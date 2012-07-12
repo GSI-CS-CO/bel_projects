@@ -16,8 +16,9 @@
 component trans_rcfg
 	PORT
 	(
+		logical_channel_address		: IN STD_LOGIC_VECTOR (2 DOWNTO 0);
 		reconfig_clk		: IN STD_LOGIC ;
-		reconfig_fromgxb		: IN STD_LOGIC_VECTOR (16 DOWNTO 0);
+		reconfig_fromgxb		: IN STD_LOGIC_VECTOR (33 DOWNTO 0);
 		busy		: OUT STD_LOGIC ;
 		reconfig_togxb		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0)
 	);

@@ -1,9 +1,17 @@
-library ieee;
-use ieee.std_logic_1164.all;
+--Copyright (C) 1991-2011 Altera Corporation
+--Your use of Altera Corporation's design tools, logic functions 
+--and other software and tools, and its AMPP partner logic 
+--functions, and any output files from any of the foregoing 
+--(including device programming or simulation files), and any 
+--associated documentation or information are expressly subject 
+--to the terms and conditions of the Altera Program License 
+--Subscription Agreement, Altera MegaCore Function License 
+--Agreement, or other applicable license agreement, including, 
+--without limitation, that your use is for the sole purpose of 
+--programming logic devices manufactured by Altera and sold by 
+--Altera or its authorized distributors.  Please refer to the 
+--applicable agreement for further details.
 
-library work;
-
-package wr_altera_pkg is
 
 component trans_loop
 	PORT
@@ -12,17 +20,15 @@ component trans_loop
 		pll_inclk		: IN STD_LOGIC ;
 		reconfig_clk		: IN STD_LOGIC ;
 		reconfig_togxb		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
-		rx_datain		: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-		rx_digitalreset		: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-		tx_digitalreset		: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
+		rx_datain		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
+		rx_digitalreset		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
+		tx_digitalreset		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 		reconfig_fromgxb		: OUT STD_LOGIC_VECTOR (16 DOWNTO 0);
-		rx_bistdone		: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-		rx_bisterr		: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-		rx_clkout		: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-		rx_signaldetect		: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-		tx_clkout		: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-		tx_dataout		: OUT STD_LOGIC_VECTOR (1 DOWNTO 0)
+		rx_bistdone		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+		rx_bisterr		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+		rx_clkout		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+		rx_signaldetect		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+		tx_clkout		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+		tx_dataout		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0)
 	);
 end component;
-
-end package;

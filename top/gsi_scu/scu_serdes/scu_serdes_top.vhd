@@ -7,6 +7,7 @@ use work.wishbone_pkg.all;
 use work.pcie_wb_pkg.all;
 use work.lpc_uart_pkg.all;
 use work.wr_altera_pkg.all;
+use work.trans_loop_pkg.all;
 
 entity scu_serdes_top is
   port(
@@ -59,12 +60,37 @@ entity scu_serdes_top is
 		nPCI_RESET		: in std_logic;
 		
 		-----------------------------------------
-      -- UART on front panel
-      -----------------------------------------
-      uart_rxd_i : in  std_logic_vector(1 downto 0);
-      uart_txd_o : out std_logic_vector(1 downto 0);
+    -- UART on front panel
+    -----------------------------------------
+    uart_rxd_i : in  std_logic_vector(1 downto 0);
+    uart_txd_o : out std_logic_vector(1 downto 0);
 
-      serial_to_cb_o : out std_logic
+    serial_to_cb_o : out std_logic;
+      
+    -----------------------------------------------------------------------
+    -- SCU Bus serdes
+    -----------------------------------------------------------------------
+    
+    -----------------------------------------------------------------------
+    -- QL1 serdes
+    -----------------------------------------------------------------------
+    
+    --F_PLL_0           : in    std_logic; -- 125Mhz ref clk
+    SFP1_TX_DIS       : out   std_logic := '0';
+    
+    QL1_GXB_RX        : in std_logic_vector(3 downto 0);
+    QL1_GXB_TX        : out std_logic_vector(3 downto 0);
+ 
+    -----------------------------------------------------------------------
+    -- QL2 serdes
+    -----------------------------------------------------------------------
+    
+    --F_PLL_0           : in    std_logic; -- 125Mhz ref clk
+    SFP2_TX_DIS       : out   std_logic := '0';
+    
+    QL2_GXB_RX        : in std_logic_vector(3 downto 0);
+    QL2_GXB_TX        : out std_logic_vector(3 downto 0)
+
 	);
 	 
 end scu_serdes_top;
@@ -144,12 +170,22 @@ architecture rtl of scu_serdes_top is
   signal gpio_slave_o : t_wishbone_slave_out;
   signal gpio_slave_i : t_wishbone_slave_in;
   
-  signal r_leds : std_logic_vector(7 downto 0);
-  signal r_reset : std_logic;
+  signal r_pio    : std_logic_vector(15 downto 0) := x"0000";
+  signal r_reset  : std_logic := '0';
   
   signal owr_pwren_o: std_logic_vector(1 downto 0);
   signal owr_en_o: std_logic_vector(1 downto 0);
   signal owr_i:	std_logic_vector(1 downto 0);
+  
+  signal rcfg_toloop:     std_logic_vector(3 downto 0);
+  signal rx_drst:         std_logic_vector(1 downto 0);
+  signal tx_drst:         std_logic_vector(1 downto 0);
+  signal rcfg_fromloop:   std_logic_vector(33 downto 0);
+  signal rx_bistdone:     std_logic_vector(1 downto 0);
+  signal rx_bisterr:      std_logic_vector(1 downto 0);
+  signal rx_signaldetect: std_logic_vector(1 downto 0);
+  signal tx_dataout:      std_logic_vector(3 downto 0);
+  
 begin
 	Inst_flash_loader_v01 : flash_loader
     port map (
@@ -212,7 +248,7 @@ begin
       g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => rstn and not r_reset,
+      rst_n_i   => rstn,
       irq_i     => lm32_interrupt,
       dwb_o     => cbar_slave_i(1), -- Data bus
       dwb_i     => cbar_slave_o(1),
@@ -256,7 +292,7 @@ begin
   -- Slave 1 is the example LED driver
   gpio_slave_i <= cbar_master_o(1);
   cbar_master_i(1) <= gpio_slave_o;
-  leds_o <= not r_leds(5 downto 0);
+  leds_o <= not r_pio(5 downto 0);
   
   -- There is a tool called 'wbgen2' which can autogenerate a Wishbone
   -- interface and C header file, but this is a simple example.
@@ -273,19 +309,19 @@ begin
       -- Detect a write to the register byte
       if gpio_slave_i.cyc = '1' and gpio_slave_i.stb = '1' and
          gpio_slave_i.we = '1' and gpio_slave_i.sel(0) = '1' then
-			-- Register 0x0 = LEDs, 0x4 = CPU reset
-			if gpio_slave_i.adr(2) = '0' then
-				r_leds <= gpio_slave_i.dat(7 downto 0);
-			else
-				r_reset <= gpio_slave_i.dat(0);
-			end if;
+        -- Register 0x0 = LEDs, 0x4 = CPU reset
+        if gpio_slave_i.adr(2) = '0' then
+          --r_pio <= gpio_slave_i.dat(7 downto 0);
+        else
+          r_reset <= gpio_slave_i.dat(0);
+        end if;
       end if;
       
       if gpio_slave_i.adr(2) = '0' then
-        gpio_slave_o.dat(31 downto 8) <= (others => '0');
-        gpio_slave_o.dat(7 downto 0) <= r_leds;
+        gpio_slave_o.dat(31 downto 16) <= (others => '0');
+        gpio_slave_o.dat(15 downto 0) <= r_pio;
       else
-        gpio_slave_o.dat(31 downto 2) <= (others => '0');
+        gpio_slave_o.dat(31 downto 1) <= (others => '0');
         gpio_slave_o.dat(0) <= r_reset;
       end if;
     end if;
@@ -365,6 +401,56 @@ begin
 			seven_seg_L => open,
 			seven_seg_H => open
 			);
+  
+  trans_loop_ql1 : trans_loop 
+  GENERIC MAP (
+    starting_channel_number => 0
+  )
+  PORT MAP (
+    cal_blk_clk	 => clk_cal,
+		pll_inclk	 => clk_sys,
+		reconfig_clk	 => clk_cal,
+		reconfig_togxb	 => rcfg_toloop,
+		rx_datain	 => QL1_GXB_RX,
+		rx_digitalreset	 => (others => r_reset),
+		tx_digitalreset	 => (others => r_reset),
+		reconfig_fromgxb	 => rcfg_fromloop(16 downto 0),
+		rx_bistdone	 => r_pio(3 downto 0),
+		rx_bisterr	 => r_pio(7 downto 4),
+		rx_clkout	 => open,
+		rx_signaldetect	 => open,
+		tx_clkout	 => open,
+		tx_dataout	 => QL1_GXB_TX
+	);
+  
+  trans_loop_ql2 : trans_loop 
+  GENERIC MAP (
+    starting_channel_number => 4
+  )
+  PORT MAP (
+    cal_blk_clk	 => clk_cal,
+		pll_inclk	 => clk_sys,
+		reconfig_clk	 => clk_cal,
+		reconfig_togxb	 => rcfg_toloop,
+		rx_datain	 => QL2_GXB_RX,
+		rx_digitalreset	 => (others => r_reset),
+		tx_digitalreset	 => (others => r_reset),
+		reconfig_fromgxb	 => rcfg_fromloop(33 downto 17),
+		rx_bistdone	 => r_pio(11 downto 8),
+		rx_bisterr	 => r_pio(15 downto 12),
+		rx_clkout	 => open,
+		rx_signaldetect	 => open,
+		tx_clkout	 => open,
+		tx_dataout	 => QL2_GXB_TX
+	);
+  
+  trans_rcfg_inst : trans_rcfg PORT MAP (
+    logical_channel_address => "000",
+		reconfig_clk	 => clk_cal,
+		reconfig_fromgxb	 => rcfg_fromloop,
+		busy	 => open,
+		reconfig_togxb	 => rcfg_toloop
+	);
 						
 	serial_to_cb_o   <= '0'; 				-- connects the serial ports to the carrier board
   

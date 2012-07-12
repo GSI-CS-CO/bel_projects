@@ -136,10 +136,6 @@ set_location_assignment PIN_A10 -to AD[4]
 set_location_assignment PIN_A9 -to AD[3]
 set_location_assignment PIN_E13 -to AD[2]
 set_location_assignment PIN_F10 -to AD[1]
-
-
-set_global_assignment -name ENABLE_SIGNALTAP ON
-set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
 set_location_assignment PIN_N4 -to LPC_AD[3]
 set_location_assignment PIN_V4 -to LPC_AD[2]
 set_location_assignment PIN_W1 -to LPC_AD[1]
@@ -177,6 +173,64 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to uart_txd_o[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to uart_txd_o[0]
 set_location_assignment PIN_AF1 -to OneWire_CB
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to OneWire_CB
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_location_assignment PIN_AH17 -to SFP1_TX_DIS
+set_location_assignment PIN_W27 -to QL1_GXB_RX[3]
+set_location_assignment PIN_U27 -to QL1_GXB_RX[2]
+set_location_assignment PIN_N27 -to QL1_GXB_RX[1]
+set_location_assignment PIN_L27 -to QL1_GXB_RX[0]
+set_location_assignment PIN_V25 -to QL1_GXB_TX[3]
+set_location_assignment PIN_T25 -to QL1_GXB_TX[2]
+set_location_assignment PIN_M25 -to QL1_GXB_TX[1]
+set_location_assignment PIN_K25 -to QL1_GXB_TX[0]
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_RX[3]
+set_location_assignment PIN_W28 -to "QL1_GXB_RX[3](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_RX[2]
+set_location_assignment PIN_U28 -to "QL1_GXB_RX[2](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_RX[1]
+set_location_assignment PIN_N28 -to "QL1_GXB_RX[1](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_RX[0]
+set_location_assignment PIN_L28 -to "QL1_GXB_RX[0](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_TX[3]
+set_location_assignment PIN_V26 -to "QL1_GXB_TX[3](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_TX[2]
+set_location_assignment PIN_T26 -to "QL1_GXB_TX[2](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_TX[1]
+set_location_assignment PIN_M26 -to "QL1_GXB_TX[1](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_TX[0]
+set_location_assignment PIN_K26 -to "QL1_GXB_TX[0](n)"
+set_location_assignment PIN_J27 -to QL2_GXB_RX[3]
+set_location_assignment PIN_G27 -to QL2_GXB_RX[2]
+set_location_assignment PIN_C27 -to QL2_GXB_RX[1]
+set_location_assignment PIN_B24 -to QL2_GXB_RX[0]
+set_location_assignment PIN_H25 -to QL2_GXB_TX[3]
+set_location_assignment PIN_F25 -to QL2_GXB_TX[2]
+set_location_assignment PIN_B26 -to QL2_GXB_TX[1]
+set_location_assignment PIN_D23 -to QL2_GXB_TX[0]
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL2_GXB_RX[3]
+set_location_assignment PIN_J28 -to "QL2_GXB_RX[3](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL2_GXB_RX[2]
+set_location_assignment PIN_G28 -to "QL2_GXB_RX[2](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL2_GXB_RX[1]
+set_location_assignment PIN_C28 -to "QL2_GXB_RX[1](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL2_GXB_RX[0]
+set_location_assignment PIN_A24 -to "QL2_GXB_RX[0](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL2_GXB_TX[3]
+set_location_assignment PIN_H26 -to "QL2_GXB_TX[3](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL2_GXB_TX[2]
+set_location_assignment PIN_F26 -to "QL2_GXB_TX[2](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL2_GXB_TX[1]
+set_location_assignment PIN_A26 -to "QL2_GXB_TX[1](n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL2_GXB_TX[0]
+set_location_assignment PIN_C23 -to "QL2_GXB_TX[0](n)"
+set_location_assignment PIN_AH18 -to SFP2_TX_DIS
+set_global_assignment -name SDC_FILE ../../../top/gsi_scu/scu_serdes/scu_top.sdc
+set_global_assignment -name QIP_FILE "../../../../wr-cores/ip_cores/general-cores/modules/wishbone/wb_pcie/altera_pcie.qip"
+set_global_assignment -name VHDL_FILE ../../../modules/transceiver_prbs/trans_rcfg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/transceiver_prbs/trans_loop_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/transceiver_prbs/trans_loop.vhd
 set_global_assignment -name VERILOG_FILE "../../../../wr-cores/ip_cores/general-cores/modules/wishbone/wb_onewire_master/sockit_owm.v"
 set_global_assignment -name VHDL_FILE "../../../../wr-cores/ip_cores/general-cores/modules/wishbone/wb_onewire_master/xwb_onewire_master.vhd"
 set_global_assignment -name VHDL_FILE "../../../../wr-cores/platform/altera/sys_pll/sys_pll.vhd"
@@ -201,7 +255,6 @@ set_global_assignment -name VHDL_FILE "../../../../wr-cores/modules/lpc_uart/pos
 set_global_assignment -name VHDL_FILE "../../../../wr-cores/modules/lpc_uart/lpc_uart_pkg.vhd"
 set_global_assignment -name VHDL_FILE "../../../../wr-cores/modules/lpc_uart/lpc_uart.vhd"
 set_global_assignment -name VHDL_FILE "../../../../wr-cores/modules/lpc_uart/lpc_peripheral.vhd"
-set_global_assignment -name QIP_FILE "../../../../wr-cores/ip_cores/general-cores/modules/wishbone/wb_pcie/altera_pcie.qip"
 set_global_assignment -name VHDL_FILE "../../../../wr-cores/ip_cores/general-cores/modules/wishbone/wb_pcie/pcie_wb_pkg.vhd"
 set_global_assignment -name VHDL_FILE "../../../../wr-cores/ip_cores/general-cores/modules/wishbone/wb_pcie/pcie_wb.vhd"
 set_global_assignment -name VHDL_FILE "../../../../wr-cores/ip_cores/general-cores/modules/wishbone/wb_pcie/pcie_tlp.vhd"
@@ -262,9 +315,7 @@ set_global_assignment -name VHDL_FILE "../../../../wr-cores/ip_cores/general-cor
 set_global_assignment -name VHDL_FILE "../../../../wr-cores/ip_cores/general-cores/modules/common/gencores_pkg.vhd"
 set_global_assignment -name VHDL_FILE "../../../../wr-cores/ip_cores/general-cores/modules/wishbone/wb_onewire_master/wb_onewire_master.vhd"
 set_global_assignment -name VHDL_FILE "../../../../wr-cores/ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_pkg.vhd"
-set_global_assignment -name VHDL_FILE ../../../top/gsi_scu/scu_serdes/wishbone_demo_top.vhd
 set_global_assignment -name VHDL_FILE ../../../top/gsi_scu/scu_serdes/scu_serdes_top.vhd
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
-set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name QIP_FILE ../../../modules/transceiver_prbs/trans_loop.qip
+set_global_assignment -name QIP_FILE ../../../modules/transceiver_prbs/trans_rcfg.qip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

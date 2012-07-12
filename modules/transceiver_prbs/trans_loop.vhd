@@ -33,13 +33,13 @@
 --applicable agreement for further details.
 
 
---alt4gxb CBX_AUTO_BLACKBOX="ALL" device_family="Arria II GX" effective_data_rate="2500 Mbps" enable_lc_tx_pll="false" enable_pll_inclk_drive_rx_cru="true" equalizer_ctrl_a_setting=0 equalizer_ctrl_b_setting=0 equalizer_ctrl_c_setting=0 equalizer_ctrl_d_setting=0 equalizer_ctrl_v_setting=1 equalizer_dcgain_setting=0 gen_reconfig_pll="false" gx_channel_type="auto" gxb_analog_power="AUTO" gxb_powerdown_width=1 input_clock_frequency="125.0 MHz" intended_device_speed_grade="5" intended_device_variant="ANY" loopback_mode="none" number_of_channels=2 number_of_quads=1 operation_mode="duplex" pll_control_width=1 pll_pfd_fb_mode="internal" preemphasis_ctrl_1stposttap_setting=0 preemphasis_ctrl_2ndposttap_inv_setting="false" preemphasis_ctrl_2ndposttap_setting=0 preemphasis_ctrl_pretap_inv_setting="false" preemphasis_ctrl_pretap_setting=0 protocol="bist" receiver_termination="OCT_100_OHMS" reconfig_calibration="true" reconfig_dprio_mode=0 reconfig_fromgxb_port_width=17 reconfig_togxb_port_width=4 rx_8b_10b_mode="normal" rx_align_loss_sync_error_num=1 rx_align_pattern="0101111100" rx_align_pattern_length=10 rx_allow_align_polarity_inversion="false" rx_allow_pipe_polarity_inversion="false" rx_bitslip_enable="false" rx_byte_order_pad_pattern="000000000" rx_byte_order_pattern="000000010" rx_byte_order_pld_ctrl_enable="false" rx_byte_ordering_mode="9" rx_channel_width=16 rx_common_mode="0.82v" rx_cru_bandwidth_type="auto" rx_cru_inclock0_period=8000 rx_cru_m_divider=10 rx_cru_n_divider=1 rx_cru_vco_post_scale_divider=2 rx_data_rate=2500 rx_data_rate_remainder=0 rx_datapath_low_latency_mode="false" rx_datapath_protocol="basic" rx_digitalreset_port_width=2 rx_dwidth_factor=2 rx_enable_bit_reversal="false" rx_enable_deep_align_byte_swap="false" rx_enable_lock_to_data_sig="false" rx_enable_lock_to_refclk_sig="false" rx_enable_self_test_mode="true" rx_flip_rx_out="false" rx_force_signal_detect="true" rx_num_align_cons_good_data=1 rx_num_align_cons_pat=1 rx_phfiforegmode="false" rx_ppmselect=32 rx_rate_match_fifo_mode="none" rx_run_length=5 rx_run_length_enable="true" rx_self_test_mode="incremental" rx_signal_detect_loss_threshold=1 rx_signal_detect_threshold=2 rx_signal_detect_valid_threshold=1 rx_use_align_state_machine="true" rx_use_clkout="true" rx_use_coreclk="false" rx_use_deserializer_double_data_mode="false" rx_use_deskew_fifo="false" rx_use_double_data_mode="true" rx_use_external_termination="false" rx_word_aligner_num_byte=1 starting_channel_number=0 transmitter_termination="OCT_100_OHMS" tx_8b_10b_mode="normal" tx_allow_polarity_inversion="false" tx_analog_power="1.5v" tx_channel_width=16 tx_clkout_width=2 tx_common_mode="0.65v" tx_data_rate=2500 tx_data_rate_remainder=0 tx_datapath_low_latency_mode="false" tx_digitalreset_port_width=2 tx_dwidth_factor=2 tx_enable_bit_reversal="false" tx_enable_self_test_mode="true" tx_flip_tx_in="false" tx_force_disparity_mode="false" tx_pll_bandwidth_type="auto" tx_pll_clock_post_divider=1 tx_pll_inclk0_period=8000 tx_pll_m_divider=10 tx_pll_n_divider=1 tx_pll_type="CMU" tx_pll_vco_post_scale_divider=2 tx_self_test_mode="incremental" tx_slew_rate="off" tx_transmit_protocol="basic" tx_use_coreclk="false" tx_use_double_data_mode="true" tx_use_external_termination="false" tx_use_serializer_double_data_mode="false" use_calibration_block="true" vod_ctrl_setting=4 cal_blk_clk pll_inclk reconfig_clk reconfig_fromgxb reconfig_togxb rx_bistdone rx_bisterr rx_clkout rx_datain rx_digitalreset rx_signaldetect tx_clkout tx_dataout tx_digitalreset
+--alt4gxb CBX_AUTO_BLACKBOX="ALL" device_family="Arria II GX" effective_data_rate="1250 Mbps" enable_lc_tx_pll="false" enable_pll_inclk_drive_rx_cru="true" equalizer_ctrl_a_setting=0 equalizer_ctrl_b_setting=0 equalizer_ctrl_c_setting=0 equalizer_ctrl_d_setting=0 equalizer_ctrl_v_setting=1 equalizer_dcgain_setting=0 gen_reconfig_pll="false" gx_channel_type="auto" gxb_analog_power="AUTO" gxb_powerdown_width=1 input_clock_frequency="125.0 MHz" intended_device_speed_grade="5" intended_device_variant="ANY" loopback_mode="none" number_of_channels=4 number_of_quads=1 operation_mode="duplex" pll_control_width=1 pll_pfd_fb_mode="internal" preemphasis_ctrl_1stposttap_setting=0 preemphasis_ctrl_2ndposttap_inv_setting="false" preemphasis_ctrl_2ndposttap_setting=0 preemphasis_ctrl_pretap_inv_setting="false" preemphasis_ctrl_pretap_setting=0 protocol="prbs" receiver_termination="OCT_100_OHMS" reconfig_calibration="true" reconfig_dprio_mode=0 reconfig_fromgxb_port_width=17 reconfig_togxb_port_width=4 rx_8b_10b_mode="none" rx_align_pattern="0011000001000000" rx_align_pattern_length=16 rx_allow_align_polarity_inversion="false" rx_allow_pipe_polarity_inversion="false" rx_bitslip_enable="false" rx_byte_ordering_mode="none" rx_channel_width=8 rx_common_mode="0.82v" rx_cru_bandwidth_type="auto" rx_cru_inclock0_period=8000 rx_cru_m_divider=5 rx_cru_n_divider=1 rx_cru_vco_post_scale_divider=4 rx_data_rate=1250 rx_data_rate_remainder=0 rx_datapath_low_latency_mode="false" rx_datapath_protocol="basic" rx_digitalreset_port_width=4 rx_dwidth_factor=1 rx_enable_bit_reversal="false" rx_enable_deep_align_byte_swap="false" rx_enable_lock_to_data_sig="false" rx_enable_lock_to_refclk_sig="false" rx_enable_self_test_mode="true" rx_flip_rx_out="false" rx_force_signal_detect="true" rx_phfiforegmode="false" rx_ppmselect=32 rx_rate_match_fifo_mode="none" rx_run_length=4 rx_run_length_enable="true" rx_self_test_mode="prbs7" rx_signal_detect_loss_threshold=1 rx_signal_detect_threshold=2 rx_signal_detect_valid_threshold=1 rx_use_align_state_machine="false" rx_use_clkout="true" rx_use_coreclk="false" rx_use_deserializer_double_data_mode="false" rx_use_deskew_fifo="false" rx_use_double_data_mode="false" rx_use_external_termination="false" rx_use_rising_edge_triggered_pattern_align="true" rx_word_aligner_num_byte=1 starting_channel_number=0 transmitter_termination="OCT_100_OHMS" tx_8b_10b_mode="none" tx_allow_polarity_inversion="false" tx_analog_power="1.5v" tx_channel_width=8 tx_clkout_width=4 tx_common_mode="0.65v" tx_data_rate=1250 tx_data_rate_remainder=0 tx_datapath_low_latency_mode="false" tx_digitalreset_port_width=4 tx_dwidth_factor=1 tx_enable_bit_reversal="false" tx_enable_self_test_mode="true" tx_flip_tx_in="false" tx_force_disparity_mode="false" tx_pll_bandwidth_type="auto" tx_pll_clock_post_divider=1 tx_pll_inclk0_period=8000 tx_pll_m_divider=5 tx_pll_n_divider=1 tx_pll_type="CMU" tx_pll_vco_post_scale_divider=4 tx_self_test_mode="prbs7" tx_slew_rate="off" tx_transmit_protocol="basic" tx_use_coreclk="false" tx_use_double_data_mode="false" tx_use_external_termination="false" tx_use_serializer_double_data_mode="false" use_calibration_block="true" vod_ctrl_setting=4 cal_blk_clk pll_inclk reconfig_clk reconfig_fromgxb reconfig_togxb rx_bistdone rx_bisterr rx_clkout rx_datain rx_digitalreset rx_signaldetect tx_clkout tx_dataout tx_digitalreset
 --VERSION_BEGIN 11.1SP2 cbx_alt4gxb 2012:01:25:21:12:11:SJ cbx_mgl 2012:01:25:21:26:09:SJ cbx_tgx 2012:01:25:21:12:11:SJ  VERSION_END
 
  LIBRARY arriaii_hssi;
  USE arriaii_hssi.all;
 
---synthesis_resources = arriaii_hssi_calibration_block 1 arriaii_hssi_clock_divider 2 arriaii_hssi_cmu 1 arriaii_hssi_pll 3 arriaii_hssi_rx_pcs 2 arriaii_hssi_rx_pma 2 arriaii_hssi_tx_pcs 2 arriaii_hssi_tx_pma 2 
+--synthesis_resources = arriaii_hssi_calibration_block 1 arriaii_hssi_clock_divider 4 arriaii_hssi_cmu 1 arriaii_hssi_pll 5 arriaii_hssi_rx_pcs 4 arriaii_hssi_rx_pma 4 arriaii_hssi_tx_pcs 4 arriaii_hssi_tx_pma 4 
  LIBRARY ieee;
  USE ieee.std_logic_1164.all;
 
@@ -55,16 +55,16 @@
 		 reconfig_clk	:	IN  STD_LOGIC := '0';
 		 reconfig_fromgxb	:	OUT  STD_LOGIC_VECTOR (16 DOWNTO 0);
 		 reconfig_togxb	:	IN  STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => 'Z');
-		 rx_bistdone	:	OUT  STD_LOGIC_VECTOR (1 DOWNTO 0);
-		 rx_bisterr	:	OUT  STD_LOGIC_VECTOR (1 DOWNTO 0);
-		 rx_clkout	:	OUT  STD_LOGIC_VECTOR (1 DOWNTO 0);
-		 rx_datain	:	IN  STD_LOGIC_VECTOR (1 DOWNTO 0) := (OTHERS => 'Z');
+		 rx_bistdone	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0);
+		 rx_bisterr	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0);
+		 rx_clkout	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0);
+		 rx_datain	:	IN  STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => 'Z');
 		 rx_dataout	:	OUT  STD_LOGIC_VECTOR (31 DOWNTO 0);
-		 rx_digitalreset	:	IN  STD_LOGIC_VECTOR (1 DOWNTO 0) := (OTHERS => '0');
-		 rx_signaldetect	:	OUT  STD_LOGIC_VECTOR (1 DOWNTO 0);
-		 tx_clkout	:	OUT  STD_LOGIC_VECTOR (1 DOWNTO 0);
-		 tx_dataout	:	OUT  STD_LOGIC_VECTOR (1 DOWNTO 0);
-		 tx_digitalreset	:	IN  STD_LOGIC_VECTOR (1 DOWNTO 0) := (OTHERS => '0')
+		 rx_digitalreset	:	IN  STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => '0');
+		 rx_signaldetect	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0);
+		 tx_clkout	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0);
+		 tx_dataout	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0);
+		 tx_digitalreset	:	IN  STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => '0')
 	 ); 
  END trans_loop_alt4gxb;
 
@@ -85,6 +85,14 @@
 	 SIGNAL  wire_ch_clk_div1_analogrefclkout	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_ch_clk_div1_analogrefclkpulse	:	STD_LOGIC;
 	 SIGNAL  wire_ch_clk_div1_dprioout	:	STD_LOGIC_VECTOR (99 DOWNTO 0);
+	 SIGNAL  wire_ch_clk_div2_analogfastrefclkout	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_ch_clk_div2_analogrefclkout	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_ch_clk_div2_analogrefclkpulse	:	STD_LOGIC;
+	 SIGNAL  wire_ch_clk_div2_dprioout	:	STD_LOGIC_VECTOR (99 DOWNTO 0);
+	 SIGNAL  wire_ch_clk_div3_analogfastrefclkout	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_ch_clk_div3_analogrefclkout	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_ch_clk_div3_analogrefclkpulse	:	STD_LOGIC;
+	 SIGNAL  wire_ch_clk_div3_dprioout	:	STD_LOGIC_VECTOR (99 DOWNTO 0);
 	 SIGNAL  wire_cent_unit0_adet	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_cent_unit0_cmudividerdprioin	:	STD_LOGIC_VECTOR (599 DOWNTO 0);
 	 SIGNAL  wire_cent_unit0_cmudividerdprioout	:	STD_LOGIC_VECTOR (599 DOWNTO 0);
@@ -141,6 +149,18 @@
 	 SIGNAL  wire_rx_cdr_pll1_inclk	:	STD_LOGIC_VECTOR (9 DOWNTO 0);
 	 SIGNAL  wire_rx_cdr_pll1_locked	:	STD_LOGIC;
 	 SIGNAL  wire_rx_cdr_pll1_pfdrefclkout	:	STD_LOGIC;
+	 SIGNAL  wire_rx_cdr_pll2_clk	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  wire_rx_cdr_pll2_dataout	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_rx_cdr_pll2_dprioout	:	STD_LOGIC_VECTOR (299 DOWNTO 0);
+	 SIGNAL  wire_rx_cdr_pll2_inclk	:	STD_LOGIC_VECTOR (9 DOWNTO 0);
+	 SIGNAL  wire_rx_cdr_pll2_locked	:	STD_LOGIC;
+	 SIGNAL  wire_rx_cdr_pll2_pfdrefclkout	:	STD_LOGIC;
+	 SIGNAL  wire_rx_cdr_pll3_clk	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  wire_rx_cdr_pll3_dataout	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_rx_cdr_pll3_dprioout	:	STD_LOGIC_VECTOR (299 DOWNTO 0);
+	 SIGNAL  wire_rx_cdr_pll3_inclk	:	STD_LOGIC_VECTOR (9 DOWNTO 0);
+	 SIGNAL  wire_rx_cdr_pll3_locked	:	STD_LOGIC;
+	 SIGNAL  wire_rx_cdr_pll3_pfdrefclkout	:	STD_LOGIC;
 	 SIGNAL  wire_tx_pll0_clk	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_tx_pll0_dprioout	:	STD_LOGIC_VECTOR (299 DOWNTO 0);
 	 SIGNAL  wire_tx_pll0_inclk	:	STD_LOGIC_VECTOR (9 DOWNTO 0);
@@ -148,11 +168,12 @@
 	 SIGNAL  wire_receive_pcs0_bistdone	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs0_bisterr	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs0_cdrctrllocktorefcl	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_reconfig_togxb_busy362w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_reconfig_togxb_busy487w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs0_cdrctrllocktorefclkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs0_clkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs0_dataout	:	STD_LOGIC_VECTOR (39 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs0_dprioout	:	STD_LOGIC_VECTOR (399 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs0_parallelfdbk	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs0_pipepowerdown	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs0_pipepowerstate	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs0_rxfound	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
@@ -161,16 +182,45 @@
 	 SIGNAL  wire_receive_pcs1_bistdone	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs1_bisterr	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs1_cdrctrllocktorefcl	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_reconfig_togxb_busy459w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_reconfig_togxb_busy586w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs1_cdrctrllocktorefclkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs1_clkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs1_dataout	:	STD_LOGIC_VECTOR (39 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs1_dprioout	:	STD_LOGIC_VECTOR (399 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs1_parallelfdbk	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs1_pipepowerdown	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs1_pipepowerstate	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs1_rxfound	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs1_signaldetect	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs1_xgmdatain	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs2_bistdone	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pcs2_bisterr	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pcs2_cdrctrllocktorefcl	:	STD_LOGIC;
+	 SIGNAL  wire_w_lg_reconfig_togxb_busy664w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs2_cdrctrllocktorefclkout	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pcs2_clkout	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pcs2_dataout	:	STD_LOGIC_VECTOR (39 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs2_dprioout	:	STD_LOGIC_VECTOR (399 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs2_parallelfdbk	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs2_pipepowerdown	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs2_pipepowerstate	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs2_rxfound	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs2_signaldetect	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pcs2_xgmdatain	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs3_bistdone	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pcs3_bisterr	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pcs3_cdrctrllocktorefcl	:	STD_LOGIC;
+	 SIGNAL  wire_w_lg_reconfig_togxb_busy742w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs3_cdrctrllocktorefclkout	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pcs3_clkout	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pcs3_dataout	:	STD_LOGIC_VECTOR (39 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs3_dprioout	:	STD_LOGIC_VECTOR (399 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs3_parallelfdbk	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs3_pipepowerdown	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs3_pipepowerstate	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs3_rxfound	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_receive_pcs3_signaldetect	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pcs3_xgmdatain	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL  wire_receive_pma0_analogtestbus	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL  wire_receive_pma0_clockout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma0_dataout	:	STD_LOGIC;
@@ -187,15 +237,31 @@
 	 SIGNAL  wire_receive_pma1_recoverdataout	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
 	 SIGNAL  wire_receive_pma1_signaldetect	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma1_testbussel	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  wire_receive_pma2_analogtestbus	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL  wire_receive_pma2_clockout	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pma2_dataout	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pma2_dprioout	:	STD_LOGIC_VECTOR (299 DOWNTO 0);
+	 SIGNAL  wire_receive_pma2_locktorefout	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pma2_recoverdataout	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
+	 SIGNAL  wire_receive_pma2_signaldetect	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pma2_testbussel	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  wire_receive_pma3_analogtestbus	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL  wire_receive_pma3_clockout	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pma3_dataout	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pma3_dprioout	:	STD_LOGIC_VECTOR (299 DOWNTO 0);
+	 SIGNAL  wire_receive_pma3_locktorefout	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pma3_recoverdataout	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
+	 SIGNAL  wire_receive_pma3_signaldetect	:	STD_LOGIC;
+	 SIGNAL  wire_receive_pma3_testbussel	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs0_clkout	:	STD_LOGIC;
 	 SIGNAL  wire_transmit_pcs0_ctrlenable	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs0_datain	:	STD_LOGIC_VECTOR (39 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs0_datainfull	:	STD_LOGIC_VECTOR (43 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs0_dataout	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs0_dispval	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs0_dprioout	:	STD_LOGIC_VECTOR (149 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs0_forcedisp	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs0_forceelecidleout	:	STD_LOGIC;
-	 SIGNAL  wire_transmit_pcs0_parallelfdbkout	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs0_powerdn	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs0_revparallelfdbk	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs0_txdetectrx	:	STD_LOGIC;
@@ -204,13 +270,37 @@
 	 SIGNAL  wire_transmit_pcs1_datain	:	STD_LOGIC_VECTOR (39 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs1_datainfull	:	STD_LOGIC_VECTOR (43 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs1_dataout	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs1_dispval	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs1_dprioout	:	STD_LOGIC_VECTOR (149 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs1_forcedisp	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs1_forceelecidleout	:	STD_LOGIC;
-	 SIGNAL  wire_transmit_pcs1_parallelfdbkout	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs1_powerdn	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs1_revparallelfdbk	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs1_txdetectrx	:	STD_LOGIC;
+	 SIGNAL  wire_transmit_pcs2_clkout	:	STD_LOGIC;
+	 SIGNAL  wire_transmit_pcs2_ctrlenable	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs2_datain	:	STD_LOGIC_VECTOR (39 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs2_datainfull	:	STD_LOGIC_VECTOR (43 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs2_dataout	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs2_dispval	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs2_dprioout	:	STD_LOGIC_VECTOR (149 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs2_forcedisp	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs2_forceelecidleout	:	STD_LOGIC;
+	 SIGNAL  wire_transmit_pcs2_powerdn	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs2_revparallelfdbk	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs2_txdetectrx	:	STD_LOGIC;
+	 SIGNAL  wire_transmit_pcs3_clkout	:	STD_LOGIC;
+	 SIGNAL  wire_transmit_pcs3_ctrlenable	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs3_datain	:	STD_LOGIC_VECTOR (39 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs3_datainfull	:	STD_LOGIC_VECTOR (43 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs3_dataout	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs3_dispval	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs3_dprioout	:	STD_LOGIC_VECTOR (149 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs3_forcedisp	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs3_forceelecidleout	:	STD_LOGIC;
+	 SIGNAL  wire_transmit_pcs3_powerdn	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs3_revparallelfdbk	:	STD_LOGIC_VECTOR (19 DOWNTO 0);
+	 SIGNAL  wire_transmit_pcs3_txdetectrx	:	STD_LOGIC;
 	 SIGNAL  wire_transmit_pma0_clockout	:	STD_LOGIC;
 	 SIGNAL  wire_transmit_pma0_datain	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma0_dataout	:	STD_LOGIC;
@@ -233,12 +323,36 @@
 	 SIGNAL  wire_transmit_pma1_refclk1in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma1_refclk2in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma1_refclk4in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy424w425w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy424w503w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_reconfig_togxb_busy424w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  analogfastrefclkout :	STD_LOGIC_VECTOR (3 DOWNTO 0);
-	 SIGNAL  analogrefclkout :	STD_LOGIC_VECTOR (3 DOWNTO 0);
-	 SIGNAL  analogrefclkpulse :	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma2_clockout	:	STD_LOGIC;
+	 SIGNAL  wire_transmit_pma2_datain	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma2_dataout	:	STD_LOGIC;
+	 SIGNAL  wire_transmit_pma2_dprioout	:	STD_LOGIC_VECTOR (299 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma2_fastrefclk1in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma2_fastrefclk2in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma2_fastrefclk4in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma2_refclk0in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma2_refclk1in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma2_refclk2in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma2_refclk4in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma3_clockout	:	STD_LOGIC;
+	 SIGNAL  wire_transmit_pma3_datain	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma3_dataout	:	STD_LOGIC;
+	 SIGNAL  wire_transmit_pma3_dprioout	:	STD_LOGIC_VECTOR (299 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma3_fastrefclk1in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma3_fastrefclk2in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma3_fastrefclk4in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma3_refclk0in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma3_refclk1in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma3_refclk2in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_transmit_pma3_refclk4in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy549w550w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy549w629w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy549w707w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy549w785w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_reconfig_togxb_busy549w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  analogfastrefclkout :	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL  analogrefclkout :	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL  analogrefclkpulse :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  cal_blk_powerdown	:	STD_LOGIC;
 	 SIGNAL  cent_unit_cmudividerdprioout :	STD_LOGIC_VECTOR (599 DOWNTO 0);
 	 SIGNAL  cent_unit_cmuplldprioout :	STD_LOGIC_VECTOR (1799 DOWNTO 0);
@@ -267,8 +381,8 @@
 	 SIGNAL  pll0_dprioin :	STD_LOGIC_VECTOR (299 DOWNTO 0);
 	 SIGNAL  pll0_dprioout :	STD_LOGIC_VECTOR (299 DOWNTO 0);
 	 SIGNAL  pll0_out :	STD_LOGIC_VECTOR (3 DOWNTO 0);
-	 SIGNAL  pll_ch_dataout_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
-	 SIGNAL  pll_ch_dprioout :	STD_LOGIC_VECTOR (599 DOWNTO 0);
+	 SIGNAL  pll_ch_dataout_wire :	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL  pll_ch_dprioout :	STD_LOGIC_VECTOR (1199 DOWNTO 0);
 	 SIGNAL  pll_cmuplldprioout :	STD_LOGIC_VECTOR (1799 DOWNTO 0);
 	 SIGNAL  pll_inclk_wire :	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  pll_powerdown	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
@@ -278,63 +392,63 @@
 	 SIGNAL  reconfig_togxb_disable :	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  reconfig_togxb_in :	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  reconfig_togxb_load :	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  rx_a1a2size	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rx_analogreset_in :	STD_LOGIC_VECTOR (5 DOWNTO 0);
 	 SIGNAL  rx_analogreset_out :	STD_LOGIC_VECTOR (5 DOWNTO 0);
-	 SIGNAL  rx_clkout_wire :	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_cruclk_in :	STD_LOGIC_VECTOR (19 DOWNTO 0);
-	 SIGNAL  rx_deserclock_in :	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL  rx_clkout_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_cruclk_in :	STD_LOGIC_VECTOR (39 DOWNTO 0);
+	 SIGNAL  rx_deserclock_in :	STD_LOGIC_VECTOR (15 DOWNTO 0);
 	 SIGNAL  rx_digitalreset_in :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rx_digitalreset_out :	STD_LOGIC_VECTOR (3 DOWNTO 0);
-	 SIGNAL  rx_locktodata	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_locktodata_wire :	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_locktorefclk	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_locktorefclk_wire :	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  rx_locktodata	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_locktodata_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_locktorefclk	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_locktorefclk_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rx_out_wire :	STD_LOGIC_VECTOR (31 DOWNTO 0);
 	 SIGNAL  rx_pcsdprioin_wire :	STD_LOGIC_VECTOR (1599 DOWNTO 0);
 	 SIGNAL  rx_pcsdprioout :	STD_LOGIC_VECTOR (1599 DOWNTO 0);
-	 SIGNAL  rx_phfifordenable	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_phfiforeset	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_phfifowrdisable	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_pldcruclk_in :	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_pll_clkout :	STD_LOGIC_VECTOR (7 DOWNTO 0);
-	 SIGNAL  rx_pll_pfdrefclkout_wire :	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_plllocked_wire :	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_pma_analogtestbus :	STD_LOGIC_VECTOR (33 DOWNTO 0);
-	 SIGNAL  rx_pma_clockout :	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_pma_dataout :	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_pma_locktorefout :	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_pma_recoverdataout_wire :	STD_LOGIC_VECTOR (39 DOWNTO 0);
+	 SIGNAL  rx_phfifordenable	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_phfiforeset	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_phfifowrdisable	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_pldcruclk_in :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_pll_clkout :	STD_LOGIC_VECTOR (15 DOWNTO 0);
+	 SIGNAL  rx_pll_pfdrefclkout_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_plllocked_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_pma_analogtestbus :	STD_LOGIC_VECTOR (67 DOWNTO 0);
+	 SIGNAL  rx_pma_clockout :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_pma_dataout :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_pma_locktorefout :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_pma_recoverdataout_wire :	STD_LOGIC_VECTOR (79 DOWNTO 0);
 	 SIGNAL  rx_pmadprioin_wire :	STD_LOGIC_VECTOR (1799 DOWNTO 0);
 	 SIGNAL  rx_pmadprioout :	STD_LOGIC_VECTOR (1799 DOWNTO 0);
-	 SIGNAL  rx_powerdown	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  rx_powerdown	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rx_powerdown_in :	STD_LOGIC_VECTOR (5 DOWNTO 0);
-	 SIGNAL  rx_prbscidenable	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  rx_prbscidenable	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rx_rxcruresetout :	STD_LOGIC_VECTOR (5 DOWNTO 0);
-	 SIGNAL  rx_signaldetect_wire :	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  rx_signaldetectout_wire :	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  rx_signaldetect_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_signaldetectout_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rxpll_dprioin :	STD_LOGIC_VECTOR (1799 DOWNTO 0);
 	 SIGNAL  tx_analogreset_out :	STD_LOGIC_VECTOR (5 DOWNTO 0);
-	 SIGNAL  tx_clkout_int_wire :	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  tx_core_clkout_wire :	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  tx_ctrlenable	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  tx_clkout_int_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  tx_core_clkout_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  tx_datain	:	STD_LOGIC_VECTOR (31 DOWNTO 0);
 	 SIGNAL  tx_datain_wire :	STD_LOGIC_VECTOR (31 DOWNTO 0);
-	 SIGNAL  tx_dataout_pcs_to_pma :	STD_LOGIC_VECTOR (39 DOWNTO 0);
+	 SIGNAL  tx_dataout_pcs_to_pma :	STD_LOGIC_VECTOR (79 DOWNTO 0);
 	 SIGNAL  tx_digitalreset_in :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  tx_digitalreset_out :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  tx_dprioin_wire :	STD_LOGIC_VECTOR (1199 DOWNTO 0);
-	 SIGNAL  tx_forcedisp_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
-	 SIGNAL  tx_invpolarity	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  tx_localrefclk :	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  tx_parallelfdbkout :	STD_LOGIC_VECTOR (39 DOWNTO 0);
-	 SIGNAL  tx_phfiforeset	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  tx_invpolarity	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  tx_localrefclk :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  tx_phfiforeset	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  tx_pmadprioin_wire :	STD_LOGIC_VECTOR (1799 DOWNTO 0);
 	 SIGNAL  tx_pmadprioout :	STD_LOGIC_VECTOR (1799 DOWNTO 0);
 	 SIGNAL  tx_txdprioout :	STD_LOGIC_VECTOR (599 DOWNTO 0);
-	 SIGNAL  txdetectrxout :	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  txdetectrxout :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  w_cent_unit_dpriodisableout1w :	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rx_locktodata_range423w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rx_locktodata_range502w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rx_locktodata_range548w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rx_locktodata_range628w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rx_locktodata_range706w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rx_locktodata_range784w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 COMPONENT  arriaii_hssi_calibration_block
 	 GENERIC 
 	 (
@@ -1409,12 +1523,14 @@
 
 	wire_gnd <= '0';
 	wire_vcc <= '1';
-	wire_w_lg_w_lg_reconfig_togxb_busy424w425w(0) <= wire_w_lg_reconfig_togxb_busy424w(0) AND wire_w_rx_locktodata_range423w(0);
-	wire_w_lg_w_lg_reconfig_togxb_busy424w503w(0) <= wire_w_lg_reconfig_togxb_busy424w(0) AND wire_w_rx_locktodata_range502w(0);
-	wire_w_lg_reconfig_togxb_busy424w(0) <= NOT reconfig_togxb_busy(0);
-	analogfastrefclkout <= ( wire_ch_clk_div1_analogfastrefclkout & wire_ch_clk_div0_analogfastrefclkout);
-	analogrefclkout <= ( wire_ch_clk_div1_analogrefclkout & wire_ch_clk_div0_analogrefclkout);
-	analogrefclkpulse <= ( wire_ch_clk_div1_analogrefclkpulse & wire_ch_clk_div0_analogrefclkpulse);
+	wire_w_lg_w_lg_reconfig_togxb_busy549w550w(0) <= wire_w_lg_reconfig_togxb_busy549w(0) AND wire_w_rx_locktodata_range548w(0);
+	wire_w_lg_w_lg_reconfig_togxb_busy549w629w(0) <= wire_w_lg_reconfig_togxb_busy549w(0) AND wire_w_rx_locktodata_range628w(0);
+	wire_w_lg_w_lg_reconfig_togxb_busy549w707w(0) <= wire_w_lg_reconfig_togxb_busy549w(0) AND wire_w_rx_locktodata_range706w(0);
+	wire_w_lg_w_lg_reconfig_togxb_busy549w785w(0) <= wire_w_lg_reconfig_togxb_busy549w(0) AND wire_w_rx_locktodata_range784w(0);
+	wire_w_lg_reconfig_togxb_busy549w(0) <= NOT reconfig_togxb_busy(0);
+	analogfastrefclkout <= ( wire_ch_clk_div3_analogfastrefclkout & wire_ch_clk_div2_analogfastrefclkout & wire_ch_clk_div1_analogfastrefclkout & wire_ch_clk_div0_analogfastrefclkout);
+	analogrefclkout <= ( wire_ch_clk_div3_analogrefclkout & wire_ch_clk_div2_analogrefclkout & wire_ch_clk_div1_analogrefclkout & wire_ch_clk_div0_analogrefclkout);
+	analogrefclkpulse <= ( wire_ch_clk_div3_analogrefclkpulse & wire_ch_clk_div2_analogrefclkpulse & wire_ch_clk_div1_analogrefclkpulse & wire_ch_clk_div0_analogrefclkpulse);
 	cal_blk_powerdown <= '0';
 	cent_unit_cmudividerdprioout <= ( wire_cent_unit0_cmudividerdprioout);
 	cent_unit_cmuplldprioout <= ( wire_cent_unit0_cmuplldprioout);
@@ -1423,23 +1539,19 @@
 	cent_unit_quadresetout(0) <= ( wire_cent_unit0_quadresetout);
 	cent_unit_rxcrupowerdn <= ( wire_cent_unit0_rxcrupowerdown(5 DOWNTO 0));
 	cent_unit_rxibpowerdn <= ( wire_cent_unit0_rxibpowerdown(5 DOWNTO 0));
-	cent_unit_rxpcsdprioin <= ( "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & rx_pcsdprioout(799 DOWNTO 0));
+	cent_unit_rxpcsdprioin <= ( rx_pcsdprioout(1599 DOWNTO 0));
 	cent_unit_rxpcsdprioout <= ( wire_cent_unit0_rxpcsdprioout(1599 DOWNTO 0));
-	cent_unit_rxpmadprioin <= ( "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & rx_pmadprioout(599 DOWNTO 0));
+	cent_unit_rxpmadprioin <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & rx_pmadprioout(1199 DOWNTO 0));
 	cent_unit_rxpmadprioout <= ( wire_cent_unit0_rxpmadprioout(1799 DOWNTO 0));
-	cent_unit_tx_dprioin <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & tx_txdprioout(299 DOWNTO 0));
+	cent_unit_tx_dprioin <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & tx_txdprioout(599 DOWNTO 0));
 	cent_unit_tx_xgmdataout <= ( wire_cent_unit0_txdataout(31 DOWNTO 0));
 	cent_unit_txctrlout <= ( wire_cent_unit0_txctrlout);
 	cent_unit_txdetectrxpowerdn <= ( wire_cent_unit0_txdetectrxpowerdown(5 DOWNTO 0));
 	cent_unit_txdprioout <= ( wire_cent_unit0_txpcsdprioout(599 DOWNTO 0));
 	cent_unit_txobpowerdn <= ( wire_cent_unit0_txobpowerdown(5 DOWNTO 0));
-	cent_unit_txpmadprioin <= ( "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & tx_pmadprioout(599 DOWNTO 0));
+	cent_unit_txpmadprioin <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & tx_pmadprioout(1199 DOWNTO 0));
 	cent_unit_txpmadprioout <= ( wire_cent_unit0_txpmadprioout(1799 DOWNTO 0));
-	clk_div_cmudividerdprioin <= ( "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & wire_ch_clk_div1_dprioout & wire_ch_clk_div0_dprioout);
+	clk_div_cmudividerdprioin <= ( "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & wire_ch_clk_div3_dprioout & wire_ch_clk_div2_dprioout & wire_ch_clk_div1_dprioout & wire_ch_clk_div0_dprioout);
 	fixedclk_to_cmu <= ( reconfig_clk & reconfig_clk & reconfig_clk & reconfig_clk & reconfig_clk & reconfig_clk);
 	gxb_powerdown <= (OTHERS => '0');
 	nonusertocmu_out(0) <= ( wire_cal_blk0_nonusertocmu);
@@ -1447,9 +1559,9 @@
 	pll0_dprioin <= ( cent_unit_cmuplldprioout(1499 DOWNTO 1200));
 	pll0_dprioout <= ( wire_tx_pll0_dprioout);
 	pll0_out <= ( wire_tx_pll0_clk(3 DOWNTO 0));
-	pll_ch_dataout_wire <= ( wire_rx_cdr_pll1_dataout & wire_rx_cdr_pll0_dataout);
-	pll_ch_dprioout <= ( wire_rx_cdr_pll1_dprioout & wire_rx_cdr_pll0_dprioout);
-	pll_cmuplldprioout <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & pll0_dprioout(299 DOWNTO 0) & "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & pll_ch_dprioout(599 DOWNTO 0));
+	pll_ch_dataout_wire <= ( wire_rx_cdr_pll3_dataout & wire_rx_cdr_pll2_dataout & wire_rx_cdr_pll1_dataout & wire_rx_cdr_pll0_dataout);
+	pll_ch_dprioout <= ( wire_rx_cdr_pll3_dprioout & wire_rx_cdr_pll2_dprioout & wire_rx_cdr_pll1_dprioout & wire_rx_cdr_pll0_dprioout);
+	pll_cmuplldprioout <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & pll0_dprioout(299 DOWNTO 0) & pll_ch_dprioout(1199 DOWNTO 0));
 	pll_inclk_wire(0) <= ( pll_inclk);
 	pll_powerdown <= (OTHERS => '0');
 	pllpowerdn_in <= ( "0" & cent_unit_pllpowerdn(0));
@@ -1459,80 +1571,70 @@
 	reconfig_togxb_disable(0) <= reconfig_togxb(1);
 	reconfig_togxb_in(0) <= reconfig_togxb(0);
 	reconfig_togxb_load(0) <= reconfig_togxb(2);
-	rx_analogreset_in <= ( "0000" & "0" & "0");
+	rx_a1a2size <= (OTHERS => '0');
+	rx_analogreset_in <= ( "00" & "0" & "0" & "0" & "0");
 	rx_analogreset_out <= ( wire_cent_unit0_rxanalogresetout(5 DOWNTO 0));
-	rx_bistdone <= ( wire_receive_pcs1_bistdone & wire_receive_pcs0_bistdone);
-	rx_bisterr <= ( wire_receive_pcs1_bisterr & wire_receive_pcs0_bisterr);
-	rx_clkout <= ( rx_clkout_wire(1 DOWNTO 0));
-	rx_clkout_wire <= ( wire_receive_pcs1_clkout & wire_receive_pcs0_clkout);
-	rx_cruclk_in <= ( "000000000" & rx_pldcruclk_in(1) & "000000000" & rx_pldcruclk_in(0));
+	rx_bistdone <= ( wire_receive_pcs3_bistdone & wire_receive_pcs2_bistdone & wire_receive_pcs1_bistdone & wire_receive_pcs0_bistdone);
+	rx_bisterr <= ( wire_receive_pcs3_bisterr & wire_receive_pcs2_bisterr & wire_receive_pcs1_bisterr & wire_receive_pcs0_bisterr);
+	rx_clkout <= ( rx_clkout_wire(3 DOWNTO 0));
+	rx_clkout_wire <= ( wire_receive_pcs3_clkout & wire_receive_pcs2_clkout & wire_receive_pcs1_clkout & wire_receive_pcs0_clkout);
+	rx_cruclk_in <= ( "000000000" & rx_pldcruclk_in(3) & "000000000" & rx_pldcruclk_in(2) & "000000000" & rx_pldcruclk_in(1) & "000000000" & rx_pldcruclk_in(0));
 	rx_dataout <= ( rx_out_wire(31 DOWNTO 0));
-	rx_deserclock_in <= ( rx_pll_clkout(7 DOWNTO 0));
-	rx_digitalreset_in <= ( "00" & rx_digitalreset(1 DOWNTO 0));
+	rx_deserclock_in <= ( rx_pll_clkout(15 DOWNTO 0));
+	rx_digitalreset_in <= ( rx_digitalreset(3 DOWNTO 0));
 	rx_digitalreset_out <= ( wire_cent_unit0_rxdigitalresetout(3 DOWNTO 0));
 	rx_locktodata <= (OTHERS => '0');
-	rx_locktodata_wire <= ( wire_w_lg_w_lg_reconfig_togxb_busy424w503w & wire_w_lg_w_lg_reconfig_togxb_busy424w425w);
+	rx_locktodata_wire <= ( wire_w_lg_w_lg_reconfig_togxb_busy549w785w & wire_w_lg_w_lg_reconfig_togxb_busy549w707w & wire_w_lg_w_lg_reconfig_togxb_busy549w629w & wire_w_lg_w_lg_reconfig_togxb_busy549w550w);
 	rx_locktorefclk <= (OTHERS => '0');
-	rx_locktorefclk_wire <= ( wire_receive_pcs1_cdrctrllocktorefclkout & wire_receive_pcs0_cdrctrllocktorefclkout);
-	rx_out_wire <= ( wire_receive_pcs1_dataout(15 DOWNTO 0) & wire_receive_pcs0_dataout(15 DOWNTO 0));
-	rx_pcsdprioin_wire <= ( "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & cent_unit_rxpcsdprioout(799 DOWNTO 0));
-	rx_pcsdprioout <= ( "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & wire_receive_pcs1_dprioout & wire_receive_pcs0_dprioout);
+	rx_locktorefclk_wire <= ( wire_receive_pcs3_cdrctrllocktorefclkout & wire_receive_pcs2_cdrctrllocktorefclkout & wire_receive_pcs1_cdrctrllocktorefclkout & wire_receive_pcs0_cdrctrllocktorefclkout);
+	rx_out_wire <= ( wire_receive_pcs3_dataout(7 DOWNTO 0) & wire_receive_pcs2_dataout(7 DOWNTO 0) & wire_receive_pcs1_dataout(7 DOWNTO 0) & wire_receive_pcs0_dataout(7 DOWNTO 0));
+	rx_pcsdprioin_wire <= ( cent_unit_rxpcsdprioout(1599 DOWNTO 0));
+	rx_pcsdprioout <= ( wire_receive_pcs3_dprioout & wire_receive_pcs2_dprioout & wire_receive_pcs1_dprioout & wire_receive_pcs0_dprioout);
 	rx_phfifordenable <= (OTHERS => '1');
 	rx_phfiforeset <= (OTHERS => '0');
 	rx_phfifowrdisable <= (OTHERS => '0');
-	rx_pldcruclk_in <= ( pll_inclk & pll_inclk);
-	rx_pll_clkout <= ( wire_rx_cdr_pll1_clk & wire_rx_cdr_pll0_clk);
-	rx_pll_pfdrefclkout_wire <= ( wire_rx_cdr_pll1_pfdrefclkout & wire_rx_cdr_pll0_pfdrefclkout);
-	rx_plllocked_wire <= ( wire_rx_cdr_pll1_locked & wire_rx_cdr_pll0_locked);
-	rx_pma_analogtestbus <= ( "0000000000000000000000000" & wire_receive_pma1_analogtestbus(5 DOWNTO 2) & wire_receive_pma0_analogtestbus(5 DOWNTO 2) & "0");
-	rx_pma_clockout <= ( wire_receive_pma1_clockout & wire_receive_pma0_clockout);
-	rx_pma_dataout <= ( wire_receive_pma1_dataout & wire_receive_pma0_dataout);
-	rx_pma_locktorefout <= ( wire_receive_pma1_locktorefout & wire_receive_pma0_locktorefout);
-	rx_pma_recoverdataout_wire <= ( wire_receive_pma1_recoverdataout(19 DOWNTO 0) & wire_receive_pma0_recoverdataout(19 DOWNTO 0));
-	rx_pmadprioin_wire <= ( "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & cent_unit_rxpmadprioout(599 DOWNTO 0));
-	rx_pmadprioout <= ( "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & wire_receive_pma1_dprioout & wire_receive_pma0_dprioout);
+	rx_pldcruclk_in <= ( pll_inclk & pll_inclk & pll_inclk & pll_inclk);
+	rx_pll_clkout <= ( wire_rx_cdr_pll3_clk & wire_rx_cdr_pll2_clk & wire_rx_cdr_pll1_clk & wire_rx_cdr_pll0_clk);
+	rx_pll_pfdrefclkout_wire <= ( wire_rx_cdr_pll3_pfdrefclkout & wire_rx_cdr_pll2_pfdrefclkout & wire_rx_cdr_pll1_pfdrefclkout & wire_rx_cdr_pll0_pfdrefclkout);
+	rx_plllocked_wire <= ( wire_rx_cdr_pll3_locked & wire_rx_cdr_pll2_locked & wire_rx_cdr_pll1_locked & wire_rx_cdr_pll0_locked);
+	rx_pma_analogtestbus <= ( "000000000000000000000000000000000000000000000000000" & wire_receive_pma3_analogtestbus(5 DOWNTO 2) & wire_receive_pma2_analogtestbus(5 DOWNTO 2) & wire_receive_pma1_analogtestbus(5 DOWNTO 2) & wire_receive_pma0_analogtestbus(5 DOWNTO 2) & "0");
+	rx_pma_clockout <= ( wire_receive_pma3_clockout & wire_receive_pma2_clockout & wire_receive_pma1_clockout & wire_receive_pma0_clockout);
+	rx_pma_dataout <= ( wire_receive_pma3_dataout & wire_receive_pma2_dataout & wire_receive_pma1_dataout & wire_receive_pma0_dataout);
+	rx_pma_locktorefout <= ( wire_receive_pma3_locktorefout & wire_receive_pma2_locktorefout & wire_receive_pma1_locktorefout & wire_receive_pma0_locktorefout);
+	rx_pma_recoverdataout_wire <= ( wire_receive_pma3_recoverdataout(19 DOWNTO 0) & wire_receive_pma2_recoverdataout(19 DOWNTO 0) & wire_receive_pma1_recoverdataout(19 DOWNTO 0) & wire_receive_pma0_recoverdataout(19 DOWNTO 0));
+	rx_pmadprioin_wire <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & cent_unit_rxpmadprioout(1199 DOWNTO 0));
+	rx_pmadprioout <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & wire_receive_pma3_dprioout & wire_receive_pma2_dprioout & wire_receive_pma1_dprioout & wire_receive_pma0_dprioout);
 	rx_powerdown <= (OTHERS => '0');
-	rx_powerdown_in <= ( "0000" & rx_powerdown(1 DOWNTO 0));
+	rx_powerdown_in <= ( "00" & rx_powerdown(3 DOWNTO 0));
 	rx_prbscidenable <= (OTHERS => '0');
 	rx_rxcruresetout <= ( wire_cent_unit0_rxcruresetout(5 DOWNTO 0));
-	rx_signaldetect <= ( rx_signaldetectout_wire(1 DOWNTO 0));
-	rx_signaldetect_wire <= ( wire_receive_pma1_signaldetect & wire_receive_pma0_signaldetect);
-	rx_signaldetectout_wire <= ( wire_receive_pcs1_signaldetect & wire_receive_pcs0_signaldetect);
-	rxpll_dprioin <= ( "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & cent_unit_cmuplldprioout(599 DOWNTO 0));
+	rx_signaldetect <= ( rx_signaldetectout_wire(3 DOWNTO 0));
+	rx_signaldetect_wire <= ( wire_receive_pma3_signaldetect & wire_receive_pma2_signaldetect & wire_receive_pma1_signaldetect & wire_receive_pma0_signaldetect);
+	rx_signaldetectout_wire <= ( wire_receive_pcs3_signaldetect & wire_receive_pcs2_signaldetect & wire_receive_pcs1_signaldetect & wire_receive_pcs0_signaldetect);
+	rxpll_dprioin <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & cent_unit_cmuplldprioout(1199 DOWNTO 0));
 	tx_analogreset_out <= ( wire_cent_unit0_txanalogresetout(5 DOWNTO 0));
-	tx_clkout <= ( tx_core_clkout_wire(1 DOWNTO 0));
-	tx_clkout_int_wire <= ( wire_transmit_pcs1_clkout & wire_transmit_pcs0_clkout);
-	tx_core_clkout_wire <= ( tx_clkout_int_wire(0) & tx_clkout_int_wire(0));
-	tx_ctrlenable <= (OTHERS => '0');
+	tx_clkout <= ( tx_core_clkout_wire(3 DOWNTO 0));
+	tx_clkout_int_wire <= ( wire_transmit_pcs3_clkout & wire_transmit_pcs2_clkout & wire_transmit_pcs1_clkout & wire_transmit_pcs0_clkout);
+	tx_core_clkout_wire <= ( tx_clkout_int_wire(0) & tx_clkout_int_wire(0) & tx_clkout_int_wire(0) & tx_clkout_int_wire(0));
 	tx_datain <= (OTHERS => '0');
 	tx_datain_wire <= ( tx_datain(31 DOWNTO 0));
-	tx_dataout <= ( wire_transmit_pma1_dataout & wire_transmit_pma0_dataout);
-	tx_dataout_pcs_to_pma <= ( wire_transmit_pcs1_dataout & wire_transmit_pcs0_dataout);
-	tx_digitalreset_in <= ( "00" & tx_digitalreset(1 DOWNTO 0));
+	tx_dataout <= ( wire_transmit_pma3_dataout & wire_transmit_pma2_dataout & wire_transmit_pma1_dataout & wire_transmit_pma0_dataout);
+	tx_dataout_pcs_to_pma <= ( wire_transmit_pcs3_dataout & wire_transmit_pcs2_dataout & wire_transmit_pcs1_dataout & wire_transmit_pcs0_dataout);
+	tx_digitalreset_in <= ( tx_digitalreset(3 DOWNTO 0));
 	tx_digitalreset_out <= ( wire_cent_unit0_txdigitalresetout(3 DOWNTO 0));
-	tx_dprioin_wire <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & cent_unit_txdprioout(299 DOWNTO 0));
-	tx_forcedisp_wire <= ( "00" & "00");
+	tx_dprioin_wire <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & cent_unit_txdprioout(599 DOWNTO 0));
 	tx_invpolarity <= (OTHERS => '0');
-	tx_localrefclk <= ( wire_transmit_pma1_clockout & wire_transmit_pma0_clockout);
-	tx_parallelfdbkout <= ( wire_transmit_pcs1_parallelfdbkout & wire_transmit_pcs0_parallelfdbkout);
+	tx_localrefclk <= ( wire_transmit_pma3_clockout & wire_transmit_pma2_clockout & wire_transmit_pma1_clockout & wire_transmit_pma0_clockout);
 	tx_phfiforeset <= (OTHERS => '0');
-	tx_pmadprioin_wire <= ( "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & cent_unit_txpmadprioout(599 DOWNTO 0));
-	tx_pmadprioout <= ( "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
- & wire_transmit_pma1_dprioout & wire_transmit_pma0_dprioout);
-	tx_txdprioout <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & wire_transmit_pcs1_dprioout & wire_transmit_pcs0_dprioout);
-	txdetectrxout <= ( wire_transmit_pcs1_txdetectrx & wire_transmit_pcs0_txdetectrx);
+	tx_pmadprioin_wire <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & cent_unit_txpmadprioout(1199 DOWNTO 0));
+	tx_pmadprioout <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & wire_transmit_pma3_dprioout & wire_transmit_pma2_dprioout & wire_transmit_pma1_dprioout & wire_transmit_pma0_dprioout);
+	tx_txdprioout <= ( wire_transmit_pcs3_dprioout & wire_transmit_pcs2_dprioout & wire_transmit_pcs1_dprioout & wire_transmit_pcs0_dprioout);
+	txdetectrxout <= ( wire_transmit_pcs3_txdetectrx & wire_transmit_pcs2_txdetectrx & wire_transmit_pcs1_txdetectrx & wire_transmit_pcs0_txdetectrx);
 	w_cent_unit_dpriodisableout1w(0) <= ( wire_cent_unit0_dpriodisableout);
-	wire_w_rx_locktodata_range423w(0) <= rx_locktodata(0);
-	wire_w_rx_locktodata_range502w(0) <= rx_locktodata(1);
+	wire_w_rx_locktodata_range548w(0) <= rx_locktodata(0);
+	wire_w_rx_locktodata_range628w(0) <= rx_locktodata(1);
+	wire_w_rx_locktodata_range706w(0) <= rx_locktodata(2);
+	wire_w_rx_locktodata_range784w(0) <= rx_locktodata(3);
 	cal_blk0 :  arriaii_hssi_calibration_block
 	  PORT MAP ( 
 		clk => cal_blk_clk,
@@ -1543,9 +1645,9 @@
 	ch_clk_div0 :  arriaii_hssi_clock_divider
 	  GENERIC MAP (
 		channel_num => ((starting_channel_number + 0) MOD 4),
-		divide_by => 5,
+		divide_by => 4,
 		divider_type => "CHANNEL_REGULAR",
-		effective_data_rate => "2500 Mbps",
+		effective_data_rate => "1250 Mbps",
 		enable_dynamic_divider => "false",
 		enable_refclk_out => "false",
 		inclk_select => 0,
@@ -1573,9 +1675,9 @@
 	ch_clk_div1 :  arriaii_hssi_clock_divider
 	  GENERIC MAP (
 		channel_num => ((starting_channel_number + 1) MOD 4),
-		divide_by => 5,
+		divide_by => 4,
 		divider_type => "CHANNEL_REGULAR",
-		effective_data_rate => "2500 Mbps",
+		effective_data_rate => "1250 Mbps",
 		enable_dynamic_divider => "false",
 		enable_refclk_out => "false",
 		inclk_select => 0,
@@ -1600,9 +1702,69 @@
 		dprioout => wire_ch_clk_div1_dprioout,
 		quadreset => cent_unit_quadresetout(0)
 	  );
+	ch_clk_div2 :  arriaii_hssi_clock_divider
+	  GENERIC MAP (
+		channel_num => ((starting_channel_number + 2) MOD 4),
+		divide_by => 4,
+		divider_type => "CHANNEL_REGULAR",
+		effective_data_rate => "1250 Mbps",
+		enable_dynamic_divider => "false",
+		enable_refclk_out => "false",
+		inclk_select => 0,
+		logical_channel_address => (starting_channel_number + 2),
+		pre_divide_by => 1,
+		select_local_rate_switch_done => "false",
+		sim_analogfastrefclkout_phase_shift => 0,
+		sim_analogrefclkout_phase_shift => 0,
+		sim_coreclkout_phase_shift => 0,
+		sim_refclkout_phase_shift => 0,
+		use_coreclk_out_post_divider => "false",
+		use_refclk_post_divider => "false",
+		use_vco_bypass => "false"
+	  )
+	  PORT MAP ( 
+		analogfastrefclkout => wire_ch_clk_div2_analogfastrefclkout,
+		analogrefclkout => wire_ch_clk_div2_analogrefclkout,
+		analogrefclkpulse => wire_ch_clk_div2_analogrefclkpulse,
+		clk0in => pll0_out(3 DOWNTO 0),
+		dpriodisable => w_cent_unit_dpriodisableout1w(0),
+		dprioin => cent_unit_cmudividerdprioout(299 DOWNTO 200),
+		dprioout => wire_ch_clk_div2_dprioout,
+		quadreset => cent_unit_quadresetout(0)
+	  );
+	ch_clk_div3 :  arriaii_hssi_clock_divider
+	  GENERIC MAP (
+		channel_num => ((starting_channel_number + 3) MOD 4),
+		divide_by => 4,
+		divider_type => "CHANNEL_REGULAR",
+		effective_data_rate => "1250 Mbps",
+		enable_dynamic_divider => "false",
+		enable_refclk_out => "false",
+		inclk_select => 0,
+		logical_channel_address => (starting_channel_number + 3),
+		pre_divide_by => 1,
+		select_local_rate_switch_done => "false",
+		sim_analogfastrefclkout_phase_shift => 0,
+		sim_analogrefclkout_phase_shift => 0,
+		sim_coreclkout_phase_shift => 0,
+		sim_refclkout_phase_shift => 0,
+		use_coreclk_out_post_divider => "false",
+		use_refclk_post_divider => "false",
+		use_vco_bypass => "false"
+	  )
+	  PORT MAP ( 
+		analogfastrefclkout => wire_ch_clk_div3_analogfastrefclkout,
+		analogrefclkout => wire_ch_clk_div3_analogrefclkout,
+		analogrefclkpulse => wire_ch_clk_div3_analogrefclkpulse,
+		clk0in => pll0_out(3 DOWNTO 0),
+		dpriodisable => w_cent_unit_dpriodisableout1w(0),
+		dprioin => cent_unit_cmudividerdprioout(399 DOWNTO 300),
+		dprioout => wire_ch_clk_div3_dprioout,
+		quadreset => cent_unit_quadresetout(0)
+	  );
 	wire_cent_unit0_adet <= (OTHERS => '0');
 	wire_cent_unit0_cmudividerdprioin <= ( clk_div_cmudividerdprioin(599 DOWNTO 0));
-	wire_cent_unit0_fixedclk <= ( "0000" & fixedclk_to_cmu(1 DOWNTO 0));
+	wire_cent_unit0_fixedclk <= ( "00" & fixedclk_to_cmu(3 DOWNTO 0));
 	wire_cent_unit0_rdalign <= (OTHERS => '0');
 	wire_cent_unit0_refclkdividerdprioin <= (OTHERS => '0');
 	wire_cent_unit0_rxanalogreset <= ( "00" & rx_analogreset_in(3 DOWNTO 0));
@@ -1635,18 +1797,18 @@
 		portaddr => (((starting_channel_number + 0) / 128) + 1),
 		rx0_auto_spd_self_switch_enable => "false",
 		rx0_channel_bonding => "none",
-		rx0_clk1_mux_select => "local reference clock",
-		rx0_clk2_mux_select => "local reference clock",
+		rx0_clk1_mux_select => "recovered clock",
+		rx0_clk2_mux_select => "recovered clock",
 		rx0_ph_fifo_reg_mode => "false",
 		rx0_rd_clk_mux_select => "int clock",
-		rx0_recovered_clk_mux_select => "local reference clock",
+		rx0_recovered_clk_mux_select => "recovered clock",
 		rx0_reset_clock_output_during_digital_reset => "false",
-		rx0_use_double_data_mode => "true",
+		rx0_use_double_data_mode => "false",
 		tx0_auto_spd_self_switch_enable => "false",
 		tx0_channel_bonding => "none",
 		tx0_ph_fifo_reg_mode => "false",
 		tx0_rd_clk_mux_select => "local",
-		tx0_use_double_data_mode => "true",
+		tx0_use_double_data_mode => "false",
 		tx0_wr_clk_mux_select => "int_clk",
 		use_deskew_fifo => "false",
 		vcceh_voltage => "Auto"
@@ -1711,17 +1873,17 @@
 		bandwidth_type => "Auto",
 		channel_num => ((starting_channel_number + 0) MOD 4),
 		dprio_config_mode => "000000",
-		effective_data_rate => "2500 Mbps",
+		effective_data_rate => "1250 Mbps",
 		enable_dynamic_divider => "false",
 		fast_lock_control => "false",
 		inclk0_input_period => 8000,
 		input_clock_frequency => "125.0 MHz",
-		m => 10,
+		m => 5,
 		n => 1,
 		pfd_clk_select => 0,
 		pll_type => "RX CDR",
 		use_refclk_pin => "false",
-		vco_post_scale => 2
+		vco_post_scale => 4
 	  )
 	  PORT MAP ( 
 		areset => rx_rxcruresetout(0),
@@ -1743,17 +1905,17 @@
 		bandwidth_type => "Auto",
 		channel_num => ((starting_channel_number + 1) MOD 4),
 		dprio_config_mode => "000000",
-		effective_data_rate => "2500 Mbps",
+		effective_data_rate => "1250 Mbps",
 		enable_dynamic_divider => "false",
 		fast_lock_control => "false",
 		inclk0_input_period => 8000,
 		input_clock_frequency => "125.0 MHz",
-		m => 10,
+		m => 5,
 		n => 1,
 		pfd_clk_select => 0,
 		pll_type => "RX CDR",
 		use_refclk_pin => "false",
-		vco_post_scale => 2
+		vco_post_scale => 4
 	  )
 	  PORT MAP ( 
 		areset => rx_rxcruresetout(1),
@@ -1769,6 +1931,70 @@
 		pfdrefclkout => wire_rx_cdr_pll1_pfdrefclkout,
 		powerdown => cent_unit_rxcrupowerdn(1)
 	  );
+	wire_rx_cdr_pll2_inclk <= ( rx_cruclk_in(29 DOWNTO 20));
+	rx_cdr_pll2 :  arriaii_hssi_pll
+	  GENERIC MAP (
+		bandwidth_type => "Auto",
+		channel_num => ((starting_channel_number + 2) MOD 4),
+		dprio_config_mode => "000000",
+		effective_data_rate => "1250 Mbps",
+		enable_dynamic_divider => "false",
+		fast_lock_control => "false",
+		inclk0_input_period => 8000,
+		input_clock_frequency => "125.0 MHz",
+		m => 5,
+		n => 1,
+		pfd_clk_select => 0,
+		pll_type => "RX CDR",
+		use_refclk_pin => "false",
+		vco_post_scale => 4
+	  )
+	  PORT MAP ( 
+		areset => rx_rxcruresetout(2),
+		clk => wire_rx_cdr_pll2_clk,
+		datain => rx_pma_dataout(2),
+		dataout => wire_rx_cdr_pll2_dataout,
+		dpriodisable => w_cent_unit_dpriodisableout1w(0),
+		dprioin => rxpll_dprioin(899 DOWNTO 600),
+		dprioout => wire_rx_cdr_pll2_dprioout,
+		inclk => wire_rx_cdr_pll2_inclk,
+		locked => wire_rx_cdr_pll2_locked,
+		locktorefclk => rx_pma_locktorefout(2),
+		pfdrefclkout => wire_rx_cdr_pll2_pfdrefclkout,
+		powerdown => cent_unit_rxcrupowerdn(2)
+	  );
+	wire_rx_cdr_pll3_inclk <= ( rx_cruclk_in(39 DOWNTO 30));
+	rx_cdr_pll3 :  arriaii_hssi_pll
+	  GENERIC MAP (
+		bandwidth_type => "Auto",
+		channel_num => ((starting_channel_number + 3) MOD 4),
+		dprio_config_mode => "000000",
+		effective_data_rate => "1250 Mbps",
+		enable_dynamic_divider => "false",
+		fast_lock_control => "false",
+		inclk0_input_period => 8000,
+		input_clock_frequency => "125.0 MHz",
+		m => 5,
+		n => 1,
+		pfd_clk_select => 0,
+		pll_type => "RX CDR",
+		use_refclk_pin => "false",
+		vco_post_scale => 4
+	  )
+	  PORT MAP ( 
+		areset => rx_rxcruresetout(3),
+		clk => wire_rx_cdr_pll3_clk,
+		datain => rx_pma_dataout(3),
+		dataout => wire_rx_cdr_pll3_dataout,
+		dpriodisable => w_cent_unit_dpriodisableout1w(0),
+		dprioin => rxpll_dprioin(1199 DOWNTO 900),
+		dprioout => wire_rx_cdr_pll3_dprioout,
+		inclk => wire_rx_cdr_pll3_inclk,
+		locked => wire_rx_cdr_pll3_locked,
+		locktorefclk => rx_pma_locktorefout(3),
+		pfdrefclkout => wire_rx_cdr_pll3_pfdrefclkout,
+		powerdown => cent_unit_rxcrupowerdn(3)
+	  );
 	wire_tx_pll0_inclk <= ( pll0_clkin(9 DOWNTO 0));
 	tx_pll0 :  arriaii_hssi_pll
 	  GENERIC MAP (
@@ -1778,13 +2004,13 @@
 		inclk0_input_period => 8000,
 		input_clock_frequency => "125.0 MHz",
 		logical_tx_pll_number => 0,
-		m => 10,
+		m => 5,
 		n => 1,
 		pfd_clk_select => 0,
 		pfd_fb_select => "internal",
 		pll_type => "CMU",
 		use_refclk_pin => "false",
-		vco_post_scale => 2
+		vco_post_scale => 4
 	  )
 	  PORT MAP ( 
 		areset => pllreset_in(0),
@@ -1796,16 +2022,17 @@
 		locked => wire_tx_pll0_locked,
 		powerdown => pllpowerdn_in(0)
 	  );
-	wire_receive_pcs0_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy362w(0);
-	wire_w_lg_reconfig_togxb_busy362w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(0);
+	wire_receive_pcs0_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy487w(0);
+	wire_w_lg_reconfig_togxb_busy487w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(0);
+	wire_receive_pcs0_parallelfdbk <= (OTHERS => '0');
 	wire_receive_pcs0_pipepowerdown <= (OTHERS => '0');
 	wire_receive_pcs0_pipepowerstate <= (OTHERS => '0');
 	wire_receive_pcs0_rxfound <= (OTHERS => '0');
 	wire_receive_pcs0_xgmdatain <= (OTHERS => '0');
 	receive_pcs0 :  arriaii_hssi_rx_pcs
 	  GENERIC MAP (
-		align_pattern => "0101111100",
-		align_pattern_length => 10,
+		align_pattern => "0011000001000000",
+		align_pattern_length => 16,
 		align_to_deskew_pattern_pos_disp_only => "false",
 		allow_align_polarity_inversion => "false",
 		allow_pipe_polarity_inversion => "false",
@@ -1814,23 +2041,23 @@
 		auto_spd_self_switch_enable => "false",
 		bit_slip_enable => "false",
 		byte_order_double_data_mode_mask_enable => "false",
-		byte_order_mode => "9",
-		byte_order_pad_pattern => "000000000",
-		byte_order_pattern => "000000010",
+		byte_order_mode => "none",
+		byte_order_pad_pattern => "0",
+		byte_order_pattern => "0",
 		byte_order_pld_ctrl_enable => "false",
 		cdrctrl_bypass_ppm_detector_cycle => 1000,
 		cdrctrl_enable => "false",
 		cdrctrl_rxvalid_mask => "false",
 		channel_bonding => "none",
 		channel_number => ((starting_channel_number + 0) MOD 4),
-		channel_width => 16,
-		clk1_mux_select => "local reference clock",
-		clk2_mux_select => "local reference clock",
+		channel_width => 8,
+		clk1_mux_select => "recovered clock",
+		clk2_mux_select => "recovered clock",
 		core_clock_0ppm => "false",
 		datapath_low_latency_mode => "false",
 		datapath_protocol => "basic",
 		dec_8b_10b_compatibility_mode => "true",
-		dec_8b_10b_mode => "normal",
+		dec_8b_10b_mode => "none",
 		dec_8b_10b_polarity_inv_enable => "false",
 		deskew_pattern => "0",
 		disable_auto_idle_insertion => "false",
@@ -1843,7 +2070,7 @@
 		enable_deep_align => "false",
 		enable_deep_align_byte_swap => "false",
 		enable_self_test_mode => "true",
-		enable_true_complement_match_in_word_align => "true",
+		enable_true_complement_match_in_word_align => "false",
 		force_signal_detect_dig => "true",
 		hip_enable => "false",
 		infiniband_invalid_code => 0,
@@ -1862,7 +2089,7 @@
 		pipe_auto_speed_nego_enable => "false",
 		pipe_freq_scale_mode => "Frequency",
 		pma_done_count => 249950,
-		protocol_hint => "bist",
+		protocol_hint => "prbs",
 		rate_match_almost_empty_threshold => 11,
 		rate_match_almost_full_threshold => 13,
 		rate_match_back_to_back => "true",
@@ -1879,22 +2106,22 @@
 		rate_match_skip_set_based => "false",
 		rate_match_start_threshold => 7,
 		rd_clk_mux_select => "int clock",
-		recovered_clk_mux_select => "local reference clock",
-		run_length => 5,
+		recovered_clk_mux_select => "recovered clock",
+		run_length => 4,
 		run_length_enable => "true",
 		rx_detect_bypass => "false",
 		rx_phfifo_wait_cnt => 15,
 		rxstatus_error_report_mode => 1,
-		self_test_mode => "incremental",
+		self_test_mode => "prbs7",
 		use_alignment_state_machine => "true",
 		use_deserializer_double_data_mode => "false",
 		use_deskew_fifo => "false",
-		use_double_data_mode => "true",
-		use_parallel_loopback => "true",
+		use_double_data_mode => "false",
+		use_parallel_loopback => "false",
 		use_rising_edge_triggered_pattern_align => "false"
 	  )
 	  PORT MAP ( 
-		a1a2size => wire_gnd,
+		a1a2size => rx_a1a2size(0),
 		alignstatus => wire_gnd,
 		alignstatussync => wire_gnd,
 		bistdone => wire_receive_pcs0_bistdone,
@@ -1916,9 +2143,9 @@
 		fifordin => wire_gnd,
 		fiforesetrd => wire_gnd,
 		invpol => wire_gnd,
-		localrefclk => tx_localrefclk(0),
+		localrefclk => wire_gnd,
 		masterclk => wire_gnd,
-		parallelfdbk => tx_parallelfdbkout(19 DOWNTO 0),
+		parallelfdbk => wire_receive_pcs0_parallelfdbk,
 		phfifordenable => rx_phfifordenable(0),
 		phfiforeset => rx_phfiforeset(0),
 		phfifowrdisable => rx_phfifowrdisable(0),
@@ -1939,16 +2166,17 @@
 		xgmctrlin => wire_gnd,
 		xgmdatain => wire_receive_pcs0_xgmdatain
 	  );
-	wire_receive_pcs1_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy459w(0);
-	wire_w_lg_reconfig_togxb_busy459w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(1);
+	wire_receive_pcs1_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy586w(0);
+	wire_w_lg_reconfig_togxb_busy586w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(1);
+	wire_receive_pcs1_parallelfdbk <= (OTHERS => '0');
 	wire_receive_pcs1_pipepowerdown <= (OTHERS => '0');
 	wire_receive_pcs1_pipepowerstate <= (OTHERS => '0');
 	wire_receive_pcs1_rxfound <= (OTHERS => '0');
 	wire_receive_pcs1_xgmdatain <= (OTHERS => '0');
 	receive_pcs1 :  arriaii_hssi_rx_pcs
 	  GENERIC MAP (
-		align_pattern => "0101111100",
-		align_pattern_length => 10,
+		align_pattern => "0011000001000000",
+		align_pattern_length => 16,
 		align_to_deskew_pattern_pos_disp_only => "false",
 		allow_align_polarity_inversion => "false",
 		allow_pipe_polarity_inversion => "false",
@@ -1957,23 +2185,23 @@
 		auto_spd_self_switch_enable => "false",
 		bit_slip_enable => "false",
 		byte_order_double_data_mode_mask_enable => "false",
-		byte_order_mode => "9",
-		byte_order_pad_pattern => "000000000",
-		byte_order_pattern => "000000010",
+		byte_order_mode => "none",
+		byte_order_pad_pattern => "0",
+		byte_order_pattern => "0",
 		byte_order_pld_ctrl_enable => "false",
 		cdrctrl_bypass_ppm_detector_cycle => 1000,
 		cdrctrl_enable => "false",
 		cdrctrl_rxvalid_mask => "false",
 		channel_bonding => "none",
 		channel_number => ((starting_channel_number + 1) MOD 4),
-		channel_width => 16,
-		clk1_mux_select => "local reference clock",
-		clk2_mux_select => "local reference clock",
+		channel_width => 8,
+		clk1_mux_select => "recovered clock",
+		clk2_mux_select => "recovered clock",
 		core_clock_0ppm => "false",
 		datapath_low_latency_mode => "false",
 		datapath_protocol => "basic",
 		dec_8b_10b_compatibility_mode => "true",
-		dec_8b_10b_mode => "normal",
+		dec_8b_10b_mode => "none",
 		dec_8b_10b_polarity_inv_enable => "false",
 		deskew_pattern => "0",
 		disable_auto_idle_insertion => "false",
@@ -1986,7 +2214,7 @@
 		enable_deep_align => "false",
 		enable_deep_align_byte_swap => "false",
 		enable_self_test_mode => "true",
-		enable_true_complement_match_in_word_align => "true",
+		enable_true_complement_match_in_word_align => "false",
 		force_signal_detect_dig => "true",
 		hip_enable => "false",
 		infiniband_invalid_code => 0,
@@ -2005,7 +2233,7 @@
 		pipe_auto_speed_nego_enable => "false",
 		pipe_freq_scale_mode => "Frequency",
 		pma_done_count => 249950,
-		protocol_hint => "bist",
+		protocol_hint => "prbs",
 		rate_match_almost_empty_threshold => 11,
 		rate_match_almost_full_threshold => 13,
 		rate_match_back_to_back => "true",
@@ -2022,22 +2250,22 @@
 		rate_match_skip_set_based => "false",
 		rate_match_start_threshold => 7,
 		rd_clk_mux_select => "int clock",
-		recovered_clk_mux_select => "local reference clock",
-		run_length => 5,
+		recovered_clk_mux_select => "recovered clock",
+		run_length => 4,
 		run_length_enable => "true",
 		rx_detect_bypass => "false",
 		rx_phfifo_wait_cnt => 15,
 		rxstatus_error_report_mode => 1,
-		self_test_mode => "incremental",
+		self_test_mode => "prbs7",
 		use_alignment_state_machine => "true",
 		use_deserializer_double_data_mode => "false",
 		use_deskew_fifo => "false",
-		use_double_data_mode => "true",
-		use_parallel_loopback => "true",
+		use_double_data_mode => "false",
+		use_parallel_loopback => "false",
 		use_rising_edge_triggered_pattern_align => "false"
 	  )
 	  PORT MAP ( 
-		a1a2size => wire_gnd,
+		a1a2size => rx_a1a2size(1),
 		alignstatus => wire_gnd,
 		alignstatussync => wire_gnd,
 		bistdone => wire_receive_pcs1_bistdone,
@@ -2059,9 +2287,9 @@
 		fifordin => wire_gnd,
 		fiforesetrd => wire_gnd,
 		invpol => wire_gnd,
-		localrefclk => tx_localrefclk(1),
+		localrefclk => wire_gnd,
 		masterclk => wire_gnd,
-		parallelfdbk => tx_parallelfdbkout(39 DOWNTO 20),
+		parallelfdbk => wire_receive_pcs1_parallelfdbk,
 		phfifordenable => rx_phfifordenable(1),
 		phfiforeset => rx_phfiforeset(1),
 		phfifowrdisable => rx_phfifowrdisable(1),
@@ -2082,6 +2310,294 @@
 		xgmctrlin => wire_gnd,
 		xgmdatain => wire_receive_pcs1_xgmdatain
 	  );
+	wire_receive_pcs2_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy664w(0);
+	wire_w_lg_reconfig_togxb_busy664w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(2);
+	wire_receive_pcs2_parallelfdbk <= (OTHERS => '0');
+	wire_receive_pcs2_pipepowerdown <= (OTHERS => '0');
+	wire_receive_pcs2_pipepowerstate <= (OTHERS => '0');
+	wire_receive_pcs2_rxfound <= (OTHERS => '0');
+	wire_receive_pcs2_xgmdatain <= (OTHERS => '0');
+	receive_pcs2 :  arriaii_hssi_rx_pcs
+	  GENERIC MAP (
+		align_pattern => "0011000001000000",
+		align_pattern_length => 16,
+		align_to_deskew_pattern_pos_disp_only => "false",
+		allow_align_polarity_inversion => "false",
+		allow_pipe_polarity_inversion => "false",
+		auto_spd_deassert_ph_fifo_rst_count => 8,
+		auto_spd_phystatus_notify_count => 14,
+		auto_spd_self_switch_enable => "false",
+		bit_slip_enable => "false",
+		byte_order_double_data_mode_mask_enable => "false",
+		byte_order_mode => "none",
+		byte_order_pad_pattern => "0",
+		byte_order_pattern => "0",
+		byte_order_pld_ctrl_enable => "false",
+		cdrctrl_bypass_ppm_detector_cycle => 1000,
+		cdrctrl_enable => "false",
+		cdrctrl_rxvalid_mask => "false",
+		channel_bonding => "none",
+		channel_number => ((starting_channel_number + 2) MOD 4),
+		channel_width => 8,
+		clk1_mux_select => "recovered clock",
+		clk2_mux_select => "recovered clock",
+		core_clock_0ppm => "false",
+		datapath_low_latency_mode => "false",
+		datapath_protocol => "basic",
+		dec_8b_10b_compatibility_mode => "true",
+		dec_8b_10b_mode => "none",
+		dec_8b_10b_polarity_inv_enable => "false",
+		deskew_pattern => "0",
+		disable_auto_idle_insertion => "false",
+		disable_running_disp_in_word_align => "false",
+		disallow_kchar_after_pattern_ordered_set => "false",
+		dprio_config_mode => "000001",
+		elec_idle_infer_enable => "false",
+		elec_idle_num_com_detect => 0,
+		enable_bit_reversal => "false",
+		enable_deep_align => "false",
+		enable_deep_align_byte_swap => "false",
+		enable_self_test_mode => "true",
+		enable_true_complement_match_in_word_align => "false",
+		force_signal_detect_dig => "true",
+		hip_enable => "false",
+		infiniband_invalid_code => 0,
+		insert_pad_on_underflow => "false",
+		logical_channel_address => (starting_channel_number + 2),
+		num_align_code_groups_in_ordered_set => 0,
+		num_align_cons_good_data => 1,
+		num_align_cons_pat => 1,
+		num_align_loss_sync_error => 1,
+		ph_fifo_low_latency_enable => "true",
+		ph_fifo_reg_mode => "false",
+		ph_fifo_xn_mapping0 => "none",
+		ph_fifo_xn_mapping1 => "none",
+		ph_fifo_xn_mapping2 => "none",
+		ph_fifo_xn_select => 1,
+		pipe_auto_speed_nego_enable => "false",
+		pipe_freq_scale_mode => "Frequency",
+		pma_done_count => 249950,
+		protocol_hint => "prbs",
+		rate_match_almost_empty_threshold => 11,
+		rate_match_almost_full_threshold => 13,
+		rate_match_back_to_back => "true",
+		rate_match_delete_threshold => 13,
+		rate_match_empty_threshold => 5,
+		rate_match_fifo_mode => "false",
+		rate_match_full_threshold => 20,
+		rate_match_insert_threshold => 11,
+		rate_match_ordered_set_based => "false",
+		rate_match_pattern1 => "0",
+		rate_match_pattern2 => "0",
+		rate_match_pattern_size => 10,
+		rate_match_reset_enable => "false",
+		rate_match_skip_set_based => "false",
+		rate_match_start_threshold => 7,
+		rd_clk_mux_select => "int clock",
+		recovered_clk_mux_select => "recovered clock",
+		run_length => 4,
+		run_length_enable => "true",
+		rx_detect_bypass => "false",
+		rx_phfifo_wait_cnt => 15,
+		rxstatus_error_report_mode => 1,
+		self_test_mode => "prbs7",
+		use_alignment_state_machine => "true",
+		use_deserializer_double_data_mode => "false",
+		use_deskew_fifo => "false",
+		use_double_data_mode => "false",
+		use_parallel_loopback => "false",
+		use_rising_edge_triggered_pattern_align => "false"
+	  )
+	  PORT MAP ( 
+		a1a2size => rx_a1a2size(2),
+		alignstatus => wire_gnd,
+		alignstatussync => wire_gnd,
+		bistdone => wire_receive_pcs2_bistdone,
+		bisterr => wire_receive_pcs2_bisterr,
+		cdrctrllocktorefcl => wire_receive_pcs2_cdrctrllocktorefcl,
+		cdrctrllocktorefclkout => wire_receive_pcs2_cdrctrllocktorefclkout,
+		clkout => wire_receive_pcs2_clkout,
+		datain => rx_pma_recoverdataout_wire(59 DOWNTO 40),
+		dataout => wire_receive_pcs2_dataout,
+		digitalreset => rx_digitalreset_out(2),
+		disablefifordin => wire_gnd,
+		disablefifowrin => wire_gnd,
+		dpriodisable => w_cent_unit_dpriodisableout1w(0),
+		dprioin => rx_pcsdprioin_wire(1199 DOWNTO 800),
+		dprioout => wire_receive_pcs2_dprioout,
+		enabledeskew => wire_gnd,
+		enabyteord => wire_gnd,
+		enapatternalign => wire_gnd,
+		fifordin => wire_gnd,
+		fiforesetrd => wire_gnd,
+		invpol => wire_gnd,
+		localrefclk => wire_gnd,
+		masterclk => wire_gnd,
+		parallelfdbk => wire_receive_pcs2_parallelfdbk,
+		phfifordenable => rx_phfifordenable(2),
+		phfiforeset => rx_phfiforeset(2),
+		phfifowrdisable => rx_phfifowrdisable(2),
+		pipepowerdown => wire_receive_pcs2_pipepowerdown,
+		pipepowerstate => wire_receive_pcs2_pipepowerstate,
+		prbscidenable => rx_prbscidenable(2),
+		quadreset => cent_unit_quadresetout(0),
+		recoveredclk => rx_pma_clockout(2),
+		revbitorderwa => wire_gnd,
+		revbyteorderwa => wire_gnd,
+		rmfifordena => wire_gnd,
+		rmfiforeset => wire_gnd,
+		rmfifowrena => wire_gnd,
+		rxdetectvalid => wire_gnd,
+		rxfound => wire_receive_pcs2_rxfound,
+		signaldetect => wire_receive_pcs2_signaldetect,
+		signaldetected => rx_signaldetect_wire(2),
+		xgmctrlin => wire_gnd,
+		xgmdatain => wire_receive_pcs2_xgmdatain
+	  );
+	wire_receive_pcs3_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy742w(0);
+	wire_w_lg_reconfig_togxb_busy742w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(3);
+	wire_receive_pcs3_parallelfdbk <= (OTHERS => '0');
+	wire_receive_pcs3_pipepowerdown <= (OTHERS => '0');
+	wire_receive_pcs3_pipepowerstate <= (OTHERS => '0');
+	wire_receive_pcs3_rxfound <= (OTHERS => '0');
+	wire_receive_pcs3_xgmdatain <= (OTHERS => '0');
+	receive_pcs3 :  arriaii_hssi_rx_pcs
+	  GENERIC MAP (
+		align_pattern => "0011000001000000",
+		align_pattern_length => 16,
+		align_to_deskew_pattern_pos_disp_only => "false",
+		allow_align_polarity_inversion => "false",
+		allow_pipe_polarity_inversion => "false",
+		auto_spd_deassert_ph_fifo_rst_count => 8,
+		auto_spd_phystatus_notify_count => 14,
+		auto_spd_self_switch_enable => "false",
+		bit_slip_enable => "false",
+		byte_order_double_data_mode_mask_enable => "false",
+		byte_order_mode => "none",
+		byte_order_pad_pattern => "0",
+		byte_order_pattern => "0",
+		byte_order_pld_ctrl_enable => "false",
+		cdrctrl_bypass_ppm_detector_cycle => 1000,
+		cdrctrl_enable => "false",
+		cdrctrl_rxvalid_mask => "false",
+		channel_bonding => "none",
+		channel_number => ((starting_channel_number + 3) MOD 4),
+		channel_width => 8,
+		clk1_mux_select => "recovered clock",
+		clk2_mux_select => "recovered clock",
+		core_clock_0ppm => "false",
+		datapath_low_latency_mode => "false",
+		datapath_protocol => "basic",
+		dec_8b_10b_compatibility_mode => "true",
+		dec_8b_10b_mode => "none",
+		dec_8b_10b_polarity_inv_enable => "false",
+		deskew_pattern => "0",
+		disable_auto_idle_insertion => "false",
+		disable_running_disp_in_word_align => "false",
+		disallow_kchar_after_pattern_ordered_set => "false",
+		dprio_config_mode => "000001",
+		elec_idle_infer_enable => "false",
+		elec_idle_num_com_detect => 0,
+		enable_bit_reversal => "false",
+		enable_deep_align => "false",
+		enable_deep_align_byte_swap => "false",
+		enable_self_test_mode => "true",
+		enable_true_complement_match_in_word_align => "false",
+		force_signal_detect_dig => "true",
+		hip_enable => "false",
+		infiniband_invalid_code => 0,
+		insert_pad_on_underflow => "false",
+		logical_channel_address => (starting_channel_number + 3),
+		num_align_code_groups_in_ordered_set => 0,
+		num_align_cons_good_data => 1,
+		num_align_cons_pat => 1,
+		num_align_loss_sync_error => 1,
+		ph_fifo_low_latency_enable => "true",
+		ph_fifo_reg_mode => "false",
+		ph_fifo_xn_mapping0 => "none",
+		ph_fifo_xn_mapping1 => "none",
+		ph_fifo_xn_mapping2 => "none",
+		ph_fifo_xn_select => 1,
+		pipe_auto_speed_nego_enable => "false",
+		pipe_freq_scale_mode => "Frequency",
+		pma_done_count => 249950,
+		protocol_hint => "prbs",
+		rate_match_almost_empty_threshold => 11,
+		rate_match_almost_full_threshold => 13,
+		rate_match_back_to_back => "true",
+		rate_match_delete_threshold => 13,
+		rate_match_empty_threshold => 5,
+		rate_match_fifo_mode => "false",
+		rate_match_full_threshold => 20,
+		rate_match_insert_threshold => 11,
+		rate_match_ordered_set_based => "false",
+		rate_match_pattern1 => "0",
+		rate_match_pattern2 => "0",
+		rate_match_pattern_size => 10,
+		rate_match_reset_enable => "false",
+		rate_match_skip_set_based => "false",
+		rate_match_start_threshold => 7,
+		rd_clk_mux_select => "int clock",
+		recovered_clk_mux_select => "recovered clock",
+		run_length => 4,
+		run_length_enable => "true",
+		rx_detect_bypass => "false",
+		rx_phfifo_wait_cnt => 15,
+		rxstatus_error_report_mode => 1,
+		self_test_mode => "prbs7",
+		use_alignment_state_machine => "true",
+		use_deserializer_double_data_mode => "false",
+		use_deskew_fifo => "false",
+		use_double_data_mode => "false",
+		use_parallel_loopback => "false",
+		use_rising_edge_triggered_pattern_align => "false"
+	  )
+	  PORT MAP ( 
+		a1a2size => rx_a1a2size(3),
+		alignstatus => wire_gnd,
+		alignstatussync => wire_gnd,
+		bistdone => wire_receive_pcs3_bistdone,
+		bisterr => wire_receive_pcs3_bisterr,
+		cdrctrllocktorefcl => wire_receive_pcs3_cdrctrllocktorefcl,
+		cdrctrllocktorefclkout => wire_receive_pcs3_cdrctrllocktorefclkout,
+		clkout => wire_receive_pcs3_clkout,
+		datain => rx_pma_recoverdataout_wire(79 DOWNTO 60),
+		dataout => wire_receive_pcs3_dataout,
+		digitalreset => rx_digitalreset_out(3),
+		disablefifordin => wire_gnd,
+		disablefifowrin => wire_gnd,
+		dpriodisable => w_cent_unit_dpriodisableout1w(0),
+		dprioin => rx_pcsdprioin_wire(1599 DOWNTO 1200),
+		dprioout => wire_receive_pcs3_dprioout,
+		enabledeskew => wire_gnd,
+		enabyteord => wire_gnd,
+		enapatternalign => wire_gnd,
+		fifordin => wire_gnd,
+		fiforesetrd => wire_gnd,
+		invpol => wire_gnd,
+		localrefclk => wire_gnd,
+		masterclk => wire_gnd,
+		parallelfdbk => wire_receive_pcs3_parallelfdbk,
+		phfifordenable => rx_phfifordenable(3),
+		phfiforeset => rx_phfiforeset(3),
+		phfifowrdisable => rx_phfifowrdisable(3),
+		pipepowerdown => wire_receive_pcs3_pipepowerdown,
+		pipepowerstate => wire_receive_pcs3_pipepowerstate,
+		prbscidenable => rx_prbscidenable(3),
+		quadreset => cent_unit_quadresetout(0),
+		recoveredclk => rx_pma_clockout(3),
+		revbitorderwa => wire_gnd,
+		revbyteorderwa => wire_gnd,
+		rmfifordena => wire_gnd,
+		rmfiforeset => wire_gnd,
+		rmfifowrena => wire_gnd,
+		rxdetectvalid => wire_gnd,
+		rxfound => wire_receive_pcs3_rxfound,
+		signaldetect => wire_receive_pcs3_signaldetect,
+		signaldetected => rx_signaldetect_wire(3),
+		xgmctrlin => wire_gnd,
+		xgmdatain => wire_receive_pcs3_xgmdatain
+	  );
 	wire_receive_pma0_testbussel <= "0110";
 	receive_pma0 :  arriaii_hssi_rx_pma
 	  GENERIC MAP (
@@ -2090,7 +2606,7 @@
 		channel_number => ((starting_channel_number + 0) MOD 4),
 		channel_type => "auto",
 		common_mode => "0.82V",
-		deserialization_factor => 10,
+		deserialization_factor => 8,
 		dprio_config_mode => "000001",
 		enable_ltd => "false",
 		enable_ltr => "false",
@@ -2106,7 +2622,7 @@
 		low_speed_test_select => 0,
 		offset_cancellation => 1,
 		ppmselect => 32,
-		protocol_hint => "bist",
+		protocol_hint => "prbs",
 		send_direct_reverse_serial_loopback => "None",
 		signal_detect_hysteresis => 2,
 		signal_detect_hysteresis_valid_threshold => 1,
@@ -2150,7 +2666,7 @@
 		channel_number => ((starting_channel_number + 1) MOD 4),
 		channel_type => "auto",
 		common_mode => "0.82V",
-		deserialization_factor => 10,
+		deserialization_factor => 8,
 		dprio_config_mode => "000001",
 		enable_ltd => "false",
 		enable_ltr => "false",
@@ -2166,7 +2682,7 @@
 		low_speed_test_select => 0,
 		offset_cancellation => 1,
 		ppmselect => 32,
-		protocol_hint => "bist",
+		protocol_hint => "prbs",
 		send_direct_reverse_serial_loopback => "None",
 		signal_detect_hysteresis => 2,
 		signal_detect_hysteresis_valid_threshold => 1,
@@ -2202,10 +2718,131 @@
 		signaldetect => wire_receive_pma1_signaldetect,
 		testbussel => wire_receive_pma1_testbussel
 	  );
-	wire_transmit_pcs0_ctrlenable <= ( "00" & tx_ctrlenable(1 DOWNTO 0));
-	wire_transmit_pcs0_datain <= ( "000000000000000000000000" & tx_datain_wire(15 DOWNTO 0));
+	wire_receive_pma2_testbussel <= "0110";
+	receive_pma2 :  arriaii_hssi_rx_pma
+	  GENERIC MAP (
+		adaptive_equalization_mode => "none",
+		allow_serial_loopback => "false",
+		channel_number => ((starting_channel_number + 2) MOD 4),
+		channel_type => "auto",
+		common_mode => "0.82V",
+		deserialization_factor => 8,
+		dprio_config_mode => "000001",
+		enable_ltd => "false",
+		enable_ltr => "false",
+		eq_dc_gain => 0,
+		eqa_ctrl => 0,
+		eqb_ctrl => 0,
+		eqc_ctrl => 0,
+		eqd_ctrl => 0,
+		eqv_ctrl => 1,
+		eyemon_bandwidth => 0,
+		force_signal_detect => "true",
+		logical_channel_address => (starting_channel_number + 2),
+		low_speed_test_select => 0,
+		offset_cancellation => 1,
+		ppmselect => 32,
+		protocol_hint => "prbs",
+		send_direct_reverse_serial_loopback => "None",
+		signal_detect_hysteresis => 2,
+		signal_detect_hysteresis_valid_threshold => 1,
+		signal_detect_loss_threshold => 1,
+		termination => "OCT 100 Ohms",
+		use_deser_double_data_width => "false",
+		use_external_termination => "false",
+		use_pma_direct => "false"
+	  )
+	  PORT MAP ( 
+		analogtestbus => wire_receive_pma2_analogtestbus,
+		clockout => wire_receive_pma2_clockout,
+		datain => rx_datain(2),
+		dataout => wire_receive_pma2_dataout,
+		deserclock => rx_deserclock_in(11 DOWNTO 8),
+		dpriodisable => w_cent_unit_dpriodisableout1w(0),
+		dprioin => rx_pmadprioin_wire(899 DOWNTO 600),
+		dprioout => wire_receive_pma2_dprioout,
+		freqlock => wire_gnd,
+		ignorephslck => wire_gnd,
+		locktodata => rx_locktodata_wire(2),
+		locktoref => rx_locktorefclk_wire(2),
+		locktorefout => wire_receive_pma2_locktorefout,
+		offsetcancellationen => wire_gnd,
+		plllocked => rx_plllocked_wire(2),
+		powerdn => cent_unit_rxibpowerdn(2),
+		ppmdetectrefclk => rx_pll_pfdrefclkout_wire(2),
+		recoverdatain => pll_ch_dataout_wire(5 DOWNTO 4),
+		recoverdataout => wire_receive_pma2_recoverdataout,
+		rxpmareset => rx_analogreset_out(2),
+		seriallpbken => wire_gnd,
+		seriallpbkin => wire_gnd,
+		signaldetect => wire_receive_pma2_signaldetect,
+		testbussel => wire_receive_pma2_testbussel
+	  );
+	wire_receive_pma3_testbussel <= "0110";
+	receive_pma3 :  arriaii_hssi_rx_pma
+	  GENERIC MAP (
+		adaptive_equalization_mode => "none",
+		allow_serial_loopback => "false",
+		channel_number => ((starting_channel_number + 3) MOD 4),
+		channel_type => "auto",
+		common_mode => "0.82V",
+		deserialization_factor => 8,
+		dprio_config_mode => "000001",
+		enable_ltd => "false",
+		enable_ltr => "false",
+		eq_dc_gain => 0,
+		eqa_ctrl => 0,
+		eqb_ctrl => 0,
+		eqc_ctrl => 0,
+		eqd_ctrl => 0,
+		eqv_ctrl => 1,
+		eyemon_bandwidth => 0,
+		force_signal_detect => "true",
+		logical_channel_address => (starting_channel_number + 3),
+		low_speed_test_select => 0,
+		offset_cancellation => 1,
+		ppmselect => 32,
+		protocol_hint => "prbs",
+		send_direct_reverse_serial_loopback => "None",
+		signal_detect_hysteresis => 2,
+		signal_detect_hysteresis_valid_threshold => 1,
+		signal_detect_loss_threshold => 1,
+		termination => "OCT 100 Ohms",
+		use_deser_double_data_width => "false",
+		use_external_termination => "false",
+		use_pma_direct => "false"
+	  )
+	  PORT MAP ( 
+		analogtestbus => wire_receive_pma3_analogtestbus,
+		clockout => wire_receive_pma3_clockout,
+		datain => rx_datain(3),
+		dataout => wire_receive_pma3_dataout,
+		deserclock => rx_deserclock_in(15 DOWNTO 12),
+		dpriodisable => w_cent_unit_dpriodisableout1w(0),
+		dprioin => rx_pmadprioin_wire(1199 DOWNTO 900),
+		dprioout => wire_receive_pma3_dprioout,
+		freqlock => wire_gnd,
+		ignorephslck => wire_gnd,
+		locktodata => rx_locktodata_wire(3),
+		locktoref => rx_locktorefclk_wire(3),
+		locktorefout => wire_receive_pma3_locktorefout,
+		offsetcancellationen => wire_gnd,
+		plllocked => rx_plllocked_wire(3),
+		powerdn => cent_unit_rxibpowerdn(3),
+		ppmdetectrefclk => rx_pll_pfdrefclkout_wire(3),
+		recoverdatain => pll_ch_dataout_wire(7 DOWNTO 6),
+		recoverdataout => wire_receive_pma3_recoverdataout,
+		rxpmareset => rx_analogreset_out(3),
+		seriallpbken => wire_gnd,
+		seriallpbkin => wire_gnd,
+		signaldetect => wire_receive_pma3_signaldetect,
+		testbussel => wire_receive_pma3_testbussel
+	  );
+	wire_transmit_pcs0_ctrlenable <= ( "000" & "0");
+	wire_transmit_pcs0_datain <= ( "00000000000000000000000000000000" & tx_datain_wire(7 DOWNTO 0));
 	wire_transmit_pcs0_datainfull <= (OTHERS => '0');
-	wire_transmit_pcs0_forcedisp <= ( "00" & tx_forcedisp_wire(1 DOWNTO 0));
+	wire_transmit_pcs0_dispval <= ( "000" & "0");
+	wire_transmit_pcs0_forcedisp <= ( "000" & "0");
 	wire_transmit_pcs0_powerdn <= (OTHERS => '0');
 	wire_transmit_pcs0_revparallelfdbk <= (OTHERS => '0');
 	transmit_pcs0 :  arriaii_hssi_tx_pcs
@@ -2215,7 +2852,7 @@
 		bitslip_enable => "false",
 		channel_bonding => "none",
 		channel_number => ((starting_channel_number + 0) MOD 4),
-		channel_width => 16,
+		channel_width => 8,
 		core_clock_0ppm => "false",
 		datapath_low_latency_mode => "false",
 		datapath_protocol => "basic",
@@ -2229,7 +2866,7 @@
 		enable_self_test_mode => "true",
 		enable_symbol_swap => "false",
 		enc_8b_10b_compatibility_mode => "true",
-		enc_8b_10b_mode => "normal",
+		enc_8b_10b_mode => "none",
 		force_echar => "false",
 		force_kchar => "false",
 		hip_enable => "false",
@@ -2242,10 +2879,10 @@
 		pipe_auto_speed_nego_enable => "false",
 		pipe_freq_scale_mode => "Frequency",
 		prbs_cid_pattern => "false",
-		protocol_hint => "bist",
+		protocol_hint => "prbs",
 		refclk_select => "local",
-		self_test_mode => "incremental",
-		use_double_data_mode => "true",
+		self_test_mode => "prbs7",
+		use_double_data_mode => "false",
 		use_serializer_double_data_mode => "false",
 		wr_clk_mux_select => "int_clk"
 	  )
@@ -2257,6 +2894,7 @@
 		dataout => wire_transmit_pcs0_dataout,
 		detectrxloop => wire_gnd,
 		digitalreset => tx_digitalreset_out(0),
+		dispval => wire_transmit_pcs0_dispval,
 		dpriodisable => w_cent_unit_dpriodisableout1w(0),
 		dprioin => tx_dprioin_wire(149 DOWNTO 0),
 		dprioout => wire_transmit_pcs0_dprioout,
@@ -2266,7 +2904,6 @@
 		forceelecidleout => wire_transmit_pcs0_forceelecidleout,
 		invpol => tx_invpolarity(0),
 		localrefclk => tx_localrefclk(0),
-		parallelfdbkout => wire_transmit_pcs0_parallelfdbkout,
 		phfiforddisable => wire_gnd,
 		phfiforeset => tx_phfiforeset(0),
 		phfifowrenable => wire_vcc,
@@ -2278,10 +2915,11 @@
 		xgmctrl => cent_unit_txctrlout(0),
 		xgmdatain => cent_unit_tx_xgmdataout(7 DOWNTO 0)
 	  );
-	wire_transmit_pcs1_ctrlenable <= ( "00" & tx_ctrlenable(3 DOWNTO 2));
-	wire_transmit_pcs1_datain <= ( "000000000000000000000000" & tx_datain_wire(31 DOWNTO 16));
+	wire_transmit_pcs1_ctrlenable <= ( "000" & "0");
+	wire_transmit_pcs1_datain <= ( "00000000000000000000000000000000" & tx_datain_wire(15 DOWNTO 8));
 	wire_transmit_pcs1_datainfull <= (OTHERS => '0');
-	wire_transmit_pcs1_forcedisp <= ( "00" & tx_forcedisp_wire(3 DOWNTO 2));
+	wire_transmit_pcs1_dispval <= ( "000" & "0");
+	wire_transmit_pcs1_forcedisp <= ( "000" & "0");
 	wire_transmit_pcs1_powerdn <= (OTHERS => '0');
 	wire_transmit_pcs1_revparallelfdbk <= (OTHERS => '0');
 	transmit_pcs1 :  arriaii_hssi_tx_pcs
@@ -2291,7 +2929,7 @@
 		bitslip_enable => "false",
 		channel_bonding => "none",
 		channel_number => ((starting_channel_number + 1) MOD 4),
-		channel_width => 16,
+		channel_width => 8,
 		core_clock_0ppm => "false",
 		datapath_low_latency_mode => "false",
 		datapath_protocol => "basic",
@@ -2305,7 +2943,7 @@
 		enable_self_test_mode => "true",
 		enable_symbol_swap => "false",
 		enc_8b_10b_compatibility_mode => "true",
-		enc_8b_10b_mode => "normal",
+		enc_8b_10b_mode => "none",
 		force_echar => "false",
 		force_kchar => "false",
 		hip_enable => "false",
@@ -2318,10 +2956,10 @@
 		pipe_auto_speed_nego_enable => "false",
 		pipe_freq_scale_mode => "Frequency",
 		prbs_cid_pattern => "false",
-		protocol_hint => "bist",
+		protocol_hint => "prbs",
 		refclk_select => "local",
-		self_test_mode => "incremental",
-		use_double_data_mode => "true",
+		self_test_mode => "prbs7",
+		use_double_data_mode => "false",
 		use_serializer_double_data_mode => "false",
 		wr_clk_mux_select => "int_clk"
 	  )
@@ -2333,6 +2971,7 @@
 		dataout => wire_transmit_pcs1_dataout,
 		detectrxloop => wire_gnd,
 		digitalreset => tx_digitalreset_out(1),
+		dispval => wire_transmit_pcs1_dispval,
 		dpriodisable => w_cent_unit_dpriodisableout1w(0),
 		dprioin => tx_dprioin_wire(299 DOWNTO 150),
 		dprioout => wire_transmit_pcs1_dprioout,
@@ -2342,7 +2981,6 @@
 		forceelecidleout => wire_transmit_pcs1_forceelecidleout,
 		invpol => tx_invpolarity(1),
 		localrefclk => tx_localrefclk(1),
-		parallelfdbkout => wire_transmit_pcs1_parallelfdbkout,
 		phfiforddisable => wire_gnd,
 		phfiforeset => tx_phfiforeset(1),
 		phfifowrenable => wire_vcc,
@@ -2353,6 +2991,160 @@
 		txdetectrx => wire_transmit_pcs1_txdetectrx,
 		xgmctrl => cent_unit_txctrlout(1),
 		xgmdatain => cent_unit_tx_xgmdataout(15 DOWNTO 8)
+	  );
+	wire_transmit_pcs2_ctrlenable <= ( "000" & "0");
+	wire_transmit_pcs2_datain <= ( "00000000000000000000000000000000" & tx_datain_wire(23 DOWNTO 16));
+	wire_transmit_pcs2_datainfull <= (OTHERS => '0');
+	wire_transmit_pcs2_dispval <= ( "000" & "0");
+	wire_transmit_pcs2_forcedisp <= ( "000" & "0");
+	wire_transmit_pcs2_powerdn <= (OTHERS => '0');
+	wire_transmit_pcs2_revparallelfdbk <= (OTHERS => '0');
+	transmit_pcs2 :  arriaii_hssi_tx_pcs
+	  GENERIC MAP (
+		allow_polarity_inversion => "false",
+		auto_spd_self_switch_enable => "false",
+		bitslip_enable => "false",
+		channel_bonding => "none",
+		channel_number => ((starting_channel_number + 2) MOD 4),
+		channel_width => 8,
+		core_clock_0ppm => "false",
+		datapath_low_latency_mode => "false",
+		datapath_protocol => "basic",
+		disable_ph_low_latency_mode => "false",
+		disparity_mode => "none",
+		dprio_config_mode => "000001",
+		elec_idle_delay => 3,
+		enable_bit_reversal => "false",
+		enable_idle_selection => "false",
+		enable_reverse_parallel_loopback => "false",
+		enable_self_test_mode => "true",
+		enable_symbol_swap => "false",
+		enc_8b_10b_compatibility_mode => "true",
+		enc_8b_10b_mode => "none",
+		force_echar => "false",
+		force_kchar => "false",
+		hip_enable => "false",
+		logical_channel_address => (starting_channel_number + 2),
+		ph_fifo_reg_mode => "false",
+		ph_fifo_xn_mapping0 => "none",
+		ph_fifo_xn_mapping1 => "none",
+		ph_fifo_xn_mapping2 => "none",
+		ph_fifo_xn_select => 1,
+		pipe_auto_speed_nego_enable => "false",
+		pipe_freq_scale_mode => "Frequency",
+		prbs_cid_pattern => "false",
+		protocol_hint => "prbs",
+		refclk_select => "local",
+		self_test_mode => "prbs7",
+		use_double_data_mode => "false",
+		use_serializer_double_data_mode => "false",
+		wr_clk_mux_select => "int_clk"
+	  )
+	  PORT MAP ( 
+		clkout => wire_transmit_pcs2_clkout,
+		ctrlenable => wire_transmit_pcs2_ctrlenable,
+		datain => wire_transmit_pcs2_datain,
+		datainfull => wire_transmit_pcs2_datainfull,
+		dataout => wire_transmit_pcs2_dataout,
+		detectrxloop => wire_gnd,
+		digitalreset => tx_digitalreset_out(2),
+		dispval => wire_transmit_pcs2_dispval,
+		dpriodisable => w_cent_unit_dpriodisableout1w(0),
+		dprioin => tx_dprioin_wire(449 DOWNTO 300),
+		dprioout => wire_transmit_pcs2_dprioout,
+		enrevparallellpbk => wire_gnd,
+		forcedisp => wire_transmit_pcs2_forcedisp,
+		forcedispcompliance => wire_gnd,
+		forceelecidleout => wire_transmit_pcs2_forceelecidleout,
+		invpol => tx_invpolarity(2),
+		localrefclk => tx_localrefclk(2),
+		phfiforddisable => wire_gnd,
+		phfiforeset => tx_phfiforeset(2),
+		phfifowrenable => wire_vcc,
+		pipestatetransdone => wire_gnd,
+		powerdn => wire_transmit_pcs2_powerdn,
+		quadreset => cent_unit_quadresetout(0),
+		revparallelfdbk => wire_transmit_pcs2_revparallelfdbk,
+		txdetectrx => wire_transmit_pcs2_txdetectrx,
+		xgmctrl => cent_unit_txctrlout(2),
+		xgmdatain => cent_unit_tx_xgmdataout(23 DOWNTO 16)
+	  );
+	wire_transmit_pcs3_ctrlenable <= ( "000" & "0");
+	wire_transmit_pcs3_datain <= ( "00000000000000000000000000000000" & tx_datain_wire(31 DOWNTO 24));
+	wire_transmit_pcs3_datainfull <= (OTHERS => '0');
+	wire_transmit_pcs3_dispval <= ( "000" & "0");
+	wire_transmit_pcs3_forcedisp <= ( "000" & "0");
+	wire_transmit_pcs3_powerdn <= (OTHERS => '0');
+	wire_transmit_pcs3_revparallelfdbk <= (OTHERS => '0');
+	transmit_pcs3 :  arriaii_hssi_tx_pcs
+	  GENERIC MAP (
+		allow_polarity_inversion => "false",
+		auto_spd_self_switch_enable => "false",
+		bitslip_enable => "false",
+		channel_bonding => "none",
+		channel_number => ((starting_channel_number + 3) MOD 4),
+		channel_width => 8,
+		core_clock_0ppm => "false",
+		datapath_low_latency_mode => "false",
+		datapath_protocol => "basic",
+		disable_ph_low_latency_mode => "false",
+		disparity_mode => "none",
+		dprio_config_mode => "000001",
+		elec_idle_delay => 3,
+		enable_bit_reversal => "false",
+		enable_idle_selection => "false",
+		enable_reverse_parallel_loopback => "false",
+		enable_self_test_mode => "true",
+		enable_symbol_swap => "false",
+		enc_8b_10b_compatibility_mode => "true",
+		enc_8b_10b_mode => "none",
+		force_echar => "false",
+		force_kchar => "false",
+		hip_enable => "false",
+		logical_channel_address => (starting_channel_number + 3),
+		ph_fifo_reg_mode => "false",
+		ph_fifo_xn_mapping0 => "none",
+		ph_fifo_xn_mapping1 => "none",
+		ph_fifo_xn_mapping2 => "none",
+		ph_fifo_xn_select => 1,
+		pipe_auto_speed_nego_enable => "false",
+		pipe_freq_scale_mode => "Frequency",
+		prbs_cid_pattern => "false",
+		protocol_hint => "prbs",
+		refclk_select => "local",
+		self_test_mode => "prbs7",
+		use_double_data_mode => "false",
+		use_serializer_double_data_mode => "false",
+		wr_clk_mux_select => "int_clk"
+	  )
+	  PORT MAP ( 
+		clkout => wire_transmit_pcs3_clkout,
+		ctrlenable => wire_transmit_pcs3_ctrlenable,
+		datain => wire_transmit_pcs3_datain,
+		datainfull => wire_transmit_pcs3_datainfull,
+		dataout => wire_transmit_pcs3_dataout,
+		detectrxloop => wire_gnd,
+		digitalreset => tx_digitalreset_out(3),
+		dispval => wire_transmit_pcs3_dispval,
+		dpriodisable => w_cent_unit_dpriodisableout1w(0),
+		dprioin => tx_dprioin_wire(599 DOWNTO 450),
+		dprioout => wire_transmit_pcs3_dprioout,
+		enrevparallellpbk => wire_gnd,
+		forcedisp => wire_transmit_pcs3_forcedisp,
+		forcedispcompliance => wire_gnd,
+		forceelecidleout => wire_transmit_pcs3_forceelecidleout,
+		invpol => tx_invpolarity(3),
+		localrefclk => tx_localrefclk(3),
+		phfiforddisable => wire_gnd,
+		phfiforeset => tx_phfiforeset(3),
+		phfifowrenable => wire_vcc,
+		pipestatetransdone => wire_gnd,
+		powerdn => wire_transmit_pcs3_powerdn,
+		quadreset => cent_unit_quadresetout(0),
+		revparallelfdbk => wire_transmit_pcs3_revparallelfdbk,
+		txdetectrx => wire_transmit_pcs3_txdetectrx,
+		xgmctrl => cent_unit_txctrlout(3),
+		xgmdatain => cent_unit_tx_xgmdataout(31 DOWNTO 24)
 	  );
 	wire_transmit_pma0_datain <= ( "00000000000000000000000000000000000000000000" & tx_dataout_pcs_to_pma(19 DOWNTO 0));
 	wire_transmit_pma0_fastrefclk1in <= (OTHERS => '0');
@@ -2373,7 +3165,7 @@
 		dprio_config_mode => "000001",
 		enable_reverse_serial_loopback => "false",
 		logical_channel_address => (starting_channel_number + 0),
-		logical_protocol_hint_0 => "bist",
+		logical_protocol_hint_0 => "prbs",
 		low_speed_test_select => 0,
 		physical_clkin0_mapping => "x1",
 		preemp_pretap => 0,
@@ -2381,9 +3173,9 @@
 		preemp_tap_1 => 0,
 		preemp_tap_2 => 0,
 		preemp_tap_2_inv => "false",
-		protocol_hint => "bist",
+		protocol_hint => "prbs",
 		rx_detect => 0,
-		serialization_factor => 10,
+		serialization_factor => 8,
 		slew_rate => "off",
 		termination => "OCT 100 Ohms",
 		use_external_termination => "false",
@@ -2436,7 +3228,7 @@
 		dprio_config_mode => "000001",
 		enable_reverse_serial_loopback => "false",
 		logical_channel_address => (starting_channel_number + 1),
-		logical_protocol_hint_0 => "bist",
+		logical_protocol_hint_0 => "prbs",
 		low_speed_test_select => 0,
 		physical_clkin0_mapping => "x1",
 		preemp_pretap => 0,
@@ -2444,9 +3236,9 @@
 		preemp_tap_1 => 0,
 		preemp_tap_2 => 0,
 		preemp_tap_2_inv => "false",
-		protocol_hint => "bist",
+		protocol_hint => "prbs",
 		rx_detect => 0,
-		serialization_factor => 10,
+		serialization_factor => 8,
 		slew_rate => "off",
 		termination => "OCT 100 Ohms",
 		use_external_termination => "false",
@@ -2480,6 +3272,132 @@
 		rxdetecten => txdetectrxout(1),
 		txpmareset => tx_analogreset_out(1)
 	  );
+	wire_transmit_pma2_datain <= ( "00000000000000000000000000000000000000000000" & tx_dataout_pcs_to_pma(59 DOWNTO 40));
+	wire_transmit_pma2_fastrefclk1in <= (OTHERS => '0');
+	wire_transmit_pma2_fastrefclk2in <= (OTHERS => '0');
+	wire_transmit_pma2_fastrefclk4in <= (OTHERS => '0');
+	wire_transmit_pma2_refclk0in <= ( analogrefclkout(5 DOWNTO 4));
+	wire_transmit_pma2_refclk1in <= (OTHERS => '0');
+	wire_transmit_pma2_refclk2in <= (OTHERS => '0');
+	wire_transmit_pma2_refclk4in <= (OTHERS => '0');
+	transmit_pma2 :  arriaii_hssi_tx_pma
+	  GENERIC MAP (
+		analog_power => "1.5V",
+		channel_number => ((starting_channel_number + 2) MOD 4),
+		channel_type => "auto",
+		clkin_select => 0,
+		clkmux_delay => "false",
+		common_mode => "0.65V",
+		dprio_config_mode => "000001",
+		enable_reverse_serial_loopback => "false",
+		logical_channel_address => (starting_channel_number + 2),
+		logical_protocol_hint_0 => "prbs",
+		low_speed_test_select => 0,
+		physical_clkin0_mapping => "x1",
+		preemp_pretap => 0,
+		preemp_pretap_inv => "false",
+		preemp_tap_1 => 0,
+		preemp_tap_2 => 0,
+		preemp_tap_2_inv => "false",
+		protocol_hint => "prbs",
+		rx_detect => 0,
+		serialization_factor => 8,
+		slew_rate => "off",
+		termination => "OCT 100 Ohms",
+		use_external_termination => "false",
+		use_pma_direct => "false",
+		use_ser_double_data_mode => "false",
+		vod_selection => 4
+	  )
+	  PORT MAP ( 
+		clockout => wire_transmit_pma2_clockout,
+		datain => wire_transmit_pma2_datain,
+		dataout => wire_transmit_pma2_dataout,
+		detectrxpowerdown => cent_unit_txdetectrxpowerdn(2),
+		dpriodisable => w_cent_unit_dpriodisableout1w(0),
+		dprioin => tx_pmadprioin_wire(899 DOWNTO 600),
+		dprioout => wire_transmit_pma2_dprioout,
+		fastrefclk0in => analogfastrefclkout(5 DOWNTO 4),
+		fastrefclk1in => wire_transmit_pma2_fastrefclk1in,
+		fastrefclk2in => wire_transmit_pma2_fastrefclk2in,
+		fastrefclk4in => wire_transmit_pma2_fastrefclk4in,
+		forceelecidle => wire_gnd,
+		powerdn => cent_unit_txobpowerdn(2),
+		refclk0in => wire_transmit_pma2_refclk0in,
+		refclk0inpulse => analogrefclkpulse(2),
+		refclk1in => wire_transmit_pma2_refclk1in,
+		refclk1inpulse => wire_gnd,
+		refclk2in => wire_transmit_pma2_refclk2in,
+		refclk2inpulse => wire_gnd,
+		refclk4in => wire_transmit_pma2_refclk4in,
+		refclk4inpulse => wire_gnd,
+		revserialfdbk => wire_gnd,
+		rxdetecten => txdetectrxout(2),
+		txpmareset => tx_analogreset_out(2)
+	  );
+	wire_transmit_pma3_datain <= ( "00000000000000000000000000000000000000000000" & tx_dataout_pcs_to_pma(79 DOWNTO 60));
+	wire_transmit_pma3_fastrefclk1in <= (OTHERS => '0');
+	wire_transmit_pma3_fastrefclk2in <= (OTHERS => '0');
+	wire_transmit_pma3_fastrefclk4in <= (OTHERS => '0');
+	wire_transmit_pma3_refclk0in <= ( analogrefclkout(7 DOWNTO 6));
+	wire_transmit_pma3_refclk1in <= (OTHERS => '0');
+	wire_transmit_pma3_refclk2in <= (OTHERS => '0');
+	wire_transmit_pma3_refclk4in <= (OTHERS => '0');
+	transmit_pma3 :  arriaii_hssi_tx_pma
+	  GENERIC MAP (
+		analog_power => "1.5V",
+		channel_number => ((starting_channel_number + 3) MOD 4),
+		channel_type => "auto",
+		clkin_select => 0,
+		clkmux_delay => "false",
+		common_mode => "0.65V",
+		dprio_config_mode => "000001",
+		enable_reverse_serial_loopback => "false",
+		logical_channel_address => (starting_channel_number + 3),
+		logical_protocol_hint_0 => "prbs",
+		low_speed_test_select => 0,
+		physical_clkin0_mapping => "x1",
+		preemp_pretap => 0,
+		preemp_pretap_inv => "false",
+		preemp_tap_1 => 0,
+		preemp_tap_2 => 0,
+		preemp_tap_2_inv => "false",
+		protocol_hint => "prbs",
+		rx_detect => 0,
+		serialization_factor => 8,
+		slew_rate => "off",
+		termination => "OCT 100 Ohms",
+		use_external_termination => "false",
+		use_pma_direct => "false",
+		use_ser_double_data_mode => "false",
+		vod_selection => 4
+	  )
+	  PORT MAP ( 
+		clockout => wire_transmit_pma3_clockout,
+		datain => wire_transmit_pma3_datain,
+		dataout => wire_transmit_pma3_dataout,
+		detectrxpowerdown => cent_unit_txdetectrxpowerdn(3),
+		dpriodisable => w_cent_unit_dpriodisableout1w(0),
+		dprioin => tx_pmadprioin_wire(1199 DOWNTO 900),
+		dprioout => wire_transmit_pma3_dprioout,
+		fastrefclk0in => analogfastrefclkout(7 DOWNTO 6),
+		fastrefclk1in => wire_transmit_pma3_fastrefclk1in,
+		fastrefclk2in => wire_transmit_pma3_fastrefclk2in,
+		fastrefclk4in => wire_transmit_pma3_fastrefclk4in,
+		forceelecidle => wire_gnd,
+		powerdn => cent_unit_txobpowerdn(3),
+		refclk0in => wire_transmit_pma3_refclk0in,
+		refclk0inpulse => analogrefclkpulse(3),
+		refclk1in => wire_transmit_pma3_refclk1in,
+		refclk1inpulse => wire_gnd,
+		refclk2in => wire_transmit_pma3_refclk2in,
+		refclk2inpulse => wire_gnd,
+		refclk4in => wire_transmit_pma3_refclk4in,
+		refclk4inpulse => wire_gnd,
+		revserialfdbk => wire_gnd,
+		rxdetecten => txdetectrxout(3),
+		txpmareset => tx_analogreset_out(3)
+	  );
 
  END RTL; --trans_loop_alt4gxb
 --VALID FILE
@@ -2499,16 +3417,16 @@ ENTITY trans_loop IS
 		pll_inclk		: IN STD_LOGIC ;
 		reconfig_clk		: IN STD_LOGIC ;
 		reconfig_togxb		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
-		rx_datain		: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-		rx_digitalreset		: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-		tx_digitalreset		: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
+		rx_datain		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
+		rx_digitalreset		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
+		tx_digitalreset		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 		reconfig_fromgxb		: OUT STD_LOGIC_VECTOR (16 DOWNTO 0);
-		rx_bistdone		: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-		rx_bisterr		: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-		rx_clkout		: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-		rx_signaldetect		: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-		tx_clkout		: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-		tx_dataout		: OUT STD_LOGIC_VECTOR (1 DOWNTO 0)
+		rx_bistdone		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+		rx_bisterr		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+		rx_clkout		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+		rx_signaldetect		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+		tx_clkout		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+		tx_dataout		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0)
 	);
 END trans_loop;
 
@@ -2520,16 +3438,16 @@ ARCHITECTURE RTL OF trans_loop IS
 	ATTRIBUTE clearbox_macroname: string;
 	ATTRIBUTE clearbox_macroname OF RTL: ARCHITECTURE IS "alt4gxb";
 	ATTRIBUTE clearbox_defparam: string;
-	ATTRIBUTE clearbox_defparam OF RTL: ARCHITECTURE IS "effective_data_rate=2500 Mbps;enable_lc_tx_pll=false;enable_pll_inclk_alt_drive_rx_cru=true;enable_pll_inclk_drive_rx_cru=true;equalizer_ctrl_a_setting=0;equalizer_ctrl_b_setting=0;equalizer_ctrl_c_setting=0;equalizer_ctrl_d_setting=0;equalizer_ctrl_v_setting=1;equalizer_dcgain_setting=0;gen_reconfig_pll=false;gxb_analog_power=AUTO;gx_channel_type=AUTO;input_clock_frequency=125.0 MHz;intended_device_family=Arria II GX;intended_device_speed_grade=5;intended_device_variant=ANY;loopback_mode=none;lpm_hint=CBX_MODULE_PREFIX=trans_loop;lpm_type=alt4gxb;number_of_channels=2;operation_mode=duplex;pll_control_width=1;pll_pfd_fb_mode=internal;preemphasis_ctrl_1stposttap_setting=0;preemphasis_ctrl_2ndposttap_inv_setting=false;preemphasis_ctrl_2ndposttap_setting=0;preemphasis_ctrl_pretap_inv_setting=false;preemphasis_ctrl_pretap_setting=0;protocol=bist;receiver_termination=oct_100_ohms;reconfig_dprio_mode=0;rx_8b_10b_mode=normal;rx_align_loss_sync_error_num=1;rx_align_pattern=0101111100;rx_align_pattern_length=10;rx_allow_align_polarity_inversion=false;rx_allow_pipe_polarity_inversion=false;rx_bitslip_enable=false;rx_byte_ordering_mode=9;rx_byte_order_pad_pattern=000000000;rx_byte_order_pattern=000000010;rx_channel_width=16;rx_common_mode=0.82v;rx_cru_bandwidth_type=Auto;rx_cru_inclock0_period=8000;rx_datapath_low_latency_mode=false;rx_datapath_protocol=basic;rx_data_rate=2500;rx_data_rate_remainder=0;rx_digitalreset_port_width=2;rx_enable_bit_reversal=false;" & 
-	                                                    "rx_enable_deep_align_byte_swap=false;rx_enable_lock_to_data_sig=false;rx_enable_lock_to_refclk_sig=false;rx_enable_self_test_mode=true;rx_flip_rx_out=false;rx_force_signal_detect=true;rx_num_align_cons_good_data=1;rx_num_align_cons_pat=1;rx_phfiforegmode=false;rx_ppmselect=32;rx_rate_match_fifo_mode=none;rx_run_length=5;rx_run_length_enable=true;rx_self_test_mode=incremental;rx_signal_detect_threshold=2;rx_use_align_state_machine=true;rx_use_clkout=true;rx_use_coreclk=false;rx_use_deserializer_double_data_mode=false;rx_use_deskew_fifo=false;rx_use_double_data_mode=true;transmitter_termination=oct_100_ohms;tx_8b_10b_mode=normal;tx_allow_polarity_inversion=false;tx_analog_power=1.5v;tx_channel_width=16;tx_clkout_width=2;tx_common_mode=0.65v;tx_datapath_low_latency_mode=false;tx_data_rate=2500;tx_data_rate_remainder=0;tx_digitalreset_port_width=2;tx_enable_bit_reversal=false;tx_enable_self_test_mode=true;tx_flip_tx_in=false;tx_force_disparity_mode=false;tx_pll_bandwidth_type=Auto;tx_pll_inclk0_period=8000;tx_pll_type=CMU;tx_self_test_mode=incremental;tx_slew_rate=off;tx_transmit_protocol=basic;tx_use_coreclk=false;tx_use_double_data_mode=true;tx_use_serializer_double_data_mode=false;use_calibration_block=true;vod_ctrl_setting=4;gxb_powerdown_width=1;number_of_quads=1;reconfig_calibration=true;reconfig_fromgxb_port_width=17;reconfig_togxb_port_width=4;rx_byte_order_pld_ctrl_enable=false;rx_cru_m_divider=10;rx_cru_n_divider=1;rx_cru_vco_post_scale_divider=2;rx_dwidth_factor=2;rx_signal_detect_loss_threshold=1;" & 
-	                                                    "rx_signal_detect_valid_threshold=1;rx_use_external_termination=false;rx_word_aligner_num_byte=1;tx_dwidth_factor=2;tx_pll_clock_post_divider=1;tx_pll_m_divider=10;tx_pll_n_divider=1;tx_pll_vco_post_scale_divider=2;tx_use_external_termination=false;";
-	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (1 DOWNTO 0);
-	SIGNAL sub_wire1	: STD_LOGIC_VECTOR (1 DOWNTO 0);
+	ATTRIBUTE clearbox_defparam OF RTL: ARCHITECTURE IS "effective_data_rate=1250 Mbps;enable_lc_tx_pll=false;enable_pll_inclk_alt_drive_rx_cru=true;enable_pll_inclk_drive_rx_cru=true;equalizer_ctrl_a_setting=0;equalizer_ctrl_b_setting=0;equalizer_ctrl_c_setting=0;equalizer_ctrl_d_setting=0;equalizer_ctrl_v_setting=1;equalizer_dcgain_setting=0;gen_reconfig_pll=false;gxb_analog_power=AUTO;gx_channel_type=AUTO;input_clock_frequency=125.0 MHz;intended_device_family=Arria II GX;intended_device_speed_grade=5;intended_device_variant=ANY;loopback_mode=none;lpm_hint=CBX_MODULE_PREFIX=trans_loop;lpm_type=alt4gxb;number_of_channels=4;operation_mode=duplex;pll_control_width=1;pll_pfd_fb_mode=internal;preemphasis_ctrl_1stposttap_setting=0;preemphasis_ctrl_2ndposttap_inv_setting=false;preemphasis_ctrl_2ndposttap_setting=0;preemphasis_ctrl_pretap_inv_setting=false;preemphasis_ctrl_pretap_setting=0;protocol=prbs;receiver_termination=oct_100_ohms;reconfig_dprio_mode=0;rx_8b_10b_mode=none;rx_align_pattern=0011000001000000;rx_align_pattern_length=16;rx_allow_align_polarity_inversion=false;rx_allow_pipe_polarity_inversion=false;rx_bitslip_enable=false;rx_byte_ordering_mode=NONE;rx_channel_width=8;rx_common_mode=0.82v;rx_cru_bandwidth_type=Auto;rx_cru_inclock0_period=8000;rx_datapath_low_latency_mode=false;rx_datapath_protocol=basic;rx_data_rate=1250;rx_data_rate_remainder=0;rx_digitalreset_port_width=4;rx_enable_bit_reversal=false;rx_enable_deep_align_byte_swap=false;rx_enable_lock_to_data_sig=false;rx_enable_lock_to_refclk_sig=false;" & 
+	                                                    "rx_enable_self_test_mode=true;rx_flip_rx_out=false;rx_force_signal_detect=true;rx_phfiforegmode=false;rx_ppmselect=32;rx_rate_match_fifo_mode=none;rx_run_length=4;rx_run_length_enable=true;rx_self_test_mode=prbs7;rx_signal_detect_threshold=2;rx_use_align_state_machine=false;rx_use_clkout=true;rx_use_coreclk=false;rx_use_deserializer_double_data_mode=false;rx_use_deskew_fifo=false;rx_use_double_data_mode=false;rx_use_rising_edge_triggered_pattern_align=true;transmitter_termination=oct_100_ohms;tx_8b_10b_mode=none;tx_allow_polarity_inversion=false;tx_analog_power=1.5v;tx_channel_width=8;tx_clkout_width=4;tx_common_mode=0.65v;tx_datapath_low_latency_mode=false;tx_data_rate=1250;tx_data_rate_remainder=0;tx_digitalreset_port_width=4;tx_enable_bit_reversal=false;tx_enable_self_test_mode=true;tx_flip_tx_in=false;tx_force_disparity_mode=false;tx_pll_bandwidth_type=Auto;tx_pll_inclk0_period=8000;tx_pll_type=CMU;tx_self_test_mode=prbs7;tx_slew_rate=off;tx_transmit_protocol=basic;tx_use_coreclk=false;tx_use_double_data_mode=false;tx_use_serializer_double_data_mode=false;use_calibration_block=true;vod_ctrl_setting=4;gxb_powerdown_width=1;number_of_quads=1;reconfig_calibration=true;reconfig_fromgxb_port_width=17;reconfig_togxb_port_width=4;rx_cru_m_divider=5;rx_cru_n_divider=1;rx_cru_vco_post_scale_divider=4;rx_dwidth_factor=1;rx_signal_detect_loss_threshold=1;rx_signal_detect_valid_threshold=1;rx_use_external_termination=false;rx_word_aligner_num_byte=1;tx_dwidth_factor=1;tx_pll_clock_post_divider=1;" & 
+	                                                    "tx_pll_m_divider=5;tx_pll_n_divider=1;tx_pll_vco_post_scale_divider=4;tx_use_external_termination=false;";
+	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (3 DOWNTO 0);
+	SIGNAL sub_wire1	: STD_LOGIC_VECTOR (3 DOWNTO 0);
 	SIGNAL sub_wire2	: STD_LOGIC_VECTOR (16 DOWNTO 0);
-	SIGNAL sub_wire3	: STD_LOGIC_VECTOR (1 DOWNTO 0);
-	SIGNAL sub_wire4	: STD_LOGIC_VECTOR (1 DOWNTO 0);
-	SIGNAL sub_wire5	: STD_LOGIC_VECTOR (1 DOWNTO 0);
-	SIGNAL sub_wire6	: STD_LOGIC_VECTOR (1 DOWNTO 0);
+	SIGNAL sub_wire3	: STD_LOGIC_VECTOR (3 DOWNTO 0);
+	SIGNAL sub_wire4	: STD_LOGIC_VECTOR (3 DOWNTO 0);
+	SIGNAL sub_wire5	: STD_LOGIC_VECTOR (3 DOWNTO 0);
+	SIGNAL sub_wire6	: STD_LOGIC_VECTOR (3 DOWNTO 0);
 
 
 
@@ -2540,29 +3458,29 @@ ARCHITECTURE RTL OF trans_loop IS
 	PORT (
 			pll_inclk	: IN STD_LOGIC ;
 			reconfig_togxb	: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
-			rx_bisterr	: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-			rx_signaldetect	: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-			tx_digitalreset	: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
+			rx_bisterr	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+			rx_signaldetect	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+			tx_digitalreset	: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 			cal_blk_clk	: IN STD_LOGIC ;
 			reconfig_fromgxb	: OUT STD_LOGIC_VECTOR (16 DOWNTO 0);
-			rx_bistdone	: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-			tx_clkout	: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
-			tx_dataout	: OUT STD_LOGIC_VECTOR (1 DOWNTO 0);
+			rx_bistdone	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+			tx_clkout	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+			tx_dataout	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
 			reconfig_clk	: IN STD_LOGIC ;
-			rx_datain	: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-			rx_digitalreset	: IN STD_LOGIC_VECTOR (1 DOWNTO 0);
-			rx_clkout	: OUT STD_LOGIC_VECTOR (1 DOWNTO 0)
+			rx_datain	: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
+			rx_digitalreset	: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
+			rx_clkout	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0)
 	);
 	END COMPONENT;
 
 BEGIN
-	rx_bisterr    <= sub_wire0(1 DOWNTO 0);
-	rx_signaldetect    <= sub_wire1(1 DOWNTO 0);
+	rx_bisterr    <= sub_wire0(3 DOWNTO 0);
+	rx_signaldetect    <= sub_wire1(3 DOWNTO 0);
 	reconfig_fromgxb    <= sub_wire2(16 DOWNTO 0);
-	rx_bistdone    <= sub_wire3(1 DOWNTO 0);
-	tx_clkout    <= sub_wire4(1 DOWNTO 0);
-	tx_dataout    <= sub_wire5(1 DOWNTO 0);
-	rx_clkout    <= sub_wire6(1 DOWNTO 0);
+	rx_bistdone    <= sub_wire3(3 DOWNTO 0);
+	tx_clkout    <= sub_wire4(3 DOWNTO 0);
+	tx_dataout    <= sub_wire5(3 DOWNTO 0);
+	rx_clkout    <= sub_wire6(3 DOWNTO 0);
 
 	trans_loop_alt4gxb_component : trans_loop_alt4gxb
 	GENERIC MAP (
@@ -2598,16 +3516,16 @@ END RTL;
 -- Retrieval info: PRIVATE: RECONFIG_SUBPROTOCOL STRING "none"
 -- Retrieval info: PRIVATE: RX_ENABLE_DC_COUPLING STRING "false"
 -- Retrieval info: PRIVATE: SYNTH_WRAPPER_GEN_POSTFIX STRING "0"
--- Retrieval info: PRIVATE: WIZ_BASE_DATA_RATE STRING "2500.0"
+-- Retrieval info: PRIVATE: WIZ_BASE_DATA_RATE STRING "1250.0"
 -- Retrieval info: PRIVATE: WIZ_BASE_DATA_RATE_ENABLE STRING "0"
--- Retrieval info: PRIVATE: WIZ_DATA_RATE STRING "2500"
--- Retrieval info: PRIVATE: WIZ_DPRIO_INCLK_FREQ_ARRAY STRING "100"
+-- Retrieval info: PRIVATE: WIZ_DATA_RATE STRING "1250"
+-- Retrieval info: PRIVATE: WIZ_DPRIO_INCLK_FREQ_ARRAY STRING "100 100"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_INPUT_A STRING "2000"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_INPUT_A_UNIT STRING "Mbps"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_INPUT_B STRING "100"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_INPUT_B_UNIT STRING "MHz"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_INPUT_SELECTION NUMERIC "0"
--- Retrieval info: PRIVATE: WIZ_DPRIO_REF_CLK0_FREQ STRING "50.0"
+-- Retrieval info: PRIVATE: WIZ_DPRIO_REF_CLK0_FREQ STRING "62.5"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_REF_CLK0_PROTOCOL STRING "Basic"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_REF_CLK1_FREQ STRING "250"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_REF_CLK1_PROTOCOL STRING "Basic"
@@ -2625,17 +3543,17 @@ END RTL;
 -- Retrieval info: PRIVATE: WIZ_EQUALIZER_CTRL_SETTING NUMERIC "0"
 -- Retrieval info: PRIVATE: WIZ_FORCE_DEFAULT_SETTINGS NUMERIC "0"
 -- Retrieval info: PRIVATE: WIZ_INCLK_FREQ STRING "125.0"
--- Retrieval info: PRIVATE: WIZ_INCLK_FREQ_ARRAY STRING "50.0 62.5 78.125 100.0 125.0 156.25 200.0 250.0 312.5 400.0 500.0"
--- Retrieval info: PRIVATE: WIZ_INPUT_A STRING "2500"
+-- Retrieval info: PRIVATE: WIZ_INCLK_FREQ_ARRAY STRING "62.5 78.125 125.0 156.25 250.0 312.5 500.0"
+-- Retrieval info: PRIVATE: WIZ_INPUT_A STRING "1250"
 -- Retrieval info: PRIVATE: WIZ_INPUT_A_UNIT STRING "Mbps"
 -- Retrieval info: PRIVATE: WIZ_INPUT_B STRING "125.0"
 -- Retrieval info: PRIVATE: WIZ_INPUT_B_UNIT STRING "MHz"
 -- Retrieval info: PRIVATE: WIZ_INPUT_SELECTION NUMERIC "0"
 -- Retrieval info: PRIVATE: WIZ_PROTOCOL STRING "Basic"
--- Retrieval info: PRIVATE: WIZ_SUBPROTOCOL STRING "BIST"
+-- Retrieval info: PRIVATE: WIZ_SUBPROTOCOL STRING "PRBS"
 -- Retrieval info: PRIVATE: WIZ_WORD_ALIGN_FLIP_PATTERN STRING "0"
 -- Retrieval info: PARAMETER: STARTING_CHANNEL_NUMBER NUMERIC "0"
--- Retrieval info: CONSTANT: EFFECTIVE_DATA_RATE STRING "2500 Mbps"
+-- Retrieval info: CONSTANT: EFFECTIVE_DATA_RATE STRING "1250 Mbps"
 -- Retrieval info: CONSTANT: ENABLE_LC_TX_PLL STRING "false"
 -- Retrieval info: CONSTANT: ENABLE_PLL_INCLK_ALT_DRIVE_RX_CRU STRING "true"
 -- Retrieval info: CONSTANT: ENABLE_PLL_INCLK_DRIVE_RX_CRU STRING "true"
@@ -2654,7 +3572,7 @@ END RTL;
 -- Retrieval info: CONSTANT: INTENDED_DEVICE_VARIANT STRING "ANY"
 -- Retrieval info: CONSTANT: LOOPBACK_MODE STRING "none"
 -- Retrieval info: CONSTANT: LPM_TYPE STRING "alt4gxb"
--- Retrieval info: CONSTANT: NUMBER_OF_CHANNELS NUMERIC "2"
+-- Retrieval info: CONSTANT: NUMBER_OF_CHANNELS NUMERIC "4"
 -- Retrieval info: CONSTANT: OPERATION_MODE STRING "duplex"
 -- Retrieval info: CONSTANT: PLL_CONTROL_WIDTH NUMERIC "1"
 -- Retrieval info: CONSTANT: PLL_PFD_FB_MODE STRING "internal"
@@ -2663,28 +3581,25 @@ END RTL;
 -- Retrieval info: CONSTANT: PREEMPHASIS_CTRL_2NDPOSTTAP_SETTING NUMERIC "0"
 -- Retrieval info: CONSTANT: PREEMPHASIS_CTRL_PRETAP_INV_SETTING STRING "false"
 -- Retrieval info: CONSTANT: PREEMPHASIS_CTRL_PRETAP_SETTING NUMERIC "0"
--- Retrieval info: CONSTANT: PROTOCOL STRING "bist"
+-- Retrieval info: CONSTANT: PROTOCOL STRING "prbs"
 -- Retrieval info: CONSTANT: RECEIVER_TERMINATION STRING "oct_100_ohms"
 -- Retrieval info: CONSTANT: RECONFIG_DPRIO_MODE NUMERIC "0"
--- Retrieval info: CONSTANT: RX_8B_10B_MODE STRING "normal"
--- Retrieval info: CONSTANT: RX_ALIGN_LOSS_SYNC_ERROR_NUM NUMERIC "1"
--- Retrieval info: CONSTANT: RX_ALIGN_PATTERN STRING "0101111100"
--- Retrieval info: CONSTANT: RX_ALIGN_PATTERN_LENGTH NUMERIC "10"
+-- Retrieval info: CONSTANT: RX_8B_10B_MODE STRING "none"
+-- Retrieval info: CONSTANT: RX_ALIGN_PATTERN STRING "0011000001000000"
+-- Retrieval info: CONSTANT: RX_ALIGN_PATTERN_LENGTH NUMERIC "16"
 -- Retrieval info: CONSTANT: RX_ALLOW_ALIGN_POLARITY_INVERSION STRING "false"
 -- Retrieval info: CONSTANT: RX_ALLOW_PIPE_POLARITY_INVERSION STRING "false"
 -- Retrieval info: CONSTANT: RX_BITSLIP_ENABLE STRING "false"
--- Retrieval info: CONSTANT: RX_BYTE_ORDERING_MODE NUMERIC "9"
--- Retrieval info: CONSTANT: RX_BYTE_ORDER_PAD_PATTERN STRING "000000000"
--- Retrieval info: CONSTANT: RX_BYTE_ORDER_PATTERN STRING "000000010"
--- Retrieval info: CONSTANT: RX_CHANNEL_WIDTH NUMERIC "16"
+-- Retrieval info: CONSTANT: RX_BYTE_ORDERING_MODE STRING "NONE"
+-- Retrieval info: CONSTANT: RX_CHANNEL_WIDTH NUMERIC "8"
 -- Retrieval info: CONSTANT: RX_COMMON_MODE STRING "0.82v"
 -- Retrieval info: CONSTANT: RX_CRU_BANDWIDTH_TYPE STRING "Auto"
 -- Retrieval info: CONSTANT: RX_CRU_INCLOCK0_PERIOD NUMERIC "8000"
 -- Retrieval info: CONSTANT: RX_DATAPATH_LOW_LATENCY_MODE STRING "false"
 -- Retrieval info: CONSTANT: RX_DATAPATH_PROTOCOL STRING "basic"
--- Retrieval info: CONSTANT: RX_DATA_RATE NUMERIC "2500"
+-- Retrieval info: CONSTANT: RX_DATA_RATE NUMERIC "1250"
 -- Retrieval info: CONSTANT: RX_DATA_RATE_REMAINDER NUMERIC "0"
--- Retrieval info: CONSTANT: RX_DIGITALRESET_PORT_WIDTH NUMERIC "2"
+-- Retrieval info: CONSTANT: RX_DIGITALRESET_PORT_WIDTH NUMERIC "4"
 -- Retrieval info: CONSTANT: RX_ENABLE_BIT_REVERSAL STRING "false"
 -- Retrieval info: CONSTANT: RX_ENABLE_DEEP_ALIGN_BYTE_SWAP STRING "false"
 -- Retrieval info: CONSTANT: RX_ENABLE_LOCK_TO_DATA_SIG STRING "false"
@@ -2692,32 +3607,31 @@ END RTL;
 -- Retrieval info: CONSTANT: RX_ENABLE_SELF_TEST_MODE STRING "true"
 -- Retrieval info: CONSTANT: RX_FLIP_RX_OUT STRING "false"
 -- Retrieval info: CONSTANT: RX_FORCE_SIGNAL_DETECT STRING "true"
--- Retrieval info: CONSTANT: RX_NUM_ALIGN_CONS_GOOD_DATA NUMERIC "1"
--- Retrieval info: CONSTANT: RX_NUM_ALIGN_CONS_PAT NUMERIC "1"
 -- Retrieval info: CONSTANT: RX_PHFIFOREGMODE STRING "false"
 -- Retrieval info: CONSTANT: RX_PPMSELECT NUMERIC "32"
 -- Retrieval info: CONSTANT: RX_RATE_MATCH_FIFO_MODE STRING "none"
--- Retrieval info: CONSTANT: RX_RUN_LENGTH STRING "5"
+-- Retrieval info: CONSTANT: RX_RUN_LENGTH STRING "4"
 -- Retrieval info: CONSTANT: RX_RUN_LENGTH_ENABLE STRING "true"
--- Retrieval info: CONSTANT: RX_SELF_TEST_MODE STRING "incremental"
+-- Retrieval info: CONSTANT: RX_SELF_TEST_MODE STRING "prbs7"
 -- Retrieval info: CONSTANT: RX_SIGNAL_DETECT_THRESHOLD NUMERIC "2"
--- Retrieval info: CONSTANT: RX_USE_ALIGN_STATE_MACHINE STRING "true"
+-- Retrieval info: CONSTANT: RX_USE_ALIGN_STATE_MACHINE STRING "false"
 -- Retrieval info: CONSTANT: RX_USE_CLKOUT STRING "true"
 -- Retrieval info: CONSTANT: RX_USE_CORECLK STRING "false"
 -- Retrieval info: CONSTANT: RX_USE_DESERIALIZER_DOUBLE_DATA_MODE STRING "false"
 -- Retrieval info: CONSTANT: RX_USE_DESKEW_FIFO STRING "false"
--- Retrieval info: CONSTANT: RX_USE_DOUBLE_DATA_MODE STRING "true"
+-- Retrieval info: CONSTANT: RX_USE_DOUBLE_DATA_MODE STRING "false"
+-- Retrieval info: CONSTANT: RX_USE_RISING_EDGE_TRIGGERED_PATTERN_ALIGN STRING "true"
 -- Retrieval info: CONSTANT: TRANSMITTER_TERMINATION STRING "oct_100_ohms"
--- Retrieval info: CONSTANT: TX_8B_10B_MODE STRING "normal"
+-- Retrieval info: CONSTANT: TX_8B_10B_MODE STRING "none"
 -- Retrieval info: CONSTANT: TX_ALLOW_POLARITY_INVERSION STRING "false"
 -- Retrieval info: CONSTANT: TX_ANALOG_POWER STRING "1.5v"
--- Retrieval info: CONSTANT: TX_CHANNEL_WIDTH NUMERIC "16"
--- Retrieval info: CONSTANT: TX_CLKOUT_WIDTH NUMERIC "2"
+-- Retrieval info: CONSTANT: TX_CHANNEL_WIDTH NUMERIC "8"
+-- Retrieval info: CONSTANT: TX_CLKOUT_WIDTH NUMERIC "4"
 -- Retrieval info: CONSTANT: TX_COMMON_MODE STRING "0.65v"
 -- Retrieval info: CONSTANT: TX_DATAPATH_LOW_LATENCY_MODE STRING "false"
--- Retrieval info: CONSTANT: TX_DATA_RATE NUMERIC "2500"
+-- Retrieval info: CONSTANT: TX_DATA_RATE NUMERIC "1250"
 -- Retrieval info: CONSTANT: TX_DATA_RATE_REMAINDER NUMERIC "0"
--- Retrieval info: CONSTANT: TX_DIGITALRESET_PORT_WIDTH NUMERIC "2"
+-- Retrieval info: CONSTANT: TX_DIGITALRESET_PORT_WIDTH NUMERIC "4"
 -- Retrieval info: CONSTANT: TX_ENABLE_BIT_REVERSAL STRING "false"
 -- Retrieval info: CONSTANT: TX_ENABLE_SELF_TEST_MODE STRING "true"
 -- Retrieval info: CONSTANT: TX_FLIP_TX_IN STRING "false"
@@ -2725,11 +3639,11 @@ END RTL;
 -- Retrieval info: CONSTANT: TX_PLL_BANDWIDTH_TYPE STRING "Auto"
 -- Retrieval info: CONSTANT: TX_PLL_INCLK0_PERIOD NUMERIC "8000"
 -- Retrieval info: CONSTANT: TX_PLL_TYPE STRING "CMU"
--- Retrieval info: CONSTANT: TX_SELF_TEST_MODE STRING "incremental"
+-- Retrieval info: CONSTANT: TX_SELF_TEST_MODE STRING "prbs7"
 -- Retrieval info: CONSTANT: TX_SLEW_RATE STRING "off"
 -- Retrieval info: CONSTANT: TX_TRANSMIT_PROTOCOL STRING "basic"
 -- Retrieval info: CONSTANT: TX_USE_CORECLK STRING "false"
--- Retrieval info: CONSTANT: TX_USE_DOUBLE_DATA_MODE STRING "true"
+-- Retrieval info: CONSTANT: TX_USE_DOUBLE_DATA_MODE STRING "false"
 -- Retrieval info: CONSTANT: TX_USE_SERIALIZER_DOUBLE_DATA_MODE STRING "false"
 -- Retrieval info: CONSTANT: USE_CALIBRATION_BLOCK STRING "true"
 -- Retrieval info: CONSTANT: VOD_CTRL_SETTING NUMERIC "4"
@@ -2738,54 +3652,53 @@ END RTL;
 -- Retrieval info: CONSTANT: reconfig_calibration STRING "true"
 -- Retrieval info: CONSTANT: reconfig_fromgxb_port_width NUMERIC "17"
 -- Retrieval info: CONSTANT: reconfig_togxb_port_width NUMERIC "4"
--- Retrieval info: CONSTANT: rx_byte_order_pld_ctrl_enable STRING "false"
--- Retrieval info: CONSTANT: rx_cru_m_divider NUMERIC "10"
+-- Retrieval info: CONSTANT: rx_cru_m_divider NUMERIC "5"
 -- Retrieval info: CONSTANT: rx_cru_n_divider NUMERIC "1"
--- Retrieval info: CONSTANT: rx_cru_vco_post_scale_divider NUMERIC "2"
--- Retrieval info: CONSTANT: rx_dwidth_factor NUMERIC "2"
+-- Retrieval info: CONSTANT: rx_cru_vco_post_scale_divider NUMERIC "4"
+-- Retrieval info: CONSTANT: rx_dwidth_factor NUMERIC "1"
 -- Retrieval info: CONSTANT: rx_signal_detect_loss_threshold STRING "1"
 -- Retrieval info: CONSTANT: rx_signal_detect_valid_threshold STRING "1"
 -- Retrieval info: CONSTANT: rx_use_external_termination STRING "false"
 -- Retrieval info: CONSTANT: rx_word_aligner_num_byte NUMERIC "1"
--- Retrieval info: CONSTANT: tx_dwidth_factor NUMERIC "2"
+-- Retrieval info: CONSTANT: tx_dwidth_factor NUMERIC "1"
 -- Retrieval info: CONSTANT: tx_pll_clock_post_divider NUMERIC "1"
--- Retrieval info: CONSTANT: tx_pll_m_divider NUMERIC "10"
+-- Retrieval info: CONSTANT: tx_pll_m_divider NUMERIC "5"
 -- Retrieval info: CONSTANT: tx_pll_n_divider NUMERIC "1"
--- Retrieval info: CONSTANT: tx_pll_vco_post_scale_divider NUMERIC "2"
+-- Retrieval info: CONSTANT: tx_pll_vco_post_scale_divider NUMERIC "4"
 -- Retrieval info: CONSTANT: tx_use_external_termination STRING "false"
 -- Retrieval info: USED_PORT: cal_blk_clk 0 0 0 0 INPUT NODEFVAL "cal_blk_clk"
 -- Retrieval info: USED_PORT: pll_inclk 0 0 0 0 INPUT NODEFVAL "pll_inclk"
 -- Retrieval info: USED_PORT: reconfig_clk 0 0 0 0 INPUT NODEFVAL "reconfig_clk"
 -- Retrieval info: USED_PORT: reconfig_fromgxb 0 0 17 0 OUTPUT NODEFVAL "reconfig_fromgxb[16..0]"
 -- Retrieval info: USED_PORT: reconfig_togxb 0 0 4 0 INPUT NODEFVAL "reconfig_togxb[3..0]"
--- Retrieval info: USED_PORT: rx_bistdone 0 0 2 0 OUTPUT NODEFVAL "rx_bistdone[1..0]"
--- Retrieval info: USED_PORT: rx_bisterr 0 0 2 0 OUTPUT NODEFVAL "rx_bisterr[1..0]"
--- Retrieval info: USED_PORT: rx_clkout 0 0 2 0 OUTPUT NODEFVAL "rx_clkout[1..0]"
--- Retrieval info: USED_PORT: rx_datain 0 0 2 0 INPUT NODEFVAL "rx_datain[1..0]"
--- Retrieval info: USED_PORT: rx_digitalreset 0 0 2 0 INPUT NODEFVAL "rx_digitalreset[1..0]"
--- Retrieval info: USED_PORT: rx_signaldetect 0 0 2 0 OUTPUT NODEFVAL "rx_signaldetect[1..0]"
--- Retrieval info: USED_PORT: tx_clkout 0 0 2 0 OUTPUT NODEFVAL "tx_clkout[1..0]"
--- Retrieval info: USED_PORT: tx_dataout 0 0 2 0 OUTPUT NODEFVAL "tx_dataout[1..0]"
--- Retrieval info: USED_PORT: tx_digitalreset 0 0 2 0 INPUT NODEFVAL "tx_digitalreset[1..0]"
+-- Retrieval info: USED_PORT: rx_bistdone 0 0 4 0 OUTPUT NODEFVAL "rx_bistdone[3..0]"
+-- Retrieval info: USED_PORT: rx_bisterr 0 0 4 0 OUTPUT NODEFVAL "rx_bisterr[3..0]"
+-- Retrieval info: USED_PORT: rx_clkout 0 0 4 0 OUTPUT NODEFVAL "rx_clkout[3..0]"
+-- Retrieval info: USED_PORT: rx_datain 0 0 4 0 INPUT NODEFVAL "rx_datain[3..0]"
+-- Retrieval info: USED_PORT: rx_digitalreset 0 0 4 0 INPUT NODEFVAL "rx_digitalreset[3..0]"
+-- Retrieval info: USED_PORT: rx_signaldetect 0 0 4 0 OUTPUT NODEFVAL "rx_signaldetect[3..0]"
+-- Retrieval info: USED_PORT: tx_clkout 0 0 4 0 OUTPUT NODEFVAL "tx_clkout[3..0]"
+-- Retrieval info: USED_PORT: tx_dataout 0 0 4 0 OUTPUT NODEFVAL "tx_dataout[3..0]"
+-- Retrieval info: USED_PORT: tx_digitalreset 0 0 4 0 INPUT NODEFVAL "tx_digitalreset[3..0]"
 -- Retrieval info: CONNECT: @cal_blk_clk 0 0 0 0 cal_blk_clk 0 0 0 0
 -- Retrieval info: CONNECT: @pll_inclk 0 0 0 0 pll_inclk 0 0 0 0
 -- Retrieval info: CONNECT: @reconfig_clk 0 0 0 0 reconfig_clk 0 0 0 0
 -- Retrieval info: CONNECT: @reconfig_togxb 0 0 4 0 reconfig_togxb 0 0 4 0
--- Retrieval info: CONNECT: @rx_datain 0 0 2 0 rx_datain 0 0 2 0
--- Retrieval info: CONNECT: @rx_digitalreset 0 0 2 0 rx_digitalreset 0 0 2 0
--- Retrieval info: CONNECT: @tx_digitalreset 0 0 2 0 tx_digitalreset 0 0 2 0
+-- Retrieval info: CONNECT: @rx_datain 0 0 4 0 rx_datain 0 0 4 0
+-- Retrieval info: CONNECT: @rx_digitalreset 0 0 4 0 rx_digitalreset 0 0 4 0
+-- Retrieval info: CONNECT: @tx_digitalreset 0 0 4 0 tx_digitalreset 0 0 4 0
 -- Retrieval info: CONNECT: reconfig_fromgxb 0 0 17 0 @reconfig_fromgxb 0 0 17 0
--- Retrieval info: CONNECT: rx_bistdone 0 0 2 0 @rx_bistdone 0 0 2 0
--- Retrieval info: CONNECT: rx_bisterr 0 0 2 0 @rx_bisterr 0 0 2 0
--- Retrieval info: CONNECT: rx_clkout 0 0 2 0 @rx_clkout 0 0 2 0
--- Retrieval info: CONNECT: rx_signaldetect 0 0 2 0 @rx_signaldetect 0 0 2 0
--- Retrieval info: CONNECT: tx_clkout 0 0 2 0 @tx_clkout 0 0 2 0
--- Retrieval info: CONNECT: tx_dataout 0 0 2 0 @tx_dataout 0 0 2 0
+-- Retrieval info: CONNECT: rx_bistdone 0 0 4 0 @rx_bistdone 0 0 4 0
+-- Retrieval info: CONNECT: rx_bisterr 0 0 4 0 @rx_bisterr 0 0 4 0
+-- Retrieval info: CONNECT: rx_clkout 0 0 4 0 @rx_clkout 0 0 4 0
+-- Retrieval info: CONNECT: rx_signaldetect 0 0 4 0 @rx_signaldetect 0 0 4 0
+-- Retrieval info: CONNECT: tx_clkout 0 0 4 0 @tx_clkout 0 0 4 0
+-- Retrieval info: CONNECT: tx_dataout 0 0 4 0 @tx_dataout 0 0 4 0
 -- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop.vhd TRUE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop.ppf TRUE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop.inc FALSE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop.cmp TRUE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop.bsf FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop_inst.vhd TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop_inst.vhd FALSE
 -- Retrieval info: LIB_FILE: arriaii_hssi
 -- Retrieval info: CBX_MODULE_PREFIX: ON
