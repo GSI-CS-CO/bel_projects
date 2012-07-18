@@ -4,7 +4,7 @@
 -- MODULE: alt4gxb 
 
 -- ============================================================
--- File Name: trans_loop.vhd
+-- File Name: reverse_lpb.vhd
 -- Megafunction Name(s):
 -- 			alt4gxb
 --
@@ -33,7 +33,7 @@
 --applicable agreement for further details.
 
 
---alt4gxb CBX_AUTO_BLACKBOX="ALL" device_family="Arria II GX" effective_data_rate="1250 Mbps" enable_lc_tx_pll="false" enable_pll_inclk_drive_rx_cru="true" equalizer_ctrl_a_setting=0 equalizer_ctrl_b_setting=0 equalizer_ctrl_c_setting=0 equalizer_ctrl_d_setting=0 equalizer_ctrl_v_setting=1 equalizer_dcgain_setting=0 gen_reconfig_pll="false" gx_channel_type="auto" gxb_analog_power="AUTO" gxb_powerdown_width=1 input_clock_frequency="125.0 MHz" intended_device_speed_grade="5" intended_device_variant="ANY" loopback_mode="slb" number_of_channels=4 number_of_quads=1 operation_mode="duplex" pll_control_width=1 pll_pfd_fb_mode="internal" preemphasis_ctrl_1stposttap_setting=0 preemphasis_ctrl_2ndposttap_inv_setting="false" preemphasis_ctrl_2ndposttap_setting=0 preemphasis_ctrl_pretap_inv_setting="false" preemphasis_ctrl_pretap_setting=0 protocol="prbs" receiver_termination="OCT_100_OHMS" reconfig_calibration="true" reconfig_dprio_mode=0 reconfig_fromgxb_port_width=17 reconfig_togxb_port_width=4 rx_8b_10b_mode="none" rx_align_pattern="0011000001000000" rx_align_pattern_length=16 rx_allow_align_polarity_inversion="false" rx_allow_pipe_polarity_inversion="false" rx_bitslip_enable="false" rx_byte_ordering_mode="none" rx_channel_width=8 rx_common_mode="0.82v" rx_cru_bandwidth_type="auto" rx_cru_inclock0_period=8000 rx_cru_m_divider=5 rx_cru_n_divider=1 rx_cru_vco_post_scale_divider=4 rx_data_rate=1250 rx_data_rate_remainder=0 rx_datapath_low_latency_mode="false" rx_datapath_protocol="basic" rx_digitalreset_port_width=4 rx_dwidth_factor=1 rx_enable_bit_reversal="false" rx_enable_deep_align_byte_swap="false" rx_enable_lock_to_data_sig="false" rx_enable_lock_to_refclk_sig="false" rx_enable_self_test_mode="true" rx_flip_rx_out="false" rx_force_signal_detect="true" rx_phfiforegmode="false" rx_ppmselect=32 rx_rate_match_fifo_mode="none" rx_run_length=4 rx_run_length_enable="true" rx_self_test_mode="prbs7" rx_signal_detect_loss_threshold=1 rx_signal_detect_threshold=2 rx_signal_detect_valid_threshold=1 rx_use_align_state_machine="false" rx_use_clkout="true" rx_use_coreclk="false" rx_use_deserializer_double_data_mode="false" rx_use_deskew_fifo="false" rx_use_double_data_mode="false" rx_use_external_termination="false" rx_use_rising_edge_triggered_pattern_align="true" rx_word_aligner_num_byte=1 starting_channel_number=0 transmitter_termination="OCT_100_OHMS" tx_8b_10b_mode="none" tx_allow_polarity_inversion="false" tx_analog_power="1.5v" tx_channel_width=8 tx_clkout_width=4 tx_common_mode="0.65v" tx_data_rate=1250 tx_data_rate_remainder=0 tx_datapath_low_latency_mode="false" tx_digitalreset_port_width=4 tx_dwidth_factor=1 tx_enable_bit_reversal="false" tx_enable_self_test_mode="true" tx_flip_tx_in="false" tx_force_disparity_mode="false" tx_pll_bandwidth_type="auto" tx_pll_clock_post_divider=1 tx_pll_inclk0_period=8000 tx_pll_m_divider=5 tx_pll_n_divider=1 tx_pll_type="CMU" tx_pll_vco_post_scale_divider=4 tx_self_test_mode="prbs7" tx_slew_rate="off" tx_transmit_protocol="basic" tx_use_coreclk="false" tx_use_double_data_mode="false" tx_use_external_termination="false" tx_use_serializer_double_data_mode="false" use_calibration_block="true" vod_ctrl_setting=4 cal_blk_clk pll_inclk reconfig_clk reconfig_fromgxb reconfig_togxb rx_bistdone rx_bisterr rx_clkout rx_datain rx_digitalreset rx_seriallpbken rx_signaldetect tx_clkout tx_dataout tx_digitalreset
+--alt4gxb CBX_AUTO_BLACKBOX="ALL" device_family="Arria II GX" effective_data_rate="3750 Mbps" enable_lc_tx_pll="false" enable_pll_inclk_drive_rx_cru="true" equalizer_ctrl_a_setting=0 equalizer_ctrl_b_setting=0 equalizer_ctrl_c_setting=0 equalizer_ctrl_d_setting=0 equalizer_ctrl_v_setting=1 equalizer_dcgain_setting=0 gen_reconfig_pll="false" gx_channel_type="auto" gxb_analog_power="AUTO" gxb_powerdown_width=1 input_clock_frequency="150.0 MHz" intended_device_speed_grade="5" intended_device_variant="ANY" loopback_mode="postcdr_rslb" number_of_channels=4 number_of_quads=1 operation_mode="duplex" pll_control_width=1 pll_pfd_fb_mode="internal" preemphasis_ctrl_1stposttap_setting=0 protocol="basic" receiver_termination="OCT_100_OHMS" reconfig_calibration="true" reconfig_dprio_mode=0 reconfig_fromgxb_port_width=17 reconfig_togxb_port_width=4 rx_8b_10b_mode="none" rx_align_pattern="1111100" rx_align_pattern_length=7 rx_allow_align_polarity_inversion="false" rx_allow_pipe_polarity_inversion="false" rx_bitslip_enable="false" rx_byte_ordering_mode="none" rx_channel_width=20 rx_common_mode="0.82v" rx_cru_bandwidth_type="auto" rx_cru_inclock0_period=6667 rx_cru_m_divider=25 rx_cru_n_divider=2 rx_cru_vco_post_scale_divider=1 rx_data_rate=3750 rx_data_rate_remainder=0 rx_datapath_low_latency_mode="false" rx_datapath_protocol="basic" rx_digitalreset_port_width=4 rx_dwidth_factor=2 rx_enable_bit_reversal="false" rx_enable_deep_align_byte_swap="false" rx_enable_lock_to_data_sig="false" rx_enable_lock_to_refclk_sig="false" rx_enable_self_test_mode="false" rx_flip_rx_out="false" rx_force_signal_detect="true" rx_phfiforegmode="false" rx_ppmselect=8 rx_rate_match_fifo_mode="none" rx_run_length=40 rx_run_length_enable="true" rx_signal_detect_loss_threshold=1 rx_signal_detect_threshold=2 rx_signal_detect_valid_threshold=1 rx_use_align_state_machine="false" rx_use_clkout="true" rx_use_coreclk="false" rx_use_deserializer_double_data_mode="false" rx_use_deskew_fifo="false" rx_use_double_data_mode="true" rx_use_external_termination="false" rx_use_rising_edge_triggered_pattern_align="false" rx_word_aligner_num_byte=1 starting_channel_number=0 transmitter_termination="OCT_100_OHMS" tx_8b_10b_mode="none" tx_allow_polarity_inversion="false" tx_analog_power="1.5v" tx_channel_width=20 tx_clkout_width=4 tx_common_mode="0.65v" tx_data_rate=3750 tx_data_rate_remainder=0 tx_datapath_low_latency_mode="false" tx_digitalreset_port_width=4 tx_dwidth_factor=2 tx_enable_bit_reversal="false" tx_enable_self_test_mode="false" tx_flip_tx_in="false" tx_force_disparity_mode="false" tx_pll_bandwidth_type="auto" tx_pll_clock_post_divider=1 tx_pll_inclk0_period=6667 tx_pll_m_divider=25 tx_pll_n_divider=2 tx_pll_type="CMU" tx_pll_vco_post_scale_divider=1 tx_slew_rate="off" tx_transmit_protocol="basic" tx_use_coreclk="false" tx_use_double_data_mode="true" tx_use_external_termination="false" tx_use_serializer_double_data_mode="false" use_calibration_block="true" vod_ctrl_setting=4 cal_blk_clk pll_inclk reconfig_clk reconfig_fromgxb reconfig_togxb rx_clkout rx_datain rx_dataout rx_digitalreset rx_enapatternalign tx_clkout tx_datain tx_dataout tx_digitalreset
 --VERSION_BEGIN 11.1SP2 cbx_alt4gxb 2012:01:25:21:12:11:SJ cbx_mgl 2012:01:25:21:26:09:SJ cbx_tgx 2012:01:25:21:12:11:SJ  VERSION_END
 
  LIBRARY arriaii_hssi;
@@ -43,7 +43,7 @@
  LIBRARY ieee;
  USE ieee.std_logic_1164.all;
 
- ENTITY  trans_loop_alt4gxb IS 
+ ENTITY  reverse_lpb_alt4gxb IS 
 	 GENERIC 
 	 (
 		starting_channel_number	:	NATURAL := 0
@@ -55,21 +55,19 @@
 		 reconfig_clk	:	IN  STD_LOGIC := '0';
 		 reconfig_fromgxb	:	OUT  STD_LOGIC_VECTOR (16 DOWNTO 0);
 		 reconfig_togxb	:	IN  STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => 'Z');
-		 rx_bistdone	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0);
-		 rx_bisterr	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0);
 		 rx_clkout	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0);
 		 rx_datain	:	IN  STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => 'Z');
-		 rx_dataout	:	OUT  STD_LOGIC_VECTOR (31 DOWNTO 0);
+		 rx_dataout	:	OUT  STD_LOGIC_VECTOR (79 DOWNTO 0);
 		 rx_digitalreset	:	IN  STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => '0');
-		 rx_seriallpbken	:	IN  STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => '0');
-		 rx_signaldetect	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0);
+		 rx_enapatternalign	:	IN  STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => '0');
 		 tx_clkout	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0);
+		 tx_datain	:	IN  STD_LOGIC_VECTOR (79 DOWNTO 0) := (OTHERS => '0');
 		 tx_dataout	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0);
 		 tx_digitalreset	:	IN  STD_LOGIC_VECTOR (3 DOWNTO 0) := (OTHERS => '0')
 	 ); 
- END trans_loop_alt4gxb;
+ END reverse_lpb_alt4gxb;
 
- ARCHITECTURE RTL OF trans_loop_alt4gxb IS
+ ARCHITECTURE RTL OF reverse_lpb_alt4gxb IS
 
 	 ATTRIBUTE synthesis_clearbox : natural;
 	 ATTRIBUTE synthesis_clearbox OF RTL : ARCHITECTURE IS 2;
@@ -166,10 +164,8 @@
 	 SIGNAL  wire_tx_pll0_dprioout	:	STD_LOGIC_VECTOR (299 DOWNTO 0);
 	 SIGNAL  wire_tx_pll0_inclk	:	STD_LOGIC_VECTOR (9 DOWNTO 0);
 	 SIGNAL  wire_tx_pll0_locked	:	STD_LOGIC;
-	 SIGNAL  wire_receive_pcs0_bistdone	:	STD_LOGIC;
-	 SIGNAL  wire_receive_pcs0_bisterr	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs0_cdrctrllocktorefcl	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_reconfig_togxb_busy492w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_reconfig_togxb_busy488w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs0_cdrctrllocktorefclkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs0_clkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs0_dataout	:	STD_LOGIC_VECTOR (39 DOWNTO 0);
@@ -180,10 +176,8 @@
 	 SIGNAL  wire_receive_pcs0_rxfound	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs0_signaldetect	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs0_xgmdatain	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
-	 SIGNAL  wire_receive_pcs1_bistdone	:	STD_LOGIC;
-	 SIGNAL  wire_receive_pcs1_bisterr	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs1_cdrctrllocktorefcl	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_reconfig_togxb_busy592w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_reconfig_togxb_busy582w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs1_cdrctrllocktorefclkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs1_clkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs1_dataout	:	STD_LOGIC_VECTOR (39 DOWNTO 0);
@@ -194,10 +188,8 @@
 	 SIGNAL  wire_receive_pcs1_rxfound	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs1_signaldetect	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs1_xgmdatain	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
-	 SIGNAL  wire_receive_pcs2_bistdone	:	STD_LOGIC;
-	 SIGNAL  wire_receive_pcs2_bisterr	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs2_cdrctrllocktorefcl	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_reconfig_togxb_busy671w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_reconfig_togxb_busy656w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs2_cdrctrllocktorefclkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs2_clkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs2_dataout	:	STD_LOGIC_VECTOR (39 DOWNTO 0);
@@ -208,10 +200,8 @@
 	 SIGNAL  wire_receive_pcs2_rxfound	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs2_signaldetect	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs2_xgmdatain	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
-	 SIGNAL  wire_receive_pcs3_bistdone	:	STD_LOGIC;
-	 SIGNAL  wire_receive_pcs3_bisterr	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs3_cdrctrllocktorefcl	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_reconfig_togxb_busy750w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_reconfig_togxb_busy730w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_receive_pcs3_cdrctrllocktorefclkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs3_clkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pcs3_dataout	:	STD_LOGIC_VECTOR (39 DOWNTO 0);
@@ -228,6 +218,7 @@
 	 SIGNAL  wire_receive_pma0_dprioout	:	STD_LOGIC_VECTOR (299 DOWNTO 0);
 	 SIGNAL  wire_receive_pma0_locktorefout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma0_recoverdataout	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
+	 SIGNAL  wire_receive_pma0_reverselpbkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma0_signaldetect	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma0_testbussel	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_receive_pma1_analogtestbus	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
@@ -236,6 +227,7 @@
 	 SIGNAL  wire_receive_pma1_dprioout	:	STD_LOGIC_VECTOR (299 DOWNTO 0);
 	 SIGNAL  wire_receive_pma1_locktorefout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma1_recoverdataout	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
+	 SIGNAL  wire_receive_pma1_reverselpbkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma1_signaldetect	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma1_testbussel	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_receive_pma2_analogtestbus	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
@@ -244,6 +236,7 @@
 	 SIGNAL  wire_receive_pma2_dprioout	:	STD_LOGIC_VECTOR (299 DOWNTO 0);
 	 SIGNAL  wire_receive_pma2_locktorefout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma2_recoverdataout	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
+	 SIGNAL  wire_receive_pma2_reverselpbkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma2_signaldetect	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma2_testbussel	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_receive_pma3_analogtestbus	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
@@ -252,6 +245,7 @@
 	 SIGNAL  wire_receive_pma3_dprioout	:	STD_LOGIC_VECTOR (299 DOWNTO 0);
 	 SIGNAL  wire_receive_pma3_locktorefout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma3_recoverdataout	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
+	 SIGNAL  wire_receive_pma3_reverselpbkout	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma3_signaldetect	:	STD_LOGIC;
 	 SIGNAL  wire_receive_pma3_testbussel	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  wire_transmit_pcs0_clkout	:	STD_LOGIC;
@@ -313,7 +307,6 @@
 	 SIGNAL  wire_transmit_pma0_refclk1in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma0_refclk2in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma0_refclk4in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  wire_transmit_pma0_seriallpbkout	:	STD_LOGIC;
 	 SIGNAL  wire_transmit_pma1_clockout	:	STD_LOGIC;
 	 SIGNAL  wire_transmit_pma1_datain	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma1_dataout	:	STD_LOGIC;
@@ -325,7 +318,6 @@
 	 SIGNAL  wire_transmit_pma1_refclk1in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma1_refclk2in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma1_refclk4in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  wire_transmit_pma1_seriallpbkout	:	STD_LOGIC;
 	 SIGNAL  wire_transmit_pma2_clockout	:	STD_LOGIC;
 	 SIGNAL  wire_transmit_pma2_datain	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma2_dataout	:	STD_LOGIC;
@@ -337,7 +329,6 @@
 	 SIGNAL  wire_transmit_pma2_refclk1in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma2_refclk2in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma2_refclk4in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  wire_transmit_pma2_seriallpbkout	:	STD_LOGIC;
 	 SIGNAL  wire_transmit_pma3_clockout	:	STD_LOGIC;
 	 SIGNAL  wire_transmit_pma3_datain	:	STD_LOGIC_VECTOR (63 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma3_dataout	:	STD_LOGIC;
@@ -349,12 +340,11 @@
 	 SIGNAL  wire_transmit_pma3_refclk1in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma3_refclk2in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_transmit_pma3_refclk4in	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
-	 SIGNAL  wire_transmit_pma3_seriallpbkout	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy555w556w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy555w636w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy555w715w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy555w794w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_reconfig_togxb_busy555w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy548w549w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy548w624w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy548w698w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_reconfig_togxb_busy548w772w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_reconfig_togxb_busy548w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  analogfastrefclkout :	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL  analogrefclkout :	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL  analogrefclkpulse :	STD_LOGIC_VECTOR (3 DOWNTO 0);
@@ -397,10 +387,10 @@
 	 SIGNAL  reconfig_togxb_disable :	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  reconfig_togxb_in :	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  reconfig_togxb_load :	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  rx_a1a2size	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rx_analogreset_in :	STD_LOGIC_VECTOR (5 DOWNTO 0);
 	 SIGNAL  rx_analogreset_out :	STD_LOGIC_VECTOR (5 DOWNTO 0);
 	 SIGNAL  rx_clkout_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_coreclk_in :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rx_cruclk_in :	STD_LOGIC_VECTOR (39 DOWNTO 0);
 	 SIGNAL  rx_deserclock_in :	STD_LOGIC_VECTOR (15 DOWNTO 0);
 	 SIGNAL  rx_digitalreset_in :	STD_LOGIC_VECTOR (3 DOWNTO 0);
@@ -409,7 +399,7 @@
 	 SIGNAL  rx_locktodata_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rx_locktorefclk	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rx_locktorefclk_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
-	 SIGNAL  rx_out_wire :	STD_LOGIC_VECTOR (31 DOWNTO 0);
+	 SIGNAL  rx_out_wire :	STD_LOGIC_VECTOR (79 DOWNTO 0);
 	 SIGNAL  rx_pcsdprioin_wire :	STD_LOGIC_VECTOR (1599 DOWNTO 0);
 	 SIGNAL  rx_pcsdprioout :	STD_LOGIC_VECTOR (1599 DOWNTO 0);
 	 SIGNAL  rx_phfifordenable	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
@@ -429,15 +419,15 @@
 	 SIGNAL  rx_powerdown	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rx_powerdown_in :	STD_LOGIC_VECTOR (5 DOWNTO 0);
 	 SIGNAL  rx_prbscidenable	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  rx_reverselpbkout :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rx_rxcruresetout :	STD_LOGIC_VECTOR (5 DOWNTO 0);
 	 SIGNAL  rx_signaldetect_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
-	 SIGNAL  rx_signaldetectout_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  rxpll_dprioin :	STD_LOGIC_VECTOR (1799 DOWNTO 0);
 	 SIGNAL  tx_analogreset_out :	STD_LOGIC_VECTOR (5 DOWNTO 0);
 	 SIGNAL  tx_clkout_int_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  tx_core_clkout_wire :	STD_LOGIC_VECTOR (3 DOWNTO 0);
-	 SIGNAL  tx_datain	:	STD_LOGIC_VECTOR (31 DOWNTO 0);
-	 SIGNAL  tx_datain_wire :	STD_LOGIC_VECTOR (31 DOWNTO 0);
+	 SIGNAL  tx_coreclk_in :	STD_LOGIC_VECTOR (3 DOWNTO 0);
+	 SIGNAL  tx_datain_wire :	STD_LOGIC_VECTOR (79 DOWNTO 0);
 	 SIGNAL  tx_dataout_pcs_to_pma :	STD_LOGIC_VECTOR (79 DOWNTO 0);
 	 SIGNAL  tx_digitalreset_in :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  tx_digitalreset_out :	STD_LOGIC_VECTOR (3 DOWNTO 0);
@@ -447,14 +437,13 @@
 	 SIGNAL  tx_phfiforeset	:	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  tx_pmadprioin_wire :	STD_LOGIC_VECTOR (1799 DOWNTO 0);
 	 SIGNAL  tx_pmadprioout :	STD_LOGIC_VECTOR (1799 DOWNTO 0);
-	 SIGNAL  tx_serialloopbackout :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  tx_txdprioout :	STD_LOGIC_VECTOR (599 DOWNTO 0);
 	 SIGNAL  txdetectrxout :	STD_LOGIC_VECTOR (3 DOWNTO 0);
 	 SIGNAL  w_cent_unit_dpriodisableout1w :	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rx_locktodata_range554w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rx_locktodata_range635w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rx_locktodata_range714w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rx_locktodata_range793w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rx_locktodata_range547w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rx_locktodata_range623w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rx_locktodata_range697w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rx_locktodata_range771w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 COMPONENT  arriaii_hssi_calibration_block
 	 GENERIC 
 	 (
@@ -1529,11 +1518,11 @@
 
 	wire_gnd <= '0';
 	wire_vcc <= '1';
-	wire_w_lg_w_lg_reconfig_togxb_busy555w556w(0) <= wire_w_lg_reconfig_togxb_busy555w(0) AND wire_w_rx_locktodata_range554w(0);
-	wire_w_lg_w_lg_reconfig_togxb_busy555w636w(0) <= wire_w_lg_reconfig_togxb_busy555w(0) AND wire_w_rx_locktodata_range635w(0);
-	wire_w_lg_w_lg_reconfig_togxb_busy555w715w(0) <= wire_w_lg_reconfig_togxb_busy555w(0) AND wire_w_rx_locktodata_range714w(0);
-	wire_w_lg_w_lg_reconfig_togxb_busy555w794w(0) <= wire_w_lg_reconfig_togxb_busy555w(0) AND wire_w_rx_locktodata_range793w(0);
-	wire_w_lg_reconfig_togxb_busy555w(0) <= NOT reconfig_togxb_busy(0);
+	wire_w_lg_w_lg_reconfig_togxb_busy548w549w(0) <= wire_w_lg_reconfig_togxb_busy548w(0) AND wire_w_rx_locktodata_range547w(0);
+	wire_w_lg_w_lg_reconfig_togxb_busy548w624w(0) <= wire_w_lg_reconfig_togxb_busy548w(0) AND wire_w_rx_locktodata_range623w(0);
+	wire_w_lg_w_lg_reconfig_togxb_busy548w698w(0) <= wire_w_lg_reconfig_togxb_busy548w(0) AND wire_w_rx_locktodata_range697w(0);
+	wire_w_lg_w_lg_reconfig_togxb_busy548w772w(0) <= wire_w_lg_reconfig_togxb_busy548w(0) AND wire_w_rx_locktodata_range771w(0);
+	wire_w_lg_reconfig_togxb_busy548w(0) <= NOT reconfig_togxb_busy(0);
 	analogfastrefclkout <= ( wire_ch_clk_div3_analogfastrefclkout & wire_ch_clk_div2_analogfastrefclkout & wire_ch_clk_div1_analogfastrefclkout & wire_ch_clk_div0_analogfastrefclkout);
 	analogrefclkout <= ( wire_ch_clk_div3_analogrefclkout & wire_ch_clk_div2_analogrefclkout & wire_ch_clk_div1_analogrefclkout & wire_ch_clk_div0_analogrefclkout);
 	analogrefclkpulse <= ( wire_ch_clk_div3_analogrefclkpulse & wire_ch_clk_div2_analogrefclkpulse & wire_ch_clk_div1_analogrefclkpulse & wire_ch_clk_div0_analogrefclkpulse);
@@ -1577,23 +1566,21 @@
 	reconfig_togxb_disable(0) <= reconfig_togxb(1);
 	reconfig_togxb_in(0) <= reconfig_togxb(0);
 	reconfig_togxb_load(0) <= reconfig_togxb(2);
-	rx_a1a2size <= (OTHERS => '0');
 	rx_analogreset_in <= ( "00" & "0" & "0" & "0" & "0");
 	rx_analogreset_out <= ( wire_cent_unit0_rxanalogresetout(5 DOWNTO 0));
-	rx_bistdone <= ( wire_receive_pcs3_bistdone & wire_receive_pcs2_bistdone & wire_receive_pcs1_bistdone & wire_receive_pcs0_bistdone);
-	rx_bisterr <= ( wire_receive_pcs3_bisterr & wire_receive_pcs2_bisterr & wire_receive_pcs1_bisterr & wire_receive_pcs0_bisterr);
 	rx_clkout <= ( rx_clkout_wire(3 DOWNTO 0));
 	rx_clkout_wire <= ( wire_receive_pcs3_clkout & wire_receive_pcs2_clkout & wire_receive_pcs1_clkout & wire_receive_pcs0_clkout);
+	rx_coreclk_in <= ( rx_clkout_wire(3 DOWNTO 0));
 	rx_cruclk_in <= ( "000000000" & rx_pldcruclk_in(3) & "000000000" & rx_pldcruclk_in(2) & "000000000" & rx_pldcruclk_in(1) & "000000000" & rx_pldcruclk_in(0));
-	rx_dataout <= ( rx_out_wire(31 DOWNTO 0));
+	rx_dataout <= ( rx_out_wire(79 DOWNTO 0));
 	rx_deserclock_in <= ( rx_pll_clkout(15 DOWNTO 0));
 	rx_digitalreset_in <= ( rx_digitalreset(3 DOWNTO 0));
 	rx_digitalreset_out <= ( wire_cent_unit0_rxdigitalresetout(3 DOWNTO 0));
 	rx_locktodata <= (OTHERS => '0');
-	rx_locktodata_wire <= ( wire_w_lg_w_lg_reconfig_togxb_busy555w794w & wire_w_lg_w_lg_reconfig_togxb_busy555w715w & wire_w_lg_w_lg_reconfig_togxb_busy555w636w & wire_w_lg_w_lg_reconfig_togxb_busy555w556w);
+	rx_locktodata_wire <= ( wire_w_lg_w_lg_reconfig_togxb_busy548w772w & wire_w_lg_w_lg_reconfig_togxb_busy548w698w & wire_w_lg_w_lg_reconfig_togxb_busy548w624w & wire_w_lg_w_lg_reconfig_togxb_busy548w549w);
 	rx_locktorefclk <= (OTHERS => '0');
 	rx_locktorefclk_wire <= ( wire_receive_pcs3_cdrctrllocktorefclkout & wire_receive_pcs2_cdrctrllocktorefclkout & wire_receive_pcs1_cdrctrllocktorefclkout & wire_receive_pcs0_cdrctrllocktorefclkout);
-	rx_out_wire <= ( wire_receive_pcs3_dataout(7 DOWNTO 0) & wire_receive_pcs2_dataout(7 DOWNTO 0) & wire_receive_pcs1_dataout(7 DOWNTO 0) & wire_receive_pcs0_dataout(7 DOWNTO 0));
+	rx_out_wire <= ( wire_receive_pcs3_dataout(19 DOWNTO 0) & wire_receive_pcs2_dataout(19 DOWNTO 0) & wire_receive_pcs1_dataout(19 DOWNTO 0) & wire_receive_pcs0_dataout(19 DOWNTO 0));
 	rx_pcsdprioin_wire <= ( cent_unit_rxpcsdprioout(1599 DOWNTO 0));
 	rx_pcsdprioout <= ( wire_receive_pcs3_dprioout & wire_receive_pcs2_dprioout & wire_receive_pcs1_dprioout & wire_receive_pcs0_dprioout);
 	rx_phfifordenable <= (OTHERS => '1');
@@ -1613,17 +1600,16 @@
 	rx_powerdown <= (OTHERS => '0');
 	rx_powerdown_in <= ( "00" & rx_powerdown(3 DOWNTO 0));
 	rx_prbscidenable <= (OTHERS => '0');
+	rx_reverselpbkout <= ( wire_receive_pma3_reverselpbkout & wire_receive_pma2_reverselpbkout & wire_receive_pma1_reverselpbkout & wire_receive_pma0_reverselpbkout);
 	rx_rxcruresetout <= ( wire_cent_unit0_rxcruresetout(5 DOWNTO 0));
-	rx_signaldetect <= ( rx_signaldetectout_wire(3 DOWNTO 0));
 	rx_signaldetect_wire <= ( wire_receive_pma3_signaldetect & wire_receive_pma2_signaldetect & wire_receive_pma1_signaldetect & wire_receive_pma0_signaldetect);
-	rx_signaldetectout_wire <= ( wire_receive_pcs3_signaldetect & wire_receive_pcs2_signaldetect & wire_receive_pcs1_signaldetect & wire_receive_pcs0_signaldetect);
 	rxpll_dprioin <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & cent_unit_cmuplldprioout(1199 DOWNTO 0));
 	tx_analogreset_out <= ( wire_cent_unit0_txanalogresetout(5 DOWNTO 0));
 	tx_clkout <= ( tx_core_clkout_wire(3 DOWNTO 0));
 	tx_clkout_int_wire <= ( wire_transmit_pcs3_clkout & wire_transmit_pcs2_clkout & wire_transmit_pcs1_clkout & wire_transmit_pcs0_clkout);
 	tx_core_clkout_wire <= ( tx_clkout_int_wire(0) & tx_clkout_int_wire(0) & tx_clkout_int_wire(0) & tx_clkout_int_wire(0));
-	tx_datain <= (OTHERS => '0');
-	tx_datain_wire <= ( tx_datain(31 DOWNTO 0));
+	tx_coreclk_in <= ( tx_core_clkout_wire(3 DOWNTO 0));
+	tx_datain_wire <= ( tx_datain(79 DOWNTO 0));
 	tx_dataout <= ( wire_transmit_pma3_dataout & wire_transmit_pma2_dataout & wire_transmit_pma1_dataout & wire_transmit_pma0_dataout);
 	tx_dataout_pcs_to_pma <= ( wire_transmit_pcs3_dataout & wire_transmit_pcs2_dataout & wire_transmit_pcs1_dataout & wire_transmit_pcs0_dataout);
 	tx_digitalreset_in <= ( tx_digitalreset(3 DOWNTO 0));
@@ -1634,14 +1620,13 @@
 	tx_phfiforeset <= (OTHERS => '0');
 	tx_pmadprioin_wire <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & cent_unit_txpmadprioout(1199 DOWNTO 0));
 	tx_pmadprioout <= ( "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" & wire_transmit_pma3_dprioout & wire_transmit_pma2_dprioout & wire_transmit_pma1_dprioout & wire_transmit_pma0_dprioout);
-	tx_serialloopbackout <= ( wire_transmit_pma3_seriallpbkout & wire_transmit_pma2_seriallpbkout & wire_transmit_pma1_seriallpbkout & wire_transmit_pma0_seriallpbkout);
 	tx_txdprioout <= ( wire_transmit_pcs3_dprioout & wire_transmit_pcs2_dprioout & wire_transmit_pcs1_dprioout & wire_transmit_pcs0_dprioout);
 	txdetectrxout <= ( wire_transmit_pcs3_txdetectrx & wire_transmit_pcs2_txdetectrx & wire_transmit_pcs1_txdetectrx & wire_transmit_pcs0_txdetectrx);
 	w_cent_unit_dpriodisableout1w(0) <= ( wire_cent_unit0_dpriodisableout);
-	wire_w_rx_locktodata_range554w(0) <= rx_locktodata(0);
-	wire_w_rx_locktodata_range635w(0) <= rx_locktodata(1);
-	wire_w_rx_locktodata_range714w(0) <= rx_locktodata(2);
-	wire_w_rx_locktodata_range793w(0) <= rx_locktodata(3);
+	wire_w_rx_locktodata_range547w(0) <= rx_locktodata(0);
+	wire_w_rx_locktodata_range623w(0) <= rx_locktodata(1);
+	wire_w_rx_locktodata_range697w(0) <= rx_locktodata(2);
+	wire_w_rx_locktodata_range771w(0) <= rx_locktodata(3);
 	cal_blk0 :  arriaii_hssi_calibration_block
 	  PORT MAP ( 
 		clk => cal_blk_clk,
@@ -1652,9 +1637,9 @@
 	ch_clk_div0 :  arriaii_hssi_clock_divider
 	  GENERIC MAP (
 		channel_num => ((starting_channel_number + 0) MOD 4),
-		divide_by => 4,
+		divide_by => 5,
 		divider_type => "CHANNEL_REGULAR",
-		effective_data_rate => "1250 Mbps",
+		effective_data_rate => "3750 Mbps",
 		enable_dynamic_divider => "false",
 		enable_refclk_out => "false",
 		inclk_select => 0,
@@ -1682,9 +1667,9 @@
 	ch_clk_div1 :  arriaii_hssi_clock_divider
 	  GENERIC MAP (
 		channel_num => ((starting_channel_number + 1) MOD 4),
-		divide_by => 4,
+		divide_by => 5,
 		divider_type => "CHANNEL_REGULAR",
-		effective_data_rate => "1250 Mbps",
+		effective_data_rate => "3750 Mbps",
 		enable_dynamic_divider => "false",
 		enable_refclk_out => "false",
 		inclk_select => 0,
@@ -1712,9 +1697,9 @@
 	ch_clk_div2 :  arriaii_hssi_clock_divider
 	  GENERIC MAP (
 		channel_num => ((starting_channel_number + 2) MOD 4),
-		divide_by => 4,
+		divide_by => 5,
 		divider_type => "CHANNEL_REGULAR",
-		effective_data_rate => "1250 Mbps",
+		effective_data_rate => "3750 Mbps",
 		enable_dynamic_divider => "false",
 		enable_refclk_out => "false",
 		inclk_select => 0,
@@ -1742,9 +1727,9 @@
 	ch_clk_div3 :  arriaii_hssi_clock_divider
 	  GENERIC MAP (
 		channel_num => ((starting_channel_number + 3) MOD 4),
-		divide_by => 4,
+		divide_by => 5,
 		divider_type => "CHANNEL_REGULAR",
-		effective_data_rate => "1250 Mbps",
+		effective_data_rate => "3750 Mbps",
 		enable_dynamic_divider => "false",
 		enable_refclk_out => "false",
 		inclk_select => 0,
@@ -1807,16 +1792,16 @@
 		rx0_clk1_mux_select => "recovered clock",
 		rx0_clk2_mux_select => "recovered clock",
 		rx0_ph_fifo_reg_mode => "false",
-		rx0_rd_clk_mux_select => "int clock",
+		rx0_rd_clk_mux_select => "core clock",
 		rx0_recovered_clk_mux_select => "recovered clock",
 		rx0_reset_clock_output_during_digital_reset => "false",
-		rx0_use_double_data_mode => "false",
+		rx0_use_double_data_mode => "true",
 		tx0_auto_spd_self_switch_enable => "false",
 		tx0_channel_bonding => "none",
 		tx0_ph_fifo_reg_mode => "false",
-		tx0_rd_clk_mux_select => "local",
-		tx0_use_double_data_mode => "false",
-		tx0_wr_clk_mux_select => "int_clk",
+		tx0_rd_clk_mux_select => "cmu_clock_divider",
+		tx0_use_double_data_mode => "true",
+		tx0_wr_clk_mux_select => "core_clk",
 		use_deskew_fifo => "false",
 		vcceh_voltage => "Auto"
 	  )
@@ -1880,17 +1865,17 @@
 		bandwidth_type => "Auto",
 		channel_num => ((starting_channel_number + 0) MOD 4),
 		dprio_config_mode => "000000",
-		effective_data_rate => "1250 Mbps",
+		effective_data_rate => "3750 Mbps",
 		enable_dynamic_divider => "false",
 		fast_lock_control => "false",
-		inclk0_input_period => 8000,
-		input_clock_frequency => "125.0 MHz",
-		m => 5,
-		n => 1,
+		inclk0_input_period => 6667,
+		input_clock_frequency => "150.0 MHz",
+		m => 25,
+		n => 2,
 		pfd_clk_select => 0,
 		pll_type => "RX CDR",
 		use_refclk_pin => "false",
-		vco_post_scale => 4
+		vco_post_scale => 1
 	  )
 	  PORT MAP ( 
 		areset => rx_rxcruresetout(0),
@@ -1912,17 +1897,17 @@
 		bandwidth_type => "Auto",
 		channel_num => ((starting_channel_number + 1) MOD 4),
 		dprio_config_mode => "000000",
-		effective_data_rate => "1250 Mbps",
+		effective_data_rate => "3750 Mbps",
 		enable_dynamic_divider => "false",
 		fast_lock_control => "false",
-		inclk0_input_period => 8000,
-		input_clock_frequency => "125.0 MHz",
-		m => 5,
-		n => 1,
+		inclk0_input_period => 6667,
+		input_clock_frequency => "150.0 MHz",
+		m => 25,
+		n => 2,
 		pfd_clk_select => 0,
 		pll_type => "RX CDR",
 		use_refclk_pin => "false",
-		vco_post_scale => 4
+		vco_post_scale => 1
 	  )
 	  PORT MAP ( 
 		areset => rx_rxcruresetout(1),
@@ -1944,17 +1929,17 @@
 		bandwidth_type => "Auto",
 		channel_num => ((starting_channel_number + 2) MOD 4),
 		dprio_config_mode => "000000",
-		effective_data_rate => "1250 Mbps",
+		effective_data_rate => "3750 Mbps",
 		enable_dynamic_divider => "false",
 		fast_lock_control => "false",
-		inclk0_input_period => 8000,
-		input_clock_frequency => "125.0 MHz",
-		m => 5,
-		n => 1,
+		inclk0_input_period => 6667,
+		input_clock_frequency => "150.0 MHz",
+		m => 25,
+		n => 2,
 		pfd_clk_select => 0,
 		pll_type => "RX CDR",
 		use_refclk_pin => "false",
-		vco_post_scale => 4
+		vco_post_scale => 1
 	  )
 	  PORT MAP ( 
 		areset => rx_rxcruresetout(2),
@@ -1976,17 +1961,17 @@
 		bandwidth_type => "Auto",
 		channel_num => ((starting_channel_number + 3) MOD 4),
 		dprio_config_mode => "000000",
-		effective_data_rate => "1250 Mbps",
+		effective_data_rate => "3750 Mbps",
 		enable_dynamic_divider => "false",
 		fast_lock_control => "false",
-		inclk0_input_period => 8000,
-		input_clock_frequency => "125.0 MHz",
-		m => 5,
-		n => 1,
+		inclk0_input_period => 6667,
+		input_clock_frequency => "150.0 MHz",
+		m => 25,
+		n => 2,
 		pfd_clk_select => 0,
 		pll_type => "RX CDR",
 		use_refclk_pin => "false",
-		vco_post_scale => 4
+		vco_post_scale => 1
 	  )
 	  PORT MAP ( 
 		areset => rx_rxcruresetout(3),
@@ -2008,16 +1993,16 @@
 		bandwidth_type => "Auto",
 		channel_num => 4,
 		dprio_config_mode => "000000",
-		inclk0_input_period => 8000,
-		input_clock_frequency => "125.0 MHz",
+		inclk0_input_period => 6667,
+		input_clock_frequency => "150.0 MHz",
 		logical_tx_pll_number => 0,
-		m => 5,
-		n => 1,
+		m => 25,
+		n => 2,
 		pfd_clk_select => 0,
 		pfd_fb_select => "internal",
 		pll_type => "CMU",
 		use_refclk_pin => "false",
-		vco_post_scale => 4
+		vco_post_scale => 1
 	  )
 	  PORT MAP ( 
 		areset => pllreset_in(0),
@@ -2029,8 +2014,8 @@
 		locked => wire_tx_pll0_locked,
 		powerdown => pllpowerdn_in(0)
 	  );
-	wire_receive_pcs0_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy492w(0);
-	wire_w_lg_reconfig_togxb_busy492w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(0);
+	wire_receive_pcs0_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy488w(0);
+	wire_w_lg_reconfig_togxb_busy488w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(0);
 	wire_receive_pcs0_parallelfdbk <= (OTHERS => '0');
 	wire_receive_pcs0_pipepowerdown <= (OTHERS => '0');
 	wire_receive_pcs0_pipepowerstate <= (OTHERS => '0');
@@ -2038,8 +2023,8 @@
 	wire_receive_pcs0_xgmdatain <= (OTHERS => '0');
 	receive_pcs0 :  arriaii_hssi_rx_pcs
 	  GENERIC MAP (
-		align_pattern => "0011000001000000",
-		align_pattern_length => 16,
+		align_pattern => "1111100",
+		align_pattern_length => 7,
 		align_to_deskew_pattern_pos_disp_only => "false",
 		allow_align_polarity_inversion => "false",
 		allow_pipe_polarity_inversion => "false",
@@ -2057,7 +2042,7 @@
 		cdrctrl_rxvalid_mask => "false",
 		channel_bonding => "none",
 		channel_number => ((starting_channel_number + 0) MOD 4),
-		channel_width => 8,
+		channel_width => 20,
 		clk1_mux_select => "recovered clock",
 		clk2_mux_select => "recovered clock",
 		core_clock_0ppm => "false",
@@ -2072,11 +2057,11 @@
 		disallow_kchar_after_pattern_ordered_set => "false",
 		dprio_config_mode => "000001",
 		elec_idle_infer_enable => "false",
-		elec_idle_num_com_detect => 0,
+		elec_idle_num_com_detect => 3,
 		enable_bit_reversal => "false",
 		enable_deep_align => "false",
 		enable_deep_align_byte_swap => "false",
-		enable_self_test_mode => "true",
+		enable_self_test_mode => "false",
 		enable_true_complement_match_in_word_align => "false",
 		force_signal_detect_dig => "true",
 		hip_enable => "false",
@@ -2096,10 +2081,10 @@
 		pipe_auto_speed_nego_enable => "false",
 		pipe_freq_scale_mode => "Frequency",
 		pma_done_count => 249950,
-		protocol_hint => "prbs",
+		protocol_hint => "basic",
 		rate_match_almost_empty_threshold => 11,
 		rate_match_almost_full_threshold => 13,
-		rate_match_back_to_back => "true",
+		rate_match_back_to_back => "false",
 		rate_match_delete_threshold => 13,
 		rate_match_empty_threshold => 5,
 		rate_match_fifo_mode => "false",
@@ -2110,32 +2095,31 @@
 		rate_match_pattern2 => "0",
 		rate_match_pattern_size => 10,
 		rate_match_reset_enable => "false",
-		rate_match_skip_set_based => "false",
+		rate_match_skip_set_based => "true",
 		rate_match_start_threshold => 7,
-		rd_clk_mux_select => "int clock",
+		rd_clk_mux_select => "core clock",
 		recovered_clk_mux_select => "recovered clock",
-		run_length => 4,
+		run_length => 40,
 		run_length_enable => "true",
 		rx_detect_bypass => "false",
-		rx_phfifo_wait_cnt => 15,
-		rxstatus_error_report_mode => 1,
-		self_test_mode => "prbs7",
-		use_alignment_state_machine => "true",
+		rx_phfifo_wait_cnt => 0,
+		rxstatus_error_report_mode => 0,
+		self_test_mode => "incremental",
+		use_alignment_state_machine => "false",
 		use_deserializer_double_data_mode => "false",
 		use_deskew_fifo => "false",
-		use_double_data_mode => "false",
+		use_double_data_mode => "true",
 		use_parallel_loopback => "false",
-		use_rising_edge_triggered_pattern_align => "false"
+		use_rising_edge_triggered_pattern_align => "true"
 	  )
 	  PORT MAP ( 
-		a1a2size => rx_a1a2size(0),
+		a1a2size => wire_gnd,
 		alignstatus => wire_gnd,
 		alignstatussync => wire_gnd,
-		bistdone => wire_receive_pcs0_bistdone,
-		bisterr => wire_receive_pcs0_bisterr,
 		cdrctrllocktorefcl => wire_receive_pcs0_cdrctrllocktorefcl,
 		cdrctrllocktorefclkout => wire_receive_pcs0_cdrctrllocktorefclkout,
 		clkout => wire_receive_pcs0_clkout,
+		coreclk => rx_coreclk_in(0),
 		datain => rx_pma_recoverdataout_wire(19 DOWNTO 0),
 		dataout => wire_receive_pcs0_dataout,
 		digitalreset => rx_digitalreset_out(0),
@@ -2146,7 +2130,7 @@
 		dprioout => wire_receive_pcs0_dprioout,
 		enabledeskew => wire_gnd,
 		enabyteord => wire_gnd,
-		enapatternalign => wire_gnd,
+		enapatternalign => rx_enapatternalign(0),
 		fifordin => wire_gnd,
 		fiforesetrd => wire_gnd,
 		invpol => wire_gnd,
@@ -2173,8 +2157,8 @@
 		xgmctrlin => wire_gnd,
 		xgmdatain => wire_receive_pcs0_xgmdatain
 	  );
-	wire_receive_pcs1_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy592w(0);
-	wire_w_lg_reconfig_togxb_busy592w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(1);
+	wire_receive_pcs1_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy582w(0);
+	wire_w_lg_reconfig_togxb_busy582w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(1);
 	wire_receive_pcs1_parallelfdbk <= (OTHERS => '0');
 	wire_receive_pcs1_pipepowerdown <= (OTHERS => '0');
 	wire_receive_pcs1_pipepowerstate <= (OTHERS => '0');
@@ -2182,8 +2166,8 @@
 	wire_receive_pcs1_xgmdatain <= (OTHERS => '0');
 	receive_pcs1 :  arriaii_hssi_rx_pcs
 	  GENERIC MAP (
-		align_pattern => "0011000001000000",
-		align_pattern_length => 16,
+		align_pattern => "1111100",
+		align_pattern_length => 7,
 		align_to_deskew_pattern_pos_disp_only => "false",
 		allow_align_polarity_inversion => "false",
 		allow_pipe_polarity_inversion => "false",
@@ -2201,7 +2185,7 @@
 		cdrctrl_rxvalid_mask => "false",
 		channel_bonding => "none",
 		channel_number => ((starting_channel_number + 1) MOD 4),
-		channel_width => 8,
+		channel_width => 20,
 		clk1_mux_select => "recovered clock",
 		clk2_mux_select => "recovered clock",
 		core_clock_0ppm => "false",
@@ -2216,11 +2200,11 @@
 		disallow_kchar_after_pattern_ordered_set => "false",
 		dprio_config_mode => "000001",
 		elec_idle_infer_enable => "false",
-		elec_idle_num_com_detect => 0,
+		elec_idle_num_com_detect => 3,
 		enable_bit_reversal => "false",
 		enable_deep_align => "false",
 		enable_deep_align_byte_swap => "false",
-		enable_self_test_mode => "true",
+		enable_self_test_mode => "false",
 		enable_true_complement_match_in_word_align => "false",
 		force_signal_detect_dig => "true",
 		hip_enable => "false",
@@ -2240,10 +2224,10 @@
 		pipe_auto_speed_nego_enable => "false",
 		pipe_freq_scale_mode => "Frequency",
 		pma_done_count => 249950,
-		protocol_hint => "prbs",
+		protocol_hint => "basic",
 		rate_match_almost_empty_threshold => 11,
 		rate_match_almost_full_threshold => 13,
-		rate_match_back_to_back => "true",
+		rate_match_back_to_back => "false",
 		rate_match_delete_threshold => 13,
 		rate_match_empty_threshold => 5,
 		rate_match_fifo_mode => "false",
@@ -2254,32 +2238,31 @@
 		rate_match_pattern2 => "0",
 		rate_match_pattern_size => 10,
 		rate_match_reset_enable => "false",
-		rate_match_skip_set_based => "false",
+		rate_match_skip_set_based => "true",
 		rate_match_start_threshold => 7,
-		rd_clk_mux_select => "int clock",
+		rd_clk_mux_select => "core clock",
 		recovered_clk_mux_select => "recovered clock",
-		run_length => 4,
+		run_length => 40,
 		run_length_enable => "true",
 		rx_detect_bypass => "false",
-		rx_phfifo_wait_cnt => 15,
-		rxstatus_error_report_mode => 1,
-		self_test_mode => "prbs7",
-		use_alignment_state_machine => "true",
+		rx_phfifo_wait_cnt => 0,
+		rxstatus_error_report_mode => 0,
+		self_test_mode => "incremental",
+		use_alignment_state_machine => "false",
 		use_deserializer_double_data_mode => "false",
 		use_deskew_fifo => "false",
-		use_double_data_mode => "false",
+		use_double_data_mode => "true",
 		use_parallel_loopback => "false",
-		use_rising_edge_triggered_pattern_align => "false"
+		use_rising_edge_triggered_pattern_align => "true"
 	  )
 	  PORT MAP ( 
-		a1a2size => rx_a1a2size(1),
+		a1a2size => wire_gnd,
 		alignstatus => wire_gnd,
 		alignstatussync => wire_gnd,
-		bistdone => wire_receive_pcs1_bistdone,
-		bisterr => wire_receive_pcs1_bisterr,
 		cdrctrllocktorefcl => wire_receive_pcs1_cdrctrllocktorefcl,
 		cdrctrllocktorefclkout => wire_receive_pcs1_cdrctrllocktorefclkout,
 		clkout => wire_receive_pcs1_clkout,
+		coreclk => rx_coreclk_in(1),
 		datain => rx_pma_recoverdataout_wire(39 DOWNTO 20),
 		dataout => wire_receive_pcs1_dataout,
 		digitalreset => rx_digitalreset_out(1),
@@ -2290,7 +2273,7 @@
 		dprioout => wire_receive_pcs1_dprioout,
 		enabledeskew => wire_gnd,
 		enabyteord => wire_gnd,
-		enapatternalign => wire_gnd,
+		enapatternalign => rx_enapatternalign(1),
 		fifordin => wire_gnd,
 		fiforesetrd => wire_gnd,
 		invpol => wire_gnd,
@@ -2317,8 +2300,8 @@
 		xgmctrlin => wire_gnd,
 		xgmdatain => wire_receive_pcs1_xgmdatain
 	  );
-	wire_receive_pcs2_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy671w(0);
-	wire_w_lg_reconfig_togxb_busy671w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(2);
+	wire_receive_pcs2_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy656w(0);
+	wire_w_lg_reconfig_togxb_busy656w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(2);
 	wire_receive_pcs2_parallelfdbk <= (OTHERS => '0');
 	wire_receive_pcs2_pipepowerdown <= (OTHERS => '0');
 	wire_receive_pcs2_pipepowerstate <= (OTHERS => '0');
@@ -2326,8 +2309,8 @@
 	wire_receive_pcs2_xgmdatain <= (OTHERS => '0');
 	receive_pcs2 :  arriaii_hssi_rx_pcs
 	  GENERIC MAP (
-		align_pattern => "0011000001000000",
-		align_pattern_length => 16,
+		align_pattern => "1111100",
+		align_pattern_length => 7,
 		align_to_deskew_pattern_pos_disp_only => "false",
 		allow_align_polarity_inversion => "false",
 		allow_pipe_polarity_inversion => "false",
@@ -2345,7 +2328,7 @@
 		cdrctrl_rxvalid_mask => "false",
 		channel_bonding => "none",
 		channel_number => ((starting_channel_number + 2) MOD 4),
-		channel_width => 8,
+		channel_width => 20,
 		clk1_mux_select => "recovered clock",
 		clk2_mux_select => "recovered clock",
 		core_clock_0ppm => "false",
@@ -2360,11 +2343,11 @@
 		disallow_kchar_after_pattern_ordered_set => "false",
 		dprio_config_mode => "000001",
 		elec_idle_infer_enable => "false",
-		elec_idle_num_com_detect => 0,
+		elec_idle_num_com_detect => 3,
 		enable_bit_reversal => "false",
 		enable_deep_align => "false",
 		enable_deep_align_byte_swap => "false",
-		enable_self_test_mode => "true",
+		enable_self_test_mode => "false",
 		enable_true_complement_match_in_word_align => "false",
 		force_signal_detect_dig => "true",
 		hip_enable => "false",
@@ -2384,10 +2367,10 @@
 		pipe_auto_speed_nego_enable => "false",
 		pipe_freq_scale_mode => "Frequency",
 		pma_done_count => 249950,
-		protocol_hint => "prbs",
+		protocol_hint => "basic",
 		rate_match_almost_empty_threshold => 11,
 		rate_match_almost_full_threshold => 13,
-		rate_match_back_to_back => "true",
+		rate_match_back_to_back => "false",
 		rate_match_delete_threshold => 13,
 		rate_match_empty_threshold => 5,
 		rate_match_fifo_mode => "false",
@@ -2398,32 +2381,31 @@
 		rate_match_pattern2 => "0",
 		rate_match_pattern_size => 10,
 		rate_match_reset_enable => "false",
-		rate_match_skip_set_based => "false",
+		rate_match_skip_set_based => "true",
 		rate_match_start_threshold => 7,
-		rd_clk_mux_select => "int clock",
+		rd_clk_mux_select => "core clock",
 		recovered_clk_mux_select => "recovered clock",
-		run_length => 4,
+		run_length => 40,
 		run_length_enable => "true",
 		rx_detect_bypass => "false",
-		rx_phfifo_wait_cnt => 15,
-		rxstatus_error_report_mode => 1,
-		self_test_mode => "prbs7",
-		use_alignment_state_machine => "true",
+		rx_phfifo_wait_cnt => 0,
+		rxstatus_error_report_mode => 0,
+		self_test_mode => "incremental",
+		use_alignment_state_machine => "false",
 		use_deserializer_double_data_mode => "false",
 		use_deskew_fifo => "false",
-		use_double_data_mode => "false",
+		use_double_data_mode => "true",
 		use_parallel_loopback => "false",
-		use_rising_edge_triggered_pattern_align => "false"
+		use_rising_edge_triggered_pattern_align => "true"
 	  )
 	  PORT MAP ( 
-		a1a2size => rx_a1a2size(2),
+		a1a2size => wire_gnd,
 		alignstatus => wire_gnd,
 		alignstatussync => wire_gnd,
-		bistdone => wire_receive_pcs2_bistdone,
-		bisterr => wire_receive_pcs2_bisterr,
 		cdrctrllocktorefcl => wire_receive_pcs2_cdrctrllocktorefcl,
 		cdrctrllocktorefclkout => wire_receive_pcs2_cdrctrllocktorefclkout,
 		clkout => wire_receive_pcs2_clkout,
+		coreclk => rx_coreclk_in(2),
 		datain => rx_pma_recoverdataout_wire(59 DOWNTO 40),
 		dataout => wire_receive_pcs2_dataout,
 		digitalreset => rx_digitalreset_out(2),
@@ -2434,7 +2416,7 @@
 		dprioout => wire_receive_pcs2_dprioout,
 		enabledeskew => wire_gnd,
 		enabyteord => wire_gnd,
-		enapatternalign => wire_gnd,
+		enapatternalign => rx_enapatternalign(2),
 		fifordin => wire_gnd,
 		fiforesetrd => wire_gnd,
 		invpol => wire_gnd,
@@ -2461,8 +2443,8 @@
 		xgmctrlin => wire_gnd,
 		xgmdatain => wire_receive_pcs2_xgmdatain
 	  );
-	wire_receive_pcs3_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy750w(0);
-	wire_w_lg_reconfig_togxb_busy750w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(3);
+	wire_receive_pcs3_cdrctrllocktorefcl <= wire_w_lg_reconfig_togxb_busy730w(0);
+	wire_w_lg_reconfig_togxb_busy730w(0) <= reconfig_togxb_busy(0) OR rx_locktorefclk(3);
 	wire_receive_pcs3_parallelfdbk <= (OTHERS => '0');
 	wire_receive_pcs3_pipepowerdown <= (OTHERS => '0');
 	wire_receive_pcs3_pipepowerstate <= (OTHERS => '0');
@@ -2470,8 +2452,8 @@
 	wire_receive_pcs3_xgmdatain <= (OTHERS => '0');
 	receive_pcs3 :  arriaii_hssi_rx_pcs
 	  GENERIC MAP (
-		align_pattern => "0011000001000000",
-		align_pattern_length => 16,
+		align_pattern => "1111100",
+		align_pattern_length => 7,
 		align_to_deskew_pattern_pos_disp_only => "false",
 		allow_align_polarity_inversion => "false",
 		allow_pipe_polarity_inversion => "false",
@@ -2489,7 +2471,7 @@
 		cdrctrl_rxvalid_mask => "false",
 		channel_bonding => "none",
 		channel_number => ((starting_channel_number + 3) MOD 4),
-		channel_width => 8,
+		channel_width => 20,
 		clk1_mux_select => "recovered clock",
 		clk2_mux_select => "recovered clock",
 		core_clock_0ppm => "false",
@@ -2504,11 +2486,11 @@
 		disallow_kchar_after_pattern_ordered_set => "false",
 		dprio_config_mode => "000001",
 		elec_idle_infer_enable => "false",
-		elec_idle_num_com_detect => 0,
+		elec_idle_num_com_detect => 3,
 		enable_bit_reversal => "false",
 		enable_deep_align => "false",
 		enable_deep_align_byte_swap => "false",
-		enable_self_test_mode => "true",
+		enable_self_test_mode => "false",
 		enable_true_complement_match_in_word_align => "false",
 		force_signal_detect_dig => "true",
 		hip_enable => "false",
@@ -2528,10 +2510,10 @@
 		pipe_auto_speed_nego_enable => "false",
 		pipe_freq_scale_mode => "Frequency",
 		pma_done_count => 249950,
-		protocol_hint => "prbs",
+		protocol_hint => "basic",
 		rate_match_almost_empty_threshold => 11,
 		rate_match_almost_full_threshold => 13,
-		rate_match_back_to_back => "true",
+		rate_match_back_to_back => "false",
 		rate_match_delete_threshold => 13,
 		rate_match_empty_threshold => 5,
 		rate_match_fifo_mode => "false",
@@ -2542,32 +2524,31 @@
 		rate_match_pattern2 => "0",
 		rate_match_pattern_size => 10,
 		rate_match_reset_enable => "false",
-		rate_match_skip_set_based => "false",
+		rate_match_skip_set_based => "true",
 		rate_match_start_threshold => 7,
-		rd_clk_mux_select => "int clock",
+		rd_clk_mux_select => "core clock",
 		recovered_clk_mux_select => "recovered clock",
-		run_length => 4,
+		run_length => 40,
 		run_length_enable => "true",
 		rx_detect_bypass => "false",
-		rx_phfifo_wait_cnt => 15,
-		rxstatus_error_report_mode => 1,
-		self_test_mode => "prbs7",
-		use_alignment_state_machine => "true",
+		rx_phfifo_wait_cnt => 0,
+		rxstatus_error_report_mode => 0,
+		self_test_mode => "incremental",
+		use_alignment_state_machine => "false",
 		use_deserializer_double_data_mode => "false",
 		use_deskew_fifo => "false",
-		use_double_data_mode => "false",
+		use_double_data_mode => "true",
 		use_parallel_loopback => "false",
-		use_rising_edge_triggered_pattern_align => "false"
+		use_rising_edge_triggered_pattern_align => "true"
 	  )
 	  PORT MAP ( 
-		a1a2size => rx_a1a2size(3),
+		a1a2size => wire_gnd,
 		alignstatus => wire_gnd,
 		alignstatussync => wire_gnd,
-		bistdone => wire_receive_pcs3_bistdone,
-		bisterr => wire_receive_pcs3_bisterr,
 		cdrctrllocktorefcl => wire_receive_pcs3_cdrctrllocktorefcl,
 		cdrctrllocktorefclkout => wire_receive_pcs3_cdrctrllocktorefclkout,
 		clkout => wire_receive_pcs3_clkout,
+		coreclk => rx_coreclk_in(3),
 		datain => rx_pma_recoverdataout_wire(79 DOWNTO 60),
 		dataout => wire_receive_pcs3_dataout,
 		digitalreset => rx_digitalreset_out(3),
@@ -2578,7 +2559,7 @@
 		dprioout => wire_receive_pcs3_dprioout,
 		enabledeskew => wire_gnd,
 		enabyteord => wire_gnd,
-		enapatternalign => wire_gnd,
+		enapatternalign => rx_enapatternalign(3),
 		fifordin => wire_gnd,
 		fiforesetrd => wire_gnd,
 		invpol => wire_gnd,
@@ -2609,11 +2590,11 @@
 	receive_pma0 :  arriaii_hssi_rx_pma
 	  GENERIC MAP (
 		adaptive_equalization_mode => "none",
-		allow_serial_loopback => "true",
+		allow_serial_loopback => "false",
 		channel_number => ((starting_channel_number + 0) MOD 4),
 		channel_type => "auto",
 		common_mode => "0.82V",
-		deserialization_factor => 8,
+		deserialization_factor => 10,
 		dprio_config_mode => "000001",
 		enable_ltd => "false",
 		enable_ltr => "false",
@@ -2628,9 +2609,9 @@
 		logical_channel_address => (starting_channel_number + 0),
 		low_speed_test_select => 0,
 		offset_cancellation => 1,
-		ppmselect => 32,
-		protocol_hint => "prbs",
-		send_direct_reverse_serial_loopback => "None",
+		ppmselect => 8,
+		protocol_hint => "basic",
+		send_direct_reverse_serial_loopback => "Post-CDR",
 		signal_detect_hysteresis => 2,
 		signal_detect_hysteresis_valid_threshold => 1,
 		signal_detect_loss_threshold => 1,
@@ -2659,9 +2640,10 @@
 		ppmdetectrefclk => rx_pll_pfdrefclkout_wire(0),
 		recoverdatain => pll_ch_dataout_wire(1 DOWNTO 0),
 		recoverdataout => wire_receive_pma0_recoverdataout,
+		reverselpbkout => wire_receive_pma0_reverselpbkout,
 		rxpmareset => rx_analogreset_out(0),
-		seriallpbken => rx_seriallpbken(0),
-		seriallpbkin => tx_serialloopbackout(0),
+		seriallpbken => wire_gnd,
+		seriallpbkin => wire_gnd,
 		signaldetect => wire_receive_pma0_signaldetect,
 		testbussel => wire_receive_pma0_testbussel
 	  );
@@ -2669,11 +2651,11 @@
 	receive_pma1 :  arriaii_hssi_rx_pma
 	  GENERIC MAP (
 		adaptive_equalization_mode => "none",
-		allow_serial_loopback => "true",
+		allow_serial_loopback => "false",
 		channel_number => ((starting_channel_number + 1) MOD 4),
 		channel_type => "auto",
 		common_mode => "0.82V",
-		deserialization_factor => 8,
+		deserialization_factor => 10,
 		dprio_config_mode => "000001",
 		enable_ltd => "false",
 		enable_ltr => "false",
@@ -2688,9 +2670,9 @@
 		logical_channel_address => (starting_channel_number + 1),
 		low_speed_test_select => 0,
 		offset_cancellation => 1,
-		ppmselect => 32,
-		protocol_hint => "prbs",
-		send_direct_reverse_serial_loopback => "None",
+		ppmselect => 8,
+		protocol_hint => "basic",
+		send_direct_reverse_serial_loopback => "Post-CDR",
 		signal_detect_hysteresis => 2,
 		signal_detect_hysteresis_valid_threshold => 1,
 		signal_detect_loss_threshold => 1,
@@ -2719,9 +2701,10 @@
 		ppmdetectrefclk => rx_pll_pfdrefclkout_wire(1),
 		recoverdatain => pll_ch_dataout_wire(3 DOWNTO 2),
 		recoverdataout => wire_receive_pma1_recoverdataout,
+		reverselpbkout => wire_receive_pma1_reverselpbkout,
 		rxpmareset => rx_analogreset_out(1),
-		seriallpbken => rx_seriallpbken(1),
-		seriallpbkin => tx_serialloopbackout(1),
+		seriallpbken => wire_gnd,
+		seriallpbkin => wire_gnd,
 		signaldetect => wire_receive_pma1_signaldetect,
 		testbussel => wire_receive_pma1_testbussel
 	  );
@@ -2729,11 +2712,11 @@
 	receive_pma2 :  arriaii_hssi_rx_pma
 	  GENERIC MAP (
 		adaptive_equalization_mode => "none",
-		allow_serial_loopback => "true",
+		allow_serial_loopback => "false",
 		channel_number => ((starting_channel_number + 2) MOD 4),
 		channel_type => "auto",
 		common_mode => "0.82V",
-		deserialization_factor => 8,
+		deserialization_factor => 10,
 		dprio_config_mode => "000001",
 		enable_ltd => "false",
 		enable_ltr => "false",
@@ -2748,9 +2731,9 @@
 		logical_channel_address => (starting_channel_number + 2),
 		low_speed_test_select => 0,
 		offset_cancellation => 1,
-		ppmselect => 32,
-		protocol_hint => "prbs",
-		send_direct_reverse_serial_loopback => "None",
+		ppmselect => 8,
+		protocol_hint => "basic",
+		send_direct_reverse_serial_loopback => "Post-CDR",
 		signal_detect_hysteresis => 2,
 		signal_detect_hysteresis_valid_threshold => 1,
 		signal_detect_loss_threshold => 1,
@@ -2779,9 +2762,10 @@
 		ppmdetectrefclk => rx_pll_pfdrefclkout_wire(2),
 		recoverdatain => pll_ch_dataout_wire(5 DOWNTO 4),
 		recoverdataout => wire_receive_pma2_recoverdataout,
+		reverselpbkout => wire_receive_pma2_reverselpbkout,
 		rxpmareset => rx_analogreset_out(2),
-		seriallpbken => rx_seriallpbken(2),
-		seriallpbkin => tx_serialloopbackout(2),
+		seriallpbken => wire_gnd,
+		seriallpbkin => wire_gnd,
 		signaldetect => wire_receive_pma2_signaldetect,
 		testbussel => wire_receive_pma2_testbussel
 	  );
@@ -2789,11 +2773,11 @@
 	receive_pma3 :  arriaii_hssi_rx_pma
 	  GENERIC MAP (
 		adaptive_equalization_mode => "none",
-		allow_serial_loopback => "true",
+		allow_serial_loopback => "false",
 		channel_number => ((starting_channel_number + 3) MOD 4),
 		channel_type => "auto",
 		common_mode => "0.82V",
-		deserialization_factor => 8,
+		deserialization_factor => 10,
 		dprio_config_mode => "000001",
 		enable_ltd => "false",
 		enable_ltr => "false",
@@ -2808,9 +2792,9 @@
 		logical_channel_address => (starting_channel_number + 3),
 		low_speed_test_select => 0,
 		offset_cancellation => 1,
-		ppmselect => 32,
-		protocol_hint => "prbs",
-		send_direct_reverse_serial_loopback => "None",
+		ppmselect => 8,
+		protocol_hint => "basic",
+		send_direct_reverse_serial_loopback => "Post-CDR",
 		signal_detect_hysteresis => 2,
 		signal_detect_hysteresis_valid_threshold => 1,
 		signal_detect_loss_threshold => 1,
@@ -2839,17 +2823,18 @@
 		ppmdetectrefclk => rx_pll_pfdrefclkout_wire(3),
 		recoverdatain => pll_ch_dataout_wire(7 DOWNTO 6),
 		recoverdataout => wire_receive_pma3_recoverdataout,
+		reverselpbkout => wire_receive_pma3_reverselpbkout,
 		rxpmareset => rx_analogreset_out(3),
-		seriallpbken => rx_seriallpbken(3),
-		seriallpbkin => tx_serialloopbackout(3),
+		seriallpbken => wire_gnd,
+		seriallpbkin => wire_gnd,
 		signaldetect => wire_receive_pma3_signaldetect,
 		testbussel => wire_receive_pma3_testbussel
 	  );
-	wire_transmit_pcs0_ctrlenable <= ( "000" & "0");
-	wire_transmit_pcs0_datain <= ( "00000000000000000000000000000000" & tx_datain_wire(7 DOWNTO 0));
+	wire_transmit_pcs0_ctrlenable <= ( "00" & "00");
+	wire_transmit_pcs0_datain <= ( "00000000000000000000" & tx_datain_wire(19 DOWNTO 0));
 	wire_transmit_pcs0_datainfull <= (OTHERS => '0');
-	wire_transmit_pcs0_dispval <= ( "000" & "0");
-	wire_transmit_pcs0_forcedisp <= ( "000" & "0");
+	wire_transmit_pcs0_dispval <= ( "00" & "00");
+	wire_transmit_pcs0_forcedisp <= ( "00" & "00");
 	wire_transmit_pcs0_powerdn <= (OTHERS => '0');
 	wire_transmit_pcs0_revparallelfdbk <= (OTHERS => '0');
 	transmit_pcs0 :  arriaii_hssi_tx_pcs
@@ -2859,18 +2844,18 @@
 		bitslip_enable => "false",
 		channel_bonding => "none",
 		channel_number => ((starting_channel_number + 0) MOD 4),
-		channel_width => 8,
+		channel_width => 20,
 		core_clock_0ppm => "false",
 		datapath_low_latency_mode => "false",
 		datapath_protocol => "basic",
 		disable_ph_low_latency_mode => "false",
 		disparity_mode => "none",
 		dprio_config_mode => "000001",
-		elec_idle_delay => 3,
+		elec_idle_delay => 6,
 		enable_bit_reversal => "false",
 		enable_idle_selection => "false",
 		enable_reverse_parallel_loopback => "false",
-		enable_self_test_mode => "true",
+		enable_self_test_mode => "false",
 		enable_symbol_swap => "false",
 		enc_8b_10b_compatibility_mode => "true",
 		enc_8b_10b_mode => "none",
@@ -2886,15 +2871,16 @@
 		pipe_auto_speed_nego_enable => "false",
 		pipe_freq_scale_mode => "Frequency",
 		prbs_cid_pattern => "false",
-		protocol_hint => "prbs",
+		protocol_hint => "basic",
 		refclk_select => "local",
-		self_test_mode => "prbs7",
-		use_double_data_mode => "false",
+		self_test_mode => "incremental",
+		use_double_data_mode => "true",
 		use_serializer_double_data_mode => "false",
-		wr_clk_mux_select => "int_clk"
+		wr_clk_mux_select => "core_clk"
 	  )
 	  PORT MAP ( 
 		clkout => wire_transmit_pcs0_clkout,
+		coreclk => tx_coreclk_in(0),
 		ctrlenable => wire_transmit_pcs0_ctrlenable,
 		datain => wire_transmit_pcs0_datain,
 		datainfull => wire_transmit_pcs0_datainfull,
@@ -2922,11 +2908,11 @@
 		xgmctrl => cent_unit_txctrlout(0),
 		xgmdatain => cent_unit_tx_xgmdataout(7 DOWNTO 0)
 	  );
-	wire_transmit_pcs1_ctrlenable <= ( "000" & "0");
-	wire_transmit_pcs1_datain <= ( "00000000000000000000000000000000" & tx_datain_wire(15 DOWNTO 8));
+	wire_transmit_pcs1_ctrlenable <= ( "00" & "00");
+	wire_transmit_pcs1_datain <= ( "00000000000000000000" & tx_datain_wire(39 DOWNTO 20));
 	wire_transmit_pcs1_datainfull <= (OTHERS => '0');
-	wire_transmit_pcs1_dispval <= ( "000" & "0");
-	wire_transmit_pcs1_forcedisp <= ( "000" & "0");
+	wire_transmit_pcs1_dispval <= ( "00" & "00");
+	wire_transmit_pcs1_forcedisp <= ( "00" & "00");
 	wire_transmit_pcs1_powerdn <= (OTHERS => '0');
 	wire_transmit_pcs1_revparallelfdbk <= (OTHERS => '0');
 	transmit_pcs1 :  arriaii_hssi_tx_pcs
@@ -2936,18 +2922,18 @@
 		bitslip_enable => "false",
 		channel_bonding => "none",
 		channel_number => ((starting_channel_number + 1) MOD 4),
-		channel_width => 8,
+		channel_width => 20,
 		core_clock_0ppm => "false",
 		datapath_low_latency_mode => "false",
 		datapath_protocol => "basic",
 		disable_ph_low_latency_mode => "false",
 		disparity_mode => "none",
 		dprio_config_mode => "000001",
-		elec_idle_delay => 3,
+		elec_idle_delay => 6,
 		enable_bit_reversal => "false",
 		enable_idle_selection => "false",
 		enable_reverse_parallel_loopback => "false",
-		enable_self_test_mode => "true",
+		enable_self_test_mode => "false",
 		enable_symbol_swap => "false",
 		enc_8b_10b_compatibility_mode => "true",
 		enc_8b_10b_mode => "none",
@@ -2963,15 +2949,16 @@
 		pipe_auto_speed_nego_enable => "false",
 		pipe_freq_scale_mode => "Frequency",
 		prbs_cid_pattern => "false",
-		protocol_hint => "prbs",
+		protocol_hint => "basic",
 		refclk_select => "local",
-		self_test_mode => "prbs7",
-		use_double_data_mode => "false",
+		self_test_mode => "incremental",
+		use_double_data_mode => "true",
 		use_serializer_double_data_mode => "false",
-		wr_clk_mux_select => "int_clk"
+		wr_clk_mux_select => "core_clk"
 	  )
 	  PORT MAP ( 
 		clkout => wire_transmit_pcs1_clkout,
+		coreclk => tx_coreclk_in(1),
 		ctrlenable => wire_transmit_pcs1_ctrlenable,
 		datain => wire_transmit_pcs1_datain,
 		datainfull => wire_transmit_pcs1_datainfull,
@@ -2999,11 +2986,11 @@
 		xgmctrl => cent_unit_txctrlout(1),
 		xgmdatain => cent_unit_tx_xgmdataout(15 DOWNTO 8)
 	  );
-	wire_transmit_pcs2_ctrlenable <= ( "000" & "0");
-	wire_transmit_pcs2_datain <= ( "00000000000000000000000000000000" & tx_datain_wire(23 DOWNTO 16));
+	wire_transmit_pcs2_ctrlenable <= ( "00" & "00");
+	wire_transmit_pcs2_datain <= ( "00000000000000000000" & tx_datain_wire(59 DOWNTO 40));
 	wire_transmit_pcs2_datainfull <= (OTHERS => '0');
-	wire_transmit_pcs2_dispval <= ( "000" & "0");
-	wire_transmit_pcs2_forcedisp <= ( "000" & "0");
+	wire_transmit_pcs2_dispval <= ( "00" & "00");
+	wire_transmit_pcs2_forcedisp <= ( "00" & "00");
 	wire_transmit_pcs2_powerdn <= (OTHERS => '0');
 	wire_transmit_pcs2_revparallelfdbk <= (OTHERS => '0');
 	transmit_pcs2 :  arriaii_hssi_tx_pcs
@@ -3013,18 +3000,18 @@
 		bitslip_enable => "false",
 		channel_bonding => "none",
 		channel_number => ((starting_channel_number + 2) MOD 4),
-		channel_width => 8,
+		channel_width => 20,
 		core_clock_0ppm => "false",
 		datapath_low_latency_mode => "false",
 		datapath_protocol => "basic",
 		disable_ph_low_latency_mode => "false",
 		disparity_mode => "none",
 		dprio_config_mode => "000001",
-		elec_idle_delay => 3,
+		elec_idle_delay => 6,
 		enable_bit_reversal => "false",
 		enable_idle_selection => "false",
 		enable_reverse_parallel_loopback => "false",
-		enable_self_test_mode => "true",
+		enable_self_test_mode => "false",
 		enable_symbol_swap => "false",
 		enc_8b_10b_compatibility_mode => "true",
 		enc_8b_10b_mode => "none",
@@ -3040,15 +3027,16 @@
 		pipe_auto_speed_nego_enable => "false",
 		pipe_freq_scale_mode => "Frequency",
 		prbs_cid_pattern => "false",
-		protocol_hint => "prbs",
+		protocol_hint => "basic",
 		refclk_select => "local",
-		self_test_mode => "prbs7",
-		use_double_data_mode => "false",
+		self_test_mode => "incremental",
+		use_double_data_mode => "true",
 		use_serializer_double_data_mode => "false",
-		wr_clk_mux_select => "int_clk"
+		wr_clk_mux_select => "core_clk"
 	  )
 	  PORT MAP ( 
 		clkout => wire_transmit_pcs2_clkout,
+		coreclk => tx_coreclk_in(2),
 		ctrlenable => wire_transmit_pcs2_ctrlenable,
 		datain => wire_transmit_pcs2_datain,
 		datainfull => wire_transmit_pcs2_datainfull,
@@ -3076,11 +3064,11 @@
 		xgmctrl => cent_unit_txctrlout(2),
 		xgmdatain => cent_unit_tx_xgmdataout(23 DOWNTO 16)
 	  );
-	wire_transmit_pcs3_ctrlenable <= ( "000" & "0");
-	wire_transmit_pcs3_datain <= ( "00000000000000000000000000000000" & tx_datain_wire(31 DOWNTO 24));
+	wire_transmit_pcs3_ctrlenable <= ( "00" & "00");
+	wire_transmit_pcs3_datain <= ( "00000000000000000000" & tx_datain_wire(79 DOWNTO 60));
 	wire_transmit_pcs3_datainfull <= (OTHERS => '0');
-	wire_transmit_pcs3_dispval <= ( "000" & "0");
-	wire_transmit_pcs3_forcedisp <= ( "000" & "0");
+	wire_transmit_pcs3_dispval <= ( "00" & "00");
+	wire_transmit_pcs3_forcedisp <= ( "00" & "00");
 	wire_transmit_pcs3_powerdn <= (OTHERS => '0');
 	wire_transmit_pcs3_revparallelfdbk <= (OTHERS => '0');
 	transmit_pcs3 :  arriaii_hssi_tx_pcs
@@ -3090,18 +3078,18 @@
 		bitslip_enable => "false",
 		channel_bonding => "none",
 		channel_number => ((starting_channel_number + 3) MOD 4),
-		channel_width => 8,
+		channel_width => 20,
 		core_clock_0ppm => "false",
 		datapath_low_latency_mode => "false",
 		datapath_protocol => "basic",
 		disable_ph_low_latency_mode => "false",
 		disparity_mode => "none",
 		dprio_config_mode => "000001",
-		elec_idle_delay => 3,
+		elec_idle_delay => 6,
 		enable_bit_reversal => "false",
 		enable_idle_selection => "false",
 		enable_reverse_parallel_loopback => "false",
-		enable_self_test_mode => "true",
+		enable_self_test_mode => "false",
 		enable_symbol_swap => "false",
 		enc_8b_10b_compatibility_mode => "true",
 		enc_8b_10b_mode => "none",
@@ -3117,15 +3105,16 @@
 		pipe_auto_speed_nego_enable => "false",
 		pipe_freq_scale_mode => "Frequency",
 		prbs_cid_pattern => "false",
-		protocol_hint => "prbs",
+		protocol_hint => "basic",
 		refclk_select => "local",
-		self_test_mode => "prbs7",
-		use_double_data_mode => "false",
+		self_test_mode => "incremental",
+		use_double_data_mode => "true",
 		use_serializer_double_data_mode => "false",
-		wr_clk_mux_select => "int_clk"
+		wr_clk_mux_select => "core_clk"
 	  )
 	  PORT MAP ( 
 		clkout => wire_transmit_pcs3_clkout,
+		coreclk => tx_coreclk_in(3),
 		ctrlenable => wire_transmit_pcs3_ctrlenable,
 		datain => wire_transmit_pcs3_datain,
 		datainfull => wire_transmit_pcs3_datainfull,
@@ -3170,9 +3159,9 @@
 		clkmux_delay => "false",
 		common_mode => "0.65V",
 		dprio_config_mode => "000001",
-		enable_reverse_serial_loopback => "false",
+		enable_reverse_serial_loopback => "true",
 		logical_channel_address => (starting_channel_number + 0),
-		logical_protocol_hint_0 => "prbs",
+		logical_protocol_hint_0 => "basic",
 		low_speed_test_select => 0,
 		physical_clkin0_mapping => "x1",
 		preemp_pretap => 0,
@@ -3180,9 +3169,9 @@
 		preemp_tap_1 => 0,
 		preemp_tap_2 => 0,
 		preemp_tap_2_inv => "false",
-		protocol_hint => "prbs",
+		protocol_hint => "basic",
 		rx_detect => 0,
-		serialization_factor => 8,
+		serialization_factor => 10,
 		slew_rate => "off",
 		termination => "OCT 100 Ohms",
 		use_external_termination => "false",
@@ -3212,9 +3201,8 @@
 		refclk2inpulse => wire_gnd,
 		refclk4in => wire_transmit_pma0_refclk4in,
 		refclk4inpulse => wire_gnd,
-		revserialfdbk => wire_gnd,
+		revserialfdbk => rx_reverselpbkout(0),
 		rxdetecten => txdetectrxout(0),
-		seriallpbkout => wire_transmit_pma0_seriallpbkout,
 		txpmareset => tx_analogreset_out(0)
 	  );
 	wire_transmit_pma1_datain <= ( "00000000000000000000000000000000000000000000" & tx_dataout_pcs_to_pma(39 DOWNTO 20));
@@ -3234,9 +3222,9 @@
 		clkmux_delay => "false",
 		common_mode => "0.65V",
 		dprio_config_mode => "000001",
-		enable_reverse_serial_loopback => "false",
+		enable_reverse_serial_loopback => "true",
 		logical_channel_address => (starting_channel_number + 1),
-		logical_protocol_hint_0 => "prbs",
+		logical_protocol_hint_0 => "basic",
 		low_speed_test_select => 0,
 		physical_clkin0_mapping => "x1",
 		preemp_pretap => 0,
@@ -3244,9 +3232,9 @@
 		preemp_tap_1 => 0,
 		preemp_tap_2 => 0,
 		preemp_tap_2_inv => "false",
-		protocol_hint => "prbs",
+		protocol_hint => "basic",
 		rx_detect => 0,
-		serialization_factor => 8,
+		serialization_factor => 10,
 		slew_rate => "off",
 		termination => "OCT 100 Ohms",
 		use_external_termination => "false",
@@ -3276,9 +3264,8 @@
 		refclk2inpulse => wire_gnd,
 		refclk4in => wire_transmit_pma1_refclk4in,
 		refclk4inpulse => wire_gnd,
-		revserialfdbk => wire_gnd,
+		revserialfdbk => rx_reverselpbkout(1),
 		rxdetecten => txdetectrxout(1),
-		seriallpbkout => wire_transmit_pma1_seriallpbkout,
 		txpmareset => tx_analogreset_out(1)
 	  );
 	wire_transmit_pma2_datain <= ( "00000000000000000000000000000000000000000000" & tx_dataout_pcs_to_pma(59 DOWNTO 40));
@@ -3298,9 +3285,9 @@
 		clkmux_delay => "false",
 		common_mode => "0.65V",
 		dprio_config_mode => "000001",
-		enable_reverse_serial_loopback => "false",
+		enable_reverse_serial_loopback => "true",
 		logical_channel_address => (starting_channel_number + 2),
-		logical_protocol_hint_0 => "prbs",
+		logical_protocol_hint_0 => "basic",
 		low_speed_test_select => 0,
 		physical_clkin0_mapping => "x1",
 		preemp_pretap => 0,
@@ -3308,9 +3295,9 @@
 		preemp_tap_1 => 0,
 		preemp_tap_2 => 0,
 		preemp_tap_2_inv => "false",
-		protocol_hint => "prbs",
+		protocol_hint => "basic",
 		rx_detect => 0,
-		serialization_factor => 8,
+		serialization_factor => 10,
 		slew_rate => "off",
 		termination => "OCT 100 Ohms",
 		use_external_termination => "false",
@@ -3340,9 +3327,8 @@
 		refclk2inpulse => wire_gnd,
 		refclk4in => wire_transmit_pma2_refclk4in,
 		refclk4inpulse => wire_gnd,
-		revserialfdbk => wire_gnd,
+		revserialfdbk => rx_reverselpbkout(2),
 		rxdetecten => txdetectrxout(2),
-		seriallpbkout => wire_transmit_pma2_seriallpbkout,
 		txpmareset => tx_analogreset_out(2)
 	  );
 	wire_transmit_pma3_datain <= ( "00000000000000000000000000000000000000000000" & tx_dataout_pcs_to_pma(79 DOWNTO 60));
@@ -3362,9 +3348,9 @@
 		clkmux_delay => "false",
 		common_mode => "0.65V",
 		dprio_config_mode => "000001",
-		enable_reverse_serial_loopback => "false",
+		enable_reverse_serial_loopback => "true",
 		logical_channel_address => (starting_channel_number + 3),
-		logical_protocol_hint_0 => "prbs",
+		logical_protocol_hint_0 => "basic",
 		low_speed_test_select => 0,
 		physical_clkin0_mapping => "x1",
 		preemp_pretap => 0,
@@ -3372,9 +3358,9 @@
 		preemp_tap_1 => 0,
 		preemp_tap_2 => 0,
 		preemp_tap_2_inv => "false",
-		protocol_hint => "prbs",
+		protocol_hint => "basic",
 		rx_detect => 0,
-		serialization_factor => 8,
+		serialization_factor => 10,
 		slew_rate => "off",
 		termination => "OCT 100 Ohms",
 		use_external_termination => "false",
@@ -3404,20 +3390,19 @@
 		refclk2inpulse => wire_gnd,
 		refclk4in => wire_transmit_pma3_refclk4in,
 		refclk4inpulse => wire_gnd,
-		revserialfdbk => wire_gnd,
+		revserialfdbk => rx_reverselpbkout(3),
 		rxdetecten => txdetectrxout(3),
-		seriallpbkout => wire_transmit_pma3_seriallpbkout,
 		txpmareset => tx_analogreset_out(3)
 	  );
 
- END RTL; --trans_loop_alt4gxb
+ END RTL; --reverse_lpb_alt4gxb
 --VALID FILE
 
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 
-ENTITY trans_loop IS
+ENTITY reverse_lpb IS
 	GENERIC
 	(
 		starting_channel_number		: NATURAL := 0
@@ -3430,91 +3415,83 @@ ENTITY trans_loop IS
 		reconfig_togxb		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 		rx_datain		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 		rx_digitalreset		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
-		rx_seriallpbken		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
+		rx_enapatternalign		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
+		tx_datain		: IN STD_LOGIC_VECTOR (79 DOWNTO 0);
 		tx_digitalreset		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 		reconfig_fromgxb		: OUT STD_LOGIC_VECTOR (16 DOWNTO 0);
-		rx_bistdone		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
-		rx_bisterr		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
 		rx_clkout		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
-		rx_signaldetect		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+		rx_dataout		: OUT STD_LOGIC_VECTOR (79 DOWNTO 0);
 		tx_clkout		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
 		tx_dataout		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0)
 	);
-END trans_loop;
+END reverse_lpb;
 
 
-ARCHITECTURE RTL OF trans_loop IS
+ARCHITECTURE RTL OF reverse_lpb IS
 
 	ATTRIBUTE synthesis_clearbox: natural;
 	ATTRIBUTE synthesis_clearbox OF RTL: ARCHITECTURE IS 2;
 	ATTRIBUTE clearbox_macroname: string;
 	ATTRIBUTE clearbox_macroname OF RTL: ARCHITECTURE IS "alt4gxb";
 	ATTRIBUTE clearbox_defparam: string;
-	ATTRIBUTE clearbox_defparam OF RTL: ARCHITECTURE IS "effective_data_rate=1250 Mbps;enable_lc_tx_pll=false;enable_pll_inclk_alt_drive_rx_cru=true;enable_pll_inclk_drive_rx_cru=true;equalizer_ctrl_a_setting=0;equalizer_ctrl_b_setting=0;equalizer_ctrl_c_setting=0;equalizer_ctrl_d_setting=0;equalizer_ctrl_v_setting=1;equalizer_dcgain_setting=0;gen_reconfig_pll=false;gxb_analog_power=AUTO;gx_channel_type=AUTO;input_clock_frequency=125.0 MHz;intended_device_family=Arria II GX;intended_device_speed_grade=5;intended_device_variant=ANY;loopback_mode=slb;lpm_hint=CBX_MODULE_PREFIX=trans_loop;lpm_type=alt4gxb;number_of_channels=4;operation_mode=duplex;pll_control_width=1;pll_pfd_fb_mode=internal;preemphasis_ctrl_1stposttap_setting=0;preemphasis_ctrl_2ndposttap_inv_setting=false;preemphasis_ctrl_2ndposttap_setting=0;preemphasis_ctrl_pretap_inv_setting=false;preemphasis_ctrl_pretap_setting=0;protocol=prbs;receiver_termination=oct_100_ohms;reconfig_dprio_mode=0;rx_8b_10b_mode=none;rx_align_pattern=0011000001000000;rx_align_pattern_length=16;rx_allow_align_polarity_inversion=false;rx_allow_pipe_polarity_inversion=false;rx_bitslip_enable=false;rx_byte_ordering_mode=NONE;rx_channel_width=8;rx_common_mode=0.82v;rx_cru_bandwidth_type=Auto;rx_cru_inclock0_period=8000;rx_datapath_low_latency_mode=false;rx_datapath_protocol=basic;rx_data_rate=1250;rx_data_rate_remainder=0;rx_digitalreset_port_width=4;rx_enable_bit_reversal=false;rx_enable_deep_align_byte_swap=false;rx_enable_lock_to_data_sig=false;rx_enable_lock_to_refclk_sig=false;" & 
-	                                                    "rx_enable_self_test_mode=true;rx_flip_rx_out=false;rx_force_signal_detect=true;rx_phfiforegmode=false;rx_ppmselect=32;rx_rate_match_fifo_mode=none;rx_run_length=4;rx_run_length_enable=true;rx_self_test_mode=prbs7;rx_signal_detect_threshold=2;rx_use_align_state_machine=false;rx_use_clkout=true;rx_use_coreclk=false;rx_use_deserializer_double_data_mode=false;rx_use_deskew_fifo=false;rx_use_double_data_mode=false;rx_use_rising_edge_triggered_pattern_align=true;transmitter_termination=oct_100_ohms;tx_8b_10b_mode=none;tx_allow_polarity_inversion=false;tx_analog_power=1.5v;tx_channel_width=8;tx_clkout_width=4;tx_common_mode=0.65v;tx_datapath_low_latency_mode=false;tx_data_rate=1250;tx_data_rate_remainder=0;tx_digitalreset_port_width=4;tx_enable_bit_reversal=false;tx_enable_self_test_mode=true;tx_flip_tx_in=false;tx_force_disparity_mode=false;tx_pll_bandwidth_type=Auto;tx_pll_inclk0_period=8000;tx_pll_type=CMU;tx_self_test_mode=prbs7;tx_slew_rate=off;tx_transmit_protocol=basic;tx_use_coreclk=false;tx_use_double_data_mode=false;tx_use_serializer_double_data_mode=false;use_calibration_block=true;vod_ctrl_setting=4;gxb_powerdown_width=1;number_of_quads=1;reconfig_calibration=true;reconfig_fromgxb_port_width=17;reconfig_togxb_port_width=4;rx_cru_m_divider=5;rx_cru_n_divider=1;rx_cru_vco_post_scale_divider=4;rx_dwidth_factor=1;rx_signal_detect_loss_threshold=1;rx_signal_detect_valid_threshold=1;rx_use_external_termination=false;rx_word_aligner_num_byte=1;tx_dwidth_factor=1;tx_pll_clock_post_divider=1;" & 
-	                                                    "tx_pll_m_divider=5;tx_pll_n_divider=1;tx_pll_vco_post_scale_divider=4;tx_use_external_termination=false;";
-	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (3 DOWNTO 0);
+	ATTRIBUTE clearbox_defparam OF RTL: ARCHITECTURE IS "effective_data_rate=3750 Mbps;enable_lc_tx_pll=false;enable_pll_inclk_alt_drive_rx_cru=true;enable_pll_inclk_drive_rx_cru=true;equalizer_ctrl_a_setting=0;equalizer_ctrl_b_setting=0;equalizer_ctrl_c_setting=0;equalizer_ctrl_d_setting=0;equalizer_ctrl_v_setting=1;equalizer_dcgain_setting=0;gen_reconfig_pll=false;gxb_analog_power=AUTO;gx_channel_type=AUTO;input_clock_frequency=150.0 MHz;intended_device_family=Arria II GX;intended_device_speed_grade=5;intended_device_variant=ANY;loopback_mode=postcdr_rslb;lpm_hint=CBX_MODULE_PREFIX=reverse_lpb;lpm_type=alt4gxb;number_of_channels=4;operation_mode=duplex;pll_control_width=1;pll_pfd_fb_mode=internal;preemphasis_ctrl_1stposttap_setting=0;protocol=basic;receiver_termination=oct_100_ohms;reconfig_dprio_mode=0;rx_8b_10b_mode=none;rx_align_pattern=1111100;rx_align_pattern_length=7;rx_allow_align_polarity_inversion=false;rx_allow_pipe_polarity_inversion=false;rx_bitslip_enable=false;rx_byte_ordering_mode=NONE;rx_channel_width=20;rx_common_mode=0.82v;rx_cru_bandwidth_type=Auto;rx_cru_inclock0_period=6667;rx_datapath_low_latency_mode=false;rx_datapath_protocol=basic;rx_data_rate=3750;rx_data_rate_remainder=0;rx_digitalreset_port_width=4;rx_enable_bit_reversal=false;rx_enable_deep_align_byte_swap=false;rx_enable_lock_to_data_sig=false;rx_enable_lock_to_refclk_sig=false;rx_enable_self_test_mode=false;rx_flip_rx_out=false;rx_force_signal_detect=true;rx_phfiforegmode=false;rx_ppmselect=8;rx_rate_match_fifo_mode=none;rx_run_length=40;" & 
+	                                                    "rx_run_length_enable=true;rx_signal_detect_threshold=2;rx_use_align_state_machine=false;rx_use_clkout=true;rx_use_coreclk=false;rx_use_deserializer_double_data_mode=false;rx_use_deskew_fifo=false;rx_use_double_data_mode=true;rx_use_rising_edge_triggered_pattern_align=false;transmitter_termination=oct_100_ohms;tx_8b_10b_mode=none;tx_allow_polarity_inversion=false;tx_analog_power=1.5v;tx_channel_width=20;tx_clkout_width=4;tx_common_mode=0.65v;tx_datapath_low_latency_mode=false;tx_data_rate=3750;tx_data_rate_remainder=0;tx_digitalreset_port_width=4;tx_enable_bit_reversal=false;tx_enable_self_test_mode=false;tx_flip_tx_in=false;tx_force_disparity_mode=false;tx_pll_bandwidth_type=Auto;tx_pll_inclk0_period=6667;tx_pll_type=CMU;tx_slew_rate=off;tx_transmit_protocol=basic;tx_use_coreclk=false;tx_use_double_data_mode=true;tx_use_serializer_double_data_mode=false;use_calibration_block=true;vod_ctrl_setting=4;gxb_powerdown_width=1;number_of_quads=1;reconfig_calibration=true;reconfig_fromgxb_port_width=17;reconfig_togxb_port_width=4;rx_cru_m_divider=25;rx_cru_n_divider=2;rx_cru_vco_post_scale_divider=1;rx_dwidth_factor=2;rx_signal_detect_loss_threshold=1;rx_signal_detect_valid_threshold=1;rx_use_external_termination=false;rx_word_aligner_num_byte=1;tx_dwidth_factor=2;tx_pll_clock_post_divider=1;tx_pll_m_divider=25;tx_pll_n_divider=2;tx_pll_vco_post_scale_divider=1;tx_use_external_termination=false;";
+	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (16 DOWNTO 0);
 	SIGNAL sub_wire1	: STD_LOGIC_VECTOR (3 DOWNTO 0);
-	SIGNAL sub_wire2	: STD_LOGIC_VECTOR (16 DOWNTO 0);
+	SIGNAL sub_wire2	: STD_LOGIC_VECTOR (3 DOWNTO 0);
 	SIGNAL sub_wire3	: STD_LOGIC_VECTOR (3 DOWNTO 0);
-	SIGNAL sub_wire4	: STD_LOGIC_VECTOR (3 DOWNTO 0);
-	SIGNAL sub_wire5	: STD_LOGIC_VECTOR (3 DOWNTO 0);
-	SIGNAL sub_wire6	: STD_LOGIC_VECTOR (3 DOWNTO 0);
+	SIGNAL sub_wire4	: STD_LOGIC_VECTOR (79 DOWNTO 0);
 
 
 
-	COMPONENT trans_loop_alt4gxb
+	COMPONENT reverse_lpb_alt4gxb
 	GENERIC (
 		starting_channel_number		: NATURAL
 	);
 	PORT (
 			pll_inclk	: IN STD_LOGIC ;
 			reconfig_togxb	: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
-			rx_bisterr	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
-			rx_signaldetect	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+			tx_datain	: IN STD_LOGIC_VECTOR (79 DOWNTO 0);
 			tx_digitalreset	: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 			cal_blk_clk	: IN STD_LOGIC ;
 			reconfig_fromgxb	: OUT STD_LOGIC_VECTOR (16 DOWNTO 0);
-			rx_bistdone	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
-			rx_seriallpbken	: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 			tx_clkout	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
 			tx_dataout	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
 			reconfig_clk	: IN STD_LOGIC ;
 			rx_datain	: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 			rx_digitalreset	: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
-			rx_clkout	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0)
+			rx_enapatternalign	: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
+			rx_clkout	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);
+			rx_dataout	: OUT STD_LOGIC_VECTOR (79 DOWNTO 0)
 	);
 	END COMPONENT;
 
 BEGIN
-	rx_bisterr    <= sub_wire0(3 DOWNTO 0);
-	rx_signaldetect    <= sub_wire1(3 DOWNTO 0);
-	reconfig_fromgxb    <= sub_wire2(16 DOWNTO 0);
-	rx_bistdone    <= sub_wire3(3 DOWNTO 0);
-	tx_clkout    <= sub_wire4(3 DOWNTO 0);
-	tx_dataout    <= sub_wire5(3 DOWNTO 0);
-	rx_clkout    <= sub_wire6(3 DOWNTO 0);
+	reconfig_fromgxb    <= sub_wire0(16 DOWNTO 0);
+	tx_clkout    <= sub_wire1(3 DOWNTO 0);
+	tx_dataout    <= sub_wire2(3 DOWNTO 0);
+	rx_clkout    <= sub_wire3(3 DOWNTO 0);
+	rx_dataout    <= sub_wire4(79 DOWNTO 0);
 
-	trans_loop_alt4gxb_component : trans_loop_alt4gxb
+	reverse_lpb_alt4gxb_component : reverse_lpb_alt4gxb
 	GENERIC MAP (
 		starting_channel_number => starting_channel_number
 	)
 	PORT MAP (
 		pll_inclk => pll_inclk,
 		reconfig_togxb => reconfig_togxb,
+		tx_datain => tx_datain,
 		tx_digitalreset => tx_digitalreset,
 		cal_blk_clk => cal_blk_clk,
-		rx_seriallpbken => rx_seriallpbken,
 		reconfig_clk => reconfig_clk,
 		rx_datain => rx_datain,
 		rx_digitalreset => rx_digitalreset,
-		rx_bisterr => sub_wire0,
-		rx_signaldetect => sub_wire1,
-		reconfig_fromgxb => sub_wire2,
-		rx_bistdone => sub_wire3,
-		tx_clkout => sub_wire4,
-		tx_dataout => sub_wire5,
-		rx_clkout => sub_wire6
+		rx_enapatternalign => rx_enapatternalign,
+		reconfig_fromgxb => sub_wire0,
+		tx_clkout => sub_wire1,
+		tx_dataout => sub_wire2,
+		rx_clkout => sub_wire3,
+		rx_dataout => sub_wire4
 	);
 
 
@@ -3530,16 +3507,16 @@ END RTL;
 -- Retrieval info: PRIVATE: RECONFIG_SUBPROTOCOL STRING "none"
 -- Retrieval info: PRIVATE: RX_ENABLE_DC_COUPLING STRING "false"
 -- Retrieval info: PRIVATE: SYNTH_WRAPPER_GEN_POSTFIX STRING "0"
--- Retrieval info: PRIVATE: WIZ_BASE_DATA_RATE STRING "1250.0"
+-- Retrieval info: PRIVATE: WIZ_BASE_DATA_RATE STRING "3750.0"
 -- Retrieval info: PRIVATE: WIZ_BASE_DATA_RATE_ENABLE STRING "0"
--- Retrieval info: PRIVATE: WIZ_DATA_RATE STRING "1250"
--- Retrieval info: PRIVATE: WIZ_DPRIO_INCLK_FREQ_ARRAY STRING "100 100 100 100"
+-- Retrieval info: PRIVATE: WIZ_DATA_RATE STRING "3750"
+-- Retrieval info: PRIVATE: WIZ_DPRIO_INCLK_FREQ_ARRAY STRING "100"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_INPUT_A STRING "2000"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_INPUT_A_UNIT STRING "Mbps"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_INPUT_B STRING "100"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_INPUT_B_UNIT STRING "MHz"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_INPUT_SELECTION NUMERIC "0"
--- Retrieval info: PRIVATE: WIZ_DPRIO_REF_CLK0_FREQ STRING "62.5"
+-- Retrieval info: PRIVATE: WIZ_DPRIO_REF_CLK0_FREQ STRING "75.0"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_REF_CLK0_PROTOCOL STRING "Basic"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_REF_CLK1_FREQ STRING "250"
 -- Retrieval info: PRIVATE: WIZ_DPRIO_REF_CLK1_PROTOCOL STRING "Basic"
@@ -3556,18 +3533,18 @@ END RTL;
 -- Retrieval info: PRIVATE: WIZ_ENABLE_EQUALIZER_CTRL NUMERIC "0"
 -- Retrieval info: PRIVATE: WIZ_EQUALIZER_CTRL_SETTING NUMERIC "0"
 -- Retrieval info: PRIVATE: WIZ_FORCE_DEFAULT_SETTINGS NUMERIC "0"
--- Retrieval info: PRIVATE: WIZ_INCLK_FREQ STRING "125.0"
--- Retrieval info: PRIVATE: WIZ_INCLK_FREQ_ARRAY STRING "62.5 78.125 125.0 156.25 250.0 312.5 500.0"
--- Retrieval info: PRIVATE: WIZ_INPUT_A STRING "1250"
+-- Retrieval info: PRIVATE: WIZ_INCLK_FREQ STRING "150.0"
+-- Retrieval info: PRIVATE: WIZ_INCLK_FREQ_ARRAY STRING "75.0 93.75 117.1875 150.0 187.5 234.375 300.0 375.0 468.75 600.0"
+-- Retrieval info: PRIVATE: WIZ_INPUT_A STRING "3750"
 -- Retrieval info: PRIVATE: WIZ_INPUT_A_UNIT STRING "Mbps"
--- Retrieval info: PRIVATE: WIZ_INPUT_B STRING "125.0"
+-- Retrieval info: PRIVATE: WIZ_INPUT_B STRING "150.0"
 -- Retrieval info: PRIVATE: WIZ_INPUT_B_UNIT STRING "MHz"
 -- Retrieval info: PRIVATE: WIZ_INPUT_SELECTION NUMERIC "0"
 -- Retrieval info: PRIVATE: WIZ_PROTOCOL STRING "Basic"
--- Retrieval info: PRIVATE: WIZ_SUBPROTOCOL STRING "PRBS"
+-- Retrieval info: PRIVATE: WIZ_SUBPROTOCOL STRING "None"
 -- Retrieval info: PRIVATE: WIZ_WORD_ALIGN_FLIP_PATTERN STRING "0"
 -- Retrieval info: PARAMETER: STARTING_CHANNEL_NUMBER NUMERIC "0"
--- Retrieval info: CONSTANT: EFFECTIVE_DATA_RATE STRING "1250 Mbps"
+-- Retrieval info: CONSTANT: EFFECTIVE_DATA_RATE STRING "3750 Mbps"
 -- Retrieval info: CONSTANT: ENABLE_LC_TX_PLL STRING "false"
 -- Retrieval info: CONSTANT: ENABLE_PLL_INCLK_ALT_DRIVE_RX_CRU STRING "true"
 -- Retrieval info: CONSTANT: ENABLE_PLL_INCLK_DRIVE_RX_CRU STRING "true"
@@ -3580,84 +3557,78 @@ END RTL;
 -- Retrieval info: CONSTANT: GEN_RECONFIG_PLL STRING "false"
 -- Retrieval info: CONSTANT: GXB_ANALOG_POWER STRING "AUTO"
 -- Retrieval info: CONSTANT: GX_CHANNEL_TYPE STRING "AUTO"
--- Retrieval info: CONSTANT: INPUT_CLOCK_FREQUENCY STRING "125.0 MHz"
+-- Retrieval info: CONSTANT: INPUT_CLOCK_FREQUENCY STRING "150.0 MHz"
 -- Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Arria II GX"
 -- Retrieval info: CONSTANT: INTENDED_DEVICE_SPEED_GRADE STRING "5"
 -- Retrieval info: CONSTANT: INTENDED_DEVICE_VARIANT STRING "ANY"
--- Retrieval info: CONSTANT: LOOPBACK_MODE STRING "slb"
+-- Retrieval info: CONSTANT: LOOPBACK_MODE STRING "postcdr_rslb"
 -- Retrieval info: CONSTANT: LPM_TYPE STRING "alt4gxb"
 -- Retrieval info: CONSTANT: NUMBER_OF_CHANNELS NUMERIC "4"
 -- Retrieval info: CONSTANT: OPERATION_MODE STRING "duplex"
 -- Retrieval info: CONSTANT: PLL_CONTROL_WIDTH NUMERIC "1"
 -- Retrieval info: CONSTANT: PLL_PFD_FB_MODE STRING "internal"
 -- Retrieval info: CONSTANT: PREEMPHASIS_CTRL_1STPOSTTAP_SETTING NUMERIC "0"
--- Retrieval info: CONSTANT: PREEMPHASIS_CTRL_2NDPOSTTAP_INV_SETTING STRING "false"
--- Retrieval info: CONSTANT: PREEMPHASIS_CTRL_2NDPOSTTAP_SETTING NUMERIC "0"
--- Retrieval info: CONSTANT: PREEMPHASIS_CTRL_PRETAP_INV_SETTING STRING "false"
--- Retrieval info: CONSTANT: PREEMPHASIS_CTRL_PRETAP_SETTING NUMERIC "0"
--- Retrieval info: CONSTANT: PROTOCOL STRING "prbs"
+-- Retrieval info: CONSTANT: PROTOCOL STRING "basic"
 -- Retrieval info: CONSTANT: RECEIVER_TERMINATION STRING "oct_100_ohms"
 -- Retrieval info: CONSTANT: RECONFIG_DPRIO_MODE NUMERIC "0"
 -- Retrieval info: CONSTANT: RX_8B_10B_MODE STRING "none"
--- Retrieval info: CONSTANT: RX_ALIGN_PATTERN STRING "0011000001000000"
--- Retrieval info: CONSTANT: RX_ALIGN_PATTERN_LENGTH NUMERIC "16"
+-- Retrieval info: CONSTANT: RX_ALIGN_PATTERN STRING "1111100"
+-- Retrieval info: CONSTANT: RX_ALIGN_PATTERN_LENGTH NUMERIC "7"
 -- Retrieval info: CONSTANT: RX_ALLOW_ALIGN_POLARITY_INVERSION STRING "false"
 -- Retrieval info: CONSTANT: RX_ALLOW_PIPE_POLARITY_INVERSION STRING "false"
 -- Retrieval info: CONSTANT: RX_BITSLIP_ENABLE STRING "false"
 -- Retrieval info: CONSTANT: RX_BYTE_ORDERING_MODE STRING "NONE"
--- Retrieval info: CONSTANT: RX_CHANNEL_WIDTH NUMERIC "8"
+-- Retrieval info: CONSTANT: RX_CHANNEL_WIDTH NUMERIC "20"
 -- Retrieval info: CONSTANT: RX_COMMON_MODE STRING "0.82v"
 -- Retrieval info: CONSTANT: RX_CRU_BANDWIDTH_TYPE STRING "Auto"
--- Retrieval info: CONSTANT: RX_CRU_INCLOCK0_PERIOD NUMERIC "8000"
+-- Retrieval info: CONSTANT: RX_CRU_INCLOCK0_PERIOD NUMERIC "6667"
 -- Retrieval info: CONSTANT: RX_DATAPATH_LOW_LATENCY_MODE STRING "false"
 -- Retrieval info: CONSTANT: RX_DATAPATH_PROTOCOL STRING "basic"
--- Retrieval info: CONSTANT: RX_DATA_RATE NUMERIC "1250"
+-- Retrieval info: CONSTANT: RX_DATA_RATE NUMERIC "3750"
 -- Retrieval info: CONSTANT: RX_DATA_RATE_REMAINDER NUMERIC "0"
 -- Retrieval info: CONSTANT: RX_DIGITALRESET_PORT_WIDTH NUMERIC "4"
 -- Retrieval info: CONSTANT: RX_ENABLE_BIT_REVERSAL STRING "false"
 -- Retrieval info: CONSTANT: RX_ENABLE_DEEP_ALIGN_BYTE_SWAP STRING "false"
 -- Retrieval info: CONSTANT: RX_ENABLE_LOCK_TO_DATA_SIG STRING "false"
 -- Retrieval info: CONSTANT: RX_ENABLE_LOCK_TO_REFCLK_SIG STRING "false"
--- Retrieval info: CONSTANT: RX_ENABLE_SELF_TEST_MODE STRING "true"
+-- Retrieval info: CONSTANT: RX_ENABLE_SELF_TEST_MODE STRING "false"
 -- Retrieval info: CONSTANT: RX_FLIP_RX_OUT STRING "false"
 -- Retrieval info: CONSTANT: RX_FORCE_SIGNAL_DETECT STRING "true"
 -- Retrieval info: CONSTANT: RX_PHFIFOREGMODE STRING "false"
--- Retrieval info: CONSTANT: RX_PPMSELECT NUMERIC "32"
+-- Retrieval info: CONSTANT: RX_PPMSELECT NUMERIC "8"
 -- Retrieval info: CONSTANT: RX_RATE_MATCH_FIFO_MODE STRING "none"
--- Retrieval info: CONSTANT: RX_RUN_LENGTH STRING "4"
+-- Retrieval info: CONSTANT: RX_RUN_LENGTH NUMERIC "40"
 -- Retrieval info: CONSTANT: RX_RUN_LENGTH_ENABLE STRING "true"
--- Retrieval info: CONSTANT: RX_SELF_TEST_MODE STRING "prbs7"
 -- Retrieval info: CONSTANT: RX_SIGNAL_DETECT_THRESHOLD NUMERIC "2"
 -- Retrieval info: CONSTANT: RX_USE_ALIGN_STATE_MACHINE STRING "false"
 -- Retrieval info: CONSTANT: RX_USE_CLKOUT STRING "true"
 -- Retrieval info: CONSTANT: RX_USE_CORECLK STRING "false"
 -- Retrieval info: CONSTANT: RX_USE_DESERIALIZER_DOUBLE_DATA_MODE STRING "false"
 -- Retrieval info: CONSTANT: RX_USE_DESKEW_FIFO STRING "false"
--- Retrieval info: CONSTANT: RX_USE_DOUBLE_DATA_MODE STRING "false"
--- Retrieval info: CONSTANT: RX_USE_RISING_EDGE_TRIGGERED_PATTERN_ALIGN STRING "true"
+-- Retrieval info: CONSTANT: RX_USE_DOUBLE_DATA_MODE STRING "true"
+-- Retrieval info: CONSTANT: RX_USE_RISING_EDGE_TRIGGERED_PATTERN_ALIGN STRING "false"
 -- Retrieval info: CONSTANT: TRANSMITTER_TERMINATION STRING "oct_100_ohms"
 -- Retrieval info: CONSTANT: TX_8B_10B_MODE STRING "none"
 -- Retrieval info: CONSTANT: TX_ALLOW_POLARITY_INVERSION STRING "false"
 -- Retrieval info: CONSTANT: TX_ANALOG_POWER STRING "1.5v"
--- Retrieval info: CONSTANT: TX_CHANNEL_WIDTH NUMERIC "8"
+-- Retrieval info: CONSTANT: TX_CHANNEL_WIDTH NUMERIC "20"
 -- Retrieval info: CONSTANT: TX_CLKOUT_WIDTH NUMERIC "4"
 -- Retrieval info: CONSTANT: TX_COMMON_MODE STRING "0.65v"
 -- Retrieval info: CONSTANT: TX_DATAPATH_LOW_LATENCY_MODE STRING "false"
--- Retrieval info: CONSTANT: TX_DATA_RATE NUMERIC "1250"
+-- Retrieval info: CONSTANT: TX_DATA_RATE NUMERIC "3750"
 -- Retrieval info: CONSTANT: TX_DATA_RATE_REMAINDER NUMERIC "0"
 -- Retrieval info: CONSTANT: TX_DIGITALRESET_PORT_WIDTH NUMERIC "4"
 -- Retrieval info: CONSTANT: TX_ENABLE_BIT_REVERSAL STRING "false"
--- Retrieval info: CONSTANT: TX_ENABLE_SELF_TEST_MODE STRING "true"
+-- Retrieval info: CONSTANT: TX_ENABLE_SELF_TEST_MODE STRING "false"
 -- Retrieval info: CONSTANT: TX_FLIP_TX_IN STRING "false"
 -- Retrieval info: CONSTANT: TX_FORCE_DISPARITY_MODE STRING "false"
 -- Retrieval info: CONSTANT: TX_PLL_BANDWIDTH_TYPE STRING "Auto"
--- Retrieval info: CONSTANT: TX_PLL_INCLK0_PERIOD NUMERIC "8000"
+-- Retrieval info: CONSTANT: TX_PLL_INCLK0_PERIOD NUMERIC "6667"
 -- Retrieval info: CONSTANT: TX_PLL_TYPE STRING "CMU"
--- Retrieval info: CONSTANT: TX_SELF_TEST_MODE STRING "prbs7"
 -- Retrieval info: CONSTANT: TX_SLEW_RATE STRING "off"
 -- Retrieval info: CONSTANT: TX_TRANSMIT_PROTOCOL STRING "basic"
 -- Retrieval info: CONSTANT: TX_USE_CORECLK STRING "false"
--- Retrieval info: CONSTANT: TX_USE_DOUBLE_DATA_MODE STRING "false"
+-- Retrieval info: CONSTANT: TX_USE_DOUBLE_DATA_MODE STRING "true"
 -- Retrieval info: CONSTANT: TX_USE_SERIALIZER_DOUBLE_DATA_MODE STRING "false"
 -- Retrieval info: CONSTANT: USE_CALIBRATION_BLOCK STRING "true"
 -- Retrieval info: CONSTANT: VOD_CTRL_SETTING NUMERIC "4"
@@ -3666,33 +3637,32 @@ END RTL;
 -- Retrieval info: CONSTANT: reconfig_calibration STRING "true"
 -- Retrieval info: CONSTANT: reconfig_fromgxb_port_width NUMERIC "17"
 -- Retrieval info: CONSTANT: reconfig_togxb_port_width NUMERIC "4"
--- Retrieval info: CONSTANT: rx_cru_m_divider NUMERIC "5"
--- Retrieval info: CONSTANT: rx_cru_n_divider NUMERIC "1"
--- Retrieval info: CONSTANT: rx_cru_vco_post_scale_divider NUMERIC "4"
--- Retrieval info: CONSTANT: rx_dwidth_factor NUMERIC "1"
+-- Retrieval info: CONSTANT: rx_cru_m_divider NUMERIC "25"
+-- Retrieval info: CONSTANT: rx_cru_n_divider NUMERIC "2"
+-- Retrieval info: CONSTANT: rx_cru_vco_post_scale_divider NUMERIC "1"
+-- Retrieval info: CONSTANT: rx_dwidth_factor NUMERIC "2"
 -- Retrieval info: CONSTANT: rx_signal_detect_loss_threshold STRING "1"
 -- Retrieval info: CONSTANT: rx_signal_detect_valid_threshold STRING "1"
 -- Retrieval info: CONSTANT: rx_use_external_termination STRING "false"
 -- Retrieval info: CONSTANT: rx_word_aligner_num_byte NUMERIC "1"
--- Retrieval info: CONSTANT: tx_dwidth_factor NUMERIC "1"
+-- Retrieval info: CONSTANT: tx_dwidth_factor NUMERIC "2"
 -- Retrieval info: CONSTANT: tx_pll_clock_post_divider NUMERIC "1"
--- Retrieval info: CONSTANT: tx_pll_m_divider NUMERIC "5"
--- Retrieval info: CONSTANT: tx_pll_n_divider NUMERIC "1"
--- Retrieval info: CONSTANT: tx_pll_vco_post_scale_divider NUMERIC "4"
+-- Retrieval info: CONSTANT: tx_pll_m_divider NUMERIC "25"
+-- Retrieval info: CONSTANT: tx_pll_n_divider NUMERIC "2"
+-- Retrieval info: CONSTANT: tx_pll_vco_post_scale_divider NUMERIC "1"
 -- Retrieval info: CONSTANT: tx_use_external_termination STRING "false"
 -- Retrieval info: USED_PORT: cal_blk_clk 0 0 0 0 INPUT NODEFVAL "cal_blk_clk"
 -- Retrieval info: USED_PORT: pll_inclk 0 0 0 0 INPUT NODEFVAL "pll_inclk"
 -- Retrieval info: USED_PORT: reconfig_clk 0 0 0 0 INPUT NODEFVAL "reconfig_clk"
 -- Retrieval info: USED_PORT: reconfig_fromgxb 0 0 17 0 OUTPUT NODEFVAL "reconfig_fromgxb[16..0]"
 -- Retrieval info: USED_PORT: reconfig_togxb 0 0 4 0 INPUT NODEFVAL "reconfig_togxb[3..0]"
--- Retrieval info: USED_PORT: rx_bistdone 0 0 4 0 OUTPUT NODEFVAL "rx_bistdone[3..0]"
--- Retrieval info: USED_PORT: rx_bisterr 0 0 4 0 OUTPUT NODEFVAL "rx_bisterr[3..0]"
 -- Retrieval info: USED_PORT: rx_clkout 0 0 4 0 OUTPUT NODEFVAL "rx_clkout[3..0]"
 -- Retrieval info: USED_PORT: rx_datain 0 0 4 0 INPUT NODEFVAL "rx_datain[3..0]"
+-- Retrieval info: USED_PORT: rx_dataout 0 0 80 0 OUTPUT NODEFVAL "rx_dataout[79..0]"
 -- Retrieval info: USED_PORT: rx_digitalreset 0 0 4 0 INPUT NODEFVAL "rx_digitalreset[3..0]"
--- Retrieval info: USED_PORT: rx_seriallpbken 0 0 4 0 INPUT NODEFVAL "rx_seriallpbken[3..0]"
--- Retrieval info: USED_PORT: rx_signaldetect 0 0 4 0 OUTPUT NODEFVAL "rx_signaldetect[3..0]"
+-- Retrieval info: USED_PORT: rx_enapatternalign 0 0 4 0 INPUT NODEFVAL "rx_enapatternalign[3..0]"
 -- Retrieval info: USED_PORT: tx_clkout 0 0 4 0 OUTPUT NODEFVAL "tx_clkout[3..0]"
+-- Retrieval info: USED_PORT: tx_datain 0 0 80 0 INPUT NODEFVAL "tx_datain[79..0]"
 -- Retrieval info: USED_PORT: tx_dataout 0 0 4 0 OUTPUT NODEFVAL "tx_dataout[3..0]"
 -- Retrieval info: USED_PORT: tx_digitalreset 0 0 4 0 INPUT NODEFVAL "tx_digitalreset[3..0]"
 -- Retrieval info: CONNECT: @cal_blk_clk 0 0 0 0 cal_blk_clk 0 0 0 0
@@ -3701,20 +3671,19 @@ END RTL;
 -- Retrieval info: CONNECT: @reconfig_togxb 0 0 4 0 reconfig_togxb 0 0 4 0
 -- Retrieval info: CONNECT: @rx_datain 0 0 4 0 rx_datain 0 0 4 0
 -- Retrieval info: CONNECT: @rx_digitalreset 0 0 4 0 rx_digitalreset 0 0 4 0
--- Retrieval info: CONNECT: @rx_seriallpbken 0 0 4 0 rx_seriallpbken 0 0 4 0
+-- Retrieval info: CONNECT: @rx_enapatternalign 0 0 4 0 rx_enapatternalign 0 0 4 0
+-- Retrieval info: CONNECT: @tx_datain 0 0 80 0 tx_datain 0 0 80 0
 -- Retrieval info: CONNECT: @tx_digitalreset 0 0 4 0 tx_digitalreset 0 0 4 0
 -- Retrieval info: CONNECT: reconfig_fromgxb 0 0 17 0 @reconfig_fromgxb 0 0 17 0
--- Retrieval info: CONNECT: rx_bistdone 0 0 4 0 @rx_bistdone 0 0 4 0
--- Retrieval info: CONNECT: rx_bisterr 0 0 4 0 @rx_bisterr 0 0 4 0
 -- Retrieval info: CONNECT: rx_clkout 0 0 4 0 @rx_clkout 0 0 4 0
--- Retrieval info: CONNECT: rx_signaldetect 0 0 4 0 @rx_signaldetect 0 0 4 0
+-- Retrieval info: CONNECT: rx_dataout 0 0 80 0 @rx_dataout 0 0 80 0
 -- Retrieval info: CONNECT: tx_clkout 0 0 4 0 @tx_clkout 0 0 4 0
 -- Retrieval info: CONNECT: tx_dataout 0 0 4 0 @tx_dataout 0 0 4 0
--- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop.vhd TRUE
--- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop.ppf TRUE
--- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop.inc FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop.cmp TRUE
--- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop.bsf FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL trans_loop_inst.vhd FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL reverse_lpb.vhd TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL reverse_lpb.ppf TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL reverse_lpb.inc FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL reverse_lpb.cmp TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL reverse_lpb.bsf FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL reverse_lpb_inst.vhd FALSE
 -- Retrieval info: LIB_FILE: arriaii_hssi
 -- Retrieval info: CBX_MODULE_PREFIX: ON

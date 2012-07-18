@@ -4,7 +4,7 @@
 -- MODULE: alt2gxb_reconfig 
 
 -- ============================================================
--- File Name: trans_rcfg.vhd
+-- File Name: sio_rcfg.vhd
 -- Megafunction Name(s):
 -- 			alt2gxb_reconfig
 --
@@ -33,7 +33,7 @@
 --applicable agreement for further details.
 
 
---alt2gxb_reconfig CBX_AUTO_BLACKBOX="ALL" DEVICE_FAMILY="Arria II GX" ENABLE_BUF_CAL="TRUE" NUMBER_OF_CHANNELS=12 NUMBER_OF_RECONFIG_PORTS=3 RECONFIG_FROMGXB_WIDTH=51 RECONFIG_TOGXB_WIDTH=4 busy reconfig_clk reconfig_fromgxb reconfig_togxb
+--alt2gxb_reconfig CBX_AUTO_BLACKBOX="ALL" DEVICE_FAMILY="Arria II GX" ENABLE_BUF_CAL="TRUE" NUMBER_OF_CHANNELS=8 NUMBER_OF_RECONFIG_PORTS=2 RECONFIG_FROMGXB_WIDTH=34 RECONFIG_TOGXB_WIDTH=4 busy reconfig_clk reconfig_fromgxb reconfig_togxb
 --VERSION_BEGIN 11.1SP2 cbx_alt2gxb_reconfig 2012:01:25:21:12:11:SJ cbx_alt_cal 2012:01:25:21:12:11:SJ cbx_alt_dprio 2012:01:25:21:12:11:SJ cbx_altsyncram 2012:01:25:21:12:11:SJ cbx_cycloneii 2012:01:25:21:12:11:SJ cbx_lpm_add_sub 2012:01:25:21:12:11:SJ cbx_lpm_compare 2012:01:25:21:12:11:SJ cbx_lpm_counter 2012:01:25:21:12:11:SJ cbx_lpm_decode 2012:01:25:21:12:11:SJ cbx_lpm_mux 2012:01:25:21:12:11:SJ cbx_lpm_shiftreg 2012:01:25:21:12:11:SJ cbx_mgl 2012:01:25:21:26:09:SJ cbx_stratix 2012:01:25:21:12:11:SJ cbx_stratixii 2012:01:25:21:12:11:SJ cbx_stratixiii 2012:01:25:21:12:11:SJ cbx_stratixv 2012:01:25:21:12:11:SJ cbx_util_mgl 2012:01:25:21:12:11:SJ  VERSION_END
 
 
@@ -47,7 +47,7 @@
  LIBRARY ieee;
  USE ieee.std_logic_1164.all;
 
- ENTITY  trans_rcfg_alt_dprio_kuj IS 
+ ENTITY  sio_rcfg_alt_dprio_kuj IS 
 	 PORT 
 	 ( 
 		 address	:	IN  STD_LOGIC_VECTOR (15 DOWNTO 0);
@@ -65,9 +65,9 @@
 		 wren	:	IN  STD_LOGIC := '0';
 		 wren_data	:	IN  STD_LOGIC := '0'
 	 ); 
- END trans_rcfg_alt_dprio_kuj;
+ END sio_rcfg_alt_dprio_kuj;
 
- ARCHITECTURE RTL OF trans_rcfg_alt_dprio_kuj IS
+ ARCHITECTURE RTL OF sio_rcfg_alt_dprio_kuj IS
 
 	 ATTRIBUTE synthesis_clearbox : natural;
 	 ATTRIBUTE synthesis_clearbox OF RTL : ARCHITECTURE IS 2;
@@ -83,7 +83,7 @@
 	 ;
 	 ATTRIBUTE ALTERA_ATTRIBUTE OF addr_shift_reg : SIGNAL IS "PRESERVE_REGISTER=ON;POWER_UP_LEVEL=LOW";
 
-	 SIGNAL  wire_addr_shift_reg_w_q_range225w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_addr_shift_reg_w_q_range221w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL	 in_data_shift_reg	:	STD_LOGIC_VECTOR(15 DOWNTO 0)
 	 -- synopsys translate_off
 	  := (OTHERS => '0')
@@ -100,7 +100,7 @@
 	 ;
 	 ATTRIBUTE ALTERA_ATTRIBUTE OF rd_out_data_shift_reg : SIGNAL IS "PRESERVE_REGISTER=ON;POWER_UP_LEVEL=LOW";
 
-	 SIGNAL  wire_rd_out_data_shift_reg_w_q_range401w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_rd_out_data_shift_reg_w_q_range397w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL	 wire_startup_cntr_d	:	STD_LOGIC_VECTOR (2 DOWNTO 0);
 	 SIGNAL	 startup_cntr	:	STD_LOGIC_VECTOR(2 DOWNTO 0)
 	 -- synopsys translate_off
@@ -110,16 +110,16 @@
 	 ATTRIBUTE ALTERA_ATTRIBUTE OF startup_cntr : SIGNAL IS "PRESERVE_REGISTER=ON;POWER_UP_LEVEL=LOW";
 
 	 SIGNAL	 wire_startup_cntr_ena	:	STD_LOGIC_VECTOR(2 DOWNTO 0);
-	 SIGNAL  wire_startup_cntr_w_lg_w_q_range466w469w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_startup_cntr_w_lg_w_q_range470w476w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_startup_cntr_w_lg_w_q_range470w479w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_startup_cntr_w_lg_w_q_range462w463w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_startup_cntr_w_lg_w_q_range462w478w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_startup_cntr_w_lg_w_q_range462w467w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_startup_cntr_w_lg_w_q_range470w471w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_startup_cntr_w_lg_w_q_range462w465w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_startup_cntr_w_lg_w_q_range466w472w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_startup_cntr_w_lg_w_q_range466w475w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_startup_cntr_w_lg_w_q_range458w459w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_startup_cntr_w_lg_w_q_range458w474w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_startup_cntr_w_lg_w_q_range458w463w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_startup_cntr_w_lg_w_q_range466w467w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_startup_cntr_w_q_range458w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_startup_cntr_w_q_range462w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_startup_cntr_w_q_range466w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_startup_cntr_w_q_range470w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL	 state_mc_reg	:	STD_LOGIC_VECTOR(2 DOWNTO 0)
 	 -- synopsys translate_off
 	  := (OTHERS => '0')
@@ -127,9 +127,9 @@
 	 ;
 	 ATTRIBUTE ALTERA_ATTRIBUTE OF state_mc_reg : SIGNAL IS "POWER_UP_LEVEL=LOW";
 
-	 SIGNAL  wire_state_mc_reg_w_q_range60w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_state_mc_reg_w_q_range79w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_state_mc_reg_w_q_range95w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_state_mc_reg_w_q_range56w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_state_mc_reg_w_q_range75w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_state_mc_reg_w_q_range91w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL	 wire_wr_out_data_shift_reg_d	:	STD_LOGIC_VECTOR (31 DOWNTO 0);
 	 SIGNAL	 wire_wr_out_data_shift_reg_asdata	:	STD_LOGIC_VECTOR (31 DOWNTO 0);
 	 SIGNAL	 wr_out_data_shift_reg	:	STD_LOGIC_VECTOR(31 DOWNTO 0)
@@ -139,10 +139,10 @@
 	 ;
 	 ATTRIBUTE ALTERA_ATTRIBUTE OF wr_out_data_shift_reg : SIGNAL IS "PRESERVE_REGISTER=ON;POWER_UP_LEVEL=LOW";
 
-	 SIGNAL  wire_wr_out_data_shift_reg_w_q_range336w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_pre_amble_cmpr_w_lg_w_lg_agb223w400w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_pre_amble_cmpr_w_lg_w_lg_agb223w335w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_pre_amble_cmpr_w_lg_agb223w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_wr_out_data_shift_reg_w_q_range332w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_pre_amble_cmpr_w_lg_w_lg_agb219w396w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_pre_amble_cmpr_w_lg_w_lg_agb219w331w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_pre_amble_cmpr_w_lg_agb219w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_pre_amble_cmpr_aeb	:	STD_LOGIC;
 	 SIGNAL  wire_pre_amble_cmpr_agb	:	STD_LOGIC;
 	 SIGNAL  wire_pre_amble_cmpr_datab	:	STD_LOGIC_VECTOR (5 DOWNTO 0);
@@ -152,57 +152,57 @@
 	 SIGNAL  wire_state_mc_cmpr_aeb	:	STD_LOGIC;
 	 SIGNAL  wire_state_mc_cmpr_datab	:	STD_LOGIC_VECTOR (5 DOWNTO 0);
 	 SIGNAL  wire_state_mc_counter_cnt_en	:	STD_LOGIC;
-	 SIGNAL  wire_dprio_w_lg_write_state45w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_write_state41w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_state_mc_counter_q	:	STD_LOGIC_VECTOR (5 DOWNTO 0);
 	 SIGNAL  wire_state_mc_decode_eq	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL	wire_dprioin_mux_dataout	:	STD_LOGIC;
-	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_s0_to_062w63w64w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_s1_to_081w82w83w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_s2_to_097w98w99w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_wren51w74w87w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_wren51w74w75w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_wr_addr_state222w226w227w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_rd_data_output_state402w403w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_wr_data_state337w338w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_s0_to_062w63w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_s1_to_081w82w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_s2_to_097w98w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_wren51w74w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_wren51w52w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_wren51w69w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_w_lg_rden458w459w460w461w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_wr_addr_state222w226w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_idle_state88w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_idle_state70w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_idle_state77w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_idle_state54w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_idle_state91w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_rd_data_output_state402w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_wr_data_state337w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_s0_to_062w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_s0_to_058w59w60w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_s1_to_077w78w79w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_s2_to_093w94w95w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_wren47w70w83w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_wren47w70w71w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_wr_addr_state218w222w223w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_rd_data_output_state398w399w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_wr_data_state333w334w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_s0_to_058w59w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_s1_to_077w78w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_s2_to_093w94w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_wren47w70w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_wren47w48w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_wren47w65w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_w_lg_rden454w455w456w457w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_wr_addr_state218w222w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_idle_state84w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_idle_state66w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_idle_state73w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_idle_state50w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_idle_state87w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_rd_data_output_state398w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_wr_data_state333w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_s0_to_058w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_s0_to_157w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_s1_to_077w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_s1_to_176w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_s2_to_093w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_s2_to_192w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_startup_done452w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_startup_idle453w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_wren47w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_wren_data69w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_rden454w455w456w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_rden45w46w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_w_lg_rden454w455w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_rden45w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_rden454w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_rdinc82w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_rdinc64w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_dprio_w_lg_s0_to_161w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_s1_to_081w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_dprio_w_lg_s1_to_180w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_s2_to_097w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_dprio_w_lg_s2_to_196w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_startup_done456w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_startup_idle457w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_wren51w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_wren_data73w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_w_lg_rden458w459w460w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_rden49w50w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_w_lg_rden458w459w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_rden49w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_rden458w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_rdinc86w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_rdinc68w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_s0_to_165w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_s1_to_184w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_s2_to_1100w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_wr_addr_state222w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_wren76w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_wren53w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprio_w_lg_wren90w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_wr_addr_state218w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_wren72w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_wren49w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_dprio_w_lg_wren86w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  busy_state :	STD_LOGIC;
 	 SIGNAL  idle_state :	STD_LOGIC;
 	 SIGNAL  rd_addr_done :	STD_LOGIC;
@@ -302,59 +302,59 @@
 	 END COMPONENT;
  BEGIN
 
-	wire_dprio_w_lg_w_lg_w_lg_s0_to_062w63w64w(0) <= wire_dprio_w_lg_w_lg_s0_to_062w63w(0) AND wire_state_mc_reg_w_q_range60w(0);
-	wire_dprio_w_lg_w_lg_w_lg_s1_to_081w82w83w(0) <= wire_dprio_w_lg_w_lg_s1_to_081w82w(0) AND wire_state_mc_reg_w_q_range79w(0);
-	wire_dprio_w_lg_w_lg_w_lg_s2_to_097w98w99w(0) <= wire_dprio_w_lg_w_lg_s2_to_097w98w(0) AND wire_state_mc_reg_w_q_range95w(0);
-	wire_dprio_w_lg_w_lg_w_lg_wren51w74w87w(0) <= wire_dprio_w_lg_w_lg_wren51w74w(0) AND wire_dprio_w_lg_rdinc86w(0);
-	wire_dprio_w_lg_w_lg_w_lg_wren51w74w75w(0) <= wire_dprio_w_lg_w_lg_wren51w74w(0) AND rden;
-	wire_dprio_w_lg_w_lg_w_lg_wr_addr_state222w226w227w(0) <= wire_dprio_w_lg_w_lg_wr_addr_state222w226w(0) AND wire_pre_amble_cmpr_agb;
-	wire_dprio_w_lg_w_lg_rd_data_output_state402w403w(0) <= wire_dprio_w_lg_rd_data_output_state402w(0) AND wire_pre_amble_cmpr_agb;
-	wire_dprio_w_lg_w_lg_wr_data_state337w338w(0) <= wire_dprio_w_lg_wr_data_state337w(0) AND wire_pre_amble_cmpr_agb;
-	wire_dprio_w_lg_w_lg_s0_to_062w63w(0) <= wire_dprio_w_lg_s0_to_062w(0) AND wire_dprio_w_lg_s0_to_161w(0);
-	wire_dprio_w_lg_w_lg_s1_to_081w82w(0) <= wire_dprio_w_lg_s1_to_081w(0) AND wire_dprio_w_lg_s1_to_180w(0);
-	wire_dprio_w_lg_w_lg_s2_to_097w98w(0) <= wire_dprio_w_lg_s2_to_097w(0) AND wire_dprio_w_lg_s2_to_196w(0);
-	wire_dprio_w_lg_w_lg_wren51w74w(0) <= wire_dprio_w_lg_wren51w(0) AND wire_dprio_w_lg_wren_data73w(0);
-	wire_dprio_w_lg_w_lg_wren51w52w(0) <= wire_dprio_w_lg_wren51w(0) AND wire_dprio_w_lg_w_lg_rden49w50w(0);
-	wire_dprio_w_lg_w_lg_wren51w69w(0) <= wire_dprio_w_lg_wren51w(0) AND wire_dprio_w_lg_rdinc68w(0);
-	wire_dprio_w_lg_w_lg_w_lg_w_lg_rden458w459w460w461w(0) <= wire_dprio_w_lg_w_lg_w_lg_rden458w459w460w(0) AND wire_dprio_w_lg_startup_done456w(0);
-	wire_dprio_w_lg_w_lg_wr_addr_state222w226w(0) <= wire_dprio_w_lg_wr_addr_state222w(0) AND wire_addr_shift_reg_w_q_range225w(0);
-	wire_dprio_w_lg_idle_state88w(0) <= idle_state AND wire_dprio_w_lg_w_lg_w_lg_wren51w74w87w(0);
-	wire_dprio_w_lg_idle_state70w(0) <= idle_state AND wire_dprio_w_lg_w_lg_wren51w69w(0);
-	wire_dprio_w_lg_idle_state77w(0) <= idle_state AND wire_dprio_w_lg_wren76w(0);
-	wire_dprio_w_lg_idle_state54w(0) <= idle_state AND wire_dprio_w_lg_wren53w(0);
-	wire_dprio_w_lg_idle_state91w(0) <= idle_state AND wire_dprio_w_lg_wren90w(0);
-	wire_dprio_w_lg_rd_data_output_state402w(0) <= rd_data_output_state AND wire_rd_out_data_shift_reg_w_q_range401w(0);
-	wire_dprio_w_lg_wr_data_state337w(0) <= wr_data_state AND wire_wr_out_data_shift_reg_w_q_range336w(0);
-	wire_dprio_w_lg_s0_to_062w(0) <= NOT s0_to_0;
-	wire_dprio_w_lg_s0_to_161w(0) <= NOT s0_to_1;
-	wire_dprio_w_lg_s1_to_081w(0) <= NOT s1_to_0;
-	wire_dprio_w_lg_s1_to_180w(0) <= NOT s1_to_1;
-	wire_dprio_w_lg_s2_to_097w(0) <= NOT s2_to_0;
-	wire_dprio_w_lg_s2_to_196w(0) <= NOT s2_to_1;
-	wire_dprio_w_lg_startup_done456w(0) <= NOT startup_done;
-	wire_dprio_w_lg_startup_idle457w(0) <= NOT startup_idle;
-	wire_dprio_w_lg_wren51w(0) <= NOT wren;
-	wire_dprio_w_lg_wren_data73w(0) <= NOT wren_data;
-	wire_dprio_w_lg_w_lg_w_lg_rden458w459w460w(0) <= wire_dprio_w_lg_w_lg_rden458w459w(0) OR wire_dprio_w_lg_startup_idle457w(0);
-	wire_dprio_w_lg_w_lg_rden49w50w(0) <= wire_dprio_w_lg_rden49w(0) OR wren_data;
-	wire_dprio_w_lg_w_lg_rden458w459w(0) <= wire_dprio_w_lg_rden458w(0) OR rdinc;
-	wire_dprio_w_lg_rden49w(0) <= rden OR rdinc;
-	wire_dprio_w_lg_rden458w(0) <= rden OR wren;
-	wire_dprio_w_lg_rdinc86w(0) <= rdinc OR rden;
-	wire_dprio_w_lg_rdinc68w(0) <= rdinc OR wren_data;
-	wire_dprio_w_lg_s0_to_165w(0) <= s0_to_1 OR wire_dprio_w_lg_w_lg_w_lg_s0_to_062w63w64w(0);
-	wire_dprio_w_lg_s1_to_184w(0) <= s1_to_1 OR wire_dprio_w_lg_w_lg_w_lg_s1_to_081w82w83w(0);
-	wire_dprio_w_lg_s2_to_1100w(0) <= s2_to_1 OR wire_dprio_w_lg_w_lg_w_lg_s2_to_097w98w99w(0);
-	wire_dprio_w_lg_wr_addr_state222w(0) <= wr_addr_state OR rd_addr_state;
-	wire_dprio_w_lg_wren76w(0) <= wren OR wire_dprio_w_lg_w_lg_w_lg_wren51w74w75w(0);
-	wire_dprio_w_lg_wren53w(0) <= wren OR wire_dprio_w_lg_w_lg_wren51w52w(0);
-	wire_dprio_w_lg_wren90w(0) <= wren OR wren_data;
+	wire_dprio_w_lg_w_lg_w_lg_s0_to_058w59w60w(0) <= wire_dprio_w_lg_w_lg_s0_to_058w59w(0) AND wire_state_mc_reg_w_q_range56w(0);
+	wire_dprio_w_lg_w_lg_w_lg_s1_to_077w78w79w(0) <= wire_dprio_w_lg_w_lg_s1_to_077w78w(0) AND wire_state_mc_reg_w_q_range75w(0);
+	wire_dprio_w_lg_w_lg_w_lg_s2_to_093w94w95w(0) <= wire_dprio_w_lg_w_lg_s2_to_093w94w(0) AND wire_state_mc_reg_w_q_range91w(0);
+	wire_dprio_w_lg_w_lg_w_lg_wren47w70w83w(0) <= wire_dprio_w_lg_w_lg_wren47w70w(0) AND wire_dprio_w_lg_rdinc82w(0);
+	wire_dprio_w_lg_w_lg_w_lg_wren47w70w71w(0) <= wire_dprio_w_lg_w_lg_wren47w70w(0) AND rden;
+	wire_dprio_w_lg_w_lg_w_lg_wr_addr_state218w222w223w(0) <= wire_dprio_w_lg_w_lg_wr_addr_state218w222w(0) AND wire_pre_amble_cmpr_agb;
+	wire_dprio_w_lg_w_lg_rd_data_output_state398w399w(0) <= wire_dprio_w_lg_rd_data_output_state398w(0) AND wire_pre_amble_cmpr_agb;
+	wire_dprio_w_lg_w_lg_wr_data_state333w334w(0) <= wire_dprio_w_lg_wr_data_state333w(0) AND wire_pre_amble_cmpr_agb;
+	wire_dprio_w_lg_w_lg_s0_to_058w59w(0) <= wire_dprio_w_lg_s0_to_058w(0) AND wire_dprio_w_lg_s0_to_157w(0);
+	wire_dprio_w_lg_w_lg_s1_to_077w78w(0) <= wire_dprio_w_lg_s1_to_077w(0) AND wire_dprio_w_lg_s1_to_176w(0);
+	wire_dprio_w_lg_w_lg_s2_to_093w94w(0) <= wire_dprio_w_lg_s2_to_093w(0) AND wire_dprio_w_lg_s2_to_192w(0);
+	wire_dprio_w_lg_w_lg_wren47w70w(0) <= wire_dprio_w_lg_wren47w(0) AND wire_dprio_w_lg_wren_data69w(0);
+	wire_dprio_w_lg_w_lg_wren47w48w(0) <= wire_dprio_w_lg_wren47w(0) AND wire_dprio_w_lg_w_lg_rden45w46w(0);
+	wire_dprio_w_lg_w_lg_wren47w65w(0) <= wire_dprio_w_lg_wren47w(0) AND wire_dprio_w_lg_rdinc64w(0);
+	wire_dprio_w_lg_w_lg_w_lg_w_lg_rden454w455w456w457w(0) <= wire_dprio_w_lg_w_lg_w_lg_rden454w455w456w(0) AND wire_dprio_w_lg_startup_done452w(0);
+	wire_dprio_w_lg_w_lg_wr_addr_state218w222w(0) <= wire_dprio_w_lg_wr_addr_state218w(0) AND wire_addr_shift_reg_w_q_range221w(0);
+	wire_dprio_w_lg_idle_state84w(0) <= idle_state AND wire_dprio_w_lg_w_lg_w_lg_wren47w70w83w(0);
+	wire_dprio_w_lg_idle_state66w(0) <= idle_state AND wire_dprio_w_lg_w_lg_wren47w65w(0);
+	wire_dprio_w_lg_idle_state73w(0) <= idle_state AND wire_dprio_w_lg_wren72w(0);
+	wire_dprio_w_lg_idle_state50w(0) <= idle_state AND wire_dprio_w_lg_wren49w(0);
+	wire_dprio_w_lg_idle_state87w(0) <= idle_state AND wire_dprio_w_lg_wren86w(0);
+	wire_dprio_w_lg_rd_data_output_state398w(0) <= rd_data_output_state AND wire_rd_out_data_shift_reg_w_q_range397w(0);
+	wire_dprio_w_lg_wr_data_state333w(0) <= wr_data_state AND wire_wr_out_data_shift_reg_w_q_range332w(0);
+	wire_dprio_w_lg_s0_to_058w(0) <= NOT s0_to_0;
+	wire_dprio_w_lg_s0_to_157w(0) <= NOT s0_to_1;
+	wire_dprio_w_lg_s1_to_077w(0) <= NOT s1_to_0;
+	wire_dprio_w_lg_s1_to_176w(0) <= NOT s1_to_1;
+	wire_dprio_w_lg_s2_to_093w(0) <= NOT s2_to_0;
+	wire_dprio_w_lg_s2_to_192w(0) <= NOT s2_to_1;
+	wire_dprio_w_lg_startup_done452w(0) <= NOT startup_done;
+	wire_dprio_w_lg_startup_idle453w(0) <= NOT startup_idle;
+	wire_dprio_w_lg_wren47w(0) <= NOT wren;
+	wire_dprio_w_lg_wren_data69w(0) <= NOT wren_data;
+	wire_dprio_w_lg_w_lg_w_lg_rden454w455w456w(0) <= wire_dprio_w_lg_w_lg_rden454w455w(0) OR wire_dprio_w_lg_startup_idle453w(0);
+	wire_dprio_w_lg_w_lg_rden45w46w(0) <= wire_dprio_w_lg_rden45w(0) OR wren_data;
+	wire_dprio_w_lg_w_lg_rden454w455w(0) <= wire_dprio_w_lg_rden454w(0) OR rdinc;
+	wire_dprio_w_lg_rden45w(0) <= rden OR rdinc;
+	wire_dprio_w_lg_rden454w(0) <= rden OR wren;
+	wire_dprio_w_lg_rdinc82w(0) <= rdinc OR rden;
+	wire_dprio_w_lg_rdinc64w(0) <= rdinc OR wren_data;
+	wire_dprio_w_lg_s0_to_161w(0) <= s0_to_1 OR wire_dprio_w_lg_w_lg_w_lg_s0_to_058w59w60w(0);
+	wire_dprio_w_lg_s1_to_180w(0) <= s1_to_1 OR wire_dprio_w_lg_w_lg_w_lg_s1_to_077w78w79w(0);
+	wire_dprio_w_lg_s2_to_196w(0) <= s2_to_1 OR wire_dprio_w_lg_w_lg_w_lg_s2_to_093w94w95w(0);
+	wire_dprio_w_lg_wr_addr_state218w(0) <= wr_addr_state OR rd_addr_state;
+	wire_dprio_w_lg_wren72w(0) <= wren OR wire_dprio_w_lg_w_lg_w_lg_wren47w70w71w(0);
+	wire_dprio_w_lg_wren49w(0) <= wren OR wire_dprio_w_lg_w_lg_wren47w48w(0);
+	wire_dprio_w_lg_wren86w(0) <= wren OR wren_data;
 	busy <= busy_state;
 	busy_state <= (write_state OR read_state);
 	dataout <= in_data_shift_reg;
-	dpriodisable <= (NOT wire_startup_cntr_w_lg_w_q_range470w479w(0));
+	dpriodisable <= (NOT wire_startup_cntr_w_lg_w_q_range466w475w(0));
 	dprioin <= wire_dprioin_mux_dataout;
-	dprioload <= (NOT (wire_startup_cntr_w_lg_w_q_range462w467w(0) AND (NOT startup_cntr(2))));
+	dprioload <= (NOT (wire_startup_cntr_w_lg_w_q_range458w463w(0) AND (NOT startup_cntr(2))));
 	idle_state <= wire_state_mc_decode_eq(0);
 	rd_addr_done <= (rd_addr_state AND wire_state_mc_cmpr_aeb);
 	rd_addr_state <= (wire_state_mc_decode_eq(5) AND startup_done);
@@ -365,13 +365,13 @@
 	rdinc <= '0';
 	read_state <= (rd_addr_state OR rd_data_state);
 	s0_to_0 <= ((wr_data_state AND wr_data_done) OR (rd_data_state AND rd_data_done));
-	s0_to_1 <= ((wire_dprio_w_lg_idle_state54w(0) OR (wr_addr_state AND wr_addr_done)) OR (rd_addr_state AND rd_addr_done));
-	s1_to_0 <= (((wr_data_state AND wr_data_done) OR (rd_data_state AND rd_data_done)) OR wire_dprio_w_lg_idle_state77w(0));
-	s1_to_1 <= ((wire_dprio_w_lg_idle_state70w(0) OR (wr_addr_state AND wr_addr_done)) OR (rd_addr_state AND rd_addr_done));
-	s2_to_0 <= ((((wr_addr_state AND wr_addr_done) OR (wr_data_state AND wr_data_done)) OR (rd_data_state AND rd_data_done)) OR wire_dprio_w_lg_idle_state91w(0));
-	s2_to_1 <= (wire_dprio_w_lg_idle_state88w(0) OR (rd_addr_state AND rd_addr_done));
-	startup_done <= (wire_startup_cntr_w_lg_w_q_range470w476w(0) AND startup_cntr(1));
-	startup_idle <= (wire_startup_cntr_w_lg_w_q_range462w463w(0) AND (NOT (startup_cntr(2) XOR startup_cntr(1))));
+	s0_to_1 <= ((wire_dprio_w_lg_idle_state50w(0) OR (wr_addr_state AND wr_addr_done)) OR (rd_addr_state AND rd_addr_done));
+	s1_to_0 <= (((wr_data_state AND wr_data_done) OR (rd_data_state AND rd_data_done)) OR wire_dprio_w_lg_idle_state73w(0));
+	s1_to_1 <= ((wire_dprio_w_lg_idle_state66w(0) OR (wr_addr_state AND wr_addr_done)) OR (rd_addr_state AND rd_addr_done));
+	s2_to_0 <= ((((wr_addr_state AND wr_addr_done) OR (wr_data_state AND wr_data_done)) OR (rd_data_state AND rd_data_done)) OR wire_dprio_w_lg_idle_state87w(0));
+	s2_to_1 <= (wire_dprio_w_lg_idle_state84w(0) OR (rd_addr_state AND rd_addr_done));
+	startup_done <= (wire_startup_cntr_w_lg_w_q_range466w472w(0) AND startup_cntr(1));
+	startup_idle <= (wire_startup_cntr_w_lg_w_q_range458w459w(0) AND (NOT (startup_cntr(2) XOR startup_cntr(1))));
 	wr_addr_done <= (wr_addr_state AND wire_state_mc_cmpr_aeb);
 	wr_addr_state <= (wire_state_mc_decode_eq(1) AND startup_done);
 	wr_data_done <= (wr_data_state AND wire_state_mc_cmpr_aeb);
@@ -667,7 +667,7 @@
 	END PROCESS;
 	wire_addr_shift_reg_asdata <= ( "00" & "00" & "0" & quad_address(8 DOWNTO 0) & "10" & address);
 	wire_addr_shift_reg_d <= ( addr_shift_reg(30 DOWNTO 0) & "0");
-	wire_addr_shift_reg_w_q_range225w(0) <= addr_shift_reg(31);
+	wire_addr_shift_reg_w_q_range221w(0) <= addr_shift_reg(31);
 	PROCESS (dpclk, reset)
 	BEGIN
 		IF (reset = '1') THEN in_data_shift_reg <= (OTHERS => '0');
@@ -822,7 +822,7 @@
 	END PROCESS;
 	wire_rd_out_data_shift_reg_asdata <= ( "00" & "1" & "1" & "0" & quad_address & "10");
 	wire_rd_out_data_shift_reg_d <= ( rd_out_data_shift_reg(14 DOWNTO 0) & "0");
-	wire_rd_out_data_shift_reg_w_q_range401w(0) <= rd_out_data_shift_reg(15);
+	wire_rd_out_data_shift_reg_w_q_range397w(0) <= rd_out_data_shift_reg(15);
 	PROCESS (dpclk)
 	BEGIN
 		IF (dpclk = '1' AND dpclk'event) THEN 
@@ -853,29 +853,29 @@
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_startup_cntr_d <= ( wire_startup_cntr_w_lg_w_q_range470w471w & wire_startup_cntr_w_lg_w_q_range462w467w & wire_startup_cntr_w_lg_w_q_range462w463w);
+	wire_startup_cntr_d <= ( wire_startup_cntr_w_lg_w_q_range466w467w & wire_startup_cntr_w_lg_w_q_range458w463w & wire_startup_cntr_w_lg_w_q_range458w459w);
 	loop0 : FOR i IN 0 TO 2 GENERATE
-		wire_startup_cntr_ena(i) <= wire_dprio_w_lg_w_lg_w_lg_w_lg_rden458w459w460w461w(0);
+		wire_startup_cntr_ena(i) <= wire_dprio_w_lg_w_lg_w_lg_w_lg_rden454w455w456w457w(0);
 	END GENERATE loop0;
-	wire_startup_cntr_w_lg_w_q_range466w469w(0) <= wire_startup_cntr_w_q_range466w(0) AND wire_startup_cntr_w_q_range462w(0);
-	wire_startup_cntr_w_lg_w_q_range470w476w(0) <= wire_startup_cntr_w_q_range470w(0) AND wire_startup_cntr_w_lg_w_q_range462w463w(0);
-	wire_startup_cntr_w_lg_w_q_range470w479w(0) <= wire_startup_cntr_w_q_range470w(0) AND wire_startup_cntr_w_lg_w_q_range462w478w(0);
-	wire_startup_cntr_w_lg_w_q_range462w463w(0) <= NOT wire_startup_cntr_w_q_range462w(0);
-	wire_startup_cntr_w_lg_w_q_range462w478w(0) <= wire_startup_cntr_w_q_range462w(0) OR wire_startup_cntr_w_q_range466w(0);
-	wire_startup_cntr_w_lg_w_q_range462w467w(0) <= wire_startup_cntr_w_q_range462w(0) XOR wire_startup_cntr_w_q_range466w(0);
-	wire_startup_cntr_w_lg_w_q_range470w471w(0) <= wire_startup_cntr_w_q_range470w(0) XOR wire_startup_cntr_w_lg_w_q_range466w469w(0);
-	wire_startup_cntr_w_q_range462w(0) <= startup_cntr(0);
-	wire_startup_cntr_w_q_range466w(0) <= startup_cntr(1);
-	wire_startup_cntr_w_q_range470w(0) <= startup_cntr(2);
+	wire_startup_cntr_w_lg_w_q_range462w465w(0) <= wire_startup_cntr_w_q_range462w(0) AND wire_startup_cntr_w_q_range458w(0);
+	wire_startup_cntr_w_lg_w_q_range466w472w(0) <= wire_startup_cntr_w_q_range466w(0) AND wire_startup_cntr_w_lg_w_q_range458w459w(0);
+	wire_startup_cntr_w_lg_w_q_range466w475w(0) <= wire_startup_cntr_w_q_range466w(0) AND wire_startup_cntr_w_lg_w_q_range458w474w(0);
+	wire_startup_cntr_w_lg_w_q_range458w459w(0) <= NOT wire_startup_cntr_w_q_range458w(0);
+	wire_startup_cntr_w_lg_w_q_range458w474w(0) <= wire_startup_cntr_w_q_range458w(0) OR wire_startup_cntr_w_q_range462w(0);
+	wire_startup_cntr_w_lg_w_q_range458w463w(0) <= wire_startup_cntr_w_q_range458w(0) XOR wire_startup_cntr_w_q_range462w(0);
+	wire_startup_cntr_w_lg_w_q_range466w467w(0) <= wire_startup_cntr_w_q_range466w(0) XOR wire_startup_cntr_w_lg_w_q_range462w465w(0);
+	wire_startup_cntr_w_q_range458w(0) <= startup_cntr(0);
+	wire_startup_cntr_w_q_range462w(0) <= startup_cntr(1);
+	wire_startup_cntr_w_q_range466w(0) <= startup_cntr(2);
 	PROCESS (dpclk, reset)
 	BEGIN
 		IF (reset = '1') THEN state_mc_reg <= (OTHERS => '0');
-		ELSIF (dpclk = '1' AND dpclk'event) THEN state_mc_reg <= ( wire_dprio_w_lg_s2_to_1100w & wire_dprio_w_lg_s1_to_184w & wire_dprio_w_lg_s0_to_165w);
+		ELSIF (dpclk = '1' AND dpclk'event) THEN state_mc_reg <= ( wire_dprio_w_lg_s2_to_196w & wire_dprio_w_lg_s1_to_180w & wire_dprio_w_lg_s0_to_161w);
 		END IF;
 	END PROCESS;
-	wire_state_mc_reg_w_q_range60w(0) <= state_mc_reg(0);
-	wire_state_mc_reg_w_q_range79w(0) <= state_mc_reg(1);
-	wire_state_mc_reg_w_q_range95w(0) <= state_mc_reg(2);
+	wire_state_mc_reg_w_q_range56w(0) <= state_mc_reg(0);
+	wire_state_mc_reg_w_q_range75w(0) <= state_mc_reg(1);
+	wire_state_mc_reg_w_q_range91w(0) <= state_mc_reg(2);
 	PROCESS (dpclk, reset)
 	BEGIN
 		IF (reset = '1') THEN wr_out_data_shift_reg(0) <= '0';
@@ -1166,10 +1166,10 @@
 	END PROCESS;
 	wire_wr_out_data_shift_reg_asdata <= ( "00" & "01" & "0" & quad_address(8 DOWNTO 0) & "10" & datain);
 	wire_wr_out_data_shift_reg_d <= ( wr_out_data_shift_reg(30 DOWNTO 0) & "0");
-	wire_wr_out_data_shift_reg_w_q_range336w(0) <= wr_out_data_shift_reg(31);
-	wire_pre_amble_cmpr_w_lg_w_lg_agb223w400w(0) <= wire_pre_amble_cmpr_w_lg_agb223w(0) AND rd_data_output_state;
-	wire_pre_amble_cmpr_w_lg_w_lg_agb223w335w(0) <= wire_pre_amble_cmpr_w_lg_agb223w(0) AND wr_data_state;
-	wire_pre_amble_cmpr_w_lg_agb223w(0) <= NOT wire_pre_amble_cmpr_agb;
+	wire_wr_out_data_shift_reg_w_q_range332w(0) <= wr_out_data_shift_reg(31);
+	wire_pre_amble_cmpr_w_lg_w_lg_agb219w396w(0) <= wire_pre_amble_cmpr_w_lg_agb219w(0) AND rd_data_output_state;
+	wire_pre_amble_cmpr_w_lg_w_lg_agb219w331w(0) <= wire_pre_amble_cmpr_w_lg_agb219w(0) AND wr_data_state;
+	wire_pre_amble_cmpr_w_lg_agb219w(0) <= NOT wire_pre_amble_cmpr_agb;
 	wire_pre_amble_cmpr_datab <= "011111";
 	pre_amble_cmpr :  lpm_compare
 	  GENERIC MAP (
@@ -1202,8 +1202,8 @@
 		dataa => wire_state_mc_counter_q,
 		datab => wire_state_mc_cmpr_datab
 	  );
-	wire_state_mc_counter_cnt_en <= wire_dprio_w_lg_write_state45w(0);
-	wire_dprio_w_lg_write_state45w(0) <= write_state OR read_state;
+	wire_state_mc_counter_cnt_en <= wire_dprio_w_lg_write_state41w(0);
+	wire_dprio_w_lg_write_state41w(0) <= write_state OR read_state;
 	state_mc_counter :  lpm_counter
 	  GENERIC MAP (
 		lpm_port_updown => "PORT_UNUSED",
@@ -1224,69 +1224,61 @@
 		data => state_mc_reg,
 		eq => wire_state_mc_decode_eq
 	  );
-	wire_dprioin_mux_dataout <= (((wire_dprio_w_lg_w_lg_w_lg_wr_addr_state222w226w227w(0) OR (wire_pre_amble_cmpr_w_lg_agb223w(0) AND wire_dprio_w_lg_wr_addr_state222w(0))) OR (wire_dprio_w_lg_w_lg_wr_data_state337w338w(0) OR wire_pre_amble_cmpr_w_lg_w_lg_agb223w335w(0))) OR (wire_dprio_w_lg_w_lg_rd_data_output_state402w403w(0) OR wire_pre_amble_cmpr_w_lg_w_lg_agb223w400w(0))) OR NOT(((write_state OR rd_addr_state) OR rd_data_output_state));
+	wire_dprioin_mux_dataout <= (((wire_dprio_w_lg_w_lg_w_lg_wr_addr_state218w222w223w(0) OR (wire_pre_amble_cmpr_w_lg_agb219w(0) AND wire_dprio_w_lg_wr_addr_state218w(0))) OR (wire_dprio_w_lg_w_lg_wr_data_state333w334w(0) OR wire_pre_amble_cmpr_w_lg_w_lg_agb219w331w(0))) OR (wire_dprio_w_lg_w_lg_rd_data_output_state398w399w(0) OR wire_pre_amble_cmpr_w_lg_w_lg_agb219w396w(0))) OR NOT(((write_state OR rd_addr_state) OR rd_data_output_state));
 
- END RTL; --trans_rcfg_alt_dprio_kuj
+ END RTL; --sio_rcfg_alt_dprio_kuj
 
 
---lpm_mux CBX_AUTO_BLACKBOX="ALL" DEVICE_FAMILY="Arria II GX" LPM_SIZE=3 LPM_WIDTH=1 LPM_WIDTHS=2 data result sel
+--lpm_mux CBX_AUTO_BLACKBOX="ALL" DEVICE_FAMILY="Arria II GX" LPM_SIZE=2 LPM_WIDTH=1 LPM_WIDTHS=1 data result sel
 --VERSION_BEGIN 11.1SP2 cbx_lpm_mux 2012:01:25:21:12:11:SJ cbx_mgl 2012:01:25:21:26:09:SJ  VERSION_END
 
---synthesis_resources = lut 2 
+--synthesis_resources = lut 1 
  LIBRARY ieee;
  USE ieee.std_logic_1164.all;
 
- ENTITY  trans_rcfg_mux_o5a IS 
+ ENTITY  sio_rcfg_mux_m5a IS 
 	 PORT 
 	 ( 
-		 data	:	IN  STD_LOGIC_VECTOR (2 DOWNTO 0) := (OTHERS => '0');
+		 data	:	IN  STD_LOGIC_VECTOR (1 DOWNTO 0) := (OTHERS => '0');
 		 result	:	OUT  STD_LOGIC_VECTOR (0 DOWNTO 0);
-		 sel	:	IN  STD_LOGIC_VECTOR (1 DOWNTO 0) := (OTHERS => '0')
+		 sel	:	IN  STD_LOGIC_VECTOR (0 DOWNTO 0) := (OTHERS => '0')
 	 ); 
- END trans_rcfg_mux_o5a;
+ END sio_rcfg_mux_m5a;
 
- ARCHITECTURE RTL OF trans_rcfg_mux_o5a IS
+ ARCHITECTURE RTL OF sio_rcfg_mux_m5a IS
 
-	 SIGNAL  wire_dprioout_mux_w_lg_w_data_range486w487w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprioout_mux_w_lg_w_sel_range484w485w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  data0_wire :	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  data1_wire :	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  data2_wire :	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  result_node :	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprioout_mux_w_data_range486w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_dprioout_mux_w_sel_range484w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL	wire_l1_w0_n0_mux_dataout	:	STD_LOGIC;
+	 SIGNAL  data_wire :	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  result_wire_ext :	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  sel_wire :	STD_LOGIC_VECTOR (0 DOWNTO 0);
  BEGIN
 
-	wire_dprioout_mux_w_lg_w_data_range486w487w(0) <= wire_dprioout_mux_w_data_range486w(0) AND wire_dprioout_mux_w_lg_w_sel_range484w485w(0);
-	wire_dprioout_mux_w_lg_w_sel_range484w485w(0) <= NOT wire_dprioout_mux_w_sel_range484w(0);
-	data0_wire(0) <= wire_dprioout_mux_w_lg_w_data_range486w487w(0);
-	data1_wire(0) <= (data(1) AND sel(0));
-	data2_wire(0) <= (data(2) AND sel(1));
-	result <= result_node;
-	result_node(0) <= (((data0_wire(0) OR data1_wire(0)) AND (NOT sel(1))) OR data2_wire(0));
-	wire_dprioout_mux_w_data_range486w(0) <= data(0);
-	wire_dprioout_mux_w_sel_range484w(0) <= sel(0);
+	data_wire <= ( data);
+	result <= result_wire_ext;
+	result_wire_ext(0) <= ( wire_l1_w0_n0_mux_dataout);
+	sel_wire(0) <= ( sel(0));
+	wire_l1_w0_n0_mux_dataout <= data_wire(1) WHEN sel_wire(0) = '1'  ELSE data_wire(0);
 
- END RTL; --trans_rcfg_mux_o5a
+ END RTL; --sio_rcfg_mux_m5a
 
  LIBRARY altera_mf;
  USE altera_mf.all;
 
---synthesis_resources = alt_cal 1 lpm_compare 3 lpm_counter 1 lpm_decode 1 lut 3 reg 114 
+--synthesis_resources = alt_cal 1 lpm_compare 3 lpm_counter 1 lpm_decode 1 lut 2 reg 114 
  LIBRARY ieee;
  USE ieee.std_logic_1164.all;
 
- ENTITY  trans_rcfg_alt2gxb_reconfig_ehm IS 
+ ENTITY  sio_rcfg_alt2gxb_reconfig_3gm IS 
 	 PORT 
 	 ( 
 		 busy	:	OUT  STD_LOGIC;
 		 reconfig_clk	:	IN  STD_LOGIC;
-		 reconfig_fromgxb	:	IN  STD_LOGIC_VECTOR (50 DOWNTO 0);
+		 reconfig_fromgxb	:	IN  STD_LOGIC_VECTOR (33 DOWNTO 0);
 		 reconfig_togxb	:	OUT  STD_LOGIC_VECTOR (3 DOWNTO 0)
 	 ); 
- END trans_rcfg_alt2gxb_reconfig_ehm;
+ END sio_rcfg_alt2gxb_reconfig_3gm;
 
- ARCHITECTURE RTL OF trans_rcfg_alt2gxb_reconfig_ehm IS
+ ARCHITECTURE RTL OF sio_rcfg_alt2gxb_reconfig_3gm IS
 
 	 ATTRIBUTE synthesis_clearbox : natural;
 	 ATTRIBUTE synthesis_clearbox OF RTL : ARCHITECTURE IS 2;
@@ -1324,8 +1316,8 @@
 
 	 SIGNAL  wire_dprioout_mux_result	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  cal_busy :	STD_LOGIC;
-	 SIGNAL  cal_dprioout_wire :	STD_LOGIC_VECTOR (2 DOWNTO 0);
-	 SIGNAL  cal_testbuses :	STD_LOGIC_VECTOR (47 DOWNTO 0);
+	 SIGNAL  cal_dprioout_wire :	STD_LOGIC_VECTOR (1 DOWNTO 0);
+	 SIGNAL  cal_testbuses :	STD_LOGIC_VECTOR (31 DOWNTO 0);
 	 SIGNAL  channel_address :	STD_LOGIC_VECTOR (2 DOWNTO 0);
 	 SIGNAL  dprio_address :	STD_LOGIC_VECTOR (15 DOWNTO 0);
 	 SIGNAL  is_adce_all_control :	STD_LOGIC;
@@ -1367,7 +1359,7 @@
 		transceiver_init	:	IN STD_LOGIC
 	 ); 
 	 END COMPONENT;
-	 COMPONENT  trans_rcfg_alt_dprio_kuj
+	 COMPONENT  sio_rcfg_alt_dprio_kuj
 	 PORT
 	 ( 
 		address	:	IN  STD_LOGIC_VECTOR(15 DOWNTO 0);
@@ -1386,20 +1378,20 @@
 		wren_data	:	IN  STD_LOGIC := '0'
 	 ); 
 	 END COMPONENT;
-	 COMPONENT  trans_rcfg_mux_o5a
+	 COMPONENT  sio_rcfg_mux_m5a
 	 PORT
 	 ( 
-		data	:	IN  STD_LOGIC_VECTOR(2 DOWNTO 0) := (OTHERS => '0');
+		data	:	IN  STD_LOGIC_VECTOR(1 DOWNTO 0) := (OTHERS => '0');
 		result	:	OUT  STD_LOGIC_VECTOR(0 DOWNTO 0);
-		sel	:	IN  STD_LOGIC_VECTOR(1 DOWNTO 0) := (OTHERS => '0')
+		sel	:	IN  STD_LOGIC_VECTOR(0 DOWNTO 0) := (OTHERS => '0')
 	 ); 
 	 END COMPONENT;
  BEGIN
 
 	busy <= cal_busy;
 	cal_busy <= wire_calibration_busy;
-	cal_dprioout_wire <= ( reconfig_fromgxb(34) & reconfig_fromgxb(17) & reconfig_fromgxb(0));
-	cal_testbuses <= ( reconfig_fromgxb(50 DOWNTO 35) & reconfig_fromgxb(33 DOWNTO 18) & reconfig_fromgxb(16 DOWNTO 1));
+	cal_dprioout_wire <= ( reconfig_fromgxb(17) & reconfig_fromgxb(0));
+	cal_testbuses <= ( reconfig_fromgxb(33 DOWNTO 18) & reconfig_fromgxb(16 DOWNTO 1));
 	channel_address <= wire_calibration_dprio_addr(14 DOWNTO 12);
 	dprio_address <= ( wire_calibration_dprio_addr(15) & address_pres_reg(2 DOWNTO 0) & wire_calibration_dprio_addr(11 DOWNTO 0));
 	offset_cancellation_reset <= '0';
@@ -1418,8 +1410,8 @@
 	wire_w_lg_offset_cancellation_reset9w(0) <= offset_cancellation_reset OR reconfig_reset_all;
 	calibration :  alt_cal
 	  GENERIC MAP (
-		CHANNEL_ADDRESS_WIDTH => 4,
-		NUMBER_OF_CHANNELS => 12,
+		CHANNEL_ADDRESS_WIDTH => 3,
+		NUMBER_OF_CHANNELS => 8,
 		SIM_MODEL_MODE => "FALSE"
 	  )
 	  PORT MAP ( 
@@ -1445,7 +1437,7 @@
 	wire_calibration_w_lg_busy13w(0) <= wire_calibration_busy AND wire_calibration_dprio_rden;
 	wire_dprio_wren <= wire_calibration_w_lg_busy14w(0);
 	wire_calibration_w_lg_busy14w(0) <= wire_calibration_busy AND wire_calibration_dprio_wren;
-	dprio :  trans_rcfg_alt_dprio_kuj
+	dprio :  sio_rcfg_alt_dprio_kuj
 	  PORT MAP ( 
 		address => wire_dprio_address,
 		busy => wire_dprio_busy,
@@ -1468,49 +1460,49 @@
 		ELSIF (reconfig_clk = '1' AND reconfig_clk'event) THEN address_pres_reg <= ( quad_address & channel_address);
 		END IF;
 	END PROCESS;
-	dprioout_mux :  trans_rcfg_mux_o5a
+	dprioout_mux :  sio_rcfg_mux_m5a
 	  PORT MAP ( 
 		data => cal_dprioout_wire,
 		result => wire_dprioout_mux_result,
-		sel => quad_address(1 DOWNTO 0)
+		sel => quad_address(0 DOWNTO 0)
 	  );
 
- END RTL; --trans_rcfg_alt2gxb_reconfig_ehm
+ END RTL; --sio_rcfg_alt2gxb_reconfig_3gm
 --VALID FILE
 
 
 LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 
-ENTITY trans_rcfg IS
+ENTITY sio_rcfg IS
 	PORT
 	(
 		reconfig_clk		: IN STD_LOGIC ;
-		reconfig_fromgxb		: IN STD_LOGIC_VECTOR (50 DOWNTO 0);
+		reconfig_fromgxb		: IN STD_LOGIC_VECTOR (33 DOWNTO 0);
 		busy		: OUT STD_LOGIC ;
 		reconfig_togxb		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0)
 	);
-END trans_rcfg;
+END sio_rcfg;
 
 
-ARCHITECTURE RTL OF trans_rcfg IS
+ARCHITECTURE RTL OF sio_rcfg IS
 
 	ATTRIBUTE synthesis_clearbox: natural;
 	ATTRIBUTE synthesis_clearbox OF RTL: ARCHITECTURE IS 2;
 	ATTRIBUTE clearbox_macroname: string;
 	ATTRIBUTE clearbox_macroname OF RTL: ARCHITECTURE IS "alt2gxb_reconfig";
 	ATTRIBUTE clearbox_defparam: string;
-	ATTRIBUTE clearbox_defparam OF RTL: ARCHITECTURE IS "cbx_blackbox_list=-lpm_mux;intended_device_family=Arria II GX;number_of_channels=12;number_of_reconfig_ports=3;enable_buf_cal=true;reconfig_fromgxb_width=51;reconfig_togxb_width=4;";
+	ATTRIBUTE clearbox_defparam OF RTL: ARCHITECTURE IS "cbx_blackbox_list=-lpm_mux;intended_device_family=Arria II GX;number_of_channels=8;number_of_reconfig_ports=2;enable_buf_cal=true;reconfig_fromgxb_width=34;reconfig_togxb_width=4;";
 	SIGNAL sub_wire0	: STD_LOGIC ;
 	SIGNAL sub_wire1	: STD_LOGIC_VECTOR (3 DOWNTO 0);
 
 
 
-	COMPONENT trans_rcfg_alt2gxb_reconfig_ehm
+	COMPONENT sio_rcfg_alt2gxb_reconfig_3gm
 	PORT (
 			busy	: OUT STD_LOGIC ;
 			reconfig_clk	: IN STD_LOGIC ;
-			reconfig_fromgxb	: IN STD_LOGIC_VECTOR (50 DOWNTO 0);
+			reconfig_fromgxb	: IN STD_LOGIC_VECTOR (33 DOWNTO 0);
 			reconfig_togxb	: OUT STD_LOGIC_VECTOR (3 DOWNTO 0)
 	);
 	END COMPONENT;
@@ -1519,7 +1511,7 @@ BEGIN
 	busy    <= sub_wire0;
 	reconfig_togxb    <= sub_wire1(3 DOWNTO 0);
 
-	trans_rcfg_alt2gxb_reconfig_ehm_component : trans_rcfg_alt2gxb_reconfig_ehm
+	sio_rcfg_alt2gxb_reconfig_3gm_component : sio_rcfg_alt2gxb_reconfig_3gm
 	PORT MAP (
 		reconfig_clk => reconfig_clk,
 		reconfig_fromgxb => reconfig_fromgxb,
@@ -1543,23 +1535,23 @@ END RTL;
 -- Retrieval info: PRIVATE: SYNTH_WRAPPER_GEN_POSTFIX STRING "0"
 -- Retrieval info: CONSTANT: CBX_BLACKBOX_LIST STRING "-lpm_mux"
 -- Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Arria II GX"
--- Retrieval info: CONSTANT: NUMBER_OF_CHANNELS NUMERIC "12"
--- Retrieval info: CONSTANT: NUMBER_OF_RECONFIG_PORTS NUMERIC "3"
+-- Retrieval info: CONSTANT: NUMBER_OF_CHANNELS NUMERIC "8"
+-- Retrieval info: CONSTANT: NUMBER_OF_RECONFIG_PORTS NUMERIC "2"
 -- Retrieval info: CONSTANT: enable_buf_cal STRING "true"
--- Retrieval info: CONSTANT: reconfig_fromgxb_width NUMERIC "51"
+-- Retrieval info: CONSTANT: reconfig_fromgxb_width NUMERIC "34"
 -- Retrieval info: CONSTANT: reconfig_togxb_width NUMERIC "4"
 -- Retrieval info: USED_PORT: busy 0 0 0 0 OUTPUT NODEFVAL "busy"
 -- Retrieval info: USED_PORT: reconfig_clk 0 0 0 0 INPUT NODEFVAL "reconfig_clk"
--- Retrieval info: USED_PORT: reconfig_fromgxb 0 0 51 0 INPUT NODEFVAL "reconfig_fromgxb[50..0]"
+-- Retrieval info: USED_PORT: reconfig_fromgxb 0 0 34 0 INPUT NODEFVAL "reconfig_fromgxb[33..0]"
 -- Retrieval info: USED_PORT: reconfig_togxb 0 0 4 0 OUTPUT NODEFVAL "reconfig_togxb[3..0]"
 -- Retrieval info: CONNECT: @reconfig_clk 0 0 0 0 reconfig_clk 0 0 0 0
--- Retrieval info: CONNECT: @reconfig_fromgxb 0 0 51 0 reconfig_fromgxb 0 0 51 0
+-- Retrieval info: CONNECT: @reconfig_fromgxb 0 0 34 0 reconfig_fromgxb 0 0 34 0
 -- Retrieval info: CONNECT: busy 0 0 0 0 @busy 0 0 0 0
 -- Retrieval info: CONNECT: reconfig_togxb 0 0 4 0 @reconfig_togxb 0 0 4 0
--- Retrieval info: GEN_FILE: TYPE_NORMAL trans_rcfg.vhd TRUE
--- Retrieval info: GEN_FILE: TYPE_NORMAL trans_rcfg.inc FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL trans_rcfg.cmp TRUE
--- Retrieval info: GEN_FILE: TYPE_NORMAL trans_rcfg.bsf FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL trans_rcfg_inst.vhd TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL sio_rcfg.vhd TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL sio_rcfg.inc FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL sio_rcfg.cmp TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL sio_rcfg.bsf FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL sio_rcfg_inst.vhd FALSE
 -- Retrieval info: LIB_FILE: altera_mf
 -- Retrieval info: LIB_FILE: lpm

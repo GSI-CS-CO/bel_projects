@@ -13,11 +13,11 @@
 --applicable agreement for further details.
 
 
-component trans_rcfg
+component sio_rcfg
 	PORT
 	(
 		reconfig_clk		: IN STD_LOGIC ;
-		reconfig_fromgxb		: IN STD_LOGIC_VECTOR (50 DOWNTO 0);
+		reconfig_fromgxb		: IN STD_LOGIC_VECTOR (33 DOWNTO 0);
 		busy		: OUT STD_LOGIC ;
 		reconfig_togxb		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0)
 	);

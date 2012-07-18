@@ -22,6 +22,7 @@ component trans_loop
 		reconfig_togxb		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 		rx_datain		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 		rx_digitalreset		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
+		rx_seriallpbken		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 		tx_digitalreset		: IN STD_LOGIC_VECTOR (3 DOWNTO 0);
 		reconfig_fromgxb		: OUT STD_LOGIC_VECTOR (16 DOWNTO 0);
 		rx_bistdone		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0);

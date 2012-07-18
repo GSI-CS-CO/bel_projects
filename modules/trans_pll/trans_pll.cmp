@@ -13,12 +13,11 @@
 --applicable agreement for further details.
 
 
-component trans_rcfg
+component trans_pll
 	PORT
 	(
-		reconfig_clk		: IN STD_LOGIC ;
-		reconfig_fromgxb		: IN STD_LOGIC_VECTOR (50 DOWNTO 0);
-		busy		: OUT STD_LOGIC ;
-		reconfig_togxb		: OUT STD_LOGIC_VECTOR (3 DOWNTO 0)
+		inclk0		: IN STD_LOGIC  := '0';
+		c0		: OUT STD_LOGIC ;
+		locked		: OUT STD_LOGIC 
 	);
 end component;
