@@ -1,66 +1,81 @@
---TITLE "'Scalable Control Unit Bus Interface' Autor: W.Panschow, Stand: 17.08.09, Version = 2, Revision = 0";
-
-
---+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
---+ Beschreibung:																											+
---+																															+
---+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-------------------------------------------------------------------------------
+-- Title      : Scalable Control Unit Bus Interface
+-- Project    : SCU
+-------------------------------------------------------------------------------
+-- File       : scu_bus_master.vhd
+-- Author     : Wolfgang Panschow
+-- Company    : GSI
+-- Created    : 2009-08-17
+-- Last update: 2012-07-19
+-- Platform   : FPGA-generics
+-- Standard   : VHDL '93
+-------------------------------------------------------------------------------
+-- Description:
+--
+-- Master Bus Interface for the SCU Bus
+-------------------------------------------------------------------------------
+-- Revisions  :
+-- Date        Version  Author          Description
+-- 2009-08-17  1.0      W.Panschow      Created
+-- 2009-08-17  1.1      W.Panschow      
+-- 2009-08-17  2.0      W.Panschow
+-- 2012-07-19  2.1      S.Rauch         switched to numeric_std
+-------------------------------------------------------------------------------
 
 library IEEE;
-USE IEEE.STD_LOGIC_1164.all;
-USE IEEE.STD_LOGIC_arith.all;
-USE IEEE.STD_LOGIC_unsigned.all;
+use IEEE.STD_LOGIC_1164.all;
+use ieee.numeric_std.all;
 
 
 ENTITY SCU_Bus_Master IS
 
 	GENERIC(
-			CLK_in_Hz			: INTEGER := 100000000;
-			Time_Out_in_ns		: INTEGER := 250;
+			CLK_in_Hz			          : INTEGER := 100000000;
+			Time_Out_in_ns		      : INTEGER := 250;
 			dly_multicast_dt_in_ns	: INTEGER := 200;
-			Sel_dly_in_ns		: INTEGER := 30;							-- delay to the I/O pins is not included
-			Sel_release_in_ns	: INTEGER := 30;							-- delay to the I/O pins is not included
-			D_Valid_to_DS_in_ns	: INTEGER := 30;							-- delay to the I/O pins is not included
-			Timing_str_in_ns	: INTEGER := 80;							-- delay to the I/O pins is not included
-			Test				: INTEGER RANGE 0 TO 1 := 0
+			Sel_dly_in_ns		        : INTEGER := 30;							-- delay to the I/O pins is not included
+			Sel_release_in_ns	      : INTEGER := 30;							-- delay to the I/O pins is not included
+			D_Valid_to_DS_in_ns	    : INTEGER := 30;							-- delay to the I/O pins is not included
+			Timing_str_in_ns	      : INTEGER := 80;							-- delay to the I/O pins is not included
+			Test				            : INTEGER RANGE 0 TO 1 := 0
 			);
 
 PORT(
-	Wr_Data					: IN		STD_LOGIC_VECTOR(15 DOWNTO 0);		-- wite data to SCU_Bus, or internal FPGA register
-	Rd_Data					: OUT		STD_LOGIC_VECTOR(15 DOWNTO 0);		-- read data from SCU_Bus, or internal FPGA register
-	Adr						: IN		STD_LOGIC_VECTOR(15 DOWNTO 0);
-	Slave_Nr				: IN		STD_LOGIC_VECTOR(3 DOWNTO 0);		-- 0x0 => internal access, 0x1 to 0xC => slave 1 to 12 access
-	Start_Cycle				: IN		STD_LOGIC;							-- start data access from/to SCU_Bus
-	Wr_Cycle				: IN		STD_LOGIC;							-- direction of SCU_Bus data access, write is active high.
-	Rd_Cycle				: IN		STD_LOGIC;							
-	Timing_In				: IN		STD_LOGIC_VECTOR(31 DOWNTO 0);
-	Start_Timing_Cycle		: IN		STD_LOGIC;							-- start timing cycle to SCU_Bus
-	clk						: IN		STD_LOGIC;
-	Reset					: IN		STD_LOGIC;
-	SCU_Bus_Access_Active	: OUT		STD_LOGIC;							-- active high signal: read or write access to SCUB is not finished
-																			-- the access can be terminated bei an error, so look also to the access error bis in the status register
-	Intr					: OUT		STD_LOGIC;							-- One or more slave interrupts, or internal Interrupts (like
-																			-- SCU_Bus-busy or SCU_Bus-timeout) are active. Intr is ative high.
-	SCUB_Data				: INOUT		STD_LOGIC_VECTOR(15 DOWNTO 0);
-	nSCUB_DS				: OUT		STD_LOGIC;							-- SCU_Bus Data Strobe, low active.
-	nSCUB_Dtack				: IN		STD_LOGIC;							-- SCU_Bus Data Acknowledge, low active.
-	SCUB_Addr				: OUT		STD_LOGIC_VECTOR(15 DOWNTO 0);		-- Address Bus of SCU_Bus
-	SCUB_RDnWR				: OUT		STD_LOGIC;							-- Read/Write Signal of SCU_Bus. Read is active high.
-																			-- Direction seen from this marco.
-	nSCUB_SRQ_Slaves		: IN		STD_LOGIC_VECTOR(11 DOWNTO 0);		-- Input of service requests up to 12 SCU_Bus slaves, active low.
-	nSCUB_Slave_Sel			: OUT		STD_LOGIC_VECTOR(11 DOWNTO 0);		-- Output select one or more of 12 SCU_Bus slaves, active low.
-	nSCUB_Timing_Cycle		: OUT		STD_LOGIC;							-- Strobe to signal a timing cycle on SCU_Bus, active low.
-	nSel_Ext_Data_Drv		: OUT		STD_LOGIC;							-- select for external data transceiver to the SCU_Bus, active low.
+	Wr_Data                 : IN		STD_LOGIC_VECTOR(15 DOWNTO 0);  -- wite data to SCU_Bus, or internal FPGA register
+	Rd_Data                 : OUT		STD_LOGIC_VECTOR(15 DOWNTO 0);	-- read data from SCU_Bus, or internal FPGA register
+	Adr                     : IN		STD_LOGIC_VECTOR(15 DOWNTO 0);
+	Slave_Nr                : IN		STD_LOGIC_VECTOR(3 DOWNTO 0);   -- 0x0 => internal access, 0x1 to 0xC => slave 1 to 12 access
+	Start_Cycle             : IN		STD_LOGIC;							        -- start data access from/to SCU_Bus
+	Wr_Cycle                : IN		STD_LOGIC;                      -- direction of SCU_Bus data access, write is active high.
+	Rd_Cycle                : IN		STD_LOGIC;							
+	Timing_In               : IN		STD_LOGIC_VECTOR(31 DOWNTO 0);
+	Start_Timing_Cycle      : IN		STD_LOGIC;                      -- start timing cycle to SCU_Bus
+	clk                     : IN		STD_LOGIC;
+	Reset                   : IN		STD_LOGIC;
+	SCU_Bus_Access_Active   : OUT		STD_LOGIC;                      -- active high signal: read or write access to SCUB is not finished
+                                                                  -- the access can be terminated bei an error, so look also to the access error bis in the status register
+	Intr                    : OUT		STD_LOGIC;                                -- One or more slave interrupts, or internal Interrupts (like
+                                                                  -- SCU_Bus-busy or SCU_Bus-timeout) are active. Intr is ative high.
+	SCUB_Data				        : INOUT		STD_LOGIC_VECTOR(15 DOWNTO 0);
+	nSCUB_DS				        : OUT		STD_LOGIC;							        -- SCU_Bus Data Strobe, low active.
+	nSCUB_Dtack				      : IN		STD_LOGIC;							        -- SCU_Bus Data Acknowledge, low active.
+	SCUB_Addr				        : OUT		STD_LOGIC_VECTOR(15 DOWNTO 0);	-- Address Bus of SCU_Bus
+	SCUB_RDnWR				      : OUT		STD_LOGIC;							        -- Read/Write Signal of SCU_Bus. Read is active high.
+                                                                  -- Direction seen from this marco.
+	nSCUB_SRQ_Slaves		: IN		STD_LOGIC_VECTOR(11 DOWNTO 0);		  -- Input of service requests up to 12 SCU_Bus slaves, active low.
+	nSCUB_Slave_Sel			: OUT		STD_LOGIC_VECTOR(11 DOWNTO 0);		  -- Output select one or more of 12 SCU_Bus slaves, active low.
+	nSCUB_Timing_Cycle	: OUT		STD_LOGIC;							            -- Strobe to signal a timing cycle on SCU_Bus, active low.
+	nSel_Ext_Data_Drv		: OUT		STD_LOGIC;							            -- select for external data transceiver to the SCU_Bus, active low.
 
 	SCUB_Rd_Err_no_Dtack	: OUT		STD_LOGIC;
-	SCUB_Rd_Fin				: OUT		STD_LOGIC;
-	SCUB_Rd_active			: OUT		STD_LOGIC;
+	SCUB_Rd_Fin				    : OUT		STD_LOGIC;
+	SCUB_Rd_active			  : OUT		STD_LOGIC;
 	SCUB_Wr_Err_no_Dtack	: OUT		STD_LOGIC;
-	SCUB_Wr_Fin				: OUT		STD_LOGIC;
-	SCUB_Wr_active			: OUT		STD_LOGIC;
-	SCUB_Ti_Cyc_Err			: OUT		STD_LOGIC;
-	SCUB_Ti_Fin				: OUT		STD_LOGIC;
-	SCU_Wait_Request		: OUT		STD_LOGIC							-- active high signal: SCU_Bus is busy should be connect to avalon-bus wait.
+	SCUB_Wr_Fin				    : OUT		STD_LOGIC;
+	SCUB_Wr_active			  : OUT		STD_LOGIC;
+	SCUB_Ti_Cyc_Err			  : OUT		STD_LOGIC;
+	SCUB_Ti_Fin				    : OUT		STD_LOGIC;
+	SCU_Wait_Request		  : OUT		STD_LOGIC							-- active high signal: SCU_Bus is busy should be connect to avalon-bus wait.
 	);
 		
 	FUNCTION set_vers_or_revi( vers_or_revi, Test: INTEGER) RETURN INTEGER IS
@@ -127,35 +142,35 @@ PORT(
 	CONSTANT	c_multicast_slave_acc	: STD_LOGIC_VECTOR(slave_Nr'range)	:= X"F";
 	
 	CONSTANT	C_Sel_dly_cnt			: INTEGER	:= set_ge_1(Sel_dly_in_ns * 1000 / Clk_in_ps)-2;		--	-2 because counter needs two more clock for unerflow
-	SIGNAL		S_Sel_dly_cnt			: STD_LOGIC_VECTOR(How_many_Bits(C_Sel_dly_cnt) DOWNTO 0);
+	SIGNAL		S_Sel_dly_cnt			: unsigned(How_many_Bits(C_Sel_dly_cnt) DOWNTO 0);
 
 	CONSTANT	C_Sel_release_cnt		: INTEGER	:= set_ge_1(Sel_release_in_ns * 1000 / Clk_in_ps)-2;	--	-2 because counter needs two more clock for unerflow
-	SIGNAL		S_Sel_release_cnt		: STD_LOGIC_VECTOR(How_many_Bits(C_Sel_release_cnt) DOWNTO 0);
+	SIGNAL		S_Sel_release_cnt		: unsigned(How_many_Bits(C_Sel_release_cnt) DOWNTO 0);
 
 	CONSTANT	C_Timing_str_cnt		: INTEGER	:= set_ge_1(Timing_str_in_ns * 1000 / Clk_in_ps)-2;		--	-2 because counter needs two more clock for unerflow
-	SIGNAL		S_Timing_str_cnt		: STD_LOGIC_VECTOR(How_many_Bits(C_Timing_str_cnt) DOWNTO 0);
+	SIGNAL		S_Timing_str_cnt		: unsigned(How_many_Bits(C_Timing_str_cnt) DOWNTO 0);
 
 	CONSTANT	C_D_Valid_to_DS_cnt		: INTEGER	:= set_ge_1(D_Valid_to_DS_in_ns * 1000 / Clk_in_ps)-2;	--	-2 because counter needs two more clock for unerflow
-	SIGNAL		S_D_Valid_to_DS_cnt		: STD_LOGIC_VECTOR(How_many_Bits(C_D_Valid_to_DS_cnt) DOWNTO 0);
+	SIGNAL		S_D_Valid_to_DS_cnt		: unsigned(How_many_Bits(C_D_Valid_to_DS_cnt) DOWNTO 0);
 
 	CONSTANT	C_time_out_cnt			: INTEGER	:= set_ge_1(time_out_in_ns * 1000 / Clk_in_ps)-2;		--	-2 because counter needs two more clock for unerflow
-	SIGNAL		s_time_out_cnt			: STD_LOGIC_VECTOR(How_many_Bits(C_time_out_cnt) DOWNTO 0);
+	SIGNAL		s_time_out_cnt			: unsigned(How_many_Bits(C_time_out_cnt) DOWNTO 0);
 	
 	CONSTANT	c_dly_multicast_dt_cnt	: INTEGER	:= set_ge_1(dly_multicast_dt_in_ns * 1000 / Clk_in_ps)-2;		--	-2 because counter needs two more clock for unerflow
-	SIGNAL		s_dly_multicast_dt_cnt	: STD_LOGIC_VECTOR(How_many_Bits(c_dly_multicast_dt_cnt) DOWNTO 0);
+	SIGNAL		s_dly_multicast_dt_cnt	: unsigned(How_many_Bits(c_dly_multicast_dt_cnt) DOWNTO 0);
 	
-	CONSTANT	C_Internal_Adr_Width	: INTEGER	:= 4;					-- define how many address bits are used to decode the internal FPGA-register
-	CONSTANT	C_Status_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 0, C_Internal_Adr_Width);
-	CONSTANT	C_Global_Intr_Ena_Adr	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 1, C_Internal_Adr_Width);
-	CONSTANT	C_Vers_Revi_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 2, C_Internal_Adr_Width);
-	CONSTANT	C_SRQ_Ena_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 3, C_Internal_Adr_Width);
-	CONSTANT	C_SRQ_Active_Adr		: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 4, C_Internal_Adr_Width);
-	CONSTANT	C_SRQ_In_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 5, C_Internal_Adr_Width);
-	CONSTANT	C_Wr_Multi_Slave_Sel_Adr	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 6, C_Internal_Adr_Width);
-	CONSTANT	C_Bus_master_intern_Echo_1_Adr	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 7, C_Internal_Adr_Width);
-	CONSTANT	C_Bus_master_intern_Echo_2_Adr	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 8, C_Internal_Adr_Width);
-	CONSTANT	C_Bus_master_intern_Echo_1	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 5, C_Internal_Adr_Width);
-	CONSTANT	C_Bus_master_intern_Echo_2	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 6, C_Internal_Adr_Width);
+	CONSTANT	c_adr_width	                : INTEGER	:= 4;					-- define how many address bits are used to decode the internal FPGA-register
+	CONSTANT	C_Status_Adr			          : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 0, c_adr_width);
+	CONSTANT	C_Global_Intr_Ena_Adr	      : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 1, c_adr_width);
+	CONSTANT	C_Vers_Revi_Adr			        : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 2, c_adr_width);
+	CONSTANT	C_SRQ_Ena_Adr			          : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 3, c_adr_width);
+	CONSTANT	C_SRQ_Active_Adr		        : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 4, c_adr_width);
+	CONSTANT	C_SRQ_In_Adr			          : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 5, c_adr_width);
+	CONSTANT	C_Wr_Multi_Slave_Sel_Adr	  : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 6, c_adr_width);
+	CONSTANT	C_Bus_master_intern_Echo_1_Adr	: unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 7, c_adr_width);
+	CONSTANT	C_Bus_master_intern_Echo_2_Adr	: unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 8, c_adr_width);
+	CONSTANT	C_Bus_master_intern_Echo_1	: unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 5, c_adr_width);
+	CONSTANT	C_Bus_master_intern_Echo_2	: unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 6, c_adr_width);
 	
 	
 	SIGNAL		s_reset					: STD_LOGIC;
@@ -203,8 +218,8 @@ PORT(
 
 	SIGNAL		S_Status				: STD_LOGIC_VECTOR(15 DOWNTO 0);
 
-	SIGNAL		S_SCUB_Version			: STD_LOGIC_VECTOR(7 DOWNTO 0);
-	SIGNAL		S_SCUB_Revision			: STD_LOGIC_VECTOR(7 DOWNTO 0);
+	SIGNAL		S_SCUB_Version			: std_logic_vector(7 DOWNTO 0);
+	SIGNAL		S_SCUB_Revision			: std_logic_vector(7 DOWNTO 0);
 	
 	SIGNAL		S_SCU_Bus_Access_Active	: STD_LOGIC;
 	SIGNAL		S_Wait_Request			: STD_LOGIC;
@@ -254,8 +269,8 @@ ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
 
 BEGIN
 
-S_SCUB_Version	<= conv_std_logic_vector(C_SCUB_Version, S_SCUB_Version'length);	-- set the version of this macro
-S_SCUB_Revision	<= conv_std_logic_vector(C_SCUB_Revision, S_SCUB_Revision'length);	-- set the revision of this macro
+S_SCUB_Version	<= std_logic_vector(to_unsigned(C_SCUB_Version, S_SCUB_Version'length));	-- set the version of this macro
+S_SCUB_Revision	<= std_logic_vector(to_unsigned(C_SCUB_Revision, S_SCUB_Revision'length));	-- set the revision of this macro
 
 ASSERT (False)
 	REPORT "SCU_Bus_Master_Macro: Version --> " & integer'image(C_SCUB_Version)
@@ -361,7 +376,7 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 	
 					WHEN X"0" =>															-- SCU_Bus_Master internal register access
 	
-						CASE Adr(C_Internal_Adr_Width-1 DOWNTO 0) IS
+						CASE unsigned(Adr(c_adr_width-1 DOWNTO 0)) IS
 
 							WHEN C_Status_Adr =>
 								IF Wr_Cycle = '1' THEN
@@ -543,9 +558,9 @@ BEGIN
 		CASE SCUB_SM IS					-- = SCU_Bus State Machine
 
 			WHEN Idle =>
-				S_Sel_dly_cnt		<= conv_std_logic_vector(C_Sel_dly_cnt, S_Sel_dly_cnt'length);
-				S_D_Valid_to_DS_cnt	<= conv_std_logic_vector(C_D_Valid_to_DS_cnt, S_D_Valid_to_DS_cnt'length);
-				S_Sel_release_cnt	<= conv_std_logic_vector(C_Sel_release_cnt, S_Sel_release_cnt'length);
+				S_Sel_dly_cnt		<= to_unsigned(C_Sel_dly_cnt, S_Sel_dly_cnt'length);
+				S_D_Valid_to_DS_cnt	<= to_unsigned(C_D_Valid_to_DS_cnt, S_D_Valid_to_DS_cnt'length);
+				S_Sel_release_cnt	<= to_unsigned(C_Sel_release_cnt, S_Sel_release_cnt'length);
 				S_SCUB_Slave_Sel	<= (OTHERS => '0');
 				S_SCUB_Addr			<= (OTHERS => '1');
 				S_SCUB_RDnWR		<= '1';
@@ -673,7 +688,7 @@ BEGIN
 				IF S_Sel_dly_cnt(S_Sel_dly_cnt'high) = '1' THEN
 					S_Sel_Ext_Data_Drv <= '1';
 					S_SCUB_Slave_Sel <= (OTHERS => '1');				-- in this version select all slaves.
-					S_Timing_str_cnt <= conv_std_logic_vector(C_Timing_str_cnt, S_Timing_str_cnt'length);
+					S_Timing_str_cnt <= to_unsigned(C_Timing_str_cnt, S_Timing_str_cnt'length);
 					SCUB_SM <= Ti_Cyc;									-- jump to active Timing cycle
 				END IF;
 
@@ -776,7 +791,7 @@ p_intr:	PROCESS (clk, s_reset)
 				END IF;
 			END LOOP;
 
-			IF S_SRQ_active /= CONV_STD_LOGIC_VECTOR( 0, nSCUB_SRQ_Slaves'length) THEN
+			IF S_SRQ_active /= std_logic_vector(to_unsigned( 0, nSCUB_SRQ_Slaves'length)) THEN
 				S_one_or_more_SRQs_act <= '1';
 			ELSE
 				S_one_or_more_SRQs_act <= '0';
@@ -813,10 +828,10 @@ P_SCUB_Tri_State:	PROCESS (SCUB_SM, S_Wr_Data, S_Timing_In)
 p_time_out:	PROCESS (Clk, s_reset)
 	BEGIN
 		IF s_reset = '1' THEN
-			s_time_out_cnt <= conv_std_logic_vector(C_time_out_cnt, s_time_out_cnt'length);
+			s_time_out_cnt <= to_unsigned(C_time_out_cnt, s_time_out_cnt'length);
 		ELSIF rising_edge(Clk) THEN
 			IF NOT ((SCUB_SM = Rd_Cyc) OR (SCUB_SM = Wr_Cyc)) THEN
-				s_time_out_cnt <= conv_std_logic_vector(C_time_out_cnt, s_time_out_cnt'length);
+				s_time_out_cnt <= to_unsigned(C_time_out_cnt, s_time_out_cnt'length);
 			ELSIF s_time_out_cnt(s_time_out_cnt'high) = '0' THEN									-- no underflow
 				s_time_out_cnt <= s_time_out_cnt - 1;												-- count down
 			END IF;
@@ -826,10 +841,10 @@ p_time_out:	PROCESS (Clk, s_reset)
 p_delay_multicast_dt:	PROCESS (Clk, s_reset)
 	BEGIN
 		IF s_reset = '1' THEN
-			s_dly_multicast_dt_cnt <= conv_std_logic_vector(c_dly_multicast_dt_cnt, s_dly_multicast_dt_cnt'length);
+			s_dly_multicast_dt_cnt <= to_unsigned(c_dly_multicast_dt_cnt, s_dly_multicast_dt_cnt'length);
 		ELSIF rising_edge(Clk) THEN
 			IF SCUB_SM /= Wr_Cyc or S_Multi_Wr_Flag = '0' THEN
-				s_dly_multicast_dt_cnt <= conv_std_logic_vector(c_dly_multicast_dt_cnt, s_dly_multicast_dt_cnt'length);
+				s_dly_multicast_dt_cnt <= to_unsigned(c_dly_multicast_dt_cnt, s_dly_multicast_dt_cnt'length);
 			ELSIF s_dly_multicast_dt_cnt(s_dly_multicast_dt_cnt'high) = '0' THEN									-- no underflow
 				s_dly_multicast_dt_cnt <= s_dly_multicast_dt_cnt - 1;												-- count down
 			END IF;
@@ -837,31 +852,31 @@ p_delay_multicast_dt:	PROCESS (Clk, s_reset)
 	END PROCESS p_delay_multicast_dt;
 
 
-SCUB_Addr				<= S_SCUB_Addr;
+SCUB_Addr				  <= S_SCUB_Addr;
 SCUB_RDnWR				<= S_SCUB_RDnWR;
-nSCUB_DS				<= NOT S_SCUB_DS;
-nSCUB_Slave_Sel			<= NOT S_SCUB_Slave_Sel;
+nSCUB_DS				  <= NOT S_SCUB_DS;
+nSCUB_Slave_Sel		<= NOT S_SCUB_Slave_Sel;
 
 nSCUB_Timing_Cycle		<= NOT S_SCUB_Timing_Cycle;
 
-nSel_Ext_Data_Drv		<= NOT S_Sel_Ext_Data_Drv;
+nSel_Ext_Data_Drv		  <= NOT S_Sel_Ext_Data_Drv;
 
-SCUB_Rd_active			<= S_Start_SCUB_Rd;
-SCUB_Rd_Fin				<= '1' WHEN SCUB_SM = F_Rd_Cyc ELSE '0';
+SCUB_Rd_active			  <= S_Start_SCUB_Rd;
+SCUB_Rd_Fin				    <= '1' WHEN SCUB_SM = F_Rd_Cyc ELSE '0';
 SCUB_Rd_Err_no_Dtack	<= S_SCUB_Rd_Err_no_Dtack;
 
-SCUB_Wr_active			<= S_Start_SCUB_Wr;
-SCUB_Wr_Fin				<= '1' WHEN SCUB_SM = F_Wr_Cyc ELSE '0';
+SCUB_Wr_active			  <= S_Start_SCUB_Wr;
+SCUB_Wr_Fin				    <= '1' WHEN SCUB_SM = F_Wr_Cyc ELSE '0';
 SCUB_Wr_Err_no_Dtack	<= S_SCUB_Wr_Err_no_Dtack;
 
-S_SCUB_Ti_Fin			<= '1' WHEN SCUB_SM = F_Ti_Cyc ELSE '0';
-SCUB_Ti_Fin				<= S_SCUB_Ti_Fin;
+S_SCUB_Ti_Fin			    <= '1' WHEN SCUB_SM = F_Ti_Cyc ELSE '0';
+SCUB_Ti_Fin				    <= S_SCUB_Ti_Fin;
 
-SCUB_Ti_Cyc_Err			<= S_Ti_Cyc_Err;
+SCUB_Ti_Cyc_Err			  <= S_Ti_Cyc_Err;
 
-S_SCU_Bus_Access_Active <= '1' WHEN (S_Start_SCUB_Wr = '1') OR (S_Start_SCUB_Rd = '1') ELSE '0';
-SCU_Bus_Access_Active <= S_SCU_Bus_Access_Active;
+S_SCU_Bus_Access_Active   <= '1' WHEN (S_Start_SCUB_Wr = '1') OR (S_Start_SCUB_Rd = '1') ELSE '0';
+SCU_Bus_Access_Active     <= S_SCU_Bus_Access_Active;
 
-SCU_Wait_Request		<= 	S_Wait_Request;
+SCU_Wait_Request		      <= 	S_Wait_Request;
 
 END Arch_SCU_Bus_Master;
