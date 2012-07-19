@@ -1,4 +1,5 @@
---TITLE "'Scalable Control Unit Bus Interface' Autor: W.Panschow, Stand: 17.08.09, Version = 1, Revision = 1";
+--TITLE "'Scalable Control Unit Bus Interface' Autor: W.Panschow, Stand: 17.08.09, Version = 2, Revision = 0";
+
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --+ Beschreibung:																											+
@@ -10,11 +11,13 @@ USE IEEE.STD_LOGIC_1164.all;
 USE IEEE.STD_LOGIC_arith.all;
 USE IEEE.STD_LOGIC_unsigned.all;
 
+
 ENTITY SCU_Bus_Master IS
 
 	GENERIC(
 			CLK_in_Hz			: INTEGER := 100000000;
 			Time_Out_in_ns		: INTEGER := 250;
+			dly_multicast_dt_in_ns	: INTEGER := 200;
 			Sel_dly_in_ns		: INTEGER := 30;							-- delay to the I/O pins is not included
 			Sel_release_in_ns	: INTEGER := 30;							-- delay to the I/O pins is not included
 			D_Valid_to_DS_in_ns	: INTEGER := 30;							-- delay to the I/O pins is not included
@@ -69,7 +72,7 @@ PORT(
 			END IF;
 		END set_vers_or_revi;
 
-	CONSTANT	C_SCUB_Version	: INTEGER RANGE 0 TO 255 := set_vers_or_revi(1, Test);		-- define the version of this macro
+	CONSTANT	C_SCUB_Version	: INTEGER RANGE 0 TO 255 := set_vers_or_revi(2, Test);		-- define the version of this macro
 	CONSTANT	C_SCUB_Revision	: INTEGER RANGE 0 TO 255 := set_vers_or_revi(1, Test);		-- define the revision of this macro
 	
 	CONSTANT	Clk_in_ps			: INTEGER	:= 1000000000 / (Clk_in_Hz / 1000);
@@ -121,7 +124,8 @@ PORT(
 			END IF;
 		END return_max;
 
-
+	CONSTANT	c_multicast_slave_acc	: STD_LOGIC_VECTOR(slave_Nr'range)	:= X"F";
+	
 	CONSTANT	C_Sel_dly_cnt			: INTEGER	:= set_ge_1(Sel_dly_in_ns * 1000 / Clk_in_ps)-2;		--	-2 because counter needs two more clock for unerflow
 	SIGNAL		S_Sel_dly_cnt			: STD_LOGIC_VECTOR(How_many_Bits(C_Sel_dly_cnt) DOWNTO 0);
 
@@ -137,12 +141,19 @@ PORT(
 	CONSTANT	C_time_out_cnt			: INTEGER	:= set_ge_1(time_out_in_ns * 1000 / Clk_in_ps)-2;		--	-2 because counter needs two more clock for unerflow
 	SIGNAL		s_time_out_cnt			: STD_LOGIC_VECTOR(How_many_Bits(C_time_out_cnt) DOWNTO 0);
 	
+	CONSTANT	c_dly_multicast_dt_cnt	: INTEGER	:= set_ge_1(dly_multicast_dt_in_ns * 1000 / Clk_in_ps)-2;		--	-2 because counter needs two more clock for unerflow
+	SIGNAL		s_dly_multicast_dt_cnt	: STD_LOGIC_VECTOR(How_many_Bits(c_dly_multicast_dt_cnt) DOWNTO 0);
+	
 	CONSTANT	C_Internal_Adr_Width	: INTEGER	:= 4;					-- define how many address bits are used to decode the internal FPGA-register
 	CONSTANT	C_Status_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 0, C_Internal_Adr_Width);
-	CONSTANT	C_Vers_Revi_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 1, C_Internal_Adr_Width);
-	CONSTANT	C_SRQ_Ena_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 2, C_Internal_Adr_Width);
-	CONSTANT	C_SRQ_Active_Adr		: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 3, C_Internal_Adr_Width);
-	CONSTANT	C_SRQ_In_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 4, C_Internal_Adr_Width);
+	CONSTANT	C_Global_Intr_Ena_Adr	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 1, C_Internal_Adr_Width);
+	CONSTANT	C_Vers_Revi_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 2, C_Internal_Adr_Width);
+	CONSTANT	C_SRQ_Ena_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 3, C_Internal_Adr_Width);
+	CONSTANT	C_SRQ_Active_Adr		: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 4, C_Internal_Adr_Width);
+	CONSTANT	C_SRQ_In_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 5, C_Internal_Adr_Width);
+	CONSTANT	C_Wr_Multi_Slave_Sel_Adr	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 6, C_Internal_Adr_Width);
+	CONSTANT	C_Bus_master_intern_Echo_1_Adr	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 7, C_Internal_Adr_Width);
+	CONSTANT	C_Bus_master_intern_Echo_2_Adr	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 8, C_Internal_Adr_Width);
 	CONSTANT	C_Bus_master_intern_Echo_1	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 5, C_Internal_Adr_Width);
 	CONSTANT	C_Bus_master_intern_Echo_2	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 6, C_Internal_Adr_Width);
 	
@@ -155,8 +166,10 @@ PORT(
 	SIGNAL		S_SCUB_DS				: STD_LOGIC;
 
 	SIGNAL		S_Slave_Nr				: STD_LOGIC_VECTOR(3 DOWNTO 0);
-	SIGNAL		S_SCUB_Slave_Sel		: STD_LOGIC_VECTOR(11 DOWNTO 0);
-	SIGNAL		S_Slave_Sel				: STD_LOGIC_VECTOR(11 DOWNTO 0);
+	SIGNAL		S_SCUB_Slave_Sel		: STD_LOGIC_VECTOR(nSCUB_Slave_Sel'range);
+	SIGNAL		S_Slave_Sel				: STD_LOGIC_VECTOR(nSCUB_Slave_Sel'range);
+	SIGNAL		S_Multi_Slave_Sel		: STD_LOGIC_VECTOR(nSCUB_Slave_Sel'range);
+	SIGNAL		S_Multi_Wr_Flag			: STD_LOGIC;
 	
 	SIGNAL		S_Start_Cycle			: STD_LOGIC;
 
@@ -202,6 +215,8 @@ PORT(
 	SIGNAL		S_Intern_Echo_1			: STD_LOGIC_VECTOR(15 DOWNTO 0);
 	SIGNAL		S_Intern_Echo_2			: STD_LOGIC_VECTOR(15 DOWNTO 0);
 	
+	SIGNAL		S_Global_Intr_Ena		: STD_LOGIC_VECTOR(15 DOWNTO 0);
+
 
 
 	END SCU_Bus_Master;
@@ -230,6 +245,12 @@ ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
 
 	SIGNAL	SCUB_SM	: T_SCUB_SM;
 
+	CONSTANT	bit_scub_wr_err:		INTEGER := 0;
+	CONSTANT	bit_scub_rd_err:		INTEGER := 1;
+	CONSTANT	bit_ti_cyc_err:			INTEGER := 2;
+	CONSTANT	bit_inval_intern_acc:	INTEGER := 3;
+	CONSTANT	bit_inval_slave_nr:		INTEGER := 4;
+	CONSTANT	bit_scub_srqs_active:	INTEGER := 5;
 
 BEGIN
 
@@ -245,8 +266,14 @@ SEVERITY Warning;
 ASSERT NOT (Clk_in_Hz < 100000000)
 	REPORT "Achtung Generic Clk_in_Hz ist auf " & integer'image(Clk_in_Hz)
 			& " gesetzt. Mit der Periodendauer von " & integer'image(Clk_in_ns)
-			& " ns lassen sich keine genauen Verzögerungen erzeugen!"
+			& " ns lassen sich keine genauen Verzoegerungen erzeugen!"
+
 SEVERITY Warning;
+
+ASSERT (c_dly_multicast_dt_cnt+2 <= C_time_out_cnt)
+	REPORT "Achtung der multicast delay count " & integer'image(c_dly_multicast_dt_cnt+2)
+			& " muss um mindestens 2 kleiner sein als der time_out_cnt = " & integer'image(C_time_out_cnt+2)
+SEVERITY Error;
 
 ASSERT (False)
 	REPORT "time_out_in_ns = " & integer'image(time_out_in_ns)
@@ -278,6 +305,7 @@ P_Reset:	PROCESS	(clk, Reset)
 	END PROCESS P_Reset;
 
 
+
 S_Status(15)	<= '0';
 S_Status(14)	<= '0';
 S_Status(13)	<= '0';
@@ -285,15 +313,15 @@ S_Status(12)	<= '0';
 S_Status(11)	<= '0';
 S_Status(10)	<= '0';
 S_Status(9)		<= '0';
-S_Status(8)		<= S_one_or_more_SRQs_act;
+S_Status(8)		<= '0';
 S_Status(7)		<= '0';
 S_Status(6)		<= '0';
-S_Status(5)		<= '0';
-S_Status(4)		<= S_Invalid_Slave_Nr;
-S_Status(3)		<= S_Invalid_Intern_Acc;
-S_Status(2)		<= S_Ti_Cyc_Err;
-S_Status(1)		<= S_SCUB_Rd_Err_no_Dtack;
-S_Status(0)		<= S_SCUB_Wr_Err_no_Dtack;
+S_Status(bit_scub_srqs_active)	<= S_one_or_more_SRQs_act;
+S_Status(bit_inval_slave_nr)	<= S_Invalid_Slave_Nr;
+S_Status(bit_inval_intern_acc)	<= S_Invalid_Intern_Acc;
+S_Status(bit_ti_cyc_err)		<= S_Ti_Cyc_Err;
+S_Status(bit_scub_rd_err)		<= S_SCUB_Rd_Err_no_Dtack;
+S_Status(bit_scub_wr_err)		<= S_SCUB_Wr_Err_no_Dtack;
 
 
 P_SCUB_Cntrl: Process (clk, s_reset)
@@ -313,6 +341,9 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 			S_Invalid_Intern_Acc	<= '0';
 			S_Intern_Echo_1			<= (OTHERS => '0');
 			S_Intern_Echo_2			<= (OTHERS => '0');
+			S_Multi_Slave_Sel		<= (OTHERS => '0');			-- clear Register which contains the bit_vector to address multible slaves during one SCU write access 
+			S_Multi_Wr_Flag			<= '0';
+			S_Global_Intr_Ena		<= (OTHERS => '0');
 
 		ELSIF rising_edge(clk) THEN
 		
@@ -323,95 +354,133 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 			IF Start_Cycle = '1' THEN
 				S_Start_Cycle <= '1';
 			END IF;
+			
+			IF S_Start_Cycle = '1' THEN
 
-			CASE Slave_Nr IS
-
-				WHEN X"0" =>																-- SCU_Bus_Master internal register access
-					IF S_Start_Cycle = '1' THEN
+				CASE Slave_Nr IS
+	
+					WHEN X"0" =>															-- SCU_Bus_Master internal register access
+	
 						CASE Adr(C_Internal_Adr_Width-1 DOWNTO 0) IS
+
 							WHEN C_Status_Adr =>
 								IF Wr_Cycle = '1' THEN
-									IF Wr_Data(0) = '1' THEN								-- look to the bit position in status
-										S_SCUB_Wr_Err_no_Dtack <= '0';						-- SCU_Bus write error no dtack
+									IF Wr_Data(bit_scub_wr_err) = '1' THEN					-- look to the bit position in status
+										S_SCUB_Wr_Err_no_Dtack <= '0';						-- reset SCU_Bus write error no dtack. 
 									END IF;
-									IF Wr_Data(1) = '1' THEN								-- look to the bit position in status!
+									IF Wr_Data(bit_scub_rd_err) = '1' THEN					-- look to the bit position in status!
 										S_SCUB_Rd_Err_no_Dtack <= '0';						-- reset SCU_Bus read error no dtack
 									END IF;
-									IF Wr_Data(2) = '1' THEN								-- look to the bit position in status!
+									IF Wr_Data(bit_ti_cyc_err) = '1' THEN					-- look to the bit position in status!
 										S_Ti_Cyc_Err <= '0';								-- reset SCU_Bus timing error
 									END IF;
-									IF Wr_Data(3) = '1' THEN								-- look to the bit position in status!
+									IF Wr_Data(bit_inval_intern_acc) = '1' THEN				-- look to the bit position in status!
 										S_Invalid_Intern_Acc <= '0';						-- reset invalid internal register access error
 									END IF;
-									IF Wr_Data(4) = '1' THEN								-- look to the bit position in status!
+									IF Wr_Data(bit_inval_slave_nr) = '1' THEN				-- look to the bit position in status!
 										S_Invalid_Slave_Nr <= '0';							-- reset invalid slave number error
 									END IF;
 								ELSIF Rd_Cycle = '1' THEN
 									Rd_Data <= S_Status;
 								END IF;
+
+							WHEN C_Global_Intr_Ena_Adr =>
+								IF Wr_Cycle = '1' THEN
+									S_Global_Intr_Ena(bit_scub_wr_err) <= Wr_Data(bit_scub_wr_err);
+									S_Global_Intr_Ena(bit_scub_rd_err) <= Wr_Data(bit_scub_rd_err);
+									S_Global_Intr_Ena(bit_ti_cyc_err) <= Wr_Data(bit_ti_cyc_err);
+									S_Global_Intr_Ena(bit_inval_intern_acc) <= Wr_Data(bit_inval_intern_acc);
+									S_Global_Intr_Ena(bit_inval_slave_nr) <= Wr_Data(bit_inval_slave_nr);
+									S_Global_Intr_Ena(bit_scub_srqs_active) <= Wr_Data(bit_scub_srqs_active);
+								ELSIF RD_Cycle = '1' THEN
+									Rd_Data <= S_Global_Intr_Ena;
+								END IF;
+
 							WHEN C_SRQ_Ena_Adr =>
 								IF Wr_Cycle = '1' THEN
-									S_SRQ_Ena <= Wr_Data(nSCUB_SRQ_Slaves'high DOWNTO 0);
+									S_SRQ_Ena <= Wr_Data(nSCUB_SRQ_Slaves'range);
 								ELSIF Rd_Cycle = '1' THEN
 									Rd_Data <= ("0000" & S_SRQ_Ena);
 								END IF;
+
 							WHEN C_Srq_active_Adr =>
 								IF Wr_Cycle = '1' THEN
 									S_Invalid_Intern_Acc <= '1';
 								ELSIF Rd_Cycle = '1' THEN
 									Rd_Data <= ("0000" & S_SRQ_Active);
 								END IF;
+
 							WHEN C_Srq_In_Adr =>
 								IF Wr_Cycle = '1' THEN
 									S_Invalid_Intern_Acc <= '1';
 								ELSIF Rd_Cycle = '1' THEN
 									Rd_Data <= ("0000" & S_SRQ_Sync);
 								END IF;
+
 							WHEN C_Vers_Revi_Adr =>
 								IF Wr_Cycle = '1' THEN
 									S_Invalid_Intern_Acc <= '1';
 								ELSIF Rd_Cycle = '1' THEN
 									Rd_Data <= (S_SCUB_Version & S_SCUB_Revision);
 								END IF;
-							WHEN C_Bus_master_intern_Echo_1 =>
+
+							WHEN C_Wr_Multi_Slave_Sel_Adr =>
+								IF Wr_Cycle = '1' THEN
+									S_Multi_Slave_Sel <= Wr_Data(nSCUB_Slave_Sel'range);
+								ELSIF Rd_Cycle = '1' THEN
+									Rd_Data <= ("0000" & S_Multi_Slave_Sel);
+								END IF;
+
+							WHEN C_Bus_master_intern_Echo_1_Adr =>
 								IF Wr_Cycle = '1' THEN
 									S_Intern_Echo_1 <= Wr_Data;
 								ELSIF Rd_Cycle = '1' THEN
 									Rd_Data <= S_Intern_Echo_1;
 								END IF;
-							WHEN C_Bus_master_intern_Echo_2 =>
+
+							WHEN C_Bus_master_intern_Echo_2_Adr =>
 								IF Wr_Cycle = '1' THEN
 									S_Intern_Echo_2 <= Wr_Data;
 								ELSIF Rd_Cycle = '1' THEN
 									Rd_Data <= S_Intern_Echo_2;
 								END IF;
+
 							WHEN OTHERS => 
 								S_Invalid_Intern_Acc <= '1';
 						END CASE;
-						S_Invalid_Intern_Acc <= '1';
+
 						S_Wait_Request <= '0';
 						S_Start_Cycle <= '0';
-					END IF;
 
 				WHEN X"1" | X"2" | X"3" | X"4" | X"5" | X"6" | X"7" | X"8" | X"9" | X"A" | X"B" | X"C" =>	-- SCU_Bus_Master external slave access
-					IF S_Start_Cycle = '1' THEN
-						IF Wr_Cycle = '1' THEN
-							S_Start_SCUB_Wr <= '1';									-- store write request
-							S_Wr_Data <= Wr_Data;									-- store write pattern
-						ELSIF Rd_Cycle = '1' THEN
-							S_Start_SCUB_Rd <= '1';									-- store read request
-						END IF;
+					IF Wr_Cycle = '1' THEN
+						S_Start_SCUB_Wr <= '1';									-- store write request
+						S_Multi_Wr_Flag <= '0';
+						S_Wr_Data <= Wr_Data;									-- store write pattern
+					ELSIF Rd_Cycle = '1' THEN
+						S_Start_SCUB_Rd <= '1';									-- store read request
 					END IF;
 					Rd_Data <= S_Rd_Data;
+				
+				WHEN c_multicast_slave_acc =>	-- Multicast Wr to external slaves
+					IF Wr_Cycle = '1' THEN
+						S_Start_SCUB_Wr <= '1';									-- store write request
+						S_Multi_Wr_Flag <= '1';
+						S_Wr_Data <= Wr_Data;									-- store write pattern
+
+					END IF;
+				  
 				WHEN OTHERS =>
 					S_Invalid_Slave_Nr <= '1';
-  					Rd_Data <= S_Rd_Data;
 					S_Wait_Request <= '0';
 					S_Start_Cycle <= '0';
 			END CASE;
 
+			END IF;
 
-			IF SCUB_SM = E_Wr_Cyc THEN
+
+			IF SCUB_SM = F_Wr_Cyc THEN
+				S_Multi_Wr_Flag <= '0';
 				S_Start_SCUB_Wr <= '0';												-- write request finished
 				S_Wait_Request <= '0';
 				S_Start_Cycle <= '0';
@@ -419,10 +488,11 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 			
 			
 			IF SCUB_SM = TO_Wr_Cyc THEN
+				S_Multi_Wr_Flag <= '0';
 				S_SCUB_Wr_Err_no_Dtack <= '1';										-- SCU_Bus write error no dtack
 			END IF;
 
-			IF  SCUB_SM = E_Rd_Cyc THEN
+			IF  SCUB_SM = F_Rd_Cyc THEN
 				S_Start_SCUB_Rd <= '0';												-- read request finished
 				S_Wait_Request <= '0';
 				S_Start_Cycle <= '0';
@@ -569,7 +639,10 @@ BEGIN
 			WHEN Wr_Cyc =>												-- write cycle active
 				IF S_D_Valid_to_DS_cnt(S_D_Valid_to_DS_cnt'high) = '1' THEN
 					S_SCUB_DS <= '1';
-					IF (S_nSync_Dtack = '0') OR (s_time_out_cnt(s_time_out_cnt'high) = '1') THEN	-- wait for Dtack or timeout
+					IF 		(S_Multi_Wr_Flag = '0' and S_nSync_Dtack = '0')																	-- wait for indivdual slave dtack
+						OR	(S_Multi_Wr_Flag = '1' and s_dly_multicast_dt_cnt(s_dly_multicast_dt_cnt'high) = '1' and S_nSync_Dtack = '0')	-- wait for first slave dtack during multicast wr and delay it for slowlier slaves
+						OR	(s_time_out_cnt(s_time_out_cnt'high) = '1')																		-- if no dtack wait for timeout
+					THEN
 						S_SCUB_DS <= '0';
 						S_Sel_Ext_Data_Drv <= '0';
 						S_SCUB_Slave_Sel <= (OTHERS => '0');
@@ -667,6 +740,12 @@ p_board_sel:	PROCESS (clk, s_reset)
 				WHEN X"A" =>	S_Slave_Sel <= "001000000000";
 				WHEN X"B" =>	S_Slave_Sel <= "010000000000";
 				WHEN X"C" =>	S_Slave_Sel <= "100000000000";	-- select board 12
+				WHEN c_multicast_slave_acc =>
+								IF S_Start_SCUB_Wr = '1' THEN	-- select boardcast
+									S_Slave_Sel <= S_Multi_Slave_Sel;
+								ELSE
+									S_Slave_Sel <= "000000000000";
+								END IF;
 				WHEN OTHERS =>  S_Slave_Sel <= "000000000000";	-- no board select
 			END CASE;
 		END IF;
@@ -676,8 +755,8 @@ p_board_sel:	PROCESS (clk, s_reset)
 p_intr:	PROCESS (clk, s_reset)
 	BEGIN
 		IF s_reset = '1' THEN
-			S_SRQ_Sync		<= "000000000000";					-- set synchronized SRQs to no SRQ
-			S_SRQ_active	<= "000000000000";					-- set active SRQs to no SRQ
+			S_SRQ_Sync		<= "000000000000";					-- clear synchronized SRQs
+			S_SRQ_active	<= "000000000000";					-- clear active SRQs
 			S_one_or_more_SRQs_act <= '0';
 			Intr			<= '0';
 
@@ -703,7 +782,13 @@ p_intr:	PROCESS (clk, s_reset)
 				S_one_or_more_SRQs_act <= '0';
 			END IF;
 
-			IF S_one_or_more_SRQs_act = '1' OR S_Ti_Cyc_Err = '1' OR S_SCUB_Rd_Err_no_Dtack = '1' OR S_SCUB_Wr_Err_no_Dtack = '1' THEN
+			IF		(S_SCUB_Wr_Err_no_Dtack = '1' AND S_Global_Intr_Ena(bit_scub_wr_err) = '1')
+				OR	(S_SCUB_Rd_Err_no_Dtack = '1' AND S_Global_Intr_Ena(bit_scub_rd_err) = '1')
+				OR	(S_Ti_Cyc_Err = '1' AND S_Global_Intr_Ena(bit_ti_cyc_err) = '1')
+				OR	(S_Invalid_Intern_Acc = '1' AND S_Global_Intr_Ena(bit_inval_intern_acc) = '1')
+				OR	(S_Invalid_Slave_Nr = '1' AND S_Global_Intr_Ena(bit_inval_slave_nr) = '1')
+				OR	(S_one_or_more_SRQs_act = '1' AND  S_Global_Intr_Ena(bit_scub_srqs_active) = '1')
+			THEN
 				Intr <= '1';
 			ELSE
 				Intr <= '0';
@@ -737,6 +822,19 @@ p_time_out:	PROCESS (Clk, s_reset)
 			END IF;
 		END IF;
 	END PROCESS p_time_out;
+
+p_delay_multicast_dt:	PROCESS (Clk, s_reset)
+	BEGIN
+		IF s_reset = '1' THEN
+			s_dly_multicast_dt_cnt <= conv_std_logic_vector(c_dly_multicast_dt_cnt, s_dly_multicast_dt_cnt'length);
+		ELSIF rising_edge(Clk) THEN
+			IF SCUB_SM /= Wr_Cyc or S_Multi_Wr_Flag = '0' THEN
+				s_dly_multicast_dt_cnt <= conv_std_logic_vector(c_dly_multicast_dt_cnt, s_dly_multicast_dt_cnt'length);
+			ELSIF s_dly_multicast_dt_cnt(s_dly_multicast_dt_cnt'high) = '0' THEN									-- no underflow
+				s_dly_multicast_dt_cnt <= s_dly_multicast_dt_cnt - 1;												-- count down
+			END IF;
+		END IF;
+	END PROCESS p_delay_multicast_dt;
 
 
 SCUB_Addr				<= S_SCUB_Addr;
