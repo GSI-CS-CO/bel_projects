@@ -1,4 +1,4 @@
---TITLE "'Scalable Control Unit Bus Interface' Autor: W.Panschow, Stand: 17.08.09, Version = 1, Revision = 0";
+--TITLE "'Scalable Control Unit Bus Interface' Autor: W.Panschow, Stand: 17.08.09, Version = 1, Revision = 1";
 
 --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 --+ Beschreibung:																											+
@@ -48,7 +48,6 @@ PORT(
 	nSCUB_Slave_Sel			: OUT		STD_LOGIC_VECTOR(11 DOWNTO 0);		-- Output select one or more of 12 SCU_Bus slaves, active low.
 	nSCUB_Timing_Cycle		: OUT		STD_LOGIC;							-- Strobe to signal a timing cycle on SCU_Bus, active low.
 	nSel_Ext_Data_Drv		: OUT		STD_LOGIC;							-- select for external data transceiver to the SCU_Bus, active low.
-	nStart_DB_Trm			: OUT		STD_LOGIC;
 
 	SCUB_Rd_Err_no_Dtack	: OUT		STD_LOGIC;
 	SCUB_Rd_Fin				: OUT		STD_LOGIC;
@@ -58,7 +57,7 @@ PORT(
 	SCUB_Wr_active			: OUT		STD_LOGIC;
 	SCUB_Ti_Cyc_Err			: OUT		STD_LOGIC;
 	SCUB_Ti_Fin				: OUT		STD_LOGIC;
-	SCU_Wait_Request		: OUT		STD_LOGIC
+	SCU_Wait_Request		: OUT		STD_LOGIC							-- active high signal: SCU_Bus is busy should be connect to avalon-bus wait.
 	);
 		
 	FUNCTION set_vers_or_revi( vers_or_revi, Test: INTEGER) RETURN INTEGER IS
@@ -71,7 +70,7 @@ PORT(
 		END set_vers_or_revi;
 
 	CONSTANT	C_SCUB_Version	: INTEGER RANGE 0 TO 255 := set_vers_or_revi(1, Test);		-- define the version of this macro
-	CONSTANT	C_SCUB_Revision	: INTEGER RANGE 0 TO 255 := set_vers_or_revi(0, Test);		-- define the revision of this macro
+	CONSTANT	C_SCUB_Revision	: INTEGER RANGE 0 TO 255 := set_vers_or_revi(1, Test);		-- define the revision of this macro
 	
 	CONSTANT	Clk_in_ps			: INTEGER	:= 1000000000 / (Clk_in_Hz / 1000);
 	CONSTANT	Clk_in_ns			: INTEGER	:= 1000000000 / Clk_in_Hz;
@@ -144,6 +143,8 @@ PORT(
 	CONSTANT	C_SRQ_Ena_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 2, C_Internal_Adr_Width);
 	CONSTANT	C_SRQ_Active_Adr		: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 3, C_Internal_Adr_Width);
 	CONSTANT	C_SRQ_In_Adr			: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 4, C_Internal_Adr_Width);
+	CONSTANT	C_Bus_master_intern_Echo_1	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 5, C_Internal_Adr_Width);
+	CONSTANT	C_Bus_master_intern_Echo_2	: STD_LOGIC_VECTOR(C_Internal_Adr_Width-1 DOWNTO 0) := CONV_STD_LOGIC_VECTOR( 6, C_Internal_Adr_Width);
 	
 	
 	SIGNAL		s_reset					: STD_LOGIC;
@@ -194,10 +195,13 @@ PORT(
 	
 	SIGNAL		S_SCU_Bus_Access_Active	: STD_LOGIC;
 	SIGNAL		S_Wait_Request			: STD_LOGIC;
-	SIGNAL		S_Dly_Wait_Request		: STD_LOGIC;
 
 	SIGNAL		S_Invalid_Slave_Nr		: STD_LOGIC;
 	SIGNAL		S_Invalid_Intern_Acc	: STD_LOGIC;
+	
+	SIGNAL		S_Intern_Echo_1			: STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL		S_Intern_Echo_2			: STD_LOGIC_VECTOR(15 DOWNTO 0);
+	
 
 
 	END SCU_Bus_Master;
@@ -241,7 +245,7 @@ SEVERITY Warning;
 ASSERT NOT (Clk_in_Hz < 100000000)
 	REPORT "Achtung Generic Clk_in_Hz ist auf " & integer'image(Clk_in_Hz)
 			& " gesetzt. Mit der Periodendauer von " & integer'image(Clk_in_ns)
-			& " ns lassen sich keine genauen Verzögerungen erzeugen!"
+			& " ns lassen sich keine genauen VerzÃ¶gerungen erzeugen!"
 SEVERITY Warning;
 
 ASSERT (False)
@@ -303,18 +307,17 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 			S_SCUB_Rd_Err_no_Dtack	<= '0';						-- reset read timeout flag
 			S_SCUB_Wr_Err_no_Dtack	<= '0';						-- reset write timeout flag
 			S_Ti_Cy(S_Ti_Cy'range)	<= (OTHERS => '0');			-- shift reg to generate pulse
-			S_SRQ_Ena				<= "111111111111";			-- all SRQs[12..1] are enabled
+			S_SRQ_Ena				<= (OTHERS => '0');			-- all SRQs[12..1] are disabled
 			S_Wait_Request			<= '0';
-			S_Dly_Wait_Request		<= '0';
 			S_Invalid_Slave_Nr		<= '0';
 			S_Invalid_Intern_Acc	<= '0';
+			S_Intern_Echo_1			<= (OTHERS => '0');
+			S_Intern_Echo_2			<= (OTHERS => '0');
 
 		ELSIF rising_edge(clk) THEN
 		
-			S_Dly_Wait_Request <= '1';
+			S_Wait_Request <= '1';
 			
---			S_Wait_Request <= S_Dly_Wait_Request;
-
 			S_Ti_Cy(S_Ti_Cy'range) <= (S_Ti_Cy(S_Ti_Cy'high-1 DOWNTO 0) & Start_Timing_Cycle);		-- shift reg to generate pulse
 
 			IF Start_Cycle = '1' THEN
@@ -323,7 +326,7 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 
 			CASE Slave_Nr IS
 
-				WHEN X"0" =>
+				WHEN X"0" =>																-- SCU_Bus_Master internal register access
 					IF S_Start_Cycle = '1' THEN
 						CASE Adr(C_Internal_Adr_Width-1 DOWNTO 0) IS
 							WHEN C_Status_Adr =>
@@ -370,14 +373,27 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 								ELSIF Rd_Cycle = '1' THEN
 									Rd_Data <= (S_SCUB_Version & S_SCUB_Revision);
 								END IF;
+							WHEN C_Bus_master_intern_Echo_1 =>
+								IF Wr_Cycle = '1' THEN
+									S_Intern_Echo_1 <= Wr_Data;
+								ELSIF Rd_Cycle = '1' THEN
+									Rd_Data <= S_Intern_Echo_1;
+								END IF;
+							WHEN C_Bus_master_intern_Echo_2 =>
+								IF Wr_Cycle = '1' THEN
+									S_Intern_Echo_2 <= Wr_Data;
+								ELSIF Rd_Cycle = '1' THEN
+									Rd_Data <= S_Intern_Echo_2;
+								END IF;
 							WHEN OTHERS => 
 								S_Invalid_Intern_Acc <= '1';
 						END CASE;
 						S_Invalid_Intern_Acc <= '1';
-						S_Dly_Wait_Request <= '0';
+						S_Wait_Request <= '0';
 						S_Start_Cycle <= '0';
 					END IF;
-				WHEN X"1" | X"2" | X"3" | X"4" | X"5" | X"6" | X"7" | X"8" | X"9" | X"A" | X"B" | X"C" =>
+
+				WHEN X"1" | X"2" | X"3" | X"4" | X"5" | X"6" | X"7" | X"8" | X"9" | X"A" | X"B" | X"C" =>	-- SCU_Bus_Master external slave access
 					IF S_Start_Cycle = '1' THEN
 						IF Wr_Cycle = '1' THEN
 							S_Start_SCUB_Wr <= '1';									-- store write request
@@ -390,14 +406,14 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 				WHEN OTHERS =>
 					S_Invalid_Slave_Nr <= '1';
   					Rd_Data <= S_Rd_Data;
-					S_Dly_Wait_Request <= '0';
+					S_Wait_Request <= '0';
 					S_Start_Cycle <= '0';
 			END CASE;
 
 
 			IF SCUB_SM = E_Wr_Cyc THEN
 				S_Start_SCUB_Wr <= '0';												-- write request finished
-				S_Dly_Wait_Request <= '0';
+				S_Wait_Request <= '0';
 				S_Start_Cycle <= '0';
 			END IF;
 			
@@ -408,7 +424,7 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 
 			IF  SCUB_SM = E_Rd_Cyc THEN
 				S_Start_SCUB_Rd <= '0';												-- read request finished
-				S_Dly_Wait_Request <= '0';
+				S_Wait_Request <= '0';
 				S_Start_Cycle <= '0';
 			END IF;
 			
@@ -732,8 +748,6 @@ nSCUB_Timing_Cycle		<= NOT S_SCUB_Timing_Cycle;
 
 nSel_Ext_Data_Drv		<= NOT S_Sel_Ext_Data_Drv;
 
-nStart_DB_Trm			<= '0' WHEN (SCUB_SM = F_Rd_Cyc)  ELSE '1';
-
 SCUB_Rd_active			<= S_Start_SCUB_Rd;
 SCUB_Rd_Fin				<= '1' WHEN SCUB_SM = F_Rd_Cyc ELSE '0';
 SCUB_Rd_Err_no_Dtack	<= S_SCUB_Rd_Err_no_Dtack;
@@ -750,6 +764,6 @@ SCUB_Ti_Cyc_Err			<= S_Ti_Cyc_Err;
 S_SCU_Bus_Access_Active <= '1' WHEN (S_Start_SCUB_Wr = '1') OR (S_Start_SCUB_Rd = '1') ELSE '0';
 SCU_Bus_Access_Active <= S_SCU_Bus_Access_Active;
 
-SCU_Wait_Request		<= 	S_Dly_Wait_Request;
+SCU_Wait_Request		<= 	S_Wait_Request;
 
 END Arch_SCU_Bus_Master;
