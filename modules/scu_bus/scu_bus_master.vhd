@@ -26,10 +26,14 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use ieee.numeric_std.all;
 
+use work.wishbone_pkg.all;
 
-ENTITY SCU_Bus_Master IS
+
+ENTITY scu_bus_master IS
 
 	GENERIC(
+      g_interface_mode        : t_wishbone_interface_mode      := CLASSIC;
+      g_address_granularity   : t_wishbone_address_granularity := WORD;
 			CLK_in_Hz			          : INTEGER := 100000000;
 			Time_Out_in_ns		      : INTEGER := 250;
 			dly_multicast_dt_in_ns	: INTEGER := 200;
@@ -41,21 +45,14 @@ ENTITY SCU_Bus_Master IS
 			);
 
 PORT(
-	Wr_Data                 : IN		STD_LOGIC_VECTOR(15 DOWNTO 0);  -- wite data to SCU_Bus, or internal FPGA register
-	Rd_Data                 : OUT		STD_LOGIC_VECTOR(15 DOWNTO 0);	-- read data from SCU_Bus, or internal FPGA register
-	Adr                     : IN		STD_LOGIC_VECTOR(15 DOWNTO 0);
-	Slave_Nr                : IN		STD_LOGIC_VECTOR(3 DOWNTO 0);   -- 0x0 => internal access, 0x1 to 0xC => slave 1 to 12 access
-	Start_Cycle             : IN		STD_LOGIC;							        -- start data access from/to SCU_Bus
-	Wr_Cycle                : IN		STD_LOGIC;                      -- direction of SCU_Bus data access, write is active high.
-	Rd_Cycle                : IN		STD_LOGIC;							
-	Timing_In               : IN		STD_LOGIC_VECTOR(31 DOWNTO 0);
-	Start_Timing_Cycle      : IN		STD_LOGIC;                      -- start timing cycle to SCU_Bus
-	clk                     : IN		STD_LOGIC;
-	Reset                   : IN		STD_LOGIC;
-	SCU_Bus_Access_Active   : OUT		STD_LOGIC;                      -- active high signal: read or write access to SCUB is not finished
-                                                                  -- the access can be terminated bei an error, so look also to the access error bis in the status register
-	Intr                    : OUT		STD_LOGIC;                                -- One or more slave interrupts, or internal Interrupts (like
-                                                                  -- SCU_Bus-busy or SCU_Bus-timeout) are active. Intr is ative high.
+  
+  -- Wishbone
+  slave_i                 : in  t_wishbone_slave_in;
+  slave_o                 : out t_wishbone_slave_out;
+                    
+	clk                     : in		std_logic;
+	nrst                    : in		std_logic;
+
 	SCUB_Data				        : INOUT		STD_LOGIC_VECTOR(15 DOWNTO 0);
 	nSCUB_DS				        : OUT		STD_LOGIC;							        -- SCU_Bus Data Strobe, low active.
 	nSCUB_Dtack				      : IN		STD_LOGIC;							        -- SCU_Bus Data Acknowledge, low active.
@@ -65,20 +62,42 @@ PORT(
 	nSCUB_SRQ_Slaves		: IN		STD_LOGIC_VECTOR(11 DOWNTO 0);		  -- Input of service requests up to 12 SCU_Bus slaves, active low.
 	nSCUB_Slave_Sel			: OUT		STD_LOGIC_VECTOR(11 DOWNTO 0);		  -- Output select one or more of 12 SCU_Bus slaves, active low.
 	nSCUB_Timing_Cycle	: OUT		STD_LOGIC;							            -- Strobe to signal a timing cycle on SCU_Bus, active low.
-	nSel_Ext_Data_Drv		: OUT		STD_LOGIC;							            -- select for external data transceiver to the SCU_Bus, active low.
-
-	SCUB_Rd_Err_no_Dtack	: OUT		STD_LOGIC;
-	SCUB_Rd_Fin				    : OUT		STD_LOGIC;
-	SCUB_Rd_active			  : OUT		STD_LOGIC;
-	SCUB_Wr_Err_no_Dtack	: OUT		STD_LOGIC;
-	SCUB_Wr_Fin				    : OUT		STD_LOGIC;
-	SCUB_Wr_active			  : OUT		STD_LOGIC;
-	SCUB_Ti_Cyc_Err			  : OUT		STD_LOGIC;
-	SCUB_Ti_Fin				    : OUT		STD_LOGIC;
-	SCU_Wait_Request		  : OUT		STD_LOGIC							-- active high signal: SCU_Bus is busy should be connect to avalon-bus wait.
+	nSel_Ext_Data_Drv		: OUT		STD_LOGIC 							            -- select for external data transceiver to the SCU_Bus, active low.
 	);
 		
-	FUNCTION set_vers_or_revi( vers_or_revi, Test: INTEGER) RETURN INTEGER IS
+END scu_bus_master;
+
+ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
+
+
+  signal Wr_Data            : std_logic_vector(15 downto 0);  -- IN wite data to SCU_Bus, or internal FPGA register
+  signal Rd_Data            : std_logic_vector(15 downto 0);  -- OUT read data from SCU_Bus, or internal FPGA register
+  signal Adr                : std_logic_vector(15 downto 0);  -- IN
+  signal Slave_Nr           : std_logic_vector(3 downto 0);   -- IN 0x0 => internal access, 0x1 to 0xC => slave 1 to 12 access
+  signal Start_Cycle        : std_logic;                      -- IN start data access from/to SCU_Bus
+  signal Wr_Cycle           : std_logic;                      -- IN direction of SCU_Bus data access, write is active high.
+  signal Rd_Cycle           : std_logic;                      -- IN
+  signal Timing_In          : std_logic_vector(31 downto 0) := (others => '0'); 
+  signal Start_Timing_Cycle : std_logic := '0';               -- IN start timing cycle to SCU_Bus
+  
+  signal SCU_Bus_Access_Active : std_logic;                   -- OUT active high signal: read or write access to SCUB is not finished
+                                                              -- the access can be terminated bei an error, so look also to the
+                                                              -- access error bis in the status register
+  signal Intr               : std_logic;                      -- OUT One or more slave interrupts, or internal Interrupts (like
+                                                              -- SCU_Bus-busy or SCU_Bus-timeout) are active. Intr is ative high.
+  signal SCUB_Rd_Err_no_Dtack	: STD_LOGIC;
+	signal SCUB_Rd_Fin				  : STD_LOGIC;
+	signal SCUB_Rd_active			  : STD_LOGIC;
+	signal SCUB_Wr_Err_no_Dtack	: STD_LOGIC;
+	signal SCUB_Wr_Fin				  : STD_LOGIC;
+	signal SCUB_Wr_active			  : STD_LOGIC;
+	signal SCUB_Ti_Cyc_Err			: STD_LOGIC;
+	signal SCUB_Ti_Fin				  : STD_LOGIC;
+	signal SCU_Wait_Request		  : STD_LOGIC;							      -- active high signal: SCU_Bus is busy should be connect to avalon-bus wait.
+
+
+
+  FUNCTION set_vers_or_revi( vers_or_revi, Test: INTEGER) RETURN INTEGER IS
 		BEGIN
 			IF test > 0 THEN
 				RETURN 0;
@@ -103,18 +122,6 @@ PORT(
 			END IF;
 		END set_ge_1;
 
-
-
-	FUNCTION prod_or_test (production, test_data, test : INTEGER) RETURN INTEGER IS
-		BEGIN
-			IF Test = 1 THEN
-				RETURN test_data;
-			ELSE
-				RETURN production;
-			END IF;
-		END prod_or_test;
-
-
 	FUNCTION How_many_Bits (int: INTEGER) RETURN INTEGER IS
 
 		VARIABLE i, tmp : INTEGER;
@@ -129,15 +136,6 @@ PORT(
 			RETURN i;
 		END How_many_bits;
 
-
-	FUNCTION return_max (a, b : INTEGER) RETURN INTEGER IS
-		BEGIN
-			IF a >= b THEN
-				RETURN a;
-			ELSE
-				RETURN b;
-			END IF;
-		END return_max;
 
 	CONSTANT	c_multicast_slave_acc	: STD_LOGIC_VECTOR(slave_Nr'range)	:= X"F";
 	
@@ -232,14 +230,6 @@ PORT(
 	
 	SIGNAL		S_Global_Intr_Ena		: STD_LOGIC_VECTOR(15 DOWNTO 0);
 
-
-
-	END SCU_Bus_Master;
-
-
-ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
-
-
 	TYPE	T_SCUB_SM	IS	(
 							Idle,
 							S_Rd_Cyc,		-- start read SCU_Bus cycle
@@ -268,6 +258,25 @@ ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
 	CONSTANT	bit_scub_srqs_active:	INTEGER := 5;
 
 BEGIN
+
+-- mapping of the wishbone signals
+Wr_Data                   <= slave_i.dat(15 downto 0);
+slave_o.dat(31 downto 16) <= (others => '0');
+slave_o.dat(15 downto 0)  <= Rd_Data;
+Adr                       <= slave_i.adr(16 downto 1);
+Slave_Nr                  <= slave_i.adr(20 downto 17);
+Start_Cycle               <= slave_i.cyc and slave_i.stb and slave_i.sel(0) and slave_i.sel(1);
+Wr_Cycle                  <= slave_i.we;
+Rd_Cycle                  <= not slave_i.we;
+slave_o.stall             <= S_Wait_Request;
+slave_o.ack               <= slave_i.cyc and slave_i.stb;
+slave_o.int               <= Intr;
+slave_o.err               <= S_SCUB_Rd_Err_no_Dtack or S_SCUB_Wr_Err_no_Dtack or S_Invalid_Intern_Acc;
+slave_o.rty               <= '0';
+
+
+
+
 
 S_SCUB_Version	<= std_logic_vector(to_unsigned(C_SCUB_Version, S_SCUB_Version'length));	-- set the version of this macro
 S_SCUB_Revision	<= std_logic_vector(to_unsigned(C_SCUB_Revision, S_SCUB_Revision'length));	-- set the revision of this macro
@@ -311,10 +320,10 @@ ASSERT (False)
 SEVERITY NOTE;
 
 
-P_Reset:	PROCESS	(clk, Reset)
+P_Reset:	PROCESS	(clk, nrst)
 	BEGIN
 		IF rising_edge(clk) THEN
-			S_First_Sync_Reset <= reset;
+			S_First_Sync_Reset <= nrst;
 			s_reset <= S_First_Sync_Reset;
 		END IF;
 	END PROCESS P_Reset;
@@ -341,7 +350,7 @@ S_Status(bit_scub_wr_err)		<= S_SCUB_Wr_Err_no_Dtack;
 
 P_SCUB_Cntrl: Process (clk, s_reset)
 	BEGIN
-		IF s_reset = '1' THEN
+		IF s_reset = '0' THEN
 			S_Start_Cycle			<= '0';
 			S_Start_SCUB_Rd			<= '0';						-- reset start SCU_Bus read
 			S_Start_SCUB_Wr			<= '0';						-- reset start SCU_Bus write
@@ -538,7 +547,7 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 P_SCUB_SM:	PROCESS (clk, s_reset)
 
 BEGIN
-	IF s_reset = '1' THEN
+	IF s_reset = '0' THEN
 		SCUB_SM <= Idle;
 		S_Last_Cycle_Timing	<= '0';
 		S_SCUB_Timing_Cycle	<= '0';
@@ -738,7 +747,7 @@ END PROCESS P_SCUB_SM;
 
 p_board_sel:	PROCESS (clk, s_reset)
 	BEGIN
-		IF s_reset = '1' THEN
+		IF s_reset = '0' THEN
 			S_Slave_Sel <= "000000000000";						-- no board select
 		ELSIF rising_edge(clk) THEN
 			CASE S_Slave_Nr IS
@@ -769,7 +778,7 @@ p_board_sel:	PROCESS (clk, s_reset)
 
 p_intr:	PROCESS (clk, s_reset)
 	BEGIN
-		IF s_reset = '1' THEN
+		IF s_reset = '0' THEN
 			S_SRQ_Sync		<= "000000000000";					-- clear synchronized SRQs
 			S_SRQ_active	<= "000000000000";					-- clear active SRQs
 			S_one_or_more_SRQs_act <= '0';
@@ -827,7 +836,7 @@ P_SCUB_Tri_State:	PROCESS (SCUB_SM, S_Wr_Data, S_Timing_In)
 
 p_time_out:	PROCESS (Clk, s_reset)
 	BEGIN
-		IF s_reset = '1' THEN
+		IF s_reset = '0' THEN
 			s_time_out_cnt <= to_unsigned(C_time_out_cnt, s_time_out_cnt'length);
 		ELSIF rising_edge(Clk) THEN
 			IF NOT ((SCUB_SM = Rd_Cyc) OR (SCUB_SM = Wr_Cyc)) THEN
@@ -840,7 +849,7 @@ p_time_out:	PROCESS (Clk, s_reset)
 
 p_delay_multicast_dt:	PROCESS (Clk, s_reset)
 	BEGIN
-		IF s_reset = '1' THEN
+		IF s_reset = '0' THEN
 			s_dly_multicast_dt_cnt <= to_unsigned(c_dly_multicast_dt_cnt, s_dly_multicast_dt_cnt'length);
 		ELSIF rising_edge(Clk) THEN
 			IF SCUB_SM /= Wr_Cyc or S_Multi_Wr_Flag = '0' THEN
