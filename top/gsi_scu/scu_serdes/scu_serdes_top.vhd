@@ -8,6 +8,7 @@ use work.pcie_wb_pkg.all;
 use work.lpc_uart_pkg.all;
 use work.wr_altera_pkg.all;
 use work.trans_pkg.all;
+use work.scu_bus_pkg.all;
 
 entity scu_serdes_top is
   port(
@@ -177,8 +178,24 @@ architecture rtl of scu_serdes_top is
     date          => x"20120603",
     name          => "WR-Periph-UART     ")));
     
+  constant c_scu_bus_master : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"02",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"2", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"00000000000fffff",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"9602eb6f",
+    version       => x"00000001",
+    date          => x"20120720",
+    name          => "SCU-BUS-Master     ")));
+    
   -- Top crossbar layout
-  constant c_slaves : natural := 5;
+  constant c_slaves : natural := 6;
   constant c_masters : natural := 4;
   constant c_dpram_size : natural := 16384; -- in 32-bit words (64KB)
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
@@ -186,7 +203,8 @@ architecture rtl of scu_serdes_top is
     1 => f_sdb_embed_device(c_xwb_gpio32_sdb,           x"00100400"),
     2 => f_sdb_embed_device(c_xwb_dma_sdb,              x"00100500"),
     3 => f_sdb_embed_device(c_xwb_owm,				 		      x"00100600"),
-    4 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"));
+    4 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"),
+    5 => f_sdb_embed_device(c_scu_bus_master,           x"00200000"));
   constant c_sdb_address : t_wishbone_address :=        x"00100000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -507,12 +525,36 @@ begin
 		busy	 => open,
 		reconfig_togxb	 => rcfg_toloop
 	);
+  
+  scub_master : scu_bus_master generic map (
+    g_interface_mode => PIPELINED,
+    g_address_granularity => BYTE,
+    CLK_in_Hz => 125_000_000,
+    Test => 0
+  )
+  port map (
+    slave_i => cbar_master_o(5),
+    slave_o => cbar_master_i(5),
+    
+    clk =>  clk_sys,
+    nrst => locked,
+    
+    SCUB_Data => A_D,
+    nSCUB_DS => A_nDS,
+    nSCUB_Dtack => A_nDtack,
+    SCUB_Addr => A_A,
+    SCUB_RDnWR => A_RnW,
+    nSCUB_SRQ_Slaves => A_nSRQ,
+    nSCUB_Slave_Sel => A_nSEL,
+    nSCUB_Timing_Cycle => A_nTiming_Cycle,
+    nSel_Ext_Data_Drv => nSel_Ext_Data_DRV
+  );
+  
 						
 	serial_to_cb_o   <= '0'; 				-- connects the serial ports to the carrier board
   A_nCONFIG <= '1';
   nPWRBTN <= '1';
   ADR_TO_SCUB <= '1';
   nADR_EN <= '1';
-  nSel_Ext_Data_DRV <= '1';
   
 end rtl;
