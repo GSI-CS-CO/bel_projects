@@ -236,9 +236,6 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to uart_txd_o[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to uart_txd_o[0]
 set_location_assignment PIN_AF1 -to OneWire_CB
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to OneWire_CB
-set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
-set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
-set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_location_assignment PIN_AH17 -to SFP1_TX_DIS
 set_location_assignment PIN_L27 -to QL1_GXB_RX[3]
 set_location_assignment PIN_N27 -to QL1_GXB_RX[2]
@@ -335,6 +332,15 @@ set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL0_GXB_TX[1]
 set_location_assignment PIN_AH27 -to "QL0_GXB_TX[1](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL0_GXB_TX[0]
 set_location_assignment PIN_AF24 -to "QL0_GXB_TX[0](n)"
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
+set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_master.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/trans_pkg.vhd
 set_global_assignment -name SDC_FILE ../../../top/gsi_scu/scu_serdes/scu_top.sdc
 set_global_assignment -name QIP_FILE "../../../../wr-cores/ip_cores/general-cores/modules/wishbone/wb_pcie/altera_pcie.qip"

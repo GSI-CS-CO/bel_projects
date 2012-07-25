@@ -10,6 +10,9 @@ use work.wr_altera_pkg.all;
 use work.trans_pkg.all;
 use work.scu_bus_pkg.all;
 
+LIBRARY altera_mf;
+USE altera_mf.altera_mf_components.all;
+
 entity scu_serdes_top is
   port(
 		 -----------------------------------------
@@ -137,7 +140,7 @@ architecture rtl of scu_serdes_top is
     wbd_width     => x"7", -- 8/16/32-bit port granularity
     sdb_component => (
     addr_first    => x"0000000000000000",
-    addr_last     => x"000000000000000b", -- three 4 byte registers
+    addr_last     => x"000000000000000f", -- three 4 byte registers
     product => (
     vendor_id     => x"0000000000000651", -- GSI
     device_id     => x"35aa6b95",
@@ -235,11 +238,17 @@ architecture rtl of scu_serdes_top is
   signal rx_signaldetect: std_logic_vector(1 downto 0);
   signal tx_dataout:      std_logic_vector(3 downto 0);
   
+  signal nreset:          std_logic;
+  
 begin
 	Inst_flash_loader_v01 : flash_loader
     port map (
       noe_in   => '0'
     );
+  reset : pow_reset
+  port map (
+    clk    => clk_sys,
+    nreset => nreset);
 	 
 	 -- open drain buffer for one wire
 	owr_i(0) <= OneWire_CB;
@@ -253,8 +262,6 @@ begin
       c1     => clk_cal,     -- 50Mhz calibration clock for Altera reconfig cores
       locked => locked);     -- '1' when the PLL has locked
   
-  -- Hold the entire WB bus reset until the PLL has locked
-  rstn <= locked;
   
   -- The top-most Wishbone B.4 crossbar
   interconnect : xwb_sdb_crossbar
@@ -267,7 +274,7 @@ begin
      g_sdb_addr    => c_sdb_address)
    port map(
      clk_sys_i     => clk_sys,
-     rst_n_i       => rstn,
+     rst_n_i       => nreset,
      -- Master connections (INTERCON is a slave)
      slave_i       => cbar_slave_i,
      slave_o       => cbar_slave_o,
@@ -297,7 +304,7 @@ begin
       g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => rstn,
+      rst_n_i   => nreset,
       irq_i     => lm32_interrupt,
       dwb_o     => cbar_slave_i(0), -- Data bus
       dwb_i     => cbar_slave_o(0),
@@ -311,7 +318,7 @@ begin
   dma : xwb_dma
     port map(
       clk_i       => clk_sys,
-      rst_n_i     => rstn,
+      rst_n_i     => nreset,
       slave_i     => cbar_master_o(2),
       slave_o     => cbar_master_i(2),
       r_master_i  => cbar_slave_o(2),
@@ -330,7 +337,7 @@ begin
       g_slave2_granularity    => WORD)
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => rstn,
+      rst_n_i   => nreset,
       -- First port connected to the crossbar
       slave1_i  => cbar_master_o(0),
       slave1_o  => cbar_master_i(0),
@@ -396,7 +403,7 @@ begin
       )
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => rstn,
+      rst_n_i   => nreset,
 
       -- Wishbone
       slave_i => cbar_master_o(4),
@@ -420,7 +427,7 @@ begin
       )
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => rstn,
+      rst_n_i   => nreset,
 
       -- Wishbone
       slave_i => cbar_master_o(3),
@@ -537,7 +544,7 @@ begin
     slave_o => cbar_master_i(5),
     
     clk =>  clk_sys,
-    nrst => locked,
+    nrst => nreset,
     
     SCUB_Data => A_D,
     nSCUB_DS => A_nDS,
@@ -555,6 +562,7 @@ begin
   A_nCONFIG <= '1';
   nPWRBTN <= '1';
   ADR_TO_SCUB <= '1';
-  nADR_EN <= '1';
+  nADR_EN <= '0';
+  A_nReset <= nreset;
   
 end rtl;
