@@ -192,13 +192,13 @@ ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
 
 	SIGNAL		S_Start_SCUB_Rd			: STD_LOGIC;
 
-	SIGNAL		S_Start_SCUB_Wr			: STD_LOGIC;
-	SIGNAL		S_Wr_Data				: STD_LOGIC_VECTOR(15 DOWNTO 0);	-- store write pattern
+	SIGNAL		S_Start_SCUB_Wr			  : STD_LOGIC;
+	SIGNAL		S_Wr_Data				      : STD_LOGIC_VECTOR(15 DOWNTO 0);	-- store write pattern
 
-	SIGNAL		S_Ti_Cy					: STD_LOGIC_VECTOR(1 DOWNTO 0);		-- shift reg to generate pulse
-	SIGNAL		S_Start_Ti_Cy			: STD_LOGIC;
+	SIGNAL		S_Ti_Cy					      : STD_LOGIC_VECTOR(1 DOWNTO 0);		-- shift reg to generate pulse
+	SIGNAL		S_Start_Ti_Cy			    : STD_LOGIC;
 
-	SIGNAL		S_nSync_Dtack			: STD_LOGIC;
+	SIGNAL		S_nSync_Dtack			    : std_logic_vector(1 downto 0);
 	SIGNAL		S_Last_Cycle_Timing		: STD_LOGIC;
 	SIGNAL		S_SCUB_Timing_Cycle		: STD_LOGIC;
 
@@ -229,6 +229,10 @@ ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
 	SIGNAL		S_Intern_Echo_2			: STD_LOGIC_VECTOR(15 DOWNTO 0);
 	
 	SIGNAL		S_Global_Intr_Ena		: STD_LOGIC_VECTOR(15 DOWNTO 0);
+  
+  signal    s_int_ack           : std_logic;
+  signal    s_ext_ack           : std_logic;
+  signal    s_adr               : std_logic_vector(15 downto 0);
 
 	TYPE	T_SCUB_SM	IS	(
 							Idle,
@@ -263,15 +267,15 @@ BEGIN
 Wr_Data                   <= slave_i.dat(15 downto 0);
 slave_o.dat(31 downto 16) <= (others => '0');
 slave_o.dat(15 downto 0)  <= Rd_Data;
-Adr                       <= slave_i.adr(16 downto 1);
-Slave_Nr                  <= slave_i.adr(20 downto 17);
-Start_Cycle               <= slave_i.cyc and slave_i.stb and slave_i.sel(0) and slave_i.sel(1);
+Adr                       <= slave_i.adr(15 downto 0);
+Slave_Nr                  <= slave_i.adr(19 downto 16);
+Start_Cycle               <= slave_i.cyc and slave_i.stb;
 Wr_Cycle                  <= slave_i.we;
 Rd_Cycle                  <= not slave_i.we;
 slave_o.stall             <= S_Wait_Request;
-slave_o.ack               <= slave_i.cyc and slave_i.stb;
+slave_o.ack               <= s_int_ack or s_ext_ack;
 slave_o.int               <= Intr;
-slave_o.err               <= S_SCUB_Rd_Err_no_Dtack or S_SCUB_Wr_Err_no_Dtack or S_Invalid_Intern_Acc;
+slave_o.err               <= S_Invalid_Intern_Acc or S_SCUB_Rd_Err_no_Dtack or S_SCUB_Wr_Err_no_Dtack or S_Invalid_Slave_Nr;
 slave_o.rty               <= '0';
 
 
@@ -351,44 +355,59 @@ S_Status(bit_scub_wr_err)		<= S_SCUB_Wr_Err_no_Dtack;
 P_SCUB_Cntrl: Process (clk, s_reset)
 	BEGIN
 		IF s_reset = '0' THEN
-			S_Start_Cycle			<= '0';
-			S_Start_SCUB_Rd			<= '0';						-- reset start SCU_Bus read
-			S_Start_SCUB_Wr			<= '0';						-- reset start SCU_Bus write
-			S_Start_Ti_Cy			<= '0';						-- reset start SCU_Bus timing cycle
-			S_Ti_Cyc_Err			<= '0';						-- reset timing error flag
+			S_Start_Cycle			      <= '0';
+			S_Start_SCUB_Rd			    <= '0';						-- reset start SCU_Bus read
+			S_Start_SCUB_Wr			    <= '0';						-- reset start SCU_Bus write
+			S_Start_Ti_Cy			      <= '0';						-- reset start SCU_Bus timing cycle
+			S_Ti_Cyc_Err			      <= '0';						-- reset timing error flag
 			S_SCUB_Rd_Err_no_Dtack	<= '0';						-- reset read timeout flag
 			S_SCUB_Wr_Err_no_Dtack	<= '0';						-- reset write timeout flag
 			S_Ti_Cy(S_Ti_Cy'range)	<= (OTHERS => '0');			-- shift reg to generate pulse
-			S_SRQ_Ena				<= (OTHERS => '0');			-- all SRQs[12..1] are disabled
-			S_Wait_Request			<= '0';
-			S_Invalid_Slave_Nr		<= '0';
-			S_Invalid_Intern_Acc	<= '0';
+			S_SRQ_Ena				        <= (OTHERS => '0');			-- all SRQs[12..1] are disabled
+			S_Wait_Request			    <= '0';
+			S_Invalid_Slave_Nr		  <= '0';
+			S_Invalid_Intern_Acc	  <= '0';
 			S_Intern_Echo_1			<= (OTHERS => '0');
 			S_Intern_Echo_2			<= (OTHERS => '0');
 			S_Multi_Slave_Sel		<= (OTHERS => '0');			-- clear Register which contains the bit_vector to address multible slaves during one SCU write access 
 			S_Multi_Wr_Flag			<= '0';
 			S_Global_Intr_Ena		<= (OTHERS => '0');
+      s_int_ack           <= '0';
 
 		ELSIF rising_edge(clk) THEN
 		
-			S_Wait_Request <= '1';
+			s_int_ack <= '0';
+      S_Invalid_Intern_Acc <= '0';
+      S_SCUB_Rd_Err_no_Dtack <= '0';
+      S_SCUB_Wr_Err_no_Dtack <= '0';
+      S_Invalid_Slave_Nr    <= '0';
 			
 			S_Ti_Cy(S_Ti_Cy'range) <= (S_Ti_Cy(S_Ti_Cy'high-1 DOWNTO 0) & Start_Timing_Cycle);		-- shift reg to generate pulse
 
 			IF Start_Cycle = '1' THEN
+        s_adr <= adr;             -- address and slave_nr are only valid with stb and cyc high
+        s_slave_nr <= slave_nr;
 				S_Start_Cycle <= '1';
 			END IF;
-			
-			IF S_Start_Cycle = '1' THEN
+      
+      if s_int_ack = '1' or S_Invalid_Intern_Acc = '1' then
+        s_wait_Request <= '0';
 
+      end if;
+			
+			IF Start_Cycle = '1' THEN
+        
+        S_Wait_Request <= '1';
+        
 				CASE Slave_Nr IS
 	
 					WHEN X"0" =>															-- SCU_Bus_Master internal register access
 	
-						CASE unsigned(Adr(c_adr_width-1 DOWNTO 0)) IS
+						CASE unsigned(s_adr(c_adr_width-1 DOWNTO 0)) IS
 
 							WHEN C_Status_Adr =>
 								IF Wr_Cycle = '1' THEN
+                  s_int_ack <= '1';
 									IF Wr_Data(bit_scub_wr_err) = '1' THEN					-- look to the bit position in status
 										S_SCUB_Wr_Err_no_Dtack <= '0';						-- reset SCU_Bus write error no dtack. 
 									END IF;
@@ -405,11 +424,13 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 										S_Invalid_Slave_Nr <= '0';							-- reset invalid slave number error
 									END IF;
 								ELSIF Rd_Cycle = '1' THEN
-									Rd_Data <= S_Status;
+									s_int_ack <= '1';
+                  Rd_Data <= S_Status;
 								END IF;
 
 							WHEN C_Global_Intr_Ena_Adr =>
 								IF Wr_Cycle = '1' THEN
+                  s_int_ack <= '1';
 									S_Global_Intr_Ena(bit_scub_wr_err) <= Wr_Data(bit_scub_wr_err);
 									S_Global_Intr_Ena(bit_scub_rd_err) <= Wr_Data(bit_scub_rd_err);
 									S_Global_Intr_Ena(bit_ti_cyc_err) <= Wr_Data(bit_ti_cyc_err);
@@ -417,13 +438,16 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 									S_Global_Intr_Ena(bit_inval_slave_nr) <= Wr_Data(bit_inval_slave_nr);
 									S_Global_Intr_Ena(bit_scub_srqs_active) <= Wr_Data(bit_scub_srqs_active);
 								ELSIF RD_Cycle = '1' THEN
+                  s_int_ack <= '1';
 									Rd_Data <= S_Global_Intr_Ena;
 								END IF;
 
 							WHEN C_SRQ_Ena_Adr =>
 								IF Wr_Cycle = '1' THEN
+                  s_int_ack <= '1';
 									S_SRQ_Ena <= Wr_Data(nSCUB_SRQ_Slaves'range);
 								ELSIF Rd_Cycle = '1' THEN
+                  s_int_ack <= '1';
 									Rd_Data <= ("0000" & S_SRQ_Ena);
 								END IF;
 
@@ -431,6 +455,7 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 								IF Wr_Cycle = '1' THEN
 									S_Invalid_Intern_Acc <= '1';
 								ELSIF Rd_Cycle = '1' THEN
+                  s_int_ack <= '1';
 									Rd_Data <= ("0000" & S_SRQ_Active);
 								END IF;
 
@@ -438,34 +463,42 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 								IF Wr_Cycle = '1' THEN
 									S_Invalid_Intern_Acc <= '1';
 								ELSIF Rd_Cycle = '1' THEN
-									Rd_Data <= ("0000" & S_SRQ_Sync);
+									s_int_ack <= '1';
+                  Rd_Data <= ("0000" & S_SRQ_Sync);
 								END IF;
 
 							WHEN C_Vers_Revi_Adr =>
 								IF Wr_Cycle = '1' THEN
 									S_Invalid_Intern_Acc <= '1';
 								ELSIF Rd_Cycle = '1' THEN
-									Rd_Data <= (S_SCUB_Version & S_SCUB_Revision);
+                  s_int_ack <= '1';
+                  Rd_Data <= (S_SCUB_Version & S_SCUB_Revision);
 								END IF;
 
 							WHEN C_Wr_Multi_Slave_Sel_Adr =>
 								IF Wr_Cycle = '1' THEN
+                  s_int_ack <= '1';
 									S_Multi_Slave_Sel <= Wr_Data(nSCUB_Slave_Sel'range);
 								ELSIF Rd_Cycle = '1' THEN
+                  s_int_ack <= '1';
 									Rd_Data <= ("0000" & S_Multi_Slave_Sel);
 								END IF;
 
 							WHEN C_Bus_master_intern_Echo_1_Adr =>
 								IF Wr_Cycle = '1' THEN
+                  s_int_ack <= '1';
 									S_Intern_Echo_1 <= Wr_Data;
 								ELSIF Rd_Cycle = '1' THEN
+                  s_int_ack <= '1';
 									Rd_Data <= S_Intern_Echo_1;
 								END IF;
 
 							WHEN C_Bus_master_intern_Echo_2_Adr =>
 								IF Wr_Cycle = '1' THEN
+                  s_int_ack <= '1';
 									S_Intern_Echo_2 <= Wr_Data;
 								ELSIF Rd_Cycle = '1' THEN
+                  s_int_ack <= '1';
 									Rd_Data <= S_Intern_Echo_2;
 								END IF;
 
@@ -473,7 +506,7 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 								S_Invalid_Intern_Acc <= '1';
 						END CASE;
 
-						S_Wait_Request <= '0';
+						--S_Wait_Request <= '0';
 						S_Start_Cycle <= '0';
 
 				WHEN X"1" | X"2" | X"3" | X"4" | X"5" | X"6" | X"7" | X"8" | X"9" | X"A" | X"B" | X"C" =>	-- SCU_Bus_Master external slave access
@@ -488,15 +521,17 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 				
 				WHEN c_multicast_slave_acc =>	-- Multicast Wr to external slaves
 					IF Wr_Cycle = '1' THEN
+            s_int_ack <= '1';
 						S_Start_SCUB_Wr <= '1';									-- store write request
 						S_Multi_Wr_Flag <= '1';
 						S_Wr_Data <= Wr_Data;									-- store write pattern
-
+          elsif Rd_Cycle = '1' then
+            S_Invalid_Intern_Acc <= '1';
 					END IF;
 				  
 				WHEN OTHERS =>
 					S_Invalid_Slave_Nr <= '1';
-					S_Wait_Request <= '0';
+					--S_Wait_Request <= '0';
 					S_Start_Cycle <= '0';
 			END CASE;
 
@@ -559,10 +594,17 @@ BEGIN
 	ELSIF rising_edge(clk) THEN
 
 		IF Test = 0 THEN
-			S_nSync_Dtack <= nSCUB_Dtack;	-- SCU_Bus_Dtack is an asynchronous Signal. S_nSync_Dtack is the synchronized nSCU_Bus_Dtack
-		ELSE
-			S_nSync_Dtack <= not S_SCUB_DS; -- during test mode S_nSync_dtack is gererated with the S_SCUB_DS signal
+			S_nSync_Dtack(0) <= nSCUB_Dtack;	-- SCU_Bus_Dtack is an asynchronous Signal. S_nSync_Dtack is the synchronized nSCU_Bus_Dtack
+      s_nSync_Dtack(1) <= s_nSync_Dtack(0);
+    ELSE
+			S_nSync_Dtack(0) <= not S_SCUB_DS; -- during test mode S_nSync_dtack is gererated with the S_SCUB_DS signal
 		END IF;
+    
+    if S_nSync_Dtack(1) = '0' and s_nSync_Dtack(0) = '1' then -- ack pulse from Dtack
+      s_ext_ack <= '1';
+    else
+      s_ext_ack <= '0';
+    end if;
 		
 		CASE SCUB_SM IS					-- = SCU_Bus State Machine
 
@@ -579,12 +621,12 @@ BEGIN
 
 
 				IF ((S_Start_SCUB_Rd = '1') AND (S_Start_Ti_Cy = '0')) THEN
-					S_SCUB_Addr	<= Adr;										-- store slave address
-					S_Slave_Nr <= Slave_Nr;									-- store slave number
+					S_SCUB_Addr	<= s_adr;										-- store slave address
+					--S_Slave_Nr <= slave_nr;									-- store slave number
 					SCUB_SM <= S_Rd_Cyc;									-- jump to start read cycle
 				ELSIF ((S_Start_SCUB_Wr = '1') AND (S_Start_Ti_Cy = '0')) THEN
-					S_SCUB_Addr	<= Adr;										-- store slave address
-					S_Slave_Nr <= Slave_Nr;									-- store slave number
+					S_SCUB_Addr	<= s_adr;										-- store slave address
+					--S_Slave_Nr <= slave_nr;									-- store slave number
 					S_SCUB_RDnWR <= '0';									-- set master writes
 					SCUB_SM <= S_Wr_Cyc;									-- jump to start write cycle
 				ELSIF ((S_Start_SCUB_Rd = '0') AND (S_Start_SCUB_Wr = '0') AND (S_Start_Ti_Cy = '1')) THEN
@@ -592,8 +634,8 @@ BEGIN
 					SCUB_SM <= S_Ti_Cyc;										-- jump to start Timing cycle
 				ELSIF ((S_Start_SCUB_Wr = '1') AND (S_Start_Ti_Cy = '1')) THEN
 					IF (S_Last_Cycle_Timing = '1') THEN
-						S_SCUB_Addr	<= Adr;									-- store slave address
-						S_Slave_Nr <= Slave_Nr;								-- store slave number
+						S_SCUB_Addr	<= s_adr;									-- store slave address
+						--S_Slave_Nr <= slave_nr;								-- store slave number
 						S_SCUB_RDnWR <= '0';								-- set master writes
 						SCUB_SM <= S_Wr_Cyc;								-- jump to start write cycle
 					ELSE
@@ -602,8 +644,8 @@ BEGIN
 					END IF;
 				ELSIF ((S_Start_SCUB_Rd = '1') AND (S_Start_Ti_Cy = '1')) THEN
 					IF (S_Last_Cycle_Timing = '1') THEN
-						S_SCUB_Addr	<= Adr;									-- store slave address
-						S_Slave_Nr <= Slave_Nr;								-- store slave number
+						S_SCUB_Addr	<= s_adr;									-- store slave address
+						--S_Slave_Nr <= s_slave_nr;								-- store slave number
 						SCUB_SM <= S_Rd_Cyc;								-- jump to start read cycle
 					ELSE
 						S_SCUB_RDnWR <= '0';								-- set master writes
@@ -624,7 +666,7 @@ BEGIN
 			WHEN Rd_Cyc =>												-- read cycle active
 				IF S_D_Valid_to_DS_cnt(S_D_Valid_to_DS_cnt'high) = '1' THEN
 					S_SCUB_DS <= '1';
-					IF S_nSync_Dtack = '0' THEN							-- wait for Dtack
+					IF S_nSync_Dtack(0) = '0' THEN							-- wait for Dtack
 						IF Test = 0 THEN
 							S_Rd_Data <= SCUB_Data;						-- during production: read the SCUB_Data bidir buffer
 						ELSE
@@ -663,8 +705,8 @@ BEGIN
 			WHEN Wr_Cyc =>												-- write cycle active
 				IF S_D_Valid_to_DS_cnt(S_D_Valid_to_DS_cnt'high) = '1' THEN
 					S_SCUB_DS <= '1';
-					IF 		(S_Multi_Wr_Flag = '0' and S_nSync_Dtack = '0')																	-- wait for indivdual slave dtack
-						OR	(S_Multi_Wr_Flag = '1' and s_dly_multicast_dt_cnt(s_dly_multicast_dt_cnt'high) = '1' and S_nSync_Dtack = '0')	-- wait for first slave dtack during multicast wr and delay it for slowlier slaves
+					IF 		(S_Multi_Wr_Flag = '0' and S_nSync_Dtack(0) = '0')																	-- wait for indivdual slave dtack
+						OR	(S_Multi_Wr_Flag = '1' and s_dly_multicast_dt_cnt(s_dly_multicast_dt_cnt'high) = '1' and S_nSync_Dtack(0) = '0')	-- wait for first slave dtack during multicast wr and delay it for slowlier slaves
 						OR	(s_time_out_cnt(s_time_out_cnt'high) = '1')																		-- if no dtack wait for timeout
 					THEN
 						S_SCUB_DS <= '0';
