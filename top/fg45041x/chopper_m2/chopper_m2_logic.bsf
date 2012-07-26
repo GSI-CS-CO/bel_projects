@@ -1,0 +1,148 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2008 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 288 240)
+	(text "chopper_m2_logic" (rect 5 0 93 12)(font "Arial" ))
+	(text "inst" (rect 8 208 25 220)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "Skal_OK" (rect 0 0 42 12)(font "Arial" ))
+		(text "Skal_OK" (rect 21 27 63 39)(font "Arial" ))
+		(line (pt 0 32)(pt 16 32)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "Data_WR[15..0]" (rect 0 0 80 12)(font "Arial" ))
+		(text "Data_WR[15..0]" (rect 21 43 101 55)(font "Arial" ))
+		(line (pt 0 48)(pt 16 48)(line_width 3))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "Anforder_In[15..0]" (rect 0 0 89 12)(font "Arial" ))
+		(text "Anforder_In[15..0]" (rect 21 59 110 71)(font "Arial" ))
+		(line (pt 0 64)(pt 16 64)(line_width 3))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "Anforder_Maske_WR" (rect 0 0 105 12)(font "Arial" ))
+		(text "Anforder_Maske_WR" (rect 21 75 126 87)(font "Arial" ))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "EMI_Schwelle_WR" (rect 0 0 92 12)(font "Arial" ))
+		(text "EMI_Schwelle_WR" (rect 21 91 113 103)(font "Arial" ))
+		(line (pt 0 96)(pt 16 96)(line_width 1))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "CLK" (rect 0 0 21 12)(font "Arial" ))
+		(text "CLK" (rect 21 107 42 119)(font "Arial" ))
+		(line (pt 0 112)(pt 16 112)(line_width 1))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "Reset" (rect 0 0 29 12)(font "Arial" ))
+		(text "Reset" (rect 21 123 50 135)(font "Arial" ))
+		(line (pt 0 128)(pt 16 128)(line_width 1))
+	)
+	(port
+		(pt 272 32)
+		(output)
+		(text "Off_Anforderung_Out" (rect 0 0 107 12)(font "Arial" ))
+		(text "Off_Anforderung_Out" (rect 144 27 251 39)(font "Arial" ))
+		(line (pt 272 32)(pt 256 32)(line_width 1))
+	)
+	(port
+		(pt 272 48)
+		(output)
+		(text "Off_UU_Out" (rect 0 0 63 12)(font "Arial" ))
+		(text "Off_UU_Out" (rect 188 43 251 55)(font "Arial" ))
+		(line (pt 272 48)(pt 256 48)(line_width 1))
+	)
+	(port
+		(pt 272 64)
+		(output)
+		(text "nMask_Anf_SIS" (rect 0 0 79 12)(font "Arial" ))
+		(text "nMask_Anf_SIS" (rect 172 59 251 71)(font "Arial" ))
+		(line (pt 272 64)(pt 256 64)(line_width 1))
+	)
+	(port
+		(pt 272 80)
+		(output)
+		(text "nMask_Anf_U" (rect 0 0 69 12)(font "Arial" ))
+		(text "nMask_Anf_U" (rect 182 75 251 87)(font "Arial" ))
+		(line (pt 272 80)(pt 256 80)(line_width 1))
+	)
+	(port
+		(pt 272 96)
+		(output)
+		(text "nMask_Anf_X" (rect 0 0 67 12)(font "Arial" ))
+		(text "nMask_Anf_X" (rect 184 91 251 103)(font "Arial" ))
+		(line (pt 272 96)(pt 256 96)(line_width 1))
+	)
+	(port
+		(pt 272 112)
+		(output)
+		(text "nMask_Anf_Y" (rect 0 0 69 12)(font "Arial" ))
+		(text "nMask_Anf_Y" (rect 182 107 251 119)(font "Arial" ))
+		(line (pt 272 112)(pt 256 112)(line_width 1))
+	)
+	(port
+		(pt 272 128)
+		(output)
+		(text "nMask_Anf_Z" (rect 0 0 68 12)(font "Arial" ))
+		(text "nMask_Anf_Z" (rect 183 123 251 135)(font "Arial" ))
+		(line (pt 272 128)(pt 256 128)(line_width 1))
+	)
+	(port
+		(pt 272 144)
+		(output)
+		(text "nMask_Anf_M" (rect 0 0 69 12)(font "Arial" ))
+		(text "nMask_Anf_M" (rect 182 139 251 151)(font "Arial" ))
+		(line (pt 272 144)(pt 256 144)(line_width 1))
+	)
+	(port
+		(pt 272 160)
+		(output)
+		(text "Anforder_Inputs[15..0]" (rect 0 0 110 12)(font "Arial" ))
+		(text "Anforder_Inputs[15..0]" (rect 141 155 251 167)(font "Arial" ))
+		(line (pt 272 160)(pt 256 160)(line_width 3))
+	)
+	(port
+		(pt 272 176)
+		(output)
+		(text "EMI_Schwelle[15..0]" (rect 0 0 99 12)(font "Arial" ))
+		(text "EMI_Schwelle[15..0]" (rect 152 171 251 183)(font "Arial" ))
+		(line (pt 272 176)(pt 256 176)(line_width 3))
+	)
+	(drawing
+		(rectangle (rect 16 16 256 208)(line_width 1))
+	)
+)

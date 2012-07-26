@@ -77,7 +77,7 @@ applicable agreement for further details.
 	(text " NAME" (rect 107 0 143 11)(font "Arial" ))
 	(text "CLK_in_Hz" (rect 4 16 68 29)(font "Arial" (font_size 8)))
 	(text " VALUE" (rect 139 0 179 11)(font "Arial" ))
-	(text "150000000" (rect 140 16 204 29)(font "Arial" (font_size 8)))
+	(text "200000000" (rect 140 16 204 29)(font "Arial" (font_size 8)))
 	(drawing
 		(line (pt 138 40)(pt 138 0))
 	)
@@ -6363,7 +6363,7 @@ applicable agreement for further details.
 	(section (rect 0 48 368 72)(text "DESIGNER" (rect 2 0 61 11)(font "Arial" ))(text "S. Rauch" (rect 56 2 133 21)(font "Arial" (font_size 12)))(border))
 	(section (rect 0 72 280 96)(text "NUMBER" (rect 2 0 51 11)(font "Arial" ))(text "FG 450.411" (rect 56 1 137 17)(font "Arial" (font_size 10)))(border))
 	(section (rect 280 72 368 96)(text "REV" (rect 2 1 26 12)(font "Arial" ))(text "1.0" (rect 43 1 65 17)(font "Arial" (font_size 10)))(border))
-	(section (rect 0 96 240 120)(text "DATE" (rect 2 0 32 11)(font "Arial" ))(text "Thu Jul 26 10:54:05 2012" (rect 56 3 230 19)(font "Arial" (font_size 10)))(date)(border))
+	(section (rect 0 96 240 120)(text "DATE" (rect 2 0 32 11)(font "Arial" ))(text "Thu Jul 26 15:56:57 2012" (rect 56 3 230 19)(font "Arial" (font_size 10)))(date)(border))
 	(section (rect 240 96 310 120)(text "SHEET" (rect 2 0 39 11)(font "Arial" ))(text "1" (rect 55 5 64 21)(font "Arial" (font_size 10))))
 	(section (rect 310 96 368 120)(text "OF" (rect 10 0 26 11)(font "Arial" ))(text "1" (rect 34 4 43 20)(font "Arial" (font_size 10))))
 	(drawing

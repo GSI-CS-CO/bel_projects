@@ -1,0 +1,148 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2005 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic       
+functions, and any output files any of the foregoing           
+(including device programming or simulation files), and any    
+associated documentation or information are expressly subject  
+to the terms and conditions of the Altera Program License      
+Subscription Agreement, Altera MegaCore Function License       
+Agreement, or other applicable license agreement, including,   
+without limitation, that your use is for the sole purpose of   
+programming logic devices manufactured by Altera and sold by   
+Altera or its authorized distributors.  Please refer to the    
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 344 208)
+	(text "chopper_macro2_vhdl" (rect 5 0 132 14)(font "Arial" (font_size 8)))
+	(text "inst" (rect 8 176 25 188)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "Sub_Adr_Sync[7..1]" (rect 0 0 115 14)(font "Arial" (font_size 8)))
+		(text "Sub_Adr_Sync[7..1]" (rect 21 27 136 41)(font "Arial" (font_size 8)))
+		(line (pt 0 32)(pt 16 32)(line_width 3))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "Data_WR[15..0]" (rect 0 0 88 14)(font "Arial" (font_size 8)))
+		(text "Data_WR[15..0]" (rect 21 43 109 57)(font "Arial" (font_size 8)))
+		(line (pt 0 48)(pt 16 48)(line_width 3))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "RD_Activ" (rect 0 0 53 14)(font "Arial" (font_size 8)))
+		(text "RD_Activ" (rect 21 59 74 73)(font "Arial" (font_size 8)))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "WR_Activ" (rect 0 0 56 14)(font "Arial" (font_size 8)))
+		(text "WR_Activ" (rect 21 75 77 89)(font "Arial" (font_size 8)))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "Skal_OK" (rect 0 0 48 14)(font "Arial" (font_size 8)))
+		(text "Skal_OK" (rect 21 91 69 105)(font "Arial" (font_size 8)))
+		(line (pt 0 96)(pt 16 96)(line_width 1))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "Clk" (rect 0 0 16 14)(font "Arial" (font_size 8)))
+		(text "Clk" (rect 21 107 37 121)(font "Arial" (font_size 8)))
+		(line (pt 0 112)(pt 16 112)(line_width 1))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "Reset" (rect 0 0 33 14)(font "Arial" (font_size 8)))
+		(text "Reset" (rect 21 123 54 137)(font "Arial" (font_size 8)))
+		(line (pt 0 128)(pt 16 128)(line_width 1))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "Anforder_In[15..0]" (rect 0 0 103 14)(font "Arial" (font_size 8)))
+		(text "Anforder_In[15..0]" (rect 21 139 124 153)(font "Arial" (font_size 8)))
+		(line (pt 0 144)(pt 16 144)(line_width 3))
+	)
+	(port
+		(pt 328 32)
+		(output)
+		(text "Chop_m2_RD_Data[15..0]" (rect 0 0 145 14)(font "Arial" (font_size 8)))
+		(text "Chop_m2_RD_Data[15..0]" (rect 162 27 307 41)(font "Arial" (font_size 8)))
+		(line (pt 328 32)(pt 312 32)(line_width 3))
+	)
+	(port
+		(pt 328 48)
+		(output)
+		(text "Chop_m2_Rd_Activ" (rect 0 0 112 14)(font "Arial" (font_size 8)))
+		(text "Chop_m2_Rd_Activ" (rect 195 43 307 57)(font "Arial" (font_size 8)))
+		(line (pt 328 48)(pt 312 48)(line_width 1))
+	)
+	(port
+		(pt 328 64)
+		(output)
+		(text "Chop_Macro2_Activ" (rect 0 0 115 14)(font "Arial" (font_size 8)))
+		(text "Chop_Macro2_Activ" (rect 192 59 307 73)(font "Arial" (font_size 8)))
+		(line (pt 328 64)(pt 312 64)(line_width 1))
+	)
+	(port
+		(pt 328 80)
+		(output)
+		(text "Chop_m2_DT_to_MB" (rect 0 0 118 14)(font "Arial" (font_size 8)))
+		(text "Chop_m2_DT_to_MB" (rect 189 75 307 89)(font "Arial" (font_size 8)))
+		(line (pt 328 80)(pt 312 80)(line_width 1))
+	)
+	(port
+		(pt 328 96)
+		(output)
+		(text "Chop_m2_Test_Vers_Aktiv" (rect 0 0 155 14)(font "Arial" (font_size 8)))
+		(text "Chop_m2_Test_Vers_Aktiv" (rect 152 91 307 105)(font "Arial" (font_size 8)))
+		(line (pt 328 96)(pt 312 96)(line_width 1))
+	)
+	(port
+		(pt 328 112)
+		(output)
+		(text "Anforder_Inputs[15..0]" (rect 0 0 128 14)(font "Arial" (font_size 8)))
+		(text "Anforder_Inputs[15..0]" (rect 179 107 307 121)(font "Arial" (font_size 8)))
+		(line (pt 328 112)(pt 312 112)(line_width 3))
+	)
+	(port
+		(pt 328 128)
+		(output)
+		(text "EMI_Schwelle[15..0]" (rect 0 0 114 14)(font "Arial" (font_size 8)))
+		(text "EMI_Schwelle[15..0]" (rect 193 123 307 137)(font "Arial" (font_size 8)))
+		(line (pt 328 128)(pt 312 128)(line_width 3))
+	)
+	(port
+		(pt 328 144)
+		(output)
+		(text "Chop_Macro2_Bus_IO[1..0]" (rect 0 0 155 14)(font "Arial" (font_size 8)))
+		(text "Chop_Macro2_Bus_IO[1..0]" (rect 152 139 307 153)(font "Arial" (font_size 8)))
+		(line (pt 328 144)(pt 312 144)(line_width 3))
+	)
+	(port
+		(pt 328 160)
+		(output)
+		(text "Chop_m2_LEDs[15..0]" (rect 0 0 125 14)(font "Arial" (font_size 8)))
+		(text "Chop_m2_LEDs[15..0]" (rect 182 155 307 169)(font "Arial" (font_size 8)))
+		(line (pt 328 160)(pt 312 160)(line_width 3))
+	)
+	(drawing
+		(rectangle (rect 16 16 312 176)(line_width 1))
+	)
+)

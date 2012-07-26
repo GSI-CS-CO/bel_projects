@@ -1,0 +1,104 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2004 Altera Corporation
+Any  megafunction  design,  and related netlist (encrypted  or  decrypted),
+support information,  device programming or simulation file,  and any other
+associated  documentation or information  provided by  Altera  or a partner
+under  Altera's   Megafunction   Partnership   Program  may  be  used  only
+to program  PLD  devices (but not masked  PLD  devices) from  Altera.   Any
+other  use  of such  megafunction  design,  netlist,  support  information,
+device programming or simulation file,  or any other  related documentation
+or information  is prohibited  for  any  other purpose,  including, but not
+limited to  modification,  reverse engineering,  de-compiling, or use  with
+any other  silicon devices,  unless such use is  explicitly  licensed under
+a separate agreement with  Altera  or a megafunction partner.  Title to the
+intellectual property,  including patents,  copyrights,  trademarks,  trade
+secrets,  or maskworks,  embodied in any such megafunction design, netlist,
+support  information,  device programming or simulation file,  or any other
+related documentation or information provided by  Altera  or a megafunction
+partner, remains with Altera, the megafunction partner, or their respective
+licensors. No other licenses, including any licenses needed under any third
+party's intellectual property, are provided herein.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 232 144)
+	(text "Clk_Cntrl" (rect 5 0 51 12)(font "Arial" ))
+	(text "inst" (rect 8 112 25 124)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "Logic[5..0]" (rect 0 0 51 12)(font "Arial" ))
+		(text "Logic[5..0]" (rect 21 27 72 39)(font "Arial" ))
+		(line (pt 0 32)(pt 16 32)(line_width 3))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "Skal_Okay" (rect 0 0 54 12)(font "Arial" ))
+		(text "Skal_Okay" (rect 21 43 75 55)(font "Arial" ))
+		(line (pt 0 48)(pt 16 48)(line_width 1))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "Master_Clk" (rect 0 0 55 12)(font "Arial" ))
+		(text "Master_Clk" (rect 21 59 76 71)(font "Arial" ))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "Extern_Clk" (rect 0 0 54 12)(font "Arial" ))
+		(text "Extern_Clk" (rect 21 75 75 87)(font "Arial" ))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "Reset" (rect 0 0 29 12)(font "Arial" ))
+		(text "Reset" (rect 21 91 50 103)(font "Arial" ))
+		(line (pt 0 96)(pt 16 96)(line_width 1))
+	)
+	(port
+		(pt 216 32)
+		(output)
+		(text "nMaster_Clk_Ena" (rect 0 0 86 12)(font "Arial" ))
+		(text "nMaster_Clk_Ena" (rect 109 27 195 39)(font "Arial" ))
+		(line (pt 216 32)(pt 200 32)(line_width 1))
+	)
+	(port
+		(pt 216 48)
+		(output)
+		(text "nSlave_Clk_Ena" (rect 0 0 81 12)(font "Arial" ))
+		(text "nSlave_Clk_Ena" (rect 114 43 195 55)(font "Arial" ))
+		(line (pt 216 48)(pt 200 48)(line_width 1))
+	)
+	(port
+		(pt 216 64)
+		(output)
+		(text "nIndenpend_Clk_Ena" (rect 0 0 103 12)(font "Arial" ))
+		(text "nIndenpend_Clk_Ena" (rect 92 59 195 71)(font "Arial" ))
+		(line (pt 216 64)(pt 200 64)(line_width 1))
+	)
+	(port
+		(pt 216 80)
+		(output)
+		(text "Extern_Clk_OK" (rect 0 0 75 12)(font "Arial" ))
+		(text "Extern_Clk_OK" (rect 120 75 195 87)(font "Arial" ))
+		(line (pt 216 80)(pt 200 80)(line_width 1))
+	)
+	(parameter
+		"Test"
+		"0"
+		""
+	)
+	(drawing
+		(rectangle (rect 16 16 200 112)(line_width 1))
+	)
+	(annotation_block (parameter)(rect 232 -64 332 16))
+)
