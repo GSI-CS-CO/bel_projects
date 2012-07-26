@@ -1,0 +1,287 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2005 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic       
+functions, and any output files any of the foregoing           
+(including device programming or simulation files), and any    
+associated documentation or information are expressly subject  
+to the terms and conditions of the Altera Program License      
+Subscription Agreement, Altera MegaCore Function License       
+Agreement, or other applicable license agreement, including,   
+without limitation, that your use is for the sole purpose of   
+programming logic devices manufactured by Altera and sold by   
+Altera or its authorized distributors.  Please refer to the    
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 248 272)
+	(text "Skal_Test" (rect 5 0 53 12)(font "Arial" ))
+	(text "inst" (rect 8 240 25 252)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "VG_Mod_Skal[7..0]" (rect 0 0 94 12)(font "Arial" ))
+		(text "VG_Mod_Skal[7..0]" (rect 21 27 115 39)(font "Arial" ))
+		(line (pt 0 32)(pt 16 32)(line_width 3))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "St_160_Skal[7..0]" (rect 0 0 87 12)(font "Arial" ))
+		(text "St_160_Skal[7..0]" (rect 21 43 108 55)(font "Arial" ))
+		(line (pt 0 48)(pt 16 48)(line_width 3))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "Logik[5..0]" (rect 0 0 51 12)(font "Arial" ))
+		(text "Logik[5..0]" (rect 21 59 72 71)(font "Arial" ))
+		(line (pt 0 64)(pt 16 64)(line_width 3))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "A_K3D_SPG" (rect 0 0 62 12)(font "Arial" ))
+		(text "A_K3D_SPG" (rect 21 75 83 87)(font "Arial" ))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "A_K3C_SPG" (rect 0 0 62 12)(font "Arial" ))
+		(text "A_K3C_SPG" (rect 21 91 83 103)(font "Arial" ))
+		(line (pt 0 96)(pt 16 96)(line_width 1))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "A_K2D_SPG" (rect 0 0 62 12)(font "Arial" ))
+		(text "A_K2D_SPG" (rect 21 107 83 119)(font "Arial" ))
+		(line (pt 0 112)(pt 16 112)(line_width 1))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "A_K2C_SPG" (rect 0 0 62 12)(font "Arial" ))
+		(text "A_K2C_SPG" (rect 21 123 83 135)(font "Arial" ))
+		(line (pt 0 128)(pt 16 128)(line_width 1))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "A_K1D_SPG" (rect 0 0 62 12)(font "Arial" ))
+		(text "A_K1D_SPG" (rect 21 139 83 151)(font "Arial" ))
+		(line (pt 0 144)(pt 16 144)(line_width 1))
+	)
+	(port
+		(pt 0 160)
+		(input)
+		(text "A_K1C_SPG" (rect 0 0 62 12)(font "Arial" ))
+		(text "A_K1C_SPG" (rect 21 155 83 167)(font "Arial" ))
+		(line (pt 0 160)(pt 16 160)(line_width 1))
+	)
+	(port
+		(pt 0 176)
+		(input)
+		(text "A_K0D_SPG" (rect 0 0 62 12)(font "Arial" ))
+		(text "A_K0D_SPG" (rect 21 171 83 183)(font "Arial" ))
+		(line (pt 0 176)(pt 16 176)(line_width 1))
+	)
+	(port
+		(pt 0 192)
+		(input)
+		(text "A_K0C_SPG" (rect 0 0 62 12)(font "Arial" ))
+		(text "A_K0C_SPG" (rect 21 187 83 199)(font "Arial" ))
+		(line (pt 0 192)(pt 16 192)(line_width 1))
+	)
+	(port
+		(pt 0 208)
+		(input)
+		(text "clk" (rect 0 0 14 12)(font "Arial" ))
+		(text "clk" (rect 21 203 35 215)(font "Arial" ))
+		(line (pt 0 208)(pt 16 208)(line_width 1))
+	)
+	(port
+		(pt 232 32)
+		(output)
+		(text "All_Okay" (rect 0 0 44 12)(font "Arial" ))
+		(text "All_Okay" (rect 167 27 211 39)(font "Arial" ))
+		(line (pt 232 32)(pt 216 32)(line_width 1))
+	)
+	(port
+		(pt 232 48)
+		(output)
+		(text "Mod_Skal_Ok" (rect 0 0 67 12)(font "Arial" ))
+		(text "Mod_Skal_Ok" (rect 144 43 211 55)(font "Arial" ))
+		(line (pt 232 48)(pt 216 48)(line_width 1))
+	)
+	(port
+		(pt 232 64)
+		(output)
+		(text "Level_Ok" (rect 0 0 47 12)(font "Arial" ))
+		(text "Level_Ok" (rect 164 59 211 71)(font "Arial" ))
+		(line (pt 232 64)(pt 216 64)(line_width 1))
+	)
+	(port
+		(pt 232 80)
+		(output)
+		(text "Logic_Nr_Ok" (rect 0 0 63 12)(font "Arial" ))
+		(text "Logic_Nr_Ok" (rect 148 75 211 87)(font "Arial" ))
+		(line (pt 232 80)(pt 216 80)(line_width 1))
+	)
+	(port
+		(pt 232 96)
+		(output)
+		(text "nK0_Switch_Ena" (rect 0 0 81 12)(font "Arial" ))
+		(text "nK0_Switch_Ena" (rect 130 91 211 103)(font "Arial" ))
+		(line (pt 232 96)(pt 216 96)(line_width 1))
+	)
+	(port
+		(pt 232 112)
+		(output)
+		(text "nK1_Switch_Ena" (rect 0 0 81 12)(font "Arial" ))
+		(text "nK1_Switch_Ena" (rect 130 107 211 119)(font "Arial" ))
+		(line (pt 232 112)(pt 216 112)(line_width 1))
+	)
+	(port
+		(pt 232 128)
+		(output)
+		(text "nK2_Switch_Ena" (rect 0 0 81 12)(font "Arial" ))
+		(text "nK2_Switch_Ena" (rect 130 123 211 135)(font "Arial" ))
+		(line (pt 232 128)(pt 216 128)(line_width 1))
+	)
+	(port
+		(pt 232 144)
+		(output)
+		(text "nK3_Switch_Ena" (rect 0 0 81 12)(font "Arial" ))
+		(text "nK3_Switch_Ena" (rect 130 139 211 151)(font "Arial" ))
+		(line (pt 232 144)(pt 216 144)(line_width 1))
+	)
+	(port
+		(pt 232 160)
+		(output)
+		(text "nSkal_Okay_Led" (rect 0 0 83 12)(font "Arial" ))
+		(text "nSkal_Okay_Led" (rect 128 155 211 167)(font "Arial" ))
+		(line (pt 232 160)(pt 216 160)(line_width 1))
+	)
+	(parameter
+		"ST_160_Pol"
+		"1"
+		""
+	)
+	(parameter
+		"No_Port_Dir_Test"
+		"0"
+		""
+	)
+	(parameter
+		"K3_Input"
+		"1"
+		""
+	)
+	(parameter
+		"K3D_Def_Level"
+		"0"
+		""
+	)
+	(parameter
+		"K3C_Def_Level"
+		"1"
+		""
+	)
+	(parameter
+		"K2_Input"
+		"1"
+		""
+	)
+	(parameter
+		"K2D_Def_Level"
+		"0"
+		""
+	)
+	(parameter
+		"K2C_Def_Level"
+		"1"
+		""
+	)
+	(parameter
+		"Gr1_APK_ID"
+		"1"
+		""
+	)
+	(parameter
+		"Gr1_16Bit"
+		"1"
+		""
+	)
+	(parameter
+		"K1_Input"
+		"1"
+		""
+	)
+	(parameter
+		"K1D_Def_Level"
+		"0"
+		""
+	)
+	(parameter
+		"K1C_Def_Level"
+		"1"
+		""
+	)
+	(parameter
+		"K0_Input"
+		"1"
+		""
+	)
+	(parameter
+		"K0D_Def_Level"
+		"0"
+		""
+	)
+	(parameter
+		"K0C_Def_Level"
+		"1"
+		""
+	)
+	(parameter
+		"Gr0_APK_ID"
+		"1"
+		""
+	)
+	(parameter
+		"Gr0_16Bit"
+		"1"
+		""
+	)
+	(parameter
+		"No_Level_Test"
+		"0"
+		""
+	)
+	(parameter
+		"No_Logic_Test"
+		"0"
+		""
+	)
+	(parameter
+		"Logic_Nr_Start"
+		"0"
+		""
+	)
+	(parameter
+		"Logic_Nr_End"
+		"0"
+		""
+	)
+	(drawing
+		(rectangle (rect 16 16 216 240)(line_width 1))
+	)
+	(annotation_block (parameter)(rect 248 -64 348 16))
+)

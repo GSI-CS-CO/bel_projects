@@ -28,7 +28,8 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.all;
 use ieee.numeric_std.all;  
 
-use work.wishbone_pkg.all;                             
+use work.wishbone_pkg.all;
+use work.scu_bus_pkg.all;                           
 
 ENTITY scu_bus_master_vhd_tst IS
 END scu_bus_master_vhd_tst;
@@ -50,23 +51,10 @@ SIGNAL SCUB_RDnWR : STD_LOGIC;
 signal slave_i: t_wishbone_slave_in;
 signal slave_o: t_wishbone_slave_out;
 
-COMPONENT scu_bus_master
-	PORT (
-	clk : IN STD_LOGIC;
-	nrst : IN STD_LOGIC;
-	nSCUB_DS : OUT STD_LOGIC;
-	nSCUB_Dtack : IN STD_LOGIC;
-	nSCUB_Slave_Sel : OUT STD_LOGIC_VECTOR(11 DOWNTO 0);
-	nSCUB_SRQ_Slaves : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
-	nSCUB_Timing_Cycle : OUT STD_LOGIC;
-	nSel_Ext_Data_Drv : OUT STD_LOGIC;
-	SCUB_Addr  : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-	SCUB_Data  : INOUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-	SCUB_RDnWR : OUT STD_LOGIC;
-	slave_i    : in t_wishbone_slave_in;
-	slave_o  : out t_wishbone_slave_out
-	);
-END COMPONENT;
+type data_reg_array is array (0 to 15) of std_logic_vector(15 downto 0);
+signal reg_block : data_reg_array;
+
+
 
 component WBDebugMaster is
   generic(
@@ -89,6 +77,10 @@ end component;
 
 BEGIN
 	i1 : scu_bus_master
+	generic map (
+    CLK_in_Hz => 125_000_000,
+    Test => 0
+  )
 	PORT MAP (
 -- list connections between master ports and signals
 	clk => clk,
@@ -111,7 +103,7 @@ BEGIN
 	   g_data_width => 32,
 	   g_burst => 1,
 	   g_addr_start => x"00080000",
-	   g_addr_end => x"0008ffff"
+	   g_addr_end => x"0008000f"
 	)
 	port map (
 	  clk_i => clk,
@@ -157,14 +149,28 @@ WAIT;
 END PROCESS always;
 
 
-dtack: process(nSCUB_DS)
+scu_slave: process(clk)
+variable cnt : integer := 0;
 begin
-  if (rising_edge(nSCUB_DS)) then
-    nSCUB_Dtack <= '0', '1' after 2 * 8 ns;
+  if nSCUB_DS = '0' and SCUB_RDnWR = '1' then
+    SCUB_Data <= reg_block(to_integer(unsigned(SCUB_Addr)));
+  elsif nSCUB_DS = '0' and SCUB_RDnWR = '0' then
+    reg_block(to_integer(unsigned(SCUB_Addr))) <= SCUB_Data;
+  else
+    SCUB_Data <= x"ZZZZ";
   end if;
-
+  
+  if rising_edge(clk) then
+    if nSCUB_DS = '0'  then
+      cnt := cnt + 1;
+      if (cnt = 3) then
+        cnt := 0;
+        nSCUB_Dtack <= '0', '1' after 2 * 8 ns;
+      end if;
+    end if;
+  end if;
 end process;
-
+  
 clk_125: Process
 begin
   loop

@@ -1,0 +1,280 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2005 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic       
+functions, and any output files any of the foregoing           
+(including device programming or simulation files), and any    
+associated documentation or information are expressly subject  
+to the terms and conditions of the Altera Program License      
+Subscription Agreement, Altera MegaCore Function License       
+Agreement, or other applicable license agreement, including,   
+without limitation, that your use is for the sole purpose of   
+programming logic devices manufactured by Altera and sold by   
+Altera or its authorized distributors.  Please refer to the    
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 240 336)
+	(text "APK_Stecker_ID_Cntrl" (rect 5 0 117 12)(font "Arial" ))
+	(text "inst" (rect 8 304 25 316)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "Start_ID_Cntrl" (rect 0 0 70 12)(font "Arial" ))
+		(text "Start_ID_Cntrl" (rect 21 27 91 39)(font "Arial" ))
+		(line (pt 0 32)(pt 16 32)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "Update_Apk_ID" (rect 0 0 77 12)(font "Arial" ))
+		(text "Update_Apk_ID" (rect 21 43 98 55)(font "Arial" ))
+		(line (pt 0 48)(pt 16 48)(line_width 1))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "Reset" (rect 0 0 29 12)(font "Arial" ))
+		(text "Reset" (rect 21 59 50 71)(font "Arial" ))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "clk" (rect 0 0 14 12)(font "Arial" ))
+		(text "clk" (rect 21 75 35 87)(font "Arial" ))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "K3_K2_Skal[7..0]" (rect 0 0 84 12)(font "Arial" ))
+		(text "K3_K2_Skal[7..0]" (rect 21 91 105 103)(font "Arial" ))
+		(line (pt 0 96)(pt 16 96)(line_width 3))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "A_K3_D[15..0]" (rect 0 0 71 12)(font "Arial" ))
+		(text "A_K3_D[15..0]" (rect 21 107 92 119)(font "Arial" ))
+		(line (pt 0 112)(pt 16 112)(line_width 3))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "A_K2_D[15..0]" (rect 0 0 71 12)(font "Arial" ))
+		(text "A_K2_D[15..0]" (rect 21 123 92 135)(font "Arial" ))
+		(line (pt 0 128)(pt 16 128)(line_width 3))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "DB_K3_INP" (rect 0 0 59 12)(font "Arial" ))
+		(text "DB_K3_INP" (rect 21 139 80 151)(font "Arial" ))
+		(line (pt 0 144)(pt 16 144)(line_width 1))
+	)
+	(port
+		(pt 0 160)
+		(input)
+		(text "DB_K2_INP" (rect 0 0 59 12)(font "Arial" ))
+		(text "DB_K2_INP" (rect 21 155 80 167)(font "Arial" ))
+		(line (pt 0 160)(pt 16 160)(line_width 1))
+	)
+	(port
+		(pt 0 176)
+		(input)
+		(text "DB_GR1_APK_ID" (rect 0 0 88 12)(font "Arial" ))
+		(text "DB_GR1_APK_ID" (rect 21 171 109 183)(font "Arial" ))
+		(line (pt 0 176)(pt 16 176)(line_width 1))
+	)
+	(port
+		(pt 0 192)
+		(input)
+		(text "K1_K0_Skal[7..0]" (rect 0 0 84 12)(font "Arial" ))
+		(text "K1_K0_Skal[7..0]" (rect 21 187 105 199)(font "Arial" ))
+		(line (pt 0 192)(pt 16 192)(line_width 3))
+	)
+	(port
+		(pt 0 208)
+		(input)
+		(text "A_K1_D[15..0]" (rect 0 0 71 12)(font "Arial" ))
+		(text "A_K1_D[15..0]" (rect 21 203 92 215)(font "Arial" ))
+		(line (pt 0 208)(pt 16 208)(line_width 3))
+	)
+	(port
+		(pt 0 224)
+		(input)
+		(text "A_K0_D[15..0]" (rect 0 0 71 12)(font "Arial" ))
+		(text "A_K0_D[15..0]" (rect 21 219 92 231)(font "Arial" ))
+		(line (pt 0 224)(pt 16 224)(line_width 3))
+	)
+	(port
+		(pt 0 240)
+		(input)
+		(text "DB_K1_INP" (rect 0 0 59 12)(font "Arial" ))
+		(text "DB_K1_INP" (rect 21 235 80 247)(font "Arial" ))
+		(line (pt 0 240)(pt 16 240)(line_width 1))
+	)
+	(port
+		(pt 0 256)
+		(input)
+		(text "DB_K0_INP" (rect 0 0 59 12)(font "Arial" ))
+		(text "DB_K0_INP" (rect 21 251 80 263)(font "Arial" ))
+		(line (pt 0 256)(pt 16 256)(line_width 1))
+	)
+	(port
+		(pt 0 272)
+		(input)
+		(text "DB_GR0_APK_ID" (rect 0 0 88 12)(font "Arial" ))
+		(text "DB_GR0_APK_ID" (rect 21 267 109 279)(font "Arial" ))
+		(line (pt 0 272)(pt 16 272)(line_width 1))
+	)
+	(port
+		(pt 224 32)
+		(output)
+		(text "ID_Cntrl_Done" (rect 0 0 73 12)(font "Arial" ))
+		(text "ID_Cntrl_Done" (rect 130 27 203 39)(font "Arial" ))
+		(line (pt 224 32)(pt 208 32)(line_width 1))
+	)
+	(port
+		(pt 224 48)
+		(output)
+		(text "APK_ST_ID_OK" (rect 0 0 79 12)(font "Arial" ))
+		(text "APK_ST_ID_OK" (rect 124 43 203 55)(font "Arial" ))
+		(line (pt 224 48)(pt 208 48)(line_width 1))
+	)
+	(port
+		(pt 224 64)
+		(output)
+		(text "La_Ena_Skal_In" (rect 0 0 79 12)(font "Arial" ))
+		(text "La_Ena_Skal_In" (rect 124 59 203 71)(font "Arial" ))
+		(line (pt 224 64)(pt 208 64)(line_width 1))
+	)
+	(port
+		(pt 224 80)
+		(output)
+		(text "La_Ena_Port_In" (rect 0 0 77 12)(font "Arial" ))
+		(text "La_Ena_Port_In" (rect 126 75 203 87)(font "Arial" ))
+		(line (pt 224 80)(pt 208 80)(line_width 1))
+	)
+	(port
+		(pt 224 96)
+		(output)
+		(text "K3_ID[15..0]" (rect 0 0 62 12)(font "Arial" ))
+		(text "K3_ID[15..0]" (rect 141 91 203 103)(font "Arial" ))
+		(line (pt 224 96)(pt 208 96)(line_width 3))
+	)
+	(port
+		(pt 224 112)
+		(output)
+		(text "A_nK3_ID_En" (rect 0 0 68 12)(font "Arial" ))
+		(text "A_nK3_ID_En" (rect 135 107 203 119)(font "Arial" ))
+		(line (pt 224 112)(pt 208 112)(line_width 1))
+	)
+	(port
+		(pt 224 128)
+		(output)
+		(text "K2_ID[15..0]" (rect 0 0 62 12)(font "Arial" ))
+		(text "K2_ID[15..0]" (rect 141 123 203 135)(font "Arial" ))
+		(line (pt 224 128)(pt 208 128)(line_width 3))
+	)
+	(port
+		(pt 224 144)
+		(output)
+		(text "A_nK2_ID_En" (rect 0 0 68 12)(font "Arial" ))
+		(text "A_nK2_ID_En" (rect 135 139 203 151)(font "Arial" ))
+		(line (pt 224 144)(pt 208 144)(line_width 1))
+	)
+	(port
+		(pt 224 160)
+		(output)
+		(text "A_nGR1_ID_Sel" (rect 0 0 80 12)(font "Arial" ))
+		(text "A_nGR1_ID_Sel" (rect 123 155 203 167)(font "Arial" ))
+		(line (pt 224 160)(pt 208 160)(line_width 1))
+	)
+	(port
+		(pt 224 176)
+		(output)
+		(text "K1_ID[15..0]" (rect 0 0 62 12)(font "Arial" ))
+		(text "K1_ID[15..0]" (rect 141 171 203 183)(font "Arial" ))
+		(line (pt 224 176)(pt 208 176)(line_width 3))
+	)
+	(port
+		(pt 224 192)
+		(output)
+		(text "A_nK1_ID_En" (rect 0 0 68 12)(font "Arial" ))
+		(text "A_nK1_ID_En" (rect 135 187 203 199)(font "Arial" ))
+		(line (pt 224 192)(pt 208 192)(line_width 1))
+	)
+	(port
+		(pt 224 208)
+		(output)
+		(text "K0_ID[15..0]" (rect 0 0 62 12)(font "Arial" ))
+		(text "K0_ID[15..0]" (rect 141 203 203 215)(font "Arial" ))
+		(line (pt 224 208)(pt 208 208)(line_width 3))
+	)
+	(port
+		(pt 224 224)
+		(output)
+		(text "A_nK0_ID_En" (rect 0 0 68 12)(font "Arial" ))
+		(text "A_nK0_ID_En" (rect 135 219 203 231)(font "Arial" ))
+		(line (pt 224 224)(pt 208 224)(line_width 1))
+	)
+	(port
+		(pt 224 240)
+		(output)
+		(text "A_nGR0_ID_Sel" (rect 0 0 80 12)(font "Arial" ))
+		(text "A_nGR0_ID_Sel" (rect 123 235 203 247)(font "Arial" ))
+		(line (pt 224 240)(pt 208 240)(line_width 1))
+	)
+	(parameter
+		"K3_APK_ST_ID"
+		"65535"
+		""
+	)
+	(parameter
+		"K2_APK_ST_ID"
+		"65535"
+		""
+	)
+	(parameter
+		"K1_APK_ST_ID"
+		"65535"
+		""
+	)
+	(parameter
+		"K0_APK_ST_ID"
+		"65535"
+		""
+	)
+	(parameter
+		"ST_160_Pol"
+		"1"
+		""
+	)
+	(parameter
+		"Clk_in_Hz"
+		"300000000"
+		""
+	)
+	(parameter
+		"Wait_in_ns"
+		"200"
+		""
+	)
+	(parameter
+		"Use_LPM"
+		"0"
+		""
+	)
+	(drawing
+		(rectangle (rect 16 16 208 304)(line_width 1))
+	)
+	(annotation_block (parameter)(rect 240 -64 340 16))
+)

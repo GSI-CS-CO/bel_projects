@@ -1,0 +1,229 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2006 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 336 304)
+	(text "chopper_m1_logic" (rect 5 0 93 12)(font "Arial" ))
+	(text "inst" (rect 8 272 25 284)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "Skal_OK" (rect 0 0 42 12)(font "Arial" ))
+		(text "Skal_OK" (rect 21 27 63 39)(font "Arial" ))
+		(line (pt 0 32)(pt 16 32)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "Data_WR[15..0]" (rect 0 0 80 12)(font "Arial" ))
+		(text "Data_WR[15..0]" (rect 21 43 101 55)(font "Arial" ))
+		(line (pt 0 48)(pt 16 48)(line_width 3))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "Strahlweg_Reg_WR" (rect 0 0 97 12)(font "Arial" ))
+		(text "Strahlweg_Reg_WR" (rect 21 59 118 71)(font "Arial" ))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "Strahlweg_Reg_RD" (rect 0 0 95 12)(font "Arial" ))
+		(text "Strahlweg_Reg_RD" (rect 21 75 116 87)(font "Arial" ))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "Strahlweg_Maske_WR" (rect 0 0 109 12)(font "Arial" ))
+		(text "Strahlweg_Maske_WR" (rect 21 91 130 103)(font "Arial" ))
+		(line (pt 0 96)(pt 16 96)(line_width 1))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "Interlock_Reg_WR" (rect 0 0 93 12)(font "Arial" ))
+		(text "Interlock_Reg_WR" (rect 21 107 114 119)(font "Arial" ))
+		(line (pt 0 112)(pt 16 112)(line_width 1))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "TK8_Delay_WR" (rect 0 0 79 12)(font "Arial" ))
+		(text "TK8_Delay_WR" (rect 21 123 100 135)(font "Arial" ))
+		(line (pt 0 128)(pt 16 128)(line_width 1))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "CLK" (rect 0 0 21 12)(font "Arial" ))
+		(text "CLK" (rect 21 139 42 151)(font "Arial" ))
+		(line (pt 0 144)(pt 16 144)(line_width 1))
+	)
+	(port
+		(pt 0 160)
+		(input)
+		(text "Reset" (rect 0 0 29 12)(font "Arial" ))
+		(text "Reset" (rect 21 155 50 167)(font "Arial" ))
+		(line (pt 0 160)(pt 16 160)(line_width 1))
+	)
+	(port
+		(pt 0 176)
+		(input)
+		(text "Beam_Control_In[15..0]" (rect 0 0 116 12)(font "Arial" ))
+		(text "Beam_Control_In[15..0]" (rect 21 171 137 183)(font "Arial" ))
+		(line (pt 0 176)(pt 16 176)(line_width 3))
+	)
+	(port
+		(pt 0 192)
+		(input)
+		(text "Strahlalarm_In[15..0]" (rect 0 0 102 12)(font "Arial" ))
+		(text "Strahlalarm_In[15..0]" (rect 21 187 123 199)(font "Arial" ))
+		(line (pt 0 192)(pt 16 192)(line_width 3))
+	)
+	(port
+		(pt 0 208)
+		(input)
+		(text "Off_Anforderung_In" (rect 0 0 99 12)(font "Arial" ))
+		(text "Off_Anforderung_In" (rect 21 203 120 215)(font "Arial" ))
+		(line (pt 0 208)(pt 16 208)(line_width 1))
+	)
+	(port
+		(pt 0 224)
+		(input)
+		(text "Off_UU_In" (rect 0 0 55 12)(font "Arial" ))
+		(text "Off_UU_In" (rect 21 219 76 231)(font "Arial" ))
+		(line (pt 0 224)(pt 16 224)(line_width 1))
+	)
+	(port
+		(pt 320 32)
+		(output)
+		(text "Strahlweg_Reg[15..0]" (rect 0 0 105 12)(font "Arial" ))
+		(text "Strahlweg_Reg[15..0]" (rect 194 27 299 39)(font "Arial" ))
+		(line (pt 320 32)(pt 304 32)(line_width 3))
+	)
+	(port
+		(pt 320 48)
+		(output)
+		(text "Strahlweg_Maske[15..0]" (rect 0 0 116 12)(font "Arial" ))
+		(text "Strahlweg_Maske[15..0]" (rect 183 43 299 55)(font "Arial" ))
+		(line (pt 320 48)(pt 304 48)(line_width 3))
+	)
+	(port
+		(pt 320 64)
+		(output)
+		(text "Interlock_to_SE[15..0]" (rect 0 0 109 12)(font "Arial" ))
+		(text "Interlock_to_SE[15..0]" (rect 190 59 299 71)(font "Arial" ))
+		(line (pt 320 64)(pt 304 64)(line_width 3))
+	)
+	(port
+		(pt 320 80)
+		(output)
+		(text "Beam_Control_Out[15..0]" (rect 0 0 125 12)(font "Arial" ))
+		(text "Beam_Control_Out[15..0]" (rect 174 75 299 87)(font "Arial" ))
+		(line (pt 320 80)(pt 304 80)(line_width 3))
+	)
+	(port
+		(pt 320 96)
+		(output)
+		(text "Trafo_Timing_Out[15..0]" (rect 0 0 119 12)(font "Arial" ))
+		(text "Trafo_Timing_Out[15..0]" (rect 180 91 299 103)(font "Arial" ))
+		(line (pt 320 96)(pt 304 96)(line_width 3))
+	)
+	(port
+		(pt 320 112)
+		(output)
+		(text "Interlock_Reg[15..0]" (rect 0 0 100 12)(font "Arial" ))
+		(text "Interlock_Reg[15..0]" (rect 199 107 299 119)(font "Arial" ))
+		(line (pt 320 112)(pt 304 112)(line_width 3))
+	)
+	(port
+		(pt 320 128)
+		(output)
+		(text "TK8_Delay[15..0]" (rect 0 0 86 12)(font "Arial" ))
+		(text "TK8_Delay[15..0]" (rect 213 123 299 135)(font "Arial" ))
+		(line (pt 320 128)(pt 304 128)(line_width 3))
+	)
+	(port
+		(pt 320 144)
+		(output)
+		(text "HSI_act_pos_latch_out[15..0]" (rect 0 0 146 12)(font "Arial" ))
+		(text "HSI_act_pos_latch_out[15..0]" (rect 153 139 299 151)(font "Arial" ))
+		(line (pt 320 144)(pt 304 144)(line_width 3))
+	)
+	(port
+		(pt 320 160)
+		(output)
+		(text "HSI_neg_latch_out[15..0]" (rect 0 0 125 12)(font "Arial" ))
+		(text "HSI_neg_latch_out[15..0]" (rect 174 155 299 167)(font "Arial" ))
+		(line (pt 320 160)(pt 304 160)(line_width 3))
+	)
+	(port
+		(pt 320 176)
+		(output)
+		(text "HSI_act_neg_latch_out[15..0]" (rect 0 0 146 12)(font "Arial" ))
+		(text "HSI_act_neg_latch_out[15..0]" (rect 153 171 299 183)(font "Arial" ))
+		(line (pt 320 176)(pt 304 176)(line_width 3))
+	)
+	(port
+		(pt 320 192)
+		(output)
+		(text "HLI_act_pos_latch_out[15..0]" (rect 0 0 145 12)(font "Arial" ))
+		(text "HLI_act_pos_latch_out[15..0]" (rect 154 187 299 199)(font "Arial" ))
+		(line (pt 320 192)(pt 304 192)(line_width 3))
+	)
+	(port
+		(pt 320 208)
+		(output)
+		(text "HLI_neg_latch_out[15..0]" (rect 0 0 123 12)(font "Arial" ))
+		(text "HLI_neg_latch_out[15..0]" (rect 176 203 299 215)(font "Arial" ))
+		(line (pt 320 208)(pt 304 208)(line_width 3))
+	)
+	(port
+		(pt 320 224)
+		(output)
+		(text "HLI_act_neg_latch_out[15..0]" (rect 0 0 145 12)(font "Arial" ))
+		(text "HLI_act_neg_latch_out[15..0]" (rect 154 219 299 231)(font "Arial" ))
+		(line (pt 320 224)(pt 304 224)(line_width 3))
+	)
+	(port
+		(pt 320 240)
+		(output)
+		(text "Chop_m1_LEDs[15..0]" (rect 0 0 112 12)(font "Arial" ))
+		(text "Chop_m1_LEDs[15..0]" (rect 187 235 299 247)(font "Arial" ))
+		(line (pt 320 240)(pt 304 240)(line_width 3))
+	)
+	(parameter
+		"Clk_in_HZ"
+		""
+		""
+	)
+	(parameter
+		"Test"
+		""
+		""
+	)
+	(drawing
+		(rectangle (rect 16 16 304 272)(line_width 1))
+	)
+	(annotation_block (parameter)(rect 336 -64 436 16))
+)

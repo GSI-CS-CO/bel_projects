@@ -119,18 +119,20 @@ end process;
                           addr_cnt      <=  g_addr_start;
                             data_gen      <=  (others => '0');
                             STARTOP <= '1';
+                            
                             state <= sWRITE;
                           
                          
           when sWRITE =>  if(ACKDONE = '1' AND STARTOP = '0') then
                             state <=  sREAD;
                             STARTOP <= '1';
+                            --addr_cnt      <=  addr_cnt + 1;
                           else
                             master.CYC  <= '1';
-                            master.WE   <= '0';
+                            master.WE   <= '1';
                             master.STB  <= '1';
                             if(master_i.STALL = '0') then
-                                addr_cnt      <=  addr_cnt + 1;
+                                --addr_cnt      <=  addr_cnt + 1;
                                 data_gen      <=  data_gen + 1;
                             end if;
                           end if;
@@ -139,6 +141,7 @@ end process;
                             if((addr_cnt + g_data_width/4) < g_addr_end) then
                               state <= sWRITE;
                               STARTOP <= '1';
+                              --addr_cnt      <=  addr_cnt + 1;
                             else
                               state <= sDONE;
                             end if;
@@ -147,7 +150,7 @@ end process;
                             master.WE   <= '0';
                             master.STB  <= '1';
                             if(master_i.STALL = '0') then
-                                addr_cnt      <=  addr_cnt + 1;
+                                
                             end if;
                           end if;
                           
