@@ -6,27 +6,27 @@ use IEEE.STD_LOGIC_ARITH.ALL;
 
 entity chopper_m2_logic is
 	port (
-			Skal_OK:					in std_logic;
-			Data_WR:					in std_logic_vector(15 downto 0);
-			Anforder_In:				in std_logic_vector(15 downto 0);
-			Anforder_Maske_WR:			in std_logic;
+			Skal_OK:					    in std_logic;
+			Data_WR:					    in std_logic_vector(15 downto 0);
+			Anforder_In:				  in std_logic_vector(15 downto 0);
+			Anforder_Maske_WR:		in std_logic;
 			EMI_Schwelle_WR:			in std_logic;
-			CLK:						in std_logic;		-- Sollte der Takt sein, der auch in den anderen Macros verwendet wird.
-			Reset:						in std_logic;
+			CLK:						      in std_logic;		-- Sollte der Takt sein, der auch in den anderen Macros verwendet wird.
+			Reset:						    in std_logic;
 
-			Off_Anforderung_Out:		out std_logic;
-			Off_UU_Out:					out std_logic;
+			Off_Anforderung_Out:	out std_logic;
+			Off_UU_Out:					  out std_logic;
 
 			nMask_Anf_SIS:				out std_logic;
-			nMask_Anf_U:				out std_logic;
-			nMask_Anf_X:				out std_logic;
-			nMask_Anf_Y:				out std_logic;	
-			nMask_Anf_Z:				out std_logic;
-			nMask_Anf_M:				out std_logic;
+			nMask_Anf_U:				  out std_logic;
+			nMask_Anf_X:				  out std_logic;
+			nMask_Anf_Y:				  out std_logic;	
+			nMask_Anf_Z:				  out std_logic;
+			nMask_Anf_M:				  out std_logic;
 			
 
 			Anforder_Inputs:			out std_logic_vector(15 downto 0);
-			EMI_Schwelle:				out std_logic_vector(15 downto 0)
+			EMI_Schwelle:				  out std_logic_vector(15 downto 0)
 		);
 end chopper_m2_logic;
 
@@ -40,7 +40,7 @@ signal s_Logik_not_Sel_or_Reset:		std_logic;
 
 
 --+-------------------------------------+
---|	Die Namen der Anforder-Eingänge 	|
+--|	Die Namen der Anforder-Eingï¿½nge 	|
 --+-------------------------------------+
 signal	Exp_Anf_X0:				std_logic;
 signal	Exp_Anf_X1:				std_logic;
@@ -52,31 +52,33 @@ signal	Exp_Anf_X7:				std_logic;
 signal	Exp_Anf_X8:				std_logic;
 signal	Exp_Anf_Y7:				std_logic;
 signal	Exp_Anf_Z6:				std_logic;
+signal  Exp_Anf_Z7:       std_logic;
 signal	Exp_Anf_UU:				std_logic;
-signal	Exp_Anf_M1:				std_logic;		-- hinzugefügt am 5.12.2007
-signal	Exp_Anf_M2:				std_logic;		-- hinzugefügt am 5.12.2007
-signal	Exp_Anf_M3:				std_logic;		-- hinzugefügt am 5.12.2007
+signal	Exp_Anf_M1:				std_logic;
+signal	Exp_Anf_M2:				std_logic;
+signal	Exp_Anf_M3:				std_logic;
 signal	Exp_Anf_SIS:			std_logic;
 
 
 --+-----------------------------------------------------------------------------+
---|		Die Maskierungs-Bits der Anforder-Eingänge (von Interlock-SE)		 	|
+--|		Die Maskierungs-Bits der Anforder-Eingï¿½nge (von Interlock-SE)		 	|
 --+-----------------------------------------------------------------------------+
 signal	Mask_Anf_X0:				std_logic;
 signal	Mask_Anf_X1:				std_logic;
 signal	Mask_Anf_X2:				std_logic;
 signal	Mask_Anf_X3:				std_logic;
-signal	Mask_Anf_X4_5:				std_logic;
+signal	Mask_Anf_X4_5:			std_logic;
 signal	Mask_Anf_X6:				std_logic;
 signal	Mask_Anf_X7:				std_logic;
 signal	Mask_Anf_X8:				std_logic;
 signal	Mask_Anf_Y7:				std_logic;
 
 signal	Mask_Anf_Z6:				std_logic;
+signal	Mask_Anf_Z7:				std_logic;
 signal	Mask_Anf_UU:				std_logic;
-signal	Mask_Anf_M1:				std_logic;		-- hinzugefügt am 5.12.2007
-signal	Mask_Anf_M2:				std_logic;		-- hinzugefügt am 5.12.2007
-signal	Mask_Anf_M3:				std_logic;		-- hinzugefügt am 5.12.2007
+signal	Mask_Anf_M1:				std_logic;
+signal	Mask_Anf_M2:				std_logic;
+signal	Mask_Anf_M3:				std_logic;
 signal	Mask_Anf_SIS:				std_logic;
 
 
@@ -106,7 +108,7 @@ begin
 	EMI_Schwelle <= s_EMI_Schwelle;
 	
 --+-----------------------------------------------------------------------------+
---|		Maskierung der Anforderungs_Eingänge (von Interlock-SE)					|
+--|		Maskierung der Anforderungs_Eingï¿½nge (von Interlock-SE)					|
 --+-----------------------------------------------------------------------------+
 	
 	Anforder_Maske_ff: process (Clk, Reset)
@@ -125,12 +127,12 @@ begin
 	Mask_Anf_X1	 					<= s_Anforder_Maske(1);
 	Mask_Anf_X2	 					<= s_Anforder_Maske(2);
 	Mask_Anf_X3	 					<= s_Anforder_Maske(3);
-	Mask_Anf_X4_5 					<= s_Anforder_Maske(4);
+	Mask_Anf_X4_5 				<= s_Anforder_Maske(4);
 	Mask_Anf_X6	 					<= s_Anforder_Maske(5);
 	Mask_Anf_X7	 					<= s_Anforder_Maske(6);
 	Mask_Anf_X8	 					<= s_Anforder_Maske(7);
 	Mask_Anf_Y7	 					<= s_Anforder_Maske(8);
-	-- frei	 						<= s_Anforder_Maske(9);
+	Mask_Anf_Z7				    <= s_Anforder_Maske(9);
 	Mask_Anf_Z6	 					<= s_Anforder_Maske(10);
 	Mask_Anf_UU	 					<= s_Anforder_Maske(11);
 	Mask_Anf_M1	 					<= s_Anforder_Maske(12);
@@ -139,7 +141,7 @@ begin
 	Mask_Anf_SIS	 				<= s_Anforder_Maske(15);
 			
 	--+-------------------------------------+
-	--|  Die Anforderungs-Eingänge			|
+	--|  Die Anforderungs-Eingï¿½nge			|
 	--+-------------------------------------+
 	-- Belegung vom 27.11.2008 mit neuem Signal Exp_Anf_SIS			
 	Exp_Anf_X0					<= not Anforder_In(0);		-- kein Strom == 0 Volt, soll der Aktive Pegel sein	-- V06: not..
@@ -151,7 +153,7 @@ begin
 	Exp_Anf_X7					<= not Anforder_In(6);		-- kein Strom == 0 Volt, soll der Aktive Pegel sein	-- V06: not..
 	Exp_Anf_X8					<= not Anforder_In(7);		-- kein Strom == 0 Volt, soll der Aktive Pegel sein	-- V06: not..
 	Exp_Anf_Y7					<= not Anforder_In(8);		--	V06: not..									--
-	-- frei						<= not Anforder_In(9);		--	V06: not..									--
+	Exp_Anf_Z7				  <= not Anforder_In(9);		--	V06: not..									--
 	Exp_Anf_Z6					<= not Anforder_In(10);		--	V06: not..									--
 	Exp_Anf_UU					<= not Anforder_In(11);		--	V06: not..									--
 	Exp_Anf_M1					<= not Anforder_In(12);		--	V06: not..									--
@@ -159,11 +161,11 @@ begin
 	Exp_Anf_M3					<= not Anforder_In(14);		--	
 	Exp_Anf_SIS					<= not Anforder_In(15);		--	neu am 27.11.2008
 --+-------------------------------------------------------------------------------------------------+
---|	Die Anforder-Eingänge werden hier zusammengefasst, damit sie von der SE gelesen werden können	|
+--|	Die Anforder-Eingï¿½nge werden hier zusammengefasst, damit sie von der SE gelesen werden kï¿½nnen	|
 --+-------------------------------------------------------------------------------------------------+
 	Anforder_Inputs		<= (
 							Exp_Anf_SIS	&	Exp_Anf_M3	&	Exp_Anf_M2	&	Exp_Anf_M1	&	-- Bit 15..12
-							Exp_Anf_UU 	&	Exp_Anf_Z6	& 	'0'			&	Exp_Anf_Y7	&	-- Bit 11..8
+							Exp_Anf_UU 	&	Exp_Anf_Z6	& Exp_Anf_Z7	&	Exp_Anf_Y7	&	-- Bit 11..8
 							Exp_Anf_X8	&	Exp_Anf_X7	&	Exp_Anf_X6	&	Exp_Anf_X4_5 &	-- Bit 7..4
 							Exp_Anf_X3	&	Exp_Anf_X2	&	Exp_Anf_X1	&	Exp_Anf_X0		-- Bit 3..0
 							);
@@ -180,6 +182,7 @@ begin
 						or (Exp_Anf_X7 and not Mask_Anf_X7)
 						or (Exp_Anf_X8 and not Mask_Anf_X8)
 						or (Exp_Anf_Y7 and not Mask_Anf_Y7)
+            or (Exp_Anf_Z7 and not Mask_Anf_Z7)
 						or (Exp_Anf_Z6 and not Mask_Anf_Z6)
 						or (Exp_Anf_M1 and not Mask_Anf_M1)
 						or (Exp_Anf_M2 and not Mask_Anf_M2)
@@ -203,7 +206,7 @@ begin
 
 	nMask_Anf_Y		<=	not (Mask_Anf_Y7);
 
-	nMask_Anf_Z		<=	not (Mask_Anf_Z6);
+	nMask_Anf_Z		<=	not (Mask_Anf_Z6 or Mask_Anf_Z7);
 	
 	nMask_Anf_M		<=	not	(Mask_Anf_M1 or Mask_Anf_M2 or Mask_Anf_M3);
 	
