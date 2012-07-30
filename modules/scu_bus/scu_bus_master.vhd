@@ -232,6 +232,7 @@ ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
   
   signal    s_int_ack           : std_logic;
   signal    s_ext_ack           : std_logic;
+  signal    s_ext_read_err      : std_logic;
   signal    s_adr               : std_logic_vector(15 downto 0);
 
 	TYPE	T_SCUB_SM	IS	(
@@ -264,18 +265,18 @@ ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
 BEGIN
 
 -- mapping of the wishbone signals
-Wr_Data                   <= slave_i.dat(15 downto 0);
-slave_o.dat(31 downto 16) <= (others => '0');
+Wr_Data                   <= slave_i.dat(15 downto 0) when slave_i.adr(1) = '1' else slave_i.dat(31 downto 16);
+slave_o.dat(31 downto 16) <= Rd_Data;
 slave_o.dat(15 downto 0)  <= Rd_Data;
-Adr                       <= slave_i.adr(15 downto 0);
-Slave_Nr                  <= slave_i.adr(19 downto 16);
+Adr                       <= slave_i.adr(16 downto 1);
+Slave_Nr                  <= slave_i.adr(20 downto 17);
 Start_Cycle               <= slave_i.cyc and slave_i.stb;
 Wr_Cycle                  <= slave_i.we;
 Rd_Cycle                  <= not slave_i.we;
 slave_o.stall             <= S_Wait_Request;
 slave_o.ack               <= s_int_ack or s_ext_ack;
 slave_o.int               <= Intr;
-slave_o.err               <= S_Invalid_Intern_Acc or S_SCUB_Rd_Err_no_Dtack or S_SCUB_Wr_Err_no_Dtack or S_Invalid_Slave_Nr;
+slave_o.err               <= S_Invalid_Intern_Acc or s_ext_read_err or S_SCUB_Wr_Err_no_Dtack or S_Invalid_Slave_Nr;
 slave_o.rty               <= '0';
 
 
@@ -373,14 +374,16 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 			S_Multi_Wr_Flag			<= '0';
 			S_Global_Intr_Ena		<= (OTHERS => '0');
       s_int_ack           <= '0';
+      s_ext_read_err      <= '0';
 
 		ELSIF rising_edge(clk) THEN
 		
-			s_int_ack <= '0';
-      S_Invalid_Intern_Acc <= '0';
-      S_SCUB_Rd_Err_no_Dtack <= '0';
-      S_SCUB_Wr_Err_no_Dtack <= '0';
-      S_Invalid_Slave_Nr    <= '0';
+			s_int_ack               <= '0';
+      s_ext_read_err          <= '0';
+      S_Invalid_Intern_Acc    <= '0';
+      S_SCUB_Rd_Err_no_Dtack  <= '0';
+      S_SCUB_Wr_Err_no_Dtack  <= '0';
+      S_Invalid_Slave_Nr      <= '0';
 			
 			S_Ti_Cy(S_Ti_Cy'range) <= (S_Ti_Cy(S_Ti_Cy'high-1 DOWNTO 0) & Start_Timing_Cycle);		-- shift reg to generate pulse
 
@@ -392,7 +395,16 @@ P_SCUB_Cntrl: Process (clk, s_reset)
       
       if s_int_ack = '1' or S_Invalid_Intern_Acc = '1' then
         s_wait_Request <= '0';
-
+      end if;
+      
+      if S_SCUB_Rd_Err_no_Dtack = '1' then    -- delay for one clk
+        s_ext_read_err <= '1';
+      end if;
+      
+      if S_nSync_Dtack(1) = '0' and slave_i.we = '0' then    -- copy last read data after Dtack 
+        Rd_Data <= S_Rd_Data;
+      elsif S_SCUB_Rd_Err_no_Dtack = '1' or S_SCUB_Wr_Err_no_Dtack = '1' or S_Invalid_Slave_Nr = '1' then
+        Rd_Data <= x"FFFF";
       end if;
 			
 			IF Start_Cycle = '1' THEN
@@ -517,7 +529,7 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 					ELSIF Rd_Cycle = '1' THEN
 						S_Start_SCUB_Rd <= '1';									-- store read request
 					END IF;
-					Rd_Data <= S_Rd_Data;
+					--Rd_Data <= S_Rd_Data;                 -- at this point the data is to late for the ack
 				
 				WHEN c_multicast_slave_acc =>	-- Multicast Wr to external slaves
 					IF Wr_Cycle = '1' THEN
@@ -577,6 +589,8 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 		END IF;
 
 	END PROCESS P_SCUB_CNTRL;
+  
+
 
 
 P_SCUB_SM:	PROCESS (clk, s_reset)
