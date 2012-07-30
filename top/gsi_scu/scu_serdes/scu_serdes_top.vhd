@@ -23,10 +23,9 @@ entity scu_serdes_top is
 		 -----------------------------------------
 		 -- PCI express pins
 		 -----------------------------------------
-		 --pcie_refclk_i : in  std_logic;
-		 --pcie_rstn_i   : in  std_logic;
-		 --pcie_rx_i     : in  std_logic_vector(3 downto 0);
-		 --pcie_tx_o     : out std_logic_vector(3 downto 0);
+		 pcie_refclk_i : in  std_logic;
+		 pcie_rx_i     : in  std_logic_vector(3 downto 0);
+		 pcie_tx_o     : out std_logic_vector(3 downto 0);
 			
 		 -----------------------------------------------------------------------
 		 -- User LEDs
@@ -50,16 +49,16 @@ entity scu_serdes_top is
 		CLK_FSH				: out std_logic;
 		nWE_FSH				: out std_logic;
 		nOE_FSH				: out std_logic;
-		nRST_FSH				: out std_logic;
-		WAIT_FSH				: in std_logic;
+		nRST_FSH			: out std_logic;
+		WAIT_FSH			: in std_logic;
 		
 		-----------------------------------------------------------------------
 		-- LPC interface from ComExpress
 		-----------------------------------------------------------------------
-		LPC_AD			: inout std_logic_vector(3 downto 0);
+		LPC_AD			  : inout std_logic_vector(3 downto 0);
 		LPC_FPGA_CLK	: in std_logic;
 		LPC_SERIRQ		: inout std_logic;
-		nLPC_DRQ0		: in std_logic;
+		nLPC_DRQ0		  : in std_logic;
 		nLPC_FRAME		: in std_logic;
 		nPCI_RESET		: in std_logic;
 		
@@ -94,27 +93,27 @@ entity scu_serdes_top is
     -- QL0 serdes
     -----------------------------------------------------------------------
  
-    QL0_GXB_RX        : in std_logic_vector(3 downto 0);
-    QL0_GXB_TX        : out std_logic_vector(3 downto 0);
+    --QL0_GXB_RX        : in std_logic_vector(3 downto 0);
+    --QL0_GXB_TX        : out std_logic_vector(3 downto 0);
     
     -----------------------------------------------------------------------
     -- QL1 serdes
     -----------------------------------------------------------------------
 
-    SFP1_TX_DIS       : out   std_logic := '0';
+    --SFP1_TX_DIS       : out   std_logic := '0';
     
-    QL1_GXB_RX        : in std_logic_vector(3 downto 0);
-    QL1_GXB_TX        : out std_logic_vector(3 downto 0);
+    --QL1_GXB_RX        : in std_logic_vector(3 downto 0);
+    --QL1_GXB_TX        : out std_logic_vector(3 downto 0);
  
     -----------------------------------------------------------------------
     -- QL2 serdes
     -----------------------------------------------------------------------
     
 
-    SFP2_TX_DIS       : out   std_logic := '0';
+    --SFP2_TX_DIS       : out   std_logic := '0';
     
-    QL2_GXB_RX        : in std_logic_vector(3 downto 0);
-    QL2_GXB_TX        : out std_logic_vector(3 downto 0);
+    --QL2_GXB_RX        : in std_logic_vector(3 downto 0);
+    --QL2_GXB_TX        : out std_logic_vector(3 downto 0);
     
     
     
@@ -189,7 +188,7 @@ architecture rtl of scu_serdes_top is
     wbd_width     => x"2", -- 8/16/32-bit port granularity
     sdb_component => (
     addr_first    => x"0000000000000000",
-    addr_last     => x"00000000000fffff",
+    addr_last     => x"00000000003fffff",
     product => (
     vendor_id     => x"0000000000000651", -- GSI
     device_id     => x"9602eb6f",
@@ -199,7 +198,7 @@ architecture rtl of scu_serdes_top is
     
   -- Top crossbar layout
   constant c_slaves : natural := 6;
-  constant c_masters : natural := 4;
+  constant c_masters : natural := 5;
   constant c_dpram_size : natural := 16384; -- in 32-bit words (64KB)
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),  x"00000000"),
@@ -207,7 +206,7 @@ architecture rtl of scu_serdes_top is
     2 => f_sdb_embed_device(c_xwb_dma_sdb,              x"00100500"),
     3 => f_sdb_embed_device(c_xwb_owm,				 		      x"00100600"),
     4 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"),
-    5 => f_sdb_embed_device(c_scu_bus_master,           x"00200000"));
+    5 => f_sdb_embed_device(c_scu_bus_master,           x"00400000"));
   constant c_sdb_address : t_wishbone_address :=        x"00100000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -263,6 +262,32 @@ begin
       locked => locked);     -- '1' when the PLL has locked
   
   
+--  sys_pll_inst: altpll
+--    generic map (
+--      intended_device_family => "ArriaII",
+--      OPERATION_MODE => "NORMAL",
+--      INCLK0_INPUT_FREQUENCY => 8000,  -- 125MHhz in ps
+--      CLK0_OUTPUT_FREQUENCY => 8000,
+--     -- CLK1_OUTPUT_FREQUENCY => 20000, -- 50MHz in ps 
+--      clk0_counter => "c0",
+--      clk1_counter => "UNUSED",
+--      clk2_counter => "UNUSED",
+--      clk3_counter => "UNUSED",
+--      clk4_counter => "UNUSED",
+--      clk5_counter => "UNUSED",
+--      clk6_counter => "UNUSED",
+--      clk7_counter => "UNUSED",
+--      clk8_counter => "UNUSED",
+--      clk9_counter => "UNUSED",
+--      feedback_source => "CLK0"
+--      )
+--    port map (
+--      inclk(0)  => clk125_i,
+--      clk(0)    => clk_sys
+--      --clk(1)    => clk_cal
+--    );
+  
+  
   -- The top-most Wishbone B.4 crossbar
   interconnect : xwb_sdb_crossbar
    generic map(
@@ -283,20 +308,20 @@ begin
      master_o      => cbar_master_o);
   
   -- Master 0 is the PCIe bridge
---  PCIe : pcie_wb
---    generic map(
---      sdb_addr => c_sdb_address)
---    port map(
---      clk125_i      => clk_sys,       -- Free running clock
---      cal_clk50_i   => clk_cal,       -- Transceiver global calibration clock
---      rstn_i        => rstn,          -- Reset for the PCIe decoder logic
---      pcie_refclk_i => pcie_refclk_i, -- External PCIe 100MHz bus clock
---      pcie_rstn_i   => locked,   		  -- External PCIe system reset pin
---      pcie_rx_i     => pcie_rx_i,
---      pcie_tx_o     => pcie_tx_o,
---      wb_clk        => clk_sys,       -- Desired clock for the WB bus
---      master_o      => cbar_slave_i(0),
---      master_i      => cbar_slave_o(0));
+  PCIe : pcie_wb
+    generic map(
+      sdb_addr => c_sdb_address)
+    port map(
+      clk125_i      => clk_sys,       -- Free running clock
+      cal_clk50_i   => clk_cal,       -- Transceiver global calibration clock
+      rstn_i        => nreset,        -- Reset for the PCIe decoder logic
+      pcie_refclk_i => pcie_refclk_i, -- External PCIe 100MHz bus clock
+      pcie_rstn_i   => nPCI_RESET,   	-- External PCIe system reset pin
+      pcie_rx_i     => pcie_rx_i,
+      pcie_tx_o     => pcie_tx_o,
+      wb_clk        => clk_sys,       -- Desired clock for the WB bus
+      master_o      => cbar_slave_i(0),
+      master_i      => cbar_slave_o(0));
   
   -- The LM32 is master 1+2
   LM32 : xwb_lm32
@@ -306,10 +331,10 @@ begin
       clk_sys_i => clk_sys,
       rst_n_i   => nreset,
       irq_i     => lm32_interrupt,
-      dwb_o     => cbar_slave_i(0), -- Data bus
-      dwb_i     => cbar_slave_o(0),
-      iwb_o     => cbar_slave_i(1), -- Instruction bus
-      iwb_i     => cbar_slave_o(1));
+      dwb_o     => cbar_slave_i(1), -- Data bus
+      dwb_i     => cbar_slave_o(1),
+      iwb_o     => cbar_slave_i(2), -- Instruction bus
+      iwb_i     => cbar_slave_o(2));
   
   -- The other 31 interrupt pins are unconnected
   lm32_interrupt(31 downto 1) <= (others => '0');
@@ -321,10 +346,10 @@ begin
       rst_n_i     => nreset,
       slave_i     => cbar_master_o(2),
       slave_o     => cbar_master_i(2),
-      r_master_i  => cbar_slave_o(2),
-      r_master_o  => cbar_slave_i(2),
-      w_master_i  => cbar_slave_o(3),
-      w_master_o  => cbar_slave_i(3),
+      r_master_i  => cbar_slave_o(3),
+      r_master_o  => cbar_slave_i(3),
+      w_master_i  => cbar_slave_o(4),
+      w_master_o  => cbar_slave_i(4),
       interrupt_o => lm32_interrupt(0));
   
   -- Slave 0 is the RAMclk_sys
@@ -460,78 +485,78 @@ begin
 			seven_seg_H => open
 			);
   
-  trans_loop_ql0 : trans_loop 
-  GENERIC MAP (
-    starting_channel_number => 0
-  )
-  PORT MAP (
-    cal_blk_clk	 => clk_cal,
-		pll_inclk	 => clk_sys,
-		reconfig_clk	 => clk_cal,
-		reconfig_togxb	 => rcfg_toloop,
-		rx_datain	 => QL0_GXB_RX,
-		rx_digitalreset	 => (others => r_reset),
-    rx_seriallpbken  => r_loopback(3 downto 0),
-		tx_digitalreset	 => (others => r_reset),
-		reconfig_fromgxb	 => rcfg_fromloop(16 downto 0),
-		rx_bistdone	 => r_pio(3 downto 0),
-		rx_bisterr	 => r_pio(7 downto 4),
-		rx_clkout	 => open,
-		rx_signaldetect	 => open,
-		tx_clkout	 => open,
-		tx_dataout	 => QL0_GXB_TX
-	);
+--  trans_loop_ql0 : trans_loop 
+--  GENERIC MAP (
+--    starting_channel_number => 0
+--  )
+--  PORT MAP (
+--    cal_blk_clk	 => clk_cal,
+--		pll_inclk	 => clk_sys,
+--		reconfig_clk	 => clk_cal,
+--		reconfig_togxb	 => rcfg_toloop,
+--		rx_datain	 => QL0_GXB_RX,
+--		rx_digitalreset	 => (others => r_reset),
+--    rx_seriallpbken  => r_loopback(3 downto 0),
+--		tx_digitalreset	 => (others => r_reset),
+--		reconfig_fromgxb	 => rcfg_fromloop(16 downto 0),
+--		rx_bistdone	 => r_pio(3 downto 0),
+--		rx_bisterr	 => r_pio(7 downto 4),
+--		rx_clkout	 => open,
+--		rx_signaldetect	 => open,
+--		tx_clkout	 => open,
+--		tx_dataout	 => QL0_GXB_TX
+--	);
   
-  trans_loop_ql1 : trans_loop 
-  GENERIC MAP (
-    starting_channel_number => 4
-  )
-  PORT MAP (
-    cal_blk_clk	 => clk_cal,
-		pll_inclk	 => clk_sys,
-		reconfig_clk	 => clk_cal,
-		reconfig_togxb	 => rcfg_toloop,
-		rx_datain	 => QL1_GXB_RX,
-		rx_digitalreset	 => (others => r_reset),
-		rx_seriallpbken  => r_loopback(7 downto 4),
-    tx_digitalreset	 => (others => r_reset),
-		reconfig_fromgxb	 => rcfg_fromloop(33 downto 17),
-		rx_bistdone	 => r_pio(11 downto 8),
-		rx_bisterr	 => r_pio(15 downto 12),
-		rx_clkout	 => open,
-		rx_signaldetect	 => open,
-		tx_clkout	 => open,
-		tx_dataout	 => QL1_GXB_TX
-	);
+--  trans_loop_ql1 : trans_loop 
+--  GENERIC MAP (
+--    starting_channel_number => 4
+--  )
+--  PORT MAP (
+--    cal_blk_clk	 => clk_cal,
+--		pll_inclk	 => clk_sys,
+--		reconfig_clk	 => clk_cal,
+--		reconfig_togxb	 => rcfg_toloop,
+--		rx_datain	 => QL1_GXB_RX,
+--		rx_digitalreset	 => (others => r_reset),
+--		rx_seriallpbken  => r_loopback(7 downto 4),
+--    tx_digitalreset	 => (others => r_reset),
+--		reconfig_fromgxb	 => rcfg_fromloop(33 downto 17),
+--		rx_bistdone	 => r_pio(11 downto 8),
+--		rx_bisterr	 => r_pio(15 downto 12),
+--		rx_clkout	 => open,
+--		rx_signaldetect	 => open,
+--		tx_clkout	 => open,
+--		tx_dataout	 => QL1_GXB_TX
+--	);
+--  
+--  trans_loop_ql2 : trans_loop 
+--  GENERIC MAP (
+--    starting_channel_number => 8
+--  )
+--  PORT MAP (
+--    cal_blk_clk	 => clk_cal,
+--		pll_inclk	 => clk_sys,
+--		reconfig_clk	 => clk_cal,
+--		reconfig_togxb	 => rcfg_toloop,
+--		rx_datain	 => QL2_GXB_RX,
+--		rx_digitalreset	 => (others => r_reset),
+--    rx_seriallpbken  => r_loopback(11 downto 8),
+--		tx_digitalreset	 => (others => r_reset),
+--		reconfig_fromgxb	 => rcfg_fromloop(50 downto 34),
+--		rx_bistdone	 => r_pio(19 downto 16),
+--		rx_bisterr	 => r_pio(23 downto 20),
+--		rx_clkout	 => open,
+--		rx_signaldetect	 => open,
+--		tx_clkout	 => open,
+--		tx_dataout	 => QL2_GXB_TX
+--	);
   
-  trans_loop_ql2 : trans_loop 
-  GENERIC MAP (
-    starting_channel_number => 8
-  )
-  PORT MAP (
-    cal_blk_clk	 => clk_cal,
-		pll_inclk	 => clk_sys,
-		reconfig_clk	 => clk_cal,
-		reconfig_togxb	 => rcfg_toloop,
-		rx_datain	 => QL2_GXB_RX,
-		rx_digitalreset	 => (others => r_reset),
-    rx_seriallpbken  => r_loopback(11 downto 8),
-		tx_digitalreset	 => (others => r_reset),
-		reconfig_fromgxb	 => rcfg_fromloop(50 downto 34),
-		rx_bistdone	 => r_pio(19 downto 16),
-		rx_bisterr	 => r_pio(23 downto 20),
-		rx_clkout	 => open,
-		rx_signaldetect	 => open,
-		tx_clkout	 => open,
-		tx_dataout	 => QL2_GXB_TX
-	);
-  
-  trans_rcfg_inst : trans_rcfg PORT MAP (
-		reconfig_clk	 => clk_cal,
-		reconfig_fromgxb	 => rcfg_fromloop,
-		busy	 => open,
-		reconfig_togxb	 => rcfg_toloop
-	);
+--  trans_rcfg_inst : trans_rcfg PORT MAP (
+--		reconfig_clk	 => clk_cal,
+--		reconfig_fromgxb	 => rcfg_fromloop,
+--		busy	 => open,
+--		reconfig_togxb	 => rcfg_toloop
+--	);
   
   scub_master : scu_bus_master generic map (
     g_interface_mode => PIPELINED,
