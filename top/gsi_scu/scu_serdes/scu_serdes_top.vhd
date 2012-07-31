@@ -262,32 +262,6 @@ begin
       locked => locked);     -- '1' when the PLL has locked
   
   
---  sys_pll_inst: altpll
---    generic map (
---      intended_device_family => "ArriaII",
---      OPERATION_MODE => "NORMAL",
---      INCLK0_INPUT_FREQUENCY => 8000,  -- 125MHhz in ps
---      CLK0_OUTPUT_FREQUENCY => 8000,
---     -- CLK1_OUTPUT_FREQUENCY => 20000, -- 50MHz in ps 
---      clk0_counter => "c0",
---      clk1_counter => "UNUSED",
---      clk2_counter => "UNUSED",
---      clk3_counter => "UNUSED",
---      clk4_counter => "UNUSED",
---      clk5_counter => "UNUSED",
---      clk6_counter => "UNUSED",
---      clk7_counter => "UNUSED",
---      clk8_counter => "UNUSED",
---      clk9_counter => "UNUSED",
---      feedback_source => "CLK0"
---      )
---    port map (
---      inclk(0)  => clk125_i,
---      clk(0)    => clk_sys
---      --clk(1)    => clk_cal
---    );
-  
-  
   -- The top-most Wishbone B.4 crossbar
   interconnect : xwb_sdb_crossbar
    generic map(
@@ -329,7 +303,7 @@ begin
       g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => nreset,
+      rst_n_i   => nreset and not r_reset,
       irq_i     => lm32_interrupt,
       dwb_o     => cbar_slave_i(1), -- Data bus
       dwb_i     => cbar_slave_o(1),
@@ -392,7 +366,7 @@ begin
          gpio_slave_i.we = '1' and gpio_slave_i.sel(0) = '1' then
         -- Register 0x0 = LEDs, 0x4 = reset, 0x8 = loopback
         if gpio_slave_i.adr(3 downto 0) = x"0" then
-          --r_pio <= gpio_slave_i.dat(7 downto 0);
+          r_pio <= gpio_slave_i.dat(23 downto 0);
         elsif gpio_slave_i.adr(3 downto 0) = x"4" then
           r_reset <= gpio_slave_i.dat(0);
         elsif gpio_slave_i.adr(3 downto 0) = x"8" then
