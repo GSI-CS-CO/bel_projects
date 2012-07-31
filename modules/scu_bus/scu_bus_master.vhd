@@ -403,7 +403,7 @@ P_SCUB_Cntrl: Process (clk, s_reset)
       
       if S_nSync_Dtack(1) = '0' and slave_i.we = '0' then    -- copy last read data after Dtack 
         Rd_Data <= S_Rd_Data;
-      elsif S_SCUB_Rd_Err_no_Dtack = '1' or S_SCUB_Wr_Err_no_Dtack = '1' or S_Invalid_Slave_Nr = '1' then
+      elsif S_SCUB_Rd_Err_no_Dtack = '1' or S_SCUB_Wr_Err_no_Dtack = '1' or S_Invalid_Slave_Nr = '1' or S_Invalid_Intern_Acc = '1' then
         Rd_Data <= x"FFFF";
       end if;
 			
@@ -411,11 +411,11 @@ P_SCUB_Cntrl: Process (clk, s_reset)
         
         S_Wait_Request <= '1';
         
-				CASE Slave_Nr IS
+				CASE s_slave_nr IS
 	
 					WHEN X"0" =>															-- SCU_Bus_Master internal register access
 	
-						CASE unsigned(s_adr(c_adr_width-1 DOWNTO 0)) IS
+						CASE unsigned(adr(c_adr_width-1 DOWNTO 0)) IS
 
 							WHEN C_Status_Adr =>
 								IF Wr_Cycle = '1' THEN
@@ -518,7 +518,6 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 								S_Invalid_Intern_Acc <= '1';
 						END CASE;
 
-						--S_Wait_Request <= '0';
 						S_Start_Cycle <= '0';
 
 				WHEN X"1" | X"2" | X"3" | X"4" | X"5" | X"6" | X"7" | X"8" | X"9" | X"A" | X"B" | X"C" =>	-- SCU_Bus_Master external slave access
@@ -529,11 +528,11 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 					ELSIF Rd_Cycle = '1' THEN
 						S_Start_SCUB_Rd <= '1';									-- store read request
 					END IF;
-					--Rd_Data <= S_Rd_Data;                 -- at this point the data is to late for the ack
+
 				
 				WHEN c_multicast_slave_acc =>	-- Multicast Wr to external slaves
 					IF Wr_Cycle = '1' THEN
-            s_int_ack <= '1';
+            --s_int_ack <= '1';
 						S_Start_SCUB_Wr <= '1';									-- store write request
 						S_Multi_Wr_Flag <= '1';
 						S_Wr_Data <= Wr_Data;									-- store write pattern
@@ -543,7 +542,6 @@ P_SCUB_Cntrl: Process (clk, s_reset)
 				  
 				WHEN OTHERS =>
 					S_Invalid_Slave_Nr <= '1';
-					--S_Wait_Request <= '0';
 					S_Start_Cycle <= '0';
 			END CASE;
 
