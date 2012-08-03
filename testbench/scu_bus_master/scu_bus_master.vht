@@ -102,8 +102,8 @@ BEGIN
 	generic map (
 	   g_data_width => 32,
 	   g_burst => 1,
-	   g_addr_start => x"00080000",
-	   g_addr_end => x"0008000f"
+	   g_addr_start => x"005e0000",
+	   g_addr_end => x"005e00ff"
 	)
 	port map (
 	  clk_i => clk,
