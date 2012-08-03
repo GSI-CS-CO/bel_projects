@@ -220,7 +220,7 @@ architecture rtl of scu_serdes_top is
   signal gpio_slave_o : t_wishbone_slave_out;
   signal gpio_slave_i : t_wishbone_slave_in;
   
-  signal r_pio      : std_logic_vector(23 downto 0) := x"000000";
+  signal r_leds : std_logic_vector(7 downto 0);
   signal r_reset    : std_logic := '0';
   signal r_loopback : std_logic_vector(11 downto 0) := x"000";
   
@@ -347,7 +347,7 @@ begin
   -- Slave 1 is the example LED driver
   gpio_slave_i <= cbar_master_o(1);
   cbar_master_i(1) <= gpio_slave_o;
-  leds_o <= not r_pio(5 downto 0);
+  leds_o <= not r_leds(5 downto 0);
   
   -- There is a tool called 'wbgen2' which can autogenerate a Wishbone
   -- interface and C header file, but this is a simple example.
@@ -364,21 +364,19 @@ begin
       -- Detect a write to the register byte
       if gpio_slave_i.cyc = '1' and gpio_slave_i.stb = '1' and
          gpio_slave_i.we = '1' and gpio_slave_i.sel(0) = '1' then
-        -- Register 0x0 = LEDs, 0x4 = reset, 0x8 = loopback
-        if gpio_slave_i.adr(3 downto 0) = x"0" then
-          r_pio <= gpio_slave_i.dat(23 downto 0);
-        elsif gpio_slave_i.adr(3 downto 0) = x"4" then
+      -- Register 0x0 = LEDs, 0x4 = CPU reset
+      if gpio_slave_i.adr(2) = '0' then
+          r_leds <= gpio_slave_i.dat(7 downto 0);
+      else
           r_reset <= gpio_slave_i.dat(0);
-        elsif gpio_slave_i.adr(3 downto 0) = x"8" then
-          r_loopback <= gpio_slave_i.dat(11 downto 0); 
-        end if;
+      end if;
       end if;
       
       if gpio_slave_i.adr(2) = '0' then
-        gpio_slave_o.dat(31 downto 24) <= (others => '0');
-        gpio_slave_o.dat(23 downto 0) <= r_pio;
+        gpio_slave_o.dat(31 downto 8) <= (others => '0');
+        gpio_slave_o.dat(7 downto 0) <= r_leds;
       else
-        gpio_slave_o.dat(31 downto 1) <= (others => '0');
+        gpio_slave_o.dat(31 downto 2) <= (others => '0');
         gpio_slave_o.dat(0) <= r_reset;
       end if;
     end if;
