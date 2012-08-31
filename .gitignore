@@ -1,5 +1,10 @@
 syn
 *.bak
 *.ppf
+*.obj
+*.hex
+*.bin
+*.o
+*.ko
 greybox_tmp
 sim
