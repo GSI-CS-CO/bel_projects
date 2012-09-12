@@ -34,15 +34,15 @@ entity sio_top is
           -----------------------------------------
           -- PCI express pins
           -----------------------------------------
-          pcie_refclk_i : in  std_logic;
+          --pcie_refclk_i : in  std_logic;
           --pcie_rstn_i   : in  std_logic;
-          pcie_rx_i     : in  std_logic_vector(3 downto 0);
-          pcie_tx_o     : out std_logic_vector(3 downto 0);
+          --pcie_rx_i     : in  std_logic_vector(3 downto 0);
+          --pcie_tx_o     : out std_logic_vector(3 downto 0);
           -----------------------------------------------------------------------
           -- QL0 serdes
           -----------------------------------------------------------------------
-          --QL0_GXB_RX        : in std_logic_vector(3 downto 0);
-          --QL0_GXB_TX        : out std_logic_vector(3 downto 0);
+          QL0_GXB_RX        : in std_logic_vector(3 downto 0);
+          QL0_GXB_TX        : out std_logic_vector(3 downto 0);
           
           -----------------------------------------------------------------------
           -- QL1 serdes
@@ -140,94 +140,32 @@ begin
 			inclk0 	=> clk_fpga,
 			c0			=> clk_150,
 			locked	=> open);
-      
-  -- Hold the entire WB bus reset until the PLL has locked
-  rstn <= locked;
-  
-  -- The top-most Wishbone B.4 crossbar
-  interconnect : xwb_sdb_crossbar
-   generic map(
-     g_num_masters => c_masters,
-     g_num_slaves  => c_slaves,
-     g_registered  => true,
-     g_wraparound  => false, -- Should be true for nested buses
-     g_layout      => c_layout,
-     g_sdb_addr    => c_sdb_address)
-   port map(
-     clk_sys_i     => clk_sys,
-     rst_n_i       => rstn,
-     -- Master connections (INTERCON is a slave)
-     slave_i       => cbar_slave_i,
-     slave_o       => cbar_slave_o,
-     -- Slave connections (INTERCON is a master)
-     master_i      => cbar_master_i,
-     master_o      => cbar_master_o);
-      
-      
-   -- Master 0 is the PCIe bridge
-  PCIe : pcie_wb
-    generic map(
-      sdb_addr => c_sdb_address)
-    port map(
-      clk125_i      => clk_sys,       -- Free running clock
-      cal_clk50_i   => clk_cal,       -- Transceiver global calibration clock
-      rstn_i        => locked,        -- Reset for the PCIe decoder logic
-      pcie_refclk_i => pcie_refclk_i, -- External PCIe 100MHz bus clock
-      pcie_rstn_i   => locked,   		  -- External PCIe system reset pin
-      pcie_rx_i     => pcie_rx_i,
-      pcie_tx_o     => pcie_tx_o,
-      wb_clk        => clk_sys,       -- Desired clock for the WB bus
-      master_o      => cbar_slave_i(0),
-      master_i      => cbar_slave_o(0));
-      
-  --------------------------------------
-  -- UART
-  --------------------------------------
-  UART : xwb_simple_uart
-    generic map(
-      g_with_virtual_uart   => false,
-      g_with_physical_uart  => true,
-      g_interface_mode      => PIPELINED,
-      g_address_granularity => BYTE
-      )
-    port map(
-      clk_sys_i => clk_sys,
-      rst_n_i   => rstn,
-
-      -- Wishbone
-      slave_i => cbar_master_o(1),
-      slave_o => cbar_master_i(1),
-      desc_o  => open,
-
-      uart_rxd_i => '0',
-      uart_txd_o => open
-      );
 
   
---	trans_loop_ql0 : reverse_lpb
---	GENERIC MAP (
---		starting_channel_number => 0
---	)
---	PORT MAP (
---		cal_blk_clk	 => clk_cal,
---		pll_inclk	 => clk_150,
---		reconfig_clk	 => clk_cal,
---		reconfig_togxb	 => rcfg_toloop,
---		rx_datain	 => QL0_GXB_RX,
---		rx_digitalreset	 => (others => locked),
---		tx_digitalreset	 => (others => locked),
---		reconfig_fromgxb	 => rcfg_fromloop(16 downto 0),
---    rx_enapatternalign => (others => '0'),
---		tx_datain		=> (others => '0'),
---		rx_clkout	 => open,
---		tx_clkout	 => open,
---    rx_dataout   => open,
---		tx_dataout	 => QL0_GXB_TX
---	);
+	trans_loop_ql0 : reverse_lpb
+	GENERIC MAP (
+		starting_channel_number => 0
+	)
+	PORT MAP (
+		cal_blk_clk	 => clk_cal,
+		pll_inclk	 => clk_150,
+		reconfig_clk	 => clk_cal,
+		reconfig_togxb	 => rcfg_toloop,
+		rx_datain	 => QL0_GXB_RX,
+		rx_digitalreset	 => (others => locked),
+		tx_digitalreset	 => (others => locked),
+		reconfig_fromgxb	 => rcfg_fromloop(16 downto 0),
+    rx_enapatternalign => (others => '0'),
+		tx_datain		=> (others => '0'),
+		rx_clkout	 => open,
+		tx_clkout	 => open,
+    rx_dataout   => open,
+		tx_dataout	 => QL0_GXB_TX
+	);
    
   trans_loop_ql1 : reverse_lpb 
   GENERIC MAP (
-    starting_channel_number => 0
+    starting_channel_number => 4
   )
   PORT MAP (
     cal_blk_clk	 => clk_cal,
@@ -237,7 +175,7 @@ begin
 		rx_datain	 => QL1_GXB_RX,
 		rx_digitalreset	 => (others => locked),
 		tx_digitalreset	 => (others => locked),
-		reconfig_fromgxb	 => rcfg_fromloop(16 downto 0),
+		reconfig_fromgxb	 => rcfg_fromloop(33 downto 17),
     rx_enapatternalign => (others => '0'),
 		tx_datain		=> (others => '0'),
 		rx_clkout	 => open,
