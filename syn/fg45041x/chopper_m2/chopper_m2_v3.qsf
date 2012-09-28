@@ -27,7 +27,7 @@
 # ========================
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 8.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:27:05  DECEMBER 08, 2008"
-set_global_assignment -name LAST_QUARTUS_VERSION "11.1 SP2"
+set_global_assignment -name LAST_QUARTUS_VERSION "9.1 SP2"
 
 # Pin & Location Assignments
 # ==========================
@@ -321,7 +321,7 @@ set_location_assignment PIN_E12 -to TP[12]
 # Timing Assignments
 # ==================
 set_global_assignment -name DO_MIN_ANALYSIS ON
-set_global_assignment -name FMAX_REQUIREMENT "400 MHz"
+set_global_assignment -name FMAX_REQUIREMENT "200 MHz"
 
 # Analysis & Synthesis Assignments
 # ================================
@@ -332,7 +332,7 @@ set_global_assignment -name USER_LIBRARIES "G:\\q5p0work\\chopper_vhdl\\Modulbus
 
 # Fitter Assignments
 # ==================
-set_global_assignment -name DEVICE EP1C4F400C6
+set_global_assignment -name DEVICE EP1C4F400C7
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
 set_global_assignment -name RESERVE_ASDO_AFTER_CONFIGURATION "AS INPUT TRI-STATED"
 set_global_assignment -name OPTIMIZE_HOLD_TIMING OFF
@@ -355,7 +355,6 @@ set_global_assignment -name ANALYZE_LATCHES_AS_SYNCHRONOUS_ELEMENTS OFF
 # =====================
 set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION OFF
 set_global_assignment -name CYCLONE_CONFIGURATION_DEVICE EPCS1
-set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"
 
 # -------------------
 # start CLOCK(F_TCXO)
@@ -474,3 +473,4 @@ set_global_assignment -name VHDL_FILE ../../../modules/chopper/Independent_Clk.v
 set_global_assignment -name VHDL_FILE ../../../modules/chopper/K12_K23_Logik_Leds.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/chopper/Kanal.vhd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name USE_CONFIGURATION_DEVICE ON
