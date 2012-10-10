@@ -437,25 +437,25 @@ begin
       );
   
 	
-	-- needed for starting up the ComExpress module
-	lpc_slave: lpc_uart
-		port map (
-      lpc_clk => LPC_FPGA_CLK,
-			lpc_serirq => LPC_SERIRQ,
-			lpc_ad => LPC_AD,
-			lpc_frame_n => nLPC_FRAME,
-			lpc_reset_n => nPCI_RESET,
-			serial_rxd => uart_rxd_i(1),
-			serial_txd => uart_txd_o(1),
-			serial_dtr => open,
-			serial_dcd => '0',
-			serial_dsr => '0',
-			serial_ri => '0',
-			serial_cts => '0',
-			serial_rts => open,
-			seven_seg_L => open,
-			seven_seg_H => open
-			);
+--	-- needed for starting up the ComExpress module
+--	lpc_slave: lpc_uart
+--		port map (
+--      lpc_clk => LPC_FPGA_CLK,
+--			lpc_serirq => LPC_SERIRQ,
+--			lpc_ad => LPC_AD,
+--			lpc_frame_n => nLPC_FRAME,
+--			lpc_reset_n => nPCI_RESET,
+--			serial_rxd => uart_rxd_i(1),
+--			serial_txd => uart_txd_o(1),
+--			serial_dtr => open,
+--			serial_dcd => '0',
+--			serial_dsr => '0',
+--			serial_ri => '0',
+--			serial_cts => '0',
+--			serial_rts => open,
+--			seven_seg_L => open,
+--			seven_seg_H => open
+--			);
   
 --  trans_loop_ql0 : trans_loop 
 --  GENERIC MAP (
