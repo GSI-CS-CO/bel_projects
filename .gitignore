@@ -7,5 +7,6 @@ syn
 *.o
 *.ko
 *.lib
+*.stp
 greybox_tmp
 sim
