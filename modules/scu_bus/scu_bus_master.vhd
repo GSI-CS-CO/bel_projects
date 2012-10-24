@@ -419,6 +419,7 @@ begin
           
       when int_acc =>                                             -- ack/err only for one clock cycle
         if S_Invalid_Intern_Acc = '1' then
+          Rd_Data <= x"dead";
           s_err <= '1';
         elsif s_int_ack = '1' then
           Rd_Data <= int_rd_data;
@@ -440,13 +441,16 @@ begin
         wb_state <= idle;
       
       when ext_err =>
+        Rd_Data <= x"dead";
         s_err <= '1';
         wb_state <= idle;
         
       when multi_acc =>
+        Rd_Data <= x"dead";
         s_err <= '1';
         wb_state <= idle;
       when invalid_slave =>
+        Rd_Data <= x"dead";
         s_err <= '1';
         wb_state <= idle;
     end case;
