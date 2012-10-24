@@ -157,18 +157,18 @@ ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
 	CONSTANT	c_dly_multicast_dt_cnt	: INTEGER	:= set_ge_1(dly_multicast_dt_in_ns * 1000 / Clk_in_ps)-2;		--	-2 because counter needs two more clock for unerflow
 	SIGNAL		s_dly_multicast_dt_cnt	: unsigned(How_many_Bits(c_dly_multicast_dt_cnt) DOWNTO 0);
 	
-	CONSTANT	c_adr_width	                : INTEGER	:= 4;					-- define how many address bits are used to decode the internal FPGA-register
+	CONSTANT	c_adr_width	                : INTEGER	:= 5;					-- define how many address bits are used to decode the internal FPGA-register
 	CONSTANT	C_Status_Adr			          : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 0, c_adr_width);
-	CONSTANT	C_Global_Intr_Ena_Adr	      : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 1, c_adr_width);
-	CONSTANT	C_Vers_Revi_Adr			        : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 2, c_adr_width);
-	CONSTANT	C_SRQ_Ena_Adr			          : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 3, c_adr_width);
-	CONSTANT	C_SRQ_Active_Adr		        : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 4, c_adr_width);
-	CONSTANT	C_SRQ_In_Adr			          : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 5, c_adr_width);
-	CONSTANT	C_Wr_Multi_Slave_Sel_Adr	  : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 6, c_adr_width);
-	CONSTANT	C_Bus_master_intern_Echo_1_Adr	: unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 7, c_adr_width);
-	CONSTANT	C_Bus_master_intern_Echo_2_Adr	: unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 8, c_adr_width);
-	CONSTANT	C_Bus_master_intern_Echo_1	: unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 5, c_adr_width);
-	CONSTANT	C_Bus_master_intern_Echo_2	: unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 6, c_adr_width);
+	CONSTANT	C_Global_Intr_Ena_Adr	      : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 2, c_adr_width);
+	CONSTANT	C_Vers_Revi_Adr			        : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 4, c_adr_width);
+	CONSTANT	C_SRQ_Ena_Adr			          : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 6, c_adr_width);
+	CONSTANT	C_SRQ_Active_Adr		        : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 8, c_adr_width);
+	CONSTANT	C_SRQ_In_Adr			          : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 10, c_adr_width);
+	CONSTANT	C_Wr_Multi_Slave_Sel_Adr	  : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 12, c_adr_width);
+	CONSTANT	C_Bus_master_intern_Echo_1_Adr	: unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 14, c_adr_width);
+	CONSTANT	C_Bus_master_intern_Echo_2_Adr	: unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 16, c_adr_width);
+	CONSTANT	C_Bus_master_intern_Echo_1	: unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 18, c_adr_width);
+	CONSTANT	C_Bus_master_intern_Echo_2	: unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned( 20, c_adr_width);
 	
 	
 	SIGNAL		s_reset					: STD_LOGIC;
@@ -401,7 +401,6 @@ begin
       when cyc_start =>
           s_stall <= '1';
           if s_slave_nr = x"0" then                               -- internal access
-            Rd_Data <= int_rd_data;
             wb_state <= int_acc;
           elsif s_slave_nr >= x"1" and s_slave_nr <= x"c" then    -- external bus access
             if Wr = '1' then
@@ -422,6 +421,7 @@ begin
         if S_Invalid_Intern_Acc = '1' then
           s_err <= '1';
         elsif s_int_ack = '1' then
+          Rd_Data <= int_rd_data;
           s_ack <= '1';
         end if;
         wb_state <= idle;
@@ -540,7 +540,7 @@ begin
         elsif rd_acc = '1' then
               s_int_ack <= '1';
 							int_rd_data <= ("0000" & S_SRQ_Ena);
-						end if;
+			end if;
 
 			when C_Srq_active_Adr =>
         if wr_acc = '1' then
