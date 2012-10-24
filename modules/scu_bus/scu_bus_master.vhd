@@ -188,7 +188,8 @@ ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
 
 	SIGNAL		S_Sel_Ext_Data_Drv		: STD_LOGIC;
 
-	SIGNAL		S_Rd_Data				: STD_LOGIC_VECTOR(15 DOWNTO 0);
+	SIGNAL		ext_rd_data				: STD_LOGIC_VECTOR(15 DOWNTO 0);
+  signal    int_rd_data       : std_logic_vector(15 downto 0);
 
 	SIGNAL		S_Start_SCUB_Rd			: STD_LOGIC;
 
@@ -372,12 +373,19 @@ begin
     s_ack                   <= '0';
     s_err                   <= '0';
     wb_state                <= idle;
+    S_Multi_Wr_Flag			    <= '0';
+    S_Start_SCUB_Rd			    <= '0';						  -- reset start SCU_Bus read
+		S_Start_SCUB_Wr			    <= '0';						  -- reset start SCU_Bus write
+    
 	elsif rising_edge(clk) then
 
     s_ext_read_err          <= '0';
     s_stall			            <= '0';
     s_ack                   <= '0';
     s_err                   <= '0';
+    S_Multi_Wr_Flag			    <= '0';
+    S_Start_SCUB_Rd			    <= '0';						  -- reset start SCU_Bus read
+		S_Start_SCUB_Wr			    <= '0';						  -- reset start SCU_Bus write
 
     
     case wb_state is
@@ -393,9 +401,17 @@ begin
       when cyc_start =>
           s_stall <= '1';
           if s_slave_nr = x"0" then                               -- internal access
+            Rd_Data <= int_rd_data;
             wb_state <= int_acc;
           elsif s_slave_nr >= x"1" and s_slave_nr <= x"c" then    -- external bus access
+            if Wr = '1' then
+              S_Start_SCUB_Wr <= '1';						                  -- store write request
+              S_Wr_Data <= Wr_Data;							                  -- store write pattern
+            elsif Rd = '1' then
+              S_Start_SCUB_Rd <= '1';						                  -- store read request
+            end if;
             wb_state <= ext_stall;
+            
           elsif s_slave_nr = c_multicast_slave_acc then
             wb_state <= multi_acc;                                -- multicast write
           else                                                    -- slave number invalid
@@ -415,6 +431,7 @@ begin
         if S_SCUB_Rd_Err_no_Dtack = '1' or S_SCUB_Wr_Err_no_Dtack = '1' then
           wb_state <= ext_err;
         elsif s_ext_ack = '1' then
+          Rd_Data <= ext_rd_data;
           wb_state <= ext_acc;
         end if;
       
@@ -455,10 +472,6 @@ begin
 		S_SCUB_Wr_Err_no_Dtack	<= '0';						  -- reset write timeout flag
     S_Ti_Cyc_Err			      <= '0';						  -- reset timing error flag
     
-    S_Multi_Wr_Flag			    <= '0';
-    S_Start_SCUB_Rd			    <= '0';						  -- reset start SCU_Bus read
-		S_Start_SCUB_Wr			    <= '0';						  -- reset start SCU_Bus write
-    
     s_Invalid_Intern_Acc    <= '0';
     S_Invalid_Slave_Nr		  <= '0';
     s_int_ack               <= '0';
@@ -472,32 +485,15 @@ begin
       S_Invalid_Intern_Acc <= '0';
     end if;
     
-    if Wr = '1' and wb_state = ext_stall then
-      S_Start_SCUB_Wr <= '1';						-- store write request
-			S_Multi_Wr_Flag <= '0';
-			S_Wr_Data <= Wr_Data;							-- store write pattern
-		elsif Rd = '1' and wb_state = ext_stall then
-			S_Start_SCUB_Rd <= '1';						-- store read request
-    end if;
-    
+  
     if SCUB_SM = TO_Rd_Cyc then
       S_SCUB_Rd_Err_no_Dtack <= '1';		-- SCU_Bus read error no dtack
     end if;
    
     if SCUB_SM = TO_Wr_Cyc then
-      S_Multi_Wr_Flag <= '0';
       S_SCUB_Wr_Err_no_Dtack <= '1';		-- SCU_Bus write error no dtack
     end if;
-    
-    if SCUB_SM = F_Wr_Cyc then
-      S_Multi_Wr_Flag <= '0';
-      S_Start_SCUB_Wr <= '0';           -- write request finished
-    end if;
-    
-    if  SCUB_SM = F_Rd_Cyc then
-      S_Start_SCUB_Rd <= '0';						-- read request finished
-    end if;
-      
+
   
     case unsigned(s_adr(c_adr_width-1 downto 0)) is
       when C_Status_Adr =>
@@ -520,7 +516,7 @@ begin
           end if;
         elsif rd_acc = '1'  then
           s_int_ack <= '1';
-          Rd_Data <= S_Status;
+          int_rd_data <= S_Status;
 				end if;
 
 			when C_Global_Intr_Ena_Adr =>
@@ -534,7 +530,7 @@ begin
 						S_Global_Intr_Ena(bit_scub_srqs_active) <= Wr_Data(bit_scub_srqs_active);
 				elsif rd_acc = '1' then
             s_int_ack <= '1';
-						Rd_Data <= S_Global_Intr_Ena;
+						int_rd_data <= S_Global_Intr_Ena;
 				end if;
 
       when C_SRQ_Ena_Adr =>
@@ -543,7 +539,7 @@ begin
 							S_SRQ_Ena <= Wr_Data(nSCUB_SRQ_Slaves'range);
         elsif rd_acc = '1' then
               s_int_ack <= '1';
-							Rd_Data <= ("0000" & S_SRQ_Ena);
+							int_rd_data <= ("0000" & S_SRQ_Ena);
 						end if;
 
 			when C_Srq_active_Adr =>
@@ -551,7 +547,7 @@ begin
               S_Invalid_Intern_Acc <= '1';
 				elsif rd_acc = '1' then
               s_int_ack <= '1';
-							Rd_Data <= ("0000" & S_SRQ_Active);
+							int_rd_data <= ("0000" & S_SRQ_Active);
 						end if;
 
 			when C_Srq_In_Adr =>
@@ -559,7 +555,7 @@ begin
               S_Invalid_Intern_Acc <= '1';
 				elsif rd_acc = '1' then
               s_int_ack <= '1';
-              Rd_Data <= ("0000" & S_SRQ_Sync);
+              int_rd_data <= ("0000" & S_SRQ_Sync);
 						end if;
 
 			when C_Vers_Revi_Adr =>
@@ -567,7 +563,7 @@ begin
               S_Invalid_Intern_Acc <= '1';
 				elsif rd_acc = '1' then
               s_int_ack <= '1';
-              Rd_Data <= (S_SCUB_Version & S_SCUB_Revision);
+              int_rd_data <= (S_SCUB_Version & S_SCUB_Revision);
 						end if;
 
 			when C_Wr_Multi_Slave_Sel_Adr =>
@@ -576,7 +572,7 @@ begin
 							S_Multi_Slave_Sel <= Wr_Data(nSCUB_Slave_Sel'range);
 				elsif rd_acc = '1' then
               s_int_ack <= '1';
-							Rd_Data <= ("0000" & S_Multi_Slave_Sel);
+							int_rd_data <= ("0000" & S_Multi_Slave_Sel);
 						end if;
 
 			when C_Bus_master_intern_Echo_1_Adr =>
@@ -585,7 +581,7 @@ begin
 							S_Intern_Echo_1 <= Wr_Data;
 				elsif rd_acc = '1' then
               s_int_ack <= '1';
-							Rd_Data <= S_Intern_Echo_1;
+							int_rd_data <= S_Intern_Echo_1;
 						end if;
 
 			when C_Bus_master_intern_Echo_2_Adr =>
@@ -594,7 +590,7 @@ begin
 							S_Intern_Echo_2 <= Wr_Data;
 				elsif rd_acc = '1' then
           s_int_ack <= '1';
-					Rd_Data <= S_Intern_Echo_2;
+					int_rd_data <= S_Intern_Echo_2;
 				end if;
         
 			when others =>
@@ -701,9 +697,9 @@ BEGIN
 					S_SCUB_DS <= '1';
 					IF S_nSync_Dtack(0) = '0' THEN							-- wait for Dtack
 						IF Test = 0 THEN
-							S_Rd_Data <= SCUB_Data;						-- during production: read the SCUB_Data bidir buffer
+							ext_rd_data <= SCUB_Data;						-- during production: read the SCUB_Data bidir buffer
 						ELSE
-							S_Rd_Data <= S_Wr_Data;						-- during test: return the last written data
+							ext_rd_data <= S_Wr_Data;						-- during test: return the last written data
 						END IF;
 						S_SCUB_DS <= '0';
 						S_SCUB_Slave_Sel <= (OTHERS => '0');
