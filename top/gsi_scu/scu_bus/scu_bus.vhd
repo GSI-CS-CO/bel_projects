@@ -9,6 +9,7 @@ use work.lpc_uart_pkg.all;
 use work.wr_altera_pkg.all;
 use work.trans_pkg.all;
 use work.scu_bus_pkg.all;
+use work.gencores_pkg.all;
 
 LIBRARY altera_mf;
 USE altera_mf.altera_mf_components.all;
@@ -215,7 +216,11 @@ architecture rtl of scu_bus is
   signal cbar_master_o : t_wishbone_master_out_array(c_slaves-1 downto 0);
 
   signal clk_sys, clk_cal, rstn, locked : std_logic;
+  signal clk_sys_rstn : std_logic;
+  signal reset_clks : std_logic_vector(0 downto 0);
+  signal reset_rstn : std_logic_vector(0 downto 0);
   signal lm32_interrupt : std_logic_vector(31 downto 0);
+  signal lm32_rstn : std_logic;
   
   signal gpio_slave_o : t_wishbone_slave_out;
   signal gpio_slave_i : t_wishbone_slave_in;
@@ -237,19 +242,13 @@ architecture rtl of scu_bus is
   signal rx_signaldetect: std_logic_vector(1 downto 0);
   signal tx_dataout:      std_logic_vector(3 downto 0);
   
-  signal nreset:          std_logic;
-  
 begin
 	Inst_flash_loader_v01 : flash_loader
     port map (
       noe_in   => '0'
     );
-  reset : pow_reset
-  port map (
-    clk    => clk_sys,
-    nreset => nreset);
 	 
-	 -- open drain buffer for one wire
+	-- open drain buffer for one wire
 	owr_i(0) <= OneWire_CB;
 	OneWire_CB <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
 	
@@ -260,6 +259,15 @@ begin
       c0     => clk_sys,     -- 125MHz system clk (cannot use external pin as clock for RAM blocks)
       c1     => clk_cal,     -- 50Mhz calibration clock for Altera reconfig cores
       locked => locked);     -- '1' when the PLL has locked
+      
+  reset : gc_reset
+    port map(
+      free_clk_i => clk125_i,
+      locked_i   => locked,
+      clks_i     => reset_clks,
+      rstn_o     => reset_rstn);
+  reset_clks(0) <= clk_sys;
+  clk_sys_rstn <= reset_rstn(0);
   
   
   -- The top-most Wishbone B.4 crossbar
@@ -273,7 +281,7 @@ begin
      g_sdb_addr    => c_sdb_address)
    port map(
      clk_sys_i     => clk_sys,
-     rst_n_i       => nreset,
+     rst_n_i       => clk_sys_rstn,
      -- Master connections (INTERCON is a slave)
      slave_i       => cbar_slave_i,
      slave_o       => cbar_slave_o,
@@ -286,24 +294,25 @@ begin
     generic map(
       sdb_addr => c_sdb_address)
     port map(
-      clk125_i      => clk_sys,       -- Free running clock
+      clk125_i      => clk125_i,      -- Free running clock
       cal_clk50_i   => clk_cal,       -- Transceiver global calibration clock
-      rstn_i        => nreset,        -- Reset for the PCIe decoder logic
       pcie_refclk_i => pcie_refclk_i, -- External PCIe 100MHz bus clock
-      pcie_rstn_i   => nPCI_RESET,   	-- External PCIe system reset pin
+      pcie_rstn_i   => nPCI_RESET,    -- External PCIe system reset pin
       pcie_rx_i     => pcie_rx_i,
       pcie_tx_o     => pcie_tx_o,
       wb_clk        => clk_sys,       -- Desired clock for the WB bus
+      wb_rstn_i     => clk_sys_rstn,
       master_o      => cbar_slave_i(0),
       master_i      => cbar_slave_o(0));
   
-  -- The LM32 is master 1+2
+   -- The LM32 is master 1+2
+  lm32_rstn <= clk_sys_rstn and not r_reset;
   LM32 : xwb_lm32
     generic map(
       g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => nreset and not r_reset,
+      rst_n_i   => lm32_rstn,
       irq_i     => lm32_interrupt,
       dwb_o     => cbar_slave_i(1), -- Data bus
       dwb_i     => cbar_slave_o(1),
@@ -312,12 +321,12 @@ begin
   
   -- The other 31 interrupt pins are unconnected
   lm32_interrupt(31 downto 1) <= (others => '0');
-  
+
   -- A DMA controller is master 3+4, slave 2, and interrupt 0
   dma : xwb_dma
     port map(
       clk_i       => clk_sys,
-      rst_n_i     => nreset,
+      rst_n_i     => clk_sys_rstn,
       slave_i     => cbar_master_o(2),
       slave_o     => cbar_master_i(2),
       r_master_i  => cbar_slave_o(3),
@@ -326,7 +335,7 @@ begin
       w_master_o  => cbar_slave_i(4),
       interrupt_o => lm32_interrupt(0));
   
-  -- Slave 0 is the RAMclk_sys
+  -- Slave 0 is the RAM
   ram : xwb_dpram
     generic map(
       g_size                  => c_dpram_size,
@@ -336,13 +345,14 @@ begin
       g_slave2_granularity    => WORD)
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => nreset,
+      rst_n_i   => clk_sys_rstn,
       -- First port connected to the crossbar
       slave1_i  => cbar_master_o(0),
       slave1_o  => cbar_master_i(0),
       -- Second port disconnected
       slave2_i  => cc_dummy_slave_in, -- CYC always low
       slave2_o  => open);
+  
   
   -- Slave 1 is the example LED driver
   gpio_slave_i <= cbar_master_o(1);
@@ -400,7 +410,7 @@ begin
       )
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => nreset,
+      rst_n_i   => clk_sys_rstn,
 
       -- Wishbone
       slave_i => cbar_master_o(4),
@@ -424,7 +434,7 @@ begin
       )
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => nreset,
+      rst_n_i   => clk_sys_rstn,
 
       -- Wishbone
       slave_i => cbar_master_o(3),
@@ -541,7 +551,7 @@ begin
     slave_o => cbar_master_i(5),
     
     clk =>  clk_sys,
-    nrst => nreset,
+    nrst => clk_sys_rstn,
     
     SCUB_Data => A_D,
     nSCUB_DS => A_nDS,
@@ -554,12 +564,13 @@ begin
     nSel_Ext_Data_Drv => nSel_Ext_Data_DRV
   );
   
+  
 						
 	serial_to_cb_o   <= '0'; 				-- connects the serial ports to the carrier board
   A_nCONFIG <= '1';
   nPWRBTN <= '1';
   ADR_TO_SCUB <= '1';
   nADR_EN <= '0';
-  A_nReset <= nreset;
+  A_nReset <= clk_sys_rstn;
   
 end rtl;
