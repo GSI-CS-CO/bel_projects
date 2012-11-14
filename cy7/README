@@ -2,7 +2,7 @@ Install sdcc		sdcc.sourceforge.net
 Install cycfx2prog	http://www.triplespark.net/elec/periph/USB-FX2/software/
 
 Go into cyfx2usbuart directory
-n
+
 Run 'make' to compile the firmware
 Run 'make run' to download the firmware to the mcu
 
@@ -17,3 +17,4 @@ Any byte received by UART will be transmitted to /dev/ttyUSB*.
 UART TX Pin = Port A Pin 1
 UART RX Pin = Part A Pin 0
 
+Only baudrate 38400 is supported.
