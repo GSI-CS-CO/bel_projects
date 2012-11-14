@@ -1,4 +1,5 @@
 Install sdcc		sdcc.sourceforge.net
+	(Firmware successfully compiles with sdcc 3.2.0)
 Install cycfx2prog	http://www.triplespark.net/elec/periph/USB-FX2/software/
 
 Go into cyfx2usbuart directory
