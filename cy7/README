@@ -1,0 +1,19 @@
+Install sdcc		sdcc.sourceforge.net
+Install cycfx2prog	http://www.triplespark.net/elec/periph/USB-FX2/software/
+
+Go into cyfx2usbuart directory
+n
+Run 'make' to compile the firmware
+Run 'make run' to download the firmware to the mcu
+
+After downloading the firmware the chip enumerates as ftdi chip and can be accessed
+with 'socat - /dev/ttyUSB0,echo=0,b38400'. Listen to /var/log/messages to see which
+file (ttyUSB*) is created in /dev/ for the serial device when the chip enumerates.
+
+Any byte sent to /dev/ttyUSB* will be transmitted on UART and will loop back on
+/dev/ttyUSB*.  
+Any byte received by UART will be transmitted to /dev/ttyUSB*.
+
+UART TX Pin = Port A Pin 1
+UART RX Pin = Part A Pin 0
+
