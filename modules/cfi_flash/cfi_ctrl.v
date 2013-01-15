@@ -99,6 +99,7 @@ module cfi_ctrl
    wb_we_i, wb_sel_i,
    wb_dat_o, wb_ack_o,
    wb_err_o, wb_rty_o,
+   wb_stall_o,
  
  
    flash_dq_io,
@@ -117,8 +118,8 @@ module cfi_ctrl
    parameter flash_dq_width = 16;
    parameter flash_adr_width = 24;
  
-   parameter flash_write_cycles = 4; // wlwh/Tclk = 50ns / 15 ns (66Mhz)
-   parameter flash_read_cycles = 7;  // elqv/Tclk = 95 / 15 ns (66MHz)
+   parameter flash_write_cycles = 4; // wlwh/Tclk = 50ns / 16 ns (62,5Mhz)
+   parameter flash_read_cycles = 6;  // elqv/Tclk = 95 / 16 ns (62,5MHz)
  
    parameter cfi_engine = "ENABLED";
  
@@ -130,7 +131,7 @@ module cfi_ctrl
    output 			   flash_clk_o;
    output 			   flash_oe_n_o;
    output 			   flash_rst_n_o;
-   input 			   flash_wait_i;
+   input           flash_wait_i;
    output 			   flash_we_n_o;
    output 			   flash_wp_n_o;
  
@@ -145,7 +146,7 @@ module cfi_ctrl
  
    output reg [31:0] 		   wb_dat_o;
    output reg 			   wb_ack_o;
-   output 			   wb_err_o, wb_rty_o;
+   output 			   wb_err_o, wb_rty_o, wb_stall_o;
  
    reg [3:0] 			   wb_state;
    generate

@@ -10,6 +10,7 @@ use work.wr_altera_pkg.all;
 use work.trans_pkg.all;
 use work.scu_bus_pkg.all;
 use work.gencores_pkg.all;
+use work.cfi_flash_pkg.all;
 
 LIBRARY altera_mf;
 USE altera_mf.altera_mf_components.all;
@@ -197,8 +198,24 @@ architecture rtl of scu_bus is
     date          => x"20120720",
     name          => "SCU-BUS-Master     ")));
     
+   constant c_cfi_flash : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"2", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"0000000000ffffff",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"3245f450",
+    version       => x"00000001",
+    date          => x"20120720",
+    name          => "CFI-flash          ")));
+    
   -- Top crossbar layout
-  constant c_slaves : natural := 6;
+  constant c_slaves : natural := 7;
   constant c_masters : natural := 5;
   constant c_dpram_size : natural := 16384; -- in 32-bit words (64KB)
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
@@ -207,7 +224,8 @@ architecture rtl of scu_bus is
     2 => f_sdb_embed_device(c_xwb_dma_sdb,              x"00100500"),
     3 => f_sdb_embed_device(c_xwb_owm,				 		      x"00100600"),
     4 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"),
-    5 => f_sdb_embed_device(c_scu_bus_master,           x"00400000"));
+    5 => f_sdb_embed_device(c_scu_bus_master,           x"00400000"),
+    6 => f_sdb_embed_device(c_cfi_flash,                x"01000000"));
   constant c_sdb_address : t_wishbone_address :=        x"00100000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -224,6 +242,9 @@ architecture rtl of scu_bus is
   
   signal gpio_slave_o : t_wishbone_slave_out;
   signal gpio_slave_i : t_wishbone_slave_in;
+  
+  signal cfi_slave_o : t_wishbone_slave_out;
+  signal cfi_slave_i : t_wishbone_slave_in;
   
   signal r_leds : std_logic_vector(7 downto 0);
   signal r_reset    : std_logic := '0';
@@ -563,7 +584,39 @@ begin
     nSCUB_Timing_Cycle => A_nTiming_Cycle,
     nSel_Ext_Data_Drv => nSel_Ext_Data_DRV
   );
-  
+
+  cfi_slave_i <= cbar_master_o(6);
+  cbar_master_i(6) <= cfi_slave_o;
+
+  cfi_flash: cfi_ctrl
+  port map (
+    wb_dat_i => cfi_slave_i.dat,
+    wb_adr_i => cfi_slave_i.adr,
+    wb_stb_i => cfi_slave_i.stb,
+    wb_cyc_i => cfi_slave_i.cyc,
+    wb_we_i => cfi_slave_i.we,
+    wb_sel_i => cfi_slave_i.sel,
+    wb_dat_o => cfi_slave_o.dat,
+    wb_ack_o => cfi_slave_o.ack,
+    wb_err_o => cfi_slave_o.err,
+    wb_rty_o => cfi_slave_o.rty,
+    wb_stall_o => cfi_slave_o.stall,
+
+    wb_clk_i =>  clk_sys,
+    wb_rst_i => not clk_sys_rstn,
+    
+    flash_dq_io       => DF,
+    flash_adr_o       => AD,
+    flash_adv_n_o     => ADV_FSH,
+    flash_ce_n_o      => nCE_FSH,
+    flash_clk_o       => CLK_FSH,
+    flash_oe_n_o      => nOE_FSH,
+    flash_rst_n_o     => nRST_FSH,
+    flash_wait_i      => WAIT_FSH,
+    flash_we_n_o      => nWE_FSH,
+    flash_wp_n_o      => open
+  );
+
   
 						
 	serial_to_cb_o   <= '0'; 				-- connects the serial ports to the carrier board
