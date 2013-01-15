@@ -8,5 +8,14 @@ syn
 *.ko
 *.lib
 *.stp
+*.asm
+*.ihx
+*.lk
+*.lst
+*.map
+*.mem
+*.rel
+*.rst
+*.sym
 greybox_tmp
 sim
