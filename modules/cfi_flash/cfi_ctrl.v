@@ -118,7 +118,7 @@ module cfi_ctrl
    parameter flash_dq_width = 16;
    parameter flash_adr_width = 24;
  
-   parameter flash_write_cycles = 4; // wlwh/Tclk = 50ns / 16 ns (62,5Mhz)
+   parameter flash_write_cycles = 4; // wlwh/Tclk = 55ns / 16 ns (62,5Mhz)
    parameter flash_read_cycles = 6;  // elqv/Tclk = 95 / 16 ns (62,5MHz)
  
    parameter cfi_engine = "ENABLED";
@@ -167,6 +167,8 @@ module cfi_ctrl
 	     wb_req_in_progress <= 0;
  
 	 assign wb_req_new = (wb_stb_i & wb_cyc_i) & !wb_req_in_progress;
+   
+   assign wb_stall_o = wb_req_in_progress & !wb_ack_o;
  
 	 /* Registers for interfacing with the CFI controller */
 	 reg [15:0] 		   cfi_bus_dat_i;
@@ -444,6 +446,7 @@ module cfi_ctrl
 	   if (wb_rst_i)
 	     begin
 		wb_ack_o <= 0;
+   // wb_stall_o <= 0;
 		wb_dat_o <= 0;
 		wb_state <= `WB_STATE_IDLE;
 		flash_dq_o_r <= 0;
@@ -466,6 +469,7 @@ module cfi_ctrl
 		   flash_oe_n_o_r <= 1;
 		   flash_we_n_o_r <= 1;
 		   flash_rst_n_o_r <= 1;
+   //    wb_stall_o <= 1;
  
 		   if (wb_stb_i & wb_cyc_i & !wb_ack_o) begin
 		      flash_adr_o_r <= wb_adr_i[flash_adr_width:1];

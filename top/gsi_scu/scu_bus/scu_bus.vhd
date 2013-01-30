@@ -206,12 +206,12 @@ architecture rtl of scu_bus is
     wbd_width     => x"2", -- 8/16/32-bit port granularity
     sdb_component => (
     addr_first    => x"0000000000000000",
-    addr_last     => x"0000000000ffffff",
+    addr_last     => x"000000000effffff",
     product => (
     vendor_id     => x"0000000000000651", -- GSI
     device_id     => x"3245f450",
     version       => x"00000001",
-    date          => x"20120720",
+    date          => x"20130116",
     name          => "CFI-flash          ")));
     
   -- Top crossbar layout
@@ -225,7 +225,7 @@ architecture rtl of scu_bus is
     3 => f_sdb_embed_device(c_xwb_owm,				 		      x"00100600"),
     4 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"),
     5 => f_sdb_embed_device(c_scu_bus_master,           x"00400000"),
-    6 => f_sdb_embed_device(c_cfi_flash,                x"01000000"));
+    6 => f_sdb_embed_device(c_cfi_flash,                x"10000000"));
   constant c_sdb_address : t_wishbone_address :=        x"00100000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -327,7 +327,7 @@ begin
       master_i      => cbar_slave_o(0));
   
    -- The LM32 is master 1+2
-  lm32_rstn <= clk_sys_rstn and not r_reset;
+  lm32_rstn <= clk_sys_rstn and r_reset;
   LM32 : xwb_lm32
     generic map(
       g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)

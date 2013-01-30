@@ -439,7 +439,7 @@ always @(posedge clk)
 /* wlwh: cycles for WE assert to WE de-assert: write time */
 parameter cfi_part_wlwh_cycles = 4; /* wlwh = 50ns, tck = 15ns, cycles = 4*/
 /* elqv: cycles from adress  to data valid */
-parameter cfi_part_elqv_cycles = 7; /* tsop 256mbit elqv = 95ns, tck = 15ns, cycles = 6*/
+parameter cfi_part_elqv_cycles = 6; /* tsop 256mbit elqv = 95ns, tck = 15ns, cycles = 6*/
  
 assign flash_phy_async_wait = (|flash_phy_ctr);
  
