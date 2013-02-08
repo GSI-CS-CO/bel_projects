@@ -131,7 +131,7 @@ begin
 	sys_pll_inst : sys_pll      -- Altera megafunction
     port map (
       inclk0 => clk_fpga,     -- 125Mhz oscillator from board
-      c0     => clk_sys,      -- 125MHz system clk (cannot use external pin as clock for RAM blocks)
+      c0     => clk_sys,      -- 62.5MHz system clk (cannot use external pin as clock for RAM blocks)
       c1     => clk_cal,      -- 50Mhz calibration clock for Altera reconfig cores
       locked => locked);      -- '1' when the PLL has locked
 	
@@ -193,7 +193,7 @@ begin
   
   blinker: led_blink generic map (
     count => 1,
-    Clk_in_Hz => 125_000_000 )
+    Clk_in_Hz => 62_500_000 )
     port map (
     clk => clk_sys,
     nrst => locked,
