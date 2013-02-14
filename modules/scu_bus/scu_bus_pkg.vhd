@@ -122,4 +122,20 @@ port	(
 		);
 end component;
 
+constant c_scu_bus_master : t_sdb_device := (
+   abi_class     => x"0000", -- undocumented device
+   abi_ver_major => x"02",
+   abi_ver_minor => x"01",
+   wbd_endian    => c_sdb_endian_big,
+   wbd_width     => x"2", -- 8/16/32-bit port granularity
+   sdb_component => (
+   addr_first    => x"0000000000000000",
+   addr_last     => x"00000000003fffff",
+   product => (
+   vendor_id     => x"0000000000000651", -- GSI
+   device_id     => x"9602eb6f",
+   version       => x"00000001",
+   date          => x"20120720",
+   name          => "SCU-BUS-Master     ")));
+
 end package;
