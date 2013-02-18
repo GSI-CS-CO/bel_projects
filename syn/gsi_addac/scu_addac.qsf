@@ -155,7 +155,7 @@ set_location_assignment PIN_H9 -to A_Spare1
 set_location_assignment PIN_B12 -to A_SysClock
 set_instance_assignment -name IO_STANDARD LVDS -to CLK_FPGA
 set_location_assignment PIN_AD14 -to "CLK_FPGA(n)"
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to "CLK_FPGA(n)"
+set_instance_assignment -name IO_STANDARD LVDS -to "CLK_FPGA(n)"
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_RnW
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_Spare0
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_Spare1
@@ -284,4 +284,7 @@ set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_LOWORD=1
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_HIWORD=20030" -section_id auto_signaltap_0
 set_global_assignment -name VHDL_FILE ../../../../hdl_cores/aux_functions/led_n.vhd
 set_global_assignment -name VHDL_FILE ../../../../hdl_cores/aux_functions/div_n.vhd
+set_global_assignment -name CDF_FILE ../../../scu_addac/output_files/scu_addac.cdf
+set_global_assignment -name SDC_FILE ../../top/gsi_addac/gsi_addac.sdc
+set_location_assignment PIN_AD13 -to CLK_FPGA
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

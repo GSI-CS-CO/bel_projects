@@ -108,13 +108,22 @@ port map  (
   
   sel_led: led_n
   generic map (
-    stretch_cnt => 6250000
-    )
+    stretch_cnt => 6250000 )
   port map (
     ena => '1',
     clk => clk_sys,
-    Sig_in => A_nBoardSel,
+    Sig_in => not A_nBoardSel,
     nLED => A_nState_LED(0),
+    nLED_opdrn => open);
+    
+  dtack_led: led_n
+  generic map (
+    stretch_cnt => 6250000 )
+  port map (
+    ena => '1',
+    clk => clk_sys,
+    Sig_in => SCUB_Dtack,
+    nLED => A_nState_LED(1),
     nLED_opdrn => open);
     
   rw_led: led_n
@@ -124,12 +133,10 @@ port map  (
   port map (
     ena => '1',
     clk => clk_sys,
-    Sig_in => A_RnW,
+    Sig_in => not A_RnW,
     nLED => A_nState_LED(2),
     nLED_opdrn => open);
     
-
-  A_nState_LED(1) <= '1';
   A_nDtack <= not SCUB_Dtack;
   A_nSRQ <= not SCUB_SRQ;
 
