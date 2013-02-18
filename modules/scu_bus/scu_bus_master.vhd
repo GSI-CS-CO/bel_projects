@@ -275,7 +275,7 @@ ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
 BEGIN
 
 -- mapping of the wishbone signals
-Wr_Data                   <= slave_i.dat(15 downto 0) when slave_i.adr(1) = '1' else slave_i.dat(31 downto 16);
+Wr_Data                   <= slave_i.dat(15 downto 0) when slave_i.sel(0) = '1' else slave_i.dat(31 downto 16);
 slave_o.dat(31 downto 16) <= Rd_Data;
 slave_o.dat(15 downto 0)  <= Rd_Data;
 Adr                       <= slave_i.adr(16 downto 1);
@@ -392,7 +392,11 @@ begin
     
       when idle =>
         if slave_i.cyc = '1' and slave_i.stb = '1' then           -- begin of wishbone cycle
-          s_adr <= adr;                                           -- register address and slave_nr
+          if slave_i.sel(0) = '1' then
+            s_adr <= std_logic_vector(unsigned(adr) + 1);                           -- register address and slave_nr
+          else
+            s_adr <= adr;
+          end if;
           s_slave_nr <= slave_nr;
           s_stall <= '1';                                         -- no pipelining
           wb_state <= cyc_start;
