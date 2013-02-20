@@ -22,7 +22,7 @@ entity adc_7606 is
 
 GENERIC (
   
-    clk_in_hz     : integer  := 100_000_000;     -- 50Mhz system clock
+    clk_in_hz     : integer  := 50_000_000;     -- 50Mhz system clock
  
     reset_delay   : integer  := 50;             -- RESET high pulse with        (treset)
     conv_wait     : integer  := 25;             -- Minimum delay between Reset low to convst high (t7)
@@ -30,19 +30,18 @@ GENERIC (
     
     rd_low        : integer  := 25;             -- RD low pulse width           (t10)
     rd_high       : integer  := 15;             -- RD high pulse width          (t11)
-    os_previous             : std_logic_vector(2 downto 0) := "000"; --Digitalfileter "000" inaktiv
+    os_previous             : std_logic_vector(2 downto 0) := "000"; -- digital filter "000" inaktiv
     adc_range_previous      : std_logic := '1' ); -- '1' = +/-10 ; '0'= +/-5V Input voltage
    
    
 -- Port Declaration 
 PORT (
    
-   --Interne Anschlu�e f�r Entity 
-    clk           : in  std_logic;                        -- Clock Signal f�r FPGA Entity
-    rst           : in  std_logic;                        -- reset Signal f�r FPGA Entity
-    start_conv    : in  std_logic;                        -- Startet den Konvertierungsablauf
+    clk           : in  std_logic;                        -- clk signal for FPGA Entity
+    rst           : in  std_logic;                        -- reset signal for FPGA Entity
+    start_conv    : in  std_logic;                        -- start of conversion
    
-   -- Ausg�nge der ausgewerteten Kan�le  
+   -- outputs of the converted channels  
     channel_1     : out std_logic_vector (15 downto 0):= (others => '0');   
     channel_2     : out std_logic_vector (15 downto 0):= (others => '0');
     channel_3     : out std_logic_vector (15 downto 0):= (others => '0');
@@ -51,18 +50,18 @@ PORT (
     channel_6     : out std_logic_vector (15 downto 0):= (others => '0');
  
    
-    --Anschlu�e an ADC
-    busy          : in  std_logic;                        -- falling adge signals shows end of conversion
-    firstdata     : in  std_logic;                        -- Anzeige der Konversion f�r den ersten Kanal
+    -- ADC interface
+    busy          : in  std_logic;                        -- falling edge signals shows end of conversion
+    firstdata     : in  std_logic;                        -- marks first converted channel
     db            : in  std_logic_vector (15 downto 0);   -- 16 bit data bus from the ADC  
     
-    convst        : out std_logic;                        -- Startet die Konvertierung
+    convst        : out std_logic;                        -- starts conversion
     n_cs          : out std_logic;                        -- chip select enables tri state databus
     n_rd_sclk     : out std_logic;                        -- first falling edge after busy clocks data out
     os            : out std_logic_vector(2 downto 0);     -- Oversampling Configuration (Dig. Filter)
     adc_range     : out std_logic;                        -- '1' = +/-10V; '0' = +/-5V
-    adc_reset     : out std_logic;                        -- reset f�r ADC
-    Data_Out_Valid: out std_logic := '0');                -- ='1' falls alles fertig 
+    adc_reset     : out std_logic;                        -- reset for ADC
+    Data_Out_Valid: out std_logic := '0');                --
   
 END adc_7606;  
 
@@ -78,25 +77,25 @@ SIGNAL s_channel_regs : channel_reg_type ;
 TYPE state_type IS (reset,              -- ADC wird resetet 
                     idle,               -- ADC wird in Ruhezustand geschaltet
                     conv_st,            -- Starte wird gestartet 
-                    wait_for_busy,      -- busy = '1' Wandlung l�uft; = '0' Wandlung fertig  
-                    wait_for_conv_fin,  -- Konvertierung ist abgeschlossen
-                    wait_firstdata,     -- Die Daten von dem Ersten Kanal werden abgewartet
-                    channel_data_ready, -- Die Daten sind bereit
+                    wait_for_busy,      -- busy = '1' conversion running; = '0' conversion finished  
+                    wait_for_conv_fin,  -- wait for finish of conversion
+                    wait_firstdata,     -- wait for data from first channel
+                    channel_data_ready, -- data channels are ready
                     wait_rd_low,        -- n_RD wird auf 'low' gezogen
                     wait_rd_high,       -- n_RD wird auf 'high' gezogen
-                    data_output);       -- alle Ausg�nge werden gleuchzeitig ausgegeben
+                    data_output);       -- all outputs are changed simultaneously
  
 SIGNAL s_conv_state           :  state_type            := reset;  --Statemaschine Signal
 SIGNAL s_channel_cnt          :  integer range 0 to 6  := 0;      -- 6 channels counter
 
 --===================================================================================================
--- Hier werden die erforderliche Taktzahlen f�r die Einhaltung der vorgegebenen Zeiten errechnet 
+-- calculating of the delay counters
 
 -- [1] Anzahl der aufgerundeten Takte f�r die Zeit treset 
 CONSTANT c_reset_delay          : integer := integer
-                            (ceil (real (clk_in_hz) / real (1_000_000_000)*real (reset_delay)));  
+                            (ceil (real (clk_in_hz) / real (1_000_000_000)*real (reset_delay)));
 
---Wie vile Bit braucht man um diese Zahl bin�r darzustellen?
+
 CONSTANT c_reset_delay_width    : integer  := integer(ceil (log2 (real(c_reset_delay))));
 
 SIGNAL   s_reset_delay          : unsigned (c_reset_delay_width-1 downto 0)  := (others => '0');
@@ -104,7 +103,8 @@ SIGNAL   s_reset_delay          : unsigned (c_reset_delay_width-1 downto 0)  := 
 
 -- [2] Anzahl der aufgerundeten Takte f�r die Zeit t7 - Minimum delay between Reset low to convst high
 CONSTANT c_conv_wait            : integer  := integer
-                            (ceil (real (clk_in_hz) / real (1_000_000_000) *real (conv_wait))); 
+                            (ceil (real (clk_in_hz) / real (1_000_000_000) *real (conv_wait)));
+
                                                             
 CONSTANT c_conv_wait_width      : integer  := integer(ceil (log2 (real(c_conv_wait))));
 
@@ -156,6 +156,13 @@ SIGNAL   s_wait_rd_high       : unsigned (c_wait_rd_high_width-1 downto 0)  := (
  --=================================================================================================
  
 BEGIN
+
+
+ASSERT false
+  REPORT "c_reset_delay: " & integer'image(c_reset_delay) SEVERITY warning;
+ASSERT false
+  REPORT "c_conv_wait: " & integer'image(c_conv_wait) SEVERITY warning;
+
 
 os              <= os_previous;
 adc_range       <= adc_range_previous;
