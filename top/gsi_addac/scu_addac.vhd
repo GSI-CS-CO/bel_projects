@@ -9,50 +9,57 @@ use work.aux_functions_pkg.all;
 
 entity scu_addac is
   port (
-          -------------------------------------------------------------------------------------------------------------------
-          CLK_FPGA:             in    std_logic;
+    -------------------------------------------------------------------------------------------------------------------
+    CLK_FPGA:               in    std_logic;
+    
+    --------- Parallel SCU-Bus-Signale --------------------------------------------------------------------------------
+    A_A:                  in    std_logic_vector(15 downto 0);  -- SCU-Adressbus
+    A_nADR_EN:            out   std_logic := '0';               -- '0' => externe Adresstreiber des Slaves aktiv
+    A_nADR_FROM_SCUB:     out   std_logic := '0';               -- '0' => externe Adresstreiber-Richtung: SCU-Bus nach Slave  
+    A_D:                  inout std_logic_vector(15 downto 0);  -- SCU-Datenbus
+    A_nDS:                in    std_logic;                      -- Data-Strobe vom Master gertieben
+    A_RnW:                in    std_logic;                      -- Schreib/Lese-Signal vom Master getrieben, '0' => lesen
+    A_nSel_Ext_Data_Drv:  out   std_logic;                      -- '0' => externe Datentreiber des Slaves aktiv
+    A_Ext_Data_RD:        out   std_logic;                      -- '0' => externe Datentreiber-Richtung: SCU-Bus nach
+                                                                -- Slave (besser default 0, oder Treiber A/B tauschen)
+                                                                -- SCU-Bus nach Slave (besser default 0, oder Treiber A/B tauschen)
+    A_nDtack:             out   std_logic;                      -- Data-Acknowlege null aktiv, '0' => aktiviert externen
+                                                                -- Opendrain-Treiber
+    A_nSRQ:               out   std_logic;                      -- Service-Request null aktiv, '0' => aktiviert externen
+                                                                -- Opendrain-Treiber
+    A_nBoardSel:          in    std_logic;                      -- '0' => Master aktiviert diesen Slave
+    A_nEvent_Str:         in    std_logic;                      -- '0' => Master sigalisiert Timing-Zyklus
+    A_SysClock:           in    std_logic;                      -- Clock vom Master getrieben.
+    A_Spare0:             in    std_logic;                      -- vom Master getrieben
+    A_Spare1:             in    std_logic;                      -- vom Master getrieben
+    A_nReset:             in    std_logic;                      -- Reset (aktiv '0'), vom Master getrieben
+    -------------------------------------------------------------------------------------------------------------------
           
-          --------- Parallel SCU-Bus-Signale --------------------------------------------------------------------------------
-          A_A:                  in    std_logic_vector(15 downto 0);    -- SCU-Adressbus
-          A_nADR_EN:            out   std_logic := '0';                 -- '0' => externe Adresstreiber des Slaves aktiv
-          A_nADR_SCUB:          out   std_logic := '0';                 -- '0' => externe Adresstreiber-Richtung: SCU-Bus nach Slave  
-          A_D:                  inout std_logic_vector(15 downto 0);    -- SCU-Datenbus
-          A_nDS:                in    std_logic;                        -- Data-Strobe driven by master
-          A_RnW:                in    std_logic;                        -- Schreib/Lese-Signal vom Master getrieben, '0' => lesen
-          A_nSel_Ext_Data_Drv:  out   std_logic;                        -- '0' => externe Datentreiber des Slaves aktiv
-          A_Ext_Data_RD:        out   std_logic;                        -- '0' => externe Datentreiber-Richtung: SCU-Bus nach
-                                                                        --  Slave (besser default 0, oder Treiber A/B tauschen)
-                                                                        -- SCU-Bus nach Slave (besser default 0, oder Treiber A/B tauschen)
-          A_nDtack:             out   std_logic;                        -- Data-Acknowlege null aktiv, '0' => aktiviert externen
-                                                                        -- opendrain
-          A_nSRQ:               out   std_logic;                        -- Service-Request null aktiv, '0' => aktiviert externen
-                                                                        -- opendrain
-          A_nBoardSel:          in    std_logic;                        -- '0' => Master aktiviert diesen Slave
-          A_nEvent_Str:         in    std_logic;                        -- '0' => Master sigalisiert Timing-Zyklus
-          A_SysClock:           in    std_logic;                        -- driven by master
-          A_Spare0:             in    std_logic;                        -- driven by master
-          A_Spare1:             in    std_logic;                        -- driven by master
-          A_nReset:             in    std_logic;
-          
-          -------------------------------------------------------------------------------------------------------------------
-          
-          ADC_DB:               inout std_logic_vector(15 downto 0);
-          ADC_CONVST_A:         out   std_logic;
-          ADC_CONVST_B:         out   std_logic;
-          nADC_CS:              out   std_logic;
-          nADC_RD_SCLK:         out   std_logic;
-          ADC_BUSY:             in    std_logic;
-          ADC_RESET:            out   std_logic;
-          ADC_OS:               out   std_logic_vector(2 downto 0);
-          nADC_PAR_SER_SEL:     out   std_logic := '0';
-          ADC_Range:            out   std_logic;
-          ADC_FRSTDATA:         in    std_logic;
+    ADC_DB:               inout std_logic_vector(15 downto 0);
+    ADC_CONVST_A:         out   std_logic;
+    ADC_CONVST_B:         out   std_logic;
+    nADC_CS:              out   std_logic;
+    nADC_RD_SCLK:         out   std_logic;
+    ADC_BUSY:             in    std_logic;
+    ADC_RESET:            out   std_logic;
+    ADC_OS:               out   std_logic_vector(2 downto 0);
+    nADC_PAR_SER_SEL:     out   std_logic := '0';
+    ADC_Range:            out   std_logic;
+    ADC_FRSTDATA:         in    std_logic;
+    
+    ------------ IO-Port-Signale --------------------------------------------------------------------------------------
+    a_io_7_0_tx:          out   std_logic;                      -- '1' = external io(7..0)-buffer set to output.
+    a_io_15_8_tx:         out   std_logic;                      -- '1' = external io(15..8)-buffer set to output
+    a_io_23_16_tx:        out   std_logic;                      -- '1' = external io(23..16)-buffer set to output
+    a_io_31_24_tx:        out   std_logic;                      -- '1' = external io(31..24)-buffer set to output
+    a_ext_io_7_0_dis:     out   std_logic;                      -- '1' = disable external io(7..0)-buffer.  
+    a_ext_io_15_8_dis:    out   std_logic;                      -- '1' = disable external io(15..8)-buffer. 
+    a_ext_io_23_16_dis:   out   std_logic;                      -- '1' = disable external io(23..16)-buffer.
+    a_ext_io_31_24_dis:   out   std_logic;                      -- '1' = disable external io(31..24)-buffer.
+    a_io:                 inout std_logic_vector(31 downto 0);  -- select and set direction only in 8-bit partitions
 
-          -------------------------------------------------------------------------------------------------------------------
-          
-          A_nState_LED:         out std_logic_vector(2 downto 0);   -- SEL, R/W, ...
-          A_nLED:               out std_logic_vector(15 downto 0)
-  );
+    A_nState_LED:         out   std_logic_vector(2 downto 0);   -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
+    A_nLED:               out std_logic_vector(15 downto 0));
 end entity;
 
 
@@ -107,6 +114,7 @@ end component ad7606;
 constant  scu_adda1_id:   integer range 16#0210# to 16#021F# := 16#0210#;
 constant  clk_sys_in_Hz:  integer := 65_500_000;
 
+
 component IO_4x8
   generic (
       Base_addr:  integer range 1 to 16#ffff# := 16#200#);
@@ -118,40 +126,31 @@ component IO_4x8
     Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     nReset:             in    std_logic := '1';
-    IO_Data:            inout std_logic_vector(31 downto 0);
-    io_7_0_tx:          out   std_logic;                      -- '1' = external IO-Data(7..0)-buffer set to output.
-    ext_da_7_0_dis:     out   std_logic;                      -- '1' = disable external IO-Data(7..0)-buffer.
-    io_15_8_tx:         out   std_logic;                      -- '1' = external IO-Data(15..8)-buffer set to output
-    ext_da_15_8_dis:    out   std_logic;                      -- '1' = disable external IO-Data(15..8)-buffer.
-    io_23_16_tx:        out   std_logic;                      -- '1' = external IO-Data(23..16)-buffer set to output.
-    ext_da_23_16_dis:   out   std_logic;                      -- '1' = disable external IO-Data(23..16)-buffer.
-    io_31_24_tx:        out   std_logic;                      -- '1' = external IO-Data(31..24)-buffer set to output
-    ext_da_31_24_dis:   out   std_logic;                      -- '1' = disable external IO-Data(31..24)-buffer.
+    io:                 inout std_logic_vector(31 downto 0);  -- select and set direction only in 8-bit partitions
+    io_7_0_tx:          out   std_logic;                      -- '1' = external io(7..0)-buffer set to output.
+    ext_io_7_0_dis:     out   std_logic;                      -- '1' = disable external io(7..0)-buffer.
+    io_15_8_tx:         out   std_logic;                      -- '1' = external io(15..8)-buffer set to output
+    ext_io_15_8_dis:    out   std_logic;                      -- '1' = disable external io(15..8)-buffer.
+    io_23_16_tx:        out   std_logic;                      -- '1' = external io(23..16)-buffer set to output.
+    ext_io_23_16_dis:   out   std_logic;                      -- '1' = disable external io(23..16)-buffer.
+    io_31_24_tx:        out   std_logic;                      -- '1' = external io(31..24)-buffer set to output
+    ext_io_31_24_dis:   out   std_logic;                      -- '1' = disable external io(31..24)-buffer.
     user_rd_active:     out   std_logic;                      -- '1' = read data available at 'Data_to_SCUB'-output
     Data_to_SCUB:       out   std_logic_vector(15 downto 0);  -- connect read sources to SCUB-Macro
     Dtack_to_SCUB:      out   std_logic                       -- connect Dtack to SCUB-Macro
-  );	
-end component IO_4x8;
-
+    );  
+  end component IO_4x8;
+  
   signal clk_sys, clk_cal, rstn, locked : std_logic;
-  signal clk_sys_rstn : std_logic;
   
   signal SCUB_SRQ:    std_logic;
   signal SCUB_Dtack:  std_logic;
   signal convst:      std_logic;
   signal rst:         std_logic;
   
-  signal  io_7_0_tx:        std_logic;        
-  signal  ext_da_7_0_dis:   std_logic;     
-  signal  io_15_8_tx:       std_logic;         
-  signal  ext_da_15_8_dis:  std_logic;    
-  signal  io_23_16_tx:      std_logic;        
-  signal  ext_da_23_16_dis: std_logic;  
-  signal  io_31_24_tx:      std_logic;       
-  signal  ext_da_31_24_dis: std_logic;  
-  signal  user_rd_active:   std_logic;     
-  signal  Data_to_SCUB:     std_logic;       
-  signal  Dtack_to_SCUB:    std_logic;
+  signal  user_rd_active:     std_logic;     
+  signal  Data_to_SCUB:       std_logic;       
+  signal  Dtack_to_SCUB:      std_logic;
 
   signal  io_port_Dtack_to_SCUB:  std_logic;
   signal  io_port_data_to_SCUB:   std_logic_vector(15 downto 0);
@@ -165,10 +164,10 @@ end component IO_4x8;
   signal  nPowerup_Res:       std_logic;
   
   signal  rw_signal:           std_logic;
+  signal  led_ena_cnt:        std_logic;
 
-  
   begin
-
+  
   -- Obtain core clocking
   sys_pll_inst : sys_pll    -- Altera megafunction
   port map (
@@ -180,9 +179,9 @@ end component IO_4x8;
   
   adc: ad7606
   generic map (
-    clk_in_Hz => 62_500_000,
-    ser_mode => false,
-    par_mode => true,
+    clk_in_Hz     => clk_sys_in_Hz,
+    ser_mode      => false,
+    par_mode      => true,
     byte_ser_mode => false)
   port map (
     clk           =>  clk_sys,
@@ -215,8 +214,7 @@ end component IO_4x8;
 
 
 SCU_Slave: SCU_Bus_Slave
-generic map
-  (
+generic map (
     CLK_in_Hz         =>  clk_sys_in_Hz,
     Firmware_Release	=>  0,
     Firmware_Version	=>  0,
@@ -225,10 +223,8 @@ generic map
     Intr_Edge_Trig    =>  "111111111111111",
     Intr_Enable   	  =>  "000000000000000",
     Intr_Level_Neg    =>  "000000000000000",
-    Slave_ID          =>  scu_adda1_id
-  )
-port map
-  (
+    Slave_ID          =>  scu_adda1_id)
+port map (
     SCUB_Addr           =>  A_A,                    -- in,	SCU_Bus: address bus
     nSCUB_Timing_Cyc  	=>  A_nEvent_Str,           -- in,	SCU_Bus signal: low active SCU_Bus runs timing cycle
     SCUB_Data           =>  A_D,                    -- inout,	SCU_Bus: data bus (FPGA tri state buffer)
@@ -270,8 +266,8 @@ port map
     Deb_SCUB_Reset_out	=>  open,                   -- out,	the debounced 'nSCUB_Reset_In'-signal, is active high,
                                                     --          can be used to reset
                                                     --          external macros, when 'nSCUB_Reset_In' is '0'
-    nPowerup_Res        =>  nPowerup_Res            -- out,	this macro generated a power up reset
-  );
+    nPowerup_Res        =>  nPowerup_Res);          -- out,	this macro generated a power up reset
+
 
 io_port:  IO_4x8
   generic map (
@@ -284,52 +280,65 @@ io_port:  IO_4x8
     Ext_Wr_active       =>  Ext_Wr_active,          -- in, '1' => Wr-Cycle is active
     clk                 =>  clk_sys,                -- in, should be the same clk, used by SCU_Bus_Slave
     nReset              =>  nPowerup_Res,           -- in, '0' => resets the IO_4x8
-    IO_Data             =>  open,
-    io_7_0_tx           =>  io_7_0_tx,              -- out, '1' = external IO-Data(7..0)-buffer set to output.
-    ext_da_7_0_dis      =>  ext_da_7_0_dis,         -- out, '1' = disable external IO-Data(7..0)-buffer.
-    io_15_8_tx          =>  io_15_8_tx,             -- out, '1' = external IO-Data(15..8)-buffer set to output
-    ext_da_15_8_dis     =>  ext_da_15_8_dis,        -- out, '1' = disable external IO-Data(15..8)-buffer.
-    io_23_16_tx         =>  io_23_16_tx,            -- out, '1' = external IO-Data(23..16)-buffer set to output.
-    ext_da_23_16_dis    =>  ext_da_23_16_dis,       -- out, '1' = disable external IO-Data(23..16)-buffer.
-    io_31_24_tx         =>  io_31_24_tx,            -- out, '1' = external IO-Data(31..24)-buffer set to output
-    ext_da_31_24_dis    =>  ext_da_31_24_dis,       -- out, '1' = disable external IO-Data(31..24)-buffer.
+    io                  =>  a_io,                   -- inout, select and set direction only in 8-bit partitions
+    io_7_0_tx           =>  a_io_7_0_tx,            -- out, '1' = external io(7..0)-buffer set to output.
+    ext_io_7_0_dis      =>  a_ext_io_7_0_dis,       -- out, '1' = disable external io(7..0)-buffer.
+    io_15_8_tx          =>  a_io_15_8_tx,           -- out, '1' = external io(15..8)-buffer set to output
+    ext_io_15_8_dis     =>  a_ext_io_15_8_dis,      -- out, '1' = disable external io(15..8)-buffer.
+    io_23_16_tx         =>  a_io_23_16_tx,          -- out, '1' = external io(23..16)-buffer set to output.
+    ext_io_23_16_dis    =>  a_ext_io_23_16_dis,     -- out, '1' = disable external io(23..16)-buffer.
+    io_31_24_tx         =>  a_io_31_24_tx,          -- out, '1' = external io(31..24)-buffer set to output
+    ext_io_31_24_dis    =>  a_ext_io_31_24_dis,     -- out, '1' = disable external io(31..24)-buffer.
     user_rd_active      =>  io_port_rd_active,      -- out, '1' = read data available at 'Data_to_SCUB'-output
     Data_to_SCUB        =>  io_port_data_to_SCUB,   -- out, connect read sources to SCUB-Macro
-    Dtack_to_SCUB       =>  io_port_Dtack_to_SCUB   -- out, connect Dtack to SCUB-Macro
-  );	
+    Dtack_to_SCUB       =>  io_port_Dtack_to_SCUB); -- out, connect Dtack to SCUB-Macro  
 
+
+p_led_ena:  div_n
+  generic map (
+    n       => clk_sys_in_Hz / 100, -- div_o is every 10 ms for one clock period active
+    diag_on => 0)
+  port map (
+    res     => not nPowerup_Res,    -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
+                                    --     countdown is "n"-1 clocks to activate the "div_o"-output for one clock periode. 
+    clk     => clk_sys,             -- clk = clock
+    ena     => '1',                 -- in, can be used for a reduction, signal should be generated from the same 
+                                    --     clock domain and should be only one clock period active.
+    div_o   => led_ena_cnt);        -- out, div_o becomes '1' for one clock period, if "div_n" arrive n-1 clocks
+                                    --      (if ena is permanent '1').
+ 
+rw_signal <= not A_RnW and not A_nBoardSel;
+  
 sel_led: led_n
   generic map (
-    stretch_cnt => 6_250_000 )
+    stretch_cnt => 3)
   port map (
-    ena         => '1',
+    ena         => led_ena_cnt,     -- is every 10 ms for one clock period active
     clk         => clk_sys,
     Sig_in      => not A_nBoardSel,
-    nLED        => A_nState_LED(0),
-    nLED_opdrn  => open);
+    nLED        => open,
+    nLED_opdrn  => A_nState_LED(0));
     
 dtack_led: led_n
   generic map (
-    stretch_cnt => 6250000 )
-  port map (
-    ena         => '1',
+    stretch_cnt => 3)
+  port map
+    (
+    ena         => led_ena_cnt,     -- is every 10 ms for one clock period active
     clk         => clk_sys,
     Sig_in      => SCUB_Dtack,
-    nLED        => A_nState_LED(1),
-    nLED_opdrn  => open);
- 
- 
-rw_signal <= not A_RnW and not A_nBoardSel;
+    nLED        => open,
+    nLED_opdrn  => A_nState_LED(1));
+    
 rw_led: led_n
   generic map (
-    stretch_cnt => 6250000
-    )
+    stretch_cnt => 3)
   port map (
-    ena         => '1',
+    ena         => led_ena_cnt,     -- is every 10 ms for one clock period active
     clk         => clk_sys,
     Sig_in      => rw_signal,
-    nLED        => A_nState_LED(2),
-    nLED_opdrn  => open);
+    nLED        => open,
+    nLED_opdrn  => A_nState_LED(2));
     
   A_nDtack  <= not SCUB_Dtack;
   A_nSRQ    <= not SCUB_SRQ;
