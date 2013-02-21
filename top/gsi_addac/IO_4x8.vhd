@@ -52,20 +52,20 @@ USE IEEE.std_logic_1164.all;
 USE IEEE.numeric_std.all;
 
 entity IO_4x8 is
-	generic
-		(
-		Base_addr:	integer range 1 to 16#ffff# := 16#200#
-		);
-		
-	port
+  generic
     (
-		Adr_from_SCUB_LA:	  in		std_logic_vector(15 downto 0);	-- latched address from SCU_Bus
-		Data_from_SCUB_LA:	in		std_logic_vector(15 downto 0);	-- latched data from SCU_Bus 
-		Ext_Adr_Val:		    in		std_logic;							        -- '1' => "ADR_from_SCUB_LA" is valid
-		Ext_Rd_active:		  in		std_logic;							        -- '1' => Rd-Cycle is active
-		Ext_Wr_active:		  in		std_logic;							        -- '1' => Wr-Cycle is active
-		clk:				        in		std_logic;							        -- should be the same clk, used by SCU_Bus_Slave
-		nReset:				      in		std_logic := '1';
+    Base_addr:  integer range 1 to 16#ffff# := 16#200#
+    );
+    
+  port
+    (
+    Adr_from_SCUB_LA:   in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
+    Data_from_SCUB_LA:  in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
+    Ext_Adr_Val:        in    std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active:      in    std_logic;                      -- '1' => Rd-Cycle is active
+    Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
+    clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
+    nReset:             in    std_logic := '1';
     io:                 inout std_logic_vector(31 downto 0);
     io_7_0_tx:          out   std_logic;                      -- '1' = external IO-Data(7..0)-buffer set to output.
     ext_io_7_0_dis:     out   std_logic;                      -- '1' = disable external IO-Data(7..0)-buffer.
@@ -75,50 +75,50 @@ entity IO_4x8 is
     ext_io_23_16_dis:   out   std_logic;                      -- '1' = disable external IO-Data(23..16)-buffer.
     io_31_24_tx:        out   std_logic;                      -- '1' = external IO-Data(31..24)-buffer set to output
     ext_io_31_24_dis:   out   std_logic;                      -- '1' = disable external IO-Data(31..24)-buffer.
-		user_rd_active:	    out		std_logic;							        -- '1' = read data available at 'Data_to_SCUB'-output
-		Data_to_SCUB:		    out		std_logic_vector(15 downto 0);	-- connect read sources to SCUB-Macro
-		Dtack_to_SCUB:		  out		std_logic						          	-- connect Dtack to SCUB-Macro
-		);	
-	end IO_4x8;
+    user_rd_active:     out   std_logic;                      -- '1' = read data available at 'Data_to_SCUB'-output
+    Data_to_SCUB:       out   std_logic_vector(15 downto 0);  -- connect read sources to SCUB-Macro
+    Dtack_to_SCUB:      out   std_logic                       -- connect Dtack to SCUB-Macro
+    );  
+  end IO_4x8;
 
 
 architecture Arch_IO_4x8 of IO_4x8 is
 
-constant	addr_width:     					integer := Adr_from_SCUB_LA'length;
+constant  addr_width:               integer := Adr_from_SCUB_LA'length;
 constant  rw_cntrl_reg_addr_offset: integer := 0;
-constant	rw_io_15_0_addr_offset:		integer := 1;						-- address offset for read/write 16 bit IO(15 downto 0)
-constant	rw_io_31_16_addr_offset:	integer := 2;						-- address offset for read/write 16 bit IO(31 downto 16)
-constant	rw_io_7_0_addr_offset:  	integer := 3;						-- address offset for read/write 8 bit IO(7 downto 0)
-constant	rw_io_15_8_addr_offset:  	integer := 4;						-- address offset for read/write 8 bit IO(15 downto 8)
-constant	rw_io_23_16_addr_offset:  integer := 5;						-- address offset for read/write 8 bit IO(23 downto 16)
-constant	rw_io_31_24_addr_offset:  integer := 6;						-- address offset for read/write 8 bit IO(31 downto 24)
+constant  rw_io_15_0_addr_offset:   integer := 1;           -- address offset for read/write 16 bit IO(15 downto 0)
+constant  rw_io_31_16_addr_offset:  integer := 2;           -- address offset for read/write 16 bit IO(31 downto 16)
+constant  rw_io_7_0_addr_offset:    integer := 3;           -- address offset for read/write 8 bit IO(7 downto 0)
+constant  rw_io_15_8_addr_offset:   integer := 4;           -- address offset for read/write 8 bit IO(15 downto 8)
+constant  rw_io_23_16_addr_offset:  integer := 5;           -- address offset for read/write 8 bit IO(23 downto 16)
+constant  rw_io_31_24_addr_offset:  integer := 6;           -- address offset for read/write 8 bit IO(31 downto 24)
 
 -- address to read/write control register
-constant	rw_cntrl_reg_addr:  unsigned(addr_width-1 downto 0) := to_unsigned((Base_addr + rw_cntrl_reg_addr_offset), addr_width);
+constant  rw_cntrl_reg_addr:  unsigned(addr_width-1 downto 0) := to_unsigned((Base_addr + rw_cntrl_reg_addr_offset), addr_width);
 
 -- address to read/write IO(15 downto 0)
-constant	rw_io_15_0_addr: 	  unsigned(addr_width-1 downto 0) := to_unsigned((Base_addr + rw_io_15_0_addr_offset), addr_width);
+constant  rw_io_15_0_addr:    unsigned(addr_width-1 downto 0) := to_unsigned((Base_addr + rw_io_15_0_addr_offset), addr_width);
 
 -- address to read/write IO(31 downto 16)
-constant	rw_io_31_16_addr: 	unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + rw_io_31_16_addr_offset), addr_width);
+constant  rw_io_31_16_addr:   unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + rw_io_31_16_addr_offset), addr_width);
 
 -- address to read/write IO(7 downto 0)
-constant	rw_io_7_0_addr:   	unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + rw_io_7_0_addr_offset), addr_width);
+constant  rw_io_7_0_addr:     unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + rw_io_7_0_addr_offset), addr_width);
 
 -- address to read/write IO(15 downto 8)
-constant	rw_io_15_8_addr:   	unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + rw_io_15_8_addr_offset), addr_width);
+constant  rw_io_15_8_addr:    unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + rw_io_15_8_addr_offset), addr_width);
 
 -- address to read/write IO(23 downto 16)
-constant	rw_io_23_16_addr:   unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + rw_io_23_16_addr_offset), addr_width);
+constant  rw_io_23_16_addr:   unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + rw_io_23_16_addr_offset), addr_width);
 
 -- address to read/write IO(31 downto 24)
-constant	rw_io_31_24_addr:   unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + rw_io_31_24_addr_offset), addr_width);
+constant  rw_io_31_24_addr:   unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + rw_io_31_24_addr_offset), addr_width);
 
-signal		rd_io_15_0:	      std_logic;                      -- select for 16-bit read: io(15 downto 0)
-signal		wr_io_15_0:	      std_logic;                      -- select for 16-bit write: io(15 downto 0)
+signal    rd_io_15_0:       std_logic;                      -- select for 16-bit read: io(15 downto 0)
+signal    wr_io_15_0:       std_logic;                      -- select for 16-bit write: io(15 downto 0)
 
-signal		rd_io_31_16:  		std_logic;                      -- select for 16-bit read: io(31 downto 16)
-signal		wr_io_31_16:  		std_logic;                      -- select for 16-bit write: io(31 downto 16)
+signal    rd_io_31_16:      std_logic;                      -- select for 16-bit read: io(31 downto 16)
+signal    wr_io_31_16:      std_logic;                      -- select for 16-bit write: io(31 downto 16)
 
 signal    rd_io_7_0:        std_logic;                      -- select for 8-bit read: io(7 downto 0)
 signal    wr_io_7_0:        std_logic;                      -- select for 8-bit write: io(7 downto 0)
@@ -160,14 +160,14 @@ signal    out_byte4:          std_logic_vector(7 downto 0); -- output latch for 
 
 begin
 
-P_Adr_Deco:	process (nReset, clk)
-	begin
-		if nReset = '0' then
+P_Adr_Deco: process (nReset, clk)
+  begin
+    if nReset = '0' then
       rd_cntrl_reg  <= '0';
       wr_cntrl_reg  <= '0';
-			rd_io_15_0    <= '0';
+      rd_io_15_0    <= '0';
       wr_io_15_0    <= '0';
-			rd_io_31_16   <= '0';
+      rd_io_31_16   <= '0';
       wr_io_31_16   <= '0';
       rd_io_7_0     <= '0';  
       wr_io_7_0     <= '0';  
@@ -177,15 +177,15 @@ P_Adr_Deco:	process (nReset, clk)
       wr_io_23_16   <= '0';
       rd_io_31_24   <= '0';
       wr_io_31_24   <= '0';
-			S_Dtack       <= '0';
-			user_rd_active <= '0';
-		
-		elsif rising_edge(clk) then
+      S_Dtack       <= '0';
+      user_rd_active <= '0';
+    
+    elsif rising_edge(clk) then
       rd_cntrl_reg  <= '0';
       wr_cntrl_reg  <= '0';
-			rd_io_15_0    <= '0';
+      rd_io_15_0    <= '0';
       wr_io_15_0    <= '0';
-			rd_io_31_16   <= '0';
+      rd_io_31_16   <= '0';
       wr_io_31_16   <= '0';
       rd_io_7_0     <= '0';  
       wr_io_7_0     <= '0';  
@@ -195,12 +195,12 @@ P_Adr_Deco:	process (nReset, clk)
       wr_io_23_16   <= '0';
       rd_io_31_24   <= '0';
       wr_io_31_24   <= '0';
-			S_Dtack       <= '0';
-			user_rd_active <= '0';
-			
-			if Ext_Adr_Val = '1' then
+      S_Dtack       <= '0';
+      user_rd_active <= '0';
+      
+      if Ext_Adr_Val = '1' then
 
-				case unsigned(ADR_from_SCUB_LA) IS
+        case unsigned(ADR_from_SCUB_LA) IS
         
           when rw_cntrl_reg_addr =>
             if Ext_Rd_active = '1' then
@@ -223,7 +223,7 @@ P_Adr_Deco:	process (nReset, clk)
                 rd_io_15_0  <= '1';
                 user_rd_active <= '1';
               end if;
-						end if;
+            end if;
             if Ext_Wr_active = '1' then
               if (s_io_15_8_tx = '1') and (s_io_7_0_tx = '1')       -- direction of both data buffer must be set to output
                 and (s_ext_io_15_8_dis = '0') and (s_ext_io_7_0_dis = '0')  -- both buffer must be enabled
@@ -234,8 +234,8 @@ P_Adr_Deco:	process (nReset, clk)
             end if;
 
 
-					when rw_io_31_16_addr =>                                    -- read-write io(31..16)
-						if Ext_Rd_active = '1' then
+          when rw_io_31_16_addr =>                                    -- read-write io(31..16)
+            if Ext_Rd_active = '1' then
               if (s_io_31_24_tx = '0') and (s_io_23_16_tx = '0')      -- direction of both data buffer must be set to input
                 and (s_ext_io_31_24_dis = '0') and (s_ext_io_23_16_dis = '0')  -- both buffer must be enabled
               then
@@ -243,7 +243,7 @@ P_Adr_Deco:	process (nReset, clk)
                 rd_io_31_16 <= '1';
                 user_rd_active <= '1';
               end if;
-						end if;
+            end if;
             if Ext_Wr_active = '1' then
               if (s_io_31_24_tx = '1') and (s_io_23_16_tx = '1')      -- direction of both data buffer must be set to input
                 and (s_ext_io_31_24_dis = '0') and (s_ext_io_23_16_dis = '0')  -- both buffer must be enabled
@@ -260,7 +260,7 @@ P_Adr_Deco:	process (nReset, clk)
                 rd_io_7_0 <= '1';
                 user_rd_active <= '1';
               end if;
-						end if;
+            end if;
             if Ext_Wr_active = '1' then
               if (s_io_7_0_tx = '1') and (s_ext_io_7_0_dis = '0') then -- direction of data buffer must be enabled and set to output
                 S_Dtack   <= '1';
@@ -275,7 +275,7 @@ P_Adr_Deco:	process (nReset, clk)
                 rd_io_15_8 <= '1';
                 user_rd_active <= '1';
               end if;
-						end if;
+            end if;
             if Ext_Wr_active = '1' then
               if (s_io_15_8_tx = '1') and (s_ext_io_15_8_dis = '0') then -- direction of data buffer must be enabled and set to output
                 S_Dtack   <= '1';
@@ -290,7 +290,7 @@ P_Adr_Deco:	process (nReset, clk)
                 rd_io_23_16 <= '1';
                 user_rd_active <= '1';
               end if;
-						end if;
+            end if;
             if Ext_Wr_active = '1' then
               if (s_io_23_16_tx = '1') and (s_ext_io_23_16_dis = '0') then -- direction of data buffer must be enabled and set to output
                 S_Dtack   <= '1';
@@ -305,7 +305,7 @@ P_Adr_Deco:	process (nReset, clk)
                 rd_io_31_24 <= '1';
                 user_rd_active <= '1';
               end if;
-						end if;
+            end if;
             if Ext_Wr_active = '1' then
               if (s_io_31_24_tx = '1') and (s_ext_io_31_24_dis = '0') then -- direction of data buffer must be enabled and set to output
                 S_Dtack   <= '1';
@@ -331,10 +331,10 @@ P_Adr_Deco:	process (nReset, clk)
               S_Dtack       <= '0';
               user_rd_active <= '0';
 
-				end case;
-			end if;
-		end if;
-	end process P_Adr_Deco;
+        end case;
+      end if;
+    end if;
+  end process P_Adr_Deco;
   
 
 p_cntrl:  process (nReset, clk)

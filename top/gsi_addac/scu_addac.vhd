@@ -22,7 +22,7 @@ entity scu_addac is
     A_RnW:                in    std_logic;                      -- Schreib/Lese-Signal vom Master getrieben, '0' => lesen
     A_nSel_Ext_Data_Drv:  out   std_logic;                      -- '0' => externe Datentreiber des Slaves aktiv
     A_Ext_Data_RD:        out   std_logic;                      -- '0' => externe Datentreiber-Richtung: SCU-Bus nach
-                                                                --  Slave (besser default 0, oder Treiber A/B tauschen)
+                                                                -- Slave (besser default 0, oder Treiber A/B tauschen)
                                                                 -- SCU-Bus nach Slave (besser default 0, oder Treiber A/B tauschen)
     A_nDtack:             out   std_logic;                      -- Data-Acknowlege null aktiv, '0' => aktiviert externen
                                                                 -- Opendrain-Treiber
@@ -45,7 +45,7 @@ entity scu_addac is
     a_ext_io_23_16_dis:   out   std_logic;                      -- '1' = disable external io(23..16)-buffer.
     a_ext_io_31_24_dis:   out   std_logic;                      -- '1' = disable external io(31..24)-buffer.
     a_io:                 inout std_logic_vector(31 downto 0);  -- select and set direction only in 8-bit partitions
-          
+
     A_nState_LED:         out   std_logic_vector(2 downto 0)    -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
   );
 end entity;
@@ -250,10 +250,8 @@ sel_led: led_n
     );
     
 dtack_led: led_n
-  generic map
-    (
-    stretch_cnt => 3
-    )
+  generic map (
+    stretch_cnt => 3)
   port map
     (
     ena         => led_ena_cnt,     -- is every 10 ms for one clock period active
