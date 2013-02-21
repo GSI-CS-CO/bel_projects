@@ -140,7 +140,6 @@ end component IO_4x8;
   signal SCUB_Dtack:  std_logic;
   signal convst:      std_logic;
   signal rst:         std_logic;
-  signal nReset:      std_logic;
   
   signal  io_7_0_tx:        std_logic;        
   signal  ext_da_7_0_dis:   std_logic;     
@@ -164,11 +163,11 @@ end component IO_4x8;
   signal  Ext_Rd_active:      std_logic;
   signal  Ext_Wr_active:      std_logic;
   signal  nPowerup_Res:       std_logic;
+  
+  signal  rw_signal:           std_logic;
 
+  
   begin
-
-
-rst <= not nReset;
 
   -- Obtain core clocking
   sys_pll_inst : sys_pll    -- Altera megafunction
@@ -187,7 +186,7 @@ rst <= not nReset;
     byte_ser_mode => false)
   port map (
     clk           =>  clk_sys,
-    nrst          =>  nReset,
+    nrst          =>  nPowerup_Res,
     conv_en       => '1',
     transfer_mode => "00",
     db            => ADC_DB(13 downto 0),
@@ -318,7 +317,9 @@ dtack_led: led_n
     Sig_in      => SCUB_Dtack,
     nLED        => A_nState_LED(1),
     nLED_opdrn  => open);
-    
+ 
+ 
+rw_signal <= not A_RnW and not A_nBoardSel;
 rw_led: led_n
   generic map (
     stretch_cnt => 6250000
@@ -326,7 +327,7 @@ rw_led: led_n
   port map (
     ena         => '1',
     clk         => clk_sys,
-    Sig_in      => not A_RnW,
+    Sig_in      => rw_signal,
     nLED        => A_nState_LED(2),
     nLED_opdrn  => open);
     
