@@ -33,19 +33,33 @@ entity scu_addac is
     A_Spare0:             in    std_logic;                      -- vom Master getrieben
     A_Spare1:             in    std_logic;                      -- vom Master getrieben
     A_nReset:             in    std_logic;                      -- Reset (aktiv '0'), vom Master getrieben
-    -------------------------------------------------------------------------------------------------------------------
-          
-    ADC_DB:               inout std_logic_vector(15 downto 0);
-    ADC_CONVST_A:         out   std_logic;
-    ADC_CONVST_B:         out   std_logic;
-    nADC_CS:              out   std_logic;
-    nADC_RD_SCLK:         out   std_logic;
-    ADC_BUSY:             in    std_logic;
-    ADC_RESET:            out   std_logic;
-    ADC_OS:               out   std_logic_vector(2 downto 0);
-    nADC_PAR_SER_SEL:     out   std_logic := '0';
-    ADC_Range:            out   std_logic;
-    ADC_FRSTDATA:         in    std_logic;
+
+    ------------ ADC Signals ------------------------------------------------------------------------------------------
+    ADC_DB:               inout   std_logic_vector(15 downto 0);
+    ADC_CONVST_A:         buffer  std_logic;
+    ADC_CONVST_B:         buffer  std_logic;
+    nADC_CS:              buffer  std_logic;
+    nADC_RD_SCLK:         buffer  std_logic;
+    ADC_BUSY:             in      std_logic;
+    ADC_RESET:            buffer  std_logic;
+    ADC_OS:               buffer  std_logic_vector(2 downto 0);
+    nADC_PAR_SER_SEL:     buffer  std_logic := '0';
+    ADC_Range:            buffer  std_logic;
+    ADC_FRSTDATA:         in      std_logic;
+    ------------ ADC Diagnostic ---------------------------------------------------------------------------------------
+    A_ADC_DAC_SEL:        in      std_logic_vector(3 downto 0);
+
+    ------------ DAC Signals ------------------------------------------------------------------------------------------
+    DAC1_SDI:             buffer  std_logic;                    -- is connected to DAC1-SDI 
+    nDAC1_CLK:            buffer  std_logic;                    -- spi-clock of DAC1
+    nDAC1_CLR:            buffer  std_logic;                    -- '0' set DAC1 to zero (pulse width min 200 ns)
+    nDAC1_A0:             buffer  std_logic;                    -- '0' enable shift of internal shift register of DAC1
+    nDAC1_A1:             buffer  std_logic;                    -- '0' copy shift register to output latch of DAC1
+    DAC2_SDI:             buffer  std_logic;                    -- is connected to DAC2-SDI 
+    nDAC2_CLK:            buffer  std_logic;                    -- spi-clock of DAC2
+    nDAC2_CLR:            buffer  std_logic;                    -- '0' set DAC2 to zero (pulse width min 200 ns)
+    nDAC2_A0:             buffer  std_logic;                    -- '0' enable shift of internal shift register of DAC2
+    nDAC2_A1:             buffer  std_logic;                    -- '0' copy shift register to output latch of DAC2
     
     ------------ IO-Port-Signale --------------------------------------------------------------------------------------
     a_io_7_0_tx:          out   std_logic;                      -- '1' = external io(7..0)-buffer set to output.
@@ -57,16 +71,28 @@ entity scu_addac is
     a_ext_io_23_16_dis:   out   std_logic;                      -- '1' = disable external io(23..16)-buffer.
     a_ext_io_31_24_dis:   out   std_logic;                      -- '1' = disable external io(31..24)-buffer.
     a_io:                 inout std_logic_vector(31 downto 0);  -- select and set direction only in 8-bit partitions
+    
+    ------------ Logic analyser Signals -------------------------------------------------------------------------------
+    A_SEL:                in    std_logic_vector(3 downto 0);   -- use to select sources for the logic analyser ports
+    A_TA:                 out   std_logic_vector(15 downto 0);  -- test port a
+    A_TB:                 out   std_logic_vector(15 downto 0);  -- test port b
 
     A_nState_LED:         out   std_logic_vector(2 downto 0);   -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
-    A_nLED:               out std_logic_vector(15 downto 0));
+    A_nLED:               out   std_logic_vector(15 downto 0));
 end entity;
 
 
 
 architecture scu_addac_arch of scu_addac is
 
-  component ad7606  is
+
+constant  scu_adda1_id:       integer range 16#0210# to 16#021F# := 16#0210#;
+
+constant  clk_sys_in_Hz:      integer := 65_500_000;
+constant  dac_spi_clk_in_hz:  integer := 10_000_000;
+
+
+component ad7606  is
   generic (
     clk_in_hz:      integer := 50_000_000;    -- 50Mhz
     sclk_in_hz:     integer := 14_500_000;    -- 14,5Mhz
@@ -85,7 +111,7 @@ architecture scu_addac_arch of scu_addac is
     conv_en:        in std_logic;
     transfer_mode:  in std_logic_vector(1 downto 0);  -- select communication mode
                                                       --	00: par
-                                                      --	01: ser																			
+                                                      --	01: ser
     db:             in std_logic_vector(13 downto 0); -- databus from the ADC
     db14_hben:      inout std_logic;                  -- hben in mode ser
     db15_byte_sel:  inout std_logic;                  -- byte sel in mode ser
@@ -111,8 +137,31 @@ architecture scu_addac_arch of scu_addac is
     channel_8:      out std_logic_vector(15 downto 0));
 end component ad7606;
 
-constant  scu_adda1_id:   integer range 16#0210# to 16#021F# := 16#0210#;
-constant  clk_sys_in_Hz:  integer := 65_500_000;
+
+component DAC_SPI
+  generic (
+    Base_addr:        integer range 1 to 16#ffff# := 16#300#;
+    CLK_in_Hz:        integer := 100_000_000;
+    SPI_CLK_in_Hz:    integer := 10_000_000 );
+  port (
+    Adr_from_SCUB_LA:   in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
+    Data_from_SCUB_LA:  in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
+    Ext_Adr_Val:        in    std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active:      in    std_logic;                      -- '1' => Rd-Cycle is active
+    Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
+    Ext_Wr_fin:         in    std_logic;                      -- '1' => Wr-Cycle is finished
+    clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
+    nReset:             in    std_logic := '1';
+    DAC_SI:             out   std_logic;
+    nDAC_CLK:           out   std_logic;
+    nCS_DAC:            out   std_logic;
+    nLD_DAC:            out   std_logic;
+    nCLR_DAC:           out   std_logic;
+    Rd_Port:            out   std_logic_vector(15 downto 0);
+    Rd_Activ:           out   std_logic;
+    Dtack:              out   std_logic
+    );
+end component DAC_SPI;
 
 
 component IO_4x8
@@ -156,16 +205,29 @@ component IO_4x8
   signal  io_port_data_to_SCUB:   std_logic_vector(15 downto 0);
   signal  io_port_rd_active:      std_logic;
   
+  signal  dac1_Dtack:         std_logic;
+  signal  dac1_data_to_SCUB:  std_logic_vector(15 downto 0);
+  signal  dac1_rd_active:     std_logic;
+  
+  signal  dac2_Dtack:         std_logic;
+  signal  dac2_data_to_SCUB:  std_logic_vector(15 downto 0);
+  signal  dac2_rd_active:     std_logic;
+  
   signal  ADR_from_SCUB_LA:   std_logic_vector(15 downto 0);
   signal  Data_from_SCUB_LA:  std_logic_vector(15 downto 0);
   signal  Ext_Adr_Val:        std_logic;
   signal  Ext_Rd_active:      std_logic;
   signal  Ext_Wr_active:      std_logic;
+  signal  Ext_Wr_fin:         std_logic;
   signal  nPowerup_Res:       std_logic;
   
-  signal  rw_signal:           std_logic;
+  signal  rw_signal:          std_logic;
   signal  led_ena_cnt:        std_logic;
 
+  signal  ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4: std_logic_vector(15 downto 0);
+  signal  ADC_channel_5, ADC_channel_6, ADC_channel_7, ADC_channel_8: std_logic_vector(15 downto 0);
+  
+  
   begin
   
   -- Obtain core clocking
@@ -203,14 +265,14 @@ component IO_4x8
     firstdata     => ADC_FRSTDATA,
     leds          => open,
     sw_high_byte  => '0',
-    channel_1     => A_nLED,
-    channel_2     => open,
-    channel_3     => open,
-    channel_4     => open,
-    channel_5     => open,
-    channel_6     => open,
-    channel_7     => open,
-    channel_8     => open);
+    channel_1     => ADC_channel_1,
+    channel_2     => ADC_channel_2,
+    channel_3     => ADC_channel_3,
+    channel_4     => ADC_channel_4,
+    channel_5     => ADC_channel_5,
+    channel_6     => ADC_channel_6,
+    channel_7     => ADC_channel_7,
+    channel_8     => ADC_channel_8);
 
 
 SCU_Slave: SCU_Bus_Slave
@@ -260,7 +322,7 @@ port map (
     Ext_Rd_Fin_ovl      =>  open,                   -- out,	marks end of read cycle, active one for one clock period
                                                     --          of clk during cycle end (overlap)
     Ext_Wr_active       =>  Ext_Wr_active,          -- out,	'1' => Wr-Cycle to external user register is active
-    Ext_Wr_fin          =>  open,                   -- out,	marks end of write cycle, active one for one clock period
+    Ext_Wr_fin          =>  Ext_wr_fin,             -- out,	marks end of write cycle, active one for one clock period
                                                     --          of clk past cycle end (no overlap)
     Ext_Wr_fin_ovl      =>  open,
     Deb_SCUB_Reset_out	=>  open,                   -- out,	the debounced 'nSCUB_Reset_In'-signal, is active high,
@@ -269,9 +331,59 @@ port map (
     nPowerup_Res        =>  nPowerup_Res);          -- out,	this macro generated a power up reset
 
 
+dac_1: DAC_SPI
+  generic map(
+    Base_addr       => 16#200#,
+    CLK_in_Hz       => clk_sys_in_Hz,
+    SPI_CLK_in_Hz   => dac_spi_clk_in_hz )
+  port map(
+    Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,       -- in, latched address from SCU_Bus
+    Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- in, latched data from SCU_Bus 
+    Ext_Adr_Val         =>  Ext_Adr_Val,            -- in, '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active       =>  Ext_Rd_active,          -- in, '1' => Rd-Cycle is active
+    Ext_Wr_active       =>  Ext_Wr_active,          -- in, '1' => Wr-Cycle is active
+    Ext_Wr_fin          =>  Ext_Wr_fin,              -- in, '1' => Wr-Cycle is finished
+    clk                 =>  clk_sys,                -- in, should be the same clk, used by SCU_Bus_Slave
+    nReset              =>  nPowerup_Res,           -- in, '0' => resets the DAC_1
+    DAC_SI              =>  DAC1_SDI,               -- out, is connected to DAC1-SDI
+    nDAC_CLK            =>  nDAC1_CLK,              -- out, spi-clock of DAC1
+    nCS_DAC             =>  nDAC1_A0,               -- out, '0' enable shift of internal shift register of DAC1
+    nLD_DAC             =>  nDAC1_A1,               -- out, '0' copy shift register to output latch of DAC1
+    nCLR_DAC            =>  nDAC1_CLR,              -- out, '0' set DAC1 to zero (pulse width min 200 ns)
+    Rd_Port             =>  dac1_data_to_SCUB,      -- out, connect read sources (over multiplexer) to SCUB-Macro
+    Rd_Activ            =>  dac1_rd_active,         -- out, '1' = read data available at 'Data_to_SCUB'-output
+    Dtack               =>  dac1_dtack
+    );
+
+    
+dac_2: DAC_SPI
+  generic map(
+    Base_addr       => 16#210#,
+    CLK_in_Hz       => clk_sys_in_Hz,
+    SPI_CLK_in_Hz   => dac_spi_clk_in_hz )
+  port map(
+    Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,       -- in, latched address from SCU_Bus
+    Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- in, latched data from SCU_Bus 
+    Ext_Adr_Val         =>  Ext_Adr_Val,            -- in, '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active       =>  Ext_Rd_active,          -- in, '1' => Rd-Cycle is active
+    Ext_Wr_active       =>  Ext_Wr_active,          -- in, '1' => Wr-Cycle is active
+    Ext_Wr_fin          =>  Ext_Wr_fin,              -- in, '1' => Wr-Cycle is finished
+    clk                 =>  clk_sys,                -- in, should be the same clk, used by SCU_Bus_Slave
+    nReset              =>  nPowerup_Res,           -- in, '0' => resets the DAC_2
+    DAC_SI              =>  DAC2_SDI,               -- out, is connected to DAC2-SDI
+    nDAC_CLK            =>  nDAC2_CLK,              -- out, spi-clock of DAC2
+    nCS_DAC             =>  nDAC2_A0,               -- out, '0' enable shift of internal shift register of DAC2
+    nLD_DAC             =>  nDAC2_A1,               -- out, '0' copy shift register to output latch of DAC2
+    nCLR_DAC            =>  nDAC2_CLR,              -- out, '0' set DAC2 to zero (pulse width min 200 ns)
+    Rd_Port             =>  dac2_data_to_SCUB,      -- out, connect read sources (over multiplexer) to SCUB-Macro
+    Rd_Activ            =>  dac2_rd_active,         -- out, '1' = read data available at 'Data_to_SCUB'-output
+    Dtack               =>  dac2_dtack
+    );
+
+
 io_port:  IO_4x8
   generic map (
-    Base_addr   => 16#200#)
+    Base_addr   => 16#220#)
   port map (
     Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,       -- in, latched address from SCU_Bus
     Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- in, latched data from SCU_Bus 
@@ -306,7 +418,57 @@ p_led_ena:  div_n
                                     --     clock domain and should be only one clock period active.
     div_o   => led_ena_cnt);        -- out, div_o becomes '1' for one clock period, if "div_n" arrive n-1 clocks
                                     --      (if ena is permanent '1').
- 
+
+
+p_test_port_mux: process (
+    DAC1_SDI, nDAC1_CLK, nDAC1_A0, nDAC1_A1, nDAC1_CLR,
+    DAC2_SDI, nDAC2_CLK, nDAC2_A0, nDAC2_A1, nDAC2_CLR,
+    ADC_Range, ADC_FRSTDATA,
+    ADC_CONVST_A, ADC_CONVST_B, nADC_CS, nADC_RD_SCLK, ADC_BUSY, ADC_RESET, ADC_OS, nADC_PAR_SER_SEL,
+    A_SEL(3 downto 0)
+    )
+  begin
+    case not A_SEL IS
+
+      when X"0" =>
+        A_TA <= '0' & DAC2_SDI & nDAC2_CLK & nDAC2_A0 & nDAC2_A1 & nDAC2_CLR & dac2_rd_active & dac2_dtack &
+                '0' & DAC1_SDI & nDAC1_CLK & nDAC1_A0 & nDAC1_A1 & nDAC1_CLR & dac1_rd_active & dac1_dtack;
+        A_TB <= X"0000";
+
+      when X"1" =>
+        A_TA <= X"0" & ADC_Range & ADC_FRSTDATA & ADC_CONVST_A & ADC_CONVST_B &
+                nADC_CS & nADC_RD_SCLK & ADC_BUSY & ADC_RESET & ADC_OS & nADC_PAR_SER_SEL;
+        A_TB <= ADC_DB(15 downto 0);
+
+      when others =>
+        A_TA <= (others => '0');
+        A_TB <= (others => '0');
+    end case;
+
+  end process p_test_port_mux;
+
+
+p_led_mux: process (
+    ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4,
+    ADC_channel_5, ADC_channel_6, ADC_channel_7, ADC_channel_8,
+    A_ADC_DAC_SEL(3 downto 0)
+    )
+  begin
+    case not A_ADC_DAC_SEL IS
+      when X"0" => A_nLED <= not ADC_channel_1;
+      when X"1" => A_nLED <= not ADC_channel_2;
+      when X"2" => A_nLED <= not ADC_channel_3;
+      when X"3" => A_nLED <= not ADC_channel_4;
+      when X"4" => A_nLED <= not ADC_channel_5;
+      when X"5" => A_nLED <= not ADC_channel_6;
+      when X"6" => A_nLED <= not ADC_channel_7;
+      when X"7" => A_nLED <= not ADC_channel_8;
+      when others =>
+        A_nLED <= (others => '1');
+    end case;
+  end process p_led_mux;
+  
+
 rw_signal <= not A_RnW and not A_nBoardSel;
   
 sel_led: led_n
