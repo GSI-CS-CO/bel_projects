@@ -88,7 +88,7 @@ architecture scu_addac_arch of scu_addac is
 
 constant  scu_adda1_id:       integer range 16#0210# to 16#021F# := 16#0210#;
 
-constant  clk_sys_in_Hz:      integer := 65_500_000;
+constant  clk_sys_in_Hz:      integer := 62_500_000;
 constant  dac_spi_clk_in_hz:  integer := 10_000_000;
 
 
