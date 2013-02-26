@@ -1,5 +1,4 @@
 files = [
-  "Debounce.vhd",
   "Epcs_spi.vhd",
   "f_divider.vhd",
   "global_reg.vhd",

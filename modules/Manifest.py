@@ -13,6 +13,8 @@ modules = {
     "modulbus",
     "chopper",
     "cfi_flash",
-    "lpc_uart"
+    "lpc_uart",
+    "aux_functions",
+    "function_generators"
   ]
 }
