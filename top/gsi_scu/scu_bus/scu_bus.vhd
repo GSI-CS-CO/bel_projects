@@ -321,8 +321,8 @@ begin
       pcie_rstn_i   => nPCI_RESET,    -- External PCIe system reset pin
       pcie_rx_i     => pcie_rx_i,
       pcie_tx_o     => pcie_tx_o,
-      wb_clk        => clk_sys,       -- Desired clock for the WB bus
-      wb_rstn_i     => clk_sys_rstn,
+      master_clk_i  => clk_sys,       -- Desired clock for the WB bus
+      master_rstn_i => clk_sys_rstn,
       master_o      => cbar_slave_i(0),
       master_i      => cbar_slave_o(0));
   
