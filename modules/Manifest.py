@@ -12,6 +12,7 @@ modules = {
     "trans_pll",
     "modulbus",
     "chopper",
-    "cfi_flash"
+    "cfi_flash",
+    "lpc_uart"
   ]
 }
