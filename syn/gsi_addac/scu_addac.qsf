@@ -52,7 +52,7 @@ set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_RO
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
-set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
+set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_location_assignment PIN_V14 -to A_A[15]
 set_location_assignment PIN_U16 -to A_A[14]
 set_location_assignment PIN_V16 -to A_A[13]
@@ -307,7 +307,7 @@ set_location_assignment PIN_C19 -to a_ext_io_15_8_dis
 set_location_assignment PIN_P7 -to a_ext_io_23_16_dis
 set_location_assignment PIN_N7 -to a_ext_io_31_24_dis
 
-set_global_assignment -name USE_CONFIGURATION_DEVICE OFF
+set_global_assignment -name USE_CONFIGURATION_DEVICE ON
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
 set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
 set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
@@ -413,23 +413,6 @@ set_location_assignment PIN_A2 -to nADC_CS
 set_location_assignment PIN_C3 -to nADC_PAR_SER_SEL
 set_global_assignment -name FLOW_ENABLE_RTL_VIEWER ON
 set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
-set_global_assignment -name VHDL_FILE ../../top/gsi_addac/DAC_SPI.vhd
-set_global_assignment -name VHDL_FILE ../../top/gsi_addac/IO_4x8.vhd
-set_global_assignment -name VHDL_FILE ../../top/gsi_addac/ad7606.vhd
-set_global_assignment -name VHDL_FILE "../../../../gsi-timing-starter-kit/wr-cores/ip_cores/general-cores/modules/genrams/genram_pkg.vhd"
-set_global_assignment -name VHDL_FILE "../../../../gsi-timing-starter-kit/wr-cores/platform/altera/altera_pkg.vhd"
-set_global_assignment -name VHDL_FILE ../../top/gsi_addac/scu_addac.vhd
-set_global_assignment -name VHDL_FILE ../../../../hdl_cores/scu_bus/scu_bus_slave_pkg.vhd
-set_global_assignment -name VHDL_FILE "../../../../gsi-timing-starter-kit/wr-cores/ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd"
-set_global_assignment -name VHDL_FILE "../../../../gsi-timing-starter-kit/wr-cores/platform/altera/sys_pll/sys_pll.vhd"
-set_global_assignment -name VHDL_FILE ../../../../hdl_cores/scu_bus/scu_bus_slave.vhd
-set_global_assignment -name VHDL_FILE ../../../../hdl_cores/aux_functions/aux_functions_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../../hdl_cores/aux_functions/Debounce.vhd
-set_global_assignment -name SIGNALTAP_FILE stp1.stp
-set_global_assignment -name VHDL_FILE ../../../../hdl_cores/aux_functions/led_n.vhd
-set_global_assignment -name VHDL_FILE ../../../../hdl_cores/aux_functions/div_n.vhd
-set_global_assignment -name CDF_FILE ../../../scu_addac/output_files/scu_addac.cdf
-set_global_assignment -name SDC_FILE ../../top/gsi_addac/gsi_addac.sdc
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to DAC1_SDI
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to DAC1_SDO
 set_location_assignment PIN_P1 -to nDAC1_CLK
@@ -501,4 +484,29 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nState_LED[2]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nState_LED[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nState_LED[0]
+set_global_assignment -name STRATIXIII_CONFIGURATION_SCHEME "ACTIVE SERIAL"
+set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCS128
+set_global_assignment -name FORCE_CONFIGURATION_VCCIO ON
+set_global_assignment -name CONFIGURATION_VCCIO_LEVEL 3.3V
+set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
+set_global_assignment -name VHDL_FILE ../../top/gsi_addac/flash_loader_v01.vhd
+set_global_assignment -name VHDL_FILE ../../top/gsi_addac/DAC_SPI.vhd
+set_global_assignment -name VHDL_FILE ../../top/gsi_addac/IO_4x8.vhd
+set_global_assignment -name VHDL_FILE ../../top/gsi_addac/ad7606.vhd
+set_global_assignment -name VHDL_FILE "../../../../gsi-timing-starter-kit/wr-cores/ip_cores/general-cores/modules/genrams/genram_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../../gsi-timing-starter-kit/wr-cores/platform/altera/altera_pkg.vhd"
+set_global_assignment -name VHDL_FILE ../../top/gsi_addac/scu_addac.vhd
+set_global_assignment -name VHDL_FILE ../../../../hdl_cores/scu_bus/scu_bus_slave_pkg.vhd
+set_global_assignment -name VHDL_FILE "../../../../gsi-timing-starter-kit/wr-cores/ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../../gsi-timing-starter-kit/wr-cores/platform/altera/sys_pll/sys_pll.vhd"
+set_global_assignment -name VHDL_FILE ../../../../hdl_cores/scu_bus/scu_bus_slave.vhd
+set_global_assignment -name VHDL_FILE ../../../../hdl_cores/aux_functions/aux_functions_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../../hdl_cores/aux_functions/Debounce.vhd
+set_global_assignment -name SIGNALTAP_FILE stp1.stp
+set_global_assignment -name VHDL_FILE ../../../../hdl_cores/aux_functions/led_n.vhd
+set_global_assignment -name VHDL_FILE ../../../../hdl_cores/aux_functions/div_n.vhd
+set_global_assignment -name CDF_FILE ../../../scu_addac/output_files/scu_addac.cdf
+set_global_assignment -name SDC_FILE ../../top/gsi_addac/gsi_addac.sdc
+set_global_assignment -name CDF_FILE scu_addac.cdf
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

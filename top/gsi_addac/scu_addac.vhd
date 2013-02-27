@@ -140,7 +140,7 @@ end component ad7606;
 
 component DAC_SPI
   generic (
-    Base_addr:        integer range 1 to 16#ffff# := 16#300#;
+    Base_addr:        unsigned(15 downto 0);
     CLK_in_Hz:        integer := 100_000_000;
     SPI_CLK_in_Hz:    integer := 10_000_000 );
   port (
@@ -166,10 +166,10 @@ end component DAC_SPI;
 
 component IO_4x8
   generic (
-      Base_addr:  integer range 1 to 16#ffff# := 16#200#);
+      Base_addr:  unsigned(15 downto 0));
   port (
     Adr_from_SCUB_LA:   in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
-    Data_from_SCUB_LA:	in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
+    Data_from_SCUB_LA:  in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
     Ext_Adr_Val:        in    std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
     Ext_Rd_active:      in    std_logic;                      -- '1' => Rd-Cycle is active
     Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
@@ -189,6 +189,14 @@ component IO_4x8
     Dtack_to_SCUB:      out   std_logic                       -- connect Dtack to SCUB-Macro
     );  
   end component IO_4x8;
+
+ 
+component flash_loader_v01
+  port (
+    noe_in: in  std_logic
+    );
+  end component;
+
   
   signal clk_sys, clk_cal, rstn, locked : std_logic;
   
@@ -197,8 +205,6 @@ component IO_4x8
   signal convst:      std_logic;
   signal rst:         std_logic;
   
-  signal  user_rd_active:     std_logic;     
-  signal  Data_to_SCUB:       std_logic;       
   signal  Dtack_to_SCUB:      std_logic;
 
   signal  io_port_Dtack_to_SCUB:  std_logic;
@@ -226,10 +232,14 @@ component IO_4x8
 
   signal  ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4: std_logic_vector(15 downto 0);
   signal  ADC_channel_5, ADC_channel_6, ADC_channel_7, ADC_channel_8: std_logic_vector(15 downto 0);
-  
-  
+
+  signal  Data_to_SCUB:       std_logic_vector(15 downto 0);
+
   begin
-  
+
+fl : flash_loader_v01
+port map (noe_in	=>	'0');
+
   -- Obtain core clocking
   sys_pll_inst : sys_pll    -- Altera megafunction
   port map (
@@ -239,7 +249,7 @@ component IO_4x8
     locked => locked);      -- '1' when the PLL has locked
 
   
-  adc: ad7606
+adc: ad7606
   generic map (
     clk_in_Hz     => clk_sys_in_Hz,
     ser_mode      => false,
@@ -275,6 +285,8 @@ component IO_4x8
     channel_8     => ADC_channel_8);
 
 
+Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack;
+
 SCU_Slave: SCU_Bus_Slave
 generic map (
     CLK_in_Hz         =>  clk_sys_in_Hz,
@@ -295,8 +307,8 @@ port map (
     SCUB_RDnWR          =>  A_RnW,                  -- in,      SCU_Bus: '1' => SCU master read slave
     clk                 =>  clk_sys,  
     nSCUB_Reset_in      =>  A_nReset,               -- in,	SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
-    Data_to_SCUB        =>  io_port_data_to_SCUB,   -- in,	connect read sources from external user functions
-    Dtack_to_SCUB       =>  io_port_Dtack_to_SCUB,  -- in,	connect Dtack from from external user functions
+    Data_to_SCUB        =>  Data_to_SCUB,           -- in,	connect read sources from external user functions
+    Dtack_to_SCUB       =>  Dtack_to_SCUB,          -- in,	connect Dtack from from external user functions
     Intr_In             =>  "000000000000000",      -- in,	interrupt(15 downro 1)
     User_Ready          =>  '1',
     Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- out,	latched data from SCU_Bus for external user functions 
@@ -333,7 +345,7 @@ port map (
 
 dac_1: DAC_SPI
   generic map(
-    Base_addr       => 16#200#,
+    Base_addr       => x"0200",
     CLK_in_Hz       => clk_sys_in_Hz,
     SPI_CLK_in_Hz   => dac_spi_clk_in_hz )
   port map(
@@ -358,7 +370,7 @@ dac_1: DAC_SPI
     
 dac_2: DAC_SPI
   generic map(
-    Base_addr       => 16#210#,
+    Base_addr       => x"0210",
     CLK_in_Hz       => clk_sys_in_Hz,
     SPI_CLK_in_Hz   => dac_spi_clk_in_hz )
   port map(
@@ -383,7 +395,7 @@ dac_2: DAC_SPI
 
 io_port:  IO_4x8
   generic map (
-    Base_addr   => 16#220#)
+    Base_addr   => x"0220")
   port map (
     Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,       -- in, latched address from SCU_Bus
     Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- in, latched data from SCU_Bus 
@@ -467,6 +479,24 @@ p_led_mux: process (
         A_nLED <= (others => '1');
     end case;
   end process p_led_mux;
+ 
+
+p_read_mux: process (
+    io_port_rd_active, io_port_data_to_SCUB,
+    dac1_rd_active, dac1_data_to_SCUB,
+    dac2_rd_active, dac2_data_to_SCUB
+    )
+  variable  sel:  unsigned(2 downto 0);
+  begin
+    sel := dac2_rd_active & dac1_rd_active & io_port_rd_active;
+    case sel IS
+      when "001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when others =>
+        Data_to_SCUB <= X"0000";
+    end case;
+  end process p_read_mux;
   
 
 rw_signal <= not A_RnW and not A_nBoardSel;
@@ -480,6 +510,7 @@ sel_led: led_n
     Sig_in      => not A_nBoardSel,
     nLED        => open,
     nLED_opdrn  => A_nState_LED(0));
+
     
 dtack_led: led_n
   generic map (
@@ -492,6 +523,7 @@ dtack_led: led_n
     nLED        => open,
     nLED_opdrn  => A_nState_LED(1));
     
+
 rw_led: led_n
   generic map (
     stretch_cnt => 3)
