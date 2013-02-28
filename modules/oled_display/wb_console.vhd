@@ -111,20 +111,22 @@ begin
       addr_width => 4,
       data_width => 8)
     port map(
-      w_rst_n_i   => nRst_i,
-      w_clk_i     => clk_i,
-      w_rdy_o     => w_rdy,
-      w_en_i      => w_en,
-      w_data_i    => wbuffer,
-      a_clk_i     => '0',
-      a_rst_n_i   => '1',
-      a_rdy_o     => open,
-      a_en_i      => '0',
-      r_clk_i     => clk_i,
-      r_rst_n_i   => '1',
-      r_rdy_o     => r_rdy,
-      r_en_i      => r_en,
-      r_data_o    => r_data);
+      w_rst_n_i => nRst_i,
+      w_clk_i  => clk_i,
+      w_rdy_o  => w_rdy,
+      w_en_i   => w_en,
+      w_data_i => wbuffer,
+      a_clk_i  => '0',
+		a_rst_n_i => '0',
+      a_rdy_o  => open,
+      a_en_i   => '0',
+      r_clk_i  => clk_i,
+      r_rst_n_i => nRst_i,
+		r_rdy_o  => r_rdy,
+      r_en_i   => r_en,
+      r_data_o => r_data);
+		
+	
 
 
 adrmode <= to_integer(unsigned(slave_i.ADR(17 downto 16)));  
@@ -142,7 +144,7 @@ char_col_o <= std_logic_vector(char_col);
 			r_en <= '0';
 			valid <= '0';
 			raw_wren_o <= '0';
-			mode <= "10";
+			mode <= "01";
 			char_col <= x"0";
 			char_row <= "000";
 			reset_disp_o <= '0';
