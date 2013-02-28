@@ -117,7 +117,7 @@ BEGIN
 		clock_enable_output_a => "BYPASS",
 		clock_enable_output_b => "BYPASS",
 		indata_reg_b => "CLOCK0",
-		init_file => "ram_ini.hex",
+		init_file => "",
 		intended_device_family => "Arria II GX",
 		lpm_type => "altsyncram",
 		numwords_a => 2048,
