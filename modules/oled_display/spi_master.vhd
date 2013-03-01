@@ -85,7 +85,7 @@ signal buf_read : std_logic;
   -- Number of clk cycles-1 in this SPI clock period
   signal spi_clk_count   : std_logic_vector(2 downto 0);
   -- SPI clock divisor
-  signal spi_clk_divide  : std_logic_vector(1 downto 0);
+  constant spi_clk_divide  : std_logic_vector(1 downto 0) := "11";
  
 
   -- Signal to clear IRQ
@@ -147,7 +147,6 @@ end process;
       DC_o         <= '0';
       state        <= s_idle;
       irq          <= '0';
-      spi_clk_divide <= "11";
  
     elsif rising_edge(clk_i) then
       prev_spi_clk <= spi_clk_buf;
