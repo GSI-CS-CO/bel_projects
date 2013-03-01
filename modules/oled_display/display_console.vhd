@@ -174,7 +174,6 @@ signal reset_disp: std_logic;
    signal char_buffer_empty : std_logic;
 	signal char_en : std_logic;
 	signal scroll_request : std_logic;
-  signal mode : std_logic_vector(1 downto 0);
   
   signal raw_mode : std_logic;
   signal raw_byte : std_logic_vector(7 downto 0);
@@ -199,7 +198,6 @@ signal reset_disp: std_logic;
 	 signal load : std_logic;
 	signal spi_rdy : std_logic;
 
-  signal wait_start_rst : std_logic;
 	signal wait_done_rst : std_logic;
 	signal cnt_wait_rst : unsigned(32 downto 0);
 	signal wait_update_cnt : unsigned(4 downto 0);
@@ -209,7 +207,6 @@ signal reset_disp: std_logic;
 
   signal wait1cyc : std_logic;
   signal disp_ram_refresh_in_progress : std_logic;
-  signal start_refresh : std_logic;
  signal done : std_logic;
  
  
@@ -516,7 +513,7 @@ begin
   					                     a_disp_ram_render_addr_byte <= std_logic_vector(c_firstCol);							-- reset col ptr
   					                     a_disp_ram_render_addr_bank <= std_logic_vector(unsigned(a_disp_ram_render_addr_bank) +1); -- inc row/bank ptr
   					                     if(a_disp_ram_render_addr_bank = std_logic_vector(c_lastBank-bank_offset)) then 		-- last row/bank?
-  						                     if(mode = cDISPMODE_CHAR) then     
+  						                     if(displaymode = cDISPMODE_CHAR) then     
 													         rfstate <=  GET_CHAR;
 													       else
 													          bank_offset <= bank_offset-1;
@@ -566,18 +563,14 @@ end process REFRESH_RAM;
 			SH_VR_INT			<= '0';
 			DC_SPI_INT			<= '0';
 			DISP_STATE			<= IDLE_STATE;
-			wait_start_rst <= '0';
 			load <= '0';
-			start_refresh <= '1';
 			stream_len <= std_logic_vector(to_unsigned(15, stream_len'length));
 			spi_done <= '0';
 			cnt_wait_rst <= c_WAIT_CYCLES_RST;
 		elsif (clk_i'event and clk_i = '1') then
 			
-		wait_start_rst <= '0';
 		load <= '0';
 		wait1cyc <= '0';
-		start_refresh <= '0';
 		spi_done <= '0';	
 			if (wait1cyc = '0') then
 				
@@ -693,7 +686,6 @@ end process REFRESH_RAM;
 										DISP_STATE <= REFRESH_RAM_STATE;
 									end if;	
 								
-								start_refresh <= '1';
 								wait1cyc <= '1';
 							end if;	
 						
