@@ -54,7 +54,7 @@ entity scu_control is
     lemo_led       : out   std_logic_vector(2 downto 1);
     
     -----------------------------------------------------------------------
-    -- LPC interface from ComExpress !!!
+    -- LPC interface from ComExpress
     -----------------------------------------------------------------------
     LPC_AD         : inout std_logic_vector(3 downto 0);
     LPC_FPGA_CLK   : in    std_logic;
@@ -107,7 +107,7 @@ entity scu_control is
     hpla_clk          : out std_logic;
     
     -----------------------------------------------------------------------
-    -- EXT CONN !!!
+    -- EXT CONN
     -----------------------------------------------------------------------
     IO_2_5            : out std_logic_vector(13 downto 0);
     A_EXT_LVDS_RX     : in  std_logic_vector( 3 downto 0);
@@ -133,14 +133,14 @@ entity scu_control is
     A_nReset          : out   std_logic;
     nSel_Ext_Data_DRV : out   std_logic;
     A_RnW             : out   std_logic;
-    A_Spare           : out   std_logic_vector(1 downto 0); -- !!!
+    A_Spare           : out   std_logic_vector(1 downto 0);
     A_nSEL            : out   std_logic_vector(12 downto 1);
     A_nDtack          : in    std_logic;
     A_nSRQ            : in    std_logic_vector(12 downto 1);
     A_SysClock        : out   std_logic;
     ADR_TO_SCUB       : out   std_logic;
     nADR_EN           : out   std_logic;
-    A_OneWire         : inout std_logic; -- !!!
+    A_OneWire         : inout std_logic;
     
     -----------------------------------------------------------------------
     -- ComExpress signals
@@ -150,7 +150,7 @@ entity scu_control is
     WDT               : in std_logic;
     
     -----------------------------------------------------------------------
-    -- Parallel Flash !!!
+    -- Parallel Flash
     -----------------------------------------------------------------------
     AD                : out   std_logic_vector(25 downto 1);
     DF                : inout std_logic_vector(15 downto 0);
@@ -163,18 +163,18 @@ entity scu_control is
     WAIT_FSH          : in    std_logic;
     
     -----------------------------------------------------------------------
-    -- DDR3 !!!
+    -- DDR3
     -----------------------------------------------------------------------
     DDR3_DQ           : inout std_logic_vector(15 downto 0);
-    DDR3_DM           : out   std_logic_vector(1 downto 0);
-    DDR3_BA           : out   std_logic_vector(2 downto 0);
+    DDR3_DM           : out   std_logic_vector( 1 downto 0);
+    DDR3_BA           : out   std_logic_vector( 2 downto 0);
     DDR3_ADDR         : out   std_logic_vector(12 downto 0);
-    DDR3_CS_n         : out   std_logic_vector(0 downto 0);
+    DDR3_CS_n         : out   std_logic_vector( 0 downto 0);
 --    DDR3_DQS          : inout std_logic_vector(1 downto 0);
 --    DDR3_DQSn         : inout std_logic_vector(1 downto 0);
     DDR3_RES_n        : out   std_logic;
-    DDR3_CKE          : out   std_logic_vector(0 downto 0);
-    DDR3_ODT          : out   std_logic_vector(0 downto 0);
+    DDR3_CKE          : out   std_logic_vector( 0 downto 0);
+    DDR3_ODT          : out   std_logic_vector( 0 downto 0);
     DDR3_CAS_n        : out   std_logic;
     DDR3_RAS_n        : out   std_logic;
 --    DDR3_CLK          : inout std_logic_vector(0 downto 0);
@@ -243,7 +243,7 @@ architecture rtl of scu_control is
   signal rstn_ref         : std_logic;
   
   -- DMTD PLL from clk_20m_vcxo_i
-  signal dmtd_locked      : std_logic;
+  -- signal dmtd_locked      : std_logic;
   signal clk_dmtd         : std_logic;
   
   signal dac_hpll_load_p1 : std_logic;
@@ -311,7 +311,7 @@ begin
   dmtd_inst : dmtd_pll port map(
     inclk0 => clk_20m_vcxo_i,    --  20  Mhz 
     c0     => clk_dmtd,          --  62.5MHz
-    locked => dmtd_locked);
+    locked => open);
   
   ref_inst : ref_pll port map(
     inclk0 => clk_125m_pllref_i, -- 125 MHz
@@ -618,6 +618,8 @@ begin
   nADR_EN     <= '0';
   A_SysClock  <= clk_scubus;
   A_nReset    <= rstn_sys;
+  A_Spare     <= (others => 'Z');
+  A_OneWire   <= 'Z';
      
   gpio_slave_i <= cbar_master_o(5);
   cbar_master_i(5) <= gpio_slave_o;
@@ -704,6 +706,9 @@ begin
   owr(0) <= OneWire_CB;
   OneWire_CB <= owr_pwren(0) when (owr_pwren(0) = '1' or owr_en(0) = '1') else 'Z';
   
+  -- no second onewire is connected
+  owr(1) <= 'Z';
+  
   -- connects the serial ports to the carrier board
   serial_to_cb_o <= '0';
   
@@ -774,13 +779,51 @@ begin
   end generate;
   
   -- Logic analyzer port (0,2,4,6,8,10 = OLED)
-  -- Use remaining pins for debugging clocks
-  hpla_ch(1) <= clk_ref;
-  hpla_ch(3) <= clk_sys;
-  hpla_ch(5) <= phy_tx_clk;
-  hpla_ch(7) <= phy_rx_rbclk;
-  hpla_ch(9) <= clk_dmtd;
-  hpla_ch(15 downto 11) <= (others => 'Z');
+  -- Don't put debug clocks too close (makes display flicker)
   hpla_clk <= 'Z';
+  hpla_ch(1) <= 'Z';
+  hpla_ch(3) <= 'Z';
+  hpla_ch(5) <= 'Z';
+  hpla_ch(7) <= 'Z';
+  hpla_ch(9) <= 'Z';
+  hpla_ch(11) <= 'Z';
+  hpla_ch(12) <= 'Z';
+  
+  hpla_ch(13) <= clk_ref;
+  hpla_ch(14) <= phy_tx_clk;
+  hpla_ch(15) <= phy_rx_rbclk;
+  
+  -- LPC bus is not connected
+  LPC_AD <= (others => 'Z');
+  LPC_SERIRQ <= 'Z';
+  
+  -- EXT CONN not connected
+  IO_2_5            <= (others => 'Z');
+  A_EXT_LVDS_TX     <= (others => '0');
+  a_EXT_LVDS_CLKOUT <= '0';
+  EIO               <= (others => 'Z');
+  
+  -- Parallel Flash not connected
+  nRST_FSH <= '0';
+  AD <= (others => 'Z');
+  DF <= (others => 'Z');
+  ADV_FSH  <= 'Z';
+  nCE_FSH  <= 'Z';
+  CLK_FSH  <= 'Z';
+  nWE_FSH  <= 'Z';
+  nOE_FSH  <= 'Z';
+  
+  -- DDR3 not connected
+  DDR3_RES_n <= '0';
+  DDR3_DQ    <= (others => 'Z');
+  DDR3_DM    <= (others => 'Z');
+  DDR3_BA    <= (others => 'Z');
+  DDR3_ADDR  <= (others => 'Z');
+  DDR3_CS_n  <= (others => 'Z');
+  DDR3_CKE   <= (others => 'Z');
+  DDR3_ODT   <= (others => 'Z');
+  DDR3_CAS_n <= 'Z';
+  DDR3_RAS_n <= 'Z';
+  DDR3_WE_n  <= 'Z';
   
 end rtl;
