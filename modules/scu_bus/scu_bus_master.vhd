@@ -299,7 +299,7 @@ S_SCUB_Revision	<= std_logic_vector(to_unsigned(C_SCUB_Revision, S_SCUB_Revision
 ASSERT (False)
 	REPORT "SCU_Bus_Master_Macro: Version --> " & integer'image(C_SCUB_Version)
 			& ", Revision is --> " & integer'image(C_SCUB_Revision)
-SEVERITY Warning;
+SEVERITY NOTE;
 
 
 ASSERT NOT (Clk_in_Hz < 100000000)
