@@ -153,7 +153,8 @@ module cfi_ctrl
       if (cfi_engine == "ENABLED") begin : cfi_engine_gen
 	 wire 			   do_rst, do_init, do_readstatus;
 	 wire 			   do_clearstatus, do_eraseblock, do_write, 
-				   do_read, do_unlockblock;
+				   do_read, do_unlockblock, do_readdeviceident,
+				   do_cfiquery;
  
 	 /* Track when we have new bus accesses and are currently serving them */
 	 reg 			   wb_req_in_progress;
