@@ -3,7 +3,7 @@ TARGET		=  scu_control
 QUARTUS		?= /opt/quartus
 QUARTUS_BIN	=  $(QUARTUS)/bin
 
-all:	$(TARGET).jam
+all:	$(TARGET).jic $(TARGET).jam
 
 clean:
 	rm -rf db incremental_db PLLJ_PLLSPE_INFO.txt
@@ -11,7 +11,6 @@ clean:
 	rm -f $(TARGET).jam $(TARGET).jic $(TARGET).pof $(TARGET).sof $(TARGET).dep
 
 %.sof:	%.qsf
-	hdlmake
 	$(QUARTUS_BIN)/quartus_map $*
 	$(QUARTUS_BIN)/quartus_fit $*
 	$(QUARTUS_BIN)/quartus_asm $*

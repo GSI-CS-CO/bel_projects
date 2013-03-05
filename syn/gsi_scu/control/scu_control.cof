@@ -2,7 +2,7 @@
 <cof>
 	<eprom_name>EPCS128</eprom_name>
 	<flash_loader_device>EP2AGX125</flash_loader_device>
-	<output_filename>scu.jic</output_filename>
+	<output_filename>scu_control.jic</output_filename>
 	<n_pages>1</n_pages>
 	<width>1</width>
 	<mode>7</mode>
@@ -10,7 +10,7 @@
 		<user_name>Page_0</user_name>
 		<page_flags>1</page_flags>
 		<bit0>
-			<sof_filename>scu.sof</sof_filename>
+			<sof_filename>scu_control.sof</sof_filename>
 		</bit0>
 	</sof_data>
 	<version>5</version>
