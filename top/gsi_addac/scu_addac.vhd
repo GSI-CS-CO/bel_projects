@@ -46,20 +46,24 @@ entity scu_addac is
     nADC_PAR_SER_SEL:     buffer  std_logic := '0';
     ADC_Range:            buffer  std_logic;
     ADC_FRSTDATA:         in      std_logic;
+    EXT_TRIG_ADC:         in      std_logic;
     ------------ ADC Diagnostic ---------------------------------------------------------------------------------------
     A_ADC_DAC_SEL:        in      std_logic_vector(3 downto 0);
 
     ------------ DAC Signals ------------------------------------------------------------------------------------------
-    DAC1_SDI:             buffer  std_logic;                    -- is connected to DAC1-SDI 
+    DAC1_SDI:             buffer  std_logic;                    -- is connected to DAC1-SDI
+    DAC1_SDO:             buffer  std_logic;
     nDAC1_CLK:            buffer  std_logic;                    -- spi-clock of DAC1
     nDAC1_CLR:            buffer  std_logic;                    -- '0' set DAC1 to zero (pulse width min 200 ns)
     nDAC1_A0:             buffer  std_logic;                    -- '0' enable shift of internal shift register of DAC1
     nDAC1_A1:             buffer  std_logic;                    -- '0' copy shift register to output latch of DAC1
-    DAC2_SDI:             buffer  std_logic;                    -- is connected to DAC2-SDI 
+    DAC2_SDI:             buffer  std_logic;                    -- is connected to DAC2-SDI
+    DAC2_SDO:             buffer  std_logic;
     nDAC2_CLK:            buffer  std_logic;                    -- spi-clock of DAC2
     nDAC2_CLR:            buffer  std_logic;                    -- '0' set DAC2 to zero (pulse width min 200 ns)
     nDAC2_A0:             buffer  std_logic;                    -- '0' enable shift of internal shift register of DAC2
     nDAC2_A1:             buffer  std_logic;                    -- '0' copy shift register to output latch of DAC2
+    EXT_TRIG_DAC:         in      std_logic;
     
     ------------ IO-Port-Signale --------------------------------------------------------------------------------------
     a_io_7_0_tx:          out   std_logic;                      -- '1' = external io(7..0)-buffer set to output.
@@ -76,9 +80,22 @@ entity scu_addac is
     A_SEL:                in    std_logic_vector(3 downto 0);   -- use to select sources for the logic analyser ports
     A_TA:                 out   std_logic_vector(15 downto 0);  -- test port a
     A_TB:                 out   std_logic_vector(15 downto 0);  -- test port b
+    TP:                   out   std_logic_vector(1 downto 0);   -- test points
 
     A_nState_LED:         out   std_logic_vector(2 downto 0);   -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
-    A_nLED:               out   std_logic_vector(15 downto 0));
+    A_nLED:               out   std_logic_vector(15 downto 0);
+    A_NLED_TRIG_DAC:      out   std_logic;
+    A_NLED_TRIG_ADC:      out   std_logic;
+    
+    HW_REV:               in    std_logic_vector(3 downto 0);
+    A_MODE_SEL:           in    std_logic_vector(1 downto 0);
+    A_OneWire:            inout std_logic;
+    A_OneWire_EEPROM:     inout std_logic;
+    
+    NDIFF_IN_EN:          out   std_logic := '0'                -- enables diff driver for ADC channels 3-8
+    
+    
+    );
 end entity;
 
 
@@ -125,8 +142,6 @@ component ad7606  is
     par_ser_sel:    out std_logic;                    -- parallel/serial/byte serial
     adc_range:      out std_logic;                    -- 10V/-10V or 5V/-5V
     firstdata:      in std_logic;
-    leds:           out std_logic_vector(7 downto 0);
-    sw_high_byte:   in std_logic;		
     channel_1:      out std_logic_vector(15 downto 0);
     channel_2:      out std_logic_vector(15 downto 0);
     channel_3:      out std_logic_vector(15 downto 0);
@@ -249,7 +264,7 @@ component IO_4x8
     clk           =>  clk_sys,
     nrst          =>  nPowerup_Res,
     conv_en       => '1',
-    transfer_mode => "00",
+    transfer_mode => "01",
     db            => ADC_DB(13 downto 0),
     db14_hben     => ADC_DB(14),
     db15_byte_sel => ADC_DB(15),
@@ -263,8 +278,6 @@ component IO_4x8
     par_ser_sel   => nADC_PAR_SER_SEL,
     adc_range     => ADC_Range,
     firstdata     => ADC_FRSTDATA,
-    leds          => open,
-    sw_high_byte  => '0',
     channel_1     => ADC_channel_1,
     channel_2     => ADC_channel_2,
     channel_3     => ADC_channel_3,

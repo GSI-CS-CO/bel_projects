@@ -41,7 +41,7 @@ set_global_assignment -name DEVICE EP2AGX125DF25C5
 set_global_assignment -name TOP_LEVEL_ENTITY scu_addac
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "12.0 SP2"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:30:14  FEBRUARY 14, 2013"
-set_global_assignment -name LAST_QUARTUS_VERSION 12.1
+set_global_assignment -name LAST_QUARTUS_VERSION "12.0 SP2"
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
@@ -119,13 +119,11 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_D[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_D[0]
 set_location_assignment PIN_R6 -to A_Ext_Data_RD
 set_location_assignment PIN_A7 -to A_nADR_EN
-set_location_assignment PIN_D15 -to A_nADR_SCUB
 set_location_assignment PIN_AB1 -to A_nBoardSel
 set_location_assignment PIN_D12 -to A_nDS
 set_location_assignment PIN_AA1 -to A_nDtack
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_Ext_Data_RD
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nADR_EN
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nADR_SCUB
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nBoardSel
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nDS
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nDtack
@@ -178,13 +176,6 @@ set_location_assignment PIN_B1 -to ADC_OS[0]
 set_location_assignment PIN_C1 -to ADC_OS[1]
 set_location_assignment PIN_D4 -to ADC_OS[2]
 set_location_assignment PIN_B4 -to ADC_RESET
-set_location_assignment PIN_F20 -to AS_CLK
-set_location_assignment PIN_J20 -to AS_DI
-set_location_assignment PIN_J19 -to AS_DO
-set_location_assignment PIN_D14 -to A_ADCDAC_SEL[0]
-set_location_assignment PIN_D1 -to A_ADCDAC_SEL[1]
-set_location_assignment PIN_D2 -to A_ADCDAC_SEL[2]
-set_location_assignment PIN_C2 -to A_ADCDAC_SEL[3]
 set_location_assignment PIN_B13 -to A_MODE_SEL[0]
 set_location_assignment PIN_C13 -to A_MODE_SEL[1]
 set_location_assignment PIN_D15 -to A_nADR_FROM_SCUB
@@ -196,8 +187,6 @@ set_location_assignment PIN_B9 -to A_SEL[0]
 set_location_assignment PIN_A9 -to A_SEL[1]
 set_location_assignment PIN_D10 -to A_SEL[2]
 set_location_assignment PIN_C10 -to A_SEL[3]
-set_location_assignment PIN_G9 -to A_Spare[0]
-set_location_assignment PIN_H9 -to A_Spare[1]
 set_location_assignment PIN_U6 -to A_TA[0]
 set_location_assignment PIN_Y1 -to A_TA[1]
 set_location_assignment PIN_AD4 -to A_TA[2]
@@ -230,8 +219,6 @@ set_location_assignment PIN_V4 -to A_TB[12]
 set_location_assignment PIN_AB5 -to A_TB[13]
 set_location_assignment PIN_U3 -to A_TB[14]
 set_location_assignment PIN_AC3 -to A_TB[15]
-set_location_assignment PIN_G19 -to A_TDI
-set_location_assignment PIN_G20 -to A_TDO
 set_location_assignment PIN_Y22 -to A_TX0N
 set_location_assignment PIN_Y21 -to A_TX0P
 set_location_assignment PIN_K21 -to A_TX4P
@@ -246,12 +233,6 @@ set_location_assignment PIN_AD11 -to HW_REV[0]
 set_location_assignment PIN_AD12 -to HW_REV[1]
 set_location_assignment PIN_AB12 -to HW_REV[2]
 set_location_assignment PIN_AC12 -to HW_REV[3]
-set_location_assignment PIN_Y19 -to MS[1]
-set_location_assignment PIN_T19 -to MS[2]
-set_location_assignment PIN_W20 -to MS[3]
-set_location_assignment PIN_T20 -to MS[4]
-set_location_assignment PIN_H19 -to NAS_CS
-set_location_assignment PIN_V20 -to NCONFIG
 set_location_assignment PIN_F1 -to NDIFF_IN_EN
 set_location_assignment PIN_F21 -to Q1_CLK5
 set_location_assignment PIN_U23 -to Q0_CLK0
@@ -260,8 +241,6 @@ set_location_assignment PIN_L23 -to Q1_RX4PB
 set_location_assignment PIN_AA24 -to Q0_RX0N
 set_location_assignment PIN_AA23 -to Q0_RX0P
 set_location_assignment PIN_L24 -to Q1_RX4NB
-set_location_assignment PIN_D18 -to TCK
-set_location_assignment PIN_G17 -to TMS
 set_location_assignment PIN_AD2 -to TP[1]
 set_location_assignment PIN_AD3 -to TP[2]
 set_location_assignment PIN_A17 -to a_io_7_0_tx
@@ -501,4 +480,160 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nLED[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nState_LED[2]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nState_LED[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to A_nState_LED[0]
+set_location_assignment PIN_C2 -to A_ADC_DAC_SEL[3]
+set_location_assignment PIN_D2 -to A_ADC_DAC_SEL[2]
+set_location_assignment PIN_D1 -to A_ADC_DAC_SEL[1]
+set_location_assignment PIN_D14 -to A_ADC_DAC_SEL[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ADC_DAC_SEL[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ADC_DAC_SEL[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ADC_DAC_SEL[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_ADC_DAC_SEL[3]
+set_global_assignment -name SLD_NODE_CREATOR_ID 110 -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_ENTITY_NAME sld_signaltap -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_clk -to "ad7606:adc|clk" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[0] -to "ad7606:adc|adc_range" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[1] -to "ad7606:adc|adc_reset" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[2] -to "ad7606:adc|busy" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[3] -to "ad7606:adc|conv_en" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[4] -to "ad7606:adc|conv_state.conv_st" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[5] -to "ad7606:adc|conv_state.conv_trigger" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[6] -to "ad7606:adc|conv_state.data_ready" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[7] -to "ad7606:adc|conv_state.idle" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[8] -to "ad7606:adc|conv_state.read_par" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[9] -to "ad7606:adc|conv_state.read_ser" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[10] -to "ad7606:adc|conv_state.reset" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[11] -to "ad7606:adc|conv_state.wait_cs_high" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[12] -to "ad7606:adc|conv_state.wait_for_busy" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[13] -to "ad7606:adc|conv_state.wait_for_conv_fin" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[14] -to "ad7606:adc|conv_state.wait_rd_low" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[15] -to "ad7606:adc|convst_a" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[16] -to "ad7606:adc|convst_b" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[17] -to "ad7606:adc|db14_hben" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[18] -to "ad7606:adc|db15_byte_sel" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[19] -to "ad7606:adc|db[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[20] -to "ad7606:adc|db[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[21] -to "ad7606:adc|db[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[22] -to "ad7606:adc|db[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[23] -to "ad7606:adc|db[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[24] -to "ad7606:adc|db[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[25] -to "ad7606:adc|db[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[26] -to "ad7606:adc|db[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[27] -to "ad7606:adc|db[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[28] -to "ad7606:adc|db[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[29] -to "ad7606:adc|db[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[30] -to "ad7606:adc|db[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[31] -to "ad7606:adc|db[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[32] -to "ad7606:adc|db[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[0] -to "ad7606:adc|adc_range" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[1] -to "ad7606:adc|adc_reset" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[2] -to "ad7606:adc|busy" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[3] -to "ad7606:adc|conv_en" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[4] -to "ad7606:adc|conv_state.conv_st" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[5] -to "ad7606:adc|conv_state.conv_trigger" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[6] -to "ad7606:adc|conv_state.data_ready" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[7] -to "ad7606:adc|conv_state.idle" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[8] -to "ad7606:adc|conv_state.read_par" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[9] -to "ad7606:adc|conv_state.read_ser" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[10] -to "ad7606:adc|conv_state.reset" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[11] -to "ad7606:adc|conv_state.wait_cs_high" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[12] -to "ad7606:adc|conv_state.wait_for_busy" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[13] -to "ad7606:adc|conv_state.wait_for_conv_fin" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[14] -to "ad7606:adc|conv_state.wait_rd_low" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[15] -to "ad7606:adc|convst_a" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[16] -to "ad7606:adc|convst_b" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[17] -to "ad7606:adc|db14_hben" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[18] -to "ad7606:adc|db15_byte_sel" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[19] -to "ad7606:adc|db[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[20] -to "ad7606:adc|db[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[21] -to "ad7606:adc|db[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[22] -to "ad7606:adc|db[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[23] -to "ad7606:adc|db[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[24] -to "ad7606:adc|db[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[25] -to "ad7606:adc|db[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[26] -to "ad7606:adc|db[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[27] -to "ad7606:adc|db[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[28] -to "ad7606:adc|db[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[29] -to "ad7606:adc|db[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[30] -to "ad7606:adc|db[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[31] -to "ad7606:adc|db[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[32] -to "ad7606:adc|db[9]" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_RAM_BLOCK_TYPE=M9K" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_INFO=805334528" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STORAGE_QUALIFIER_INVERSION_MASK_LENGTH=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SEGMENT_SIZE=1024" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ATTRIBUTE_MEM_MODE=OFF" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_FLOW_USE_GENERATED=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_BITS=11" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_BUFFER_FULL_STOP=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_CURRENT_RESOURCE_WIDTH=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SAMPLE_DEPTH=1024" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_IN_ENABLED=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ADVANCED_TRIGGER_ENTITY=basic,1," -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL_PIPELINE=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ENABLE_ADVANCED_TRIGGER=0" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[33] -to "ad7606:adc|firstdata" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[34] -to "ad7606:adc|leds[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[35] -to "ad7606:adc|leds[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[36] -to "ad7606:adc|leds[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[37] -to "ad7606:adc|leds[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[38] -to "ad7606:adc|leds[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[39] -to "ad7606:adc|leds[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[40] -to "ad7606:adc|leds[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[41] -to "ad7606:adc|leds[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[42] -to "ad7606:adc|n_cs" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[43] -to "ad7606:adc|n_rd_sclk" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[44] -to "ad7606:adc|nrst" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[45] -to "ad7606:adc|os[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[46] -to "ad7606:adc|os[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[47] -to "ad7606:adc|os[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[48] -to "ad7606:adc|par_ser_sel" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[49] -to "ad7606:adc|s_channel_regs[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[50] -to "ad7606:adc|s_channel_regs[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[51] -to "ad7606:adc|s_channel_regs[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[52] -to "ad7606:adc|s_channel_regs[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[53] -to "ad7606:adc|s_channel_regs[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[54] -to "ad7606:adc|s_channel_regs[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[55] -to "ad7606:adc|s_channel_regs[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[56] -to "ad7606:adc|s_channel_regs[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[33] -to "ad7606:adc|firstdata" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[34] -to "ad7606:adc|leds[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[35] -to "ad7606:adc|leds[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[36] -to "ad7606:adc|leds[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[37] -to "ad7606:adc|leds[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[38] -to "ad7606:adc|leds[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[39] -to "ad7606:adc|leds[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[40] -to "ad7606:adc|leds[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[41] -to "ad7606:adc|leds[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[42] -to "ad7606:adc|n_cs" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[43] -to "ad7606:adc|n_rd_sclk" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[44] -to "ad7606:adc|nrst" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[45] -to "ad7606:adc|os[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[46] -to "ad7606:adc|os[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[47] -to "ad7606:adc|os[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[48] -to "ad7606:adc|par_ser_sel" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[49] -to "ad7606:adc|s_channel_regs[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[50] -to "ad7606:adc|s_channel_regs[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[51] -to "ad7606:adc|s_channel_regs[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[52] -to "ad7606:adc|s_channel_regs[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[53] -to "ad7606:adc|s_channel_regs[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[54] -to "ad7606:adc|s_channel_regs[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[55] -to "ad7606:adc|s_channel_regs[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[56] -to "ad7606:adc|s_channel_regs[7]" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_DATA_BITS=57" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_BITS=57" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_POWER_UP_TRIGGER=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK=000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000101000000000000000000000000000000000000000000000000000000100011101111111" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK_LENGTH=195" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_LOWORD=12057" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_HIWORD=12136" -section_id auto_signaltap_0
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_OneWire_EEPROM
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_OneWire
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_MODE_SEL[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_MODE_SEL[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EXT_TRIG_ADC
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EXT_TRIG_DAC
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to TP[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to TP[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to NDIFF_IN_EN
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
