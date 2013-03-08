@@ -111,17 +111,19 @@ constant  dac_spi_clk_in_hz:  integer := 10_000_000;
 
 component ad7606  is
   generic (
-    clk_in_hz:      integer := 50_000_000;    -- 50Mhz
-    sclk_in_hz:     integer := 14_500_000;    -- 14,5Mhz
-    cs_delay:       integer := 16;            -- 16ns
-    cs_high:        integer := 22;            -- 22ns
-    rd_low:         integer := 16;            -- 16ns
-    reset_delay:    integer := 50;            -- 50ns
-    conv_wait:      integer := 25;            -- 25ns
-    inter_cycle:    integer := 6000;          -- 6us
-    ser_mode:       boolean := true;          -- selects between ADC communication modes
-    par_mode:       boolean := false;         -- serial, 16bit parallel or 8bit serial
-    byte_ser_mode:  boolean := false);
+    clk_in_hz:            integer := 50_000_000;    -- 50Mhz
+    sclk_in_hz:           integer := 14_500_000;    -- 14,5Mhz
+    cs_delay_in_ns:       integer := 16;            -- 16ns
+    cs_high_in_ns:        integer := 22;            -- 22ns
+    rd_low_in_ns:         integer := 16;            -- 16ns
+    reset_delay_in_ns:    integer := 50;            -- 50ns
+    conv_wait_in_ns:      integer := 25;            -- 25ns
+    inter_cycle_in_ns:    integer := 6000;          -- 6us
+    ser_mode:             boolean := true;          -- selects between ADC communication modes
+    par_mode:             boolean := false;         -- serial, 16bit parallel or 8bit serial
+    byte_ser_mode:        boolean := false;
+    diag_on_is_1:         integer range 0 to 1 := 0   -- if 1 then diagnosic information is generated during compilation
+    );
   port (
     clk:            in std_logic;
     nrst:           in std_logic;
@@ -155,7 +157,7 @@ end component ad7606;
 
 component DAC_SPI
   generic (
-    Base_addr:        integer range 1 to 16#ffff# := 16#300#;
+    Base_addr:        unsigned(15 downto 0);
     CLK_in_Hz:        integer := 100_000_000;
     SPI_CLK_in_Hz:    integer := 10_000_000 );
   port (
@@ -181,10 +183,10 @@ end component DAC_SPI;
 
 component IO_4x8
   generic (
-      Base_addr:  integer range 1 to 16#ffff# := 16#200#);
+      Base_addr:  unsigned(15 downto 0));
   port (
     Adr_from_SCUB_LA:   in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
-    Data_from_SCUB_LA:	in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
+    Data_from_SCUB_LA:  in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
     Ext_Adr_Val:        in    std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
     Ext_Rd_active:      in    std_logic;                      -- '1' => Rd-Cycle is active
     Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
@@ -204,16 +206,22 @@ component IO_4x8
     Dtack_to_SCUB:      out   std_logic                       -- connect Dtack to SCUB-Macro
     );  
   end component IO_4x8;
+
+ 
+component flash_loader_v01
+  port (
+    noe_in: in  std_logic
+    );
+  end component;
+
   
-  signal clk_sys, clk_cal, rstn, locked : std_logic;
+  signal clk_sys, clk_cal, locked : std_logic;
   
   signal SCUB_SRQ:    std_logic;
   signal SCUB_Dtack:  std_logic;
   signal convst:      std_logic;
   signal rst:         std_logic;
   
-  signal  user_rd_active:     std_logic;     
-  signal  Data_to_SCUB:       std_logic;       
   signal  Dtack_to_SCUB:      std_logic;
 
   signal  io_port_Dtack_to_SCUB:  std_logic;
@@ -233,7 +241,7 @@ component IO_4x8
   signal  Ext_Adr_Val:        std_logic;
   signal  Ext_Rd_active:      std_logic;
   signal  Ext_Wr_active:      std_logic;
-  signal  Ext_Wr_fin:         std_logic;
+  signal  Ext_Wr_fin_ovl:     std_logic;
   signal  nPowerup_Res:       std_logic;
   
   signal  rw_signal:          std_logic;
@@ -241,12 +249,19 @@ component IO_4x8
 
   signal  ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4: std_logic_vector(15 downto 0);
   signal  ADC_channel_5, ADC_channel_6, ADC_channel_7, ADC_channel_8: std_logic_vector(15 downto 0);
+
+  signal  Data_to_SCUB:       std_logic_vector(15 downto 0);
   
-  
+  signal  modelsim_A_nBoardSel: std_logic;
+  signal  modelsim_nPowerup_Res: std_logic;
+
   begin
-  
+
+fl : flash_loader_v01
+port map (noe_in	=>	'0');
+
   -- Obtain core clocking
-  sys_pll_inst : sys_pll    -- Altera megafunction
+sys_pll_inst : sys_pll    -- Altera megafunction
   port map (
     inclk0 => CLK_FPGA,     -- 125Mhz oscillator from board
     c0     => clk_sys,      -- 62.5MHz system clk (cannot use external pin as clock for RAM blocks)
@@ -254,12 +269,13 @@ component IO_4x8
     locked => locked);      -- '1' when the PLL has locked
 
   
-  adc: ad7606
+adc: ad7606
   generic map (
     clk_in_Hz     => clk_sys_in_Hz,
     ser_mode      => false,
     par_mode      => true,
-    byte_ser_mode => false)
+    byte_ser_mode => false,
+    diag_on_is_1  => 0)
   port map (
     clk           =>  clk_sys,
     nrst          =>  nPowerup_Res,
@@ -288,6 +304,8 @@ component IO_4x8
     channel_8     => ADC_channel_8);
 
 
+Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack;
+
 SCU_Slave: SCU_Bus_Slave
 generic map (
     CLK_in_Hz         =>  clk_sys_in_Hz,
@@ -308,8 +326,8 @@ port map (
     SCUB_RDnWR          =>  A_RnW,                  -- in,      SCU_Bus: '1' => SCU master read slave
     clk                 =>  clk_sys,  
     nSCUB_Reset_in      =>  A_nReset,               -- in,	SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
-    Data_to_SCUB        =>  io_port_data_to_SCUB,   -- in,	connect read sources from external user functions
-    Dtack_to_SCUB       =>  io_port_Dtack_to_SCUB,  -- in,	connect Dtack from from external user functions
+    Data_to_SCUB        =>  Data_to_SCUB,           -- in,	connect read sources from external user functions
+    Dtack_to_SCUB       =>  Dtack_to_SCUB,          -- in,	connect Dtack from from external user functions
     Intr_In             =>  "000000000000000",      -- in,	interrupt(15 downro 1)
     User_Ready          =>  '1',
     Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- out,	latched data from SCU_Bus for external user functions 
@@ -335,9 +353,10 @@ port map (
     Ext_Rd_Fin_ovl      =>  open,                   -- out,	marks end of read cycle, active one for one clock period
                                                     --          of clk during cycle end (overlap)
     Ext_Wr_active       =>  Ext_Wr_active,          -- out,	'1' => Wr-Cycle to external user register is active
-    Ext_Wr_fin          =>  Ext_wr_fin,             -- out,	marks end of write cycle, active one for one clock period
+    Ext_Wr_fin          =>  open,                   -- out,	marks end of write cycle, active high for one clock period
                                                     --          of clk past cycle end (no overlap)
-    Ext_Wr_fin_ovl      =>  open,
+    Ext_Wr_fin_ovl      =>  Ext_Wr_fin_ovl,         -- out, marks end of write cycle, active high for one clock period
+                                                    --          of clk before write cycle finished (with overlap) 
     Deb_SCUB_Reset_out	=>  open,                   -- out,	the debounced 'nSCUB_Reset_In'-signal, is active high,
                                                     --          can be used to reset
                                                     --          external macros, when 'nSCUB_Reset_In' is '0'
@@ -346,7 +365,7 @@ port map (
 
 dac_1: DAC_SPI
   generic map(
-    Base_addr       => 16#200#,
+    Base_addr       => x"0200",
     CLK_in_Hz       => clk_sys_in_Hz,
     SPI_CLK_in_Hz   => dac_spi_clk_in_hz )
   port map(
@@ -355,7 +374,7 @@ dac_1: DAC_SPI
     Ext_Adr_Val         =>  Ext_Adr_Val,            -- in, '1' => "ADR_from_SCUB_LA" is valid
     Ext_Rd_active       =>  Ext_Rd_active,          -- in, '1' => Rd-Cycle is active
     Ext_Wr_active       =>  Ext_Wr_active,          -- in, '1' => Wr-Cycle is active
-    Ext_Wr_fin          =>  Ext_Wr_fin,              -- in, '1' => Wr-Cycle is finished
+    Ext_Wr_fin          =>  Ext_Wr_fin_ovl,         -- in, '1' => Wr-Cycle is finished
     clk                 =>  clk_sys,                -- in, should be the same clk, used by SCU_Bus_Slave
     nReset              =>  nPowerup_Res,           -- in, '0' => resets the DAC_1
     DAC_SI              =>  DAC1_SDI,               -- out, is connected to DAC1-SDI
@@ -371,7 +390,7 @@ dac_1: DAC_SPI
     
 dac_2: DAC_SPI
   generic map(
-    Base_addr       => 16#210#,
+    Base_addr       => x"0210",
     CLK_in_Hz       => clk_sys_in_Hz,
     SPI_CLK_in_Hz   => dac_spi_clk_in_hz )
   port map(
@@ -380,7 +399,7 @@ dac_2: DAC_SPI
     Ext_Adr_Val         =>  Ext_Adr_Val,            -- in, '1' => "ADR_from_SCUB_LA" is valid
     Ext_Rd_active       =>  Ext_Rd_active,          -- in, '1' => Rd-Cycle is active
     Ext_Wr_active       =>  Ext_Wr_active,          -- in, '1' => Wr-Cycle is active
-    Ext_Wr_fin          =>  Ext_Wr_fin,              -- in, '1' => Wr-Cycle is finished
+    Ext_Wr_fin          =>  Ext_Wr_fin_ovl,         -- in, '1' => Wr-Cycle is finished
     clk                 =>  clk_sys,                -- in, should be the same clk, used by SCU_Bus_Slave
     nReset              =>  nPowerup_Res,           -- in, '0' => resets the DAC_2
     DAC_SI              =>  DAC2_SDI,               -- out, is connected to DAC2-SDI
@@ -396,7 +415,7 @@ dac_2: DAC_SPI
 
 io_port:  IO_4x8
   generic map (
-    Base_addr   => 16#220#)
+    Base_addr   => x"0220")
   port map (
     Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,       -- in, latched address from SCU_Bus
     Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- in, latched data from SCU_Bus 
@@ -418,13 +437,14 @@ io_port:  IO_4x8
     Data_to_SCUB        =>  io_port_data_to_SCUB,   -- out, connect read sources to SCUB-Macro
     Dtack_to_SCUB       =>  io_port_Dtack_to_SCUB); -- out, connect Dtack to SCUB-Macro  
 
+modelsim_nPowerup_Res <= not nPowerup_Res;
 
 p_led_ena:  div_n
   generic map (
     n       => clk_sys_in_Hz / 100, -- div_o is every 10 ms for one clock period active
     diag_on => 0)
   port map (
-    res     => not nPowerup_Res,    -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
+    res     => modelsim_nPowerup_Res, -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
                                     --     countdown is "n"-1 clocks to activate the "div_o"-output for one clock periode. 
     clk     => clk_sys,             -- clk = clock
     ena     => '1',                 -- in, can be used for a reduction, signal should be generated from the same 
@@ -434,10 +454,10 @@ p_led_ena:  div_n
 
 
 p_test_port_mux: process (
-    DAC1_SDI, nDAC1_CLK, nDAC1_A0, nDAC1_A1, nDAC1_CLR,
-    DAC2_SDI, nDAC2_CLK, nDAC2_A0, nDAC2_A1, nDAC2_CLR,
+    DAC1_SDI, nDAC1_CLK, nDAC1_A0, nDAC1_A1, nDAC1_CLR, dac1_rd_active, dac1_dtack,
+    DAC2_SDI, nDAC2_CLK, nDAC2_A0, nDAC2_A1, nDAC2_CLR, dac2_rd_active, dac2_dtack,
     ADC_Range, ADC_FRSTDATA,
-    ADC_CONVST_A, ADC_CONVST_B, nADC_CS, nADC_RD_SCLK, ADC_BUSY, ADC_RESET, ADC_OS, nADC_PAR_SER_SEL,
+    ADC_CONVST_A, ADC_CONVST_B, nADC_CS, nADC_RD_SCLK, ADC_BUSY, ADC_RESET, ADC_OS, nADC_PAR_SER_SEL, ADC_DB(15 downto 0),
     A_SEL(3 downto 0)
     )
   begin
@@ -480,9 +500,27 @@ p_led_mux: process (
         A_nLED <= (others => '1');
     end case;
   end process p_led_mux;
+ 
+
+p_read_mux: process (
+    io_port_rd_active, io_port_data_to_SCUB,
+    dac1_rd_active, dac1_data_to_SCUB,
+    dac2_rd_active, dac2_data_to_SCUB
+    )
+  variable  sel:  unsigned(2 downto 0);
+  begin
+    sel := dac2_rd_active & dac1_rd_active & io_port_rd_active;
+    case sel IS
+      when "001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when others =>
+        Data_to_SCUB <= X"0000";
+    end case;
+  end process p_read_mux;
   
 
-rw_signal <= not A_RnW and not A_nBoardSel;
+modelsim_A_nBoardSel <= not A_nBoardSel; -- modelsim can't use not ...;
   
 sel_led: led_n
   generic map (
@@ -490,9 +528,10 @@ sel_led: led_n
   port map (
     ena         => led_ena_cnt,     -- is every 10 ms for one clock period active
     clk         => clk_sys,
-    Sig_in      => not A_nBoardSel,
+    Sig_in      => modelsim_A_nBoardSel,
     nLED        => open,
     nLED_opdrn  => A_nState_LED(0));
+
     
 dtack_led: led_n
   generic map (
@@ -505,6 +544,8 @@ dtack_led: led_n
     nLED        => open,
     nLED_opdrn  => A_nState_LED(1));
     
+rw_signal <= not A_RnW and not A_nBoardSel;
+
 rw_led: led_n
   generic map (
     stretch_cnt => 3)

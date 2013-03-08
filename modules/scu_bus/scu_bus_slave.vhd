@@ -371,7 +371,7 @@ port
   signal    S_Powerup_Done:       std_logic;
   
   constant  C_Dtack_dly_in_ns:    integer := 20;
-  constant  C_Dtack_dly_cnt:      integer := (C_Dtack_dly_in_ns * 1000 / Clk_in_ps)-1;
+  constant  C_Dtack_dly_cnt:      integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(C_Dtack_dly_in_ns)));
   signal    S_Dtack_to_SCUB_Dly:  std_logic_vector(C_Dtack_dly_cnt downto 0);   -- als Schieberegister
   
   constant  C_Debounce_nReset_in_ns:  integer := 500;   -- Vers_2_Revi_2
@@ -392,17 +392,21 @@ ASSERT NOT (Clk_in_Hz < 100000000)
       & " ns laesst sich kein schnelles Slaveinterface realisieren"
 SEVERITY Warning;
 
-ASSERT true
+ASSERT false
   REPORT "Das SCUB-Signal nSCUB_Reset_in wird mit "
       & integer'image(C_Debounce_nReset_in_ns) & " ns entprellt."   -- Vers_2_Revi_2
 SEVERITY NOTE;
 
-ASSERT true
+ASSERT false
   REPORT "'Der SCU_Bus_Slave'-Makro hat die Version: "
       & integer'image(This_macro_vers_dont_change_from_outside)
       & " und die Revision: "
       & integer'image(This_macro_revi_dont_change_from_outside)     -- ab Vers_3_Revi_0
 SEVERITY NOTE;
+
+ASSERT  false
+  REPORT "S_Dtack_to_SCUB_Dly length:  " & integer'image(S_Dtack_to_SCUB_Dly'length)
+SEVERITY note;
 
 
 Res <= not nSCUB_Reset_in; -- Modelsim kann kein not in der Signalzuweisung

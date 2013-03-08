@@ -5,7 +5,7 @@ use work.aux_functions_pkg.all;
 
 entity DAC_SPI is
   generic (
-    Base_addr:        integer range 1 to 16#ffff# := 16#300#;
+    Base_addr:        unsigned(15 downto 0) := X"0300";
     CLK_in_Hz:        integer := 100_000_000;
     SPI_CLK_in_Hz:    integer := 10_000_000
     );
@@ -34,13 +34,13 @@ end DAC_SPI;
 
 architecture arch_DAC_SPI OF DAC_SPI IS
 
-  constant  addr_width:                  integer := Adr_from_SCUB_LA'length;
-  constant  rw_dac_Cntrl_addr_offset:    integer := 0;
-  constant  wr_dac_addr_offset:          integer := 1;
+
+  constant  rw_dac_Cntrl_addr_offset:   unsigned(15 downto 0) := X"0000";
+  constant  wr_dac_addr_offset:         unsigned(15 downto 0) := X"0001";
 
 
-  constant  rw_dac_cntrl_addr:  unsigned(addr_width-1 downto 0) := to_unsigned((Base_addr + rw_dac_cntrl_addr_offset), addr_width);
-  constant  wr_dac_addr:        unsigned(addr_width-1 downto 0) := to_unsigned((Base_addr + wr_dac_addr_offset), addr_width);
+  constant  rw_dac_cntrl_addr:  unsigned(15 downto 0) := Base_addr + rw_dac_cntrl_addr_offset;
+  constant  wr_dac_addr:        unsigned(15 downto 0) := Base_addr + wr_dac_addr_offset;
 
   constant  c_spi_clk_ena_cnt:  integer := (clk_in_hz / spi_clk_in_hz) / 2;
 
@@ -73,10 +73,14 @@ architecture arch_DAC_SPI OF DAC_SPI IS
 
   signal    S_nCLR_DAC:       std_logic;
 
-  signal    SPI_TRM:          std_logic; 
+  signal    SPI_TRM:          std_logic;
+  
+  signal    modelsim_nReset:  std_logic;
 
   
 begin
+
+modelsim_nReset <= not nReset;
 
 spi_clk_gen:  div_n
   generic map (
@@ -84,7 +88,7 @@ spi_clk_gen:  div_n
     diag_on => 0
     )
   port map (
-    res     => not nReset,      -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
+    res     => modelsim_nReset, -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
                                 --     countdown is "n"-1 clocks to activate the "div_o"-output for one clock periode. 
     clk     => clk,             -- clk = clock
     ena     => '1',             -- in, can be used for a reduction, signal should be generated from the same 
