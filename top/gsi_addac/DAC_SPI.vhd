@@ -73,10 +73,14 @@ architecture arch_DAC_SPI OF DAC_SPI IS
 
   signal    S_nCLR_DAC:       std_logic;
 
-  signal    SPI_TRM:          std_logic; 
+  signal    SPI_TRM:          std_logic;
+  
+  signal    modelsim_nReset:  std_logic;
 
   
 begin
+
+modelsim_nReset <= not nReset;
 
 spi_clk_gen:  div_n
   generic map (
@@ -84,7 +88,7 @@ spi_clk_gen:  div_n
     diag_on => 0
     )
   port map (
-    res     => not nReset,      -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
+    res     => modelsim_nReset, -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
                                 --     countdown is "n"-1 clocks to activate the "div_o"-output for one clock periode. 
     clk     => clk,             -- clk = clock
     ena     => '1',             -- in, can be used for a reduction, signal should be generated from the same 

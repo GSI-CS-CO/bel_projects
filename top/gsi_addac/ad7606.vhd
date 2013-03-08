@@ -6,18 +6,19 @@ use ieee.math_real.all;
 
 entity ad7606  is
 	generic (
-				clk_in_hz:		integer := 50_000_000;		-- 50Mhz
-				sclk_in_hz:		integer := 14_500_000;		-- 14,5Mhz
-				cs_delay: 		integer := 16;				-- 16ns
-				cs_high: 		integer := 22;				-- 22ns
-				rd_low: 		integer := 16;				-- 16ns
-				reset_delay:	integer := 50;				-- 50ns
-				conv_wait:		integer := 25;				-- 25ns
-				inter_cycle:	integer := 6000;			-- 6us
+				clk_in_hz:		      integer := 50_000_000;		-- 50Mhz
+				sclk_in_hz:		      integer := 14_500_000;		-- 14,5Mhz
+				cs_delay_in_ns: 		integer := 16;				-- 16ns
+				cs_high_in_ns: 		  integer := 22;				-- 22ns
+				rd_low_in_ns: 		  integer := 16;				-- 16ns
+				reset_delay_in_ns:	integer := 50;				-- 50ns
+				conv_wait_in_ns:		integer := 25;				-- 25ns
+				inter_cycle_in_ns:	integer := 6000;			-- 6us
 				
 				ser_mode:		boolean := true;			-- selects between ADC communication modes
 				par_mode:		boolean := false;			-- serial, 16bit parallel or 8bit serial
-				byte_ser_mode:	boolean := false
+				byte_ser_mode:	boolean := false;
+        diag_on_is_1:   integer range 0 to 1 := 0   -- if 1 then diagnosic information is generated during compilation
 				
 				
 			);
@@ -87,39 +88,68 @@ architecture ad7606_arch of ad7606 is
 	signal s_channel_latch:	std_logic;
 	
 	
-	constant c_wait_d_ready:			integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(cs_delay)));
-	constant c_wait_d_ready_width:		integer := integer(floor(log2(real(c_wait_d_ready)))) + 2;
-	signal	s_wait_d_ready:				unsigned(c_wait_d_ready_width-1 downto 0) := (others => '0');
+	constant c_wait_d_ready:			  integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(cs_delay_in_ns)));
+	constant c_wait_d_ready_width:	integer := integer(floor(log2(real(c_wait_d_ready))));
+	signal	s_wait_d_ready:				  unsigned(c_wait_d_ready_width downto 0) := (others => '0') ;
+
+	constant  c_wait_cs_high:			  integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(cs_high_in_ns)));
+	constant  c_wait_cs_high_width:	integer := integer(floor(log2(real(c_wait_cs_high))));
+	signal	  s_wait_cs_high:				  unsigned(c_wait_cs_high_width downto 0) := (others => '0');
 	
-	constant c_wait_cs_high:			integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(cs_high)));
-	constant c_wait_cs_high_width:		integer := integer(floor(log2(real(c_wait_cs_high)))) + 2;
-	signal	s_wait_cs_high:				unsigned(c_wait_cs_high_width-1 downto 0) := (others => '0');
+	constant c_wait_rd_low:				integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(rd_low_in_ns)));
+	constant c_wait_rd_low_width:		integer := integer(floor(log2(real(c_wait_rd_low))));
+	signal	s_wait_rd_low:				unsigned( c_wait_rd_low_width downto 0) := (others => '0');
 	
-	constant c_wait_rd_low:				integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(rd_low)));
-	constant c_wait_rd_low_width:		integer := integer(floor(log2(real(c_wait_rd_low)))) + 2;
-	signal	s_wait_rd_low:				unsigned( c_wait_rd_low_width-1 downto 0) := (others => '0');
+	constant c_reset_delay:				integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(reset_delay_in_ns)));
+	constant c_reset_delay_width:		integer := integer(floor(log2(real(c_reset_delay))));
+	signal	s_reset_delay:				unsigned( c_reset_delay_width downto 0) := (others => '0');
 	
-	constant c_reset_delay:				integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(reset_delay)));
-	constant c_reset_delay_width:		integer := integer(floor(log2(real(c_reset_delay)))) + 2;
-	signal	s_reset_delay:				unsigned( c_reset_delay_width-1 downto 0) := (others => '0');
-	--signal s_reset_delay:				integer range 0 to c_reset_delay := 0;
+	constant c_conv_wait:				integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(conv_wait_in_ns)));
+	constant c_conv_wait_width:			integer := integer(floor(log2(real(c_conv_wait))));
+	signal	s_conv_wait:				unsigned(c_conv_wait_width downto 0) := (others => '0');
 	
-	constant c_conv_wait:				integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(conv_wait)));
-	constant c_conv_wait_width:			integer := integer(floor(log2(real(c_conv_wait)))) + 2;
-	signal	s_conv_wait:				unsigned(c_conv_wait_width-1 downto 0) := (others => '0');
-	
-	constant c_inter_cycle:				integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(inter_cycle)));
-	constant c_inter_cycle_width:		integer := integer(floor(log2(real(c_inter_cycle)))) + 2;
-	signal	s_inter_cycle:				unsigned(c_inter_cycle_width-1 downto 0) := (others => '0');
+	constant c_inter_cycle:				integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(inter_cycle_in_ns)));
+	constant c_inter_cycle_width:		integer := integer(floor(log2(real(c_inter_cycle))));
+	signal	s_inter_cycle:				unsigned(c_inter_cycle_width downto 0) := (others => '0');
 	
 	constant c_sclk_cnt:				integer := integer(ceil((real(clk_in_hz) / real(sclk_in_hz)) / real(2)));
-	constant c_sclk_cnt_width:			integer := integer(floor(log2(real(c_sclk_cnt)))) + 2;
-	signal s_sclk_cnt:					unsigned(c_sclk_cnt_width-1 downto 0) := (others => '0');
+	constant c_sclk_cnt_width:			integer := integer(floor(log2(real(c_sclk_cnt))));
+	signal s_sclk_cnt:					unsigned(c_sclk_cnt_width downto 0) := (others => '0');
 		
 	constant c_ser_length:				integer := 64 * 2;	
 
 
 begin
+
+  assert not (diag_on_is_1 = 1)
+    report " c_wait_d_ready: " & integer'image(c_wait_d_ready)
+        &  ",   s_wait_d_ready length in bit: " & integer'image(s_wait_d_ready'length)
+    severity note;
+  assert not (diag_on_is_1 = 1)
+    report " c_wait_cs_high: " & integer'image(c_wait_cs_high)
+        &  ",   s_wait_cs_high length in bit: " & integer'image(s_wait_cs_high'length)
+  severity note;
+  assert not (diag_on_is_1 = 1)
+    report " c_wait_rd_low: " & integer'image(c_wait_rd_low)
+        &  ",    s_wait_rd_low length in bit: " & integer'image(s_wait_rd_low'length)
+  severity note;
+  assert not (diag_on_is_1 = 1)
+    report " c_reset_delay: " & integer'image(c_reset_delay)
+        &  ",    s_reset_delay length in bit: " & integer'image(s_reset_delay'length)
+  severity note;
+  assert not (diag_on_is_1 = 1)
+    report " c_conv_wait: " & integer'image(c_conv_wait)
+        &  ",    s_conv_wait length in bit: " & integer'image(s_conv_wait'length)
+  severity note;
+  assert not (diag_on_is_1 = 1)
+    report " c_inter_cycle: " & integer'image(c_inter_cycle)
+        &  ",    s_inter_cycle length in bit: " & integer'image(s_inter_cycle'length)
+  severity note;
+  assert not (diag_on_is_1 = 1)
+    report " c_sclk_cnt: " & integer'image(c_sclk_cnt)
+        &  ",    s_sclk_cnt length in bit: " & integer'image(s_sclk_cnt'length)
+  severity note;
+
 
 	-- tri stating the hben and byte_sel lines
 	s_db14 <= db14_hben;
@@ -236,7 +266,7 @@ begin
 			case conv_state is
 				when reset =>
 					s_adc_reset 	<= '1';
-					if s_reset_delay = to_unsigned(c_reset_delay, c_reset_delay_width) then
+					if s_reset_delay = to_unsigned(c_reset_delay, s_reset_delay'length) then
 						conv_state <= idle;
 						s_reset_delay <= (others => '0');
 					else
@@ -244,7 +274,7 @@ begin
 					end if;
 					
 				when idle =>
-					if s_inter_cycle = to_unsigned(c_inter_cycle, c_inter_cycle_width) then
+					if s_inter_cycle = to_unsigned(c_inter_cycle, s_inter_cycle'length) then
 						conv_state <= conv_st;
 						s_inter_cycle <= (others => '0');
 					else
@@ -255,7 +285,7 @@ begin
 				when conv_st =>
 					s_convst_a <= '0';
 					s_convst_b <= '0';
-					if s_conv_wait = to_unsigned(c_conv_wait, c_conv_wait_width) then
+					if s_conv_wait = to_unsigned(c_conv_wait, s_conv_wait'length) then
 						conv_state <= wait_for_busy;
 						s_conv_wait <= (others => '0');
 					else
@@ -291,7 +321,7 @@ begin
 					s_par_ser_sel <= '0';
 					-- wait for c_wait_d_ready until data is stable
 		
-					if s_wait_d_ready = to_unsigned(c_wait_d_ready, c_wait_d_ready_width) then
+					if s_wait_d_ready = to_unsigned(c_wait_d_ready, s_wait_d_ready'length) then
 						conv_state <= data_ready;
 						s_wait_d_ready <= (others=> '0');
 					else
@@ -322,7 +352,7 @@ begin
 					s_n_cs <= '0';
 					s_n_rd <= '0';
 					
-					if s_wait_rd_low = to_unsigned(c_wait_rd_low, c_wait_rd_low_width) then
+					if s_wait_rd_low = to_unsigned(c_wait_rd_low, s_wait_rd_low'length) then
 						conv_state <= wait_cs_high;
 						s_wait_rd_low <= (others=> '0');
 					else
@@ -332,7 +362,7 @@ begin
 				when wait_cs_high =>
 					s_par_ser_sel <= '0';
 					-- rd and cs goes high for c_wait_cs_high
-					if s_wait_cs_high = to_unsigned(c_wait_cs_high, c_wait_cs_high_width) then
+					if s_wait_cs_high = to_unsigned(c_wait_cs_high, s_wait_cs_high'length) then
 						conv_state <= data_ready;
 						s_wait_cs_high <= (others=> '0');
 					else

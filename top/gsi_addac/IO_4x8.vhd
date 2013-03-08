@@ -357,14 +357,14 @@ p_cntrl:  process (nReset, clk)
       s_io_31_24_tx       <= '0';
     elsif rising_edge(clk) then
       if wr_cntrl_reg = '1' then
-        s_ext_io_7_0_dis    <= Data_from_SCUB_LA(s_ext_io_7_0_dis'pos(s_ext_io_7_0_dis));
-        s_ext_io_15_8_dis   <= Data_from_SCUB_LA(s_ext_io_15_8_dis'pos(s_ext_io_15_8_dis));
-        s_ext_io_23_16_dis  <= Data_from_SCUB_LA(s_ext_io_23_16_dis'pos(s_ext_io_23_16_dis));
-        s_ext_io_31_24_dis  <= Data_from_SCUB_LA(s_ext_io_31_24_dis'pos(s_ext_io_31_24_dis));
-        s_io_7_0_tx         <= Data_from_SCUB_LA(s_io_7_0_tx'pos(s_io_7_0_tx));
-        s_io_15_8_tx        <= Data_from_SCUB_LA(s_io_15_8_tx'pos(s_io_15_8_tx));
-        s_io_23_16_tx       <= Data_from_SCUB_LA(s_io_23_16_tx'pos(s_io_23_16_tx));
-        s_io_31_24_tx       <= Data_from_SCUB_LA(s_io_31_24_tx'pos(s_io_31_24_tx));
+        s_ext_io_7_0_dis    <= Data_from_SCUB_LA(0);--Data_from_SCUB_LA(s_ext_io_7_0_dis'pos(s_ext_io_7_0_dis));
+        s_ext_io_15_8_dis   <= Data_from_SCUB_LA(1);--Data_from_SCUB_LA(s_ext_io_15_8_dis'pos(s_ext_io_15_8_dis));
+        s_ext_io_23_16_dis  <= Data_from_SCUB_LA(2);--Data_from_SCUB_LA(s_ext_io_23_16_dis'pos(s_ext_io_23_16_dis));
+        s_ext_io_31_24_dis  <= Data_from_SCUB_LA(3);--Data_from_SCUB_LA(s_ext_io_31_24_dis'pos(s_ext_io_31_24_dis));
+        s_io_7_0_tx         <= Data_from_SCUB_LA(4);--Data_from_SCUB_LA(s_io_7_0_tx'pos(s_io_7_0_tx));
+        s_io_15_8_tx        <= Data_from_SCUB_LA(5);--Data_from_SCUB_LA(s_io_15_8_tx'pos(s_io_15_8_tx));
+        s_io_23_16_tx       <= Data_from_SCUB_LA(6);--Data_from_SCUB_LA(s_io_23_16_tx'pos(s_io_23_16_tx));
+        s_io_31_24_tx       <= Data_from_SCUB_LA(7);--Data_from_SCUB_LA(s_io_31_24_tx'pos(s_io_31_24_tx));
       end if;
     end if; 
   end process p_cntrl;
