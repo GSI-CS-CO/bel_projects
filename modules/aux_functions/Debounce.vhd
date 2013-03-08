@@ -55,7 +55,7 @@ severity ERROR;
 
 assert false
     report " debounce width is " & integer'image(S_DB_Cnt'length) & " Bit(s)"
-severity WARNING;
+severity note;
 
 
 S_DB_On_Cnt <= to_unsigned(DB_Cnt, S_DB_Cnt'length) when (Test = 0) else to_unsigned(DB_Tst_Cnt, S_DB_Cnt'length);
