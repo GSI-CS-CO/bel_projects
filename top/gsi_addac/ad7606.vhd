@@ -43,8 +43,6 @@ entity ad7606  is
 			par_ser_sel:		out std_logic;								-- parallel/serial/byte serial
 			adc_range:			out std_logic;								-- 10V/-10V or 5V/-5V
 			firstdata:			in std_logic;
-			leds:				out std_logic_vector(7 downto 0);
-			sw_high_byte:		in std_logic;		
 			channel_1:			out std_logic_vector(15 downto 0);
 			channel_2:			out std_logic_vector(15 downto 0);
 			channel_3:			out std_logic_vector(15 downto 0);
@@ -388,8 +386,6 @@ begin
 	adc_range <= '0';
 	adc_reset <= s_adc_reset;
 	
-	
-	leds <= s_channel_regs(1)(15 downto 8) when sw_high_byte = '0' else s_channel_regs(1)(7 downto 0);
 	
 	channel_1 <= s_channel_regs(0);
 	channel_2 <= s_channel_regs(1);

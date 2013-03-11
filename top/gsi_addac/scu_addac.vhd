@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.wr_altera_pkg.all;
+--use work.wr_altera_pkg.all;
 use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
 
@@ -105,7 +105,7 @@ architecture scu_addac_arch of scu_addac is
 
 constant  scu_adda1_id:       integer range 16#0210# to 16#021F# := 16#0210#;
 
-constant  clk_sys_in_Hz:      integer := 62_500_000;
+constant  clk_sys_in_Hz:      integer := 125_000_000;
 constant  dac_spi_clk_in_hz:  integer := 10_000_000;
 
 
@@ -214,6 +214,17 @@ component flash_loader_v01
     );
   end component;
 
+
+component adda_pll
+	PORT
+	(
+		inclk0: in  std_logic  := '0';
+		c0:     out std_logic;
+		c1:     out std_logic;
+		locked: out std_logic 
+	);
+end component;
+
   
   signal clk_sys, clk_cal, locked : std_logic;
   
@@ -257,16 +268,17 @@ component flash_loader_v01
 
   begin
 
+
 fl : flash_loader_v01
-port map (noe_in	=>	'0');
+  port map (noe_in	=>	'0');
 
   -- Obtain core clocking
-sys_pll_inst : sys_pll    -- Altera megafunction
-  port map (
-    inclk0 => CLK_FPGA,     -- 125Mhz oscillator from board
-    c0     => clk_sys,      -- 62.5MHz system clk (cannot use external pin as clock for RAM blocks)
+adda_pll_1: adda_pll        -- Altera megafunction
+	port map (
+		inclk0 => CLK_FPGA,     -- 125Mhz oscillator from board
+		c0     => clk_sys,      -- 125MHz system clk
     c1     => clk_cal,      -- 50Mhz calibration clock for Altera reconfig cores
-    locked => locked);      -- '1' when the PLL has locked
+		locked => locked);      -- '1' when the PLL has locked
 
   
 adc: ad7606
