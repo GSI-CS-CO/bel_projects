@@ -80,7 +80,7 @@ entity scu_addac is
     A_SEL:                in    std_logic_vector(3 downto 0);   -- use to select sources for the logic analyser ports
     A_TA:                 out   std_logic_vector(15 downto 0);  -- test port a
     A_TB:                 out   std_logic_vector(15 downto 0);  -- test port b
-    TP:                   out   std_logic_vector(1 downto 0);   -- test points
+    TP:                   out   std_logic_vector(2 downto 1);   -- test points
 
     A_nState_LED:         out   std_logic_vector(2 downto 0);   -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
     A_nLED:               out   std_logic_vector(15 downto 0);
