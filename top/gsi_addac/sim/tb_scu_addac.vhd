@@ -205,7 +205,13 @@ COMPONENT scu_addac
   nDAC2_A0 : BUFFER STD_LOGIC;
   nDAC2_A1 : BUFFER STD_LOGIC;
   nDAC2_CLK : BUFFER STD_LOGIC;
-  nDAC2_CLR : BUFFER STD_LOGIC
+  nDAC2_CLR : BUFFER STD_LOGIC;
+   EXT_TRIG_DAC: in std_logic;
+   EXT_TRIG_ADC: in std_logic;
+    HW_REV:               in    std_logic_vector(3 downto 0);
+    A_MODE_SEL:           in    std_logic_vector(1 downto 0)
+   
+   
   );
 END COMPONENT;
 
@@ -507,7 +513,11 @@ PORT MAP(
   nDAC2_A0 => nDAC2_A0,
   nDAC2_A1 => nDAC2_A1,
   nDAC2_CLK => nDAC2_CLK,
-  nDAC2_CLR => nDAC2_CLR
+  nDAC2_CLR => nDAC2_CLR,
+     EXT_TRIG_DAC => '0',
+   EXT_TRIG_ADC => '0',
+    HW_REV => "0000",
+    A_MODE_SEL => "00"
   );
 
 
