@@ -8,17 +8,13 @@ entity ad7606  is
 	generic (
 				clk_in_hz:		      integer := 50_000_000;		-- 50Mhz
 				sclk_in_hz:		      integer := 14_500_000;		-- 14,5Mhz
-				cs_delay_in_ns: 		integer := 16;				-- 16ns
-				cs_high_in_ns: 		  integer := 22;				-- 22ns
-				rd_low_in_ns: 		  integer := 16;				-- 16ns
-				reset_delay_in_ns:	integer := 50;				-- 50ns
-				conv_wait_in_ns:		integer := 25;				-- 25ns
-				inter_cycle_in_ns:	integer := 6000;			-- 6us
-				
-				ser_mode:		boolean := true;			-- selects between ADC communication modes
-				par_mode:		boolean := false;			-- serial, 16bit parallel or 8bit serial
-				byte_ser_mode:	boolean := false;
-        diag_on_is_1:   integer range 0 to 1 := 0   -- if 1 then diagnosic information is generated during compilation
+				cs_delay_in_ns: 		integer := 16;				    -- 16ns
+				cs_high_in_ns: 		  integer := 22;				    -- 22ns
+				rd_low_in_ns: 		  integer := 16;				    -- 16ns
+				reset_delay_in_ns:	integer := 50;				    -- 50ns
+				conv_wait_in_ns:		integer := 25;				    -- 25ns
+				inter_cycle_in_ns:	integer := 6000;			    -- 6us
+        diag_on_is_1:   integer range 0 to 1 := 0     -- if 1 then diagnosic information is generated during compilation
 				
 				
 			);
@@ -387,9 +383,6 @@ begin
 	convst_b <= s_convst_b;
 	adc_range <= '0';
 	adc_reset <= s_adc_reset;
-	
-	
-	leds <= s_channel_regs(1)(15 downto 8) when sw_high_byte = '0' else s_channel_regs(1)(7 downto 0);
 	
 	channel_1 <= s_channel_regs(0);
 	channel_2 <= s_channel_regs(1);

@@ -6,6 +6,7 @@ library work;
 use work.wr_altera_pkg.all;
 use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
+use work.adc_pkg.all;
 
 entity scu_addac is
   port (
@@ -109,52 +110,6 @@ constant  clk_sys_in_Hz:      integer := 62_500_000;
 constant  dac_spi_clk_in_hz:  integer := 10_000_000;
 
 
-component ad7606  is
-  generic (
-    clk_in_hz:            integer := 50_000_000;    -- 50Mhz
-    sclk_in_hz:           integer := 14_500_000;    -- 14,5Mhz
-    cs_delay_in_ns:       integer := 16;            -- 16ns
-    cs_high_in_ns:        integer := 22;            -- 22ns
-    rd_low_in_ns:         integer := 16;            -- 16ns
-    reset_delay_in_ns:    integer := 50;            -- 50ns
-    conv_wait_in_ns:      integer := 25;            -- 25ns
-    inter_cycle_in_ns:    integer := 6000;          -- 6us
-    ser_mode:             boolean := true;          -- selects between ADC communication modes
-    par_mode:             boolean := false;         -- serial, 16bit parallel or 8bit serial
-    byte_ser_mode:        boolean := false;
-    diag_on_is_1:         integer range 0 to 1 := 0   -- if 1 then diagnosic information is generated during compilation
-    );
-  port (
-    clk:            in std_logic;
-    nrst:           in std_logic;
-    conv_en:        in std_logic;
-    transfer_mode:  in std_logic_vector(1 downto 0);  -- select communication mode
-                                                      --	00: par
-                                                      --	01: ser
-    db:             in std_logic_vector(13 downto 0); -- databus from the ADC
-    db14_hben:      inout std_logic;                  -- hben in mode ser
-    db15_byte_sel:  inout std_logic;                  -- byte sel in mode ser
-    convst_a:       out std_logic;                    -- start conversion for channels 1-4
-    convst_b:       out std_logic;                    -- start conversion for channels 5-8
-    n_cs:           out std_logic;                    -- chipselect, enables tri state databus
-    n_rd_sclk:      out std_logic;                    -- first falling edge after busy clocks data out
-    busy:           in std_logic;                     -- falling edge signals end of conversion
-    adc_reset:      out std_logic;
-    os:             out std_logic_vector(2 downto 0); -- oversampling config
-    par_ser_sel:    out std_logic;                    -- parallel/serial/byte serial
-    adc_range:      out std_logic;                    -- 10V/-10V or 5V/-5V
-    firstdata:      in std_logic;
-    channel_1:      out std_logic_vector(15 downto 0);
-    channel_2:      out std_logic_vector(15 downto 0);
-    channel_3:      out std_logic_vector(15 downto 0);
-    channel_4:      out std_logic_vector(15 downto 0);
-    channel_5:      out std_logic_vector(15 downto 0);
-    channel_6:      out std_logic_vector(15 downto 0);
-    channel_7:      out std_logic_vector(15 downto 0);
-    channel_8:      out std_logic_vector(15 downto 0));
-end component ad7606;
-
-
 component DAC_SPI
   generic (
     Base_addr:        unsigned(15 downto 0);
@@ -179,7 +134,6 @@ component DAC_SPI
     Dtack:              out   std_logic
     );
 end component DAC_SPI;
-
 
 component IO_4x8
   generic (
@@ -244,6 +198,10 @@ component flash_loader_v01
   signal  Ext_Wr_fin_ovl:     std_logic;
   signal  nPowerup_Res:       std_logic;
   
+  signal  adc_rd_active:      std_logic;
+  signal  adc_data_to_SCUB:   std_logic_vector(15 downto 0);
+  signal  adc_dtack:          std_logic;
+  
   signal  rw_signal:          std_logic;
   signal  led_ena_cnt:        std_logic;
 
@@ -269,42 +227,7 @@ sys_pll_inst : sys_pll    -- Altera megafunction
     locked => locked);      -- '1' when the PLL has locked
 
   
-adc: ad7606
-  generic map (
-    clk_in_Hz     => clk_sys_in_Hz,
-    ser_mode      => false,
-    par_mode      => true,
-    byte_ser_mode => false,
-    diag_on_is_1  => 0)
-  port map (
-    clk           =>  clk_sys,
-    nrst          =>  nPowerup_Res,
-    conv_en       => '1',
-    transfer_mode => "01",
-    db            => ADC_DB(13 downto 0),
-    db14_hben     => ADC_DB(14),
-    db15_byte_sel => ADC_DB(15),
-    convst_a      => ADC_CONVST_A,
-    convst_b      => ADC_CONVST_B,
-    n_cs          => nADC_CS,
-    n_rd_sclk     => nADC_RD_SCLK,
-    busy          => ADC_BUSY,
-    adc_reset     => ADC_RESET,
-    os            => ADC_OS,
-    par_ser_sel   => nADC_PAR_SER_SEL,
-    adc_range     => ADC_Range,
-    firstdata     => ADC_FRSTDATA,
-    channel_1     => ADC_channel_1,
-    channel_2     => ADC_channel_2,
-    channel_3     => ADC_channel_3,
-    channel_4     => ADC_channel_4,
-    channel_5     => ADC_channel_5,
-    channel_6     => ADC_channel_6,
-    channel_7     => ADC_channel_7,
-    channel_8     => ADC_channel_8);
-
-
-Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack;
+Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack;
 
 SCU_Slave: SCU_Bus_Slave
 generic map (
@@ -435,7 +358,39 @@ io_port:  IO_4x8
     ext_io_31_24_dis    =>  a_ext_io_31_24_dis,     -- out, '1' = disable external io(31..24)-buffer.
     user_rd_active      =>  io_port_rd_active,      -- out, '1' = read data available at 'Data_to_SCUB'-output
     Data_to_SCUB        =>  io_port_data_to_SCUB,   -- out, connect read sources to SCUB-Macro
-    Dtack_to_SCUB       =>  io_port_Dtack_to_SCUB); -- out, connect Dtack to SCUB-Macro  
+    Dtack_to_SCUB       =>  io_port_Dtack_to_SCUB); -- out, connect Dtack to SCUB-Macro
+    
+adc: adc_scu_bus
+  generic map (
+    Base_addr     => x"0230",
+    clk_in_Hz     => clk_sys_in_Hz,
+    diag_on_is_1  => 0)
+  port map (
+    clk           =>  clk_sys,
+    nrst          =>  nPowerup_Res,
+    
+    db            => ADC_DB(13 downto 0),
+    db14_hben     => ADC_DB(14),
+    db15_byte_sel => ADC_DB(15),
+    convst_a      => ADC_CONVST_A,
+    convst_b      => ADC_CONVST_B,
+    n_cs          => nADC_CS,
+    n_rd_sclk     => nADC_RD_SCLK,
+    busy          => ADC_BUSY,
+    adc_reset     => ADC_RESET,
+    os            => ADC_OS,
+    par_ser_sel   => nADC_PAR_SER_SEL,
+    adc_range     => ADC_Range,
+    firstdata     => ADC_FRSTDATA,
+    
+    Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
+    Data_from_SCUB_LA => Data_from_SCUB_LA,
+    Ext_Adr_Val       => Ext_Adr_Val,
+    Ext_Rd_active     => Ext_Rd_active,
+    Ext_Wr_active     => Ext_Wr_active,
+    user_rd_active    => adc_rd_active,
+    Data_to_SCUB      => adc_data_to_SCUB,
+    Dtack_to_SCUB     => adc_dtack);
 
 modelsim_nPowerup_Res <= not nPowerup_Res;
 
@@ -505,15 +460,17 @@ p_led_mux: process (
 p_read_mux: process (
     io_port_rd_active, io_port_data_to_SCUB,
     dac1_rd_active, dac1_data_to_SCUB,
-    dac2_rd_active, dac2_data_to_SCUB
+    dac2_rd_active, dac2_data_to_SCUB,
+    adc_rd_active
     )
-  variable  sel:  unsigned(2 downto 0);
+  variable  sel:  unsigned(3 downto 0);
   begin
-    sel := dac2_rd_active & dac1_rd_active & io_port_rd_active;
+    sel := adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
     case sel IS
-      when "001" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "010" => Data_to_SCUB <= dac1_data_to_SCUB;
-      when "100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "0001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "0010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "0100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "1000" => Data_to_SCUB <= adc_data_to_SCUB;
       when others =>
         Data_to_SCUB <= X"0000";
     end case;
