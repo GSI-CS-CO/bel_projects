@@ -472,7 +472,7 @@ p_read_mux: process (
     io_port_rd_active, io_port_data_to_SCUB,
     dac1_rd_active, dac1_data_to_SCUB,
     dac2_rd_active, dac2_data_to_SCUB,
-    adc_rd_active
+    adc_rd_active, adc_data_to_SCUB
     )
   variable  sel:  unsigned(3 downto 0);
   begin

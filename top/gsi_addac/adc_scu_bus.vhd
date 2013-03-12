@@ -9,13 +9,6 @@ entity adc_scu_bus is
   generic (
     Base_addr:            unsigned(15 downto 0);
     clk_in_hz:            integer := 50_000_000;        -- 50Mhz
-    sclk_in_hz:           integer := 14_500_000;        -- 14,5Mhz
-    cs_delay_in_ns:       integer := 16;                -- 16ns
-    cs_high_in_ns:        integer := 22;                -- 22ns
-    rd_low_in_ns:         integer := 16;                -- 16ns
-    reset_delay_in_ns:    integer := 50;                -- 50ns
-    conv_wait_in_ns:      integer := 25;                -- 25ns
-    inter_cycle_in_ns:    integer := 6000;              -- 6us
     diag_on_is_1:         integer range 0 to 1 := 0);   -- if 1 then diagnosic information is generated during compilation
   port (
     clk:            in std_logic;
