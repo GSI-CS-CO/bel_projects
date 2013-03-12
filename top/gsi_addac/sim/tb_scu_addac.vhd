@@ -561,6 +561,7 @@ BEGIN
   Computer_access_master(Slave1_Acc, x"0220", X"005f", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
   Computer_access_master(Slave1_Acc, x"0220", X"005f", rd, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
   
+  Computer_access_master(Slave1_Acc, x"0200", X"0002", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
   Computer_access_master(Slave1_Acc, x"0201", X"1234", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
 	wait for 2 us;	
   Computer_access_master(Slave1_Acc, x"0201", X"aaaa", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);

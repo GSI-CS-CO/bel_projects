@@ -370,6 +370,7 @@ io_port:  IO_4x8
     user_rd_active      =>  io_port_rd_active,      -- out, '1' = read data available at 'Data_to_SCUB'-output
     Data_to_SCUB        =>  io_port_data_to_SCUB,   -- out, connect read sources to SCUB-Macro
     Dtack_to_SCUB       =>  io_port_Dtack_to_SCUB); -- out, connect Dtack to SCUB-Macro
+
     
 adc: adc_scu_bus
   generic map (
@@ -402,6 +403,7 @@ adc: adc_scu_bus
     user_rd_active    => adc_rd_active,
     Data_to_SCUB      => adc_data_to_SCUB,
     Dtack_to_SCUB     => adc_dtack);
+
 
 modelsim_nPowerup_Res <= not nPowerup_Res;
 
@@ -472,7 +474,7 @@ p_read_mux: process (
     io_port_rd_active, io_port_data_to_SCUB,
     dac1_rd_active, dac1_data_to_SCUB,
     dac2_rd_active, dac2_data_to_SCUB,
-    adc_rd_active
+    adc_rd_active, adc_data_to_SCUB
     )
   variable  sel:  unsigned(3 downto 0);
   begin

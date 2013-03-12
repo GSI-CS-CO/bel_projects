@@ -227,14 +227,26 @@ P_Shift_Reg:  process (clk, nReset)
   end process P_Shift_Reg;
 
 P_DAC_Cntrl:  process (clk, nReset)
+  variable  clr_cnt:  unsigned(1 downto 0) := "00";
   begin
     if  nReset = '0' then
       S_nCLR_DAC <= '0';
+      clr_cnt := "00";
     elsif rising_edge(clk) then
-      S_nCLR_DAC <= '1';
       if Wr_DAC_Cntrl = '1' then
-        if Data_from_SCUB_LA(0) = '1' then
+        if Data_from_SCUB_LA(1) = '1' then
           S_nCLR_DAC <= '0';
+          clr_cnt := "00";
+        end if;
+      else
+        if S_nCLR_DAC = '0' then
+          if spi_clk_ena = '1' then 
+            if clr_cnt < 3 then
+              clr_cnt := clr_cnt + 1;
+            else
+              S_nCLR_DAC <= '1';
+            end if;
+          end if;
         end if;
       end if;
     end if;
@@ -242,10 +254,10 @@ P_DAC_Cntrl:  process (clk, nReset)
 
 
 DAC_SI  <= Shift_Reg(Shift_Reg'high);
-nDAC_CLK <= spi_clk; 
+nDAC_CLK <= not spi_clk; 
 nCLR_DAC <= S_nCLR_DAC;
   
-Rd_Port <= (X"000" & '0' & '0' & '0' & SPI_TRM);  
+Rd_Port <= (X"000" & '0' & '0' & not S_nCLR_DAC & SPI_TRM);  
   
   
 Dtack <= S_Dtack;
