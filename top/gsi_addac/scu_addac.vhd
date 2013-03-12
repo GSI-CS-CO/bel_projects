@@ -169,13 +169,13 @@ component flash_loader_v01
 
 
 component adda_pll
-	port
-	(
-		inclk0: in  std_logic  := '0';
-		c0:     out std_logic;
-		c1:     out std_logic;
-		locked: out std_logic 
-	);
+  PORT
+  (
+    inclk0: in  std_logic  := '0';
+    c0:     out std_logic;
+    c1:     out std_logic;
+    locked: out std_logic 
+  );
 end component;
 
   
