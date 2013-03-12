@@ -3,7 +3,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
---use work.wr_altera_pkg.all;
 use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
 
@@ -216,7 +215,7 @@ component flash_loader_v01
 
 
 component adda_pll
-	PORT
+	port
 	(
 		inclk0: in  std_logic  := '0';
 		c0:     out std_logic;
