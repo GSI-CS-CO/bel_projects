@@ -35,7 +35,7 @@ ARCHITECTURE scu_addac_arch OF scu_addac_vhd_tst IS
 -- constants
 CONSTANT  scu_master_clk_in_hz: INTEGER := 120_000_000;
 CONSTANT  master_clk_period:    time := (real(1_000_000_000)/real(scu_master_clk_in_hz/1000)) * 1 ps;
-CONSTANT  slave_clk_in_hz:    INTEGER := 65_500_000;
+CONSTANT  slave_clk_in_hz:    INTEGER := 125_000_000;
 CONSTANT  slave_clk_period:   time := (real(1_000_000_000)/real(slave_clk_in_hz/1000)) * 1 ps;
 CONSTANT  A_SysClock_period:  time  := 40.0 * 1 ns;
 
@@ -562,8 +562,11 @@ BEGIN
   Computer_access_master(Slave1_Acc, x"0220", X"005f", rd, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
   
   Computer_access_master(Slave1_Acc, x"0201", X"1234", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
-
-	wait for 10 us;	
+	wait for 2 us;	
+  Computer_access_master(Slave1_Acc, x"0201", X"aaaa", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
+	wait for 2 us;	
+  Computer_access_master(Slave1_Acc, x"0201", X"5555", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
+	wait for 2 us;	
 
 	ASSERT FALSE REPORT "testbench finished" SEVERITY failure;
                                                        

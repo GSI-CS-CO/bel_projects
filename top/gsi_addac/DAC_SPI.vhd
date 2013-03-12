@@ -48,7 +48,7 @@ architecture arch_DAC_SPI OF DAC_SPI IS
 
 
 
-  signal    Shift_Reg:        std_logic_vector(15 DOWNTO 0);
+  signal    Shift_Reg:        unsigned(15 DOWNTO 0);
   signal    Wr_Shift_Reg:     std_logic;
   signal    Wr_DAC_Cntrl:     std_logic;
   signal    Rd_DAC_Cntrl:     std_logic;
@@ -219,8 +219,8 @@ P_Shift_Reg:  process (clk, nReset)
       Shift_Reg <= (others => '0');
     elsif rising_edge(clk) then
       if Wr_Shift_Reg = '1' then
-        Shift_Reg <= Data_from_SCUB_LA;
-      elsif SPI_SM = CLK_Lo AND spi_clk_ena = '1' then
+        Shift_Reg <= unsigned(Data_from_SCUB_LA);
+      elsif (SPI_SM = CLK_Lo) AND (spi_clk_ena = '1') and (Bit_Cnt > 0) then
         Shift_Reg <= (Shift_Reg(Shift_Reg'high-1 DOWNTO 0) & '0');
       end if;
     end if;

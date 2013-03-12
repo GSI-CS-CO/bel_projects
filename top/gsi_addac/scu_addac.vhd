@@ -3,7 +3,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
---use work.wr_altera_pkg.all;
 use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
 use work.adc_pkg.all;
