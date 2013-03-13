@@ -14,11 +14,12 @@ entity ad7606  is
         reset_delay_in_ns:  integer := 50;              -- 50ns
         conv_wait_in_ns:    integer := 25;              -- 25ns
         inter_cycle_in_ns:  integer := 6000;            -- 6us
-        diag_on_is_1:       integer range 0 to 1 := 0   -- if 1 then diagnosic information is generated during compilation
+        diag_on_is_1:       integer range 0 to 1 := 1   -- if 1 then diagnosic information is generated during compilation
       );
   port (
       clk:            in std_logic;
       nrst:           in std_logic;
+      sync_rst:       in std_logic;
       conv_en:        in std_logic;
       transfer_mode:  in std_logic_vector(1 downto 0);      -- select communication mode
                                                             --  00: par
@@ -78,6 +79,8 @@ architecture ad7606_arch of ad7606 is
   signal s_shift_reg_b: std_logic_vector(63 downto 0);
   
   signal s_channel_latch: std_logic;
+  signal sync_busy1:      std_logic;
+  signal sync_busy2:      std_logic;
   
   
   constant c_wait_d_ready:        integer := integer(ceil(real(clk_in_hz) / real(1_000_000_000) * real(cs_delay_in_ns)));
@@ -157,7 +160,7 @@ begin
     if nrst = '0' then
       s_sclk_cnt <= (others=> '0');
     elsif rising_edge(clk) then
-      if s_sclk_cnt = to_unsigned(c_sclk_cnt-1, c_sclk_cnt_width) then
+      if s_sclk_cnt = to_unsigned(c_sclk_cnt-1, s_sclk_cnt'length) then
         s_sclk_en <= '1';
         s_sclk_cnt <= (others=> '0');
       else
@@ -217,10 +220,18 @@ begin
   
   end process;
   
+  sync_busy: process (clk, busy)
+  begin
+    if rising_edge(clk) then
+      sync_busy1 <= busy;
+      sync_busy2 <= sync_busy1;
+    end if;
+  end process;
+  
 conv_cycle: process(clk, nrst)
   begin
   
-    if nrst = '0' then
+    if nrst = '0' or sync_rst = '1' then
       conv_state <= reset;
       s_convst_a    <= '1';
       s_convst_b    <= '1';
@@ -283,14 +294,13 @@ conv_cycle: process(clk, nrst)
           end if;
         
         when wait_for_busy =>
-          
-          if busy = '1' then
+          if sync_busy2 = '1' then
             conv_state <= wait_for_conv_fin;
           end if;
         
         when wait_for_conv_fin =>
           
-          if busy = '0' then
+          if sync_busy2 = '0' then
             if transfer_mode = "00" then
               conv_state <= read_par;
             elsif transfer_mode = "01" then
@@ -326,8 +336,6 @@ conv_cycle: process(clk, nrst)
             s_n_cs <= '0';
             s_n_rd <= '0';
             
-            
-            s_channel_latch <= '1';
             s_channel_cnt <= s_channel_cnt + 1;
             conv_state <= wait_rd_low;
           else
@@ -342,6 +350,7 @@ conv_cycle: process(clk, nrst)
           s_n_cs <= '0';
           s_n_rd <= '0';
           
+          
           if s_wait_rd_low = to_unsigned(c_wait_rd_low, s_wait_rd_low'length) then
             conv_state <= wait_cs_high;
             s_wait_rd_low <= (others=> '0');
@@ -351,6 +360,7 @@ conv_cycle: process(clk, nrst)
         
         when wait_cs_high =>
           s_par_ser_sel <= '0';
+          s_channel_latch <= '1';
           -- rd and cs goes high for c_wait_cs_high
           if s_wait_cs_high = to_unsigned(c_wait_cs_high, s_wait_cs_high'length) then
             conv_state <= data_ready;
@@ -378,12 +388,13 @@ conv_cycle: process(clk, nrst)
   adc_range <= '0';
   adc_reset <= s_adc_reset;
   
-  channel_1 <= s_channel_regs(0);
-  channel_2 <= s_channel_regs(1);
-  channel_3 <= s_channel_regs(2);
-  channel_4 <= s_channel_regs(3);
-  channel_5 <= s_channel_regs(4);
-  channel_6 <= s_channel_regs(5);
-  channel_7 <= s_channel_regs(6);
-  channel_8 <= s_channel_regs(7);
+  -- channel order has to be switched for SCU_ADDA
+  channel_1 <= s_channel_regs(7);
+  channel_2 <= s_channel_regs(6);
+  channel_3 <= s_channel_regs(5);
+  channel_4 <= s_channel_regs(4);
+  channel_5 <= s_channel_regs(3);
+  channel_6 <= s_channel_regs(2);
+  channel_7 <= s_channel_regs(1);
+  channel_8 <= s_channel_regs(0);
 end architecture;

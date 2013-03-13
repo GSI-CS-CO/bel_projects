@@ -22,6 +22,7 @@ component ad7606  is
   port (
     clk:            in std_logic;
     nrst:           in std_logic;
+    sync_rst:       in std_logic;
     conv_en:        in std_logic;
     transfer_mode:  in std_logic_vector(1 downto 0);  -- select communication mode
                                                       --	00: par
@@ -81,7 +82,17 @@ component adc_scu_bus is
     Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
     user_rd_active:     out   std_logic;                      -- '1' = read data available at 'Data_to_SCUB'-output
     Data_to_SCUB:       out   std_logic_vector(15 downto 0);  -- connect read sources to SCUB-Macro
-    Dtack_to_SCUB:      out   std_logic);                     -- connect Dtack to SCUB-Macro
+    Dtack_to_SCUB:      out   std_logic;                     -- connect Dtack to SCUB-Macro
+    
+    -- channel data for LEDs
+    channel_1:          out std_logic_vector(15 downto 0);
+    channel_2:          out std_logic_vector(15 downto 0);
+    channel_3:          out std_logic_vector(15 downto 0);
+    channel_4:          out std_logic_vector(15 downto 0);
+    channel_5:          out std_logic_vector(15 downto 0);
+    channel_6:          out std_logic_vector(15 downto 0);
+    channel_7:          out std_logic_vector(15 downto 0);
+    channel_8:          out std_logic_vector(15 downto 0));
 end component;
 
 

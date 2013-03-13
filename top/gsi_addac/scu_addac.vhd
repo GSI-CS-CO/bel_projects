@@ -376,7 +376,7 @@ adc: adc_scu_bus
   generic map (
     Base_addr     => x"0230",
     clk_in_Hz     => clk_sys_in_Hz,
-    diag_on_is_1  => 0)
+    diag_on_is_1  => 1)
   port map (
     clk           =>  clk_sys,
     nrst          =>  nPowerup_Res,
@@ -402,8 +402,16 @@ adc: adc_scu_bus
     Ext_Wr_active     => Ext_Wr_active,
     user_rd_active    => adc_rd_active,
     Data_to_SCUB      => adc_data_to_SCUB,
-    Dtack_to_SCUB     => adc_dtack);
+    Dtack_to_SCUB     => adc_dtack,
 
+    channel_1 => ADC_channel_1,
+    channel_2 => ADC_channel_2,
+    channel_3 => ADC_channel_3,
+    channel_4 => ADC_channel_4,
+    channel_5 => ADC_channel_5,
+    channel_6 => ADC_channel_6,
+    channel_7 => ADC_channel_7,
+    channel_8 => ADC_channel_8);
 
 modelsim_nPowerup_Res <= not nPowerup_Res;
 
@@ -456,14 +464,14 @@ p_led_mux: process (
     )
   begin
     case not A_ADC_DAC_SEL IS
-      when X"0" => A_nLED <= not ADC_channel_1;
-      when X"1" => A_nLED <= not ADC_channel_2;
-      when X"2" => A_nLED <= not ADC_channel_3;
-      when X"3" => A_nLED <= not ADC_channel_4;
-      when X"4" => A_nLED <= not ADC_channel_5;
-      when X"5" => A_nLED <= not ADC_channel_6;
-      when X"6" => A_nLED <= not ADC_channel_7;
-      when X"7" => A_nLED <= not ADC_channel_8;
+      when X"1" => A_nLED <= not ADC_channel_1;
+      when X"2" => A_nLED <= not ADC_channel_2;
+      when X"3" => A_nLED <= not ADC_channel_3;
+      when X"4" => A_nLED <= not ADC_channel_4;
+      when X"5" => A_nLED <= not ADC_channel_5;
+      when X"6" => A_nLED <= not ADC_channel_6;
+      when X"7" => A_nLED <= not ADC_channel_7;
+      when X"8" => A_nLED <= not ADC_channel_8;
       when others =>
         A_nLED <= (others => '1');
     end case;
