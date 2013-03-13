@@ -29,7 +29,7 @@ use ieee.numeric_std.all;
 use work.wishbone_pkg.all;
 
 
-ENTITY scu_bus_master IS
+ENTITY wb_scu_bus IS
 
 	GENERIC(
       g_interface_mode        : t_wishbone_interface_mode      := CLASSIC;
@@ -65,9 +65,9 @@ PORT(
 	nSel_Ext_Data_Drv		: OUT		STD_LOGIC 							            -- select for external data transceiver to the SCU_Bus, active low.
 	);
 		
-END scu_bus_master;
+END wb_scu_bus;
 
-ARCHITECTURE Arch_SCU_Bus_Master OF SCU_Bus_Master IS
+ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
 
 
   signal Wr_Data            : std_logic_vector(15 downto 0);  -- IN wite data to SCU_Bus, or internal FPGA register

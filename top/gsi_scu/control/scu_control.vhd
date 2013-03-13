@@ -592,7 +592,7 @@ begin
       master_o  => pcie_slave_i,
       master_i  => pcie_slave_o);
   
-  scub_master : scu_bus_master 
+  scub_master : wb_scu_bus 
     generic map(
       g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE,

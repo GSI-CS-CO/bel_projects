@@ -8,7 +8,7 @@ use work.wishbone_pkg.all;
 
 package scu_bus_pkg is
 
-component scu_bus_master is
+component wb_scu_bus is
 
 	generic(
       g_interface_mode        : t_wishbone_interface_mode      := CLASSIC;
