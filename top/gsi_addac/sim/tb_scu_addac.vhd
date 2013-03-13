@@ -58,13 +58,13 @@ CONSTANT  C_Status_Reg_Adr:       STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0011";   --
 
 
 
-CONSTANT	C_Slave_Intr_In_Adr:			STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0020";		-- address of slave interrupt In register (rd)
-CONSTANT	C_Slave_Intr_Enable_Adr:		STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0021";		-- address of slave interrupt pending register (rd/wr)
-CONSTANT	C_Slave_Intr_Pending_Adr:		STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0022";		-- address of slave interrupt pending register (rd/wr)
-CONSTANT	C_Slave_Intr_Mask_Adr:			STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0023";		-- address of slave interrupt mask register (rd/wr)
-CONSTANT	C_Slave_Intr_Active_Adr:		STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0024";		-- address of slave interrupt active register (rd)
-CONSTANT	C_Slave_Intr_Level_Adr:			STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0025";		-- address of slave interrupt level register (rd/wr)
-CONSTANT	C_Slave_Intr_Edge_Adr:			STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0026";		-- address of slave interrupt edge register (rd/wr)
+CONSTANT  C_Slave_Intr_In_Adr:      STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0020";   -- address of slave interrupt In register (rd)
+CONSTANT  C_Slave_Intr_Enable_Adr:    STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0021";   -- address of slave interrupt pending register (rd/wr)
+CONSTANT  C_Slave_Intr_Pending_Adr:   STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0022";   -- address of slave interrupt pending register (rd/wr)
+CONSTANT  C_Slave_Intr_Mask_Adr:      STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0023";   -- address of slave interrupt mask register (rd/wr)
+CONSTANT  C_Slave_Intr_Active_Adr:    STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0024";   -- address of slave interrupt active register (rd)
+CONSTANT  C_Slave_Intr_Level_Adr:     STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0025";   -- address of slave interrupt level register (rd/wr)
+CONSTANT  C_Slave_Intr_Edge_Adr:      STD_LOGIC_VECTOR(15 DOWNTO 0) := X"0026";   -- address of slave interrupt edge register (rd/wr)
 
                                                  
 -- signals
@@ -92,9 +92,9 @@ SIGNAL    nSel_Ext_Data_Drv:    STD_LOGIC;
 SIGNAL    scub_rd_fin:          STD_LOGIC;
 SIGNAL    scub_wr_fin:          STD_LOGIC;
 SIGNAL    nscub_timing_cycle:   STD_LOGIC;
-SIGNAL		scub_ti_cyc_err:		  STD_LOGIC;
-SIGNAL		scub_ti_fin:			    STD_LOGIC;
-SIGNAL		Intr_In:				      STD_LOGIC_VECTOR(15 DOWNTO 1) := (OTHERS => 'H');
+SIGNAL    scub_ti_cyc_err:      STD_LOGIC;
+SIGNAL    scub_ti_fin:          STD_LOGIC;
+SIGNAL    Intr_In:              STD_LOGIC_VECTOR(15 DOWNTO 1) := (OTHERS => 'H');
   
 
 SIGNAL SCUB_Addr : STD_LOGIC_VECTOR(15 DOWNTO 0);
@@ -131,7 +131,7 @@ SIGNAL A_TB : STD_LOGIC_VECTOR(15 DOWNTO 0);
 SIGNAL ADC_BUSY : STD_LOGIC;
 SIGNAL ADC_CONVST_A : STD_LOGIC;
 SIGNAL ADC_CONVST_B : STD_LOGIC;
-SIGNAL ADC_DB : STD_LOGIC_VECTOR(15 DOWNTO 0);
+SIGNAL ADC_DB : STD_LOGIC_VECTOR(15 DOWNTO 0) := x"DEAD";
 SIGNAL ADC_FRSTDATA : STD_LOGIC;
 SIGNAL ADC_OS : STD_LOGIC_VECTOR(2 DOWNTO 0);
 SIGNAL ADC_Range : STD_LOGIC;
@@ -520,7 +520,8 @@ PORT MAP(
     A_MODE_SEL => "00"
   );
 
-
+ADC_BUSY <= not ADC_CONVST_A after 10 ns;
+ADC_FRSTDATA <=  not ADC_CONVST_A after 120 ns;
 
 
 always : PROCESS                                              
@@ -528,31 +529,31 @@ always : PROCESS
 -- (        )                                                 
 -- variable declarations                                      
 BEGIN
-	ASSERT FALSE REPORT "master clock period is %" & time'image(master_clk_period) SEVERITY warning;
-	ASSERT FALSE REPORT "slave clock period is %" & time'image(slave_clk_period) SEVERITY warning;
+  ASSERT FALSE REPORT "master clock period is %" & time'image(master_clk_period) SEVERITY warning;
+  ASSERT FALSE REPORT "slave clock period is %" & time'image(slave_clk_period) SEVERITY warning;
 
   
- 	Intr_In(15 DOWNTO 1) <= B"1111_1111_1111_111";
+  Intr_In(15 DOWNTO 1) <= B"1111_1111_1111_111";
                                                     
-	Timing_In <= (OTHERS => 'H');
-	Start_Timing_Cycle <= '0';
-	Start_Cycle <= 'L';
- 	Reset <= '1';
+  Timing_In <= (OTHERS => 'H');
+  Start_Timing_Cycle <= '0';
+  Start_Cycle <= 'L';
+  Reset <= '1';
 
- 	A_SEL <= X"1";
+  A_SEL <= X"1";
 
- 	A_nReset <= '0';
-	wait for 1200 ns;
- 	A_nReset <= '1';
- 	Reset <= '0';
-	wait for 800 ns;
-	
+  A_nReset <= '0';
+  wait for 1200 ns;
+  A_nReset <= '1';
+  Reset <= '0';
+  wait for 800 ns;
+  
   Timing( X"DEADDEAD", Timing_In, Start_Timing_Cycle);
   wait for 500 ns;
                                                            
   Computer_access_master(Slave1_Acc, C_Slave_Intr_Active_Adr, X"0000", Rd, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
   Computer_access_master(Slave1_Acc, C_Slave_Intr_Active_Adr, Last_Rd_Data, Wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
- 	ASSERT FALSE REPORT "read and quitt power up intr (bit(0))" SEVERITY warning;
+  ASSERT FALSE REPORT "read and quitt power up intr (bit(0))" SEVERITY warning;
   Wait for 50 ns;
 
   Computer_access_master(Slave1_Acc, x"0010", X"5A0F", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
@@ -563,13 +564,18 @@ BEGIN
   
   Computer_access_master(Slave1_Acc, x"0200", X"0002", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
   Computer_access_master(Slave1_Acc, x"0201", X"1234", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
-	wait for 2 us;	
+  wait for 2 us;  
   Computer_access_master(Slave1_Acc, x"0201", X"aaaa", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
-	wait for 2 us;	
+  wait for 2 us;  
   Computer_access_master(Slave1_Acc, x"0201", X"5555", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
-	wait for 2 us;	
+  wait for 2 us;  
+ 
+  Computer_access_master(Slave1_Acc, x"0231", X"0000", rd, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
+  wait for 2 us;
+  Computer_access_master(Slave1_Acc, x"0231", X"0000", rd, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
+  wait for 2 us;
 
-	ASSERT FALSE REPORT "testbench finished" SEVERITY failure;
+  ASSERT FALSE REPORT "testbench finished" SEVERITY failure;
                                                        
 END PROCESS always;                                          
 END scu_addac_arch;
