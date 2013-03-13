@@ -185,7 +185,8 @@ P_SPI_SM: process (clk, nReset, S_nCLR_DAC)
               spi_clk <= '0';
               SPI_SM <= CLK_Hi;
             ELSE
-              spi_clk <= '1';
+              spi_clk <= '0';
+              nCS_DAC <= '1';
               SPI_SM <= Sel_Off;
             end if;
             
@@ -195,14 +196,16 @@ P_SPI_SM: process (clk, nReset, S_nCLR_DAC)
             SPI_SM <= CLK_Lo;
 
           when Sel_Off =>
-            nCS_DAC <= '1';
+            spi_clk <= '1';
             SPI_SM <= Load;
 
           when Load =>
+            spi_clk <= '0';
             nLD_DAC <= '0';
             SPI_SM <= Load_end;
 
           when Load_End =>
+            spi_clk <= '1';
             SPI_TRM <= '0';
             nLD_DAC <= '0';
             SPI_SM <= Idle;
