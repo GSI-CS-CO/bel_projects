@@ -162,7 +162,6 @@ add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/Data_from_SCUB_LA
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/Ext_Adr_Val
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/Ext_Rd_active
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/Ext_Wr_active
-add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/Ext_Wr_fin
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/nPowerup_Res
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/rw_signal
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/led_ena_cnt
@@ -328,21 +327,21 @@ add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Ext_Wr_fin
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Dtack
 add wave -noupdate -radix hexadecimal -childformat {{/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(15) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(14) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(13) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(12) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(11) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(10) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(9) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(8) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(7) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(6) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(5) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(4) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(3) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(2) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(1) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(0) -radix hexadecimal}} -subitemconfig {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(15) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(14) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(13) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(12) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(11) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(10) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(9) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(8) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(7) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(6) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(5) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(4) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(3) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(2) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(1) {-height 15 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(0) {-height 15 -radix hexadecimal}} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/spi_clk
-add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/DAC_SI
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/SPI_TRM
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Ext_Adr_Val
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Ext_Rd_active
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Ext_Wr_active
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/clk
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/nReset
+add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/DAC_SI
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/nDAC_CLK
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/nCS_DAC
+add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Wr_DAC_Cntrl
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/nLD_DAC
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/nCLR_DAC
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Rd_Port
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Rd_Activ
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/spi_clk_ena
-add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Wr_DAC_Cntrl
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Rd_DAC_Cntrl
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/S_Dtack
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/SPI_SM
@@ -355,8 +354,8 @@ add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/rw_dac_cntr
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/wr_dac_addr
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/c_spi_clk_ena_cnt
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {3750143 ps} 0} {{Cursor 2} {3760226 ps} 0} {{Cursor 3} {3216000 ps} 0}
-quietly wave cursor active 2
+WaveRestoreCursors {{Cursor 1} {7081420 ps} 0} {{Cursor 2} {9832323 ps} 0} {{Cursor 3} {3220187 ps} 0}
+quietly wave cursor active 1
 configure wave -namecolwidth 175
 configure wave -valuecolwidth 59
 configure wave -justifyvalue left
@@ -371,4 +370,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ps
 update
-WaveRestoreZoom {3277052 ps} {4296137 ps}
+WaveRestoreZoom {0 ps} {10669392 ps}
