@@ -734,7 +734,7 @@ begin
   -- Output MUXes
   with r_gpio_mux(1 downto 0) select
     s_lemo_dat(1) <= 
-      clk_ref       when "00",
+      '0'           when "00",
       eca_gpio(0)   when "01",
       r_gpio_val(0) when "10",
       '-'           when others;

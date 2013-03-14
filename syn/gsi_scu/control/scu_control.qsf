@@ -734,7 +734,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/oled_display/Display_RAM_
 set_global_assignment -name VHDL_FILE ../../../modules/oled_display/oled_display_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/oled_display/spi_master.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/oled_display/wb_console.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_master.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/wb_scu_bus.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave.vhd
