@@ -720,6 +720,9 @@ set_global_assignment -name SYNCHRONIZER_IDENTIFICATION "FORCED IF ASYNCHRONOUS"
 set_global_assignment -name TIMEQUEST_DO_CCPP_REMOVAL ON
 set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
+set_location_assignment PIN_E27 -to sfp2_ref_clk_i
+set_instance_assignment -name IO_STANDARD LVDS -to sfp2_ref_clk_i
+set_location_assignment PIN_E28 -to "sfp2_ref_clk_i(n)"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name VHDL_FILE ../../../top/gsi_scu/control/scu_control.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd
@@ -970,6 +973,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/pow_reset.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/wr_gxb_phy_arria2/altgx_reconf.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/wr_gxb_phy_arria2/arria_phy.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/wr_gxb_phy_arria2/rxclkout.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/wr_gxb_phy_arria2/wr_gxb_phy_arriaii.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/dmtd_pll/dmtd_pll.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/ref_pll/ref_pll.vhd
