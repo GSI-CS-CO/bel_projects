@@ -378,7 +378,7 @@ begin
       g_aux_clks                  => 1,
       g_ep_rxbuf_size             => 1024,
       g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
-      g_dpram_size                => 131072/4,
+      g_dpram_size                => 262144/4,
       g_interface_mode            => PIPELINED,
       g_address_granularity       => BYTE,
       g_aux_sdb                   => c_etherbone_sdb)
@@ -401,6 +401,7 @@ begin
       phy_tx_k_o         => phy_tx_k,
       phy_tx_disparity_i => phy_tx_disparity,
       phy_tx_enc_err_i   => phy_tx_enc_err,
+		
       phy_rx_data_i      => phy_rx_data,
       phy_rx_rbclk_i     => phy_rx_rbclk,
       phy_rx_k_i         => phy_rx_k,
