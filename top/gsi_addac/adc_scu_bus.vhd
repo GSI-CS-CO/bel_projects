@@ -82,7 +82,6 @@ signal rd_adc_chn_8: std_logic;
 
 signal dtack:         std_logic;
 signal adc_cntrl_reg: std_logic_vector(15 downto 0);
-signal reg_busy:      std_logic;
 signal adc_cntrl_rd_reg: std_logic_vector(15 downto 0);
 
 signal rd_pulse1: std_logic;
@@ -114,7 +113,7 @@ adc: ad7606
     adc_reset     => adc_reset,
     par_ser_sel   => par_ser_sel,
     firstdata     => firstdata,
-    reg_busy      => reg_busy,
+    reg_busy      => open,
     channel_1     => chn_1,
     channel_2     => chn_2,
     channel_3     => chn_3,
@@ -259,17 +258,26 @@ end process;
 -- adc_cntrl_reg(7 downto 5)  : oversample config: 000 -> no OS, 110 -> ratio 64
 -- adc_cntrl_reg(8)           : enables differential input for channels 3 to 8
 cntrl_reg: process (clk, nrst, rd_adc_cntrl, wr_adc_cntrl)
+  variable reset_cnt: unsigned(1 downto 0) := "00";
 begin
   if nrst = '0' then
-    adc_cntrl_reg <= x"00" & "00001000";
+    adc_cntrl_reg <= x"0008";
+    reset_cnt := "00";
   elsif rising_edge(clk) then
     if wr_adc_cntrl = '1' then
       adc_cntrl_reg <= Data_from_SCUB_LA;
+    elsif  adc_cntrl_reg(0) = '1' then
+      if reset_cnt < 3 then
+        reset_cnt := reset_cnt + 1;
+      else
+        adc_cntrl_reg(0) <= '0';
+        reset_cnt := "00";
+      end if;
     end if;
   end if;
 end process;
 
-adc_cntrl_rd_reg <= x"000" & "000" & reg_busy;
+adc_cntrl_rd_reg <=  adc_cntrl_reg;
 
     
 user_rd_active <= rd_adc_cntrl or rd_adc_chn_1 or rd_adc_chn_2 or rd_adc_chn_3
