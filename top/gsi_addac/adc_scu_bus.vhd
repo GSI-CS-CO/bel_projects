@@ -227,7 +227,7 @@ end process;
 
 copy_shadow <= '1' when rd_pulse1 = '1' and rd_pulse2 = '0' else '0';
 
-shadow_2_ext: process(clk)
+shadow_2_ext: process(clk, nrst)
 begin
   if nrst = '0' then
     s_ext_regs(0) <= (others => '0');

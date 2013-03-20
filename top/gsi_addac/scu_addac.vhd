@@ -457,7 +457,8 @@ p_test_port_mux: process (
 p_led_mux: process (
     ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4,
     ADC_channel_5, ADC_channel_6, ADC_channel_7, ADC_channel_8,
-    A_ADC_DAC_SEL(3 downto 0), A_MODE_SEL(1 downto 0)
+    A_ADC_DAC_SEL(3 downto 0), A_MODE_SEL(1 downto 0),
+    nADC_PAR_SER_SEL, NDIFF_IN_EN
     )
   begin
     if A_MODE_SEL = "11" then
@@ -475,9 +476,7 @@ p_led_mux: process (
         when others =>
           A_nLED <= (others => '1');
       end case;
-    elsif A_MODE_SEL = "10" then
-      A_nLED <= (others => '1');
-    elsif A_MODE_SEL = "00" then
+    else
       A_nLED <= (others => '1');
     end if;
   end process p_led_mux;
