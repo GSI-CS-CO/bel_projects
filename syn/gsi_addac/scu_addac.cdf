@@ -4,7 +4,7 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EP2AGX125DF25) Path("G:/bel_projects/syn/gsi_addac/") File("scu_addac.sof") MfrSpec(OpMask(1) SEC_Device(EPCS128) Child_OpMask(1 3) SFLPath("G:/bel_projects/syn/gsi_addac/scu_addac.jic"));
+		Device PartName(EP2AGX125DF25) Path("G:/bel_projects/syn/gsi_addac/") File("scu_addac.sof") MfrSpec(OpMask(1) SEC_Device(EPCS128) Child_OpMask(1 1) SFLPath("G:/bel_projects/syn/gsi_addac/scu_addac.jic"));
 	P ActionCode(Ign)
 		Device PartName(ISP_CLOCK_5410) MfrSpec(OpMask(0));
 

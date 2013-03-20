@@ -327,21 +327,21 @@ add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Ext_Wr_fin
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Dtack
 add wave -noupdate -radix hexadecimal -childformat {{/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(15) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(14) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(13) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(12) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(11) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(10) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(9) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(8) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(7) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(6) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(5) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(4) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(3) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(2) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(1) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(0) -radix hexadecimal}} -subitemconfig {/scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(15) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(14) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(13) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(12) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(11) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(10) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(9) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(8) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(7) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(6) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(5) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(4) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(3) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(2) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(1) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg(0) {-height 13 -radix hexadecimal}} /scu_addac_vhd_tst/adda1/dac_1/Shift_Reg
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/spi_clk
+add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/DAC_SI
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/SPI_TRM
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Ext_Adr_Val
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Ext_Rd_active
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Ext_Wr_active
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/clk
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/nReset
-add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/DAC_SI
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/nDAC_CLK
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/nCS_DAC
-add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Wr_DAC_Cntrl
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/nLD_DAC
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/nCLR_DAC
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Rd_Port
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Rd_Activ
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/spi_clk_ena
+add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Wr_DAC_Cntrl
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/Rd_DAC_Cntrl
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/S_Dtack
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/SPI_SM
@@ -356,7 +356,7 @@ add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/dac_1/c_spi_clk_e
 add wave -noupdate -divider ADC
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/clk
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/nrst
-add wave -noupdate -radix hexadecimal -childformat {{/scu_addac_vhd_tst/adda1/adc/db(13) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(12) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(11) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(10) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(9) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(8) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(7) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(6) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(5) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(4) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(3) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(2) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(1) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(0) -radix hexadecimal}} -subitemconfig {/scu_addac_vhd_tst/adda1/adc/db(13) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(12) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(11) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(10) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(9) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(8) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(7) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(6) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(5) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(4) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(3) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(2) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(1) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(0) {-height 13 -radix hexadecimal}} /scu_addac_vhd_tst/adda1/adc/db
+add wave -noupdate -radix hexadecimal -childformat {{/scu_addac_vhd_tst/adda1/adc/db(13) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(12) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(11) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(10) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(9) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(8) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(7) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(6) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(5) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(4) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(3) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(2) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(1) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/db(0) -radix hexadecimal}} -expand -subitemconfig {/scu_addac_vhd_tst/adda1/adc/db(13) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(12) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(11) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(10) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(9) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(8) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(7) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(6) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(5) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(4) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(3) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(2) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(1) {-radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/db(0) {-radix hexadecimal}} /scu_addac_vhd_tst/adda1/adc/db
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/db14_hben
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/db15_byte_sel
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/convst_a
@@ -377,7 +377,7 @@ add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/Ext_Wr_active
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/user_rd_active
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/Data_to_SCUB
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/Dtack_to_SCUB
-add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/channel_1
+add wave -noupdate -radix hexadecimal -childformat {{/scu_addac_vhd_tst/adda1/adc/channel_1(15) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(14) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(13) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(12) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(11) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(10) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(9) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(8) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(7) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(6) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(5) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(4) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(3) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(2) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(1) -radix hexadecimal} {/scu_addac_vhd_tst/adda1/adc/channel_1(0) -radix hexadecimal}} -subitemconfig {/scu_addac_vhd_tst/adda1/adc/channel_1(15) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(14) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(13) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(12) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(11) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(10) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(9) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(8) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(7) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(6) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(5) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(4) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(3) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(2) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(1) {-height 13 -radix hexadecimal} /scu_addac_vhd_tst/adda1/adc/channel_1(0) {-height 13 -radix hexadecimal}} /scu_addac_vhd_tst/adda1/adc/channel_1
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/channel_2
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/channel_3
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/channel_4
@@ -398,12 +398,7 @@ add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/rd_adc_chn_8
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/dtack
 add wave -noupdate -radix hexadecimal /scu_addac_vhd_tst/adda1/adc/adc_cntrl_reg
 TreeUpdate [SetDefaultTree]
-<<<<<<< HEAD
-WaveRestoreCursors {{Cursor 1} {7081420 ps} 0} {{Cursor 2} {9832323 ps} 0} {{Cursor 3} {3220187 ps} 0}
-quietly wave cursor active 1
-=======
 WaveRestoreCursors {{Cursor 1} {6464000 ps} 0} {{Cursor 2} {14448000 ps} 0} {{Cursor 3} {3216000 ps} 0}
->>>>>>> 35a2c9fd63e523cfeba9576440f9acc53697c0d2
 configure wave -namecolwidth 175
 configure wave -valuecolwidth 81
 configure wave -justifyvalue left
@@ -418,8 +413,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ps
 update
-<<<<<<< HEAD
-WaveRestoreZoom {0 ps} {10669392 ps}
-=======
-WaveRestoreZoom {28991288 ps} {29140792 ps}
->>>>>>> 35a2c9fd63e523cfeba9576440f9acc53697c0d2
+WaveRestoreZoom {0 ps} {94693305 ps}

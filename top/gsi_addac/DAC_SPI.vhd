@@ -46,9 +46,10 @@ architecture arch_DAC_SPI OF DAC_SPI IS
 
   signal    spi_clk_ena:        std_logic;
 
+  signal    dly_right_si:       unsigned(8 downto 0);
+  signal    dly_left_si:       unsigned(8 downto 0);
 
-
-  signal    Shift_Reg:        unsigned(15 DOWNTO 0);
+  signal    Shift_Reg:        unsigned(15 downto 0);
   signal    Wr_Shift_Reg:     std_logic;
   signal    Wr_DAC_Cntrl:     std_logic;
   signal    Rd_DAC_Cntrl:     std_logic;
@@ -71,16 +72,17 @@ architecture arch_DAC_SPI OF DAC_SPI IS
 
   signal    spi_clk:          std_logic;  
 
-  signal    S_nCLR_DAC:       std_logic;
+  signal    S_nCLR_DAC:         std_logic;
+  signal    dac_conv_extern:    std_logic;
+  signal    dac_neg_edge_conv:  std_logic;
+
 
   signal    SPI_TRM:          std_logic;
   
-  signal    modelsim_nReset:  std_logic;
 
   
 begin
 
-modelsim_nReset <= not nReset;
 
 spi_clk_gen:  div_n
   generic map (
@@ -88,7 +90,7 @@ spi_clk_gen:  div_n
     diag_on => 0
     )
   port map (
-    res     => modelsim_nReset, -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
+    res     => not nReset,      -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
                                 --     countdown is "n"-1 clocks to activate the "div_o"-output for one clock periode. 
     clk     => clk,             -- clk = clock
     ena     => '1',             -- in, can be used for a reduction, signal should be generated from the same 
@@ -159,7 +161,7 @@ P_SPI_SM: process (clk, nReset, S_nCLR_DAC)
   
     elsif rising_edge(clk) then
 
-      if Wr_Shift_Reg = '1' AND Ext_Wr_Fin = '1' then
+      if (Wr_Shift_Reg = '1') AND (S_Dtack = '1') then
         SPI_TRM <= '1';
       end if;
 
@@ -189,7 +191,7 @@ P_SPI_SM: process (clk, nReset, S_nCLR_DAC)
               nCS_DAC <= '1';
               SPI_SM <= Sel_Off;
             end if;
-            
+
           when CLK_Hi =>
             spi_clk <= '1';
             Bit_Cnt <= Bit_Cnt + 1;
@@ -229,17 +231,26 @@ P_Shift_Reg:  process (clk, nReset)
     end if;
   end process P_Shift_Reg;
 
+
 P_DAC_Cntrl:  process (clk, nReset)
   variable  clr_cnt:  unsigned(1 downto 0) := "00";
   begin
-    if  nReset = '0' then
-      S_nCLR_DAC <= '0';
-      clr_cnt := "00";
+    if nReset = '0' then
+      S_nCLR_DAC        <= '0';
+      dac_conv_extern   <= '0';
+      dac_neg_edge_conv <= '0';
+      clr_cnt           := "00";
     elsif rising_edge(clk) then
       if Wr_DAC_Cntrl = '1' then
-        if Data_from_SCUB_LA(1) = '1' then
+        if Data_from_SCUB_LA(1) = '1' then  -- arm clear signal of DAC
           S_nCLR_DAC <= '0';
-          clr_cnt := "00";
+          clr_cnt := "00";                  -- reset the counter for generating the correct length of clear signal
+        end if;
+        if Data_from_SCUB_LA(2) = '1' then  -- enable external convert dac strobe
+          dac_conv_extern <= '1';
+        end if;
+        if Data_from_SCUB_LA(3) = '1' then  -- negative edge convert dac strobe
+          dac_neg_edge_conv <= '1';
         end if;
       else
         if S_nCLR_DAC = '0' then
@@ -255,12 +266,14 @@ P_DAC_Cntrl:  process (clk, nReset)
     end if;
   end process P_DAC_Cntrl;
 
-
+  
 DAC_SI  <= Shift_Reg(Shift_Reg'high);
+
+
 nDAC_CLK <= not spi_clk; 
 nCLR_DAC <= S_nCLR_DAC;
   
-Rd_Port <= (X"000" & '0' & '0' & not S_nCLR_DAC & SPI_TRM);  
+Rd_Port <= (X"000" & dac_neg_edge_conv & dac_conv_extern & not S_nCLR_DAC & SPI_TRM);  
   
   
 Dtack <= S_Dtack;
