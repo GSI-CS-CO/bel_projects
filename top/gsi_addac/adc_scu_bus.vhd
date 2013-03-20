@@ -40,15 +40,14 @@ entity adc_scu_bus is
     Data_to_SCUB:       out   std_logic_vector(15 downto 0);  -- connect read sources to SCUB-Macro
     Dtack_to_SCUB:      out   std_logic;                      -- connect Dtack to SCUB-Macro
     
-    -- channel data for LEDs
-    channel_1:          out std_logic_vector(15 downto 0);
-    channel_2:          out std_logic_vector(15 downto 0);
-    channel_3:          out std_logic_vector(15 downto 0);
-    channel_4:          out std_logic_vector(15 downto 0);
-    channel_5:          out std_logic_vector(15 downto 0);
-    channel_6:          out std_logic_vector(15 downto 0);
-    channel_7:          out std_logic_vector(15 downto 0);
-    channel_8:          out std_logic_vector(15 downto 0));
+    channel_1:          out   std_logic_vector(15 downto 0);
+    channel_2:          out   std_logic_vector(15 downto 0);
+    channel_3:          out   std_logic_vector(15 downto 0);
+    channel_4:          out   std_logic_vector(15 downto 0);
+    channel_5:          out   std_logic_vector(15 downto 0);
+    channel_6:          out   std_logic_vector(15 downto 0);
+    channel_7:          out   std_logic_vector(15 downto 0);
+    channel_8:          out   std_logic_vector(15 downto 0));
 end entity;
 
 
@@ -90,13 +89,15 @@ signal rd_pulse1: std_logic;
 signal rd_pulse2: std_logic;
 signal copy_shadow: std_logic;
 
+
 begin
 
 adc: ad7606
   generic map (
     clk_in_Hz     => clk_in_Hz,
-    diag_on_is_1  => diag_on_is_1)
+    diag_on_is_1  => 0)
   port map (
+
     clk           => clk,
     nrst          => nrst,
     sync_rst      => adc_cntrl_reg(0),
@@ -274,6 +275,7 @@ adc_cntrl_rd_reg <= x"000" & "000" & reg_busy;
 user_rd_active <= rd_adc_cntrl or rd_adc_chn_1 or rd_adc_chn_2 or rd_adc_chn_3
                   or rd_adc_chn_4 or rd_adc_chn_5 or rd_adc_chn_6 or rd_adc_chn_7
                   or rd_adc_chn_8;
+
 Data_to_SCUB <= s_ext_regs(0) when rd_adc_chn_1 = '1' else
                 s_ext_regs(1) when rd_adc_chn_2 = '1' else
                 s_ext_regs(2) when rd_adc_chn_3 = '1' else
@@ -284,7 +286,7 @@ Data_to_SCUB <= s_ext_regs(0) when rd_adc_chn_1 = '1' else
                 s_ext_regs(7) when rd_adc_chn_8 = '1' else
                 adc_cntrl_rd_reg when rd_adc_cntrl = '1' else
                 x"0000";
-   
+                
 Dtack_to_SCUB <= dtack;
 
 channel_1 <= chn_1;

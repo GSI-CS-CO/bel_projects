@@ -212,7 +212,6 @@ end component;
   signal  adc_data_to_SCUB:   std_logic_vector(15 downto 0);
   signal  adc_dtack:          std_logic;
   
-  signal  rw_signal:          std_logic;
   signal  led_ena_cnt:        std_logic;
 
   signal  ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4: std_logic_vector(15 downto 0);
@@ -220,22 +219,20 @@ end component;
 
   signal  Data_to_SCUB:       std_logic_vector(15 downto 0);
   
-  signal  modelsim_A_nBoardSel: std_logic;
-  signal  modelsim_nPowerup_Res: std_logic;
 
   begin
 
 
 fl : flash_loader_v01
-  port map (noe_in	=>	'0');
+  port map (noe_in  =>  '0');
 
   -- Obtain core clocking
 adda_pll_1: adda_pll        -- Altera megafunction
-	port map (
-		inclk0 => CLK_FPGA,     -- 125Mhz oscillator from board
-		c0     => clk_sys,      -- 125MHz system clk
+  port map (
+    inclk0 => CLK_FPGA,     -- 125Mhz oscillator from board
+    c0     => clk_sys,      -- 125MHz system clk
     c1     => clk_cal,      -- 50Mhz calibration clock for Altera reconfig cores
-		locked => locked);      -- '1' when the PLL has locked
+    locked => locked);      -- '1' when the PLL has locked
 
   
 Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack;
@@ -414,14 +411,13 @@ adc: adc_scu_bus
     channel_7 => ADC_channel_7,
     channel_8 => ADC_channel_8);
 
-modelsim_nPowerup_Res <= not nPowerup_Res;
 
 p_led_ena:  div_n
   generic map (
     n       => clk_sys_in_Hz / 100, -- div_o is every 10 ms for one clock period active
     diag_on => 0)
   port map (
-    res     => modelsim_nPowerup_Res, -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
+    res     => not nPowerup_Res, -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
                                     --     countdown is "n"-1 clocks to activate the "div_o"-output for one clock periode. 
     clk     => clk_sys,             -- clk = clock
     ena     => '1',                 -- in, can be used for a reduction, signal should be generated from the same 
@@ -507,15 +503,13 @@ p_read_mux: process (
   end process p_read_mux;
   
 
-modelsim_A_nBoardSel <= not A_nBoardSel; -- modelsim can't use not ...;
-  
 sel_led: led_n
   generic map (
     stretch_cnt => 3)
   port map (
     ena         => led_ena_cnt,     -- is every 10 ms for one clock period active
     clk         => clk_sys,
-    Sig_in      => modelsim_A_nBoardSel,
+    Sig_in      => not A_nBoardSel,
     nLED        => open,
     nLED_opdrn  => A_nState_LED(0));
 
@@ -531,7 +525,6 @@ dtack_led: led_n
     nLED        => open,
     nLED_opdrn  => A_nState_LED(1));
     
-rw_signal <= not A_RnW and not A_nBoardSel;
 
 rw_led: led_n
   generic map (
@@ -539,7 +532,7 @@ rw_led: led_n
   port map (
     ena         => led_ena_cnt,     -- is every 10 ms for one clock period active
     clk         => clk_sys,
-    Sig_in      => rw_signal,
+    Sig_in      => not A_RnW and not A_nBoardSel,
     nLED        => open,
     nLED_opdrn  => A_nState_LED(2));
     
