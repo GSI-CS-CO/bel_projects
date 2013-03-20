@@ -77,22 +77,22 @@ entity scu_addac is
     a_io:                 inout std_logic_vector(31 downto 0);  -- select and set direction only in 8-bit partitions
     
     ------------ Logic analyser Signals -------------------------------------------------------------------------------
-    A_SEL:                in    std_logic_vector(3 downto 0);   -- use to select sources for the logic analyser ports
-    A_TA:                 out   std_logic_vector(15 downto 0);  -- test port a
-    A_TB:                 out   std_logic_vector(15 downto 0);  -- test port b
-    TP:                   out   std_logic_vector(2 downto 1);   -- test points
+    A_SEL:                in      std_logic_vector(3 downto 0);   -- use to select sources for the logic analyser ports
+    A_TA:                 out     std_logic_vector(15 downto 0);  -- test port a
+    A_TB:                 out     std_logic_vector(15 downto 0);  -- test port b
+    TP:                   out     std_logic_vector(2 downto 1);   -- test points
 
-    A_nState_LED:         out   std_logic_vector(2 downto 0);   -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
-    A_nLED:               out   std_logic_vector(15 downto 0);
-    A_NLED_TRIG_DAC:      out   std_logic;
-    A_NLED_TRIG_ADC:      out   std_logic;
+    A_nState_LED:         out     std_logic_vector(2 downto 0);   -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
+    A_nLED:               out     std_logic_vector(15 downto 0);
+    A_NLED_TRIG_DAC:      out     std_logic;
+    A_NLED_TRIG_ADC:      out     std_logic;
     
-    HW_REV:               in    std_logic_vector(3 downto 0);
-    A_MODE_SEL:           in    std_logic_vector(1 downto 0);
-    A_OneWire:            inout std_logic;
-    A_OneWire_EEPROM:     inout std_logic;
+    HW_REV:               in      std_logic_vector(3 downto 0);
+    A_MODE_SEL:           in      std_logic_vector(1 downto 0);
+    A_OneWire:            inout   std_logic;
+    A_OneWire_EEPROM:     inout   std_logic;
     
-    NDIFF_IN_EN:          out   std_logic := '0'                -- enables diff driver for ADC channels 3-8
+    NDIFF_IN_EN:          buffer  std_logic                       -- enables diff driver for ADC channels 3-8
     
     
     );
@@ -394,6 +394,7 @@ adc: adc_scu_bus
     par_ser_sel   => nADC_PAR_SER_SEL,
     adc_range     => ADC_Range,
     firstdata     => ADC_FRSTDATA,
+    nDiff_In_En   => NDIFF_IN_EN,
     
     Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
     Data_from_SCUB_LA => Data_from_SCUB_LA,
@@ -460,21 +461,29 @@ p_test_port_mux: process (
 p_led_mux: process (
     ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4,
     ADC_channel_5, ADC_channel_6, ADC_channel_7, ADC_channel_8,
-    A_ADC_DAC_SEL(3 downto 0)
+    A_ADC_DAC_SEL(3 downto 0), A_MODE_SEL(1 downto 0)
     )
   begin
-    case not A_ADC_DAC_SEL IS
-      when X"1" => A_nLED <= not ADC_channel_1;
-      when X"2" => A_nLED <= not ADC_channel_2;
-      when X"3" => A_nLED <= not ADC_channel_3;
-      when X"4" => A_nLED <= not ADC_channel_4;
-      when X"5" => A_nLED <= not ADC_channel_5;
-      when X"6" => A_nLED <= not ADC_channel_6;
-      when X"7" => A_nLED <= not ADC_channel_7;
-      when X"8" => A_nLED <= not ADC_channel_8;
-      when others =>
-        A_nLED <= (others => '1');
-    end case;
+    if A_MODE_SEL = "11" then
+      A_nLED <= not nADC_PAR_SER_SEL & nADC_PAR_SER_SEL & NDIFF_IN_EN & "1" & x"FFF";
+    elsif A_MODE_SEL = "01" then
+      case not A_ADC_DAC_SEL IS
+        when X"1" => A_nLED <= not ADC_channel_1;
+        when X"2" => A_nLED <= not ADC_channel_2;
+        when X"3" => A_nLED <= not ADC_channel_3;
+        when X"4" => A_nLED <= not ADC_channel_4;
+        when X"5" => A_nLED <= not ADC_channel_5;
+        when X"6" => A_nLED <= not ADC_channel_6;
+        when X"7" => A_nLED <= not ADC_channel_7;
+        when X"8" => A_nLED <= not ADC_channel_8;
+        when others =>
+          A_nLED <= (others => '1');
+      end case;
+    elsif A_MODE_SEL = "10" then
+      A_nLED <= (others => '1');
+    elsif A_MODE_SEL = "00" then
+      A_nLED <= (others => '1');
+    end if;
   end process p_led_mux;
  
 
