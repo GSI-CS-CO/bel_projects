@@ -211,6 +211,17 @@ begin
           end if;
           
         when others =>
+          wr_adc_cntrl  <= '0';
+          rd_adc_cntrl  <= '0';
+          rd_adc_chn_1  <= '0';
+          rd_adc_chn_2  <= '0';
+          rd_adc_chn_3  <= '0';
+          rd_adc_chn_4  <= '0';
+          rd_adc_chn_5  <= '0';
+          rd_adc_chn_6  <= '0';
+          rd_adc_chn_7  <= '0';
+          rd_adc_chn_8  <= '0';
+          dtack         <= '0';
       end case;
     end if;
   end if;
