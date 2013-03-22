@@ -3,6 +3,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.wishbone_pkg.all;
+use work.gencores_pkg.all;
 use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
 use work.adc_pkg.all;
@@ -79,7 +81,10 @@ entity scu_addac is
     ------------ Logic analyser Signals -------------------------------------------------------------------------------
     A_SEL:                in      std_logic_vector(3 downto 0);   -- use to select sources for the logic analyser ports
     A_TA:                 out     std_logic_vector(15 downto 0);  -- test port a
-    A_TB:                 out     std_logic_vector(15 downto 0);  -- test port b
+    --A_TB:                 in     std_logic_vector(15 downto 1);  -- test port b
+    A_TB0:              out     std_logic;
+    A_TB1:              in      std_logic;
+    A_TB2:              out     std_logic := '1';
     TP:                   out     std_logic_vector(2 downto 1);   -- test points
 
     A_nState_LED:         out     std_logic_vector(2 downto 0);   -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
@@ -178,6 +183,38 @@ component adda_pll
   );
 end component;
 
+constant c_xwb_owm : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"00000000000000ff",
+    product => (
+    vendor_id     => x"000000000000CE42", -- CERN
+    device_id     => x"779c5443",
+    version       => x"00000001",
+    date          => x"20120603",
+    name          => "WR-Periph-1Wire    ")));
+	 
+	 constant c_xwb_uart : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"00000000000000ff",
+    product => (
+    vendor_id     => x"000000000000CE42", -- CERN
+    device_id     => x"e2d13d04",
+    version       => x"00000001",
+    date          => x"20120603",
+    name          => "WR-Periph-UART     ")));
+
   
   signal clk_sys, clk_cal, locked : std_logic;
   
@@ -219,6 +256,32 @@ end component;
 
   signal  Data_to_SCUB:       std_logic_vector(15 downto 0);
   
+  signal reset_clks : std_logic_vector(0 downto 0);
+  signal reset_rstn : std_logic_vector(0 downto 0);
+  signal clk_sys_rstn : std_logic;
+  signal lm32_interrupt : std_logic_vector(31 downto 0);
+  signal lm32_rstn : std_logic;
+  
+  -- Top crossbar layout
+  constant c_slaves : natural := 3;
+  constant c_masters : natural := 2;
+  constant c_dpram_size : natural := 16384; -- in 32-bit words (64KB)
+  constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
+   (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),  x"00000000"),
+    1 => f_sdb_embed_device(c_xwb_owm,				 		      x"00100600"),
+    2 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"));
+  constant c_sdb_address : t_wishbone_address :=        x"00100000";
+
+  signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
+  signal cbar_slave_o  : t_wishbone_slave_out_array(c_masters-1 downto 0);
+  signal cbar_master_i : t_wishbone_master_in_array(c_slaves-1 downto 0);
+  signal cbar_master_o : t_wishbone_master_out_array(c_slaves-1 downto 0);
+  
+  signal owr_pwren_o: std_logic_vector(1 downto 0);
+  signal owr_en_o: std_logic_vector(1 downto 0);
+  signal owr_i:	std_logic_vector(1 downto 0);
+  
+  
 
   begin
 
@@ -234,7 +297,124 @@ adda_pll_1: adda_pll        -- Altera megafunction
     c1     => clk_cal,      -- 50Mhz calibration clock for Altera reconfig cores
     locked => locked);      -- '1' when the PLL has locked
 
+    reset : gc_reset
+    port map(
+      free_clk_i => clk_sys,
+      locked_i   => locked,
+      clks_i     => reset_clks,
+      rstn_o     => reset_rstn);
+    reset_clks(0) <= clk_sys;
+    clk_sys_rstn <= reset_rstn(0);
+
+  -- open drain buffer for one wire
+	owr_i(0) <= A_OneWire;
+	A_OneWire <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
+  owr_i(1) <= A_OneWire_EEPROM;
+	A_OneWire_EEPROM <= owr_pwren_o(1) when (owr_pwren_o(1) = '1' or owr_en_o(1) = '1') else 'Z';
   
+  -- The top-most Wishbone B.4 crossbar
+  interconnect : xwb_sdb_crossbar
+   generic map(
+     g_num_masters => c_masters,
+     g_num_slaves  => c_slaves,
+     g_registered  => true,
+     g_wraparound  => false, -- Should be true for nested buses
+     g_layout      => c_layout,
+     g_sdb_addr    => c_sdb_address)
+   port map(
+     clk_sys_i     => clk_sys,
+     rst_n_i       => clk_sys_rstn,
+     -- Master connections (INTERCON is a slave)
+     slave_i       => cbar_slave_i,
+     slave_o       => cbar_slave_o,
+     -- Slave connections (INTERCON is a master)
+     master_i      => cbar_master_i,
+     master_o      => cbar_master_o);
+     
+  -- The LM32 is master 0+1
+  LM32 : xwb_lm32
+    generic map(
+      g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
+    port map(
+      clk_sys_i => clk_sys,
+      rst_n_i   => clk_sys_rstn,
+      irq_i     => lm32_interrupt,
+      dwb_o     => cbar_slave_i(0), -- Data bus
+      dwb_i     => cbar_slave_o(0),
+      iwb_o     => cbar_slave_i(1), -- Instruction bus
+      iwb_i     => cbar_slave_o(1));
+  -- The other 31 interrupt pins are unconnected
+  lm32_interrupt(31 downto 1) <= (others => '0');
+  
+  -- Slave 0 is the RAM
+  ram : xwb_dpram
+    generic map(
+      g_size                  => c_dpram_size,
+      g_slave1_interface_mode => PIPELINED, -- Why isn't this the default?!
+      g_slave2_interface_mode => PIPELINED,
+      g_slave1_granularity    => BYTE,
+      g_slave2_granularity    => WORD)
+    port map(
+      clk_sys_i => clk_sys,
+      rst_n_i   => clk_sys_rstn,
+      -- First port connected to the crossbar
+      slave1_i  => cbar_master_o(0),
+      slave1_o  => cbar_master_i(0),
+      -- Second port disconnected
+      slave2_i  => cc_dummy_slave_in, -- CYC always low
+      slave2_o  => open);
+      
+      
+  --------------------------------------
+  -- 1-WIRE
+  --------------------------------------
+  ONEWIRE : xwb_onewire_master
+    generic map(
+      g_interface_mode      => PIPELINED,
+      g_address_granularity => BYTE,
+      g_num_ports           => 2,
+      g_ow_btp_normal       => "5.0",
+      g_ow_btp_overdrive    => "1.0"
+      )
+    port map(
+      clk_sys_i => clk_sys,
+      rst_n_i   => clk_sys_rstn,
+
+      -- Wishbone
+      slave_i => cbar_master_o(1),
+      slave_o => cbar_master_i(1),
+      desc_o  => open,
+
+		owr_pwren_o => owr_pwren_o,
+      owr_en_o => owr_en_o,
+      owr_i    => owr_i
+      );
+  --------------------------------------
+  -- UART
+  --------------------------------------
+  UART : xwb_simple_uart
+    generic map(
+      g_with_virtual_uart   => false,
+      g_with_physical_uart  => true,
+      g_interface_mode      => PIPELINED,
+      g_address_granularity => BYTE
+      )
+    port map(
+      clk_sys_i => clk_sys,
+      rst_n_i   => clk_sys_rstn,
+
+      -- Wishbone
+      slave_i => cbar_master_o(2),
+      slave_o => cbar_master_i(2),
+      desc_o  => open,
+
+      uart_rxd_i => A_TB1,
+      uart_txd_o => A_TB0
+      );
+
+
+    
+
 Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack;
 
 SCU_Slave: SCU_Bus_Slave
@@ -426,32 +606,32 @@ p_led_ena:  div_n
                                     --      (if ena is permanent '1').
 
 
-p_test_port_mux: process (
-    DAC1_SDI, nDAC1_CLK, nDAC1_A0, nDAC1_A1, nDAC1_CLR, dac1_rd_active, dac1_dtack,
-    DAC2_SDI, nDAC2_CLK, nDAC2_A0, nDAC2_A1, nDAC2_CLR, dac2_rd_active, dac2_dtack,
-    ADC_Range, ADC_FRSTDATA,
-    ADC_CONVST_A, ADC_CONVST_B, nADC_CS, nADC_RD_SCLK, ADC_BUSY, ADC_RESET, ADC_OS, nADC_PAR_SER_SEL, ADC_DB(15 downto 0),
-    A_SEL(3 downto 0)
-    )
-  begin
-    case not A_SEL IS
-
-      when X"0" =>
-        A_TA <= '0' & DAC2_SDI & nDAC2_CLK & nDAC2_A0 & nDAC2_A1 & nDAC2_CLR & dac2_rd_active & dac2_dtack &
-                '0' & DAC1_SDI & nDAC1_CLK & nDAC1_A0 & nDAC1_A1 & nDAC1_CLR & dac1_rd_active & dac1_dtack;
-        A_TB <= X"0000";
-
-      when X"1" =>
-        A_TA <= X"0" & ADC_Range & ADC_FRSTDATA & ADC_CONVST_A & ADC_CONVST_B &
-                nADC_CS & nADC_RD_SCLK & ADC_BUSY & ADC_RESET & ADC_OS & nADC_PAR_SER_SEL;
-        A_TB <= ADC_DB(15 downto 0);
-
-      when others =>
-        A_TA <= (others => '0');
-        A_TB <= (others => '0');
-    end case;
-
-  end process p_test_port_mux;
+--p_test_port_mux: process (
+--    DAC1_SDI, nDAC1_CLK, nDAC1_A0, nDAC1_A1, nDAC1_CLR, dac1_rd_active, dac1_dtack,
+--    DAC2_SDI, nDAC2_CLK, nDAC2_A0, nDAC2_A1, nDAC2_CLR, dac2_rd_active, dac2_dtack,
+--    ADC_Range, ADC_FRSTDATA,
+--    ADC_CONVST_A, ADC_CONVST_B, nADC_CS, nADC_RD_SCLK, ADC_BUSY, ADC_RESET, ADC_OS, nADC_PAR_SER_SEL, ADC_DB(15 downto 0),
+--    A_SEL(3 downto 0)
+--    )
+--  begin
+--    case not A_SEL IS
+--
+--      when X"0" =>
+--        A_TA <= '0' & DAC2_SDI & nDAC2_CLK & nDAC2_A0 & nDAC2_A1 & nDAC2_CLR & dac2_rd_active & dac2_dtack &
+--                '0' & DAC1_SDI & nDAC1_CLK & nDAC1_A0 & nDAC1_A1 & nDAC1_CLR & dac1_rd_active & dac1_dtack;
+--        A_TB <= X"0000";
+--
+--      when X"1" =>
+--        A_TA <= X"0" & ADC_Range & ADC_FRSTDATA & ADC_CONVST_A & ADC_CONVST_B &
+--                nADC_CS & nADC_RD_SCLK & ADC_BUSY & ADC_RESET & ADC_OS & nADC_PAR_SER_SEL;
+--        A_TB <= ADC_DB(15 downto 0);
+--
+--      when others =>
+--        A_TA <= (others => '0');
+--        A_TB <= (others => '0');
+--    end case;
+--
+--  end process p_test_port_mux;
 
 
 p_led_mux: process (
