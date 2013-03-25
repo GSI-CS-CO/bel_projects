@@ -8,6 +8,7 @@ use work.gencores_pkg.all;
 use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
 use work.adc_pkg.all;
+use work.wb_scu_reg_pkg.all;
 
 entity scu_addac is
   port (
@@ -82,9 +83,9 @@ entity scu_addac is
     A_SEL:                in      std_logic_vector(3 downto 0);   -- use to select sources for the logic analyser ports
     A_TA:                 out     std_logic_vector(15 downto 0);  -- test port a
     --A_TB:                 in     std_logic_vector(15 downto 1);  -- test port b
-    A_TB0:              out     std_logic;
-    A_TB1:              in      std_logic;
-    A_TB2:              out     std_logic := '1';
+    A_TB0:                out     std_logic;
+    A_TB1:                in      std_logic;
+    A_TB2:                out     std_logic := '1';
     TP:                   out     std_logic_vector(2 downto 1);   -- test points
 
     A_nState_LED:         out     std_logic_vector(2 downto 0);   -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
@@ -214,7 +215,6 @@ constant c_xwb_owm : t_sdb_device := (
     version       => x"00000001",
     date          => x"20120603",
     name          => "WR-Periph-UART     ")));
-
   
   signal clk_sys, clk_cal, locked : std_logic;
   
@@ -263,13 +263,14 @@ constant c_xwb_owm : t_sdb_device := (
   signal lm32_rstn : std_logic;
   
   -- Top crossbar layout
-  constant c_slaves : natural := 3;
+  constant c_slaves : natural := 4;
   constant c_masters : natural := 2;
   constant c_dpram_size : natural := 16384; -- in 32-bit words (64KB)
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),  x"00000000"),
     1 => f_sdb_embed_device(c_xwb_owm,				 		      x"00100600"),
-    2 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"));
+    2 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"),
+    3 => f_sdb_embed_device(c_xwb_scu_reg,              x"00100800"));
   constant c_sdb_address : t_wishbone_address :=        x"00100000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -280,6 +281,10 @@ constant c_xwb_owm : t_sdb_device := (
   signal owr_pwren_o: std_logic_vector(1 downto 0);
   signal owr_en_o: std_logic_vector(1 downto 0);
   signal owr_i:	std_logic_vector(1 downto 0);
+  
+  signal wb_scu_rd_active:    std_logic;
+  signal wb_scu_dtack:        std_logic;
+  signal wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
   
   
 
@@ -346,11 +351,11 @@ adda_pll_1: adda_pll        -- Altera megafunction
   -- The other 31 interrupt pins are unconnected
   lm32_interrupt(31 downto 1) <= (others => '0');
   
-  -- Slave 0 is the RAM
+  -- WB Slave 0 is the RAM
   ram : xwb_dpram
     generic map(
       g_size                  => c_dpram_size,
-      g_slave1_interface_mode => PIPELINED, -- Why isn't this the default?!
+      g_slave1_interface_mode => PIPELINED,
       g_slave2_interface_mode => PIPELINED,
       g_slave1_granularity    => BYTE,
       g_slave2_granularity    => WORD)
@@ -411,11 +416,31 @@ adda_pll_1: adda_pll        -- Altera megafunction
       uart_rxd_i => A_TB1,
       uart_txd_o => A_TB0
       );
+  
+  SCU_WB_Reg: wb_scu_reg
+    generic map (
+      Base_addr => x"0240",
+      register_cnt => 16 )
+    port map (
+      clk_sys_i => clk_sys,
+      rst_n_i   => clk_sys_rstn,
 
+      -- Wishbone
+      slave_i => cbar_master_o(3),
+      slave_o => cbar_master_i(3),
+      
+      Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
+      Data_from_SCUB_LA => Data_from_SCUB_LA,
+      Ext_Adr_Val       => Ext_Adr_Val,
+      Ext_Rd_active     => Ext_Rd_active,
+      Ext_Wr_active     => Ext_Wr_active,
+      user_rd_active    => wb_scu_rd_active,
+      Data_to_SCUB      => wb_scu_data_to_SCUB,
+      Dtack_to_SCUB     => wb_scu_dtack );
 
     
 
-Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack;
+Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack or wb_scu_dtack;
 
 SCU_Slave: SCU_Bus_Slave
 generic map (
@@ -666,16 +691,18 @@ p_read_mux: process (
     io_port_rd_active, io_port_data_to_SCUB,
     dac1_rd_active, dac1_data_to_SCUB,
     dac2_rd_active, dac2_data_to_SCUB,
-    adc_rd_active, adc_data_to_SCUB
+    adc_rd_active, adc_data_to_SCUB,
+    wb_scu_data_to_SCUB, wb_scu_rd_active
     )
-  variable  sel:  unsigned(3 downto 0);
+  variable  sel:  unsigned(4 downto 0);
   begin
-    sel := adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
+    sel := wb_scu_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
     case sel IS
-      when "0001" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "0010" => Data_to_SCUB <= dac1_data_to_SCUB;
-      when "0100" => Data_to_SCUB <= dac2_data_to_SCUB;
-      when "1000" => Data_to_SCUB <= adc_data_to_SCUB;
+      when "00001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "00010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "00100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "01000" => Data_to_SCUB <= adc_data_to_SCUB;
+      when "10000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
       when others =>
         Data_to_SCUB <= X"0000";
     end case;
