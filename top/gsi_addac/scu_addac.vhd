@@ -242,8 +242,8 @@ generic map (
     CLK_in_Hz         =>  clk_sys_in_Hz,
     Firmware_Release	=>  0,
     Firmware_Version	=>  0,
-    Hardware_Release	=>  0,
-    Hardware_Version	=>  0,
+    CID_System        =>  55,                       -- important: 55 => CSCOHW
+    CID_Group         =>  3,                        -- important: 3  => "FG900160_SCU_ADDAC1"
     Intr_Edge_Trig    =>  "111111111111111",
     Intr_Enable   	  =>  "000000000000000",
     Intr_Level_Neg    =>  "000000000000000",
