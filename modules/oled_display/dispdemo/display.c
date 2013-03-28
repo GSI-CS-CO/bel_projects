@@ -1,8 +1,5 @@
 #include "display.h"
 
-
-
-
 const unsigned int REG_MODE 	= 0x00000000;
 const unsigned int REG_RST 	= 0x00000004;
 const unsigned int REG_UART	= 0x00010000;
@@ -14,6 +11,7 @@ const char MODE_UART	= 0x01;
 const char MODE_CHAR	= 0x02;
 const char MODE_IDLE	= 0x00;
 
+const char ROW_LEN = 11;
 
 void disp_reset()
 {
@@ -37,6 +35,31 @@ void disp_put_str(const char *sPtr)
 	while(*sPtr != '\0') *(display + (REG_UART>>2)) = (unsigned int)*sPtr++;
 }
 
+void disp_put_line(const char *sPtr, unsigned char row)
+{
+	unsigned char col, outp, pad;
+	pad = 0;
+
+	for(col=0; col<ROW_LEN; col++)
+	{
+		if(*(sPtr+col) == '\0') pad = 1;
+
+		if(pad) outp = ' ';
+		else 	outp = (unsigned int)*(sPtr+col);	
+		
+		disp_loc_c(outp, row, col);
+	}
+}
+
+void disp_loc_c(char ascii, unsigned char row, unsigned char col)
+{
+	unsigned int rowcol;
+	
+	*(display + (REG_MODE>>2)) = (unsigned int)MODE_CHAR;
+	rowcol = ((0x07 & (unsigned int)row)<<6) + ((0x0f & (unsigned int)col)<<2);
+	*(display + ((REG_CHAR + rowcol)>>2)) = (unsigned int)ascii;
+
+}
 
 void disp_put_raw(char pixcol, unsigned int address, char color)
 {

@@ -12,11 +12,13 @@ extern const char MODE_RAW;
 extern const char MODE_UART;
 extern const char MODE_CHAR;
 extern const char MODE_IDLE;
-
+extern const char ROW_LEN;
 
 void disp_put_c(char ascii);
 void disp_put_int(int number);
 void disp_put_str(const char *sPtr);
+void disp_put_line(const char *sPtr, unsigned char row);
+
 void disp_reset();
 
 void disp_loc_c(char ascii, unsigned char row, unsigned char col);
