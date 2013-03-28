@@ -14,8 +14,21 @@ generic
     Slave_ID:         integer range 0 TO 16#FFFF# := 0;   -- ID of the realisied slave board function
     Firmware_Version: integer range 0 to 16#FFFF# := 0;
     Firmware_Release: integer range 0 to 16#FFFF# := 0;
-    Hardware_Version: integer range 0 to 16#FFFF# := 0;
-    Hardware_Release: integer range 0 to 16#FFFF# := 0;
+
+    -- "CSCOHW" hat z.B. die "CID_System"-Kennung dezimal 55. Baugruppen anderer Gewerke-Hersteller sollten verbindlich
+    -- ihre "CID_System"-Kennung eintragen. Falls keine vorhanden ist, darf der Defaultwert 0 nicht verändert werden.
+    CID_System:       integer range 0 to 16#FFFF# := 0;
+
+    -- Jede Baugruppe die diesen Macro verwendet sollte durch die "CID-Group" zusammen mit "CID-System" eine eindeutige
+    -- Identifizierug der Hardware-Funktion und deren Revision ermöglichen. Die "CID-Group"-Nummer wird bei jeder neuen Karte
+    -- oder jeder neuen Revision hochgezählt.Z.B. "CSCOHW" hat die Karte "FG900160_SCU_ADDAC1" entwickelt,
+    -- für die die "CID_Group"-Nummer 0003 dezimal vergeben wurde.
+    -- Eine neue Version der Baugruppe, z.B. "FG900161_SCU_ADDAC2" könnte die "CID-Group"-Nummer 0011 haben, da
+    -- zwischenzeitlich  "CID-Group"-Nummern für andere Projekte (Funktionen) vergeben wurden, und die "CID-Group"-Nummer
+    -- kontinuierlich hochgezählt werden soll.                                  --
+    -- Falls keine verbindliche "CID-Group"-Nummer vorliegt, muss der Defaultwert 0 stehen bleiben!
+    CID_Group: integer range 0 to 16#FFFF# := 0;
+
 
     -- the bit positions are corresponding to Intr_In.
     -- A '1' set default level of this Intr_In(n) to neg. level or neg. edge
