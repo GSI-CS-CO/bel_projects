@@ -77,22 +77,22 @@ entity scu_addac is
     a_io:                 inout std_logic_vector(31 downto 0);  -- select and set direction only in 8-bit partitions
     
     ------------ Logic analyser Signals -------------------------------------------------------------------------------
-    A_SEL:                in    std_logic_vector(3 downto 0);   -- use to select sources for the logic analyser ports
-    A_TA:                 out   std_logic_vector(15 downto 0);  -- test port a
-    A_TB:                 out   std_logic_vector(15 downto 0);  -- test port b
-    TP:                   out   std_logic_vector(2 downto 1);   -- test points
+    A_SEL:                in      std_logic_vector(3 downto 0);   -- use to select sources for the logic analyser ports
+    A_TA:                 out     std_logic_vector(15 downto 0);  -- test port a
+    A_TB:                 out     std_logic_vector(15 downto 0);  -- test port b
+    TP:                   out     std_logic_vector(2 downto 1);   -- test points
 
-    A_nState_LED:         out   std_logic_vector(2 downto 0);   -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
-    A_nLED:               out   std_logic_vector(15 downto 0);
-    A_NLED_TRIG_DAC:      out   std_logic;
-    A_NLED_TRIG_ADC:      out   std_logic;
+    A_nState_LED:         out     std_logic_vector(2 downto 0);   -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
+    A_nLED:               out     std_logic_vector(15 downto 0);
+    A_NLED_TRIG_DAC:      out     std_logic;
+    A_NLED_TRIG_ADC:      out     std_logic;
     
-    HW_REV:               in    std_logic_vector(3 downto 0);
-    A_MODE_SEL:           in    std_logic_vector(1 downto 0);
-    A_OneWire:            inout std_logic;
-    A_OneWire_EEPROM:     inout std_logic;
+    HW_REV:               in      std_logic_vector(3 downto 0);
+    A_MODE_SEL:           in      std_logic_vector(1 downto 0);
+    A_OneWire:            inout   std_logic;
+    A_OneWire_EEPROM:     inout   std_logic;
     
-    NDIFF_IN_EN:          out   std_logic := '0'                -- enables diff driver for ADC channels 3-8
+    NDIFF_IN_EN:          buffer  std_logic                       -- enables diff driver for ADC channels 3-8
     
     
     );
@@ -212,7 +212,6 @@ end component;
   signal  adc_data_to_SCUB:   std_logic_vector(15 downto 0);
   signal  adc_dtack:          std_logic;
   
-  signal  rw_signal:          std_logic;
   signal  led_ena_cnt:        std_logic;
 
   signal  ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4: std_logic_vector(15 downto 0);
@@ -220,22 +219,20 @@ end component;
 
   signal  Data_to_SCUB:       std_logic_vector(15 downto 0);
   
-  signal  modelsim_A_nBoardSel: std_logic;
-  signal  modelsim_nPowerup_Res: std_logic;
 
   begin
 
 
 fl : flash_loader_v01
-  port map (noe_in	=>	'0');
+  port map (noe_in  =>  '0');
 
   -- Obtain core clocking
 adda_pll_1: adda_pll        -- Altera megafunction
-	port map (
-		inclk0 => CLK_FPGA,     -- 125Mhz oscillator from board
-		c0     => clk_sys,      -- 125MHz system clk
+  port map (
+    inclk0 => CLK_FPGA,     -- 125Mhz oscillator from board
+    c0     => clk_sys,      -- 125MHz system clk
     c1     => clk_cal,      -- 50Mhz calibration clock for Altera reconfig cores
-		locked => locked);      -- '1' when the PLL has locked
+    locked => locked);      -- '1' when the PLL has locked
 
   
 Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack;
@@ -245,8 +242,8 @@ generic map (
     CLK_in_Hz         =>  clk_sys_in_Hz,
     Firmware_Release	=>  0,
     Firmware_Version	=>  0,
-    Hardware_Release	=>  0,
-    Hardware_Version	=>  0,
+    CID_System        =>  55,                       -- important: 55 => CSCOHW
+    CID_Group         =>  3,                        -- important: 3  => "FG900160_SCU_ADDAC1"
     Intr_Edge_Trig    =>  "111111111111111",
     Intr_Enable   	  =>  "000000000000000",
     Intr_Level_Neg    =>  "000000000000000",
@@ -394,6 +391,7 @@ adc: adc_scu_bus
     par_ser_sel   => nADC_PAR_SER_SEL,
     adc_range     => ADC_Range,
     firstdata     => ADC_FRSTDATA,
+    nDiff_In_En   => NDIFF_IN_EN,
     
     Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
     Data_from_SCUB_LA => Data_from_SCUB_LA,
@@ -413,14 +411,13 @@ adc: adc_scu_bus
     channel_7 => ADC_channel_7,
     channel_8 => ADC_channel_8);
 
-modelsim_nPowerup_Res <= not nPowerup_Res;
 
 p_led_ena:  div_n
   generic map (
     n       => clk_sys_in_Hz / 100, -- div_o is every 10 ms for one clock period active
     diag_on => 0)
   port map (
-    res     => modelsim_nPowerup_Res, -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
+    res     => not nPowerup_Res, -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the 
                                     --     countdown is "n"-1 clocks to activate the "div_o"-output for one clock periode. 
     clk     => clk_sys,             -- clk = clock
     ena     => '1',                 -- in, can be used for a reduction, signal should be generated from the same 
@@ -460,21 +457,28 @@ p_test_port_mux: process (
 p_led_mux: process (
     ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4,
     ADC_channel_5, ADC_channel_6, ADC_channel_7, ADC_channel_8,
-    A_ADC_DAC_SEL(3 downto 0)
+    A_ADC_DAC_SEL(3 downto 0), A_MODE_SEL(1 downto 0),
+    nADC_PAR_SER_SEL, NDIFF_IN_EN
     )
   begin
-    case not A_ADC_DAC_SEL IS
-      when X"1" => A_nLED <= not ADC_channel_1;
-      when X"2" => A_nLED <= not ADC_channel_2;
-      when X"3" => A_nLED <= not ADC_channel_3;
-      when X"4" => A_nLED <= not ADC_channel_4;
-      when X"5" => A_nLED <= not ADC_channel_5;
-      when X"6" => A_nLED <= not ADC_channel_6;
-      when X"7" => A_nLED <= not ADC_channel_7;
-      when X"8" => A_nLED <= not ADC_channel_8;
-      when others =>
-        A_nLED <= (others => '1');
-    end case;
+    if A_MODE_SEL = "11" then
+      A_nLED <= not nADC_PAR_SER_SEL & nADC_PAR_SER_SEL & NDIFF_IN_EN & "1" & x"FFF";
+    elsif A_MODE_SEL = "01" then
+      case not A_ADC_DAC_SEL IS
+        when X"1" => A_nLED <= not ADC_channel_1;
+        when X"2" => A_nLED <= not ADC_channel_2;
+        when X"3" => A_nLED <= not ADC_channel_3;
+        when X"4" => A_nLED <= not ADC_channel_4;
+        when X"5" => A_nLED <= not ADC_channel_5;
+        when X"6" => A_nLED <= not ADC_channel_6;
+        when X"7" => A_nLED <= not ADC_channel_7;
+        when X"8" => A_nLED <= not ADC_channel_8;
+        when others =>
+          A_nLED <= (others => '1');
+      end case;
+    else
+      A_nLED <= (others => '1');
+    end if;
   end process p_led_mux;
  
 
@@ -498,15 +502,13 @@ p_read_mux: process (
   end process p_read_mux;
   
 
-modelsim_A_nBoardSel <= not A_nBoardSel; -- modelsim can't use not ...;
-  
 sel_led: led_n
   generic map (
     stretch_cnt => 3)
   port map (
     ena         => led_ena_cnt,     -- is every 10 ms for one clock period active
     clk         => clk_sys,
-    Sig_in      => modelsim_A_nBoardSel,
+    Sig_in      => not A_nBoardSel,
     nLED        => open,
     nLED_opdrn  => A_nState_LED(0));
 
@@ -522,7 +524,6 @@ dtack_led: led_n
     nLED        => open,
     nLED_opdrn  => A_nState_LED(1));
     
-rw_signal <= not A_RnW and not A_nBoardSel;
 
 rw_led: led_n
   generic map (
@@ -530,7 +531,7 @@ rw_led: led_n
   port map (
     ena         => led_ena_cnt,     -- is every 10 ms for one clock period active
     clk         => clk_sys,
-    Sig_in      => rw_signal,
+    Sig_in      => not A_RnW and not A_nBoardSel,
     nLED        => open,
     nLED_opdrn  => A_nState_LED(2));
     

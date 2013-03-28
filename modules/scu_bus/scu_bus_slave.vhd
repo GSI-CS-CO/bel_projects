@@ -185,13 +185,36 @@
 --    Ab der Vers_3_Revi_0, wird der Makro nur noch "SCU_Bus_Slave" heissen.                                        --
 --    Wenn der "SCU_Bus_Slave" in einem Block-Design-File als Symbol eingebunden werden soll, wird über die Generics--
 --      "This_macro_vers_dont_change_from_outside" die Version und                                                  --
---      "This_macro_vers_dont_change_from_outside" die Revision angezeigt.                                          --
---    Das setzt vorraus, das vom aktuell eingebudenen SCU_Bus_Slave.vhd-File ein neues BSF generiert wird.          --
+--      "This_macro_revi_dont_change_from_outside" die Revision angezeigt.                                          --
+--    Das setzt vorraus, das vom aktuell eingebundenen SCU_Bus_Slave.vhd-File ein neues BSF generiert wird.         --
 --    Wird der SCU_Bus_Slave als Vhdl-Componente in ein in der Hirachie höheren Vhdl-File eingefügt, muesste die    --
 --    Componenten-Deklaration haendisch aktualisiert werden. Deshalb soll dieser Makro als Package in das           --
---    übergeordnete Vhdl-File eingebunden werden.                                                                    --
+--    übergeordnete Vhdl-File eingebunden werden.                                                                   --
 ----------------------------------------------------------------------------------------------------------------------
---
+
+----------------------------------------------------------------------------------------------------------------------
+--  Vers_3_Revi_1: erstellt am 22.03.2013, Autor: W.Panschow                                                        --
+--    Die Generics "Hardware_Version" und "Hardware_Release" sollen Elemente der CID-Nummern repräsentiern.         --
+--    Da diese Nummern für alle Baugruppen die im Fair-Projekt eingesetzt werden sollen, eindeutig sein müssen,     --
+--    ist es wichtig, dass nicht jeder Entwickler eine Nummer nach gutdünken vergibt. Um zu verdeutlichen, dass     --
+--    über diese Generics nur die CID-Elemente "System" und "Gruppe" referiert werden dürfen, wurde sie umbenannt:  --
+--                                                                                                                  --
+--      "Hardware_Version" in "CID_System".                                                                         --
+--            "CSCOHW" hat z.B. die "CID_System"-Kennung dezimal 55. Baugruppen anderer Gewerke-Hersteller sollten  --
+--            verbindlich ihre "CID_System"-Kennung eintragen. Falls keine vorhanden ist, darf der                  --
+--            Defaultwert 0 nicht verändert werden.                                                                 --
+--                                                                                                                  --
+--      "Hardware_Revision" in "CID_Group".                                                                         --
+--            Jede Baugruppe die diesen Macro verwendet sollte durch die "CID-Group" zusammen mit "CID-System"      --
+--            eine eindeutige Identifizierug der Hardware-Funktion und deren Revision ermöglichen.                  --
+--            Die "CID-Group"-Nummer wird bei jeder neuen Karte oder jeder neuen Revision hochgezählt.              --
+--            Z.B. "CSCOHW" hat die Karte "FG900160_SCU_ADDAC1" entwickelt, für die die "CID_Group"-Nummer          --
+--            0003 dezimal vergeben wurde.                                                                          --
+--            Eine neue Version der Baugruppe, z.B. "FG900161_SCU_ADDAC2" könnte die "CID-Group"-Nummer 0011        --
+--            haben, da zwischenzeitlich "CID-Group"-Nummern für andere Projekte (Funktionen) vergeben wurden,      --
+--            und die "CID-Group"-Nummer kontinuierlich hochgezählt werden soll.                                    --
+--            Falls keine verbindliche "CID-Group"-Nummer vorliegt, muss der Defaultwert 0 stehen bleiben!          --
+----------------------------------------------------------------------------------------------------------------------
 
 
 library IEEE;
@@ -211,8 +234,20 @@ generic
     Slave_ID:         integer range 0 TO 16#FFFF# := 0;   -- ID of the realisied slave board function
     Firmware_Version: integer range 0 to 16#FFFF# := 0;
     Firmware_Release: integer range 0 to 16#FFFF# := 0;
-    Hardware_Version: integer range 0 to 16#FFFF# := 0;
-    Hardware_Release: integer range 0 to 16#FFFF# := 0;
+
+    -- "CSCOHW" hat z.B. die "CID_System"-Kennung dezimal 55. Baugruppen anderer Gewerke-Hersteller sollten verbindlich
+    -- ihre "CID_System"-Kennung eintragen. Falls keine vorhanden ist, darf der Defaultwert 0 nicht verändert werden.
+    CID_System:       integer range 0 to 16#FFFF# := 0;
+
+    -- Jede Baugruppe die diesen Macro verwendet sollte durch die "CID-Group" zusammen mit "CID-System" eine eindeutige
+    -- Identifizierug der Hardware-Funktion und deren Revision ermöglichen. Die "CID-Group"-Nummer wird bei jeder neuen Karte
+    -- oder jeder neuen Revision hochgezählt.Z.B. "CSCOHW" hat die Karte "FG900160_SCU_ADDAC1" entwickelt,
+    -- für die die "CID_Group"-Nummer 0003 dezimal vergeben wurde.
+    -- Eine neue Version der Baugruppe, z.B. "FG900161_SCU_ADDAC2" könnte die "CID-Group"-Nummer 0011 haben, da
+    -- zwischenzeitlich  "CID-Group"-Nummern für andere Projekte (Funktionen) vergeben wurden, und die "CID-Group"-Nummer
+    -- kontinuierlich hochgezählt werden soll.                                  --
+    -- Falls keine verbindliche "CID-Group"-Nummer vorliegt, muss der Defaultwert 0 stehen bleiben!
+    CID_Group: integer range 0 to 16#FFFF# := 0;
 
     -- the bit positions are corresponding to Intr_In.
     -- A '1' set default level of this Intr_In(n) to neg. level or neg. edge
@@ -230,7 +265,7 @@ generic
     This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 3;
     
     -- change only here! increment by minor changes of this macro
-    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 0
+    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 1
     );
 port
     (
@@ -294,38 +329,38 @@ port
   constant  C_Version:  unsigned(7 downto 0) :=  to_unsigned(This_macro_vers_dont_change_from_outside, 8);
   constant  C_Revision: unsigned(7 downto 0) :=  to_unsigned(This_macro_revi_dont_change_from_outside, 8);
   
-  constant  C_Slave_ID_Adr:   std_logic_vector(15 downto 0) := X"0001";   -- address of slave ident code (rd)
-  constant  C_FW_Version_Adr: std_logic_vector(15 downto 0) := X"0002";   -- address of firmware version (rd)
-  constant  C_FW_Release_Adr: std_logic_vector(15 downto 0) := X"0003";   -- address of firmware release (rd)
-  constant  C_HW_Version_Adr: std_logic_vector(15 downto 0) := X"0004";   -- address of hardware version (rd)
-  constant  C_HW_Release_Adr: std_logic_vector(15 downto 0) := X"0005";   -- address of hardware release (rd)
+  constant  C_Slave_ID_Adr:   unsigned(15 downto 0) := X"0001";   -- address of slave ident code (rd)
+  constant  C_FW_Version_Adr: unsigned(15 downto 0) := X"0002";   -- address of firmware version (rd)
+  constant  C_FW_Release_Adr: unsigned(15 downto 0) := X"0003";   -- address of firmware release (rd)
+  constant  C_CID_System_Adr: unsigned(15 downto 0) := X"0004";   -- address of hardware version (rd)
+  constant  C_CID_Group_Adr:  unsigned(15 downto 0) := X"0005";   -- address of hardware release (rd)
   -- address of version and revision register of this macro (rd)
-  constant  C_Vers_Revi_of_this_Macro: std_logic_vector(15 downto 0) := X"0006";
-  constant  C_Echo_Reg_Adr:   std_logic_vector(15 downto 0) := X"0010";   -- address of echo register (rd/wr)
-  constant  C_Status_Reg_Adr: std_logic_vector(15 downto 0) := X"0011";   -- address of status register (rd)
+  constant  C_Vers_Revi_of_this_Macro: unsigned(15 downto 0) := X"0006";
+  constant  C_Echo_Reg_Adr:   unsigned(15 downto 0) := X"0010";   -- address of echo register (rd/wr)
+  constant  C_Status_Reg_Adr: unsigned(15 downto 0) := X"0011";   -- address of status register (rd)
   
-  constant  C_Free_Intern_A_12: std_logic_vector(15 downto 0) := X"0012";   -- reserved internal address 12hex
-  constant  C_Free_Intern_A_13: std_logic_vector(15 downto 0) := X"0013";   -- reserved internal address 13hex
-  constant  C_Free_Intern_A_14: std_logic_vector(15 downto 0) := X"0014";   -- reserved internal address 14hex
-  constant  C_Free_Intern_A_15: std_logic_vector(15 downto 0) := X"0015";   -- reserved internal address 15hex
-  constant  C_Free_Intern_A_16: std_logic_vector(15 downto 0) := X"0016";   -- reserved internal address 16hex
-  constant  C_Free_Intern_A_17: std_logic_vector(15 downto 0) := X"0017";   -- reserved internal address 17hex
-  constant  C_Free_Intern_A_18: std_logic_vector(15 downto 0) := X"0018";   -- reserved internal address 18hex
-  constant  C_Free_Intern_A_19: std_logic_vector(15 downto 0) := X"0019";   -- reserved internal address 19hex
-  constant  C_Free_Intern_A_1A: std_logic_vector(15 downto 0) := X"001A";   -- reserved internal address 1Ahex
-  constant  C_Free_Intern_A_1B: std_logic_vector(15 downto 0) := X"001B";   -- reserved internal address 1Bhex
-  constant  C_Free_Intern_A_1C: std_logic_vector(15 downto 0) := X"001C";   -- reserved internal address 1Chex
-  constant  C_Free_Intern_A_1D: std_logic_vector(15 downto 0) := X"001D";   -- reserved internal address 1Dhex
-  constant  C_Free_Intern_A_1E: std_logic_vector(15 downto 0) := X"001E";   -- reserved internal address 1Ehex
-  constant  C_Free_Intern_A_1F: std_logic_vector(15 downto 0) := X"001F";   -- reserved internal address 1Fhex
+  constant  C_Free_Intern_A_12: unsigned(15 downto 0) := X"0012";   -- reserved internal address 12hex
+  constant  C_Free_Intern_A_13: unsigned(15 downto 0) := X"0013";   -- reserved internal address 13hex
+  constant  C_Free_Intern_A_14: unsigned(15 downto 0) := X"0014";   -- reserved internal address 14hex
+  constant  C_Free_Intern_A_15: unsigned(15 downto 0) := X"0015";   -- reserved internal address 15hex
+  constant  C_Free_Intern_A_16: unsigned(15 downto 0) := X"0016";   -- reserved internal address 16hex
+  constant  C_Free_Intern_A_17: unsigned(15 downto 0) := X"0017";   -- reserved internal address 17hex
+  constant  C_Free_Intern_A_18: unsigned(15 downto 0) := X"0018";   -- reserved internal address 18hex
+  constant  C_Free_Intern_A_19: unsigned(15 downto 0) := X"0019";   -- reserved internal address 19hex
+  constant  C_Free_Intern_A_1A: unsigned(15 downto 0) := X"001A";   -- reserved internal address 1Ahex
+  constant  C_Free_Intern_A_1B: unsigned(15 downto 0) := X"001B";   -- reserved internal address 1Bhex
+  constant  C_Free_Intern_A_1C: unsigned(15 downto 0) := X"001C";   -- reserved internal address 1Chex
+  constant  C_Free_Intern_A_1D: unsigned(15 downto 0) := X"001D";   -- reserved internal address 1Dhex
+  constant  C_Free_Intern_A_1E: unsigned(15 downto 0) := X"001E";   -- reserved internal address 1Ehex
+  constant  C_Free_Intern_A_1F: unsigned(15 downto 0) := X"001F";   -- reserved internal address 1Fhex
 
-  constant  C_Intr_In_Adr:      std_logic_vector(15 downto 0) := X"0020";   -- address of interrupt In register (rd)
-  constant  C_Intr_Ena_Adr:     std_logic_vector(15 downto 0) := X"0021";   -- address of interrupt enable register (rd/wr)
-  constant  C_Intr_Pending_Adr: std_logic_vector(15 downto 0) := X"0022";   -- address of interrupt pending register (rd/wr)
-  constant  C_Intr_Mask_Adr:    std_logic_vector(15 downto 0) := X"0023";   -- address of interrupt mask register (rd/wr)
-  constant  C_Intr_Active_Adr:  std_logic_vector(15 downto 0) := X"0024";   -- address of interrupt active register (rd)
-  constant  C_Intr_Level_Adr:   std_logic_vector(15 downto 0) := X"0025";   -- address of interrupt level register (rd/wr)
-  constant  C_Intr_Edge_Adr:    std_logic_vector(15 downto 0) := X"0026";   -- address of interrupt edge register (rd/wr)
+  constant  C_Intr_In_Adr:      unsigned(15 downto 0) := X"0020";   -- address of interrupt In register (rd)
+  constant  C_Intr_Ena_Adr:     unsigned(15 downto 0) := X"0021";   -- address of interrupt enable register (rd/wr)
+  constant  C_Intr_Pending_Adr: unsigned(15 downto 0) := X"0022";   -- address of interrupt pending register (rd/wr)
+  constant  C_Intr_Mask_Adr:    unsigned(15 downto 0) := X"0023";   -- address of interrupt mask register (rd/wr)
+  constant  C_Intr_Active_Adr:  unsigned(15 downto 0) := X"0024";   -- address of interrupt active register (rd)
+  constant  C_Intr_Level_Adr:   unsigned(15 downto 0) := X"0025";   -- address of interrupt level register (rd/wr)
+  constant  C_Intr_Edge_Adr:    unsigned(15 downto 0) := X"0026";   -- address of interrupt edge register (rd/wr)
 
   signal    S_nReset:           std_logic;                        -- '0' => S_nReset is active
 
@@ -633,7 +668,7 @@ P_Standard_Reg: process (clk, S_nReset)
       S_Read_Out <= (others => 'Z');    -- Vers_2 Revi_0: Vorschlag S. Schäfer, vermeidet
                                         --unötige Datenübergänge auf dem SCU-Datenbus 
       if S_nSync_Board_Sel = "00" and S_nSync_Timing_Cyc = "11" then
-        case S_ADR_from_SCUB_LA IS
+        case unsigned(S_ADR_from_SCUB_LA) IS
           when C_Slave_ID_Adr =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
@@ -652,16 +687,16 @@ P_Standard_Reg: process (clk, S_nReset)
               S_Read_Out <= std_logic_vector(to_unsigned(Firmware_Release, S_Read_Out'length));
               S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
             end if;
-          when C_HW_Version_Adr =>
+          when C_CID_System_Adr =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
-              S_Read_Out <= std_logic_vector(to_unsigned(Hardware_Version, S_Read_Out'length));
+              S_Read_Out <= std_logic_vector(to_unsigned(CID_System, S_Read_Out'length));
               S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
             end if;
-          when C_HW_Release_Adr =>
+          when C_CID_Group_Adr =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
-              S_Read_Out <= std_logic_vector(to_unsigned(Hardware_Release, S_Read_Out'length));
+              S_Read_Out <= std_logic_vector(to_unsigned(CID_Group, S_Read_Out'length));
               S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
             end if;
           when C_Echo_Reg_Adr =>

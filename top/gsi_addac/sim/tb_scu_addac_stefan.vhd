@@ -131,7 +131,7 @@ SIGNAL A_TB : STD_LOGIC_VECTOR(15 DOWNTO 0);
 SIGNAL ADC_BUSY : STD_LOGIC;
 SIGNAL ADC_CONVST_A : STD_LOGIC;
 SIGNAL ADC_CONVST_B : STD_LOGIC;
-SIGNAL ADC_DB : STD_LOGIC_VECTOR(15 DOWNTO 0) := x"DEAD";
+SIGNAL ADC_DB : STD_LOGIC_VECTOR(15 DOWNTO 0) := x"0000";
 SIGNAL ADC_FRSTDATA : STD_LOGIC;
 SIGNAL ADC_OS : STD_LOGIC_VECTOR(2 DOWNTO 0);
 SIGNAL ADC_Range : STD_LOGIC;
@@ -536,12 +536,14 @@ db15_byte_sel <= '0' when nADC_PAR_SER_SEL = '0' else 'Z';
 
 serial_data: process (nADC_RD_SCLK)
 begin
-	if ADC_RESET = '1' then
+	if ADC_RESET = '1' or ADC_BUSY = '1' then
 		s_data_a <= x"DEADBEEF08154711";
 		s_data_b <= x"DEADBEEF08154711";
 	elsif rising_edge(nADC_RD_SCLK) then
-		s_data_a <= s_data_a(s_data_a'high-1 downto 0) & '0';
-		s_data_b <= s_data_b(s_data_b'high-1 downto 0) & '0';
+    if nADC_PAR_SER_SEL = '1' then
+      s_data_a <= s_data_a(s_data_a'high-1 downto 0) & '0';
+      s_data_b <= s_data_b(s_data_b'high-1 downto 0) & '0';
+    end if;
 	end if;
 end process;
 
@@ -598,7 +600,11 @@ BEGIN
   Computer_access_master(Slave1_Acc, x"0231", X"0000", rd, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
   wait for 2 us;
   Computer_access_master(Slave1_Acc, x"0230", X"000a", wr, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
-  wait for 100 us;
+  wait for 10 us;
+  Computer_access_master(Slave1_Acc, x"0231", X"0000", rd, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
+  wait for 2 us;
+  Computer_access_master(Slave1_Acc, x"0232", X"0000", rd, Slave_Nr, Adr, Wr_Data, Wr_Cycle, Rd_Cycle, Start_Cycle, nSCUB_Dtack);
+  wait for 2 us;
 
   ASSERT FALSE REPORT "testbench finished" SEVERITY failure;
                                                        

@@ -1,7 +1,7 @@
 #include "display.h"
 
 
-volatile unsigned int* display = (unsigned int*)0x140000;
+volatile unsigned int* display = (unsigned int*)0x00200000;
 
 
 
@@ -25,6 +25,16 @@ unsigned int time = 0;
 
   disp_reset();	
   disp_put_c('\f');
+  disp_put_str(mytext);
+  disp_put_line("ABC", 2);
+  disp_put_line("456", 1);
+  disp_put_line("123", 0);
+
+
+
+
+
+
 	x = 0;
 	y = 9;
 	yinc = -1;
@@ -36,7 +46,7 @@ unsigned int time = 0;
     
 
 
-	disp_put_raw( get_pixcol_val((unsigned char)y), get_pixcol_addr((unsigned char)x, (unsigned char)y), color);
+//	disp_put_raw( get_pixcol_val((unsigned char)y), get_pixcol_addr((unsigned char)x, (unsigned char)y), color);
 
 
 	if(x == 63) xinc = -1;

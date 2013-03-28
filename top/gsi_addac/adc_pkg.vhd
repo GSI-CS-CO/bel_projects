@@ -6,24 +6,21 @@ package adc_pkg is
 
 component ad7606  is
   generic (
-    clk_in_hz:            integer := 50_000_000;    -- 50Mhz
-    sclk_in_hz:           integer := 14_500_000;    -- 14,5Mhz
-    cs_delay_in_ns:       integer := 16;            -- 16ns
-    cs_high_in_ns:        integer := 22;            -- 22ns
-    rd_low_in_ns:         integer := 16;            -- 16ns
-    reset_delay_in_ns:    integer := 50;            -- 50ns
-    conv_wait_in_ns:      integer := 25;            -- 25ns
-    inter_cycle_in_ns:    integer := 6000;          -- 6us
- --   ser_mode:             boolean := true;          -- selects between ADC communication modes
- --   par_mode:             boolean := false;         -- serial, 16bit parallel or 8bit serial
- --   byte_ser_mode:        boolean := false;
+    clk_in_hz:            integer := 50_000_000;      -- 50Mhz
+    sclk_in_hz:           integer := 14_500_000;      -- 14,5Mhz
+    cs_delay_in_ns:       integer := 16;              -- 16ns
+    cs_high_in_ns:        integer := 22;              -- 22ns
+    rd_low_in_ns:         integer := 16;              -- 16ns
+    reset_delay_in_ns:    integer := 50;              -- 50ns
+    conv_wait_in_ns:      integer := 25;              -- 25ns
+    inter_cycle_in_ns:    integer := 6000;            -- 6us
     diag_on_is_1:         integer range 0 to 1 := 0   -- if 1 then diagnosic information is generated during compilation
     );
   port (
     clk:            in std_logic;
     nrst:           in std_logic;
     sync_rst:       in std_logic;
-    conv_en:        in std_logic;
+    trigger_mode:   in std_logic;                     -- 0: continuous conversion 1: triggered by extern trig input
     transfer_mode:  in std_logic_vector(1 downto 0);  -- select communication mode
                                                       --	00: par
                                                       --	01: ser
@@ -36,10 +33,9 @@ component ad7606  is
     n_rd_sclk:      out std_logic;                    -- first falling edge after busy clocks data out
     busy:           in std_logic;                     -- falling edge signals end of conversion
     adc_reset:      out std_logic;
-    os:             out std_logic_vector(2 downto 0); -- oversampling config
     par_ser_sel:    out std_logic;                    -- parallel/serial/byte serial
-    adc_range:      out std_logic;                    -- 10V/-10V or 5V/-5V
     firstdata:      in std_logic;
+    reg_busy:       out std_logic;                    -- active when adc data is written to register block
     channel_1:      out std_logic_vector(15 downto 0);
     channel_2:      out std_logic_vector(15 downto 0);
     channel_3:      out std_logic_vector(15 downto 0);
@@ -73,6 +69,7 @@ component adc_scu_bus is
     par_ser_sel:    out std_logic;                    -- parallel/serial/byte serial
     adc_range:      out std_logic;                    -- 10V/-10V or 5V/-5V
     firstdata:      in std_logic;
+    nDiff_In_En:    out std_logic;                    -- logic low enables diff input for chn 3-8
     
     -- SCUB interface
     Adr_from_SCUB_LA:   in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
@@ -82,17 +79,16 @@ component adc_scu_bus is
     Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
     user_rd_active:     out   std_logic;                      -- '1' = read data available at 'Data_to_SCUB'-output
     Data_to_SCUB:       out   std_logic_vector(15 downto 0);  -- connect read sources to SCUB-Macro
-    Dtack_to_SCUB:      out   std_logic;                     -- connect Dtack to SCUB-Macro
+    Dtack_to_SCUB:      out   std_logic;                      -- connect Dtack to SCUB-Macro
     
-    -- channel data for LEDs
-    channel_1:          out std_logic_vector(15 downto 0);
-    channel_2:          out std_logic_vector(15 downto 0);
-    channel_3:          out std_logic_vector(15 downto 0);
-    channel_4:          out std_logic_vector(15 downto 0);
-    channel_5:          out std_logic_vector(15 downto 0);
-    channel_6:          out std_logic_vector(15 downto 0);
-    channel_7:          out std_logic_vector(15 downto 0);
-    channel_8:          out std_logic_vector(15 downto 0));
+    channel_1:          out   std_logic_vector(15 downto 0);
+    channel_2:          out   std_logic_vector(15 downto 0);
+    channel_3:          out   std_logic_vector(15 downto 0);
+    channel_4:          out   std_logic_vector(15 downto 0);
+    channel_5:          out   std_logic_vector(15 downto 0);
+    channel_6:          out   std_logic_vector(15 downto 0);
+    channel_7:          out   std_logic_vector(15 downto 0);
+    channel_8:          out   std_logic_vector(15 downto 0));
 end component;
 
 
