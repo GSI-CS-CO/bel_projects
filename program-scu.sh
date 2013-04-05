@@ -1,7 +1,7 @@
 #! /bin/bash
 
-#quartus_jli="${QUARTUS:-/opt/quartus}/bin/quartus_jli"
-quartus_jli="quartus_jli"
+quartus_jli="${QUARTUS:-/opt/quartus}/bin/quartus_jli"
+#quartus_jli="quartus_jli"
 jam="$1"
 
 if ! test -f "$jam"; then

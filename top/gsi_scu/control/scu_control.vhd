@@ -271,6 +271,7 @@ architecture rtl of scu_control is
   signal phy_rx_k         : std_logic;
   signal phy_rx_enc_err   : std_logic;
   signal phy_rx_bitslide  : std_logic_vector(3 downto 0);
+  signal phy_rst          : std_logic;
   signal phy_loopen       : std_logic;
   signal dbg_tx_clk       : std_logic;
 
@@ -378,7 +379,7 @@ begin
       g_aux_clks                  => 1,
       g_ep_rxbuf_size             => 1024,
       g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
-      g_dpram_size                => 262144/4,
+      g_dpram_size                => 131072/4,
       g_interface_mode            => PIPELINED,
       g_address_granularity       => BYTE,
       g_aux_sdb                   => c_etherbone_sdb)
@@ -401,13 +402,12 @@ begin
       phy_tx_k_o         => phy_tx_k,
       phy_tx_disparity_i => phy_tx_disparity,
       phy_tx_enc_err_i   => phy_tx_enc_err,
-		
       phy_rx_data_i      => phy_rx_data,
       phy_rx_rbclk_i     => phy_rx_rbclk,
       phy_rx_k_i         => phy_rx_k,
       phy_rx_enc_err_i   => phy_rx_enc_err,
       phy_rx_bitslide_i  => phy_rx_bitslide,
-      phy_rst_o          => open,
+      phy_rst_o          => phy_rst,
       phy_loopen_o       => phy_loopen,
       
       led_act_o   => link_act,
@@ -465,6 +465,7 @@ begin
       rstn_sys_i     => rstn_sys,
       locked_o       => gxb_locked,
       loopen_i       => phy_loopen,
+      drop_link_i    => phy_rst,
       tx_data_i      => phy_tx_data,
       tx_k_i         => phy_tx_k,
       tx_disparity_o => phy_tx_disparity,
@@ -550,8 +551,9 @@ begin
       g_fifo_depth   => 10)
     port map (
       ref_clk_i       => clk_ref,
+      ref_rstn_i      => rstn_ref,
       sys_clk_i       => clk_sys,
-      nRSt_i          => rstn_sys,
+      sys_rstn_i      => rstn_sys,
       triggers_i(0)   => lemo_io(1),
       triggers_i(1)   => lemo_io(2),
       tm_time_valid_i => tm_valid,
@@ -796,9 +798,10 @@ begin
   hpla_ch(11) <= 'Z';
   hpla_ch(12) <= 'Z';
   
-  hpla_ch(13) <= clk_ref;
-  hpla_ch(14) <= dbg_tx_clk;
-  hpla_ch(15) <= phy_rx_rbclk;
+  hpla_ch(13) <= clk_ref;      -- pin 6
+  hpla_ch(14) <= dbg_tx_clk;   -- pin 5
+  hpla_ch(15) <= phy_rx_rbclk; -- pin 4
+  -- 20 is ground
   
   -- LPC bus is not connected
   LPC_AD <= (others => 'Z');
