@@ -3,7 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 use work.wishbone_pkg.all;
-use work.gencores_pkg.gc_wfifo;
+use work.genram_pkg.all;
 
 
 --Only low data byte is used in all operations
@@ -72,7 +72,7 @@ architecture rtl of wb_console is
 
 signal adrmode : natural;
   signal mode		:	std_logic_vector(1 downto 0);
-  signal w_rdy, w_en, r_rdy, r_en : std_logic;
+  signal w_full, w_en, r_empty, r_en : std_logic;
   signal w_data, r_data : std_logic_vector(c_wishbone_data_width/4-1 downto 0);
 
   signal wbuffer : std_logic_vector(7 downto 0);
@@ -101,33 +101,25 @@ begin
   -- Output pins
   mode_o  <= mode;
   fifo_o  <= r_data;
-  empty_o <= not r_rdy;
+  empty_o <= r_empty;
   valid_o <= valid;
   
-  fifo : gc_wfifo 
+  fifo : generic_sync_fifo
     generic map(
-      sync_depth => 0,
-      gray_code  => false,
-      addr_width => 4,
-      data_width => 8)
+      g_data_width => 8,
+      g_size       => 16)
     port map(
-      w_rst_n_i => nRst_i,
-      w_clk_i  => clk_i,
-      w_rdy_o  => w_rdy,
-      w_en_i   => w_en,
-      w_data_i => wbuffer,
-      a_clk_i  => '0',
-		a_rst_n_i => '0',
-      a_rdy_o  => open,
-      a_en_i   => '0',
-      r_clk_i  => clk_i,
-      r_rst_n_i => nRst_i,
-		r_rdy_o  => r_rdy,
-      r_en_i   => r_en,
-      r_data_o => r_data);
-		
-	
-
+      rst_n_i        => nRst_i,
+      clk_i          => clk_i,
+      d_i            => wbuffer,
+      we_i           => w_en,
+      q_o            => r_data,
+      rd_i           => r_en,
+      empty_o        => r_empty,
+      full_o         => w_full,
+      almost_empty_o => open,
+      almost_full_o  => open,
+      count_o        => open);
 
 adrmode <= to_integer(unsigned(slave_i.ADR(17 downto 16)));  
 char_col_o <= std_logic_vector(char_col);
@@ -153,7 +145,7 @@ char_col_o <= std_logic_vector(char_col);
 		  reset_disp_o <= '0';
 		  slave_o_ACK <= '0';
 		  slave_o_STALL <= '1';
-		  r_en <= read_i AND r_rdy AND not r_en;
+		  r_en <= read_i AND not r_empty AND not r_en;
         w_en <= '0';
         
 		  if(slave_i.SEL(0) = '1') then
@@ -194,7 +186,7 @@ char_col_o <= std_logic_vector(char_col);
 								
 					when 1 =>	--only lower stall take on new commands if there are no acks pending
 								if(unsigned(disp_ram_ack_shreg) = 0) then
-									slave_o_STALL <= not (w_rdy and slave_o_STALL);
+									slave_o_STALL <= not (not w_full and slave_o_STALL);
 								end if;
 								slave_o_ACK <= not slave_o_STALL;
 								 if(slave_i.WE = '1' and slave_i.SEL(0) = '1' and slave_o_stall = '0' and unsigned(slave_i.ADR(15 downto 2)) = 0) then -- UART FIFO
@@ -204,7 +196,7 @@ char_col_o <= std_logic_vector(char_col);
 					when 2 => 
 								--only lower stall take on new commands if there are no acks pending
 								if(unsigned(disp_ram_ack_shreg) = 0) then
-									slave_o_STALL <= not (w_rdy and slave_o_STALL and not r_rdy);
+									slave_o_STALL <= not (not w_full and slave_o_STALL and r_empty);
 								end if;
 								slave_o_ACK <= not slave_o_STALL;
 								if(slave_i.WE = '1' and slave_i.SEL(0) = '1' and slave_o_stall = '0' and unsigned(slave_i.ADR(5 downto 2)) < 11) then -- Raw Char
