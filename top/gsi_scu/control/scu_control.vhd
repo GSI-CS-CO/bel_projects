@@ -2,11 +2,10 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library work;
 use work.gencores_pkg.all;
 use work.wrcore_pkg.all;
 use work.wr_fabric_pkg.all;
-
-library work;
 use work.wishbone_pkg.all;
 use work.eca_pkg.all;
 use work.wb_cores_pkg_gsi.all;
@@ -14,6 +13,7 @@ use work.pcie_wb_pkg.all;
 use work.wr_altera_pkg.all;
 use work.etherbone_pkg.all;
 use work.scu_bus_pkg.all;
+use work.altera_flash_pkg.all;
 use work.oled_display_pkg.all;
 
 entity scu_control is
@@ -207,7 +207,7 @@ architecture rtl of scu_control is
     name          => "GSI_GPIO_32        ")));
 
   -- Top crossbar layout
-  constant c_slaves  : natural := 8;
+  constant c_slaves  : natural := 9;
   constant c_masters : natural := 2;
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00000000"),
@@ -217,7 +217,8 @@ architecture rtl of scu_control is
     4 => f_sdb_embed_device(c_scu_bus_master,             x"00400000"),
     5 => f_sdb_embed_device(c_xwb_gpio32_sdb,             x"00800000"),
     6 => f_sdb_embed_device(c_wrc_periph1_sdb,            x"00800100"),
-    7 => f_sdb_embed_device(c_oled_display,               x"00900000"));
+    7 => f_sdb_embed_device(c_oled_display,               x"00900000"),
+    8 => f_sdb_embed_device(c_wb_spi_flash_sdb,           x"01000000"));
   constant c_sdb_address : t_wishbone_address := x"00300000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -233,11 +234,17 @@ architecture rtl of scu_control is
 
   -- Sys PLL from clk_125m_local_i
   signal sys_locked       : std_logic;
-  signal clk_pcie         : std_logic;
-  signal clk_reconf       : std_logic;
-  signal clk_sys          : std_logic;
-  signal clk_scubus       : std_logic;
+  signal clk_62_5         : std_logic;
+  signal clk_50           : std_logic;
+  signal clk_20           : std_logic;
   signal rstn_sys         : std_logic;
+  
+  -- Logical clock names
+  signal clk_pcie         : std_logic;
+  signal clk_sys          : std_logic;
+  signal clk_reconf       : std_logic;
+  signal clk_flash        : std_logic;
+  signal clk_scubus       : std_logic;
   
   -- RX PLL
   signal gxb_locked       : std_logic;
@@ -310,10 +317,6 @@ architecture rtl of scu_control is
   signal s_lemo_led : std_logic_vector(2 downto 1);
 begin
 
-  Inst_flash_loader_v01 : flash_loader
-    port map(
-      noe_in   => '0');
-  
   dmtd_inst : dmtd_pll port map(
     inclk0 => clk_20m_vcxo_i,    --  20  Mhz 
     c0     => clk_dmtd,          --  62.5MHz
@@ -326,12 +329,16 @@ begin
 
   sys_inst : sys_pll port map(
     inclk0 => clk_125m_local_i, -- 125  Mhz 
-    c0     => clk_pcie,         -- 125  MHz
-    c1     => clk_reconf,       --  50  Mhz
-    c2     => clk_sys,          --  62.5MHz
-    c3     => clk_scubus,       --  20  MHz
-    c4     => open,             -- 100  MHz
+    c0     => clk_62_5,         --  62.5MHz
+    c1     => clk_50,           --  50  Mhz
+    c2     => clk_20,           --  20  MHz
     locked => sys_locked);
+  
+  clk_pcie  <= clk_ref;
+  clk_sys   <= clk_62_5;
+  clk_reconf <= clk_50;
+  clk_flash  <= clk_50;
+  clk_scubus <= clk_20;
   
   sys_reset : gc_reset
     generic map(
@@ -351,6 +358,22 @@ begin
       clks_i(0)  => clk_ref,
       rstn_o(0)  => rstn_ref);
 
+  flash : flash_top
+    generic map(
+      g_family                 => "Arria II GX",
+      g_port_width             => 1,   -- single-lane SPI bus
+      g_addr_width             => 24,  -- 3 byte addressed chip
+      g_input_latch_edge       => '1', -- 30ns at 50MHz (10+20) after falling edge sets up SPI output
+      g_output_latch_edge      => '0', -- falling edge to meet SPI setup times
+      g_input_to_output_cycles => 2)   -- delayed to work-around unconstrained design
+    port map(
+      clk_i     => clk_sys,
+      rstn_i    => rstn_sys,
+      slave_i   => cbar_master_o(8),
+      slave_o   => cbar_master_i(8),
+      clk_out_i => clk_flash,
+      clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
+  
   GSI_CON : xwb_sdb_crossbar
    generic map(
      g_num_masters => c_masters,
@@ -557,7 +580,7 @@ begin
       triggers_i(0)   => lemo_io(1),
       triggers_i(1)   => lemo_io(2),
       tm_time_valid_i => tm_valid,
-      tm_utc_i        => tm_tai,
+      tm_tai_i        => tm_tai,
       tm_cycles_i     => tm_cycles,
       wb_slave_i      => cbar_master_o(1),
       wb_slave_o      => cbar_master_i(1));
