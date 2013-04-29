@@ -3,6 +3,9 @@ use ieee.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use work.aux_functions_pkg.all;
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers: 1 Revi: 0: erstellt am 25.04.2013, Autor: W.Panschow                                                      --
+
 entity DAC_SPI is
   generic (
     Base_addr:        unsigned(15 downto 0) := X"0300";
@@ -19,11 +22,14 @@ entity DAC_SPI is
     Ext_Wr_fin:         in    std_logic;                      -- '1' => Wr-Cycle is finished
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     nReset:             in    std_logic := '1';
+    nExt_Trig_DAC:      in    std_logic;                      -- external trigger input over optocoupler,
+                                                              -- led on -> nExt_Trig_DAC is low
     DAC_SI:             out   std_logic;                      -- connect to DAC-SDI
     nDAC_CLK:           out   std_logic;                      -- spi-clock of DAC
     nCS_DAC:            out   std_logic;                      -- '0' enable shift of internal shift register of DAC
     nLD_DAC:            out   std_logic;                      -- '0' copy shift register to output latch of DAC
-    nCLR_DAC:           out   std_logic;
+    nCLR_DAC:           out   std_logic;                      -- '0' resets the DAC, Clear Pulsewidth min 200ns
+                                                              -- resets both the input latch and the D/A latch to 0000H (midscale).
     Rd_Port:            out   std_logic_vector(15 downto 0);
     Rd_Activ:           out   std_logic;
     Dtack:              out   std_logic
@@ -46,9 +52,6 @@ architecture arch_DAC_SPI OF DAC_SPI IS
 
   signal    spi_clk_ena:        std_logic;
 
-  signal    dly_right_si:       unsigned(8 downto 0);
-  signal    dly_left_si:       unsigned(8 downto 0);
-
   signal    Shift_Reg:        unsigned(15 downto 0);
   signal    Wr_Shift_Reg:     std_logic;
   signal    Wr_DAC_Cntrl:     std_logic;
@@ -63,6 +66,7 @@ architecture arch_DAC_SPI OF DAC_SPI IS
               Clk_Hi,
               Sel_Off,
               Load,
+              load_Wait,
               Load_End
               );  
 
@@ -75,7 +79,12 @@ architecture arch_DAC_SPI OF DAC_SPI IS
   signal    S_nCLR_DAC:         std_logic;
   signal    dac_conv_extern:    std_logic;
   signal    dac_neg_edge_conv:  std_logic;
-
+  
+  signal    build_edge:             std_logic_vector(2 downto 0);   -- shift_reg to detect external tirgger edge
+  signal    Trig_DAC_with_old_data: std_logic;
+  signal    Trig_DAC_during_shift:  std_logic;
+  signal    Trig_DAC:               std_logic;
+  signal    SPI_TRM_during_previous_cycle_active: std_logic;
 
   signal    SPI_TRM:          std_logic;
   
@@ -158,11 +167,16 @@ P_SPI_SM: process (clk, nReset, S_nCLR_DAC)
       spi_clk <= '1';
       nLD_DAC <= '1';
       SPI_TRM <= '0';
+      SPI_TRM_during_previous_cycle_active <= '0';
   
     elsif rising_edge(clk) then
 
-      if (Wr_Shift_Reg = '1') AND (S_Dtack = '1') then
-        SPI_TRM <= '1';
+      if (Wr_Shift_Reg = '1') and (S_Dtack = '1') then
+        if (SPI_TRM = '1') and (SPI_SM /= Idle) then
+          SPI_TRM_during_previous_cycle_active <= '1';
+        else
+          SPI_TRM <= '1';
+        end if;
       end if;
 
       if spi_clk_ena = '1' then
@@ -199,12 +213,30 @@ P_SPI_SM: process (clk, nReset, S_nCLR_DAC)
 
           when Sel_Off =>
             spi_clk <= '1';
+            if dac_conv_extern = '1' then
+              SPI_TRM <= '0';               -- during extern trigger wait, reset the SPI_TRM,
+                                            -- so you can recognize an new SPI_TRM during wait for external Trigger
+            end if;
             SPI_SM <= Load;
 
           when Load =>
+-- hier noch den Abbruch des waits einbauen, wenn neues Datum geschrieben wurde.
             spi_clk <= '0';
-            nLD_DAC <= '0';
-            SPI_SM <= Load_end;
+            if dac_conv_extern = '0' then
+              nLD_DAC <= '0';             -- software driven so load directly
+              SPI_SM <= Load_end;
+            else
+              if Trig_DAC = '1' then      -- extenal driven load, so wait on Trig_DAC
+                nLD_DAC <= '0';
+                SPI_SM <= Load_End;
+              else
+                SPI_SM <= Load_wait;
+              end if;
+            end if;
+
+          when Load_wait =>               -- wait external driven load
+            spi_clk <= '1';
+            SPI_SM <= Load;
 
           when Load_End =>
             spi_clk <= '1';
@@ -218,12 +250,48 @@ P_SPI_SM: process (clk, nReset, S_nCLR_DAC)
   end process P_SPI_SM;
 
 
+P_Ext_Trig:   process (clk)
+  begin
+    if rising_edge(clk) then
+      if dac_conv_extern = '1' then
+        -- shift_reg to detect external tirgger
+        build_edge <= build_edge(build_edge'high-1 downto 0) & (dac_neg_edge_conv xor nExt_Trig_DAC);
+          if build_edge(build_edge'high) = '0' and build_edge(build_edge'high-1) = '1' then   
+            -- external trigger (edge) detected
+            if SPI_SM = Idle then
+              -- during idle state, so no new DAC data available
+              Trig_DAC_with_old_data <= '1';
+            elsif (SPI_SM = Sel_On) or (SPI_SM = Clk_Lo) or (SPI_SM = Clk_Hi) then
+              -- during DAC data spi-shift-operation, so its to early
+              Trig_DAC_during_shift <= '1';
+              Trig_DAC <= '1';
+            elsif (SPI_SM = Sel_Off) or (SPI_SM = Load) or (SPI_SM = Load_wait) then
+              -- during Wait for external trigger, so it's okay
+              Trig_DAC <= '1';
+            elsif (SPI_SM = load_end) then
+              -- tigger is executed, so reset 
+              Trig_DAC_during_shift <= '0';
+              Trig_DAC <= '0';
+            end if;
+          else
+            Trig_DAC_with_old_data <= '0';
+          end if;
+      else
+        Trig_DAC_with_old_data <= '0';
+        Trig_DAC_during_shift <= '0';
+        build_edge <= "000";
+        Trig_DAC <= '0';
+      end if;
+    end if;
+  end process P_Ext_Trig;
+
+
 P_Shift_Reg:  process (clk, nReset)
   begin
     if  nReset = '0' then
       Shift_Reg <= (others => '0');
     elsif rising_edge(clk) then
-      if Wr_Shift_Reg = '1' then
+      if Wr_Shift_Reg = '1' and ((SPI_SM = Idle) or (SPI_SM = Load) or (SPI_SM = Load_wait)) then
         Shift_Reg <= unsigned(Data_from_SCUB_LA);
       elsif (SPI_SM = CLK_Lo) AND (spi_clk_ena = '1') and (Bit_Cnt > 0) then
         Shift_Reg <= (Shift_Reg(Shift_Reg'high-1 DOWNTO 0) & '0');
