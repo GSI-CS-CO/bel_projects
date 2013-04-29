@@ -18,3 +18,4 @@ syn
 *.rst
 *.sym
 greybox_tmp
+eb-flash

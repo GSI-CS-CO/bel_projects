@@ -1,5 +1,6 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
+use ieee.numeric_std.all;
 
 library work;
 
@@ -9,10 +10,8 @@ component scu_slave_fg is
 generic	
     (
 		sys_clk_in_hz:  		         	    natural	:= 100_000_000;
-		broadcast_start_addr:	            natural	:= 16#1030#;
-		base_addr:    				            natural := 16#100#;
-		This_macro_vers_dont_change_from_outside: integer	range 0 to 2**3-1 := 3;	-- only change here! increment by major changes of this macro
-		This_macro_revi_dont_change_from_outside: integer	range 0 to 2**4-1 := 0	-- only change here! increment by minor changes of this macro
+		broadcast_start_addr:	            unsigned(15 downto 0)	:= X"1030";
+		base_addr:    				            unsigned(15 downto 0) := X"0100"
 		);
 port
     (

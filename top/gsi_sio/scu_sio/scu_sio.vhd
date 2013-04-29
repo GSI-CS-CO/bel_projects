@@ -4,7 +4,8 @@ use IEEE.numeric_std.all;
 
 
 LIBRARY work;
-use work.scu_bus_pkg.all;
+use work.scu_bus_slave_pkg.all;
+use work.scu_slave_fg_pkg.all;
 use work.wr_altera_pkg.all;
 
 ENTITY scu_sio IS 
@@ -331,10 +332,10 @@ port map  (
 
 A_nLED <= NOT(User1_Reg);
 
-fg1: SCU_Slave_FG_V2R2
+fg1: SCU_Slave_FG
 generic	map (
 	      sys_clk_in_hz => 125_000_000,
-	      base_addr	    => 16#300#
+	      base_addr	    => X"0300"
 	    )
 port map  (
 	    fg_clk            =>  F_8_MHz,              -- attention, fg_clk is 8.192 Mhz
@@ -436,13 +437,13 @@ port map  (
 	  );
 
 
-SCU_Slave : scu_bus_slave_v2r1
+SCU_Slave : scu_bus_slave
 generic map (
 	      CLK_in_Hz		=>  CLK_in_Hz,
 	      Firmware_Release	=>  0,
 	      Firmware_Version	=>  0,
-	      Hardware_Release	=>  0,
-	      Hardware_Version	=>  0,
+	      CID_System       	=>  55,
+	      CID_Group       	=>  0,
 	      Intr_Edge_Trig	=>  "111111111111110",
 	      Intr_Enable	=>  "000000000000001",
 	      Intr_Level_Neg	=>  "000000000000000",
@@ -455,7 +456,7 @@ port map  (
 	    SCUB_RDnWR	        =>  A_RnW,
 	    clk                 =>  clk,
 	    nSCUB_Slave_Sel     =>  A_nBoardSel,
-	    nReset              =>  A_nReset,
+	    nSCUB_Reset_in      =>  A_nReset,
 	    nSCUB_Timing_Cyc    =>  A_nEvent_Str,
 	    Dtack_to_SCUB       =>  Dtack_to_SCUB,
 	    User_Ready	        =>  DFF_inst10,

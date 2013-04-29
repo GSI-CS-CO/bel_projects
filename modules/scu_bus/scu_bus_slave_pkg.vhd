@@ -40,13 +40,7 @@ generic
     
     -- the bit positions are corresponding to Intr_In.
     -- A '1' enable Intr_In(n), '0' disable Intr_In(n)
-    Intr_Enable:      std_logic_vector(15 DOWNTO 1) := B"0000_0000_0000_001";
-                                                                              
-    -- change only here! increment by major changes of this macro
-    This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 3;
-    
-    -- change only here! increment by minor changes of this macro
-    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 0
+    Intr_Enable:      std_logic_vector(15 DOWNTO 1) := B"0000_0000_0000_001"
     );
 port
     (
