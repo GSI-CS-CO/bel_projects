@@ -1,4 +1,3 @@
---+-----------------------------------------------------------------------------------------------------+
 --| SCU_Slave_FG_V1_R1 ist ein linearer Funktionsgenerator. Er ist in seiner Funktionsweise             |
 --| weitgehend kompatibel mit:                                                                          |
 --|     - der Fg-Generator-Tocherkarte für die Intefacekarte.                                           |
@@ -122,7 +121,7 @@
 --|     Die letzte Version die diesen Schema folgte, lautete "SCU_Slave_FG_V2R3".                       |
 --|     Ab der Vers_3_Revi_0, wird der Makro nur noch "SCU_Slave_FG" heissen.                           |
 --|     Wenn der "SCU_Slave_FG" in einem Block-Design-File als Symbol eingebunden werden soll, wird     |
---|    über die Generics                                                                                |
+--|     über die Generics                                                                               |
 --|         "This_macro_vers_dont_change_from_outside" die Version und                                  |
 --|         "This_macro_vers_dont_change_from_outside" die Revision angezeigt.                          |
 --|     Das setzt vorraus, das vom aktuell eingebudenen SCU_Bus_Slave.vhd-File ein neues BSF generiert  |
@@ -132,21 +131,43 @@
 --|      als Package in das übergeordnete Vhdl-File eingebunden werden.                                 |
 --+-----------------------------------------------------------------------------------------------------+
 
+--+-----------------------------------------------------------------------------------------------------+
+--| Stand:  24.04.2013  Version 3, Revision 1 (V3R1)                                                    |
+--|                                                                                                     |
+--|   a) Fehler der Beschreibung der (V3R0) korregiert.                                                 |
+--|     Der fehlerhafte Text:                                                                           |
+--|     Wenn der "SCU_Slave_FG" in einem Block-Design-File als Symbol eingebunden werden soll, wird     |
+--|     über die Generics                                                                               |
+--|         "This_macro_vers_dont_change_from_outside" die Version und                                  |
+--|         "This_macro_vers_dont_change_from_outside" die Revision angezeigt.                          |
+--|     Der korregierte Text:                                                                           |
+--|     Wenn der "SCU_Slave_FG" in einem Block-Design-File als Symbol eingebunden werden soll, wird     |
+--|     über die Generics                                                                               |
+--|         "This_macro_vers_dont_change_from_outside" die Version und                                  |
+--|         "This_macro_revi_dont_change_from_outside" die Revision angezeigt.                          |
+--|   b) Bei den Generics "brodacast_start_addr" und "base_addr" wurde der Typ                          |
+--|     von natural auf unsignged geändert.                                                             |
+--+-----------------------------------------------------------------------------------------------------+
+
+--+-----------------------------------------------------------------------------------------------------+
+--| Stand:  29.04.2013  Version 3, Revision 2 (V3R2)                                                    |
+--|   Latch im rd_dtack und wr_dtack entfernt.                                                          |
+--+-----------------------------------------------------------------------------------------------------+
+
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
 use ieee.math_real.all;
 
 entity SCU_Slave_FG is
   generic
     (
     sys_clk_in_hz:          natural := 100_000_000;
-    broadcast_start_addr:   natural := 16#1030#;
-    base_addr:              natural := 16#100#;
+    broadcast_start_addr:   unsigned(15 downto 0) := x"1030";
+    base_addr:              unsigned(15 downto 0) := x"0100";
     This_macro_vers_dont_change_from_outside: integer   range 0 to 2**3-1 := 3; -- change version only here!
                                                                                 -- increment by major changes of this macro
-    This_macro_revi_dont_change_from_outside: integer   range 0 to 2**4-1 := 0  -- change revision only here!
+    This_macro_revi_dont_change_from_outside: integer   range 0 to 2**4-1 := 2  -- change revision only here!
                                                                                 -- increment by minor changes of this macro
     );
   port
@@ -217,35 +238,35 @@ architecture SCU_Slave_FG_arch of SCU_Slave_FG is
 
   constant  addr_width:             integer := 16;
 
-  constant  sw1_addr_offset:            integer := 1;   -- Setzen oder rücklesen von SW_Out(31..16)
-  constant  sw2_addr_offset:            integer := 2;   -- Setzen oder rücklesen von SW_Out(15..0)
-  constant  sw3_addr_offset:            integer := 3;   -- Setzen des Addierwertes, wird noch, in Abhängikeit von Status-Register2, mit 2 oder 32 multipliziert
-  constant  sw4_addr_offset:            integer := 4;   -- Vorgabe: Addierschrittanzahl, Addierfrequenz, externe/lokale Frequenz
-  constant  sw5_addr_offset:            integer := 5;   -- Interpolation ein/aus, sw3 um 1 oder 5 geschiftet, Starte mit Broadcast, sw3 im 1er oder 2er Komplement
-  constant  status1_addr_offset:        integer := 6;
-  constant  status2_addr_offset:        integer := 7;
-  constant  reset_wr_addr_offset:       integer := 8;   -- FG rücksetzen
-  constant  hw_data_point_addr_offset:  integer := 9;   -- speichert den jeweils letzten Stützpunkwert(31..16)
-  constant  lw_data_point_addr_offset:  integer := 10;  -- speichert den jeweils letzten Stützpunkwert(15..0)
+  constant  sw1_addr_offset:            unsigned(15 downto 0) := X"0001";   -- Setzen oder rücklesen von SW_Out(31..16)
+  constant  sw2_addr_offset:            unsigned(15 downto 0) := X"0002";   -- Setzen oder rücklesen von SW_Out(15..0)
+  constant  sw3_addr_offset:            unsigned(15 downto 0) := X"0003";   -- Setzen des Addierwertes, wird noch, in Abhängikeit von Status-Register2, mit 2 oder 32 multipliziert
+  constant  sw4_addr_offset:            unsigned(15 downto 0) := X"0004";   -- Vorgabe: Addierschrittanzahl, Addierfrequenz, externe/lokale Frequenz
+  constant  sw5_addr_offset:            unsigned(15 downto 0) := X"0005";   -- Interpolation ein/aus, sw3 um 1 oder 5 geschiftet, Starte mit Broadcast, sw3 im 1er oder 2er Komplement
+  constant  status1_addr_offset:        unsigned(15 downto 0) := X"0006";
+  constant  status2_addr_offset:        unsigned(15 downto 0) := X"0007";
+  constant  reset_wr_addr_offset:       unsigned(15 downto 0) := X"0008";   -- FG rücksetzen
+  constant  hw_data_point_addr_offset:  unsigned(15 downto 0) := X"0009";   -- speichert den jeweils letzten Stützpunkwert(31..16)
+  constant  lw_data_point_addr_offset:  unsigned(15 downto 0) := X"000A";  -- speichert den jeweils letzten Stützpunkwert(15..0)
   
   -- Falls mehrere Funktionsgeneratoren in einem SCU-Slave eingesetzt werden, sollen sie gleichzeitig zu starten sein.        --
   -- Deshalb liegt die Broadcast-Adresse fest auf 100 hex. Mit  e i n e m  Schreibzugriff auf diese Adresse lassen sich       --
   -- m e h r e r e Funktionsgeneratoren starten, sofern sie individuell dafür freigegeben wurden.                                --
-  constant  c_broadcast_addr:       unsigned(addr_width-1 downto 0) := to_unsigned(broadcast_start_addr, addr_width);
+  constant  c_broadcast_addr:       unsigned(15 downto 0) := broadcast_start_addr;
 
   -- Alle nachfolgen Adressen sind individuell und errechnen sich aus dem Generic "base_addr" + dem entsprechenden Offset.    --
   -- Achtung! Bei der Instanzierung von mehreren FGs ist darauf zu achten, dass sich die Adressbereiche der einzelnen FGs     --
   -- nicht überlappen.                                                                                                       --
-  constant  c_reset_wr_addr:        unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + reset_wr_addr_offset), addr_width);
-  constant  c_sw1_addr:             unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + sw1_addr_offset), addr_width);
-  constant  c_sw2_addr:             unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + sw2_addr_offset), addr_width);
-  constant  c_sw3_addr:             unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + sw3_addr_offset), addr_width);
-  constant  c_sw4_addr:             unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + sw4_addr_offset), addr_width);
-  constant  c_sw5_addr:             unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + sw5_addr_offset), addr_width);
-  constant  c_status1_addr:         unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + status1_addr_offset), addr_width);
-  constant  c_status2_addr:         unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + status2_addr_offset), addr_width);
-  constant  c_hw_data_point_addr:   unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + hw_data_point_addr_offset), addr_width);
-  constant  c_lw_data_point_addr:   unsigned(addr_width-1 downto 0) := to_unsigned((base_addr + lw_data_point_addr_offset), addr_width);
+  constant  c_reset_wr_addr:        unsigned(15 downto 0) := base_addr + reset_wr_addr_offset;
+  constant  c_sw1_addr:             unsigned(15 downto 0) := base_addr + sw1_addr_offset;
+  constant  c_sw2_addr:             unsigned(15 downto 0) := base_addr + sw2_addr_offset;
+  constant  c_sw3_addr:             unsigned(15 downto 0) := base_addr + sw3_addr_offset;
+  constant  c_sw4_addr:             unsigned(15 downto 0) := base_addr + sw4_addr_offset;
+  constant  c_sw5_addr:             unsigned(15 downto 0) := base_addr + sw5_addr_offset;
+  constant  c_status1_addr:         unsigned(15 downto 0) := base_addr + status1_addr_offset;
+  constant  c_status2_addr:         unsigned(15 downto 0) := base_addr + status2_addr_offset;
+  constant  c_hw_data_point_addr:   unsigned(15 downto 0) := base_addr + hw_data_point_addr_offset;
+  constant  c_lw_data_point_addr:   unsigned(15 downto 0) := base_addr + lw_data_point_addr_offset;
 
   -- Vereinbarungen zur Überwachung der Exteren Clock
   constant  sys_clk_in_ps:              integer := 1_000_000_000 / (sys_clk_in_Hz / 1000);
@@ -489,7 +510,8 @@ p_dtack: process (sys_clk, res_sys_clk_sync)
     elsif rising_edge(sys_clk) then
       if wr_req_to_fg = '1' and fg_clk_edge_detect = '1' then
         wr_dtack <= '1';
-      elsif ext_wr_fin = '1' then
+      end if;
+      if ext_wr_fin = '1' then
         wr_dtack <= '0';
       end if;
       
@@ -501,7 +523,8 @@ p_dtack: process (sys_clk, res_sys_clk_sync)
           ) and fg_clk_edge_detect = '1'  -- nur einen Takt aktiv!
       then
         rd_dtack <= '1';
-      elsif ext_rd_fin = '1' then     -- V1R1: rd_dtack steuert indirekt den SCU-Daten-Bus im SCUB_Slave_Makro! Der Bus   --
+      end if;
+      if ext_rd_fin = '1' then      -- V1R1: rd_dtack steuert indirekt den SCU-Daten-Bus im SCUB_Slave_Makro! Der Bus   --
         rd_dtack <= '0';            -- muss so lange aktiv bleiben, bis der SCU_Master die Daten übernommen hat.       --
       end if;
     end if;
