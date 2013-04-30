@@ -531,7 +531,7 @@ begin
       pulse_i    => pps,
       extended_o => ext_pps);
   
-   U_ebone : eb_slave_core
+   U_ebone : eb_ethernet_slave
      generic map(
        g_sdb_address => x"00000000" & c_sdb_address)
      port map(

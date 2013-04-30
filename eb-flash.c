@@ -162,12 +162,10 @@ static void quick_scan_gap(eb_device_t device, eb_address_t offset, eb_address_t
   eb_cycle_t cycle;
   int i;
   int size;
-  int cycles;
   int ops;
   int inflight;
   
   size = format & EB_DATAX;
-  cycles = 0;
   ops = 0;
   inflight = 0;
   
@@ -202,10 +200,8 @@ static void quick_scan_gap(eb_device_t device, eb_address_t offset, eb_address_t
           fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
         }
         
-        if (++cycles == cycles_per_poll) {
-          cycles = 0;
-          eb_socket_run(eb_device_socket(device), 0);
-        }
+        while (inflight >= cycles_per_poll)
+          eb_socket_run(eb_device_socket(device), -1);
       }
     }
   }
@@ -313,7 +309,6 @@ static void program_flash(eb_device_t device) {
   eb_address_t stop_offset;
   eb_data_t data;
   int size;
-  int cycles;
   int ops;
   int inflight;
   int byte;
@@ -321,7 +316,6 @@ static void program_flash(eb_device_t device) {
   uint8_t buf[8];
 
   size = format & EB_DATAX;
-  cycles = 0;
   ops = 0;
   inflight = 0;
   may_skip_ffs = 1;
@@ -387,10 +381,8 @@ static void program_flash(eb_device_t device) {
         fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
       }
       
-      if (++cycles == cycles_per_poll) {
-        cycles = 0;
-        eb_socket_run(eb_device_socket(device), 0);
-      }
+      while (inflight >= cycles_per_poll)
+        eb_socket_run(eb_device_socket(device), -1);
     }
   }
   
@@ -473,12 +465,10 @@ static void verify_flash(eb_device_t device) {
   eb_address_t offset;
   eb_address_t stop_offset;
   int size;
-  int cycles;
   int ops;
   int inflight;
 
   size = format & EB_DATAX;
-  cycles = 0;
   ops = 0;
   inflight = 0;
   
@@ -507,10 +497,8 @@ static void verify_flash(eb_device_t device) {
         fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
       }
       
-      if (++cycles == cycles_per_poll) {
-        cycles = 0;
-        eb_socket_run(eb_device_socket(device), 0);
-      }
+      while (inflight >= cycles_per_poll)
+        eb_socket_run(eb_device_socket(device), -1);
     }
   }
   
