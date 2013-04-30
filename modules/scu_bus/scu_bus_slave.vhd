@@ -216,6 +216,12 @@
 --            Falls keine verbindliche "CID-Group"-Nummer vorliegt, muss der Defaultwert 0 stehen bleiben!          --
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers_3_Revi_2: erstellt am 30.04.2013, Autor: W.Panschow                                                        --
+--    Eventuell auftretendes Latch von "S_SCUB_Dtack" und "S_DS_Val" entfernt.                                      --
+----------------------------------------------------------------------------------------------------------------------
+
+
 
 library IEEE;
 USE IEEE.std_logic_1164.all;
@@ -265,7 +271,7 @@ generic
     This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 3;
     
     -- change only here! increment by minor changes of this macro
-    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 1
+    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 2
     );
 port
     (
@@ -808,6 +814,9 @@ P_Standard_Reg: process (clk, S_nReset)
             elsif SCUB_RDnWR = '0' and S_nSync_DS = "00" then                   -- Vers_2 Revi_1
               S_DS_Val <= '1';
               S_SCUB_Dtack <= S_Dtack_to_SCUB_Dly(S_Dtack_to_SCUB_Dly'high);    -- Vers_2 Revi_1
+            else
+              S_SCUB_Dtack <= '0';                                              -- Vers_3_Revi_2, eigentlich sollte der Default (nach rising_edge)
+              S_DS_Val <= '0';                                                  --                für das Rücksetzen sorgen. 
             end if;
         end case;
       end if;
