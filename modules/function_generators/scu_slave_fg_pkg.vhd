@@ -21,9 +21,7 @@ port
 		ADR_from_SCUB_LA:	  in		std_logic_vector(15 DOWNTO 0);-- latched address from SCU_Bus
 		Ext_Adr_Val:		    in		std_logic;				    	  		-- '1' => "ADR_from_SCUB_LA" is valid
 		Ext_Rd_active:		  in		std_logic;						      	-- '1' => Rd-Cycle is active
-		Ext_Rd_fin:		  	  in		std_logic;					      		-- marks end of read cycle, active one for one clock period of sys_clk
 		Ext_Wr_active:		  in		std_logic;			    			  	-- '1' => Wr-Cycle is active
-		Ext_Wr_fin:			    in		std_logic;							      -- marks end of write cycle, active one for one clock period of sys_clk
 		Data_from_SCUB_LA:	in		std_logic_vector(15 DOWNTO 0);-- latched data from SCU_Bus 
 		nPowerup_Res:		    in		std_logic;				       			-- '0' => the FPGA make a powerup
 		nStartSignal:		    in		std_logic;					  	    	-- '0' => started FG if broadcast_en = '1'

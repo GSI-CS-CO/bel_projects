@@ -344,9 +344,7 @@ port map  (
 	    ADR_from_SCUB_LA  =>  ADR_from_SCUB_LA,     -- latched address from SCU_Bus
 	    Ext_Adr_Val	      =>  Ext_Adr_Val,          -- '1' => "ADR_from_SCUB_LA" is valid
 	    Ext_Rd_active     =>  Ext_Rd_active,        -- '1' => Rd-Cycle is active
-	    Ext_Rd_fin	      =>  Ext_Rd_fin,           -- marks end of read cycle, active one for one clock period of sys_clk
 	    Ext_Wr_active     =>  Ext_Wr_active,        -- '1' => Wr-Cycle is active
-	    Ext_Wr_fin	      =>  Ext_Wr_fin,           -- marks end of write cycle, active one for one clock period of sys_clk
 	    Data_from_SCUB_LA =>  Data_from_SCUB_LA,    -- latched data from SCU_Bus 
 	    nPowerup_Res      =>  nCB_RESET,            -- '0' => the FPGA make a powerup
 	    nStartSignal      =>  A_Spare0,             -- '0' => started FG if broadcast_en = '1'

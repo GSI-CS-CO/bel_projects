@@ -154,6 +154,14 @@
 --|   Latch im rd_dtack und wr_dtack entfernt.                                                          |
 --+-----------------------------------------------------------------------------------------------------+
 
+--+-----------------------------------------------------------------------------------------------------+
+--| Stand:  02.05.2013  Version 3, Revision 3 (V3R3)                                                    |
+--|   Die Register rd_dtack und wr_dtack müssen als Latch funktionieren, da die Aktivierung von der     |
+--|   Flankenerkennung der fg_clk abhaengt. Diese ist aber nur einen Sys_Clk-Takt aktiv.                |
+--|   Bisher wurden die Signale´wr(rd)_dtack mit den Signalen Ext_Wr(Rd)_fin zurueckgesetzt.            |
+--|   Diese Signale scheinen zur Zeit nicht zuverlaessig vom scu_bus_slave bereitgestellt zu werden.    |
+--|   Als schnelle Loesung wurde auf die Signale Ext_Rd_fin und Ext_Wr_fin im SCU_Slave_FG verzichtet.  |
+--+-----------------------------------------------------------------------------------------------------+
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -168,7 +176,7 @@ entity SCU_Slave_FG is
     base_addr:              unsigned(15 downto 0) := x"0100";
     This_macro_vers_dont_change_from_outside: integer   range 0 to 2**3-1 := 3; -- change version only here!
                                                                                 -- increment by major changes of this macro
-    This_macro_revi_dont_change_from_outside: integer   range 0 to 2**4-1 := 2  -- change revision only here!
+    This_macro_revi_dont_change_from_outside: integer   range 0 to 2**4-1 := 3  -- change revision only here!
                                                                                 -- increment by minor changes of this macro
     );
   port
@@ -179,11 +187,7 @@ entity SCU_Slave_FG is
    ADR_from_SCUB_LA: in    std_logic_vector(15 DOWNTO 0);  -- latched address from SCU_Bus
    Ext_Adr_Val:      in    std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
    Ext_Rd_active:    in    std_logic;                      -- '1' => Rd-Cycle is active
-   Ext_Rd_fin:       in    std_logic;                      -- marks end of read cycle, active one for one
-                                                           -- clock period of sys_clk
    Ext_Wr_active:    in    std_logic;                      -- '1' => Wr-Cycle is active
-   Ext_Wr_fin:       in    std_logic;                      -- marks end of write cycle, active one for one
-                                                           -- clock period of sys_clk
    Data_from_SCUB_LA:in    std_logic_vector(15 DOWNTO 0);  -- latched data from SCU_Bus 
    nPowerup_Res:     in    std_logic;                      -- '0' => the FPGA make a powerup
    nStartSignal:     in    std_logic;                      -- '0' => started FG if broadcast_en = '1'
@@ -251,9 +255,11 @@ architecture SCU_Slave_FG_arch of SCU_Slave_FG is
   constant  lw_data_point_addr_offset:  unsigned(15 downto 0) := X"000A";  -- speichert den jeweils letzten Stützpunkwert(15..0)
   
   -- Falls mehrere Funktionsgeneratoren in einem SCU-Slave eingesetzt werden, sollen sie gleichzeitig zu starten sein.        --
-  -- Deshalb liegt die Broadcast-Adresse fest auf 100 hex. Mit  e i n e m  Schreibzugriff auf diese Adresse lassen sich       --
-  -- m e h r e r e Funktionsgeneratoren starten, sofern sie individuell dafür freigegeben wurden.                                --
-  constant  c_broadcast_addr:       unsigned(15 downto 0) := broadcast_start_addr;
+  -- Die Broadcast-Adresse wird durch den Generic broadcast_start_addr definiert.                                             --
+  -- Vorausgesetzt alle FGs in einem FPGA oder gleicher Slave-Karten-Funktion haben die gleiche broadcast_start_addr bekommen --
+  -- Lassen sich mit  e i n e m  Schreibzugriff auf diese Adresse alle Funktionsgeneratoren starten, sofern sie individuell   --
+  -- dafür freigegeben wurden.                                                                                                --
+    constant  c_broadcast_addr:       unsigned(15 downto 0) := broadcast_start_addr;
 
   -- Alle nachfolgen Adressen sind individuell und errechnen sich aus dem Generic "base_addr" + dem entsprechenden Offset.    --
   -- Achtung! Bei der Instanzierung von mehreren FGs ist darauf zu achten, dass sich die Adressbereiche der einzelnen FGs     --
@@ -334,6 +340,7 @@ architecture SCU_Slave_FG_arch of SCU_Slave_FG is
   signal    data_point_mem:         signed(31 downto 0);
   
   signal    wr_req_to_fg:           std_logic;
+  signal    rd_req_to_fg:           std_logic;
 --signal  wr_req_to_fg_activ: std_logic;
 
   signal  broadcast_wr:             std_logic;
@@ -481,6 +488,12 @@ wr_req_to_fg <=    broadcast_wr
                 or sw5_wr
                 or status1_rd;  -- muss im Timing als Schreibzugriff abgearbeitet werden, da beim Status1-Lesen Fehlerbits zurückgesetzt werden. 
 
+rd_req_to_fg <=     sw1_rd
+                or  sw2_rd
+                or  status2_rd
+                or  hw_data_point_rd
+                or  lw_data_point_rd;
+
 
 broadcast_wr_fg <= broadcast_wr and fg_clk_edge_detect;
 sw1_wr_fg       <= sw1_wr and fg_clk_edge_detect;
@@ -510,24 +523,23 @@ p_dtack: process (sys_clk, res_sys_clk_sync)
       wr_dtack <= '0';
     elsif rising_edge(sys_clk) then
       if wr_req_to_fg = '1' and fg_clk_edge_detect = '1' then
+        -- latch wr_dtack, because fg_clk_edge_detect is only one clock period active
         wr_dtack <= '1';
       end if;
-      if ext_wr_fin = '1' then
+      if wr_dtack = '1' and wr_req_to_fg = '0' then
+        -- clear latched wr_dtack, when wr_req_to_fg is finished
         wr_dtack <= '0';
       end if;
-      
-      if (    sw1_rd = '1'
-          or  sw2_rd = '1'
-          or  status2_rd = '1'
-          or  hw_data_point_rd = '1'
-          or  lw_data_point_rd = '1'
-          ) and fg_clk_edge_detect = '1'  -- nur einen Takt aktiv!
-      then
+
+      if rd_req_to_fg = '1' and fg_clk_edge_detect = '1' then
+        -- latch rd_dtack, because fg_clk_edge_detect is only one clock period active
         rd_dtack <= '1';
       end if;
-      if ext_rd_fin = '1' then      -- V1R1: rd_dtack steuert indirekt den SCU-Daten-Bus im SCUB_Slave_Makro! Der Bus   --
-        rd_dtack <= '0';            -- muss so lange aktiv bleiben, bis der SCU_Master die Daten übernommen hat.       --
+      if rd_dtack = '1' and rd_req_to_fg = '0' then
+        -- clear latched rd_dtack, when rd_req_to_fg is finished
+        rd_dtack <= '0';
       end if;
+
     end if;
   end process p_dtack;
 
