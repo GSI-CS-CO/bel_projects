@@ -41,7 +41,7 @@ set_global_assignment -name DEVICE EP2AGX125DF25C5
 set_global_assignment -name TOP_LEVEL_ENTITY scu_sio
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "09:36:27  JUNE 18, 2012"
-set_global_assignment -name LAST_QUARTUS_VERSION "12.0 SP2"
+set_global_assignment -name LAST_QUARTUS_VERSION 12.1
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 2
@@ -338,22 +338,25 @@ set_global_assignment -name MISC_FILE "G:/Q12p0work/FG900150_SIO2/SCU_SIO_Slave/
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_SysClock
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/altera_pkg.vhd"
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/led_n.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/div_n.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/Debounce.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/aux_functions_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/lemo_io.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave.vhd
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gencores_pkg.vhd"
 set_global_assignment -name SDC_FILE ../../../top/gsi_sio/scu_sio/scu_sio.sdc
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave_v2r1.vhd
 set_global_assignment -name VHDL_FILE ../../../top/gsi_sio/scu_sio/SysClock.vhd
 set_global_assignment -name VHDL_FILE ../../../top/gsi_sio/scu_sio/PU_Reset.vhd
 set_global_assignment -name VHDL_FILE ../../../top/gsi_sio/scu_sio/PLL_SIO.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_slave_fg_v2r1.vhd
-set_global_assignment -name VHDL_FILE ../../../top/gsi_sio/scu_sio/div_n.vhd
-set_global_assignment -name VHDL_FILE ../../../top/gsi_sio/scu_sio/led_n.vhd
-set_global_assignment -name VHDL_FILE "../../../../wr-cores/platform/altera/flash_loader.vhd"
-set_global_assignment -name VHDL_FILE "../../../../wr-cores/platform/altera/altera_pkg.vhd"
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_slave_fg_v2r2.vhd
 set_global_assignment -name VHDL_FILE ../../../top/gsi_sio/scu_sio/Test_User_Reg.vhd
-set_global_assignment -name VHDL_FILE ../../../top/gsi_sio/scu_sio/lemo_io.vhd
-set_global_assignment -name VHDL_FILE "../../../../wr-cores/ip_cores/general-cores/modules/genrams/genram_pkg.vhd"
-set_global_assignment -name VHDL_FILE "../../../../wr-cores/ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd"
 set_global_assignment -name VHDL_FILE ../../../top/gsi_sio/scu_sio/Zeitbasis.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../top/gsi_sio/scu_sio/scu_sio.vhd
+set_global_assignment -name VHDL_FILE ../../../top/gsi_sio/scu_sio/flash_loader.vhd
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -6,6 +6,7 @@ use IEEE.numeric_std.all;
 LIBRARY work;
 use work.scu_bus_slave_pkg.all;
 use work.scu_slave_fg_pkg.all;
+use work.aux_functions_pkg.all;
 use work.wr_altera_pkg.all;
 
 ENTITY scu_sio IS 
@@ -137,6 +138,12 @@ port	(
       );
 end component;
 
+component flash_loader
+  port (
+    noe_in: in  std_logic
+    );
+  end component;
+
 
 component pll_sio
 port	(
@@ -168,24 +175,6 @@ port	(
         Clk:    in std_logic;
         PU_Res: out std_logic
       );
-end component;
-
-component lemo_io
-GENERIC	(
-	  Opendrain_is_1:   integer := 1;
-	  stretch_cnt:      integer := 3
-	);
-port	(
-	  reset:              in STD_LOGIC;
-	  clk:                in STD_LOGIC;
-	  led_clk:            in STD_LOGIC;
-	  lemo_io_is_output:  in STD_LOGIC;
-	  stretch_led_off:    in STD_LOGIC;
-	  to_lemo:            in STD_LOGIC;
-	  lemo_io:            inout STD_LOGIC;
-	  lemo_en_in:         out STD_LOGIC;
-	  activity_led_n:     out STD_LOGIC
-	);
 end component;
 
 component zeitbasis
@@ -276,7 +265,6 @@ SYNTHESIZED_WIRE_0 <= '1';
 
 lemo_1: lemo_io
 generic map (
-	      Opendrain_is_1  =>  1,
 	      stretch_cnt     =>  3
 	    )
 port map    (
@@ -288,12 +276,13 @@ port map    (
 	      to_lemo           =>  A_Spare0,
 	      lemo_io           =>  A_LEMO_1_IO,
 	      lemo_en_in        =>  A_LEMO_1_EN_IN,
-	      activity_led_n    =>  A_nLEMO_1_LED
+	      activity_led_n    =>  A_nLEMO_1_LED,
+        activity_led_n_opdrn  => open
+
 	    );
 
 lemo_2: lemo_io
 generic map (
-	      Opendrain_is_1  =>  1,
 	      stretch_cnt     =>  3
 	    )
 port map  (
@@ -305,7 +294,8 @@ port map  (
 	    to_lemo             =>  A_Spare1,
 	    lemo_io             =>  A_LEMO_2_IO,
 	    lemo_en_in          =>  A_LEMO_2_EN_IN,
-	    activity_led_n      =>  A_nLEMO_2_LED
+	    activity_led_n      =>  A_nLEMO_2_LED,
+      activity_led_n_opdrn  => open
 	  );
 
 
