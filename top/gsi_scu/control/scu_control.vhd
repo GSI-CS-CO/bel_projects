@@ -147,9 +147,12 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- ComExpress signals
     -----------------------------------------------------------------------
-    nTHRMTRIP         : in std_logic;
-    nEXCD0_PERST      : in std_logic;
-    WDT               : in std_logic;
+    nTHRMTRIP         : in  std_logic;
+    nEXCD0_PERST      : in  std_logic;
+    WDT               : in  std_logic;
+    nPWRBTN           : out std_logic;
+    nFPGA_Res_Out     : out std_logic;
+    A_nCONFIG         : out std_logic := '1';
     
     -----------------------------------------------------------------------
     -- Parallel Flash
@@ -280,7 +283,6 @@ architecture rtl of scu_control is
   signal phy_rx_bitslide  : std_logic_vector(3 downto 0);
   signal phy_rst          : std_logic;
   signal phy_loopen       : std_logic;
-  signal dbg_tx_clk       : std_logic;
 
   signal wrc_master_i  : t_wishbone_master_in;
   signal wrc_master_o  : t_wishbone_master_out;
@@ -311,6 +313,7 @@ architecture rtl of scu_control is
   signal r_lemo_dir : std_logic_vector(1 downto 0);
   signal r_gpio_mux : std_logic_vector(7 downto 0);
   signal r_gpio_val : std_logic_vector(3 downto 0);
+  signal r_resets   : std_logic_vector(2 downto 0) := (others => '0');
   
   signal s_lemo_dat : std_logic_vector(2 downto 1);
   signal s_uled_dat : std_logic_vector(2 downto 1);
@@ -499,8 +502,7 @@ begin
       rx_enc_err_o   => phy_rx_enc_err,
       rx_bitslide_o  => phy_rx_bitslide,
       pad_txp_o      => sfp2_txp_o,
-      pad_rxp_i      => sfp2_rxp_i,
-      dbg_tx_clk_o   => dbg_tx_clk);
+      pad_rxp_i      => sfp2_rxp_i);
 
   U_DAC_ARB : spec_serial_dac_arb
     generic map (
@@ -673,6 +675,7 @@ begin
         r_lemo_dir <= (others => '0');
         r_gpio_mux <= (others => '0');
         r_gpio_val <= (others => '0');
+        r_resets   <= (others => '0');
       else
         -- Detect a write to the register byte
         if gpio_slave_i.cyc = '1' and gpio_slave_i.stb = '1' and
@@ -681,6 +684,7 @@ begin
             when 0 => r_gpio_val <= gpio_slave_i.dat(r_gpio_val'range);
             when 1 => r_lemo_dir <= gpio_slave_i.dat(r_lemo_dir'range);
             when 2 => r_gpio_mux <= gpio_slave_i.dat(r_gpio_mux'range);
+            when 3 => r_resets   <= gpio_slave_i.dat(r_resets'range);
             when others => null;
           end case;
         end if;
@@ -689,6 +693,7 @@ begin
           when 0 => gpio_slave_o.dat(r_gpio_val'range) <= r_gpio_val;
           when 1 => gpio_slave_o.dat(r_lemo_dir'range) <= r_lemo_dir;
           when 2 => gpio_slave_o.dat(r_gpio_mux'range) <= r_gpio_mux;
+          when 3 => gpio_slave_o.dat(r_resets'range)   <= r_resets;
           when others => null;
         end case;
       end if;
@@ -813,17 +818,11 @@ begin
   -- Logic analyzer port (0,2,4,6,8,10 = OLED)
   -- Don't put debug clocks too close (makes display flicker)
   hpla_clk <= 'Z';
-  hpla_ch(1) <= 'Z';
-  hpla_ch(3) <= 'Z';
-  hpla_ch(5) <= 'Z';
-  hpla_ch(7) <= 'Z';
-  hpla_ch(9) <= 'Z';
-  hpla_ch(11) <= 'Z';
-  hpla_ch(12) <= 'Z';
+  hpla_ch <= (others => 'Z');
   
-  hpla_ch(13) <= clk_ref;      -- pin 6
-  hpla_ch(14) <= dbg_tx_clk;   -- pin 5
-  hpla_ch(15) <= phy_rx_rbclk; -- pin 4
+  -- hpla_ch(13) <= clk_ref;      -- pin 6
+  -- hpla_ch(14) <= dbg_tx_clk;   -- pin 5
+  -- hpla_ch(15) <= phy_rx_rbclk; -- pin 4
   -- 20 is ground
   
   -- LPC bus is not connected
@@ -858,5 +857,10 @@ begin
   DDR3_CAS_n <= 'Z';
   DDR3_RAS_n <= 'Z';
   DDR3_WE_n  <= 'Z';
+  
+  -- External reset values
+  nFPGA_Res_Out <= not r_resets(0) and rstn_wr;
+  nPWRBTN       <= not r_resets(1);
+  A_nCONFIG     <= not r_resets(2);
   
 end rtl;
