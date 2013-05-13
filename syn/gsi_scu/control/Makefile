@@ -13,16 +13,13 @@ clean:
 	rm -f $(TARGET).rpd $(TARGET).jic $(TARGET).pof $(TARGET).sof $(TARGET).dep
 
 %.sof:	%.qsf
+	hdlmake -v | sed -n -e 's/ *$$/:/;s/^.* Parsing manifest file: *//p' > $*.dep
+	sed -n -e 's/"//g;s/$$/:/;s/set_global_assignment.*-name.*_FILE //p' < $< >> $*.dep
+	echo "$*.sof $@:	$< " `sed 's/ *: *$$//' < $*.dep` >> $*.dep
 	$(QUARTUS_BIN)/quartus_map $*
 	$(QUARTUS_BIN)/quartus_fit $*
 	$(QUARTUS_BIN)/quartus_asm $*
 	$(QUARTUS_BIN)/quartus_sta $*
-
-%.dep:	%.qsf
-	hdlmake
-	echo -n "$*.sof $@:	$< " > $@.new
-	echo `grep "set_global_assignment -name [^ ]*_FILE" $< | sed 's/^.*-name .*_FILE//;s/"//g'` >> $@.new
-	mv $@.new $@
 
 %.opt:	%.sof
 	echo "BITSTREAM_COMPRESSION=ON" > $@
