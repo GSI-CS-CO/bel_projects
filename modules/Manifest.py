@@ -15,6 +15,7 @@ modules = {
     "cfi_flash",
     "lpc_uart",
     "aux_functions",
-    "function_generators"
+    "function_generators",
+    "uart"
   ]
 }
