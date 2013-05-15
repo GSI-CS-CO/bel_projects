@@ -15,6 +15,7 @@ use work.etherbone_pkg.all;
 use work.scu_bus_pkg.all;
 use work.altera_flash_pkg.all;
 use work.oled_display_pkg.all;
+use work.lpc_uart_pkg.all;
 
 entity scu_control is
   port(
@@ -150,6 +151,7 @@ entity scu_control is
     nTHRMTRIP         : in  std_logic;
     nEXCD0_PERST      : in  std_logic;
     WDT               : in  std_logic;
+    A20GATE           : out std_logic;
     nPWRBTN           : out std_logic;
     nFPGA_Res_Out     : out std_logic;
     A_nCONFIG         : out std_logic := '1';
@@ -318,6 +320,9 @@ architecture rtl of scu_control is
   signal s_lemo_dat : std_logic_vector(2 downto 1);
   signal s_uled_dat : std_logic_vector(2 downto 1);
   signal s_lemo_led : std_logic_vector(2 downto 1);
+  
+  signal kbc_out_port : std_logic_vector(7 downto 0);
+  signal kbc_in_port  : std_logic_vector(7 downto 0);
 begin
 
   dmtd_inst : dmtd_pll port map(
@@ -654,6 +659,7 @@ begin
   A_nReset    <= rstn_sys;
   A_Spare     <= (others => 'Z');
   A_OneWire   <= 'Z';
+  A20GATE     <= kbc_out_port(1);
      
   gpio_slave_i <= cbar_master_o(5);
   cbar_master_i(5) <= gpio_slave_o;
@@ -720,8 +726,8 @@ begin
       slave_i    => cbar_master_o(6),
       slave_o    => cbar_master_i(6),
       desc_o     => open,
-      uart_rxd_i => uart_rxd_i(1),
-      uart_txd_o => uart_txd_o(1));
+      uart_rxd_i => '1',
+      uart_txd_o => open);
       
   -------------------------------------
   -- OLED display
@@ -739,6 +745,31 @@ begin
       SD_SPI_o   => hpla_ch(10),
       SH_VR_o    => hpla_ch(0));
     
+  -------------------------------------
+  -- LPC UART
+  -------------------------------------
+  lpc_slave: lpc_uart
+    port map(
+      lpc_clk         => LPC_FPGA_CLK,
+      lpc_serirq      => LPC_SERIRQ,
+      lpc_ad          => LPC_AD,
+      lpc_frame_n     => nLPC_FRAME,
+      lpc_reset_n     => nPCI_RESET,
+      
+      kbc_out_port    => kbc_out_port,
+      kbc_in_port     => x"00",
+      
+      serial_rxd      => uart_rxd_i(1),
+      serial_txd      => uart_txd_o(1),
+      serial_dtr      => open,
+      serial_dcd      => '0',
+      serial_dsr      => '0',
+      serial_ri       => '0',
+      serial_cts      => '0',
+      serial_rts      => open,
+      seven_seg_L     => open,
+      seven_seg_H     => open);
+  
   -- open drain buffer for one wire
   owr(0) <= OneWire_CB;
   OneWire_CB <= owr_pwren(0) when (owr_pwren(0) = '1' or owr_en(0) = '1') else 'Z';

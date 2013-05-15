@@ -49,6 +49,8 @@ set_location_assignment PIN_R4 -to dac_sclk
 set_location_assignment PIN_P1 -to dac_din
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dac_din
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dac_sclk
+set_location_assignment PIN_R5 -to A20GATE
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A20GATE
 set_location_assignment PIN_P3 -to lemo_en_in[2]
 set_location_assignment PIN_M5 -to lemo_en_in[1]
 set_location_assignment PIN_P4 -to lemo_led[2]
@@ -732,6 +734,8 @@ set_location_assignment PIN_R1 -to nPWRBTN
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nPWRBTN
 set_location_assignment PIN_AC7 -to A_nCONFIG
 set_location_assignment PIN_AF3 -to nFPGA_Res_Out
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nCONFIG
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nFPGA_Res_Out
 set_global_assignment -name VHDL_FILE ../../../top/gsi_scu/control/scu_control.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/trans_pkg.vhd
@@ -770,6 +774,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/chopper/Kicker_Leds.vhd
 set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl_engine.v
 set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl.v
 set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/cfi_flash_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/i8042_kbc.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_peripheral.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_uart.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_uart_pkg.vhd
@@ -783,6 +788,18 @@ set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/led_n.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/lemo_io.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_clock_div.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_counter.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_edge_detect.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_input_filter.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_input_sync.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_mv_filter.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_16750.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_baudgen.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_interrupt.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_receiver.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_transmitter.vhd
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_checksum.vhd"
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd"
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_commit_fifo.vhd"
@@ -998,6 +1015,4 @@ set_global_assignment -name SDC_FILE ../../../top/gsi_scu/control/scu_control.sd
 
 
 
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nCONFIG
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nFPGA_Res_Out
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
