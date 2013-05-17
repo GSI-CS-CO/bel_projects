@@ -96,11 +96,11 @@ begin
       
       if stat_cmd = '1' and in_buffer = disable_kbd and wr = '1' then
         command_byte(4) <= '1';
-        out_buffer <= x"e0";
-        status_reg(0) <= '1'; --  output buffer full
-        if command_byte(0) = '1' then
-          int <= '1';
-        end if;
+--        out_buffer <= x"e0";
+--        status_reg(0) <= '1'; --  output buffer full
+--        if command_byte(0) = '1' then
+--          int <= '1';
+--        end if;
       end if;
       
       if stat_cmd = '1' and in_buffer = enable_kbd and wr = '1' then
@@ -140,27 +140,27 @@ begin
       end if;
       
       if data = '1' and in_buffer = x"ff" and wr = '1' then -- reset to keyboard
-        out_buffer <= x"e0";  -- ack
-        status_reg(0) <= '1'; -- output buffer full
-        if command_byte(0) = '1' then
-          int <= '1';
-        end if;
+--        out_buffer <= x"e0";  -- ack
+--        status_reg(0) <= '1'; -- output buffer full
+--        if command_byte(0) = '1' then
+--          int <= '1';
+--        end if;
       end if;
       
       if data = '1' and in_buffer = x"ee" and wr = '1' then
-        out_buffer <= x"e0";  -- answer from keyboard
-        status_reg(0) <= '1'; --  output buffer full
-        if command_byte(0) = '1' then
-          int <= '1';
-        end if;
+--        out_buffer <= x"e0";  -- answer from keyboard
+--        status_reg(0) <= '1'; --  output buffer full
+--        if command_byte(0) = '1' then
+--          int <= '1';
+--        end if;
       end if;
       
       if data = '1' and in_buffer = x"f5" and wr = '1' then
-        out_buffer <= x"e0";  -- answer from keyboard
-        status_reg(0) <= '1'; --  output buffer full
-        if command_byte(0) = '1' then
-          int <= '1';
-        end if;
+--        out_buffer <= x"e0";  -- answer from keyboard
+--        status_reg(0) <= '1'; --  output buffer full
+--        if command_byte(0) = '1' then
+--          int <= '1';
+--        end if;
       end if;
       
     end if;

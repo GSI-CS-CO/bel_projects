@@ -636,7 +636,8 @@ begin
       g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE,
       CLK_in_Hz             => 62_500_000,
-      Test                  => 0)
+      Test                  => 0,
+      Time_Out_in_ns        => 300)
    port map(
      clk     =>  clk_sys,
      nrst    => rstn_sys,
@@ -754,7 +755,7 @@ begin
       lpc_serirq      => LPC_SERIRQ,
       lpc_ad          => LPC_AD,
       lpc_frame_n     => nLPC_FRAME,
-      lpc_reset_n     => nPCI_RESET,
+      lpc_reset_n     => nPCI_RESET and rstn_wr, -- !!! add signal
       
       kbc_out_port    => kbc_out_port,
       kbc_in_port     => x"00",

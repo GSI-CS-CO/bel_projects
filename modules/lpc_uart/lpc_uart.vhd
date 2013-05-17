@@ -401,6 +401,7 @@ begin
   begin
     if lpc_reset_n = '0' then
       efir_reg <= x"00";
+      ld_reg <= x"00";
     elsif rising_edge(lpc_clk) then
       -- save config register address in EFIR
       if ef_active = '1' and (io_addr = std_logic_vector(EFIR)) and io_bus_we = '1' then
