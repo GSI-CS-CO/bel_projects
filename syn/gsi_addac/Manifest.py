@@ -1,6 +1,8 @@
 target = "altera"
 action = "synthesis"
 
+fetchto = "../../../ip_cores"
+
 syn_device = "ep2agx125ef"
 syn_grade = "c6"
 syn_package = "25"
