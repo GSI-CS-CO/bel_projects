@@ -1,4 +1,5 @@
 files = [
+  "i8042_kbc.vhd",
   "lpc_peripheral.vhd",
   "lpc_uart.vhd",
   "lpc_uart_pkg.vhd",
