@@ -14,7 +14,7 @@ clean:
 
 %.sof:	%.qsf
 	hdlmake --quartus-proj -v | sed -n -e 's/ *$$/:/;s/^.* Parsing manifest file: *//p' > $*.dep
-	sed -n -e 's/"//g;s/$$/:/;s/set_global_assignment.*-name.*_FILE //p' < $< >> $*.dep
+	sed -n -e 's/"//g;s/quartus_sh://;s/$$/:/;s/set_global_assignment.*-name.*_FILE //p' < $< >> $*.dep
 	echo "$*.sof $@:	$< " `sed 's/ *: *$$//' < $*.dep` >> $*.dep
 	$(QUARTUS_BIN)/quartus_sh --tcl_eval load_package flow \; project_open $* \; execute_flow -compile
 

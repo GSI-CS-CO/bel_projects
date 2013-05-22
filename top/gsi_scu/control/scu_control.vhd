@@ -482,7 +482,7 @@ begin
       rst_aux_n_o          => open,
       link_ok_o            => open);
 
-  wr_gxb_phy_arriaii_1 : wr_gxb_phy_arriaii
+  wr_gxb_arria2 : wr_arria2_phy
     port map (
       clk_reconf_i   => clk_reconf,
       clk_pll_i      => clk_ref,

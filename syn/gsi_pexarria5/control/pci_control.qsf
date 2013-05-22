@@ -359,7 +359,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/ref_pll/ref_pll.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/sys_pll/sys_pll.vhd
 set_global_assignment -name SDC_FILE ../../../top/gsi_pexarria5/control/pci_control.sdc
-set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/wb_pcie.qip
+set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/arria5_pcie.qip
 set_global_assignment -name QIP_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/wr_arria5_phy.qip
-
+set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:pci_control.tcl"
 
