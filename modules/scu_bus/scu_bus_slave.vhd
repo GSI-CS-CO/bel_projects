@@ -221,6 +221,10 @@
 --    Eventuell auftretendes Latch von "S_SCUB_Dtack" und "S_DS_Val" entfernt.                                      --
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers_3_Revi_3: erstellt am 21.05.2013, Autor: W.Panschow                                                        --
+--    Process "P_Intr" ueberarbeitet.                                                                               --
+----------------------------------------------------------------------------------------------------------------------
 
 
 library IEEE;
@@ -271,7 +275,7 @@ generic
     This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 3;
     
     -- change only here! increment by minor changes of this macro
-    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 2
+    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 3
     );
 port
     (
@@ -389,6 +393,7 @@ port
   
   signal    S_Read_Out:           std_logic_vector(15 downto 0);
 
+  signal    S_Intr_In_Sync0:      std_logic_vector(Intr_In'range);
   signal    S_Intr_In_Sync1:      std_logic_vector(Intr_In'range);
   signal    S_Intr_In_Sync2:      std_logic_vector(Intr_In'range);
   signal    S_Intr_Enable:        std_logic_vector(Intr_In'range);
@@ -550,28 +555,36 @@ P_Timing_LA:  process (clk, S_nReset)
 P_Intr: process (clk, S_nReset, S_Powerup_Done)
   begin
     if S_nReset = '0' then
+      S_Intr_In_Sync0 <= (others => '0');
       S_Intr_In_Sync1 <= (others => '0');
       S_Intr_In_Sync2 <= (others => '0');
-      S_Intr_Pending <= (others => '0');
-      FOR i in Intr_In'low TO Intr_In'high LOOP 
-        S_Intr_Active(i) <= '0';
-        end LOOP;
+      S_Intr_Pending  <= (others => '0');
+      S_Intr_Active   <= (others => '0');
 
     elsif rising_edge(clk) then
       FOR i in Intr_In'low TO Intr_In'high LOOP
-        -- convert 'Intr_In' to positive level and first synchronisation
-        S_Intr_In_Sync1(i) <= Intr_In(i) XOR S_Intr_Level_Neg(i);
-        -- second synchronisation and usefull for edge detection        
+        -- convert 'Intr_In' to positive level and made first synchronisation
+        S_Intr_In_Sync0(i) <= Intr_In(i) XOR S_Intr_Level_Neg(i);
+        -- second synchronisation usefull for edge detection        
+        S_Intr_In_Sync1(i) <= S_Intr_In_Sync0(i);
+        -- third synchronisation usefull for edge detection        
         S_Intr_In_Sync2(i) <= S_Intr_In_Sync1(i);
         if S_Intr_Enable(i) = '1' then
-          if S_Intr_Edge_Trig(i) = '1' then                                 -- interrupt edge triggered enabled?
-            if S_Intr_In_Sync1(i) = '1' and S_Intr_In_Sync2(i) = '0' then   -- yes...positive edge detected? (1 clock pulse)
-              if S_Intr_Mask(i) = '1' then                            -- yes...interrupt enabled?
-                S_Intr_Pending(i) <= '1';                             -- yes...store it in the interrupt pending register
-              elsif S_Intr_Active(i) = '1' then           -- is the interrupt stored in the interupt active register?
-                S_Intr_Pending(i) <= '1';                 -- yes...clear the interrupt pending register
+          -- specific interrupt is enabled
+          if S_Intr_Edge_Trig(i) = '1' then
+            -- specific interrupt is edge triggered
+            if S_Intr_In_Sync1(i) = '1' and S_Intr_In_Sync2(i) = '0' then
+              -- specific edge detected, only one clock pulse active
+              if S_Intr_Mask(i) = '0' then
+                -- specific interrupt not masked
+                S_Intr_Pending(i) <= '1';             -- so, store the specific edge in the interrupt pending register
+
+              elsif S_Intr_Active(i) = '1' then
+                -- the specific interrupt is active
+                S_Intr_Pending(i) <= '0';             -- so, clear the specific interrupt pending bit
               else
-                S_Intr_Active(i) <= '1';                  -- no...set the interrupt active register
+              -- the specific interrupt is not active
+                S_Intr_Active(i) <= '1';              -- so, set the specific interrupt active bit
               end if;
             elsif S_Wr_Intr_Active = "01" and S_Data_from_SCUB_LA(i) = '1' then
               S_Intr_Active(i) <= '0';
@@ -582,14 +595,17 @@ P_Intr: process (clk, S_nReset, S_Powerup_Done)
               S_Intr_Active(i) <= '1';
             end if;
           else
-            S_Intr_Pending(i) <= S_Intr_In_Sync2(i);                  -- follows synchronized Intr_IN(i) level
+            -- specific interrupt is level triggered
+            S_Intr_Pending(i) <= S_Intr_In_Sync2(i);  -- follows synchronized Intr_IN(i) level
             if S_Intr_Pending(i) = '1' and S_Intr_Mask(i) = '0' then
-              S_Intr_Active(i) <= '1';
+              -- specific interrupt active and not masked
+              S_Intr_Active(i) <= '1';                -- so, set the specific interrupt active bit
             else
-              S_Intr_Active(i) <= '0';
+              S_Intr_Active(i) <= '0';                -- so, clear the specific interrupt active bit
             end if;
           end if;
         else
+          -- specific interrupt is disabled, so clear specific ...Pending- and Active-Bit 
           S_Intr_Pending(i) <= '0';
           S_Intr_Active(i) <= '0';
         end if;

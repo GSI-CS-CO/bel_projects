@@ -11,6 +11,9 @@ package lpc_uart_pkg is
 		lpc_ad:			inout std_logic_vector(3 downto 0);
 		lpc_frame_n:		in std_logic;
 		lpc_reset_n:		in std_logic;
+    
+    kbc_out_port:   out std_logic_vector(7 downto 0);
+    kbc_in_port:   in std_logic_vector(7 downto 0);
 
 		serial_rxd:		in std_logic;
 		serial_txd:		out std_logic;
