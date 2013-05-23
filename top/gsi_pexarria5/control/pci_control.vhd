@@ -99,7 +99,6 @@ architecture rtl of pci_control is
   signal rstn_sys         : std_logic;
   
   -- Logical clock names
-  signal clk_pcie         : std_logic;
   signal clk_sys          : std_logic;
   signal clk_reconf       : std_logic;
   signal clk_flash        : std_logic;
@@ -193,10 +192,9 @@ begin
     c2     => clk_20,           --  20  MHz
     locked => sys_locked);
   
-  clk_pcie  <= clk_ref;
-  clk_sys   <= clk_62_5;
-  clk_reconf <= clk_50;
-  clk_flash  <= clk_50;
+  clk_sys    <= clk_62_5;
+  clk_reconf <= pcie_refclk_i; -- required when Hard IP active
+  clk_flash  <= clk_62_5; -- 100 MHz is max
   clk_scubus <= clk_20;
   
   sys_reset : gc_reset
@@ -409,8 +407,8 @@ begin
        g_family => "Arria V",
        sdb_addr => c_sdb_address)
     port map(
-       clk125_i      => clk_pcie,
-       cal_clk50_i   => clk_reconf,
+       clk125_i      => '0',        -- unused on arria5
+       cal_clk50_i   => clk_reconf, -- actually 100MHz on arria5
        
        pcie_refclk_i => pcie_refclk_i,
        pcie_rstn_i   => nPCI_RESET,
