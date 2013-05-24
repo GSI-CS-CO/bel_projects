@@ -1,4 +1,4 @@
-TARGET		= scu_control
+TARGET		= pci_control
 DEVICE		= EP2AGX125
 FLASH		= EPCS128
 

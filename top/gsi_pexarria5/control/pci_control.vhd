@@ -12,24 +12,14 @@ use work.wb_cores_pkg_gsi.all;
 use work.pcie_wb_pkg.all;
 use work.wr_altera_pkg.all;
 use work.etherbone_pkg.all;
-use work.scu_bus_pkg.all;
 use work.altera_flash_pkg.all;
 use work.oled_display_pkg.all;
-use work.lpc_uart_pkg.all;
 
-entity scu_control is
+entity pci_control is
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
     clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
     clk_125m_local_i  : in std_logic;  -- local clk from 125Mhz oszillator
-    nres              : in std_logic; -- powerup reset
-    
-    -----------------------------------------
-    -- UART on front panel
-    -----------------------------------------
-    uart_rxd_i     : in  std_logic_vector(1 downto 0);
-    uart_txd_o     : out std_logic_vector(1 downto 0);
-    serial_to_cb_o : out std_logic;
     
     -----------------------------------------
     -- PCI express pins
@@ -55,40 +45,9 @@ entity scu_control is
     lemo_led       : out   std_logic_vector(2 downto 1);
     
     -----------------------------------------------------------------------
-    -- LPC interface from ComExpress
-    -----------------------------------------------------------------------
-    LPC_AD         : inout std_logic_vector(3 downto 0);
-    LPC_FPGA_CLK   : in    std_logic;
-    LPC_SERIRQ     : inout std_logic;
-    nLPC_DRQ0      : in    std_logic;
-    nLPC_FRAME     : in    std_logic;
-
-    -----------------------------------------------------------------------
-    -- User LEDs (U1-U4)
-    -----------------------------------------------------------------------
-    leds_o         : out std_logic_vector(4 downto 1);
-    
-    -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
     OneWire_CB     : inout std_logic;
-    
-    -----------------------------------------------------------------------
-    -- QL1 serdes
-    -----------------------------------------------------------------------
---    QL1_GXB_RX        : in std_logic_vector(3 downto 0);
---    QL1_GXB_TX        : out std_logic_vector(3 downto 0);
-    
-    -----------------------------------------------------------------------
-    -- AUX SFP 
-    -----------------------------------------------------------------------
-    sfp1_tx_disable_o : out std_logic := '0';
-    --sfp1_txp_o        : out std_logic;
-    --sfp1_rxp_i        : in  std_logic;
-    
-    sfp1_mod0         : in    std_logic; -- grounded by module
-    sfp1_mod1         : inout std_logic; -- SCL
-    sfp1_mod2         : inout std_logic; -- SDA
     
     -----------------------------------------------------------------------
     -- Timing SFP 
@@ -101,129 +60,24 @@ entity scu_control is
     
     sfp2_mod0         : in    std_logic; -- grounded by module
     sfp2_mod1         : inout std_logic; -- SCL
-    sfp2_mod2         : inout std_logic; -- SDA
-    
-    -----------------------------------------------------------------------
-    -- LA port
-    -----------------------------------------------------------------------
-    hpla_ch           : out std_logic_vector(15 downto 0);
-    hpla_clk          : out std_logic;
-    
-    -----------------------------------------------------------------------
-    -- EXT CONN
-    -----------------------------------------------------------------------
-    IO_2_5            : out std_logic_vector(13 downto 0);
-    A_EXT_LVDS_RX     : in  std_logic_vector( 3 downto 0);
-    A_EXT_LVDS_TX     : out std_logic_vector( 3 downto 0);
-    A_EXT_LVDS_CLKOUT : out std_logic;
-    A_EXT_LVDS_CLKIN  : in  std_logic;
-    EIO               : out std_logic_vector(16 downto 0);
-    
-    -----------------------------------------------------------------------
-    -- serial channel SCU bus
-    -----------------------------------------------------------------------
-    
-    --A_MASTER_CON_RX   : in std_logic_vector(3 downto 0);
-    --A_MASTER_CON_TX   : out std_logic_vector(3 downto 0);
-    
-    -----------------------------------------------------------------------
-    -- SCU Bus
-    -----------------------------------------------------------------------
-    A_D               : inout std_logic_vector(15 downto 0);
-    A_A               : out   std_logic_vector(15 downto 0);
-    A_nTiming_Cycle   : out   std_logic;
-    A_nDS             : out   std_logic;
-    A_nReset          : out   std_logic;
-    nSel_Ext_Data_DRV : out   std_logic;
-    A_RnW             : out   std_logic;
-    A_Spare           : out   std_logic_vector(1 downto 0);
-    A_nSEL            : out   std_logic_vector(12 downto 1);
-    A_nDtack          : in    std_logic;
-    A_nSRQ            : in    std_logic_vector(12 downto 1);
-    A_SysClock        : out   std_logic;
-    ADR_TO_SCUB       : out   std_logic;
-    nADR_EN           : out   std_logic;
-    A_OneWire         : inout std_logic;
-    
-    -----------------------------------------------------------------------
-    -- ComExpress signals
-    -----------------------------------------------------------------------
-    nTHRMTRIP         : in  std_logic;
-    nEXCD0_PERST      : in  std_logic;
-    WDT               : in  std_logic;
-    A20GATE           : out std_logic;
-    nPWRBTN           : out std_logic;
-    nFPGA_Res_Out     : out std_logic;
-    A_nCONFIG         : out std_logic := '1';
-    
-    -----------------------------------------------------------------------
-    -- Parallel Flash
-    -----------------------------------------------------------------------
-    AD                : out   std_logic_vector(25 downto 1);
-    DF                : inout std_logic_vector(15 downto 0);
-    ADV_FSH           : out   std_logic;
-    nCE_FSH           : out   std_logic;
-    CLK_FSH           : out   std_logic;
-    nWE_FSH           : out   std_logic;
-    nOE_FSH           : out   std_logic;
-    nRST_FSH          : out   std_logic;
-    WAIT_FSH          : in    std_logic;
-    
-    -----------------------------------------------------------------------
-    -- DDR3
-    -----------------------------------------------------------------------
-    DDR3_DQ           : inout std_logic_vector(15 downto 0);
-    DDR3_DM           : out   std_logic_vector( 1 downto 0);
-    DDR3_BA           : out   std_logic_vector( 2 downto 0);
-    DDR3_ADDR         : out   std_logic_vector(12 downto 0);
-    DDR3_CS_n         : out   std_logic_vector( 0 downto 0);
---    DDR3_DQS          : inout std_logic_vector(1 downto 0);
---    DDR3_DQSn         : inout std_logic_vector(1 downto 0);
-    DDR3_RES_n        : out   std_logic;
-    DDR3_CKE          : out   std_logic_vector( 0 downto 0);
-    DDR3_ODT          : out   std_logic_vector( 0 downto 0);
-    DDR3_CAS_n        : out   std_logic;
-    DDR3_RAS_n        : out   std_logic;
---    DDR3_CLK          : inout std_logic_vector(0 downto 0);
---    DDR3_CLK_n        : inout std_logic_vector(0 downto 0);
-    DDR3_WE_n         : out   std_logic);
-    
-end scu_control;
+    sfp2_mod2         : inout std_logic); -- SDA
 
-architecture rtl of scu_control is
+end pci_control;
+
+architecture rtl of pci_control is
   
   -- WR core layout
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   
-  constant c_xwb_gpio32_sdb : t_sdb_device := (
-    abi_class     => x"0000", -- undocumented device
-    abi_ver_major => x"01",
-    abi_ver_minor => x"00",
-    wbd_endian    => c_sdb_endian_big,
-    wbd_width     => x"7", -- 8/16/32-bit port granularity
-    sdb_component => (
-    addr_first    => x"0000000000000000",
-    addr_last     => x"000000000000000f", -- three 4 byte registers
-    product => (
-    vendor_id     => x"0000000000000651", -- GSI
-    device_id     => x"35aa6b95",
-    version       => x"00000001",
-    date          => x"20120305",
-    name          => "GSI_GPIO_32        ")));
-
   -- Top crossbar layout
-  constant c_slaves  : natural := 9;
+  constant c_slaves  : natural := 5;
   constant c_masters : natural := 2;
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00000000"),
     1 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00100000"),
     2 => f_sdb_embed_device(c_eca_sdb,                    x"00100800"),
     3 => f_sdb_embed_device(c_eca_evt_sdb,                x"00100C00"),
-    4 => f_sdb_embed_device(c_scu_bus_master,             x"00400000"),
-    5 => f_sdb_embed_device(c_xwb_gpio32_sdb,             x"00800000"),
-    6 => f_sdb_embed_device(c_wrc_periph1_sdb,            x"00800100"),
-    7 => f_sdb_embed_device(c_oled_display,               x"00900000"),
-    8 => f_sdb_embed_device(c_wb_spi_flash_sdb,           x"01000000"));
+    4 => f_sdb_embed_device(c_wb_spi_flash_sdb,           x"01000000"));
   constant c_sdb_address : t_wishbone_address := x"00300000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -245,7 +99,6 @@ architecture rtl of scu_control is
   signal rstn_sys         : std_logic;
   
   -- Logical clock names
-  signal clk_pcie         : std_logic;
   signal clk_sys          : std_logic;
   signal clk_reconf       : std_logic;
   signal clk_flash        : std_logic;
@@ -320,9 +173,6 @@ architecture rtl of scu_control is
   signal s_lemo_dat : std_logic_vector(2 downto 1);
   signal s_uled_dat : std_logic_vector(2 downto 1);
   signal s_lemo_led : std_logic_vector(2 downto 1);
-  
-  signal kbc_out_port : std_logic_vector(7 downto 0);
-  signal kbc_in_port  : std_logic_vector(7 downto 0);
 begin
 
   dmtd_inst : dmtd_pll port map(
@@ -342,10 +192,9 @@ begin
     c2     => clk_20,           --  20  MHz
     locked => sys_locked);
   
-  clk_pcie  <= clk_ref;
-  clk_sys   <= clk_62_5;
-  clk_reconf <= clk_50;
-  clk_flash  <= clk_50;
+  clk_sys    <= clk_62_5;
+  clk_reconf <= pcie_refclk_i; -- required when Hard IP active
+  clk_flash  <= clk_62_5; -- 100 MHz is max
   clk_scubus <= clk_20;
   
   sys_reset : gc_reset
@@ -368,7 +217,7 @@ begin
 
   flash : flash_top
     generic map(
-      g_family                 => "Arria II GX",
+      g_family                 => "Arria V",
       g_port_width             => 1,   -- single-lane SPI bus
       g_addr_width             => 24,  -- 3 byte addressed chip
       g_input_latch_edge       => '1', -- 30ns at 50MHz (10+20) after falling edge sets up SPI output
@@ -377,8 +226,8 @@ begin
     port map(
       clk_i     => clk_sys,
       rstn_i    => rstn_sys,
-      slave_i   => cbar_master_o(8),
-      slave_o   => cbar_master_i(8),
+      slave_i   => cbar_master_o(4),
+      slave_o   => cbar_master_i(4),
       clk_out_i => clk_flash,
       clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
   
@@ -456,8 +305,8 @@ begin
       btn1_i      => '0',
       btn2_i      => '0',
 
-      uart_rxd_i => uart_rxd_i(0),
-      uart_txd_o => uart_txd_o(0),
+      uart_rxd_i => '0',
+      uart_txd_o => open,
       
       owr_pwren_o => owr_pwren,
       owr_en_o    => owr_en,
@@ -487,7 +336,7 @@ begin
       rst_aux_n_o          => open,
       link_ok_o            => open);
 
-  wr_gxb_arria2 : wr_arria2_phy
+  wr_arria5_phy_inst : wr_arria5_phy
     port map (
       clk_reconf_i   => clk_reconf,
       clk_pll_i      => clk_ref,
@@ -555,10 +404,11 @@ begin
   
   PCIe : pcie_wb
     generic map(
+       g_family => "Arria V",
        sdb_addr => c_sdb_address)
     port map(
-       clk125_i      => clk_pcie,
-       cal_clk50_i   => clk_reconf,
+       clk125_i      => '0',        -- unused on arria5
+       cal_clk50_i   => clk_reconf, -- actually 100MHz on arria5
        
        pcie_refclk_i => pcie_refclk_i,
        pcie_rstn_i   => nPCI_RESET,
@@ -631,160 +481,12 @@ begin
       master_o  => pcie_slave_i,
       master_i  => pcie_slave_o);
   
-  scub_master : wb_scu_bus 
-    generic map(
-      g_interface_mode      => PIPELINED,
-      g_address_granularity => BYTE,
-      CLK_in_Hz             => 62_500_000,
-      Test                  => 0,
-      Time_Out_in_ns        => 300)
-   port map(
-     clk     =>  clk_sys,
-     nrst    => rstn_sys,
-     slave_i => cbar_master_o(4),
-     slave_o => cbar_master_i(4),
-     
-     SCUB_Data          => A_D,
-     nSCUB_DS           => A_nDS,
-     nSCUB_Dtack        => A_nDtack,
-     SCUB_Addr          => A_A,
-     SCUB_RDnWR         => A_RnW,
-     nSCUB_SRQ_Slaves   => A_nSRQ,
-     nSCUB_Slave_Sel    => A_nSEL,
-     nSCUB_Timing_Cycle => A_nTiming_Cycle,
-     nSel_Ext_Data_Drv  => nSel_Ext_Data_DRV);
-  
-  ADR_TO_SCUB <= '1';
-  nADR_EN     <= '0';
-  A_SysClock  <= clk_scubus;
-  A_nReset    <= rstn_sys;
-  A_Spare     <= (others => 'Z');
-  A_OneWire   <= 'Z';
-  A20GATE     <= kbc_out_port(1);
-     
-  gpio_slave_i <= cbar_master_o(5);
-  cbar_master_i(5) <= gpio_slave_o;
-  
-  -- There is a tool called 'wbgen2' which can autogenerate a Wishbone
-  -- interface and C header file, but this is a simple example.
-  gpio : process(clk_sys)
-  begin
-    if rising_edge(clk_sys) then
-      -- It is vitally important that for each occurance of
-      --   (cyc and stb and not stall) there is (ack or rty or err)
-      --   sometime later on the bus.
-      --
-      -- This is an easy solution for a device that never stalls:
-      gpio_slave_o.ack <= gpio_slave_i.cyc and gpio_slave_i.stb;
-      gpio_slave_o.dat <= (others => '0');
-      
-      if rstn_sys = '0' then
-        r_lemo_dir <= (others => '0');
-        r_gpio_mux <= (others => '0');
-        r_gpio_val <= (others => '0');
-        r_resets   <= (others => '0');
-      else
-        -- Detect a write to the register byte
-        if gpio_slave_i.cyc = '1' and gpio_slave_i.stb = '1' and
-           gpio_slave_i.we = '1' and gpio_slave_i.sel(0) = '1' then
-          case to_integer(unsigned(gpio_slave_i.adr(3 downto 2))) is
-            when 0 => r_gpio_val <= gpio_slave_i.dat(r_gpio_val'range);
-            when 1 => r_lemo_dir <= gpio_slave_i.dat(r_lemo_dir'range);
-            when 2 => r_gpio_mux <= gpio_slave_i.dat(r_gpio_mux'range);
-            when 3 => r_resets   <= gpio_slave_i.dat(r_resets'range);
-            when others => null;
-          end case;
-        end if;
-        
-        case to_integer(unsigned(gpio_slave_i.adr(3 downto 2))) is
-          when 0 => gpio_slave_o.dat(r_gpio_val'range) <= r_gpio_val;
-          when 1 => gpio_slave_o.dat(r_lemo_dir'range) <= r_lemo_dir;
-          when 2 => gpio_slave_o.dat(r_gpio_mux'range) <= r_gpio_mux;
-          when 3 => gpio_slave_o.dat(r_resets'range)   <= r_resets;
-          when others => null;
-        end case;
-      end if;
-    end if;
-  end process;
-  
-  gpio_slave_o.int <= '0'; -- In my opinion, this should not be in the structure.
-  gpio_slave_o.err <= '0';
-  gpio_slave_o.rty <= '0';
-  gpio_slave_o.stall <= '0'; -- This simple example is always ready
-  
-  --------------------------------------
-  -- UART
-  --------------------------------------
-  UART : xwb_simple_uart
-    generic map(
-      g_with_virtual_uart   => false,
-      g_with_physical_uart  => true,
-      g_interface_mode      => PIPELINED,
-      g_address_granularity => BYTE)
-    port map(
-      clk_sys_i  => clk_sys,
-      rst_n_i    => rstn_sys,
-      slave_i    => cbar_master_o(6),
-      slave_o    => cbar_master_i(6),
-      desc_o     => open,
-      uart_rxd_i => '1',
-      uart_txd_o => open);
-      
-  -------------------------------------
-  -- OLED display
-  -------------------------------------
-  dcon :  display_console
-    port map(	
-      clk_i      => clk_sys,
-      nRst_i     => rstn_sys,
-      slave_i    => cbar_master_o(7),
-      slave_o    => cbar_master_i(7),
-      RST_DISP_o => hpla_ch(8),
-      DC_SPI_o   => hpla_ch(6),
-      SS_SPI_o   => hpla_ch(4),
-      SCK_SPI_o  => hpla_ch(2),	
-      SD_SPI_o   => hpla_ch(10),
-      SH_VR_o    => hpla_ch(0));
-    
-  -------------------------------------
-  -- LPC UART
-  -------------------------------------
-  lpc_slave: lpc_uart
-    port map(
-      lpc_clk         => LPC_FPGA_CLK,
-      lpc_serirq      => LPC_SERIRQ,
-      lpc_ad          => LPC_AD,
-      lpc_frame_n     => nLPC_FRAME,
-      lpc_reset_n     => nPCI_RESET and rstn_wr, -- !!! add signal
-      
-      kbc_out_port    => kbc_out_port,
-      kbc_in_port     => x"00",
-      
-      serial_rxd      => uart_rxd_i(1),
-      serial_txd      => uart_txd_o(1),
-      serial_dtr      => open,
-      serial_dcd      => '0',
-      serial_dsr      => '0',
-      serial_ri       => '0',
-      serial_cts      => '0',
-      serial_rts      => open,
-      seven_seg_L     => open,
-      seven_seg_H     => open);
-  
   -- open drain buffer for one wire
   owr(0) <= OneWire_CB;
   OneWire_CB <= owr_pwren(0) when (owr_pwren(0) = '1' or owr_en(0) = '1') else 'Z';
   
   -- no second onewire is connected
   owr(1) <= 'Z';
-  
-  -- connects the serial ports to the carrier board
-  serial_to_cb_o <= '0';
-  
-  -- Disable SFP1
-  sfp1_tx_disable_o <= '1';
-  sfp1_mod1 <= 'Z';
-  sfp1_mod2 <= 'Z';
   
   -- Enable SFP2 as timing
   sfp2_tx_disable_o <= '0';
@@ -793,106 +495,5 @@ begin
   sfp2_det_i <= sfp2_mod0;
   sfp2_mod1  <= '0' when sfp2_scl_o = '0' else 'Z';
   sfp2_mod2  <= '0' when sfp2_sda_o = '0' else 'Z';
-  
-  -- Output MUXes
-  with r_gpio_mux(1 downto 0) select
-    s_lemo_dat(1) <= 
-      '0'           when "00",
-      eca_gpio(0)   when "01",
-      r_gpio_val(0) when "10",
-      '-'           when others;
-  
-  with r_gpio_mux(3 downto 2) select
-    s_lemo_dat(2) <= 
-      ext_pps       when "00",
-      eca_gpio(1)   when "01",
-      r_gpio_val(1) when "10",
-      '-'           when others;
-  
-  with r_gpio_mux(5 downto 4) select
-    s_uled_dat(1) <= 
-      ext_pps       when "00",
-      eca_gpio(2)   when "01",
-      r_gpio_val(2) when "10",
-      '-'           when others;
-  
-  with r_gpio_mux(7 downto 6) select
-    s_uled_dat(2) <= 
-      link_act      when "00",
-      eca_gpio(3)   when "01",
-      r_gpio_val(3) when "10",
-      '-'           when others;
-  
-  -- LEMO control
-  lemo_en_in <= r_lemo_dir;
-  lemo_io(1) <= s_lemo_dat(1) when r_lemo_dir(0) = '0' else 'Z';
-  lemo_io(2) <= s_lemo_dat(2) when r_lemo_dir(1) = '0' else 'Z';
-  
-  -- LED control
-  leds_o(1) <= not s_uled_dat(1);
-  leds_o(2) <= not s_uled_dat(2);
-  leds_o(3) <= not link_up;
-  leds_o(4) <= not tm_valid;
-  
-  -- Extend LEMO input/outputs to LEDs at 20Hz
-  lemo_leds : for i in 1 to 2 generate
-    lemo_led(i) <= not s_lemo_led(i);
-    lemo_ledx : gc_extend_pulse
-      generic map(
-        g_width => 125_000_000/20) -- 20 Hz
-      port map(
-        clk_i      => clk_ref,
-        rst_n_i    => rstn_ref,
-        pulse_i    => lemo_io(i),
-        extended_o => s_lemo_led(i));
-  end generate;
-  
-  -- Logic analyzer port (0,2,4,6,8,10 = OLED)
-  -- Don't put debug clocks too close (makes display flicker)
-  hpla_clk <= 'Z';
-  hpla_ch <= (others => 'Z');
-  
-  -- hpla_ch(13) <= clk_ref;      -- pin 6
-  -- hpla_ch(14) <= dbg_tx_clk;   -- pin 5
-  -- hpla_ch(15) <= phy_rx_rbclk; -- pin 4
-  -- 20 is ground
-  
-  -- LPC bus is not connected
-  LPC_AD <= (others => 'Z');
-  LPC_SERIRQ <= 'Z';
-  
-  -- EXT CONN not connected
-  IO_2_5            <= (others => 'Z');
-  A_EXT_LVDS_TX     <= (others => '0');
-  a_EXT_LVDS_CLKOUT <= '0';
-  EIO               <= (others => 'Z');
-  
-  -- Parallel Flash not connected
-  nRST_FSH <= '0';
-  AD <= (others => 'Z');
-  DF <= (others => 'Z');
-  ADV_FSH  <= 'Z';
-  nCE_FSH  <= 'Z';
-  CLK_FSH  <= 'Z';
-  nWE_FSH  <= 'Z';
-  nOE_FSH  <= 'Z';
-  
-  -- DDR3 not connected
-  DDR3_RES_n <= '0';
-  DDR3_DQ    <= (others => 'Z');
-  DDR3_DM    <= (others => 'Z');
-  DDR3_BA    <= (others => 'Z');
-  DDR3_ADDR  <= (others => 'Z');
-  DDR3_CS_n  <= (others => 'Z');
-  DDR3_CKE   <= (others => 'Z');
-  DDR3_ODT   <= (others => 'Z');
-  DDR3_CAS_n <= 'Z';
-  DDR3_RAS_n <= 'Z';
-  DDR3_WE_n  <= 'Z';
-  
-  -- External reset values
-  nFPGA_Res_Out <= not r_resets(0) and rstn_wr;
-  nPWRBTN       <= not r_resets(1);
-  A_nCONFIG     <= not r_resets(2);
   
 end rtl;
