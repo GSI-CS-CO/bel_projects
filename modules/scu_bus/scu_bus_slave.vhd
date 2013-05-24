@@ -226,6 +226,10 @@
 --    Process "P_Intr" ueberarbeitet.                                                                               --
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers_3_Revi_4: erstellt am 22.05.2013, Autor: W.Panschow                                                        --
+--    Die Signale "Ext_Wr_fin", "Ext_Rd_Fin", "Ext_Wr_fin_ovl" and "Ext_Rd_fin_ovl" wurden ueberarbeitet.           --
+----------------------------------------------------------------------------------------------------------------------
 
 library IEEE;
 USE IEEE.std_logic_1164.all;
@@ -275,7 +279,7 @@ generic
     This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 3;
     
     -- change only here! increment by minor changes of this macro
-    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 3
+    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 4
     );
 port
     (
@@ -423,6 +427,10 @@ port
   constant  C_Debounce_nReset_in_ns:  integer := 500;   -- Vers_2_Revi_2
   signal    S_Deb_Reset:          std_logic;            -- Vers_2_Revi_2
   signal    Res:                  std_logic;
+  
+  signal    is_ext_wr_cycle:      std_logic;
+  signal    is_ext_rd_cycle:      std_logic;
+  signal    dt_caught:            std_logic;
   
   end SCU_Bus_Slave;
 
@@ -639,26 +647,63 @@ P_Tri_Buff: process (S_nReset, SCUB_RDnWR, nSCUB_DS, nSCUB_Slave_Sel, S_Read_Out
   end process P_Tri_Buff;
   
 
-P_no_fin_sig_overap: process (clk)
+P_no_fin_sig_overap: process (clk, S_nReset)
   begin
-    if rising_edge(clk) then
-      if (S_Adr_Val = '1' and SCUB_RDnWR = '1' and S_nSync_Board_Sel = "01" and S_SCUB_Dtack = '1') then
-        Ext_Rd_fin <= '1';
-      else
-        Ext_Rd_fin <= '0';
+  
+    if S_nReset = '0' then
+      is_ext_rd_cycle <= '0';
+      is_ext_wr_cycle <= '0';
+      dt_caught <= '0';
+      Ext_Rd_fin <= '0';
+      Ext_Wr_fin <= '0';
+      
+    elsif rising_edge(clk) then
+    
+      if S_Adr_Val = '1' and S_nSync_Board_Sel = "00" and SCUB_RDnWR = '1' then
+        is_ext_rd_cycle <= '1';     -- store that the next cycle is external write access
+        if S_SCUB_Dtack = '1' then
+          dt_caught <= '1';
+        end if;
+      elsif  S_Adr_Val = '1' and S_nSync_Board_Sel = "00" and SCUB_RDnWR = '0' then
+        is_ext_wr_cycle <= '1';     -- store that the next cycle is external read access
+        if S_SCUB_Dtack = '1' then
+          dt_caught <= '1';
+        end if;
       end if;
-      if (S_DS_Val = '1' and SCUB_RDnWR = '0' and S_nSync_Board_Sel = "01" and S_SCUB_Dtack = '1') then
-        Ext_Wr_fin <= '1';
-      else
-        Ext_Wr_fin <= '0';
+      
+      if S_nSync_Board_Sel = "01" and is_ext_rd_cycle = '1' then
+        -- the external read becomes inactive
+        is_ext_rd_cycle <= '0';     -- so clear the cycle type storage
+        if dt_caught = '1' then
+        -- the external read becomes inactive with data acknowlege
+          Ext_Rd_fin <= '1';        -- one clock cyce active
+        end if;
+      elsif S_nSync_Board_Sel = "11" then
+        -- the external read is finished
+        dt_caught <= '0';           -- so clear dt_caught-latch
+        Ext_Rd_fin <= '0';          -- so clear Ext_Rd_fin-latch
       end if;
+      
+      if S_nSync_Board_Sel = "01" and is_ext_wr_cycle = '1' then
+        -- the external write becomes inactive
+        is_ext_wr_cycle <= '0';     -- so clear the cycle type storage
+        if dt_caught = '1' then
+        -- the external write becomes inactive with data acknowlege
+          Ext_Wr_fin <= '1';        -- one clock cyce active
+        end if;
+      elsif S_nSync_Board_Sel = "11" then
+        -- the external write is finished
+        dt_caught <= '0';           -- so clear dt_caught-latch
+        Ext_Wr_fin <= '0';          -- so clear Ext_Wr_fin-latch
+      end if;
+      
     end if;
   end process P_no_fin_sig_overap;
   
 
-Ext_Rd_fin_ovl  <= '1' when (S_Adr_Val = '1' and SCUB_RDnWR = '1' and S_nSync_Board_Sel = "01" and S_SCUB_Dtack = '1') 
+Ext_Rd_fin_ovl  <= '1' when (is_ext_rd_cycle = '1' and S_nSync_Board_Sel = "01" and dt_caught = '1') 
                        else '0';
-Ext_Wr_fin_ovl  <= '1' when (S_DS_Val = '1' and SCUB_RDnWR = '0' and S_nSync_Board_Sel = "01" and S_SCUB_Dtack = '1')
+Ext_Wr_fin_ovl  <= '1' when (is_ext_wr_cycle = '1' and S_nSync_Board_Sel = "01" and dt_caught = '1')
                        else '0';
 
 
@@ -856,9 +901,9 @@ SCUB_SRQ    <= '1' when (S_SRQ = '1') else '0';
 
 Ext_Adr_Val <= S_Adr_Val;
 
-Ext_Rd_active <= '1' when (S_Adr_Val = '1' and S_nSync_Board_Sel = "00" and SCUB_RDnWR = '1') else '0';
+Ext_Rd_active <= is_ext_rd_cycle;
 
-Ext_Wr_active <= '1' when (S_DS_Val = '1' and S_nSync_Board_Sel = "00"  and SCUB_RDnWR = '0') else '0';
+Ext_Wr_active <= is_ext_wr_cycle and S_DS_Val;
 
 nPowerup_Res <= not S_Powerup_Res;
 
