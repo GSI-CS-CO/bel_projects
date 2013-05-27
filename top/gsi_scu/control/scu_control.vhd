@@ -637,7 +637,7 @@ begin
       g_address_granularity => BYTE,
       CLK_in_Hz             => 62_500_000,
       Test                  => 0,
-      Time_Out_in_ns        => 300)
+      Time_Out_in_ns        => 350)
    port map(
      clk     =>  clk_sys,
      nrst    => rstn_sys,
