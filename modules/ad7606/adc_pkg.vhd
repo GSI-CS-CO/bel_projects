@@ -91,5 +91,47 @@ component adc_scu_bus is
     channel_8:          out   std_logic_vector(15 downto 0));
 end component;
 
+component adc_modul_bus is
+  generic (
+    clk_in_hz:            integer := 50_000_000;        -- 50Mhz
+    diag_on_is_1:         integer range 0 to 1 := 0);   -- if 1 then diagnosic information is generated during compilation
+  port (
+    clk:            in std_logic;
+    nrst:           in std_logic;
+    
+    -- ADC interface
+    db:             in std_logic_vector(13 downto 0); -- databus from the ADC
+    db14_hben:      inout std_logic;                  -- hben in mode ser
+    db15_byte_sel:  inout std_logic;                  -- byte sel in mode ser
+    convst_a:       out std_logic;                    -- start conversion for channels 1-4
+    convst_b:       out std_logic;                    -- start conversion for channels 5-8
+    n_cs:           out std_logic;                    -- chipselect, enables tri state databus
+    n_rd_sclk:      out std_logic;                    -- first falling edge after busy clocks data out
+    busy:           in std_logic;                     -- falling edge signals end of conversion
+    adc_reset:      out std_logic;
+    os:             out std_logic_vector(2 downto 0); -- oversampling config
+    par_ser_sel:    out std_logic;                    -- parallel/serial/byte serial
+    adc_range:      out std_logic;                    -- logic high 10V/-10V or logic low 5V/-5V
+    firstdata:      in std_logic;                     -- is high during transmit of the frist channel
+    nDiff_In_En:    out std_logic;                    -- logic low enables diff input for chn 3-8
+    
+    -- modulbus interface
+    sub_adr_la:		  in std_logic_vector(7 downto 1);	-- sub address from modulbus
+    data_wr_la:		  in std_logic_vector(15 downto 0);	-- data from modulbus
+		read_data:		  out std_logic_vector(15 downto 0);-- read data to modulbus
+		rd_activ:		    in std_logic;
+		wr_activ:		    in std_logic;
+		adc_dt_to_mb:		out std_logic;						        -- dtack for modulbus macro
+    
+    channel_1:          out   std_logic_vector(15 downto 0);
+    channel_2:          out   std_logic_vector(15 downto 0);
+    channel_3:          out   std_logic_vector(15 downto 0);
+    channel_4:          out   std_logic_vector(15 downto 0);
+    channel_5:          out   std_logic_vector(15 downto 0);
+    channel_6:          out   std_logic_vector(15 downto 0);
+    channel_7:          out   std_logic_vector(15 downto 0);
+    channel_8:          out   std_logic_vector(15 downto 0));
+end component;
+
 
 end package;
