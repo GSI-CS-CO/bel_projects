@@ -446,14 +446,14 @@ set_global_assignment -name VHDL_SHOW_LMF_MAPPING_MESSAGES OFF
 
 
 
-set_global_assignment -name VHDL_FILE ../../top/gsi_addac/adc_scu_bus.vhd
+set_global_assignment -name VHDL_FILE ../../modules/ad7606/adc_scu_bus.vhd
+set_global_assignment -name VHDL_FILE ../../modules/ad7606/adc_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../modules/ad7606/ad7606.vhd
 set_global_assignment -name VHDL_FILE ../../top/gsi_addac/adda_pll.vhd
 set_global_assignment -name VHDL_FILE ../../top/gsi_addac/flash_loader_v01.vhd
 set_global_assignment -name VHDL_FILE ../../modules/wb_scu_reg/wb_scu_reg_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../modules/wb_scu_reg/wb_scu_reg.vhd
-set_global_assignment -name VHDL_FILE ../../top/gsi_addac/adc_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../top/gsi_addac/scu_addac.vhd
-set_global_assignment -name VHDL_FILE ../../top/gsi_addac/ad7606.vhd
 set_global_assignment -name VHDL_FILE ../../top/gsi_addac/DAC_SPI.vhd
 set_global_assignment -name VHDL_FILE ../../top/gsi_addac/IO_4x8.vhd
 set_global_assignment -name VHDL_FILE ../../modules/led_blink.vhd
