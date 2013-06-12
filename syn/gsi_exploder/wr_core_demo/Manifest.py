@@ -11,6 +11,6 @@ syn_project = "exploder_top"
 
 quartus_preflow = "exploder_top.tcl"
 
-modules = {"local" : [ "../../../", "../../../top/gsi_exploder/wr_core_demo"]}
+modules = {"local" : [ "../../../top/gsi_exploder/wr_core_demo"]}
 
 				 

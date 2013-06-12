@@ -428,7 +428,7 @@ begin
     elsif s_bsel_rd = '1' then
       io_from_slave <= bank_sel_reg;
     elsif s_vendorid_rd = '1' then
-      if bank_sel_reg(7) then
+      if bank_sel_reg(7) = '1' then
         io_from_slave <= vendor_high_byte;
       else
         io_from_slave <= vendor_low_byte;

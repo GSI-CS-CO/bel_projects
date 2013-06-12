@@ -1,7 +1,8 @@
-fetchto = "../../../ip_cores"
-
 modules = {
-    "git" : "git://ohwr.org/hdl-core-lib/etherbone-core.git"
-};
+		  "local" : [
+			      "../../../modules",
+			          "../../../ip_cores",
+				    ]
+		  }
 
 files = ["exploder_top.sdc", "exploder_top.vhd" ]
