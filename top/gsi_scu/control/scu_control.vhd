@@ -203,7 +203,7 @@ architecture rtl of scu_control is
     wbd_width     => x"7", -- 8/16/32-bit port granularity
     sdb_component => (
     addr_first    => x"0000000000000000",
-    addr_last     => x"000000000000000f", -- three 4 byte registers
+    addr_last     => x"000000000000001f", -- five 4 byte registers
     product => (
     vendor_id     => x"0000000000000651", -- GSI
     device_id     => x"35aa6b95",
@@ -320,6 +320,7 @@ architecture rtl of scu_control is
   signal s_lemo_dat : std_logic_vector(2 downto 1);
   signal s_uled_dat : std_logic_vector(2 downto 1);
   signal s_lemo_led : std_logic_vector(2 downto 1);
+  signal s_lemo_in  : std_logic_vector(3 downto 0);
   
   signal kbc_out_port : std_logic_vector(7 downto 0);
   signal kbc_in_port  : std_logic_vector(7 downto 0);
@@ -696,11 +697,12 @@ begin
           end case;
         end if;
         
-        case to_integer(unsigned(gpio_slave_i.adr(3 downto 2))) is
+        case to_integer(unsigned(gpio_slave_i.adr(4 downto 2))) is
           when 0 => gpio_slave_o.dat(r_gpio_val'range) <= r_gpio_val;
           when 1 => gpio_slave_o.dat(r_lemo_dir'range) <= r_lemo_dir;
           when 2 => gpio_slave_o.dat(r_gpio_mux'range) <= r_gpio_mux;
           when 3 => gpio_slave_o.dat(r_resets'range)   <= r_resets;
+          when 4 => gpio_slave_o.dat(s_lemo_in'range)  <= s_lemo_in;
           when others => null;
         end case;
       end if;
@@ -794,6 +796,18 @@ begin
   sfp2_mod1  <= '0' when sfp2_scl_o = '0' else 'Z';
   sfp2_mod2  <= '0' when sfp2_sda_o = '0' else 'Z';
   
+  -- lemo input register
+  lemo_in: process (clk_sys)
+  begin
+    if rising_edge(clk_sys) then
+      s_lemo_in(0) <= lemo_io(1);
+      s_lemo_in(1) <= lemo_io(2);
+      s_lemo_in(2) <= '0';
+      s_lemo_in(3) <= '0';
+    end if;
+  
+  end process;
+  
   -- Output MUXes
   with r_gpio_mux(1 downto 0) select
     s_lemo_dat(1) <= 
@@ -856,10 +870,6 @@ begin
   -- hpla_ch(14) <= dbg_tx_clk;   -- pin 5
   -- hpla_ch(15) <= phy_rx_rbclk; -- pin 4
   -- 20 is ground
-  
-  -- LPC bus is not connected
-  LPC_AD <= (others => 'Z');
-  LPC_SERIRQ <= 'Z';
   
   -- EXT CONN not connected
   IO_2_5            <= (others => 'Z');
