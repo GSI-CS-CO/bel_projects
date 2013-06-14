@@ -1,0 +1,52 @@
+set_global_assignment -entity "dummy_phy" -library "dummy_phy" -name IP_TOOL_NAME "altera_xcvr_native_av"
+set_global_assignment -entity "dummy_phy" -library "dummy_phy" -name IP_TOOL_VERSION "12.1sp1"
+set_global_assignment -entity "dummy_phy" -library "dummy_phy" -name IP_TOOL_ENV "mwpim"
+set_global_assignment -library "dummy_phy" -name MISC_FILE [file join $::quartus(qip_path) "dummy_phy.cmp"]
+set_global_assignment -name SYNTHESIS_ONLY_QIP ON
+
+set_global_assignment -library "dummy_phy" -name VHDL_FILE [file join $::quartus(qip_path) "dummy_phy.vhd"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/altera_xcvr_functions.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/sv_reconfig_bundle_to_xcvr.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/sv_reconfig_bundle_to_ip.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/sv_reconfig_bundle_merger.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_xcvr_h.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_xcvr_avmm_csr.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_tx_pma_ch.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_tx_pma.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_rx_pma.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_pma.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_pcs_ch.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_pcs.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_xcvr_avmm.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_xcvr_native.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_xcvr_plls.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_xcvr_data_adapter.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_reconfig_bundle_to_basic.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_reconfig_bundle_to_xcvr.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_hssi_8g_rx_pcs_rbc.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_hssi_8g_tx_pcs_rbc.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_hssi_common_pcs_pma_interface_rbc.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_hssi_common_pld_pcs_interface_rbc.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_hssi_pipe_gen1_2_rbc.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_hssi_rx_pcs_pma_interface_rbc.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_hssi_rx_pld_pcs_interface_rbc.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_hssi_tx_pcs_pma_interface_rbc.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/av_hssi_tx_pld_pcs_interface_rbc.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/alt_reset_ctrl_lego.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/alt_reset_ctrl_tgx_cdrauto.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/alt_xcvr_resync.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/alt_xcvr_csr_common_h.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/alt_xcvr_csr_common.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/alt_xcvr_csr_pcs8g_h.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/alt_xcvr_csr_pcs8g.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/alt_xcvr_csr_selector.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/alt_xcvr_mgmt2dec.sv"]
+set_global_assignment -library "dummy_phy" -name VERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/altera_wait_generate.v"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/altera_xcvr_native_av_functions_h.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/altera_xcvr_native_av.sv"]
+set_global_assignment -library "dummy_phy" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy/altera_xcvr_data_adapter_av.sv"]
+set_global_assignment -library "dummy_phy" -name SOURCE_FILE [file join $::quartus(qip_path) "dummy_phy/plain_files.txt"]
+
+set_global_assignment -entity "altera_xcvr_native_av" -library "dummy_phy" -name IP_TOOL_NAME "altera_xcvr_native_av"
+set_global_assignment -entity "altera_xcvr_native_av" -library "dummy_phy" -name IP_TOOL_VERSION "12.1"
+set_global_assignment -entity "altera_xcvr_native_av" -library "dummy_phy" -name IP_TOOL_ENV "mwpim"

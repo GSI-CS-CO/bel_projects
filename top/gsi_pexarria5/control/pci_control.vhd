@@ -14,12 +14,14 @@ use work.wr_altera_pkg.all;
 use work.etherbone_pkg.all;
 use work.altera_flash_pkg.all;
 use work.oled_display_pkg.all;
+use work.dummy_phy_pkg.all;
 
 entity pci_control is
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
     clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
     clk_125m_local_i  : in std_logic;  -- local clk from 125Mhz oszillator
+    --osc_rfck_p        : in std_logic;  -- ref clock sfp
     
     -----------------------------------------
     -- PCI express pins
@@ -29,25 +31,168 @@ entity pci_control is
     pcie_tx_o      : out std_logic_vector(3 downto 0);
     nPCI_RESET     : in std_logic;
     
+    pe_smdat        : inout std_logic;
+    pe_snclk        : out std_logic;
+    pe_waken        : out std_logic;
+    
     ------------------------------------------------------------------------
     -- WR DAC signals
     ------------------------------------------------------------------------
     dac_sclk       : out std_logic;
     dac_din        : out std_logic;
     ndac_cs        : out std_logic_vector(2 downto 1);
-
-    -----------------------------------------
-    -- LEMO on front panel (LED        = B1/B2 act)
-    --                     (lemo_en_in = B1/B2 out)
-    -----------------------------------------
-    lemo_io        : inout std_logic_vector(2 downto 1);
-    lemo_en_in     : out   std_logic_vector(2 downto 1);
-    lemo_led       : out   std_logic_vector(2 downto 1);
     
     -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
-    OneWire_CB     : inout std_logic;
+    rom_data        : inout std_logic;
+    
+    -----------------------------------------------------------------------
+    -- display
+    -----------------------------------------------------------------------
+    di              : out std_logic_vector(6 downto 0);
+    ai              : out std_logic_vector(1 downto 0);
+    dout_LCD        : out std_logic;
+    wrdis           : out std_logic;
+    dres            : out std_logic;
+    
+    -----------------------------------------------------------------------
+    -- io
+    -----------------------------------------------------------------------
+    fpga_res        : in std_logic;
+    nres            : in std_Logic;
+    pbs2            : in std_logic;
+    hpw             : inout std_logic_vector(15 downto 0); -- logic analyzer
+    ant              : inout std_logic_vector(26 downto 1); -- trigger bus
+    p1              : out std_logic;
+    p2              : out std_logic;
+    p3              : out std_logic;
+    p4              : out std_logic;
+    p5              : out std_logic;
+    p6              : out std_logic;
+    p7              : out std_logic;
+    p8              : out std_logic;
+    p9              : out std_logic;
+    p10             : out std_logic;
+    p11             : out std_logic;
+    p12             : out std_logic;
+    p13             : out std_logic;
+    p14             : out std_logic;
+    p15             : out std_logic;
+    p16             : out std_logic;
+    p17             : out std_logic;
+    p18             : out std_logic;
+    p19             : out std_logic;
+    p21             : out std_logic;
+    p22             : out std_logic;
+    p23             : out std_logic;
+    p24             : out std_logic;
+    p25             : out std_logic;
+    p26             : out std_logic;
+    p27             : out std_logic;
+    p28             : out std_logic;
+    p29             : out std_logic;
+    p30             : out std_logic;
+    n1              : out std_logic;
+    n2              : out std_logic;
+    n3              : out std_logic;
+    n4              : out std_logic;
+    n5              : out std_logic;
+    n6              : out std_logic;
+    n7              : out std_logic;
+    n8              : out std_logic;
+    n9              : out std_logic;
+    n10             : out std_logic;
+    n11             : out std_logic;
+    n12             : out std_logic;
+    n13             : out std_logic;
+    n14             : out std_logic;
+    n15             : out std_logic;
+    n16             : out std_logic;
+    n17             : out std_logic;
+    n18             : out std_logic;
+    n19             : out std_logic;
+    n21             : out std_logic;
+    n22             : out std_logic;
+    n23             : out std_logic;
+    n24             : out std_logic;
+    n25             : out std_logic;
+    n26             : out std_logic;
+    n27             : out std_logic;
+    n28             : out std_logic;
+    n29             : out std_logic;
+    n30             : out std_logic;
+    
+    -----------------------------------------------------------------------
+    -- connector cpld
+    -----------------------------------------------------------------------
+    con             : out std_logic_vector(5 downto 1);
+    -----------------------------------------------------------------------
+    -- usb
+    -----------------------------------------------------------------------
+    slrd            : out std_logic;
+    slwr            : out std_logic;
+    fd              : inout std_logic_vector(7 downto 0);
+    pa              : inout std_logic_vector(7 downto 0);
+    ctl             : in std_logic_vector(2 downto 0);
+    uclk            : out std_logic;
+    ures            : out std_logic;
+    
+    -----------------------------------------------------------------------
+    -- leds onboard
+    -----------------------------------------------------------------------
+    led             : out std_logic_vector(8 downto 1);
+    
+    -----------------------------------------------------------------------
+    -- leds SFPs
+    -----------------------------------------------------------------------
+    ledsfpr          : out std_logic_vector(4 downto 1);
+    ledsfpg          : out std_logic_vector(4 downto 1);
+    
+    -----------------------------------------------------------------------
+    -- SFP1  
+    -----------------------------------------------------------------------
+    
+    sfp1_tx_disable_o : out std_logic := '0';
+    sfp1_tx_fault     : in std_logic;
+    sfp1_los          : in std_logic;
+    
+  --  sfp1_txp_o        : out std_logic;
+  --  sfp1_rxp_i        : in  std_logic;
+    
+    sfp1_mod0         : in    std_logic; -- grounded by module
+    sfp1_mod1         : inout std_logic; -- SCL
+    sfp1_mod2         : inout std_logic; -- SDA
+    
+    -----------------------------------------------------------------------
+    -- SFP3 
+    -----------------------------------------------------------------------
+       
+    sfp3_tx_disable_o : out std_logic := '0';
+    sfp3_tx_fault     : in std_logic;
+    sfp3_los          : in std_logic;
+    
+  --  sfp3_txp_o        : out std_logic;
+  --  sfp3_rxp_i        : in  std_logic;
+    
+    sfp3_mod0         : in    std_logic; -- grounded by module
+    sfp3_mod1         : inout std_logic; -- SCL
+    sfp3_mod2         : inout std_logic; -- SDA
+    
+    -----------------------------------------------------------------------
+    -- SFP4 
+    -----------------------------------------------------------------------
+    
+    sfp4_tx_disable_o : out std_logic := '0';
+    sfp4_tx_fault     : in std_logic;
+    sfp4_los          : in std_logic;
+    
+  --  sfp4_txp_o        : out std_logic;
+  --  sfp4_rxp_i        : in  std_logic;
+    
+    sfp4_mod0         : in    std_logic; -- grounded by module
+    sfp4_mod1         : inout std_logic; -- SCL
+    sfp4_mod2         : inout std_logic; -- SDA
     
     -----------------------------------------------------------------------
     -- Timing SFP 
@@ -173,6 +318,18 @@ architecture rtl of pci_control is
   signal s_lemo_dat : std_logic_vector(2 downto 1);
   signal s_uled_dat : std_logic_vector(2 downto 1);
   signal s_lemo_led : std_logic_vector(2 downto 1);
+  
+  signal s_pll_powerdown      : std_logic;
+  signal s_tx_analogreset     : std_logic_vector(2 downto 0);
+  signal s_tx_digitalreset    : std_logic_vector(2 downto 0);
+  signal s_pll_locked         : std_logic_vector(2 downto 0);
+  signal s_tx_cal_busy        : std_logic_vector(2 downto 0);
+  signal s_rx_analogreset     : std_logic_vector(2 downto 0);
+  signal s_rx_digitalreset    : std_logic_vector(2 downto 0);
+  signal s_rx_cal_busy        : std_logic_vector(2 downto 0);
+  signal s_reconf_to          : std_logic_vector(419 downto 0);
+  signal s_reconf_from        : std_logic_vector(275 downto 0);
+
 begin
 
   dmtd_inst : dmtd_pll port map(
@@ -434,8 +591,8 @@ begin
       ref_rstn_i      => rstn_ref,
       sys_clk_i       => clk_sys,
       sys_rstn_i      => rstn_sys,
-      triggers_i(0)   => lemo_io(1),
-      triggers_i(1)   => lemo_io(2),
+      triggers_i(0)   => '0',
+      triggers_i(1)   => '0',
       tm_time_valid_i => tm_valid,
       tm_tai_i        => tm_tai,
       tm_cycles_i     => tm_cycles,
@@ -480,10 +637,56 @@ begin
       channel_i => channels(1),
       master_o  => pcie_slave_i,
       master_i  => pcie_slave_o);
+      
+--  phys: dummy_phy
+--    port map (
+--      pll_powerdown         => "000",
+--      tx_analogreset        => s_tx_analogreset,
+--      tx_digitalreset       => s_tx_digitalreset,
+--      tx_pll_refclk         => (others => osc_rfck_p),
+--      rx_analogreset        => "000",
+--      rx_digitalreset       => "000",
+--      rx_cdr_refclk         => (others => osc_rfck_p),
+--      rx_serial_data        => sfp4_rxp_i & sfp3_rxp_i & sfp1_rxp_i,
+--      tx_parallel_data      => (others => '0'),
+--      tx_std_clkout         => open,
+--      tx_serial_data(2)     => sfp4_txp_o,
+--      tx_serial_data(1)     => sfp3_txp_o,
+--      tx_serial_data(0)     => sfp1_txp_o,
+--      pll_locked            => open,
+--      tx_cal_busy           => s_tx_cal_busy,
+--      rx_cal_busy           => s_rx_cal_busy,
+--      rx_parallel_data      => open,
+--      reconfig_to_xcvr      => s_reconf_to,
+--      reconfig_from_xcvr    => s_reconf_from  
+--      
+--      );
+
+      
   
+--  dphy_rst: dummy_phy_reset
+--    port map (
+--      clock           => clk_sys,
+--      reset           => rstn_sys,
+--      pll_powerdown   => open,
+--      tx_analogreset  => s_tx_analogreset,
+--      tx_digitalreset => s_tx_digitalreset,
+--      tx_ready        => open,
+--      pll_locked      => (others => sys_locked),
+--      tx_cal_busy     => s_tx_cal_busy,
+--      rx_analogreset  => s_rx_analogreset,
+--      rx_digitalreset => s_rx_digitalreset,
+--      rx_ready        => open,
+--      rx_cal_busy     => s_rx_cal_busy);
+--      
+--  dphy_reconf: dummy_phy_reconf
+--    port map (
+--      reconfig_to_xcvr    => s_reconf_to,
+--      reconfig_from_xcvr  => s_reconf_from);
+      
   -- open drain buffer for one wire
-  owr(0) <= OneWire_CB;
-  OneWire_CB <= owr_pwren(0) when (owr_pwren(0) = '1' or owr_en(0) = '1') else 'Z';
+  owr(0) <= rom_data;
+  rom_data <= owr_pwren(0) when (owr_pwren(0) = '1' or owr_en(0) = '1') else 'Z';
   
   -- no second onewire is connected
   owr(1) <= 'Z';

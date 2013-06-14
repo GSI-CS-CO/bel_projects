@@ -1,0 +1,16 @@
+set_global_assignment -entity "dummy_phy_reset" -library "dummy_phy_reset" -name IP_TOOL_NAME "altera_xcvr_reset_control"
+set_global_assignment -entity "dummy_phy_reset" -library "dummy_phy_reset" -name IP_TOOL_VERSION "12.1sp1"
+set_global_assignment -entity "dummy_phy_reset" -library "dummy_phy_reset" -name IP_TOOL_ENV "mwpim"
+set_global_assignment -library "dummy_phy_reset" -name MISC_FILE [file join $::quartus(qip_path) "dummy_phy_reset.cmp"]
+set_global_assignment -name SYNTHESIS_ONLY_QIP ON
+
+set_global_assignment -library "dummy_phy_reset" -name VHDL_FILE [file join $::quartus(qip_path) "dummy_phy_reset.vhd"]
+set_global_assignment -library "dummy_phy_reset" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy_reset/altera_xcvr_functions.sv"]
+set_global_assignment -library "dummy_phy_reset" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy_reset/alt_xcvr_resync.sv"]
+set_global_assignment -library "dummy_phy_reset" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy_reset/altera_xcvr_reset_control.sv"]
+set_global_assignment -library "dummy_phy_reset" -name SYSTEMVERILOG_FILE [file join $::quartus(qip_path) "dummy_phy_reset/alt_xcvr_reset_counter.sv"]
+set_global_assignment -library "dummy_phy_reset" -name SOURCE_FILE [file join $::quartus(qip_path) "dummy_phy_reset/plain_files.txt"]
+
+set_global_assignment -entity "altera_xcvr_reset_control" -library "dummy_phy_reset" -name IP_TOOL_NAME "altera_xcvr_reset_control"
+set_global_assignment -entity "altera_xcvr_reset_control" -library "dummy_phy_reset" -name IP_TOOL_VERSION "12.1"
+set_global_assignment -entity "altera_xcvr_reset_control" -library "dummy_phy_reset" -name IP_TOOL_ENV "mwpim"
