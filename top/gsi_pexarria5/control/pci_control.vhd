@@ -15,6 +15,7 @@ use work.etherbone_pkg.all;
 use work.altera_flash_pkg.all;
 use work.oled_display_pkg.all;
 use work.dummy_phy_pkg.all;
+use work.ez_usb_pkg.all;
 
 entity pci_control is
   port(
@@ -50,11 +51,15 @@ entity pci_control is
     -----------------------------------------------------------------------
     -- display
     -----------------------------------------------------------------------
-    di              : out std_logic_vector(6 downto 0);
-    ai              : out std_logic_vector(1 downto 0);
-    dout_LCD        : out std_logic;
-    wrdis           : out std_logic;
-    dres            : out std_logic;
+    di              : inout std_logic_vector(6 downto 0);
+    ai              : out std_logic_vector(1 downto 0) := "00";
+    dout_LCD        : out std_logic := '0';
+    wrdis           : out std_logic := '0';
+    dres            : out std_logic := '1';
+    
+    --red_o			    : out std_logic;
+    --blue_o				: out std_logic;
+    --green_o				: out std_logic;
     
     -----------------------------------------------------------------------
     -- io
@@ -62,8 +67,9 @@ entity pci_control is
     fpga_res        : in std_logic;
     nres            : in std_Logic;
     pbs2            : in std_logic;
-    hpw             : inout std_logic_vector(15 downto 0); -- logic analyzer
-    ant              : inout std_logic_vector(26 downto 1); -- trigger bus
+    hpw             : inout std_logic_vector(15 downto 0) := x"0000"; -- logic analyzer
+    --hpwck           : out std_logic;
+    ant             : inout std_logic_vector(26 downto 1) := x"000000"; -- trigger bus
     p1              : out std_logic;
     p2              : out std_logic;
     p3              : out std_logic;
@@ -141,7 +147,7 @@ entity pci_control is
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
-    led             : out std_logic_vector(8 downto 1);
+    led             : out std_logic_vector(8 downto 1) := (others => '1');
     
     -----------------------------------------------------------------------
     -- leds SFPs
@@ -157,8 +163,8 @@ entity pci_control is
     sfp1_tx_fault     : in std_logic;
     sfp1_los          : in std_logic;
     
-  --  sfp1_txp_o        : out std_logic;
-  --  sfp1_rxp_i        : in  std_logic;
+    --sfp1_txp_o        : out std_logic;
+    --sfp1_rxp_i        : in  std_logic;
     
     sfp1_mod0         : in    std_logic; -- grounded by module
     sfp1_mod1         : inout std_logic; -- SCL
@@ -172,8 +178,8 @@ entity pci_control is
     sfp3_tx_fault     : in std_logic;
     sfp3_los          : in std_logic;
     
-  --  sfp3_txp_o        : out std_logic;
-  --  sfp3_rxp_i        : in  std_logic;
+    --sfp3_txp_o        : out std_logic;
+    --sfp3_rxp_i        : in  std_logic;
     
     sfp3_mod0         : in    std_logic; -- grounded by module
     sfp3_mod1         : inout std_logic; -- SCL
@@ -187,8 +193,8 @@ entity pci_control is
     sfp4_tx_fault     : in std_logic;
     sfp4_los          : in std_logic;
     
-  --  sfp4_txp_o        : out std_logic;
-  --  sfp4_rxp_i        : in  std_logic;
+    sfp4_txp_o        : out std_logic;
+    sfp4_rxp_i        : in  std_logic;
     
     sfp4_mod0         : in    std_logic; -- grounded by module
     sfp4_mod1         : inout std_logic; -- SCL
@@ -200,8 +206,8 @@ entity pci_control is
     sfp2_ref_clk_i    : in  std_logic;
     
     sfp2_tx_disable_o : out std_logic := '0';
-    sfp2_txp_o        : out std_logic;
-    sfp2_rxp_i        : in  std_logic;
+    --sfp2_txp_o        : out std_logic;
+    --sfp2_rxp_i        : in  std_logic;
     
     sfp2_mod0         : in    std_logic; -- grounded by module
     sfp2_mod1         : inout std_logic; -- SCL
@@ -215,14 +221,15 @@ architecture rtl of pci_control is
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   
   -- Top crossbar layout
-  constant c_slaves  : natural := 5;
-  constant c_masters : natural := 2;
+  constant c_slaves  : natural := 6;
+  constant c_masters : natural := 3;
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00000000"),
     1 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00100000"),
     2 => f_sdb_embed_device(c_eca_sdb,                    x"00100800"),
     3 => f_sdb_embed_device(c_eca_evt_sdb,                x"00100C00"),
-    4 => f_sdb_embed_device(c_wb_spi_flash_sdb,           x"01000000"));
+    4 => f_sdb_embed_device(c_wb_serial_lcd_sdb,          x"00100D00"),
+    5 => f_sdb_embed_device(c_wb_spi_flash_sdb,           x"01000000"));
   constant c_sdb_address : t_wishbone_address := x"00300000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -329,6 +336,18 @@ architecture rtl of pci_control is
   signal s_rx_cal_busy        : std_logic_vector(2 downto 0);
   signal s_reconf_to          : std_logic_vector(419 downto 0);
   signal s_reconf_from        : std_logic_vector(275 downto 0);
+  
+  signal s_uart_rxd_i   : std_logic;
+  signal s_uart_txd_o   : std_logic;
+  
+  signal fd_oen : std_logic;
+  signal fd_o   : std_logic_vector(7 downto 0);
+  
+  signal di_scp : std_logic;
+  signal di_lp  : std_logic;
+  signal di_flm : std_logic;
+  signal di_dat : std_logic;
+  signal di_bll : std_logic;
 
 begin
 
@@ -383,8 +402,8 @@ begin
     port map(
       clk_i     => clk_sys,
       rstn_i    => rstn_sys,
-      slave_i   => cbar_master_o(4),
-      slave_o   => cbar_master_i(4),
+      slave_i   => cbar_master_o(5),
+      slave_o   => cbar_master_i(5),
       clk_out_i => clk_flash,
       clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
   
@@ -462,8 +481,8 @@ begin
       btn1_i      => '0',
       btn2_i      => '0',
 
-      uart_rxd_i => '0',
-      uart_txd_o => open,
+      uart_rxd_i => s_uart_rxd_i,
+      uart_txd_o => s_uart_txd_o,
       
       owr_pwren_o => owr_pwren,
       owr_en_o    => owr_en,
@@ -498,6 +517,7 @@ begin
       clk_reconf_i   => clk_reconf,
       clk_pll_i      => clk_ref,
       clk_cru_i      => sfp2_ref_clk_i,
+      --clk_cru_i      => osc_rfck_p,
       clk_sys_i      => clk_sys,
       rstn_sys_i     => rstn_sys,
       locked_o       => gxb_locked,
@@ -512,8 +532,8 @@ begin
       rx_k_o         => phy_rx_k,
       rx_enc_err_o   => phy_rx_enc_err,
       rx_bitslide_o  => phy_rx_bitslide,
-      pad_txp_o      => sfp2_txp_o,
-      pad_rxp_i      => sfp2_rxp_i);
+      pad_txp_o      => sfp4_txp_o,
+      pad_rxp_i      => sfp4_rxp_i);
 
   U_DAC_ARB : spec_serial_dac_arb
     generic map (
@@ -638,6 +658,68 @@ begin
       master_o  => pcie_slave_i,
       master_i  => pcie_slave_o);
       
+  -- USB micro controller
+  -----------------
+  ures <= rstn_sys; -- allow it to boot once the FPGA is reayd.
+  
+  fd <= fd_o when fd_oen='1' else (others => 'Z');
+  --readyn_io <= 'Z'; -- weak pull-up
+  
+  EZUSB : ez_usb
+    generic map(
+      g_sdb_address => c_sdb_address)
+    port map(
+      clk_sys_i => clk_sys,
+      rstn_i    => rstn_sys,
+      master_i  => cbar_slave_o(2),
+      master_o  => cbar_slave_i(2),
+      uart_o    => s_uart_rxd_i,
+      uart_i    => s_uart_txd_o,
+      
+      ebcyc_i   => pa(3),
+      speed_i   => pa(0),
+      shift_i   => pa(1),
+      fifoadr_o(1) => pa(5),
+      fifoadr_o(0) => pa(4),
+      readyn_i  => pa(7),
+      fulln_i   => ctl(1),
+      emptyn_i  => ctl(2),
+      sloen_o   => pa(2),
+      slrdn_o   => slrd,
+      slwrn_o   => slwr,
+      pktendn_o => pa(6),
+      fd_i      => fd(7 downto 0),
+      fd_o      => fd_o,
+      fd_oen_o  => fd_oen);
+      
+  -- Display
+  -----------------
+  -- red=nolink, blue=link+notrack, green=track
+  --red_o   <= '0' when (not tm_up)                  = '1' else 'Z';
+  --blue_o  <= '0' when (    tm_up and not tm_valid) = '1' else 'Z';
+  --green_o <= '0' when (    tm_up and     tm_valid) = '1' else 'Z';
+
+  -- Display
+  display : wb_serial_lcd
+   generic map(
+      g_wait => 1,
+      g_hold => 15)
+   port map(
+    slave_clk_i  => clk_sys,
+    slave_rstn_i => rstn_sys,
+    slave_i      => cbar_master_o(4),
+    slave_o      => cbar_master_i(4),
+    di_clk_i     => clk_20,
+    di_scp_o     => di_scp,
+    di_lp_o      => di_lp,
+    di_flm_o     => di_flm,
+    di_dat_o     => di_dat);
+
+  di(3) <= '0' when (di_scp = '0') else 'Z'; -- clock (run at 2MHz)
+  di(1) <= '0' when (di_lp  = '0') else 'Z'; -- latch pulse (end-of-40-bit-row)
+  di(2) <= '0' when (di_flm = '0') else 'Z'; -- first-line marker
+  di(0) <= '0' when (di_dat = '0') else 'Z'; -- shift register in
+      
 --  phys: dummy_phy
 --    port map (
 --      pll_powerdown         => "000",
@@ -683,6 +765,17 @@ begin
 --    port map (
 --      reconfig_to_xcvr    => s_reconf_to,
 --      reconfig_from_xcvr  => s_reconf_from);
+
+  -- On board leds
+  -----------------
+  -- Link Activity
+  led(1)		<= not (link_act and link_up); -- Link active
+  led(2)		<= not link_up;						  -- Link up
+  led(3)		<= not tm_valid;						  -- Timing Valid
+  led(4)	  <= not ext_pps;
+  
+  -- not assigned leds
+  led(8 downto 5)	<= (others => '1'); -- power off
       
   -- open drain buffer for one wire
   owr(0) <= rom_data;
