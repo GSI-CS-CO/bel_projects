@@ -931,8 +931,9 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_period_detect.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_bangbang_pd.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wbgen2_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/wr_softpll_ng.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/softpll_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/xwr_softpll_ng.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/wr_softpll_ng.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wb_slave.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_registers_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_private_pkg.vhd
@@ -971,6 +972,10 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_pps_
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_pps_gen/xwr_pps_gen.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac_arb.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/si570_if_wbgen2_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/si570_if_wb.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/wr_si57x_interface.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/xwr_si57x_interface.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_adder.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_channel.vhd
@@ -979,7 +984,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tlu/wb_cores_pkg_gsi.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_search.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_tdp.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_flags.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_walker.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_channel.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_event.vhd
