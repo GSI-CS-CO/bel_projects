@@ -1,6 +1,6 @@
 derive_pll_clocks -create_base_clocks
-create_clock -period 100Mhz -name pcie_refclk_i  [get_ports {pcie_refclk_i}]
-create_clock -period 125Mhz -name sfp2_ref_clk_i [get_ports {sfp2_ref_clk_i}]
+#create_clock -period 100Mhz -name pcie_refclk_i  [get_ports {pcie_refclk_i}]
+#create_clock -period 125Mhz -name sfp2_ref_clk_i [get_ports {sfp2_ref_clk_i}]
 #create_clock -period 125Mhz -name osc_rfck_p [get_ports {osc_rfck_p}]
 derive_clock_uncertainty
 

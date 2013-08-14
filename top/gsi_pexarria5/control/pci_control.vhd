@@ -14,7 +14,6 @@ use work.wr_altera_pkg.all;
 use work.etherbone_pkg.all;
 use work.altera_flash_pkg.all;
 use work.oled_display_pkg.all;
-use work.dummy_phy_pkg.all;
 use work.ez_usb_pkg.all;
 
 entity pci_control is
