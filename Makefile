@@ -25,9 +25,10 @@ driver-install::
 gcc-4.5.3-lm32.tar.xz:
 	wget http://www.ohwr.org/attachments/1301/gcc-4.5.3-lm32.tar.xz
 
-toolchain:
+toolchain:	gcc-4.5.3-lm32.tar.xz
 	tar xvJf gcc-4.5.3-lm32.tar.xz
 	mv lm32 toolchain
+	touch toolchain
 
 toolchain-clean::
 	rm -rf toolchain
