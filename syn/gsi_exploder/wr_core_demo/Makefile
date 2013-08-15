@@ -20,7 +20,7 @@ clean:
 
 %.opt:	%.sof
 	rm -f $@.tmp
-	[ $$($(QUARTUS_BIN)/quartus_cpf --version | sed -ne 's/^Version \([0-9]*\).*$$/\1/p') -gt 12 ] && \
+	[ $$($(QUARTUS_BIN)/quartus_cpf --version | sed -ne 's/^Version \([0-9]*\).*$$/\1/p') -lt 13 ] || \
 		echo "IGNORE_EPCS_ID_CHECK=ON" >> $@.tmp
 	echo "BITSTREAM_COMPRESSION=ON" >> $@.tmp
 	mv $@.tmp $@
