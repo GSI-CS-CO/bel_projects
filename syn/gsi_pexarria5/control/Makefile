@@ -1,6 +1,6 @@
 TARGET		= pci_control
-DEVICE		= EP2AGX125
-FLASH		= EPCS128
+DEVICE		= 5AGXMA3D4
+FLASH		= EPCQ256
 
 QUARTUS		?= /opt/quartus
 QUARTUS_BIN	=  $(QUARTUS)/bin
