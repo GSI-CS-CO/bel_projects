@@ -18,6 +18,8 @@ use work.genram_pkg.all;
 --
 --0x00004 Reset			Write resets FSMs and display controller
 --
+--0x00008 ColOffset     Offset of the first visible column. 0x23 for old, 0x30 for new controllers
+--
 --0x10000 UART				Written ascii code is put directly on screen
 --
 --0x20000 Char				Written ascii code is put on supplied location
@@ -46,7 +48,7 @@ generic(
 	 valid_o			: out std_logic;							--data from WBIF is valid				
 	 mode_o			: out std_logic_vector(1 downto 0); --display mode (idle, uart, char, raw)
 	 reset_disp_o 	: out std_logic; 							--issue a reset of the display controller
-	 
+	 col_offset_o  : out std_logic_vector(7 downto 0);
 	 
 	 --Raw Image
 	 raw_data_i		: in 	std_logic_vector(7 downto 0);
@@ -86,7 +88,13 @@ signal adrmode : natural;
   signal disp_ram_ack_sh : std_logic;
   signal disp_ram_ack_shreg : std_logic_vector(0 downto 0);
   
+  constant c_firstCol : 	 std_logic_vector(7 downto 0) := x"30";
+  signal   col_offset : std_logic_vector(7 downto 0);
+  	
 begin
+  
+  
+  col_offset_o  <= col_offset;
   -- Hard-wired slave pins
   slave_o.ACK   <= slave_o_ACK or disp_ram_ack_shreg(disp_ram_ack_shreg'left);
   slave_o.ERR   <= '0';
@@ -140,6 +148,7 @@ char_col_o <= std_logic_vector(char_col);
 			char_col <= x"0";
 			char_row <= "000";
 			reset_disp_o <= '0';
+			col_offset <= c_firstCol;
 		else
         
 		  reset_disp_o <= '0';
@@ -181,6 +190,11 @@ char_col_o <= std_logic_vector(char_col);
 									--reset register
 									elsif(unsigned(slave_i.ADR(15 downto 2)) = 1) then
 										reset_disp_o <= slave_i.WE;
+									elsif(unsigned(slave_i.ADR(15 downto 2)) = 2) then
+										slave_o_DAT <= std_logic_vector(to_unsigned(0,24)) & col_offset;
+										if(slave_i.WE = '1') then
+											col_offset <= slave_i.DAT(7 downto 0);
+										end if; 	
 									end if;
 								end if; 
 								

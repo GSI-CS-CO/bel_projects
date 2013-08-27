@@ -57,7 +57,7 @@ generic(
 	 valid_o			: out std_logic;
 	 mode_o			:	out std_logic_vector(1 downto 0);
 	 reset_disp_o 	: out std_logic; 							--issue a reset of the display controller
-	 
+	 col_offset_o  : out std_logic_vector(7 downto 0);
 	 
 	 --Raw Image
 	 raw_data_i		: in  std_logic_vector(7 downto 0);
@@ -96,39 +96,39 @@ end component wb_console;
 ----------------------------------------------------------------------------------------------------------------------------
 	component spi_master is
 port (
-    clk_i              : in  std_logic;
-    nRst_i             : in  std_logic;
+    clk_i         : in  std_logic;
+    nRst_i        : in  std_logic;
     
     -- Control
-    load_i		: in std_logic;
-	  DC_i               : in  std_logic;                   -- 1 Datastream, Commandstream 0
-    data_i             : in  std_logic_vector(7 downto 0);-- parallel data in
-    stream_len_i       : in std_logic_vector(15 downto 0);           -- length of stream for controlling cs_n
+    load_i		   : in std_logic;
+	  DC_i         : in  std_logic;                   -- 1 Datastream, Commandstream 0
+    data_i        : in  std_logic_vector(7 downto 0);-- parallel data in
+    stream_len_i  : in std_logic_vector(15 downto 0);           -- length of stream for controlling cs_n
     
-    word_done_o          : out std_logic;                   -- ack after each word sent
-    stream_done_o        : out std_logic;                   -- ack after complete sream sent
-    buf_empty_o              : out std_logic;
+    word_done_o   : out std_logic;                   -- ack after each word sent
+    stream_done_o : out std_logic;                   -- ack after complete sream sent
+    buf_empty_o   : out std_logic;
     
     
     --SPI
-    spi_clk            : out std_logic;
-    spi_mosi           : out std_logic;
-    spi_miso           : in  std_logic;
-    spi_cs_n           : out std_logic;
+    spi_clk       : out std_logic;
+    spi_mosi      : out std_logic;
+    spi_miso      : in  std_logic;
+    spi_cs_n      : out std_logic;
     
-    DC_o               : out std_logic
+    DC_o          : out std_logic
 );
 end component;
 
 ---------------------------------------------------------------------------------------------------------------------------
 	component char_render is
 	port(
-				clk_i        : in std_logic;
+				clk_i       : in std_logic;
 			   nRst_i      : std_logic;
 			   addr_char_i : in std_logic_vector(7 downto 0);
 			   load_i      : in std_logic;
 			   valid_o     : out std_logic;
-			    q_o			     : out std_logic_vector(7 downto 0)
+			   q_o			: out std_logic_vector(7 downto 0)
 	);
 	end component;
 ----------------------------------------------------------------------------------------------------------------------------
@@ -137,10 +137,10 @@ end component;
 	subtype byte is std_logic_vector(7 downto 0);
 	type bytearray is array (integer range <>) of byte;
 
-	constant    adr_sequence     	: bytearray(0 to 2) 	:= (	x"B0", x"00", x"1F");
+	constant    adr_sequence     			: bytearray(0 to 2) 	:= (	x"B0", x"00", x"1F");
 	constant    scroll_start_sequence  	: bytearray(0 to 6) 	:= (	x"29", x"00", x"00", x"00", x"00", x"01", x"2F");
 	constant    scroll_stop_sequence  	: bytearray(0 to 1) 	:= (	x"00",x"2E" );
-	constant 	init_sequence 		: bytearray(0 to 11) := ( 	x"A1", x"C8", x"00", x"81",
+	constant 	init_sequence 				: bytearray(0 to 11) := ( 	x"A1", x"C8", x"00", x"81",
 																				x"50", x"AC", x"82", x"F0",
 																				x"00", x"00", x"00", x"AF");
 	
@@ -149,38 +149,41 @@ end component;
 	constant c_Char_CR          : 	 std_logic_vector(7 downto 0) := x"0d";
 	constant c_Char_FF          : 	 std_logic_vector(7 downto 0) := x"0c";
 	
-	constant c_firstCol          : 	 unsigned(7 downto 0) := x"23";
-	constant c_lastCol           : 	 unsigned(7 downto 0) := x"64";
-	constant c_firstBank         : 	 unsigned(2 downto 0) := "000";
-	constant c_firstVisibleBank  : 	 unsigned(2 downto 0) := "010";
-	constant c_lastBank          : 	 unsigned(2 downto 0) := "111";
+	constant c_col_width        : 	 unsigned(7 downto 0) := x"41";
+	constant c_firstBank        : 	 unsigned(2 downto 0) := "000";
+	constant c_firstVisibleBank : 	 unsigned(2 downto 0) := "010";
+	constant c_lastBank         : 	 unsigned(2 downto 0) := "111";
+	
+	signal s_firstCol           : 	 unsigned(7 downto 0);
+	signal s_lastCol            : 	 unsigned(7 downto 0);
+	signal col_offset				 : 	 std_logic_vector(7 downto 0);  
 	
 	signal nRst : std_logic;
-signal reset_disp: std_logic;	
+	signal reset_disp: std_logic;	
 	
  	
 	signal need_refresh : std_logic;
 	signal request_spi_transfer : std_logic;
 	signal spi_done : std_logic;
 	
-  signal ascii_code : std_LOGIC_VECTOR(7 downto 0);
+   signal ascii_code : std_LOGIC_VECTOR(7 downto 0);
    signal ascii_code_reg : std_LOGIC_VECTOR(7 downto 0);
    
-  signal char_valid : std_logic;
-  signal char_load : std_logic;
-  signal char_row	: std_logic_vector(2 downto 0);
+   signal char_valid : std_logic;
+   signal char_load : std_logic;
+   signal char_row	: std_logic_vector(2 downto 0);
 	signal char_col : std_logic_vector(3 downto 0); 
   
    signal char_buffer_empty : std_logic;
 	signal char_en : std_logic;
 	signal scroll_request : std_logic;
   
-  signal raw_mode : std_logic;
-  signal raw_byte : std_logic_vector(7 downto 0);
-  signal WRITE_DISP_RAM_DATA : std_logic_vector(7 downto 0);
+   signal raw_mode : std_logic;
+   signal raw_byte : std_logic_vector(7 downto 0);
+   signal WRITE_DISP_RAM_DATA : std_logic_vector(7 downto 0);
   
-  signal raw_addr : std_logic_vector(10 downto 0);
-  signal raw_wren : std_logic;
+   signal raw_addr : std_logic_vector(10 downto 0);
+   signal raw_wren : std_logic;
 	
 	signal displaymode : std_logic_vector(1 downto 0);
 	
@@ -299,6 +302,9 @@ generic map(FifoDepth => 16)
 	 raw_data_o => disp_ram_raw_data,
 	 raw_addr_o => disp_ram_raw_addr,
 	 raw_wren_o	=> disp_ram_raw_we,
+	 col_offset_o => col_offset,
+
+
 	 
 reset_disp_o => 	 reset_disp,
 	 
@@ -311,7 +317,7 @@ reset_disp_o => 	 reset_disp,
 	 mode_o		=> displaymode
 	); 
 
-
+s_firstCol <= unsigned(col_offset);
 
 	Character_Render_Engine : char_render
 		port map	(
@@ -398,7 +404,7 @@ Inst_SPI_Control_Block: spi_master
 	                       
 disp_ram_raw_q <= disp_ram_q;	                       	 
 ----------------------------------------------------------------------------------------------------                      	 	                       
-
+s_lastCol <= s_firstCol + c_col_width;
 
 REFRESH_RAM : process(clk_i)
 begin
@@ -411,12 +417,12 @@ begin
 	  ascii_code_reg      <= ascii_code;
 	
 	if(nRst = '0') then
-		rfstate             <=  IDLE;
-		bank_offset         <= (others => '0');
-		need_refresh        <= '0';
-		disp_ram_clear_addr <= std_logic_vector(c_firstVisibleBank & c_firstCol);
-		disp_ram_render_addr  <= std_logic_vector(c_firstVisibleBank & c_firstCol);
-		disp_ram_clear_we   <= '0';
+		rfstate              <=  IDLE;
+		bank_offset          <= (others => '0');
+		need_refresh         <= '0';
+		disp_ram_clear_addr  <= std_logic_vector(c_firstVisibleBank & s_firstCol);
+		disp_ram_render_addr <= std_logic_vector(c_firstVisibleBank & s_firstCol);
+		disp_ram_clear_we    <= '0';
 	else	
 		
 	
@@ -457,7 +463,7 @@ begin
 										when c_CHAR_LF | c_CHAR_CR => if(displaymode = cDISPMODE_UART) then
 																					a_disp_ram_clear_addr_bank 	<= std_logic_vector(unsigned(a_disp_ram_render_addr_bank)+1);
 																					LastBank2clear  		<= std_logic_vector(unsigned(a_disp_ram_render_addr_bank)+1);
-																					a_disp_ram_render_addr_byte 				<= std_logic_vector(c_firstCol);
+																					a_disp_ram_render_addr_byte 				<= std_logic_vector(s_firstCol);
 																					a_disp_ram_render_addr_bank 		<= std_logic_vector(unsigned(a_disp_ram_render_addr_bank) +1); -- inc row/bank ptr
 																					if(a_disp_ram_render_addr_bank = std_logic_vector(c_lastBank-bank_offset)) then 		-- last row/bank?
 																						 bank_offset 		<= bank_offset-1;
@@ -470,13 +476,13 @@ begin
 										when c_CHAR_FF 				=> a_disp_ram_clear_addr_bank 	<= std_logic_vector(unsigned(a_disp_ram_render_addr_bank)+1);
 																				LastBank2clear  		<= a_disp_ram_render_addr_bank;
 																				a_disp_ram_render_addr_bank 		<= std_logic_vector(c_firstVisibleBank);
-																				a_disp_ram_render_addr_byte 				<= std_logic_vector(c_firstCol);
+																				a_disp_ram_render_addr_byte 				<= std_logic_vector(s_firstCol);
 																				bank_offset 			<= "000";
 																				rfstate 					<= CLEAR_BANKS;	
 																											
 										when others 					=> char_load <= '1';
 										                    if(displaymode = cDISPMODE_CHAR) then
-										                      a_disp_ram_render_addr_byte <= std_logic_vector(c_firstCol+unsigned(char_col)*6);
+										                      a_disp_ram_render_addr_byte <= std_logic_vector(s_firstCol+unsigned(char_col)*6);
 										                      a_disp_ram_render_addr_bank <= std_logic_vector(c_firstVisibleBank+unsigned(char_row));
 										                      bank_offset 			<= "000";
 										                    end if;
@@ -486,8 +492,8 @@ begin
 
 		when CLEAR_BANKS	=>   	
 										disp_ram_clear_we <= '1';
-										if(unsigned(a_disp_ram_clear_addr_byte) >= c_lastCol) then						-- out of visible display area?
-											a_disp_ram_clear_addr_byte <= std_logic_vector(c_firstCol-1);
+										if(unsigned(a_disp_ram_clear_addr_byte) >= s_lastCol) then						-- out of visible display area?
+											a_disp_ram_clear_addr_byte <= std_logic_vector(s_firstCol-1);
 											if(a_disp_ram_clear_addr_bank	= LastBank2clear) then
 												rfstate 					<= UPDATE_DISPLAY_START;
 												scroll_request 	<= '1';
@@ -509,8 +515,8 @@ begin
   		                      else
   		                        rfstate <=  GET_CHAR;
 		                      if(displaymode = cDISPMODE_UART) then
-  		                        if(unsigned(a_disp_ram_render_addr_byte) >= c_lastCol) then						-- out of visible display area?
-  					                     a_disp_ram_render_addr_byte <= std_logic_vector(c_firstCol);							-- reset col ptr
+  		                        if(unsigned(a_disp_ram_render_addr_byte) >= s_lastCol) then						-- out of visible display area?
+  					                     a_disp_ram_render_addr_byte <= std_logic_vector(s_firstCol);							-- reset col ptr
   					                     a_disp_ram_render_addr_bank <= std_logic_vector(unsigned(a_disp_ram_render_addr_bank) +1); -- inc row/bank ptr
   					                     if(a_disp_ram_render_addr_bank = std_logic_vector(c_lastBank-bank_offset)) then 		-- last row/bank?
   						                     if(displaymode = cDISPMODE_CHAR) then     
