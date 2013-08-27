@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 library work;
-use work.aux_functions_pkg.div_n;
+use work.aux_functions_pkg.all;
 
 --+-----------------------------------------------------------------------------------------------------------------+
 --| "led_n",    Autor: W.Panschow                                                                                   |
