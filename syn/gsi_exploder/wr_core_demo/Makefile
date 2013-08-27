@@ -19,7 +19,11 @@ clean:
 	$(QUARTUS_BIN)/quartus_sh --tcl_eval load_package flow \; project_open $* \; execute_flow -compile
 
 %.opt:	%.sof
-	echo "BITSTREAM_COMPRESSION=ON" > $@
+	rm -f $@.tmp
+	[ $$($(QUARTUS_BIN)/quartus_cpf --version | sed -ne 's/^Version \([0-9]*\).*$$/\1/p') -lt 13 ] || \
+		echo "IGNORE_EPCS_ID_CHECK=ON" >> $@.tmp
+	echo "BITSTREAM_COMPRESSION=ON" >> $@.tmp
+	mv $@.tmp $@
 
 %.jic:	%.sof %.opt
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -s $(DEVICE) $< $@

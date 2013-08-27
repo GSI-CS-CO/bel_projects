@@ -14,15 +14,13 @@ use work.wr_altera_pkg.all;
 use work.etherbone_pkg.all;
 use work.altera_flash_pkg.all;
 use work.oled_display_pkg.all;
-use work.dummy_phy_pkg.all;
 use work.ez_usb_pkg.all;
 
 entity pci_control is
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
-    clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
+--    clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
     clk_125m_local_i  : in std_logic;  -- local clk from 125Mhz oszillator
-    --osc_rfck_p        : in std_logic;  -- ref clock sfp
     
     -----------------------------------------
     -- PCI express pins
@@ -51,15 +49,11 @@ entity pci_control is
     -----------------------------------------------------------------------
     -- display
     -----------------------------------------------------------------------
-    di              : inout std_logic_vector(6 downto 0);
-    ai              : out std_logic_vector(1 downto 0) := "00";
-    dout_LCD        : out std_logic := '0';
+    di              : out std_logic_vector(6 downto 0);
+    ai              : in  std_logic_vector(1 downto 0);
+    dout_LCD        : in  std_logic;
     wrdis           : out std_logic := '0';
     dres            : out std_logic := '1';
-    
-    --red_o			    : out std_logic;
-    --blue_o				: out std_logic;
-    --green_o				: out std_logic;
     
     -----------------------------------------------------------------------
     -- io
@@ -67,9 +61,9 @@ entity pci_control is
     fpga_res        : in std_logic;
     nres            : in std_Logic;
     pbs2            : in std_logic;
-    hpw             : inout std_logic_vector(15 downto 0) := x"0000"; -- logic analyzer
-    --hpwck           : out std_logic;
+    hpw             : inout std_logic_vector(15 downto 0) := x"0000"; -- logic analyzer    
     ant             : inout std_logic_vector(26 downto 1) := x"000000"; -- trigger bus
+    
     p1              : out std_logic;
     p2              : out std_logic;
     p3              : out std_logic;
@@ -133,16 +127,17 @@ entity pci_control is
     -- connector cpld
     -----------------------------------------------------------------------
     con             : out std_logic_vector(5 downto 1);
+    
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
-    slrd            : out std_logic;
-    slwr            : out std_logic;
-    fd              : inout std_logic_vector(7 downto 0);
-    pa              : inout std_logic_vector(7 downto 0);
-    ctl             : in std_logic_vector(2 downto 0);
-    uclk            : out std_logic;
-    ures            : out std_logic;
+    slrd            : out   std_logic;
+    slwr            : out   std_logic;
+    fd              : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    pa              : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    ctl             : in    std_logic_vector(2 downto 0);
+    uclk            : in    std_logic;
+    ures            : out   std_logic;
     
     -----------------------------------------------------------------------
     -- leds onboard
@@ -154,6 +149,8 @@ entity pci_control is
     -----------------------------------------------------------------------
     ledsfpr          : out std_logic_vector(4 downto 1);
     ledsfpg          : out std_logic_vector(4 downto 1);
+
+    sfp234_ref_clk_i    : in  std_logic;
     
     -----------------------------------------------------------------------
     -- SFP1  
@@ -169,6 +166,21 @@ entity pci_control is
     sfp1_mod0         : in    std_logic; -- grounded by module
     sfp1_mod1         : inout std_logic; -- SCL
     sfp1_mod2         : inout std_logic; -- SDA
+    
+    -----------------------------------------------------------------------
+    -- SFP2
+    -----------------------------------------------------------------------
+    
+    sfp2_tx_disable_o : out std_logic := '0';
+    sfp2_tx_fault     : in  std_logic;
+    sfp2_los          : in  std_logic;
+    
+    --sfp2_txp_o        : out std_logic;
+    --sfp2_rxp_i        : in  std_logic;
+    
+    sfp2_mod0         : in    std_logic; -- grounded by module
+    sfp2_mod1         : inout std_logic; -- SCL
+    sfp2_mod2         : inout std_logic; -- SDA
     
     -----------------------------------------------------------------------
     -- SFP3 
@@ -198,21 +210,7 @@ entity pci_control is
     
     sfp4_mod0         : in    std_logic; -- grounded by module
     sfp4_mod1         : inout std_logic; -- SCL
-    sfp4_mod2         : inout std_logic; -- SDA
-    
-    -----------------------------------------------------------------------
-    -- Timing SFP 
-    -----------------------------------------------------------------------
-    sfp2_ref_clk_i    : in  std_logic;
-    
-    sfp2_tx_disable_o : out std_logic := '0';
-    --sfp2_txp_o        : out std_logic;
-    --sfp2_rxp_i        : in  std_logic;
-    
-    sfp2_mod0         : in    std_logic; -- grounded by module
-    sfp2_mod1         : inout std_logic; -- SCL
-    sfp2_mod2         : inout std_logic); -- SDA
-
+    sfp4_mod2         : inout std_logic); -- SDA
 end pci_control;
 
 architecture rtl of pci_control is
@@ -246,15 +244,16 @@ architecture rtl of pci_control is
   -- Sys PLL from clk_125m_local_i
   signal sys_locked       : std_logic;
   signal clk_62_5         : std_logic;
-  signal clk_50           : std_logic;
   signal clk_20           : std_logic;
+  signal clk_100g         : std_logic;
+  signal clk_100r         : std_logic;
   signal rstn_sys         : std_logic;
   
   -- Logical clock names
   signal clk_sys          : std_logic;
   signal clk_reconf       : std_logic;
   signal clk_flash        : std_logic;
-  signal clk_scubus       : std_logic;
+  signal clk_display      : std_logic;
   
   -- RX PLL
   signal gxb_locked       : std_logic;
@@ -299,6 +298,7 @@ architecture rtl of pci_control is
   signal mb_snk_out    : t_wrf_sink_out;
   signal mb_snk_in     : t_wrf_sink_in;
   
+  signal tm_up     : std_logic;
   signal tm_valid  : std_logic;
   signal tm_tai    : std_logic_vector(39 downto 0);
   signal tm_cycles : std_logic_vector(27 downto 0);
@@ -309,11 +309,11 @@ architecture rtl of pci_control is
   signal owr_en    : std_logic_vector(1 downto 0);
   signal owr       : std_logic_vector(1 downto 0);
   
-  signal sfp2_scl_o : std_logic;
-  signal sfp2_scl_i : std_logic;
-  signal sfp2_sda_o : std_logic;
-  signal sfp2_sda_i : std_logic;
-  signal sfp2_det_i : std_logic;
+  signal sfp_scl_o : std_logic;
+  signal sfp_scl_i : std_logic;
+  signal sfp_sda_o : std_logic;
+  signal sfp_sda_i : std_logic;
+  signal sfp_det_i : std_logic;
   
   signal eca_gpio : std_logic_vector(15 downto 0);
   
@@ -351,27 +351,34 @@ architecture rtl of pci_control is
 
 begin
 
-  dmtd_inst : dmtd_pll port map(
-    inclk0 => clk_20m_vcxo_i,    --  20  Mhz 
-    c0     => clk_dmtd,          --  62.5MHz
-    locked => open);
+  dmtd_inst : dmtd_pll5 port map(
+    rst      => '0',
+    refclk   => clk_20m_vcxo_i,    --  20  Mhz 
+    outclk_0 => clk_dmtd,          --  62.5MHz
+    locked   => open);
   
-  ref_inst : ref_pll port map(
-    inclk0 => clk_125m_pllref_i, -- 125 MHz
-    c0     => clk_ref,           -- 125 MHz
-    locked => ref_locked);
+  ref_inst : ref_pll5 port map(
+    rst      => '0',
+    refclk   => sfp234_ref_clk_i, -- 125 MHz
+    outclk_0 => clk_ref,          -- 125 MHz
+    locked   => ref_locked);
 
-  sys_inst : sys_pll port map(
-    inclk0 => clk_125m_local_i, -- 125  Mhz 
-    c0     => clk_62_5,         --  62.5MHz
-    c1     => clk_50,           --  50  Mhz
-    c2     => clk_20,           --  20  MHz
-    locked => sys_locked);
-  
-  clk_sys    <= clk_62_5;
-  clk_reconf <= pcie_refclk_i; -- required when Hard IP active
-  clk_flash  <= clk_62_5; -- 100 MHz is max
-  clk_scubus <= clk_20;
+  sys_inst : sys_pll5 port map(
+    rst      => '0',
+    refclk   => clk_125m_local_i, -- 125  Mhz 
+    outclk_0 => clk_62_5,         --  62.5MHz
+    outclk_1 => clk_20,           --  20  MHz
+    outclk_2 => clk_100g,         -- 100  MHz global clock
+    outclk_3 => clk_100r,         -- 100  MHz dual region clock
+    locked   => sys_locked);
+
+  reconf : dual_region5 port map(
+    inclk  => clk_100r,
+    outclk => clk_reconf);
+    
+  clk_sys     <= clk_62_5;
+  clk_flash   <= clk_62_5; -- !!! clk_100g;
+  clk_display <= clk_20;
   
   sys_reset : gc_reset
     generic map(
@@ -473,11 +480,11 @@ begin
       scl_i       => '0',
       sda_i       => '0',
       sda_o       => open,
-      sfp_scl_i   => sfp2_scl_i,
-      sfp_sda_i   => sfp2_sda_i,
-      sfp_scl_o   => sfp2_scl_o,
-      sfp_sda_o   => sfp2_sda_o,
-      sfp_det_i   => sfp2_det_i,
+      sfp_scl_i   => sfp_scl_i,
+      sfp_sda_i   => sfp_sda_i,
+      sfp_scl_o   => sfp_scl_o,
+      sfp_sda_o   => sfp_sda_o,
+      sfp_det_i   => sfp_det_i,
       btn1_i      => '0',
       btn2_i      => '0',
 
@@ -498,10 +505,10 @@ begin
       aux_master_o => wrc_master_o,
       aux_master_i => wrc_master_i,
  
-      tm_link_up_o         => open,
+      tm_link_up_o         => tm_up,
       tm_dac_value_o       => open,
       tm_dac_wr_o          => open,
-      tm_clk_aux_lock_en_i => '0',
+      tm_clk_aux_lock_en_i => (others => '0'),
       tm_clk_aux_locked_o  => open,
       tm_time_valid_o      => tm_valid,
       tm_tai_o             => tm_tai,
@@ -512,12 +519,21 @@ begin
       rst_aux_n_o          => open,
       link_ok_o            => open);
 
+  -- Enable SFP2 as timing
+  sfp4_tx_disable_o <= '0';
+  sfp_scl_i <= sfp4_mod1;
+  sfp_sda_i <= sfp4_mod2;
+  sfp_det_i <= sfp4_mod0;
+  sfp4_mod1  <= '0' when sfp_scl_o = '0' else 'Z';
+  sfp4_mod2  <= '0' when sfp_sda_o = '0' else 'Z';
+  
   wr_arria5_phy_inst : wr_arria5_phy
+    generic map ( 
+      g_rx_latch_edge => '0',
+      g_tx_latch_edge => '0')
     port map (
       clk_reconf_i   => clk_reconf,
-      clk_pll_i      => clk_ref,
-      clk_cru_i      => sfp2_ref_clk_i,
-      --clk_cru_i      => osc_rfck_p,
+      clk_pll_i      => sfp234_ref_clk_i,
       clk_sys_i      => clk_sys,
       rstn_sys_i     => rstn_sys,
       locked_o       => gxb_locked,
@@ -695,9 +711,9 @@ begin
   -- Display
   -----------------
   -- red=nolink, blue=link+notrack, green=track
-  --red_o   <= '0' when (not tm_up)                  = '1' else 'Z';
-  --blue_o  <= '0' when (    tm_up and not tm_valid) = '1' else 'Z';
-  --green_o <= '0' when (    tm_up and     tm_valid) = '1' else 'Z';
+  di(5) <= '0' when (not tm_up)                  = '1' else 'Z'; -- red
+  di(6) <= '0' when (    tm_up and not tm_valid) = '1' else 'Z'; -- blue
+  di(4) <= '0' when (    tm_up and     tm_valid) = '1' else 'Z'; -- green
 
   -- Display
   display : wb_serial_lcd
@@ -709,7 +725,7 @@ begin
     slave_rstn_i => rstn_sys,
     slave_i      => cbar_master_o(4),
     slave_o      => cbar_master_i(4),
-    di_clk_i     => clk_20,
+    di_clk_i     => clk_display,
     di_scp_o     => di_scp,
     di_lp_o      => di_lp,
     di_flm_o     => di_flm,
@@ -719,63 +735,22 @@ begin
   di(1) <= '0' when (di_lp  = '0') else 'Z'; -- latch pulse (end-of-40-bit-row)
   di(2) <= '0' when (di_flm = '0') else 'Z'; -- first-line marker
   di(0) <= '0' when (di_dat = '0') else 'Z'; -- shift register in
-      
---  phys: dummy_phy
---    port map (
---      pll_powerdown         => "000",
---      tx_analogreset        => s_tx_analogreset,
---      tx_digitalreset       => s_tx_digitalreset,
---      tx_pll_refclk         => (others => osc_rfck_p),
---      rx_analogreset        => "000",
---      rx_digitalreset       => "000",
---      rx_cdr_refclk         => (others => osc_rfck_p),
---      rx_serial_data        => sfp4_rxp_i & sfp3_rxp_i & sfp1_rxp_i,
---      tx_parallel_data      => (others => '0'),
---      tx_std_clkout         => open,
---      tx_serial_data(2)     => sfp4_txp_o,
---      tx_serial_data(1)     => sfp3_txp_o,
---      tx_serial_data(0)     => sfp1_txp_o,
---      pll_locked            => open,
---      tx_cal_busy           => s_tx_cal_busy,
---      rx_cal_busy           => s_rx_cal_busy,
---      rx_parallel_data      => open,
---      reconfig_to_xcvr      => s_reconf_to,
---      reconfig_from_xcvr    => s_reconf_from  
---      
---      );
+  di(5) <= '0' when (not tm_up)                  = '1' else 'Z'; -- red
+  di(6) <= '0' when (    tm_up and not tm_valid) = '1' else 'Z'; -- blue
+  di(4) <= '0' when (    tm_up and     tm_valid) = '1' else 'Z'; -- green
 
-      
-  
---  dphy_rst: dummy_phy_reset
---    port map (
---      clock           => clk_sys,
---      reset           => rstn_sys,
---      pll_powerdown   => open,
---      tx_analogreset  => s_tx_analogreset,
---      tx_digitalreset => s_tx_digitalreset,
---      tx_ready        => open,
---      pll_locked      => (others => sys_locked),
---      tx_cal_busy     => s_tx_cal_busy,
---      rx_analogreset  => s_rx_analogreset,
---      rx_digitalreset => s_rx_digitalreset,
---      rx_ready        => open,
---      rx_cal_busy     => s_rx_cal_busy);
---      
---  dphy_reconf: dummy_phy_reconf
---    port map (
---      reconfig_to_xcvr    => s_reconf_to,
---      reconfig_from_xcvr  => s_reconf_from);
-
-  -- On board leds
-  -----------------
-  -- Link Activity
-  led(1)		<= not (link_act and link_up); -- Link active
-  led(2)		<= not link_up;						  -- Link up
-  led(3)		<= not tm_valid;						  -- Timing Valid
-  led(4)	  <= not ext_pps;
+  led(1) <= not (link_act and link_up); -- red   = traffic/no-link
+  led(2) <= not link_up;                -- blue  = link
+  led(3) <= not tm_valid;               -- green = timing valid
+  led(4) <= not ext_pps;                -- white = PPS
   
   -- not assigned leds
   led(8 downto 5)	<= (others => '1'); -- power off
+  
+  ledsfpg(3 downto 1) <= (others => '1');
+  ledsfpr(3 downto 1) <= (others => '1');
+  ledsfpg(4) <= not link_up;
+  ledsfpr(4) <= not link_act;
       
   -- open drain buffer for one wire
   owr(0) <= rom_data;
@@ -783,13 +758,5 @@ begin
   
   -- no second onewire is connected
   owr(1) <= 'Z';
-  
-  -- Enable SFP2 as timing
-  sfp2_tx_disable_o <= '0';
-  sfp2_scl_i <= sfp2_mod1;
-  sfp2_sda_i <= sfp2_mod2;
-  sfp2_det_i <= sfp2_mod0;
-  sfp2_mod1  <= '0' when sfp2_scl_o = '0' else 'Z';
-  sfp2_mod2  <= '0' when sfp2_sda_o = '0' else 'Z';
   
 end rtl;

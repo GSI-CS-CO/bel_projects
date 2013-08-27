@@ -1,3 +1,5 @@
+gcc-4.5.3-lm32.tar.xz
+toolchain/
 syn
 *.bak
 *.ppf
@@ -18,4 +20,3 @@ syn
 *.rst
 *.sym
 greybox_tmp
-eb-flash
