@@ -258,7 +258,13 @@ architecture rtl of scu_control is
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
   signal clk_ref          : std_logic;
+  signal clk_butis        : std_logic;
+  signal clk_25m          : std_logic;
   signal rstn_ref         : std_logic;
+  
+  signal phase_done       : std_logic;
+  signal phase_step       : std_logic;
+  signal phase_sel        : std_logic_vector(3 downto 0);
   
   -- DMTD PLL from clk_20m_vcxo_i
   -- signal dmtd_locked      : std_logic;
@@ -334,7 +340,14 @@ begin
   ref_inst : ref_pll port map(
     inclk0 => clk_125m_pllref_i, -- 125 MHz
     c0     => clk_ref,           -- 125 MHz
-    locked => ref_locked);
+    c1     => clk_butis,         -- 200 MHz
+    c2     => clk_25m,           --  25 MHz
+    locked => ref_locked,
+    scanclk            => clk_reconf,
+    phasedone          => phase_done,
+    phasecounterselect => phase_sel,
+    phasestep          => phase_step,
+    phaseupdown        => '0');
 
   sys_inst : sys_pll port map(
     inclk0 => clk_125m_local_i, -- 125  Mhz 
@@ -367,6 +380,17 @@ begin
       clks_i(0)  => clk_ref,
       rstn_o(0)  => rstn_ref);
 
+  butis : altera_butis
+    port map(
+      clk_ref_i   => clk_ref,
+      clk_25m_i   => clk_25m,
+      clk_scan_i  => clk_reconf,
+      locked_i    => ref_locked,
+      pps_i       => pps,
+      phasedone_i => phase_done,
+      phasesel_o  => phase_sel,
+      phasestep_o => phase_step);
+  
   flash : flash_top
     generic map(
       g_family                 => "Arria II GX",
@@ -873,9 +897,13 @@ begin
   
   -- EXT CONN not connected
   IO_2_5            <= (others => 'Z');
-  A_EXT_LVDS_TX     <= (others => '0');
   a_EXT_LVDS_CLKOUT <= '0';
   EIO               <= (others => 'Z');
+  
+  A_EXT_LVDS_TX(0) <= clk_butis;
+  A_EXT_LVDS_TX(1) <= clk_ref;
+  A_EXT_LVDS_TX(2) <= '0';
+  A_EXT_LVDS_TX(3) <= '0';
   
   -- Parallel Flash not connected
   nRST_FSH <= '0';

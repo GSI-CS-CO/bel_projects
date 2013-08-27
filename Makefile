@@ -2,6 +2,10 @@ all::	etherbone driver toolchain firmware
 
 clean::	etherbone-clean driver-clean toolchain-clean firmware-clean scu-clean exploder-clean pexarria5-clean
 
+distclean::
+	git clean -xfd .
+	for i in etherbone-core fpga-config-space general-cores wr-cores wrpc-sw; do cd ip_cores/$$i; git clean -xfd .; cd ../..; done
+
 install::	etherbone-install driver-install
 
 etherbone::

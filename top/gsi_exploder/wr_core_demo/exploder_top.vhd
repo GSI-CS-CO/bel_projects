@@ -353,7 +353,13 @@ architecture rtl of exploder_top is
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
   signal clk_ref          : std_logic;
+  signal clk_butis        : std_logic;
+  signal clk_25m          : std_logic;
   signal rstn_ref         : std_logic;
+  
+  signal phase_done       : std_logic;
+  signal phase_step       : std_logic;
+  signal phase_sel        : std_logic_vector(3 downto 0);
   
   -- DMTD PLL from clk_20m_vcxo_i
   --signal dmtd_locked      : std_logic;
@@ -449,7 +455,14 @@ begin
   ref_inst : ref_pll port map(
     inclk0 => clk_125m_pllref_i, -- 125 MHz
     c0     => clk_ref,           -- 125 MHz
-    locked => ref_locked);
+    c1     => clk_butis,         -- 200 MHz
+    c2     => clk_25m,           --  25 MHz
+    locked => ref_locked,
+    scanclk            => clk_reconf,
+    phasedone          => phase_done,
+    phasecounterselect => phase_sel,
+    phasestep          => phase_step,
+    phaseupdown        => '0');
 
   sys_inst : sys_pll port map(
     inclk0 => clk_125m_local_i, -- 125  Mhz 
@@ -483,6 +496,17 @@ begin
       clks_i(0)  => clk_ref,
       rstn_o(0)  => rstn_ref);
 
+  butis : altera_butis
+    port map(
+      clk_ref_i   => clk_ref,
+      clk_25m_i   => clk_25m,
+      clk_scan_i  => clk_reconf,
+      locked_i    => ref_locked,
+      pps_i       => pps,
+      phasedone_i => phase_done,
+      phasesel_o  => phase_sel,
+      phasestep_o => phase_step);
+  
   flash : flash_top
     generic map(
       g_family                 => "Arria II GX",
@@ -783,22 +807,26 @@ begin
   select_o  <= lemo_ttl;
   selectn_o <= not lemo_ttl;
   
-  -- LEMO outputs
-  ttnim_o(8) <= ext_pps;
-  ttnim_o(7 downto 2) <= eca_lemo_led(6 downto 1);
-  
   ref_out : process(clk_ref) is
   begin
     if rising_edge(clk_ref) then
       ref_toggle <= not ref_toggle;
     end if;
   end process;
-  ttnim_o(1) <= ref_toggle;
+  
+  -- LEMO outputs
+  ttnim_o(8)          <= ext_pps;
+  ttnim_o(7 downto 2) <= eca_lemo_led(6 downto 1);
+  ttnim_o(1)          <= ref_toggle;
   
   -- ECA outputs
-  lvds_o <= eca_lvds_ecl(7 downto 0);
+  lvds_o(6 downto 2) <= eca_lvds_ecl(5 downto 1);
   ecl_o  <= eca_lvds_ecl(15 downto 8);
   de_o   <= eca_trigger(7 downto 0);
+  
+  lvds_o(8) <= clk_butis;
+  lvds_o(7) <= ext_pps;
+  lvds_o(1) <= clk_ref;
   
   -- Use TRIGGER ports in type 1 mode.
   fsen1_o <= '0';
