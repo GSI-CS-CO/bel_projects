@@ -49,15 +49,11 @@ entity pci_control is
     -----------------------------------------------------------------------
     -- display
     -----------------------------------------------------------------------
-    di              : inout std_logic_vector(6 downto 0);
-    ai              : out std_logic_vector(1 downto 0) := "00";
-    dout_LCD        : out std_logic := '0';
+    di              : out std_logic_vector(6 downto 0);
+    ai              : in  std_logic_vector(1 downto 0);
+    dout_LCD        : in  std_logic;
     wrdis           : out std_logic := '0';
     dres            : out std_logic := '1';
-    
-    --red_o			    : out std_logic;
-    --blue_o				: out std_logic;
-    --green_o				: out std_logic;
     
     -----------------------------------------------------------------------
     -- io
@@ -65,9 +61,9 @@ entity pci_control is
     fpga_res        : in std_logic;
     nres            : in std_Logic;
     pbs2            : in std_logic;
-    hpw             : inout std_logic_vector(15 downto 0) := x"0000"; -- logic analyzer
-    --hpwck           : out std_logic;
+    hpw             : inout std_logic_vector(15 downto 0) := x"0000"; -- logic analyzer    
     ant             : inout std_logic_vector(26 downto 1) := x"000000"; -- trigger bus
+    
     p1              : out std_logic;
     p2              : out std_logic;
     p3              : out std_logic;
@@ -131,16 +127,17 @@ entity pci_control is
     -- connector cpld
     -----------------------------------------------------------------------
     con             : out std_logic_vector(5 downto 1);
+    
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
-    slrd            : out std_logic;
-    slwr            : out std_logic;
-    fd              : inout std_logic_vector(7 downto 0);
-    pa              : inout std_logic_vector(7 downto 0);
-    ctl             : in std_logic_vector(2 downto 0);
-    uclk            : out std_logic;
-    ures            : out std_logic;
+    slrd            : out   std_logic;
+    slwr            : out   std_logic;
+    fd              : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    pa              : inout std_logic_vector(7 downto 0) := (others => 'Z');
+    ctl             : in    std_logic_vector(2 downto 0);
+    uclk            : in    std_logic;
+    ures            : out   std_logic;
     
     -----------------------------------------------------------------------
     -- leds onboard
@@ -532,7 +529,8 @@ begin
   
   wr_arria5_phy_inst : wr_arria5_phy
     generic map ( 
-      g_rx_latch_edge => '1')
+      g_rx_latch_edge => '0',
+      g_tx_latch_edge => '0')
     port map (
       clk_reconf_i   => clk_reconf,
       clk_pll_i      => sfp234_ref_clk_i,
@@ -737,57 +735,6 @@ begin
   di(1) <= '0' when (di_lp  = '0') else 'Z'; -- latch pulse (end-of-40-bit-row)
   di(2) <= '0' when (di_flm = '0') else 'Z'; -- first-line marker
   di(0) <= '0' when (di_dat = '0') else 'Z'; -- shift register in
-      
---  phys: dummy_phy
---    port map (
---      pll_powerdown         => "000",
---      tx_analogreset        => s_tx_analogreset,
---      tx_digitalreset       => s_tx_digitalreset,
---      tx_pll_refclk         => (others => osc_rfck_p),
---      rx_analogreset        => "000",
---      rx_digitalreset       => "000",
---      rx_cdr_refclk         => (others => osc_rfck_p),
---      rx_serial_data        => sfp4_rxp_i & sfp3_rxp_i & sfp1_rxp_i,
---      tx_parallel_data      => (others => '0'),
---      tx_std_clkout         => open,
---      tx_serial_data(2)     => sfp4_txp_o,
---      tx_serial_data(1)     => sfp3_txp_o,
---      tx_serial_data(0)     => sfp1_txp_o,
---      pll_locked            => open,
---      tx_cal_busy           => s_tx_cal_busy,
---      rx_cal_busy           => s_rx_cal_busy,
---      rx_parallel_data      => open,
---      reconfig_to_xcvr      => s_reconf_to,
---      reconfig_from_xcvr    => s_reconf_from  
---      
---      );
-
-      
-  
---  dphy_rst: dummy_phy_reset
---    port map (
---      clock           => clk_sys,
---      reset           => rstn_sys,
---      pll_powerdown   => open,
---      tx_analogreset  => s_tx_analogreset,
---      tx_digitalreset => s_tx_digitalreset,
---      tx_ready        => open,
---      pll_locked      => (others => sys_locked),
---      tx_cal_busy     => s_tx_cal_busy,
---      rx_analogreset  => s_rx_analogreset,
---      rx_digitalreset => s_rx_digitalreset,
---      rx_ready        => open,
---      rx_cal_busy     => s_rx_cal_busy);
---      
---  dphy_reconf: dummy_phy_reconf
---    port map (
---      reconfig_to_xcvr    => s_reconf_to,
---      reconfig_from_xcvr  => s_reconf_from);
-
-  -- On board leds
-  -----------------
-  -- Link Activity
-  
   di(5) <= '0' when (not tm_up)                  = '1' else 'Z'; -- red
   di(6) <= '0' when (    tm_up and not tm_valid) = '1' else 'Z'; -- blue
   di(4) <= '0' when (    tm_up and     tm_valid) = '1' else 'Z'; -- green
