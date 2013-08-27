@@ -9,6 +9,7 @@ use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
 use work.adc_pkg.all;
 use work.wb_scu_reg_pkg.all;
+use work.dac714_pkg.all;
 
 entity scu_addac is
   port (
@@ -114,31 +115,6 @@ constant  scu_adda1_id:       integer range 16#0210# to 16#021F# := 16#0210#;
 constant  clk_sys_in_Hz:      integer := 125_000_000;
 constant  dac_spi_clk_in_hz:  integer := 10_000_000;
 
-
-component DAC_SPI
-  generic (
-    Base_addr:        unsigned(15 downto 0);
-    CLK_in_Hz:        integer := 100_000_000;
-    SPI_CLK_in_Hz:    integer := 10_000_000 );
-  port (
-    Adr_from_SCUB_LA:   in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
-    Data_from_SCUB_LA:  in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
-    Ext_Adr_Val:        in    std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active:      in    std_logic;                      -- '1' => Rd-Cycle is active
-    Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
-    Ext_Wr_fin:         in    std_logic;                      -- '1' => Wr-Cycle is finished
-    clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
-    nReset:             in    std_logic := '1';
-    DAC_SI:             out   std_logic;
-    nDAC_CLK:           out   std_logic;
-    nCS_DAC:            out   std_logic;
-    nLD_DAC:            out   std_logic;
-    nCLR_DAC:           out   std_logic;
-    Rd_Port:            out   std_logic_vector(15 downto 0);
-    Rd_Activ:           out   std_logic;
-    Dtack:              out   std_logic
-    );
-end component DAC_SPI;
 
 component IO_4x8
   generic (
@@ -499,20 +475,24 @@ port map (
     nPowerup_Res        =>  nPowerup_Res);          -- out,	this macro generated a power up reset
 
 
-dac_1: DAC_SPI
+dac_1: dac714
   generic map(
     Base_addr       => x"0200",
     CLK_in_Hz       => clk_sys_in_Hz,
-    SPI_CLK_in_Hz   => dac_spi_clk_in_hz )
+    SPI_CLK_in_Hz   => dac_spi_clk_in_hz,
+    Default_is_FG_mode => 1 )
   port map(
     Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,       -- in, latched address from SCU_Bus
     Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- in, latched data from SCU_Bus 
     Ext_Adr_Val         =>  Ext_Adr_Val,            -- in, '1' => "ADR_from_SCUB_LA" is valid
     Ext_Rd_active       =>  Ext_Rd_active,          -- in, '1' => Rd-Cycle is active
     Ext_Wr_active       =>  Ext_Wr_active,          -- in, '1' => Wr-Cycle is active
-    Ext_Wr_fin          =>  Ext_Wr_fin_ovl,         -- in, '1' => Wr-Cycle is finished
     clk                 =>  clk_sys,                -- in, should be the same clk, used by SCU_Bus_Slave
     nReset              =>  nPowerup_Res,           -- in, '0' => resets the DAC_1
+    nExt_Trig_DAC       =>  EXT_TRIG_DAC,           -- external trigger input over optocoupler,
+																										-- led on -> nExt_Trig_DAC is low
+    FG_Data             =>  open,                   -- parallel dac data during FG-Mode
+    FG_Strobe           =>  open,                   -- strobe to start SPI transfer (if possible) during FG-Mode
     DAC_SI              =>  DAC1_SDI,               -- out, is connected to DAC1-SDI
     nDAC_CLK            =>  nDAC1_CLK,              -- out, spi-clock of DAC1
     nCS_DAC             =>  nDAC1_A0,               -- out, '0' enable shift of internal shift register of DAC1
@@ -524,20 +504,24 @@ dac_1: DAC_SPI
     );
 
     
-dac_2: DAC_SPI
+dac_2: dac714
   generic map(
     Base_addr       => x"0210",
     CLK_in_Hz       => clk_sys_in_Hz,
-    SPI_CLK_in_Hz   => dac_spi_clk_in_hz )
+    SPI_CLK_in_Hz   => dac_spi_clk_in_hz,
+    Default_is_FG_mode => 1 )
   port map(
     Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,       -- in, latched address from SCU_Bus
     Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- in, latched data from SCU_Bus 
     Ext_Adr_Val         =>  Ext_Adr_Val,            -- in, '1' => "ADR_from_SCUB_LA" is valid
     Ext_Rd_active       =>  Ext_Rd_active,          -- in, '1' => Rd-Cycle is active
     Ext_Wr_active       =>  Ext_Wr_active,          -- in, '1' => Wr-Cycle is active
-    Ext_Wr_fin          =>  Ext_Wr_fin_ovl,         -- in, '1' => Wr-Cycle is finished
     clk                 =>  clk_sys,                -- in, should be the same clk, used by SCU_Bus_Slave
     nReset              =>  nPowerup_Res,           -- in, '0' => resets the DAC_2
+    nExt_Trig_DAC       =>  EXT_TRIG_DAC,           -- external trigger input over optocoupler,
+																										-- led on -> nExt_Trig_DAC is low
+    FG_Data             =>  open,                   -- parallel dac data during FG-Mode
+    FG_Strobe           =>  open,                   -- strobe to start SPI transfer (if possible) during FG-Mode
     DAC_SI              =>  DAC2_SDI,               -- out, is connected to DAC2-SDI
     nDAC_CLK            =>  nDAC2_CLK,              -- out, spi-clock of DAC2
     nCS_DAC             =>  nDAC2_A0,               -- out, '0' enable shift of internal shift register of DAC2

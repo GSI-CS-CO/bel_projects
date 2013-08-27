@@ -8,7 +8,7 @@ use work.fg_quad_pkg.all;
 
 entity fg_quad_datapath is
   generic (
-    CLK_in_Hz:  integer := 125000000);
+    CLK_in_Hz:  integer := 125_000_000);
   port (
   data_a:             in  std_logic_vector(15 downto 0);
   data_b:             in  std_logic_vector(15 downto 0);
@@ -82,7 +82,7 @@ constant  c_freq_cnt_width:       integer := integer(ceil(log2(real(c_freq_cnt(0
 constant  c_add_cnt_width:        integer := integer(ceil(log2(real(c_add_cnt(0))))) + 1;
 
 
-signal  s_cnt:	       unsigned(7 downto 0);
+signal  s_cnt:         unsigned(7 downto 0);
 signal  s_freq_cnt:    unsigned(c_freq_cnt_width - 1 downto 0);
 signal  s_freq_en:     std_logic;
 signal  s_freq_cnt_en: std_logic := '1';
@@ -96,17 +96,17 @@ begin
 
 fast_cnt: process(clk, nrst)
 begin
-	if nrst = '0' then
-		s_cnt <= "01000111";
-	elsif rising_edge(clk) then
-		if s_cnt(s_cnt'high) = '1' or s_cnt_set = '1' then
-			s_cnt <= "01000111";
-		else	
-			s_cnt <= s_cnt - 1;
-		end if;
-	end if;
+  if nrst = '0' then
+    s_cnt <= "01000111";
+  elsif rising_edge(clk) then
+    if s_cnt(s_cnt'high) = '1' or s_cnt_set = '1' then
+      s_cnt <= "01000111";
+    else  
+      s_cnt <= s_cnt - 1;
+    end if;
+  end if;
 end process;
-	
+  
 s_reached <= s_cnt(s_cnt'high);
 s_cnt_out <= std_logic_vector(s_cnt);
 
