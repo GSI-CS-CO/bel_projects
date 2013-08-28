@@ -13,6 +13,7 @@ use work.pcie_wb_pkg.all;
 use work.wr_altera_pkg.all;
 use work.etherbone_pkg.all;
 use work.altera_flash_pkg.all;
+use work.altera_networks_pkg.all;
 use work.oled_display_pkg.all;
 use work.ez_usb_pkg.all;
 
@@ -243,10 +244,10 @@ architecture rtl of pci_control is
 
   -- Sys PLL from clk_125m_local_i
   signal sys_locked       : std_logic;
-  signal clk_62_5         : std_logic;
-  signal clk_20           : std_logic;
-  signal clk_100g         : std_logic;
-  signal clk_100r         : std_logic;
+  signal clk_sys0         : std_logic;
+  signal clk_sys1         : std_logic;
+  signal clk_sys2         : std_logic;
+  signal clk_sys3         : std_logic;
   signal rstn_sys         : std_logic;
   
   -- Logical clock names
@@ -261,11 +262,22 @@ architecture rtl of pci_control is
   
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
+  signal clk_ref0         : std_logic;
+  signal clk_ref1         : std_logic;
+  signal clk_ref2         : std_logic;
+  
   signal clk_ref          : std_logic;
+  signal clk_butis        : std_logic;
+  signal clk_phase        : std_logic;
   signal rstn_ref         : std_logic;
+  
+  signal phase_done       : std_logic;
+  signal phase_step       : std_logic;
+  signal phase_sel        : std_logic_vector(4 downto 0);
   
   -- DMTD PLL from clk_20m_vcxo_i
   -- signal dmtd_locked      : std_logic;
+  signal clk_dmtd0        : std_logic;
   signal clk_dmtd         : std_logic;
   
   signal dac_hpll_load_p1 : std_logic;
@@ -334,8 +346,6 @@ architecture rtl of pci_control is
   signal s_rx_analogreset     : std_logic_vector(2 downto 0);
   signal s_rx_digitalreset    : std_logic_vector(2 downto 0);
   signal s_rx_cal_busy        : std_logic_vector(2 downto 0);
-  signal s_reconf_to          : std_logic_vector(419 downto 0);
-  signal s_reconf_from        : std_logic_vector(275 downto 0);
   
   signal s_uart_rxd_i   : std_logic;
   signal s_uart_txd_o   : std_logic;
@@ -354,31 +364,58 @@ begin
   dmtd_inst : dmtd_pll5 port map(
     rst      => '0',
     refclk   => clk_20m_vcxo_i,    --  20  Mhz 
-    outclk_0 => clk_dmtd,          --  62.5MHz
+    outclk_0 => clk_dmtd0,         --  62.5MHz
     locked   => open);
   
+  dmtd_clk : single_region port map(
+    inclk  => clk_dmtd0,
+    outclk => clk_dmtd);
+  
   ref_inst : ref_pll5 port map(
-    rst      => '0',
-    refclk   => sfp234_ref_clk_i, -- 125 MHz
-    outclk_0 => clk_ref,          -- 125 MHz
-    locked   => ref_locked);
+    rst        => '0',
+    refclk     => sfp234_ref_clk_i, -- 125 MHz
+    outclk_0   => clk_ref0,         -- 125 MHz
+    outclk_1   => clk_ref1,         -- 200 MHz
+    outclk_2   => clk_ref2,         --  25 MHz
+    locked     => ref_locked,
+    scanclk    => clk_reconf,
+    cntsel     => phase_sel,
+    phase_en   => phase_step,
+    updn       => '0',
+    phase_done => phase_done);
+  
+  ref_clk : global_region port map(
+    inclk  => clk_ref0,
+    outclk => clk_ref);
+    
+  phase_clk : single_region port map(
+    inclk  => clk_ref2,
+    outclk => clk_phase);
 
   sys_inst : sys_pll5 port map(
     rst      => '0',
     refclk   => clk_125m_local_i, -- 125  Mhz 
-    outclk_0 => clk_62_5,         --  62.5MHz
-    outclk_1 => clk_20,           --  20  MHz
-    outclk_2 => clk_100g,         -- 100  MHz global clock
-    outclk_3 => clk_100r,         -- 100  MHz dual region clock
+    outclk_0 => clk_sys0,         --  62.5MHz
+    outclk_1 => clk_sys1,         --  20  MHz
+    outclk_2 => clk_sys2,         -- 100  MHz
+    outclk_3 => clk_sys3,         -- 100  MHz
     locked   => sys_locked);
 
-  reconf : dual_region5 port map(
-    inclk  => clk_100r,
+  sys_clk : global_region port map(
+    inclk  => clk_sys0,
+    outclk => clk_sys);
+  
+  display_clk : single_region port map(
+    inclk  => clk_sys1,
+    outclk => clk_display);
+  
+  reconf_clk : dual_region port map(
+    inclk  => clk_sys2,
     outclk => clk_reconf);
-    
-  clk_sys     <= clk_62_5;
-  clk_flash   <= clk_62_5; -- !!! clk_100g;
-  clk_display <= clk_20;
+  
+  flash_clk : single_region port map(
+    inclk  => clk_sys3,
+    outclk => clk_flash);
   
   sys_reset : gc_reset
     generic map(
@@ -398,6 +435,19 @@ begin
       clks_i(0)  => clk_ref,
       rstn_o(0)  => rstn_ref);
 
+  butis : altera_butis
+    generic map(
+      g_select_bits => 5)
+    port map(
+      clk_ref_i   => clk_ref,
+      clk_25m_i   => clk_phase,
+      clk_scan_i  => clk_reconf,
+      locked_i    => ref_locked,
+      pps_i       => pps,
+      phasedone_i => phase_done,
+      phasesel_o  => phase_sel,
+      phasestep_o => phase_step);
+  
   flash : flash_top
     generic map(
       g_family                 => "Arria V",
@@ -528,17 +578,18 @@ begin
   sfp4_mod2  <= '0' when sfp_sda_o = '0' else 'Z';
   
   wr_arria5_phy_inst : wr_arria5_phy
-    generic map ( 
-      g_rx_latch_edge => '0',
-      g_tx_latch_edge => '0')
+    generic map (
+      g_tx_latch_edge => '1',
+      g_rx_latch_edge => '0')
     port map (
       clk_reconf_i   => clk_reconf,
-      clk_pll_i      => sfp234_ref_clk_i,
+      clk_phy_i      => sfp234_ref_clk_i,
       clk_sys_i      => clk_sys,
       rstn_sys_i     => rstn_sys,
       locked_o       => gxb_locked,
       loopen_i       => phy_loopen,
       drop_link_i    => phy_rst,
+      tx_clk_i       => clk_ref,
       tx_data_i      => phy_tx_data,
       tx_k_i         => phy_tx_k,
       tx_disparity_o => phy_tx_disparity,
@@ -637,8 +688,8 @@ begin
 
   ECA0 : wr_eca
     generic map(
-      g_eca_name       => f_name("SCU top"),
-      g_channel_names  => (f_name("GPIO: LEMOs(0=B1,1=B2) LEDs(2=U1,3=U2)"), 
+      g_eca_name       => f_name("Pexaria5 top"),
+      g_channel_names  => (f_name("GPIO: LEDs(12-15)"), 
                            f_name("PCIe: Interrupt generator")),
       g_log_table_size => 7,
       g_log_queue_len  => 8,
@@ -709,13 +760,6 @@ begin
       fd_oen_o  => fd_oen);
       
   -- Display
-  -----------------
-  -- red=nolink, blue=link+notrack, green=track
-  di(5) <= '0' when (not tm_up)                  = '1' else 'Z'; -- red
-  di(6) <= '0' when (    tm_up and not tm_valid) = '1' else 'Z'; -- blue
-  di(4) <= '0' when (    tm_up and     tm_valid) = '1' else 'Z'; -- green
-
-  -- Display
   display : wb_serial_lcd
    generic map(
       g_wait => 1,
@@ -739,13 +783,12 @@ begin
   di(6) <= '0' when (    tm_up and not tm_valid) = '1' else 'Z'; -- blue
   di(4) <= '0' when (    tm_up and     tm_valid) = '1' else 'Z'; -- green
 
+  -- LEDs
   led(1) <= not (link_act and link_up); -- red   = traffic/no-link
   led(2) <= not link_up;                -- blue  = link
   led(3) <= not tm_valid;               -- green = timing valid
   led(4) <= not ext_pps;                -- white = PPS
-  
-  -- not assigned leds
-  led(8 downto 5)	<= (others => '1'); -- power off
+  led(8 downto 5) <= not eca_gpio(15 downto 12);
   
   ledsfpg(3 downto 1) <= (others => '1');
   ledsfpr(3 downto 1) <= (others => '1');
@@ -758,5 +801,7 @@ begin
   
   -- no second onewire is connected
   owr(1) <= 'Z';
+  
+--  clk_butis_o <= clk_butis;
   
 end rtl;

@@ -507,13 +507,14 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wi
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/wb_slave_vic.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_32to64.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_64to32.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_altera.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_tlp.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/flash/altera_spi.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/flash/flash_top.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_altera.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_rx.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_sink.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_source.vhd
@@ -611,6 +612,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.vhd
 set_global_assignment -name SDC_FILE ../../../top/gsi_exploder/wr_core_demo/exploder_top.sdc
 set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/arria2_pcie.qip
+set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip
 set_global_assignment -name QIP_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.qip
 set_global_assignment -name QIP_FILE ../../../ip_cores/wr-cores/platform/altera/arria2_pll/arria2_pll.qip
 set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:exploder_top.tcl"
