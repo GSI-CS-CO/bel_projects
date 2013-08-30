@@ -413,6 +413,10 @@ set_global_assignment -name LL_WIDTH 1 -section_id "wr_arria5:rx"
 set_global_assignment -name LL_HEIGHT 1 -section_id "wr_arria5:rx"
 set_global_assignment -name LL_ORIGIN X1_Y64 -section_id "wr_arria5:rx"
 set_instance_assignment -name LL_MEMBER_OF "wr_arria5:rx" -to "wr_arria5_phy:wr_arria5_phy_inst|rx_reg_dataout" -section_id "wr_arria5:rx"
+set_location_assignment PLLOUTPUTCOUNTER_X0_Y20_N1 -to "dmtd_pll5:dmtd_inst|dmtd_pll5_0002:dmtd_pll5_inst|altera_pll:altera_pll_i|outclk_wire[0]"
+set_location_assignment PLLOUTPUTCOUNTER_X0_Y55_N1 -to "ref_pll5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[1]"
+set_location_assignment PLLOUTPUTCOUNTER_X0_Y54_N1 -to "ref_pll5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[2]"
+set_location_assignment PLLOUTPUTCOUNTER_X0_Y53_N1 -to "ref_pll5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[0]"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd

@@ -62,67 +62,67 @@ entity pci_control is
     fpga_res        : in std_logic;
     nres            : in std_Logic;
     pbs2            : in std_logic;
-    hpw             : inout std_logic_vector(15 downto 0) := x"0000"; -- logic analyzer    
-    ant             : inout std_logic_vector(26 downto 1) := x"000000"; -- trigger bus
+    hpw             : inout std_logic_vector(15 downto 0) := (others => 'Z'); -- logic analyzer
+    ant             : inout std_logic_vector(26 downto 1) := (others => 'Z'); -- trigger bus
     
-    p1              : out std_logic;
-    p2              : out std_logic;
-    p3              : out std_logic;
-    p4              : out std_logic;
-    p5              : out std_logic;
-    p6              : out std_logic;
-    p7              : out std_logic;
-    p8              : out std_logic;
-    p9              : out std_logic;
-    p10             : out std_logic;
-    p11             : out std_logic;
-    p12             : out std_logic;
-    p13             : out std_logic;
-    p14             : out std_logic;
-    p15             : out std_logic;
-    p16             : out std_logic;
-    p17             : out std_logic;
-    p18             : out std_logic;
-    p19             : out std_logic;
-    p21             : out std_logic;
-    p22             : out std_logic;
-    p23             : out std_logic;
-    p24             : out std_logic;
-    p25             : out std_logic;
-    p26             : out std_logic;
-    p27             : out std_logic;
-    p28             : out std_logic;
-    p29             : out std_logic;
-    p30             : out std_logic;
-    n1              : out std_logic;
-    n2              : out std_logic;
-    n3              : out std_logic;
-    n4              : out std_logic;
-    n5              : out std_logic;
-    n6              : out std_logic;
-    n7              : out std_logic;
-    n8              : out std_logic;
-    n9              : out std_logic;
-    n10             : out std_logic;
-    n11             : out std_logic;
-    n12             : out std_logic;
-    n13             : out std_logic;
-    n14             : out std_logic;
-    n15             : out std_logic;
-    n16             : out std_logic;
-    n17             : out std_logic;
-    n18             : out std_logic;
-    n19             : out std_logic;
-    n21             : out std_logic;
-    n22             : out std_logic;
-    n23             : out std_logic;
-    n24             : out std_logic;
-    n25             : out std_logic;
-    n26             : out std_logic;
-    n27             : out std_logic;
-    n28             : out std_logic;
-    n29             : out std_logic;
-    n30             : out std_logic;
+    p1              : inout std_logic := 'Z';
+    p2              : inout std_logic := 'Z';
+    p3              : inout std_logic := 'Z';
+    p4              : inout std_logic := 'Z';
+    p5              : inout std_logic := 'Z';
+    p6              : inout std_logic := 'Z';
+    p7              : inout std_logic := 'Z';
+    p8              : inout std_logic := 'Z';
+    p9              : inout std_logic := 'Z';
+    p10             : inout std_logic := 'Z';
+    p11             : inout std_logic := 'Z';
+    p12             : inout std_logic := 'Z';
+    p13             : inout std_logic := 'Z';
+    p14             : inout std_logic := 'Z';
+    p15             : inout std_logic := 'Z';
+    p16             : inout std_logic := 'Z';
+    p17             : inout std_logic := 'Z';
+    p18             : inout std_logic := 'Z';
+    p19             : inout std_logic := 'Z';
+    p21             : inout std_logic := 'Z';
+    p22             : inout std_logic := 'Z';
+    p23             : inout std_logic := 'Z';
+    p24             : inout std_logic := 'Z';
+    p25             : inout std_logic := 'Z';
+    p26             : inout std_logic := 'Z';
+    p27             : inout std_logic := 'Z';
+    p28             : inout std_logic := 'Z';
+    p29             : inout std_logic := 'Z';
+    p30             : inout std_logic := 'Z';
+    n1              : inout std_logic := 'Z';
+    n2              : inout std_logic := 'Z';
+    n3              : inout std_logic := 'Z';
+    n4              : inout std_logic := 'Z';
+    n5              : inout std_logic := 'Z';
+    n6              : inout std_logic := 'Z';
+    n7              : inout std_logic := 'Z';
+    n8              : inout std_logic := 'Z';
+    n9              : inout std_logic := 'Z';
+    n10             : inout std_logic := 'Z';
+    n11             : inout std_logic := 'Z';
+    n12             : inout std_logic := 'Z';
+    n13             : inout std_logic := 'Z';
+    n14             : inout std_logic := 'Z';
+    n15             : inout std_logic := 'Z';
+    n16             : inout std_logic := 'Z';
+    n17             : inout std_logic := 'Z';
+    n18             : inout std_logic := 'Z';
+    n19             : inout std_logic := 'Z';
+    n21             : inout std_logic := 'Z';
+    n22             : inout std_logic := 'Z';
+    n23             : inout std_logic := 'Z';
+    n24             : inout std_logic := 'Z';
+    n25             : inout std_logic := 'Z';
+    n26             : inout std_logic := 'Z';
+    n27             : inout std_logic := 'Z';
+    n28             : inout std_logic := 'Z';
+    n29             : inout std_logic := 'Z';
+    n30             : inout std_logic := 'Z';
     
     -----------------------------------------------------------------------
     -- connector cpld
@@ -367,16 +367,16 @@ begin
     outclk_0 => clk_dmtd0,         --  62.5MHz
     locked   => open);
   
-  dmtd_clk : single_region port map(
+  dmtd_clk : global_region port map( -- skew must match clk_ref => both global
     inclk  => clk_dmtd0,
     outclk => clk_dmtd);
   
   ref_inst : ref_pll5 port map(
     rst        => '0',
     refclk     => sfp234_ref_clk_i, -- 125 MHz
-    outclk_0   => clk_ref0,         -- 125 MHz
-    outclk_1   => clk_ref1,         -- 200 MHz
-    outclk_2   => clk_ref2,         --  25 MHz
+    outclk_0   => clk_ref0,         -- 125 MHz, counter:14
+    outclk_1   => clk_ref1,         -- 200 MHz, counter:12
+    outclk_2   => clk_ref2,         --  25 MHz, counter:13
     locked     => ref_locked,
     scanclk    => clk_reconf,
     cntsel     => phase_sel,
@@ -387,8 +387,12 @@ begin
   ref_clk : global_region port map(
     inclk  => clk_ref0,
     outclk => clk_ref);
+  
+  butis_clk : global_region port map(
+    inclk  => clk_ref1,
+    outclk => clk_butis);
     
-  phase_clk : single_region port map(
+  phase_clk : global_region port map( -- skew must match clk_ref => both global
     inclk  => clk_ref2,
     outclk => clk_phase);
 
@@ -437,7 +441,9 @@ begin
 
   butis : altera_butis
     generic map(
-      g_select_bits => 5)
+      g_select_bits => 5,
+      g_200_sel     => 12,
+      g_25_sel      => 13)
     port map(
       clk_ref_i   => clk_ref,
       clk_25m_i   => clk_phase,
@@ -802,6 +808,11 @@ begin
   -- no second onewire is connected
   owr(1) <= 'Z';
   
---  clk_butis_o <= clk_butis;
+  -- debug clocks
+  --hpw(1)  <= '0';
+  --hpw(3)  <= ext_pps;
+  --hpw(9)  <= clk_ref;
+  --hpw(11) <= phy_rx_rbclk;
+  --hpw(15) <= clk_butis;
   
 end rtl;
