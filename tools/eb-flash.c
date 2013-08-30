@@ -78,7 +78,7 @@ static void help(void) {
   fprintf(stderr, "  -i <0/1>       invert bit order of bytes in firmware   (auto)\n");
   fprintf(stderr, "  -s <bytes>     flash sector size                       (auto)\n");
   fprintf(stderr, "  -x <bytes>     flash page size                          (256)\n");
-  fprintf(stderr, "  -w <seconds>   time to wait after a sector erase        (2.5)\n");
+  fprintf(stderr, "  -w <seconds>   poll interval while erasing              (0.1)\n");
   fprintf(stderr, "  -c <cycles>    number of cycles per bridge access         (4)\n");
   fprintf(stderr, "  -r <retries>   number of times to attempt autonegotiation (3)\n");
   fprintf(stderr, "  -f             full; skip quick scan and erase everything\n");
@@ -120,13 +120,24 @@ static eb_data_t flip_bits(eb_data_t x) {
   return x;
 }
 
-static void wait_for_erase(eb_device_t device) {
+static void wait_for_busy(eb_device_t device) {
   long delay, used;
+  eb_status_t status;
+  eb_data_t result;
   
-  /* Sleep as requested */
-  for (delay = wait_us; delay > 0; delay -= used) {
-    used = eb_socket_run(eb_device_socket(device), delay);
-  }
+  do {
+    /* Sleep as requested */
+    for (delay = wait_us; delay > 0; delay -= used) {
+      used = eb_socket_run(eb_device_socket(device), delay);
+    }
+    
+    result = 0;
+    status = eb_device_read(device, erase_address, (format&EB_ENDIAN_MASK)|EB_DATA32, &result, 0, eb_block);
+    if (status != EB_OK) {
+      fprintf(stderr, "%s: polling erase status failed: %s\n", program, eb_status(status));
+      exit(1);
+    }
+  } while ((result & 1) == 0);
 }
 
 static void find_sector_size(eb_user_data_t user, eb_device_t dev, eb_operation_t op, eb_status_t status) {
@@ -210,13 +221,15 @@ static eb_address_t detect_sector_size(eb_device_t device) {
     exit(1);
   }
   
+  wait_for_busy(device);
+  
   status = eb_device_write(device, erase_address, (format&EB_ENDIAN_MASK)|EB_DATA32, target, 0, eb_block);
   if (status != EB_OK) {
     fprintf(stderr, "\r%s: failed to erase test sector 0x%"EB_ADDR_FMT": %s\n", program, target, eb_status(status));
     exit(1);
   }
   
-  wait_for_erase(device);
+  wait_for_busy(device);
   
   if ((status = eb_cycle_open(device, &sector_size, find_sector_size, &cycle)) != EB_OK) {
     fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
@@ -379,7 +392,7 @@ static void erase_flash(eb_device_t device) {
       exit(1);
     }
     
-    wait_for_erase(device);
+    wait_for_busy(device);
   }
   
   if (!quiet) printf("done!\n");
@@ -642,7 +655,7 @@ int main(int argc, char** argv) {
   endian = 0; /* auto-detect */
   sector_size = 0; /* auto */
   page_size = 256;
-  wait_us = 3000000; /* 3 seconds */
+  wait_us = 100000; /* 100 ms */
   cycles_per_poll = 4;
   retries = 3;
   full = 0;
@@ -715,7 +728,7 @@ int main(int argc, char** argv) {
       break;
     case 'w':
       wait_us = strtof(optarg, &value_end) * 1000000.0;
-      if (*value_end || wait_us <= 0.01 || wait_us >= 10) {
+      if (*value_end || wait_us < 100000 || wait_us > 10000000) {
         fprintf(stderr, "%s: invalid wait time -- '%s'; must be between 0.01 and 10 seconds\n", program, optarg);
         error = 1;
       }

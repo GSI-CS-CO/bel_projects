@@ -223,7 +223,7 @@ architecture rtl of scu_control is
     5 => f_sdb_embed_device(c_xwb_gpio32_sdb,             x"00800000"),
     6 => f_sdb_embed_device(c_wrc_periph1_sdb,            x"00800100"),
     7 => f_sdb_embed_device(c_oled_display,               x"00900000"),
-    8 => f_sdb_embed_device(c_wb_spi_flash_sdb,           x"01000000"));
+    8 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"04000000"));
   constant c_sdb_address : t_wishbone_address := x"00300000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -396,6 +396,7 @@ begin
       g_family                 => "Arria II GX",
       g_port_width             => 1,   -- single-lane SPI bus
       g_addr_width             => 24,  -- 3 byte addressed chip
+      g_dummy_time             => 8,   -- 8 cycles between address and data
       g_input_latch_edge       => '1', -- 30ns at 50MHz (10+20) after falling edge sets up SPI output
       g_output_latch_edge      => '0', -- falling edge to meet SPI setup times
       g_input_to_output_cycles => 2)   -- delayed to work-around unconstrained design

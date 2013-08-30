@@ -322,7 +322,7 @@ architecture rtl of exploder_top is
     2 => f_sdb_embed_device(c_eca_sdb,                    x"00100800"),
     3 => f_sdb_embed_device(c_eca_evt_sdb,                x"00100C00"),
     4 => f_sdb_embed_device(c_wb_serial_lcd_sdb,          x"00100D00"),
-    5 => f_sdb_embed_device(c_wb_spi_flash_sdb,           x"01000000"));
+    5 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"04000000"));
   constant c_sdb_address : t_wishbone_address := x"00300000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -452,11 +452,11 @@ begin
     c0     => clk_dmtd,          --  62.5MHz
     locked => open); -- dmtd_locked);
   
-  ref_inst : ref_pll port map(
+  ref_inst : ref_pll port map( -- see "Phase Counter Select Mapping" table for arria2gx
     inclk0 => clk_125m_pllref_i, -- 125 MHz
-    c0     => clk_ref,           -- 125 MHz
-    c1     => clk_butis,         -- 200 MHz
-    c2     => clk_25m,           --  25 MHz
+    c0     => clk_ref,           -- 125 MHz, counter: 0010
+    c1     => clk_butis,         -- 200 MHz, counter: 0011 = #3
+    c2     => clk_25m,           --  25 MHz, counter: 0100 = #4
     locked => ref_locked,
     scanclk            => clk_reconf,
     phasedone          => phase_done,
@@ -512,6 +512,7 @@ begin
       g_family                 => "Arria II GX",
       g_port_width             => 1,   -- single-lane SPI bus
       g_addr_width             => 24,  -- 3 byte addressed chip
+      g_dummy_time             => 8,   -- 8 cycles between addr and data
       g_input_latch_edge       => '1', -- 30ns at 50MHz (10+20) after falling edge sets up SPI output
       g_output_latch_edge      => '0', -- falling edge to meet SPI setup times
       g_input_to_output_cycles => 2)   -- delayed to work-around unconstrained design

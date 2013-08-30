@@ -152,7 +152,7 @@ entity pci_control is
     ledsfpg          : out std_logic_vector(4 downto 1);
 
     sfp234_ref_clk_i    : in  std_logic;
-    
+
     -----------------------------------------------------------------------
     -- SFP1  
     -----------------------------------------------------------------------
@@ -228,7 +228,7 @@ architecture rtl of pci_control is
     2 => f_sdb_embed_device(c_eca_sdb,                    x"00100800"),
     3 => f_sdb_embed_device(c_eca_evt_sdb,                x"00100C00"),
     4 => f_sdb_embed_device(c_wb_serial_lcd_sdb,          x"00100D00"),
-    5 => f_sdb_embed_device(c_wb_spi_flash_sdb,           x"01000000"));
+    5 => f_sdb_embed_device(f_wb_spi_flash_sdb(25),       x"04000000"));
   constant c_sdb_address : t_wishbone_address := x"00300000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -457,18 +457,19 @@ begin
   flash : flash_top
     generic map(
       g_family                 => "Arria V",
-      g_port_width             => 1,   -- single-lane SPI bus
-      g_addr_width             => 24,  -- 3 byte addressed chip
-      g_input_latch_edge       => '1', -- 30ns at 50MHz (10+20) after falling edge sets up SPI output
-      g_output_latch_edge      => '0', -- falling edge to meet SPI setup times
-      g_input_to_output_cycles => 2)   -- delayed to work-around unconstrained design
+      g_port_width             => 4,  -- quad-lane SPI bus
+      g_addr_width             => 25, -- 256Mb = 32MB = 25 bits
+      g_dummy_time             => 5,
+      g_input_latch_edge       => '1',
+      g_output_latch_edge      => '1',
+      g_input_to_output_cycles => 2)
     port map(
       clk_i     => clk_sys,
       rstn_i    => rstn_sys,
       slave_i   => cbar_master_o(5),
       slave_o   => cbar_master_i(5),
       clk_out_i => clk_flash,
-      clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
+      clk_in_i  => clk_flash);
   
   GSI_CON : xwb_sdb_crossbar
    generic map(
