@@ -120,9 +120,124 @@ static eb_data_t flip_bits(eb_data_t x) {
   return x;
 }
 
+static void wait_for_erase(eb_device_t device) {
+  long delay, used;
+  
+  /* Sleep as requested */
+  for (delay = wait_us; delay > 0; delay -= used) {
+    used = eb_socket_run(eb_device_socket(device), delay);
+  }
+}
+
+static void find_sector_size(eb_user_data_t user, eb_device_t dev, eb_operation_t op, eb_status_t status) {
+  eb_address_t* sector_size = (eb_address_t*)user;
+  eb_address_t result;
+  
+  if (status != EB_OK) {
+    fprintf(stderr, "%s: pattern read failed: %s\n", program, eb_status(status));
+    exit(1);
+  }
+  
+  result = page_size;
+  for (; op != EB_NULL; op = eb_operation_next(op)) {
+    if (eb_operation_had_error(op)) {
+      fprintf(stderr, "%s: wishbone segfault reading %s %s bits from address 0x%"EB_ADDR_FMT"\n",
+                      program, 
+                      eb_width_data(eb_operation_format(op)), 
+                      eb_format_endian(eb_operation_format(op)), 
+                      eb_operation_address(op));
+      exit(1);
+    }
+    
+    /* If the data is 0, then it was erased */
+    if (eb_operation_data(op) != 0) {
+      result <<= 1;
+    } else {
+      break;
+    }
+  }
+  
+  *sector_size = result;
+}
+
 static eb_address_t detect_sector_size(eb_device_t device) {
-  /* !!! */
-  return 256*1024;
+  eb_address_t sector_size;
+  eb_address_t max_size;
+  eb_address_t target;
+  eb_address_t end;
+  eb_status_t  status;
+  eb_cycle_t   cycle;
+  
+  /* Plan:
+   *   0- Find largest possible sector that fits between start and end
+   *   1- Write 0s at positions 2^x-1 inside that sector
+   *   2- Erase the start address of the sector
+   *   3- Read the values at all the addresses that were zeroed.
+   *   4- The last non-zero seen determines the sector size
+   */
+  
+  if (!quiet) {
+    printf("Autodetecting sector size ... ");
+    fflush(stdout);
+  }
+  
+  /* Find largest sector that fits by aligning target */
+  end = address + firmware_length-1;
+  target = address + firmware_length/2;
+  
+  sector_size = page_size;
+  target &= ~(sector_size-1);
+  while (address <= target && target+sector_size-1 <= end) {
+    sector_size <<= 1;
+    target &= ~(sector_size-1);
+  }
+  
+  max_size = sector_size >> 1;
+  target = (address + firmware_length/2) & ~(max_size-1);
+  
+  /* Start writing test pattern */
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) {
+    fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
+    exit(1);
+  }
+  
+  for (sector_size = 2*page_size; sector_size <= max_size; sector_size <<= 1) {
+    eb_cycle_write(cycle, target+sector_size-sizeof(eb_data_t), format, 0);
+  }
+  
+  if ((status = eb_cycle_close(cycle)) != EB_OK) {
+    fprintf(stderr, "\r%s: could not write test pattern: %s\n", program, eb_status(status));
+    exit(1);
+  }
+  
+  status = eb_device_write(device, erase_address, (format&EB_ENDIAN_MASK)|EB_DATA32, target, 0, eb_block);
+  if (status != EB_OK) {
+    fprintf(stderr, "\r%s: failed to erase test sector 0x%"EB_ADDR_FMT": %s\n", program, target, eb_status(status));
+    exit(1);
+  }
+  
+  wait_for_erase(device);
+  
+  if ((status = eb_cycle_open(device, &sector_size, find_sector_size, &cycle)) != EB_OK) {
+    fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
+    exit(1);
+  }
+  
+  for (sector_size = 2*page_size; sector_size <= max_size; sector_size <<= 1) {
+    eb_cycle_read(cycle, target+sector_size-sizeof(eb_data_t), format, 0);
+  }
+  
+  sector_size = 0;
+  eb_cycle_close(cycle);
+  while (sector_size == 0) {
+    eb_socket_run(eb_device_socket(device), -1);
+  }
+  
+  if (!quiet) {
+    printf("0x%"EB_ADDR_FMT"\n", sector_size);
+  }
+  
+  return sector_size;
 }
 
 static void detect_decrement(eb_user_data_t user, eb_device_t dev, eb_operation_t op, eb_status_t status) {
@@ -130,7 +245,7 @@ static void detect_decrement(eb_user_data_t user, eb_device_t dev, eb_operation_
   --*counter;
   
   if (status != EB_OK) {
-    fprintf(stderr, "%s: program operation failed: %s\n", program, eb_status(status));
+    fprintf(stderr, "%s: scan operation failed: %s\n", program, eb_status(status));
     exit(1);
   }
   
@@ -243,8 +358,6 @@ static void erase_flash(eb_device_t device) {
   eb_address_t last_sector;
   eb_status_t status;
   int i;
-  long delay, used;
-  
   first_sector = (address/sector_size) * sector_size;
   last_sector = ((address+firmware_length+sector_size-1)/sector_size)*sector_size;
   
@@ -260,22 +373,13 @@ static void erase_flash(eb_device_t device) {
     
     if (!bitmask_get(i++)) continue;
     
-    status = eb_device_write(device, erase_address, (format&EB_ENDIAN_MASK)|EB_DATA32, sector, &status, eb_record_status);
+    status = eb_device_write(device, erase_address, (format&EB_ENDIAN_MASK)|EB_DATA32, sector, 0, eb_block);
     if (status != EB_OK) {
-      fprintf(stderr, "\r%s: failed allocate cycle: %s\n", program, eb_status(status));
-      exit(1);
-    }
-    
-    /* Sleep as requested */
-    status = EB_OK;
-    for (delay = wait_us; delay > 0; delay -= used) {
-      used = eb_socket_run(eb_device_socket(device), delay);
-    }
-    
-    if (status != EB_SUCCESS) {
       fprintf(stderr, "\r%s: failed to erase 0x%"EB_ADDR_FMT": %s\n", program, sector, eb_status(status));
       exit(1);
     }
+    
+    wait_for_erase(device);
   }
   
   if (!quiet) printf("done!\n");

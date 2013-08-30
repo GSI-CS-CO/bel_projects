@@ -1,12 +1,12 @@
-all::	etherbone driver toolchain firmware
+all::	etherbone tools driver toolchain firmware
 
-clean::	etherbone-clean driver-clean toolchain-clean firmware-clean scu-clean exploder-clean pexarria5-clean
+clean::	etherbone-clean tools-clean driver-clean toolchain-clean firmware-clean scu-clean exploder-clean pexarria5-clean
 
 distclean::
 	git clean -xfd .
 	for i in etherbone-core fpga-config-space general-cores wr-cores wrpc-sw; do cd ip_cores/$$i; git clean -xfd .; cd ../..; done
 
-install::	etherbone-install driver-install
+install::	etherbone-install tools-install driver-install
 
 etherbone::
 	$(MAKE) -C ip_cores/etherbone-core/api all
@@ -16,6 +16,15 @@ etherbone-clean::
 
 etherbone-install::
 	$(MAKE) -C ip_cores/etherbone-core/api install
+
+tools::
+	$(MAKE) -C tools all
+
+tools-clean::
+	$(MAKE) -C tools clean
+
+tools-install::
+	$(MAKE) -C tools install
 
 driver::
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb all
