@@ -29,5 +29,9 @@ set_clock_groups -asynchronous                \
           PCIe*|rx_pmas[3]*|clk90b          } \
  -group { PCIe*|coreclkout                  }
 
+# cut: wb sys <=> wb flash   (different frequencies and using xwb_clock_crossing)
 set_false_path -from [get_clocks {sys_inst|*|general[0].*}] -to [get_clocks {sys_inst|*|general[3].*}]
 set_false_path -from [get_clocks {sys_inst|*|general[3].*}] -to [get_clocks {sys_inst|*|general[0].*}]
+# cut: wb sys <=> wb display (different frequencies and using xwb_clock_crossing)
+set_false_path -from [get_clocks {sys_inst|*|general[0].*}] -to [get_clocks {sys_inst|*|general[1].*}]
+set_false_path -from [get_clocks {sys_inst|*|general[1].*}] -to [get_clocks {sys_inst|*|general[0].*}]

@@ -16,3 +16,10 @@ set_clock_groups -asynchronous                \
           wr_gxb*|rx_cdr_pll0|*               \
           wr_gxb*|receive_pma0|*              \
           wr_gxb*|receive_pcs0|*            }
+
+# cut: wb sys <=> wb flash   (different frequencies and using xwb_clock_crossing)
+set_false_path -from [get_clocks {sys_inst|*|clk[0]}] -to [get_clocks {sys_inst|*|clk[1]}]
+set_false_path -from [get_clocks {sys_inst|*|clk[1]}] -to [get_clocks {sys_inst|*|clk[0]}]
+# cut: wb sys <=> wb display (different frequencies and using xwb_clock_crossing)
+set_false_path -from [get_clocks {sys_inst|*|clk[0]}] -to [get_clocks {sys_inst|*|clk[2]}]
+set_false_path -from [get_clocks {sys_inst|*|clk[2]}] -to [get_clocks {sys_inst|*|clk[0]}]

@@ -32,3 +32,10 @@ set_clock_groups -asynchronous                \
           PCIe*|receive_pma2|*              } \
  -group { PCIe*|rx_cdr_pll3|*                 \
           PCIe*|receive_pma3|*              }
+
+# cut: wb sys <=> wb flash   (different frequencies and using xwb_clock_crossing)
+set_false_path -from [get_clocks {sys_inst|*|clk[0]}] -to [get_clocks {sys_inst|*|clk[1]}]
+set_false_path -from [get_clocks {sys_inst|*|clk[1]}] -to [get_clocks {sys_inst|*|clk[0]}]
+# cut: wb sys <=> wb display (different frequencies and using xwb_clock_crossing)
+set_false_path -from [get_clocks {sys_inst|*|clk[0]}] -to [get_clocks {sys_inst|*|clk[2]}]
+set_false_path -from [get_clocks {sys_inst|*|clk[2]}] -to [get_clocks {sys_inst|*|clk[0]}]
