@@ -31,7 +31,7 @@ clean:
 %.pof:	%.sof %.opt
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) $< $@
 
-%.rpd:	%.pof
+%.rpd:	%.pof %.opt
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt $< $@
 
 -include $(TARGET).dep
