@@ -16,6 +16,7 @@ use work.scu_bus_pkg.all;
 use work.altera_flash_pkg.all;
 use work.oled_display_pkg.all;
 use work.lpc_uart_pkg.all;
+use work.wb_irq_pkg.all;
 
 entity scu_control is
   port(
@@ -203,7 +204,7 @@ architecture rtl of scu_control is
     wbd_width     => x"7", -- 8/16/32-bit port granularity
     sdb_component => (
     addr_first    => x"0000000000000000",
-    addr_last     => x"000000000000001f", -- five 4 byte registers
+    addr_last     => x"000000000000000f", -- three 4 byte registers
     product => (
     vendor_id     => x"0000000000000651", -- GSI
     device_id     => x"35aa6b95",
@@ -211,25 +212,78 @@ architecture rtl of scu_control is
     date          => x"20120305",
     name          => "GSI_GPIO_32        ")));
 
-  -- Top crossbar layout
-  constant c_slaves  : natural := 9;
-  constant c_masters : natural := 2;
-  constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
-   (0 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00000000"),
-    1 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00100000"),
-    2 => f_sdb_embed_device(c_eca_sdb,                    x"00100800"),
-    3 => f_sdb_embed_device(c_eca_evt_sdb,                x"00100C00"),
-    4 => f_sdb_embed_device(c_scu_bus_master,             x"00400000"),
+	constant c_dpram_size : natural := 131072/4;
+
+
+  ----------------------------------------------------------------------------------
+  -- MSI IRQ Crossbar --------------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  constant c_irq_slaves   : natural := 4;
+  constant c_irq_masters  : natural := 1;
+  constant c_irq_layout   : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
+   (0 => f_sdb_embed_device(c_irq_ep_sdb, 					      x"00000000"),
+    1 => f_sdb_embed_device(c_irq_ep_sdb,                 x"00000100"),
+    2 => f_sdb_embed_device(c_irq_ep_sdb,                 x"00000200"),
+	  3 => f_sdb_embed_device(c_irq_hostbridge_ep_sdb,      x"00001000"));
+  constant c_irq_sdb_address : t_wishbone_address := x"00002000";
+
+  signal irq_cbar_slave_i  : t_wishbone_slave_in_array (c_irq_masters-1 downto 0);
+  signal irq_cbar_slave_o  : t_wishbone_slave_out_array(c_irq_masters-1 downto 0);
+  signal irq_cbar_master_i : t_wishbone_master_in_array(c_irq_slaves-1 downto 0);
+  signal irq_cbar_master_o : t_wishbone_master_out_array(c_irq_slaves-1 downto 0);
+
+  -- END OF MSI IRQ Crossbar
+  ----------------------------------------------------------------------------------	 
+  
+  ----------------------------------------------------------------------------------
+  -- GSI Periphery Crossbar --------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  constant c_per_slaves   : natural := 9;
+  constant c_per_masters  : natural := 1;
+  constant c_per_layout   : t_sdb_record_array(c_per_slaves-1 downto 0) :=
+   (0 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00000000"),
+    1 => f_sdb_embed_device(c_eca_sdb,                    x"00000800"),
+    2 => f_sdb_embed_device(c_eca_evt_sdb,                x"00000C00"),
+	 3 => f_sdb_embed_device(c_irq_ctrl_sdb,               x"00000D00"),
+	 4 => f_sdb_embed_device(c_scu_bus_master,             x"00400000"),
     5 => f_sdb_embed_device(c_xwb_gpio32_sdb,             x"00800000"),
     6 => f_sdb_embed_device(c_wrc_periph1_sdb,            x"00800100"),
     7 => f_sdb_embed_device(c_oled_display,               x"00900000"),
-    8 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"04000000"));
-  constant c_sdb_address : t_wishbone_address := x"00300000";
+    8 => f_sdb_embed_device(c_wb_spi_flash_sdb,           x"01000000"));
+  constant c_per_sdb_address : t_wishbone_address := x"00001000";
+  constant c_per_bridge_sdb  : t_sdb_bridge       :=
+    f_xwb_bridge_layout_sdb(true, c_per_layout, c_per_sdb_address);
+	
+  signal per_cbar_slave_i  : t_wishbone_slave_in_array (c_per_masters-1 downto 0);
+  signal per_cbar_slave_o  : t_wishbone_slave_out_array(c_per_masters-1 downto 0);
+  signal per_cbar_master_i : t_wishbone_master_in_array(c_per_slaves-1 downto 0);
+  signal per_cbar_master_o : t_wishbone_master_out_array(c_per_slaves-1 downto 0);	
+  
+  -- END OF GSI Periphery Crossbar
+  ----------------------------------------------------------------------------------		 
+  
+  ----------------------------------------------------------------------------------
+  -- Top crossbar ------------------------------------------------------------------
+  ----------------------------------------------------------------------------------  
+  constant c_top_slaves : natural := 3;
+  constant c_top_masters : natural := 4;
+  constant c_top_layout : t_sdb_record_array(c_top_slaves-1 downto 0) :=
+   (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),    x"00000000"),
+    1 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00080000"),
+    2 => f_sdb_embed_bridge(c_per_bridge_sdb,             x"02000000")
+   );
+  constant c_top_sdb_address : t_wishbone_address := x"000F0000";	 
+	 
+  signal top_cbar_slave_i  : t_wishbone_slave_in_array (c_top_masters-1 downto 0);
+  signal top_cbar_slave_o  : t_wishbone_slave_out_array(c_top_masters-1 downto 0);
+  signal top_cbar_master_i : t_wishbone_master_in_array(c_top_slaves-1 downto 0);
+  signal top_cbar_master_o : t_wishbone_master_out_array(c_top_slaves-1 downto 0);
+  
+  -- END OF Top crossbar
+  ----------------------------------------------------------------------------------		
 
-  signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
-  signal cbar_slave_o  : t_wishbone_slave_out_array(c_masters-1 downto 0);
-  signal cbar_master_i : t_wishbone_master_in_array(c_slaves-1 downto 0);
-  signal cbar_master_o : t_wishbone_master_out_array(c_slaves-1 downto 0);
+  signal eca_2_wb_i : t_wishbone_master_in;
+  signal eca_2_wb_o : t_wishbone_master_out;
   
   signal pcie_slave_i : t_wishbone_slave_in;
   signal pcie_slave_o : t_wishbone_slave_out;
@@ -258,13 +312,7 @@ architecture rtl of scu_control is
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
   signal clk_ref          : std_logic;
-  signal clk_butis        : std_logic;
-  signal clk_25m          : std_logic;
   signal rstn_ref         : std_logic;
-  
-  signal phase_done       : std_logic;
-  signal phase_step       : std_logic;
-  signal phase_sel        : std_logic_vector(3 downto 0);
   
   -- DMTD PLL from clk_20m_vcxo_i
   -- signal dmtd_locked      : std_logic;
@@ -326,11 +374,15 @@ architecture rtl of scu_control is
   signal s_lemo_dat : std_logic_vector(2 downto 1);
   signal s_uled_dat : std_logic_vector(2 downto 1);
   signal s_lemo_led : std_logic_vector(2 downto 1);
-  signal s_lemo_in  : std_logic_vector(3 downto 0);
   
   signal kbc_out_port : std_logic_vector(7 downto 0);
   signal kbc_in_port  : std_logic_vector(7 downto 0);
 begin
+
+  ----------------------------------------------------------------------------------
+  -- Reset & PLLs and Tranceiver ---------------------------------------------------
+  ----------------------------------------------------------------------------------
+  rstn_wr <= rstn_sys and gxb_locked;
 
   dmtd_inst : dmtd_pll port map(
     inclk0 => clk_20m_vcxo_i,    --  20  Mhz 
@@ -340,14 +392,7 @@ begin
   ref_inst : ref_pll port map(
     inclk0 => clk_125m_pllref_i, -- 125 MHz
     c0     => clk_ref,           -- 125 MHz
-    c1     => clk_butis,         -- 200 MHz
-    c2     => clk_25m,           --  25 MHz
-    locked => ref_locked,
-    scanclk            => clk_reconf,
-    phasedone          => phase_done,
-    phasecounterselect => phase_sel,
-    phasestep          => phase_step,
-    phaseupdown        => '0');
+    locked => ref_locked);
 
   sys_inst : sys_pll port map(
     inclk0 => clk_125m_local_i, -- 125  Mhz 
@@ -379,54 +424,415 @@ begin
       locked_i   => ref_locked,
       clks_i(0)  => clk_ref,
       rstn_o(0)  => rstn_ref);
-
-  butis : altera_butis
-    port map(
-      clk_ref_i   => clk_ref,
-      clk_25m_i   => clk_25m,
-      clk_scan_i  => clk_reconf,
-      locked_i    => ref_locked,
-      pps_i       => pps,
-      phasedone_i => phase_done,
-      phasesel_o  => phase_sel,
-      phasestep_o => phase_step);
+      
+    wr_gxb_arria2 : wr_arria2_phy
+    port map (
+      clk_reconf_i   => clk_reconf,
+      clk_pll_i      => clk_ref,
+      clk_cru_i      => sfp2_ref_clk_i,
+      clk_sys_i      => clk_sys,
+      rstn_sys_i     => rstn_sys,
+      locked_o       => gxb_locked,
+      loopen_i       => phy_loopen,
+      drop_link_i    => phy_rst,
+      tx_data_i      => phy_tx_data,
+      tx_k_i         => phy_tx_k,
+      tx_disparity_o => phy_tx_disparity,
+      tx_enc_err_o   => phy_tx_enc_err,
+      rx_rbclk_o     => phy_rx_rbclk,
+      rx_data_o      => phy_rx_data,
+      rx_k_o         => phy_rx_k,
+      rx_enc_err_o   => phy_rx_enc_err,
+      rx_bitslide_o  => phy_rx_bitslide,
+      pad_txp_o      => sfp2_txp_o,
+      pad_rxp_i      => sfp2_rxp_i);    
   
+  -- Reset & PLLs and Tranceiver
+  ----------------------------------------------------------------------------------
+  
+  ----------------------------------------------------------------------------------
+  -- WB Bus Interconnects ----------------------------------------------------------
+  ----------------------------------------------------------------------------------
+   IRQ_CON : xwb_sdb_crossbar
+   generic map(
+     g_num_masters => c_irq_masters,
+     g_num_slaves  => c_irq_slaves,
+     g_registered  => true,
+     g_wraparound  => true,
+     g_layout      => c_irq_layout,
+     g_sdb_addr    => c_irq_sdb_address)
+   port map(
+     clk_sys_i     => clk_sys,
+     rst_n_i       => rstn_sys,
+     -- Master connections (INTERCON is a slave)
+     slave_i       => irq_cbar_slave_i,
+     slave_o       => irq_cbar_slave_o,
+     -- Slave connections (INTERCON is a master)
+     master_i      => irq_cbar_master_i,
+     master_o      => irq_cbar_master_o);
+  
+  TOP_CON : xwb_sdb_crossbar
+   generic map(
+     g_num_masters => c_top_masters,
+     g_num_slaves  => c_top_slaves,
+     g_registered  => true,
+     g_wraparound  => true,
+     g_layout      => c_top_layout,
+     g_sdb_addr    => c_top_sdb_address)
+   port map(
+     clk_sys_i     => clk_sys,
+     rst_n_i       => rstn_sys,
+     -- Master connections (INTERCON is a slave)
+     slave_i       => top_cbar_slave_i,
+     slave_o       => top_cbar_slave_o,
+     -- Slave connections (INTERCON is a master)
+     master_i      => top_cbar_master_i,
+     master_o      => top_cbar_master_o);
+  
+  ------------------------------------------------
+  -- Connect periphery crossbar to top crossbar
+  per_cbar_slave_i(0)  <= top_cbar_master_o(2);
+  top_cbar_master_i(2) <= per_cbar_slave_o(0);
+  ------------------------------------------------
+  
+  PER_CON : xwb_sdb_crossbar
+   generic map(
+     g_num_masters => c_per_masters,
+     g_num_slaves  => c_per_slaves,
+     g_registered  => true,
+     g_wraparound  => true,
+     g_layout      => c_per_layout,
+     g_sdb_addr    => c_per_sdb_address)
+   port map(
+     clk_sys_i     => clk_sys,
+     rst_n_i       => rstn_sys,
+     -- Master connections (INTERCON is a slave)
+     slave_i       => per_cbar_slave_i,
+     slave_o       => per_cbar_slave_o,
+     -- Slave connections (INTERCON is a master)
+     master_i      => per_cbar_master_i,
+     master_o      => per_cbar_master_o);
+
+  -- END OF WB Bus Interconnects
+  ----------------------------------------------------------------------------------
+  
+  
+  ----------------------------------------------------------------------------------
+  -- Top LM32 CPU & RAM ------------------------------------------------------------
+  ----------------------------------------------------------------------------------
+    DPRAM : xwb_dpram
+    generic map(
+      g_size                  => c_dpram_size,
+      g_init_file             => "",
+      g_must_have_init_file   => false,
+      g_slave1_interface_mode => PIPELINED,
+      g_slave2_interface_mode => PIPELINED,
+      g_slave1_granularity    => BYTE,
+      g_slave2_granularity    => WORD)  
+    port map(
+      clk_sys_i => clk_sys,
+      rst_n_i   => rstn_sys,
+
+      slave1_i => top_cbar_master_o(0),
+      slave1_o => top_cbar_master_i(0),
+      slave2_i => cc_dummy_slave_in,
+      slave2_o => open
+      );
+
+    
+
+   LM32_CORE : wb_irq_lm32
+    generic map(g_profile => "medium_icache_debug")
+    port map(
+      clk_sys_i => clk_sys,
+      rst_n_i   => rstn_sys,
+
+      dwb_o => top_cbar_slave_i(2),
+      dwb_i => top_cbar_slave_o(2),
+      iwb_o => top_cbar_slave_i(3),
+      iwb_i => top_cbar_slave_o(3),
+      
+      irq_slave_o   => irq_cbar_master_i(c_irq_slaves-1-1 downto 0), 
+      irq_slave_i   => irq_cbar_master_o(c_irq_slaves-1-1 downto 0),
+           
+      ctrl_slave_o  => per_cbar_master_i(3),
+      ctrl_slave_i  => per_cbar_master_o(3)
+      );	
+
+  -- END OF Top LM32 CPU & RAM 
+  ----------------------------------------------------------------------------------
+  
+
+  ----------------------------------------------------------------------------------
+  -- GSI WB Periphery --------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   flash : flash_top
     generic map(
       g_family                 => "Arria II GX",
       g_port_width             => 1,   -- single-lane SPI bus
       g_addr_width             => 24,  -- 3 byte addressed chip
-      g_dummy_time             => 8,   -- 8 cycles between address and data
       g_input_latch_edge       => '1', -- 30ns at 50MHz (10+20) after falling edge sets up SPI output
       g_output_latch_edge      => '0', -- falling edge to meet SPI setup times
       g_input_to_output_cycles => 2)   -- delayed to work-around unconstrained design
     port map(
       clk_i     => clk_sys,
       rstn_i    => rstn_sys,
-      slave_i   => cbar_master_o(8),
-      slave_o   => cbar_master_i(8),
+      slave_i   => per_cbar_master_o(8),
+      slave_o   => per_cbar_master_i(8),
       clk_out_i => clk_flash,
       clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
+      
+U_DAC_ARB : spec_serial_dac_arb
+    generic map (
+      g_invert_sclk    => false,
+      g_num_extra_bits => 8) -- AD DACs with 24bit interface
+    port map (
+      clk_i   => clk_sys,
+      rst_n_i => rstn_sys,
+
+      val1_i  => dac_dpll_data,
+      load1_i => dac_dpll_load_p1,
+
+      val2_i  => dac_hpll_data,
+      load2_i => dac_hpll_load_p1,
+
+      dac_cs_n_o(0) => ndac_cs(1),
+      dac_cs_n_o(1) => ndac_cs(2),
+      dac_clr_n_o   => open,
+      dac_sclk_o    => dac_sclk,
+      dac_din_o     => dac_din);
+
+
   
-  GSI_CON : xwb_sdb_crossbar
-   generic map(
-     g_num_masters => c_masters,
-     g_num_slaves  => c_slaves,
-     g_registered  => true,
-     g_wraparound  => true,
-     g_layout      => c_layout,
-     g_sdb_addr    => c_sdb_address)
+   U_ebone : eb_ethernet_slave
+     generic map(
+       g_sdb_address => x"00000000" & c_top_sdb_address)
+     port map(
+       clk_i       => clk_sys,
+       nRst_i      => rstn_sys,
+       snk_i       => mb_snk_in,
+       snk_o       => mb_snk_out,
+       src_o       => mb_src_out,
+       src_i       => mb_src_in,
+       cfg_slave_o => wrc_master_i,
+       cfg_slave_i => wrc_master_o,
+       master_o    => top_cbar_slave_i(0),
+       master_i    => top_cbar_slave_o(0));
+
+  
+  PCIe : pcie_wb
+    generic map(
+       sdb_addr => c_top_sdb_address)
+    port map(
+       clk125_i      => clk_pcie,
+       cal_clk50_i   => clk_reconf,
+       
+       pcie_refclk_i => pcie_refclk_i,
+       pcie_rstn_i   => nPCI_RESET,
+       pcie_rx_i     => pcie_rx_i,
+       pcie_tx_o     => pcie_tx_o,
+       
+       master_clk_i  => clk_sys,
+       master_rstn_i => rstn_sys,
+       master_o      => top_cbar_slave_i(1),
+       master_i      => top_cbar_slave_o(1),
+       
+       slave_clk_i   => clk_ref,
+       slave_rstn_i  => rstn_ref,
+       slave_i       => irq_cbar_master_o(3),
+       slave_o       => irq_cbar_master_i(3));
+  
+  TLU : wb_timestamp_latch
+    generic map (
+      g_num_triggers => 2,
+      g_fifo_depth   => 10)
+    port map (
+      ref_clk_i       => clk_ref,
+      ref_rstn_i      => rstn_ref,
+      sys_clk_i       => clk_sys,
+      sys_rstn_i      => rstn_sys,
+      triggers_i(0)   => lemo_io(1),
+      triggers_i(1)   => lemo_io(2),
+      tm_time_valid_i => tm_valid,
+      tm_tai_i        => tm_tai,
+      tm_cycles_i     => tm_cycles,
+      wb_slave_i      => per_cbar_master_o(0),
+      wb_slave_o      => per_cbar_master_i(0));
+
+  ECA0 : wr_eca
+    generic map(
+      g_eca_name       => f_name("SCU top"),
+      g_channel_names  => (f_name("GPIO: LEMOs(0=B1,1=B2) LEDs(2=U1,3=U2)"), 
+                           f_name("PCIe: Interrupt generator")),
+      g_log_table_size => 7,
+      g_log_queue_len  => 8,
+      g_num_channels   => 2,
+      g_num_streams    => 1)
+    port map(
+      e_clk_i  (0)=> clk_sys,
+      e_rst_n_i(0)=> rstn_sys,
+      e_slave_i(0)=> per_cbar_master_o(2),
+      e_slave_o(0)=> per_cbar_master_i(2),
+      c_clk_i     => clk_sys,
+      c_rst_n_i   => rstn_sys,
+      c_slave_i   => per_cbar_master_o(1),
+      c_slave_o   => per_cbar_master_i(1),
+      a_clk_i     => clk_ref,
+      a_rst_n_i   => rstn_ref,
+      a_tai_i     => tm_tai,
+      a_cycles_i  => tm_cycles,
+      a_channel_o => channels);
+  
+  C0 : eca_gpio_channel
+    port map(
+      clk_i     => clk_ref,
+      rst_n_i   => rstn_ref,
+      channel_i => channels(0),
+      gpio_o    => eca_gpio);
+  
+  C1 : eca_wb_channel
+    port map(
+      clk_i     => clk_ref,
+      rst_n_i   => rstn_ref,
+      channel_i => channels(1),
+      master_o  => eca_2_wb_o,
+      master_i  => eca_2_wb_i);
+		
+	 eca_2_irq : xwb_clock_crossing 
+	 generic map(
+				g_size => 256)
+	 port map(
+    slave_clk_i    => clk_ref,
+    slave_rst_n_i  => rstn_ref,
+    slave_i        => eca_2_wb_o,
+    slave_o        => eca_2_wb_i,
+    master_clk_i   => clk_sys, 
+    master_rst_n_i => rstn_sys,
+    master_i       => irq_cbar_slave_o(0),
+    master_o       => irq_cbar_slave_i(0));	
+		
+		
+  
+  scub_master : wb_scu_bus 
+    generic map(
+      g_interface_mode      => PIPELINED,
+      g_address_granularity => BYTE,
+      CLK_in_Hz             => 62_500_000,
+      Test                  => 0,
+      Time_Out_in_ns        => 350)
    port map(
-     clk_sys_i     => clk_sys,
-     rst_n_i       => rstn_sys,
-     -- Master connections (INTERCON is a slave)
-     slave_i       => cbar_slave_i,
-     slave_o       => cbar_slave_o,
-     -- Slave connections (INTERCON is a master)
-     master_i      => cbar_master_i,
-     master_o      => cbar_master_o);
+     clk     =>  clk_sys,
+     nrst    => rstn_sys,
+     slave_i => per_cbar_master_o(4),
+     slave_o => per_cbar_master_i(4),
+     
+     SCUB_Data          => A_D,
+     nSCUB_DS           => A_nDS,
+     nSCUB_Dtack        => A_nDtack,
+     SCUB_Addr          => A_A,
+     SCUB_RDnWR         => A_RnW,
+     nSCUB_SRQ_Slaves   => A_nSRQ,
+     nSCUB_Slave_Sel    => A_nSEL,
+     nSCUB_Timing_Cycle => A_nTiming_Cycle,
+     nSel_Ext_Data_Drv  => nSel_Ext_Data_DRV);
   
-  rstn_wr <= rstn_sys and gxb_locked;
+  ADR_TO_SCUB <= '1';
+  nADR_EN     <= '0';
+  A_SysClock  <= clk_scubus;
+  A_nReset    <= rstn_sys;
+  A_Spare     <= (others => 'Z');
+  A_OneWire   <= 'Z';
+  A20GATE     <= kbc_out_port(1);
+     
+  gpio_slave_i <= per_cbar_master_o(5);
+  per_cbar_master_i(5) <= gpio_slave_o;
+  
+  -- There is a tool called 'wbgen2' which can autogenerate a Wishbone
+  -- interface and C header file, but this is a simple example.
+  gpio : process(clk_sys)
+  begin
+    if rising_edge(clk_sys) then
+      -- It is vitally important that for each occurance of
+      --   (cyc and stb and not stall) there is (ack or rty or err)
+      --   sometime later on the bus.
+      --
+      -- This is an easy solution for a device that never stalls:
+      gpio_slave_o.ack <= gpio_slave_i.cyc and gpio_slave_i.stb;
+      gpio_slave_o.dat <= (others => '0');
+      
+      if rstn_sys = '0' then
+        r_lemo_dir <= (others => '0');
+        r_gpio_mux <= (others => '0');
+        r_gpio_val <= (others => '0');
+        r_resets   <= (others => '0');
+      else
+        -- Detect a write to the register byte
+        if gpio_slave_i.cyc = '1' and gpio_slave_i.stb = '1' and
+           gpio_slave_i.we = '1' and gpio_slave_i.sel(0) = '1' then
+          case to_integer(unsigned(gpio_slave_i.adr(3 downto 2))) is
+            when 0 => r_gpio_val <= gpio_slave_i.dat(r_gpio_val'range);
+            when 1 => r_lemo_dir <= gpio_slave_i.dat(r_lemo_dir'range);
+            when 2 => r_gpio_mux <= gpio_slave_i.dat(r_gpio_mux'range);
+            when 3 => r_resets   <= gpio_slave_i.dat(r_resets'range);
+            when others => null;
+          end case;
+        end if;
+        
+        case to_integer(unsigned(gpio_slave_i.adr(3 downto 2))) is
+          when 0 => gpio_slave_o.dat(r_gpio_val'range) <= r_gpio_val;
+          when 1 => gpio_slave_o.dat(r_lemo_dir'range) <= r_lemo_dir;
+          when 2 => gpio_slave_o.dat(r_gpio_mux'range) <= r_gpio_mux;
+          when 3 => gpio_slave_o.dat(r_resets'range)   <= r_resets;
+          when others => null;
+        end case;
+      end if;
+    end if;
+  end process;
+  
+  gpio_slave_o.int <= '0'; -- In my opinion, this should not be in the structure.
+  gpio_slave_o.err <= '0';
+  gpio_slave_o.rty <= '0';
+  gpio_slave_o.stall <= '0'; -- This simple example is always ready
+  
+
+  -- UART
+  UART : xwb_simple_uart
+    generic map(
+      g_with_virtual_uart   => false,
+      g_with_physical_uart  => true,
+      g_interface_mode      => PIPELINED,
+      g_address_granularity => BYTE)
+    port map(
+      clk_sys_i  => clk_sys,
+      rst_n_i    => rstn_sys,
+      slave_i    => per_cbar_master_o(6),
+      slave_o    => per_cbar_master_i(6),
+      desc_o     => open,
+      uart_rxd_i => '1',
+      uart_txd_o => open);
+      
+  -- OLED display
+  dcon :  display_console
+    port map(	
+      clk_i      => clk_sys,
+      nRst_i     => rstn_sys,
+      slave_i    => per_cbar_master_o(7),
+      slave_o    => per_cbar_master_i(7),
+      RST_DISP_o => hpla_ch(8),
+      DC_SPI_o   => hpla_ch(6),
+      SS_SPI_o   => hpla_ch(4),
+      SCK_SPI_o  => hpla_ch(2),	
+      SD_SPI_o   => hpla_ch(10),
+      SH_VR_o    => hpla_ch(0));
+    
+
+        
+  -- END OF GSI WB Periphery
+  ----------------------------------------------------------------------------------
+  
+  ----------------------------------------------------------------------------------
+  -- WR Core -----------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   U_WR_CORE : xwr_core
     generic map (
       g_simulation                => 0,
@@ -488,8 +894,8 @@ begin
       owr_pwren_o => owr_pwren,
       owr_en_o    => owr_en,
       owr_i       => owr,
-      slave_i => cbar_master_o(0),
-      slave_o => cbar_master_i(0),
+      slave_i => top_cbar_master_o(1),
+      slave_o => top_cbar_master_i(1),
 
       wrf_src_o => mb_snk_in,
       wrf_src_i => mb_snk_out,
@@ -502,7 +908,7 @@ begin
       tm_link_up_o         => open,
       tm_dac_value_o       => open,
       tm_dac_wr_o          => open,
-      tm_clk_aux_lock_en_i => (others => '0'),
+      tm_clk_aux_lock_en_i => '0',
       tm_clk_aux_locked_o  => open,
       tm_time_valid_o      => tm_valid,
       tm_tai_o             => tm_tai,
@@ -513,269 +919,15 @@ begin
       rst_aux_n_o          => open,
       link_ok_o            => open);
 
-  wr_gxb_arria2 : wr_arria2_phy
-    port map (
-      clk_reconf_i   => clk_reconf,
-      clk_pll_i      => clk_ref,
-      clk_cru_i      => sfp2_ref_clk_i,
-      clk_sys_i      => clk_sys,
-      rstn_sys_i     => rstn_sys,
-      locked_o       => gxb_locked,
-      loopen_i       => phy_loopen,
-      drop_link_i    => phy_rst,
-      tx_data_i      => phy_tx_data,
-      tx_k_i         => phy_tx_k,
-      tx_disparity_o => phy_tx_disparity,
-      tx_enc_err_o   => phy_tx_enc_err,
-      rx_rbclk_o     => phy_rx_rbclk,
-      rx_data_o      => phy_rx_data,
-      rx_k_o         => phy_rx_k,
-      rx_enc_err_o   => phy_rx_enc_err,
-      rx_bitslide_o  => phy_rx_bitslide,
-      pad_txp_o      => sfp2_txp_o,
-      pad_rxp_i      => sfp2_rxp_i);
+  -- END OF WR Core
+  ----------------------------------------------------------------------------------
 
-  U_DAC_ARB : spec_serial_dac_arb
-    generic map (
-      g_invert_sclk    => false,
-      g_num_extra_bits => 8) -- AD DACs with 24bit interface
-    port map (
-      clk_i   => clk_sys,
-      rst_n_i => rstn_sys,
 
-      val1_i  => dac_dpll_data,
-      load1_i => dac_dpll_load_p1,
-
-      val2_i  => dac_hpll_data,
-      load2_i => dac_hpll_load_p1,
-
-      dac_cs_n_o(0) => ndac_cs(1),
-      dac_cs_n_o(1) => ndac_cs(2),
-      dac_clr_n_o   => open,
-      dac_sclk_o    => dac_sclk,
-      dac_din_o     => dac_din);
-
-  U_Extend_PPS : gc_extend_pulse
-    generic map (
-      g_width => 10000000)
-    port map (
-      clk_i      => clk_sys,
-      rst_n_i    => rstn_sys,
-      pulse_i    => pps,
-      extended_o => ext_pps);
+  ----------------------------------------------------------------------------------
+  -- System IOs --------------------------------------------------------------------
+  ----------------------------------------------------------------------------------
   
-   U_ebone : eb_ethernet_slave
-     generic map(
-       g_sdb_address => x"00000000" & c_sdb_address)
-     port map(
-       clk_i       => clk_sys,
-       nRst_i      => rstn_sys,
-       snk_i       => mb_snk_in,
-       snk_o       => mb_snk_out,
-       src_o       => mb_src_out,
-       src_i       => mb_src_in,
-       cfg_slave_o => wrc_master_i,
-       cfg_slave_i => wrc_master_o,
-       master_o    => cbar_slave_i(0),
-       master_i    => cbar_slave_o(0));
-  
-  PCIe : pcie_wb
-    generic map(
-       sdb_addr => c_sdb_address)
-    port map(
-       clk125_i      => clk_pcie,
-       cal_clk50_i   => clk_reconf,
-       
-       pcie_refclk_i => pcie_refclk_i,
-       pcie_rstn_i   => nPCI_RESET,
-       pcie_rx_i     => pcie_rx_i,
-       pcie_tx_o     => pcie_tx_o,
-       
-       master_clk_i  => clk_sys,
-       master_rstn_i => rstn_sys,
-       master_o      => cbar_slave_i(1),
-       master_i      => cbar_slave_o(1),
-       
-       slave_clk_i   => clk_ref,
-       slave_rstn_i  => rstn_ref,
-       slave_i       => pcie_slave_i,
-       slave_o       => pcie_slave_o);
-  
-  TLU : wb_timestamp_latch
-    generic map (
-      g_num_triggers => 2,
-      g_fifo_depth   => 10)
-    port map (
-      ref_clk_i       => clk_ref,
-      ref_rstn_i      => rstn_ref,
-      sys_clk_i       => clk_sys,
-      sys_rstn_i      => rstn_sys,
-      triggers_i(0)   => lemo_io(1),
-      triggers_i(1)   => lemo_io(2),
-      tm_time_valid_i => tm_valid,
-      tm_tai_i        => tm_tai,
-      tm_cycles_i     => tm_cycles,
-      wb_slave_i      => cbar_master_o(1),
-      wb_slave_o      => cbar_master_i(1));
-
-  ECA0 : wr_eca
-    generic map(
-      g_eca_name       => f_name("SCU top"),
-      g_channel_names  => (f_name("GPIO: LEMOs(0=B1,1=B2) LEDs(2=U1,3=U2)"), 
-                           f_name("PCIe: Interrupt generator")),
-      g_log_table_size => 7,
-      g_log_queue_len  => 8,
-      g_num_channels   => 2,
-      g_num_streams    => 1)
-    port map(
-      e_clk_i  (0)=> clk_sys,
-      e_rst_n_i(0)=> rstn_sys,
-      e_slave_i(0)=> cbar_master_o(3),
-      e_slave_o(0)=> cbar_master_i(3),
-      c_clk_i     => clk_sys,
-      c_rst_n_i   => rstn_sys,
-      c_slave_i   => cbar_master_o(2),
-      c_slave_o   => cbar_master_i(2),
-      a_clk_i     => clk_ref,
-      a_rst_n_i   => rstn_ref,
-      a_tai_i     => tm_tai,
-      a_cycles_i  => tm_cycles,
-      a_channel_o => channels);
-  
-  C0 : eca_gpio_channel
-    port map(
-      clk_i     => clk_ref,
-      rst_n_i   => rstn_ref,
-      channel_i => channels(0),
-      gpio_o    => eca_gpio);
-  
-  C1 : eca_wb_channel
-    port map(
-      clk_i     => clk_ref,
-      rst_n_i   => rstn_ref,
-      channel_i => channels(1),
-      master_o  => pcie_slave_i,
-      master_i  => pcie_slave_o);
-  
-  scub_master : wb_scu_bus 
-    generic map(
-      g_interface_mode      => PIPELINED,
-      g_address_granularity => BYTE,
-      CLK_in_Hz             => 62_500_000,
-      Test                  => 0,
-      Time_Out_in_ns        => 350)
-   port map(
-     clk     =>  clk_sys,
-     nrst    => rstn_sys,
-     slave_i => cbar_master_o(4),
-     slave_o => cbar_master_i(4),
-     
-     SCUB_Data          => A_D,
-     nSCUB_DS           => A_nDS,
-     nSCUB_Dtack        => A_nDtack,
-     SCUB_Addr          => A_A,
-     SCUB_RDnWR         => A_RnW,
-     nSCUB_SRQ_Slaves   => A_nSRQ,
-     nSCUB_Slave_Sel    => A_nSEL,
-     nSCUB_Timing_Cycle => A_nTiming_Cycle,
-     nSel_Ext_Data_Drv  => nSel_Ext_Data_DRV);
-  
-  ADR_TO_SCUB <= '1';
-  nADR_EN     <= '0';
-  A_SysClock  <= clk_scubus;
-  A_nReset    <= rstn_sys;
-  A_Spare     <= (others => 'Z');
-  A_OneWire   <= 'Z';
-  A20GATE     <= kbc_out_port(1);
-     
-  gpio_slave_i <= cbar_master_o(5);
-  cbar_master_i(5) <= gpio_slave_o;
-  
-  -- There is a tool called 'wbgen2' which can autogenerate a Wishbone
-  -- interface and C header file, but this is a simple example.
-  gpio : process(clk_sys)
-  begin
-    if rising_edge(clk_sys) then
-      -- It is vitally important that for each occurance of
-      --   (cyc and stb and not stall) there is (ack or rty or err)
-      --   sometime later on the bus.
-      --
-      -- This is an easy solution for a device that never stalls:
-      gpio_slave_o.ack <= gpio_slave_i.cyc and gpio_slave_i.stb;
-      gpio_slave_o.dat <= (others => '0');
-      
-      if rstn_sys = '0' then
-        r_lemo_dir <= (others => '0');
-        r_gpio_mux <= (others => '0');
-        r_gpio_val <= (others => '0');
-        r_resets   <= (others => '0');
-      else
-        -- Detect a write to the register byte
-        if gpio_slave_i.cyc = '1' and gpio_slave_i.stb = '1' and
-           gpio_slave_i.we = '1' and gpio_slave_i.sel(0) = '1' then
-          case to_integer(unsigned(gpio_slave_i.adr(3 downto 2))) is
-            when 0 => r_gpio_val <= gpio_slave_i.dat(r_gpio_val'range);
-            when 1 => r_lemo_dir <= gpio_slave_i.dat(r_lemo_dir'range);
-            when 2 => r_gpio_mux <= gpio_slave_i.dat(r_gpio_mux'range);
-            when 3 => r_resets   <= gpio_slave_i.dat(r_resets'range);
-            when others => null;
-          end case;
-        end if;
-        
-        case to_integer(unsigned(gpio_slave_i.adr(4 downto 2))) is
-          when 0 => gpio_slave_o.dat(r_gpio_val'range) <= r_gpio_val;
-          when 1 => gpio_slave_o.dat(r_lemo_dir'range) <= r_lemo_dir;
-          when 2 => gpio_slave_o.dat(r_gpio_mux'range) <= r_gpio_mux;
-          when 3 => gpio_slave_o.dat(r_resets'range)   <= r_resets;
-          when 4 => gpio_slave_o.dat(s_lemo_in'range)  <= s_lemo_in;
-          when others => null;
-        end case;
-      end if;
-    end if;
-  end process;
-  
-  gpio_slave_o.int <= '0'; -- In my opinion, this should not be in the structure.
-  gpio_slave_o.err <= '0';
-  gpio_slave_o.rty <= '0';
-  gpio_slave_o.stall <= '0'; -- This simple example is always ready
-  
-  --------------------------------------
-  -- UART
-  --------------------------------------
-  UART : xwb_simple_uart
-    generic map(
-      g_with_virtual_uart   => false,
-      g_with_physical_uart  => true,
-      g_interface_mode      => PIPELINED,
-      g_address_granularity => BYTE)
-    port map(
-      clk_sys_i  => clk_sys,
-      rst_n_i    => rstn_sys,
-      slave_i    => cbar_master_o(6),
-      slave_o    => cbar_master_i(6),
-      desc_o     => open,
-      uart_rxd_i => '1',
-      uart_txd_o => open);
-      
-  -------------------------------------
-  -- OLED display
-  -------------------------------------
-  dcon :  display_console
-    port map(	
-      clk_i      => clk_sys,
-      nRst_i     => rstn_sys,
-      slave_i    => cbar_master_o(7),
-      slave_o    => cbar_master_i(7),
-      RST_DISP_o => hpla_ch(8),
-      DC_SPI_o   => hpla_ch(6),
-      SS_SPI_o   => hpla_ch(4),
-      SCK_SPI_o  => hpla_ch(2),	
-      SD_SPI_o   => hpla_ch(10),
-      SH_VR_o    => hpla_ch(0));
-    
-  -------------------------------------
-  -- LPC UART
-  -------------------------------------
+    -- LPC UART
   lpc_slave: lpc_uart
     port map(
       lpc_clk         => LPC_FPGA_CLK,
@@ -797,6 +949,15 @@ begin
       serial_rts      => open,
       seven_seg_L     => open,
       seven_seg_H     => open);
+  
+    U_Extend_PPS : gc_extend_pulse
+    generic map (
+      g_width => 10000000)
+    port map (
+      clk_i      => clk_sys,
+      rst_n_i    => rstn_sys,
+      pulse_i    => pps,
+      extended_o => ext_pps);
   
   -- open drain buffer for one wire
   owr(0) <= OneWire_CB;
@@ -820,18 +981,6 @@ begin
   sfp2_det_i <= sfp2_mod0;
   sfp2_mod1  <= '0' when sfp2_scl_o = '0' else 'Z';
   sfp2_mod2  <= '0' when sfp2_sda_o = '0' else 'Z';
-  
-  -- lemo input register
-  lemo_in: process (clk_sys)
-  begin
-    if rising_edge(clk_sys) then
-      s_lemo_in(0) <= lemo_io(1);
-      s_lemo_in(1) <= lemo_io(2);
-      s_lemo_in(2) <= '0';
-      s_lemo_in(3) <= '0';
-    end if;
-  
-  end process;
   
   -- Output MUXes
   with r_gpio_mux(1 downto 0) select
@@ -896,15 +1045,15 @@ begin
   -- hpla_ch(15) <= phy_rx_rbclk; -- pin 4
   -- 20 is ground
   
+  -- LPC bus is not connected
+  LPC_AD <= (others => 'Z');
+  LPC_SERIRQ <= 'Z';
+  
   -- EXT CONN not connected
   IO_2_5            <= (others => 'Z');
+  A_EXT_LVDS_TX     <= (others => '0');
   a_EXT_LVDS_CLKOUT <= '0';
   EIO               <= (others => 'Z');
-  
-  A_EXT_LVDS_TX(0) <= clk_butis;
-  A_EXT_LVDS_TX(1) <= clk_ref;
-  A_EXT_LVDS_TX(2) <= '0';
-  A_EXT_LVDS_TX(3) <= '0';
   
   -- Parallel Flash not connected
   nRST_FSH <= '0';
@@ -933,5 +1082,8 @@ begin
   nFPGA_Res_Out <= not r_resets(0) and rstn_wr;
   nPWRBTN       <= not r_resets(1);
   A_nCONFIG     <= not r_resets(2);
+
+  -- END OF System IOs
+  ----------------------------------------------------------------------------------
   
 end rtl;
