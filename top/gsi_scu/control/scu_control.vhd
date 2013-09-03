@@ -221,10 +221,10 @@ architecture rtl of scu_control is
   constant c_irq_slaves   : natural := 4;
   constant c_irq_masters  : natural := 1;
   constant c_irq_layout   : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
-   (0 => f_sdb_embed_device(c_irq_ep_sdb, 					      x"00000000"),
-    1 => f_sdb_embed_device(c_irq_ep_sdb,                 x"00000100"),
-    2 => f_sdb_embed_device(c_irq_ep_sdb,                 x"00000200"),
-	  3 => f_sdb_embed_device(c_irq_hostbridge_ep_sdb,      x"00001000"));
+   (0 => f_sdb_embed_device(c_irq_ep_sdb, 	      x"00000000"),
+    1 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000100"),
+    2 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000200"),
+    3 => f_sdb_embed_device(c_irq_hostbridge_ep_sdb,  x"00001000"));
   constant c_irq_sdb_address : t_wishbone_address := x"00002000";
 
   signal irq_cbar_slave_i  : t_wishbone_slave_in_array (c_irq_masters-1 downto 0);
@@ -244,12 +244,12 @@ architecture rtl of scu_control is
    (0 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00000000"),
     1 => f_sdb_embed_device(c_eca_sdb,                    x"00000800"),
     2 => f_sdb_embed_device(c_eca_evt_sdb,                x"00000C00"),
-	 3 => f_sdb_embed_device(c_irq_ctrl_sdb,               x"00000D00"),
-	 4 => f_sdb_embed_device(c_scu_bus_master,             x"00400000"),
+	 3 => f_sdb_embed_device(c_irq_ctrl_sdb,          x"00000D00"),
+	 4 => f_sdb_embed_device(c_scu_bus_master,        x"00400000"),
     5 => f_sdb_embed_device(c_xwb_gpio32_sdb,             x"00800000"),
     6 => f_sdb_embed_device(c_wrc_periph1_sdb,            x"00800100"),
     7 => f_sdb_embed_device(c_oled_display,               x"00900000"),
-    8 => f_sdb_embed_device(c_wb_spi_flash_sdb,           x"01000000"));
+    8 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"01000000"));
   constant c_per_sdb_address : t_wishbone_address := x"00001000";
   constant c_per_bridge_sdb  : t_sdb_bridge       :=
     f_xwb_bridge_layout_sdb(true, c_per_layout, c_per_sdb_address);
