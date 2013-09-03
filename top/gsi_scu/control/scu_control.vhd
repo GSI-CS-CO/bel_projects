@@ -937,7 +937,7 @@ U_DAC_ARB : spec_serial_dac_arb
       tm_link_up_o         => open,
       tm_dac_value_o       => open,
       tm_dac_wr_o          => open,
-      tm_clk_aux_lock_en_i => '0',
+      tm_clk_aux_lock_en_i => (others => '0'),
       tm_clk_aux_locked_o  => open,
       tm_time_valid_o      => tm_valid,
       tm_tai_o             => tm_tai,
@@ -947,6 +947,8 @@ U_DAC_ARB : spec_serial_dac_arb
       dio_o                => open,
       rst_aux_n_o          => open,
       link_ok_o            => open);
+
+ 
 
   -- END OF WR Core
   ----------------------------------------------------------------------------------
