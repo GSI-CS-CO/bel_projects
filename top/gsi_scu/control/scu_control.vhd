@@ -204,7 +204,7 @@ architecture rtl of scu_control is
     wbd_width     => x"7", -- 8/16/32-bit port granularity
     sdb_component => (
     addr_first    => x"0000000000000000",
-    addr_last     => x"000000000000000f", -- three 4 byte registers
+    addr_last     => x"000000000000001f", -- five 4 byte registers
     product => (
     vendor_id     => x"0000000000000651", -- GSI
     device_id     => x"35aa6b95",
@@ -244,8 +244,8 @@ architecture rtl of scu_control is
    (0 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00000000"),
     1 => f_sdb_embed_device(c_eca_sdb,                    x"00000800"),
     2 => f_sdb_embed_device(c_eca_evt_sdb,                x"00000C00"),
-	 3 => f_sdb_embed_device(c_irq_ctrl_sdb,          x"00000D00"),
-	 4 => f_sdb_embed_device(c_scu_bus_master,        x"00400000"),
+	 3 => f_sdb_embed_device(c_irq_ctrl_sdb,                x"00000D00"),
+	 4 => f_sdb_embed_device(c_scu_bus_master,              x"00400000"),
     5 => f_sdb_embed_device(c_xwb_gpio32_sdb,             x"00800000"),
     6 => f_sdb_embed_device(c_wrc_periph1_sdb,            x"00800100"),
     7 => f_sdb_embed_device(c_oled_display,               x"00900000"),
@@ -312,7 +312,13 @@ architecture rtl of scu_control is
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
   signal clk_ref          : std_logic;
+  signal clk_butis        : std_logic;
+  signal clk_25m          : std_logic;
   signal rstn_ref         : std_logic;
+  
+  signal phase_done       : std_logic;
+  signal phase_step       : std_logic;
+  signal phase_sel        : std_logic_vector(3 downto 0);
   
   -- DMTD PLL from clk_20m_vcxo_i
   -- signal dmtd_locked      : std_logic;
@@ -374,6 +380,7 @@ architecture rtl of scu_control is
   signal s_lemo_dat : std_logic_vector(2 downto 1);
   signal s_uled_dat : std_logic_vector(2 downto 1);
   signal s_lemo_led : std_logic_vector(2 downto 1);
+  signal s_lemo_in  : std_logic_vector(3 downto 0);
   
   signal kbc_out_port : std_logic_vector(7 downto 0);
   signal kbc_in_port  : std_logic_vector(7 downto 0);
@@ -392,7 +399,14 @@ begin
   ref_inst : ref_pll port map(
     inclk0 => clk_125m_pllref_i, -- 125 MHz
     c0     => clk_ref,           -- 125 MHz
-    locked => ref_locked);
+    c1     => clk_butis,         -- 200 MHz
+    c2     => clk_25m,           --  25 MHz
+    locked => ref_locked,
+    scanclk            => clk_reconf,
+    phasedone          => phase_done,
+    phasecounterselect => phase_sel,
+    phasestep          => phase_step,
+    phaseupdown        => '0');
 
   sys_inst : sys_pll port map(
     inclk0 => clk_125m_local_i, -- 125  Mhz 
@@ -424,7 +438,19 @@ begin
       locked_i   => ref_locked,
       clks_i(0)  => clk_ref,
       rstn_o(0)  => rstn_ref);
-      
+
+  butis : altera_butis
+    port map(
+      clk_ref_i   => clk_ref,
+      clk_25m_i   => clk_25m,
+      clk_scan_i  => clk_reconf,
+      locked_i    => ref_locked,
+      pps_i       => pps,
+      phasedone_i => phase_done,
+      phasesel_o  => phase_sel,
+      phasestep_o => phase_step);
+  
+ 
     wr_gxb_arria2 : wr_arria2_phy
     port map (
       clk_reconf_i   => clk_reconf,
@@ -566,6 +592,7 @@ begin
   ----------------------------------------------------------------------------------
   -- GSI WB Periphery --------------------------------------------------------------
   ----------------------------------------------------------------------------------
+
   flash : flash_top
     generic map(
       g_family                 => "Arria II GX",
@@ -778,11 +805,12 @@ U_DAC_ARB : spec_serial_dac_arb
           end case;
         end if;
         
-        case to_integer(unsigned(gpio_slave_i.adr(3 downto 2))) is
+        case to_integer(unsigned(gpio_slave_i.adr(4 downto 2))) is
           when 0 => gpio_slave_o.dat(r_gpio_val'range) <= r_gpio_val;
           when 1 => gpio_slave_o.dat(r_lemo_dir'range) <= r_lemo_dir;
           when 2 => gpio_slave_o.dat(r_gpio_mux'range) <= r_gpio_mux;
           when 3 => gpio_slave_o.dat(r_resets'range)   <= r_resets;
+          when 4 => gpio_slave_o.dat(s_lemo_in'range)  <= s_lemo_in;
           when others => null;
         end case;
       end if;
@@ -982,6 +1010,18 @@ U_DAC_ARB : spec_serial_dac_arb
   sfp2_mod1  <= '0' when sfp2_scl_o = '0' else 'Z';
   sfp2_mod2  <= '0' when sfp2_sda_o = '0' else 'Z';
   
+  -- lemo input register
+  lemo_in: process (clk_sys)
+  begin
+    if rising_edge(clk_sys) then
+      s_lemo_in(0) <= lemo_io(1);
+      s_lemo_in(1) <= lemo_io(2);
+      s_lemo_in(2) <= '0';
+      s_lemo_in(3) <= '0';
+    end if;
+  
+  end process;
+  
   -- Output MUXes
   with r_gpio_mux(1 downto 0) select
     s_lemo_dat(1) <= 
@@ -1045,15 +1085,15 @@ U_DAC_ARB : spec_serial_dac_arb
   -- hpla_ch(15) <= phy_rx_rbclk; -- pin 4
   -- 20 is ground
   
-  -- LPC bus is not connected
-  LPC_AD <= (others => 'Z');
-  LPC_SERIRQ <= 'Z';
-  
   -- EXT CONN not connected
   IO_2_5            <= (others => 'Z');
-  A_EXT_LVDS_TX     <= (others => '0');
   a_EXT_LVDS_CLKOUT <= '0';
   EIO               <= (others => 'Z');
+  
+  A_EXT_LVDS_TX(0) <= clk_butis;
+  A_EXT_LVDS_TX(1) <= clk_ref;
+  A_EXT_LVDS_TX(2) <= '0';
+  A_EXT_LVDS_TX(3) <= '0';
   
   -- Parallel Flash not connected
   nRST_FSH <= '0';
