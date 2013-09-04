@@ -244,8 +244,8 @@ architecture rtl of scu_control is
    (0 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00000000"),
     1 => f_sdb_embed_device(c_eca_sdb,                    x"00000800"),
     2 => f_sdb_embed_device(c_eca_evt_sdb,                x"00000C00"),
-	 3 => f_sdb_embed_device(c_irq_ctrl_sdb,                x"00000D00"),
-	 4 => f_sdb_embed_device(c_scu_bus_master,              x"00400000"),
+	 3 => f_sdb_embed_device(c_irq_ctrl_sdb,               x"00000D00"),
+	 4 => f_sdb_embed_device(c_scu_bus_master,             x"00400000"),
     5 => f_sdb_embed_device(c_xwb_gpio32_sdb,             x"00800000"),
     6 => f_sdb_embed_device(c_wrc_periph1_sdb,            x"00800100"),
     7 => f_sdb_embed_device(c_oled_display,               x"00900000"),
@@ -265,15 +265,16 @@ architecture rtl of scu_control is
   ----------------------------------------------------------------------------------
   -- Top crossbar ------------------------------------------------------------------
   ----------------------------------------------------------------------------------  
-  constant c_top_slaves : natural := 3;
+  constant c_top_slaves : natural := 4;
   constant c_top_masters : natural := 4;
   constant c_top_layout : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),    x"00000000"),
     1 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00080000"),
-    2 => f_sdb_embed_bridge(c_per_bridge_sdb,             x"02000000")
+	 2 => f_sdb_embed_device(c_ebm_sdb,          			 x"01000000"),
+    3 => f_sdb_embed_bridge(c_per_bridge_sdb,             x"02000000")
    );
   constant c_top_sdb_address : t_wishbone_address := x"000F0000";	 
-	 
+  
   signal top_cbar_slave_i  : t_wishbone_slave_in_array (c_top_masters-1 downto 0);
   signal top_cbar_slave_o  : t_wishbone_slave_out_array(c_top_masters-1 downto 0);
   signal top_cbar_master_i : t_wishbone_master_in_array(c_top_slaves-1 downto 0);
@@ -517,8 +518,8 @@ begin
   
   ------------------------------------------------
   -- Connect periphery crossbar to top crossbar
-  per_cbar_slave_i(0)  <= top_cbar_master_o(2);
-  top_cbar_master_i(2) <= per_cbar_slave_o(0);
+  per_cbar_slave_i(0)  <= top_cbar_master_o(3);
+  top_cbar_master_i(3) <= per_cbar_slave_o(0);
   ------------------------------------------------
   
   PER_CON : xwb_sdb_crossbar
@@ -632,20 +633,44 @@ U_DAC_ARB : spec_serial_dac_arb
 
 
   
-   U_ebone : eb_ethernet_slave
-     generic map(
-       g_sdb_address => x"00000000" & c_top_sdb_address)
-     port map(
-       clk_i       => clk_sys,
-       nRst_i      => rstn_sys,
-       snk_i       => mb_snk_in,
-       snk_o       => mb_snk_out,
-       src_o       => mb_src_out,
-       src_i       => mb_src_in,
-       cfg_slave_o => wrc_master_i,
-       cfg_slave_i => wrc_master_o,
-       master_o    => top_cbar_slave_i(0),
-       master_i    => top_cbar_slave_o(0));
+--   U_ebone : eb_ethernet_slave
+--     generic map(
+--       g_sdb_address => x"00000000" & c_top_sdb_address)
+--     port map(
+--       clk_i       => clk_sys,
+--       nRst_i      => rstn_sys,
+--       snk_i       => mb_snk_in,
+--       snk_o       => mb_snk_out,
+--       src_o       => mb_src_out,
+--       src_i       => mb_src_in,
+--       cfg_slave_o => wrc_master_i,
+--       cfg_slave_i => wrc_master_o,
+--       master_o    => top_cbar_slave_i(0),
+--       master_i    => top_cbar_slave_o(0));
+		 
+  eb : eb_master_slave_wrapper
+  generic map(
+    g_with_master         	=> true,
+    g_ebs_sdb_address		=> (x"00000000" & c_top_sdb_address),
+	 g_ebm_adr_bits_hi 		=> 10)               
+  port map(
+	 clk_i       => clk_sys,
+	 nRst_i      => rstn_sys,
+	 snk_i       => mb_snk_in,
+	 snk_o       => mb_snk_out,
+	 src_o       => mb_src_out,
+	 src_i       => mb_src_in,
+  
+    --ebs
+    ebs_cfg_slave_o => wrc_master_i,
+    ebs_cfg_slave_i => wrc_master_o,
+    ebs_wb_master_o => top_cbar_slave_i(0),
+    ebs_wb_master_i => top_cbar_slave_o(0),
+    
+    --ebm (optional)
+    ebm_wb_slave_i  => top_cbar_master_o(2),
+    ebm_wb_slave_o  => top_cbar_Master_i(2));
+		 
 
   
   PCIe : pcie_wb
