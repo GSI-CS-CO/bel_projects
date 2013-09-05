@@ -632,22 +632,6 @@ U_DAC_ARB : spec_serial_dac_arb
       dac_din_o     => dac_din);
 
 
-  
---   U_ebone : eb_ethernet_slave
---     generic map(
---       g_sdb_address => x"00000000" & c_top_sdb_address)
---     port map(
---       clk_i       => clk_sys,
---       nRst_i      => rstn_sys,
---       snk_i       => mb_snk_in,
---       snk_o       => mb_snk_out,
---       src_o       => mb_src_out,
---       src_i       => mb_src_in,
---       cfg_slave_o => wrc_master_i,
---       cfg_slave_i => wrc_master_o,
---       master_o    => top_cbar_slave_i(0),
---       master_i    => top_cbar_slave_o(0));
-		 
   eb : eb_master_slave_wrapper
   generic map(
     g_with_master         	=> true,
