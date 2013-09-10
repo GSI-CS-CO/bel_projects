@@ -361,22 +361,22 @@ architecture rtl of pci_control is
 
 begin
 
-  dmtd_inst : dmtd_pll5 port map(
+  dmtd_inst : dmtd_pll5 port map(   --  FRACTIONALPLL_X0_Y18_N0 (down-to-up)
     rst      => '0',
-    refclk   => clk_20m_vcxo_i,    --  20  Mhz 
-    outclk_0 => clk_dmtd0,         --  62.5MHz
+    refclk   => clk_20m_vcxo_i,     --  20  Mhz 
+    outclk_0 => clk_dmtd0,          --  62.5MHz, counter 12 = PLLOUTPUTCOUNTER_X0_Y20_N1
     locked   => open);
   
   dmtd_clk : global_region port map(
     inclk  => clk_dmtd0,
-    outclk => clk_dmtd);
+    outclk => clk_dmtd);            -- GCLK4
   
-  ref_inst : ref_pll5 port map(
+  ref_inst : ref_pll5 port map(     -- FRACTIONALPLL_X0_Y51_N0 (up-to-down)
     rst        => '0',
     refclk     => sfp234_ref_clk_i, -- 125 MHz
-    outclk_0   => clk_ref0,         -- 125 MHz, counter:14
-    outclk_1   => clk_ref1,         -- 200 MHz, counter:12
-    outclk_2   => clk_ref2,         --  25 MHz, counter:13
+    outclk_0   => clk_ref0,         -- 125 MHz, counter 12 = PLLOUTPUTCOUNTER_X0_Y55_N1
+    outclk_1   => clk_ref1,         -- 200 MHz, counter 13 = PLLOUTPUTCOUNTER_X0_Y54_N1
+    outclk_2   => clk_ref2,         --  25 MHz, counter 14 = PLLOUTPUTCOUNTER_X0_Y53_N1
     locked     => ref_locked,
     scanclk    => clk_reconf,
     cntsel     => phase_sel,
@@ -386,28 +386,28 @@ begin
   
   ref_clk : global_region port map(
     inclk  => clk_ref0,
-    outclk => clk_ref);
+    outclk => clk_ref);             -- GCLK12
   
   butis_clk : global_region port map(
     inclk  => clk_ref1,
-    outclk => clk_butis);
+    outclk => clk_butis);           -- GCLK13
     
-  phase_clk : global_region port map( -- skew must match clk_ref => both global
-    inclk  => clk_ref2,
-    outclk => clk_phase);
+  phase_clk : global_region port map( 
+    inclk  => clk_ref2,             -- skew must match clk_ref => both global
+    outclk => clk_phase);           -- GCLK14
 
-  sys_inst : sys_pll5 port map(
+  sys_inst : sys_pll5 port map(     -- FRACTIONALPLL_X0_Y60_N0 (up-to-down)
     rst      => '0',
-    refclk   => clk_125m_local_i, -- 125  Mhz 
-    outclk_0 => clk_sys0,         --  62.5MHz
-    outclk_1 => clk_sys1,         --  20  MHz
-    outclk_2 => clk_sys2,         -- 100  MHz
-    outclk_3 => clk_sys3,         -- 100  MHz, -1.5 ns
+    refclk   => clk_125m_local_i,   -- 125  Mhz 
+    outclk_0 => clk_sys0,           --  62.5MHz, counter 0 = PLLOUTPUTCOUNTER_X0_Y67_N1
+    outclk_1 => clk_sys1,           --  20  MHz, counter 1 = PLLOUTPUTCOUNTER_X0_Y66_N1
+    outclk_2 => clk_sys2,           -- 100  MHz, counter 2 = PLLOUTPUTCOUNTER_X0_Y65_N1
+    outclk_3 => clk_sys3,           -- 100  MHz, counter 3 = PLLOUTPUTCOUNTER_X0_Y64_N1
     locked   => sys_locked);
 
   sys_clk : global_region port map(
     inclk  => clk_sys0,
-    outclk => clk_sys);
+    outclk => clk_sys);             -- GCLK0
   
   display_clk : single_region port map(
     inclk  => clk_sys1,
@@ -442,8 +442,8 @@ begin
   butis : altera_butis
     generic map(
       g_select_bits => 5,
-      g_200_sel     => 12,
-      g_25_sel      => 13)
+      g_200_sel     => 13, -- counter 13 = PLLOUTPUTCOUNTER_X0_Y54_N1
+      g_25_sel      => 14) -- counter 14 = PLLOUTPUTCOUNTER_X0_Y53_N1
     port map(
       clk_ref_i   => clk_ref,
       clk_25m_i   => clk_phase,
@@ -815,6 +815,6 @@ begin
   --hpw(3)  <= ext_pps;
   --hpw(9)  <= clk_ref;
   --hpw(11) <= phy_rx_rbclk;
-  --hpw(15) <= clk_butis;
+  hpw(15) <= clk_butis;
   
 end rtl;
