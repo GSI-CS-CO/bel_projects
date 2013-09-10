@@ -367,7 +367,7 @@ begin
     outclk_0 => clk_dmtd0,         --  62.5MHz
     locked   => open);
   
-  dmtd_clk : global_region port map( -- skew must match clk_ref => both global
+  dmtd_clk : global_region port map(
     inclk  => clk_dmtd0,
     outclk => clk_dmtd);
   
@@ -402,7 +402,7 @@ begin
     outclk_0 => clk_sys0,         --  62.5MHz
     outclk_1 => clk_sys1,         --  20  MHz
     outclk_2 => clk_sys2,         -- 100  MHz
-    outclk_3 => clk_sys3,         -- 100  MHz
+    outclk_3 => clk_sys3,         -- 100  MHz, -1.5 ns
     locked   => sys_locked);
 
   sys_clk : global_region port map(
@@ -468,6 +468,7 @@ begin
       rstn_i    => rstn_sys,
       slave_i   => cbar_master_o(5),
       slave_o   => cbar_master_i(5),
+      clk_ext_i => clk_flash,
       clk_out_i => clk_flash,
       clk_in_i  => clk_flash);
   

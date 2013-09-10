@@ -405,6 +405,7 @@ begin
       rstn_i    => rstn_sys,
       slave_i   => cbar_master_o(8),
       slave_o   => cbar_master_i(8),
+      clk_ext_i => clk_flash,
       clk_out_i => clk_flash,
       clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
   
