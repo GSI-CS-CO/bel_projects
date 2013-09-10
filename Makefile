@@ -2,7 +2,7 @@ all::	etherbone tools driver toolchain firmware
 
 clean::	etherbone-clean tools-clean driver-clean toolchain-clean firmware-clean scu-clean exploder-clean pexarria5-clean
 
-distclean::
+distclean::	clean
 	git clean -xfd .
 	for i in etherbone-core fpga-config-space general-cores wr-cores wrpc-sw; do cd ip_cores/$$i; git clean -xfd .; cd ../..; done
 
@@ -47,7 +47,7 @@ toolchain-clean::
 	rm -rf toolchain
 
 ip_cores/wrpc-sw/.config:
-	cp ip_cores/wrpc-sw/configs/etherbone_defconfig $@
+	cp ip_cores/wrpc-sw/configs/gsi_defconfig $@
 
 firmware::	toolchain ip_cores/wrpc-sw/.config
 	$(MAKE) PATH=$(PWD)/toolchain/bin:$(PATH) -C ip_cores/wrpc-sw all
