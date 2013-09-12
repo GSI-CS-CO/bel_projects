@@ -198,7 +198,9 @@ static eb_address_t detect_sector_size(eb_device_t device) {
   
   sector_size = page_size;
   target &= ~(sector_size-1);
-  while (address <= target && target+sector_size-1 <= end) {
+  while (address <= target && target+sector_size-1 <= end && 
+         (target+sector_size-sizeof(eb_data_t) < erase_address ||
+          target+sector_size >= erase_address)) {
     sector_size <<= 1;
     target &= ~(sector_size-1);
   }
