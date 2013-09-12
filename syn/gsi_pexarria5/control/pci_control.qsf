@@ -433,6 +433,14 @@ set_global_assignment -name TRI_STATE_SPI_PINS ON
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_location_assignment CLKCTRL_R83 -to "single_region:flash_clk|single_region_altclkctrl_bkh:single_region_altclkctrl_bkh_component|sd1"
 set_location_assignment CLKCTRL_R82 -to "dual_region:reconf_clk|dual_region_altclkctrl_u2i:dual_region_altclkctrl_u2i_component|sd1"
+set_instance_assignment -name FAST_INPUT_REGISTER ON -to ctl
+set_instance_assignment -name FAST_INPUT_REGISTER ON -to fd
+set_instance_assignment -name FAST_INPUT_REGISTER ON -to pa
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to slrd
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to slwr
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to fd
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to pa
+set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to fd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/trans_pkg.vhd

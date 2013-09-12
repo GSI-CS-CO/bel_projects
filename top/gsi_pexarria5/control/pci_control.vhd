@@ -738,7 +738,6 @@ begin
   ures <= rstn_sys; -- allow it to boot once the FPGA is reayd.
   
   fd <= fd_o when fd_oen='1' else (others => 'Z');
-  --readyn_io <= 'Z'; -- weak pull-up
   
   EZUSB : ez_usb
     generic map(
@@ -754,8 +753,7 @@ begin
       ebcyc_i   => pa(3),
       speed_i   => pa(0),
       shift_i   => pa(1),
-      fifoadr_o(1) => pa(5),
-      fifoadr_o(0) => pa(4),
+      fifoadr_o => pa(5 downto 4),
       readyn_i  => pa(7),
       fulln_i   => ctl(1),
       emptyn_i  => ctl(2),
@@ -763,7 +761,7 @@ begin
       slrdn_o   => slrd,
       slwrn_o   => slwr,
       pktendn_o => pa(6),
-      fd_i      => fd(7 downto 0),
+      fd_i      => fd,
       fd_o      => fd_o,
       fd_oen_o  => fd_oen);
       
