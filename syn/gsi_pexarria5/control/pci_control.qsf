@@ -430,7 +430,6 @@ set_location_assignment CLKCTRL_G12 -to "global_region:ref_clk|global_region_alt
 set_location_assignment CLKCTRL_G13 -to "global_region:butis_clk|global_region_altclkctrl_bdh:global_region_altclkctrl_bdh_component|sd1"
 set_location_assignment CLKCTRL_G14 -to "global_region:phase_clk|global_region_altclkctrl_bdh:global_region_altclkctrl_bdh_component|sd1"
 set_global_assignment -name TRI_STATE_SPI_PINS ON
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_location_assignment CLKCTRL_R83 -to "single_region:flash_clk|single_region_altclkctrl_bkh:single_region_altclkctrl_bkh_component|sd1"
 set_location_assignment CLKCTRL_R82 -to "dual_region:reconf_clk|dual_region_altclkctrl_u2i:dual_region_altclkctrl_u2i_component|sd1"
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to ctl
@@ -441,6 +440,41 @@ set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to slwr
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to fd
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to pa
 set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to fd
+set_global_assignment -name LL_ENABLED ON -section_id "flash:rx"
+set_global_assignment -name LL_AUTO_SIZE OFF -section_id "flash:rx"
+set_global_assignment -name LL_STATE LOCKED -section_id "flash:rx"
+set_global_assignment -name LL_RESERVED ON -section_id "flash:rx"
+set_global_assignment -name LL_SECURITY_ROUTING_INTERFACE OFF -section_id "flash:rx"
+set_global_assignment -name LL_IGNORE_IO_BANK_SECURITY_CONSTRAINT OFF -section_id "flash:rx"
+set_global_assignment -name LL_PR_REGION OFF -section_id "flash:rx"
+set_global_assignment -name LL_WIDTH 1 -section_id "flash:rx"
+set_global_assignment -name LL_HEIGHT 1 -section_id "flash:rx"
+set_global_assignment -name LL_ORIGIN X17_Y1 -section_id "flash:rx"
+set_instance_assignment -name LL_MEMBER_OF "flash:rx" -to "flash_top:flash|wb_spi_flash:wb|r_shift_i" -section_id "flash:rx"
+set_global_assignment -name LL_ENABLED ON -section_id "flash:tx"
+set_global_assignment -name LL_AUTO_SIZE OFF -section_id "flash:tx"
+set_global_assignment -name LL_STATE LOCKED -section_id "flash:tx"
+set_global_assignment -name LL_RESERVED ON -section_id "flash:tx"
+set_global_assignment -name LL_SECURITY_ROUTING_INTERFACE OFF -section_id "flash:tx"
+set_global_assignment -name LL_IGNORE_IO_BANK_SECURITY_CONSTRAINT OFF -section_id "flash:tx"
+set_global_assignment -name LL_PR_REGION OFF -section_id "flash:tx"
+set_global_assignment -name LL_WIDTH 1 -section_id "flash:tx"
+set_global_assignment -name LL_HEIGHT 1 -section_id "flash:tx"
+set_global_assignment -name LL_ORIGIN X16_Y1 -section_id "flash:tx"
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_instance_assignment -name LL_MEMBER_OF "flash:tx" -to "flash_top:flash|wb_spi_flash:wb|r_shift_o" -section_id "flash:tx"
+set_global_assignment -name LL_ENABLED ON -section_id "flash:ctl"
+set_global_assignment -name LL_AUTO_SIZE OFF -section_id "flash:ctl"
+set_global_assignment -name LL_STATE LOCKED -section_id "flash:ctl"
+set_global_assignment -name LL_RESERVED ON -section_id "flash:ctl"
+set_global_assignment -name LL_SECURITY_ROUTING_INTERFACE OFF -section_id "flash:ctl"
+set_global_assignment -name LL_IGNORE_IO_BANK_SECURITY_CONSTRAINT OFF -section_id "flash:ctl"
+set_global_assignment -name LL_PR_REGION OFF -section_id "flash:ctl"
+set_global_assignment -name LL_WIDTH 1 -section_id "flash:ctl"
+set_global_assignment -name LL_HEIGHT 1 -section_id "flash:ctl"
+set_global_assignment -name LL_ORIGIN X18_Y1 -section_id "flash:ctl"
+set_instance_assignment -name LL_MEMBER_OF "flash:ctl" -to "flash_top:flash|wb_spi_flash:wb|r_ncs" -section_id "flash:ctl"
+set_instance_assignment -name LL_MEMBER_OF "flash:ctl" -to "flash_top:flash|wb_spi_flash:wb|r_oe" -section_id "flash:ctl"
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/trans_pkg.vhd
