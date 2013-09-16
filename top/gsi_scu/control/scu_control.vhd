@@ -560,8 +560,8 @@ begin
     generic map (
       g_width => 10000000)
     port map (
-      clk_i      => clk_sys,
-      rst_n_i    => rstn_sys,
+      clk_i      => clk_ref,
+      rst_n_i    => rstn_ref,
       pulse_i    => pps,
       extended_o => ext_pps);
   
@@ -844,14 +844,14 @@ begin
   
   with r_gpio_mux(3 downto 2) select
     s_lemo_dat(2) <= 
-      ext_pps       when "00",
+      pps           when "00",
       eca_gpio(1)   when "01",
       r_gpio_val(1) when "10",
       '-'           when others;
   
   with r_gpio_mux(5 downto 4) select
     s_uled_dat(1) <= 
-      ext_pps       when "00",
+      pps           when "00",
       eca_gpio(2)   when "01",
       r_gpio_val(2) when "10",
       '-'           when others;
@@ -904,7 +904,7 @@ begin
   
   A_EXT_LVDS_TX(0) <= clk_butis;
   A_EXT_LVDS_TX(1) <= clk_ref;
-  A_EXT_LVDS_TX(2) <= '0';
+  A_EXT_LVDS_TX(2) <= pps;
   A_EXT_LVDS_TX(3) <= '0';
   
   -- Parallel Flash not connected
