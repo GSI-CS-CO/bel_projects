@@ -266,12 +266,7 @@ set_location_assignment PIN_D8 -to n21
 set_location_assignment PIN_E9 -to n22
 set_location_assignment PIN_C6 -to n23
 set_location_assignment PIN_C9 -to n24
-set_location_assignment PIN_K10 -to n25
 set_location_assignment PIN_H9 -to n26
-set_location_assignment PIN_G8 -to n27
-set_location_assignment PIN_A9 -to n28
-set_location_assignment PIN_D5 -to n29
-set_location_assignment PIN_C7 -to n30
 set_location_assignment PIN_W2 -to p1
 set_location_assignment PIN_T2 -to p2
 set_location_assignment PIN_R5 -to p3
@@ -461,7 +456,6 @@ set_global_assignment -name LL_PR_REGION OFF -section_id "flash:tx"
 set_global_assignment -name LL_WIDTH 1 -section_id "flash:tx"
 set_global_assignment -name LL_HEIGHT 1 -section_id "flash:tx"
 set_global_assignment -name LL_ORIGIN X16_Y1 -section_id "flash:tx"
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name LL_MEMBER_OF "flash:tx" -to "flash_top:flash|wb_spi_flash:wb|r_shift_o" -section_id "flash:tx"
 set_global_assignment -name LL_ENABLED ON -section_id "flash:ctl"
 set_global_assignment -name LL_AUTO_SIZE OFF -section_id "flash:ctl"
@@ -475,6 +469,22 @@ set_global_assignment -name LL_HEIGHT 1 -section_id "flash:ctl"
 set_global_assignment -name LL_ORIGIN X18_Y1 -section_id "flash:ctl"
 set_instance_assignment -name LL_MEMBER_OF "flash:ctl" -to "flash_top:flash|wb_spi_flash:wb|r_ncs" -section_id "flash:ctl"
 set_instance_assignment -name LL_MEMBER_OF "flash:ctl" -to "flash_top:flash|wb_spi_flash:wb|r_oe" -section_id "flash:ctl"
+set_instance_assignment -name IO_STANDARD LVDS -to p25
+set_location_assignment PIN_K10 -to "p25(n)"
+set_instance_assignment -name IO_STANDARD LVDS -to p27
+set_location_assignment PIN_G8 -to "p27(n)"
+set_instance_assignment -name IO_STANDARD LVDS -to p28
+set_location_assignment PIN_A9 -to "p28(n)"
+set_instance_assignment -name IO_STANDARD LVDS -to p29
+set_location_assignment PIN_D5 -to "p29(n)"
+set_instance_assignment -name IO_STANDARD LVDS -to p30
+set_location_assignment PIN_C7 -to "p30(n)"
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p25
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p27
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p28
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p29
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p30
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/trans_pkg.vhd

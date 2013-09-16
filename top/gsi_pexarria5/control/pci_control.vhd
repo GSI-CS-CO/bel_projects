@@ -88,12 +88,12 @@ entity pci_control is
     p22             : inout std_logic := 'Z';
     p23             : inout std_logic := 'Z';
     p24             : inout std_logic := 'Z';
-    p25             : inout std_logic := 'Z';
+    p25             : out   std_logic := 'Z';
     p26             : inout std_logic := 'Z';
-    p27             : inout std_logic := 'Z';
-    p28             : inout std_logic := 'Z';
-    p29             : inout std_logic := 'Z';
-    p30             : inout std_logic := 'Z';
+    p27             : out   std_logic := 'Z';
+    p28             : out   std_logic := 'Z';
+    p29             : out   std_logic := 'Z';
+    p30             : out   std_logic := 'Z';
     n1              : inout std_logic := 'Z';
     n2              : inout std_logic := 'Z';
     n3              : inout std_logic := 'Z';
@@ -117,12 +117,12 @@ entity pci_control is
     n22             : inout std_logic := 'Z';
     n23             : inout std_logic := 'Z';
     n24             : inout std_logic := 'Z';
-    n25             : inout std_logic := 'Z';
+--    n25             : inout std_logic := 'Z';
     n26             : inout std_logic := 'Z';
-    n27             : inout std_logic := 'Z';
-    n28             : inout std_logic := 'Z';
-    n29             : inout std_logic := 'Z';
-    n30             : inout std_logic := 'Z';
+--    n27             : inout std_logic := 'Z';
+--    n28             : inout std_logic := 'Z';
+--    n29             : inout std_logic := 'Z';
+--    n30             : inout std_logic := 'Z';
     
     -----------------------------------------------------------------------
     -- connector cpld
@@ -269,6 +269,7 @@ architecture rtl of pci_control is
   signal clk_ref          : std_logic;
   signal clk_butis        : std_logic;
   signal clk_phase        : std_logic;
+  signal clk_scan         : std_logic;
   signal rstn_ref         : std_logic;
   
   signal phase_done       : std_logic;
@@ -371,6 +372,7 @@ begin
     inclk  => clk_dmtd0,
     outclk => clk_dmtd);            -- GCLK4
   
+  clk_scan <= clk_reconf;
   ref_inst : ref_pll5 port map(     -- FRACTIONALPLL_X0_Y51_N0 (up-to-down)
     rst        => '0',
     refclk     => sfp234_ref_clk_i, -- 125 MHz
@@ -378,7 +380,7 @@ begin
     outclk_1   => clk_ref1,         -- 200 MHz, counter 13 = PLLOUTPUTCOUNTER_X0_Y54_N1
     outclk_2   => clk_ref2,         --  25 MHz, counter 14 = PLLOUTPUTCOUNTER_X0_Y53_N1
     locked     => ref_locked,
-    scanclk    => clk_reconf,
+    scanclk    => clk_scan,
     cntsel     => phase_sel,
     phase_en   => phase_step,
     updn       => '0',
@@ -447,7 +449,7 @@ begin
     port map(
       clk_ref_i   => clk_ref,
       clk_25m_i   => clk_phase,
-      clk_scan_i  => clk_reconf,
+      clk_scan_i  => clk_scan,
       locked_i    => ref_locked,
       pps_i       => pps,
       phasedone_i => phase_done,
@@ -634,8 +636,8 @@ begin
     generic map (
       g_width => 10000000)
     port map (
-      clk_i      => clk_sys,
-      rst_n_i    => rstn_sys,
+      clk_i      => clk_ref,
+      rst_n_i    => rstn_ref,
       pulse_i    => pps,
       extended_o => ext_pps);
   
@@ -809,10 +811,10 @@ begin
   owr(1) <= 'Z';
   
   -- debug clocks
-  --hpw(1)  <= '0';
-  --hpw(3)  <= ext_pps;
-  --hpw(9)  <= clk_ref;
-  --hpw(11) <= phy_rx_rbclk;
-  hpw(15) <= clk_butis;
+  p25 <= clk_ref;
+  p27 <= clk_phase;
+  p28 <= sfp234_ref_clk_i;
+  p29 <= clk_butis;
+  p30 <= pps;
   
 end rtl;
