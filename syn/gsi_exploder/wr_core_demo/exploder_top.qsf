@@ -328,6 +328,8 @@ set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC OFF
 set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING OFF
 set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION OFF
 set_instance_assignment -name GLOBAL_SIGNAL OFF -from "wr_gxb_phy_arriaii:wr_gxb_phy_arriaii_1|arria_phy:U_The_PHY|arria_phy_alt4gxb:arria_phy_alt4gxb_component|tx_clkout_int_wire[0]" -to "wr_gxb_phy_arriaii:wr_gxb_phy_arriaii_1|tx_gxb_datain[*]"
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to lvds_o
+set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to ttnim_o
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd

@@ -658,8 +658,8 @@ begin
     generic map (
       g_width => 10000000)
     port map (
-      clk_i      => clk_sys,
-      rst_n_i    => rstn_sys,
+      clk_i      => clk_ref,
+      rst_n_i    => rstn_ref,
       pulse_i    => pps,
       extended_o => ext_pps);
   
@@ -817,7 +817,7 @@ begin
   end process;
   
   -- LEMO outputs
-  ttnim_o(8)          <= ext_pps;
+  ttnim_o(8)          <= pps;
   ttnim_o(7 downto 2) <= eca_lemo_led(6 downto 1);
   ttnim_o(1)          <= ref_toggle;
   
@@ -827,7 +827,7 @@ begin
   de_o   <= eca_trigger(7 downto 0);
   
   lvds_o(8) <= clk_butis;
-  lvds_o(7) <= ext_pps;
+  lvds_o(7) <= pps;
   lvds_o(1) <= clk_ref;
   
   -- Use TRIGGER ports in type 1 mode.
