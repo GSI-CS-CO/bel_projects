@@ -717,8 +717,8 @@ set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to DDR3_WE
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to lemo_io[1]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to lemo_io[2]
 set_location_assignment PLL_4 -to "ref_pll:ref_inst|altpll:altpll_component|ref_pll_altpll:auto_generated|pll1"
-set_location_assignment PLL_2 -to "sys_pll:sys_inst|altpll:altpll_component|ref_pll_altpll:auto_generated|pll1"
-set_location_assignment PLL_3 -to "dmtd_pll:dmtd_inst|altpll:altpll_component|ref_pll_altpll:auto_generated|pll1"
+set_location_assignment PLL_2 -to "sys_pll:sys_inst|altpll:altpll_component|sys_pll_altpll:auto_generated|pll1"
+set_location_assignment PLL_3 -to "dmtd_pll:dmtd_inst|altpll:altpll_component|dmtd_pll_altpll:auto_generated|pll1"
 set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
 set_global_assignment -name SYNCHRONIZER_IDENTIFICATION "FORCED IF ASYNCHRONOUS"
 set_global_assignment -name TIMEQUEST_DO_CCPP_REMOVAL ON
@@ -1024,6 +1024,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_cor
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/xwr_syscon_wb.vhd
 set_global_assignment -name VHDL_FILE ../../../top/gsi_scu/control/scu_control.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_butis.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_reset.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.vhd
 set_global_assignment -name SDC_FILE ../../../top/gsi_scu/control/scu_control.sdc
 set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/arria2_pcie.qip
