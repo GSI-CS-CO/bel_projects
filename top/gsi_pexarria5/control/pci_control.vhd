@@ -451,7 +451,7 @@ begin
       g_family                 => "Arria V",
       g_port_width             => 4,  -- quad-lane SPI bus
       g_addr_width             => 25, -- 256Mb = 32MB = 25 bits
-      g_dummy_time             => 5,
+      g_dummy_time             => 10,
       g_input_latch_edge       => '1',
       g_output_latch_edge      => '1',
       g_input_to_output_cycles => 2)
