@@ -455,7 +455,7 @@ begin
       g_config                 => true,
       g_input_latch_edge       => '1',
       g_output_latch_edge      => '1',
-      g_input_to_output_cycles => 2)
+      g_input_to_output_cycles => 3)
     port map(
       clk_i     => clk_sys,
       rstn_i    => rstn_sys,
