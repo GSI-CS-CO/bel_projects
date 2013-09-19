@@ -513,9 +513,9 @@ begin
       g_port_width             => 1,   -- single-lane SPI bus
       g_addr_width             => 24,  -- 3 byte addressed chip
       g_dummy_time             => 8,   -- 8 cycles between addr and data
-      g_input_latch_edge       => '1', -- 30ns at 50MHz (10+20) after falling edge sets up SPI output
-      g_output_latch_edge      => '0', -- falling edge to meet SPI setup times
-      g_input_to_output_cycles => 2)   -- delayed to work-around unconstrained design
+      g_input_latch_edge       => '0', -- experimentally determined...
+      g_output_latch_edge      => '1', -- ... and held fixed using logic lock
+      g_input_to_output_cycles => 2)
     port map(
       clk_i     => clk_sys,
       rstn_i    => rstn_sys,
