@@ -13,11 +13,11 @@ constant	c_mil_byte_addr_range:	integer := 16#1000# * 4;  						-- all resources
 																																				-- so multiply the c_mil_byte_addr_range by 4.
 constant	c_mil_addr_width:				integer	:= integer(ceil(log2(real(c_mil_byte_addr_range))));
 
-constant c_xwb_gpio32_sdb : t_sdb_device := (
+constant c_xwb_gsi_mil_scu : t_sdb_device := (
 	abi_class     => x"0000", -- undocumented device
 	abi_ver_major => x"01",
 	abi_ver_minor => x"00",
-	wbd_endian    => c_sdb_endian_big,
+	wbd_endian    => c_sdb_endian_little,
 	wbd_width     => x"7", -- 8/16/32-bit port granularity
 	sdb_component => (
 	addr_first    => x"0000000000000000",
@@ -71,13 +71,13 @@ port	(
 																						--								of a sync pulse and two valid Manchester data bits
 
 		-- decoder/encoder signals of HD6408 ------------------------------------------------------------------------------------
-		ME_12MHz:				out			std_logic;			-- HD6408-input:	is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
+--		ME_12MHz:				out			std_logic;			-- HD6408-input:	is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
 		
 
-		Mil_BOI:				in			std_logic;			-- HD6408-input:	connect positive bipolar receiver, in FPGA directed to the external
+		Mil_BOI:				out			std_logic;			-- HD6408-input:	connect positive bipolar receiver, in FPGA directed to the external
 																						--								manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
 																						--								vhdl manchester macro.
-		Mil_BZI:				in			std_logic;			-- HD6408-input:	connect negative bipolar receiver, in FPGA directed to the external
+		Mil_BZI:				out			std_logic;			-- HD6408-input:	connect negative bipolar receiver, in FPGA directed to the external
 																						--								manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
 																						--								vhdl manchester macro.
 		Sel_Mil_Drv:		out			std_logic;			-- HD6408-output:	active high, enable the external open collector driver to the transformer
@@ -88,15 +88,20 @@ port	(
 		Mil_nBZO:				out			std_logic;			-- HD6408-output:	connect bipolar negative output to external open collector driver of
 																						--								the transformer. Source is the external manchester en/decoder HD6408 via
 																						--								nME_BZO or the internal FPGA vhdl manchester macro.
-		Mil_Rcv_Rdy:		buffer	std_logic;			-- output:	
-		mil_trm_rdy:		buffer	std_logic;
-		Mil_Rcv_Error:	buffer	std_logic;
+		nLed_Mil_Rcv:		out			std_logic;
+		nLed_Mil_Trm:		out			std_logic;
+		nLed_Mil_Err:		out			std_logic;
 		error_limit_reached:	out		std_logic;
 		Mil_Decoder_Diag_p:	out		std_logic_vector(15 downto 0);
 		Mil_Decoder_Diag_n:	out		std_logic_vector(15 downto 0);
+		timing:					in			std_logic;
+		nLed_Timing:		out			std_logic;
 		Interlock_Intr:	in			std_logic;
 		Data_Rdy_Intr:	in			std_logic;
-		Data_Req_Intr:	in			std_logic
+		Data_Req_Intr:	in			std_logic;
+		nLed_Interl:		out			std_logic;
+		nLed_Dry:				out			std_logic;
+		nLed_Drq:				out			std_logic
 		);
 end component wb_mil_scu;
 

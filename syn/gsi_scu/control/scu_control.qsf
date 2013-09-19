@@ -3,7 +3,7 @@ set_global_assignment -name DEVICE EP2AGX125EF29C5
 set_global_assignment -name TOP_LEVEL_ENTITY scu_control
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
-set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name LAST_QUARTUS_VERSION 12.1
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
@@ -17,12 +17,12 @@ set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE OFF
 set_global_assignment -name SYNTH_TIMING_DRIVEN_SYNTHESIS ON
 set_global_assignment -name USE_CONFIGURATION_DEVICE ON
-set_global_assignment -rise -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO"
-set_global_assignment -fall -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO"
-set_global_assignment -rise -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING"
-set_global_assignment -fall -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING"
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO" -fall
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -rise
+set_global_assignment -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING" -fall
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_40MHZ
-set_global_assignment -name ENABLE_SIGNALTAP OFF
+set_global_assignment -name ENABLE_SIGNALTAP ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_location_assignment PIN_Y10 -to nres
 set_global_assignment -name SMART_RECOMPILE ON
@@ -30,21 +30,17 @@ set_location_assignment PIN_AE14 -to clk_20m_vcxo_i
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to clk_20m_vcxo_i
 set_location_assignment PIN_AE15 -to clk_125m_pllref_i
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_pllref_i
-set_location_assignment PIN_AF15 -to "clk_125m_pllref_i(n)"
 set_location_assignment PIN_D15 -to clk_125m_local_i
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_local_i
-set_location_assignment PIN_C15 -to "clk_125m_local_i(n)"
-set_location_assignment PIN_AE6 -to uart_rxd_i
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nres
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to uart_rxd_i
-set_location_assignment PIN_AF6 -to uart_txd_o
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to uart_txd_o
 set_location_assignment PIN_AF2 -to serial_to_cb_o
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to serial_to_cb_o
-set_location_assignment PIN_J5 -to leds_o[1]
-set_location_assignment PIN_H4 -to leds_o[2]
-set_location_assignment PIN_J4 -to leds_o[3]
-set_location_assignment PIN_H3 -to leds_o[4]
+set_location_assignment PIN_H4 -to leds_o[1]
+set_location_assignment PIN_J5 -to leds_o[2]
+set_location_assignment PIN_H3 -to leds_o[3]
+set_location_assignment PIN_J4 -to leds_o[4]
 set_location_assignment PIN_R4 -to dac_sclk
 set_location_assignment PIN_P1 -to dac_din
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dac_din
@@ -61,29 +57,15 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lemo_en_in[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lemo_en_in[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lemo_led[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lemo_led[1]
-set_location_assignment PIN_N4 -to LPC_AD[3]
-set_location_assignment PIN_V4 -to LPC_AD[2]
-set_location_assignment PIN_W1 -to LPC_AD[1]
-set_location_assignment PIN_W2 -to LPC_AD[0]
-set_location_assignment PIN_P2 -to LPC_FPGA_CLK
-set_location_assignment PIN_W3 -to LPC_SERIRQ
-set_location_assignment PIN_V1 -to nLPC_DRQ0
-set_location_assignment PIN_P6 -to nLPC_FRAME
-set_location_assignment PIN_R6 -to nPCI_RESET
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nLPC_DRQ0
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nPCI_RESET
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nLPC_FRAME
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LPC_AD[3]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LPC_AD[2]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LPC_AD[1]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LPC_AD[0]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LPC_FPGA_CLK
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LPC_SERIRQ
 set_location_assignment PIN_AD12 -to uart_rxd_i[1]
 set_location_assignment PIN_Y12 -to uart_txd_o[1]
 set_global_assignment -name STRATIXIII_CONFIGURATION_SCHEME "ACTIVE SERIAL"
 set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCS128
-set_location_assignment PIN_AF1 -to OneWire_CB
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to OneWire_CB
 set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
@@ -95,7 +77,6 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sfp1_mod1
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sfp1_mod2
 set_location_assignment PIN_AE27 -to pcie_refclk_i
 set_instance_assignment -name IO_STANDARD HCSL -to pcie_refclk_i
-set_location_assignment PIN_AE28 -to "pcie_refclk_i(n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_rx_i
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_tx_o
 set_location_assignment PIN_AF18 -to hpla_ch[15]
@@ -116,166 +97,19 @@ set_location_assignment PIN_Y18 -to hpla_ch[1]
 set_location_assignment PIN_AG19 -to hpla_ch[0]
 set_location_assignment PIN_AH16 -to hpla_clk
 set_location_assignment PIN_AA27 -to pcie_rx_i[3]
-set_location_assignment PIN_AA28 -to "pcie_rx_i[3](n)"
 set_location_assignment PIN_AC27 -to pcie_rx_i[2]
-set_location_assignment PIN_AC28 -to "pcie_rx_i[2](n)"
 set_location_assignment PIN_AG25 -to pcie_rx_i[1]
-set_location_assignment PIN_AH25 -to "pcie_rx_i[1](n)"
 set_location_assignment PIN_AG23 -to pcie_rx_i[0]
-set_location_assignment PIN_AH23 -to "pcie_rx_i[0](n)"
 set_location_assignment PIN_Y25 -to pcie_tx_o[3]
-set_location_assignment PIN_Y26 -to "pcie_tx_o[3](n)"
 set_location_assignment PIN_AB25 -to pcie_tx_o[2]
-set_location_assignment PIN_AB26 -to "pcie_tx_o[2](n)"
 set_location_assignment PIN_AG27 -to pcie_tx_o[1]
-set_location_assignment PIN_AH27 -to "pcie_tx_o[1](n)"
 set_location_assignment PIN_AE24 -to pcie_tx_o[0]
-set_location_assignment PIN_AF24 -to "pcie_tx_o[0](n)"
-set_location_assignment PIN_Y13 -to A_A[15]
-set_location_assignment PIN_AH10 -to A_A[14]
-set_location_assignment PIN_AH8 -to A_A[13]
-set_location_assignment PIN_AH9 -to A_A[12]
-set_location_assignment PIN_AH7 -to A_A[11]
-set_location_assignment PIN_AG9 -to A_A[10]
-set_location_assignment PIN_AC14 -to A_A[9]
-set_location_assignment PIN_AH6 -to A_A[8]
-set_location_assignment PIN_AB14 -to A_A[7]
-set_location_assignment PIN_AG6 -to A_A[6]
-set_location_assignment PIN_AH5 -to A_A[5]
-set_location_assignment PIN_AF13 -to A_A[4]
-set_location_assignment PIN_AH4 -to A_A[3]
-set_location_assignment PIN_AE13 -to A_A[2]
-set_location_assignment PIN_AC13 -to A_A[1]
-set_location_assignment PIN_AF12 -to A_A[0]
-set_location_assignment PIN_AC3 -to A_D[15]
-set_location_assignment PIN_AA4 -to A_D[14]
-set_location_assignment PIN_V6 -to A_D[13]
-set_location_assignment PIN_W4 -to A_D[12]
-set_location_assignment PIN_U6 -to A_D[11]
-set_location_assignment PIN_W5 -to A_D[10]
-set_location_assignment PIN_AB2 -to A_D[9]
-set_location_assignment PIN_Y3 -to A_D[8]
-set_location_assignment PIN_AB3 -to A_D[7]
-set_location_assignment PIN_Y4 -to A_D[6]
-set_location_assignment PIN_T6 -to A_D[5]
-set_location_assignment PIN_AE1 -to A_D[4]
-set_location_assignment PIN_T7 -to A_D[3]
-set_location_assignment PIN_AD1 -to A_D[2]
-set_location_assignment PIN_AC1 -to A_D[1]
-set_location_assignment PIN_AA1 -to A_D[0]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_A
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_D
-set_location_assignment PIN_R3 -to A_nDS
-set_location_assignment PIN_AF5 -to A_nDtack
-set_location_assignment PIN_U1 -to A_nReset
-set_location_assignment PIN_AB13 -to A_nSEL[12]
-set_location_assignment PIN_AE12 -to A_nSEL[11]
-set_location_assignment PIN_AF10 -to A_nSEL[10]
-set_location_assignment PIN_AF11 -to A_nSEL[9]
-set_location_assignment PIN_AE10 -to A_nSEL[8]
-set_location_assignment PIN_AE11 -to A_nSEL[7]
-set_location_assignment PIN_W13 -to A_nSEL[6]
-set_location_assignment PIN_AF9 -to A_nSEL[5]
-set_location_assignment PIN_W12 -to A_nSEL[4]
-set_location_assignment PIN_AE9 -to A_nSEL[3]
-set_location_assignment PIN_AF8 -to A_nSEL[2]
-set_location_assignment PIN_AF7 -to A_nSEL[1]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nDS
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nDtack
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nReset
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL[12]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL[11]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL[10]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL[9]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL[8]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL[7]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL[6]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL[5]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL[4]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL[3]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL[2]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSEL[1]
-set_location_assignment PIN_AE7 -to A_nSRQ[12]
-set_location_assignment PIN_W11 -to A_nSRQ[11]
-set_location_assignment PIN_AC12 -to A_nSRQ[10]
-set_location_assignment PIN_AE5 -to A_nSRQ[9]
-set_location_assignment PIN_AC11 -to A_nSRQ[8]
-set_location_assignment PIN_AG4 -to A_nSRQ[7]
-set_location_assignment PIN_AB11 -to A_nSRQ[6]
-set_location_assignment PIN_AG3 -to A_nSRQ[5]
-set_location_assignment PIN_AH3 -to A_nSRQ[4]
-set_location_assignment PIN_AF4 -to A_nSRQ[3]
-set_location_assignment PIN_AH2 -to A_nSRQ[2]
-set_location_assignment PIN_AE4 -to A_nSRQ[1]
-set_location_assignment PIN_U5 -to A_nTiming_Cycle
-set_location_assignment PIN_AB1 -to A_OneWire
-set_location_assignment PIN_N6 -to A_RnW
-set_location_assignment PIN_AH11 -to A_Spare[1]
-set_location_assignment PIN_Y14 -to A_Spare[0]
-set_location_assignment PIN_W10 -to A_SysClock
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_SysClock
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ[12]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ[11]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ[10]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ[9]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ[8]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ[7]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ[6]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ[5]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ[4]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ[3]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ[2]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nSRQ[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nTiming_Cycle
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_OneWire
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_RnW
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_Spare[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_Spare[0]
-set_location_assignment PIN_J14 -to AD[25]
-set_location_assignment PIN_G13 -to AD[24]
-set_location_assignment PIN_E12 -to AD[23]
-set_location_assignment PIN_K13 -to AD[22]
-set_location_assignment PIN_B9 -to AD[21]
-set_location_assignment PIN_C9 -to AD[20]
-set_location_assignment PIN_G12 -to AD[19]
-set_location_assignment PIN_F12 -to AD[18]
-set_location_assignment PIN_B6 -to AD[17]
-set_location_assignment PIN_K14 -to AD[16]
-set_location_assignment PIN_A11 -to AD[15]
-set_location_assignment PIN_K12 -to AD[14]
-set_location_assignment PIN_A8 -to AD[13]
-set_location_assignment PIN_C11 -to AD[12]
-set_location_assignment PIN_D13 -to AD[11]
-set_location_assignment PIN_A7 -to AD[10]
-set_location_assignment PIN_D12 -to AD[9]
-set_location_assignment PIN_C12 -to AD[8]
-set_location_assignment PIN_D11 -to AD[7]
-set_location_assignment PIN_A6 -to AD[6]
-set_location_assignment PIN_C13 -to AD[5]
-set_location_assignment PIN_A10 -to AD[4]
-set_location_assignment PIN_A9 -to AD[3]
-set_location_assignment PIN_E13 -to AD[2]
-set_location_assignment PIN_F10 -to AD[1]
-set_location_assignment PIN_AA10 -to ADR_TO_SCUB
-set_location_assignment PIN_A3 -to ADV_FSH
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ADR_TO_SCUB
-set_location_assignment PIN_K11 -to CLK_FSH
-set_location_assignment PIN_D8 -to DF[15]
-set_location_assignment PIN_C6 -to DF[14]
-set_location_assignment PIN_J11 -to DF[13]
-set_location_assignment PIN_B12 -to DF[12]
-set_location_assignment PIN_C7 -to DF[11]
-set_location_assignment PIN_G11 -to DF[10]
-set_location_assignment PIN_C5 -to DF[9]
-set_location_assignment PIN_C10 -to DF[8]
-set_location_assignment PIN_D9 -to DF[7]
-set_location_assignment PIN_D6 -to DF[6]
-set_location_assignment PIN_E7 -to DF[5]
-set_location_assignment PIN_J12 -to DF[4]
-set_location_assignment PIN_D7 -to DF[3]
-set_location_assignment PIN_A4 -to DF[2]
-set_location_assignment PIN_C8 -to DF[1]
-set_location_assignment PIN_D10 -to DF[0]
 set_location_assignment PIN_AH17 -to sfp1_tx_disable_o
 set_location_assignment PIN_AH13 -to sfp2_mod0
 set_location_assignment PIN_T3 -to sfp2_mod1
@@ -290,146 +124,22 @@ set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to sfp2_rxp_i
 set_location_assignment PIN_G28 -to "sfp2_rxp_i(n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to sfp2_txp_o
 set_location_assignment PIN_F26 -to "sfp2_txp_o(n)"
-set_location_assignment PIN_K1 -to A_EXT_LVDS_CLKOUT
-set_location_assignment PIN_L3 -to A_EXT_LVDS_RX[3]
-set_location_assignment PIN_M4 -to A_EXT_LVDS_RX[2]
-set_location_assignment PIN_H1 -to A_EXT_LVDS_RX[1]
-set_location_assignment PIN_L4 -to A_EXT_LVDS_RX[0]
-set_location_assignment PIN_L7 -to A_EXT_LVDS_TX[3]
-set_location_assignment PIN_J3 -to A_EXT_LVDS_TX[2]
-set_location_assignment PIN_J7 -to A_EXT_LVDS_TX[1]
-set_location_assignment PIN_F1 -to A_EXT_LVDS_TX[0]
-set_location_assignment PIN_D14 -to A_EXT_LVDS_CLKIN
 set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_CLKIN
-set_location_assignment PIN_C14 -to "A_EXT_LVDS_CLKIN(n)"
 set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_CLKOUT
-set_location_assignment PIN_L1 -to "A_EXT_LVDS_CLKOUT(n)"
 set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_RX[3]
-set_location_assignment PIN_M2 -to "A_EXT_LVDS_RX[3](n)"
 set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_RX[2]
-set_location_assignment PIN_M3 -to "A_EXT_LVDS_RX[2](n)"
 set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_RX[1]
-set_location_assignment PIN_J1 -to "A_EXT_LVDS_RX[1](n)"
 set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_RX[0]
-set_location_assignment PIN_K3 -to "A_EXT_LVDS_RX[0](n)"
-set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_TX[3]
-set_location_assignment PIN_K6 -to "A_EXT_LVDS_TX[3](n)"
-set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_TX[2]
-set_location_assignment PIN_J2 -to "A_EXT_LVDS_TX[2](n)"
-set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_TX[1]
-set_location_assignment PIN_J6 -to "A_EXT_LVDS_TX[1](n)"
-set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_TX[0]
-set_location_assignment PIN_G1 -to "A_EXT_LVDS_TX[0](n)"
-set_location_assignment PIN_AD4 -to EIO[16]
-set_location_assignment PIN_AB7 -to EIO[15]
-set_location_assignment PIN_AC5 -to EIO[14]
-set_location_assignment PIN_W8 -to EIO[13]
-set_location_assignment PIN_AB5 -to EIO[12]
-set_location_assignment PIN_Y9 -to EIO[11]
-set_location_assignment PIN_AB6 -to EIO[10]
-set_location_assignment PIN_AC4 -to EIO[9]
-set_location_assignment PIN_Y5 -to EIO[8]
-set_location_assignment PIN_AB4 -to EIO[7]
-set_location_assignment PIN_Y6 -to EIO[6]
-set_location_assignment PIN_W6 -to EIO[5]
-set_location_assignment PIN_AE3 -to EIO[4]
-set_location_assignment PIN_V7 -to EIO[3]
-set_location_assignment PIN_AD3 -to EIO[2]
-set_location_assignment PIN_AC2 -to EIO[1]
-set_location_assignment PIN_AA3 -to EIO[0]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[16]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[15]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[14]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[13]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[12]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[11]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[10]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[9]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[8]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[7]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[6]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[5]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[4]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[3]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[2]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[1]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to EIO[0]
-set_location_assignment PIN_AC17 -to IO_2_5[13]
-set_location_assignment PIN_AC21 -to IO_2_5[12]
-set_location_assignment PIN_AB17 -to IO_2_5[11]
-set_location_assignment PIN_Y22 -to IO_2_5[10]
-set_location_assignment PIN_AC16 -to IO_2_5[9]
-set_location_assignment PIN_W21 -to IO_2_5[8]
-set_location_assignment PIN_AB16 -to IO_2_5[7]
-set_location_assignment PIN_AD23 -to IO_2_5[6]
-set_location_assignment PIN_AD18 -to IO_2_5[5]
-set_location_assignment PIN_AD22 -to IO_2_5[4]
-set_location_assignment PIN_AC18 -to IO_2_5[3]
-set_location_assignment PIN_Y20 -to IO_2_5[2]
-set_location_assignment PIN_AC23 -to IO_2_5[1]
-set_location_assignment PIN_Y19 -to IO_2_5[0]
-set_location_assignment PIN_AD9 -to nADR_EN
+set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_TX[3] -disable
+set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_TX[2] -disable
+set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_TX[1] -disable
+set_instance_assignment -name IO_STANDARD LVDS -to A_EXT_LVDS_TX[0] -disable
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nADR_EN
-set_location_assignment PIN_F13 -to nCE_FSH
-set_location_assignment PIN_G14 -to nOE_FSH
-set_location_assignment PIN_F7 -to nRST_FSH
-set_location_assignment PIN_F14 -to nWE_FSH
-set_location_assignment PIN_G7 -to WAIT_FSH
-set_location_assignment PIN_AC9 -to nTHRMTRIP
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nTHRMTRIP
-set_location_assignment PIN_AD7 -to nEXCD0_PERST
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nEXCD0_PERST
-set_location_assignment PIN_U3 -to nSel_Ext_Data_DRV
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nSel_Ext_Data_DRV
-set_location_assignment PIN_AE8 -to WDT
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to WDT
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
-set_location_assignment PIN_F23 -to DDR3_ADDR[12]
-set_location_assignment PIN_F21 -to DDR3_ADDR[11]
-set_location_assignment PIN_H19 -to DDR3_ADDR[10]
-set_location_assignment PIN_J16 -to DDR3_ADDR[9]
-set_location_assignment PIN_B19 -to DDR3_ADDR[8]
-set_location_assignment PIN_J18 -to DDR3_ADDR[7]
-set_location_assignment PIN_D18 -to DDR3_ADDR[6]
-set_location_assignment PIN_L21 -to DDR3_ADDR[5]
-set_location_assignment PIN_E24 -to DDR3_ADDR[4]
-set_location_assignment PIN_K21 -to DDR3_ADDR[3]
-set_location_assignment PIN_K19 -to DDR3_ADDR[2]
-set_location_assignment PIN_F22 -to DDR3_ADDR[1]
-set_location_assignment PIN_J19 -to DDR3_ADDR[0]
-set_location_assignment PIN_J17 -to DDR3_BA[2]
-set_location_assignment PIN_D20 -to DDR3_BA[1]
-set_location_assignment PIN_K18 -to DDR3_BA[0]
-set_location_assignment PIN_F24 -to DDR3_CAS_n
-set_location_assignment PIN_E15 -to DDR3_CKE[0]
-set_location_assignment PIN_G19 -to DDR3_CLK[0]
-set_location_assignment PIN_G18 -to DDR3_CLK_n[0]
-set_location_assignment PIN_F17 -to DDR3_DM[1]
-set_location_assignment PIN_C19 -to DDR3_DM[0]
-set_location_assignment PIN_J21 -to DDR3_DQ[15]
-set_location_assignment PIN_C18 -to DDR3_DQ[14]
-set_location_assignment PIN_K15 -to DDR3_DQ[13]
-set_location_assignment PIN_D19 -to DDR3_DQ[12]
-set_location_assignment PIN_G17 -to DDR3_DQ[11]
-set_location_assignment PIN_D17 -to DDR3_DQ[10]
-set_location_assignment PIN_K20 -to DDR3_DQ[9]
-set_location_assignment PIN_C17 -to DDR3_DQ[8]
-set_location_assignment PIN_B15 -to DDR3_DQ[7]
-set_location_assignment PIN_G15 -to DDR3_DQ[6]
-set_location_assignment PIN_C16 -to DDR3_DQ[5]
-set_location_assignment PIN_H15 -to DDR3_DQ[4]
-set_location_assignment PIN_A19 -to DDR3_DQ[3]
-set_location_assignment PIN_F15 -to DDR3_DQ[2]
-set_location_assignment PIN_A17 -to DDR3_DQ[1]
-set_location_assignment PIN_D16 -to DDR3_DQ[0]
-set_location_assignment PIN_D21 -to DDR3_DQS[1]
-set_location_assignment PIN_B16 -to DDR3_DQS[0]
-set_location_assignment PIN_C21 -to DDR3_DQSn[1]
-set_location_assignment PIN_A16 -to DDR3_DQSn[0]
-set_location_assignment PIN_E22 -to DDR3_ODT[0]
-set_location_assignment PIN_G24 -to DDR3_RAS_n
-set_location_assignment PIN_K16 -to DDR3_RES_n
-set_location_assignment PIN_F20 -to DDR3_WE_n
 set_instance_assignment -name IO_STANDARD "1.5 V" -to DDR3_RES_n
 set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_WE_n
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
@@ -458,56 +168,23 @@ set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_BA[0]
 set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_CAS_n
 set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DM[1]
 set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DM[0]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[15]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[14]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[13]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[12]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[11]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[10]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[9]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[8]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[7]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[6]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[5]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[4]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[3]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[2]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[1]
-set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_DQ[0]
 set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.5-V SSTL CLASS I" -to DDR3_DQS[1]
 set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.5-V SSTL CLASS I" -to DDR3_DQS[0]
 set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.5-V SSTL CLASS I" -to DDR3_DQSn[1]
 set_instance_assignment -name IO_STANDARD "DIFFERENTIAL 1.5-V SSTL CLASS I" -to DDR3_DQSn[0]
 set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to DDR3_RAS_n
-set_location_assignment PIN_E21 -to DDR3_CS_n[0]
 set_location_assignment PIN_V3 -to lemo_io[1]
 set_location_assignment PIN_P5 -to lemo_io[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lemo_io[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lemo_io[2]
-set_location_assignment PIN_W27 -to QL1_GXB_RX[0]
-set_location_assignment PIN_U27 -to QL1_GXB_RX[1]
-set_location_assignment PIN_N27 -to QL1_GXB_RX[2]
-set_location_assignment PIN_L27 -to QL1_GXB_RX[3]
-set_location_assignment PIN_K25 -to QL1_GXB_TX[3]
-set_location_assignment PIN_M25 -to QL1_GXB_TX[2]
-set_location_assignment PIN_T25 -to QL1_GXB_TX[1]
-set_location_assignment PIN_V25 -to QL1_GXB_TX[0]
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_RX[3]
-set_location_assignment PIN_L28 -to "QL1_GXB_RX[3](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_RX[2]
-set_location_assignment PIN_N28 -to "QL1_GXB_RX[2](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_RX[1]
-set_location_assignment PIN_U28 -to "QL1_GXB_RX[1](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_RX[0]
-set_location_assignment PIN_W28 -to "QL1_GXB_RX[0](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_TX[3]
-set_location_assignment PIN_K26 -to "QL1_GXB_TX[3](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_TX[2]
-set_location_assignment PIN_M26 -to "QL1_GXB_TX[2](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_TX[1]
-set_location_assignment PIN_T26 -to "QL1_GXB_TX[1](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to QL1_GXB_TX[0]
-set_location_assignment PIN_V26 -to "QL1_GXB_TX[0](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to "QL1_GXB_RX[3](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to "QL1_GXB_RX[2](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to "QL1_GXB_RX[1](n)"
@@ -516,11 +193,6 @@ set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to "QL1_GXB_TX[3](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to "QL1_GXB_TX[2](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to "QL1_GXB_TX[1](n)"
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to "QL1_GXB_TX[0](n)"
-set_location_assignment PIN_H25 -to A_MASTER_CON_TX[0]
-set_location_assignment PIN_B26 -to A_MASTER_CON_TX[1]
-set_location_assignment PIN_J27 -to A_MASTER_CON_RX[0]
-set_location_assignment PIN_C27 -to A_MASTER_CON_RX[1]
-set_location_assignment PIN_D25 -to QL2_REFCLK6p
 set_global_assignment -name PHYSICAL_SYNTHESIS_COMBO_LOGIC OFF
 set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_RETIMING OFF
 set_global_assignment -name PHYSICAL_SYNTHESIS_REGISTER_DUPLICATION OFF
@@ -529,38 +201,6 @@ set_global_assignment -name PHYSICAL_SYNTHESIS_EFFORT FAST
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[0]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[1]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[2]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[3]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[4]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[5]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[6]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[7]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[8]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[9]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[10]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[11]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[12]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[13]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[14]
-set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQ[15]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[0]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[1]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[2]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[3]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[4]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[5]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[6]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[7]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[8]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[9]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[10]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[11]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[12]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[13]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[14]
-set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQ[15]
 set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQS[0]
 set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DQS[1]
 set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DQS[0]
@@ -573,24 +213,8 @@ set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -
 set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to DDR3_DM[1]
 set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DM[0]
 set_instance_assignment -name OUTPUT_ENABLE_GROUP 57190167 -to DDR3_DM[1]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[0] -to DDR3_DQ[0]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[0] -to DDR3_DQ[1]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[0] -to DDR3_DQ[2]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[0] -to DDR3_DQ[3]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[0] -to DDR3_DQ[4]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[0] -to DDR3_DQ[5]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[0] -to DDR3_DQ[6]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[0] -to DDR3_DQ[7]
 set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[0] -to DDR3_DM[0]
 set_instance_assignment -name DQSB_DQS_PAIR ON -from DDR3_DQSn[0] -to DDR3_DQS[0]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[1] -to DDR3_DQ[8]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[1] -to DDR3_DQ[9]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[1] -to DDR3_DQ[10]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[1] -to DDR3_DQ[11]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[1] -to DDR3_DQ[12]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[1] -to DDR3_DQ[13]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[1] -to DDR3_DQ[14]
-set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[1] -to DDR3_DQ[15]
 set_instance_assignment -name DQ_GROUP 9 -from DDR3_DQS[1] -to DDR3_DM[1]
 set_instance_assignment -name DQSB_DQS_PAIR ON -from DDR3_DQSn[1] -to DDR3_DQS[1]
 set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to DDR3_ODT[0]
@@ -622,22 +246,6 @@ set_instance_assignment -name OUTPUT_TERMINATION "SERIES 50 OHM WITHOUT CALIBRAT
 set_instance_assignment -name OUTPUT_TERMINATION "SERIES 50 OHM WITHOUT CALIBRATION" -to DDR3_DM
 set_instance_assignment -name BOARD_MODEL_FAR_PULLUP_R 51 -to DDR3_DQ
 set_instance_assignment -name BOARD_MODEL_NEAR_SERIES_R SHORT -to DDR3_DQ
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.7047 -to DDR3_DQ[0]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.4371 -to DDR3_DQ[1]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6417 -to DDR3_DQ[2]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6496 -to DDR3_DQ[3]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.4921 -to DDR3_DQ[4]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6457 -to DDR3_DQ[5]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.5984 -to DDR3_DQ[6]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.5984 -to DDR3_DQ[7]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6024 -to DDR3_DQ[8]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6063 -to DDR3_DQ[9]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6103 -to DDR3_DQ[10]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6378 -to DDR3_DQ[11]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6181 -to DDR3_DQ[12]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6772 -to DDR3_DQ[13]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6496 -to DDR3_DQ[14]
-set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.7008 -to DDR3_DQ[15]
 set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_L_PER_LENGTH 8.66N -to DDR3_DQ
 set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_C_PER_LENGTH 3.47P -to DDR3_DQ
 set_instance_assignment -name BOARD_MODEL_FAR_DIFFERENTIAL_R 100 -to DDR3_CLK
@@ -716,9 +324,6 @@ set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_C_PER_LENGTH 3.47P -to DDR3
 set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to DDR3_WE_n
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to lemo_io[1]
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to lemo_io[2]
-set_location_assignment PLL_4 -to "ref_pll:ref_inst|altpll:altpll_component|ref_pll_altpll:auto_generated|pll1"
-set_location_assignment PLL_2 -to "sys_pll:sys_inst|altpll:altpll_component|ref_pll_altpll:auto_generated|pll1"
-set_location_assignment PLL_3 -to "dmtd_pll:dmtd_inst|altpll:altpll_component|ref_pll_altpll:auto_generated|pll1"
 set_global_assignment -name TIMEQUEST_MULTICORNER_ANALYSIS ON
 set_global_assignment -name SYNCHRONIZER_IDENTIFICATION "FORCED IF ASYNCHRONOUS"
 set_global_assignment -name TIMEQUEST_DO_CCPP_REMOVAL ON
@@ -726,20 +331,46 @@ set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
 set_location_assignment PIN_E27 -to sfp2_ref_clk_i
 set_instance_assignment -name IO_STANDARD LVDS -to sfp2_ref_clk_i
-set_location_assignment PIN_E28 -to "sfp2_ref_clk_i(n)"
-set_location_assignment PIN_R1 -to nPWRBTN
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nPWRBTN
-set_location_assignment PIN_AC7 -to A_nCONFIG
-set_location_assignment PIN_AF3 -to nFPGA_Res_Out
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_nCONFIG
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nFPGA_Res_Out
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd
+set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:scu_control.tcl"
+
+
+set_location_assignment PIN_AC3 -to a_d[15]
+set_location_assignment PIN_AA4 -to a_d[14]
+set_location_assignment PIN_V6 -to a_d[13]
+set_location_assignment PIN_W4 -to a_d[12]
+set_location_assignment PIN_U6 -to a_d[11]
+set_location_assignment PIN_W5 -to a_d[10]
+set_location_assignment PIN_AB2 -to a_d[9]
+set_location_assignment PIN_Y3 -to a_d[8]
+set_location_assignment PIN_AB3 -to a_d[7]
+set_location_assignment PIN_Y4 -to a_d[6]
+set_location_assignment PIN_T6 -to a_d[5]
+set_location_assignment PIN_AE1 -to a_d[4]
+set_location_assignment PIN_T7 -to a_d[3]
+set_location_assignment PIN_AD1 -to a_d[2]
+set_location_assignment PIN_AC1 -to a_d[1]
+set_location_assignment PIN_AA1 -to a_d[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_d
+set_global_assignment -name QIP_FILE mil_pll.qip
+set_global_assignment -name INCLUDE_FILE ../../../../Q12p0work/wb_mil_scu/div_n.inc
+set_global_assignment -name AHDL_FILE ../../../../Q12p0work/wb_mil_scu/ser_par.tdf
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_hw_or_soft_ip.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_Enc_Vhdl.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_en_decoder.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_dec_edge_timed.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_bipol_dec.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu_pkg.vhd
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd"
 set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/trans_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/reverse_lpb/reverse_lpb.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/oled_display/char_render.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd"
 set_global_assignment -name VHDL_FILE ../../../modules/oled_display/Display_RAM_Ini_v01.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/oled_display/spi_master.vhd
@@ -775,7 +406,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/cfi_flash_pkg.v
 set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/i8042_kbc.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_peripheral.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_uart.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd"
 set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/postcode.vhd
 set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_defines.v
 set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_slave.v
@@ -798,227 +429,1034 @@ set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_baudgen.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_interrupt.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_receiver.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_transmitter.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_commit_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_tx.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_ethernet_slave.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_checksum.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_pass_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_top.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_narrow.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tag_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_wbm_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gencores_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_core.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_crc_gen.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_moving_average.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_extend_pulse.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_delay_gen.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_dual_pi_controller.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_reset.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_serial_dac.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_sync_ffs.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_arbitrated_mux.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_frequency_meter.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_rr_arbiter.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_prio_encoder.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_word_packer.vhd
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_commit_fifo.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_tx.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_ethernet_slave.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_fifo.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_checksum.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_pass_fifo.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_top.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_narrow.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tag_fifo.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_wbm_fifo.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gencores_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_core.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_crc_gen.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_moving_average.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_extend_pulse.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_delay_gen.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_dual_pi_controller.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_reset.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_serial_dac.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_sync_ffs.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_arbitrated_mux.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_frequency_meter.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_rr_arbiter.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_prio_encoder.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/common/gc_word_packer.vhd"
 set_global_assignment -name VHDL_FILE ../../../modules/oled_display/wb_console.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/memory_loader_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/generic_shiftreg_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/inferred_sync_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/inferred_async_fifo.vhd
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/memory_loader_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/generic_shiftreg_fifo.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/inferred_sync_fifo.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/inferred_async_fifo.vhd"
 set_global_assignment -name VHDL_FILE ../../../modules/oled_display/display_console.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_async_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_sync_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/gc_shiftreg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_async_bridge/wb_async_bridge.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_async_bridge/xwb_async_bridge.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/wb_onewire_master.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/xwb_onewire_master.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/sockit_owm.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_bit_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_byte_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_top.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/wb_i2c_master.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/xwb_i2c_master.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_bus_fanout/xwb_bus_fanout.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_dpram/xwb_dpram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_gpio_port/wb_gpio_port.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_gpio_port/xwb_gpio_port.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_timer/wb_tics.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_timer/xwb_tics.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_rx.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_tx.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/wb_simple_uart.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/xwb_simple_uart.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/vic_prio_enc.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/wb_vic.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/xwb_vic.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_clgen.v
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_shift.v
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_top.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/wb_spi.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/xwb_spi.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/xwb_lm32.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_mc_arithmetic.v
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/jtag_cores.v
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_adder.v
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_addsub.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_dp_ram.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_logic_op.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_ram.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_shifter.v
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic/lm32_multiplier.v
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/altera/jtag_tap.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_dma.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_streamer.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_serial_lcd/wb_serial_lcd.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi_flash/wb_spi_flash.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/simple_pwm_wbgen2_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/simple_pwm_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/wb_simple_pwm.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/xwb_simple_pwm.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_dpssram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_eic.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_fifo_async.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_fifo_sync.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/wb_slave_vic.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_32to64.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_64to32.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_tlp.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/flash/altera_flash_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/flash/altera_spi.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/flash/flash_top.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_altera.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_rx.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_sink.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_source.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/xwrf_mux.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tbi_phy/dec_8b10b.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tbi_phy/enc_8b10b.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tbi_phy/wr_tbi_phy.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tbi_phy/disparity_gen_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/dmtd_phase_meas.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/dmtd_with_deglitcher.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/multi_dmtd_with_deglitcher.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/hpll_period_detect.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/pulse_gen.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/pulse_stamper.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_packet_buffer.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wbgen2_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wb_slave.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/wr_mini_nic.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/xwr_mini_nic.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_period_detect.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_bangbang_pd.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wbgen2_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/softpll_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/xwr_softpll_ng.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/wr_softpll_ng.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wb_slave.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_registers_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_private_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_8bit.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_16bit.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_16bit.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_autonegotiation.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_pcs_tbi_mdio_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_1000basex_pcs.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_crc32_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_bypass_queue.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_path.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_wb_master.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_oob_insert.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_early_address_match.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_clock_alignment_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_framer.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_packet_filter.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_vlan_unit.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_ts_counter.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_status_reg_insert.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_timestamping_unit.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_leds_controller.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rtu_header_extract.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect_16bit.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_wishbone_controller.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_8bit.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_crc_size_check.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/wr_endpoint.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/xwr_endpoint.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_pps_gen/pps_gen_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_pps_gen/wr_pps_gen.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_pps_gen/xwr_pps_gen.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac_arb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/si570_if_wbgen2_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/si570_if_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/wr_si57x_interface.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/xwr_si57x_interface.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_adder.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_channel.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_gpio_channel.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_offset.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tlu/wb_cores_pkg_gsi.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_search.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_flags.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_walker.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_channel.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_event.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_wr_time.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/wr_eca.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tlu/wb_timestamp_latch.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrcore_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wr_core.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_dpram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_periph.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wb_reset.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/xwr_core.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/xwr_syscon_wb.vhd
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_async_fifo.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/generic_sync_fifo.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/genrams/altera/gc_shiftreg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_async_bridge/wb_async_bridge.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_async_bridge/xwb_async_bridge.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/wb_onewire_master.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/xwb_onewire_master.vhd"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/sockit_owm.v"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_bit_ctrl.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_byte_ctrl.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_top.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/wb_i2c_master.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/xwb_i2c_master.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_bus_fanout/xwb_bus_fanout.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_dpram/xwb_dpram.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_gpio_port/wb_gpio_port.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_gpio_port/xwb_gpio_port.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_simple_timer/wb_tics.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_simple_timer/xwb_tics.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_rx.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_tx.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_wb.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/wb_simple_uart.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/xwb_simple_uart.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_vic/vic_prio_enc.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_vic/wb_vic.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_vic/xwb_vic.vhd"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_clgen.v"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_shift.v"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_top.v"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi/wb_spi.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi/xwb_spi.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/xwb_lm32.vhd"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_mc_arithmetic.v"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/jtag_cores.v"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_adder.v"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_addsub.v"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_dp_ram.vhd"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_logic_op.v"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_ram.vhd"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_shifter.v"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic/lm32_multiplier.v"
+set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/altera/jtag_tap.v"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_dma.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_streamer.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_serial_lcd/wb_serial_lcd.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_spi_flash/wb_spi_flash.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/simple_pwm_wbgen2_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/simple_pwm_wb.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/wb_simple_pwm.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/xwb_simple_pwm.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_dpssram.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_eic.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_fifo_async.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_fifo_sync.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_vic/wb_slave_vic.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_32to64.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_64to32.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_tlp.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/flash/altera_flash_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/flash/altera_spi.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/flash/flash_top.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_altera.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_rx.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_sink.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_source.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/fabric/xwrf_mux.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tbi_phy/dec_8b10b.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tbi_phy/enc_8b10b.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tbi_phy/wr_tbi_phy.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tbi_phy/disparity_gen_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/dmtd_phase_meas.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/dmtd_with_deglitcher.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/multi_dmtd_with_deglitcher.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/hpll_period_detect.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/pulse_gen.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/timing/pulse_stamper.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_packet_buffer.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wbgen2_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wb_slave.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/wr_mini_nic.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_mini_nic/xwr_mini_nic.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_period_detect.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_bangbang_pd.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wbgen2_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/softpll_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/xwr_softpll_ng.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/wr_softpll_ng.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wb_slave.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_registers_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_private_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_8bit.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_16bit.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_16bit.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_autonegotiation.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_pcs_tbi_mdio_wb.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_1000basex_pcs.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_crc32_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_bypass_queue.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_path.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_wb_master.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_oob_insert.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_early_address_match.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_clock_alignment_fifo.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_framer.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_packet_filter.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_vlan_unit.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_ts_counter.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_status_reg_insert.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_timestamping_unit.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_leds_controller.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rtu_header_extract.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect_16bit.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_wishbone_controller.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_8bit.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_crc_size_check.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/wr_endpoint.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_endpoint/xwr_endpoint.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_pps_gen/pps_gen_wb.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_pps_gen/wr_pps_gen.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_pps_gen/xwr_pps_gen.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac_arb.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_si57x_interface/si570_if_wbgen2_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_si57x_interface/si570_if_wb.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_si57x_interface/wr_si57x_interface.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_si57x_interface/xwr_si57x_interface.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_adder.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_channel.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_gpio_channel.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_offset.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/wb_cores_pkg_gsi.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_search.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_flags.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_walker.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_channel.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_event.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_wr_time.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/wr_eca.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_tlu/wb_timestamp_latch.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrcore_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wr_core.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_dpram.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/altera_pkg.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_periph.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wb_reset.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_wb.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/xwr_core.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wrc_core/xwr_syscon_wb.vhd"
 set_global_assignment -name VHDL_FILE ../../../top/gsi_scu/control/scu_control.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_butis.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.vhd
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/altera_butis.vhd"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.vhd"
 set_global_assignment -name SDC_FILE ../../../top/gsi_scu/control/scu_control.sdc
-set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/arria2_pcie.qip
-set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip
-set_global_assignment -name QIP_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.qip
-set_global_assignment -name QIP_FILE ../../../ip_cores/wr-cores/platform/altera/arria2_pll/arria2_pll.qip
-set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:scu_control.tcl"
-
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/wb_pcie/arria2_pcie.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/arria2_pll/arria2_pll.qip"
+set_global_assignment -name TCL_SCRIPT_FILE scu3_control_pin.tcl
+set_global_assignment -name TCL_SCRIPT_FILE scu_control_tmp.tcl
+set_location_assignment PIN_G19 -to ddr3_clk[0]
+set_location_assignment PIN_G18 -to ddr3_clk_n[0]
+set_location_assignment PIN_J17 -to ddr3_ba[2]
+set_location_assignment PIN_D20 -to ddr3_ba[1]
+set_location_assignment PIN_K18 -to ddr3_ba[0]
+set_location_assignment PIN_F24 -to ddr3_cas_n
+set_location_assignment PIN_G24 -to ddr3_ras_n
+set_location_assignment PIN_K16 -to ddr3_res_n
+set_location_assignment PIN_J21 -to ddr3_dq[15]
+set_location_assignment PIN_C18 -to ddr3_dq[14]
+set_location_assignment PIN_K15 -to ddr3_dq[13]
+set_location_assignment PIN_D19 -to ddr3_dq[12]
+set_location_assignment PIN_G17 -to ddr3_dq[11]
+set_location_assignment PIN_D17 -to ddr3_dq[10]
+set_location_assignment PIN_K20 -to ddr3_dq[9]
+set_location_assignment PIN_C17 -to ddr3_dq[8]
+set_location_assignment PIN_B15 -to ddr3_dq[7]
+set_location_assignment PIN_G15 -to ddr3_dq[6]
+set_location_assignment PIN_C16 -to ddr3_dq[5]
+set_location_assignment PIN_H15 -to ddr3_dq[4]
+set_location_assignment PIN_A19 -to ddr3_dq[3]
+set_location_assignment PIN_F15 -to ddr3_dq[2]
+set_location_assignment PIN_A17 -to ddr3_dq[1]
+set_location_assignment PIN_D16 -to ddr3_dq[0]
+set_location_assignment PIN_F20 -to ddr3_we_n
+set_location_assignment PIN_F17 -to ddr3_dm[1]
+set_location_assignment PIN_C19 -to ddr3_dm[0]
+set_location_assignment PIN_D21 -to ddr3_dqs_p[1]
+set_location_assignment PIN_B16 -to ddr3_dqs_p[0]
+set_location_assignment PIN_C21 -to ddr3_dqs_n[1]
+set_location_assignment PIN_A16 -to ddr3_dqs_n[0]
+set_location_assignment PIN_F23 -to ddr3_addr[12]
+set_location_assignment PIN_F21 -to ddr3_addr[11]
+set_location_assignment PIN_H19 -to ddr3_addr[10]
+set_location_assignment PIN_J16 -to ddr3_addr[9]
+set_location_assignment PIN_B19 -to ddr3_addr[8]
+set_location_assignment PIN_J18 -to ddr3_addr[7]
+set_location_assignment PIN_D18 -to ddr3_addr[6]
+set_location_assignment PIN_L21 -to ddr3_addr[5]
+set_location_assignment PIN_E24 -to ddr3_addr[4]
+set_location_assignment PIN_K21 -to ddr3_addr[3]
+set_location_assignment PIN_K19 -to ddr3_addr[2]
+set_location_assignment PIN_F22 -to ddr3_addr[1]
+set_location_assignment PIN_J19 -to ddr3_addr[0]
+set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to ddr3_addr
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to ddr3_addr
+set_instance_assignment -name BOARD_MODEL_FAR_PULLUP_R 51 -to ddr3_addr
+set_instance_assignment -name BOARD_MODEL_NEAR_SERIES_R SHORT -to ddr3_addr
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_L_PER_LENGTH 8.66N -to ddr3_addr
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_C_PER_LENGTH 3.47P -to ddr3_addr
+set_location_assignment PIN_E21 -to ddr3_cs_n
+set_location_assignment PIN_E22 -to ddr3_odt
+set_location_assignment PIN_E15 -to ddr3_cke
+set_location_assignment PIN_H18 -to vref_ddr3
+set_location_assignment PIN_D25 -to sfp1_ref_clk_i
+set_instance_assignment -name IO_STANDARD LVDS -to sfp1_ref_clk_i
+set_location_assignment PIN_P25 -to F_PLL_3
+set_instance_assignment -name IO_STANDARD LVDS -to F_PLL_3
+set_location_assignment PIN_AD25 -to F_PLL_2
+set_instance_assignment -name IO_STANDARD LVDS -to F_PLL_2
+set_location_assignment PIN_R27 -to F_PLL_0
+set_instance_assignment -name IO_STANDARD LVDS -to F_PLL_0
+set_location_assignment PIN_L27 -to a_master_con_rx[4]
+set_location_assignment PIN_N27 -to a_master_con_rx[3]
+set_location_assignment PIN_U27 -to a_master_con_rx[2]
+set_location_assignment PIN_W27 -to a_master_con_rx[1]
+set_location_assignment PIN_K25 -to mc_tx[4]
+set_location_assignment PIN_M25 -to mc_tx[3]
+set_location_assignment PIN_T25 -to mc_tx[2]
+set_location_assignment PIN_V25 -to mc_tx[1]
+set_location_assignment PIN_C27 -to a_ext_con_tx[2]
+set_location_assignment PIN_J27 -to a_ext_con_tx[1]
+set_location_assignment PIN_B26 -to ec_rx[2]
+set_location_assignment PIN_H25 -to ec_rx[1]
+set_location_assignment PIN_B24 -to sfp1_rxp_i
+set_location_assignment PIN_A24 -to "sfp1_rxp_i(n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to sfp1_rxp_i
+set_location_assignment PIN_D23 -to sfp1_txp_o
+set_location_assignment PIN_C23 -to "sfp1_txp_o(n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to sfp1_txp_i
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to sfp2_txp_i
+set_location_assignment PIN_AC10 -to nkbd_rst
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nkbd_rst
+set_location_assignment PIN_AB10 -to a20gate
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a20gate
+set_location_assignment PIN_AC8 -to a_rear_out[1]
+set_location_assignment PIN_AB8 -to a_rear_out[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_rear_out
+set_location_assignment PIN_AH12 -to a_rear_in[1]
+set_location_assignment PIN_AG12 -to a_rear_in[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_rear_in
+set_location_assignment PIN_Y13 -to a_a[15]
+set_location_assignment PIN_AH10 -to a_a[14]
+set_location_assignment PIN_AH8 -to a_a[13]
+set_location_assignment PIN_AH9 -to a_a[12]
+set_location_assignment PIN_AH7 -to a_a[11]
+set_location_assignment PIN_AG9 -to a_a[10]
+set_location_assignment PIN_AC14 -to a_a[9]
+set_location_assignment PIN_AH6 -to a_a[8]
+set_location_assignment PIN_AB14 -to a_a[7]
+set_location_assignment PIN_AG6 -to a_a[6]
+set_location_assignment PIN_AH5 -to a_a[5]
+set_location_assignment PIN_AF13 -to a_a[4]
+set_location_assignment PIN_AH4 -to a_a[3]
+set_location_assignment PIN_AE13 -to a_a[2]
+set_location_assignment PIN_AC13 -to a_a[1]
+set_location_assignment PIN_AF12 -to a_a[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_a
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to a_a
+set_location_assignment PIN_AB13 -to a_nsel[12]
+set_location_assignment PIN_AE12 -to a_nsel[11]
+set_location_assignment PIN_AF10 -to a_nsel[10]
+set_location_assignment PIN_AF11 -to a_nsel[9]
+set_location_assignment PIN_AE10 -to a_nsel[8]
+set_location_assignment PIN_AE11 -to a_nsel[7]
+set_location_assignment PIN_W13 -to a_nsel[6]
+set_location_assignment PIN_AF9 -to a_nsel[5]
+set_location_assignment PIN_W12 -to a_nsel[4]
+set_location_assignment PIN_AE9 -to a_nsel[3]
+set_location_assignment PIN_AF8 -to a_nsel[2]
+set_location_assignment PIN_AF7 -to a_nsel[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_nsel
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to a_nsel
+set_location_assignment PIN_AF5 -to a_ndtack
+set_location_assignment PIN_AE7 -to a_nsrq[12]
+set_location_assignment PIN_W11 -to a_nsrq[11]
+set_location_assignment PIN_AC12 -to a_nsrq[10]
+set_location_assignment PIN_AE5 -to a_nsrq[9]
+set_location_assignment PIN_AC11 -to a_nsrq[8]
+set_location_assignment PIN_AG4 -to a_nsrq[7]
+set_location_assignment PIN_AB11 -to a_nsrq[6]
+set_location_assignment PIN_AG3 -to a_nsrq[5]
+set_location_assignment PIN_AH3 -to a_nsrq[4]
+set_location_assignment PIN_AF4 -to a_nsrq[3]
+set_location_assignment PIN_AH2 -to a_nsrq[2]
+set_location_assignment PIN_AE4 -to a_nsrq[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_nsrq
+set_location_assignment PIN_AF3 -to nfpga_res_out
+set_location_assignment PIN_AF1 -to onewire_cb
+set_location_assignment PIN_AD9 -to nadr_en
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nadr_en
+set_location_assignment PIN_AC9 -to nthrmtrip
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nthrmtrip
+set_location_assignment PIN_AD7 -to nexcd0_perst
+set_location_assignment PIN_AC7 -to a_nconfig
+set_location_assignment PIN_U24 -to sfp1_tx_fault
+set_instance_assignment -name IO_STANDARD "2.5 V" -to sfp1_tx_fault
+set_instance_assignment -name IO_STANDARD "2.5 V" -to sfp1_tx_disable_o
+set_location_assignment PIN_V24 -to sfp1_los
+set_instance_assignment -name IO_STANDARD "2.5 V" -to sfp1_los
+set_location_assignment PIN_AB19 -to sfp2_tx_fault
+set_instance_assignment -name IO_STANDARD "2.5 V" -to sfp2_tx_fault
+set_instance_assignment -name IO_STANDARD "2.5 V" -to sfp2_tx_disable_o
+set_location_assignment PIN_AC22 -to sfp2_los
+set_instance_assignment -name IO_STANDARD "2.5 V" -to sfp2_los
+set_location_assignment PIN_AH11 -to a_spare[1]
+set_location_assignment PIN_Y14 -to a_spare[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_spare
+set_location_assignment PIN_AE8 -to wdt
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wdt
+set_location_assignment PIN_AF6 -to uart_txd_o[0]
+set_location_assignment PIN_AE6 -to uart_rxd_i[0]
+set_location_assignment PIN_Y11 -to onewire_ext
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to onewire_ext
+set_location_assignment PIN_W10 -to a_sysclock
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_sysclock
+set_location_assignment PIN_AA10 -to adr_to_scub
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to adr_to_scub
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hpla_ch
+set_instance_assignment -name IO_STANDARD "2.5 V" -to hpla_clk
+set_location_assignment PIN_AG15 -to nuser_pb
+set_location_assignment PIN_AC19 -to io_2_5v[15]
+set_location_assignment PIN_AB16 -to io_2_5v[14]
+set_location_assignment PIN_AC16 -to io_2_5v[13]
+set_location_assignment PIN_AB17 -to io_2_5v[12]
+set_location_assignment PIN_AC17 -to io_2_5v[11]
+set_location_assignment PIN_AC18 -to io_2_5v[10]
+set_location_assignment PIN_AD18 -to io_2_5v[9]
+set_location_assignment PIN_Y19 -to io_2_5v[8]
+set_location_assignment PIN_Y20 -to io_2_5v[7]
+set_location_assignment PIN_AC21 -to io_2_5v[6]
+set_location_assignment PIN_AD21 -to io_2_5v[5]
+set_location_assignment PIN_W21 -to io_2_5v[4]
+set_location_assignment PIN_Y22 -to io_2_5v[3]
+set_location_assignment PIN_AD22 -to io_2_5v[2]
+set_location_assignment PIN_AD23 -to io_2_5v[1]
+set_location_assignment PIN_AC23 -to io_2_5v[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to io_2_5v
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to io_2_5v
+set_location_assignment PIN_K11 -to clk_fsh
+set_location_assignment PIN_G14 -to noe_fsh
+set_location_assignment PIN_F14 -to nwe_fsh
+set_location_assignment PIN_C9 -to ad[25]
+set_location_assignment PIN_K12 -to ad[24]
+set_location_assignment PIN_E13 -to ad[23]
+set_location_assignment PIN_G12 -to ad[22]
+set_location_assignment PIN_J14 -to ad[21]
+set_location_assignment PIN_F10 -to ad[20]
+set_location_assignment PIN_G13 -to ad[19]
+set_location_assignment PIN_F12 -to ad[18]
+set_location_assignment PIN_K13 -to ad[17]
+set_location_assignment PIN_K14 -to ad[16]
+set_location_assignment PIN_B6 -to ad[15]
+set_location_assignment PIN_B9 -to ad[14]
+set_location_assignment PIN_A6 -to ad[13]
+set_location_assignment PIN_A7 -to ad[12]
+set_location_assignment PIN_E12 -to ad[11]
+set_location_assignment PIN_A8 -to ad[10]
+set_location_assignment PIN_A9 -to ad[9]
+set_location_assignment PIN_A10 -to ad[8]
+set_location_assignment PIN_C12 -to ad[7]
+set_location_assignment PIN_A11 -to ad[6]
+set_location_assignment PIN_C13 -to ad[5]
+set_location_assignment PIN_D13 -to ad[4]
+set_location_assignment PIN_D12 -to ad[3]
+set_location_assignment PIN_D11 -to ad[2]
+set_location_assignment PIN_C11 -to ad[1]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to ad
+set_location_assignment PIN_A3 -to adv_fsh
+set_instance_assignment -name IO_STANDARD "2.5 V" -to adv_fsh
+set_location_assignment PIN_D6 -to df[15]
+set_location_assignment PIN_D10 -to df[14]
+set_location_assignment PIN_J12 -to df[13]
+set_location_assignment PIN_A4 -to df[12]
+set_location_assignment PIN_J11 -to df[11]
+set_location_assignment PIN_D9 -to df[10]
+set_location_assignment PIN_C7 -to df[9]
+set_location_assignment PIN_D8 -to df[8]
+set_location_assignment PIN_E7 -to df[7]
+set_location_assignment PIN_C5 -to df[6]
+set_location_assignment PIN_G11 -to df[5]
+set_location_assignment PIN_C6 -to df[4]
+set_location_assignment PIN_D7 -to df[3]
+set_location_assignment PIN_B12 -to df[2]
+set_location_assignment PIN_C8 -to df[1]
+set_location_assignment PIN_C10 -to df[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to df
+set_location_assignment PIN_F13 -to nce_fsh
+set_instance_assignment -name IO_STANDARD "2.5 V" -to nce_fsh
+set_location_assignment PIN_F7 -to nrst_fsh
+set_instance_assignment -name IO_STANDARD "2.5 V" -to nrst_fsh
+set_location_assignment PIN_G7 -to wait_fsh
+set_instance_assignment -name IO_STANDARD "2.5 V" -to wait_fsh
+set_location_assignment PIN_D14 -to a_ext_lvds_clkin
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_clkin
+set_location_assignment PIN_R5 -to dir_rb3_to_scub
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dir_rb3_to_scub
+set_location_assignment PIN_N3 -to CLK_20_VCXO
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lemo_io
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lemo_led
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lemo_en_in
+set_location_assignment PIN_P2 -to lpc_fpga_clk
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lpc_fpga_clk
+set_location_assignment PIN_V1 -to nlpc_drq0
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nlpc_drq0
+set_location_assignment PIN_P6 -to nlpc_frame
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nlpc_frame
+set_location_assignment PIN_N4 -to lpc_ad[3]
+set_location_assignment PIN_V4 -to lpc_ad[2]
+set_location_assignment PIN_W1 -to lpc_ad[1]
+set_location_assignment PIN_W2 -to lpc_ad[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lpc_ad
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to lpc_ad
+set_location_assignment PIN_W3 -to lpc_serirq
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lpc_serirq
+set_location_assignment PIN_U4 -to npci_pme
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to npci_pme
+set_location_assignment PIN_U5 -to a_ntiming_cycle
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_ntiming_cycle
+set_location_assignment PIN_R3 -to a_nds
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_nds
+set_location_assignment PIN_U1 -to a_nreset
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_nreset
+set_location_assignment PIN_R6 -to npci_reset
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to npci_reset
+set_location_assignment PIN_U3 -to nsel_ext_data_drv
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nsel_ext_data_drv
+set_location_assignment PIN_N6 -to a_rnw
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_rnw
+set_location_assignment PIN_M6 -to nsys_reset
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nsys_reset
+set_location_assignment PIN_R1 -to npwrbtn
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to npwrbtn
+set_location_assignment PIN_AC2 -to eio[17]
+set_location_assignment PIN_AA3 -to eio[16]
+set_location_assignment PIN_AD3 -to eio[15]
+set_location_assignment PIN_AE3 -to eio[14]
+set_location_assignment PIN_AC4 -to eio[13]
+set_location_assignment PIN_AD4 -to eio[12]
+set_location_assignment PIN_AB5 -to eio[11]
+set_location_assignment PIN_AC5 -to eio[10]
+set_location_assignment PIN_AA6 -to eio[9]
+set_location_assignment PIN_AB6 -to eio[8]
+set_location_assignment PIN_AB4 -to eio[7]
+set_location_assignment PIN_AB7 -to eio[6]
+set_location_assignment PIN_Y6 -to eio[5]
+set_location_assignment PIN_Y5 -to eio[4]
+set_location_assignment PIN_W6 -to eio[3]
+set_location_assignment PIN_W8 -to eio[2]
+set_location_assignment PIN_Y9 -to eio[1]
+set_location_assignment PIN_V7 -to eio[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to eio
+set_location_assignment PIN_AB1 -to a_onewire
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_onewire
+set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o
+set_location_assignment PIN_L7 -to a_ext_lvds_tx[3] -disable
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_tx[3] -disable
+set_location_assignment PIN_J3 -to a_ext_lvds_tx[2] -disable
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_tx[2] -disable
+set_location_assignment PIN_J7 -to a_ext_lvds_tx[1] -disable
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_tx[1] -disable
+set_location_assignment PIN_F1 -to a_ext_lvds_tx[0] -disable
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_tx[0] -disable
+set_location_assignment PIN_K1 -to a_ext_lvds_clkout
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_clkout
+set_location_assignment PIN_L3 -to a_ext_lvds_rx[3]
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_rx[3]
+set_location_assignment PIN_M4 -to a_ext_lvds_rx[2]
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_rx[2]
+set_location_assignment PIN_H1 -to a_ext_lvds_rx[1]
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_rx[1]
+set_location_assignment PIN_L4 -to a_ext_lvds_rx[0]
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_rx[0]
+set_location_assignment PIN_H6 -to ntiming_sfp_red
+set_instance_assignment -name IO_STANDARD "2.5 V" -to ntiming_sfp_red
+set_location_assignment PIN_A2 -to ntiming_sfp_grn
+set_instance_assignment -name IO_STANDARD "2.5 V" -to ntiming_sfp_grn
+set_location_assignment PIN_K9 -to naux_sfp_grn
+set_instance_assignment -name IO_STANDARD "2.5 V" -to naux_sfp_grn
+set_location_assignment PIN_B1 -to naux_sfp_red
+set_instance_assignment -name IO_STANDARD "2.5 V" -to naux_sfp_red
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_tx_i
+set_location_assignment PIN_E3 -to scu_cb_version[3]
+set_location_assignment PIN_D3 -to scu_cb_version[2]
+set_location_assignment PIN_G5 -to scu_cb_version[1]
+set_location_assignment PIN_G6 -to scu_cb_version[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to scu_cb_version
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to scu_cb_version
+set_location_assignment PIN_F1 -to a_ext_conn3_a2
+set_location_assignment PIN_G1 -to a_ext_conn3_a3
+set_location_assignment PIN_J6 -to a_ext_conn3_a7
+set_location_assignment PIN_J7 -to a_ext_conn3_a6
+set_location_assignment PIN_J3 -to a_ext_conn3_a10
+set_location_assignment PIN_J2 -to a_ext_conn3_a11
+set_location_assignment PIN_L7 -to a_ext_conn3_a14
+set_location_assignment PIN_K6 -to a_ext_conn3_a15
+set_location_assignment PIN_K1 -to a_ext_conn3_a18
+set_location_assignment PIN_L1 -to a_ext_conn3_a19
+set_location_assignment PIN_L4 -to a_ext_conn3_b4
+set_location_assignment PIN_K3 -to a_ext_conn3_b5
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.7008 -to ddr3_dq[15]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6496 -to ddr3_dq[14]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6772 -to ddr3_dq[13]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6181 -to ddr3_dq[12]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6378 -to ddr3_dq[11]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6103 -to ddr3_dq[10]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6063 -to ddr3_dq[9]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6024 -to ddr3_dq[8]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.5984 -to ddr3_dq[7]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.5984 -to ddr3_dq[6]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6457 -to ddr3_dq[5]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.4921 -to ddr3_dq[4]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6496 -to ddr3_dq[3]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.6417 -to ddr3_dq[2]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.4371 -to ddr3_dq[1]
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_LENGTH 2.7047 -to ddr3_dq[0]
+set_instance_assignment -name IO_STANDARD "SSTL-15 CLASS I" -to ddr3_dq
+set_instance_assignment -name MEM_INTERFACE_DELAY_CHAIN_CONFIG FLEXIBLE_TIMING -to ddr3_dq
+set_instance_assignment -name OUTPUT_TERMINATION "SERIES 50 OHM WITHOUT CALIBRATION" -to ddr3_dq
+set_instance_assignment -name BOARD_MODEL_FAR_PULLUP_R 51 -to ddr3_dq
+set_instance_assignment -name BOARD_MODEL_NEAR_SERIES_R SHORT -to ddr3_dq
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_L_PER_LENGTH 8.66N -to ddr3_dq
+set_instance_assignment -name BOARD_MODEL_NEAR_TLINE_C_PER_LENGTH 3.47P -to ddr3_dq
+set_location_assignment PIN_AD7 -to nextcd0_perst
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nextcd0_perst
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to onewire_cb
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to a_nconfig
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ndac_cs
+set_instance_assignment -name IO_STANDARD "2.5 V" -to nuser_pb
+set_location_assignment PIN_L7 -to a_ext_lvds_tx[3]
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_tx[3]
+set_location_assignment PIN_J3 -to a_ext_lvds_tx[2]
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_tx[2]
+set_location_assignment PIN_J7 -to a_ext_lvds_tx[1]
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_tx[1]
+set_location_assignment PIN_F1 -to a_ext_lvds_tx[0]
+set_instance_assignment -name IO_STANDARD LVDS -to a_ext_lvds_tx[0]
+set_global_assignment -name USE_SIGNALTAP_FILE stp_mil.stp
+set_global_assignment -name SIGNALTAP_FILE stp_mil.stp
+set_global_assignment -name SLD_NODE_CREATOR_ID 110 -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_ENTITY_NAME sld_signaltap -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_clk -to "sys_pll:sys_inst|c0" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[0] -to "wb_mil_scu:mil|ME_BOI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[1] -to "wb_mil_scu:mil|ME_BZI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[2] -to "wb_mil_scu:mil|ME_CDS" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[3] -to "wb_mil_scu:mil|ME_DSC" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[4] -to "wb_mil_scu:mil|ME_EE" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[5] -to "wb_mil_scu:mil|ME_ESC" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[6] -to "wb_mil_scu:mil|ME_SD" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[7] -to "wb_mil_scu:mil|ME_SDI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[8] -to "wb_mil_scu:mil|ME_SDO" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[9] -to "wb_mil_scu:mil|ME_SS" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[10] -to "wb_mil_scu:mil|ME_TD" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[11] -to "wb_mil_scu:mil|ME_UDI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[12] -to "wb_mil_scu:mil|ME_VW" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[13] -to "wb_mil_scu:mil|Mil_BOI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[14] -to "wb_mil_scu:mil|Mil_BZI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[15] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[16] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[17] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[18] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[19] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[20] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[21] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[22] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[23] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[24] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[25] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[26] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[27] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[28] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[29] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[30] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[31] -to "wb_mil_scu:mil|Mil_nBOO" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[32] -to "wb_mil_scu:mil|Mil_nBZO" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[0] -to "wb_mil_scu:mil|ME_BOI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[1] -to "wb_mil_scu:mil|ME_BZI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[2] -to "wb_mil_scu:mil|ME_CDS" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[3] -to "wb_mil_scu:mil|ME_DSC" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[4] -to "wb_mil_scu:mil|ME_EE" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[5] -to "wb_mil_scu:mil|ME_ESC" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[6] -to "wb_mil_scu:mil|ME_SD" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[7] -to "wb_mil_scu:mil|ME_SDI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[8] -to "wb_mil_scu:mil|ME_SDO" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[9] -to "wb_mil_scu:mil|ME_SS" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[10] -to "wb_mil_scu:mil|ME_TD" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[11] -to "wb_mil_scu:mil|ME_UDI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[12] -to "wb_mil_scu:mil|ME_VW" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[13] -to "wb_mil_scu:mil|Mil_BOI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[14] -to "wb_mil_scu:mil|Mil_BZI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[15] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[16] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[17] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[18] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[19] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[20] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[21] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[22] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[23] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[24] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[25] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[26] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[27] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[28] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[29] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[30] -to "wb_mil_scu:mil|Mil_Decoder_Diag_p[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[31] -to "wb_mil_scu:mil|Mil_nBOO" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[32] -to "wb_mil_scu:mil|Mil_nBZO" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_RAM_BLOCK_TYPE=M9K" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_INFO=805334528" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_POWER_UP_TRIGGER=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ATTRIBUTE_MEM_MODE=OFF" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_FLOW_USE_GENERATED=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_BITS=11" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_BUFFER_FULL_STOP=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_CURRENT_RESOURCE_WIDTH=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_IN_ENABLED=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ADVANCED_TRIGGER_ENTITY=basic,1," -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL_PIPELINE=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ENABLE_ADVANCED_TRIGGER=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SEGMENT_SIZE=8192" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SAMPLE_DEPTH=8192" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[33] -to "wb_mil_scu:mil|Sel_Mil_Drv" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[34] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|Mil_Trm_Rdy" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[35] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|Reset" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[36] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.IDLE_HI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[37] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.IDLE_LO" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[38] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.Sync1" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[39] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.Sync2" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[40] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.Sync3" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[41] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.Sync4" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[42] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.Sync5" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[43] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.Sync6" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[44] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.TRM_HI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[45] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.TRM_Idle" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[46] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.TRM_LO" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[47] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|ME_EE" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[48] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|ME_EE_ff" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[49] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|SEL_6408" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[50] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[51] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[52] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[53] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[54] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[55] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[56] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[57] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[58] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[59] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[60] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[61] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[62] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[63] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[64] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[65] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[66] -to "wb_mil_scu:mil|mil_rd_start" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[67] -to "wb_mil_scu:mil|mil_trm_data[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[68] -to "wb_mil_scu:mil|mil_trm_data[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[69] -to "wb_mil_scu:mil|mil_trm_data[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[70] -to "wb_mil_scu:mil|mil_trm_data[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[71] -to "wb_mil_scu:mil|mil_trm_data[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[72] -to "wb_mil_scu:mil|mil_trm_data[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[73] -to "wb_mil_scu:mil|mil_trm_data[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[74] -to "wb_mil_scu:mil|mil_trm_data[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[75] -to "wb_mil_scu:mil|mil_trm_data[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[76] -to "wb_mil_scu:mil|mil_trm_data[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[77] -to "wb_mil_scu:mil|mil_trm_data[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[78] -to "wb_mil_scu:mil|mil_trm_data[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[79] -to "wb_mil_scu:mil|mil_trm_data[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[80] -to "wb_mil_scu:mil|mil_trm_data[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[81] -to "wb_mil_scu:mil|mil_trm_data[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[82] -to "wb_mil_scu:mil|mil_trm_data[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[83] -to "wb_mil_scu:mil|mil_trm_start" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[33] -to "wb_mil_scu:mil|Sel_Mil_Drv" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[34] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|Mil_Trm_Rdy" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[35] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|Reset" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[36] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.IDLE_HI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[37] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.IDLE_LO" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[38] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.Sync1" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[39] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.Sync2" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[40] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.Sync3" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[41] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.Sync4" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[42] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.Sync5" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[43] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.Sync6" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[44] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.TRM_HI" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[45] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.TRM_Idle" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[46] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|mil_en_decoder:mil_en_dec|mil_enc_vhdl:mil_enc|S_Encode_SM.TRM_LO" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[47] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|ME_EE" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[48] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|ME_EE_ff" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[49] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|SEL_6408" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[50] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[51] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[52] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[53] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[54] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[55] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[56] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[57] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[58] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[59] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[60] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[61] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[62] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[63] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[64] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[65] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|lpm_shiftreg:Par_in_Ser_out|data[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[66] -to "wb_mil_scu:mil|mil_rd_start" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[67] -to "wb_mil_scu:mil|mil_trm_data[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[68] -to "wb_mil_scu:mil|mil_trm_data[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[69] -to "wb_mil_scu:mil|mil_trm_data[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[70] -to "wb_mil_scu:mil|mil_trm_data[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[71] -to "wb_mil_scu:mil|mil_trm_data[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[72] -to "wb_mil_scu:mil|mil_trm_data[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[73] -to "wb_mil_scu:mil|mil_trm_data[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[74] -to "wb_mil_scu:mil|mil_trm_data[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[75] -to "wb_mil_scu:mil|mil_trm_data[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[76] -to "wb_mil_scu:mil|mil_trm_data[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[77] -to "wb_mil_scu:mil|mil_trm_data[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[78] -to "wb_mil_scu:mil|mil_trm_data[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[79] -to "wb_mil_scu:mil|mil_trm_data[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[80] -to "wb_mil_scu:mil|mil_trm_data[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[81] -to "wb_mil_scu:mil|mil_trm_data[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[82] -to "wb_mil_scu:mil|mil_trm_data[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[83] -to "wb_mil_scu:mil|mil_trm_start" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STORAGE_QUALIFIER_INVERSION_MASK_LENGTH=0" -section_id auto_signaltap_0
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to io_2_5v[11]
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to io_2_5v[12]
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[84] -to "wb_mil_scu:mil|nLed_Mil_Trm" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[85] -to "wb_mil_scu:mil|slave_i.adr[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[86] -to "wb_mil_scu:mil|slave_i.adr[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[87] -to "wb_mil_scu:mil|slave_i.adr[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[88] -to "wb_mil_scu:mil|slave_i.adr[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[89] -to "wb_mil_scu:mil|slave_i.adr[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[90] -to "wb_mil_scu:mil|slave_i.adr[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[91] -to "wb_mil_scu:mil|slave_i.adr[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[92] -to "wb_mil_scu:mil|slave_i.adr[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[93] -to "wb_mil_scu:mil|slave_i.adr[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[94] -to "wb_mil_scu:mil|slave_i.adr[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[95] -to "wb_mil_scu:mil|slave_i.adr[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[96] -to "wb_mil_scu:mil|slave_i.adr[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[97] -to "wb_mil_scu:mil|slave_i.adr[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[98] -to "wb_mil_scu:mil|slave_i.adr[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[99] -to "wb_mil_scu:mil|slave_i.adr[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[100] -to "wb_mil_scu:mil|slave_i.adr[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[101] -to "wb_mil_scu:mil|slave_i.adr[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[102] -to "wb_mil_scu:mil|slave_i.adr[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[103] -to "wb_mil_scu:mil|slave_i.adr[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[104] -to "wb_mil_scu:mil|slave_i.adr[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[105] -to "wb_mil_scu:mil|slave_i.adr[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[106] -to "wb_mil_scu:mil|slave_i.adr[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[107] -to "wb_mil_scu:mil|slave_i.adr[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[108] -to "wb_mil_scu:mil|slave_i.adr[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[109] -to "wb_mil_scu:mil|slave_i.adr[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[110] -to "wb_mil_scu:mil|slave_i.adr[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[111] -to "wb_mil_scu:mil|slave_i.adr[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[112] -to "wb_mil_scu:mil|slave_i.adr[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[113] -to "wb_mil_scu:mil|slave_i.adr[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[114] -to "wb_mil_scu:mil|slave_i.adr[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[115] -to "wb_mil_scu:mil|slave_i.adr[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[116] -to "wb_mil_scu:mil|slave_i.adr[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[117] -to "wb_mil_scu:mil|slave_i.cyc" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[118] -to "wb_mil_scu:mil|slave_i.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[119] -to "wb_mil_scu:mil|slave_i.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[120] -to "wb_mil_scu:mil|slave_i.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[121] -to "wb_mil_scu:mil|slave_i.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[122] -to "wb_mil_scu:mil|slave_i.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[123] -to "wb_mil_scu:mil|slave_i.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[124] -to "wb_mil_scu:mil|slave_i.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[125] -to "wb_mil_scu:mil|slave_i.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[126] -to "wb_mil_scu:mil|slave_i.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[127] -to "wb_mil_scu:mil|slave_i.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[128] -to "wb_mil_scu:mil|slave_i.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[129] -to "wb_mil_scu:mil|slave_i.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[130] -to "wb_mil_scu:mil|slave_i.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[131] -to "wb_mil_scu:mil|slave_i.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[132] -to "wb_mil_scu:mil|slave_i.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[133] -to "wb_mil_scu:mil|slave_i.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[134] -to "wb_mil_scu:mil|slave_i.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[135] -to "wb_mil_scu:mil|slave_i.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[136] -to "wb_mil_scu:mil|slave_i.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[137] -to "wb_mil_scu:mil|slave_i.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[138] -to "wb_mil_scu:mil|slave_i.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[139] -to "wb_mil_scu:mil|slave_i.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[140] -to "wb_mil_scu:mil|slave_i.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[141] -to "wb_mil_scu:mil|slave_i.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[142] -to "wb_mil_scu:mil|slave_i.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[143] -to "wb_mil_scu:mil|slave_i.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[144] -to "wb_mil_scu:mil|slave_i.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[145] -to "wb_mil_scu:mil|slave_i.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[146] -to "wb_mil_scu:mil|slave_i.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[147] -to "wb_mil_scu:mil|slave_i.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[148] -to "wb_mil_scu:mil|slave_i.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[149] -to "wb_mil_scu:mil|slave_i.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[150] -to "wb_mil_scu:mil|slave_i.sel[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[151] -to "wb_mil_scu:mil|slave_i.sel[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[152] -to "wb_mil_scu:mil|slave_i.sel[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[153] -to "wb_mil_scu:mil|slave_i.sel[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[154] -to "wb_mil_scu:mil|slave_i.stb" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[155] -to "wb_mil_scu:mil|slave_i.we" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[156] -to "wb_mil_scu:mil|slave_o.ack" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[157] -to "wb_mil_scu:mil|slave_o.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[158] -to "wb_mil_scu:mil|slave_o.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[159] -to "wb_mil_scu:mil|slave_o.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[160] -to "wb_mil_scu:mil|slave_o.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[161] -to "wb_mil_scu:mil|slave_o.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[162] -to "wb_mil_scu:mil|slave_o.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[163] -to "wb_mil_scu:mil|slave_o.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[164] -to "wb_mil_scu:mil|slave_o.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[165] -to "wb_mil_scu:mil|slave_o.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[166] -to "wb_mil_scu:mil|slave_o.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[167] -to "wb_mil_scu:mil|slave_o.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[168] -to "wb_mil_scu:mil|slave_o.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[169] -to "wb_mil_scu:mil|slave_o.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[170] -to "wb_mil_scu:mil|slave_o.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[171] -to "wb_mil_scu:mil|slave_o.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[172] -to "wb_mil_scu:mil|slave_o.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[173] -to "wb_mil_scu:mil|slave_o.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[174] -to "wb_mil_scu:mil|slave_o.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[175] -to "wb_mil_scu:mil|slave_o.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[176] -to "wb_mil_scu:mil|slave_o.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[177] -to "wb_mil_scu:mil|slave_o.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[178] -to "wb_mil_scu:mil|slave_o.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[179] -to "wb_mil_scu:mil|slave_o.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[180] -to "wb_mil_scu:mil|slave_o.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[181] -to "wb_mil_scu:mil|slave_o.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[182] -to "wb_mil_scu:mil|slave_o.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[183] -to "wb_mil_scu:mil|slave_o.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[184] -to "wb_mil_scu:mil|slave_o.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[185] -to "wb_mil_scu:mil|slave_o.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[186] -to "wb_mil_scu:mil|slave_o.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[187] -to "wb_mil_scu:mil|slave_o.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[188] -to "wb_mil_scu:mil|slave_o.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[189] -to "wb_mil_scu:mil|slave_o.err" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[190] -to "wb_mil_scu:mil|slave_o.int" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[191] -to "wb_mil_scu:mil|slave_o.rty" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[192] -to "wb_mil_scu:mil|slave_o.stall" -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[193] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|Send_init" -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[194] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|TRM_Ena_ff" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[84] -to "wb_mil_scu:mil|nLed_Mil_Trm" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[85] -to "wb_mil_scu:mil|slave_i.adr[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[86] -to "wb_mil_scu:mil|slave_i.adr[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[87] -to "wb_mil_scu:mil|slave_i.adr[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[88] -to "wb_mil_scu:mil|slave_i.adr[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[89] -to "wb_mil_scu:mil|slave_i.adr[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[90] -to "wb_mil_scu:mil|slave_i.adr[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[91] -to "wb_mil_scu:mil|slave_i.adr[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[92] -to "wb_mil_scu:mil|slave_i.adr[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[93] -to "wb_mil_scu:mil|slave_i.adr[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[94] -to "wb_mil_scu:mil|slave_i.adr[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[95] -to "wb_mil_scu:mil|slave_i.adr[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[96] -to "wb_mil_scu:mil|slave_i.adr[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[97] -to "wb_mil_scu:mil|slave_i.adr[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[98] -to "wb_mil_scu:mil|slave_i.adr[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[99] -to "wb_mil_scu:mil|slave_i.adr[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[100] -to "wb_mil_scu:mil|slave_i.adr[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[101] -to "wb_mil_scu:mil|slave_i.adr[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[102] -to "wb_mil_scu:mil|slave_i.adr[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[103] -to "wb_mil_scu:mil|slave_i.adr[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[104] -to "wb_mil_scu:mil|slave_i.adr[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[105] -to "wb_mil_scu:mil|slave_i.adr[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[106] -to "wb_mil_scu:mil|slave_i.adr[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[107] -to "wb_mil_scu:mil|slave_i.adr[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[108] -to "wb_mil_scu:mil|slave_i.adr[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[109] -to "wb_mil_scu:mil|slave_i.adr[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[110] -to "wb_mil_scu:mil|slave_i.adr[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[111] -to "wb_mil_scu:mil|slave_i.adr[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[112] -to "wb_mil_scu:mil|slave_i.adr[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[113] -to "wb_mil_scu:mil|slave_i.adr[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[114] -to "wb_mil_scu:mil|slave_i.adr[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[115] -to "wb_mil_scu:mil|slave_i.adr[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[116] -to "wb_mil_scu:mil|slave_i.adr[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[117] -to "wb_mil_scu:mil|slave_i.cyc" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[118] -to "wb_mil_scu:mil|slave_i.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[119] -to "wb_mil_scu:mil|slave_i.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[120] -to "wb_mil_scu:mil|slave_i.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[121] -to "wb_mil_scu:mil|slave_i.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[122] -to "wb_mil_scu:mil|slave_i.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[123] -to "wb_mil_scu:mil|slave_i.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[124] -to "wb_mil_scu:mil|slave_i.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[125] -to "wb_mil_scu:mil|slave_i.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[126] -to "wb_mil_scu:mil|slave_i.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[127] -to "wb_mil_scu:mil|slave_i.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[128] -to "wb_mil_scu:mil|slave_i.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[129] -to "wb_mil_scu:mil|slave_i.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[130] -to "wb_mil_scu:mil|slave_i.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[131] -to "wb_mil_scu:mil|slave_i.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[132] -to "wb_mil_scu:mil|slave_i.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[133] -to "wb_mil_scu:mil|slave_i.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[134] -to "wb_mil_scu:mil|slave_i.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[135] -to "wb_mil_scu:mil|slave_i.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[136] -to "wb_mil_scu:mil|slave_i.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[137] -to "wb_mil_scu:mil|slave_i.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[138] -to "wb_mil_scu:mil|slave_i.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[139] -to "wb_mil_scu:mil|slave_i.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[140] -to "wb_mil_scu:mil|slave_i.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[141] -to "wb_mil_scu:mil|slave_i.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[142] -to "wb_mil_scu:mil|slave_i.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[143] -to "wb_mil_scu:mil|slave_i.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[144] -to "wb_mil_scu:mil|slave_i.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[145] -to "wb_mil_scu:mil|slave_i.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[146] -to "wb_mil_scu:mil|slave_i.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[147] -to "wb_mil_scu:mil|slave_i.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[148] -to "wb_mil_scu:mil|slave_i.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[149] -to "wb_mil_scu:mil|slave_i.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[150] -to "wb_mil_scu:mil|slave_i.sel[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[151] -to "wb_mil_scu:mil|slave_i.sel[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[152] -to "wb_mil_scu:mil|slave_i.sel[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[153] -to "wb_mil_scu:mil|slave_i.sel[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[154] -to "wb_mil_scu:mil|slave_i.stb" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[155] -to "wb_mil_scu:mil|slave_i.we" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[156] -to "wb_mil_scu:mil|slave_o.ack" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[157] -to "wb_mil_scu:mil|slave_o.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[158] -to "wb_mil_scu:mil|slave_o.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[159] -to "wb_mil_scu:mil|slave_o.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[160] -to "wb_mil_scu:mil|slave_o.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[161] -to "wb_mil_scu:mil|slave_o.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[162] -to "wb_mil_scu:mil|slave_o.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[163] -to "wb_mil_scu:mil|slave_o.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[164] -to "wb_mil_scu:mil|slave_o.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[165] -to "wb_mil_scu:mil|slave_o.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[166] -to "wb_mil_scu:mil|slave_o.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[167] -to "wb_mil_scu:mil|slave_o.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[168] -to "wb_mil_scu:mil|slave_o.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[169] -to "wb_mil_scu:mil|slave_o.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[170] -to "wb_mil_scu:mil|slave_o.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[171] -to "wb_mil_scu:mil|slave_o.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[172] -to "wb_mil_scu:mil|slave_o.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[173] -to "wb_mil_scu:mil|slave_o.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[174] -to "wb_mil_scu:mil|slave_o.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[175] -to "wb_mil_scu:mil|slave_o.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[176] -to "wb_mil_scu:mil|slave_o.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[177] -to "wb_mil_scu:mil|slave_o.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[178] -to "wb_mil_scu:mil|slave_o.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[179] -to "wb_mil_scu:mil|slave_o.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[180] -to "wb_mil_scu:mil|slave_o.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[181] -to "wb_mil_scu:mil|slave_o.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[182] -to "wb_mil_scu:mil|slave_o.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[183] -to "wb_mil_scu:mil|slave_o.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[184] -to "wb_mil_scu:mil|slave_o.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[185] -to "wb_mil_scu:mil|slave_o.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[186] -to "wb_mil_scu:mil|slave_o.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[187] -to "wb_mil_scu:mil|slave_o.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[188] -to "wb_mil_scu:mil|slave_o.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[189] -to "wb_mil_scu:mil|slave_o.err" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[190] -to "wb_mil_scu:mil|slave_o.int" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[191] -to "wb_mil_scu:mil|slave_o.rty" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[192] -to "wb_mil_scu:mil|slave_o.stall" -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[193] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|Send_init" -section_id auto_signaltap_0
+set_instance_assignment -name POST_FIT_CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[194] -to "wb_mil_scu:mil|mil_hw_or_soft_ip:Mil_1|ser_par:HW6408|TRM_Ena_ff" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_DATA_BITS=195" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_BITS=195" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK=000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK_LENGTH=612" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_LOWORD=63527" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_HIWORD=4025" -section_id auto_signaltap_0
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -16,62 +16,73 @@ use work.scu_bus_pkg.all;
 use work.altera_flash_pkg.all;
 use work.oled_display_pkg.all;
 use work.lpc_uart_pkg.all;
+use work.wb_mil_scu_pkg.all;
+
 
 entity scu_control is
   port(
-    clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
-    clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
-    clk_125m_local_i  : in std_logic;  -- local clk from 125Mhz oszillator
-    nres              : in std_logic; -- powerup reset
+    clk_20m_vcxo_i:				in	std_logic;  -- 20MHz VCXO clock
+    clk_125m_pllref_i:		in	std_logic;  -- 125 MHz PLL reference
+    clk_125m_local_i:			in	std_logic;  -- local clk from 125Mhz oszillator
+		nres:									in	std_logic;	-- nCB_RESET from COMexpress
+		
+		nsys_reset:						in	std_logic;	-- reset generated from:	push bottom or nFPGA_Res_Out or nExtension_Res_Out or
+																					--												nExt_Res_Out or V3.3, V2.5, V1.5 not in tolerance
+
     
     -----------------------------------------
     -- UART on front panel
     -----------------------------------------
-    uart_rxd_i     : in  std_logic_vector(1 downto 0);
-    uart_txd_o     : out std_logic_vector(1 downto 0);
-    serial_to_cb_o : out std_logic;
+    uart_rxd_i:					in  std_logic_vector(1 downto 0);
+    uart_txd_o:					out std_logic_vector(1 downto 0);
+    serial_to_cb_o:			out std_logic;
     
     -----------------------------------------
     -- PCI express pins
     -----------------------------------------
-    pcie_refclk_i  : in  std_logic;
-    pcie_rx_i      : in  std_logic_vector(3 downto 0);
-    pcie_tx_o      : out std_logic_vector(3 downto 0);
-    nPCI_RESET     : in std_logic;
+    pcie_refclk_i:			in  std_logic;
+    pcie_rx_i:					in  std_logic_vector(3 downto 0);
+    pcie_tx_o:					out std_logic_vector(3 downto 0);
+    npci_reset:					in std_logic;
     
     ------------------------------------------------------------------------
     -- WR DAC signals
     ------------------------------------------------------------------------
-    dac_sclk       : out std_logic;
-    dac_din        : out std_logic;
-    ndac_cs        : out std_logic_vector(2 downto 1);
+    dac_sclk:					out		std_logic;
+    dac_din:					out		std_logic;
+    ndac_cs:					out		std_logic_vector(2 downto 1);
 
     -----------------------------------------
     -- LEMO on front panel (LED        = B1/B2 act)
     --                     (lemo_en_in = B1/B2 out)
     -----------------------------------------
-    lemo_io        : inout std_logic_vector(2 downto 1);
-    lemo_en_in     : out   std_logic_vector(2 downto 1);
-    lemo_led       : out   std_logic_vector(2 downto 1);
+    lemo_io:					inout std_logic_vector(2 downto 1);
+    lemo_en_in:				out   std_logic_vector(2 downto 1);
+    lemo_led:					out   std_logic_vector(2 downto 1);
     
     -----------------------------------------------------------------------
     -- LPC interface from ComExpress
     -----------------------------------------------------------------------
-    LPC_AD         : inout std_logic_vector(3 downto 0);
-    LPC_FPGA_CLK   : in    std_logic;
-    LPC_SERIRQ     : inout std_logic;
-    nLPC_DRQ0      : in    std_logic;
-    nLPC_FRAME     : in    std_logic;
+    lpc_ad:						inout std_logic_vector(3 downto 0);
+    lpc_fpga_clk:			in    std_logic;
+    lpc_serirq:				inout std_logic;
+    nlpc_drq0:				in    std_logic;
+    nlpc_frame:				in    std_logic;
 
     -----------------------------------------------------------------------
-    -- User LEDs (U1-U4)
+    -- LEDs
     -----------------------------------------------------------------------
-    leds_o         : out std_logic_vector(4 downto 1);
-    
+    leds_o:							out		std_logic_vector(4 downto 1);
+		ntiming_sfp_grn:		out		std_logic;
+		ntiming_sfp_red:		out		std_logic; 
+		naux_sfp_grn:				out		std_logic;
+		naux_sfp_red:				out		std_logic;
+		
+		
     -----------------------------------------------------------------------
-    -- OneWire
+    -- OneWire carrier board
     -----------------------------------------------------------------------
-    OneWire_CB     : inout std_logic;
+    onewire_cb:					inout std_logic;
     
     -----------------------------------------------------------------------
     -- QL1 serdes
@@ -82,111 +93,195 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- AUX SFP 
     -----------------------------------------------------------------------
-    sfp1_tx_disable_o : out std_logic := '0';
+  --sfp1_ref_clk_i:			in 		std_logic;
+		sfp1_tx_fault:			in		std_logic;
+		sfp1_los:						in		std_logic;
+		
+    sfp1_tx_disable_o:	out std_logic := '0';
     --sfp1_txp_o        : out std_logic;
     --sfp1_rxp_i        : in  std_logic;
     
-    sfp1_mod0         : in    std_logic; -- grounded by module
-    sfp1_mod1         : inout std_logic; -- SCL
-    sfp1_mod2         : inout std_logic; -- SDA
+    sfp1_mod0:					in    std_logic; -- grounded by module
+    sfp1_mod1:					inout std_logic; -- SCL
+    sfp1_mod2:					inout std_logic; -- SDA
     
     -----------------------------------------------------------------------
     -- Timing SFP 
     -----------------------------------------------------------------------
-    sfp2_ref_clk_i    : in  std_logic;
+    sfp2_ref_clk_i:			in 		std_logic;
+		sfp2_tx_fault:			in		std_logic;
+		sfp2_los:						in		std_logic;
     
-    sfp2_tx_disable_o : out std_logic := '0';
-    sfp2_txp_o        : out std_logic;
-    sfp2_rxp_i        : in  std_logic;
+    sfp2_tx_disable_o:	out 	std_logic := '0';
+    sfp2_txp_o:					out 	std_logic;
+    sfp2_rxp_i:					in  	std_logic;
     
-    sfp2_mod0         : in    std_logic; -- grounded by module
-    sfp2_mod1         : inout std_logic; -- SCL
-    sfp2_mod2         : inout std_logic; -- SDA
+    sfp2_mod0:					in    std_logic; -- grounded by module
+    sfp2_mod1:					inout std_logic; -- SCL
+    sfp2_mod2:					inout std_logic; -- SDA
+
     
     -----------------------------------------------------------------------
     -- LA port
     -----------------------------------------------------------------------
-    hpla_ch           : out std_logic_vector(15 downto 0);
-    hpla_clk          : out std_logic;
+    hpla_ch:						out		std_logic_vector(15 downto 0);
+    hpla_clk:						out		std_logic;
+		
+		nuser_pb:						in		std_logic;
+		
+    -----------------------------------------------------------------------
+    -- Ext_Conn1
+    -----------------------------------------------------------------------
+	--a_ext_con_tx:				out		std_logic_vector(2 downto 1);
+	--ec_rx:							in		std_logic_vector(2 downto 1); -- signal hat erst hinter dem Kondensator den Namen a_ext_con_rx
+		
+		
+    -----------------------------------------------------------------------
+    -- Ext_Conn2
+    -----------------------------------------------------------------------
+		-- io_2_5v(0)		-> EXT_CONN2 pin b4
+		-- io_2_5v(1)		-> EXT_CONN2 pin b5
+		-- io_2_5v(2)		-> EXT_CONN2 pin b6
+		-- io_2_5v(3)		-> EXT_CONN2 pin b7
+		-- io_2_5v(4)		-> EXT_CONN2 pin b8
+		-- io_2_5v(5)		-> EXT_CONN2 pin b9
+		-- io_2_5v(6)		-> EXT_CONN2 pin b10
+		-- io_2_5v(7)		-> EXT_CONN2 pin b11
+		-- io_2_5v(8)		-> EXT_CONN2 pin b14
+		-- io_2_5v(9)		-> EXT_CONN2 pin b15
+		-- io_2_5v(10)	-> EXT_CONN2 pin b16
+		-- io_2_5v(11)	-> EXT_CONN2 pin b17
+		-- io_2_5v(12)	-> EXT_CONN2 pin b18
+		-- io_2_5v(13)	-> EXT_CONN2 pin b19
+		-- io_2_5v(14)	-> EXT_CONN2 pin b20
+		-- io_2_5v(15)	-> EXT_CONN2 pin b21
+    io_2_5v:        		inout   std_logic_vector(15 downto 0);
     
+		-- eio(0)				-> EXT_CONN2 pin a4
+		-- eio(1)				-> EXT_CONN2 pin a5
+		-- eio(2)				-> EXT_CONN2 pin a6
+		-- eio(3)				-> EXT_CONN2 pin a7
+		-- eio(4)				-> EXT_CONN2 pin a8
+		-- eio(5)				-> EXT_CONN2 pin a9
+		-- eio(6)				-> EXT_CONN2 pin a10
+		-- eio(7)				-> EXT_CONN2 pin a11
+		-- eio(8)				-> EXT_CONN2 pin a14
+		-- eio(9)				-> EXT_CONN2 pin a15
+		-- eio(10)			-> EXT_CONN2 pin a16
+		-- eio(11)			-> EXT_CONN2 pin a17
+		-- eio(12)			-> EXT_CONN2 pin a18
+		-- eio(13)			-> EXT_CONN2 pin a19
+		-- eio(14)			-> EXT_CONN2 pin a20
+		-- eio(15)			-> EXT_CONN2 pin a21
+		-- eio(16)			-> EXT_CONN2 pin a23
+		-- eio(17)			-> EXT_CONN2 pin a24
+    eio:            		inout   std_logic_vector(17 downto 0);
+		
+		onewire_ext:				inout		std_logic;	-- to extension board
+		
+		
+ 
     -----------------------------------------------------------------------
-    -- EXT CONN
+    -- Ext_Conn3
     -----------------------------------------------------------------------
-    IO_2_5            : out std_logic_vector(13 downto 0);
-    A_EXT_LVDS_RX     : in  std_logic_vector( 3 downto 0);
-    A_EXT_LVDS_TX     : out std_logic_vector( 3 downto 0);
-    A_EXT_LVDS_CLKOUT : out std_logic;
-    A_EXT_LVDS_CLKIN  : in  std_logic;
-    EIO               : out std_logic_vector(16 downto 0);
+--		a_ext_lvds_rx:			in	  std_logic_vector(3 downto 0);
+--    a_ext_lvds_tx:			out 	std_logic_vector(3 downto 0);
+--    a_ext_lvds_clkout:	out 	std_logic;
+			a_ext_lvds_clkin:		in  	std_logic;
+			a_ext_conn3_a2:			inout	std_logic;	-- Optokoppler Interlock
+			a_ext_conn3_a3:			inout	std_logic;	-- Optokoppler Data Ready
+			a_ext_conn3_a6:			inout	std_logic;	-- Optokoppler Data Request
+			a_ext_conn3_a7:			inout	std_logic;	-- Optokoppler Timing
+			a_ext_conn3_a10:		inout	std_logic;
+			a_ext_conn3_a11:		inout	std_logic;
+			a_ext_conn3_a14:		inout	std_logic;
+			a_ext_conn3_a15:		inout	std_logic;
+			a_ext_conn3_a18:		inout	std_logic;
+			a_ext_conn3_a19:		inout	std_logic;
+			a_ext_conn3_b4:			inout	std_logic;
+			a_ext_conn3_b5:			inout	std_logic;
+			
     
     -----------------------------------------------------------------------
     -- serial channel SCU bus
     -----------------------------------------------------------------------
-    
-    --A_MASTER_CON_RX   : in std_logic_vector(3 downto 0);
-    --A_MASTER_CON_TX   : out std_logic_vector(3 downto 0);
+--    a_master_con_rx:		in	std_logic_vector(3 downto 0);
+--    mc_tx:							out std_logic_vector(3 downto 0); -- signal hat erst hinter dem Kondensator den Namen a_master_con_tx
     
     -----------------------------------------------------------------------
     -- SCU Bus
     -----------------------------------------------------------------------
-    A_D               : inout std_logic_vector(15 downto 0);
-    A_A               : out   std_logic_vector(15 downto 0);
-    A_nTiming_Cycle   : out   std_logic;
-    A_nDS             : out   std_logic;
-    A_nReset          : out   std_logic;
-    nSel_Ext_Data_DRV : out   std_logic;
-    A_RnW             : out   std_logic;
-    A_Spare           : out   std_logic_vector(1 downto 0);
-    A_nSEL            : out   std_logic_vector(12 downto 1);
-    A_nDtack          : in    std_logic;
-    A_nSRQ            : in    std_logic_vector(12 downto 1);
-    A_SysClock        : out   std_logic;
-    ADR_TO_SCUB       : out   std_logic;
-    nADR_EN           : out   std_logic;
-    A_OneWire         : inout std_logic;
-    
+    a_d:								inout std_logic_vector(15 downto 0);
+    a_a:								out   std_logic_vector(15 downto 0);
+    a_ntiming_cycle:		out   std_logic;
+    a_nds:							out   std_logic;
+    a_nreset:						out   std_logic;
+    nsel_ext_data_drv:	out   std_logic;
+    a_rnw:							out   std_logic;
+    a_spare:						out   std_logic_vector(1 downto 0);
+    a_nsel:							out   std_logic_vector(12 downto 1);
+    a_ndtack:						in    std_logic;
+    a_nsrq:							in    std_logic_vector(12 downto 1);
+    a_sysclock:					out   std_logic;
+    adr_to_scub:				out   std_logic;
+    nadr_en:						out   std_logic;
+    a_onewire:					inout std_logic;
+ 
     -----------------------------------------------------------------------
     -- ComExpress signals
     -----------------------------------------------------------------------
-    nTHRMTRIP         : in  std_logic;
-    nEXCD0_PERST      : in  std_logic;
-    WDT               : in  std_logic;
-    A20GATE           : out std_logic;
-    nPWRBTN           : out std_logic;
-    nFPGA_Res_Out     : out std_logic;
-    A_nCONFIG         : out std_logic := '1';
-    
+    nthrmtrip:					in		std_logic;
+    nextcd0_perst:			in 		std_logic;
+    wdt:								in		std_logic;
+    a20gate:						out		std_logic;
+		nkbd_rst:						out		std_logic;
+    npwrbtn:						out		std_logic;
+    nfpga_res_out:			out		std_logic;
+    a_nconfig:					out		std_logic := '1';
+		npci_pme:						out		std_logic;				-- pci power management event, low activ
+		
     -----------------------------------------------------------------------
-    -- Parallel Flash
+    -- Master Connector IO
     -----------------------------------------------------------------------
-    AD                : out   std_logic_vector(25 downto 1);
-    DF                : inout std_logic_vector(15 downto 0);
-    ADV_FSH           : out   std_logic;
-    nCE_FSH           : out   std_logic;
-    CLK_FSH           : out   std_logic;
-    nWE_FSH           : out   std_logic;
-    nOE_FSH           : out   std_logic;
-    nRST_FSH          : out   std_logic;
-    WAIT_FSH          : in    std_logic;
+		a_rear_out:					out		std_logic_vector(1 downto 0);
+		a_rear_in:					in		std_logic_vector(1 downto 0);
+
+    -----------------------------------------------------------------------
+    -- SCU-CB Version
+    -----------------------------------------------------------------------
+		scu_cb_version:			in		std_logic_vector(3 downto 0);		-- must be assigned with weak pull ups
     
+		-----------------------------------------------------------------------
+		-- Parallel Flash
+		-----------------------------------------------------------------------
+		ad:									out		std_logic_vector(25 downto 1);
+		df:									inout std_logic_vector(15 downto 0);
+		adv_fsh:						out		std_logic;
+		nce_fsh:						out		std_logic;
+		clk_fsh:						out		std_logic;
+		nwe_fsh:						out		std_logic;
+		noe_fsh:						out		std_logic;
+		nrst_fsh:						out		std_logic;
+		wait_fsh:						in		std_logic;
+		
     -----------------------------------------------------------------------
     -- DDR3
     -----------------------------------------------------------------------
-    DDR3_DQ           : inout std_logic_vector(15 downto 0);
-    DDR3_DM           : out   std_logic_vector( 1 downto 0);
-    DDR3_BA           : out   std_logic_vector( 2 downto 0);
-    DDR3_ADDR         : out   std_logic_vector(12 downto 0);
-    DDR3_CS_n         : out   std_logic_vector( 0 downto 0);
+    ddr3_dq:						inout std_logic_vector(15 downto 0);
+    ddr3_dm:						out   std_logic_vector( 1 downto 0);
+    ddr3_ba:						out   std_logic_vector( 2 downto 0);
+    ddr3_addr:					out   std_logic_vector(12 downto 0);
+    ddr3_cs_n:					out   std_logic_vector( 0 downto 0);
 --    DDR3_DQS          : inout std_logic_vector(1 downto 0);
 --    DDR3_DQSn         : inout std_logic_vector(1 downto 0);
-    DDR3_RES_n        : out   std_logic;
-    DDR3_CKE          : out   std_logic_vector( 0 downto 0);
-    DDR3_ODT          : out   std_logic_vector( 0 downto 0);
-    DDR3_CAS_n        : out   std_logic;
-    DDR3_RAS_n        : out   std_logic;
+    ddr3_res_n:					out   std_logic;
+    ddr3_cke:						out   std_logic_vector( 0 downto 0);
+    ddr3_odt:						out   std_logic_vector( 0 downto 0);
+    ddr3_cas_n:					out   std_logic;
+    ddr3_ras_n:					out   std_logic;
 --    DDR3_CLK          : inout std_logic_vector(0 downto 0);
 --    DDR3_CLK_n        : inout std_logic_vector(0 downto 0);
-    DDR3_WE_n         : out   std_logic);
+    ddr3_we_n:					out   std_logic);
     
 end scu_control;
 
@@ -212,7 +307,7 @@ architecture rtl of scu_control is
     name          => "GSI_GPIO_32        ")));
 
   -- Top crossbar layout
-  constant c_slaves  : natural := 9;
+  constant c_slaves  : natural := 10;
   constant c_masters : natural := 2;
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00000000"),
@@ -223,7 +318,9 @@ architecture rtl of scu_control is
     5 => f_sdb_embed_device(c_xwb_gpio32_sdb,             x"00800000"),
     6 => f_sdb_embed_device(c_wrc_periph1_sdb,            x"00800100"),
     7 => f_sdb_embed_device(c_oled_display,               x"00900000"),
-    8 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"04000000"));
+    8 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"04000000"),
+    9 => f_sdb_embed_device(c_xwb_gsi_mil_scu,          	x"10000000"));
+
   constant c_sdb_address : t_wishbone_address := x"00300000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -236,6 +333,8 @@ architecture rtl of scu_control is
   
   signal gpio_slave_i : t_wishbone_slave_in;
   signal gpio_slave_o : t_wishbone_slave_out;
+	
+	signal	extension_id:			std_logic_vector(3 downto 0);
 
   -- Sys PLL from clk_125m_local_i
   signal sys_locked       : std_logic;
@@ -330,6 +429,20 @@ architecture rtl of scu_control is
   
   signal kbc_out_port : std_logic_vector(7 downto 0);
   signal kbc_in_port  : std_logic_vector(7 downto 0);
+	
+	signal	mil_12Mhz:		std_logic;
+
+
+component mil_pll
+	port
+	(
+		inclk0:		in	std_logic  := '0';
+		c0:				out std_logic ;
+		locked:		out std_logic 
+	);
+
+end component;
+
 begin
 
   dmtd_inst : dmtd_pll port map(
@@ -355,7 +468,11 @@ begin
     c1     => clk_50,           --  50  Mhz
     c2     => clk_20,           --  20  MHz
     locked => sys_locked);
-  
+
+	mil_pll_inst:	mil_pll port map(
+		inclk0	=> clk_50,
+		c0			=> mil_12Mhz);	
+		
   clk_pcie  <= clk_ref;
   clk_sys   <= clk_62_5;
   clk_reconf <= clk_50;
@@ -513,7 +630,88 @@ begin
       rst_aux_n_o          => open,
       link_ok_o            => open);
 
-  wr_gxb_arria2 : wr_arria2_phy
+
+mil: wb_mil_scu
+generic map (
+		Clk_in_Hz	=> 65_500_000		-- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
+																-- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+		)
+port map (
+		clk_i  			=> clk_sys,
+		nRst_i 			=> rstn_sys,
+		slave_i			=> cbar_master_o(9),
+		slave_o			=> cbar_master_i(9),
+		
+		-- encoder (transmiter) signals of HD6408 --------------------------------------------------------------------------------
+		nME_BOO				=> io_2_5v(11),		-- in: HD6408-output:	transmit bipolar positive.
+		nME_BZO				=> io_2_5v(12),		-- in: HD6408-output:	transmit bipolar negative.
+				
+		ME_SD					=> io_2_5v(10),		-- in: HD6408-output:	'1' => send data is active.
+		ME_ESC				=> io_2_5v(9),		-- in: HD6408-output:	encoder shift clock for shifting data into the encoder. The
+																		--										encoder samples ME_SDI on low-to-high transition of ME_ESC.
+		ME_SDI				=> eio(4),				-- out: HD6408-input:	serial data in accepts a serial data stream at a data rate
+																		--										equal to encoder shift clock.
+		ME_EE					=> eio(5),				-- out: HD6408-input:	a high on encoder enable initiates the encode cycle.
+																		--										(Subject to the preceding cycle being completed).
+		ME_SS					=> eio(6),				-- out: HD6408-input:	sync select actuates a Command sync for an input high
+																		--										and data sync for an input low.
+
+		-- decoder (receiver) signals of HD6408 ---------------------------------------------------------------------------------
+		ME_BOI				=> eio(1),				-- out: HD6408-input:	A high input should be applied to bipolar one in when the bus is in its
+																		--										positive state, this pin must be held low when the Unipolar input is used.
+		ME_BZI				=> eio(2),				-- out: HD6408-input:	A high input should be applied to bipolar zero in when the bus is in its
+																		--										negative state. This pin must be held high when the Unipolar input is used.
+		ME_UDI				=> eio(3),				-- out: HD6408-input:	With ME_BZI high and ME_BOI low, this pin enters unipolar data in to the
+																		--										transition finder circuit. If not used this input must be held low.
+		ME_CDS				=> io_2_5v(7),		-- in: HD6408-output:	high occurs during output of decoded data which was preced
+																		--										by a command synchronizing character. Low indicares a data sync.
+		ME_SDO				=> io_2_5v(5),		-- in: HD6408-output:	serial data out delivers received data in correct NRZ format.
+		ME_DSC				=> io_2_5v(4),		-- in: HD6408-output:	decoder shift clock delivers a frequency (decoder clock : 12),
+																		--										synchronized by the recovered serial data stream.
+		ME_VW					=> io_2_5v(6),		-- in: HD6408-output:	high indicates receipt of a VALID WORD.
+		ME_TD					=> io_2_5v(8),		-- in: HD6408-output:	take data is high during receipt of data after identification
+																		--										of a sync pulse and two valid Manchester data bits
+
+		-- decoder/encoder signals of HD6408 ------------------------------------------------------------------------------------
+--		ME_12MHz			=> eio(0),					-- out: HD6408-input:	is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
+				
+		
+		Mil_BOI				=> io_2_5v(13),		-- out: HD6408-input:	connect positive bipolar receiver, in FPGA directed to the external
+																		--										manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
+																		--										vhdl manchester macro.
+		Mil_BZI				=> io_2_5v(14),		-- out: HD6408-input:	connect negative bipolar receiver, in FPGA directed to the external
+																		--										manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
+																		--										vhdl manchester macro.
+		Sel_Mil_Drv		=> eio(9),				-- output:	active high, enable the external open collector driver to the transformer
+		nSel_Mil_Rcv	=> eio(7),				-- output:	active low, enable the external differtial receive circuit.
+		Mil_nBOO			=> eio(10),				-- out:	connect bipolar positive output to external open collector driver of
+																		--			the transformer. Source is the external manchester en/decoder HD6408 via
+																		--			nME_BOO or the internal FPGA vhdl manchester macro.
+		Mil_nBZO			=> eio(8),				-- out: connect bipolar negative output to external open collector driver of
+																		--			the transformer. Source is the external manchester en/decoder HD6408 via
+																		--			nME_BZO or the internal FPGA vhdl manchester macro.
+		nLed_Mil_Rcv	=> a_ext_conn3_b4, --open,--A_EXT_LVDS_TX_p3,	
+		nLed_Mil_Trm	=> a_ext_conn3_b5, --open,--A_EXT_LVDS_TX_n3,
+		nLed_Mil_Err	=> a_ext_conn3_a19,--open,--A_EXT_LVDS_TX_n2,
+		error_limit_reached => open,
+		Mil_Decoder_Diag_p => open,
+		Mil_Decoder_Diag_n => open,
+		timing					=> not a_ext_conn3_a7,
+		nLed_Timing			=> eio(17),
+		Interlock_Intr	=> not a_ext_conn3_a2,
+		Data_Rdy_Intr		=> not a_ext_conn3_a3,
+		Data_Req_Intr		=> not a_ext_conn3_a6,
+		nLed_Interl			=> a_ext_conn3_a15,
+		nLed_drq				=> a_ext_conn3_a14,
+		nLed_dry				=> a_ext_conn3_a11
+		);
+ 
+	eio(0) <= mil_12Mhz;
+	
+	extension_id <= io_2_5v(3 downto 0);
+ 
+
+	wr_gxb_arria2 : wr_arria2_phy
     port map (
       clk_reconf_i   => clk_reconf,
       clk_pll_i      => clk_ref,
@@ -897,14 +1095,14 @@ begin
   -- 20 is ground
   
   -- EXT CONN not connected
-  IO_2_5            <= (others => 'Z');
-  a_EXT_LVDS_CLKOUT <= '0';
-  EIO               <= (others => 'Z');
+--  io_2_5v            <= (others => 'Z');
+--  a_EXT_LVDS_CLKOUT <= '0';
+--  eio               <= (others => 'Z');
   
-  A_EXT_LVDS_TX(0) <= clk_butis;
-  A_EXT_LVDS_TX(1) <= clk_ref;
-  A_EXT_LVDS_TX(2) <= '0';
-  A_EXT_LVDS_TX(3) <= '0';
+--  A_EXT_LVDS_TX(0) <= clk_butis;
+--  A_EXT_LVDS_TX(1) <= clk_ref;
+--  A_EXT_LVDS_TX(2) <= '0';
+--  A_EXT_LVDS_TX(3) <= '0';
   
   -- Parallel Flash not connected
   nRST_FSH <= '0';
