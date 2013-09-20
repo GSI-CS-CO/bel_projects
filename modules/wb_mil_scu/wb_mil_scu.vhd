@@ -52,10 +52,10 @@ port	(
 --		ME_12MHz:				out			std_logic;			-- HD6408-input:		is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
 		
 
-		Mil_BOI:				buffer	std_logic;			-- HD6408-input:	connect positive bipolar receiver, in FPGA directed to the external
+		Mil_BOI:				in	std_logic;			-- HD6408-input:	connect positive bipolar receiver, in FPGA directed to the external
 																						--								manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
 																						--								vhdl manchester macro.
-		Mil_BZI:				buffer	std_logic;			-- HD6408-input:	connect negative bipolar receiver, in FPGA directed to the external
+		Mil_BZI:				in	std_logic;			-- HD6408-input:	connect negative bipolar receiver, in FPGA directed to the external
 																						--								manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
 																						--								vhdl manchester macro.
 		Sel_Mil_Drv:		buffer	std_logic;			-- HD6408-output:	active high, enable the external open collector driver to the transformer
@@ -411,6 +411,9 @@ p_regs_acc:	process (clk_i, nrst_i)
 
 			if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';
 			elsif manchester_fpga = '1' then  mil_trm_start <= '0'; end if;
+			
+			if mil_rcv_rdy = '0' and manchester_fpga = '0' then mil_rd_start <= '0';
+			elsif manchester_fpga = '1' then  mil_rd_start <= '0'; end if;
 
 			if slave_i.cyc = '1' and slave_i.stb = '1' and ex_stall = '1' then
 			-- begin of wishbone cycle
@@ -443,11 +446,11 @@ p_regs_acc:	process (clk_i, nrst_i)
 							if Mil_Rcv_Rdy = '1' and mil_rd_start = '0' then
 								mil_rd_start <= '1';
 								slave_o.dat(15 downto 0) <= Mil_RCV_D;
-								if Mil_Rcv_Rdy = '0' then
-									mil_rd_start <= '0';
+--								if Mil_Rcv_Rdy = '0' then
+--									mil_rd_start <= '0';
 									ex_stall <= '0';
 									ex_ack <= '1';
-								end if;
+--								end if;
 							else
 							-- read mil not allowed, because no mil_rcv_rdy
 								ex_stall <= '0';

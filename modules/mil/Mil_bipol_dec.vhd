@@ -207,7 +207,7 @@ Mil_dec_p:	Mil_dec_edge_timed
                                 -- '0' => der negative Signalstrom ist an Manchester_In angeschlossen.
 		)
 	port map (
-		Manchester_In	=> Manchester_In_p,			  -- Eingangsdatenstrom MIL-1553B
+		Manchester_In	=> Manchester_In_n,			  -- Eingangsdatenstrom MIL-1553B. Achtung der negative Empfangsstrom
 		RD_MIL			  => S_RD_MIL,				      -- setzt Rcv_Rdy zurueck. Muss synchron zur Clock 'clk' und mindesten eine
                                             -- Periode lang aktiv sein!
 		Res				    => Res,				            -- Muss mindestens einmal f�r eine Periode von 'clk' aktiv ('1') gewesen sein.
@@ -231,7 +231,7 @@ Mil_dec_n:	Mil_dec_edge_timed
                                 -- '0' => der negative Signalstrom ist an Manchester_In angeschlossen.
 		)
 	port map (
-		Manchester_In	=> Manchester_In_n,	  	  -- Eingangsdatenstrom MIL-1553B
+		Manchester_In	=> Manchester_In_p,	  	  -- Eingangsdatenstrom MIL-1553B. Achtung der positive Empfangsstrom
 		RD_MIL			  => S_RD_MIL,    			    -- setzt Rcv_Rdy zurueck. Muss synchron zur Clock 'clk' und mindesten eine
                                             -- Periode lang aktiv sein!
 		Res				    => Res,     				  	  -- Muss mindestens einmal fuer eine Periode von 'clk' aktiv ('1') gewesen sein.

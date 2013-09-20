@@ -74,20 +74,20 @@ port	(
 --		ME_12MHz:				out			std_logic;			-- HD6408-input:	is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
 		
 
-		Mil_BOI:				out			std_logic;			-- HD6408-input:	connect positive bipolar receiver, in FPGA directed to the external
-																						--								manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
-																						--								vhdl manchester macro.
-		Mil_BZI:				out			std_logic;			-- HD6408-input:	connect negative bipolar receiver, in FPGA directed to the external
-																						--								manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
-																						--								vhdl manchester macro.
+		Mil_BOI:				in			std_logic;			-- connect positive bipolar receiver, in FPGA directed to the external
+																						-- manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
+																						-- vhdl manchester macro.
+		Mil_BZI:				in			std_logic;			-- connect negative bipolar receiver, in FPGA directed to the external
+																						-- manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
+																						-- vhdl manchester macro.
 		Sel_Mil_Drv:		out			std_logic;			-- HD6408-output:	active high, enable the external open collector driver to the transformer
 		nSel_Mil_Rcv:		out			std_logic;			-- HD6408-output:	active low, enable the external differtial receive circuit.
-		Mil_nBOO:				out			std_logic;			-- HD6408-output:	connect bipolar positive output to external open collector driver of
-																						--								the transformer. Source is the external manchester en/decoder HD6408 via
-																						--								nME_BOO or the internal FPGA vhdl manchester macro.
-		Mil_nBZO:				out			std_logic;			-- HD6408-output:	connect bipolar negative output to external open collector driver of
-																						--								the transformer. Source is the external manchester en/decoder HD6408 via
-																						--								nME_BZO or the internal FPGA vhdl manchester macro.
+		Mil_nBOO:				out			std_logic;			-- connect bipolar positive output to external open collector driver of
+																						-- the transformer. Source is the external manchester en/decoder HD6408 via
+																						-- nME_BOO or the internal FPGA vhdl manchester macro.
+		Mil_nBZO:				out			std_logic;			-- connect bipolar negative output to external open collector driver of
+																						-- the transformer. Source is the external manchester en/decoder HD6408 via
+																						-- nME_BZO or the internal FPGA vhdl manchester macro.
 		nLed_Mil_Rcv:		out			std_logic;
 		nLed_Mil_Trm:		out			std_logic;
 		nLed_Mil_Err:		out			std_logic;

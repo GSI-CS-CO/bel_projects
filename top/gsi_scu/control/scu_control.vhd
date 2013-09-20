@@ -676,12 +676,12 @@ port map (
 --		ME_12MHz			=> eio(0),					-- out: HD6408-input:	is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
 				
 		
-		Mil_BOI				=> io_2_5v(13),		-- out: HD6408-input:	connect positive bipolar receiver, in FPGA directed to the external
-																		--										manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
-																		--										vhdl manchester macro.
-		Mil_BZI				=> io_2_5v(14),		-- out: HD6408-input:	connect negative bipolar receiver, in FPGA directed to the external
-																		--										manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
-																		--										vhdl manchester macro.
+		Mil_BOI				=> io_2_5v(13),		-- in:	connect positive bipolar receiver, in FPGA directed to the external
+																		--			manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
+																		--			vhdl manchester macro.
+		Mil_BZI				=> io_2_5v(14),		-- in:	connect negative bipolar receiver, in FPGA directed to the external
+																		--			manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
+																		--			vhdl manchester macro.
 		Sel_Mil_Drv		=> eio(9),				-- output:	active high, enable the external open collector driver to the transformer
 		nSel_Mil_Rcv	=> eio(7),				-- output:	active low, enable the external differtial receive circuit.
 		Mil_nBOO			=> eio(10),				-- out:	connect bipolar positive output to external open collector driver of

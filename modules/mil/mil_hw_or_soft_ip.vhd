@@ -230,9 +230,9 @@ Mil_Cmd_Rcv <= Mil_Cmd_Rcv_M when EPLD_Manchester_Enc = '1' else CMD_RCV_6408;
 
 Mil_Trm_Rdy <= Mil_Trm_Rdy_M when EPLD_Manchester_Enc = '1' else TRM_RDY_6408;
 
-nMil_Out_Pos <= not nMil_Out_Pos_M when EPLD_Manchester_Enc = '1' else not nME_BOO;
+nMil_Out_Pos <= nMil_Out_Pos_M when EPLD_Manchester_Enc = '1' else nME_BOO;
 
-nMil_Out_Neg <= not nMil_OUT_Neg_M when EPLD_Manchester_Enc = '1' else not nME_BZO;
+nMil_Out_Neg <= nMil_OUT_Neg_M when EPLD_Manchester_Enc = '1' else nME_BZO;
 
 Mil_Rcv_Error <= Mil_RCV_Error_M when EPLD_Manchester_Enc = '1' else RCV_Err_6408;
 
