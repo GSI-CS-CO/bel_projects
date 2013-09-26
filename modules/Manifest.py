@@ -16,6 +16,9 @@ modules = {
     "lpc_uart",
     "aux_functions",
     "function_generators",
-    "uart"
+    "uart",
+    "dac714",
+    "wb_scu_reg",
+    "ad7606",
   ]
 }
