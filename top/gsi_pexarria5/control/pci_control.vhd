@@ -80,7 +80,7 @@ entity pci_control is
     p13             : inout std_logic := 'Z';
     p14             : inout std_logic := 'Z';
     p15             : inout std_logic := 'Z';
-    p16             : inout std_logic := 'Z';
+    p16             : in    std_logic := 'Z';
     p17             : inout std_logic := 'Z';
     p18             : inout std_logic := 'Z';
     p19             : inout std_logic := 'Z';
@@ -89,7 +89,7 @@ entity pci_control is
     p23             : inout std_logic := 'Z';
     p24             : inout std_logic := 'Z';
     p25             : out   std_logic := 'Z';
-    p26             : inout std_logic := 'Z';
+    p26             : in    std_logic := 'Z';
     p27             : out   std_logic := 'Z';
     p28             : out   std_logic := 'Z';
     p29             : out   std_logic := 'Z';
@@ -109,7 +109,7 @@ entity pci_control is
     n13             : inout std_logic := 'Z';
     n14             : inout std_logic := 'Z';
     n15             : inout std_logic := 'Z';
-    n16             : inout std_logic := 'Z';
+--    n16             : inout std_logic := 'Z';
     n17             : inout std_logic := 'Z';
     n18             : inout std_logic := 'Z';
     n19             : inout std_logic := 'Z';
@@ -118,7 +118,7 @@ entity pci_control is
     n23             : inout std_logic := 'Z';
     n24             : inout std_logic := 'Z';
 --    n25             : inout std_logic := 'Z';
-    n26             : inout std_logic := 'Z';
+--    n26             : inout std_logic := 'Z';
 --    n27             : inout std_logic := 'Z';
 --    n28             : inout std_logic := 'Z';
 --    n29             : inout std_logic := 'Z';
@@ -248,6 +248,7 @@ architecture rtl of pci_control is
 
   -- Non-PLL reset stuff
   signal clk_free         : std_logic;
+  signal rstn_free        : std_logic;
   signal gxb_locked       : std_logic;
   signal pll_rst          : std_logic;
   
@@ -274,10 +275,14 @@ architecture rtl of pci_control is
   signal clk_butis        : std_logic;
   signal clk_phase        : std_logic;
   signal rstn_ref         : std_logic;
+  signal rstn_butis       : std_logic;
+  signal rstn_phase       : std_logic;
   
   signal phase_done       : std_logic;
   signal phase_step       : std_logic;
   signal phase_sel        : std_logic_vector(4 downto 0);
+  
+  signal phase_butis      : phase_offset;
   
   -- DMTD PLL from clk_20m_vcxo_i
   signal dmtd_locked      : std_logic;
@@ -295,6 +300,8 @@ architecture rtl of pci_control is
   
   signal link_up  : std_logic;
   signal link_act : std_logic;
+  
+  
   signal ext_pps  : std_logic;
   signal pps      : std_logic;
 
@@ -337,7 +344,6 @@ architecture rtl of pci_control is
   
   signal eca_gpio : std_logic_vector(15 downto 0);
   
-  signal s_usb_reset    : std_logic;
   signal s_uart_rxd_i   : std_logic;
   signal s_uart_txd_o   : std_logic;
   
@@ -352,24 +358,29 @@ architecture rtl of pci_control is
 begin
 
   -- We need at least one off-chip free running clock to setup PLLs
-  clk_free <= clk_20m_vcxo_i;
+  clk_free <= clk_125m_local_i;
 
   reset : altera_reset
     generic map(
       g_plls   => 4,
       g_clocks => 2)
     port map(
-      clk_free    => clk_free,
-      rstn_i      => pbs2,
-      locked_i(0) => dmtd_locked,
-      locked_i(1) => ref_locked,
-      locked_i(2) => sys_locked,
-      locked_i(3) => gxb_locked,
-      pll_rst_o   => pll_rst,
-      clocks_i(0) => clk_sys,
-      clocks_i(1) => clk_ref,
-      rstn_o(0)   => rstn_sys,
-      rstn_o(1)   => rstn_ref);
+      clk_free_i    => clk_free,
+      rstn_i        => pbs2,
+      pll_lock_i(0) => dmtd_locked,
+      pll_lock_i(1) => ref_locked,
+      pll_lock_i(2) => sys_locked,
+      pll_lock_i(3) => gxb_locked,
+      pll_clk_i(0)  => clk_dmtd,
+      pll_clk_i(1)  => clk_ref,
+      pll_clk_i(2)  => clk_sys,
+      pll_clk_i(3)  => phy_rx_rbclk,
+      pll_arst_o    => open,
+      pll_srst_o    => pll_rst,
+      clocks_i(0)   => clk_sys,
+      clocks_i(1)   => clk_free,
+      rstn_o(0)     => rstn_sys,
+      rstn_o(1)     => rstn_free);
       
   dmtd_inst : dmtd_pll5 port map(   --  FRACTIONALPLL_X0_Y18_N0 (down-to-up)
     rst      => pll_rst,
@@ -381,31 +392,6 @@ begin
     inclk  => clk_dmtd0,
     outclk => clk_dmtd);
   
-  ref_inst : ref_pll5 port map(     -- FRACTIONALPLL_X0_Y51_N0 (up-to-down)
-    rst        => pll_rst,
-    refclk     => sfp234_ref_clk_i, -- 125 MHz
-    outclk_0   => clk_ref0,         -- 125 MHz, counter 12 = PLLOUTPUTCOUNTER_X0_Y55_N1
-    outclk_1   => clk_ref1,         -- 200 MHz, counter 13 = PLLOUTPUTCOUNTER_X0_Y54_N1
-    outclk_2   => clk_ref2,         --  25 MHz, counter 14 = PLLOUTPUTCOUNTER_X0_Y53_N1
-    locked     => ref_locked,
-    scanclk    => clk_free,
-    cntsel     => phase_sel,
-    phase_en   => phase_step,
-    updn       => '0',
-    phase_done => phase_done);
-  
-  ref_clk : global_region port map(
-    inclk  => clk_ref0,
-    outclk => clk_ref);             -- GCLK12
-  
-  butis_clk : global_region port map(
-    inclk  => clk_ref1,
-    outclk => clk_butis);           -- GCLK13
-    
-  phase_clk : global_region port map(
-    inclk  => clk_ref2,             -- GCLK14
-    outclk => clk_phase);
-
   sys_inst : sys_pll5 port map(     -- FRACTIONALPLL_X0_Y60_N0 (up-to-down)
     rst      => pll_rst,
     refclk   => clk_125m_local_i,   -- 125  Mhz 
@@ -431,20 +417,61 @@ begin
     inclk  => clk_sys3,
     outclk => clk_flash);
   
-  butis : altera_butis
+  ref_inst : ref_pll5 port map(     -- FRACTIONALPLL_X0_Y51_N0 (up-to-down)
+    rst        => pll_rst,
+    refclk     => sfp234_ref_clk_i, -- 125 MHz
+    outclk_0   => clk_ref0,         -- 125 MHz, counter 12 = PLLOUTPUTCOUNTER_X0_Y55_N1
+    outclk_1   => clk_ref1,         -- 200 MHz, counter 13 = PLLOUTPUTCOUNTER_X0_Y54_N1
+    outclk_2   => clk_ref2,         --  25 MHz, counter 14 = PLLOUTPUTCOUNTER_X0_Y53_N1
+    locked     => ref_locked,
+    scanclk    => clk_free,
+    cntsel     => phase_sel,
+    phase_en   => phase_step,
+    updn       => '1',              -- positive phase shift (widen period)
+    phase_done => phase_done);
+  
+  ref_clk : global_region port map(
+    inclk  => clk_ref0,
+    outclk => clk_ref);             -- GCLK12
+  
+  butis_clk : global_region port map(
+    inclk  => clk_ref1,
+    outclk => clk_butis);           -- GCLK13
+    
+  phase_clk : single_region port map(
+    inclk  => clk_ref2,
+    outclk => clk_phase);
+
+  phase : altera_phase
     generic map(
-      g_select_bits => 5,
-      g_200_sel     => 13, -- counter 13 = PLLOUTPUTCOUNTER_X0_Y54_N1
-      g_25_sel      => 14) -- counter 14 = PLLOUTPUTCOUNTER_X0_Y53_N1
+      g_select_bits   => 5,
+      g_outputs       => 3,
+      g_base          => 2500/(1000/8), -- 2500ps shift
+      g_vco_freq      => 1000, -- 1GHz
+      g_output_freq   => (0 => 125, 1 => 200, 2 => 25),
+      g_output_select => (0 =>  12, 1 =>  13, 2 => 14))
     port map(
-      clk_ref_i   => clk_ref,
-      clk_25m_i   => clk_phase,
-      clk_scan_i  => clk_free,
-      locked_i    => ref_locked,
-      pps_i       => pps,
+      clk_i       => clk_free,
+      rstn_i      => rstn_free,
+      clks_i(0)   => clk_ref,
+      clks_i(1)   => clk_butis,
+      clks_i(2)   => clk_phase,
+      rstn_o(0)   => rstn_ref,
+      rstn_o(1)   => rstn_butis,
+      rstn_o(2)   => rstn_phase,
+      offset_i(0) => (others => '0'),
+      offset_i(1) => phase_butis,
+      offset_i(2) => (others => '0'),
       phasedone_i => phase_done,
       phasesel_o  => phase_sel,
       phasestep_o => phase_step);
+  
+  butis : altera_butis
+    port map(
+      clk_ref_i => clk_ref,
+      clk_25m_i => clk_phase,
+      pps_i     => pps,
+      phase_o   => phase_butis);
   
   flash : flash_top
     generic map(
@@ -675,8 +702,8 @@ begin
       ref_rstn_i      => rstn_ref,
       sys_clk_i       => clk_sys,
       sys_rstn_i      => rstn_sys,
-      triggers_i(0)   => '0',
-      triggers_i(1)   => '0',
+      triggers_i(0)   => p16,
+      triggers_i(1)   => p26,
       tm_time_valid_i => tm_valid,
       tm_tai_i        => tm_tai,
       tm_cycles_i     => tm_cycles,
@@ -724,16 +751,6 @@ begin
       
   -- USB micro controller
   -----------------
-  reset_usb : gc_extend_pulse
-    generic map (
-      g_width => 312500) -- 5ms at 62.5MHz
-    port map (
-      clk_i      => clk_sys,
-      rst_n_i    => '1',
-      pulse_i    => rstn_sys,
-      extended_o => s_usb_reset);
-  
-  ures <= s_usb_reset;
   fd <= fd_o when fd_oen='1' else (others => 'Z');
   
   EZUSB : ez_usb
@@ -741,12 +758,13 @@ begin
       g_sdb_address => c_sdb_address)
     port map(
       clk_sys_i => clk_sys,
-      rstn_i    => s_usb_reset,
+      rstn_i    => rstn_sys,
       master_i  => cbar_slave_o(2),
       master_o  => cbar_slave_i(2),
       uart_o    => s_uart_rxd_i,
       uart_i    => s_uart_txd_o,
       
+      rstn_o    => ures,
       ebcyc_i   => pa(3),
       speed_i   => pa(0),
       shift_i   => pa(1),
@@ -807,8 +825,8 @@ begin
   
   -- debug clocks
   p25 <= pps;
-  p27 <= clk_phase;
-  p28 <= '0';
+  p27 <= '0'; -- clk_phase;
+  p28 <= '0'; -- sfp234_ref_clk_i;
   p29 <= clk_butis;
   p30 <= clk_ref;
   

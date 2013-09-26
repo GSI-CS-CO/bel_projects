@@ -258,7 +258,6 @@ set_location_assignment PIN_N3 -to n12
 set_location_assignment PIN_N1 -to n13
 set_location_assignment PIN_N6 -to n14
 set_location_assignment PIN_N5 -to n15
-set_location_assignment PIN_E6 -to n16
 set_location_assignment PIN_A6 -to n17
 set_location_assignment PIN_H10 -to n18
 set_location_assignment PIN_J8 -to n19
@@ -266,7 +265,6 @@ set_location_assignment PIN_D8 -to n21
 set_location_assignment PIN_E9 -to n22
 set_location_assignment PIN_C6 -to n23
 set_location_assignment PIN_C9 -to n24
-set_location_assignment PIN_H9 -to n26
 set_location_assignment PIN_W2 -to p1
 set_location_assignment PIN_T2 -to p2
 set_location_assignment PIN_R5 -to p3
@@ -422,10 +420,7 @@ set_location_assignment CLKCTRL_G0 -to "global_region:sys_clk|global_region_altc
 set_location_assignment CLKCTRL_G4 -to "global_region:dmtd_clk|global_region_altclkctrl_bdh:global_region_altclkctrl_bdh_component|sd1"
 set_location_assignment CLKCTRL_G12 -to "global_region:ref_clk|global_region_altclkctrl_bdh:global_region_altclkctrl_bdh_component|sd1"
 set_location_assignment CLKCTRL_G13 -to "global_region:butis_clk|global_region_altclkctrl_bdh:global_region_altclkctrl_bdh_component|sd1"
-set_location_assignment CLKCTRL_G14 -to "global_region:phase_clk|global_region_altclkctrl_bdh:global_region_altclkctrl_bdh_component|sd1"
 set_global_assignment -name TRI_STATE_SPI_PINS ON
-set_location_assignment CLKCTRL_R83 -to "single_region:flash_clk|single_region_altclkctrl_bkh:single_region_altclkctrl_bkh_component|sd1"
-set_location_assignment CLKCTRL_R82 -to "dual_region:reconf_clk|dual_region_altclkctrl_u2i:dual_region_altclkctrl_u2i_component|sd1"
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to ctl
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to fd
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to pa
@@ -486,6 +481,10 @@ set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p30
 set_instance_assignment -name LL_MEMBER_OF "wr_arria5:tx" -to "wr_arria5_phy:wr_arria5_phy_inst|enc_8b10b:encoder|s_out_10b_reg" -section_id "wr_arria5:tx"
 set_instance_assignment -name LL_MEMBER_OF "wr_arria5:tx" -to "wr_arria5_phy:wr_arria5_phy_inst|tx_reg_datain" -section_id "wr_arria5:tx"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_instance_assignment -name IO_STANDARD LVDS -to p16
+set_location_assignment PIN_E6 -to "p16(n)"
+set_instance_assignment -name IO_STANDARD LVDS -to p26
+set_location_assignment PIN_H9 -to "p26(n)"
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/trans_pkg.vhd
@@ -775,6 +774,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_cor
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/xwr_syscon_wb.vhd
 set_global_assignment -name VHDL_FILE ../../../top/gsi_pexarria5/control/pci_control.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_butis.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_phase.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_reset.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/wr_arria5_phy.vhd
 set_global_assignment -name SDC_FILE ../../../top/gsi_pexarria5/control/pci_control.sdc

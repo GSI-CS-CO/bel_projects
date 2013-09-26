@@ -11,6 +11,7 @@ use work.wb_cores_pkg_gsi.all;
 use work.eca_pkg.all;
 use work.wr_altera_pkg.all;
 use work.altera_flash_pkg.all;
+use work.altera_networks_pkg.all;
 use work.etherbone_pkg.all;
 use work.ez_usb_pkg.all;
 
@@ -333,37 +334,55 @@ architecture rtl of exploder_top is
   signal eca_master_i : t_wishbone_master_in;
   signal eca_master_o : t_wishbone_master_out;
   
+  --------------------------------------------------------------
+  -- Clocking
+  --------------------------------------------------------------
+  
+  -- Non-PLL reset stuff
+  signal clk_free         : std_logic;
+  signal rstn_free        : std_logic;
+  signal gxb_locked       : std_logic;
+  signal pll_arst         : std_logic;
+  
   -- Sys PLL from clk_125m_local_i
   signal sys_locked       : std_logic;
-  signal clk_62_5         : std_logic;
-  signal clk_50           : std_logic;
-  signal clk_20           : std_logic;
-  signal rstn_sys         : std_logic;
+  signal clk_sys0         : std_logic;
+  signal clk_sys1         : std_logic;
+  signal clk_sys2         : std_logic;
   
-  -- logical clock names
   signal clk_sys          : std_logic;
   signal clk_reconf       : std_logic;
   signal clk_flash        : std_logic;
   signal clk_lcd          : std_logic;
-  
-  -- RX PLL
-  signal gxb_locked       : std_logic;
-  signal rstn_wr          : std_logic;
+  signal rstn_sys         : std_logic;
   
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
+  signal clk_ref0         : std_logic;
+  signal clk_ref1         : std_logic;
+  signal clk_ref2         : std_logic;
+  
   signal clk_ref          : std_logic;
   signal clk_butis        : std_logic;
-  signal clk_25m          : std_logic;
+  signal clk_phase        : std_logic;
   signal rstn_ref         : std_logic;
+  signal rstn_butis       : std_logic;
+  signal rstn_phase       : std_logic;
   
   signal phase_done       : std_logic;
   signal phase_step       : std_logic;
   signal phase_sel        : std_logic_vector(3 downto 0);
   
+  signal phase_butis      : phase_offset;
+  
   -- DMTD PLL from clk_20m_vcxo_i
-  --signal dmtd_locked      : std_logic;
+  signal dmtd_locked      : std_logic;
+  signal clk_dmtd0        : std_logic;
   signal clk_dmtd         : std_logic;
+  
+  --------------------------------------------------------------
+  -- White Rabbit
+  --------------------------------------------------------------
   
   signal dac_hpll_load_p1 : std_logic;
   signal dac_dpll_load_p1 : std_logic;
@@ -433,79 +452,118 @@ architecture rtl of exploder_top is
   signal fd_o   : std_logic_vector(7 downto 0);
 begin
 
-  -- open drain buffer for one wire (only one)
+  -- We need at least one off-chip free running clock to setup PLLs
+  clk_free <= clk_20m_vcxo_i;
   
-  owr(0) <= rom_data_io;
-  owr(1) <= '0';
-  rom_data_io <= owr_pwren(0) when (owr_pwren(0) = '1' or owr_en(0) = '1') else 'Z';
-  
-  -- open drain buffer for SFP i2c
-  sfp1_scl_i <= sfp1_mod1_io;
-  sfp1_sda_i <= sfp1_mod2_io;
-  
-  sfp1_det_i <= sfp1_mod0_i;
-  sfp1_mod1_io <= '0' when sfp1_scl_o = '0' else 'Z';
-  sfp1_mod2_io <= '0' when sfp1_sda_o = '0' else 'Z';
-  
+  reset : altera_reset
+    generic map(
+      g_plls   => 4,
+      g_clocks => 2)
+    port map(
+      clk_free_i    => clk_free,
+      rstn_i        => '1',
+      pll_lock_i(0) => dmtd_locked,
+      pll_lock_i(1) => ref_locked,
+      pll_lock_i(2) => sys_locked,
+      pll_lock_i(3) => gxb_locked,
+      pll_clk_i(0)  => clk_dmtd,
+      pll_clk_i(1)  => clk_ref,
+      pll_clk_i(2)  => clk_sys,
+      pll_clk_i(3)  => phy_rx_rbclk,
+      pll_arst_o    => pll_arst,
+      pll_srst_o    => open,
+      clocks_i(0)   => clk_sys,
+      clocks_i(1)   => clk_free,
+      rstn_o(0)     => rstn_sys,
+      rstn_o(1)     => rstn_free);
+
   dmtd_inst : dmtd_pll port map(
+    areset => pll_arst,
     inclk0 => clk_20m_vcxo_i,    --  20  Mhz 
-    c0     => clk_dmtd,          --  62.5MHz
-    locked => open); -- dmtd_locked);
+    c0     => clk_dmtd0,         --  62.5MHz
+    locked => dmtd_locked);
+  
+  dmtd_clk : single_region port map(
+    inclk  => clk_dmtd0,
+    outclk => clk_dmtd);
+  
+  sys_inst : sys_pll port map(
+    areset => pll_arst,
+    inclk0 => clk_125m_local_i, -- 125  Mhz 
+    c0     => clk_sys0,         --  62.5 MHz
+    c1     => clk_sys1,         --  50  Mhz
+    c2     => clk_sys2,         --  20  MHz
+    locked => sys_locked);
+  
+  sys_clk : global_region port map(
+    inclk  => clk_sys0,
+    outclk => clk_sys);
+  
+  reconf_clk : global_region port map(
+    inclk  => clk_sys1,
+    outclk => clk_reconf);
+  
+  clk_flash <= clk_reconf;
+  
+  lcd_clk : single_region port map(
+    inclk  => clk_sys2,
+    outclk => clk_lcd);
   
   ref_inst : ref_pll port map( -- see "Phase Counter Select Mapping" table for arria2gx
+    areset => pll_arst,
     inclk0 => clk_125m_pllref_i, -- 125 MHz
-    c0     => clk_ref,           -- 125 MHz, counter: 0010
-    c1     => clk_butis,         -- 200 MHz, counter: 0011 = #3
-    c2     => clk_25m,           --  25 MHz, counter: 0100 = #4
+    c0     => clk_ref0,          -- 125 MHz, counter: 0010 - #2
+    c1     => clk_ref1,          -- 200 MHz, counter: 0011 = #3
+    c2     => clk_ref2,          --  25 MHz, counter: 0100 = #4
     locked => ref_locked,
-    scanclk            => clk_reconf,
+    scanclk            => clk_free,
     phasedone          => phase_done,
     phasecounterselect => phase_sel,
     phasestep          => phase_step,
-    phaseupdown        => '0');
-
-  sys_inst : sys_pll port map(
-    inclk0 => clk_125m_local_i, -- 125  Mhz 
-    c0     => clk_62_5,         --  62.5 MHz
-    c1     => clk_50,           --  50  Mhz
-    c2     => clk_20,           --  20  MHz
-    locked => sys_locked);
+    phaseupdown        => '1');
   
-  clk_sys    <= clk_62_5;
-  clk_reconf <= clk_50;
-  clk_flash  <= clk_50;
-  clk_lcd    <= clk_20;
+  ref_clk : global_region port map(
+    inclk  => clk_ref0,
+    outclk => clk_ref);
   
-  sys_reset : gc_reset
-    generic map(
-      g_clocks   => 1,
-      g_logdelay => 19) -- 8.4ms at 62.5MHz (must exceed 5ms for USB)
-    port map(
-      free_clk_i => clk_62_5,
-      locked_i   => sys_locked,
-      clks_i(0)  => clk_sys,
-      rstn_o(0)  => rstn_sys);
+  butis_clk : global_region port map(
+    inclk  => clk_ref1,
+    outclk => clk_butis);
+  
+  phase_clk : single_region port map(
+    inclk  => clk_ref2,
+    outclk => clk_phase);
 
-  ref_reset : gc_reset
+  phase : altera_phase
     generic map(
-      g_clocks   => 1,
-      g_logdelay => 20)
+      g_select_bits   => 4,
+      g_outputs       => 3,
+      g_base          => 0,
+      g_vco_freq      => 1000, -- 1GHz
+      g_output_freq   => (0 => 125, 1 => 200, 2 => 25),
+      g_output_select => (0 =>   2, 1 =>   3, 2 =>  4))
     port map(
-      free_clk_i => clk_ref,
-      locked_i   => ref_locked,
-      clks_i(0)  => clk_ref,
-      rstn_o(0)  => rstn_ref);
-
-  butis : altera_butis
-    port map(
-      clk_ref_i   => clk_ref,
-      clk_25m_i   => clk_25m,
-      clk_scan_i  => clk_reconf,
-      locked_i    => ref_locked,
-      pps_i       => pps,
+      clk_i       => clk_free,
+      rstn_i      => rstn_free,
+      clks_i(0)   => clk_ref,
+      clks_i(1)   => clk_butis,
+      clks_i(2)   => clk_phase,
+      rstn_o(0)   => rstn_ref,
+      rstn_o(1)   => rstn_phase,
+      rstn_o(2)   => rstn_butis,
+      offset_i(0) => (others => '0'),
+      offset_i(1) => phase_butis,
+      offset_i(2) => (others => '0'),
       phasedone_i => phase_done,
       phasesel_o  => phase_sel,
       phasestep_o => phase_step);
+  
+  butis : altera_butis
+    port map(
+      clk_ref_i => clk_ref,
+      clk_25m_i => clk_phase,
+      pps_i     => pps,
+      phase_o   => phase_butis);
   
   flash : flash_top
     generic map(
@@ -525,7 +583,20 @@ begin
       clk_out_i => clk_flash,
       clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
   
-  rstn_wr <= rstn_sys and gxb_locked;
+  -- open drain buffer for one wire (only one)
+  
+  owr(0) <= rom_data_io;
+  owr(1) <= '0';
+  rom_data_io <= owr_pwren(0) when (owr_pwren(0) = '1' or owr_en(0) = '1') else 'Z';
+  
+  -- open drain buffer for SFP i2c
+  sfp1_scl_i <= sfp1_mod1_io;
+  sfp1_sda_i <= sfp1_mod2_io;
+  
+  sfp1_det_i <= sfp1_mod0_i;
+  sfp1_mod1_io <= '0' when sfp1_scl_o = '0' else 'Z';
+  sfp1_mod2_io <= '0' when sfp1_sda_o = '0' else 'Z';
+  
   U_WR_CORE : xwr_core
     generic map (
       g_simulation                => 0,
@@ -546,7 +617,7 @@ begin
       clk_aux_i  => (others => '0'),
       clk_ext_i  => '0', -- g_with_external_clock_input controls usage
       pps_ext_i  => '0',
-      rst_n_i    => rstn_wr,
+      rst_n_i    => rstn_sys,
 
       dac_hpll_load_p1_o => dac_hpll_load_p1,
       dac_hpll_data_o    => dac_hpll_data,
@@ -615,13 +686,14 @@ begin
   wr_gxb_arria2 : wr_arria2_phy
     port map (
       clk_reconf_i   => clk_reconf,
-      clk_pll_i      => clk_ref,
+      clk_pll_i      => clk_ref0,
       clk_cru_i      => sfp_ref_clk_i,
-      clk_sys_i      => clk_sys,
-      rstn_sys_i     => rstn_sys,
+      clk_sys_i      => clk_free,
+      rstn_sys_i     => '1', -- !!!
       locked_o       => gxb_locked,
       loopen_i       => phy_loopen,
       drop_link_i    => phy_rst,
+      tx_clk_i       => clk_ref,
       tx_data_i      => phy_tx_data,
       tx_k_i         => phy_tx_k,
       tx_disparity_o => phy_tx_disparity,
@@ -887,7 +959,6 @@ begin
   
   -- USB micro controller
   pres_o <= '0';      -- reserved pin connected to FPGA by mistake. must be ground.
-  sres_o <= rstn_sys; -- allow it to boot once the FPGA is reayd.
   
   fd_io <= fd_o when fd_oen='1' else (others => 'Z');
   readyn_io <= 'Z'; -- weak pull-up
@@ -903,6 +974,7 @@ begin
       uart_o    => uart_rx,
       uart_i    => uart_tx,
       
+      rstn_o    => sres_o,
       ebcyc_i   => ebcyc_i,
       speed_i   => speed_i,
       shift_i   => shift_i,
