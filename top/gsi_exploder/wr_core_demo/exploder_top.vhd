@@ -456,9 +456,6 @@ begin
   clk_free <= clk_20m_vcxo_i;
   
   reset : altera_reset
-    generic map(
-      g_plls   => 4,
-      g_clocks => 2)
     port map(
       clk_free_i    => clk_free,
       rstn_i        => '1',
@@ -466,12 +463,7 @@ begin
       pll_lock_i(1) => ref_locked,
       pll_lock_i(2) => sys_locked,
       pll_lock_i(3) => gxb_locked,
-      pll_clk_i(0)  => clk_dmtd,
-      pll_clk_i(1)  => clk_ref,
-      pll_clk_i(2)  => clk_sys,
-      pll_clk_i(3)  => phy_rx_rbclk,
       pll_arst_o    => pll_arst,
-      pll_srst_o    => open,
       clocks_i(0)   => clk_sys,
       clocks_i(1)   => clk_free,
       rstn_o(0)     => rstn_sys,
@@ -688,8 +680,8 @@ begin
       clk_reconf_i   => clk_reconf,
       clk_pll_i      => clk_ref0,
       clk_cru_i      => sfp_ref_clk_i,
-      clk_sys_i      => clk_free,
-      rstn_sys_i     => '1', -- !!!
+      clk_free_i     => clk_free,
+      rst_i          => pll_arst,
       locked_o       => gxb_locked,
       loopen_i       => phy_loopen,
       drop_link_i    => phy_rst,

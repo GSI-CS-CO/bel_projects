@@ -14,6 +14,7 @@ use work.wr_altera_pkg.all;
 use work.etherbone_pkg.all;
 use work.scu_bus_pkg.all;
 use work.altera_flash_pkg.all;
+use work.altera_networks_pkg.all;
 use work.oled_display_pkg.all;
 use work.lpc_uart_pkg.all;
 use work.wb_irq_pkg.all;
@@ -153,6 +154,7 @@ entity scu_control is
     nEXCD0_PERST      : in  std_logic;
     WDT               : in  std_logic;
     A20GATE           : out std_logic;
+    KBD_RESET         : out std_logic; -- ac10
     nPWRBTN           : out std_logic;
     nFPGA_Res_Out     : out std_logic;
     A_nCONFIG         : out std_logic := '1';
@@ -292,38 +294,55 @@ architecture rtl of scu_control is
   signal gpio_slave_i : t_wishbone_slave_in;
   signal gpio_slave_o : t_wishbone_slave_out;
 
+  --------------------------------------------------------------
+  -- Clocking
+  --------------------------------------------------------------
+  
+  -- Non-PLL reset stuff
+  signal clk_free         : std_logic;
+  signal rstn_free        : std_logic;
+  signal gxb_locked       : std_logic;
+  signal pll_arst         : std_logic;
+  
   -- Sys PLL from clk_125m_local_i
   signal sys_locked       : std_logic;
-  signal clk_62_5         : std_logic;
-  signal clk_50           : std_logic;
-  signal clk_20           : std_logic;
-  signal rstn_sys         : std_logic;
+  signal clk_sys0         : std_logic;
+  signal clk_sys1         : std_logic;
+  signal clk_sys2         : std_logic;
   
-  -- Logical clock names
-  signal clk_pcie         : std_logic;
   signal clk_sys          : std_logic;
   signal clk_reconf       : std_logic;
   signal clk_flash        : std_logic;
   signal clk_scubus       : std_logic;
-  
-  -- RX PLL
-  signal gxb_locked       : std_logic;
-  signal rstn_wr          : std_logic;
+  signal rstn_sys         : std_logic;
   
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
+  signal clk_ref0         : std_logic;
+  signal clk_ref1         : std_logic;
+  signal clk_ref2         : std_logic;
+  
   signal clk_ref          : std_logic;
   signal clk_butis        : std_logic;
-  signal clk_25m          : std_logic;
+  signal clk_phase        : std_logic;
   signal rstn_ref         : std_logic;
+  signal rstn_butis       : std_logic;
+  signal rstn_phase       : std_logic;
   
   signal phase_done       : std_logic;
   signal phase_step       : std_logic;
   signal phase_sel        : std_logic_vector(3 downto 0);
   
+  signal phase_butis      : phase_offset;
+  
   -- DMTD PLL from clk_20m_vcxo_i
-  -- signal dmtd_locked      : std_logic;
+  signal dmtd_locked      : std_logic;
+  signal clk_dmtd0        : std_logic;
   signal clk_dmtd         : std_logic;
+  
+  --------------------------------------------------------------
+  -- White Rabbit
+  --------------------------------------------------------------
   
   signal dac_hpll_load_p1 : std_logic;
   signal dac_dpll_load_p1 : std_logic;
@@ -392,78 +411,123 @@ begin
   ----------------------------------------------------------------------------------
   -- Reset & PLLs and Tranceiver ---------------------------------------------------
   ----------------------------------------------------------------------------------
-  rstn_wr <= rstn_sys and gxb_locked;
+  
+  -- We need at least one off-chip free running clock to setup PLLs
+  clk_free <= clk_20m_vcxo_i;
+  
+  reset : altera_reset
+    port map(
+      clk_free_i    => clk_free,
+      rstn_i        => '1',
+      pll_lock_i(0) => dmtd_locked,
+      pll_lock_i(1) => ref_locked,
+      pll_lock_i(2) => sys_locked,
+      pll_lock_i(3) => gxb_locked,
+      pll_arst_o    => pll_arst,
+      clocks_i(0)   => clk_sys,
+      clocks_i(1)   => clk_free,
+      rstn_o(0)     => rstn_sys,
+      rstn_o(1)     => rstn_free);
 
   dmtd_inst : dmtd_pll port map(
+    areset => pll_arst,
     inclk0 => clk_20m_vcxo_i,    --  20  Mhz 
-    c0     => clk_dmtd,          --  62.5MHz
-    locked => open);
+    c0     => clk_dmtd0,         --  62.5MHz
+    locked => dmtd_locked);
   
-  ref_inst : ref_pll port map(
+  dmtd_clk : single_region port map(
+    inclk  => clk_dmtd0,
+    outclk => clk_dmtd);
+  
+  sys_inst : sys_pll port map(
+    areset => pll_arst,
+    inclk0 => clk_125m_local_i, -- 125  Mhz 
+    c0     => clk_sys0,         --  62.5 MHz
+    c1     => clk_sys1,         --  50  Mhz
+    c2     => clk_sys2,         --  20  MHz
+    locked => sys_locked);
+  
+  sys_clk : global_region port map(
+    inclk  => clk_sys0,
+    outclk => clk_sys);
+  
+  reconf_clk : global_region port map(
+    inclk  => clk_sys1,
+    outclk => clk_reconf);
+  
+  clk_flash <= clk_reconf;
+  
+  scubus_clk : single_region port map(
+    inclk  => clk_sys2,
+    outclk => clk_scubus);
+  
+  ref_inst : ref_pll port map( -- see "Phase Counter Select Mapping" table for arria2gx
+    areset => pll_arst,
     inclk0 => clk_125m_pllref_i, -- 125 MHz
-    c0     => clk_ref,           -- 125 MHz
-    c1     => clk_butis,         -- 200 MHz
-    c2     => clk_25m,           --  25 MHz
+    c0     => clk_ref0,          -- 125 MHz, counter: 0010 - #2
+    c1     => clk_ref1,          -- 200 MHz, counter: 0011 = #3
+    c2     => clk_ref2,          --  25 MHz, counter: 0100 = #4
     locked => ref_locked,
-    scanclk            => clk_reconf,
+    scanclk            => clk_free,
     phasedone          => phase_done,
     phasecounterselect => phase_sel,
     phasestep          => phase_step,
-    phaseupdown        => '0');
-
-  sys_inst : sys_pll port map(
-    inclk0 => clk_125m_local_i, -- 125  Mhz 
-    c0     => clk_62_5,         --  62.5MHz
-    c1     => clk_50,           --  50  Mhz
-    c2     => clk_20,           --  20  MHz
-    locked => sys_locked);
+    phaseupdown        => '1');
   
-  clk_pcie  <= clk_ref;
-  clk_sys   <= clk_62_5;
-  clk_reconf <= clk_50;
-  clk_flash  <= clk_50;
-  clk_scubus <= clk_20;
+  ref_clk : global_region port map(
+    inclk  => clk_ref0,
+    outclk => clk_ref);
   
-  sys_reset : gc_reset
-    generic map(
-      g_clocks => 1)
-    port map(
-      free_clk_i => clk_sys,
-      locked_i   => sys_locked,
-      clks_i(0)  => clk_sys,
-      rstn_o(0)  => rstn_sys);
+  butis_clk : global_region port map(
+    inclk  => clk_ref1,
+    outclk => clk_butis);
+  
+  phase_clk : single_region port map(
+    inclk  => clk_ref2,
+    outclk => clk_phase);
 
-  ref_reset : gc_reset
+  phase : altera_phase
     generic map(
-      g_clocks => 1)
+      g_select_bits   => 4,
+      g_outputs       => 3,
+      g_base          => 0,
+      g_vco_freq      => 1000, -- 1GHz
+      g_output_freq   => (0 => 125, 1 => 200, 2 => 25),
+      g_output_select => (0 =>   2, 1 =>   3, 2 =>  4))
     port map(
-      free_clk_i => clk_ref,
-      locked_i   => ref_locked,
-      clks_i(0)  => clk_ref,
-      rstn_o(0)  => rstn_ref);
-
-  butis : altera_butis
-    port map(
-      clk_ref_i   => clk_ref,
-      clk_25m_i   => clk_25m,
-      clk_scan_i  => clk_reconf,
-      locked_i    => ref_locked,
-      pps_i       => pps,
+      clk_i       => clk_free,
+      rstn_i      => rstn_free,
+      clks_i(0)   => clk_ref,
+      clks_i(1)   => clk_butis,
+      clks_i(2)   => clk_phase,
+      rstn_o(0)   => rstn_ref,
+      rstn_o(1)   => rstn_phase,
+      rstn_o(2)   => rstn_butis,
+      offset_i(0) => (others => '0'),
+      offset_i(1) => phase_butis,
+      offset_i(2) => (others => '0'),
       phasedone_i => phase_done,
       phasesel_o  => phase_sel,
       phasestep_o => phase_step);
   
- 
-    wr_gxb_arria2 : wr_arria2_phy
+  butis : altera_butis
+    port map(
+      clk_ref_i => clk_ref,
+      clk_25m_i => clk_phase,
+      pps_i     => pps,
+      phase_o   => phase_butis);
+  
+  wr_gxb_arria2 : wr_arria2_phy
     port map (
       clk_reconf_i   => clk_reconf,
-      clk_pll_i      => clk_ref,
+      clk_pll_i      => clk_ref0,
       clk_cru_i      => sfp2_ref_clk_i,
-      clk_sys_i      => clk_sys,
-      rstn_sys_i     => rstn_sys,
+      clk_free_i     => clk_free,
+      rst_i          => pll_arst,
       locked_o       => gxb_locked,
       loopen_i       => phy_loopen,
       drop_link_i    => phy_rst,
+      tx_clk_i       => clk_ref,
       tx_data_i      => phy_tx_data,
       tx_k_i         => phy_tx_k,
       tx_disparity_o => phy_tx_disparity,
@@ -610,6 +674,7 @@ begin
       rstn_i    => rstn_sys,
       slave_i   => per_cbar_master_o(8),
       slave_o   => per_cbar_master_i(8),
+      clk_ext_i => clk_flash,
       clk_out_i => clk_flash,
       clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
       
@@ -663,7 +728,7 @@ U_DAC_ARB : spec_serial_dac_arb
     generic map(
        sdb_addr => c_top_sdb_address)
     port map(
-       clk125_i      => clk_pcie,
+       clk125_i      => clk_125m_local_i,
        cal_clk50_i   => clk_reconf,
        
        pcie_refclk_i => pcie_refclk_i,
@@ -896,7 +961,7 @@ U_DAC_ARB : spec_serial_dac_arb
       clk_aux_i  => (others => '0'),
       clk_ext_i  => '0', -- g_with_external_clock_input controls usage
       pps_ext_i  => '0',
-      rst_n_i    => rstn_wr,
+      rst_n_i    => rstn_sys,
 
       dac_hpll_load_p1_o => dac_hpll_load_p1,
       dac_hpll_data_o    => dac_hpll_data,
@@ -979,7 +1044,7 @@ U_DAC_ARB : spec_serial_dac_arb
       lpc_serirq      => LPC_SERIRQ,
       lpc_ad          => LPC_AD,
       lpc_frame_n     => nLPC_FRAME,
-      lpc_reset_n     => nPCI_RESET and rstn_wr, -- !!! add signal
+      lpc_reset_n     => nPCI_RESET, -- and rstn_wr, -- !!! add signal
       
       kbc_out_port    => kbc_out_port,
       kbc_in_port     => x"00",
@@ -1056,7 +1121,7 @@ U_DAC_ARB : spec_serial_dac_arb
   
   with r_gpio_mux(5 downto 4) select
     s_uled_dat(1) <= 
-      pps           when "00",
+      ext_pps       when "00",
       eca_gpio(2)   when "01",
       r_gpio_val(2) when "10",
       '-'           when others;
@@ -1136,7 +1201,7 @@ U_DAC_ARB : spec_serial_dac_arb
   DDR3_WE_n  <= 'Z';
   
   -- External reset values
-  nFPGA_Res_Out <= not r_resets(0) and rstn_wr;
+  nFPGA_Res_Out <= not r_resets(0) and rstn_sys;
   nPWRBTN       <= not r_resets(1);
   A_nCONFIG     <= not r_resets(2);
 
