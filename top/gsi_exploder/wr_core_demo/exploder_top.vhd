@@ -367,7 +367,6 @@ architecture rtl of exploder_top is
   signal clk_phase        : std_logic;
   signal rstn_ref         : std_logic;
   signal rstn_butis       : std_logic;
-  signal rstn_phase       : std_logic;
   
   signal phase_done       : std_logic;
   signal phase_step       : std_logic;
@@ -456,6 +455,8 @@ begin
   clk_free <= clk_20m_vcxo_i;
   
   reset : altera_reset
+    generic map(
+      g_clocks      => 3)
     port map(
       clk_free_i    => clk_free,
       rstn_i        => '1',
@@ -466,8 +467,10 @@ begin
       pll_arst_o    => pll_arst,
       clocks_i(0)   => clk_sys,
       clocks_i(1)   => clk_free,
+      clocks_i(2)   => clk_ref,
       rstn_o(0)     => rstn_sys,
-      rstn_o(1)     => rstn_free);
+      rstn_o(1)     => rstn_free,
+      rstn_o(2)     => rstn_ref);
 
   dmtd_inst : dmtd_pll port map(
     areset => pll_arst,
@@ -529,23 +532,17 @@ begin
   phase : altera_phase
     generic map(
       g_select_bits   => 4,
-      g_outputs       => 3,
+      g_outputs       => 1,
       g_base          => 0,
       g_vco_freq      => 1000, -- 1GHz
-      g_output_freq   => (0 => 125, 1 => 200, 2 => 25),
-      g_output_select => (0 =>   2, 1 =>   3, 2 =>  4))
+      g_output_freq   => (0 => 200),
+      g_output_select => (0 =>   3))
     port map(
       clk_i       => clk_free,
       rstn_i      => rstn_free,
-      clks_i(0)   => clk_ref,
-      clks_i(1)   => clk_butis,
-      clks_i(2)   => clk_phase,
-      rstn_o(0)   => rstn_ref,
-      rstn_o(1)   => rstn_phase,
-      rstn_o(2)   => rstn_butis,
-      offset_i(0) => (others => '0'),
-      offset_i(1) => phase_butis,
-      offset_i(2) => (others => '0'),
+      clks_i(0)   => clk_butis,
+      rstn_o(0)   => rstn_butis,
+      offset_i(0) => phase_butis,
       phasedone_i => phase_done,
       phasesel_o  => phase_sel,
       phasestep_o => phase_step);

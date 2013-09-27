@@ -417,7 +417,6 @@ set_location_assignment PLLOUTPUTCOUNTER_X0_Y54_N1 -to "ref_pll5:ref_inst|ref_pl
 set_location_assignment PLLOUTPUTCOUNTER_X0_Y53_N1 -to "ref_pll5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[2]"
 set_location_assignment PLLOUTPUTCOUNTER_X0_Y20_N1 -to "dmtd_pll5:dmtd_inst|dmtd_pll5_0002:dmtd_pll5_inst|altera_pll:altera_pll_i|outclk_wire[0]"
 set_location_assignment CLKCTRL_G0 -to "global_region:sys_clk|global_region_altclkctrl_bdh:global_region_altclkctrl_bdh_component|sd1"
-set_location_assignment CLKCTRL_G4 -to "global_region:dmtd_clk|global_region_altclkctrl_bdh:global_region_altclkctrl_bdh_component|sd1"
 set_location_assignment CLKCTRL_G12 -to "global_region:ref_clk|global_region_altclkctrl_bdh:global_region_altclkctrl_bdh_component|sd1"
 set_location_assignment CLKCTRL_G13 -to "global_region:butis_clk|global_region_altclkctrl_bdh:global_region_altclkctrl_bdh_component|sd1"
 set_global_assignment -name TRI_STATE_SPI_PINS ON
@@ -478,7 +477,7 @@ set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p27
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p28
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p29
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p30
-set_instance_assignment -name LL_MEMBER_OF "wr_arria5:tx" -to "wr_arria5_phy:wr_arria5_phy_inst|enc_8b10b:encoder|s_out_10b_reg" -section_id "wr_arria5:tx"
+set_instance_assignment -name LL_MEMBER_OF "wr_arria5:tx" -to "wr_arria5_phy:wr_arria5_phy_inst|tx_gxb_datain" -section_id "wr_arria5:tx"
 set_instance_assignment -name LL_MEMBER_OF "wr_arria5:tx" -to "wr_arria5_phy:wr_arria5_phy_inst|tx_reg_datain" -section_id "wr_arria5:tx"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name IO_STANDARD LVDS -to p16

@@ -438,7 +438,7 @@ begin
     generic map(
       g_select_bits   => 5,
       g_outputs       => 3,
-      g_base          => 2500/(1000/8), -- 2500ps shift
+      g_base          => 6500/(1000/8), -- 6500ps shift
       g_vco_freq      => 1000, -- 1GHz
       g_output_freq   => (0 => 125, 1 => 200, 2 => 25),
       g_output_select => (0 =>  12, 1 =>  13, 2 => 14))

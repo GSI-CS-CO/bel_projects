@@ -153,8 +153,8 @@ entity scu_control is
     nTHRMTRIP         : in  std_logic;
     nEXCD0_PERST      : in  std_logic;
     WDT               : in  std_logic;
-    A20GATE           : out std_logic;
-    KBD_RESET         : out std_logic; -- ac10
+    A20GATE           : out std_logic := 'Z';
+    KBD_RESET         : out std_logic := 'Z';
     nPWRBTN           : out std_logic;
     nFPGA_Res_Out     : out std_logic;
     A_nCONFIG         : out std_logic := '1';
@@ -327,7 +327,6 @@ architecture rtl of scu_control is
   signal clk_phase        : std_logic;
   signal rstn_ref         : std_logic;
   signal rstn_butis       : std_logic;
-  signal rstn_phase       : std_logic;
   
   signal phase_done       : std_logic;
   signal phase_step       : std_logic;
@@ -416,6 +415,8 @@ begin
   clk_free <= clk_20m_vcxo_i;
   
   reset : altera_reset
+    generic map(
+      g_clocks      => 3)
     port map(
       clk_free_i    => clk_free,
       rstn_i        => '1',
@@ -426,8 +427,10 @@ begin
       pll_arst_o    => pll_arst,
       clocks_i(0)   => clk_sys,
       clocks_i(1)   => clk_free,
+      clocks_i(2)   => clk_ref,
       rstn_o(0)     => rstn_sys,
-      rstn_o(1)     => rstn_free);
+      rstn_o(1)     => rstn_free,
+      rstn_o(2)     => rstn_ref);
 
   dmtd_inst : dmtd_pll port map(
     areset => pll_arst,
@@ -489,23 +492,17 @@ begin
   phase : altera_phase
     generic map(
       g_select_bits   => 4,
-      g_outputs       => 3,
+      g_outputs       => 1,
       g_base          => 0,
       g_vco_freq      => 1000, -- 1GHz
-      g_output_freq   => (0 => 125, 1 => 200, 2 => 25),
-      g_output_select => (0 =>   2, 1 =>   3, 2 =>  4))
+      g_output_freq   => (0 => 200),
+      g_output_select => (0 =>   3))
     port map(
       clk_i       => clk_free,
       rstn_i      => rstn_free,
-      clks_i(0)   => clk_ref,
-      clks_i(1)   => clk_butis,
-      clks_i(2)   => clk_phase,
-      rstn_o(0)   => rstn_ref,
-      rstn_o(1)   => rstn_phase,
-      rstn_o(2)   => rstn_butis,
-      offset_i(0) => (others => '0'),
-      offset_i(1) => phase_butis,
-      offset_i(2) => (others => '0'),
+      clks_i(0)   => clk_butis,
+      rstn_o(0)   => rstn_butis,
+      offset_i(0) => phase_butis,
       phasedone_i => phase_done,
       phasesel_o  => phase_sel,
       phasestep_o => phase_step);
@@ -666,8 +663,8 @@ begin
       g_port_width             => 1,   -- single-lane SPI bus
       g_addr_width             => 24,  -- 3 byte addressed chip
       g_dummy_time             => 8,   -- 8 cycles between address and data
-      g_input_latch_edge       => '1', -- 30ns at 50MHz (10+20) after falling edge sets up SPI output
-      g_output_latch_edge      => '0', -- falling edge to meet SPI setup times
+      g_input_latch_edge       => '0', -- 30ns at 50MHz (10+20) after falling edge sets up SPI output
+      g_output_latch_edge      => '1', -- falling edge to meet SPI setup times
       g_input_to_output_cycles => 2)   -- delayed to work-around unconstrained design
     port map(
       clk_i     => clk_sys,
