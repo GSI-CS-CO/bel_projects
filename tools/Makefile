@@ -1,4 +1,4 @@
-TARGETS = eb-flash
+TARGETS = eb-flash eb-info
 EB      = ../ip_cores/etherbone-core/api
 
 all:	$(TARGETS)
