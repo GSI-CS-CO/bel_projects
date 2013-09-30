@@ -15,6 +15,7 @@ use work.etherbone_pkg.all;
 use work.scu_bus_pkg.all;
 use work.altera_flash_pkg.all;
 use work.altera_networks_pkg.all;
+use work.build_id_pkg.all;
 use work.oled_display_pkg.all;
 use work.lpc_uart_pkg.all;
 use work.wb_irq_pkg.all;
@@ -240,18 +241,19 @@ architecture rtl of scu_control is
   ----------------------------------------------------------------------------------
   -- GSI Periphery Crossbar --------------------------------------------------------
   ----------------------------------------------------------------------------------
-  constant c_per_slaves   : natural := 9;
+  constant c_per_slaves   : natural := 10;
   constant c_per_masters  : natural := 1;
   constant c_per_layout   : t_sdb_record_array(c_per_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00000000"),
     1 => f_sdb_embed_device(c_eca_sdb,                    x"00000800"),
     2 => f_sdb_embed_device(c_eca_evt_sdb,                x"00000C00"),
-	 3 => f_sdb_embed_device(c_irq_ctrl_sdb,               x"00000D00"),
-	 4 => f_sdb_embed_device(c_scu_bus_master,             x"00400000"),
+    3 => f_sdb_embed_device(c_irq_ctrl_sdb,               x"00000D00"),
+    4 => f_sdb_embed_device(c_scu_bus_master,             x"00400000"),
     5 => f_sdb_embed_device(c_xwb_gpio32_sdb,             x"00800000"),
     6 => f_sdb_embed_device(c_wrc_periph1_sdb,            x"00800100"),
     7 => f_sdb_embed_device(c_oled_display,               x"00900000"),
-    8 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"01000000"));
+    8 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"01000000"),
+    9 => f_sdb_embed_device(c_build_id_sdb,               x"00800400"));
   constant c_per_sdb_address : t_wishbone_address := x"00001000";
   constant c_per_bridge_sdb  : t_sdb_bridge       :=
     f_xwb_bridge_layout_sdb(true, c_per_layout, c_per_sdb_address);
@@ -657,6 +659,13 @@ begin
   -- GSI WB Periphery --------------------------------------------------------------
   ----------------------------------------------------------------------------------
 
+  id : build_id
+    port map(
+      clk_i   => clk_sys,
+      rst_n_i => rstn_sys,
+      slave_i => per_cbar_master_o(9),
+      slave_o => per_cbar_master_i(9));
+  
   flash : flash_top
     generic map(
       g_family                 => "Arria II GX",
