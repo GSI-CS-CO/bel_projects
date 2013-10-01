@@ -18,10 +18,13 @@ component fg_quad_datapath is
   a_en, b_en:         in  std_logic;                      -- data register enable
   load_start, s_en:   in  std_logic;
   status_reg_changed: in  std_logic;   
-  step_sel:           in  std_logic_vector(2 downto 0);   -- shiftvalue coeff a
-  b_shift:            in  integer range 0 to 16;          -- shiftvalue coeff b
+  step_sel:           in  std_logic_vector(2 downto 0);
+  shift_b:            in  integer range 0 to 48;          -- shiftvalue coeff b
+  shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff a
   freq_sel:           in  std_logic_vector(2 downto 0);
+  dreq:               out std_logic;
   sw_out:             out std_logic_vector(23 downto 0);
+  sw_strobe:          out std_logic;
   set_out:            out std_logic                       -- debug out
   );
 end component fg_quad_datapath;
@@ -44,6 +47,7 @@ component fg_quad_scu_bus is
     Rd_Port:            out     std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Rd_Active:          out     std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:              out     std_logic;
+    dreq:               out     std_logic;
     sw_out:             out     std_logic_vector(23 downto 0);
     sw_strobe:          out     std_logic
     );

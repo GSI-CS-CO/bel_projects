@@ -10,6 +10,7 @@ use work.aux_functions_pkg.all;
 use work.adc_pkg.all;
 use work.wb_scu_reg_pkg.all;
 use work.dac714_pkg.all;
+use work.fg_quad_pkg.all;
 
 entity scu_addac is
   port (
@@ -225,6 +226,13 @@ constant c_xwb_owm : t_sdb_device := (
   signal  adc_data_to_SCUB:   std_logic_vector(15 downto 0);
   signal  adc_dtack:          std_logic;
   
+  signal  fg_1_dtack:         std_logic;
+  signal  fg_1_data_to_SCUB:  std_logic_vector(15 downto 0);
+  signal  fg_1_rd_active:     std_logic;
+  signal  fg_1_sw:            std_logic_vector(23 downto 0);
+  signal  fg_1_strobe:        std_logic;
+  signal  fg_1_dreq:            std_logic;
+  
   signal  led_ena_cnt:        std_logic;
 
   signal  ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4: std_logic_vector(15 downto 0);
@@ -416,7 +424,7 @@ adda_pll_1: adda_pll        -- Altera megafunction
 
     
 
-Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack or wb_scu_dtack;
+Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack or wb_scu_dtack or fg_1_dtack;
 
 SCU_Slave: SCU_Bus_Slave
 generic map (
@@ -440,7 +448,7 @@ port map (
     nSCUB_Reset_in      =>  A_nReset,               -- in,	SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
     Data_to_SCUB        =>  Data_to_SCUB,           -- in,	connect read sources from external user functions
     Dtack_to_SCUB       =>  Dtack_to_SCUB,          -- in,	connect Dtack from from external user functions
-    Intr_In             =>  "000000000000000",      -- in,	interrupt(15 downro 1)
+    Intr_In             =>  "00000000000000" & fg_1_dreq,      -- in,	interrupt(15 downro 1)
     User_Ready          =>  '1',
     Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- out,	latched data from SCU_Bus for external user functions 
     ADR_from_SCUB_LA    =>  ADR_from_SCUB_LA,       -- out,	latched address from SCU_Bus for external user functions
@@ -520,8 +528,8 @@ dac_2: dac714
     nReset              =>  nPowerup_Res,           -- in, '0' => resets the DAC_2
     nExt_Trig_DAC       =>  EXT_TRIG_DAC,           -- external trigger input over optocoupler,
 																										-- led on -> nExt_Trig_DAC is low
-    FG_Data             =>  open,                   -- parallel dac data during FG-Mode
-    FG_Strobe           =>  open,                   -- strobe to start SPI transfer (if possible) during FG-Mode
+    FG_Data             =>  fg_1_sw(23 downto 8),   -- parallel dac data during FG-Mode
+    FG_Strobe           =>  fg_1_strobe,            -- strobe to start SPI transfer (if possible) during FG-Mode
     DAC_SI              =>  DAC2_SDI,               -- out, is connected to DAC2-SDI
     nDAC_CLK            =>  nDAC2_CLK,              -- out, spi-clock of DAC2
     nCS_DAC             =>  nDAC2_A0,               -- out, '0' enable shift of internal shift register of DAC2
@@ -599,6 +607,32 @@ adc: adc_scu_bus
     channel_6 => ADC_channel_6,
     channel_7 => ADC_channel_7,
     channel_8 => ADC_channel_8);
+    
+fg_1: fg_quad_scu_bus
+  generic map (
+    Base_addr           =>  x"0300",
+    clk_in_hz           =>  clk_sys_in_Hz,
+    diag_on_is_1        =>  0                       -- if 1 then diagnosic information is generated during compilation
+    )
+  port map (
+
+    -- SCUB interface
+    Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,       -- in, latched address from SCU_Bus
+    Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- in, latched data from SCU_Bus 
+    Ext_Adr_Val         =>  Ext_Adr_Val,            -- in, '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active       =>  Ext_Rd_active,          -- in, '1' => Rd-Cycle is active
+    Ext_Wr_active       =>  Ext_Wr_active,          -- in, '1' => Wr-Cycle is active
+    clk                 =>  clk_sys,                -- in, should be the same clk, used by SCU_Bus_Slave
+    nReset              =>  nPowerup_Res,           -- in, '0' => resets the fg_1
+    Rd_Port             =>  fg_1_data_to_SCUB,      -- out, connect read sources (over multiplexer) to SCUB-Macro
+    Rd_Active           =>  fg_1_rd_active,         -- '1' = read data available at 'Rd_Port'-output
+    Dtack               =>  fg_1_dtack,             -- connect Dtack to SCUB-Macro
+    dreq                =>  fg_1_dreq,
+
+    --  fg output
+    sw_out              =>  fg_1_sw,
+    sw_strobe           =>  fg_1_strobe
+  );
 
 
 p_led_ena:  div_n

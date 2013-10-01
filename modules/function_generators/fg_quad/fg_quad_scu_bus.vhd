@@ -26,6 +26,7 @@ entity fg_quad_scu_bus is
     Rd_Active:          out   std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:              out   std_logic;                       -- connect Dtack to SCUB-Macro
     -- fg_quad
+    dreq:               out   std_logic;
     sw_out:             out   std_logic_vector(23 downto 0);  -- function generator output
     sw_strobe:          out   std_logic                       -- 
     );
@@ -39,12 +40,17 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   constant coeff_b_reg_adr: unsigned(15 downto 0) := Base_addr + x"0002";
   constant start_h_reg_adr: unsigned(15 downto 0) := Base_addr + x"0003";
   constant start_l_reg_adr: unsigned(15 downto 0) := Base_addr + x"0004";
+  constant shift_a_reg_adr: unsigned(15 downto 0) := Base_addr + x"0005";
+  constant shift_b_reg_adr: unsigned(15 downto 0) := Base_addr + x"0006";
+  
 
   
   signal  fg_cntrl_reg:     std_logic_vector(15 downto 0);
   signal  coeff_a_reg:      std_logic_vector(15 downto 0);
   signal  coeff_b_reg:      std_logic_vector(15 downto 0);
   signal  start_value_reg:  std_logic_vector(31 downto 0);
+  signal  shift_a_reg:      std_logic_vector(15 downto 0);
+  signal  shift_b_reg:      std_logic_vector(15 downto 0);
 
   signal  wr_fg_cntrl:      std_logic;
   signal  rd_fg_cntrl:      std_logic;
@@ -56,9 +62,14 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  rd_start_value_h: std_logic;
   signal  wr_start_value_l: std_logic;
   signal  rd_start_value_l: std_logic;
+  signal  wr_shift_a:       std_logic;
+  signal  rd_shift_a:       std_logic;
+  signal  wr_shift_b:       std_logic;
+  signal  rd_shift_b:       std_logic;
   
   signal  set_out:          std_logic;
   signal  s_en:             std_logic;
+
 
 begin
   quad_fg: fg_quad_datapath 
@@ -74,10 +85,15 @@ begin
       load_start          => fg_cntrl_reg(1),
       s_en                => s_en,
       status_reg_changed  => wr_fg_cntrl,
-      step_sel            => fg_cntrl_reg(9 downto 7),
-      b_shift             => to_integer(unsigned(fg_cntrl_reg(6 downto 4))),
-      freq_sel            => fg_cntrl_reg(13 downto 11),
+      step_sel            => fg_cntrl_reg(12 downto 10),
+      --shift_b             => to_integer(unsigned(fg_cntrl_reg(9 downto 4))),
+      --shift_a             => to_integer(unsigned(fg_cntrl_reg(9 downto 4))),
+      shift_b             => to_integer(unsigned(shift_b_reg(5 downto 0))),
+      shift_a             => to_integer(unsigned(shift_a_reg(5 downto 0))),
+      freq_sel            => fg_cntrl_reg(15 downto 13),
+      dreq                => dreq,
       sw_out              => sw_out,
+      sw_strobe           => sw_strobe,
       set_out             => set_out    
     );
     
@@ -94,6 +110,10 @@ adr_decoder: process (clk, nReset)
       rd_start_value_h  <= '0';
       wr_start_value_l  <= '0';
       rd_start_value_l  <= '0';
+      wr_shift_a        <= '0';
+      wr_shift_b        <= '0';
+      rd_shift_a        <= '0';
+      rd_shift_b        <= '0';
       Rd_Active         <= '0';
       dtack             <= '0';
       
@@ -108,6 +128,10 @@ adr_decoder: process (clk, nReset)
       rd_start_value_h  <= '0';
       wr_start_value_l  <= '0';
       rd_start_value_l  <= '0';
+      wr_shift_a        <= '0';
+      wr_shift_b        <= '0';
+      rd_shift_a        <= '0';
+      rd_shift_b        <= '0';
       Rd_Active         <= '0';
       dtack             <= '0';
     
@@ -165,6 +189,26 @@ adr_decoder: process (clk, nReset)
               Rd_Active         <= '1';
               dtack             <= '1';
             end if;
+          
+          when shift_a_reg_adr =>
+            if Ext_Wr_active = '1' then
+              wr_shift_a  <= '1';
+              dtack       <= '1';
+            elsif Ext_Rd_active = '1' then
+              rd_shift_a  <= '1';
+              Rd_Active   <= '1';
+              dtack       <= '1';
+            end if;
+            
+          when shift_b_reg_adr =>
+            if Ext_Wr_active = '1' then
+              wr_shift_b  <= '1';
+              dtack       <= '1';
+            elsif Ext_Rd_active = '1' then
+              rd_shift_b  <= '1';
+              Rd_Active   <= '1';
+              dtack       <= '1';
+            end if;
 
           when others =>
             wr_fg_cntrl       <= '0';
@@ -177,6 +221,10 @@ adr_decoder: process (clk, nReset)
             rd_start_value_h  <= '0';
             wr_start_value_l  <= '0';
             rd_start_value_l  <= '0';
+            wr_shift_a        <= '0';
+            wr_shift_b        <= '0';
+            rd_shift_a        <= '0';
+            rd_shift_b        <= '0';
             Rd_Active         <= '0';
             dtack             <= '0';
         end case;
@@ -186,9 +234,9 @@ adr_decoder: process (clk, nReset)
 
 -- fg_cntrl_reg(0)            : reset, 1 -> active
 -- fg_cntrl_reg(1)            : load start
--- fg_cntrl_reg(6 downto 4)   : shift value b
--- fg_cntrl_reg(10 downto 7)  : step value M
--- fg_cntrl_reg(13 dwonto 11) : add frequency select
+-- fg_cntrl_reg(9 downto 4)   : shift value b
+-- fg_cntrl_reg(12 downto 10) : step value M
+-- fg_cntrl_reg(15 downto 13) : add frequency select
 cntrl_reg: process (clk, nReset, rd_fg_cntrl, wr_fg_cntrl)
   variable reset_cnt: unsigned(1 downto 0) := "00";
 begin
@@ -208,6 +256,12 @@ begin
     if wr_coeff_b = '1' then
       coeff_b_reg <= Data_from_SCUB_LA;
     end if;
+    if wr_shift_a = '1' then
+      shift_a_reg <= Data_from_SCUB_LA;
+    end if;
+    if wr_shift_b = '1' then
+      shift_b_reg <= Data_from_SCUB_LA;
+    end if;
     if wr_start_value_h = '1' then
       start_value_reg(31 downto 16) <= Data_from_SCUB_LA;
     end if;
@@ -225,6 +279,7 @@ begin
   end if;
 end process;
 
+/*TODO*/
 Rd_port <= fg_cntrl_reg;
   
 end architecture;

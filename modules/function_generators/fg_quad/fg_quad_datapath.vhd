@@ -17,25 +17,28 @@ entity fg_quad_datapath is
   a_en, b_en:         in  std_logic;                      -- data register enable
   load_start, s_en:   in  std_logic;
   status_reg_changed: in  std_logic;   
-  step_sel:           in  std_logic_vector(2 downto 0);   -- shiftvalue coeff a
-  b_shift:            in  integer range 0 to 16;          -- shiftvalue coeff b
+  step_sel:           in  std_logic_vector(2 downto 0);
+  shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
+  shift_b:            in  integer range 0 to 48;          -- shiftvalue coeff b
   freq_sel:           in  std_logic_vector(2 downto 0);
+  dreq:               out std_logic;
   sw_out:             out std_logic_vector(23 downto 0);
+  sw_strobe:          out std_logic;
   set_out:            out std_logic);                     -- debug out
 end entity;
 
 architecture fg_quad_dp_arch of fg_quad_datapath is
 
 -- shifter signals
-signal s_a_shifted:   signed(39 downto 0);
-signal s_b_shifted:   signed(39 downto 0);
+signal s_a_shifted:   unsigned(63 downto 0);
+signal s_b_shifted:   unsigned(63 downto 0);
 
 -- registerblock
-signal s_a_reg:       signed(39 downto 0);
-signal s_b_reg:       signed(39 downto 0);
-signal s_Q_reg:       signed(39 downto 0);
-signal s_X_reg:       signed(39 downto 0);
-signal s_start_reg:   signed(39 downto 0);
+signal s_a_reg:       unsigned(63 downto 0);
+signal s_b_reg:       unsigned(63 downto 0);
+signal s_Q_reg:       unsigned(63 downto 0);
+signal s_X_reg:       unsigned(63 downto 0);
+signal s_start_reg:   unsigned(63 downto 0);
 
 
 -- signals statemachine
@@ -49,7 +52,6 @@ signal control_state: cntrl_type;
 
 signal s_cnt_out:   std_logic_vector(7 downto 0);
 signal s_reached:   std_logic;
-signal s_set:       std_logic;
 signal s_cnt_set:   std_logic := '0';
 
 -- constants for frequency and step value counters
@@ -112,24 +114,10 @@ s_cnt_out <= std_logic_vector(s_cnt);
 
 
 
--- shifting for linear coefficient a
-shift_a: process(step_sel, data_a)
-begin
-  case step_sel is
-    when "000"  =>  s_a_shifted <= resize(signed(data_a), 40) sll 17;
-    when "001"  =>  s_a_shifted <= resize(signed(data_a), 40) sll 16; 
-    when "010"  =>  s_a_shifted <= resize(signed(data_a), 40) sll 15; 
-    when "011"  =>  s_a_shifted <= resize(signed(data_a), 40) sll 14;
-    when "100"  =>  s_a_shifted <= resize(signed(data_a), 40) sll 13; 
-    when "101"  =>  s_a_shifted <= resize(signed(data_a), 40) sll 12; 
-    when "110"  =>  s_a_shifted <= resize(signed(data_a), 40) sll 11; 
-    when "111"  =>  s_a_shifted <= resize(signed(data_a), 40) sll 10;
-    when others =>  s_a_shifted <= resize(signed(data_a), 40) sll 10;
-  end case;
-end process;
-
--- shifting for quadratic coefficient b
-s_b_shifted <= shift_left(resize(signed(data_b), 40), b_shift);
+-- shifting for quadratic coefficient a
+s_a_shifted <= shift_left(resize(unsigned(data_a), 64), shift_a);
+-- shifting for linear coefficient b
+s_b_shifted <= shift_left(resize(unsigned(data_b), 64), shift_b);
 
 -- registers a, b, Q, X, start und adder for lin und quad term
 reg_file: process (clk, nrst, a_en, b_en, s_en, load_start)
@@ -141,16 +129,16 @@ begin
     s_X_reg     <=  (others => '0');
     s_start_reg <=  (others => '0');
   elsif rising_edge(clk) then
-    if a_en = '1' then
+    if a_en = '1' or s_stp_reached = '1' then
       s_a_reg <= (s_a_shifted);
     end if;
     
-    if b_en = '1' then
+    if b_en = '1' or s_stp_reached = '1' then
       s_b_reg <= (s_b_shifted);
     end if;
     
     if s_en = '1' then
-      s_start_reg <= signed(x"000000" & data_a); -- TEST --
+      s_start_reg <= unsigned(x"000000000000" & data_a); -- TEST --
     end if;
   
   -- init quad term with start value
@@ -160,17 +148,17 @@ begin
     
     -- increment quad term
     if s_inc_quad = '1' then
-      s_Q_reg <= signed(s_Q_reg) + signed(s_b_reg);
+      s_Q_reg <= unsigned(s_Q_reg) + unsigned(s_a_reg);
     end if; 
     
     -- increment linear term
     if s_inc_lin = '1' then
-      s_X_reg <= signed(s_X_reg) + signed(s_a_reg);
+      s_X_reg <= unsigned(s_X_reg) + unsigned(s_b_reg);
     end if;
     
     -- sum of linear and quadratic term
     if s_add_lin_quad = '1' then
-      s_X_reg <= signed(s_X_reg) + signed(s_Q_reg);
+      s_X_reg <= unsigned(s_X_reg) + unsigned(s_Q_reg);
     end if; 
   end if;
 
@@ -220,7 +208,7 @@ end process;
   control_sm: process (clk, nrst)
   begin
     if nrst = '0' then
-      control_state <= load;
+      control_state <= idle;
       
     elsif rising_edge(clk) then
       s_load_start  <= '0';
@@ -229,10 +217,13 @@ end process;
       s_add_lin_quad  <= '0';
     
       case control_state is
-        when load =>
-          s_load_start <= '1';
+        when idle =>
           
-          control_state <= quad_inc;
+        when load =>    
+          if s_freq_en = '1' then
+            s_load_start <= '1';
+            control_state <= quad_inc;
+          end if;
     
         when quad_inc =>
           s_inc_quad <= '1';
@@ -240,16 +231,14 @@ end process;
           control_state <= lin_inc;
           
         when lin_inc =>
-          s_inc_lin <= '1';
-          
+          s_inc_lin <= '1'; 
           control_state <= addXQ;
         
-        when addXQ =>
-          s_add_lin_quad <= '1';
-          
+        when addXQ => 
           if load_start = '1' then
             control_state <= load;
-          else
+          elsif s_freq_en = '1' then
+            s_add_lin_quad <= '1';
             control_state <= quad_inc;
           end if;
           
@@ -261,8 +250,9 @@ end process;
 
 
 -- output register for the 24 most significant bits
-sw_out <= std_logic_vector(s_X_reg(39 downto 16));
+sw_out    <= std_logic_vector(s_X_reg(63 downto 40));
+sw_strobe <= s_add_lin_quad;
 
-set_out <= s_set;
+dreq    <= s_stp_reached;
 
 end FG_quad_DP_arch;
