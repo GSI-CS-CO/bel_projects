@@ -2,6 +2,7 @@ LIBRARY ieee;
 use ieee.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use work.aux_functions_pkg.all;
+use work.dac714_pkg.all;
 
 ----------------------------------------------------------------------------------------------------------------------
 --  Vers: 1 Revi: 0: erstellt am 25.04.2013, Autor: W.Panschow                                                      --
@@ -45,12 +46,12 @@ use work.aux_functions_pkg.all;
 --                                  4   | FG_mode;  1 = Funktiongenerator-Mode                                      --
 --                                      |           0 = Software-Mode                                               --
 --                                      |           Ein Wechsel dieses Bits hat immer einen Reset des gesamten      --
---                                      |           dac714-Makros zur Folge. D.h. beim Umschalten von FG-Mode auf --
+--                                      |           dac714-Makros zur Folge. D.h. beim Umschalten von FG-Mode auf   --
 --                                      |           SW-Mode kann nicht der exterene Trigger und die entsprechende   --
 --                                      |           Trigger-Flanke vorgegen werden, weil waehrend des Resets        --
 --                                      |           diese Bits auf null gesetzt werden. Nachdem der Reset beendet   --
---                                      |           ist (CLR_DAC_active = 0), können die Bits entsprechend gesetzt --
---                                      |           werden.                                                         -- 
+--                                      |           ist (CLR_DAC_active = 0), können die Bits entsprechend gesetzt  --
+--                                      |           werden.                                                         --
 --                                ------+-----------------------------------------------------------------------    --
 --                                  3   | dac_neg_edge_conv;  1 = neg. Flanke ist Trigger, wenn ext. Trig. selekt.  --
 --                                      |                         Laesst sich nur im SW-Mode setzen.                --
@@ -102,7 +103,7 @@ use work.aux_functions_pkg.all;
 --                                                                                                                  --
 --  Aenderung 3)                                                                                                    --
 --    Beim Wechsel der Betriebsart Software getrieben nach Funktionsgenerator getrieben und umgekehrt, wird ein     --
---    genereller Reset durchgefuehrt. Beim Umschalten vom FG-Mode zum SW-Mode können die Bits 'dac_conv_extern' und  --
+--    genereller Reset durchgefuehrt. Beim Umschalten vom FG-Mode zum SW-Mode können die Bits 'dac_conv_extern' und --
 --    'dac_neg_edge_conv' nicht gleichzeitig gesetzt werden, da der Reset im asynchonen Pfad des Kontrollregisters  --
 --    diese Bits auf null setzt. Wenn die Bits nach dem Umschalten gestzt werden sollen, muss das Kontrollregister  --
 --    noch einmal geschrieben werden.                                                                               --
@@ -128,6 +129,20 @@ use work.aux_functions_pkg.all;
 --                                                                                                                  --
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers: 2 Revi: 1: erstellt am 01.10.2013, Autor: W.Panschow                                                      --
+--                                                                                                                  --
+--  Aenderung 1)                                                                                                    --
+--    Der Generic "Default_is_FG_mode" ist entfernt worden. Nach einem Reset oder Powerup ist immer der Software    --
+--    gesteuerte Mode selektiert. Soll der Funktionsgenerator die Daten liefern, ist auf FG-Mode umzuschalten.      --
+--    Der Funktionsgenerator muss sowieso entsprechend mit Daten versorgt werden, dazu gehoert eben auch die        --
+--    Umschaltung den FG-Mode.                                                                                      --
+--                                                                                                                  --
+--  Aenderung 2)                                                                                                    --
+--    Bisher wurde bei einer Umschaltung der Betriebsart zwischen Software getrieben oder Funktionsgenerator        --
+--    getrieben. Ein Automatisch generierter Reser erzeugt. Dieser Automatismus ist entfernt worden.                --
+--                                                                                                                  --
+----------------------------------------------------------------------------------------------------------------------
 
 
 
@@ -135,8 +150,7 @@ entity dac714 is
   generic (
     Base_addr:        unsigned(15 downto 0) := X"0300";
     CLK_in_Hz:        integer := 100_000_000;
-    SPI_CLK_in_Hz:    integer := 10_000_000;
-    Default_is_FG_mode: integer range 0 to 1 := 0
+    SPI_CLK_in_Hz:    integer := 10_000_000
     );
   port
     (
@@ -167,12 +181,6 @@ end dac714;
 
 architecture arch_dac714 OF dac714 IS
 
-
-  constant  rw_dac_Cntrl_addr_offset:             unsigned(15 downto 0) := X"0000";
-  constant  wr_dac_addr_offset:                   unsigned(15 downto 0) := X"0001";
-  constant  clr_rd_shift_err_cnt_addr_offset:     unsigned(15 downto 0) := X"0002";
-  constant  clr_rd_old_data_err_cnt_addr_offset:  unsigned(15 downto 0) := X"0003";
-  constant  clr_rd_trm_during_trm_active_err_cnt_addr_offset: unsigned(15 downto 0) := X"0004";
 
   constant  rw_dac_cntrl_addr:            unsigned(15 downto 0) := Base_addr + rw_dac_cntrl_addr_offset;
   constant  wr_dac_addr:                  unsigned(15 downto 0) := Base_addr + wr_dac_addr_offset;
@@ -226,8 +234,7 @@ architecture arch_dac714 OF dac714 IS
   signal    dac_conv_extern:    std_logic;    -- '1' => enable external convert dac strobe, its bit(2) of DAC control register
   signal    dac_neg_edge_conv:  std_logic;    -- '1' => negative edge convert dac strobe,   its bit(3) of DAC control register
   signal    FG_mode:            std_logic;    -- '1' => enable fuction generator mode,      its bit(4) of DAC control register
-  signal    FG_mode_dly:        std_logic;    -- used to detect change from software driven mode to funktionsgenerator mode
-  
+
   signal    clear_spi_clk:    std_logic;
 
   signal    nReset_ff:        std_logic;
@@ -376,9 +383,7 @@ P_reset: process (clk)
       nReset_ff <= '1';                             -- set nReset_ff default value to inactive
 
       if nReset_sync(1) = '0'
-        or (nCLR_DAC = '0' and nCLR_DAC_dly = '1')  -- occurs when nCLR_DAC is set to zero during cntrl_reg_wr
-        or (FG_mode = '1' and FG_mode_dly = '0')    -- occurs when FG_mode changed from software driven to function generator driven 
-        or (FG_mode = '0' and FG_mode_dly = '1')    -- occurs when FG_mode changed from function generator driven to software driven
+        or (nCLR_DAC = '0' and nCLR_DAC_dly = '1')  -- occurs when nCLR_DAC is set to zero, during cntrl_reg_wr
       then
         nReset_ff <= '0';
       end if;
@@ -396,6 +401,7 @@ P_SPI_SM: process (clk, nReset_ff)
       spi_clk <= '1';
       nLD_DAC <= '1';
       SPI_TRM <= '0';
+      clear_spi_clk <= '1';
       Shift_Reg <= (others => '0');
       New_trm_during_trm_active <= '0';
   
@@ -571,15 +577,10 @@ P_DAC_Cntrl:  process (clk, nReset_ff)
       dac_conv_extern   <= '0';
       dac_neg_edge_conv <= '0';
       clr_cnt           := "00";
-      if Default_is_FG_mode = 1 then
-        FG_mode <= '1';
-      else
-        FG_mode <= '0';
-      end if;
+      FG_mode <= '0';
 
     elsif rising_edge(clk) then
     
-      FG_mode_dly <= FG_mode;               -- FG_mode_dly is used to detect a change of the FG_mode
       nCLR_DAC_dly <= nCLR_DAC;             -- nCLR_DAC_dly is used to detect the reason off activating nCLR_DAC.
                                             -- In the asynchronous path nCLR_DAC and nCLR_DAC_dly are set to '0'
                                             -- driven by wr_DAC_Cntrl you can detec an edge with both signals.
