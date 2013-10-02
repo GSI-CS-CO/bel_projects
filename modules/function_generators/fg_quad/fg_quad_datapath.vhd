@@ -30,19 +30,17 @@ end entity;
 architecture fg_quad_dp_arch of fg_quad_datapath is
 
 -- shifter signals
-signal s_a_shifted:   unsigned(63 downto 0);
-signal s_b_shifted:   unsigned(63 downto 0);
+signal s_a_shifted:   signed(63 downto 0);
+signal s_b_shifted:   signed(63 downto 0);
 
 -- registerblock
-signal s_a_reg:       unsigned(63 downto 0);
-signal s_b_reg:       unsigned(63 downto 0);
-signal s_Q_reg:       unsigned(63 downto 0);
-signal s_X_reg:       unsigned(63 downto 0);
-signal s_start_reg:   unsigned(63 downto 0);
+signal s_a_reg:       signed(63 downto 0);
+signal s_b_reg:       signed(63 downto 0);
+signal s_Q_reg:       signed(63 downto 0);
+signal s_X_reg:       signed(63 downto 0);
 
 
 -- signals statemachine
-signal s_load_start:    std_logic;
 signal s_inc_quad:      std_logic;
 signal s_inc_lin:       std_logic;
 signal s_add_lin_quad:  std_logic;
@@ -115,9 +113,9 @@ s_cnt_out <= std_logic_vector(s_cnt);
 
 
 -- shifting for quadratic coefficient a
-s_a_shifted <= shift_left(resize(unsigned(data_a), 64), shift_a);
+s_a_shifted <= shift_left(resize(signed(data_a), 64), shift_a);
 -- shifting for linear coefficient b
-s_b_shifted <= shift_left(resize(unsigned(data_b), 64), shift_b);
+s_b_shifted <= shift_left(resize(signed(data_b), 64), shift_b);
 
 -- registers a, b, Q, X, start und adder for lin und quad term
 reg_file: process (clk, nrst, a_en, b_en, s_en, load_start)
@@ -127,7 +125,6 @@ begin
     s_b_reg     <=  (others => '0');
     s_Q_reg     <=  (others => '0');
     s_X_reg     <=  (others => '0');
-    s_start_reg <=  (others => '0');
   elsif rising_edge(clk) then
     if a_en = '1' or s_stp_reached = '1' then
       s_a_reg <= (s_a_shifted);
@@ -137,28 +134,24 @@ begin
       s_b_reg <= (s_b_shifted);
     end if;
     
+    -- init quad term with start value
     if s_en = '1' then
-      s_start_reg <= unsigned(x"000000000000" & data_a); -- TEST --
-    end if;
-  
-  -- init quad term with start value
-    if s_load_start = '1' then 
-      s_Q_reg <= s_start_reg; 
+      s_Q_reg <= signed(resize(signed(data_a), 64));
     end if;
     
     -- increment quad term
     if s_inc_quad = '1' then
-      s_Q_reg <= unsigned(s_Q_reg) + unsigned(s_a_reg);
+      s_Q_reg <= signed(s_Q_reg) + signed(s_a_reg);
     end if; 
     
     -- increment linear term
     if s_inc_lin = '1' then
-      s_X_reg <= unsigned(s_X_reg) + unsigned(s_b_reg);
+      s_X_reg <= signed(s_X_reg) + signed(s_b_reg);
     end if;
     
     -- sum of linear and quadratic term
     if s_add_lin_quad = '1' then
-      s_X_reg <= unsigned(s_X_reg) + unsigned(s_Q_reg);
+      s_X_reg <= signed(s_X_reg) + signed(s_Q_reg);
     end if; 
   end if;
 
@@ -211,36 +204,30 @@ end process;
       control_state <= idle;
       
     elsif rising_edge(clk) then
-      s_load_start  <= '0';
-      s_inc_quad    <= '0';
-      s_inc_lin     <= '0';
+      s_inc_quad      <= '0';
+      s_inc_lin       <= '0';
       s_add_lin_quad  <= '0';
     
       case control_state is
         when idle =>
-          
-        when load =>    
-          if s_freq_en = '1' then
-            s_load_start <= '1';
+          if load_start = '1' then
             control_state <= quad_inc;
           end if;
     
         when quad_inc =>
-          s_inc_quad <= '1';
-          
-          control_state <= lin_inc;
+          if s_freq_en = '1' then
+            s_inc_quad <= '1';
+            control_state <= lin_inc;
+          end if;
           
         when lin_inc =>
           s_inc_lin <= '1'; 
           control_state <= addXQ;
         
         when addXQ => 
-          if load_start = '1' then
-            control_state <= load;
-          elsif s_freq_en = '1' then
             s_add_lin_quad <= '1';
             control_state <= quad_inc;
-          end if;
+         
           
         when others =>
           

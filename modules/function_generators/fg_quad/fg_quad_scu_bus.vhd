@@ -38,11 +38,11 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   constant cntrl_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0000";
   constant coeff_a_reg_adr: unsigned(15 downto 0) := Base_addr + x"0001";
   constant coeff_b_reg_adr: unsigned(15 downto 0) := Base_addr + x"0002";
-  constant start_h_reg_adr: unsigned(15 downto 0) := Base_addr + x"0003";
-  constant start_l_reg_adr: unsigned(15 downto 0) := Base_addr + x"0004";
-  constant shift_a_reg_adr: unsigned(15 downto 0) := Base_addr + x"0005";
-  constant shift_b_reg_adr: unsigned(15 downto 0) := Base_addr + x"0006";
-  
+  constant broad_start_adr: unsigned(15 downto 0) := Base_addr + x"0003";
+  constant shift_a_reg_adr: unsigned(15 downto 0) := Base_addr + x"0004";
+  constant shift_b_reg_adr: unsigned(15 downto 0) := Base_addr + x"0005";
+  constant start_h_reg_adr: unsigned(15 downto 0) := Base_addr + x"0006";
+  constant start_l_reg_adr: unsigned(15 downto 0) := Base_addr + x"0007";
 
   
   signal  fg_cntrl_reg:     std_logic_vector(15 downto 0);
@@ -66,6 +66,7 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  rd_shift_a:       std_logic;
   signal  wr_shift_b:       std_logic;
   signal  rd_shift_b:       std_logic;
+  signal  wr_brc_start:     std_logic;
   
   signal  set_out:          std_logic;
   signal  s_en:             std_logic;
@@ -82,7 +83,7 @@ begin
       nrst                => nReset,
       a_en                => wr_coeff_a,
       b_en                => wr_coeff_b,
-      load_start          => fg_cntrl_reg(1),
+      load_start          => wr_brc_start,
       s_en                => s_en,
       status_reg_changed  => wr_fg_cntrl,
       step_sel            => fg_cntrl_reg(12 downto 10),
@@ -147,6 +148,12 @@ adr_decoder: process (clk, nReset)
             if Ext_Rd_active = '1' then
               rd_fg_cntrl <= '1';
               Rd_Active   <= '1';
+              dtack       <= '1';
+            end if;
+            
+          when broad_start_adr =>
+            if Ext_Wr_active = '1' then
+              wr_brc_start <= '1';
               dtack       <= '1';
             end if;
           
