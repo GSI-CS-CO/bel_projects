@@ -16,7 +16,7 @@ component Mil_dec_edge_timed is
 --| Version 2;  Autor: W.Panschow; Datum: 22.11.2012                                                                                    |
 --| Änderungen:                                                                                                                         |
 --|   1)  Das Enable das alle 500ns fuer einen Takt aktiv sein soll, wird jetzt aus der Mil_Clk erzeugt. Damit wird verhindert, dass    |
---|       das Enablewelches vormals außerhalb dieses Makros erzeugt wiurde eventuell von einer anderen Clock-Domäne abgeleitet wurde.   |
+--|       das Enablewelches vormals außerhalb dieses Makros erzeugt wiurde eventuell von einer anderen Clock-Domaene abgeleitet wurde.  |
 --|   2)  Die Umschaltung zwischen High- und Standard-Speed wurde entfernt. Es gibt nur noch Standard-Speed (Bitrate 1 us)              |
 --|                                                                                                                                     |
 --| Version 3;  Autor: W.Panschow; Datum: 13.09.2013                                                                                    |
@@ -44,7 +44,7 @@ component Mil_dec_edge_timed is
     Rcv_Rdy:            out std_logic;    -- '1' es wurde ein Kommand oder Datum empfangen.
                                           -- Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
     Mil_Rcv_Data:       out std_logic_vector(15 downto 0);  -- Empfangenes Datum oder Komando
-    Mil_Decoder_Diag:   out std_logic_vector(15 downto 0)   -- Diagnoseausgänge fuer Logikanalysator
+    Mil_Decoder_Diag:   out std_logic_vector(15 downto 0)   -- Diagnoseausgaenge fuer Logikanalysator
     );
 end component;
 
@@ -56,7 +56,7 @@ component mil_enc_vhdl is
 --| Version 4;  Autor: W.Panschow; Datum: 13.11.2012                                                                                |
 --| Änderungen:                                                                                                                     |
 --|   1)  Das Enable das alle 500ns fuer einen Takt aktiv sein soll, wird jetzt aus der Clk erzeugt. Damit wird verhindert, dass das|
---|       Enable welches vormals außerhalb dieses Makros erzeugt wiurde eventuell von einer anderen Clock-Domäne abgeleitet wurde.  |
+--|       Enable welches vormals außerhalb dieses Makros erzeugt wiurde eventuell von einer anderen Clock-Domaene abgeleitet wurde. |
 --|   2)  Die Umschaltung zwischen High- und Standard-Speed wurde entfernt. Es gibt nur noch Standard-Speed (Bitrate 1 us)          |
 --|                                                                                                                                 |
 --| Version 5;  Autor: W.Panschow; Datum: 13.08.2013                                                                                |
@@ -67,7 +67,7 @@ component mil_enc_vhdl is
 generic (Clk_in_Hz : INTEGER);
   port(
       Mil_TRM_D:    in    std_logic_vector(15 DOWNTO 0);  -- solange 'Mil_TRM' aktiv ist muß hier das zu sendende Datum anliegen.     -- 
-      Cmd_Trm:      in    std_logic;          -- Cmd_Trm = Eins während 'Wr_Mil' aktiv => ein Command-Sync. wird erzeugt, sonst       --
+      Cmd_Trm:      in    std_logic;          -- Cmd_Trm = Eins waehrend 'Wr_Mil' aktiv => ein Command-Sync. wird erzeugt, sonst       --
                                               -- wird ein Data-Sync. generiert.                                                       --
       Wr_Mil:       in    std_logic;          -- Startet ein Mil-Send, muß mindestens 1 Takt aktiv sein.                              --
       Clk:          in    std_logic;          -- Die Frequenz muß mindestens 4 MHz betragen.                                          --
@@ -78,7 +78,7 @@ generic (Clk_in_Hz : INTEGER);
       nSel_Mil_Rcv: out   std_logic;          -- '0' selektiert den Empfangspfad.                                                     --
       Mil_Rdy_4_Wr: out   std_logic;          -- Das Sende-Register ist frei.                                                         --
       SD:           out   std_logic           -- V02: Bildet das Signal "SD" des 6408-ICs nach, wird fuer den Blockmode der           --
-                                              -- Interfacekarte benötigt.                                                             --
+                                              -- Interfacekarte benoetigt.                                                             --
       );
 end component;
 
@@ -129,7 +129,7 @@ component Mil_bipol_dec is
 --|         Devicebuslaenge abhaengig. Einer der beiden Dekoder muss immer darauf warten, dass das Paritiy-Bit die letzten Flanke mit   |
 --|         einem Spannungspegel beendet, der nicht dem Ruhepegel entspricht. Deshalb kommt am Ende der Parity-Bit-Zeit noch eine       |
 --|         Flanke die durch das Ausschwingen in die Ruhespannung erzeugt wird. Dies wird aber nicht mehr aktiv betrieben, und dauert   |
---|         bei einem laengeren Device-Bus durch die groessere kapatizive Last entsprechend läenger. Bis Version 5 war die              |
+--|         bei einem laengeren Device-Bus durch die groessere kapatizive Last entsprechend laeenger. Bis Version 5 war die             |
 --|         Zeitdifferenz "max_jitter_ns" auf 300 ns festgelegt. In Version 6 ist "max_jitter_ns" auf 900 ns erhoeht worden.            |
 --|         Das hat zur Folge, dass die Luecke zwischen den Telegrammen groesser als 900 ns sein muss.                                  |
 --+-------------------------------------------------------------------------------------------------------------------------------------+
@@ -196,15 +196,15 @@ port  (
     Test:           in      std_logic := '0';       -- Nur zur Simulation verwenden. Test-Multiplexer, wenn Test = 1 wird der
                                                     -- Ausgang des Mil_Encoders direkt auf den Eingang des Mil_Decoders geschaltet.
     Clk:            in      std_logic;
-    CMD_TRM:        in      std_logic;              -- Cmd_Trm = Eins während 'Wr_Mil' aktiv => ein Command-Sync. wird erzeugt,
+    CMD_TRM:        in      std_logic;              -- Cmd_Trm = Eins waehrend 'Wr_Mil' aktiv => ein Command-Sync. wird erzeugt,
                                                     -- sonst wird ein Data-Sync. generiert.
     Wr_Mil:         in      std_logic;              -- Startet ein Mil-Send, muß mindestens 1 Takt aktiv sein.
     Mil_TRM_D:      in      std_logic_vector(15 downto 0);  -- solange Mil_Rdy_4_WR = '0' ist, muß hier das zu sendende Datum anliegen. 
     Rd_Mil:         in      std_logic;              -- setzt Rcv_Rdy zurueck. Muss synchron zur Clock 'Clk' und mindesten eine Periode
                                                     -- lang aktiv sein!
-    Clr_No_VW_Cnt:  in      std_logic;              -- Löscht die no valid word Fehler-Zähler des positiven und negativen Dekoders.
+    Clr_No_VW_Cnt:  in      std_logic;              -- Loescht die no valid word Fehler-Zaehler des positiven und negativen Dekoders.
                                                     -- Muss synchron zur Clock 'Clk' und mindesten eine Periode lang aktiv sein!
-    Clr_Not_Equal_Cnt:  in    std_logic;            -- Löscht die Fehlerzähler fuer Data_not_equal und den Fehlerzähler fuer unterschiedliche
+    Clr_Not_Equal_Cnt:  in    std_logic;            -- Loescht die Fehlerzaehler fuer Data_not_equal und den Fehlerzaehler fuer unterschiedliche
                                                     -- Komando-Daten-Kennung (CMD_not_equal). Muss synchron zur Clock 'Clk' und mindestens
                                                     -- eine Periode lang aktiv sein!
     Mil_in_Neg:     in      std_logic;              -- negativer Eingangsdatenstrom MIL-1553B
@@ -218,11 +218,11 @@ port  (
     RCV_ERROR:      out     std_logic;
     CMD_Rcv:        out     std_logic;              -- '1' es wurde ein Kommando empfangen.
     Mil_RCV_D:      out     std_logic_vector(15 downto 0);  -- Empfangenes Datum oder Komando
-    No_VW_Cnt:      out     std_logic_vector(15 downto 0);  -- Bit[15..8] Fehlerzähler fuer No Valid Word des positiven Decoders "No_VW_p",
-                                                            -- Bit[7..0] Fehlerzähler fuer No Valid Word des negativen Decoders "No_VM_n".
-    Not_Equal_Cnt:  out     std_logic_vector(15 downto 0);  -- Bit[15..8] Fehlerzähler fuer Data_not_equal,
-                                                            -- Bit[7..0] Fehlerzähler fuer unterschiedliche Komando-Daten-Kennung (CMD_not_equal).
-    error_limit_reached:  out   std_logic;                  -- wird aktiv 'eins' wenn die Fehlerzähler die Generics "threshold_not_equal_err"
+    No_VW_Cnt:      out     std_logic_vector(15 downto 0);  -- Bit[15..8] Fehlerzaehler fuer No Valid Word des positiven Decoders "No_VW_p",
+                                                            -- Bit[7..0] Fehlerzaehler fuer No Valid Word des negativen Decoders "No_VM_n".
+    Not_Equal_Cnt:  out     std_logic_vector(15 downto 0);  -- Bit[15..8] Fehlerzaehler fuer Data_not_equal,
+                                                            -- Bit[7..0] Fehlerzaehler fuer unterschiedliche Komando-Daten-Kennung (CMD_not_equal).
+    error_limit_reached:  out   std_logic;                  -- wird aktiv 'eins' wenn die Fehlerzaehler die Generics "threshold_not_equal_err"
                                                             -- oder "threshold_no_VW_err" ueberschritten haben.
     Mil_Decoder_Diag_p: out   std_logic_vector(15 downto 0);-- Diagnoseausgaenge des Positiven Signalpfades, 
                                                             -- nur auswerten wenn, der Softcore-Manchester-Decoder aktiviert ist. 

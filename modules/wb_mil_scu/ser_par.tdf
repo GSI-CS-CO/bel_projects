@@ -1,8 +1,7 @@
-include	"div_n.inc";
 
 PARAMETERS (clk_in_Hz = 20000000);
 
-CONSTANT	wait_cnt = Clk_in_Hz div 1000000 + 1;
+CONSTANT  wait_cnt = Clk_in_Hz div 1000000 + 1;
 
 CONSTANT c_vw_tst_cnt = 17-1;
 CONSTANT c_end_vw_tst = c_vw_tst_cnt + 1;
@@ -19,48 +18,52 @@ FUNCTION lpm_counter (data[LPM_WIDTH-1..0], clock, clk_en, cnt_en, updown, cin, 
    WITH (LPM_WIDTH, LPM_DIRECTION, LPM_MODULUS, LPM_AVALUE, LPM_SVALUE, CARRY_CNT_EN, LABWIDE_SCLR)
    RETURNS (q[LPM_WIDTH-1..0], cout, eq[15..0]);
 
+FUNCTION div_n (res, clk, ena)
+  WITH (n, diag_on)
+  RETURNS (div_o);
+
 SUBDESIGN ser_par
 (
-	DI[15..0]:		INPUT = GND;	-- wird nicht angeschlossen, wenn nur der RCV-Teil gebraucht wird. 
-	Mil_WR:			INPUT = GND;	-- wird nicht angeschlossen, wenn nur der RCV-Teil gebraucht wird.
-	Mil_Send_CMD:	INPUT = GND;	-- wird nicht angeschlossen, wenn nur der RCV-Teil gebraucht wird.
-	ME_SD:			INPUT = GND;	-- wird nicht angeschlossen, wenn nur der RCV-Teil gebraucht wird.
-	ME_ESC:			INPUT = GND;	-- wird nicht angeschlossen, wenn nur der RCV-Teil gebraucht wird.
-	SEL_6408:		INPUT = GND;
+  DI[15..0]:    INPUT = GND;  -- wird nicht angeschlossen, wenn nur der RCV-Teil gebraucht wird. 
+  Mil_WR:     INPUT = GND;  -- wird nicht angeschlossen, wenn nur der RCV-Teil gebraucht wird.
+  Mil_Send_CMD: INPUT = GND;  -- wird nicht angeschlossen, wenn nur der RCV-Teil gebraucht wird.
+  ME_SD:      INPUT = GND;  -- wird nicht angeschlossen, wenn nur der RCV-Teil gebraucht wird.
+  ME_ESC:     INPUT = GND;  -- wird nicht angeschlossen, wenn nur der RCV-Teil gebraucht wird.
+  SEL_6408:   INPUT = GND;
 
-	RD_MIL:			INPUT;
-	ME_CDS:			INPUT;		-- Comand Data Sync (HD6408) => 1: Rcv CMD, 0 := RCV Data	--
-	ME_VW:			INPUT;		-- Valid Word (HD6408)										--
-	ME_TD:			INPUT;		-- Take Data (HD6408)										--
-	ME_DSC:			INPUT;		-- Decoder Shift Clock (HD6408)								--
-	ME_SDO:			INPUT;		-- Serial Data Out (HD6408)									--
-	nME_BOO:		INPUT = GND;
-	nME_BZO:		INPUT = GND;
-	Reset:			INPUT;
-	Clk:		INPUT;
+  RD_MIL:     INPUT;
+  ME_CDS:     INPUT;    -- Comand Data Sync (HD6408) => 1: Rcv CMD, 0 := RCV Data --
+  ME_VW:      INPUT;    -- Valid Word (HD6408)                    --
+  ME_TD:      INPUT;    -- Take Data (HD6408)                   --
+  ME_DSC:     INPUT;    -- Decoder Shift Clock (HD6408)               --
+  ME_SDO:     INPUT;    -- Serial Data Out (HD6408)                 --
+  nME_BOO:    INPUT = GND;
+  nME_BZO:    INPUT = GND;
+  Reset:      INPUT;
+  Clk:    INPUT;
 
-	ME_SS:			OUTPUT;		-- Sync Select (HD6408) => 1 := Send CMD, 0 := Send Data	--
-	ME_SDI:			OUTPUT;		-- Serial Data In (HD6408)									--
-	ME_EE:			OUTPUT;		-- Encode Enable (HD6408)									--
-	nRCV_Ena:		OUTPUT;
-	nTRM_Ena:		OUTPUT;
-	Trm_Rdy:		OUTPUT;
+  ME_SS:      OUTPUT;   -- Sync Select (HD6408) => 1 := Send CMD, 0 := Send Data  --
+  ME_SDI:     OUTPUT;   -- Serial Data In (HD6408)                  --
+  ME_EE:      OUTPUT;   -- Encode Enable (HD6408)                 --
+  nRCV_Ena:   OUTPUT;
+  nTRM_Ena:   OUTPUT;
+  Trm_Rdy:    OUTPUT;
 
-	CMD_RCV:		OUTPUT;
-	Valid_W:		OUTPUT;
-	RCV_Err:		OUTPUT;
-	D_out[15..0]:	OUTPUT;
-	Reset_6408:		OUTPUT;
+  CMD_RCV:    OUTPUT;
+  Valid_W:    OUTPUT;
+  RCV_Err:    OUTPUT;
+  D_out[15..0]: OUTPUT;
+  Reset_6408:   OUTPUT;
 )
 
 VARIABLE
 
 VW_SM: MACHINE OF BITS (VW_SM_[3..1])
-		WITH STATES (
-					Idle_VW,
-					Wait_VW,		
-					Err_VW
-					);
+    WITH STATES (
+          Idle_VW,
+          Wait_VW,    
+          Err_VW
+          );
 
 vw_cnt: lpm_counter WITH (LPM_WIDTH = 5, LPM_DIRECTION = "UP");
 
@@ -70,146 +73,146 @@ Ser_in_Par_out: lpm_shiftreg WITH (LPM_WIDTH = 16, LPM_DIRECTION = "LEFT");
 
 wait: div_n WITH (n = wait_cnt, diag_on = 0);
 
-Send_Reg[15..0]:		DFFE;
-Rcv_Reg[15..0]:			DFFE;
-Send_init:				SRFF;
-ME_EE_ff:				DFF;
-ME_SS_FF:				SRFF;		-- Sync-Select => 1 := Send CMD, 0 := Send Data	--
-Trm_Rdy_ff:				DFF;
-TRM_Ena_ff:				DFF;
+Send_Reg[15..0]:    DFFE;
+Rcv_Reg[15..0]:     DFFE;
+Send_init:        SRFF;
+ME_EE_ff:       DFF;
+ME_SS_FF:       SRFF;   -- Sync-Select => 1 := Send CMD, 0 := Send Data --
+Trm_Rdy_ff:       DFF;
+TRM_Ena_ff:       DFF;
 
-RCV_Ena_ff1:			DFF;
-RCV_Ena_ff:				DFF;
+RCV_Ena_ff1:      DFF;
+RCV_Ena_ff:       DFF;
 
-Valid_W_ff:				SRFF;
-RCV_Err_ff:				DFF;
-ME_CDS_ff:				DFFE;
+Valid_W_ff:       SRFF;
+RCV_Err_ff:       DFF;
+ME_CDS_ff:        DFFE;
 
 
 BEGIN
 ---------------------------------------- TRANSMIT -----------------------------------------
-Send_Reg[].clk	= Clk;
-Send_Reg[].d	= DI[];
-Send_Reg[].ena	= Mil_WR;
-Send_Reg[].clrn	= SEL_6408;
+Send_Reg[].clk  = Clk;
+Send_Reg[].d  = DI[];
+Send_Reg[].ena  = Mil_WR;
+Send_Reg[].clrn = SEL_6408;
 
-Send_init.clk	= Clk;
-Send_init.s		= Mil_WR;
-Send_init.r		= ME_SD;
-Send_init.clrn	= SEL_6408;
+Send_init.clk = Clk;
+Send_init.s   = Mil_WR;
+Send_init.r   = ME_SD;
+Send_init.clrn  = SEL_6408;
 
-Par_in_Ser_out.data[]	= Send_Reg[];
-Par_in_Ser_out.clock	= not ME_ESC;
-Par_in_Ser_out.enable	= ME_SD OR Send_init;
-Par_in_Ser_out.load		= Send_init;
-Par_in_Ser_out.aclr		= not SEL_6408;
+Par_in_Ser_out.data[] = Send_Reg[];
+Par_in_Ser_out.clock  = not ME_ESC;
+Par_in_Ser_out.enable = ME_SD OR Send_init;
+Par_in_Ser_out.load   = Send_init;
+Par_in_Ser_out.aclr   = not SEL_6408;
 
 ME_SDI = Par_in_Ser_out.shiftout;
 
-ME_EE_ff.clk	= not ME_ESC;
-ME_EE_ff.d		= Send_Init;
-ME_EE_ff.clrn	= SEL_6408;
+ME_EE_ff.clk  = not ME_ESC;
+ME_EE_ff.d    = Send_Init;
+ME_EE_ff.clrn = SEL_6408;
 
 ME_EE = ME_EE_ff.q;
 
-ME_SS_FF.clk	= Clk;
-ME_SS_FF.s		= Mil_Wr and  Mil_Send_CMD;
-ME_SS_FF.r		= Mil_WR and !Mil_Send_CMD;
-ME_SS_FF.clrn	= SEL_6408;
+ME_SS_FF.clk  = Clk;
+ME_SS_FF.s    = Mil_Wr and  Mil_Send_CMD;
+ME_SS_FF.r    = Mil_WR and !Mil_Send_CMD;
+ME_SS_FF.clrn = SEL_6408;
 
 ME_SS = ME_SS_FF.q;
 
-Trm_Rdy_ff.clrn	= not Mil_Wr;
-Trm_Rdy_ff.d	= VCC;
-Trm_Rdy_ff.clk	= not ME_SD;
-Trm_Rdy_ff.prn	= not (Reset_6408 or not SEL_6408);
+Trm_Rdy_ff.clrn = not Mil_Wr;
+Trm_Rdy_ff.d  = VCC;
+Trm_Rdy_ff.clk  = not ME_SD;
+Trm_Rdy_ff.prn  = not (Reset_6408 or not SEL_6408);
 
 Trm_Rdy = Trm_Rdy_ff;
 
-TRM_Ena_ff.clk	= Clk;
-TRM_Ena_ff.d	= nME_BOO xor nME_BZO;
-TRM_Ena_ff.clrn	= !Reset and SEL_6408;
+TRM_Ena_ff.clk  = Clk;
+TRM_Ena_ff.d  = nME_BOO xor nME_BZO;
+TRM_Ena_ff.clrn = !Reset and SEL_6408;
 nTRM_Ena = not TRM_Ena_ff;
 
 ---------------------------------------- RECEIVE ------------------------------------------
-Ser_in_Par_out.shiftin	= ME_SDO;
-Ser_in_Par_out.clock	= ME_DSC;
-Ser_in_Par_out.enable	= ME_TD;
-Ser_in_Par_out.aclr		= not SEL_6408;
+Ser_in_Par_out.shiftin  = ME_SDO;
+Ser_in_Par_out.clock  = ME_DSC;
+Ser_in_Par_out.enable = ME_TD;
+Ser_in_Par_out.aclr   = not SEL_6408;
 
-Rcv_Reg[].clk	= Clk;
-Rcv_Reg[].d		= Ser_in_Par_out.q[];
-Rcv_Reg[].ena	= not ME_TD;
+Rcv_Reg[].clk = Clk;
+Rcv_Reg[].d   = Ser_in_Par_out.q[];
+Rcv_Reg[].ena = not ME_TD;
 
 D_out[] = Rcv_Reg[].q;
 
-ME_CDS_ff.d		= ME_CDS;
-ME_CDS_ff.clk	= not ME_DSC;
-ME_CDS_ff.ena	= ME_TD;
-ME_CDS_ff.clrn	= not (RD_Mil OR Reset or not SEL_6408);
+ME_CDS_ff.d   = ME_CDS;
+ME_CDS_ff.clk = not ME_DSC;
+ME_CDS_ff.ena = ME_TD;
+ME_CDS_ff.clrn  = not (RD_Mil OR Reset or not SEL_6408);
 CMD_RCV = ME_CDS_ff;
 
-VW_SM.clk	= ME_DSC;
-VW_SM.Reset	= Reset;
+VW_SM.clk = ME_DSC;
+VW_SM.Reset = Reset;
 CASE VW_SM IS
-	WHEN Idle_VW =>
-   		IF ME_TD THEN
-			VW_SM = Wait_VW;
-		ELSE
-			VW_SM = Idle_VW;
-		END IF;
+  WHEN Idle_VW =>
+      IF ME_TD THEN
+      VW_SM = Wait_VW;
+    ELSE
+      VW_SM = Idle_VW;
+    END IF;
 
-	WHEN Wait_VW =>
-		IF vw_cnt.q[] == c_end_vw_tst THEN
-			VW_SM = Err_VW;
-		ELSIF ME_VW THEN
-			IF vw_cnt.q[] == c_vw_tst_cnt THEN
-				Valid_W_ff.s	= VCC;
-				VW_SM = Idle_VW;
-			ELSE
-				VW_SM = Err_VW;
-			END IF;
-		ELSE
-			VW_SM = Wait_VW;
-		END IF;
+  WHEN Wait_VW =>
+    IF vw_cnt.q[] == c_end_vw_tst THEN
+      VW_SM = Err_VW;
+    ELSIF ME_VW THEN
+      IF vw_cnt.q[] == c_vw_tst_cnt THEN
+        Valid_W_ff.s  = VCC;
+        VW_SM = Idle_VW;
+      ELSE
+        VW_SM = Err_VW;
+      END IF;
+    ELSE
+      VW_SM = Wait_VW;
+    END IF;
 
-	WHEN Err_VW =>
-		IF vw_cnt.q[] <= c_end_vw_tst THEN
-			VW_SM = Err_VW;
-		ELSE
-			RCV_Err_ff.d	= VCC;
-			Valid_W_ff.r	= VCC;
-			VW_SM = Idle_VW;
+  WHEN Err_VW =>
+    IF vw_cnt.q[] <= c_end_vw_tst THEN
+      VW_SM = Err_VW;
+    ELSE
+      RCV_Err_ff.d  = VCC;
+      Valid_W_ff.r  = VCC;
+      VW_SM = Idle_VW;
         END IF;
 
 END CASE;
 
-vw_cnt.clock	= ME_DSC;
-vw_cnt.sclr		= Idle_VW;
-vw_cnt.cnt_en	= Wait_VW or Err_VW;
+vw_cnt.clock  = ME_DSC;
+vw_cnt.sclr   = Idle_VW;
+vw_cnt.cnt_en = Wait_VW or Err_VW;
 
-Valid_W_ff.clk	= Clk;			-- Die Frequenz von CLK mehr als doppelt so hoch als ME_DSC, 	--
-									-- deshalb kann mit einem FF synchronisiert werden.				--
-Valid_W_ff.clrn	= not (RD_MIL OR Reset or not SEL_6408);
+Valid_W_ff.clk  = Clk;      -- Die Frequenz von CLK mehr als doppelt so hoch als ME_DSC,  --
+                  -- deshalb kann mit einem FF synchronisiert werden.       --
+Valid_W_ff.clrn = not (RD_MIL OR Reset or not SEL_6408);
 
 Valid_W = Valid_W_ff.q;
 
-RCV_Err_ff.clk	= Clk;			-- Die Frequenz von CLK mehr als doppelt so hoch als ME_DSC, 	--
-									-- deshalb kann mit einem FF synchronisiert werden.				--
-									-- Gesetzt wird das ff in der VW_SM.							--
+RCV_Err_ff.clk  = Clk;      -- Die Frequenz von CLK mehr als doppelt so hoch als ME_DSC,  --
+                  -- deshalb kann mit einem FF synchronisiert werden.       --
+                  -- Gesetzt wird das ff in der VW_SM.              --
 RCV_Err = RCV_Err_ff;
-													
-RCV_Ena_ff1.clk		= not ME_ESC;				-- Nach dem Senden Empfänger nicht gleich Einschalten.	--
-RCV_Ena_ff1.d		= not (Send_Init or ME_SD);	-- Einschalten vorbereitet.								--
-RCV_Ena_ff1.clrn	= not ME_EE;				-- Encoder-Enable schaltet sofort die Empfänger aus.	--
+                          
+RCV_Ena_ff1.clk   = not ME_ESC;       -- Nach dem Senden Empfänger nicht gleich Einschalten. --
+RCV_Ena_ff1.d   = not (Send_Init or ME_SD); -- Einschalten vorbereitet.               --
+RCV_Ena_ff1.clrn  = not ME_EE;        -- Encoder-Enable schaltet sofort die Empfänger aus. --
 
-RCV_Ena_ff.clk		= not ME_ESC;				-- Nach dem Senden Empfänger nicht gleich Einschalten.	--
-RCV_Ena_ff.d		= RCV_Ena_ff1;				-- Einschalten.											--
-RCV_Ena_ff.clrn		= not ME_EE;				-- Encoder-Enable schaltet sofort die Empf�nger aus.	--
+RCV_Ena_ff.clk    = not ME_ESC;       -- Nach dem Senden Empfänger nicht gleich Einschalten. --
+RCV_Ena_ff.d    = RCV_Ena_ff1;        -- Einschalten.                     --
+RCV_Ena_ff.clrn   = not ME_EE;        -- Encoder-Enable schaltet sofort die Empf�nger aus.  --
 
 nRCV_Ena = not RCV_Ena_ff;
 
-Reset_6408	= not wait.div_o;	-- Reset_6408 muss mind. bis zur nächsten pos. Flanke von ME_DSC akiv bleiben (mindestens 1us)
+Reset_6408  = not wait.div_o; -- Reset_6408 muss mind. bis zur nächsten pos. Flanke von ME_DSC akiv bleiben (mindestens 1us)
 
 wait.res = Reset;
 wait.clk = Clk;
