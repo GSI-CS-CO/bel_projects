@@ -14,6 +14,7 @@ use work.wr_altera_pkg.all;
 use work.etherbone_pkg.all;
 use work.altera_flash_pkg.all;
 use work.altera_networks_pkg.all;
+use work.build_id_pkg.all;
 use work.oled_display_pkg.all;
 use work.ez_usb_pkg.all;
 
@@ -80,7 +81,7 @@ entity pci_control is
     p13             : inout std_logic := 'Z';
     p14             : inout std_logic := 'Z';
     p15             : inout std_logic := 'Z';
-    p16             : inout std_logic := 'Z';
+    p16             : in    std_logic := 'Z';
     p17             : inout std_logic := 'Z';
     p18             : inout std_logic := 'Z';
     p19             : inout std_logic := 'Z';
@@ -88,12 +89,12 @@ entity pci_control is
     p22             : inout std_logic := 'Z';
     p23             : inout std_logic := 'Z';
     p24             : inout std_logic := 'Z';
-    p25             : inout std_logic := 'Z';
-    p26             : inout std_logic := 'Z';
-    p27             : inout std_logic := 'Z';
-    p28             : inout std_logic := 'Z';
-    p29             : inout std_logic := 'Z';
-    p30             : inout std_logic := 'Z';
+    p25             : out   std_logic := 'Z';
+    p26             : in    std_logic := 'Z';
+    p27             : out   std_logic := 'Z';
+    p28             : out   std_logic := 'Z';
+    p29             : out   std_logic := 'Z';
+    p30             : out   std_logic := 'Z';
     n1              : inout std_logic := 'Z';
     n2              : inout std_logic := 'Z';
     n3              : inout std_logic := 'Z';
@@ -109,7 +110,7 @@ entity pci_control is
     n13             : inout std_logic := 'Z';
     n14             : inout std_logic := 'Z';
     n15             : inout std_logic := 'Z';
-    n16             : inout std_logic := 'Z';
+--    n16             : inout std_logic := 'Z';
     n17             : inout std_logic := 'Z';
     n18             : inout std_logic := 'Z';
     n19             : inout std_logic := 'Z';
@@ -117,12 +118,12 @@ entity pci_control is
     n22             : inout std_logic := 'Z';
     n23             : inout std_logic := 'Z';
     n24             : inout std_logic := 'Z';
-    n25             : inout std_logic := 'Z';
-    n26             : inout std_logic := 'Z';
-    n27             : inout std_logic := 'Z';
-    n28             : inout std_logic := 'Z';
-    n29             : inout std_logic := 'Z';
-    n30             : inout std_logic := 'Z';
+--    n25             : inout std_logic := 'Z';
+--    n26             : inout std_logic := 'Z';
+--    n27             : inout std_logic := 'Z';
+--    n28             : inout std_logic := 'Z';
+--    n29             : inout std_logic := 'Z';
+--    n30             : inout std_logic := 'Z';
     
     -----------------------------------------------------------------------
     -- connector cpld
@@ -220,7 +221,7 @@ architecture rtl of pci_control is
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   
   -- Top crossbar layout
-  constant c_slaves  : natural := 6;
+  constant c_slaves  : natural := 7;
   constant c_masters : natural := 3;
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00000000"),
@@ -228,7 +229,8 @@ architecture rtl of pci_control is
     2 => f_sdb_embed_device(c_eca_sdb,                    x"00100800"),
     3 => f_sdb_embed_device(c_eca_evt_sdb,                x"00100C00"),
     4 => f_sdb_embed_device(c_wb_serial_lcd_sdb,          x"00100D00"),
-    5 => f_sdb_embed_device(f_wb_spi_flash_sdb(25),       x"04000000"));
+    5 => f_sdb_embed_device(c_build_id_sdb,               x"00200000"),
+    6 => f_sdb_embed_device(f_wb_spi_flash_sdb(25),       x"04000000"));
   constant c_sdb_address : t_wishbone_address := x"00300000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -241,7 +243,17 @@ architecture rtl of pci_control is
   
   signal gpio_slave_i : t_wishbone_slave_in;
   signal gpio_slave_o : t_wishbone_slave_out;
+  
+  --------------------------------------------------------------
+  -- Clocking
+  --------------------------------------------------------------
 
+  -- Non-PLL reset stuff
+  signal clk_free         : std_logic;
+  signal rstn_free        : std_logic;
+  signal gxb_locked       : std_logic;
+  signal pll_rst          : std_logic;
+  
   -- Sys PLL from clk_125m_local_i
   signal sys_locked       : std_logic;
   signal clk_sys0         : std_logic;
@@ -250,15 +262,10 @@ architecture rtl of pci_control is
   signal clk_sys3         : std_logic;
   signal rstn_sys         : std_logic;
   
-  -- Logical clock names
   signal clk_sys          : std_logic;
   signal clk_reconf       : std_logic;
   signal clk_flash        : std_logic;
   signal clk_display      : std_logic;
-  
-  -- RX PLL
-  signal gxb_locked       : std_logic;
-  signal rstn_wr          : std_logic;
   
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
@@ -270,16 +277,24 @@ architecture rtl of pci_control is
   signal clk_butis        : std_logic;
   signal clk_phase        : std_logic;
   signal rstn_ref         : std_logic;
+  signal rstn_butis       : std_logic;
+  signal rstn_phase       : std_logic;
   
   signal phase_done       : std_logic;
   signal phase_step       : std_logic;
   signal phase_sel        : std_logic_vector(4 downto 0);
   
+  signal phase_butis      : phase_offset;
+  
   -- DMTD PLL from clk_20m_vcxo_i
-  -- signal dmtd_locked      : std_logic;
+  signal dmtd_locked      : std_logic;
   signal clk_dmtd0        : std_logic;
   signal clk_dmtd         : std_logic;
   
+  --------------------------------------------------------------
+  -- White Rabbit
+  --------------------------------------------------------------
+
   signal dac_hpll_load_p1 : std_logic;
   signal dac_dpll_load_p1 : std_logic;
   signal dac_hpll_data    : std_logic_vector(15 downto 0);
@@ -287,6 +302,8 @@ architecture rtl of pci_control is
   
   signal link_up  : std_logic;
   signal link_act : std_logic;
+  
+  
   signal ext_pps  : std_logic;
   signal pps      : std_logic;
 
@@ -329,24 +346,6 @@ architecture rtl of pci_control is
   
   signal eca_gpio : std_logic_vector(15 downto 0);
   
-  signal r_lemo_dir : std_logic_vector(1 downto 0);
-  signal r_gpio_mux : std_logic_vector(7 downto 0);
-  signal r_gpio_val : std_logic_vector(3 downto 0);
-  signal r_resets   : std_logic_vector(2 downto 0) := (others => '0');
-  
-  signal s_lemo_dat : std_logic_vector(2 downto 1);
-  signal s_uled_dat : std_logic_vector(2 downto 1);
-  signal s_lemo_led : std_logic_vector(2 downto 1);
-  
-  signal s_pll_powerdown      : std_logic;
-  signal s_tx_analogreset     : std_logic_vector(2 downto 0);
-  signal s_tx_digitalreset    : std_logic_vector(2 downto 0);
-  signal s_pll_locked         : std_logic_vector(2 downto 0);
-  signal s_tx_cal_busy        : std_logic_vector(2 downto 0);
-  signal s_rx_analogreset     : std_logic_vector(2 downto 0);
-  signal s_rx_digitalreset    : std_logic_vector(2 downto 0);
-  signal s_rx_cal_busy        : std_logic_vector(2 downto 0);
-  
   signal s_uart_rxd_i   : std_logic;
   signal s_uart_txd_o   : std_logic;
   
@@ -357,57 +356,48 @@ architecture rtl of pci_control is
   signal di_lp  : std_logic;
   signal di_flm : std_logic;
   signal di_dat : std_logic;
-  signal di_bll : std_logic;
-
+  
 begin
 
-  dmtd_inst : dmtd_pll5 port map(
-    rst      => '0',
-    refclk   => clk_20m_vcxo_i,    --  20  Mhz 
-    outclk_0 => clk_dmtd0,         --  62.5MHz
-    locked   => open);
+  -- We need at least one off-chip free running clock to setup PLLs
+  clk_free <= clk_125m_local_i;
+
+  reset : altera_reset
+    port map(
+      clk_free_i    => clk_free,
+      rstn_i        => pbs2,
+      pll_lock_i(0) => dmtd_locked,
+      pll_lock_i(1) => ref_locked,
+      pll_lock_i(2) => sys_locked,
+      pll_lock_i(3) => gxb_locked,
+      pll_arst_o    => pll_rst,
+      clocks_i(0)   => clk_sys,
+      clocks_i(1)   => clk_free,
+      rstn_o(0)     => rstn_sys,
+      rstn_o(1)     => rstn_free);
+      
+  dmtd_inst : dmtd_pll5 port map(   --  FRACTIONALPLL_X0_Y18_N0 (down-to-up)
+    rst      => pll_rst,
+    refclk   => clk_20m_vcxo_i,     --  20  Mhz 
+    outclk_0 => clk_dmtd0,          --  62.5MHz, counter 12 = PLLOUTPUTCOUNTER_X0_Y20_N1
+    locked   => dmtd_locked);
   
-  dmtd_clk : global_region port map( -- skew must match clk_ref => both global
+  dmtd_clk : single_region port map(
     inclk  => clk_dmtd0,
     outclk => clk_dmtd);
   
-  ref_inst : ref_pll5 port map(
-    rst        => '0',
-    refclk     => sfp234_ref_clk_i, -- 125 MHz
-    outclk_0   => clk_ref0,         -- 125 MHz, counter:14
-    outclk_1   => clk_ref1,         -- 200 MHz, counter:12
-    outclk_2   => clk_ref2,         --  25 MHz, counter:13
-    locked     => ref_locked,
-    scanclk    => clk_reconf,
-    cntsel     => phase_sel,
-    phase_en   => phase_step,
-    updn       => '0',
-    phase_done => phase_done);
-  
-  ref_clk : global_region port map(
-    inclk  => clk_ref0,
-    outclk => clk_ref);
-  
-  butis_clk : global_region port map(
-    inclk  => clk_ref1,
-    outclk => clk_butis);
-    
-  phase_clk : global_region port map( -- skew must match clk_ref => both global
-    inclk  => clk_ref2,
-    outclk => clk_phase);
-
-  sys_inst : sys_pll5 port map(
-    rst      => '0',
-    refclk   => clk_125m_local_i, -- 125  Mhz 
-    outclk_0 => clk_sys0,         --  62.5MHz
-    outclk_1 => clk_sys1,         --  20  MHz
-    outclk_2 => clk_sys2,         -- 100  MHz
-    outclk_3 => clk_sys3,         -- 100  MHz
+  sys_inst : sys_pll5 port map(     -- FRACTIONALPLL_X0_Y60_N0 (up-to-down)
+    rst      => pll_rst,
+    refclk   => clk_125m_local_i,   -- 125  Mhz 
+    outclk_0 => clk_sys0,           --  62.5MHz, counter 0 = PLLOUTPUTCOUNTER_X0_Y67_N1
+    outclk_1 => clk_sys1,           --  20  MHz, counter 1 = PLLOUTPUTCOUNTER_X0_Y66_N1
+    outclk_2 => clk_sys2,           -- 100  MHz, counter 2 = PLLOUTPUTCOUNTER_X0_Y65_N1
+    outclk_3 => clk_sys3,           -- 100  MHz, counter 3 = PLLOUTPUTCOUNTER_X0_Y64_N1
     locked   => sys_locked);
 
   sys_clk : global_region port map(
     inclk  => clk_sys0,
-    outclk => clk_sys);
+    outclk => clk_sys);             -- GCLK0
   
   display_clk : single_region port map(
     inclk  => clk_sys1,
@@ -421,53 +411,85 @@ begin
     inclk  => clk_sys3,
     outclk => clk_flash);
   
-  sys_reset : gc_reset
-    generic map(
-      g_clocks => 1)
-    port map(
-      free_clk_i => clk_sys,
-      locked_i   => sys_locked,
-      clks_i(0)  => clk_sys,
-      rstn_o(0)  => rstn_sys);
+  ref_inst : ref_pll5 port map(     -- FRACTIONALPLL_X0_Y51_N0 (up-to-down)
+    rst        => pll_rst,
+    refclk     => sfp234_ref_clk_i, -- 125 MHz
+    outclk_0   => clk_ref0,         -- 125 MHz, counter 12 = PLLOUTPUTCOUNTER_X0_Y55_N1
+    outclk_1   => clk_ref1,         -- 200 MHz, counter 13 = PLLOUTPUTCOUNTER_X0_Y54_N1
+    outclk_2   => clk_ref2,         --  25 MHz, counter 14 = PLLOUTPUTCOUNTER_X0_Y53_N1
+    locked     => ref_locked,
+    scanclk    => clk_free,
+    cntsel     => phase_sel,
+    phase_en   => phase_step,
+    updn       => '1',              -- positive phase shift (widen period)
+    phase_done => phase_done);
+  
+  ref_clk : global_region port map(
+    inclk  => clk_ref0,
+    outclk => clk_ref);             -- GCLK12
+  
+  butis_clk : global_region port map(
+    inclk  => clk_ref1,
+    outclk => clk_butis);           -- GCLK13
+    
+  phase_clk : single_region port map(
+    inclk  => clk_ref2,
+    outclk => clk_phase);
 
-  ref_reset : gc_reset
+  phase : altera_phase
     generic map(
-      g_clocks => 1)
+      g_select_bits   => 5,
+      g_outputs       => 3,
+      g_base          => 6500/(1000/8), -- 6500ps shift
+      g_vco_freq      => 1000, -- 1GHz
+      g_output_freq   => (0 => 125, 1 => 200, 2 => 25),
+      g_output_select => (0 =>  12, 1 =>  13, 2 => 14))
     port map(
-      free_clk_i => clk_ref,
-      locked_i   => ref_locked,
-      clks_i(0)  => clk_ref,
-      rstn_o(0)  => rstn_ref);
-
-  butis : altera_butis
-    generic map(
-      g_select_bits => 5,
-      g_200_sel     => 12,
-      g_25_sel      => 13)
-    port map(
-      clk_ref_i   => clk_ref,
-      clk_25m_i   => clk_phase,
-      clk_scan_i  => clk_reconf,
-      locked_i    => ref_locked,
-      pps_i       => pps,
+      clk_i       => clk_free,
+      rstn_i      => rstn_free,
+      clks_i(0)   => clk_ref,
+      clks_i(1)   => clk_butis,
+      clks_i(2)   => clk_phase,
+      rstn_o(0)   => rstn_ref,
+      rstn_o(1)   => rstn_butis,
+      rstn_o(2)   => rstn_phase,
+      offset_i(0) => (others => '0'),
+      offset_i(1) => phase_butis,
+      offset_i(2) => (others => '0'),
       phasedone_i => phase_done,
       phasesel_o  => phase_sel,
       phasestep_o => phase_step);
+  
+  butis : altera_butis
+    port map(
+      clk_ref_i => clk_ref,
+      clk_25m_i => clk_phase,
+      pps_i     => pps,
+      phase_o   => phase_butis);
+  
+  id : build_id
+    port map(
+      clk_i   => clk_sys,
+      rst_n_i => rstn_sys,
+      slave_i => cbar_master_o(5),
+      slave_o => cbar_master_i(5));
   
   flash : flash_top
     generic map(
       g_family                 => "Arria V",
       g_port_width             => 4,  -- quad-lane SPI bus
       g_addr_width             => 25, -- 256Mb = 32MB = 25 bits
-      g_dummy_time             => 5,
+      g_dummy_time             => 10,
+      g_config                 => true,
       g_input_latch_edge       => '1',
       g_output_latch_edge      => '1',
-      g_input_to_output_cycles => 2)
+      g_input_to_output_cycles => 3)
     port map(
       clk_i     => clk_sys,
       rstn_i    => rstn_sys,
-      slave_i   => cbar_master_o(5),
-      slave_o   => cbar_master_i(5),
+      slave_i   => cbar_master_o(6),
+      slave_o   => cbar_master_i(6),
+      clk_ext_i => clk_flash,
       clk_out_i => clk_flash,
       clk_in_i  => clk_flash);
   
@@ -489,7 +511,6 @@ begin
      master_i      => cbar_master_i,
      master_o      => cbar_master_o);
   
-  rstn_wr <= rstn_sys and gxb_locked;
   U_WR_CORE : xwr_core
     generic map (
       g_simulation                => 0,
@@ -510,7 +531,7 @@ begin
       clk_aux_i  => (others => '0'),
       clk_ext_i  => '0', -- g_with_external_clock_input controls usage
       pps_ext_i  => '0',
-      rst_n_i    => rstn_wr,
+      rst_n_i    => rstn_sys,
 
       dac_hpll_load_p1_o => dac_hpll_load_p1,
       dac_hpll_data_o    => dac_hpll_data,
@@ -585,14 +606,9 @@ begin
   sfp4_mod2  <= '0' when sfp_sda_o = '0' else 'Z';
   
   wr_arria5_phy_inst : wr_arria5_phy
-    generic map (
-      g_tx_latch_edge => '1',
-      g_rx_latch_edge => '0')
     port map (
       clk_reconf_i   => clk_reconf,
       clk_phy_i      => sfp234_ref_clk_i,
-      clk_sys_i      => clk_sys,
-      rstn_sys_i     => rstn_sys,
       locked_o       => gxb_locked,
       loopen_i       => phy_loopen,
       drop_link_i    => phy_rst,
@@ -633,8 +649,8 @@ begin
     generic map (
       g_width => 10000000)
     port map (
-      clk_i      => clk_sys,
-      rst_n_i    => rstn_sys,
+      clk_i      => clk_ref,
+      rst_n_i    => rstn_ref,
       pulse_i    => pps,
       extended_o => ext_pps);
   
@@ -685,8 +701,8 @@ begin
       ref_rstn_i      => rstn_ref,
       sys_clk_i       => clk_sys,
       sys_rstn_i      => rstn_sys,
-      triggers_i(0)   => '0',
-      triggers_i(1)   => '0',
+      triggers_i(0)   => p16,
+      triggers_i(1)   => p26,
       tm_time_valid_i => tm_valid,
       tm_tai_i        => tm_tai,
       tm_cycles_i     => tm_cycles,
@@ -734,10 +750,7 @@ begin
       
   -- USB micro controller
   -----------------
-  ures <= rstn_sys; -- allow it to boot once the FPGA is reayd.
-  
   fd <= fd_o when fd_oen='1' else (others => 'Z');
-  --readyn_io <= 'Z'; -- weak pull-up
   
   EZUSB : ez_usb
     generic map(
@@ -750,11 +763,11 @@ begin
       uart_o    => s_uart_rxd_i,
       uart_i    => s_uart_txd_o,
       
+      rstn_o    => ures,
       ebcyc_i   => pa(3),
       speed_i   => pa(0),
       shift_i   => pa(1),
-      fifoadr_o(1) => pa(5),
-      fifoadr_o(0) => pa(4),
+      fifoadr_o => pa(5 downto 4),
       readyn_i  => pa(7),
       fulln_i   => ctl(1),
       emptyn_i  => ctl(2),
@@ -762,7 +775,7 @@ begin
       slrdn_o   => slrd,
       slwrn_o   => slwr,
       pktendn_o => pa(6),
-      fd_i      => fd(7 downto 0),
+      fd_i      => fd,
       fd_o      => fd_o,
       fd_oen_o  => fd_oen);
       
@@ -810,10 +823,10 @@ begin
   owr(1) <= 'Z';
   
   -- debug clocks
-  --hpw(1)  <= '0';
-  --hpw(3)  <= ext_pps;
-  --hpw(9)  <= clk_ref;
-  --hpw(11) <= phy_rx_rbclk;
-  --hpw(15) <= clk_butis;
+  p25 <= pps;
+  p27 <= '0'; -- clk_phase;
+  p28 <= '0'; -- sfp234_ref_clk_i;
+  p29 <= clk_butis;
+  p30 <= clk_ref;
   
 end rtl;

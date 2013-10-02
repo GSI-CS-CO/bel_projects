@@ -5,6 +5,7 @@ files = [
 
 modules = {
   "local": [
+    "build_id",
     "reverse_lpb",
     "oled_display",
     "scu_bus",
