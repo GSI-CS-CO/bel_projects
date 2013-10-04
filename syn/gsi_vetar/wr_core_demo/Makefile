@@ -7,6 +7,10 @@ QUARTUS_BIN	=  $(QUARTUS)/bin
 
 all:	$(TARGET).sof $(TARGET).jic $(TARGET).rpd
 
+prog: 
+	@read -p "If there are more than one USB-Programmer specify number you want to use: " BLASTER; \
+	$(QUARTUS_BIN)/quartus_pgm -c "$$BLASTER" -m jtag -o 'p;$(TARGET).sof'
+
 clean:
 	rm -rf db incremental_db PLLJ_PLLSPE_INFO.txt
 	rm -f $(TARGET).*.rpt $(TARGET).*.summary $(TARGET).map* $(TARGET).fit.* $(TARGET).pin $(TARGET).jdi $(TARGET)*.qdf $(TARGET).done $(TARGET).qws
