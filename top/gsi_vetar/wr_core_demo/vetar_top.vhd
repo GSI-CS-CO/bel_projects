@@ -126,19 +126,10 @@ entity vetar_top is
 
 	 -----------------------------------------------------------------------
     -- Display
-    -----------------------------------------------------------------------
-	 
-   red_o			     : out std_logic;
-	blue_o			  : out std_logic;
-	green_o			  : out std_logic;
-   bll_o            : out std_logic;
-
-   discp_o          : out std_logic; -- clock (run at 2MHz)
-   dilp_o           : out std_logic; -- latch pulse (end-of-40-bit-row)
-   diflm_o          : out std_logic; -- first-line marker
-   diin_o           : out std_logic; -- shift register in
-   diout_i          : in  std_logic; -- shift register out
-
+    -----------------------------------------------------------------------	
+ 	 di              : out std_logic_vector(3 downto 0);
+	 color				: out std_logic_vector(2 downto 0);                                        
+	
     -----------------------------------------
     -- VETAR1DB1 ADD-ON Board 
     -----------------------------------------
@@ -149,12 +140,11 @@ entity vetar_top is
 	 leds_lvds_out_o	: out std_logic_vector(1 downto 0);
 
     -- CLKs
-	 --wr_clock_o				: out std_logic;
-	 clk_conn_i				: in std_logic;
-	 clk_con_i				: in std_logic;
+	 --clk_conn_i				: in std_logic;
+	 --clk_con_i				: in std_logic;
 
 	 -- HDMI
-	 hdmi_o					: out std_logic_vector(2 downto 0);
+	 hdmi_o					: out std_logic_vector(1 downto 0);
 	 hdmi_i					: out std_logic;
 	 
 	 -- Output LEMOs and LEDS
@@ -278,7 +268,12 @@ architecture rtl of vetar_top is
   signal di_flm : std_logic;
   signal di_dat : std_logic;
   signal di_bll : std_logic;
- 
+  
+  constant black : std_logic_vector 	:= "111";
+  constant red : std_logic_vector 		:= "101";
+  constant green   : std_logic_vector 	:= "110";
+  constant blue  : std_logic_vector 	:= "011";
+  
   signal eca_gpio :  std_logic_vector(15 downto 0);
 
   signal s_uart_rxd_i   : std_logic;
@@ -308,6 +303,7 @@ architecture rtl of vetar_top is
   -- LA onewire
   signal oneWire_i: std_logic;
   signal oneWire_o: std_logic;
+  signal dit : std_logic_vector(6 downto 0);
  
 begin
 
@@ -363,32 +359,6 @@ begin
   
   clk_pll_o  <= clk_butis;
 
-----------------------------------------------
---  dmtd_inst : dmtd_pll port map(
---    inclk0 => clk_20m_vcxo_i,    --  20  Mhz 
---    c0     => clk_dmtd,          --  62.5MHz
---    locked => dmtd_locked);
---  
---  ref_inst : ref_pll port map(
---    inclk0 => clk_125m_pllref_i, -- 125 MHz
---    c0     => clk_ref,           -- 125 MHz
---    locked => ref_locked);
---
---  sys_inst : sys_pll port map(
---    inclk0 => clk_125m_local_i, -- 125  Mhz 
---    c0     => clk_62_5,         --  62.5Mhz
---    c1     => clk_50,           --  50  MHz
---    c2     => clk_20,           --  20  MHz
---	 c3	  => open,				  --  125 MHz
---	 c4	  => clk_50_delayed_72,--  50 Mhz(72 degrres)
---    locked => sys_locked);
---  
---  clk_sys    <= clk_62_5;
---  clk_reconf <= clk_50;
---  clk_flash  <= clk_50;
---  clk_flash  <= clk_50_delayed_72;
---  clk_lcd    <= clk_20;
---
   -- RESET
 
   sys_reset : gc_reset
@@ -410,6 +380,17 @@ begin
       locked_i   => ref_locked,
       clks_i(0)  => clk_ref,
       rstn_o(0)  => rstn_ref);
+		
+   butis : altera_butis
+    port map(
+      clk_ref_i   => clk_ref,
+      clk_25m_i   => clk_25m,
+      clk_scan_i  => clk_reconf,
+      locked_i    => ref_locked,
+      pps_i       => pps,
+      phasedone_i => phase_done,
+      phasesel_o  => phase_sel,
+      phasestep_o => phase_step);
   
   -- FLASH
   flash : flash_top
@@ -427,7 +408,8 @@ begin
       slave_i   => cbar_master_o(5),
       slave_o   => cbar_master_i(5),
       clk_out_i => clk_flash,
-      clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
+      --clk_ext_i => clk_flash,
+		clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
   
   rstn_wr <= rstn_sys and gxb_locked;
   
@@ -453,7 +435,7 @@ begin
       clk_ext_i  => '0', -- g_with_external_clock_input controls usage
       pps_ext_i  => '0',
       rst_n_i    => rstn_wr,
-
+		
       dac_hpll_load_p1_o => dac_hpll_load_p1,
       dac_hpll_data_o    => dac_hpll_data,
       dac_dpll_load_p1_o => dac_dpll_load_p1,
@@ -780,15 +762,7 @@ begin
       fd_oen_o  => fd_oen);
   
   -- Display
-  -----------------
-  -- red=nolink, blue=link+notrack, green=track
-  di_bll <= '1';
-  bll_o   <= 'Z' when di_bll='1' else '0';
-  red_o   <= '0' when (not tm_up)                  = '1' else 'Z';
-  blue_o  <= '0' when (    tm_up and not tm_valid) = '1' else 'Z';
-  green_o <= '0' when (    tm_up and     tm_valid) = '1' else 'Z';
-
-  -- Display
+  ----------------
    display : wb_serial_lcd
    generic map(
       g_wait => 1,
@@ -803,11 +777,36 @@ begin
          di_lp_o      => di_lp,
          di_flm_o     => di_flm,
          di_dat_o     => di_dat);
+  
+  di(3) <= '0' when (di_scp = '0') else 'Z'; -- clock (run at 2MHz)                            
+  di(2) <= '0' when (di_flm = '0') else 'Z'; -- first-line marker
+  di(1) <= '0' when (di_lp  = '0') else 'Z'; -- latch pulse (end-of-40-bit-row)  
+  di(0) <= '0' when (di_dat = '0') else 'Z'; -- shift register in
+  
+  -- red=nolink, blue=link+notrack, green=track
+  color <= red 	when (not tm_up) 							else
+			  blue  	when (    tm_up and not tm_valid)  	else
+			  green  when (    tm_up and     tm_valid)   else
+			  black;          
 
-  discp_o <= '0' when (di_scp = '0') else 'Z';
-  dilp_o  <= '0' when (di_lp  = '0') else 'Z';
-  diflm_o <= '0' when (di_flm = '0') else 'Z';
-  diin_o  <= '0' when (di_dat = '0') else 'Z';
+--  show_colors_display: process(clk_butis)
+--  constant MAX : integer := 400000000;
+--  variable cnt : integer range 0 to MAX;
+--  variable color_cd : unsigned (2 downto 0) := "000";
+-- 	begin
+--		if rising_edge(clk_butis) then
+--			
+--			if(cnt = MAX) then
+--				color_cd := color_cd + 1;
+--				color <= std_logic_vector(color_cd);
+--				cnt := 0;
+--			else
+--				cnt := cnt + 1;
+--			end if;
+--		end if;
+--  end process; 
+  
+ 
 
   -- On board leds
   -----------------
@@ -860,25 +859,24 @@ begin
   leds_lvds_out_o(0)	<= not eca_gpio(0);
   leds_lvds_out_o(1)	<= not eca_gpio(1);
    
-  --clocks
-  --wr_clock_o   <= PLL
-  --clk_conn_i
-  --clk_con_i:w
-	
   -- HDMI
-  hdmi_o   <= (others => '0');
-  --hmdi_i
-  
+  --hdmi_o   <= (others => '0');
+  hdmi_o(0) <= pps;
+  hdmi_o(1) <= clk_ref;  
+ 
   -- LA
-  ---------------------
-  hplw(0) <= '0';
-  hplw(1) <= '0';
-  hplw(2) <= oneWire_i;
-  hplw(3) <= oneWire_o;
-  hplw(15 downto 4) <= (others => '0');
-  --hplw(4) <= ;
-  --hplw(5) <= ;
-  --hplw(6) <= ;
-  --hplw(7) <= ;
+  ---------------------  
+  hplw(0) <= dit(0);
+  hplw(1) <= dit(1);
+  hplw(2) <= dit(2);
+  hplw(3) <= dit(3);
+  
+  hplw(7) <= clk_lcd;
+  hplw(8) <= di_scp;
+  hplw(9) <= di_lp;
+  hplw(10)<= di_flm;
+  hplw(11)<= di_dat;
+  
+  hplw(15 downto 12) <= (others => '0');
   
 end rtl;
