@@ -176,25 +176,39 @@ set_location_assignment PIN_AB16 -to hplw[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to hplw[0]
 
 #Display
-set_location_assignment PIN_AH5 -to red_o
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to red_o
-set_location_assignment PIN_AH4 -to blue_o
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to blue_o
-set_location_assignment PIN_AH13 -to green_o
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to green_o
-set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to green_o
-set_location_assignment PIN_AH7 -to diin_o
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to diin_o
-set_location_assignment PIN_Y14 -to diout_i
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to diout_i
-set_location_assignment PIN_AH8 -to diflm_o
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to diflm_o
-set_location_assignment PIN_AD7 -to dilp_o
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dilp_o
-set_location_assignment PIN_AC7 -to discp_o
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to discp_o
+set_location_assignment PIN_AH4 -to color[2]
+set_location_assignment PIN_AH5 -to color[1]
+set_location_assignment PIN_AH13 -to color[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to color[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to color[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to color[0]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to color[0]
 
 
+set_location_assignment PIN_AC7 -to di[3]
+set_location_assignment PIN_AH8 -to di[2]
+set_location_assignment PIN_AD7 -to di[1]
+set_location_assignment PIN_AH7 -to di[0]
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to di[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to di[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to di[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to di[0]
+
+#set_location_assignment PIN_Y14 -to dout_LCD
+#set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dout_LCD
+#
+#set_location_assignment PIN_AD9 -to dres
+#set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dres
+#
+#set_location_assignment PIN_AH14 -to wrdis
+#set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wrdis
+#
+#set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ai[1]
+#set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ai[0]
+#set_location_assignment PIN_AB14 -to ai[1]
+#set_location_assignment PIN_AC9 -to ai[0]
+#
 #USB
 set_location_assignment PIN_AB8 -to sres_o
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to sres_o
@@ -534,16 +548,6 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VME_BUFFER_LATCH_O[3
 #ADD ON BOARD#
 ##############
 #CLOCKS
-#set_location_assignment PIN_V24 -to wr_clock_o
-#set_instance_assignment -name IO_STANDARD LVDS -to wr_clock_o
-#set_location_assignment PIN_U24 -to "wr_clock_o(n)"
-
-set_location_assignment PIN_N1 -to clk_conn_o
-set_location_assignment PIN_M1 -to "clk_conn_o(n)"
-
-set_location_assignment PIN_C15 -to clk_con_o
-set_instance_assignment -name IO_STANDARD LVDS -to clk_conn_o
-set_location_assignment PIN_D15 -to "clk_con_o(n)"
 
 
 #LVDS
@@ -554,29 +558,32 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to lvds_in_i[1]
 
 set_location_assignment PIN_AE18 -to lvds_out_o[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to lvds_out_o[0]
+
 set_location_assignment PIN_AF18 -to lvds_out_o[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to lvds_out_o[1]
 
 set_location_assignment PIN_D6 -to leds_lvds_out_o[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lvds_out_o[0]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lvds_out_o[0]
+
 set_location_assignment PIN_C5 -to leds_lvds_out_o[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lvds_out_o[1]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lvds_out_o[1]
 
 #HDMI
-set_location_assignment PIN_K11 -to hdmi_o[0]
-set_instance_assignment -name IO_STANDARD LVDS -to hdmi_io[0]
-set_location_assignment PIN_D9 -to "hdmi_io[0](n)"
+set_location_assignment PIN_F10 -to hdmi_o[0]
+set_instance_assignment -name IO_STANDARD LVDS_E_3R -to hdmi_o[0]
+set_location_assignment PIN_E10 -to "hdmi_o[0](n)"
 
-set_location_assignment PIN_H10 -to hdmi_o[1]
-set_instance_assignment -name IO_STANDARD LVDS -to hdmi_io[1]
-set_location_assignment PIN_G10 -to "hdmi_io[1](n)"
 
-#set_location_assignment PIN_V24 -to hdmi_o[2]
-#set_instance_assignment -name IO_STANDARD LVDS -to hdmi_o[2]
-#set_location_assignment PIN_U24 -to "hdmi_o[2](n)"
+set_location_assignment PIN_F9 -to hdmi_o[1]
+set_instance_assignment -name IO_STANDARD LVDS_E_3R -to hdmi_o[1]
+set_location_assignment PIN_F8 -to "hdmi_o[1](n)"
+
+
 
 set_location_assignment PIN_E9 -to hdmi_i
-set_instance_assignment -name IO_STANDARD LVDS -to hdmi_io
+set_instance_assignment -name IO_STANDARD LVDS -to hdmi_i
 set_location_assignment PIN_D9 -to "hdmi_i(n)"
 
 #LEMO
@@ -598,23 +605,34 @@ set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lemo_addOn_o[5]
 #LEDS LEMO
 set_location_assignment PIN_E7 -to leds_lemo_addOn_o[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lemo_addOn_o[0]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_addOn_o[0]
+
 set_location_assignment PIN_D7 -to leds_lemo_addOn_o[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lemo_addOn_o[1]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_addOn_o[1]
+
 set_location_assignment PIN_C7 -to leds_lemo_addOn_o[2]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lemo_addOn_o[2]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_addOn_o[2]
+
 set_location_assignment PIN_C6 -to leds_lemo_addOn_o[3]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lemo_addOn_o[3]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_addOn_o[3]
+
 set_location_assignment PIN_B6 -to leds_lemo_addOn_o[4]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lemo_addOn_o[4]
+
 set_location_assignment PIN_A6 -to leds_lemo_addOn_o[5]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lemo_addOn_o[5]
 
 #LEMO TTL/NIM
 set_location_assignment PIN_E6 -to lemo_nim_ttl_i[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to lemo_nim_ttl_i[0]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lemo_nim_ttl_i[0]
+
 set_location_assignment PIN_D5 -to lemo_nim_ttl_i[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to lemo_nim_ttl_i[1]
-
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lemo_nim_ttl_i[1]
 ############################################################################
 
 set_global_assignment -name USE_SIGNALTAP_FILE stp1.stp
@@ -871,6 +889,35 @@ set_global_assignment -name SDC_FILE ../../../top/gsi_vetar/wr_core_demo/vetar_t
 set_global_assignment -name SIGNALTAP_FILE stp1.stp
 #set_global_assignment -name QIP_FILE ../../../platform/altera/sys_pll/sys_pll.qip
 
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_clk -to "sys_pll:sys_inst|c0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SEGMENT_SIZE=4096" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SAMPLE_DEPTH=4096" -section_id auto_signaltap_0
+
+
+
+set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd"
+set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip"
+set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/arria2_pll/arria2_pll.qip"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/altera_butis.vhd"
+set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.qip"
+set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.vhd"
+
+
+
+set_global_assignment -name QIP_FILE clk_ctrl.qip
+set_location_assignment PLL_1 -to "sys_pll:sys_inst|altpll:altpll_component|sys_pll_altpll:auto_generated|pll1"
+set_location_assignment PLL_3 -to "dmtd_pll:dmtd_inst|altpll:altpll_component|dmtd_pll_altpll:auto_generated|pll1"
+
+
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to wrdis
+
+
+
+
+
+
+
+
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[0] -to vme_addr_data_b[0] -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[1] -to vme_addr_data_b[10] -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[2] -to vme_addr_data_b[11] -section_id auto_signaltap_0
@@ -938,76 +985,6 @@ set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[63]
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[64] -to vme_irq_n_o[6] -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[65] -to vme_rst_n_i -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[66] -to vme_write_n_i -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[0] -to vme_addr_data_b[0] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[1] -to vme_addr_data_b[10] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[2] -to vme_addr_data_b[11] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[3] -to vme_addr_data_b[12] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[4] -to vme_addr_data_b[13] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[5] -to vme_addr_data_b[14] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[6] -to vme_addr_data_b[15] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[7] -to vme_addr_data_b[16] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[8] -to vme_addr_data_b[17] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[9] -to vme_addr_data_b[18] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[10] -to vme_addr_data_b[19] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[11] -to vme_addr_data_b[1] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[12] -to vme_addr_data_b[20] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[13] -to vme_addr_data_b[21] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[14] -to vme_addr_data_b[22] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[15] -to vme_addr_data_b[23] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[16] -to vme_addr_data_b[24] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[17] -to vme_addr_data_b[25] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[18] -to vme_addr_data_b[26] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[19] -to vme_addr_data_b[27] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[20] -to vme_addr_data_b[28] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[21] -to vme_addr_data_b[29] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[22] -to vme_addr_data_b[2] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[23] -to vme_addr_data_b[30] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[24] -to vme_addr_data_b[31] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[25] -to vme_addr_data_b[3] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[26] -to vme_addr_data_b[4] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[27] -to vme_addr_data_b[5] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[28] -to vme_addr_data_b[6] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[29] -to vme_addr_data_b[7] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[30] -to vme_addr_data_b[8] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[31] -to vme_addr_data_b[9] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[32] -to vme_addr_oe_ab_o -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[33] -to vme_addr_oe_ba_o -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[34] -to vme_am_i[0] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[35] -to vme_am_i[1] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[36] -to vme_am_i[2] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[37] -to vme_am_i[3] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[38] -to vme_am_i[4] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[39] -to vme_am_i[5] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[40] -to vme_as_n_i -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[41] -to vme_berr_o -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[42] -to vme_buffer_latch_o[0] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[43] -to vme_buffer_latch_o[1] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[44] -to vme_buffer_latch_o[2] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[45] -to vme_buffer_latch_o[3] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[46] -to vme_data_oe_ab_o -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[47] -to vme_data_oe_ba_o -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[48] -to vme_ds_n_i[0] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[49] -to vme_ds_n_i[1] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[50] -to vme_dtack_oe_o -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[51] -to vme_ga_i[0] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[52] -to vme_ga_i[1] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[53] -to vme_ga_i[2] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[54] -to vme_ga_i[3] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[55] -to vme_iack_n_i -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[56] -to vme_iackin_n_i -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[57] -to vme_iackout_n_o -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[58] -to vme_irq_n_o[0] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[59] -to vme_irq_n_o[1] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[60] -to vme_irq_n_o[2] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[61] -to vme_irq_n_o[3] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[62] -to vme_irq_n_o[4] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[63] -to vme_irq_n_o[5] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[64] -to vme_irq_n_o[6] -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[65] -to vme_rst_n_i -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[66] -to vme_write_n_i -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_clk -to "sys_pll:sys_inst|c0" -section_id auto_signaltap_0
-set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SEGMENT_SIZE=4096" -section_id auto_signaltap_0
-set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SAMPLE_DEPTH=4096" -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[67] -to "xVME64xCore_Top:U_VME64|VME_ADDR_i[10]" -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[68] -to "xVME64xCore_Top:U_VME64|VME_ADDR_i[11]" -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[69] -to "xVME64xCore_Top:U_VME64|VME_ADDR_i[12]" -section_id auto_signaltap_0
@@ -1562,6 +1539,333 @@ set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[617
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[618] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.adr[7]" -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[619] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.adr[8]" -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[620] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.adr[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[621] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.cyc" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[622] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[623] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[624] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[625] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[626] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[627] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[628] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[629] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[630] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[631] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[632] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[633] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[634] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[635] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[636] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[637] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[638] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[639] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[640] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[641] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[642] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[643] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[644] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[645] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[646] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[647] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[648] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[649] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[650] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[651] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[652] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[653] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[654] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.stb" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[655] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.we" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[656] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.ack" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[657] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[658] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[659] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[660] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[661] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[662] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[663] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[664] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[665] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[666] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[667] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[668] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[669] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[670] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[671] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[672] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[673] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[674] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[675] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[676] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[677] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[678] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[679] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[680] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[681] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[682] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[683] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[684] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[685] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[686] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[687] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[688] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[689] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[690] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[691] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[692] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[693] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[694] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[695] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[696] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[697] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[698] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[699] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[700] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[701] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[702] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[703] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[704] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[705] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[706] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[707] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[708] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[709] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[710] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[711] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[712] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[713] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[714] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[715] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[716] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[717] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[718] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[719] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[720] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[721] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[722] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[723] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[724] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[725] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[726] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[727] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[728] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[729] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[730] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[731] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[732] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[733] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[734] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[735] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[736] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[737] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[738] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[739] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[740] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[741] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[742] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[743] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[744] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[745] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[746] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[747] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[748] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[749] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[750] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[751] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[752] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[753] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[754] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[755] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[756] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[757] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[758] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[759] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[760] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[761] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[762] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[763] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[764] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[765] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[766] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[767] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[768] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[769] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[770] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[771] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[772] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[773] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[774] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[775] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[776] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[777] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[778] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[779] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[780] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[781] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[782] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[783] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[784] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[785] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[786] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[787] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[788] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[789] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[790] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[791] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[792] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[793] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[794] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[795] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[796] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[797] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[798] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[799] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[800] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[801] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[802] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[803] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[804] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[805] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[806] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[807] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[808] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[809] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[810] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[811] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[812] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[813] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[814] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[815] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[816] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[817] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[818] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[819] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[820] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[821] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[822] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[823] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[824] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[825] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[826] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[827] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[828] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[829] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[830] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[831] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[832] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[833] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[834] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[835] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[836] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[837] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[838] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[839] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[840] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[841] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[842] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[843] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[844] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[845] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[846] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[847] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[848] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[849] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[850] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[851] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[852] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[853] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[854] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[855] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[856] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[857] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[858] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[859] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[860] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[861] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[862] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[863] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[864] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[865] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[866] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[867] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[868] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[869] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[870] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[871] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[872] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[873] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[874] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[875] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[876] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[877] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[878] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[879] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[880] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[0] -to vme_addr_data_b[0] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[1] -to vme_addr_data_b[10] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[2] -to vme_addr_data_b[11] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[3] -to vme_addr_data_b[12] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[4] -to vme_addr_data_b[13] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[5] -to vme_addr_data_b[14] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[6] -to vme_addr_data_b[15] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[7] -to vme_addr_data_b[16] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[8] -to vme_addr_data_b[17] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[9] -to vme_addr_data_b[18] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[10] -to vme_addr_data_b[19] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[11] -to vme_addr_data_b[1] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[12] -to vme_addr_data_b[20] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[13] -to vme_addr_data_b[21] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[14] -to vme_addr_data_b[22] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[15] -to vme_addr_data_b[23] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[16] -to vme_addr_data_b[24] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[17] -to vme_addr_data_b[25] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[18] -to vme_addr_data_b[26] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[19] -to vme_addr_data_b[27] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[20] -to vme_addr_data_b[28] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[21] -to vme_addr_data_b[29] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[22] -to vme_addr_data_b[2] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[23] -to vme_addr_data_b[30] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[24] -to vme_addr_data_b[31] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[25] -to vme_addr_data_b[3] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[26] -to vme_addr_data_b[4] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[27] -to vme_addr_data_b[5] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[28] -to vme_addr_data_b[6] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[29] -to vme_addr_data_b[7] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[30] -to vme_addr_data_b[8] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[31] -to vme_addr_data_b[9] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[32] -to vme_addr_oe_ab_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[33] -to vme_addr_oe_ba_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[34] -to vme_am_i[0] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[35] -to vme_am_i[1] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[36] -to vme_am_i[2] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[37] -to vme_am_i[3] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[38] -to vme_am_i[4] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[39] -to vme_am_i[5] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[40] -to vme_as_n_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[41] -to vme_berr_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[42] -to vme_buffer_latch_o[0] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[43] -to vme_buffer_latch_o[1] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[44] -to vme_buffer_latch_o[2] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[45] -to vme_buffer_latch_o[3] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[46] -to vme_data_oe_ab_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[47] -to vme_data_oe_ba_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[48] -to vme_ds_n_i[0] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[49] -to vme_ds_n_i[1] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[50] -to vme_dtack_oe_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[51] -to vme_ga_i[0] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[52] -to vme_ga_i[1] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[53] -to vme_ga_i[2] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[54] -to vme_ga_i[3] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[55] -to vme_iack_n_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[56] -to vme_iackin_n_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[57] -to vme_iackout_n_o -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[58] -to vme_irq_n_o[0] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[59] -to vme_irq_n_o[1] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[60] -to vme_irq_n_o[2] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[61] -to vme_irq_n_o[3] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[62] -to vme_irq_n_o[4] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[63] -to vme_irq_n_o[5] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[64] -to vme_irq_n_o[6] -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[65] -to vme_rst_n_i -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[66] -to vme_write_n_i -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[67] -to "xVME64xCore_Top:U_VME64|VME_ADDR_i[10]" -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[68] -to "xVME64xCore_Top:U_VME64|VME_ADDR_i[11]" -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[69] -to "xVME64xCore_Top:U_VME64|VME_ADDR_i[12]" -section_id auto_signaltap_0
@@ -2116,266 +2420,6 @@ set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[617] -
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[618] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.adr[7]" -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[619] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.adr[8]" -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[620] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.adr[9]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[621] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.cyc" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[622] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[0]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[623] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[10]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[624] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[11]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[625] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[12]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[626] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[13]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[627] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[14]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[628] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[15]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[629] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[16]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[630] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[17]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[631] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[18]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[632] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[19]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[633] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[1]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[634] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[20]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[635] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[21]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[636] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[22]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[637] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[23]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[638] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[24]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[639] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[25]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[640] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[26]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[641] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[27]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[642] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[28]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[643] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[29]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[644] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[2]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[645] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[30]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[646] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[31]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[647] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[3]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[648] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[4]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[649] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[5]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[650] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[6]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[651] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[7]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[652] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[8]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[653] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[9]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[654] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.stb" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[655] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.we" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[656] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.ack" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[657] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[0]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[658] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[10]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[659] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[11]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[660] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[12]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[661] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[13]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[662] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[14]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[663] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[15]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[664] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[16]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[665] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[17]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[666] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[18]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[667] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[19]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[668] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[1]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[669] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[20]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[670] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[21]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[671] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[22]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[672] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[23]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[673] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[24]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[674] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[25]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[675] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[26]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[676] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[27]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[677] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[28]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[678] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[29]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[679] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[2]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[680] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[30]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[681] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[31]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[682] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[3]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[683] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[4]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[684] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[5]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[685] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[6]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[686] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[7]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[687] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[8]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[688] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_o.dat[9]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[689] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[0]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[690] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[10]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[691] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[11]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[692] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[12]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[693] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[13]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[694] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[14]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[695] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[15]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[696] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[16]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[697] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[17]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[698] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[18]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[699] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[19]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[700] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[1]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[701] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[20]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[702] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[21]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[703] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[22]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[704] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[23]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[705] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[24]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[706] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[25]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[707] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[26]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[708] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[27]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[709] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[28]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[710] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[29]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[711] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[2]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[712] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[30]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[713] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[31]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[714] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[3]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[715] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[4]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[716] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[5]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[717] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[6]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[718] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[7]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[719] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[8]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[720] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_i.dat[9]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[721] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[0]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[722] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[10]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[723] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[11]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[724] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[12]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[725] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[13]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[726] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[14]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[727] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[15]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[728] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[16]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[729] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[17]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[730] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[18]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[731] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[19]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[732] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[1]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[733] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[20]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[734] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[21]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[735] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[22]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[736] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[23]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[737] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[24]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[738] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[25]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[739] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[26]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[740] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[27]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[741] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[28]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[742] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[29]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[743] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[2]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[744] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[30]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[745] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[31]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[746] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[3]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[747] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[4]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[748] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[5]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[749] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[6]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[750] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[7]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[751] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[8]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[752] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.adr[9]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[753] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[0]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[754] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[10]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[755] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[11]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[756] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[12]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[757] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[13]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[758] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[14]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[759] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[15]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[760] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[16]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[761] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[17]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[762] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[18]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[763] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[19]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[764] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[1]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[765] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[20]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[766] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[21]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[767] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[22]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[768] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[23]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[769] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[24]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[770] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[25]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[771] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[26]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[772] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[27]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[773] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[28]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[774] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[29]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[775] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[2]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[776] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[30]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[777] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[31]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[778] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[3]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[779] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[4]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[780] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[5]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[781] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[6]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[782] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[7]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[783] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[8]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[784] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|dwb_o.dat[9]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[785] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[0]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[786] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[10]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[787] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[11]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[788] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[12]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[789] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[13]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[790] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[14]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[791] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[15]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[792] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[16]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[793] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[17]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[794] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[18]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[795] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[19]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[796] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[1]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[797] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[20]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[798] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[21]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[799] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[22]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[800] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[23]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[801] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[24]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[802] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[25]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[803] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[26]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[804] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[27]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[805] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[28]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[806] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[29]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[807] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[2]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[808] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[30]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[809] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[31]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[810] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[3]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[811] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[4]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[812] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[5]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[813] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[6]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[814] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[7]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[815] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[8]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[816] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_i.dat[9]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[817] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[0]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[818] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[10]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[819] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[11]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[820] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[12]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[821] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[13]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[822] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[14]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[823] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[15]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[824] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[16]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[825] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[17]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[826] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[18]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[827] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[19]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[828] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[1]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[829] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[20]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[830] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[21]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[831] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[22]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[832] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[23]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[833] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[24]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[834] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[25]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[835] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[26]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[836] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[27]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[837] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[28]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[838] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[29]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[839] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[2]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[840] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[30]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[841] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[31]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[842] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[3]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[843] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[4]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[844] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[5]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[845] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[6]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[846] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[7]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[847] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[8]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[848] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.adr[9]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[849] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[0]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[850] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[10]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[851] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[11]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[852] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[12]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[853] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[13]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[854] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[14]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[855] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[15]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[856] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[16]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[857] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[17]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[858] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[18]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[859] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[19]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[860] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[1]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[861] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[20]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[862] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[21]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[863] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[22]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[864] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[23]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[865] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[24]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[866] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[25]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[867] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[26]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[868] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[27]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[869] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[28]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[870] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[29]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[871] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[2]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[872] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[30]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[873] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[31]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[874] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[3]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[875] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[4]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[876] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[5]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[877] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[6]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[878] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[7]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[879] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[8]" -section_id auto_signaltap_0
-set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[880] -to "xwr_core:U_WR_CORE|wr_core:WRPC|xwb_lm32:LM32_CORE|iwb_o.dat[9]" -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[621] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.cyc" -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[622] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[0]" -section_id auto_signaltap_0
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[623] -to "xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|xwb_onewire_master:ONEWIRE|slave_i.dat[10]" -section_id auto_signaltap_0
@@ -2642,19 +2686,4 @@ set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK=00
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK_LENGTH=2669" -section_id auto_signaltap_0
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_LOWORD=38044" -section_id auto_signaltap_0
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_HIWORD=33631" -section_id auto_signaltap_0
-
-
-
-set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd"
-set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip"
-set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/arria2_pll/arria2_pll.qip"
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/altera_butis.vhd"
-set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.qip"
-set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.vhd"
-
-
-
-set_global_assignment -name QIP_FILE clk_ctrl.qip
-set_location_assignment PLL_1 -to "sys_pll:sys_inst|altpll:altpll_component|sys_pll_altpll:auto_generated|pll1"
-set_location_assignment PLL_3 -to "dmtd_pll:dmtd_inst|altpll:altpll_component|dmtd_pll_altpll:auto_generated|pll1"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
