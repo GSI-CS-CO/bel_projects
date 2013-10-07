@@ -11,8 +11,7 @@ component dac714 is
   generic (
     Base_addr:        unsigned(15 downto 0) := X"0300";
     CLK_in_Hz:        integer := 100_000_000;
-    SPI_CLK_in_Hz:    integer := 10_000_000;
-    Default_is_FG_mode: integer range 0 to 1 := 0
+    SPI_CLK_in_Hz:    integer := 10_000_000
     );
   port
     (
@@ -38,5 +37,13 @@ component dac714 is
     Dtack:              out     std_logic
     );
 end component dac714;
+
+-- address offsets, used during instantiation of the component. The real address is calulated by adding the offsets to the base address
+  constant  rw_dac_Cntrl_addr_offset:             unsigned(15 downto 0) := X"0000";
+  constant  wr_dac_addr_offset:                   unsigned(15 downto 0) := X"0001";
+  constant  clr_rd_shift_err_cnt_addr_offset:     unsigned(15 downto 0) := X"0002";
+  constant  clr_rd_old_data_err_cnt_addr_offset:  unsigned(15 downto 0) := X"0003";
+  constant  clr_rd_trm_during_trm_active_err_cnt_addr_offset: unsigned(15 downto 0) := X"0004";
+
 
 end package dac714_pkg;

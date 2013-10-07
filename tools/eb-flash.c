@@ -35,6 +35,8 @@
 #define GSI_ID   0x651
 #define FLASH_ID 0x5cf12a1c
 
+#define MAX_SECTOR_SIZE	4194304
+
 static const char* program;
 static const char* device_address;
 static const char* firmware;
@@ -120,24 +122,24 @@ static eb_data_t flip_bits(eb_data_t x) {
   return x;
 }
 
-static void wait_for_busy(eb_device_t device) {
+static void wait_for_busy(eb_device_t device, long interval) {
   long delay, used;
   eb_status_t status;
   eb_data_t result;
   
   do {
     /* Sleep as requested */
-    for (delay = wait_us; delay > 0; delay -= used) {
+    for (delay = interval; delay > 0; delay -= used) {
       used = eb_socket_run(eb_device_socket(device), delay);
     }
     
     result = 0;
     status = eb_device_read(device, erase_address, (format&EB_ENDIAN_MASK)|EB_DATA32, &result, 0, eb_block);
-    if (status != EB_OK) {
+    if (status != EB_OK && status != EB_SEGFAULT) {
       fprintf(stderr, "%s: polling erase status failed: %s\n", program, eb_status(status));
       exit(1);
     }
-  } while ((result & 1) == 0);
+  } while (status == EB_SEGFAULT);
 }
 
 static void find_sector_size(eb_user_data_t user, eb_device_t dev, eb_operation_t op, eb_status_t status) {
@@ -201,43 +203,49 @@ static eb_address_t detect_sector_size(eb_device_t device) {
   while (address <= target && target+sector_size-1 <= end) {
     sector_size <<= 1;
     target &= ~(sector_size-1);
+    if (sector_size >= MAX_SECTOR_SIZE) break; /* faster */
   }
   
   max_size = sector_size >> 1;
   target = (address + firmware_length/2) & ~(max_size-1);
   
   /* Start writing test pattern */
-  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) {
-    fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
-    exit(1);
+  for (sector_size = page_size; sector_size < max_size; sector_size <<= 1) {
+    if (!quiet) {
+      printf("\rAutodetecting sector size: write 0x%"EB_ADDR_FMT" ... ", target+sector_size);
+      fflush(stdout);
+    }
+    status = eb_device_write(device, target+sector_size, format, 0, 0, eb_block);
+    if (status != EB_OK) {
+      fprintf(stderr, "\r%s: failed to write test pattern at 0x%"EB_ADDR_FMT": %s\n", program, target+sector_size, eb_status(status));
+      exit(1);
+    }
+    wait_for_busy(device, 0);
   }
   
-  for (sector_size = 2*page_size; sector_size <= max_size; sector_size <<= 1) {
-    eb_cycle_write(cycle, target+sector_size-sizeof(eb_data_t), format, 0);
+  if (!quiet) {
+    printf("\rAutodetecting sector size: erasing 0x%"EB_ADDR_FMT" ... ", target);
+    fflush(stdout);
   }
-  
-  if ((status = eb_cycle_close(cycle)) != EB_OK) {
-    fprintf(stderr, "\r%s: could not write test pattern: %s\n", program, eb_status(status));
-    exit(1);
-  }
-  
-  wait_for_busy(device);
-  
   status = eb_device_write(device, erase_address, (format&EB_ENDIAN_MASK)|EB_DATA32, target, 0, eb_block);
   if (status != EB_OK) {
     fprintf(stderr, "\r%s: failed to erase test sector 0x%"EB_ADDR_FMT": %s\n", program, target, eb_status(status));
     exit(1);
   }
   
-  wait_for_busy(device);
+  wait_for_busy(device, wait_us);
   
+  if (!quiet) {
+    printf("\rAutodetecting sector size: scanning ...            ");
+    fflush(stdout);
+  }
   if ((status = eb_cycle_open(device, &sector_size, find_sector_size, &cycle)) != EB_OK) {
     fprintf(stderr, "\r%s: could not create cycle: %s\n", program, eb_status(status));
     exit(1);
   }
   
-  for (sector_size = 2*page_size; sector_size <= max_size; sector_size <<= 1) {
-    eb_cycle_read(cycle, target+sector_size-sizeof(eb_data_t), format, 0);
+  for (sector_size = page_size; sector_size < max_size; sector_size <<= 1) {
+    eb_cycle_read(cycle, target+sector_size, format, 0);
   }
   
   sector_size = 0;
@@ -247,7 +255,7 @@ static eb_address_t detect_sector_size(eb_device_t device) {
   }
   
   if (!quiet) {
-    printf("0x%"EB_ADDR_FMT"\n", sector_size);
+    printf("\rAutodetecting sector size: found = 0x%"EB_ADDR_FMT"\n", sector_size);
   }
   
   return sector_size;
@@ -392,7 +400,7 @@ static void erase_flash(eb_device_t device) {
       exit(1);
     }
     
-    wait_for_busy(device);
+    wait_for_busy(device, wait_us);
   }
   
   if (!quiet) printf("done!\n");
@@ -569,8 +577,8 @@ static void verify_decrement(eb_user_data_t user, eb_device_t dev, eb_operation_
     data = flip_bits(data);
     
     if (eb_operation_data(op) != data) {
-      fprintf(stderr, "%s: verify failed at address 0x%"EB_ADDR_FMT"\n",
-                      program, eb_operation_address(op));
+      fprintf(stderr, "%s: verify failed at address 0x%"EB_ADDR_FMT" (0x%"EB_DATA_FMT" != 0x%"EB_DATA_FMT")\n",
+                      program, eb_operation_address(op), eb_operation_data(op), data);
       exit(1);
     }
   }
@@ -894,6 +902,13 @@ int main(int argc, char** argv) {
       erase_address_set = 1;
       if (verbose)
         fprintf(stdout, "  using 0x%"EB_ADDR_FMT" as erase register\n", erase_address);
+    }
+    
+    if (info.abi_ver_major == 1 && info.abi_ver_minor == 0) {
+      if (!quiet) fprintf(stderr, "warning: old flash firmware detected! (falling back to slow erase)\n");
+      if (wait_us < 4000000) {
+        wait_us = 4000000;
+      }
     }
   } else {
     device_support = endian | EB_DATAX;
