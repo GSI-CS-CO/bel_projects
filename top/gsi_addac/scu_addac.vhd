@@ -487,8 +487,7 @@ dac_1: dac714
   generic map(
     Base_addr       => x"0200",
     CLK_in_Hz       => clk_sys_in_Hz,
-    SPI_CLK_in_Hz   => dac_spi_clk_in_hz,
-    Default_is_FG_mode => 1 )
+    SPI_CLK_in_Hz   => dac_spi_clk_in_hz)
   port map(
     Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,       -- in, latched address from SCU_Bus
     Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- in, latched data from SCU_Bus 
@@ -516,8 +515,7 @@ dac_2: dac714
   generic map(
     Base_addr       => x"0210",
     CLK_in_Hz       => clk_sys_in_Hz,
-    SPI_CLK_in_Hz   => dac_spi_clk_in_hz,
-    Default_is_FG_mode => 1 )
+    SPI_CLK_in_Hz   => dac_spi_clk_in_hz)
   port map(
     Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,       -- in, latched address from SCU_Bus
     Data_from_SCUB_LA   =>  Data_from_SCUB_LA,      -- in, latched data from SCU_Bus 
