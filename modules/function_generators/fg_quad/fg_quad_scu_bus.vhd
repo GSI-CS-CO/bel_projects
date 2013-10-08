@@ -107,6 +107,7 @@ adr_decoder: process (clk, nReset)
       rd_coeff_a        <= '0';
       wr_coeff_b        <= '0';
       rd_coeff_b        <= '0';
+      wr_brc_start      <= '0';
       wr_start_value_h  <= '0';
       rd_start_value_h  <= '0';
       wr_start_value_l  <= '0';
@@ -125,6 +126,7 @@ adr_decoder: process (clk, nReset)
       rd_coeff_a        <= '0';
       wr_coeff_b        <= '0';
       rd_coeff_b        <= '0';
+      wr_brc_start      <= '0';
       wr_start_value_h  <= '0';
       rd_start_value_h  <= '0';
       wr_start_value_l  <= '0';
@@ -224,6 +226,7 @@ adr_decoder: process (clk, nReset)
             rd_coeff_a        <= '0';
             wr_coeff_b        <= '0';
             rd_coeff_b        <= '0';
+            wr_brc_start      <= '0';
             wr_start_value_h  <= '0';
             rd_start_value_h  <= '0';
             wr_start_value_l  <= '0';

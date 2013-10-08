@@ -48,9 +48,11 @@ signal s_add_lin_quad:  std_logic;
 type cntrl_type is (idle, load, quad_inc, lin_inc, addXQ);
 signal control_state: cntrl_type;
 
-signal s_cnt_out:   std_logic_vector(7 downto 0);
-signal s_reached:   std_logic;
-signal s_cnt_set:   std_logic := '0';
+signal s_cnt_out:     std_logic_vector(7 downto 0);
+signal s_reached:     std_logic;
+signal s_cnt_set:     std_logic := '0';
+signal s_coeff_rcvd:  std_logic;
+
 
 -- constants for frequency and step value counters
 type int_array is array(7 downto 0) of integer;
@@ -90,6 +92,7 @@ signal  s_freq_cnt_en: std_logic := '1';
 signal s_add_cnt:     unsigned(c_add_cnt_width - 1 downto 0);
 signal s_add_cnt_en:  std_logic := '1';
 signal s_stp_reached: std_logic;
+signal s_cont:        std_logic;
 
 begin
 
@@ -198,7 +201,7 @@ end process;
   s_stp_reached <= std_logic(s_add_cnt(s_add_cnt'high));
 
 -- control state machine
-  control_sm: process (clk, nrst)
+  control_sm: process (clk, nrst, s_cont)
   begin
     if nrst = '0' then
       control_state <= idle;
@@ -207,6 +210,7 @@ end process;
       s_inc_quad      <= '0';
       s_inc_lin       <= '0';
       s_add_lin_quad  <= '0';
+      s_add_cnt_en    <= '0';
     
       case control_state is
         when idle =>
@@ -215,23 +219,47 @@ end process;
           end if;
     
         when quad_inc =>
+          s_add_cnt_en <= '1';
           if s_freq_en = '1' then
             s_inc_quad <= '1';
             control_state <= lin_inc;
           end if;
           
         when lin_inc =>
+          s_add_cnt_en <= '1';
           s_inc_lin <= '1'; 
           control_state <= addXQ;
         
         when addXQ => 
+            s_add_cnt_en <= '1';
             s_add_lin_quad <= '1';
-            control_state <= quad_inc;
+            if s_cont = '1' then
+              control_state <= quad_inc;
+            else
+              control_state <= idle;
+            end if;
          
           
         when others =>
           
       end case;
+    end if;
+  end process;
+  
+  -- stops the FG when there are no new coeff values
+  coeff_rcvd: process (clk, nrst, a_en, b_en, s_stp_reached, s_coeff_rcvd)
+  begin
+    if nrst = '0' then
+      s_coeff_rcvd <= '0';
+      s_cont <= '1';
+    elsif rising_edge(clk) then
+      if a_en = '1' or b_en = '1' then
+        s_coeff_rcvd <= '1';
+      elsif s_stp_reached = '1' and s_coeff_rcvd = '1' then
+        s_coeff_rcvd <= '0';
+      elsif s_stp_reached = '1' and s_coeff_rcvd = '0' then
+        s_cont <= '0';
+      end if;
     end if;
   end process;
 
