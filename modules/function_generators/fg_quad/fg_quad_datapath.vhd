@@ -181,22 +181,6 @@ end process;
   
   s_freq_en <= s_freq_cnt(s_freq_cnt'high);
 
-  -- downcounter for step values
-  add_cnt: process(clk, nrst)
-  begin
-    if nrst = '0' then
-      s_add_cnt <= (others => '0');
-    elsif rising_edge(clk) then
-      -- reload counter at overflow or status register access 
-      if s_stp_reached = '1' or status_reg_changed = '1' then
-          -- choosing constant from array
-          s_add_cnt <= to_unsigned(c_add_cnt(to_integer(unsigned(step_sel))), c_add_cnt_width);
-        
-      elsif s_freq_en = '1' and s_add_cnt_en = '1' then
-        s_add_cnt <= s_add_cnt - 1;
-      end if;
-    end if;
-  end process add_cnt;
   
   s_stp_reached <= std_logic(s_add_cnt(s_add_cnt'high));
 
@@ -211,33 +195,50 @@ end process;
       s_inc_lin       <= '0';
       s_add_lin_quad  <= '0';
       s_add_cnt_en    <= '0';
+      s_freq_cnt_en   <= '1';
+    
+      if a_en = '1' or b_en = '1' then
+        s_coeff_rcvd <= '1';
+      end if;
     
       case control_state is
         when idle =>
+          s_freq_cnt_en   <= '0';
+          -- load step counter from array
+          s_add_cnt <= to_unsigned(c_add_cnt(to_integer(unsigned(step_sel))), c_add_cnt_width);
           if load_start = '1' then
+            s_coeff_rcvd <= '0';
             control_state <= quad_inc;
           end if;
     
         when quad_inc =>
-          s_add_cnt_en <= '1';
-          if s_freq_en = '1' then
+          if s_stp_reached = '1' then
+            if s_coeff_rcvd = '1' then
+              -- continue with new parameter set
+              -- reload step counter from array
+              s_add_cnt <= to_unsigned(c_add_cnt(to_integer(unsigned(step_sel))), c_add_cnt_width);
+              s_coeff_rcvd <= '0';
+              s_inc_quad <= '1';
+              control_state <= lin_inc;
+            else
+              -- no paramters received
+              -- go to idle
+              control_state <= idle;
+            end if;
+          
+          elsif s_freq_en = '1' then
+            s_add_cnt <= s_add_cnt - 1;
             s_inc_quad <= '1';
             control_state <= lin_inc;
           end if;
           
         when lin_inc =>
-          s_add_cnt_en <= '1';
           s_inc_lin <= '1'; 
           control_state <= addXQ;
         
         when addXQ => 
-            s_add_cnt_en <= '1';
             s_add_lin_quad <= '1';
-            if s_cont = '1' then
-              control_state <= quad_inc;
-            else
-              control_state <= idle;
-            end if;
+            control_state <= quad_inc;
          
           
         when others =>
@@ -246,28 +247,23 @@ end process;
     end if;
   end process;
   
-  -- stops the FG when there are no new coeff values
-  coeff_rcvd: process (clk, nrst, a_en, b_en, s_stp_reached, s_coeff_rcvd)
-  begin
-    if nrst = '0' then
-      s_coeff_rcvd <= '0';
-      s_cont <= '1';
-    elsif rising_edge(clk) then
-      if a_en = '1' or b_en = '1' then
-        s_coeff_rcvd <= '1';
-      elsif s_stp_reached = '1' and s_coeff_rcvd = '1' then
-        s_coeff_rcvd <= '0';
-      elsif s_stp_reached = '1' and s_coeff_rcvd = '0' then
-        s_cont <= '0';
-      end if;
-    end if;
-  end process;
+  
+--  irq: process (clk, nrst)
+--  begin
+--    if nrst = '0' then
+--      dreq <= '0';
+--    elsif rising_edge(clk) then
+--      if control_state /= idle and s_add_cnt = 0 then
+--        dreq <= '1';
+--      elsif control_state /= idle and s_add_cnt = 2 then
+--        dreq <= '0';
+--      end if;
+--    end if;
+--  end process;
 
-
+dreq <= s_stp_reached or load_start;
 -- output register for the 24 most significant bits
 sw_out    <= std_logic_vector(s_X_reg(63 downto 40));
 sw_strobe <= s_add_lin_quad;
-
-dreq    <= s_stp_reached;
 
 end FG_quad_DP_arch;
