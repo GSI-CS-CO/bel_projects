@@ -1,9 +1,9 @@
 files = [
   "scu_addac.vhd",
   "gsi_addac.sdc",
-  "IO_4x8.vhd",
-  "flash_loader_v01.vhd",
-  "adda_pll.vhd",
+  "ad7606.vhd",
+  "DAC_SPI.vhd",
+  "IO_4x8.vhd"
 ]
 
 modules = {

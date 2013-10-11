@@ -47,6 +47,34 @@ component wb_scu_bus is
     );
 end component;
 
+component wb_irq_scu_bus is
+  generic (
+            g_interface_mode      : t_wishbone_interface_mode       := PIPELINED;
+            g_address_granularity : t_wishbone_address_granularity  := BYTE;
+            clk_in_hz             : integer := 62_500_000;
+            time_out_in_ns        : integer := 250;
+            test                  : integer range 0 to 1 := 0);
+  port (
+        clk_i               : std_logic;
+        rst_n_i             : std_logic;
+        
+        irq_master_o        : out t_wishbone_master_out;
+        irq_master_i        : in t_wishbone_master_in;
+        
+        scu_slave_o         : buffer t_wishbone_slave_out;
+        scu_slave_i         : in t_wishbone_slave_in;
+        
+        scub_data           : inout std_logic_vector(15 downto 0);
+        nscub_ds            : out std_logic;
+        nscub_dtack         : in std_logic;
+        scub_addr           : out std_logic_vector(15 downto 0);
+        scub_rdnwr          : out std_logic;
+        nscub_srq_slaves    : in std_logic_vector(11 downto 0);
+        nscub_slave_sel     : out std_logic_vector(11 downto 0);
+        nscub_timing_cycle  : out std_logic;
+        nsel_ext_data_drv   : out std_logic);
+end component;
+
 component scu_bus_slave_v2r1
 generic	(
 		CLK_in_Hz:			integer;
