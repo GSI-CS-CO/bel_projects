@@ -67,9 +67,9 @@ entity pci_control is
     ant             : inout std_logic_vector(26 downto 1) := (others => 'Z'); -- trigger bus
     
     p1              : inout std_logic := 'Z';
-    p2              : inout std_logic := 'Z';
-    p3              : inout std_logic := 'Z';
-    p4              : inout std_logic := 'Z';
+    p2              : in    std_logic := 'Z'; -- BlackCat1 Chn 1
+    p3              : out   std_logic := 'Z'; -- BlackCat1 PG1 (active high)
+    p4              : in    std_logic := 'Z'; -- BlackCat1 Chn 2
     p5              : inout std_logic := 'Z';
     p6              : inout std_logic := 'Z';
     p7              : inout std_logic := 'Z';
@@ -82,19 +82,19 @@ entity pci_control is
     p14             : inout std_logic := 'Z';
     p15             : inout std_logic := 'Z';
     p16             : in    std_logic := 'Z';
-    p17             : inout std_logic := 'Z';
-    p18             : inout std_logic := 'Z';
-    p19             : inout std_logic := 'Z';
+    p17             : out   std_logic := 'Z'; -- BlackCat1 TTLEN1 (active low)
+    p18             : out   std_logic := 'Z'; -- BlackCat1 TTLEN2 (active low)
+    p19             : out   std_logic := 'Z'; -- BlackCat1 TTLEN3 (active low)
     p21             : inout std_logic := 'Z';
     p22             : inout std_logic := 'Z';
     p23             : inout std_logic := 'Z';
     p24             : inout std_logic := 'Z';
-    p25             : out   std_logic := 'Z';
-    p26             : in    std_logic := 'Z';
-    p27             : out   std_logic := 'Z';
-    p28             : out   std_logic := 'Z';
-    p29             : out   std_logic := 'Z';
-    p30             : out   std_logic := 'Z';
+    p25             : out   std_logic := 'Z'; -- BlackCat1 Chn 5
+    p26             : out   std_logic := 'Z'; -- BlackCat1 Chn 6
+    p27             : in    std_logic := 'Z'; -- BlackCat1 Chn 7
+    p28             : inout std_logic := 'Z';
+    p29             : inout std_logic := 'Z';
+    p30             : inout std_logic := 'Z';
     n1              : inout std_logic := 'Z';
     n2              : inout std_logic := 'Z';
     n3              : inout std_logic := 'Z';
@@ -701,8 +701,8 @@ begin
       ref_rstn_i      => rstn_ref,
       sys_clk_i       => clk_sys,
       sys_rstn_i      => rstn_sys,
-      triggers_i(0)   => p16,
-      triggers_i(1)   => p26,
+      triggers_i(0)   => p27,       -- BlackCat1 Chn 7
+      triggers_i(1)   => p4,        -- BlackCat1 Chn 2
       tm_time_valid_i => tm_valid,
       tm_tai_i        => tm_tai,
       tm_cycles_i     => tm_cycles,
@@ -823,10 +823,18 @@ begin
   owr(1) <= 'Z';
   
   -- debug clocks
-  p25 <= pps;
-  p27 <= '0'; -- clk_phase;
-  p28 <= '0'; -- sfp234_ref_clk_i;
-  p29 <= clk_butis;
-  p30 <= clk_ref;
+  --p25 <= pps;
+  --p27 <= '0'; -- clk_phase;
+  --p28 <= '0'; -- sfp234_ref_clk_i;
+  --p29 <= clk_butis;
+  --p30 <= clk_ref;
+  
+  p3  <= '1'; -- BlackCat1 PG1 (active high)
+  p17 <= '0'; -- BlackCat1 TTLEN1 (active low)
+  p18 <= '0'; -- BlackCat1 TTLEN2 (active low)
+  p19 <= '0'; -- BlackCat1 TTLEN3 (active low)
+  
+  p25 <= eca_gpio(0); -- BlackCat1 Chn 5
+  p26 <= eca_gpio(1); --BlackCat1 Chn 6
   
 end rtl;
