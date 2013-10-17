@@ -42,8 +42,8 @@ architecture wb_irq_scu_bus_arch of wb_irq_scu_bus is
 begin
   scub_master : wb_scu_bus 
     generic map(
-      g_interface_mode      => PIPELINED,
-      g_address_granularity => BYTE,
+      g_interface_mode      => g_interface_mode,
+      g_address_granularity => g_address_granularity,
       CLK_in_Hz             => 62_500_000,
       Test                  => 0,
       Time_Out_in_ns        => 350)
@@ -73,7 +73,7 @@ begin
           master_i  => irq_master_i,
           
           irq_i     => scu_slave_o.int,
-          adr_i     => x"00000000",
+          adr_i     => x"00000104",
           msg_i     => x"DEADBEEF");
 
 
