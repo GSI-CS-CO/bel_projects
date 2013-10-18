@@ -356,11 +356,11 @@ S_Status(8)		<= '0';
 S_Status(7)		<= '0';
 S_Status(6)		<= '0';
 S_Status(bit_scub_srqs_active)	<= S_one_or_more_SRQs_act;
-S_Status(bit_inval_slave_nr)	<= S_Invalid_Slave_Nr;
+S_Status(bit_inval_slave_nr)	  <= S_Invalid_Slave_Nr;
 S_Status(bit_inval_intern_acc)	<= S_Invalid_Intern_Acc;
-S_Status(bit_ti_cyc_err)		<= S_Ti_Cyc_Err;
-S_Status(bit_scub_rd_err)		<= S_SCUB_Rd_Err_no_Dtack;
-S_Status(bit_scub_wr_err)		<= S_SCUB_Wr_Err_no_Dtack;
+S_Status(bit_ti_cyc_err)		    <= S_Ti_Cyc_Err;
+S_Status(bit_scub_rd_err)		    <= S_SCUB_Rd_Err_no_Dtack;
+S_Status(bit_scub_wr_err)		    <= S_SCUB_Wr_Err_no_Dtack;
 
 
 p_wb_ctrl: process (clk, s_reset)
@@ -392,8 +392,8 @@ begin
     
       when idle =>
         if slave_i.cyc = '1' and slave_i.stb = '1' then           -- begin of wishbone cycle
-          if slave_i.sel(0) = '1' then
-            s_adr <= std_logic_vector(unsigned(adr) + 1);                           -- register address and slave_nr
+          if slave_i.sel(0) = '1' and slave_i.adr(1) = '0' then   -- fix for LM32
+            s_adr <= std_logic_vector(unsigned(adr) + 1);         -- register address and slave_nr
           else
             s_adr <= adr;
           end if;
