@@ -5,7 +5,7 @@ CFLAGS  := -Wall -mmultiply-enabled -mbarrel-shift-enabled -Os -ggdb -ffreestand
 msidemo.bin: msidemo.elf
 	lm32-elf-objcopy -O binary $< $@
 
-msidemo.elf: crt0.o display.o irq.o main.o
+msidemo.elf: crt0.o display.o irq.o scu_bus.o main.o
 	$(CC) $(CFLAGS) -o $@ -nostdlib -T linker.ld $^
 
 
