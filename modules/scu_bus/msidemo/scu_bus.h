@@ -26,6 +26,9 @@
 
 #define CID_SYS           0x4
 #define CID_GROUP         0x5
+#define SLAVE_INT_ENA     0x21
+#define SLAVE_INT_PEND    0x22
+#define SLAVE_INT_ACT     0x24
 
 #define DAC1_BASE         0x200
 #define DAC2_BASE         0x210
@@ -55,8 +58,9 @@
 #define FG_QUAD_H         0x6
 #define FG_QUAD_L         0x7
  
-#define GLOBAL_IRQ_ENA    0x4
-#define SRQ_ENA           0xc
+#define GLOBAL_IRQ_ENA    0x2
+#define SRQ_ENA           0x6
+#define SRQ_ACT           0x8
 #define SCU_BUS_MAX_SLOTS 5
 
 void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*);

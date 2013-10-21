@@ -19,7 +19,9 @@ char* mat_sprinthex(char* buffer, unsigned short val)
   return buffer;
 }
 
-
+/*  for every found slave the slotnumber is added to the slave array
+    e.g. [2,3] means slaves in slot 2 and 3
+*/
 void probe_scu_bus(volatile unsigned short* bus_addr, unsigned short system_addr, unsigned short group_addr, int* slaves) {
   int slot;
   unsigned short cid_sys, cid_group;
@@ -28,8 +30,7 @@ void probe_scu_bus(volatile unsigned short* bus_addr, unsigned short system_addr
     cid_sys = bus_addr[(slot<<16) + CID_SYS];     //CID system addr from slave
     cid_group = bus_addr[(slot<<16) + CID_GROUP]; //CID group addr from slave
     if (cid_sys == system_addr && cid_group == group_addr) 
-      slaves[slot-1] = 1;
-    else
-      slaves[slot-1] = 0;  
-  } 
+      *(slaves++) = slot;  
+  }
+  *slaves = 0; // end of device list 
 } 
