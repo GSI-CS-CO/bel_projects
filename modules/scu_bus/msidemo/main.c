@@ -44,7 +44,8 @@ void isr1()
         scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 1;
       //ack dreq
       else if (scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] & 2) {
-        scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0xFF;
+        scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x8FF;
+////        scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_A] = 0x2;
         scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 2;
       }
     }
@@ -78,10 +79,12 @@ void main(void) {
     while(1);
   } 
   
-  scu_bus_master[SRQ_ENA] = 0x0; //reset bitmask  
+  scu_bus_master[SRQ_ENA] = 0x0; //reset bitmask
+  scu_bus_master[MULTI_SLAVE_SEL] = 0x0; //reset bitmask  
   while(slaves[i]) {
     disp_put_c('x');
     scu_bus_master[SRQ_ENA] |= (1 << (slaves[i]-1));  //enable irqs for the slave
+    scu_bus_master[MULTI_SLAVE_SEL] |= (1 << (slaves[i]-1)); //set bitmask for broadcast select
     scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ENA] = 0x2; //enable dreq from fg
     i++;
   } 
@@ -90,14 +93,23 @@ void main(void) {
   scu_bus_master[GLOBAL_IRQ_ENA] = 0x20;
 
   isr_table_clr();
-//  isr_ptr_table[0]= isr0;
   isr_ptr_table[1]= isr1;  
   irq_set_mask(0x02);
   irq_enable();
-
-  scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0xFF;
-  scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_BROAD] = 0x4711; // start
-
+  
+  //config of DAC and FG
+  i=0;
+  while(slaves[i]) {
+    
+    scu_bus_master[(slaves[i] << 16) + DAC2_BASE + DAC_CNTRL] = 0x10; //set FG mode
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = 0x1; //reset fg
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = 0x2000; //reset fg
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x8ff;
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTA] = 0x24;
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTB] = 0x24;
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_BROAD] = 0x4711; // start signal to all fg slaves
+    i++;
+  }
   
  // disp_reset();	
  // disp_put_str(mytext);

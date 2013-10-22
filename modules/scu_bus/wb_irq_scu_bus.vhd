@@ -38,7 +38,8 @@ end entity;
 
 
 architecture wb_irq_scu_bus_arch of wb_irq_scu_bus is
-  signal s_irq: std_logic;
+  signal s_int      : std_logic_vector(1 downto 0);
+  signal s_int_edge : std_logic;
 begin
   scub_master : wb_scu_bus 
     generic map(
@@ -62,7 +63,18 @@ begin
      nSCUB_Slave_Sel    => nscub_slave_sel,
      nSCUB_Timing_Cycle => nscub_timing_cycle,
      nSel_Ext_Data_Drv  => nsel_ext_data_drv);
-
+     
+  edge: process (clk_i, rst_n_i)
+  begin
+    if rst_n_i = '0' then
+      s_int <= "00";
+    elsif rising_edge(clk_i) then
+      s_int(0) <= scu_slave_o.int;
+      s_int(1) <= s_int(0);
+    end if;
+  end process;
+  
+  s_int_edge <= not s_int(1) and s_int(0);
      
   irq_master: wb_irq_master
     port map (
@@ -72,7 +84,7 @@ begin
           master_o  => irq_master_o,
           master_i  => irq_master_i,
           
-          irq_i     => scu_slave_o.int,
+          irq_i     => s_int_edge,
           adr_i     => x"00000104",
           msg_i     => x"DEADBEEF");
 

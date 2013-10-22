@@ -61,6 +61,8 @@
 #define GLOBAL_IRQ_ENA    0x2
 #define SRQ_ENA           0x6
 #define SRQ_ACT           0x8
+#define MULTI_SLAVE_SEL   0xc
+#define MULTICAST_ACC     0x8
 #define SCU_BUS_MAX_SLOTS 5
 
 void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*);
