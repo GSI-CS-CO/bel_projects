@@ -1,12 +1,15 @@
-all::	etherbone tools driver toolchain firmware
+# Install files to this directory if not set with: make PREFIX=/opt all
+PREFIX ?= /usr/local
 
-clean::	etherbone-clean tools-clean driver-clean toolchain-clean firmware-clean scu-clean exploder-clean pexarria5-clean
+all::	etherbone tools eca driver toolchain firmware
+
+clean::	etherbone-clean tools-clean eca-clean driver-clean toolchain-clean firmware-clean scu-clean exploder-clean pexarria5-clean
 
 distclean::	clean
 	git clean -xfd .
 	for i in etherbone-core fpga-config-space general-cores wr-cores wrpc-sw; do cd ip_cores/$$i; git clean -xfd .; cd ../..; done
 
-install::	etherbone-install tools-install driver-install
+install::	etherbone-install tools-install eca-install driver-install
 
 etherbone::
 	$(MAKE) -C ip_cores/etherbone-core/api all
@@ -17,14 +20,23 @@ etherbone-clean::
 etherbone-install::
 	$(MAKE) -C ip_cores/etherbone-core/api install
 
-tools::
-	$(MAKE) -C tools all
+tools::		etherbone
+	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api all
 
 tools-clean::
-	$(MAKE) -C tools clean
+	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api clean
 
 tools-install::
-	$(MAKE) -C tools install
+	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api install
+
+eca::		etherbone
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api all
+
+eca-clean::
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api clean
+
+eca-install::
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api install
 
 driver::
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb all
