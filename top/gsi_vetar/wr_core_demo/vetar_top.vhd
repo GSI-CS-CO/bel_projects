@@ -298,6 +298,8 @@ architecture rtl of vetar_top is
   signal s_vme_data_o     : std_logic_vector(31 downto 0);
   signal s_vme_addr_o     : std_logic_vector(31 downto 1);
 
+  signal s_trigger        : std_logic;
+
   -- test flash
   signal clk_50_delayed_72		: std_logic;
   -- LA onewire
@@ -661,7 +663,7 @@ begin
       ref_rstn_i      => rstn_ref,
       sys_clk_i       => clk_sys,
       sys_rstn_i      => rstn_sys,
-      triggers_i(0)   => lemo_i,
+      triggers_i(0)   => s_trigger,
       tm_time_valid_i => '0',
       tm_tai_i        => tm_tai,
       tm_cycles_i     => tm_cycles,
@@ -806,8 +808,6 @@ begin
 --		end if;
 --  end process; 
   
- 
-
   -- On board leds
   -----------------
    -- Link Activity
@@ -826,10 +826,10 @@ begin
   -- PPS output
   lemo_o_en_o 	<= '0';
   lemo_o		  	<= pps;
-  --lemo_o		  	<= ext_pps;
+
   -- Latch input
   --lemo_i, see component map  wb_timestamp_latch 
-  --triggers_i(0)   => lemo_i,
+  s_trigger    <= not lemo_i; --negative logic
  
  -- Add-on Board
  ----------------
