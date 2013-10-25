@@ -1,7 +1,16 @@
-# Install files to this directory if not set with: make PREFIX=/opt all
-PREFIX ?= /usr/local
+# PREFIX  controls where programs and libraries get installed
+# STAGING can be used to store 'install' output into a staging folder
+# Note: during compile (all), PREFIX must be set to the final installation path
+# Example usage:
+#   make PREFIX=/usr all
+#   make STAGING=/tmp/package PREFIX=/usr install
+#   ... will compile the programs to expect installation into /usr, but
+#       will actually install them into /tmp/package/usr for zipping.
+STAGING ?=
+PREFIX  ?= /usr/local
+PWD     := $(shell pwd)
 
-all::	etherbone tools eca driver toolchain firmware
+all::	etherbone tools eca toolchain firmware driver
 
 clean::	etherbone-clean tools-clean eca-clean driver-clean toolchain-clean firmware-clean scu-clean exploder-clean pexarria5-clean
 
