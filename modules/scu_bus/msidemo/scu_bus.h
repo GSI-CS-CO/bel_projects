@@ -66,5 +66,11 @@
 #define SCU_BUS_MAX_SLOTS 5
 
 void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*);
+char* mat_sprinthex(char*, unsigned short);
+
+static inline void usleep(int x) {
+  int i;
+  for (i = (x * CPU_CLOCK/4)/1000; i > 0; i--) asm("# noop");
+}
 
 #endif

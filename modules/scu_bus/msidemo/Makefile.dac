@@ -2,10 +2,10 @@ LD      := lm32-elf-ld
 CC      := lm32-elf-gcc
 CFLAGS  := -Wall -mmultiply-enabled -mbarrel-shift-enabled -Os -ggdb -ffreestanding -DCPU_CLOCK=62500
 
-msidemo.bin: msidemo.elf
+dac_demo.bin: dac_demo.elf
 	lm32-elf-objcopy -O binary $< $@
 
-msidemo.elf: crt0.o display.o irq.o scu_bus.o main.o
+dac_demo.elf: crt0.o display.o irq.o scu_bus.o dac_demo.o
 	$(CC) $(CFLAGS) -o $@ -nostdlib -T linker.ld $^
 
 

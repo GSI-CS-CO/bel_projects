@@ -6,6 +6,7 @@ syn
 *.obj
 *.hex
 *.bin
+*.elf
 *.o
 *.ko
 *.lib

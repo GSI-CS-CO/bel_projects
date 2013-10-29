@@ -35,9 +35,10 @@ void isr1()
 {
   unsigned int i;
   
-  disp_put_str("ISR1\n");
+  //disp_put_str("ISR1\n");
   //which slave has triggered?
   while(slaves[i]) {
+    //check bit in master act reg
     if (scu_bus_master[SRQ_ACT] & (1 << (slaves[i]-1))) {
       //acknowledge powerup irq
       if (scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] & 1)
@@ -45,7 +46,6 @@ void isr1()
       //ack dreq
       else if (scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] & 2) {
         scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x8FF;
-////        scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_A] = 0x2;
         scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 2;
       }
     }
@@ -56,8 +56,8 @@ void isr1()
 
 void _irq_entry(void) {
   
-  disp_put_c('\f');
-  disp_put_str("IRQ_ENTRY\n");
+  //disp_put_c('\f');
+  //disp_put_str("IRQ_ENTRY\n");
   irq_process();
  
 }
@@ -103,7 +103,8 @@ void main(void) {
     
     scu_bus_master[(slaves[i] << 16) + DAC2_BASE + DAC_CNTRL] = 0x10; //set FG mode
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = 0x1; //reset fg
-    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = 0x2000; //reset fg
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = (7 << 13); //set frequency Bit 15..13
+   // scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] |= (0 << 10); //set frequency Bit 12..10
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x8ff;
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTA] = 0x24;
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTB] = 0x24;

@@ -104,7 +104,7 @@ inline void irq_clear( unsigned int mask)
 
 inline void irq_process(void)
 {
-  char buffer[12];
+  // char buffer[12];
    
   unsigned int ip;
   unsigned char irq_no = 0;
