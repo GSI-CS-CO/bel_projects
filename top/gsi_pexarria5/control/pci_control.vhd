@@ -70,9 +70,9 @@ entity pci_control is
     p2              : in    std_logic := 'Z'; -- BlackCat1 Chn 1
     p3              : out   std_logic := 'Z'; -- BlackCat1 PG1 (active high)
     p4              : in    std_logic := 'Z'; -- BlackCat1 Chn 2
-    p5              : inout std_logic := 'Z';
-    p6              : inout std_logic := 'Z';
-    p7              : inout std_logic := 'Z';
+    p5              : out   std_logic := 'Z'; -- BlackCat1 Chn 3
+    p6              : out   std_logic := 'Z'; -- BlackCat1 PG2 (active high)
+    p7              : out   std_logic := 'Z'; -- BlackCat1 Chn 4
     p8              : inout std_logic := 'Z';
     p9              : inout std_logic := 'Z';
     p10             : inout std_logic := 'Z';
@@ -81,7 +81,7 @@ entity pci_control is
     p13             : inout std_logic := 'Z';
     p14             : inout std_logic := 'Z';
     p15             : inout std_logic := 'Z';
-    p16             : in    std_logic := 'Z';
+    p16             : inout std_logic := 'Z';
     p17             : out   std_logic := 'Z'; -- BlackCat1 TTLEN1 (active low)
     p18             : out   std_logic := 'Z'; -- BlackCat1 TTLEN2 (active low)
     p19             : out   std_logic := 'Z'; -- BlackCat1 TTLEN3 (active low)
@@ -110,7 +110,7 @@ entity pci_control is
     n13             : inout std_logic := 'Z';
     n14             : inout std_logic := 'Z';
     n15             : inout std_logic := 'Z';
---    n16             : inout std_logic := 'Z';
+    n16             : inout std_logic := 'Z';
     n17             : inout std_logic := 'Z';
     n18             : inout std_logic := 'Z';
     n19             : inout std_logic := 'Z';
@@ -118,12 +118,12 @@ entity pci_control is
     n22             : inout std_logic := 'Z';
     n23             : inout std_logic := 'Z';
     n24             : inout std_logic := 'Z';
---    n25             : inout std_logic := 'Z';
---    n26             : inout std_logic := 'Z';
---    n27             : inout std_logic := 'Z';
---    n28             : inout std_logic := 'Z';
---    n29             : inout std_logic := 'Z';
---    n30             : inout std_logic := 'Z';
+    n25             : inout std_logic := 'Z';
+    n26             : inout std_logic := 'Z';
+    n27             : inout std_logic := 'Z';
+    n28             : inout std_logic := 'Z';
+    n29             : inout std_logic := 'Z';
+    n30             : inout std_logic := 'Z';
     
     -----------------------------------------------------------------------
     -- connector cpld
@@ -822,19 +822,16 @@ begin
   -- no second onewire is connected
   owr(1) <= 'Z';
   
-  -- debug clocks
-  --p25 <= pps;
-  --p27 <= '0'; -- clk_phase;
-  --p28 <= '0'; -- sfp234_ref_clk_i;
-  --p29 <= clk_butis;
-  --p30 <= clk_ref;
-  
   p3  <= '1'; -- BlackCat1 PG1 (active high)
+  p6  <= '1'; -- BlackCat1 PG2 (active high)
   p17 <= '0'; -- BlackCat1 TTLEN1 (active low)
   p18 <= '0'; -- BlackCat1 TTLEN2 (active low)
   p19 <= '0'; -- BlackCat1 TTLEN3 (active low)
   
   p25 <= eca_gpio(0); -- BlackCat1 Chn 5
-  p26 <= eca_gpio(1); --BlackCat1 Chn 6
+  p26 <= eca_gpio(1); -- BlackCat1 Chn 6
+  
+  p5 <= pps;              -- BlackCat1 Chn 3
+  p7 <= sfp234_ref_clk_i; -- BlackCat1 Chn 4
   
 end rtl;

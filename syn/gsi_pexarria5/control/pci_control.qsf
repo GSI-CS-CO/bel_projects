@@ -417,12 +417,6 @@ set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to slwr
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to fd
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to pa
 set_instance_assignment -name FAST_OUTPUT_ENABLE_REGISTER ON -to fd
-set_instance_assignment -name IO_STANDARD LVDS -to p25
-set_location_assignment PIN_K10 -to "p25(n)"
-set_instance_assignment -name IO_STANDARD "2.5 V" -to p27
-set_instance_assignment -name IO_STANDARD "2.5 V" -to p28
-set_instance_assignment -name IO_STANDARD "2.5 V" -to p29
-set_instance_assignment -name IO_STANDARD "2.5 V" -to p30
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p25
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p27
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p28
@@ -430,9 +424,6 @@ set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p29
 set_instance_assignment -name FAST_OUTPUT_REGISTER ON -to p30
 set_instance_assignment -name LL_MEMBER_OF "wr_arria5:tx" -to "wr_arria5_phy:wr_arria5_phy_inst|tx_gxb_datain" -section_id "wr_arria5:tx"
 set_instance_assignment -name LL_MEMBER_OF "wr_arria5:tx" -to "wr_arria5_phy:wr_arria5_phy_inst|tx_reg_datain" -section_id "wr_arria5:tx"
-set_instance_assignment -name IO_STANDARD LVDS -to p16
-set_location_assignment PIN_E6 -to "p16(n)"
-set_instance_assignment -name IO_STANDARD "2.5 V" -to p26
 set_global_assignment -name LL_ENABLED ON -section_id flash
 set_global_assignment -name LL_AUTO_SIZE OFF -section_id flash
 set_global_assignment -name LL_STATE LOCKED -section_id flash
@@ -466,6 +457,41 @@ set_global_assignment -name LL_HEIGHT 3 -section_id "wr_arria5:reconf"
 set_global_assignment -name LL_ORIGIN X23_Y74 -section_id "wr_arria5:reconf"
 set_instance_assignment -name LL_MEMBER_OF "wr_arria5:reconf" -to "wr_arria5_phy:wr_arria5_phy_inst|arria5_phy_reconf:U_Reconf|alt_xcvr_reconfig:arria5_phy_reconf_inst|alt_xcvr_reconfig_basic:basic|av_xcvr_reconfig_basic:a5|av_xrbasic_lif:lif[0].logical_if|av_xrbasic_lif_csr:lif_csr|reg_rwdata*" -section_id "wr_arria5:reconf"
 set_instance_assignment -name LL_PRIORITY 1 -to "wr_arria5_phy:wr_arria5_phy_inst|arria5_phy_reconf:U_Reconf|alt_xcvr_reconfig:arria5_phy_reconf_inst|alt_xcvr_reconfig_basic:basic|av_xcvr_reconfig_basic:a5|av_xrbasic_lif:lif[0].logical_if|av_xrbasic_lif_csr:lif_csr|reg_rwdata*" -section_id "wr_arria5:reconf"
+set_location_assignment PIN_C7 -to n30
+set_location_assignment PIN_D5 -to n29
+set_location_assignment PIN_A9 -to n28
+set_location_assignment PIN_G8 -to n27
+set_location_assignment PIN_H9 -to n26
+set_location_assignment PIN_K10 -to n25
+set_location_assignment PIN_E6 -to n16
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n1
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n2
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n3
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n4
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n5
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n6
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n7
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n9
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n10
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n11
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n12
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n13
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n14
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n15
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p1
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p2
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p3
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p4
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p5
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p6
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p7
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p9
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p10
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p11
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p12
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p13
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p14
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p15
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd
