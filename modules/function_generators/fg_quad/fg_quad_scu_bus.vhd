@@ -46,6 +46,7 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
 
   
   signal  fg_cntrl_reg:     std_logic_vector(15 downto 0);
+  signal  fg_cntrl_rd_reg:  std_logic_vector(15 downto 0);
   signal  coeff_a_reg:      std_logic_vector(15 downto 0);
   signal  coeff_b_reg:      std_logic_vector(15 downto 0);
   signal  start_value_reg:  std_logic_vector(31 downto 0);
@@ -70,6 +71,8 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   
   signal  set_out:          std_logic;
   signal  s_en:             std_logic;
+  signal  fg_stopped:       std_logic;
+  signal  fg_running:       std_logic;
 
 
 begin
@@ -81,21 +84,22 @@ begin
       data_b              => coeff_b_reg,
       clk                 => clk,
       nrst                => nReset,
+      sync_rst            => fg_cntrl_reg(0),
       a_en                => wr_coeff_a,
       b_en                => wr_coeff_b,
       load_start          => wr_brc_start,
       s_en                => s_en,
       status_reg_changed  => wr_fg_cntrl,
       step_sel            => fg_cntrl_reg(12 downto 10),
-      --shift_b             => to_integer(unsigned(fg_cntrl_reg(9 downto 4))),
-      --shift_a             => to_integer(unsigned(fg_cntrl_reg(9 downto 4))),
       shift_b             => to_integer(unsigned(shift_b_reg(5 downto 0))),
       shift_a             => to_integer(unsigned(shift_a_reg(5 downto 0))),
       freq_sel            => fg_cntrl_reg(15 downto 13),
       dreq                => dreq,
       sw_out              => sw_out,
       sw_strobe           => sw_strobe,
-      set_out             => set_out    
+      set_out             => set_out,
+      fg_stopped          => fg_stopped,
+      fg_running          => fg_running       
     );
     
 adr_decoder: process (clk, nReset)
@@ -242,15 +246,17 @@ adr_decoder: process (clk, nReset)
     end if;
   end process adr_decoder;
 
--- fg_cntrl_reg(0)            : reset, 1 -> active
--- fg_cntrl_reg(1)            : load start
--- fg_cntrl_reg(9 downto 4)   : shift value b
--- fg_cntrl_reg(12 downto 10) : step value M
--- fg_cntrl_reg(15 downto 13) : add frequency select
+-- fg_cntrl_reg(0)            : reset, 1 -> active 
+-- fg_cntrl_reg(1)            : -
+-- fg_cntrl_reg(2)            : running (ro)
+-- fg_cntrl_reg(3)            : stopped (ro)
+-- fg_cntrl_reg(9 downto 4)   : shift value b (wo)
+-- fg_cntrl_reg(12 downto 10) : step value M (wo)
+-- fg_cntrl_reg(15 downto 13) : add frequency select (wo)
 cntrl_reg: process (clk, nReset, rd_fg_cntrl, wr_fg_cntrl)
   variable reset_cnt: unsigned(1 downto 0) := "00";
 begin
-  if nReset = '0' then
+  if nReset = '0' or fg_cntrl_reg(0) = '1' then
     fg_cntrl_reg <= (others => '0');
     coeff_a_reg <= (others => '0');
     coeff_b_reg <= (others => '0');
@@ -289,7 +295,11 @@ begin
   end if;
 end process;
 
-/*TODO*/
-Rd_port <= fg_cntrl_reg;
-  
+fg_cntrl_rd_reg <= fg_cntrl_reg(15 downto 4) & fg_stopped & fg_running & fg_cntrl_reg(1 downto 0);
+
+user_rd_active <= rd_fg_cntrl;
+
+Rd_Port <= fg_cntrl_rd_reg when rd_fg_cntrl = '1' else
+                x"0000";
+
 end architecture;

@@ -14,6 +14,7 @@ entity fg_quad_datapath is
   data_b:             in  std_logic_vector(15 downto 0);
   clk:                in  std_logic;
   nrst:               in  std_logic;
+  sync_rst:           in  std_logic;
   a_en, b_en:         in  std_logic;                      -- data register enable
   load_start, s_en:   in  std_logic;
   status_reg_changed: in  std_logic;   
@@ -24,7 +25,9 @@ entity fg_quad_datapath is
   dreq:               out std_logic;
   sw_out:             out std_logic_vector(23 downto 0);
   sw_strobe:          out std_logic;
-  set_out:            out std_logic);                     -- debug out
+  set_out:            out std_logic;
+  fg_stopped:         out std_logic;
+  fg_running:         out std_logic);
 end entity;
 
 architecture fg_quad_dp_arch of fg_quad_datapath is
@@ -45,7 +48,7 @@ signal s_inc_quad:      std_logic;
 signal s_inc_lin:       std_logic;
 signal s_add_lin_quad:  std_logic;
 
-type cntrl_type is (idle, load, quad_inc, lin_inc, addXQ);
+type cntrl_type is (idle, load, quad_inc, lin_inc, addXQ, stopped);
 signal control_state: cntrl_type;
 
 signal s_cnt_out:     std_logic_vector(7 downto 0);
@@ -94,12 +97,15 @@ signal s_add_cnt_en:  std_logic := '1';
 signal s_stp_reached: std_logic;
 signal s_cont:        std_logic;
 
+signal s_stopped:     std_logic;
+signal s_running:     std_logic;
+
 begin
 
 
 fast_cnt: process(clk, nrst)
 begin
-  if nrst = '0' then
+  if nrst = '0' or sync_rst = '1' then
     s_cnt <= "01000111";
   elsif rising_edge(clk) then
     if s_cnt(s_cnt'high) = '1' or s_cnt_set = '1' then
@@ -123,7 +129,7 @@ s_b_shifted <= shift_left(resize(signed(data_b), 64), shift_b);
 -- registers a, b, Q, X, start und adder for lin und quad term
 reg_file: process (clk, nrst, a_en, b_en, s_en, load_start)
 begin
-  if nrst = '0' then
+  if nrst = '0' or sync_rst = '1' then
     s_a_reg     <=  (others => '0');
     s_b_reg     <=  (others => '0');
     s_Q_reg     <=  (others => '0');
@@ -166,7 +172,7 @@ end process;
   begin
     -- important for synced start 
     --if nrst = '0' or s_reset_freq_cnt = '1' then
-    if nrst = '0' then
+    if nrst = '0' or sync_rst = '1' then
       s_freq_cnt <= (others => '0');
     elsif rising_edge(clk) then
       -- reload count at overflow
@@ -187,7 +193,7 @@ end process;
 -- control state machine
   control_sm: process (clk, nrst, s_cont)
   begin
-    if nrst = '0' then
+    if nrst = '0' or sync_rst = '1' then
       control_state <= idle;
       
     elsif rising_edge(clk) then
@@ -196,6 +202,8 @@ end process;
       s_add_lin_quad  <= '0';
       s_add_cnt_en    <= '0';
       s_freq_cnt_en   <= '1';
+      s_stopped       <= '0';
+      s_running       <= '0';
     
       if a_en = '1' or b_en = '1' then
         s_coeff_rcvd <= '1';
@@ -212,6 +220,7 @@ end process;
           end if;
     
         when quad_inc =>
+          s_running <= '1';
           if s_stp_reached = '1' then
             if s_coeff_rcvd = '1' then
               -- continue with new parameter set
@@ -223,7 +232,7 @@ end process;
             else
               -- no paramters received
               -- go to idle
-              control_state <= idle;
+              control_state <= stopped;
             end if;
           
           elsif s_freq_en = '1' then
@@ -233,12 +242,17 @@ end process;
           end if;
           
         when lin_inc =>
+          s_running <= '1';
           s_inc_lin <= '1'; 
           control_state <= addXQ;
         
-        when addXQ => 
+        when addXQ =>
+            s_running <= '1';
             s_add_lin_quad <= '1';
             control_state <= quad_inc;
+            
+        when stopped =>
+              s_stopped <= '1';
          
           
         when others =>
@@ -246,24 +260,14 @@ end process;
       end case;
     end if;
   end process;
-  
-  
---  irq: process (clk, nrst)
---  begin
---    if nrst = '0' then
---      dreq <= '0';
---    elsif rising_edge(clk) then
---      if control_state /= idle and s_add_cnt = 0 then
---        dreq <= '1';
---      elsif control_state /= idle and s_add_cnt = 2 then
---        dreq <= '0';
---      end if;
---    end if;
---  end process;
+
 
 dreq <= s_stp_reached or load_start;
 -- output register for the 24 most significant bits
 sw_out    <= std_logic_vector(s_X_reg(63 downto 40));
 sw_strobe <= s_add_lin_quad;
+
+fg_stopped <= s_stopped;
+fg_running <= s_running;
 
 end FG_quad_DP_arch;

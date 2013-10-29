@@ -5,6 +5,8 @@ exec rlwrap -C lm32-ctl -I $QUARTUS_ROOTDIR/bin/quartus_stp -t "$0" "$@"
 
 
 set i_index 0
+set hw_index 0
+set dev_index 0
 set i_max 0
 set hw_max 0
 set dev_max 0
@@ -14,11 +16,14 @@ set dev_max 0
 proc get_default_hw {} {
 
 	global usbblaster_name
+  global hw_max
 
 	if { [catch {
 		foreach hardware_name [get_hardware_names] {
 			if { [string match "USB-Blaster*" $hardware_name] } {
-				set usbblaster_name $hardware_name
+        puts " $hw_max $hardware_name"
+				set hw_max [expr {$hw_max + 1} ]
+        set usbblaster_name $hardware_name
 			}
 	
 		}
@@ -95,16 +100,47 @@ proc get_default_inst {} {
 
 proc config {var val} {
    global i_index
+   global hw_index
+   global dev_index
    global usbblaster_name	
    global test_device
    global hw_max
    global dev_max
    global i_max
-
+    
+   
    if {[string match "hw" $var]} {
 	if {$val >= 0 && $val <= $hw_max} {
+	if { [catch {
+		set hw_index 0
+    foreach hardware_name [get_hardware_names] {
+			if { [string match "USB-Blaster*" $hardware_name] } {
+				if { $hw_index == $val } {
+          set usbblaster_name $hardware_name
+          close_device
+          break
+        } else {
+        set hw_index [expr {$hw_index + 1} ] }
+			}
+	
+		}
+	} ] } {
+	    puts stderr "\n \033\[31mNo programmer found\033\[0m"
+	    exit 1	
+	}
    		#set i_index $val
-		puts "USBBlaster set to $i_index"
+		puts "USBBlaster set to $hw_index $usbblaster_name"
+
+   show_hw_settings
+    get_default_dev
+          
+    # Open device
+    if { [catch {open_device -hardware_name $usbblaster_name -device_name $test_device}] } {
+      puts stderr "\n \033\[31mError connecting to JTAG device $test_device @ $usbblaster_name\033\[0m"
+      exit 1	
+    }
+    get_default_inst
+
    	} else {
         	puts "$val is a bad input."
    	}
@@ -117,7 +153,7 @@ proc config {var val} {
 			}
 		}	
 		puts "JTAG device set to $test_device"
-   	} else {rea
+   	} else {
         	puts "$val is a bad input."
    	}
    } elseif {[string match "inst" $var]} {

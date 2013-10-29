@@ -8,26 +8,27 @@ package fg_quad_pkg is
 
 component fg_quad_datapath is
   generic (
-    CLK_in_Hz:  integer := 125000000
-    );
+    CLK_in_Hz:  integer := 125_000_000);
   port (
   data_a:             in  std_logic_vector(15 downto 0);
   data_b:             in  std_logic_vector(15 downto 0);
   clk:                in  std_logic;
   nrst:               in  std_logic;
+  sync_rst:           in  std_logic;
   a_en, b_en:         in  std_logic;                      -- data register enable
   load_start, s_en:   in  std_logic;
   status_reg_changed: in  std_logic;   
   step_sel:           in  std_logic_vector(2 downto 0);
+  shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
   shift_b:            in  integer range 0 to 48;          -- shiftvalue coeff b
-  shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff a
   freq_sel:           in  std_logic_vector(2 downto 0);
   dreq:               out std_logic;
   sw_out:             out std_logic_vector(23 downto 0);
   sw_strobe:          out std_logic;
-  set_out:            out std_logic                       -- debug out
-  );
-end component fg_quad_datapath;
+  set_out:            out std_logic;
+  fg_stopped:         out std_logic;
+  fg_running:         out std_logic);
+end component;
 
 component fg_quad_scu_bus is
   generic (
