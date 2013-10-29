@@ -448,7 +448,7 @@ port map (
     nSCUB_Reset_in => A_nReset, -- in,        SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
     Data_to_SCUB => Data_to_SCUB, -- in,        connect read sources from external user functions
     Dtack_to_SCUB => Dtack_to_SCUB, -- in,        connect Dtack from from external user functions
-    Intr_In => "00000000000000" & fg_1_dreq, -- in,        interrupt(15 downro 1)
+    Intr_In => "00000000000000" & fg_1_dreq, -- in,        interrupt(15 downto 1)
     User_Ready => '1',
     Data_from_SCUB_LA => Data_from_SCUB_LA, -- out,        latched data from SCU_Bus for external user functions
     ADR_from_SCUB_LA => ADR_from_SCUB_LA, -- out,        latched address from SCU_Bus for external user functions
