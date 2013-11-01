@@ -86,14 +86,6 @@ end wb_mil_scu;
 
 ARCHITECTURE arch_wb_mil_scu OF wb_mil_scu IS 
 
-component Mil_12Mhz
-  PORT (
-    inclk0    : IN STD_LOGIC  := '0';
-    c0    : OUT STD_LOGIC ;
-    locked    : OUT STD_LOGIC 
-  );
-end component;
-
 
 -- allowed wishbone addresses
 constant  mil_wr_data_a:      unsigned(c_mil_addr_width-1 downto 2) := to_unsigned(16#00#, c_mil_addr_width-2);
@@ -187,7 +179,7 @@ ena_led_cnt: div_n
     )
 
   port map (
-    res       => open,
+    res       => '0',
     clk       => clk_i,
     ena       => open,            -- das untersetzende enable muss in der gleichen Clockdomäne erzeugt werden.
                                   -- Das enable sollte nur ein Takt lang sein.

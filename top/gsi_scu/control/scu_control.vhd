@@ -19,6 +19,7 @@ use work.build_id_pkg.all;
 use work.oled_display_pkg.all;
 use work.lpc_uart_pkg.all;
 use work.wb_irq_pkg.all;
+use work.wb_mil_scu_pkg.all;
 
 entity scu_control is
   port(
@@ -111,16 +112,71 @@ entity scu_control is
     -----------------------------------------------------------------------
     hpla_ch           : out std_logic_vector(15 downto 0);
     hpla_clk          : out std_logic;
+
+    -----------------------------------------------------------------------
+    -- Ext_Conn2
+    -----------------------------------------------------------------------
+      -- IO_2_5V(0)       -> EXT_CONN2 pin b4
+      -- IO_2_5V(1)       -> EXT_CONN2 pin b5
+      -- IO_2_5V(2)       -> EXT_CONN2 pin b6
+      -- IO_2_5V(3)       -> EXT_CONN2 pin b7
+      -- IO_2_5V(4)       -> EXT_CONN2 pin b8
+      -- IO_2_5V(5)       -> EXT_CONN2 pin b9
+      -- IO_2_5V(6)       -> EXT_CONN2 pin b10
+      -- IO_2_5V(7)       -> EXT_CONN2 pin b11
+      -- IO_2_5V(8)       -> EXT_CONN2 pin b14
+      -- IO_2_5V(9)       -> EXT_CONN2 pin b15
+      -- IO_2_5V(10)      -> EXT_CONN2 pin b16
+      -- IO_2_5V(11)      -> EXT_CONN2 pin b17
+      -- IO_2_5V(12)      -> EXT_CONN2 pin b18
+      -- IO_2_5V(13)      -> EXT_CONN2 pin b19
+      -- IO_2_5V(14)      -> EXT_CONN2 pin b20
+      -- IO_2_5V(15)      -> EXT_CONN2 pin b21
+    IO_2_5V:          inout std_logic_vector(15 downto 0);
     
+      -- EIO(0)           -> EXT_CONN2 pin a4
+      -- EIO(1)           -> EXT_CONN2 pin a5
+      -- EIO(2)           -> EXT_CONN2 pin a6
+      -- EIO(3)           -> EXT_CONN2 pin a7
+      -- EIO(4)           -> EXT_CONN2 pin a8
+      -- EIO(5)           -> EXT_CONN2 pin a9
+      -- EIO(6)           -> EXT_CONN2 pin a10
+      -- EIO(7)           -> EXT_CONN2 pin a11
+      -- EIO(8)           -> EXT_CONN2 pin a14
+      -- EIO(9)           -> EXT_CONN2 pin a15
+      -- EIO(10)          -> EXT_CONN2 pin a16
+      -- EIO(11)          -> EXT_CONN2 pin a17
+      -- EIO(12)          -> EXT_CONN2 pin a18
+      -- EIO(13)          -> EXT_CONN2 pin a19
+      -- EIO(14)          -> EXT_CONN2 pin a20
+      -- EIO(15)          -> EXT_CONN2 pin a21
+      -- EIO(16)          -> EXT_CONN2 pin a23
+      -- EIO(17)          -> EXT_CONN2 pin a24
+    EIO:              inout std_logic_vector(17 downto 0);
+    
+    onewire_ext:      inout std_logic;        -- to extension board
+
     -----------------------------------------------------------------------
-    -- EXT CONN
+    -- EXT CONN3
     -----------------------------------------------------------------------
-    IO_2_5            : out std_logic_vector(13 downto 0);
-    A_EXT_LVDS_RX     : in  std_logic_vector( 3 downto 0);
-    A_EXT_LVDS_TX     : out std_logic_vector( 3 downto 0);
-    A_EXT_LVDS_CLKOUT : out std_logic;
-    A_EXT_LVDS_CLKIN  : in  std_logic;
-    EIO               : out std_logic_vector(16 downto 0);
+
+ --   A_EXT_LVDS_RX     : in  std_logic_vector( 3 downto 0);    -- von Mil-Extension verwendet
+ --   A_EXT_LVDS_TX     : out std_logic_vector( 3 downto 0);    -- von Mil-Extension verwendet
+ --   A_EXT_LVDS_CLKOUT : out std_logic;                        -- von Mil-Extension verwendet
+    A_EXT_LVDS_CLKIN  : in    std_logic;
+
+    a_ext_conn3_a2:     inout std_logic;        -- Optokoppler Interlock
+    a_ext_conn3_a3:     inout std_logic;        -- Optokoppler Data Ready
+    a_ext_conn3_a6:     inout std_logic;        -- Optokoppler Data Request
+    a_ext_conn3_a7:     inout std_logic;        -- Optokoppler Timing
+    a_ext_conn3_a10:    inout std_logic;
+    a_ext_conn3_a11:    inout std_logic;
+    a_ext_conn3_a14:    inout std_logic;
+    a_ext_conn3_a15:    inout std_logic;
+    a_ext_conn3_a18:    inout std_logic;
+    a_ext_conn3_a19:    inout std_logic;
+    a_ext_conn3_b4:     inout std_logic;
+    a_ext_conn3_b5:     inout std_logic;
     
     -----------------------------------------------------------------------
     -- serial channel SCU bus
@@ -159,6 +215,15 @@ entity scu_control is
     nPWRBTN           : out std_logic;
     nFPGA_Res_Out     : out std_logic;
     A_nCONFIG         : out std_logic := '1';
+    npci_pme:           out std_logic;                    -- pci power management event, low activ
+
+    
+    -----------------------------------------------------------------------
+    -- SCU-CB Version
+    -----------------------------------------------------------------------
+    scu_cb_version:   in    std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
+    
+
     
     -----------------------------------------------------------------------
     -- Parallel Flash
@@ -215,7 +280,7 @@ architecture rtl of scu_control is
     date          => x"20120305",
     name          => "GSI_GPIO_32        ")));
 
-	constant c_dpram_size : natural := 131072/4;
+  constant c_dpram_size : natural := 131072/4;
 
 
   ----------------------------------------------------------------------------------
@@ -224,7 +289,7 @@ architecture rtl of scu_control is
   constant c_irq_slaves   : natural := 4;
   constant c_irq_masters  : natural := 2;
   constant c_irq_layout   : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
-   (0 => f_sdb_embed_device(c_irq_ep_sdb, 	      x"00000000"),
+   (0 => f_sdb_embed_device(c_irq_ep_sdb,         x"00000000"),
     1 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000100"),
     2 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000200"),
     3 => f_sdb_embed_device(c_irq_hostbridge_ep_sdb,  x"00001000"));
@@ -236,12 +301,12 @@ architecture rtl of scu_control is
   signal irq_cbar_master_o : t_wishbone_master_out_array(c_irq_slaves-1 downto 0);
 
   -- END OF MSI IRQ Crossbar
-  ----------------------------------------------------------------------------------	 
+  ----------------------------------------------------------------------------------   
   
   ----------------------------------------------------------------------------------
   -- GSI Periphery Crossbar --------------------------------------------------------
   ----------------------------------------------------------------------------------
-  constant c_per_slaves   : natural := 10;
+  constant c_per_slaves   : natural := 11;
   constant c_per_masters  : natural := 1;
   constant c_per_layout   : t_sdb_record_array(c_per_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00000000"),
@@ -253,18 +318,19 @@ architecture rtl of scu_control is
     6 => f_sdb_embed_device(c_wrc_periph1_sdb,            x"00800100"),
     7 => f_sdb_embed_device(c_oled_display,               x"00900000"),
     8 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"01000000"),
-    9 => f_sdb_embed_device(c_build_id_sdb,               x"00800400"));
+    9 => f_sdb_embed_device(c_build_id_sdb,               x"00800400"),
+    10 => f_sdb_embed_device(c_xwb_gsi_mil_scu,           x"00808000"));
   constant c_per_sdb_address : t_wishbone_address := x"00001000";
   constant c_per_bridge_sdb  : t_sdb_bridge       :=
     f_xwb_bridge_layout_sdb(true, c_per_layout, c_per_sdb_address);
-	
+  
   signal per_cbar_slave_i  : t_wishbone_slave_in_array (c_per_masters-1 downto 0);
   signal per_cbar_slave_o  : t_wishbone_slave_out_array(c_per_masters-1 downto 0);
   signal per_cbar_master_i : t_wishbone_master_in_array(c_per_slaves-1 downto 0);
-  signal per_cbar_master_o : t_wishbone_master_out_array(c_per_slaves-1 downto 0);	
+  signal per_cbar_master_o : t_wishbone_master_out_array(c_per_slaves-1 downto 0);  
   
   -- END OF GSI Periphery Crossbar
-  ----------------------------------------------------------------------------------		 
+  ----------------------------------------------------------------------------------     
   
   ----------------------------------------------------------------------------------
   -- Top crossbar ------------------------------------------------------------------
@@ -274,10 +340,10 @@ architecture rtl of scu_control is
   constant c_top_layout : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),    x"00000000"),
     1 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00080000"),
-	 2 => f_sdb_embed_device(c_ebm_sdb,          			 x"01000000"),
+   2 => f_sdb_embed_device(c_ebm_sdb,                x"01000000"),
     3 => f_sdb_embed_bridge(c_per_bridge_sdb,             x"02000000")
    );
-  constant c_top_sdb_address : t_wishbone_address := x"000F0000";	 
+  constant c_top_sdb_address : t_wishbone_address := x"000F0000";  
   
   signal top_cbar_slave_i  : t_wishbone_slave_in_array (c_top_masters-1 downto 0);
   signal top_cbar_slave_o  : t_wishbone_slave_out_array(c_top_masters-1 downto 0);
@@ -285,7 +351,7 @@ architecture rtl of scu_control is
   signal top_cbar_master_o : t_wishbone_master_out_array(c_top_slaves-1 downto 0);
   
   -- END OF Top crossbar
-  ----------------------------------------------------------------------------------		
+  ----------------------------------------------------------------------------------    
 
   signal eca_2_wb_i : t_wishbone_master_in;
   signal eca_2_wb_o : t_wishbone_master_out;
@@ -407,6 +473,18 @@ architecture rtl of scu_control is
   signal kbc_in_port  : std_logic_vector(7 downto 0);
   
   signal rst_usr_lm32_n : std_logic;
+  
+  signal  mil_12Mhz:    std_logic;
+  signal  extension_id: std_logic_vector(3 downto 0);
+
+  component mil_pll
+    port (
+      inclk0: in  std_logic := '0';
+      c0:     out std_logic ;
+      locked: out std_logic
+    );
+  end component;
+
 begin
 
   ----------------------------------------------------------------------------------
@@ -455,6 +533,11 @@ begin
   sys_clk : global_region port map(
     inclk  => clk_sys0,
     outclk => clk_sys);
+    
+  mil_pll_inst: mil_pll port map(
+    inclk0 => clk_sys1,
+    c0     => mil_12Mhz);        
+
   
   reconf_clk : global_region port map(
     inclk  => clk_sys1,
@@ -649,7 +732,7 @@ begin
            
       ctrl_slave_o  => per_cbar_master_i(3),
       ctrl_slave_i  => per_cbar_master_o(3)
-      );	
+      );  
 
   -- END OF Top LM32 CPU & RAM 
   ----------------------------------------------------------------------------------
@@ -707,16 +790,16 @@ U_DAC_ARB : spec_serial_dac_arb
 
   eb : eb_master_slave_wrapper
   generic map(
-    g_with_master         	=> true,
-    g_ebs_sdb_address		=> (x"00000000" & c_top_sdb_address),
-	 g_ebm_adr_bits_hi 		=> 10)               
+    g_with_master           => true,
+    g_ebs_sdb_address   => (x"00000000" & c_top_sdb_address),
+   g_ebm_adr_bits_hi    => 10)               
   port map(
-	 clk_i       => clk_sys,
-	 nRst_i      => rstn_sys,
-	 snk_i       => mb_snk_in,
-	 snk_o       => mb_snk_out,
-	 src_o       => mb_src_out,
-	 src_i       => mb_src_in,
+   clk_i       => clk_sys,
+   nRst_i      => rstn_sys,
+   snk_i       => mb_snk_in,
+   snk_o       => mb_snk_out,
+   src_o       => mb_src_out,
+   src_i       => mb_src_in,
   
     --ebs
     ebs_cfg_slave_o => wrc_master_i,
@@ -727,7 +810,7 @@ U_DAC_ARB : spec_serial_dac_arb
     --ebm (optional)
     ebm_wb_slave_i  => top_cbar_master_o(2),
     ebm_wb_slave_o  => top_cbar_Master_i(2));
-		 
+     
 
   
   PCIe : pcie_wb
@@ -763,9 +846,9 @@ U_DAC_ARB : spec_serial_dac_arb
       sys_rstn_i      => rstn_sys,
       triggers_i(0)   => lemo_io(1),
       triggers_i(1)   => lemo_io(2),
-		triggers_i(2)	 => eca_gpio(0),
-		triggers_i(3)	 => eca_gpio(1),
-		triggers_i(4)	 => eca_gpio(2),
+    triggers_i(2)  => eca_gpio(0),
+    triggers_i(3)  => eca_gpio(1),
+    triggers_i(4)  => eca_gpio(2),
       tm_time_valid_i => tm_valid,
       tm_tai_i        => tm_tai,
       tm_cycles_i     => tm_cycles,
@@ -810,11 +893,11 @@ U_DAC_ARB : spec_serial_dac_arb
       channel_i => channels(1),
       master_o  => eca_2_wb_o,
       master_i  => eca_2_wb_i);
-		
-	 eca_2_irq : xwb_clock_crossing 
-	 generic map(
-				g_size => 256)
-	 port map(
+    
+   eca_2_irq : xwb_clock_crossing 
+   generic map(
+        g_size => 256)
+   port map(
     slave_clk_i    => clk_ref,
     slave_rst_n_i  => rstn_ref,
     slave_i        => eca_2_wb_o,
@@ -822,8 +905,8 @@ U_DAC_ARB : spec_serial_dac_arb
     master_clk_i   => clk_sys, 
     master_rst_n_i => rstn_sys,
     master_i       => irq_cbar_slave_o(0),
-    master_o       => irq_cbar_slave_i(0));	
-		
+    master_o       => irq_cbar_slave_i(0)); 
+    
   irq_scub_m : wb_irq_scu_bus 
     generic map(
       g_interface_mode      => PIPELINED,
@@ -933,7 +1016,7 @@ U_DAC_ARB : spec_serial_dac_arb
       
   -- OLED display
   dcon :  display_console
-    port map(	
+    port map( 
       clk_i      => clk_sys,
       nRst_i     => rstn_sys,
       slave_i    => per_cbar_master_o(7),
@@ -941,7 +1024,7 @@ U_DAC_ARB : spec_serial_dac_arb
       RST_DISP_o => hpla_ch(8),
       DC_SPI_o   => hpla_ch(6),
       SS_SPI_o   => hpla_ch(4),
-      SCK_SPI_o  => hpla_ch(2),	
+      SCK_SPI_o  => hpla_ch(2), 
       SD_SPI_o   => hpla_ch(10),
       SH_VR_o    => hpla_ch(0));
     
@@ -979,7 +1062,7 @@ U_DAC_ARB : spec_serial_dac_arb
       dac_hpll_data_o    => dac_hpll_data,
       dac_dpll_load_p1_o => dac_dpll_load_p1,
       dac_dpll_data_o    => dac_dpll_data,
-		
+    
       phy_ref_clk_i      => clk_ref,
       phy_tx_data_o      => phy_tx_data,
       phy_tx_k_o         => phy_tx_k,
@@ -1044,7 +1127,85 @@ U_DAC_ARB : spec_serial_dac_arb
   -- END OF WR Core
   ----------------------------------------------------------------------------------
 
+  mil: wb_mil_scu
+generic map (
+  Clk_in_Hz      => 65_500_000      -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
+                                    -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+  )
+port map (
+  clk_i         => clk_sys,
+  nRst_i        => rstn_sys,
+  slave_i       => per_cbar_master_o(10),
+  slave_o       => per_cbar_master_i(10),
+  
+  -- encoder (transmiter) signals of HD6408 --------------------------------------------------------------------------------
+  nME_BOO       => io_2_5v(11),         -- in: HD6408-output: transmit bipolar positive.
+  nME_BZO       => io_2_5v(12),         -- in: HD6408-output: transmit bipolar negative.
+                  
+  ME_SD         => io_2_5v(10),         -- in: HD6408-output: '1' => send data is active.
+  ME_ESC        => io_2_5v(9),          -- in: HD6408-output: encoder shift clock for shifting data into the encoder. The
+                                        --                    encoder samples ME_SDI on low-to-high transition of ME_ESC.
+  ME_SDI        => eio(4),              -- out: HD6408-input: serial data in accepts a serial data stream at a data rate
+                                        --                    equal to encoder shift clock.
+  ME_EE         => eio(5),              -- out: HD6408-input: a high on encoder enable initiates the encode cycle.
+                                        --                    (Subject to the preceding cycle being completed).
+  ME_SS         => eio(6),              -- out: HD6408-input: sync select actuates a Command sync for an input high
+                                        --                    and data sync for an input low.
 
+  -- decoder (receiver) signals of HD6408 ---------------------------------------------------------------------------------
+  ME_BOI        => eio(1),              -- out: HD6408-input: A high input should be applied to bipolar one in when the bus is in its
+                                        --                    positive state, this pin must be held low when the Unipolar input is used.
+  ME_BZI        => eio(2),              -- out: HD6408-input: A high input should be applied to bipolar zero in when the bus is in its
+                                        --                    negative state. This pin must be held high when the Unipolar input is used.
+  ME_UDI        => eio(3),              -- out: HD6408-input: With ME_BZI high and ME_BOI low, this pin enters unipolar data in to the
+                                        --                    transition finder circuit. If not used this input must be held low.
+  ME_CDS        => io_2_5v(7),          -- in: HD6408-output: high occurs during output of decoded data which was preced
+                                        --                    by a command synchronizing character. Low indicares a data sync.
+  ME_SDO        => io_2_5v(5),          -- in: HD6408-output: serial data out delivers received data in correct NRZ format.
+  ME_DSC        => io_2_5v(4),          -- in: HD6408-output: decoder shift clock delivers a frequency (decoder clock : 12),
+                                        --                    synchronized by the recovered serial data stream.
+  ME_VW         => io_2_5v(6),          -- in: HD6408-output: high indicates receipt of a VALID WORD.
+  ME_TD         => io_2_5v(8),          -- in: HD6408-output: take data is high during receipt of data after identification
+                                        --                    of a sync pulse and two valid Manchester data bits
+
+  -- decoder/encoder signals of HD6408 ------------------------------------------------------------------------------------
+--  ME_12MHz    => eio(0),              -- out: HD6408-input: is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
+  
+  Mil_BOI       => io_2_5v(13),         -- in:  connect positive bipolar receiver, in FPGA directed to the external
+                                        --      manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
+                                        --      vhdl manchester macro.
+  Mil_BZI       => io_2_5v(14),         -- in:  connect negative bipolar receiver, in FPGA directed to the external
+                                        --      manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
+                                        --      vhdl manchester macro.
+  Sel_Mil_Drv   => eio(9),              -- output: active high, enable the external open collector driver to the transformer
+  nSel_Mil_Rcv  => eio(7),              -- output: active low, enable the external differtial receive circuit.
+  Mil_nBOO      => eio(10),             -- out: connect bipolar positive output to external open collector driver of
+                                        --      the transformer. Source is the external manchester en/decoder HD6408 via
+                                        --      nME_BOO or the internal FPGA vhdl manchester macro.
+  Mil_nBZO      => eio(8),              -- out: connect bipolar negative output to external open collector driver of
+                                        --      the transformer. Source is the external manchester en/decoder HD6408 via
+                                        --      nME_BZO or the internal FPGA vhdl manchester macro.
+  nLed_Mil_Rcv  => a_ext_conn3_b4,        
+  nLed_Mil_Trm  => a_ext_conn3_b5,
+  nLed_Mil_Err  => a_ext_conn3_a19,
+  error_limit_reached => open,
+  Mil_Decoder_Diag_p  => open,
+  Mil_Decoder_Diag_n  => open,
+  timing         => not a_ext_conn3_a7,
+  nLed_Timing    => eio(17),
+  Interlock_Intr => not a_ext_conn3_a2,
+  Data_Rdy_Intr  => not a_ext_conn3_a3,
+  Data_Req_Intr  => not a_ext_conn3_a6,
+  nLed_Interl    => a_ext_conn3_a15,
+  nLed_drq       => a_ext_conn3_a14,
+  nLed_dry       => a_ext_conn3_a11
+  );
+ 
+  eio(0) <= mil_12Mhz;
+  
+  extension_id <= io_2_5v(3 downto 0);
+
+  
   ----------------------------------------------------------------------------------
   -- System IOs --------------------------------------------------------------------
   ----------------------------------------------------------------------------------
@@ -1180,14 +1341,14 @@ U_DAC_ARB : spec_serial_dac_arb
   -- 20 is ground
   
   -- EXT CONN not connected
-  IO_2_5            <= (others => 'Z');
-  a_EXT_LVDS_CLKOUT <= '0';
-  EIO               <= (others => 'Z');
+  --  IO_2_5V           <= (others => 'Z');
+  --  a_EXT_LVDS_CLKOUT <= '0';
+  --  EIO               <= (others => 'Z');
   
-  A_EXT_LVDS_TX(0) <= clk_butis;
-  A_EXT_LVDS_TX(1) <= clk_ref;
-  A_EXT_LVDS_TX(2) <= pps;
-  A_EXT_LVDS_TX(3) <= '0';
+--  A_EXT_LVDS_TX(0) <= clk_butis;  -- von Mil-Extension verwendet
+--  A_EXT_LVDS_TX(1) <= clk_ref;    -- von Mil-Extension verwendet
+--  A_EXT_LVDS_TX(2) <= pps;        -- von Mil-Extension verwendet
+--  A_EXT_LVDS_TX(3) <= '0';        -- von Mil-Extension verwendet
   
   -- Parallel Flash not connected
   nRST_FSH <= '0';

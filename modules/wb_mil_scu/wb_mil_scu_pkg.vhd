@@ -9,7 +9,7 @@ library work;
 
 package wb_mil_scu_pkg is
 
-constant  c_mil_byte_addr_range:  integer := 16#1000# * 4;              -- all resources (byte, word, double word) are alligned to modulo 4 addresses,
+constant  c_mil_byte_addr_range:  integer := 16#2000# * 4;              -- all resources (byte, word, double word) are alligned to modulo 4 addresses,
                                                                         -- so multiply the c_mil_byte_addr_range by 4.
 constant  c_mil_addr_width:       integer := integer(ceil(log2(real(c_mil_byte_addr_range))));
 
