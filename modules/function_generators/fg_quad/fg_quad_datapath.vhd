@@ -17,6 +17,8 @@ entity fg_quad_datapath is
   sync_rst:           in  std_logic;
   a_en, b_en:         in  std_logic;                      -- data register enable
   load_start, s_en:   in  std_logic;
+  sync_start:         in  std_logic;
+  start_value:        in  std_logic_vector(31 downto 0);
   status_reg_changed: in  std_logic;   
   step_sel:           in  std_logic_vector(2 downto 0);
   shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
@@ -25,7 +27,6 @@ entity fg_quad_datapath is
   dreq:               out std_logic;
   sw_out:             out std_logic_vector(23 downto 0);
   sw_strobe:          out std_logic;
-  set_out:            out std_logic;
   fg_stopped:         out std_logic;
   fg_running:         out std_logic);
 end entity;
@@ -93,7 +94,6 @@ signal  s_freq_en:     std_logic;
 signal  s_freq_cnt_en: std_logic := '1';
 
 signal s_add_cnt:     unsigned(c_add_cnt_width - 1 downto 0);
-signal s_add_cnt_en:  std_logic := '1';
 signal s_stp_reached: std_logic;
 signal s_cont:        std_logic;
 
@@ -102,32 +102,13 @@ signal s_running:     std_logic;
 
 begin
 
-
-fast_cnt: process(clk, nrst)
-begin
-  if nrst = '0' or sync_rst = '1' then
-    s_cnt <= "01000111";
-  elsif rising_edge(clk) then
-    if s_cnt(s_cnt'high) = '1' or s_cnt_set = '1' then
-      s_cnt <= "01000111";
-    else  
-      s_cnt <= s_cnt - 1;
-    end if;
-  end if;
-end process;
-  
-s_reached <= s_cnt(s_cnt'high);
-s_cnt_out <= std_logic_vector(s_cnt);
-
-
-
 -- shifting for quadratic coefficient a
 s_a_shifted <= shift_left(resize(signed(data_a), 64), shift_a);
 -- shifting for linear coefficient b
 s_b_shifted <= shift_left(resize(signed(data_b), 64), shift_b);
 
 -- registers a, b, Q, X, start und adder for lin und quad term
-reg_file: process (clk, nrst, a_en, b_en, s_en, load_start)
+reg_file: process (clk, nrst, sync_rst, a_en, b_en, s_en, load_start)
 begin
   if nrst = '0' or sync_rst = '1' then
     s_a_reg     <=  (others => '0');
@@ -144,8 +125,8 @@ begin
     end if;
     
     -- init quad term with start value
-    if s_en = '1' then
-      s_Q_reg <= signed(resize(signed(data_a), 64));
+    if load_start = '1' then
+      s_Q_reg <= signed(resize(signed(start_value), 64));
     end if;
     
     -- increment quad term
@@ -168,7 +149,7 @@ end process;
 
 
   -- downcounter for frequency division
-  freq_cnt: process(clk, nrst)
+  freq_cnt: process(clk, nrst, sync_rst)
   begin
     -- important for synced start 
     --if nrst = '0' or s_reset_freq_cnt = '1' then
@@ -191,7 +172,7 @@ end process;
   s_stp_reached <= std_logic(s_add_cnt(s_add_cnt'high));
 
 -- control state machine
-  control_sm: process (clk, nrst, s_cont)
+  control_sm: process (clk, nrst, s_cont, sync_rst)
   begin
     if nrst = '0' or sync_rst = '1' then
       control_state <= idle;
@@ -200,7 +181,6 @@ end process;
       s_inc_quad      <= '0';
       s_inc_lin       <= '0';
       s_add_lin_quad  <= '0';
-      s_add_cnt_en    <= '0';
       s_freq_cnt_en   <= '1';
       s_stopped       <= '0';
       s_running       <= '0';

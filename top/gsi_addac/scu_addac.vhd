@@ -252,7 +252,7 @@ constant c_xwb_owm : t_sdb_device := (
   constant c_dpram_size : natural := 16384; -- in 32-bit words (64KB)
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size), x"00000000"),
-    1 => f_sdb_embed_device(c_xwb_owm,                                                  x"00100600"),
+    1 => f_sdb_embed_device(c_xwb_owm, x"00100600"),
     2 => f_sdb_embed_device(c_xwb_uart, x"00100700"),
     3 => f_sdb_embed_device(c_xwb_scu_reg, x"00100800"));
   constant c_sdb_address : t_wishbone_address := x"00100000";
@@ -710,15 +710,16 @@ p_read_mux: process (
     adc_rd_active, adc_data_to_SCUB,
     wb_scu_data_to_SCUB, wb_scu_rd_active
     )
-  variable sel: unsigned(4 downto 0);
+  variable sel: unsigned(5 downto 0);
   begin
-    sel := wb_scu_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
+    sel := fg_1_rd_active & wb_scu_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
     case sel IS
-      when "00001" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "00010" => Data_to_SCUB <= dac1_data_to_SCUB;
-      when "00100" => Data_to_SCUB <= dac2_data_to_SCUB;
-      when "01000" => Data_to_SCUB <= adc_data_to_SCUB;
-      when "10000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "000001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "000010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "000100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "001000" => Data_to_SCUB <= adc_data_to_SCUB;
+      when "010000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "100000" => Data_to_SCUB <= fg_1_data_to_SCUB;
       when others =>
         Data_to_SCUB <= X"0000";
     end case;

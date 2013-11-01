@@ -87,7 +87,9 @@ begin
       sync_rst            => fg_cntrl_reg(0),
       a_en                => wr_coeff_a,
       b_en                => wr_coeff_b,
-      load_start          => wr_brc_start,
+      sync_start          => wr_brc_start,
+      load_start          => wr_start_value_h,              -- when high word was written, load into datapath
+      start_value         => start_value_reg(31 downto 0),
       s_en                => s_en,
       status_reg_changed  => wr_fg_cntrl,
       step_sel            => fg_cntrl_reg(12 downto 10),
@@ -97,7 +99,6 @@ begin
       dreq                => dreq,
       sw_out              => sw_out,
       sw_strobe           => sw_strobe,
-      set_out             => set_out,
       fg_stopped          => fg_stopped,
       fg_running          => fg_running       
     );
@@ -253,7 +254,7 @@ adr_decoder: process (clk, nReset)
 -- fg_cntrl_reg(9 downto 4)   : shift value b (wo)
 -- fg_cntrl_reg(12 downto 10) : step value M (wo)
 -- fg_cntrl_reg(15 downto 13) : add frequency select (wo)
-cntrl_reg: process (clk, nReset, rd_fg_cntrl, wr_fg_cntrl)
+cntrl_reg: process (clk, nReset, rd_fg_cntrl, fg_cntrl_reg, wr_fg_cntrl)
   variable reset_cnt: unsigned(1 downto 0) := "00";
 begin
   if nReset = '0' or fg_cntrl_reg(0) = '1' then
@@ -295,11 +296,18 @@ begin
   end if;
 end process;
 
-fg_cntrl_rd_reg <= fg_cntrl_reg(15 downto 4) & fg_stopped & fg_running & fg_cntrl_reg(1 downto 0);
+fg_cntrl_rd_reg <=  fg_cntrl_reg(15 downto 13) & fg_cntrl_reg(12 downto 10) &
+                    fg_cntrl_reg(9 downto 4) & fg_stopped & fg_running & fg_cntrl_reg(1 downto 0);
 
 user_rd_active <= rd_fg_cntrl;
 
-Rd_Port <= fg_cntrl_rd_reg when rd_fg_cntrl = '1' else
+Rd_Port <=  fg_cntrl_rd_reg               when rd_fg_cntrl = '1' else
+            coeff_a_reg                   when rd_coeff_a = '1' else
+            coeff_b_reg                   when rd_coeff_b = '1' else
+            start_value_reg(31 downto 16) when rd_start_value_h = '1' else
+            start_value_reg(15 downto 0)  when rd_start_value_l = '1' else
+            shift_a_reg                   when rd_shift_a = '1' else
+            shift_b_reg                   when rd_shift_b = '1' else
                 x"0000";
 
 end architecture;

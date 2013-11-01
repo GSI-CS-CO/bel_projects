@@ -17,6 +17,8 @@ component fg_quad_datapath is
   sync_rst:           in  std_logic;
   a_en, b_en:         in  std_logic;                      -- data register enable
   load_start, s_en:   in  std_logic;
+  sync_start:         in  std_logic;
+  start_value:        in  std_logic_vector(31 downto 0);
   status_reg_changed: in  std_logic;   
   step_sel:           in  std_logic_vector(2 downto 0);
   shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
@@ -25,7 +27,6 @@ component fg_quad_datapath is
   dreq:               out std_logic;
   sw_out:             out std_logic_vector(23 downto 0);
   sw_strobe:          out std_logic;
-  set_out:            out std_logic;
   fg_stopped:         out std_logic;
   fg_running:         out std_logic);
 end component;
