@@ -58,17 +58,16 @@ void _irq_entry(void) {
 const char mytext[] = "Hallo Welt!...\n\n";
 
 void main(void) {
-  unsigned short dac_value = 0xffff;
-  int i;
+  unsigned short dac_value = 0xaaaa;
+  int j;
   char buffer[14];
   //enable dac
-  scu_bus_master[(5 << 16) + DAC1_BASE + DAC_CNTRL] = 0x1;
-  
+  scu_bus_master[(5 << 16) + DAC2_BASE + DAC_CNTRL] = 0x1;
   while (1) {
-    usleep(1000);
-    scu_bus_master[(5 << 16) + DAC1_BASE + DAC_DATA] = (signed)32767;
-    usleep(1000);
-    scu_bus_master[(5 << 16) + DAC1_BASE + DAC_DATA] = (signed)-32768;
+    while((scu_bus_master[(5 << 16) + DAC2_BASE + DAC_CNTRL] & 0x1));
+  
+    dac_value = ~dac_value;
+    scu_bus_master[(5 << 16) + DAC2_BASE + DAC_DATA] = dac_value;
    // disp_put_c('\f');
    // mat_sprinthex(buffer, (unsigned long)dac_value);
    // disp_put_str(buffer);
@@ -87,7 +86,7 @@ void main(void) {
   //irq_set_mask(0x03);
   //irq_enable();
 
-  
+ 
   disp_reset();	
   disp_put_str(mytext);
 

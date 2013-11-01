@@ -3,6 +3,10 @@
 #include "irq.h"
 #include "scu_bus.h"
 
+//extern unsigned int* _startshared[];
+//extern unsigned int* _endshared[];
+//volatile unsigned int* fesa_if = (unsigned int*)_startshared;
+
 volatile unsigned int* display            = (unsigned int*)0x02900000;
 volatile unsigned int* irq_slave          = (unsigned int*)0x02000d00;
 volatile unsigned short* scu_bus_master   = (unsigned short*)0x02400000;
@@ -45,7 +49,8 @@ void isr1()
         scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 1;
       //ack dreq
       else if (scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] & 2) {
-        scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x8FF;
+        //scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = fesa_if[0];//0x8FF;
+        scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x1;
         scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 2;
       }
     }
@@ -64,7 +69,7 @@ void _irq_entry(void) {
 
 //const char mytext[] = "Hallo Welt!...\n\n";
 
-void main(void) {
+int main(void) {
   int i = 0;
   //char buffer[14];
 
@@ -103,9 +108,9 @@ void main(void) {
     
     scu_bus_master[(slaves[i] << 16) + DAC2_BASE + DAC_CNTRL] = 0x10; //set FG mode
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = 0x1; //reset fg
-    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = (7 << 13); //set frequency Bit 15..13
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = (0 << 13); //set frequency Bit 15..13
    // scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] |= (0 << 10); //set frequency Bit 12..10
-    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x8ff;
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x1;
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTA] = 0x24;
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTB] = 0x24;
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_BROAD] = 0x4711; // start signal to all fg slaves
@@ -115,4 +120,6 @@ void main(void) {
  // disp_reset();	
  // disp_put_str(mytext);
   while(1);
+
+  return(0);
 }
