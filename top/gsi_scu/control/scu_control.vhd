@@ -215,13 +215,13 @@ entity scu_control is
     nPWRBTN           : out std_logic;
     nFPGA_Res_Out     : out std_logic;
     A_nCONFIG         : out std_logic := '1';
-    npci_pme:           out std_logic;                    -- pci power management event, low activ
+    npci_pme          : out std_logic;                    -- pci power management event, low activ
 
     
     -----------------------------------------------------------------------
     -- SCU-CB Version
     -----------------------------------------------------------------------
-    scu_cb_version:   in    std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
+    scu_cb_version    : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
     
 
     
@@ -289,7 +289,7 @@ architecture rtl of scu_control is
   constant c_irq_slaves   : natural := 4;
   constant c_irq_masters  : natural := 2;
   constant c_irq_layout   : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
-   (0 => f_sdb_embed_device(c_irq_ep_sdb,         x"00000000"),
+   (0 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000000"),
     1 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000100"),
     2 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000200"),
     3 => f_sdb_embed_device(c_irq_hostbridge_ep_sdb,  x"00001000"));
@@ -340,7 +340,7 @@ architecture rtl of scu_control is
   constant c_top_layout : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),    x"00000000"),
     1 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00080000"),
-   2 => f_sdb_embed_device(c_ebm_sdb,                x"01000000"),
+   2 => f_sdb_embed_device(c_ebm_sdb,                     x"01000000"),
     3 => f_sdb_embed_bridge(c_per_bridge_sdb,             x"02000000")
    );
   constant c_top_sdb_address : t_wishbone_address := x"000F0000";  
@@ -474,8 +474,8 @@ architecture rtl of scu_control is
   
   signal rst_usr_lm32_n : std_logic;
   
-  signal  mil_12Mhz:    std_logic;
-  signal  extension_id: std_logic_vector(3 downto 0);
+  signal  mil_12Mhz     : std_logic;
+  signal  extension_id  : std_logic_vector(3 downto 0);
 
   component mil_pll
     port (
@@ -1128,77 +1128,77 @@ U_DAC_ARB : spec_serial_dac_arb
   ----------------------------------------------------------------------------------
 
   mil: wb_mil_scu
-generic map (
-  Clk_in_Hz      => 65_500_000      -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
-                                    -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+  generic map (
+    Clk_in_Hz      => 65_500_000      -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
+                                      -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
   )
-port map (
-  clk_i         => clk_sys,
-  nRst_i        => rstn_sys,
-  slave_i       => per_cbar_master_o(10),
-  slave_o       => per_cbar_master_i(10),
+  port map (
+    clk_i         => clk_sys,
+    nRst_i        => rstn_sys,
+    slave_i       => per_cbar_master_o(10),
+    slave_o       => per_cbar_master_i(10),
   
-  -- encoder (transmiter) signals of HD6408 --------------------------------------------------------------------------------
-  nME_BOO       => io_2_5v(11),         -- in: HD6408-output: transmit bipolar positive.
-  nME_BZO       => io_2_5v(12),         -- in: HD6408-output: transmit bipolar negative.
+    -- encoder (transmiter) signals of HD6408 --------------------------------------------------------------------------------
+    nME_BOO       => io_2_5v(11),         -- in: HD6408-output: transmit bipolar positive.
+    nME_BZO       => io_2_5v(12),         -- in: HD6408-output: transmit bipolar negative.
                   
-  ME_SD         => io_2_5v(10),         -- in: HD6408-output: '1' => send data is active.
-  ME_ESC        => io_2_5v(9),          -- in: HD6408-output: encoder shift clock for shifting data into the encoder. The
-                                        --                    encoder samples ME_SDI on low-to-high transition of ME_ESC.
-  ME_SDI        => eio(4),              -- out: HD6408-input: serial data in accepts a serial data stream at a data rate
-                                        --                    equal to encoder shift clock.
-  ME_EE         => eio(5),              -- out: HD6408-input: a high on encoder enable initiates the encode cycle.
-                                        --                    (Subject to the preceding cycle being completed).
-  ME_SS         => eio(6),              -- out: HD6408-input: sync select actuates a Command sync for an input high
-                                        --                    and data sync for an input low.
+    ME_SD         => io_2_5v(10),         -- in: HD6408-output: '1' => send data is active.
+    ME_ESC        => io_2_5v(9),          -- in: HD6408-output: encoder shift clock for shifting data into the encoder. The
+                                          --                    encoder samples ME_SDI on low-to-high transition of ME_ESC.
+    ME_SDI        => eio(4),              -- out: HD6408-input: serial data in accepts a serial data stream at a data rate
+                                          --                    equal to encoder shift clock.
+    ME_EE         => eio(5),              -- out: HD6408-input: a high on encoder enable initiates the encode cycle.
+                                          --                    (Subject to the preceding cycle being completed).
+    ME_SS         => eio(6),              -- out: HD6408-input: sync select actuates a Command sync for an input high
+                                          --                    and data sync for an input low.
 
-  -- decoder (receiver) signals of HD6408 ---------------------------------------------------------------------------------
-  ME_BOI        => eio(1),              -- out: HD6408-input: A high input should be applied to bipolar one in when the bus is in its
-                                        --                    positive state, this pin must be held low when the Unipolar input is used.
-  ME_BZI        => eio(2),              -- out: HD6408-input: A high input should be applied to bipolar zero in when the bus is in its
-                                        --                    negative state. This pin must be held high when the Unipolar input is used.
-  ME_UDI        => eio(3),              -- out: HD6408-input: With ME_BZI high and ME_BOI low, this pin enters unipolar data in to the
-                                        --                    transition finder circuit. If not used this input must be held low.
-  ME_CDS        => io_2_5v(7),          -- in: HD6408-output: high occurs during output of decoded data which was preced
-                                        --                    by a command synchronizing character. Low indicares a data sync.
-  ME_SDO        => io_2_5v(5),          -- in: HD6408-output: serial data out delivers received data in correct NRZ format.
-  ME_DSC        => io_2_5v(4),          -- in: HD6408-output: decoder shift clock delivers a frequency (decoder clock : 12),
-                                        --                    synchronized by the recovered serial data stream.
-  ME_VW         => io_2_5v(6),          -- in: HD6408-output: high indicates receipt of a VALID WORD.
-  ME_TD         => io_2_5v(8),          -- in: HD6408-output: take data is high during receipt of data after identification
-                                        --                    of a sync pulse and two valid Manchester data bits
+    -- decoder (receiver) signals of HD6408 ---------------------------------------------------------------------------------
+    ME_BOI        => eio(1),              -- out: HD6408-input: A high input should be applied to bipolar one in when the bus is in its
+                                          --                    positive state, this pin must be held low when the Unipolar input is used.
+    ME_BZI        => eio(2),              -- out: HD6408-input: A high input should be applied to bipolar zero in when the bus is in its
+                                          --                    negative state. This pin must be held high when the Unipolar input is used.
+    ME_UDI        => eio(3),              -- out: HD6408-input: With ME_BZI high and ME_BOI low, this pin enters unipolar data in to the
+                                          --                    transition finder circuit. If not used this input must be held low.
+    ME_CDS        => io_2_5v(7),          -- in: HD6408-output: high occurs during output of decoded data which was preced
+                                          --                    by a command synchronizing character. Low indicares a data sync.
+    ME_SDO        => io_2_5v(5),          -- in: HD6408-output: serial data out delivers received data in correct NRZ format.
+    ME_DSC        => io_2_5v(4),          -- in: HD6408-output: decoder shift clock delivers a frequency (decoder clock : 12),
+                                          --                    synchronized by the recovered serial data stream.
+    ME_VW         => io_2_5v(6),          -- in: HD6408-output: high indicates receipt of a VALID WORD.
+    ME_TD         => io_2_5v(8),          -- in: HD6408-output: take data is high during receipt of data after identification
+                                          --                    of a sync pulse and two valid Manchester data bits
 
-  -- decoder/encoder signals of HD6408 ------------------------------------------------------------------------------------
---  ME_12MHz    => eio(0),              -- out: HD6408-input: is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
+    -- decoder/encoder signals of HD6408 ------------------------------------------------------------------------------------
+    --  ME_12MHz    => eio(0),          -- out: HD6408-input: is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
   
-  Mil_BOI       => io_2_5v(13),         -- in:  connect positive bipolar receiver, in FPGA directed to the external
+    Mil_BOI       => io_2_5v(13),       -- in:  connect positive bipolar receiver, in FPGA directed to the external
                                         --      manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
                                         --      vhdl manchester macro.
-  Mil_BZI       => io_2_5v(14),         -- in:  connect negative bipolar receiver, in FPGA directed to the external
+    Mil_BZI       => io_2_5v(14),       -- in:  connect negative bipolar receiver, in FPGA directed to the external
                                         --      manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
                                         --      vhdl manchester macro.
-  Sel_Mil_Drv   => eio(9),              -- output: active high, enable the external open collector driver to the transformer
-  nSel_Mil_Rcv  => eio(7),              -- output: active low, enable the external differtial receive circuit.
-  Mil_nBOO      => eio(10),             -- out: connect bipolar positive output to external open collector driver of
+    Sel_Mil_Drv   => eio(9),            -- output: active high, enable the external open collector driver to the transformer
+    nSel_Mil_Rcv  => eio(7),            -- output: active low, enable the external differtial receive circuit.
+    Mil_nBOO      => eio(10),           -- out: connect bipolar positive output to external open collector driver of
                                         --      the transformer. Source is the external manchester en/decoder HD6408 via
                                         --      nME_BOO or the internal FPGA vhdl manchester macro.
-  Mil_nBZO      => eio(8),              -- out: connect bipolar negative output to external open collector driver of
+    Mil_nBZO      => eio(8),            -- out: connect bipolar negative output to external open collector driver of
                                         --      the transformer. Source is the external manchester en/decoder HD6408 via
                                         --      nME_BZO or the internal FPGA vhdl manchester macro.
-  nLed_Mil_Rcv  => a_ext_conn3_b4,        
-  nLed_Mil_Trm  => a_ext_conn3_b5,
-  nLed_Mil_Err  => a_ext_conn3_a19,
-  error_limit_reached => open,
-  Mil_Decoder_Diag_p  => open,
-  Mil_Decoder_Diag_n  => open,
-  timing         => not a_ext_conn3_a7,
-  nLed_Timing    => eio(17),
-  Interlock_Intr => not a_ext_conn3_a2,
-  Data_Rdy_Intr  => not a_ext_conn3_a3,
-  Data_Req_Intr  => not a_ext_conn3_a6,
-  nLed_Interl    => a_ext_conn3_a15,
-  nLed_drq       => a_ext_conn3_a14,
-  nLed_dry       => a_ext_conn3_a11
+    nLed_Mil_Rcv  => a_ext_conn3_b4,        
+    nLed_Mil_Trm  => a_ext_conn3_b5,
+    nLed_Mil_Err  => a_ext_conn3_a19,
+    error_limit_reached => open,
+    Mil_Decoder_Diag_p  => open,
+    Mil_Decoder_Diag_n  => open,
+    timing         => not a_ext_conn3_a7,
+    nLed_Timing    => eio(17),
+    Interlock_Intr => not a_ext_conn3_a2,
+    Data_Rdy_Intr  => not a_ext_conn3_a3,
+    Data_Req_Intr  => not a_ext_conn3_a6,
+    nLed_Interl    => a_ext_conn3_a15,
+    nLed_drq       => a_ext_conn3_a14,
+    nLed_dry       => a_ext_conn3_a11
   );
  
   eio(0) <= mil_12Mhz;

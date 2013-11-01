@@ -21,5 +21,7 @@ modules = {
     "dac714",
     "wb_scu_reg",
     "ad7606",
+    "mil",
+    "wb_mil_scu"
   ]
 }
