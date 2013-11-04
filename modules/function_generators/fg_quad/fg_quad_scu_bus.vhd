@@ -23,7 +23,6 @@ entity fg_quad_scu_bus is
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     nReset:             in    std_logic;
     Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
-    Rd_Active:          out   std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:              out   std_logic;                       -- connect Dtack to SCUB-Macro
     -- fg_quad
     dreq:               out   std_logic;
@@ -121,7 +120,6 @@ adr_decoder: process (clk, nReset)
       wr_shift_b        <= '0';
       rd_shift_a        <= '0';
       rd_shift_b        <= '0';
-      Rd_Active         <= '0';
       dtack             <= '0';
       
     elsif rising_edge(clk) then
@@ -140,7 +138,6 @@ adr_decoder: process (clk, nReset)
       wr_shift_b        <= '0';
       rd_shift_a        <= '0';
       rd_shift_b        <= '0';
-      Rd_Active         <= '0';
       dtack             <= '0';
     
       if Ext_Adr_Val = '1' then
@@ -154,7 +151,6 @@ adr_decoder: process (clk, nReset)
             end if;
             if Ext_Rd_active = '1' then
               rd_fg_cntrl <= '1';
-              Rd_Active   <= '1';
               dtack       <= '1';
             end if;
             
@@ -170,7 +166,6 @@ adr_decoder: process (clk, nReset)
               dtack       <= '1';
             elsif Ext_Rd_active = '1' then
               rd_coeff_a  <= '1';
-              Rd_Active   <= '1';
               dtack       <= '1';
             end if;
             
@@ -180,7 +175,6 @@ adr_decoder: process (clk, nReset)
               dtack       <= '1';
             elsif Ext_Rd_active = '1' then
               rd_coeff_b  <= '1';
-              Rd_Active   <= '1';
               dtack       <= '1';
             end if;
             
@@ -190,7 +184,6 @@ adr_decoder: process (clk, nReset)
               dtack             <= '1';
             elsif Ext_Rd_active = '1' then
               rd_start_value_h  <= '1';
-              Rd_Active         <= '1';
               dtack             <= '1';
             end if;
             
@@ -200,7 +193,6 @@ adr_decoder: process (clk, nReset)
               dtack             <= '1';
             elsif Ext_Rd_active = '1' then
               rd_start_value_l  <= '1';
-              Rd_Active         <= '1';
               dtack             <= '1';
             end if;
           
@@ -210,7 +202,6 @@ adr_decoder: process (clk, nReset)
               dtack       <= '1';
             elsif Ext_Rd_active = '1' then
               rd_shift_a  <= '1';
-              Rd_Active   <= '1';
               dtack       <= '1';
             end if;
             
@@ -220,7 +211,6 @@ adr_decoder: process (clk, nReset)
               dtack       <= '1';
             elsif Ext_Rd_active = '1' then
               rd_shift_b  <= '1';
-              Rd_Active   <= '1';
               dtack       <= '1';
             end if;
 
@@ -240,7 +230,6 @@ adr_decoder: process (clk, nReset)
             wr_shift_b        <= '0';
             rd_shift_a        <= '0';
             rd_shift_b        <= '0';
-            Rd_Active         <= '0';
             dtack             <= '0';
         end case;
       end if;
@@ -261,6 +250,8 @@ begin
     fg_cntrl_reg <= (others => '0');
     coeff_a_reg <= (others => '0');
     coeff_b_reg <= (others => '0');
+    shift_a_reg <= (others => '0');
+    shift_b_reg <= (others => '0');
     start_value_reg <= (others => '0');
     reset_cnt := "00";
   elsif rising_edge(clk) then
@@ -299,7 +290,8 @@ end process;
 fg_cntrl_rd_reg <=  fg_cntrl_reg(15 downto 13) & fg_cntrl_reg(12 downto 10) &
                     fg_cntrl_reg(9 downto 4) & fg_stopped & fg_running & fg_cntrl_reg(1 downto 0);
 
-user_rd_active <= rd_fg_cntrl;
+user_rd_active <= rd_fg_cntrl or rd_coeff_a or rd_coeff_b or rd_start_value_h
+                  or rd_start_value_l or rd_shift_a or rd_shift_b;
 
 Rd_Port <=  fg_cntrl_rd_reg               when rd_fg_cntrl = '1' else
             coeff_a_reg                   when rd_coeff_a = '1' else

@@ -47,7 +47,7 @@ component fg_quad_scu_bus is
     clk:                in      std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     nReset:             in      std_logic := '1';
     Rd_Port:            out     std_logic_vector(15 downto 0);  -- output for all read sources of this macro
-    Rd_Active:          out     std_logic;                      -- this acro has read data available at the Rd_Port.
+    user_rd_active:     out     std_logic;
     Dtack:              out     std_logic;
     dreq:               out     std_logic;
     sw_out:             out     std_logic_vector(23 downto 0);
