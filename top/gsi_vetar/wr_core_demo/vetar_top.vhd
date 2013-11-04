@@ -16,6 +16,7 @@ use work.ez_usb_pkg.all;
 use work.xvme64x_pack.all;
 use work.VME_Buffer_pack.all;
 
+
 entity vetar_top is
   port(
     clk_20m_vcxo_i    	: in std_logic;  -- 20MHz VCXO clock
@@ -829,7 +830,7 @@ begin
 
   -- Latch input
   --lemo_i, see component map  wb_timestamp_latch 
-  s_trigger    <= not lemo_i; --negative logic
+  s_trigger    <= lemo_i;
  
  -- Add-on Board
  ----------------
