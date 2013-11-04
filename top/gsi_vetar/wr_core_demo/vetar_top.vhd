@@ -15,7 +15,8 @@ use work.altera_flash_pkg.all;
 use work.ez_usb_pkg.all;
 use work.xvme64x_pack.all;
 use work.VME_Buffer_pack.all;
-
+use work.build_id_pkg.all;
+use work.altera_networks_pkg.all;
 
 entity vetar_top is
   port(
@@ -163,7 +164,7 @@ architecture rtl of vetar_top is
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   
   -- Top crossbar layout
-  constant c_slaves  : natural := 6;
+  constant c_slaves  : natural := 7;
   constant c_masters : natural := 3;
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00000000"),
@@ -171,7 +172,8 @@ architecture rtl of vetar_top is
     2 => f_sdb_embed_device(c_eca_sdb,                    x"00100800"),
     3 => f_sdb_embed_device(c_eca_evt_sdb,                x"00100C00"),
     4 => f_sdb_embed_device(c_wb_serial_lcd_sdb,          x"00100D00"),
-    5 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"04000000"));
+    5 => f_sdb_embed_device(c_build_id_sdb,               x"00200000"),
+    6 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"04000000"));
   constant c_sdb_address : t_wishbone_address := x"00300000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -183,37 +185,47 @@ architecture rtl of vetar_top is
   signal vme_slave_o : t_wishbone_slave_out;
   
   -- Sys PLL from clk_125m_local_i
-  signal sys_locked       : std_logic;
-  signal clk_62_5         : std_logic;
-  signal clk_50           : std_logic;
-  signal clk_20           : std_logic;
   signal rstn_sys         : std_logic;
+  signal pll_arst         : std_logic;
   
   -- logical clock names
-  signal clk_sys          : std_logic;
   signal clk_reconf       : std_logic;
   signal clk_flash        : std_logic;
   signal clk_lcd          : std_logic;
   
   -- RX PLL
   signal gxb_locked       : std_logic;
-  signal rstn_wr          : std_logic;
+  signal clk_ref0         : std_logic;
+  signal clk_ref1         : std_logic;
+  signal clk_ref2         : std_logic;
   
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
   signal clk_ref          : std_logic;
   signal clk_butis        : std_logic;
   signal clk_25m          : std_logic;
-  signal rstn_ref         : std_logic;
+  
+  signal sys_locked       : std_logic;  
+  signal clk_sys0         : std_logic;
+  signal clk_sys1         : std_logic;
+  signal clk_sys2         : std_logic;
+  signal clk_sys          : std_logic;
 
   signal phase_done       : std_logic;
   signal phase_step       : std_logic;
   signal phase_sel        : std_logic_vector(3 downto 0);
- 
+  signal phase_butis      : phase_offset;
+
   -- DMTD PLL from clk_20m_vcxo_i
-  --signal dmtd_locked      : std_logic;
+  signal dmtd_locked      : std_logic;
   signal clk_dmtd         : std_logic;
-  
+  signal clk_dmtd0        : std_logic;
+  signal clk_free         : std_logic;
+  signal rstn_free        : std_logic;
+  signal clk_phase        : std_logic;
+  signal rstn_ref         : std_logic;
+  signal rstn_butis       : std_logic;
+
   signal dac_hpll_load_p1 : std_logic;
   signal dac_dpll_load_p1 : std_logic;
   signal dac_hpll_data    : std_logic_vector(15 downto 0);
@@ -329,72 +341,122 @@ begin
   
   sfp_tx_disable_o <= '0';				-- enable SFP
 
+  -- We need at least one off-chip free running clock to setup PLLs
+  clk_free <= clk_20m_vcxo_i;
+  
+  reset : altera_reset
+    generic map(
+      g_clocks      => 3)
+    port map(
+      clk_free_i    => clk_free,
+      rstn_i        => '1',
+      pll_lock_i(0) => dmtd_locked,
+      pll_lock_i(1) => ref_locked,
+      pll_lock_i(2) => sys_locked,
+      pll_lock_i(3) => gxb_locked,
+      pll_arst_o    => pll_arst,
+      clocks_i(0)   => clk_sys,
+      clocks_i(1)   => clk_free,
+      clocks_i(2)   => clk_ref,
+      rstn_o(0)     => rstn_sys,
+      rstn_o(1)     => rstn_free,
+      rstn_o(2)     => rstn_ref);
+
   -- PLLs
 
   dmtd_inst : dmtd_pll port map(
+    areset => pll_arst,
     inclk0 => clk_20m_vcxo_i,    --  20  Mhz 
-    c0     => clk_dmtd,          --  62.5MHz
-    locked => open); -- dmtd_locked);
+    c0     => clk_dmtd0,         --  62.5MHz
+    locked => dmtd_locked);
   
+  dmtd_clk : single_region port map(
+    inclk  => clk_dmtd0,
+    outclk => clk_dmtd);
+ 
+  sys_inst : sys_pll port map(
+    areset => pll_arst,
+    inclk0 => clk_125m_local_i, -- 125  Mhz 
+    c0     => clk_sys0,         --  62.5 MHz
+    c1     => clk_sys1,         --  50  Mhz
+    c2     => clk_sys2,         --  20  MHz
+    locked => sys_locked);
+
+  sys_clk : global_region port map(
+    inclk  => clk_sys0,
+    outclk => clk_sys);
+
+  reconf_clk : global_region port map(
+    inclk  => clk_sys1,
+    outclk => clk_reconf);
+
+  clk_flash <= clk_reconf;
+
+  lcd_clk : single_region port map(
+    inclk  => clk_sys2,
+    outclk => clk_lcd);
+
   ref_inst : ref_pll port map( -- see "Phase Counter Select Mapping" table for arria2gx
+    areset => pll_arst,
     inclk0 => clk_125m_pllref_i, -- 125 MHz
-    c0     => clk_ref,           -- 125 MHz, counter: 0010
-    c1     => clk_butis,         -- 200 MHz, counter: 0011 = #3
-    c2     => clk_25m,           --  25 MHz, counter: 0100 = #4
+    c0     => clk_ref0,          -- 125 MHz, counter: 0010 - #2
+    c1     => clk_ref1,          -- 200 MHz, counter: 0011 = #3
+    c2     => clk_ref2,          --  25 MHz, counter: 0100 = #4
     locked => ref_locked,
-    scanclk            => clk_reconf,
+    scanclk            => clk_free,
     phasedone          => phase_done,
     phasecounterselect => phase_sel,
     phasestep          => phase_step,
-    phaseupdown        => '0');
+    phaseupdown        => '1');
 
-  sys_inst : sys_pll port map(
-    inclk0 => clk_125m_local_i, -- 125  Mhz 
-    c0     => clk_62_5,         --  62.5 MHz
-    c1     => clk_50,           --  50  Mhz
-    c2     => clk_20,           --  20  MHz
-    locked => sys_locked);
-  
-  clk_sys    <= clk_62_5;
-  clk_reconf <= clk_50;
-  clk_flash  <= clk_50;
-  clk_lcd    <= clk_20;
-  
-  clk_pll_o  <= clk_butis;
 
-  -- RESET
+  ref_clk : global_region port map(
+    inclk  => clk_ref0,
+    outclk => clk_ref);
 
-  sys_reset : gc_reset
+  butis_clk : global_region port map(
+    inclk  => clk_ref1,
+    outclk => clk_butis);
+
+  clk_pll_o  <= clk_ref1;
+
+  phase_clk : single_region port map(
+    inclk  => clk_ref2,
+    outclk => clk_phase);
+
+  phase : altera_phase
     generic map(
-      g_clocks 	=> 1,
-		g_logdelay	=> 19)
+      g_select_bits   => 4,
+      g_outputs       => 1,
+      g_base          => 0,
+      g_vco_freq      => 1000, -- 1GHz
+      g_output_freq   => (0 => 200),
+      g_output_select => (0 =>   3))
     port map(
-      free_clk_i => clk_sys,
-      locked_i   => sys_locked,
-      clks_i(0)  => clk_sys,
-      rstn_o(0)  => rstn_sys);
-
-  ref_reset : gc_reset
-    generic map(
-      g_clocks 	=> 1,
-		g_logdelay	=>	20)
-    port map(
-      free_clk_i => clk_ref,
-      locked_i   => ref_locked,
-      clks_i(0)  => clk_ref,
-      rstn_o(0)  => rstn_ref);
-		
-   butis : altera_butis
-    port map(
-      clk_ref_i   => clk_ref,
-      clk_25m_i   => clk_25m,
-      clk_scan_i  => clk_reconf,
-      locked_i    => ref_locked,
-      pps_i       => pps,
+      clk_i       => clk_free,
+      rstn_i      => rstn_free,
+      clks_i(0)   => clk_butis,
+      rstn_o(0)   => rstn_butis,
+      offset_i(0) => phase_butis,
       phasedone_i => phase_done,
       phasesel_o  => phase_sel,
       phasestep_o => phase_step);
-  
+
+  butis : altera_butis
+    port map(
+      clk_ref_i => clk_ref,
+      clk_25m_i => clk_phase,
+      pps_i     => pps,
+      phase_o   => phase_butis);
+
+  -- ID
+  id : build_id
+    port map(
+      clk_i   => clk_sys,
+      rst_n_i => rstn_sys,
+      slave_i => cbar_master_o(5),
+      slave_o => cbar_master_i(5)); 
+
   -- FLASH
   flash : flash_top
     generic map(
@@ -408,13 +470,12 @@ begin
     port map(
       clk_i     => clk_sys,
       rstn_i    => rstn_sys,
-      slave_i   => cbar_master_o(5),
-      slave_o   => cbar_master_i(5),
+      slave_i   => cbar_master_o(6),
+      slave_o   => cbar_master_i(6),
       clk_out_i => clk_flash,
-      --clk_ext_i => clk_flash,
-		clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
+      clk_ext_i => clk_flash,
+      clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
   
-  rstn_wr <= rstn_sys and gxb_locked;
   
   U_WR_CORE : xwr_core
     generic map (
@@ -437,7 +498,7 @@ begin
       clk_aux_i  => (others => '0'),
       clk_ext_i  => '0', -- g_with_external_clock_input controls usage
       pps_ext_i  => '0',
-      rst_n_i    => rstn_wr,
+      rst_n_i    => rstn_sys,
 		
       dac_hpll_load_p1_o => dac_hpll_load_p1,
       dac_hpll_data_o    => dac_hpll_data,
@@ -507,11 +568,12 @@ begin
       clk_reconf_i   => clk_reconf,
       clk_pll_i      => clk_ref,
       clk_cru_i      => sfp_ref_clk_i,
-      clk_sys_i      => clk_sys,
-      rstn_sys_i     => rstn_sys,
+      clk_free_i     => clk_free,
+      rst_i          => pll_arst,
       locked_o       => gxb_locked,
       loopen_i       => phy_loopen,
       drop_link_i    => phy_rst,
+      tx_clk_i       => clk_ref,
       tx_data_i      => phy_tx_data,
       tx_k_i         => phy_tx_k,
       tx_disparity_o => phy_tx_disparity,

@@ -3,7 +3,7 @@ set_global_assignment -name DEVICE EP2AGX125EF29C5
 set_global_assignment -name TOP_LEVEL_ENTITY vetar_top
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
-set_global_assignment -name LAST_QUARTUS_VERSION 12.1
+set_global_assignment -name LAST_QUARTUS_VERSION 13.0
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name DEVICE_FILTER_PACKAGE FBGA
@@ -889,10 +889,12 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_u
 set_global_assignment -name SDC_FILE ../../../top/gsi_vetar/wr_core_demo/vetar_top.sdc
 set_global_assignment -name SIGNALTAP_FILE stp1.stp
 #set_global_assignment -name QIP_FILE ../../../platform/altera/sys_pll/sys_pll.qip
+set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_phase.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_reset.vhd
 
 set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_clk -to "sys_pll:sys_inst|c0" -section_id auto_signaltap_0
-
-
 
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd"
 set_global_assignment -name QIP_FILE "../../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip"
@@ -900,6 +902,8 @@ set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/altera_butis.vhd"
 set_global_assignment -name QIP_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.qip"
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.vhd"
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd
+
 
 
 
