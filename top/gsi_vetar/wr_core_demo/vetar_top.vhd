@@ -418,7 +418,7 @@ begin
     inclk  => clk_ref1,
     outclk => clk_butis);
 
-  clk_pll_o  <= clk_ref1;
+  clk_pll_o  <= clk_ref1; -- dedicated output clock pin
 
   phase_clk : single_region port map(
     inclk  => clk_ref2,
@@ -566,7 +566,7 @@ begin
   wr_gxb_phy_arriaii_1 : wr_arria2_phy
     port map (
       clk_reconf_i   => clk_reconf,
-      clk_pll_i      => clk_ref,
+      clk_pll_i      => clk_ref0,
       clk_cru_i      => sfp_ref_clk_i,
       clk_free_i     => clk_free,
       rst_i          => pll_arst,
@@ -795,8 +795,6 @@ begin
 
   -- USB micro controller
   -----------------
-  sres_o <= rstn_sys; -- allow it to boot once the FPGA is reayd.
-  
   fd_io <= fd_o when fd_oen='1' else (others => 'Z');
   readyn_io <= 'Z'; -- weak pull-up
   
@@ -811,6 +809,7 @@ begin
       uart_o    => s_uart_rxd_i,
       uart_i    => s_uart_txd_o,
       
+      rstn_o    => sres_o,
       ebcyc_i   => ebcyc_i,
       speed_i   => speed_i,
       shift_i   => shift_i,
