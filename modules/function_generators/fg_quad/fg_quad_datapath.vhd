@@ -194,7 +194,7 @@ end process;
           s_freq_cnt_en   <= '0';
           -- load step counter from array
           s_add_cnt <= to_unsigned(c_add_cnt(to_integer(unsigned(step_sel))), c_add_cnt_width);
-          if load_start = '1' then
+          if sync_start = '1' then
             s_coeff_rcvd <= '0';
             control_state <= quad_inc;
           end if;

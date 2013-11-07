@@ -708,17 +708,17 @@ p_read_mux: process (
     dac1_rd_active, dac1_data_to_SCUB,
     dac2_rd_active, dac2_data_to_SCUB,
     adc_rd_active, adc_data_to_SCUB,
-    wb_scu_data_to_SCUB, wb_scu_rd_active
+    fg_1_rd_active, fg_1_data_to_SCUB    
     )
   variable sel: unsigned(4 downto 0);
   begin
-    sel := wb_scu_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
+    sel :=  fg_1_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
     case sel IS
       when "00001" => Data_to_SCUB <= io_port_data_to_SCUB;
       when "00010" => Data_to_SCUB <= dac1_data_to_SCUB;
       when "00100" => Data_to_SCUB <= dac2_data_to_SCUB;
       when "01000" => Data_to_SCUB <= adc_data_to_SCUB;
-      when "10000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "10000" => Data_to_SCUB <= fg_1_data_to_SCUB;
       when others =>
         Data_to_SCUB <= X"0000";
     end case;
