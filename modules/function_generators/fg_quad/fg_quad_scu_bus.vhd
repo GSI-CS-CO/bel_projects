@@ -23,6 +23,7 @@ entity fg_quad_scu_bus is
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     nReset:             in    std_logic;
     Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
+    Rd_Active:          out   std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:              out   std_logic;                       -- connect Dtack to SCUB-Macro
     -- fg_quad
     dreq:               out   std_logic;
@@ -68,7 +69,6 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  rd_shift_b:       std_logic;
   signal  wr_brc_start:     std_logic;
   
-  signal  set_out:          std_logic;
   signal  s_en:             std_logic;
   signal  fg_stopped:       std_logic;
   signal  fg_running:       std_logic;
@@ -87,7 +87,7 @@ begin
       a_en                => wr_coeff_a,
       b_en                => wr_coeff_b,
       sync_start          => wr_brc_start,
-      load_start          => wr_start_value_h,              -- when high word was written, load into datapath
+      load_start          => wr_start_value_h, -- when high word was written, load into datapath
       start_value         => start_value_reg(31 downto 0),
       s_en                => s_en,
       status_reg_changed  => wr_fg_cntrl,
@@ -287,19 +287,19 @@ begin
   end if;
 end process;
 
-fg_cntrl_rd_reg <=  fg_cntrl_reg(15 downto 13) & fg_cntrl_reg(12 downto 10) &
+fg_cntrl_rd_reg <= fg_cntrl_reg(15 downto 13) & fg_cntrl_reg(12 downto 10) &
                     fg_cntrl_reg(9 downto 4) & fg_stopped & fg_running & fg_cntrl_reg(1 downto 0);
 
 user_rd_active <= rd_fg_cntrl or rd_coeff_a or rd_coeff_b or rd_start_value_h
                   or rd_start_value_l or rd_shift_a or rd_shift_b;
 
-Rd_Port <=  fg_cntrl_rd_reg               when rd_fg_cntrl = '1' else
+Rd_Port <= fg_cntrl_rd_reg                when rd_fg_cntrl = '1' else
             coeff_a_reg                   when rd_coeff_a = '1' else
             coeff_b_reg                   when rd_coeff_b = '1' else
             start_value_reg(31 downto 16) when rd_start_value_h = '1' else
             start_value_reg(15 downto 0)  when rd_start_value_l = '1' else
             shift_a_reg                   when rd_shift_a = '1' else
             shift_b_reg                   when rd_shift_b = '1' else
-                x"0000";
+            x"0000";
 
 end architecture;

@@ -623,7 +623,7 @@ fg_1: fg_quad_scu_bus
     clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
     nReset            => nPowerup_Res,          -- in, '0' => resets the fg_1
     Rd_Port           => fg_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
-    user_rd_active    => fg_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
+    Rd_active         => fg_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_1_dtack,            -- connect Dtack to SCUB-Macro
     dreq              => fg_1_dreq,             -- request of new parameter set
 

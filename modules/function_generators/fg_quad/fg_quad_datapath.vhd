@@ -17,8 +17,8 @@ entity fg_quad_datapath is
   sync_rst:           in  std_logic;
   a_en, b_en:         in  std_logic;                      -- data register enable
   load_start, s_en:   in  std_logic;
-  sync_start:         in  std_logic;
-  start_value:        in  std_logic_vector(31 downto 0);
+  sync_start:         in std_logic;
+  start_value:        in std_logic_vector(31 downto 0);
   status_reg_changed: in  std_logic;   
   step_sel:           in  std_logic_vector(2 downto 0);
   shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
@@ -27,6 +27,7 @@ entity fg_quad_datapath is
   dreq:               out std_logic;
   sw_out:             out std_logic_vector(23 downto 0);
   sw_strobe:          out std_logic;
+  set_out:            out std_logic;
   fg_stopped:         out std_logic;
   fg_running:         out std_logic);
 end entity;
@@ -172,7 +173,7 @@ end process;
   s_stp_reached <= std_logic(s_add_cnt(s_add_cnt'high));
 
 -- control state machine
-  control_sm: process (clk, nrst, s_cont, sync_rst)
+  control_sm: process (clk, nrst, s_cont)
   begin
     if nrst = '0' or sync_rst = '1' then
       control_state <= idle;
@@ -211,7 +212,7 @@ end process;
               control_state <= lin_inc;
             else
               -- no paramters received
-              -- go to idle
+              -- go to stop mode
               control_state <= stopped;
             end if;
           
@@ -242,7 +243,7 @@ end process;
   end process;
 
 
-dreq <= s_stp_reached or load_start;
+dreq <= s_stp_reached or sync_start;
 -- output register for the 24 most significant bits
 sw_out    <= std_logic_vector(s_X_reg(63 downto 40));
 sw_strobe <= s_add_lin_quad;

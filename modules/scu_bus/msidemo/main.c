@@ -50,7 +50,7 @@ void isr1()
       //ack dreq
       else if (scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] & 2) {
         //scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = fesa_if[0];//0x8FF;
-        scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x1;
+        scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x100;
         scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 2;
       }
     }
@@ -111,8 +111,8 @@ int main(void) {
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = (0 << 13); //set frequency Bit 15..13
    // scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] |= (0 << 10); //set frequency Bit 12..10
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x1;
-    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTA] = 0x24;
-    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTB] = 0x24;
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTA] = 0x20;
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTB] = 0x20;
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_BROAD] = 0x4711; // start signal to all fg slaves
     i++;
   }

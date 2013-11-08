@@ -17,8 +17,8 @@ component fg_quad_datapath is
   sync_rst:           in  std_logic;
   a_en, b_en:         in  std_logic;                      -- data register enable
   load_start, s_en:   in  std_logic;
-  sync_start:         in  std_logic;
-  start_value:        in  std_logic_vector(31 downto 0);
+  sync_start:         in std_logic;
+  start_value:        in std_logic_vector(31 downto 0);
   status_reg_changed: in  std_logic;   
   step_sel:           in  std_logic_vector(2 downto 0);
   shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
@@ -27,6 +27,7 @@ component fg_quad_datapath is
   dreq:               out std_logic;
   sw_out:             out std_logic_vector(23 downto 0);
   sw_strobe:          out std_logic;
+  set_out:            out std_logic;
   fg_stopped:         out std_logic;
   fg_running:         out std_logic);
 end component;
@@ -47,7 +48,7 @@ component fg_quad_scu_bus is
     clk:                in      std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     nReset:             in      std_logic := '1';
     Rd_Port:            out     std_logic_vector(15 downto 0);  -- output for all read sources of this macro
-    user_rd_active:     out     std_logic;
+    Rd_Active:          out     std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:              out     std_logic;
     dreq:               out     std_logic;
     sw_out:             out     std_logic_vector(23 downto 0);
