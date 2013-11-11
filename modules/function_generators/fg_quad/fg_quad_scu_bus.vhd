@@ -23,7 +23,6 @@ entity fg_quad_scu_bus is
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     nReset:             in    std_logic;
     Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
-    Rd_Active:          out   std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:              out   std_logic;                       -- connect Dtack to SCUB-Macro
     -- fg_quad
     dreq:               out   std_logic;
@@ -69,7 +68,6 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  rd_shift_b:       std_logic;
   signal  wr_brc_start:     std_logic;
   
-  signal  s_en:             std_logic;
   signal  fg_stopped:       std_logic;
   signal  fg_running:       std_logic;
 
@@ -89,7 +87,6 @@ begin
       sync_start          => wr_brc_start,
       load_start          => wr_start_value_h, -- when high word was written, load into datapath
       start_value         => start_value_reg(31 downto 0),
-      s_en                => s_en,
       status_reg_changed  => wr_fg_cntrl,
       step_sel            => fg_cntrl_reg(12 downto 10),
       shift_b             => to_integer(unsigned(shift_b_reg(5 downto 0))),
