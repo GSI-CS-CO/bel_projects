@@ -58,13 +58,13 @@ port  (
     ME_TD:          in      std_logic;      -- output:  take data is high during receipt of data after identification
                                             --          of a sync pulse and two valid Manchester data bits
 
-    Clk:        in    std_logic;
-    Rd_Mil:       in    std_logic;
+    Clk:            in    std_logic;
+    Rd_Mil:         in    std_logic;
     Mil_RCV_D:      out   std_logic_vector(15 downto 0);
     Mil_In_Pos:     in    std_logic;
     Mil_In_Neg:     in    std_logic;
-    Mil_Cmd:      in    std_logic;
-    Wr_Mil:       in    std_logic;
+    Mil_Cmd:        in    std_logic;
+    Wr_Mil:         in    std_logic;
     Mil_TRM_D:      in    std_logic_vector(15 downto 0);
     EPLD_Manchester_Enc:  in    std_logic := '0';
     Reset_6408:     out   std_logic;
@@ -75,7 +75,7 @@ port  (
     nMil_Out_Neg:   out   std_logic;
     Mil_Cmd_Rcv:    out   std_logic;
     Mil_Rcv_Rdy:    out   std_logic;
-    Mil_Rcv_Error:    out   std_logic;
+    Mil_Rcv_Err:    out   std_logic;
     No_VW_Cnt:      out   std_logic_vector(15 downto 0);    -- Bit[15..8] Fehlerzaehler fuer No Valid Word des positiven Decoders "No_VW_p",
                                                             -- Bit[7..0] Fehlerzaehler fuer No Valid Word des negativen Decoders "No_VM_n"
     Clr_No_VW_Cnt:    in    std_logic;                      -- Loescht die no valid word Fehler-Zaehler des positiven und negativen Dekoders.
@@ -87,7 +87,8 @@ port  (
                                                             -- Muss synchron zur Clock 'Clk' und mindesten eine Periode lang aktiv sein!
     error_limit_reached:  out   std_logic;
     Mil_Decoder_Diag_p: out   std_logic_vector(15 downto 0);
-    Mil_Decoder_Diag_n: out   std_logic_vector(15 downto 0)
+    Mil_Decoder_Diag_n: out   std_logic_vector(15 downto 0);
+    clr_mil_rcv_err:    in    std_logic
     );
 end mil_hw_or_soft_ip;
 
@@ -100,7 +101,7 @@ generic (
     );
 port  (
     Mil_WR:       in    std_logic;
-    Mil_Send_CMD:   in    std_logic;
+    Mil_Send_CMD: in    std_logic;
     ME_SD:        in    std_logic;
     ME_ESC:       in    std_logic;
     SEL_6408:     in    std_logic;
@@ -113,8 +114,8 @@ port  (
     nME_BOO:      in    std_logic;
     nME_BZO:      in    std_logic;
     Reset:        in    std_logic;
-    Clk:      in    std_logic;
-    DI:         in    std_logic_vector(15 downto 0);
+    Clk:          in    std_logic;
+    DI:           in    std_logic_vector(15 downto 0);
     ME_SS:        out   std_logic;
     ME_SDI:       out   std_logic;
     ME_EE:        out   std_logic;
@@ -124,7 +125,7 @@ port  (
     CMD_RCV:      out   std_logic;
     Valid_W:      out   std_logic;
     RCV_Err:      out   std_logic;
-    Reset_6408:     out   std_logic;
+    Reset_6408:   out   std_logic;
     D_out:        out   std_logic_vector(15 downto 0)
     );
 end component;
@@ -135,22 +136,25 @@ signal    nMil_Out_Pos_M:     std_logic;
 signal    nSel_Mil_Drv_M:     std_logic;
 signal    nSel_Mil_RCV_M:     std_logic;
 signal    Mil_Cmd_Rcv_M:      std_logic;
-signal    Mil_Rcv_D_M:      std_logic_vector(15 downto 0);
+signal    Mil_Rcv_D_M:        std_logic_vector(15 downto 0);
 signal    Mil_RCV_Error_M:    std_logic;
 signal    Mil_Rcv_Rdy_M:      std_logic;
 signal    Mil_Trm_Rdy_M:      std_logic;
 
-signal    nTRM_ENA_6408:      std_logic;
+signal    nTRM_ENA_6408:    std_logic;
 signal    CMD_RCV_6408:     std_logic;
-signal    nRCV_ENA_6408:      std_logic;
+signal    nRCV_ENA_6408:    std_logic;
 signal    RCV_Err_6408:     std_logic;
 signal    TRM_RDY_6408:     std_logic;
 signal    Valid_W_6408:     std_logic;
-signal    D_OUT:          std_logic_vector(15 downto 0);
+signal    D_OUT:            std_logic_vector(15 downto 0);
+
+signal    Mil_Rcv_Error:    std_logic;
+signal    Mil_Rcv_Err_ff:   std_logic;
 
 signal  SEL_6408:     std_logic;    -- used for modelsim
 
-begin 
+begin
 
 SEL_6408 <= not EPLD_Manchester_Enc;
 
@@ -161,31 +165,31 @@ generic map (
 port map  (
       Mil_WR      => Wr_Mil,
       Mil_Send_CMD  => Mil_Cmd,
-      ME_SD     => ME_SD,
+      ME_SD       => ME_SD,
       ME_ESC      => ME_ESC,
       SEL_6408    => SEL_6408,
       RD_MIL      => Rd_Mil,
       ME_CDS      => ME_CDS,
-      ME_VW     => ME_VW,
-      ME_TD     => ME_TD,
+      ME_VW       => ME_VW,
+      ME_TD       => ME_TD,
       ME_DSC      => ME_DSC,
       ME_SDO      => ME_SDO,
       nME_BOO     => nME_BOO,
       nME_BZO     => nME_BZO,
-      Reset     => Reset_Puls,
-      Clk       => Clk,
-      DI        => MIL_TRM_D,
-      ME_SS     => ME_SS,
+      Reset       => Reset_Puls,
+      Clk         => Clk,
+      DI          => MIL_TRM_D,
+      ME_SS       => ME_SS,
       ME_SDI      => ME_SDI,
-      ME_EE     => ME_EE,
+      ME_EE       => ME_EE,
       nRCV_Ena    => nRCV_ENA_6408,
       nTRM_Ena    => nTRM_ENA_6408,
       Trm_Rdy     => TRM_RDY_6408,
       CMD_RCV     => CMD_RCV_6408,
       Valid_W     => Valid_W_6408,
       RCV_Err     => RCV_Err_6408,
-      Reset_6408    => Reset_6408,
-      D_out     => D_OUT
+      Reset_6408  => Reset_6408,
+      D_out       => D_OUT
       );
 
       
@@ -205,7 +209,7 @@ port map  (
       Wr_Mil        => Wr_Mil,          -- Startet ein Mil-Send, muß mindestens 1 Takt aktiv sein.
       Mil_TRM_D     => Mil_TRM_D,       -- solange Mil_Rdy_4_WR = '0' ist, muß hier das zu sendende Datum anliegen. 
       Rd_Mil        => Rd_Mil,          -- setzt Rcv_Rdy zurueck. Muss synchron zur Clock 'clk' und mindesten eine Periode lang aktiv sein!
-      Clr_No_VW_Cnt   => Clr_No_VW_Cnt, -- Loescht die no valid word Fehler-Zaehler des positiven und negativen Dekoders.
+      Clr_No_VW_Cnt => Clr_No_VW_Cnt,   -- Loescht die no valid word Fehler-Zaehler des positiven und negativen Dekoders.
                                         -- Muss synchron zur Clock 'clk' und mindesten eine Periode lang aktiv sein!
       Clr_Not_Equal_Cnt => Clr_Not_Equal_Cnt, -- Loescht die Fehlerzaehler fuer Data_not_equal und den Fehlerzaehler fuer unterschiedliche
                                               -- Komando-Daten-Kennung (CMD_not_equal). Muss synchron zur Clock 'clk' und mindesten eine Periode lang aktiv sein!
@@ -248,6 +252,22 @@ Mil_Rcv_Error <= Mil_RCV_Error_M when EPLD_Manchester_Enc = '1' else RCV_Err_640
 
 ME_BOI <= '0' when EPLD_Manchester_Enc = '1' else MIL_in_Pos;
 ME_BZI <= '1' when EPLD_Manchester_Enc = '1' else MIL_in_Neg;
+
+
+P_Mil_Rcv_Err:  process (clk, Reset_Puls)
+  begin
+    if Reset_Puls = '1' then
+      Mil_Rcv_Err_ff <= '0';
+    elsif rising_edge(clk) then
+      if Mil_Rcv_Error = '1' then
+        Mil_Rcv_Err_ff <= '1';
+      elsif clr_mil_rcv_err = '1' then
+        Mil_Rcv_Err_ff <= '0';
+      end if;
+    end if;
+  end process P_Mil_Rcv_Err;
+  
+
 
 
 end arch_mil_hw_or_soft_ip;

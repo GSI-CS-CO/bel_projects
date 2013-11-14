@@ -1198,7 +1198,13 @@ U_DAC_ARB : spec_serial_dac_arb
     Data_Req_Intr  => not a_ext_conn3_a6,
     nLed_Interl    => a_ext_conn3_a15,
     nLed_drq       => a_ext_conn3_a14,
-    nLed_dry       => a_ext_conn3_a11
+    nLed_dry       => a_ext_conn3_a11,
+    io_1           => eio(11),
+    io_1_is_in     => eio(12),
+    nLed_io_1      => eio(13),
+    io_2           => eio(14),
+    io_2_is_in     => eio(15),
+    nLed_io_2      => eio(16)
   );
  
   eio(0) <= mil_12Mhz;
