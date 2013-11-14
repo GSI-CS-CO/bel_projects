@@ -1,5 +1,6 @@
 files = [
   "wb_mil_scu_pkg.vhd",
   "wb_mil_scu.vhd",
-  "wb_mil_scu.qip"
+  "wb_mil_scu.qip",
+  "event_processing.vhd"
 ]

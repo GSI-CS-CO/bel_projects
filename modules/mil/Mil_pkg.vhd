@@ -270,7 +270,7 @@ port  (
                                             --          (Subject to the preceding cycle being completed).
     ME_SS:          out     std_logic;      -- input:   sync select actuates a Command sync for an input high
                                             --          and data sync for an input low.
-    Reset_Puls:   in    std_logic;
+    Reset_Puls:     in      std_logic;
 
     -- decoder (receiver) signals of HD6408 ---------------------------------------------------------------------------------
     ME_BOI:         out     std_logic;      -- input:   A high input should be applied to bipolar one in when the bus is in its
@@ -305,7 +305,7 @@ port  (
     nMil_Out_Neg:   out   std_logic;
     Mil_Cmd_Rcv:    out   std_logic;
     Mil_Rcv_Rdy:    out   std_logic;
-    Mil_Rcv_Error:  out   std_logic;
+    Mil_Rcv_Err:    out   std_logic;
     No_VW_Cnt:      out   std_logic_vector(15 downto 0);  -- Bit[15..8] Fehlerzaehler fuer No Valid Word des positiven Decoders "No_VW_p",
                                                           -- Bit[7..0] Fehlerzaehler fuer No Valid Word des negativen Decoders "No_VM_n"
     Clr_No_VW_Cnt:  in    std_logic;                      -- Loescht die no valid word Fehler-Zaehler des positiven und negativen Dekoders.
@@ -317,7 +317,8 @@ port  (
                                                           -- Muss synchron zur Clock 'Clk' und mindesten eine Periode lang aktiv sein!
     error_limit_reached:  out   std_logic;
     Mil_Decoder_Diag_p: out   std_logic_vector(15 downto 0);
-    Mil_Decoder_Diag_n: out   std_logic_vector(15 downto 0)
+    Mil_Decoder_Diag_n: out   std_logic_vector(15 downto 0);
+    clr_mil_rcv_err:    in    std_logic
     );
 end component;
 

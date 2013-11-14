@@ -7,7 +7,41 @@ use work.aux_functions_pkg.all;
 use work.mil_pkg.all;
 use work.wb_mil_scu_pkg.all;
 
-ENTITY wb_mil_scu IS 
+ENTITY wb_mil_scu IS
+--+---------------------------------------------------------------------------------------------------------------------------------+
+--| "wb_mil_scu" stellt in Verbindung mit der SCU-Aufsteck-Karte "FG900170_SCU_MIL1" alle Funktionen bereit, die benötigt werden um |
+--| SE-Funktionalitaet mit einer SCU realistieren zu können.                                                                        |
+--|                                                                                                                                 |
+--| Das Rechnerinterface zu den einzelnen SE-Funktionen ist mit dem wishbone bus realisiert.                                        |
+--| Je nach angesprochener Funktion ist ein 32 Bit oder 16 Bit Zugriff vorgeschrieben.                                              |
+--| Egal ob 32 Bit oder 16 Bit Resource, die Adressen muessen immer auf Modulo-4-Grenzen liegen.                                    |
+--| Die Adressoffsets der einzelnen Funktionen sind in der Datei "wb_mil_scu_pkg" abgelegt. Ebenso ist dort die                     |
+--| Component-Deklaration der Entity "wb_mil_scu" abgelegt. Dort ist auch der SDB-Record der wishbone-componente abgelegt.          |
+--|                                                                                                                                 |
+--| Folgende Funktionen sollen zum Abschluss des Projekts bereitstehen:                                                             |
+--|   1) Mil-(Device)-Bus-Kommunikation. Wird als erstes realisiert.                                                                |
+--|   2) Timing-Receiver (Manchester-Dekoder im FPGA)                                                                               |
+--|   3) Event-Filter zur Steuerung:                                                                                                |
+--|       a) welches Event in das Empfangs-Fifo geschreiben wird.                                                                   |
+--|       b) welches Event den Event-Timer rueckstzen soll.                                                                         |
+--|       c) ob ein Event einen Puls (oder zwei Events einen Rahmenpuls) an den beiden Lemoausgangsbuchsen bereitstellen soll.      |
+--|   4) Delay-Timer, generiert einen Interrupt nach herunterzaehlen des geladenen Datums.                                          |
+--|   5) Event-Timer, 32 Bit breit, kann per Event oder Software auf Null zurueckgestzt werden. Hat keinen Ueberlaufschutz.         |
+--|   6) Wait-Timer, 24 Bit breit, kann per Software auf null gestzt werden. Hat keinen Ueberlaufschutz.                            |
+--|   7) Interrupt-System.                                                                                                          |
+--|   8) Test und Auslese ob die SCU-Aufsteck-Karte "FG900170_SCU_MIL1" bestueckt ist.                                              |
+--|                                                                                                                                 |
+--| Version | Autor       | Datum       | Grund                                                                                     |
+--| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
+--|   01    | W.Panschow  | 15.08.2013  | Bereitstellung der Mil-(Device)-Bus Funktion.                                             |
+--| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
+--|   02    | W.Panschow  | 14.11.2013  | Timing-Receiver, Event-Filter, Delay-Timer, Event-Timer und Wait-Timer implementiert.     |
+--| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
+--|   03    |             |             |                                                                                           |
+--| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
+--|                                                                                                                                 |
+--+---------------------------------------------------------------------------------------------------------------------------------+
+
 generic (
     Clk_in_Hz:  INTEGER := 125_000_000    -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
                                           -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
@@ -79,7 +113,13 @@ port  (
     Data_Req_Intr:  in      std_logic;
     nLed_Interl:    out     std_logic;
     nLed_Dry:       out     std_logic;
-    nLed_Drq:       out     std_logic
+    nLed_Drq:       out     std_logic;
+    io_1:           buffer  std_logic;
+    io_1_is_in:     out     std_logic := '0';
+    nLed_io_1:      out     std_logic;
+    io_2:           buffer  std_logic;
+    io_2_is_in:     out     std_logic := '0';
+    nLed_io_2:      out     std_logic
     );
 end wb_mil_scu;
 
@@ -87,45 +127,14 @@ end wb_mil_scu;
 ARCHITECTURE arch_wb_mil_scu OF wb_mil_scu IS 
 
 
--- allowed wishbone addresses
-constant  mil_wr_data_a:      unsigned(c_mil_addr_width-1 downto 2) := to_unsigned(16#00#, c_mil_addr_width-2);
-constant  mil_wr_cmd_a:       unsigned(c_mil_addr_width-1 downto 2) := to_unsigned(16#01#, c_mil_addr_width-2);
-constant  mil_wr_rd_status_a: unsigned(c_mil_addr_width-1 downto 2) := to_unsigned(16#02#, c_mil_addr_width-2);
-constant  rd_wr_no_vw_cnt_a:  unsigned(c_mil_addr_width-1 downto 2) := to_unsigned(16#03#, c_mil_addr_width-2);
-constant  rd_wr_not_eq_cnt_a: unsigned(c_mil_addr_width-1 downto 2) := to_unsigned(16#04#, c_mil_addr_width-2);
-
-constant  test_echo_1_a:      unsigned(c_mil_addr_width-1 downto 2) := to_unsigned(16#10#, c_mil_addr_width-2);
-constant  test_echo_2_a:      unsigned(c_mil_addr_width-1 downto 2) := to_unsigned(16#fff#, c_mil_addr_width-2);
-constant  test_event_a:       unsigned(c_mil_addr_width-1 downto 2) := to_unsigned(16#ffe#, c_mil_addr_width-2);
-
--- bit positions of mil control/status register
-constant  b_sel_fpga_n6408: integer := 15;  -- '1' => fpga manchester endecoder selected, '0' => external hardware manchester endecoder 6408 selected.
-constant  b_ev_filt_12_n8:  integer := 14;  -- '1' => event filter decode 12 bit of the event, '0' => event filter decode 8 bit of the event.
-constant  b_ev_filter_on:   integer := 13;  -- '1' => event filter is on, '0' => event filter is off.
-constant  b_debounce_on:    integer := 12;  -- '1' => debounce of device bus interrupt input is on.
-constant  b_puls2_rahmen:   integer := 11;  -- '1' => aus zwei events wird der Rahmenpuls2 gebildet. Vorausgesetzt das Eventfilter ist richtig programmiert.
-constant  b_puls1_rahmen:   integer := 10;  -- '1' => aus zwei events wird der Rahmenpuls1 gebildet. Vorausgesetzt das Eventfilter ist richtig programmiert.
-constant  b_ev_reset_on:    integer := 09;  -- '1' => events koennen den event timer auf Null setzen, vorausgesetzt das Eventfilter ist richtig programmiert.
-constant  b_mil_rcv_err:    integer := 08;
-
-constant  b_mil_rcv_rdy:    integer := 4;   -- '1' => command or data received from mil bus.
-constant  b_ev_fifo_full:   integer := 3;   -- '1' => event fifo is full.
-constant  b_data_req:       integer := 2;   -- '1' => data request interrupt of device bus is active.
-constant  b_data_rdy:       integer := 1;   -- '1' => data ready interrupt of device bus is active.
-constant  b_interlock:      integer := 0;   -- '1' => Interlock of device bus is active.
-
 signal    manchester_fpga:  std_logic;  -- '1' => fpga manchester endecoder selected, '0' => external hardware manchester endecoder 6408 selected.
-signal    ev_filt_12_n8:    std_logic;  -- '1' => event filter is on, '0' => event filter is off.
-signal    ev_filter_on:     std_logic;  -- '1' => event filter is on, '0' => event filter is off.
+signal    ev_filt_12_8b:    std_logic;  -- '1' => event filter is on, '0' => event filter is off.
+signal    ev_filt_on:       std_logic;  -- '1' => event filter is on, '0' => event filter is off.
 signal    debounce_on:      std_logic;  -- '1' => debounce of device bus interrupt input is on.
-signal    puls2_rahmen:     std_logic;  -- '1' => aus zwei events wird der Rahmenpuls2 gebildet. Vorausgesetzt das Eventfilter ist richtig programmiert.
-signal    puls1_rahmen:     std_logic;  -- '1' => aus zwei events wird der Rahmenpuls1 gebildet. Vorausgesetzt das Eventfilter ist richtig programmiert.
+signal    puls2_frame:      std_logic;  -- '1' => aus zwei events wird der Rahmenpuls2 gebildet. Vorausgesetzt das Eventfilter ist richtig programmiert.
+signal    puls1_frame:      std_logic;  -- '1' => aus zwei events wird der Rahmenpuls1 gebildet. Vorausgesetzt das Eventfilter ist richtig programmiert.
 signal    ev_reset_on:      std_logic;  -- '1' => events koennen den event timer auf Null setzen, vorausgesetzt das Eventfilter ist richtig programmiert.
 signal    clr_mil_rcv_err:  std_logic;
-
-
-signal    Sel_EPLD_n6408:   std_logic;  --!!!!
-signal    Mil_Rcv_Err_ff:   std_logic;  --!!!!
 
 signal    Mil_RCV_D:      std_logic_vector(15 downto 0);
 signal    Mil_Cmd_Rcv:    std_logic;
@@ -144,21 +153,42 @@ signal    Reset_6408:     std_logic;
 
 signal  ex_stall, ex_ack, ex_err, intr: std_logic;  -- dummy
 
-signal    mil_trm_start:  std_logic;
-signal    mil_trm_cmd:    std_logic;
-signal    mil_trm_data:   std_logic_vector(15 downto 0);
+signal    mil_trm_start:    std_logic;
+signal    mil_trm_cmd:      std_logic;
+signal    mil_trm_data:     std_logic_vector(15 downto 0);
+  
+signal    mil_rd_start:     std_logic;
+  
+signal    sw_clr_ev_timer:  std_logic;
+signal    ev_clr_ev_timer:  std_logic;
+signal    ev_timer:         unsigned(31 downto 0);
+  
+signal    ena_led_count:    std_logic;
+  
+signal    nSel_Mil_Drv:     std_logic;
+  
+signal    wr_filt_ram:      std_logic;
+signal    rd_filt_ram:      std_logic;
+signal    stall_filter:     std_logic;
+signal    filt_data_i:      std_logic_vector(5 downto 0);
+signal    ev_fifo_ne:       std_logic;
+signal    ev_fifo_full:     std_logic;
+signal    rd_ev_fifo:       std_logic;
+signal    clr_ev_fifo:      std_logic;
 
-signal    mil_rd_start:   std_logic;
+signal    dly_timer:        unsigned(24 downto 0);
+signal    ld_dly_timer:     std_logic;
+signal    stall_dly_timer:  std_logic;
 
-signal    test_echo_1:    std_logic_vector(31 downto 0);
-signal    test_echo_2:    std_logic_vector(31 downto 0);
+signal    wait_timer:       unsigned(23 downto 0);
+signal    clr_wait_timer:   std_logic;
+  
+signal    ep_read_port:     std_logic_vector(15 downto 0);    --event processing read port
+  
+signal    timing_received:  std_logic;
 
-signal    timing_cmd, timing_rcv, event_fin:  std_logic;
-signal    event_d:        std_logic_vector(15 downto 0);
+signal    ena_every_us:     std_logic;
 
-signal    ena_led_count:  std_logic;
-
-signal    nSel_Mil_Drv:   std_logic;
 
 
 begin
@@ -181,9 +211,9 @@ ena_led_cnt: div_n
   port map (
     res       => '0',
     clk       => clk_i,
-    ena       => open,            -- das untersetzende enable muss in der gleichen Clockdomäne erzeugt werden.
+    ena       => open,            -- das untersetzende enable muss in der gleichen ClockdomÃ¤ne erzeugt werden.
                                   -- Das enable sollte nur ein Takt lang sein.
-                                  -- Z.B. könnte eine weitere div_n-Instanz dieses Signal erzeugen.  
+                                  -- Z.B. kÃ¶nnte eine weitere div_n-Instanz dieses Signal erzeugen.  
     div_o     => ena_led_count    -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
     );
 
@@ -282,37 +312,39 @@ led_timing: led_n
     ena         =>  ena_led_count,  -- if you use ena for a reduction, signal should be generated from the same 
                                     -- clock domain and should be only one clock period active.
     CLK         => clk_i,
-    Sig_In      => timing_cmd and timing_rcv,   -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
+    Sig_In      => timing_received, -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => open,            -- Push-Pull output, active low, inactive high.
     nLed_opdrn  => nLed_Timing      -- open drain output, active low, inactive tristate.
     );
 
-Serial_Timing:  mil_dec_edge_timed
+led_io_1: led_n
   generic map (
-    CLK_in_Hz         => clk_in_Hz,     -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen 
-                                        -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
-                                        -- Die tatsaechlich angelegte Frequenz, muss vor der Synthese in "CLK_in_Hz"
-                                        -- in Hertz beschrieben werden.
-    Receive_pos_lane  => 0              -- '0' => der Manchester-Datenstrom wird bipolar über Übertrager empfangen.
-                                        -- '1' => der positive Signalstrom ist an Manchester_In angeschlossen
-                                        -- '0' => der negative Signalstrom ist an Manchester_In angeschlossen.
+    stretch_cnt => 4
     )
   port map (
-    Manchester_In     => Timing,        -- Eingangsdatenstrom MIL-1553B
-    RD_MIL            => event_fin,     -- setzt Rvc_Cmd, Rcv_Rdy und Rcv_Error zurück. Muss synchron zur Clock 'clk' und 
-                                        -- mindesten eine Periode lang aktiv sein!
-    Res               => not nRst_i,    -- Muss mindestens einmal für eine Periode von 'clk' aktiv ('1') gewesen sein.
-    clk               => clk_i,
-    Rcv_Cmd           => timing_cmd,    -- '1' es wurde ein Kommando empfangen.
-    Rcv_Error         => open,          -- ist bei einem Fehler für einen Takt aktiv '1'.
-    Rcv_Rdy           => timing_rcv,    -- '1' es wurde ein Kommand oder Datum empfangen.
-                                        -- Wenn Rcv_Cmd = '0' => Datum. Wenn Rcv_Cmd = '1' => Kommando
-    Mil_Rcv_Data      => event_d,       -- Empfangenes Datum oder Komando
-    Mil_Decoder_Diag  => open           -- Diagnoseausgänge für Logikanalysator
+    ena         =>  ena_led_count,  -- if you use ena for a reduction, signal should be generated from the same 
+                                    -- clock domain and should be only one clock period active.
+    CLK         => clk_i,
+    Sig_In      => io_1,            -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
+                                    -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
+    nLED        => open,            -- Push-Pull output, active low, inactive high.
+    nLed_opdrn  => nLed_io_1        -- open drain output, active low, inactive tristate.
     );
 
-event_fin <= timing_rcv and timing_cmd;
+led_io_2: led_n
+  generic map (
+    stretch_cnt => 4
+    )
+  port map (
+    ena         =>  ena_led_count,  -- if you use ena for a reduction, signal should be generated from the same 
+                                    -- clock domain and should be only one clock period active.
+    CLK         => clk_i,
+    Sig_In      => io_2,            -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
+                                    -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
+    nLED        => open,            -- Push-Pull output, active low, inactive high.
+    nLed_opdrn  => nLed_io_2        -- open drain output, active low, inactive tristate.
+    );
 
 Mil_1:  mil_hw_or_soft_ip
   generic map (
@@ -369,7 +401,7 @@ Mil_1:  mil_hw_or_soft_ip
     nMil_Out_Neg  =>  Mil_nBZO,
     Mil_Cmd_Rcv   =>  Mil_Cmd_Rcv,
     Mil_Rcv_Rdy   =>  Mil_Rcv_Rdy,
-    Mil_Rcv_Error =>  Mil_Rcv_Error,
+    Mil_Rcv_Err   =>  Mil_Rcv_Error,
     No_VW_Cnt     =>  no_vw_cnt,      -- Bit[15..8] Fehlerzaehler fuer No Valid Word des positiven Decoders "No_VW_p",
                                       -- Bit[7..0] Fehlerzaehler fuer No Valid Word des negativen Decoders "No_VM_n"
     Clr_No_VW_Cnt =>  clr_no_vw_cnt,  -- Loescht die no valid word Fehler-Zaehler des positiven und negativen Dekoders.
@@ -381,11 +413,43 @@ Mil_1:  mil_hw_or_soft_ip
                                               -- Muss synchron zur Clock 'Clk' und mindesten eine Periode lang aktiv sein!
     error_limit_reached =>  error_limit_reached,
     Mil_Decoder_Diag_p  =>  Mil_Decoder_Diag_p,
-    Mil_Decoder_Diag_n  =>  Mil_Decoder_Diag_n
+    Mil_Decoder_Diag_n  =>  Mil_Decoder_Diag_n,
+    clr_mil_rcv_err     =>  clr_mil_rcv_err
     );
     
 Sel_Mil_Drv <= not nSel_Mil_Drv;
-    
+
+
+event_processing_1: event_processing
+  generic map (
+    clk_in_hz         =>    Clk_in_Hz     -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
+                                          -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+    )
+  port map (
+    ev_filt_12_8b     => ev_filt_12_8b,
+    ev_filt_on        => ev_filt_on,
+    ev_reset_on       => ev_reset_on,
+    puls1_frame       => puls1_frame,
+    puls2_frame       => puls2_frame,
+    timing_i          => timing,
+    clk_i             => clk_i,
+    nRst_i            => nRst_i,
+    wr_filt_ram       => wr_filt_ram,
+    rd_filt_ram       => rd_filt_ram,
+    rd_ev_fifo        => rd_ev_fifo,
+    clr_ev_fifo       => clr_ev_fifo,
+    filt_addr         => slave_i.adr(11+2 downto 2),
+    filt_data_i       => slave_i.dat(filt_data_i'range),
+    stall_o           => stall_filter,
+    read_port_o       => ep_read_port,
+    ev_fifo_ne        => ev_fifo_ne,
+    ev_fifo_full      => ev_fifo_full,
+    ev_timer_res      => ev_clr_ev_timer,
+    ev_puls1          => io_1,
+    ev_puls2          => io_2,
+    timing_received   => timing_received
+  );
+
 
 p_regs_acc: process (clk_i, nrst_i)
   begin
@@ -395,26 +459,43 @@ p_regs_acc: process (clk_i, nrst_i)
       ex_err          <= '0';
       
       manchester_fpga <= '0';
-      ev_filt_12_n8   <= '0';
-      ev_filter_on    <= '0';
+      ev_filt_12_8b   <= '0';
+      ev_filt_on      <= '0';
       debounce_on     <= '0';
-      puls2_rahmen    <= '0';
-      puls1_rahmen    <= '0';
+      puls2_frame     <= '0';
+      puls1_frame     <= '0';
       ev_reset_on     <= '0';
-      clr_mil_rcv_err <= '0';
+      clr_mil_rcv_err <= '1';
       
       mil_trm_start   <= '0';
       mil_rd_start    <= '0';
       mil_trm_cmd     <= '0';
       mil_trm_data <= (others => '0');
+
+      rd_ev_fifo      <= '0';
+      clr_ev_fifo     <= '1';
+      wr_filt_ram     <= '0';
+      rd_filt_ram     <= '0';
+      sw_clr_ev_timer <= '1';
+      ld_dly_timer    <= '0';
+      clr_wait_timer  <= '1';
       
     elsif rising_edge(clk_i) then
+
       ex_stall        <= '1';
       ex_ack          <= '0';
       ex_err          <= '0';
-      
+
+      rd_ev_fifo      <= '0';
+      clr_ev_fifo     <= '0';
+      wr_filt_ram     <= '0';
+      rd_filt_ram     <= '0';
+
       clr_no_VW_cnt   <= '0';
       clr_not_equal_cnt <= '0';
+      sw_clr_ev_timer <= '0';
+      ld_dly_timer    <= '0';
+      clr_wait_timer  <= '0';
 
       if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';
       elsif manchester_fpga = '1' then  mil_trm_start <= '0'; end if;
@@ -424,147 +505,213 @@ p_regs_acc: process (clk_i, nrst_i)
 
       if slave_i.cyc = '1' and slave_i.stb = '1' and ex_stall = '1' then
       -- begin of wishbone cycle
-        case unsigned(slave_i.adr(c_mil_addr_width-1 downto 2)) is
+        case to_integer(unsigned(slave_i.adr(c_mil_addr_width-1 downto 2))) is
         -- check existing word register
-          when mil_wr_cmd_a | mil_wr_data_a =>
-            if slave_i.we = '1' then
-              if slave_i.sel = "0011" then
-              -- write to low word is allowed
+          when mil_wr_cmd_a | mil_rd_wr_data_a =>
+            if slave_i.sel = "0011" then
+              if slave_i.we = '1' then
+                -- write low word
                 if mil_trm_rdy = '1' and mil_trm_start = '0' then
+                  -- write is allowed, because mil tranmiter is free
                   mil_trm_start <= '1';
                   mil_trm_cmd   <= slave_i.adr(2);
                   mil_trm_data  <= slave_i.dat(15 downto 0);
-                    ex_stall <= '0';
-                    ex_ack <= '1';
+                  ex_stall <= '0';
+                  ex_ack <= '1';
                 else
-                -- write to mil not allowed, because mil transmit is active
+                  -- write to mil not allowed, because mil transmit is active
                   ex_stall <= '0';
                   ex_err <= '1';
                 end if;
               else
-                -- write to high word or unaligned word is not allowed
-                ex_stall <= '0';
-                ex_err <= '1';
-              end if;
-            else
-              if Mil_Rcv_Rdy = '1' and mil_rd_start = '0' then
-                mil_rd_start <= '1';
-                slave_o.dat(15 downto 0) <= Mil_RCV_D;
+                -- read low word
+                if Mil_Rcv_Rdy = '1' and mil_rd_start = '0' then
+                  -- read is allowed, because mil received a data
+                  mil_rd_start <= '1';
+                  slave_o.dat(15 downto 0) <= Mil_RCV_D;
                   ex_stall <= '0';
                   ex_ack <= '1';
-              else
-              -- read mil not allowed, because no mil_rcv_rdy
-                ex_stall <= '0';
-                ex_err <= '1';
+                else
+                  -- read mil not allowed, because mil received no data
+                  ex_stall <= '0';
+                  ex_err <= '1';
+                end if;
               end if;
+            else
+              -- access to high word or unaligned word is not allowed
+              ex_stall <= '0';
+              ex_err <= '1';
             end if;
-
-          when mil_wr_rd_status_a =>
-            if slave_i.we = '1' then
-              if slave_i.sel = "0011" then
+ 
+          when mil_wr_rd_status_a =>  -- read or write status register
+            if slave_i.sel = "0011" then -- only word access to modulo-4 address allowed
+              if slave_i.we = '1' then
+                -- write status register
                 manchester_fpga <= slave_i.dat(b_sel_fpga_n6408);
-                ev_filt_12_n8   <= slave_i.dat(b_ev_filt_12_n8);
-                ev_filter_on    <= slave_i.dat(b_ev_filter_on);
+                ev_filt_12_8b   <= slave_i.dat(b_ev_filt_12_8b);
+                ev_filt_on      <= slave_i.dat(b_ev_filt_on);
                 debounce_on     <= slave_i.dat(b_debounce_on);
-                puls2_rahmen    <= slave_i.dat(b_puls2_rahmen);
-                puls1_rahmen    <= slave_i.dat(b_puls1_rahmen);
+                puls2_frame     <= slave_i.dat(b_puls2_frame);
+                puls1_frame     <= slave_i.dat(b_puls1_frame);
                 ev_reset_on     <= slave_i.dat(b_ev_reset_on);
                 clr_mil_rcv_err <= slave_i.dat(b_mil_rcv_err);
                 ex_stall <= '0';
                 ex_ack <= '1';
               else
-                -- write to high word or unaligned word is not allowed
+                -- read status register
+                slave_o.dat(15 downto 0) <= ( manchester_fpga & ev_filt_12_8b & ev_filt_on & debounce_on    -- mil-status[15..12]
+                                            & puls2_frame & puls1_frame & ev_reset_on & mil_rcv_error       -- mil-status[11..8]
+                                            & mil_trm_rdy & Mil_Cmd_Rcv & mil_rcv_rdy & ev_fifo_full        -- mil-status[7..4]
+                                            & ev_fifo_ne & Data_Req_Intr & Data_Rdy_Intr & Interlock_Intr );-- mil-status[3..0]
                 ex_stall <= '0';
-                ex_err <= '1';
+                ex_ack <= '1';
               end if;
             else
-              slave_o.dat(15 downto 0) <= ( manchester_fpga & ev_filt_12_n8 & ev_filter_on & debounce_on  -- mil-status[15..12]
-                                          & puls2_rahmen & puls1_rahmen & ev_reset_on & mil_rcv_err_ff    -- mil-status[11..8]
-                                          & mil_trm_rdy & Mil_Cmd_Rcv & mil_rcv_rdy & '0'                 -- mil-status[7..4]
-                                          & '0' & Data_Req_Intr & Data_Rdy_Intr & Interlock_Intr );       -- mil-status[3..0]
+              -- access to high word or unaligned word is not allowed
               ex_stall <= '0';
-              ex_ack <= '1';
+              ex_err <= '1';
             end if;
               
-          when rd_wr_no_vw_cnt_a =>
-            if slave_i.we = '1' then
-              if slave_i.sel = "0011" then
+          when rd_clr_no_vw_cnt_a =>  -- read or clear no valid word counters
+            if slave_i.sel = "0011" then -- only word access to modulo-4 address allowed
+              if slave_i.we = '1' then
+                -- write access clears no valid word counters
                 clr_no_vw_cnt <= '1';
                 ex_stall <= '0';
                 ex_ack <= '1';
               else
-                -- write to high word or unaligned word is not allowed
+                -- read no valid word counters
+                slave_o.dat(15 downto 0) <= no_vw_cnt;
                 ex_stall <= '0';
-                ex_err <= '1';
+                ex_ack <= '1';
               end if;
             else
-              slave_o.dat(15 downto 0) <= no_vw_cnt;
+              -- access to high word or unaligned word is not allowed
               ex_stall <= '0';
-              ex_ack <= '1';
+              ex_err <= '1';
             end if;
 
-          when rd_wr_not_eq_cnt_a =>
-            if slave_i.we = '1' then
-              if slave_i.sel = "0011" then
+          when rd_wr_not_eq_cnt_a =>  -- read or clear not equal counters
+            if slave_i.sel = "0011" then -- only word access to modulo-4 address allowed
+              if slave_i.we = '1' then
+                -- write access clears not equal counters
                 clr_not_equal_cnt <= '1';
                 ex_stall <= '0';
                 ex_ack <= '1';
               else
-                -- write to high word or unaligned word is not allowed
-                ex_stall <= '0';
-                ex_err <= '1';
-              end if;
-            else
-              slave_o.dat(15 downto 0) <= not_equal_cnt;
-              ex_stall <= '0';
-              ex_ack <= '1';
-            end if;
-
-          when test_echo_1_a =>
-            if slave_i.we = '1' then
-              if slave_i.sel = "1111" then
-                test_echo_1 <= slave_i.dat(31 downto 0);
+                -- read not equal counters
+                slave_o.dat(15 downto 0) <= not_equal_cnt;
                 ex_stall <= '0';
                 ex_ack <= '1';
-              else
-              -- double word write is not complete written
-                ex_stall <= '0';
-                ex_err <= '1';
               end if;
             else
-            -- read complete double word
-              slave_o.dat(31 downto 0) <= test_echo_1;
-              ex_stall <= '0';
-              ex_ack <= '1';
-            end if;
-
-          when test_echo_2_a =>
-            if slave_i.we = '1' then
-              if slave_i.sel = "1111" then
-                test_echo_2 <= slave_i.dat(31 downto 0);
-                ex_stall <= '0';
-                ex_ack <= '1';
-              else
-              -- double word write is not complete written
-                ex_stall <= '0';
-                ex_err <= '1';
-              end if;
-            else
-            -- read complete double word
-              slave_o.dat(31 downto 0) <= test_echo_2;
-              ex_stall <= '0';
-              ex_ack <= '1';
-            end if;
-
-          when test_event_a =>
-            if slave_i.we = '1' then
+              -- write to high word or unaligned word is not allowed
               ex_stall <= '0';
               ex_err <= '1';
+            end if;
+
+          when rd_clr_ev_fifo_a =>  -- read or clear event fifo
+            if slave_i.sel = "0011" then -- only word access to modulo-4 address allowed
+              if slave_i.we = '1' then
+                -- write access clears event fifo
+                clr_ev_fifo <= '1';
+                ex_stall <= '0';
+                ex_ack <= '1';
+              else
+                -- read event fifo
+                if ev_fifo_ne = '1' then
+                  -- read is okay because fifo is not empty
+                  rd_ev_fifo <= '1';
+                  slave_o.dat(15 downto 0) <= ep_read_port;
+                  ex_stall <= '0';
+                  ex_ack <= '1';
+                else
+                  -- read is not okay because fifo is empty
+                  ex_stall <= '0';
+                  ex_err <= '1';
+                end if;
+              end if;
             else
-            -- read complete double word
-              slave_o.dat(15 downto 0) <= event_d;
+              -- write to high word or unaligned word is not allowed
               ex_stall <= '0';
-              ex_ack <= '1';
+              ex_err <= '1';
+            end if;
+
+          when rd_clr_ev_timer_a =>  -- read or clear event timer
+            if slave_i.sel = "1111" then -- only double word access allowed
+              if slave_i.we = '1' then
+                -- write access clears event timer
+                sw_clr_ev_timer <= '1';
+                ex_stall <= '0';
+                ex_ack <= '1';
+              else
+                -- read complete double word
+                slave_o.dat(31 downto 0) <= std_logic_vector(ev_timer);
+                ex_stall <= '0';
+                ex_ack <= '1';
+              end if;
+            else
+              -- no complete double word access
+              ex_stall <= '0';
+              ex_err <= '1';
+            end if;
+
+          when rd_wr_dly_timer_a =>  -- read or write delay timer
+            if slave_i.sel = "1111" then -- only double word access allowed
+              if slave_i.we = '1' then
+                -- write access clears event timer
+                ld_dly_timer <= '1';
+                ex_stall <= stall_dly_timer;
+                ex_ack <= not stall_dly_timer;
+              else
+                -- read complete double word
+                slave_o.dat(31 downto 0) <= 7x"0" & std_logic_vector(dly_timer);
+                ex_stall <= '0';
+                ex_ack <= '1';
+              end if;
+            else
+              -- no complete double word access
+              ex_stall <= '0';
+              ex_err <= '1';
+            end if;
+
+          when rd_clr_wait_timer_a =>  -- read or clear wait timer
+            if slave_i.sel = "1111" then -- only double word access allowed
+              if slave_i.we = '1' then
+                -- write access clears wait timer
+                clr_wait_timer <= '1';
+                ex_stall <= '0';
+                ex_ack <= '1';
+              else
+                -- read complete double word
+                slave_o.dat(31 downto 0) <= 8x"0" & std_logic_vector(wait_timer);
+                ex_stall <= '0';
+                ex_ack <= '1';
+              end if;
+            else
+              -- no complete double word access
+              ex_stall <= '0';
+              ex_err <= '1';
+            end if;
+
+          when ev_filt_first_a to ev_filt_last_a =>  -- read or write event filter ram 
+            if slave_i.sel = "0011" then -- only word access to modulo-4 address allowed
+              if slave_i.we = '1' then
+                -- write event filter ram
+                wr_filt_ram <= '1';
+                ex_stall <= stall_filter;
+                ex_ack <= not stall_filter;
+              else
+                -- read event filter ram
+                rd_filt_ram <= '1';
+                slave_o.dat(15 downto 0) <= ep_read_port;
+                ex_stall <= stall_filter;
+                ex_ack <= not stall_filter;
+              end if;
+            else
+              -- write to high word or unaligned word is not allowed
+              ex_stall <= stall_filter;
+              ex_err <= not stall_filter;
             end if;
 
           when others =>
@@ -574,20 +721,89 @@ p_regs_acc: process (clk_i, nrst_i)
       end if;
     end if;
   end process p_regs_acc;
-  
 
-P_Mil_Rcv_Err:  process (clk_i, nRst_i)
+
+p_every_us: div_n
+  generic map (
+    n         => clk_in_hz / (1_000_000_000 / 1000),  -- alle 1000 ns einen Takt aktiv
+    diag_on   => 0                        -- diag_on = 1 die Breite des Untersetzungzaehlers
+                                          -- mit assert .. note ausgegeben.
+    )
+
+  port map (
+    res       => '0',
+    clk       => clk_i,
+    ena       => open,            -- das untersetzende enable muss in der gleichen ClockdomÃ¤ne erzeugt werden.
+                                  -- Das enable sollte nur ein Takt lang sein.
+                                  -- Z.B. kÃ¶nnte eine weitere div_n-Instanz dieses Signal erzeugen.  
+    div_o     => ena_every_us     -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
+    );
+
+
+p_ev_timer: process (clk_i, nRst_i)
   begin
     if nRst_i = '0' then
-      Mil_Rcv_Err_ff <= '0';
+      ev_timer <= to_unsigned(0, ev_timer'length);
     elsif rising_edge(clk_i) then
-      if Mil_Rcv_Error = '1' then
-        Mil_Rcv_Err_ff <= '1';
-      elsif clr_mil_rcv_err = '1' then
-        Mil_Rcv_Err_ff <= '0';
+      if sw_clr_ev_timer = '1' or ev_clr_ev_timer = '1' then
+        ev_timer <=  to_unsigned(0, ev_timer'length);
+      elsif ena_every_us = '1' then
+        ev_timer <= ev_timer + 1;
       end if;
     end if;
-  end process P_Mil_Rcv_Err;
-  
+  end process p_ev_timer;
+
+
+p_delay_timer: process (clk_i, nRst_i)
+
+  variable  dly_timer_start:  std_logic;
+  variable  dly_intr:         std_logic;
+
+  begin
+    if nRst_i = '0' then
+      dly_timer       <= to_unsigned(-1, dly_timer'length);
+      dly_timer_start := '0';
+      dly_intr        := '0';
+
+    elsif rising_edge(clk_i) then
+      
+      stall_dly_timer <= '1';
+      
+      if ld_dly_timer = '1' then
+        stall_dly_timer <= '0';
+        dly_intr := '0';                            -- laden des delay timers setzt delay interrupt zurueck
+        dly_timer <= unsigned(slave_i.dat(dly_timer'range));
+        if dly_timer(dly_timer'high) = '0' then     -- laden des delay timers bei dem das oberste bit = 0 ist
+          dly_timer_start := '1';                   -- startet den delay timer.
+        else
+          dly_timer_start := '0';                   -- stoppt den delay timer.
+        end if;
+      end if;
+        
+      if dly_timer_start = '1' then
+        if ena_every_us = '1' then
+          if dly_timer(dly_timer'high) = '0' then
+            dly_timer <= dly_timer - 1;
+          else
+            dly_intr := '1';
+          end if;
+        end if;
+      end if;
+    end if;
+  end process p_delay_timer;
+
+
+p_wait_timer: process (clk_i, nRst_i)
+  begin
+    if nRst_i = '0' then
+      wait_timer <= to_unsigned(0, wait_timer'length);
+    elsif rising_edge(clk_i) then
+      if clr_wait_timer = '1' then
+        wait_timer <=  to_unsigned(0, wait_timer'length);
+      elsif ena_every_us = '1' then
+        wait_timer <= wait_timer + 1;
+      end if;
+    end if;
+  end process p_wait_timer;
 
 end arch_wb_mil_scu;

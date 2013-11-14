@@ -29,6 +29,54 @@ constant c_xwb_gsi_mil_scu : t_sdb_device := (
   date          => x"20130826",
   name          => "GSI_MIL_SCU        ")));  -- should be 19 Char
 
+
+constant  filter_data_width:  integer := 6;
+constant  filter_ram_size:    integer := 4096;
+constant  filter_addr_width:  integer := integer(ceil(log2(real(filter_ram_size))));
+
+-- allowed wishbone address offsets for calulating the true wishbone address you have to multiply the constant by 4.
+constant  mil_rd_wr_data_a:   integer := 16#00#;  -- read mil bus:                wb_mil_scu_offset + 16#00#, only 16 bit access, only alloed when mil data received.
+                                                  -- write data to mil bus:       wb_mil_scu_offset + 16#00#, only 16 bit access, only alloed when transmiter free.
+constant  mil_wr_cmd_a:       integer := 16#01#;  -- write command to mil bus:    wb_mil_scu_offset + 16#04#, only 16 bit access, only alloed when transmiter free.
+constant  mil_wr_rd_status_a: integer := 16#02#;  -- read mil status:             wb_mil_scu_offset + 16#08#, only 16 bit access alloed.
+                                                  -- write mil control reg:       wb_mil_scu_offset + 16#08#, only 16 bit access alloed. Only secific bits can be changed
+constant  rd_clr_no_vw_cnt_a: integer := 16#03#;  -- read no valid counters:      wb_mil_scu_offset + 16#0C#, only 16 bit access alloed.
+                                                  -- write (clears )no valid counters: wb_mil_scu_offset + 16#0C#, only 16 bit access alloed.
+constant  rd_wr_not_eq_cnt_a: integer := 16#04#;  -- read not equal counters:     wb_mil_scu_offset + 16#10#, only 16 bit access alloed.
+                                                  -- write (clears) not equal counters: wb_mil_scu_offset + 16#10#, only 16 bit access alloed.
+constant  rd_clr_ev_fifo_a:   integer := 16#05#;  -- read event fifo:             wb_mil_scu_offset + 16#14#, only 16 bit access, only allowed when event fifo is not empty.
+                                                  -- write (clears) event fifo:   wb_mil_scu_offset + 16#14#, only 16 bit access.
+constant  rd_clr_ev_timer_a:  integer := 16#06#;  -- read event timer:            wb_mil_scu_offset + 16#18#, only 32 bit access allowed.
+                                                  -- write (sw-clear) event fifo: wb_mil_scu_offset + 16#18#, only 32 bit access allowed.
+constant  rd_wr_dly_timer_a:  integer := 16#07#;  -- read delay timer:            wb_mil_scu_offset + 16#1C#, only 32 bit access allowed.
+                                                  -- write delay timer:           wb_mil_scu_offset + 16#1C#, only 32 bit access allowed.
+constant  rd_clr_wait_timer_a:integer := 16#08#;  -- read wait timer:             wb_mil_scu_offset + 16#20#, only 32 bit access allowed.
+                                                  -- write (clear) wait timer:    wb_mil_scu_offset + 16#20#, only 32 bit access allowed.
+
+constant  ev_filt_first_a:    integer := 16#1000#;  -- first event filter ram address: wb_mil_scu_offset + 16#4000, only 16 bit access
+constant  ev_filt_last_a:     integer := 16#1FFF#;  -- last event filter  ram address: wb_mil_scu_offset + 16#7FFC, only 16 bit access
+
+-- bit positions of mil control/status register
+constant  b_sel_fpga_n6408: integer := 15;  -- '1' => fpga manchester endecoder selected, '0' => external hardware manchester endecoder 6408 selected.
+constant  b_ev_filt_12_8b:  integer := 14;  -- '1' => event filter decode 12 bit of the event, '0' => event filter decode 8 bit of the event.
+constant  b_ev_filt_on:     integer := 13;  -- '1' => event filter is on, '0' => event filter is off.
+constant  b_debounce_on:    integer := 12;  -- '1' => debounce of device bus interrupt input is on.
+constant  b_puls2_frame:    integer := 11;  -- '1' => aus zwei events wird der Rahmenpuls2 gebildet. Vorausgesetzt das Eventfilter ist richtig programmiert.
+constant  b_puls1_frame:    integer := 10;  -- '1' => aus zwei events wird der Rahmenpuls1 gebildet. Vorausgesetzt das Eventfilter ist richtig programmiert.
+constant  b_ev_reset_on:    integer := 9;   -- '1' => events koennen den event timer auf Null setzen, vorausgesetzt das Eventfilter ist richtig programmiert.
+constant  b_mil_rcv_err:    integer := 8;   -- '1' => an receive error okkurs. If this bit is '1', then it holds information
+                                            --        until it's cleared by writing a one to this position of thencontrol register.
+constant  b_mil_trm_rdy:    integer := 7;   -- '1' => ready to tranmit data or commands.
+constant  b_mil_cmd_rcv:    integer := 6;   -- '1' => command received.
+constant  b_mil_rcv_rdy:    integer := 5;   -- '1' => command or data received from mil bus.
+constant  b_ev_fifo_full:   integer := 4;   -- '1' => event fifo is full.
+constant  b_ev_fifo_ne:     integer := 3;   -- '1' => event fifo is not empty.
+constant  b_data_req:       integer := 2;   -- '1' => data request interrupt of device bus is active.
+constant  b_data_rdy:       integer := 1;   -- '1' => data ready interrupt of device bus is active.
+constant  b_interlock:      integer := 0;   -- '1' => Interlock of device bus is active.
+
+
+
 component wb_mil_scu IS 
 generic (
     Clk_in_Hz:  INTEGER := 125_000_000    -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
@@ -101,8 +149,46 @@ port  (
     Data_Req_Intr:  in      std_logic;
     nLed_Interl:    out     std_logic;
     nLed_Dry:       out     std_logic;
-    nLed_Drq:       out     std_logic
+    nLed_Drq:       out     std_logic;
+    io_1:           out     std_logic;
+    io_1_is_in:     out     std_logic := '0';
+    nLed_io_1:      out     std_logic;
+    io_2:           out     std_logic;
+    io_2_is_in:     out     std_logic := '0';
+    nLed_io_2:      out     std_logic
     );
 end component wb_mil_scu;
+
+component event_processing is 
+  generic (
+    clk_in_hz:  INTEGER := 125_000_000    -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
+                                          -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+    );
+  port (
+    ev_filt_12_8b:    in    std_logic;
+    ev_filt_on:       in    std_logic;
+    ev_reset_on:      in    std_logic;
+    puls1_frame:      in    std_logic;
+    puls2_frame:      in    std_logic;
+    timing_i:         in    std_logic;
+    clk_i:            in    std_logic;
+    nRst_i:           in    std_logic;
+    wr_filt_ram:      in    std_logic;
+    rd_filt_ram:      in    std_logic;
+    rd_ev_fifo:       in    std_logic;
+    clr_ev_fifo:      in    std_logic;
+    filt_addr:        in    std_logic_vector(filter_addr_width-1 downto 0);
+    filt_data_i:      in    std_logic_vector(filter_data_width-1 downto 0);
+    stall_o:          out   std_logic;
+    read_port_o:      out   std_logic_vector(15 downto 0);
+    ev_fifo_ne:       out   std_logic;
+    ev_fifo_full:     out   std_logic;
+    ev_timer_res:     out   std_logic;
+    ev_puls1:         out   std_logic;
+    ev_puls2:         out   std_logic;
+    timing_received:  out   std_logic
+    );
+end component event_processing;
+
 
 end package wb_mil_scu_pkg;
