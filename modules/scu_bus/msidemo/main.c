@@ -3,14 +3,24 @@
 #include "irq.h"
 #include "scu_bus.h"
 
-//extern unsigned int* _startshared[];
-//extern unsigned int* _endshared[];
-//volatile unsigned int* fesa_if = (unsigned int*)_startshared;
+extern unsigned int* _startshared[];
+extern unsigned int* _endshared[];
+volatile unsigned int* fesa_if = (unsigned int*)_startshared;
 
 volatile unsigned int* display            = (unsigned int*)0x02900000;
 volatile unsigned int* irq_slave          = (unsigned int*)0x02000d00;
 volatile unsigned short* scu_bus_master   = (unsigned short*)0x02400000;
 int slaves[SCU_BUS_MAX_SLOTS+1] = {0};
+
+
+struct pset {
+  int a;
+  int l_a;
+  int b;
+  int l_b;
+  int c;
+  int n;
+};
 
 
 void show_msi()
@@ -37,9 +47,10 @@ void show_msi()
 
 void isr1()
 {
+  struct pset *p;
   unsigned int i;
-  
-  //disp_put_str("ISR1\n");
+  p = (struct p *)fesa_if;
+
   //which slave has triggered?
   while(slaves[i]) {
     //check bit in master act reg
@@ -49,14 +60,20 @@ void isr1()
         scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 1;
       //ack dreq
       else if (scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] & 2) {
-        //scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = fesa_if[0];//0x8FF;
-        scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x1;
-        scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 2;
+        if (p->a != 0xdeadbeef) { //no more data
+          scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_A]      = p->a;
+          scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTA] = 64 - 24 - p->l_a * -1;
+          scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B]      = p->b;
+          scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTB] = 64 - 24 - p->l_b * -1;
+          scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_L]      = p->c;
+          scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_H]      = p->c >> 16;
+          scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT]                 |= 2; //ack slave dreq
+        }
       }
     }
     i++;
   } 
-
+  fesa_if += 6;
 }
 
 void _irq_entry(void) {
@@ -108,11 +125,11 @@ int main(void) {
     
     scu_bus_master[(slaves[i] << 16) + DAC2_BASE + DAC_CNTRL] = 0x10; //set FG mode
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = 0x1; //reset fg
-    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = (0 << 13); //set frequency Bit 15..13
-   // scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] |= (0 << 10); //set frequency Bit 12..10
-    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x1;
-    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTA] = 0x24;
-    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTB] = 0x24;
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = (5 << 13); //set frequency Bit 15..13
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] |= (2 << 10); //set step count Bit 12..10
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_B] = 0x0;
+    //scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTA] = 0x20;
+    //scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTB] = 0x20;
     scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_BROAD] = 0x4711; // start signal to all fg slaves
     i++;
   }

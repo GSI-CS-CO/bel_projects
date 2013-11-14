@@ -6,7 +6,7 @@ msidemo.bin: msidemo.elf
 	lm32-elf-objcopy -O binary $< $@
 
 msidemo.elf: crt0.o display.o irq.o scu_bus.o main.o
-	$(CC) $(CFLAGS) -o $@ -T linker.ld $^
+	$(CC) $(CFLAGS) -o $@ -T ram.ld $^
 
 
 clean:

@@ -16,9 +16,9 @@ entity fg_quad_datapath is
   nrst:               in  std_logic;
   sync_rst:           in  std_logic;
   a_en, b_en:         in  std_logic;                      -- data register enable
-  load_start, s_en:   in  std_logic;
-  sync_start:         in  std_logic;
-  start_value:        in  std_logic_vector(31 downto 0);
+  load_start:         in  std_logic;
+  sync_start:         in std_logic;
+  start_value:        in std_logic_vector(31 downto 0);
   status_reg_changed: in  std_logic;   
   step_sel:           in  std_logic_vector(2 downto 0);
   shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
@@ -52,9 +52,6 @@ signal s_add_lin_quad:  std_logic;
 type cntrl_type is (idle, load, quad_inc, lin_inc, addXQ, stopped);
 signal control_state: cntrl_type;
 
-signal s_cnt_out:     std_logic_vector(7 downto 0);
-signal s_reached:     std_logic;
-signal s_cnt_set:     std_logic := '0';
 signal s_coeff_rcvd:  std_logic;
 
 
@@ -72,7 +69,7 @@ constant c_freq_cnt: int_array := (
                                     (CLK_in_Hz / 16000) - 2
                                     );
 
-constant c_add_cnt: int_array := (
+constant c_step_cnt: int_array := (
                                    32000 - 2, 
                                    16000 - 2, 
                                    8000 - 2,
@@ -85,7 +82,7 @@ constant c_add_cnt: int_array := (
 
 -- calculate width from the biggest value
 constant  c_freq_cnt_width:       integer := integer(ceil(log2(real(c_freq_cnt(0))))) + 1;
-constant  c_add_cnt_width:        integer := integer(ceil(log2(real(c_add_cnt(0))))) + 1;
+constant  c_step_cnt_width:       integer := integer(ceil(log2(real(c_step_cnt(0))))) + 1;
 
 
 signal  s_cnt:         unsigned(7 downto 0);
@@ -93,7 +90,7 @@ signal  s_freq_cnt:    unsigned(c_freq_cnt_width - 1 downto 0);
 signal  s_freq_en:     std_logic;
 signal  s_freq_cnt_en: std_logic := '1';
 
-signal s_add_cnt:     unsigned(c_add_cnt_width - 1 downto 0);
+signal s_step_cnt:     unsigned(c_step_cnt_width - 1 downto 0);
 signal s_stp_reached: std_logic;
 signal s_cont:        std_logic;
 
@@ -102,13 +99,8 @@ signal s_running:     std_logic;
 
 begin
 
--- shifting for quadratic coefficient a
-s_a_shifted <= shift_left(resize(signed(data_a), 64), shift_a);
--- shifting for linear coefficient b
-s_b_shifted <= shift_left(resize(signed(data_b), 64), shift_b);
-
 -- registers a, b, Q, X, start und adder for lin und quad term
-reg_file: process (clk, nrst, sync_rst, a_en, b_en, s_en, load_start)
+reg_file: process (clk, nrst, sync_rst, a_en, b_en, load_start)
 begin
   if nrst = '0' or sync_rst = '1' then
     s_a_reg     <=  (others => '0');
@@ -117,15 +109,17 @@ begin
     s_X_reg     <=  (others => '0');
   elsif rising_edge(clk) then
     if a_en = '1' or s_stp_reached = '1' then
-      s_a_reg <= (s_a_shifted);
+      -- shifting for quadratic coefficient a
+      s_a_reg <= shift_left(resize(signed(data_a), 64), shift_a);
     end if;
     
     if b_en = '1' or s_stp_reached = '1' then
-      s_b_reg <= (s_b_shifted);
+      s_b_reg <= shift_left(resize(signed(data_b), 64), shift_b);
     end if;
     
     -- init quad term with start value
     if load_start = '1' then
+      -- shifting for linear coefficient b
       s_Q_reg <= signed(resize(signed(start_value), 64));
     end if;
     
@@ -149,12 +143,12 @@ end process;
 
 
   -- downcounter for frequency division
-  freq_cnt: process(clk, nrst, sync_rst)
+  freq_cnt: process(clk, nrst, sync_rst, freq_sel, sync_start)
   begin
     -- important for synced start 
     --if nrst = '0' or s_reset_freq_cnt = '1' then
-    if nrst = '0' or sync_rst = '1' then
-      s_freq_cnt <= (others => '0');
+    if nrst = '0' or sync_rst = '1' or sync_start = '1' then
+      s_freq_cnt <= to_unsigned(c_freq_cnt(to_integer(unsigned(freq_sel))), c_freq_cnt_width);
     elsif rising_edge(clk) then
       -- reload count at overflow
       if s_freq_en = '1' then      
@@ -169,10 +163,10 @@ end process;
   s_freq_en <= s_freq_cnt(s_freq_cnt'high);
 
   
-  s_stp_reached <= std_logic(s_add_cnt(s_add_cnt'high));
+  s_stp_reached <= std_logic(s_step_cnt(s_step_cnt'high));
 
 -- control state machine
-  control_sm: process (clk, nrst, s_cont, sync_rst)
+  control_sm: process (clk, nrst, sync_rst, s_cont)
   begin
     if nrst = '0' or sync_rst = '1' then
       control_state <= idle;
@@ -193,8 +187,8 @@ end process;
         when idle =>
           s_freq_cnt_en   <= '0';
           -- load step counter from array
-          s_add_cnt <= to_unsigned(c_add_cnt(to_integer(unsigned(step_sel))), c_add_cnt_width);
-          if load_start = '1' then
+          s_step_cnt <= to_unsigned(c_step_cnt(to_integer(unsigned(step_sel))), c_step_cnt_width);
+          if sync_start = '1' then
             s_coeff_rcvd <= '0';
             control_state <= quad_inc;
           end if;
@@ -205,18 +199,18 @@ end process;
             if s_coeff_rcvd = '1' then
               -- continue with new parameter set
               -- reload step counter from array
-              s_add_cnt <= to_unsigned(c_add_cnt(to_integer(unsigned(step_sel))), c_add_cnt_width);
+              s_step_cnt <= to_unsigned(c_step_cnt(to_integer(unsigned(step_sel))), c_step_cnt_width);
               s_coeff_rcvd <= '0';
               s_inc_quad <= '1';
               control_state <= lin_inc;
             else
               -- no paramters received
-              -- go to idle
+              -- go to stop mode
               control_state <= stopped;
             end if;
           
           elsif s_freq_en = '1' then
-            s_add_cnt <= s_add_cnt - 1;
+            s_step_cnt <= s_step_cnt - 1;
             s_inc_quad <= '1';
             control_state <= lin_inc;
           end if;
@@ -242,7 +236,7 @@ end process;
   end process;
 
 
-dreq <= s_stp_reached or load_start;
+dreq <= s_stp_reached or sync_start;
 -- output register for the 24 most significant bits
 sw_out    <= std_logic_vector(s_X_reg(63 downto 40));
 sw_strobe <= s_add_lin_quad;

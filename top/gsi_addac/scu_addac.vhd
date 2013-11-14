@@ -615,21 +615,21 @@ fg_1: fg_quad_scu_bus
   port map (
 
     -- SCUB interface
-    Adr_from_SCUB_LA => ADR_from_SCUB_LA, -- in, latched address from SCU_Bus
-    Data_from_SCUB_LA => Data_from_SCUB_LA, -- in, latched data from SCU_Bus
-    Ext_Adr_Val => Ext_Adr_Val, -- in, '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active => Ext_Rd_active, -- in, '1' => Rd-Cycle is active
-    Ext_Wr_active => Ext_Wr_active, -- in, '1' => Wr-Cycle is active
-    clk => clk_sys, -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset => nPowerup_Res, -- in, '0' => resets the fg_1
-    Rd_Port => fg_1_data_to_SCUB, -- out, connect read sources (over multiplexer) to SCUB-Macro
-    Rd_Active => fg_1_rd_active, -- '1' = read data available at 'Rd_Port'-output
-    Dtack => fg_1_dtack, -- connect Dtack to SCUB-Macro
-    dreq => fg_1_dreq,
+    Adr_from_SCUB_LA  => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+    Data_from_SCUB_LA => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+    Ext_Adr_Val       => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+    Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+    clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
+    nReset            => nPowerup_Res,          -- in, '0' => resets the fg_1
+    Rd_Port           => fg_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
+    Rd_active         => fg_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
+    Dtack             => fg_1_dtack,            -- connect Dtack to SCUB-Macro
+    dreq              => fg_1_dreq,             -- request of new parameter set
 
     -- fg output
-    sw_out => fg_1_sw,
-    sw_strobe => fg_1_strobe
+    sw_out            => fg_1_sw,               -- 24bit output from fg
+    sw_strobe         => fg_1_strobe            -- signals new output data
   );
 
 
@@ -708,18 +708,17 @@ p_read_mux: process (
     dac1_rd_active, dac1_data_to_SCUB,
     dac2_rd_active, dac2_data_to_SCUB,
     adc_rd_active, adc_data_to_SCUB,
-    wb_scu_data_to_SCUB, wb_scu_rd_active
+    fg_1_rd_active, fg_1_data_to_SCUB    
     )
-  variable sel: unsigned(5 downto 0);
+  variable sel: unsigned(4 downto 0);
   begin
-    sel := fg_1_rd_active & wb_scu_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
+    sel :=  fg_1_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
     case sel IS
-      when "000001" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "000010" => Data_to_SCUB <= dac1_data_to_SCUB;
-      when "000100" => Data_to_SCUB <= dac2_data_to_SCUB;
-      when "001000" => Data_to_SCUB <= adc_data_to_SCUB;
-      when "010000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "100000" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "00001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "00010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "00100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "01000" => Data_to_SCUB <= adc_data_to_SCUB;
+      when "10000" => Data_to_SCUB <= fg_1_data_to_SCUB;
       when others =>
         Data_to_SCUB <= X"0000";
     end case;
