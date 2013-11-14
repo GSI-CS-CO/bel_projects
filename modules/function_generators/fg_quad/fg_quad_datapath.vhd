@@ -12,14 +12,13 @@ entity fg_quad_datapath is
   port (
   data_a:             in  std_logic_vector(15 downto 0);
   data_b:             in  std_logic_vector(15 downto 0);
+  data_c:             in  std_logic_vector(31 downto 0);
   clk:                in  std_logic;
   nrst:               in  std_logic;
   sync_rst:           in  std_logic;
-  a_en, b_en:         in  std_logic;                      -- data register enable
+  a_en:               in  std_logic;                      -- data register enable
   load_start:         in  std_logic;
-  sync_start:         in std_logic;
-  start_value:        in std_logic_vector(31 downto 0);
-  status_reg_changed: in  std_logic;   
+  sync_start:         in  std_logic; 
   step_sel:           in  std_logic_vector(2 downto 0);
   shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
   shift_b:            in  integer range 0 to 48;          -- shiftvalue coeff b
@@ -39,7 +38,6 @@ signal s_b_shifted:   signed(63 downto 0);
 
 -- registerblock
 signal s_a_reg:       signed(63 downto 0);
-signal s_b_reg:       signed(63 downto 0);
 signal s_Q_reg:       signed(63 downto 0);
 signal s_X_reg:       signed(63 downto 0);
 
@@ -80,9 +78,9 @@ constant c_step_cnt: int_array := (
                                    250 - 2
                                    );
 
--- calculate width from the biggest value
+-- calculate width from the biggest value. high bit needs to be 0
 constant  c_freq_cnt_width:       integer := integer(ceil(log2(real(c_freq_cnt(0))))) + 1;
-constant  c_step_cnt_width:       integer := integer(ceil(log2(real(c_step_cnt(0))))) + 1;
+constant  c_step_cnt_width:       integer := integer(ceil(log2(real(c_step_cnt(7))))) + 1;
 
 
 signal  s_cnt:         unsigned(7 downto 0);
@@ -100,11 +98,10 @@ signal s_running:     std_logic;
 begin
 
 -- registers a, b, Q, X, start und adder for lin und quad term
-reg_file: process (clk, nrst, sync_rst, a_en, b_en, load_start)
+reg_file: process (clk, nrst, sync_rst, a_en, load_start)
 begin
   if nrst = '0' or sync_rst = '1' then
     s_a_reg     <=  (others => '0');
-    s_b_reg     <=  (others => '0');
     s_Q_reg     <=  (others => '0');
     s_X_reg     <=  (others => '0');
   elsif rising_edge(clk) then
@@ -113,25 +110,17 @@ begin
       s_a_reg <= shift_left(resize(signed(data_a), 64), shift_a);
     end if;
     
-    if b_en = '1' or s_stp_reached = '1' then
-      s_b_reg <= shift_left(resize(signed(data_b), 64), shift_b);
-    end if;
-    
-    -- init quad term with start value
+    -- init quad term with start values b and c
+    -- Q0 = b and X0 = c
     if load_start = '1' then
-      -- shifting for linear coefficient b
-      s_Q_reg <= signed(resize(signed(start_value), 64));
+      s_Q_reg <= shift_left(resize(signed(data_b), 64), shift_b);
+      s_X_reg <= shift_left(resize(signed(data_c), 64), 40);
     end if;
     
     -- increment quad term
     if s_inc_quad = '1' then
       s_Q_reg <= signed(s_Q_reg) + signed(s_a_reg);
     end if; 
-    
-    -- increment linear term
-    if s_inc_lin = '1' then
-      s_X_reg <= signed(s_X_reg) + signed(s_b_reg);
-    end if;
     
     -- sum of linear and quadratic term
     if s_add_lin_quad = '1' then
@@ -179,7 +168,7 @@ end process;
       s_stopped       <= '0';
       s_running       <= '0';
     
-      if a_en = '1' or b_en = '1' then
+      if a_en = '1' then
         s_coeff_rcvd <= '1';
       end if;
     

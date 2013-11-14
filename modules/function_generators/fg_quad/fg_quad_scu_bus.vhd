@@ -79,15 +79,13 @@ begin
     port map (
       data_a              => coeff_a_reg,
       data_b              => coeff_b_reg,
+      data_c              => start_value_reg(31 downto 0),
       clk                 => clk,
       nrst                => nReset,
       sync_rst            => fg_cntrl_reg(0),
       a_en                => wr_coeff_a,
-      b_en                => wr_coeff_b,
       sync_start          => wr_brc_start,
       load_start          => wr_start_value_h, -- when high word was written, load into datapath
-      start_value         => start_value_reg(31 downto 0),
-      status_reg_changed  => wr_fg_cntrl,
       step_sel            => fg_cntrl_reg(12 downto 10),
       shift_b             => to_integer(unsigned(shift_b_reg(5 downto 0))),
       shift_a             => to_integer(unsigned(shift_a_reg(5 downto 0))),

@@ -12,14 +12,13 @@ component fg_quad_datapath is
   port (
   data_a:             in  std_logic_vector(15 downto 0);
   data_b:             in  std_logic_vector(15 downto 0);
+  data_c:             in  std_logic_vector(31 downto 0);
   clk:                in  std_logic;
   nrst:               in  std_logic;
   sync_rst:           in  std_logic;
-  a_en, b_en:         in  std_logic;                      -- data register enable
+  a_en:               in  std_logic;                      -- data register enable
   load_start:         in  std_logic;
-  sync_start:         in std_logic;
-  start_value:        in std_logic_vector(31 downto 0);
-  status_reg_changed: in  std_logic;   
+  sync_start:         in  std_logic; 
   step_sel:           in  std_logic_vector(2 downto 0);
   shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
   shift_b:            in  integer range 0 to 48;          -- shiftvalue coeff b
