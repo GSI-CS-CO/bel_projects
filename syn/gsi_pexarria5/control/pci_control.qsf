@@ -3,7 +3,7 @@ set_global_assignment -name DEVICE 5AGXMA3D4F27C5
 set_global_assignment -name TOP_LEVEL_ENTITY pci_control
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
-set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
+set_global_assignment -name LAST_QUARTUS_VERSION 13.1
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 2
@@ -787,6 +787,22 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_phase.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_reset.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria5_phy/wr_arria5_phy.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/xvme64x_pack.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Buffer_pack.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_CR_pack.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Access_Decode.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Am_Match.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_bus.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_CSR_pack.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/xVME64xCore_Top.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_CR_CSR_Space.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_CRAM.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Funct_Match.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Init.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_IRQ_Controller.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_SharedComps.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_swapper.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Wb_master.vhd
 set_global_assignment -name SDC_FILE ../../../top/gsi_pexarria5/control/pci_control.sdc
 set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/arria5_pcie.qip
 set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/networks/arria5_networks.qip

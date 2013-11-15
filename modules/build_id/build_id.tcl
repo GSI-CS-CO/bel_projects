@@ -27,6 +27,7 @@ set output [list]
 
 lappend output "Project     : [lindex $quartus(args) 1]"
 lappend output "Platform    : $platform"
+lappend output "FPGA model  : [get_global_assignment -name FAMILY] ([get_global_assignment -name DEVICE])"
 lappend output "Build type  : $build_type"
 lappend output "Build date  : $build_date"
 lappend output "Prepared by : $username <$email>"

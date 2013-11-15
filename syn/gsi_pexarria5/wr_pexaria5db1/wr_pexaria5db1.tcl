@@ -1,4 +1,5 @@
 set platform "pexaria5 +pexaria5db1 +wrex1"
+source ../../autogen.tcl
 source ../../../modules/build_id/build_id.tcl
 source ../../../ip_cores/general-cores/platform/altera/networks/arria5.tcl
 source ../../../ip_cores/general-cores/platform/altera/wb_pcie/arria5.tcl
