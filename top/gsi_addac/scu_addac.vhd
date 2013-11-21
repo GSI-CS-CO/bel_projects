@@ -84,10 +84,10 @@ entity scu_addac is
     ------------ Logic analyser Signals -------------------------------------------------------------------------------
     A_SEL: in std_logic_vector(3 downto 0); -- use to select sources for the logic analyser ports
     A_TA: out std_logic_vector(15 downto 0); -- test port a
-    --A_TB: in std_logic_vector(15 downto 1); -- test port b
-    A_TB0: out std_logic;
-    A_TB1: in std_logic;
-    A_TB2: out std_logic := '1';
+    A_TB: out std_logic_vector(15 downto 0); -- test port b
+    --A_TB0: out std_logic;
+    --A_TB1: in std_logic;
+    --A_TB2: out std_logic := '1';
     TP: out std_logic_vector(2 downto 1); -- test points
 
     A_nState_LED: out std_logic_vector(2 downto 0); -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
@@ -229,7 +229,7 @@ constant c_xwb_owm : t_sdb_device := (
   signal fg_1_dtack: std_logic;
   signal fg_1_data_to_SCUB: std_logic_vector(15 downto 0);
   signal fg_1_rd_active: std_logic;
-  signal fg_1_sw: std_logic_vector(23 downto 0);
+  signal fg_1_sw: std_logic_vector(31 downto 0);
   signal fg_1_strobe: std_logic;
   signal fg_1_dreq: std_logic;
   
@@ -397,8 +397,8 @@ adda_pll_1: adda_pll -- Altera megafunction
       slave_o => cbar_master_i(2),
       desc_o => open,
 
-      uart_rxd_i => A_TB1,
-      uart_txd_o => A_TB0
+      uart_rxd_i => '0',
+      uart_txd_o => open
       );
   
   SCU_WB_Reg: wb_scu_reg
@@ -760,4 +760,7 @@ rw_led: led_n
     
   A_nDtack <= not SCUB_Dtack;
   A_nSRQ <= not SCUB_SRQ;
+  
+  A_TA <= fg_1_sw(23 downto 8);
+  A_TB <= fg_1_sw(7 downto 0) & fg_1_strobe & "0000000";
 end architecture;
