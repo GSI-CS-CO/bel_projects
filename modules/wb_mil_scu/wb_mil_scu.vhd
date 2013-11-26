@@ -9,8 +9,8 @@ use work.wb_mil_scu_pkg.all;
 
 ENTITY wb_mil_scu IS
 --+---------------------------------------------------------------------------------------------------------------------------------+
---| "wb_mil_scu" stellt in Verbindung mit der SCU-Aufsteck-Karte "FG900170_SCU_MIL1" alle Funktionen bereit, die benötigt werden um |
---| SE-Funktionalitaet mit einer SCU realistieren zu können.                                                                        |
+--| "wb_mil_scu" stellt in Verbindung mit der SCU-Aufsteck-Karte "FG900170_SCU_MIL1" alle Funktionen bereit, die benoetigt werden,  |
+--| um SE-Funktionalitaet mit einer SCU realistieren zu koennen.                                                                    |
 --|                                                                                                                                 |
 --| Das Rechnerinterface zu den einzelnen SE-Funktionen ist mit dem wishbone bus realisiert.                                        |
 --| Je nach angesprochener Funktion ist ein 32 Bit oder 16 Bit Zugriff vorgeschrieben.                                              |
@@ -37,7 +37,14 @@ ENTITY wb_mil_scu IS
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
 --|   02    | W.Panschow  | 14.11.2013  | Timing-Receiver, Event-Filter, Delay-Timer, Event-Timer und Wait-Timer implementiert.     |
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
---|   03    |             |             |                                                                                           |
+--|   03    | W.Panschow  | 22.11.2013  | a) Es sind nur noch 32 Bit-Zugriffe auf alle Resourcen der wb_mil_scu erlaubt.            |
+--|         |             |             | b) Die Led Trm-12-Spannung-okay ist angeschlossen. Die Led wird doppelt genutzt.          |
+--|         |             |             |    Bei Fehlerhaften Zugriffen auf "wb_mil_scu"-Resourcen (z.B. kein 32Bit-Zugriff, oder   |
+--|         |             |             |    Event-Fifo-auslesen, obwohl kein Event im Fifo steht) wird Trm-12 fuer kurze Zeit      |
+--|         |             |             |    dunkel getastet.                                                                       |
+--|         |             |             | c) Die User-1 Led signalisiert, dass das Event-Fifo nicht leer ist.                       |
+--|         |             |             | d) Die Entprellung der Device-Bus-Interrupts ist implementiert. Diese Funktion ist immer  |
+--|         |             |             |    einschaltet. Im Statusregister wird die Funktion immer als eingeschaltet signalisiert. |
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
 --|                                                                                                                                 |
 --+---------------------------------------------------------------------------------------------------------------------------------+
@@ -108,6 +115,7 @@ port  (
     Mil_Decoder_Diag_n: out   std_logic_vector(15 downto 0);
     timing:         in      std_logic;
     nLed_Timing:    out     std_logic;
+    nLed_Fifo_ne:   out     std_logic;
     Interlock_Intr: in      std_logic;
     Data_Rdy_Intr:  in      std_logic;
     Data_Req_Intr:  in      std_logic;
@@ -119,7 +127,8 @@ port  (
     nLed_io_1:      out     std_logic;
     io_2:           buffer  std_logic;
     io_2_is_in:     out     std_logic := '0';
-    nLed_io_2:      out     std_logic
+    nLed_io_2:      out     std_logic;
+    nsig_wb_err:    out     std_logic       -- '0' => gestretchte wishbone access Fehlermeldung
     );
 end wb_mil_scu;
 
@@ -188,6 +197,10 @@ signal    ep_read_port:     std_logic_vector(15 downto 0);    --event processing
 signal    timing_received:  std_logic;
 
 signal    ena_every_us:     std_logic;
+
+signal    db_interlock_intr:  std_logic;
+signal    db_data_rdy_intr: std_logic;
+signal    db_data_req_intr: std_logic;
 
 
 
@@ -270,7 +283,7 @@ led_interl: led_n
     ena         =>  ena_led_count,  -- if you use ena for a reduction, signal should be generated from the same 
                                     -- clock domain and should be only one clock period active.
     CLK         => clk_i,
-    Sig_In      => Interlock_Intr,  -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
+    Sig_In      => db_interlock_intr,  -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => open,            -- Push-Pull output, active low, inactive high.
     nLed_opdrn  => nLed_Interl      -- open drain output, active low, inactive tristate.
@@ -284,10 +297,10 @@ led_dry: led_n
     ena         =>  ena_led_count,  -- if you use ena for a reduction, signal should be generated from the same 
                                     -- clock domain and should be only one clock period active.
     CLK         => clk_i,
-    Sig_In      => Data_Rdy_Intr,   -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
+    Sig_In      => db_data_rdy_intr,-- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => open,            -- Push-Pull output, active low, inactive high.
-    nLed_opdrn  => nLed_dry     -- open drain output, active low, inactive tristate.
+    nLed_opdrn  => nLed_dry         -- open drain output, active low, inactive tristate.
     );
 
 led_drq: led_n
@@ -298,7 +311,7 @@ led_drq: led_n
     ena         =>  ena_led_count,  -- if you use ena for a reduction, signal should be generated from the same 
                                     -- clock domain and should be only one clock period active.
     CLK         => clk_i,
-    Sig_In      => Data_Req_Intr,   -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
+    Sig_In      => db_data_req_intr,-- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => open,            -- Push-Pull output, active low, inactive high.
     nLed_opdrn  => nLed_drq         -- open drain output, active low, inactive tristate.
@@ -344,6 +357,59 @@ led_io_2: led_n
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => open,            -- Push-Pull output, active low, inactive high.
     nLed_opdrn  => nLed_io_2        -- open drain output, active low, inactive tristate.
+    );
+
+sig_wb_err: led_n
+  generic map (
+    stretch_cnt => 6
+    )
+  port map (
+    ena         =>  ena_led_count,  -- if you use ena for a reduction, signal should be generated from the same 
+                                    -- clock domain and should be only one clock period active.
+    CLK         => clk_i,
+    Sig_In      => ex_err,          -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
+                                    -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
+    nLED        => nsig_wb_err,     -- Push-Pull output, active low, inactive high.
+    nLed_opdrn  => open             -- open drain output, active low, inactive tristate.
+    );
+
+p_deb_intl: debounce
+  generic map (
+    DB_Cnt  => clk_in_hz / (1_000_000/ 2)   -- "DB_Cnt" = fuer 2 us, debounce count gibt die Anzahl von Taktperioden vor, die das
+                                            -- Signal "DB_In" mindestens '1' oder '0' sein muss, damit der Ausgang
+                                            -- "DB_Out" diesem Pegel folgt.     
+    )
+  port map (
+    DB_In   => Interlock_Intr,    -- Das zu entprellende Signal
+    Reset   => not nRst_i,        -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
+    Clk     => clk_i,
+    DB_Out  => db_interlock_intr  -- Das entprellte Signal von "DB_In".
+    );
+
+p_deb_drdy: debounce
+  generic map (
+    DB_Cnt  => clk_in_hz / (1_000_000/ 2)   -- "DB_Cnt" = fuer 2 us, debounce count gibt die Anzahl von Taktperioden vor, die das
+                                            -- Signal "DB_In" mindestens '1' oder '0' sein muss, damit der Ausgang
+                                            -- "DB_Out" diesem Pegel folgt.     
+    )
+  port map (
+    DB_In   => Data_Rdy_Intr,     -- Das zu entprellende Signal
+    Reset   => not nRst_i,        -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
+    Clk     => clk_i,
+    DB_Out  => db_data_rdy_intr   -- Das entprellte Signal von "DB_In".
+    );
+
+p_deb_deq: debounce
+  generic map (
+    DB_Cnt  => clk_in_hz / (1_000_000/ 2)   -- "DB_Cnt" = fuer 2 us, debounce count gibt die Anzahl von Taktperioden vor, die das
+                                            -- Signal "DB_In" mindestens '1' oder '0' sein muss, damit der Ausgang
+                                            -- "DB_Out" diesem Pegel folgt.     
+    )
+  port map (
+    DB_In   => Data_Req_Intr,     -- Das zu entprellende Signal
+    Reset   => not nRst_i,        -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
+    Clk     => clk_i,
+    DB_Out  => db_data_req_intr   -- Das entprellte Signal von "DB_In".
     );
 
 Mil_1:  mil_hw_or_soft_ip
@@ -439,7 +505,7 @@ event_processing_1: event_processing
     rd_ev_fifo        => rd_ev_fifo,
     clr_ev_fifo       => clr_ev_fifo,
     filt_addr         => slave_i.adr(11+2 downto 2),
-    filt_data_i       => slave_i.dat(filt_data_i'range),
+    filt_data_i       => slave_i.dat(filter_data_width-1 downto 0),
     stall_o           => stall_filter,
     read_port_o       => ep_read_port,
     ev_fifo_ne        => ev_fifo_ne,
@@ -451,6 +517,21 @@ event_processing_1: event_processing
   );
 
 
+led_fifo_ne: led_n
+  generic map (
+    stretch_cnt => 4
+    )
+  port map (
+    ena         => ena_led_count,   -- if you use ena for a reduction, signal should be generated from the same 
+                                    -- clock domain and should be only one clock period active.
+    CLK         => clk_i,
+    Sig_In      => ev_fifo_ne,      -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
+                                    -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
+    nLED        => open,            -- Push-Pull output, active low, inactive high.
+    nLed_opdrn  => nLed_Fifo_ne     -- open drain output, active low, inactive tristate.
+    );
+
+    
 p_regs_acc: process (clk_i, nrst_i)
   begin
     if nrst_i = '0' then
@@ -461,7 +542,7 @@ p_regs_acc: process (clk_i, nrst_i)
       manchester_fpga <= '0';
       ev_filt_12_8b   <= '0';
       ev_filt_on      <= '0';
-      debounce_on     <= '0';
+      debounce_on     <= '1';
       puls2_frame     <= '0';
       puls1_frame     <= '0';
       ev_reset_on     <= '0';
@@ -496,6 +577,8 @@ p_regs_acc: process (clk_i, nrst_i)
       sw_clr_ev_timer <= '0';
       ld_dly_timer    <= '0';
       clr_wait_timer  <= '0';
+      
+      slave_o.dat <= (others => '0');
 
       if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';
       elsif manchester_fpga = '1' then  mil_trm_start <= '0'; end if;
@@ -508,14 +591,14 @@ p_regs_acc: process (clk_i, nrst_i)
         case to_integer(unsigned(slave_i.adr(c_mil_addr_width-1 downto 2))) is
         -- check existing word register
           when mil_wr_cmd_a | mil_rd_wr_data_a =>
-            if slave_i.sel = "0011" then
+            if slave_i.sel = "1111" then
               if slave_i.we = '1' then
                 -- write low word
                 if mil_trm_rdy = '1' and mil_trm_start = '0' then
                   -- write is allowed, because mil tranmiter is free
                   mil_trm_start <= '1';
                   mil_trm_cmd   <= slave_i.adr(2);
-                  mil_trm_data  <= slave_i.dat(15 downto 0);
+                  mil_trm_data  <= slave_i.dat(15 downto 0);  -- update(mil_trm_data)
                   ex_stall <= '0';
                   ex_ack <= '1';
                 else
@@ -544,13 +627,13 @@ p_regs_acc: process (clk_i, nrst_i)
             end if;
  
           when mil_wr_rd_status_a =>  -- read or write status register
-            if slave_i.sel = "0011" then -- only word access to modulo-4 address allowed
+            if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write status register
                 manchester_fpga <= slave_i.dat(b_sel_fpga_n6408);
                 ev_filt_12_8b   <= slave_i.dat(b_ev_filt_12_8b);
                 ev_filt_on      <= slave_i.dat(b_ev_filt_on);
-                debounce_on     <= slave_i.dat(b_debounce_on);
+                debounce_on     <= '1'; -- slave_i.dat(b_debounce_on);
                 puls2_frame     <= slave_i.dat(b_puls2_frame);
                 puls1_frame     <= slave_i.dat(b_puls1_frame);
                 ev_reset_on     <= slave_i.dat(b_ev_reset_on);
@@ -573,7 +656,7 @@ p_regs_acc: process (clk_i, nrst_i)
             end if;
               
           when rd_clr_no_vw_cnt_a =>  -- read or clear no valid word counters
-            if slave_i.sel = "0011" then -- only word access to modulo-4 address allowed
+            if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write access clears no valid word counters
                 clr_no_vw_cnt <= '1';
@@ -592,7 +675,7 @@ p_regs_acc: process (clk_i, nrst_i)
             end if;
 
           when rd_wr_not_eq_cnt_a =>  -- read or clear not equal counters
-            if slave_i.sel = "0011" then -- only word access to modulo-4 address allowed
+            if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write access clears not equal counters
                 clr_not_equal_cnt <= '1';
@@ -611,7 +694,7 @@ p_regs_acc: process (clk_i, nrst_i)
             end if;
 
           when rd_clr_ev_fifo_a =>  -- read or clear event fifo
-            if slave_i.sel = "0011" then -- only word access to modulo-4 address allowed
+            if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write access clears event fifo
                 clr_ev_fifo <= '1';
@@ -695,7 +778,7 @@ p_regs_acc: process (clk_i, nrst_i)
             end if;
 
           when ev_filt_first_a to ev_filt_last_a =>  -- read or write event filter ram 
-            if slave_i.sel = "0011" then -- only word access to modulo-4 address allowed
+            if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write event filter ram
                 wr_filt_ram <= '1';
@@ -710,8 +793,8 @@ p_regs_acc: process (clk_i, nrst_i)
               end if;
             else
               -- write to high word or unaligned word is not allowed
-              ex_stall <= stall_filter;
-              ex_err <= not stall_filter;
+              ex_stall <= '0';
+              ex_err <= '1';
             end if;
 
           when others =>
@@ -805,5 +888,6 @@ p_wait_timer: process (clk_i, nRst_i)
       end if;
     end if;
   end process p_wait_timer;
+
 
 end arch_wb_mil_scu;

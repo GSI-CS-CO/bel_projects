@@ -14,11 +14,11 @@ constant  c_mil_byte_addr_range:  integer := 16#2000# * 4;              -- all r
 constant  c_mil_addr_width:       integer := integer(ceil(log2(real(c_mil_byte_addr_range))));
 
 constant c_xwb_gsi_mil_scu : t_sdb_device := (
-  abi_class     => x"0000", -- undocumented device
+  abi_class     => x"0000",             -- undocumented device
   abi_ver_major => x"01",
   abi_ver_minor => x"00",
-  wbd_endian    => c_sdb_endian_little,
-  wbd_width     => x"7", -- 8/16/32-bit port granularity
+  wbd_endian    => c_sdb_endian_big,    -- '1' = little, '0' = big
+  wbd_width     => x"4",                -- only 32-bit port granularity allowed
   sdb_component => (
   addr_first    => x"0000000000000000",
   addr_last     => std_logic_vector(to_unsigned(c_mil_byte_addr_range-1, t_sdb_component.addr_last'length)),
@@ -34,27 +34,31 @@ constant  filter_data_width:  integer := 6;
 constant  filter_ram_size:    integer := 4096;
 constant  filter_addr_width:  integer := integer(ceil(log2(real(filter_ram_size))));
 
--- allowed wishbone address offsets for calulating the true wishbone address you have to multiply the constant by 4.
-constant  mil_rd_wr_data_a:   integer := 16#00#;  -- read mil bus:                wb_mil_scu_offset + 16#00#, only 16 bit access, only alloed when mil data received.
-                                                  -- write data to mil bus:       wb_mil_scu_offset + 16#00#, only 16 bit access, only alloed when transmiter free.
-constant  mil_wr_cmd_a:       integer := 16#01#;  -- write command to mil bus:    wb_mil_scu_offset + 16#04#, only 16 bit access, only alloed when transmiter free.
-constant  mil_wr_rd_status_a: integer := 16#02#;  -- read mil status:             wb_mil_scu_offset + 16#08#, only 16 bit access alloed.
-                                                  -- write mil control reg:       wb_mil_scu_offset + 16#08#, only 16 bit access alloed. Only secific bits can be changed
-constant  rd_clr_no_vw_cnt_a: integer := 16#03#;  -- read no valid counters:      wb_mil_scu_offset + 16#0C#, only 16 bit access alloed.
-                                                  -- write (clears )no valid counters: wb_mil_scu_offset + 16#0C#, only 16 bit access alloed.
-constant  rd_wr_not_eq_cnt_a: integer := 16#04#;  -- read not equal counters:     wb_mil_scu_offset + 16#10#, only 16 bit access alloed.
-                                                  -- write (clears) not equal counters: wb_mil_scu_offset + 16#10#, only 16 bit access alloed.
-constant  rd_clr_ev_fifo_a:   integer := 16#05#;  -- read event fifo:             wb_mil_scu_offset + 16#14#, only 16 bit access, only allowed when event fifo is not empty.
-                                                  -- write (clears) event fifo:   wb_mil_scu_offset + 16#14#, only 16 bit access.
-constant  rd_clr_ev_timer_a:  integer := 16#06#;  -- read event timer:            wb_mil_scu_offset + 16#18#, only 32 bit access allowed.
-                                                  -- write (sw-clear) event fifo: wb_mil_scu_offset + 16#18#, only 32 bit access allowed.
-constant  rd_wr_dly_timer_a:  integer := 16#07#;  -- read delay timer:            wb_mil_scu_offset + 16#1C#, only 32 bit access allowed.
-                                                  -- write delay timer:           wb_mil_scu_offset + 16#1C#, only 32 bit access allowed.
-constant  rd_clr_wait_timer_a:integer := 16#08#;  -- read wait timer:             wb_mil_scu_offset + 16#20#, only 32 bit access allowed.
-                                                  -- write (clear) wait timer:    wb_mil_scu_offset + 16#20#, only 32 bit access allowed.
+--------------------------------------------------------------------------------------------------------------------------
+-- allowed wishbone address offsets for calulating the true wishbone address you have to multiply the constant by 4.    --
+-- Only 32 bit access allowed.                                                                                          --
+--------------------------------------------------------------------------------------------------------------------------
+constant  mil_rd_wr_data_a:   integer := 16#00#;  -- read mil bus:                wb_mil_scu_offset + 16#00#, only allowed when mil data received. Data[31..16] always zero.
+                                                  -- write data to mil bus:       wb_mil_scu_offset + 16#00#, only allowed when transmiter free. Data[31..16] don't care.
+constant  mil_wr_cmd_a:       integer := 16#01#;  -- write command to mil bus:    wb_mil_scu_offset + 16#04#, only allowed when transmiter free. Data[31..16] don't care.
+constant  mil_wr_rd_status_a: integer := 16#02#;  -- read mil status:             wb_mil_scu_offset + 16#08#, data[31..16] always zero.
+                                                  -- write mil control reg:       wb_mil_scu_offset + 16#08#, only secific bits can be changed. Data[31..16] don't care.
+constant  rd_clr_no_vw_cnt_a: integer := 16#03#;  -- read no valid counters:           wb_mil_scu_offset + 16#0C#. Data[31..16] always zero.
+                                                  -- write (clears )no valid counters: wb_mil_scu_offset + 16#0C#. Data[31..0] don't care
+constant  rd_wr_not_eq_cnt_a: integer := 16#04#;  -- read not equal counters:     wb_mil_scu_offset + 16#10#. Data[31..16] always zero.
+                                                  -- write (clears) not equal counters: wb_mil_scu_offset + 16#10#. Data[31..0] don't care.
+constant  rd_clr_ev_fifo_a:   integer := 16#05#;  -- read event fifo:             wb_mil_scu_offset + 16#14#, only allowed when event fifo is not empty. Data[31..16] always zero.
+                                                  -- write (clears) event fifo:   wb_mil_scu_offset + 16#14#. Data[31..0] don't care. 
+constant  rd_clr_ev_timer_a:  integer := 16#06#;  -- read event timer:            wb_mil_scu_offset + 16#18#.
+                                                  -- write (sw-clear) event fifo: wb_mil_scu_offset + 16#18#.
+constant  rd_wr_dly_timer_a:  integer := 16#07#;  -- read delay timer:            wb_mil_scu_offset + 16#1C#.
+                                                  -- write delay timer:           wb_mil_scu_offset + 16#1C#.
+constant  rd_clr_wait_timer_a:integer := 16#08#;  -- read wait timer:             wb_mil_scu_offset + 16#20#.
+                                                  -- write (clear) wait timer:    wb_mil_scu_offset + 16#20#.
 
-constant  ev_filt_first_a:    integer := 16#1000#;  -- first event filter ram address: wb_mil_scu_offset + 16#4000, only 16 bit access
-constant  ev_filt_last_a:     integer := 16#1FFF#;  -- last event filter  ram address: wb_mil_scu_offset + 16#7FFC, only 16 bit access
+constant  ev_filt_first_a:    integer := 16#1000#;  -- first event filter ram address: wb_mil_scu_offset + 16#4000. 
+constant  ev_filt_last_a:     integer := 16#1FFF#;  -- last event filter  ram address: wb_mil_scu_offset + 16#7FFC.
+
 
 -- bit positions of mil control/status register
 constant  b_sel_fpga_n6408: integer := 15;  -- '1' => fpga manchester endecoder selected, '0' => external hardware manchester endecoder 6408 selected.
@@ -144,6 +148,7 @@ port  (
     Mil_Decoder_Diag_n: out   std_logic_vector(15 downto 0);
     timing:         in      std_logic;
     nLed_Timing:    out     std_logic;
+    nLed_Fifo_ne:   out     std_logic;
     Interlock_Intr: in      std_logic;
     Data_Rdy_Intr:  in      std_logic;
     Data_Req_Intr:  in      std_logic;
@@ -155,7 +160,9 @@ port  (
     nLed_io_1:      out     std_logic;
     io_2:           out     std_logic;
     io_2_is_in:     out     std_logic := '0';
-    nLed_io_2:      out     std_logic
+    nLed_io_2:      out     std_logic;
+    nsig_wb_err:    out     std_logic       -- '0' => gestretchte wishbone access Fehlermeldung
+
     );
 end component wb_mil_scu;
 
