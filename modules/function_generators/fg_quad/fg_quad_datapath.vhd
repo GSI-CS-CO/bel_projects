@@ -24,7 +24,7 @@ entity fg_quad_datapath is
   shift_b:            in  integer range 0 to 48;          -- shiftvalue coeff b
   freq_sel:           in  std_logic_vector(2 downto 0);
   dreq:               out std_logic;
-  sw_out:             out std_logic_vector(23 downto 0);
+  sw_out:             out std_logic_vector(31 downto 0);
   sw_strobe:          out std_logic;
   fg_stopped:         out std_logic;
   fg_running:         out std_logic);
@@ -227,7 +227,7 @@ end process;
 
 dreq <= s_stp_reached or sync_start;
 -- output register for the 24 most significant bits
-sw_out    <= std_logic_vector(s_X_reg(63 downto 40));
+sw_out    <= std_logic_vector(s_X_reg(63 downto 32));
 sw_strobe <= s_add_lin_quad;
 
 fg_stopped <= s_stopped;

@@ -26,7 +26,7 @@ entity fg_quad_scu_bus is
     Dtack:              out   std_logic;                       -- connect Dtack to SCUB-Macro
     -- fg_quad
     dreq:               out   std_logic;
-    sw_out:             out   std_logic_vector(23 downto 0);  -- function generator output
+    sw_out:             out   std_logic_vector(31 downto 0);  -- function generator output
     sw_strobe:          out   std_logic                       -- 
     );
 end entity;

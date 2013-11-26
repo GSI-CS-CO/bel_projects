@@ -18,10 +18,10 @@ use work.build_id_pkg.all;
 use work.oled_display_pkg.all;
 use work.ez_usb_pkg.all;
 
-entity pci_control is
+entity wr_pexaria5db1 is
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
---    clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
+    clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
     clk_125m_local_i  : in std_logic;  -- local clk from 125Mhz oszillator
     
     -----------------------------------------
@@ -67,35 +67,35 @@ entity pci_control is
     ant             : inout std_logic_vector(26 downto 1) := (others => 'Z'); -- trigger bus
     
     p1              : inout std_logic := 'Z';
-    p2              : in    std_logic := 'Z'; -- BlackCat1 Chn 1
-    p3              : out   std_logic := 'Z'; -- BlackCat1 PG1 (active high)
-    p4              : in    std_logic := 'Z'; -- BlackCat1 Chn 2
-    p5              : out   std_logic := 'Z'; -- BlackCat1 Chn 3
-    p6              : out   std_logic := 'Z'; -- BlackCat1 PG2 (active high)
-    p7              : out   std_logic := 'Z'; -- BlackCat1 Chn 4
+    p2              : inout std_logic := 'Z';
+    p3              : inout std_logic := 'Z';
+    p4              : inout std_logic := 'Z';
+    p5              : inout std_logic := 'Z';
+    p6              : inout std_logic := 'Z';
+    p7              : inout std_logic := 'Z';
     p8              : inout std_logic := 'Z';
     p9              : inout std_logic := 'Z';
     p10             : inout std_logic := 'Z';
     p11             : inout std_logic := 'Z';
-    p12             : inout std_logic := 'Z';
-    p13             : inout std_logic := 'Z';
+    p12             : out   std_logic := 'Z';
+    p13             : out   std_logic := 'Z';
     p14             : inout std_logic := 'Z';
     p15             : inout std_logic := 'Z';
     p16             : inout std_logic := 'Z';
-    p17             : out   std_logic := 'Z'; -- BlackCat1 TTLEN1 (active low)
-    p18             : out   std_logic := 'Z'; -- BlackCat1 TTLEN2 (active low)
-    p19             : out   std_logic := 'Z'; -- BlackCat1 TTLEN3 (active low)
-    p21             : inout std_logic := 'Z';
-    p22             : inout std_logic := 'Z';
-    p23             : inout std_logic := 'Z';
-    p24             : inout std_logic := 'Z';
-    p25             : out   std_logic := 'Z'; -- BlackCat1 Chn 5
-    p26             : out   std_logic := 'Z'; -- BlackCat1 Chn 6
-    p27             : in    std_logic := 'Z'; -- BlackCat1 Chn 7
-    p28             : inout std_logic := 'Z';
-    p29             : inout std_logic := 'Z';
-    p30             : inout std_logic := 'Z';
-    n1              : inout std_logic := 'Z';
+	 p17             : in    std_logic;
+    p18             : in    std_logic;
+    p19             : out   std_logic;
+    p21             : in    std_logic;
+    p22             : in    std_logic;
+    p23             : in    std_logic;
+    p24             : out   std_logic;
+    p25             : out   std_logic;
+    p26             : in    std_logic;
+    p27             : out   std_logic;
+    p28             : out   std_logic;
+    p29             : out   std_logic;
+    p30             : out   std_logic;
+	 n1              : inout std_logic := 'Z';
     n2              : inout std_logic := 'Z';
     n3              : inout std_logic := 'Z';
     n4              : inout std_logic := 'Z';
@@ -106,24 +106,11 @@ entity pci_control is
     n9              : inout std_logic := 'Z';
     n10             : inout std_logic := 'Z';
     n11             : inout std_logic := 'Z';
-    n12             : inout std_logic := 'Z';
-    n13             : inout std_logic := 'Z';
+    n12             : out   std_logic := 'Z';
+    n13             : out   std_logic := 'Z';
     n14             : inout std_logic := 'Z';
     n15             : inout std_logic := 'Z';
     n16             : inout std_logic := 'Z';
-    n17             : inout std_logic := 'Z';
-    n18             : inout std_logic := 'Z';
-    n19             : inout std_logic := 'Z';
-    n21             : inout std_logic := 'Z';
-    n22             : inout std_logic := 'Z';
-    n23             : inout std_logic := 'Z';
-    n24             : inout std_logic := 'Z';
-    n25             : inout std_logic := 'Z';
-    n26             : inout std_logic := 'Z';
-    n27             : inout std_logic := 'Z';
-    n28             : inout std_logic := 'Z';
-    n29             : inout std_logic := 'Z';
-    n30             : inout std_logic := 'Z';
     
     -----------------------------------------------------------------------
     -- connector cpld
@@ -213,10 +200,39 @@ entity pci_control is
     sfp4_mod0         : in    std_logic; -- grounded by module
     sfp4_mod1         : inout std_logic; -- SCL
     sfp4_mod2         : inout std_logic); -- SDA
-end pci_control;
+end wr_pexaria5db1;
 
-architecture rtl of pci_control is
-  
+architecture rtl of wr_pexaria5db1 is
+component lvds_rx
+	PORT
+	(
+		rx_enable		: IN STD_LOGIC ;
+		rx_in		: IN STD_LOGIC_VECTOR (0 DOWNTO 0);
+		rx_inclock		: IN STD_LOGIC ;
+		rx_out		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
+	);
+end component;
+ component lvds_tx
+	PORT
+	(
+		tx_enable		: IN STD_LOGIC ;
+		tx_in		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
+		tx_inclock		: IN STD_LOGIC ;
+		tx_out		: OUT STD_LOGIC_VECTOR (0 DOWNTO 0)
+	);
+end component;
+component arriav_pll_lvds_output
+    generic (
+      pll_loaden_enable_disable  : STRING;
+      pll_lvdsclk_enable_disable : STRING
+    );
+    
+    port (ccout           : in  std_logic_vector (1 downto 0);
+          loaden          : out std_logic ;
+          lvdsclk         : out std_logic 
+    );
+end component;
+ 
   -- WR core layout
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   
@@ -268,14 +284,20 @@ architecture rtl of pci_control is
   signal clk_display      : std_logic;
   
   -- Ref PLL from clk_125m_pllref_i
+  signal clk_cascade      : std_logic;
+  
   signal ref_locked       : std_logic;
   signal clk_ref0         : std_logic;
   signal clk_ref1         : std_logic;
   signal clk_ref2         : std_logic;
+  signal clk_ref3         : std_logic;
+  signal clk_ref4         : std_logic;
   
   signal clk_ref          : std_logic;
   signal clk_butis        : std_logic;
   signal clk_phase        : std_logic;
+  signal clk_lvds         : std_logic;
+  signal clk_enable       : std_logic;
   signal rstn_ref         : std_logic;
   signal rstn_butis       : std_logic;
   signal rstn_phase       : std_logic;
@@ -356,6 +378,22 @@ architecture rtl of pci_control is
   signal di_lp  : std_logic;
   signal di_flm : std_logic;
   signal di_dat : std_logic;
+
+  signal s_chi1 : std_logic_vector(7 downto 0);
+  signal s_chi2 : std_logic_vector(7 downto 0);
+  signal s_chi5 : std_logic_vector(7 downto 0);
+  signal s_chi6 : std_logic_vector(7 downto 0);
+  signal s_chi7 : std_logic_vector(7 downto 0);
+  signal r_chi1 : std_logic_vector(7 downto 0);
+  signal r_chi2 : std_logic_vector(7 downto 0);
+  signal r_chi5 : std_logic_vector(7 downto 0);
+  signal r_chi6 : std_logic_vector(7 downto 0);
+  signal r_chi7 : std_logic_vector(7 downto 0);
+  signal r_cho3 : std_logic_vector(7 downto 0);
+  signal r_cho4 : std_logic_vector(7 downto 0);
+  signal r_cho5 : std_logic_vector(7 downto 0);
+  signal r_cho6 : std_logic_vector(7 downto 0);
+  signal r_cho7 : std_logic_vector(7 downto 0);
   
 begin
 
@@ -411,12 +449,18 @@ begin
     inclk  => clk_sys3,
     outclk => clk_flash);
   
+  cascade : global_region port map(
+    inclk => clk_125m_pllref_i,
+	 outclk => clk_cascade);
+  
   ref_inst : ref_pll5 port map(     -- FRACTIONALPLL_X0_Y51_N0 (up-to-down)
     rst        => pll_rst,
-    refclk     => sfp234_ref_clk_i, -- 125 MHz
+    refclk     => clk_cascade,-- 125 MHz
     outclk_0   => clk_ref0,         -- 125 MHz, counter 12 = PLLOUTPUTCOUNTER_X0_Y55_N1
     outclk_1   => clk_ref1,         -- 200 MHz, counter 13 = PLLOUTPUTCOUNTER_X0_Y54_N1
     outclk_2   => clk_ref2,         --  25 MHz, counter 14 = PLLOUTPUTCOUNTER_X0_Y53_N1
+	 outclk_3   => clk_ref3,
+	 outclk_4   => clk_ref4,
     locked     => ref_locked,
     scanclk    => clk_free,
     cntsel     => phase_sel,
@@ -435,7 +479,16 @@ begin
   phase_clk : single_region port map(
     inclk  => clk_ref2,
     outclk => clk_phase);
-
+ 
+  lvds_clk : arriav_pll_lvds_output
+    generic map(
+      pll_loaden_enable_disable  => "true",
+      pll_lvdsclk_enable_disable => "true")
+    port map (
+	   ccout   => clk_ref4 & clk_ref3,
+		loaden  => clk_enable,
+		lvdsclk => clk_lvds);
+  
   phase : altera_phase
     generic map(
       g_select_bits   => 5,
@@ -701,8 +754,8 @@ begin
       ref_rstn_i      => rstn_ref,
       sys_clk_i       => clk_sys,
       sys_rstn_i      => rstn_sys,
-      triggers_i(0)   => p27,       -- BlackCat1 Chn 7
-      triggers_i(1)   => p4,        -- BlackCat1 Chn 2
+      triggers_i(0)   => '0',
+      triggers_i(1)   => '0',
       tm_time_valid_i => tm_valid,
       tm_tai_i        => tm_tai,
       tm_cycles_i     => tm_cycles,
@@ -822,16 +875,87 @@ begin
   -- no second onewire is connected
   owr(1) <= 'Z';
   
-  p3  <= '1'; -- BlackCat1 PG1 (active high)
-  p6  <= '1'; -- BlackCat1 PG2 (active high)
-  p17 <= '0'; -- BlackCat1 TTLEN1 (active low)
-  p18 <= '0'; -- BlackCat1 TTLEN2 (active low)
-  p19 <= '0'; -- BlackCat1 TTLEN3 (active low)
+  -- see if we can control these pins as gpio
+  n12 <= eca_gpio(0);
+  p12 <= eca_gpio(1);
+  n13 <= eca_gpio(2);
+  p13 <= eca_gpio(3);
+
+  rx1 : lvds_rx port map(
+	 rx_inclock => clk_lvds,
+    rx_enable  => clk_enable,
+	 rx_in(0)   => p17,
+	 rx_out     => s_chi1);
+
+  rx2 : lvds_rx port map(
+	 rx_inclock => clk_lvds,
+    rx_enable  => clk_enable,
+	 rx_in(0)   => p18,
+	 rx_out     => s_chi2);
+
+  tx3 : lvds_tx port map(
+	 tx_inclock => clk_lvds,
+    tx_enable  => clk_enable,
+	 tx_out(0)   => p19,
+	 tx_in       => r_cho3);
+
+  tx4 : lvds_tx port map(
+	 tx_inclock => clk_lvds,
+    tx_enable  => clk_enable,
+	 tx_out(0)  => p24,
+	 tx_in      => r_cho4);
+
+  rx5 : lvds_rx port map(
+	 rx_inclock => clk_lvds,
+    rx_enable  => clk_enable,
+	 rx_in(0)   => p21,
+	 rx_out     => s_chi5);
   
-  p25 <= eca_gpio(0); -- BlackCat1 Chn 5
-  p26 <= eca_gpio(1); -- BlackCat1 Chn 6
+  tx5 : lvds_tx port map(
+	 tx_inclock => clk_lvds,
+    tx_enable  => clk_enable,
+	 tx_out(0)  => p25,
+	 tx_in      => r_cho5);
+
+  rx6 : lvds_rx port map(
+	 rx_inclock => clk_lvds,
+    rx_enable  => clk_enable,
+	 rx_in(0)   => p22,
+	 rx_out     => s_chi6);
   
-  p5 <= pps;              -- BlackCat1 Chn 3
-  p7 <= sfp234_ref_clk_i; -- BlackCat1 Chn 4
+  tx6 : lvds_tx port map(
+	 tx_inclock => clk_lvds,
+    tx_enable  => clk_enable,
+	 tx_out(0)  => p27,
+	 tx_in      => r_cho6);
+
+  rx7 : lvds_rx port map(
+	 rx_inclock => clk_lvds,
+    rx_enable  => clk_enable,
+	 rx_in(0)   => p23,
+	 rx_out     => s_chi7);
+  
+  tx7 : lvds_tx port map(
+	 tx_inclock => clk_lvds,
+    tx_enable  => clk_enable,
+	 tx_out(0)   => p28,
+	 tx_in       => r_cho7);
+
+  lvds : process(clk_ref) is
+  begin
+    if rising_edge(clk_ref) then
+	   r_chi1 <= s_chi1;
+	   r_chi2 <= s_chi2;
+	   r_chi5 <= s_chi5;
+	   r_chi6 <= s_chi6;
+	   r_chi7 <= s_chi7;
+		
+		r_cho3 <= r_chi1;
+		r_cho4 <= r_chi2;
+		r_cho5 <= r_chi5;
+		r_cho6 <= r_chi6;
+		r_cho7 <= r_cho7;
+	 end if;
+  end process;
   
 end rtl;

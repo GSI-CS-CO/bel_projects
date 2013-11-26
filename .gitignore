@@ -1,5 +1,6 @@
 gcc-4.5.3-lm32.tar.xz
 toolchain/
+tags
 syn
 *.bak
 *.ppf
@@ -20,4 +21,6 @@ syn
 *.rel
 *.rst
 *.sym
+*.swo
+*.swp
 greybox_tmp

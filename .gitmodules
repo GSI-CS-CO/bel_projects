@@ -13,3 +13,6 @@
 [submodule "ip_cores/wrpc-sw"]
 	path = ip_cores/wrpc-sw
 	url = git://ohwr.org/hdl-core-lib/wr-cores/wrpc-sw.git
+[submodule "ip_cores/legacy-vme64x-core"]
+	path = ip_cores/legacy-vme64x-core
+	url = git://ohwr.org/hdl-core-lib/vme64x-core/legacy-vme64x-core.git

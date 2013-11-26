@@ -613,8 +613,8 @@ begin
       clk_dmtd_i => clk_dmtd,
       clk_ref_i  => clk_ref,
       clk_aux_i  => (others => '0'),
-      clk_ext_i  => '0', -- g_with_external_clock_input controls usage
-      pps_ext_i  => '0',
+      clk_ext_i  => lemo_i(7),
+      pps_ext_i  => lemo_i(8),
       rst_n_i    => rstn_sys,
 
       dac_hpll_load_p1_o => dac_hpll_load_p1,
@@ -782,7 +782,7 @@ begin
       g_eca_name       => f_name("Exploder2C + DB2"),
       g_channel_names  => (f_name("GPIO: TTL Output (2-7) Side LEDs(9-12) NIM|TTL(16)"), 
                            f_name("GPIO: TRIGGER1+TRIGGER2 simultaneously (1-8)"), 
-                           f_name("GPIO: LVDS Output (1-8) ECL Output (9-16)"),
+                           f_name("GPIO: LVDS Output (2-6) ECL Output (9-16)"),
                            f_name("WB:   Top-level bus controller")),
       g_log_table_size => 7,
       g_log_queue_len  => 8,

@@ -1056,8 +1056,8 @@ U_DAC_ARB : spec_serial_dac_arb
       clk_dmtd_i => clk_dmtd,
       clk_ref_i  => clk_ref,
       clk_aux_i  => (others => '0'),
-      clk_ext_i  => '0', -- g_with_external_clock_input controls usage
-      pps_ext_i  => '0',
+      clk_ext_i  => lemo_io(1),
+      pps_ext_i  => lemo_io(2),
       rst_n_i    => rstn_sys,
 
       dac_hpll_load_p1_o => dac_hpll_load_p1,
