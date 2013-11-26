@@ -150,7 +150,6 @@ signal    Valid_W_6408:     std_logic;
 signal    D_OUT:            std_logic_vector(15 downto 0);
 
 signal    Mil_Rcv_Error:    std_logic;
-signal    Mil_Rcv_Err_ff:   std_logic;
 
 signal  SEL_6408:     std_logic;    -- used for modelsim
 
@@ -257,16 +256,15 @@ ME_BZI <= '1' when EPLD_Manchester_Enc = '1' else MIL_in_Neg;
 P_Mil_Rcv_Err:  process (clk, Reset_Puls)
   begin
     if Reset_Puls = '1' then
-      Mil_Rcv_Err_ff <= '0';
+      Mil_Rcv_Err <= '0';
     elsif rising_edge(clk) then
       if Mil_Rcv_Error = '1' then
-        Mil_Rcv_Err_ff <= '1';
+        Mil_Rcv_Err <= '1';
       elsif clr_mil_rcv_err = '1' then
-        Mil_Rcv_Err_ff <= '0';
+        Mil_Rcv_Err <= '0';
       end if;
     end if;
   end process P_Mil_Rcv_Err;
-  
 
 
 
