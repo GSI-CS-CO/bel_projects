@@ -223,7 +223,6 @@ entity scu_control is
     -----------------------------------------------------------------------
     scu_cb_version    : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
     
-
     
     -----------------------------------------------------------------------
     -- Parallel Flash
@@ -290,9 +289,9 @@ architecture rtl of scu_control is
   constant c_irq_masters  : natural := 2;
   constant c_irq_layout   : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000000"),
-    1 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000100"),
-    2 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000200"),
-    3 => f_sdb_embed_device(c_irq_hostbridge_ep_sdb,  x"00001000"));
+    1 => f_sdb_embed_device(c_irq_ep_sdb,             x"00004000"),
+    2 => f_sdb_embed_device(c_irq_ep_sdb,             x"00008000"),
+    3 => f_sdb_embed_device(c_irq_hostbridge_ep_sdb,  x"00010000"));
   constant c_irq_sdb_address : t_wishbone_address := x"00002000";
 
   signal irq_cbar_slave_i  : t_wishbone_slave_in_array (c_irq_masters-1 downto 0);
@@ -476,6 +475,9 @@ architecture rtl of scu_control is
   
   signal  mil_12Mhz     : std_logic;
   signal  extension_id  : std_logic_vector(3 downto 0);
+  
+  signal  nsig_wb_err:    std_logic;  -- '0' => gestretchte wishbone access Fehlermeldung
+
 
   component mil_pll
     port (
@@ -1193,6 +1195,7 @@ U_DAC_ARB : spec_serial_dac_arb
     Mil_Decoder_Diag_n  => open,
     timing         => not a_ext_conn3_a7,
     nLed_Timing    => eio(17),
+    nLed_Fifo_ne   => a_ext_conn3_a19,
     Interlock_Intr => not a_ext_conn3_a2,
     Data_Rdy_Intr  => not a_ext_conn3_a3,
     Data_Req_Intr  => not a_ext_conn3_a6,
@@ -1204,10 +1207,12 @@ U_DAC_ARB : spec_serial_dac_arb
     nLed_io_1      => eio(13),
     io_2           => eio(14),
     io_2_is_in     => eio(15),
-    nLed_io_2      => eio(16)
+    nLed_io_2      => eio(16),
+    nsig_wb_err    => nsig_wb_err
   );
  
-  eio(0) <= mil_12Mhz;
+  a_ext_conn3_a10 <= not (io_2_5v(15) and nsig_wb_err); -- io_2_5v(15) = 1' => Mil Spannung 12V okay; nsig_wb_err = '0' signalisiert einen wishbone error
+  eio(0)          <= mil_12Mhz;
   
   extension_id <= io_2_5v(3 downto 0);
 
