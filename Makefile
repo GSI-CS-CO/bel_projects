@@ -57,10 +57,10 @@ driver-install::
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb install
 
 sdbfs::
-	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace doc" all
+	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace" all
 
 sdbfs-clean::
-	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace doc" clean
+	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace" clean
 
 gcc-4.5.3-lm32.tar.xz:
 	wget http://www.ohwr.org/attachments/1301/gcc-4.5.3-lm32.tar.xz
