@@ -76,17 +76,17 @@ begin
   
   s_int_edge <= not s_int(1) and s_int(0);
      
-  irq_master: wb_irq_master
-    port map (
-          clk_i   => clk_i,
-          rst_n_i => rst_n_i,
-          
-          master_o  => irq_master_o,
-          master_i  => irq_master_i,
-          
-          irq_i     => s_int_edge,
-          adr_i     => x"00000104",
-          msg_i     => x"DEADBEEF");
+--  irq_master: wb_irq_master
+--    port map (
+--          clk_i   => clk_i,
+--          rst_n_i => rst_n_i,
+--          
+--          master_o  => irq_master_o,
+--          master_i  => irq_master_i,
+--          
+--          irq_i     => s_int_edge,
+--          adr_i     => x"00000104",
+--          msg_i     => x"DEADBEEF");
 
 
 end architecture;
