@@ -241,7 +241,7 @@ architecture rtl of scu_control is
   ----------------------------------------------------------------------------------
   -- GSI Periphery Crossbar --------------------------------------------------------
   ----------------------------------------------------------------------------------
-  constant c_per_slaves   : natural := 10;
+  constant c_per_slaves   : natural := 11;
   constant c_per_masters  : natural := 1;
   constant c_per_layout   : t_sdb_record_array(c_per_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00000000"),
@@ -253,7 +253,8 @@ architecture rtl of scu_control is
     6 => f_sdb_embed_device(c_wrc_periph1_sdb,            x"00800100"),
     7 => f_sdb_embed_device(c_oled_display,               x"00900000"),
     8 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"01000000"),
-    9 => f_sdb_embed_device(c_build_id_sdb,               x"00800400"));
+    9 => f_sdb_embed_device(c_build_id_sdb,               x"00800400"),
+    10=> f_sdb_embed_device(c_eca_queue_sdb,              x"00000A00"));
   constant c_per_sdb_address : t_wishbone_address := x"00001000";
   constant c_per_bridge_sdb  : t_sdb_bridge       :=
     f_xwb_bridge_layout_sdb(true, c_per_layout, c_per_sdb_address);
@@ -287,9 +288,6 @@ architecture rtl of scu_control is
   -- END OF Top crossbar
   ----------------------------------------------------------------------------------		
 
-  signal eca_2_wb_i : t_wishbone_master_in;
-  signal eca_2_wb_o : t_wishbone_master_out;
-  
   signal pcie_slave_i : t_wishbone_slave_in;
   signal pcie_slave_o : t_wishbone_slave_out;
   
@@ -807,29 +805,20 @@ U_DAC_ARB : spec_serial_dac_arb
       channel_i => channels(0),
       gpio_o    => eca_gpio);
   
-  C1 : eca_wb_channel
+  C1 : eca_queue_channel
     port map(
-      clk_i     => clk_ref,
-      rst_n_i   => rstn_ref,
-      channel_i => channels(1),
-      master_o  => eca_2_wb_o,
-      master_i  => eca_2_wb_i);
-		
-	 eca_2_irq : xwb_clock_crossing 
-	 generic map(
-				g_size => 256)
-	 port map(
-    slave_clk_i    => clk_ref,
-    slave_rst_n_i  => rstn_ref,
-    slave_i        => eca_2_wb_o,
-    slave_o        => eca_2_wb_i,
-    master_clk_i   => clk_sys, 
-    master_rst_n_i => rstn_sys,
-    master_i       => irq_cbar_slave_o(0),
-    master_o       => irq_cbar_slave_i(0));	
-		
-		
-  
+      a_clk_i     => clk_ref,
+      a_rst_n_i   => rstn_ref,
+      a_channel_i => channels(1),
+      i_clk_i     => clk_sys,
+      i_rst_n_i   => rstn_sys,
+      i_master_o  => irq_cbar_slave_i(0),
+      i_master_i  => irq_cbar_slave_o(0),
+      q_clk_i     => clk_sys,
+      q_rst_n_i   => rstn_sys,
+      q_slave_i   => per_cbar_master_o(10),
+      q_slave_o   => per_cbar_master_i(10));
+      
   scub_master : wb_scu_bus 
     generic map(
       g_interface_mode      => PIPELINED,
