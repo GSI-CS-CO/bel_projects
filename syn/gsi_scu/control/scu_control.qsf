@@ -869,10 +869,12 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/co
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_sync_ffs.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_arbitrated_mux.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer2.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_frequency_meter.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_rr_arbiter.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_prio_encoder.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_word_packer.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_big_adder.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/memory_loader_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/generic_shiftreg_fifo.vhd
@@ -920,6 +922,8 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wi
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_timer.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/irqm_core.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_lm32.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_slave.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_master.vhd
@@ -1037,6 +1041,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tlu/
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_search.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_flags.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_channel.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_walker.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_channel.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_event.vhd
@@ -1061,6 +1066,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera
 set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/xvme64x_pack.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Buffer_pack.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_CR_pack.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Buffer.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Access_Decode.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Am_Match.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_bus.vhd
@@ -1073,7 +1079,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/V
 set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_IRQ_Controller.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_SharedComps.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_swapper.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Wb_master.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Wb_master_eb.vhd
 set_global_assignment -name SDC_FILE ../../../top/gsi_scu/control/scu_control.sdc
 set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/arria2_pcie.qip
 set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip

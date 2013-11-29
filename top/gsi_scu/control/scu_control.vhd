@@ -222,7 +222,7 @@ architecture rtl of scu_control is
   -- MSI IRQ Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
   constant c_irq_slaves   : natural := 4;
-  constant c_irq_masters  : natural := 1;
+  constant c_irq_masters  : natural := 2;
   constant c_irq_layout   : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(c_irq_ep_sdb, 	      x"00000000"),
     1 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000100"),
@@ -246,7 +246,7 @@ architecture rtl of scu_control is
   constant c_per_layout   : t_sdb_record_array(c_per_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00000000"),
     1 => f_sdb_embed_device(c_eca_sdb,                    x"00000800"),
-    2 => f_sdb_embed_device(c_eca_evt_sdb,                x"00000C00"),
+    2 => f_sdb_embed_device(c_eca_event_sdb,              x"00000C00"),
     3 => f_sdb_embed_device(c_irq_ctrl_sdb,               x"00000D00"),
     4 => f_sdb_embed_device(c_scu_bus_master,             x"00400000"),
     5 => f_sdb_embed_device(c_xwb_gpio32_sdb,             x"00800000"),
@@ -794,7 +794,11 @@ U_DAC_ARB : spec_serial_dac_arb
       a_rst_n_i   => rstn_ref,
       a_tai_i     => tm_tai,
       a_cycles_i  => tm_cycles,
-      a_channel_o => channels);
+      a_channel_o => channels,
+      i_clk_i     => clk_sys,
+      i_rst_n_i   => rstn_sys,
+      i_master_i  => irq_cbar_slave_o(1),
+      i_master_o  => irq_cbar_slave_i(1));
   
   C0 : eca_gpio_channel
     port map(

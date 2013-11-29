@@ -88,6 +88,12 @@ scu::		firmware
 scu-clean::
 	$(MAKE) -C syn/gsi_scu/control clean
 
+vetar::		firmware
+	$(MAKE) -C syn/gsi_vetar/wr_core_demo
+
+vetar-clean::
+	$(MAKE) -C syn/gsi_vetar/wr_core_demo clean
+
 exploder::	firmware
 	$(MAKE) -C syn/gsi_exploder/wr_core_demo
 

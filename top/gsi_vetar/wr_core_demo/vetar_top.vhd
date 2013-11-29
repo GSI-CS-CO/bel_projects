@@ -170,7 +170,7 @@ architecture rtl of vetar_top is
    (0 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00000000"),
     1 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00100000"),
     2 => f_sdb_embed_device(c_eca_sdb,                    x"00100800"),
-    3 => f_sdb_embed_device(c_eca_evt_sdb,                x"00100C00"),
+    3 => f_sdb_embed_device(c_eca_event_sdb,              x"00100C00"),
     4 => f_sdb_embed_device(c_wb_serial_lcd_sdb,          x"00100D00"),
     5 => f_sdb_embed_device(c_build_id_sdb,               x"00200000"),
     6 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"04000000"));
@@ -756,7 +756,11 @@ begin
       a_rst_n_i   => rstn_ref,
       a_tai_i     => tm_tai,
       a_cycles_i  => tm_cycles,
-      a_channel_o => channels);
+      a_channel_o => channels,
+      i_clk_i     => clk_sys,
+      i_rst_n_i   => rstn_sys,
+      i_master_i  => cc_dummy_master_in, -- !!! FIXME: connect somewhere
+      i_master_o  => open);
   
   C0 : eca_gpio_channel
     port map(
