@@ -747,8 +747,8 @@ U_DAC_ARB : spec_serial_dac_arb
        master_o      => top_cbar_slave_i(1),
        master_i      => top_cbar_slave_o(1),
        
-       slave_clk_i   => clk_ref,
-       slave_rstn_i  => rstn_ref,
+       slave_clk_i   => clk_sys,
+       slave_rstn_i  => rstn_sys,
        slave_i       => irq_cbar_master_o(3),
        slave_o       => irq_cbar_master_i(3));
   
