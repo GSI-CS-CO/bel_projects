@@ -91,6 +91,4 @@ begin
     mask_i  => x"FFF",
     irq_i   => scu_srq_active);
                       
-
-
 end architecture;
