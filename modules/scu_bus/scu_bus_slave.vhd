@@ -401,13 +401,15 @@ port
   signal    S_Intr_In_Sync1:      std_logic_vector(Intr_In'range);
   signal    S_Intr_In_Sync2:      std_logic_vector(Intr_In'range);
   signal    S_Intr_Enable:        std_logic_vector(Intr_In'range);
-  signal    S_Intr_Mask:          std_logic_vector(Intr_In'range);
-  signal    S_Intr_Pending:       std_logic_vector(Intr_In'range);
-  signal    S_Wr_Intr_Pending:    std_logic_vector(1 downto 0);
+  signal    intr_enable_previous: std_logic_vector(Intr_In'range);
+  signal    intr_reactivate:      std_logic_vector(Intr_In'range);
+--  signal    S_Intr_Mask:          std_logic_vector(Intr_In'range);
+--  signal    S_Intr_Pending:       std_logic_vector(Intr_In'range);
+--  signal    S_Wr_Intr_Pending:    std_logic_vector(1 downto 0);
   signal    S_Intr_Active:        std_logic_vector(Intr_In'range);
   signal    S_Wr_Intr_Active:     std_logic_vector(1 downto 0);
-  signal    S_Intr_Level_Neg:     std_logic_vector(Intr_In'range);
-  signal    S_Intr_Edge_Trig:     std_logic_vector(Intr_In'range);
+--  signal    S_Intr_Level_Neg:     std_logic_vector(Intr_In'range);
+--  signal    S_Intr_Edge_Trig:     std_logic_vector(Intr_In'range);
   signal    S_SRQ:                std_logic;
   
   signal    S_Standard_Reg_Acc  : std_logic;
@@ -566,64 +568,56 @@ P_Intr: process (clk, S_nReset, S_Powerup_Done)
       S_Intr_In_Sync0 <= (others => '0');
       S_Intr_In_Sync1 <= (others => '0');
       S_Intr_In_Sync2 <= (others => '0');
-      S_Intr_Pending  <= (others => '0');
       S_Intr_Active   <= (others => '0');
+      intr_reactivate <= (others => '0');
+      intr_enable_previous <= (others => '0');
 
     elsif rising_edge(clk) then
-      FOR i in Intr_In'low TO Intr_In'high LOOP
-        -- convert 'Intr_In' to positive level and made first synchronisation
-        S_Intr_In_Sync0(i) <= Intr_In(i) XOR S_Intr_Level_Neg(i);
-        -- second synchronisation usefull for edge detection        
-        S_Intr_In_Sync1(i) <= S_Intr_In_Sync0(i);
-        -- third synchronisation usefull for edge detection        
-        S_Intr_In_Sync2(i) <= S_Intr_In_Sync1(i);
-        if S_Intr_Enable(i) = '1' then
-          -- specific interrupt is enabled
-          if S_Intr_Edge_Trig(i) = '1' then
-            -- specific interrupt is edge triggered
-            if S_Intr_In_Sync1(i) = '1' and S_Intr_In_Sync2(i) = '0' then
-              -- specific edge detected, only one clock pulse active
-              if S_Intr_Mask(i) = '0' then
-                -- specific interrupt not masked
-                S_Intr_Pending(i) <= '1';             -- so, store the specific edge in the interrupt pending register
 
-              elsif S_Intr_Active(i) = '1' then
-                -- the specific interrupt is active
-                S_Intr_Pending(i) <= '0';             -- so, clear the specific interrupt pending bit
-              else
-              -- the specific interrupt is not active
-                S_Intr_Active(i) <= '1';              -- so, set the specific interrupt active bit
-              end if;
-            elsif S_Wr_Intr_Active = "01" and S_Data_from_SCUB_LA(i) = '1' then
-              S_Intr_Active(i) <= '0';
-            elsif S_Wr_Intr_Pending = "01" and S_Data_from_SCUB_LA(i) = '1' then
-              S_Intr_Pending(i) <= '0';
-            elsif S_Intr_Pending(i) = '1' and S_Intr_Active(i) = '0' and S_Intr_Mask(i) = '0' then
-              S_Intr_Pending(i) <= '0';
-              S_Intr_Active(i) <= '1';
-            end if;
+      S_Intr_In_Sync0 <= Intr_In;             -- 'Intr_In' first synchronisation
+      S_Intr_In_Sync1 <= S_Intr_In_Sync0;     -- second synchronisation used for edge detection 
+      S_Intr_In_Sync2 <= S_Intr_In_Sync1;     -- third synchronisation used for edge detection
+      intr_enable_previous <= S_Intr_Enable;  -- used to detect transition frorm disable to enable
+
+      FOR i in Intr_In'low TO Intr_In'high LOOP
+
+        if S_Intr_Enable(i) = '0' then
+        -- specific interrupt is disabled, so clear the specific interrupt active bit
+          S_Intr_Active(i) <= '0';                
+
+        elsif S_Intr_Enable(i) = '1' and intr_enable_previous(i) = '0' and S_Intr_In_Sync2(i) = '1' then
+        -- specific interrupt changed from disabled to enabled, if the specific interrupt is active, set the the specific interrupt active bit without edge detect.
+          S_Intr_Active(i) <= '1';
+        
+        elsif S_Intr_Enable(i) = '1' and S_Intr_In_Sync1(i) = '1' and S_Intr_In_Sync2(i) = '0' then
+        -- specific interrupt is enabled and an edge is detected.
+          if S_Wr_Intr_Active = "01" and S_Data_from_SCUB_LA(i) = '1' then
+          -- edge detection  and clear action occurs at same time
+            S_Intr_Active(i) <= '0';      -- so, first clear the S_Intr_Active bit
+            intr_reactivate(i) <= '1';    -- and set an memo to ractivate the S_Intr_Active bit later
           else
-            -- specific interrupt is level triggered
-            S_Intr_Pending(i) <= S_Intr_In_Sync2(i);  -- follows synchronized Intr_IN(i) level
-            if S_Intr_Pending(i) = '1' and S_Intr_Mask(i) = '0' then
-              -- specific interrupt active and not masked
-              S_Intr_Active(i) <= '1';                -- so, set the specific interrupt active bit
-            else
-              S_Intr_Active(i) <= '0';                -- so, clear the specific interrupt active bit
-            end if;
+            S_Intr_Active(i) <= '1';      -- set the the specific interrupt active bit
           end if;
-        else
-          -- specific interrupt is disabled, so clear specific ...Pending- and Active-Bit 
-          S_Intr_Pending(i) <= '0';
+          
+        elsif S_Wr_Intr_Active = "01" and S_Data_from_SCUB_LA(i) = '1' then
+        -- clear interrupt active bit, even it's not enabled
           S_Intr_Active(i) <= '0';
+        
+        elsif intr_reactivate(i) = '1' then
+        -- ractivate the S_Intr_Active bit
+          S_Intr_Active(i) <= '1';
+          intr_reactivate(i) <= '0';
         end if;
+        
       end LOOP;
+
       if unsigned(S_Intr_Active) /= 0 OR S_Powerup_Done = '1' then
         S_SRQ <= '1';
       else
         S_SRQ <= '0';
       end if;
     end if;
+
   end process P_Intr;
 
 
@@ -711,15 +705,11 @@ P_Standard_Reg: process (clk, S_nReset)
   begin
     if S_nReset = '0' then
       S_Echo_Reg <= (others => '0');
-      S_Intr_Mask <= (others => '0');
-      S_Intr_Level_Neg <= Intr_Level_Neg(Intr_In'range);
-      S_Intr_Edge_Trig <= Intr_Edge_Trig(Intr_In'range);
       S_Intr_Enable <= Intr_Enable;
       S_Adr_Val <= '0';
       S_DS_Val <= '0';
       S_SCUB_Dtack <= '0';
       S_Standard_Reg_Acc <= '0';
-      S_Wr_Intr_Pending <= "00";
       S_Wr_Intr_Active <= "00";
       S_Read_Out <= (others => 'Z');    -- Vers_2 Revi_0: Vorschlag S. Schäfer,
                                         -- vermeidet unötige Datenübergänge auf dem SCU-Datenbus
@@ -728,7 +718,6 @@ P_Standard_Reg: process (clk, S_nReset)
       S_Adr_Val <= '0';
       S_DS_Val <= '0';
       S_SCUB_Dtack <= '0';
-      S_Wr_Intr_Pending <= "00";
       S_Wr_Intr_Active <= "00";
       S_Standard_Reg_Acc <= '0';
       S_Dtack_to_SCUB_Dly <= (others => '0');
@@ -798,24 +787,24 @@ P_Standard_Reg: process (clk, S_nReset)
               S_Intr_Enable <= S_Data_from_SCUB_LA(Intr_In'range);
               S_SCUB_Dtack <= '1';
             end if;
-          when C_Intr_Pending_Adr =>
-            S_Standard_Reg_Acc <= '1';
-            if SCUB_RDnWR = '1' then
-              S_Read_Out <= (S_Intr_Pending & '0'); -- register latchen ???
-              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
-            elsif S_nSync_DS = "00" then
-              S_Wr_Intr_Pending <= S_Wr_Intr_Pending(0) & '1';
-              S_SCUB_Dtack <= '1';  -- ???
-            end if;
-          when C_Intr_Mask_Adr =>
-            S_Standard_Reg_Acc <= '1';
-            if SCUB_RDnWR = '1' then
-              S_Read_Out <= (S_Intr_Mask & '0');
-              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
-            elsif S_nSync_DS = "00" then
-              S_Intr_Mask <= S_Data_from_SCUB_LA(Intr_In'range);
-              S_SCUB_Dtack <= '1';
-            end if;
+--          when C_Intr_Pending_Adr =>
+--            S_Standard_Reg_Acc <= '1';
+--            if SCUB_RDnWR = '1' then
+--              S_Read_Out <= (S_Intr_Pending & '0'); -- register latchen ???
+--              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
+--            elsif S_nSync_DS = "00" then
+--              S_Wr_Intr_Pending <= S_Wr_Intr_Pending(0) & '1';
+--              S_SCUB_Dtack <= '1';  -- ???
+--            end if;
+--          when C_Intr_Mask_Adr =>
+--            S_Standard_Reg_Acc <= '1';
+--            if SCUB_RDnWR = '1' then
+--              S_Read_Out <= (S_Intr_Mask & '0');
+--              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
+--            elsif S_nSync_DS = "00" then
+--              S_Intr_Mask <= S_Data_from_SCUB_LA(Intr_In'range);
+--              S_SCUB_Dtack <= '1';
+--            end if;
           when C_Intr_Active_Adr =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
@@ -825,24 +814,24 @@ P_Standard_Reg: process (clk, S_nReset)
               S_Wr_Intr_Active <= S_Wr_Intr_Active(0) & '1';
               S_SCUB_Dtack <= '1';  -- ??
             end if;
-          when C_Intr_Level_Adr =>
-            S_Standard_Reg_Acc <= '1';
-            if SCUB_RDnWR = '1' then
-              S_Read_Out <= (S_Intr_Level_Neg & '0');
-              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
-            elsif S_nSync_DS = "00" then
-              S_Intr_Level_Neg <= S_Data_from_SCUB_LA(Intr_In'range);
-              S_SCUB_Dtack <= '1';
-            end if;
-          when C_Intr_Edge_Adr =>
-            S_Standard_Reg_Acc <= '1';
-            if SCUB_RDnWR = '1' then
-              S_Read_Out <= (S_Intr_Edge_Trig & '0');
-              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
-            elsif S_nSync_DS = "00" then
-              S_Intr_Edge_Trig <= S_Data_from_SCUB_LA(Intr_In'range);
-              S_SCUB_Dtack <= '1';
-            end if;
+--          when C_Intr_Level_Adr =>
+--            S_Standard_Reg_Acc <= '1';
+--            if SCUB_RDnWR = '1' then
+--              S_Read_Out <= (S_Intr_Level_Neg & '0');
+--              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
+--            elsif S_nSync_DS = "00" then
+--              S_Intr_Level_Neg <= S_Data_from_SCUB_LA(Intr_In'range);
+--              S_SCUB_Dtack <= '1';
+--            end if;
+--          when C_Intr_Edge_Adr =>
+--            S_Standard_Reg_Acc <= '1';
+--            if SCUB_RDnWR = '1' then
+--              S_Read_Out <= (S_Intr_Edge_Trig & '0');
+--              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
+--            elsif S_nSync_DS = "00" then
+--              S_Intr_Edge_Trig <= S_Data_from_SCUB_LA(Intr_In'range);
+--              S_SCUB_Dtack <= '1';
+--            end if;
           when C_Vers_Revi_of_this_Macro =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
