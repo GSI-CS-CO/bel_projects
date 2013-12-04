@@ -270,10 +270,24 @@ constant c_xwb_owm : t_sdb_device := (
   signal wb_scu_dtack: std_logic;
   signal wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
   
+  signal irqcnt:  unsigned(16 downto 0);
+  
   
 
   begin
-
+    
+    timer_irq: process (clk_sys, reset_rstn)
+    begin
+      if reset_rstn = "0" then
+        irqcnt <= '0' & x"FFFF";
+      elsif rising_edge(clk_sys) then
+        if irqcnt(irqcnt'high) = '1' then
+          irqcnt <= '0' & x"FFFF";
+        else
+          irqcnt <= irqcnt - 1;
+        end if;
+      end if;
+    end process;
 
 fl : flash_loader_v01
   port map (noe_in => '0');
@@ -448,7 +462,7 @@ port map (
     nSCUB_Reset_in => A_nReset, -- in,        SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
     Data_to_SCUB => Data_to_SCUB, -- in,        connect read sources from external user functions
     Dtack_to_SCUB => Dtack_to_SCUB, -- in,        connect Dtack from from external user functions
-    Intr_In => "00000000000000" & fg_1_dreq, -- in,        interrupt(15 downto 1)
+    Intr_In => "0000000000000" & irqcnt(irqcnt'high) & fg_1_dreq, -- in,        interrupt(15 downto 1)
     User_Ready => '1',
     Data_from_SCUB_LA => Data_from_SCUB_LA, -- out,        latched data from SCU_Bus for external user functions
     ADR_from_SCUB_LA => ADR_from_SCUB_LA, -- out,        latched address from SCU_Bus for external user functions
