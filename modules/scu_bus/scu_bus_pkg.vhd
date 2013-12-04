@@ -29,6 +29,7 @@ component wb_scu_bus is
     slave_i                 : in  t_wishbone_slave_in;
     slave_o                 : out t_wishbone_slave_out;
     
+    srq_active              : out std_logic_vector(11 downto 0);    -- vector of slave service requests
 
     clk                     : IN		STD_LOGIC;
     nrst                    : IN		STD_LOGIC;

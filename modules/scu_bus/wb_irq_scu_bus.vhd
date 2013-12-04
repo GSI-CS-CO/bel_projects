@@ -38,8 +38,7 @@ end entity;
 
 
 architecture wb_irq_scu_bus_arch of wb_irq_scu_bus is
-  signal s_int      : std_logic_vector(1 downto 0);
-  signal s_int_edge : std_logic;
+  signal scu_srq_active : std_logic_vector(11 downto 0);
 begin
   scub_master : wb_scu_bus 
     generic map(
@@ -49,10 +48,11 @@ begin
       Test                  => 0,
       Time_Out_in_ns        => 350)
    port map(
-     clk     =>   clk_i,
-     nrst    =>   rst_n_i,
-     slave_i =>   scu_slave_i,
-     slave_o =>   scu_slave_o,
+     clk          => clk_i,
+     nrst         => rst_n_i,
+     slave_i      => scu_slave_i,
+     slave_o      => scu_slave_o,
+     srq_active   => scu_srq_active,
      
      SCUB_Data          => scub_data,
      nSCUB_DS           => nscub_ds,
@@ -64,29 +64,33 @@ begin
      nSCUB_Timing_Cycle => nscub_timing_cycle,
      nSel_Ext_Data_Drv  => nsel_ext_data_drv);
      
-  edge: process (clk_i, rst_n_i)
-  begin
-    if rst_n_i = '0' then
-      s_int <= "00";
-    elsif rising_edge(clk_i) then
-      s_int(0) <= scu_slave_o.int;
-      s_int(1) <= s_int(0);
-    end if;
-  end process;
-  
-  s_int_edge <= not s_int(1) and s_int(0);
      
---  irq_master: wb_irq_master
---    port map (
---          clk_i   => clk_i,
---          rst_n_i => rst_n_i,
---          
---          master_o  => irq_master_o,
---          master_i  => irq_master_i,
---          
---          irq_i     => s_int_edge,
---          adr_i     => x"00000104",
---          msg_i     => x"DEADBEEF");
+  irq_master: irqm_core
+  generic map (
+    g_channels => 12,     -- 12 scu bus irq lines
+    g_round_rb => true,   -- round robin scheduler
+    g_det_edge => true)   -- trigger on edge
+  port map (
+    clk_i   => clk_i,
+    rst_n_i => rst_n_i,
+    
+    -- msi if
+    irq_master_o => irq_master_o,
+    irq_master_i => irq_master_i,
+    
+    -- configuration
+    msi_dst_array => (x"0000010b",x"0000010a",x"00000109",x"00000108",
+                      x"00000107",x"00000106",x"00000105",x"00000104",
+                      x"00000103",x"00000102",x"00000101",x"00000100"),
+    msi_msg_array => (x"00000000",x"00000000",x"00000000",x"00000000",
+                      x"00000000",x"00000000",x"00000000",x"00000000",
+                      x"00000000",x"00000000",x"00000000",x"00000000"),
+                      
+    -- irq lines
+    en_i    => '1',
+    mask_i  => x"FFF",
+    irq_i   => scu_srq_active);
+                      
 
 
 end architecture;

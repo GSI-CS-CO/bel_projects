@@ -51,6 +51,8 @@ PORT(
   -- Wishbone
   slave_i                 : in  t_wishbone_slave_in;
   slave_o                 : out t_wishbone_slave_out;
+  
+  srq_active              : out std_logic_vector(11 downto 0);    -- vector of slave service requests
                     
   clk                     : in    std_logic;
   nrst                    : in    std_logic;
@@ -932,31 +934,33 @@ p_delay_multicast_dt: PROCESS (Clk, s_reset)
   END PROCESS p_delay_multicast_dt;
 
 
-SCUB_Addr         <= S_SCUB_Addr;
-SCUB_RDnWR        <= S_SCUB_RDnWR;
-nSCUB_DS          <= NOT S_SCUB_DS;
-nSCUB_Slave_Sel   <= NOT S_SCUB_Slave_Sel;
+SCUB_Addr               <= S_SCUB_Addr;
+SCUB_RDnWR              <= S_SCUB_RDnWR;
+nSCUB_DS                <= NOT S_SCUB_DS;
+nSCUB_Slave_Sel         <= NOT S_SCUB_Slave_Sel;
 
-nSCUB_Timing_Cycle    <= NOT S_SCUB_Timing_Cycle;
+nSCUB_Timing_Cycle      <= NOT S_SCUB_Timing_Cycle;
 
-nSel_Ext_Data_Drv     <= NOT S_Sel_Ext_Data_Drv;
+nSel_Ext_Data_Drv       <= NOT S_Sel_Ext_Data_Drv;
 
-SCUB_Rd_active        <= S_Start_SCUB_Rd;
-SCUB_Rd_Fin           <= '1' WHEN SCUB_SM = F_Rd_Cyc ELSE '0';
-SCUB_Rd_Err_no_Dtack  <= S_SCUB_Rd_Err_no_Dtack;
+SCUB_Rd_active          <= S_Start_SCUB_Rd;
+SCUB_Rd_Fin             <= '1' WHEN SCUB_SM = F_Rd_Cyc ELSE '0';
+SCUB_Rd_Err_no_Dtack    <= S_SCUB_Rd_Err_no_Dtack;
 
-SCUB_Wr_active        <= S_Start_SCUB_Wr;
-SCUB_Wr_Fin           <= '1' WHEN SCUB_SM = F_Wr_Cyc ELSE '0';
-SCUB_Wr_Err_no_Dtack  <= S_SCUB_Wr_Err_no_Dtack;
+SCUB_Wr_active          <= S_Start_SCUB_Wr;
+SCUB_Wr_Fin             <= '1' WHEN SCUB_SM = F_Wr_Cyc ELSE '0';
+SCUB_Wr_Err_no_Dtack    <= S_SCUB_Wr_Err_no_Dtack;
 
-S_SCUB_Ti_Fin         <= '1' WHEN SCUB_SM = F_Ti_Cyc ELSE '0';
-SCUB_Ti_Fin           <= S_SCUB_Ti_Fin;
+S_SCUB_Ti_Fin           <= '1' WHEN SCUB_SM = F_Ti_Cyc ELSE '0';
+SCUB_Ti_Fin             <= S_SCUB_Ti_Fin;
 
-SCUB_Ti_Cyc_Err       <= S_Ti_Cyc_Err;
+SCUB_Ti_Cyc_Err         <= S_Ti_Cyc_Err;
 
-S_SCU_Bus_Access_Active   <= '1' WHEN (S_Start_SCUB_Wr = '1') OR (S_Start_SCUB_Rd = '1') ELSE '0';
-SCU_Bus_Access_Active     <= S_SCU_Bus_Access_Active;
+S_SCU_Bus_Access_Active <= '1' WHEN (S_Start_SCUB_Wr = '1') OR (S_Start_SCUB_Rd = '1') ELSE '0';
+SCU_Bus_Access_Active   <= S_SCU_Bus_Access_Active;
 
-SCU_Wait_Request          <=  s_stall;
+SCU_Wait_Request        <= s_stall;
+
+srq_active              <= S_SRQ_active;
 
 END Arch_SCU_Bus_Master;
