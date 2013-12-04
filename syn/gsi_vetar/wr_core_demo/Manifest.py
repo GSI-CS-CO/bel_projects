@@ -9,6 +9,8 @@ syn_package = "29"
 syn_top = "vetar_top"
 syn_project = "vetar"
 
+quartus_preflow = "vetar_top.tcl"
+
 modules = {
   "local" : [ 
     "../../../top/gsi_vetar/wr_core_demo",

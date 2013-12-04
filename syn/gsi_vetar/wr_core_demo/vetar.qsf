@@ -1557,5 +1557,5 @@ set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/al
 set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip
 set_global_assignment -name QIP_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.qip
 set_global_assignment -name QIP_FILE ../../../ip_cores/wr-cores/platform/altera/arria2_pll/arria2_pll.qip
-
+set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:vetar_top.tcl"
 
