@@ -231,6 +231,31 @@
 --    Die Signale "Ext_Wr_fin", "Ext_Rd_Fin", "Ext_Wr_fin_ovl" and "Ext_Rd_fin_ovl" wurden ueberarbeitet.           --
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers_4_Revi_0: erstellt am 05.12.2013, Autor: W.Panschow                                                        --
+--  A) Die Interrupt-Funktion der Intr_In-Eingaenge wurde ueberarbeitet.                                             --
+--    Die Aenderungen betreffen:                                                                                    --
+--    1) Die Pegel bzw. Flanken zum generieren eines Interrupts. Sie koennen nicht mehr durch Generics oder         --
+--      Register vorgegeben werden. Nur ein positiver Pegel oder eine positive Flanke loest einen Interrupt aus,    --
+--      vorausgesetzt der Intr_In-Eingang ist enabled. Deshalb sind die Generics "Intr_Level_Neg" und               --
+--      "Intr_Edge_Trig" entfernt worden. Auch die Moeglichkeit im laufenden Betrieb die Vorgaben zu aendern ist    --
+--      entfernt worden. Deshalb sind die Adressen "C_Intr_Level_Adr = X"0025" und "C_Intr_Edge_Adr = X0026" nicht  --
+--      mehr ansprechbar.                                                                                           --
+--    2) Es kann nicht mehr zwischen Pegel- und Flanken-Triggerung gewaehlt werden. Der Interrupt muss fuer         --
+--      mindestens eine Taktperiode aktiv sein, dann bleibt er im "S_Intr_Active"-Register gespeichert, bis er dort --
+--      geloescht wird. Das Generic "Intr_Level_Neg" und das Register "S_Intr_Edge_Trig" wurde entfernt.            --
+--    3) Das interrupt mask register wurde entfernt, deshalb ist die Adresse "C_Intr_Mask_Adr = X"0023" nicht mehr  --
+--      erlaubt. Die Interrupts werden nur noch ueber das Generic "Intr_Enable" oder das Register "S_Intr_Enable"   --
+--      armiert. Ist ein Interrupt schon waerend des Enable-Vorgangs aktiv,wird eine Flanke erzeugt, d.h. der       --
+--      Interrupt wird im "S_Intr_Active"-Register gesetzt.                                                         --
+--    4) Das interrupt pending register wurde entfernt, deshalb ist Adresse "C_Intr_Pending_Adr = X"0022" nicht     --
+--      mehr erlaubt.                                                                                               --
+--  B) Das Signal "S_Powerup_Done" ist auf einen Entiy-Ausgang gelegt worden. Mit diesem Signal koennen die         --
+--    Firmware-Entwickler von Slave-Karten signalisieren, dass ein Powerup durchgefuehrt wurde. Dieses Signal ist   --
+--    nur so lange aktiv, bis der SCU-Bus-Master es quittiert hat. Da dies im Allgemeinen schnell passieren wird.   --
+--    Sollte das Signal durch eine LED angezeigt werden, sollt es entsprechend gestrecht werden.                    --
+----------------------------------------------------------------------------------------------------------------------
+
 library IEEE;
 USE IEEE.std_logic_1164.all;
 USE IEEE.numeric_std.all;
@@ -263,23 +288,15 @@ generic
     -- Falls keine verbindliche "CID-Group"-Nummer vorliegt, muss der Defaultwert 0 stehen bleiben!
     CID_Group: integer range 0 to 16#FFFF# := 0;
 
-    -- the bit positions are corresponding to Intr_In.
-    -- A '1' set default level of this Intr_In(n) to neg. level or neg. edge
-    Intr_Level_Neg:   std_logic_vector(15 DOWNTO 1) := B"0000_0000_0000_000";
-
-    -- the bit positions are corresponding to Intr_In.
-    -- A '1' set default of this Intr_In(n) to edge triggered, '0' is level triggered
-    Intr_Edge_Trig:   std_logic_vector(15 DOWNTO 1) := B"1111_1111_1111_110";
-    
-    -- the bit positions are corresponding to Intr_In.
-    -- A '1' enable Intr_In(n), '0' disable Intr_In(n)
-    Intr_Enable:      std_logic_vector(15 DOWNTO 1) := B"0000_0000_0000_001";
+    -- the bit positions are corresponding to Intr_In. A '1' enable Intr_In(n), '0' disable Intr_In(n)
+    -- The least significant bit don't care, because it represent the powerup interrupt. This interrupt is always enabled.
+    Intr_Enable:      std_logic_vector(15 DOWNTO 0) := B"0000_0000_0000_0000";
                                                                               
     -- change only here! increment by major changes of this macro
-    This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 3;
+    This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 4;
     
     -- change only here! increment by minor changes of this macro
-    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 4
+    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 0
     );
 port
     (
@@ -295,7 +312,7 @@ port
     Dtack_to_SCUB:      in    std_logic;                      -- connect Dtack from from external user functions
 
     -- 15 interrupts from external user functions
-    Intr_In:            in    std_logic_vector(15 DOWNTO 1) := NOT Intr_Level_Neg(15 Downto 1);
+    Intr_In:            in    std_logic_vector(15 DOWNTO 1);
     
     -- '1' => the user function(s), device, is ready to work with the control system
     User_Ready:         in    std_logic;
@@ -334,7 +351,8 @@ port
     Ext_Wr_fin_ovl:     out   std_logic;    -- marks end of write cycle, active one for one clock period
                                             -- of clk during cycle end (overlap)
     Deb_SCUB_Reset_out: out   std_logic;    -- the debounced SCU-Bus signal 'nSCUB_Reset_In'. Use for other macros.
-    nPowerup_Res:       out   std_logic     -- '0' => the FPGA make a powerup
+    nPowerup_Res:       out   std_logic;    -- '0' => the FPGA make a powerup
+    Powerup_Done:       out   std_logic     -- this memory is set to one if an Powerup is done. Only the SCUB-Master can clear this bit.
     );
   
   constant  Clk_in_ps: integer  := 1000000000 / (Clk_in_Hz / 1000);
@@ -343,38 +361,35 @@ port
   constant  C_Version:  unsigned(7 downto 0) :=  to_unsigned(This_macro_vers_dont_change_from_outside, 8);
   constant  C_Revision: unsigned(7 downto 0) :=  to_unsigned(This_macro_revi_dont_change_from_outside, 8);
   
-  constant  C_Slave_ID_Adr:   unsigned(15 downto 0) := X"0001";   -- address of slave ident code (rd)
-  constant  C_FW_Version_Adr: unsigned(15 downto 0) := X"0002";   -- address of firmware version (rd)
-  constant  C_FW_Release_Adr: unsigned(15 downto 0) := X"0003";   -- address of firmware release (rd)
-  constant  C_CID_System_Adr: unsigned(15 downto 0) := X"0004";   -- address of hardware version (rd)
-  constant  C_CID_Group_Adr:  unsigned(15 downto 0) := X"0005";   -- address of hardware release (rd)
+  constant  C_Slave_ID_Adr:     integer := 16#0001#;   -- address of slave ident code (rd)
+  constant  C_FW_Version_Adr:   integer := 16#0002#;   -- address of firmware version (rd)
+  constant  C_FW_Release_Adr:   integer := 16#0003#;   -- address of firmware release (rd)
+  constant  C_CID_System_Adr:   integer := 16#0004#;   -- address of hardware version (rd)
+  constant  C_CID_Group_Adr:    integer := 16#0005#;   -- address of hardware release (rd)
   -- address of version and revision register of this macro (rd)
-  constant  C_Vers_Revi_of_this_Macro: unsigned(15 downto 0) := X"0006";
-  constant  C_Echo_Reg_Adr:   unsigned(15 downto 0) := X"0010";   -- address of echo register (rd/wr)
-  constant  C_Status_Reg_Adr: unsigned(15 downto 0) := X"0011";   -- address of status register (rd)
+  constant  C_Vers_Revi_of_this_Macro: integer := 16#006#;
+  constant  C_Echo_Reg_Adr:     integer := 16#0010#;   -- address of echo register (rd/wr)
+  constant  C_Status_Reg_Adr:   integer := 16#0011#;   -- address of status register (rd)
   
-  constant  C_Free_Intern_A_12: unsigned(15 downto 0) := X"0012";   -- reserved internal address 12hex
-  constant  C_Free_Intern_A_13: unsigned(15 downto 0) := X"0013";   -- reserved internal address 13hex
-  constant  C_Free_Intern_A_14: unsigned(15 downto 0) := X"0014";   -- reserved internal address 14hex
-  constant  C_Free_Intern_A_15: unsigned(15 downto 0) := X"0015";   -- reserved internal address 15hex
-  constant  C_Free_Intern_A_16: unsigned(15 downto 0) := X"0016";   -- reserved internal address 16hex
-  constant  C_Free_Intern_A_17: unsigned(15 downto 0) := X"0017";   -- reserved internal address 17hex
-  constant  C_Free_Intern_A_18: unsigned(15 downto 0) := X"0018";   -- reserved internal address 18hex
-  constant  C_Free_Intern_A_19: unsigned(15 downto 0) := X"0019";   -- reserved internal address 19hex
-  constant  C_Free_Intern_A_1A: unsigned(15 downto 0) := X"001A";   -- reserved internal address 1Ahex
-  constant  C_Free_Intern_A_1B: unsigned(15 downto 0) := X"001B";   -- reserved internal address 1Bhex
-  constant  C_Free_Intern_A_1C: unsigned(15 downto 0) := X"001C";   -- reserved internal address 1Chex
-  constant  C_Free_Intern_A_1D: unsigned(15 downto 0) := X"001D";   -- reserved internal address 1Dhex
-  constant  C_Free_Intern_A_1E: unsigned(15 downto 0) := X"001E";   -- reserved internal address 1Ehex
-  constant  C_Free_Intern_A_1F: unsigned(15 downto 0) := X"001F";   -- reserved internal address 1Fhex
+  constant  C_Free_Intern_A_12: integer := 16#0012#;   -- reserved internal address 12hex
+  constant  C_Free_Intern_A_13: integer := 16#0013#;   -- reserved internal address 13hex
+  constant  C_Free_Intern_A_14: integer := 16#0014#;   -- reserved internal address 14hex
+  constant  C_Free_Intern_A_15: integer := 16#0015#;   -- reserved internal address 15hex
+  constant  C_Free_Intern_A_16: integer := 16#0016#;   -- reserved internal address 16hex
+  constant  C_Free_Intern_A_17: integer := 16#0017#;   -- reserved internal address 17hex
+  constant  C_Free_Intern_A_18: integer := 16#0018#;   -- reserved internal address 18hex
+  constant  C_Free_Intern_A_19: integer := 16#0019#;   -- reserved internal address 19hex
+  constant  C_Free_Intern_A_1A: integer := 16#001A#;   -- reserved internal address 1Ahex
+  constant  C_Free_Intern_A_1B: integer := 16#001B#;   -- reserved internal address 1Bhex
+  constant  C_Free_Intern_A_1C: integer := 16#001C#;   -- reserved internal address 1Chex
+  constant  C_Free_Intern_A_1D: integer := 16#001D#;   -- reserved internal address 1Dhex
+  constant  C_Free_Intern_A_1E: integer := 16#001E#;   -- reserved internal address 1Ehex
+  constant  C_Free_Intern_A_1F: integer := 16#001F#;   -- reserved internal address 1Fhex
 
-  constant  C_Intr_In_Adr:      unsigned(15 downto 0) := X"0020";   -- address of interrupt In register (rd)
-  constant  C_Intr_Ena_Adr:     unsigned(15 downto 0) := X"0021";   -- address of interrupt enable register (rd/wr)
-  constant  C_Intr_Pending_Adr: unsigned(15 downto 0) := X"0022";   -- address of interrupt pending register (rd/wr)
-  constant  C_Intr_Mask_Adr:    unsigned(15 downto 0) := X"0023";   -- address of interrupt mask register (rd/wr)
-  constant  C_Intr_Active_Adr:  unsigned(15 downto 0) := X"0024";   -- address of interrupt active register (rd)
-  constant  C_Intr_Level_Adr:   unsigned(15 downto 0) := X"0025";   -- address of interrupt level register (rd/wr)
-  constant  C_Intr_Edge_Adr:    unsigned(15 downto 0) := X"0026";   -- address of interrupt edge register (rd/wr)
+  constant  C_Intr_In_Adr:      integer := 16#0020#;   -- address of interrupt In register (rd)
+  constant  C_Intr_Ena_Adr:     integer := 16#0021#;   -- address of interrupt enable register (rd/wr)
+  constant  C_Intr_Active_Adr:  integer := 16#0024#;   -- address of interrupt active register (rd)
+  constant  C_Intr_Edge_Adr:    integer := 16#0026#;   -- address of interrupt edge register (rd/wr)
 
   signal    S_nReset:           std_logic;                        -- '0' => S_nReset is active
 
@@ -403,13 +418,8 @@ port
   signal    S_Intr_Enable:        std_logic_vector(Intr_In'range);
   signal    intr_enable_previous: std_logic_vector(Intr_In'range);
   signal    intr_reactivate:      std_logic_vector(Intr_In'range);
---  signal    S_Intr_Mask:          std_logic_vector(Intr_In'range);
---  signal    S_Intr_Pending:       std_logic_vector(Intr_In'range);
---  signal    S_Wr_Intr_Pending:    std_logic_vector(1 downto 0);
   signal    S_Intr_Active:        std_logic_vector(Intr_In'range);
   signal    S_Wr_Intr_Active:     std_logic_vector(1 downto 0);
---  signal    S_Intr_Level_Neg:     std_logic_vector(Intr_In'range);
---  signal    S_Intr_Edge_Trig:     std_logic_vector(Intr_In'range);
   signal    S_SRQ:                std_logic;
   
   signal    S_Standard_Reg_Acc  : std_logic;
@@ -705,7 +715,7 @@ P_Standard_Reg: process (clk, S_nReset)
   begin
     if S_nReset = '0' then
       S_Echo_Reg <= (others => '0');
-      S_Intr_Enable <= Intr_Enable;
+      S_Intr_Enable <= Intr_Enable(Intr_In'range);
       S_Adr_Val <= '0';
       S_DS_Val <= '0';
       S_SCUB_Dtack <= '0';
@@ -724,7 +734,7 @@ P_Standard_Reg: process (clk, S_nReset)
       S_Read_Out <= (others => 'Z');    -- Vers_2 Revi_0: Vorschlag S. Schäfer, vermeidet
                                         --unötige Datenübergänge auf dem SCU-Datenbus 
       if S_nSync_Board_Sel = "00" and S_nSync_Timing_Cyc = "11" then
-        case unsigned(S_ADR_from_SCUB_LA) IS
+        case to_integer(unsigned(S_ADR_from_SCUB_LA)) IS
           when C_Slave_ID_Adr =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
@@ -787,24 +797,6 @@ P_Standard_Reg: process (clk, S_nReset)
               S_Intr_Enable <= S_Data_from_SCUB_LA(Intr_In'range);
               S_SCUB_Dtack <= '1';
             end if;
---          when C_Intr_Pending_Adr =>
---            S_Standard_Reg_Acc <= '1';
---            if SCUB_RDnWR = '1' then
---              S_Read_Out <= (S_Intr_Pending & '0'); -- register latchen ???
---              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
---            elsif S_nSync_DS = "00" then
---              S_Wr_Intr_Pending <= S_Wr_Intr_Pending(0) & '1';
---              S_SCUB_Dtack <= '1';  -- ???
---            end if;
---          when C_Intr_Mask_Adr =>
---            S_Standard_Reg_Acc <= '1';
---            if SCUB_RDnWR = '1' then
---              S_Read_Out <= (S_Intr_Mask & '0');
---              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
---            elsif S_nSync_DS = "00" then
---              S_Intr_Mask <= S_Data_from_SCUB_LA(Intr_In'range);
---              S_SCUB_Dtack <= '1';
---            end if;
           when C_Intr_Active_Adr =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
@@ -814,24 +806,6 @@ P_Standard_Reg: process (clk, S_nReset)
               S_Wr_Intr_Active <= S_Wr_Intr_Active(0) & '1';
               S_SCUB_Dtack <= '1';  -- ??
             end if;
---          when C_Intr_Level_Adr =>
---            S_Standard_Reg_Acc <= '1';
---            if SCUB_RDnWR = '1' then
---              S_Read_Out <= (S_Intr_Level_Neg & '0');
---              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
---            elsif S_nSync_DS = "00" then
---              S_Intr_Level_Neg <= S_Data_from_SCUB_LA(Intr_In'range);
---              S_SCUB_Dtack <= '1';
---            end if;
---          when C_Intr_Edge_Adr =>
---            S_Standard_Reg_Acc <= '1';
---            if SCUB_RDnWR = '1' then
---              S_Read_Out <= (S_Intr_Edge_Trig & '0');
---              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
---            elsif S_nSync_DS = "00" then
---              S_Intr_Edge_Trig <= S_Data_from_SCUB_LA(Intr_In'range);
---              S_SCUB_Dtack <= '1';
---            end if;
           when C_Vers_Revi_of_this_Macro =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then

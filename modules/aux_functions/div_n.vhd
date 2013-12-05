@@ -86,13 +86,11 @@ p_div_n:    process (clk, Res)
   begin
     if res = '1' THEN
       s_div_n <= c_load_val;
-    elsif   rising_edge(clk) THEN
-      if ena = '1' then
-        if s_div_n(s_div_n'high) = '1' THEN   -- Bei underflow wird neu geladen   --
-          s_div_n <= c_load_val;
-        else
-          s_div_n <= s_div_n - 1;             -- subtrahieren.                    --
-        end if;
+    elsif rising_edge(clk) THEN
+      if s_div_n(s_div_n'high) = '1' THEN   -- Bei underflow wird neu geladen   --
+        s_div_n <= c_load_val;
+      elsif ena = '1' then
+        s_div_n <= s_div_n - 1;             -- subtrahieren.                    --
       end if;
     end if;
   end process p_div_n;

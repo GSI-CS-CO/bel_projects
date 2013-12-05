@@ -433,9 +433,7 @@ generic map (
     Firmware_Version        => 0,
     CID_System => 55, -- important: 55 => CSCOHW
     CID_Group => 3, -- important: 3 => "FG900160_SCU_ADDAC1"
-    Intr_Edge_Trig => "111111111111111",
-    Intr_Enable          => "000000000000000",
-    Intr_Level_Neg => "000000000000000",
+    Intr_Enable          => "0000000000000001",
     Slave_ID => scu_adda1_id)
 port map (
     SCUB_Addr => A_A, -- in,        SCU_Bus: address bus
@@ -480,8 +478,9 @@ port map (
     Deb_SCUB_Reset_out        => open, -- out,        the debounced 'nSCUB_Reset_In'-signal, is active high,
                                                     -- can be used to reset
                                                     -- external macros, when 'nSCUB_Reset_In' is '0'
-    nPowerup_Res => nPowerup_Res); -- out,        this macro generated a power up reset
-
+    nPowerup_Res => nPowerup_Res, -- out,        this macro generated a power up reset
+    Powerup_Done => open          -- out  this memory is set to one if an Powerup is done. Only the SCUB-Master can clear this bit.
+    );
 
 dac_1: dac714
   generic map(
@@ -497,7 +496,7 @@ dac_1: dac714
     clk => clk_sys, -- in, should be the same clk, used by SCU_Bus_Slave
     nReset => nPowerup_Res, -- in, '0' => resets the DAC_1
     nExt_Trig_DAC => EXT_TRIG_DAC, -- external trigger input over optocoupler,
-                                                                                                                                                                                                                -- led on -> nExt_Trig_DAC is low
+                                   -- led on -> nExt_Trig_DAC is low
     FG_Data => open, -- parallel dac data during FG-Mode
     FG_Strobe => open, -- strobe to start SPI transfer (if possible) during FG-Mode
     DAC_SI => DAC1_SDI, -- out, is connected to DAC1-SDI
@@ -525,7 +524,7 @@ dac_2: dac714
     clk => clk_sys, -- in, should be the same clk, used by SCU_Bus_Slave
     nReset => nPowerup_Res, -- in, '0' => resets the DAC_2
     nExt_Trig_DAC => EXT_TRIG_DAC, -- external trigger input over optocoupler,
-                                                                                                                                                                                                                -- led on -> nExt_Trig_DAC is low
+                                   -- led on -> nExt_Trig_DAC is low
     FG_Data => fg_1_sw(23 downto 8), -- parallel dac data during FG-Mode
     FG_Strobe => fg_1_strobe, -- strobe to start SPI transfer (if possible) during FG-Mode
     DAC_SI => DAC2_SDI, -- out, is connected to DAC2-SDI
