@@ -270,7 +270,7 @@ constant c_xwb_owm : t_sdb_device := (
   signal wb_scu_dtack: std_logic;
   signal wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
   
-  signal irqcnt:  unsigned(16 downto 0);
+  signal irqcnt:  unsigned(12 downto 0);
   
   
 
@@ -279,10 +279,10 @@ constant c_xwb_owm : t_sdb_device := (
     timer_irq: process (clk_sys, reset_rstn)
     begin
       if reset_rstn = "0" then
-        irqcnt <= '0' & x"FFFF";
+        irqcnt <= '0' & x"FFF";
       elsif rising_edge(clk_sys) then
         if irqcnt(irqcnt'high) = '1' then
-          irqcnt <= '0' & x"FFFF";
+          irqcnt <= '0' & x"FFF";
         else
           irqcnt <= irqcnt - 1;
         end if;
