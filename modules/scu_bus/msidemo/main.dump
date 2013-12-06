@@ -1,0 +1,415 @@
+
+main.o:     file format elf32-lm32
+
+
+Disassembly of section .text:
+
+00000000 <isr1>:
+  
+//  show_msi();
+  //which slave has triggered?
+  while(slaves[i]) {
+    //check bit in master act reg
+    if (scu_bus_master[SRQ_ACT] & (1 << (slaves[i]-1))) {
+   0:	78 01 00 00 	mvhi r1,0x0
+   4:	38 21 00 00 	ori r1,r1,0x0
+   8:	28 23 00 00 	lw r3,(r1+0)
+  disp_put_str("S ");
+  disp_put_str(buffer);
+  disp_put_c('\n');
+}
+
+void isr1()
+   c:	78 02 00 00 	mvhi r2,0x0
+  10:	38 42 00 00 	ori r2,r2,0x0
+  
+//  show_msi();
+  //which slave has triggered?
+  while(slaves[i]) {
+    //check bit in master act reg
+    if (scu_bus_master[SRQ_ACT] & (1 << (slaves[i]-1))) {
+  14:	34 64 00 10 	addi r4,r3,16
+  unsigned int i;
+  p = (struct p *)fesa_if;
+  
+//  show_msi();
+  //which slave has triggered?
+  while(slaves[i]) {
+  18:	e0 00 00 19 	bi 7c <isr1+0x7c>
+    //check bit in master act reg
+    if (scu_bus_master[SRQ_ACT] & (1 << (slaves[i]-1))) {
+  1c:	2c 85 00 00 	lhu r5,(r4+0)
+  20:	34 26 ff ff 	addi r6,r1,-1
+  24:	20 a5 ff ff 	andi r5,r5,0xffff
+  28:	94 a6 28 00 	sr r5,r5,r6
+  2c:	20 a5 00 01 	andi r5,r5,0x1
+  30:	44 a0 00 12 	be r5,r0,78 <isr1+0x78>
+      //acknowledge powerup irq
+      if (scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] & 1)
+  34:	3c 21 00 11 	sli r1,r1,17
+  38:	34 21 00 48 	addi r1,r1,72
+  3c:	b4 61 08 00 	add r1,r3,r1
+  40:	2c 25 00 00 	lhu r5,(r1+0)
+  44:	20 a5 00 01 	andi r5,r5,0x1
+  48:	44 a0 00 05 	be r5,r0,5c <isr1+0x5c>
+        scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 1;
+  4c:	2c 25 00 00 	lhu r5,(r1+0)
+  50:	20 a5 ff ff 	andi r5,r5,0xffff
+  54:	38 a5 00 01 	ori r5,r5,0x1
+  58:	0c 25 00 00 	sh (r1+0),r5
+      //ack timer
+      if (scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] & 4) {
+  5c:	2c 25 00 00 	lhu r5,(r1+0)
+  60:	20 a5 00 04 	andi r5,r5,0x4
+  64:	44 a0 00 05 	be r5,r0,78 <isr1+0x78>
+          scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 4; //ack slave timer
+  68:	2c 25 00 00 	lhu r5,(r1+0)
+  6c:	20 a5 ff ff 	andi r5,r5,0xffff
+  70:	38 a5 00 04 	ori r5,r5,0x4
+  74:	0c 25 00 00 	sh (r1+0),r5
+  78:	34 42 00 04 	addi r2,r2,4
+  unsigned int i;
+  p = (struct p *)fesa_if;
+  
+//  show_msi();
+  //which slave has triggered?
+  while(slaves[i]) {
+  7c:	28 41 00 00 	lw r1,(r2+0)
+  80:	5c 20 ff e7 	bne r1,r0,1c <isr1+0x1c>
+      }
+      
+    }
+    i++;
+  } 
+}
+  84:	c3 a0 00 00 	ret
+
+00000088 <mat_sprinthex>:
+  int c;
+  int n;
+};
+
+char* mat_sprinthex(char* buffer, unsigned long val)
+{
+  88:	b8 20 20 00 	mv r4,r1
+  8c:	34 03 00 00 	mvi r3,0
+  const unsigned long mask = 0x0000000F;
+
+  for(i=0; i<8;i++)
+  {
+    ascii= (val>>(i<<2)) & mask;
+    if(ascii > 9) ascii = ascii - 10 + 'A';
+  90:	34 08 00 09 	mvi r8,9
+char* mat_sprinthex(char* buffer, unsigned long val)
+{
+  unsigned char i,ascii;
+  const unsigned long mask = 0x0000000F;
+
+  for(i=0; i<8;i++)
+  94:	34 07 00 08 	mvi r7,8
+  {
+    ascii= (val>>(i<<2)) & mask;
+  98:	3c 65 00 02 	sli r5,r3,2
+  9c:	80 45 28 00 	sru r5,r2,r5
+  a0:	20 a5 00 0f 	andi r5,r5,0xf
+    if(ascii > 9) ascii = ascii - 10 + 'A';
+    else        ascii = ascii      + '0';
+  a4:	34 a6 00 30 	addi r6,r5,48
+  const unsigned long mask = 0x0000000F;
+
+  for(i=0; i<8;i++)
+  {
+    ascii= (val>>(i<<2)) & mask;
+    if(ascii > 9) ascii = ascii - 10 + 'A';
+  a8:	51 05 00 02 	bgeu r8,r5,b0 <mat_sprinthex+0x28>
+  ac:	34 a6 00 37 	addi r6,r5,55
+    else        ascii = ascii      + '0';
+    buffer[7-i] = ascii;
+  b0:	30 86 00 07 	sb (r4+7),r6
+  b4:	34 63 00 01 	addi r3,r3,1
+  b8:	34 84 ff ff 	addi r4,r4,-1
+char* mat_sprinthex(char* buffer, unsigned long val)
+{
+  unsigned char i,ascii;
+  const unsigned long mask = 0x0000000F;
+
+  for(i=0; i<8;i++)
+  bc:	5c 67 ff f7 	bne r3,r7,98 <mat_sprinthex+0x10>
+    if(ascii > 9) ascii = ascii - 10 + 'A';
+    else        ascii = ascii      + '0';
+    buffer[7-i] = ascii;
+  }
+
+  buffer[8] = 0x00;
+  c0:	30 20 00 08 	sb (r1+8),r0
+  return buffer;
+}
+  c4:	c3 a0 00 00 	ret
+
+000000c8 <show_msi>:
+
+void show_msi()
+{
+  c8:	37 9c ff e8 	addi sp,sp,-24
+  cc:	5b 8b 00 0c 	sw (sp+12),r11
+  d0:	5b 8c 00 08 	sw (sp+8),r12
+  d4:	5b 9d 00 04 	sw (sp+4),ra
+  char buffer[12];
+  
+  mat_sprinthex(buffer, global_msi.msg);
+  d8:	78 0c 00 00 	mvhi r12,0x0
+  dc:	39 8c 00 00 	ori r12,r12,0x0
+  e0:	29 82 00 00 	lw r2,(r12+0)
+  e4:	37 8b 00 10 	addi r11,sp,16
+  e8:	b9 60 08 00 	mv r1,r11
+  ec:	f8 00 00 00 	calli ec <show_msi+0x24>
+  disp_put_str("D ");
+  f0:	78 01 00 00 	mvhi r1,0x0
+  f4:	38 21 00 00 	ori r1,r1,0x0
+  f8:	f8 00 00 00 	calli f8 <show_msi+0x30>
+  disp_put_str(buffer);
+  fc:	b9 60 08 00 	mv r1,r11
+ 100:	f8 00 00 00 	calli 100 <show_msi+0x38>
+  disp_put_c('\n');
+ 104:	34 01 00 0a 	mvi r1,10
+ 108:	f8 00 00 00 	calli 108 <show_msi+0x40>
+
+  
+  mat_sprinthex(buffer, global_msi.src);
+ 10c:	29 82 00 04 	lw r2,(r12+4)
+ 110:	b9 60 08 00 	mv r1,r11
+ 114:	f8 00 00 00 	calli 114 <show_msi+0x4c>
+  disp_put_str("A ");
+ 118:	78 01 00 00 	mvhi r1,0x0
+ 11c:	38 21 00 00 	ori r1,r1,0x0
+ 120:	f8 00 00 00 	calli 120 <show_msi+0x58>
+  disp_put_str(buffer);
+ 124:	b9 60 08 00 	mv r1,r11
+ 128:	f8 00 00 00 	calli 128 <show_msi+0x60>
+  disp_put_c('\n');
+ 12c:	34 01 00 0a 	mvi r1,10
+ 130:	f8 00 00 00 	calli 130 <show_msi+0x68>
+
+  
+  mat_sprinthex(buffer, (unsigned long)global_msi.sel);
+ 134:	29 82 00 08 	lw r2,(r12+8)
+ 138:	b9 60 08 00 	mv r1,r11
+ 13c:	f8 00 00 00 	calli 13c <show_msi+0x74>
+  disp_put_str("S ");
+ 140:	78 01 00 00 	mvhi r1,0x0
+ 144:	38 21 00 00 	ori r1,r1,0x0
+ 148:	f8 00 00 00 	calli 148 <show_msi+0x80>
+  disp_put_str(buffer);
+ 14c:	b9 60 08 00 	mv r1,r11
+ 150:	f8 00 00 00 	calli 150 <show_msi+0x88>
+  disp_put_c('\n');
+ 154:	34 01 00 0a 	mvi r1,10
+ 158:	f8 00 00 00 	calli 158 <show_msi+0x90>
+}
+ 15c:	2b 9d 00 04 	lw ra,(sp+4)
+ 160:	2b 8b 00 0c 	lw r11,(sp+12)
+ 164:	2b 8c 00 08 	lw r12,(sp+8)
+ 168:	37 9c 00 18 	addi sp,sp,24
+ 16c:	c3 a0 00 00 	ret
+
+00000170 <_irq_entry>:
+    }
+    i++;
+  } 
+}
+
+void _irq_entry(void) {
+ 170:	37 9c ff fc 	addi sp,sp,-4
+ 174:	5b 9d 00 04 	sw (sp+4),ra
+  
+//  disp_put_c('\f');
+//  disp_put_str("IRQ_ENTRY\n");
+  irq_process();
+ 178:	f8 00 00 00 	calli 178 <_irq_entry+0x8>
+ 
+}
+ 17c:	2b 9d 00 04 	lw ra,(sp+4)
+ 180:	37 9c 00 04 	addi sp,sp,4
+ 184:	c3 a0 00 00 	ret
+
+00000188 <main>:
+
+//const char mytext[] = "Hallo Welt!...\n\n";
+
+int main(void) {
+ 188:	37 9c ff e8 	addi sp,sp,-24
+ 18c:	5b 8b 00 18 	sw (sp+24),r11
+ 190:	5b 8c 00 14 	sw (sp+20),r12
+ 194:	5b 8d 00 10 	sw (sp+16),r13
+ 198:	5b 8e 00 0c 	sw (sp+12),r14
+ 19c:	5b 8f 00 08 	sw (sp+8),r15
+ 1a0:	5b 9d 00 04 	sw (sp+4),ra
+  int i = 0;
+  //char buffer[14];
+
+  
+  disp_reset();
+ 1a4:	f8 00 00 00 	calli 1a4 <main+0x1c>
+  disp_put_c('\f');
+ 1a8:	34 01 00 0c 	mvi r1,12
+  probe_scu_bus(scu_bus_master,55,3,slaves); //probe for ADDAC cards
+ 1ac:	78 0b 00 00 	mvhi r11,0x0
+  int i = 0;
+  //char buffer[14];
+
+  
+  disp_reset();
+  disp_put_c('\f');
+ 1b0:	f8 00 00 00 	calli 1b0 <main+0x28>
+  probe_scu_bus(scu_bus_master,55,3,slaves); //probe for ADDAC cards
+ 1b4:	39 6b 00 00 	ori r11,r11,0x0
+ 1b8:	29 61 00 00 	lw r1,(r11+0)
+ 1bc:	78 0c 00 00 	mvhi r12,0x0
+ 1c0:	39 8c 00 00 	ori r12,r12,0x0
+ 1c4:	34 02 00 37 	mvi r2,55
+ 1c8:	34 03 00 03 	mvi r3,3
+ 1cc:	b9 80 20 00 	mv r4,r12
+ 1d0:	f8 00 00 00 	calli 1d0 <main+0x48>
+  
+  if (!slaves[0]) {
+ 1d4:	29 81 00 00 	lw r1,(r12+0)
+ 1d8:	5c 20 00 07 	bne r1,r0,1f4 <main+0x6c>
+    disp_put_c('\f');
+ 1dc:	34 01 00 0c 	mvi r1,12
+ 1e0:	f8 00 00 00 	calli 1e0 <main+0x58>
+    disp_put_str("no slaves\n");
+ 1e4:	78 01 00 00 	mvhi r1,0x0
+ 1e8:	38 21 00 00 	ori r1,r1,0x0
+ 1ec:	f8 00 00 00 	calli 1ec <main+0x64>
+ 1f0:	e0 00 00 00 	bi 1f0 <main+0x68>
+    while(1);
+  } 
+  
+  scu_bus_master[SRQ_ENA] = 0x0; //reset bitmask
+ 1f4:	29 61 00 00 	lw r1,(r11+0)
+  scu_bus_master[MULTI_SLAVE_SEL] = 0x0; //reset bitmask  
+ 1f8:	b9 80 68 00 	mv r13,r12
+  while(slaves[i]) {
+    disp_put_c('x');
+    scu_bus_master[SRQ_ENA] |= (1 << (slaves[i]-1));  //enable irqs for the slave
+ 1fc:	34 0f 00 01 	mvi r15,1
+    disp_put_c('\f');
+    disp_put_str("no slaves\n");
+    while(1);
+  } 
+  
+  scu_bus_master[SRQ_ENA] = 0x0; //reset bitmask
+ 200:	0c 20 00 0c 	sh (r1+12),r0
+  scu_bus_master[MULTI_SLAVE_SEL] = 0x0; //reset bitmask  
+ 204:	0c 20 00 18 	sh (r1+24),r0
+  while(slaves[i]) {
+    disp_put_c('x');
+    scu_bus_master[SRQ_ENA] |= (1 << (slaves[i]-1));  //enable irqs for the slave
+    scu_bus_master[MULTI_SLAVE_SEL] |= (1 << (slaves[i]-1)); //set bitmask for broadcast select
+    scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ENA] = 0x4; //enable timer from fg
+ 208:	34 0e 00 04 	mvi r14,4
+    while(1);
+  } 
+  
+  scu_bus_master[SRQ_ENA] = 0x0; //reset bitmask
+  scu_bus_master[MULTI_SLAVE_SEL] = 0x0; //reset bitmask  
+  while(slaves[i]) {
+ 20c:	e0 00 00 15 	bi 260 <main+0xd8>
+    disp_put_c('x');
+ 210:	34 01 00 78 	mvi r1,120
+ 214:	f8 00 00 00 	calli 214 <main+0x8c>
+    scu_bus_master[SRQ_ENA] |= (1 << (slaves[i]-1));  //enable irqs for the slave
+ 218:	29 83 00 00 	lw r3,(r12+0)
+ 21c:	29 61 00 00 	lw r1,(r11+0)
+    scu_bus_master[MULTI_SLAVE_SEL] |= (1 << (slaves[i]-1)); //set bitmask for broadcast select
+    scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ENA] = 0x4; //enable timer from fg
+ 220:	35 8c 00 04 	addi r12,r12,4
+  
+  scu_bus_master[SRQ_ENA] = 0x0; //reset bitmask
+  scu_bus_master[MULTI_SLAVE_SEL] = 0x0; //reset bitmask  
+  while(slaves[i]) {
+    disp_put_c('x');
+    scu_bus_master[SRQ_ENA] |= (1 << (slaves[i]-1));  //enable irqs for the slave
+ 224:	34 62 ff ff 	addi r2,r3,-1
+ 228:	2c 24 00 0c 	lhu r4,(r1+12)
+ 22c:	bd e2 10 00 	sl r2,r15,r2
+ 230:	dc 40 10 00 	sexth r2,r2
+ 234:	b8 44 20 00 	or r4,r2,r4
+ 238:	20 84 ff ff 	andi r4,r4,0xffff
+ 23c:	0c 24 00 0c 	sh (r1+12),r4
+    scu_bus_master[MULTI_SLAVE_SEL] |= (1 << (slaves[i]-1)); //set bitmask for broadcast select
+ 240:	2c 24 00 18 	lhu r4,(r1+24)
+ 244:	b8 44 10 00 	or r2,r2,r4
+ 248:	20 42 ff ff 	andi r2,r2,0xffff
+ 24c:	0c 22 00 18 	sh (r1+24),r2
+    scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ENA] = 0x4; //enable timer from fg
+ 250:	3c 62 00 11 	sli r2,r3,17
+ 254:	34 42 00 42 	addi r2,r2,66
+ 258:	b4 22 08 00 	add r1,r1,r2
+ 25c:	0c 2e 00 00 	sh (r1+0),r14
+    while(1);
+  } 
+  
+  scu_bus_master[SRQ_ENA] = 0x0; //reset bitmask
+  scu_bus_master[MULTI_SLAVE_SEL] = 0x0; //reset bitmask  
+  while(slaves[i]) {
+ 260:	29 81 00 00 	lw r1,(r12+0)
+ 264:	5c 20 ff eb 	bne r1,r0,210 <main+0x88>
+    scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ENA] = 0x4; //enable timer from fg
+    i++;
+  } 
+  //SCU Bus Master
+  //enable slave irqs
+  scu_bus_master[GLOBAL_IRQ_ENA] = 0x20;
+ 268:	29 62 00 00 	lw r2,(r11+0)
+ 26c:	34 01 00 20 	mvi r1,32
+ 270:	0c 41 00 04 	sh (r2+4),r1
+
+  isr_table_clr();
+ 274:	f8 00 00 00 	calli 274 <main+0xec>
+  isr_ptr_table[1]= isr1;  
+ 278:	78 01 00 00 	mvhi r1,0x0
+ 27c:	78 02 00 00 	mvhi r2,0x0
+ 280:	38 42 00 00 	ori r2,r2,0x0
+ 284:	38 21 00 00 	ori r1,r1,0x0
+ 288:	58 22 00 04 	sw (r1+4),r2
+  irq_set_mask(0x02);
+ 28c:	34 01 00 02 	mvi r1,2
+ 290:	f8 00 00 00 	calli 290 <main+0x108>
+  irq_enable();
+ 294:	f8 00 00 00 	calli 294 <main+0x10c>
+    
+  //  scu_bus_master[(slaves[i] << 16) + DAC2_BASE + DAC_CNTRL] = 0x10; //set FG mode
+  //  scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 1;
+  //  scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 2;
+    
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = 0x1; //reset fg
+ 298:	29 63 00 00 	lw r3,(r11+0)
+ 29c:	34 02 00 01 	mvi r2,1
+  irq_set_mask(0x02);
+  irq_enable();
+  
+  //config of DAC and FG
+  i=0;
+  while(slaves[i]) {
+ 2a0:	e0 00 00 05 	bi 2b4 <main+0x12c>
+    
+  //  scu_bus_master[(slaves[i] << 16) + DAC2_BASE + DAC_CNTRL] = 0x10; //set FG mode
+  //  scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 1;
+  //  scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 2;
+    
+    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = 0x1; //reset fg
+ 2a4:	3c 21 00 11 	sli r1,r1,17
+ 2a8:	34 21 06 00 	addi r1,r1,1536
+ 2ac:	b4 61 08 00 	add r1,r3,r1
+ 2b0:	0c 22 00 00 	sh (r1+0),r2
+  irq_set_mask(0x02);
+  irq_enable();
+  
+  //config of DAC and FG
+  i=0;
+  while(slaves[i]) {
+ 2b4:	29 a1 00 00 	lw r1,(r13+0)
+ 2b8:	35 ad 00 04 	addi r13,r13,4
+ 2bc:	5c 20 ff fa 	bne r1,r0,2a4 <main+0x11c>
+ 2c0:	e0 00 00 00 	bi 2c0 <main+0x138>

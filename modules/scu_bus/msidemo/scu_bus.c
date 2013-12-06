@@ -2,22 +2,6 @@
 #include "display.h"
 
 
-char* mat_sprinthex(char* buffer, unsigned short val)
-{
-  unsigned char i,ascii;
-  const unsigned short mask = 0x000F;
-
-  for(i=0; i<4;i++)
-  {
-    ascii= (val>>(i<<2)) & mask;
-    if(ascii > 9) ascii = ascii - 10 + 'A';
-    else        ascii = ascii      + '0';
-    buffer[4-i] = ascii;
-  }
-
-  buffer[4] = 0x00;
-  return buffer;
-}
 
 /*  for every found slave the slotnumber is added to the slave array
     e.g. [2,3] means slaves in slot 2 and 3
