@@ -289,9 +289,9 @@ architecture rtl of scu_control is
   constant c_irq_masters  : natural := 2;
   constant c_irq_layout   : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000000"),
-    1 => f_sdb_embed_device(c_irq_ep_sdb,             x"00004000"),
-    2 => f_sdb_embed_device(c_irq_ep_sdb,             x"00008000"),
-    3 => f_sdb_embed_device(c_irq_hostbridge_ep_sdb,  x"00010000"));
+    1 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000100"),
+    2 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000200"),
+    3 => f_sdb_embed_device(c_irq_hostbridge_ep_sdb,  x"00001000"));
   constant c_irq_sdb_address : t_wishbone_address := x"00002000";
 
   signal irq_cbar_slave_i  : t_wishbone_slave_in_array (c_irq_masters-1 downto 0);
