@@ -597,16 +597,21 @@ P_Intr: process (clk, S_nReset, S_Powerup_Done)
 
         elsif S_Intr_Enable(i) = '1' and intr_enable_previous(i) = '0' and S_Intr_In_Sync2(i) = '1' then
         -- specific interrupt changed from disabled to enabled, if the specific interrupt is active, set the the specific interrupt active bit without edge detect.
-          S_Intr_Active(i) <= '1';
+          S_Intr_Active(i)  <= '1';
         
         elsif S_Intr_Enable(i) = '1' and S_Intr_In_Sync1(i) = '1' and S_Intr_In_Sync2(i) = '0' then
         -- specific interrupt is enabled and an edge is detected.
+          if S_Intr_Active(i) = '1' then
+            S_Intr_Active(i)  <= '0';     -- it is allready active, so clear it for one clk period. So we generate a new edge on S_Intr_Active(i). 
+            intr_reactivate(i) <= '1';    -- set an memo to ractivate the S_Intr_Active(i) one clk later
+          else
+            S_Intr_Active(i)  <= '1';
+          end if;
+ 
           if S_Wr_Intr_Active = "01" and S_Data_from_SCUB_LA(i) = '1' then
           -- edge detection  and clear action occurs at same time
             S_Intr_Active(i) <= '0';      -- so, first clear the S_Intr_Active bit
-            intr_reactivate(i) <= '1';    -- and set an memo to ractivate the S_Intr_Active bit later
-          else
-            S_Intr_Active(i) <= '1';      -- set the the specific interrupt active bit
+            intr_reactivate(i) <= '1';    -- and set an memo to ractivate the S_Intr_Active(i) one clk later
           end if;
           
         elsif S_Wr_Intr_Active = "01" and S_Data_from_SCUB_LA(i) = '1' then
