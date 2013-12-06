@@ -29,18 +29,9 @@ generic
     -- Falls keine verbindliche "CID-Group"-Nummer vorliegt, muss der Defaultwert 0 stehen bleiben!
     CID_Group: integer range 0 to 16#FFFF# := 0;
 
-
-    -- the bit positions are corresponding to Intr_In.
-    -- A '1' set default level of this Intr_In(n) to neg. level or neg. edge
-    Intr_Level_Neg:   std_logic_vector(15 DOWNTO 1) := B"0000_0000_0000_000";
-
-    -- the bit positions are corresponding to Intr_In.
-    -- A '1' set default of this Intr_In(n) to edge triggered, '0' is level triggered
-    Intr_Edge_Trig:   std_logic_vector(15 DOWNTO 1) := B"1111_1111_1111_110";
-    
-    -- the bit positions are corresponding to Intr_In.
-    -- A '1' enable Intr_In(n), '0' disable Intr_In(n)
-    Intr_Enable:      std_logic_vector(15 DOWNTO 1) := B"0000_0000_0000_001"
+    -- the bit positions are corresponding to Intr_In. A '1' enable Intr_In(n), '0' disable Intr_In(n)
+    -- The least significant bit don't care, because it represent the powerup interrupt. This interrupt is always enabled.
+    Intr_Enable:      std_logic_vector(15 DOWNTO 0) := B"0000_0000_0000_0001"
     );
 port
     (
@@ -56,7 +47,7 @@ port
     Dtack_to_SCUB:      in    std_logic;                      -- connect Dtack from from external user functions
 
     -- 15 interrupts from external user functions
-    Intr_In:            in    std_logic_vector(15 DOWNTO 1) := NOT Intr_Level_Neg(15 Downto 1);
+    Intr_In:            in    std_logic_vector(15 DOWNTO 1);
     
     -- '1' => the user function(s), device, is ready to work with the control system
     User_Ready:         in    std_logic;
@@ -95,7 +86,8 @@ port
     Ext_Wr_fin_ovl:     out   std_logic;    -- marks end of write cycle, active one for one clock period
                                             -- of clk during cycle end (overlap)
     Deb_SCUB_Reset_out: out   std_logic;    -- the debounced SCU-Bus signal 'nSCUB_Reset_In'. Use for other macros.
-    nPowerup_Res:       out   std_logic     -- '0' => the FPGA make a powerup
+    nPowerup_Res:       out   std_logic;    -- '0' => the FPGA make a powerup
+    Powerup_Done:       out   std_logic     -- this memory is set to one if an Powerup is done. Only the SCUB-Master can clear this bit.
     );
 end component;
 
