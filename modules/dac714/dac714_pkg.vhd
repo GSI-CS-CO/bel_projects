@@ -32,6 +32,7 @@ component dac714 is
     nLD_DAC:            out     std_logic;                      -- '0' copy shift register to output latch of DAC
     nCLR_DAC:           buffer  std_logic;                      -- '0' resets the DAC, Clear Pulsewidth min 200ns
                                                                 -- resets both the input latch and the D/A latch to 0000H (midscale).
+    ext_trig_valid:     out     std_logic;                      -- got an valid external trigger, during extern trigger mode.
     Rd_Port:            out     std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Rd_Activ:           out     std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:              out     std_logic
