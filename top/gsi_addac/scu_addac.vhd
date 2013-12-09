@@ -69,6 +69,7 @@ entity scu_addac is
     nDAC2_A0: buffer std_logic; -- '0' enable shift of internal shift register of DAC2
     nDAC2_A1: buffer std_logic; -- '0' copy shift register to output latch of DAC2
     EXT_TRIG_DAC: in std_logic;
+    A_NLED_TRIG_DAC: out std_logic;
     
     ------------ IO-Port-Signale --------------------------------------------------------------------------------------
     a_io_7_0_tx: out std_logic; -- '1' = external io(7..0)-buffer set to output.
@@ -92,7 +93,6 @@ entity scu_addac is
 
     A_nState_LED: out std_logic_vector(2 downto 0); -- ..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
     A_nLED: out std_logic_vector(15 downto 0);
-    A_NLED_TRIG_DAC: out std_logic;
     A_NLED_TRIG_ADC: out std_logic;
     
     HW_REV: in std_logic_vector(3 downto 0);
@@ -177,7 +177,7 @@ constant c_xwb_owm : t_sdb_device := (
     date => x"20120603",
     name => "WR-Periph-1Wire    ")));
         
-         constant c_xwb_uart : t_sdb_device := (
+constant c_xwb_uart : t_sdb_device := (
     abi_class => x"0000", -- undocumented device
     abi_ver_major => x"01",
     abi_ver_minor => x"01",
@@ -272,7 +272,7 @@ constant c_xwb_owm : t_sdb_device := (
   
   signal irqcnt:  unsigned(12 downto 0);
   
-  
+  signal  dac_1_ext_trig, dac_2_ext_trig: std_logic;
 
   begin
     
@@ -447,7 +447,7 @@ generic map (
     Firmware_Version        => 0,
     CID_System => 55, -- important: 55 => CSCOHW
     CID_Group => 3, -- important: 3 => "FG900160_SCU_ADDAC1"
-    Intr_Enable          => "0000000000000001",
+    Intr_Enable          => b"0000_0000_0000_0001",
     Slave_ID => scu_adda1_id)
 port map (
     SCUB_Addr => A_A, -- in,        SCU_Bus: address bus
@@ -518,6 +518,7 @@ dac_1: dac714
     nCS_DAC => nDAC1_A0, -- out, '0' enable shift of internal shift register of DAC1
     nLD_DAC => nDAC1_A1, -- out, '0' copy shift register to output latch of DAC1
     nCLR_DAC => nDAC1_CLR, -- out, '0' set DAC1 to zero (pulse width min 200 ns)
+    ext_trig_val  => dac_1_ext_trig,  -- out, '1' got an valid external trigger, during extern trigger mode.
     Rd_Port => dac1_data_to_SCUB, -- out, connect read sources (over multiplexer) to SCUB-Macro
     Rd_Activ => dac1_rd_active, -- out, '1' = read data available at 'Data_to_SCUB'-output
     Dtack => dac1_dtack
@@ -546,6 +547,7 @@ dac_2: dac714
     nCS_DAC => nDAC2_A0, -- out, '0' enable shift of internal shift register of DAC2
     nLD_DAC => nDAC2_A1, -- out, '0' copy shift register to output latch of DAC2
     nCLR_DAC => nDAC2_CLR, -- out, '0' set DAC2 to zero (pulse width min 200 ns)
+    ext_trig_val  => dac_2_ext_trig,  -- out, '1' got an valid external trigger, during extern trigger mode.
     Rd_Port => dac2_data_to_SCUB, -- out, connect read sources (over multiplexer) to SCUB-Macro
     Rd_Activ => dac2_rd_active, -- out, '1' = read data available at 'Data_to_SCUB'-output
     Dtack => dac2_dtack
@@ -770,6 +772,17 @@ rw_led: led_n
     Sig_in => not A_RnW and not A_nBoardSel,
     nLED => open,
     nLED_opdrn => A_nState_LED(2));
+
+ext_trig_led: led_n
+  generic map (
+    stretch_cnt => 3)
+  port map (
+    ena => led_ena_cnt, -- is every 10 ms for one clock period active
+    clk => clk_sys,
+    Sig_in => dac_1_ext_trig or dac_2_ext_trig,
+    nLED => open,
+    nLED_opdrn => A_nLED_Trig_DAC);
+
     
   A_nDtack <= not SCUB_Dtack;
   A_nSRQ <= not SCUB_SRQ;

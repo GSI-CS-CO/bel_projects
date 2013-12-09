@@ -881,5 +881,6 @@ Standard_Reg_Acc <= S_Standard_Reg_Acc;
 
 Deb_SCUB_Reset_out <= S_Deb_Reset;  -- Vers_2_Revi_4: das Reset-Signal des SCU-Busses 'nSCUB_Reset_In' wird entprellt
                                     -- und für andere Macros zur Verfügung gestellt
+Powerup_Done <= S_Powerup_Done;
 
 end Arch_SCU_Bus_Slave;

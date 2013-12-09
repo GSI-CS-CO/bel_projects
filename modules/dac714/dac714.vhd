@@ -167,6 +167,21 @@ use work.dac714_pkg.all;
 --                                                                                                                  --
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers: 3 Revi: 1: erstellt am 06.12.2013, Autor: W.Panschow                                                      --
+--                                                                                                                  --
+--  Aenderung 1)                                                                                                    --
+--    In der Betriebsart "Externe Triggerung" des DAC, sollen gültige Trigger-Ereignisse durch eine LED             --
+--    signalisiert werden. Hierfür ist an der entity dac714 der Ausgang "ext_trig_valid" hinzugefuegt worden.       --
+--    Die eigentliche Ansteuerung der Frontplatten-LED wird ausserhalb dieses Makros realisiert, da sich z.B. im    --
+--    Projekt "scu_adda" zwei DACs einen Trigger-Eingang teilen muessen. Die Verknuepfung und die Opendrain-        --
+--    Pulsverlaengerung wird deshalb eine Ebens hoeher realisiert.                                                  --
+--                                                                                                                  --
+--  Aenderung 2)                                                                                                    --
+--    Die Address-Konstanten die fuer die Adressberechnung einer DAC-Instanz benoetigt werden (die gewuenschte      --
+--    Basis-Adresse muss dazu addiert werden), waren zweifach definiert. Einmal hier in "dac_714.vhd" und ein       --
+--    zweites mal in "dac_714_pkg.vhd".
+----------------------------------------------------------------------------------------------------------------------
 
 
 
@@ -196,6 +211,7 @@ entity dac714 is
     nLD_DAC:            out     std_logic;                      -- '0' copy shift register to output latch of DAC
     nCLR_DAC:           buffer  std_logic;                      -- '0' resets the DAC, Clear Pulsewidth min 200ns
                                                                 -- resets both the input latch and the D/A latch to 0000H (midscale).
+    ext_trig_valid:     out     std_logic;                      -- got an valid external trigger, during extern trigger mode.
     Rd_Port:            out     std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Rd_Activ:           out     std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:              out     std_logic
@@ -429,6 +445,7 @@ P_SPI_SM: process (clk, nReset_ff)
       clear_spi_clk <= '1';
       Shift_Reg <= (others => '0');
       New_trm_during_trm_active <= '0';
+      ext_trig_valid <= '0';
   
     elsif rising_edge(clk) then
     
@@ -436,6 +453,7 @@ P_SPI_SM: process (clk, nReset_ff)
       
       clear_spi_clk <= '0';
       New_trm_during_trm_active <= '0';
+      ext_trig_valid <= '0';
 
       if FG_mode = '0' then
         -- software mode is selected
@@ -516,6 +534,7 @@ P_SPI_SM: process (clk, nReset_ff)
               SPI_SM <= Load_End;
             else                          -- extenal driven load, so wait on Trig_DAC
               if Trig_DAC = '1' then
+                ext_trig_valid <= '1';
                 nLD_DAC <= '0';
                 SPI_TRM <= '0';
                 SPI_SM <= Load_End;
