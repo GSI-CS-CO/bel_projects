@@ -73,6 +73,6 @@ p_stretch:  process (clk, sig_in)
 
 nLed <= cnt(cnt'high);
 
-nLed_opdrn <= '0' when (cnt(cnt'high)) else 'Z';
+nLed_opdrn <= '0' when (cnt(cnt'high) = '0') else 'Z';
 
 end arch_led_n;
