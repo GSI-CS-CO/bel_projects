@@ -740,7 +740,7 @@ p_read_mux: process (
 
 sel_led: led_n
   generic map (
-    stretch_cnt => 3)
+    stretch_cnt => 5)
   port map (
     ena => led_ena_cnt, -- is every 10 ms for one clock period active
     clk => clk_sys,
@@ -751,7 +751,7 @@ sel_led: led_n
     
 dtack_led: led_n
   generic map (
-    stretch_cnt => 3)
+    stretch_cnt => 5)
   port map
     (
     ena => led_ena_cnt, -- is every 10 ms for one clock period active
@@ -763,7 +763,7 @@ dtack_led: led_n
 
 rw_led: led_n
   generic map (
-    stretch_cnt => 3)
+    stretch_cnt => 5)
   port map (
     ena => led_ena_cnt, -- is every 10 ms for one clock period active
     clk => clk_sys,
