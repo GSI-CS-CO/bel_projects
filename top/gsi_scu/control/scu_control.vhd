@@ -702,7 +702,7 @@ begin
     DPRAM : xwb_dpram
     generic map(
       g_size                  => c_dpram_size,
-      g_init_file             => "",
+      g_init_file             => "scu_control.mif",
       g_must_have_init_file   => false,
       g_slave1_interface_mode => PIPELINED,
       g_slave2_interface_mode => PIPELINED,
