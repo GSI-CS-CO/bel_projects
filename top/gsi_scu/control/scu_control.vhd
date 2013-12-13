@@ -286,7 +286,7 @@ architecture rtl of scu_control is
   -- MSI IRQ Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
   constant c_irq_slaves   : natural := 4;
-  constant c_irq_masters  : natural := 2;
+  constant c_irq_masters  : natural := 3;
   constant c_irq_layout   : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000000"),
     1 => f_sdb_embed_device(c_irq_ep_sdb,             x"00000100"),
@@ -305,12 +305,12 @@ architecture rtl of scu_control is
   ----------------------------------------------------------------------------------
   -- GSI Periphery Crossbar --------------------------------------------------------
   ----------------------------------------------------------------------------------
-  constant c_per_slaves   : natural := 11;
+  constant c_per_slaves   : natural := 12;
   constant c_per_masters  : natural := 1;
   constant c_per_layout   : t_sdb_record_array(c_per_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00000000"),
     1 => f_sdb_embed_device(c_eca_sdb,                    x"00000800"),
-    2 => f_sdb_embed_device(c_eca_evt_sdb,                x"00000C00"),
+    2 => f_sdb_embed_device(c_eca_event_sdb,              x"00000C00"),
     3 => f_sdb_embed_device(c_irq_ctrl_sdb,               x"00000D00"),
     4 => f_sdb_embed_device(c_scu_bus_master,             x"00400000"),
     5 => f_sdb_embed_device(c_xwb_gpio32_sdb,             x"00800000"),
@@ -318,7 +318,8 @@ architecture rtl of scu_control is
     7 => f_sdb_embed_device(c_oled_display,               x"00900000"),
     8 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"01000000"),
     9 => f_sdb_embed_device(c_build_id_sdb,               x"00800400"),
-    10 => f_sdb_embed_device(c_xwb_gsi_mil_scu,           x"00808000"));
+    10 => f_sdb_embed_device(c_xwb_gsi_mil_scu,           x"00808000"),
+    11 => f_sdb_embed_device(c_eca_queue_sdb,             x"00000A00"));
   constant c_per_sdb_address : t_wishbone_address := x"00001000";
   constant c_per_bridge_sdb  : t_sdb_bridge       :=
     f_xwb_bridge_layout_sdb(true, c_per_layout, c_per_sdb_address);
@@ -339,7 +340,7 @@ architecture rtl of scu_control is
   constant c_top_layout : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),    x"00000000"),
     1 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00080000"),
-   2 => f_sdb_embed_device(c_ebm_sdb,                     x"01000000"),
+    2 => f_sdb_embed_device(c_ebm_sdb,                    x"01000000"),
     3 => f_sdb_embed_bridge(c_per_bridge_sdb,             x"02000000")
    );
   constant c_top_sdb_address : t_wishbone_address := x"000F0000";  
@@ -352,9 +353,6 @@ architecture rtl of scu_control is
   -- END OF Top crossbar
   ----------------------------------------------------------------------------------    
 
-  signal eca_2_wb_i : t_wishbone_master_in;
-  signal eca_2_wb_o : t_wishbone_master_out;
-  
   signal pcie_slave_i : t_wishbone_slave_in;
   signal pcie_slave_o : t_wishbone_slave_out;
   
@@ -832,8 +830,8 @@ U_DAC_ARB : spec_serial_dac_arb
        master_o      => top_cbar_slave_i(1),
        master_i      => top_cbar_slave_o(1),
        
-       slave_clk_i   => clk_ref,
-       slave_rstn_i  => rstn_ref,
+       slave_clk_i   => clk_sys,
+       slave_rstn_i  => rstn_sys,
        slave_i       => irq_cbar_master_o(3),
        slave_o       => irq_cbar_master_i(3));
   
@@ -859,27 +857,31 @@ U_DAC_ARB : spec_serial_dac_arb
 
   ECA0 : wr_eca
     generic map(
-      g_eca_name       => f_name("SCU top"),
-      g_channel_names  => (f_name("GPIO: LEMOs(0=B1,1=B2) LEDs(2=U1,3=U2)"), 
+      g_eca_name      => f_name("SCU top"),
+      g_channel_names => (f_name("GPIO: LEMOs(0=B1,1=B2) LEDs(2=U1,3=U2)"),
                            f_name("PCIe: Interrupt generator")),
       g_log_table_size => 7,
       g_log_queue_len  => 8,
       g_num_channels   => 2,
       g_num_streams    => 1)
     port map(
-      e_clk_i  (0)=> clk_sys,
-      e_rst_n_i(0)=> rstn_sys,
-      e_slave_i(0)=> per_cbar_master_o(2),
-      e_slave_o(0)=> per_cbar_master_i(2),
-      c_clk_i     => clk_sys,
-      c_rst_n_i   => rstn_sys,
-      c_slave_i   => per_cbar_master_o(1),
-      c_slave_o   => per_cbar_master_i(1),
-      a_clk_i     => clk_ref,
-      a_rst_n_i   => rstn_ref,
-      a_tai_i     => tm_tai,
-      a_cycles_i  => tm_cycles,
-      a_channel_o => channels);
+      e_clk_i (0)   => clk_sys,
+      e_rst_n_i(0)  => rstn_sys,
+      e_slave_i(0)  => per_cbar_master_o(2),
+      e_slave_o(0)  => per_cbar_master_i(2),
+      c_clk_i       => clk_sys,
+      c_rst_n_i     => rstn_sys,
+      c_slave_i     => per_cbar_master_o(1),
+      c_slave_o     => per_cbar_master_i(1),
+      a_clk_i       => clk_ref,
+      a_rst_n_i     => rstn_ref,
+      a_tai_i       => tm_tai,
+      a_cycles_i    => tm_cycles,
+      a_channel_o   => channels,
+      i_clk_i       => clk_sys,
+      i_rst_n_i     => rstn_sys,
+      i_master_i    => irq_cbar_slave_o(1),
+      i_master_o    => irq_cbar_slave_i(1));
   
   C0 : eca_gpio_channel
     port map(
@@ -888,28 +890,21 @@ U_DAC_ARB : spec_serial_dac_arb
       channel_i => channels(0),
       gpio_o    => eca_gpio);
   
-  C1 : eca_wb_channel
+  C1 : eca_queue_channel
     port map(
-      clk_i     => clk_ref,
-      rst_n_i   => rstn_ref,
-      channel_i => channels(1),
-      master_o  => eca_2_wb_o,
-      master_i  => eca_2_wb_i);
+      a_clk_i     => clk_ref,
+      a_rst_n_i   => rstn_ref,
+      a_channel_i => channels(1),
+      i_clk_i     => clk_sys,
+      i_rst_n_i   => rstn_sys,
+      i_master_o  => irq_cbar_slave_i(0),
+      i_master_i  => irq_cbar_slave_o(0),
+      q_clk_i     => clk_sys,
+      q_rst_n_i   => rstn_sys,
+      q_slave_i   => per_cbar_master_o(11),
+      q_slave_o   => per_cbar_master_i(11)); 
     
-   eca_2_irq : xwb_clock_crossing 
-   generic map(
-        g_size => 256)
-   port map(
-    slave_clk_i    => clk_ref,
-    slave_rst_n_i  => rstn_ref,
-    slave_i        => eca_2_wb_o,
-    slave_o        => eca_2_wb_i,
-    master_clk_i   => clk_sys, 
-    master_rst_n_i => rstn_sys,
-    master_i       => irq_cbar_slave_o(0),
-    master_o       => irq_cbar_slave_i(0)); 
-    
-  irq_scub_m : wb_irq_scu_bus 
+  irq_scub_m : wb_irq_scu_bus
     generic map(
       g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE,
@@ -917,11 +912,11 @@ U_DAC_ARB : spec_serial_dac_arb
       Test                  => 0,
       Time_Out_in_ns        => 350)
    port map(
-     clk_i      =>  clk_sys,
-     rst_n_i    => rstn_sys,
+     clk_i    => clk_sys,
+     rst_n_i  => rstn_sys,
      
-     irq_master_o => irq_cbar_slave_i(1),
-     irq_master_i => irq_cbar_slave_o(1),
+     irq_master_o => irq_cbar_slave_i(2),
+     irq_master_i => irq_cbar_slave_o(2),
      
      scu_slave_o => per_cbar_master_i(4),
      scu_slave_i => per_cbar_master_o(4),
@@ -936,8 +931,6 @@ U_DAC_ARB : spec_serial_dac_arb
      nscub_slave_sel    => A_nSEL,
      nscub_timing_cycle => A_nTiming_Cycle,
      nsel_ext_data_drv  => nSel_Ext_Data_DRV);
-     
-     
 
   
   ADR_TO_SCUB <= '1';
@@ -998,23 +991,6 @@ U_DAC_ARB : spec_serial_dac_arb
   gpio_slave_o.err <= '0';
   gpio_slave_o.rty <= '0';
   gpio_slave_o.stall <= '0'; -- This simple example is always ready
-  
-
-  -- UART
-  UART : xwb_simple_uart
-    generic map(
-      g_with_virtual_uart   => false,
-      g_with_physical_uart  => true,
-      g_interface_mode      => PIPELINED,
-      g_address_granularity => BYTE)
-    port map(
-      clk_sys_i  => clk_sys,
-      rst_n_i    => rstn_sys,
-      slave_i    => per_cbar_master_o(6),
-      slave_o    => per_cbar_master_i(6),
-      desc_o     => open,
-      uart_rxd_i => '1',
-      uart_txd_o => open);
       
   -- OLED display
   dcon :  display_console
