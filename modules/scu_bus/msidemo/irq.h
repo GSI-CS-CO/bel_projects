@@ -46,7 +46,7 @@
 typedef struct
 {
    unsigned int  msg;
-   unsigned int  src;
+   unsigned int  adr;
    unsigned int  sel;
 } msi; 
 
@@ -62,6 +62,8 @@ inline void irq_pop_msi( unsigned int irq_no);
 inline  unsigned int  irq_get_mask(void);
 
 inline void irq_set_mask( unsigned int im);
+
+inline  unsigned int  irq_get_enable(void);
 
 inline void irq_disable(void);
 

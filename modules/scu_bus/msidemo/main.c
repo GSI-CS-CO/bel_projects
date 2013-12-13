@@ -2,6 +2,7 @@
 #include "display.h"
 #include "irq.h"
 #include "scu_bus.h"
+#include "aux.h"
 
 extern unsigned int* _startshared[];
 extern unsigned int* _endshared[];
@@ -11,6 +12,15 @@ volatile unsigned int* display            = (unsigned int*)0x02900000;
 volatile unsigned int* irq_slave          = (unsigned int*)0x02000d00;
 volatile unsigned short* scu_bus_master   = (unsigned short*)0x02400000;
 int slaves[SCU_BUS_MAX_SLOTS+1] = {0};
+volatile unsigned int* cpu_ID;
+volatile unsigned int* time_sys;
+volatile unsigned int* irq_slave;
+volatile unsigned int* timer;
+volatile unsigned int* test;
+volatile unsigned int* display;
+volatile unsigned int* ebm;
+volatile unsigned int* cores;
+volatile unsigned int* atomic;
 
 
 struct pset {
@@ -22,23 +32,6 @@ struct pset {
   int n;
 };
 
-char* mat_sprinthex(char* buffer, unsigned long val)
-{
-  unsigned char i,ascii;
-  const unsigned long mask = 0x0000000F;
-
-  for(i=0; i<8;i++)
-  {
-    ascii= (val>>(i<<2)) & mask;
-    if(ascii > 9) ascii = ascii - 10 + 'A';
-    else        ascii = ascii      + '0';
-    buffer[7-i] = ascii;
-  }
-
-  buffer[8] = 0x00;
-  return buffer;
-}
-
 void show_msi()
 {
   char buffer[12];
@@ -49,7 +42,7 @@ void show_msi()
   disp_put_c('\n');
 
   
-  mat_sprinthex(buffer, global_msi.src);
+  mat_sprinthex(buffer, global_msi.adr);
   disp_put_str("A ");
   disp_put_str(buffer);
   disp_put_c('\n');
@@ -63,37 +56,30 @@ void show_msi()
 
 void isr1()
 {
+  char buffer[12];
   struct pset *p;
   unsigned int i;
   p = (struct p *)fesa_if;
-  
-//  show_msi();
-  //which slave has triggered?
-  while(slaves[i]) {
-    //check bit in master act reg
-    if (scu_bus_master[SRQ_ACT] & (1 << (slaves[i]-1))) {
-      //acknowledge powerup irq
-      if (scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] & 1)
-        scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 1;
-      //ack timer
-      if (scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] & 4) {
-          scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 4; //ack slave timer
-      }
-      
-    }
-    i++;
-  } 
-}
-
-void _irq_entry(void) {
-  
-//  disp_put_c('\f');
-//  disp_put_str("IRQ_ENTRY\n");
-  irq_process();
+  unsigned char slave_nr = global_msi.adr>>2 & 0xf;
+  static unsigned int icounter[SCU_BUS_MAX_SLOTS+1] = {0};
  
+  unsigned short tmr_irq_cnts = scu_bus_master[((slave_nr) << 16) + TMR_BASE + TMR_IRQ_CNT]; 
+  //disp_put_c(slave_nr + '0');
+  //disp_put_c(' ');
+  mat_sprinthex(buffer, icounter[slave_nr - 1]);
+  disp_put_str(buffer);
+  disp_put_c('\n');
+  
+  mat_sprinthex(buffer, tmr_irq_cnts);
+  disp_put_str(buffer);
+  disp_put_c('\n');
+
+  if (tmr_irq_cnts = icounter[slave_nr - 1] + 1) {
+    scu_bus_master[((slave_nr) << 16) + SLAVE_INT_ACT] |= 5; //ack timer and powerup irq
+  }
+  icounter[slave_nr-1]++; 
 }
 
-//const char mytext[] = "Hallo Welt!...\n\n";
 
 int main(void) {
   int i = 0;
@@ -116,7 +102,11 @@ int main(void) {
     disp_put_c('x');
     scu_bus_master[SRQ_ENA] |= (1 << (slaves[i]-1));  //enable irqs for the slave
     scu_bus_master[MULTI_SLAVE_SEL] |= (1 << (slaves[i]-1)); //set bitmask for broadcast select
-    scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ENA] = 0x4; //enable timer from fg
+    scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ENA] = 0x4; //enable tmr irq in slave macro
+    scu_bus_master[(slaves[i] << 16) + TMR_BASE + TMR_CNTRL] = 0x1; //reset TMR
+    scu_bus_master[(slaves[i] << 16) + TMR_BASE + TMR_VALUEL] = 0x1fff; //enable generation of tmr irqs
+    scu_bus_master[(slaves[i] << 16) + TMR_BASE + TMR_VALUEH] = 0x0000; //enable generation of tmr irqs
+    scu_bus_master[(slaves[i] << 16) + TMR_BASE + TMR_CNTRL] |= 0x2; //enable generation of tmr irqs
     i++;
   } 
   //SCU Bus Master
@@ -136,7 +126,7 @@ int main(void) {
   //  scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 1;
   //  scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 2;
     
-    scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = 0x1; //reset fg
+  //  scu_bus_master[(slaves[i] << 16) + TMR_BASE + TMR_CNTRL] = 0x1; //reset TMR
   //  scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = (5 << 13); //set frequency Bit 15..13
   //  scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] |= (2 << 10); //set step count Bit 12..10
   //  scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_A] = 0x0;

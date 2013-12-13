@@ -57,6 +57,12 @@
 #define FG_QUAD_SHIFTB    0x5
 #define FG_QUAD_H         0x6
 #define FG_QUAD_L         0x7
+
+#define TMR_BASE          0x330
+#define TMR_CNTRL         0x0
+#define TMR_IRQ_CNT       0x1
+#define TMR_VALUEL        0x2
+#define TMR_VALUEH        0x3
  
 #define GLOBAL_IRQ_ENA    0x2
 #define SRQ_ENA           0x6

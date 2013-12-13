@@ -1,5 +1,5 @@
 /** @file irq.c
- *  @brief MSI capable IRQ handler for the LM32
+ *  @brief MSI IRQ handler for the LM32
  *
  *  Copyright (C) 2011-2012 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
@@ -25,27 +25,25 @@
 
 #include "irq.h"
 
-//#include "display.h" DEBUG
+#define NESTED_IRQS 0
 
 extern unsigned int* irq_slave;
 
-const unsigned int IRQ_REG_RST 	= 0x00000000;
-const unsigned int IRQ_REG_STAT = 0x00000004;
-const unsigned int IRQ_REG_POP	= 0x00000008;
-const unsigned int IRQ_OFFS_MSG = 0x00000000;
-const unsigned int IRQ_OFFS_SRC = 0x00000004;
-const unsigned int IRQ_OFFS_SEL	= 0x00000008;
+const unsigned int IRQ_REG_RST   = 0x00000000;
+const unsigned int IRQ_REG_STAT  = 0x00000004;
+const unsigned int IRQ_REG_POP   = 0x00000008;
+const unsigned int IRQ_OFFS_MSG  = 0x00000000;
+const unsigned int IRQ_OFFS_ADR  = 0x00000004;
+const unsigned int IRQ_OFFS_SEL  = 0x00000008;
 
 inline void irq_pop_msi( unsigned int irq_no)
 {
     unsigned int* msg_queue = (unsigned int*)(irq_slave + ((irq_no +1)<<2));
     
     global_msi.msg =  *(msg_queue+(IRQ_OFFS_MSG>>2));
-    global_msi.src =  *(msg_queue+(IRQ_OFFS_SRC>>2)); 
+    global_msi.adr =  *(msg_queue+(IRQ_OFFS_ADR>>2)); 
     global_msi.sel =  *(msg_queue+(IRQ_OFFS_SEL>>2));
     *(irq_slave + (IRQ_REG_POP>>2)) = 1<<irq_no;   
-    
-    return; 
 } 
 
 inline void isr_table_clr(void)
@@ -57,72 +55,95 @@ inline void isr_table_clr(void)
 
 inline  unsigned int  irq_get_mask(void)
 {
-	 //read IRQ mask
-	 unsigned int im;
-	 asm volatile (	"rcsr %0, im": "=&r" (im));
-	 return im;	             	
+    //read IRQ mask
+    unsigned int im;
+    asm ( "rcsr %0, im": "=&r" (im));
+    return im;                   
 }
+
 
 inline void irq_set_mask( unsigned int im)
 {
-	 //write IRQ mask
-	 asm volatile (	"wcsr im, %0": "=&r" (im));
-	 return;	             	
+    //write IRQ mask
+    asm (   "wcsr im, %0" \
+            :             \
+            : "r" (im)    \
+        );
+}
+
+inline  unsigned int  irq_get_enable(void)
+{
+    //read global IRQ enable bit
+    unsigned int ie;
+    asm ( "rcsr %0, ie\n"  \
+          "andi %0, %0, 1" \
+         : "=&r" (ie));
+    return ie;                   
 }
 
 inline void irq_disable(void)
 {
-	 //globally disable interrupts
-	  unsigned int ie;
-	 asm volatile (	"rcsr %0, IE\n" \
-			            "andi  %0, %0, 0xFFFE\n" \
-			            "wcsr IE, %0" : "=&r" (ie));
-	 return;		            
+   //globally disable interrupts
+   unsigned foo;
+   asm volatile   (  "rcsr %0, IE\n"            \
+                     "andi  %0, %0, 0xFFFE\n"   \
+                     "wcsr IE, %0"              \
+                     : "=r" (foo)               \
+                     :                          \
+                     : 
+                     );
 }
 
 inline void irq_enable(void)
 {
-	 //globally enable interrupts
-	  unsigned int  ie;
-	 asm volatile (	"rcsr %0, IE\n" \
-			            "ori  %0, %0, 1\n" \
-			            "wcsr IE, %0" : "=&r" (ie));
-	 return;			            
+   //globally enable interrupts
+   unsigned foo;
+   asm volatile   (  "rcsr %0, IE\n"      \
+                     "ori  %0, %0, 1\n"   \
+                     "wcsr IE, %0"        \
+                     : "=r" (foo)         \
+                     :                    \
+                     :                    \
+                     );
 }
+
 
 inline void irq_clear( unsigned int mask)
 {
-	 //clear pending interrupt flag(s)
-	 unsigned int ip;
-	 asm volatile (	"rcsr %0, ip\n" \
-			            "and  %0, %0, %1\n" \
-			            "wcsr ip, %0" : "=&r" (ip): "r" (mask) );
-	 return;		            
+    //clear pending interrupt flag(s)
+    asm           (  "wcsr ip, %0"  \
+                     :              \
+                     : "r" (mask)   \
+                     :              \
+                     );
 }
 
-
-
-inline void irq_process(void)
+void _irq_entry(void)
 {
-  // char buffer[12];
-   
-  unsigned int ip;
+  unsigned int  ip;
   unsigned char irq_no = 0;
-  
-  //get pending flags
-  asm volatile ("rcsr %0, ip": "=r"(ip));
-
-  while(ip) //irqs pending ?
+#if NESTED_IRQS
+  unsigned int  msk;
+#endif  
+  asm ("rcsr %0, ip": "=r"(ip)); //get pending flags
+  while(ip) 
   {
-    if(ip & 0x01) //check if irq with lowest number is pending
+    if(ip & 1) //check if irq with lowest number is pending
     {
+#if NESTED_IRQS
+      msk = irq_get_mask();
+      irq_set_mask(msk & ((1<<irq_no)-1) ); //mask out all priorities matching and below current
+      irq_enable();
+#endif  
       irq_pop_msi(irq_no);      //pop msg from msi queue into global_msi variable
       irq_clear(1<<irq_no);     //clear pending bit
-      if((unsigned int)isr_ptr_table[irq_no]) isr_ptr_table[irq_no]();  //execute isr
-      //else disp_put_str("No ISR\nptr found!\n"); DEBUG
+      isr_ptr_table[irq_no]();  //execute isr
+#if NESTED_IRQS
+      irq_set_mask(msk);
+      irq_disable();
+#endif
     }  
     irq_no++; 
     ip = ip >> 1; //process next irq
   }
-  return;
 }  
