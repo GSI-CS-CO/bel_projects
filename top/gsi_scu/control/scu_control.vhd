@@ -20,6 +20,7 @@ use work.oled_display_pkg.all;
 use work.lpc_uart_pkg.all;
 use work.wb_irq_pkg.all;
 use work.wb_mil_scu_pkg.all;
+use work.wb_arria_reset_pkg.all;
 
 entity scu_control is
   port(
@@ -305,7 +306,7 @@ architecture rtl of scu_control is
   ----------------------------------------------------------------------------------
   -- GSI Periphery Crossbar --------------------------------------------------------
   ----------------------------------------------------------------------------------
-  constant c_per_slaves   : natural := 12;
+  constant c_per_slaves   : natural := 13;
   constant c_per_masters  : natural := 1;
   constant c_per_layout   : t_sdb_record_array(c_per_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00000000"),
@@ -319,7 +320,8 @@ architecture rtl of scu_control is
     8 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"01000000"),
     9 => f_sdb_embed_device(c_build_id_sdb,               x"00800400"),
     10 => f_sdb_embed_device(c_xwb_gsi_mil_scu,           x"00808000"),
-    11 => f_sdb_embed_device(c_eca_queue_sdb,             x"00000A00"));
+    11 => f_sdb_embed_device(c_eca_queue_sdb,             x"00000A00"),
+    12 => f_sdb_embed_device(c_arria_reset,               x"00000E00"));
   constant c_per_sdb_address : t_wishbone_address := x"00001000";
   constant c_per_bridge_sdb  : t_sdb_bridge       :=
     f_xwb_bridge_layout_sdb(true, c_per_layout, c_per_sdb_address);
@@ -475,6 +477,8 @@ architecture rtl of scu_control is
   signal  extension_id  : std_logic_vector(3 downto 0);
   
   signal  nsig_wb_err:    std_logic;  -- '0' => gestretchte wishbone access Fehlermeldung
+  
+  signal new_reset: std_logic_vector(1 downto 0);
 
 
   component mil_pll
@@ -1196,6 +1200,19 @@ U_DAC_ARB : spec_serial_dac_arb
   ----------------------------------------------------------------------------------
   -- System IOs --------------------------------------------------------------------
   ----------------------------------------------------------------------------------
+  
+  fpga_reset: wb_arria_reset
+    generic map (
+      arria_family => "arria",
+      rst_channels => 2)
+    port map (
+      clk   => clk_sys,
+      nrst  => rstn_sys,
+      
+      slave_i     => per_cbar_master_o(12),
+      slave_o     => per_cbar_master_i(12),
+      
+      reset_out   => new_reset);
   
     -- LPC UART
   lpc_slave: lpc_uart
