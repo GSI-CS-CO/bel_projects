@@ -61,28 +61,31 @@ entity wb_arria_reset is
             rst_channels: integer range 1 to 7 := 2
           );
   port (
-          clk:        in std_logic;
-          nrst:       in std_logic;
+          clk_i:      in std_logic;
+          rstn_i:     in std_logic;
           
           slave_o:    out t_wishbone_slave_out;
           slave_i:    in t_wishbone_slave_in;
            
-          reset_out:  out std_logic_vector(rst_channels-1 downto 0)
+          rstn_o:     out std_logic_vector(rst_channels-1 downto 0)
       );
 end entity;
 
 
 architecture wb_arria_reset_arch of wb_arria_reset is
   signal reset_reg: std_logic_vector(7 downto 0);
+  signal reset : std_logic;
 begin
+  
+  reset <= not rstn_i;
   
   ruc_gen_a2 : if arria_family = "Arria II" generate
     arria_reset_inst : arria_reset PORT MAP (
-      clock	      => clk,
+      clock	      => clk_i,
       param	      => "000",
       read_param	=> '0',
       reconfig	  => reset_reg(0),
-      reset	      => not nrst,
+      reset	      => reset,
       reset_timer	=> '0',
       busy	      => open,
       data_out	  => open
@@ -91,11 +94,11 @@ begin
   
   ruc_gen_a5 : if arria_family = "Arria V" generate
     arria5_reset_inst : arria5_reset PORT MAP (
-      clock	      => clk,
+      clock	      => clk_i,
       param	      => "000",
       read_param	=> '0',
       reconfig	  => reset_reg(0),
-      reset	      => not nrst,
+      reset	      => reset,
       reset_timer	=> '0',
       busy	      => open,
       data_out	  => open
@@ -103,17 +106,17 @@ begin
   end generate;
   
   rst_out_gen: for i in 0 to rst_channels-1 generate
-    reset_out(i) <= reset_reg(i+1);
+    rstn_o(i) <= not reset_reg(i+1);
   end generate;
   
   
-  wb_reg: process(clk)
+  wb_reg: process(clk_i)
   begin
-    if rising_edge(clk) then
+    if rising_edge(clk_i) then
       slave_o.ack <= slave_i.cyc and slave_i.stb;
       slave_o.dat <= (others => '0');
   
-      if nrst = '0' then
+      if rstn_i = '0' then
         reset_reg <= (others => '0');
       else
         -- Detect a write to the register byte
