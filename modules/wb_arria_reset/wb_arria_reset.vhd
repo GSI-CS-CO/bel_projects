@@ -57,7 +57,7 @@ use work.wb_arria_reset_pkg.all;
 
 entity wb_arria_reset is
   generic (
-            arria_family: string := "arria";
+            arria_family: string := "Arria II";
             rst_channels: integer range 1 to 7 := 2
           );
   port (
@@ -76,7 +76,7 @@ architecture wb_arria_reset_arch of wb_arria_reset is
   signal reset_reg: std_logic_vector(7 downto 0);
 begin
   
-  ruc_gen: if arria_family = "arria" generate
+  ruc_gen_a2 : if arria_family = "Arria II" generate
     arria_reset_inst : arria_reset PORT MAP (
       clock	      => clk,
       param	      => "000",
@@ -87,7 +87,9 @@ begin
       busy	      => open,
       data_out	  => open
     );
-  else generate
+  end generate;
+  
+  ruc_gen_a5 : if arria_family = "Arria V" generate
     arria5_reset_inst : arria5_reset PORT MAP (
       clock	      => clk,
       param	      => "000",

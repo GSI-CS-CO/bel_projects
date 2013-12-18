@@ -37,7 +37,7 @@ end component;
 
 component wb_arria_reset is
   generic (
-            arria_family: string  := "arria";
+            arria_family: string  := "Arria II";
             rst_channels: integer range 1 to 7 := 2
           );
   port (
