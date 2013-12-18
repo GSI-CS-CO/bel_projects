@@ -55,7 +55,7 @@ architecture rtl of ftm_lm32_cluster is
    constant c_local_periphery : t_sdb_record_array(3 downto 0) :=
    (  0 => f_sdb_embed_device(c_cluster_info_sdb,           x"00000000"),
       1 => f_sdb_embed_device(c_eca_sdb,                    x"00000000"),
-      2 => f_sdb_embed_device(c_eca_evt_sdb,                x"00000000"),
+      2 => f_sdb_embed_device(c_eca_event_sdb,              x"00000000"),
       3 => f_sdb_embed_bridge(g_bridge_sdb,                 x"00000000"));
    
    constant c_lm32_slaves   : natural := g_cores+c_local_periphery'length; -- an irq queue per lm32 + eca + ext interface out

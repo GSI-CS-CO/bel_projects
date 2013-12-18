@@ -138,5 +138,20 @@ package ftm_pkg is
 
   
 
+  component time_clk_cross is
+    generic (g_delay_comp      : natural := 16);
+    port    (clk_ref_i            : in std_logic;
+             rst_ref_n_i          : in std_logic;
+             clk_sys_i            : in std_logic;           
+             rst_sys_n_i          : in std_logic;             
+               
+             tm_time_valid_i      : in  std_logic;                       -- timestamp valid flag
+             tm_tai_i             : in  std_logic_vector(39 downto 0);   -- TAI Timestamp
+             tm_cycles_i          : in  std_logic_vector(27 downto 0);   -- refclock cycle count
+          
+             tm_ref_tai_cycles_o  : out std_logic_vector(63 downto 0);
+             tm_sys_tai_cycles_o  : out std_logic_vector(63 downto 0)        
+      );
+  end component;
   
 end ftm_pkg;
