@@ -748,7 +748,7 @@ p_regs_acc: process (clk_i, nrst_i)
                 ex_ack <= not stall_dly_timer;
               else
                 -- read complete double word
-                slave_o.dat(31 downto 0) <= 7x"0" & std_logic_vector(dly_timer);
+                slave_o.dat(31 downto 0) <= "0000000" & std_logic_vector(dly_timer);
                 ex_stall <= '0';
                 ex_ack <= '1';
               end if;
@@ -767,7 +767,7 @@ p_regs_acc: process (clk_i, nrst_i)
                 ex_ack <= '1';
               else
                 -- read complete double word
-                slave_o.dat(31 downto 0) <= 8x"0" & std_logic_vector(wait_timer);
+                slave_o.dat(31 downto 0) <= x"00" & std_logic_vector(wait_timer);
                 ex_stall <= '0';
                 ex_ack <= '1';
               end if;

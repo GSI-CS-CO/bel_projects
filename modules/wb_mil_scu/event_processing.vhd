@@ -305,7 +305,7 @@ p_ev_timer_res:  process (clk_i)
 ev_timer_res <= ev_timer_res_o;
 
 
-p_mux_filter_addr:  process (all)
+p_mux_filter_addr:  process (filt_cntrl_sm, filter_addr, event_d, filt_addr)
   begin
     if filt_cntrl_sm = ev_rd or filt_cntrl_sm = ev_rd_fin then
       filter_addr <= event_d(filter_addr_width-1 downto 0);
@@ -315,7 +315,7 @@ p_mux_filter_addr:  process (all)
   end process p_mux_filter_addr;
 
 
-p_mux_read_port:  process (all)
+p_mux_read_port:  process (filt_cntrl_sm, filt_data_o, event_o)
   begin
     if filt_cntrl_sm = fi_rd then
       read_port_o <= std_logic_vector(to_unsigned(0 ,(16-filter_data_width))) & filt_data_o;
