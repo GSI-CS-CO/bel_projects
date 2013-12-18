@@ -109,6 +109,8 @@ begin
     rstn_o(i) <= not reset_reg(i+1);
   end generate;
   
+  slave_o.err <= '0';
+  slave_o.stall <= '0';
   
   wb_reg: process(clk_i)
   begin
