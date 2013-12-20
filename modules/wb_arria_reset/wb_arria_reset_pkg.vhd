@@ -41,15 +41,13 @@ component wb_arria_reset is
             rst_channels: integer range 1 to 7 := 2
           );
   port (
-          clk_i:      in std_logic;
-          rstn_i:     in std_logic;
-          
-          slave_o:  out t_wishbone_slave_out;
-          slave_i:  in t_wishbone_slave_in;
-          
-          rstn_o:  out std_logic_vector(rst_channels-1 downto 0)
-  
-      );
+          clk_sys_i:  in std_logic;
+          rstn_sys_i: in std_logic;
+          clk_upd_i:  in std_logic;
+          rstn_upd_i: in std_logic;
+          slave_o:    out t_wishbone_slave_out;
+          slave_i:    in t_wishbone_slave_in;
+          rstn_o:     out std_logic_vector(rst_channels-1 downto 0));
 end component;
 
 constant c_arria_reset : t_sdb_device := (

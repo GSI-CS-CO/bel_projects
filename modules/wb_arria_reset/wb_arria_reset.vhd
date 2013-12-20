@@ -61,8 +61,10 @@ entity wb_arria_reset is
             rst_channels: integer range 1 to 7 := 2
           );
   port (
-          clk_i:      in std_logic;
-          rstn_i:     in std_logic;
+          clk_sys_i:  in std_logic;
+          rstn_sys_i: in std_logic;
+          clk_upd_i:  in std_logic;
+          rstn_upd_i: in std_logic;
           
           slave_o:    out t_wishbone_slave_out;
           slave_i:    in t_wishbone_slave_in;
@@ -77,11 +79,11 @@ architecture wb_arria_reset_arch of wb_arria_reset is
   signal reset : std_logic;
 begin
   
-  reset <= not rstn_i;
+  reset <= not rstn_upd_i;
   
   ruc_gen_a2 : if arria_family = "Arria II" generate
     arria_reset_inst : arria_reset PORT MAP (
-      clock	      => clk_i,
+      clock	      => clk_upd_i,
       param	      => "000",
       read_param	=> '0',
       reconfig	  => reset_reg(0),
@@ -94,7 +96,7 @@ begin
   
   ruc_gen_a5 : if arria_family = "Arria V" generate
     arria5_reset_inst : arria5_reset PORT MAP (
-      clock	      => clk_i,
+      clock	      => clk_upd_i,
       param	      => "000",
       read_param	=> '0',
       reconfig	  => reset_reg(0),
@@ -112,13 +114,13 @@ begin
   slave_o.err <= '0';
   slave_o.stall <= '0';
   
-  wb_reg: process(clk_i)
+  wb_reg: process(clk_sys_i)
   begin
-    if rising_edge(clk_i) then
+    if rising_edge(clk_sys_i) then
       slave_o.ack <= slave_i.cyc and slave_i.stb;
       slave_o.dat <= (others => '0');
   
-      if rstn_i = '0' then
+      if rstn_sys_i = '0' then
         reset_reg <= (others => '0');
       else
         -- Detect a write to the register byte
