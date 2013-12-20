@@ -1,0 +1,48 @@
+-- megafunction wizard: %ALTREMOTE_UPDATE%
+
+--altremote_update CBX_AUTO_BLACKBOX="ALL" check_app_pof="false" config_device_addr_width=32 DEVICE_FAMILY="Arria V" in_data_width=32 operation_mode="remote" out_data_width=32 busy clock data_out param read_param reconfig reset reset_timer
+--VERSION_BEGIN 13.1 cbx_altremote_update 2013:10:17:04:07:49:SJ cbx_cycloneii 2013:10:17:04:07:49:SJ cbx_lpm_add_sub 2013:10:17:04:07:49:SJ cbx_lpm_compare 2013:10:17:04:07:49:SJ cbx_lpm_counter 2013:10:17:04:07:49:SJ cbx_lpm_decode 2013:10:17:04:07:49:SJ cbx_lpm_shiftreg 2013:10:17:04:07:49:SJ cbx_mgl 2013:10:17:04:34:36:SJ cbx_stratix 2013:10:17:04:07:49:SJ cbx_stratixii 2013:10:17:04:07:49:SJ  VERSION_END
+
+-- ============================================================
+-- CNX file retrieval info
+-- ============================================================
+-- Retrieval info: PRIVATE: INTENDED_DEVICE_FAMILY STRING "Arria V"
+-- Retrieval info: PRIVATE: SIM_INIT_PAGE_SELECT_COMBO STRING "0"
+-- Retrieval info: PRIVATE: SIM_INIT_STAT_BIT0_CHECK STRING "0"
+-- Retrieval info: PRIVATE: SIM_INIT_STAT_BIT1_CHECK STRING "0"
+-- Retrieval info: PRIVATE: SIM_INIT_STAT_BIT2_CHECK STRING "0"
+-- Retrieval info: PRIVATE: SIM_INIT_STAT_BIT3_CHECK STRING "0"
+-- Retrieval info: PRIVATE: SIM_INIT_STAT_BIT4_CHECK STRING "0"
+-- Retrieval info: PRIVATE: SIM_INIT_WATCHDOG_VALUE_EDIT STRING "1"
+-- Retrieval info: PRIVATE: SUPPORT_WRITE_CHECK STRING "0"
+-- Retrieval info: PRIVATE: SYNTH_WRAPPER_GEN_POSTFIX STRING "0"
+-- Retrieval info: PRIVATE: WATCHDOG_ENABLE_CHECK STRING "0"
+-- Retrieval info: CONSTANT: CHECK_APP_POF STRING "false"
+-- Retrieval info: CONSTANT: CONFIG_DEVICE_ADDR_WIDTH NUMERIC "32"
+-- Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Arria V"
+-- Retrieval info: CONSTANT: IN_DATA_WIDTH NUMERIC "32"
+-- Retrieval info: CONSTANT: OPERATION_MODE STRING "REMOTE"
+-- Retrieval info: CONSTANT: OUT_DATA_WIDTH NUMERIC "32"
+-- Retrieval info: USED_PORT: busy 0 0 0 0 OUTPUT NODEFVAL "busy"
+-- Retrieval info: USED_PORT: clock 0 0 0 0 INPUT NODEFVAL "clock"
+-- Retrieval info: USED_PORT: data_out 0 0 32 0 OUTPUT NODEFVAL "data_out[31..0]"
+-- Retrieval info: USED_PORT: param 0 0 3 0 INPUT NODEFVAL "param[2..0]"
+-- Retrieval info: USED_PORT: read_param 0 0 0 0 INPUT NODEFVAL "read_param"
+-- Retrieval info: USED_PORT: reconfig 0 0 0 0 INPUT NODEFVAL "reconfig"
+-- Retrieval info: USED_PORT: reset 0 0 0 0 INPUT NODEFVAL "reset"
+-- Retrieval info: USED_PORT: reset_timer 0 0 0 0 INPUT NODEFVAL "reset_timer"
+-- Retrieval info: CONNECT: @clock 0 0 0 0 clock 0 0 0 0
+-- Retrieval info: CONNECT: @param 0 0 3 0 param 0 0 3 0
+-- Retrieval info: CONNECT: @read_param 0 0 0 0 read_param 0 0 0 0
+-- Retrieval info: CONNECT: @reconfig 0 0 0 0 reconfig 0 0 0 0
+-- Retrieval info: CONNECT: @reset 0 0 0 0 reset 0 0 0 0
+-- Retrieval info: CONNECT: @reset_timer 0 0 0 0 reset_timer 0 0 0 0
+-- Retrieval info: CONNECT: busy 0 0 0 0 @busy 0 0 0 0
+-- Retrieval info: CONNECT: data_out 0 0 32 0 @data_out 0 0 32 0
+-- Retrieval info: GEN_FILE: TYPE_NORMAL arria5_reset.vhd TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL arria5_reset.inc FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL arria5_reset.cmp TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL arria5_reset.bsf FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL arria5_reset_inst.vhd TRUE
+-- Retrieval info: LIB_FILE: arriav
+-- Retrieval info: LIB_FILE: lpm
