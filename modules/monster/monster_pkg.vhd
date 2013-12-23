@@ -40,6 +40,7 @@ package monster_pkg is
       g_en_vme      : boolean := false;
       g_en_usb      : boolean := false;
       g_en_scubus   : boolean := false;
+      g_en_mil      : boolean := false;
       g_en_oled     : boolean := false;
       g_en_lcd      : boolean := false);
     port(
@@ -126,6 +127,47 @@ package monster_pkg is
       scubus_a_nsel          : out   std_logic_vector(12 downto 1);
       scubus_a_ntiming_cycle : out   std_logic;
       scubus_a_sysclock      : out   std_logic;
+      -- g_en_mil
+      mil_nme_boo_i          : in    std_logic := '0';
+      mil_nme_bzo_i          : in    std_logic := '0';
+      mil_me_sd_i            : in    std_logic := '0';
+      mil_me_esc_i           : in    std_logic := '0';
+      mil_me_sdi_o           : out   std_logic;
+      mil_me_ee_o            : out   std_logic;
+      mil_me_ss_o            : out   std_logic;
+      mil_me_boi_o           : out   std_logic;
+      mil_me_bzi_o           : out   std_logic;
+      mil_me_udi_o           : out   std_logic;
+      mil_me_cds_i           : in    std_logic := '0';
+      mil_me_sdo_i           : in    std_logic := '0';
+      mil_me_dsc_i           : in    std_logic := '0';
+      mil_me_vw_i            : in    std_logic := '0';
+      mil_me_td_i            : in    std_logic := '0';
+      mil_me_12mhz_o         : out   std_logic;
+      mil_boi_i              : in    std_logic := '0';
+      mil_bzi_i              : in    std_logic := '0';
+      mil_sel_drv_o          : out   std_logic;
+      mil_nsel_rcv_o         : out   std_logic;
+      mil_nboo_o             : out   std_logic;
+      mil_nbzo_o             : out   std_logic;
+      mil_nled_rcv_o         : out   std_logic;
+      mil_nled_trm_o         : out   std_logic;
+      mil_nled_err_o         : out   std_logic;
+      mil_timing_i           : in    std_logic := '0';
+      mil_nled_timing_o      : out   std_logic;
+      mil_nled_fifo_ne_o     : out   std_logic;
+      mil_interlock_intr_i   : in    std_logic := '0';
+      mil_data_rdy_intr_i    : in    std_logic := '0';
+      mil_data_req_intr_i    : in    std_logic := '0';
+      mil_nled_interl_o      : out   std_logic;
+      mil_nled_dry_o         : out   std_logic;
+      mil_nled_drq_o         : out   std_logic;
+      mil_io1_o              : out   std_logic;
+      mil_io1_is_in_o        : out   std_logic;
+      mil_nled_io1_o         : out   std_logic;
+      mil_io2_o              : out   std_logic;
+      mil_io2_is_in_o        : out   std_logic;
+      mil_nled_io2_o         : out   std_logic;
       -- g_en_oled
       oled_rstn_o            : out   std_logic;
       oled_dc_o              : out   std_logic;

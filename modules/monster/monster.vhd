@@ -47,6 +47,7 @@ use work.ez_usb_pkg.all;
 use work.wb_arria_reset_pkg.all;
 use work.xvme64x_pack.all;
 use work.VME_Buffer_pack.all;
+use work.wb_mil_scu_pkg.all;
 
 entity monster is
   generic(
@@ -61,6 +62,7 @@ entity monster is
     g_en_vme      : boolean;
     g_en_usb      : boolean;
     g_en_scubus   : boolean;
+    g_en_mil      : boolean;
     g_en_oled     : boolean;
     g_en_lcd      : boolean);
   port(
@@ -147,6 +149,47 @@ entity monster is
     scubus_a_nsel          : out   std_logic_vector(12 downto 1) := (others => 'Z');
     scubus_a_ntiming_cycle : out   std_logic := 'Z';
     scubus_a_sysclock      : out   std_logic := 'Z';
+    -- g_en_mil
+    mil_nme_boo_i          : in    std_logic;
+    mil_nme_bzo_i          : in    std_logic;
+    mil_me_sd_i            : in    std_logic;
+    mil_me_esc_i           : in    std_logic;
+    mil_me_sdi_o           : out   std_logic := 'Z';
+    mil_me_ee_o            : out   std_logic := 'Z';
+    mil_me_ss_o            : out   std_logic := 'Z';
+    mil_me_boi_o           : out   std_logic := 'Z';
+    mil_me_bzi_o           : out   std_logic := 'Z';
+    mil_me_udi_o           : out   std_logic := 'Z';
+    mil_me_cds_i           : in    std_logic;
+    mil_me_sdo_i           : in    std_logic;
+    mil_me_dsc_i           : in    std_logic;
+    mil_me_vw_i            : in    std_logic;
+    mil_me_td_i            : in    std_logic;
+    mil_me_12mhz_o         : out   std_logic := 'Z';
+    mil_boi_i              : in    std_logic;
+    mil_bzi_i              : in    std_logic;
+    mil_sel_drv_o          : out   std_logic := 'Z';
+    mil_nsel_rcv_o         : out   std_logic := 'Z';
+    mil_nboo_o             : out   std_logic := 'Z';
+    mil_nbzo_o             : out   std_logic := 'Z';
+    mil_nled_rcv_o         : out   std_logic := 'Z';
+    mil_nled_trm_o         : out   std_logic := 'Z';
+    mil_nled_err_o         : out   std_logic := 'Z';
+    mil_timing_i           : in    std_logic;
+    mil_nled_timing_o      : out   std_logic := 'Z';
+    mil_nled_fifo_ne_o     : out   std_logic := 'Z';
+    mil_interlock_intr_i   : in    std_logic;
+    mil_data_rdy_intr_i    : in    std_logic;
+    mil_data_req_intr_i    : in    std_logic;
+    mil_nled_interl_o      : out   std_logic := 'Z';
+    mil_nled_dry_o         : out   std_logic := 'Z';
+    mil_nled_drq_o         : out   std_logic := 'Z';
+    mil_io1_o              : out   std_logic := 'Z';
+    mil_io1_is_in_o        : out   std_logic := 'Z';
+    mil_nled_io1_o         : out   std_logic := 'Z';
+    mil_io2_o              : out   std_logic := 'Z';
+    mil_io2_is_in_o        : out   std_logic := 'Z';
+    mil_nled_io2_o         : out   std_logic := 'Z';
     -- g_en_oled
     oled_rstn_o            : out   std_logic := 'Z';
     oled_dc_o              : out   std_logic := 'Z';
@@ -221,7 +264,7 @@ architecture rtl of monster is
   constant c_topm_usb       : natural := 4;
   
   -- required slaves
-  constant c_top_slaves     : natural := 14;
+  constant c_top_slaves     : natural := 15;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32_ram  : natural := 2;
@@ -238,7 +281,7 @@ architecture rtl of monster is
   constant c_tops_lcd       : natural := 11;
   constant c_tops_oled      : natural := 12;
   constant c_tops_scubus    : natural := 13;
-  -- !!! add mil
+  constant c_tops_mil       : natural := 14;
   
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -257,7 +300,8 @@ architecture rtl of monster is
     c_tops_eca_aq    => f_sdb_auto_device(c_eca_queue_sdb,                  true),
     c_tops_lcd       => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
-    c_tops_scubus    => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus));
+    c_tops_scubus    => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
+    c_tops_mil       => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil));
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_top_layout_req);
@@ -1205,6 +1249,68 @@ begin
         nscub_slave_sel    => scubus_a_nsel,
         nscub_timing_cycle => scubus_a_ntiming_cycle,
         nsel_ext_data_drv  => scubus_nsel_data_drv);
+  end generate;
+  
+  mil_n : if not g_en_mil generate
+    top_cbar_master_i(c_tops_mil) <= cc_dummy_slave_out;
+  end generate;
+  mil_y : if g_en_mil generate
+    milp : mil_pll
+      port map(
+        inclk0 => clk_sys1,
+        c0     => mil_me_12mhz_o);
+      
+    mil : wb_mil_scu
+      generic map(
+        Clk_in_Hz     => 65_500_000)
+      port map(
+        clk_i         => clk_sys,
+        nRst_i        => rstn_sys,
+        slave_i       => top_cbar_master_o(c_tops_mil),
+        slave_o       => top_cbar_master_i(c_tops_mil),
+        nME_BOO       => mil_nme_boo_i,
+        nME_BZO       => mil_nme_bzo_i,
+        ME_SD         => mil_me_sd_i,
+        ME_ESC        => mil_me_esc_i,
+        ME_SDI        => mil_me_sdi_o,
+        ME_EE         => mil_me_ee_o,
+        ME_SS         => mil_me_ss_o,
+        ME_BOI        => mil_me_boi_o,
+        ME_BZI        => mil_me_bzi_o,
+        ME_UDI        => mil_me_udi_o,
+        ME_CDS        => mil_me_cds_i,
+        ME_SDO        => mil_me_sdo_i,
+        ME_DSC        => mil_me_dsc_i,
+        ME_VW         => mil_me_vw_i,
+        ME_TD         => mil_me_td_i,
+        Mil_BOI       => mil_boi_i,
+        Mil_BZI       => mil_bzi_i,
+        Sel_Mil_Drv   => mil_sel_drv_o,
+        nSel_Mil_Rcv  => mil_nsel_rcv_o,
+        Mil_nBOO      => mil_nboo_o,
+        Mil_nBZO      => mil_nbzo_o,
+        nLed_Mil_Rcv  => mil_nled_rcv_o,
+        nLed_Mil_Trm  => mil_nled_trm_o,
+        nLed_Mil_Err  => mil_nled_err_o,
+        error_limit_reached => open,
+        Mil_Decoder_Diag_p  => open,
+        Mil_Decoder_Diag_n  => open,
+        timing         => mil_timing_i,
+        nLed_Timing    => mil_nled_timing_o,
+        nLed_Fifo_ne   => mil_nled_fifo_ne_o,
+        Interlock_Intr => mil_interlock_intr_i,
+        Data_Rdy_Intr  => mil_data_rdy_intr_i,
+        Data_Req_Intr  => mil_data_req_intr_i,
+        nLed_Interl    => mil_nled_interl_o,
+        nLed_drq       => mil_nled_drq_o,
+        nLed_dry       => mil_nled_dry_o,
+        io_1           => mil_io1_o,
+        io_1_is_in     => mil_io1_is_in_o,
+        nLed_io_1      => mil_nled_io1_o,
+        io_2           => mil_io2_o,
+        io_2_is_in     => mil_io2_is_in_o,
+        nLed_io_2      => mil_nled_io2_o,
+        nsig_wb_err    => open);
   end generate;
   
   -- END OF Wishbone slaves
