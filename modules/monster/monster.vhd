@@ -475,7 +475,7 @@ begin
   
   reset : altera_reset
     generic map(
-	   g_clocks => 3)
+      g_clocks => 3)
     port map(
       clk_free_i    => clk_free,
       rstn_i        => core_rstn_i,
@@ -486,10 +486,10 @@ begin
       pll_arst_o    => pll_rst,
       clocks_i(0)   => clk_free,
       clocks_i(1)   => clk_sys,
-		clocks_i(2)   => clk_update,
+      clocks_i(2)   => clk_update,
       rstn_o(0)     => rstn_free,
       rstn_o(1)     => rstn_sys,
-		rstn_o(2)     => rstn_update);
+      rstn_o(2)     => rstn_update);
 
   dmtd_a2 : if g_family = "Arria II" generate
     dmtd_inst : dmtd_pll port map(
