@@ -3,18 +3,8 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.gencores_pkg.all;
-use work.wrcore_pkg.all;
-use work.wr_fabric_pkg.all;
-use work.wishbone_pkg.all;
-use work.wb_cores_pkg_gsi.all;
-use work.eca_pkg.all;
-use work.wr_altera_pkg.all;
-use work.altera_flash_pkg.all;
-use work.altera_networks_pkg.all;
-use work.build_id_pkg.all;
-use work.etherbone_pkg.all;
-use work.ez_usb_pkg.all;
+use work.monster_pkg.all;
+use work.gencores_pkg.all; -- pulse extend LEDs
 
 entity exploder_top is
   port(
@@ -312,547 +302,76 @@ end exploder_top;
 
 architecture rtl of exploder_top is
   
-  -- WR core layout
-  constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
+  signal led_link_up  : std_logic;
+  signal led_link_act : std_logic;
+  signal led_track    : std_logic;
+  signal led_pps      : std_logic;
   
-  -- Top crossbar layout
-  constant c_slaves  : natural := 7;
-  constant c_masters : natural := 3;
-  constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
-   (0 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00000000"),
-    1 => f_sdb_embed_device(c_xwr_wb_timestamp_latch_sdb, x"00100000"),
-    2 => f_sdb_embed_device(c_eca_sdb,                    x"00100800"),
-    3 => f_sdb_embed_device(c_eca_event_sdb,              x"00100C00"),
-    4 => f_sdb_embed_device(c_wb_serial_lcd_sdb,          x"00100D00"),
-    5 => f_sdb_embed_device(c_build_id_sdb,               x"00200000"),
-    6 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"04000000"));
-  constant c_sdb_address : t_wishbone_address := x"00300000";
-
-  signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
-  signal cbar_slave_o  : t_wishbone_slave_out_array(c_masters-1 downto 0);
-  signal cbar_master_i : t_wishbone_master_in_array(c_slaves-1 downto 0);
-  signal cbar_master_o : t_wishbone_master_out_array(c_slaves-1 downto 0);
+  signal clk_ref   : std_logic;
+  signal clk_butis : std_logic;
   
-  signal eca_master_i : t_wishbone_master_in;
-  signal eca_master_o : t_wishbone_master_out;
+  signal lemo_ttl : std_logic;
+  signal lemo_i   : std_logic_vector(8 downto 1);
+  signal lemo_o   : std_logic_vector(4 downto 1);
   
-  --------------------------------------------------------------
-  -- Clocking
-  --------------------------------------------------------------
-  
-  -- Non-PLL reset stuff
-  signal clk_free         : std_logic;
-  signal rstn_free        : std_logic;
-  signal gxb_locked       : std_logic;
-  signal pll_arst         : std_logic;
-  
-  -- Sys PLL from clk_125m_local_i
-  signal sys_locked       : std_logic;
-  signal clk_sys0         : std_logic;
-  signal clk_sys1         : std_logic;
-  signal clk_sys2         : std_logic;
-  
-  signal clk_sys          : std_logic;
-  signal clk_reconf       : std_logic;
-  signal clk_flash        : std_logic;
-  signal clk_lcd          : std_logic;
-  signal rstn_sys         : std_logic;
-  
-  -- Ref PLL from clk_125m_pllref_i
-  signal ref_locked       : std_logic;
-  signal clk_ref0         : std_logic;
-  signal clk_ref1         : std_logic;
-  signal clk_ref2         : std_logic;
-  
-  signal clk_ref          : std_logic;
-  signal clk_butis        : std_logic;
-  signal clk_phase        : std_logic;
-  signal rstn_ref         : std_logic;
-  signal rstn_butis       : std_logic;
-  
-  signal phase_done       : std_logic;
-  signal phase_step       : std_logic;
-  signal phase_sel        : std_logic_vector(3 downto 0);
-  
-  signal phase_butis      : phase_offset;
-  
-  -- DMTD PLL from clk_20m_vcxo_i
-  signal dmtd_locked      : std_logic;
-  signal clk_dmtd0        : std_logic;
-  signal clk_dmtd         : std_logic;
-  
-  --------------------------------------------------------------
-  -- White Rabbit
-  --------------------------------------------------------------
-  
-  signal dac_hpll_load_p1 : std_logic;
-  signal dac_dpll_load_p1 : std_logic;
-  signal dac_hpll_data    : std_logic_vector(15 downto 0);
-  signal dac_dpll_data    : std_logic_vector(15 downto 0);
-
-  signal link_act : std_logic;
-  signal link_up  : std_logic;
-  signal ext_pps  : std_logic;
-  signal pps      : std_logic;
-
-  signal phy_tx_data      : std_logic_vector(7 downto 0);
-  signal phy_tx_k         : std_logic;
-  signal phy_tx_disparity : std_logic;
-  signal phy_tx_enc_err   : std_logic;
-  signal phy_rx_data      : std_logic_vector(7 downto 0);
-  signal phy_rx_rbclk     : std_logic;
-  signal phy_rx_k         : std_logic;
-  signal phy_rx_enc_err   : std_logic;
-  signal phy_rx_bitslide  : std_logic_vector(3 downto 0);
-  signal phy_rst          : std_logic;
-  signal phy_loopen       : std_logic;
-
-  signal wrc_master_i  : t_wishbone_master_in;
-  signal wrc_master_o  : t_wishbone_master_out;
-
-  signal mb_src_out    : t_wrf_source_out;
-  signal mb_src_in     : t_wrf_source_in;
-  signal mb_snk_out    : t_wrf_sink_out;
-  signal mb_snk_in     : t_wrf_sink_in;
-  
-  signal tm_up     : std_logic;
-  signal tm_valid  : std_logic;
-  signal tm_tai    : std_logic_vector(39 downto 0);
-  signal tm_cycles : std_logic_vector(27 downto 0);
-
-  constant c_channels : natural := 4;
-  signal channels : t_channel_array(c_channels-1 downto 0);
-  
-  signal owr_pwren : std_logic_vector(1 downto 0);
-  signal owr_en    : std_logic_vector(1 downto 0);
-  signal owr       : std_logic_vector(1 downto 0);
-  
-  signal uart_rx, uart_tx : std_logic;
-  
-  signal sfp1_scl_o : std_logic;
-  signal sfp1_scl_i : std_logic;
-  signal sfp1_sda_o : std_logic;
-  signal sfp1_sda_i : std_logic;
-  signal sfp1_det_i : std_logic;
-  
-  signal eca_lemo_led : std_logic_vector(15 downto 0);
-  signal eca_lvds_ecl : std_logic_vector(15 downto 0);
-  signal eca_trigger  : std_logic_vector(15 downto 0);
-  
-  signal lemo_ttl   : std_logic;
-  signal lemo_i     : std_logic_vector(8 downto 1);
-  signal ref_toggle : std_logic;
-  
-  signal di_scp : std_logic;
-  signal di_lp  : std_logic;
-  signal di_flm : std_logic;
-  signal di_dat : std_logic;
-  signal di_bll : std_logic;
-  
-  signal fd_oen : std_logic;
-  signal fd_o   : std_logic_vector(7 downto 0);
 begin
 
-  -- We need at least one off-chip free running clock to setup PLLs
-  clk_free <= clk_20m_vcxo_i;
-  
-  reset : altera_reset
+  main : monster
     generic map(
-      g_clocks      => 3)
+      g_family     => "Arria II",
+      g_project    => "exploder_top",
+      g_inputs     => 16,
+      g_outputs    => 16,
+      g_flash_bits => 24,
+      g_en_usb     => true,
+      g_en_lcd     => true)
     port map(
-      clk_free_i    => clk_free,
-      rstn_i        => '1',
-      pll_lock_i(0) => dmtd_locked,
-      pll_lock_i(1) => ref_locked,
-      pll_lock_i(2) => sys_locked,
-      pll_lock_i(3) => gxb_locked,
-      pll_arst_o    => pll_arst,
-      clocks_i(0)   => clk_sys,
-      clocks_i(1)   => clk_free,
-      clocks_i(2)   => clk_ref,
-      rstn_o(0)     => rstn_sys,
-      rstn_o(1)     => rstn_free,
-      rstn_o(2)     => rstn_ref);
-
-  dmtd_inst : dmtd_pll port map(
-    areset => pll_arst,
-    inclk0 => clk_20m_vcxo_i,    --  20  Mhz 
-    c0     => clk_dmtd0,         --  62.5MHz
-    locked => dmtd_locked);
-  
-  dmtd_clk : single_region port map(
-    inclk  => clk_dmtd0,
-    outclk => clk_dmtd);
-  
-  sys_inst : sys_pll port map(
-    areset => pll_arst,
-    inclk0 => clk_125m_local_i, -- 125  Mhz 
-    c0     => clk_sys0,         --  62.5 MHz
-    c1     => clk_sys1,         --  50  Mhz
-    c2     => clk_sys2,         --  20  MHz
-    locked => sys_locked);
-  
-  sys_clk : global_region port map(
-    inclk  => clk_sys0,
-    outclk => clk_sys);
-  
-  reconf_clk : global_region port map(
-    inclk  => clk_sys1,
-    outclk => clk_reconf);
-  
-  clk_flash <= clk_reconf;
-  
-  lcd_clk : single_region port map(
-    inclk  => clk_sys2,
-    outclk => clk_lcd);
-  
-  ref_inst : ref_pll port map( -- see "Phase Counter Select Mapping" table for arria2gx
-    areset => pll_arst,
-    inclk0 => clk_125m_pllref_i, -- 125 MHz
-    c0     => clk_ref0,          -- 125 MHz, counter: 0010 - #2
-    c1     => clk_ref1,          -- 200 MHz, counter: 0011 = #3
-    c2     => clk_ref2,          --  25 MHz, counter: 0100 = #4
-    locked => ref_locked,
-    scanclk            => clk_free,
-    phasedone          => phase_done,
-    phasecounterselect => phase_sel,
-    phasestep          => phase_step,
-    phaseupdown        => '1');
-  
-  ref_clk : global_region port map(
-    inclk  => clk_ref0,
-    outclk => clk_ref);
-  
-  butis_clk : global_region port map(
-    inclk  => clk_ref1,
-    outclk => clk_butis);
-  
-  phase_clk : single_region port map(
-    inclk  => clk_ref2,
-    outclk => clk_phase);
-
-  phase : altera_phase
-    generic map(
-      g_select_bits   => 4,
-      g_outputs       => 1,
-      g_base          => 0,
-      g_vco_freq      => 1000, -- 1GHz
-      g_output_freq   => (0 => 200),
-      g_output_select => (0 =>   3))
-    port map(
-      clk_i       => clk_free,
-      rstn_i      => rstn_free,
-      clks_i(0)   => clk_butis,
-      rstn_o(0)   => rstn_butis,
-      offset_i(0) => phase_butis,
-      phasedone_i => phase_done,
-      phasesel_o  => phase_sel,
-      phasestep_o => phase_step);
-  
-  butis : altera_butis
-    port map(
-      clk_ref_i => clk_ref,
-      clk_25m_i => clk_phase,
-      pps_i     => pps,
-      phase_o   => phase_butis);
-  
-  id : build_id
-    port map(
-      clk_i   => clk_sys,
-      rst_n_i => rstn_sys,
-      slave_i => cbar_master_o(5),
-      slave_o => cbar_master_i(5));
-  
-  flash : flash_top
-    generic map(
-      g_family                 => "Arria II GX",
-      g_port_width             => 1,   -- single-lane SPI bus
-      g_addr_width             => 24,  -- 3 byte addressed chip
-      g_dummy_time             => 8,   -- 8 cycles between addr and data
-      g_input_latch_edge       => '0', -- experimentally determined...
-      g_output_latch_edge      => '1', -- ... and held fixed using logic lock
-      g_input_to_output_cycles => 2)
-    port map(
-      clk_i     => clk_sys,
-      rstn_i    => rstn_sys,
-      slave_i   => cbar_master_o(6),
-      slave_o   => cbar_master_i(6),
-      clk_ext_i => clk_flash,
-      clk_out_i => clk_flash,
-      clk_in_i  => clk_flash); -- no need to phase shift at 50MHz
-  
-  -- open drain buffer for one wire (only one)
-  
-  owr(0) <= rom_data_io;
-  owr(1) <= '0';
-  rom_data_io <= owr_pwren(0) when (owr_pwren(0) = '1' or owr_en(0) = '1') else 'Z';
-  
-  -- open drain buffer for SFP i2c
-  sfp1_scl_i <= sfp1_mod1_io;
-  sfp1_sda_i <= sfp1_mod2_io;
-  
-  sfp1_det_i <= sfp1_mod0_i;
-  sfp1_mod1_io <= '0' when sfp1_scl_o = '0' else 'Z';
-  sfp1_mod2_io <= '0' when sfp1_sda_o = '0' else 'Z';
-  
-  U_WR_CORE : xwr_core
-    generic map (
-      g_simulation                => 0,
-      g_phys_uart                 => true,
-      g_virtual_uart              => false,
-      g_with_external_clock_input => true,
-      g_aux_clks                  => 1,
-      g_ep_rxbuf_size             => 1024,
-      g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
-      g_dpram_size                => 131072/4,
-      g_interface_mode            => PIPELINED,
-      g_address_granularity       => BYTE,
-      g_aux_sdb                   => c_etherbone_sdb)
-    port map (
-      clk_sys_i  => clk_sys,
-      clk_dmtd_i => clk_dmtd,
-      clk_ref_i  => clk_ref,
-      clk_aux_i  => (others => '0'),
-      clk_ext_i  => lemo_i(7),
-      pps_ext_i  => lemo_i(8),
-      rst_n_i    => rstn_sys,
-
-      dac_hpll_load_p1_o => dac_hpll_load_p1,
-      dac_hpll_data_o    => dac_hpll_data,
-      dac_dpll_load_p1_o => dac_dpll_load_p1,
-      dac_dpll_data_o    => dac_dpll_data,
-		
-      phy_ref_clk_i      => clk_ref,
-      phy_tx_data_o      => phy_tx_data,
-      phy_tx_k_o         => phy_tx_k,
-      phy_tx_disparity_i => phy_tx_disparity,
-      phy_tx_enc_err_i   => phy_tx_enc_err,
-      phy_rx_data_i      => phy_rx_data,
-      phy_rx_rbclk_i     => phy_rx_rbclk,
-      phy_rx_k_i         => phy_rx_k,
-      phy_rx_enc_err_i   => phy_rx_enc_err,
-      phy_rx_bitslide_i  => phy_rx_bitslide,
-      phy_rst_o          => phy_rst,
-      phy_loopen_o       => phy_loopen,
-      
-      led_act_o   => link_act,
-      led_link_o  => link_up,
-      scl_o       => open,
-      scl_i       => '0',
-      sda_i       => '0',
-      sda_o       => open,
-      sfp_scl_i   => sfp1_scl_i,
-      sfp_sda_i   => sfp1_sda_i,
-      sfp_scl_o   => sfp1_scl_o,
-      sfp_sda_o   => sfp1_sda_o,
-      sfp_det_i   => sfp1_det_i,
-      btn1_i      => '0',
-      btn2_i      => '0',
-
-      uart_rxd_i => uart_rx,
-      uart_txd_o => uart_tx,
-      
-      owr_pwren_o => owr_pwren,
-      owr_en_o    => owr_en,
-      owr_i       => owr,
-      
-      slave_i => cbar_master_o(0),
-      slave_o => cbar_master_i(0),
-
-      wrf_src_o => mb_snk_in,
-      wrf_src_i => mb_snk_out,
-      wrf_snk_o => mb_src_in,
-      wrf_snk_i => mb_src_out,
-
-      aux_master_o => wrc_master_o,
-      aux_master_i => wrc_master_i,
- 
-      tm_link_up_o         => tm_up,
-      tm_dac_value_o       => open,
-      tm_dac_wr_o          => open,
-      tm_clk_aux_lock_en_i => (others => '0'),
-      tm_clk_aux_locked_o  => open,
-      tm_time_valid_o      => tm_valid,
-      tm_tai_o             => tm_tai,
-      tm_cycles_o          => tm_cycles,
-      pps_p_o              => pps,
-      
-      dio_o                => open,
-      rst_aux_n_o          => open,
-      link_ok_o            => open);
-
-  wr_gxb_arria2 : wr_arria2_phy
-    port map (
-      clk_reconf_i   => clk_reconf,
-      clk_pll_i      => clk_ref0,
-      clk_cru_i      => sfp_ref_clk_i,
-      clk_free_i     => clk_free,
-      rst_i          => pll_arst,
-      locked_o       => gxb_locked,
-      loopen_i       => phy_loopen,
-      drop_link_i    => phy_rst,
-      tx_clk_i       => clk_ref,
-      tx_data_i      => phy_tx_data,
-      tx_k_i         => phy_tx_k,
-      tx_disparity_o => phy_tx_disparity,
-      tx_enc_err_o   => phy_tx_enc_err,
-      rx_rbclk_o     => phy_rx_rbclk,
-      rx_data_o      => phy_rx_data,
-      rx_k_o         => phy_rx_k,
-      rx_enc_err_o   => phy_rx_enc_err,
-      rx_bitslide_o  => phy_rx_bitslide,
-      pad_txp_o      => sfp1_td_o,
-      pad_rxp_i      => sfp1_rd_i);
-
-  U_DAC_ARB : spec_serial_dac_arb
-    generic map (
-      g_invert_sclk    => false,
-      g_num_extra_bits => 8) -- AD DACs with 24bit interface
-    port map (
-      clk_i   => clk_sys,
-      rst_n_i => rstn_sys,
-
-      val1_i  => dac_dpll_data,
-      load1_i => dac_dpll_load_p1,
-
-      val2_i  => dac_hpll_data,
-      load2_i => dac_hpll_load_p1,
-
-      dac_cs_n_o(0) => ndac_cs_o(1),
-      dac_cs_n_o(1) => ndac_cs_o(2),
-      dac_clr_n_o   => open,
-      dac_sclk_o    => dac_sclk_o,
-      dac_din_o     => dac_din_o);
-
-  U_Extend_PPS : gc_extend_pulse
-    generic map (
-      g_width => 10000000)
-    port map (
-      clk_i      => clk_ref,
-      rst_n_i    => rstn_ref,
-      pulse_i    => pps,
-      extended_o => ext_pps);
-  
-  U_ebone : eb_ethernet_slave
-    generic map(
-      g_sdb_address => x"00000000" & c_sdb_address)
-    port map(
-      clk_i       => clk_sys,
-      nRst_i      => rstn_sys,
-      snk_i       => mb_snk_in,
-      snk_o       => mb_snk_out,
-      src_o       => mb_src_out,
-      src_i       => mb_src_in,
-      cfg_slave_o => wrc_master_i,
-      cfg_slave_i => wrc_master_o,
-      master_o    => cbar_slave_i(1),
-      master_i    => cbar_slave_o(1));
-  
-  ref2sys : xwb_clock_crossing
-    port map(
-      slave_clk_i   => clk_ref,
-      slave_rst_n_i => rstn_ref,
-      slave_i       => eca_master_o,
-      slave_o       => eca_master_i,
-      master_clk_i  => clk_sys,
-      master_rst_n_i=> rstn_sys,
-      master_i      => cbar_slave_o(0),
-      master_o      => cbar_slave_i(0));
-  
-  TLU : wb_timestamp_latch
-    generic map (
-      g_num_triggers => 32,
-      g_fifo_depth   => 10)
-    port map (
-      ref_clk_i                => clk_ref,
-      ref_rstn_i               => rstn_ref,
-      sys_clk_i                => clk_sys,
-      sys_rstn_i               => rstn_sys,
-      triggers_i(15 downto  0) => rc_i,
-      triggers_i(23 downto 16) => lemo_i,
-      triggers_i(31 downto 24) => any_i,
-      tm_time_valid_i          => tm_valid,
-      tm_tai_i                 => tm_tai,
-      tm_cycles_i              => tm_cycles,
-      wb_slave_i               => cbar_master_o(1),
-      wb_slave_o               => cbar_master_i(1));
-
-  ECA0 : wr_eca
-    generic map(
-      g_eca_name       => f_name("Exploder2C + DB2"),
-      g_channel_names  => (f_name("GPIO: TTL Output (2-7) Side LEDs(9-12) NIM|TTL(16)"), 
-                           f_name("GPIO: TRIGGER1+TRIGGER2 simultaneously (1-8)"), 
-                           f_name("GPIO: LVDS Output (2-6) ECL Output (9-16)"),
-                           f_name("WB:   Top-level bus controller")),
-      g_log_table_size => 7,
-      g_log_queue_len  => 8,
-      g_num_channels   => c_channels,
-      g_num_streams    => 1)
-    port map(
-      e_clk_i  (0)=> clk_sys,
-      e_rst_n_i(0)=> rstn_sys,
-      e_slave_i(0)=> cbar_master_o(3),
-      e_slave_o(0)=> cbar_master_i(3),
-      c_clk_i     => clk_sys,
-      c_rst_n_i   => rstn_sys,
-      c_slave_i   => cbar_master_o(2),
-      c_slave_o   => cbar_master_i(2),
-      a_clk_i     => clk_ref,
-      a_rst_n_i   => rstn_ref,
-      a_tai_i     => tm_tai,
-      a_cycles_i  => tm_cycles,
-      a_channel_o => channels,
-      i_clk_i     => clk_sys,
-      i_rst_n_i   => rstn_sys,
-      i_master_i  => cc_dummy_master_in, -- !!! FIXME: connect somewhere
-      i_master_o  => open);
-  
-  C0 : eca_gpio_channel
-    port map(
-      clk_i     => clk_ref,
-      rst_n_i   => rstn_ref,
-      channel_i => channels(0),
-      gpio_o    => eca_lemo_led);
-  
-  C1 : eca_gpio_channel
-    port map(
-      clk_i     => clk_ref,
-      rst_n_i   => rstn_ref,
-      channel_i => channels(1),
-      gpio_o    => eca_trigger);
-  
-  C2 : eca_gpio_channel
-    port map(
-      clk_i     => clk_ref,
-      rst_n_i   => rstn_ref,
-      channel_i => channels(2),
-      gpio_o    => eca_lvds_ecl);
-  
-  C3 : eca_wb_channel
-    port map(
-      clk_i     => clk_ref,
-      rst_n_i   => rstn_ref,
-      channel_i => channels(3),
-      master_o  => eca_master_o,
-      master_i  => eca_master_i);
-  
-  GSI_CON : xwb_sdb_crossbar
-   generic map(
-     g_num_masters => c_masters,
-     g_num_slaves  => c_slaves,
-     g_registered  => true,
-     g_wraparound  => true,
-     g_layout      => c_layout,
-     g_sdb_addr    => c_sdb_address)
-   port map(
-     clk_sys_i     => clk_sys,
-     rst_n_i       => rstn_sys,
-     -- Master connections (INTERCON is a slave)
-     slave_i       => cbar_slave_i,
-     slave_o       => cbar_slave_o,
-     -- Slave connections (INTERCON is a master)
-     master_i      => cbar_master_i,
-     master_o      => cbar_master_o);
+      core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
+      core_clk_125m_pllref_i => clk_125m_pllref_i,
+      core_clk_125m_sfpref_i => sfp_ref_clk_i,
+      core_clk_125m_local_i  => clk_125m_local_i,
+      core_clk_wr_ref_o      => clk_ref,
+      core_clk_butis_o       => clk_butis,
+      gpio_o(15 downto 12)   => de_o  (4 downto 1),
+      gpio_o(11 downto  8)   => ecl_o (4 downto 1),
+      gpio_o( 7 downto  4)   => lvds_o(4 downto 1),
+      gpio_o( 3 downto  0)   => lemo_o(4 downto 1),
+      gpio_i(15 downto 12)   => rc_i  (16 downto 13),
+      gpio_i(11 downto  8)   => rc_i  (8 downto 5),
+      gpio_i( 7 downto  4)   => any_i (4 downto 1),
+      gpio_i( 3 downto  0)   => lemo_i(4 downto 1),
+      wr_onewire_io          => rom_data_io,
+      wr_sfp_sda_io          => sfp1_mod2_io,
+      wr_sfp_scl_io          => sfp1_mod1_io,
+      wr_sfp_det_i           => sfp1_mod0_i,
+      wr_sfp_tx_o            => sfp1_td_o,
+      wr_sfp_rx_i            => sfp1_rd_i,
+      wr_dac_sclk_o          => dac_sclk_o,
+      wr_dac_din_o           => dac_din_o,
+      wr_ndac_cs_o           => ndac_cs_o,
+      wr_ext_clk_i           => lemo_i(8),
+      wr_ext_pps_i           => lemo_i(7),
+      led_link_up_o          => led_link_up,
+      led_link_act_o         => led_link_act,
+      led_track_o            => led_track,
+      led_pps_o              => led_pps,
+      usb_rstn_o             => sres_o,
+      usb_ebcyc_i            => ebcyc_i,
+      usb_speed_i            => speed_i,
+      usb_shift_i            => shift_i,
+      usb_readyn_io          => readyn_io,
+      usb_fifoadr_o          => fifoadr_o,
+      usb_sloen_o            => sloen_o,
+      usb_fulln_i            => fulln_i,
+      usb_emptyn_i           => emptyn_i,
+      usb_slrdn_o            => slrdn_o,
+      usb_slwrn_o            => slwrn_o,
+      usb_pktendn_o          => pktendn_o,
+      usb_fd_io              => fd_io,
+      lcd_scp_o              => discp_o,
+      lcd_lp_o               => dilp_o,
+      lcd_flm_o              => diflm_o,
+      lcd_in_o               => diin_o);
   
   sfp1_tx_dis_o <= '0'; -- enable SFP1
   sfp2_tx_dis_o <= '1'; -- disable SFP2
@@ -867,53 +386,18 @@ begin
   sfp4_mod1_io <= 'Z';
   sfp4_mod2_io <= 'Z';
 
+  -- Display back light
+  -- red=nolink, blue=link+notrack, green=track
+  bll_o   <= 'Z';
+  red_o   <= '0' when (not led_link_up)                   = '1' else 'Z';
+  blue_o  <= '0' when (    led_link_up and not led_track) = '1' else 'Z';
+  green_o <= '0' when (    led_link_up and     led_track) = '1' else 'Z';
+  
   -- Baseboard LEDs
-  hpv_o(0) <= not link_act and link_up; -- red   = traffic/no-link
-  hpv_o(1) <= not link_up;              -- blue  = link
-  hpv_o(2) <= not tm_valid;             -- green = timing valid
-  hpv_o(3) <= not ext_pps;              -- white = PPS
-  hpv_o(7 downto 4) <= not eca_lemo_led(11 downto 8); -- ECA controls other LEDs
-  
-  -- Baseboard logic analyzer (HPLA1)
-  hpw_io(15 downto 0) <= (others => 'Z');
-  -- 20 is ground
-  
-  -- Use output LEMOs in TTL mode
-  lemo_ttl  <= not eca_lemo_led(15);
-  select_o  <= lemo_ttl;
-  selectn_o <= not lemo_ttl;
-  
-  ref_out : process(clk_ref) is
-  begin
-    if rising_edge(clk_ref) then
-      ref_toggle <= not ref_toggle;
-    end if;
-  end process;
-  
-  -- LEMO outputs
-  ttnim_o(8)          <= pps;
-  ttnim_o(7 downto 2) <= eca_lemo_led(6 downto 1);
-  ttnim_o(1)          <= ref_toggle;
-  
-  -- ECA outputs
-  lvds_o(6 downto 2) <= eca_lvds_ecl(5 downto 1);
-  ecl_o  <= eca_lvds_ecl(15 downto 8);
-  de_o   <= eca_trigger(7 downto 0);
-  
-  lvds_o(8) <= clk_butis;
-  lvds_o(7) <= pps;
-  lvds_o(1) <= clk_ref;
-  
-  -- Use TRIGGER ports in type 1 mode.
-  fsen1_o <= '0';
-  fsen2_o <= '0';
-  -- Enable control of the trigger bus
-  mde_o   <= '1'; 
-  -- Drive a '1' out the trigger bus on enable
-  di_o <= (others => '1');
-  
-  -- RES is unused for now
-  res_io(8 downto 1) <= (others => 'Z');
+  hpv_o(0) <= not led_link_act and led_link_up; -- red   = traffic/no-link
+  hpv_o(1) <= not led_link_up;                  -- blue  = link
+  hpv_o(2) <= not led_track;                    -- green = timing valid
+  hpv_o(3) <= not led_pps;                      -- white = PPS
   
   -- LEMO inputs can come from TTL or NIM standard
   lemo_i <= not (ttlin_i or nimin_i);
@@ -925,71 +409,54 @@ begin
         g_width => 125000000/20)
       port map(
         clk_i      => clk_ref,
-        rst_n_i    => rstn_ref,
+        rst_n_i    => '1',
         pulse_i    => lemo_i(i),
         extended_o => led_o(i));
   end generate;
-  
-  -- Display back light
-  -- red=nolink, blue=link+notrack, green=track
-  di_bll <= '1';
-  bll_o   <= 'Z' when di_bll='1' else '0';
-  red_o   <= '0' when (not tm_up)                  = '1' else 'Z';
-  blue_o  <= '0' when (    tm_up and not tm_valid) = '1' else 'Z';
-  green_o <= '0' when (    tm_up and     tm_valid) = '1' else 'Z';
-  
-  -- Display
-  display : wb_serial_lcd
-    generic map(
-      g_wait => 1,
-      g_hold => 15)
-    port map(
-      slave_clk_i  => clk_sys,
-      slave_rstn_i => rstn_sys,
-      slave_i      => cbar_master_o(4),
-      slave_o      => cbar_master_i(4),
-      di_clk_i     => clk_lcd,
-      di_scp_o     => di_scp,
-      di_lp_o      => di_lp,
-      di_flm_o     => di_flm,
-      di_dat_o     => di_dat);
-  
-  discp_o <= '0' when (di_scp = '0') else 'Z';
-  dilp_o  <= '0' when (di_lp  = '0') else 'Z';
-  diflm_o <= '0' when (di_flm = '0') else 'Z';
-  diin_o  <= '0' when (di_dat = '0') else 'Z';
-  
-  -- USB micro controller
-  pres_o <= '0';      -- reserved pin connected to FPGA by mistake. must be ground.
-  
-  fd_io <= fd_o when fd_oen='1' else (others => 'Z');
-  readyn_io <= 'Z'; -- weak pull-up
-  
-  EZUSB : ez_usb
-    generic map(
-      g_sdb_address => c_sdb_address)
-    port map(
-      clk_sys_i => clk_sys,
-      rstn_i    => rstn_sys,
-      master_i  => cbar_slave_o(2),
-      master_o  => cbar_slave_i(2),
-      uart_o    => uart_rx,
-      uart_i    => uart_tx,
-      
-      rstn_o    => sres_o,
-      ebcyc_i   => ebcyc_i,
-      speed_i   => speed_i,
-      shift_i   => shift_i,
-      fifoadr_o => fifoadr_o,
-      readyn_i  => readyn_io,
-      fulln_i   => fulln_i,
-      emptyn_i  => emptyn_i,
-      sloen_o   => sloen_o,
-      slrdn_o   => slrdn_o,
-      slwrn_o   => slwrn_o,
-      pktendn_o => pktendn_o,
-      fd_i      => fd_io,
-      fd_o      => fd_o,
-      fd_oen_o  => fd_oen);
 
+  -- Use output LEMOs in TTL mode
+  lemo_ttl  <= '1';
+  select_o  <= lemo_ttl;
+  selectn_o <= not lemo_ttl;
+  
+  -- LEMO outputs (1-4 = GPIO0-3)
+  ttnim_o(8) <= clk_butis;
+  ttnim_o(7) <= '0';
+  ttnim_o(6) <= led_pps;
+  ttnim_o(5) <= clk_ref;
+  ttnim_o(4 downto 1) <= lemo_o;
+  hpv_o  (7 downto 4) <= lemo_o; -- LEDs show status
+  
+  -- ECA outputs (1-4 = GPIO4-7)
+  lvds_o(8) <= clk_butis;
+  lvds_o(7) <= '0';
+  lvds_o(6) <= led_pps;
+  lvds_o(5) <= clk_ref;
+  
+  -- ECL outputs (1-4 = GPIO8-12)
+  ecl_o(8) <= clk_butis;
+  ecl_o(7) <= '0';
+  ecl_o(6) <= led_pps;
+  ecl_o(5) <= clk_ref;
+  
+  -- Trigger 1+2 outputs
+  de_o(8 downto 5) <= (others => '0');
+  
+  -- Use TRIGGER ports in type 1 mode.
+  fsen1_o <= '0';
+  fsen2_o <= '0';
+  -- Enable control of the trigger bus
+  mde_o   <= '1'; 
+  -- Drive a '1' out the trigger bus on enable
+  di_o <= (others => '1');
+  
+  -- reserved USB pin connected to FPGA by mistake. must be ground.
+  pres_o <= '0'; 
+  
+  -- Baseboard logic analyzer (HPLA1)
+  hpw_io(15 downto 0) <= (others => 'Z');
+  
+  -- RES is unused for now
+  res_io(8 downto 1) <= (others => 'Z');
+  
 end rtl;

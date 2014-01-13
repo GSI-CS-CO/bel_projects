@@ -22,6 +22,9 @@ modules = {
     "wb_scu_reg",
     "ad7606",
     "mil",
-    "wb_mil_scu"
+    "wb_mil_scu",
+    "wb_arria_reset",
+    "ftm",
+    "monster",
   ]
 }

@@ -197,5 +197,11 @@ component event_processing is
     );
 end component event_processing;
 
+component mil_pll is
+  port(
+    inclk0 : in  std_logic;
+    c0     : out std_logic;
+    locked : out std_logic);
+end component mil_pll;
 
 end package wb_mil_scu_pkg;

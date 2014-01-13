@@ -697,7 +697,7 @@ P_error_stat: process (clk, nReset_ff)
   
 DAC_SI  <= Shift_Reg(Shift_Reg'high);
 
-P_Ext_Trig_wait: process (all)
+P_Ext_Trig_wait: process (dac_conv_extern, SPI_SM)
   begin
     if dac_conv_extern = '1' and ((SPI_SM = Load) or (SPI_SM = Load_wait)) then
       Ext_Trig_wait <= '1';
@@ -709,7 +709,9 @@ P_Ext_Trig_wait: process (all)
 
 nDAC_CLK <= not spi_clk; 
 
-P_read_mux: process (all)
+P_read_mux: process (rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_shift_err_cnt, Rd_DAC_Cntrl,
+                     Ext_Trig_wait, FG_mode, dac_neg_edge_conv, dac_conv_extern, nCLR_DAC, SPI_TRM, 
+                     Trig_DAC_during_shift_err_cnt_b, Trig_DAC_with_old_data_err_cnt_b, New_trm_during_trm_active_err_cnt_b)
   variable  sel_mux:  std_logic_vector(5 downto 0);
   begin
     sel_mux := ('0' ,'0', rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_shift_err_cnt, Rd_DAC_Cntrl);
