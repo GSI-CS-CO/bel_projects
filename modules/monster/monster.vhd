@@ -1262,7 +1262,7 @@ begin
       
     mil : wb_mil_scu
       generic map(
-        Clk_in_Hz     => 65_500_000)
+        Clk_in_Hz     => 62_500_000)
       port map(
         clk_i         => clk_sys,
         nRst_i        => rstn_sys,
