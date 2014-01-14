@@ -77,6 +77,7 @@ entity monster is
     core_clk_butis_o       : out   std_logic;
     core_rstn_wr_ref_o     : out   std_logic;
     core_rstn_butis_o      : out   std_logic;
+    core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
     -- GPIO for the board
     gpio_o                 : out   std_logic_vector(g_outputs-1 downto 0);
     gpio_i                 : in    std_logic_vector(g_inputs-1  downto 0);
@@ -475,7 +476,7 @@ begin
   
   reset : altera_reset
     generic map(
-	   g_clocks => 3)
+      g_clocks => 3)
     port map(
       clk_free_i    => clk_free,
       rstn_i        => core_rstn_i,
@@ -486,10 +487,10 @@ begin
       pll_arst_o    => pll_rst,
       clocks_i(0)   => clk_free,
       clocks_i(1)   => clk_sys,
-		clocks_i(2)   => clk_update,
+      clocks_i(2)   => clk_update,
       rstn_o(0)     => rstn_free,
       rstn_o(1)     => rstn_sys,
-		rstn_o(2)     => rstn_update);
+      rstn_o(2)     => rstn_update);
 
   dmtd_a2 : if g_family = "Arria II" generate
     dmtd_inst : dmtd_pll port map(
@@ -607,8 +608,8 @@ begin
       rstn_o(0)   => rstn_ref,
       rstn_o(1)   => rstn_butis,
       rstn_o(2)   => rstn_phase,
-      offset_i(0) => phase_butis,
-      offset_i(1) => (others => '0'),
+      offset_i(0) => (others => '0'),
+      offset_i(1) => phase_butis,
       offset_i(2) => (others => '0'),
       phasedone_i => phase_done,
       phasesel_o  => phase_sel,
