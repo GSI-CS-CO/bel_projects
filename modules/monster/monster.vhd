@@ -119,6 +119,7 @@ entity monster is
     vme_iackout_n_o        : out   std_logic := 'Z';
     vme_irq_n_o            : out   std_logic_vector(6 downto 0) := (others => 'Z');
     vme_berr_o             : out   std_logic := 'Z';
+    vme_dtack_oe_o         : out   std_logic := 'Z';
     vme_buffer_latch_o     : out   std_logic_vector(3 downto 0) := (others => 'Z');
     vme_data_oe_ab_o       : out   std_logic := 'Z';
     vme_data_oe_ba_o       : out   std_logic := 'Z';
@@ -815,6 +816,7 @@ begin
         data_buff_f2v_o  =>  vme_data_oe_ba_o,
         addr_buff_v2f_o  =>  vme_addr_oe_ab_o,
         addr_buff_f2v_o  =>  vme_addr_oe_ba_o,
+        dtack_oe_o       =>  s_vme_dtack_oe_o,
         latch_buff_o     =>  s_vme_buffer_latch);
     
     vme_addr_data_b <= 
