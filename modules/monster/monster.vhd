@@ -119,7 +119,6 @@ entity monster is
     vme_iackout_n_o        : out   std_logic := 'Z';
     vme_irq_n_o            : out   std_logic_vector(6 downto 0) := (others => 'Z');
     vme_berr_o             : out   std_logic := 'Z';
-    vme_dtack_oe_o         : out   std_logic := 'Z';
     vme_buffer_latch_o     : out   std_logic_vector(3 downto 0) := (others => 'Z');
     vme_data_oe_ab_o       : out   std_logic := 'Z';
     vme_data_oe_ba_o       : out   std_logic := 'Z';
@@ -232,14 +231,15 @@ architecture rtl of monster is
   constant c_irqm_aq     : natural := 2;
   constant c_irqm_scubus : natural := 3;
   
-  constant c_irq_slaves  : natural := 2;
+  constant c_irq_slaves  : natural := 3;
   constant c_irqs_lm32   : natural := 0;
   constant c_irqs_pcie   : natural := 1;
-  -- !!! add VME here
+  constant c_irqs_vme    : natural := 2;
   
   constant c_irq_layout_req : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
    (c_irqs_lm32 => f_sdb_auto_device(c_irq_ep_sdb,   true),
-    c_irqs_pcie => f_sdb_auto_device(c_msi_pcie_sdb, g_en_pcie));
+    c_irqs_pcie => f_sdb_auto_device(c_msi_pcie_sdb, g_en_pcie),
+    c_irqs_vme  => f_sdb_auto_device(c_vme_msi_sdb,  g_en_vme));
   
   constant c_irq_layout      : t_sdb_record_array(c_irq_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_irq_layout_req);
@@ -755,6 +755,7 @@ begin
   
   vme_n : if not g_en_vme generate
     top_cbar_slave_i (c_topm_vme) <= cc_dummy_master_out;
+    irq_cbar_master_i(c_irqs_vme) <= cc_dummy_slave_out;
     vme_addr_data_b <= (others => 'Z');
   end generate;
   vme_y : if g_en_vme generate
@@ -791,7 +792,6 @@ begin
         vme_iackin_n_i  => vme_iackin_n_i,
         vme_iack_n_i    => vme_iack_n_i,
         vme_iackout_n_o => vme_iackout_n_o,
-        vme_dtack_oe_o  => s_vme_dtack_oe_o,
         vme_buffer_o    => s_vme_buffer,
         vme_retry_oe_o  => open,
         irq_i           => '0',  -- => wbirq_i,  
@@ -799,6 +799,8 @@ begin
         reset_o         => open, -- => s_rst,
         master_o        => top_cbar_slave_i(c_topm_vme),
         master_i        => top_cbar_slave_o(c_topm_vme),
+        slave_o         => irq_cbar_master_i(c_irqs_vme),
+        slave_i         => irq_cbar_master_o(c_irqs_vme), 
         debug           => open);
     
     U_BUFFER_CTRL : VME_Buffer_ctrl
