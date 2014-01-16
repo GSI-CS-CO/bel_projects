@@ -46,7 +46,7 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ndac_cs[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ndac_cs[2]
 set_instance_assignment -name IO_STANDARD LVDS -to pcie_refclk_i
 set_location_assignment PIN_C22 -to "clk_125m_local_i(n)"
-set_location_assignment PIN_AB21 -to "clk_125m_pllref_i(n)"
+set_location_assignment PIN_H15 -to "clk_125m_pllref_i(n)"
 set_location_assignment PIN_F6 -to nPCI_RESET
 set_location_assignment PIN_AF8 -to ndac_cs[1]
 set_location_assignment PIN_AF7 -to ndac_cs[2]
@@ -70,7 +70,7 @@ set_location_assignment PIN_J24 -to sfp2_txp_o
 set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "ACTIVE SERIAL X4"
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN ON
 set_location_assignment PIN_AF21 -to clk_20m_vcxo_i
-set_location_assignment PIN_AC21 -to clk_125m_pllref_i
+set_location_assignment PIN_G15 -to clk_125m_pllref_i
 set_location_assignment PIN_AD8 -to dac_din
 set_location_assignment PIN_AC8 -to dac_sclk
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to dac_din
@@ -258,13 +258,6 @@ set_location_assignment PIN_N3 -to n12
 set_location_assignment PIN_N1 -to n13
 set_location_assignment PIN_N6 -to n14
 set_location_assignment PIN_N5 -to n15
-set_location_assignment PIN_A6 -to n17
-set_location_assignment PIN_H10 -to n18
-set_location_assignment PIN_J8 -to n19
-set_location_assignment PIN_D8 -to n21
-set_location_assignment PIN_E9 -to n22
-set_location_assignment PIN_C6 -to n23
-set_location_assignment PIN_C9 -to n24
 set_location_assignment PIN_W2 -to p1
 set_location_assignment PIN_T2 -to p2
 set_location_assignment PIN_R5 -to p3
@@ -291,7 +284,6 @@ set_location_assignment PIN_B9 -to p24
 set_location_assignment PIN_J10 -to p25
 set_location_assignment PIN_G9 -to p26
 set_location_assignment PIN_F8 -to p27
-set_location_assignment PIN_A8 -to p28
 set_location_assignment PIN_C5 -to p29
 set_location_assignment PIN_B7 -to p30
 set_location_assignment PIN_V9 -to pa[0]
@@ -395,15 +387,15 @@ set_global_assignment -name LL_WIDTH 1 -section_id "wr_arria5:tx"
 set_global_assignment -name LL_HEIGHT 1 -section_id "wr_arria5:tx"
 set_global_assignment -name LL_ORIGIN X1_Y65 -section_id "wr_arria5:tx"
 set_location_assignment FRACTIONALPLL_X0_Y60_N0 -to "monster:main|sys_pll5:\\sys_a5:sys_inst|sys_pll5_0002:sys_pll5_inst|altera_pll:altera_pll_i|general[0].gpll~FRACTIONAL_PLL"
-set_location_assignment FRACTIONALPLL_X0_Y51_N0 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|altera_arriav_pll_base:fpll_0|cntnen"
+set_location_assignment FRACTIONALPLL_X43_Y65_N0 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|altera_arriav_pll_base:fpll_0|cntnen"
 set_location_assignment FRACTIONALPLL_X0_Y18_N0 -to "monster:main|dmtd_pll5:\\dmtd_a5:dmtd_inst|dmtd_pll5_0002:dmtd_pll5_inst|altera_pll:altera_pll_i|general[0].gpll~FRACTIONAL_PLL"
 set_location_assignment PLLOUTPUTCOUNTER_X0_Y67_N1 -to "monster:main|sys_pll5:\\sys_a5:sys_inst|sys_pll5_0002:sys_pll5_inst|altera_pll:altera_pll_i|outclk_wire[0]"
 set_location_assignment PLLOUTPUTCOUNTER_X0_Y66_N1 -to "monster:main|sys_pll5:\\sys_a5:sys_inst|sys_pll5_0002:sys_pll5_inst|altera_pll:altera_pll_i|outclk_wire[1]"
 set_location_assignment PLLOUTPUTCOUNTER_X0_Y65_N1 -to "monster:main|sys_pll5:\\sys_a5:sys_inst|sys_pll5_0002:sys_pll5_inst|altera_pll:altera_pll_i|outclk_wire[2]"
 set_location_assignment PLLOUTPUTCOUNTER_X0_Y64_N1 -to "monster:main|sys_pll5:\\sys_a5:sys_inst|sys_pll5_0002:sys_pll5_inst|altera_pll:altera_pll_i|outclk_wire[3]"
-set_location_assignment PLLOUTPUTCOUNTER_X0_Y55_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[0]"
-set_location_assignment PLLOUTPUTCOUNTER_X0_Y54_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[1]"
-set_location_assignment PLLOUTPUTCOUNTER_X0_Y53_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[2]"
+set_location_assignment PLLOUTPUTCOUNTER_X43_Y63_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[0]"
+set_location_assignment PLLOUTPUTCOUNTER_X43_Y62_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[1]"
+set_location_assignment PLLOUTPUTCOUNTER_X43_Y61_N1 -to "monster:main|ref_pll5:\\ref_a5:ref_inst|ref_pll5_0002:ref_pll5_inst|altera_pll:altera_pll_i|altera_arriav_pll:arriav_pll|cascade_wire[2]"
 set_location_assignment PLLOUTPUTCOUNTER_X0_Y20_N1 -to "monster:main|dmtd_pll5:\\dmtd_a5:dmtd_inst|dmtd_pll5_0002:dmtd_pll5_inst|altera_pll:altera_pll_i|outclk_wire[0]"
 set_global_assignment -name TRI_STATE_SPI_PINS ON
 set_instance_assignment -name FAST_INPUT_REGISTER ON -to ctl
@@ -439,12 +431,7 @@ set_global_assignment -name LL_PR_REGION OFF -section_id "wr_arria5:reconf"
 set_global_assignment -name LL_WIDTH 2 -section_id "wr_arria5:reconf"
 set_global_assignment -name LL_HEIGHT 3 -section_id "wr_arria5:reconf"
 set_global_assignment -name LL_ORIGIN X23_Y74 -section_id "wr_arria5:reconf"
-set_location_assignment PIN_C7 -to n30
-set_location_assignment PIN_D5 -to n29
-set_location_assignment PIN_A9 -to n28
-set_location_assignment PIN_G8 -to n27
 set_location_assignment PIN_H9 -to n26
-set_location_assignment PIN_K10 -to n25
 set_location_assignment PIN_E6 -to n16
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n1
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to n2
@@ -474,7 +461,6 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p12
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p13
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p14
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to p15
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_instance_assignment -name LL_MEMBER_OF "wr_arria5:tx" -to "monster:main|wr_arria5_phy:\\phy_a5:phy|tx_gxb_datain" -section_id "wr_arria5:tx"
 set_instance_assignment -name LL_MEMBER_OF "wr_arria5:tx" -to "monster:main|wr_arria5_phy:\\phy_a5:phy|tx_reg_datain" -section_id "wr_arria5:tx"
 set_instance_assignment -name LL_MEMBER_OF "wr_arria5:reconf" -to "monster:main|wr_arria5_phy:\\phy_a5:phy|arria5_phy_reconf:U_Reconf|alt_xcvr_reconfig:arria5_phy_reconf_inst|alt_xcvr_reconfig_basic:basic|av_xcvr_reconfig_basic:a5|av_xrbasic_lif:lif[0].logical_if|av_xrbasic_lif_csr:lif_csr|reg_rwdata" -section_id "wr_arria5:reconf"
@@ -489,6 +475,37 @@ set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\f
 set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_shift_o[29]" -section_id flash
 set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_shift_o[30]" -section_id flash
 set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_shift_o[31]" -section_id flash
+set_instance_assignment -name IO_STANDARD LVDS -to p28
+set_instance_assignment -name IO_STANDARD LVDS -to p27
+set_instance_assignment -name IO_STANDARD LVDS -to p17
+set_instance_assignment -name IO_STANDARD LVDS -to n17
+set_location_assignment PIN_A6 -to n17
+set_instance_assignment -name IO_STANDARD LVDS -to p18
+set_location_assignment PIN_H10 -to n18
+set_instance_assignment -name IO_STANDARD LVDS -to p19
+set_instance_assignment -name IO_STANDARD LVDS -to p21
+set_location_assignment PIN_D8 -to n21
+set_instance_assignment -name IO_STANDARD LVDS -to p22
+set_location_assignment PIN_E9 -to n22
+set_instance_assignment -name IO_STANDARD LVDS -to p23
+set_location_assignment PIN_C6 -to n23
+set_location_assignment PIN_C7 -to n30
+set_location_assignment PIN_D5 -to n29
+set_instance_assignment -name IO_STANDARD LVDS -to p24
+set_instance_assignment -name IO_STANDARD LVDS -to p25
+set_location_assignment PIN_A8 -to p28
+set_instance_assignment -name IO_STANDARD LVDS -to N19
+set_instance_assignment -name IO_STANDARD LVDS -to n19
+set_location_assignment PIN_J8 -to n19
+set_instance_assignment -name IO_STANDARD LVDS -to n24
+set_location_assignment PIN_C9 -to n24
+set_instance_assignment -name IO_STANDARD LVDS -to n25
+set_location_assignment PIN_K10 -to n25
+set_instance_assignment -name IO_STANDARD LVDS -to n27
+set_location_assignment PIN_G8 -to n27
+set_instance_assignment -name IO_STANDARD LVDS -to n28
+set_location_assignment PIN_A9 -to n28
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name VHDL_FILE ../../../modules/monster/monster_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/trans_pkg.vhd
@@ -577,6 +594,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_en_decoder.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/event_processing.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/mil_pll.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria_reset.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria5_reset.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset_pkg.vhd
@@ -585,8 +603,20 @@ set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gencores_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5_lvds_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_ibuf.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_obuf.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_rx.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_tx.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/eca_lvds_channel.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../top/gsi_pexarria5/control/pci_control.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5/arria5_lvds_ibuf.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5/arria5_lvds_obuf.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5/arria5_lvds_rx.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5/arria5_lvds_tx.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd
