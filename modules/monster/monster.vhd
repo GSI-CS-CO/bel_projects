@@ -28,6 +28,7 @@ use ieee.numeric_std.all;
 library work;
 use work.gencores_pkg.all;
 use work.wrcore_pkg.all;
+use work.monster_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.wishbone_pkg.all;
 use work.eca_pkg.all;
@@ -38,6 +39,7 @@ use work.etherbone_pkg.all;
 use work.scu_bus_pkg.all;
 use work.altera_flash_pkg.all;
 use work.altera_networks_pkg.all;
+use work.altera_lvds_pkg.all;
 use work.build_id_pkg.all;
 use work.oled_display_pkg.all;
 use work.lpc_uart_pkg.all;
@@ -53,11 +55,16 @@ entity monster is
   generic(
     g_family      : string; -- "Arria II" or "Arria V"
     g_project     : string;
-    g_inputs      : natural;
-    g_outputs     : natural;
     g_flash_bits  : natural;
-    g_ram_size    : natural;
     g_pll_skew    : natural; -- (ref-tx) in ps
+    g_ram_size    : natural;
+    g_gpio_inout  : natural;
+    g_gpio_in     : natural;
+    g_gpio_out    : natural;
+    g_lvds_inout  : natural;
+    g_lvds_in     : natural;
+    g_lvds_out    : natural;
+    g_lvds_invert : boolean;
     g_en_pcie     : boolean;
     g_en_vme      : boolean;
     g_en_usb      : boolean;
@@ -78,9 +85,6 @@ entity monster is
     core_rstn_wr_ref_o     : out   std_logic;
     core_rstn_butis_o      : out   std_logic;
     core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
-    -- GPIO for the board
-    gpio_o                 : out   std_logic_vector(g_outputs-1 downto 0);
-    gpio_i                 : in    std_logic_vector(g_inputs-1  downto 0);
     -- Required: white rabbit pins
     wr_onewire_io          : inout std_logic;
     wr_sfp_sda_io          : inout std_logic;
@@ -96,6 +100,18 @@ entity monster is
     wr_ext_pps_i           : in    std_logic;
     wr_uart_o              : out   std_logic;
     wr_uart_i              : in    std_logic;
+    -- GPIO for the board
+    gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0);
+    gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0) := (others => 'Z');
+    gpio_oen_o             : out   std_logic_vector(f_sub1(g_gpio_inout)            downto 0) := (others => '1');
+    -- LVDS for the board
+    lvds_p_i               : in    std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)  downto 0);
+    lvds_n_i               : in    std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)  downto 0);
+    lvds_i_led_o           : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)  downto 0) := (others => 'Z');
+    lvds_p_o               : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0) := (others => 'Z');
+    lvds_n_o               : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0) := (others => 'Z');
+    lvds_o_led_o           : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0) := (others => 'Z');
+    lvds_oen_o             : out   std_logic_vector(f_sub1(g_lvds_inout)            downto 0) := (others => '1');
     -- Optional status LEDs
     led_link_up_o          : out   std_logic;
     led_link_act_o         : out   std_logic;
@@ -213,8 +229,8 @@ architecture rtl of monster is
   
   function f_pll_select return natural_vector is
     -- Note: for arria5 you need to set location assignments to make this true!
-    constant c_a2_pll_select : natural_vector := (0 =>  2, 1=>  3, 2 =>  4);
-    constant c_a5_pll_select : natural_vector := (0 => 12, 1=> 13, 2 => 14);
+    constant c_a2_pll_select : natural_vector := (0 => 2, 1=>  3, 2 =>  4);
+    constant c_a5_pll_select : natural_vector := (0 => 9, 1=> 10, 2 => 11);
     constant c_error         : natural_vector := (0 => 0);
   begin
     if    g_family = "Arria II" then return c_a2_pll_select;
@@ -348,10 +364,14 @@ architecture rtl of monster is
   signal clk_ref0         : std_logic;
   signal clk_ref1         : std_logic;
   signal clk_ref2         : std_logic;
+  signal clk_ref3         : std_logic;
+  signal clk_ref4         : std_logic;
   
   signal clk_ref          : std_logic;
   signal clk_butis        : std_logic;
   signal clk_phase        : std_logic;
+  signal clk_lvds         : std_logic;
+  signal clk_enable       : std_logic;
   signal rstn_ref         : std_logic;
   signal rstn_butis       : std_logic;
   signal rstn_phase       : std_logic;
@@ -433,7 +453,7 @@ architecture rtl of monster is
   signal sfp_scl_o : std_logic;
   signal sfp_sda_o : std_logic;
   
-  signal channels : t_channel_array(1 downto 0);
+  signal channels : t_channel_array(2 downto 0);
   
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
@@ -460,6 +480,8 @@ architecture rtl of monster is
   signal lcd_flm : std_logic;
   signal lcd_in  : std_logic;
   signal gpio    : std_logic_vector(15 downto 0);
+  signal lvds_o  : t_lvds_byte_array(11 downto 0);
+  signal lvds_i  : t_lvds_byte_array(15 downto 0);
   
 begin
 
@@ -572,6 +594,8 @@ begin
       outclk_0   => clk_ref0,         -- 125 MHz
       outclk_1   => clk_ref1,         -- 200 MHz
       outclk_2   => clk_ref2,         --  25 MHz
+      outclk_3   => clk_ref3,         --1000 MHz
+      outclk_4   => clk_ref4,         -- 125 MHz, 1/8 duty, -1.5ns phase
       locked     => ref_locked,
       scanclk    => clk_free,  
       cntsel     => phase_sel, 
@@ -592,6 +616,9 @@ begin
   phase_clk : global_region port map( -- skew must match ref_clk
     inclk  => clk_ref2,
     outclk => clk_phase);
+  
+  clk_lvds   <= clk_ref3;
+  clk_enable <= clk_ref4;
 
   phase : altera_phase
     generic map(
@@ -1120,7 +1147,7 @@ begin
   
   tlu : wb_timestamp_latch
     generic map(
-      g_num_triggers => g_inputs,
+      g_num_triggers => f_sub1(g_gpio_inout+g_gpio_in)+1,
       g_fifo_depth   => 10)
     port map(
       ref_clk_i       => clk_ref,
@@ -1137,11 +1164,12 @@ begin
   eca : wr_eca
     generic map(
       g_eca_name      => f_name(g_project & " top"),
-      g_channel_names => (f_name("GPIO: output triggers"),
-                          f_name("RTOS: Action Queue")),
+      g_channel_names => (f_name("GPIO: gpio triggers"),
+                          f_name("RTOS: Action Queue"),
+                          f_name("GPIO: lvds triggers")),
       g_log_table_size => 7,
       g_log_queue_len  => 8,
-      g_num_channels   => 2,
+      g_num_channels   => 3,
       g_num_streams    => 1)
     port map(
       e_clk_i  (0)=> clk_sys,
@@ -1183,6 +1211,34 @@ begin
       q_rst_n_i   => rstn_sys,  
       q_slave_i   => top_cbar_master_o(c_tops_eca_aq),
       q_slave_o   => top_cbar_master_i(c_tops_eca_aq)); 
+  
+  c2 : eca_lvds_channel
+    port map(
+      clk_i     => clk_ref,
+      rst_n_i   => rstn_ref,
+      channel_i => channels(2),
+      lvds_o    => lvds_o);
+  
+  lvds_pins : altera_lvds
+    generic map(
+      g_family  => g_family,
+      g_inputs  => f_sub1(g_lvds_inout+g_lvds_in) +1,
+      g_outputs => f_sub1(g_lvds_inout+g_lvds_out)+1,
+      g_invert  => g_lvds_invert)
+    port map(
+      clk_ref_i    => clk_ref,
+      rstn_ref_i   => rstn_ref,
+      clk_lvds_i   => clk_lvds,
+      clk_enable_i => clk_enable,
+      -- !!! attach to TLU v2
+      dat_o        => lvds_i(f_sub1(g_lvds_inout+g_lvds_in) downto 0),
+      lvds_p_i     => lvds_p_i,
+      lvds_n_i     => lvds_n_i,
+      lvds_i_led_o => lvds_i_led_o,
+      dat_i        => lvds_o(f_sub1(g_lvds_inout+g_lvds_out) downto 0),
+      lvds_p_o     => lvds_p_o,
+      lvds_n_o     => lvds_n_o,
+      lvds_o_led_o => lvds_o_led_o);
   
   lcd_n : if not g_en_lcd generate
     top_cbar_master_i(c_tops_lcd) <= cc_dummy_slave_out;
@@ -1323,5 +1379,9 @@ begin
   
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------
+
+  -- !!!
+  gpio_oen_o <= (others => '0');
+  lvds_oen_o <= (0 => '1', others => '0');
   
 end rtl;
