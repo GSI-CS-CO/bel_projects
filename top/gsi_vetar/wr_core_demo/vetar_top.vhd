@@ -24,7 +24,7 @@ entity vetar_top is
     clk_125m_pllref_i 	: in std_logic;  -- 125 MHz PLL reference
     clk_125m_local_i  	: in std_logic;  -- local clk from 125Mhz oscillator
     clk_pll_o           : out std_logic; -- clock pll output
-    --nres              	: in std_logic; -- powerup reset
+
     
     ------------------------------------------------------------------------
     -- WR DAC signals
@@ -164,7 +164,7 @@ architecture rtl of vetar_top is
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   
   -- Top crossbar layout
-  constant c_slaves  : natural := 7;
+  constant c_slaves  : natural := 8;
   constant c_masters : natural := 3;
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_bridge(c_wrcore_bridge_sdb,          x"00000000"),
@@ -173,7 +173,9 @@ architecture rtl of vetar_top is
     3 => f_sdb_embed_device(c_eca_event_sdb,              x"00100C00"),
     4 => f_sdb_embed_device(c_wb_serial_lcd_sdb,          x"00100D00"),
     5 => f_sdb_embed_device(c_build_id_sdb,               x"00200000"),
-    6 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"04000000"));
+    6 => f_sdb_embed_device(f_wb_spi_flash_sdb(24),       x"04000000"),
+    7 => f_sdb_embed_device(c_vme_msi_sdb,                x"00100900"));
+
   constant c_sdb_address : t_wishbone_address := x"00300000";
 
   signal cbar_slave_i  : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -315,21 +317,16 @@ architecture rtl of vetar_top is
 
   -- test flash
   signal clk_50_delayed_72		: std_logic;
-  -- LA onewire
-  signal oneWire_i: std_logic;
-  signal oneWire_o: std_logic;
-  signal dit : std_logic_vector(6 downto 0);
- 
+
+  --irq test
+  signal     irq_test : std_logic :='0';
+  signal     width    : std_logic :='0';
 begin
 
   -- one wire
-  oneWire_i <= OneWire_CB;
-  --owr_i(0) <= OneWire_CB;
-  owr_i(0) <= oneWire_i;
+  owr_i(0) <= OneWire_CB;
   owr_i(1) <= '0';
-  --OneWire_CB <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
-  oneWire_o <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
-  OneWire_CB <= oneWire_o;
+  OneWire_CB <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
   
   -- open drain buffer for SFP i2c
   sfp_scl_i <= sfp_mod1;
@@ -598,7 +595,8 @@ begin
       g_ManufacturerID => c_GSI_ID,     -- 0x080031
       g_RevisionID     => c_RevisionID, -- 0x1
       g_ProgramID      => 96,           -- 0x60
-      g_base_addr		   => MECHANICALLY)
+      g_base_addr		  => MECHANICALLY,
+      g_irq_src        => MSI)
 
      port map(
         -- VME
@@ -609,11 +607,9 @@ begin
       vme_am_i        => vme_am_i,
       vme_ds_n_i      => vme_ds_n_i,
       vme_ga_i        => b"00" & vme_ga_i ,
-      --vme_ga_i        => "110111",
       vme_berr_o      => s_vme_berr_o,
       vme_dtack_n_o   => s_vme_dtack_n_o,
-      --vme_retry_n_o   => vme_retry_n_o,		
-		vme_retry_n_o   => open,		
+		vme_retry_n_o   => open,		       -- no retry pin in VETAR  
       vme_lword_n_i   => s_vme_lword_n_i,
       vme_lword_n_o   => s_vme_lword_n_o,
       vme_addr_i      => vme_addr_data_b(31 downto 1),
@@ -625,17 +621,20 @@ begin
       vme_iack_n_i    => vme_iack_n_i,
       vme_iackout_n_o => vme_iackout_n_o,
       -- buffer
-      vme_dtack_oe_o  => s_vme_dtack_oe_o,
+      --vme_dtack_oe_o  => s_vme_dtack_oe_o,
       vme_buffer_o    => s_vme_buffer,
       --vme_retry_oe_o  => vme_retry_oe_o,
-		vme_retry_oe_o  => open,
+		vme_retry_oe_o  => open,            -- no retry in VETAR
       --IRQ Generator    
-      irq_i           => '0',  -- => wbirq_i,  
+      irq_i           => '0', 
       int_ack_o       => open, -- => s_int_ack,
       reset_o         => open, -- => s_rst,
       -- WB Interface
       master_o        => cbar_slave_i(2),
       master_i        => cbar_slave_o(2),
+
+      slave_o         => cbar_master_i(7),
+      slave_i         => cbar_master_o(7),
       debug           => open);
 
   U_BUFFER_CTRL :   VME_Buffer_ctrl
@@ -651,19 +650,22 @@ begin
       data_buff_f2v_o  =>  vme_data_oe_ba_o,
       addr_buff_v2f_o  =>  vme_addr_oe_ab_o,
       addr_buff_f2v_o  =>  vme_addr_oe_ba_o,
+      dtack_oe_o       =>  s_vme_dtack_oe_o,
       latch_buff_o     =>  s_buffer_latch);
 
   vme_buffer_latch_o  <=  (others => s_buffer_latch);
 
   -- DATA & ADDR BUS MUX
-  vme_addr_data_b <=  s_vme_data_o                      when  s_vme_buffer.s_buffer_eo = data_buff and 
-																                              s_vme_buffer.s_datadir = fpga2vme         else
-								      (s_vme_addr_o & s_vme_lword_n_o)	when  s_vme_buffer.s_buffer_eo = addr_buff and 
-																					                    s_vme_buffer.s_addrdir = fpga2vme         else
-								      (others => 'Z');
+  vme_addr_data_b <=  s_vme_data_o                       when  s_vme_buffer.s_buffer_eo = data_buff and 
+																               s_vme_buffer.s_datadir = fpga2vme         else
+						    (s_vme_addr_o & s_vme_lword_n_o)	when  s_vme_buffer.s_buffer_eo = addr_buff and 
+																				   s_vme_buffer.s_addrdir = fpga2vme         else
+						    (others => 'Z');
 
   s_vme_lword_n_i	<= vme_addr_data_b(0);	
-	
+
+  -- completely redundant. There is already a signal for controlling the oe 
+  -- of the buffer. To be removed and tested.
   vme_dtack_oe_o  <=  s_vme_dtack_n_o	when s_vme_dtack_oe_o = '1' else 
                       '1';
 	
@@ -671,7 +673,8 @@ begin
   
   --Rst <= VME_RST_n_i and Reset;
   --rst	<= vme_rst_n_i;
-  ----------------------------------------
+
+ ----------------------------------------
 
   U_DAC_ARB : spec_serial_dac_arb
     generic map (
@@ -776,8 +779,6 @@ begin
  --     channel_i => channels(0),
  --     master_o  => vme_slave_i,
  --     master_i  => vme_slave_o);
- --     --master_o  => pcie_slave_i,
-      --master_i  => pcie_slave_o);
   
   GSI_CON : xwb_sdb_crossbar
    generic map(
@@ -857,23 +858,6 @@ begin
 			  green  when (    tm_up and     tm_valid)   else
 			  black;          
 
---  show_colors_display: process(clk_butis)
---  constant MAX : integer := 400000000;
---  variable cnt : integer range 0 to MAX;
---  variable color_cd : unsigned (2 downto 0) := "000";
--- 	begin
---		if rising_edge(clk_butis) then
---			
---			if(cnt = MAX) then
---				color_cd := color_cd + 1;
---				color <= std_logic_vector(color_cd);
---				cnt := 0;
---			else
---				cnt := cnt + 1;
---			end if;
---		end if;
---  end process; 
-  
   -- On board leds
   -----------------
    -- Link Activity
@@ -926,16 +910,15 @@ begin
   leds_lvds_out_o(1)	<= not eca_gpio(1);
    
   -- HDMI
-  --hdmi_o   <= (others => '0');
   hdmi_o(0) <= pps;
   hdmi_o(1) <= clk_ref;  
  
   -- LA
   ---------------------  
-  hplw(0) <= dit(0);
-  hplw(1) <= dit(1);
-  hplw(2) <= dit(2);
-  hplw(3) <= dit(3);
+  hplw(0) <= '0';
+  hplw(1) <= '0';
+  hplw(2) <= '0';
+  hplw(3) <= '0';
   
   hplw(7) <= clk_lcd;
   hplw(8) <= di_scp;

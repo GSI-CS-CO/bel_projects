@@ -55,6 +55,7 @@ package monster_pkg is
       core_clk_butis_o       : out   std_logic;
       core_rstn_wr_ref_o     : out   std_logic;
       core_rstn_butis_o      : out   std_logic;
+      core_debug_o           : out   std_logic_vector(15 downto 0);
       -- GPIO for the board
       gpio_o                 : out   std_logic_vector(g_outputs-1 downto 0);
       gpio_i                 : in    std_logic_vector(g_inputs-1  downto 0);
@@ -96,7 +97,6 @@ package monster_pkg is
       vme_iackout_n_o        : out   std_logic;
       vme_irq_n_o            : out   std_logic_vector(6 downto 0);
       vme_berr_o             : out   std_logic;
-      vme_dtack_oe_o         : out   std_logic;
       vme_buffer_latch_o     : out   std_logic_vector(3 downto 0);
       vme_data_oe_ab_o       : out   std_logic;
       vme_data_oe_ba_o       : out   std_logic;
