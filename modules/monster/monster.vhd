@@ -583,10 +583,11 @@ begin
   ref_clk : global_region port map(
     inclk  => clk_ref0,
     outclk => clk_ref);
-  
-  butis_clk : global_region port map(
-    inclk  => clk_ref1,
-    outclk => clk_butis);
+
+  --butis_clk : global_region port map(
+  --  inclk  => clk_ref1,
+  -- outclk => clk_butis);
+  clk_butis <= clk_ref1;
   
   phase_clk : global_region port map( -- skew must match ref_clk
     inclk  => clk_ref2,
