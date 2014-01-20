@@ -233,7 +233,7 @@
 
 ----------------------------------------------------------------------------------------------------------------------
 --  Vers_4_Revi_0: erstellt am 05.12.2013, Autor: W.Panschow                                                        --
---  A) Die Interrupt-Funktion der Intr_In-Eingaenge wurde ueberarbeitet.                                             --
+--  A) Die Interrupt-Funktion der Intr_In-Eingaenge wurde ueberarbeitet.                                            --
 --    Die Aenderungen betreffen:                                                                                    --
 --    1) Die Pegel bzw. Flanken zum generieren eines Interrupts. Sie koennen nicht mehr durch Generics oder         --
 --      Register vorgegeben werden. Nur ein positiver Pegel oder eine positive Flanke loest einen Interrupt aus,    --
@@ -252,9 +252,34 @@
 --      mehr erlaubt.                                                                                               --
 --  B) Das Signal "S_Powerup_Done" ist auf einen Entiy-Ausgang gelegt worden. Mit diesem Signal koennen die         --
 --    Firmware-Entwickler von Slave-Karten signalisieren, dass ein Powerup durchgefuehrt wurde. Dieses Signal ist   --
---    nur so lange aktiv, bis der SCU-Bus-Master es quittiert hat. Da dies im Allgemeinen schnell passieren wird.   --
---    Sollte das Signal durch eine LED angezeigt werden, sollt es entsprechend gestrecht werden.                    --
+--    nur so lange aktiv, bis es der SCU-Bus-Master quittiert hat. Da dies im Allgemeinen schnell passieren wird,   --
+--    sollte das Signal entsprechend gestrecht werden, wenn es durch eine LED treiben soll.                         --
 ----------------------------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------------------------------------------------------------
+--  Vers_5_Revi_0: erstellt am 17.01.2014, Autor: W.Panschow                                                        --
+--  A) Falls Slave-Karten die Moeglichkeit bieten, mit Erweiterungs-Karten bestueckt zu werden, ist es sinnvoll     --
+--    den bestueckten Erweiterungs-Karte-Typ, direkt ueber den Uebergabe-Stecker kodiert zu kennzeichnen. Bei der   --
+--    DIOB-Karte sind hierfuer z.B. 8 Bit vorgesehen. Firmware-Entwickler dieser Karte muessen fuer den jeweils     --
+--    bestueckten Erweiterungs-Karten-Typ entsprechende Funktionen auf Slave-Karte bereitstellen. Bei der           --
+--    Implementierung dieser Funktionen kann der Entwickler bei eindeutiger Erweiterungs-Karten-Kennung eine        --
+--    Tabelle pflegen, die ueber diese Kennung die entsprechende CID-System- und CID-Group-Kennung an die neuen     --
+--    SCU-Bus-Slave-Eingangsports anlegt.                                                                           --
+--    1) Es sind zwei neue Eingangs-Ports definiert worden:                                                         --
+--      "extension_cid_system" und "extension_cid_group". Beide sind 16 Bit breit. Wenn die Ports nicht beschaltet  --
+--       sind, werden sie mit "0000"hex vorbelegt.                                                                  --
+--    2) Es wurde die Auslese des "extension_cid_system"-Ports eingebaut.                                           --
+--      Die Adresse lautet "c_extension_cid_system_adr" und hat die Adresse X"0007" (hex).                          --
+--    3) Es wurde die Auslese des "extension_cid_group"-Ports eingebaut.                                            --
+--      Die Adresse lautet "c_extension_cid_group_adr" und hat die Adresse X"0008" (hex).                           --
+--  B) Fuer betimmte Funktionen ist es interessant zu wissen mit welcher Frequenz, dieses Makro, und eventuell      --
+--    nachgelagerte Anwenderfunktionen getaktet werden. Deshalb kann jetzt der Generic "CLK_in_Hz" ausgelesen       --
+--    werden. Um den Wert auf 16 Bit Breite zu beschraenken wird der Wert "Clk_in_Hz" in "ClK_in_10kHz" um-         --
+--    rechnet.                                                                                                      --
+--    1) Die Adresse zum Auslesen des "Clk_in_10kHz"-Werts lautet "c_clk_in_10khz_adr" und hat die                  --
+--     Adresse x"0009" (hex).                                                                                       --
+----------------------------------------------------------------------------------------------------------------------
+
 
 library IEEE;
 USE IEEE.std_logic_1164.all;
@@ -293,7 +318,7 @@ generic
     Intr_Enable:      std_logic_vector(15 DOWNTO 0) := B"0000_0000_0000_0000";
                                                                               
     -- change only here! increment by major changes of this macro
-    This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 4;
+    This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 5;
     
     -- change only here! increment by minor changes of this macro
     This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 0
@@ -316,7 +341,15 @@ port
     
     -- '1' => the user function(s), device, is ready to work with the control system
     User_Ready:         in    std_logic;
-
+    
+    -- if an extension card is connected to the slave card, than you can map cid_system of this extension
+    -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
+     extension_cid_system: in  std_logic_vector(15 DOWNTO 0) := (others => '0');
+    
+    -- if an extension card is connected to the slave card, than you can map cid_group of this extension
+    -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
+    extension_cid_group:  in  std_logic_vector(15 DOWNTO 0) := (others => '0');
+    
     -- latched data from SCU_Bus for external user functions
     Data_from_SCUB_LA:  out   std_logic_vector(15 DOWNTO 0);
 
@@ -357,6 +390,7 @@ port
   
   constant  Clk_in_ps: integer  := 1000000000 / (Clk_in_Hz / 1000);
   constant  Clk_in_ns: integer  := 1000000000 / Clk_in_Hz;
+  constant  clk_in_10kHz: integer := Clk_in_Hz / 10_000;
   
   constant  C_Version:  unsigned(7 downto 0) :=  to_unsigned(This_macro_vers_dont_change_from_outside, 8);
   constant  C_Revision: unsigned(7 downto 0) :=  to_unsigned(This_macro_revi_dont_change_from_outside, 8);
@@ -364,13 +398,28 @@ port
   constant  C_Slave_ID_Adr:     integer := 16#0001#;   -- address of slave ident code (rd)
   constant  C_FW_Version_Adr:   integer := 16#0002#;   -- address of firmware version (rd)
   constant  C_FW_Release_Adr:   integer := 16#0003#;   -- address of firmware release (rd)
-  constant  C_CID_System_Adr:   integer := 16#0004#;   -- address of hardware version (rd)
-  constant  C_CID_Group_Adr:    integer := 16#0005#;   -- address of hardware release (rd)
-  -- address of version and revision register of this macro (rd)
-  constant  C_Vers_Revi_of_this_Macro: integer := 16#006#;
+  constant  C_CID_System_Adr:   integer := 16#0004#;   -- addresses CID system number of slave card, source is generic CID_System (rd)
+  constant  C_CID_Group_Adr:    integer := 16#0005#;   -- addresses CID group number of slave card, source is generic CID_Group (rd)
+
+  constant  C_Vers_Revi_of_this_Macro:  integer := 16#0006#;  -- address of version and revision register of this macro (rd)
+  constant  c_extension_cid_system_adr: integer := 16#0007#;  -- adresses cid system number of a connected extension card,
+                                                              -- source is the port "extension_cid_system" of this macro
+  constant  c_extension_cid_group_adr:  integer := 16#0008#;  -- adresses cid system group of a connected extension card,
+                                                              -- source is the port "extension_cid_group" of this macro
+  constant  c_clk_in_10khz_adr: integer := 16#0009#;   -- adresse unter der die Frequenz des Generics "CLK_in_Hz" in 10khz-Aufloesung
+                                                       -- umgerechnet ausgelesen werden kann.
+  
+  constant  C_Free_Intern_A_0A: integer := 16#000A#;   -- reserved internal address 0Ahex
+  constant  C_Free_Intern_A_0B: integer := 16#000B#;   -- reserved internal address 0Bhex
+  constant  C_Free_Intern_A_0C: integer := 16#000C#;   -- reserved internal address 0Chex
+  constant  C_Free_Intern_A_0D: integer := 16#000D#;   -- reserved internal address 0Dhex
+  constant  C_Free_Intern_A_0E: integer := 16#000E#;   -- reserved internal address 0Ehex
+  constant  C_Free_Intern_A_0F: integer := 16#000F#;   -- reserved internal address 0Fhex
+  
   constant  C_Echo_Reg_Adr:     integer := 16#0010#;   -- address of echo register (rd/wr)
   constant  C_Status_Reg_Adr:   integer := 16#0011#;   -- address of status register (rd)
   
+
   constant  C_Free_Intern_A_12: integer := 16#0012#;   -- reserved internal address 12hex
   constant  C_Free_Intern_A_13: integer := 16#0013#;   -- reserved internal address 13hex
   constant  C_Free_Intern_A_14: integer := 16#0014#;   -- reserved internal address 14hex
@@ -389,7 +438,6 @@ port
   constant  C_Intr_In_Adr:      integer := 16#0020#;   -- address of interrupt In register (rd)
   constant  C_Intr_Ena_Adr:     integer := 16#0021#;   -- address of interrupt enable register (rd/wr)
   constant  C_Intr_Active_Adr:  integer := 16#0024#;   -- address of interrupt active register (rd)
-  constant  C_Intr_Edge_Adr:    integer := 16#0026#;   -- address of interrupt edge register (rd/wr)
 
   signal    S_nReset:           std_logic;                        -- '0' => S_nReset is active
 
@@ -770,6 +818,32 @@ P_Standard_Reg: process (clk, S_nReset)
               S_Read_Out <= std_logic_vector(to_unsigned(CID_Group, S_Read_Out'length));
               S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
             end if;
+          when C_Vers_Revi_of_this_Macro =>
+            S_Standard_Reg_Acc <= '1';
+            if SCUB_RDnWR = '1' then
+              S_Read_Out <= std_logic_vector(C_Version) & std_logic_vector(C_Revision);
+              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
+            end if;
+          when c_extension_cid_system_adr =>
+            S_Standard_Reg_Acc <= '1';
+            if SCUB_RDnWR = '1' then
+              S_Read_Out <= extension_cid_system;
+              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
+            end if;
+          when c_extension_cid_group_adr =>
+            S_Standard_Reg_Acc <= '1';
+            if SCUB_RDnWR = '1' then
+              S_Read_Out <= extension_cid_group;
+              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
+            end if;
+          when c_clk_in_10khz_adr =>
+            S_Standard_Reg_Acc <= '1';
+            if SCUB_RDnWR = '1' then
+              S_Read_Out <= std_logic_vector(to_unsigned(clk_in_Hz / 10_000, S_Read_Out'length));
+              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
+            end if;
+          when C_Free_Intern_A_0A to C_Free_Intern_A_0F =>
+             S_Standard_Reg_Acc <= '1';
           when C_Echo_Reg_Adr =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
@@ -811,26 +885,7 @@ P_Standard_Reg: process (clk, S_nReset)
               S_Wr_Intr_Active <= S_Wr_Intr_Active(0) & '1';
               S_SCUB_Dtack <= '1';  -- ??
             end if;
-          when C_Vers_Revi_of_this_Macro =>
-            S_Standard_Reg_Acc <= '1';
-            if SCUB_RDnWR = '1' then
-              S_Read_Out <= std_logic_vector(C_Version) & std_logic_vector(C_Revision);
-              S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
-            end if;
-          when   C_Free_Intern_A_12
-             | C_Free_Intern_A_13
-             | C_Free_Intern_A_14
-             | C_Free_Intern_A_15
-             | C_Free_Intern_A_16
-             | C_Free_Intern_A_17
-             | C_Free_Intern_A_18
-             | C_Free_Intern_A_19
-             | C_Free_Intern_A_1A
-             | C_Free_Intern_A_1B
-             | C_Free_Intern_A_1C
-             | C_Free_Intern_A_1D
-             | C_Free_Intern_A_1E
-             | C_Free_Intern_A_1F  =>
+          when   C_Free_Intern_A_12 to C_Free_Intern_A_1F  =>
             S_Standard_Reg_Acc <= '1';
           when others =>                -- der Zugriff soll ausserhalb dieses Makros erfolgen (externe User-Register)
             S_Adr_Val <= '1';
