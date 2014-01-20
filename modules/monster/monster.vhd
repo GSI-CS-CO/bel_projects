@@ -771,7 +771,9 @@ begin
         g_ManufacturerID => c_GSI_ID,     -- 0x080031
         g_RevisionID     => c_RevisionID, -- 0x1
         g_ProgramID      => 96,           -- 0x60
-        g_base_addr      => MECHANICALLY)
+        g_base_addr      => MECHANICALLY,
+        g_sdb_addr 		 => c_top_sdb_address,
+        g_irq_src        => MSI)
        port map(
         clk_i           => clk_sys,
         vme_as_n_i      => vme_as_n_i,
