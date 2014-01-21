@@ -261,8 +261,11 @@ set_location_assignment PIN_G14 -to UIO[9]
 set_location_assignment PIN_E7 -to A_NLED_D2
 set_location_assignment PIN_D7 -to A_NLED_D3
 
-set_global_assignment -name VHDL_FILE Test_User_Reg.vhd
-set_global_assignment -name VHDL_FILE AW_IO_Reg.vhd
+set_global_assignment -name VHDL_FILE ../../top/scu_diob/Zeitbasis.vhd
+set_global_assignment -name VHDL_FILE ../../top/scu_diob/Test_User_Reg.vhd
+set_global_assignment -name VHDL_FILE ../../top/scu_diob/SysClock.vhd
+set_global_assignment -name VHDL_FILE ../../top/scu_diob/PLL_SIO.vhd
+set_global_assignment -name VHDL_FILE ../../top/scu_diob/AW_IO_Reg.vhd
 set_global_assignment -name VHDL_FILE ../../modules/scu_bus/scu_bus_slave_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../top/scu_diob/IO_4x8.vhd
 set_global_assignment -name VHDL_FILE ../../top/scu_diob/flash_loader_v01.vhd
