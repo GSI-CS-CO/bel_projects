@@ -77,6 +77,7 @@ entity monster is
     core_clk_butis_o       : out   std_logic;
     core_rstn_wr_ref_o     : out   std_logic;
     core_rstn_butis_o      : out   std_logic;
+    core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
     -- GPIO for the board
     gpio_o                 : out   std_logic_vector(g_outputs-1 downto 0);
     gpio_i                 : in    std_logic_vector(g_inputs-1  downto 0);
@@ -231,14 +232,15 @@ architecture rtl of monster is
   constant c_irqm_aq     : natural := 2;
   constant c_irqm_scubus : natural := 3;
   
-  constant c_irq_slaves  : natural := 2;
+  constant c_irq_slaves  : natural := 3;
   constant c_irqs_lm32   : natural := 0;
   constant c_irqs_pcie   : natural := 1;
-  -- !!! add VME here
+  constant c_irqs_vme    : natural := 2;
   
   constant c_irq_layout_req : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
    (c_irqs_lm32 => f_sdb_auto_device(c_irq_ep_sdb,   true),
-    c_irqs_pcie => f_sdb_auto_device(c_msi_pcie_sdb, g_en_pcie));
+    c_irqs_pcie => f_sdb_auto_device(c_msi_pcie_sdb, g_en_pcie),
+    c_irqs_vme  => f_sdb_auto_device(c_vme_msi_sdb,  g_en_vme));
   
   constant c_irq_layout      : t_sdb_record_array(c_irq_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_irq_layout_req);
@@ -475,7 +477,7 @@ begin
   
   reset : altera_reset
     generic map(
-	   g_clocks => 3)
+      g_clocks => 3)
     port map(
       clk_free_i    => clk_free,
       rstn_i        => core_rstn_i,
@@ -486,10 +488,10 @@ begin
       pll_arst_o    => pll_rst,
       clocks_i(0)   => clk_free,
       clocks_i(1)   => clk_sys,
-		clocks_i(2)   => clk_update,
+      clocks_i(2)   => clk_update,
       rstn_o(0)     => rstn_free,
       rstn_o(1)     => rstn_sys,
-		rstn_o(2)     => rstn_update);
+      rstn_o(2)     => rstn_update);
 
   dmtd_a2 : if g_family = "Arria II" generate
     dmtd_inst : dmtd_pll port map(
@@ -581,10 +583,11 @@ begin
   ref_clk : global_region port map(
     inclk  => clk_ref0,
     outclk => clk_ref);
-  
-  butis_clk : global_region port map(
-    inclk  => clk_ref1,
-    outclk => clk_butis);
+
+  --butis_clk : global_region port map(
+  --  inclk  => clk_ref1,
+  -- outclk => clk_butis);
+  clk_butis <= clk_ref1;
   
   phase_clk : global_region port map( -- skew must match ref_clk
     inclk  => clk_ref2,
@@ -607,8 +610,8 @@ begin
       rstn_o(0)   => rstn_ref,
       rstn_o(1)   => rstn_butis,
       rstn_o(2)   => rstn_phase,
-      offset_i(0) => phase_butis,
-      offset_i(1) => (others => '0'),
+      offset_i(0) => (others => '0'),
+      offset_i(1) => phase_butis,
       offset_i(2) => (others => '0'),
       phasedone_i => phase_done,
       phasesel_o  => phase_sel,
@@ -754,6 +757,7 @@ begin
   
   vme_n : if not g_en_vme generate
     top_cbar_slave_i (c_topm_vme) <= cc_dummy_master_out;
+    irq_cbar_master_i(c_irqs_vme) <= cc_dummy_slave_out;
     vme_addr_data_b <= (others => 'Z');
   end generate;
   vme_y : if g_en_vme generate
@@ -768,7 +772,9 @@ begin
         g_ManufacturerID => c_GSI_ID,     -- 0x080031
         g_RevisionID     => c_RevisionID, -- 0x1
         g_ProgramID      => 96,           -- 0x60
-        g_base_addr      => MECHANICALLY)
+        g_base_addr      => MECHANICALLY,
+        g_sdb_addr 		 => c_top_sdb_address,
+        g_irq_src        => MSI)
        port map(
         clk_i           => clk_sys,
         vme_as_n_i      => vme_as_n_i,
@@ -790,7 +796,6 @@ begin
         vme_iackin_n_i  => vme_iackin_n_i,
         vme_iack_n_i    => vme_iack_n_i,
         vme_iackout_n_o => vme_iackout_n_o,
-        vme_dtack_oe_o  => s_vme_dtack_oe_o,
         vme_buffer_o    => s_vme_buffer,
         vme_retry_oe_o  => open,
         irq_i           => '0',  -- => wbirq_i,  
@@ -798,6 +803,8 @@ begin
         reset_o         => open, -- => s_rst,
         master_o        => top_cbar_slave_i(c_topm_vme),
         master_i        => top_cbar_slave_o(c_topm_vme),
+        slave_o         => irq_cbar_master_i(c_irqs_vme),
+        slave_i         => irq_cbar_master_o(c_irqs_vme), 
         debug           => open);
     
     U_BUFFER_CTRL : VME_Buffer_ctrl
@@ -812,6 +819,7 @@ begin
         data_buff_f2v_o  =>  vme_data_oe_ba_o,
         addr_buff_v2f_o  =>  vme_addr_oe_ab_o,
         addr_buff_f2v_o  =>  vme_addr_oe_ba_o,
+        dtack_oe_o       =>  s_vme_dtack_oe_o,
         latch_buff_o     =>  s_vme_buffer_latch);
     
     vme_addr_data_b <= 
