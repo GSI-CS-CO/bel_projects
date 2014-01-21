@@ -1,5 +1,6 @@
-library IEEE;
-use IEEE.STD_LOGIC_1164.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library work;
 
@@ -134,5 +135,28 @@ port
     activity_led_n_opdrn:   out   std_logic   -- für Aktivitätsanzeige von lemo_io vorgesehen    (opendrain, aktiv low)
     );
 end component lemo_io;
+
+component tmr_scu_bus is
+  generic (
+    Base_addr:      unsigned(15 downto 0);
+    diag_on_is_1:   integer range 0 to 1 := 0);   -- if 1 then diagnosic information is generated during compilation
+  port (
+    clk:                in std_logic;
+    nrst:               in std_logic;
+    
+    tmr_irq:            out std_logic;
+    
+    -- SCUB interface
+    Adr_from_SCUB_LA:   in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
+    Data_from_SCUB_LA:  in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
+    Ext_Adr_Val:        in    std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active:      in    std_logic;                      -- '1' => Rd-Cycle is active
+    Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
+    user_rd_active:     out   std_logic;                      -- '1' = read data available at 'Data_to_SCUB'-output
+    Data_to_SCUB:       out   std_logic_vector(15 downto 0);  -- connect read sources to SCUB-Macro
+    Dtack_to_SCUB:      out   std_logic                       -- connect Dtack to SCUB-Macro
+    );
+
+end component;
 
 end package aux_functions_pkg;

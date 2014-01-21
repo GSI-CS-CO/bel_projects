@@ -226,6 +226,10 @@ constant c_xwb_uart : t_sdb_device := (
   signal adc_data_to_SCUB: std_logic_vector(15 downto 0);
   signal adc_dtack: std_logic;
   
+  signal tmr_rd_active: std_logic;
+  signal tmr_data_to_SCUB: std_logic_vector(15 downto 0);
+  signal tmr_dtack: std_logic;
+  
   signal fg_1_dtack: std_logic;
   signal fg_1_data_to_SCUB: std_logic_vector(15 downto 0);
   signal fg_1_rd_active: std_logic;
@@ -270,25 +274,13 @@ constant c_xwb_uart : t_sdb_device := (
   signal wb_scu_dtack: std_logic;
   signal wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
   
-  signal irqcnt:  unsigned(12 downto 0);
+  --signal irqcnt:  unsigned(12 downto 0);
+  signal tmr_irq: std_logic;
   
-  signal  dac_1_ext_trig, dac_2_ext_trig: std_logic;
+  signal dac_1_ext_trig, dac_2_ext_trig: std_logic;
 
   begin
     
-    timer_irq: process (clk_sys, reset_rstn)
-    begin
-      if reset_rstn = "0" then
-        irqcnt <= '0' & x"FFF";
-      elsif rising_edge(clk_sys) then
-        if irqcnt(irqcnt'high) = '1' then
-          irqcnt <= '0' & x"FFF";
-        else
-          irqcnt <= irqcnt - 1;
-        end if;
-      end if;
-    end process;
-
 fl : flash_loader_v01
   port map (noe_in => '0');
 
@@ -438,7 +430,7 @@ adda_pll_1: adda_pll -- Altera megafunction
 
     
 
-Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack or wb_scu_dtack or fg_1_dtack;
+Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack or wb_scu_dtack or fg_1_dtack or tmr_dtack;
 
 SCU_Slave: SCU_Bus_Slave
 generic map (
@@ -460,7 +452,7 @@ port map (
     nSCUB_Reset_in => A_nReset, -- in,        SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
     Data_to_SCUB => Data_to_SCUB, -- in,        connect read sources from external user functions
     Dtack_to_SCUB => Dtack_to_SCUB, -- in,        connect Dtack from from external user functions
-    Intr_In => "0000000000000" & irqcnt(irqcnt'high) & fg_1_dreq, -- in,        interrupt(15 downto 1)
+    Intr_In => "0000000000000" & tmr_irq & fg_1_dreq, -- in,        interrupt(15 downto 1)
     User_Ready => '1',
     Data_from_SCUB_LA => Data_from_SCUB_LA, -- out,        latched data from SCU_Bus for external user functions
     ADR_from_SCUB_LA => ADR_from_SCUB_LA, -- out,        latched address from SCU_Bus for external user functions
@@ -518,7 +510,7 @@ dac_1: dac714
     nCS_DAC => nDAC1_A0, -- out, '0' enable shift of internal shift register of DAC1
     nLD_DAC => nDAC1_A1, -- out, '0' copy shift register to output latch of DAC1
     nCLR_DAC => nDAC1_CLR, -- out, '0' set DAC1 to zero (pulse width min 200 ns)
-    ext_trig_val  => dac_1_ext_trig,  -- out, '1' got an valid external trigger, during extern trigger mode.
+    ext_trig_valid  => dac_1_ext_trig,  -- out, '1' got an valid external trigger, during extern trigger mode.
     Rd_Port => dac1_data_to_SCUB, -- out, connect read sources (over multiplexer) to SCUB-Macro
     Rd_Activ => dac1_rd_active, -- out, '1' = read data available at 'Data_to_SCUB'-output
     Dtack => dac1_dtack
@@ -547,7 +539,7 @@ dac_2: dac714
     nCS_DAC => nDAC2_A0, -- out, '0' enable shift of internal shift register of DAC2
     nLD_DAC => nDAC2_A1, -- out, '0' copy shift register to output latch of DAC2
     nCLR_DAC => nDAC2_CLR, -- out, '0' set DAC2 to zero (pulse width min 200 ns)
-    ext_trig_val  => dac_2_ext_trig,  -- out, '1' got an valid external trigger, during extern trigger mode.
+    ext_trig_valid  => dac_2_ext_trig,  -- out, '1' got an valid external trigger, during extern trigger mode.
     Rd_Port => dac2_data_to_SCUB, -- out, connect read sources (over multiplexer) to SCUB-Macro
     Rd_Activ => dac2_rd_active, -- out, '1' = read data available at 'Data_to_SCUB'-output
     Dtack => dac2_dtack
@@ -620,6 +612,7 @@ adc: adc_scu_bus
     channel_6 => ADC_channel_6,
     channel_7 => ADC_channel_7,
     channel_8 => ADC_channel_8);
+   
     
 fg_1: fg_quad_scu_bus
   generic map (
@@ -647,6 +640,24 @@ fg_1: fg_quad_scu_bus
     sw_strobe         => fg_1_strobe            -- signals new output data
   );
 
+  tmr: tmr_scu_bus
+  generic map (
+    Base_addr => x"0330",
+    diag_on_is_1 => 1)
+  port map (
+    clk => clk_sys,
+    nrst => nPowerup_Res,
+    
+    tmr_irq => tmr_irq,
+    
+    Adr_from_SCUB_LA => ADR_from_SCUB_LA,
+    Data_from_SCUB_LA => Data_from_SCUB_LA,
+    Ext_Adr_Val => Ext_Adr_Val,
+    Ext_Rd_active => Ext_Rd_active,
+    Ext_Wr_active => Ext_Wr_active,
+    user_rd_active => tmr_rd_active,
+    Data_to_SCUB => tmr_data_to_SCUB,
+    Dtack_to_SCUB => tmr_dtack);
 
 p_led_ena: div_n
   generic map (
@@ -723,17 +734,19 @@ p_read_mux: process (
     dac1_rd_active, dac1_data_to_SCUB,
     dac2_rd_active, dac2_data_to_SCUB,
     adc_rd_active, adc_data_to_SCUB,
-    fg_1_rd_active, fg_1_data_to_SCUB    
+    fg_1_rd_active, fg_1_data_to_SCUB,
+    tmr_rd_active, tmr_data_to_SCUB
     )
-  variable sel: unsigned(4 downto 0);
+  variable sel: unsigned(5 downto 0);
   begin
-    sel :=  fg_1_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
+    sel :=  tmr_rd_active & fg_1_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
     case sel IS
-      when "00001" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "00010" => Data_to_SCUB <= dac1_data_to_SCUB;
-      when "00100" => Data_to_SCUB <= dac2_data_to_SCUB;
-      when "01000" => Data_to_SCUB <= adc_data_to_SCUB;
-      when "10000" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "000001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "000010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "000100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "001000" => Data_to_SCUB <= adc_data_to_SCUB;
+      when "010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "100000" => Data_to_SCUB <= tmr_data_to_SCUB;
       when others =>
         Data_to_SCUB <= X"0000";
     end case;

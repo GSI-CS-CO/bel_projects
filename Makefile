@@ -6,9 +6,10 @@
 #   make STAGING=/tmp/package PREFIX=/usr install
 #   ... will compile the programs to expect installation into /usr, but
 #       will actually install them into /tmp/package/usr for zipping.
-STAGING ?=
-PREFIX  ?= /usr/local
-PWD     := $(shell pwd)
+STAGING     ?=
+PREFIX      ?= /usr/local
+EXTRA_FLAGS ?=
+PWD         := $(shell pwd)
 
 all::	etherbone tools eca sdbfs toolchain firmware driver
 
@@ -21,31 +22,31 @@ distclean::	clean
 	for i in etherbone-core fpga-config-space general-cores wr-cores wrpc-sw; do cd ip_cores/$$i; git clean -xfd .; cd ../..; done
 
 etherbone::
-	$(MAKE) -C ip_cores/etherbone-core/api all
+	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
 
 etherbone-clean::
-	$(MAKE) -C ip_cores/etherbone-core/api clean
+	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" clean
 
 etherbone-install::
-	$(MAKE) -C ip_cores/etherbone-core/api install
+	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" install
 
 tools::		etherbone
-	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api all
+	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
 
 tools-clean::
-	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api clean
+	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" clean
 
 tools-install::
-	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api install
+	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" install
 
 eca::		etherbone
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api all
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
 
 eca-clean::
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api clean
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" clean
 
 eca-install::
-	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api install
+	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" install
 
 driver::
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb all
@@ -83,19 +84,25 @@ firmware-clean::
 	$(MAKE) -C ip_cores/wrpc-sw EB=$(PWD)/ip_cores/etherbone-core/api SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
 scu::		firmware
-	$(MAKE) -C syn/gsi_scu/control
+	$(MAKE) -C syn/gsi_scu/control PATH=$(PWD)/toolchain/bin:$(PATH) all
 
 scu-clean::
-	$(MAKE) -C syn/gsi_scu/control clean
+	$(MAKE) -C syn/gsi_scu/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+vetar::		firmware
+	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+vetar-clean::
+	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
 exploder::	firmware
-	$(MAKE) -C syn/gsi_exploder/wr_core_demo
+	$(MAKE) -C syn/gsi_exploder/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
 
 exploder-clean::
-	$(MAKE) -C syn/gsi_exploder/wr_core_demo clean
+	$(MAKE) -C syn/gsi_exploder/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
 pexarria5::	firmware
-	$(MAKE) -C syn/gsi_pexarria5/control
+	$(MAKE) -C syn/gsi_pexarria5/control PATH=$(PWD)/toolchain/bin:$(PATH) all
 
 pexarria5-clean::
-	$(MAKE) -C syn/gsi_pexarria5/control clean
+	$(MAKE) -C syn/gsi_pexarria5/control PATH=$(PWD)/toolchain/bin:$(PATH) clean

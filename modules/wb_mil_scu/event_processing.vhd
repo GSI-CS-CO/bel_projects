@@ -155,7 +155,7 @@ timing_received <= timing_rcv and timing_cmd;
 
 ev_direct_to_fifo <= '1' when unsigned(event_d(7 downto 0)) >= 200 else '0';
 
-ev_to_fifo <= '1' when event_fin and (fi_ev_to_fifo or not ev_filt_on or ev_direct_to_fifo) else '0';
+ev_to_fifo <= event_fin and (fi_ev_to_fifo or not ev_filt_on or ev_direct_to_fifo);
 
 
 p_filt_access:  process (clk_i, nRst_i)
@@ -239,11 +239,11 @@ puls1_length: div_n
 p_puls1:  process (clk_i)
   begin
     if rising_edge(clk_i) then
-      if timing_received and ev_filt_on and fi_ev_puls1_s then
+      if (timing_received and ev_filt_on and fi_ev_puls1_s) = '1' then
         puls1 <= '1';
-      elsif puls1 then
-        if puls1_frame then
-          if timing_received and ev_filt_on and fi_ev_puls1_e then
+      elsif puls1 = '1' then
+        if puls1_frame = '1' then
+          if (timing_received and ev_filt_on and fi_ev_puls1_e) = '1' then
             puls1 <= '0';
           end if;
         else
@@ -272,11 +272,11 @@ puls2_length: div_n
 p_puls2:  process (clk_i)
   begin
     if rising_edge(clk_i) then
-      if timing_received and ev_filt_on and fi_ev_puls2_s then
+      if (timing_received and ev_filt_on and fi_ev_puls2_s) = '1' then
         puls2 <= '1';
-      elsif puls2 then
-        if puls2_frame then
-          if timing_received and ev_filt_on and fi_ev_puls2_e then
+      elsif puls2 = '1' then
+        if puls2_frame = '1' then
+          if (timing_received and ev_filt_on and fi_ev_puls2_e) = '1' then
             puls2 <= '0';
           end if;
         else
@@ -294,7 +294,7 @@ ev_puls2 <= puls2;
 p_ev_timer_res:  process (clk_i)
   begin
     if rising_edge(clk_i) then
-      if timing_received and ev_filt_on and fi_ev_timer_res and ev_reset_on then
+      if (timing_received and ev_filt_on and fi_ev_timer_res and ev_reset_on) = '1' then
         ev_timer_res_o <= '1';
       else
         ev_timer_res_o <= '0';
@@ -305,7 +305,7 @@ p_ev_timer_res:  process (clk_i)
 ev_timer_res <= ev_timer_res_o;
 
 
-p_mux_filter_addr:  process (all)
+p_mux_filter_addr:  process (filt_cntrl_sm, filter_addr, event_d, filt_addr)
   begin
     if filt_cntrl_sm = ev_rd or filt_cntrl_sm = ev_rd_fin then
       filter_addr <= event_d(filter_addr_width-1 downto 0);
@@ -315,7 +315,7 @@ p_mux_filter_addr:  process (all)
   end process p_mux_filter_addr;
 
 
-p_mux_read_port:  process (all)
+p_mux_read_port:  process (filt_cntrl_sm, filt_data_o, event_o)
   begin
     if filt_cntrl_sm = fi_rd then
       read_port_o <= std_logic_vector(to_unsigned(0 ,(16-filter_data_width))) & filt_data_o;
