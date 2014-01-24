@@ -7,7 +7,7 @@ CROSS_COMPILE	?= lm32-elf-
 CC		=  $(CROSS_COMPILE)gcc
 OBJCOPY		=  $(CROSS_COMPILE)objcopy
 GENRAMMIF	?= ../../../ip_cores/wrpc-sw/tools/genrammif
-CFLAGS		?= -mmultiply-enabled -mbarrel-shift-enabled -Os
+CFLAGS		?= -mmultiply-enabled -mbarrel-shift-enabled -Os -DCPU_CLOCK=62500
 STUBD		?= ../../../modules/lm32_stub
 STUBS		?= $(STUBD)/stubs.c $(STUBD)/crt0.S
 LDFLAGS		?= -nostdlib -T $(STUBD)/ram.ld -Wl,--defsym,_fstack=$(RAM_SIZE)-4 -lgcc -lc
@@ -17,7 +17,7 @@ all:	$(TARGET).mif $(TARGET).sof $(TARGET).jic $(TARGET).rpd
 clean:
 	rm -rf db incremental_db PLLJ_PLLSPE_INFO.txt
 	rm -f $(TARGET).*.rpt $(TARGET).*.summary $(TARGET).map* $(TARGET).fit.* $(TARGET).pin $(TARGET).jdi $(TARGET)*.qdf $(TARGET).done $(TARGET).qws
-	rm -f $(TARGET).rpd $(TARGET).jic $(TARGET).pof $(TARGET).sof $(TARGET).dep
+	rm -f $(TARGET).rpd $(TARGET).jic $(TARGET).pof $(TARGET).sof $(TARGET).dep $(TARGET).elf $(TARGET).o
 
 %.elf:
 	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(LDFLAGS)
