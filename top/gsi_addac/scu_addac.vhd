@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 library work;
 use work.wishbone_pkg.all;
@@ -195,6 +196,8 @@ constant c_xwb_uart : t_sdb_device := (
   
   signal clk_sys, clk_cal, locked : std_logic;
   
+  constant clk_in_hz: integer := 125_000_000;
+  
   signal SCUB_SRQ: std_logic;
   signal SCUB_Dtack: std_logic;
   signal convst: std_logic;
@@ -285,6 +288,13 @@ constant c_xwb_uart : t_sdb_device := (
   signal tmr_irq: std_logic;
   
   signal dac_1_ext_trig, dac_2_ext_trig: std_logic;
+  
+  constant c_led_cnt:				integer := integer(ceil(real(clk_sys_in_hz) / real(1_000_000_000) * real(125000000)));
+	constant c_led_cnt_width:	integer := integer(floor(log2(real(c_led_cnt)))) + 2;
+	signal  s_led_cnt:				unsigned( c_led_cnt_width-1 downto 0) := (others => '0');
+  
+  signal s_led_en:      std_logic;
+  signal s_test_vector: std_logic_vector(15 downto 0) := x"8000";
 
   begin
     
@@ -733,6 +743,35 @@ p_led_ena: div_n
 --
 -- end process p_test_port_mux;
 
+  -------------------------------------------------------------------------------
+	-- precsaler for the led test vector
+	-------------------------------------------------------------------------------
+	sec_prescale:	process(clk_sys, nPowerup_Res)
+	begin
+		if nPowerup_Res = '0' then
+			s_led_en <= '0';
+		elsif rising_edge(clk_sys) then
+			if s_led_cnt = to_unsigned(c_led_cnt, c_led_cnt_width) then
+				s_led_en <= '1';
+				s_led_cnt <= (others => '0');
+			else
+				s_led_en <= '0';
+				s_led_cnt <= s_led_cnt  + 1;
+			end if;
+		end if;
+	end process;
+	
+	-------------------------------------------------------------------------------
+	-- rotating bit as a test vector for led testing
+	-------------------------------------------------------------------------------
+	test_signal: process(clk_sys, nPowerup_Res, s_led_en)
+	begin
+		if nPowerup_Res = '0' then
+			s_test_vector <= ('1', others => '0');
+		elsif rising_edge(clk_sys) and s_led_en = '1' then
+			s_test_vector <= s_test_vector(s_test_vector'high-1 downto 0) & s_test_vector(s_test_vector'high);
+		end if;
+	end process;
 
 p_led_mux: process (
     ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4,
@@ -742,7 +781,7 @@ p_led_mux: process (
     )
   begin
     if A_MODE_SEL = "11" then
-      A_nLED <= not nADC_PAR_SER_SEL & nADC_PAR_SER_SEL & NDIFF_IN_EN & "1" & x"FFF";
+      A_nLED <= not nADC_PAR_SER_SEL & nADC_PAR_SER_SEL & NDIFF_IN_EN & not dac1_dtack & not dac2_dtack & "111" & x"FF";
     elsif A_MODE_SEL = "01" then
       case not A_ADC_DAC_SEL IS
         when X"1" => A_nLED <= not ADC_channel_1;
@@ -756,6 +795,8 @@ p_led_mux: process (
         when others =>
           A_nLED <= (others => '1');
       end case;
+    elsif A_MODE_SEL = "10" then
+      A_nLED <= not s_test_vector;
     else
       A_nLED <= (others => '1');
     end if;
