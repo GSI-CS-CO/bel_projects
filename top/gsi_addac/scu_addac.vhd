@@ -319,10 +319,10 @@ adda_pll_1: adda_pll -- Altera megafunction
     clk_sys_rstn <= reset_rstn(0);
 
   -- open drain buffer for one wire
-        owr_i(0) <= A_OneWire;
-        A_OneWire <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
-  owr_i(1) <= A_OneWire_EEPROM;
-        A_OneWire_EEPROM <= owr_pwren_o(1) when (owr_pwren_o(1) = '1' or owr_en_o(1) = '1') else 'Z';
+    owr_i(0) <= A_OneWire;
+    A_OneWire <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
+    owr_i(1) <= A_OneWire_EEPROM;
+    A_OneWire_EEPROM <= owr_pwren_o(1) when (owr_pwren_o(1) = '1' or owr_en_o(1) = '1') else 'Z';
   
   -- The top-most Wishbone B.4 crossbar
   interconnect : xwb_sdb_crossbar
@@ -365,7 +365,8 @@ adda_pll_1: adda_pll -- Altera megafunction
       g_slave1_interface_mode => PIPELINED,
       g_slave2_interface_mode => PIPELINED,
       g_slave1_granularity => BYTE,
-      g_slave2_granularity => WORD)
+      g_slave2_granularity => WORD,
+      g_init_file => "scu_addac.mif")
     port map(
       clk_sys_i => clk_sys,
       rst_n_i => clk_sys_rstn,
@@ -810,19 +811,21 @@ p_read_mux: process (
     adc_rd_active, adc_data_to_SCUB,
     fg_1_rd_active, fg_1_data_to_SCUB,
     fg_2_rd_active, fg_2_data_to_SCUB,
-    tmr_rd_active, tmr_data_to_SCUB
+    tmr_rd_active, tmr_data_to_SCUB,
+    wb_scu_rd_active, wb_scu_data_to_SCUB
     )
-  variable sel: unsigned(6 downto 0);
+  variable sel: unsigned(7 downto 0);
   begin
-    sel :=  tmr_rd_active & fg_2_rd_active & fg_1_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
+    sel :=  wb_scu_rd_active & tmr_rd_active & fg_2_rd_active & fg_1_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
     case sel IS
-      when "0000001" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "0000010" => Data_to_SCUB <= dac1_data_to_SCUB;
-      when "0000100" => Data_to_SCUB <= dac2_data_to_SCUB;
-      when "0001000" => Data_to_SCUB <= adc_data_to_SCUB;
-      when "0010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "0100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
-      when "1000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "00000001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "00000010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "00000100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "00001000" => Data_to_SCUB <= adc_data_to_SCUB;
+      when "00010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "00100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
+      when "01000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "10000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
       when others =>
         Data_to_SCUB <= X"0000";
     end case;
