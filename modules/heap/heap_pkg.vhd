@@ -28,7 +28,7 @@ package heap_pkg is
    
    function f_get_r_child(idxParent : unsigned) return unsigned;
 
-   function f_is_lowest_level(ptr : unsigned; last : natural) return boolean;
+   function f_is_lowest_level(ptr : unsigned; last : unsigned) return boolean;
    
       
   component heap_pathfinder is
@@ -48,6 +48,7 @@ package heap_pkg is
     idx_o      : out std_logic_vector(g_idx_width-1 downto 0);
     last_o     : out std_logic_vector(g_idx_width-1 downto 0);
     valid_o    : out std_logic;
+    push_op_o  : out std_logic; 
     
     --from writer core
     wr_key_i   : in  t_key;     -- writes
@@ -74,7 +75,7 @@ package heap_pkg is
     idx_i      : in std_logic_vector(g_idx_width-1 downto 0);
     last_i     : in std_logic_vector(g_idx_width-1 downto 0);
     final_i    : in std_logic;
-    push_i    : in std_logic;
+    push_op_i  : in std_logic; 
     en_i       : in std_logic;
     
     -- to pathfinder core
@@ -113,17 +114,20 @@ end heap_pkg;
       return v_res;
    end f_get_r_child;
 
-   function f_is_lowest_level(ptr : unsigned; last : natural) return boolean is
-      variable v_upper, v_lower : natural;
+   function f_is_lowest_level(ptr : unsigned; last : unsigned) return boolean is
+      variable i : natural;
    begin
-      v_upper := 2**(f_log2_size(last));
-      v_lower := 2**(f_log2_size(last)-1);
-      --report "ptr " & integer'image(to_integer(ptr)) & "last " & integer'image(last) & " Upper " & integer'image(v_upper) & " lower " & integer'image(v_lower) severity note;
-      if(to_integer(ptr) >= v_lower and to_integer(ptr) < v_upper ) then
-         return true;
-      else
-         return false;
-      end if;
+      for i in last'left downto 0 loop
+         if(last(i) = '1') then
+            if(ptr(i) = '1') then
+               return true;
+            else
+               return false;
+            end if;   
+         end if;
+      end loop;
+      return false;
+      
    end f_is_lowest_level;
 
 
