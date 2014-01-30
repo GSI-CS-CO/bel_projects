@@ -28,7 +28,7 @@ entity heap_writer is
     idx_i     : in std_logic_vector(g_idx_width-1 downto 0);
     last_i    : in std_logic_vector(g_idx_width-1 downto 0);
     final_i   : in std_logic;
-    push_i    : in std_logic;
+    push_op_i : in std_logic;
     en_i      : in std_logic;
     
     
@@ -58,11 +58,10 @@ architecture behavioral of heap_writer is
    
    signal r_wr_idx1, r_wr_idx0 : std_logic_vector(g_idx_width-1 downto 0);
    signal s_rd_idx, r_dbg_ptr, r_dbg_adr : std_logic_vector(g_idx_width-1 downto 0);
-   signal r_last : std_logic_vector(g_idx_width-1 downto 0);
    
    signal s_rd_val, s_wr_val, r_dbg_cmp : t_data;
    signal s_we : std_logic;
-   signal r_fin0, r_fin1, r_en0, r_en1, r_push : std_logic; 
+   signal r_fin0, r_fin1, r_en0, r_en1 : std_logic; 
   
 begin
   
@@ -96,7 +95,7 @@ begin
    -- read first element, last element or index list, 
    inpmux0 : with r_rd_adr_mode select
       s_rd_idx <= c_first  when c_OUTPUT,
-                  r_last   when c_UPDATE,
+                  last_i   when c_UPDATE,
                   r_dbg_adr when c_DBG,
                   idx_i    when others;
    
@@ -126,8 +125,10 @@ begin
       else
          r_fin0      <= final_i;
          r_fin1      <= r_fin0;
+         
          r_en0       <= en_i;
          r_en1       <= r_en0;
+         
          r_wr_idx0   <= idx_i;
          r_wr_idx1   <= r_wr_idx0;
       end if;
@@ -145,14 +146,15 @@ begin
       
       if(rst_n_i = '0') then
          r_state  <= e_IDLE;
-         r_push <= '0';
-         r_dbg_ptr <= c_first;
+        r_dbg_ptr <= c_first;
       else
          
-         r_push <= r_push or push_i ;
-         r_last   <= last_i;
+         data_o   <= s_rd_val;
          case r_state is
-            when e_IDLE    => 
+            when e_IDLE    => if(push_op_i = '1') then --if this is a replace or insert, copy new data to moving element 
+                                 r_mov    <= data_i;
+                              end if;
+                              
                               if(dbg_show_i = '1') then
                                  r_dbg_ptr <= last_i;
                                  r_dbg_adr <= last_i;
@@ -160,16 +162,11 @@ begin
                               else
                               
                                  if(en_i = '1') then
-                                    if(r_push = '1') then
-                                       r_mov    <= data_i;
-                                    end if;
-                                    
                                     v_state  := e_COPY;   
                                  end if;   
                               end if;
   
             when e_COPY    => if(r_fin1 = '1') then
-                                 r_push <= '0';
                                  v_state  := e_SET_ADR_1ST;   
                               end if;              
 
@@ -195,24 +192,33 @@ begin
                               
             when e_DBG_VER => r_dbg_ptr <= std_logic_vector(unsigned(r_dbg_ptr) -1);
                               r_dbg_adr <= std_logic_vector(unsigned(r_dbg_ptr) -1);
-                                report "*** C "   & integer'image(to_integer(unsigned(r_dbg_cmp(t_skey'range))))  
-                                       & " @"     & integer'image(to_integer(unsigned(r_dbg_ptr)))
-                                       & " >= P "   & integer'image(to_integer(unsigned(s_rd_val(t_skey'range))))
-                                       & " @"     & integer'image(to_integer(unsigned(r_dbg_adr))) 
-                                 severity note;
                               
-                              assert (unsigned(r_dbg_cmp(t_skey'range)) >= unsigned(s_rd_val(t_skey'range)))
-                                 report "####### C "   & integer'image(to_integer(unsigned(r_dbg_cmp(t_skey'range))))  
-                                       & "@"     & integer'image(to_integer(unsigned(r_dbg_ptr)))
-                                       & " < P "   & integer'image(to_integer(unsigned(s_rd_val(t_skey'range))))
-                                       & "@"     & integer'image(to_integer(unsigned(r_dbg_adr))) 
-                                 severity failure;
-                                 
                               if(r_dbg_ptr = c_first) then 
+                                 report "### HEAP OK ##########################################################" severity note;
                                  v_state := e_IDLE;
                               else
                                  v_state := e_DBG_RD_C;
-                              end if;  
+                              end if; 
+                              
+                              --report "*** C "   & integer'image(to_integer(unsigned(r_dbg_cmp(t_skey'range))))  
+                              --         & " @"     & integer'image(to_integer(unsigned(r_dbg_ptr)))
+                              --         & " >= P "   & integer'image(to_integer(unsigned(s_rd_val(t_skey'range))))
+                              --        & " @"     & integer'image(to_integer(unsigned(r_dbg_adr))) 
+                              --   severity note;
+                              
+                              if(unsigned(last_i) = 0) then 
+                                 report "*** HEAP IS EMPTY." severity note;
+                                 v_state := e_IDLE;
+                              else
+                                 assert (unsigned(r_dbg_cmp(t_skey'range)) >= unsigned(s_rd_val(t_skey'range)))
+                                    report "####### C "   & integer'image(to_integer(unsigned(r_dbg_cmp(t_skey'range))))  
+                                          & "@"     & integer'image(to_integer(unsigned(r_dbg_ptr)))
+                                          & " < P "   & integer'image(to_integer(unsigned(s_rd_val(t_skey'range))))
+                                          & "@"     & integer'image(to_integer(unsigned(r_dbg_adr))) 
+                                    severity failure;   
+                              end if;   
+                              
+                               
                                   
             when others    => v_state := e_IDLE;                   
                                  

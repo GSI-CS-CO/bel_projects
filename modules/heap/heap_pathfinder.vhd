@@ -29,6 +29,7 @@ entity heap_pathfinder is
     idx_o      : out std_logic_vector(g_idx_width-1 downto 0);
     last_o     : out std_logic_vector(g_idx_width-1 downto 0);
     valid_o    : out std_logic;
+    push_op_o  : out std_logic;     
     
     --from writer core
     wr_key_i   : in  t_key;     -- writes
@@ -57,7 +58,7 @@ architecture behavioral of heap_pathfinder is
    
    
    signal r_state : t_op_state;
-   signal r_last, r_new_last, r_ptr, s_ptr_down, s_ptr_up : unsigned(g_idx_width-1 downto 0); 
+   signal r_last, r_new_last, r_ptr, s_ptr_down, s_l_child, s_r_child, s_ptr_up : unsigned(g_idx_width-1 downto 0); 
    constant c_first      : unsigned(g_idx_width-1 downto 0) := to_unsigned(1, g_idx_width); 
    signal r_mov : t_key;
    signal s_parent_le_children,  r_parent_le_children : std_logic;
@@ -66,10 +67,11 @@ architecture behavioral of heap_pathfinder is
    signal s_child_gre_parent,    r_child_gre_parent   : std_logic;
    signal s_highest_level,       r_highest_level      : std_logic; 
             
-   signal s_pos_found, s_valid : std_logic;
+   signal s_pos_found, r_pos_found, s_valid, r_valid : std_logic;
    signal s_full, s_empty, r_out0 : std_logic;
    signal s_A_gre_B, s_A_gre_MOV, s_B_gre_MOV : std_logic;
    signal s_adr_mode : std_logic_vector (1 downto 0);
+   signal r_push : std_logic;
    
 begin   
    
@@ -105,14 +107,16 @@ G1: for I in 0 to 1 generate
 end generate;
 
    -- comparators
-   s_A_gre_B      <= '1' when s_qa(0) >= s_qa(1)
+   s_A_gre_B      <= '1' when ( (s_qa(0) >= s_qa(1)) and f_get_r_child(r_ptr) <= r_new_last)
                 else '0';
    
    s_A_gre_MOV    <= '1' when s_qa(0) >= r_mov
                 else '0';
    
-   s_B_gre_MOV    <= '1' when s_qa(1) >= r_mov
+   s_B_gre_MOV    <= '1' when ( (s_qa(1) >= r_mov) and f_get_r_child(r_ptr) <= r_new_last)
                 else '0';
+                  
+                  
    
    s_full         <= '1' when r_last = to_unsigned(c_elements-1, r_last'length)
                 else '0';
@@ -126,14 +130,22 @@ end generate;
        else f_get_l_child(r_ptr) when (s_A_gre_B = '0' and s_A_gre_mov = '0')
        else f_get_r_child(r_ptr) when (s_A_gre_B = '1' and s_B_gre_mov = '0')
        else r_ptr;
+   
+   s_l_child <= f_get_l_child(s_ptr_down);
+   s_r_child <= f_get_r_child(s_ptr_down);
       
-   s_adr_down(0) <=  std_logic_vector(f_get_l_child(s_ptr_down));
-   s_adr_down(1) <=  std_logic_vector(f_get_r_child(s_ptr_down));
+   s_adr_down(0) <=  std_logic_vector(s_l_child);
+   -- when s_l_child <= r_new_last
+     --                else std_logic_vector(s_ptr_down);
+   
+   s_adr_down(1) <=  std_logic_vector(s_r_child);
+   -- when s_r_child <= r_new_last
+   --                  else std_logic_vector(s_ptr_down);
       
-   s_parent_le_children <= '1' when (s_B_gre_mov = '1' and s_A_gre_mov = '1') and r_state = e_HEAP_DOWN
+   s_parent_le_children <= '1' when ( (s_B_gre_mov = '1' or f_get_r_child(r_ptr) > r_new_last) and s_A_gre_mov = '1') and r_state = e_HEAP_DOWN
             else '0';
                
-   s_lowest_level <= '1' when f_is_lowest_level(s_ptr_down, to_integer(r_last)) and r_state = e_HEAP_DOWN
+   s_lowest_level <= '1' when f_is_lowest_level(r_ptr, r_new_last) and r_state = e_HEAP_DOWN
              else '0';
       
 -- upward search & adresses      
@@ -155,9 +167,11 @@ end generate;
 
       
       
-   s_pos_found <= (s_parent_le_children or r_lowest_level) or (s_child_gre_parent or r_highest_level);
+   s_pos_found <= (s_parent_le_children or s_lowest_level) or (s_child_gre_parent or s_highest_level);
    s_valid     <= '1' when r_state = e_HEAP_DOWN or r_state = e_HEAP_UP
-             else '0';               
+             else '0';
+             
+   push_op_o <= r_push;                         
    
    valid_o <= s_valid;
    
@@ -180,7 +194,7 @@ end generate;
    begin
     if(rising_edge(clk_sys_i)) then
       v_cmd    := push_i & pop_i;
-      v_state  := r_state;
+      
       
       if(rst_n_i = '0') then
          r_state     <= e_IDLE;
@@ -189,12 +203,17 @@ end generate;
          r_mov       <= (others => '0');
          s_adr_mode  <= (others => '0');
          r_new_last <= (others => '0');
+         r_push <= '0';
       else
+         v_state  := r_state;
          r_lowest_level       <= s_lowest_level;
          r_parent_le_children <= s_parent_le_children; 
         
          r_highest_level      <= s_highest_level;
-         r_child_gre_parent   <= s_child_gre_parent; 
+         r_child_gre_parent   <= s_child_gre_parent;
+         
+         r_valid <= s_valid;
+         r_pos_found <= s_pos_found; 
          case r_state is
             when e_IDLE => r_mov <= s_qa(1); -- set moving element to last element. necessary for remove function 
                            case v_cmd is
@@ -211,19 +230,25 @@ end generate;
                               when c_REMOVE  => if(s_empty = '0') then
                                                    -- last element is the moving one. copy to r_mov ...
                                                    r_mov    <= r_mov;
-                                                   r_out0   <= '1';           -- request output of old first pos   
                                                    -- update pointers
                                                    r_new_last <= r_last -1;
                                                    r_ptr    <= c_first;
-                                                   v_state  := e_HEAP_DOWN_SETUP;   --reorganise heap downward
+                                                   
+                                                   if(r_last = c_first) then
+                                                      --we just emptied the heap
+                                                      --no reorganising, just update pointers
+                                                      v_state  := e_UPDATE; 
+                                                   else
+                                                      v_state  := e_HEAP_DOWN_SETUP;   --reorganise heap downward
+                                                   end if;
                                                 else
                                                    -- signal error
                                                    v_state  := e_IDLE;  
                                                 end if;  
                                           
-                           when c_REPLACE => r_mov       <= movkey_i;
-                                                r_ptr    <= c_first;       --update pointers
-                                                r_out0   <= '1';           --request output of old first pos
+                           when c_REPLACE =>    r_mov       <= movkey_i;
+                                                r_new_last  <= r_last;
+                                                r_ptr       <= c_first;       --update pointers
                                                 v_state  := e_HEAP_DOWN_SETUP;        --reorganise heap
                                                                                                                         
                               when others => null;
@@ -236,14 +261,14 @@ end generate;
             when e_HEAP_DOWN_SETUP  => v_state  := e_HEAP_DOWN;
                     
             when e_HEAP_DOWN        => r_ptr   <= s_ptr_down;
-                                       if(r_lowest_level = '1' or s_parent_le_children = '1') then
+                                       if(s_pos_found = '1') then
                                           v_state  := e_UPDATE;
                                        else
                                           v_state  := e_HEAP_DOWN; 
                                        end if;
                            
             when e_HEAP_UP          => r_ptr   <= s_ptr_up;
-                                       if(r_highest_level = '1' or s_child_gre_parent = '1') then
+                                       if(r_pos_found = '1') then
                                           v_state  := e_UPDATE;
                                        else
                                           v_state  := e_HEAP_UP; 
@@ -256,10 +281,14 @@ end generate;
                                  
          end case;  
          
+         
+         
          case v_state is
-            when e_HEAP_DOWN_SETUP | e_HEAP_DOWN => s_adr_mode <= c_DOWN;
-            when e_HEAP_UP_SETUP   | e_HEAP_UP   => s_adr_mode <= c_UP;
-            when others                          => s_adr_mode <= c_DEF;                         
+            when e_HEAP_DOWN_SETUP  => s_adr_mode <= c_DOWN;   --r_push <= push_i; 
+            when e_HEAP_DOWN        => s_adr_mode <= c_DOWN; 
+            when e_HEAP_UP_SETUP    => s_adr_mode <= c_UP;     --r_push <= push_i;
+            when e_HEAP_UP          => s_adr_mode <= c_UP;  
+            when others             => s_adr_mode <= c_DEF;    --r_push <= '0';                      
          end case;
             
          r_state <= v_state;     
