@@ -23,13 +23,15 @@ entity heap_pathfinder is
     push_i     : in  std_logic;
     pop_i      : in  std_logic;
     movkey_i   : in  t_key;
+    busy_o     : out std_logic;
+    empty_o    : out std_logic; 
+    full_o     : out std_logic;
     
     -- to writer core
     final_o    : out std_logic;
     idx_o      : out std_logic_vector(g_idx_width-1 downto 0);
     last_o     : out std_logic_vector(g_idx_width-1 downto 0);
-    valid_o    : out std_logic;
-    push_op_o  : out std_logic;     
+    valid_o    : out std_logic;    
     
     --from writer core
     wr_key_i   : in  t_key;     -- writes
@@ -81,7 +83,7 @@ G1: for I in 0 to 1 generate
   KEY_DPRAM : generic_dpram
     generic map(
       -- standard parameters
-      g_data_width               => 8,
+      g_data_width               => t_key'length,
       g_size                     => c_elements,
       g_with_byte_enable         => false,
       --g_addr_conflict_resolution => "dont_care",
@@ -130,17 +132,9 @@ end generate;
        else f_get_l_child(r_ptr) when (s_A_gre_B = '0' and s_A_gre_mov = '0')
        else f_get_r_child(r_ptr) when (s_A_gre_B = '1' and s_B_gre_mov = '0')
        else r_ptr;
-   
-   s_l_child <= f_get_l_child(s_ptr_down);
-   s_r_child <= f_get_r_child(s_ptr_down);
-      
-   s_adr_down(0) <=  std_logic_vector(s_l_child);
-   -- when s_l_child <= r_new_last
-     --                else std_logic_vector(s_ptr_down);
-   
-   s_adr_down(1) <=  std_logic_vector(s_r_child);
-   -- when s_r_child <= r_new_last
-   --                  else std_logic_vector(s_ptr_down);
+
+   s_adr_down(0) <=  std_logic_vector(f_get_l_child(s_ptr_down));
+   s_adr_down(1) <=  std_logic_vector(f_get_r_child(s_ptr_down));
       
    s_parent_le_children <= '1' when ( (s_B_gre_mov = '1' or f_get_r_child(r_ptr) > r_new_last) and s_A_gre_mov = '1') and r_state = e_HEAP_DOWN
             else '0';
@@ -160,68 +154,78 @@ end generate;
                
    s_highest_level <= '1' when s_ptr_up = c_first and r_state = e_HEAP_UP
              else '0';
+   
+   -- indicices valid and final position flags
+   s_pos_found <= (s_parent_le_children or s_lowest_level) or (s_child_gre_parent or s_highest_level);
+   s_valid     <= '1' when r_state = e_HEAP_DOWN or r_state = e_HEAP_UP
+             else '0';
+                     
       
 -- default addresses
    s_adr_def(0) <= std_logic_vector(c_first);
    s_adr_def(1) <= std_logic_vector(r_last);
 
-      
-      
-   s_pos_found <= (s_parent_le_children or s_lowest_level) or (s_child_gre_parent or s_highest_level);
-   s_valid     <= '1' when r_state = e_HEAP_DOWN or r_state = e_HEAP_UP
-             else '0';
-             
-   push_op_o <= r_push;                         
-   
-   valid_o <= s_valid;
-   
-   last_o <= std_logic_vector(r_last); 
-                    
+-- RAM addressing
    mux_adr_all : with s_adr_mode select
       s_aa <= s_adr_down   when c_DOWN,
               s_adr_up     when c_UP,
               s_adr_def    when others; 
-                     
-
-   idx_o       <= std_logic_vector(r_ptr); 
-   final_o  <= s_pos_found;
    
-   main: process(clk_sys_i)
-      variable v_comp   : std_logic_vector (2 downto 0);
-      variable v_cmd    : std_logic_vector (1 downto 0);
+   -- outputs
+   idx_o    <= std_logic_vector(r_ptr); 
+   valid_o  <= s_valid;
+   final_o  <= s_pos_found;
+   last_o   <= std_logic_vector(r_last);
+   empty_o  <= s_empty;
+   full_o   <= s_full;
+   
+   pipeline: process(clk_sys_i)
       variable v_state  : t_op_state;
    
    begin
     if(rising_edge(clk_sys_i)) then
-      v_cmd    := push_i & pop_i;
-      
+      v_state  := r_state;
       
       if(rst_n_i = '0') then
-         r_state     <= e_IDLE;
-         r_ptr       <= (others => '0');
-         r_last      <= (others => '0');
-         r_mov       <= (others => '0');
-         s_adr_mode  <= (others => '0');
-         r_new_last <= (others => '0');
-         r_push <= '0';
+       
       else
-         v_state  := r_state;
          r_lowest_level       <= s_lowest_level;
          r_parent_le_children <= s_parent_le_children; 
         
          r_highest_level      <= s_highest_level;
          r_child_gre_parent   <= s_child_gre_parent;
          
-         r_valid <= s_valid;
-         r_pos_found <= s_pos_found; 
+         r_valid              <= s_valid;
+         r_pos_found          <= s_pos_found; 
+      end if;
+    end if;
+    end process pipeline; 
+   
+   main: process(clk_sys_i)
+      variable v_cmd    : std_logic_vector (1 downto 0);
+      variable v_state  : t_op_state;
+   begin
+    if(rising_edge(clk_sys_i)) then
+      if(rst_n_i = '0') then
+         r_state     <= e_IDLE;
+         r_ptr       <= (others => '0');
+         r_last      <= (others => '0');
+         r_mov       <= (others => '0');
+         s_adr_mode  <= (others => '0');
+         r_new_last  <= (others => '0');
+         busy_o      <= '0';
+      else
+         v_cmd    := push_i & pop_i;
+         v_state  := r_state;
+         
          case r_state is
             when e_IDLE => r_mov <= s_qa(1); -- set moving element to last element. necessary for remove function 
                            case v_cmd is
                               when c_INSERT  => if(s_full = '0') then
-                                                   r_mov    <= movkey_i;
-                                                   r_ptr    <= r_last +1;
-                                                   r_new_last   <= r_last +1;
-                                                   v_state  := e_HEAP_UP_SETUP;  --reorganise heap upward
+                                                   r_mov       <= movkey_i;
+                                                   r_ptr       <= r_last +1;
+                                                   r_new_last  <= r_last +1;
+                                                   v_state     := e_HEAP_UP_SETUP;  --reorganise heap upward
                                                 else
                                                    -- signal error
                                                    v_state  := e_IDLE;
@@ -229,10 +233,10 @@ end generate;
                                                                      
                               when c_REMOVE  => if(s_empty = '0') then
                                                    -- last element is the moving one. copy to r_mov ...
-                                                   r_mov    <= r_mov;
+                                                   r_mov       <= r_mov;
                                                    -- update pointers
-                                                   r_new_last <= r_last -1;
-                                                   r_ptr    <= c_first;
+                                                   r_new_last  <= r_last -1;
+                                                   r_ptr       <= c_first;
                                                    
                                                    if(r_last = c_first) then
                                                       --we just emptied the heap
@@ -246,21 +250,21 @@ end generate;
                                                    v_state  := e_IDLE;  
                                                 end if;  
                                           
-                           when c_REPLACE =>    r_mov       <= movkey_i;
+                              when c_REPLACE => r_mov       <= movkey_i;
                                                 r_new_last  <= r_last;
                                                 r_ptr       <= c_first;       --update pointers
-                                                v_state  := e_HEAP_DOWN_SETUP;        --reorganise heap
+                                                v_state     := e_HEAP_DOWN_SETUP;        --reorganise heap
                                                                                                                         
-                              when others => null;
+                              when others    => null;
                            end case;
                            
             
-            when e_HEAP_UP_SETUP    => r_last <= r_new_last;
+            when e_HEAP_UP_SETUP    => r_last   <= r_new_last;
                                        v_state  := e_HEAP_UP;
             
             when e_HEAP_DOWN_SETUP  => v_state  := e_HEAP_DOWN;
                     
-            when e_HEAP_DOWN        => r_ptr   <= s_ptr_down;
+            when e_HEAP_DOWN        => r_ptr    <= s_ptr_down;
                                        if(s_pos_found = '1') then
                                           v_state  := e_UPDATE;
                                        else
@@ -274,22 +278,26 @@ end generate;
                                           v_state  := e_HEAP_UP; 
                                        end if;
                   
-            when e_UPDATE           => r_last <= r_new_last;
+            when e_UPDATE           => r_last   <= r_new_last;
                                        v_state  := e_IDLE;
                                  
             when others             => v_state  := e_IDLE;                   
                                  
          end case;  
          
-         
-         
          case v_state is
-            when e_HEAP_DOWN_SETUP  => s_adr_mode <= c_DOWN;   --r_push <= push_i; 
+            when e_HEAP_DOWN_SETUP  => s_adr_mode <= c_DOWN;   
             when e_HEAP_DOWN        => s_adr_mode <= c_DOWN; 
-            when e_HEAP_UP_SETUP    => s_adr_mode <= c_UP;     --r_push <= push_i;
+            when e_HEAP_UP_SETUP    => s_adr_mode <= c_UP;    
             when e_HEAP_UP          => s_adr_mode <= c_UP;  
-            when others             => s_adr_mode <= c_DEF;    --r_push <= '0';                      
+            when others             => s_adr_mode <= c_DEF;                    
          end case;
+         
+         if(v_state = e_IDLE) then
+            busy_o     <= '0';
+         else
+            busy_o     <= '1';
+         end if;   
             
          r_state <= v_state;     
          

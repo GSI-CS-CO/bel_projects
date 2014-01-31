@@ -10,8 +10,8 @@ use work.gencores_pkg.all;
 
 package heap_pkg is
 
-   constant c_val_len  : natural := 32;
-   constant c_key_len  : natural := 8;
+   constant c_val_len  : natural := 8*4*2;
+   constant c_key_len  : natural := 8*4*2;
    constant c_data_len : natural := c_key_len + c_val_len;
    
    subtype t_val is std_logic_vector(c_val_len -1 downto 0);
@@ -30,6 +30,32 @@ package heap_pkg is
 
    function f_is_lowest_level(ptr : unsigned; last : unsigned) return boolean;
    
+  
+  component heap_top is
+  generic(
+    g_idx_width    : natural := 8
+  );            
+  port(clk_sys_i  : in  std_logic;
+       rst_n_i    : in  std_logic;
+
+       dbg_show_i : in std_logic := '0';
+       dbg_ok_o   : out std_logic;         
+       dbg_err_o  : out std_logic; 
+
+       push_i     : in std_logic;
+       pop_i      : in std_logic;
+       
+       busy_o     : out std_logic;
+       full_o     : out std_logic;
+       empty_o    : out std_logic;
+       count_o    : out std_logic_vector(g_idx_width-1 downto 0);
+       
+       data_i     : in  t_data;
+       data_o     : out t_data;
+       out_o      : out std_logic
+
+         );
+   end component;
       
   component heap_pathfinder is
   generic(
@@ -42,13 +68,15 @@ package heap_pkg is
     push_i     : in  std_logic;
     pop_i      : in  std_logic;
     movkey_i   : in  t_key;
+    busy_o     : out std_logic;
+    empty_o    : out std_logic; 
+    full_o     : out std_logic;
     
     -- to writer core
-    final_o : out std_logic;
+    final_o    : out std_logic;
     idx_o      : out std_logic_vector(g_idx_width-1 downto 0);
     last_o     : out std_logic_vector(g_idx_width-1 downto 0);
-    valid_o    : out std_logic;
-    push_op_o  : out std_logic; 
+    valid_o    : out std_logic;     
     
     --from writer core
     wr_key_i   : in  t_key;     -- writes
@@ -64,21 +92,23 @@ package heap_pkg is
   port(
     clk_sys_i  : in  std_logic;
     rst_n_i    : in  std_logic;
-
+   
+    busy_o     : out std_logic;  
+   
     dbg_show_i : in std_logic;
-    -- from LM32s
-    data_i     : in  t_data;
-    -- to EBM
-    data_o     : out t_data;
+    dbg_err_o  : out std_logic;
+    dbg_ok_o   : out std_logic;
     
-    -- from pathfinder core
+    data_i     : in  t_data;
+    data_o     : out  t_data;
+    out_o      : out std_logic; 
+    
     idx_i      : in std_logic_vector(g_idx_width-1 downto 0);
     last_i     : in std_logic_vector(g_idx_width-1 downto 0);
     final_i    : in std_logic;
-    push_op_i  : in std_logic; 
     en_i       : in std_logic;
+    push_i     : in std_logic;
     
-    -- to pathfinder core
     wr_key_o   : out  t_key;     -- writes
     wr_idx_o   : out  std_logic_vector(g_idx_width-1 downto 0);
     we_o       : out  std_logic

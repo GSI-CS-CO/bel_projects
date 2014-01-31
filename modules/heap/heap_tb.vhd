@@ -21,86 +21,69 @@ signal clk_sys 						: std_logic := '0';
    constant clk_period : time := 8 ns;
    constant c_width : natural := 5;
    
-   signal time_sys, s_wdat : std_logic_vector(7 downto 0); --x"1555AAAAFFFFFFAA";
-   signal s_movkey : t_key;
+   signal s_data_in, s_data_out, sample_in, sample_out : t_data;
    
-   signal s_data_in, s_data_out : t_data;
-   
-   signal s_idx, s_last, s_wadr : std_logic_vector(c_width-1 downto 0); --x"1555AAAAFFFFFFAA";
-   
-   signal s_fedge_push : std_logic_vector(0 downto 0) :=  "0";
-   signal s_push : std_logic := '0';
+   signal s_count : std_logic_vector(c_width-1 downto 0); --x"1555AAAAFFFFFFAA";
+   signal s_push, s_pop, s_dbg, s_busy, s_full, s_out, s_empty, s_dbg_ok, s_dbg_err : std_logic := '0';
    signal r_push : std_logic := '0';
-   signal s_pop, s_dbg  : std_logic := '0'; 
-
-   signal s_we, s_valid, s_flag, s_push_op : std_logic;
 
 begin
   
-   s_movkey <= s_data_in(t_skey'range);
-    
- 
-   PF : heap_pathfinder
-   generic map (
-      g_idx_width    => c_width 
-   )            
-   port map(clk_sys_i   => clk_sys,
-            rst_n_i     => rst_n,
-            push_i      => s_push,
-            pop_i       => s_pop,
-            movkey_i    => s_movkey,
-    
-            final_o => s_flag,
-            idx_o      => s_idx,
-            last_o     => s_last,
-            valid_o    => s_valid,
-            push_op_o  => s_push_op,
-                  
-            wr_key_i   => s_wdat,
-            wr_idx_i   => s_wadr,
-            we_i       => s_we
-    
-    
-    );
-    
-   WR : heap_writer
+   heap : heap_top
    generic map (
       g_idx_width    => c_width 
    )            
    port map(clk_sys_i   => clk_sys,
             rst_n_i     => rst_n,
             
-            dbg_show_i => s_dbg,
+            dbg_show_i  => s_dbg,
+            dbg_ok_o    => s_dbg_ok,       
+            dbg_err_o   => s_dbg_err,
+    
+          
+            push_i      => s_push,
+            pop_i       => s_pop,
+            busy_o      => s_busy,
+            full_o      => s_full,
+            empty_o     => s_empty,
+            count_o     => s_count,
+           
+            
             data_i     => s_data_in,
             data_o     => s_data_out, 
-                
-            final_i => s_flag,
-            idx_i      => s_idx,
-            last_i     => s_last,
-            push_op_i  => s_push,
-            en_i    => s_valid,
-    
-            wr_key_o   => s_wdat,
-            wr_idx_o   => s_wadr,
-            we_o       => s_we
-    
+            out_o      => s_out 
     
     );
+   
+  
+
+    
+ 
     
     
    -- Clock process definitions( clock with 50% duty cycle is generated here.
    clk_process :process
    begin
-        time_sys <= std_logic_vector(unsigned(time_sys) + unsigned(s_fedge_push));
         clk_sys <= '0';
         wait for clk_period/2;  --for 0.5 ns signal is '0'.
         clk_sys <= '1';
         wait for clk_period/2;  --for next 0.5 ns signal is '1'.
-        r_push <= s_push;
         
    end process;
    
-   s_fedge_push(0) <= not s_push and r_push;
+   sample :process(clk_sys)
+   begin
+   if(rising_edge(clk_sys)) then
+   
+   if(s_push = '1') then
+    sample_in <= s_data_in;
+   end if;
+   if(s_out = '1') then
+      sample_out <= s_data_out;
+   end if;
+   end if;  
+   end process;  
+     
    
    
    -- Stimulus process
