@@ -32,6 +32,7 @@ generic
     -- the bit positions are corresponding to Intr_In. A '1' enable Intr_In(n), '0' disable Intr_In(n)
     -- The least significant bit don't care, because it represent the powerup interrupt. This interrupt is always enabled.
     Intr_Enable:      std_logic_vector(15 DOWNTO 0) := B"0000_0000_0000_0001"
+    -- change only here! increment by major changes of this macro
     );
 port
     (
@@ -51,6 +52,14 @@ port
     
     -- '1' => the user function(s), device, is ready to work with the control system
     User_Ready:         in    std_logic;
+
+    -- if an extension card is connected to the slave card, than you can map cid_system of this extension
+    -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
+     extension_cid_system: in  std_logic_vector(15 DOWNTO 0) := (others => '0');
+    
+    -- if an extension card is connected to the slave card, than you can map cid_group of this extension
+    -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
+    extension_cid_group:  in  std_logic_vector(15 DOWNTO 0) := (others => '0');
 
     -- latched data from SCU_Bus for external user functions
     Data_from_SCUB_LA:  out   std_logic_vector(15 DOWNTO 0);
