@@ -14,7 +14,9 @@ use work.heap_pkg.all;
 
 entity heap_writer is
   generic(
-    g_idx_width    : natural := 8
+    g_idx_width    : natural := 8;
+    g_key_width    : natural := 64;
+    g_val_width    : natural := 192 
   );            
   port(
     clk_sys_i  : in  std_logic;
@@ -26,8 +28,8 @@ entity heap_writer is
     dbg_err_o  : out std_logic;
     dbg_ok_o   : out std_logic;
     
-    data_i     : in  t_data;
-    data_o     : out  t_data;
+    data_i     : in  std_logic_vector(g_key_width + g_val_width-1 downto 0);
+    data_o     : out std_logic_vector(g_key_width + g_val_width-1 downto 0);
     out_o      : out std_logic; 
     
     idx_i      : in std_logic_vector(g_idx_width-1 downto 0);
@@ -36,13 +38,23 @@ entity heap_writer is
     en_i       : in std_logic;
     push_i     : in std_logic;
     
-    wr_key_o   : out  t_key;     -- writes
+    wr_key_o   : out  std_logic_vector(g_key_width-1 downto 0);     -- writes
     wr_idx_o   : out  std_logic_vector(g_idx_width-1 downto 0);
     we_o       : out  std_logic
     );
 end heap_writer;
 
 architecture behavioral of heap_writer is
+
+   
+   constant c_data_width : natural := g_key_width + g_val_width;
+   
+   subtype t_val   is std_logic_vector(g_val_width  -1 downto 0);
+   subtype t_key   is std_logic_vector(g_key_width  -1 downto 0);
+   subtype t_data  is std_logic_vector(c_data_width -1 downto 0);
+   subtype t_skey  is std_logic_vector(c_data_width -1 downto g_val_width);
+   subtype t_sval  is t_val;
+
 
    constant c_elements  : natural := 2**g_idx_width;
    constant c_first     : std_logic_vector(g_idx_width-1 downto 0) := std_logic_vector(to_unsigned(1, g_idx_width)); 

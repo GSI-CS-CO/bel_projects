@@ -43,6 +43,11 @@ end heap_pathfinder;
 architecture behavioral of heap_pathfinder is
 
    constant c_elements : natural := 2**g_idx_width;
+   constant c_data_width : natural := g_key_width + g_val_width;
+   
+   subtype t_key   is std_logic_vector(g_key_width  -1 downto 0);
+   subtype t_skey  is std_logic_vector(c_data_width -1 downto g_val_width);
+  
    
    subtype t_adr is std_logic_vector(g_idx_width-1 downto 0);
    type t_key_array is array (1 downto 0) of t_key;

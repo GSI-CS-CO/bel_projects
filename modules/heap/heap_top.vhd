@@ -14,7 +14,9 @@ use work.heap_pkg.all;
 
 entity heap_top is
   generic(
-    g_idx_width    : natural := 8
+    g_idx_width    : natural := 8;
+    g_key_width    : natural := 64;
+    g_val_width    : natural := 192 
   );            
   port(
     clk_sys_i  : in  std_logic;
@@ -60,7 +62,8 @@ begin
      
    PF : heap_pathfinder
    generic map (
-      g_idx_width    => g_idx_width 
+      g_idx_width    => g_idx_width,
+      g_key_width    => g_key_width 
    )            
    port map(clk_sys_i   => clk_sys_i,
             rst_n_i     => rst_n_i,
@@ -83,7 +86,9 @@ begin
     
    WR : heap_writer
    generic map (
-      g_idx_width    => g_idx_width 
+      g_idx_width    => g_idx_width,
+      g_key_width    => g_key_width,
+      g_val_width    => g_val_width 
    )            
    port map(clk_sys_i   => clk_sys_i,
             rst_n_i     => rst_n_i,
