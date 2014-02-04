@@ -34,8 +34,8 @@ entity heap_top is
     empty_o    : out std_logic;
     count_o    : out std_logic_vector(g_idx_width-1 downto 0);
     
-    data_i     : in  t_data;
-    data_o     : out t_data;
+    data_i     : in  std_logic_vector(g_key_width + g_val_width-1 downto 0);
+    data_o     : out std_logic_vector(g_key_width + g_val_width-1 downto 0);
     out_o      : out std_logic
     
     );
@@ -43,13 +43,23 @@ end heap_top;
 
 architecture behavioral of heap_top is
 
+   constant c_data_width : natural := g_key_width + g_val_width;
+   
+   subtype t_val   is std_logic_vector(g_val_width  -1 downto 0);
+   subtype t_key   is std_logic_vector(g_key_width  -1 downto 0);
+   subtype t_data  is std_logic_vector(c_data_width -1 downto 0);
+   subtype t_skey  is std_logic_vector(c_data_width -1 downto g_val_width);
+   subtype t_sval  is t_val;
+   
    signal s_busy, s_busy_pf, s_busy_wr,s_push, s_pop, s_dbg : std_logic;
    
    signal s_valid,   s_final, s_we     : std_logic;
    signal s_idx,     s_widx,  s_last   : std_logic_vector(g_idx_width-1 downto 0);
-   signal s_key,     s_wkey            : t_key;
+   signal s_key,     s_wkey            : std_logic_vector(g_key_width-1 downto 0);
    
 begin
+  
+  
   
    s_key    <= data_i(t_skey'range);
    
@@ -88,7 +98,8 @@ begin
    generic map (
       g_idx_width    => g_idx_width,
       g_key_width    => g_key_width,
-      g_val_width    => g_val_width 
+      g_val_width    => g_val_width
+       
    )            
    port map(clk_sys_i   => clk_sys_i,
             rst_n_i     => rst_n_i,

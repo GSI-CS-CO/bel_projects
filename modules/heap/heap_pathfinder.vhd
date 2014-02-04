@@ -14,7 +14,8 @@ use work.heap_pkg.all;
 
 entity heap_pathfinder is
   generic(
-    g_idx_width    : natural := 8
+    g_idx_width    : natural := 8;
+    g_key_width    : natural := 64
   );            
   port(
     clk_sys_i  : in  std_logic;
@@ -22,7 +23,7 @@ entity heap_pathfinder is
 
     push_i     : in  std_logic;
     pop_i      : in  std_logic;
-    movkey_i   : in  t_key;
+    movkey_i   : in  std_logic_vector(g_key_width-1 downto 0);
     busy_o     : out std_logic;
     empty_o    : out std_logic; 
     full_o     : out std_logic;
@@ -34,7 +35,7 @@ entity heap_pathfinder is
     valid_o    : out std_logic;    
     
     --from writer core
-    wr_key_i   : in  t_key;     -- writes
+    wr_key_i   : in  std_logic_vector(g_key_width-1 downto 0);     -- writes
     wr_idx_i   : in  std_logic_vector(g_idx_width-1 downto 0);
     we_i       : in  std_logic
     );
@@ -43,10 +44,7 @@ end heap_pathfinder;
 architecture behavioral of heap_pathfinder is
 
    constant c_elements : natural := 2**g_idx_width;
-   constant c_data_width : natural := g_key_width + g_val_width;
-   
    subtype t_key   is std_logic_vector(g_key_width  -1 downto 0);
-   subtype t_skey  is std_logic_vector(c_data_width -1 downto g_val_width);
   
    
    subtype t_adr is std_logic_vector(g_idx_width-1 downto 0);
