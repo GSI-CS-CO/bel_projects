@@ -4,5 +4,6 @@ files = [
   "div_n.vhd",
   "led_n.vhd",
   "lemo_io.vhd",
-  "tmr_scu_bus.vhd"
+  "tmr_scu_bus.vhd",
+  "sys_clk_or_local_clk.vhd",
 ]
