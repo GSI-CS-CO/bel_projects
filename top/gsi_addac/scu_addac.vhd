@@ -86,7 +86,7 @@ entity scu_addac is
     ------------ Logic analyser Signals -------------------------------------------------------------------------------
     A_SEL: in std_logic_vector(3 downto 0); -- use to select sources for the logic analyser ports
     A_TA: out std_logic_vector(15 downto 0); -- test port a
-    A_TB: out std_logic_vector(15 downto 0); -- test port b
+    A_TB: inout std_logic_vector(15 downto 0); -- test port b
     --A_TB0: out std_logic;
     --A_TB1: in std_logic;
     --A_TB2: out std_logic := '1';
@@ -198,54 +198,54 @@ constant c_xwb_uart : t_sdb_device := (
   
   constant clk_in_hz: integer := 125_000_000;
   
-  signal SCUB_SRQ: std_logic;
-  signal SCUB_Dtack: std_logic;
-  signal convst: std_logic;
-  signal rst: std_logic;
+  signal SCUB_SRQ:    std_logic;
+  signal SCUB_Dtack:  std_logic;
+  signal convst:      std_logic;
+  signal rst:         std_logic;
   
   signal Dtack_to_SCUB: std_logic;
 
   signal io_port_Dtack_to_SCUB: std_logic;
-  signal io_port_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal io_port_rd_active: std_logic;
+  signal io_port_data_to_SCUB:  std_logic_vector(15 downto 0);
+  signal io_port_rd_active:     std_logic;
   
-  signal dac1_Dtack: std_logic;
+  signal dac1_Dtack:        std_logic;
   signal dac1_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal dac1_rd_active: std_logic;
+  signal dac1_rd_active:    std_logic;
   
-  signal dac2_Dtack: std_logic;
+  signal dac2_Dtack:        std_logic;
   signal dac2_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal dac2_rd_active: std_logic;
+  signal dac2_rd_active:    std_logic;
   
-  signal ADR_from_SCUB_LA: std_logic_vector(15 downto 0);
+  signal ADR_from_SCUB_LA:  std_logic_vector(15 downto 0);
   signal Data_from_SCUB_LA: std_logic_vector(15 downto 0);
-  signal Ext_Adr_Val: std_logic;
-  signal Ext_Rd_active: std_logic;
-  signal Ext_Wr_active: std_logic;
-  signal Ext_Wr_fin_ovl: std_logic;
-  signal nPowerup_Res: std_logic;
+  signal Ext_Adr_Val:       std_logic;
+  signal Ext_Rd_active:     std_logic;
+  signal Ext_Wr_active:     std_logic;
+  signal Ext_Wr_fin_ovl:    std_logic;
+  signal nPowerup_Res:      std_logic;
   
-  signal adc_rd_active: std_logic;
-  signal adc_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal adc_dtack: std_logic;
+  signal adc_rd_active:     std_logic;
+  signal adc_data_to_SCUB:  std_logic_vector(15 downto 0);
+  signal adc_dtack:         std_logic;
   
-  signal tmr_rd_active: std_logic;
-  signal tmr_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal tmr_dtack: std_logic;
+  signal tmr_rd_active:     std_logic;
+  signal tmr_data_to_SCUB:  std_logic_vector(15 downto 0);
+  signal tmr_dtack:         std_logic;
   
-  signal fg_1_dtack: std_logic;
+  signal fg_1_dtack:        std_logic;
   signal fg_1_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal fg_1_rd_active: std_logic;
-  signal fg_1_sw: std_logic_vector(31 downto 0);
-  signal fg_1_strobe: std_logic;
-  signal fg_1_dreq: std_logic;
+  signal fg_1_rd_active:    std_logic;
+  signal fg_1_sw:           std_logic_vector(31 downto 0);
+  signal fg_1_strobe:       std_logic;
+  signal fg_1_dreq:         std_logic;
   
-  signal fg_2_dtack: std_logic;
+  signal fg_2_dtack:        std_logic;
   signal fg_2_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal fg_2_rd_active: std_logic;
-  signal fg_2_sw: std_logic_vector(31 downto 0);
-  signal fg_2_strobe: std_logic;
-  signal fg_2_dreq: std_logic;
+  signal fg_2_rd_active:    std_logic;
+  signal fg_2_sw:           std_logic_vector(31 downto 0);
+  signal fg_2_strobe:       std_logic;
+  signal fg_2_dreq:         std_logic;
 
   signal led_ena_cnt: std_logic;
 
@@ -254,21 +254,21 @@ constant c_xwb_uart : t_sdb_device := (
 
   signal Data_to_SCUB: std_logic_vector(15 downto 0);
   
-  signal reset_clks : std_logic_vector(0 downto 0);
-  signal reset_rstn : std_logic_vector(0 downto 0);
-  signal clk_sys_rstn : std_logic;
-  signal lm32_interrupt : std_logic_vector(31 downto 0);
-  signal lm32_rstn : std_logic;
+  signal reset_clks:       std_logic_vector(0 downto 0);
+  signal reset_rstn:       std_logic_vector(0 downto 0);
+  signal clk_sys_rstn:     std_logic;
+  signal lm32_interrupt:   std_logic_vector(31 downto 0);
+  signal lm32_rstn:        std_logic;
   
   -- Top crossbar layout
-  constant c_slaves : natural := 4;
-  constant c_masters : natural := 2;
-  constant c_dpram_size : natural := 16384; -- in 32-bit words (64KB)
-  constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
-   (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size), x"00000000"),
-    1 => f_sdb_embed_device(c_xwb_owm, x"00100600"),
-    2 => f_sdb_embed_device(c_xwb_uart, x"00100700"),
-    3 => f_sdb_embed_device(c_xwb_scu_reg, x"00100800"));
+  constant c_slaves     : natural := 4;
+  constant c_masters    : natural := 2;
+  constant c_dpram_size : natural := 32768; -- in 32-bit words (64KB)
+  constant c_layout     : t_sdb_record_array(c_slaves-1 downto 0) :=
+   (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),  x"00000000"),
+    1 => f_sdb_embed_device(c_xwb_owm,                  x"00100600"),
+    2 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"),
+    3 => f_sdb_embed_device(c_xwb_scu_reg,              x"00100800"));
   constant c_sdb_address : t_wishbone_address := x"00100000";
 
   signal cbar_slave_i : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -276,12 +276,12 @@ constant c_xwb_uart : t_sdb_device := (
   signal cbar_master_i : t_wishbone_master_in_array(c_slaves-1 downto 0);
   signal cbar_master_o : t_wishbone_master_out_array(c_slaves-1 downto 0);
   
-  signal owr_pwren_o: std_logic_vector(1 downto 0);
-  signal owr_en_o: std_logic_vector(1 downto 0);
-  signal owr_i:        std_logic_vector(1 downto 0);
+  signal owr_pwren_o:   std_logic_vector(1 downto 0);
+  signal owr_en_o:      std_logic_vector(1 downto 0);
+  signal owr_i:         std_logic_vector(1 downto 0);
   
-  signal wb_scu_rd_active: std_logic;
-  signal wb_scu_dtack: std_logic;
+  signal wb_scu_rd_active:    std_logic;
+  signal wb_scu_dtack:        std_logic;
   signal wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
   
   --signal irqcnt:  unsigned(12 downto 0);
@@ -304,10 +304,10 @@ fl : flash_loader_v01
   -- Obtain core clocking
 adda_pll_1: adda_pll -- Altera megafunction
   port map (
-    inclk0 => CLK_FPGA, -- 125Mhz oscillator from board
-    c0 => clk_sys, -- 125MHz system clk
-    c1 => clk_cal, -- 50Mhz calibration clock for Altera reconfig cores
-    locked => locked); -- '1' when the PLL has locked
+    inclk0  => CLK_FPGA,  -- 125Mhz oscillator from board
+    c0      => clk_sys,   -- 125MHz system clk
+    c1      => clk_cal,   -- 50Mhz calibration clock for Altera reconfig cores
+    locked  => locked);   -- '1' when the PLL has locked
 
     reset : gc_reset
     port map(
@@ -422,7 +422,7 @@ adda_pll_1: adda_pll -- Altera megafunction
       desc_o => open,
 
       uart_rxd_i => '0',
-      uart_txd_o => open
+      uart_txd_o => A_TB(0)
       );
   
   SCU_WB_Reg: wb_scu_reg
@@ -878,7 +878,8 @@ ext_trig_led: led_n
     
   A_nDtack <= not SCUB_Dtack;
   A_nSRQ <= not SCUB_SRQ;
-  
-  A_TA <= fg_1_sw(23 downto 8);
-  A_TB <= fg_1_sw(7 downto 0) & fg_1_strobe & "0000000";
+  A_TB(1) <= '1';
+  --A_TA <= fg_1_sw(23 downto 8);
+  --
+  --A_TB <= fg_1_sw(7 downto 0) & fg_1_strobe & "0000000";
 end architecture;
