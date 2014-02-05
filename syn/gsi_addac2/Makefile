@@ -1,8 +1,8 @@
-TARGET		= scu_addac
+TARGET		= scu_addac2
 DEVICE		= EP2AGX125
 FLASH		  = EPCS128
 RAM_SIZE	= 32768
-PADDAC   = ../../top/gsi_addac
+PADDAC   = ../../top/gsi_addac2
 PDEV    = $(PADDAC)/dev
 POW     = $(PDEV)/sockitowm
 STUBD       = ../../modules/lm32_stub

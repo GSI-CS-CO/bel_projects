@@ -14,7 +14,7 @@ LDFLAGS		?= -nostdlib -T $(STUBD)/ram.ld -Wl,--defsym,_fstack=$(RAM_SIZE)-4 -lgc
 
 all:	$(TARGET).mif $(TARGET).sof $(TARGET).jic $(TARGET).rpd
 
-clean:
+clean::
 	rm -rf db incremental_db PLLJ_PLLSPE_INFO.txt
 	rm -f $(TARGET).*.rpt $(TARGET).*.summary $(TARGET).map* $(TARGET).fit.* $(TARGET).pin $(TARGET).jdi $(TARGET)*.qdf $(TARGET).done $(TARGET).qws
 	rm -f $(TARGET).rpd $(TARGET).jic $(TARGET).pof $(TARGET).sof $(TARGET).dep $(TARGET).elf $(TARGET).o
