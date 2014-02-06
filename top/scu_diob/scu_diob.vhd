@@ -120,8 +120,8 @@ port	(
     A_Spare1: in std_logic; -- vom Master getrieben
     A_nReset: in std_logic; -- Reset (aktiv '0'), vom Master getrieben
 
-		A_nSEL_Ext_Signal_DRV: out std_logic; -- '0' => Treiber für SCU-Bus-Steuer-Signale aktiv
-		A_nExt_Signal_In: out std_logic; -- '0' => Treiber für SCU-Bus-Steuer-Signale-Richtung: SCU-Bus nach Slave (besser default 0, oder Treiber A/B tauschen)
+		A_nSEL_Ext_Signal_DRV: out std_logic; -- '0' => Treiber fr SCU-Bus-Steuer-Signale aktiv
+		A_nExt_Signal_In: out std_logic; -- '0' => Treiber fr SCU-Bus-Steuer-Signale-Richtung: SCU-Bus nach Slave (besser default 0, oder Treiber A/B tauschen)
 
 		----------------- OneWire ----------------------------------------------------------------------------------------
 		A_OneWire: inout std_logic; -- Temp.-OneWire auf dem Slave
@@ -129,7 +129,7 @@ port	(
     ------------ Logic analyser Signals -------------------------------------------------------------------------------
     A_SEL: in std_logic_vector(3 downto 0); -- use to select sources for the logic analyser ports
 		A_Tclk: out std_logic; -- Clock  for Logikanalysator Port A
-    A_TA: out std_logic_vector(15 downto 0); -- test port a
+    A_TA: inout std_logic_vector(15 downto 0); -- test port a
 
 		---------------------------------- Diagnose-LED's -----------------------------------------------------------------
 		A_nLED_D2: out std_logic;	-- Diagnose-LED_D2 auf dem Basis-Board
@@ -139,7 +139,7 @@ port	(
 		A_nUser_EN: out std_logic; -- Enable User-I/O
 		UIO: inout std_logic_vector(15 downto 0); -- User I/O VG-Leiste
 	
-		---------------- Übergabestecker für Anwender-I/O -----------------------------------------------------------------
+		---------------- bergabestecker fr Anwender-I/O -----------------------------------------------------------------
 		CLK_IO: in std_logic; -- Clock vom Anwender_I/0
 		PIO: inout std_logic_vector(150 downto 16)	-- Dig. User I/0 to Piggy
 		);
@@ -594,12 +594,12 @@ begin
 		when X"F" => test_out := test_port_in_0;
 		when others =>	test_out := (others => '0');
 	end case;
-	A_TA <= test_out(15 downto 0);
+	--A_TA <= test_out(15 downto 0);
 end process testport_mux;
 
 
 
-A_Tclk	<=	 la_clk;	-- Clock für Logikanalysator: = Sysclk x 2 				
+A_Tclk	<=	 la_clk;	-- Clock fr Logikanalysator: = Sysclk x 2 				
 
 test_port_in_0 <=	nPowerup_Res 	& clk 						& Ena_Every_100ns & Ena_Every_166ns &	-- bit15..12
 									Ext_Wr_active & SCU_Ext_Wr_fin  & AWOut_Reg1_wr		& fg_1_strobe			& -- bit11..8
@@ -690,7 +690,7 @@ port map	(
      g_sdb_addr => c_sdb_address)
    port map(
      clk_sys_i => clk_sys,
-     rst_n_i => clk_sys_rstn,
+     rst_n_i => pll_2_locked,
      -- Master connections (INTERCON is a slave)
      slave_i => cbar_slave_i,
      slave_o => cbar_slave_o,
@@ -704,7 +704,7 @@ port map	(
       g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      rst_n_i => pll_2_locked,
       irq_i => lm32_interrupt,
       dwb_o => cbar_slave_i(0), -- Data bus
       dwb_i => cbar_slave_o(0),
@@ -724,7 +724,7 @@ port map	(
       g_init_file => "scu_diob.mif")
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      rst_n_i => pll_2_locked,
       -- First port connected to the crossbar
       slave1_i => cbar_master_o(0),
       slave1_o => cbar_master_i(0),
@@ -746,7 +746,7 @@ port map	(
       )
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      rst_n_i => pll_2_locked,
 
       -- Wishbone
       slave_i => cbar_master_o(1),
@@ -769,7 +769,7 @@ port map	(
       )
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      rst_n_i => pll_2_locked,
 
       -- Wishbone
       slave_i => cbar_master_o(2),
@@ -777,7 +777,7 @@ port map	(
       desc_o => open,
 
       uart_rxd_i => '0',
-      uart_txd_o => open
+      uart_txd_o => A_TA(0)
       );
   
   SCU_WB_Reg: wb_scu_reg
@@ -786,7 +786,7 @@ port map	(
       register_cnt => 16 )
     port map (
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      rst_n_i => pll_2_locked,
 
       -- Wishbone
       slave_i => cbar_master_o(3),
@@ -845,7 +845,7 @@ A_nLED_D3	<=	 s_nLED_Dtack;	-- Diagnose-LED_D3 = Dtack
 
 
 sel_every_250ms: div_n
-  generic map (n => 12, diag_on => 0)  -- ena nur alle 20ms für einen Takt aktiv, deshalb 13x20ms = 260ms
+  generic map (n => 12, diag_on => 0)  -- ena nur alle 20ms fr einen Takt aktiv, deshalb 13x20ms = 260ms
     port map  ( res => Powerup_Res,
                 clk => clk_sys,
                 ena => Ena_Every_20ms,
@@ -853,7 +853,7 @@ sel_every_250ms: div_n
               );
 							
 sel_every_500ms: div_n
-  generic map (n => 25, diag_on => 0)  -- ena nur alle 20ms für einen Takt aktiv, deshalb 25x20ms = 500ms
+  generic map (n => 25, diag_on => 0)  -- ena nur alle 20ms fr einen Takt aktiv, deshalb 25x20ms = 500ms
     port map  ( res => Powerup_Res,
                 clk => clk_sys,
                 ena => Ena_Every_20ms,
@@ -1064,14 +1064,13 @@ fg_1: fg_quad_scu_bus
 rd_port_mux:	process	(fg_1_rd_active, AWOut_Reg_rd_active,
 											fg_1_data_to_SCUB, aw_port1_data_to_SCUB)  
 
-  variable sel: unsigned(3 downto 0);
+  variable sel: unsigned(2 downto 0);
   begin
-    sel :=  wb_scu_rd_active & fg_1_rd_active & User_Reg_rd_active & AWOut_Reg_rd_active;
+    sel :=  wb_scu_rd_active & fg_1_rd_active  & AWOut_Reg_rd_active;
     case sel IS
-      when "0001" => Data_to_SCUB <= aw_port1_data_to_SCUB;
-      when "0010" => Data_to_SCUB <= user_reg1_data_to_SCUB;
-      when "0100" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "1000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "001" => Data_to_SCUB <= aw_port1_data_to_SCUB;
+      when "010" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "100" => Data_to_SCUB <= wb_scu_data_to_SCUB;
       when others =>
 		Data_to_SCUB <= (others => '-');
     end case;
@@ -1099,7 +1098,7 @@ BEGIN
 		--#################################################################################
 		--#################################################################################
 		--###																																						###
-		--###											IO-Stecker-Test mit "Brückenkarte											###
+		--###											IO-Stecker-Test mit "Brckenkarte											###
 		--###																																						###
 		--#################################################################################
 	
@@ -1133,7 +1132,7 @@ BEGIN
 --  IF 	A_SEL = not (X"F")   THEN		-- Codierschalter = x"F" --> Testmode 
 
 
-			UIO(15 DOWNTO 0)		<=	AWOut_Reg6(15 DOWNTO 0);	-- Test USER-IO-Pins zu VG-Leiste über die "USER-Register" 
+			UIO(15 DOWNTO 0)		<=	AWOut_Reg6(15 DOWNTO 0);	-- Test USER-IO-Pins zu VG-Leiste ber die "USER-Register" 
 	
 
 			AWIn1(15 DOWNTO 0)	<=	(		CLK_IO,	PIO(16),	PIO(17),	PIO(18),	PIO(19),	PIO(20),	PIO(21),	PIO(22),
@@ -1218,13 +1217,13 @@ BEGIN
 			s_deb_In1	<=	not PIO(139);					-- Debounce, Input "Start" H-Aktiv
 			s_str_In1	<=	s_deb_Out1;						-- pos. Flanke des entprellten Start-Pulses wird ein Puls (1-clk)
 							
-			s_Led_Bu1	<=	s_deb_Out1;						-- Stretch Deb_Inputsignal für LED
+			s_Led_Bu1	<=	s_deb_Out1;						-- Stretch Deb_Inputsignal fr LED
 			PIO(33)		<=	s_Led_Bu1_Out;				--	Output "nLED_Start"
 					
 					
 		-- Input Stop --
 			s_deb_In2	<=	not PIO(141);					-- Debounce, Input "Stop" H-aktiv
-			s_Led_Bu2	<=	s_deb_Out2;						-- Stretch Deb_Inputsignal für LED
+			s_Led_Bu2	<=	s_deb_Out2;						-- Stretch Deb_Inputsignal fr LED
 			PIO(35)		<=	s_Led_Bu2_Out;				-- Output "nLED_Stop"
 		
 
@@ -1520,7 +1519,7 @@ END PROCESS p_AW_MUX;
 
 
 
-
+A_TA(1) <= '1'; -- drives the external max level shifter
   
 
 end architecture;
