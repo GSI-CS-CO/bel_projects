@@ -38,6 +38,7 @@ architecture wb_scu_reg_arch of wb_scu_reg is
   signal rd_pulse1: std_logic;
   signal rd_pulse2: std_logic;
   signal copy_shadow: std_logic;
+  signal rd_active: std_logic;
   
   signal dtack:         std_logic;
 begin
@@ -104,11 +105,13 @@ begin
   begin
     if rising_edge(clk_sys_i) then
       dtack         <= '0';
+      rd_active     <= '0';
       
       if Ext_Adr_Val = '1' then
         if unsigned(Adr_from_SCUB_LA) >= Base_addr and unsigned(Adr_from_SCUB_LA) < Base_addr + register_cnt then
           if Ext_Rd_active = '1' then
             dtack        <= '1';
+            rd_active    <= '1';
           end if;
         end if;
       end if;
@@ -116,9 +119,9 @@ begin
     end if;
   end process adr_decoder;
   
-  user_rd_active <= Ext_Rd_active;
+  user_rd_active <= rd_active;
 
-  Data_to_SCUB <= s_ext_regs(to_integer(unsigned(Adr_from_SCUB_LA))) when Ext_Rd_active = '1' else
+  Data_to_SCUB <= s_ext_regs(to_integer(unsigned(Adr_from_SCUB_LA))) when rd_active = '1' else
                   x"0000";
                   
   Dtack_to_SCUB <= dtack;

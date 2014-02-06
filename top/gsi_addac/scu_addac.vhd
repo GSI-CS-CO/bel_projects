@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 library work;
 use work.wishbone_pkg.all;
@@ -85,7 +86,7 @@ entity scu_addac is
     ------------ Logic analyser Signals -------------------------------------------------------------------------------
     A_SEL: in std_logic_vector(3 downto 0); -- use to select sources for the logic analyser ports
     A_TA: out std_logic_vector(15 downto 0); -- test port a
-    A_TB: out std_logic_vector(15 downto 0); -- test port b
+    A_TB: inout std_logic_vector(15 downto 0); -- test port b
     --A_TB0: out std_logic;
     --A_TB1: in std_logic;
     --A_TB2: out std_logic := '1';
@@ -195,48 +196,57 @@ constant c_xwb_uart : t_sdb_device := (
   
   signal clk_sys, clk_cal, locked : std_logic;
   
-  signal SCUB_SRQ: std_logic;
-  signal SCUB_Dtack: std_logic;
-  signal convst: std_logic;
-  signal rst: std_logic;
+  constant clk_in_hz: integer := 125_000_000;
+  
+  signal SCUB_SRQ:    std_logic;
+  signal SCUB_Dtack:  std_logic;
+  signal convst:      std_logic;
+  signal rst:         std_logic;
   
   signal Dtack_to_SCUB: std_logic;
 
   signal io_port_Dtack_to_SCUB: std_logic;
-  signal io_port_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal io_port_rd_active: std_logic;
+  signal io_port_data_to_SCUB:  std_logic_vector(15 downto 0);
+  signal io_port_rd_active:     std_logic;
   
-  signal dac1_Dtack: std_logic;
+  signal dac1_Dtack:        std_logic;
   signal dac1_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal dac1_rd_active: std_logic;
+  signal dac1_rd_active:    std_logic;
   
-  signal dac2_Dtack: std_logic;
+  signal dac2_Dtack:        std_logic;
   signal dac2_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal dac2_rd_active: std_logic;
+  signal dac2_rd_active:    std_logic;
   
-  signal ADR_from_SCUB_LA: std_logic_vector(15 downto 0);
+  signal ADR_from_SCUB_LA:  std_logic_vector(15 downto 0);
   signal Data_from_SCUB_LA: std_logic_vector(15 downto 0);
-  signal Ext_Adr_Val: std_logic;
-  signal Ext_Rd_active: std_logic;
-  signal Ext_Wr_active: std_logic;
-  signal Ext_Wr_fin_ovl: std_logic;
-  signal nPowerup_Res: std_logic;
+  signal Ext_Adr_Val:       std_logic;
+  signal Ext_Rd_active:     std_logic;
+  signal Ext_Wr_active:     std_logic;
+  signal Ext_Wr_fin_ovl:    std_logic;
+  signal nPowerup_Res:      std_logic;
   
-  signal adc_rd_active: std_logic;
-  signal adc_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal adc_dtack: std_logic;
+  signal adc_rd_active:     std_logic;
+  signal adc_data_to_SCUB:  std_logic_vector(15 downto 0);
+  signal adc_dtack:         std_logic;
   
-  signal tmr_rd_active: std_logic;
-  signal tmr_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal tmr_dtack: std_logic;
+  signal tmr_rd_active:     std_logic;
+  signal tmr_data_to_SCUB:  std_logic_vector(15 downto 0);
+  signal tmr_dtack:         std_logic;
   
-  signal fg_1_dtack: std_logic;
+  signal fg_1_dtack:        std_logic;
   signal fg_1_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal fg_1_rd_active: std_logic;
-  signal fg_1_sw: std_logic_vector(31 downto 0);
-  signal fg_1_strobe: std_logic;
-  signal fg_1_dreq: std_logic;
+  signal fg_1_rd_active:    std_logic;
+  signal fg_1_sw:           std_logic_vector(31 downto 0);
+  signal fg_1_strobe:       std_logic;
+  signal fg_1_dreq:         std_logic;
   
+  signal fg_2_dtack:        std_logic;
+  signal fg_2_data_to_SCUB: std_logic_vector(15 downto 0);
+  signal fg_2_rd_active:    std_logic;
+  signal fg_2_sw:           std_logic_vector(31 downto 0);
+  signal fg_2_strobe:       std_logic;
+  signal fg_2_dreq:         std_logic;
+
   signal led_ena_cnt: std_logic;
 
   signal ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4: std_logic_vector(15 downto 0);
@@ -244,21 +254,21 @@ constant c_xwb_uart : t_sdb_device := (
 
   signal Data_to_SCUB: std_logic_vector(15 downto 0);
   
-  signal reset_clks : std_logic_vector(0 downto 0);
-  signal reset_rstn : std_logic_vector(0 downto 0);
-  signal clk_sys_rstn : std_logic;
-  signal lm32_interrupt : std_logic_vector(31 downto 0);
-  signal lm32_rstn : std_logic;
+  signal reset_clks:       std_logic_vector(0 downto 0);
+  signal reset_rstn:       std_logic_vector(0 downto 0);
+  signal clk_sys_rstn:     std_logic;
+  signal lm32_interrupt:   std_logic_vector(31 downto 0);
+  signal lm32_rstn:        std_logic;
   
   -- Top crossbar layout
-  constant c_slaves : natural := 4;
-  constant c_masters : natural := 2;
-  constant c_dpram_size : natural := 16384; -- in 32-bit words (64KB)
-  constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
-   (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size), x"00000000"),
-    1 => f_sdb_embed_device(c_xwb_owm, x"00100600"),
-    2 => f_sdb_embed_device(c_xwb_uart, x"00100700"),
-    3 => f_sdb_embed_device(c_xwb_scu_reg, x"00100800"));
+  constant c_slaves     : natural := 4;
+  constant c_masters    : natural := 2;
+  constant c_dpram_size : natural := 32768; -- in 32-bit words (64KB)
+  constant c_layout     : t_sdb_record_array(c_slaves-1 downto 0) :=
+   (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),  x"00000000"),
+    1 => f_sdb_embed_device(c_xwb_owm,                  x"00100600"),
+    2 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"),
+    3 => f_sdb_embed_device(c_xwb_scu_reg,              x"00100800"));
   constant c_sdb_address : t_wishbone_address := x"00100000";
 
   signal cbar_slave_i : t_wishbone_slave_in_array (c_masters-1 downto 0);
@@ -266,18 +276,25 @@ constant c_xwb_uart : t_sdb_device := (
   signal cbar_master_i : t_wishbone_master_in_array(c_slaves-1 downto 0);
   signal cbar_master_o : t_wishbone_master_out_array(c_slaves-1 downto 0);
   
-  signal owr_pwren_o: std_logic_vector(1 downto 0);
-  signal owr_en_o: std_logic_vector(1 downto 0);
-  signal owr_i:        std_logic_vector(1 downto 0);
+  signal owr_pwren_o:   std_logic_vector(1 downto 0);
+  signal owr_en_o:      std_logic_vector(1 downto 0);
+  signal owr_i:         std_logic_vector(1 downto 0);
   
-  signal wb_scu_rd_active: std_logic;
-  signal wb_scu_dtack: std_logic;
+  signal wb_scu_rd_active:    std_logic;
+  signal wb_scu_dtack:        std_logic;
   signal wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
   
   --signal irqcnt:  unsigned(12 downto 0);
   signal tmr_irq: std_logic;
   
   signal dac_1_ext_trig, dac_2_ext_trig: std_logic;
+  
+  constant c_led_cnt:				integer := integer(ceil(real(clk_sys_in_hz) / real(1_000_000_000) * real(125000000)));
+	constant c_led_cnt_width:	integer := integer(floor(log2(real(c_led_cnt)))) + 2;
+	signal  s_led_cnt:				unsigned( c_led_cnt_width-1 downto 0) := (others => '0');
+  
+  signal s_led_en:      std_logic;
+  signal s_test_vector: std_logic_vector(15 downto 0) := x"8000";
 
   begin
     
@@ -287,10 +304,10 @@ fl : flash_loader_v01
   -- Obtain core clocking
 adda_pll_1: adda_pll -- Altera megafunction
   port map (
-    inclk0 => CLK_FPGA, -- 125Mhz oscillator from board
-    c0 => clk_sys, -- 125MHz system clk
-    c1 => clk_cal, -- 50Mhz calibration clock for Altera reconfig cores
-    locked => locked); -- '1' when the PLL has locked
+    inclk0  => CLK_FPGA,  -- 125Mhz oscillator from board
+    c0      => clk_sys,   -- 125MHz system clk
+    c1      => clk_cal,   -- 50Mhz calibration clock for Altera reconfig cores
+    locked  => locked);   -- '1' when the PLL has locked
 
     reset : gc_reset
     port map(
@@ -302,10 +319,10 @@ adda_pll_1: adda_pll -- Altera megafunction
     clk_sys_rstn <= reset_rstn(0);
 
   -- open drain buffer for one wire
-        owr_i(0) <= A_OneWire;
-        A_OneWire <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
-  owr_i(1) <= A_OneWire_EEPROM;
-        A_OneWire_EEPROM <= owr_pwren_o(1) when (owr_pwren_o(1) = '1' or owr_en_o(1) = '1') else 'Z';
+    owr_i(0) <= A_OneWire;
+    A_OneWire <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
+    owr_i(1) <= A_OneWire_EEPROM;
+    A_OneWire_EEPROM <= owr_pwren_o(1) when (owr_pwren_o(1) = '1' or owr_en_o(1) = '1') else 'Z';
   
   -- The top-most Wishbone B.4 crossbar
   interconnect : xwb_sdb_crossbar
@@ -348,7 +365,8 @@ adda_pll_1: adda_pll -- Altera megafunction
       g_slave1_interface_mode => PIPELINED,
       g_slave2_interface_mode => PIPELINED,
       g_slave1_granularity => BYTE,
-      g_slave2_granularity => WORD)
+      g_slave2_granularity => WORD,
+      g_init_file => "scu_addac.mif")
     port map(
       clk_sys_i => clk_sys,
       rst_n_i => clk_sys_rstn,
@@ -365,24 +383,24 @@ adda_pll_1: adda_pll -- Altera megafunction
   --------------------------------------
   ONEWIRE : xwb_onewire_master
     generic map(
-      g_interface_mode => PIPELINED,
+      g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE,
-      g_num_ports => 2,
-      g_ow_btp_normal => "5.0",
-      g_ow_btp_overdrive => "1.0"
+      g_num_ports           => 2,
+      g_ow_btp_normal       => "5.0",
+      g_ow_btp_overdrive    => "1.0"
       )
     port map(
-      clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      clk_sys_i   => clk_sys,
+      rst_n_i     => clk_sys_rstn,
 
       -- Wishbone
-      slave_i => cbar_master_o(1),
-      slave_o => cbar_master_i(1),
-      desc_o => open,
+      slave_i     => cbar_master_o(1),
+      slave_o     => cbar_master_i(1),
+      desc_o      => open,
 
-                owr_pwren_o => owr_pwren_o,
-      owr_en_o => owr_en_o,
-      owr_i => owr_i
+      owr_pwren_o => owr_pwren_o,
+      owr_en_o    => owr_en_o,
+      owr_i       => owr_i
       );
   --------------------------------------
   -- UART
@@ -404,7 +422,7 @@ adda_pll_1: adda_pll -- Altera megafunction
       desc_o => open,
 
       uart_rxd_i => '0',
-      uart_txd_o => open
+      uart_txd_o => A_TB(0)
       );
   
   SCU_WB_Reg: wb_scu_reg
@@ -430,119 +448,120 @@ adda_pll_1: adda_pll -- Altera megafunction
 
     
 
-Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack or wb_scu_dtack or fg_1_dtack or tmr_dtack;
+Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack
+                or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack;
 
 SCU_Slave: SCU_Bus_Slave
 generic map (
-    CLK_in_Hz => clk_sys_in_Hz,
+    CLK_in_Hz               => clk_sys_in_Hz,
     Firmware_Release        => 0,
     Firmware_Version        => 0,
-    CID_System => 55, -- important: 55 => CSCOHW
-    CID_Group => 3, -- important: 3 => "FG900160_SCU_ADDAC1"
-    Intr_Enable          => b"0000_0000_0000_0001",
-    Slave_ID => scu_adda1_id)
+    CID_System              => 55,  -- important: 55 => CSCOHW
+    CID_Group               => 3,   -- important: 3 => "FG900160_SCU_ADDAC1"
+    Intr_Enable             => b"0000_0000_0000_0001",
+    Slave_ID                => scu_adda1_id)
 port map (
-    SCUB_Addr => A_A, -- in,        SCU_Bus: address bus
-    nSCUB_Timing_Cyc         => A_nEvent_Str, -- in,        SCU_Bus signal: low active SCU_Bus runs timing cycle
-    SCUB_Data => A_D, -- inout,        SCU_Bus: data bus (FPGA tri state buffer)
-    nSCUB_Slave_Sel => A_nBoardSel, -- in, SCU_Bus: '0' => SCU master select slave
-    nSCUB_DS => A_nDS, -- in,        SCU_Bus: '0' => SCU master activate data strobe
-    SCUB_RDnWR => A_RnW, -- in, SCU_Bus: '1' => SCU master read slave
-    clk => clk_sys,
-    nSCUB_Reset_in => A_nReset, -- in,        SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
-    Data_to_SCUB => Data_to_SCUB, -- in,        connect read sources from external user functions
-    Dtack_to_SCUB => Dtack_to_SCUB, -- in,        connect Dtack from from external user functions
-    Intr_In => "0000000000000" & tmr_irq & fg_1_dreq, -- in,        interrupt(15 downto 1)
-    User_Ready => '1',
-    Data_from_SCUB_LA => Data_from_SCUB_LA, -- out,        latched data from SCU_Bus for external user functions
-    ADR_from_SCUB_LA => ADR_from_SCUB_LA, -- out,        latched address from SCU_Bus for external user functions
-    Timing_Pattern_LA => open, -- out,        latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV => open, -- out,        timing pattern received
-    nSCUB_Dtack_Opdrn => open, -- out,        for direct connect to SCU_Bus opendrain signal
+    SCUB_Addr               => A_A,                 -- in,        SCU_Bus: address bus
+    nSCUB_Timing_Cyc        => A_nEvent_Str,        -- in,        SCU_Bus signal: low active SCU_Bus runs timing cycle
+    SCUB_Data               => A_D,                 -- inout,        SCU_Bus: data bus (FPGA tri state buffer)
+    nSCUB_Slave_Sel         => A_nBoardSel,         -- in, SCU_Bus: '0' => SCU master select slave
+    nSCUB_DS                => A_nDS,               -- in,        SCU_Bus: '0' => SCU master activate data strobe
+    SCUB_RDnWR              => A_RnW,               -- in, SCU_Bus: '1' => SCU master read slave
+    clk                     => clk_sys,
+    nSCUB_Reset_in          => A_nReset,            -- in,        SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
+    Data_to_SCUB            => Data_to_SCUB,        -- in,        connect read sources from external user functions
+    Dtack_to_SCUB           => Dtack_to_SCUB,       -- in,        connect Dtack from from external user functions
+    Intr_In                 => "000000000000" & tmr_irq & fg_2_dreq & fg_1_dreq, -- in,        interrupt(15 downto 1)
+    User_Ready              => '1',
+    Data_from_SCUB_LA       => Data_from_SCUB_LA,   -- out,        latched data from SCU_Bus for external user functions
+    ADR_from_SCUB_LA        => ADR_from_SCUB_LA,    -- out,        latched address from SCU_Bus for external user functions
+    Timing_Pattern_LA       => open,                -- out,        latched timing pattern from SCU_Bus for external user functions
+    Timing_Pattern_RCV      => open,                -- out,        timing pattern received
+    nSCUB_Dtack_Opdrn       => open,                -- out,        for direct connect to SCU_Bus opendrain signal
                                                     -- '0' => slave give dtack to SCU master
-    SCUB_Dtack => SCUB_Dtack, -- out,        for connect via ext. open collector driver
+    SCUB_Dtack              => SCUB_Dtack,          -- out,        for connect via ext. open collector driver
                                                     -- '1' => slave give dtack to SCU master
-    nSCUB_SRQ_Opdrn => open, -- out,        for direct connect to SCU_Bus opendrain signal
+    nSCUB_SRQ_Opdrn         => open,                -- out,        for direct connect to SCU_Bus opendrain signal
                                                     -- '0' => slave service request to SCU ma
-    SCUB_SRQ => SCUB_SRQ, -- out,        for connect via ext. open collector driver
+    SCUB_SRQ                => SCUB_SRQ,            -- out,        for connect via ext. open collector driver
                                                     -- '1' => slave service request to SCU master
-    nSel_Ext_Data_Drv => A_nSel_Ext_Data_Drv, -- out,        '0' => select the external data driver on the SCU_Bus slave
-    Ext_Data_Drv_Rd         => A_Ext_Data_RD, -- out,        '1' => direction of the external data driver on the
+    nSel_Ext_Data_Drv       => A_nSel_Ext_Data_Drv, -- out,        '0' => select the external data driver on the SCU_Bus slave
+    Ext_Data_Drv_Rd         => A_Ext_Data_RD,       -- out,        '1' => direction of the external data driver on the
                                                     -- SCU_Bus slave is to the SCU_Bus
-    Standard_Reg_Acc => open, -- out,        '1' => mark the access to register of this macro
-    Ext_Adr_Val => Ext_Adr_Val, -- out,        for external user functions: '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active => Ext_Rd_active, -- out,        '1' => Rd-Cycle to external user register is active
-    Ext_Rd_fin => open, -- out,        marks end of read cycle, active one for one clock period
+    Standard_Reg_Acc        => open,                -- out,        '1' => mark the access to register of this macro
+    Ext_Adr_Val             => Ext_Adr_Val,         -- out,        for external user functions: '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active           => Ext_Rd_active,       -- out,        '1' => Rd-Cycle to external user register is active
+    Ext_Rd_fin              => open,                -- out,        marks end of read cycle, active one for one clock period
                                                     -- of clk past cycle end (no overlap)
-    Ext_Rd_Fin_ovl => open, -- out,        marks end of read cycle, active one for one clock period
+    Ext_Rd_Fin_ovl          => open,                -- out,        marks end of read cycle, active one for one clock period
                                                     -- of clk during cycle end (overlap)
-    Ext_Wr_active => Ext_Wr_active, -- out,        '1' => Wr-Cycle to external user register is active
-    Ext_Wr_fin => open, -- out,        marks end of write cycle, active high for one clock period
+    Ext_Wr_active           => Ext_Wr_active,       -- out,        '1' => Wr-Cycle to external user register is active
+    Ext_Wr_fin              => open,                -- out,        marks end of write cycle, active high for one clock period
                                                     -- of clk past cycle end (no overlap)
-    Ext_Wr_fin_ovl => Ext_Wr_fin_ovl, -- out, marks end of write cycle, active high for one clock period
+    Ext_Wr_fin_ovl          => Ext_Wr_fin_ovl,      -- out, marks end of write cycle, active high for one clock period
                                                     -- of clk before write cycle finished (with overlap)
-    Deb_SCUB_Reset_out        => open, -- out,        the debounced 'nSCUB_Reset_In'-signal, is active high,
+    Deb_SCUB_Reset_out      => open,                -- out,        the debounced 'nSCUB_Reset_In'-signal, is active high,
                                                     -- can be used to reset
                                                     -- external macros, when 'nSCUB_Reset_In' is '0'
-    nPowerup_Res => nPowerup_Res, -- out,        this macro generated a power up reset
-    Powerup_Done => open          -- out  this memory is set to one if an Powerup is done. Only the SCUB-Master can clear this bit.
+    nPowerup_Res            => nPowerup_Res,        -- out,        this macro generated a power up reset
+    Powerup_Done            => open                 -- out  this memory is set to one if an Powerup is done. Only the SCUB-Master can clear this bit.
     );
 
 dac_1: dac714
   generic map(
-    Base_addr => x"0200",
-    CLK_in_Hz => clk_sys_in_Hz,
-    SPI_CLK_in_Hz => dac_spi_clk_in_hz)
+    Base_addr         => x"0200",
+    CLK_in_Hz         => clk_sys_in_Hz,
+    SPI_CLK_in_Hz     => dac_spi_clk_in_hz)
   port map(
-    Adr_from_SCUB_LA => ADR_from_SCUB_LA, -- in, latched address from SCU_Bus
-    Data_from_SCUB_LA => Data_from_SCUB_LA, -- in, latched data from SCU_Bus
-    Ext_Adr_Val => Ext_Adr_Val, -- in, '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active => Ext_Rd_active, -- in, '1' => Rd-Cycle is active
-    Ext_Wr_active => Ext_Wr_active, -- in, '1' => Wr-Cycle is active
-    clk => clk_sys, -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset => nPowerup_Res, -- in, '0' => resets the DAC_1
-    nExt_Trig_DAC => EXT_TRIG_DAC, -- external trigger input over optocoupler,
-                                   -- led on -> nExt_Trig_DAC is low
-    FG_Data => open, -- parallel dac data during FG-Mode
-    FG_Strobe => open, -- strobe to start SPI transfer (if possible) during FG-Mode
-    DAC_SI => DAC1_SDI, -- out, is connected to DAC1-SDI
-    nDAC_CLK => nDAC1_CLK, -- out, spi-clock of DAC1
-    nCS_DAC => nDAC1_A0, -- out, '0' enable shift of internal shift register of DAC1
-    nLD_DAC => nDAC1_A1, -- out, '0' copy shift register to output latch of DAC1
-    nCLR_DAC => nDAC1_CLR, -- out, '0' set DAC1 to zero (pulse width min 200 ns)
-    ext_trig_valid  => dac_1_ext_trig,  -- out, '1' got an valid external trigger, during extern trigger mode.
-    Rd_Port => dac1_data_to_SCUB, -- out, connect read sources (over multiplexer) to SCUB-Macro
-    Rd_Activ => dac1_rd_active, -- out, '1' = read data available at 'Data_to_SCUB'-output
-    Dtack => dac1_dtack
+    Adr_from_SCUB_LA  => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+    Data_from_SCUB_LA => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+    Ext_Adr_Val       => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+    Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+    clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
+    nReset            => nPowerup_Res,          -- in, '0' => resets the DAC_1
+    nExt_Trig_DAC     => EXT_TRIG_DAC,          -- external trigger input over optocoupler,
+                                                -- led on -> nExt_Trig_DAC is low
+    FG_Data           => fg_1_sw(23 downto 8),  -- parallel dac data during FG-Mode
+    FG_Strobe         => fg_1_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
+    DAC_SI            => DAC1_SDI,              -- out, is connected to DAC1-SDI
+    nDAC_CLK          => nDAC1_CLK,             -- out, spi-clock of DAC1
+    nCS_DAC           => nDAC1_A0,              -- out, '0' enable shift of internal shift register of DAC1
+    nLD_DAC           => nDAC1_A1,              -- out, '0' copy shift register to output latch of DAC1
+    nCLR_DAC          => nDAC1_CLR,             -- out, '0' set DAC1 to zero (pulse width min 200 ns)
+    ext_trig_valid    => dac_1_ext_trig,        -- out, '1' got an valid external trigger, during extern trigger mode.
+    Rd_Port           => dac1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
+    Rd_Activ          => dac1_rd_active,        -- out, '1' = read data available at 'Data_to_SCUB'-output
+    Dtack             => dac1_dtack
     );
 
     
 dac_2: dac714
   generic map(
-    Base_addr => x"0210",
-    CLK_in_Hz => clk_sys_in_Hz,
-    SPI_CLK_in_Hz => dac_spi_clk_in_hz)
+    Base_addr         => x"0210",
+    CLK_in_Hz         => clk_sys_in_Hz,
+    SPI_CLK_in_Hz     => dac_spi_clk_in_hz)
   port map(
-    Adr_from_SCUB_LA => ADR_from_SCUB_LA, -- in, latched address from SCU_Bus
-    Data_from_SCUB_LA => Data_from_SCUB_LA, -- in, latched data from SCU_Bus
-    Ext_Adr_Val => Ext_Adr_Val, -- in, '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active => Ext_Rd_active, -- in, '1' => Rd-Cycle is active
-    Ext_Wr_active => Ext_Wr_active, -- in, '1' => Wr-Cycle is active
-    clk => clk_sys, -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset => nPowerup_Res, -- in, '0' => resets the DAC_2
-    nExt_Trig_DAC => EXT_TRIG_DAC, -- external trigger input over optocoupler,
-                                   -- led on -> nExt_Trig_DAC is low
-    FG_Data => fg_1_sw(23 downto 8), -- parallel dac data during FG-Mode
-    FG_Strobe => fg_1_strobe, -- strobe to start SPI transfer (if possible) during FG-Mode
-    DAC_SI => DAC2_SDI, -- out, is connected to DAC2-SDI
-    nDAC_CLK => nDAC2_CLK, -- out, spi-clock of DAC2
-    nCS_DAC => nDAC2_A0, -- out, '0' enable shift of internal shift register of DAC2
-    nLD_DAC => nDAC2_A1, -- out, '0' copy shift register to output latch of DAC2
-    nCLR_DAC => nDAC2_CLR, -- out, '0' set DAC2 to zero (pulse width min 200 ns)
-    ext_trig_valid  => dac_2_ext_trig,  -- out, '1' got an valid external trigger, during extern trigger mode.
-    Rd_Port => dac2_data_to_SCUB, -- out, connect read sources (over multiplexer) to SCUB-Macro
-    Rd_Activ => dac2_rd_active, -- out, '1' = read data available at 'Data_to_SCUB'-output
-    Dtack => dac2_dtack
+    Adr_from_SCUB_LA  => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+    Data_from_SCUB_LA => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+    Ext_Adr_Val       => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+    Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+    clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
+    nReset            => nPowerup_Res,          -- in, '0' => resets the DAC_2
+    nExt_Trig_DAC     => EXT_TRIG_DAC,          -- external trigger input over optocoupler,
+                                                -- led on -> nExt_Trig_DAC is low
+    FG_Data           => fg_2_sw(23 downto 8),  -- parallel dac data during FG-Mode
+    FG_Strobe         => fg_2_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
+    DAC_SI            => DAC2_SDI,              -- out, is connected to DAC2-SDI
+    nDAC_CLK          => nDAC2_CLK,             -- out, spi-clock of DAC2
+    nCS_DAC           => nDAC2_A0,              -- out, '0' enable shift of internal shift register of DAC2
+    nLD_DAC           => nDAC2_A1,              -- out, '0' copy shift register to output latch of DAC2
+    nCLR_DAC          => nDAC2_CLR,             -- out, '0' set DAC2 to zero (pulse width min 200 ns)
+    ext_trig_valid    => dac_2_ext_trig,        -- out, '1' got an valid external trigger, during extern trigger mode.
+    Rd_Port           => dac2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
+    Rd_Activ          => dac2_rd_active,        -- out, '1' = read data available at 'Data_to_SCUB'-output
+    Dtack             => dac2_dtack
     );
 
 
@@ -573,36 +592,36 @@ io_port: IO_4x8
     
 adc: adc_scu_bus
   generic map (
-    Base_addr => x"0230",
-    clk_in_Hz => clk_sys_in_Hz,
-    diag_on_is_1 => 1)
+    Base_addr     => x"0230",
+    clk_in_Hz     => clk_sys_in_Hz,
+    diag_on_is_1  => 1)
   port map (
-    clk => clk_sys,
-    nrst => nPowerup_Res,
+    clk           => clk_sys,
+    nrst          => nPowerup_Res,
     
-    db => ADC_DB(13 downto 0),
-    db14_hben => ADC_DB(14),
+    db            => ADC_DB(13 downto 0),
+    db14_hben     => ADC_DB(14),
     db15_byte_sel => ADC_DB(15),
-    convst_a => ADC_CONVST_A,
-    convst_b => ADC_CONVST_B,
-    n_cs => nADC_CS,
-    n_rd_sclk => nADC_RD_SCLK,
-    busy => ADC_BUSY,
-    adc_reset => ADC_RESET,
-    os => ADC_OS,
-    par_ser_sel => nADC_PAR_SER_SEL,
-    adc_range => ADC_Range,
-    firstdata => ADC_FRSTDATA,
-    nDiff_In_En => NDIFF_IN_EN,
+    convst_a      => ADC_CONVST_A,
+    convst_b      => ADC_CONVST_B,
+    n_cs          => nADC_CS,
+    n_rd_sclk     => nADC_RD_SCLK,
+    busy          => ADC_BUSY,
+    adc_reset     => ADC_RESET,
+    os            => ADC_OS,
+    par_ser_sel   => nADC_PAR_SER_SEL,
+    adc_range     => ADC_Range,
+    firstdata     => ADC_FRSTDATA,
+    nDiff_In_En   => NDIFF_IN_EN,
     
-    Adr_from_SCUB_LA => ADR_from_SCUB_LA,
+    Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
     Data_from_SCUB_LA => Data_from_SCUB_LA,
-    Ext_Adr_Val => Ext_Adr_Val,
-    Ext_Rd_active => Ext_Rd_active,
-    Ext_Wr_active => Ext_Wr_active,
-    user_rd_active => adc_rd_active,
-    Data_to_SCUB => adc_data_to_SCUB,
-    Dtack_to_SCUB => adc_dtack,
+    Ext_Adr_Val       => Ext_Adr_Val,
+    Ext_Rd_active     => Ext_Rd_active,
+    Ext_Wr_active     => Ext_Wr_active,
+    user_rd_active    => adc_rd_active,
+    Data_to_SCUB      => adc_data_to_SCUB,
+    Dtack_to_SCUB     => adc_dtack,
 
     channel_1 => ADC_channel_1,
     channel_2 => ADC_channel_2,
@@ -616,9 +635,9 @@ adc: adc_scu_bus
     
 fg_1: fg_quad_scu_bus
   generic map (
-    Base_addr => x"0300",
-    clk_in_hz => clk_sys_in_Hz,
-    diag_on_is_1 => 0 -- if 1 then diagnosic information is generated during compilation
+    Base_addr     => x"0300",
+    clk_in_hz     => clk_sys_in_Hz,
+    diag_on_is_1  => 0 -- if 1 then diagnosic information is generated during compilation
     )
   port map (
 
@@ -640,24 +659,49 @@ fg_1: fg_quad_scu_bus
     sw_strobe         => fg_1_strobe            -- signals new output data
   );
 
+fg_2: fg_quad_scu_bus
+  generic map (
+    Base_addr     => x"0340",
+    clk_in_hz     => clk_sys_in_Hz,
+    diag_on_is_1  => 0 -- if 1 then diagnosic information is generated during compilation
+    )
+  port map (
+
+    -- SCUB interface
+    Adr_from_SCUB_LA  => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+    Data_from_SCUB_LA => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+    Ext_Adr_Val       => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+    Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+    clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
+    nReset            => nPowerup_Res,          -- in, '0' => resets the fg_1
+    Rd_Port           => fg_2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
+    user_rd_active    => fg_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
+    Dtack             => fg_2_dtack,            -- connect Dtack to SCUB-Macro
+    dreq              => fg_2_dreq,             -- request of new parameter set
+
+    -- fg output
+    sw_out            => fg_2_sw,               -- 24bit output from fg
+    sw_strobe         => fg_2_strobe            -- signals new output data
+  );
+
   tmr: tmr_scu_bus
   generic map (
-    Base_addr => x"0330",
-    diag_on_is_1 => 1)
+    Base_addr     => x"0330",
+    diag_on_is_1  => 1)
   port map (
-    clk => clk_sys,
-    nrst => nPowerup_Res,
+    clk           => clk_sys,
+    nrst          => nPowerup_Res,
+    tmr_irq       => tmr_irq,
     
-    tmr_irq => tmr_irq,
-    
-    Adr_from_SCUB_LA => ADR_from_SCUB_LA,
+    Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
     Data_from_SCUB_LA => Data_from_SCUB_LA,
-    Ext_Adr_Val => Ext_Adr_Val,
-    Ext_Rd_active => Ext_Rd_active,
-    Ext_Wr_active => Ext_Wr_active,
-    user_rd_active => tmr_rd_active,
-    Data_to_SCUB => tmr_data_to_SCUB,
-    Dtack_to_SCUB => tmr_dtack);
+    Ext_Adr_Val       => Ext_Adr_Val,
+    Ext_Rd_active     => Ext_Rd_active,
+    Ext_Wr_active     => Ext_Wr_active,
+    user_rd_active    => tmr_rd_active,
+    Data_to_SCUB      => tmr_data_to_SCUB,
+    Dtack_to_SCUB     => tmr_dtack);
 
 p_led_ena: div_n
   generic map (
@@ -700,6 +744,35 @@ p_led_ena: div_n
 --
 -- end process p_test_port_mux;
 
+  -------------------------------------------------------------------------------
+	-- precsaler for the led test vector
+	-------------------------------------------------------------------------------
+	sec_prescale:	process(clk_sys, nPowerup_Res)
+	begin
+		if nPowerup_Res = '0' then
+			s_led_en <= '0';
+		elsif rising_edge(clk_sys) then
+			if s_led_cnt = to_unsigned(c_led_cnt, c_led_cnt_width) then
+				s_led_en <= '1';
+				s_led_cnt <= (others => '0');
+			else
+				s_led_en <= '0';
+				s_led_cnt <= s_led_cnt  + 1;
+			end if;
+		end if;
+	end process;
+	
+	-------------------------------------------------------------------------------
+	-- rotating bit as a test vector for led testing
+	-------------------------------------------------------------------------------
+	test_signal: process(clk_sys, nPowerup_Res, s_led_en)
+	begin
+		if nPowerup_Res = '0' then
+			s_test_vector <= ('1', others => '0');
+		elsif rising_edge(clk_sys) and s_led_en = '1' then
+			s_test_vector <= s_test_vector(s_test_vector'high-1 downto 0) & s_test_vector(s_test_vector'high);
+		end if;
+	end process;
 
 p_led_mux: process (
     ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4,
@@ -709,7 +782,7 @@ p_led_mux: process (
     )
   begin
     if A_MODE_SEL = "11" then
-      A_nLED <= not nADC_PAR_SER_SEL & nADC_PAR_SER_SEL & NDIFF_IN_EN & "1" & x"FFF";
+      A_nLED <= not nADC_PAR_SER_SEL & nADC_PAR_SER_SEL & NDIFF_IN_EN & not dac1_dtack & not dac2_dtack & "111" & x"FF";
     elsif A_MODE_SEL = "01" then
       case not A_ADC_DAC_SEL IS
         when X"1" => A_nLED <= not ADC_channel_1;
@@ -723,6 +796,8 @@ p_led_mux: process (
         when others =>
           A_nLED <= (others => '1');
       end case;
+    elsif A_MODE_SEL = "10" then
+      A_nLED <= not s_test_vector;
     else
       A_nLED <= (others => '1');
     end if;
@@ -735,18 +810,22 @@ p_read_mux: process (
     dac2_rd_active, dac2_data_to_SCUB,
     adc_rd_active, adc_data_to_SCUB,
     fg_1_rd_active, fg_1_data_to_SCUB,
-    tmr_rd_active, tmr_data_to_SCUB
+    fg_2_rd_active, fg_2_data_to_SCUB,
+    tmr_rd_active, tmr_data_to_SCUB,
+    wb_scu_rd_active, wb_scu_data_to_SCUB
     )
-  variable sel: unsigned(5 downto 0);
+  variable sel: unsigned(7 downto 0);
   begin
-    sel :=  tmr_rd_active & fg_1_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
+    sel :=  wb_scu_rd_active & tmr_rd_active & fg_2_rd_active & fg_1_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
     case sel IS
-      when "000001" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "000010" => Data_to_SCUB <= dac1_data_to_SCUB;
-      when "000100" => Data_to_SCUB <= dac2_data_to_SCUB;
-      when "001000" => Data_to_SCUB <= adc_data_to_SCUB;
-      when "010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "100000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "00000001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "00000010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "00000100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "00001000" => Data_to_SCUB <= adc_data_to_SCUB;
+      when "00010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "00100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
+      when "01000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "10000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
       when others =>
         Data_to_SCUB <= X"0000";
     end case;
@@ -799,7 +878,8 @@ ext_trig_led: led_n
     
   A_nDtack <= not SCUB_Dtack;
   A_nSRQ <= not SCUB_SRQ;
-  
-  A_TA <= fg_1_sw(23 downto 8);
-  A_TB <= fg_1_sw(7 downto 0) & fg_1_strobe & "0000000";
+  A_TB(1) <= '1';
+  --A_TA <= fg_1_sw(23 downto 8);
+  --
+  --A_TB <= fg_1_sw(7 downto 0) & fg_1_strobe & "0000000";
 end architecture;

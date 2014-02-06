@@ -342,7 +342,7 @@ constant c_xwb_uart : t_sdb_device := (
   -- Top crossbar layout
   constant c_slaves : natural := 4;
   constant c_masters : natural := 2;
-  constant c_dpram_size : natural := 16384; -- in 32-bit words (64KB)
+  constant c_dpram_size : natural := 32768; -- in 32-bit words (64KB)
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size), x"00000000"),
     1 => f_sdb_embed_device(c_xwb_owm, x"00100600"),
@@ -720,7 +720,8 @@ port map	(
       g_slave1_interface_mode => PIPELINED,
       g_slave2_interface_mode => PIPELINED,
       g_slave1_granularity => BYTE,
-      g_slave2_granularity => WORD)
+      g_slave2_granularity => WORD,
+      g_init_file => "scu_diob.mif")
     port map(
       clk_sys_i => clk_sys,
       rst_n_i => clk_sys_rstn,
@@ -1063,12 +1064,14 @@ fg_1: fg_quad_scu_bus
 rd_port_mux:	process	(fg_1_rd_active, AWOut_Reg_rd_active,
 											fg_1_data_to_SCUB, aw_port1_data_to_SCUB)  
 
-  variable sel: unsigned(1 downto 0);
+  variable sel: unsigned(3 downto 0);
   begin
-    sel :=  fg_1_rd_active & AWOut_Reg_rd_active;
+    sel :=  wb_scu_rd_active & fg_1_rd_active & User_Reg_rd_active & AWOut_Reg_rd_active;
     case sel IS
-      when "10" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "01" => Data_to_SCUB <= aw_port1_data_to_SCUB;
+      when "0001" => Data_to_SCUB <= aw_port1_data_to_SCUB;
+      when "0010" => Data_to_SCUB <= user_reg1_data_to_SCUB;
+      when "0100" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "1000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
       when others =>
 		Data_to_SCUB <= (others => '-');
     end case;
