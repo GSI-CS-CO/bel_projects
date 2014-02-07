@@ -352,6 +352,7 @@ architecture rtl of monster is
   signal clk_ref          : std_logic;
   signal clk_butis        : std_logic;
   signal clk_phase        : std_logic;
+  signal clk_12_5         : std_logic;
   signal rstn_ref         : std_logic;
   signal rstn_butis       : std_logic;
   signal rstn_phase       : std_logic;
@@ -588,6 +589,19 @@ begin
   --  inclk  => clk_ref1,
   -- outclk => clk_butis);
   clk_butis <= clk_ref1;
+  
+  clk_div: process(clk_ref0)
+    variable cnt: integer := 0;
+  begin
+    if rising_edge(clk_ref0) then
+      if cnt < 4 then
+        cnt := cnt + 1;
+      else
+        cnt := 0;
+        clk_12_5 <= not clk_12_5;
+      end if;
+    end if;
+  end process;
   
   phase_clk : global_region port map( -- skew must match ref_clk
     inclk  => clk_ref2,
@@ -1233,7 +1247,7 @@ begin
     scubus_a_d <= (others => 'Z');
   end generate;
   scub_y : if g_en_scubus generate
-    scubus_a_sysclock <= clk_20m;
+    scubus_a_sysclock <= clk_12_5;
     scub : wb_irq_scu_bus
       generic map(
         g_interface_mode      => PIPELINED,
