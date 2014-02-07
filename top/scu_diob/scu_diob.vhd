@@ -690,7 +690,7 @@ port map	(
      g_sdb_addr => c_sdb_address)
    port map(
      clk_sys_i => clk_sys,
-     rst_n_i => pll_2_locked,
+     rst_n_i => nPowerup_Res,
      -- Master connections (INTERCON is a slave)
      slave_i => cbar_slave_i,
      slave_o => cbar_slave_o,
@@ -704,7 +704,7 @@ port map	(
       g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => pll_2_locked,
+      rst_n_i => nPowerup_Res,
       irq_i => lm32_interrupt,
       dwb_o => cbar_slave_i(0), -- Data bus
       dwb_i => cbar_slave_o(0),
@@ -724,7 +724,7 @@ port map	(
       g_init_file => "scu_diob.mif")
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => pll_2_locked,
+      rst_n_i => nPowerup_Res,
       -- First port connected to the crossbar
       slave1_i => cbar_master_o(0),
       slave1_o => cbar_master_i(0),
@@ -746,7 +746,7 @@ port map	(
       )
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => pll_2_locked,
+      rst_n_i => nPowerup_Res,
 
       -- Wishbone
       slave_i => cbar_master_o(1),
@@ -769,7 +769,7 @@ port map	(
       )
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => pll_2_locked,
+      rst_n_i => nPowerup_Res,
 
       -- Wishbone
       slave_i => cbar_master_o(2),
@@ -786,7 +786,7 @@ port map	(
       register_cnt => 16 )
     port map (
       clk_sys_i => clk_sys,
-      rst_n_i => pll_2_locked,
+      rst_n_i => nPowerup_Res,
 
       -- Wishbone
       slave_i => cbar_master_o(3),
