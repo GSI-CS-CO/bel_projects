@@ -10,6 +10,83 @@ use work.aux_functions_pkg.all;
 use work.wb_scu_reg_pkg.all;
 use work.fg_quad_pkg.all;
 
+
+
+
+----------------------------------------------------------------------------------------------------------------------
+--  Vers: 1 Revi: 0: erstellt am 28.01.2014, Autor: R.Hartmann                                                      --
+--                                                                                                                  --
+--                                                                                                                  --
+--    Config-Register-Layout                                                                                        --
+--                                                                                                                  --
+--      Base_addr   : Config-Register-Layout                                                                        --
+--                                ------+-----------------------------------------------------------------------    --
+--                     Lesen Bit:   15  | Leiterplatten-Test-Mode;  1 = Test                                        --
+--                                      |                           0 = Betrieb                                     --
+--                                ------+-----------------------------------------------------------------------    --
+--																      |                                                                           --
+--																14..5 | immer '0'                                                                 --
+--																      |                                                                           --
+---                                ------+-----------------------------------------------------------------------   --
+--                                  4   | FG_mode;  1 = Funktiongenerator-Mode, DAC-Werte kommen von FG_Data und    --
+--                                      |               werden mit FG_Strobe uebernommen. Kein externer Trigger!    --
+--                                      |           0 = Software-Mode, DAC-Werte, kommen vom SCU-Bus-Slave.         --
+--                                      |               Externe Triggerung mit pos. oder neg. Flanke, kann einge-   --
+--                                      |               schaltet werden.                                            --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  3   | dac_neg_edge_conv;  1 = neg. Flanke ist Trigger, wenn ext. Trig. selekt.  --
+--                                      |                     0 = pos. Flanke ist Trigger, wenn ext. Trig. selekt.  --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  2   | dac_conv_extern;    1 = externer Trigger ist selektiert                   --
+--                                      |                     0 = direkt nach der seriellen Uebertragung, wird der  --
+--                                      |                         DAC-Wert eingestellt.                             --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  1   | CLR_DAC_active;   1 = der Reset des DACs ist noch nicht beendet (200ns).  --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  0   |               --
+--                                ------+-----------------------------------------------------------------------    --
+--                                                                                                                  --
+--                  
+--                                ------+-----------------------------------------------------------------------    --
+--                 Schreiben Bit:   15  | Leiterplatten-Test-Mode;  1 = Test                                        --
+--                                      |                           0 = Betrieb                                     --
+--                                ------+-----------------------------------------------------------------------    --
+--																      |                                                                           --
+--																14..5 | kein Einfluss                                                             --
+--																      |                                                                           --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  4   | FG_mode;  1 = Funktiongenerator-Mode                                      --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  4   | FG_mode;  1 = Funktiongenerator-Mode                                      --
+--                                      |           0 = Software-Mode                                               --
+--                                      |           Ein Wechsel dieses Bits hat immer einen Reset des gesamten      --
+--                                      |           dac714-Makros zur Folge. D.h. beim Umschalten von FG-Mode auf   --
+--                                      |           SW-Mode kann nicht der exterene Trigger und die entsprechende   --
+--                                      |           Trigger-Flanke vorgegen werden, weil waehrend des Resets        --
+--                                      |           diese Bits auf null gesetzt werden. Nachdem der Reset beendet   --
+--                                      |           ist (CLR_DAC_active = 0), koennen die Bits entsprechend gesetzt --
+--                                      |           werden.                                                         --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  3   | dac_neg_edge_conv;  1 = neg. Flanke ist Trigger, wenn ext. Trig. selekt.  --
+--                                      |                         Laesst sich nur im SW-Mode setzen.                --
+--                                      |                     0 = pos. Flanke ist Trigger, wenn ext. Trig. selekt.  --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  2   | dac_conv_extern;    1 = externer Trigger wird selektiert                  --
+--                                      |                         Laesst sich nur im SW-Mode setzen.                --
+--                                      |                     0 = direkt nach der seriellen Uebertragung, wird      --
+--                                      |                         der DAC-Wert eingestellt.                         --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  1   | CLR_DAC;    1 = ein Reset des DACs wird ausgefuehrt (200ns)               --
+--                                ------+-----------------------------------------------------------------------    --
+--                                  0   |  --
+--                                      |  --
+--                                      |  --
+--                                ------+-----------------------------------------------------------------------    --
+--                                                                                                                  --
+----------------------------------------------------------------------------------------------------------------------
+
+
+
 entity scu_diob is
 generic (
 		CLK_sys_in_Hz:			integer := 125000000
@@ -43,8 +120,8 @@ port	(
     A_Spare1: in std_logic; -- vom Master getrieben
     A_nReset: in std_logic; -- Reset (aktiv '0'), vom Master getrieben
 
-		A_nSEL_Ext_Signal_DRV: out std_logic; -- '0' => Treiber für SCU-Bus-Steuer-Signale aktiv
-		A_nExt_Signal_In: out std_logic; -- '0' => Treiber für SCU-Bus-Steuer-Signale-Richtung: SCU-Bus nach Slave (besser default 0, oder Treiber A/B tauschen)
+		A_nSEL_Ext_Signal_DRV: out std_logic; -- '0' => Treiber fr SCU-Bus-Steuer-Signale aktiv
+		A_nExt_Signal_In: out std_logic; -- '0' => Treiber fr SCU-Bus-Steuer-Signale-Richtung: SCU-Bus nach Slave (besser default 0, oder Treiber A/B tauschen)
 
 		----------------- OneWire ----------------------------------------------------------------------------------------
 		A_OneWire: inout std_logic; -- Temp.-OneWire auf dem Slave
@@ -52,7 +129,7 @@ port	(
     ------------ Logic analyser Signals -------------------------------------------------------------------------------
     A_SEL: in std_logic_vector(3 downto 0); -- use to select sources for the logic analyser ports
 		A_Tclk: out std_logic; -- Clock  for Logikanalysator Port A
-    A_TA: out std_logic_vector(15 downto 0); -- test port a
+    A_TA: inout std_logic_vector(15 downto 0); -- test port a
 
 		---------------------------------- Diagnose-LED's -----------------------------------------------------------------
 		A_nLED_D2: out std_logic;	-- Diagnose-LED_D2 auf dem Basis-Board
@@ -62,7 +139,7 @@ port	(
 		A_nUser_EN: out std_logic; -- Enable User-I/O
 		UIO: inout std_logic_vector(15 downto 0); -- User I/O VG-Leiste
 	
-		---------------- Übergabestecker für Anwender-I/O -----------------------------------------------------------------
+		---------------- bergabestecker fr Anwender-I/O -----------------------------------------------------------------
 		CLK_IO: in std_logic; -- Clock vom Anwender_I/0
 		PIO: inout std_logic_vector(150 downto 16)	-- Dig. User I/0 to Piggy
 		);
@@ -73,34 +150,12 @@ end scu_diob;
 architecture scu_diob_arch of scu_diob is
 
 
-constant scu_diob1_id: integer range 16#0210# to 16#021F# := 16#0210#;
+constant scu_diob1_id: integer range 16#0220# to 16#022F# := 16#0220#;
 
 
 --	+============================================================================================================================+
 --	| 																Anfang: Component    																		  |
 --	+============================================================================================================================+
-
-
-component test_user_reg
-generic (
-		Base_addr : integer
-		);
-port	(Ext_Adr_Val:		in	std_logic;
-		 Ext_Rd_active:		in	std_logic;
-		 Ext_Rd_fin:		in	std_logic;
-		 Ext_Wr_active:		in	std_logic;
-		 Ext_Wr_fin:		in	std_logic;
-		 clk:				in	std_logic;
-		 nReset:			in	std_logic;
-		 Adr_from_SCUB_LA:	in	std_logic_vector(15 downto 0);
-		 Data_from_SCUB_LA:	in	std_logic_vector(15 downto 0);
-		 Dtack_to_SCUB:		out	std_logic;
-		 Data_to_SCUB:		out	std_logic_vector(15 downto 0);
-		 User1_Reg:			out	std_logic_vector(15 downto 0);
-		 User2_Reg:			out	std_logic_vector(15 downto 0);
-		 User_Reg_rd_active:out	std_logic
-		);
-end component test_user_reg;
 
 
 component aw_io_reg
@@ -121,11 +176,21 @@ port (Adr_from_SCUB_LA		:	 IN STD_LOGIC_VECTOR(15 DOWNTO 0);
 		AWIn3		:	 IN STD_LOGIC_VECTOR(15 DOWNTO 0);
 		AWIn4		:	 IN STD_LOGIC_VECTOR(15 DOWNTO 0);
 		AWIn5		:	 IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+		AWIn6		:	 IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+		AW_Config			:	 OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
 		AWOut_Reg1		:	 OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
 		AWOut_Reg2		:	 OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
 		AWOut_Reg3		:	 OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
 		AWOut_Reg4		:	 OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
 		AWOut_Reg5		:	 OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+		AWOut_Reg6		:	 OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+		AW_Config_Wr	:	 OUT STD_LOGIC;	 
+		AWOut_Reg1_Wr	:	 OUT STD_LOGIC;	 	
+		AWOut_Reg2_Wr	:	 OUT STD_LOGIC;	 	
+		AWOut_Reg3_Wr	:	 OUT STD_LOGIC;	 	
+		AWOut_Reg4_Wr	:	 OUT STD_LOGIC;	 	
+		AWOut_Reg5_Wr	:	 OUT STD_LOGIC;	 	
+		AWOut_Reg6_Wr	:	 OUT STD_LOGIC;	 	
 		AWOut_Reg_rd_active		:	 OUT STD_LOGIC;
 		Data_to_SCUB		:	 OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
 		Dtack_to_SCUB		:	 OUT STD_LOGIC
@@ -250,8 +315,13 @@ constant c_xwb_uart : t_sdb_device := (
   signal Ext_Rd_active: std_logic;
   signal Ext_Wr_active: std_logic;
   signal Ext_Wr_fin_ovl: std_logic;
+  signal SCU_Ext_Wr_fin: std_logic;
   signal nPowerup_Res: std_logic;
-  
+
+  signal extension_cid_system:  std_logic_vector(15 downto 0); -- in,	extension card: cid_system
+  signal extension_cid_group:  std_logic_vector(15 downto 0); --in, extension card: cid_group
+  signal DAC_Out: std_logic_vector(15 downto 0);
+ 
   signal fg_1_dtack: std_logic;
   signal fg_1_data_to_SCUB: std_logic_vector(15 downto 0);
   signal fg_1_rd_active: std_logic;
@@ -272,7 +342,7 @@ constant c_xwb_uart : t_sdb_device := (
   -- Top crossbar layout
   constant c_slaves : natural := 4;
   constant c_masters : natural := 2;
-  constant c_dpram_size : natural := 16384; -- in 32-bit words (64KB)
+  constant c_dpram_size : natural := 32768; -- in 32-bit words (64KB)
   constant c_layout : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size), x"00000000"),
     1 => f_sdb_embed_device(c_xwb_owm, x"00100600"),
@@ -318,16 +388,9 @@ constant c_xwb_uart : t_sdb_device := (
 	signal Ena_Every_250ms: std_logic;
 	signal Ena_Every_500ms: std_logic;
  
-	 
-	signal User1_Reg: std_logic_vector(15 downto 0);
-	signal User2_Reg: std_logic_vector(15 downto 0);
 	signal F_8_MHz: std_logic;
-	signal F_25_MHz: std_logic;
+	signal F_12p5_MHz: std_logic;
 	 
-	signal user_reg1_Dtack: std_logic;
-	signal user_reg_rd_active: std_logic;
-	signal user_reg1_data_to_SCUB: std_logic_vector(15 downto 0);
-	
 	signal test_port_in_0: std_logic_vector(15 downto 0);
 	signal test_clocks: std_logic_vector(15 downto 0);
 	
@@ -345,11 +408,21 @@ constant c_xwb_uart : t_sdb_device := (
 	signal AWIn3: std_logic_vector(15 downto 0);
 	signal AWIn4: std_logic_vector(15 downto 0);
 	signal AWIn5: std_logic_vector(15 downto 0);
+	signal AWIn6: std_logic_vector(15 downto 0);
+	signal AW_Config: std_logic_vector(15 downto 0);
 	signal AWOut_Reg1: std_logic_vector(15 downto 0);
 	signal AWOut_Reg2: std_logic_vector(15 downto 0);
 	signal AWOut_Reg3: std_logic_vector(15 downto 0);
 	signal AWOut_Reg4: std_logic_vector(15 downto 0);
 	signal AWOut_Reg5: std_logic_vector(15 downto 0);
+	signal AWOut_Reg6: std_logic_vector(15 downto 0);
+	signal AW_Config_Wr:  std_logic;	
+	signal AWOut_Reg1_Wr: std_logic;
+	signal AWOut_Reg2_Wr: std_logic;
+	signal AWOut_Reg3_Wr: std_logic;
+	signal AWOut_Reg4_Wr: std_logic;
+	signal AWOut_Reg5_Wr: std_logic;
+	signal AWOut_Reg6_Wr: std_logic;
 	signal AWOut_Reg_rd_active: std_logic;
 	signal aw_port1_Dtack: std_logic;
 	signal aw_port1_data_to_SCUB: std_logic_vector(15 downto 0);
@@ -416,7 +489,7 @@ constant c_xwb_uart : t_sdb_device := (
 	CONSTANT c_AW_OCIO: STD_LOGIC_VECTOR(7 DOWNTO 0):= B"00000100";	---- FG900_730
 	CONSTANT c_AW_UIO: STD_LOGIC_VECTOR(7 DOWNTO 0):= B"00000101";	---- FG900_740
 	CONSTANT c_AW_DA: STD_LOGIC_VECTOR(7 DOWNTO 0):= B"00000110";	------ FG900_750
-	
+
 
 --	+============================================================================================================================+
 --	| 																			Begin   		 																		  |
@@ -437,31 +510,10 @@ constant c_xwb_uart : t_sdb_device := (
 	WRnRD       <= not A_RnW;  				-- only for modelsim!
 
 
-user_reg1: test_user_reg
-generic map(
-			Base_addr	=>	16#200#
-			)
-port map	(
-			Ext_Adr_Val				=>	Ext_Adr_Val,
-			Ext_Rd_active			=>	Ext_Rd_active,
-			Ext_Rd_fin				=>	Ext_Rd_fin,
-			Ext_Wr_active			=>	Ext_Wr_active,
-			Ext_Wr_fin				=>	Ext_Wr_fin,
-			clk								=>	clk_sys,
-			nReset						=>	nPowerup_Res,
-			Adr_from_SCUB_LA	=>	ADR_from_SCUB_LA,
-			Data_from_SCUB_LA	=>	Data_from_SCUB_LA,
-			Dtack_to_SCUB			=>	user_reg1_Dtack,
-			Data_to_SCUB			=>	user_reg1_data_to_SCUB,
-			User1_Reg					=>	User1_Reg,
-			User2_Reg					=>	User2_Reg,
-			User_Reg_rd_active	=>	User_Reg_rd_active
-			);
-
 			
 aw_port1: aw_io_reg			
 generic map(
-			Base_addr	=>	16#400#
+			Base_addr	=>	16#200#
 			)
 port map	(			
 			Adr_from_SCUB_LA		=>	ADR_from_SCUB_LA,
@@ -478,11 +530,21 @@ port map	(
 			AWIn3								=>	AWIn3,
 			AWIn4								=>	AWIn4,
 			AWIn5								=>	AWIn5,
+			AWIn6								=>	AWIn6,
+			AW_Config						=>	AW_Config,
 			AWOut_Reg1					=>	AWOut_Reg1,
 			AWOut_Reg2					=>	AWOut_Reg2,
 			AWOut_Reg3					=>	AWOut_Reg3,
 			AWOut_Reg4					=>	AWOut_Reg4,
 			AWOut_Reg5					=>	AWOut_Reg5,
+			AWOut_Reg6					=>	AWOut_Reg6,
+			AW_Config_Wr				=>	AW_Config_Wr,	
+			AWOut_Reg1_Wr				=>	AWOut_Reg1_Wr,	
+			AWOut_Reg2_Wr				=>	AWOut_Reg2_Wr,
+			AWOut_Reg3_Wr				=>	AWOut_Reg3_Wr,	
+			AWOut_Reg4_Wr				=>	AWOut_Reg4_Wr,	
+			AWOut_Reg5_Wr				=>	AWOut_Reg5_Wr,	
+			AWOut_Reg6_Wr				=>	AWOut_Reg6_Wr,	
 			AWOut_Reg_rd_active	=>	AWOut_Reg_rd_active,
 			Dtack_to_SCUB				=>	aw_port1_Dtack,
 			Data_to_SCUB				=>	aw_port1_data_to_SCUB
@@ -502,43 +564,59 @@ port map	(
       end if;
     end process;
 
+
+
 		
-
-
-testport_mux:	process	(A_SEL, test_port_in_0, test_clocks, IO_Test_Port0, IO_Test_Port1, IO_Test_Port2, IO_Test_Port3, AWIn1, AWOut_Reg1)
+testport_mux:	process	(A_SEL, AW_Config, AWIn1, AWOut_Reg1,
+                       IO_Test_Port0, IO_Test_Port1, IO_Test_Port2, IO_Test_Port3,
+											 test_port_in_0, test_clocks)
 variable test_out: std_logic_vector(15 downto 0);
 begin
 	case (not A_SEL) is
-		when X"0" => test_out := IO_Test_Port0;
-		when X"1" => test_out := IO_Test_Port1;
-		when X"2" => test_out := IO_Test_Port2;
-		when X"3" => test_out := IO_Test_Port3;
+		when X"0" => test_out := AW_Config;
+		when X"1" => test_out := AWOut_Reg1;
+		when X"2" => test_out := AWIn1;
+		when X"3" => test_out := X"0000";
 --
-		when X"4" => test_out := AWOut_Reg1;
-		when X"5" => test_out := AWIn1;
-		when X"D" => test_out := test_clocks;
-		when X"E" => test_out := test_port_in_0;
+		when X"4" => test_out := IO_Test_Port0;
+		when X"5" => test_out := IO_Test_Port1;
+		when X"6" => test_out := IO_Test_Port2;
+		when X"7" => test_out := X"0000";
+--
+		when X"8" => test_out := X"0000";
+		when X"9" => test_out := X"0000";
+		when X"A" => test_out := X"0000";
+		when X"B" => test_out := X"0000";
+--
+		when X"C" => test_out := X"0000";
+		when X"D" => test_out := X"0000";
+		when X"E" => test_out := test_clocks;
+		when X"F" => test_out := test_port_in_0;
 		when others =>	test_out := (others => '0');
 	end case;
-	A_TA <= test_out(15 downto 0);
+	--A_TA <= test_out(15 downto 0);
 end process testport_mux;
 
 
 
-A_Tclk	<=	 la_clk;	-- Clock für Logikanalysator: = Sysclk x 2 				
+A_Tclk	<=	 la_clk;	-- Clock fr Logikanalysator: = Sysclk x 2 				
 
-test_port_in_0 <=	nPowerup_Res & clk & Ena_Every_100ns & Ena_Every_166ns &				-- bit15..12
-						'0' & '0' & '0' & '0' &																								-- bit11..8
-						la_clk 			& pll_2_locked			& A_RnW & A_nDS		&										-- bit7..4
-						A_nBoardSel & fg_1_strobe 			& '0' 	& SCUB_Dtack					-- bit3..0
-						;
+test_port_in_0 <=	nPowerup_Res 	& clk 						& Ena_Every_100ns & Ena_Every_166ns &	-- bit15..12
+									Ext_Wr_active & SCU_Ext_Wr_fin  & AWOut_Reg1_wr		& fg_1_strobe			& -- bit11..8
+									la_clk 			  & pll_2_locked		& A_RnW & A_nDS		&										-- bit7..4
+									A_nBoardSel   & fg_1_strobe 		& '0' 	& SCUB_Dtack									-- bit3..0
+									;
 
 						
 test_clocks <=	X"00" &
 						A_SysClock 			&	CLK_20MHz_D 	& clkbad0			&	clkbad1 		&		-- bit7..4					
 						pll_2_locked		&	clk 					&	F_8_MHz 		&	la_clk 					-- bit3..0
 						;					
-						
+
+IO_Test_Port1 <=	x"00" &	s_AW_ID(7 DOWNTO 0);-- Anwender_ID
+IO_Test_Port2 <=	AWOut_Reg1(15 DOWNTO 0);
+IO_Test_Port3 <=	AWOut_Reg2(15 DOWNTO 0);
+
 						
 
 --rd_port_mux:	process	(fg1_rd_cycle, fg1_data_to_SCUB, User_Reg_rd_active, AWOut_Reg_rd_active, user_reg1_data_to_SCUB, aw_port1_data_to_SCUB)
@@ -571,11 +649,10 @@ port map	(
 			noe_in	=>	'0'
 			);
 	
-
 	PLL_1: pll_sio
 port map	(
 			inclk0	=>	CLK_20MHz_D,
-			c0		=>	F_25_MHz,					-- clk,
+			c0		=>	F_12p5_MHz,				-- clk,
 			c1		=>	open,							-- la_clk,
 			locked	=>	pll_1_locked
 			);
@@ -584,8 +661,8 @@ port map	(
 PLL_2: SysClock
 port map	(
 			areset		=>	'0',
-			inclk0		=>	A_SysClock,		-- 25 Mhz vom SCU-Bus
-			inclk1		=>	F_25_MHz,			-- 25 Mhz von PLL1 aus 20MHz vom Onboard Oszillator
+			inclk0		=>	A_SysClock,		-- 12,5 Mhz vom SCU-Bus
+			inclk1		=>	F_12p5_MHz,		-- 12,5 Mhz von PLL1 aus 20MHz vom Onboard Oszillator
 			activeclock => open,
 			c0				=>	clk_sys,						
 			c1				=>	F_8_MHz,
@@ -613,7 +690,7 @@ port map	(
      g_sdb_addr => c_sdb_address)
    port map(
      clk_sys_i => clk_sys,
-     rst_n_i => clk_sys_rstn,
+     rst_n_i => pll_2_locked,
      -- Master connections (INTERCON is a slave)
      slave_i => cbar_slave_i,
      slave_o => cbar_slave_o,
@@ -627,7 +704,7 @@ port map	(
       g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      rst_n_i => pll_2_locked,
       irq_i => lm32_interrupt,
       dwb_o => cbar_slave_i(0), -- Data bus
       dwb_i => cbar_slave_o(0),
@@ -643,10 +720,11 @@ port map	(
       g_slave1_interface_mode => PIPELINED,
       g_slave2_interface_mode => PIPELINED,
       g_slave1_granularity => BYTE,
-      g_slave2_granularity => WORD)
+      g_slave2_granularity => WORD,
+      g_init_file => "scu_diob.mif")
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      rst_n_i => pll_2_locked,
       -- First port connected to the crossbar
       slave1_i => cbar_master_o(0),
       slave1_o => cbar_master_i(0),
@@ -668,7 +746,7 @@ port map	(
       )
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      rst_n_i => pll_2_locked,
 
       -- Wishbone
       slave_i => cbar_master_o(1),
@@ -691,7 +769,7 @@ port map	(
       )
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      rst_n_i => pll_2_locked,
 
       -- Wishbone
       slave_i => cbar_master_o(2),
@@ -699,7 +777,7 @@ port map	(
       desc_o => open,
 
       uart_rxd_i => '0',
-      uart_txd_o => open
+      uart_txd_o => A_TA(0)
       );
   
   SCU_WB_Reg: wb_scu_reg
@@ -708,7 +786,7 @@ port map	(
       register_cnt => 16 )
     port map (
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      rst_n_i => pll_2_locked,
 
       -- Wishbone
       slave_i => cbar_master_o(3),
@@ -767,7 +845,7 @@ A_nLED_D3	<=	 s_nLED_Dtack;	-- Diagnose-LED_D3 = Dtack
 
 
 sel_every_250ms: div_n
-  generic map (n => 12, diag_on => 0)  -- ena nur alle 20ms für einen Takt aktiv, deshalb 13x20ms = 260ms
+  generic map (n => 12, diag_on => 0)  -- ena nur alle 20ms fr einen Takt aktiv, deshalb 13x20ms = 260ms
     port map  ( res => Powerup_Res,
                 clk => clk_sys,
                 ena => Ena_Every_20ms,
@@ -775,7 +853,7 @@ sel_every_250ms: div_n
               );
 							
 sel_every_500ms: div_n
-  generic map (n => 25, diag_on => 0)  -- ena nur alle 20ms für einen Takt aktiv, deshalb 25x20ms = 500ms
+  generic map (n => 25, diag_on => 0)  -- ena nur alle 20ms fr einen Takt aktiv, deshalb 25x20ms = 500ms
     port map  ( res => Powerup_Res,
                 clk => clk_sys,
                 ena => Ena_Every_20ms,
@@ -892,9 +970,9 @@ SCU_Slave: SCU_Bus_Slave
 generic map (
     CLK_in_Hz => clk_sys_in_Hz,
     Firmware_Release        => 0,
-    Firmware_Version        => 0,
+    Firmware_Version        => 1,
     CID_System => 55, -- important: 55 => CSCOHW
-    CID_Group => 3, -- important: 3 => "FG900160_scu_diob1"
+    CID_Group => 26, --- important: 26 => "FG900500_SCU_Diob1"
     Intr_Enable          => b"0000_0000_0000_0001",
     Slave_ID => scu_diob1_id)
 port map (
@@ -910,7 +988,9 @@ port map (
     Dtack_to_SCUB => Dtack_to_SCUB, -- in,        connect Dtack from from external user functions
     Intr_In => "0000000000000" & irqcnt(irqcnt'high) & fg_1_dreq, -- in,        interrupt(15 downto 1)
     User_Ready => '1',
-    Data_from_SCUB_LA => Data_from_SCUB_LA, -- out,        latched data from SCU_Bus for external user functions
+    extension_cid_system => extension_cid_system, -- in,	extension card: cid_system
+		extension_cid_group => extension_cid_group, --in,	    extension card: cid_group
+		Data_from_SCUB_LA => Data_from_SCUB_LA, -- out,        latched data from SCU_Bus for external user functions
     ADR_from_SCUB_LA => ADR_from_SCUB_LA, -- out,        latched address from SCU_Bus for external user functions
     Timing_Pattern_LA => open, -- out,        latched timing pattern from SCU_Bus for external user functions
     Timing_Pattern_RCV => open, -- out,        timing pattern received
@@ -933,7 +1013,7 @@ port map (
     Ext_Rd_Fin_ovl => open, -- out,        marks end of read cycle, active one for one clock period
                                                     -- of clk during cycle end (overlap)
     Ext_Wr_active => Ext_Wr_active, -- out,        '1' => Wr-Cycle to external user register is active
-    Ext_Wr_fin => open, -- out,        marks end of write cycle, active high for one clock period
+    Ext_Wr_fin => SCU_Ext_Wr_fin, -- out,        marks end of write cycle, active high for one clock period
                                                     -- of clk past cycle end (no overlap)
     Ext_Wr_fin_ovl => Ext_Wr_fin_ovl, -- out, marks end of write cycle, active high for one clock period
                                                     -- of clk before write cycle finished (with overlap)
@@ -945,7 +1025,7 @@ port map (
     );
 
 
-		Dtack_to_SCUB <= wb_scu_dtack or fg_1_dtack or user_reg1_Dtack or aw_port1_Dtack;
+		Dtack_to_SCUB <= wb_scu_dtack or fg_1_dtack or aw_port1_Dtack;
 
 
 		A_nDtack <= NOT(SCUB_Dtack);
@@ -981,16 +1061,16 @@ fg_1: fg_quad_scu_bus
 
 
 
-rd_port_mux:	process	(fg_1_rd_active, User_Reg_rd_active, AWOut_Reg_rd_active,
-											fg_1_data_to_SCUB, user_reg1_data_to_SCUB, aw_port1_data_to_SCUB)  
+rd_port_mux:	process	(fg_1_rd_active, AWOut_Reg_rd_active,
+											fg_1_data_to_SCUB, aw_port1_data_to_SCUB)  
 
   variable sel: unsigned(2 downto 0);
   begin
-    sel :=  fg_1_rd_active & User_Reg_rd_active & AWOut_Reg_rd_active;
+    sel :=  wb_scu_rd_active & fg_1_rd_active  & AWOut_Reg_rd_active;
     case sel IS
       when "001" => Data_to_SCUB <= aw_port1_data_to_SCUB;
-      when "010" => Data_to_SCUB <= user_reg1_data_to_SCUB;
-      when "100" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "010" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "100" => Data_to_SCUB <= wb_scu_data_to_SCUB;
       when others =>
 		Data_to_SCUB <= (others => '-');
     end case;
@@ -1000,10 +1080,10 @@ rd_port_mux:	process	(fg_1_rd_active, User_Reg_rd_active, AWOut_Reg_rd_active,
 
 
 p_AW_MUX:	PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO, A_SEL, fg_1_sw, fg_1_strobe, dff1_q,
-									 AWIn1, AWIn2, AWIn3, AWIn4, AWIn5, 
-									 AWOut_Reg1, AWOut_Reg2, AWOut_Reg3, AWOut_Reg4, AWOut_Reg5,
+									 AWIn1, AWIn2, AWIn3, AWIn4, AWIn5, AWIn6, 
+									 AWOut_Reg1, AWOut_Reg2, AWOut_Reg3, AWOut_Reg4, AWOut_Reg5, AWOut_Reg6,
 									 IO_Test_Port0, IO_Test_Port1, IO_Test_Port2, IO_Test_Port3,
-									 User1_Reg, CLK_IO, clk_blink, s_nLED_Sel, s_nLED_Dtack, s_nLED_INR, 
+									 CLK_IO, clk_blink, s_nLED_Sel, s_nLED_Dtack, s_nLED_INR, 
 									 Ena_Every_1us, ena_Every_20ms, ena_Every_250ms,
 									 s_deb_In1, s_deb_In2, s_deb_In3, s_deb_In4,
 									 s_deb_Out1, s_deb_Out2, s_deb_Out3, s_deb_Out4,
@@ -1018,7 +1098,7 @@ BEGIN
 		--#################################################################################
 		--#################################################################################
 		--###																																						###
-		--###											IO-Stecker-Test mit "Brückenkarte											###
+		--###											IO-Stecker-Test mit "Brckenkarte											###
 		--###																																						###
 		--#################################################################################
 	
@@ -1030,24 +1110,29 @@ BEGIN
 		s_deb_In1	<= '0';	s_deb_In2	<= '0';	s_deb_In3	<= '0'; s_deb_In4	<= '0';
 		s_str_In1	<= '0';	s_str_In2	<= '0';	s_str_In3	<= '0'; s_str_In4	<= '0';
 		dff1_Reset		<= '0'; dff1_clk_En		<=	'0'; dff1_d		<=	'0';
-		IO_Test_Port0				<=	x"0000";	-- IO-Test-Port 1
-		IO_Test_Port1				<=	x"0000";	-- IO-Test-Port 2
-		IO_Test_Port2				<=	x"0000";	-- IO-Test-Port 3
-		IO_Test_Port3				<=	x"0000";	-- IO-Test-Port 3
+--		IO_Test_Port0				<=	x"0000";	-- IO-Test-Port 0
+--		IO_Test_Port1				<=	x"0000";	-- IO-Test-Port 1
+--		IO_Test_Port2				<=	x"0000";	-- IO-Test-Port 2
+--		IO_Test_Port3				<=	x"0000";	-- IO-Test-Port 3
 		AWIn1(15 DOWNTO 0)	<=	x"0000";	-- AW-In-Register 1
 		AWIn2(15 DOWNTO 0)	<=	x"0000";	-- AW-In-Register 2
 		AWIn3(15 DOWNTO 0)	<=	x"0000";	-- AW-In-Register 3
 		AWIn4(15 DOWNTO 0)	<=	x"0000";	-- AW-In-Register 4
 		AWIn5(15 DOWNTO 0)	<=	x"0000";	-- AW-In-Register 5
+		AWIn6(15 DOWNTO 0)	<=	x"0000";	-- AW-In-Register 6
 		s_AW_ID(7 DOWNTO 0)	<=	x"FF";		-- Anwender-Karten ID
 		UIO(15 DOWNTO 0)		<=	(OTHERS => '0');	-- USER-IO-Pins zu VG-Leiste
+		
+		extension_cid_system <=	(OTHERS => '0');	-- extension card: cid_system
+		extension_cid_group  <=	(OTHERS => '0');	-- extension card: cid_group
 
 		
 		
-		IF 	A_SEL = not (X"F")  THEN		-- Codierschalter = x"F"
+    IF 	AW_Config(15) = '1'  THEN		-- Config-Reg Bit15 = 1  --> Testmode 
+--  IF 	A_SEL = not (X"F")   THEN		-- Codierschalter = x"F" --> Testmode 
 
 
-			UIO(15 DOWNTO 0)		<=	User1_Reg(15 DOWNTO 0);	-- Test USER-IO-Pins zu VG-Leiste über die "USER-Register" 
+			UIO(15 DOWNTO 0)		<=	AWOut_Reg6(15 DOWNTO 0);	-- Test USER-IO-Pins zu VG-Leiste ber die "USER-Register" 
 	
 
 			AWIn1(15 DOWNTO 0)	<=	(		CLK_IO,	PIO(16),	PIO(17),	PIO(18),	PIO(19),	PIO(20),	PIO(21),	PIO(22),
@@ -1100,7 +1185,7 @@ BEGIN
 
 		--Input: Anwender_ID ---      
 			s_AW_ID(7 DOWNTO 0)		<=	(PIO(150),PIO(149),PIO(148),PIO(147),PIO(146),PIO(145),PIO(144),PIO(143));
-			AWIn5(15 DOWNTO 0)		<=	x"00" &	s_AW_ID(7 DOWNTO 0);-- Anwender_ID
+      AWIn5(15 DOWNTO 0)		<=	x"00" &	s_AW_ID(7 DOWNTO 0);-- Anwender_ID
 		
 	
 		--	--- Output: Anwender-LED's ---
@@ -1124,22 +1209,21 @@ BEGIN
 		--####									Anwender-IO: P37IO	-- FG900_700												###
 		--#################################################################################
 
---		CID_Group		<=	55;
---		CID_System	<=	27;
-
-
+		extension_cid_system <=	x"0037";	-- extension card: cid_system, CSCOHW=55
+		extension_cid_group  <=	x"001B";	-- extension card: cid_group, "FG900700_P37IO1" = 27
+		
 		
 		-- Input Start --
 			s_deb_In1	<=	not PIO(139);					-- Debounce, Input "Start" H-Aktiv
 			s_str_In1	<=	s_deb_Out1;						-- pos. Flanke des entprellten Start-Pulses wird ein Puls (1-clk)
 							
-			s_Led_Bu1	<=	s_deb_Out1;						-- Stretch Deb_Inputsignal für LED
+			s_Led_Bu1	<=	s_deb_Out1;						-- Stretch Deb_Inputsignal fr LED
 			PIO(33)		<=	s_Led_Bu1_Out;				--	Output "nLED_Start"
 					
 					
-		-- Input Stopp --
+		-- Input Stop --
 			s_deb_In2	<=	not PIO(141);					-- Debounce, Input "Stop" H-aktiv
-			s_Led_Bu2	<=	s_deb_Out2;						-- Stretch Deb_Inputsignal für LED
+			s_Led_Bu2	<=	s_deb_Out2;						-- Stretch Deb_Inputsignal fr LED
 			PIO(35)		<=	s_Led_Bu2_Out;				-- Output "nLED_Stop"
 		
 
@@ -1162,18 +1246,25 @@ BEGIN
 												s_deb_Out2				&	s_deb_In2 				&	s_deb_Out1 			&	s_deb_In1; 				-- bit 3..0
 			
 			
-			PIO(65)	<=	AWOut_Reg1(7);	--	Output "CO_D7"
-			PIO(69)	<=	AWOut_Reg1(6);	--	Output "CO_D6"
-			PIO(61)	<=	AWOut_Reg1(5);	--	Output "CO_D5"
-			PIO(67)	<=	AWOut_Reg1(4);	--	Output "CO_D4"
-			PIO(63)	<=	AWOut_Reg1(3);	--	Output "CO_D3"
-			PIO(71)	<=	AWOut_Reg1(2);	--	Output "CO_D2"
-			PIO(55)	<=	AWOut_Reg1(1);	--	Output "CO_D1"
-			PIO(53)	<=	AWOut_Reg1(0);	--	Output "CO_D0"
-			PIO(57)	<=	AWOut_Reg2(1);	--	Output "CO_FAULT"
-			PIO(59)	<=	AWOut_Reg2(0);	--	Output "CO_STAT"
-                  
-									
+
+
+
+			PIO(39)	<=	'0';	-------------------------------	Output_Enable (nach Init vom ALTERA)
+			PIO(41)	<=	'0';	-------------------------------	Output_Enable (nach Init vom ALTERA)
+			PIO(43)	<=	'0';	-------------------------------	Output_Enable (nach Init vom ALTERA)
+
+			PIO(65)	<=	not AWOut_Reg1(7);	--	Output "CO_D7"
+			PIO(69)	<=	not AWOut_Reg1(6);	--	Output "CO_D6"
+			PIO(61)	<=	not AWOut_Reg1(5);	--	Output "CO_D5"
+			PIO(67)	<=	not AWOut_Reg1(4);	--	Output "CO_D4"
+			PIO(63)	<=	not AWOut_Reg1(3);	--	Output "CO_D3"
+			PIO(71)	<=	not AWOut_Reg1(2);	--	Output "CO_D2"
+			PIO(55)	<=	not AWOut_Reg1(1);	--	Output "CO_D1"
+			PIO(53)	<=	not AWOut_Reg1(0);	--	Output "CO_D0"
+			PIO(57)	<=	not AWOut_Reg2(1);	--	Output "CO_FAULT"
+			PIO(59)	<=	not AWOut_Reg2(0);	--	Output "CO_STAT"
+                
+ 
 			AWIn1(15)	<=	PIO(131);	--	Input "HI7"
 			AWIn1(14)	<=	PIO(129);	--	Input "HI6"
 			AWIn1(13)	<=	PIO(127);	--	Input "HI5"
@@ -1200,33 +1291,45 @@ BEGIN
 		--####										Anwender-IO: P25IO	-- FG900_710											###
 		--#################################################################################
 
---		CID_Group		<=	55;
---		CID_System	<=	28;
+		extension_cid_system <=	x"0037";	-- extension card: cid_system, CSCOHW=55
+		extension_cid_group  <=	x"001C";	-- extension card: cid_group, "FG900710_P25IO1" = 28
 
 
+
+		IF 	(AW_Config(4) = '1')  THEN
 	
+--           FG_mode; DAC-Werte kommen von FG_Data und werden mit FG_Strobe uebernommen. Kein externer Trigger!	
+
+             PIO(105)               <=	not fg_1_strobe;	-- vom Funktionsgen.
+             DAC_Out(15 DOWNTO 0)		<=	fg_1_sw(31 DOWNTO 16);	
+				Else
+--           Software-Mode, DAC-Werte, kommen vom SCU-Bus-Slave. Externe Triggerung mit pos. oder neg. Flanke, kann eingeschaltet werden. 
+
+             PIO(105)               <=	AWOut_Reg1_wr; --	
+				     DAC_Out(15 DOWNTO 0)		<=	AWOut_Reg1(15 DOWNTO 0);
+			END IF;	
 			
-		-- digital. Output-Port vom Funktionsgen.
+			PIO(107)	<=	DAC_Out(15);	-- Output Bit-15
+			PIO(109)	<=	DAC_Out(14);	-- Output Bit-14
+			PIO(111)	<=	DAC_Out(13);	-- Output Bit-13
+			PIO(113)	<=	DAC_Out(12);	-- Output Bit-12
+			PIO(115)	<=	DAC_Out(11);	-- Output Bit-11
+			PIO(117)	<=	DAC_Out(10);	-- Output Bit-10
+			PIO(119)	<=	DAC_Out(9);		-- Output Bit-9
+			PIO(121)	<=	DAC_Out(8);		-- Output Bit-8
+			PIO(123)	<=	DAC_Out(7);		-- Output Bit-7
+			PIO(125)	<=	DAC_Out(6);		-- Output Bit-6
+			PIO(127)	<=	DAC_Out(5);		-- Output Bit-5
+			PIO(129)	<=	DAC_Out(4);		-- Output Bit-4
+			PIO(131)	<=	DAC_Out(3);		-- Output Bit-3
+			PIO(133)	<=	DAC_Out(2);		-- Output Bit-2
+			PIO(135)	<=	DAC_Out(1);		-- Output Bit-1
+			PIO(137)	<=	DAC_Out(0);		-- Output Bit-0
 
-			PIO(105)	<=	fg_1_strobe;	-- vom Funktionsgen.
-		
-			PIO(107)	<=	fg_1_sw(31);	-- Output Bit-15, vom Funktionsgen. Bit-31 
-			PIO(109)	<=	fg_1_sw(30);	-- Output Bit-14, vom Funktionsgen. 
-			PIO(111)	<=	fg_1_sw(29);	-- Output Bit-13, vom Funktionsgen. 
-			PIO(113)	<=	fg_1_sw(28);	-- Output Bit-12, vom Funktionsgen. 
-			PIO(115)	<=	fg_1_sw(27);	-- Output Bit-11, vom Funktionsgen. 
-			PIO(117)	<=	fg_1_sw(26);	-- Output Bit-10, vom Funktionsgen. 
-			PIO(119)	<=	fg_1_sw(25);	-- Output Bit-9,  vom Funktionsgen. 
-			PIO(121)	<=	fg_1_sw(24);	-- Output Bit-8,  vom Funktionsgen. 
-			PIO(123)	<=	fg_1_sw(23);	-- Output Bit-7,  vom Funktionsgen. 
-			PIO(125)	<=	fg_1_sw(22);	-- Output Bit-6,  vom Funktionsgen. 
-			PIO(127)	<=	fg_1_sw(21);	-- Output Bit-5,  vom Funktionsgen. 
-			PIO(129)	<=	fg_1_sw(20);	-- Output Bit-4,  vom Funktionsgen. 
-			PIO(131)	<=	fg_1_sw(19);	-- Output Bit-3,	vom Funktionsgen. 
-			PIO(133)	<=	fg_1_sw(18);	-- Output Bit-2,  vom Funktionsgen. 
-			PIO(135)	<=	fg_1_sw(17);	-- Output Bit-1,  vom Funktionsgen. 
-			PIO(137)	<=	fg_1_sw(16);	-- Output Bit-0,  vom Funktionsgen. Bit-16 
+			
+			
 
+			
 
 			AWIn1(15)	<=	PIO(41);	--------------	Input "HI7"
 			AWIn1(14)	<=	PIO(43);	--------------	Input "HI6"
@@ -1252,10 +1355,9 @@ BEGIN
 		--#################################################################################
 		--####										Anwender-IO: OCIN	-- FG900_720												###
 		--#################################################################################
-	
---		CID_Group		<=	55;
---		CID_System	<=	29;
 
+		extension_cid_system <=	x"0037";	-- extension card: cid_system, CSCOHW=55
+		extension_cid_group  <=	x"001D";	-- extension card: cid_group, "FG900720_OCIN1" = 29
 
 
 			AWIn1(15)	<=	'0';			--------------	Frei
@@ -1294,6 +1396,8 @@ BEGIN
 			AWIn2(0)	<=	PIO(131);	--	Input "C0"
 		
 		
+			PIO(39)		<=	'0';	-------------------------------	Output_Enable (nach Init vom ALTERA)
+
 			PIO(49)	<=	not AWOut_Reg1(3);	--	Output "2CB2"
 			PIO(47)	<=	not AWOut_Reg1(2);	--	Output "2CA2"
 			PIO(45)	<=	not AWOut_Reg1(1);	--	Output "1CB2"
@@ -1307,10 +1411,11 @@ BEGIN
 		--####											Anwender-IO: OCIO	-- FG900_730											###
 		--#################################################################################
 
---		CID_Group		<=	55;
---		CID_System	<=	30;
+		extension_cid_system <=	x"0037";	-- extension card: cid_system, CSCOHW=55
+		extension_cid_group  <=	x"001E";	-- extension card: cid_group, "FG900730_OCIO1" = 30
 
-
+		
+		
 
 			AWIn1(15)	<=	PIO(45);	--------------	Input "C7"
 			AWIn1(14)	<=	PIO(47);	--------------	Input "C6"
@@ -1342,7 +1447,9 @@ BEGIN
 			AWIn2(0)	<=	PIO(81);	--	Input "D0"
 			
 		
-		
+
+			PIO(77)		<=	'0';	-------------------------------	Output_Enable (nach Init vom ALTERA)
+			
 			PIO(105)	<=	not AWOut_Reg1(11);	----------------	Output "CD2"
 			PIO(61) 	<=	not AWOut_Reg1(10);	----------------	Output "CC2"
 			PIO(107)	<=	not AWOut_Reg1(9);	----------------	Output "CB2"
@@ -1372,7 +1479,7 @@ BEGIN
 		--####									Anwender-IO: DA(DAC/ADC)	-- FG900_75											###
 		--###################################################################################
 	
-			
+
 			
 	WHEN OTHERS =>
 
@@ -1412,7 +1519,7 @@ END PROCESS p_AW_MUX;
 
 
 
-
+A_TA(1) <= '1'; -- drives the external max level shifter
   
 
 end architecture;
