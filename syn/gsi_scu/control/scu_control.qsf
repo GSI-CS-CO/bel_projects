@@ -888,6 +888,14 @@ set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gencores_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5_lvds_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_ibuf.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_obuf.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_rx.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_tx.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/eca_lvds_channel.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../top/gsi_scu/control/scu_control.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd
