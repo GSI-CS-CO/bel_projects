@@ -229,8 +229,8 @@ begin
     generic map(
       g_family     => "Arria II",
       g_project    => "vetar_top",
-      g_inputs     => 4,
-      g_outputs    => 8,
+      g_gpio_in    => 4,
+      g_gpio_out   => 8,
       g_flash_bits => 24,
       g_en_vme     => true,
       g_en_usb     => true,
