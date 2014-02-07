@@ -280,6 +280,13 @@
 --     Adresse x"0009" (hex).                                                                                       --
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers_5_Revi_1: erstellt am 07.02.2014, Autor: W.Panschow                                                        --
+--  A) Die Adressdekodierung der Makro-Internen Adressen wurde ueberarbeitet. Die Range-Definitionen z.B:           --
+--    when C_Free_Intern_A_12 to C_Free_Intern_A_1F, wurden in ein Oder-Konstrukt geaendert. Da die Adress-         --
+--    dekodierung nur fehlerfrei funktioniert, wenn alle Adressen aufsteigend sortiert waren. Bei der Oder-         --
+--    Implementierung musste darauf nicht geachtet werden.                                                          --
+----------------------------------------------------------------------------------------------------------------------
 
 library IEEE;
 USE IEEE.std_logic_1164.all;
@@ -321,7 +328,7 @@ generic
     This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 5;
     
     -- change only here! increment by minor changes of this macro
-    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 0
+    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 1
     );
 port
     (
@@ -437,7 +444,21 @@ port
 
   constant  C_Intr_In_Adr:      integer := 16#0020#;   -- address of interrupt In register (rd)
   constant  C_Intr_Ena_Adr:     integer := 16#0021#;   -- address of interrupt enable register (rd/wr)
+  constant  C_Free_Intern_A_22: integer := 16#0022#;   -- reserved internal address 22hex
+  constant  C_Free_Intern_A_23: integer := 16#0023#;   -- reserved internal address 23hex
   constant  C_Intr_Active_Adr:  integer := 16#0024#;   -- address of interrupt active register (rd)
+
+  constant  C_Free_Intern_A_25: integer := 16#0025#;   -- reserved internal address 25hex
+  constant  C_Free_Intern_A_26: integer := 16#0026#;   -- reserved internal address 26hex
+  constant  C_Free_Intern_A_27: integer := 16#0027#;   -- reserved internal address 27hex
+  constant  C_Free_Intern_A_28: integer := 16#0028#;   -- reserved internal address 28hex
+  constant  C_Free_Intern_A_29: integer := 16#0029#;   -- reserved internal address 29hex
+  constant  C_Free_Intern_A_2A: integer := 16#002A#;   -- reserved internal address 2Ahex
+  constant  C_Free_Intern_A_2B: integer := 16#002B#;   -- reserved internal address 2Bhex
+  constant  C_Free_Intern_A_2C: integer := 16#002C#;   -- reserved internal address 2Chex
+  constant  C_Free_Intern_A_2D: integer := 16#002D#;   -- reserved internal address 2Dhex
+  constant  C_Free_Intern_A_2E: integer := 16#002E#;   -- reserved internal address 2Ehex
+  constant  C_Free_Intern_A_2F: integer := 16#002F#;   -- reserved internal address 2Fhex
 
   signal    S_nReset:           std_logic;                        -- '0' => S_nReset is active
 
@@ -842,8 +863,12 @@ P_Standard_Reg: process (clk, S_nReset)
               S_Read_Out <= std_logic_vector(to_unsigned(clk_in_Hz / 10_000, S_Read_Out'length));
               S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
             end if;
-          when C_Free_Intern_A_0A to C_Free_Intern_A_0F =>
-             S_Standard_Reg_Acc <= '1';
+          when C_Free_Intern_A_0A
+             | C_Free_Intern_A_0B
+             | C_Free_Intern_A_0C
+             | C_Free_Intern_A_0D
+             | C_Free_Intern_A_0E
+             | C_Free_Intern_A_0F => S_Standard_Reg_Acc <= '1';
           when C_Echo_Reg_Adr =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
@@ -861,6 +886,20 @@ P_Standard_Reg: process (clk, S_nReset)
               S_Read_Out <= (X"000" & '0' & '0' & User_Ready & S_Powerup_Done); -- User_Ready must be synchron with clk
               S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
             end if;
+          when C_Free_Intern_A_12
+             | C_Free_Intern_A_13
+             | C_Free_Intern_A_14
+             | C_Free_Intern_A_15
+             | C_Free_Intern_A_16
+             | C_Free_Intern_A_17
+             | C_Free_Intern_A_18
+             | C_Free_Intern_A_19
+             | C_Free_Intern_A_1A
+             | C_Free_Intern_A_1B
+             | C_Free_Intern_A_1C
+             | C_Free_Intern_A_1D
+             | C_Free_Intern_A_1E
+             | C_Free_Intern_A_1F => S_Standard_Reg_Acc <= '1';
           when C_Intr_In_Adr =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
@@ -876,6 +915,8 @@ P_Standard_Reg: process (clk, S_nReset)
               S_Intr_Enable <= S_Data_from_SCUB_LA(Intr_In'range);
               S_SCUB_Dtack <= '1';
             end if;
+          when C_Free_Intern_A_22
+             | C_Free_Intern_A_23 => S_Standard_Reg_Acc <= '1';
           when C_Intr_Active_Adr =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
@@ -885,8 +926,17 @@ P_Standard_Reg: process (clk, S_nReset)
               S_Wr_Intr_Active <= S_Wr_Intr_Active(0) & '1';
               S_SCUB_Dtack <= '1';  -- ??
             end if;
-          when   C_Free_Intern_A_12 to C_Free_Intern_A_1F  =>
-            S_Standard_Reg_Acc <= '1';
+          when C_Free_Intern_A_25
+             | C_Free_Intern_A_26
+             | C_Free_Intern_A_27
+             | C_Free_Intern_A_28
+             | C_Free_Intern_A_29
+             | C_Free_Intern_A_2A
+             | C_Free_Intern_A_2B
+             | C_Free_Intern_A_2C
+             | C_Free_Intern_A_2D
+             | C_Free_Intern_A_2E
+             | C_Free_Intern_A_2F => S_Standard_Reg_Acc <= '1';
           when others =>                -- der Zugriff soll ausserhalb dieses Makros erfolgen (externe User-Register)
             S_Adr_Val <= '1';
 
