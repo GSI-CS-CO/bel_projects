@@ -12,6 +12,7 @@ use work.adc_pkg.all;
 use work.wb_scu_reg_pkg.all;
 use work.dac714_pkg.all;
 use work.fg_quad_pkg.all;
+use work.addac_sys_clk_local_clk_switch_pkg.all;
 
 entity scu_addac is
   port (
@@ -151,16 +152,6 @@ component flash_loader_v01
   end component;
 
 
-component adda_pll
-  PORT
-  (
-    inclk0: in std_logic := '0';
-    c0: out std_logic;
-    c1: out std_logic;
-    locked: out std_logic
-  );
-end component;
-
 constant c_xwb_owm : t_sdb_device := (
     abi_class => x"0000", -- undocumented device
     abi_ver_major => x"01",
@@ -211,10 +202,14 @@ constant c_xwb_uart : t_sdb_device := (
   signal dac1_Dtack:        std_logic;
   signal dac1_data_to_SCUB: std_logic_vector(15 downto 0);
   signal dac1_rd_active:    std_logic;
+  signal dac1_convert:      std_logic;
+  signal dac1_convert_led:  std_logic;
   
   signal dac2_Dtack:        std_logic;
   signal dac2_data_to_SCUB: std_logic_vector(15 downto 0);
   signal dac2_rd_active:    std_logic;
+  signal dac2_convert:      std_logic;
+  signal dac2_convert_led:  std_logic;
   
   signal ADR_from_SCUB_LA:  std_logic_vector(15 downto 0);
   signal Data_from_SCUB_LA: std_logic_vector(15 downto 0);
@@ -283,6 +278,19 @@ constant c_xwb_uart : t_sdb_device := (
   signal wb_scu_dtack:        std_logic;
   signal wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
   
+  signal sys_clk_is_bad:        std_logic;
+  signal sys_clk_is_bad_led:    std_logic;
+  signal sys_clk_is_bad_la:     std_logic;
+  signal local_clk_is_bad:      std_logic;
+  signal local_clk_is_running:  std_logic;
+  signal sys_clk_failed:        std_logic;
+  signal sys_clk_deviation:     std_logic;
+  signal sys_clk_deviation_la:  std_logic;
+  signal sys_clk_deviation_led: std_logic;
+  signal clk_switch_rd_data:    std_logic_vector(15 downto 0);
+  signal clk_switch_rd_active:  std_logic;
+  signal clk_switch_dtack:      std_logic;
+  
   --signal irqcnt:  unsigned(12 downto 0);
   signal tmr_irq: std_logic;
   
@@ -297,18 +305,33 @@ constant c_xwb_uart : t_sdb_device := (
 
   begin
     
-fl : flash_loader_v01
-  port map (noe_in => '0');
+  fl : flash_loader_v01
+    port map (noe_in => '0');
 
-  -- Obtain core clocking
-adda_pll_1: adda_pll -- Altera megafunction
-  port map (
-    inclk0  => CLK_FPGA,  -- 125Mhz oscillator from board
-    c0      => clk_sys,   -- 125MHz system clk
-    c1      => clk_cal,   -- 50Mhz calibration clock for Altera reconfig cores
-    locked  => locked);   -- '1' when the PLL has locked
+  addac_clk_switch: addac_sys_clk_local_clk_switch
+    port map(
+      local_clk_i           => CLK_FPGA,
+      sys_clk_i             => A_SysClock,
+      nReset                => nPowerup_Res,
+      master_clk_o          => clk_sys,               -- core clocking
+      sys_clk_is_bad        => sys_clk_is_bad,
+      sys_clk_is_bad_la     => sys_clk_is_bad_la,
+      local_clk_is_bad      => local_clk_is_bad,
+      local_clk_is_running  => local_clk_is_running,
+      sys_clk_deviation     => sys_clk_deviation,
+      sys_clk_deviation_la  => sys_clk_deviation_la,
+      Adr_from_SCUB_LA      => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+      Data_from_SCUB_LA     => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+      Ext_Adr_Val           => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Rd_active         => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+      Ext_Wr_active         => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+      Rd_Port               => clk_switch_rd_data,    -- output for all read sources of this macro
+      Rd_Activ              => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
+      Dtack                 => clk_switch_dtack
+      );
+    
 
-    reset : gc_reset
+  reset : gc_reset
     port map(
       free_clk_i => clk_sys,
       locked_i => locked,
@@ -426,7 +449,7 @@ adda_pll_1: adda_pll -- Altera megafunction
   
   SCU_WB_Reg: wb_scu_reg
     generic map (
-      Base_addr => x"0240",
+      Base_addr => x"0050",
       register_cnt => 16 )
     port map (
       clk_sys_i => clk_sys,
@@ -448,7 +471,7 @@ adda_pll_1: adda_pll -- Altera megafunction
     
 
 Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack
-                or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack;
+                or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack or clk_switch_dtack;
 
 SCU_Slave: SCU_Bus_Slave
 generic map (
@@ -470,7 +493,7 @@ port map (
     nSCUB_Reset_in          => A_nReset,            -- in,        SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
     Data_to_SCUB            => Data_to_SCUB,        -- in,        connect read sources from external user functions
     Dtack_to_SCUB           => Dtack_to_SCUB,       -- in,        connect Dtack from from external user functions
-    Intr_In                 => "000000000000" & tmr_irq & fg_2_dreq & fg_1_dreq, -- in,        interrupt(15 downto 1)
+    Intr_In                 => fg_1_dreq & fg_2_dreq & tmr_irq & "00000000000" & (sys_clk_is_bad_la or sys_clk_deviation_la), -- in,        interrupt(15 downto 1)
     User_Ready              => '1',
     Data_from_SCUB_LA       => Data_from_SCUB_LA,   -- out,        latched data from SCU_Bus for external user functions
     ADR_from_SCUB_LA        => ADR_from_SCUB_LA,    -- out,        latched address from SCU_Bus for external user functions
@@ -529,6 +552,7 @@ dac_1: dac714
     nLD_DAC           => nDAC1_A1,              -- out, '0' copy shift register to output latch of DAC1
     nCLR_DAC          => nDAC1_CLR,             -- out, '0' set DAC1 to zero (pulse width min 200 ns)
     ext_trig_valid    => dac_1_ext_trig,        -- out, '1' got an valid external trigger, during extern trigger mode.
+    DAC_convert_o     => dac1_convert,          -- out, '1' when DAC convert driven by software, functiongenerator or external trigger
     Rd_Port           => dac1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     Rd_Activ          => dac1_rd_active,        -- out, '1' = read data available at 'Data_to_SCUB'-output
     Dtack             => dac1_dtack
@@ -558,6 +582,7 @@ dac_2: dac714
     nLD_DAC           => nDAC2_A1,              -- out, '0' copy shift register to output latch of DAC2
     nCLR_DAC          => nDAC2_CLR,             -- out, '0' set DAC2 to zero (pulse width min 200 ns)
     ext_trig_valid    => dac_2_ext_trig,        -- out, '1' got an valid external trigger, during extern trigger mode.
+    DAC_convert_o     => dac2_convert,          -- out, '1' when DAC convert driven by software, functiongenerator or external trigger
     Rd_Port           => dac2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     Rd_Activ          => dac2_rd_active,        -- out, '1' = read data available at 'Data_to_SCUB'-output
     Dtack             => dac2_dtack
@@ -781,7 +806,7 @@ p_led_mux: process (
     )
   begin
     if A_MODE_SEL = "11" then
-      A_nLED <= not nADC_PAR_SER_SEL & nADC_PAR_SER_SEL & NDIFF_IN_EN & not dac1_dtack & not dac2_dtack & "111" & x"FF";
+      A_nLED <= not nADC_PAR_SER_SEL & nADC_PAR_SER_SEL & NDIFF_IN_EN & dac1_convert_led & dac2_convert_led & '1' & sys_clk_deviation_led & sys_clk_is_bad_led & x"FF";
     elsif A_MODE_SEL = "01" then
       case not A_ADC_DAC_SEL IS
         when X"1" => A_nLED <= not ADC_channel_1;
@@ -811,20 +836,22 @@ p_read_mux: process (
     fg_1_rd_active, fg_1_data_to_SCUB,
     fg_2_rd_active, fg_2_data_to_SCUB,
     tmr_rd_active, tmr_data_to_SCUB,
-    wb_scu_rd_active, wb_scu_data_to_SCUB
+    wb_scu_rd_active, wb_scu_data_to_SCUB,
+    clk_switch_rd_active, clk_switch_rd_data
     )
-  variable sel: unsigned(7 downto 0);
+  variable sel: unsigned(8 downto 0);
   begin
-    sel :=  wb_scu_rd_active & tmr_rd_active & fg_2_rd_active & fg_1_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
+    sel := clk_switch_rd_active & wb_scu_rd_active & tmr_rd_active & fg_2_rd_active & fg_1_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
     case sel IS
-      when "00000001" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "00000010" => Data_to_SCUB <= dac1_data_to_SCUB;
-      when "00000100" => Data_to_SCUB <= dac2_data_to_SCUB;
-      when "00001000" => Data_to_SCUB <= adc_data_to_SCUB;
-      when "00010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "00100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
-      when "01000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "10000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "000000001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "000000010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "000000100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "000001000" => Data_to_SCUB <= adc_data_to_SCUB;
+      when "000010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "000100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
+      when "001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "010000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "100000000" => Data_to_SCUB <= clk_switch_rd_data;
       when others =>
         Data_to_SCUB <= X"0000";
     end case;
@@ -874,7 +901,46 @@ ext_trig_led: led_n
     nLED => open,
     nLED_opdrn => A_nLED_Trig_DAC);
 
+clk_deviation_led: led_n
+  generic map (
+    stretch_cnt => 5)
+  port map (
+    ena => led_ena_cnt, -- is every 10 ms for one clock period active
+    clk => clk_sys,
+    Sig_in => sys_clk_deviation,
+    nLED => open,
+    nLED_opdrn => sys_clk_deviation_led);
     
+clk_failed_led: led_n
+  generic map (
+    stretch_cnt => 5)
+  port map (
+    ena => led_ena_cnt, -- is every 10 ms for one clock period active
+    clk => clk_sys,
+    Sig_in => sys_clk_is_bad,
+    nLED => open,
+    nLED_opdrn => sys_clk_is_bad_led);
+    
+dac1_led: led_n
+  generic map (
+    stretch_cnt => 5)
+  port map (
+    ena => led_ena_cnt, -- is every 10 ms for one clock period active
+    clk => clk_sys,
+    Sig_in => dac1_convert,
+    nLED => open,
+    nLED_opdrn => dac1_convert_led);
+
+dac2_led: led_n
+  generic map (
+    stretch_cnt => 5)
+  port map (
+    ena => led_ena_cnt, -- is every 10 ms for one clock period active
+    clk => clk_sys,
+    Sig_in => dac2_convert,
+    nLED => open,
+    nLED_opdrn => dac2_convert_led);
+
   A_nDtack <= not SCUB_Dtack;
   A_nSRQ <= not SCUB_SRQ;
   A_TB(1) <= '1';
