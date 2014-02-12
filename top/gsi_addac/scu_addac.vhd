@@ -427,7 +427,7 @@ adda_pll_1: adda_pll -- Altera megafunction
   
   SCU_WB_Reg: wb_scu_reg
     generic map (
-      Base_addr => x"0240",
+      Base_addr => x"0040",
       register_cnt => 16 )
     port map (
       clk_sys_i => clk_sys,
