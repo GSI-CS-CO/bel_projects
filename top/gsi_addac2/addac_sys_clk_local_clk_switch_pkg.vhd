@@ -28,7 +28,8 @@ component addac_sys_clk_local_clk_switch is
     Ext_Wr_active:        in    std_logic;                      -- '1' => Wr-Cycle is active
     Rd_Port:              out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Rd_Activ:             out   std_logic;                      -- this acro has read data available at the Rd_Port.
-    Dtack:                out   std_logic
+    Dtack:                out   std_logic;
+    sig_tap_clk_250mhz:   out   std_logic
     );
 end component;
 

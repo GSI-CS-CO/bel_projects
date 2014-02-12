@@ -203,13 +203,13 @@ constant c_xwb_uart : t_sdb_device := (
   signal dac1_data_to_SCUB: std_logic_vector(15 downto 0);
   signal dac1_rd_active:    std_logic;
   signal dac1_convert:      std_logic;
-  signal dac1_convert_led:  std_logic;
+  signal dac1_convert_led_n:  std_logic;
   
   signal dac2_Dtack:        std_logic;
   signal dac2_data_to_SCUB: std_logic_vector(15 downto 0);
   signal dac2_rd_active:    std_logic;
   signal dac2_convert:      std_logic;
-  signal dac2_convert_led:  std_logic;
+  signal dac2_convert_led_n:  std_logic;
   
   signal ADR_from_SCUB_LA:  std_logic_vector(15 downto 0);
   signal Data_from_SCUB_LA: std_logic_vector(15 downto 0);
@@ -279,17 +279,21 @@ constant c_xwb_uart : t_sdb_device := (
   signal wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
   
   signal sys_clk_is_bad:        std_logic;
-  signal sys_clk_is_bad_led:    std_logic;
+  signal sys_clk_is_bad_led_n:  std_logic;
   signal sys_clk_is_bad_la:     std_logic;
   signal local_clk_is_bad:      std_logic;
   signal local_clk_is_running:  std_logic;
+  signal local_clk_runs_led_n:  std_logic;
   signal sys_clk_failed:        std_logic;
   signal sys_clk_deviation:     std_logic;
   signal sys_clk_deviation_la:  std_logic;
-  signal sys_clk_deviation_led: std_logic;
+  signal sys_clk_deviation_led_n: std_logic;
   signal clk_switch_rd_data:    std_logic_vector(15 downto 0);
   signal clk_switch_rd_active:  std_logic;
   signal clk_switch_dtack:      std_logic;
+  
+  signal signal_tap_clk_250mhz: std_logic;
+
   
   --signal irqcnt:  unsigned(12 downto 0);
   signal tmr_irq: std_logic;
@@ -327,7 +331,8 @@ constant c_xwb_uart : t_sdb_device := (
       Ext_Wr_active         => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
       Rd_Port               => clk_switch_rd_data,    -- output for all read sources of this macro
       Rd_Activ              => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
-      Dtack                 => clk_switch_dtack
+      Dtack                 => clk_switch_dtack,
+      sig_tap_clk_250mhz    => signal_tap_clk_250mhz
       );
     
 
@@ -449,7 +454,7 @@ constant c_xwb_uart : t_sdb_device := (
   
   SCU_WB_Reg: wb_scu_reg
     generic map (
-      Base_addr => x"0050",
+      Base_addr => x"0040",
       register_cnt => 16 )
     port map (
       clk_sys_i => clk_sys,
@@ -806,7 +811,15 @@ p_led_mux: process (
     )
   begin
     if A_MODE_SEL = "11" then
-      A_nLED <= not nADC_PAR_SER_SEL & nADC_PAR_SER_SEL & NDIFF_IN_EN & dac1_convert_led & dac2_convert_led & '1' & sys_clk_deviation_led & sys_clk_is_bad_led & x"FF";
+      A_nLED <= not nADC_PAR_SER_SEL 
+              & nADC_PAR_SER_SEL
+              & NDIFF_IN_EN 
+              & dac1_convert_led_n 
+              & dac2_convert_led_n
+              & local_clk_runs_led_n
+              & sys_clk_deviation_led_n
+              & sys_clk_is_bad_led_n 
+              & x"FF";
     elsif A_MODE_SEL = "01" then
       case not A_ADC_DAC_SEL IS
         when X"1" => A_nLED <= not ADC_channel_1;
@@ -841,7 +854,15 @@ p_read_mux: process (
     )
   variable sel: unsigned(8 downto 0);
   begin
-    sel := clk_switch_rd_active & wb_scu_rd_active & tmr_rd_active & fg_2_rd_active & fg_1_rd_active & adc_rd_active & dac2_rd_active & dac1_rd_active & io_port_rd_active;
+    sel := clk_switch_rd_active 
+         & wb_scu_rd_active 
+         & tmr_rd_active 
+         & fg_2_rd_active 
+         & fg_1_rd_active 
+         & adc_rd_active 
+         & dac2_rd_active 
+         & dac1_rd_active 
+         & io_port_rd_active;
     case sel IS
       when "000000001" => Data_to_SCUB <= io_port_data_to_SCUB;
       when "000000010" => Data_to_SCUB <= dac1_data_to_SCUB;
@@ -908,8 +929,8 @@ clk_deviation_led: led_n
     ena => led_ena_cnt, -- is every 10 ms for one clock period active
     clk => clk_sys,
     Sig_in => sys_clk_deviation,
-    nLED => open,
-    nLED_opdrn => sys_clk_deviation_led);
+    nLED => sys_clk_deviation_led_n,
+    nLED_opdrn => open);
     
 clk_failed_led: led_n
   generic map (
@@ -918,8 +939,18 @@ clk_failed_led: led_n
     ena => led_ena_cnt, -- is every 10 ms for one clock period active
     clk => clk_sys,
     Sig_in => sys_clk_is_bad,
-    nLED => open,
-    nLED_opdrn => sys_clk_is_bad_led);
+    nLED => sys_clk_is_bad_led_n,
+    nLED_opdrn => open);
+    
+local_clk_led: led_n
+  generic map (
+    stretch_cnt => 5)
+  port map (
+    ena => led_ena_cnt, -- is every 10 ms for one clock period active
+    clk => clk_sys,
+    Sig_in => local_clk_is_running,
+    nLED => local_clk_runs_led_n,
+    nLED_opdrn => open);
     
 dac1_led: led_n
   generic map (
@@ -928,8 +959,8 @@ dac1_led: led_n
     ena => led_ena_cnt, -- is every 10 ms for one clock period active
     clk => clk_sys,
     Sig_in => dac1_convert,
-    nLED => open,
-    nLED_opdrn => dac1_convert_led);
+    nLED => dac1_convert_led_n,
+    nLED_opdrn => open);
 
 dac2_led: led_n
   generic map (
@@ -938,8 +969,8 @@ dac2_led: led_n
     ena => led_ena_cnt, -- is every 10 ms for one clock period active
     clk => clk_sys,
     Sig_in => dac2_convert,
-    nLED => open,
-    nLED_opdrn => dac2_convert_led);
+    nLED => dac2_convert_led_n,
+    nLED_opdrn => open);
 
   A_nDtack <= not SCUB_Dtack;
   A_nSRQ <= not SCUB_SRQ;
@@ -947,4 +978,8 @@ dac2_led: led_n
   --A_TA <= fg_1_sw(23 downto 8);
   --
   --A_TB <= fg_1_sw(7 downto 0) & fg_1_strobe & "0000000";
+  
+  A_TA(2) <= signal_tap_clk_250mhz;
+  A_TA(0) <= clk_sys;
+
 end architecture;
