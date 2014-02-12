@@ -153,36 +153,36 @@ component flash_loader_v01
 
 
 constant c_xwb_owm : t_sdb_device := (
-    abi_class => x"0000", -- undocumented device
-    abi_ver_major => x"01",
-    abi_ver_minor => x"01",
-    wbd_endian => c_sdb_endian_big,
-    wbd_width => x"7", -- 8/16/32-bit port granularity
-    sdb_component => (
-    addr_first => x"0000000000000000",
-    addr_last => x"00000000000000ff",
-    product => (
-    vendor_id => x"000000000000CE42", -- CERN
-    device_id => x"779c5443",
-    version => x"00000001",
-    date => x"20120603",
-    name => "WR-Periph-1Wire    ")));
+    abi_class       => x"0000", -- undocumented device
+    abi_ver_major   => x"01",
+    abi_ver_minor   => x"01",
+    wbd_endian      => c_sdb_endian_big,
+    wbd_width       => x"7", -- 8/16/32-bit port granularity
+    sdb_component   => (
+    addr_first      => x"0000000000000000",
+    addr_last       => x"00000000000000ff",
+    product         => (
+    vendor_id       => x"000000000000CE42", -- CERN
+    device_id       => x"779c5443",
+    version         => x"00000001",
+    date            => x"20120603",
+    name            => "WR-Periph-1Wire    ")));
         
 constant c_xwb_uart : t_sdb_device := (
-    abi_class => x"0000", -- undocumented device
-    abi_ver_major => x"01",
-    abi_ver_minor => x"01",
-    wbd_endian => c_sdb_endian_big,
-    wbd_width => x"7", -- 8/16/32-bit port granularity
-    sdb_component => (
-    addr_first => x"0000000000000000",
-    addr_last => x"00000000000000ff",
-    product => (
-    vendor_id => x"000000000000CE42", -- CERN
-    device_id => x"e2d13d04",
-    version => x"00000001",
-    date => x"20120603",
-    name => "WR-Periph-UART     ")));
+    abi_class       => x"0000", -- undocumented device
+    abi_ver_major   => x"01",
+    abi_ver_minor   => x"01",
+    wbd_endian      => c_sdb_endian_big,
+    wbd_width       => x"7", -- 8/16/32-bit port granularity
+    sdb_component   => (
+    addr_first      => x"0000000000000000",
+    addr_last       => x"00000000000000ff",
+    product         => (
+    vendor_id       => x"000000000000CE42", -- CERN
+    device_id       => x"e2d13d04",
+    version         => x"00000001",
+    date            => x"20120603",
+    name            => "WR-Periph-UART     ")));
   
   signal clk_sys, clk_cal, locked : std_logic;
   
@@ -241,24 +241,24 @@ constant c_xwb_uart : t_sdb_device := (
   signal fg_2_strobe:       std_logic;
   signal fg_2_dreq:         std_logic;
 
-  signal led_ena_cnt: std_logic;
+  signal led_ena_cnt:       std_logic;
 
   signal ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4: std_logic_vector(15 downto 0);
   signal ADC_channel_5, ADC_channel_6, ADC_channel_7, ADC_channel_8: std_logic_vector(15 downto 0);
 
-  signal Data_to_SCUB: std_logic_vector(15 downto 0);
+  signal Data_to_SCUB:      std_logic_vector(15 downto 0);
   
-  signal reset_clks:       std_logic_vector(0 downto 0);
-  signal reset_rstn:       std_logic_vector(0 downto 0);
-  signal clk_sys_rstn:     std_logic;
-  signal lm32_interrupt:   std_logic_vector(31 downto 0);
-  signal lm32_rstn:        std_logic;
+  signal reset_clks:        std_logic_vector(0 downto 0);
+  signal reset_rstn:        std_logic_vector(0 downto 0);
+  signal clk_sys_rstn:      std_logic;
+  signal lm32_interrupt:    std_logic_vector(31 downto 0);
+  signal lm32_rstn:         std_logic;
   
   -- Top crossbar layout
-  constant c_slaves     : natural := 4;
-  constant c_masters    : natural := 2;
-  constant c_dpram_size : natural := 32768; -- in 32-bit words (64KB)
-  constant c_layout     : t_sdb_record_array(c_slaves-1 downto 0) :=
+  constant c_slaves     :   natural := 4;
+  constant c_masters    :   natural := 2;
+  constant c_dpram_size :   natural := 32768; -- in 32-bit words (64KB)
+  constant c_layout     :   t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),  x"00000000"),
     1 => f_sdb_embed_device(c_xwb_owm,                  x"00100600"),
     2 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"),
@@ -338,12 +338,12 @@ constant c_xwb_uart : t_sdb_device := (
 
   reset : gc_reset
     port map(
-      free_clk_i => clk_sys,
-      locked_i => locked,
-      clks_i => reset_clks,
-      rstn_o => reset_rstn);
-    reset_clks(0) <= clk_sys;
-    clk_sys_rstn <= reset_rstn(0);
+      free_clk_i  =>   clk_sys,
+      locked_i    =>   locked,
+      clks_i      =>   reset_clks,
+      rstn_o      =>   reset_rstn);
+    reset_clks(0) <=   clk_sys;
+    clk_sys_rstn  <=    reset_rstn(0);
 
   -- open drain buffer for one wire
     owr_i(0) <= A_OneWire;
@@ -354,21 +354,21 @@ constant c_xwb_uart : t_sdb_device := (
   -- The top-most Wishbone B.4 crossbar
   interconnect : xwb_sdb_crossbar
    generic map(
-     g_num_masters => c_masters,
-     g_num_slaves => c_slaves,
-     g_registered => true,
-     g_wraparound => false, -- Should be true for nested buses
-     g_layout => c_layout,
-     g_sdb_addr => c_sdb_address)
+     g_num_masters  => c_masters,
+     g_num_slaves   => c_slaves,
+     g_registered   => true,
+     g_wraparound   => false, -- Should be true for nested buses
+     g_layout       => c_layout,
+     g_sdb_addr     => c_sdb_address)
    port map(
-     clk_sys_i => clk_sys,
-     rst_n_i => clk_sys_rstn,
+     clk_sys_i  => clk_sys,
+     rst_n_i    => clk_sys_rstn,
      -- Master connections (INTERCON is a slave)
-     slave_i => cbar_slave_i,
-     slave_o => cbar_slave_o,
+     slave_i    => cbar_slave_i,
+     slave_o    => cbar_slave_o,
      -- Slave connections (INTERCON is a master)
-     master_i => cbar_master_i,
-     master_o => cbar_master_o);
+     master_i   => cbar_master_i,
+     master_o   => cbar_master_o);
      
   -- The LM32 is master 0+1
   LM32 : xwb_lm32
@@ -376,33 +376,33 @@ constant c_xwb_uart : t_sdb_device := (
       g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
-      irq_i => lm32_interrupt,
-      dwb_o => cbar_slave_i(0), -- Data bus
-      dwb_i => cbar_slave_o(0),
-      iwb_o => cbar_slave_i(1), -- Instruction bus
-      iwb_i => cbar_slave_o(1));
+      rst_n_i   => clk_sys_rstn,
+      irq_i     => lm32_interrupt,
+      dwb_o     => cbar_slave_i(0), -- Data bus
+      dwb_i     => cbar_slave_o(0),
+      iwb_o     => cbar_slave_i(1), -- Instruction bus
+      iwb_i     => cbar_slave_o(1));
   -- The other 31 interrupt pins are unconnected
   lm32_interrupt(31 downto 1) <= (others => '0');
   
   -- WB Slave 0 is the RAM
   ram : xwb_dpram
     generic map(
-      g_size => c_dpram_size,
+      g_size                  => c_dpram_size,
       g_slave1_interface_mode => PIPELINED,
       g_slave2_interface_mode => PIPELINED,
-      g_slave1_granularity => BYTE,
-      g_slave2_granularity => WORD,
-      g_init_file => "scu_addac.mif")
+      g_slave1_granularity    => BYTE,
+      g_slave2_granularity    => WORD,
+      g_init_file             => "scu_addac.mif") -- software for the lm32
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      rst_n_i   => clk_sys_rstn,
       -- First port connected to the crossbar
-      slave1_i => cbar_master_o(0),
-      slave1_o => cbar_master_i(0),
+      slave1_i  => cbar_master_o(0),
+      slave1_o  => cbar_master_i(0),
       -- Second port disconnected
-      slave2_i => cc_dummy_slave_in, -- CYC always low
-      slave2_o => open);
+      slave2_i  => cc_dummy_slave_in, -- CYC always low
+      slave2_o  => open);
       
       
   --------------------------------------
@@ -430,23 +430,23 @@ constant c_xwb_uart : t_sdb_device := (
       owr_i       => owr_i
       );
   --------------------------------------
-  -- UART
+  -- UART (only for debug)
   --------------------------------------
   UART : xwb_simple_uart
     generic map(
-      g_with_virtual_uart => false,
-      g_with_physical_uart => true,
-      g_interface_mode => PIPELINED,
+      g_with_virtual_uart   => false,
+      g_with_physical_uart  => true,
+      g_interface_mode      => PIPELINED,
       g_address_granularity => BYTE
       )
     port map(
-      clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      clk_sys_i   => clk_sys,
+      rst_n_i     => clk_sys_rstn,
 
       -- Wishbone
       slave_i => cbar_master_o(2),
       slave_o => cbar_master_i(2),
-      desc_o => open,
+      desc_o  => open,
 
       uart_rxd_i => '0',
       uart_txd_o => A_TB(0)
@@ -458,20 +458,20 @@ constant c_xwb_uart : t_sdb_device := (
       register_cnt => 16 )
     port map (
       clk_sys_i => clk_sys,
-      rst_n_i => clk_sys_rstn,
+      rst_n_i   => clk_sys_rstn,
 
       -- Wishbone
       slave_i => cbar_master_o(3),
       slave_o => cbar_master_i(3),
       
-      Adr_from_SCUB_LA => ADR_from_SCUB_LA,
+      Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
       Data_from_SCUB_LA => Data_from_SCUB_LA,
-      Ext_Adr_Val => Ext_Adr_Val,
-      Ext_Rd_active => Ext_Rd_active,
-      Ext_Wr_active => Ext_Wr_active,
-      user_rd_active => wb_scu_rd_active,
-      Data_to_SCUB => wb_scu_data_to_SCUB,
-      Dtack_to_SCUB => wb_scu_dtack );
+      Ext_Adr_Val       => Ext_Adr_Val,
+      Ext_Rd_active     => Ext_Rd_active,
+      Ext_Wr_active     => Ext_Wr_active,
+      user_rd_active    => wb_scu_rd_active,
+      Data_to_SCUB      => wb_scu_data_to_SCUB,
+      Dtack_to_SCUB     => wb_scu_dtack );
 
     
 
