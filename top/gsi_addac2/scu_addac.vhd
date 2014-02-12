@@ -362,7 +362,7 @@ constant c_xwb_uart : t_sdb_device := (
      g_sdb_addr     => c_sdb_address)
    port map(
      clk_sys_i  => clk_sys,
-     rst_n_i    => clk_sys_rstn,
+     rst_n_i    => nPowerup_Res,
      -- Master connections (INTERCON is a slave)
      slave_i    => cbar_slave_i,
      slave_o    => cbar_slave_o,
@@ -376,7 +376,7 @@ constant c_xwb_uart : t_sdb_device := (
       g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => clk_sys_rstn,
+      rst_n_i   => nPowerup_Res,
       irq_i     => lm32_interrupt,
       dwb_o     => cbar_slave_i(0), -- Data bus
       dwb_i     => cbar_slave_o(0),
@@ -393,10 +393,10 @@ constant c_xwb_uart : t_sdb_device := (
       g_slave2_interface_mode => PIPELINED,
       g_slave1_granularity    => BYTE,
       g_slave2_granularity    => WORD,
-      g_init_file             => "scu_addac.mif") -- software for the lm32
+      g_init_file             => "scu_addac2.mif") -- software for the lm32
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => clk_sys_rstn,
+      rst_n_i   => nPowerup_Res,
       -- First port connected to the crossbar
       slave1_i  => cbar_master_o(0),
       slave1_o  => cbar_master_i(0),
@@ -418,7 +418,7 @@ constant c_xwb_uart : t_sdb_device := (
       )
     port map(
       clk_sys_i   => clk_sys,
-      rst_n_i     => clk_sys_rstn,
+      rst_n_i     => nPowerup_Res,
 
       -- Wishbone
       slave_i     => cbar_master_o(1),
@@ -441,7 +441,7 @@ constant c_xwb_uart : t_sdb_device := (
       )
     port map(
       clk_sys_i   => clk_sys,
-      rst_n_i     => clk_sys_rstn,
+      rst_n_i     => nPowerup_Res,
 
       -- Wishbone
       slave_i => cbar_master_o(2),
@@ -458,7 +458,7 @@ constant c_xwb_uart : t_sdb_device := (
       register_cnt => 16 )
     port map (
       clk_sys_i => clk_sys,
-      rst_n_i   => clk_sys_rstn,
+      rst_n_i   => nPowerup_Res,
 
       -- Wishbone
       slave_i => cbar_master_o(3),

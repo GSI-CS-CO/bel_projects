@@ -13,7 +13,7 @@ CFLAGS      = -I$(PADDAC)/include -I$(PADDAC)/include/hw -I$(PADDAC)/include/soc
 
 include ../build.mk
 
-scu_addac.elf: $(PADDAC)/main.o $(PDEV)/mprintf.o $(PDEV)/uart.o $(POW)/owerr.o $(POW)/owlnk.o $(POW)/ownet.o \
+scu_addac2.elf: $(PADDAC)/main.o $(PDEV)/mprintf.o $(PDEV)/uart.o $(POW)/owerr.o $(POW)/owlnk.o $(POW)/ownet.o \
               $(POW)/owtran.o $(POW)/eep43.o $(POW)/crcutil.o $(POW)/temp42.o $(POW)/temp10.o $(POW)/temp28.o \
               $(POW)/findtype.o
 
