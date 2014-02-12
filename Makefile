@@ -115,3 +115,15 @@ pexarria5::	firmware
 
 pexarria5-clean::
 	$(MAKE) -C syn/gsi_pexarria5/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+addac::	
+	$(MAKE) -C syn/gsi_addac PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+addac-clean::
+	$(MAKE) -C syn/gsi_addac PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+addac2::	
+	$(MAKE) -C syn/gsi_addac2 PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+addac2-clean::
+	$(MAKE) -C syn/gsi_addac2 PATH=$(PWD)/toolchain/bin:$(PATH) clean
