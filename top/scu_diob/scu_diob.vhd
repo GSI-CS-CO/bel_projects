@@ -9,6 +9,7 @@ use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
 use work.wb_scu_reg_pkg.all;
 use work.fg_quad_pkg.all;
+use work.diob_sys_clk_local_clk_switch_pkg.all;
 
 
 
@@ -205,33 +206,6 @@ port	(
 end component;
 
 
-component pll_sio
-port	(
-		inclk0:		in		std_logic;
-		c0:			out		std_logic;
-		c1:			out		std_logic;
-		locked:		out		std_logic
-		);
-end component;
-
-
-component SysClock
-	PORT
-	(
-		areset		: IN STD_LOGIC  := '0';
-		inclk0		: IN STD_LOGIC  := '0';
-		inclk1		: IN STD_LOGIC  := '0';
-		activeclock		: OUT STD_LOGIC ;
-		c0		: OUT STD_LOGIC ;
-		c1		: OUT STD_LOGIC ;
-		c2		: OUT STD_LOGIC ;
-		clkbad0		: OUT STD_LOGIC ;
-		clkbad1		: OUT STD_LOGIC ;
-		locked		: OUT STD_LOGIC 
-	);
-end component;
-
-
 component pu_reset
 generic	(
 		PU_Reset_in_clks : integer
@@ -318,8 +292,8 @@ constant c_xwb_uart : t_sdb_device := (
   signal SCU_Ext_Wr_fin: std_logic;
   signal nPowerup_Res: std_logic;
 
-  signal extension_cid_system:  std_logic_vector(15 downto 0); -- in,	extension card: cid_system
-  signal extension_cid_group:  std_logic_vector(15 downto 0); --in, extension card: cid_group
+  signal extension_cid_system:  integer range 0 to 16#FFFF#;  -- in,	extension card: cid_system
+  signal extension_cid_group:   integer range 0 to 16#FFFF#;  --in, extension card: cid_group
   signal DAC_Out: std_logic_vector(15 downto 0);
  
   signal fg_1_dtack: std_logic;
@@ -375,10 +349,6 @@ constant c_xwb_uart : t_sdb_device := (
 	signal Standard_Reg_Acc:		std_logic;
 	signal Ext_Rd_fin: std_logic;
 	signal Ext_Wr_fin: std_logic;
-	signal pll_1_locked: std_logic;
-	signal pll_2_locked: std_logic;
-	signal clkbad0, clkbad1: std_logic;
-	signal SysClock_pll_out: 	std_logic;
 
 	
 	signal Ena_Every_100ns: std_logic;
@@ -388,7 +358,6 @@ constant c_xwb_uart : t_sdb_device := (
 	signal Ena_Every_250ms: std_logic;
 	signal Ena_Every_500ms: std_logic;
  
-	signal F_8_MHz: std_logic;
 	signal F_12p5_MHz: std_logic;
 	 
 	signal test_port_in_0: std_logic_vector(15 downto 0);
@@ -476,6 +445,22 @@ constant c_xwb_uart : t_sdb_device := (
 	 
 	signal clk_blink: std_logic;
 	
+  signal sys_clk_is_bad:        std_logic;
+  signal sys_clk_is_bad_led_n:  std_logic;
+  signal sys_clk_is_bad_la:     std_logic;
+  signal local_clk_is_bad:      std_logic;
+  signal local_clk_is_running:  std_logic;
+  signal local_clk_runs_led_n:  std_logic;
+  signal sys_clk_failed:        std_logic;
+  signal sys_clk_deviation:     std_logic;
+  signal sys_clk_deviation_la:  std_logic;
+  signal sys_clk_deviation_led_n: std_logic;
+  signal clk_switch_rd_data:    std_logic_vector(15 downto 0);
+  signal clk_switch_rd_active:  std_logic;
+  signal clk_switch_dtack:      std_logic;
+  signal pll_locked:            std_LOGIC;
+  
+  signal signal_tap_clk_250mhz: std_logic;
 	
 	
 	constant	C_Debounce_Input_in_ns: integer := 5000;
@@ -508,6 +493,31 @@ constant c_xwb_uart : t_sdb_device := (
 
 	Powerup_Res <= not nPowerup_Res;  -- only for modelsim!
 	WRnRD       <= not A_RnW;  				-- only for modelsim!
+
+  diob_clk_switch: diob_sys_clk_local_clk_switch
+    port map(
+      local_clk_i           => CLK_20MHz_D,
+      sys_clk_i             => A_SysClock,
+      nReset                => nPowerup_Res,
+      master_clk_o          => clk_sys,               -- core clocking
+      pll_locked            => pll_locked,
+      sys_clk_is_bad        => sys_clk_is_bad,
+      sys_clk_is_bad_la     => sys_clk_is_bad_la,
+      local_clk_is_bad      => local_clk_is_bad,
+      local_clk_is_running  => local_clk_is_running,
+      sys_clk_deviation     => sys_clk_deviation,
+      sys_clk_deviation_la  => sys_clk_deviation_la,
+      Adr_from_SCUB_LA      => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+      Data_from_SCUB_LA     => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+      Ext_Adr_Val           => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Rd_active         => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+      Ext_Wr_active         => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+      Rd_Port               => clk_switch_rd_data,    -- output for all read sources of this macro
+      Rd_Activ              => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
+      Dtack                 => clk_switch_dtack,
+      sig_tap_clk_250mhz    => signal_tap_clk_250mhz
+      );
+    
 
 
 			
@@ -603,76 +613,28 @@ A_Tclk	<=	 la_clk;	-- Clock fr Logikanalysator: = Sysclk x 2
 
 test_port_in_0 <=	nPowerup_Res 	& clk 						& Ena_Every_100ns & Ena_Every_166ns &	-- bit15..12
 									Ext_Wr_active & SCU_Ext_Wr_fin  & AWOut_Reg1_wr		& fg_1_strobe			& -- bit11..8
-									la_clk 			  & pll_2_locked		& A_RnW & A_nDS		&										-- bit7..4
+									la_clk 			  & pll_locked		  & A_RnW & A_nDS		&										-- bit7..4
 									A_nBoardSel   & fg_1_strobe 		& '0' 	& SCUB_Dtack									-- bit3..0
 									;
 
 						
-test_clocks <=	X"00" &
-						A_SysClock 			&	CLK_20MHz_D 	& clkbad0			&	clkbad1 		&		-- bit7..4					
-						pll_2_locked		&	clk 					&	F_8_MHz 		&	la_clk 					-- bit3..0
-						;					
+test_clocks <=  X"0"                                                                              -- bit15..12
+              & '0' & signal_tap_clk_250mhz & A_SysClock & CLK_20MHz_D                            -- bit11..8
+              & '0' & pll_locked & sys_clk_deviation & sys_clk_deviation_la                       -- bit7..4
+              & local_clk_is_running & local_clk_is_bad & sys_clk_is_bad & sys_clk_is_bad_la;     -- bit3..0
+
 
 IO_Test_Port1 <=	x"00" &	s_AW_ID(7 DOWNTO 0);-- Anwender_ID
 IO_Test_Port2 <=	AWOut_Reg1(15 DOWNTO 0);
 IO_Test_Port3 <=	AWOut_Reg2(15 DOWNTO 0);
 
-						
-
---rd_port_mux:	process	(fg1_rd_cycle, fg1_data_to_SCUB, User_Reg_rd_active, AWOut_Reg_rd_active, user_reg1_data_to_SCUB, aw_port1_data_to_SCUB)
---begin
---	if fg1_rd_cycle = '1' then
---		Data_to_SCUB <= fg1_data_to_SCUB;
---	elsif User_Reg_rd_active = '1' then
---		Data_to_SCUB <= user_reg1_data_to_SCUB;
---		elsif AWOut_Reg_rd_active = '1' then
---		Data_to_SCUB <= aw_port1_data_to_SCUB;
---	else
---		Data_to_SCUB <= (others => '-');
---	end if;
---end process rd_port_mux;
---
-
-
---p_ready:	process(clk, nPowerup_Res, Deb_SCUB_Reset_out)
---begin
---	if (nPowerup_Res = '0') or (Deb_SCUB_Reset_out = '1') then
---		ready <= '0';
---	elsif rising_edge(clk) then
---		ready <= '1';
---	end if;
---end process;
-
-						
 fl : flash_loader_v01
 port map	(
 			noe_in	=>	'0'
 			);
 	
-	PLL_1: pll_sio
-port map	(
-			inclk0	=>	CLK_20MHz_D,
-			c0		=>	F_12p5_MHz,				-- clk,
-			c1		=>	open,							-- la_clk,
-			locked	=>	pll_1_locked
-			);
 
 
-PLL_2: SysClock
-port map	(
-			areset		=>	'0',
-			inclk0		=>	A_SysClock,		-- 12,5 Mhz vom SCU-Bus
-			inclk1		=>	F_12p5_MHz,		-- 12,5 Mhz von PLL1 aus 20MHz vom Onboard Oszillator
-			activeclock => open,
-			c0				=>	clk_sys,						
-			c1				=>	F_8_MHz,
-			c2				=>	la_clk,
-			clkbad0		=>	clkbad0,
-			clkbad1		=>	clkbad1,
-			
-			locked		=>	pll_2_locked
-			);
-		
 	
 		
   -- open drain buffer for one wire
@@ -1061,18 +1023,20 @@ fg_1: fg_quad_scu_bus
 
 
 
-rd_port_mux:	process	(fg_1_rd_active, AWOut_Reg_rd_active,
-											fg_1_data_to_SCUB, aw_port1_data_to_SCUB)  
+rd_port_mux:  process ( clk_switch_rd_active, clk_switch_rd_data,
+                        wb_scu_rd_active,     wb_scu_data_to_SCUB,
+                        fg_1_rd_active,       fg_1_data_to_SCUB,
+                        AWOut_Reg_rd_active,  aw_port1_data_to_SCUB )
 
-  variable sel: unsigned(2 downto 0);
+  variable sel: unsigned(3 downto 0);
   begin
-    sel :=  wb_scu_rd_active & fg_1_rd_active  & AWOut_Reg_rd_active;
+    sel :=  clk_switch_rd_active & wb_scu_rd_active & fg_1_rd_active & AWOut_Reg_rd_active;
     case sel IS
-      when "001" => Data_to_SCUB <= aw_port1_data_to_SCUB;
-      when "010" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "100" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when others =>
-		Data_to_SCUB <= (others => '-');
+      when "0001" => Data_to_SCUB <= aw_port1_data_to_SCUB;
+      when "0010" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "0100" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "1000" => Data_to_SCUB <= clk_switch_rd_data;
+      when others => Data_to_SCUB <= (others => '0');
     end case;
   end process rd_port_mux;
 
@@ -1123,8 +1087,8 @@ BEGIN
 		s_AW_ID(7 DOWNTO 0)	<=	x"FF";		-- Anwender-Karten ID
 		UIO(15 DOWNTO 0)		<=	(OTHERS => '0');	-- USER-IO-Pins zu VG-Leiste
 		
-		extension_cid_system <=	(OTHERS => '0');	-- extension card: cid_system
-		extension_cid_group  <=	(OTHERS => '0');	-- extension card: cid_group
+		extension_cid_system <= 0;	-- extension card: cid_system
+		extension_cid_group  <= 0;	-- extension card: cid_group
 
 		
 		
@@ -1197,7 +1161,8 @@ BEGIN
 			PIO(25) <= '1';
 			PIO(27) <= '1';	 
 			PIO(29) <= '1';	 
-			PIO(31) <= ((clkbad0 or clkbad1) AND not (clk_blink And (clkbad0 or clkbad1) ));	-- -- LED4 = Int. Clock	
+--			PIO(31) <= ((not local_clk_is_running) AND not (clk_blink And (not local_clk_is_running) ));	-- -- LED4 = Int. Clock	
+			PIO(31) <= local_clk_is_running or clk_blink;	    -- -- LED4 = Int. Clock	
 		
 		
 	CASE s_AW_ID(7 DOWNTO 0) IS
@@ -1209,8 +1174,8 @@ BEGIN
 		--####									Anwender-IO: P37IO	-- FG900_700												###
 		--#################################################################################
 
-		extension_cid_system <=	x"0037";	-- extension card: cid_system, CSCOHW=55
-		extension_cid_group  <=	x"001B";	-- extension card: cid_group, "FG900700_P37IO1" = 27
+		extension_cid_system <=	55;	-- extension card: cid_system, CSCOHW=55
+		extension_cid_group  <= 27;	-- extension card: cid_group, "FG900700_P37IO1" = 27
 		
 		
 		-- Input Start --
@@ -1291,8 +1256,8 @@ BEGIN
 		--####										Anwender-IO: P25IO	-- FG900_710											###
 		--#################################################################################
 
-		extension_cid_system <=	x"0037";	-- extension card: cid_system, CSCOHW=55
-		extension_cid_group  <=	x"001C";	-- extension card: cid_group, "FG900710_P25IO1" = 28
+		extension_cid_system <= 55;	-- extension card: cid_system, CSCOHW=55
+		extension_cid_group  <= 28;	-- extension card: cid_group, "FG900710_P25IO1" = 28
 
 
 
@@ -1356,8 +1321,8 @@ BEGIN
 		--####										Anwender-IO: OCIN	-- FG900_720												###
 		--#################################################################################
 
-		extension_cid_system <=	x"0037";	-- extension card: cid_system, CSCOHW=55
-		extension_cid_group  <=	x"001D";	-- extension card: cid_group, "FG900720_OCIN1" = 29
+		extension_cid_system <= 55;	-- extension card: cid_system, CSCOHW=55
+		extension_cid_group  <= 29;	-- extension card: cid_group, "FG900720_OCIN1" = 29
 
 
 			AWIn1(15)	<=	'0';			--------------	Frei
@@ -1411,8 +1376,8 @@ BEGIN
 		--####											Anwender-IO: OCIO	-- FG900_730											###
 		--#################################################################################
 
-		extension_cid_system <=	x"0037";	-- extension card: cid_system, CSCOHW=55
-		extension_cid_group  <=	x"001E";	-- extension card: cid_group, "FG900730_OCIO1" = 30
+		extension_cid_system <= 55;	-- extension card: cid_system, CSCOHW=55
+		extension_cid_group  <= 30;	-- extension card: cid_group, "FG900730_OCIO1" = 30
 
 		
 		

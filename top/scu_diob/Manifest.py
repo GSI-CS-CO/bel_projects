@@ -2,12 +2,11 @@ files = [
    "scu_diob.vhd",
    "scu_diob.sdc",
    "flash_loader_v01.vhd",
-   "adda_pll.vhd",
-   "Test_User_Reg.vhd",
    "Zeitbasis.vhd",
-   "SysClock.vhd",
    "AW_IO_Reg.vhd",
-   "PLL_SIO.vhd"         
+   "diob_sys_clk_local_clk_switch_pkg.vhd",
+   "diob_sys_clk_local_clk_switch.vhd",
+   "diob_local_clk_to_12p5_mhz.vhd",  
 ]
 
 modules = {
