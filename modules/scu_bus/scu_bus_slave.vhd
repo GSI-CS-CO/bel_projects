@@ -288,6 +288,13 @@
 --    Implementierung musste darauf nicht geachtet werden.                                                          --
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers_5_Revi_2: erstellt am 13.02.2014, Autor: W.Panschow                                                        --
+--  A) Die beiden Ports CID-System und CID-Group_Kennung wurden von Type Std_logic_vector(15 downto 0) auf          --
+--    den Type integer range 0 to 16#FFFF# umgestellt. Die Vorgabe kann dann genauso direkt (ohne Typkonversion)    --
+--    vorgnommen werden, wie bei den Generics CID_System und CID_Group.                                             --
+----------------------------------------------------------------------------------------------------------------------
+
 library IEEE;
 USE IEEE.std_logic_1164.all;
 USE IEEE.numeric_std.all;
@@ -328,7 +335,7 @@ generic
     This_macro_vers_dont_change_from_outside: integer range 0 to 16#FF# := 5;
     
     -- change only here! increment by minor changes of this macro
-    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 1
+    This_macro_revi_dont_change_from_outside: integer range 0 to 16#FF# := 2
     );
 port
     (
@@ -351,11 +358,11 @@ port
     
     -- if an extension card is connected to the slave card, than you can map cid_system of this extension
     -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
-     extension_cid_system: in  std_logic_vector(15 DOWNTO 0) := (others => '0');
+    extension_cid_system: in  integer range 0 to 16#FFFF# := 0;
     
     -- if an extension card is connected to the slave card, than you can map cid_group of this extension
     -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
-    extension_cid_group:  in  std_logic_vector(15 DOWNTO 0) := (others => '0');
+    extension_cid_group:  in    integer range 0 to 16#FFFF# := 0;
     
     -- latched data from SCU_Bus for external user functions
     Data_from_SCUB_LA:  out   std_logic_vector(15 DOWNTO 0);
@@ -848,13 +855,13 @@ P_Standard_Reg: process (clk, S_nReset)
           when c_extension_cid_system_adr =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
-              S_Read_Out <= extension_cid_system;
+              S_Read_Out <= std_logic_vector(to_unsigned(extension_cid_system, 16));
               S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
             end if;
           when c_extension_cid_group_adr =>
             S_Standard_Reg_Acc <= '1';
             if SCUB_RDnWR = '1' then
-              S_Read_Out <= extension_cid_group;
+              S_Read_Out <= std_logic_vector(to_unsigned(extension_cid_group, 16));
               S_SCUB_Dtack <= NOT (S_nSync_DS(1) OR S_nSync_DS(0));
             end if;
           when c_clk_in_10khz_adr =>

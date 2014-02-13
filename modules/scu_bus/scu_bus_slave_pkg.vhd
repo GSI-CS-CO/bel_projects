@@ -55,11 +55,11 @@ port
 
     -- if an extension card is connected to the slave card, than you can map cid_system of this extension
     -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
-     extension_cid_system: in  std_logic_vector(15 DOWNTO 0) := (others => '0');
+    extension_cid_system: in  integer range 0 to 16#FFFF# := 0;
     
     -- if an extension card is connected to the slave card, than you can map cid_group of this extension
     -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
-    extension_cid_group:  in  std_logic_vector(15 DOWNTO 0) := (others => '0');
+    extension_cid_group:  in  integer range 0 to 16#FFFF# := 0;
 
     -- latched data from SCU_Bus for external user functions
     Data_from_SCUB_LA:  out   std_logic_vector(15 DOWNTO 0);
