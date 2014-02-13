@@ -127,3 +127,9 @@ addac2::
 
 addac2-clean::
 	$(MAKE) -C syn/gsi_addac2 PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+diob::	
+	$(MAKE) -C syn/scu_diob PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+diob-clean::
+	$(MAKE) -C syn/scu_diob PATH=$(PWD)/toolchain/bin:$(PATH) clean
