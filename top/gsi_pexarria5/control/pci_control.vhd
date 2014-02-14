@@ -324,9 +324,9 @@ begin
   n10 <= '0' when lvds_oen(0)='0' else 'Z'; -- TTLIO1 output enable
   n11 <= '0' when lvds_oen(1)='0' else 'Z'; -- TTLIO2 output enable
   n14 <= '0' when lvds_oen(2)='0' else 'Z'; -- TTLIO3 output enable
-  p9  <= '0' when lvds_oen(0)='1' else '1'; -- TERMEN1 (terminate when input)
-  n9  <= '0' when lvds_oen(1)='1' else '1'; -- TERMEN2 (terminate when input)
-  p10 <= '0' when lvds_oen(2)='1' else '1'; -- TERMEN3 (terminate when input)
+  p9  <= '1' when lvds_oen(0)='1' else '0'; -- TERMEN1 (terminate when input)
+  n9  <= '1' when lvds_oen(1)='1' else '0'; -- TERMEN2 (terminate when input)
+  p10 <= '1' when lvds_oen(2)='1' else '0'; -- TERMEN3 (terminate when input)
   p29 <= '0' when lvds_oen(0)='0' else 'Z'; -- FPLED1/TTLIO1 red
   p26 <= '0' when lvds_oen(1)='0' else 'Z'; -- FPLED3/TTLIO2 red
   p16 <= '0' when lvds_oen(2)='0' else 'Z'; -- FPLED5/TTLIO3 red
