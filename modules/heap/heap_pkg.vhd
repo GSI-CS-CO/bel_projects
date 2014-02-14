@@ -21,7 +21,6 @@ package heap_pkg is
   
    component xwb_heap is
    generic(
-      g_is_ftm       : boolean := false;  
       g_idx_width    : natural := 8;
       g_key_width    : natural := 64;
       g_val_width    : natural := 192  
@@ -29,8 +28,6 @@ package heap_pkg is
    port(
       clk_sys_i   : in  std_logic;
       rst_n_i     : in  std_logic;
-
-      time_sys_i  : std_logic_vector(63 downto 0) := (others => '1');
 
       ctrl_i      : in  t_wishbone_slave_in;
       ctrl_o      : out t_wishbone_slave_out;

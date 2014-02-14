@@ -1,5 +1,30 @@
+--! @file heap_top.vhd
+--! @brief dpram based generic heap implementation
+--! @author Mathias Kreider <m.kreider@gsi.de>
+--!
+--! Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+--!
+--! Accepts 2^g_idx_width -1 elements composed of a g_key_width bits sorting keys
+--! and g_val_width bits of payload. Lowest key will always be the first element
+--! in the heap. Heap is organized as follows:
+--! First element idx 1, last idx 2^g_idx_width -1 
+--! right child of parent idx n is 2*n
+--! right child of parent idx n is 2*n+1
+--------------------------------------------------------------------------------
+--! This library is free software; you can redistribute it and/or
+--! modify it under the terms of the GNU Lesser General Public
+--! License as published by the Free Software Foundation; either
+--! version 3 of the License, or (at your option) any later version.
+--!
+--! This library is distributed in the hope that it will be useful,
+--! but WITHOUT ANY WARRANTY; without even the implied warranty of
+--! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--! Lesser General Public License for more details.
+--!  
+--! You should have received a copy of the GNU Lesser General Public
+--! License along with this library. If not, see <http://www.gnu.org/licenses/>.
+---------------------------------------------------------------------------------
 
--------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -43,6 +68,10 @@ end heap_top;
 
 architecture behavioral of heap_top is
 
+--**************************************************************************--
+-- Constants
+------------------------------------------------------------------------------
+-- io width / fields
    constant c_data_width : natural := g_key_width + g_val_width;
    
    subtype t_val   is std_logic_vector(g_val_width  -1 downto 0);
@@ -50,16 +79,19 @@ architecture behavioral of heap_top is
    subtype t_data  is std_logic_vector(c_data_width -1 downto 0);
    subtype t_skey  is std_logic_vector(c_data_width -1 downto g_val_width);
    subtype t_sval  is t_val;
-   
-   signal s_busy, s_busy_pf, s_busy_wr,s_push, s_pop, s_dbg : std_logic;
-   
+------------------------------------------------------------------------------
+
+--**************************************************************************--
+-- Constants
+------------------------------------------------------------------------------
+   signal s_busy, s_busy_pf, s_busy_wr, 
+          s_push, s_pop, s_dbg         : std_logic;
    signal s_valid,   s_final, s_we     : std_logic;
    signal s_idx,     s_widx,  s_last   : std_logic_vector(g_idx_width-1 downto 0);
    signal s_key,     s_wkey            : std_logic_vector(g_key_width-1 downto 0);
+------------------------------------------------------------------------------
    
 begin
-  
-  
   
    s_key    <= data_i(t_skey'range);
    

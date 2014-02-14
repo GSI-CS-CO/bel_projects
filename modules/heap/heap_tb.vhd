@@ -89,10 +89,9 @@ begin
   
    wb_heap : xwb_heap
    generic map(
-      g_is_ftm       => false,  
       g_idx_width    => c_width,
-      g_key_width    => 64,
-      g_val_width    => 56
+      g_key_width    => c_val_width,
+      g_val_width    => c_key_width
        
    )           
    port map(
@@ -156,8 +155,8 @@ begin
     -- Stimulus process
   stim_WB_proc: process
   variable i, j : natural;
-  variable v_key : std_logic_vector(c_key_width-1 downto 0);
-  variable v_val : std_logic_vector(c_val_width-1 downto 0);
+  variable v_key  : std_logic_vector(c_key_width-1 downto 0);
+  variable v_val  : std_logic_vector(c_val_width-1 downto 0);
   variable v_data : std_logic_vector(c_words_per_entry * t_wishbone_data'length-1 downto 0); 
    begin        
         
@@ -166,7 +165,14 @@ begin
         s_snk_i  <= ('0', '0', x"00000000", x"F", '0', x"00000000"); 
         wait until rst_n = '1';
         wait until rising_edge(clk_sys);
-       
+        wait for clk_period*5; 
+        
+        s_ctrl_i <= ('1', '1', x"00000020", x"F", '1', x"7FFFFFF0"); -- set dst adr
+        wait for clk_period;
+        s_ctrl_i <= ('1', '1', x"00000018", x"F", '1', x"00000003"); -- set cfg enable and fifo mode
+        wait for clk_period;
+        s_ctrl_i <= ('0', '0', x"00000000", x"F", '0', x"00000000"); 
+        wait for clk_period*1;
         
         report "+++++++++++++++ +++++++++++++++ +++++++++++++ Start INSERT" severity warning;
         
@@ -249,11 +255,6 @@ begin
         s_dbg <= '0';
         s_data_in <= std_logic_vector(to_unsigned(i*2+1, t_key'length)) & std_logic_vector(to_unsigned(0, t_val'length));  
         wait until rst_n = '1';
-        
-        
-       
-        
-        report "Fill 6" severity note;
         
         report "+++++++++++++++ +++++++++++++++ +++++++++++++ Start INSERT" severity warning;
         

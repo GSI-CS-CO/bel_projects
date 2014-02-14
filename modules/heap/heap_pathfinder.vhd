@@ -1,5 +1,31 @@
-
--------------------------------------------------------------------------------
+--! @file heap_pathfinder.vhd
+--! @brief submodule of generic heap, calculates queue or dequeue path through the heap
+--! @author Mathias Kreider <m.kreider@gsi.de>
+--!
+--! Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+--!
+--! Calculates queue or dequeue path through the heap and outputs all indices 
+--! which ought to be shifted in order of traversal along the path,
+--! last index on the output is the new position of the moving element
+--! 
+--! Heap is organized as follows:
+--! First element idx 1, last idx 2^g_idx_width -1 
+--! right child of parent idx n is 2*n
+--! right child of parent idx n is 2*n+1
+--------------------------------------------------------------------------------
+--! This library is free software; you can redistribute it and/or
+--! modify it under the terms of the GNU Lesser General Public
+--! License as published by the Free Software Foundation; either
+--! version 3 of the License, or (at your option) any later version.
+--!
+--! This library is distributed in the hope that it will be useful,
+--! but WITHOUT ANY WARRANTY; without even the implied warranty of
+--! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--! Lesser General Public License for more details.
+--!  
+--! You should have received a copy of the GNU Lesser General Public
+--! License along with this library. If not, see <http://www.gnu.org/licenses/>.
+---------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -80,7 +106,9 @@ architecture behavioral of heap_pathfinder is
    
 begin   
    
-
+--**************************************************************************--
+-- RAM instances
+------------------------------------------------------------------------------
 G1: for I in 0 to 1 generate
 
   KEY_DPRAM : generic_dpram
@@ -110,8 +138,14 @@ G1: for I in 0 to 1 generate
       );
       
 end generate;
+------------------------------------------------------------------------------
 
-   -- comparators
+
+--**************************************************************************--
+-- Combinatorial Logic
+------------------------------------------------------------------------------
+
+-- comparators
    s_A_gre_B      <= '1' when ( (s_qa(0) >= s_qa(1)) and f_get_r_child(r_ptr) <= r_new_last)
                 else '0';
    
@@ -128,7 +162,6 @@ end generate;
    
    s_empty        <= '1' when r_last = 0
                 else '0';
-
 
 -- downward search & adresses
    s_ptr_down <= c_first              when r_state = e_HEAP_DOWN_SETUP
@@ -158,12 +191,11 @@ end generate;
    s_highest_level <= '1' when s_ptr_up = c_first and r_state = e_HEAP_UP
              else '0';
    
-   -- indicices valid and final position flags
+-- indicices valid and final position flags
    s_pos_found <= (s_parent_le_children or s_lowest_level) or (s_child_gre_parent or s_highest_level);
    s_valid     <= '1' when r_state = e_HEAP_DOWN or r_state = e_HEAP_UP
              else '0';
                      
-      
 -- default addresses
    s_adr_def(0) <= std_logic_vector(c_first);
    s_adr_def(1) <= std_logic_vector(r_last);
@@ -181,7 +213,12 @@ end generate;
    last_o   <= std_logic_vector(r_last);
    empty_o  <= s_empty;
    full_o   <= s_full;
-   
+------------------------------------------------------------------------------
+
+
+--**************************************************************************--
+-- Registers / Pipeline
+------------------------------------------------------------------------------   
    pipeline: process(clk_sys_i)
       variable v_state  : t_op_state;
    
@@ -203,7 +240,12 @@ end generate;
       end if;
     end if;
     end process pipeline; 
-   
+------------------------------------------------------------------------------
+
+
+--**************************************************************************--
+-- FSM
+------------------------------------------------------------------------------     
    main: process(clk_sys_i)
       variable v_cmd    : std_logic_vector (1 downto 0);
       variable v_state  : t_op_state;
@@ -306,7 +348,9 @@ end generate;
          
       end if;
     end if;
-   end process main;        
+   end process main;
+------------------------------------------------------------------------------
+           
 end behavioral;      
       
       

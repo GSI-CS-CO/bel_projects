@@ -1,5 +1,30 @@
-
--------------------------------------------------------------------------------
+--! @file heap_writer.vhd
+--! @brief submodule of generic heap, copies elements according to the indices povided by heap_pathfinder
+--! @author Mathias Kreider <m.kreider@gsi.de>
+--!
+--! Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+--!
+--! Copies elements to their new position according to the indices povided
+--! by heap_pathfinder queue or dequeue path through the heap
+--! 
+--! Heap is organized as follows:
+--! First element idx 1, last idx 2^g_idx_width -1 
+--! right child of parent idx n is 2*n
+--! right child of parent idx n is 2*n+1
+--------------------------------------------------------------------------------
+--! This library is free software; you can redistribute it and/or
+--! modify it under the terms of the GNU Lesser General Public
+--! License as published by the Free Software Foundation; either
+--! version 3 of the License, or (at your option) any later version.
+--!
+--! This library is distributed in the hope that it will be useful,
+--! but WITHOUT ANY WARRANTY; without even the implied warranty of
+--! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--! Lesser General Public License for more details.
+--!  
+--! You should have received a copy of the GNU Lesser General Public
+--! License along with this library. If not, see <http://www.gnu.org/licenses/>.
+---------------------------------------------------------------------------------
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -154,6 +179,7 @@ begin
             r_state     <= e_IDLE;
             dbg_ok_o    <= '0';
             dbg_err_o   <= '0';
+            out_o       <= '0';
          else
             dbg_ok_o    <= '0';
             dbg_err_o   <= '0';
