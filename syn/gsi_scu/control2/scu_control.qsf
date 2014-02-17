@@ -845,6 +845,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/div_n.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/led_n.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/lemo_io.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/tmr_scu_bus.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/sys_clk_or_local_clk.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_pkg.vhd
@@ -889,7 +890,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gencores_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../top/gsi_scu/control/scu_control.vhd
+set_global_assignment -name VHDL_FILE ../../../top/gsi_scu/control2/scu_control.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd
@@ -1141,7 +1142,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/V
 set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_SharedComps.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_swapper.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/legacy-vme64x-core/hdl/VME_Wb_master_eb.vhd
-set_global_assignment -name SDC_FILE ../../../top/gsi_scu/control/scu_control.sdc
+set_global_assignment -name SDC_FILE ../../../top/gsi_scu/control2/scu_control.sdc
 set_global_assignment -name QIP_FILE ../../../modules/wb_mil_scu/wb_mil_scu.qip
 set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/arria2_pcie.qip
 set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip

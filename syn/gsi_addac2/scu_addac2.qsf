@@ -451,7 +451,6 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_
 set_global_assignment -name VHDL_FILE ../../top/gsi_addac2/addac_sys_clk_local_clk_switch_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../top/gsi_addac2/IO_4x8.vhd
 set_global_assignment -name VHDL_FILE ../../top/gsi_addac2/flash_loader_v01.vhd
-set_global_assignment -name VHDL_FILE ../../top/gsi_addac2/adda_pll.vhd
 set_global_assignment -name VHDL_FILE ../../modules/scu_bus/scu_bus_slave_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../top/gsi_addac2/addac_sys_clk_local_clk_switch.vhd
 set_global_assignment -name VHDL_FILE ../../top/gsi_addac2/addac_local_clk_to_12p5_mhz.vhd
