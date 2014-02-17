@@ -15,6 +15,7 @@ component addac_sys_clk_local_clk_switch is
     sys_clk_i:            in    std_logic;
     nReset:               in    std_logic;
     master_clk_o:         out   std_logic;
+    pll_locked:           out   std_logic;
     sys_clk_is_bad:       out   std_logic;
     sys_clk_is_bad_la:    out   std_logic;
     local_clk_is_bad:     out   std_logic;
