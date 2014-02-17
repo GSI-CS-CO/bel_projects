@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.arria2_lvds_pkg.all;
 use work.arria5_lvds_pkg.all;
 
 entity altera_lvds_ibuf is
@@ -17,6 +18,14 @@ end altera_lvds_ibuf;
 architecture rtl of altera_lvds_ibuf is
 begin
 
+  arria2 : if g_family = "Arria II" generate
+    ibuf : arria2_lvds_ibuf
+      port map(
+        datain(0)   => datain,
+        datain_b(0) => datain_b,
+        dataout(0)  => dataout);
+  end generate;
+  
   arria5 : if g_family = "Arria V" generate
     ibuf : arria5_lvds_ibuf
       port map(
