@@ -11,6 +11,7 @@ entity addac_sys_clk_local_clk_switch is
     sys_clk_i:            in    std_logic;
     nReset:               in    std_logic;
     master_clk_o:         out   std_logic;
+    pll_locked:           out   std_logic;
     sys_clk_is_bad:       out   std_logic;
     sys_clk_is_bad_la:    out   std_logic;
     local_clk_is_bad:     out   std_logic;
@@ -101,6 +102,7 @@ sys_or_local_pll: sys_clk_or_local_clk
     inclk1      => f_local_12p5_mhz,
     c0          => master_clk,
     c1          => signal_tap_clk_250mhz,
+    locked      => pll_locked,
     activeclock => local_clk_is_running,
     clkbad0     => sys_clk_is_bad,
     clkbad1     => local_clk_is_bad
