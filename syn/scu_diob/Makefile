@@ -2,7 +2,7 @@ TARGET		= scu_diob
 DEVICE		= EP2AGX125
 FLASH		  = EPCS128
 RAM_SIZE	= 32768
-PDIOB     = ../../top/scu_diob
+PDIOB     = ../../modules/scu_bus/housekeeping_sw
 PDEV    = $(PDIOB)/dev
 POW     = $(PDEV)/sockitowm
 STUBD       = ../../modules/lm32_stub
@@ -13,7 +13,9 @@ CFLAGS      = -I$(PDIOB)/include -I$(PDIOB)/include/hw -I$(PDIOB)/include/sockit
 
 include ../build.mk
 
-scu_diob.elf: $(PDIOB)/main.o $(PDEV)/mprintf.o $(PDEV)/uart.o $(POW)/owerr.o $(POW)/owlnk.o $(POW)/ownet.o \
+$(TARGET).mif:  housekeeping.mif
+
+housekeeping.elf: $(PDIOB)/main.o $(PDEV)/mprintf.o $(PDEV)/uart.o $(POW)/owerr.o $(POW)/owlnk.o $(POW)/ownet.o \
               $(POW)/owtran.o $(POW)/eep43.o $(POW)/crcutil.o $(POW)/temp42.o $(POW)/temp10.o $(POW)/temp28.o \
               $(POW)/findtype.o
 

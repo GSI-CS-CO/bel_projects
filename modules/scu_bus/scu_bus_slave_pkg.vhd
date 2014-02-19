@@ -1,5 +1,6 @@
-library IEEE;
-use IEEE.STD_LOGIC_1164.all;
+library ieee;
+use ieee.STD_LOGIC_1164.all;
+use ieee.numeric_std.all;
 
 library work;
 
@@ -99,5 +100,30 @@ port
     Powerup_Done:       out   std_logic     -- this memory is set to one if an Powerup is done. Only the SCUB-Master can clear this bit.
     );
 end component;
+
+component housekeeping is
+  generic (
+    Base_addr:  unsigned(15 downto 0));
+  port (
+    clk_sys:            in std_logic;
+    n_rst:              in std_logic;
+    
+    ADR_from_SCUB_LA:   in std_logic_vector(15 downto 0);
+    Data_from_SCUB_LA:  in std_logic_vector(15 downto 0);
+    Ext_Adr_Val:        in std_logic;
+    Ext_Rd_active:      in std_logic;
+    Ext_Wr_active:      in std_logic;
+    user_rd_active:     out std_logic;
+    Data_to_SCUB:       out std_logic_vector(15 downto 0);
+    Dtack_to_SCUB:      out std_logic;
+    
+    owr_pwren_o:        out std_logic_vector(1 downto 0);
+    owr_en_o:           out std_logic_vector(1 downto 0);
+    owr_i:              in std_logic_vector(1 downto 0);
+
+    debug_serial_o:     out std_logic;
+    debug_serial_i:     in  std_logic);
+end component; 
+
 
 end package scu_bus_slave_pkg;
