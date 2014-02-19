@@ -15,6 +15,9 @@ use work.fg_quad_pkg.all;
 use work.addac_sys_clk_local_clk_switch_pkg.all;
 
 entity scu_addac is
+  generic(
+    g_cid_group: integer
+    );
   port (
     -------------------------------------------------------------------------------------------------------------------
     CLK_FPGA: in std_logic;
@@ -394,7 +397,7 @@ constant c_xwb_uart : t_sdb_device := (
       g_slave2_interface_mode => PIPELINED,
       g_slave1_granularity    => BYTE,
       g_slave2_granularity    => WORD,
-      g_init_file             => "scu_addac2.mif") -- software for the lm32
+      g_init_file             => "scu_addac.mif") -- software for the lm32
     port map(
       clk_sys_i => clk_sys,
       rst_n_i   => nPowerup_Res,
@@ -486,8 +489,8 @@ SCU_Slave: SCU_Bus_Slave
     CLK_in_Hz           => clk_sys_in_Hz,
     Firmware_Release    => 0,
     Firmware_Version    => 0,
-    CID_System          => 55,                  -- important: 55 => CSCOHW
-    CID_Group           => 38,                  -- important: 38 => "FG900160_SCU_ADDAC2"
+    CID_System          => 55,                    -- important: 55 => CSCOHW
+    CID_Group           => g_cid_group,           -- must be defined as global parameter in project file xyz.qsf (scu_addac1 = 03, scu_addac2 = 38)
     Intr_Enable         => b"0000_0000_0000_0001")
   port map (
     SCUB_Addr           => A_A,                 -- in,    SCU_Bus: address bus
