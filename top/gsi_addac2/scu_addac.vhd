@@ -13,6 +13,9 @@ use work.fg_quad_pkg.all;
 use work.addac_sys_clk_local_clk_switch_pkg.all;
 
 entity scu_addac is
+  generic(
+    g_cid_group: integer := 38
+    );
   port (
     -------------------------------------------------------------------------------------------------------------------
     CLK_FPGA: in std_logic;
@@ -299,7 +302,6 @@ component flash_loader_v01
     owr_i(1) <= A_OneWire_EEPROM;
     A_OneWire_EEPROM <= owr_pwren_o(1) when (owr_pwren_o(1) = '1' or owr_en_o(1) = '1') else 'Z';
   
-    
 
 Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack
                 or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack or clk_switch_dtack;
@@ -311,8 +313,8 @@ SCU_Slave: SCU_Bus_Slave
     CLK_in_Hz           => clk_sys_in_Hz,
     Firmware_Release    => 0,
     Firmware_Version    => 0,
-    CID_System          => 55,                  -- important: 55 => CSCOHW
-    CID_Group           => 38,                  -- important: 38 => "FG900160_SCU_ADDAC2"
+    CID_System          => 55,                    -- important: 55 => CSCOHW
+    CID_Group           => g_cid_group,           -- must be defined as global parameter in project file xyz.qsf (scu_addac1 = 03, scu_addac2 = 38)
     Intr_Enable         => b"0000_0000_0000_0001")
   port map (
     SCUB_Addr           => A_A,                 -- in,    SCU_Bus: address bus
