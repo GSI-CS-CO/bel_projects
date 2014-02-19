@@ -167,33 +167,21 @@ int main(void) {
   disp_reset();
   disp_put_c('\f');
 
-  init(); 
+  //init(); 
   
   //config of DAC and FG
-  i=0;
   while(slaves[i]) {
-    
-  //  scu_bus_master[(slaves[i] << 16) + DAC2_BASE + DAC_CNTRL] = 0x10; //set FG mode
-  //  scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 1;
-  //  scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ACT] |= 2;
-    
-  //  scu_bus_master[(slaves[i] << 16) + TMR_BASE + TMR_CNTRL] = 0x1; //reset TMR
-  //  scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] = (5 << 13); //set frequency Bit 15..13
-  //  scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_CNTRL] |= (2 << 10); //set step count Bit 12..10
-  //  scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_A] = 0x0;
-    //scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTA] = 0x20;
-    //scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_SHIFTB] = 0x20;
-  //  scu_bus_master[(slaves[i] << 16) + FG_QUAD_BASE + FG_QUAD_BROAD] = 0x4711; // start signal to all fg slaves
     i++;
   }
   
- // disp_reset();	
- // disp_put_str(mytext);
+  // disp_reset();	
+  // disp_put_str(mytext);
   while(1) {
-    if (fg_control) {
-      init();
-      fg_control = 0;
-    }
+    //placeholder for fg software
+    //if (fg_control) {
+    //  init();
+    //  fg_control = 0;
+    //}
   }
 
   return(0);
