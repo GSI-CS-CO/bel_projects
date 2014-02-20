@@ -52,7 +52,30 @@ architecture rtl of heap_tb is
    signal s_src_i : t_wishbone_master_in;
    signal s_src_o : t_wishbone_master_out;
    
+   component ftm_priority_queue is
+generic(
+   g_is_ftm       : boolean := false;  
+   g_idx_width    : natural := 8;
+   g_key_width    : natural := 64;
+   g_val_width    : natural := 192  
+);            
+port(
+   clk_sys_i   : in  std_logic;
+   rst_n_i     : in  std_logic;
+
+   time_sys_i  : std_logic_vector(63 downto 0) := (others => '1');
+
+   ctrl_i      : in  t_wishbone_slave_in;
+   ctrl_o      : out t_wishbone_slave_out;
    
+   snk_i       : in  t_wishbone_slave_in;
+   snk_o       : out t_wishbone_slave_out;
+   
+   src_o       : out t_wishbone_master_out;
+   src_i       : in  t_wishbone_master_in
+  
+);
+end component;
    
    
 
@@ -87,7 +110,7 @@ begin
     );
    
   
-   wb_heap : xwb_heap
+   wb_heap : ftm_priority_queue
    generic map(
       g_idx_width    => c_width,
       g_key_width    => c_val_width,
@@ -105,7 +128,7 @@ begin
       snk_o       => open,
       
       src_o       => s_src_o,
-      src_i       => c_dummy_master_in
+      src_i       => s_src_i
      
    );
  
@@ -126,7 +149,8 @@ begin
    sample :process(clk_sys)
    begin
    if(rising_edge(clk_sys)) then
-   
+      s_src_i.stall <= '0';
+      s_src_i.ack <= s_src_o.stb and s_src_o.cyc and not s_src_i.stall;
    if(s_push = '1') then
     sample_in <= s_data_in;
    end if;

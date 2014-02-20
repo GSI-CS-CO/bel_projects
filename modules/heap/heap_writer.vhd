@@ -102,7 +102,8 @@ architecture behavioral of heap_writer is
    
    signal s_rd_val, s_wr_val, r_dbg_cmp : t_data;
    signal s_we : std_logic;
-   signal r_fin0, r_fin1, r_en0, r_en1 : std_logic; 
+   signal r_fin0, r_fin1, r_fin2, r_en0, r_en1 : std_logic; 
+   signal s_done : std_logic;
   
 begin
   
@@ -141,8 +142,8 @@ begin
                   idx_i    when others;
    
   
-   
-   inpmux1 : with r_fin1 select
+   -- TODO: check if this is solid!
+   inpmux1 : with (r_fin1 and not r_fin0) select
       s_wr_val <= s_rd_val when '0',
                   r_mov when others;
    
@@ -153,6 +154,11 @@ begin
    wr_idx_o <= r_wr_idx1;
    we_o     <= s_we;
    
+   
+   
+   s_done <= r_fin2 and not r_fin1;
+   
+   
    pipeline: process(clk_sys_i)
    begin
       if(rising_edge(clk_sys_i)) then
@@ -161,6 +167,7 @@ begin
       else
          r_fin0      <= final_i;
          r_fin1      <= r_fin0;
+         r_fin2      <= r_fin1;
          
          r_en0       <= en_i;
          r_en1       <= r_en0;
@@ -202,7 +209,7 @@ begin
                                     end if;   
                                  end if;
 
-               when e_COPY    => if(r_fin1 = '1') then
+               when e_COPY    => if(s_done = '1') then
                                     v_state  := e_SET_ADR_1ST;   
                                  end if;              
 
@@ -226,7 +233,7 @@ begin
                                     r_dbg_adr <= std_logic_vector(unsigned(r_dbg_ptr) -1);
                                     
                                     if(r_dbg_ptr = c_first) then 
-                                       report "### HEAP OK ##########################################################" severity note;
+                                       --report "### HEAP OK ##########################################################" severity note;
                                        dbg_ok_o <= '1';
                                        v_state := e_SET_ADR_1ST;
                                     else
