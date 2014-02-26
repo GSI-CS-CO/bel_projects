@@ -65,7 +65,7 @@ port(
    clk_sys_i   : in  std_logic;
    rst_n_i     : in  std_logic;
 
-   time_sys_i  : std_logic_vector(63 downto 0) := (others => '1');
+   time_sys_i  : in  std_logic_vector(63 downto 0) := (others => '1');
 
    ctrl_i      : in  t_wishbone_slave_in;
    ctrl_o      : out t_wishbone_slave_out;
@@ -140,7 +140,7 @@ architecture behavioral of ftm_priority_queue is
    constant c_EBM_ADR_OPA_HI   : unsigned(31 downto 0) := x"00000030";
    constant c_EBM_ADR_CNT      : unsigned(31 downto 0) := x"00000008";
    constant c_EBM_ADR_MSK      : unsigned(31 downto 0) := to_unsigned(0, c_ebm_adr_bits_hi) & unsigned(to_signed(-1, t_wishbone_address'length-c_ebm_adr_bits_hi));
-   constant c_ECA_ADR          : unsigned(31 downto 0) := x"1111BABE";
+   constant c_ECA_ADR          : unsigned(31 downto 0) := x"7FFFFFFF";
 ------------------------------------------------------------------------------
 
 
@@ -375,7 +375,7 @@ end process;
 -- Input Data Interface
 ------------------------------------------------------------------------------
 s_push            <= r_push and r_cfg(c_CFG_BIT_ENA) ;
-r_snk_out.stall   <= r_snk_out_fsm_stall or s_full or s_busy;
+r_snk_out.stall   <= r_snk_out_fsm_stall or s_full or s_busy or (not snk_i.cyc and s_pop); -- stall when buffer full, heap busy or 
 r_snk_out.dat     <= (others => '0');
 s_data_in         <= r_sreg_in(r_sreg_in'left downto r_sreg_in'length-c_entry_width);
    
@@ -533,7 +533,7 @@ begin
                                        r_ebm_ops         <= src_i.dat;
                                        
                                        s_src_o.adr       <= std_logic_vector(c_EBM_ADR_CFG_BASE + c_EBM_ADR_OPA_HI);
-                                       r_command_out     <= std_logic_vector(c_ECA_ADR);
+                                       r_command_out     <= std_logic_vector(r_dst_adr);
                                        
                                        v_state_out       := e_EBM_CFG;
                                  end if;   
@@ -548,7 +548,7 @@ begin
                                     r_pop_req_dec  <= to_unsigned(1, r_pop_req_dec'length);
                                     
                                     
-                                    s_src_o.adr    <= std_logic_vector(c_EBM_ADR_CFG_BASE or c_EBM_DAT_OFFS or c_EBM_RW_OFFS or (c_ECA_ADR and c_EBM_ADR_MSK));
+                                    s_src_o.adr    <= std_logic_vector(c_EBM_ADR_CFG_BASE or c_EBM_DAT_OFFS or c_EBM_RW_OFFS or (unsigned(r_dst_adr) and c_EBM_ADR_MSK));
                                     
                                     v_state_out    := e_SHIFT_OUT;
                                  end if;
