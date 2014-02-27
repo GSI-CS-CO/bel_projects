@@ -26,5 +26,6 @@ modules = {
     "wb_arria_reset",
     "ftm",
     "monster",
+    "heap",
   ]
 }

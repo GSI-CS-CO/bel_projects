@@ -130,6 +130,7 @@ architecture behavioral of ftm_priority_queue is
    constant c_ebm_adr_bits_hi : natural := 10;
    constant c_dat_bit : natural := t_wishbone_address'left - c_ebm_adr_bits_hi +2;
    constant c_rw_bit  : natural := t_wishbone_address'left - c_ebm_adr_bits_hi +1;
+   constant c_msg_n_max : natural := (1500 - 20 - 8 - 4) / ((8 + 2) * 4); -- (max eth length - ip - udp - eb) / (eb rec + eb wr adr + 8 words playload) 
    
      -- ebm if constants for FAIR Timing master
    constant c_EBM_ADR_CFG_BASE : unsigned(31 downto 0) := x"00000000";
@@ -295,6 +296,7 @@ begin
          r_cfg       <= (others => '0');
          r_force <= (others => '0');
          r_ctrl_out  <= ('0', '0', '0', '0', '0', x"00000000");
+         r_msg_max   <= std_logic_vector(to_unsigned(c_msg_n_max, r_msg_max'length));
       else
          -- short names 
          v_dat_i   := ctrl_i.dat;
@@ -678,8 +680,6 @@ s_max_time_reached <= '1' when (r_earliest_key < r_deadline) -- due when top hea
 s_max_msg_reached <= '1' when r_msg_cnt_packet = r_msg_max
                 else '0';
 
-s_max_space_reached <= '0';                                        
-
 s_packet_start_end <= r_filling_packet0 xor r_filling_packet1;
 
 
@@ -695,8 +695,7 @@ begin
             r_send         <= '0';
             r_earliest_key <= a_out_key; 
          else
-            r_send <= r_send  or s_max_space_reached                                      -- when space limit reached
-                              or (s_max_time_reached and r_cfg(c_CFG_BIT_AUTOFLUSH_TIME)) -- when time limit reached
+            r_send <= r_send  or (s_max_time_reached and r_cfg(c_CFG_BIT_AUTOFLUSH_TIME)) -- when time limit reached
                               or (s_max_msg_reached  and r_cfg(c_CFG_BIT_AUTOFLUSH_MSGS)) -- when msg limit reached 
                               or r_force(c_FORCE_BIT_FLUSH);                 -- when pop request without autopop
          end if;

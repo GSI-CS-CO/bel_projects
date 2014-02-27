@@ -864,7 +864,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria5_res
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32_cluster.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gencores_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd
@@ -874,6 +874,8 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_sl
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_wb_if.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_record_gen.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_checksum.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_commit_fifo.vhd
@@ -897,7 +899,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_sl
 set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/ftm/time_clk_cross.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_crc_gen.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_moving_average.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_extend_pulse.vhd
@@ -1077,7 +1079,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_channel.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_gpio_channel.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_offset.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32_cluster.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/time_clk_cross.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_search.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_flags.vhd
