@@ -219,6 +219,7 @@ architecture behavioral of ftm_priority_queue is
    signal r_pop_req_inc       : unsigned(g_idx_width downto 0);
    signal r_pop_req_dec       : unsigned(g_idx_width downto 0);
    signal r_command_out       : t_wishbone_data;
+   signal r_stowed            : std_logic;
    
 -- autopop
    signal r_state_out         : t_state;
@@ -228,7 +229,7 @@ architecture behavioral of ftm_priority_queue is
    signal r_src_ack_cnt,
           r_src_push_cnt      : unsigned(5 downto 0);
    
-   alias  a_out_key           : std_logic_vector(g_key_width -1 downto 0) is s_data_out(s_data_out'left downto s_data_out'length - g_key_width);
+   alias  a_out_key           : std_logic_vector(g_key_width -1 downto 0) is r_reg_out(s_data_out'left downto s_data_out'length - g_key_width);
    signal r_due0,
           r_due1               : std_logic;
    signal r_duetime           : std_logic_vector(63 downto 0);
@@ -412,7 +413,9 @@ begin
          r_push <= '0';
          
          if( r_clr = "1" ) then
-            r_msg_cnt_in   <= (others => '0'); 
+            r_msg_cnt_in   <= (others => '0');
+         elsif( r_push = '1') then
+            r_msg_cnt_in         <= std_logic_vector(unsigned(r_msg_cnt_in) +1);     
          end if;
          
          if(v_en = '1') then
@@ -432,7 +435,7 @@ begin
                      r_sin_cnt            <= (others => '0');
                      r_snk_out_fsm_stall  <= '1';
                      r_push               <= '1';
-                     r_msg_cnt_in         <= std_logic_vector(unsigned(r_msg_cnt_in) +1); 
+                     
                   else
                      r_sin_cnt            <= r_sin_cnt +1;
                   end if;
@@ -513,22 +516,19 @@ begin
          if(s_data_out_rdy = '1') then
             r_reg_out <= s_data_out;
          end if;
-         
+         r_stowed <= '0';
          
          
          
          case r_state_out is
-            when e_IDLE       => if((s_pop and v_rdy)= '1') then
-                                       s_src_o.adr          <= std_logic_vector(c_EBM_ADR_CFG_BASE + c_EBM_ADR_CNT);
-                                       v_state_out          := e_EBM_CHK;
-                                       
-                                 else
-                                    if(r_send = '1') then
+            when e_IDLE       => if(r_send = '1') then
                                       r_filling_packet0 <= '1'; 
                                       s_src_o.adr   <= std_logic_vector(c_EBM_ADR_CFG_BASE + c_EBM_ADR_FLUSH);
                                       r_command_out <= x"00000001";
                                       v_state_out := e_EBM_FLUSH;
-                                    end if;
+                                 elsif((s_pop and v_rdy)= '1') then
+                                       s_src_o.adr          <= std_logic_vector(c_EBM_ADR_CFG_BASE + c_EBM_ADR_CNT);
+                                       v_state_out          := e_EBM_CHK;
                                  end if;
                                           
             when e_EBM_CHK    => if(src_i.ack = '1') then
@@ -562,6 +562,7 @@ begin
                                     if(r_sout_cnt = c_words_per_entry-1) then
                                        r_sout_cnt <= (others => '0');
                                        r_msg_cnt_packet <= std_logic_vector(unsigned(r_msg_cnt_packet) +1);
+                                       r_stowed <= '1';
                                        if(r_send = '1') then
                                          s_src_o.adr   <= std_logic_vector(c_EBM_ADR_CFG_BASE + c_EBM_ADR_FLUSH);
                                          v_state_out := e_EBM_FLUSH;
@@ -632,6 +633,7 @@ begin
          v_pop_req_inc := (others => '0');
       else
          v_pop_req_inc := (others => '0');
+         assert not (s_auto_pop = '1') report "AUTOPOP" severity note;
          if( (r_force(c_FORCE_BIT_POP) or s_auto_pop) = '1') then
             v_pop_req_inc := to_unsigned(1, v_pop_req_inc'length);
          end if;
@@ -662,7 +664,7 @@ begin
          r_due1 <= '0';
       else
          r_duetime <= std_logic_vector( unsigned(time_sys_i) - unsigned(r_t_due) );    
-         r_due0 <= s_due and r_cfg(c_CFG_BIT_AUTOPOP) and not s_empty; 
+         r_due0 <= s_due and r_cfg(c_CFG_BIT_AUTOPOP) and not s_empty and not r_stowed; 
          r_due1 <= r_due0;
       end if; -- rst       
    end if; -- clk edge
@@ -685,6 +687,7 @@ s_packet_start_end <= r_filling_packet0 xor r_filling_packet1;
 
 auto_flush : process(clk_sys_i)
    variable v_rdy : std_logic;
+   variable v_msg_flush, v_time_flush : std_logic;
 begin
    if rising_edge(clk_sys_i) then
       if(rst_n_i = '0' or r_rst = "1") then
@@ -695,8 +698,13 @@ begin
             r_send         <= '0';
             r_earliest_key <= a_out_key; 
          else
-            r_send <= r_send  or (s_max_time_reached and r_cfg(c_CFG_BIT_AUTOFLUSH_TIME)) -- when time limit reached
-                              or (s_max_msg_reached  and r_cfg(c_CFG_BIT_AUTOFLUSH_MSGS)) -- when msg limit reached 
+            v_msg_flush := (s_max_msg_reached  and r_cfg(c_CFG_BIT_AUTOFLUSH_MSGS));
+            v_time_flush := (s_max_time_reached and r_cfg(c_CFG_BIT_AUTOFLUSH_TIME));
+            assert not (v_msg_flush = '1') report "AUTOFLUSH MSG" severity warning;
+            assert not (v_time_flush = '1') report "AUTOFLUSH MSG" severity note;
+            
+            r_send <= r_send  or v_time_flush -- when time limit reached
+                              or v_msg_flush -- when msg limit reached 
                               or r_force(c_FORCE_BIT_FLUSH);                 -- when pop request without autopop
          end if;
       end if; -- rst       
