@@ -6,8 +6,8 @@ PATHSCU   = ../../../top/gsi_scu/control2
 PSCU      = ../../../modules/scu_bus/housekeeping_sw
 PDEV      = $(PSCU)/dev
 W1        = ../../../ip_cores/wrpc-sw
-CFLAGS    = -I$(PSCU)/include -I$(PSCU)/include/hw -I$(PATHSCU)/../ -mmultiply-enabled \
-            -mbarrel-shift-enabled -Os -I$(W1)/include
+CFLAGS    = -I$(PSCU)/include -I$(PATHSCU)/../ -mmultiply-enabled \
+            -mbarrel-shift-enabled -Os -I$(W1)/include -I$(W1)/pp_printf
 
 include ../../build.mk
 

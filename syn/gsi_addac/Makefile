@@ -9,8 +9,8 @@ W1        = ../../ip_cores/wrpc-sw
 STUBD       = ../../modules/lm32_stub
 GENRAMMIF   = ../../ip_cores/wrpc-sw/tools/genrammif
 STUBS       = $(STUBD)/stubs.c $(STUBD)/crt0.S
-CFLAGS      = -I$(PHK)/include -I$(PHK)/include/hw -I$(PADDAC) -mmultiply-enabled \
-              -mbarrel-shift-enabled -Os -I$(W1)/include
+CFLAGS      = -I$(PHK)/include -I$(PADDAC) -mmultiply-enabled \
+              -mbarrel-shift-enabled -Os -I$(W1)/include -I$(W1)/pp_printf
 
 include ../build.mk
 
