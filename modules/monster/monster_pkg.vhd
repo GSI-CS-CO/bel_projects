@@ -42,7 +42,8 @@ package monster_pkg is
       g_en_scubus   : boolean := false;
       g_en_mil      : boolean := false;
       g_en_oled     : boolean := false;
-      g_en_lcd      : boolean := false);
+      g_en_lcd      : boolean := false;
+      g_en_user_ow  : boolean := false);
     port(
       -- Required: core signals
       core_clk_20m_vcxo_i    : in    std_logic;
@@ -180,7 +181,9 @@ package monster_pkg is
       lcd_scp_o              : out   std_logic;
       lcd_lp_o               : out   std_logic;
       lcd_flm_o              : out   std_logic;
-      lcd_in_o               : out   std_logic);
+      lcd_in_o               : out   std_logic;
+      -- g_en_user_ow
+      ow_io                  : inout std_logic_vector(1 downto 0));
   end component;
 
 end package;

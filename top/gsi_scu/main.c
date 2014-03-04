@@ -1,15 +1,29 @@
+#include <stdint.h>
+#include <inttypes.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "display.h"
 #include "irq.h"
 #include "scu_bus.h"
 #include "aux.h"
 #include "mini_sdb.h"
+#include "board.h"
+#include "uart.h"
+#include "w1.h"
 
-//extern unsigned int* _startshared[];
-//extern unsigned int* _endshared[];
-unsigned int status     __attribute__((section ("fg_status")));
-volatile unsigned int fg_control __attribute__((section ("fg_status")));
+extern struct w1_bus wrpc_w1_bus;
+
+#define SHARED __attribute__((section(".shared")))
+uint64_t SHARED board_id = -1;
+uint16_t SHARED board_temp = -1;
+uint64_t SHARED ext_id = -1;
+uint16_t SHARED ext_temp = -1; 
+uint64_t SHARED backplane_id = -1;
+uint16_t SHARED backplane_temp = -1;
+unsigned int SHARED status;
+volatile unsigned int SHARED fg_control;
 
 volatile unsigned int* pSDB_base    = (unsigned int*)0x7FFFFA00;
 volatile unsigned int* display;
@@ -19,9 +33,11 @@ volatile unsigned int* cpu_ID;
 volatile unsigned int* time_sys;
 volatile unsigned int* cores;
 volatile unsigned int* atomic;
+volatile unsigned int BASE_ONEWIRE;
 
 int slaves[SCU_BUS_MAX_SLOTS+1] = {0};
 volatile unsigned short icounter[SCU_BUS_MAX_SLOTS+1];
+
 
 struct pset {
   int a;
@@ -31,6 +47,42 @@ struct pset {
   int c;
   int n;
 };
+
+void usleep(int x)
+{
+  int i;
+  for (i = x * CPU_CLOCK/1000/4; i > 0; i--) asm("# noop");
+}  
+
+void msDelay(int msecs) {
+  usleep(1000 * msecs);
+}
+
+void ReadTempDevices(int bus, uint64_t *id, uint16_t *temp) {
+  struct w1_dev *d;
+  int i;
+  int tvalue;
+  wrpc_w1_bus.detail = bus; // set the portnumber of the onewire controller
+  if (w1_scan_bus(&wrpc_w1_bus) > 0) {
+    for (i = 0; i < W1_MAX_DEVICES; i++) {
+      d = wrpc_w1_bus.devs + i;
+        if (d->rom) {
+          mprintf("bus,device (%d,%d): 0x%08x%08x ", wrpc_w1_bus.detail, i, (int)(d->rom >> 32), (int)d->rom);
+          if ((char)d->rom == 0x42) {
+            *id = d->rom;
+            tvalue = w1_read_temp(d, 0);
+            *temp = (tvalue >> 12); //full precision with 1/16 degree C
+            mprintf("temp: %dC", tvalue >> 16); //show only integer part for debug
+          }
+          mprintf("\n");
+        }  
+    }
+  } else {
+    mprintf("no devices found on bus %d\n", wrpc_w1_bus.detail);
+  }
+  //int x = w1_read_temp_bus(&wrpc_w1_bus, 0);
+}
+
 
 void show_msi()
 {
@@ -78,7 +130,6 @@ void isr1()
   }
   icounter[slave_nr-1]++; 
 }
-
 
 void scan_scu_bus() {
   int i = 0;
@@ -147,6 +198,11 @@ void reset_slaves() {
 }
 
 void init() {
+  
+  uart_init_hw();
+  uart_write_string("\nDebug Port\n");
+  
+  /*
   scan_scu_bus();
   reset_slaves();
   usleep(1000);
@@ -155,6 +211,7 @@ void init() {
   init_irq();
   usleep(1000);
   configure_slaves();
+  */
 } 
 
 int main(void) {
@@ -163,11 +220,12 @@ int main(void) {
   display      = (unsigned int*)find_device(SCU_OLED_DISPLAY);
   irq_slave    = (unsigned int*)find_device(IRQ_MSI_CTRL_IF);
   scu_bus_master = (unsigned short*)find_device(SCU_BUS_MASTER);  
+
   
   disp_reset();
   disp_put_c('\f');
 
-  //init(); 
+  init(); 
   
   //config of DAC and FG
   while(slaves[i]) {
@@ -176,7 +234,21 @@ int main(void) {
   
   // disp_reset();	
   // disp_put_str(mytext);
+  
+  // wait for WR deamon to star 
+  msDelay(5000);
+
   while(1) {
+      
+    mprintf("Onboard Onewire Devices:\n");
+    BASE_ONEWIRE = BASE_OW_WR;
+    wrpc_w1_init();
+    ReadTempDevices(0, &board_id, &board_temp);
+    mprintf("External Onewire Devices:\n");
+    BASE_ONEWIRE = BASE_OW_EXT;
+    wrpc_w1_init();
+    ReadTempDevices(0, &ext_id, &ext_temp);
+    ReadTempDevices(1, &backplane_id, &backplane_temp);
     //placeholder for fg software
     //if (fg_control) {
     //  init();

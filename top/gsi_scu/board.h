@@ -1,11 +1,12 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-#define CPU_CLOCK 125000ULL
+#define CPU_CLOCK 62500000ULL
 
 #define BASE_PIO	    0x100400
-#define BASE_UART  	  0x100700
-#define BASE_ONEWIRE  0x100600
+#define BASE_UART  	  0x800a0500
+#define BASE_OW_WR    0x800a0600
+#define BASE_OW_EXT   0x80000100
 #define BASE_SCU_REG  0x100800
 
 #define UART_BAUDRATE 115200ULL /* not a real UART */
@@ -15,9 +16,6 @@ static inline void delay(int x)
   while(x--) asm volatile("nop");
 }
 
-static inline void usleep(int x)
-{
-  int i;
-  for (i = x * CPU_CLOCK/4; i > 0; i--) asm("# noop");
-}  
+extern void usleep(int x);
+extern volatile unsigned int BASE_ONEWIRE;
 #endif
