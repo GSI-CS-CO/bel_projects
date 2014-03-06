@@ -3,16 +3,17 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.wishbone_pkg.all;
 use work.wb_irq_pkg.all;
-use work.eca_pkg.all;
 use work.ftm_pkg.all;
 
 entity ftm_lm32_cluster is
-generic(g_cores         : natural := 3;
+generic(g_is_ftm        : boolean := false;
+        g_cores         : natural := 1;
         g_ram_per_core  : natural := 32768/4;
-        g_msi_per_core  : natural := 4;
+        g_shared_mem    : natural := 32768/4;
+        g_msi_per_core  : natural := 2;
         g_profile       : string  := "medium_icache_debug";
         g_init_file     : string  := "msidemo.mif";   
-        g_bridge_sdb    : t_sdb_bridge                      -- periphery crossbar         
+        g_world_bridge_sdb    : t_sdb_bridge                      -- superior crossbar         
    );
 port(
 clk_sys_i      : in  std_logic;
@@ -21,14 +22,20 @@ rst_lm32_n_i   : in  std_logic;
 
 tm_tai8ns_i    : in std_logic_vector(63 downto 0);
 
-ext_irq_slave_o    : out t_wishbone_slave_out; 
-ext_irq_slave_i    : in  t_wishbone_slave_in;
-         
-ext_lm32_master_o   : out t_wishbone_master_out; 
-ext_lm32_master_i : in  t_wishbone_master_in;  
+irq_slave_o    : out t_wishbone_slave_out; 
+irq_slave_i    : in  t_wishbone_slave_in;
 
-ext_ram_slave_o    : out t_wishbone_slave_out;                            
-ext_ram_slave_i    : in  t_wishbone_slave_in
+-- optional cluster ctrl slave interface
+cluster_slave_o  : out t_wishbone_slave_out; 
+cluster_slave_i  : in  t_wishbone_slave_in := ('0', '0', x"00000000", x"F", '0', x"00000000");
+
+-- optional FTM ebm queue master interface
+ftm_queue_master_o : out t_wishbone_master_out; 
+ftm_queue_master_i : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000"); 
+         
+master_o   : out t_wishbone_master_out; 
+master_i   : in  t_wishbone_master_in  
+
 
 );
 end ftm_lm32_cluster;
@@ -36,69 +43,24 @@ end ftm_lm32_cluster;
 architecture rtl of ftm_lm32_cluster is 
 
    --**************************************************************************--
-   -- dummy periphery crossbar for testing
+   -- WORLD CROSSBAR. mux CPUs to world IF (not an SDB crossbar!)
    ------------------------------------------------------------------------------
-   --constant c_per_slaves   : natural := 2;
-   --constant c_per_masters  : natural := 2;
-   --constant c_per_layout   : t_sdb_record_array(c_per_slaves-1 downto 0) :=
-   --(0 => f_sdb_embed_device(f_xwb_dpram(4096/4),   x"00000000"),
-   -- 1 => f_sdb_embed_device(f_xwb_dpram(16384/4),   x"00000000"));
+   constant c_world_slaves  : natural := 1;
+   constant c_world_masters : natural := g_cores;
+   signal world_cbar_masterport_in   : t_wishbone_master_in_array  (c_world_slaves-1 downto 0);
+   signal world_cbar_masterport_out  : t_wishbone_master_out_array (c_world_slaves-1 downto 0);
+   signal world_cbar_slaveport_in    : t_wishbone_slave_in_array   (c_world_masters-1 downto 0);
+   signal world_cbar_slaveport_out   : t_wishbone_slave_out_array  (c_world_masters-1 downto 0);
 
-  --constant c_per_sdb_address : t_wishbone_address := x"000F0000";
-  --constant c_per_bridge_sdb  : t_sdb_bridge       :=
-  --  f_xwb_bridge_layout_sdb(true, c_per_layout, c_per_sdb_address);   
-   ------------------------------------------------------------------------------
-
-   --**************************************************************************--
-   -- LM32 CROSSBAR. this is the main crossbar of the FTM, and it's BIG ...
-   ------------------------------------------------------------------------------
-   constant c_local_periphery : t_sdb_record_array(3 downto 0) :=
-   (  0 => f_sdb_embed_device(c_cluster_info_sdb,           x"00000000"),
-      1 => f_sdb_embed_device(c_eca_sdb,                    x"00000000"),
-      2 => f_sdb_embed_device(c_eca_event_sdb,              x"00000000"),
-      3 => f_sdb_embed_bridge(g_bridge_sdb,                 x"00000000"));
-   
-   constant c_lm32_slaves   : natural := g_cores+c_local_periphery'length; -- an irq queue per lm32 + eca + ext interface out
-   constant c_lm32_masters  : natural := g_cores; -- lm32's
-   constant c_lm32_layout   : t_sdb_record_array(c_lm32_slaves-1 downto 0) := 
-   f_sdb_automap_array(f_sdb_join_arrays(f_sdb_create_array(  device            => c_irq_ep_sdb, 
-                        instances         => g_cores,
-                        g_enum_dev_id     => true,
-                        g_dev_id_offs     => 0,
-                        g_enum_dev_name   => true,
-                        g_dev_name_offs   => 0), 
-                        c_local_periphery), x"00000000");
-
-   constant c_lm32_sdb_address   : t_wishbone_address := f_sdb_create_rom_addr(c_lm32_layout);
-   constant c_lm32_bridge_sdb  : t_sdb_bridge       :=
-    f_xwb_bridge_layout_sdb(true, c_lm32_layout, c_lm32_sdb_address);       
-
-   signal lm32_cbar_masterport_in   : t_wishbone_master_in_array  (c_lm32_slaves-1 downto 0);
-   signal lm32_cbar_masterport_out  : t_wishbone_master_out_array (c_lm32_slaves-1 downto 0);
-   signal lm32_cbar_slaveport_in    : t_wishbone_slave_in_array   (c_lm32_masters-1 downto 0);
-   signal lm32_cbar_slaveport_out   : t_wishbone_slave_out_array  (c_lm32_masters-1 downto 0);
-   ------------------------------------------------------------------------------
-   
-   --**************************************************************************--
+      --**************************************************************************--
    -- IRQ CROSSBAR
    ------------------------------------------------------------------------------
-   constant c_ext_msi      : natural := g_msi_per_core -1;  -- lm32 irq sources are not masters of irq crossbar to reduce fan out
-   constant c_irq_slaves   : natural := g_cores*c_ext_msi;  -- all but one irq queue per lm32 are connected here
+   constant c_irq_slaves   : natural := g_cores*g_msi_per_core;  -- all but one irq queue per lm32 are connected here
    constant c_irq_masters  : natural := 2;                  -- eca action queues, interlocks
+   constant c_irq_layout_aux  : t_sdb_record_array(c_irq_slaves-1 downto 0) := f_cluster_irq_sdb(g_cores, g_msi_per_core);
+   constant c_irq_sdb_address : t_wishbone_address := f_sdb_auto_sdb(c_irq_layout_aux);
+   constant c_irq_layout      : t_sdb_record_array(c_irq_slaves-1 downto 0) := f_sdb_auto_layout(c_irq_layout_aux);
    
-   ------------------------------------------------------------------------------
-   -- there is no 'reverse' generic. this is awkward: since the master if(s) of
-   -- the IRQ crossbar are slaves to the outside  world , all this might need 
-   -- to be done in the top file as well so a possible higher level IRQ crossbar
-   -- can insert us as a bridge.   
-   constant c_irq_layout   : t_sdb_record_array(c_irq_slaves-1 downto 0) := 
-   f_sdb_automap_array(f_sdb_create_array(device            => c_irq_ep_sdb, 
-                                          instances         => c_irq_slaves,
-                                          g_enum_dev_name   => true,
-                                          g_dev_name_offs   => (g_cores*c_ext_msi-1)*10),  x"00000000");
-   
-   constant c_irq_sdb_address       : t_wishbone_address := f_sdb_create_rom_addr(c_irq_layout);
-
    signal irq_cbar_masterport_in    : t_wishbone_master_in_array  (c_irq_slaves-1 downto 0);
    signal irq_cbar_masterport_out   : t_wishbone_master_out_array (c_irq_slaves-1 downto 0);
    signal irq_cbar_slaveport_in     : t_wishbone_slave_in_array   (c_irq_masters-1 downto 0);
@@ -107,111 +69,140 @@ architecture rtl of ftm_lm32_cluster is
    --**************************************************************************--
    -- RAM CROSSBAR
    ------------------------------------------------------------------------------
-   constant c_ram_slaves   : natural := g_cores;  
-   constant c_ram_masters  : natural := 1;       
-   
-   ------------------------------------------------------------------------------
-   -- there is no 'reverse' generic. this is awkward: since the master of the  
-   -- RAM crossbar is a slave to the outside  world (top crossbar), all this 
-   -- needs to be done in the top file as well so the top crossbar can insert us
-   -- as a bridge.          
-    constant c_ram_layout   : t_sdb_record_array(c_ram_slaves-1 downto 0) := 
-    f_sdb_automap_array(f_sdb_create_array(device            => f_xwb_dpram(g_ram_per_core), 
-                                           instances         => g_cores,
-                                           g_enum_dev_name   => true,
-                                           g_dev_name_offs   => g_cores*10),  x"00000000");
-   
-    constant c_ram_sdb_address       : t_wishbone_address := f_sdb_create_rom_addr(c_ram_layout);
-   ------------------------------------------------------------------------------
-  
+   constant c_ram_slaves      : natural := g_cores;  
+   constant c_ram_masters     : natural := 1;       
+   constant c_ram_layout_aux  : t_sdb_record_array(c_ram_slaves-1 downto 0) := f_cluster_ram_sdb(c_ram_slaves, g_ram_per_core);
+   constant c_ram_sdb_address : t_wishbone_address := f_sdb_auto_sdb(c_ram_layout_aux);
+   constant c_ram_layout      : t_sdb_record_array(c_ram_slaves-1 downto 0) := f_sdb_auto_layout(c_ram_layout_aux);
    signal ram_cbar_masterport_in    : t_wishbone_master_in_array  (c_ram_slaves-1 downto 0);
    signal ram_cbar_masterport_out   : t_wishbone_master_out_array (c_ram_slaves-1 downto 0);
    signal ram_cbar_slaveport_in     : t_wishbone_slave_in_array   (c_ram_masters-1 downto 0);
    signal ram_cbar_slaveport_out    : t_wishbone_slave_out_array  (c_ram_masters-1 downto 0);
+
+   --**************************************************************************--
+   -- LM32 CROSSBAR. this is the main crossbar of the FTM
+   ------------------------------------------------------------------------------
+   --
+   -- <--- World <--- All LM32s master ports 
+   --
+   -- ---> LM32 <--- All LM32s Cluster ports
+   --       |
+   --       |---> RAM ---> All LM32 RAM ports
+   --       |---> IRQ ---> All LM32 IRQ ports 
+   --             ^
+   -- ---->-------|
    
-   signal irq_rewire_out            : t_wishbone_slave_out_array  (g_msi_per_core*g_cores-1 downto 0);
-   signal irq_rewire_in             : t_wishbone_slave_in_array   (g_msi_per_core*g_cores-1 downto 0);
+   --constant c_clu_slaves    -> pkg  : natural := 7; 
+   constant c_clu_masters     : natural := g_cores+1; -- lm32's + top
+   constant c_cluster_ext_if  : natural := c_clu_masters-1; -- last master is ext if
+   constant c_clu_layout_aux  : t_sdb_record_array(c_clu_slaves-1 downto 0)
+   := f_cluster_main_sdb(c_irq_layout, c_ram_layout, g_shared_mem, g_is_ftm);
+   constant c_clu_sdb_address : t_wishbone_address := f_sdb_auto_sdb(c_clu_layout_aux);
+   constant c_clu_layout      : t_sdb_record_array(c_clu_slaves-1 downto 0)
+   := f_sdb_auto_layout(c_clu_layout_aux);
+   constant c_clu_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_clu_layout, c_clu_sdb_address);       
+   signal clu_cbar_masterport_in   : t_wishbone_master_in_array  (c_clu_slaves-1 downto 0);
+   signal clu_cbar_masterport_out  : t_wishbone_master_out_array (c_clu_slaves-1 downto 0);
+   signal clu_cbar_slaveport_in    : t_wishbone_slave_in_array   (c_clu_masters-1 downto 0);
+   signal clu_cbar_slaveport_out   : t_wishbone_slave_out_array  (c_clu_masters-1 downto 0);
+   ------------------------------------------------------------------------------
+   
+   signal r_rst_lm32_n,
+          s_rst_lm32_n,
+          s_rst_lm32_n_aux           : std_logic_vector(31 downto 0);            
 
-
-  begin
+   begin
 
    G1: for I in 0 to g_cores-1 generate
-      --instantiate an ftm-lm32 (LM32 core with its own DPRAM and 4..n msi queues)
+      --instantiate an ftm-lm32 (LM32 core with its own DPRAM and 2..n msi queues)
       LM32 : ftm_lm32
       generic map(g_cpu_id                         => x"BBEE" & std_logic_vector(to_unsigned(I, 16)),
                   g_size                           => g_ram_per_core,
-                  g_bridge_sdb                     => c_lm32_bridge_sdb,
+                  g_is_in_cluster                  => true,
+                  g_cluster_bridge_sdb             => c_clu_bridge_sdb,
+                  g_world_bridge_sdb               => g_world_bridge_sdb,
                   g_profile                        => g_profile,
                   g_init_file                      => g_init_file,
-                  g_msi_queues                     => g_msi_per_core)
-      port map(clk_sys_i                           => clk_sys_i,
-               rst_n_i                             => rst_n_i,
-               rst_lm32_n_i                        => rst_lm32_n_i,
+                  g_msi_queues                     => g_msi_per_core) -- 1 for inter CPU communication
+      port map(clk_sys_i      => clk_sys_i,
+               rst_n_i        => rst_n_i,
+               rst_lm32_n_i   => s_rst_lm32_n(I),
 
-               tm_tai8ns_i                         => tm_tai8ns_i,            
+               tm_tai8ns_i    => tm_tai8ns_i,            
+               
+               clu_master_o   => clu_cbar_slaveport_in (I), 
+               clu_master_i   => clu_cbar_slaveport_out (I),
                --LM32               
-               lm32_master_o => lm32_cbar_slaveport_in  (I),
-               lm32_master_i => lm32_cbar_slaveport_out (I), 
+               world_master_o => world_cbar_slaveport_in  (I),
+               world_master_i => world_cbar_slaveport_out (I), 
                -- MSI
-               irq_slaves_o  => irq_rewire_out((I+1)*g_msi_per_core-1 downto I*g_msi_per_core),
-               irq_slaves_i  => irq_rewire_in ((I+1)*g_msi_per_core-1 downto I*g_msi_per_core),       
+               irq_slaves_o   => irq_cbar_masterport_in ((I+1)*g_msi_per_core-1 downto I*g_msi_per_core),
+               irq_slaves_i   => irq_cbar_masterport_out ((I+1)*g_msi_per_core-1 downto I*g_msi_per_core),       
                --2nd RAM port               
-               ram_slave_o   => ram_cbar_masterport_in(I),                      
-               ram_slave_i   => ram_cbar_masterport_out(I));
+               ram_slave_o    => ram_cbar_masterport_in(I),                      
+               ram_slave_i    => ram_cbar_masterport_out(I));
    
-               --------------------------------------------------------------------------------------------------------------------------------------   
-               -- Wire MSI Queues (workaround, not possible in instanciation)              
-               -- Prio 0: ECA               
-               irq_cbar_masterport_in(I*c_ext_msi+0)                             <= irq_rewire_out(I*g_msi_per_core+0);
-               irq_rewire_in(I*g_msi_per_core+0)                                 <= irq_cbar_masterport_out(I*c_ext_msi+0);
-               -- Prio 1: Other LM32s 
-               lm32_cbar_masterport_in(I)                                        <= irq_rewire_out(I*g_msi_per_core+1);
-               irq_rewire_in(I*g_msi_per_core+1)                                 <= lm32_cbar_masterport_out(I); 
-               -- Prio 2: Interlocks 
-               irq_cbar_masterport_in(I*c_ext_msi+1)                             <= irq_rewire_out(I*g_msi_per_core+2);
-               irq_rewire_in(I*g_msi_per_core+2)                                 <= irq_cbar_masterport_out(I*c_ext_msi+1);
-               -- Prio 3-n: Others 
-               irq_cbar_masterport_in((I+1)*c_ext_msi-1 downto I*c_ext_msi+2)    <= irq_rewire_out((I+1)*g_msi_per_core-1 downto I*g_msi_per_core+3);
-               irq_rewire_in((I+1)*g_msi_per_core-1 downto I*g_msi_per_core+3)   <= irq_cbar_masterport_out((I+1)*c_ext_msi-1 downto I*c_ext_msi+2);
                -------------------------------------------------------------------------------------------------------------------------------------- 
          
       end generate G1;  
+
+-- must be transparent, NOT SDB
+  WORLD_CON : xwb_crossbar 
+  generic map(
+    g_num_masters => c_world_masters,
+    g_num_slaves  => c_world_slaves,
+    g_registered  => true,
+    -- Address of the slaves connected
+    g_address     => (0 => x"00000000"),
+    g_mask        => (0 => x"FFFFFFFF"))
+  port map(
+     clk_sys_i     => clk_sys_i,
+     rst_n_i       => rst_n_i,
+        -- Master connections (INTERCON is a slave)
+     slave_i       => world_cbar_slaveport_in,
+     slave_o       => world_cbar_slaveport_out,
+     -- Slave connections (INTERCON is a master)
+     master_i      => world_cbar_masterport_in,
+     master_o      => world_cbar_masterport_out);
+
+   -- 1st slave is external world IF
+   world_cbar_masterport_in(0) <= master_i; 
+   master_o <= world_cbar_masterport_out(0);  
   
-   LM32_CON : xwb_sdb_crossbar
+
+   
+   CLUSTER_CON : xwb_sdb_crossbar
    generic map(
-     g_num_masters => c_lm32_masters,
-     g_num_slaves  => c_lm32_slaves,
+     g_num_masters => c_clu_masters,
+     g_num_slaves  => c_clu_slaves,
      g_registered  => true,
      g_wraparound  => true,
-     g_layout      => c_lm32_layout,
-     g_sdb_addr    => c_lm32_sdb_address)
+     g_layout      => c_clu_layout,
+     g_sdb_addr    => c_clu_sdb_address)
    port map(
      clk_sys_i     => clk_sys_i,
      rst_n_i       => rst_n_i,
      -- Master connections (INTERCON is a slave)
-     slave_i       => lm32_cbar_slaveport_in,
-     slave_o       => lm32_cbar_slaveport_out,
+     slave_i       => clu_cbar_slaveport_in,
+     slave_o       => clu_cbar_slaveport_out,
      -- Slave connections (INTERCON is a master)
-     master_i      => lm32_cbar_masterport_in,
-     master_o      => lm32_cbar_masterport_out);
+     master_i      => clu_cbar_masterport_in,
+     master_o      => clu_cbar_masterport_out);
 
-   -- last slave on the lm32 crossbar is the connection to the periphery crossbar
-   ext_lm32_master_o                         <= lm32_cbar_masterport_out(c_lm32_slaves-1);
-   lm32_cbar_masterport_in(c_lm32_slaves-1)  <= ext_lm32_master_i;  
+   -- <--- World <--- All LM32s master ports 
+   --
+   -- ---> CLU <--- All LM32s Cluster ports
+   --       |
+   --       |---> RAM ---> All LM32 RAM ports
+   --       |---> IRQ ---> All LM32 IRQ ports 
+   --             ^
+   -- ---->-------|
 
-   --------------------------------------------------------------------------------
--- Slave - CLUSTER INFO ROM 
---------------------------------------------------------------------------------  
-   cluster_info_rom : process(clk_sys_i)
-   begin
-      if rising_edge(clk_sys_i) then
-         -- This is an easy solution for a device that never stalls:
-         lm32_cbar_masterport_in(g_cores).ack <= lm32_cbar_masterport_out(g_cores).cyc and lm32_cbar_masterport_out(g_cores).stb;
-         lm32_cbar_masterport_in(g_cores).dat <= std_logic_vector(to_unsigned(g_cores,32));
-      end if;
-   end process;   
-   
-   
+   -- the first n masters are the lm32 cores. c_cluster_slave_if is the outside world and master to LM32_CON
+   cluster_slave_o                           <= clu_cbar_slaveport_out(c_cluster_ext_if);
+   clu_cbar_slaveport_in(c_cluster_ext_if)   <= cluster_slave_i;  
+
+
    IRQ_CON : xwb_sdb_crossbar
    generic map(
      g_num_masters => c_irq_masters,
@@ -230,8 +221,13 @@ architecture rtl of ftm_lm32_cluster is
      master_i      => irq_cbar_masterport_in,
      master_o      => irq_cbar_masterport_out);
 
-   ext_irq_slave_o            <= irq_cbar_slaveport_out(0);
-   irq_cbar_slaveport_in(0)   <= ext_irq_slave_i;
+   -- 1st master is cluster crossbar
+   clu_cbar_masterport_in(c_clu_irq_bridge)  <= irq_cbar_slaveport_out(0);                           
+   irq_cbar_slaveport_in(0)                  <= clu_cbar_masterport_out(c_clu_irq_bridge);
+
+   -- 2nd master is external irq slave if
+   irq_slave_o                               <= irq_cbar_slaveport_out(1);
+   irq_cbar_slaveport_in(1)                  <= irq_slave_i;
 
    RAM_CON : xwb_sdb_crossbar
    generic map(
@@ -251,7 +247,114 @@ architecture rtl of ftm_lm32_cluster is
      master_i      => ram_cbar_masterport_in,
      master_o      => ram_cbar_masterport_out);
 
-     ext_ram_slave_o          <= ram_cbar_slaveport_out(0);                           
-     ram_cbar_slaveport_in(0) <= ext_ram_slave_i; 
+   -- 1st master is cluster crossbar
+   clu_cbar_masterport_in(c_clu_ram_bridge)  <= ram_cbar_slaveport_out(0);                           
+   ram_cbar_slaveport_in(0)                  <= clu_cbar_masterport_out(c_clu_ram_bridge);  
+
+--------------------------------------------------------------------------------
+-- Slave - CLUSTER INFO ROM 
+--------------------------------------------------------------------------------  
+   cluster_info_rom : process(clk_sys_i)
+   variable vIdx : natural;
+   begin
+      vIdx := c_clu_cluster_info;
+      if rising_edge(clk_sys_i) then
+         -- This is an easy solution for a device that never stalls:
+         clu_cbar_masterport_in(vIdx).ack <= clu_cbar_masterport_out(vIdx).cyc and clu_cbar_masterport_out(vIdx).stb;
+         clu_cbar_masterport_in(vIdx).dat <= std_logic_vector(to_unsigned(g_cores,32));
+      end if;
+   end process;
+   
+  clu_cbar_masterport_in(c_clu_cluster_info).stall <= '0';
+  clu_cbar_masterport_in(c_clu_cluster_info).err   <= '0';
+   
+   --------------------------------------------------------------------------------
+-- SHARED MEMORY
+--------------------------------------------------------------------------------   
+   SHARED_MEM : xwb_dpram
+   generic map(
+      g_size                  => g_shared_mem,
+      g_init_file             => "",
+      g_must_have_init_file   => false,
+      g_slave1_interface_mode => PIPELINED,
+      g_slave2_interface_mode => PIPELINED,
+      g_slave1_granularity    => BYTE,
+      g_slave2_granularity    => BYTE)  
+   port map(
+      clk_sys_i   => clk_sys_i,
+      rst_n_i     => rst_n_i,
+      slave1_i    => clu_cbar_masterport_out(c_clu_shared_mem),
+      slave1_o    => clu_cbar_masterport_in(c_clu_shared_mem),
+      slave2_i    => c_dummy_slave_in,
+      slave2_o    => open);
+
+
+--******************************************************************************
+-- FTM Prio Queue
+--------------------------------------------------------------------------------
+   
+   prio_queue : ftm_priority_queue
+   generic map(
+      g_idx_width    => 7,
+      g_key_width    => 64, 
+      g_val_width    => 192 -- 2**7 -> 128 entries, 8 * 32b per entry (64b key, 192b value)
+   )           
+   port map(
+      clk_sys_i   => clk_sys_i,
+      rst_n_i     => rst_n_i,
+
+      time_sys_i  => tm_tai8ns_i,
+
+      ctrl_i      => clu_cbar_masterport_out(c_clu_ebm_queue_c),
+      ctrl_o      => clu_cbar_masterport_in(c_clu_ebm_queue_c),
+      
+      snk_i       => clu_cbar_masterport_out(c_clu_ebm_queue_d),
+      snk_o       => clu_cbar_masterport_in(c_clu_ebm_queue_d),
+      
+      src_o       => ftm_queue_master_o,
+      src_i       => ftm_queue_master_i
+     
+   );
+    
+--******************************************************************************
+-- makeshift ftm load manager / rst control
+--------------------------------------------------------------------------------
+   rst_ctrl : process(clk_sys_i)
+   variable vIdx : natural; 
+   begin
+    vIdx := c_clu_load_mgr;
+    
+    if rising_edge(clk_sys_i) then
+      if(rst_n_i = '0') then
+        r_rst_lm32_n <= (others => '1');
+      else
+        -- rom is an easy solution for a device that never stalls:
+        clu_cbar_masterport_in(vIdx).dat <= (others => '0');      
+        clu_cbar_masterport_in(vIdx).ack <= clu_cbar_masterport_out(vIdx).cyc and clu_cbar_masterport_out(vIdx).stb;
+         
+        if(clu_cbar_masterport_out(vIdx).cyc = '1' and clu_cbar_masterport_out(vIdx).stb = '1') then         
+           case(to_integer(unsigned(clu_cbar_masterport_out(vIdx).adr(7 downto 2)) & "00")) is
+              when 0 => clu_cbar_masterport_in(vIdx).dat <= r_rst_lm32_n;
+                        if(clu_cbar_masterport_out(vIdx).we = '1') then
+                          r_rst_lm32_n <= clu_cbar_masterport_out(vIdx).dat;
+                        end if; 
+                           
+              when others => null;
+           end case;
+        end if;
+      end if;
+    end if;
+  end process;   
+
+  clu_cbar_masterport_in(c_clu_load_mgr).stall <= '0';
+  clu_cbar_masterport_in(c_clu_load_mgr).err   <= '0';   
+  
+  s_rst_lm32_n_aux <= (others => rst_lm32_n_i);
+  s_rst_lm32_n <= r_rst_lm32_n and s_rst_lm32_n_aux;
+   
+   
+
+
+      
  
   end architecture rtl;
