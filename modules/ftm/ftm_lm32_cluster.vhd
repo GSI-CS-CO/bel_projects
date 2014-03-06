@@ -92,7 +92,7 @@ architecture rtl of ftm_lm32_cluster is
    --             ^
    -- ---->-------|
    
-   constant c_clu_slaves      : natural := 6; 
+   --constant c_clu_slaves    -> pkg  : natural := 7; 
    constant c_clu_masters     : natural := g_cores+1; -- lm32's + top
    constant c_cluster_ext_if  : natural := c_clu_masters-1; -- last master is ext if
    constant c_clu_layout_aux  : t_sdb_record_array(c_clu_slaves-1 downto 0)
@@ -200,7 +200,7 @@ architecture rtl of ftm_lm32_cluster is
 
    -- the first n masters are the lm32 cores. c_cluster_slave_if is the outside world and master to LM32_CON
    cluster_slave_o                           <= clu_cbar_slaveport_out(c_cluster_ext_if);
-   clu_cbar_slaveport_in(c_cluster_ext_if) <= cluster_slave_i;  
+   clu_cbar_slaveport_in(c_cluster_ext_if)   <= cluster_slave_i;  
 
 
    IRQ_CON : xwb_sdb_crossbar
@@ -290,11 +290,32 @@ architecture rtl of ftm_lm32_cluster is
 
 
 --******************************************************************************
--- TODO: EBM Queue
+-- FTM Prio Queue
 --------------------------------------------------------------------------------
-
- clu_cbar_masterport_in(c_clu_ebm_queue) <= c_dummy_slave_out;
    
+   prio_queue : ftm_priority_queue
+   generic map(
+      g_idx_width    => 7,
+      g_key_width    => 64, 
+      g_val_width    => 192 -- 2**7 -> 128 entries, 8 * 32b per entry (64b key, 192b value)
+   )           
+   port map(
+      clk_sys_i   => clk_sys_i,
+      rst_n_i     => rst_n_i,
+
+      time_sys_i  => tm_tai8ns_i,
+
+      ctrl_i      => clu_cbar_masterport_out(c_clu_ebm_queue_c),
+      ctrl_o      => clu_cbar_masterport_in(c_clu_ebm_queue_c),
+      
+      snk_i       => clu_cbar_masterport_out(c_clu_ebm_queue_d),
+      snk_o       => clu_cbar_masterport_in(c_clu_ebm_queue_d),
+      
+      src_o       => ftm_queue_master_o,
+      src_i       => ftm_queue_master_i
+     
+   );
+    
 --******************************************************************************
 -- makeshift ftm load manager / rst control
 --------------------------------------------------------------------------------
@@ -308,7 +329,7 @@ architecture rtl of ftm_lm32_cluster is
         r_rst_lm32_n <= (others => '1');
       else
         -- rom is an easy solution for a device that never stalls:
-            clu_cbar_masterport_in(vIdx).dat <= (others => '0');      
+        clu_cbar_masterport_in(vIdx).dat <= (others => '0');      
         clu_cbar_masterport_in(vIdx).ack <= clu_cbar_masterport_out(vIdx).cyc and clu_cbar_masterport_out(vIdx).stb;
          
         if(clu_cbar_masterport_out(vIdx).cyc = '1' and clu_cbar_masterport_out(vIdx).stb = '1') then         

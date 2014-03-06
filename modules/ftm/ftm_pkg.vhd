@@ -12,12 +12,16 @@ package ftm_pkg is
 ------------------------------------------------------------------------------
 -- Components declaration
 -------------------------------------------------------------------------------
+  
+   constant c_clu_slaves   : natural := 7; 
+   
    constant c_clu_cluster_info  : natural := 0;
    constant c_clu_shared_mem    : natural := 1;
    constant c_clu_load_mgr      : natural := 2;
-   constant c_clu_ebm_queue     : natural := 3;
-   constant c_clu_irq_bridge    : natural := 4;
-   constant c_clu_ram_bridge    : natural := 5;
+   constant c_clu_ebm_queue_c   : natural := 3;
+   constant c_clu_ebm_queue_d   : natural := 4;
+   constant c_clu_irq_bridge    : natural := 5;
+   constant c_clu_ram_bridge    : natural := 6;
 
    -- generator functions for ftm crossbars. workaround for no-reverse-generic in VHDL,
    -- use this when placing the ftm bridges outside
@@ -132,6 +136,32 @@ package ftm_pkg is
    );
    end component;
    
+   component ftm_priority_queue is
+   generic(
+      g_is_ftm       : boolean := false;  
+      g_idx_width    : natural := 8;
+      g_key_width    : natural := 64;
+      g_val_width    : natural := 192  
+   );            
+   port(
+      clk_sys_i   : in  std_logic;
+      rst_n_i     : in  std_logic;
+
+      time_sys_i  : in  std_logic_vector(63 downto 0) := (others => '1');
+
+      ctrl_i      : in  t_wishbone_slave_in;
+      ctrl_o      : out t_wishbone_slave_out;
+      
+      snk_i       : in  t_wishbone_slave_in;
+      snk_o       : out t_wishbone_slave_out;
+      
+      src_o       : out t_wishbone_master_out;
+      src_i       : in  t_wishbone_master_in
+     
+   );
+   end component;
+   
+   
    constant c_atomic_sdb : t_sdb_device := (
     abi_class     => x"0000", -- undocumented device
     abi_ver_major => x"01",
@@ -180,7 +210,7 @@ package ftm_pkg is
     date          => x"20131009",
     name          => "CPU_INFO_ROM       ")));
 
-   constant c_ebm_queue_sdb : t_sdb_device := (
+   constant c_ebm_queue_data_sdb : t_sdb_device := (
    abi_class     => x"0000", -- undocumented device
    abi_ver_major => x"01",
    abi_ver_minor => x"01",
@@ -191,10 +221,26 @@ package ftm_pkg is
    addr_last     => x"0000000000000003",
    product => (
    vendor_id     => x"0000000000000651", -- GSI
+   device_id     => x"10040101",
+   version       => x"00000001",
+   date          => x"20131009",
+   name          => "EBM_MSG_QUEUE_DATA ")));
+   
+   constant c_ebm_queue_ctrl_sdb : t_sdb_device := (
+   abi_class     => x"0000", -- undocumented device
+   abi_ver_major => x"01",
+   abi_ver_minor => x"01",
+   wbd_endian    => c_sdb_endian_big,
+   wbd_width     => x"7", -- 8/16/32-bit port granularity
+   sdb_component => (
+   addr_first    => x"0000000000000000",
+   addr_last     => x"000000000000007f",
+   product => (
+   vendor_id     => x"0000000000000651", -- GSI
    device_id     => x"10040100",
    version       => x"00000001",
    date          => x"20131009",
-   name          => "EBM_MSG_QUEUE      "))); 
+   name          => "EBM_MSG_QUEUE_CTRL "))); 
 
    constant c_load_mgr_sdb : t_sdb_device := (
    abi_class     => x"0000", -- undocumented device
@@ -248,11 +294,12 @@ end ftm_pkg;
    
    function f_cluster_main_sdb(irq_layout : t_sdb_record_array; ram_layout : t_sdb_record_array; shared_ramsize : natural; is_ftm : boolean )
    return t_sdb_record_array is
-      variable v_clu_layout :  t_sdb_record_array(5 downto 0); 
+      variable v_clu_layout :  t_sdb_record_array(c_clu_slaves-1 downto 0); 
    begin
       v_clu_layout :=   (  c_clu_cluster_info => f_sdb_auto_device(c_cluster_info_sdb,            true),
                            c_clu_load_mgr     => f_sdb_auto_device(c_load_mgr_sdb,                true), 
-                           c_clu_ebm_queue    => f_sdb_auto_device(c_ebm_queue_sdb,               is_ftm),
+                           c_clu_ebm_queue_c  => f_sdb_auto_device(c_ebm_queue_ctrl_sdb,          is_ftm),
+                           c_clu_ebm_queue_d  => f_sdb_auto_device(c_ebm_queue_data_sdb,          is_ftm),
                            c_clu_shared_mem   => f_sdb_auto_device(f_xwb_dpram(shared_ramsize),  (shared_ramsize > 0)),
                            c_clu_irq_bridge   => f_sdb_auto_bridge(f_xwb_bridge_layout_sdb(true, f_sdb_auto_layout(irq_layout), f_sdb_auto_sdb(irq_layout)), true), 
                            c_clu_ram_bridge   => f_sdb_auto_bridge(f_xwb_bridge_layout_sdb(true, f_sdb_auto_layout(ram_layout), f_sdb_auto_sdb(ram_layout)), true) 
@@ -292,7 +339,7 @@ end ftm_pkg;
                                    shared_ram   : natural;
                                    is_ftm       : boolean)
    return t_sdb_bridge is
-      variable v_main : t_sdb_record_array(5 downto 0);      
+      variable v_main : t_sdb_record_array(c_clu_slaves-1 downto 0);      
    begin
       v_main := f_cluster_main_sdb(f_cluster_irq_sdb(cores, msiPerCore), f_cluster_ram_sdb(cores, ramPerCore), shared_ram, is_ftm);
       return   f_xwb_bridge_layout_sdb(
