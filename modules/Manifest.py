@@ -27,5 +27,6 @@ modules = {
     "ftm",
     "lvds",
     "monster",
+    "butis_t0",
   ]
 }
