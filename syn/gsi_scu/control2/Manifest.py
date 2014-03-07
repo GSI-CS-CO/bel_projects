@@ -13,6 +13,6 @@ quartus_preflow = "scu_control.tcl"
 
 modules = {
   "local" : [ 
-    "../../../top/gsi_scu/control", 
+    "../../../top/gsi_scu/control2", 
   ]
 }
