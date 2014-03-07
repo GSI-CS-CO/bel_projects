@@ -28,5 +28,6 @@ modules = {
     "lvds",
     "monster",
     "heap",
+    "butis_t0",
   ]
 }

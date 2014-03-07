@@ -60,6 +60,7 @@ package monster_pkg is
       -- Optional clock outputs
       core_clk_wr_ref_o      : out   std_logic;
       core_clk_butis_o       : out   std_logic;
+      core_clk_butis_t0_o    : out   std_logic;
       core_rstn_wr_ref_o     : out   std_logic;
       core_rstn_butis_o      : out   std_logic;
       core_debug_o           : out   std_logic_vector(15 downto 0);

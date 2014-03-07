@@ -50,6 +50,7 @@ use work.wb_arria_reset_pkg.all;
 use work.xvme64x_pack.all;
 use work.VME_Buffer_pack.all;
 use work.wb_mil_scu_pkg.all;
+use work.wr_serialtimestamp_pkg.all;
 
 
 entity monster is
@@ -90,6 +91,7 @@ entity monster is
     -- Optional clock outputs
     core_clk_wr_ref_o      : out   std_logic;
     core_clk_butis_o       : out   std_logic;
+    core_clk_butis_t0_o    : out   std_logic;
     core_rstn_wr_ref_o     : out   std_logic;
     core_rstn_butis_o      : out   std_logic;
     core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
@@ -415,6 +417,10 @@ architecture rtl of monster is
   signal clk_dmtd0        : std_logic;
   signal clk_dmtd         : std_logic;
   
+  -- BuTiS T0 clocks
+  signal clk_butis_t0     : std_logic; -- 100KHz
+  signal clk_butis_t0_ts  : std_logic; -- 100KHz + timestamp
+  
   -- END OF Clock networks
   ----------------------------------------------------------------------------------
   
@@ -691,8 +697,22 @@ begin
       pps_i     => pps,
       phase_o   => phase_butis);
   
+  butis_t0 : BuTiS_T0_generator
+    port map(
+      wr_clock_i               => clk_ref,
+      wr_rst_n_i               => rstn_ref,
+      wr_PPSpulse_i            => pps,
+      BuTis_rst_n_i            => rstn_butis,
+      timestamp_i(63 downto 3) => ref_tai8ns(60 downto 0),
+      timestamp_i( 2 downto 0) => "000",
+      BuTis_C2_i               => clk_butis,
+      BuTis_T0_o               => clk_butis_t0,
+      BuTis_T0_timestamp_o     => clk_butis_t0_ts,
+      error_o                  => open);
+  
   core_clk_wr_ref_o  <= clk_ref;
   core_clk_butis_o   <= clk_butis;
+  core_clk_butis_t0_o<= clk_butis_t0_ts;
   core_rstn_wr_ref_o <= rstn_ref;
   core_rstn_butis_o  <= rstn_butis;
   
