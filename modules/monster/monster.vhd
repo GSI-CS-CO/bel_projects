@@ -75,6 +75,7 @@ entity monster is
     g_en_oled              : boolean;
     g_en_lcd               : boolean;
     g_lm32_cores           : natural := 1;
+    g_lm32_MSIs            : natural := 1;
     g_lm32_ramsizes        : natural := 131072/4;
     g_lm32_shared_ramsize  : natural := 16384/4; -- will only be used if g_lm32_cores > 1
     g_lm32_are_ftm         : boolean := false 
@@ -509,6 +510,18 @@ architecture rtl of monster is
   signal gpio    : std_logic_vector(15 downto 0);
   signal lvds_o  : t_lvds_byte_array(11 downto 0);
   signal lvds_i  : t_lvds_byte_array(15 downto 0);
+  
+  signal s_triggers : t_trigger_array(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto 0);
+  
+  function f_lvds_array_to_trigger_array(lvds : t_lvds_byte_array) return t_trigger_array is
+   variable i : natural := 0;
+   variable result : t_trigger_array(lvds'left downto 0);
+   begin
+      for i in 0 to lvds'left loop
+         result(i) := lvds(i);
+      end loop;
+      return result;
+   end f_lvds_array_to_trigger_array; 
   
 begin
 
@@ -1181,22 +1194,29 @@ begin
   
 
   
+  tlu_gpio : if (g_gpio_in + g_gpio_inout > 0) generate
+   s_triggers(g_gpio_in + g_gpio_inout -1 downto 0) <= f_gpio_to_trigger_array(gpio_i);
+  end generate;
+   
+  tlu_lvds : if (g_lvds_inout + g_lvds_in > 0) generate
+   s_triggers(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto g_gpio_in + g_gpio_inout) <= f_lvds_array_to_trigger_array(lvds_i(f_sub1(g_lvds_inout+g_lvds_in) downto 0));
+  end generate;
+  
   tlu : wr_tlu
     generic map(
-      g_num_triggers => g_gpio_in + g_lvds_inout + g_lvds_in,
-      g_fifo_depth   => g_tlu_fifo_depth)
+      g_num_triggers => g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in,
+      g_fifo_depth   => g_tlu_fifo_size)
     port map(
-      ref_clk_i       => clk_ref,
-      ref_rstn_i      => rstn_ref,
-      sys_clk_i       => clk_sys,
-      sys_rstn_i      => rstn_sys,
-      triggers_i(f_sub1(g_gpio_in) downto 0)                       => lgpio,
-      triggers_i(f_sub1(g_lvds_inout+g_lvds_in) downto g_gpio_in)  => lvds_i,
-      tm_tai_cyc_i    => ref_tai8ns,
-      ctrl_slave_i    => top_cbar_master_o(c_tops_tlu),
-      ctrl_slave_o    => top_cbar_master_i(c_tops_tlu),
-      irq_master_o    => irq_cbar_slave_i(c_irqm_tlu),
-      irq_master_i    => irq_cbar_slave_o(c_irqm_tlu)
+      clk_ref_i      => clk_ref,
+      rst_ref_n_i    => rstn_ref,
+      clk_sys_i      => clk_sys,
+      rst_sys_n_i    => rstn_sys,
+      triggers_i     => s_triggers,
+      tm_tai_cyc_i   => ref_tai8ns,
+      ctrl_slave_i   => top_cbar_master_o(c_tops_tlu),
+      ctrl_slave_o   => top_cbar_master_i(c_tops_tlu),
+      irq_master_o   => irq_cbar_slave_i(c_irqm_tlu),
+      irq_master_i   => irq_cbar_slave_o(c_irqm_tlu)
       );
   
   eca : wr_eca
