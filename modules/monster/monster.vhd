@@ -264,10 +264,13 @@ architecture rtl of monster is
   constant c_irqs_pcie   : natural := 1;
   constant c_irqs_vme    : natural := 2;
   
+  constant c_lm32_irq_bridge_sdb : t_sdb_bridge := 
+    f_lm32_irq_bridge_sdb(g_lm32_cores, g_lm32_MSIs);
+  
   constant c_irq_layout_req : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
-   (c_irqs_lm32 => f_sdb_auto_device(c_irq_ep_sdb,   true),
-    c_irqs_pcie => f_sdb_auto_device(c_msi_pcie_sdb, g_en_pcie),
-    c_irqs_vme  => f_sdb_auto_device(c_vme_msi_sdb,  g_en_vme));
+   (c_irqs_lm32 => f_sdb_auto_bridge(c_lm32_irq_bridge_sdb, true),
+    c_irqs_pcie => f_sdb_auto_device(c_msi_pcie_sdb,        g_en_pcie),
+    c_irqs_vme  => f_sdb_auto_device(c_vme_msi_sdb,        g_en_vme));
   
   constant c_irq_layout      : t_sdb_record_array(c_irq_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_irq_layout_req);
@@ -285,7 +288,6 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   -- GSI Top Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
-  
   
   constant c_top_masters    : natural := 6;
   constant c_topm_ebs       : natural := 0;
@@ -318,24 +320,18 @@ architecture rtl of monster is
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   
-  --************************************************************************************************--
-  -- LM32 Config and Bridge description. This is going to be a bit of work
-  ----------------------------------------------------------------------------------------------------
-
-  
   -- LM32 cluster (IRQs, RAM, Periphery)
-  constant c_lm32_main_bridge_sdb : t_sdb_bridge := f_lm32_main_bridge_sdb(g_lm32_cores,
-																						         g_lm32_MSIs,
-																						         g_lm32_ramsizes,
-																						         g_lm32_shared_ramsize,
-																						         g_lm32_are_ftm);
+  constant c_lm32_main_bridge_sdb : t_sdb_bridge := 
+    f_lm32_main_bridge_sdb(g_lm32_cores,
+                           g_lm32_MSIs,
+                           g_lm32_ramsizes,
+                           g_lm32_shared_ramsize,
+                           g_lm32_are_ftm);
   
-  constant c_lm32_irq_bridge_sdb : t_sdb_bridge := f_lm32_irq_bridge_sdb(g_lm32_cores,
-																						       g_lm32_MSIs);
   ----------------------------------------------------------------------------------------------------
   
   constant c_top_layout_req : t_sdb_record_array(c_top_slaves-1 downto 0) :=
-   (c_tops_irq       => f_sdb_auto_bridge(c_lm32_irq_bridge_sdb,            true),
+   (c_tops_irq       => f_sdb_auto_bridge(c_irq_bridge_sdb,                 true),
     c_tops_wrc       => f_sdb_auto_bridge(c_wrcore_bridge_sdb,              true),
     c_tops_lm32      => f_sdb_auto_bridge(c_lm32_main_bridge_sdb,           true),
     c_tops_build_id  => f_sdb_auto_device(c_build_id_sdb,                   true),
@@ -520,14 +516,14 @@ architecture rtl of monster is
   signal s_triggers : t_trigger_array(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto 0);
   
   function f_lvds_array_to_trigger_array(lvds : t_lvds_byte_array) return t_trigger_array is
-   variable i : natural := 0;
-   variable result : t_trigger_array(lvds'left downto 0);
-   begin
-      for i in 0 to lvds'left loop
-         result(i) := lvds(i);
-      end loop;
-      return result;
-   end f_lvds_array_to_trigger_array; 
+    variable i : natural := 0;
+    variable result : t_trigger_array(lvds'left downto 0);
+  begin
+    for i in 0 to lvds'left loop
+      result(i) := lvds(i);
+    end loop;
+    return result;
+  end f_lvds_array_to_trigger_array; 
   
 begin
 
@@ -800,17 +796,17 @@ begin
  
   lm32 : ftm_lm32_cluster 
     generic map(
-      g_is_ftm				 => g_lm32_are_ftm,	
-		g_cores            => g_lm32_cores,
+      g_is_ftm           => g_lm32_are_ftm,	
+      g_cores            => g_lm32_cores,
       g_ram_per_core     => g_lm32_ramsizes,
-		g_shared_mem       => g_lm32_shared_ramsize,
+      g_shared_mem       => g_lm32_shared_ramsize,
       g_world_bridge_sdb => c_top_bridge_sdb,
       g_init_file        => g_project & ".mif",
       g_msi_per_core     => g_lm32_MSIs)
     port map(
-      clk_sys_i       	   => clk_sys,
-      rst_n_i         	   => rstn_sys,
-      rst_lm32_n_i    	   => s_lm32_rstn,
+      clk_sys_i            => clk_sys,
+      rst_n_i              => rstn_sys,
+      rst_lm32_n_i         => s_lm32_rstn,
       tm_tai8ns_i     	   => sys_tai8ns,
       irq_slave_o     	   => irq_cbar_master_i(c_irqs_lm32),
       irq_slave_i     	   => irq_cbar_master_o(c_irqs_lm32),
@@ -818,9 +814,8 @@ begin
       cluster_slave_i      => top_cbar_master_o(c_tops_lm32),
       ftm_queue_master_o   => top_cbar_slave_i (c_topm_fpq),
       ftm_queue_master_i   => top_cbar_slave_o (c_topm_fpq),
-		master_o        	   => top_cbar_slave_i (c_topm_lm32),
-      master_i        	   => top_cbar_slave_o (c_topm_lm32)
-		);
+      master_o             => top_cbar_slave_i (c_topm_lm32),
+      master_i             => top_cbar_slave_o (c_topm_lm32));
   
   pcie_n : if not g_en_pcie generate
     top_cbar_slave_i (c_topm_pcie) <= cc_dummy_master_out;
@@ -1308,7 +1303,6 @@ begin
       rstn_ref_i   => rstn_ref,
       clk_lvds_i   => clk_lvds,
       clk_enable_i => clk_enable,
-      -- !!! attach to TLU v2
       dat_o        => lvds_i(f_sub1(g_lvds_inout+g_lvds_in) downto 0),
       lvds_p_i     => lvds_p_i,
       lvds_n_i     => lvds_n_i,
