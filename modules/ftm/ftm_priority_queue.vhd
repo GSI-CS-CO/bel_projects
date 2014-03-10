@@ -377,7 +377,7 @@ end process;
 --**************************************************************************--
 -- Input Data Interface
 ------------------------------------------------------------------------------
-s_push            <= r_push and r_cfg(c_CFG_BIT_ENA) ;
+s_push            <= r_push;
 r_snk_out.stall   <= r_snk_out_fsm_stall or s_full or s_busy or (not snk_i.cyc and s_pop); -- stall when buffer full, heap busy or 
 r_snk_out.dat     <= (others => '0');
 s_data_in         <= r_sreg_in(r_sreg_in'left downto r_sreg_in'length-c_entry_width);
@@ -634,7 +634,7 @@ begin
       else
          v_pop_req_inc := (others => '0');
          assert not (s_auto_pop = '1') report "AUTOPOP" severity note;
-         if( (r_force(c_FORCE_BIT_POP) or s_auto_pop) = '1') then
+         if( ((r_force(c_FORCE_BIT_POP) or s_auto_pop) and r_cfg(c_CFG_BIT_ENA)) = '1') then
             v_pop_req_inc := to_unsigned(1, v_pop_req_inc'length);
          end if;
          r_pop_req <= r_pop_req - r_pop_req_dec + v_pop_req_inc;
