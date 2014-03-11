@@ -16,8 +16,8 @@
 #define SCU_OLED_DISPLAY      0x93a6f3c4
 #define ETHERBONE_MASTER      0x00000815
 
-
-
+#define FTM_PRIOQ_CTRL        0x10040200
+#define FTM_PRIOQ_DATA        0x10040201
 
 
 

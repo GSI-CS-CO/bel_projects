@@ -8,19 +8,21 @@
 #include "ebm.h"
 #include "aux.h"
 
+#define WORLD_CON 0x80000000
 
 volatile unsigned int* pSDB_base    = (unsigned int*)0x7FFFFA00;
-
-volatile unsigned int* cpu_ID;
-volatile unsigned int* time_sys;
-volatile unsigned int* irq_slave;
-volatile unsigned int* timer;
-volatile unsigned int* test;     
-volatile unsigned int* display;
-volatile unsigned int* ebm;     
-volatile unsigned int* cores;
-volatile unsigned int* atomic;        
-
+volatile unsigned int* pEca         = (unsigned int*)(WORLD_CON + 0x7FFFFFF0);
+volatile unsigned int* pCpuID ;
+volatile unsigned int* pTimeSys;
+volatile unsigned int* pIrqCtrl;
+volatile unsigned int* pTimer;
+volatile unsigned int* pTest;     
+volatile unsigned int* pDisplay;
+volatile unsigned int* pEbm;     
+volatile unsigned int* pClusterInfo;
+volatile unsigned int* pAtomic;        
+volatile unsigned int* pFpqCtrl;
+volatile unsigned int* pFpqData;
 
 volatile char color; 
 unsigned int cpuID, cpuMAX;
@@ -82,52 +84,15 @@ void isr0()
    ebm_flush(); 
    atomic_off();
 
-   disp_put_c('\f');
-   disp_put_str("C");
-   disp_put_c('0' + (*cpu_ID & 0xf)+1); 
-
-   disp_put_str(" TM");
-   disp_put_c('0' + tm_idx);
-   disp_put_c('/');
-   disp_put_str(sprinthex(buffer, global_msi.msg & 0xffff, 4));
-   disp_put_str("Calls: ");
-   disp_put_str(sprinthex(buffer, calls++, 4));
    
-   delta = timestamp - timestamp_old - c_period;
-
-   if(calls > 2){
-      if(delta>>31) { //negativ
-         
-         deltamax = delta<deltamax ? delta : deltamax;
-         deltamin = delta>deltamin ? delta : deltamin;
-      } else {        // positiv
-         deltamax = delta>deltamax ? delta : deltamax;
-         deltamin = delta<deltamin ? delta : deltamin;
-      }
-   }
-   disp_put_str("D*  ");
-   disp_put_str(sprinthex(buffer, delta, 5));
-   disp_put_str("\nMin ");
-   disp_put_str(sprinthex(buffer, deltamin, 5));
-   disp_put_str("\nMax ");
-   disp_put_str(sprinthex(buffer, deltamax, 5));
-   disp_put_str("\nDD  ");
-   disp_put_str(sprinthex(buffer, deltamax-deltamin, 5));
 }
 
 
 void isr2()
 {
-
-  unsigned int msg = global_msi.msg & 0xff;
-  unsigned int target = global_msi.msg & 0xff00;
-  volatile unsigned int* irq; 
-  
-  disp_put_str("ILCK\n");
+ disp_put_str("ILCK\n");
   show_msi();
 
-  irq = (unsigned int*) (0x8000000 + ((target + (*cpu_ID<<2))>>2)); //send an irq to the msi queue of <target> from <cpu_ID>
-  *irq = msg;
       
 }
 
@@ -141,28 +106,60 @@ void isr3()
    for (j = 0; j < 125000000; ++j) {
         asm("# noop"); /* no-op the compiler can't optimize away */
       }
-   disp_put_c('\f');   
+  
 }
 
 
 const char mytext[] = "Hallo Welt!...\n\n";
 
+
+void discovery()
+{
+   pCpuID         = (unsigned int*)find_device(CPU_INFO_ROM);
+   pClusterInfo   = (unsigned int*)find_device(LM32_CLUSTER_INFO_ROM);
+   pDisplay       = (unsigned int*)find_device(SCU_OLED_DISPLAY);  
+   pEbm           = (unsigned int*)find_device(ETHERBONE_MASTER);
+   pFpqCtrl       = (unsigned int*)find_device(FTM_PRIOQ_CTRL); 
+   pFpqData       = (unsigned int*)find_device(FTM_PRIOQ_DATA);  
+   pIrqCtrl       = (unsigned int*)find_device(IRQ_MSI_CTRL_IF);   
+   pTimeSys       = (unsigned int*)find_device(SYSTEM_TIME);
+   pTimer         = (unsigned int*)find_device(IRQ_TIMER_CTRL_IF);
+   pAtomic        = (unsigned int*)find_device(ATOMIC_BUS_ACCESS);
+}
+
+void ebmInit()
+{
+   ebm_config_if(LOCAL,   "hw/08:00:30:e3:b0:5a/udp/192.168.191.254/port/60368");
+   ebm_config_if(REMOTE,  "hw/00:14:d1:fa:01:aa/udp/192.168.191.131/port/60368");
+   ebm_config_meta(80, 0x11, 16, 0x00000000 );
+}
+
+void prioQueueInit()
+{
+   *(pFpqCtrl + r_FPQ.clear)  = 1;
+   *(pFpqCtrl + r_FPQ.dstAdr) = (unsigned int)pEca;
+   *(pFpqCtrl + r_FPQ.ebmAdr) = (unsigned int)pEbm;
+   *(pFpqCtrl + r_FPQ.msgMax) = 5;
+   *(pFpqCtrl + r_FPQ.tTrnHi) = 0;
+   *(pFpqCtrl + r_FPQ.tTrnLo) = 0;
+   *(pFpqCtrl + r_FPQ.tDueHi) = 0;
+   *(pFpqCtrl + r_FPQ.tDueLo) = 0;
+   *(pFpqCtrl + r_FPQ.cfgSet) = //r_FPQ.cfg_AUTOFLUSH_TIME | 
+                                  r_FPQ.cfg_AUTOFLUSH_MSGS |
+                                  //r_FPQ.cfg_AUTOPOP | 
+                                  r_FPQ.cfg_FIFO | 
+                                  r_FPQ.cfg_ENA;
+}
+
+
 void init()
 {
 
-   cpu_ID       = (unsigned int*)find_device(CPU_INFO_ROM);
-   cores        = (unsigned int*)find_device(LM32_CLUSTER_INFO_ROM);
-   display      = (unsigned int*)find_device(SCU_OLED_DISPLAY);  
-   ebm          = (unsigned int*)find_device(ETHERBONE_MASTER); 
-   irq_slave    = (unsigned int*)find_device(IRQ_MSI_CTRL_IF);   
-   time_sys     = (unsigned int*)find_device(SYSTEM_TIME);
-   timer        = (unsigned int*)find_device(IRQ_TIMER_CTRL_IF);
-   atomic       = (unsigned int*)find_device(ATOMIC_BUS_ACCESS);
-
-   ebm_config_if(LOCAL,   "hw/08:00:30:e3:b0:5a/udp/192.168.191.254/port/60368");
-   ebm_config_if(REMOTE,  "hw/00:14:d1:fa:01:aa/udp/192.168.191.131/port/60368");
-   ebm_config_meta(80, 0x11, 16, 0x00000000 ); 
-
+   
+   discovery();
+   ebmInit(); 
+   prioQueueInit();
+   
    isr_table_clr();
    isr_ptr_table[0]= ISR_timer; //timer
    isr_ptr_table[1]= 0; //lm32
@@ -196,9 +193,7 @@ disp_put_c('\f');
       }
 
   while (1) {
-      fesaCmdEval();
-      processDueMsgs();
- 
+      
   }
 
 }

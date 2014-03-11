@@ -55,7 +55,62 @@
 #define TIMER_CFG_ERROR_0     -1
 #define TIMER_CFG_ERROR_1     -2
 
-
+// Priority Queue RegisterLayout
+static const struct {
+   unsigned int rst;
+   unsigned int force;
+   unsigned int dbgSet;
+   unsigned int dbgGet;
+   unsigned int clear;
+   unsigned int cfgGet;
+   unsigned int cfgSet;
+   unsigned int cfgClr;
+   unsigned int dstAdr;
+   unsigned int heapCnt;
+   unsigned int msgCntO;
+   unsigned int msgCntI;
+   unsigned int tTrnHi;
+   unsigned int tTrnLo;
+   unsigned int tDueHi;
+   unsigned int tDueLo;
+   unsigned int msgMin;
+   unsigned int msgMax;
+   unsigned int ebmAdr;
+   unsigned int cfg_ena;
+   unsigned int cfg_fifo;    
+   unsigned int cfg_irq;
+   unsigned int cfg_autopop;
+   unsigned int cfg_autoflush_time;
+   unsigned int cfg_autoflush_msgs;
+   unsigned int force_pop;
+   unsigned int force_flush;
+} r_FPQ = {    .rst     =  0x00 >> 2,
+               .dbgSet  =  0x04 >> 2,
+               .dbgGet  =  0x08 >> 2,
+               .clear   =  0x0C >> 2,
+               .cfgGet  =  0x10 >> 2,
+               .cfgSet  =  0x14 >> 2,
+               .cfgClr  =  0x18 >> 2,
+               .dstAdr  =  0x1C >> 2,
+               .heapCnt =  0x20 >> 2,
+               .msgCntO =  0x24 >> 2,
+               .msgCntI =  0x28 >> 2,
+               .tTrnHi  =  0x2C >> 2,
+               .tTrnLo  =  0x30 >> 2,
+               .tDueHi  =  0x34 >> 2,
+               .tDueLo  =  0x38 >> 2,
+               .msgMin  =  0x3C >> 2,
+               .msgMax  =  0x40 >> 2,
+               .ebmAdr  =  0x44 >> 2,
+               .cfg_ENA             = 1<<0,
+               .cfg_FIFO            = 1<<1,    
+               .cfg_IRQ             = 1<<2,
+               .cfg_AUTOPOP         = 1<<3,
+               .cfg_AUTOFLUSH_TIME  = 1<<4,
+               .cfg_AUTOFLUSH_MSGS  = 1<<5,
+               .force_POP           = 1<<0,
+               .force_FLUSH         = 1<<1
+};
 
 
 
