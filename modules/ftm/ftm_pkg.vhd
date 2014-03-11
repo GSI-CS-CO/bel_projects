@@ -221,7 +221,7 @@ package ftm_pkg is
    addr_last     => x"0000000000000003",
    product => (
    vendor_id     => x"0000000000000651", -- GSI
-   device_id     => x"10040101",
+   device_id     => x"10040201",
    version       => x"00000001",
    date          => x"20131009",
    name          => "EBM_MSG_QUEUE_DATA ")));
@@ -237,7 +237,7 @@ package ftm_pkg is
    addr_last     => x"000000000000007f",
    product => (
    vendor_id     => x"0000000000000651", -- GSI
-   device_id     => x"10040100",
+   device_id     => x"10040200",
    version       => x"00000001",
    date          => x"20131009",
    name          => "EBM_MSG_QUEUE_CTRL "))); 
@@ -253,7 +253,7 @@ package ftm_pkg is
    addr_last     => x"00000000000000ff",
    product => (
    vendor_id     => x"0000000000000651", -- GSI
-   device_id     => x"10040101",
+   device_id     => x"10040202",
    version       => x"00000001",
    date          => x"20131009",
    name          => "LOAD_MANAGER       ")));

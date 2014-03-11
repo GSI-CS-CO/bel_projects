@@ -472,16 +472,18 @@ s_src_o.dat <= s_shift_out when '1',
 
 src_ack_cnt : process(clk_sys_i)
 begin
-   if(r_src_ack_cnt_clr = '1' or rst_n_i = '0' or r_rst = "1") then
-         r_src_ack_cnt  <= (others => '0');
-         r_src_push_cnt <= (others => '0');
-   else
-      if(src_i.ack = '1') then
-         r_src_ack_cnt  <= r_src_ack_cnt  + 1;
-      end if;
-      
-      if((s_src_o.cyc and s_src_o.cyc and not src_i.stall) = '1') then
-         r_src_push_cnt  <= r_src_push_cnt  + 1;
+   if rising_edge(clk_sys_i) then
+      if(r_src_ack_cnt_clr = '1' or rst_n_i = '0' or r_rst = "1") then
+            r_src_ack_cnt  <= (others => '0');
+            r_src_push_cnt <= (others => '0');
+      else
+         if(src_i.ack = '1') then
+            r_src_ack_cnt  <= r_src_ack_cnt  + 1;
+         end if;
+         
+         if((s_src_o.cyc and s_src_o.stb and not src_i.stall) = '1') then
+            r_src_push_cnt  <= r_src_push_cnt  + 1;
+         end if;
       end if;
    end if;
 end process src_ack_cnt;
