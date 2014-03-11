@@ -154,7 +154,7 @@ architecture rtl of ftm_lm32_cluster is
     g_registered  => true,
     -- Address of the slaves connected
     g_address     => (0 => x"00000000"),
-    g_mask        => (0 => x"FFFFFFFF"))
+    g_mask        => (0 => x"00000000"))
   port map(
      clk_sys_i     => clk_sys_i,
      rst_n_i       => rst_n_i,
