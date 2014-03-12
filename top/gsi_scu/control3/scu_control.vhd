@@ -267,8 +267,8 @@ begin
     generic map(
       g_family     => "Arria II",
       g_project    => "scu_control",
-      g_inputs     => 1,
-      g_outputs    => 1,
+      g_gpio_in    => 1,
+      g_gpio_out   => 1,
       g_flash_bits => 24,
       g_en_pcie    => true,
       g_en_scubus  => true,

@@ -31,7 +31,7 @@ struct scu_bus SHARED scub;
 struct fg_list SHARED fgs;
 volatile uint32_t SHARED fg_control;
 
-volatile unsigned int* pSDB_base    = (unsigned int*)0x7FFFFA00;
+volatile unsigned int* pSDB_base    = (unsigned int*)0x3fffe000;
 volatile unsigned int* display;
 volatile unsigned int* irq_slave;
 volatile unsigned short* scub_base;
@@ -39,7 +39,8 @@ volatile unsigned int* cpu_ID;
 volatile unsigned int* time_sys;
 volatile unsigned int* cores;
 volatile unsigned int* atomic;
-volatile unsigned int BASE_ONEWIRE;
+volatile unsigned int* BASE_ONEWIRE;
+volatile unsigned int* BASE_UART;
 
 int slaves[SCU_BUS_MAX_SLOTS+1] = {0};
 volatile unsigned short icounter[SCU_BUS_MAX_SLOTS+1];
@@ -197,13 +198,13 @@ void updateTemps() {
   #ifdef DEBUG
   mprintf("Onboard Onewire Devices:\n");
   #endif
-  BASE_ONEWIRE = BASE_OW_WR;
+  BASE_ONEWIRE = (unsigned int*)BASE_OW_WR;
   wrpc_w1_init();
   ReadTempDevices(0, &board_id, &board_temp);
   #ifdef DEBUG
   mprintf("External Onewire Devices:\n");
   #endif
-  BASE_ONEWIRE = BASE_OW_EXT;
+  BASE_ONEWIRE = (unsigned int*)BASE_OW_EXT;
   wrpc_w1_init();
   ReadTempDevices(0, &ext_id, &ext_temp);
   ReadTempDevices(1, &backplane_id, &backplane_temp);
@@ -213,6 +214,9 @@ void init() {
   int i=0, j;
   uart_init_hw();
   uart_write_string("\nDebug Port\n");
+  mprintf("display base: 0x%x\n", display);
+  mprintf("scub base: 0x%x\n", scub_base);
+  mprintf("uart base: 0x%x\n", BASE_UART);
   updateTemps();
   
   scan_scu_bus(&scub, backplane_id, scub_base);
@@ -254,16 +258,19 @@ void init() {
 } 
 
 int main(void) {
+  char buffer[20];
   int i = 0;
   
   display      = (unsigned int*)find_device(SCU_OLED_DISPLAY);
   irq_slave    = (unsigned int*)find_device(IRQ_MSI_CTRL_IF);
-  scub_base    = (unsigned short*)find_device(SCU_BUS_MASTER);  
+  scub_base    = (unsigned short*)find_device(SCU_BUS_MASTER);
+  BASE_UART    = (unsigned int*)find_device(WR_Periph_UART);
+  BASE_ONEWIRE = (unsigned int*)find_device(WR_Periph_1Wire);  
+
 
   
   disp_reset();
   disp_put_c('\f');
-
   init(); 
   
   //config of DAC and FG

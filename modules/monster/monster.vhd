@@ -78,7 +78,7 @@ entity monster is
     g_en_user_ow           : boolean;
     g_lm32_cores           : natural := 1;
     g_lm32_MSIs            : natural := 1;
-    g_lm32_ramsizes        : natural := 131072/4;
+    g_lm32_ramsizes        : natural := 65536;
     g_lm32_shared_ramsize  : natural := 16384/4; -- will only be used if g_lm32_cores > 1
     g_lm32_are_ftm         : boolean := false 
     );

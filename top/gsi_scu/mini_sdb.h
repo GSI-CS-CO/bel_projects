@@ -16,6 +16,8 @@
 #define SCU_OLED_DISPLAY      0x93a6f3c4
 #define ETHERBONE_MASTER      0x00000815
 #define SCU_BUS_MASTER        0x9602eb6f
+#define WR_Periph_UART        0xe2d13d04
+#define WR_Periph_1Wire       0x779c5443
 
 
 
