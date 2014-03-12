@@ -16,27 +16,25 @@ generic(g_is_ftm        : boolean := false;
         g_world_bridge_sdb    : t_sdb_bridge                      -- superior crossbar         
    );
 port(
-clk_sys_i      : in  std_logic;
-rst_n_i        : in  std_logic;
-rst_lm32_n_i   : in  std_logic;
+   clk_sys_i      : in  std_logic;
+   rst_n_i        : in  std_logic;
+   rst_lm32_n_i   : in  std_logic;
 
-tm_tai8ns_i    : in std_logic_vector(63 downto 0);
+   tm_tai8ns_i    : in std_logic_vector(63 downto 0);
 
-irq_slave_o    : out t_wishbone_slave_out; 
-irq_slave_i    : in  t_wishbone_slave_in;
+   irq_slave_o    : out t_wishbone_slave_out; 
+   irq_slave_i    : in  t_wishbone_slave_in;
 
--- optional cluster ctrl slave interface
-cluster_slave_o  : out t_wishbone_slave_out; 
-cluster_slave_i  : in  t_wishbone_slave_in := ('0', '0', x"00000000", x"F", '0', x"00000000");
+   -- optional cluster ctrl slave interface
+   cluster_slave_o  : out t_wishbone_slave_out; 
+   cluster_slave_i  : in  t_wishbone_slave_in := ('0', '0', x"00000000", x"F", '0', x"00000000");
 
--- optional FTM ebm queue master interface
-ftm_queue_master_o : out t_wishbone_master_out; 
-ftm_queue_master_i : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000"); 
-         
-master_o   : out t_wishbone_master_out; 
-master_i   : in  t_wishbone_master_in  
-
-
+   -- optional FTM ebm queue master interface
+   ftm_queue_master_o : out t_wishbone_master_out; 
+   ftm_queue_master_i : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000"); 
+            
+   master_o   : out t_wishbone_master_out; 
+   master_i   : in  t_wishbone_master_in  
 );
 end ftm_lm32_cluster;
 
@@ -292,7 +290,7 @@ architecture rtl of ftm_lm32_cluster is
 --******************************************************************************
 -- FTM Prio Queue
 --------------------------------------------------------------------------------
-   
+ prioQ : if(g_is_ftm) generate  
    prio_queue : ftm_priority_queue
    generic map(
       g_idx_width    => 7,
@@ -315,6 +313,8 @@ architecture rtl of ftm_lm32_cluster is
       src_i       => ftm_queue_master_i
      
    );
+ end generate;
+ 
     
 --******************************************************************************
 -- makeshift ftm load manager / rst control
@@ -328,7 +328,7 @@ architecture rtl of ftm_lm32_cluster is
       if(rst_n_i = '0') then
         r_rst_lm32_n <= (others => '1');
       else
-        -- rom is an easy solution for a device that never stalls:
+    
         clu_cbar_masterport_in(vIdx).dat <= (others => '0');      
         clu_cbar_masterport_in(vIdx).ack <= clu_cbar_masterport_out(vIdx).cyc and clu_cbar_masterport_out(vIdx).stb;
          
