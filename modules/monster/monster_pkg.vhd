@@ -39,6 +39,7 @@ package monster_pkg is
       g_gpio_inout  : natural := 0;
       g_gpio_in     : natural := 0;
       g_gpio_out    : natural := 0;
+      g_tlu_fifo_size : natural := 32;
       g_lvds_inout  : natural := 0;
       g_lvds_in     : natural := 0;
       g_lvds_out    : natural := 0;
@@ -49,7 +50,13 @@ package monster_pkg is
       g_en_scubus   : boolean := false;
       g_en_mil      : boolean := false;
       g_en_oled     : boolean := false;
-      g_en_lcd      : boolean := false);
+      g_en_lcd      : boolean := false;
+      g_lm32_cores           : natural := 1;
+      g_lm32_MSIs            : natural := 1;
+      g_lm32_ramsizes        : natural := 131072/4;
+      g_lm32_shared_ramsize  : natural := 16384/4; -- will only be used if g_lm32_cores > 1
+      g_lm32_are_ftm         : boolean := false
+    );
     port(
       -- Required: core signals
       core_clk_20m_vcxo_i    : in    std_logic;
