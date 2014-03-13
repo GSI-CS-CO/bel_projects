@@ -92,13 +92,18 @@ architecture behavioral of heap_pathfinder is
    signal r_last, r_new_last, r_ptr, s_ptr_down, s_l_child, s_r_child, s_ptr_up : unsigned(g_idx_width-1 downto 0); 
    constant c_first      : unsigned(g_idx_width-1 downto 0) := to_unsigned(1, g_idx_width); 
    signal r_mov : t_key;
-   signal s_parent_le_children,  r_parent_le_children : std_logic;
-   signal s_lowest_level,        r_lowest_level       : std_logic;
+   signal s_parent_le_children : std_logic;
+--signal	r_parent_le_children : std_logic;
+   signal s_lowest_level : std_logic;        
+	--signal r_lowest_level       : std_logic;
    
-   signal s_child_gre_parent,    r_child_gre_parent   : std_logic;
-   signal s_highest_level,       r_highest_level      : std_logic; 
+   signal s_child_gre_parent : std_logic;
+--	signal r_child_gre_parent   : std_logic;
+   signal s_highest_level : std_logic; 
+--	signal       r_highest_level      : std_logic; 
             
-   signal s_pos_found, r_pos_found, s_valid, r_valid : std_logic;
+   signal s_pos_found, r_pos_found, s_valid : std_logic;
+--signal  r_valid	: std_logic;
    signal s_full, s_empty, r_out0 : std_logic;
    signal s_A_gre_B, s_A_gre_MOV, s_B_gre_MOV : std_logic;
    signal s_adr_mode : std_logic_vector (1 downto 0);
@@ -220,22 +225,18 @@ end generate;
 -- Registers / Pipeline
 ------------------------------------------------------------------------------   
    pipeline: process(clk_sys_i)
-      variable v_state  : t_op_state;
-   
    begin
     if(rising_edge(clk_sys_i)) then
-      v_state  := r_state;
-      
       if(rst_n_i = '0') then
        
       else
-         r_lowest_level       <= s_lowest_level;
-         r_parent_le_children <= s_parent_le_children; 
+         --r_lowest_level       <= s_lowest_level;
+         --r_parent_le_children <= s_parent_le_children; 
         
-         r_highest_level      <= s_highest_level;
-         r_child_gre_parent   <= s_child_gre_parent;
+         --r_highest_level      <= s_highest_level;
+         --r_child_gre_parent   <= s_child_gre_parent;
          
-         r_valid              <= s_valid;
+         --r_valid              <= s_valid;
          r_pos_found          <= s_pos_found; 
       end if;
     end if;

@@ -53,6 +53,7 @@ use work.genram_pkg.all;
 use work.wishbone_pkg.all;
 use work.gencores_pkg.all;
 use work.heap_pkg.all;
+use work.ftm_pkg.all;
 
 entity ftm_priority_queue is
 generic(
@@ -88,27 +89,30 @@ architecture behavioral of ftm_priority_queue is
 -- memory map for ctrl wb
    type t_state is (e_IDLE, e_EBM_CHK, e_EBM_CFG, e_SHIFT_OUT, e_WAIT_IDLE, e_EBM_FLUSH, e_ERROR); 
    
-   constant c_RST        : natural := 0;                 --wo, reset. writing 1 will reset the core
-   constant c_FORCE      : natural := c_RST        +4;   --wo, pops one element from the heap if heap is not empty
-   constant c_DBG_SET    : natural := c_FORCE      +4;   --wo, start heap consistency check when writing 1
-   constant c_DBG_GET    : natural := c_DBG_SET    +4;   --ro, shows heap consistency check result 
-   constant c_CLEAR      : natural := c_DBG_GET    +4;   --wo, clear heap on writing 1 
-   constant c_CFG_GET    : natural := c_CLEAR      +4;   --ro, get   cfg bits, see below 
-   constant c_CFG_SET    : natural := c_CFG_GET    +4;   --wo, set   cfg bits
-   constant c_CFG_CLR    : natural := c_CFG_SET    +4;   --wo, clear cfg bits
-   constant c_DST_ADR    : natural := c_CFG_CLR    +4;   --rw, wishbone address of src output
-   constant c_HEAP_CNT   : natural := c_DST_ADR    +4;   --ro, current number of elements on the heap
-   constant c_MSG_CNT_O  : natural := c_HEAP_CNT   +4;   --ro, total number of elements dequeued since last clear/reset
-   constant c_MSG_CNT_I  : natural := c_MSG_CNT_O  +4;   --ro, total number of elements queued since last clear/reset
+   constant c_adr_mask   : t_wishbone_address := 
+   (c_ebm_queue_ctrl_sdb.sdb_component.addr_first(31 downto 2) xor c_ebm_queue_ctrl_sdb.sdb_component.addr_last(31 downto 2)) & "00";
    
-   constant c_T_TRN_HI   : natural := c_MSG_CNT_I  +4;   --rw, transmission time window in 8ns, high word. Used for autopop
-   constant c_T_TRN_LO   : natural := c_T_TRN_HI   +4;   --rw, transmission time window in 8ns, low word
-   constant c_T_DUE_HI   : natural := c_T_TRN_LO   +4;   --rw, transmission time window in 8ns, high word. Used for autopop
-   constant c_T_DUE_LO   : natural := c_T_DUE_HI   +4;   --rw, transmission time window in 8ns, low word
+   constant c_RST        : natural := 0;                 --00 wo, reset. writing 1 will reset the core
+   constant c_FORCE      : natural := c_RST        +4;   --04 wo, pops one element from the heap if heap is not empty
+   constant c_DBG_SET    : natural := c_FORCE      +4;   --08 wo, start heap consistency check when writing 1
+   constant c_DBG_GET    : natural := c_DBG_SET    +4;   --0c ro, shows heap consistency check result 
+   constant c_CLEAR      : natural := c_DBG_GET    +4;   --10 wo, clear heap on writing 1 
+   constant c_CFG_GET    : natural := c_CLEAR      +4;   --14 ro, get   cfg bits, see below 
+   constant c_CFG_SET    : natural := c_CFG_GET    +4;   --18 wo, set   cfg bits
+   constant c_CFG_CLR    : natural := c_CFG_SET    +4;   --1c wo, clear cfg bits
+   constant c_DST_ADR    : natural := c_CFG_CLR    +4;   --20 rw, wishbone address of src output
+   constant c_HEAP_CNT   : natural := c_DST_ADR    +4;   --24 ro, current number of elements on the heap
+   constant c_MSG_CNT_O  : natural := c_HEAP_CNT   +4;   --28 ro, total number of elements dequeued since last clear/reset
+   constant c_MSG_CNT_I  : natural := c_MSG_CNT_O  +4;   --2c ro, total number of elements queued since last clear/reset
    
-   constant c_MSG_MIN    : natural := c_T_DUE_LO   +4;   --rw, minimum number of elements to dequeue before send & wait for EBM readiness. used for autopop
-   constant c_MSG_MAX    : natural := c_MSG_MIN    +4;   --rw, maximum number of elements to dequeue before send & wait for EBM readiness. used for autopop
-   constant c_EBM_ADR    : natural := c_MSG_MAX    +4;   --rw, wishbone address of the Etherbone Master
+   constant c_T_TRN_HI   : natural := c_MSG_CNT_I  +4;   --30 rw, transmission time window in 8ns, high word. Used for autopop
+   constant c_T_TRN_LO   : natural := c_T_TRN_HI   +4;   --34 rw, transmission time window in 8ns, low word
+   constant c_T_DUE_HI   : natural := c_T_TRN_LO   +4;   --38 rw, transmission time window in 8ns, high word. Used for autopop
+   constant c_T_DUE_LO   : natural := c_T_DUE_HI   +4;   --3C rw, transmission time window in 8ns, low word
+   
+   constant c_MSG_MIN    : natural := c_T_DUE_LO   +4;   --40 rw, minimum number of elements to dequeue before send & wait for EBM readiness. used for autopop
+   constant c_MSG_MAX    : natural := c_MSG_MIN    +4;   --44 rw, maximum number of elements to dequeue before send & wait for EBM readiness. used for autopop
+   constant c_EBM_ADR    : natural := c_MSG_MAX    +4;   --48 rw, wishbone address of the Etherbone Master
    
 -- cfg reg bits
    constant c_CFG_BIT_ENA            : natural := 0;
@@ -221,6 +225,10 @@ architecture behavioral of ftm_priority_queue is
    signal r_command_out       : t_wishbone_data;
    signal r_stowed            : std_logic;
    
+   signal s_adr               : unsigned(6 downto 0);
+   attribute syn_keep: boolean;
+   attribute syn_keep of s_adr: signal is true;
+   
 -- autopop
    signal r_state_out         : t_state;
    signal r_send              : std_logic;
@@ -282,10 +290,13 @@ heap : heap_top
 --**************************************************************************--
 -- Control Registers and Wishbone Slave If
 ------------------------------------------------------------------------------
+ctrl_o <= r_ctrl_out;
+s_adr <= unsigned(ctrl_i.adr(6 downto 2)) & "00";
+
 ctrl_if : process(clk_sys_i)
    variable v_dat_i  : t_wishbone_data;
    variable v_dat_o  : t_wishbone_data;
-   variable v_adr    : t_wishbone_address; 
+   variable v_adr    : natural; 
    variable v_sel    : t_wishbone_byte_select;
    variable v_we     : std_logic;
    variable v_en     : std_logic; 
@@ -300,8 +311,9 @@ begin
          r_msg_max   <= std_logic_vector(to_unsigned(c_msg_n_max, r_msg_max'length));
       else
          -- short names 
-         v_dat_i   := ctrl_i.dat;
-         v_adr   := ctrl_i.adr;
+         v_dat_i := ctrl_i.dat;
+         v_adr   := to_integer(s_adr); 
+         
          v_sel   := ctrl_i.sel;
          v_en    := ctrl_i.cyc and ctrl_i.stb and not r_ctrl_out.stall;
          v_we    := ctrl_i.we; 
@@ -324,7 +336,7 @@ begin
             --report "+++++ EN +++++ " severity warning;
             if(v_we = '1') then
                --report "ADR: " & integer'image(to_integer(unsigned(v_adr))) severity warning;             
-               case to_integer(unsigned(v_adr)) is
+               case v_adr is
                   when c_RST        => r_rst         <= f_wb_wr(r_rst,       v_dat_i, v_sel, "set");
                   when c_FORCE      => r_force       <= f_wb_wr(r_force, v_dat_i, v_sel, "set");
                                        
@@ -345,7 +357,7 @@ begin
                   when others => r_ctrl_out.ack  <= '0'; r_ctrl_out.err <= '1';
                end case;
             else
-               case to_integer(unsigned(v_adr)) is
+               case v_adr is
                   when c_DBG_GET    => r_ctrl_out.dat(s_dbg_stat'range)    <= s_dbg_stat;
                   when c_CFG_GET    => r_ctrl_out.dat(r_cfg'range)         <= r_cfg;
                   when c_DST_ADR    => r_ctrl_out.dat(r_dst_adr'range)     <= r_dst_adr;
@@ -373,7 +385,7 @@ begin
 end process;
 ------------------------------------------------------------------------------
 
-
+snk_o <= r_snk_out;
 --**************************************************************************--
 -- Input Data Interface
 ------------------------------------------------------------------------------
@@ -525,18 +537,18 @@ begin
          case r_state_out is
             when e_IDLE       => if(r_send = '1') then
                                       r_filling_packet0 <= '1'; 
-                                      s_src_o.adr   <= std_logic_vector(c_EBM_ADR_CFG_BASE + c_EBM_ADR_FLUSH);
+                                      s_src_o.adr   <= std_logic_vector(unsigned(r_ebm_adr) + c_EBM_ADR_FLUSH);
                                       r_command_out <= x"00000001";
                                       v_state_out := e_EBM_FLUSH;
                                  elsif((s_pop and v_rdy)= '1') then
-                                       s_src_o.adr          <= std_logic_vector(c_EBM_ADR_CFG_BASE + c_EBM_ADR_CNT);
+                                       s_src_o.adr          <= std_logic_vector(unsigned(r_ebm_adr) + c_EBM_ADR_CNT);
                                        v_state_out          := e_EBM_CHK;
                                  end if;
                                           
             when e_EBM_CHK    => if(src_i.ack = '1') then
                                        r_ebm_ops         <= src_i.dat;
                                        
-                                       s_src_o.adr       <= std_logic_vector(c_EBM_ADR_CFG_BASE + c_EBM_ADR_OPA_HI);
+                                       s_src_o.adr       <= std_logic_vector(unsigned(r_ebm_adr) + c_EBM_ADR_OPA_HI);
                                        r_command_out     <= std_logic_vector(r_dst_adr);
                                        
                                        v_state_out       := e_EBM_CFG;
@@ -550,10 +562,7 @@ begin
                                     end if;
                                     r_data_out_rdy <= s_data_out_rdy;
                                     r_pop_req_dec  <= to_unsigned(1, r_pop_req_dec'length);
-                                    
-                                    
-                                    s_src_o.adr    <= std_logic_vector(c_EBM_ADR_CFG_BASE or c_EBM_DAT_OFFS or c_EBM_RW_OFFS or (unsigned(r_dst_adr) and c_EBM_ADR_MSK));
-                                    
+                                    s_src_o.adr    <= std_logic_vector(unsigned(r_ebm_adr) or c_EBM_DAT_OFFS or c_EBM_RW_OFFS or (unsigned(r_dst_adr) and c_EBM_ADR_MSK));
                                     v_state_out    := e_SHIFT_OUT;
                                  end if;
                                  
@@ -566,7 +575,7 @@ begin
                                        r_msg_cnt_packet <= std_logic_vector(unsigned(r_msg_cnt_packet) +1);
                                        r_stowed <= '1';
                                        if(r_send = '1') then
-                                         s_src_o.adr   <= std_logic_vector(c_EBM_ADR_CFG_BASE + c_EBM_ADR_FLUSH);
+                                         s_src_o.adr   <= std_logic_vector(unsigned(r_ebm_adr) + c_EBM_ADR_FLUSH);
                                          v_state_out := e_EBM_FLUSH;
                                        else
                                           v_state_out := e_WAIT_IDLE;
