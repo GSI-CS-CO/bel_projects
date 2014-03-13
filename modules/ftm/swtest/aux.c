@@ -34,8 +34,8 @@ unsigned int ier = 5;
 inline unsigned long long getSysTime()
 {
    unsigned long long systime;  
-   systime =  ((unsigned long long)*(time_sys+0))<<32;
-   systime |= ((unsigned long long)*(time_sys+1)) & 0x00000000ffffffff;
+   systime =  ((unsigned long long)*(pCpuSysTime+0))<<32;
+   systime |= ((unsigned long long)*(pCpuSysTime+1)) & 0x00000000ffffffff;
    return systime;  
 }
 
@@ -50,20 +50,20 @@ inline void uSleep(unsigned long long uSecs)
    cycSleep((unsigned int)(uSecs * 1000 / T_SYS));
 }
 
-inline unsigned int  getCpuID()  {return *cpu_ID;}
-inline unsigned int  getCpuIdx() {return *cpu_ID & 0xff;}
-inline unsigned int  getCores()  {return *cores  & 0xff;}
+inline unsigned int  getCpuID()  {return *pCpuId;}
+inline unsigned int  getCpuIdx() {return *pCpuId & 0xff;}
+inline unsigned int  getCores()  {return *pCluInfo  & 0xff;}
 
 inline  unsigned int  atomic_get(void)
 {
-	 return *atomic;	             	
+	 return *pCpuAtomic;	             	
 }
 
 inline void atomic_on()
 {
    ier = irq_get_enable();
    irq_disable();
-   *atomic = 1;
+   *pCpuAtomic = 1;
 }
 
 char progressWheel()
@@ -78,7 +78,7 @@ char progressWheel()
 
 inline void atomic_off()
 {
-	*atomic = 0;
+	*pCpuAtomic = 0;
 	unsigned int foo = 0;
 	// or the IE bit with ier
 	asm volatile ("rcsr  %0, IE\n"      \

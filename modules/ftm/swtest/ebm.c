@@ -26,10 +26,6 @@
 #include <string.h>
 #include "ebm.h"
 
-extern unsigned int* ebm;
-
-
-
 static inline char* strsplit(const char*  numstr, const char* delimeter);
 static inline unsigned char* numStrToBytes(const char*  numstr, unsigned char* bytes,  unsigned char len,  unsigned char base, const char* delimeter);
 static inline unsigned char* addressStrToBytes(const char* addressStr, unsigned char* addressBytes, adress_type_t addtype);
@@ -47,24 +43,24 @@ void ebm_config_if(target_t conf, const char* con_info)
   if(conf == REMOTE) offset = EBM_OFFS_REMOTE;
   
   tmp = (link->mac[0] << 24) | (link->mac[1] << 16) | (link->mac[2] << 8) | link->mac[3];
-  *(ebm + ((offset + EBM_OFFS_MAC_HI)   >>2)) =  tmp;  
+  *(pEbm + ((offset + EBM_OFFS_MAC_HI)   >>2)) =  tmp;  
   
   tmp = (link->mac[4] << 24) | (link->mac[5] << 16);
-  *(ebm + ((offset + EBM_OFFS_MAC_LO)   >>2)) = tmp;
+  *(pEbm + ((offset + EBM_OFFS_MAC_LO)   >>2)) = tmp;
   
   tmp = (link->ipv4[0] << 24) | (link->ipv4[1] << 16) | (link->ipv4[2] << 8) | link->ipv4[3];
-  *(ebm + ((offset + EBM_OFFS_IPV4)     >>2)) =  tmp;  
+  *(pEbm + ((offset + EBM_OFFS_IPV4)     >>2)) =  tmp;  
   
-  *(ebm + ((offset + EBM_OFFS_UDP_PORT) >>2)) = (unsigned int)link->port;
+  *(pEbm + ((offset + EBM_OFFS_UDP_PORT) >>2)) = (unsigned int)link->port;
   
 }
 
 void ebm_config_meta(unsigned int pac_len, unsigned int hi_bits, unsigned int max_ops, unsigned int eb_ops)
 {
-  *(ebm + (EBM_REG_PAC_LEN  >>2)) = pac_len;  
-  *(ebm + (EBM_REG_OPA_HI   >>2)) = hi_bits;
-  *(ebm + (EBM_REG_OPS_MAX  >>2)) = max_ops;
-  *(ebm + (EBM_REG_EB_OPT   >>2)) = eb_ops;
+  *(pEbm + (EBM_REG_PAC_LEN  >>2)) = pac_len;  
+  *(pEbm + (EBM_REG_OPA_HI   >>2)) = hi_bits;
+  *(pEbm + (EBM_REG_OPS_MAX  >>2)) = max_ops;
+  *(pEbm + (EBM_REG_EB_OPT   >>2)) = eb_ops;
 }
 
 
@@ -72,17 +68,17 @@ void ebm_op(unsigned int address, unsigned int value, unsigned int optype)
 {
     unsigned int offset = EBM_OFFS_DAT;
     //set hibits according to desired address
-    //*(ebm + (EBM_REG_OPA_HI >> 2)) = (address & ~ADR_MASK);
+    //*(pEbm + (EBM_REG_OPA_HI >> 2)) = (address & ~ADR_MASK);
     
     offset += optype;
      offset += (address & ADR_MASK);
-    *(ebm + (offset>>2)) = value;
+    *(pEbm + (offset>>2)) = value;
     return;
 }
 
 void ebm_flush(void)
 {
-  *(ebm + (EBM_REG_FLUSH>>2)) = 0x01;
+  *(pEbm + (EBM_REG_FLUSH>>2)) = 0x01;
 }
 
 

@@ -43,6 +43,8 @@
 #ifndef __IRQ_H_
 #define __IRQ_H_
 
+extern volatile unsigned int* pCpuIrqSlave;
+
 typedef struct
 {
    unsigned int  msg;

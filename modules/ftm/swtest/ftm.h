@@ -76,14 +76,14 @@ static const struct {
    unsigned int msgMin;
    unsigned int msgMax;
    unsigned int ebmAdr;
-   unsigned int cfg_ena;
-   unsigned int cfg_fifo;    
-   unsigned int cfg_irq;
-   unsigned int cfg_autopop;
-   unsigned int cfg_autoflush_time;
-   unsigned int cfg_autoflush_msgs;
-   unsigned int force_pop;
-   unsigned int force_flush;
+   unsigned int cfg_ENA;
+   unsigned int cfg_FIFO;    
+   unsigned int cfg_IRQ;
+   unsigned int cfg_AUTOPOP;
+   unsigned int cfg_AUTOFLUSH_TIME;
+   unsigned int cfg_AUTOFLUSH_MSGS;
+   unsigned int force_POP;
+   unsigned int force_FLUSH;
 } r_FPQ = {    .rst     =  0x00 >> 2,
                .dbgSet  =  0x04 >> 2,
                .dbgGet  =  0x08 >> 2,

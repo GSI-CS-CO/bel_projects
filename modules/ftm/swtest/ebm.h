@@ -26,6 +26,7 @@
 #ifndef EBM_H
 #define EBM_H
 
+extern volatile unsigned int* pEbm;
 
 #define EBM_REG_RESET         0                         
 #define EBM_REG_FLUSH         (EBM_REG_RESET        +4)        
