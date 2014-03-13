@@ -1,27 +1,25 @@
 #include <stdio.h>
+#include <string.h>
 #include "display.h"
 #include "irq.h"
 #include "scu_bus.h"
 #include "aux.h"
+#include "mini_sdb.h"
 
 extern unsigned int* _startshared[];
 extern unsigned int* _endshared[];
 volatile unsigned int* fesa_if = (unsigned int*)_startshared;
 
-volatile unsigned int* display            = (unsigned int*)0x02900000;
-volatile unsigned int* irq_slave          = (unsigned int*)0x02000d00;
-volatile unsigned short* scu_bus_master   = (unsigned short*)0x02400000;
-int slaves[SCU_BUS_MAX_SLOTS+1] = {0};
+volatile unsigned int* pSDB_base    = (unsigned int*)0x7FFFFA00;
+volatile unsigned int* display;
+volatile unsigned int* irq_slave;
+volatile unsigned short* scu_bus_master;
 volatile unsigned int* cpu_ID;
 volatile unsigned int* time_sys;
-volatile unsigned int* irq_slave;
-volatile unsigned int* timer;
-volatile unsigned int* test;
-volatile unsigned int* display;
-volatile unsigned int* ebm;
 volatile unsigned int* cores;
 volatile unsigned int* atomic;
 
+int slaves[SCU_BUS_MAX_SLOTS+1] = {0};
 
 struct pset {
   int a;
@@ -58,23 +56,23 @@ void isr1()
 {
   char buffer[12];
   struct pset *p;
-  unsigned int i;
   p = (struct p *)fesa_if;
   unsigned char slave_nr = global_msi.adr>>2 & 0xf;
-  static unsigned int icounter[SCU_BUS_MAX_SLOTS+1] = {0};
- 
+  static unsigned short icounter[SCU_BUS_MAX_SLOTS+1] = {1, 1, 1, 1, 1, 1};
   unsigned short tmr_irq_cnts = scu_bus_master[((slave_nr) << 16) + TMR_BASE + TMR_IRQ_CNT]; 
-  //disp_put_c(slave_nr + '0');
-  //disp_put_c(' ');
-  mat_sprinthex(buffer, icounter[slave_nr - 1]);
+  disp_put_c(slave_nr + '0');
+  disp_put_c(' ');
+
+  sprinthex(buffer, icounter[slave_nr - 1], 4);
   disp_put_str(buffer);
   disp_put_c('\n');
-  
-  mat_sprinthex(buffer, tmr_irq_cnts);
+  disp_put_c(' '); disp_put_c(' '); 
+ 
+  sprinthex(buffer, tmr_irq_cnts, 4);
   disp_put_str(buffer);
   disp_put_c('\n');
 
-  if (tmr_irq_cnts = icounter[slave_nr - 1] + 1) {
+  if ((tmr_irq_cnts == icounter[slave_nr - 1])) {
     scu_bus_master[((slave_nr) << 16) + SLAVE_INT_ACT] |= 5; //ack timer and powerup irq
   }
   icounter[slave_nr-1]++; 
@@ -83,8 +81,10 @@ void isr1()
 
 int main(void) {
   int i = 0;
-  //char buffer[14];
-
+  
+  display      = (unsigned int*)find_device(SCU_OLED_DISPLAY);
+  irq_slave    = (unsigned int*)find_device(IRQ_MSI_CTRL_IF);
+  scu_bus_master = (unsigned short*)find_device(SCU_BUS_MASTER);  
   
   disp_reset();
   disp_put_c('\f');
@@ -104,8 +104,8 @@ int main(void) {
     scu_bus_master[MULTI_SLAVE_SEL] |= (1 << (slaves[i]-1)); //set bitmask for broadcast select
     scu_bus_master[(slaves[i] << 16) + SLAVE_INT_ENA] = 0x4; //enable tmr irq in slave macro
     scu_bus_master[(slaves[i] << 16) + TMR_BASE + TMR_CNTRL] = 0x1; //reset TMR
-    scu_bus_master[(slaves[i] << 16) + TMR_BASE + TMR_VALUEL] = 0x1fff; //enable generation of tmr irqs
-    scu_bus_master[(slaves[i] << 16) + TMR_BASE + TMR_VALUEH] = 0x0000; //enable generation of tmr irqs
+    scu_bus_master[(slaves[i] << 16) + TMR_BASE + TMR_VALUEL] = 0xffff; //enable generation of tmr irqs
+    scu_bus_master[(slaves[i] << 16) + TMR_BASE + TMR_VALUEH] = 0x005f; //enable generation of tmr irqs
     scu_bus_master[(slaves[i] << 16) + TMR_BASE + TMR_CNTRL] |= 0x2; //enable generation of tmr irqs
     i++;
   } 

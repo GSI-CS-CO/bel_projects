@@ -56,7 +56,12 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- User LEDs (U1-U4)
     -----------------------------------------------------------------------
-    leds_o         : out std_logic_vector(4 downto 1);
+    nuser_leds_o    : out std_logic_vector(4 downto 1);
+    naux_sfp_grn    : out std_logic;
+    naux_sfp_red    : out std_logic;
+    ntiming_sfp_grn : out std_logic;
+    ntiming_sfp_red : out std_logic;
+    
     
     -----------------------------------------------------------------------
     -- OneWire
@@ -246,9 +251,13 @@ end scu_control;
 
 architecture rtl of scu_control is
   
-  signal kbc_out_port : std_logic_vector(7 downto 0);
-  signal s_leds       : std_logic_vector(4 downto 1);
-  signal s_lemo_leds  : std_logic_vector(2 downto 1);
+  signal kbc_out_port   : std_logic_vector(7 downto 0);
+  signal s_leds         : std_logic_vector(4 downto 1);
+  signal s_lemo_leds    : std_logic_vector(2 downto 1);
+  signal s_tled_sfp_grn : std_logic;
+  signal s_tled_sfp_red : std_logic;
+  signal s_aled_sfp_grn : std_logic;
+  signal s_aled_sfp_red : std_logic;
   signal clk_ref      : std_logic;
   signal rstn_ref     : std_logic;
   
@@ -263,8 +272,9 @@ begin
       g_flash_bits => 24,
       g_en_pcie    => true,
       g_en_scubus  => true,
-      g_en_mil     => true,
-      g_en_oled    => true)
+      g_en_mil     => false,
+      g_en_oled    => true,
+      g_en_user_ow => true)
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_sfpref_i => sfp2_ref_clk_i,
@@ -285,8 +295,8 @@ begin
       wr_ndac_cs_o           => ndac_cs,
       wr_uart_o              => uart_txd_o(0),
       wr_uart_i              => uart_rxd_i(0),
-      led_link_up_o          => s_leds(3),
-      led_link_act_o         => s_leds(2),
+      led_link_up_o          => s_tled_sfp_grn,
+      led_link_act_o         => s_tled_sfp_red,
       led_track_o            => s_leds(4),
       led_pps_o              => s_leds(1),
       pcie_refclk_i          => pcie_refclk_i,
@@ -348,7 +358,9 @@ begin
       oled_ss_o              => hpla_ch(4),
       oled_sck_o             => hpla_ch(2), 
       oled_sd_o              => hpla_ch(10),
-      oled_sh_vr_o           => hpla_ch(0));
+      oled_sh_vr_o           => hpla_ch(0),
+      ow_io(0)               => onewire_ext,
+      ow_io(1)               => A_OneWire);
  
   -- LPC UART
   lpc_slave: lpc_uart
@@ -408,8 +420,12 @@ begin
   end generate;
   
   -- LEDs
-  leds_o   <= not s_leds;
-  lemo_led <= not s_lemo_leds;
+  nuser_leds_o    <= not s_leds;
+  lemo_led        <= not s_lemo_leds;
+  ntiming_sfp_grn <= not s_tled_sfp_grn;
+  ntiming_sfp_red <= not s_tled_sfp_red;
+  naux_sfp_grn    <= not s_aled_sfp_grn;
+  naux_sfp_red    <= not s_aled_sfp_red;
   
   -- Logic analyzer port (0,2,4,6,8,10 = OLED)
   -- Don't put debug clocks too close (makes display flicker)

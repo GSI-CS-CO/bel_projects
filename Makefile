@@ -89,11 +89,17 @@ firmware::	sdbfs etherbone toolchain ip_cores/wrpc-sw/.config
 firmware-clean::
 	$(MAKE) -C ip_cores/wrpc-sw EB=$(PWD)/ip_cores/etherbone-core/api SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
-scu::		firmware
-	$(MAKE) -C syn/gsi_scu/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+scu2::		firmware
+	$(MAKE) -C syn/gsi_scu/control2 PATH=$(PWD)/toolchain/bin:$(PATH) all
 
-scu-clean::
-	$(MAKE) -C syn/gsi_scu/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+scu2-clean::
+	$(MAKE) -C syn/gsi_scu/control2 PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+scu3::		firmware
+	$(MAKE) -C syn/gsi_scu/control3 PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+scu3-clean::
+	$(MAKE) -C syn/gsi_scu/control3 PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
 vetar::		firmware
 	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
@@ -112,3 +118,21 @@ pexarria5::	firmware
 
 pexarria5-clean::
 	$(MAKE) -C syn/gsi_pexarria5/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+addac::	
+	$(MAKE) -C syn/gsi_addac PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+addac-clean::
+	$(MAKE) -C syn/gsi_addac PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+addac2::	
+	$(MAKE) -C syn/gsi_addac2 PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+addac2-clean::
+	$(MAKE) -C syn/gsi_addac2 PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+diob::	
+	$(MAKE) -C syn/scu_diob PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+diob-clean::
+	$(MAKE) -C syn/scu_diob PATH=$(PWD)/toolchain/bin:$(PATH) clean

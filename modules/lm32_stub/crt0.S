@@ -83,15 +83,13 @@
 
 //#define MICO32_FULL_CONTEXT_SAVE_RESTORE
 
+.extern _irq_entry
 
 /* Exception handlers - Must be 32 bytes long. */
-        .section    .boot, "ax", @progbits
-	
-        .global	_start  
-_start: 
-	   
-        .global _reset_handler
-        .type 	_reset_handler, @function
+.section    .boot, "ax", @progbits
+
+.global _reset_handler
+.type 	_reset_handler, @function
 _reset_handler:
     xor r0, r0, r0
     wcsr    IE, r0
@@ -101,12 +99,75 @@ _reset_handler:
     wcsr    EBA, r1
     calli   _crt0
     nop
-        .size	_reset_handler, .-_reset_handler
-	
-.extern _irq_entry
-.org 0xc0
-        .global _interrupt_handler
-        .type 	_interrupt_handler, @function
+.size	_reset_handler, .-_reset_handler
+
+.global _breakpoint_handler
+.type 	_breakpoint_handler, @function
+_breakpoint_handler:
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+.size _breakpoint_handler, .-_breakpoint_handler
+
+.global _instruction_bus_error_handler
+.type 	_instruction_bus_error_handler, @function
+_instruction_bus_error_handler:
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+.size _instruction_bus_error_handler, .-_instruction_bus_error_handler
+
+.global _watchpoint_handler
+.type 	_watchpoint_handler, @function
+_watchpoint_handler:
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+.size _watchpoint_handler, .-_watchpoint_handler
+
+.global _data_bus_error_handler
+.type 	_data_bus_error_handler, @function
+_data_bus_error_handler:
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+.size _data_bus_error_handler, .-_data_bus_error_handler
+
+.global _divide_by_zero_handler
+.type 	_divide_by_zero_handler, @function
+_divide_by_zero_handler:
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+.size _divide_by_zero_handler, .-_divide_by_zero_handler
+
+.global _interrupt_handler
+.type 	_interrupt_handler, @function
 _interrupt_handler:
     sw      (sp+0), ra
     calli   _save_all
@@ -120,8 +181,22 @@ _interrupt_handler:
     nop
     nop
     nop
+.size _interrupt_handler, .-_interrupt_handler
 
-.org 0x100
+.global _system_call_handler
+.type 	_system_call_handler, @function
+_system_call_handler:
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+.size _system_call_handler, .-_system_call_handler
+
+        .section    .text, "ax", @progbits
         .global _crt0
         .type 	_crt0, @function
 _crt0:

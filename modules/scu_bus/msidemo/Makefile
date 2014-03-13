@@ -5,7 +5,7 @@ CFLAGS  := -Wall -mmultiply-enabled -mbarrel-shift-enabled -Os -ggdb -DCPU_CLOCK
 msidemo.bin: msidemo.elf
 	lm32-elf-objcopy -O binary $< $@
 
-msidemo.elf: crt0.o aux.o display.o irq.o scu_bus.o main.o
+msidemo.elf: crt0.o mini_sdb.o aux.o display.o irq.o scu_bus.o main.o
 	$(CC) $(CFLAGS) -o $@ -T ram.ld $^
 
 

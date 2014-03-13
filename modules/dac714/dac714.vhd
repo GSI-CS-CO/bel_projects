@@ -183,6 +183,14 @@ use work.dac714_pkg.all;
 --    zweites mal in "dac_714_pkg.vhd".
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers: 3 Revi: 2: erstellt am 07.02.2014, Autor: W.Panschow                                                      --
+--                                                                                                                  --
+--  Aenderung 1)                                                                                                    --
+--    Die Entity dac714 hat ein weiteres Output-Port (DAC_convert_o) bekommen. Es wird bei jeder DAC-Konversion     --
+--    fuer einen Takt aktiv Eins. Dabei spielt es keine Rolle ob die Konversion durch Software, den Funktions-      --
+--    generator oder durch einen exteren Trigger ausgeloest wurde.                                                  -- 
+----------------------------------------------------------------------------------------------------------------------
 
 
 
@@ -212,6 +220,7 @@ entity dac714 is
     nCLR_DAC:           buffer  std_logic;                      -- '0' resets the DAC, Clear Pulsewidth min 200ns
                                                                 -- resets both the input latch and the D/A latch to 0000H (midscale).
     ext_trig_valid:     out     std_logic;                      -- got an valid external trigger, during extern trigger mode.
+    DAC_convert_o:      out     std_logic;                      -- '1' when DAC convert driven by software, functiongenerator or external trigger
     Rd_Port:            out     std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Rd_Activ:           out     std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:              out     std_logic
@@ -296,6 +305,7 @@ architecture arch_dac714 OF dac714 IS
   signal    clr_trm_during_trm_active_err_cnt:    std_logic;
   signal    rd_trm_during_trm_active_err_cnt:     std_logic;
   signal    Ext_Trig_wait:     std_logic;
+  signal    DAC_convert:       std_logic;
 
 begin
 
@@ -454,6 +464,12 @@ P_SPI_SM: process (clk, nReset_ff)
       clear_spi_clk <= '0';
       New_trm_during_trm_active <= '0';
       ext_trig_valid <= '0';
+      
+      if SPI_SM = Load_End then
+        DAC_convert <= '1';    -- '1' when DAC convert driven by software, functiongenerator or external trigger
+      else
+        DAC_convert <= '0';
+      end if;
 
       if FG_mode = '0' then
         -- software mode is selected
@@ -707,7 +723,9 @@ P_Ext_Trig_wait: process (dac_conv_extern, SPI_SM)
   end process P_Ext_Trig_wait;
 
 
-nDAC_CLK <= not spi_clk; 
+nDAC_CLK <= not spi_clk;
+
+DAC_convert_o <= DAC_convert; -- '1' when DAC convert driven by software, functiongenerator or external trigger
 
 P_read_mux: process (rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_shift_err_cnt, Rd_DAC_Cntrl,
                      Ext_Trig_wait, FG_mode, dac_neg_edge_conv, dac_conv_extern, nCLR_DAC, SPI_TRM, 
