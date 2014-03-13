@@ -205,7 +205,9 @@ package monster_pkg is
       lcd_scp_o              : out   std_logic;
       lcd_lp_o               : out   std_logic;
       lcd_flm_o              : out   std_logic;
-      lcd_in_o               : out   std_logic);
+      lcd_in_o               : out   std_logic;
+      -- g_en_user_ow
+      ow_io                  : inout std_logic_vector(1 downto 0));
   end component;
 
 end package;
