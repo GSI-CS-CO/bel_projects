@@ -14,7 +14,7 @@
 --! 0x10  CLEAR      wo, clears heap
 --! 0x14  T_TRN_HI   rw, transmission time window in 8ns, high word. Used for autopop
 --! 0x18  T_TRN_LO   rw, transmission time window in 8ns, low word
---! 0x1C  MSG_MIN    rw, minimum number of elements to dequeue before send & wait for EBM readiness
+--! 0x1C  CAPACITY   ro, total heap capacity
 --! 0x20  MSG_MAX    rw, maximum number of elements to dequeue before send & wait for EBM readiness
 --! 0x24  MSG_CNT    ro, number of elements already popped to EBM before 'send' was issued
 --! 0x28  CFG_GET    ro, get    cfg bits. b5 irq, b4 care for T_Trn, b3 care for msg cnt, b2 chk time before insert,  b1 auto-pop 
@@ -110,8 +110,8 @@ architecture behavioral of ftm_priority_queue is
    constant c_T_DUE_HI   : natural := c_T_TRN_LO   +4;   --38 rw, transmission time window in 8ns, high word. Used for autopop
    constant c_T_DUE_LO   : natural := c_T_DUE_HI   +4;   --3C rw, transmission time window in 8ns, low word
    
-   constant c_MSG_MIN    : natural := c_T_DUE_LO   +4;   --40 rw, minimum number of elements to dequeue before send & wait for EBM readiness. used for autopop
-   constant c_MSG_MAX    : natural := c_MSG_MIN    +4;   --44 rw, maximum number of elements to dequeue before send & wait for EBM readiness. used for autopop
+   constant c_CAPACITY    : natural := c_T_DUE_LO   +4;   --40 ro, total heap capacity
+   constant c_MSG_MAX    : natural := c_CAPACITY    +4;   --44 rw, maximum number of elements to dequeue before send & wait for EBM readiness. used for autopop
    constant c_EBM_ADR    : natural := c_MSG_MAX    +4;   --48 rw, wishbone address of the Etherbone Master
    
 -- cfg reg bits
@@ -195,7 +195,7 @@ architecture behavioral of ftm_priority_queue is
    signal r_msg_cnt_in        : std_logic_vector(31 downto 0);
    signal r_msg_cnt_packet    : std_logic_vector(31 downto 0);
    
-   signal r_msg_min           : std_logic_vector(31 downto 0);
+   signal c_heap_cap          : std_logic_vector(g_idx_width-1 downto 0) := std_logic_vector(to_unsigned(2**g_idx_width-1, g_idx_width);
    signal r_msg_max           : std_logic_vector(31 downto 0);
    signal r_t_trn             : std_logic_vector(63 downto 0);
    alias  a_t_trn_hi          : std_logic_vector(31 downto 0) is r_t_trn(63 downto 32);
@@ -351,7 +351,7 @@ begin
                   when c_T_TRN_LO   => a_t_trn_lo        <= f_wb_wr(a_t_trn_lo,  v_dat_i, v_sel, "owr");
                   when c_T_DUE_HI   => a_t_due_hi        <= f_wb_wr(a_t_due_hi,  v_dat_i, v_sel, "owr");
                   when c_T_DUE_LO   => a_t_due_lo        <= f_wb_wr(a_t_due_lo,  v_dat_i, v_sel, "owr");
-                  when c_MSG_MIN    => r_msg_min         <= f_wb_wr(r_msg_min,   v_dat_i, v_sel, "owr");
+                  when c_CAPACITY    => c_heap_cap         <= f_wb_wr(c_heap_cap,   v_dat_i, v_sel, "owr");
                   when c_MSG_MAX    => r_msg_max         <= f_wb_wr(r_msg_max,   v_dat_i, v_sel, "owr");
                   when c_EBM_ADR    => r_ebm_adr         <= f_wb_wr(r_ebm_adr,   v_dat_i, v_sel, "owr");
                   when others => r_ctrl_out.ack  <= '0'; r_ctrl_out.err <= '1';
@@ -362,7 +362,7 @@ begin
                   when c_CFG_GET    => r_ctrl_out.dat(r_cfg'range)         <= r_cfg;
                   when c_DST_ADR    => r_ctrl_out.dat(r_dst_adr'range)     <= r_dst_adr;
                   when c_HEAP_CNT   => r_ctrl_out.dat(s_heap_cnt'range)    <= s_heap_cnt;
-                  when c_MSG_CNT_O  => r_ctrl_out.dat(r_msg_cnt_out'range) <= r_msg_cnt_out;
+                  when c_MSG_CNT_O  => r_ctrl_out.dat(r_msg_cnt_packet'range) <= r_msg_cnt_packet;
                   when c_MSG_CNT_I  => r_ctrl_out.dat(r_msg_cnt_in'range)  <= r_msg_cnt_in;
                   
                   --FTM
@@ -370,7 +370,7 @@ begin
                   when c_T_TRN_LO   => r_ctrl_out.dat(a_t_trn_lo'range) <= a_t_trn_lo;
                   when c_T_DUE_HI   => r_ctrl_out.dat(a_t_due_hi'range) <= a_t_due_hi;
                   when c_T_DUE_LO   => r_ctrl_out.dat(a_t_due_lo'range) <= a_t_due_lo;
-                  when c_MSG_MIN    => r_ctrl_out.dat(r_msg_min'range)  <= r_msg_min;
+                  when c_CAPACITY   => r_ctrl_out.dat(c_heap_cap'range)  <= c_heap_cap;
                   when c_MSG_MAX    => r_ctrl_out.dat(r_msg_max'range)  <= r_msg_max;
                   when c_EBM_ADR    => r_ctrl_out.dat(r_ebm_adr'range)  <= r_ebm_adr;
                   
