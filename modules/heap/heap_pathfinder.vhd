@@ -177,7 +177,7 @@ end generate;
    s_adr_down(0) <=  std_logic_vector(f_get_l_child(s_ptr_down));
    s_adr_down(1) <=  std_logic_vector(f_get_r_child(s_ptr_down));
       
-   s_parent_le_children <= '1' when ( (s_B_gre_mov = '1' or f_get_r_child(r_ptr) > r_new_last) and s_A_gre_mov = '1') and r_state = e_HEAP_DOWN
+   s_parent_le_children <= '1' when ( (s_B_gre_mov = '1' or f_get_r_child(r_ptr) > r_new_last) and (s_A_gre_mov = '1' or f_get_l_child(r_ptr) > r_new_last)) and r_state = e_HEAP_DOWN
             else '0';
                
    s_lowest_level <= '1' when f_is_lowest_level(r_ptr, r_new_last) and r_state = e_HEAP_DOWN
