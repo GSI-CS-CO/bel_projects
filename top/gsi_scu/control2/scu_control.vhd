@@ -266,7 +266,8 @@ begin
       g_en_scubus  => true,
       g_en_mil     => true,
       g_en_oled    => true,
-      g_en_user_ow => true)
+      g_en_user_ow => true,
+      g_en_power_test => true)
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_sfpref_i => sfp2_ref_clk_i,
@@ -352,7 +353,9 @@ begin
       oled_sd_o              => hpla_ch(10),
       oled_sh_vr_o           => hpla_ch(0),
       ow_io(0)               => onewire_ext,
-      ow_io(1)               => A_OneWire);
+      ow_io(1)               => A_OneWire,
+      pwm_o                  => hpla_ch(14),
+      power_test_toggle      => hpla_clk);
  
   -- LPC UART
   lpc_slave: lpc_uart
@@ -417,7 +420,7 @@ begin
   
   -- Logic analyzer port (0,2,4,6,8,10 = OLED)
   -- Don't put debug clocks too close (makes display flicker)
-  hpla_clk <= 'Z';
+--  hpla_clk <= 'Z';
   hpla_ch <= (others => 'Z');
   
   -- Parallel Flash not connected

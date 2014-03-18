@@ -51,7 +51,7 @@ use work.xvme64x_pack.all;
 use work.VME_Buffer_pack.all;
 use work.wb_mil_scu_pkg.all;
 use work.wr_serialtimestamp_pkg.all;
-
+use work.power_test_pkg.all;
 
 entity monster is
   generic(
@@ -76,6 +76,7 @@ entity monster is
     g_en_oled              : boolean;
     g_en_lcd               : boolean;
     g_en_user_ow           : boolean;
+    g_en_power_test        : boolean;
     g_lm32_cores           : natural := 1;
     g_lm32_MSIs            : natural := 1;
     g_lm32_ramsizes        : natural := 65536;
@@ -231,7 +232,9 @@ entity monster is
     lcd_flm_o              : out   std_logic := 'Z';
     lcd_in_o               : out   std_logic := 'Z';
     -- g_en_user_ow
-    ow_io                  : inout std_logic_vector(1 downto 0));
+    ow_io                  : inout std_logic_vector(1 downto 0);
+    pwm_o                  : out    std_logic;
+    power_test_toggle      : out    std_logic := 'Z');
 end monster;
 
 architecture rtl of monster is
@@ -301,7 +304,7 @@ architecture rtl of monster is
   constant c_topm_fpq       : natural := 5;
   
   -- required slaves
-  constant c_top_slaves     : natural := 16;
+  constant c_top_slaves     : natural := 17;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -320,6 +323,8 @@ architecture rtl of monster is
   constant c_tops_scubus    : natural := 13;
   constant c_tops_mil       : natural := 14;
   constant c_tops_ow        : natural := 15;
+  constant c_tops_power_test: natural := 16;
+
   
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -350,7 +355,8 @@ architecture rtl of monster is
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_tops_scubus    => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
     c_tops_mil       => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
-    c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow));
+    c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow),
+    c_tops_power_test => f_sdb_auto_device(c_xwb_power_test,                g_en_power_test));
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_top_layout_req);
@@ -1501,6 +1507,29 @@ begin
         owr_i       => ow_io
         );
   end generate;
+
+  power_test_n : if not g_en_power_test generate
+    top_cbar_master_i(c_tops_power_test) <= cc_dummy_slave_out;
+  end generate;
+  
+  power_test_y : if g_en_power_test generate
+    power_test_inst: power_test
+        generic map(
+          Clk_in_Hz   => 62_500_000,
+          pwm_width   => 16,
+          row_width   => 64,
+          row_cnt     => 900
+          )
+        port map(
+          clk_i     => clk_sys,
+          nrst_i    => rstn_sys,
+          -- Wishbone
+          slave_i => top_cbar_master_o(c_tops_power_test),
+          slave_o => top_cbar_master_i(c_tops_power_test),
+          pwm_o   => pwm_o, 
+          or_o    => power_test_toggle
+          );
+    end generate;
   
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------
