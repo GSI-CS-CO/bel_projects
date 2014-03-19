@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
   
   /* Process the command-line arguments */
   error = 0;
-  while ((opt = getopt(argc, argv, "h")) != -1) {
+  while ((opt = getopt(argc, argv, "i:h")) != -1) {
     switch (opt) {
     case 'h':
       help();
