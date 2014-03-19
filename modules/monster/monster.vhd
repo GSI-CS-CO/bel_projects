@@ -993,7 +993,7 @@ begin
     generic map (
       g_simulation                => 0,
       g_phys_uart                 => true,
-      g_virtual_uart              => false,
+      g_virtual_uart              => true,
       g_with_external_clock_input => true,
       g_aux_clks                  => 1,
       g_ep_rxbuf_size             => 1024,
