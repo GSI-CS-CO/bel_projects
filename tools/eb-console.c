@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
     exit(1);
   }
   
-  printf("Connected to uart at address %"EB_ADDR_FMT"\n", sdb[i].sdb_component.addr_first);
+  printf("Connected to uart at address %"PRIx64"\n", sdb[i].sdb_component.addr_first);
   tx = sdb[i].sdb_component.addr_first + VUART_TX;
   rx = sdb[i].sdb_component.addr_first + VUART_RX;
   
@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
   /* be lazy and just poll for now */
   busy = 0;
   while (1) {
-    usleep(10000); /* 10ms */
+    if (!busy) usleep(10000); /* 10ms */
     
     while (1) {
       eb_device_read(device, rx, EB_BIG_ENDIAN|EB_DATA32, &data, eb_block, 0);
@@ -162,17 +162,17 @@ int main(int argc, char** argv) {
     
     if (busy) {
       eb_device_read(device, tx, EB_BIG_ENDIAN|EB_DATA32, &data, eb_block, 0);
-      busy = (data & 0x100) != 0;
-    } else {
-      if (read(STDIN_FD, &byte, 1) == 1) {
-        if (byte == 3) { /* control-C */
-          tcsetattr(STDIN_FD, TCSANOW, &old);
-          exit(0);
-        }
-        data = byte;
-        eb_device_write(device, tx, EB_BIG_ENDIAN|EB_DATA32, data, eb_block, 0);
-        busy = 1;
+      busy = (data & 0x100) == 0;
+    }
+    
+    if (!busy && read(STDIN_FD, &byte, 1) == 1) {
+      if (byte == 3) { /* control-C */
+        tcsetattr(STDIN_FD, TCSANOW, &old);
+        exit(0);
       }
+      data = byte;
+      eb_device_write(device, tx, EB_BIG_ENDIAN|EB_DATA32, data, eb_block, 0);
+      busy = 1;
     }
   }
   
