@@ -15,7 +15,7 @@ all::	etherbone tools eca sdbfs toolchain firmware driver
 
 install::	etherbone-install tools-install eca-install driver-install
 
-clean::	etherbone-clean tools-clean eca-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu-clean exploder-clean pexarria5-clean
+clean::	etherbone-clean tools-clean eca-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean pexarria5-clean
 
 distclean::	clean
 	git clean -xfd .

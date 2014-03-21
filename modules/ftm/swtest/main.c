@@ -125,7 +125,7 @@ static const struct {
    unsigned int tTrnLo;
    unsigned int tDueHi;
    unsigned int tDueLo;
-   unsigned int msgMin;
+   unsigned int capacity;
    unsigned int msgMax;
    unsigned int ebmAdr;
    unsigned int cfg_ENA;
@@ -136,25 +136,25 @@ static const struct {
    unsigned int cfg_AUTOFLUSH_MSGS;
    unsigned int force_POP;
    unsigned int force_FLUSH;
-} r_FPQ = {    .rst     =  0x00 >> 2,
-               .force   =  0x04 >> 2,
-               .dbgSet  =  0x08 >> 2,
-               .dbgGet  =  0x0c >> 2,
-               .clear   =  0x10 >> 2,
-               .cfgGet  =  0x14 >> 2,
-               .cfgSet  =  0x18 >> 2,
-               .cfgClr  =  0x1C >> 2,
-               .dstAdr  =  0x20 >> 2,
-               .heapCnt =  0x24 >> 2,
-               .msgCntO =  0x28 >> 2,
-               .msgCntI =  0x2C >> 2,
-               .tTrnHi  =  0x30 >> 2,
-               .tTrnLo  =  0x34 >> 2,
-               .tDueHi  =  0x38 >> 2,
-               .tDueLo  =  0x3C >> 2,
-               .msgMin  =  0x40 >> 2,
-               .msgMax  =  0x44 >> 2,
-               .ebmAdr  =  0x48 >> 2,
+} r_FPQ = {    .rst        =  0x00 >> 2,
+               .force      =  0x04 >> 2,
+               .dbgSet     =  0x08 >> 2,
+               .dbgGet     =  0x0c >> 2,
+               .clear      =  0x10 >> 2,
+               .cfgGet     =  0x14 >> 2,
+               .cfgSet     =  0x18 >> 2,
+               .cfgClr     =  0x1C >> 2,
+               .dstAdr     =  0x20 >> 2,
+               .heapCnt    =  0x24 >> 2,
+               .msgCntO    =  0x28 >> 2,
+               .msgCntI    =  0x2C >> 2,
+               .tTrnHi     =  0x30 >> 2,
+               .tTrnLo     =  0x34 >> 2,
+               .tDueHi     =  0x38 >> 2,
+               .tDueLo     =  0x3C >> 2,
+               .capacity   =  0x40 >> 2,
+               .msgMax     =  0x44 >> 2,
+               .ebmAdr     =  0x48 >> 2,
                .cfg_ENA             = 1<<0,
                .cfg_FIFO            = 1<<1,    
                .cfg_IRQ             = 1<<2,
@@ -170,7 +170,7 @@ void prioQueueInit()
    *(pFpqCtrl + r_FPQ.clear)  = 1;
    *(pFpqCtrl + r_FPQ.dstAdr) = (unsigned int)pEca;
    *(pFpqCtrl + r_FPQ.ebmAdr) = (unsigned int)pEbm;
-   *(pFpqCtrl + r_FPQ.msgMax) = 2;
+   *(pFpqCtrl + r_FPQ.msgMax) = 5;
    *(pFpqCtrl + r_FPQ.tTrnHi) = 0;
    *(pFpqCtrl + r_FPQ.tTrnLo) = 0;
    *(pFpqCtrl + r_FPQ.tDueHi) = 0;
@@ -205,21 +205,27 @@ void init()
    disp_put_c('\f'); 
 }
 
-void insertFpqEntry()
+int insertFpqEntry()
 {
    static unsigned int run = 0;
-  
-   atomic_on();   
-   *pFpqData = 0;
-   *pFpqData = run++;
-   *pFpqData = 0xDEADBEEF;
-   *pFpqData = 0xCAFEBABE;
-   *pFpqData = 0x11111111;
-   *pFpqData = 0x11111111;
-   *pFpqData = 0x11111111;
-   *pFpqData = 20 - run;
+   int ret = 0;
+   atomic_on();
+   if( (*(pFpqCtrl + r_FPQ.capacity) - *(pFpqCtrl + r_FPQ.heapCnt)) > 1)
+   {  
+      *pFpqData = 0;
+      *pFpqData = 128 - run++;
+      *pFpqData = 0xDEADBEEF;
+      *pFpqData = 0xCAFEBABE;
+      *pFpqData = 0x11111111;
+      *pFpqData = 0x22222222;
+      *pFpqData = 0x33333333;
+      *pFpqData = run;
+   } else {
+      ret = -1;
+      mprintf("Queue full, waiting\n");
+   }   
    atomic_off();  
-
+   return ret;
 }
 
 void showFpqStatus()
@@ -257,36 +263,17 @@ disp_put_c('\f');
    mprintf("ECA 0x%8x\n", pEca);
    mprintf("Time: 0x%8x%8x\n", *pCpuSysTime, *(pCpuSysTime+1));
     showFpqStatus();
-   /*
-   while(1){ 
-   insertFpqEntry();
-   for (j = 0; j < 31500000; ++j) {asm("# noop");}
-   showFpqStatus();
-   */
-   /*
-   insertFpqEntry();
-   for (j = 0; j < 31500000; ++j) {asm("# noop");}
-   showFpqStatus();
-   insertFpqEntry();
-   for (j = 0; j < 31500000; ++j) {asm("# noop");}
+   
+   for (j = 0; j < 128; ++j) insertFpqEntry();
    showFpqStatus();
    
-   *(pFpqCtrl + r_FPQ.force) = r_FPQ.force_POP;
-   for (j = 0; j < 31500000; ++j) {asm("# noop");}
-   showFpqStatus();
+   for (j = 0; j < 3500000; ++j) {asm("# noop");}
+  
    
-   *(pFpqCtrl + r_FPQ.force) = r_FPQ.force_POP;
-   for (j = 0; j < 31500000; ++j) {asm("# noop");}
-   showFpqStatus();
-   
-   *(pFpqCtrl + r_FPQ.force) = r_FPQ.force_POP;
-   for (j = 0; j < 31500000; ++j) {asm("# noop");}
-   showFpqStatus();
-   */
-   }
-   
-  while (1) {
-      
+   while (1) {
+      *(pFpqCtrl + r_FPQ.force) = r_FPQ.force_POP;
+      for (j = 0; j < 31500000; ++j) {asm("# noop");}
+      showFpqStatus();
   }
 
 }
