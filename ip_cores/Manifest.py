@@ -3,6 +3,6 @@ modules = {
     "etherbone-core",
     "general-cores",
     "wr-cores",
-    "legacy-vme64x-core",
+    "fpga-config-space/legacy-vme64x-core",
   ]
 }
