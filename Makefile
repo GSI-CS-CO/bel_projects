@@ -50,17 +50,14 @@ eca-install::
 
 driver::
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb all
-	$(MAKE) -C ip_cores/legacy-vme64x-core/drv all
 	$(MAKE) -C ip_cores/fpga-config-space/vme-wb all
 
 driver-clean::
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb clean
-	$(MAKE) -C ip_cores/legacy-vme64x-core/drv clean
 	$(MAKE) -C ip_cores/fpga-config-space/vme-wb clean
 
 driver-install::
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb install
-	$(MAKE) -C ip_cores/legacy-vme64x-core/drv install
 	$(MAKE) -C ip_cores/fpga-config-space/vme-wb install
 
 sdbfs::
