@@ -61,12 +61,12 @@ extern volatile unsigned int* pEbm;
 #define READ            0x00000000
 #define ADR_MASK        0x003FFFFF
 
-typedef struct eb_lm32_udp_link {
+typedef struct {
   /* Contents must fit in 12 bytes */
   unsigned char mac[6];
   unsigned char ipv4[4];
   unsigned short port;		
-};
+} eb_lm32_udp_link;
 typedef unsigned int adress_type_t;
 typedef unsigned char target_t;
 

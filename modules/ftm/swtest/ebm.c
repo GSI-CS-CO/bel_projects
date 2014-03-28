@@ -29,11 +29,11 @@
 static inline char* strsplit(const char*  numstr, const char* delimeter);
 static inline unsigned char* numStrToBytes(const char*  numstr, unsigned char* bytes,  unsigned char len,  unsigned char base, const char* delimeter);
 static inline unsigned char* addressStrToBytes(const char* addressStr, unsigned char* addressBytes, adress_type_t addtype);
-static inline unsigned int ebm_parse_adr(struct eb_lm32_udp_link* link, const char* address);
+static inline unsigned int ebm_parse_adr(eb_lm32_udp_link* link, const char* address);
 
 void ebm_config_if(target_t conf, const char* con_info)
 {
-  struct eb_lm32_udp_link* link;
+  eb_lm32_udp_link* link;
   unsigned int offset;
   
   unsigned int tmp;
@@ -145,7 +145,7 @@ static  unsigned char* addressStrToBytes(const char* addressStr, unsigned char* 
 	
 }
 
-static unsigned int ebm_parse_adr(struct eb_lm32_udp_link* link, const char* address) {
+static unsigned int ebm_parse_adr(eb_lm32_udp_link* link, const char* address) {
   
 
   char * pch;
