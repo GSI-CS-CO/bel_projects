@@ -46,6 +46,10 @@ ENTITY wb_mil_scu IS
 --|         |             |             | d) Die Entprellung der Device-Bus-Interrupts ist implementiert. Diese Funktion ist immer  |
 --|         |             |             |    einschaltet. Im Statusregister wird die Funktion immer als eingeschaltet signalisiert. |
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
+--|   04    | W.Panschow  | 28.03.2013  | a) Interrupt-Ausgaenge zum Anschluss an die Mil-Interrupt-Instanz "mil_irq_inst"          |
+--|         |             |             |    eingebaut (Interlock_Intr_o, Data_Rdy_Intr_o,  Data_Req_Intr_o, dly_intr_o,            |
+--|         |             |             |    ev_fifo_ne_intr_o).                                                                    |
+--| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
 --|                                                                                                                                 |
 --+---------------------------------------------------------------------------------------------------------------------------------+
 
@@ -115,13 +119,19 @@ port  (
     Mil_Decoder_Diag_n: out   std_logic_vector(15 downto 0);
     timing:         in      std_logic;
     nLed_Timing:    out     std_logic;
+    dly_intr_o:     out     std_logic;
     nLed_Fifo_ne:   out     std_logic;
-    Interlock_Intr: in      std_logic;
-    Data_Rdy_Intr:  in      std_logic;
-    Data_Req_Intr:  in      std_logic;
+    ev_fifo_ne_intr_o:  out   std_logic;
+    Interlock_Intr_i: in      std_logic;
+    Data_Rdy_Intr_i:  in      std_logic;
+    Data_Req_Intr_i:  in      std_logic;
+    Interlock_Intr_o: out     std_logic;
+    Data_Rdy_Intr_o:  out     std_logic;
+    Data_Req_Intr_o:  out     std_logic;
     nLed_Interl:    out     std_logic;
     nLed_Dry:       out     std_logic;
     nLed_Drq:       out     std_logic;
+    every_10ms_intr_o:  out std_logic;
     io_1:           buffer  std_logic;
     io_1_is_in:     out     std_logic := '0';
     nLed_io_1:      out     std_logic;
@@ -202,6 +212,8 @@ signal    db_interlock_intr:  std_logic;
 signal    db_data_rdy_intr: std_logic;
 signal    db_data_req_intr: std_logic;
 
+signal    dly_intr:         std_logic;
+signal    every_10ms:       std_logic;
 
 
 begin
@@ -229,6 +241,25 @@ ena_led_cnt: div_n
                                   -- Z.B. kÃ¶nnte eine weitere div_n-Instanz dieses Signal erzeugen.  
     div_o     => ena_led_count    -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
     );
+
+
+every_10ms_inst: div_n
+  generic map (
+    n         => clk_in_hz / (100 * 1000),-- Vorgabe der Taktuntersetzung. 10ms = 0.01 = 1/100 * ena_every_us (1000)
+    diag_on   => 0                        -- diag_on = 1 die Breite des Untersetzungzaehlers
+                                          -- mit assert .. note ausgegeben.
+    )
+
+  port map (
+    res       => '0',
+    clk       => clk_i,
+    ena       => ena_every_us,    -- das untersetzende enable muss in der gleichen ClockdomÃ¤ne erzeugt werden.
+                                  -- Das enable sollte nur ein Takt lang sein.
+                                  -- Z.B. kÃ¶nnte eine weitere div_n-Instanz dieses Signal erzeugen.  
+    div_o     => every_10ms       -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
+    );
+
+every_10ms_intr_o <= every_10ms;
 
 
 led_rcv: led_n
@@ -380,11 +411,14 @@ p_deb_intl: debounce
                                             -- "DB_Out" diesem Pegel folgt.     
     )
   port map (
-    DB_In   => Interlock_Intr,    -- Das zu entprellende Signal
+    DB_In   => Interlock_Intr_i,  -- Das zu entprellende Signal
     Reset   => not nRst_i,        -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
     Clk     => clk_i,
     DB_Out  => db_interlock_intr  -- Das entprellte Signal von "DB_In".
     );
+    
+Interlock_Intr_o <= db_interlock_intr;
+
 
 p_deb_drdy: debounce
   generic map (
@@ -393,24 +427,30 @@ p_deb_drdy: debounce
                                             -- "DB_Out" diesem Pegel folgt.     
     )
   port map (
-    DB_In   => Data_Rdy_Intr,     -- Das zu entprellende Signal
+    DB_In   => Data_Rdy_Intr_i,   -- Das zu entprellende Signal
     Reset   => not nRst_i,        -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
     Clk     => clk_i,
-    DB_Out  => db_data_rdy_intr   -- Das entprellte Signal von "DB_In".
+    DB_Out  => db_data_rdy_intr   -- Das entprellte Signal von "DB_In"
     );
 
-p_deb_deq: debounce
+Data_Rdy_Intr_o <= db_data_rdy_intr;
+
+
+p_deb_dreq: debounce
   generic map (
     DB_Cnt  => clk_in_hz / (1_000_000/ 2)   -- "DB_Cnt" = fuer 2 us, debounce count gibt die Anzahl von Taktperioden vor, die das
                                             -- Signal "DB_In" mindestens '1' oder '0' sein muss, damit der Ausgang
                                             -- "DB_Out" diesem Pegel folgt.     
     )
   port map (
-    DB_In   => Data_Req_Intr,     -- Das zu entprellende Signal
+    DB_In   => Data_Req_Intr_i,   -- Das zu entprellende Signal
     Reset   => not nRst_i,        -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
     Clk     => clk_i,
     DB_Out  => db_data_req_intr   -- Das entprellte Signal von "DB_In".
     );
+    
+Data_Req_Intr_o <= db_data_req_intr;
+
 
 Mil_1:  mil_hw_or_soft_ip
   generic map (
@@ -515,6 +555,8 @@ event_processing_1: event_processing
     ev_puls2          => io_2,
     timing_received   => timing_received
   );
+
+ev_fifo_ne_intr_o <= ev_fifo_ne;
 
 
 led_fifo_ne: led_n
@@ -645,7 +687,7 @@ p_regs_acc: process (clk_i, nrst_i)
                 slave_o.dat(15 downto 0) <= ( manchester_fpga & ev_filt_12_8b & ev_filt_on & debounce_on    -- mil-status[15..12]
                                             & puls2_frame & puls1_frame & ev_reset_on & mil_rcv_error       -- mil-status[11..8]
                                             & mil_trm_rdy & Mil_Cmd_Rcv & mil_rcv_rdy & ev_fifo_full        -- mil-status[7..4]
-                                            & ev_fifo_ne & Data_Req_Intr & Data_Rdy_Intr & Interlock_Intr );-- mil-status[3..0]
+                                            & ev_fifo_ne & db_data_req_intr & db_data_rdy_intr & db_interlock_intr );-- mil-status[3..0]
                 ex_stall <= '0';
                 ex_ack <= '1';
               end if;
@@ -840,13 +882,12 @@ p_ev_timer: process (clk_i, nRst_i)
 p_delay_timer: process (clk_i, nRst_i)
 
   variable  dly_timer_start:  std_logic;
-  variable  dly_intr:         std_logic;
 
   begin
     if nRst_i = '0' then
       dly_timer       <= to_unsigned(-1, dly_timer'length);
       dly_timer_start := '0';
-      dly_intr        := '0';
+      dly_intr        <= '0';
 
     elsif rising_edge(clk_i) then
       
@@ -854,7 +895,7 @@ p_delay_timer: process (clk_i, nRst_i)
       
       if ld_dly_timer = '1' then
         stall_dly_timer <= '0';
-        dly_intr := '0';                            -- laden des delay timers setzt delay interrupt zurueck
+        dly_intr <= '0';                            -- laden des delay timers setzt delay interrupt zurueck
         dly_timer <= unsigned(slave_i.dat(dly_timer'range));
         if dly_timer(dly_timer'high) = '0' then     -- laden des delay timers bei dem das oberste bit = 0 ist
           dly_timer_start := '1';                   -- startet den delay timer.
@@ -868,12 +909,14 @@ p_delay_timer: process (clk_i, nRst_i)
           if dly_timer(dly_timer'high) = '0' then
             dly_timer <= dly_timer - 1;
           else
-            dly_intr := '1';
+            dly_intr <= '1';
           end if;
         end if;
       end if;
     end if;
   end process p_delay_timer;
+  
+dly_intr_o <= dly_intr;
 
 
 p_wait_timer: process (clk_i, nRst_i)
@@ -888,6 +931,18 @@ p_wait_timer: process (clk_i, nRst_i)
       end if;
     end if;
   end process p_wait_timer;
+
+
+--p_every_10ms: process (clk_i, nRst_i)
+--  begin
+--    if nRst_i = '0' then
+--      every_10ms_cnt <= to_unsigned(0, every_10ms_cnt'length);
+--    elsif rising_edge(clk_i) then
+--      if ena_every_us = '1' then
+--        every_10ms_cnt <= every_10ms_cnt + 1;
+--      end if;
+--    end if;
+--  end process p_every_10ms;
 
 
 end arch_wb_mil_scu;
