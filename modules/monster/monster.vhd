@@ -1582,7 +1582,7 @@ begin
           -- Wishbone
           slave_i => top_cbar_master_o(c_tops_power_test),
           slave_o => top_cbar_master_i(c_tops_power_test),
-          pwm_o   => pwm_o, 
+          pwm_o   => power_test_pwm_o, 
           or_o    => open
           );
     end generate;
