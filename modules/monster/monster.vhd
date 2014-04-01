@@ -206,20 +206,14 @@ entity monster is
     mil_nled_err_o         : out   std_logic := 'Z';
     mil_timing_i           : in    std_logic;
     mil_nled_timing_o      : out   std_logic := 'Z';
-    mil_dly_intr_o         : buffer std_logic;
-    mil_ev_fifo_ne_intr_o  : buffer std_logic;
     mil_nled_fifo_ne_o     : out   std_logic := 'Z';
     mil_interlock_intr_i   : in    std_logic;
     mil_data_rdy_intr_i    : in    std_logic;
     mil_data_req_intr_i    : in    std_logic;
-    mil_interlock_intr_o   : buffer    std_logic;
-    mil_data_rdy_intr_o    : buffer    std_logic;
-    mil_data_req_intr_o    : buffer    std_logic;
     mil_nled_interl_o      : out   std_logic := 'Z';
     mil_nled_dry_o         : out   std_logic := 'Z';
     mil_nled_drq_o         : out   std_logic := 'Z';
     mil_io1_o              : out   std_logic := 'Z';
-    mil_every_10ms_intr_o  : buffer     std_logic;
     mil_io1_is_in_o        : out   std_logic := 'Z';
     mil_nled_io1_o         : out   std_logic := 'Z';
     mil_io2_o              : out   std_logic := 'Z';
@@ -239,8 +233,8 @@ entity monster is
     lcd_in_o               : out   std_logic := 'Z';
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
-    pwm_o                  : out    std_logic;
-    power_test_toggle      : out    std_logic := 'Z');
+    -- g_en_power_test
+    power_test_pwm_o       : out    std_logic);
 end monster;
 
 architecture rtl of monster is
@@ -508,6 +502,21 @@ architecture rtl of monster is
   
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
+
+  ----------------------------------------------------------------------------------
+  -- Mil-Extension signals ---------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  
+  signal  mil_interlock_intr_o:   std_logic;
+  signal  mil_data_rdy_intr_o:    std_logic;
+  signal  mil_data_req_intr_o:    std_logic;
+  signal  mil_dly_intr_o:         std_logic;
+  signal  mil_ev_fifo_ne_intr_o:  std_logic;
+  signal  mil_every_10ms_intr_o:  std_logic;
+  
+  -- Mil-Extension signals
+  ----------------------------------------------------------------------------------
+  
   
   ----------------------------------------------------------------------------------
   -- VME signals -------------------------------------------------------------------
@@ -1430,6 +1439,7 @@ begin
   end generate;
   
   mil_y : if g_en_mil generate
+  
     milp : mil_pll
       port map(
         inclk0 => clk_sys1,
@@ -1573,7 +1583,7 @@ begin
           slave_i => top_cbar_master_o(c_tops_power_test),
           slave_o => top_cbar_master_i(c_tops_power_test),
           pwm_o   => pwm_o, 
-          or_o    => power_test_toggle
+          or_o    => open
           );
     end generate;
   

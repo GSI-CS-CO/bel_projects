@@ -362,8 +362,7 @@ begin
       oled_sh_vr_o           => hpla_ch(0),
       ow_io(0)               => onewire_ext,
       ow_io(1)               => A_OneWire,
-      pwm_o                  => hpla_ch(14),
-      power_test_toggle      => hpla_clk);
+      power_test_pwm_o       => hpla_ch(14));
       
   -- LPC UART
   lpc_slave: lpc_uart

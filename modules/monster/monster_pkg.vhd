@@ -209,8 +209,8 @@ package monster_pkg is
       lcd_in_o               : out   std_logic;
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0);
-      pwm_o                  : out    std_logic;
-      power_test_toggle      : out    std_logic);
+      -- g_en_power_test
+      power_test_pwm_o       : out    std_logic);
   end component;
 
 end package;

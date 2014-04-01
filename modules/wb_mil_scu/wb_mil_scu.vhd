@@ -933,16 +933,4 @@ p_wait_timer: process (clk_i, nRst_i)
   end process p_wait_timer;
 
 
---p_every_10ms: process (clk_i, nRst_i)
---  begin
---    if nRst_i = '0' then
---      every_10ms_cnt <= to_unsigned(0, every_10ms_cnt'length);
---    elsif rising_edge(clk_i) then
---      if ena_every_us = '1' then
---        every_10ms_cnt <= every_10ms_cnt + 1;
---      end if;
---    end if;
---  end process p_every_10ms;
-
-
 end arch_wb_mil_scu;
