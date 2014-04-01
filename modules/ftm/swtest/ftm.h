@@ -1,6 +1,7 @@
 #ifndef _FTM_H_
 #define _FTM_H_
-
+#include <inttypes.h>
+#include <stdint.h>
 
 
 //masks & constants
@@ -33,8 +34,8 @@
 #define TIMER_CYC_START       8
 #define TIMER_CYC_PREP        TIMER_CYC_START+1 
 #define TIMER_MSG_PREP        TIMER_CYC_PREP+1  
-#define TIMER_ABS       CYC_ABS_TIME
-#define TIMER_PER        (1<<2) 
+#define TIMER_ABS             CYC_ABS_TIME
+#define TIMER_PER             (1<<2) 
 
 
 #define TIMER_CYC_START_MSK   (1<<TIMER_CYC_START)
@@ -68,40 +69,70 @@
 #define FTM_IS_RUNNING        (1<<0) 
 #define FTM_IS_STOP_REQ       (1<<1) 
 
-extern unsigned int*       _startshared[];
-extern unsigned int*       _endshared[];
+#define FTM_TIME_SIZE         8
+#define FTM_DWORD_SIZE        8
+#define FTM_WORD_SIZE         4
+#define FTM_PTR_SIZE          4
+
+#define FTM_MSG_ID            0
+#define FTM_MSG_PAR           (FTM_MSG_ID    + 8)
+#define FTM_MSG_TEF           (FTM_MSG_PAR   + 8)
+#define FTM_MSG_RES           (FTM_MSG_TEF   + 4)
+#define FTM_MSG_TS            (FTM_MSG_RES   + 4)
+#define FTM_MSG_OFFS          (FTM_MSG_TS    + 8)
+#define FTM_MSG_END_          (FTM_MSG_OFFS  + 8)
+
+#define FTM_CYC_TTRN          0
+#define FTM_CYC_TSTART        (FTM_CYC_TTRN           + 8)
+#define FTM_CYC_TPERIOD       (FTM_CYC_TSTART         + 8)
+#define FTM_CYC_TEXEC         (FTM_CYC_TPERIOD        + 8)
+#define FTM_CYC_FLAGS         (FTM_CYC_TEXEC          + 8)
+#define FTM_CYC_PCONDINDPUT   (FTM_CYC_FLAGS          + 4)
+#define FTM_CYC_PCONDPATTERN  (FTM_CYC_PCONDINDPUT    + 4)
+#define FTM_CYC_CONDMSK       (FTM_CYC_PCONDPATTERN   + 4)
+#define FTM_CYC_REPQTY        (FTM_CYC_CONDMSK        + 4)
+#define FTM_CYC_REPCNT        (FTM_CYC_REPQTY         + 4)
+#define FTM_CYC_MSGQTY        (FTM_CYC_REPCNT         + 4)
+#define FTM_CYC_MSGIDX        (FTM_CYC_MSGQTY         + 4)
+#define FTM_CYC_PMSG          (FTM_CYC_MSGIDX         + 4)
+#define FTM_CYC_PNEXT         (FTM_CYC_PMSG           + 4)
+#define FTM_CYC_END_          (FTM_CYC_PNEXT          + 4)
 
 
+
+
+extern uint32_t*       _startshared[];
+extern uint32_t*       _endshared[];
 
 // Priority Queue RegisterLayout
 static const struct {
-   unsigned int rst;
-   unsigned int force;
-   unsigned int dbgSet;
-   unsigned int dbgGet;
-   unsigned int clear;
-   unsigned int cfgGet;
-   unsigned int cfgSet;
-   unsigned int cfgClr;
-   unsigned int dstAdr;
-   unsigned int heapCnt;
-   unsigned int msgCntO;
-   unsigned int msgCntI;
-   unsigned int tTrnHi;
-   unsigned int tTrnLo;
-   unsigned int tDueHi;
-   unsigned int tDueLo;
-   unsigned int capacity;
-   unsigned int msgMax;
-   unsigned int ebmAdr;
-   unsigned int cfg_ENA;
-   unsigned int cfg_FIFO;    
-   unsigned int cfg_IRQ;
-   unsigned int cfg_AUTOPOP;
-   unsigned int cfg_AUTOFLUSH_TIME;
-   unsigned int cfg_AUTOFLUSH_MSGS;
-   unsigned int force_POP;
-   unsigned int force_FLUSH;
+   uint32_t rst;
+   uint32_t force;
+   uint32_t dbgSet;
+   uint32_t dbgGet;
+   uint32_t clear;
+   uint32_t cfgGet;
+   uint32_t cfgSet;
+   uint32_t cfgClr;
+   uint32_t dstAdr;
+   uint32_t heapCnt;
+   uint32_t msgCntO;
+   uint32_t msgCntI;
+   uint32_t tTrnHi;
+   uint32_t tTrnLo;
+   uint32_t tDueHi;
+   uint32_t tDueLo;
+   uint32_t capacity;
+   uint32_t msgMax;
+   uint32_t ebmAdr;
+   uint32_t cfg_ENA;
+   uint32_t cfg_FIFO;    
+   uint32_t cfg_IRQ;
+   uint32_t cfg_AUTOPOP;
+   uint32_t cfg_AUTOFLUSH_TIME;
+   uint32_t cfg_AUTOFLUSH_MSGS;
+   uint32_t force_POP;
+   uint32_t force_FLUSH;
 } r_FPQ = {    .rst        =  0x00 >> 2,
                .force      =  0x04 >> 2,
                .dbgSet     =  0x08 >> 2,
@@ -131,105 +162,113 @@ static const struct {
                .force_FLUSH         = 1<<1
 };
 
-
-
-typedef unsigned int t_status;
-
-
+typedef uint32_t t_status;
 
 typedef struct {
-   unsigned int hi;
-   unsigned int lo;
+   uint32_t hi;
+   uint32_t lo;
 } t_dw;
 
 typedef union {
-   unsigned long long   v64;
-   t_dw                 v32;               
+   uint64_t   v64;
+   t_dw       v32;               
 } u_dword;
 
 typedef u_dword t_time ;
 
 typedef struct {
-   u_dword id;
-   u_dword par;
-   unsigned int tef;
-   unsigned int res;
-   u_dword ts;
-   u_dword offs;
+   u_dword  id;
+   u_dword  par;
+   uint32_t tef;
+   uint32_t res;
+   u_dword  ts;
+   u_dword  offs;
 } t_ftmMsg;
-
 
 typedef struct {
    
-   const u_dword        tTrn;     //worst case time transmission will take
-   const u_dword        tPrep;    //time offset to prepare msgs
-   u_dword        tStart;   //desired start time of this cycle
-   const u_dword        tPeriod;  //cycle period
-         u_dword        tExec;    //cycle execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod
-   const unsigned int  flags;    //apart from CYC_IS_BP, this is just markers for status info & better debugging
-   const unsigned int* pCondInput;   //pointer to location to poll for condition
-   const unsigned int* pCondPattern; //pointer to pattern to compare
-   const unsigned int  condMsk;     //mask for comparison in condition
-   const unsigned int  repQty;   //number of desired repetitions. -1 -> infinite, 0 -> none
-         unsigned int  repCnt;   //running count of repetitions
-   const unsigned int  msgQty;   //Number of messages
-         unsigned int  msgIdx;   //idx of the currently processed msg 
-   const t_ftmMsg*     pMsg;     //pointer to messages
-   const struct t_ftmCycle*  pNext;    //pointer to next cycle
-   const unsigned int  planID;   //+++ to be removed, just for debugging
-   const unsigned int  cycID;    //+++ to be removed, just for debugging
+   u_dword              tTrn;          //worst case time transmission will take
+   u_dword              tStart;        //desired start time of this cycle
+   u_dword              tPeriod;       //cycle period
+   u_dword              tExec;         //cycle execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod
+   uint32_t             flags;         //apart from CYC_IS_BP, this is just markers for status info & better debugging
+   uint32_t*            pCondInput;    //pointer to location to poll for condition
+   uint32_t*            pCondPattern;  //pointer to pattern to compare
+   uint32_t             condMsk;       //mask for comparison in condition
+   uint32_t             repQty;        //number of desired repetitions. -1 -> infinite, 0 -> none
+   uint32_t             repCnt;        //running count of repetitions
+   uint32_t             msgQty;        //Number of messages
+   uint32_t             msgIdx;        //idx of the currently processed msg 
+   t_ftmMsg*            pMsg;          //pointer to messages
+   struct t_ftmCycle*   pNext;         //pointer to next cycle
    
 } t_ftmCycle;
 
-
-
-
 typedef struct {
 
-   unsigned int   space[ ((4096/4 -32)/2  - 32) ];
-   unsigned int   planQty;
+   uint32_t       space[ ((4096/4 -32)/2  - 32) ];
+   uint32_t       planQty;
    t_ftmCycle     pPlans[16];
    t_ftmCycle*    pAlt;
    t_ftmCycle*    pStart;
 } t_ftmPage;
 
 typedef struct {
-   t_ftmPage            pPages[2];
-   unsigned int         cmd;
-   unsigned int         status;
+   t_ftmPage   pPages[2];
+   uint32_t    cmd;
+   uint32_t    status;
    t_ftmPage*  pAct;
    t_ftmPage*  pIna;
-   t_ftmCycle*          pBP;
-   unsigned long long   tPrep;
+   t_ftmCycle* pBP;
+   uint64_t    tPrep;
 } t_FtmIf;
 
-
-
-volatile t_FtmIf*   pFtmIf;
-
-
-void prioQueueInit(unsigned long long trn, unsigned long long due);
-void     ftmInit(void);
-void     fesaInit(void);
-t_ftmCycle*   processCycle(t_ftmCycle* this);    //checks for condition and if cycle is to be processed ( repQty != 0 )
-t_ftmCycle*   processCycleAux(t_ftmCycle* this); //does the actual work
-int      dispatchMsg(t_ftmMsg* pMsg);  //dispatch a message to prio queue
-void     evalCmd();
-void showPage(t_ftmPage* pPage);
-
-unsigned short getIdFID(unsigned long long id);
-unsigned short getIdGID(unsigned long long id);
-unsigned short getIdEVTNO(unsigned long long id);
-unsigned short getIdSID(unsigned long long id);
-unsigned short getIdBPID(unsigned long long id);
-unsigned short getIdSCTR(unsigned long long id);
-//int      sendCustomMsg(unsigned int* customMsg, unsigned char len,  );
+volatile t_FtmIf* pFtmIf;
+void              prioQueueInit(uint64_t trn, uint64_t due);
+void              ftmInit(void);
+void              demoInit(void);
+t_ftmCycle*       processCycle(t_ftmCycle* this);    //checks for condition and if cycle is to be processed ( repQty != 0 )
+t_ftmCycle*       processCycleAux(t_ftmCycle* this); //does the actual work
+int               dispatchMsg(t_ftmMsg* pMsg);  //dispatch a message to prio queue
+void              evalCmd();
+void              showPage(t_ftmPage* pPage);
 
 
 
+t_ftmCycle* deserCycle( uint8_t*    buf, t_ftmCycle* cyc);
 
+uint8_t* serCycle(uint8_t*    buf, 
+                  uint64_t    tTrn,
+                  uint64_t    tStart,
+                  uint64_t    tPeriod,
+                  uint64_t    tExec,       
+                  uint32_t    flags,
+                  uint32_t*   pCondInput,    
+                  uint32_t*   pCondPattern,  
+                  uint32_t    condMsk,       
+                  uint32_t    repQty,        
+                  uint32_t    repCnt,
+                  uint32_t    msgQty,
+                  uint32_t    msgIdx,
+                  t_ftmMsg*   pMsg,
+                  t_ftmCycle* pNext);
 
+t_ftmMsg* deserMsg(  uint8_t*  buf, t_ftmMsg* msg);
 
+uint8_t*  serMsg(    uint8_t* buf, 
+                     uint64_t id,
+                     uint64_t par,
+                     uint32_t tef,
+                     uint32_t res,
+                     uint64_t ts,
+                     uint64_t offs);
 
+uint16_t    getIdFID(uint64_t id);
+uint16_t    getIdGID(uint64_t id);
+uint16_t    getIdEVTNO(uint64_t id);
+uint16_t    getIdSID(uint64_t id);
+uint16_t    getIdBPID(uint64_t id);
+uint16_t    getIdSCTR(uint64_t id);
+//int      sendCustomMsg(uint32_t* customMsg, unsigned char len,  );
 
 #endif
