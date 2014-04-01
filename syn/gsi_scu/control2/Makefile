@@ -1,7 +1,7 @@
 TARGET		= scu_control
 DEVICE		= EP2AGX125
 FLASH		  = EPCS128
-RAM_SIZE	= 65536
+RAM_SIZE	= 131072
 PATHSCU   = ../../../top/gsi_scu
 PSCU      = ../../../modules/scu_bus/housekeeping_sw
 PDEV      = $(PSCU)/dev
