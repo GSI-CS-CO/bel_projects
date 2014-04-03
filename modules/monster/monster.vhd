@@ -910,6 +910,7 @@ begin
         g_irq_src        => MSI)
        port map(
         clk_i           => clk_sys,
+        rst_n_i         => rstn_sys,
         vme_as_n_i      => vme_as_n_i,
         vme_rst_n_i     => vme_rst_n_i,
         vme_write_n_i   => vme_write_n_i,
@@ -933,7 +934,7 @@ begin
         vme_retry_oe_o  => open,
         irq_i           => '0',  -- => wbirq_i,  
         int_ack_o       => open, -- => s_int_ack,
-        reset_o         => open, -- => s_rst,
+        --reset_o         => open, -- => s_rst,
         master_o        => top_cbar_slave_i(c_topm_vme),
         master_i        => top_cbar_slave_o(c_topm_vme),
         slave_o         => irq_cbar_master_i(c_irqs_vme),
