@@ -1434,7 +1434,7 @@ begin
   
   mil_n : if not g_en_mil generate
     top_cbar_master_i(c_tops_mil) <= cc_dummy_slave_out;
-    irq_cbar_master_i(c_tops_mil_ctrl) <= cc_dummy_slave_out;
+    top_cbar_master_i(c_tops_mil_ctrl) <= cc_dummy_slave_out;
     irq_cbar_slave_i(c_irqm_mil) <= cc_dummy_master_out;
   end generate;
   
@@ -1462,8 +1462,8 @@ begin
       irq_master_o    => irq_cbar_slave_i(c_irqm_mil),
       irq_master_i    => irq_cbar_slave_o(c_irqm_mil),
       -- ctrl interface  
-      ctrl_slave_o    => irq_cbar_master_i(c_tops_mil_ctrl),       
-      ctrl_slave_i    => irq_cbar_master_o(c_tops_mil_ctrl),
+      ctrl_slave_o    => top_cbar_master_i(c_tops_mil_ctrl),       
+      ctrl_slave_i    => top_cbar_master_o(c_tops_mil_ctrl),
       --irq lines
       irq_i           => (mil_every_10ms_intr_o,
                           mil_ev_fifo_ne_intr_o,
