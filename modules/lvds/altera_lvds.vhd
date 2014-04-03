@@ -59,8 +59,8 @@ architecture rtl of altera_lvds is
   signal clk_enable : std_logic;
   signal lvds_idat  : std_logic_vector(g_inputs-1  downto 0);
   signal lvds_odat  : std_logic_vector(g_outputs-1 downto 0);
-  signal s_dat_i    : t_lvds_byte_array(g_inputs-1  downto 0);
-  signal s_dat_o    : t_lvds_byte_array(g_outputs-1 downto 0);
+  signal s_dat_i    : t_lvds_byte_array(g_outputs-1 downto 0);
+  signal s_dat_o    : t_lvds_byte_array(g_inputs-1  downto 0);
   signal s_led      : std_logic_vector(g_inputs-1 downto 0);
 begin
 
