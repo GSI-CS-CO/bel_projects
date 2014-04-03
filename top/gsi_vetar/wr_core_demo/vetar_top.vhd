@@ -323,10 +323,11 @@ begin
   di_o(0) <= '0' when (s_di_dat = '0') else 'Z'; -- shift register in
   
   -- red=nolink, blue=link+notrack, green=track
-  color_o <= c_red 	   when (not s_led_link_up) 			               else
-			    c_blue  	when (    s_led_link_up and not s_led_track)  	else
-			    c_green    when (    s_led_link_up and     s_led_track)    else
-			    c_black;          
+  color_o <= 
+    c_red   when (not s_led_link_up)                ='1' else
+    c_blue  when (s_led_link_up and not s_led_track)='1' else
+    c_green when (s_led_link_up and     s_led_track)='1' else
+    c_black;          
 
   -- On board leds
   -----------------
