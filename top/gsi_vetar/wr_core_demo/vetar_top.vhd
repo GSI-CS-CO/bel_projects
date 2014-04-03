@@ -208,6 +208,7 @@ architecture rtl of vetar_top is
   
   signal s_clk_ref      : std_logic;
   signal s_clk_butis    : std_logic;
+  signal s_butis_t0     : std_logic;
   signal s_dedicated_out: std_logic;
 
   signal s_lemo_addOn   : std_logic_vector(5 downto 0);
@@ -242,6 +243,7 @@ begin
       core_clk_125m_local_i  => clk_125m_local_i,
       core_clk_wr_ref_o      => s_clk_ref,
       core_clk_butis_o       => s_clk_butis,
+      core_clk_butis_t0_o    => s_butis_t0,
       -- gpio
       gpio_o( 5 downto  0)   => s_lemo_addOn(5 downto 0),
       gpio_o( 7 downto  6)   => s_lvds_out(1 downto 0),
@@ -357,7 +359,7 @@ begin
 
   -- HDMI
   hdmi_o(0) <= s_clk_butis;
-  hdmi_o(1) <= s_clk_ref;
+  hdmi_o(1) <= s_butis_t0;
   clk_pll_o <= s_clk_butis;
   
 end rtl;
