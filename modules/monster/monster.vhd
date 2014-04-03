@@ -266,11 +266,10 @@ architecture rtl of monster is
   constant c_irqm_tlu    : natural := 4;
   constant c_irqm_mil    : natural := 5;
   
-  constant c_irq_slaves     : natural := 4;
+  constant c_irq_slaves     : natural := 3;
   constant c_irqs_lm32      : natural := 0;
   constant c_irqs_pcie      : natural := 1;
   constant c_irqs_vme       : natural := 2;
-  constant c_irqs_mil_ctrl  : natural := 3;
   
   constant c_lm32_irq_bridge_sdb : t_sdb_bridge := 
     f_lm32_irq_bridge_sdb(g_lm32_cores, g_lm32_MSIs);
@@ -278,8 +277,7 @@ architecture rtl of monster is
   constant c_irq_layout_req : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
    (c_irqs_lm32     => f_sdb_auto_device(c_irq_ep_sdb,    true),
     c_irqs_pcie     => f_sdb_auto_device(c_msi_pcie_sdb,  g_en_pcie),
-    c_irqs_vme      => f_sdb_auto_device(c_vme_msi_sdb,   g_en_vme),
-    c_irqs_mil_ctrl => f_sdb_auto_device(c_irq_ctrl_sdb,  g_en_mil));
+    c_irqs_vme      => f_sdb_auto_device(c_vme_msi_sdb,   g_en_vme));
   
   constant c_irq_layout      : t_sdb_record_array(c_irq_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_irq_layout_req);
@@ -307,7 +305,7 @@ architecture rtl of monster is
   constant c_topm_fpq       : natural := 5;
   
   -- required slaves
-  constant c_top_slaves     : natural := 17;
+  constant c_top_slaves     : natural := 18;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -325,8 +323,9 @@ architecture rtl of monster is
   constant c_tops_oled      : natural := 12;
   constant c_tops_scubus    : natural := 13;
   constant c_tops_mil       : natural := 14;
-  constant c_tops_ow        : natural := 15;
-  constant c_tops_power_test: natural := 16;
+  constant c_tops_mil_ctrl  : natural := 15;
+  constant c_tops_ow        : natural := 16;
+  constant c_tops_power_test: natural := 17;
 
   
   -- We have to specify the values for WRC as there is no generic out in vhdl
@@ -358,6 +357,7 @@ architecture rtl of monster is
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_tops_scubus    => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
     c_tops_mil       => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
+    c_tops_mil_ctrl  => f_sdb_auto_device(c_irq_ctrl_sdb,                   g_en_mil),
     c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow),
     c_tops_power_test => f_sdb_auto_device(c_xwb_power_test,                g_en_power_test));
     
@@ -1434,7 +1434,7 @@ begin
   
   mil_n : if not g_en_mil generate
     top_cbar_master_i(c_tops_mil) <= cc_dummy_slave_out;
-    irq_cbar_master_i(c_irqs_mil_ctrl) <= cc_dummy_slave_out;
+    irq_cbar_master_i(c_tops_mil_ctrl) <= cc_dummy_slave_out;
     irq_cbar_slave_i(c_irqm_mil) <= cc_dummy_master_out;
   end generate;
   
@@ -1462,8 +1462,8 @@ begin
       irq_master_o    => irq_cbar_slave_i(c_irqm_mil),
       irq_master_i    => irq_cbar_slave_o(c_irqm_mil),
       -- ctrl interface  
-      ctrl_slave_o    => irq_cbar_master_i(c_irqs_mil_ctrl),       
-      ctrl_slave_i    => irq_cbar_master_o(c_irqs_mil_ctrl),
+      ctrl_slave_o    => irq_cbar_master_i(c_tops_mil_ctrl),       
+      ctrl_slave_i    => irq_cbar_master_o(c_tops_mil_ctrl),
       --irq lines
       irq_i           => (mil_every_10ms_intr_o,
                           mil_ev_fifo_ne_intr_o,
