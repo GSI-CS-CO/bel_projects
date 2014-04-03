@@ -93,6 +93,7 @@ begin
       generic map(
         g_family   => g_family)
       port map(
+        tx_core    => clk_ref_i,
         tx_inclock => clk_lvds,
         tx_enable  => clk_enable,
         tx_in      => s_dat_i(i),
@@ -120,6 +121,7 @@ begin
       generic map(
         g_family   => g_family)
       port map(
+        rx_core    => clk_ref_i,
         rx_inclock => clk_lvds,
         rx_enable  => clk_enable,
         rx_in      => lvds_idat(i),

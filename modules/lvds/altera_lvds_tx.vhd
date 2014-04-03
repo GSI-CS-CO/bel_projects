@@ -10,6 +10,7 @@ entity altera_lvds_tx is
   generic(
     g_family : string);
   port(
+    tx_core    : in  std_logic;
     tx_inclock : in  std_logic;
     tx_enable  : in  std_logic;
     tx_in      : in  std_logic_vector(7 downto 0);
@@ -17,14 +18,22 @@ entity altera_lvds_tx is
 end altera_lvds_tx;
 
 architecture rtl of altera_lvds_tx is
+  signal reg : std_logic_vector(7 downto 0);
 begin
+
+  main : process(tx_core) is
+  begin
+    if rising_edge(tx_core) then
+      reg <= tx_in;
+    end if;
+  end process;
 
   arria2 : if g_family = "Arria II" generate
     tx : arria2_lvds_tx
       port map(
         tx_inclock => tx_inclock,
         tx_enable  => tx_enable,
-        tx_in      => tx_in,
+        tx_in      => reg,
         tx_out(0)  => tx_out);
   end generate;
   
@@ -33,7 +42,7 @@ begin
       port map(
         tx_inclock => tx_inclock,
         tx_enable  => tx_enable,
-        tx_in      => tx_in,
+        tx_in      => reg,
         tx_out(0)  => tx_out);
   end generate;
   
