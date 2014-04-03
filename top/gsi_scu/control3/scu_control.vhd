@@ -270,6 +270,7 @@ begin
       g_gpio_in    => 1,
       g_gpio_out   => 1,
       g_flash_bits => 24,
+      g_lm32_ramsizes => 98304,
       g_en_pcie    => true,
       g_en_scubus  => true,
       g_en_mil     => true,
