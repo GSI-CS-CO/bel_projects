@@ -94,24 +94,24 @@ entity pci_control is
     n17             : in    std_logic;        -- P_LVDS_1 / SYpIN
     p18             : in    std_logic;        -- N_LVDS_2 / TRnIN
     n18             : in    std_logic;        -- P_LVDS_2 / TRpIN
-    p19             : out   std_logic := 'Z'; -- N_LVDS_3 / CK200n
-    n19             : out   std_logic := 'Z'; -- P_LVDS_3 / CK200p
+    p19             : out   std_logic;        -- N_LVDS_3 / CK200n
+    n19             : out   std_logic;        -- P_LVDS_3 / CK200p
     p21             : in    std_logic;        -- N_LVDS_6  = TTLIO1 in
     n21             : in    std_logic;        -- P_LVDS_6
     p22             : in    std_logic;        -- N_LVDS_8  = TTLIO2 in
     n22             : in    std_logic;        -- P_PVDS_8
     p23             : in    std_logic;        -- N_LVDS_10 = TTLIO3 in
     n23             : in    std_logic;        -- P_LVDS_10
-    p24             : out   std_logic := 'Z'; -- N_LVDS_4 / SYnOU
-    n24             : out   std_logic := 'Z'; -- P_LVDS_4 / SYpOU
-    p25             : out   std_logic := 'Z'; -- N_LVDS_5  = TTLIO1 out
-    n25             : out   std_logic := 'Z'; -- P_LVDS_5
+    p24             : out   std_logic;        -- N_LVDS_4 / SYnOU
+    n24             : out   std_logic;        -- P_LVDS_4 / SYpOU
+    p25             : out   std_logic;        -- N_LVDS_5  = TTLIO1 out
+    n25             : out   std_logic;        -- P_LVDS_5
     p26             : out   std_logic := 'Z'; -- FPLED3    = TTLIO2 (red)  0=on, Z=off
     n26             : out   std_logic := 'Z'; -- FPLED4             (blue)
-    p27             : out   std_logic := 'Z'; -- N_LVDS_7  = TTLIO2 out
-    n27             : out   std_logic := 'Z'; -- P_LVDS_7
-    p28             : out   std_logic := 'Z'; -- N_LVDS_9  = TTLIO3 out
-    n28             : out   std_logic := 'Z'; -- P_LVDS_9
+    p27             : out   std_logic;        -- N_LVDS_7  = TTLIO2 out
+    n27             : out   std_logic;        -- P_LVDS_7
+    p28             : out   std_logic;        -- N_LVDS_9  = TTLIO3 out
+    n28             : out   std_logic;        -- P_LVDS_9
     p29             : out   std_logic := 'Z'; -- FPLED1    = TTLIO1 (red)  0=on, Z=off
     n29             : out   std_logic := 'Z'; -- FPLED2             (blue)
     p30             : out   std_logic := 'Z'; -- n/c
