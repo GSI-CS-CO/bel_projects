@@ -29,9 +29,10 @@ clean::
 	$(GENRAMMIF) $< $(RAM_SIZE) > $@
 
 %.sof:	%.qsf %.mif
-	hdlmake --quartus-proj -v | sed -n -e 's/ *$$/:/;s/^.* Parsing manifest file: *//p' > $*.dep
-	sed -n -e 's/"//g;s/quartus_sh://;s/$$/:/;s/set_global_assignment.*-name.*_FILE //p' < $< >> $*.dep
-	echo "$*.sof $@:	$< " `sed 's/ *: *$$//' < $*.dep` >> $*.dep
+	python2.7 ../../../ip_cores/hdl-make/hdlmake quartus-project
+	find ../../.. -name Manifest.py > $*.dep
+	sed -n -e 's/"//g;s/quartus_sh://;s/set_global_assignment.*-name.*_FILE //p' < $< >> $*.dep
+	echo "$*.sof $@:	$< " `cat $*.dep` > $*.dep
 	$(QUARTUS_BIN)/quartus_sh --tcl_eval load_package flow \; project_open $* \; execute_flow -compile
 
 %.opt:	%.sof

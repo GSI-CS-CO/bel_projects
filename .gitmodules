@@ -13,3 +13,6 @@
 [submodule "ip_cores/wrpc-sw"]
 	path = ip_cores/wrpc-sw
 	url = git://ohwr.org/hdl-core-lib/wr-cores/wrpc-sw.git
+[submodule "ip_cores/hdl-make"]
+	path = ip_cores/hdl-make
+	url = git://ohwr.org/misc/hdl-make.git

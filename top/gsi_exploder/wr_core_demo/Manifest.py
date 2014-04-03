@@ -1,8 +1,10 @@
 modules = {
-		  "local" : [
-			      "../../../modules",
-			          "../../../ip_cores",
-				    ]
-		  }
+  "local" : [
+     "../../.."
+   ]
+}
 
-files = ["exploder_top.sdc", "exploder_top.vhd" ]
+files = [
+  "exploder_top.sdc", 
+  "exploder_top.vhd",
+]
