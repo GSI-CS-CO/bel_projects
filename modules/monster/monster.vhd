@@ -51,7 +51,7 @@ use work.xvme64x_pack.all;
 use work.VME_Buffer_pack.all;
 use work.wb_mil_scu_pkg.all;
 use work.wr_serialtimestamp_pkg.all;
-
+use work.power_test_pkg.all;
 
 entity monster is
   generic(
@@ -76,6 +76,7 @@ entity monster is
     g_en_oled              : boolean;
     g_en_lcd               : boolean;
     g_en_user_ow           : boolean;
+    g_en_power_test        : boolean;
     g_lm32_cores           : natural := 1;
     g_lm32_MSIs            : natural := 1;
     g_lm32_ramsizes        : natural := 65536;
@@ -231,7 +232,9 @@ entity monster is
     lcd_flm_o              : out   std_logic := 'Z';
     lcd_in_o               : out   std_logic := 'Z';
     -- g_en_user_ow
-    ow_io                  : inout std_logic_vector(1 downto 0));
+    ow_io                  : inout std_logic_vector(1 downto 0);
+    -- g_en_power_test
+    power_test_pwm_o       : out    std_logic);
 end monster;
 
 architecture rtl of monster is
@@ -255,25 +258,26 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   -- MSI IRQ Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
-  constant c_irq_masters : natural := 5;
+  constant c_irq_masters : natural := 6;
   constant c_irqm_top    : natural := 0;
   constant c_irqm_eca    : natural := 1;
   constant c_irqm_aq     : natural := 2;
   constant c_irqm_scubus : natural := 3;
   constant c_irqm_tlu    : natural := 4;
+  constant c_irqm_mil    : natural := 5;
   
-  constant c_irq_slaves  : natural := 3;
-  constant c_irqs_lm32   : natural := 0;
-  constant c_irqs_pcie   : natural := 1;
-  constant c_irqs_vme    : natural := 2;
+  constant c_irq_slaves     : natural := 3;
+  constant c_irqs_lm32      : natural := 0;
+  constant c_irqs_pcie      : natural := 1;
+  constant c_irqs_vme       : natural := 2;
   
   constant c_lm32_irq_bridge_sdb : t_sdb_bridge := 
     f_lm32_irq_bridge_sdb(g_lm32_cores, g_lm32_MSIs);
   
   constant c_irq_layout_req : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
-   (c_irqs_lm32 => f_sdb_auto_bridge(c_lm32_irq_bridge_sdb, true),
-    c_irqs_pcie => f_sdb_auto_device(c_msi_pcie_sdb,        g_en_pcie),
-    c_irqs_vme  => f_sdb_auto_device(c_vme_msi_sdb,        g_en_vme));
+   (c_irqs_lm32     => f_sdb_auto_device(c_irq_ep_sdb,    true),
+    c_irqs_pcie     => f_sdb_auto_device(c_msi_pcie_sdb,  g_en_pcie),
+    c_irqs_vme      => f_sdb_auto_device(c_vme_msi_sdb,   g_en_vme));
   
   constant c_irq_layout      : t_sdb_record_array(c_irq_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_irq_layout_req);
@@ -301,7 +305,7 @@ architecture rtl of monster is
   constant c_topm_fpq       : natural := 5;
   
   -- required slaves
-  constant c_top_slaves     : natural := 16;
+  constant c_top_slaves     : natural := 18;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -319,7 +323,10 @@ architecture rtl of monster is
   constant c_tops_oled      : natural := 12;
   constant c_tops_scubus    : natural := 13;
   constant c_tops_mil       : natural := 14;
-  constant c_tops_ow        : natural := 15;
+  constant c_tops_mil_ctrl  : natural := 15;
+  constant c_tops_ow        : natural := 16;
+  constant c_tops_power_test: natural := 17;
+
   
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -350,7 +357,9 @@ architecture rtl of monster is
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_tops_scubus    => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
     c_tops_mil       => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
-    c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow));
+    c_tops_mil_ctrl  => f_sdb_auto_device(c_irq_ctrl_sdb,                   g_en_mil),
+    c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow),
+    c_tops_power_test => f_sdb_auto_device(c_xwb_power_test,                g_en_power_test));
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_top_layout_req);
@@ -493,6 +502,21 @@ architecture rtl of monster is
   
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
+
+  ----------------------------------------------------------------------------------
+  -- Mil-Extension signals ---------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  
+  signal  mil_interlock_intr_o:   std_logic;
+  signal  mil_data_rdy_intr_o:    std_logic;
+  signal  mil_data_req_intr_o:    std_logic;
+  signal  mil_dly_intr_o:         std_logic;
+  signal  mil_ev_fifo_ne_intr_o:  std_logic;
+  signal  mil_every_10ms_intr_o:  std_logic;
+  
+  -- Mil-Extension signals
+  ----------------------------------------------------------------------------------
+  
   
   ----------------------------------------------------------------------------------
   -- VME signals -------------------------------------------------------------------
@@ -1410,13 +1434,45 @@ begin
   
   mil_n : if not g_en_mil generate
     top_cbar_master_i(c_tops_mil) <= cc_dummy_slave_out;
+    top_cbar_master_i(c_tops_mil_ctrl) <= cc_dummy_slave_out;
+    irq_cbar_slave_i(c_irqm_mil) <= cc_dummy_master_out;
   end generate;
+  
   mil_y : if g_en_mil generate
+  
     milp : mil_pll
       port map(
         inclk0 => clk_sys1,
         c0     => mil_me_12mhz_o);
-      
+
+   mil_irq_inst:  wb_irq_master
+    generic map(
+      g_channels     => 6,        -- number of interrupt lines
+      g_round_rb     => true,     -- scheduler       true: round robin,                         false: prioritised 
+      g_det_edge     => true,     -- edge detection. true: trigger on rising edge of irq lines, false: trigger on high level
+      g_has_dev_id   => false,    -- if set, dst adr bits 11..7 hold g_dev_id as device identifier
+      g_dev_id       => (others => '0'), -- device identifier
+      g_has_ch_id    => false,           -- if set, dst adr bits  6..2 hold g_ch_id  as device identifier         
+      g_default_msg  => true             -- initialises msgs to a default value in order to detect uninitialised irq master
+      )
+    port map(
+      clk_i           => clk_sys,
+      rst_n_i         => rstn_sys,
+      --msi if
+      irq_master_o    => irq_cbar_slave_i(c_irqm_mil),
+      irq_master_i    => irq_cbar_slave_o(c_irqm_mil),
+      -- ctrl interface  
+      ctrl_slave_o    => top_cbar_master_i(c_tops_mil_ctrl),       
+      ctrl_slave_i    => top_cbar_master_o(c_tops_mil_ctrl),
+      --irq lines
+      irq_i           => (mil_every_10ms_intr_o,
+                          mil_ev_fifo_ne_intr_o,
+                          mil_dly_intr_o,
+                          mil_data_req_intr_o,
+                          mil_data_rdy_intr_o,
+                          mil_interlock_intr_o)
+      );
+     
     mil : wb_mil_scu
       generic map(
         Clk_in_Hz     => 62_500_000)
@@ -1453,14 +1509,20 @@ begin
         Mil_Decoder_Diag_p  => open,
         Mil_Decoder_Diag_n  => open,
         timing         => mil_timing_i,
+        dly_intr_o     => mil_dly_intr_o,
         nLed_Timing    => mil_nled_timing_o,
         nLed_Fifo_ne   => mil_nled_fifo_ne_o,
-        Interlock_Intr => mil_interlock_intr_i,
-        Data_Rdy_Intr  => mil_data_rdy_intr_i,
-        Data_Req_Intr  => mil_data_req_intr_i,
+        ev_fifo_ne_intr_o => mil_ev_fifo_ne_intr_o,
+        Interlock_Intr_i => mil_interlock_intr_i,
+        Data_Rdy_Intr_i  => mil_data_rdy_intr_i,
+        Data_Req_Intr_i  => mil_data_req_intr_i,
+        Interlock_Intr_o => mil_interlock_intr_o,
+        Data_Rdy_Intr_o  => mil_data_rdy_intr_o,
+        Data_Req_Intr_o  => mil_data_req_intr_o,
         nLed_Interl    => mil_nled_interl_o,
         nLed_drq       => mil_nled_drq_o,
         nLed_dry       => mil_nled_dry_o,
+        every_10ms_intr_o => mil_every_10ms_intr_o,
         io_1           => mil_io1_o,
         io_1_is_in     => mil_io1_is_in_o,
         nLed_io_1      => mil_nled_io1_o,
@@ -1501,6 +1563,29 @@ begin
         owr_i       => ow_io
         );
   end generate;
+
+  power_test_n : if not g_en_power_test generate
+    top_cbar_master_i(c_tops_power_test) <= cc_dummy_slave_out;
+  end generate;
+  
+  power_test_y : if g_en_power_test generate
+    power_test_inst: power_test
+        generic map(
+          Clk_in_Hz   => 62_500_000,
+          pwm_width   => 16,
+          row_width   => 64,
+          row_cnt     => 900
+          )
+        port map(
+          clk_i     => clk_sys,
+          nrst_i    => rstn_sys,
+          -- Wishbone
+          slave_i => top_cbar_master_o(c_tops_power_test),
+          slave_o => top_cbar_master_i(c_tops_power_test),
+          pwm_o   => power_test_pwm_o, 
+          or_o    => open
+          );
+    end generate;
   
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------
