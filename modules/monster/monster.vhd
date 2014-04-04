@@ -234,7 +234,7 @@ entity monster is
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
     -- g_en_power_test
-    power_test_pwm_o       : out    std_logic);
+    power_test_pwm_o       : out    std_logic := 'Z');
 end monster;
 
 architecture rtl of monster is
