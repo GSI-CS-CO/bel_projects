@@ -4,12 +4,6 @@ create_clock -period 125Mhz -name sfp_ref_clk_i [get_ports {sfp_ref_clk_i}]
 derive_pll_clocks -create_base_clocks
 derive_clock_uncertainty
 
-#set_multicycle_path -from {main|BuTiS_T0_generator:butis_t0|wr_timestamp_nextT0_s[*]} \
-   -to [get_clocks {ref_inst|altpll_component|auto_generated|pll1|clk[1]}] -setup -end 2
-
-#set_multicycle_path -from {main|BuTiS_T0_generator:butis_t0|wr_timestamp_nextT0_s[*]} \
-   -to [get_clocks {ref_inst|altpll_component|auto_generated|pll1|clk[1]}] -hold -end 2
-
 # Cut the clock domains from each other
 set_clock_groups -asynchronous                           \
  -group { altera_reserved_tck                          } \
@@ -32,9 +26,6 @@ set_false_path -from [get_clocks {main|\sys_a2:sys_inst|*|clk[1]}] -to [get_cloc
 # cut: wb sys <=> wb display (different frequencies and using xwb_clock_crossing)
 set_false_path -from [get_clocks {main|\sys_a2:sys_inst|*|clk[0]}] -to [get_clocks {main|\sys_a2:sys_inst|*|clk[2]}]
 set_false_path -from [get_clocks {main|\sys_a2:sys_inst|*|clk[2]}] -to [get_clocks {main|\sys_a2:sys_inst|*|clk[0]}]
-
 # cut: wr-ref <=> butis
 set_false_path -from [get_clocks {main|\ref_a2:ref_inst|*|clk[0]}] -to [get_clocks {main|\ref_a2:ref_inst|*|clk[1]}]
 set_false_path -from [get_clocks {main|\ref_a2:ref_inst|*|clk[1]}] -to [get_clocks {main|\ref_a2:ref_inst|*|clk[0]}]
-                                 
-#{main|\ref_a2:ref_inst|altpll_component|auto_generated|pll1|clk[0]

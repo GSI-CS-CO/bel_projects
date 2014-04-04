@@ -419,6 +419,7 @@ begin
                     s_vendorid_rd, s_kbc_data, s_kbc_status, kbc_status_out, kbc_data_out,
                     s_uart_out)
   begin
+    io_from_slave <= "--------";
     if s_kbc_status = '1' then
       io_from_slave <= kbc_status_out;
     elsif s_kbc_data = '1' then
