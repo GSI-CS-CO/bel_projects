@@ -123,8 +123,8 @@ ME_SS_FF.clrn = SEL_6408;
 ME_SS = ME_SS_FF.q;
 
 Trm_Rdy_ff.clrn = not Mil_Wr;
-Trm_Rdy_ff.d  = VCC;
-Trm_Rdy_ff.clk  = not ME_SD;
+Trm_Rdy_ff.d    = not ME_SD;
+Trm_Rdy_ff.clk  = not ME_ESC;
 Trm_Rdy_ff.prn  = not (Reset_6408 or not SEL_6408);
 
 Trm_Rdy = Trm_Rdy_ff;

@@ -26,3 +26,6 @@ set_false_path -from [get_clocks {main|\sys_a2:sys_inst|*|clk[1]}] -to [get_cloc
 # cut: wb sys <=> wb display (different frequencies and using xwb_clock_crossing)
 set_false_path -from [get_clocks {main|\sys_a2:sys_inst|*|clk[0]}] -to [get_clocks {main|\sys_a2:sys_inst|*|clk[2]}]
 set_false_path -from [get_clocks {main|\sys_a2:sys_inst|*|clk[2]}] -to [get_clocks {main|\sys_a2:sys_inst|*|clk[0]}]
+# cut: wr-ref <=> butis
+set_false_path -from [get_clocks {main|\ref_a2:ref_inst|*|clk[0]}] -to [get_clocks {main|\ref_a2:ref_inst|*|clk[1]}]
+set_false_path -from [get_clocks {main|\ref_a2:ref_inst|*|clk[1]}] -to [get_clocks {main|\ref_a2:ref_inst|*|clk[0]}]

@@ -52,6 +52,7 @@ package monster_pkg is
       g_en_oled     : boolean := false;
       g_en_lcd      : boolean := false;
       g_en_user_ow  : boolean := false;  
+      g_en_power_test:  boolean := false;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4;
@@ -207,7 +208,9 @@ package monster_pkg is
       lcd_flm_o              : out   std_logic;
       lcd_in_o               : out   std_logic;
       -- g_en_user_ow
-      ow_io                  : inout std_logic_vector(1 downto 0));
+      ow_io                  : inout std_logic_vector(1 downto 0);
+      -- g_en_power_test
+      power_test_pwm_o       : out    std_logic);
   end component;
 
 end package;

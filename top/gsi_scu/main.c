@@ -13,8 +13,10 @@
 #include "uart.h"
 #include "w1.h"
 #include "fg.h"
+#include "cb.h"
 
 //#define DEBUG
+//#define FGDEBUG
 
 extern struct w1_bus wrpc_w1_bus;
 
@@ -26,7 +28,8 @@ uint16_t SHARED ext_temp = -1;
 uint64_t SHARED backplane_id = -1;
 uint16_t SHARED backplane_temp = -1;
 uint32_t SHARED fg_magic_number = 0xdeadbeef;
-uint32_t SHARED fg_version = 0x1; 
+uint32_t SHARED fg_version = 0x1;
+struct circ_buffer SHARED fg_buffer[MAX_FG_DEVICES]; 
 struct scu_bus SHARED scub;
 struct fg_list SHARED fgs;
 volatile uint32_t SHARED fg_control;
@@ -44,16 +47,6 @@ volatile unsigned int* BASE_UART;
 
 int slaves[SCU_BUS_MAX_SLOTS+1] = {0};
 volatile unsigned short icounter[SCU_BUS_MAX_SLOTS+1];
-
-
-struct pset {
-  int a;
-  int l_a;
-  int b;
-  int l_b;
-  int c;
-  int n;
-};
 
 void usleep(int x)
 {
@@ -213,14 +206,18 @@ void updateTemps() {
 void init() {
   int i=0, j;
   uart_init_hw();
-  uart_write_string("\nDebug Port\n");
-  mprintf("display base: 0x%x\n", display);
-  mprintf("scub base: 0x%x\n", scub_base);
-  mprintf("uart base: 0x%x\n", BASE_UART);
   updateTemps();
+  init_buffers(&fg_buffer);
+
+  for (i=0; i < MAX_FG_DEVICES; i++) {
+    mprintf("cb[%d]: isEmpty = %d\n", i, cbisEmpty(&fg_buffer, i));
+    mprintf("cb[%d]: isFull = %d\n", i, cbisFull(&fg_buffer, i));
+    mprintf("cb[%d]: getCount = %d\n", i, cbgetCount(&fg_buffer, i));
+  }
   
   scan_scu_bus(&scub, backplane_id, scub_base);
   scan_for_fgs(&scub, &fgs);
+  #ifdef FGDEBUG
   mprintf("ID: 0x%08x%08x\n", (int)(scub.unique_id >> 32), (int)scub.unique_id);
   while(scub.slaves[i].unique_id) { /* more slaves in list */
       mprintf("slaves[%d] ID:  0x%08x%08x\n",i, (int)(scub.slaves[i].unique_id>>32), (int)scub.slaves[i].unique_id);
@@ -245,8 +242,7 @@ void init() {
     mprintf("        endvalue 0x%x\n", fgs.devs[i]->endvalue);
     i++;
   }
-  //mprintf("scub_base: %x\n", scub_base[0x4]);
-  
+  #endif
 /*  reset_slaves();
   usleep(1000);
   dis_irq();
@@ -286,7 +282,11 @@ int main(void) {
 
   while(1) {
     updateTemps();
-      
+            
+    mprintf("cb[%d]: isEmpty = %d\n", 0, cbisEmpty(&fg_buffer, 0));
+    mprintf("cb[%d]: isFull = %d\n", 0, cbisFull(&fg_buffer, 0));
+    mprintf("cb[%d]: getCount = %d\n", 0, cbgetCount(&fg_buffer, 0));
+
     //placeholder for fg software
     //if (fg_control) {
     //  init();

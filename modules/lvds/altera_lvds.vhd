@@ -59,8 +59,8 @@ architecture rtl of altera_lvds is
   signal clk_enable : std_logic;
   signal lvds_idat  : std_logic_vector(g_inputs-1  downto 0);
   signal lvds_odat  : std_logic_vector(g_outputs-1 downto 0);
-  signal s_dat_i    : t_lvds_byte_array(g_inputs-1  downto 0);
-  signal s_dat_o    : t_lvds_byte_array(g_outputs-1 downto 0);
+  signal s_dat_i    : t_lvds_byte_array(g_outputs-1 downto 0);
+  signal s_dat_o    : t_lvds_byte_array(g_inputs-1  downto 0);
   signal s_led      : std_logic_vector(g_inputs-1 downto 0);
 begin
 
@@ -93,6 +93,7 @@ begin
       generic map(
         g_family   => g_family)
       port map(
+        tx_core    => clk_ref_i,
         tx_inclock => clk_lvds,
         tx_enable  => clk_enable,
         tx_in      => s_dat_i(i),
@@ -120,6 +121,7 @@ begin
       generic map(
         g_family   => g_family)
       port map(
+        rx_core    => clk_ref_i,
         rx_inclock => clk_lvds,
         rx_enable  => clk_enable,
         rx_in      => lvds_idat(i),

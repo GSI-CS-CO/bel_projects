@@ -84,6 +84,7 @@ package altera_lvds_pkg is
     generic(
       g_family : string);
     port(
+      rx_core    : in  std_logic;
       rx_inclock : in  std_logic;
       rx_enable  : in  std_logic;
       rx_in      : in  std_logic;
@@ -94,6 +95,7 @@ package altera_lvds_pkg is
     generic(
       g_family : string);
     port(
+      tx_core    : in  std_logic;
       tx_inclock : in  std_logic;
       tx_enable  : in  std_logic;
       tx_in      : in  std_logic_vector(7 downto 0);

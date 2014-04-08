@@ -94,24 +94,24 @@ entity pci_control is
     n17             : in    std_logic;        -- P_LVDS_1 / SYpIN
     p18             : in    std_logic;        -- N_LVDS_2 / TRnIN
     n18             : in    std_logic;        -- P_LVDS_2 / TRpIN
-    p19             : out   std_logic := 'Z'; -- N_LVDS_3 / CK200n
-    n19             : out   std_logic := 'Z'; -- P_LVDS_3 / CK200p
+    p19             : out   std_logic;        -- N_LVDS_3 / CK200n
+--    n19             : out   std_logic;        -- P_LVDS_3 / CK200p
     p21             : in    std_logic;        -- N_LVDS_6  = TTLIO1 in
     n21             : in    std_logic;        -- P_LVDS_6
     p22             : in    std_logic;        -- N_LVDS_8  = TTLIO2 in
     n22             : in    std_logic;        -- P_PVDS_8
     p23             : in    std_logic;        -- N_LVDS_10 = TTLIO3 in
     n23             : in    std_logic;        -- P_LVDS_10
-    p24             : out   std_logic := 'Z'; -- N_LVDS_4 / SYnOU
-    n24             : out   std_logic := 'Z'; -- P_LVDS_4 / SYpOU
-    p25             : out   std_logic := 'Z'; -- N_LVDS_5  = TTLIO1 out
-    n25             : out   std_logic := 'Z'; -- P_LVDS_5
+    p24             : out   std_logic;        -- N_LVDS_4 / SYnOU
+--    n24             : out   std_logic;        -- P_LVDS_4 / SYpOU
+    p25             : out   std_logic;        -- N_LVDS_5  = TTLIO1 out
+    n25             : out   std_logic;        -- P_LVDS_5
     p26             : out   std_logic := 'Z'; -- FPLED3    = TTLIO2 (red)  0=on, Z=off
     n26             : out   std_logic := 'Z'; -- FPLED4             (blue)
-    p27             : out   std_logic := 'Z'; -- N_LVDS_7  = TTLIO2 out
-    n27             : out   std_logic := 'Z'; -- P_LVDS_7
-    p28             : out   std_logic := 'Z'; -- N_LVDS_9  = TTLIO3 out
-    n28             : out   std_logic := 'Z'; -- P_LVDS_9
+    p27             : out   std_logic;        -- N_LVDS_7  = TTLIO2 out
+    n27             : out   std_logic;        -- P_LVDS_7
+    p28             : out   std_logic;        -- N_LVDS_9  = TTLIO3 out
+    n28             : out   std_logic;        -- P_LVDS_9
     p29             : out   std_logic := 'Z'; -- FPLED1    = TTLIO1 (red)  0=on, Z=off
     n29             : out   std_logic := 'Z'; -- FPLED2             (blue)
     p30             : out   std_logic := 'Z'; -- n/c
@@ -218,9 +218,9 @@ architecture rtl of pci_control is
   signal lvds_p_i     : std_logic_vector(4 downto 0);
   signal lvds_n_i     : std_logic_vector(4 downto 0);
   signal lvds_i_led   : std_logic_vector(4 downto 0);
-  signal lvds_p_o     : std_logic_vector(4 downto 0);
-  signal lvds_n_o     : std_logic_vector(4 downto 0);
-  signal lvds_o_led   : std_logic_vector(4 downto 0);
+  signal lvds_p_o     : std_logic_vector(2 downto 0);
+  signal lvds_n_o     : std_logic_vector(2 downto 0);
+  signal lvds_o_led   : std_logic_vector(2 downto 0);
   signal lvds_oen     : std_logic_vector(2 downto 0);
 
 begin
@@ -233,7 +233,7 @@ begin
       g_pll_skew    => 6500/(1000/8), -- 6500ps shift
       g_gpio_out    => 8,
       g_lvds_in     => 2,
-      g_lvds_out    => 2,
+      g_lvds_out    => 0,
       g_lvds_inout  => 3,
       g_lvds_invert => true,
       g_en_pcie     => true,
@@ -244,6 +244,8 @@ begin
       core_clk_125m_pllref_i => clk_125m_pllref_i,
       core_clk_125m_sfpref_i => sfp234_ref_clk_i,
       core_clk_125m_local_i  => clk_125m_local_i,
+      core_clk_butis_o       => p19,
+      core_clk_butis_t0_o    => p24,
       wr_onewire_io          => rom_data,
       wr_sfp_sda_io          => sfp4_mod2,
       wr_sfp_scl_io          => sfp4_mod1,
@@ -347,13 +349,13 @@ begin
   n25 <= lvds_n_o(0); -- TTLIO1
   n27 <= lvds_n_o(1); -- TTLIO2
   n28 <= lvds_n_o(2); -- TTLIO3
-  n19 <= lvds_n_o(3); -- LVDS_3 / CK200
-  n24 <= lvds_n_o(4); -- LVDS_4 / SYOU
+--  n19 <= lvds_n_o(3); -- LVDS_3 / CK200
+--  n24 <= lvds_n_o(4); -- LVDS_4 / SYOU
   p25 <= lvds_p_o(0); -- TTLIO1
   p27 <= lvds_p_o(1); -- TTLIO2
   p28 <= lvds_p_o(2); -- TTLIO3
-  p19 <= lvds_p_o(3); -- LVDS_3 / CK200
-  p24 <= lvds_p_o(4); -- LVDS_4 / SYOU
+--  p19 <= lvds_p_o(3); -- LVDS_3 / CK200
+--  p24 <= lvds_p_o(4); -- LVDS_4 / SYOU
   
   -- LVDS activity LEDs
   n29 <= '0' when lvds_i_led(0)='1' else 'Z'; -- FPLED2/TTLIO1 blue
@@ -361,8 +363,8 @@ begin
   n16 <= '0' when lvds_i_led(2)='1' else 'Z'; -- FPLED6/TTLIO3 blue
   p5  <= '0' when lvds_i_led(3)='1' else 'Z'; -- LED1 (near HDMI = SYIN  / LVDS1)
   n5  <= '0' when lvds_i_led(4)='1' else 'Z'; -- LED2 (near HDMI = TRIN  / LVDS2)
-  p6  <= '0' when lvds_o_led(3)='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3)
-  n6  <= '0' when lvds_o_led(4)='1' else 'Z'; -- LED4 (near HDMI = SYOU  / LVDS4)
+--  p6  <= '0' when lvds_o_led(3)='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3)
+--  n6  <= '0' when lvds_o_led(4)='1' else 'Z'; -- LED4 (near HDMI = SYOU  / LVDS4)
   
   -- Wires to CPLD, currently unused
   con <= (others => 'Z');

@@ -15,7 +15,7 @@ all::	etherbone tools eca sdbfs toolchain firmware driver
 
 install::	etherbone-install tools-install eca-install driver-install
 
-clean::	etherbone-clean tools-clean eca-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu-clean exploder-clean pexarria5-clean
+clean::	etherbone-clean tools-clean eca-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean pexarria5-clean
 
 distclean::	clean
 	git clean -xfd .
@@ -50,17 +50,14 @@ eca-install::
 
 driver::
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb all
-	$(MAKE) -C ip_cores/legacy-vme64x-core/drv all
 	$(MAKE) -C ip_cores/fpga-config-space/vme-wb all
 
 driver-clean::
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb clean
-	$(MAKE) -C ip_cores/legacy-vme64x-core/drv clean
 	$(MAKE) -C ip_cores/fpga-config-space/vme-wb clean
 
 driver-install::
 	$(MAKE) -C ip_cores/fpga-config-space/pcie-wb install
-	$(MAKE) -C ip_cores/legacy-vme64x-core/drv install
 	$(MAKE) -C ip_cores/fpga-config-space/vme-wb install
 
 sdbfs::

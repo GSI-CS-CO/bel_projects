@@ -54,3 +54,12 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list) {
   }
   list->devs[j] = 0;
 }
+
+void init_buffers(struct circ_buffer *buf) {
+  int i;
+  for (i = 0; i < MAX_FG_DEVICES; i++) {
+    buf[i].wr_ptr = 0;
+    buf[i].rd_ptr = 0;
+    buf[i].size = BUFFER_SIZE; 
+  }
+}
