@@ -14,7 +14,7 @@ const char* program;
 
 
 
-
+typedef enum { false = 0, true = 1 } bool;
 
 const    uint32_t devID_RAM 	      = 0x66cfeb52;
 const    uint64_t vendID_CERN       = 0x000000000000ce42;
@@ -26,140 +26,244 @@ static eb_width_t address_width, data_width;
 static int verbose;
 static int idx;
 int eb_ram_com(const char* netaddress, uint8_t cpuId, const uint32_t* buf, uint32_t len);
-uint32_t* parseXml(const char* filename);
+t_ftmPage* parseXml(const char* filename);
 const char* msgIdFields[] = {"FID", "GID", "EVTNO", "SID", "BPID", "SCTR"};
 
 xmlNode* checkNode(xmlNode* aNode, const char* name)
 {
    int8_t i;
-   i=0;
-      
+   i=0; while(name[i++] != '\0'); 
    
-   while(name[i++] != '\0'); 
-   //printf("name %s ", name);
    while(aNode != NULL) 
    {
       while(aNode->type != XML_ELEMENT_NODE || (strncmp((const char*)aNode->name, name, i-1) != 0))
       { 
-         //printf("\nInc nodename %s \n", aNode->name);
          aNode = xmlNextElementSibling(aNode);
-         
       }
-      //printf("nodename %s, len %d \n", aNode->name, i);
       return aNode;
-      
-      
    }
-   //printf("NULL\n");
    return aNode;
 }
 
 
-t_ftmMsg* convertMsg(xmlNode* msgNode)
+t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
 {
    xmlNode *fieldNode, *subFieldNode = NULL;
-   t_ftmMsg* pMsg = NULL;
    uint32_t i;
    
-   pMsg = calloc(1, sizeof(t_ftmMsg));
-            fieldNode =  msgNode->children;
-            if( checkNode(fieldNode, "id") )
+   
+   fieldNode =  msgNode->children;
+   if( checkNode(fieldNode, "id") )
+   {
+         fieldNode = checkNode(fieldNode, "id");
+         subFieldNode =  fieldNode->children;
+         uint16_t vals[6];
+         for(i=0;i<6;i++)
+         {
+            if( checkNode(subFieldNode, msgIdFields[i]) != NULL)
             {
-                  fieldNode = checkNode(fieldNode, "id");
-                  subFieldNode =  fieldNode->children;
-                  uint16_t vals[6];
-                  for(i=0;i<6;i++)
-                  {
-                     if( checkNode(subFieldNode, msgIdFields[i]) != NULL)
-                     {
-                        subFieldNode = checkNode(subFieldNode, msgIdFields[i]);
-                        vals[i] = (uint16_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL, 10 );
-                     }
-                     else printf("ERROR %s\n", msgIdFields[i]);
-                     subFieldNode =  xmlNextElementSibling(subFieldNode);
-                  }   
-                  pMsg->id = getId(vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
-            } else printf("ERROR id %s \n",  fieldNode->name);
-            fieldNode =  xmlNextElementSibling(fieldNode);
-            
-            if( checkNode(fieldNode, "par") != NULL) 
-            {
-               fieldNode = checkNode(fieldNode, "par");
-               pMsg->par = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  10 );
-            }  
-            else printf("ERROR par\n");
-            fieldNode =  xmlNextElementSibling(fieldNode);
-            
-            if( checkNode(fieldNode, "tef") != NULL) 
-            {
-               fieldNode = checkNode(fieldNode, "tef");
-               pMsg->tef = (uint32_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  10 );
-            }     
-            else printf("ERROR tef\n");
-            fieldNode =  xmlNextElementSibling(fieldNode);
-            
-            if( checkNode(fieldNode, "offs") != NULL) 
-            {
-               fieldNode = checkNode(fieldNode, "offs");
-               pMsg->offs = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  10 );
+               subFieldNode = checkNode(subFieldNode, msgIdFields[i]);
+               vals[i] = (uint16_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL, 0 );
             }
-            else printf("ERROR offs\n");
-            
-            
-            printf("id:\t%04x%04x\npar:\t%04x%04x\ntef:\t%04x\noffs:\t%04x%04x\n", 
-                  (uint32_t)(pMsg->id>>32), (uint32_t)pMsg->id, 
-                  (uint32_t)(pMsg->par>>32), (uint32_t)pMsg->par,
-                  pMsg->tef,
-                  (uint32_t)(pMsg->offs>>32), (uint32_t)pMsg->offs);
-                  
-           return pMsg;       
+            else printf("ERROR %s\n", msgIdFields[i]);
+            subFieldNode =  xmlNextElementSibling(subFieldNode);
+         }   
+         pMsg->id = getId(vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
+   } else printf("ERROR id %s \n",  fieldNode->name);
+   fieldNode =  xmlNextElementSibling(fieldNode);
+
+   if( checkNode(fieldNode, "par") != NULL) 
+   {
+      fieldNode = checkNode(fieldNode, "par");
+      pMsg->par = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
+   }  
+   else printf("ERROR par\n");
+   fieldNode =  xmlNextElementSibling(fieldNode);
+
+   if( checkNode(fieldNode, "tef") != NULL) 
+   {
+      fieldNode = checkNode(fieldNode, "tef");
+      pMsg->tef = (uint32_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
+   }     
+   else printf("ERROR tef\n");
+   fieldNode =  xmlNextElementSibling(fieldNode);
+
+   if( checkNode(fieldNode, "offs") != NULL) 
+   {
+      fieldNode = checkNode(fieldNode, "offs");
+      pMsg->offs = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
+   }
+   else printf("ERROR offs\n");
+
+/*
+   printf("id:\t%04x%04x\npar:\t%04x%04x\ntef:\t%04x\noffs:\t%04x%04x\n", 
+         (uint32_t)(pMsg->id>>32), (uint32_t)pMsg->id, 
+         (uint32_t)(pMsg->par>>32), (uint32_t)pMsg->par,
+         pMsg->tef,
+         (uint32_t)(pMsg->offs>>32), (uint32_t)pMsg->offs);
+  */       
+   return pMsg;       
 }
 
-int convertDOM2ftmPage(xmlNode * aNode)
+t_ftmCycle* createCyc(xmlNode* cycNode, t_ftmCycle* pCyc)
 {
-   xmlNode *curNode, *pageNode, *planNode, *cycNode, *msgNode, *fieldNode, *subFieldNode = NULL;
-   curNode = aNode;
-   t_ftmPage* pPage = NULL;
-   t_ftmMsg* pMsg = NULL;
+   /*
+   xmlNode *fieldNode, *subFieldNode = NULL;
+   uint32_t i;
+   
+   
+   fieldNode =  msgNode->children;
+   if( checkNode(fieldNode, "id") )
+   {
+         fieldNode = checkNode(fieldNode, "id");
+         subFieldNode =  fieldNode->children;
+         uint16_t vals[6];
+         for(i=0;i<6;i++)
+         {
+            if( checkNode(subFieldNode, msgIdFields[i]) != NULL)
+            {
+               subFieldNode = checkNode(subFieldNode, msgIdFields[i]);
+               vals[i] = (uint16_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL, 10 );
+            }
+            else printf("ERROR %s\n", msgIdFields[i]);
+            subFieldNode =  xmlNextElementSibling(subFieldNode);
+         }   
+         pMsg->id = getId(vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
+   } else printf("ERROR id %s \n",  fieldNode->name);
+   fieldNode =  xmlNextElementSibling(fieldNode);
+
+   
+
+   if( checkNode(fieldNode, "offs") != NULL) 
+   {
+      fieldNode = checkNode(fieldNode, "offs");
+      pMsg->offs = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  10 );
+   }
+   else printf("ERROR offs\n");
+
+
+   */
+         
+   return pCyc;       
+}
+
+
+t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
+{
+   xmlNode *curNode, *pageNode, *planNode, *cycNode, *msgNode = NULL;
+   
+   t_ftmPage*  pPage    = NULL;
+   t_ftmCycle* pCyc     = NULL;
+   t_ftmCycle* pCycPrev = NULL;
+   t_ftmCycle* pIdle    = NULL;
+   t_ftmMsg* pMsg       = NULL;
+   bool     planStart;
    uint32_t planIdx, cycIdx, msgIdx;
    uint32_t i;
    
+   curNode = aNode;
    if(checkNode(curNode, "page") != NULL) pageNode = curNode;
    else return 0;
 
-   //pPage = calloc(sizeof(ftmPage));
    planNode = pageNode->children;
    printf("PAGE\n");
+   
+   pPage    = calloc(1, sizeof(t_ftmPage));
+   planIdx  = 0;
+   
    while( checkNode(planNode, "plan") != NULL)
    {
       planNode = checkNode(planNode, "plan");
       printf("\tPLAN\n");
-      cycNode = planNode->children;
-      
+      cycIdx      = 0;
+      cycNode     = planNode->children;
+      planStart   = true;
+
       while( checkNode(cycNode, "cyc") != NULL)
       {
-         cycNode = checkNode(cycNode, "cyc");
+         //alloc cycle, fill first part from DOM
+         cycNode  = checkNode(cycNode, "cyc");
+         pCycPrev = pCyc;
+         pCyc     = calloc(1, sizeof(t_ftmCycle));
+         //createCyc(cycNode, &pCyc);
          printf("\t\tCYC\n");
+         
+         //if this is the first cycle of a plan, save the pointer for the plan array
+         if(planStart) 
+         {  
+            planStart = false; 
+            pPage->plans[planIdx].pStart = pCyc;
+            
+         } else {
+            pCycPrev->pNext =  (struct t_ftmCycle*)pCyc;
+         }
+            
+         //alloc msg array, fill array from DOM
+         msgIdx = 0;
+         pMsg = calloc(1024, sizeof(t_ftmMsg)); //alloc 1k msgs just in case
          msgNode = cycNode->children;
          while( checkNode(msgNode, "msg") != NULL)
          {
             msgNode = checkNode(msgNode, "msg");
             printf("\t\t\tMSG\n");
-            convertMsg(msgNode);
-            
-            
+            createMsg(msgNode, &pMsg[msgIdx++]);
             msgNode = xmlNextElementSibling(msgNode);      
          }
+         //realloc msg array size to actual space
+         pMsg = realloc(pMsg, msgIdx*sizeof(t_ftmMsg)); //adjust msg mem allocation to actual cnt
+         //write msg array ptr and msg qty to parent cycle
+         pCyc->pMsg     = pMsg;
+         pCyc->msgQty   = msgIdx;
+         cycIdx++;
          cycNode = xmlNextElementSibling(cycNode);               
       }
-      planNode = xmlNextElementSibling(planNode);   
+      pCyc->pNext = (struct t_ftmCycle*)pIdle;
+      pPage->plans[planIdx++].cycQty = cycIdx;
+      
+      planNode = xmlNextElementSibling(planNode);
    }
-  
-     
-     
-   return 0;    
+   pPage->planQty                 = planIdx;
+   return pPage;    
+}
+
+void showFtmPage(t_ftmPage* pPage)
+{
+   uint32_t planIdx, cycIdx, msgIdx;
+   t_ftmCycle* pCyc  = NULL;
+   t_ftmMsg*   pMsg  = NULL;
+   
+   for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
+   {
+      printf("\t---PLAN %c\n", planIdx+'A');
+      cycIdx = 0;
+      pCyc = pPage->plans[planIdx].pStart;
+      while(cycIdx++ < pPage->plans[planIdx].cycQty && pCyc != NULL)
+      {
+         printf("\t\t---CYC %c%u\n", planIdx+'A', cycIdx);
+         printf("\t\tStart:\t%04x%04x\n\t\tperiod:\t%04x%04x\n\t\tflags:\t%04x\n\t\trep:\t%04x\n\t\tmsg:\t%04x\n", 
+         (uint32_t)(pCyc->tStart>>32), (uint32_t)pCyc->tStart, 
+         (uint32_t)(pCyc->tPeriod>>32), (uint32_t)pCyc->tPeriod,
+         pCyc->flags,
+         pCyc->repQty,
+         pCyc->msgQty); 
+         
+         pMsg = pCyc->pMsg;
+         for(msgIdx = 0; msgIdx < pCyc->msgQty; msgIdx++)
+         {
+            printf("\t\t\t---MSG %c%u%c\n", planIdx+'A', cycIdx, msgIdx+'A');
+            printf("\t\t\tid:\t%04x%04x\n\t\t\tpar:\t%04x%04x\n\t\t\ttef:\t%04x\n\t\t\toffs:\t%04x%04x\n", 
+            (uint32_t)(pMsg[msgIdx].id>>32), (uint32_t)pMsg[msgIdx].id, 
+            (uint32_t)(pMsg[msgIdx].par>>32), (uint32_t)pMsg[msgIdx].par,
+            pMsg[msgIdx].tef,
+            (uint32_t)(pMsg[msgIdx].offs>>32), (uint32_t)pMsg[msgIdx].offs);   
+         }
+         pCyc = (t_ftmCycle*)pCyc->pNext;
+      }
+           
+   }   
    
 }
+
 
 int eb_ram_com(const char* netaddress, uint8_t cpuId, const uint32_t* buf, uint32_t len)
 {
@@ -235,10 +339,11 @@ int eb_ram_com(const char* netaddress, uint8_t cpuId, const uint32_t* buf, uint3
   return 0;
 }
 
-uint32_t* parseXml(const char* filename)
+t_ftmPage* parseXml(const char* filename)
 {
    xmlDoc *doc = NULL;
     xmlNode *root_element = NULL;
+   t_ftmPage* pPage = NULL;
 
     LIBXML_TEST_VERSION
 
@@ -253,7 +358,7 @@ uint32_t* parseXml(const char* filename)
     root_element = xmlDocGetRootElement(doc);
 
     
-    convertDOM2ftmPage(root_element);
+    pPage = convertDOM2ftmPage(root_element);
 
     /*free the document */
     xmlFreeDoc(doc);
@@ -263,14 +368,14 @@ uint32_t* parseXml(const char* filename)
      *have been allocated by the parser.
      */
     xmlCleanupParser();
-    return 0;
+    return pPage;
 
 }
 
    int main(int argc, char** argv) {
       unsigned int i;
       int opt, error;
-     
+      t_ftmPage* pPage = NULL;
   
       const char* netaddress;
       char filename[64];
@@ -304,7 +409,8 @@ uint32_t* parseXml(const char* filename)
       netaddress = argv[optind];
 
       printf("%s\n\n", filename);
-      parseXml(filename);
+      pPage = parseXml(filename);
+      showFtmPage(pPage);
       //eb_ram_com(netaddress, 0, NULL, 0);
       printf("\n\n");
 
