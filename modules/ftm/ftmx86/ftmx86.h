@@ -44,9 +44,11 @@
 #define ID_SCTR_POS           0
 
 #define FLAGS_IS_BP           (1<<0)
-#define FLAGS_IS_COND         (1<<1)
-#define FLAGS_IS_START        (1<<2) // debug
-#define FLAGS_IS_END          (1<<3) // debug
+#define FLAGS_IS_COND_MSI     (1<<1)
+#define FLAGS_IS_COND_SHARED  (1<<2)
+#define FLAGS_IS_SIG          (1<<3)
+#define FLAGS_IS_START        (1<<4) // debug
+#define FLAGS_IS_END          (1<<5) // debug
 
 #define FTM_IS_RUNNING        (1<<0) 
 #define FTM_IS_STOP_REQ       (1<<1) 
@@ -69,10 +71,11 @@
 #define FTM_CYC_TPERIOD       (FTM_CYC_TSTART         + 8)
 #define FTM_CYC_TEXEC         (FTM_CYC_TPERIOD        + 8)
 #define FTM_CYC_FLAGS         (FTM_CYC_TEXEC          + 8)
-#define FTM_CYC_PCONDINDPUT   (FTM_CYC_FLAGS          + 4)
-#define FTM_CYC_PCONDPATTERN  (FTM_CYC_PCONDINDPUT    + 4)
-#define FTM_CYC_CONDMSK       (FTM_CYC_PCONDPATTERN   + 4)
-#define FTM_CYC_REPQTY        (FTM_CYC_CONDMSK        + 4)
+#define FTM_CYC_CONDVAL       (FTM_CYC_FLAGS          + 4)
+#define FTM_CYC_CONDMSK       (FTM_CYC_CONDVAL        + 8)
+#define FTM_CYC_SIGDST        (FTM_CYC_CONDMSK        + 4)
+#define FTM_CYC_SIGVAL        (FTM_CYC_SIGDST         + 4)
+#define FTM_CYC_REPQTY        (FTM_CYC_SIGVAL         + 4)
 #define FTM_CYC_REPCNT        (FTM_CYC_REPQTY         + 4)
 #define FTM_CYC_MSGQTY        (FTM_CYC_REPCNT         + 4)
 #define FTM_CYC_MSGIDX        (FTM_CYC_MSGQTY         + 4)
@@ -100,9 +103,10 @@ typedef struct {
    uint64_t             tPeriod;       //cycle period
    uint64_t             tExec;         //cycle execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod
    uint32_t             flags;         //apart from CYC_IS_BP, this is just markers for status info & better debugging
-   uint32_t*            pCondInput;    //pointer to location to poll for condition
-   uint32_t*            pCondPattern;  //pointer to pattern to compare
-   uint32_t             condMsk;       //mask for comparison in condition
+   uint64_t             condVal;  //pointer to pattern to compare
+   uint64_t             condMsk;       //mask for comparison in condition
+   uint32_t             sigDst;       //mask for comparison in condition
+   uint32_t             sigVal;       //mask for comparison in condition
    uint32_t             repQty;        //number of desired repetitions. -1 -> infinite, 0 -> none
    uint32_t             repCnt;        //running count of repetitions
    uint32_t             msgQty;        //Number of messages
@@ -113,11 +117,17 @@ typedef struct {
 } t_ftmCycle;
 
 typedef struct {
+   uint32_t       cycQty;
+   t_ftmCycle*    pStart;
+} t_ftmPlan;
+
+
+typedef struct {
 
    uint32_t       planQty;
-   t_ftmCycle     pPlans[16];
-   t_ftmCycle*    pAlt;
-   t_ftmCycle*    pStart;
+   t_ftmPlan      plans[16];
+   t_ftmPlan*     pAlt;
+   t_ftmPlan*     pStart;
 } t_ftmPage;
 
 typedef struct {
@@ -139,9 +149,10 @@ uint8_t* serCycle(uint8_t*    buf,
                   uint64_t    tPeriod,
                   uint64_t    tExec,       
                   uint32_t    flags,
-                  uint32_t*   pCondInput,    
-                  uint32_t*   pCondPattern,  
-                  uint32_t    condMsk,       
+                  uint64_t    condVal,
+                  uint64_t    condMsk,
+                  uint32_t    sigDst, 
+                  uint32_t    sigVal,      
                   uint32_t    repQty,        
                   uint32_t    repCnt,
                   uint32_t    msgQty,

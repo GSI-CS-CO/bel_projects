@@ -5,16 +5,23 @@
    </meta>
    
    <plan>
-      <!-- Plan A -->  
+      <!-- Plan A -->
+      <starttime>60</starttime>  
       <cycle>
          <!-- Cycle A0 -->
          <meta>
             <rep>10</rep>
             <period>2000</period>
             <breakpoint>yes</breakpoint>
-            <conditional>yes</conditional>
-            <condition>0x1</condition>
-            <mask>0x3</mask>
+            <condition>
+               <source>shared</source>
+               <pattern>0xd15ea5edcafebabe</pattern>
+               <mask>0xffffffffffffffff</mask>
+            </condition>
+            <signal>
+               <destination>0x123</destination>
+               <value>0x456</value>
+            </signal>
          </meta>
         
          <msg>
@@ -25,7 +32,6 @@
                <EVTNO>0</EVTNO>
                <SID>5</SID>
                <BPID>6</BPID>
-               <SCTR>7</SCTR>
             </id>
             <par>0xfeed0132</par>
             <tef>132</tef>
@@ -40,7 +46,6 @@
                <EVTNO>1</EVTNO>
                <SID>5</SID>
                <BPID>6</BPID>
-               <SCTR>7</SCTR>
             </id>
             <par>0xdead0132</par>
             <tef>0</tef>
@@ -54,7 +59,6 @@
                <EVTNO>1</EVTNO>
                <SID>5</SID>
                <BPID>6</BPID>
-               <SCTR>7</SCTR>
             </id>
             <par>0xdead0132</par>
             <tef>0</tef>
@@ -68,7 +72,6 @@
             <rep>1</rep>
             <period>5000</period>
             <breakpoint>yes</breakpoint>
-            <conditional>no</conditional>
          </meta>
          
          <msg>
@@ -79,7 +82,6 @@
                <EVTNO>0</EVTNO>
                <SID>5</SID>
                <BPID>6</BPID>
-               <SCTR>7</SCTR>
             </id>
             <par>0xfeed0132</par>
             <tef>132</tef>
@@ -94,7 +96,6 @@
                <EVTNO>1</EVTNO>
                <SID>5</SID>
                <BPID>6</BPID>
-               <SCTR>7</SCTR>
             </id>
             <par>0xdead0132</par>
             <tef>0</tef>
@@ -104,6 +105,7 @@
    </plan>
    
    <plan>
+      <starttime>5</starttime>
       <!-- Plan B -->  
       <cycle>
          <!-- Cycle B0 -->
@@ -111,9 +113,10 @@
             <rep>10</rep>
             <period>2000</period>
             <breakpoint>yes</breakpoint>
-            <conditional>yes</conditional>
-            <condition>0x1</condition>
-            <mask>0x3</mask>
+            <signal>
+               <destination>0x1234567</destination>
+               <value>0xDEADBEEF</value>
+            </signal>
          </meta>
         
          <msg>
@@ -124,7 +127,6 @@
                <EVTNO>0</EVTNO>
                <SID>5</SID>
                <BPID>6</BPID>
-               <SCTR>7</SCTR>
             </id>
             <par>0xfeed0132</par>
             <tef>132</tef>
@@ -139,7 +141,6 @@
                <EVTNO>1</EVTNO>
                <SID>5</SID>
                <BPID>6</BPID>
-               <SCTR>7</SCTR>
             </id>
             <par>0xdead0132</par>
             <tef>0</tef>
@@ -153,7 +154,11 @@
             <rep>1</rep>
             <period>5000</period>
             <breakpoint>yes</breakpoint>
-            <conditional>no</conditional>
+            <condition>
+               <source>msi</source>
+               <pattern>0xcafebabe</pattern>
+               <mask>0xffffffff</mask>
+            </condition>
          </meta>
          
          <msg>
@@ -164,7 +169,6 @@
                <EVTNO>0</EVTNO>
                <SID>5</SID>
                <BPID>6</BPID>
-               <SCTR>7</SCTR>
             </id>
             <par>0xfeed0132</par>
             <tef>132</tef>
@@ -179,7 +183,6 @@
                <EVTNO>1</EVTNO>
                <SID>5</SID>
                <BPID>6</BPID>
-               <SCTR>7</SCTR>
             </id>
             <par>0xdead0132</par>
             <tef>0</tef>
@@ -191,8 +194,7 @@
          <meta>
             <rep>1</rep>
             <period>5000</period>
-            <breakpoint>yes</breakpoint>
-            <conditional>no</conditional>
+            <breakpoint>no</breakpoint>
          </meta>
          
          <msg>
@@ -203,7 +205,6 @@
                <EVTNO>0</EVTNO>
                <SID>5</SID>
                <BPID>6</BPID>
-               <SCTR>7</SCTR>
             </id>
             <par>0xfeed0132</par>
             <tef>132</tef>

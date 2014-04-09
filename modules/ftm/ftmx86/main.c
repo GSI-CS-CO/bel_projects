@@ -34,11 +34,12 @@ xmlNode* checkNode(xmlNode* aNode, const char* name)
    int8_t i;
    i=0; while(name[i++] != '\0'); 
    
-   while(aNode != NULL) 
+   if(aNode != NULL) 
    {
       while(aNode->type != XML_ELEMENT_NODE || (strncmp((const char*)aNode->name, name, i-1) != 0))
       { 
          aNode = xmlNextElementSibling(aNode);
+         if(aNode == NULL) break;
       }
       return aNode;
    }
@@ -51,14 +52,12 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
    xmlNode *fieldNode, *subFieldNode = NULL;
    uint32_t i;
    
-   
-   fieldNode =  msgNode->children;
-   if( checkNode(fieldNode, "id") )
+   fieldNode =  checkNode(msgNode->children, "id") ;
+   if(fieldNode != NULL)
    {
-         fieldNode = checkNode(fieldNode, "id");
          subFieldNode =  fieldNode->children;
-         uint16_t vals[6];
-         for(i=0;i<6;i++)
+         uint16_t vals[5];
+         for(i=0;i<5;i++)
          {
             if( checkNode(subFieldNode, msgIdFields[i]) != NULL)
             {
@@ -68,81 +67,80 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
             else printf("ERROR %s\n", msgIdFields[i]);
             subFieldNode =  xmlNextElementSibling(subFieldNode);
          }   
-         pMsg->id = getId(vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
+         pMsg->id = getId(vals[0], vals[1], vals[2], vals[3], vals[4], 0);
    } else printf("ERROR id %s \n",  fieldNode->name);
-   fieldNode =  xmlNextElementSibling(fieldNode);
-
-   if( checkNode(fieldNode, "par") != NULL) 
-   {
-      fieldNode = checkNode(fieldNode, "par");
-      pMsg->par = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
-   }  
+   
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "par");
+   if(fieldNode != NULL) pMsg->par = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
    else printf("ERROR par\n");
-   fieldNode =  xmlNextElementSibling(fieldNode);
-
-   if( checkNode(fieldNode, "tef") != NULL) 
-   {
-      fieldNode = checkNode(fieldNode, "tef");
-      pMsg->tef = (uint32_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
-   }     
+   
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "tef");
+   if(fieldNode != NULL) pMsg->tef = (uint32_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
    else printf("ERROR tef\n");
-   fieldNode =  xmlNextElementSibling(fieldNode);
-
-   if( checkNode(fieldNode, "offs") != NULL) 
-   {
-      fieldNode = checkNode(fieldNode, "offs");
-      pMsg->offs = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
-   }
+   
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "offs");
+   if(fieldNode != NULL) pMsg->offs = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
    else printf("ERROR offs\n");
 
-/*
-   printf("id:\t%04x%04x\npar:\t%04x%04x\ntef:\t%04x\noffs:\t%04x%04x\n", 
-         (uint32_t)(pMsg->id>>32), (uint32_t)pMsg->id, 
-         (uint32_t)(pMsg->par>>32), (uint32_t)pMsg->par,
-         pMsg->tef,
-         (uint32_t)(pMsg->offs>>32), (uint32_t)pMsg->offs);
-  */       
    return pMsg;       
 }
 
 t_ftmCycle* createCyc(xmlNode* cycNode, t_ftmCycle* pCyc)
 {
-   /*
-   xmlNode *fieldNode, *subFieldNode = NULL;
-   uint32_t i;
+   
+   xmlNode *fieldNode, *subFieldNode, *curNode = NULL;
+   
+   fieldNode =  checkNode(cycNode->children, "meta");
+   if(fieldNode != NULL) fieldNode =  fieldNode->children;
+   else printf("ERROR meta \n");
    
    
-   fieldNode =  msgNode->children;
-   if( checkNode(fieldNode, "id") )
+   fieldNode = checkNode(fieldNode, "rep");
+   if(fieldNode != NULL) pCyc->repQty = (int32_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
+   else printf("ERROR repQty\n");
+   
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "period");
+   if(fieldNode != NULL) pCyc->tPeriod = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
+   else printf("ERROR Period\n");
+   
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "breakpoint");
+   if(fieldNode != NULL) {if(strncmp( (const char*)xmlNodeGetContent(fieldNode), "yes",  3) == 0) pCyc->flags |= FLAGS_IS_BP;}
+   else printf("ERROR breakpoint\n");
+   
+   curNode = fieldNode;
+   fieldNode = checkNode(xmlNextElementSibling(curNode), "condition");
+   if(fieldNode != NULL) 
    {
-         fieldNode = checkNode(fieldNode, "id");
-         subFieldNode =  fieldNode->children;
-         uint16_t vals[6];
-         for(i=0;i<6;i++)
-         {
-            if( checkNode(subFieldNode, msgIdFields[i]) != NULL)
-            {
-               subFieldNode = checkNode(subFieldNode, msgIdFields[i]);
-               vals[i] = (uint16_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL, 10 );
-            }
-            else printf("ERROR %s\n", msgIdFields[i]);
-            subFieldNode =  xmlNextElementSibling(subFieldNode);
-         }   
-         pMsg->id = getId(vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
-   } else printf("ERROR id %s \n",  fieldNode->name);
-   fieldNode =  xmlNextElementSibling(fieldNode);
-
-   
-
-   if( checkNode(fieldNode, "offs") != NULL) 
-   {
-      fieldNode = checkNode(fieldNode, "offs");
-      pMsg->offs = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  10 );
+      subFieldNode = checkNode(fieldNode->children, "source");
+      if(subFieldNode != NULL)
+      {
+               if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "shared",  6) == 0) pCyc->flags |= FLAGS_IS_COND_SHARED;
+         else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "msi",     3) == 0) pCyc->flags |= FLAGS_IS_COND_MSI; 
+      } else printf("ERROR source\n");
+      
+      subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "pattern");
+      if(subFieldNode != NULL) pCyc->condVal = (uint64_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
+      else printf("ERROR condition\n");
+      
+      subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "mask");
+      if(subFieldNode != NULL) pCyc->condMsk = (uint64_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
+      else printf("ERROR condmask\n");
    }
-   else printf("ERROR offs\n");
-
-
-   */
+   else printf("no condition found\n");
+   
+   fieldNode = checkNode(xmlNextElementSibling(curNode), "signal");
+   if(fieldNode != NULL)
+   {
+      pCyc->flags |= FLAGS_IS_SIG;
+      subFieldNode = checkNode(fieldNode->children, "destination");
+      if(subFieldNode != NULL) pCyc->sigDst = (uint32_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
+      else printf("ERROR sigdst\n");
+      
+      subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "value");
+      if(subFieldNode != NULL) pCyc->sigVal = (uint32_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
+      else printf("ERROR sigval\n");
+   }
+   else printf("no signal found \n");
          
    return pCyc;       
 }
@@ -178,14 +176,15 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
       cycIdx      = 0;
       cycNode     = planNode->children;
       planStart   = true;
-
-      while( checkNode(cycNode, "cyc") != NULL)
+      
+      
+      while( checkNode(cycNode, "cycle") != NULL)
       {
          //alloc cycle, fill first part from DOM
-         cycNode  = checkNode(cycNode, "cyc");
+         cycNode  = checkNode(cycNode, "cycle");
          pCycPrev = pCyc;
-         pCyc     = calloc(1, sizeof(t_ftmCycle));
-         //createCyc(cycNode, &pCyc);
+         pCyc     = createCyc(cycNode, calloc(1, sizeof(t_ftmCycle)));
+    
          printf("\t\tCYC\n");
          
          //if this is the first cycle of a plan, save the pointer for the plan array
@@ -194,9 +193,14 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
             planStart = false; 
             pPage->plans[planIdx].pStart = pCyc;
             
+            curNode = checkNode(planNode->children, "starttime");
+            if(curNode != NULL) 
+            pCyc->tStart = (uint64_t)strtoul( (const char*)xmlNodeGetContent(curNode), NULL, 0 );
+            
          } else {
             pCycPrev->pNext =  (struct t_ftmCycle*)pCyc;
          }
+         
             
          //alloc msg array, fill array from DOM
          msgIdx = 0;
@@ -239,19 +243,31 @@ void showFtmPage(t_ftmPage* pPage)
       pCyc = pPage->plans[planIdx].pStart;
       while(cycIdx++ < pPage->plans[planIdx].cycQty && pCyc != NULL)
       {
-         printf("\t\t---CYC %c%u\n", planIdx+'A', cycIdx);
-         printf("\t\tStart:\t%04x%04x\n\t\tperiod:\t%04x%04x\n\t\tflags:\t%04x\n\t\trep:\t%04x\n\t\tmsg:\t%04x\n", 
+         printf("\t\t---CYC %c%u\n", planIdx+'A', cycIdx-1);
+         printf("\t\tStart:\t\t%08x%08x\n\t\tperiod:\t\t%08x%08x\n\t\trep:\t\t\t%08x\n\t\tmsg:\t\t\t%08x\n", 
          (uint32_t)(pCyc->tStart>>32), (uint32_t)pCyc->tStart, 
          (uint32_t)(pCyc->tPeriod>>32), (uint32_t)pCyc->tPeriod,
-         pCyc->flags,
          pCyc->repQty,
-         pCyc->msgQty); 
+         pCyc->msgQty);
+         
+         printf("\t\tFlags:\t");
+         if(pCyc->flags & FLAGS_IS_BP) printf("-IS_BP\t");
+         if(pCyc->flags & FLAGS_IS_COND_MSI) printf("-IS_CMSI\t");
+         if(pCyc->flags & FLAGS_IS_COND_SHARED) printf("-IS_CSHA\t");
+         if(pCyc->flags & FLAGS_IS_SIG) printf("-IS_SIG");
+         printf("\n");
+         
+         printf("\t\tCondVal:\t%08x%08x\n\t\tCondMsk:\t%08x%08x\n\t\tSigDst:\t\t\t%08x\n\t\tSigVal:\t\t\t%08x\n", 
+         (uint32_t)(pCyc->condVal>>32), (uint32_t)pCyc->condVal, 
+         (uint32_t)(pCyc->condMsk>>32), (uint32_t)pCyc->condMsk,
+         pCyc->sigDst,
+         pCyc->sigVal);  
          
          pMsg = pCyc->pMsg;
          for(msgIdx = 0; msgIdx < pCyc->msgQty; msgIdx++)
          {
-            printf("\t\t\t---MSG %c%u%c\n", planIdx+'A', cycIdx, msgIdx+'A');
-            printf("\t\t\tid:\t%04x%04x\n\t\t\tpar:\t%04x%04x\n\t\t\ttef:\t%04x\n\t\t\toffs:\t%04x%04x\n", 
+            printf("\t\t\t---MSG %c%u%c\n", planIdx+'A', cycIdx-1, msgIdx+'A');
+            printf("\t\t\tid:\t%08x%08x\n\t\t\tpar:\t%08x%08x\n\t\t\ttef:\t\t%08x\n\t\t\toffs:\t%08x%08x\n", 
             (uint32_t)(pMsg[msgIdx].id>>32), (uint32_t)pMsg[msgIdx].id, 
             (uint32_t)(pMsg[msgIdx].par>>32), (uint32_t)pMsg[msgIdx].par,
             pMsg[msgIdx].tef,

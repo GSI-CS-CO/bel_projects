@@ -32,10 +32,11 @@ const t_ftmCycle Idle = { .tTrn           = 0,
                           .tStart         = 0,
                           .tPeriod        = 500,
                           .tExec          = 0,
-                          .flags          = (FLAGS_IS_BP | FLAGS_IS_COND),
-                          .pCondInput     = NULL,
-                          .pCondPattern   = NULL,
+                          .flags          = (FLAGS_IS_BP),
+                          .condVal        = 0,
                           .condMsk        = 0,
+                          .sigDst         = 0,
+                          .sigVal         = 0,
                           .repQty         = -1,
                           .repCnt         = 0,
                           .msgQty         = 0,
@@ -54,9 +55,10 @@ uint8_t* serCycle(uint8_t*    buf,
                   uint64_t    tPeriod,
                   uint64_t    tExec,       
                   uint32_t    flags,
-                  uint32_t*   pCondInput,    
-                  uint32_t*   pCondPattern,  
-                  uint32_t    condMsk,       
+                  uint64_t    condVal,
+                  uint64_t    condMsk,
+                  uint32_t    sigDst, 
+                  uint32_t    sigVal,       
                   uint32_t    repQty,        
                   uint32_t    repCnt,
                   uint32_t    msgQty,
@@ -73,9 +75,10 @@ uint8_t* serCycle(uint8_t*    buf,
    for(i=0;i<FTM_TIME_SIZE;   i++) buf[FTM_CYC_TPERIOD      + i]  = (tPeriod        >> (8*i)) & 0xff;
    for(i=0;i<FTM_TIME_SIZE;   i++) buf[FTM_CYC_TEXEC        + i]  = (tExec          >> (8*i)) & 0xff;
    for(i=0;i<FTM_WORD_SIZE;   i++) buf[FTM_CYC_FLAGS        + i]  = (flags          >> (8*i)) & 0xff;
-   for(i=0;i<FTM_PTR_SIZE;    i++) buf[FTM_CYC_PCONDINDPUT  + i]  = ((uint32_t)pCondInput     >> (8*i)) & 0xff;
-   for(i=0;i<FTM_PTR_SIZE;    i++) buf[FTM_CYC_PCONDPATTERN + i]  = ((uint32_t)pCondPattern   >> (8*i)) & 0xff;
-   for(i=0;i<FTM_WORD_SIZE;   i++) buf[FTM_CYC_CONDMSK      + i]  = (condMsk        >> (8*i)) & 0xff;
+   for(i=0;i<FTM_DWORD_SIZE;  i++) buf[FTM_CYC_CONDVAL      + i]  = (condVal        >> (8*i)) & 0xff;
+   for(i=0;i<FTM_DWORD_SIZE;  i++) buf[FTM_CYC_CONDMSK      + i]  = (condMsk        >> (8*i)) & 0xff;
+   for(i=0;i<FTM_WORD_SIZE;   i++) buf[FTM_CYC_SIGDST       + i]  = (sigDst         >> (8*i)) & 0xff;
+   for(i=0;i<FTM_WORD_SIZE;   i++) buf[FTM_CYC_SIGVAL       + i]  = (sigVal         >> (8*i)) & 0xff;
    for(i=0;i<FTM_WORD_SIZE;   i++) buf[FTM_CYC_REPQTY       + i]  = (repQty         >> (8*i)) & 0xff;
    for(i=0;i<FTM_WORD_SIZE;   i++) buf[FTM_CYC_REPCNT       + i]  = (repCnt         >> (8*i)) & 0xff;
    for(i=0;i<FTM_WORD_SIZE;   i++) buf[FTM_CYC_MSGQTY       + i]  = (msgQty         >> (8*i)) & 0xff;
