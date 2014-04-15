@@ -1,86 +1,256 @@
-/**
- * section: Tree
- * synopsis: Navigates a tree to print element names
- * purpose: Parse a file to a tree, use xmlDocGetRootElement() to
- *          get the root element, then walk the document and print
- *          all the element name in document order.
- * usage: tree1 filename_or_URL
- * test: tree1 test2.xml > tree1.tmp && diff tree1.tmp $(srcdir)/tree1.res
- * author: Dodji Seketeli
- * copy: see Copyright for the status of this software.
- */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <libxml/tree.h>
-#include <libxml/parser.h>
+#include "xmlaux.h"
 
-#ifdef LIBXML_TREE_ENABLED
+const char* msgIdFields[] = {"FID", "GID", "EVTNO", "SID", "BPID", "SCTR"};
 
-/*
- *To compile this file using gcc you can type
- *gcc `xml2-config --cflags --libs` -o xmlexample libxml2-example.c
- */
-
-/**
- * print_element_names:
- * @a_node: the initial xml node to consider.
- *
- * Prints the names of the all the xml elements
- * that are siblings or children of a given xml node.
- */
-static void
-print_element_names(xmlNode * a_node)
+xmlNode* checkNode(xmlNode* aNode, const char* name)
 {
-    xmlNode *cur_node = NULL;
-  
-    for (cur_node = a_node; cur_node; cur_node = cur_node->next) {
-        if (cur_node->type == XML_ELEMENT_NODE) {
-            //printf("node type: Element, name: %s value: %s\n", cur_node->name, xmlNodeGetContent(cur_node));
-            if(cur_node->parent->name != NULL)
-            {
-               if(strncmp(cur_node->parent->name, "id", 2) == 0) 
-               printf("node type: Element, name: %s value: %s\n", cur_node->name, xmlNodeGetContent(cur_node));
-            }   
-        }
-
-        print_element_names(cur_node->children);
-    }
+   int8_t i;
+   i=0; while(name[i++] != '\0'); 
+   
+   if(aNode != NULL) 
+   {
+      while(aNode->type != XML_ELEMENT_NODE || (strncmp((const char*)aNode->name, name, i-1) != 0))
+      { 
+         aNode = xmlNextElementSibling(aNode);
+         if(aNode == NULL) break;
+      }
+      return aNode;
+   }
+   return aNode;
 }
 
 
-/**
- * Simple example to parse a file called "file.xml", 
- * walk down the DOM, and print the name of the 
- * xml elements nodes.
- */
-int
-main(int argc, char **argv)
+t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
 {
-    xmlDoc *doc = NULL;
+   xmlNode *fieldNode, *subFieldNode = NULL;
+   uint32_t i;
+   
+   fieldNode =  checkNode(msgNode->children, "id") ;
+   if(fieldNode != NULL)
+   {
+         subFieldNode =  fieldNode->children;
+         uint16_t vals[5];
+         for(i=0;i<5;i++)
+         {
+            if( checkNode(subFieldNode, msgIdFields[i]) != NULL)
+            {
+               subFieldNode = checkNode(subFieldNode, msgIdFields[i]);
+               vals[i] = (uint16_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL, 0 );
+            }
+            else printf("ERROR %s\n", msgIdFields[i]);
+            subFieldNode =  xmlNextElementSibling(subFieldNode);
+         }   
+         pMsg->id = getId(vals[0], vals[1], vals[2], vals[3], vals[4], 0);
+   } else printf("ERROR id %s \n",  fieldNode->name);
+   
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "par");
+   if(fieldNode != NULL) pMsg->par = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
+   else printf("ERROR par\n");
+   
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "tef");
+   if(fieldNode != NULL) pMsg->tef = (uint32_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
+   else printf("ERROR tef\n");
+   
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "offs");
+   if(fieldNode != NULL) pMsg->offs = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
+   else printf("ERROR offs\n");
+
+   return pMsg;       
+}
+
+t_ftmCycle* createCyc(xmlNode* cycNode, t_ftmCycle* pCyc)
+{
+   
+   xmlNode *fieldNode, *subFieldNode, *curNode = NULL;
+   
+   fieldNode =  checkNode(cycNode->children, "meta");
+   if(fieldNode != NULL) fieldNode =  fieldNode->children;
+   else printf("ERROR meta \n");
+   
+   
+   fieldNode = checkNode(fieldNode, "rep");
+   if(fieldNode != NULL) pCyc->repQty = (int32_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
+   else printf("ERROR repQty\n");
+   
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "period");
+   if(fieldNode != NULL) pCyc->tPeriod = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
+   else printf("ERROR Period\n");
+   
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "breakpoint");
+   if(fieldNode != NULL) {if(strncmp( (const char*)xmlNodeGetContent(fieldNode), "yes",  3) == 0) pCyc->flags |= FLAGS_IS_BP;}
+   else printf("ERROR breakpoint\n");
+   
+   curNode = fieldNode;
+   fieldNode = checkNode(xmlNextElementSibling(curNode), "condition");
+   if(fieldNode != NULL) 
+   {
+      subFieldNode = checkNode(fieldNode->children, "source");
+      if(subFieldNode != NULL)
+      {
+               if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "shared",  6) == 0) pCyc->flags |= FLAGS_IS_COND_SHARED;
+         else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "msi",     3) == 0) pCyc->flags |= FLAGS_IS_COND_MSI; 
+      } else printf("ERROR source\n");
+      
+      subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "pattern");
+      if(subFieldNode != NULL) pCyc->condVal = (uint64_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
+      else printf("ERROR condition\n");
+      
+      subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "mask");
+      if(subFieldNode != NULL) pCyc->condMsk = (uint64_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
+      else printf("ERROR condmask\n");
+   }
+   else printf("no condition found\n");
+   
+   fieldNode = checkNode(xmlNextElementSibling(curNode), "signal");
+   if(fieldNode != NULL)
+   {
+      pCyc->flags |= FLAGS_IS_SIG;
+      subFieldNode = checkNode(fieldNode->children, "destination");
+      if(subFieldNode != NULL) pCyc->sigDst = (uint32_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
+      else printf("ERROR sigdst\n");
+      
+      subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "value");
+      if(subFieldNode != NULL) pCyc->sigVal = (uint32_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
+      else printf("ERROR sigval\n");
+   }
+   else printf("no signal found \n");
+         
+   return pCyc;       
+}
+
+t_ftmPage* createPage(xmlNode* pageNode, t_ftmPage* pPage)
+{
+   
+   xmlNode *fieldNode = NULL;
+   const char* planChar;
+   
+   fieldNode =  checkNode(pageNode->children, "meta");
+   if(fieldNode != NULL) fieldNode =  fieldNode->children;
+   else printf("ERROR meta \n");
+   
+   
+   fieldNode = checkNode(fieldNode, "startplan");
+   if(fieldNode != NULL) 
+   {  
+      planChar = (const char*)xmlNodeGetContent(fieldNode);
+      pPage->idxStart = (uint32_t)(planChar[0] & 0xdf) - 'A';
+   }
+   else printf("ERROR startplan\n");
+   
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "altplan");
+   if(fieldNode != NULL)
+   {  
+      planChar = (const char*)xmlNodeGetContent(fieldNode);
+      pPage->idxBp = (uint32_t)(planChar[0] & 0xdf) - 'A';
+   }
+   else printf("ERROR altplan\n");
+   return pPage;       
+}
+
+
+t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
+{
+   xmlNode *curNode, *pageNode, *planNode, *cycNode, *msgNode = NULL;
+   
+   t_ftmPage*  pPage    = NULL;
+   t_ftmCycle* pCyc     = NULL;
+   t_ftmCycle* pCycPrev = NULL;
+   t_ftmCycle* pIdle    = NULL;
+   t_ftmMsg* pMsg       = NULL;
+   bool     planStart;
+   uint32_t planIdx, cycIdx, msgIdx;
+   
+   curNode = aNode;
+   
+   if(checkNode(curNode, "page") != NULL) pageNode = curNode;
+   else return 0;
+   planNode = pageNode->children;
+   printf("PAGE\n");
+   
+   pPage    = createPage(pageNode, calloc(1, sizeof(t_ftmPage)));
+   planIdx  = 0;
+ 
+   while( checkNode(planNode, "plan") != NULL)
+   {
+      planNode = checkNode(planNode, "plan");
+      printf("\tPLAN\n");
+      
+      cycIdx      = 0;
+      cycNode     = planNode->children;
+      planStart   = true;
+      
+      while( checkNode(cycNode, "cycle") != NULL)
+      {
+         //alloc cycle, fill first part from DOM
+         cycNode  = checkNode(cycNode, "cycle");
+         pCycPrev = pCyc;
+         pCyc     = createCyc(cycNode, calloc(1, sizeof(t_ftmCycle)));
+    
+         printf("\t\tCYC\n");
+         
+         //if this is the first cycle of a plan, save the pointer for the plan array
+         if(planStart) 
+         {  
+            planStart = false; 
+            pPage->plans[planIdx].pStart = pCyc;
+            
+            curNode = checkNode(planNode->children, "starttime");
+            if(curNode != NULL) 
+            pCyc->tStart = (uint64_t)strtoul( (const char*)xmlNodeGetContent(curNode), NULL, 0 );
+            
+         } else {
+            pCycPrev->pNext =  (struct t_ftmCycle*)pCyc;
+         }
+         
+         //alloc msg array, fill array from DOM
+         msgIdx = 0;
+         pMsg = calloc(1024, sizeof(t_ftmMsg)); //alloc 1k msgs just in case
+         msgNode = cycNode->children;
+         while( checkNode(msgNode, "msg") != NULL)
+         {
+            msgNode = checkNode(msgNode, "msg");
+            printf("\t\t\tMSG\n");
+            createMsg(msgNode, &pMsg[msgIdx++]);
+            msgNode = xmlNextElementSibling(msgNode);      
+         }
+         //realloc msg array size to actual space
+         pMsg = realloc(pMsg, msgIdx*sizeof(t_ftmMsg)); //adjust msg mem allocation to actual cnt
+         //write msg array ptr and msg qty to parent cycle
+         pCyc->pMsg     = pMsg;
+         pCyc->msgQty   = msgIdx;
+         cycIdx++;
+         cycNode = xmlNextElementSibling(cycNode);               
+      }
+      pCyc->pNext = (struct t_ftmCycle*)pIdle;
+      pPage->plans[planIdx++].cycQty = cycIdx;
+      pCyc->flags |= FLAGS_IS_END;
+      planNode = xmlNextElementSibling(planNode);
+   }
+   pPage->planQty                 = planIdx;
+   
+   return pPage;    
+}
+
+t_ftmPage* parseXml(const char* filename)
+{
+   xmlDoc *doc = NULL;
     xmlNode *root_element = NULL;
+   t_ftmPage* pPage = NULL;
 
-    if (argc != 2)
-        return(1);
-
-    /*
-     * this initialize the library and check potential ABI mismatches
-     * between the version it was compiled for and the actual shared
-     * library used.
-     */
     LIBXML_TEST_VERSION
 
     /*parse the file and get the DOM */
-    doc = xmlReadFile(argv[1], NULL, 0);
+    doc = xmlReadFile(filename, NULL, 0);
 
     if (doc == NULL) {
-        printf("error: could not parse file %s\n", argv[1]);
+        printf("error: could not parse file %s\n", filename);
     }
 
     /*Get the root element node */
     root_element = xmlDocGetRootElement(doc);
 
-    print_element_names(root_element);
+    
+    pPage = convertDOM2ftmPage(root_element);
 
     /*free the document */
     xmlFreeDoc(doc);
@@ -90,13 +260,6 @@ main(int argc, char **argv)
      *have been allocated by the parser.
      */
     xmlCleanupParser();
+    return pPage;
 
-    return 0;
 }
-#else
-int main(void) {
-    fprintf(stderr, "Tree support not compiled in\n");
-    exit(1);
-}
-#endif
-

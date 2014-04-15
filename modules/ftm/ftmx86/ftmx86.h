@@ -64,16 +64,16 @@
 #define FTM_MSG_RES           (FTM_MSG_TEF   + 4)
 #define FTM_MSG_TS            (FTM_MSG_RES   + 4)
 #define FTM_MSG_OFFS          (FTM_MSG_TS    + 8)
-#define FTM_MSG_LEN           (FTM_MSG_OFFS  + 8)
+#define _FTM_MSG_LEN          (FTM_MSG_OFFS  + 8)
 
-#define FTM_CYC_TTRN          0
-#define FTM_CYC_TSTART        (FTM_CYC_TTRN           + 8)
+
+#define FTM_CYC_TSTART        0
 #define FTM_CYC_TPERIOD       (FTM_CYC_TSTART         + 8)
 #define FTM_CYC_TEXEC         (FTM_CYC_TPERIOD        + 8)
 #define FTM_CYC_FLAGS         (FTM_CYC_TEXEC          + 8)
 #define FTM_CYC_CONDVAL       (FTM_CYC_FLAGS          + 4)
 #define FTM_CYC_CONDMSK       (FTM_CYC_CONDVAL        + 8)
-#define FTM_CYC_SIGDST        (FTM_CYC_CONDMSK        + 4)
+#define FTM_CYC_SIGDST        (FTM_CYC_CONDMSK        + 8)
 #define FTM_CYC_SIGVAL        (FTM_CYC_SIGDST         + 4)
 #define FTM_CYC_REPQTY        (FTM_CYC_SIGVAL         + 4)
 #define FTM_CYC_REPCNT        (FTM_CYC_REPQTY         + 4)
@@ -81,7 +81,16 @@
 #define FTM_CYC_MSGIDX        (FTM_CYC_MSGQTY         + 4)
 #define FTM_CYC_PMSG          (FTM_CYC_MSGIDX         + 4)
 #define FTM_CYC_PNEXT         (FTM_CYC_PMSG           + 4)
-#define FTM_CYC_LEN           (FTM_CYC_PNEXT          + 4)
+#define _FTM_CYC_LEN          (FTM_CYC_PNEXT          + 4)
+
+#define FTM_PLAN_MAX          16
+
+#define FTM_PAGE_QTY          0
+#define FTM_PAGE_PLANPTRS     (FTM_PAGE_QTY            +4)   
+#define FTM_PAGE_IDX_BP       (FTM_PAGE_PLANPTRS       + FTM_PLAN_MAX * 4)
+#define FTM_PAGE_IDX_START    (FTM_PAGE_IDX_BP         +4)
+#define _FTM_PAGE_LEN         (FTM_PAGE_IDX_START      +4)
+
 
 extern uint32_t*       _startshared[];
 extern uint32_t*       _endshared[];
@@ -98,7 +107,6 @@ typedef struct {
 
 typedef struct {
    
-   uint64_t             tTrn;          //worst case time transmission will take
    uint64_t             tStart;        //desired start time of this cycle
    uint64_t             tPeriod;       //cycle period
    uint64_t             tExec;         //cycle execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod
@@ -125,9 +133,9 @@ typedef struct {
 typedef struct {
 
    uint32_t       planQty;
-   t_ftmPlan      plans[16];
-   t_ftmPlan*     pAlt;
-   t_ftmPlan*     pStart;
+   t_ftmPlan      plans[FTM_PLAN_MAX];
+   uint32_t       idxBp;
+   uint32_t       idxStart;
 } t_ftmPage;
 
 typedef struct {
@@ -141,34 +149,20 @@ typedef struct {
 } t_FtmIf;
 
 
-t_ftmCycle* deserCycle( uint8_t*    buf, t_ftmCycle* cyc);
+t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs);
+uint8_t* deserCycle(t_ftmCycle* pCyc, t_ftmCycle* pNext, uint8_t* pCycStart, uint8_t* pBufStart, uint32_t embeddedOffs);
+uint8_t* deserMsg(  uint8_t*  buf, t_ftmMsg* msg);
 
-uint8_t* serCycle(uint8_t*    buf, 
-                  uint64_t    tTrn,
-                  uint64_t    tStart,
-                  uint64_t    tPeriod,
-                  uint64_t    tExec,       
-                  uint32_t    flags,
-                  uint64_t    condVal,
-                  uint64_t    condMsk,
-                  uint32_t    sigDst, 
-                  uint32_t    sigVal,      
-                  uint32_t    repQty,        
-                  uint32_t    repCnt,
-                  uint32_t    msgQty,
-                  uint32_t    msgIdx,
-                  uint32_t    pMsg,
-                  uint32_t    pNext);
 
-t_ftmMsg* deserMsg(  uint8_t*  buf, t_ftmMsg* msg);
+uint8_t* uint32ToBytes(uint8_t* buf, uint32_t val);
+uint8_t* uint64ToBytes(uint8_t* buf, uint64_t val);
+uint32_t bytesToUint32(uint8_t* buf);
+uint64_t bytesToUint64(uint8_t* buf);
 
-uint8_t*  serMsg(    uint8_t* buf, 
-                     uint64_t id,
-                     uint64_t par,
-                     uint32_t tef,
-                     uint32_t res,
-                     uint64_t ts,
-                     uint64_t offs);
+uint8_t* serPage  (t_ftmPage*  pPage, uint8_t* bufStart, uint32_t offset);
+uint8_t* serCycle (t_ftmCycle* pCyc, uint8_t* bufStart, uint8_t* buf, uint32_t offset);
+uint8_t* serMsg   (t_ftmMsg* pMsg, uint8_t* buf);
+void showFtmPage(t_ftmPage* pPage);
 
 uint16_t    getIdFID(uint64_t id);
 uint16_t    getIdGID(uint64_t id);
