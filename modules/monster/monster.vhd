@@ -357,7 +357,7 @@ architecture rtl of monster is
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_tops_scubus    => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
     c_tops_mil       => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
-    c_tops_mil_ctrl  => f_sdb_auto_device(c_irq_ctrl_sdb,                   g_en_mil),
+    c_tops_mil_ctrl  => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_mil),
     c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow),
     c_tops_power_test => f_sdb_auto_device(c_xwb_power_test,                g_en_power_test));
     
