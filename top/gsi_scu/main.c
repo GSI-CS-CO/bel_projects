@@ -17,6 +17,7 @@
 
 //#define DEBUG
 //#define FGDEBUG
+//#define CBDEBUG
 
 extern struct w1_bus wrpc_w1_bus;
 
@@ -34,14 +35,7 @@ struct scu_bus SHARED scub;
 struct fg_list SHARED fgs;
 volatile uint32_t SHARED fg_control;
 
-volatile unsigned int* pSDB_base    = (unsigned int*)0x3fffe000;
-volatile unsigned int* display;
-volatile unsigned int* irq_slave;
 volatile unsigned short* scub_base;
-volatile unsigned int* cpu_ID;
-volatile unsigned int* time_sys;
-volatile unsigned int* cores;
-volatile unsigned int* atomic;
 volatile unsigned int* BASE_ONEWIRE;
 volatile unsigned int* BASE_UART;
 
@@ -153,7 +147,6 @@ void dis_irq() {
   irq_set_mask(0x02);
   irq_disable();
   isr_table_clr();
-  irq_clear_queue(0xf);
   for (i = 0; i < SCU_BUS_MAX_SLOTS; i++) {
     icounter[i] = 0; //reset counter in ISR
   }
@@ -191,13 +184,14 @@ void updateTemps() {
   #ifdef DEBUG
   mprintf("Onboard Onewire Devices:\n");
   #endif
-  BASE_ONEWIRE = (unsigned int*)BASE_OW_WR;
-  wrpc_w1_init();
-  ReadTempDevices(0, &board_id, &board_temp);
+ //conflicts with WR
+ // BASE_ONEWIRE = (unsigned int*)BASE_OW_WR;
+//  wrpc_w1_init();
+//  ReadTempDevices(0, &board_id, &board_temp);
   #ifdef DEBUG
   mprintf("External Onewire Devices:\n");
   #endif
-  BASE_ONEWIRE = (unsigned int*)BASE_OW_EXT;
+  //BASE_ONEWIRE = (unsigned int*)BASE_OW_EXT;
   wrpc_w1_init();
   ReadTempDevices(0, &ext_id, &ext_temp);
   ReadTempDevices(1, &backplane_id, &backplane_temp);
@@ -208,13 +202,13 @@ void init() {
   uart_init_hw();
   updateTemps();
   init_buffers(&fg_buffer);
-
+  #ifdef CBDEBUG
   for (i=0; i < MAX_FG_DEVICES; i++) {
     mprintf("cb[%d]: isEmpty = %d\n", i, cbisEmpty(&fg_buffer, i));
     mprintf("cb[%d]: isFull = %d\n", i, cbisFull(&fg_buffer, i));
     mprintf("cb[%d]: getCount = %d\n", i, cbgetCount(&fg_buffer, i));
   }
-  
+  #endif
   scan_scu_bus(&scub, backplane_id, scub_base);
   scan_for_fgs(&scub, &fgs);
   #ifdef FGDEBUG
@@ -256,36 +250,21 @@ void init() {
 int main(void) {
   char buffer[20];
   int i = 0;
-  
-  display      = (unsigned int*)find_device(SCU_OLED_DISPLAY);
-  irq_slave    = (unsigned int*)find_device(IRQ_MSI_CTRL_IF);
+
+  discoverPeriphery();  
   scub_base    = (unsigned short*)find_device(SCU_BUS_MASTER);
-  BASE_UART    = (unsigned int*)find_device(WR_Periph_UART);
-  BASE_ONEWIRE = (unsigned int*)find_device(WR_Periph_1Wire);  
+  BASE_ONEWIRE = (unsigned int*)find_device(WR_1Wire);
 
-
-  
   disp_reset();
   disp_put_c('\f');
   init(); 
-  
-  //config of DAC and FG
-  while(slaves[i]) {
-    i++;
-  }
-  
-  // disp_reset();	
-  // disp_put_str(mytext);
-  
-  // wait for WR deamon to star 
-  
 
   while(1) {
-    updateTemps();
+    //updateTemps();
             
-    mprintf("cb[%d]: isEmpty = %d\n", 0, cbisEmpty(&fg_buffer, 0));
-    mprintf("cb[%d]: isFull = %d\n", 0, cbisFull(&fg_buffer, 0));
-    mprintf("cb[%d]: getCount = %d\n", 0, cbgetCount(&fg_buffer, 0));
+  //  mprintf("cb[%d]: isEmpty = %d\n", 0, cbisEmpty(&fg_buffer, 0));
+  //  mprintf("cb[%d]: isFull = %d\n", 0, cbisFull(&fg_buffer, 0));
+  //  mprintf("cb[%d]: getCount = %d\n", 0, cbgetCount(&fg_buffer, 0));
 
     //placeholder for fg software
     //if (fg_control) {

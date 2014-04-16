@@ -23,7 +23,7 @@ int cbgetCount(struct circ_buffer* cb, int num) {
   int ret = 0;
   atomic_on();
   ret = abs(cb[num].wr_ptr - cb[num].rd_ptr);
-  atomic_off;
+  atomic_off();
   return ret;
 }
 

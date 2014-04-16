@@ -27,33 +27,23 @@
 
 #define NESTED_IRQS 0
 
-extern unsigned int* irq_slave;
 
-const unsigned int IRQ_REG_RST      = 0x00000000;
-const unsigned int IRQ_REG_STAT     = 0x00000004;
-const unsigned int IRQ_REG_POP      = 0x00000008;
-const unsigned int IRQ_REG_CLEAR    = 0x0000000c;
-const unsigned int IRQ_REG_ENA_GET  = 0x00000010;
-const unsigned int IRQ_REG_ENA_SET  = 0x00000014;
-const unsigned int IRQ_REG_ENA_CLR  = 0x00000018;
+
+const unsigned int IRQ_REG_RST   = 0x00000000;
+const unsigned int IRQ_REG_STAT  = 0x00000004;
+const unsigned int IRQ_REG_POP   = 0x00000008;
 const unsigned int IRQ_OFFS_MSG  = 0x00000000;
 const unsigned int IRQ_OFFS_ADR  = 0x00000004;
 const unsigned int IRQ_OFFS_SEL  = 0x00000008;
 
 inline void irq_pop_msi( unsigned int irq_no)
 {
-    unsigned int* msg_queue = (unsigned int*)(irq_slave + ((irq_no +1)<<2));
+    unsigned int* msg_queue = (unsigned int*)(pCpuIrqSlave + ((irq_no +1)<<2));
     
     global_msi.msg =  *(msg_queue+(IRQ_OFFS_MSG>>2));
     global_msi.adr =  *(msg_queue+(IRQ_OFFS_ADR>>2)); 
-    global_msi.sel =  *(msg_queue+(IRQ_OFFS_SEL>>
-2));
-    *(irq_slave + (IRQ_REG_POP>>2)) = 1<<irq_no;   
-}
-
-void irq_clear_queue( unsigned int irq_no)
-{
-  *(irq_slave + (IRQ_REG_CLEAR>>2)) = 1<<irq_no;
+    global_msi.sel =  *(msg_queue+(IRQ_OFFS_SEL>>2));
+    *(pCpuIrqSlave + (IRQ_REG_POP>>2)) = 1<<irq_no;   
 } 
 
 inline void isr_table_clr(void)
