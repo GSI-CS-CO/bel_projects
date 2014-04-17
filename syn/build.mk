@@ -2,6 +2,7 @@ QUARTUS		?= /opt/quartus
 QUARTUS_BIN	=  $(QUARTUS)/bin
 
 RAM_SIZE	?= 4096
+SPI_LANES	?= ASx1
 
 CROSS_COMPILE	?= lm32-elf-
 CC		=  $(CROSS_COMPILE)gcc
@@ -51,7 +52,7 @@ prog:
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -s $(DEVICE) $< $@
 
 %.pof:	%.sof %.opt
-	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) $< $@
+	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt -d $(FLASH) -m $(SPI_LANES) $< $@
 
 %.rpd:	%.pof %.opt
 	$(QUARTUS_BIN)/quartus_cpf -c -o $*.opt $< $@
