@@ -932,7 +932,7 @@ int main(int argc, char** argv) {
         wait_us = 4000000;
       }
     }
-    if (info.abi_ver_major == 1 && info.abi_ver_minor == 1) {
+    if (info.abi_ver_major == 1 && info.abi_ver_minor <= 1) {
       if (!quiet) fprintf(stderr, "warning: old flash firmware detected! (using hardware erase command)\n");
       old_erase = 1;
     } else {
