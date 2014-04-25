@@ -59,6 +59,7 @@ static int verify;
 static int invert;
 static int verbose;
 static int quiet;
+static int old_erase;
 
 static eb_address_t firmware_length;
 static eb_format_t format;
@@ -120,6 +121,29 @@ static eb_data_t flip_bits(eb_data_t x) {
   x = ((x >> 1) & mask) | ((x & mask) << 1);
   
   return x;
+}
+
+static eb_status_t erase_sector(eb_device_t device, eb_address_t sector) {
+  eb_cycle_t cycle;
+  eb_format_t control;
+  eb_status_t status;
+  
+  control = (format&EB_ENDIAN_MASK) | EB_DATA32;
+  
+  if (old_erase)
+    return eb_device_write(device, erase_address, control, sector, 0, eb_block);
+  
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+  eb_cycle_write(cycle, erase_address, control, 0x6);        /* write enable */
+  eb_cycle_write(cycle, erase_address, control, 0x80000000); /* execute */
+  eb_cycle_write(cycle, erase_address, control, 0xD8);       /* sector erase */
+  if (((erase_address-address) >> 24) != 0) 
+    eb_cycle_write(cycle, erase_address, control, (sector >> 24) & 0xFF);
+  eb_cycle_write(cycle, erase_address, control, (sector >> 16) & 0xFF);
+  eb_cycle_write(cycle, erase_address, control, (sector >>  8) & 0xFF);
+  eb_cycle_write(cycle, erase_address, control, (sector >>  0) & 0xFF);
+  eb_cycle_write(cycle, erase_address, control, 0x80000000); /* execute */
+  return eb_cycle_close(cycle);
 }
 
 static void wait_for_busy(eb_device_t device, long interval) {
@@ -227,8 +251,7 @@ static eb_address_t detect_sector_size(eb_device_t device) {
     printf("\rAutodetecting sector size: erasing 0x%"EB_ADDR_FMT" ... ", target);
     fflush(stdout);
   }
-  status = eb_device_write(device, erase_address, (format&EB_ENDIAN_MASK)|EB_DATA32, target, 0, eb_block);
-  if (status != EB_OK) {
+  if ((status = erase_sector(device, target)) != EB_OK) {
     fprintf(stderr, "\r%s: failed to erase test sector 0x%"EB_ADDR_FMT": %s\n", program, target, eb_status(status));
     exit(1);
   }
@@ -394,8 +417,7 @@ static void erase_flash(eb_device_t device) {
     
     if (!bitmask_get(i++)) continue;
     
-    status = eb_device_write(device, erase_address, (format&EB_ENDIAN_MASK)|EB_DATA32, sector, 0, eb_block);
-    if (status != EB_OK) {
+    if ((status = erase_sector(device, sector)) != EB_OK) {
       fprintf(stderr, "\r%s: failed to erase 0x%"EB_ADDR_FMT": %s\n", program, sector, eb_status(status));
       exit(1);
     }
@@ -909,6 +931,12 @@ int main(int argc, char** argv) {
       if (wait_us < 4000000) {
         wait_us = 4000000;
       }
+    }
+    if (info.abi_ver_major == 1 && info.abi_ver_minor <= 1) {
+      if (!quiet) fprintf(stderr, "warning: old flash firmware detected! (using hardware erase command)\n");
+      old_erase = 1;
+    } else {
+      old_erase = 0;
     }
   } else {
     device_support = endian | EB_DATAX;
