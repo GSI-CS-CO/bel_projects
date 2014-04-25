@@ -16,8 +16,8 @@
 #include "cb.h"
 
 //#define DEBUG
-//#define FGDEBUG
-//#define CBDEBUG
+#define FGDEBUG
+#define CBDEBUG
 
 extern struct w1_bus wrpc_w1_bus;
 
@@ -42,10 +42,15 @@ volatile unsigned int* BASE_UART;
 int slaves[SCU_BUS_MAX_SLOTS+1] = {0};
 volatile unsigned short icounter[SCU_BUS_MAX_SLOTS+1];
 
-void usleep(int x)
+void usleep(int us)
 {
-  int i;
-  for (i = x * CPU_CLOCK/1000/4; i > 0; i--) asm("# noop");
+  unsigned i;
+  unsigned long long delay = us;
+  /* prevent arithmetic overflow */
+  delay *= CPU_CLOCK;
+  delay /= 1000000;
+  delay /= 4; // instructions per loop
+  for (i = delay; i > 0; i--) asm("# noop");
 }  
 
 void msDelay(int msecs) {
@@ -204,9 +209,9 @@ void init() {
   init_buffers(&fg_buffer);
   #ifdef CBDEBUG
   for (i=0; i < MAX_FG_DEVICES; i++) {
-    mprintf("cb[%d]: isEmpty = %d\n", i, cbisEmpty(&fg_buffer, i));
-    mprintf("cb[%d]: isFull = %d\n", i, cbisFull(&fg_buffer, i));
-    mprintf("cb[%d]: getCount = %d\n", i, cbgetCount(&fg_buffer, i));
+    mprintf("cb[%d]: isEmpty = %d\n", i, cbisEmpty((struct circ_buffer *)&fg_buffer, i));
+    mprintf("cb[%d]: isFull = %d\n", i, cbisFull((struct circ_buffer *)&fg_buffer, i));
+    mprintf("cb[%d]: getCount = %d\n", i, cbgetCount((struct circ_buffer *)&fg_buffer, i));
   }
   #endif
   scan_scu_bus(&scub, backplane_id, scub_base);
@@ -250,6 +255,8 @@ void init() {
 int main(void) {
   char buffer[20];
   int i = 0;
+  struct param_set pset;
+  unsigned int old[MAX_FG_DEVICES] = {0};
 
   discoverPeriphery();  
   scub_base    = (unsigned short*)find_device(SCU_BUS_MASTER);
@@ -261,11 +268,23 @@ int main(void) {
 
   while(1) {
     //updateTemps();
-            
-  //  mprintf("cb[%d]: isEmpty = %d\n", 0, cbisEmpty(&fg_buffer, 0));
-  //  mprintf("cb[%d]: isFull = %d\n", 0, cbisFull(&fg_buffer, 0));
-  //  mprintf("cb[%d]: getCount = %d\n", 0, cbgetCount(&fg_buffer, 0));
+    
+    for(i = 0; i < MAX_FG_DEVICES; i++) {
+      if (!cbisEmpty((struct circ_buffer *)&fg_buffer, i)) {
+        cbRead((struct circ_buffer *)&fg_buffer, i, &pset);
+        if((pset.coeff_c % 10000) == 0) {
+          mprintf("cb[%d]: fcnt: %d coeff_a: %x coeff_b: 0x%x coeff_c: 0x%x\n",
+          i, cbgetCount((struct circ_buffer *)&fg_buffer, i), pset.coeff_a, pset.coeff_b, pset.coeff_c);
+        }
+        if (old[i] + 1 != pset.coeff_c) {
+          mprintf("cb[%d]: buffer value not consistent old: %x coeff_c: %x\n", i, old[i], pset.coeff_c);
+          return(1);
+        }
+        old[i] = pset.coeff_c;
+      }
 
+      usleep(100);
+    }
     //placeholder for fg software
     //if (fg_control) {
     //  init();

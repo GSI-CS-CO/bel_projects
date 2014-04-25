@@ -6,7 +6,7 @@
 #define   MAX_FG_DEVICES  12
 #define   MAX_SCU_SLAVES  12
 #define   MAX_FG_PER_SLAVE 2
-#define   BUFFER_SIZE 10
+#define   BUFFER_SIZE 250
 
 struct fg_dev {
   unsigned int dev_number;
