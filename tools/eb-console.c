@@ -39,7 +39,7 @@
 #define VUART_TX 0x10
 #define VUART_RX 0x14
 #define STDIN_FD 0
-#define STDOUT_FD 1
+#define BATCH_SIZE 200
 
 const char *program;
 
@@ -66,7 +66,8 @@ int main(int argc, char** argv) {
   eb_socket_t socket;
   eb_device_t device;
   eb_address_t tx, rx;
-  eb_data_t data;
+  eb_data_t rx_data[BATCH_SIZE], tx_data, done;
+  eb_cycle_t cycle;
   char byte;
   
   /* Default arguments */
@@ -153,25 +154,36 @@ int main(int argc, char** argv) {
   while (1) {
     if (!busy) usleep(10000); /* 10ms */
     
-    while (1) {
-      eb_device_read(device, rx, EB_BIG_ENDIAN|EB_DATA32, &data, eb_block, 0);
-      if ((data & 0x100) == 0) break;
-      byte = data & 0xFF;
-      write(STDOUT_FD, &byte, 1);
+    /* Poll for status */
+    eb_cycle_open(device, 0, eb_block, &cycle);
+    eb_cycle_read(cycle, rx, EB_BIG_ENDIAN|EB_DATA32, &rx_data[0]);
+    eb_cycle_read(cycle, tx, EB_BIG_ENDIAN|EB_DATA32, &done);
+    eb_cycle_close(cycle);
+    
+    /* Bulk read anything extra */
+    if ((rx_data[0] & 0x100) != 0) {
+      eb_cycle_open(device, 0, eb_block, &cycle);
+      for (i = 1; i < BATCH_SIZE; ++i)
+        eb_cycle_read(cycle, rx, EB_BIG_ENDIAN|EB_DATA32, &rx_data[i]);
+      eb_cycle_close(cycle);
+    
+      for (i = 0; i < BATCH_SIZE; ++i) {
+        if ((rx_data[i] & 0x100) == 0) continue;
+        byte = rx_data[i] & 0xFF;
+        fputc(byte, stdout);
+      }
+      fflush(stdout);
     }
     
-    if (busy) {
-      eb_device_read(device, tx, EB_BIG_ENDIAN|EB_DATA32, &data, eb_block, 0);
-      busy = (data & 0x100) == 0;
-    }
+    busy = busy && (done & 0x100) == 0;
     
     if (!busy && read(STDIN_FD, &byte, 1) == 1) {
       if (byte == 3) { /* control-C */
         tcsetattr(STDIN_FD, TCSANOW, &old);
         exit(0);
       }
-      data = byte;
-      eb_device_write(device, tx, EB_BIG_ENDIAN|EB_DATA32, data, eb_block, 0);
+      tx_data = byte;
+      eb_device_write(device, tx, EB_BIG_ENDIAN|EB_DATA32, tx_data, eb_block, 0);
       busy = 1;
     }
   }
