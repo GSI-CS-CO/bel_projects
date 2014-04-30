@@ -25,6 +25,10 @@ modules = {
     "wb_mil_scu",
     "wb_arria_reset",
     "ftm",
+    "lvds",
     "monster",
+    "heap",
+    "butis_t0",
+    "power_test",
   ]
 }

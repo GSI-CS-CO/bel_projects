@@ -27,15 +27,23 @@ use ieee.numeric_std.all;
 
 package monster_pkg is
 
+  function f_sub1(x : natural) return natural;
+
   component monster is
     generic(
       g_family      : string; -- "Arria II" or "Arria V"
       g_project     : string;
-      g_inputs      : natural;
-      g_outputs     : natural;
       g_flash_bits  : natural;
-      g_ram_size    : natural := 131072;
       g_pll_skew    : natural := 0; -- (ref-tx) in ps
+      g_ram_size    : natural := 131072;
+      g_gpio_inout  : natural := 0;
+      g_gpio_in     : natural := 0;
+      g_gpio_out    : natural := 0;
+      g_tlu_fifo_size : natural := 32;
+      g_lvds_inout  : natural := 0;
+      g_lvds_in     : natural := 0;
+      g_lvds_out    : natural := 0;
+      g_lvds_invert : boolean := false;
       g_en_pcie     : boolean := false;
       g_en_vme      : boolean := false;
       g_en_usb      : boolean := false;
@@ -43,7 +51,14 @@ package monster_pkg is
       g_en_mil      : boolean := false;
       g_en_oled     : boolean := false;
       g_en_lcd      : boolean := false;
-      g_en_user_ow  : boolean := false);
+      g_en_user_ow  : boolean := false;  
+      g_en_power_test:  boolean := false;
+      g_lm32_cores           : natural := 1;
+      g_lm32_MSIs            : natural := 1;
+      g_lm32_ramsizes        : natural := 131072/4;
+      g_lm32_shared_ramsize  : natural := 16384/4; -- will only be used if g_lm32_cores > 1
+      g_lm32_are_ftm         : boolean := false
+    );
     port(
       -- Required: core signals
       core_clk_20m_vcxo_i    : in    std_logic;
@@ -54,12 +69,10 @@ package monster_pkg is
       -- Optional clock outputs
       core_clk_wr_ref_o      : out   std_logic;
       core_clk_butis_o       : out   std_logic;
+      core_clk_butis_t0_o    : out   std_logic;
       core_rstn_wr_ref_o     : out   std_logic;
       core_rstn_butis_o      : out   std_logic;
       core_debug_o           : out   std_logic_vector(15 downto 0);
-      -- GPIO for the board
-      gpio_o                 : out   std_logic_vector(g_outputs-1 downto 0);
-      gpio_i                 : in    std_logic_vector(g_inputs-1  downto 0);
       -- Required: white rabbit pins
       wr_onewire_io          : inout std_logic;
       wr_sfp_sda_io          : inout std_logic;
@@ -75,6 +88,18 @@ package monster_pkg is
       wr_ext_pps_i           : in    std_logic := '0';
       wr_uart_o              : out   std_logic;
       wr_uart_i              : in    std_logic := '0';
+      -- GPIO for the board (inouts start at 0, dedicated in/outs come after)
+      gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0) := (others => '0');
+      gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0);
+      gpio_oen_o             : out   std_logic_vector(f_sub1(g_gpio_inout)            downto 0);
+      -- LVDS for the board (inouts start at 0, dedicated in/outs come after)
+      lvds_p_i               : in    std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)  downto 0) := (others => '0');
+      lvds_n_i               : in    std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)  downto 0) := (others => '0');
+      lvds_i_led_o           : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)  downto 0);
+      lvds_p_o               : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0);
+      lvds_n_o               : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0);
+      lvds_o_led_o           : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0);
+      lvds_oen_o             : out   std_logic_vector(f_sub1(g_lvds_inout)            downto 0);
       -- Optional status LEDs
       led_link_up_o          : out   std_logic;
       led_link_act_o         : out   std_logic;
@@ -183,7 +208,19 @@ package monster_pkg is
       lcd_flm_o              : out   std_logic;
       lcd_in_o               : out   std_logic;
       -- g_en_user_ow
-      ow_io                  : inout std_logic_vector(1 downto 0));
+      ow_io                  : inout std_logic_vector(1 downto 0);
+      -- g_en_power_test
+      power_test_pwm_o       : out    std_logic);
   end component;
 
 end package;
+
+package body monster_pkg is
+  function f_sub1(x : natural) return natural is
+  begin
+    if x = 0
+    then return 0;
+    else return x-1;
+    end if;
+  end f_sub1;
+end monster_pkg;

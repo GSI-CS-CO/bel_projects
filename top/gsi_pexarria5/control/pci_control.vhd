@@ -8,7 +8,7 @@ use work.monster_pkg.all;
 entity pci_control is
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
---    clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
+    clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
     clk_125m_local_i  : in std_logic;  -- local clk from 125Mhz oszillator
     
     -----------------------------------------
@@ -48,69 +48,74 @@ entity pci_control is
     -- io
     -----------------------------------------------------------------------
     fpga_res        : in std_logic;
-    nres            : in std_Logic;
+    nres            : in std_logic;
     pbs2            : in std_logic;
     hpw             : inout std_logic_vector(15 downto 0) := (others => 'Z'); -- logic analyzer
     ant             : inout std_logic_vector(26 downto 1) := (others => 'Z'); -- trigger bus
     
-    p1              : inout std_logic := 'Z';
-    p2              : in    std_logic := 'Z'; -- BlackCat1 Chn 1
-    p3              : out   std_logic := 'Z'; -- BlackCat1 PG1 (active high)
-    p4              : in    std_logic := 'Z'; -- BlackCat1 Chn 2
-    p5              : out   std_logic := 'Z'; -- BlackCat1 Chn 3
-    p6              : out   std_logic := 'Z'; -- BlackCat1 PG2 (active high)
-    p7              : out   std_logic := 'Z'; -- BlackCat1 Chn 4
-    p8              : inout std_logic := 'Z';
-    p9              : inout std_logic := 'Z';
-    p10             : inout std_logic := 'Z';
-    p11             : inout std_logic := 'Z';
-    p12             : inout std_logic := 'Z';
-    p13             : inout std_logic := 'Z';
-    p14             : inout std_logic := 'Z';
-    p15             : inout std_logic := 'Z';
-    p16             : inout std_logic := 'Z';
-    p17             : out   std_logic := 'Z'; -- BlackCat1 TTLEN1 (active low)
-    p18             : out   std_logic := 'Z'; -- BlackCat1 TTLEN2 (active low)
-    p19             : out   std_logic := 'Z'; -- BlackCat1 TTLEN3 (active low)
-    p21             : inout std_logic := 'Z';
-    p22             : inout std_logic := 'Z';
-    p23             : inout std_logic := 'Z';
-    p24             : inout std_logic := 'Z';
-    p25             : out   std_logic := 'Z'; -- BlackCat1 Chn 5
-    p26             : out   std_logic := 'Z'; -- BlackCat1 Chn 6
-    p27             : in    std_logic := 'Z'; -- BlackCat1 Chn 7
-    p28             : inout std_logic := 'Z';
-    p29             : inout std_logic := 'Z';
-    p30             : inout std_logic := 'Z';
-    n1              : inout std_logic := 'Z';
-    n2              : inout std_logic := 'Z';
-    n3              : inout std_logic := 'Z';
-    n4              : inout std_logic := 'Z';
-    n5              : inout std_logic := 'Z';
-    n6              : inout std_logic := 'Z';
-    n7              : inout std_logic := 'Z';
-    n8              : inout std_logic := 'Z';
-    n9              : inout std_logic := 'Z';
-    n10             : inout std_logic := 'Z';
-    n11             : inout std_logic := 'Z';
-    n12             : inout std_logic := 'Z';
-    n13             : inout std_logic := 'Z';
-    n14             : inout std_logic := 'Z';
-    n15             : inout std_logic := 'Z';
-    n16             : inout std_logic := 'Z';
-    n17             : inout std_logic := 'Z';
-    n18             : inout std_logic := 'Z';
-    n19             : inout std_logic := 'Z';
-    n21             : inout std_logic := 'Z';
-    n22             : inout std_logic := 'Z';
-    n23             : inout std_logic := 'Z';
-    n24             : inout std_logic := 'Z';
-    n25             : inout std_logic := 'Z';
-    n26             : inout std_logic := 'Z';
-    n27             : inout std_logic := 'Z';
-    n28             : inout std_logic := 'Z';
-    n29             : inout std_logic := 'Z';
-    n30             : inout std_logic := 'Z';
+    -----------------------------------------------------------------------
+    -- pexaria5db1/2
+    -----------------------------------------------------------------------
+    p1              : inout std_logic := 'Z'; -- HPWX0 logic analyzer: 3.3V
+    n1              : inout std_logic := 'Z'; -- HPWX1
+    p2              : inout std_logic := 'Z'; -- HPWX2
+    n2              : inout std_logic := 'Z'; -- HPWX3
+    p3              : inout std_logic := 'Z'; -- HPWX4
+    n3              : inout std_logic := 'Z'; -- HPWX5
+    p4              : inout std_logic := 'Z'; -- HPWX6
+    n4              : inout std_logic := 'Z'; -- HPWX7
+    p5              : out   std_logic := 'Z'; -- LED1 1-6: 3.3V (red)   1|Z=off, 0=on
+    n5              : out   std_logic := 'Z'; -- LED2           (blue)
+    p6              : out   std_logic := 'Z'; -- LED3           (green)
+    n6              : out   std_logic := 'Z'; -- LED4           (white)
+    p7              : out   std_logic := 'Z'; -- LED5           (red)
+    n7              : out   std_logic := 'Z'; -- LED6           (blue)
+    p8              : out   std_logic := 'Z'; -- LED7 7-8: 2.5V (green)
+    n8              : out   std_logic := 'Z'; -- LED8           (white)
+    
+    p9              : out   std_logic := 'Z'; -- TERMEN1 = terminate TTLIO1, 1=x, 0|Z=x (Q2 BSH103 -- G pin)
+    n9              : out   std_logic := 'Z'; -- TERMEN2 = terminate TTLIO2, 1=x, 0|Z=x
+    p10             : out   std_logic := 'Z'; -- TERMEN3 = terminate TTLIO3, 1=x, 0|Z=x
+    n10             : out   std_logic := 'Z'; -- TTLEN1  = TTLIO1 output enable, 0=enable, 1|Z=disable
+    p11             : out   std_logic := 'Z'; -- n/c
+    n11             : out   std_logic := 'Z'; -- TTLEN3  = TTLIO2 output enable, 0=enable, 1|Z=disable
+    p12             : out   std_logic := 'Z'; -- n/c
+    n12             : out   std_logic := 'Z'; -- n/c
+    p13             : out   std_logic := 'Z'; -- n/c
+    n13             : out   std_logic := 'Z'; -- n/c
+    p14             : out   std_logic := 'Z'; -- n/c
+    n14             : out   std_logic := 'Z'; -- TTLEN5  = TTLIO3 output enable, 0=enable, 1|Z=disable
+    p15             : out   std_logic := 'Z'; -- n/c
+    n15             : inout std_logic := 'Z'; -- ROM_DATA
+    p16             : out   std_logic := 'Z'; -- FPLED5  = TTLIO3 (red)  0=on, Z=off
+    n16             : out   std_logic := 'Z'; -- FPLED6           (blue)
+    
+    p17             : in    std_logic;        -- N_LVDS_1 / SYnIN
+    n17             : in    std_logic;        -- P_LVDS_1 / SYpIN
+    p18             : in    std_logic;        -- N_LVDS_2 / TRnIN
+    n18             : in    std_logic;        -- P_LVDS_2 / TRpIN
+    p19             : out   std_logic;        -- N_LVDS_3 / CK200n
+--    n19             : out   std_logic;        -- P_LVDS_3 / CK200p
+    p21             : in    std_logic;        -- N_LVDS_6  = TTLIO1 in
+    n21             : in    std_logic;        -- P_LVDS_6
+    p22             : in    std_logic;        -- N_LVDS_8  = TTLIO2 in
+    n22             : in    std_logic;        -- P_PVDS_8
+    p23             : in    std_logic;        -- N_LVDS_10 = TTLIO3 in
+    n23             : in    std_logic;        -- P_LVDS_10
+    p24             : out   std_logic;        -- N_LVDS_4 / SYnOU
+--    n24             : out   std_logic;        -- P_LVDS_4 / SYpOU
+    p25             : out   std_logic;        -- N_LVDS_5  = TTLIO1 out
+    n25             : out   std_logic;        -- P_LVDS_5
+    p26             : out   std_logic := 'Z'; -- FPLED3    = TTLIO2 (red)  0=on, Z=off
+    n26             : out   std_logic := 'Z'; -- FPLED4             (blue)
+    p27             : out   std_logic;        -- N_LVDS_7  = TTLIO2 out
+    n27             : out   std_logic;        -- P_LVDS_7
+    p28             : out   std_logic;        -- N_LVDS_9  = TTLIO3 out
+    n28             : out   std_logic;        -- P_LVDS_9
+    p29             : out   std_logic := 'Z'; -- FPLED1    = TTLIO1 (red)  0=on, Z=off
+    n29             : out   std_logic := 'Z'; -- FPLED2             (blue)
+    p30             : out   std_logic := 'Z'; -- n/c
+    n30             : out   std_logic := 'Z'; -- n/c
     
     -----------------------------------------------------------------------
     -- connector cpld
@@ -208,32 +213,39 @@ architecture rtl of pci_control is
   signal led_link_act : std_logic;
   signal led_track    : std_logic;
   signal led_pps      : std_logic;
+  
+  signal gpio_o       : std_logic_vector(7 downto 0);
+  signal lvds_p_i     : std_logic_vector(4 downto 0);
+  signal lvds_n_i     : std_logic_vector(4 downto 0);
+  signal lvds_i_led   : std_logic_vector(4 downto 0);
+  signal lvds_p_o     : std_logic_vector(2 downto 0);
+  signal lvds_n_o     : std_logic_vector(2 downto 0);
+  signal lvds_o_led   : std_logic_vector(2 downto 0);
+  signal lvds_oen     : std_logic_vector(2 downto 0);
 
 begin
 
   main : monster
     generic map(
-      g_family     => "Arria V",
-      g_project    => "pci_control",
-      g_inputs     => 2,
-      g_outputs    => 6,
-      g_flash_bits => 25,
-      g_pll_skew   => 6500/(1000/8), -- 6500ps shift
-      g_en_pcie    => true,
-      g_en_usb     => true,
-      g_en_lcd     => true)
+      g_family      => "Arria V",
+      g_project     => "pci_control",
+      g_flash_bits  => 25,
+      g_pll_skew    => 6500/(1000/8), -- 6500ps shift
+      g_gpio_out    => 8,
+      g_lvds_in     => 2,
+      g_lvds_out    => 0,
+      g_lvds_inout  => 3,
+      g_lvds_invert => true,
+      g_en_pcie     => true,
+      g_en_usb      => true,
+      g_en_lcd      => true)
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
-      core_clk_125m_pllref_i => sfp234_ref_clk_i, -- clk_125m_pllref_i,
+      core_clk_125m_pllref_i => clk_125m_pllref_i,
       core_clk_125m_sfpref_i => sfp234_ref_clk_i,
       core_clk_125m_local_i  => clk_125m_local_i,
-      core_clk_wr_ref_o      => p7,  -- BlackCat Chn 4
-      core_clk_butis_o       => p5,  -- BlackCat Chn 3
-      gpio_o(5 downto 2)     => led(8 downto 5),
-      gpio_o(1)              => p26, -- BlackCat Chn 6
-      gpio_o(0)              => p25, -- BlackCat Chn 5
-      gpio_i(1)              => p4,  -- BlackCat Chn 2
-      gpio_i(0)              => p27, -- BlackCat Chn 7
+      core_clk_butis_o       => p19,
+      core_clk_butis_t0_o    => p24,
       wr_onewire_io          => rom_data,
       wr_sfp_sda_io          => sfp4_mod2,
       wr_sfp_scl_io          => sfp4_mod1,
@@ -243,7 +255,14 @@ begin
       wr_dac_sclk_o          => dac_sclk,
       wr_dac_din_o           => dac_din,
       wr_ndac_cs_o           => ndac_cs,
-      -- no external clock input
+      gpio_o                 => gpio_o,
+      lvds_p_i               => lvds_p_i,
+      lvds_n_i               => lvds_n_i,
+      lvds_i_led_o           => lvds_i_led,
+      lvds_p_o               => lvds_p_o,
+      lvds_n_o               => lvds_n_o,
+      lvds_o_led_o           => lvds_o_led,
+      lvds_oen_o             => lvds_oen,
       led_link_up_o          => led_link_up,
       led_link_act_o         => led_link_act,
       led_track_o            => led_track,
@@ -270,18 +289,19 @@ begin
       lcd_flm_o              => di(2),
       lcd_in_o               => di(0));
 
+  -- SFP1-3 are not mounted
   sfp1_tx_disable_o <= '1';
   sfp2_tx_disable_o <= '1';
   sfp3_tx_disable_o <= '1';
   sfp4_tx_disable_o <= '0';
 
+  -- Link LEDs
   wrdis <= '0';
   dres  <= '1';
   di(5) <= '0' when (not led_link_up)                   = '1' else 'Z'; -- red
   di(6) <= '0' when (    led_link_up and not led_track) = '1' else 'Z'; -- blue
   di(4) <= '0' when (    led_link_up and     led_track) = '1' else 'Z'; -- green
 
-  -- LEDs
   led(1) <= not (led_link_act and led_link_up); -- red   = traffic/no-link
   led(2) <= not led_link_up;                    -- blue  = link
   led(3) <= not led_track;                      -- green = timing valid
@@ -291,12 +311,60 @@ begin
   ledsfpr(3 downto 1) <= (others => '1');
   ledsfpg(4) <= not led_link_up;
   ledsfpr(4) <= not led_link_act;
+  
+  -- GPIO LEDs
+  led(5) <= '0' when gpio_o(0)='1' else 'Z'; -- (baseboard)
+  led(6) <= '0' when gpio_o(1)='1' else 'Z';
+  led(7) <= '0' when gpio_o(2)='1' else 'Z';
+  led(8) <= '0' when gpio_o(3)='1' else 'Z';
+  p7     <= '0' when gpio_o(4)='1' else 'Z'; -- LED5 (DB1/2)
+  n7     <= '0' when gpio_o(4)='1' else 'Z'; -- LED6
+  p8     <= '0' when gpio_o(4)='1' else 'Z'; -- LED7
+  n8     <= '0' when gpio_o(4)='1' else 'Z'; -- LED8
+  
+  -- LVDS->LEMO output enable / termination
+  n10 <= '0' when lvds_oen(0)='0' else 'Z'; -- TTLIO1 output enable
+  n11 <= '0' when lvds_oen(1)='0' else 'Z'; -- TTLIO2 output enable
+  n14 <= '0' when lvds_oen(2)='0' else 'Z'; -- TTLIO3 output enable
+  p9  <= '1' when lvds_oen(0)='1' else '0'; -- TERMEN1 (terminate when input)
+  n9  <= '1' when lvds_oen(1)='1' else '0'; -- TERMEN2 (terminate when input)
+  p10 <= '1' when lvds_oen(2)='1' else '0'; -- TERMEN3 (terminate when input)
+  p29 <= '0' when lvds_oen(0)='0' else 'Z'; -- FPLED1/TTLIO1 red
+  p26 <= '0' when lvds_oen(1)='0' else 'Z'; -- FPLED3/TTLIO2 red
+  p16 <= '0' when lvds_oen(2)='0' else 'Z'; -- FPLED5/TTLIO3 red
+  
+  -- LVDS inputs
+  lvds_p_i(0) <= p21; -- TTLIO1
+  lvds_p_i(1) <= p22; -- TTLIO2
+  lvds_p_i(2) <= p23; -- TTLIO3
+  lvds_p_i(3) <= p17; -- LVDS_1 / SYIN
+  lvds_p_i(4) <= p18; -- LVDS_2 / TRIN
+  lvds_n_i(0) <= n21; -- TTLIO1
+  lvds_n_i(1) <= n22; -- TTLIO2
+  lvds_n_i(2) <= n23; -- TTLIO3
+  lvds_n_i(3) <= n17; -- LVDS_1 / SYIN
+  lvds_n_i(4) <= n18; -- LVDS_2 / TRIN
       
-  p3  <= '1'; -- BlackCat1 PG1 (active high)
-  p6  <= '1'; -- BlackCat1 PG2 (active high)
-  p17 <= '0'; -- BlackCat1 TTLEN1 (active low)
-  p18 <= '0'; -- BlackCat1 TTLEN2 (active low)
-  p19 <= '0'; -- BlackCat1 TTLEN3 (active low)
+  -- LVDS outputs
+  n25 <= lvds_n_o(0); -- TTLIO1
+  n27 <= lvds_n_o(1); -- TTLIO2
+  n28 <= lvds_n_o(2); -- TTLIO3
+--  n19 <= lvds_n_o(3); -- LVDS_3 / CK200
+--  n24 <= lvds_n_o(4); -- LVDS_4 / SYOU
+  p25 <= lvds_p_o(0); -- TTLIO1
+  p27 <= lvds_p_o(1); -- TTLIO2
+  p28 <= lvds_p_o(2); -- TTLIO3
+--  p19 <= lvds_p_o(3); -- LVDS_3 / CK200
+--  p24 <= lvds_p_o(4); -- LVDS_4 / SYOU
+  
+  -- LVDS activity LEDs
+  n29 <= '0' when lvds_i_led(0)='1' else 'Z'; -- FPLED2/TTLIO1 blue
+  n26 <= '0' when lvds_i_led(1)='1' else 'Z'; -- FPLED4/TTLIO2 blue
+  n16 <= '0' when lvds_i_led(2)='1' else 'Z'; -- FPLED6/TTLIO3 blue
+  p5  <= '0' when lvds_i_led(3)='1' else 'Z'; -- LED1 (near HDMI = SYIN  / LVDS1)
+  n5  <= '0' when lvds_i_led(4)='1' else 'Z'; -- LED2 (near HDMI = TRIN  / LVDS2)
+--  p6  <= '0' when lvds_o_led(3)='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3)
+--  n6  <= '0' when lvds_o_led(4)='1' else 'Z'; -- LED4 (near HDMI = SYOU  / LVDS4)
   
   -- Wires to CPLD, currently unused
   con <= (others => 'Z');

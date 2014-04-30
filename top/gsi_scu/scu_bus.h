@@ -26,6 +26,7 @@
 
 #define CID_SYS           0x4
 #define CID_GROUP         0x5
+#define SLAVE_VERSION     0x6
 #define SLAVE_INT_ENA     0x21
 #define SLAVE_INT_PEND    0x22
 #define SLAVE_INT_ACT     0x24

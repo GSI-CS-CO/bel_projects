@@ -320,8 +320,8 @@ begin
     generic map(
       g_family     => "Arria II",
       g_project    => "exploder_top",
-      g_inputs     => 16,
-      g_outputs    => 16,
+      g_gpio_in    => 16,
+      g_gpio_out   => 16,
       g_flash_bits => 24,
       g_en_usb     => true,
       g_en_lcd     => true)
