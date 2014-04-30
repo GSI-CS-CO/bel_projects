@@ -99,17 +99,24 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOff
          pBuf = serCycle(pCyc, pBufStart, pBuf, embeddedOffs);
          pCyc = (t_ftmCycle*)pCyc->pNext;
       }   
-   }      
+   }
+ 
    // now write page meta
    uint32ToBytes(&pBufStart[FTM_PAGE_QTY], pPage->planQty);
    for(j=0;j<pPage->planQty;    j++)
       uint32ToBytes(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE], pBufPlans[j]);
    for(j=pPage->planQty;j<FTM_PLAN_MAX;    j++)
-      uint32ToBytes(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE], 0xCAFEBABE);
-         
-   uint32ToBytes(&pBufStart[FTM_PAGE_IDX_BP],    pPage->idxBp);
-   uint32ToBytes(&pBufStart[FTM_PAGE_IDX_START], pPage->idxStart);
-      
+      uint32ToBytes(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE], FTM_NULL);
+   
+   if(pBufPlans[pPage->idxBp] == 0xdeadbeef)    pPage->pBp = FTM_IDLE_OFFSET;
+   else pPage->pBp     = pBufPlans[pPage->idxBp];
+   
+   if(pBufPlans[pPage->idxStart] == 0xdeadbeef) pPage->pStart = FTM_IDLE_OFFSET;
+   else pPage->pStart  = pBufPlans[pPage->idxStart];
+   
+   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_BP],         pPage->pBp);
+   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_START],      pPage->pStart);
+   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_SHAREDMEM],  pPage->pSharedMem);  
    return pBuf;   
 
 }
@@ -166,15 +173,14 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
    uint8_t* pBuf = pBufStart;
    uint32_t j, cycQty;
    uint8_t* pBufPlans[FTM_PLAN_MAX];
-   t_ftmCycle* pCyc      = NULL;
-      t_ftmCycle* pNext = NULL;
+   t_ftmCycle* pCyc  = NULL;
+   t_ftmCycle* pNext = NULL;
    
    //printf("deserpage\n");
    //get plan qty
    if(pPage == NULL) printf("page not allocated\n");
    
-   pPage->idxStart   = bytesToUint32(&pBufStart[FTM_PAGE_IDX_START]); 
-   pPage->idxBp      = bytesToUint32(&pBufStart[FTM_PAGE_IDX_BP]);
+   
    
    pPage->planQty = bytesToUint32(&pBufStart[FTM_PAGE_QTY]);
    for(j=0;j<pPage->planQty;    j++)
@@ -209,9 +215,19 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
       //save to plan how many cycles it contains
       pPage->plans[j].cycQty = cycQty;
    }
-   pPage->idxBp      = bytesToUint32(&pBufStart[FTM_PAGE_IDX_BP]);
-   pPage->idxStart   = bytesToUint32(&pBufStart[FTM_PAGE_IDX_START]);
- 
+   
+   pPage->pBp        = bytesToUint32(&pBufStart[FTM_PAGE_PTR_BP]); 
+   pPage->pStart     = bytesToUint32(&pBufStart[FTM_PAGE_PTR_START]);
+   
+   if       (pPage->pBp    == FTM_NULL)         {pPage->pBp  = NULL;  pPage->idxBp = 0xcafebabe;}
+   else if  (pPage->pBp    == FTM_IDLE_OFFSET)  {pPage->idxBp  = 0xdeadbeef;}
+   else for (j=0;j<pPage->planQty;    j++)      {if(pBufPlans[j] == pPage->pBp) pPage->idxBp = j;}  
+      
+   if       (pPage->pStart == FTM_NULL)           {pPage->pStart   = NULL;  pPage->idxStart = 0xcafebabe;}
+   else if  (pPage->pStart == FTM_IDLE_OFFSET)    {pPage->idxStart = 0xdeadbeef;}
+   else for(j=0;j<pPage->planQty;    j++) {if(pBufPlans[j] == pPage->pStart)  pPage->idxStart = j;}    
+   pPage->pSharedMem = &pBufStart[FTM_PAGE_PTR_SHAREDMEM];    
+      
    return pPage;     
 }
 
@@ -259,8 +275,6 @@ uint8_t* deserMsg(uint8_t* pBuf, t_ftmMsg* pMsg)
 
 
 
-//buf + _FTM_MSG_LEN;
-
 void showFtmPage(t_ftmPage* pPage)
 {
    uint32_t planIdx, cycIdx, msgIdx;
@@ -268,7 +282,21 @@ void showFtmPage(t_ftmPage* pPage)
    t_ftmMsg*   pMsg  = NULL;
    
    printf("---PAGE \n");
-   printf("StartPlan:\t%c\nAltPlan:\t%c\n", pPage->idxStart + 'A', pPage->idxBp + 'A');
+   printf("StartPlan:\t");
+   
+   if(pPage->idxStart == 0xdeadbeef) printf("idle\n");
+   else { 
+          if(pPage->idxStart == 0xcafebabe) printf("NULL\n");
+          else printf("%c\n", pPage->idxStart + 'A');
+        } 
+   
+   printf("AltPlan:\t");
+   if(pPage->idxBp == 0xdeadbeef) printf("idle\n");
+   else { 
+          if(pPage->idxBp == 0xcafebabe) printf("NULL\n");
+          else printf("%c\n", pPage->idxBp + 'A');
+        }  
+   
          
    for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
    {

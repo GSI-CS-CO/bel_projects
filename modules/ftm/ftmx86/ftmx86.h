@@ -3,6 +3,14 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+#define FTM_PAGESIZE        8192  
+#define FTM_SHARED_OFFSET   0xC000
+#define FTM_CMD_OFFSET      (FTM_SHARED_OFFSET  + 2*FTM_PAGESIZE)
+#define FTM_STAT_OFFSET     (FTM_CMD_OFFSET     + 4)
+#define FTM_PACT_OFFSET     (FTM_STAT_OFFSET    + 4)
+#define FTM_PINA_OFFSET     (FTM_PACT_OFFSET    + 4)
+#define FTM_TPREP_OFFSET    (FTM_PINA_OFFSET    + 4)
+#define FTM_IDLE_OFFSET     (FTM_TPREP_OFFSET   + 8)
 
 //masks & constants
 #define CMD_RST           		(1<<0)	//Reset FTM status and counters
@@ -20,8 +28,6 @@
 
 #define CMD_DBG_0             (1<<16)  //DBG case 0
 #define CMD_DBG_1             (1<<17)  //DBG case 1
-
-
 
 #define STAT_RUNNING          (1<<0)   //the FTM is running
 #define STAT_IDLE             (1<<1)   //the FTM is idling  
@@ -57,6 +63,7 @@
 #define FTM_DWORD_SIZE        8
 #define FTM_WORD_SIZE         4
 #define FTM_PTR_SIZE          4
+#define FTM_NULL              0x0
 
 #define FTM_MSG_ID            0
 #define FTM_MSG_PAR           (FTM_MSG_ID    + 8)
@@ -87,9 +94,10 @@
 
 #define FTM_PAGE_QTY          0
 #define FTM_PAGE_PLANPTRS     (FTM_PAGE_QTY            +4)   
-#define FTM_PAGE_IDX_BP       (FTM_PAGE_PLANPTRS       + FTM_PLAN_MAX * 4)
-#define FTM_PAGE_IDX_START    (FTM_PAGE_IDX_BP         +4)
-#define _FTM_PAGE_LEN         (FTM_PAGE_IDX_START      +4)
+#define FTM_PAGE_PTR_BP       (FTM_PAGE_PLANPTRS       + FTM_PLAN_MAX * 4)
+#define FTM_PAGE_PTR_START    (FTM_PAGE_PTR_BP         +4)
+#define FTM_PAGE_PTR_SHAREDMEM (FTM_PAGE_PTR_START     +4)
+#define _FTM_PAGE_LEN         (FTM_PAGE_PTR_SHAREDMEM  +4)
 
 
 extern uint32_t*       _startshared[];
@@ -111,7 +119,7 @@ typedef struct {
    uint64_t             tPeriod;       //cycle period
    uint64_t             tExec;         //cycle execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod
    uint32_t             flags;         //apart from CYC_IS_BP, this is just markers for status info & better debugging
-   uint64_t             condVal;  //pointer to pattern to compare
+   uint64_t             condVal;       //pattern to compare
    uint64_t             condMsk;       //mask for comparison in condition
    uint32_t             sigDst;       //mask for comparison in condition
    uint32_t             sigVal;       //mask for comparison in condition
@@ -136,18 +144,10 @@ typedef struct {
    t_ftmPlan      plans[FTM_PLAN_MAX];
    uint32_t       idxBp;
    uint32_t       idxStart;
+   uint32_t       pBp;
+   uint32_t       PStart;
+   uint32_t       pSharedMem;
 } t_ftmPage;
-
-typedef struct {
-   t_ftmPage   pPages[2];
-   uint32_t    cmd;
-   uint32_t    status;
-   t_ftmPage*  pAct;
-   t_ftmPage*  pIna;
-   t_ftmCycle* pBP;
-   uint64_t    tPrep;
-} t_FtmIf;
-
 
 t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs);
 uint8_t* deserCycle(t_ftmCycle* pCyc, t_ftmCycle* pNext, uint8_t* pCycStart, uint8_t* pBufStart, uint32_t embeddedOffs);

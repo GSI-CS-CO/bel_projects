@@ -133,7 +133,8 @@ t_ftmPage* createPage(xmlNode* pageNode, t_ftmPage* pPage)
    if(fieldNode != NULL) 
    {  
       planChar = (const char*)xmlNodeGetContent(fieldNode);
-      pPage->idxStart = (uint32_t)(planChar[0] & 0xdf) - 'A';
+      if (strcmp(planChar, "idle") != 0) pPage->idxStart = 0xdeadbeef;
+      else pPage->idxStart = (uint32_t)(planChar[0] & 0xdf) - 'A';
    }
    else printf("ERROR startplan\n");
    
@@ -141,7 +142,8 @@ t_ftmPage* createPage(xmlNode* pageNode, t_ftmPage* pPage)
    if(fieldNode != NULL)
    {  
       planChar = (const char*)xmlNodeGetContent(fieldNode);
-      pPage->idxBp = (uint32_t)(planChar[0] & 0xdf) - 'A';
+      if (strcmp(planChar, "idle") != 0) pPage->idxBp = 0xdeadbeef;
+      else pPage->idxBp = (uint32_t)(planChar[0] & 0xdf) - 'A';
    }
    else printf("ERROR altplan\n");
    return pPage;       

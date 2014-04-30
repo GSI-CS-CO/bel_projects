@@ -21,7 +21,7 @@ const    uint64_t vendID_CERN       = 0x000000000000ce42;
 const    uint32_t devID_ClusterInfo = 0x10040086;
 const    uint64_t vendID_GSI        = 0x0000000000000651;
 char              devName_RAM_pre[] = "WB4-BlockRAM_";
-const uint32_t sharedOffset = 0xc000;		
+		
 volatile uint32_t embeddedOffset;
 
 

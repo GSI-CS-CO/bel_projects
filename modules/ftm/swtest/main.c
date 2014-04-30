@@ -118,11 +118,18 @@ void init()
 {
 
    
+   
    discoverPeriphery();
+   
    uart_init_hw();
    uart_write_string("\nDebug Port\n");
+   mprintf("Init EBM...");
    ebmInit(); 
-   prioQueueInit(5000, 10000);
+   mprintf("done.\n");
+   mprintf("Init FTM...");
+   ftmInit();
+   mprintf("done.\n");
+   //prioQueueInit(5000, 10000);
    
 /*   isr_table_clr();
    isr_ptr_table[0]= ISR_timer; //timer
