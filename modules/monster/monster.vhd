@@ -504,7 +504,7 @@ architecture rtl of monster is
   signal  mil_data_req_intr_o:    std_logic;
   signal  mil_dly_intr_o:         std_logic;
   signal  mil_ev_fifo_ne_intr_o:  std_logic;
-  signal  mil_every_10ms_intr_o:  std_logic;
+  signal  mil_every_ms_intr_o:  std_logic;
   
   -- Mil-Extension signals
   ----------------------------------------------------------------------------------
@@ -1491,7 +1491,7 @@ begin
       ctrl_slave_o    => top_cbar_master_i(c_tops_mil_ctrl),       
       ctrl_slave_i    => top_cbar_master_o(c_tops_mil_ctrl),
       --irq lines
-      irq_i           => (mil_every_10ms_intr_o,
+      irq_i           => (mil_every_ms_intr_o,
                           mil_ev_fifo_ne_intr_o,
                           mil_dly_intr_o,
                           mil_data_req_intr_o,
@@ -1548,7 +1548,7 @@ begin
         nLed_Interl    => mil_nled_interl_o,
         nLed_drq       => mil_nled_drq_o,
         nLed_dry       => mil_nled_dry_o,
-        every_10ms_intr_o => mil_every_10ms_intr_o,
+        every_ms_intr_o => mil_every_ms_intr_o,
         io_1           => mil_io1_o,
         io_1_is_in     => mil_io1_is_in_o,
         nLed_io_1      => mil_nled_io1_o,
