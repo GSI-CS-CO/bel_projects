@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "ftmx86.h"
 
-t_FtmIf*       pFtmIf;
+//t_FtmIf*       pFtmIf;
 
 uint16_t getIdFID(uint64_t id)     {return ((uint16_t)(id >> ID_FID_POS))     & (ID_MSK_B16 >> (16 - ID_FID_LEN));}
 uint16_t getIdGID(uint64_t id)     {return ((uint16_t)(id >> ID_GID_POS))     & (ID_MSK_B16 >> (16 - ID_GID_LEN));}
@@ -28,7 +28,7 @@ uint64_t getId(uint16_t fid, uint16_t gid, uint16_t evtno, uint16_t sid, uint16_
    return ret;         
 }
 
-const t_ftmCycle Idle = { .tStart         = 0,
+const t_ftmChain Idle = { .tStart         = 0,
                           .tPeriod        = 500,
                           .tExec          = 0,
                           .flags          = (FLAGS_IS_BP),
@@ -79,9 +79,9 @@ uint64_t bytesToUint64(uint8_t* pBuf)
 
 uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOffs) 
 {
-   uint8_t j, planIdx, cycIdx;
+   uint8_t j, planIdx, chainIdx;
    uint8_t* pBuf = pBufStart;
-   t_ftmCycle* pCyc;
+   t_ftmChain* pChain;
    uint32_t pBufPlans[FTM_PLAN_MAX];
    
    
@@ -91,13 +91,13 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOff
    {
       pBufPlans[planIdx] = embeddedOffs + ((uint32_t)((uintptr_t)pBuf - (uintptr_t)pBufStart));
       printf("Plan %02u/%02u starts @%08x\n", planIdx, pPage->planQty, pBufPlans[planIdx]);
-      pCyc = pPage->plans[planIdx].pStart;
-      cycIdx=0;
-      while(cycIdx++ < pPage->plans[planIdx].cycQty && pCyc != NULL)
+      pChain = pPage->plans[planIdx].pStart;
+      chainIdx=0;
+      while(chainIdx++ < pPage->plans[planIdx].chainQty && pChain != NULL)
       {
-         printf("Cyc %02u/%02u starts @", cycIdx, pPage->plans[planIdx].cycQty);
-         pBuf = serCycle(pCyc, pBufStart, pBuf, embeddedOffs);
-         pCyc = (t_ftmCycle*)pCyc->pNext;
+         printf("Chain %02u/%02u starts @", chainIdx, pPage->plans[planIdx].chainQty);
+         pBuf = serChain(pChain, pBufStart, pBuf, embeddedOffs);
+         pChain = (t_ftmChain*)pChain->pNext;
       }   
    }
  
@@ -116,40 +116,40 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOff
    
    uint32ToBytes(&pBufStart[FTM_PAGE_PTR_BP],         pPage->pBp);
    uint32ToBytes(&pBufStart[FTM_PAGE_PTR_START],      pPage->pStart);
-   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_SHAREDMEM],  pPage->pSharedMem);  
+   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_SHAREDMEM], pPage->pSharedMem);  
    return pBuf;   
 
 }
 
 
-uint8_t* serCycle(t_ftmCycle* pCyc, uint8_t* pBufStart, uint8_t* pBuf, uint32_t embeddedOffs)
+uint8_t* serChain(t_ftmChain* pChain, uint8_t* pBufStart, uint8_t* pBuf, uint32_t embeddedOffs)
 {
    uint8_t msgIdx;
    
    uint32_t pBufNext, pBufMsg;
-   t_ftmMsg* pMsg = pCyc->pMsg; 
+   t_ftmMsg* pMsg = pChain->pMsg; 
    
-   uint64ToBytes(&pBuf[FTM_CYC_TSTART],    pCyc->tStart);
-   uint64ToBytes(&pBuf[FTM_CYC_TPERIOD],   pCyc->tPeriod);
-   uint64ToBytes(&pBuf[FTM_CYC_TEXEC],     0);
-   uint32ToBytes(&pBuf[FTM_CYC_FLAGS],     pCyc->flags);
-   uint64ToBytes(&pBuf[FTM_CYC_CONDVAL],   pCyc->condVal);
-   uint64ToBytes(&pBuf[FTM_CYC_CONDMSK],   pCyc->condMsk);
-   uint32ToBytes(&pBuf[FTM_CYC_SIGDST],    pCyc->sigDst);
-   uint32ToBytes(&pBuf[FTM_CYC_SIGVAL],    pCyc->sigVal);
-   uint32ToBytes(&pBuf[FTM_CYC_REPQTY],    pCyc->repQty);
-   uint32ToBytes(&pBuf[FTM_CYC_REPCNT],    0);
-   uint32ToBytes(&pBuf[FTM_CYC_MSGQTY],    pCyc->msgQty);
-   uint32ToBytes(&pBuf[FTM_CYC_MSGIDX],    0);
+   uint64ToBytes(&pBuf[FTM_CHAIN_TSTART],    pChain->tStart);
+   uint64ToBytes(&pBuf[FTM_CHAIN_TPERIOD],   pChain->tPeriod);
+   uint64ToBytes(&pBuf[FTM_CHAIN_TEXEC],     0);
+   uint32ToBytes(&pBuf[FTM_CHAIN_FLAGS],     pChain->flags);
+   uint32ToBytes(&pBuf[FTM_CHAIN_CONDVAL],   pChain->condVal);
+   uint32ToBytes(&pBuf[FTM_CHAIN_CONDMSK],   pChain->condMsk);
+   uint32ToBytes(&pBuf[FTM_CHAIN_SIGDST],    pChain->sigDst);
+   uint32ToBytes(&pBuf[FTM_CHAIN_SIGVAL],    pChain->sigVal);
+   uint32ToBytes(&pBuf[FTM_CHAIN_REPQTY],    pChain->repQty);
+   uint32ToBytes(&pBuf[FTM_CHAIN_REPCNT],    0);
+   uint32ToBytes(&pBuf[FTM_CHAIN_MSGQTY],    pChain->msgQty);
+   uint32ToBytes(&pBuf[FTM_CHAIN_MSGIDX],    0);
    
-   pBufMsg  = embeddedOffs + _FTM_CYC_LEN + ( (uint32_t)( (uintptr_t)pBuf - (uintptr_t)pBufStart ) );
-   uint32ToBytes(&pBuf[FTM_CYC_PMSG],    pBufMsg);
+   pBufMsg  = embeddedOffs + _FTM_CHAIN_LEN + ( (uint32_t)( (uintptr_t)pBuf - (uintptr_t)pBufStart ) );
+   uint32ToBytes(&pBuf[FTM_CHAIN_PMSG],    pBufMsg);
    
-   pBufNext = pBufMsg + pCyc->msgQty * _FTM_MSG_LEN;
-   uint32ToBytes(&pBuf[FTM_CYC_PNEXT],    pBufNext);
+   pBufNext = pBufMsg + pChain->msgQty * _FTM_MSG_LEN;
+   uint32ToBytes(&pBuf[FTM_CHAIN_PNEXT],    pBufNext);
    
-   pBuf +=  _FTM_CYC_LEN;
-   for(msgIdx = 0; msgIdx < pCyc->msgQty; msgIdx++) pBuf = serMsg(&pMsg[msgIdx], pBuf);   
+   pBuf +=  _FTM_CHAIN_LEN;
+   for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++) pBuf = serMsg(&pMsg[msgIdx], pBuf);   
    
    return pBuf;   
 
@@ -171,10 +171,10 @@ uint8_t* serMsg(  t_ftmMsg* pMsg, uint8_t* pBuf)
 t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs)
 {
    uint8_t* pBuf = pBufStart;
-   uint32_t j, cycQty;
+   uint32_t j, chainQty;
    uint8_t* pBufPlans[FTM_PLAN_MAX];
-   t_ftmCycle* pCyc  = NULL;
-   t_ftmCycle* pNext = NULL;
+   t_ftmChain* pChain  = NULL;
+   t_ftmChain* pNext = NULL;
    
    //printf("deserpage\n");
    //get plan qty
@@ -186,77 +186,77 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
    for(j=0;j<pPage->planQty;    j++)
    {
       
-      //read the offset to start of first cycle
+      //read the offset to start of first chain
       pBufPlans[j] = pBufStart + (uintptr_t)bytesToUint32(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE]) - (uintptr_t)embeddedOffs;
       
-      //allocate first cycle and a Next Cycle
-      cycQty = 1;
-      pCyc      = calloc(1, sizeof(t_ftmCycle));
-      pNext     = calloc(1, sizeof(t_ftmCycle));
-      //set plan start to first cycle
-      pPage->plans[j].pStart = pCyc;
-      //deserialise (pBufStart +  offset) to pCyc and fix pCycs next ptr
+      //allocate first chain and a Next Chain
+      chainQty = 1;
+      pChain      = calloc(1, sizeof(t_ftmChain));
+      pNext     = calloc(1, sizeof(t_ftmChain));
+      //set plan start to first chain
+      pPage->plans[j].pStart = pChain;
+      //deserialise (pBufStart +  offset) to pChain and fix pChains next ptr
 
-      pBuf = deserCycle(pCyc, pNext, pBufPlans[j], pBufStart, embeddedOffs);
+      pBuf = deserChain(pChain, pNext, pBufPlans[j], pBufStart, embeddedOffs);
 
  
-      //deserialise cycles until we reached the end or we reached max
+      //deserialise chains until we reached the end or we reached max
       
-      while(!(pCyc->flags & FLAGS_IS_END) && cycQty < 1024)
+      while(!(pChain->flags & FLAGS_IS_END) && chainQty < 1024)
       {
-         pCyc = pNext;
-         pNext = calloc(1, sizeof(t_ftmCycle));
-         pBuf = deserCycle(pCyc, pNext, pBuf, pBufStart, embeddedOffs);
-         cycQty++;
+         pChain = pNext;
+         pNext = calloc(1, sizeof(t_ftmChain));
+         pBuf = deserChain(pChain, pNext, pBuf, pBufStart, embeddedOffs);
+         chainQty++;
       } 
       //no next after the end, free this one
       //free(pNext);
-      pCyc->pNext = NULL;
-      //save to plan how many cycles it contains
-      pPage->plans[j].cycQty = cycQty;
+      pChain->pNext = NULL;
+      //save to plan how many chains it contains
+      pPage->plans[j].chainQty = chainQty;
    }
    
    pPage->pBp        = bytesToUint32(&pBufStart[FTM_PAGE_PTR_BP]); 
    pPage->pStart     = bytesToUint32(&pBufStart[FTM_PAGE_PTR_START]);
    
-   if       (pPage->pBp    == FTM_NULL)         {pPage->pBp  = NULL;  pPage->idxBp = 0xcafebabe;}
+   if       (pPage->pBp    == FTM_NULL)         { pPage->idxBp = 0xcafebabe;}
    else if  (pPage->pBp    == FTM_IDLE_OFFSET)  {pPage->idxBp  = 0xdeadbeef;}
-   else for (j=0;j<pPage->planQty;    j++)      {if(pBufPlans[j] == pPage->pBp) pPage->idxBp = j;}  
+   else for (j=0;j<pPage->planQty;    j++)      {if(pBufPlans[j] == (uint8_t*)(uintptr_t)pPage->pBp) pPage->idxBp = j;}  
       
-   if       (pPage->pStart == FTM_NULL)           {pPage->pStart   = NULL;  pPage->idxStart = 0xcafebabe;}
+   if       (pPage->pStart == FTM_NULL)           {pPage->idxStart = 0xcafebabe;}
    else if  (pPage->pStart == FTM_IDLE_OFFSET)    {pPage->idxStart = 0xdeadbeef;}
-   else for(j=0;j<pPage->planQty;    j++) {if(pBufPlans[j] == pPage->pStart)  pPage->idxStart = j;}    
-   pPage->pSharedMem = &pBufStart[FTM_PAGE_PTR_SHAREDMEM];    
+   else for(j=0;j<pPage->planQty;    j++) {if(pBufPlans[j] == (uint8_t*)(uintptr_t)pPage->pStart)  pPage->idxStart = j;}    
+   //pPage->pSharedMem = pBufStart[FTM_PAGE_PTR_SHAREDMEM];    
       
    return pPage;     
 }
 
-uint8_t* deserCycle(t_ftmCycle* pCyc, t_ftmCycle* pNext, uint8_t* pCycStart, uint8_t* pBufStart, uint32_t embeddedOffs)
+uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChainStart, uint8_t* pBufStart, uint32_t embeddedOffs)
 {
-   uint8_t* pBuf = pCycStart;
+   uint8_t* pBuf = pChainStart;
    uint32_t msgIdx;
 
-      //printf("desercyc\n");
-      //printf("pCyc %p pNext %p pBufPLansJ %p pBuf: %p\n", pCyc, pNext, pCycStart, pBufStart); 
-   pCyc->tStart   = bytesToUint64(&pCycStart[FTM_CYC_TSTART]);
-   pCyc->tPeriod  = bytesToUint64(&pCycStart[FTM_CYC_TPERIOD]);
-   pCyc->flags    = bytesToUint32(&pCycStart[FTM_CYC_FLAGS]);
-   pCyc->condVal  = bytesToUint64(&pCycStart[FTM_CYC_CONDVAL]);
-   pCyc->condMsk  = bytesToUint64(&pCycStart[FTM_CYC_CONDMSK]);
-   pCyc->sigDst   = bytesToUint32(&pCycStart[FTM_CYC_SIGDST]);
-   pCyc->sigVal   = bytesToUint32(&pCycStart[FTM_CYC_SIGVAL]);
-   pCyc->repQty   = bytesToUint32(&pCycStart[FTM_CYC_REPQTY]);
-   pCyc->repCnt   = bytesToUint32(&pCycStart[FTM_CYC_REPCNT]);
-   pCyc->msgQty   = bytesToUint32(&pCycStart[FTM_CYC_MSGQTY]);
-   pCyc->msgIdx   = bytesToUint32(&pCycStart[FTM_CYC_MSGIDX]);
-   //allocate space for this cycles messages
-   pCyc->pMsg     = calloc(pCyc->msgQty, sizeof(t_ftmMsg));
-   pCyc->pNext    = (struct t_ftmCycle*)pNext;
+      //printf("deserchain\n");
+      //printf("pChain %p pNext %p pBufPLansJ %p pBuf: %p\n", pChain, pNext, pChainStart, pBufStart); 
+   pChain->tStart   = bytesToUint64(&pChainStart[FTM_CHAIN_TSTART]);
+   pChain->tPeriod  = bytesToUint64(&pChainStart[FTM_CHAIN_TPERIOD]);
+   pChain->flags    = bytesToUint32(&pChainStart[FTM_CHAIN_FLAGS]);
+   pChain->condVal  = bytesToUint32(&pChainStart[FTM_CHAIN_CONDVAL]);
+   pChain->condMsk  = bytesToUint32(&pChainStart[FTM_CHAIN_CONDMSK]);
+   pChain->sigDst   = bytesToUint32(&pChainStart[FTM_CHAIN_SIGDST]);
+   pChain->sigVal   = bytesToUint32(&pChainStart[FTM_CHAIN_SIGVAL]);
+   pChain->repQty   = bytesToUint32(&pChainStart[FTM_CHAIN_REPQTY]);
+   pChain->repCnt   = bytesToUint32(&pChainStart[FTM_CHAIN_REPCNT]);
+   pChain->msgQty   = bytesToUint32(&pChainStart[FTM_CHAIN_MSGQTY]);
+   pChain->msgIdx   = bytesToUint32(&pChainStart[FTM_CHAIN_MSGIDX]);
+   //allocate space for this chains messages
+   pChain->pMsg     = calloc(pChain->msgQty, sizeof(t_ftmMsg));
+   pChain->pNext    = (struct t_ftmChain*)pNext;
    //deserialise messages until msgQty is reached
-   pBuf = &pBuf[_FTM_CYC_LEN];
-   for(msgIdx = 0; msgIdx < pCyc->msgQty; msgIdx++) pBuf = deserMsg(pBuf, &pCyc->pMsg[msgIdx]);   
+   pBuf = &pBuf[_FTM_CHAIN_LEN];
+   for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++) pBuf = deserMsg(pBuf, &pChain->pMsg[msgIdx]);   
    //set pBuf ptr to 
-   return pBufStart + (uintptr_t)bytesToUint32(&pCycStart[FTM_CYC_PNEXT]) - (uintptr_t)embeddedOffs;
+   return pBufStart + (uintptr_t)bytesToUint32(&pChainStart[FTM_CHAIN_PNEXT]) - (uintptr_t)embeddedOffs;
    
 }
 
@@ -277,8 +277,8 @@ uint8_t* deserMsg(uint8_t* pBuf, t_ftmMsg* pMsg)
 
 void showFtmPage(t_ftmPage* pPage)
 {
-   uint32_t planIdx, cycIdx, msgIdx;
-   t_ftmCycle* pCyc  = NULL;
+   uint32_t planIdx, chainIdx, msgIdx;
+   t_ftmChain* pChain  = NULL;
    t_ftmMsg*   pMsg  = NULL;
    
    printf("---PAGE \n");
@@ -301,42 +301,43 @@ void showFtmPage(t_ftmPage* pPage)
    for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
    {
       printf("\t---PLAN %c\n", planIdx+'A');
-      cycIdx = 0;
-      pCyc = pPage->plans[planIdx].pStart;
-      while(cycIdx++ < pPage->plans[planIdx].cycQty && pCyc != NULL)
+      chainIdx = 0;
+      pChain = pPage->plans[planIdx].pStart;
+      while(chainIdx++ < pPage->plans[planIdx].chainQty && pChain != NULL)
       {
-         printf("\t\t---CYC %c%u\n", planIdx+'A', cycIdx-1);
+         printf("\t\t---CHAIN %c%u\n", planIdx+'A', chainIdx-1);
          printf("\t\tStart:\t\t%08x%08x\n\t\tperiod:\t\t%08x%08x\n\t\trep:\t\t\t%08x\n\t\tmsg:\t\t\t%08x\n", 
-         (uint32_t)(pCyc->tStart>>32), (uint32_t)pCyc->tStart, 
-         (uint32_t)(pCyc->tPeriod>>32), (uint32_t)pCyc->tPeriod,
-         pCyc->repQty,
-         pCyc->msgQty);
+         (uint32_t)(pChain->tStart>>32), (uint32_t)pChain->tStart, 
+         (uint32_t)(pChain->tPeriod>>32), (uint32_t)pChain->tPeriod,
+         pChain->repQty,
+         pChain->msgQty);
          
          printf("\t\tFlags:\t");
-         if(pCyc->flags & FLAGS_IS_BP) printf("-IS_BP\t");
-         if(pCyc->flags & FLAGS_IS_COND_MSI) printf("-IS_CMSI\t");
-         if(pCyc->flags & FLAGS_IS_COND_SHARED) printf("-IS_CSHA\t");
-         if(pCyc->flags & FLAGS_IS_SIG) printf("-IS_SIG");
-         if(pCyc->flags & FLAGS_IS_END) printf("-IS_END");
+         if(pChain->flags & FLAGS_IS_BP) printf("-IS_BP\t");
+         if(pChain->flags & FLAGS_IS_COND_MSI) printf("-IS_CMSI\t");
+         if(pChain->flags & FLAGS_IS_COND_SHARED) printf("-IS_CSHA\t");
+         if(pChain->flags & FLAGS_IS_SIG_SHARED) printf("-IS_SIG_SHARED");
+         if(pChain->flags & FLAGS_IS_SIG_MSI)    printf("-IS_SIG_MSI");
+         if(pChain->flags & FLAGS_IS_END) printf("-IS_END");
          printf("\n");
          
-         printf("\t\tCondVal:\t%08x%08x\n\t\tCondMsk:\t%08x%08x\n\t\tSigDst:\t\t\t%08x\n\t\tSigVal:\t\t\t%08x\n", 
-         (uint32_t)(pCyc->condVal>>32), (uint32_t)pCyc->condVal, 
-         (uint32_t)(pCyc->condMsk>>32), (uint32_t)pCyc->condMsk,
-         pCyc->sigDst,
-         pCyc->sigVal);  
+         printf("\t\tCondVal:\t%08x\n\t\tCondMsk:\t%08x\n\t\tSigDst:\t\t\t%08x\n\t\tSigVal:\t\t\t%08x\n", 
+         (uint32_t)pChain->condVal, 
+         (uint32_t)pChain->condMsk,
+         pChain->sigDst,
+         pChain->sigVal);  
          
-         pMsg = pCyc->pMsg;
-         for(msgIdx = 0; msgIdx < pCyc->msgQty; msgIdx++)
+         pMsg = pChain->pMsg;
+         for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++)
          {
-            printf("\t\t\t---MSG %c%u%c\n", planIdx+'A', cycIdx-1, msgIdx+'A');
+            printf("\t\t\t---MSG %c%u%c\n", planIdx+'A', chainIdx-1, msgIdx+'A');
             printf("\t\t\tid:\t%08x%08x\n\t\t\tpar:\t%08x%08x\n\t\t\ttef:\t\t%08x\n\t\t\toffs:\t%08x%08x\n", 
             (uint32_t)(pMsg[msgIdx].id>>32), (uint32_t)pMsg[msgIdx].id, 
             (uint32_t)(pMsg[msgIdx].par>>32), (uint32_t)pMsg[msgIdx].par,
             pMsg[msgIdx].tef,
             (uint32_t)(pMsg[msgIdx].offs>>32), (uint32_t)pMsg[msgIdx].offs);   
          }
-         pCyc = (t_ftmCycle*)pCyc->pNext;
+         pChain = (t_ftmChain*)pChain->pNext;
       }
            
    }   

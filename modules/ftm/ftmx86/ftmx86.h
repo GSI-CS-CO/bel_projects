@@ -31,7 +31,7 @@
 
 #define STAT_RUNNING          (1<<0)   //the FTM is running
 #define STAT_IDLE             (1<<1)   //the FTM is idling  
-#define STAT_IDLE_REQ         (1<<2)   //alt ptr has been set to IDLE 
+#define STAT_STOP_REQ         (1<<2)   //alt ptr has been set to IDLE 
 #define STAT_STOPPED          (1<<1)   //FTM is Stopped - will not execute anything 
 #define STAT_ERROR            (1<<3)   //FTM encountered an error, check error register
 
@@ -52,9 +52,20 @@
 #define FLAGS_IS_BP           (1<<0)
 #define FLAGS_IS_COND_MSI     (1<<1)
 #define FLAGS_IS_COND_SHARED  (1<<2)
-#define FLAGS_IS_SIG          (1<<3)
-#define FLAGS_IS_START        (1<<4) // debug
-#define FLAGS_IS_END          (1<<5) // debug
+#define FLAGS_IS_SHARED_TIME  (1<<3)
+#define FLAGS_IS_SIG_MSI      (1<<4)
+#define FLAGS_IS_SIG_SHARED   (1<<5)
+#define FLAGS_IS_START        (1<<6) // debug
+#define FLAGS_IS_END          (1<<7) // debug
+
+#define SIG_SH_SENDER_ID      0
+#define SIG_SH_FORMAT         1
+#define SIG_SH_WORDS          2
+#define SIG_SH_RESERVED       3
+
+#define SIG_MSI_SENDER_ID     0
+#define SIG_MSI_MSG           1
+
 
 #define FTM_IS_RUNNING        (1<<0) 
 #define FTM_IS_STOP_REQ       (1<<1) 
@@ -74,21 +85,21 @@
 #define _FTM_MSG_LEN          (FTM_MSG_OFFS  + 8)
 
 
-#define FTM_CYC_TSTART        0
-#define FTM_CYC_TPERIOD       (FTM_CYC_TSTART         + 8)
-#define FTM_CYC_TEXEC         (FTM_CYC_TPERIOD        + 8)
-#define FTM_CYC_FLAGS         (FTM_CYC_TEXEC          + 8)
-#define FTM_CYC_CONDVAL       (FTM_CYC_FLAGS          + 4)
-#define FTM_CYC_CONDMSK       (FTM_CYC_CONDVAL        + 8)
-#define FTM_CYC_SIGDST        (FTM_CYC_CONDMSK        + 8)
-#define FTM_CYC_SIGVAL        (FTM_CYC_SIGDST         + 4)
-#define FTM_CYC_REPQTY        (FTM_CYC_SIGVAL         + 4)
-#define FTM_CYC_REPCNT        (FTM_CYC_REPQTY         + 4)
-#define FTM_CYC_MSGQTY        (FTM_CYC_REPCNT         + 4)
-#define FTM_CYC_MSGIDX        (FTM_CYC_MSGQTY         + 4)
-#define FTM_CYC_PMSG          (FTM_CYC_MSGIDX         + 4)
-#define FTM_CYC_PNEXT         (FTM_CYC_PMSG           + 4)
-#define _FTM_CYC_LEN          (FTM_CYC_PNEXT          + 4)
+#define FTM_CHAIN_TSTART        0
+#define FTM_CHAIN_TPERIOD       (FTM_CHAIN_TSTART         + 8)
+#define FTM_CHAIN_TEXEC         (FTM_CHAIN_TPERIOD        + 8)
+#define FTM_CHAIN_FLAGS         (FTM_CHAIN_TEXEC          + 8)
+#define FTM_CHAIN_CONDVAL       (FTM_CHAIN_FLAGS          + 4)
+#define FTM_CHAIN_CONDMSK       (FTM_CHAIN_CONDVAL        + 4)
+#define FTM_CHAIN_SIGDST        (FTM_CHAIN_CONDMSK        + 4)
+#define FTM_CHAIN_SIGVAL        (FTM_CHAIN_SIGDST         + 4)
+#define FTM_CHAIN_REPQTY        (FTM_CHAIN_SIGVAL         + 4)
+#define FTM_CHAIN_REPCNT        (FTM_CHAIN_REPQTY         + 4)
+#define FTM_CHAIN_MSGQTY        (FTM_CHAIN_REPCNT         + 4)
+#define FTM_CHAIN_MSGIDX        (FTM_CHAIN_MSGQTY         + 4)
+#define FTM_CHAIN_PMSG          (FTM_CHAIN_MSGIDX         + 4)
+#define FTM_CHAIN_PNEXT         (FTM_CHAIN_PMSG           + 4)
+#define _FTM_CHAIN_LEN          (FTM_CHAIN_PNEXT          + 4)
 
 #define FTM_PLAN_MAX          16
 
@@ -115,26 +126,27 @@ typedef struct {
 
 typedef struct {
    
-   uint64_t             tStart;        //desired start time of this cycle
-   uint64_t             tPeriod;       //cycle period
-   uint64_t             tExec;         //cycle execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod
-   uint32_t             flags;         //apart from CYC_IS_BP, this is just markers for status info & better debugging
-   uint64_t             condVal;       //pattern to compare
-   uint64_t             condMsk;       //mask for comparison in condition
-   uint32_t             sigDst;       //mask for comparison in condition
-   uint32_t             sigVal;       //mask for comparison in condition
+   uint64_t             tStart;        //desired start time of this chain
+   uint64_t             tPeriod;       //chain period
+   uint64_t             tExec;         //chain execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod
+   uint32_t             flags;         //apart from chain_IS_BP, this is just markers for status info & better debugging
+   uint32_t             condVal;       //pattern to compare
+   uint32_t             condMsk;       //mask for comparison in condition
+   uint32_t             sigCpu;       //destination cpu msi/shared
+   uint32_t             sigDst;       //destination address msi/shared
+   uint32_t             sigVal;       //signal value
    uint32_t             repQty;        //number of desired repetitions. -1 -> infinite, 0 -> none
    uint32_t             repCnt;        //running count of repetitions
    uint32_t             msgQty;        //Number of messages
    uint32_t             msgIdx;        //idx of the currently processed msg 
    t_ftmMsg*            pMsg;          //pointer to messages
-   struct t_ftmCycle*   pNext;         //pointer to next cycle
+   struct t_ftmChain*   pNext;         //pointer to next chain
    
-} t_ftmCycle;
+} t_ftmChain;
 
 typedef struct {
-   uint32_t       cycQty;
-   t_ftmCycle*    pStart;
+   uint32_t       chainQty;
+   t_ftmChain*    pStart;
 } t_ftmPlan;
 
 
@@ -145,12 +157,12 @@ typedef struct {
    uint32_t       idxBp;
    uint32_t       idxStart;
    uint32_t       pBp;
-   uint32_t       PStart;
+   uint32_t       pStart;
    uint32_t       pSharedMem;
 } t_ftmPage;
 
 t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs);
-uint8_t* deserCycle(t_ftmCycle* pCyc, t_ftmCycle* pNext, uint8_t* pCycStart, uint8_t* pBufStart, uint32_t embeddedOffs);
+uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChainStart, uint8_t* pBufStart, uint32_t embeddedOffs);
 uint8_t* deserMsg(  uint8_t*  buf, t_ftmMsg* msg);
 
 
@@ -160,7 +172,7 @@ uint32_t bytesToUint32(uint8_t* buf);
 uint64_t bytesToUint64(uint8_t* buf);
 
 uint8_t* serPage  (t_ftmPage*  pPage, uint8_t* bufStart, uint32_t offset);
-uint8_t* serCycle (t_ftmCycle* pCyc, uint8_t* bufStart, uint8_t* buf, uint32_t offset);
+uint8_t* serChain (t_ftmChain* pChain, uint8_t* bufStart, uint8_t* buf, uint32_t offset);
 uint8_t* serMsg   (t_ftmMsg* pMsg, uint8_t* buf);
 void showFtmPage(t_ftmPage* pPage);
 
@@ -172,5 +184,5 @@ uint16_t    getIdBPID(uint64_t id);
 uint16_t    getIdSCTR(uint64_t id);
 uint64_t getId(uint16_t fid, uint16_t gid, uint16_t evtno, uint16_t sid, uint16_t bpid, uint16_t sctr);
 //int      sendCustomMsg(uint32_t* customMsg, unsigned char len,  );
-extern t_FtmIf*       pFtmIf;
+//extern t_FtmIf*       pFtmIf;
 #endif

@@ -14,7 +14,7 @@ extern const char* msgIdFields[];
 
 xmlNode*    checkNode(xmlNode* aNode, const char* name);
 t_ftmMsg*   createMsg(xmlNode* msgNode, t_ftmMsg* pMsg);
-t_ftmCycle* createCyc(xmlNode* cycNode, t_ftmCycle* pCyc);
+t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain);
 t_ftmPage*  createPage(xmlNode* pageNode, t_ftmPage* pPage);
 t_ftmPage*  convertDOM2ftmPage(xmlNode * aNode);
 t_ftmPage* parseXml(const char* filename);

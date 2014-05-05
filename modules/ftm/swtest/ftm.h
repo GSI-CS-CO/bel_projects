@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+#define MSI_SIG               0
 #define FTM_PAGESIZE          8192
 //masks & constants
 #define CMD_RST           		(1<<0)	//Reset FTM status and counters
@@ -31,15 +32,15 @@
 
 
 
-#define TIMER_CYC_START       8
-#define TIMER_CYC_PREP        TIMER_CYC_START+1 
-#define TIMER_MSG_PREP        TIMER_CYC_PREP+1  
-#define TIMER_ABS             CYC_ABS_TIME
+#define TIMER_CHAIN_START       8
+#define TIMER_CHAIN_PREP        TIMER_CHAIN_START+1 
+#define TIMER_MSG_PREP        TIMER_CHAIN_PREP+1  
+#define TIMER_ABS             chain_ABS_TIME
 #define TIMER_PER             (1<<2) 
 
 
-#define TIMER_CYC_START_MSK   (1<<TIMER_CYC_START)
-#define TIMER_CYC_PREP_MSK    (1<<TIMER_CYC_PREP) 
+#define TIMER_CHAIN_START_MSK   (1<<TIMER_CHAIN_START)
+#define TIMER_CHAIN_PREP_MSK    (1<<TIMER_CHAIN_PREP) 
 #define TIMER_MSG_PREP_MSK    (1<<TIMER_MSG_PREP)
 
 #define TIMER_CFG_SUCCESS     0
@@ -61,10 +62,17 @@
 #define ID_BPID_POS           (ID_SCTR_LEN)
 #define ID_SCTR_POS           0
 
-#define FLAGS_IS_BP           (1<<0)
-#define FLAGS_IS_COND         (1<<1)
-#define FLAGS_IS_START        (1<<2) // debug
-#define FLAGS_IS_END          (1<<3) // debug
+#define FLAGS_IS_BP           (1<<00)
+#define FLAGS_IS_COND_MSI     (1<<01)
+#define FLAGS_IS_COND_SHARED  (1<<02)
+#define FLAGS_IS_SHARED_TIME  (1<<03)
+#define FLAGS_IS_SIG_MSI      (1<<04)
+#define FLAGS_IS_SIG_SHARED   (1<<05)
+#define FLAGS_IS_SIG_FIRST    (1<<06)
+#define FLAGS_IS_SIG_LAST     (1<<07)
+#define FLAGS_IS_SIG_ALL      (1<<08)
+#define FLAGS_IS_START        (1<<09) // debug
+#define FLAGS_IS_END          (1<<10) // debug
 
 #define FTM_IS_RUNNING        (1<<0) 
 #define FTM_IS_STOP_REQ       (1<<1) 
@@ -82,21 +90,21 @@
 #define FTM_MSG_OFFS          (FTM_MSG_TS    + 8)
 #define FTM_MSG_END_          (FTM_MSG_OFFS  + 8)
 
-#define FTM_CYC_TTRN          0
-#define FTM_CYC_TSTART        (FTM_CYC_TTRN           + 8)
-#define FTM_CYC_TPERIOD       (FTM_CYC_TSTART         + 8)
-#define FTM_CYC_TEXEC         (FTM_CYC_TPERIOD        + 8)
-#define FTM_CYC_FLAGS         (FTM_CYC_TEXEC          + 8)
-#define FTM_CYC_PCONDINDPUT   (FTM_CYC_FLAGS          + 4)
-#define FTM_CYC_PCONDPATTERN  (FTM_CYC_PCONDINDPUT    + 4)
-#define FTM_CYC_CONDMSK       (FTM_CYC_PCONDPATTERN   + 4)
-#define FTM_CYC_REPQTY        (FTM_CYC_CONDMSK        + 4)
-#define FTM_CYC_REPCNT        (FTM_CYC_REPQTY         + 4)
-#define FTM_CYC_MSGQTY        (FTM_CYC_REPCNT         + 4)
-#define FTM_CYC_MSGIDX        (FTM_CYC_MSGQTY         + 4)
-#define FTM_CYC_PMSG          (FTM_CYC_MSGIDX         + 4)
-#define FTM_CYC_PNEXT         (FTM_CYC_PMSG           + 4)
-#define FTM_CYC_END_          (FTM_CYC_PNEXT          + 4)
+#define FTM_CHAIN_TTRN          0
+#define FTM_CHAIN_TSTART        (FTM_CHAIN_TTRN           + 8)
+#define FTM_CHAIN_TPERIOD       (FTM_CHAIN_TSTART         + 8)
+#define FTM_CHAIN_TEXEC         (FTM_CHAIN_TPERIOD        + 8)
+#define FTM_CHAIN_FLAGS         (FTM_CHAIN_TEXEC          + 8)
+#define FTM_CHAIN_PCONDINDPUT   (FTM_CHAIN_FLAGS          + 4)
+#define FTM_CHAIN_PCONDPATTERN  (FTM_CHAIN_PCONDINDPUT    + 4)
+#define FTM_CHAIN_CONDMSK       (FTM_CHAIN_PCONDPATTERN   + 4)
+#define FTM_CHAIN_REPQTY        (FTM_CHAIN_CONDMSK        + 4)
+#define FTM_CHAIN_REPCNT        (FTM_CHAIN_REPQTY         + 4)
+#define FTM_CHAIN_MSGQTY        (FTM_CHAIN_REPCNT         + 4)
+#define FTM_CHAIN_MSGIDX        (FTM_CHAIN_MSGQTY         + 4)
+#define FTM_CHAIN_PMSG          (FTM_CHAIN_MSGIDX         + 4)
+#define FTM_CHAIN_PNEXT         (FTM_CHAIN_PMSG           + 4)
+#define FTM_CHAIN_END_          (FTM_CHAIN_PNEXT          + 4)
 
 
 
@@ -167,54 +175,51 @@ typedef struct {
    uint8_t reserved_8192 [ FTM_PAGESIZE ];
 } t_pageSpace;  
 
-typedef struct {
-   uint32_t hi;
-   uint32_t lo;
-} t_dw;
+typedef uint64_t t_time ;
 
-typedef union {
-   uint64_t   v64;
-   t_dw       v32;               
-} u_dword;
-
-typedef u_dword t_time ;
 
 typedef struct {
-   u_dword  id;
-   u_dword  par;
+   uint32_t msg; 
+   t_time   time;
+} t_shared;
+
+typedef struct {
+   uint64_t id;
+   uint64_t par;
    uint32_t tef;
    uint32_t res;
-   u_dword  ts;
-   u_dword  offs;
+   t_time   ts;
+   t_time   offs;
 } t_ftmMsg;
 
 typedef struct {
    
-   u_dword              tStart;  //desired start time of this cycle
-   u_dword              tPeriod; //cycle period
-   u_dword              tExec;   //cycle execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod
+   t_time               tStart;  //desired start time of this chain
+   t_time               tPeriod; //chain period
+   t_time               tExec;   //chain execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod FIXME
    uint32_t             flags; 
-   uint64_t             condVal; //pattern to compare
-   uint64_t             condMsk; //mask for comparison in condition
-   uint32_t             sigDst;  //dst adr for signalling
+   uint32_t             condVal; //pattern to compare
+   uint32_t             condMsk; //mask for comparison in condition
+   uint32_t*            sigDst;  //dst adr for signalling
    uint32_t             sigVal;  //value for signalling
    uint32_t             repQty;  //number of desired repetitions. -1 -> infinite, 0 -> none
    uint32_t             repCnt;  //running count of repetitions
    uint32_t             msgQty;  //Number of messages
    uint32_t             msgIdx;  //idx of the currently processed msg
    t_ftmMsg*            pMsg;    //pointer to messages
-   struct t_ftmCycle*   pNext;   //pointer to next cycle
+   struct t_ftmchain*   pNext;   //pointer to next chain
    
-} t_ftmCycle;
+} t_ftmchain;
 
+//a plan is a linked list of chains
 typedef struct {
 
    t_pageSpace    pages[2];
    uint32_t       planQty;
    t_ftmPlan      plans[FTM_PLAN_MAX];
-   t_ftmCycle*    pBp;
-   t_ftmCycle*    pStart;
-   uint64_t*      pSharedMem;
+   t_ftmchain*    pBp;
+   t_ftmchain*    pStart;
+   t_shared*      pSharedMem;
 } t_ftmPage;
 
 typedef struct {
@@ -224,15 +229,17 @@ typedef struct {
    t_ftmPage*  pAct;
    t_ftmPage*  pIna;
    uint64_t    tPrep;
-   t_ftmCycle  pIdle;
+   t_ftmchain  pIdle;
 } t_FtmIf;
 
 volatile t_FtmIf* pFtmIf;
 void              prioQueueInit(uint64_t trn, uint64_t due);
 void              ftmInit(void);
-uint8_t           condValid(t_Cyc* cyc);
-t_ftmCycle*       processCycle(t_ftmCycle* this);    //checks for condition and if cycle is to be processed ( repQty != 0 )
-t_ftmCycle*       processCycleAux(t_ftmCycle* this); //does the actual work
+void              sigSend(t_chain* this);
+uint8_t           condValid(t_chain* chain);
+
+t_ftmchain*       processchain(t_ftmchain* this);    //checks for condition and if chain is to be processed ( repQty != 0 )
+t_ftmchain*       processchainAux(t_ftmchain* this); //does the actual work
 int               dispatchMsg(t_ftmMsg* pMsg);  //dispatch a message to prio queue
 void              evalCmd();
 void              showPage(t_ftmPage* pPage);

@@ -58,26 +58,26 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
    return pMsg;       
 }
 
-t_ftmCycle* createCyc(xmlNode* cycNode, t_ftmCycle* pCyc)
+t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
 {
    
    xmlNode *fieldNode, *subFieldNode, *curNode = NULL;
    
-   fieldNode =  checkNode(cycNode->children, "meta");
+   fieldNode =  checkNode(chainNode->children, "meta");
    if(fieldNode != NULL) fieldNode =  fieldNode->children;
    else printf("ERROR meta \n");
    
    
    fieldNode = checkNode(fieldNode, "rep");
-   if(fieldNode != NULL) pCyc->repQty = (int32_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
+   if(fieldNode != NULL) pChain->repQty = (int32_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
    else printf("ERROR repQty\n");
    
    fieldNode = checkNode(xmlNextElementSibling(fieldNode), "period");
-   if(fieldNode != NULL) pCyc->tPeriod = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
+   if(fieldNode != NULL) pChain->tPeriod = (uint64_t)strtoul( (const char*)xmlNodeGetContent(fieldNode), NULL,  0 );
    else printf("ERROR Period\n");
    
    fieldNode = checkNode(xmlNextElementSibling(fieldNode), "breakpoint");
-   if(fieldNode != NULL) {if(strncmp( (const char*)xmlNodeGetContent(fieldNode), "yes",  3) == 0) pCyc->flags |= FLAGS_IS_BP;}
+   if(fieldNode != NULL) {if(strncmp( (const char*)xmlNodeGetContent(fieldNode), "yes",  3) == 0) pChain->flags |= FLAGS_IS_BP;}
    else printf("ERROR breakpoint\n");
    
    curNode = fieldNode;
@@ -87,16 +87,16 @@ t_ftmCycle* createCyc(xmlNode* cycNode, t_ftmCycle* pCyc)
       subFieldNode = checkNode(fieldNode->children, "source");
       if(subFieldNode != NULL)
       {
-               if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "shared",  6) == 0) pCyc->flags |= FLAGS_IS_COND_SHARED;
-         else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "msi",     3) == 0) pCyc->flags |= FLAGS_IS_COND_MSI; 
-      } else printf("ERROR source\n");
+               if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "shared",  6) == 0) pChain->flags |= FLAGS_IS_COND_SHARED;
+         else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "msi",     3) == 0) pChain->flags |= FLAGS_IS_COND_MSI; 
+      } else printf("ERROR cond source\n");
       
       subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "pattern");
-      if(subFieldNode != NULL) pCyc->condVal = (uint64_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
-      else printf("ERROR condition\n");
+      if(subFieldNode != NULL) pChain->condVal = (uint64_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
+      else printf("ERROR cond pattern\n");
       
       subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "mask");
-      if(subFieldNode != NULL) pCyc->condMsk = (uint64_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
+      if(subFieldNode != NULL) pChain->condMsk = (uint64_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
       else printf("ERROR condmask\n");
    }
    else printf("no condition found\n");
@@ -104,18 +104,25 @@ t_ftmCycle* createCyc(xmlNode* cycNode, t_ftmCycle* pCyc)
    fieldNode = checkNode(xmlNextElementSibling(curNode), "signal");
    if(fieldNode != NULL)
    {
-      pCyc->flags |= FLAGS_IS_SIG;
       subFieldNode = checkNode(fieldNode->children, "destination");
-      if(subFieldNode != NULL) pCyc->sigDst = (uint32_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
-      else printf("ERROR sigdst\n");
+      if(subFieldNode != NULL)
+      {
+               if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "shared",  6) == 0) pChain->flags |= FLAGS_IS_SIG_SHARED;
+         else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "msi",     3) == 0) pChain->flags |= FLAGS_IS_SIG_MSI;
+      } else printf("ERROR sig destination\n");
+      
+      
+      subFieldNode = checkNode(fieldNode->children, "cpu");
+      if(subFieldNode != NULL) pChain->sigCpu = (uint32_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
+      else printf("ERROR sig cpu\n");
       
       subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "value");
-      if(subFieldNode != NULL) pCyc->sigVal = (uint32_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
-      else printf("ERROR sigval\n");
+      if(subFieldNode != NULL) pChain->sigVal = (uint32_t)strtoul( (const char*)xmlNodeGetContent(subFieldNode), NULL,  0 );
+      else printf("ERROR sig val\n");
    }
    else printf("no signal found \n");
          
-   return pCyc;       
+   return pChain;       
 }
 
 t_ftmPage* createPage(xmlNode* pageNode, t_ftmPage* pPage)
@@ -152,15 +159,15 @@ t_ftmPage* createPage(xmlNode* pageNode, t_ftmPage* pPage)
 
 t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
 {
-   xmlNode *curNode, *pageNode, *planNode, *cycNode, *msgNode = NULL;
+   xmlNode *curNode, *pageNode, *planNode, *chainNode, *msgNode = NULL;
    
    t_ftmPage*  pPage    = NULL;
-   t_ftmCycle* pCyc     = NULL;
-   t_ftmCycle* pCycPrev = NULL;
-   t_ftmCycle* pIdle    = NULL;
+   t_ftmChain* pChain     = NULL;
+   t_ftmChain* pChainPrev = NULL;
+   t_ftmChain* pIdle    = NULL;
    t_ftmMsg* pMsg       = NULL;
    bool     planStart;
-   uint32_t planIdx, cycIdx, msgIdx;
+   uint32_t planIdx, chainIdx, msgIdx;
    
    curNode = aNode;
    
@@ -177,37 +184,37 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
       planNode = checkNode(planNode, "plan");
       printf("\tPLAN\n");
       
-      cycIdx      = 0;
-      cycNode     = planNode->children;
+      chainIdx      = 0;
+      chainNode     = planNode->children;
       planStart   = true;
       
-      while( checkNode(cycNode, "cycle") != NULL)
+      while( checkNode(chainNode, "chain") != NULL)
       {
-         //alloc cycle, fill first part from DOM
-         cycNode  = checkNode(cycNode, "cycle");
-         pCycPrev = pCyc;
-         pCyc     = createCyc(cycNode, calloc(1, sizeof(t_ftmCycle)));
+         //alloc chain, fill first part from DOM
+         chainNode  = checkNode(chainNode, "chain");
+         pChainPrev = pChain;
+         pChain     = createChain(chainNode, calloc(1, sizeof(t_ftmChain)));
     
          printf("\t\tCYC\n");
          
-         //if this is the first cycle of a plan, save the pointer for the plan array
+         //if this is the first chain of a plan, save the pointer for the plan array
          if(planStart) 
          {  
             planStart = false; 
-            pPage->plans[planIdx].pStart = pCyc;
+            pPage->plans[planIdx].pStart = pChain;
             
             curNode = checkNode(planNode->children, "starttime");
             if(curNode != NULL) 
-            pCyc->tStart = (uint64_t)strtoul( (const char*)xmlNodeGetContent(curNode), NULL, 0 );
+            pChain->tStart = (uint64_t)strtoul( (const char*)xmlNodeGetContent(curNode), NULL, 0 );
             
          } else {
-            pCycPrev->pNext =  (struct t_ftmCycle*)pCyc;
+            pChainPrev->pNext =  (struct t_ftmChain*)pChain;
          }
          
          //alloc msg array, fill array from DOM
          msgIdx = 0;
          pMsg = calloc(1024, sizeof(t_ftmMsg)); //alloc 1k msgs just in case
-         msgNode = cycNode->children;
+         msgNode = chainNode->children;
          while( checkNode(msgNode, "msg") != NULL)
          {
             msgNode = checkNode(msgNode, "msg");
@@ -217,15 +224,15 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
          }
          //realloc msg array size to actual space
          pMsg = realloc(pMsg, msgIdx*sizeof(t_ftmMsg)); //adjust msg mem allocation to actual cnt
-         //write msg array ptr and msg qty to parent cycle
-         pCyc->pMsg     = pMsg;
-         pCyc->msgQty   = msgIdx;
-         cycIdx++;
-         cycNode = xmlNextElementSibling(cycNode);               
+         //write msg array ptr and msg qty to parent chain
+         pChain->pMsg     = pMsg;
+         pChain->msgQty   = msgIdx;
+         chainIdx++;
+         chainNode = xmlNextElementSibling(chainNode);               
       }
-      pCyc->pNext = (struct t_ftmCycle*)pIdle;
-      pPage->plans[planIdx++].cycQty = cycIdx;
-      pCyc->flags |= FLAGS_IS_END;
+      pChain->pNext = (struct t_ftmChain*)pIdle;
+      pPage->plans[planIdx++].chainQty = chainIdx;
+      pChain->flags |= FLAGS_IS_END;
       planNode = xmlNextElementSibling(planNode);
    }
    pPage->planQty                 = planIdx;

@@ -16,16 +16,19 @@ uint16_t getIdSID(uint64_t id)     {return ((uint16_t)(id >> ID_SID_POS))     & 
 uint16_t getIdBPID(uint64_t id)    {return ((uint16_t)(id >> ID_BPID_POS))    & (ID_MSK_B16 >> (16 - ID_BPID_LEN));}
 uint16_t getIdSCTR(uint64_t id)    {return ((uint16_t)(id >> ID_SCTR_POS))    & (ID_MSK_B16 >> (16 - ID_SCTR_LEN));}
 
+uint32_t hiW(uint64_t dword) {return (uint32_t)(dword >> 32);}
+uint32_t loW(uint64_t dword) {return (uint32_t)dword;}
+
 void prioQueueInit()
 {
    *(pFPQctrl + r_FPQ.clear)       = 1;
    *(pFPQctrl + r_FPQ.dstAdr)      = pEcaAdr;
    *(pFPQctrl + r_FPQ.ebmAdr)      = pEbmAdr;
    *(pFPQctrl + r_FPQ.msgQty)      = 32;
-   *(pFPQctrl + r_FPQ.tTrnHi)      = pFesaFtmIf->tTrn.v32.hi;
-   *(pFPQctrl + r_FPQ.tTrnLo)      = pFesaFtmIf->tTrn.v32.lo;
-   *(pFPQctrl + r_FPQ.tMarginHi)   = pFesaFtmIf->tMargin.v32.hi;
-   *(pFPQctrl + r_FPQ.tMarginLo)   = pFesaFtmIf->tMargin.v32.lo;
+   *(pFPQctrl + r_FPQ.tTrnHi)      = hiW(pFesaFtmIf->tTrn);
+   *(pFPQctrl + r_FPQ.tTrnLo)      = loW(pFesaFtmIf->tTrn);
+   *(pFPQctrl + r_FPQ.tMarginHi)   = hiW(pFesaFtmIf->tMargin);
+   *(pFPQctrl + r_FPQ.tMarginLo)   = loW(pFesaFtmIf->tMargin);
    *(pFPQctrl + r_FPQ.cfgSet)      = r_FPQ.cfg_AUTOFLUSH_TIME | 
                                      r_FPQ.cfg_AUTOFLUSH_MSGS |
                                      r_FPQ.cfg_AUTOPOP | 
@@ -54,6 +57,7 @@ void ftmInit()
                     .pMsg           = NULL,
                     .pNext          = NULL
                     };
+   pFtmIf->sigSema = 1;
    
    prioQueueInit();
    
@@ -100,7 +104,7 @@ void showPage(t_ftmPage* pPage)
    mprintf("Active Page:   %x, %u\n", pPage, pageIdx);
    mprintf("Plans:         %x\n", pPage->planQty);
    pageAltIdx  = (t_ftmPage)(pPage->pAlt) - pBase;
-   cycAltIdx   = pPage->pAlt - (t_ftmCycle)pageAltIdx;
+   cycAltIdx   = pPage->pAlt - (t_ftmchain)pageAltIdx;
    
    mprintf("Alt Plan:      %x Page %u \n", pPage->pAlt, pageAltIdx, cycAltIdx);
    mprintf("Cur Plan, Idx: %x %u\n", pCur, (pCur - pPage->pPlans) );
@@ -116,14 +120,14 @@ int dispatch(t_ftmMsg* pMsg)
    if(diff > 1)
    {  
       atomic_on();
-      pFpqData = pMsg->id.v32.hi;
-      pFpqData = pMsg->id.v32.lo;
-      pFpqData = pMsg->par.v32.hi;
-      pFpqData = pMsg->par.v32.lo;
+      pFpqData = hiW(pMsg->id);
+      pFpqData = loW(pMsg->id);
+      pFpqData = hiW(pMsg->par);
+      pFpqData = loW(pMsg->par);
       pFpqData = pMsg->tag
       pFpqData = pMsg->tef;
-      pFpqData = pMsg->ts.v32.hi;
-      pFpqData = pMsg->ts.v32.lo;
+      pFpqData = hiW(pMsg->ts);
+      pFpqData = loW(pMsg->ts);
       atomic_off(); 
    } else {
       ret = -1;
@@ -133,40 +137,73 @@ int dispatch(t_ftmMsg* pMsg)
    return ret;
 }
 
-uint8_t condValid(t_Cyc* cyc)
+uint8_t condValid(t_chain* cyc)
 {
    uint8_t ret = 0;
    
    
-   if(this->flags & (FLAGS_IS_COND_MSI | FLAGS_IS_COND_SHARED) )
+   if(cyc->flags & (FLAGS_IS_COND_MSI | FLAGS_IS_COND_SHARED) )
    {
-      if(this->flags & FLAGS_IS_COND_MSI)
+      if(cyc->flags & FLAGS_IS_COND_MSI)
       {
          uint32_t  ip, msg;
          irq_disable();
          asm ("rcsr %0, ip": "=r"(ip)); //get pending irq flags
-         if(ip & 1<<MSISIG)
+         if(ip & 1<<MSI_SIG)
          {
-            irq_pop_msi(MSISIG);      //pop msg from msi queue into global_msi variable
+            irq_pop_msi(MSI_SIG);      //pop msg from msi queue into global_msi variable
             msg = global_msi.msg;
-            irq_clear(1<<MSISIG);     //clear pending bit
+            irq_clear(1<<MSI_SIG);     //clear pending bit
          }      
          irq_enable();
-         if(cyc->condVal & cyc->condMsk) == (msg & cyc->condMsk & 0xFFFFFFFF) ret = 1;   
+         if(cyc->condVal & cyc->condMsk) == (msg & cyc->condMsk) ret = 1;   
       }
       else
-      {if((cyc->condVal & cyc->condMsk) == *(pFtmIf->pAct->pSharedMem)) {ret = 1;} }
+      {
+         if((cyc->condVal & cyc->condMsk) == (*(pFtmIf->pAct->pSharedMem).value & cyc->condMsk) ) 
+         {
+            if(this->flags & FLAGS_IS_SHARED_TIME) this->tStart = *(pFtmIf->pAct->pSharedMem).time;
+            else                                   this->tStart = getSysTime();         
+            ret = 1;
+            (*(pFtmIf->pAct->pSharedMem).value = 0x0;
+         }
+         
+      }
    }
    else ret = 1;
    
    return ret; 
 } 
 
-t_Cyc* processCycle(t_Cyc* this)
+void sigSend(t_chain* this)
 {
-   t_Cyc* pCur = this; 
+   t_time time;
    
-   if(condValid(this)) pCur = processCycleAux(this);
+   time = this->tStart + this->tPeriod;
+   
+   *(this->sigDst) = this->sigVal;
+   if(this->flags & FLAGS_IS_SIG_SHARED)
+   {
+      *(this->sigDst+1) = hiW(time);
+      *(this->sigDst+2) = loW(time);
+   }
+   pFtmIf->sigSema = 0; 
+}
+
+
+t_chain* processChain(t_chain* this)
+{
+   t_chain* pCur = this; 
+   
+   if(condValid(this))
+   {
+      if((this->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED)) 
+         && ( (this->flags & (FLAGS_IS_SIG_FIRST | FLAGS_IS_SIG_ALL))
+              || ((this->flags &FLAGS_IS_SIG_LAST) && (this->repCnt == this->repQty-1)))
+         && sigSema ) 
+         {sigSend(this);}
+      pCur = processchainAux(this);
+   }   
    else 
    {
       if((this->flags & FLAGS_IS_BP) && pFtmIf->pAlt != NULL)
@@ -175,9 +212,9 @@ t_Cyc* processCycle(t_Cyc* this)
    return pCur;    
 }
 
-t_Cyc* processCycleAux(t_Cyc* this)
+t_chain* processChainAux(t_chain* this)
 {
-   t_Cyc* pCur = this; 
+   t_chain* pCur = this; 
    unsigned long long tMsgExec;
    
    //get execution time for due msg
@@ -198,17 +235,31 @@ t_Cyc* processCycleAux(t_Cyc* this)
       //is this a breakpoint? if so and break is desired, continue at the address in the page alternate plan
       if((this->flags & FLAGS_IS_BP) && pAct->pAlt != NULL)       
       { 
-         pCur = pAct->pAlt;  //BP? go to alt cycle
+         pCur = pAct->pAlt;  //BP? go to alt chain
          pAct->pAlt = NULL;
+         pFtmIf->sigSema = 1;
       }
       else
       { 
-         if( this->repCnt < this->repQty )   {this->repCnt++;     pCur = this;}        //repetions left? stay with this cycle
-         else                                {this->repCnt = 0;   pCur = this->pNext;} //done, go to next cycle
+         if( this->repCnt < this->repQty )   
+         {
+            //repetions left? stay with this chain
+            this->repCnt++;     
+            pCur = this; 
+            if(this->flags & FLAGS_IS_SIG_ALL) pFtmIf->sigSema = 1;
+         } 
+         else
+         {
+            //done, go to next chain
+            this->repCnt = 0;
+            pCur = this->pNext;
+            pFtmIf->sigSema = 1;
+         } 
+         
       }   
       
-      //propagate updated start time to next cycle to be executed
-      pCur->Start = this->tStart + this->tPeriod;
+      //propagate updated start time to next chain to be executed
+      pCur->tStart = this->tStart + this->tPeriod;
    }
      
    return pCur;    

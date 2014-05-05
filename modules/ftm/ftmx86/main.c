@@ -113,7 +113,7 @@ int ebRamOpen(const char* netaddress, uint8_t cpuId)
       printf("%.*s 0x%"PRIx64"\n", 19, &devices[idx].sdb_component.product.name[0], devices[idx].sdb_component.addr_first);
          if(strncmp(devName_RAM_post, (const char*)&devices[idx].sdb_component.product.name[13], 3) == 0)
          printf("MATCH! found %s\n", devName_RAM_post);
-         embeddedOffset = sharedOffset + devices[idx].sdb_component.addr_first;
+         embeddedOffset = devices[idx].sdb_component.addr_first + FTM_SHARED_OFFSET;
     }
   } else {
     printf("0x%"PRIx64"\n", devices[idx].sdb_component.addr_first);
