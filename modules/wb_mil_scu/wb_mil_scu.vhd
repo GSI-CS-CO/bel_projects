@@ -46,9 +46,11 @@ ENTITY wb_mil_scu IS
 --|         |             |             | d) Die Entprellung der Device-Bus-Interrupts ist implementiert. Diese Funktion ist immer  |
 --|         |             |             |    einschaltet. Im Statusregister wird die Funktion immer als eingeschaltet signalisiert. |
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
---|   04    | W.Panschow  | 28.03.2013  | a) Interrupt-Ausgaenge zum Anschluss an die Mil-Interrupt-Instanz "mil_irq_inst"          |
+--|   04    | W.Panschow  | 28.03.2014  | a) Interrupt-Ausgaenge zum Anschluss an die Mil-Interrupt-Instanz "mil_irq_inst"          |
 --|         |             |             |    eingebaut (Interlock_Intr_o, Data_Rdy_Intr_o,  Data_Req_Intr_o, dly_intr_o,            |
 --|         |             |             |    ev_fifo_ne_intr_o).                                                                    |
+--| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
+--|   05    | W.Panschow  | 22.04.2014  | a) evyer_10ms_intr_o changed to every_ms_intr_o.                                          |
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
 --|                                                                                                                                 |
 --+---------------------------------------------------------------------------------------------------------------------------------+
@@ -131,7 +133,7 @@ port  (
     nLed_Interl:    out     std_logic;
     nLed_Dry:       out     std_logic;
     nLed_Drq:       out     std_logic;
-    every_10ms_intr_o:  out std_logic;
+    every_ms_intr_o:  out std_logic;
     io_1:           buffer  std_logic;
     io_1_is_in:     out     std_logic := '0';
     nLed_io_1:      out     std_logic;
@@ -213,7 +215,7 @@ signal    db_data_rdy_intr: std_logic;
 signal    db_data_req_intr: std_logic;
 
 signal    dly_intr:         std_logic;
-signal    every_10ms:       std_logic;
+signal    every_ms:       std_logic;
 
 
 begin
@@ -243,9 +245,9 @@ ena_led_cnt: div_n
     );
 
 
-every_10ms_inst: div_n
+every_1ms_inst: div_n
   generic map (
-    n         => clk_in_hz / (100 * 1000),-- Vorgabe der Taktuntersetzung. 10ms = 0.01 = 1/100 * ena_every_us (1000)
+    n         => clk_in_hz / 1000 * 1000, -- Vorgabe der Taktuntersetzung. 1ms = 0.001 = 1/1000 * ena_every_us (1000)
     diag_on   => 0                        -- diag_on = 1 die Breite des Untersetzungzaehlers
                                           -- mit assert .. note ausgegeben.
     )
@@ -256,10 +258,10 @@ every_10ms_inst: div_n
     ena       => ena_every_us,    -- das untersetzende enable muss in der gleichen ClockdomÃ¤ne erzeugt werden.
                                   -- Das enable sollte nur ein Takt lang sein.
                                   -- Z.B. kÃ¶nnte eine weitere div_n-Instanz dieses Signal erzeugen.  
-    div_o     => every_10ms       -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
+    div_o     => every_ms         -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
     );
 
-every_10ms_intr_o <= every_10ms;
+every_ms_intr_o <= every_ms;
 
 
 led_rcv: led_n
@@ -850,17 +852,17 @@ p_regs_acc: process (clk_i, nrst_i)
 
 p_every_us: div_n
   generic map (
-    n         => clk_in_hz / (1_000_000_000 / 1000),  -- alle 1000 ns einen Takt aktiv
-    diag_on   => 0                        -- diag_on = 1 die Breite des Untersetzungzaehlers
-                                          -- mit assert .. note ausgegeben.
+    n         => 1_000,           -- alle us einen Takt aktiv (ena_every_us * 1000 = 1ms)
+    diag_on   => 0                -- diag_on = 1 die Breite des Untersetzungzaehlers
+                                  -- mit assert .. note ausgegeben.
     )
 
   port map (
     res       => '0',
     clk       => clk_i,
-    ena       => open,            -- das untersetzende enable muss in der gleichen ClockdomÃ¤ne erzeugt werden.
+    ena       => open,            -- das untersetzende enable muss in der gleichen Clockdomaene erzeugt werden.
                                   -- Das enable sollte nur ein Takt lang sein.
-                                  -- Z.B. kÃ¶nnte eine weitere div_n-Instanz dieses Signal erzeugen.  
+                                  -- Z.B. koennte eine weitere div_n-Instanz dieses Signal erzeugen.  
     div_o     => ena_every_us     -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
     );
 

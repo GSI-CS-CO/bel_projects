@@ -160,7 +160,7 @@ port  (
     nLed_Interl:    out     std_logic;
     nLed_Dry:       out     std_logic;
     nLed_Drq:       out     std_logic;
-    every_10ms_intr_o:  out std_logic;
+    every_ms_intr_o:  out std_logic;
     io_1:           out     std_logic;
     io_1_is_in:     out     std_logic := '0';
     nLed_io_1:      out     std_logic;
