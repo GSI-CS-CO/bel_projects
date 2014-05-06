@@ -10,7 +10,6 @@ files = [
 
 modules = {
   "local" : [
-    "../../modules",
-    "../../ip_cores",
+    "../..",
   ]
 }
