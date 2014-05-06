@@ -156,6 +156,7 @@ entity vetar_top is
     lemo_i           	: in std_logic;   -- K4
     lemo_o           	: out std_logic;  -- H4
     lemo_o_en_o      	: out std_logic;  -- H3
+	 lemo_i_en_o      	: out std_logic;  -- C1
 
     -----------------------------------------
     -- VETAR1DB1 ADD-ON Board 
@@ -252,6 +253,7 @@ begin
       gpio_i( 2 )            => hdmi_i,
       --gpio_i( 2 )            => open,
       gpio_i( 3 )            => lemo_i,
+		--gpio_i( 3 )            => lemo_nim_ttl_i(1),
      -- wr core
       wr_onewire_io          => rom_data_io,
       wr_sfp_sda_io          => sfp_mod2_io,
@@ -262,7 +264,9 @@ begin
       wr_dac_sclk_o          => dac_sclk_o,
       wr_dac_din_o           => dac_din_o,
       wr_ndac_cs_o           => ndac_cs_o,
-      wr_ext_clk_i           => lemo_nim_ttl_i(1),
+      --wr_ext_clk_i           => open,
+      --wr_ext_pps_i           => open,
+		wr_ext_clk_i           => lemo_nim_ttl_i(1),
       wr_ext_pps_i           => lemo_nim_ttl_i(0),
       led_link_up_o          => s_led_link_up,
       led_link_act_o         => s_led_link_act,
@@ -344,8 +348,9 @@ begin
   
   -- On board lemo
   ---------------- 
+  lemo_i_en_o <= '1';
   -- PPS output
-  lemo_o_en_o 	<= '0';
+  lemo_o_en_o 	<= '1';
   lemo_o		  	<= s_led_pps;
 
   -- VETAR1DB1 ADD-ON Board

@@ -6,8 +6,6 @@ PHK       = ../../modules/scu_bus/housekeeping_sw
 PDIOB     = ../../top/scu_diob
 PDEV      = $(PHK)/dev
 W1        = ../../ip_cores/wrpc-sw
-STUBD       = ../../modules/lm32_stub
-GENRAMMIF   = ../../ip_cores/wrpc-sw/tools/genrammif
 STUBS       = $(STUBD)/stubs.c $(STUBD)/crt0.S
 CFLAGS      = -I$(PHK)/include -I$(PDIOB) -mmultiply-enabled \
               -mbarrel-shift-enabled -Os -I$(W1)/include -I$(W1)/pp_printf

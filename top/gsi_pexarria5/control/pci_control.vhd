@@ -318,9 +318,9 @@ begin
   led(7) <= '0' when gpio_o(2)='1' else 'Z';
   led(8) <= '0' when gpio_o(3)='1' else 'Z';
   p7     <= '0' when gpio_o(4)='1' else 'Z'; -- LED5 (DB1/2)
-  n7     <= '0' when gpio_o(4)='1' else 'Z'; -- LED6
-  p8     <= '0' when gpio_o(4)='1' else 'Z'; -- LED7
-  n8     <= '0' when gpio_o(4)='1' else 'Z'; -- LED8
+  n7     <= '0' when gpio_o(5)='1' else 'Z'; -- LED6
+  p8     <= '0' when gpio_o(6)='1' else 'Z'; -- LED7
+  n8     <= '0' when gpio_o(7)='1' else 'Z'; -- LED8
   
   -- LVDS->LEMO output enable / termination
   n10 <= '0' when lvds_oen(0)='0' else 'Z'; -- TTLIO1 output enable
