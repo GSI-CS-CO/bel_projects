@@ -11,9 +11,9 @@ CFLAGS    = -I$(PSCU)/include -I$(PATHSCU) -mmultiply-enabled \
 
 include ../../build.mk
 
-$(TARGET).elf: $(PATHSCU)/main.c $(PATHSCU)/aux.c $(PATHSCU)/display.c $(PATHSCU)/irq.c $(PATHSCU)/cb.c \
-                $(PATHSCU)/scu_bus.c $(PATHSCU)/mini_sdb.c $(PATHSCU)/fg.c $(PDEV)/mprintf.c $(W1)/dev/uart.c \
-                $(W1)/dev/w1.c $(W1)/dev/w1-temp.c $(W1)/dev/w1-hw.c
+#$(TARGET).elf: $(PATHSCU)/main.c $(PATHSCU)/aux.c $(PATHSCU)/display.c $(PATHSCU)/irq.c $(PATHSCU)/cb.c \
+#                $(PATHSCU)/scu_bus.c $(PATHSCU)/mini_sdb.c $(PATHSCU)/fg.c $(PDEV)/mprintf.c $(W1)/dev/uart.c \
+#                $(W1)/dev/w1.c $(W1)/dev/w1-temp.c $(W1)/dev/w1-hw.c
 
 clean::
 	rm -f $(PDEV)/*.o $(PATHSCU)/main.o $(W1)/dev/*.o
