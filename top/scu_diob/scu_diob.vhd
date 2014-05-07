@@ -1002,7 +1002,7 @@ p_P25IO_Ext_Tim_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_Ext_Tim_deb_
   
 P25IO_ADC_ECC: led_n
   generic map (stretch_cnt => 250) -- 250 x 8ns(1/125 MHz) = 2us
-  port map      (ena => '1', CLK => clk_sys,   Sig_in => P25IO_ADC_ECC_i ,    nLED => P25IO_nADC_ECC_o);-- 
+  port map      (ena => '1', CLK => clk_sys,   Sig_in => (P25IO_ADC_ECC_i), nLED => P25IO_nADC_ECC_o);-- 
   
 
 P25IO_in_EOC_Deb:  Debounce
@@ -1031,16 +1031,13 @@ end process;
 p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO, A_SEL, fg_1_sw, fg_1_strobe,
                    AWin1, AWin2, AWin3, AWin4, AWin5, AWin6, 
                    AWOut_Reg1, AWOut_Reg2, AWOut_Reg3, AWOut_Reg4, AWOut_Reg5, AWOut_Reg6,
-                   IO_Test_Port0, IO_Test_Port1, IO_Test_Port2, IO_Test_Port3,
+                   DAC_Out, P25IO_ADC_Data_FF_i,
+						 IO_Test_Port0, IO_Test_Port1, IO_Test_Port2, IO_Test_Port3,
                    CLK_IO, clk_blink, s_nLED_Sel, s_nLED_Dtack, s_nLED_inR, 
                    Ena_Every_1us, ena_Every_20ms, ena_Every_250ms
                    )
   
-
-  
-  
-BEGin
-  
+BEGIN
 
     --#################################################################################
     --#################################################################################
@@ -1218,7 +1215,7 @@ BEGin
       PIO(87)   			<= P25IO_nLED_Start_o;   	--	Output "nLED_Start"
       P25IO_Stop_i		<=	not PIO(75);         	-- input "LemoBuchse-Stop" L-Aktiv, nach dem Optokoppler aber L-Aktiv
       PIO(89)   			<= P25IO_nLED_Stop_o;		--	Output "nLED_Stop"
-      P25IO_Reset_i		<=	not PIO(69);         	-- input "Rest-Taster" L-Aktiv
+      P25IO_Reset_i		<=	not PIO(67);         	-- input "Rest-Taster" L-Aktiv
 
       PIO(103)      		<=  P25IO_BNC_o;        	-- Output "BNC"
       PIO(91)       		<=  P25IO_nELD_BNC_o;    	-- Output "nLED_BNC"
