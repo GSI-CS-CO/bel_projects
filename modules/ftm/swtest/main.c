@@ -189,7 +189,8 @@ void main(void) {
 disp_put_c('\f');
 
   disp_put_str("FTM ready\n");
-  
+  cmdEval();
+  processFtm();
   
 
    for (j = 0; j < (125000000/160)*(cpuID<<3); ++j) {

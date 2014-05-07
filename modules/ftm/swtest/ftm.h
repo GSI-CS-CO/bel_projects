@@ -2,9 +2,15 @@
 #define _FTM_H_
 #include <inttypes.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "mini_sdb.h"
+#include "irq.h"
+#include "aux.h"
 
 #define MSI_SIG               0
 #define FTM_PAGESIZE          8192
+#define FTM_PLAN_MAX          16
 //masks & constants
 #define CMD_RST           		(1<<0)	//Reset FTM status and counters
 #define CMD_START      		   (1<<1)	//Start FTM
@@ -13,40 +19,17 @@
 #define CMD_STOP_NOW          (1<<4)	//Stop FTM immediately
 
 #define CMD_COMMIT_PAGE       (1<<8)  //Commmit new data and validate
-#define CMD_COMMIT_ALT        (1<<9)  //Commit alt Plan pointer. Will be selected at next BP if not NULL
+#define CMD_COMMIT_BP         (1<<9)  //Commit alt Plan pointer. Will be selected at next BP if not NULL
 #define CMD_PAGE_SWAP         (1<<10)  //swap Page at next BP
-
 #define CMD_SHOW_ACT          (1<<11)
 #define CMD_SHOW_INA          (1<<12)
-
 #define CMD_DBG_0             (1<<16)  //DBG case 0
 #define CMD_DBG_1             (1<<17)  //DBG case 1
 
-
-
 #define STAT_RUNNING          (1<<0)   //the FTM is running
 #define STAT_IDLE             (1<<1)   //the FTM is idling  
-#define STAT_IDLE_REQ         (1<<2)   //alt ptr has been set to IDLE 
-#define STAT_STOPPED          (1<<1)   //FTM is Stopped - will not execute anything 
+#define STAT_STOP_REQ         (1<<2)   //alt ptr has been set to IDLE 
 #define STAT_ERROR            (1<<3)   //FTM encountered an error, check error register
-
-
-
-#define TIMER_CHAIN_START       8
-#define TIMER_CHAIN_PREP        TIMER_CHAIN_START+1 
-#define TIMER_MSG_PREP        TIMER_CHAIN_PREP+1  
-#define TIMER_ABS             chain_ABS_TIME
-#define TIMER_PER             (1<<2) 
-
-
-#define TIMER_CHAIN_START_MSK   (1<<TIMER_CHAIN_START)
-#define TIMER_CHAIN_PREP_MSK    (1<<TIMER_CHAIN_PREP) 
-#define TIMER_MSG_PREP_MSK    (1<<TIMER_MSG_PREP)
-
-#define TIMER_CFG_SUCCESS     0
-#define TIMER_CFG_ERROR_0     -1
-#define TIMER_CFG_ERROR_1     -2
-
 
 #define ID_MSK_B16            0xffff
 #define ID_FID_LEN            4
@@ -62,20 +45,19 @@
 #define ID_BPID_POS           (ID_SCTR_LEN)
 #define ID_SCTR_POS           0
 
-#define FLAGS_IS_BP           (1<<00)
-#define FLAGS_IS_COND_MSI     (1<<01)
-#define FLAGS_IS_COND_SHARED  (1<<02)
-#define FLAGS_IS_SHARED_TIME  (1<<03)
-#define FLAGS_IS_SIG_MSI      (1<<04)
-#define FLAGS_IS_SIG_SHARED   (1<<05)
-#define FLAGS_IS_SIG_FIRST    (1<<06)
-#define FLAGS_IS_SIG_LAST     (1<<07)
-#define FLAGS_IS_SIG_ALL      (1<<08)
-#define FLAGS_IS_START        (1<<09) // debug
+#define FLAGS_IS_BP           (1<<0)
+#define FLAGS_IS_COND_MSI     (1<<1)
+#define FLAGS_IS_COND_SHARED  (1<<2)
+#define FLAGS_IS_SHARED_TIME  (1<<3)
+#define FLAGS_IS_SIG_MSI      (1<<4)
+#define FLAGS_IS_SIG_SHARED   (1<<5)
+#define FLAGS_IS_SIG_FIRST    (1<<6)
+#define FLAGS_IS_SIG_LAST     (1<<7)
+#define FLAGS_IS_SIG_ALL      (1<<8)
+#define FLAGS_IS_START        (1<<9) // debug
 #define FLAGS_IS_END          (1<<10) // debug
 
-#define FTM_IS_RUNNING        (1<<0) 
-#define FTM_IS_STOP_REQ       (1<<1) 
+
 
 #define FTM_TIME_SIZE         8
 #define FTM_DWORD_SIZE        8
@@ -111,7 +93,7 @@
 
 extern uint32_t*       _startshared[];
 extern uint32_t*       _endshared[];
-volatile  t_FtmIf* pFtmIf;
+
 
 // Priority Queue RegisterLayout
 static const struct {
@@ -172,6 +154,11 @@ static const struct {
 };
 
 typedef struct {
+   uint8_t sig;
+   uint8_t cond;
+} t_semaphore;  
+
+typedef struct {
    uint8_t reserved_8192 [ FTM_PAGESIZE ];
 } t_pageSpace;  
 
@@ -179,7 +166,7 @@ typedef uint64_t t_time ;
 
 
 typedef struct {
-   uint32_t msg; 
+   uint32_t value; 
    t_time   time;
 } t_shared;
 
@@ -207,19 +194,19 @@ typedef struct {
    uint32_t             msgQty;  //Number of messages
    uint32_t             msgIdx;  //idx of the currently processed msg
    t_ftmMsg*            pMsg;    //pointer to messages
-   struct t_ftmchain*   pNext;   //pointer to next chain
+   struct t_ftmChain*   pNext;   //pointer to next chain
    
-} t_ftmchain;
+} t_ftmChain;
 
 //a plan is a linked list of chains
 typedef struct {
 
-   t_pageSpace    pages[2];
+   t_pageSpace    pagedummy;
    uint32_t       planQty;
-   t_ftmPlan      plans[FTM_PLAN_MAX];
-   t_ftmchain*    pBp;
-   t_ftmchain*    pStart;
-   t_shared*      pSharedMem;
+   t_ftmChain     plans[FTM_PLAN_MAX];
+   t_ftmChain*    pBp;
+   t_ftmChain*    pStart;
+   
 } t_ftmPage;
 
 typedef struct {
@@ -228,21 +215,33 @@ typedef struct {
    uint32_t    status;
    t_ftmPage*  pAct;
    t_ftmPage*  pIna;
+   t_ftmChain* pNewBp;
    uint64_t    tPrep;
-   t_ftmchain  pIdle;
-} t_FtmIf;
+   uint64_t    tDue;
+   uint64_t    tTrn;
+   t_ftmChain  idle;
+   t_shared*   pSharedMem;
+   t_semaphore sema;
+} t_ftmIf;
 
-volatile t_FtmIf* pFtmIf;
-void              prioQueueInit(uint64_t trn, uint64_t due);
+volatile t_ftmIf* pFtmIf;
+t_ftmChain* pCurrentChain;
+
+void              prioQueueInit();
 void              ftmInit(void);
-void              sigSend(t_chain* this);
-uint8_t           condValid(t_chain* chain);
+void              sigSend(t_ftmChain* c);
+uint8_t           condValid(t_ftmChain* c);
 
-t_ftmchain*       processchain(t_ftmchain* this);    //checks for condition and if chain is to be processed ( repQty != 0 )
-t_ftmchain*       processchainAux(t_ftmchain* this); //does the actual work
-int               dispatchMsg(t_ftmMsg* pMsg);  //dispatch a message to prio queue
-void              evalCmd();
+void              processFtm();
+t_ftmChain*       processChain(t_ftmChain* c);    //checks for condition and if chain is to be processed ( repQty != 0 )
+t_ftmChain*       processChainAux(t_ftmChain* c); //does the actual work
+int               dispatch(t_ftmMsg* pMsg);  //dispatch a message to prio queue
+void              cmdEval();
 void              showPage(t_ftmPage* pPage);
+
+extern unsigned int * pEcaAdr;
+extern unsigned int * pEbmAdr;
+extern unsigned int * pFPQctrl;
 
 uint16_t    getIdFID(uint64_t id);
 uint16_t    getIdGID(uint64_t id);

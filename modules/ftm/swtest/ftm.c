@@ -1,13 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-
-
-#include "mini_sdb.h"
 #include "ftm.h"
-#include "irq.h"
-#include "aux.h"
-#include "timer.h"
-
 
 uint16_t getIdFID(uint64_t id)     {return ((uint16_t)(id >> ID_FID_POS))     & (ID_MSK_B16 >> (16 - ID_FID_LEN));}
 uint16_t getIdGID(uint64_t id)     {return ((uint16_t)(id >> ID_GID_POS))     & (ID_MSK_B16 >> (16 - ID_GID_LEN));}
@@ -21,43 +12,46 @@ uint32_t loW(uint64_t dword) {return (uint32_t)dword;}
 
 void prioQueueInit()
 {
-   *(pFPQctrl + r_FPQ.clear)       = 1;
-   *(pFPQctrl + r_FPQ.dstAdr)      = pEcaAdr;
-   *(pFPQctrl + r_FPQ.ebmAdr)      = pEbmAdr;
-   *(pFPQctrl + r_FPQ.msgQty)      = 32;
-   *(pFPQctrl + r_FPQ.tTrnHi)      = hiW(pFesaFtmIf->tTrn);
-   *(pFPQctrl + r_FPQ.tTrnLo)      = loW(pFesaFtmIf->tTrn);
-   *(pFPQctrl + r_FPQ.tMarginHi)   = hiW(pFesaFtmIf->tMargin);
-   *(pFPQctrl + r_FPQ.tMarginLo)   = loW(pFesaFtmIf->tMargin);
-   *(pFPQctrl + r_FPQ.cfgSet)      = r_FPQ.cfg_AUTOFLUSH_TIME | 
-                                     r_FPQ.cfg_AUTOFLUSH_MSGS |
-                                     r_FPQ.cfg_AUTOPOP | 
-                                     r_FPQ.cfg_FIFO |
-                                     r_FPQ.cfg_ENA;
+   
+   *(pFpqCtrl + r_FPQ.clear)     = 1;
+   *(pFpqCtrl + r_FPQ.dstAdr)    = (uint32_t)pEca;
+   *(pFpqCtrl + r_FPQ.ebmAdr)    = (uint32_t)pEbm;
+   *(pFpqCtrl + r_FPQ.msgMax)    = 32;
+   *(pFpqCtrl + r_FPQ.tTrnHi)    = hiW(pFtmIf->tTrn);
+   *(pFpqCtrl + r_FPQ.tTrnLo)    = loW(pFtmIf->tTrn);
+   *(pFpqCtrl + r_FPQ.tDueHi)    = hiW(pFtmIf->tDue);
+   *(pFpqCtrl + r_FPQ.tDueLo)    = loW(pFtmIf->tDue);
+   *(pFpqCtrl + r_FPQ.cfgSet)    = r_FPQ.cfg_AUTOFLUSH_TIME | 
+                                   r_FPQ.cfg_AUTOFLUSH_MSGS |
+                                   r_FPQ.cfg_AUTOPOP | 
+                                   r_FPQ.cfg_FIFO |
+                                   r_FPQ.cfg_ENA;
 }
 
 void ftmInit()
 {
-   pFtmIf = (t_FtmIf*)_startshared; 
-   pFtmIf->status = STAT_STOPPED;
-   pFtmIf->pAct = &pPages[0];
-   pFtmIf->pIna = &pPages[1];
-   pFtmIf->Idle = { .tStart.v64     = 0,
-                    .tPeriod.v64    = 5000,
-                    .tExec.v64      = 0,
-                    .flags          = (FLAGS_IS_BP),
-                    .condVal        = 0,
-                    .condMsk        = 0,
-                    .sigDst         = 0,
-                    .sigVal         = 0,
-                    .repQty         = -1,
-                    .repCnt         = 0,
-                    .msgQty         = 0,
-                    .msgIdx         = 0,
-                    .pMsg           = NULL,
-                    .pNext          = NULL
-                    };
-   pFtmIf->sigSema = 1;
+   pFtmIf = (t_ftmIf*)_startshared; 
+   pFtmIf->status = 0x0;
+   pFtmIf->pAct = (t_ftmPage*)&(pFtmIf->pPages[0]);
+   pFtmIf->pIna = (t_ftmPage*)&(pFtmIf->pPages[1]);
+   pFtmIf->idle = (t_ftmChain){ .tStart     = 0,
+                                .tPeriod    = 5000,
+                                .tExec      = 0,
+                                .flags      = (FLAGS_IS_BP),
+                                .condVal    = 0,
+                                .condMsk    = 0,
+                                .sigDst     = 0,
+                                .sigVal     = 0,
+                                .repQty     = -1,
+                                .repCnt     = 0,
+                                .msgQty     = 0,
+                                .msgIdx     = 0,
+                                .pMsg       = NULL,
+                                .pNext      = NULL
+                                };
+   pFtmIf->sema.sig  = 1;
+   pFtmIf->sema.cond = 1;
+   pCurrentChain = (t_ftmChain*)&pFtmIf->idle;;
    
    prioQueueInit();
    
@@ -65,7 +59,8 @@ void ftmInit()
 
 void cmdEval()
 {
-   unsigned int cmd, ftmRunning;
+   uint32_t cmd, stat;
+   t_ftmPage* pTmp;
    
    cmd = pFtmIf->cmd;
    stat = pFtmIf->status;
@@ -74,40 +69,42 @@ void cmdEval()
    if(cmd)
    {
       if(cmd & CMD_RST)          { ftmInit();}
-      if(cmd & CMD_START)        { pFtmIf->pAct->pAlt = pFtmIf->pAct->pStart; stat = (stat & STAT_ERROR) | STAT_RUNNING;}
-      if(cmd & CMD_IDLE)         { pFtmIf->pAct->pAlt = &pFtmIf->Idle;}
-      if(cmd & CMD_STOP_REQ)     { stat |= STAT_STOP_REQ;
-      if(cmd & CMD_STOP_NOW)     { stat = (stat & STAT_ERROR) | STAT_STOPPED;}
+      if(cmd & CMD_START)        { pFtmIf->pAct->pBp = pFtmIf->pAct->pStart; stat = (stat & STAT_ERROR) | STAT_RUNNING;}
+      if(cmd & CMD_IDLE)         { pFtmIf->pAct->pBp = (t_ftmChain*)&pFtmIf->idle;}
+      if(cmd & CMD_STOP_REQ)     { stat |= STAT_STOP_REQ; }
+      if(cmd & CMD_STOP_NOW)     { stat = (stat & STAT_ERROR) & ~STAT_RUNNING;}
       
-      if(cmd & CMD_COMMIT_PAGE)  {pTmp = pFtmIf->pIna; pFtmIf->pIna = pFtmIf->pAct; pFtmIf->pAct = pTmp; pFtmIf->pAct->pAlt = pFtmIf->pAct->pStart;}
-      if(cmd & CMD_COMMIT_BP)    {pFtmIf->pAct->pAlt = pFtmIf->pBP;}
+      if(cmd & CMD_COMMIT_PAGE)  {pTmp = pFtmIf->pIna; pFtmIf->pIna = pFtmIf->pAct; pFtmIf->pAct = pTmp; pFtmIf->pAct->pBp = pFtmIf->pAct->pStart;}
+      if(cmd & CMD_COMMIT_BP)    {pFtmIf->pAct->pBp = pFtmIf->pNewBp;}
       
       if(cmd & CMD_DBG_0)        {mprintf("DBG0\n");}
       if(cmd & CMD_DBG_1)        {mprintf("DBG1\n");}
       
-      if(cmd & CMD_SHOW_ACT)     {  if(!ftmRunning) showPage(pFtmIf->pAct);}
-      if(cmd & CMD_SHOW_INA)     {  if(!ftmRunning) showPage(pFtmIf->pIna);}
+      if(cmd & CMD_SHOW_ACT)     {  if (!(pFtmIf->status & STAT_RUNNING)) showPage(pFtmIf->pAct);}
+      if(cmd & CMD_SHOW_INA)     {  if (!(pFtmIf->status & STAT_RUNNING)) showPage(pFtmIf->pIna);}
       
                             
    }
    
-   if(pCur == &pFtmIf->idle)  {stat |=  STAT_IDLE;}
+   if(pCurrentChain == &pFtmIf->idle)  {stat |=  STAT_IDLE;}
    else                       {stat &= ~STAT_IDLE;}
-   if(pCur == &pFtmIf->idle && (stat & STAT_STOP_REQ)) { stat = (stat & STAT_ERROR) | STAT_STOPPED; }
+   if(pCurrentChain == &pFtmIf->idle && (stat & STAT_STOP_REQ)) { stat = (stat & STAT_ERROR) & ~STAT_RUNNING;}
    
    pFtmIf->status = stat; 
 }
 
+void processFtm()
+{
+   if (pFtmIf->status & STAT_RUNNING) pCurrentChain = processChain(pCurrentChain); 
+}
+
 void showPage(t_ftmPage* pPage)
 {
+   /*
    pageIdx = (pPage - pBase);
    mprintf("Active Page:   %x, %u\n", pPage, pageIdx);
    mprintf("Plans:         %x\n", pPage->planQty);
-   pageAltIdx  = (t_ftmPage)(pPage->pAlt) - pBase;
-   cycAltIdx   = pPage->pAlt - (t_ftmchain)pageAltIdx;
-   
-   mprintf("Alt Plan:      %x Page %u \n", pPage->pAlt, pageAltIdx, cycAltIdx);
-   mprintf("Cur Plan, Idx: %x %u\n", pCur, (pCur - pPage->pPlans) );
+   */
 }
 
 
@@ -116,18 +113,18 @@ int dispatch(t_ftmMsg* pMsg)
    int ret = 0;
    unsigned int diff;
    
-   diff = ( heapCap - *(pFpqCtrl + r_FPQ.heapCnt));
+   diff = ( *(pFpqCtrl + r_FPQ.capacity) - *(pFpqCtrl + r_FPQ.heapCnt));
    if(diff > 1)
    {  
       atomic_on();
-      pFpqData = hiW(pMsg->id);
-      pFpqData = loW(pMsg->id);
-      pFpqData = hiW(pMsg->par);
-      pFpqData = loW(pMsg->par);
-      pFpqData = pMsg->tag
-      pFpqData = pMsg->tef;
-      pFpqData = hiW(pMsg->ts);
-      pFpqData = loW(pMsg->ts);
+      *pFpqData = hiW(pMsg->id);
+      *pFpqData = loW(pMsg->id);
+      *pFpqData = hiW(pMsg->par);
+      *pFpqData = loW(pMsg->par);
+      *pFpqData = pMsg->tef;
+      *pFpqData = pMsg->res;
+      *pFpqData = hiW(pMsg->ts);
+      *pFpqData = loW(pMsg->ts);
       atomic_off(); 
    } else {
       ret = -1;
@@ -137,14 +134,14 @@ int dispatch(t_ftmMsg* pMsg)
    return ret;
 }
 
-uint8_t condValid(t_chain* cyc)
+uint8_t condValid(t_ftmChain* c)
 {
    uint8_t ret = 0;
    
    
-   if(cyc->flags & (FLAGS_IS_COND_MSI | FLAGS_IS_COND_SHARED) )
+   if(c->flags & (FLAGS_IS_COND_MSI | FLAGS_IS_COND_SHARED) )
    {
-      if(cyc->flags & FLAGS_IS_COND_MSI)
+      if(c->flags & FLAGS_IS_COND_MSI)
       {
          uint32_t  ip, msg;
          irq_disable();
@@ -156,110 +153,117 @@ uint8_t condValid(t_chain* cyc)
             irq_clear(1<<MSI_SIG);     //clear pending bit
          }      
          irq_enable();
-         if(cyc->condVal & cyc->condMsk) == (msg & cyc->condMsk) ret = 1;   
+         if((c->condVal & c->condMsk) == (msg & c->condMsk)) ret = 1;   
       }
       else
       {
-         if((cyc->condVal & cyc->condMsk) == (*(pFtmIf->pAct->pSharedMem).value & cyc->condMsk) ) 
+         if((c->condVal & c->condMsk) == ((*pFtmIf->pSharedMem).value & c->condMsk) ) 
          {
-            if(this->flags & FLAGS_IS_SHARED_TIME) this->tStart = *(pFtmIf->pAct->pSharedMem).time;
-            else                                   this->tStart = getSysTime();         
+            if(c->flags & FLAGS_IS_SHARED_TIME) c->tStart = (*pFtmIf->pSharedMem).time;
+            else                                c->tStart = getSysTime();         
             ret = 1;
-            (*(pFtmIf->pAct->pSharedMem).value = 0x0;
+            (*pFtmIf->pSharedMem).value = 0x0;
          }
          
       }
    }
    else ret = 1;
    
+   if(ret) pFtmIf->sema.cond = 0;
+   
    return ret; 
 } 
 
-void sigSend(t_chain* this)
+void sigSend(t_ftmChain* c)
 {
    t_time time;
    
-   time = this->tStart + this->tPeriod;
+   time = c->tStart + c->tPeriod;
    
-   *(this->sigDst) = this->sigVal;
-   if(this->flags & FLAGS_IS_SIG_SHARED)
+   *(c->sigDst) = c->sigVal;
+   if(c->flags & FLAGS_IS_SIG_SHARED)
    {
-      *(this->sigDst+1) = hiW(time);
-      *(this->sigDst+2) = loW(time);
+      *(c->sigDst+1) = hiW(time);
+      *(c->sigDst+2) = loW(time);
    }
-   pFtmIf->sigSema = 0; 
+   pFtmIf->sema.sig = 0; 
 }
 
 
-t_chain* processChain(t_chain* this)
+t_ftmChain* processChain(t_ftmChain* c)
 {
-   t_chain* pCur = this; 
-   
-   if(condValid(this))
+   t_ftmChain* pCur = c; 
+   if( getSysTime() + pFtmIf->tPrep >= c->tStart)
    {
-      if((this->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED)) 
-         && ( (this->flags & (FLAGS_IS_SIG_FIRST | FLAGS_IS_SIG_ALL))
-              || ((this->flags &FLAGS_IS_SIG_LAST) && (this->repCnt == this->repQty-1)))
-         && sigSema ) 
-         {sigSend(this);}
-      pCur = processchainAux(this);
-   }   
-   else 
-   {
-      if((this->flags & FLAGS_IS_BP) && pFtmIf->pAlt != NULL)
-      { pCur = pFtmIf->pAct->pAlt; pFtmIf->pAct->pAlt = NULL;} // else check for breakpoint so we get around inf wait
+      if(condValid(c) || !pFtmIf->sema.cond) { pCur = processChainAux(c); }   
+      else 
+      {
+         if((c->flags & FLAGS_IS_BP) && pFtmIf->pAct->pBp != NULL)
+         { pCur = pFtmIf->pAct->pBp; pFtmIf->pAct->pBp = NULL;} // else check for breakpoint so we get around inf wait
+      }
    }   
    return pCur;    
 }
 
-t_chain* processChainAux(t_chain* this)
+t_ftmChain* processChainAux(t_ftmChain* c)
 {
-   t_chain* pCur = this; 
+   t_ftmChain* pCur = c; 
    unsigned long long tMsgExec;
    
+   //signal to send ?
+   if(pFtmIf->sema.sig)
+   if(   (c->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED)) 
+     && (    !(c->flags & FLAGS_IS_SIG_LAST)
+         ||  ((c->flags & FLAGS_IS_SIG_LAST) && (c->repCnt == c->repQty-1)))) 
+   {
+      if( getSysTime() + pFtmIf->tPrep >= c->tStart)  sigSend(c);
+   }
+   
    //get execution time for due msg
-   tMsgExec    = this->tStart + (this->pMsg + this->msgIdx)->tOffset); 
+   tMsgExec    = c->tStart + (c->pMsg + c->msgIdx)->offs; 
     
-   if(this->msgIdx < this->msgQty) //msgs left to process?
+   if(c->msgIdx < c->msgQty) //msgs left to process?
    {
       //time to hand it over to prio queue ?
-      if( getSysTime() + tPrep >= tMsgExec)  
+      if( getSysTime() + pFtmIf->tPrep >= tMsgExec)  
       {
-         (this->pMsg + this->msgIdx)->ts = tMsgExec; //calc execution timestamp
-         if( dispatch( (t_ftmMsg*)(this->pMsg + this->msgIdx) ) this->msgIdx++;  //enough space in prio queue? dispatch and inc msgidx
+         (c->pMsg + c->msgIdx)->ts = tMsgExec; //calc execution timestamp
+         if( dispatch( (t_ftmMsg*)(c->pMsg + c->msgIdx) )) c->msgIdx++;  //enough space in prio queue? dispatch and inc msgidx
       }
    } 
    else
    {
-      this->msgIdx = 0;
-      //is this a breakpoint? if so and break is desired, continue at the address in the page alternate plan
-      if((this->flags & FLAGS_IS_BP) && pAct->pAlt != NULL)       
+      c->msgIdx = 0;
+      //is c a breakpoint? if so and break is desired, continue at the address in the page alternate plan
+      if((c->flags & FLAGS_IS_BP) && (pFtmIf->pAct->pBp != NULL))       
       { 
-         pCur = pAct->pAlt;  //BP? go to alt chain
-         pAct->pAlt = NULL;
-         pFtmIf->sigSema = 1;
+         pCur = pFtmIf->pAct->pBp;  //BP? go to alt chain
+         pFtmIf->pAct->pBp = NULL;
+         pFtmIf->sema.sig = 1;
+         pFtmIf->sema.cond = 1;
       }
       else
       { 
-         if( this->repCnt < this->repQty )   
+         if( c->repCnt < c->repQty )   
          {
             //repetions left? stay with this chain
-            this->repCnt++;     
-            pCur = this; 
-            if(this->flags & FLAGS_IS_SIG_ALL) pFtmIf->sigSema = 1;
+            c->repCnt++;     
+            pCur = c; 
+            if(c->flags & FLAGS_IS_SIG_ALL) pFtmIf->sema.sig = 1;
          } 
          else
          {
             //done, go to next chain
-            this->repCnt = 0;
-            pCur = this->pNext;
-            pFtmIf->sigSema = 1;
+            c->repCnt = 0;
+            pCur = (t_ftmChain*)c->pNext;
+            pFtmIf->sema.sig = 1;
+            pFtmIf->sema.cond = 1;
          } 
          
       }   
       
       //propagate updated start time to next chain to be executed
-      pCur->tStart = this->tStart + this->tPeriod;
+      pCur->tStart = c->tStart + c->tPeriod;
    }
      
    return pCur;    
