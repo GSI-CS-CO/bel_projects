@@ -140,7 +140,7 @@ t_ftmPage* createPage(xmlNode* pageNode, t_ftmPage* pPage)
    if(fieldNode != NULL) 
    {  
       planChar = (const char*)xmlNodeGetContent(fieldNode);
-      if (strcmp(planChar, "idle") != 0) pPage->idxStart = 0xdeadbeef;
+      if (strcmp(planChar, "idle") == 0) pPage->idxStart = 0xdeadbeef;
       else pPage->idxStart = (uint32_t)(planChar[0] & 0xdf) - 'A';
    }
    else printf("ERROR startplan\n");
@@ -149,7 +149,7 @@ t_ftmPage* createPage(xmlNode* pageNode, t_ftmPage* pPage)
    if(fieldNode != NULL)
    {  
       planChar = (const char*)xmlNodeGetContent(fieldNode);
-      if (strcmp(planChar, "idle") != 0) pPage->idxBp = 0xdeadbeef;
+      if (strcmp(planChar, "idle") == 0) pPage->idxBp = 0xdeadbeef;
       else pPage->idxBp = (uint32_t)(planChar[0] & 0xdf) - 'A';
    }
    else printf("ERROR altplan\n");
@@ -187,7 +187,7 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
       chainIdx      = 0;
       chainNode     = planNode->children;
       planStart   = true;
-      
+
       while( checkNode(chainNode, "chain") != NULL)
       {
          //alloc chain, fill first part from DOM

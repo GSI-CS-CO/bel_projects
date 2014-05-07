@@ -100,7 +100,7 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOff
          pChain = (t_ftmChain*)pChain->pNext;
       }   
    }
- 
+   
    // now write page meta
    uint32ToBytes(&pBufStart[FTM_PAGE_QTY], pPage->planQty);
    for(j=0;j<pPage->planQty;    j++)
@@ -108,15 +108,20 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOff
    for(j=pPage->planQty;j<FTM_PLAN_MAX;    j++)
       uint32ToBytes(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE], FTM_NULL);
    
-   if(pBufPlans[pPage->idxBp] == 0xdeadbeef)    pPage->pBp = FTM_IDLE_OFFSET;
+   
+   if( pPage->idxBp == 0xdeadbeef)    pPage->pBp = FTM_IDLE_OFFSET;
    else pPage->pBp     = pBufPlans[pPage->idxBp];
    
-   if(pBufPlans[pPage->idxStart] == 0xdeadbeef) pPage->pStart = FTM_IDLE_OFFSET;
+   if( pPage->idxStart == 0xdeadbeef) pPage->pStart = FTM_IDLE_OFFSET;
    else pPage->pStart  = pBufPlans[pPage->idxStart];
    
-   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_BP],         pPage->pBp);
+   printf("BP: %08x, Start: %08x\n", pPage->pBp, pPage->pStart);
+   
+    uint32ToBytes(&pBufStart[FTM_PAGE_PTR_BP],         pPage->pBp);
    uint32ToBytes(&pBufStart[FTM_PAGE_PTR_START],      pPage->pStart);
-   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_SHAREDMEM], pPage->pSharedMem);  
+ 
+   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_SHAREDMEM], pPage->pSharedMem);
+   
    return pBuf;   
 
 }
@@ -221,11 +226,17 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
    
    if       (pPage->pBp    == FTM_NULL)         { pPage->idxBp = 0xcafebabe;}
    else if  (pPage->pBp    == FTM_IDLE_OFFSET)  {pPage->idxBp  = 0xdeadbeef;}
-   else for (j=0;j<pPage->planQty;    j++)      {if(pBufPlans[j] == (uint8_t*)(uintptr_t)pPage->pBp) pPage->idxBp = j;}  
+   else for (j=0;j<pPage->planQty;    j++)      
+   {
+      if(pBufPlans[j]-pBufStart == ((uintptr_t)pPage->pBp - (uintptr_t)embeddedOffs)) {pPage->idxBp = j;}
+   }  
       
    if       (pPage->pStart == FTM_NULL)           {pPage->idxStart = 0xcafebabe;}
    else if  (pPage->pStart == FTM_IDLE_OFFSET)    {pPage->idxStart = 0xdeadbeef;}
-   else for(j=0;j<pPage->planQty;    j++) {if(pBufPlans[j] == (uint8_t*)(uintptr_t)pPage->pStart)  pPage->idxStart = j;}    
+   else for(j=0;j<pPage->planQty;    j++) 
+   {
+      if(pBufPlans[j]-pBufStart == ((uintptr_t)pPage->pStart - (uintptr_t)embeddedOffs)) {pPage->idxStart = j;}
+   }    
    //pPage->pSharedMem = pBufStart[FTM_PAGE_PTR_SHAREDMEM];    
       
    return pPage;     
@@ -328,6 +339,7 @@ void showFtmPage(t_ftmPage* pPage)
          pChain->sigVal);  
          
          pMsg = pChain->pMsg;
+         
          for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++)
          {
             printf("\t\t\t---MSG %c%u%c\n", planIdx+'A', chainIdx-1, msgIdx+'A');

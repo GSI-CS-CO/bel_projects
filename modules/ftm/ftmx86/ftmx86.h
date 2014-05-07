@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define FTM_PAGESIZE        8192  
-#define FTM_SHARED_OFFSET   0xC000
+#define FTM_SHARED_OFFSET   0x1000
 #define FTM_CMD_OFFSET      (FTM_SHARED_OFFSET  + 2*FTM_PAGESIZE)
 #define FTM_STAT_OFFSET     (FTM_CMD_OFFSET     + 4)
 #define FTM_PACT_OFFSET     (FTM_STAT_OFFSET    + 4)
