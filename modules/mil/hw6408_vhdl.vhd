@@ -2,6 +2,14 @@ LIBRARY ieee;
 use ieee.std_logic_1164.all; 
 use ieee.numeric_std.all;
 
+--+-----------------------------------------------------------------------------------------------------------+
+--| "hw6408_vhdl" realisiert das Interface zu einem externen Manchester-En-Decoder-Baustein, Type 6408.       |
+--| Es ist als Ersatz für das ältere in AHDL geschriebene Interface "ser_para.tdf" vorgesehen.                |
+--|                                                                                                           |
+--| Autor: W.Panschow; Datum 7.05.14                                                                          |
+--+-----------------------------------------------------------------------------------------------------------+
+
+
 
 entity hw6408_vhdl is
   generic (
