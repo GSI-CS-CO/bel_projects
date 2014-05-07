@@ -369,7 +369,6 @@ end component;
 	signal P25IO_nLED_Ext_Tim_o:	std_logic;					--	Output "nLED_Start"
 
 
-	signal P25IO_Ext_Tim_Strobe_Start_i:	std_logic;				-- input  "Start-Puls für den ext. Trigger"
 	signal P25IO_Ext_Tim_Strobe_Start_o:	std_logic;				-- Output "Start-Puls für den ext. Trigger"
 	signal P25IO_Ext_Tim_shift: std_logic_vector(2  downto 0);	-- Shift-Reg.
 
@@ -983,14 +982,14 @@ P25IO_Out_Led_Ext_Tim: led_n
   
 --------- Puls als Signal (1 Clock breit) --------------------
 
-p_P25IO_Ext_Tim_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_Ext_Tim_Strobe_Start_i)
+p_P25IO_Ext_Tim_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_Ext_Tim_deb_o)
   BEGin
     IF Powerup_Res  = '1' THEN
       P25IO_Ext_Tim_shift  <= (OTHERS => '0');
       P25IO_Ext_Tim_Strobe_Start_o    <= '0';
 
     ELSIF rising_edge(clk_sys) THEN
-      P25IO_Ext_Tim_shift <= (P25IO_Ext_Tim_shift(P25IO_Ext_Tim_shift'high-1 downto 0) & (P25IO_Ext_Tim_Strobe_Start_i));
+      P25IO_Ext_Tim_shift <= (P25IO_Ext_Tim_shift(P25IO_Ext_Tim_shift'high-1 downto 0) & (P25IO_Ext_Tim_deb_o));
 
       IF P25IO_Ext_Tim_shift(P25IO_Ext_Tim_shift'high) = '0' AND P25IO_Ext_Tim_shift(P25IO_Ext_Tim_shift'high-1) = '1' THEN
         P25IO_Ext_Tim_Strobe_Start_o <= '1';
