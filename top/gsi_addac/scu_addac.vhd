@@ -294,7 +294,7 @@ end component;
       Rd_Port               => clk_switch_rd_data,    -- output for all read sources of this macro
       Rd_Activ              => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
       Dtack                 => clk_switch_dtack,
-      sig_tap_clk_250mhz    => signal_tap_clk_250mhz
+      signal_tap_clk_250mhz    => signal_tap_clk_250mhz
       );
     
 
