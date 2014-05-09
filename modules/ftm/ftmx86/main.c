@@ -9,7 +9,7 @@
 
 
 #define MAX_DEVICES  100
-#define BUF_SIZE     3300
+#define BUF_SIZE     0x600
 #define PACKET_SIZE  1500
 
 const char* program;
@@ -262,7 +262,7 @@ int ebRamWrite(const uint8_t* buf, uint32_t address, uint32_t len)
       
       
 	   
-	   pBufWrite = serPage (pPage, &bufWrite[0], embeddedOffset);
+	   pBufWrite = serPage (pPage, &bufWrite[0], FTM_SHARED_OFFSET);
 	   printf("pBuf: %p\n", &bufWrite[0]);
 	   printf("TestX\n");
 	   printf("Offs:\t %08x\n", embeddedOffset);
@@ -273,7 +273,7 @@ int ebRamWrite(const uint8_t* buf, uint32_t address, uint32_t len)
       printf("TestZ\n");
 	   ebRamClose();
 
-	   pNewPage = deserPage(calloc(1, sizeof(t_ftmPage)), &bufRead[0], embeddedOffset);
+	   pNewPage = deserPage(calloc(1, sizeof(t_ftmPage)), &bufRead[0], FTM_SHARED_OFFSET);
       
       if(pNewPage != NULL) showFtmPage(pNewPage);
       else printf("deserialize failed\n");

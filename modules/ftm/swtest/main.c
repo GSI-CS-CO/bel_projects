@@ -8,6 +8,8 @@
 #include "ebm.h"
 #include "aux.h"
 
+#define DEBUG 3
+
 char buffer[12];
 volatile char color; 
 unsigned int cpuID, cpuMAX, heapCap;
@@ -183,49 +185,26 @@ void main(void) {
 
    int j;
 
+   
+
    init();
-  
+  DBPRINT("Hallo Welt!\n");
 
 disp_put_c('\f');
 
   disp_put_str("FTM ready\n");
-  cmdEval();
-  processFtm();
   
-
-   for (j = 0; j < (125000000/160)*(cpuID<<3); ++j) {
+  
+  
+   
+  while (1) {
+   showStatus();
+   cmdEval();
+   //processFtm();
+   for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
       }
    
-   
-   
-   disp_put_str(mat_sprinthex(buffer, (unsigned int)pCpuId)); disp_put_c('\n');   
-   disp_put_str(mat_sprinthex(buffer, (unsigned int)pCluInfo)); disp_put_c('\n');
-   disp_put_str(mat_sprinthex(buffer, (unsigned int)pUart)); disp_put_c('\n');
-   mprintf("Hello World!\n");
-   mprintf("PrioQC 0x%8x\n", pFpqCtrl);
-   mprintf("PrioQD 0x%8x\n", pFpqData);
-   mprintf("EBM 0x%8x\n", pEbm);
-   mprintf("ECA 0x%8x\n", pEca);
-   mprintf("Time: 0x%8x%8x\n", *pCpuSysTime, *(pCpuSysTime+1));
-   mprintf("%8x\n%8x\n", (unsigned int)(ct_sec>>32), (unsigned int)(ct_sec));
-    showFpqStatus();
-   for (j = 0; j < 64; ++j) insertFpqEntry();
-   mprintf("Fpq: capacity %d heapcnt %d\n", *(pFpqCtrl + r_FPQ.capacity), *(pFpqCtrl + r_FPQ.heapCnt) );
-   for (j = 0; j < 63; ++j) insertFpqEntry();
-   mprintf("Fpq: capacity %d heapcnt %d\n", *(pFpqCtrl + r_FPQ.capacity), *(pFpqCtrl + r_FPQ.heapCnt) );
-   showFpqStatus();
-   
-   for (j = 0; j < 3500000; ++j) {asm("# noop");}
-  
-   
-   while (1) {
-      /*
-      *(pFpqCtrl + r_FPQ.force) = r_FPQ.force_POP;
-      *(pFpqCtrl + r_FPQ.force) = r_FPQ.force_POP;
-      for (j = 0; j < 31500000; ++j) {asm("# noop");}
-      showFpqStatus();
-      */
   }
 
 }

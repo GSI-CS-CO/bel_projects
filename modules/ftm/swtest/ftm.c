@@ -80,8 +80,8 @@ void cmdEval()
       if(cmd & CMD_DBG_0)        {mprintf("DBG0\n");}
       if(cmd & CMD_DBG_1)        {mprintf("DBG1\n");}
       
-      if(cmd & CMD_SHOW_ACT)     {  if (!(pFtmIf->status & STAT_RUNNING)) showPage(pFtmIf->pAct);}
-      if(cmd & CMD_SHOW_INA)     {  if (!(pFtmIf->status & STAT_RUNNING)) showPage(pFtmIf->pIna);}
+      if(cmd & CMD_SHOW_ACT)     {  DBPRINT("SHOW ACT\n"); showFtmPage(pFtmIf->pAct);}
+      if(cmd & CMD_SHOW_INA)     {  DBPRINT("SHOW INA\n"); showFtmPage(pFtmIf->pIna);}
       
                             
    }
@@ -98,15 +98,92 @@ void processFtm()
    if (pFtmIf->status & STAT_RUNNING) pCurrentChain = processChain(pCurrentChain); 
 }
 
-void showPage(t_ftmPage* pPage)
+void showFtmPage(t_ftmPage* pPage)
 {
-   /*
-   pageIdx = (pPage - pBase);
-   mprintf("Active Page:   %x, %u\n", pPage, pageIdx);
-   mprintf("Plans:         %x\n", pPage->planQty);
-   */
+   uint32_t planIdx, chainIdx, msgIdx;
+   t_ftmChain* pChain  = NULL;
+   t_ftmMsg*   pMsg  = NULL;
+   
+   mprintf("---PAGE %08x\n", pPage);
+   mprintf("StartPlan:\t");
+   
+   if(pPage->pStart == &(pFtmIf->idle) ) mprintf("idle\n");
+   else { 
+          if(pPage->pStart == NULL) mprintf("NULL\n");
+          else mprintf("%08x\n", pPage->pStart);
+        } 
+   
+   mprintf("AltPlan:\t");
+   if(pPage->pBp == &(pFtmIf->idle) ) mprintf("idle\n");
+   else { 
+          if(pPage->pBp == NULL) mprintf("NULL\n");
+          else mprintf("%08x\n", pPage->pBp);
+        }  
+   mprintf("PlanQty:\t%u\t%08x\n", pPage->planQty, &(pPage->planQty));
+    
+   for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
+   {
+      mprintf("\t---PLAN %c\n", planIdx+'A');
+      chainIdx = 0;
+      pChain = pPage->plans[planIdx];
+      while(pChain != NULL)
+      {
+         mprintf("\t\t---CHAIN %c%u\n", planIdx+'A', chainIdx-1);
+         mprintf("\t\tStart:\t\t%08x%08x\n\t\tperiod:\t\t%08x%08x\n\t\trep:\t\t\t%08x\n\t\tmsg:\t\t\t%08x\n", 
+         (uint32_t)(pChain->tStart>>32), (uint32_t)pChain->tStart, 
+         (uint32_t)(pChain->tPeriod>>32), (uint32_t)pChain->tPeriod,
+         pChain->repQty,
+         pChain->msgQty);
+         
+         mprintf("\t\tFlags:\t");
+         if(pChain->flags & FLAGS_IS_BP) mprintf("-IS_BP\t");
+         if(pChain->flags & FLAGS_IS_COND_MSI) mprintf("-IS_CMSI\t");
+         if(pChain->flags & FLAGS_IS_COND_SHARED) mprintf("-IS_CSHA\t");
+         if(pChain->flags & FLAGS_IS_SIG_SHARED) mprintf("-IS_SIG_SHARED");
+         if(pChain->flags & FLAGS_IS_SIG_MSI)    mprintf("-IS_SIG_MSI");
+         if(pChain->flags & FLAGS_IS_END) mprintf("-IS_END");
+         mprintf("\n");
+         
+         mprintf("\t\tCondVal:\t%08x\n\t\tCondMsk:\t%08x\n\t\tSigDst:\t\t\t%08x\n\t\tSigVal:\t\t\t%08x\n", 
+         (uint32_t)pChain->condVal, 
+         (uint32_t)pChain->condMsk,
+         pChain->sigDst,
+         pChain->sigVal);  
+         
+         pMsg = pChain->pMsg;
+         
+         for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++)
+         {
+            mprintf("\t\t\t---MSG %c%u%c\n", planIdx+'A', chainIdx-1, msgIdx+'A');
+            mprintf("\t\t\tid:\t%08x%08x\n\t\t\tpar:\t%08x%08x\n\t\t\ttef:\t\t%08x\n\t\t\toffs:\t%08x%08x\n", 
+            (uint32_t)(pMsg[msgIdx].id>>32), (uint32_t)pMsg[msgIdx].id, 
+            (uint32_t)(pMsg[msgIdx].par>>32), (uint32_t)pMsg[msgIdx].par,
+            pMsg[msgIdx].tef,
+            (uint32_t)(pMsg[msgIdx].offs>>32), (uint32_t)pMsg[msgIdx].offs);   
+         }
+         if(pChain->flags & FLAGS_IS_END) pChain = NULL;
+         else pChain = (t_ftmChain*)pChain->pNext;
+      }
+           
+   }
+   uint64_t j;
+  for (j = 0; j < (250000000); ++j) {
+        asm("# noop"); // no-op the compiler can't optimize away
+      }    
+   
 }
 
+void showStatus()
+{
+   uint32_t stat = pFtmIf->status;
+   mprintf("\f%08x\tStatus:\t", (uint32_t)(&(pFtmIf->cmd)) );
+   if(stat & STAT_RUNNING) mprintf("\t\t-RUNNING"); else mprintf("\t\t-\t");
+   if(stat & STAT_IDLE) mprintf("\t\t-IDLE"); else mprintf("\t\t-\n");
+   if(stat & STAT_STOP_REQ) mprintf("\t\t-STOP_REQ"); else mprintf("\t\t-\t");
+   if(stat & STAT_ERROR) mprintf("\t\t-ERROR"); else mprintf("\t\t-\t");
+   mprintf("\n");
+   
+}
 
 int dispatch(t_ftmMsg* pMsg)
 {

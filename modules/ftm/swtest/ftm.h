@@ -8,9 +8,25 @@
 #include "irq.h"
 #include "aux.h"
 
+
 #define MSI_SIG               0
-#define FTM_PAGESIZE          8192
-#define FTM_PLAN_MAX          16
+
+
+#define FTM_PLAN_MAX        16
+#define FTM_PAGEDATA        0x0600
+#define FTM_PAGEMETA        (4 + 4 * FTM_PLAN_MAX + 4 + 4)   
+#define FTM_PAGESIZE        (FTM_PAGEDATA + FTM_PAGEMETA)
+
+
+#define FTM_CMD_OFFSET      (2*FTM_PAGESIZE)
+#define FTM_STAT_OFFSET     (FTM_CMD_OFFSET     + 4)
+#define FTM_PACT_OFFSET     (FTM_STAT_OFFSET    + 4)
+#define FTM_PINA_OFFSET     (FTM_PACT_OFFSET    + 4)
+#define FTM_TPREP_OFFSET    (FTM_PINA_OFFSET    + 4)
+#define FTM_IDLE_OFFSET     (FTM_TPREP_OFFSET   + 8)
+
+
+
 //masks & constants
 #define CMD_RST           		(1<<0)	//Reset FTM status and counters
 #define CMD_START      		   (1<<1)	//Start FTM
@@ -159,7 +175,7 @@ typedef struct {
 } t_semaphore;  
 
 typedef struct {
-   uint8_t reserved_8192 [ FTM_PAGESIZE ];
+   uint8_t reserved [ FTM_PAGEDATA ];
 } t_pageSpace;  
 
 typedef uint64_t t_time ;
@@ -201,11 +217,11 @@ typedef struct {
 //a plan is a linked list of chains
 typedef struct {
 
-   t_pageSpace    pagedummy;
    uint32_t       planQty;
-   t_ftmChain     plans[FTM_PLAN_MAX];
+   t_ftmChain*    plans[FTM_PLAN_MAX];
    t_ftmChain*    pBp;
    t_ftmChain*    pStart;
+   t_pageSpace    pagedummy;
    
 } t_ftmPage;
 
@@ -237,7 +253,7 @@ t_ftmChain*       processChain(t_ftmChain* c);    //checks for condition and if 
 t_ftmChain*       processChainAux(t_ftmChain* c); //does the actual work
 int               dispatch(t_ftmMsg* pMsg);  //dispatch a message to prio queue
 void              cmdEval();
-void              showPage(t_ftmPage* pPage);
+void showFtmPage(t_ftmPage* pPage);
 
 extern unsigned int * pEcaAdr;
 extern unsigned int * pEbmAdr;

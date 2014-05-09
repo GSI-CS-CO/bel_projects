@@ -3,8 +3,12 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-#define FTM_PAGESIZE        8192  
-#define FTM_SHARED_OFFSET   0x1000
+#define FTM_PLAN_MAX        16
+#define FTM_PAGEDATA        0x0600
+#define FTM_PAGEMETA        (4 + 4 * FTM_PLAN_MAX + 4 + 4)   
+#define FTM_PAGESIZE        (FTM_PAGEDATA + FTM_PAGEMETA) 
+
+#define FTM_SHARED_OFFSET   0xC000
 #define FTM_CMD_OFFSET      (FTM_SHARED_OFFSET  + 2*FTM_PAGESIZE)
 #define FTM_STAT_OFFSET     (FTM_CMD_OFFSET     + 4)
 #define FTM_PACT_OFFSET     (FTM_STAT_OFFSET    + 4)

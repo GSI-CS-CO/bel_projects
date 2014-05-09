@@ -47,14 +47,14 @@ const t_ftmChain Idle = { .tStart         = 0,
 uint8_t* uint32ToBytes(uint8_t* pBuf, uint32_t val)
 {
    uint8_t i;
-   for(i=0;i<FTM_WORD_SIZE;   i++) pBuf[i]  = val >> (8*(FTM_WORD_SIZE-i-1)) & 0xff;
+   for(i=0;i<FTM_WORD_SIZE;   i++) pBuf[i]  = val >> (8*i) & 0xff;
    return pBuf+4;
 }
 
 uint8_t* uint64ToBytes(uint8_t* pBuf, uint64_t val)
 {
    uint8_t i;
-   for(i=0;i<FTM_DWORD_SIZE;   i++) pBuf[i]  = val >> (8*(FTM_DWORD_SIZE-i-1)) & 0xff;
+   for(i=0;i<FTM_DWORD_SIZE;   i++) pBuf[i]  = val >> (8*i) & 0xff;
    return pBuf+8;
 }
 
@@ -64,7 +64,7 @@ uint32_t bytesToUint32(uint8_t* pBuf)
    uint8_t i;
    uint32_t val=0;
    
-   for(i=0;i<FTM_WORD_SIZE;   i++) val |= (uint32_t)pBuf[i] << (8*(FTM_WORD_SIZE-i-1));
+   for(i=0;i<FTM_WORD_SIZE;   i++) val |= (uint32_t)pBuf[i] << (8*i);
    return val;
 }
 
@@ -73,7 +73,7 @@ uint64_t bytesToUint64(uint8_t* pBuf)
    uint8_t i;
    uint64_t val=0;
    
-   for(i=0;i<FTM_DWORD_SIZE;   i++) val |= (uint64_t)pBuf[i] << (8*(FTM_DWORD_SIZE-i-1));
+   for(i=0;i<FTM_DWORD_SIZE;   i++) val |= (uint64_t)pBuf[i] << (8*i);
    return val;
 }
 
@@ -84,8 +84,8 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOff
    t_ftmChain* pChain;
    uint32_t pBufPlans[FTM_PLAN_MAX];
    
-   
-   pBuf += 4 + FTM_PLAN_MAX * 4 + 4 +4; //leave space for page meta info
+    pBuf += FTM_PAGEMETA;
+    //leave space for page meta info
    //write all plans to pBuffer
    for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
    {
@@ -102,6 +102,7 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOff
    }
    
    // now write page meta
+  
    uint32ToBytes(&pBufStart[FTM_PAGE_QTY], pPage->planQty);
    for(j=0;j<pPage->planQty;    j++)
       uint32ToBytes(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE], pBufPlans[j]);
@@ -150,7 +151,8 @@ uint8_t* serChain(t_ftmChain* pChain, uint8_t* pBufStart, uint8_t* pBuf, uint32_
    pBufMsg  = embeddedOffs + _FTM_CHAIN_LEN + ( (uint32_t)( (uintptr_t)pBuf - (uintptr_t)pBufStart ) );
    uint32ToBytes(&pBuf[FTM_CHAIN_PMSG],    pBufMsg);
    
-   pBufNext = pBufMsg + pChain->msgQty * _FTM_MSG_LEN;
+   if(pChain->pNext != NULL) pBufNext = pBufMsg + pChain->msgQty * _FTM_MSG_LEN;
+   else                     pBufNext = FTM_NULL;
    uint32ToBytes(&pBuf[FTM_CHAIN_PNEXT],    pBufNext);
    
    pBuf +=  _FTM_CHAIN_LEN;
@@ -181,7 +183,7 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
    t_ftmChain* pChain  = NULL;
    t_ftmChain* pNext = NULL;
    
-   //printf("deserpage\n");
+   
    //get plan qty
    if(pPage == NULL) printf("page not allocated\n");
    
@@ -203,7 +205,7 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
       //deserialise (pBufStart +  offset) to pChain and fix pChains next ptr
 
       pBuf = deserChain(pChain, pNext, pBufPlans[j], pBufStart, embeddedOffs);
-
+      
  
       //deserialise chains until we reached the end or we reached max
       
@@ -214,6 +216,7 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
          pBuf = deserChain(pChain, pNext, pBuf, pBufStart, embeddedOffs);
          chainQty++;
       } 
+      printf("deserpage\n");
       //no next after the end, free this one
       //free(pNext);
       pChain->pNext = NULL;
