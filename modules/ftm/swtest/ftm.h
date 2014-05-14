@@ -254,6 +254,7 @@ t_ftmChain*       processChainAux(t_ftmChain* c); //does the actual work
 int               dispatch(t_ftmMsg* pMsg);  //dispatch a message to prio queue
 void              cmdEval();
 void showFtmPage(t_ftmPage* pPage);
+void showStatus();
 
 extern unsigned int * pEcaAdr;
 extern unsigned int * pEbmAdr;

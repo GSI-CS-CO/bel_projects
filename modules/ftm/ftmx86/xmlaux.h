@@ -12,6 +12,7 @@
 typedef enum { false = 0, true = 1 } bool;
 extern const char* msgIdFields[];
 
+uint64_t strtou64(const char* s);
 xmlNode*    checkNode(xmlNode* aNode, const char* name);
 t_ftmMsg*   createMsg(xmlNode* msgNode, t_ftmMsg* pMsg);
 t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain);

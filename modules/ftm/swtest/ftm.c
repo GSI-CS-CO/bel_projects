@@ -10,6 +10,8 @@ uint16_t getIdSCTR(uint64_t id)    {return ((uint16_t)(id >> ID_SCTR_POS))    & 
 uint32_t hiW(uint64_t dword) {return (uint32_t)(dword >> 32);}
 uint32_t loW(uint64_t dword) {return (uint32_t)dword;}
 
+uint64_t execCnt; 
+
 void prioQueueInit()
 {
    
@@ -51,7 +53,7 @@ void ftmInit()
                                 };
    pFtmIf->sema.sig  = 1;
    pFtmIf->sema.cond = 1;
-   pCurrentChain = (t_ftmChain*)&pFtmIf->idle;;
+   pCurrentChain = (t_ftmChain*)&pFtmIf->idle;
    
    prioQueueInit();
    
@@ -69,7 +71,7 @@ void cmdEval()
    if(cmd)
    {
       if(cmd & CMD_RST)          { ftmInit();}
-      if(cmd & CMD_START)        { pFtmIf->pAct->pBp = pFtmIf->pAct->pStart; stat = (stat & STAT_ERROR) | STAT_RUNNING;}
+      if(cmd & CMD_START)        { DBPRINT1("Starting\n"); pFtmIf->pAct->pBp = pFtmIf->pAct->pStart; stat = (stat & STAT_ERROR) | STAT_RUNNING;}
       if(cmd & CMD_IDLE)         { pFtmIf->pAct->pBp = (t_ftmChain*)&pFtmIf->idle;}
       if(cmd & CMD_STOP_REQ)     { stat |= STAT_STOP_REQ; }
       if(cmd & CMD_STOP_NOW)     { stat = (stat & STAT_ERROR) & ~STAT_RUNNING;}
@@ -77,11 +79,11 @@ void cmdEval()
       if(cmd & CMD_COMMIT_PAGE)  {pTmp = pFtmIf->pIna; pFtmIf->pIna = pFtmIf->pAct; pFtmIf->pAct = pTmp; pFtmIf->pAct->pBp = pFtmIf->pAct->pStart;}
       if(cmd & CMD_COMMIT_BP)    {pFtmIf->pAct->pBp = pFtmIf->pNewBp;}
       
-      if(cmd & CMD_DBG_0)        {mprintf("DBG0\n");}
+      if(cmd & CMD_DBG_0)        {showStatus();}
       if(cmd & CMD_DBG_1)        {mprintf("DBG1\n");}
       
-      if(cmd & CMD_SHOW_ACT)     {  DBPRINT("SHOW ACT\n"); showFtmPage(pFtmIf->pAct);}
-      if(cmd & CMD_SHOW_INA)     {  DBPRINT("SHOW INA\n"); showFtmPage(pFtmIf->pIna);}
+      if(cmd & CMD_SHOW_ACT)     {  DBPRINT1("SHOW ACT\n"); showFtmPage(pFtmIf->pAct);}
+      if(cmd & CMD_SHOW_INA)     {  DBPRINT1("SHOW INA\n"); showFtmPage(pFtmIf->pIna);}
       
                             
    }
@@ -95,7 +97,7 @@ void cmdEval()
 
 void processFtm()
 {
-   if (pFtmIf->status & STAT_RUNNING) pCurrentChain = processChain(pCurrentChain); 
+   if (pFtmIf->status & STAT_RUNNING) { pCurrentChain = processChain(pCurrentChain); execCnt++;} 
 }
 
 void showFtmPage(t_ftmPage* pPage)
@@ -154,7 +156,7 @@ void showFtmPage(t_ftmPage* pPage)
          
          for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++)
          {
-            mprintf("\t\t\t---MSG %c%u%c\n", planIdx+'A', chainIdx-1, msgIdx+'A');
+            mprintf("\t\t\t---MSG %u\n", msgIdx);
             mprintf("\t\t\tid:\t%08x%08x\n\t\t\tpar:\t%08x%08x\n\t\t\ttef:\t\t%08x\n\t\t\toffs:\t%08x%08x\n", 
             (uint32_t)(pMsg[msgIdx].id>>32), (uint32_t)pMsg[msgIdx].id, 
             (uint32_t)(pMsg[msgIdx].par>>32), (uint32_t)pMsg[msgIdx].par,
@@ -181,6 +183,7 @@ void showStatus()
    if(stat & STAT_IDLE) mprintf("\t\t-IDLE"); else mprintf("\t\t-\n");
    if(stat & STAT_STOP_REQ) mprintf("\t\t-STOP_REQ"); else mprintf("\t\t-\t");
    if(stat & STAT_ERROR) mprintf("\t\t-ERROR"); else mprintf("\t\t-\t");
+   mprintf("\t\tE:\t%x%08x", (uint32_t)(execCnt), (uint32_t)(execCnt>>32) );
    mprintf("\n");
    
 }
@@ -189,6 +192,16 @@ int dispatch(t_ftmMsg* pMsg)
 {
    int ret = 0;
    unsigned int diff;
+   ///////////////////////////
+   execCnt = 0;
+   ///////////////////////////
+      
+   DBPRINT2("Sending Msg\n");
+   DBPRINT3("\t\t\tid:\t%08x%08x\n\t\t\tpar:\t%08x%08x\n\t\t\ttef:\t\t%08x\n\t\t\toffs:\t%08x%08x\n", 
+            (uint32_t)(pMsg->id>>32), (uint32_t)pMsg->id, 
+            (uint32_t)(pMsg->par>>32), (uint32_t)pMsg->par,
+            pMsg->tef,
+            (uint32_t)(pMsg->offs>>32), (uint32_t)pMsg->offs);
    
    diff = ( *(pFpqCtrl + r_FPQ.capacity) - *(pFpqCtrl + r_FPQ.heapCnt));
    if(diff > 1)
@@ -205,7 +218,7 @@ int dispatch(t_ftmMsg* pMsg)
       atomic_off(); 
    } else {
       ret = -1;
-      mprintf("Queue full, waiting\n");
+      DBPRINT1("Queue full, waiting\n");
    }   
    
    return ret;
@@ -234,6 +247,7 @@ uint8_t condValid(t_ftmChain* c)
       }
       else
       {
+         DBPRINT3("Val: %08x Con: %08x\n", (c->condVal & c->condMsk), ((*pFtmIf->pSharedMem).value & c->condMsk) );
          if((c->condVal & c->condMsk) == ((*pFtmIf->pSharedMem).value & c->condMsk) ) 
          {
             if(c->flags & FLAGS_IS_SHARED_TIME) c->tStart = (*pFtmIf->pSharedMem).time;
@@ -255,6 +269,8 @@ void sigSend(t_ftmChain* c)
 {
    t_time time;
    
+   DBPRINT2("Sending Signal\n");
+   
    time = c->tStart + c->tPeriod;
    
    *(c->sigDst) = c->sigVal;
@@ -269,9 +285,11 @@ void sigSend(t_ftmChain* c)
 
 t_ftmChain* processChain(t_ftmChain* c)
 {
-   t_ftmChain* pCur = c; 
+   t_ftmChain* pCur = c;
+      
    if( getSysTime() + pFtmIf->tPrep >= c->tStart)
    {
+      DBPRINT2("Time to process Chain reached\n");
       if(condValid(c) || !pFtmIf->sema.cond) { pCur = processChainAux(c); }   
       else 
       {
@@ -286,16 +304,14 @@ t_ftmChain* processChainAux(t_ftmChain* c)
 {
    t_ftmChain* pCur = c; 
    unsigned long long tMsgExec;
-   
+   DBPRINT2("Processing...\n");
    //signal to send ?
-   if(pFtmIf->sema.sig)
-   if(   (c->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED)) 
-     && (    !(c->flags & FLAGS_IS_SIG_LAST)
-         ||  ((c->flags & FLAGS_IS_SIG_LAST) && (c->repCnt == c->repQty-1)))) 
-   {
-      if( getSysTime() + pFtmIf->tPrep >= c->tStart)  sigSend(c);
+   if(pFtmIf->sema.sig) {
+      if(   (c->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED)) 
+        && (    !(c->flags & FLAGS_IS_SIG_LAST)
+            ||  ((c->flags & FLAGS_IS_SIG_LAST) && (c->repCnt == c->repQty-1)))) 
+      {  if( getSysTime() + pFtmIf->tPrep >= c->tStart)  sigSend(c); }
    }
-   
    //get execution time for due msg
    tMsgExec    = c->tStart + (c->pMsg + c->msgIdx)->offs; 
     
@@ -305,7 +321,8 @@ t_ftmChain* processChainAux(t_ftmChain* c)
       if( getSysTime() + pFtmIf->tPrep >= tMsgExec)  
       {
          (c->pMsg + c->msgIdx)->ts = tMsgExec; //calc execution timestamp
-         if( dispatch( (t_ftmMsg*)(c->pMsg + c->msgIdx) )) c->msgIdx++;  //enough space in prio queue? dispatch and inc msgidx
+         dispatch( (t_ftmMsg*)(c->pMsg + c->msgIdx));
+         c->msgIdx++;  //enough space in prio queue? dispatch and inc msgidx
       }
    } 
    else
@@ -316,7 +333,7 @@ t_ftmChain* processChainAux(t_ftmChain* c)
       { 
          pCur = pFtmIf->pAct->pBp;  //BP? go to alt chain
          pFtmIf->pAct->pBp = NULL;
-         pFtmIf->sema.sig = 1;
+         pFtmIf->sema.sig  = 1;
          pFtmIf->sema.cond = 1;
       }
       else
@@ -333,12 +350,10 @@ t_ftmChain* processChainAux(t_ftmChain* c)
             //done, go to next chain
             c->repCnt = 0;
             pCur = (t_ftmChain*)c->pNext;
-            pFtmIf->sema.sig = 1;
+            pFtmIf->sema.sig  = 1;
             pFtmIf->sema.cond = 1;
          } 
-         
       }   
-      
       //propagate updated start time to next chain to be executed
       pCur->tStart = c->tStart + c->tPeriod;
    }

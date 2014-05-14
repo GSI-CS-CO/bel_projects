@@ -18,6 +18,7 @@ uint64_t getId(uint16_t fid, uint16_t gid, uint16_t evtno, uint16_t sid, uint16_
 {
    uint64_t ret;
    
+   printf("ID: %u %u %u %u %u %u\n", fid, gid, evtno, sid, bpid, sctr);
    ret =    ((uint64_t)fid    << ID_FID_POS)    |
             ((uint64_t)gid    << ID_GID_POS)    |
             ((uint64_t)evtno  << ID_EVTNO_POS)  |
@@ -53,8 +54,8 @@ uint8_t* uint32ToBytes(uint8_t* pBuf, uint32_t val)
 
 uint8_t* uint64ToBytes(uint8_t* pBuf, uint64_t val)
 {
-   uint8_t i;
-   for(i=0;i<FTM_DWORD_SIZE;   i++) pBuf[i]  = val >> (8*i) & 0xff;
+   uint32ToBytes(pBuf+0, (uint32_t)(val>>32));
+   uint32ToBytes(pBuf+4, (uint32_t)val);
    return pBuf+8;
 }
 
@@ -70,10 +71,11 @@ uint32_t bytesToUint32(uint8_t* pBuf)
 
 uint64_t bytesToUint64(uint8_t* pBuf)
 {
-   uint8_t i;
    uint64_t val=0;
    
-   for(i=0;i<FTM_DWORD_SIZE;   i++) val |= (uint64_t)pBuf[i] << (8*i);
+   
+   val |= (uint64_t)bytesToUint32(pBuf+0)<<32;
+   val |= (uint64_t)bytesToUint32(pBuf+4);
    return val;
 }
 
@@ -346,6 +348,7 @@ void showFtmPage(t_ftmPage* pPage)
          for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++)
          {
             printf("\t\t\t---MSG %c%u%c\n", planIdx+'A', chainIdx-1, msgIdx+'A');
+           
             printf("\t\t\tid:\t%08x%08x\n\t\t\tpar:\t%08x%08x\n\t\t\ttef:\t\t%08x\n\t\t\toffs:\t%08x%08x\n", 
             (uint32_t)(pMsg[msgIdx].id>>32), (uint32_t)pMsg[msgIdx].id, 
             (uint32_t)(pMsg[msgIdx].par>>32), (uint32_t)pMsg[msgIdx].par,

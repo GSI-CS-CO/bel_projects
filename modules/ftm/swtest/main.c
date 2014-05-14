@@ -23,7 +23,7 @@ const unsigned int c_period = 375000000/1;
 
 void show_msi()
 {
-
+  mprintf("Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
 
   mat_sprinthex(buffer, global_msi.msg);
   disp_put_str("D ");
@@ -43,20 +43,11 @@ void show_msi()
   disp_put_c('\n');
 }
 
-void pause_and_show_msi() 
-{
-  
-
-}
-
-
-
-
 void isr0()
 {
-      
-   
-   
+   mprintf("ISR0\n");   
+   show_msi();
+   /*
    unsigned char tm_idx = global_msi.adr>>2 & 0xf;
    unsigned long long deadline = irq_tm_deadl_get(tm_idx);
    static unsigned int calls = 0;  
@@ -73,7 +64,7 @@ void isr0()
    ebm_op(0x100000F0, (((unsigned int)tm_idx)<<16) + (unsigned int)calls, WRITE);    
    ebm_flush(); 
    atomic_off();
-
+   */
    
 }
 
@@ -133,47 +124,21 @@ void init()
    mprintf("done.\n");
    //prioQueueInit(5000, 10000);
    
-/*   isr_table_clr();
-   isr_ptr_table[0]= ISR_timer; //timer
+   isr_table_clr();
+   isr_ptr_table[0]= isr0; //timer
+   /*
    isr_ptr_table[1]= 0; //lm32
    isr_ptr_table[2]= isr2; //ilck
    isr_ptr_table[3]= isr3; //other    
-   irq_set_mask(0x0f);
+   */
+   irq_set_mask(0x01);
    irq_enable();
-*/
+
    disp_reset();	
    disp_put_c('\f'); 
 }
 
-int insertFpqEntry()
-{
-   static unsigned int run = 0;
-   int ret = 0;
-   unsigned int diff;
-   unsigned long long stime;
-   
-   stime = getSysTime() + ct_sec + ct_trn - ((run++)<<3); //+ (1 + ((run>>5)*5))*ct_sec ;
-   //mprintf("etime: %8x%8x\n", (unsigned int)(stime>>32), (unsigned int)(stime)); 
-   diff = ( heapCap - *(pFpqCtrl + r_FPQ.heapCnt));
-   if(diff > 1)
-   {  
-      atomic_on();
-      *pFpqData = (unsigned int)(stime>>32);
-      *pFpqData = (unsigned int)(stime);
-      *pFpqData = 0xDEADBEEF;
-      *pFpqData = 0xCAFEBABE;
-      *pFpqData = 0x11111111;
-      *pFpqData = 0x22222222;
-      *pFpqData = 0x33333333;
-      *pFpqData = run;
-      atomic_off(); 
-   } else {
-      ret = -1;
-      mprintf("Queue full, waiting\n");
-   }   
-    
-   return ret;
-}
+
 
 void showFpqStatus()
 {
@@ -198,9 +163,9 @@ disp_put_c('\f');
   
    
   while (1) {
-   showStatus();
+   //showStatus();
    cmdEval();
-   //processFtm();
+   processFtm();
    for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
       }
