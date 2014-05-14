@@ -63,7 +63,7 @@ entity monster is
     g_gpio_inout           : natural;
     g_gpio_in              : natural;
     g_gpio_out             : natural;
-    g_tlu_fifo_size        : natural := 32;
+    g_tlu_fifo_size        : natural;
     g_lvds_inout           : natural;
     g_lvds_in              : natural;
     g_lvds_out             : natural;
@@ -77,12 +77,11 @@ entity monster is
     g_en_lcd               : boolean;
     g_en_user_ow           : boolean;
     g_en_power_test        : boolean;
-    g_lm32_cores           : natural := 1;
-    g_lm32_MSIs            : natural := 1;
-    g_lm32_ramsizes        : natural := 65536;
-    g_lm32_shared_ramsize  : natural := 16384/4; -- will only be used if g_lm32_cores > 1
-    g_lm32_are_ftm         : boolean := false 
-    );
+    g_lm32_cores           : natural;
+    g_lm32_MSIs            : natural;
+    g_lm32_ramsizes        : natural;
+    g_lm32_shared_ramsize  : natural;
+    g_lm32_are_ftm         : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
