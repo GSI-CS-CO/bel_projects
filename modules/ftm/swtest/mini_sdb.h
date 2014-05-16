@@ -14,6 +14,9 @@
 #define SDB_BRIDGE      0x02
 #define SDB_EMPTY       0xFF
 
+#define GSI                   0x00000651
+#define CB_GENERIC            0xeef0b198
+
 #define CPU_INFO_ROM          0x10040085
 #define CPU_ATOM_ACC          0x10040100
 #define CPU_SYSTEM_TIME       0x10040084
@@ -45,6 +48,8 @@ volatile unsigned int* pCpuTimer;
 volatile unsigned int* pCluInfo;
 volatile unsigned int* pUart;
 volatile unsigned int* BASE_UART;
+
+
 
 typedef struct pair64 {
         unsigned int high;
@@ -98,6 +103,15 @@ typedef union sdb_record {
         struct sdb_bridge bridge;
         struct SDB_INTERCONNECT interconnect;
 } sdb_record_t;
+
+typedef struct sdb_location {
+        sdb_record_t* sdb;
+        unsigned int adr;
+} sdb_location;
+
+sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, unsigned int base, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId);
+sdb_location find_sdb(unsigned int venId, unsigned int devId);
+unsigned int getSdbAdr(sdb_location loc);
 
 unsigned char *find_device_deep(unsigned int base, unsigned int sdb,
                                        unsigned int devid);

@@ -1,6 +1,60 @@
 #include "mini_sdb.h"
+#include "aux.h"
 
+sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, unsigned int base, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId)
+{
+        sdb_record_t *record = parent_sdb;
+        int records = record->interconnect.sdb_records;
+        int i;
+        DBPRINT1("base 0x%08x\n", base);
+           for (i = 0; i < records; ++i, ++record) {
+                   if (record->empty.record_type == SDB_BRIDGE) {
+                     
+                     if (record->bridge.sdb_component.product.vendor_id.low == venId &&
+                         record->bridge.sdb_component.product.device_id == devId) {
+                           DBPRINT1("Target BRG at base 0x%08x 0x%08x  entry %u\n", base, base+record->bridge.sdb_component.addr_first.low, *idx);
+                           found_sdb[(*idx)].sdb = record;
+                           found_sdb[(*idx)].adr = base;
+                           (*idx)++;
+                           
+        
+                     }  
+                     DBPRINT2("call base %08x sdb %08x Adr: 0x%08x \n", base, (sdb_record_t *)(base +record->bridge.sdb_child.low), base+record->bridge.sdb_component.addr_first.low);
+                     
+                     find_sdb_deep((sdb_record_t *)(base+record->bridge.sdb_child.low), found_sdb, base+record->bridge.sdb_component.addr_first.low, idx, qty, venId, devId);
+                     
+                   }
+                   
+                   if (record->empty.record_type == SDB_DEVICE) {
+                      DBPRINT3("idx %u max %u Adr: 0x%08x DEV VEN 0x%08x ID 0x%08x\n", i, records, base+record->device.sdb_component.addr_first.low, record->device.sdb_component.product.vendor_id.low, record->device.sdb_component.product.device_id);
+                      if (record->device.sdb_component.product.vendor_id.low == venId &&
+                          record->device.sdb_component.product.device_id == devId) {
+                              DBPRINT1("Target DEV at 0x%08x\n", base + record->device.sdb_component.addr_first.low);
+                              found_sdb[(*idx)].sdb = record;
+                              found_sdb[(*idx)].adr = base;
+                              (*idx)++;
 
+                      }
+                   }
+                   if(*idx >= qty) return found_sdb;
+           }
+        
+        return found_sdb;
+}
+
+sdb_location find_sdb(unsigned int venId, unsigned int devId)
+{
+   sdb_location ret;
+   unsigned int idx = 0;
+   find_sdb_deep((sdb_record_t *)((unsigned int)(SBD_BASE)), &ret, 0, &idx, 1, venId, devId);
+   return ret;
+}
+
+unsigned int getSdbAdr(sdb_location loc)
+{
+   if (loc.sdb->empty.record_type == SDB_DEVICE ) return loc.adr + loc.sdb->device.sdb_component.addr_first.low;
+   else return loc.adr + loc.sdb->bridge.sdb_component.addr_first.low;
+}
 
 unsigned char *find_device_deep(unsigned int base, unsigned int sdb,
                                        unsigned int devid)

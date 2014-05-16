@@ -149,23 +149,50 @@ void main(void) {
 
 
    int j;
-
-   
+   sdb_location brg;
+   sdb_location dev;
+   unsigned int adrDev0, adrDev1, adrBrg, idx;
+   sdb_location allBrg[20];
 
    init();
-  DBPRINT("Hallo Welt!\n");
+  DBPRINT("Hallo Welt???\n");
 
 disp_put_c('\f');
 
   disp_put_str("FTM ready\n");
-  
-  
-  
+  mprintf("\fFTM READY\n");
+  for (j = 0; j < (125000000/4); ++j) {
+        asm("# noop"); // no-op the compiler can't optimize away
+      }
    
+  adrDev0 = getSdbAdr(find_sdb(GSI,CPU_CLU_INFO_ROM));
+  brg = find_sdb(GSI,CB_GENERIC);
+  adrBrg = getSdbAdr(brg);
+
+
+  idx = 0;
+  find_sdb_deep((sdb_record_t *)((unsigned int)(SBD_BASE)), &allBrg[0], 0, &idx, 20, GSI,CB_GENERIC);
+  mprintf("Brg1: 0x%08x Brg2: 0x%08x Brg3: 0x%08x Brg4: 0x%08x\n", getSdbAdr(allBrg[0]), getSdbAdr(allBrg[1]), getSdbAdr(allBrg[2]), getSdbAdr(allBrg[3]));
+   
+  
+  idx = 0;
+  find_sdb_deep(allBrg[0].sdb, &dev, allBrg[0].adr, &idx, 1, GSI,  CPU_CLU_INFO_ROM);
+  adrDev1 = getSdbAdr(dev);
+  
+  mprintf("CLUINFOROM: 0x%08x CB: 0x%08x SUB: 0x%08x\n", adrDev0, allBrg[0].adr, adrDev1);
+ idx = 0;
+ find_sdb_deep((sdb_record_t *)(allBrg[1].adr+allBrg[1].sdb->bridge.sdb_child.low), &dev, getSdbAdr(allBrg[1]), &idx, 1, GSI,  0x10050082);
+  adrDev1 = getSdbAdr(dev);
+  
+  mprintf("IRQ: 0x%08x \n", adrDev1);
+ 
+ 
   while (1) {
+  /*
    //showStatus();
    cmdEval();
    processFtm();
+   */
    for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
       }
