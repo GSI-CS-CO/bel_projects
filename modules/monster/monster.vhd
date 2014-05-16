@@ -304,7 +304,7 @@ architecture rtl of monster is
   constant c_topm_fpq       : natural := 5;
   
   -- required slaves
-  constant c_top_slaves     : natural := 18;
+  constant c_top_slaves     : natural := 19;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -316,15 +316,15 @@ architecture rtl of monster is
   constant c_tops_eca_ctl   : natural := 8;
   constant c_tops_eca_event : natural := 9;
   constant c_tops_eca_aq    : natural := 10;
-  -- !!! missing IO configuration slave
+  constant c_tops_iodir     : natural := 11;
   -- optional slaves:
-  constant c_tops_lcd       : natural := 11;
-  constant c_tops_oled      : natural := 12;
-  constant c_tops_scubus    : natural := 13;
-  constant c_tops_mil       : natural := 14;
-  constant c_tops_mil_ctrl  : natural := 15;
-  constant c_tops_ow        : natural := 16;
-  constant c_tops_power_test: natural := 17;
+  constant c_tops_lcd       : natural := 12;
+  constant c_tops_oled      : natural := 13;
+  constant c_tops_scubus    : natural := 14;
+  constant c_tops_mil       : natural := 15;
+  constant c_tops_mil_ctrl  : natural := 16;
+  constant c_tops_ow        : natural := 17;
+  constant c_tops_power_test: natural := 18;
 
   
   -- We have to specify the values for WRC as there is no generic out in vhdl
@@ -352,6 +352,7 @@ architecture rtl of monster is
     c_tops_eca_ctl   => f_sdb_auto_device(c_eca_sdb,                        true),
     c_tops_eca_event => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
     c_tops_eca_aq    => f_sdb_auto_device(c_eca_queue_sdb,                  true),
+    c_tops_iodir     => f_sdb_auto_device(c_iodir_sdb,                      true),
     c_tops_lcd       => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_tops_scubus    => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
@@ -1250,8 +1251,17 @@ begin
       slave_i    => top_cbar_master_o(c_tops_reset),
       rstn_o(0)  => s_lm32_rstn);
   
-  
-
+  iodir : monster_iodir
+    generic map(
+      g_gpio_inout => g_gpio_inout,
+      g_lvds_inout => g_lvds_inout)
+    port map(
+      clk_i      => clk_sys,
+      rst_n_i    => rstn_sys,
+      slave_i    => top_cbar_master_o(c_tops_iodir),
+      slave_o    => top_cbar_master_i(c_tops_iodir),
+      gpio_oen_o => gpio_oen_o,
+      lvds_oen_o => lvds_oen_o);
   
   tlu_gpio : if (g_gpio_in + g_gpio_inout > 0) generate
    s_triggers(g_gpio_in + g_gpio_inout -1 downto 0) <= f_gpio_to_trigger_array(gpio_i);
@@ -1588,9 +1598,5 @@ begin
   
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------
-
-  -- !!!
-  gpio_oen_o <= (others => '0');
-  lvds_oen_o <= (0 => '1', others => '0');
   
 end rtl;
