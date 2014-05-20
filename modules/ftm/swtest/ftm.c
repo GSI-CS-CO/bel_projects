@@ -1,4 +1,5 @@
 #include "ftm.h"
+#include "dbg.h"
 
 uint16_t getIdFID(uint64_t id)     {return ((uint16_t)(id >> ID_FID_POS))     & (ID_MSK_B16 >> (16 - ID_FID_LEN));}
 uint16_t getIdGID(uint64_t id)     {return ((uint16_t)(id >> ID_GID_POS))     & (ID_MSK_B16 >> (16 - ID_GID_LEN));}
@@ -51,9 +52,11 @@ void ftmInit()
                                 .pMsg       = NULL,
                                 .pNext      = NULL
                                 };
-   pFtmIf->sema.sig  = 1;
-   pFtmIf->sema.cond = 1;
-   pCurrentChain = (t_ftmChain*)&pFtmIf->idle;
+   
+   pFtmIf->pSharedMem   = (t_shared*)pSharedRam;
+   pFtmIf->sema.sig     = 1;
+   pFtmIf->sema.cond    = 1;
+   pCurrentChain        = (t_ftmChain*)&pFtmIf->idle;
    
    prioQueueInit();
    
@@ -289,7 +292,7 @@ t_ftmChain* processChain(t_ftmChain* c)
       
    if( getSysTime() + pFtmIf->tPrep >= c->tStart)
    {
-      DBPRINT2("Time to process Chain reached\n");
+      DBPRINT3("Time to process Chain reached\n");
       if(condValid(c) || !pFtmIf->sema.cond) { pCur = processChainAux(c); }   
       else 
       {
@@ -304,7 +307,7 @@ t_ftmChain* processChainAux(t_ftmChain* c)
 {
    t_ftmChain* pCur = c; 
    unsigned long long tMsgExec;
-   DBPRINT2("Processing...\n");
+   DBPRINT3("Processing...\n");
    //signal to send ?
    if(pFtmIf->sema.sig) {
       if(   (c->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED)) 
@@ -349,7 +352,8 @@ t_ftmChain* processChainAux(t_ftmChain* c)
          {
             //done, go to next chain
             c->repCnt = 0;
-            pCur = (t_ftmChain*)c->pNext;
+            if(c->pNext != NULL) pCur = (t_ftmChain*)c->pNext;
+            else pCur = (t_ftmChain*)&pFtmIf->idle;
             pFtmIf->sema.sig  = 1;
             pFtmIf->sema.cond = 1;
          } 

@@ -7,31 +7,8 @@
 #define F_SYS          62500000ULL
 #define T_SYS          1000000000ULL / F_SYS
 #define CYCSMICRO      1000ULL/16ULL  
-#define DEBUGLEVEL     3
 
 
-//print macro for debuglevel 1-3
-#ifdef DEBUGLEVEL
-   #if DEBUGLEVEL>=1
-      #define DBPRINT1 mprintf
-      #define DBPRINT  mprintf
-   #else
-      #define DBPRINT1(...)
-      #define DBPRINT(...)
-   #endif
-
-   #if DEBUGLEVEL>=2
-      #define DBPRINT2 mprintf
-   #else
-      #define DBPRINT2(...)
-   #endif
-
-   #if DEBUGLEVEL>=3
-      #define DBPRINT3 mprintf
-   #else
-      #define DBPRINT3(...)
-   #endif
-#endif
 
 extern volatile unsigned int* pCpuId;
 extern volatile unsigned int* pCpuAtomic;

@@ -8,9 +8,10 @@
 #include "ftmx86.h"
 
 
+
 #define MAX_DEVICES  100
 #define BUF_SIZE     0x600
-#define PACKET_SIZE  1500
+#define PACKET_SIZE  1000
 
 const char* program;
 eb_device_t device;

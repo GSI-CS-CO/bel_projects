@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "dbg.h"
 #include "mini_sdb.h"
 #include "irq.h"
 #include "aux.h"

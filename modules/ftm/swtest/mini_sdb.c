@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "mini_sdb.h"
-#include "aux.h"
+#include "dbg.h"
 
 sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, unsigned int base, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId)
 {
@@ -73,14 +73,12 @@ unsigned int* find_device_adr_in_subtree(sdb_location *loc, unsigned int venId, 
    else        adr = NULL;
    return adr;
 }
-///
+
 
 unsigned int getSdbAdr(sdb_location *loc)
 {
-   DBPRINT3("getAdr: Base: 0x%08x first: 0x%08x\n", loc->adr, loc->sdb->device.sdb_component.addr_first.low);
    if (loc->sdb->empty.record_type == SDB_DEVICE ) 
    {
-      
       return loc->adr + loc->sdb->device.sdb_component.addr_first.low;
    }
    else return loc->adr + loc->sdb->bridge.sdb_component.addr_first.low;

@@ -7,8 +7,7 @@
 #include "timer.h"
 #include "ebm.h"
 #include "aux.h"
-
-#define DEBUG 3
+#include "dbg.h"
 
 char buffer[12];
 volatile char color; 
@@ -161,11 +160,10 @@ disp_put_c('\f');
 
   disp_put_str("FTM ready\n");
   mprintf("\fFTM READY\n");
-  DBPRINT1("pCpuId %08x\npCpuAtmoic %08x\n pCluInfo %08x\n pEca %08x\n pCluCB %08x\n pSharedRam %08x\n", pCpuId, pCpuAtomic, pCluInfo, pEca, pCluCB,pSharedRam);
   for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
       }
-   
+  /* 
   mprintf("CluRom: 0x%08x\n", find_device_adr(GSI,CPU_CLU_INFO_ROM));
   
   idx = 0;
@@ -181,12 +179,14 @@ disp_put_c('\f');
   
   mprintf("IRQ: 0x%08x \n", adrDev1);
    mprintf("UART0: 0x%08x \nUART1: 0x%08x \n", (unsigned int*)find_device_adr(CERN, WR_UART), (unsigned int*)find_device(WR_UART));
+  */
+  
   while (1) {
-  /*
+  
    //showStatus();
    cmdEval();
    processFtm();
-   */
+   
    for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
       }
