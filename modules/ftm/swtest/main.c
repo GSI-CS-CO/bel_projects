@@ -3,22 +3,26 @@
 #include "mini_sdb.h"
 #include "display.h"
 #include "irq.h"
-//#include "ftm.h"
+#include "ftm.h"
 #include "timer.h"
 #include "ebm.h"
 #include "aux.h"
+#include "dbg.h"
 
 char buffer[12];
 volatile char color; 
-unsigned int cpuID, cpuMAX;
+unsigned int cpuID, cpuMAX, heapCap;
    char buffer[12];
 volatile unsigned long long timestamp, timestamp_old;
+
+const unsigned long long ct_trn = 200000 /8; // 200 us in 8ns steps
+const unsigned long long ct_sec = 1000000000 /8; // 1s
 
 const unsigned int c_period = 375000000/1;
 
 void show_msi()
 {
-
+  mprintf("Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
 
   mat_sprinthex(buffer, global_msi.msg);
   disp_put_str("D ");
@@ -38,20 +42,11 @@ void show_msi()
   disp_put_c('\n');
 }
 
-void pause_and_show_msi() 
-{
-  
-
-}
-
-
-
-
 void isr0()
 {
-      
-   
-   
+   mprintf("ISR0\n");   
+   show_msi();
+   /*
    unsigned char tm_idx = global_msi.adr>>2 & 0xf;
    unsigned long long deadline = irq_tm_deadl_get(tm_idx);
    static unsigned int calls = 0;  
@@ -68,7 +63,7 @@ void isr0()
    ebm_op(0x100000F0, (((unsigned int)tm_idx)<<16) + (unsigned int)calls, WRITE);    
    ebm_flush(); 
    atomic_off();
-
+   */
    
 }
 
@@ -107,126 +102,42 @@ void ebmInit()
 
 
 
-// Priority Queue RegisterLayout
-static const struct {
-   unsigned int rst;
-   unsigned int force;
-   unsigned int dbgSet;
-   unsigned int dbgGet;
-   unsigned int clear;
-   unsigned int cfgGet;
-   unsigned int cfgSet;
-   unsigned int cfgClr;
-   unsigned int dstAdr;
-   unsigned int heapCnt;
-   unsigned int msgCntO;
-   unsigned int msgCntI;
-   unsigned int tTrnHi;
-   unsigned int tTrnLo;
-   unsigned int tDueHi;
-   unsigned int tDueLo;
-   unsigned int capacity;
-   unsigned int msgMax;
-   unsigned int ebmAdr;
-   unsigned int cfg_ENA;
-   unsigned int cfg_FIFO;    
-   unsigned int cfg_IRQ;
-   unsigned int cfg_AUTOPOP;
-   unsigned int cfg_AUTOFLUSH_TIME;
-   unsigned int cfg_AUTOFLUSH_MSGS;
-   unsigned int force_POP;
-   unsigned int force_FLUSH;
-} r_FPQ = {    .rst        =  0x00 >> 2,
-               .force      =  0x04 >> 2,
-               .dbgSet     =  0x08 >> 2,
-               .dbgGet     =  0x0c >> 2,
-               .clear      =  0x10 >> 2,
-               .cfgGet     =  0x14 >> 2,
-               .cfgSet     =  0x18 >> 2,
-               .cfgClr     =  0x1C >> 2,
-               .dstAdr     =  0x20 >> 2,
-               .heapCnt    =  0x24 >> 2,
-               .msgCntO    =  0x28 >> 2,
-               .msgCntI    =  0x2C >> 2,
-               .tTrnHi     =  0x30 >> 2,
-               .tTrnLo     =  0x34 >> 2,
-               .tDueHi     =  0x38 >> 2,
-               .tDueLo     =  0x3C >> 2,
-               .capacity   =  0x40 >> 2,
-               .msgMax     =  0x44 >> 2,
-               .ebmAdr     =  0x48 >> 2,
-               .cfg_ENA             = 1<<0,
-               .cfg_FIFO            = 1<<1,    
-               .cfg_IRQ             = 1<<2,
-               .cfg_AUTOPOP         = 1<<3,
-               .cfg_AUTOFLUSH_TIME  = 1<<4,
-               .cfg_AUTOFLUSH_MSGS  = 1<<5,
-               .force_POP           = 1<<0,
-               .force_FLUSH         = 1<<1
-};
 
-void prioQueueInit()
-{
-   *(pFpqCtrl + r_FPQ.clear)  = 1;
-   *(pFpqCtrl + r_FPQ.dstAdr) = (unsigned int)pEca;
-   *(pFpqCtrl + r_FPQ.ebmAdr) = (unsigned int)pEbm;
-   *(pFpqCtrl + r_FPQ.msgMax) = 5;
-   *(pFpqCtrl + r_FPQ.tTrnHi) = 0;
-   *(pFpqCtrl + r_FPQ.tTrnLo) = 0;
-   *(pFpqCtrl + r_FPQ.tDueHi) = 0;
-   *(pFpqCtrl + r_FPQ.tDueLo) = 0;
-   *(pFpqCtrl + r_FPQ.cfgSet) = //r_FPQ.cfg_AUTOFLUSH_TIME | 
-                                  r_FPQ.cfg_AUTOFLUSH_MSGS |
-                                  //r_FPQ.cfg_AUTOPOP | 
-                                  r_FPQ.cfg_FIFO | 
-                                  r_FPQ.cfg_ENA;
-}
+
 
 
 void init()
 {
 
    
+   
    discoverPeriphery();
+   
    uart_init_hw();
    uart_write_string("\nDebug Port\n");
+   mprintf("Init EBM...");
    ebmInit(); 
-   prioQueueInit();
+   mprintf("done.\n");
+   mprintf("Init FTM...");
+   ftmInit();
+   mprintf("done.\n");
+   //prioQueueInit(5000, 10000);
    
-/*   isr_table_clr();
-   isr_ptr_table[0]= ISR_timer; //timer
+   isr_table_clr();
+   isr_ptr_table[0]= isr0; //timer
+   /*
    isr_ptr_table[1]= 0; //lm32
    isr_ptr_table[2]= isr2; //ilck
    isr_ptr_table[3]= isr3; //other    
-   irq_set_mask(0x0f);
+   */
+   irq_set_mask(0x01);
    irq_enable();
-*/
+
    disp_reset();	
    disp_put_c('\f'); 
 }
 
-int insertFpqEntry()
-{
-   static unsigned int run = 0;
-   int ret = 0;
-   atomic_on();
-   if( (*(pFpqCtrl + r_FPQ.capacity) - *(pFpqCtrl + r_FPQ.heapCnt)) > 1)
-   {  
-      *pFpqData = 0;
-      *pFpqData = 128 - run++;
-      *pFpqData = 0xDEADBEEF;
-      *pFpqData = 0xCAFEBABE;
-      *pFpqData = 0x11111111;
-      *pFpqData = 0x22222222;
-      *pFpqData = 0x33333333;
-      *pFpqData = run;
-   } else {
-      ret = -1;
-      mprintf("Queue full, waiting\n");
-   }   
-   atomic_off();  
-   return ret;
-}
+
 
 void showFpqStatus()
 {
@@ -237,43 +148,49 @@ void main(void) {
 
 
    int j;
+   sdb_location brg;
+   sdb_location dev, loc;
+   unsigned int adrDev0, adrDev1, adrBrg, idx;
+   sdb_location allBrg[20];
 
    init();
-  
+  DBPRINT("Hallo Welt???\n");
 
 disp_put_c('\f');
 
   disp_put_str("FTM ready\n");
+  mprintf("\fFTM READY\n");
+  for (j = 0; j < (125000000/4); ++j) {
+        asm("# noop"); // no-op the compiler can't optimize away
+      }
+  /* 
+  mprintf("CluRom: 0x%08x\n", find_device_adr(GSI,CPU_CLU_INFO_ROM));
+  
+  idx = 0;
+  find_device_multi(&allBrg[0], &idx, 20, GSI,CB_GENERIC);
+  mprintf("Brg1: 0x%08x Brg2: 0x%08x Brg3: 0x%08x Brg4: 0x%08x\n", getSdbAdr(&allBrg[0]), getSdbAdr(&allBrg[1]), getSdbAdr(&allBrg[2]), getSdbAdr(&allBrg[3]));
+   
+  idx = 0;
+  adrDev1 = (unsigned int)find_device_adr_in_subtree(&allBrg[0], GSI,  CPU_CLU_INFO_ROM);
   
   
-
-   for (j = 0; j < (125000000/160)*(cpuID<<3); ++j) {
+ idx = 0;
+ adrDev1 = (unsigned int)find_device_adr_in_subtree(&allBrg[1], GSI,  0x10050082);
+  
+  mprintf("IRQ: 0x%08x \n", adrDev1);
+   mprintf("UART0: 0x%08x \nUART1: 0x%08x \n", (unsigned int*)find_device_adr(CERN, WR_UART), (unsigned int*)find_device(WR_UART));
+  */
+  
+  while (1) {
+  
+   //showStatus();
+   cmdEval();
+   processFtm();
+   
+   for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
       }
    
-   
-   
-   disp_put_str(mat_sprinthex(buffer, (unsigned int)pCpuId)); disp_put_c('\n');   
-   disp_put_str(mat_sprinthex(buffer, (unsigned int)pCluInfo)); disp_put_c('\n');
-   disp_put_str(mat_sprinthex(buffer, (unsigned int)pUart)); disp_put_c('\n');
-   mprintf("Hello World!\n");
-   mprintf("PrioQC 0x%8x\n", pFpqCtrl);
-   mprintf("PrioQD 0x%8x\n", pFpqData);
-   mprintf("EBM 0x%8x\n", pEbm);
-   mprintf("ECA 0x%8x\n", pEca);
-   mprintf("Time: 0x%8x%8x\n", *pCpuSysTime, *(pCpuSysTime+1));
-    showFpqStatus();
-   
-   for (j = 0; j < 128; ++j) insertFpqEntry();
-   showFpqStatus();
-   
-   for (j = 0; j < 3500000; ++j) {asm("# noop");}
-  
-   
-   while (1) {
-      *(pFpqCtrl + r_FPQ.force) = r_FPQ.force_POP;
-      for (j = 0; j < 31500000; ++j) {asm("# noop");}
-      showFpqStatus();
   }
 
 }

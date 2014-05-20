@@ -49,7 +49,7 @@ inline void irq_tm_clr_arm(unsigned int val)
 // comparator src
 inline unsigned int irq_tm_get_src(void)
 {
-  return (pCpuTimer + r_timer.srcGet);
+  return *(pCpuTimer + r_timer.srcGet);
 }
 
 inline void irq_tm_set_src(unsigned int val)

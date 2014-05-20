@@ -1,0 +1,217 @@
+<page>
+   <meta>
+      <startplan>A</startplan>
+      <altplan>B</altplan>
+   </meta>
+   
+   <plan>
+      <!-- Plan A -->
+      <starttime>60</starttime>  
+      <cycle>
+         <!-- Cycle A0 -->
+         <meta>
+            <rep>10</rep>
+            <period>2000</period>
+            <breakpoint>yes</breakpoint>
+            <condition>
+               <source>shared</source>
+               <pattern>0xd15ea5edcafebabe</pattern>
+               <mask>0xffffffffffffffff</mask>
+            </condition>
+            <signal>
+               <destination>0x123</destination>
+               <value>0x456</value>
+            </signal>
+         </meta>
+        
+         <msg>
+             <!-- Msg A0A -->
+            <id>
+               <FID>2</FID>
+               <GID>3</GID>
+               <EVTNO>0</EVTNO>
+               <SID>5</SID>
+               <BPID>6</BPID>
+            </id>
+            <par>0xfeed0132</par>
+            <tef>132</tef>
+            <offs>200</offs>
+         </msg>
+         
+         <msg>
+            <!-- Msg A0B -->
+            <id>
+               <FID>2</FID>
+               <GID>3</GID>
+               <EVTNO>1</EVTNO>
+               <SID>5</SID>
+               <BPID>6</BPID>
+            </id>
+            <par>0xdead0132</par>
+            <tef>0</tef>
+            <offs>500</offs>
+         </msg>
+         <msg>
+            <!-- Msg A0C -->
+            <id>
+               <FID>2</FID>
+               <GID>3</GID>
+               <EVTNO>1</EVTNO>
+               <SID>5</SID>
+               <BPID>6</BPID>
+            </id>
+            <par>0xdead0132</par>
+            <tef>0</tef>
+            <offs>500</offs>
+         </msg>
+      </cycle>
+      
+      <cycle>
+         <!-- Cycle A1 -->
+         <meta>
+            <rep>1</rep>
+            <period>5000</period>
+            <breakpoint>yes</breakpoint>
+         </meta>
+         
+         <msg>
+            <!-- Msg A1A -->
+            <id>
+               <FID>2</FID>
+               <GID>3</GID>
+               <EVTNO>0</EVTNO>
+               <SID>5</SID>
+               <BPID>6</BPID>
+            </id>
+            <par>0xfeed0132</par>
+            <tef>132</tef>
+            <offs>500</offs>
+         </msg>
+         
+         <msg>
+            <!-- Msg A1B -->
+            <id>
+               <FID>2</FID>
+               <GID>3</GID>
+               <EVTNO>1</EVTNO>
+               <SID>5</SID>
+               <BPID>6</BPID>
+            </id>
+            <par>0xdead0132</par>
+            <tef>0</tef>
+            <offs>1000</offs>
+         </msg>
+      </cycle>
+   </plan>
+   
+   <plan>
+      <starttime>5</starttime>
+      <!-- Plan B -->  
+      <cycle>
+         <!-- Cycle B0 -->
+         <meta>
+            <rep>10</rep>
+            <period>2000</period>
+            <breakpoint>yes</breakpoint>
+            <signal>
+               <destination>0x1234567</destination>
+               <value>0xDEADBEEF</value>
+            </signal>
+         </meta>
+        
+         <msg>
+             <!-- Msg B0A -->
+            <id>
+               <FID>2</FID>
+               <GID>3</GID>
+               <EVTNO>0</EVTNO>
+               <SID>5</SID>
+               <BPID>6</BPID>
+            </id>
+            <par>0xfeed0132</par>
+            <tef>132</tef>
+            <offs>200</offs>
+         </msg>
+         
+         <msg>
+            <!-- Msg B0B -->
+            <id>
+               <FID>2</FID>
+               <GID>3</GID>
+               <EVTNO>1</EVTNO>
+               <SID>5</SID>
+               <BPID>6</BPID>
+            </id>
+            <par>0xdead0132</par>
+            <tef>0</tef>
+            <offs>500</offs>
+         </msg>
+      </cycle>
+      
+      <cycle>
+         <!-- Cycle B1 -->
+         <meta>
+            <rep>1</rep>
+            <period>5000</period>
+            <breakpoint>yes</breakpoint>
+            <condition>
+               <source>msi</source>
+               <pattern>0xcafebabe</pattern>
+               <mask>0xffffffff</mask>
+            </condition>
+         </meta>
+         
+         <msg>
+            <!-- Msg B1A -->
+            <id>
+               <FID>2</FID>
+               <GID>3</GID>
+               <EVTNO>0</EVTNO>
+               <SID>5</SID>
+               <BPID>6</BPID>
+            </id>
+            <par>0xfeed0132</par>
+            <tef>132</tef>
+            <offs>500</offs>
+         </msg>
+         
+         <msg>
+            <!-- Msg B1B -->
+            <id>
+               <FID>2</FID>
+               <GID>3</GID>
+               <EVTNO>1</EVTNO>
+               <SID>5</SID>
+               <BPID>6</BPID>
+            </id>
+            <par>0xdead0132</par>
+            <tef>0</tef>
+            <offs>1000</offs>
+         </msg>
+      </cycle>
+      <cycle>
+         <!-- Cycle B2 -->
+         <meta>
+            <rep>1</rep>
+            <period>5000</period>
+            <breakpoint>no</breakpoint>
+         </meta>
+         
+         <msg>
+            <!-- Msg B2A -->
+            <id>
+               <FID>2</FID>
+               <GID>3</GID>
+               <EVTNO>0</EVTNO>
+               <SID>5</SID>
+               <BPID>6</BPID>
+            </id>
+            <par>0xfeed0132</par>
+            <tef>132</tef>
+            <offs>500</offs>
+         </msg>
+         
+         
+      </cycle>
+   </plan>
+</page>

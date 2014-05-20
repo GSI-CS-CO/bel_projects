@@ -1,107 +1,165 @@
 #ifndef _FTM_H_
 #define _FTM_H_
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "dbg.h"
+#include "mini_sdb.h"
+#include "irq.h"
+#include "aux.h"
+
+
+#define MSI_SIG               0
+
+
+#define FTM_PLAN_MAX        16
+#define FTM_PAGEDATA        0x0600
+#define FTM_PAGEMETA        (4 + 4 * FTM_PLAN_MAX + 4 + 4)   
+#define FTM_PAGESIZE        (FTM_PAGEDATA + FTM_PAGEMETA)
+
+
+#define FTM_CMD_OFFSET      (2*FTM_PAGESIZE)
+#define FTM_STAT_OFFSET     (FTM_CMD_OFFSET     + 4)
+#define FTM_PACT_OFFSET     (FTM_STAT_OFFSET    + 4)
+#define FTM_PINA_OFFSET     (FTM_PACT_OFFSET    + 4)
+#define FTM_TPREP_OFFSET    (FTM_PINA_OFFSET    + 4)
+#define FTM_IDLE_OFFSET     (FTM_TPREP_OFFSET   + 8)
 
 
 
 //masks & constants
-#define MSK_PAGE              (1<<0)
-
-#define NORMAL                0
-#define OFFSET                1
-#define NOW                   2
-
-
 #define CMD_RST           		(1<<0)	//Reset FTM status and counters
-#define CMD_PAGESWAP      		(1<<1)	//Use mempage A/B
-#define CMD_PAGESWAP_I   		(1<<2)	//Use mempage A/B immediately
-#define CMD_RUN    		      (1<<3)	//Use mempage A/B immediately
-#define CMD_RUN_NOW 		      (1<<4)	//Use mempage A/B immediately
-#define CMD_STOP    		      (1<<5)	//Use mempage A/B immediately
-#define CMD_STOP_NOW 	      (1<<6)	//Use mempage A/B immediately
+#define CMD_START      		   (1<<1)	//Start FTM
+#define CMD_IDLE   		      (1<<2)	//Jump into IDLE at next BP
+#define CMD_STOP_REQ          (1<<3)	//Stop FTM if when it reaches IDLE state
+#define CMD_STOP_NOW          (1<<4)	//Stop FTM immediately
 
-#define CMD_DBG_0             (1<<8)
-#define CMD_DBG_1             (1<<9)
+#define CMD_COMMIT_PAGE       (1<<8)  //Commmit new data and validate
+#define CMD_COMMIT_BP         (1<<9)  //Commit alt Plan pointer. Will be selected at next BP if not NULL
+#define CMD_PAGE_SWAP         (1<<10)  //swap Page at next BP
+#define CMD_SHOW_ACT          (1<<11)
+#define CMD_SHOW_INA          (1<<12)
+#define CMD_DBG_0             (1<<16)  //DBG case 0
+#define CMD_DBG_1             (1<<17)  //DBG case 1
 
-#define FTM_RUNNING           (1<<0)
+#define STAT_RUNNING          (1<<0)   //the FTM is running
+#define STAT_IDLE             (1<<1)   //the FTM is idling  
+#define STAT_STOP_REQ         (1<<2)   //alt ptr has been set to IDLE 
+#define STAT_ERROR            (1<<3)   //FTM encountered an error, check error register
 
-#define CYC_START_ABS_MSK     (1<<8)	   //Start timing cycle at time specified
-#define CYC_START_REL_MSK     (1<<8)	   //Start timing cycle at now + time specifed
-#define CYC_DBG           (1<<10)	   //Run Cycle in  debug mode (start time will be corrected if in the past, no error detection)
-#define CYC_SEL           0xffff0000	//cycle select
+#define ID_MSK_B16            0xffff
+#define ID_FID_LEN            4
+#define ID_GID_LEN            12
+#define ID_EVTNO_LEN          12
+#define ID_SID_LEN            12
+#define ID_BPID_LEN           14
+#define ID_SCTR_LEN           10
+#define ID_FID_POS            (ID_GID_LEN + ID_EVTNO_LEN + ID_SID_LEN + ID_BPID_LEN + ID_SCTR_LEN)
+#define ID_GID_POS            (ID_EVTNO_LEN + ID_SID_LEN + ID_BPID_LEN + ID_SCTR_LEN)
+#define ID_EVTNO_POS          (ID_SID_LEN + ID_BPID_LEN + ID_SCTR_LEN)
+#define ID_SID_POS            (ID_BPID_LEN + ID_SCTR_LEN)
+#define ID_BPID_POS           (ID_SCTR_LEN)
+#define ID_SCTR_POS           0
+
+#define FLAGS_IS_BP           (1<<0)
+#define FLAGS_IS_COND_MSI     (1<<1)
+#define FLAGS_IS_COND_SHARED  (1<<2)
+#define FLAGS_IS_SHARED_TIME  (1<<3)
+#define FLAGS_IS_SIG_MSI      (1<<4)
+#define FLAGS_IS_SIG_SHARED   (1<<5)
+#define FLAGS_IS_SIG_FIRST    (1<<6)
+#define FLAGS_IS_SIG_LAST     (1<<7)
+#define FLAGS_IS_SIG_ALL      (1<<8)
+#define FLAGS_IS_START        (1<<9) // debug
+#define FLAGS_IS_END          (1<<10) // debug
+
+
+
+#define FTM_TIME_SIZE         8
+#define FTM_DWORD_SIZE        8
+#define FTM_WORD_SIZE         4
+#define FTM_PTR_SIZE          4
+
+#define FTM_MSG_ID            0
+#define FTM_MSG_PAR           (FTM_MSG_ID    + 8)
+#define FTM_MSG_TEF           (FTM_MSG_PAR   + 8)
+#define FTM_MSG_RES           (FTM_MSG_TEF   + 4)
+#define FTM_MSG_TS            (FTM_MSG_RES   + 4)
+#define FTM_MSG_OFFS          (FTM_MSG_TS    + 8)
+#define FTM_MSG_END_          (FTM_MSG_OFFS  + 8)
+
+#define FTM_CHAIN_TTRN          0
+#define FTM_CHAIN_TSTART        (FTM_CHAIN_TTRN           + 8)
+#define FTM_CHAIN_TPERIOD       (FTM_CHAIN_TSTART         + 8)
+#define FTM_CHAIN_TEXEC         (FTM_CHAIN_TPERIOD        + 8)
+#define FTM_CHAIN_FLAGS         (FTM_CHAIN_TEXEC          + 8)
+#define FTM_CHAIN_PCONDINDPUT   (FTM_CHAIN_FLAGS          + 4)
+#define FTM_CHAIN_PCONDPATTERN  (FTM_CHAIN_PCONDINDPUT    + 4)
+#define FTM_CHAIN_CONDMSK       (FTM_CHAIN_PCONDPATTERN   + 4)
+#define FTM_CHAIN_REPQTY        (FTM_CHAIN_CONDMSK        + 4)
+#define FTM_CHAIN_REPCNT        (FTM_CHAIN_REPQTY         + 4)
+#define FTM_CHAIN_MSGQTY        (FTM_CHAIN_REPCNT         + 4)
+#define FTM_CHAIN_MSGIDX        (FTM_CHAIN_MSGQTY         + 4)
+#define FTM_CHAIN_PMSG          (FTM_CHAIN_MSGIDX         + 4)
+#define FTM_CHAIN_PNEXT         (FTM_CHAIN_PMSG           + 4)
+#define FTM_CHAIN_END_          (FTM_CHAIN_PNEXT          + 4)
 
 
 
 
-#define CYC_WAITING      (1<<0)	//shows if cycle is waiting for condition
-#define CYC_DBG          (1<<1)	//shows cycle debug mode is active/inactive
-#define CYC_ACTIVE       (1<<2)	//shows cycle is active/inactive
-#define CYC_ERROR      	 (1<<3)	//error occured during cycle execution
+extern uint32_t*       _startshared[];
+extern uint32_t*       _endshared[];
 
-
-
-
-#define TIMER_CYC_START       8
-#define TIMER_CYC_PREP        TIMER_CYC_START+1 
-#define TIMER_MSG_PREP        TIMER_CYC_PREP+1  
-#define TIMER_ABS       CYC_ABS_TIME
-#define TIMER_PER        (1<<2) 
-
-
-#define TIMER_CYC_START_MSK   (1<<TIMER_CYC_START)
-#define TIMER_CYC_PREP_MSK    (1<<TIMER_CYC_PREP) 
-#define TIMER_MSG_PREP_MSK    (1<<TIMER_MSG_PREP)
-
-#define TIMER_CFG_SUCCESS     0
-#define TIMER_CFG_ERROR_0     -1
-#define TIMER_CFG_ERROR_1     -2
 
 // Priority Queue RegisterLayout
 static const struct {
-   unsigned int rst;
-   unsigned int force;
-   unsigned int dbgSet;
-   unsigned int dbgGet;
-   unsigned int clear;
-   unsigned int cfgGet;
-   unsigned int cfgSet;
-   unsigned int cfgClr;
-   unsigned int dstAdr;
-   unsigned int heapCnt;
-   unsigned int msgCntO;
-   unsigned int msgCntI;
-   unsigned int tTrnHi;
-   unsigned int tTrnLo;
-   unsigned int tDueHi;
-   unsigned int tDueLo;
-   unsigned int msgMin;
-   unsigned int msgMax;
-   unsigned int ebmAdr;
-   unsigned int cfg_ENA;
-   unsigned int cfg_FIFO;    
-   unsigned int cfg_IRQ;
-   unsigned int cfg_AUTOPOP;
-   unsigned int cfg_AUTOFLUSH_TIME;
-   unsigned int cfg_AUTOFLUSH_MSGS;
-   unsigned int force_POP;
-   unsigned int force_FLUSH;
-} r_FPQ = {    .rst     =  0x00 >> 2,
-               .dbgSet  =  0x04 >> 2,
-               .dbgGet  =  0x08 >> 2,
-               .clear   =  0x0C >> 2,
-               .cfgGet  =  0x10 >> 2,
-               .cfgSet  =  0x14 >> 2,
-               .cfgClr  =  0x18 >> 2,
-               .dstAdr  =  0x1C >> 2,
-               .heapCnt =  0x20 >> 2,
-               .msgCntO =  0x24 >> 2,
-               .msgCntI =  0x28 >> 2,
-               .tTrnHi  =  0x2C >> 2,
-               .tTrnLo  =  0x30 >> 2,
-               .tDueHi  =  0x34 >> 2,
-               .tDueLo  =  0x38 >> 2,
-               .msgMin  =  0x3C >> 2,
-               .msgMax  =  0x40 >> 2,
-               .ebmAdr  =  0x44 >> 2,
+   uint32_t rst;
+   uint32_t force;
+   uint32_t dbgSet;
+   uint32_t dbgGet;
+   uint32_t clear;
+   uint32_t cfgGet;
+   uint32_t cfgSet;
+   uint32_t cfgClr;
+   uint32_t dstAdr;
+   uint32_t heapCnt;
+   uint32_t msgCntO;
+   uint32_t msgCntI;
+   uint32_t tTrnHi;
+   uint32_t tTrnLo;
+   uint32_t tDueHi;
+   uint32_t tDueLo;
+   uint32_t capacity;
+   uint32_t msgMax;
+   uint32_t ebmAdr;
+   uint32_t cfg_ENA;
+   uint32_t cfg_FIFO;    
+   uint32_t cfg_IRQ;
+   uint32_t cfg_AUTOPOP;
+   uint32_t cfg_AUTOFLUSH_TIME;
+   uint32_t cfg_AUTOFLUSH_MSGS;
+   uint32_t force_POP;
+   uint32_t force_FLUSH;
+} r_FPQ = {    .rst        =  0x00 >> 2,
+               .force      =  0x04 >> 2,
+               .dbgSet     =  0x08 >> 2,
+               .dbgGet     =  0x0c >> 2,
+               .clear      =  0x10 >> 2,
+               .cfgGet     =  0x14 >> 2,
+               .cfgSet     =  0x18 >> 2,
+               .cfgClr     =  0x1C >> 2,
+               .dstAdr     =  0x20 >> 2,
+               .heapCnt    =  0x24 >> 2,
+               .msgCntO    =  0x28 >> 2,
+               .msgCntI    =  0x2C >> 2,
+               .tTrnHi     =  0x30 >> 2,
+               .tTrnLo     =  0x34 >> 2,
+               .tDueHi     =  0x38 >> 2,
+               .tDueLo     =  0x3C >> 2,
+               .capacity   =  0x40 >> 2,
+               .msgMax     =  0x44 >> 2,
+               .ebmAdr     =  0x48 >> 2,
                .cfg_ENA             = 1<<0,
                .cfg_FIFO            = 1<<1,    
                .cfg_IRQ             = 1<<2,
@@ -112,98 +170,102 @@ static const struct {
                .force_FLUSH         = 1<<1
 };
 
-
-
-typedef unsigned int t_status;
-
-//control & status registers
+typedef struct {
+   uint8_t sig;
+   uint8_t cond;
+} t_semaphore;  
 
 typedef struct {
-   unsigned int hi;
-   unsigned int lo;
-} t_dw;
+   uint8_t reserved [ FTM_PAGEDATA ];
+} t_pageSpace;  
 
+typedef uint64_t t_time ;
 
-
-typedef union {
-   unsigned long long   v64;
-   t_dw                 v32;               
-} u_dword;
-
-typedef u_dword t_time ;
 
 typedef struct {
-   u_dword id;
-   u_dword par;
-   unsigned int res;
-   unsigned int tef;
-   u_dword ts;
-   u_dword offs;
+   uint32_t value; 
+   t_time   time;
+} t_shared;
+
+typedef struct {
+   uint64_t id;
+   uint64_t par;
+   uint32_t tef;
+   uint32_t res;
+   t_time   ts;
+   t_time   offs;
 } t_ftmMsg;
 
 typedef struct {
-   unsigned int       status;   
-   t_time tTrn;
-   t_time tMargin;
-   t_time tStart;
-   t_time tPeriod;
-   t_time tExec;
-   int                rep;
-   int                repCnt;
-   int                msgCnt;
    
-   unsigned int       qtyMsgs;
-   unsigned int       procMsg;  
-   t_ftmMsg           msgs[10];
+   t_time               tStart;  //desired start time of this chain
+   t_time               tPeriod; //chain period
+   t_time               tExec;   //chain execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod FIXME
+   uint32_t             flags; 
+   uint32_t             condVal; //pattern to compare
+   uint32_t             condMsk; //mask for comparison in condition
+   uint32_t*            sigDst;  //dst adr for signalling
+   uint32_t             sigVal;  //value for signalling
+   uint32_t             repQty;  //number of desired repetitions. -1 -> infinite, 0 -> none
+   uint32_t             repCnt;  //running count of repetitions
+   uint32_t             msgQty;  //Number of messages
+   uint32_t             msgIdx;  //idx of the currently processed msg
+   t_ftmMsg*            pMsg;    //pointer to messages
+   struct t_ftmChain*   pNext;   //pointer to next chain
    
-} t_ftmCycle;
+} t_ftmChain;
+
+//a plan is a linked list of chains
+typedef struct {
+
+   uint32_t       planQty;
+   t_ftmChain*    plans[FTM_PLAN_MAX];
+   t_ftmChain*    pBp;
+   t_ftmChain*    pStart;
+   t_pageSpace    pagedummy;
+   
+} t_ftmPage;
 
 typedef struct {
-   unsigned int   msgChStat;
-   unsigned int   cycleSel;
-   t_ftmCycle     cycles[2];
-   
-} t_fesaPage;
+   t_ftmPage   pPages[2];
+   uint32_t    cmd;
+   uint32_t    status;
+   t_ftmPage*  pAct;
+   t_ftmPage*  pIna;
+   t_ftmChain* pNewBp;
+   uint64_t    tPrep;
+   uint64_t    tDue;
+   uint64_t    tTrn;
+   t_ftmChain  idle;
+   t_shared*   pSharedMem;
+   t_semaphore sema;
+} t_ftmIf;
 
-typedef struct {
-   unsigned int cmd;
-   unsigned int status;
-   unsigned int pageSel; 
-   t_fesaPage page[2];
-} t_fesaFtmIf;
+volatile t_ftmIf* pFtmIf;
+t_ftmChain* pCurrentChain;
 
-extern const t_time tProc;
+void              prioQueueInit();
+void              ftmInit(void);
+void              sigSend(t_ftmChain* c);
+uint8_t           condValid(t_ftmChain* c);
 
-extern unsigned int* _startshared[];
-extern unsigned int* _endshared[];
+void              processFtm();
+t_ftmChain*       processChain(t_ftmChain* c);    //checks for condition and if chain is to be processed ( repQty != 0 )
+t_ftmChain*       processChainAux(t_ftmChain* c); //does the actual work
+int               dispatch(t_ftmMsg* pMsg);  //dispatch a message to prio queue
+void              cmdEval();
+void showFtmPage(t_ftmPage* pPage);
+void showStatus();
 
+extern unsigned int * pEcaAdr;
+extern unsigned int * pEbmAdr;
+extern unsigned int * pFPQctrl;
 
-volatile t_fesaPage* pPageAct;
-volatile t_fesaPage* pPageInAct;
-extern volatile t_fesaFtmIf* pFesaFtmIf;
-volatile unsigned int swap;
-volatile unsigned int msgProcPending;
-
-inline void updateCycExecTime(t_ftmCycle* c);
-inline void updatePageExecTimes(t_fesaPage* pPage);
-inline void updateAllExecTimes();
-
-unsigned int setMsgTimer(t_time tDeadline, unsigned int msg, unsigned int timerIdx);
-unsigned int setCycleTimer(t_ftmCycle* cyc, unsigned int mode);
-
-
-void processDueMsgs();
-void ISR_timer();
-
-void ftmInit(void);
-void fesaInit(void);
-
-void fesaCmdEval();
-
-void ISR_timer();
-
-t_ftmMsg* addFtmMsg(unsigned int eca_adr, t_ftmMsg* pMsg);
-
-void sendFtmMsgPacket();
+uint16_t    getIdFID(uint64_t id);
+uint16_t    getIdGID(uint64_t id);
+uint16_t    getIdEVTNO(uint64_t id);
+uint16_t    getIdSID(uint64_t id);
+uint16_t    getIdBPID(uint64_t id);
+uint16_t    getIdSCTR(uint64_t id);
 
 #endif

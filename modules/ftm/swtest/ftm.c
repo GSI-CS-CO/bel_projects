@@ -1,311 +1,366 @@
 #include "ftm.h"
-#include "irq.h"
-#include "aux.h"
-#include "timer.h"
-#include "display.h"
-#include "ebm.h"
+#include "dbg.h"
 
-const t_time tProc = { .v64 = 125000};
-volatile t_fesaFtmIf* pFesaFtmIf = (t_fesaFtmIf*)_startshared;
+uint16_t getIdFID(uint64_t id)     {return ((uint16_t)(id >> ID_FID_POS))     & (ID_MSK_B16 >> (16 - ID_FID_LEN));}
+uint16_t getIdGID(uint64_t id)     {return ((uint16_t)(id >> ID_GID_POS))     & (ID_MSK_B16 >> (16 - ID_GID_LEN));}
+uint16_t getIdEVTNO(uint64_t id)   {return ((uint16_t)(id >> ID_EVTNO_POS))   & (ID_MSK_B16 >> (16 - ID_EVTNO_LEN));}
+uint16_t getIdSID(uint64_t id)     {return ((uint16_t)(id >> ID_SID_POS))     & (ID_MSK_B16 >> (16 - ID_SID_LEN));}
+uint16_t getIdBPID(uint64_t id)    {return ((uint16_t)(id >> ID_BPID_POS))    & (ID_MSK_B16 >> (16 - ID_BPID_LEN));}
+uint16_t getIdSCTR(uint64_t id)    {return ((uint16_t)(id >> ID_SCTR_POS))    & (ID_MSK_B16 >> (16 - ID_SCTR_LEN));}
 
-char buffer[10];
+uint32_t hiW(uint64_t dword) {return (uint32_t)(dword >> 32);}
+uint32_t loW(uint64_t dword) {return (uint32_t)dword;}
 
-t_ftmMsg* addFtmMsg(unsigned int eca_adr, t_ftmMsg* pMsg)
+uint64_t execCnt; 
+
+void prioQueueInit()
 {
-   atomic_on();   
-   ebm_op(eca_adr, pMsg->id.v32.hi,  WRITE);
-   ebm_op(eca_adr, pMsg->id.v32.lo,  WRITE);
-   ebm_op(eca_adr, pMsg->par.v32.hi, WRITE);
-   ebm_op(eca_adr, pMsg->par.v32.lo, WRITE);
-   ebm_op(eca_adr, pMsg->res,        WRITE);
-   ebm_op(eca_adr, pMsg->tef,        WRITE);
-   ebm_op(eca_adr, pMsg->ts.v32.hi,  WRITE);
-   ebm_op(eca_adr, pMsg->ts.v32.lo,  WRITE);
-   atomic_off();   
-   return pMsg;
-}
-
-void sendFtmMsgPacket()
-{
-   ebm_flush();
-}
-
-void fesaInit()
-{ 
-   unsigned int ps, cs, ms;
-   cs = 1;
-   ps = 0;
-   ms = 0;
    
-   pFesaFtmIf->pageSel = ps;
-   pFesaFtmIf->page[ps].cycleSel = cs;
-   pFesaFtmIf->page[ps].cycles[cs].tTrn.v64         = 5000;
-   pFesaFtmIf->page[ps].cycles[cs].tMargin.v64      = 1000;
-   pFesaFtmIf->page[ps].cycles[cs].tStart.v64       = getSysTime() + 125000000; 
-   pFesaFtmIf->page[ps].cycles[cs].tPeriod.v64      = 5*5000000;
-   pFesaFtmIf->page[ps].cycles[cs].rep              = 250;
-   pFesaFtmIf->page[ps].cycles[cs].repCnt           = 0;
-   pFesaFtmIf->page[ps].cycles[cs].qtyMsgs          = 1;
-   pFesaFtmIf->page[ps].cycles[cs].msgs[ms].id.v64   = 0x100000000000ABCD;
-   pFesaFtmIf->page[ps].cycles[cs].msgs[ms].par.v64  = 0x2000000000000123;
-   pFesaFtmIf->page[ps].cycles[cs].msgs[ms].res      = 0;
-   pFesaFtmIf->page[ps].cycles[cs].msgs[ms].tef      = 0xDEADBEEF;
-   pFesaFtmIf->page[ps].cycles[cs].msgs[ms].ts.v64   = 0;
-   pFesaFtmIf->page[ps].cycles[cs].msgs[ms].offs.v64 = 5000000;
-     
-}
-
-
-void ISR_timer()
-{
-   //updatePageExecTimes(pPageAct);
-   
-   disp_put_c(0x0c);
-  /*
-   disp_put_str("\nP:");
-   disp_put_str(sprinthex(buffer, pFesaFtmIf->pageSel, 2));   
-   disp_put_str(" C:");
-   disp_put_str(sprinthex(buffer, pPageAct->cycleSel, 2));
-   disp_put_str("\nR:");
-   disp_put_str(sprinthex(buffer, pPageAct->cycles[pPageAct->cycleSel].rep, 2));
-   disp_put_str(" C:");
-   disp_put_str(sprinthex(buffer, pPageAct->cycles[pPageAct->cycleSel].repCnt, 2));
-   //disp_put_c('\n');
-  */
-   disp_put_c(progressWheel());
-   disp_put_c('A');
-   updateAllExecTimes();
-   disp_put_c('B');
-   if(1) {
-      //updateTimers();
-   }
-   
-   if(global_msi.msg & ((TIMER_CYC_START) | (TIMER_CYC_PREP)))
-   {
-      if(pPageAct->cycles[pPageAct->cycleSel].repCnt < pPageAct->cycles[pPageAct->cycleSel].rep) 
-      {
-      msgProcPending = true;
-      pPageAct->cycles[pPageAct->cycleSel].repCnt++;
-      }
-  /* 
-      if ((pPageAct->cycles[pPageAct->cycleSel].status & CYC_ACTIVE)
-      && (pPageAct->cycles[pPageAct->cycleSel].repCnt <= pPageAct->cycles[pPageAct->cycleSel].rep))
-        {
-     
-        
-   } else {
-   */
-   }
-        
-}
-
-void ISR_Cmd()
-{
-
-}
-
-void processDueMsgs()
-{
-   t_ftmCycle* cyc = pPageAct->cycles + pPageAct->cycleSel;
-   unsigned char dueIdx, nextIdx;
-   unsigned char  dispatch = 0;
-   t_time tDue;
-   
-   dueIdx = cyc->procMsg;
-   
-   if( ((cyc->rep == -1) || (cyc->rep > cyc->repCnt)) && (cyc->status & CYC_ACTIVE) && msgProcPending )
-   {
-      tDue = cyc->msgs[cyc->procMsg].ts;
-      if(getSysTime() >= tDue.v64 - (cyc->tMargin.v64 + cyc->tTrn.v64) ) // 
-      disp_put_c('X');
-      for(dueIdx = cyc->procMsg; dueIdx <  cyc->qtyMsgs; dueIdx++)
-      {
-         disp_put_c('A' + dueIdx);
-         if ( (tDue.v64 + tProc.v64 > cyc->msgs[dueIdx].ts.v64) // diff between msgs less than time to process...
-         ||   (cyc->msgs[dueIdx].ts.v64 + tProc.v64 >= cyc->tExec.v64 + cyc->tPeriod.v64) ) // or diff to cycle end less than time to process? 
-         {
-            disp_put_c('0' + dueIdx);
-            //dispatch msg
-            addFtmMsg( 0x0, cyc->msgs+dueIdx); 
-            dispatch = true;
-            tDue = cyc->msgs[dueIdx].ts;
-         } else {
-         
-            if(dispatch) {sendFtmMsgPacket(); msgProcPending = false; disp_put_str("Sent!\n");}
-            
-            nextIdx = (dueIdx == cyc->qtyMsgs-1) ? 0 : dueIdx+1;
-           
-            cyc->procMsg = nextIdx;
-         } 
-      }
-   } 
-}
-
-
-inline void updateCycExecTime(t_ftmCycle* c)
-{
-   disp_put_c('Z');
-   unsigned int i;
-   if((c->rep == -1) || (c->rep > c->repCnt)) c->tExec.v64 = c->tStart.v64 + c->repCnt * c->tPeriod.v64;
-   for(i=0; i < c->qtyMsgs; i++) c->msgs[i].ts.v64 = c->tExec.v64 + c->msgs[i].offs.v64;
-}
-
-
-inline void updatePageExecTimes(t_fesaPage* pPage)
-{
-   disp_put_c('Y');
-   updateCycExecTime(pPage->cycles + 0);
-   updateCycExecTime(pPage->cycles + 1);
-}
-
-inline void updateAllExecTimes()
-{
-   disp_put_c('X');
-   updatePageExecTimes(pPageInAct);
-   updatePageExecTimes(pPageAct);
-}
-
-unsigned int setMsgTimer(t_time tDeadline, unsigned int msg, unsigned int timerIdx)
-{
-   s_timer  tm;
-  
-   if (getSysTime() + tProc.v64 > tDeadline.v64) return TIMER_CFG_ERROR_0;
-   
-   tm.mode      = TIMER_1TIME;
-   tm.src       = TIMER_ABS_TIME;  
-   tm.cascade   = TIMER_NO_CASCADE;
-   tm.deadline  = tDeadline.v64;
-   tm.msi_dst   = 0;
-   tm.msi_msg   = msg;
- 
-   atomic_on();
-   irq_tm_write_config(timerIdx, &tm);
-   irq_tm_set_arm(1<<timerIdx);
-   atomic_off();
-   
-   return TIMER_CFG_SUCCESS;
-   
-}
-
-
-
-
-unsigned int setCycleTimer(t_ftmCycle* cyc, unsigned int mode)
-{
-   t_time   tPrep, tExec;
-   s_timer  tm0, tm1;
-   unsigned long long factor;
-      
-   //timer0
-   //calculate due time for start
-   tExec = cyc->tStart;
-   tPrep.v64 = cyc->tMargin.v64 + cyc->tTrn.v64;
-   
-   if (!mode && (getSysTime() + tPrep.v64 > tExec.v64))
-   {
-    return TIMER_CFG_ERROR_0;
-   }
-   tm0.mode      = TIMER_1TIME;
-   tm0.src       = (mode) ? TIMER_ABS_TIME : TIMER_REL_TIME; //absolute or relative value
-   tm0.cascade   = TIMER_NO_CASCADE;
-   tm0.deadline  = (mode == NOW) ? 10 : tExec.v64 - tPrep.v64;
-   tm0.msi_dst   = 0;
-   tm0.msi_msg   = TIMER_CYC_PREP;
-   /*
-   // if the cycle duration is shorter than processing time, pack multiple cycles in one packet
-   if(cyc->tPeriod.v64 > tProc.v64) { tPeriod.v64 = cyc->tPeriod.v64; factor = 1;}
-   else  {  factor = tProc.v64/cyc->tPeriod.v64 + ((tProc.v64 % cyc->tPeriod.v64) ? 1 : 0);
-            tPeriod.v64 = factor * cyc->tPeriod.v64;     
-   }
-   */                        
-   //timer1
-   //cascade to Timer1, periodic with cycle period
-   tm1.mode      = TIMER_PERIODIC;
-   tm1.src       = TIMER_REL_TIME;
-   tm1.cascade   = TIMER_0;
-   tm1.deadline  = cyc->tPeriod.v64;
-   tm1.msi_dst   = 0;
-   tm1.msi_msg   = TIMER_CYC_START;
- 
-   atomic_on();
-   irq_tm_write_config(0, &tm0);
-   irq_tm_write_config(1, &tm1);
-   irq_tm_set_arm(1<<TIMER_1 | 1<<TIMER_0);
-   atomic_off();
-   return TIMER_CFG_SUCCESS;
+   *(pFpqCtrl + r_FPQ.clear)     = 1;
+   *(pFpqCtrl + r_FPQ.dstAdr)    = (uint32_t)pEca;
+   *(pFpqCtrl + r_FPQ.ebmAdr)    = (uint32_t)pEbm;
+   *(pFpqCtrl + r_FPQ.msgMax)    = 32;
+   *(pFpqCtrl + r_FPQ.tTrnHi)    = hiW(pFtmIf->tTrn);
+   *(pFpqCtrl + r_FPQ.tTrnLo)    = loW(pFtmIf->tTrn);
+   *(pFpqCtrl + r_FPQ.tDueHi)    = hiW(pFtmIf->tDue);
+   *(pFpqCtrl + r_FPQ.tDueLo)    = loW(pFtmIf->tDue);
+   *(pFpqCtrl + r_FPQ.cfgSet)    = r_FPQ.cfg_AUTOFLUSH_TIME | 
+                                   r_FPQ.cfg_AUTOFLUSH_MSGS |
+                                   r_FPQ.cfg_AUTOPOP | 
+                                   r_FPQ.cfg_FIFO |
+                                   r_FPQ.cfg_ENA;
 }
 
 void ftmInit()
 {
-  irq_tm_clr_arm(0xffffffff);
-  fesaInit();
-  pPageAct    = pFesaFtmIf->page + (pFesaFtmIf->pageSel & 1);
-  pPageInAct  = pFesaFtmIf->page + (~pFesaFtmIf->pageSel & 1);   
+   pFtmIf = (t_ftmIf*)_startshared; 
+   pFtmIf->status = 0x0;
+   pFtmIf->pAct = (t_ftmPage*)&(pFtmIf->pPages[0]);
+   pFtmIf->pIna = (t_ftmPage*)&(pFtmIf->pPages[1]);
+   pFtmIf->idle = (t_ftmChain){ .tStart     = 0,
+                                .tPeriod    = 5000,
+                                .tExec      = 0,
+                                .flags      = (FLAGS_IS_BP),
+                                .condVal    = 0,
+                                .condMsk    = 0,
+                                .sigDst     = 0,
+                                .sigVal     = 0,
+                                .repQty     = -1,
+                                .repCnt     = 0,
+                                .msgQty     = 0,
+                                .msgIdx     = 0,
+                                .pMsg       = NULL,
+                                .pNext      = NULL
+                                };
+   
+   pFtmIf->pSharedMem   = (t_shared*)pSharedRam;
+   pFtmIf->sema.sig     = 1;
+   pFtmIf->sema.cond    = 1;
+   pCurrentChain        = (t_ftmChain*)&pFtmIf->idle;
+   
+   prioQueueInit();
+   
 }
 
-void fesaCmdEval()
+void cmdEval()
 {
-   unsigned int cmd, ftmRunning;
-   cmd         = pFesaFtmIf->cmd;
+   uint32_t cmd, stat;
+   t_ftmPage* pTmp;
    
+   cmd = pFtmIf->cmd;
+   stat = pFtmIf->status;
+   pFtmIf->cmd = 0; 
    
    if(cmd)
    {
-      if(cmd & CMD_RST) ftmInit();
+      if(cmd & CMD_RST)          { ftmInit();}
+      if(cmd & CMD_START)        { DBPRINT1("Starting\n"); pFtmIf->pAct->pBp = pFtmIf->pAct->pStart; stat = (stat & STAT_ERROR) | STAT_RUNNING;}
+      if(cmd & CMD_IDLE)         { pFtmIf->pAct->pBp = (t_ftmChain*)&pFtmIf->idle;}
+      if(cmd & CMD_STOP_REQ)     { stat |= STAT_STOP_REQ; }
+      if(cmd & CMD_STOP_NOW)     { stat = (stat & STAT_ERROR) & ~STAT_RUNNING;}
       
-      if(cmd & (CMD_PAGESWAP | CMD_PAGESWAP_I))
-      {
-         ftmRunning = (pFesaFtmIf->status & FTM_RUNNING);
-         swap |= ( (pPageAct->cycles[pPageAct->cycleSel].status   & CYC_ACTIVE) && !(cmd & CMD_PAGESWAP_I)   && ftmRunning) <<0;
-         swap |= ( (pPageInAct->cycles[pPageAct->cycleSel].status & CYC_ACTIVE)                              && ftmRunning) <<1;
-         
-         
-         //update page pointers
-         pPageAct    = pFesaFtmIf->page + (pFesaFtmIf->pageSel & 1);
-         pPageInAct  = pFesaFtmIf->page + (~pFesaFtmIf->pageSel & 1);   
-      }//if pageswap
+      if(cmd & CMD_COMMIT_PAGE)  {pTmp = pFtmIf->pIna; pFtmIf->pIna = pFtmIf->pAct; pFtmIf->pAct = pTmp; pFtmIf->pAct->pBp = pFtmIf->pAct->pStart;}
+      if(cmd & CMD_COMMIT_BP)    {pFtmIf->pAct->pBp = pFtmIf->pNewBp;}
       
-      if(cmd & CMD_RUN) setCycleTimer(pPageAct->cycles + pPageAct->cycleSel, NORMAL) ? disp_put_str("\n+CfgErr") : disp_put_str("\n+CfgOK");
+      if(cmd & CMD_DBG_0)        {showStatus();}
+      if(cmd & CMD_DBG_1)        {mprintf("DBG1\n");}
       
-      if(cmd & CMD_RUN_NOW) 
-      {
-         msgProcPending = false; 
-         pPageAct->cycles[pPageAct->cycleSel].status |= CYC_ACTIVE;
-         setCycleTimer(pPageAct->cycles + pPageAct->cycleSel, NOW) ? disp_put_str("\n!CfgErr") : disp_put_str("\n!CfgOK");
-         
-         
-      }
+      if(cmd & CMD_SHOW_ACT)     {  DBPRINT1("SHOW ACT\n"); showFtmPage(pFtmIf->pAct);}
+      if(cmd & CMD_SHOW_INA)     {  DBPRINT1("SHOW INA\n"); showFtmPage(pFtmIf->pIna);}
       
-     
-      
-      if(cmd & CMD_DBG_0) 
-      {
-         disp_put_c(0x0c);
-         disp_put_str("State: \n");
-         disp_put_str(sprinthex(buffer, pFesaFtmIf->status, 8));
-         disp_put_str("\nPage: ");
-         disp_put_str(sprinthex(buffer, pFesaFtmIf->pageSel, 2));   
-         disp_put_str("\nCyc:  ");
-         disp_put_str(sprinthex(buffer, pPageAct->cycleSel, 2));
-       
-         disp_put_str("\nPer: ");
-         disp_put_str(sprinthex(buffer, (unsigned int)irq_tm_deadl_get(TIMER_1), 8));
-         disp_put_str("\nStat: ");
-         disp_put_str(sprinthex(buffer, irq_tm_get_arm(), 4));
-         
-      }
-      
-      if(cmd & CMD_DBG_1)
-      {
-         irq_tm_clr_arm(0x2);
-         irq_tm_timer_sel(1);
-         irq_tm_deadl_set(125000000);
-         irq_tm_set_arm(0x2);
-      }     
-      pFesaFtmIf->cmd = 0;      
+                            
    }
+   
+   if(pCurrentChain == &pFtmIf->idle)  {stat |=  STAT_IDLE;}
+   else                       {stat &= ~STAT_IDLE;}
+   if(pCurrentChain == &pFtmIf->idle && (stat & STAT_STOP_REQ)) { stat = (stat & STAT_ERROR) & ~STAT_RUNNING;}
+   
+   pFtmIf->status = stat; 
+}
+
+void processFtm()
+{
+   if (pFtmIf->status & STAT_RUNNING) { pCurrentChain = processChain(pCurrentChain); execCnt++;} 
+}
+
+void showFtmPage(t_ftmPage* pPage)
+{
+   uint32_t planIdx, chainIdx, msgIdx;
+   t_ftmChain* pChain  = NULL;
+   t_ftmMsg*   pMsg  = NULL;
+   
+   mprintf("---PAGE %08x\n", pPage);
+   mprintf("StartPlan:\t");
+   
+   if(pPage->pStart == &(pFtmIf->idle) ) mprintf("idle\n");
+   else { 
+          if(pPage->pStart == NULL) mprintf("NULL\n");
+          else mprintf("%08x\n", pPage->pStart);
+        } 
+   
+   mprintf("AltPlan:\t");
+   if(pPage->pBp == &(pFtmIf->idle) ) mprintf("idle\n");
+   else { 
+          if(pPage->pBp == NULL) mprintf("NULL\n");
+          else mprintf("%08x\n", pPage->pBp);
+        }  
+   mprintf("PlanQty:\t%u\t%08x\n", pPage->planQty, &(pPage->planQty));
+    
+   for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
+   {
+      mprintf("\t---PLAN %c\n", planIdx+'A');
+      chainIdx = 0;
+      pChain = pPage->plans[planIdx];
+      while(pChain != NULL)
+      {
+         mprintf("\t\t---CHAIN %c%u\n", planIdx+'A', chainIdx-1);
+         mprintf("\t\tStart:\t\t%08x%08x\n\t\tperiod:\t\t%08x%08x\n\t\trep:\t\t\t%08x\n\t\tmsg:\t\t\t%08x\n", 
+         (uint32_t)(pChain->tStart>>32), (uint32_t)pChain->tStart, 
+         (uint32_t)(pChain->tPeriod>>32), (uint32_t)pChain->tPeriod,
+         pChain->repQty,
+         pChain->msgQty);
+         
+         mprintf("\t\tFlags:\t");
+         if(pChain->flags & FLAGS_IS_BP) mprintf("-IS_BP\t");
+         if(pChain->flags & FLAGS_IS_COND_MSI) mprintf("-IS_CMSI\t");
+         if(pChain->flags & FLAGS_IS_COND_SHARED) mprintf("-IS_CSHA\t");
+         if(pChain->flags & FLAGS_IS_SIG_SHARED) mprintf("-IS_SIG_SHARED");
+         if(pChain->flags & FLAGS_IS_SIG_MSI)    mprintf("-IS_SIG_MSI");
+         if(pChain->flags & FLAGS_IS_END) mprintf("-IS_END");
+         mprintf("\n");
+         
+         mprintf("\t\tCondVal:\t%08x\n\t\tCondMsk:\t%08x\n\t\tSigDst:\t\t\t%08x\n\t\tSigVal:\t\t\t%08x\n", 
+         (uint32_t)pChain->condVal, 
+         (uint32_t)pChain->condMsk,
+         pChain->sigDst,
+         pChain->sigVal);  
+         
+         pMsg = pChain->pMsg;
+         
+         for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++)
+         {
+            mprintf("\t\t\t---MSG %u\n", msgIdx);
+            mprintf("\t\t\tid:\t%08x%08x\n\t\t\tpar:\t%08x%08x\n\t\t\ttef:\t\t%08x\n\t\t\toffs:\t%08x%08x\n", 
+            (uint32_t)(pMsg[msgIdx].id>>32), (uint32_t)pMsg[msgIdx].id, 
+            (uint32_t)(pMsg[msgIdx].par>>32), (uint32_t)pMsg[msgIdx].par,
+            pMsg[msgIdx].tef,
+            (uint32_t)(pMsg[msgIdx].offs>>32), (uint32_t)pMsg[msgIdx].offs);   
+         }
+         if(pChain->flags & FLAGS_IS_END) pChain = NULL;
+         else pChain = (t_ftmChain*)pChain->pNext;
+      }
+           
+   }
+   uint64_t j;
+  for (j = 0; j < (250000000); ++j) {
+        asm("# noop"); // no-op the compiler can't optimize away
+      }    
+   
+}
+
+void showStatus()
+{
+   uint32_t stat = pFtmIf->status;
+   mprintf("\f%08x\tStatus:\t", (uint32_t)(&(pFtmIf->cmd)) );
+   if(stat & STAT_RUNNING) mprintf("\t\t-RUNNING"); else mprintf("\t\t-\t");
+   if(stat & STAT_IDLE) mprintf("\t\t-IDLE"); else mprintf("\t\t-\n");
+   if(stat & STAT_STOP_REQ) mprintf("\t\t-STOP_REQ"); else mprintf("\t\t-\t");
+   if(stat & STAT_ERROR) mprintf("\t\t-ERROR"); else mprintf("\t\t-\t");
+   mprintf("\t\tE:\t%x%08x", (uint32_t)(execCnt), (uint32_t)(execCnt>>32) );
+   mprintf("\n");
+   
+}
+
+int dispatch(t_ftmMsg* pMsg)
+{
+   int ret = 0;
+   unsigned int diff;
+   ///////////////////////////
+   execCnt = 0;
+   ///////////////////////////
+      
+   DBPRINT2("Sending Msg\n");
+   DBPRINT3("\t\t\tid:\t%08x%08x\n\t\t\tpar:\t%08x%08x\n\t\t\ttef:\t\t%08x\n\t\t\toffs:\t%08x%08x\n", 
+            (uint32_t)(pMsg->id>>32), (uint32_t)pMsg->id, 
+            (uint32_t)(pMsg->par>>32), (uint32_t)pMsg->par,
+            pMsg->tef,
+            (uint32_t)(pMsg->offs>>32), (uint32_t)pMsg->offs);
+   
+   diff = ( *(pFpqCtrl + r_FPQ.capacity) - *(pFpqCtrl + r_FPQ.heapCnt));
+   if(diff > 1)
+   {  
+      atomic_on();
+      *pFpqData = hiW(pMsg->id);
+      *pFpqData = loW(pMsg->id);
+      *pFpqData = hiW(pMsg->par);
+      *pFpqData = loW(pMsg->par);
+      *pFpqData = pMsg->tef;
+      *pFpqData = pMsg->res;
+      *pFpqData = hiW(pMsg->ts);
+      *pFpqData = loW(pMsg->ts);
+      atomic_off(); 
+   } else {
+      ret = -1;
+      DBPRINT1("Queue full, waiting\n");
+   }   
+   
+   return ret;
+}
+
+uint8_t condValid(t_ftmChain* c)
+{
+   uint8_t ret = 0;
+   
+   
+   if(c->flags & (FLAGS_IS_COND_MSI | FLAGS_IS_COND_SHARED) )
+   {
+      if(c->flags & FLAGS_IS_COND_MSI)
+      {
+         uint32_t  ip, msg;
+         irq_disable();
+         asm ("rcsr %0, ip": "=r"(ip)); //get pending irq flags
+         if(ip & 1<<MSI_SIG)
+         {
+            irq_pop_msi(MSI_SIG);      //pop msg from msi queue into global_msi variable
+            msg = global_msi.msg;
+            irq_clear(1<<MSI_SIG);     //clear pending bit
+         }      
+         irq_enable();
+         if((c->condVal & c->condMsk) == (msg & c->condMsk)) ret = 1;   
+      }
+      else
+      {
+         DBPRINT3("Val: %08x Con: %08x\n", (c->condVal & c->condMsk), ((*pFtmIf->pSharedMem).value & c->condMsk) );
+         if((c->condVal & c->condMsk) == ((*pFtmIf->pSharedMem).value & c->condMsk) ) 
+         {
+            if(c->flags & FLAGS_IS_SHARED_TIME) c->tStart = (*pFtmIf->pSharedMem).time;
+            else                                c->tStart = getSysTime();         
+            ret = 1;
+            (*pFtmIf->pSharedMem).value = 0x0;
+         }
+         
+      }
+   }
+   else ret = 1;
+   
+   if(ret) pFtmIf->sema.cond = 0;
+   
+   return ret; 
+} 
+
+void sigSend(t_ftmChain* c)
+{
+   t_time time;
+   
+   DBPRINT2("Sending Signal\n");
+   
+   time = c->tStart + c->tPeriod;
+   
+   *(c->sigDst) = c->sigVal;
+   if(c->flags & FLAGS_IS_SIG_SHARED)
+   {
+      *(c->sigDst+1) = hiW(time);
+      *(c->sigDst+2) = loW(time);
+   }
+   pFtmIf->sema.sig = 0; 
 }
 
 
+t_ftmChain* processChain(t_ftmChain* c)
+{
+   t_ftmChain* pCur = c;
+      
+   if( getSysTime() + pFtmIf->tPrep >= c->tStart)
+   {
+      DBPRINT3("Time to process Chain reached\n");
+      if(condValid(c) || !pFtmIf->sema.cond) { pCur = processChainAux(c); }   
+      else 
+      {
+         if((c->flags & FLAGS_IS_BP) && pFtmIf->pAct->pBp != NULL)
+         { pCur = pFtmIf->pAct->pBp; pFtmIf->pAct->pBp = NULL;} // else check for breakpoint so we get around inf wait
+      }
+   }   
+   return pCur;    
+}
 
-
+t_ftmChain* processChainAux(t_ftmChain* c)
+{
+   t_ftmChain* pCur = c; 
+   unsigned long long tMsgExec;
+   DBPRINT3("Processing...\n");
+   //signal to send ?
+   if(pFtmIf->sema.sig) {
+      if(   (c->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED)) 
+        && (    !(c->flags & FLAGS_IS_SIG_LAST)
+            ||  ((c->flags & FLAGS_IS_SIG_LAST) && (c->repCnt == c->repQty-1)))) 
+      {  if( getSysTime() + pFtmIf->tPrep >= c->tStart)  sigSend(c); }
+   }
+   //get execution time for due msg
+   tMsgExec    = c->tStart + (c->pMsg + c->msgIdx)->offs; 
+    
+   if(c->msgIdx < c->msgQty) //msgs left to process?
+   {
+      //time to hand it over to prio queue ?
+      if( getSysTime() + pFtmIf->tPrep >= tMsgExec)  
+      {
+         (c->pMsg + c->msgIdx)->ts = tMsgExec; //calc execution timestamp
+         dispatch( (t_ftmMsg*)(c->pMsg + c->msgIdx));
+         c->msgIdx++;  //enough space in prio queue? dispatch and inc msgidx
+      }
+   } 
+   else
+   {
+      c->msgIdx = 0;
+      //is c a breakpoint? if so and break is desired, continue at the address in the page alternate plan
+      if((c->flags & FLAGS_IS_BP) && (pFtmIf->pAct->pBp != NULL))       
+      { 
+         pCur = pFtmIf->pAct->pBp;  //BP? go to alt chain
+         pFtmIf->pAct->pBp = NULL;
+         pFtmIf->sema.sig  = 1;
+         pFtmIf->sema.cond = 1;
+      }
+      else
+      { 
+         if( c->repCnt < c->repQty )   
+         {
+            //repetions left? stay with this chain
+            c->repCnt++;     
+            pCur = c; 
+            if(c->flags & FLAGS_IS_SIG_ALL) pFtmIf->sema.sig = 1;
+         } 
+         else
+         {
+            //done, go to next chain
+            c->repCnt = 0;
+            if(c->pNext != NULL) pCur = (t_ftmChain*)c->pNext;
+            else pCur = (t_ftmChain*)&pFtmIf->idle;
+            pFtmIf->sema.sig  = 1;
+            pFtmIf->sema.cond = 1;
+         } 
+      }   
+      //propagate updated start time to next chain to be executed
+      pCur->tStart = c->tStart + c->tPeriod;
+   }
+     
+   return pCur;    
+}

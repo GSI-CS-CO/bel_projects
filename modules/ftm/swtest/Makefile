@@ -14,7 +14,7 @@ $(TARGET).bin: $(TARGET).elf
 
 $(TARGET).elf:  $(MYPATH)/aux.c  $(MYPATH)/ebm.c $(MYPATH)/timer.c $(MYPATH)/display.c $(MYPATH)/irq.c \
                 $(MYPATH)/mini_sdb.c $(MYPATH)/main.c $(MYPATH)/crt0.o $(MYPATH)/mprintf.c \
-                $(W1)/dev/uart.c 
+                $(W1)/dev/uart.c $(MYPATH)/ftm.c
 #$(W1)/dev/w1.c $(W1)/dev/w1-temp.c $(W1)/dev/w1-hw.c
 	$(CC) $(CFLAGS) -o $@ -nostdlib -T linker.ld $^ 
 

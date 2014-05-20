@@ -14,6 +14,12 @@
 #define SDB_BRIDGE      0x02
 #define SDB_EMPTY       0xFF
 
+#define GSI                   0x00000651
+#define CERN                  0x0000ce42
+
+#define CB_GENERIC            0xeef0b198
+#define DPRAM_GENERIC         0x66cfeb52
+
 #define CPU_INFO_ROM          0x10040085
 #define CPU_ATOM_ACC          0x10040100
 #define CPU_SYSTEM_TIME       0x10040084
@@ -45,6 +51,9 @@ volatile unsigned int* pCpuTimer;
 volatile unsigned int* pCluInfo;
 volatile unsigned int* pUart;
 volatile unsigned int* BASE_UART;
+volatile unsigned int* pSharedRam;
+volatile unsigned int* pCluCB;
+
 
 typedef struct pair64 {
         unsigned int high;
@@ -99,10 +108,24 @@ typedef union sdb_record {
         struct SDB_INTERCONNECT interconnect;
 } sdb_record_t;
 
-unsigned char *find_device_deep(unsigned int base, unsigned int sdb,
-                                       unsigned int devid);
+typedef struct sdb_location {
+        sdb_record_t* sdb;
+        unsigned int adr;
+} sdb_location;
 
-unsigned char *find_device(unsigned int devid);
+sdb_location*  find_device_multi(sdb_location *found_sdb, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId);
+unsigned int*  find_device_adr(unsigned int venId, unsigned int devId);
+sdb_location*  find_device_multi_in_subtree(sdb_location *loc, sdb_location *found_sdb, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId);
+unsigned int*  find_device_adr_in_subtree(sdb_location *loc, unsigned int venId, unsigned int devId);
+
+sdb_location*  find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, unsigned int base, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId);
+unsigned int   getSdbAdr(sdb_location *loc);
+sdb_record_t*  getChild(sdb_location *loc);
+
+unsigned char *find_device(unsigned int devid); //DEPRECATED, USE find_device_adr INSTEAD!
+
+
+
 
 void discoverPeriphery();
 
