@@ -16,3 +16,6 @@ install:
 
 %:	%.c
 	gcc $(CFLAGS) -o $@ $< $(LIBS)
+
+%:	%.cpp
+	g++ $(CFLAGS) -o $@ $< $(LIBS) -leca

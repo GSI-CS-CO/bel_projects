@@ -25,6 +25,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library work;
+use work.wishbone_pkg.all;
+
 package monster_pkg is
 
   function f_sub1(x : natural) return natural;
@@ -211,6 +214,35 @@ package monster_pkg is
       ow_io                  : inout std_logic_vector(1 downto 0);
       -- g_en_power_test
       power_test_pwm_o       : out    std_logic);
+  end component;
+
+  constant c_iodir_sdb : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"00",
+    abi_ver_minor => x"00",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"000000000000000f",
+    product => (
+    vendor_id     => x"0000000000000651",
+    device_id     => x"4d78adfd",
+    version       => x"00000001",
+    date          => x"20140516",
+    name          => "GSI:IODIR_HACK     ")));
+  
+  component monster_iodir is
+    generic(
+      g_gpio_inout : natural := 0;
+      g_lvds_inout : natural := 0);
+    port(
+      clk_i      : in  std_logic;
+      rst_n_i    : in  std_logic;
+      slave_i    : in  t_wishbone_slave_in;
+      slave_o    : out t_wishbone_slave_out;
+      gpio_oen_o : out std_logic_vector(f_sub1(g_gpio_inout) downto 0);
+      lvds_oen_o : out std_logic_vector(f_sub1(g_lvds_inout) downto 0));
   end component;
 
 end package;
