@@ -170,7 +170,7 @@ entity vetar_top is
     -- leds_out_o[0] AE18 PG1P13-79 
     -- leds_out_o[1] AF18 PG1N13-81
 
-	 leds_lvds_out_o	   : out std_logic_vector(1 downto 0);
+	  -- leds_lvds_out_o	   : out std_logic_vector(1 downto 0);
     -- leds_lvds_out_o[0] D6p PG2P12-73  
     -- DON'T DRIVE FAST, CLOSE TO PLL!!
     -- leds_lvds_out_o[1] C5 PG2N12-75 
@@ -232,7 +232,7 @@ begin
       g_family     => "Arria II",
       g_project    => "vetar_top",
       g_gpio_in    => 4,
-      g_gpio_out   => 8,
+      g_gpio_out   => 6,
       g_flash_bits => 24,
       g_en_vme     => true,
       g_en_usb     => true,
@@ -247,8 +247,7 @@ begin
       core_clk_butis_t0_o    => s_butis_t0,
       -- gpio
       gpio_o( 5 downto  0)   => s_lemo_addOn(5 downto 0),
-      gpio_o( 7 downto  6)   => s_lvds_out(1 downto 0),
-
+      --gpio_o( 7 downto  6)   => s_lvds_out(1 downto 0),
       gpio_i( 1 downto  0)   => lvds_in_i(1 downto 0),
       gpio_i( 2 )            => hdmi_i,
       gpio_i( 3 )            => lemo_i,
@@ -356,8 +355,9 @@ begin
   leds_lemo_addOn_o  <= not s_lemo_addOn;
    
   -- LVDS outputs GPIO6-8
-  lvds_out_o        <= s_lvds_out;
-  leds_lvds_out_o   <= not s_lvds_out;
+  --lvds_out_o        <= s_lvds_out;
+  lvds_out_o(0)        <= s_clk_butis;
+  lvds_out_o(1)        <= s_butis_t0;
 
   -- HDMI
   hdmi_o(0) <= s_clk_butis;
