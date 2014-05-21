@@ -93,12 +93,16 @@ architecture rtl of ftm_lm32_cluster is
    --constant c_clu_slaves    -> pkg  : natural := 7; 
    constant c_clu_masters     : natural := g_cores+1; -- lm32's + top
    constant c_cluster_ext_if  : natural := c_clu_masters-1; -- last master is ext if
+   
    constant c_clu_layout_aux  : t_sdb_record_array(c_clu_slaves-1 downto 0)
-   := f_cluster_main_sdb(c_irq_layout, c_ram_layout, g_shared_mem, g_is_ftm);
+   := f_cluster_main_sdb(c_irq_layout_aux, c_ram_layout_aux, g_shared_mem, g_is_ftm);
    constant c_clu_sdb_address : t_wishbone_address := f_sdb_auto_sdb(c_clu_layout_aux);
    constant c_clu_layout      : t_sdb_record_array(c_clu_slaves-1 downto 0)
    := f_sdb_auto_layout(c_clu_layout_aux);
-   constant c_clu_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_clu_layout, c_clu_sdb_address);       
+   
+   constant c_clu_bridge_sdb  : t_sdb_bridge       
+   := f_lm32_main_bridge_sdb(g_cores, g_msi_per_core, g_ram_per_core, g_shared_mem, g_is_ftm);
+   
    signal clu_cbar_masterport_in   : t_wishbone_master_in_array  (c_clu_slaves-1 downto 0);
    signal clu_cbar_masterport_out  : t_wishbone_master_out_array (c_clu_slaves-1 downto 0);
    signal clu_cbar_slaveport_in    : t_wishbone_slave_in_array   (c_clu_masters-1 downto 0);

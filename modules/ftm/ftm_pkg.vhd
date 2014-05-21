@@ -357,7 +357,7 @@ end ftm_pkg;
                   f_sdb_auto_layout(v_main),  
                   f_sdb_auto_sdb(v_main)
                );
-      v_ret.sdb_component.product := c_cluster_cb_product;
+      --v_ret.sdb_component.product := c_cluster_cb_product;
       return v_ret;         
    end f_lm32_main_bridge_sdb;
    
