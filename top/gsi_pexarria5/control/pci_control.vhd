@@ -230,7 +230,7 @@ begin
       g_family      => "Arria V",
       g_project     => "pci_control",
       g_flash_bits  => 25,
-      g_pll_skew    => 6500/(1000/8), -- 6500ps shift
+      g_pll_skew    => 6750/(1000/8), -- -1.25ns shift
       g_gpio_out    => 8,
       g_lvds_in     => 2,
       g_lvds_out    => 0,
