@@ -11,7 +11,7 @@
 
 #define MAX_DEVICES  100
 #define BUF_SIZE     0x600
-#define PACKET_SIZE  1000
+#define PACKET_SIZE  500
 
 const char* program;
 eb_device_t device;
@@ -41,7 +41,8 @@ int ebRamOpen(const char* netaddress, uint8_t cpuId)
    int attempts;
    int num_devices;
    struct sdb_device devices[MAX_DEVICES];
-   char              devName_RAM_post[4];
+   char              devName_RAM_post[4] = "020"
+;
    
    attempts   = 3;
    idx        = -1;
@@ -108,9 +109,9 @@ int ebRamOpen(const char* netaddress, uint8_t cpuId)
     printf("Found %u devs\n", num_devices);
     for (idx = 0; idx < num_devices; ++idx) {
       printf("%.*s 0x%"PRIx64"\n", 19, &devices[idx].sdb_component.product.name[0], devices[idx].sdb_component.addr_first);
-         if(strncmp(devName_RAM_post, (const char*)&devices[idx].sdb_component.product.name[13], 3) == 0)
+         if(strncmp(devName_RAM_post, (const char*)&devices[idx].sdb_component.product.name[13], 3) == 0) {
          printf("MATCH! found %s\n", devName_RAM_post);
-         embeddedOffset = devices[idx].sdb_component.addr_first + FTM_SHARED_OFFSET;
+         embeddedOffset = devices[idx].sdb_component.addr_first + FTM_SHARED_OFFSET;}
     }
   } else {
     printf("0x%"PRIx64"\n", devices[idx].sdb_component.addr_first);

@@ -16,17 +16,17 @@ uint64_t execCnt;
 void prioQueueInit()
 {
    
-   *(pFpqCtrl + r_FPQ.clear)     = 1;
-   *(pFpqCtrl + r_FPQ.dstAdr)    = (uint32_t)pEca;
+   *(pFpqCtrl + r_FPQ.rst)     = 1;
+   *(pFpqCtrl + r_FPQ.dstAdr)    = (uint32_t)pEca & ~0x80000000;
    *(pFpqCtrl + r_FPQ.ebmAdr)    = (uint32_t)pEbm;
-   *(pFpqCtrl + r_FPQ.msgMax)    = 32;
+   *(pFpqCtrl + r_FPQ.msgMax)    = 10;
    *(pFpqCtrl + r_FPQ.tTrnHi)    = hiW(pFtmIf->tTrn);
    *(pFpqCtrl + r_FPQ.tTrnLo)    = loW(pFtmIf->tTrn);
    *(pFpqCtrl + r_FPQ.tDueHi)    = hiW(pFtmIf->tDue);
    *(pFpqCtrl + r_FPQ.tDueLo)    = loW(pFtmIf->tDue);
-   *(pFpqCtrl + r_FPQ.cfgSet)    = r_FPQ.cfg_AUTOFLUSH_TIME | 
+   *(pFpqCtrl + r_FPQ.cfgSet)    = //r_FPQ.cfg_AUTOFLUSH_TIME | 
                                    r_FPQ.cfg_AUTOFLUSH_MSGS |
-                                   r_FPQ.cfg_AUTOPOP | 
+                                   //r_FPQ.cfg_AUTOPOP | 
                                    r_FPQ.cfg_FIFO |
                                    r_FPQ.cfg_ENA;
 }
@@ -57,7 +57,8 @@ void ftmInit()
    pFtmIf->sema.sig     = 1;
    pFtmIf->sema.cond    = 1;
    pCurrentChain        = (t_ftmChain*)&pFtmIf->idle;
-   
+   pFtmIf->tTrn         = 0x0000000000007A12;
+   pFtmIf->tDue         = 0x0000000000003A12;
    prioQueueInit();
    
 }
@@ -323,8 +324,10 @@ t_ftmChain* processChainAux(t_ftmChain* c)
       //time to hand it over to prio queue ?
       if( getSysTime() + pFtmIf->tPrep >= tMsgExec)  
       {
+         
          (c->pMsg + c->msgIdx)->ts = tMsgExec; //calc execution timestamp
          dispatch( (t_ftmMsg*)(c->pMsg + c->msgIdx));
+         DBPRINT2("ST: %08x %08x ID: %08x %08x TS: %08x %08x\n", getSysTime(), (c->pMsg + c->msgIdx)->id, (c->pMsg + c->msgIdx)->ts);
          c->msgIdx++;  //enough space in prio queue? dispatch and inc msgidx
       }
    } 

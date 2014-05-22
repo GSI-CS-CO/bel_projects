@@ -17,6 +17,7 @@
 #define GSI                   0x00000651
 #define CERN                  0x0000ce42
 
+#define CB_CLUSTER            0x10041000
 #define CB_GENERIC            0xeef0b198
 #define DPRAM_GENERIC         0x66cfeb52
 

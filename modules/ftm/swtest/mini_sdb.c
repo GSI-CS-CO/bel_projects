@@ -109,6 +109,7 @@ void discoverPeriphery()
    
    //FIXME this should not count found std CBs, but use a CB with a special devId
    
+   //find_device_multi(&found_sdb[0], &idx, 20, GSI, CB_CLUSTER);
    find_device_multi(&found_sdb[0], &idx, 20, GSI, CB_GENERIC);
    pCluCB         = (unsigned int*)getSdbAdr(&found_sdb[0]);
    pSharedRam     = find_device_adr_in_subtree(&found_sdb[0], CERN, DPRAM_GENERIC);

@@ -144,6 +144,37 @@ void showFpqStatus()
    mprintf("Fpq: Cfg %x HeapCnt %d MsgO %d MsgI %d\n", *(pFpqCtrl + r_FPQ.cfgGet), *(pFpqCtrl + r_FPQ.heapCnt), *(pFpqCtrl + r_FPQ.msgCntO), *(pFpqCtrl + r_FPQ.msgCntI));
 }
 
+int insertFpqEntry()
+{
+    static unsigned int run = 0;
+    int ret = 0;
+   unsigned int diff;
+   unsigned long long stime;
+   
+   stime = getSysTime() + ct_sec + ct_trn - ((run++)<<3); //+ (1 + ((run>>5)*5))*ct_sec ;
+   //mprintf("etime: %8x%8x\n", (unsigned int)(stime>>32), (unsigned int)(stime)); 
+   diff = ( *(pFpqCtrl + r_FPQ.capacity) - *(pFpqCtrl + r_FPQ.heapCnt));
+   if(diff > 1)
+    {  
+      atomic_on();
+      *pFpqData = (unsigned int)(stime>>32);
+      *pFpqData = (unsigned int)(stime);
+       *pFpqData = 0xDEADBEEF;
+       *pFpqData = 0xCAFEBABE;
+       *pFpqData = 0x11111111;
+       *pFpqData = 0x22222222;
+       *pFpqData = 0x33333333;
+       *pFpqData = run;
+      atomic_off(); 
+    } else {
+       ret = -1;
+       mprintf("Queue full, waiting\n");
+    }   
+ 
+    
+    return ret;
+ }
+
 void main(void) {
 
 
@@ -163,30 +194,23 @@ disp_put_c('\f');
   for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
       }
-  /* 
-  mprintf("CluRom: 0x%08x\n", find_device_adr(GSI,CPU_CLU_INFO_ROM));
   
-  idx = 0;
-  find_device_multi(&allBrg[0], &idx, 20, GSI,CB_GENERIC);
-  mprintf("Brg1: 0x%08x Brg2: 0x%08x Brg3: 0x%08x Brg4: 0x%08x\n", getSdbAdr(&allBrg[0]), getSdbAdr(&allBrg[1]), getSdbAdr(&allBrg[2]), getSdbAdr(&allBrg[3]));
-   
-  idx = 0;
-  adrDev1 = (unsigned int)find_device_adr_in_subtree(&allBrg[0], GSI,  CPU_CLU_INFO_ROM);
-  
-  
- idx = 0;
- adrDev1 = (unsigned int)find_device_adr_in_subtree(&allBrg[1], GSI,  0x10050082);
-  
-  mprintf("IRQ: 0x%08x \n", adrDev1);
-   mprintf("UART0: 0x%08x \nUART1: 0x%08x \n", (unsigned int*)find_device_adr(CERN, WR_UART), (unsigned int*)find_device(WR_UART));
-  */
   
   while (1) {
   
    //showStatus();
    cmdEval();
    processFtm();
-   
+   insertFpqEntry();
+   showFpqStatus();
+/*
+    atomic_on();
+   ebm_op(0x100000E0, 0xDEADBEEF, WRITE);
+   ebm_flush(); 
+   atomic_off();
+  */
+
+  
    for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
       }
