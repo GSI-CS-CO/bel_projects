@@ -240,8 +240,8 @@ architecture rtl of monster is
   
   function f_pll_select return natural_vector is
     -- Note: for arria5 you need to set location assignments to make this true!
-    constant c_a2_pll_select : natural_vector := (0 => 2, 1=>  3, 2 =>  4);
-    constant c_a5_pll_select : natural_vector := (0 => 9, 1=> 10, 2 => 11);
+    constant c_a2_pll_select : natural_vector := (0 => 2, 1=> 3, 2 => 4);
+    constant c_a5_pll_select : natural_vector := (0 => 3, 1=> 4, 2 => 5);
     constant c_error         : natural_vector := (0 => 0);
   begin
     if    g_family = "Arria II" then return c_a2_pll_select;
