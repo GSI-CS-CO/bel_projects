@@ -235,22 +235,6 @@ end monster;
 architecture rtl of monster is
 
   ----------------------------------------------------------------------------------
-  -- Platform dependant parameters -------------------------------------------------
-  ----------------------------------------------------------------------------------
-  
-  function f_pll_select return natural_vector is
-    -- Note: for arria5 you need to set location assignments to make this true!
-    constant c_a2_pll_select : natural_vector := (0 => 2, 1=> 3, 2 => 4);
-    constant c_a5_pll_select : natural_vector := (0 => 3, 1=> 4, 2 => 5);
-    constant c_error         : natural_vector := (0 => 0);
-  begin
-    if    g_family = "Arria II" then return c_a2_pll_select;
-    elsif g_family = "Arria V"  then return c_a5_pll_select;
-    else                             return c_error;
-    end if;
-  end f_pll_select;
-  
-  ----------------------------------------------------------------------------------
   -- MSI IRQ Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
   constant c_irq_masters : natural := 6;
@@ -654,7 +638,32 @@ begin
       phasecounterselect => phase_sel(3 downto 0),
       phasestep          => phase_step,
       phaseupdown        => '1');
+
+    phase : altera_phase
+      generic map(
+        g_select_bits   => 4,
+        g_outputs       => 3,
+        g_base          => g_pll_skew,
+        g_vco_freq      => 1000, -- 1GHz
+        g_output_freq   => (0 => 125, 1 => 200, 2 => 25),
+        g_output_select => (0 =>   2, 1 =>   3, 2 =>  4))
+      port map(
+        clk_i       => clk_free,
+        rstn_i      => rstn_free,
+        clks_i(0)   => clk_ref,
+        clks_i(1)   => clk_butis,
+        clks_i(2)   => clk_phase,
+        rstn_o(0)   => rstn_ref,
+        rstn_o(1)   => rstn_butis,
+        rstn_o(2)   => rstn_phase,
+        offset_i(0) => (others => '0'),
+        offset_i(1) => phase_butis,
+        offset_i(2) => (others => '0'),
+        phasedone_i => phase_done,
+        phasesel_o  => phase_sel,
+        phasestep_o => phase_step);
   end generate;
+
   ref_a5 : if g_family = "Arria V" generate
     ref_inst : ref_pll5 port map(
       rst        => pll_rst,
@@ -670,6 +679,34 @@ begin
       phase_en   => phase_step,
       updn       => '1',              -- positive phase shift (widen period)
       phase_done => phase_done);
+      
+    phase : altera_phase
+      generic map(
+        g_select_bits   => 5,
+        g_outputs       => 5,
+        g_base          => g_pll_skew,
+        g_vco_freq      => 1000, -- 1GHz
+        g_output_freq   => (0 => 125, 1 => 200, 2 => 25, 3 => 1000, 4 => 125),
+        g_output_select => (0 =>   3, 1 =>   4, 2 =>  5, 3 =>    6, 4 =>   7))
+      port map(
+        clk_i       => clk_free,
+        rstn_i      => rstn_free,
+        clks_i(0)   => clk_ref,
+        clks_i(1)   => clk_butis,
+        clks_i(2)   => clk_phase,
+        clks_i(3)   => '0', -- these clocks should not be used in core logic
+        clks_i(4)   => '0',
+        rstn_o(0)   => rstn_ref,
+        rstn_o(1)   => rstn_butis,
+        rstn_o(2)   => rstn_phase,
+        rstn_o(3)   => open,
+        rstn_o(4)   => open,
+        offset_i(0) => (others => '0'),
+        offset_i(1) => phase_butis,
+        offset_i(2) => (others => '0'),
+        phasedone_i => phase_done,
+        phasesel_o  => phase_sel,
+        phasestep_o => phase_step);
   end generate;
   
   ref_clk : global_region port map(
@@ -701,30 +738,6 @@ begin
   clk_lvds   <= clk_ref3;
   clk_enable <= clk_ref4;
 
-  phase : altera_phase
-    generic map(
-      g_select_bits   => 5,
-      g_outputs       => 3,
-      g_base          => g_pll_skew,
-      g_vco_freq      => 1000, -- 1GHz
-      g_output_freq   => (0 => 125, 1 => 200, 2 => 25),
-      g_output_select => f_pll_select)
-    port map(
-      clk_i       => clk_free,
-      rstn_i      => rstn_free,
-      clks_i(0)   => clk_ref,
-      clks_i(1)   => clk_butis,
-      clks_i(2)   => clk_phase,
-      rstn_o(0)   => rstn_ref,
-      rstn_o(1)   => rstn_butis,
-      rstn_o(2)   => rstn_phase,
-      offset_i(0) => (others => '0'),
-      offset_i(1) => phase_butis,
-      offset_i(2) => (others => '0'),
-      phasedone_i => phase_done,
-      phasesel_o  => phase_sel,
-      phasestep_o => phase_step);
-  
   butis : altera_butis
     port map(
       clk_ref_i => clk_ref,
