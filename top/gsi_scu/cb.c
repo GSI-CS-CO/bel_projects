@@ -40,8 +40,26 @@ void cbRead(volatile struct circ_buffer *cb, int num, struct param_set *pset) {
   }
   /* read element */
   *pset = cb[num].pset[rptr];
+  mprintf("%x(%d) ", cb[num].pset[rptr].coeff_c, rptr);
+  if (!(cb[num].pset[rptr].coeff_c % 10))
+    mprintf("\n");
   /* move read pointer forward */
   cb[num].rd_ptr = (rptr + 1) % size;    
+}
+
+void cbDump(volatile struct circ_buffer *cb, int num) {
+  int i = 0, col;
+  struct param_set *pset;
+  mprintf("dumped cb[%d]: \n", num);  
+  mprintf ("wr_ptr: %d rd_ptr: %d size: %d\n", cb[num].wr_ptr, cb[num].rd_ptr, cb[num].size);
+  while(i < cb[num].size) {
+    mprintf("%d ", i);
+    for(col = 0; (col < 8) && (i < cb[num].size); col++) {
+      *pset = cb[num].pset[i++];
+      mprintf("0x%x ", pset->coeff_c);
+    }
+    mprintf("\n");
+  }
 }
 
 

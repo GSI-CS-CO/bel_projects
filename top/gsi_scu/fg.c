@@ -60,6 +60,6 @@ void init_buffers(struct circ_buffer *buf) {
   for (i = 0; i < MAX_FG_DEVICES; i++) {
     buf[i].wr_ptr = 0;
     buf[i].rd_ptr = 0;
-    buf[i].size = BUFFER_SIZE; 
+    buf[i].size = BUFFER_SIZE + 1; 
   }
 }

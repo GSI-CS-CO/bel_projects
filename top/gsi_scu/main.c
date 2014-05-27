@@ -57,38 +57,6 @@ void msDelay(int msecs) {
   usleep(1000 * msecs);
 }
 
-void ReadTempDevices(int bus, uint64_t *id, uint16_t *temp) {
-  struct w1_dev *d;
-  int i;
-  int tvalue;
-  wrpc_w1_bus.detail = bus; // set the portnumber of the onewire controller
-  if (w1_scan_bus(&wrpc_w1_bus) > 0) {
-    for (i = 0; i < W1_MAX_DEVICES; i++) {
-      d = wrpc_w1_bus.devs + i;
-        if (d->rom) {
-          #ifdef DEBUG
-          mprintf("bus,device (%d,%d): 0x%08x%08x ", wrpc_w1_bus.detail, i, (int)(d->rom >> 32), (int)d->rom);
-          #endif
-          if ((char)d->rom == 0x42) {
-            *id = d->rom;
-            tvalue = w1_read_temp(d, 0);
-            *temp = (tvalue >> 12); //full precision with 1/16 degree C
-            #ifdef DEBUG
-            mprintf("temp: %dC", tvalue >> 16); //show only integer part for debug
-            #endif
-          }
-          #ifdef DEBUG
-          mprintf("\n");
-          #endif
-        }  
-    }
-  } else {
-    #ifdef DEBUG
-    mprintf("no devices found on bus %d\n", wrpc_w1_bus.detail);
-    #endif
-  }
-}
-
 
 void show_msi()
 {
@@ -255,8 +223,14 @@ void init() {
 int main(void) {
   char buffer[20];
   int i = 0;
-  struct param_set pset;
+  unsigned int favg[MAX_FG_DEVICES] = {0};
+  unsigned int count[MAX_FG_DEVICES] = {0};
+  unsigned int min_count[MAX_FG_DEVICES];
   unsigned int old[MAX_FG_DEVICES] = {0};
+  struct param_set pset;
+
+  /* init min_count */
+  for(i = 0; i < MAX_FG_DEVICES; i++) min_count[i] = BUFFER_SIZE-2;
 
   discoverPeriphery();  
   scub_base    = (unsigned short*)find_device(SCU_BUS_MASTER);
@@ -266,25 +240,42 @@ int main(void) {
   disp_put_c('\f');
   init(); 
 
+  mprintf("NULL is: 0x%x\n", NULL); 
+  /* wait until buffers are filled */
+  for(i = 0; i < MAX_FG_DEVICES; i++) {
+    while(cbgetCount((struct circ_buffer *)&fg_buffer, i) < BUFFER_SIZE - 5) usleep(10000);
+  }
   while(1) {
     //updateTemps();
     
     for(i = 0; i < MAX_FG_DEVICES; i++) {
+
       if (!cbisEmpty((struct circ_buffer *)&fg_buffer, i)) {
         cbRead((struct circ_buffer *)&fg_buffer, i, &pset);
-        if((pset.coeff_c % 10000) == 0) {
-          mprintf("cb[%d]: fcnt: %d coeff_a: %x coeff_b: 0x%x coeff_c: 0x%x\n",
-          i, cbgetCount((struct circ_buffer *)&fg_buffer, i), pset.coeff_a, pset.coeff_b, pset.coeff_c);
+        if((pset.coeff_c % 1000) == 0) {
+          mprintf("cb[%d]: fcnt: %d fmin: %d favg: %d coeff_a: %x coeff_b: 0x%x coeff_c: 0x%x\n",
+          i, count[i], min_count[i], favg[i]/1000, pset.coeff_a, pset.coeff_b, pset.coeff_c);
+          favg[i] = 0;
         }
         if (old[i] + 1 != pset.coeff_c) {
           mprintf("cb[%d]: buffer value not consistent old: %x coeff_c: %x\n", i, old[i], pset.coeff_c);
+          cbDump((struct circ_buffer *)&fg_buffer, i);
           return(1);
         }
-        old[i] = pset.coeff_c;
+       old[i] = pset.coeff_c;
       }
-
-      usleep(100);
+     
+      count[i] = cbgetCount((struct circ_buffer *)&fg_buffer, i);
+      favg[i] += count[i];
+      if (count[i] < min_count[i]) min_count[i] = count[i];
+      if (count[i] == 0) {
+        mprintf("cb[%d] fcnt: %d\n", i, count[i]);
+        cbDump((struct circ_buffer *)&fg_buffer, i);
+        return(1);
+      }
+      
     }
+    usleep(800);
     //placeholder for fg software
     //if (fg_control) {
     //  init();
