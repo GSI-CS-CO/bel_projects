@@ -109,8 +109,8 @@ CONVERSION_LOOP:
 		
 		  } while (u_val>0);
 
-//	  while (width--)
-//		 	*--ptr = fill; 		      
+	  while (width--)
+		 	*--ptr = fill; 		      
       
 		  while (*ptr)
 	          uart_write_byte(*ptr++);
@@ -217,8 +217,8 @@ CONVERSION_LOOP:
 		
 		  } while (u_val>0);
 
-//	  while (width--)
-//		 	*--ptr = fill; 		      
+	  while (width--)
+		 	*--ptr = fill; 		      
       
 		  while (*ptr)
 	           *dst++=*ptr++;
