@@ -61,6 +61,10 @@ component wb_irq_scu_bus is
         
         irq_master_o        : out t_wishbone_master_out;
         irq_master_i        : in t_wishbone_master_in;
+
+        ctrl_irq_o          : out t_wishbone_slave_out;
+        ctrl_irq_i          : in t_wishbone_slave_in;
+
         
         scu_slave_o         : buffer t_wishbone_slave_out;
         scu_slave_i         : in t_wishbone_slave_in;
