@@ -641,7 +641,7 @@ begin
 
     phase : altera_phase
       generic map(
-        g_select_bits   => 4,
+        g_select_bits   => 5,
         g_outputs       => 3,
         g_base          => g_pll_skew,
         g_vco_freq      => 1000, -- 1GHz
