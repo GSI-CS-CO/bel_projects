@@ -273,7 +273,14 @@ package ftm_pkg is
    device_id     => x"10040086",
    version       => x"00000001",
    date          => x"20131009",
-   name          => "CLUSTER_INFO_ROM   "))); 
+   name          => "CLUSTER_INFO_ROM   ")));
+   
+   constant c_cluster_cb_product : t_sdb_product := (
+   vendor_id     => x"0000000000000651", -- GSI
+   device_id     => x"10041000",
+   version       => x"00000001",
+   date          => x"20140515",
+   name          => "CB_LM32_CLUSTER    ");  
 
 end ftm_pkg;
 
@@ -340,13 +347,18 @@ end ftm_pkg;
                                    is_ftm       : boolean)
    return t_sdb_bridge is
       variable v_main : t_sdb_record_array(c_clu_slaves-1 downto 0);      
+      variable v_ret :  t_sdb_bridge;
    begin
+     
+      
       v_main := f_cluster_main_sdb(f_cluster_irq_sdb(cores, msiPerCore), f_cluster_ram_sdb(cores, ramPerCore), shared_ram, is_ftm);
-      return   f_xwb_bridge_layout_sdb(
+      v_ret  := f_xwb_bridge_layout_sdb(
                   true, 
                   f_sdb_auto_layout(v_main),  
                   f_sdb_auto_sdb(v_main)
                );
+      v_ret.sdb_component.product := c_cluster_cb_product;
+      return v_ret;         
    end f_lm32_main_bridge_sdb;
    
   

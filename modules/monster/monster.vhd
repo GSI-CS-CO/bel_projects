@@ -51,7 +51,6 @@ use work.xvme64x_pack.all;
 use work.VME_Buffer_pack.all;
 use work.wb_mil_scu_pkg.all;
 use work.wr_serialtimestamp_pkg.all;
-use work.power_test_pkg.all;
 
 entity monster is
   generic(
@@ -63,7 +62,7 @@ entity monster is
     g_gpio_inout           : natural;
     g_gpio_in              : natural;
     g_gpio_out             : natural;
-    g_tlu_fifo_size        : natural := 32;
+    g_tlu_fifo_size        : natural;
     g_lvds_inout           : natural;
     g_lvds_in              : natural;
     g_lvds_out             : natural;
@@ -76,13 +75,11 @@ entity monster is
     g_en_oled              : boolean;
     g_en_lcd               : boolean;
     g_en_user_ow           : boolean;
-    g_en_power_test        : boolean;
-    g_lm32_cores           : natural := 1;
-    g_lm32_MSIs            : natural := 1;
-    g_lm32_ramsizes        : natural := 65536;
-    g_lm32_shared_ramsize  : natural := 16384/4; -- will only be used if g_lm32_cores > 1
-    g_lm32_are_ftm         : boolean := false 
-    );
+    g_lm32_cores           : natural;
+    g_lm32_MSIs            : natural;
+    g_lm32_ramsizes        : natural;
+    g_lm32_shared_ramsize  : natural;
+    g_lm32_are_ftm         : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -232,29 +229,11 @@ entity monster is
     lcd_flm_o              : out   std_logic := 'Z';
     lcd_in_o               : out   std_logic := 'Z';
     -- g_en_user_ow
-    ow_io                  : inout std_logic_vector(1 downto 0);
-    -- g_en_power_test
-    power_test_pwm_o       : out    std_logic := 'Z');
+    ow_io                  : inout std_logic_vector(1 downto 0));
 end monster;
 
 architecture rtl of monster is
 
-  ----------------------------------------------------------------------------------
-  -- Platform dependant parameters -------------------------------------------------
-  ----------------------------------------------------------------------------------
-  
-  function f_pll_select return natural_vector is
-    -- Note: for arria5 you need to set location assignments to make this true!
-    constant c_a2_pll_select : natural_vector := (0 => 2, 1=>  3, 2 =>  4);
-    constant c_a5_pll_select : natural_vector := (0 => 9, 1=> 10, 2 => 11);
-    constant c_error         : natural_vector := (0 => 0);
-  begin
-    if    g_family = "Arria II" then return c_a2_pll_select;
-    elsif g_family = "Arria V"  then return c_a5_pll_select;
-    else                             return c_error;
-    end if;
-  end f_pll_select;
-  
   ----------------------------------------------------------------------------------
   -- MSI IRQ Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
@@ -317,15 +296,14 @@ architecture rtl of monster is
   constant c_tops_eca_ctl   : natural := 8;
   constant c_tops_eca_event : natural := 9;
   constant c_tops_eca_aq    : natural := 10;
-  -- !!! missing IO configuration slave
+  constant c_tops_iodir     : natural := 11;
   -- optional slaves:
-  constant c_tops_lcd       : natural := 11;
-  constant c_tops_oled      : natural := 12;
-  constant c_tops_scubus    : natural := 13;
-  constant c_tops_mil       : natural := 14;
-  constant c_tops_mil_ctrl  : natural := 15;
-  constant c_tops_ow        : natural := 16;
-  constant c_tops_power_test: natural := 17;
+  constant c_tops_lcd       : natural := 12;
+  constant c_tops_oled      : natural := 13;
+  constant c_tops_scubus    : natural := 14;
+  constant c_tops_mil       : natural := 15;
+  constant c_tops_mil_ctrl  : natural := 16;
+  constant c_tops_ow        : natural := 17;
   constant c_tops_scubirq   : natural := 18;
 
   
@@ -354,14 +332,14 @@ architecture rtl of monster is
     c_tops_eca_ctl   => f_sdb_auto_device(c_eca_sdb,                        true),
     c_tops_eca_event => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
     c_tops_eca_aq    => f_sdb_auto_device(c_eca_queue_sdb,                  true),
+    c_tops_iodir     => f_sdb_auto_device(c_iodir_sdb,                      true),
     c_tops_lcd       => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_tops_scubus    => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
     c_tops_scubirq   => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_scubus),
     c_tops_mil       => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
     c_tops_mil_ctrl  => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_mil),
-    c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow),
-    c_tops_power_test => f_sdb_auto_device(c_xwb_power_test,                g_en_power_test));
+    c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow));
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_top_layout_req);
@@ -662,7 +640,32 @@ begin
       phasecounterselect => phase_sel(3 downto 0),
       phasestep          => phase_step,
       phaseupdown        => '1');
+
+    phase : altera_phase
+      generic map(
+        g_select_bits   => 5,
+        g_outputs       => 3,
+        g_base          => g_pll_skew,
+        g_vco_freq      => 1000, -- 1GHz
+        g_output_freq   => (0 => 125, 1 => 200, 2 => 25),
+        g_output_select => (0 =>   2, 1 =>   3, 2 =>  4))
+      port map(
+        clk_i       => clk_free,
+        rstn_i      => rstn_free,
+        clks_i(0)   => clk_ref,
+        clks_i(1)   => clk_butis,
+        clks_i(2)   => clk_phase,
+        rstn_o(0)   => rstn_ref,
+        rstn_o(1)   => rstn_butis,
+        rstn_o(2)   => rstn_phase,
+        offset_i(0) => (others => '0'),
+        offset_i(1) => phase_butis,
+        offset_i(2) => (others => '0'),
+        phasedone_i => phase_done,
+        phasesel_o  => phase_sel,
+        phasestep_o => phase_step);
   end generate;
+
   ref_a5 : if g_family = "Arria V" generate
     ref_inst : ref_pll5 port map(
       rst        => pll_rst,
@@ -678,6 +681,34 @@ begin
       phase_en   => phase_step,
       updn       => '1',              -- positive phase shift (widen period)
       phase_done => phase_done);
+      
+    phase : altera_phase
+      generic map(
+        g_select_bits   => 5,
+        g_outputs       => 5,
+        g_base          => g_pll_skew,
+        g_vco_freq      => 1000, -- 1GHz
+        g_output_freq   => (0 => 125, 1 => 200, 2 => 25, 3 => 1000, 4 => 125),
+        g_output_select => (0 =>   3, 1 =>   4, 2 =>  5, 3 =>    6, 4 =>   7))
+      port map(
+        clk_i       => clk_free,
+        rstn_i      => rstn_free,
+        clks_i(0)   => clk_ref,
+        clks_i(1)   => clk_butis,
+        clks_i(2)   => clk_phase,
+        clks_i(3)   => '0', -- these clocks should not be used in core logic
+        clks_i(4)   => '0',
+        rstn_o(0)   => rstn_ref,
+        rstn_o(1)   => rstn_butis,
+        rstn_o(2)   => rstn_phase,
+        rstn_o(3)   => open,
+        rstn_o(4)   => open,
+        offset_i(0) => (others => '0'),
+        offset_i(1) => phase_butis,
+        offset_i(2) => (others => '0'),
+        phasedone_i => phase_done,
+        phasesel_o  => phase_sel,
+        phasestep_o => phase_step);
   end generate;
   
   ref_clk : global_region port map(
@@ -709,30 +740,6 @@ begin
   clk_lvds   <= clk_ref3;
   clk_enable <= clk_ref4;
 
-  phase : altera_phase
-    generic map(
-      g_select_bits   => 5,
-      g_outputs       => 3,
-      g_base          => g_pll_skew,
-      g_vco_freq      => 1000, -- 1GHz
-      g_output_freq   => (0 => 125, 1 => 200, 2 => 25),
-      g_output_select => f_pll_select)
-    port map(
-      clk_i       => clk_free,
-      rstn_i      => rstn_free,
-      clks_i(0)   => clk_ref,
-      clks_i(1)   => clk_butis,
-      clks_i(2)   => clk_phase,
-      rstn_o(0)   => rstn_ref,
-      rstn_o(1)   => rstn_butis,
-      rstn_o(2)   => rstn_phase,
-      offset_i(0) => (others => '0'),
-      offset_i(1) => phase_butis,
-      offset_i(2) => (others => '0'),
-      phasedone_i => phase_done,
-      phasesel_o  => phase_sel,
-      phasestep_o => phase_step);
-  
   butis : altera_butis
     port map(
       clk_ref_i => clk_ref,
@@ -1253,8 +1260,17 @@ begin
       slave_i    => top_cbar_master_o(c_tops_reset),
       rstn_o(0)  => s_lm32_rstn);
   
-  
-
+  iodir : monster_iodir
+    generic map(
+      g_gpio_inout => g_gpio_inout,
+      g_lvds_inout => g_lvds_inout)
+    port map(
+      clk_i      => clk_sys,
+      rst_n_i    => rstn_sys,
+      slave_i    => top_cbar_master_o(c_tops_iodir),
+      slave_o    => top_cbar_master_i(c_tops_iodir),
+      gpio_oen_o => gpio_oen_o,
+      lvds_oen_o => lvds_oen_o);
   
   tlu_gpio : if (g_gpio_in + g_gpio_inout > 0) generate
    s_triggers(g_gpio_in + g_gpio_inout -1 downto 0) <= f_gpio_to_trigger_array(gpio_i);
@@ -1569,34 +1585,7 @@ begin
         );
   end generate;
 
-  power_test_n : if not g_en_power_test generate
-    top_cbar_master_i(c_tops_power_test) <= cc_dummy_slave_out;
-  end generate;
-  
-  power_test_y : if g_en_power_test generate
-    power_test_inst: power_test
-        generic map(
-          Clk_in_Hz   => 62_500_000,
-          pwm_width   => 16,
-          row_width   => 64,
-          row_cnt     => 900
-          )
-        port map(
-          clk_i     => clk_sys,
-          nrst_i    => rstn_sys,
-          -- Wishbone
-          slave_i => top_cbar_master_o(c_tops_power_test),
-          slave_o => top_cbar_master_i(c_tops_power_test),
-          pwm_o   => power_test_pwm_o, 
-          or_o    => open
-          );
-    end generate;
-  
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------
-
-  -- !!!
-  gpio_oen_o <= (others => '0');
-  lvds_oen_o <= (0 => '1', others => '0');
   
 end rtl;

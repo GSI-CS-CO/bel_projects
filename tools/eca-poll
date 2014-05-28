@@ -1,0 +1,18 @@
+#! /bin/bash
+
+dev="$1"
+set -e
+
+eca-ctl $dev enable
+eca-ctl $dev idisable
+eca-ctl $dev activate -c 1
+
+eca-table $dev flush
+eca-table $dev add 0/0 0 1 0xcafebabe
+eca-table $dev flip-active
+
+set +e
+while true; do
+  eca-ctl $dev pop -c 1
+  sleep 1
+done
