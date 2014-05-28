@@ -37,6 +37,8 @@
 #define ECA_EVENT             0x8752bf45
 #define ECA_CTRL              0x8752bf44 
 #define WR_UART               0xe2d13d04
+#define SCU_BUS_MASTER        0x9602eb6f
+#define WR_1Wire              0x779c5443
 
 //periphery device pointers
 volatile unsigned int* pEbm;     
