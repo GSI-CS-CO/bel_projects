@@ -1,0 +1,21 @@
+#! /bin/sh
+
+dev="$1"
+
+let good=0
+while true; do
+  # reset the card
+  eb-write "$dev" 0x0/4 1 2> /dev/null
+
+  # wait for lock
+  sleep 30
+
+  # see if pps is still not running
+  pps=0x`eb-read $dev 0x6031c/4`
+  if [ $((pps%4/2)) -eq 0 ]; then
+    break
+  fi
+  let good=good+1
+done
+
+echo Found a state where the card is hung! It took $good resets to fail ...
