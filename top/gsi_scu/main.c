@@ -233,8 +233,8 @@ int main(void) {
   for(i = 0; i < MAX_FG_DEVICES; i++) min_count[i] = BUFFER_SIZE-2;
 
   discoverPeriphery();  
-  scub_base    = (unsigned short*)find_device(SCU_BUS_MASTER);
-  BASE_ONEWIRE = (unsigned int*)find_device(WR_1Wire);
+  scub_base    = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
+  BASE_ONEWIRE = (unsigned int*)find_device_adr(CERN, WR_1Wire);
 
   disp_reset();
   disp_put_c('\f');
