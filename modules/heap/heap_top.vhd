@@ -59,8 +59,8 @@ entity heap_top is
     empty_o    : out std_logic;
     count_o    : out std_logic_vector(g_idx_width-1 downto 0);
     
-    data_i     : in  std_logic_vector(g_key_width + g_val_width-1 downto 0);
-    data_o     : out std_logic_vector(g_key_width + g_val_width-1 downto 0);
+    data_i     : in  std_logic_vector(g_val_width+g_key_width-1 downto 0);
+    data_o     : out std_logic_vector(g_val_width+g_key_width-1 downto 0);
     out_o      : out std_logic
     
     );

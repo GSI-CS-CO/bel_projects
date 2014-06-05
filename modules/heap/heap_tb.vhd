@@ -26,7 +26,7 @@ architecture rtl of heap_tb is
    subtype t_val   is std_logic_vector(c_val_width  -1 downto 0);
    subtype t_key   is std_logic_vector(c_key_width  -1 downto 0);
    subtype t_data  is std_logic_vector(c_data_width -1 downto 0);
-   subtype t_skey  is std_logic_vector(c_data_width -1 downto c_val_width);
+   subtype t_skey  is std_logic_vector(c_key_width  -1 downto 0);
    subtype t_sval  is t_val;
 
   
@@ -51,6 +51,8 @@ architecture rtl of heap_tb is
    
    signal s_src_i : t_wishbone_master_in;
    signal s_src_o : t_wishbone_master_out;
+   
+   signal r_time : std_logic_vector(63 downto 0);
    
    component ftm_priority_queue is
 generic(
@@ -113,14 +115,15 @@ begin
    wb_heap : ftm_priority_queue
    generic map(
       g_idx_width    => c_width,
-      g_key_width    => c_val_width,
-      g_val_width    => c_key_width
+      g_key_width    => c_key_width,
+      g_val_width    => c_val_width
        
    )           
    port map(
       clk_sys_i   => clk_sys,
       rst_n_i     => rst_n,
 
+      time_sys_i  => r_time,
       ctrl_i      => s_ctrl_i,
       ctrl_o      => open,
       
@@ -167,6 +170,7 @@ begin
   begin        
         
         rst_n  <= '0';
+        r_time <= std_logic_vector(to_unsigned(0,64));
         wait until rising_edge(clk_sys);
         wait for clk_period*5;
         rst_n <= '1';
@@ -193,8 +197,18 @@ begin
         
         s_ctrl_i <= ('1', '1', x"00000020", x"F", '1', x"7FFFFFF0"); -- set dst adr
         wait for clk_period;
-        s_ctrl_i <= ('1', '1', x"00000018", x"F", '1', x"00000003"); -- set cfg enable and fifo mode
+        s_ctrl_i <= ('1', '1', x"00000018", x"F", '1', x"0000003b"); -- set cfg enable and fifo mode
         wait for clk_period;
+        s_ctrl_i <= ('1', '1', x"00000030", x"F", '1', x"00000000"); -- set cfg enable and fifo mode
+        wait for clk_period;
+        s_ctrl_i <= ('1', '1', x"00000034", x"F", '1', x"00000100"); -- set cfg enable and fifo mode
+        wait for clk_period;
+        s_ctrl_i <= ('1', '1', x"00000038", x"F", '1', x"00000000"); -- set cfg enable and fifo mode
+        wait for clk_period;
+        s_ctrl_i <= ('1', '1', x"0000003C", x"F", '1', x"00000100"); -- set cfg enable and fifo mode
+        wait for clk_period;
+        
+         
         s_ctrl_i <= ('0', '0', x"00000000", x"F", '0', x"00000000"); 
         wait for clk_period*1;
         
@@ -203,9 +217,9 @@ begin
         while (i > 0) 
         loop
         
-        v_key := std_logic_vector(to_unsigned(i*2, v_key'length));
+        v_key := std_logic_vector(to_unsigned(i*2+1000, v_key'length));
         v_val := (others => '1');
-        v_data := v_key & v_val & std_logic_vector( to_unsigned(0, (c_words_per_entry * t_wishbone_data'length - c_data_width)));
+        v_data := v_val & std_logic_vector( to_unsigned(0, (c_words_per_entry * t_wishbone_data'length - c_data_width))) & v_key ;
         
         for j in 0 to c_words_per_entry-1 loop 
            s_snk_i <= ('1', '1', x"00000000", x"F", '1', v_data(v_data'left - j*t_wishbone_data'length downto  v_data'length - (j+1)*t_wishbone_data'length));
@@ -277,7 +291,7 @@ begin
         s_push <= '0';
         s_pop <= '0';
         s_dbg <= '0';
-        s_data_in <= std_logic_vector(to_unsigned(i*2+1, t_key'length)) & std_logic_vector(to_unsigned(0, t_val'length));  
+        s_data_in <= std_logic_vector(to_unsigned(0, t_val'length)) & std_logic_vector(to_unsigned(i*2+1000, t_key'length)) ;  
         wait until rst_n = '1';
         
         report "+++++++++++++++ +++++++++++++++ +++++++++++++ Start INSERT" severity warning;
@@ -288,7 +302,7 @@ begin
         s_push <= '1';
         
         wait for clk_period;
-        s_data_in <= std_logic_vector(to_unsigned(i*2, t_key'length)) & s_data_in(t_sval'range); 
+        s_data_in <= s_data_in(t_sval'range) & std_logic_vector(to_unsigned(i*2+1000, t_key'length)) ; 
         s_push <= '0'; 
         wait for clk_period*20;
         i := i -1;
@@ -298,7 +312,7 @@ begin
         wait for clk_period*150;
         
         end loop;
-        s_data_in <= std_logic_vector(to_unsigned(64, t_key'length)) & std_logic_vector(to_unsigned(0, t_val'length));  
+        s_data_in <= std_logic_vector(to_unsigned(0, t_val'length)) & std_logic_vector(to_unsigned(64, t_key'length)) ;  
         
         wait for clk_period*10;
         
@@ -306,7 +320,7 @@ begin
         report "+++++++++++++++ +++++++++++++++ +++++++++++++ Start REPLACE" severity warning;
         while (i > 0) 
         loop
-        s_data_in <= std_logic_vector(to_unsigned(i*2, t_key'length)) & s_data_in(t_sval'range);
+        s_data_in <= s_data_in(t_sval'range) & std_logic_vector(to_unsigned(i*2+1000, t_key'length));
         wait for clk_period*3;
         s_push <= '1';
         s_pop <= '1';
@@ -327,7 +341,7 @@ begin
         report "+++++++++++++++ +++++++++++++++ +++++++++++++ Start REMOVE" severity warning;
         while (i > 0) 
         loop
-        s_data_in <= std_logic_vector(unsigned(s_data_in(t_skey'range)) -1) & s_data_in(t_sval'range);
+        s_data_in <= s_data_in(t_sval'range) & std_logic_vector(unsigned(s_data_in(t_skey'range)) -1);
         s_push <= '0';
         s_pop <= '1';
         wait for clk_period;

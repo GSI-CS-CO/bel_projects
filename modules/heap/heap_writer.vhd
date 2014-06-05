@@ -77,7 +77,7 @@ architecture behavioral of heap_writer is
    subtype t_val   is std_logic_vector(g_val_width  -1 downto 0);
    subtype t_key   is std_logic_vector(g_key_width  -1 downto 0);
    subtype t_data  is std_logic_vector(c_data_width -1 downto 0);
-   subtype t_skey  is std_logic_vector(c_data_width -1 downto g_val_width);
+   subtype t_skey  is std_logic_vector(g_key_width  -1 downto 0);
    subtype t_sval  is t_val;
 
 
@@ -187,6 +187,7 @@ begin
             dbg_ok_o    <= '0';
             dbg_err_o   <= '0';
             out_o       <= '0';
+            data_o   <= s_rd_val;
          else
             dbg_ok_o    <= '0';
             dbg_err_o   <= '0';
