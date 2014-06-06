@@ -275,8 +275,7 @@ begin
       g_en_scubus  => true,
       g_en_mil     => true,
       g_en_oled    => true,
-      g_en_user_ow => true,
-      g_en_power_test => false)
+      g_en_user_ow => true)
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_sfpref_i => sfp2_ref_clk_i,
@@ -362,8 +361,7 @@ begin
       oled_sd_o              => hpla_ch(10),
       oled_sh_vr_o           => hpla_ch(0),
       ow_io(0)               => onewire_ext,
-      ow_io(1)               => A_OneWire,
-      power_test_pwm_o       => hpla_ch(14));
+      ow_io(1)               => A_OneWire);
       
   -- LPC UART
   lpc_slave: lpc_uart
