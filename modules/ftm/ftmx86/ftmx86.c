@@ -18,7 +18,7 @@ uint64_t getId(uint16_t fid, uint16_t gid, uint16_t evtno, uint16_t sid, uint16_
 {
    uint64_t ret;
    
-   printf("ID: %u %u %u %u %u %u\n", fid, gid, evtno, sid, bpid, sctr);
+   //printf("ID: %u %u %u %u %u %u\n", fid, gid, evtno, sid, bpid, sctr);
    ret =    ((uint64_t)fid    << ID_FID_POS)    |
             ((uint64_t)gid    << ID_GID_POS)    |
             ((uint64_t)evtno  << ID_EVTNO_POS)  |
@@ -92,12 +92,12 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOff
    for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
    {
       pBufPlans[planIdx] = embeddedOffs + ((uint32_t)((uintptr_t)pBuf - (uintptr_t)pBufStart));
-      printf("Plan %02u/%02u starts @%08x\n", planIdx, pPage->planQty, pBufPlans[planIdx]);
+      //printf("Plan %02u/%02u starts @%08x\n", planIdx, pPage->planQty, pBufPlans[planIdx]);
       pChain = pPage->plans[planIdx].pStart;
       chainIdx=0;
       while(chainIdx++ < pPage->plans[planIdx].chainQty && pChain != NULL)
       {
-         printf("Chain %02u/%02u starts @", chainIdx, pPage->plans[planIdx].chainQty);
+         //printf("Chain %02u/%02u starts @", chainIdx, pPage->plans[planIdx].chainQty);
          pBuf = serChain(pChain, pBufStart, pBuf, embeddedOffs);
          pChain = (t_ftmChain*)pChain->pNext;
       }   
@@ -118,7 +118,7 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOff
    if( pPage->idxStart == 0xdeadbeef) pPage->pStart = FTM_IDLE_OFFSET;
    else pPage->pStart  = pBufPlans[pPage->idxStart];
    
-   printf("BP: %08x, Start: %08x\n", pPage->pBp, pPage->pStart);
+   //printf("BP: %08x, Start: %08x\n", pPage->pBp, pPage->pStart);
    
     uint32ToBytes(&pBufStart[FTM_PAGE_PTR_BP],         pPage->pBp);
    uint32ToBytes(&pBufStart[FTM_PAGE_PTR_START],      pPage->pStart);
@@ -218,7 +218,7 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
          pBuf = deserChain(pChain, pNext, pBuf, pBufStart, embeddedOffs);
          chainQty++;
       } 
-      printf("deserpage\n");
+      //printf("deserpage\n");
       //no next after the end, free this one
       //free(pNext);
       pChain->pNext = NULL;

@@ -45,7 +45,7 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
    {
          subFieldNode =  fieldNode->children;
          
-         printf("MSG NODE\n Vals:\t");
+         //printf("MSG NODE\n Vals:\t");
          for(i=0;i<5;i++)
          {
             if( checkNode(subFieldNode, msgIdFields[i]) != NULL)
@@ -55,11 +55,11 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
             }
             else printf("ERROR %s\n", msgIdFields[i]);
             subFieldNode =  xmlNextElementSibling(subFieldNode);
-            printf("\t %02x", vals[i]);
+            //printf("\t %02x", vals[i]);
          }   
          pMsg->id = getId(vals[0], vals[1], vals[2], vals[3], vals[4], 0);
    } else printf("ERROR id %s \n",  fieldNode->name);
-   printf("\n");
+   //printf("\n");
    fieldNode = checkNode(xmlNextElementSibling(fieldNode), "par");
    if(fieldNode != NULL) pMsg->par = strtou64( (const char*)xmlNodeGetContent(fieldNode));
    else printf("ERROR par\n");
@@ -119,7 +119,7 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
       if(subFieldNode != NULL) pChain->condMsk = strtou64( (const char*)xmlNodeGetContent(subFieldNode));
       else printf("ERROR condmask\n");
    }
-   else printf("no condition found\n");
+   //else printf("no condition found\n");
    
    fieldNode = checkNode(xmlNextElementSibling(curNode), "signal");
    if(fieldNode != NULL)
@@ -140,7 +140,7 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
       if(subFieldNode != NULL) pChain->sigVal = (uint32_t)strtou64( (const char*)xmlNodeGetContent(subFieldNode));
       else printf("ERROR sig val\n");
    }
-   else printf("no signal found \n");
+   //else printf("no signal found \n");
          
    return pChain;       
 }
@@ -194,7 +194,7 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
    if(checkNode(curNode, "page") != NULL) pageNode = curNode;
    else return 0;
    planNode = pageNode->children;
-   printf("PAGE\n");
+  // printf("PAGE\n");
    
    pPage    = createPage(pageNode, calloc(1, sizeof(t_ftmPage)));
    planIdx  = 0;
@@ -202,7 +202,7 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
    while( checkNode(planNode, "plan") != NULL)
    {
       planNode = checkNode(planNode, "plan");
-      printf("\tPLAN\n");
+      //printf("\tPLAN\n");
       
       chainIdx      = 0;
       chainNode     = planNode->children;
@@ -215,7 +215,7 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
          pChainPrev = pChain;
          pChain     = createChain(chainNode, calloc(1, sizeof(t_ftmChain)));
     
-         printf("\t\tCYC\n");
+         //printf("\t\tCYC\n");
          
          //if this is the first chain of a plan, save the pointer for the plan array
          if(planStart) 
@@ -238,7 +238,7 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
          while( checkNode(msgNode, "msg") != NULL)
          {
             msgNode = checkNode(msgNode, "msg");
-            printf("\t\t\tMSG\n");
+            //printf("\t\t\tMSG\n");
             createMsg(msgNode, &pMsg[msgIdx++]);
             msgNode = xmlNextElementSibling(msgNode);      
          }
