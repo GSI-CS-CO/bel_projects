@@ -238,6 +238,11 @@ end component;
   signal fg_1_strobe: std_logic;
   signal fg_1_dreq: std_logic;
   
+  signal  tmr_rd_active:    std_logic;
+  signal  tmr_data_to_SCUB: std_logic_vector(15 downto 0);
+  signal  tmr_dtack:        std_logic;
+  signal  tmr_irq:          std_logic;
+  
   signal led_ena_cnt: std_logic;
 
   signal Data_to_SCUB: std_logic_vector(15 downto 0);
@@ -253,9 +258,7 @@ end component;
   signal wb_scu_rd_active: std_logic;
   signal wb_scu_dtack: std_logic;
   signal wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
-  
-  signal irqcnt:  unsigned(12 downto 0);
-  
+   
 
   signal Powerup_Res: std_logic; -- only for modelsim!
   signal Powerup_Done: std_logic;     -- this memory is set to one if an Powerup is done. Only the SCUB-Master can clear this bit.
@@ -514,22 +517,6 @@ port map  (
       Dtack_to_SCUB       =>  aw_port1_Dtack,
       Data_to_SCUB        =>  aw_port1_data_to_SCUB
       );
-      
-  
-    timer_irq: process (clk_sys, reset_rstn)
-    begin
-      if reset_rstn = "0" then
-        irqcnt <= '0' & x"FFF";
-      elsif rising_edge(clk_sys) then
-        if irqcnt(irqcnt'high) = '1' then
-          irqcnt <= '0' & x"FFF";
-        else
-          irqcnt <= irqcnt - 1;
-        end if;
-      end if;
-    end process;
-
-
 
     
 testport_mux: process (A_SEL, AW_Config, AWin1, AWOut_Reg1,
@@ -687,10 +674,10 @@ port map (
     nSCUB_Reset_in => A_nReset, -- in,        SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
     Data_to_SCUB => Data_to_SCUB, -- in,        connect read sources from external user functions
     Dtack_to_SCUB => Dtack_to_SCUB, -- in,        connect Dtack from from external user functions
-    intr_in => fg_1_dreq & irqcnt(irqcnt'high) & '0' & '0'  -- bit 15..12
-            & x"0"                                          -- bit 11..8
-            & x"0"                                          -- bit 7..4
-            & '0' & '0' & clk_switch_intr,                  -- bit 3..1
+    intr_in => fg_1_dreq & '0' & tmr_irq & '0'  -- bit 15..12
+            & x"0"                              -- bit 11..8
+            & x"0"                              -- bit 7..4
+            & '0' & '0' & clk_switch_intr,      -- bit 3..1
     User_Ready => '1',
     extension_cid_system => extension_cid_system, -- in,  extension card: cid_system
     extension_cid_group => extension_cid_group, --in,     extension card: cid_group
@@ -753,7 +740,7 @@ lm32_ow: housekeeping
     debug_serial_i    => '0');
 
 
-    Dtack_to_SCUB <= clk_switch_dtack or wb_scu_dtack or fg_1_dtack or aw_port1_Dtack;
+    Dtack_to_SCUB <= clk_switch_dtack or wb_scu_dtack or fg_1_dtack or aw_port1_Dtack or tmr_dtack;
 
 
     A_nDtack <= NOT(SCUB_Dtack);
@@ -787,21 +774,39 @@ fg_1: fg_quad_scu_bus
     sw_strobe         => fg_1_strobe            -- signals new output data
   );
 
-
+  tmr: tmr_scu_bus
+  generic map (
+    Base_addr     => x"0330",
+    diag_on_is_1  => 1)
+  port map (
+    clk           => clk_sys,
+    nrst          => nPowerup_Res,
+    tmr_irq       => tmr_irq,
+    
+    Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
+    Data_from_SCUB_LA => Data_from_SCUB_LA,
+    Ext_Adr_Val       => Ext_Adr_Val,
+    Ext_Rd_active     => Ext_Rd_active,
+    Ext_Wr_active     => Ext_Wr_active,
+    user_rd_active    => tmr_rd_active,
+    Data_to_SCUB      => tmr_data_to_SCUB,
+    Dtack_to_SCUB     => tmr_dtack);
 
 rd_port_mux:  process ( clk_switch_rd_active, clk_switch_rd_data,
                         wb_scu_rd_active,     wb_scu_data_to_SCUB,
                         fg_1_rd_active,       fg_1_data_to_SCUB,
-                        AWOut_Reg_rd_active,  aw_port1_data_to_SCUB )
+                        AWOut_Reg_rd_active,  aw_port1_data_to_SCUB,
+                        tmr_rd_active,      tmr_data_to_SCUB )
 
-  variable sel: unsigned(3 downto 0);
+  variable sel: unsigned(4 downto 0);
   begin
-    sel :=  clk_switch_rd_active & wb_scu_rd_active & fg_1_rd_active & AWOut_Reg_rd_active;
+    sel :=  clk_switch_rd_active & wb_scu_rd_active & fg_1_rd_active & AWOut_Reg_rd_active & tmr_rd_active;
     case sel IS
-      when "0001" => Data_to_SCUB <= aw_port1_data_to_SCUB;
-      when "0010" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "0100" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "1000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "00001" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "00010" => Data_to_SCUB <= aw_port1_data_to_SCUB;
+      when "00100" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "01000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "10000" => Data_to_SCUB <= clk_switch_rd_data;
       when others => Data_to_SCUB <= (others => '0');
     end case;
   end process rd_port_mux;
