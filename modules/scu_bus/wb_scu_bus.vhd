@@ -848,6 +848,41 @@ p_board_sel:  PROCESS (clk, s_reset)
     END IF;
   END PROCESS p_board_sel;
 
+  
+irq_deglitch: process(clk, s_reset)
+  type cnt_array is array (0 to 11) of integer range 0 to 5;
+  variable cnt : cnt_array;
+  type regarray is array (0 to 11) of std_logic_vector(4 downto 0);
+  variable shiftreg : regarray;
+begin
+  if rising_edge(clk) then
+  
+    if s_reset = '0' then
+      for i in 0 to 11 loop
+        cnt(i) := 0;
+        shiftreg(i) := (others => '0');
+      end loop;
+    else
+      for i in 0 to 11 loop
+        shiftreg(i) := shiftreg(i)(3 downto 0) & S_SRQ_active(i);
+      
+        if shiftreg(i)(0) = '1' then
+          cnt(i) := cnt(i) + 1;
+        end if;
+        if shiftreg(i)(4) = '1' then
+          cnt(i) := cnt(i) - 1;
+        end if;
+      
+        if cnt(i) = 3 then 
+          srq_active(i) <= '1';
+        elsif cnt(i) < 3 then
+          srq_active(i) <= '0';
+        end if;
+      end loop;
+    end if;
+  end if;
+  
+end process;
 
 p_intr: PROCESS (clk, s_reset)
   BEGIN
@@ -961,6 +996,6 @@ SCU_Bus_Access_Active   <= S_SCU_Bus_Access_Active;
 
 SCU_Wait_Request        <= s_stall;
 
-srq_active              <= S_SRQ_active;
+--srq_active              <= S_SRQ_active;
 
 END Arch_SCU_Bus_Master;

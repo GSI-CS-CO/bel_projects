@@ -171,4 +171,20 @@ constant c_scu_bus_master : t_sdb_device := (
    date          => x"20120720",
    name          => "SCU-BUS-Master     ")));
 
+constant c_scu_irq_ctrl_sdb : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"00000000000000ff",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"9602eb70",
+    version       => x"00000001",
+    date          => x"20140528",
+    name          => "IRQ_MASTER_CTRL    ")));
+
 end package;
