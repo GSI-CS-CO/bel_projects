@@ -2,9 +2,9 @@
 #define __FG_H_
 
 #include <stdint.h>
+#include <scu_bus.h>
 
 #define   MAX_FG_DEVICES  1
-#define   MAX_SCU_SLAVES  12
 #define   MAX_FG_PER_SLAVE 2
 #define   BUFFER_SIZE 10
 
