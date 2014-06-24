@@ -2,8 +2,9 @@
 #include <string.h>
 #include <stdint.h>
 #include "ftmx86.h"
+#include <etherbone.h>
 
-//t_FtmIf*       pFtmIf;
+extern uint8_t cpuId;
 
 uint16_t getIdFID(uint64_t id)     {return ((uint16_t)(id >> ID_FID_POS))     & (ID_MSK_B16 >> (16 - ID_FID_LEN));}
 uint16_t getIdGID(uint64_t id)     {return ((uint16_t)(id >> ID_GID_POS))     & (ID_MSK_B16 >> (16 - ID_GID_LEN));}
@@ -134,16 +135,31 @@ uint8_t* serChain(t_ftmChain* pChain, uint8_t* pBufStart, uint8_t* pBuf, uint32_
 {
    uint8_t msgIdx;
    
-   uint32_t pBufNext, pBufMsg;
+   uint32_t pBufNext, pBufMsg, sigDst, condSrc;
    t_ftmMsg* pMsg = pChain->pMsg; 
+   
+   sigDst = 0;
+   condSrc = 0;
+   
+   
+   //FIXME: change to proper sdb find
+   if (pChain->flags & FLAGS_IS_SIG_MSI)           sigDst = 0x40000800 + pChain->sigCpu * 0x100;
+   else if (pChain->flags & FLAGS_IS_SIG_SHARED)   sigDst = 0x40001000 + pChain->sigCpu * 0xC;
+   else if (pChain->flags & FLAGS_IS_SIG_ADR)      sigDst = pChain->sigDst;
+   
+   //FIXME: change to proper sdb find
+   if (pChain->flags & FLAGS_IS_COND_MSI)          condSrc = 0x0;
+   else if (pChain->flags & FLAGS_IS_COND_SHARED)  condSrc = 0x40001000 + cpuId * 0xC;
+   else if (pChain->flags & FLAGS_IS_COND_ADR)     condSrc = pChain->condSrc;
    
    uint64ToBytes(&pBuf[FTM_CHAIN_TSTART],    pChain->tStart);
    uint64ToBytes(&pBuf[FTM_CHAIN_TPERIOD],   pChain->tPeriod);
    uint64ToBytes(&pBuf[FTM_CHAIN_TEXEC],     0);
    uint32ToBytes(&pBuf[FTM_CHAIN_FLAGS],     pChain->flags);
+   uint32ToBytes(&pBuf[FTM_CHAIN_CONDSRC],   condSrc);
    uint32ToBytes(&pBuf[FTM_CHAIN_CONDVAL],   pChain->condVal);
    uint32ToBytes(&pBuf[FTM_CHAIN_CONDMSK],   pChain->condMsk);
-   uint32ToBytes(&pBuf[FTM_CHAIN_SIGDST],    pChain->sigDst);
+   uint32ToBytes(&pBuf[FTM_CHAIN_SIGDST],    sigDst);
    uint32ToBytes(&pBuf[FTM_CHAIN_SIGVAL],    pChain->sigVal);
    uint32ToBytes(&pBuf[FTM_CHAIN_REPQTY],    pChain->repQty);
    uint32ToBytes(&pBuf[FTM_CHAIN_REPCNT],    0);

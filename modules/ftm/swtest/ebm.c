@@ -45,7 +45,7 @@ void ebm_config_if(target_t conf, const char* con_info)
   tmp = (link->mac[0] << 24) | (link->mac[1] << 16) | (link->mac[2] << 8) | link->mac[3];
   *(pEbm + ((offset + EBM_OFFS_MAC_HI)   >>2)) =  tmp;  
   
-  tmp = (link->mac[4] << 24) | (link->mac[5] << 16);
+  tmp = (link->mac[4] << 8) | (link->mac[5] << 0);
   *(pEbm + ((offset + EBM_OFFS_MAC_LO)   >>2)) = tmp;
   
   tmp = (link->ipv4[0] << 24) | (link->ipv4[1] << 16) | (link->ipv4[2] << 8) | link->ipv4[3];

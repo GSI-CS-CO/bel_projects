@@ -333,6 +333,10 @@ begin
             r_msg_max         <= std_logic_vector(to_unsigned(c_msg_n_max, r_msg_max'length));
             r_t_due           <= (others => '0'); 
             r_t_trn           <= (others => '0');
+            r_ebm_adr         <= x"deadb000";
+            r_ts_adr          <= x"deada000";
+            r_dst_adr         <= x"7ffffff0";
+            r_ts_ch           <= (others => '0');
          else
             -- short names 
             v_dat_i           := ctrl_i.dat;
@@ -373,7 +377,7 @@ begin
                      when c_MSG_MAX    => r_msg_max   <= f_wb_wr(r_msg_max,   v_dat_i, v_sel, "owr");
                      when c_EBM_ADR    => r_ebm_adr   <= f_wb_wr(r_ebm_adr,   v_dat_i, v_sel, "owr");
                      when c_TS_ADR     => r_ts_adr    <= f_wb_wr(r_ts_adr,    v_dat_i, v_sel, "owr");
-							when c_TS_CH      => r_ts_ch     <= f_wb_wr(r_ts_ch,     v_dat_i, v_sel, "owr");
+							       when c_TS_CH      => r_ts_ch     <= f_wb_wr(r_ts_ch,     v_dat_i, v_sel, "owr");
                      when others => r_ctrl_out.ack  <= '0'; r_ctrl_out.err <= '1';
                   end case;
                else
@@ -586,7 +590,7 @@ begin
                                     elsif((s_pop and v_rdy)= '1') then
                                           r_pop_ack            <= '1';
                                           
-                                          if(r_cfg(c_CFG_BIT_MSG_ARR_TS) = '1') then 
+                                          if(r_cfg(c_CFG_BIT_MSG_ARR_TS) = '1' and s_packet_not_empty = '0') then 
                                              v_state_out := e_SET_ADHI_TLU;
                                           else
                                              v_state_out := e_SET_ADHI_ECA;
@@ -605,22 +609,22 @@ begin
                                        s_src_o.adr    <= std_logic_vector(unsigned(r_ebm_adr) or c_EBM_DAT_OFFS 
                                                          or c_EBM_RW_OFFS or ((unsigned(r_ts_adr) + c_TLU_ADR_CHSEL) and c_EBM_ADR_MSK));
                                        r_command_out  <= std_logic_vector(to_unsigned(0,(32 - r_ts_ch'length))) & r_ts_ch;
-                                       v_state_out    := e_DATA1_TLU;  
+                                       v_state_out    := e_DATA1_TLU;
+                                        
                
                when e_DATA1_TLU     => s_src_o.cyc <= '1';
                                        s_src_o.stb <= '1';
-                                       if(src_i.stall = '0') then
+                                       if((s_src_o.cyc and s_src_o.stb and not src_i.stall) = '1') then
                                           s_src_o.adr       <= std_logic_vector(unsigned(r_ebm_adr) or c_EBM_DAT_OFFS 
-                                                            or c_EBM_RW_OFFS or ((unsigned(r_ts_adr)+c_TLU_CH_TEST) and c_EBM_ADR_MSK));
+                                                               or c_EBM_RW_OFFS or ((unsigned(r_ts_adr)+c_TLU_CH_TEST) and c_EBM_ADR_MSK));
                                           r_command_out     <= x"ffffffff";      
-                                          
                                           r_state_out_next  <= e_SET_ADHI_ECA;
                                           v_state_out       := e_END_CYC_WAIT;
-                                       end if;     
+                                       end if; 
+                                        
                
                when e_SET_ADHI_ECA  => s_src_o.cyc <= '1';
                                        s_src_o.stb <= '1';
-                                       
                                        r_sreg_out(r_sreg_out'left downto r_sreg_out'length - s_data_out'length) <= r_reg_out;
                                        if(r_sreg_out'length /= s_data_out'length) then 
                                           r_sreg_out(r_sreg_out'left - s_data_out'length downto 0) 
@@ -628,32 +632,32 @@ begin
                                        end if;
                                        r_data_out_rdy <= s_data_out_rdy;
                                        r_pop_req_dec  <= to_unsigned(1, r_pop_req_dec'length);
-                                       --s_src_o.adr    <= std_logic_vector(unsigned(r_ebm_adr) or c_EBM_DAT_OFFS 
-                                       --                  or c_EBM_RW_OFFS or (unsigned(r_dst_adr) and c_EBM_ADR_MSK));
+                                       s_src_o.adr       <= std_logic_vector(unsigned(r_ebm_adr) + c_EBM_ADR_OPA_HI);
+                                       r_command_out     <= std_logic_vector(r_dst_adr);
                                        r_state_out_next  <= e_DATA_ECA;
                                        v_state_out       := e_END_CYC_WAIT;
                                        
                when e_DATA_ECA     =>  s_src_o.cyc <= '1';
                                        s_src_o.stb <= '1';
+                                       s_src_o.adr <= std_logic_vector( unsigned(r_ebm_adr) or c_EBM_DAT_OFFS or c_EBM_RW_OFFS or (unsigned(r_dst_adr) and c_EBM_ADR_MSK ));
                                        
                                        if((s_src_o.cyc and s_src_o.stb and not src_i.stall) = '1') then
-                                          
                                           if(c_words_per_entry > 1) then
                                              r_sreg_out <= r_sreg_out(r_sreg_out'left - t_wishbone_data'length downto 0) & x"00000000";
                                           end if;
                                           if(r_sout_cnt = c_words_per_entry-1) then
-                                             r_sout_cnt <= (others => '0');
-                                             s_src_o.stb <= '0';
-                                             r_msg_cnt_packet <= std_logic_vector(unsigned(r_msg_cnt_packet) +1);
+                                             r_sout_cnt           <= (others => '0');
+                                             s_src_o.stb          <= '0';
+                                             r_msg_cnt_packet     <= std_logic_vector(unsigned(r_msg_cnt_packet) +1);
                                              
                                              if(r_send = '1') then
                                                r_state_out_next   <= e_EBM_FLUSH;
                                              else
-                                                r_state_out_next  <= e_IDLE;
+                                               r_state_out_next   <= e_IDLE;
                                              end if;
-                                             v_state_out       := e_END_CYC_WAIT;
+                                             v_state_out          := e_END_CYC_WAIT;
                                           else
-                                             r_sout_cnt <= r_sout_cnt +1;
+                                             r_sout_cnt           <= r_sout_cnt +1;
                                           end if;
                                        end if;
 
@@ -661,6 +665,8 @@ begin
                                        s_src_o.stb       <= '1';
                                        s_src_o.adr       <= std_logic_vector(unsigned(r_ebm_adr) + c_EBM_ADR_FLUSH);
                                        r_command_out     <= x"00000001";
+                                       r_msg_cnt_packet  <= (others => '0'); 
+                                       r_send            <= '0';
                                        r_state_out_next  <= e_IDLE;
                                        v_state_out       := e_END_CYC_WAIT;
                
@@ -669,7 +675,7 @@ begin
                                          s_src_o.stb <= '0'; 
                                        end if;
                                        
-                                       if(v_stb_out <= v_ackerr_in) then
+                                       if(v_stb_out <= v_ackerr_in and v_stb_out /= 0) then
                                           s_src_o.cyc <= '0';
                                           s_src_o.stb <= '0';
                                           r_ackerr_in <= (others => '0');

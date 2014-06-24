@@ -71,7 +71,7 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
    
    fieldNode = checkNode(xmlNextElementSibling(fieldNode), "offs");
    
-   if(fieldNode != NULL) pMsg->offs = strtou64( (const char*)xmlNodeGetContent(fieldNode));
+   if(fieldNode != NULL) pMsg->offs = strtou64( (const char*)xmlNodeGetContent(fieldNode))>>3;
    else printf("ERROR offs\n");
    
 
@@ -93,7 +93,7 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
    else printf("ERROR repQty\n");
    
    fieldNode = checkNode(xmlNextElementSibling(fieldNode), "period");
-   if(fieldNode != NULL) pChain->tPeriod = (uint64_t)strtou64( (const char*)xmlNodeGetContent(fieldNode));
+   if(fieldNode != NULL) pChain->tPeriod = (uint64_t)strtou64( (const char*)xmlNodeGetContent(fieldNode))>>3;
    else printf("ERROR Period\n");
    
    fieldNode = checkNode(xmlNextElementSibling(fieldNode), "breakpoint");
@@ -108,7 +108,9 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
       if(subFieldNode != NULL)
       {
                if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "shared",  6) == 0) pChain->flags |= FLAGS_IS_COND_SHARED;
-         else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "msi",     3) == 0) pChain->flags |= FLAGS_IS_COND_MSI; 
+         else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "msi",     3) == 0) pChain->flags |= FLAGS_IS_COND_MSI;
+         else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "0x",      2) == 0) {strtou64( (const char*)xmlNodeGetContent(subFieldNode));
+         pChain->flags |= FLAGS_IS_COND_ADR;} 
       } else printf("ERROR cond source\n");
       
       subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "pattern");
@@ -129,8 +131,10 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
       {
                if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "shared",  6) == 0) pChain->flags |= FLAGS_IS_SIG_SHARED;
          else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "msi",     3) == 0) pChain->flags |= FLAGS_IS_SIG_MSI;
+         else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "0x",      2) == 0) {strtou64( (const char*)xmlNodeGetContent(subFieldNode));
+         pChain->flags |= FLAGS_IS_SIG_ADR;}
       } else printf("ERROR sig destination\n");
-      
+          
       
       subFieldNode = checkNode(fieldNode->children, "cpu");
       if(subFieldNode != NULL) pChain->sigCpu = (uint32_t)strtou64( (const char*)xmlNodeGetContent(subFieldNode));

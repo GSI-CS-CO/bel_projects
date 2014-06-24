@@ -126,7 +126,10 @@ begin
         -- Detect a write to the register byte
         if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.we = '1' and slave_i.sel(0) = '1' then
           case to_integer(unsigned(slave_i.adr(3 downto 2))) is
-            when 0 => reset_reg <= slave_i.dat(reset_reg'range);
+            when 0 => reset_reg(reset_reg'left downto 1) <= slave_i.dat(reset_reg'left downto 1);
+							 if(slave_i.dat = x"DEADBEEF") then
+								reset_reg(0) <= '1';
+							 end if;		
             when others => null;
           end case;
         end if;

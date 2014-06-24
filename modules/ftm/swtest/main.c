@@ -20,6 +20,7 @@ const unsigned long long ct_sec = 1000000000 /8; // 1s
 
 const unsigned int c_period = 375000000/1;
 
+
 void show_msi()
 {
   mprintf("Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
@@ -95,7 +96,8 @@ const char mytext[] = "Hallo Welt!...\n\n";
 void ebmInit()
 {
    ebm_config_if(LOCAL,   "hw/08:00:30:e3:b0:5a/udp/192.168.191.254/port/60368");
-   ebm_config_if(REMOTE,  "hw/00:14:d1:fa:01:aa/udp/192.168.191.131/port/60368");
+   //ebm_config_if(REMOTE,  "hw/00:14:d1:fa:01:aa/udp/192.168.191.131/port/60368");
+   ebm_config_if(REMOTE,  "hw/ff:ff:ff:ff:ff:ff/udp/192.168.255.255/port/60368");
    ebm_config_meta(80, 0x11, 16, 0x00000000 );
 }
 
@@ -190,7 +192,8 @@ void main(void) {
 disp_put_c('\f');
 
   disp_put_str("FTM ready\n");
-  mprintf("\fFTM READY\n");
+  mprintf("\fFTM CPU %u READY\nAdr: %08x\n", getCpuIdx(), pFtmIf->pSharedMem);
+  
   for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
       }
@@ -201,8 +204,8 @@ disp_put_c('\f');
    //showStatus();
    cmdEval();
    processFtm();
-   insertFpqEntry();
-   showFpqStatus();
+   //insertFpqEntry();
+   //showFpqStatus();
 /*
     atomic_on();
    ebm_op(0x100000E0, 0xDEADBEEF, WRITE);
@@ -210,11 +213,11 @@ disp_put_c('\f');
    atomic_off();
   */
 
-  
+  /*
    for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
       }
-   
+   */
   }
 
 }

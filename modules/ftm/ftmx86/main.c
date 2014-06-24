@@ -24,16 +24,16 @@ const    uint64_t vendID_GSI        = 0x0000000000000651;
 char              devName_RAM_pre[] = "WB4-BlockRAM_";
 		
 volatile uint32_t embeddedOffset;
+uint8_t error, verbose, readonly, cpuId;
 
 
-
-int ebRamOpen(const char* netaddress, uint8_t cpuId);
+int ebRamOpen(const char* netaddress);
 int ebRamRead(uint32_t address, uint32_t len, const uint8_t* buf);
 int ebRamWrite(const uint8_t* buf, uint32_t address, uint32_t len);
 int ebRamClose(void);
 
 
-int ebRamOpen(const char* netaddress, uint8_t cpuId)
+int ebRamOpen(const char* netaddress)
 {
    
    eb_status_t status;
@@ -101,7 +101,7 @@ int ebRamOpen(const char* netaddress, uint8_t cpuId)
   }
   
   
-  printf("\tSearching for RAM of Cpu %u/%u\n", cpuId, (cpuQty & 0xf));
+  if (verbose) printf("\tSearching for RAM of Cpu %u/%u\n", cpuId, (cpuQty & 0xf));
   num_devices = MAX_DEVICES;
   eb_sdb_find_by_identity(device, vendID_CERN, devID_RAM, &devices[0], &num_devices);
   if (num_devices == 0) {
@@ -126,8 +126,8 @@ int ebRamOpen(const char* netaddress, uint8_t cpuId)
       //printf("%.*s 0x%"PRIx64"\n", 19, &devices[idx].sdb_component.product.name[0], devices[idx].sdb_component.addr_first);
          if(strncmp(devName_RAM_post, (const char*)&devices[idx].sdb_component.product.name[13], 3) == 0)
          {
-            printf("\tfound %.*s @ 0x%08x\n", 19, &devices[idx].sdb_component.product.name[0], (uint32_t)devices[idx].sdb_component.addr_first);
-            embeddedOffset = devices[idx].sdb_component.addr_first + FTM_SHARED_OFFSET;
+            if (verbose) printf("\tfound %.*s @ 0x%08x\n", 19, &devices[idx].sdb_component.product.name[0], (uint32_t)devices[idx].sdb_component.addr_first);
+            embeddedOffset = devices[idx].sdb_component.addr_first;
             return 0;
          }
          
@@ -224,17 +224,20 @@ int ebRamWrite(const uint8_t* buf, uint32_t address, uint32_t len)
 }
 
 static void help(void) {
-  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [command]\n", program);
+  fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> [command]\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -x <filename>             select xml file with FTM data to copy to ftm cpu\n");
   fprintf(stderr, "  -c <cpu-id>               select a cpu by index#\n");
-  fprintf(stderr, "  -v                        verbose operation: print ftm data\n");
+  fprintf(stderr, "  -v                        verbose operation, print more details\n");
   fprintf(stderr, "  -h                        display this help and exit\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  status                    report this ftm cpu's status\n");
+  fprintf(stderr, "  status                    (default) report this ftm cpu's status\n");
   fprintf(stderr, "  run                       run this ftm cpu\n");
   fprintf(stderr, "  stop                      request stop on this ftm cpu\n");
   fprintf(stderr, "  fstop                     force stop on this ftm cpu\n");
+  fprintf(stderr, "  idle                      request idle state on this ftm cpu\n");
+  fprintf(stderr, "  swap                      swap active and inactive ftm data on this ftm cpu\n");
+  fprintf(stderr, "  show                      Make this cpu output its data to console\n");
   fprintf(stderr, "  put                       puts ftm data from xml file to cpu, then reads back ftm data from cpu.\n");
   fprintf(stderr, "  get                       gets ftm data from cpu.\n");
   fprintf(stderr, "\n");
@@ -245,7 +248,19 @@ static void die(eb_status_t status, const char* what) {
   exit(1);
 }
 
-
+void status()
+{
+    uint32_t ftmStatus;
+    eb_device_read(device, embeddedOffset + FTM_STAT_OFFSET, EB_BIG_ENDIAN | EB_DATA32, &ftmStatus, 0, eb_block);
+    printf("FTM CPU %u Status: %08x\n", cpuId, ftmStatus);
+    printf("----------------------------------------------------------------------\n");
+    if(ftmStatus & STAT_RUNNING)    printf("\t-RUNNING");    else printf("\t-\t");
+    if(ftmStatus & STAT_IDLE)       printf("\t-IDLE\t");       else printf("\t-\t");
+    if(ftmStatus & STAT_STOP_REQ)   printf("\t-STOP_REQ\t");   else printf("\t-\t");
+    if(ftmStatus & STAT_ERROR)      printf("\t-ERROR\t");      else printf("\t-\t");
+    printf("\n");
+    printf("----------------------------------------------------------------------\n");
+}
 
 int main(int argc, char** argv) {
 
@@ -261,9 +276,9 @@ int main(int argc, char** argv) {
 
    uint8_t bufRead[BUF_SIZE];
    uint8_t* pBufRead = &bufRead[0];
-   uint8_t cpuId;
-   char filename[64];
-   uint8_t error, verbose, readonly;
+    char filename[64];
+   
+   
    FILE *f;    
   
    cpuId     = 0;
@@ -315,10 +330,11 @@ int main(int argc, char** argv) {
 
    
    netaddress = argv[optind];
+   printf("\n");
    
-   printf("\nOpening CPU %u on %s ...\n", cpuId, netaddress);
-   if(ebRamOpen(netaddress, cpuId)) return 1;
-   printf("done.\n");
+   if (verbose) printf("\nOpening CPU %u on %s ...\n", cpuId, netaddress);
+   if(ebRamOpen(netaddress)) return 1;
+   if (verbose) printf("done.\n");
 
    if (optind+1 < argc) {
    command = argv[optind+1];
@@ -326,9 +342,10 @@ int main(int argc, char** argv) {
    command = "status";
    }
    
+  
    /* -------------------------------------------------------------------- */
   if (!strcasecmp(command, "status")) {
-    
+    status();
   }
 
   /* -------------------------------------------------------------------- */
@@ -337,7 +354,8 @@ int main(int argc, char** argv) {
     if (verbose) {
       printf("Starting CPU %u\n", cpuId);
     }
-    
+    eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_START, 0, eb_block);
+    status();
   }
   
   else if (!strcasecmp(command, "stop")) {
@@ -345,7 +363,17 @@ int main(int argc, char** argv) {
     if (verbose) {
       printf("Requesting CPU %u to stop\n", cpuId);
     }
+    eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_STOP_REQ, 0, eb_block);
+    status();
+  }
+  
+  else if (!strcasecmp(command, "idle")) {
     
+    if (verbose) {
+      printf("Setting BP of CPU %u to idle\n", cpuId);
+    }
+    eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_IDLE, 0, eb_block);
+    status();
   }
   
   else if (!strcasecmp(command, "fstop")) {
@@ -353,7 +381,31 @@ int main(int argc, char** argv) {
     if (verbose) {
       printf("Forcing CPU %u to stop\n", cpuId);
     }
+    eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_STOP_NOW, 0, eb_block);
+    status();
+  } 
+  
+  else if (!strcasecmp(command, "reset")) {
+    if (verbose) {
+      printf("Resetting FTM CPU %u\n", cpuId);
+    }
+    eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_RST, 0, eb_block);
+  } 
+  
+  else if (!strcasecmp(command, "swap")) {
     
+    if (verbose) {
+      printf("Swapping Active/Inactive page on CPU %u\n", cpuId);
+    }
+    eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_PAGE_SWAP, 0, eb_block);
+  } 
+  
+  else if (!strcasecmp(command, "show")) {
+    
+    if (verbose) {
+      printf("Commanding FTM CPU %u to show FTM Data on console\n", cpuId);
+    }
+    eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_SHOW_ACT, 0, eb_block);
   } 
   
   else if ((!strcasecmp(command, "put")) || (!strcasecmp(command, "get"))) {
@@ -364,12 +416,12 @@ int main(int argc, char** argv) {
          printf("done.\n");
          if(verbose) showFtmPage(pPage);
          pBufWrite = serPage (pPage, &bufWrite[0], FTM_SHARED_OFFSET);
-         printf("Writing %u bytes FTM Data ...", ebRamWrite(&bufWrite[0], embeddedOffset, BUF_SIZE));
+         printf("Writing %u bytes FTM Data ...", ebRamWrite(&bufWrite[0], embeddedOffset + FTM_SHARED_OFFSET, BUF_SIZE));
          printf("done.\n");
       } else fprintf(stderr, "No xml file specified\n");
    }
 
-   printf("Reading %u bytes FTM Data ...", ebRamRead(embeddedOffset, BUF_SIZE, pBufRead));
+   printf("Reading %u bytes FTM Data ...", ebRamRead(embeddedOffset + FTM_SHARED_OFFSET, BUF_SIZE, pBufRead));
    printf("done.\n");
    
    pNewPage = deserPage(calloc(1, sizeof(t_ftmPage)), &bufRead[0], FTM_SHARED_OFFSET);
@@ -379,8 +431,8 @@ int main(int argc, char** argv) {
       if(verbose || (!strcasecmp(command, "get")) ) showFtmPage(pNewPage);
    }   
    else printf("Deserialization FAILED! Corrupt/No Data ?\n");
-   }   
-    
+ }   
+ else  printf("Unknown command: %s\n", command);  
   
    
 

@@ -10,8 +10,8 @@
 #include "aux.h"
 
 
-#define MSI_SIG               0
-
+#define MSI_SIG             0
+#define TLU_CH_TEST         0x60
 
 #define FTM_PLAN_MAX        16
 #define FTM_PAGEDATA        0x0600
@@ -29,19 +29,19 @@
 
 
 //masks & constants
-#define CMD_RST           		(1<<0)	//Reset FTM status and counters
-#define CMD_START      		   (1<<1)	//Start FTM
-#define CMD_IDLE   		      (1<<2)	//Jump into IDLE at next BP
-#define CMD_STOP_REQ          (1<<3)	//Stop FTM if when it reaches IDLE state
-#define CMD_STOP_NOW          (1<<4)	//Stop FTM immediately
+#define CMD_RST           		0x0001	//Reset FTM status and counters
+#define CMD_START      		   0x0002	//Start FTM
+#define CMD_IDLE   		      0x0004	//Jump into IDLE at next BP
+#define CMD_STOP_REQ          0x0008	//Stop FTM if when it reaches IDLE state
+#define CMD_STOP_NOW          0x0010	//Stop FTM immediately
 
-#define CMD_COMMIT_PAGE       (1<<8)  //Commmit new data and validate
-#define CMD_COMMIT_BP         (1<<9)  //Commit alt Plan pointer. Will be selected at next BP if not NULL
-#define CMD_PAGE_SWAP         (1<<10)  //swap Page at next BP
-#define CMD_SHOW_ACT          (1<<11)
-#define CMD_SHOW_INA          (1<<12)
-#define CMD_DBG_0             (1<<16)  //DBG case 0
-#define CMD_DBG_1             (1<<17)  //DBG case 1
+#define CMD_COMMIT_PAGE       0x0100  //Commmit new data and validate
+#define CMD_COMMIT_BP         0x0200  //Commit alt Plan pointer. Will be selected at next BP if not NULL
+#define CMD_PAGE_SWAP         0x0400  //swap Page at next BP
+#define CMD_SHOW_ACT          0x0800
+#define CMD_SHOW_INA          0x1000
+#define CMD_DBG_0             0x2000  //DBG case 0
+#define CMD_DBG_1             0x4000  //DBG case 1
 
 #define STAT_RUNNING          (1<<0)   //the FTM is running
 #define STAT_IDLE             (1<<1)   //the FTM is idling  
@@ -62,19 +62,25 @@
 #define ID_BPID_POS           (ID_SCTR_LEN)
 #define ID_SCTR_POS           0
 
+
 #define FLAGS_IS_BP           (1<<0)
-#define FLAGS_IS_COND_MSI     (1<<1)
-#define FLAGS_IS_COND_SHARED  (1<<2)
-#define FLAGS_IS_SHARED_TIME  (1<<3)
-#define FLAGS_IS_SIG_MSI      (1<<4)
-#define FLAGS_IS_SIG_SHARED   (1<<5)
-#define FLAGS_IS_SIG_FIRST    (1<<6)
-#define FLAGS_IS_SIG_LAST     (1<<7)
-#define FLAGS_IS_SIG_ALL      (1<<8)
-#define FLAGS_IS_START        (1<<9) // debug
-#define FLAGS_IS_END          (1<<10) // debug
 
+#define FLAGS_IS_COND_MSI     (1<<4)
+#define FLAGS_IS_COND_SHARED  (1<<5)
+#define FLAGS_IS_COND_ADR     (1<<6)
+#define FLAGS_IS_COND_TIME    (1<<7)
 
+#define FLAGS_IS_SIG_MSI      (1<<8)
+#define FLAGS_IS_SIG_SHARED   (1<<9)
+#define FLAGS_IS_SIG_ADR      (1<<10)
+#define FLAGS_IS_SIG_TIME     (1<<11)
+
+#define FLAGS_IS_SIG_FIRST    (1<<12)
+#define FLAGS_IS_SIG_LAST     (1<<13)
+#define FLAGS_IS_SIG_ALL      (1<<14)
+
+#define FLAGS_IS_START        (1<<16) // debug
+#define FLAGS_IS_END          (1<<17) // debug
 
 #define FTM_TIME_SIZE         8
 #define FTM_DWORD_SIZE        8
@@ -133,12 +139,15 @@ static const struct {
    uint32_t capacity;
    uint32_t msgMax;
    uint32_t ebmAdr;
+   uint32_t tsAdr;
+   uint32_t tsCh;
    uint32_t cfg_ENA;
    uint32_t cfg_FIFO;    
    uint32_t cfg_IRQ;
    uint32_t cfg_AUTOPOP;
    uint32_t cfg_AUTOFLUSH_TIME;
    uint32_t cfg_AUTOFLUSH_MSGS;
+   uint32_t cfg_MSG_ARR_TS;
    uint32_t force_POP;
    uint32_t force_FLUSH;
 } r_FPQ = {    .rst        =  0x00 >> 2,
@@ -160,12 +169,15 @@ static const struct {
                .capacity   =  0x40 >> 2,
                .msgMax     =  0x44 >> 2,
                .ebmAdr     =  0x48 >> 2,
+               .tsAdr      =  0x4C >> 2,
+               .tsCh       =  0x50 >> 2,
                .cfg_ENA             = 1<<0,
                .cfg_FIFO            = 1<<1,    
                .cfg_IRQ             = 1<<2,
                .cfg_AUTOPOP         = 1<<3,
                .cfg_AUTOFLUSH_TIME  = 1<<4,
                .cfg_AUTOFLUSH_MSGS  = 1<<5,
+               .cfg_MSG_ARR_TS      = 1<<6,
                .force_POP           = 1<<0,
                .force_FLUSH         = 1<<1
 };
@@ -202,6 +214,7 @@ typedef struct {
    t_time               tPeriod; //chain period
    t_time               tExec;   //chain execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod FIXME
    uint32_t             flags; 
+   uint32_t*            condSrc; //condition source adr
    uint32_t             condVal; //pattern to compare
    uint32_t             condMsk; //mask for comparison in condition
    uint32_t*            sigDst;  //dst adr for signalling

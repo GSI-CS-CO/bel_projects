@@ -109,8 +109,8 @@ void discoverPeriphery()
    
    //FIXME this should not count found std CBs, but use a CB with a special devId
    
-   //find_device_multi(&found_sdb[0], &idx, 20, GSI, CB_CLUSTER);
-   find_device_multi(&found_sdb[0], &idx, 20, GSI, CB_GENERIC);
+   find_device_multi(&found_sdb[0], &idx, 20, GSI, CB_CLUSTER);
+   //find_device_multi(&found_sdb[0], &idx, 20, GSI, CB_GENERIC);
    pCluCB         = (unsigned int*)getSdbAdr(&found_sdb[0]);
    pSharedRam     = find_device_adr_in_subtree(&found_sdb[0], CERN, DPRAM_GENERIC);
    pCluInfo       = find_device_adr_in_subtree(&found_sdb[0], GSI, CPU_CLU_INFO_ROM);
@@ -120,6 +120,7 @@ void discoverPeriphery()
    pOledDisplay   = find_device_adr(GSI, OLED_DISPLAY);  
    pEbm           = find_device_adr(GSI, ETHERBONE_MASTER);
    pEca           = find_device_adr(GSI, ECA_EVENT);
+   pTlu           = find_device_adr(GSI, TLU);
    pUart          = find_device_adr(CERN, WR_UART);
    BASE_UART      = pUart; //make WR happy ...
    
