@@ -57,7 +57,6 @@ entity monster is
     g_family               : string; -- "Arria II" or "Arria V"
     g_project              : string;
     g_flash_bits           : natural;
-    g_pll_skew             : natural; -- (ref-tx) in ps
     g_ram_size             : natural;
     g_gpio_inout           : natural;
     g_gpio_in              : natural;
@@ -393,7 +392,6 @@ architecture rtl of monster is
   signal clk_12_5         : std_logic;
   signal rstn_ref         : std_logic;
   signal rstn_butis       : std_logic;
-  signal rstn_phase       : std_logic;
   
   signal phase_done       : std_logic;
   signal phase_step       : std_logic;
@@ -509,7 +507,7 @@ architecture rtl of monster is
   signal s_vme_addr_o       : std_logic_vector(31 downto 1);
   signal s_vme_buffer       : t_vme_buffer;
   signal s_vme_buffer_latch : std_logic;
-    
+  
   -- END OF VME signals
   ----------------------------------------------------------------------------------
   
@@ -551,7 +549,7 @@ begin
   
   reset : altera_reset
     generic map(
-      g_clocks => 3)
+      g_clocks => 4)
     port map(
       clk_free_i    => clk_free,
       rstn_i        => core_rstn_i,
@@ -563,9 +561,11 @@ begin
       clocks_i(0)   => clk_free,
       clocks_i(1)   => clk_sys,
       clocks_i(2)   => clk_update,
+      clocks_i(3)   => clk_ref,
       rstn_o(0)     => rstn_free,
       rstn_o(1)     => rstn_sys,
-      rstn_o(2)     => rstn_update);
+      rstn_o(2)     => rstn_update,
+      rstn_o(3)     => rstn_ref);
 
   dmtd_a2 : if g_family = "Arria II" generate
     dmtd_inst : dmtd_pll port map(
@@ -642,23 +642,17 @@ begin
     phase : altera_phase
       generic map(
         g_select_bits   => 5,
-        g_outputs       => 3,
-        g_base          => g_pll_skew,
+        g_outputs       => 1,
+        g_base          => 0,
         g_vco_freq      => 1000, -- 1GHz
-        g_output_freq   => (0 => 125, 1 => 200, 2 => 25),
-        g_output_select => (0 =>   2, 1 =>   3, 2 =>  4))
+        g_output_freq   => (0 => 200),
+        g_output_select => (0 =>   3))
       port map(
         clk_i       => clk_free,
         rstn_i      => rstn_free,
-        clks_i(0)   => clk_ref,
-        clks_i(1)   => clk_butis,
-        clks_i(2)   => clk_phase,
-        rstn_o(0)   => rstn_ref,
-        rstn_o(1)   => rstn_butis,
-        rstn_o(2)   => rstn_phase,
-        offset_i(0) => (others => '0'),
-        offset_i(1) => phase_butis,
-        offset_i(2) => (others => '0'),
+        clks_i(0)   => clk_butis,
+        rstn_o(0)   => rstn_butis,
+        offset_i(0) => phase_butis,
         phasedone_i => phase_done,
         phasesel_o  => phase_sel,
         phasestep_o => phase_step);
@@ -683,27 +677,17 @@ begin
     phase : altera_phase
       generic map(
         g_select_bits   => 5,
-        g_outputs       => 5,
-        g_base          => g_pll_skew,
+        g_outputs       => 1,
+        g_base          => 0,
         g_vco_freq      => 1000, -- 1GHz
-        g_output_freq   => (0 => 125, 1 => 200, 2 => 25, 3 => 1000, 4 => 125),
-        g_output_select => (0 =>   3, 1 =>   4, 2 =>  5, 3 =>    6, 4 =>   7))
+        g_output_freq   => (0 => 200),
+        g_output_select => (0 =>   4))
       port map(
         clk_i       => clk_free,
         rstn_i      => rstn_free,
-        clks_i(0)   => clk_ref,
-        clks_i(1)   => clk_butis,
-        clks_i(2)   => clk_phase,
-        clks_i(3)   => '0', -- these clocks should not be used in core logic
-        clks_i(4)   => '0',
-        rstn_o(0)   => rstn_ref,
-        rstn_o(1)   => rstn_butis,
-        rstn_o(2)   => rstn_phase,
-        rstn_o(3)   => open,
-        rstn_o(4)   => open,
-        offset_i(0) => (others => '0'),
-        offset_i(1) => phase_butis,
-        offset_i(2) => (others => '0'),
+        clks_i(0)   => clk_butis,
+        rstn_o(0)   => rstn_butis,
+        offset_i(0) => phase_butis,
         phasedone_i => phase_done,
         phasesel_o  => phase_sel,
         phasestep_o => phase_step);
