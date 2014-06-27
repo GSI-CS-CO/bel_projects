@@ -566,12 +566,14 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endp
 set_global_assignment -name VHDL_FILE ../../../modules/power_test/pwm.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer2.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/monster/monster_iodir.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_sink.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/wb_simple_uart.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tlu/tlu_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/dac714/dac714.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_bicolor_led_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_adder.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/power_test/row_array.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/modulbus/global_reg.vhd
@@ -646,6 +648,7 @@ set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_qu
 set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_dec_edge_timed.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wbgen2_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/hpll_period_detect.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_dyn_glitch_filt.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/oled_display/display_console.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/power_test/power_test.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_period_detect.vhd

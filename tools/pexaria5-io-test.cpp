@@ -3,10 +3,34 @@
 #include <eca.h>
 #include <cassert>
 #include <cstdio>
+#include <cstdlib>
 #include <unistd.h> // sleep
 
 using namespace GSI_ECA;
 using namespace GSI_TLU;
+
+void validate(uint64_t start, int in, int out, const std::vector<uint64_t>& queue) {
+  /* Now test phase quality */
+  int64_t phase[16];
+  int64_t avg = 0;
+  for (int event = 0; event < 16; ++event) {
+    uint64_t target = (event%8) + start + 200000000*event;
+    phase[event] = queue[event] - target;
+    //printf("Phase: %d\n", (int)phase[event]);
+    avg += phase[event];
+  }
+  avg /= 16;
+  
+  printf("Phase offset from %d=>%d: %dns\n", out, in, (int)avg);
+  for (int event = 0; event < 16; ++event) {
+    if (phase[event] > avg + 1 ||
+        phase[event] + 1 < avg) {
+      fprintf(stderr, "Too much phase noise on %d=>%d! %dns differs too far from average %dns\n",
+        out, in, (int)phase[event], (int)avg);
+      exit(1);
+    }
+  }
+}
 
 int main(int argc, const char** argv) {
   Socket socket;
@@ -119,24 +143,22 @@ int main(int argc, const char** argv) {
         return 1;
       }
       
-      /* Now test phase quality */
-      int64_t phase[16];
-      int64_t avg = 0;
-      for (int event = 0; event < 16; ++event) {
-        uint64_t target = (event%8) + start + 200000000*event;
-        phase[event] = queue[event] - target;
-        //printf("Phase: %d\n", (int)phase[event]);
-        avg += phase[event];
+      validate(start, in, out, queue);
+    }
+    
+    for (int lvds = 3; lvds < 5; ++lvds) {
+      std::vector<uint64_t>& queue = queues[lvds];
+      
+      if (queue.empty()) {
+        fprintf(stderr, "!!! warning: failed to detect cable on LVDS input\n");
+        continue;
       }
-      avg /= 16;
-      printf("Phase offset from %d=>%d: %dns\n", out, in, (int)avg);
-      for (int event = 0; event < 16; ++event) {
-        if (phase[event] > avg + 1 ||
-            phase[event] + 1 < avg) {
-          fprintf(stderr, "Too much phase noise on %d=>%d! %dns differs too far from average %dns\n",
-            out, in, (int)phase[event], (int)avg);
-        }
+      
+      if (queue.size() != 16) {
+        fprintf(stderr, "Input %d did not record 16 events!\n", lvds);
+        return 1;
       }
+      validate(start, lvds, -1, queue);
     }
   }
   
@@ -145,5 +167,6 @@ int main(int argc, const char** argv) {
     return 1;
   }
   
+  printf(">>> testing complete <<<\n");
   return 0;
 }

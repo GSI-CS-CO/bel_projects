@@ -18,4 +18,4 @@ install:
 	gcc $(CFLAGS) -o $@ $< $(LIBS)
 
 %:	%.cpp
-	g++ $(CFLAGS) -o $@ $< $(LIBS) -leca
+	g++ $(CFLAGS) -o $@ $< $(LIBS) -leca -ltlu

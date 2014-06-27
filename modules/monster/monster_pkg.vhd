@@ -37,7 +37,6 @@ package monster_pkg is
       g_family      : string; -- "Arria II" or "Arria V"
       g_project     : string;
       g_flash_bits  : natural;
-      g_pll_skew    : natural := 0; -- (ref-tx) in ps
       g_ram_size    : natural := 131072;
       g_gpio_inout  : natural := 0;
       g_gpio_in     : natural := 0;
