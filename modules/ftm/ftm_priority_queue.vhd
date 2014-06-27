@@ -231,7 +231,6 @@ architecture behavioral of ftm_priority_queue is
    signal r_pop_req_inc       : unsigned(g_idx_width downto 0);
    signal r_pop_req_dec       : unsigned(g_idx_width downto 0);
    signal r_command_out       : t_wishbone_data;
-   signal r_pop_ack            : std_logic;
    signal r_empty            : std_logic;
    signal s_adr               : unsigned(6 downto 0);
    
@@ -285,7 +284,7 @@ begin
             dbg_err_o   => s_dbg_stat(1),
     
             push_i      => s_push,
-            pop_i       => s_pop,
+            pop_i       => r_pop_req_dec(0),
             busy_o      => s_busy,
             full_o      => s_full,
             empty_o     => s_empty,
@@ -495,7 +494,7 @@ begin
 -- FSM für output -> block ebm, check EBM status msg count, set ebm hi adr reg, output element(s), trigger ebm flush if necessary
    src_o       <= s_src_o;
 
-   s_pop       <= '1' when (r_pop_req > 0) and s_busy = '0' and r_cfg(c_CFG_BIT_ENA) = '1' and s_empty = '0' and r_pop_ack = '0'
+   s_pop       <= '1' when (r_pop_req > 0) and s_busy = '0' and r_cfg(c_CFG_BIT_ENA) = '1' and s_empty = '0'
              else '0';
    s_shift_out <= r_sreg_out(r_sreg_out'left downto r_sreg_out'length-t_wishbone_data'length);
 
@@ -537,27 +536,24 @@ begin
             s_src_o.we        <= '0';
             r_sreg_out(r_sreg_out'left downto r_sreg_out'length - s_data_out'length) <= s_data_out;
             r_pop_req_dec     <= (others => '0');
-            r_data_out_rdy    <= '0';
             r_send            <= '0';
             r_state_out       <= e_IDLE;
             r_state_out_next      <= e_IDLE;
             r_ebm_ops         <= (others => '0');
             r_msg_cnt_packet  <= (others => '0');
             r_src_ack_cnt_clr <= '0';
-            r_pop_ack         <= '0';
-
+            
             r_ackerr_in       <= (others => '0');
             r_stb_out         <= (others => '0');
          else
-            v_rdy := s_data_out_rdy or r_data_out_rdy;
-            r_data_out_rdy    <= v_rdy; 
+            if(s_data_out_rdy = '1') then
+               r_reg_out <= s_data_out;
+            end if;
+            
             r_pop_req_dec     <= (others => '0');
             r_src_ack_cnt_clr <= '0';
             v_state_out       := r_state_out;
-            if(s_data_out_rdy = '1') then
-               r_reg_out      <= s_data_out;
-            end if;
-         
+            
             r_send <= (r_send or s_send) and s_packet_not_empty;
             
             
@@ -582,14 +578,12 @@ begin
             case r_state_out is
                when e_IDLE       => s_src_o.cyc <= '0';
                                     s_src_o.stb <= '0';
-                                    r_pop_ack <= '0';
                                     if(r_send = '1') then
                                          s_src_o.adr   <= std_logic_vector(unsigned(r_ebm_adr) + c_EBM_ADR_FLUSH);
                                          r_command_out <= x"00000001";
                                          v_state_out := e_EBM_FLUSH;
-                                    elsif((s_pop and v_rdy)= '1') then
-                                          r_pop_ack            <= '1';
-                                          
+                                    elsif((s_pop and not s_busy) = '1') then
+                                          r_sreg_out(r_sreg_out'left downto r_sreg_out'length - s_data_out'length) <= r_reg_out;
                                           if(r_cfg(c_CFG_BIT_MSG_ARR_TS) = '1' and s_packet_not_empty = '0') then 
                                              v_state_out := e_SET_ADHI_TLU;
                                           else
@@ -625,13 +619,11 @@ begin
                
                when e_SET_ADHI_ECA  => s_src_o.cyc <= '1';
                                        s_src_o.stb <= '1';
-                                       r_sreg_out(r_sreg_out'left downto r_sreg_out'length - s_data_out'length) <= r_reg_out;
+                                       
                                        if(r_sreg_out'length /= s_data_out'length) then 
                                           r_sreg_out(r_sreg_out'left - s_data_out'length downto 0) 
                                           <= std_logic_vector(to_unsigned(0, r_sreg_out'length - s_data_out'length));
                                        end if;
-                                       r_data_out_rdy <= s_data_out_rdy;
-                                       r_pop_req_dec  <= to_unsigned(1, r_pop_req_dec'length);
                                        s_src_o.adr       <= std_logic_vector(unsigned(r_ebm_adr) + c_EBM_ADR_OPA_HI);
                                        r_command_out     <= std_logic_vector(r_dst_adr);
                                        r_state_out_next  <= e_DATA_ECA;
@@ -649,7 +641,7 @@ begin
                                              r_sout_cnt           <= (others => '0');
                                              s_src_o.stb          <= '0';
                                              r_msg_cnt_packet     <= std_logic_vector(unsigned(r_msg_cnt_packet) +1);
-                                             
+                                             r_pop_req_dec  <= to_unsigned(1, r_pop_req_dec'length);
                                              if(r_send = '1') then
                                                r_state_out_next   <= e_EBM_FLUSH;
                                              else
@@ -667,6 +659,7 @@ begin
                                        r_command_out     <= x"00000001";
                                        r_msg_cnt_packet  <= (others => '0'); 
                                        r_send            <= '0';
+                                       
                                        r_state_out_next  <= e_IDLE;
                                        v_state_out       := e_END_CYC_WAIT;
                
@@ -751,7 +744,7 @@ begin
          if(rst_n_i = '0' or r_rst = "1") then
             r_due0 <= '0';
          else
-            r_due0 <= s_due and r_cfg(c_CFG_BIT_AUTOPOP) and not r_empty and not r_pop_ack; 
+            r_due0 <= s_due and r_cfg(c_CFG_BIT_AUTOPOP) and not r_empty and not s_data_out_rdy; 
             r_due1 <= r_due0;
          end if; -- rst       
       end if; -- clk edge
