@@ -162,7 +162,6 @@ void configure_slaves(unsigned int tmr_value) {
     scub_base[(slot << 16) + TMR_BASE + TMR_VALUEH] = tmr_value >> 16; //enable generation of tmr irqs, 1ms, 0x001e
     i++;
   }
-  scub_base[(0xf << 16) + TMR_BASE + TMR_CNTRL] |= 0x2; //multicast tmr enable
 } 
 
 void reset_slaves() {
@@ -180,18 +179,24 @@ void reset_slaves() {
 scan_bus() {
   int i=0, j=0;
   scan_scu_bus(&scub, backplane_id, scub_base);
-  //scan_for_fgs(&scub, &fgs);
+  scan_for_fgs(&scub, &fgs);
   mprintf("ID: 0x%08x%08x\n", (int)(scub.unique_id >> 32), (int)scub.unique_id); 
   while(scub.slaves[i].unique_id) { /* more slaves in list */ 
       mprintf("slaves[%d] ID:  0x%08x%08x\n",i, (int)(scub.slaves[i].unique_id>>32), (int)scub.slaves[i].unique_id); 
       mprintf("slv ver: 0x%x cid_sys: %d cid_grp: %d\n", scub.slaves[i].version, scub.slaves[i].cid_sys, scub.slaves[i].cid_group); 
       mprintf("slot:        %d\n", scub.slaves[i].slot); 
       j = 0; 
-      //while(scub.slaves[i].devs[j].version) { /* more fgs in list */ 
-      //  mprintf("   fg[%d], version 0x%x \n", j, scub.slaves[i].devs[j].version); 
-      //  j++; 
-      //} 
+      while(scub.slaves[i].devs[j].version) { /* more fgs in list */ 
+        mprintf("   fg[%d], version 0x%x \n", j, scub.slaves[i].devs[j].version); 
+        j++; 
+      } 
       i++; 
+  }
+  i = 0;
+  mprintf("FGs found:\n");
+  while(fgs.devs[i]) {
+    mprintf("fg[%d] slot: %d \n", i, fgs.devs[i]->slave->slot);
+    i++;
   } 
 }
 
@@ -204,6 +209,7 @@ void sw_irq_handler() {
     case 1:
       configure_slaves(global_msi.msg);
       enable_slave_irqs();
+      scub_base[(0xd << 16) + TMR_BASE + TMR_CNTRL] = 0x2; //multicast tmr enable
     break;
     case 2:
       disable_slave_irqs();
