@@ -98,7 +98,7 @@ void ebmInit()
    ebm_config_if(LOCAL,   "hw/08:00:30:e3:b0:5a/udp/192.168.191.254/port/60368");
    //ebm_config_if(REMOTE,  "hw/00:14:d1:fa:01:aa/udp/192.168.191.131/port/60368");
    ebm_config_if(REMOTE,  "hw/ff:ff:ff:ff:ff:ff/udp/192.168.255.255/port/60368");
-   ebm_config_meta(80, 0x11, 16, 0x00000000 );
+   ebm_config_meta(1500, 0x11, 255, 0x00000000 );
 }
 
 
@@ -187,12 +187,8 @@ void main(void) {
    sdb_location allBrg[20];
 
    init();
-  DBPRINT("Hallo Welt???\n");
-
-disp_put_c('\f');
-
-  disp_put_str("FTM ready\n");
-  mprintf("\fFTM CPU %u READY\nAdr: %08x\n", getCpuIdx(), pFtmIf->pSharedMem);
+   disp_put_c('\f');
+   disp_put_str("FTM ready\n");
   
   for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
@@ -204,6 +200,7 @@ disp_put_c('\f');
    //showStatus();
    cmdEval();
    processFtm();
+   
    //insertFpqEntry();
    //showFpqStatus();
 /*

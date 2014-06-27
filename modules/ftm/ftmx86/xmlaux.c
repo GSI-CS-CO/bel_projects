@@ -96,9 +96,9 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
    if(fieldNode != NULL) pChain->tPeriod = (uint64_t)strtou64( (const char*)xmlNodeGetContent(fieldNode))>>3;
    else printf("ERROR Period\n");
    
-   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "breakpoint");
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "branchpoint");
    if(fieldNode != NULL) {if(strncmp( (const char*)xmlNodeGetContent(fieldNode), "yes",  3) == 0) pChain->flags |= FLAGS_IS_BP;}
-   else printf("ERROR breakpoint\n");
+   else printf("ERROR branchpoint\n");
    
    curNode = fieldNode;
    fieldNode = checkNode(xmlNextElementSibling(curNode), "condition");
@@ -183,15 +183,16 @@ t_ftmPage* createPage(xmlNode* pageNode, t_ftmPage* pPage)
 
 t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
 {
-   xmlNode *curNode, *pageNode, *planNode, *chainNode, *msgNode = NULL;
+   xmlNode *curNode, *pageNode, *planNode, *fieldNode, *subFieldNode, *chainNode, *msgNode = NULL;
    
    t_ftmPage*  pPage    = NULL;
    t_ftmChain* pChain     = NULL;
    t_ftmChain* pChainPrev = NULL;
    t_ftmChain* pIdle    = NULL;
    t_ftmMsg* pMsg       = NULL;
-   bool     planStart;
+   bool     planStart, planIsLoop = 0;
    uint32_t planIdx, chainIdx, msgIdx;
+   uint64_t starttime = 0;
    
    curNode = aNode;
    
@@ -209,8 +210,34 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
       //printf("\tPLAN\n");
       
       chainIdx      = 0;
-      chainNode     = planNode->children;
+      
       planStart   = true;
+   
+   const char* planChar;
+   
+   fieldNode =  checkNode(planNode->children, "meta");
+   subFieldNode = NULL;
+   if(fieldNode != NULL) subFieldNode = fieldNode->children;
+   else printf("ERROR meta \n");
+   
+   
+   subFieldNode = checkNode(subFieldNode, "starttime");
+   if(subFieldNode != NULL) 
+   {  
+       starttime = strtou64( (const char*)xmlNodeGetContent(subFieldNode));
+   }
+   else printf("ERROR starttime\n");
+   
+   subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "lastjump");
+   if(subFieldNode != NULL)
+   {  
+      planChar = (const char*)xmlNodeGetContent(subFieldNode);
+      if (strcmp(planChar, "self") == 0) { planIsLoop = 1; }
+      else planIsLoop = 0;
+   }
+   else printf("ERROR lastjump\n");
+   
+   chainNode = xmlNextElementSibling(fieldNode);   
 
       while( checkNode(chainNode, "chain") != NULL)
       {
@@ -226,11 +253,8 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
          {  
             planStart = false; 
             pPage->plans[planIdx].pStart = pChain;
-            
-            curNode = checkNode(planNode->children, "starttime");
-            if(curNode != NULL) 
-            pChain->tStart = strtou64( (const char*)xmlNodeGetContent(curNode));
-            
+            pChain->tStart = starttime;
+            printf("Plan %u Ptr 0x%p\n", planIdx, pPage->plans[planIdx].pStart); 
          } else {
             pChainPrev->pNext =  (struct t_ftmChain*)pChain;
          }
@@ -254,9 +278,14 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
          chainIdx++;
          chainNode = xmlNextElementSibling(chainNode);               
       }
-      pChain->pNext = (struct t_ftmChain*)pIdle;
+      if(planIsLoop) { printf("Plan %u loops to Ptr 0x%p\n", planIdx, pPage->plans[planIdx].pStart);
+                       pChain->flags |= FLAGS_IS_ENDLOOP;
+                       pChain->pNext = (struct t_ftmChain*)(pPage->plans[planIdx].pStart);
+                     }  
+      else {pChain->pNext = (struct t_ftmChain*)pIdle;}
       pPage->plans[planIdx++].chainQty = chainIdx;
       pChain->flags |= FLAGS_IS_END;
+      
       planNode = xmlNextElementSibling(planNode);
    }
    pPage->planQty                 = planIdx;

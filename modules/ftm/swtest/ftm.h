@@ -47,6 +47,8 @@
 #define STAT_IDLE             (1<<1)   //the FTM is idling  
 #define STAT_STOP_REQ         (1<<2)   //alt ptr has been set to IDLE 
 #define STAT_ERROR            (1<<3)   //FTM encountered an error, check error register
+#define STAT_WAIT             (1<<4)   //FTM waiting on condition
+
 
 #define ID_MSK_B16            0xffff
 #define ID_FID_LEN            4
@@ -81,6 +83,7 @@
 
 #define FLAGS_IS_START        (1<<16) // debug
 #define FLAGS_IS_END          (1<<17) // debug
+#define FLAGS_IS_ENDLOOP      (1<<18)
 
 #define FTM_TIME_SIZE         8
 #define FTM_DWORD_SIZE        8

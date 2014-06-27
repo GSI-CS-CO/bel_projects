@@ -13,7 +13,39 @@ uint16_t getIdSID(uint64_t id)     {return ((uint16_t)(id >> ID_SID_POS))     & 
 uint16_t getIdBPID(uint64_t id)    {return ((uint16_t)(id >> ID_BPID_POS))    & (ID_MSK_B16 >> (16 - ID_BPID_LEN));}
 uint16_t getIdSCTR(uint64_t id)    {return ((uint16_t)(id >> ID_SCTR_POS))    & (ID_MSK_B16 >> (16 - ID_SCTR_LEN));}
 
+static void hexDump (char *desc, void *addr, int len) {
+    int i;
+    unsigned char buff[17];
+    unsigned char *pc = (unsigned char*)addr;
 
+    // Output description if given.
+    if (desc != NULL)
+        printf ("%s:\n", desc);
+
+    // Process every byte in the data.
+    for (i = 0; i < len; i++) {
+        // Multiple of 16 means new line (with line offset).
+
+        if ((i % 16) == 0) {
+            // Just don't print ASCII for the zeroth line.
+            if (i != 0)
+                printf ("  %s\n", buff);
+
+            // Output the offset.
+            printf ("  %04x ", i);
+        }
+
+        // Now the hex code for the specific character.
+        printf (" %02x", pc[i]);
+
+        // And store a printable ASCII character for later.
+        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
+            buff[i % 16] = '.';
+        else
+            buff[i % 16] = pc[i];
+        buff[(i % 16) + 1] = '\0';
+    }
+}
 
 uint64_t getId(uint16_t fid, uint16_t gid, uint16_t evtno, uint16_t sid, uint16_t bpid, uint16_t sctr)
 {
@@ -80,7 +112,7 @@ uint64_t bytesToUint64(uint8_t* pBuf)
    return val;
 }
 
-uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOffs) 
+uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOffs, uint8_t cpuId) 
 {
    uint8_t j, planIdx, chainIdx;
    uint8_t* pBuf = pBufStart;
@@ -99,7 +131,7 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOff
       while(chainIdx++ < pPage->plans[planIdx].chainQty && pChain != NULL)
       {
          //printf("Chain %02u/%02u starts @", chainIdx, pPage->plans[planIdx].chainQty);
-         pBuf = serChain(pChain, pBufStart, pBuf, embeddedOffs);
+         pBuf = serChain(pChain, pBufPlans[planIdx], pBufStart, pBuf, embeddedOffs, cpuId);
          pChain = (t_ftmChain*)pChain->pNext;
       }   
    }
@@ -131,7 +163,7 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOff
 }
 
 
-uint8_t* serChain(t_ftmChain* pChain, uint8_t* pBufStart, uint8_t* pBuf, uint32_t embeddedOffs)
+uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufStart, uint8_t* pBuf, uint32_t embeddedOffs, uint8_t cpuId)
 {
    uint8_t msgIdx;
    
@@ -169,16 +201,21 @@ uint8_t* serChain(t_ftmChain* pChain, uint8_t* pBufStart, uint8_t* pBuf, uint32_
    pBufMsg  = embeddedOffs + _FTM_CHAIN_LEN + ( (uint32_t)( (uintptr_t)pBuf - (uintptr_t)pBufStart ) );
    uint32ToBytes(&pBuf[FTM_CHAIN_PMSG],    pBufMsg);
    
-   if(pChain->pNext != NULL) pBufNext = pBufMsg + pChain->msgQty * _FTM_MSG_LEN;
-   else                     pBufNext = FTM_NULL;
+   if(pChain->pNext != NULL) {
+    if(((pChain->flags & FLAGS_IS_END) && (pChain->flags & FLAGS_IS_ENDLOOP))) pBufNext = (uint32_t)pPlanStart;
+    else pBufNext = pBufMsg + pChain->msgQty * _FTM_MSG_LEN;
+   } 
+   else                      pBufNext = FTM_NULL;
    uint32ToBytes(&pBuf[FTM_CHAIN_PNEXT],    pBufNext);
-   
+ 
    pBuf +=  _FTM_CHAIN_LEN;
    for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++) pBuf = serMsg(&pMsg[msgIdx], pBuf);   
    
    return pBuf;   
 
 }
+
+
 
 uint8_t* serMsg(  t_ftmMsg* pMsg, uint8_t* pBuf)
 {
@@ -198,20 +235,19 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
    uint8_t* pBuf = pBufStart;
    uint32_t j, chainQty;
    uint8_t* pBufPlans[FTM_PLAN_MAX];
+   uint8_t* aux;
    t_ftmChain* pChain  = NULL;
    t_ftmChain* pNext = NULL;
-   
-   
+  
    //get plan qty
    if(pPage == NULL) printf("page not allocated\n");
-   
-   
-   
    pPage->planQty = bytesToUint32(&pBufStart[FTM_PAGE_QTY]);
+   
    for(j=0;j<pPage->planQty;    j++)
    {
       
       //read the offset to start of first chain
+      aux =  (uintptr_t)bytesToUint32(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE]) - (uintptr_t)embeddedOffs;
       pBufPlans[j] = pBufStart + (uintptr_t)bytesToUint32(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE]) - (uintptr_t)embeddedOffs;
       
       //allocate first chain and a Next Chain
@@ -221,20 +257,17 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
       //set plan start to first chain
       pPage->plans[j].pStart = pChain;
       //deserialise (pBufStart +  offset) to pChain and fix pChains next ptr
-
       pBuf = deserChain(pChain, pNext, pBufPlans[j], pBufStart, embeddedOffs);
-      
- 
       //deserialise chains until we reached the end or we reached max
       
-      while(!(pChain->flags & FLAGS_IS_END) && chainQty < 1024)
+      while(!(pChain->flags & FLAGS_IS_END) && chainQty < 10)
       {
          pChain = pNext;
          pNext = calloc(1, sizeof(t_ftmChain));
          pBuf = deserChain(pChain, pNext, pBuf, pBufStart, embeddedOffs);
          chainQty++;
+         
       } 
-      //printf("deserpage\n");
       //no next after the end, free this one
       //free(pNext);
       pChain->pNext = NULL;
@@ -288,6 +321,7 @@ uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChainStart,
    pBuf = &pBuf[_FTM_CHAIN_LEN];
    for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++) pBuf = deserMsg(pBuf, &pChain->pMsg[msgIdx]);   
    //set pBuf ptr to 
+   
    return pBufStart + (uintptr_t)bytesToUint32(&pChainStart[FTM_CHAIN_PNEXT]) - (uintptr_t)embeddedOffs;
    
 }
@@ -332,28 +366,32 @@ void showFtmPage(t_ftmPage* pPage)
          
    for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
    {
-      printf("\t---PLAN %c\n", planIdx+'A');
+      printf("\t*******************************************************************************************************\n");
+      printf("\t---   PLAN %c\n", planIdx+'A');
+      printf("\t*******************************************************************************************************\n");
       chainIdx = 0;
       pChain = pPage->plans[planIdx].pStart;
       while(chainIdx++ < pPage->plans[planIdx].chainQty && pChain != NULL)
       {
-         printf("\t\t---CHAIN %c%u\n", planIdx+'A', chainIdx-1);
-         printf("\t\tStart:\t\t%08x%08x\n\t\tperiod:\t\t%08x%08x\n\t\trep:\t\t\t%08x\n\t\tmsg:\t\t\t%08x\n", 
+         printf("\t\t-----------------------------------------------------------------------------------------------\n");
+         printf("\t\t---   CHAIN %c%u\n", planIdx+'A', chainIdx-1);
+         printf("\t\t-----------------------------------------------------------------------------------------------\n");
+         printf("\t\tFlags:\t");
+         if(pChain->flags & FLAGS_IS_BP)           printf("    IS_BP    "); else printf("      -      ");
+         if(pChain->flags & FLAGS_IS_COND_MSI)     printf("   IS_CMSI   "); else printf("      -      ");
+         if(pChain->flags & FLAGS_IS_COND_SHARED)  printf("   IS_CSHA   "); else printf("      -      ");
+         if(pChain->flags & FLAGS_IS_SIG_SHARED)   printf("IS_SIG_SHARED"); else printf("      -      ");
+         if(pChain->flags & FLAGS_IS_SIG_MSI)      printf("  IS_SIG_MSI "); else printf("      -      ");
+         if(pChain->flags & FLAGS_IS_END)          printf("   IS_END    "); else printf("      -      ");
+         if(pChain->flags & FLAGS_IS_ENDLOOP)      printf("  IS_ENDLOOP "); else printf("      -      ");
+         printf("\n");
+         printf("\t\tStart:\t\t0x%08x%08x\n\t\tperiod:\t\t0x%08x%08x\n\t\trep:\t\t\t%10u\n\t\tmsg:\t\t\t%10u\n", 
          (uint32_t)(pChain->tStart>>32), (uint32_t)pChain->tStart, 
          (uint32_t)(pChain->tPeriod>>32), (uint32_t)pChain->tPeriod,
          pChain->repQty,
          pChain->msgQty);
-         
-         printf("\t\tFlags:\t");
-         if(pChain->flags & FLAGS_IS_BP) printf("-IS_BP\t");
-         if(pChain->flags & FLAGS_IS_COND_MSI) printf("-IS_CMSI\t");
-         if(pChain->flags & FLAGS_IS_COND_SHARED) printf("-IS_CSHA\t");
-         if(pChain->flags & FLAGS_IS_SIG_SHARED) printf("-IS_SIG_SHARED");
-         if(pChain->flags & FLAGS_IS_SIG_MSI)    printf("-IS_SIG_MSI");
-         if(pChain->flags & FLAGS_IS_END) printf("-IS_END");
-         printf("\n");
-         
-         printf("\t\tCondVal:\t%08x\n\t\tCondMsk:\t%08x\n\t\tSigDst:\t\t\t%08x\n\t\tSigVal:\t\t\t%08x\n", 
+       
+         printf("\t\tCondVal:\t\t0x%08x\n\t\tCondMsk:\t\t0x%08x\n\t\tSigDst:\t\t\t0x%08x\n\t\tSigVal:\t\t\t0x%08x\n", 
          (uint32_t)pChain->condVal, 
          (uint32_t)pChain->condMsk,
          pChain->sigDst,
@@ -365,7 +403,7 @@ void showFtmPage(t_ftmPage* pPage)
          {
             printf("\t\t\t---MSG %c%u%c\n", planIdx+'A', chainIdx-1, msgIdx+'A');
            
-            printf("\t\t\tid:\t%08x%08x\n\t\t\tpar:\t%08x%08x\n\t\t\ttef:\t\t%08x\n\t\t\toffs:\t%08x%08x\n", 
+            printf("\t\t\tid:\t0x%08x%08x\n\t\t\tpar:\t0x%08x%08x\n\t\t\ttef:\t\t0x%08x\n\t\t\toffs:\t0x%08x%08x\n", 
             (uint32_t)(pMsg[msgIdx].id>>32), (uint32_t)pMsg[msgIdx].id, 
             (uint32_t)(pMsg[msgIdx].par>>32), (uint32_t)pMsg[msgIdx].par,
             pMsg[msgIdx].tef,
@@ -375,7 +413,7 @@ void showFtmPage(t_ftmPage* pPage)
       }
            
    }   
-   
+   printf("\n\n");
 }
 
 

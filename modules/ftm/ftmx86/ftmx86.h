@@ -36,6 +36,7 @@
 #define STAT_STOP_REQ         (1<<2)   //alt ptr has been set to IDLE 
 #define STAT_STOPPED          (1<<1)   //FTM is Stopped - will not execute anything 
 #define STAT_ERROR            (1<<3)   //FTM encountered an error, check error register
+#define STAT_WAIT             (1<<4)   //FTM waiting on condition
 
 #define ID_MSK_B16            0xffff
 #define ID_FID_LEN            4
@@ -69,6 +70,7 @@
 
 #define FLAGS_IS_START        (1<<16) // debug
 #define FLAGS_IS_END          (1<<17) // debug
+#define FLAGS_IS_ENDLOOP      (1<<18) // debug
 
 #define SIG_SH_SENDER_ID      0
 #define SIG_SH_FORMAT         1
@@ -185,8 +187,8 @@ uint8_t* uint64ToBytes(uint8_t* buf, uint64_t val);
 uint32_t bytesToUint32(uint8_t* buf);
 uint64_t bytesToUint64(uint8_t* buf);
 
-uint8_t* serPage  (t_ftmPage*  pPage, uint8_t* bufStart, uint32_t offset);
-uint8_t* serChain (t_ftmChain* pChain, uint8_t* bufStart, uint8_t* buf, uint32_t offset);
+uint8_t* serPage  (t_ftmPage*  pPage, uint8_t* bufStart, uint32_t offset, uint8_t cpuId);
+uint8_t* serChain (t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* bufStart, uint8_t* buf, uint32_t offset, uint8_t cpuId);
 uint8_t* serMsg   (t_ftmMsg* pMsg, uint8_t* buf);
 void showFtmPage(t_ftmPage* pPage);
 
