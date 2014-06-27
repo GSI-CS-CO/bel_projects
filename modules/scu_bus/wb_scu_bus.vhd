@@ -141,7 +141,7 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
     END How_many_bits;
 
 
-  CONSTANT  c_multicast_slave_acc : STD_LOGIC_VECTOR(slave_Nr'range)  := X"F";
+  CONSTANT  c_multicast_slave_acc : STD_LOGIC_VECTOR(slave_Nr'range)  := X"D";
   
   CONSTANT  C_Sel_dly_cnt     : INTEGER := set_ge_1(Sel_dly_in_ns * 1000 / Clk_in_ps)-2;    --  -2 because counter needs two more clock for unerflow
   SIGNAL    S_Sel_dly_cnt     : unsigned(How_many_Bits(C_Sel_dly_cnt) DOWNTO 0);
