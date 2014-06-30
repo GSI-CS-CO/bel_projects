@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <wait.h>
 #include <etherbone.h>
 #include "xmlaux.h"
 #include "ftmx86.h"
@@ -12,18 +13,21 @@
 #define MAX_DEVICES  100
 #define BUF_SIZE     0x600
 #define PACKET_SIZE  500
+#define CMD_LM32_RST 0x2
+
 
 const char* program;
 eb_device_t device;
 eb_socket_t mySocket;
 
-const    uint32_t devID_RAM 	      = 0x66cfeb52;
-const    uint64_t vendID_CERN       = 0x000000000000ce42;
-const    uint32_t devID_ClusterInfo = 0x10040086;
-const    uint64_t vendID_GSI        = 0x0000000000000651;
+const uint32_t devID_Reset       = 0x3a362063;
+const uint32_t devID_RAM 	      = 0x66cfeb52;
+const uint64_t vendID_CERN       = 0x000000000000ce42;
+const uint32_t devID_ClusterInfo = 0x10040086;
+const uint64_t vendID_GSI        = 0x0000000000000651;
 char              devName_RAM_pre[] = "WB4-BlockRAM_";
 		
-volatile uint32_t embeddedOffset;
+volatile uint32_t embeddedOffset, resetOffset, inaOffset, actOffset, targetOffset;
 uint8_t error, verbose, readonly;
 volatile uint8_t cpuQty;
 
@@ -33,10 +37,92 @@ int ebRamRead(uint32_t address, uint32_t len, const uint8_t* buf);
 int ebRamWrite(const uint8_t* buf, uint32_t address, uint32_t len);
 int ebRamClose(void);
 
+static void strreverse(char* begin, char* end) {
+	
+	char aux;
+	
+	while(end>begin)
+	
+		aux=*end, *end--=*begin, *begin++=aux;
+	
+}
+	
+static void itoa(int value, char* str, int base) {
+	
+	static char num[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+	
+	char* wstr=str;
+	
+	int sign;
+	
+	div_t res;
+	
+
+	
+	// Validate base
+	
+	if (base<2 || base>35){ *wstr='\0'; return; }
+	
+
+	
+	// Take care of sign
+	
+	if ((sign=value) < 0) value = -value;
+	
+
+	
+	// Conversion. Number is reversed.
+	
+	do {
+	
+		res = div(value,base);
+	
+		*wstr++ = num[res.rem];
+	
+	}while(value=res.quot);
+	
+	if(sign<0) *wstr++='-';
+	
+	*wstr='\0';
+	
+
+	
+	// Reverse string
+	
+	strreverse(str,wstr-1);
+	
+}
+
+
+static int getResetAdr()
+{
+  int idx = 0;
+  int num_devices;
+  struct sdb_device devices[MAX_DEVICES]; 
+  
+  num_devices = MAX_DEVICES;
+  eb_sdb_find_by_identity(device, vendID_GSI, devID_Reset, &devices[0], &num_devices);
+  if (num_devices == 0) {
+    fprintf(stderr, "%s: no reset controller found\n", program);
+    return 0xDEADBEEF;
+  }
+
+  if (num_devices > MAX_DEVICES) {
+    fprintf(stderr, "%s: more devices found that tool supports (%d > %d)\n", program, num_devices, MAX_DEVICES);
+    return 0xDEADBEEF;
+  }
+
+  if (idx > num_devices) {
+    fprintf(stderr, "%s: device #%d could not be found; only %d present\n", program, idx, num_devices);
+    return 0xDEADBEEF;
+  }
+
+ return devices[0].sdb_component.addr_first;
+}
 
 int ebRamOpen(const char* netaddress, uint8_t cpuId)
 {
-   
+   eb_cycle_t cycle;
    eb_status_t status;
    int idx;
    int attempts;
@@ -86,7 +172,6 @@ int ebRamOpen(const char* netaddress, uint8_t cpuId)
     
     
   }
-  //printf("Found Cluster Info @ %08x\n", (uint32_t)devices[0].sdb_component.addr_first);
   //get number of CPUs and create search string
   eb_device_read(device, (uint32_t)devices[0].sdb_component.addr_first, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&cpuQty, 0, eb_block);
   devName_RAM_post[0] = '0';
@@ -103,7 +188,6 @@ int ebRamOpen(const char* netaddress, uint8_t cpuId)
   }
   
   
-  if (verbose) printf("\tSearching for RAM of Cpu %u/%u\n", cpuId, (cpuQty & 0xf));
   num_devices = MAX_DEVICES;
   eb_sdb_find_by_identity(device, vendID_CERN, devID_RAM, &devices[0], &num_devices);
   if (num_devices == 0) {
@@ -128,19 +212,34 @@ int ebRamOpen(const char* netaddress, uint8_t cpuId)
       //printf("%.*s 0x%"PRIx64"\n", 19, &devices[idx].sdb_component.product.name[0], devices[idx].sdb_component.addr_first);
          if(strncmp(devName_RAM_post, (const char*)&devices[idx].sdb_component.product.name[13], 3) == 0)
          {
-            if (verbose) printf("\tfound %.*s @ 0x%08x\n", 19, &devices[idx].sdb_component.product.name[0], (uint32_t)devices[idx].sdb_component.addr_first);
             embeddedOffset = devices[idx].sdb_component.addr_first;
-            return 0;
+            
          }
          
     }
   } else {
     printf("0x%"PRIx64"\n", devices[idx].sdb_component.addr_first);
+    embeddedOffset = devices[idx].sdb_component.addr_first;
   }
   
-  fprintf(stderr, "Could not find RAM of CPU %u\n", cpuId);
-  ebRamClose();
-  return 1;
+  
+  // get the active and inactive pointer value from the core
+  uint32_t act, ina;
+  
+  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) {
+      fprintf(stderr, "%s: failed to create cycle: %s\n", program, eb_status(status));
+      return 1;
+  } 
+  eb_cycle_read(cycle, (eb_address_t)(embeddedOffset + FTM_PACT_OFFSET), EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&act);
+  eb_cycle_read(cycle, (eb_address_t)(embeddedOffset + FTM_PINA_OFFSET), EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&ina);
+   
+  eb_cycle_close(cycle);
+  
+ 
+  actOffset = act;
+  inaOffset = ina;
+  
+  return 0;
 }
 
 int ebRamClose()
@@ -231,20 +330,26 @@ int ebRamWrite(const uint8_t* buf, uint32_t address, uint32_t len)
 static void help(void) {
   fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> [command]\n", program);
   fprintf(stderr, "\n");
-  fprintf(stderr, "  -x <filename>             select xml file with FTM data to copy to ftm cpu\n");
-  fprintf(stderr, "  -c <cpu-id>               select a cpu by index#\n");
+  fprintf(stderr, "  -x <filename>             select FTM data xml file with or Firmware bin file \n");
+  fprintf(stderr, "  -c <core-idx>             select a core by index, -1 selects all\n");
   fprintf(stderr, "  -v                        verbose operation, print more details\n");
   fprintf(stderr, "  -h                        display this help and exit\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  status                    (default) report this ftm cpu's status\n");
-  fprintf(stderr, "  run                       run this ftm cpu\n");
-  fprintf(stderr, "  stop                      request stop on this ftm cpu\n");
-  fprintf(stderr, "  fstop                     force stop on this ftm cpu\n");
-  fprintf(stderr, "  idle                      request idle state on this ftm cpu\n");
-  fprintf(stderr, "  swap                      swap active and inactive ftm data on this ftm cpu\n");
-  fprintf(stderr, "  show                      Make this cpu output its data to console\n");
-  fprintf(stderr, "  put                       puts ftm data from xml file to cpu, then reads back ftm data from cpu.\n");
-  fprintf(stderr, "  get                       gets ftm data from cpu.\n");
+  fprintf(stderr, "  status                    (default) report core status\n");
+  fprintf(stderr, "  run                       start this core\n");
+  fprintf(stderr, "  stop                      request stop on this core\n");
+  fprintf(stderr, "  fstop                     force stop on this core\n");
+  fprintf(stderr, "  bpset                     set branchpoint. accepts 0..n or 'idle'\n");
+  fprintf(stderr, "  idle                      request idle state on this core\n");
+  fprintf(stderr, "  swap                      swap active and inactive page on this core\n");
+  fprintf(stderr, "  put                       puts ftm data from xml file to inactive page on this core\n");
+  fprintf(stderr, "  get                       gets ftm data from inactive page and displays it\n");
+  fprintf(stderr, "  dump                      gets ftm data from active page and displays it\n");
+  fprintf(stderr, "  loadfw                    puts firmware from bin file to core\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  condump                   debug feature. make this core output its data to console\n");
+  //fprintf(stderr, "  condget                   debug feature. if this core is wating for a condition value, ask what it is\n");
+  //fprintf(stderr, "  condset                   debug feature. set condition value in shared mem for this core\n");
   fprintf(stderr, "\n");
 }
 
@@ -258,7 +363,8 @@ static void status(uint8_t cpuId)
     uint32_t ftmStatus;
     eb_device_read(device, embeddedOffset + FTM_STAT_OFFSET, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&ftmStatus, 0, eb_block);
     printf("***********************************************************************************\n");
-    printf("#%u: Status: %08x MsgCnt: %u\n", cpuId, ftmStatus, (ftmStatus >> 16));
+    printf("** Core #%u: Status: %08x MsgCnt: %8u                                    **\n", cpuId, ftmStatus, (ftmStatus >> 16));
+    printf("***********************************************************************************\n");
     printf("-----------------------------------------------------------------------------------\n");
     if(ftmStatus & STAT_RUNNING)    printf("RUNNING  \t");  else printf("    -    \t");
     if(ftmStatus & STAT_IDLE)       printf("IDLE     \t");  else printf("    -    \t");
@@ -266,6 +372,11 @@ static void status(uint8_t cpuId)
     if(ftmStatus & STAT_ERROR)      printf("ERROR    \t");  else printf("    -    \t");
     if(ftmStatus & STAT_WAIT)       printf("WAIT_COND\t");  else printf("    -    \t");
     printf("\n");
+    printf("-----------------------------------------------------------------------------------\n");
+    if(actOffset < inaOffset) printf("  Active Page: A @ 0x%08x\nInactive Page: B @ 0x%08x\n", actOffset, inaOffset);
+    else                      printf("  Active Page: B @ 0x%08x\nInactive Page: A @ 0x%08x\n", actOffset, inaOffset);
+    printf("-----------------------------------------------------------------------------------\n");
+    
 }
 
 static void hexDump (char *desc, void *addr, int len) {
@@ -308,8 +419,8 @@ int main(int argc, char** argv) {
    int opt;
    char *value_end;
    
-   t_ftmPage* pPage = NULL;
-   t_ftmPage* pNewPage = NULL;
+   t_ftmPage* pPage     = NULL;
+   t_ftmPage* pNewPage  = NULL;
    const char* netaddress, *command;
    uint8_t bufWrite[BUF_SIZE];
    //uint8_t* pBufWrite;
@@ -317,6 +428,8 @@ int main(int argc, char** argv) {
    uint8_t bufRead[BUF_SIZE];
    uint8_t* pBufRead = &bufRead[0];
    char filename[64];
+   char bpstr[10];
+   
    int cpuId;
    uint8_t firstCpu, lastCpu;
    
@@ -328,14 +441,10 @@ int main(int argc, char** argv) {
    readonly  = 1;
    program = argv[0];
    uint32_t i;
-   while ((opt = getopt(argc, argv, "x:c:vh")) != -1) {
+   //printf("\n%s %s %s %s %s %s\n", argv[0], argv[1], argv[2],argv[3],argv[4], argv[5]   );
+   while ((opt = getopt(argc, argv, "c:vh")) != -1) {
       switch (opt) {
-         case 'x':
-                  i =0;
-                  while(i<64 && (optarg[i] != '\0')) { filename[i] = optarg[i]; i++;}
-                  filename[i] = '\0';
-                  readonly = 0;
-                  break;
+         
          case 'c':
             cpuId = strtol(optarg, &value_end, 0);
             if (*value_end || cpuId < -1 ||cpuId > 32) {
@@ -346,9 +455,6 @@ int main(int argc, char** argv) {
          case 'v':
             verbose = 1;
             break;
-         
-         
-
          case 'h':
             help();
             return 0;
@@ -378,13 +484,42 @@ int main(int argc, char** argv) {
 
 
    if (optind+1 < argc) {
-   command = argv[optind+1];
+   command = argv[++optind];
    } else {
    command = "status"; cpuId = -1;
    }
    
+   
+   if ( (!strcasecmp(command, "put")) || (!strcasecmp(command, "loadfw"))  )
+   {
+      if (optind+1 < argc) {
+         strncpy(filename, argv[optind+1], 64);
+         
+      } else {
+         fprintf(stderr, "%s: expecting one non-optional argument: <filename>\n", program);
+         return 1;
+      }
+   }
+   
+   if (!strcasecmp(command, "setbp")) 
+   {
+      if (optind+1 < argc) {
+         bpstr[9] = 0;
+         strncpy(bpstr, argv[optind+1], 8);
+      } else {
+         fprintf(stderr, "%s: expecting one non-optional argument: <branchpoint name>\n", program);
+         return 1;
+      }
+   }
+   
    ebRamOpen(netaddress, 0);
+   if (!strcasecmp(command, "loadfw")) {
+      resetOffset = getResetAdr();
+      printf("Putting CPU into Reset for FW load\n");
+      eb_device_write(device, resetOffset, EB_BIG_ENDIAN | EB_DATA32, CMD_LM32_RST, 0, eb_block);
+   }
    ebRamClose();
+   
    
    if(cpuId < 0) { firstCpu   = 0; 
                    lastCpu    = cpuQty-1;
@@ -393,13 +528,26 @@ int main(int argc, char** argv) {
           lastCpu  = (uint8_t)cpuId;
         }    
    
-   if (!strcasecmp(command, "status")) { printf("+++ FTM@%s Status +++\n", netaddress); }
+   if (!strcasecmp(command, "status")) 
+   { 
+      printf("#### FTM @ %s ####\n", netaddress);
+      
+   
+   }
    uint8_t k;
    for(k = firstCpu; k <= lastCpu; k++)
    {
-      if(ebRamOpen(netaddress, k)) return 1;
-    
-  
+      if(strcasecmp(command, "loadfw"))
+      {
+         ebRamOpen(netaddress, k); // open connection if the command is NOT loadfw
+      
+         if(!(actOffset + inaOffset)) {
+            printf("CPU #%u NOT INITIALIZED!\nrun 'ftm-ctl %s -c  %u loadfw -x <firmware.bin>' to load FW to CPU #%u\nor  'ftm-ctl %s -c -1 loadfw -x <firmware.bin>' to load FW to all CPUs\n", k, netaddress, k, k, netaddress);
+            return -1;  
+         }   
+      }
+       
+      
       /* -------------------------------------------------------------------- */
      if (!strcasecmp(command, "status")) {
        
@@ -411,7 +559,7 @@ int main(int argc, char** argv) {
      else if (!strcasecmp(command, "run")) {
        
        if (verbose) {
-         printf("Starting CPU %u\n", k);
+         printf("Starting FTM Core %u\n", k);
        }
        eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_START, 0, eb_block);
 
@@ -420,7 +568,7 @@ int main(int argc, char** argv) {
      else if (!strcasecmp(command, "stop")) {
        
        if (verbose) {
-         printf("Requesting CPU %u to stop\n", k);
+         printf("Requesting FTM Core %u to stop\n", k);
        }
        eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_STOP_REQ, 0, eb_block);
      }
@@ -428,7 +576,7 @@ int main(int argc, char** argv) {
      else if (!strcasecmp(command, "idle")) {
        
        if (verbose) {
-         printf("Setting BP of CPU %u to idle\n", k);
+         printf("Setting BP of FTM COre %u to idle\n", k);
        }
        eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_IDLE, 0, eb_block);
 
@@ -437,35 +585,69 @@ int main(int argc, char** argv) {
      else if (!strcasecmp(command, "fstop")) {
        
        if (verbose) {
-         printf("Forcing CPU %u to stop\n", k);
+         printf("Forcing FTM Core %u to stop\n", k);
        }
        eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_STOP_NOW, 0, eb_block);
      } 
      
      else if (!strcasecmp(command, "reset")) {
        if (verbose) {
-         printf("Resetting FTM CPU %u\n", k);
+         printf("Resetting FTM Core %u\n", k);
        }
        eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_RST, 0, eb_block);
-     } 
-     else if (!strcasecmp(command, "init")) {
+     }
+     
+     else if (!strcasecmp(command, "setbp")) {
+       int planIdx;
+       uint32_t bp;
        
-       if (verbose) {
-         printf("Loading Firmware to CPU %u\n", k);
-       }
-       //filename
+      if(!strcasecmp(bpstr, "idle")) planIdx = -1;
+      else {planIdx = strtol(bpstr, 0, 10);}   
+      
+      
+      eb_device_read(device, (uint32_t)embeddedOffset + actOffset + 4 + 4*planIdx, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&bp, 0, eb_block);
        
+      if(bp != NULL) eb_device_write(device, (uint32_t)embeddedOffset + actOffset + FTM_PAGE_BP_OFFSET, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)bp, 0, eb_block);
+     
+     }
+    
+      
+     else if (!strcasecmp(command, "loadfw")) {
+
+            char cOffs[11] = "0x00000000";
+            char cmdStr[80];
+            
+            //get embeddedOffset.
+            //TODO: replace offset retrieval code with something more elegant 
+            ebRamOpen(netaddress, k);
+            ebRamClose();
+            
+            itoa(embeddedOffset, &cOffs[2], 16);
+            strcpy (cmdStr, "eb-put ");
+            strcat (cmdStr, netaddress);
+            strcat (cmdStr, " ");
+            strcat (cmdStr, cOffs);
+            strcat (cmdStr, " ");
+            strcat (cmdStr, filename);
+            
+            if (verbose) {
+               printf("Loading %s to CPU %u @ %s\n", filename, k, cOffs);  
+            } else printf("Loading Firmware to CPU %u\n", k);
+            
+            FILE* ebput = popen(cmdStr, "w");
+            pclose(ebput);
+            
      }
      else if (!strcasecmp(command, "swap")) {
        
        if (verbose) {
          printf("Swapping Active/Inactive page on CPU %u\n", k);
        }
-       eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_PAGE_SWAP, 0, eb_block);
+       eb_device_write(device, embeddedOffset + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_COMMIT_PAGE, 0, eb_block);
 
      } 
      
-     else if (!strcasecmp(command, "show")) {
+     else if (!strcasecmp(command, "condump")) {
        
        if (verbose) {
          printf("Commanding FTM CPU %u to show FTM Data on console\n", k);
@@ -474,39 +656,51 @@ int main(int argc, char** argv) {
        sleep(1); 
      } 
      
-     else if ((!strcasecmp(command, "put")) || (!strcasecmp(command, "get"))) {
+     else if ((!strcasecmp(command, "put")) || (!strcasecmp(command, "get")) || (!strcasecmp(command, "dump"))) {
+       
+       targetOffset = inaOffset;
+       
+       
        if(!strcasecmp(command, "put")) {
           if(!readonly) {
             printf("Parsing %s ...", filename);
             pPage = parseXml(filename);
             printf("done.\n");
             if(verbose) showFtmPage(pPage);
-            serPage (pPage, &bufWrite[0], FTM_SHARED_OFFSET, k);
-            printf("Writing %u bytes FTM Data to 0x%08x...", ebRamWrite(&bufWrite[0], embeddedOffset + FTM_SHARED_OFFSET, BUF_SIZE), embeddedOffset + FTM_SHARED_OFFSET);
+            serPage (pPage, &bufWrite[0], targetOffset, k);
+            printf("Writing %u bytes FTM Data to 0x%08x...", ebRamWrite(&bufWrite[0], embeddedOffset + targetOffset, BUF_SIZE), embeddedOffset + targetOffset);
             printf("done.\n");
          } else fprintf(stderr, "No xml file specified\n");
+         
       }
-
-      printf("Reading %u bytes FTM Data ...", ebRamRead(embeddedOffset + FTM_SHARED_OFFSET, BUF_SIZE, pBufRead));
+      if(!strcasecmp(command, "dump")) targetOffset = actOffset;
+      
+      
+      printf("Reading %u bytes FTM Data from 0x%08x...", ebRamRead(embeddedOffset + targetOffset, BUF_SIZE, pBufRead), embeddedOffset + targetOffset);
       printf("done.\n");
       //hexDump ("ReadBuf", &bufRead[0], BUF_SIZE);
       
-      
-      pNewPage = deserPage(calloc(1, sizeof(t_ftmPage)), &bufRead[0], FTM_SHARED_OFFSET);
+      pNewPage = deserPage(calloc(1, sizeof(t_ftmPage)), &bufRead[0], targetOffset);
       if(pNewPage != NULL)
       {  
          printf("Deserialization successful.\n\n");
-         if(verbose || (!strcasecmp(command, "get")) ) showFtmPage(pNewPage);
+         if(verbose || (!strcasecmp(command, "get")) || (!strcasecmp(command, "dump")) ) showFtmPage(pNewPage);
       }   
       else printf("Deserialization FAILED! Corrupt/No Data ?\n");
     }   
     else  printf("Unknown command: %s\n", command);  
   
-    ebRamClose();
-
+    if(strcasecmp(command, "loadfw")) ebRamClose(); // close connection if command is NOT loadfw
+    
    } 
 	   
-	   
+	if(!strcasecmp(command, "loadfw")) {
+      ebRamOpen(netaddress, 0);
+      printf("Releasing all CPUs from Reset\n\n");
+      eb_device_write(device, resetOffset, EB_BIG_ENDIAN | EB_DATA32, 0, 0, eb_block);
+      ebRamClose(); 
+    }
+       
    return 0;
 }
 
