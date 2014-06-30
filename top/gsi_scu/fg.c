@@ -36,18 +36,24 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list) {
         bus->slaves[i].devs[0].dev_number = 0x0;
         bus->slaves[i].devs[0].version = 0x1;
         bus->slaves[i].devs[0].offset = 0x300;
-        list->devs[j] = &(bus->slaves[i].devs[0]);j++;
+        bus->slaves[i].devs[0].slave = &(bus->slaves[i]);
+        if (j < MAX_FG_DEVICES)
+          list->devs[j] = &(bus->slaves[i].devs[0]);j++;
         bus->slaves[i].devs[1].dev_number = 0x1;
         bus->slaves[i].devs[1].version = 0x1;
         bus->slaves[i].devs[1].offset = 0x320;
-        list->devs[j] = &(bus->slaves[i].devs[1]);j++;
+        bus->slaves[i].devs[1].slave = &(bus->slaves[i]);
+        if (j < MAX_FG_DEVICES)
+          list->devs[j] = &(bus->slaves[i].devs[1]);j++;
         
       } else if (bus->slaves[i].cid_group == 26) { /* DIOB */
         /* one FG */
         bus->slaves[i].devs[0].dev_number = 0x0;
         bus->slaves[i].devs[0].version = 0x1;
         bus->slaves[i].devs[0].offset = 0x300;
-        list->devs[j] = &(bus->slaves[i].devs[0]);j++;
+        bus->slaves[i].devs[0].slave = &(bus->slaves[i]);
+        if (j < MAX_FG_DEVICES)
+          list->devs[j] = &(bus->slaves[i].devs[0]);j++;
       }
     }
     i++;
@@ -60,6 +66,6 @@ void init_buffers(struct circ_buffer *buf) {
   for (i = 0; i < MAX_FG_DEVICES; i++) {
     buf[i].wr_ptr = 0;
     buf[i].rd_ptr = 0;
-    buf[i].size = BUFFER_SIZE; 
+    buf[i].size = BUFFER_SIZE + 1; 
   }
 }

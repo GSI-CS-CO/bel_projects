@@ -16,8 +16,8 @@
 #include "cb.h"
 
 //#define DEBUG
-#define FGDEBUG
-#define CBDEBUG
+//#define FGDEBUG
+//#define CBDEBUG
 
 extern struct w1_bus wrpc_w1_bus;
 
@@ -38,9 +38,11 @@ volatile uint32_t SHARED fg_control;
 volatile unsigned short* scub_base;
 volatile unsigned int* BASE_ONEWIRE;
 volatile unsigned int* BASE_UART;
+volatile unsigned int* scub_irq_base;
+volatile unsigned int* lm32_irq_endp;
 
-int slaves[SCU_BUS_MAX_SLOTS+1] = {0};
-volatile unsigned short icounter[SCU_BUS_MAX_SLOTS+1];
+int slaves[MAX_SCU_SLAVES+1] = {0};
+volatile unsigned short icounter[MAX_SCU_SLAVES+1];
 
 void usleep(int us)
 {
@@ -55,38 +57,6 @@ void usleep(int us)
 
 void msDelay(int msecs) {
   usleep(1000 * msecs);
-}
-
-void ReadTempDevices(int bus, uint64_t *id, uint16_t *temp) {
-  struct w1_dev *d;
-  int i;
-  int tvalue;
-  wrpc_w1_bus.detail = bus; // set the portnumber of the onewire controller
-  if (w1_scan_bus(&wrpc_w1_bus) > 0) {
-    for (i = 0; i < W1_MAX_DEVICES; i++) {
-      d = wrpc_w1_bus.devs + i;
-        if (d->rom) {
-          #ifdef DEBUG
-          mprintf("bus,device (%d,%d): 0x%08x%08x ", wrpc_w1_bus.detail, i, (int)(d->rom >> 32), (int)d->rom);
-          #endif
-          if ((char)d->rom == 0x42) {
-            *id = d->rom;
-            tvalue = w1_read_temp(d, 0);
-            *temp = (tvalue >> 12); //full precision with 1/16 degree C
-            #ifdef DEBUG
-            mprintf("temp: %dC", tvalue >> 16); //show only integer part for debug
-            #endif
-          }
-          #ifdef DEBUG
-          mprintf("\n");
-          #endif
-        }  
-    }
-  } else {
-    #ifdef DEBUG
-    mprintf("no devices found on bus %d\n", wrpc_w1_bus.detail);
-    #endif
-  }
 }
 
 
@@ -116,7 +86,6 @@ void isr1()
 {
   char buffer[12];
   struct pset *p;
-  //p = (struct p *)fesa_if;
   unsigned char slave_nr = global_msi.adr>>2 & 0xf;
   unsigned short tmr_irq_cnts = scub_base[((slave_nr) << 16) + TMR_BASE + TMR_IRQ_CNT]; 
   disp_put_c(slave_nr + '0');
@@ -134,17 +103,30 @@ void isr1()
   if ((tmr_irq_cnts == icounter[slave_nr - 1])) {
     scub_base[((slave_nr) << 16) + SLAVE_INT_ACT] |= 5; //ack timer and powerup irq
   }
-  icounter[slave_nr-1]++; 
+  icounter[slave_nr-1]++;
+  mprintf("irq1\n");
+  //show_msi();
+  //usleep(500000);
+  //mprintf("adr: 0x%x\n", (unsigned long)global_msi.adr);
+  //mprintf("msg: 0x%x\n", (unsigned long)global_msi.msg);
 }
 
 void init_irq() {
+  int i;
   //SCU Bus Master
-  //enable slave irqs
-  scub_base[GLOBAL_IRQ_ENA] = 0x20;
+  scub_base[GLOBAL_IRQ_ENA] = 0x20; //enable slave irqs
+  scub_irq_base[0] = 0x1; // reset irq master
+  scub_irq_base[2] = 0xfff; //enable all slaves
+  for (i = 0; i < 12; i++) {
+    scub_irq_base[8] = i;  //channel select
+    scub_irq_base[9] = 0x08154711;  //msg
+    scub_irq_base[10] = 0x200300 + ((i+1) << 2); //destination address, do not use lower 2 bits 
+  } 
   isr_table_clr();
-  isr_ptr_table[1]= isr1;  
+  isr_ptr_table[1] = &isr1;  
   irq_set_mask(0x02);
   irq_enable();
+  mprintf("MSI IRQs configured.\n");
 }
 
 void dis_irq() {
@@ -152,7 +134,7 @@ void dis_irq() {
   irq_set_mask(0x02);
   irq_disable();
   isr_table_clr();
-  for (i = 0; i < SCU_BUS_MAX_SLOTS; i++) {
+  for (i = 0; i < MAX_SCU_SLAVES; i++) {
     icounter[i] = 0; //reset counter in ISR
   }
 }
@@ -205,6 +187,7 @@ void updateTemps() {
 void init() {
   int i=0, j;
   uart_init_hw();
+  init_irq();
   updateTemps();
   init_buffers(&fg_buffer);
   #ifdef CBDEBUG
@@ -216,6 +199,8 @@ void init() {
   #endif
   scan_scu_bus(&scub, backplane_id, scub_base);
   scan_for_fgs(&scub, &fgs);
+  //probe_scu_bus(scub_base, 55, 3, slaves);
+  configure_slaves();
   #ifdef FGDEBUG
   mprintf("ID: 0x%08x%08x\n", (int)(scub.unique_id >> 32), (int)scub.unique_id);
   while(scub.slaves[i].unique_id) { /* more slaves in list */
@@ -255,36 +240,68 @@ void init() {
 int main(void) {
   char buffer[20];
   int i = 0;
-  struct param_set pset;
+  unsigned int favg[MAX_FG_DEVICES] = {0};
+  unsigned int count[MAX_FG_DEVICES] = {0};
+  unsigned int min_count[MAX_FG_DEVICES];
   unsigned int old[MAX_FG_DEVICES] = {0};
+  struct param_set pset;
+
+  /* init min_count */
+  for(i = 0; i < MAX_FG_DEVICES; i++) min_count[i] = BUFFER_SIZE-2;
 
   discoverPeriphery();  
-  scub_base    = (unsigned short*)find_device(SCU_BUS_MASTER);
-  BASE_ONEWIRE = (unsigned int*)find_device(WR_1Wire);
+  scub_base     = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
+  BASE_ONEWIRE  = (unsigned int*)find_device_adr(CERN, WR_1Wire);
+  scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);
+  //lm32_irq_endp = (unsigned int*)find_device_adr(GSI, IRQ_ENDPOINT);
 
   disp_reset();
   disp_put_c('\f');
   init(); 
 
+  mprintf("scub_irq_base is: 0x%x\n", scub_irq_base); 
+  //mprintf("irq_endp is: 0x%x\n", lm32_irq_endp);
+
+  while(1);
+  //while(1) {
+  //  mprintf("global_msi: 0x%x\n", &global_msi);
+  //  _irq_entry();
+  //}
+  /* wait until buffers are filled */
+  for(i = 0; i < MAX_FG_DEVICES; i++) {
+    while(cbgetCount((struct circ_buffer *)&fg_buffer, i) < BUFFER_SIZE - 5) usleep(10000);
+  }
   while(1) {
     //updateTemps();
     
     for(i = 0; i < MAX_FG_DEVICES; i++) {
+
       if (!cbisEmpty((struct circ_buffer *)&fg_buffer, i)) {
         cbRead((struct circ_buffer *)&fg_buffer, i, &pset);
-        if((pset.coeff_c % 10000) == 0) {
-          mprintf("cb[%d]: fcnt: %d coeff_a: %x coeff_b: 0x%x coeff_c: 0x%x\n",
-          i, cbgetCount((struct circ_buffer *)&fg_buffer, i), pset.coeff_a, pset.coeff_b, pset.coeff_c);
+        if((pset.coeff_c % 1000) == 0) {
+          mprintf("cb[%d]: fcnt: %d fmin: %d favg: %d coeff_a: %x coeff_b: 0x%x coeff_c: 0x%x\n",
+          i, count[i], min_count[i], favg[i]/1000, pset.coeff_a, pset.coeff_b, pset.coeff_c);
+          favg[i] = 0;
         }
         if (old[i] + 1 != pset.coeff_c) {
           mprintf("cb[%d]: buffer value not consistent old: %x coeff_c: %x\n", i, old[i], pset.coeff_c);
+          cbDump((struct circ_buffer *)&fg_buffer, i);
           return(1);
         }
-        old[i] = pset.coeff_c;
+       old[i] = pset.coeff_c;
       }
-
-      usleep(100);
+     
+      count[i] = cbgetCount((struct circ_buffer *)&fg_buffer, i);
+      favg[i] += count[i];
+      if (count[i] < min_count[i]) min_count[i] = count[i];
+      if (count[i] == 0) {
+        mprintf("cb[%d] fcnt: %d\n", i, count[i]);
+        cbDump((struct circ_buffer *)&fg_buffer, i);
+        return(1);
+      }
+      
     }
+    usleep(800);
     //placeholder for fg software
     //if (fg_control) {
     //  init();

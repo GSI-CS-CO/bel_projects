@@ -21,6 +21,9 @@ entity wb_irq_scu_bus is
         
         irq_master_o        : out t_wishbone_master_out;
         irq_master_i        : in t_wishbone_master_in;
+
+        ctrl_irq_o          : out t_wishbone_slave_out;
+        ctrl_irq_i          : in t_wishbone_slave_in;
         
         scu_slave_o         : buffer t_wishbone_slave_out;
         scu_slave_i         : in t_wishbone_slave_in;
@@ -63,13 +66,12 @@ begin
      nSCUB_Slave_Sel    => nscub_slave_sel,
      nSCUB_Timing_Cycle => nscub_timing_cycle,
      nSel_Ext_Data_Drv  => nsel_ext_data_drv);
-     
-     
-  irq_master: irqm_core
+  
+  scub_irq_master: wb_irq_master
   generic map (
-    g_channels => 12,     -- 12 scu bus irq lines
-    g_round_rb => true,   -- round robin scheduler
-    g_det_edge => true)   -- trigger on edge
+    g_channels => 12,
+    g_round_rb => true,
+    g_det_edge => true) 
   port map (
     clk_i   => clk_i,
     rst_n_i => rst_n_i,
@@ -77,19 +79,11 @@ begin
     -- msi if
     irq_master_o => irq_master_o,
     irq_master_i => irq_master_i,
-    
-    -- configuration
-    -- do not use the lower two bits of the address
-    msi_dst_array => (x"00000030",x"0000002c",x"00000028",x"00000024",
-                      x"00000020",x"0000001c",x"00000018",x"00000014",
-                      x"00000010",x"0000000c",x"00000008",x"00000004"),
-    msi_msg_array => (x"00000000",x"00000000",x"00000000",x"00000000",
-                      x"00000000",x"00000000",x"00000000",x"00000000",
-                      x"00000000",x"00000000",x"00000000",x"00000000"),
-                      
+
+    -- ctrl if
+    ctrl_slave_o => ctrl_irq_o,
+    ctrl_slave_i => ctrl_irq_i,
+
     -- irq lines
-    en_i    => '1',
-    mask_i  => x"FFF",
-    irq_i   => scu_srq_active);
-                      
+    irq_i        => scu_srq_active);                    
 end architecture;
