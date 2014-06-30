@@ -33,25 +33,26 @@ static inline unsigned int ebm_parse_adr(eb_lm32_udp_link* link, const char* add
 
 void ebm_config_if(target_t conf, const char* con_info)
 {
-  eb_lm32_udp_link* link;
+  eb_lm32_udp_link link;
   unsigned int offset;
   
   unsigned int tmp;
-  ebm_parse_adr(link, con_info);
+  ebm_parse_adr(&link, con_info);
+  
   
   if(conf == LOCAL) offset = EBM_OFFS_LOCAL;
   if(conf == REMOTE) offset = EBM_OFFS_REMOTE;
   
-  tmp = (link->mac[0] << 24) | (link->mac[1] << 16) | (link->mac[2] << 8) | link->mac[3];
+  tmp = (link.mac[0] << 24) | (link.mac[1] << 16) | (link.mac[2] << 8) | link.mac[3];
   *(pEbm + ((offset + EBM_OFFS_MAC_HI)   >>2)) =  tmp;  
   
-  tmp = (link->mac[4] << 8) | (link->mac[5] << 0);
+  tmp = (link.mac[4] << 8) | (link.mac[5] << 0);
   *(pEbm + ((offset + EBM_OFFS_MAC_LO)   >>2)) = tmp;
   
-  tmp = (link->ipv4[0] << 24) | (link->ipv4[1] << 16) | (link->ipv4[2] << 8) | link->ipv4[3];
+  tmp = (link.ipv4[0] << 24) | (link.ipv4[1] << 16) | (link.ipv4[2] << 8) | link.ipv4[3];
   *(pEbm + ((offset + EBM_OFFS_IPV4)     >>2)) =  tmp;  
   
-  *(pEbm + ((offset + EBM_OFFS_UDP_PORT) >>2)) = (unsigned int)link->port;
+  *(pEbm + ((offset + EBM_OFFS_UDP_PORT) >>2)) = (unsigned int)link.port;
   
 }
 

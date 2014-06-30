@@ -111,32 +111,23 @@ void ebmInit()
 void init()
 {
 
-   
-   
    discoverPeriphery();
-   
    uart_init_hw();
-   uart_write_string("\nDebug Port\n");
-   mprintf("Init EBM...");
-   ebmInit(); 
-   mprintf("done.\n");
-   mprintf("Init FTM...");
+   //uart_write_string("\nDebug Port\n");
+   ebmInit();
    ftmInit();
-   mprintf("done.\n");
-   //prioQueueInit(5000, 10000);
-   
+
    isr_table_clr();
    isr_ptr_table[0]= isr0; //timer
-   /*
+   
    isr_ptr_table[1]= 0; //lm32
    isr_ptr_table[2]= isr2; //ilck
    isr_ptr_table[3]= isr3; //other    
-   */
+   
    irq_set_mask(0x01);
    irq_enable();
 
-   disp_reset();	
-   disp_put_c('\f'); 
+   mprintf("FTM Core #%u boot ... rdy\n", getCpuIdx()); 
 }
 
 
@@ -181,14 +172,9 @@ void main(void) {
 
 
    int j;
-   sdb_location brg;
-   sdb_location dev, loc;
-   unsigned int adrDev0, adrDev1, adrBrg, idx;
-   sdb_location allBrg[20];
+  
 
    init();
-   disp_put_c('\f');
-   disp_put_str("FTM ready\n");
   
   for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
@@ -203,18 +189,11 @@ void main(void) {
    
    //insertFpqEntry();
    //showFpqStatus();
-/*
-    atomic_on();
-   ebm_op(0x100000E0, 0xDEADBEEF, WRITE);
-   ebm_flush(); 
-   atomic_off();
-  */
 
-  /*
    for (j = 0; j < (125000000/4); ++j) {
         asm("# noop"); // no-op the compiler can't optimize away
       }
-   */
+   
   }
 
 }
