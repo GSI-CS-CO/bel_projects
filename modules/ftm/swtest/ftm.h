@@ -64,26 +64,27 @@
 #define ID_BPID_POS           (ID_SCTR_LEN)
 #define ID_SCTR_POS           0
 
-
 #define FLAGS_IS_BP           (1<<0)
 
 #define FLAGS_IS_COND_MSI     (1<<4)
 #define FLAGS_IS_COND_SHARED  (1<<5)
 #define FLAGS_IS_COND_ADR     (1<<6)
 #define FLAGS_IS_COND_TIME    (1<<7)
+#define FLAGS_IS_COND_ALL     (1<<8)
 
-#define FLAGS_IS_SIG_MSI      (1<<8)
-#define FLAGS_IS_SIG_SHARED   (1<<9)
-#define FLAGS_IS_SIG_ADR      (1<<10)
-#define FLAGS_IS_SIG_TIME     (1<<11)
+#define FLAGS_IS_SIG_MSI      (1<<12)
+#define FLAGS_IS_SIG_SHARED   (1<<13)
+#define FLAGS_IS_SIG_ADR      (1<<14)
+#define FLAGS_IS_SIG_TIME     (1<<15)
 
-#define FLAGS_IS_SIG_FIRST    (1<<12)
-#define FLAGS_IS_SIG_LAST     (1<<13)
-#define FLAGS_IS_SIG_ALL      (1<<14)
+#define FLAGS_IS_SIG_FIRST    (1<<16)
+#define FLAGS_IS_SIG_LAST     (1<<17)
+#define FLAGS_IS_SIG_ALL      (1<<18)
 
-#define FLAGS_IS_START        (1<<16) // debug
-#define FLAGS_IS_END          (1<<17) // debug
-#define FLAGS_IS_ENDLOOP      (1<<18)
+#define FLAGS_IS_START        (1<<20) 
+#define FLAGS_IS_END          (1<<21) 
+#define FLAGS_IS_ENDLOOP      (1<<22)
+#define FLAGS_IS_PERS_REP_CNT (1<<23) 
 
 #define FTM_TIME_SIZE         8
 #define FTM_DWORD_SIZE        8

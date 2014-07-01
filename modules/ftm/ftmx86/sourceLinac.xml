@@ -10,50 +10,21 @@
          <starttime>9999999</starttime>
          <lastjump>self</lastjump>
       </meta>  
-      <chain>
-         <!-- Cycle A0, entry -->
-         <meta>
-            <rep>0</rep>
-            <period>1000</period>
-            <branchpoint>yes</branchpoint>
-            <condition>
-               <source>shared</source>
-               <pattern>0x0000000000004711</pattern>
-               <mask>0x000000000000ffff</mask>
-            </condition>
-         </meta>
-
-	      <msg>
-             <!-- Msg A0A, dummy event -->
-            <id>
-               <FID>0</FID>
-               <GID>4095</GID>
-               <EVTNO>4095</EVTNO>
-               <SID>0</SID>
-               <BPID>0</BPID>
-            </id>
-            <par>0xdead0561</par>
-            <tef>000</tef>
-            <offs>000000000</offs>
-         </msg>
-      </chain>
+      
 
       <chain>
          <!-- Cycle A1, ion source and linac -->
          <meta>
-            <rep>1</rep>
+            <rep>2</rep>
             <period>60000000</period>
             <branchpoint>yes</branchpoint>
             <condition>
                <source>shared</source>
                <pattern>0x0000000000004712</pattern>
                <mask>0x000000000000ffff</mask>
+               <always>no</always>
             </condition>
-            <signal>
-               <destination>shared</destination>
-               <cpu>1</cpu>
-               <value>0x0000000000004713</value>
-            </signal>
+            
          </meta>
 
 	      <msg>
@@ -172,9 +143,15 @@
        <chain>
          <!-- Loop back to Start -->
          <meta>
-            <rep>100</rep>
+            <rep>10000</rep>
             <period>0</period>
             <branchpoint>yes</branchpoint>
+            <signal>
+               <destination>shared</destination>
+               <cpu>1</cpu>
+               <value>0x0000000000004713</value>
+               <always>yes</always>
+            </signal>
          </meta>
       </chain>
       

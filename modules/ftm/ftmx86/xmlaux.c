@@ -91,7 +91,11 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
    fieldNode = checkNode(fieldNode, "rep");
    if(fieldNode != NULL) pChain->repQty = (int32_t)strtou64( (const char*)xmlNodeGetContent(fieldNode));
    else printf("ERROR repQty\n");
-   
+   /*
+   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "persistent");
+   if(fieldNode != NULL) {if(strncmp( (const char*)xmlNodeGetContent(fieldNode), "yes",  3) == 0) pChain->flags |= FLAGS_IS_PERS_REP_CNT;}
+   else printf("ERROR persistent cnt\n");
+   */
    fieldNode = checkNode(xmlNextElementSibling(fieldNode), "period");
    if(fieldNode != NULL) pChain->tPeriod = (uint64_t)strtou64( (const char*)xmlNodeGetContent(fieldNode))>>3;
    else printf("ERROR Period\n");
@@ -120,6 +124,8 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
       subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "mask");
       if(subFieldNode != NULL) pChain->condMsk = strtou64( (const char*)xmlNodeGetContent(subFieldNode));
       else printf("ERROR condmask\n");
+      
+      
    }
    //else printf("no condition found\n");
    
@@ -143,6 +149,8 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
       subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "value");
       if(subFieldNode != NULL) pChain->sigVal = (uint32_t)strtou64( (const char*)xmlNodeGetContent(subFieldNode));
       else printf("ERROR sig val\n");
+      
+      
    }
    //else printf("no signal found \n");
          

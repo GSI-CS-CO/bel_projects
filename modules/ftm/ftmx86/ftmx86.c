@@ -346,6 +346,9 @@ void showFtmPage(t_ftmPage* pPage)
    uint32_t planIdx, chainIdx, msgIdx;
    t_ftmChain* pChain  = NULL;
    t_ftmMsg*   pMsg  = NULL;
+   char noFlag[] = "        -        ";
+                    
+   
    
    printf("---PAGE \n");
    printf("StartPlan:\t");
@@ -376,14 +379,25 @@ void showFtmPage(t_ftmPage* pPage)
          printf("\t\t-----------------------------------------------------------------------------------------------\n");
          printf("\t\t---   CHAIN %c%u\n", planIdx+'A', chainIdx-1);
          printf("\t\t-----------------------------------------------------------------------------------------------\n");
-         printf("\t\tFlags:\t");
-         if(pChain->flags & FLAGS_IS_BP)           printf("    IS_BP    "); else printf("      -      ");
-         if(pChain->flags & FLAGS_IS_COND_MSI)     printf("   IS_CMSI   "); else printf("      -      ");
-         if(pChain->flags & FLAGS_IS_COND_SHARED)  printf("   IS_CSHA   "); else printf("      -      ");
-         if(pChain->flags & FLAGS_IS_SIG_SHARED)   printf("IS_SIG_SHARED"); else printf("      -      ");
-         if(pChain->flags & FLAGS_IS_SIG_MSI)      printf("  IS_SIG_MSI "); else printf("      -      ");
-         if(pChain->flags & FLAGS_IS_END)          printf("   IS_END    "); else printf("      -      ");
-         if(pChain->flags & FLAGS_IS_ENDLOOP)      printf("  IS_ENDLOOP "); else printf("      -      ");
+         printf("\t\tFlags:\t");                            
+         if(pChain->flags & FLAGS_IS_BP)                 printf("      IS_BP      "); else printf("%s", noFlag);
+         if(pChain->flags & (FLAGS_IS_COND_MSI | FLAGS_IS_COND_SHARED))
+         {
+              if(pChain->flags & FLAGS_IS_COND_SHARED)   printf(" IS_COND_SHA");
+              if(pChain->flags & FLAGS_IS_COND_MSI)      printf(" IS_COND_MSI");
+              if(pChain->flags & FLAGS_IS_COND_ALL)      printf("_ALL ");
+              else                                       printf("     ");
+         } else printf("%s", noFlag);      
+         if(pChain->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED))
+         {
+              if(pChain->flags & FLAGS_IS_SIG_SHARED)    printf(" IS_SIG_SHA");
+              if(pChain->flags & FLAGS_IS_SIG_MSI)       printf(" IS_SIG_MSI");
+              if(pChain->flags & FLAGS_IS_SIG_ALL)       printf("_ALL  ");
+              else                                       printf("      ");
+         } else printf("%s", noFlag); 
+         
+         if(pChain->flags & FLAGS_IS_END)       printf("      IS_END     "); else printf("%s", noFlag);
+         if(pChain->flags & FLAGS_IS_ENDLOOP)   printf("      IS_LOOP    "); else printf("%s", noFlag);
          printf("\n");
          printf("\t\tStart:\t\t0x%08x%08x\n\t\tperiod:\t\t0x%08x%08x\n\t\trep:\t\t\t%10u\n\t\tmsg:\t\t\t%10u\n", 
          (uint32_t)(pChain->tStart>>32), (uint32_t)pChain->tStart, 

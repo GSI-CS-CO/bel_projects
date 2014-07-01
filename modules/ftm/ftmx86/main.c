@@ -21,12 +21,12 @@ eb_device_t device;
 eb_socket_t mySocket;
 
 const uint32_t devID_Reset       = 0x3a362063;
-const uint32_t devID_RAM 	      = 0x66cfeb52;
+const uint32_t devID_RAM          = 0x66cfeb52;
 const uint64_t vendID_CERN       = 0x000000000000ce42;
 const uint32_t devID_ClusterInfo = 0x10040086;
 const uint64_t vendID_GSI        = 0x0000000000000651;
 char              devName_RAM_pre[] = "WB4-BlockRAM_";
-		
+      
 volatile uint32_t embeddedOffset, resetOffset, inaOffset, actOffset, targetOffset;
 uint8_t error, verbose, readonly;
 volatile uint8_t cpuQty;
@@ -38,59 +38,59 @@ int ebRamWrite(const uint8_t* buf, uint32_t address, uint32_t len);
 int ebRamClose(void);
 
 static void strreverse(char* begin, char* end) {
-	
-	char aux;
-	
-	while(end>begin)
-	
-		aux=*end, *end--=*begin, *begin++=aux;
-	
+   
+   char aux;
+   
+   while(end>begin)
+   
+      aux=*end, *end--=*begin, *begin++=aux;
+   
 }
-	
+   
 static void itoa(int value, char* str, int base) {
-	
-	static char num[] = "0123456789abcdefghijklmnopqrstuvwxyz";
-	
-	char* wstr=str;
-	
-	int sign;
-	
-	div_t res;
-	
+   
+   static char num[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+   
+   char* wstr=str;
+   
+   int sign;
+   
+   div_t res;
+   
 
-	
-	// Validate base
-	
-	if (base<2 || base>35){ *wstr='\0'; return; }
-	
+   
+   // Validate base
+   
+   if (base<2 || base>35){ *wstr='\0'; return; }
+   
 
-	
-	// Take care of sign
-	
-	if ((sign=value) < 0) value = -value;
-	
+   
+   // Take care of sign
+   
+   if ((sign=value) < 0) value = -value;
+   
 
-	
-	// Conversion. Number is reversed.
-	
-	do {
-	
-		res = div(value,base);
-	
-		*wstr++ = num[res.rem];
-	
-	}while(value=res.quot);
-	
-	if(sign<0) *wstr++='-';
-	
-	*wstr='\0';
-	
+   
+   // Conversion. Number is reversed.
+   
+   do {
+   
+      res = div(value,base);
+   
+      *wstr++ = num[res.rem];
+   
+   }while(value=res.quot);
+   
+   if(sign<0) *wstr++='-';
+   
+   *wstr='\0';
+   
 
-	
-	// Reverse string
-	
-	strreverse(str,wstr-1);
-	
+   
+   // Reverse string
+   
+   strreverse(str,wstr-1);
+   
 }
 
 
@@ -267,7 +267,7 @@ int ebRamRead(uint32_t address, uint32_t len, const uint8_t* buf)
    eb_status_t status;
    eb_cycle_t cycle;
    uint32_t i,j, parts, partLen, start;
-   uint32_t* readin = (uint32_t*)buf;	
+   uint32_t* readin = (uint32_t*)buf;   
 
    //wrap frame buffer in EB packet
    parts = (len/PACKET_SIZE)+1;
@@ -300,7 +300,7 @@ int ebRamWrite(const uint8_t* buf, uint32_t address, uint32_t len)
    eb_status_t status;
    eb_cycle_t cycle;
    uint32_t i,j, parts, partLen, start;
-   uint32_t* writeout = (uint32_t*)buf;	
+   uint32_t* writeout = (uint32_t*)buf;   
    
    //wrap frame buffer in EB packet
    parts = (len/PACKET_SIZE)+1;
@@ -441,7 +441,7 @@ int main(int argc, char** argv) {
    readonly  = 1;
    program = argv[0];
    uint32_t i;
-   //printf("\n%s %s %s %s %s %s\n", argv[0], argv[1], argv[2],argv[3],argv[4], argv[5]   );
+   
    while ((opt = getopt(argc, argv, "c:vh")) != -1) {
       switch (opt) {
          
@@ -481,12 +481,10 @@ int main(int argc, char** argv) {
    netaddress = argv[optind];
    printf("\n");
    
-
-
    if (optind+1 < argc) {
-   command = argv[++optind];
+      command = argv[++optind];
    } else {
-   command = "status"; cpuId = -1;
+      command = "status"; cpuId = -1;
    }
    
    
@@ -494,6 +492,7 @@ int main(int argc, char** argv) {
    {
       if (optind+1 < argc) {
          strncpy(filename, argv[optind+1], 64);
+         readonly = 0;
          
       } else {
          fprintf(stderr, "%s: expecting one non-optional argument: <filename>\n", program);
@@ -542,9 +541,10 @@ int main(int argc, char** argv) {
          ebRamOpen(netaddress, k); // open connection if the command is NOT loadfw
       
          if(!(actOffset + inaOffset)) {
-            printf("CPU #%u NOT INITIALIZED!\nrun 'ftm-ctl %s -c  %u loadfw -x <firmware.bin>' to load FW to CPU #%u\nor  'ftm-ctl %s -c -1 loadfw -x <firmware.bin>' to load FW to all CPUs\n", k, netaddress, k, k, netaddress);
+            printf("CPU #%u NOT INITIALIZED!\nrun 'ftm-ctl %s -c  %u loadfw <firmware.bin>' to load FW to CPU #%u\nor  'ftm-ctl %s -c -1 loadfw <firmware.bin>' to load FW to all CPUs\n", k, netaddress, k, k, netaddress);
             return -1;  
-         }   
+         }
+         printf("act 0x%08x ina 0x%08x emb 0x%08x\n", actOffset,  inaOffset, embeddedOffset   );
       }
        
       
@@ -598,17 +598,42 @@ int main(int argc, char** argv) {
      }
      
      else if (!strcasecmp(command, "setbp")) {
-       int planIdx;
+       int planIdx, planQty;
+       eb_status_t status;
+       eb_cycle_t cycle;
        uint32_t bp;
        
       if(!strcasecmp(bpstr, "idle")) planIdx = -1;
       else {planIdx = strtol(bpstr, 0, 10);}   
       
       
-      eb_device_read(device, (uint32_t)embeddedOffset + actOffset + 4 + 4*planIdx, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&bp, 0, eb_block);
+      
+      //user gave us a planIdx. load corresponding ptr
+        if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) {
+            fprintf(stderr, "%s: failed to create cycle: %s\n", program, eb_status(status));
+            return 1;
+        } 
+        eb_cycle_read(cycle, (eb_address_t)(embeddedOffset + actOffset + FTM_PAGE_PLANQTY_OFFSET), EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&planQty);
+        //if the user wanted to go to idle, read idle ptr from interface, else read plan ptr
+        if(planIdx == -1)
+         {eb_cycle_read(cycle, (eb_address_t)(embeddedOffset + FTM_IDLE_OFFSET), EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&bp);}
+        else 
+         {eb_cycle_read(cycle, (eb_address_t)(embeddedOffset + actOffset + FTM_PAGE_PLANS_OFFSET + 4*planIdx), EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&bp);}
+        eb_cycle_close(cycle);
+  
+      // Check and write to BP
+      if(bp != FTM_NULL && planIdx < planQty) 
+      {
+         printf("Writing plan %d @ 0x%08x to BP\n", planIdx, bp);
+         eb_device_write(device, (uint32_t)embeddedOffset + actOffset + FTM_PAGE_BP_OFFSET, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)bp, 0, eb_block);
+      } else
+      { 
+         
+         if (planIdx >= planQty) printf ("Sorry, but the plan index is neither idle nor 0 <= %d (planIdx) <  %u (planQty)\n", planIdx, planQty);
+         else printf ("Found a NULL ptr at plan idx %d, something is wrong\n", planIdx);
+          
+      }
        
-      if(bp != NULL) eb_device_write(device, (uint32_t)embeddedOffset + actOffset + FTM_PAGE_BP_OFFSET, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)bp, 0, eb_block);
-     
      }
     
       
@@ -693,8 +718,8 @@ int main(int argc, char** argv) {
     if(strcasecmp(command, "loadfw")) ebRamClose(); // close connection if command is NOT loadfw
     
    } 
-	   
-	if(!strcasecmp(command, "loadfw")) {
+      
+   if(!strcasecmp(command, "loadfw")) {
       ebRamOpen(netaddress, 0);
       printf("Releasing all CPUs from Reset\n\n");
       eb_device_write(device, resetOffset, EB_BIG_ENDIAN | EB_DATA32, 0, 0, eb_block);

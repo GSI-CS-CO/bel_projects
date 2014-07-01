@@ -20,7 +20,14 @@
                <source>shared</source>
                <pattern>0x0000000000004713</pattern>
                <mask>0x000000000000ffff</mask>
+               <always>yes</always>
             </condition>
+            <signal>
+               <destination>shared</destination>
+               <cpu>0</cpu>
+               <value>0x0000000000004712</value>
+               <always>yes</always>
+            </signal>
          </meta>
         
          <msg>

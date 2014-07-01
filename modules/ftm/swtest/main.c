@@ -190,9 +190,6 @@ void main(void) {
    //insertFpqEntry();
    //showFpqStatus();
 
-   for (j = 0; j < (125000000/4); ++j) {
-        asm("# noop"); // no-op the compiler can't optimize away
-      }
    
   }
 

@@ -96,13 +96,13 @@ void cmdEval()
       if(cmd & CMD_STOP_REQ)     { stat |= STAT_STOP_REQ; }
       if(cmd & CMD_STOP_NOW)     { stat = (stat & STAT_ERROR) & ~STAT_RUNNING; showId(); mprintf("Stopped (forced)\n");} 
       
-      if(cmd & CMD_COMMIT_PAGE)  {showId(); mprintf("Page Commit\n");
+      if(cmd & CMD_COMMIT_PAGE)  {//showId(); mprintf("Page Commit\n");
                                   pTmp = pFtmIf->pIna;
                                   pFtmIf->pIna = pFtmIf->pAct;
                                   pFtmIf->pAct = pTmp;
                                   pFtmIf->pAct->pBp = pFtmIf->pAct->pStart;
                                  }
-      if(cmd & CMD_COMMIT_BP)    {pFtmIf->pAct->pBp = pFtmIf->pNewBp;}
+      //if(cmd & CMD_COMMIT_BP)    {pFtmIf->pAct->pBp = pFtmIf->pNewBp;}
       
       if(cmd & CMD_DBG_0)        {showStatus();}
       if(cmd & CMD_DBG_1)        {showId(); mprintf("DBG1\n");}
@@ -239,7 +239,7 @@ int dispatch(t_ftmMsg* pMsg)
    
    
       
-   DBPRINT1("Sending Msg...\n");
+   DBPRINT2("by #%u ...\n", getCpuIdx());
    DBPRINT3("\t\t\tid:\t%08x%08x\n\t\t\tpar:\t%08x%08x\n\t\t\ttef:\t\t%08x\n\t\t\toffs:\t%08x%08x\n", 
             (uint32_t)(pMsg->id>>32), (uint32_t)pMsg->id, 
             (uint32_t)(pMsg->par>>32), (uint32_t)pMsg->par,
@@ -295,7 +295,7 @@ uint8_t condValid(t_ftmChain* c)
       }
       else
       {
-         DBPRINT2("CPU %u Val: %08x Con: %08x Adr: %08x\n", getCpuID() , (c->condVal & c->condMsk),  (*c->condSrc), c->condSrc );
+         DBPRINT3("CPU %u Val: %08x Con: %08x Adr: %08x\n", getCpuID() , (c->condVal & c->condMsk),  (*c->condSrc), c->condSrc );
          if((c->condVal & c->condMsk) == ((*c->condSrc) & c->condMsk) ) 
          {
             if(c->flags & FLAGS_IS_COND_TIME)
@@ -304,7 +304,7 @@ uint8_t condValid(t_ftmChain* c)
                time |= ((uint64_t)(*c->condSrc+2))<<32;
                c->tStart = time;
             }   
-            else c->tStart = getSysTime();         
+            else c->tStart = getSysTime()+ pFtmIf->tPrep;         
             ret = 1;
             DBPRINT1("Val: %08x Src: %08x Adr: %08x\n", (c->condVal & c->condMsk),  (*c->condSrc), c->condSrc );
             (*c->condSrc) = 0x0;
@@ -313,7 +313,7 @@ uint8_t condValid(t_ftmChain* c)
    }
    else ret = 1;
    
-   if(ret) {pFtmIf->status &= ~STAT_WAIT; pFtmIf->sema.cond = 0; showonce = 1; c->tStart = getSysTime() + pFtmIf->tPrep;}    
+   if(ret) {pFtmIf->status &= ~STAT_WAIT; pFtmIf->sema.cond = 0; showonce = 1;}    
    else    {
             pFtmIf->status |=  STAT_WAIT; 
             if(showonce) DBPRINT3("Waiting for Val: %08x Src: %08x Adr: %08x, SemaCond %u\n", (c->condVal & c->condMsk),  (*c->condSrc), c->condSrc, pFtmIf->sema.cond );
@@ -393,8 +393,9 @@ t_ftmChain* processChainAux(t_ftmChain* c)
          {
             
             (c->pMsg + c->msgIdx)->ts = tMsgExec; //calc execution timestamp
+            DBPRINT2("Msg %u sent ", c->msgIdx);
             dispatch( (t_ftmMsg*)(c->pMsg + c->msgIdx));
-            DBPRINT2("ST: %08x %08x ID: %08x %08x TS: %08x %08x\n", getSysTime(), (c->pMsg + c->msgIdx)->id, (c->pMsg + c->msgIdx)->ts);
+            DBPRINT2("ST: %08x %08x ID: %08x %08x TS: %08x %08x\n", getSysTime() + pFtmIf->tPrep , (c->pMsg + c->msgIdx)->id, (c->pMsg + c->msgIdx)->ts);
             c->msgIdx++;  //enough space in prio queue? dispatch and inc msgidx
          } else DBPRINT3("Too early for Idx %u, ST: %08x %08x TS: %08x %08x\n", c->msgIdx, getSysTime(), tMsgExec);
       } 
@@ -407,7 +408,8 @@ t_ftmChain* processChainAux(t_ftmChain* c)
          if((c->flags & FLAGS_IS_END) && (c->flags & FLAGS_IS_ENDLOOP)) { pCur = (t_ftmChain*)c->pNext; DBPRINT1("Chain Loop to 0x%08x\n", pCur); }
          else pCur = c;
          pCur->tStart = c->tStart + c->tPeriod; 
-         if(c->flags & FLAGS_IS_SIG_ALL) pFtmIf->sema.sig = 1;
+         if(c->flags & FLAGS_IS_SIG_ALL)  pFtmIf->sema.sig = 1;
+         if(c->flags & FLAGS_IS_COND_ALL) pFtmIf->sema.cond = 1;
       }
    } 
    else
@@ -422,7 +424,7 @@ t_ftmChain* processChainAux(t_ftmChain* c)
       pCur->tStart = c->tStart + c->tPeriod;
       pFtmIf->sema.sig  = 1;
       pFtmIf->sema.cond = 1;
-      DBPRINT1("NC SemaCond: %u\n", pFtmIf->sema.cond);
+      DBPRINT2("NC SemaCond: %u\n", pFtmIf->sema.cond);
    } 
    
    //is c a branchpoint? if so and break is desired, continue at the address in the page alternate plan
@@ -433,7 +435,7 @@ t_ftmChain* processChainAux(t_ftmChain* c)
          pFtmIf->sema.sig  = 1;
          
          pFtmIf->sema.cond = 1;
-         DBPRINT1("BP SemaCond: %u\n", pFtmIf->sema.cond);
+         DBPRINT2("BP SemaCond: %u\n", pFtmIf->sema.cond);
       }
     
    

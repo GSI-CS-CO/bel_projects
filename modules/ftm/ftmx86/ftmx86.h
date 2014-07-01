@@ -16,6 +16,10 @@
 #define FTM_TPREP_OFFSET    (FTM_PINA_OFFSET    + 4)
 #define FTM_IDLE_OFFSET     (FTM_TPREP_OFFSET   + 8)
 
+#define FTM_PAGE_PLANQTY_OFFSET  0
+#define FTM_PAGE_PLANS_OFFSET    (FTM_PAGE_PLANQTY_OFFSET + 4)
+#define FTM_PAGE_BP_OFFSET       (FTM_PAGE_PLANS_OFFSET   + 4 * FTM_PLAN_MAX)
+
 //masks & constants
 #define CMD_RST           		0x0001	//Reset FTM status and counters
 #define CMD_START      		   0x0002	//Start FTM
@@ -58,19 +62,21 @@
 #define FLAGS_IS_COND_SHARED  (1<<5)
 #define FLAGS_IS_COND_ADR     (1<<6)
 #define FLAGS_IS_COND_TIME    (1<<7)
+#define FLAGS_IS_COND_ALL     (1<<8)
 
-#define FLAGS_IS_SIG_MSI      (1<<8)
-#define FLAGS_IS_SIG_SHARED   (1<<9)
-#define FLAGS_IS_SIG_ADR      (1<<10)
-#define FLAGS_IS_SIG_TIME     (1<<11)
+#define FLAGS_IS_SIG_MSI      (1<<12)
+#define FLAGS_IS_SIG_SHARED   (1<<13)
+#define FLAGS_IS_SIG_ADR      (1<<14)
+#define FLAGS_IS_SIG_TIME     (1<<15)
 
-#define FLAGS_IS_SIG_FIRST    (1<<12)
-#define FLAGS_IS_SIG_LAST     (1<<13)
-#define FLAGS_IS_SIG_ALL      (1<<14)
+#define FLAGS_IS_SIG_FIRST    (1<<16)
+#define FLAGS_IS_SIG_LAST     (1<<17)
+#define FLAGS_IS_SIG_ALL      (1<<18)
 
-#define FLAGS_IS_START        (1<<16) // debug
-#define FLAGS_IS_END          (1<<17) // debug
-#define FLAGS_IS_ENDLOOP      (1<<18) // debug
+#define FLAGS_IS_START        (1<<20) 
+#define FLAGS_IS_END          (1<<21) 
+#define FLAGS_IS_ENDLOOP      (1<<22)
+#define FLAGS_IS_PERS_REP_CNT (1<<23)
 
 #define SIG_SH_SENDER_ID      0
 #define SIG_SH_FORMAT         1
