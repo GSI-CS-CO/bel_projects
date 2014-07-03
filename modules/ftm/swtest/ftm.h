@@ -256,6 +256,7 @@ typedef struct {
    t_ftmChain  idle;
    t_shared*   pSharedMem;
    t_semaphore sema;
+   uint16_t    sctr;
 } t_ftmIf;
 
 volatile t_ftmIf* pFtmIf;
@@ -284,5 +285,5 @@ uint16_t    getIdEVTNO(uint64_t id);
 uint16_t    getIdSID(uint64_t id);
 uint16_t    getIdBPID(uint64_t id);
 uint16_t    getIdSCTR(uint64_t id);
-
+void incIdSCTR(uint64_t* id, volatile uint16_t* sctr); 
 #endif

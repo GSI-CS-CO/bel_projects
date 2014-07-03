@@ -9,6 +9,9 @@ uint16_t getIdSID(uint64_t id)     {return ((uint16_t)(id >> ID_SID_POS))     & 
 uint16_t getIdBPID(uint64_t id)    {return ((uint16_t)(id >> ID_BPID_POS))    & (ID_MSK_B16 >> (16 - ID_BPID_LEN));}
 uint16_t getIdSCTR(uint64_t id)    {return ((uint16_t)(id >> ID_SCTR_POS))    & (ID_MSK_B16 >> (16 - ID_SCTR_LEN));}
 
+void incIdSCTR(uint64_t* id, volatile uint16_t* sctr)   {*id = ( *id & 0xfffffffffffffc00) | *sctr; *sctr = (*sctr+1) & ~0xfc00; DBPRINT3("id: %x sctr: %x\n", *id, *sctr);}
+
+
 uint32_t hiW(uint64_t dword) {return (uint32_t)(dword >> 32);}
 uint32_t loW(uint64_t dword) {return (uint32_t)dword;}
 
@@ -30,7 +33,7 @@ void prioQueueInit()
    *(pFpqCtrl + r_FPQ.tDueHi)    = hiW(pFtmIf->tDue);
    *(pFpqCtrl + r_FPQ.tDueLo)    = loW(pFtmIf->tDue);
   
-   *(pFpqCtrl + r_FPQ.cfgSet)    = r_FPQ.cfg_MSG_ARR_TS |
+   *(pFpqCtrl + r_FPQ.cfgSet)    = //r_FPQ.cfg_MSG_ARR_TS |
                                    r_FPQ.cfg_AUTOFLUSH_TIME | 
                                    r_FPQ.cfg_AUTOFLUSH_MSGS |
                                    r_FPQ.cfg_AUTOPOP | 
@@ -73,7 +76,7 @@ void ftmInit()
 
 static void showId()
 {
-   mprintf("#%u: ", getCpuIdx()); 
+   mprintf("#%02u: ", getCpuIdx()); 
 }
 
 void cmdEval()
@@ -88,7 +91,7 @@ void cmdEval()
    if(cmd)
    {
       if(cmd & CMD_RST)          { showId(); mprintf("Ftm Init done\n"); stat = 0; ftmInit(); }
-      if(cmd & CMD_START)        { showId(); mprintf("Starting, IP: 0x%08x,SP: 0x%08x\n", &pFtmIf->idle, pFtmIf->pAct->pStart); 
+      if(cmd & CMD_START)        { showId(); mprintf("Starting, IP: 0x%08x, SP: 0x%08x\n", &pFtmIf->idle, pFtmIf->pAct->pStart); 
                                    pFtmIf->pAct->pBp = pFtmIf->pAct->pStart;
                                    stat = (stat & STAT_ERROR) | STAT_RUNNING;
                                  }
@@ -109,8 +112,7 @@ void cmdEval()
       
       if(cmd & CMD_SHOW_ACT)     {  showId(); mprintf("Showing Active\n"); showFtmPage(pFtmIf->pAct);}
       if(cmd & CMD_SHOW_INA)     {  showId(); mprintf("Showing Inactive\n"); showFtmPage(pFtmIf->pIna);}
-      
-      mprintf("Writing back stat 0x%08x\n", stat);                      
+                           
    }
    
    if(pCurrentChain == &pFtmIf->idle)  {stat |=  STAT_IDLE;}
@@ -230,15 +232,14 @@ int dispatch(t_ftmMsg* pMsg)
 {
    int ret = 0;
    unsigned int diff;
+   uint64_t now =  getSysTime();
    
    ///////////////////////////
    execCnt = 0;
    ///////////////////////////
    uint32_t msgCnt, stat; 
    stat = pFtmIf->status;
-   
-   
-      
+   DBPRINT2("#ST: %08x %08x \n TS: %08x %08x\n ID: %08x %08x \n", now, pMsg->ts, pMsg->id);
    DBPRINT2("by #%u ...\n", getCpuIdx());
    DBPRINT3("\t\t\tid:\t%08x%08x\n\t\t\tpar:\t%08x%08x\n\t\t\ttef:\t\t%08x\n\t\t\toffs:\t%08x%08x\n", 
             (uint32_t)(pMsg->id>>32), (uint32_t)pMsg->id, 
@@ -249,6 +250,7 @@ int dispatch(t_ftmMsg* pMsg)
    diff = ( *(pFpqCtrl + r_FPQ.capacity) - *(pFpqCtrl + r_FPQ.heapCnt));
    if(diff > 1)
    {  
+      incIdSCTR(&pMsg->id, &pFtmIf->sctr); //copy sequence counter (sctr) into msg id and inc sctr
       atomic_on();
       *pFpqData = hiW(pMsg->id);
       *pFpqData = loW(pMsg->id);
@@ -273,12 +275,9 @@ uint8_t condValid(t_ftmChain* c)
 {
    uint8_t ret = 0;
    t_time time;
-   static uint8_t showonce = 1;
    
    if(c->flags & (FLAGS_IS_COND_MSI | FLAGS_IS_COND_SHARED | FLAGS_IS_COND_ADR) )
    {
-      
-      
       if(c->flags & FLAGS_IS_COND_MSI)
       {
          uint32_t  ip, msg;
@@ -313,12 +312,8 @@ uint8_t condValid(t_ftmChain* c)
    }
    else ret = 1;
    
-   if(ret) {pFtmIf->status &= ~STAT_WAIT; pFtmIf->sema.cond = 0; showonce = 1;}    
-   else    {
-            pFtmIf->status |=  STAT_WAIT; 
-            if(showonce) DBPRINT3("Waiting for Val: %08x Src: %08x Adr: %08x, SemaCond %u\n", (c->condVal & c->condMsk),  (*c->condSrc), c->condSrc, pFtmIf->sema.cond );
-            showonce = 0;
-           }
+   if(ret) {pFtmIf->status &= ~STAT_WAIT; pFtmIf->sema.cond = 0;}    
+   else    {pFtmIf->status |=  STAT_WAIT; }
    
    return ret; 
 } 
@@ -328,7 +323,6 @@ void sigSend(t_ftmChain* c)
    t_time time;
    
    DBPRINT1("Val: %08x Dst: %08x\n", c->sigVal,  c->sigDst );
-   
    time = c->tStart + c->tPeriod;
    
    *(c->sigDst) = c->sigVal;
@@ -346,165 +340,91 @@ t_ftmChain* processChain(t_ftmChain* c)
    t_ftmChain* pCur = c;
    t_time now = getSysTime();
    
-   //if starttime is 0, set to earliest possible time
-   if ( !c->tStart) c->tStart = now + pFtmIf->tPrep;
+   //if starttime is 0 or in the past, set to earliest possible time
+   if ( !c->tStart || c->tStart < now) c->tStart = now + pFtmIf->tPrep;
    
-      DBPRINT3("Time to process Chain reached\n");
-      if(condValid(c) || !pFtmIf->sema.cond) 
+   DBPRINT3("Time to process Chain reached\n");
+   if(condValid(c) || !pFtmIf->sema.cond) pCur = processChainAux(c); 
+   else 
+   {
+      if((c->flags & FLAGS_IS_BP) && pFtmIf->pAct->pBp != NULL)
       { 
-         pCur = processChainAux(c); 
-      }   
-      else 
-      {
-         DBPRINT3("ELSE Waiting for Val: %08x Src: %08x Adr: %08x, SemaCond %u\n", (c->condVal & c->condMsk),  (*c->condSrc), c->condSrc, pFtmIf->sema.cond );
-         if((c->flags & FLAGS_IS_BP) && pFtmIf->pAct->pBp != NULL)
-         { 
-            pCur = pFtmIf->pAct->pBp; 
-            pFtmIf->pAct->pBp = NULL;
-             
-         } // else check for branchpoint so we get around inf wait
-      }
-   //} else pFtmIf->status |= STAT_ERROR;
+         pCur = pFtmIf->pAct->pBp; 
+         
+         pFtmIf->sctr      = 0;
+         pFtmIf->pAct->pBp = NULL;
+      } 
+   }
       
    return pCur;    
 }
 
 t_ftmChain* processChainAux(t_ftmChain* c)
 {
-   t_ftmChain* pCur = c; 
-   unsigned long long tMsgExec;
-   DBPRINT3("Processing...\n");
+   t_ftmChain* pCur; 
+   uint64_t tMsgExec, now;
+   
+   pCur  = c; 
+   now   = getSysTime();
+   
    //signal to send ?
    if(pFtmIf->sema.sig) {
       if(   (c->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED)) 
         && (    !(c->flags & FLAGS_IS_SIG_LAST)
             ||  ((c->flags & FLAGS_IS_SIG_LAST) && (c->repCnt == c->repQty-1)))) 
-      {  if( getSysTime() + pFtmIf->tPrep >= c->tStart)  sigSend(c); }
+      {  if( now + pFtmIf->tPrep >= c->tStart)  sigSend(c); }
    }
-   //get execution time for due msg
-   tMsgExec    = c->tStart + (c->pMsg + c->msgIdx)->offs; 
+   (c->pMsg + c->msgIdx)->ts = c->tStart + (c->pMsg + c->msgIdx)->offs; //set execution time for msg 
    
-   if( c->repCnt < c->repQty || c->repQty == -1)   
+   if( c->repCnt < c->repQty || c->repQty == -1) //reps left ?  
    {
       if(c->msgIdx < c->msgQty) //msgs left to process?
       {
-         //time to hand it over to prio queue ?
-         if( getSysTime() + pFtmIf->tPrep >= tMsgExec)  
+         if( now + pFtmIf->tPrep >= (c->pMsg + c->msgIdx)->ts)  //### time to hand it over to prio queue ? ###
          {
-            
-            (c->pMsg + c->msgIdx)->ts = tMsgExec; //calc execution timestamp
+            if ( !dispatch((t_ftmMsg*)(c->pMsg + c->msgIdx)) ) c->msgIdx++;  //enough space in prio queue? dispatch and inc msgidx
             DBPRINT2("Msg %u sent ", c->msgIdx);
-            dispatch( (t_ftmMsg*)(c->pMsg + c->msgIdx));
-            DBPRINT2("ST: %08x %08x ID: %08x %08x TS: %08x %08x\n", getSysTime() + pFtmIf->tPrep , (c->pMsg + c->msgIdx)->id, (c->pMsg + c->msgIdx)->ts);
-            c->msgIdx++;  //enough space in prio queue? dispatch and inc msgidx
-         } else DBPRINT3("Too early for Idx %u, ST: %08x %08x TS: %08x %08x\n", c->msgIdx, getSysTime(), tMsgExec);
+         } 
       } 
       else
       {
-         //repetions left? stay with this chain
-         DBPRINT3("RepCnt: %u RepQty: %u\n", c->repCnt, c->repQty);
-         c->msgIdx = 0;
-         c->repCnt++;     
+         c->msgIdx = 0; c->repCnt++; //repetions left, stay with this chain
+              
          if((c->flags & FLAGS_IS_END) && (c->flags & FLAGS_IS_ENDLOOP)) { pCur = (t_ftmChain*)c->pNext; DBPRINT1("Chain Loop to 0x%08x\n", pCur); }
          else pCur = c;
+         
          pCur->tStart = c->tStart + c->tPeriod; 
-         if(c->flags & FLAGS_IS_SIG_ALL)  pFtmIf->sema.sig = 1;
+         if(c->flags & FLAGS_IS_SIG_ALL)  pFtmIf->sema.sig  = 1;
          if(c->flags & FLAGS_IS_COND_ALL) pFtmIf->sema.cond = 1;
       }
    } 
    else
    {
       //done, go to next chain
-      DBPRINT1("RepCnt: %u RepQty: %u\n", c->repCnt, c->repQty);
-      c->msgIdx = 0;
-      c->repCnt = 0;
+      DBPRINT2("RepCnt: %u RepQty: %u\n", c->repCnt, c->repQty);
+      c->msgIdx = 0; c->repCnt = 0;
       if( ((c->flags & FLAGS_IS_END) && (c->flags & FLAGS_IS_ENDLOOP)) || (c->pNext == NULL) ) pCur = (t_ftmChain*)&pFtmIf->idle;
       else pCur = (t_ftmChain*)c->pNext;
       
       pCur->tStart = c->tStart + c->tPeriod;
       pFtmIf->sema.sig  = 1;
       pFtmIf->sema.cond = 1;
-      DBPRINT2("NC SemaCond: %u\n", pFtmIf->sema.cond);
+      DBPRINT3("NC SemaCond: %u\n", pFtmIf->sema.cond);
    } 
    
-   //is c a branchpoint? if so and break is desired, continue at the address in the page alternate plan
-      if((c->flags & FLAGS_IS_BP) && (pFtmIf->pAct->pBp != NULL))       
-      { 
-         pCur = pFtmIf->pAct->pBp;  //BP? go to alt chain
-         pFtmIf->pAct->pBp = NULL;
-         pFtmIf->sema.sig  = 1;
-         
-         pFtmIf->sema.cond = 1;
-         DBPRINT2("BP SemaCond: %u\n", pFtmIf->sema.cond);
-      }
+   //is c a branchpoint? if so, jump, reset sequence counter (sctr), semaphores and BP
+   if((c->flags & FLAGS_IS_BP) && (pFtmIf->pAct->pBp != NULL))       
+   { 
+      pCur = pFtmIf->pAct->pBp;  //BP? go to alt chain
+      
+      pFtmIf->sctr      = 0;
+      pFtmIf->pAct->pBp = NULL;
+      pFtmIf->sema.sig  = 1;
+      pFtmIf->sema.cond = 1;
+      
+      DBPRINT3("BP SemaCond: %u\n", pFtmIf->sema.cond);
+   }
     
-   
-     
    return pCur;    
 }
-/*
-t_ftmChain* processChainAux(t_ftmChain* c)
-{
-   t_ftmChain* pCur = c; 
-   unsigned long long tMsgExec;
-   DBPRINT3("Processing...\n");
-   //signal to send ?
-   if(pFtmIf->sema.sig) {
-      if(   (c->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED)) 
-        && (    !(c->flags & FLAGS_IS_SIG_LAST)
-            ||  ((c->flags & FLAGS_IS_SIG_LAST) && (c->repCnt == c->repQty-1)))) 
-      {  if( getSysTime() + pFtmIf->tPrep >= c->tStart)  sigSend(c); }
-   }
-   //get execution time for due msg
-   tMsgExec    = c->tStart + (c->pMsg + c->msgIdx)->offs; 
-    
-   if(c->msgIdx < c->msgQty) //msgs left to process?
-   {
-      //time to hand it over to prio queue ?
-      if( getSysTime() + pFtmIf->tPrep >= tMsgExec)  
-      {
-         
-         (c->pMsg + c->msgIdx)->ts = tMsgExec; //calc execution timestamp
-         dispatch( (t_ftmMsg*)(c->pMsg + c->msgIdx));
-         DBPRINT2("ST: %08x %08x ID: %08x %08x TS: %08x %08x\n", getSysTime(), (c->pMsg + c->msgIdx)->id, (c->pMsg + c->msgIdx)->ts);
-         c->msgIdx++;  //enough space in prio queue? dispatch and inc msgidx
-      }
-   } 
-   else
-   {
-      c->msgIdx = 0;
-      //is c a branchpoint? if so and break is desired, continue at the address in the page alternate plan
-      if((c->flags & FLAGS_IS_BP) && (pFtmIf->pAct->pBp != NULL))       
-      { 
-         pCur = pFtmIf->pAct->pBp;  //BP? go to alt chain
-         pFtmIf->pAct->pBp = NULL;
-         pFtmIf->sema.sig  = 1;
-         pFtmIf->sema.cond = 1;
-      }
-      else
-      { 
-         DBPRINT1("RepCnt: %u RepQty: %u\n", c->repCnt, c->repQty);
-         if( c->repCnt < c->repQty )   
-         {
-            //repetions left? stay with this chain
-            c->repCnt++;     
-            pCur = c; 
-            if(c->flags & FLAGS_IS_SIG_ALL) pFtmIf->sema.sig = 1;
-         } 
-         else
-         {
-            //done, go to next chain
-            c->repCnt = 0;
-            if(c->pNext != NULL) pCur = (t_ftmChain*)c->pNext;
-            else pCur = (t_ftmChain*)&pFtmIf->idle;
-            pFtmIf->sema.sig  = 1;
-            pFtmIf->sema.cond = 1;
-         } 
-      }   
-      //propagate updated start time to next chain to be executed
-      pCur->tStart = c->tStart + c->tPeriod;
-   }
-     
-   return pCur;    
-}
-*/
+
