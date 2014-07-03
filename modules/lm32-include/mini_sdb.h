@@ -43,6 +43,7 @@ volatile unsigned int* pEbm;
 volatile unsigned int* pOledDisplay;     
 volatile unsigned int* pFpqCtrl;
 volatile unsigned int* pFpqData;
+volatile unsigned int* pTlu;
 volatile unsigned int* pEca;
 volatile unsigned int* pCpuId;
 volatile unsigned int* pCpuIrqSlave;
