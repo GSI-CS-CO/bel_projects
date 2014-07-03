@@ -31,6 +31,7 @@ use work.wishbone_pkg.all;
 package monster_pkg is
 
   function f_sub1(x : natural) return natural;
+  function f_pick(x : boolean; y : integer; z : integer) return natural;
 
   component monster is
     generic(
@@ -244,6 +245,7 @@ package monster_pkg is
 end package;
 
 package body monster_pkg is
+
   function f_sub1(x : natural) return natural is
   begin
     if x = 0
@@ -251,4 +253,13 @@ package body monster_pkg is
     else return x-1;
     end if;
   end f_sub1;
+
+  function f_pick(x : boolean; y : integer; z : integer) return natural is
+  begin
+    if x
+    then return y;
+    else return z;
+    end if;
+  end f_pick;
+
 end monster_pkg;
