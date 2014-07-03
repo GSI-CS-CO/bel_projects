@@ -11,15 +11,15 @@ CXXFLAGS= $(FLAGS)
 CC      = $(TARGET)gcc
 CXX     = $(TARGET)g++
 
-all: ftmctrl 
+all: ftm-ctl
 
-ftmctrl:	$(SOURCES)
+ftm-ctl:	$(SOURCES)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 
 
 clean:
-	        rm -f *.o *.elf *.bin ftmctrl
+	        rm -f *.o *.elf *.bin ftm-ctl
 
 
 
