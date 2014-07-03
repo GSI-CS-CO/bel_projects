@@ -646,24 +646,6 @@ begin
       phasecounterselect => phase_sel(3 downto 0),
       phasestep          => phase_step,
       phaseupdown        => '1');
-
-    phase : altera_phase
-      generic map(
-        g_select_bits   => 5,
-        g_outputs       => 1,
-        g_base          => 0,
-        g_vco_freq      => 1000, -- 1GHz
-        g_output_freq   => (0 => 200),
-        g_output_select => (0 =>   3))
-      port map(
-        clk_i       => clk_free,
-        rstn_i      => rstn_free,
-        clks_i(0)   => clk_butis,
-        rstn_o(0)   => rstn_butis,
-        offset_i(0) => phase_butis,
-        phasedone_i => phase_done,
-        phasesel_o  => phase_sel,
-        phasestep_o => phase_step);
   end generate;
 
   ref_a5 : if c_is_arria5 generate
@@ -681,25 +663,25 @@ begin
       phase_en   => phase_step,
       updn       => '1',              -- positive phase shift (widen period)
       phase_done => phase_done);
-      
-    phase : altera_phase
-      generic map(
-        g_select_bits   => 5,
-        g_outputs       => 1,
-        g_base          => 0,
-        g_vco_freq      => 1000, -- 1GHz
-        g_output_freq   => (0 => 200),
-        g_output_select => (0 =>   4))
-      port map(
-        clk_i       => clk_free,
-        rstn_i      => rstn_free,
-        clks_i(0)   => clk_butis,
-        rstn_o(0)   => rstn_butis,
-        offset_i(0) => phase_butis,
-        phasedone_i => phase_done,
-        phasesel_o  => phase_sel,
-        phasestep_o => phase_step);
   end generate;
+  
+  phase : altera_phase
+    generic map(
+      g_select_bits   => 5,
+      g_outputs       => 1,
+      g_base          => 0,
+      g_vco_freq      => 1000, -- 1GHz
+      g_output_freq   => (0 => 200),
+      g_output_select => (0 => f_pick(c_is_arria5, 4, 3)))
+    port map(
+      clk_i       => clk_free,
+      rstn_i      => rstn_free,
+      clks_i(0)   => clk_butis,
+      rstn_o(0)   => rstn_butis,
+      offset_i(0) => phase_butis,
+      phasedone_i => phase_done,
+      phasesel_o  => phase_sel,
+      phasestep_o => phase_step);
   
   ref_clk : global_region port map(
     inclk  => clk_ref0,
