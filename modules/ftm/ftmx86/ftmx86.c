@@ -13,39 +13,11 @@ uint16_t getIdSID(uint64_t id)     {return ((uint16_t)(id >> ID_SID_POS))     & 
 uint16_t getIdBPID(uint64_t id)    {return ((uint16_t)(id >> ID_BPID_POS))    & (ID_MSK_B16 >> (16 - ID_BPID_LEN));}
 uint16_t getIdSCTR(uint64_t id)    {return ((uint16_t)(id >> ID_SCTR_POS))    & (ID_MSK_B16 >> (16 - ID_SCTR_LEN));}
 
-static void hexDump (char *desc, void *addr, int len) {
-    int i;
-    unsigned char buff[17];
-    unsigned char *pc = (unsigned char*)addr;
+static uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChainStart, uint8_t* pBufStart, uint32_t embeddedOffs);
+static uint8_t* deserMsg(uint8_t* pBuf, t_ftmMsg* pMsg);
 
-    // Output description if given.
-    if (desc != NULL)
-        printf ("%s:\n", desc);
-
-    // Process every byte in the data.
-    for (i = 0; i < len; i++) {
-        // Multiple of 16 means new line (with line offset).
-
-        if ((i % 16) == 0) {
-            // Just don't print ASCII for the zeroth line.
-            if (i != 0)
-                printf ("  %s\n", buff);
-
-            // Output the offset.
-            printf ("  %04x ", i);
-        }
-
-        // Now the hex code for the specific character.
-        printf (" %02x", pc[i]);
-
-        // And store a printable ASCII character for later.
-        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
-            buff[i % 16] = '.';
-        else
-            buff[i % 16] = pc[i];
-        buff[(i % 16) + 1] = '\0';
-    }
-}
+static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufStart, uint8_t* pBuf, uint32_t embeddedOffs, uint8_t cpuId);
+static uint8_t* serMsg(  t_ftmMsg* pMsg, uint8_t* pBuf);
 
 uint64_t getId(uint16_t fid, uint16_t gid, uint16_t evtno, uint16_t sid, uint16_t bpid, uint16_t sctr)
 {
@@ -78,22 +50,21 @@ const t_ftmChain Idle = { .tStart         = 0,
                           .pNext          = NULL
                           };
                           
-uint8_t* uint32ToBytes(uint8_t* pBuf, uint32_t val)
+static uint8_t* uint32ToBytes(uint8_t* pBuf, uint32_t val)
 {
    uint8_t i;
    for(i=0;i<FTM_WORD_SIZE;   i++) pBuf[i]  = val >> (8*i) & 0xff;
    return pBuf+4;
 }
 
-uint8_t* uint64ToBytes(uint8_t* pBuf, uint64_t val)
+static uint8_t* uint64ToBytes(uint8_t* pBuf, uint64_t val)
 {
    uint32ToBytes(pBuf+0, (uint32_t)(val>>32));
    uint32ToBytes(pBuf+4, (uint32_t)val);
    return pBuf+8;
 }
 
-
-uint32_t bytesToUint32(uint8_t* pBuf)
+static uint32_t bytesToUint32(uint8_t* pBuf)
 {
    uint8_t i;
    uint32_t val=0;
@@ -102,48 +73,42 @@ uint32_t bytesToUint32(uint8_t* pBuf)
    return val;
 }
 
-uint64_t bytesToUint64(uint8_t* pBuf)
+static uint64_t bytesToUint64(uint8_t* pBuf)
 {
    uint64_t val=0;
-   
    
    val |= (uint64_t)bytesToUint32(pBuf+0)<<32;
    val |= (uint64_t)bytesToUint32(pBuf+4);
    return val;
 }
 
-uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOffs, uint8_t cpuId) 
+uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint32_t embeddedOffs, uint8_t cpuId) 
 {
-   uint8_t j, planIdx, chainIdx;
-   uint8_t* pBuf = pBufStart;
+   uint8_t j,  planIdx, chainIdx;
+   uint8_t*    pBuf;
    t_ftmChain* pChain;
-   uint32_t pBufPlans[FTM_PLAN_MAX];
+   uint32_t    pBufPlans[FTM_PLAN_MAX];
    
-    pBuf += FTM_PAGEMETA;
-    //leave space for page meta info
-   //write all plans to pBuffer
+   pBuf = pBufStart + FTM_PAGEMETA;
+   //leave space for page meta info, write all plans to pBuffer
    for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
    {
       pBufPlans[planIdx] = embeddedOffs + ((uint32_t)((uintptr_t)pBuf - (uintptr_t)pBufStart));
-      //printf("Plan %02u/%02u starts @%08x\n", planIdx, pPage->planQty, pBufPlans[planIdx]);
-      pChain = pPage->plans[planIdx].pStart;
-      chainIdx=0;
+      pChain   = pPage->plans[planIdx].pStart;
+      chainIdx = 0;
       while(chainIdx++ < pPage->plans[planIdx].chainQty && pChain != NULL)
       {
-         //printf("Chain %02u/%02u starts @", chainIdx, pPage->plans[planIdx].chainQty);
-         pBuf = serChain(pChain, pBufPlans[planIdx], pBufStart, pBuf, embeddedOffs, cpuId);
-         pChain = (t_ftmChain*)pChain->pNext;
+         pBuf     = serChain(pChain, pBufPlans[planIdx], pBufStart, pBuf, embeddedOffs, cpuId);
+         pChain   = (t_ftmChain*)pChain->pNext;
       }   
    }
    
    // now write page meta
-  
    uint32ToBytes(&pBufStart[FTM_PAGE_QTY], pPage->planQty);
    for(j=0;j<pPage->planQty;    j++)
       uint32ToBytes(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE], pBufPlans[j]);
    for(j=pPage->planQty;j<FTM_PLAN_MAX;    j++)
       uint32ToBytes(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE], FTM_NULL);
-   
    
    if( pPage->idxBp == 0xdeadbeef)    pPage->pBp = FTM_IDLE_OFFSET;
    else pPage->pBp     = pBufPlans[pPage->idxBp];
@@ -153,26 +118,22 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t*    pBufStart, uint32_t embeddedOff
    
    //printf("BP: %08x, Start: %08x\n", pPage->pBp, pPage->pStart);
    
-    uint32ToBytes(&pBufStart[FTM_PAGE_PTR_BP],         pPage->pBp);
+   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_BP],         pPage->pBp);
    uint32ToBytes(&pBufStart[FTM_PAGE_PTR_START],      pPage->pStart);
- 
-   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_SHAREDMEM], pPage->pSharedMem);
+   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_SHAREDMEM],  pPage->pSharedMem);
    
    return pBuf;   
-
 }
 
-
-uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufStart, uint8_t* pBuf, uint32_t embeddedOffs, uint8_t cpuId)
+static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufStart, uint8_t* pBuf, uint32_t embeddedOffs, uint8_t cpuId)
 {
    uint8_t msgIdx;
    
    uint32_t pBufNext, pBufMsg, sigDst, condSrc;
    t_ftmMsg* pMsg = pChain->pMsg; 
    
-   sigDst = 0;
-   condSrc = 0;
-   
+   sigDst   = 0;
+   condSrc  = 0;
    
    //FIXME: change to proper sdb find
    if (pChain->flags & FLAGS_IS_SIG_MSI)           sigDst = 0x40000800 + pChain->sigCpu * 0x100;
@@ -202,22 +163,20 @@ uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufStart, u
    uint32ToBytes(&pBuf[FTM_CHAIN_PMSG],    pBufMsg);
    
    if(pChain->pNext != NULL) {
-    if(((pChain->flags & FLAGS_IS_END) && (pChain->flags & FLAGS_IS_ENDLOOP))) pBufNext = (uint32_t)pPlanStart;
-    else pBufNext = pBufMsg + pChain->msgQty * _FTM_MSG_LEN;
+      if(((pChain->flags & FLAGS_IS_END) && (pChain->flags & FLAGS_IS_ENDLOOP)))   pBufNext = (uint32_t)pPlanStart;
+      else                                                                         pBufNext = pBufMsg + pChain->msgQty * _FTM_MSG_LEN;
    } 
-   else                      pBufNext = FTM_NULL;
+   else pBufNext = FTM_NULL;
    uint32ToBytes(&pBuf[FTM_CHAIN_PNEXT],    pBufNext);
  
-   pBuf +=  _FTM_CHAIN_LEN;
+   pBuf += _FTM_CHAIN_LEN;
    for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++) pBuf = serMsg(&pMsg[msgIdx], pBuf);   
    
    return pBuf;   
 
 }
 
-
-
-uint8_t* serMsg(  t_ftmMsg* pMsg, uint8_t* pBuf)
+static uint8_t* serMsg(  t_ftmMsg* pMsg, uint8_t* pBuf)
 {
    uint64ToBytes(&pBuf[FTM_MSG_ID],     pMsg->id);
    uint64ToBytes(&pBuf[FTM_MSG_PAR],    pMsg->par);
@@ -229,31 +188,29 @@ uint8_t* serMsg(  t_ftmMsg* pMsg, uint8_t* pBuf)
    return pBuf + _FTM_MSG_LEN;
 }
 
-
 t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs)
 {
-   uint8_t* pBuf = pBufStart;
-   uint32_t j, chainQty;
-   uint8_t* pBufPlans[FTM_PLAN_MAX];
-   uint8_t* aux;
-   t_ftmChain* pChain  = NULL;
-   t_ftmChain* pNext = NULL;
+   uint32_t j, chainQty, planStart;
+   uint8_t*    pBufPlans[FTM_PLAN_MAX];
+   uint8_t*    pBuf     = pBufStart;
+   t_ftmChain* pChain   = NULL;
+   t_ftmChain* pNext    = NULL;
   
    //get plan qty
    if(pPage == NULL) printf("page not allocated\n");
    pPage->planQty = bytesToUint32(&pBufStart[FTM_PAGE_QTY]);
    
-   for(j=0;j<pPage->planQty;    j++)
+   for(j=0; j<pPage->planQty; j++)
    {
-      
       //read the offset to start of first chain
-      aux =  (uintptr_t)bytesToUint32(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE]) - (uintptr_t)embeddedOffs;
-      pBufPlans[j] = pBufStart + (uintptr_t)bytesToUint32(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE]) - (uintptr_t)embeddedOffs;
+      planStart      = bytesToUint32(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE]);
+       
+      pBufPlans[j]   = pBufStart + (uintptr_t)planStart - (uintptr_t)embeddedOffs;
       
       //allocate first chain and a Next Chain
       chainQty = 1;
-      pChain      = calloc(1, sizeof(t_ftmChain));
-      pNext     = calloc(1, sizeof(t_ftmChain));
+      pChain   = calloc(1, sizeof(t_ftmChain));
+      pNext    = calloc(1, sizeof(t_ftmChain));
       //set plan start to first chain
       pPage->plans[j].pStart = pChain;
       //deserialise (pBufStart +  offset) to pChain and fix pChains next ptr
@@ -262,9 +219,9 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
       
       while(!(pChain->flags & FLAGS_IS_END) && chainQty < 10)
       {
-         pChain = pNext;
-         pNext = calloc(1, sizeof(t_ftmChain));
-         pBuf = deserChain(pChain, pNext, pBuf, pBufStart, embeddedOffs);
+         pChain   = pNext;
+         pNext    = calloc(1, sizeof(t_ftmChain));
+         pBuf     = deserChain(pChain, pNext, pBuf, pBufStart, embeddedOffs);
          chainQty++;
          
       } 
@@ -278,16 +235,16 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
    pPage->pBp        = bytesToUint32(&pBufStart[FTM_PAGE_PTR_BP]); 
    pPage->pStart     = bytesToUint32(&pBufStart[FTM_PAGE_PTR_START]);
    
-   if       (pPage->pBp    == FTM_NULL)         { pPage->idxBp = 0xcafebabe;}
+   if       (pPage->pBp    == FTM_NULL)         {pPage->idxBp  = 0xcafebabe;}
    else if  (pPage->pBp    == FTM_IDLE_OFFSET)  {pPage->idxBp  = 0xdeadbeef;}
-   else for (j=0;j<pPage->planQty;    j++)      
+   else for (j=0; j<pPage->planQty; j++)      
    {
       if(pBufPlans[j]-pBufStart == ((uintptr_t)pPage->pBp - (uintptr_t)embeddedOffs)) {pPage->idxBp = j;}
    }  
       
    if       (pPage->pStart == FTM_NULL)           {pPage->idxStart = 0xcafebabe;}
    else if  (pPage->pStart == FTM_IDLE_OFFSET)    {pPage->idxStart = 0xdeadbeef;}
-   else for(j=0;j<pPage->planQty;    j++) 
+   else for(j=0; j<pPage->planQty; j++) 
    {
       if(pBufPlans[j]-pBufStart == ((uintptr_t)pPage->pStart - (uintptr_t)embeddedOffs)) {pPage->idxStart = j;}
    }    
@@ -296,7 +253,7 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
    return pPage;     
 }
 
-uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChainStart, uint8_t* pBufStart, uint32_t embeddedOffs)
+static uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChainStart, uint8_t* pBufStart, uint32_t embeddedOffs)
 {
    uint8_t* pBuf = pChainStart;
    uint32_t msgIdx;
@@ -326,7 +283,7 @@ uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChainStart,
    
 }
 
-uint8_t* deserMsg(uint8_t* pBuf, t_ftmMsg* pMsg)
+static uint8_t* deserMsg(uint8_t* pBuf, t_ftmMsg* pMsg)
 {
    //printf("desermsg\n");   
    pMsg->id    = bytesToUint64(&pBuf[FTM_MSG_ID]);
@@ -339,34 +296,29 @@ uint8_t* deserMsg(uint8_t* pBuf, t_ftmMsg* pMsg)
    return pBuf + (uintptr_t)_FTM_MSG_LEN; 
 }
 
-
-
 void showFtmPage(t_ftmPage* pPage)
 {
    uint32_t planIdx, chainIdx, msgIdx;
-   t_ftmChain* pChain  = NULL;
-   t_ftmMsg*   pMsg  = NULL;
-   char noFlag[] = "        -        ";
+   t_ftmChain* pChain   = NULL;
+   t_ftmMsg*   pMsg     = NULL;
+   char noFlag[]        = "        -        ";
                     
-   
-   
    printf("---PAGE \n");
    printf("StartPlan:\t");
    
    if(pPage->idxStart == 0xdeadbeef) printf("idle\n");
    else { 
-          if(pPage->idxStart == 0xcafebabe) printf("NULL\n");
-          else printf("%c\n", pPage->idxStart + 'A');
+          if(pPage->idxStart == 0xcafebabe)  printf("NULL\n");
+          else                               printf("%c\n", pPage->idxStart + 'A');
         } 
    
    printf("AltPlan:\t");
    if(pPage->idxBp == 0xdeadbeef) printf("idle\n");
    else { 
-          if(pPage->idxBp == 0xcafebabe) printf("NULL\n");
-          else printf("%c\n", pPage->idxBp + 'A');
+          if(pPage->idxBp == 0xcafebabe)  printf("NULL\n");
+          else                            printf("%c\n", pPage->idxBp + 'A');
         }  
    
-         
    for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
    {
       printf("\t*******************************************************************************************************\n");
@@ -416,7 +368,6 @@ void showFtmPage(t_ftmPage* pPage)
          for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++)
          {
             printf("\t\t\t---MSG %c%u%c\n", planIdx+'A', chainIdx-1, msgIdx+'A');
-           
             printf("\t\t\tid:\t0x%08x%08x\n\t\t\tpar:\t0x%08x%08x\n\t\t\ttef:\t\t0x%08x\n\t\t\toffs:\t0x%08x%08x\n", 
             (uint32_t)(pMsg[msgIdx].id>>32), (uint32_t)pMsg[msgIdx].id, 
             (uint32_t)(pMsg[msgIdx].par>>32), (uint32_t)pMsg[msgIdx].par,
@@ -425,45 +376,6 @@ void showFtmPage(t_ftmPage* pPage)
          }
          pChain = (t_ftmChain*)pChain->pNext;
       }
-           
    }   
    printf("\n\n");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

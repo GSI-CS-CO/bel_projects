@@ -262,7 +262,6 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
             planStart = false; 
             pPage->plans[planIdx].pStart = pChain;
             pChain->tStart = starttime;
-            printf("Plan %u Ptr 0x%p\n", planIdx, pPage->plans[planIdx].pStart); 
          } else {
             pChainPrev->pNext =  (struct t_ftmChain*)pChain;
          }

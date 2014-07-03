@@ -8,6 +8,8 @@
 #define FTM_PAGEMETA        (4 + 4 * FTM_PLAN_MAX + 4 + 4)   
 #define FTM_PAGESIZE        (FTM_PAGEDATA + FTM_PAGEMETA) 
 
+#define BUF_SIZE            FTM_PAGESIZE
+
 #define FTM_SHARED_OFFSET   0xC000
 #define FTM_CMD_OFFSET      (FTM_SHARED_OFFSET  + 2*FTM_PAGESIZE)
 #define FTM_STAT_OFFSET     (FTM_CMD_OFFSET     + 4)
@@ -131,10 +133,8 @@
 #define FTM_PAGE_PTR_SHAREDMEM (FTM_PAGE_PTR_START     +4)
 #define _FTM_PAGE_LEN         (FTM_PAGE_PTR_SHAREDMEM  +4)
 
-
 extern uint32_t*       _startshared[];
 extern uint32_t*       _endshared[];
-
 
 typedef struct {
    uint64_t id;
@@ -147,22 +147,22 @@ typedef struct {
 
 typedef struct {
    
-   uint64_t             tStart;        //desired start time of this chain
-   uint64_t             tPeriod;       //chain period
-   uint64_t             tExec;         //chain execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod
-   uint32_t             flags;         //apart from chain_IS_BP, this is just markers for status info & better debugging
-   uint32_t             condSrc;       //condition source
-   uint32_t             condVal;       //pattern to compare
-   uint32_t             condMsk;       //mask for comparison in condition
-   uint32_t             sigCpu;       //destination cpu msi/shared
-   uint32_t             sigDst;       //destination address msi/shared
-   uint32_t             sigVal;       //signal value
-   uint32_t             repQty;        //number of desired repetitions. -1 -> infinite, 0 -> none
-   uint32_t             repCnt;        //running count of repetitions
-   uint32_t             msgQty;        //Number of messages
-   uint32_t             msgIdx;        //idx of the currently processed msg 
-   t_ftmMsg*            pMsg;          //pointer to messages
-   struct t_ftmChain*   pNext;         //pointer to next chain
+   uint64_t             tStart;  //desired start time of this chain
+   uint64_t             tPeriod; //chain period
+   uint64_t             tExec;   //chain execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod
+   uint32_t             flags;   //apart from chain_IS_BP, this is just markers for status info & better debugging
+   uint32_t             condSrc; //condition source
+   uint32_t             condVal; //pattern to compare
+   uint32_t             condMsk; //mask for comparison in condition
+   uint32_t             sigCpu;  //destination cpu msi/shared
+   uint32_t             sigDst;  //destination address msi/shared
+   uint32_t             sigVal;  //signal value
+   uint32_t             repQty;  //number of desired repetitions. -1 -> infinite, 0 -> none
+   uint32_t             repCnt;  //running count of repetitions
+   uint32_t             msgQty;  //Number of messages
+   uint32_t             msgIdx;  //idx of the currently processed msg 
+   t_ftmMsg*            pMsg;    //pointer to messages
+   struct t_ftmChain*   pNext;   //pointer to next chain
    
 } t_ftmChain;
 
@@ -183,19 +183,8 @@ typedef struct {
    uint32_t       pSharedMem;
 } t_ftmPage;
 
-t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs);
-uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChainStart, uint8_t* pBufStart, uint32_t embeddedOffs);
-uint8_t* deserMsg(  uint8_t*  buf, t_ftmMsg* msg);
-
-
-uint8_t* uint32ToBytes(uint8_t* buf, uint32_t val);
-uint8_t* uint64ToBytes(uint8_t* buf, uint64_t val);
-uint32_t bytesToUint32(uint8_t* buf);
-uint64_t bytesToUint64(uint8_t* buf);
-
-uint8_t* serPage  (t_ftmPage*  pPage, uint8_t* bufStart, uint32_t offset, uint8_t cpuId);
-uint8_t* serChain (t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* bufStart, uint8_t* buf, uint32_t offset, uint8_t cpuId);
-uint8_t* serMsg   (t_ftmMsg* pMsg, uint8_t* buf);
+t_ftmPage*  deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs);
+uint8_t*    serPage  (t_ftmPage* pPage, uint8_t* pBufStart, uint32_t offset, uint8_t cpuId);
 void showFtmPage(t_ftmPage* pPage);
 
 uint16_t    getIdFID(uint64_t id);
@@ -204,7 +193,6 @@ uint16_t    getIdEVTNO(uint64_t id);
 uint16_t    getIdSID(uint64_t id);
 uint16_t    getIdBPID(uint64_t id);
 uint16_t    getIdSCTR(uint64_t id);
-uint64_t getId(uint16_t fid, uint16_t gid, uint16_t evtno, uint16_t sid, uint16_t bpid, uint16_t sctr);
-//int      sendCustomMsg(uint32_t* customMsg, unsigned char len,  );
-//extern t_FtmIf*       pFtmIf;
+uint64_t    getId(uint16_t fid, uint16_t gid, uint16_t evtno, uint16_t sid, uint16_t bpid, uint16_t sctr);
+
 #endif
