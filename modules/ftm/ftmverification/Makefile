@@ -5,7 +5,7 @@ MYPATH    = .
 FTMPATH   = ../swtest
 INCPATH   = ../../lm32-include
 W1        = ../../../ip_cores/wrpc-sw
-CFLAGS    = -I$(INCPATH) -mmultiply-enabled -mbarrel-shift-enabled -Os -I$(W1)/include -I$(W1)/pp_printf
+CFLAGS    = -I$(INCPATH) -mmultiply-enabled -mbarrel-shift-enabled -Os -I$(W1)/include -I$(W1)/pp_printf -I$(FTMPATH)
 
 $(TARGET).bin: $(TARGET).elf
 	lm32-elf-objcopy -O binary $< $@

@@ -8,7 +8,7 @@
 #include "dbg.h"
 
 volatile unsigned int* pEC;
-uint32_t errCnt, actCnt; 
+
 
 #define ECA_ACTION      0x9bfa4560
 
@@ -28,7 +28,7 @@ uint32_t errCnt, actCnt;
 
 char buffer[12];
 
-void report(uint64_t now)
+void report(uint64_t now, uint32_t actCnt, uint32_t errCnt)
 {
    //acquire info on offending evt
    
@@ -36,7 +36,7 @@ void report(uint64_t now)
    uint64_t par   = ((uint64_t)*(pEC + (ECA_EVT_PA_HI >> 2))) << 32 | (uint64_t)*(pEC + (ECA_EVT_PA_LO >> 2));
    uint64_t time  = (((uint64_t)*(pEC + (ECA_EVT_TI_HI >> 2))) << 32 | (uint64_t)*(pEC + (ECA_EVT_TI_LO >> 2))) << 3;
     
-   mprintf("################## %10u/%10u ##################", errCnt, actCnt);
+   mprintf("################## %x/%x ##################", errCnt, actCnt);
    if( *(pEC + (ECA_FLAGS  >> 2)) & 0x01 ) mprintf("late ");
    if( *(pEC + (ECA_FLAGS  >> 2)) & 0x02 ) mprintf("conflict ");
    mprintf("\n");
@@ -70,6 +70,7 @@ void main(void) {
   int j;
   uint64_t now;
   uint32_t data;
+  uint32_t errCnt, actCnt; 
   
   init();
   
@@ -85,7 +86,7 @@ void main(void) {
         actCnt++;
         if( *(pEC + (ECA_FLAGS  >> 2)) ) {    // check for errors, if so, gather info on offending event and printf preport
           errCnt++;
-          report(now<<3);
+          report(now<<3, actCnt, errCnt);
         }
         *(pEC + (ECA_ACT_CTL >> 2)) = ECA_CMD_POP; //... pop the element
      }
