@@ -554,7 +554,10 @@ begin
   
   reset : altera_reset
     generic map(
-      g_clocks => 4)
+      g_plls   => 4,
+      g_clocks => 4,
+      g_areset => f_pick(c_is_arria5, 100, 1)*1024,
+      g_stable => f_pick(c_is_arria5, 100, 1)*1024)
     port map(
       clk_free_i    => clk_free,
       rstn_i        => core_rstn_i,
