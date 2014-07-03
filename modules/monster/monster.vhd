@@ -233,6 +233,9 @@ end monster;
 
 architecture rtl of monster is
 
+  constant c_is_arria5 : boolean := g_family = "Arria V";
+  constant c_is_arria2 : boolean := g_family = "Arria II";
+
   ----------------------------------------------------------------------------------
   -- MSI IRQ Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
@@ -542,10 +545,10 @@ begin
   ----------------------------------------------------------------------------------
   
   -- We need at least one off-chip free running clock to setup PLLs
-  free_a5 : if g_family = "Arria V" generate
+  free_a5 : if c_is_arria5 generate
     clk_free <= core_clk_125m_local_i;
   end generate;
-  free_a2 : if g_family = "Arria II" generate
+  free_a2 : if c_is_arria2 generate
     clk_free <= core_clk_20m_vcxo_i; -- (125MHz is too fast)
   end generate;
   
@@ -569,14 +572,14 @@ begin
       rstn_o(2)     => rstn_update,
       rstn_o(3)     => rstn_ref);
 
-  dmtd_a2 : if g_family = "Arria II" generate
+  dmtd_a2 : if c_is_arria2 generate
     dmtd_inst : dmtd_pll port map(
       areset   => pll_rst,
       inclk0   => core_clk_20m_vcxo_i,    --  20  Mhz 
       c0       => clk_dmtd0,              --  62.5MHz
       locked   => dmtd_locked);
   end generate;
-  dmtd_a5 : if g_family = "Arria V" generate
+  dmtd_a5 : if c_is_arria5 generate
     dmtd_inst : dmtd_pll5 port map(
       rst      => pll_rst,
       refclk   => core_clk_20m_vcxo_i,    --  20  MHz
@@ -588,7 +591,7 @@ begin
     inclk  => clk_dmtd0,
     outclk => clk_dmtd);
   
-  sys_a2 : if g_family = "Arria II" generate
+  sys_a2 : if c_is_arria2 generate
     sys_inst : sys_pll port map(
       areset => pll_rst,
       inclk0 => core_clk_125m_local_i, -- 125  Mhz 
@@ -598,7 +601,7 @@ begin
       c3     => clk_sys3,         --  10  MHz
       locked => sys_locked);
   end generate;
-  sys_a5 : if g_family = "Arria V" generate
+  sys_a5 : if c_is_arria5 generate
     sys_inst : sys_pll5 port map(
       rst      => pll_rst,
       refclk   => core_clk_125m_local_i, -- 125  Mhz 
@@ -627,7 +630,7 @@ begin
     inclk  => clk_sys3,
     outclk => clk_update);
   
-  ref_a2 : if g_family = "Arria II" generate
+  ref_a2 : if c_is_arria2 generate
     ref_inst : ref_pll port map( -- see "Phase Counter Select Mapping" table for arria2gx
       areset => pll_rst,
       inclk0 => core_clk_125m_pllref_i, -- 125 MHz
@@ -660,7 +663,7 @@ begin
         phasestep_o => phase_step);
   end generate;
 
-  ref_a5 : if g_family = "Arria V" generate
+  ref_a5 : if c_is_arria5 generate
     ref_inst : ref_pll5 port map(
       rst        => pll_rst,
       refclk     => core_clk_125m_pllref_i, -- 125 MHz
@@ -1101,7 +1104,7 @@ begin
       dac_sclk_o    => wr_dac_sclk_o,
       dac_din_o     => wr_dac_din_o);
 
-  phy_a2 : if g_family = "Arria II" generate
+  phy_a2 : if c_is_arria2 generate
     phy : wr_arria2_phy
       port map (
         clk_reconf_i   => clk_reconf,
@@ -1126,7 +1129,7 @@ begin
         pad_rxp_i      => wr_sfp_rx_i);    
   end generate;
   
-  phy_a5 : if g_family = "Arria V" generate
+  phy_a5 : if c_is_arria5 generate
     phy : wr_arria5_phy
       port map (
         clk_reconf_i   => clk_reconf,
@@ -1192,7 +1195,7 @@ begin
       slave_i => top_cbar_master_o(c_tops_build_id),
       slave_o => top_cbar_master_i(c_tops_build_id));
   
-  flash_a2 : if g_family = "Arria II" generate
+  flash_a2 : if c_is_arria2 generate
     flash : flash_top
       generic map(
         g_family                 => "Arria II GX",
@@ -1211,7 +1214,7 @@ begin
         clk_out_i => clk_flash,
         clk_in_i  => clk_flash);
   end generate;
-  flash_a5 : if g_family = "Arria V" generate
+  flash_a5 : if c_is_arria5 generate
     flash : flash_top
       generic map(
         g_family                 => "Arria V",
