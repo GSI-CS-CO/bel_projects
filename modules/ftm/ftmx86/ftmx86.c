@@ -331,7 +331,7 @@ void showFtmPage(t_ftmPage* pPage)
          printf("\t\t-----------------------------------------------------------------------------------------------\n");
          printf("\t\t---   CHAIN %c%u\n", planIdx+'A', chainIdx-1);
          printf("\t\t-----------------------------------------------------------------------------------------------\n");
-         printf("\t\tFlags:\t");                            
+         printf("\t\tFlags: 0x%08x\t", pChain->flags );                            
          if(pChain->flags & FLAGS_IS_BP)                 printf("      IS_BP      "); else printf("%s", noFlag);
          if(pChain->flags & (FLAGS_IS_COND_MSI | FLAGS_IS_COND_SHARED))
          {

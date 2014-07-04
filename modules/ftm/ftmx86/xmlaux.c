@@ -124,7 +124,8 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
       subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "mask");
       if(subFieldNode != NULL) pChain->condMsk = strtou64( (const char*)xmlNodeGetContent(subFieldNode));
       else printf("ERROR condmask\n");
-      
+      subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "always");
+      if(subFieldNode != NULL) if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "yes",  3) == 0) pChain->flags |= FLAGS_IS_COND_ALL;
       
    }
    //else printf("no condition found\n");
@@ -150,6 +151,9 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
       if(subFieldNode != NULL) pChain->sigVal = (uint32_t)strtou64( (const char*)xmlNodeGetContent(subFieldNode));
       else printf("ERROR sig val\n");
       
+      subFieldNode = checkNode(xmlNextElementSibling(subFieldNode), "always");
+      if(subFieldNode != NULL) if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "yes",  3) == 0) pChain->flags |= FLAGS_IS_SIG_ALL;
+       
       
    }
    //else printf("no signal found \n");
