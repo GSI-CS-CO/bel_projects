@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
+#include <stdint.h>
+
 #include "mini_sdb.h"
-#include "display.h"
 #include "irq.h"
 #include "ftm.h"
 #include "timer.h"
@@ -10,41 +12,6 @@
 #include "dbg.h"
  
 unsigned int cpuId, cpuQty, heapCap;
-
-static void strreverse(char* begin, char* end) {
-   
-   char aux;
-   while(end>begin) aux=*end, *end--=*begin, *begin++=aux;
-}
-   
-static void itoa(int value, char* str, int base) {
-   
-   static char num[] = "0123456789abcdefghijklmnopqrstuvwxyz";
-   char* wstr=str;
-   int sign;
-   int res;
-
-   // Validate base
-   if (base<2 || base>35){ *wstr='\0'; return; }
-   
-   // Take care of sign
-   if ((sign=value) < 0) value = -value;
-   
-   // Conversion. Number is reversed.
-   do {
-      res = value / base;
-      *wstr++ = num[value % base];
-      value = res;
-   }while(value);
-   
-   if(sign<0) *wstr++='-';
-   *wstr='\0';
-   
-   // Reverse string
-   strreverse(str,wstr-1);
-}
-
-
 
 void show_msi()
 {

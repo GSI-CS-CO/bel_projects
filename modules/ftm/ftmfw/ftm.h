@@ -1,9 +1,9 @@
 #ifndef _FTM_H_
 #define _FTM_H_
-#include <inttypes.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
+#include <stdint.h>
 #include "dbg.h"
 #include "mini_sdb.h"
 #include "irq.h"
@@ -18,15 +18,12 @@
 #define FTM_PAGEMETA        (4 + 4 * FTM_PLAN_MAX + 4 + 4)   
 #define FTM_PAGESIZE        (FTM_PAGEDATA + FTM_PAGEMETA)
 
-
 #define FTM_CMD_OFFSET      (2*FTM_PAGESIZE)
 #define FTM_STAT_OFFSET     (FTM_CMD_OFFSET     + 4)
 #define FTM_PACT_OFFSET     (FTM_STAT_OFFSET    + 4)
 #define FTM_PINA_OFFSET     (FTM_PACT_OFFSET    + 4)
 #define FTM_TPREP_OFFSET    (FTM_PINA_OFFSET    + 4)
 #define FTM_IDLE_OFFSET     (FTM_TPREP_OFFSET   + 8)
-
-
 
 //masks & constants
 #define CMD_RST           		0x0001	//Reset FTM status and counters
@@ -48,7 +45,6 @@
 #define STAT_STOP_REQ         (1<<2)   //alt ptr has been set to IDLE 
 #define STAT_ERROR            (1<<3)   //FTM encountered an error, check error register
 #define STAT_WAIT             (1<<4)   //FTM waiting on condition
-
 
 #define ID_MSK_B16            0xffff
 #define ID_FID_LEN            4

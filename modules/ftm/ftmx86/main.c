@@ -428,8 +428,6 @@ int main(int argc, char** argv) {
    }
    ebRamClose();
    
-   
-   
    if(cpuId < 0) { firstCpu   = 0; 
                    lastCpu    = cpuQty-1;
                   } // bit wasteful but safer than self modifiying loop
@@ -437,12 +435,7 @@ int main(int argc, char** argv) {
           lastCpu  = (uint8_t)cpuId;
         }    
    
-   if (!strcasecmp(command, "status")) 
-   { 
-      printf("#### FTM @ %s ####\n", netaddress);
-      
-   
-   }
+   if (!strcasecmp(command, "status")) { printf("#### FTM @ %s ####\n", netaddress); }
    
    uint8_t k;
    for(k = firstCpu; k <= lastCpu; k++)
@@ -461,8 +454,6 @@ int main(int argc, char** argv) {
       
       /* -------------------------------------------------------------------- */
      if (!strcasecmp(command, "status")) {
-       
-       //printf("EBM: \n”); 
        status(k);
      }
 
@@ -543,7 +534,6 @@ int main(int argc, char** argv) {
       { 
          if (planIdx >= planQty) printf ("Sorry, but the plan index is neither idle nor 0 <= %d (planIdx) <  %u (planQty)\n", planIdx, planQty);
          else printf ("Found a NULL ptr at plan idx %d, something is wrong\n", planIdx);
-          
       }
        
      }

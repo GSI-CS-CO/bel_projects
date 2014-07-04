@@ -1,6 +1,11 @@
 #ifndef _DBG_H_
 #define _DBG_H_
 
+#include <stdio.h>
+#include <string.h>
+#include <inttypes.h>
+#include <stdint.h>
+
 // Provides some control on how talkative your dbg statements get
 
 //**************************//
@@ -31,3 +36,7 @@
 #endif
 
 #endif
+
+void strreverse(char* begin, char* end);
+void itoa(int value, char* str, int base);
+void hexDump (char *desc, void *addr, int len);

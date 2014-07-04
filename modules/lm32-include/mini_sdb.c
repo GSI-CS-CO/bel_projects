@@ -120,6 +120,7 @@ void discoverPeriphery()
    pOledDisplay   = find_device_adr(GSI, OLED_DISPLAY);  
    pEbm           = find_device_adr(GSI, ETHERBONE_MASTER);
    pEca           = find_device_adr(GSI, ECA_EVENT);
+   pTlu           = find_device_adr(GSI, TLU);
    pUart          = find_device_adr(CERN, WR_UART);
    BASE_UART      = pUart; //make WR happy ...
    
