@@ -35,13 +35,13 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list) {
         /* two FGs */
         bus->slaves[i].devs[0].dev_number = 0x0;
         bus->slaves[i].devs[0].version = 0x1;
-        bus->slaves[i].devs[0].offset = 0x300;
+        bus->slaves[i].devs[0].offset = FG1_BASE;
         bus->slaves[i].devs[0].slave = &(bus->slaves[i]);
         if (j < MAX_FG_DEVICES)
           list->devs[j] = &(bus->slaves[i].devs[0]);j++;
         bus->slaves[i].devs[1].dev_number = 0x1;
         bus->slaves[i].devs[1].version = 0x1;
-        bus->slaves[i].devs[1].offset = 0x320;
+        bus->slaves[i].devs[1].offset = FG2_BASE;
         bus->slaves[i].devs[1].slave = &(bus->slaves[i]);
         if (j < MAX_FG_DEVICES)
           list->devs[j] = &(bus->slaves[i].devs[1]);j++;
@@ -50,7 +50,7 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list) {
         /* one FG */
         bus->slaves[i].devs[0].dev_number = 0x0;
         bus->slaves[i].devs[0].version = 0x1;
-        bus->slaves[i].devs[0].offset = 0x300;
+        bus->slaves[i].devs[0].offset = FG1_BASE;
         bus->slaves[i].devs[0].slave = &(bus->slaves[i]);
         if (j < MAX_FG_DEVICES)
           list->devs[j] = &(bus->slaves[i].devs[0]);j++;
