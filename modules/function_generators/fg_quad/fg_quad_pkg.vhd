@@ -24,6 +24,7 @@ component fg_quad_datapath is
   shift_b:            in  integer range 0 to 48;          -- shiftvalue coeff b
   freq_sel:           in  std_logic_vector(2 downto 0);
   dreq:               out std_logic;
+  ramp_sec_fin:       out std_logic;
   sw_out:             out std_logic_vector(31 downto 0);
   sw_strobe:          out std_logic;
   fg_stopped:         out std_logic;
@@ -36,21 +37,24 @@ component fg_quad_scu_bus is
     CLK_in_Hz:          integer := 100_000_000;
     diag_on_is_1:       integer range 0 to 1 := 0         -- if 1 then diagnosic information is generated during compilation
     );
-  port
-    (
-    Adr_from_SCUB_LA:   in      std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
-    Data_from_SCUB_LA:  in      std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
-    Ext_Adr_Val:        in      std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active:      in      std_logic;                      -- '1' => Rd-Cycle is active
-    Ext_Wr_active:      in      std_logic;                      -- '1' => Wr-Cycle is active
-    clk:                in      std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
-    nReset:             in      std_logic := '1';
-    Rd_Port:            out     std_logic_vector(15 downto 0);  -- output for all read sources of this macro
-    user_rd_active:     out     std_logic;                      -- this acro has read data available at the Rd_Port.
-    Dtack:              out     std_logic;
-    dreq:               out     std_logic;
-    sw_out:             out     std_logic_vector(31 downto 0);
-    sw_strobe:          out     std_logic
+  port (
+    -- SCUB interface
+    Adr_from_SCUB_LA:   in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
+    Data_from_SCUB_LA:  in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
+    Ext_Adr_Val:        in    std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active:      in    std_logic;                      -- '1' => Rd-Cycle is active
+    Ext_Wr_active:      in    std_logic;                      -- '1' => Wr-Cycle is active
+    user_rd_active:     out   std_logic;                      -- '1' = read data available at 'Data_to_SCUB'-output
+    clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
+    nReset:             in    std_logic;
+    brdcst_i:           in    std_logic;                      -- broadcast in from another fg
+    Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
+    Dtack:              out   std_logic;                      -- connect Dtack to SCUB-Macro
+    brdcst_o:           out   std_logic;                      -- broadcast start out for triggering another fg
+    -- fg_quad
+    dreq:               out   std_logic;
+    sw_out:             out   std_logic_vector(31 downto 0);  -- function generator output
+    sw_strobe:          out   std_logic 
     );
 end component fg_quad_scu_bus;
 

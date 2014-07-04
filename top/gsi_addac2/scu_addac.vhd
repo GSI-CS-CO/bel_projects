@@ -192,7 +192,8 @@ component flash_loader_v01
   signal  tmr_rd_active:     std_logic;
   signal  tmr_data_to_SCUB:  std_logic_vector(15 downto 0);
   signal  tmr_dtack:         std_logic;
-    
+   
+  signal  fg_brdcst:         std_logic; 
   signal  fg_1_dtack:        std_logic;
   signal  fg_1_data_to_SCUB: std_logic_vector(15 downto 0);
   signal  fg_1_rd_active:    std_logic;
@@ -539,6 +540,8 @@ fg_1: fg_quad_scu_bus
     user_rd_active    => fg_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_1_dtack,            -- connect Dtack to SCUB-Macro
     dreq              => fg_1_dreq,             -- request of new parameter set
+    brdcst_i          => '0',
+    brdcst_o          => fg_brdcst,             -- sync start fg 2
 
     -- fg output
     sw_out            => fg_1_sw,               -- 24bit output from fg
@@ -565,6 +568,8 @@ fg_2: fg_quad_scu_bus
     user_rd_active    => fg_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_2_dtack,            -- connect Dtack to SCUB-Macro
     dreq              => fg_2_dreq,             -- request of new parameter set
+    brdcst_i          => fg_brdcst,             -- triggered by fg 1
+    brdcst_o          => open,
 
     -- fg output
     sw_out            => fg_2_sw,               -- 24bit output from fg

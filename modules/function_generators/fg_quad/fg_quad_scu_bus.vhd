@@ -22,26 +22,29 @@ entity fg_quad_scu_bus is
     user_rd_active:     out   std_logic;                      -- '1' = read data available at 'Data_to_SCUB'-output
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     nReset:             in    std_logic;
+    brdcst_i:           in    std_logic;                      -- broadcast in from another fg
     Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
-    Dtack:              out   std_logic;                       -- connect Dtack to SCUB-Macro
+    Dtack:              out   std_logic;                      -- connect Dtack to SCUB-Macro
+    brdcst_o:           out   std_logic;                      -- broadcast start out for triggering another fg
     -- fg_quad
     dreq:               out   std_logic;
     sw_out:             out   std_logic_vector(31 downto 0);  -- function generator output
-    sw_strobe:          out   std_logic                       -- 
+    sw_strobe:          out   std_logic
     );
 end entity;
 
 
 architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
 
-  constant cntrl_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0000";
-  constant coeff_a_reg_adr: unsigned(15 downto 0) := Base_addr + x"0001";
-  constant coeff_b_reg_adr: unsigned(15 downto 0) := Base_addr + x"0002";
-  constant broad_start_adr: unsigned(15 downto 0) := Base_addr + x"0003";
-  constant shift_a_reg_adr: unsigned(15 downto 0) := Base_addr + x"0004";
-  constant shift_b_reg_adr: unsigned(15 downto 0) := Base_addr + x"0005";
-  constant start_h_reg_adr: unsigned(15 downto 0) := Base_addr + x"0006";
-  constant start_l_reg_adr: unsigned(15 downto 0) := Base_addr + x"0007";
+  constant cntrl_reg_adr:     unsigned(15 downto 0) := Base_addr + x"0000";
+  constant coeff_a_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0001";
+  constant coeff_b_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0002";
+  constant broad_start_adr:   unsigned(15 downto 0) := Base_addr + x"0003";
+  constant shift_a_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0004";
+  constant shift_b_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0005";
+  constant start_h_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0006";
+  constant start_l_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0007";
+  constant ramp_cnt_reg_adr:  unsigned(15 downto 0) := Base_addr + x"0008";
 
   
   signal  fg_cntrl_reg:     std_logic_vector(15 downto 0);
@@ -51,6 +54,7 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  start_value_reg:  std_logic_vector(31 downto 0);
   signal  shift_a_reg:      std_logic_vector(15 downto 0);
   signal  shift_b_reg:      std_logic_vector(15 downto 0);
+  signal  ramp_cnt_reg:     unsigned(15 downto 0);
 
   signal  wr_fg_cntrl:      std_logic;
   signal  rd_fg_cntrl:      std_logic;
@@ -67,9 +71,11 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  wr_shift_b:       std_logic;
   signal  rd_shift_b:       std_logic;
   signal  wr_brc_start:     std_logic;
+  signal  rd_ramp_cnt:      std_logic;
   
   signal  fg_stopped:       std_logic;
   signal  fg_running:       std_logic;
+  signal  ramp_sec_fin:     std_logic;
 
 
 begin
@@ -84,13 +90,14 @@ begin
       nrst                => nReset,
       sync_rst            => fg_cntrl_reg(0),
       a_en                => wr_coeff_a,
-      sync_start          => wr_brc_start,
-      load_start          => wr_start_value_h, -- when high word was written, load into datapath
+      sync_start          => wr_brc_start or brdcst_i,  -- start at write to broadcast reg or from external signal
+      load_start          => wr_start_value_h,          -- when high word was written, load into datapath
       step_sel            => fg_cntrl_reg(12 downto 10),
       shift_b             => to_integer(unsigned(shift_b_reg(5 downto 0))),
       shift_a             => to_integer(unsigned(shift_a_reg(5 downto 0))),
       freq_sel            => fg_cntrl_reg(15 downto 13),
       dreq                => dreq,
+      ramp_sec_fin        => ramp_sec_fin,
       sw_out              => sw_out,
       sw_strobe           => sw_strobe,
       fg_stopped          => fg_stopped,
@@ -115,6 +122,7 @@ adr_decoder: process (clk, nReset)
       wr_shift_b        <= '0';
       rd_shift_a        <= '0';
       rd_shift_b        <= '0';
+      rd_ramp_cnt       <= '0';
       dtack             <= '0';
       
     elsif rising_edge(clk) then
@@ -133,6 +141,7 @@ adr_decoder: process (clk, nReset)
       wr_shift_b        <= '0';
       rd_shift_a        <= '0';
       rd_shift_b        <= '0';
+      rd_ramp_cnt       <= '0';
       dtack             <= '0';
     
       if Ext_Adr_Val = '1' then
@@ -208,6 +217,12 @@ adr_decoder: process (clk, nReset)
               rd_shift_b  <= '1';
               dtack       <= '1';
             end if;
+            
+          when ramp_cnt_reg_adr =>
+            if Ext_Rd_active = '1' then
+              rd_ramp_cnt  <= '1';
+              dtack       <= '1';
+            end if;
 
           when others =>
             wr_fg_cntrl       <= '0';
@@ -225,6 +240,7 @@ adr_decoder: process (clk, nReset)
             wr_shift_b        <= '0';
             rd_shift_a        <= '0';
             rd_shift_b        <= '0';
+            rd_ramp_cnt       <= '0';
             dtack             <= '0';
         end case;
       end if;
@@ -248,6 +264,7 @@ begin
     shift_a_reg <= (others => '0');
     shift_b_reg <= (others => '0');
     start_value_reg <= (others => '0');
+    ramp_cnt_reg <= (others => '0');
     reset_cnt := "00";
   elsif rising_edge(clk) then
     if wr_fg_cntrl = '1' then
@@ -279,6 +296,9 @@ begin
         reset_cnt := "00";
       end if;
     end if;
+    if ramp_sec_fin = '1' and fg_running = '1' then -- increment with every finished ramp section
+      ramp_cnt_reg <= ramp_cnt_reg + 1;
+    end if;
   end if;
 end process;
 
@@ -286,15 +306,18 @@ fg_cntrl_rd_reg <= fg_cntrl_reg(15 downto 13) & fg_cntrl_reg(12 downto 10) &
                     fg_cntrl_reg(9 downto 4) & fg_stopped & fg_running & fg_cntrl_reg(1 downto 0);
 
 user_rd_active <= rd_fg_cntrl or rd_coeff_a or rd_coeff_b or rd_start_value_h
-                  or rd_start_value_l or rd_shift_a or rd_shift_b;
+                  or rd_start_value_l or rd_shift_a or rd_shift_b or rd_ramp_cnt;
 
-Rd_Port <= fg_cntrl_rd_reg                when rd_fg_cntrl = '1' else
-            coeff_a_reg                   when rd_coeff_a = '1' else
-            coeff_b_reg                   when rd_coeff_b = '1' else
-            start_value_reg(31 downto 16) when rd_start_value_h = '1' else
-            start_value_reg(15 downto 0)  when rd_start_value_l = '1' else
-            shift_a_reg                   when rd_shift_a = '1' else
-            shift_b_reg                   when rd_shift_b = '1' else
+Rd_Port <= fg_cntrl_rd_reg                  when rd_fg_cntrl = '1' else
+            coeff_a_reg                     when rd_coeff_a = '1' else
+            coeff_b_reg                     when rd_coeff_b = '1' else
+            start_value_reg(31 downto 16)   when rd_start_value_h = '1' else
+            start_value_reg(15 downto 0)    when rd_start_value_l = '1' else
+            shift_a_reg                     when rd_shift_a = '1' else
+            shift_b_reg                     when rd_shift_b = '1' else
+            std_logic_vector(ramp_cnt_reg)  when rd_ramp_cnt = '1' else
             x"0000";
 
+brdcst_o <= wr_brc_start; -- for sync start of another fg
+            
 end architecture;

@@ -768,6 +768,8 @@ fg_1: fg_quad_scu_bus
     user_rd_active    => fg_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_1_dtack,            -- connect Dtack to SCUB-Macro
     dreq              => fg_1_dreq,             -- request of new parameter set
+    brdcst_i          => '0',
+    brdcst_o          => open,          
 
     -- fg output
     sw_out            => fg_1_sw,               -- 24bit output from fg
