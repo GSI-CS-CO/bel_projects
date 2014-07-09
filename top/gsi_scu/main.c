@@ -33,7 +33,6 @@ uint32_t SHARED fg_version = 0x1;
 struct circ_buffer SHARED fg_buffer[MAX_FG_DEVICES]; 
 struct scu_bus SHARED scub;
 struct fg_list SHARED fgs;
-volatile uint32_t SHARED fg_control;
 
 volatile unsigned short* scub_base;
 volatile unsigned int* BASE_ONEWIRE;
@@ -86,7 +85,7 @@ void slave_irq_handler()
 {
   int j = 0;
   char buffer[12];
-  struct pset *p;
+  struct param_set pset;
   unsigned char slave_nr = global_msi.adr>>2 & 0xf;
   volatile unsigned short tmr_irq_cnts; 
   static unsigned short old_tmr_cnt[MAX_SCU_SLAVES];
@@ -94,6 +93,7 @@ void slave_irq_handler()
   unsigned int slave_acks = 0;
   struct fg_dev* fg1 = 0;
   struct fg_dev* fg2 = 0;
+  int fg_number;
 
 
   if (slave_nr < 0 || slave_nr > MAX_SCU_SLAVES) {
@@ -133,12 +133,24 @@ void slave_irq_handler()
   }
   
   if (slv_int_act_reg & (1<<15)) { //FG1 irq?
-    scub_base[(slave_nr << 16) + FG1_BASE + FG_A] = 0x1;
+    fg_number = (scub_base[(slave_nr << 16) + FG1_BASE + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
+    if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number))
+      cbRead((struct circ_buffer *)&fg_buffer, fg_number, &pset);
+    else
+      return; 
+    scub_base[(slave_nr << 16) + FG1_BASE + FG_A] = pset.coeff_a;
+    scub_base[(slave_nr << 16) + FG1_BASE + FG_B] = pset.coeff_b;
     slave_acks |= (1<<15); //ack FG1 irq
   } 
  
   if (slv_int_act_reg & (1<<14)) { //FG2 irq?
-    scub_base[(slave_nr << 16) + FG2_BASE + FG_A] = 0x1;
+    fg_number = (scub_base[(slave_nr << 16) + FG2_BASE + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
+    if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number))
+      cbRead((struct circ_buffer *)&fg_buffer, fg_number, &pset);
+    else 
+      return; 
+    scub_base[(slave_nr << 16) + FG2_BASE + FG_A] = pset.coeff_a;
+    scub_base[(slave_nr << 16) + FG2_BASE + FG_B] = pset.coeff_b;
     slave_acks |= (1<<14); //ack FG2 irq
   } 
 
@@ -214,7 +226,7 @@ void configure_fgs() {
       mprintf("enable fg[%d] in slot %d\n", scub.slaves[i].devs[j].dev_number, slot);
       scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_CNTRL] = 0x1; // reset fg
       scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_CNTRL] = (5<<13); //set frequency Bit 15..13  
-      scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_CNTRL] |= (2<<10); //set step count Bit 12..10  
+      scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_CNTRL] |= (2<<10); //set step count Bit 12..10
       scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_A] = 0x1;
       scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_SHIFTA] = 0x20;
       scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_SHIFTB] = 0x20;
@@ -223,6 +235,12 @@ void configure_fgs() {
     }
     i++;
   }
+  i = 0;
+  while(fgs.devs[i]) {
+    slot = fgs.devs[i]->slave->slot;
+    scub_base[(slot << 16) + fgs.devs[i]->offset + FG_CNTRL] |= (i << 4); //set virtual fg number Bit 9..4
+    i++;
+  } 
 } 
 
 void reset_slaves() {
@@ -262,10 +280,12 @@ scan_bus() {
 }
 
 void sw_irq_handler() {
-
+  int i;
+  struct param_set pset;
   switch(global_msi.adr>>2 & 0xf) {
     case 0:
       disable_msi_irqs();  
+      init_buffers(&fg_buffer);
     break;
     case 1:
       configure_slaves(global_msi.msg);
@@ -281,6 +301,21 @@ void sw_irq_handler() {
       configure_fgs();
       scub_base[(0xd << 16) + FG1_BASE + FG_BROAD] = 0x4711; //start all FG1s (and linked FG2s)
     break;
+    case 4:
+      for (i = 0; i < MAX_FG_DEVICES; i++)
+        mprintf("fg[%d] buffer: %d\n", i, cbgetCount((struct circ_buffer *)&fg_buffer, i));
+    break;
+    case 5:
+      if (global_msi.msg >= 0 && global_msi.msg < MAX_FG_DEVICES) {
+        if(!cbisEmpty((struct circ_buffer *)&fg_buffer, global_msi.msg)) {
+          cbRead((struct circ_buffer *)&fg_buffer, global_msi.msg, &pset);
+          mprintf("read buffer[%d]: %d, %d, %d, 0x%x\n", global_msi.msg, pset.coeff_a, pset.coeff_b, pset.coeff_c, pset.control);
+        } else {
+          mprintf("read buffer[%d]: buffer empty!\n", global_msi.msg);
+        }
+          
+      }
+    break;   
     default:
       mprintf("swi: 0x%x\n", global_msi.adr);
       mprintf("     0x%x\n", global_msi.msg);
@@ -300,7 +335,7 @@ void init_msi() {
 void init() {
   uart_init_hw();
   scan_bus();
-  //configure_slaves(0x006ee848);
+  init_buffers(&fg_buffer);
   init_msi();
 } 
 
