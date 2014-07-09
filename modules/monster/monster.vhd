@@ -51,6 +51,7 @@ use work.xvme64x_pack.all;
 use work.VME_Buffer_pack.all;
 use work.wb_mil_scu_pkg.all;
 use work.wr_serialtimestamp_pkg.all;
+use work.wb_ssd1325_serial_driver_pkg.all;
 
 entity monster is
   generic(
@@ -73,6 +74,7 @@ entity monster is
     g_en_mil               : boolean;
     g_en_oled              : boolean;
     g_en_lcd               : boolean;
+	 g_en_ssd1325           : boolean;
     g_en_user_ow           : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
@@ -227,6 +229,12 @@ entity monster is
     lcd_lp_o               : out   std_logic := 'Z';
     lcd_flm_o              : out   std_logic := 'Z';
     lcd_in_o               : out   std_logic := 'Z';
+	 -- g_en_ssd1325
+	 ssd1325_rst_o          : out   std_logic := 'Z';
+	 ssd1325_dc_o           : out   std_logic := 'Z';
+	 ssd1325_ss_o           : out   std_logic := 'Z';
+	 ssd1325_sclk_o         : out   std_logic := 'Z';
+	 ssd1325_data_o         : out   std_logic := 'Z';
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0));
 end monster;
@@ -286,7 +294,7 @@ architecture rtl of monster is
   constant c_topm_fpq       : natural := 5;
   
   -- required slaves
-  constant c_top_slaves     : natural := 19;
+  constant c_top_slaves     : natural := 20;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -307,7 +315,7 @@ architecture rtl of monster is
   constant c_tops_mil_ctrl  : natural := 16;
   constant c_tops_ow        : natural := 17;
   constant c_tops_scubirq   : natural := 18;
-
+  constant c_tops_ssd1325   : natural := 19;
   
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -337,6 +345,7 @@ architecture rtl of monster is
     c_tops_iodir     => f_sdb_auto_device(c_iodir_sdb,                      true),
     c_tops_lcd       => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
+    c_tops_ssd1325   => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325),
     c_tops_scubus    => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
     c_tops_scubirq   => f_sdb_auto_device(c_scu_irq_ctrl_sdb,               g_en_scubus),
     c_tops_mil       => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
@@ -1388,6 +1397,24 @@ begin
         SCK_SPI_o  => oled_sck_o, 
         SD_SPI_o   => oled_sd_o,
         SH_VR_o    => oled_sh_vr_o);
+  end generate;
+  
+  ssd1325_n : if not g_en_ssd1325 generate
+    top_cbar_master_i(c_tops_ssd1325) <= cc_dummy_slave_out;
+  end generate;
+  ssd1325_y : if g_en_ssd1325 generate
+    ssd1325_display : wb_ssd1325_serial_driver
+      port map (
+        clk_sys_i  => clk_sys,
+        rst_n_i    => rstn_sys,
+        slave_i    => top_cbar_master_o(c_tops_ssd1325),
+        slave_o    => top_cbar_master_i(c_tops_ssd1325),
+        ssd_rst_o  => ssd1325_rst_o,
+        ssd_dc_o   => ssd1325_dc_o,    
+        ssd_ss_o   => ssd1325_ss_o,    
+        ssd_sclk_o => ssd1325_sclk_o,   
+        ssd_data_o => ssd1325_data_o    
+      );
   end generate;
   
   scub_n : if not g_en_scubus generate

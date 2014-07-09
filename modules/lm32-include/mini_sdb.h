@@ -30,6 +30,7 @@
 #define IRQ_ENDPOINT          0x10050082
 
 #define OLED_DISPLAY          0x93a6f3c4
+#define SSD1325_SER_DRIVER    0x55d1325d
 #define ETHERBONE_MASTER      0x00000815
 
 #define FTM_PRIOQ_CTRL        0x10040200
