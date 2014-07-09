@@ -24,6 +24,8 @@
 #ifndef __SCU_H_
 #define __SCU_H
 
+#include "inttypes.h"
+
 #define CID_SYS           0x4
 #define CID_GROUP         0x5
 #define SLAVE_VERSION     0x6
@@ -70,8 +72,10 @@
 #define SRQ_ACT           0x8
 #define MULTI_SLAVE_SEL   0xc
 #define MULTICAST_ACC     0x8
-#define SCU_BUS_MAX_SLOTS 5
+#define MAX_SCU_SLAVES    12
 
+extern struct w1_bus wrpc_w1_bus;
+void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);
 void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*);
 
 #endif

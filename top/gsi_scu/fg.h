@@ -2,11 +2,11 @@
 #define __FG_H_
 
 #include <stdint.h>
+#include <scu_bus.h>
 
-#define   MAX_FG_DEVICES  12
-#define   MAX_SCU_SLAVES  12
+#define   MAX_FG_DEVICES  (MAX_FG_PER_SLAVE * MAX_SCU_SLAVES)
 #define   MAX_FG_PER_SLAVE 2
-#define   BUFFER_SIZE 250
+#define   BUFFER_SIZE 10
 
 struct fg_dev {
   unsigned int dev_number;
@@ -35,7 +35,7 @@ struct scu_bus {
 };
 
 struct fg_list {
-  struct fg_dev *devs[MAX_FG_DEVICES];
+  struct fg_dev *devs[MAX_FG_DEVICES + 1];
 };
 
 struct param_set {
@@ -53,7 +53,7 @@ struct circ_buffer {
   unsigned int wr_ptr;
   unsigned int rd_ptr;
   unsigned int size;
-  struct param_set pset[BUFFER_SIZE];
+  struct param_set pset[BUFFER_SIZE+1];
 };
 
 #endif

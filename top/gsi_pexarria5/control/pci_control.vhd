@@ -243,6 +243,7 @@ begin
       core_clk_125m_pllref_i => clk_125m_pllref_i,
       core_clk_125m_sfpref_i => sfp234_ref_clk_i,
       core_clk_125m_local_i  => clk_125m_local_i,
+      core_rstn_i            => pbs2,
       core_clk_butis_o       => p19,
       core_clk_butis_t0_o    => p24,
       wr_onewire_io          => rom_data,
