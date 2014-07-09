@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <scu_bus.h>
 
-#define   MAX_FG_DEVICES  (MAX_FG_PER_SLAVE * MAX_SCU_SLAVES)
+#define   MAX_FG_DEVICES 12
 #define   MAX_FG_PER_SLAVE 2
 #define   BUFFER_SIZE 10
 
