@@ -7,7 +7,7 @@ LD							:= lm32-elf-ld
 CC							:= lm32-elf-gcc
 
 TARGET					= ssd1325_display_demo
-LOCATION				= /home/alex/workspace/multi_projects
+LOCATION				= ../../../../..
 SSD1325_FILES		= $(LOCATION)/bel_projects/modules/ssd1325/src/c
 MYPATH					= $(LOCATION)/bel_projects/modules/lm32-include
 W1							= $(LOCATION)/bel_projects/ip_cores/wrpc-sw

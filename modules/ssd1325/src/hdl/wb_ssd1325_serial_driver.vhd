@@ -73,10 +73,10 @@ architecture rtl of wb_ssd1325_serial_driver is
   signal s_tx_control_reg               : std_logic_vector (g_data_size-1 downto 0); -- Configuration register   [W/R]
   
   -- register mapping
-  constant c_address_tx_data_reg        : std_logic_vector (3 downto 0):= "0000"; -- 00 
-  constant c_address_tx_data_status_reg : std_logic_vector (3 downto 0):= "0100"; -- 04
-  constant c_address_tx_fill_level_reg  : std_logic_vector (3 downto 0):= "1000"; -- 08
-  constant c_address_tx_control_reg     : std_logic_vector (3 downto 0):= "1100"; -- 0C
+  constant c_address_tx_data_reg        : std_logic_vector (1 downto 0):= "00"; -- 0(3 downto 2) - 00(31 downto 0) 
+  constant c_address_tx_data_status_reg : std_logic_vector (1 downto 0):= "01"; -- 1(3 downto 2) - 04(31 downto 0) 
+  constant c_address_tx_fill_level_reg  : std_logic_vector (1 downto 0):= "10"; -- 2(3 downto 2) - 08(31 downto 0) 
+  constant c_address_tx_control_reg     : std_logic_vector (1 downto 0):= "11"; -- 3(3 downto 2) - 0C(31 downto 0) 
   
   -- constant wishbone bus error (register is not readable or writable, ...)
   constant c_wb_bus_read_error          : std_logic_vector (g_data_size-1 downto 0):= x"DEADBEEF";
@@ -120,16 +120,23 @@ begin
     rx_read_o      => s_tx_fifo_read_en
   );  
   
-  -- registers
-  s_tx_fifo_data_reg       <= "00000000" & "00000000" & "00000000" & s_tx_fifo_data_in;
-  s_tx_fifo_status_reg     <= "00000000" & "00000000" & "00000000" & "00000" & s_irq & s_tx_fifo_empty & s_tx_fifo_full;
-  s_tx_fifo_fill_level_reg <= "00000000" & "00000000" & "00000000" & s_tx_fifo_fill_level;
-  s_tx_control_reg         <= "00000000" & "00000000" & "00000000" & "00" & s_irq_clear & s_irq_en & s_ss_state & s_ss_ctrl_config & s_dc_config & s_rst_config;
+  -- register bit layout
+  s_tx_fifo_data_reg(g_data_size-1 downto 8)       <= (others => '0');
+  s_tx_fifo_data_reg(7 downto 0)                   <= s_tx_fifo_data_in;
+  
+  s_tx_fifo_status_reg(g_data_size-1 downto 3)     <= (others => '0');
+  s_tx_fifo_status_reg(2 downto 0)                 <= s_irq & s_tx_fifo_empty & s_tx_fifo_full;
+  
+  s_tx_fifo_fill_level_reg(g_data_size-1 downto 8) <= (others => '0');
+  s_tx_fifo_fill_level_reg(7 downto 0)             <= s_tx_fifo_fill_level;
+  
+  s_tx_control_reg(g_data_size-1 downto 6)         <= (others => '0');
+  s_tx_control_reg(5 downto 0)                     <= s_irq_clear & s_irq_en & s_ss_state & s_ss_ctrl_config & s_dc_config & s_rst_config;
   
   -- signals depending on tx_control_reg
-  ssd_dc_o                 <= s_dc_config;
-  ssd_rst_o                <= s_rst_config;
-  ssd_irq_o                <= s_irq and s_irq_en;
+  ssd_dc_o  <= s_dc_config;
+  ssd_rst_o <= s_rst_config;
+  ssd_irq_o <= s_irq and s_irq_en;
   
   -- process slave select depending on slave select configuration 
   p_ss : process(s_ss, s_ss_state, s_ss_ctrl_config)
@@ -193,18 +200,13 @@ begin
       -- process with normal flow 
     elsif (rising_edge(clk_sys_i)) then
       -- generate ack and stall
-      if (slave_i.we='1') then
-        s_ack <= slave_i.cyc and slave_i.stb;
-        s_stall <= '0';
-      else
-        s_ack <= slave_i.cyc and slave_i.stb;
-        s_stall <= '0';
-      end if;
+      s_ack <= slave_i.cyc and slave_i.stb;
+      s_stall <= '0';
       
       -- check if a request is incoming   
       if (slave_i.stb='1' and slave_i.cyc='1') then
         -- evaluate address and write enable signals
-        case slave_i.adr(3 downto 0) is
+        case slave_i.adr(3 downto 2) is
         
           -- handle requests for tx data register
           when c_address_tx_data_reg =>

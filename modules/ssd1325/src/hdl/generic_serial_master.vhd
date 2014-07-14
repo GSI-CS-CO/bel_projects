@@ -123,10 +123,6 @@ begin
             if (s_tx_start_i = '0') then
               s_spitxstate  <= state_spi_start_tx;
             end if;
-            
-          -- unknown
-            when others =>
-              null;
     
         end case;
         
