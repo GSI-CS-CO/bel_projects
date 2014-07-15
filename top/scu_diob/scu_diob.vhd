@@ -319,9 +319,17 @@ end component;
   signal IO_Test_Port2: std_logic_vector(15 downto 0);
   signal IO_Test_Port3: std_logic_vector(15 downto 0);
   
+  signal s_nLED_User1_i: std_logic;	-- LED3 = User 1 
+  signal s_nLED_User2_i: std_logic;	-- LED2 = User 2 
+  signal s_nLED_User3_i: std_logic;	-- LED1 = User 3 
+  signal s_nLED_User1_o: std_logic;	-- LED3 = User 1 
+  signal s_nLED_User2_o: std_logic;	-- LED2 = User 2 
+  signal s_nLED_User3_o: std_logic;	-- LED1 = User 3 
+
   signal uart_txd_out:  std_logic;
 
 
+  
 --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: P37IO  -- FG900_700                                    |
 --  +============================================================================================================================+
@@ -336,6 +344,10 @@ end component;
   signal P37IO_Reset_deb_o:	std_logic;     -- input "Rest" entprellt
   signal P37IO_BNC_o:			std_logic;   	-- Output "BNC"
   signal P37IO_nELD_BNC_o:		std_logic;     -- Output "nLED_BNC"
+
+  signal P37IO_in_Data_Deb_i: std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal P37IO_in_Data_Deb_o: std_logic_vector(15 downto 0); -- entprellter Data_Input
+
   
 --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: P25IO  -- FG900_710                                    |
@@ -373,14 +385,10 @@ end component;
 	signal P25IO_Ext_Tim_shift: std_logic_vector(2  downto 0);	-- Shift-Reg.
 
 	
-	signal P27IO_EOC_i:		 		std_logic;								--	input "nEOC"
+	signal P25IO_EOC_i:		 		std_logic;								--	input "nEOC"
 	signal P25IO_EOC_deb_o:			std_logic;  							-- input "EOC" entprellt
 	signal P25IO_ADC_Data_FF_i:	std_logic_vector(15  downto 0);	-- input  "Daten ADC-Register"
 	signal P25IO_ADC_Data_FF_o:	std_logic_vector(15  downto 0);  -- Output "Daten ADC-Register"
-
- 
-
- 
  
  
  
@@ -388,8 +396,65 @@ end component;
   signal s_str_EE_20ms: std_logic;                -- Puls-Output
 
 
+  signal P25IO_in_Data_Deb_i: std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal P25IO_in_Data_Deb_o: std_logic_vector(15 downto 0); -- entprellter Data_Input
+
+  
+--  +============================================================================================================================+
+--  |                                   Übergabe-Signale für Anwender-IO: OCIN   -- FG900_720                                    |
+--  +============================================================================================================================+
+
+
+  signal OCIN_in_Data_Deb1_i: std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIN_in_Data_Deb1_o: std_logic_vector(15 downto 0); -- entprellter Data_Input
+  signal OCIN_in_Data_Deb2_i: std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIN_in_Data_Deb2_o: std_logic_vector(15 downto 0); -- entprellter Data_Input
+
 
 --  +============================================================================================================================+
+--  |                                   Übergabe-Signale für Anwender-IO: OCIO   -- FG900_730                                    |
+--  +============================================================================================================================+
+
+
+  signal OCIO_in_Data_Deb1_i: std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIO_in_Data_Deb1_o: std_logic_vector(15 downto 0); -- entprellter Data_Input
+  signal OCIO_in_Data_Deb2_i: std_logic_vector(7  downto 0); -- Data_Input über Optokoppler
+  signal OCIO_in_Data_Deb2_o: std_logic_vector(7  downto 0); -- entprellter Data_Input
+
+
+--  +============================================================================================================================+
+--  |                                   Übergabe-Signale für Anwender-IO: SPSIO  -- FG900.770                                    |
+--  +============================================================================================================================+
+
+  signal SPSIO_in_Data_Deb_i: std_logic_vector(23 downto 0); -- Data_Input über Optokoppler
+  signal SPSIO_in_Data_Deb_o: std_logic_vector(23 downto 0); -- entprellter Data_Input
+
+
+--  +============================================================================================================================+
+--  |                                   Übergabe-Signale für Anwender-IO: HFIO  -- FG900.780                                     |
+--  +============================================================================================================================+
+
+	signal HFIO_Tastpuls_i: 					std_logic;	--	Input  "nLED_Tastpuls"
+	signal HFIO_nLED_Tastpuls_o: 				std_logic;	--	Output "nLED_Tastpuls"
+	signal HFIO_Sample_Puls_inv_i:			std_logic;	--	Input  "nLED_Sample_Puls_inv"
+	signal HFIO_nLED_Sample_Puls_inv_o: 	std_logic;	--	Output "nLED_Sample_Puls_inv"
+	signal HFIO_Aux_i: 							std_logic;	--	Input  "nLED_Aux"
+	signal HFIO_nLED_Aux_o: 					std_logic;	--	Output "nLED_Aux"
+	signal HFIO_Sample_Puls_Display_i:		std_logic;	--	Input  "nLED_Sample_Puls_Display"
+	signal HFIO_nLED_Sample_Puls_Display_o:std_logic;	--	Output "nLED_Sample_Puls_Display"
+
+	signal HFIO_in_AMP_FEHLER_Deb_i:			std_logic;	-- Input  "AMP_FEHLER"
+	signal HFIO_in_AMP_FEHLER_Deb_o:			std_logic;	-- Output "AMP_FEHLER"
+	signal HFIO_in_PHASE_FEHLER_Deb_i:		std_logic;	-- Input  "PHASE_FEHLER"
+	signal HFIO_in_PHASE_FEHLER_Deb_o:		std_logic;	-- Output  PHASE_FEHLER"
+	
+	
+
+--  +============================================================================================================================+
+
+--  signal Deb_in:    	std_logic_vector(15 downto 0);
+--  signal Deb_out:    std_logic_vector(15 downto 0);
+
 --  +============================================================================================================================+
 
 
@@ -414,7 +479,30 @@ end component;
   signal signal_tap_clk_250mhz: std_logic;
   
   
-  constant  C_Debounce_input_in_ns: integer := 5000;
+--  constant  C_Debounce_input_in_ns: integer := 5000;
+
+  constant  C_P37IO_Start_Debounce_input_in_ns: 	integer := 5000;		-- Debounce, Start-Input von FG900_700
+  constant  C_P37IO_Stop_Debounce_input_in_ns: 		integer := 5000;		-- Debounce, Stop-Input  von FG900_700
+  constant  C_P37IO_Reset_Debounce_input_in_ns: 	integer := 5000;		-- Debounce, Reset-Input von FG900_700
+  constant  C_P37IO_Data_Debounce_input_in_ns: 		integer := 5000;		-- Debounce, Data-Input  von FG900_700
+                                                                     
+  constant  C_P25IO_Start_Debounce_input_in_ns: 	integer := 5000;		-- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_Stop_Debounce_input_in_ns: 		integer := 5000;		-- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_Reset_Debounce_input_in_ns: 	integer := 5000;		-- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_Ext_Tim_Debounce_input_in_ns:	integer := 5000;		-- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_EOC_Debounce_input_in_ns: 		integer := 500;		-- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_Data_Debounce_input_in_ns: 		integer := 5000;		-- Debounce, Data-Input von FG900_710
+                                                                     
+  constant  C_OCIN_Data_Debounce_input_in_ns: 		integer := 5000;		-- Debounce, Data-Input von FG900_720
+  constant  C_OCIO_Data_Debounce_input_in_ns: 		integer := 5000;		-- Debounce, Data-Input von FG900_730
+
+  constant  C_SPSIO_Data_Debounce_input_in_ns: 		integer := 5000;		-- Debounce, Data-Input von FG900_770
+
+  constant  C_HFIO_AMP_FEHLER_Debounce_input_in_ns: 	integer := 5000;	-- Debounce, Data-Input von FG900_780
+  constant  C_HFIO_PHASE_FEHLER_Debounce_input_in_ns: integer := 5000;	-- Debounce, Data-Input von FG900_780
+ 
+  
+  
   constant  Clk_in_ns: integer:= 1000000000/clk_sys_in_Hz;
   constant  stretch_cnt: integer := 5;
   
@@ -445,6 +533,12 @@ end component;
   A_nUser_EN            <= '0';
   
 
+--  Deb16:	for I in 0 to 15 generate
+--		DB_I:	debounce generic map(DB_Cnt => C_Debounce_input_in_ns / clk_in_ns)
+--							port map(DB_in => Deb_in(I),  Reset => Powerup_Res, clk => clk_sys, DB_Out => Deb_out(I));
+--		end generate Deb16;
+  
+  
   Powerup_Res <= not nPowerup_Res;  -- only for modelsim!
   WRnRD       <= not A_RnW;         -- only for modelsim!
 
@@ -625,7 +719,20 @@ p_led_pu: led_n
   generic map (stretch_cnt => stretch_cnt)
   port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => not (nPowerup_Res), nLED => s_nLED_PU);-- LED: nPowerup_Reset
 
+  
+p_led_user1: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => s_nLED_User1_i, nLED => s_nLED_User1_o);-- LED3 = User 1
 
+p_led_user2: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => s_nLED_User2_i, nLED => s_nLED_User2_o);-- LED3 = User 1
+
+p_led_user3: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => s_nLED_User3_i, nLED => s_nLED_User3_o);-- LED3 = User 1
+  
+  
   
 A_nLED_D2 <=   s_nLED_Sel;    -- Diagnose-LED_D2 = BoardSelekt  
 A_nLED_D3 <=   s_nLED_Dtack;  -- Diagnose-LED_D3 = Dtack
@@ -815,7 +922,7 @@ rd_port_mux:  process ( clk_switch_rd_active, clk_switch_rd_data,
 
 
 P37IO_in_Start_Deb:  Debounce
-  GENERIC MAP (DB_Cnt => C_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
+  GENERIC MAP (DB_Cnt => C_P37IO_Start_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
   PORT MAP  (DB_in => P37IO_Start_i,  Reset => Powerup_Res, clk => clk_sys, DB_Out => P37IO_Start_deb_o);
       
 P37IO_Out_Led_Start: led_n
@@ -824,7 +931,7 @@ P37IO_Out_Led_Start: led_n
   
 
 P37IO_in_Stop_Deb:  Debounce
-  GENERIC MAP (DB_Cnt => C_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
+  GENERIC MAP (DB_Cnt => C_P37IO_Stop_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
   PORT MAP  (DB_in => P37IO_Stop_i,  Reset => Powerup_Res, clk => clk_sys, DB_Out => P37IO_Stop_deb_o);
  
 P37IO_Out_Led_Stop: led_n
@@ -833,7 +940,7 @@ P37IO_Out_Led_Stop: led_n
  
 
 P37IO_in_Reset_Deb:  Debounce
-  GENERIC MAP (DB_Cnt => C_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
+  GENERIC MAP (DB_Cnt => C_P37IO_Reset_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
   PORT MAP  (DB_in => P37IO_Reset_i,  Reset => Powerup_Res, clk => clk_sys, DB_Out => P37IO_Reset_deb_o);
 
 
@@ -863,6 +970,12 @@ P37IO_Out_Led_BNC: led_n
   port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => P37IO_BNC_o,    nLED => P37IO_nELD_BNC_o);
 
 
+P37IO_in_Data_Deb:	for I in 0 to 15 generate
+							DB_I:	debounce generic map(DB_Cnt => C_P37IO_Data_Debounce_input_in_ns / clk_in_ns)
+							port map(DB_in => P37IO_in_Data_Deb_i(I),  Reset => Powerup_Res, clk => clk_sys, DB_Out => P37IO_in_Data_Deb_o(I));
+							end generate P37IO_in_Data_Deb;
+							
+  
 
 --  +============================================================================================================================+
 --  |                                      		Anwender-IO: P25IO  -- FG900_710	                                                |
@@ -871,7 +984,7 @@ P37IO_Out_Led_BNC: led_n
 
 
 P25IO_in_Start_Deb:  Debounce
-  GENERIC MAP (DB_Cnt => C_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
+  GENERIC MAP (DB_Cnt => C_P25IO_Start_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
   PORT MAP  (DB_in => P25IO_Start_i,  Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_Start_deb_o);
       
 P25IO_Out_Led_Start: led_n
@@ -880,7 +993,7 @@ P25IO_Out_Led_Start: led_n
   
 
 P25IO_in_Stop_Deb:  Debounce
-  GENERIC MAP (DB_Cnt => C_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
+  GENERIC MAP (DB_Cnt => C_P25IO_Stop_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
   PORT MAP  (DB_in => P25IO_Stop_i,  Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_Stop_deb_o);
  
 P25IO_Out_Led_Stop: led_n
@@ -889,7 +1002,7 @@ P25IO_Out_Led_Stop: led_n
  
 
 P25IO_in_Reset_Deb:  Debounce
-  GENERIC MAP (DB_Cnt => C_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
+  GENERIC MAP (DB_Cnt => C_P25IO_Reset_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
   PORT MAP  (DB_in => P25IO_Reset_i,  Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_Reset_deb_o);
 
 
@@ -972,7 +1085,7 @@ p_P25IO_ADC_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_ADC_ECC_Start_i)
 --------- ADC_Out-ECC --------------------
 
 P25IO_in_Ext_Tim_Deb:  Debounce
-  GENERIC MAP (DB_Cnt => C_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
+  GENERIC MAP (DB_Cnt => C_P25IO_Ext_Tim_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
   PORT MAP  (DB_in => P25IO_Ext_Tim_i,  Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_Ext_Tim_deb_o);
       
 P25IO_Out_Led_Ext_Tim: led_n
@@ -1006,8 +1119,9 @@ P25IO_ADC_ECC: led_n
   
 
 P25IO_in_EOC_Deb:  Debounce
-  GENERIC MAP (DB_Cnt => C_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
-  PORT MAP  (DB_in => P27IO_EOC_i,  Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_EOC_deb_o);
+  GENERIC MAP (DB_Cnt => C_P25IO_EOC_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
+  PORT MAP  (DB_in => not P25IO_EOC_i,  Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_EOC_deb_o);
+
 
   
 p_P25IO_ADC_FF: 
@@ -1021,7 +1135,92 @@ begin
 end process;
 
 
+P25IO_in_Data_Deb:	for I in 0 to 15 generate
+							DB_I:	debounce generic map(DB_Cnt => C_OCIO_Data_Debounce_input_in_ns / clk_in_ns)
+							port map(DB_in => P25IO_in_Data_Deb_i(I),  Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_in_Data_Deb_o(I));
+							end generate P25IO_in_Data_Deb;
+							
+  
 
+--  +============================================================================================================================+
+--  |                                      		Anwender-IO: OCIN  -- FG900_720	                                                |
+--  +============================================================================================================================+
+
+
+
+OCIN_in_Data_Deb1:	for I in 0 to 15 generate
+							DB_I:	debounce generic map(DB_Cnt => C_OCIN_Data_Debounce_input_in_ns / clk_in_ns)
+							port map(DB_in => OCIN_in_Data_Deb1_i(I),  Reset => Powerup_Res, clk => clk_sys, DB_Out => OCIN_in_Data_Deb1_o(I));
+							end generate OCIN_in_Data_Deb1;
+							
+OCIN_in_Data_Deb2:	for I in 0 to 15 generate
+							DB_I:	debounce generic map(DB_Cnt => C_OCIN_Data_Debounce_input_in_ns / clk_in_ns)
+							port map(DB_in => OCIN_in_Data_Deb2_i(I),  Reset => Powerup_Res, clk => clk_sys, DB_Out => OCIN_in_Data_Deb2_o(I));
+							end generate OCIN_in_Data_Deb2;
+							
+  
+
+--  +============================================================================================================================+
+--  |                                      		Anwender-IO: OCIO  -- FG900_730	                                                |
+--  +============================================================================================================================+
+
+
+
+OCIO_in_Data_Deb1:	for I in 0 to 15 generate
+							DB_I:	debounce generic map(DB_Cnt => C_OCIO_Data_Debounce_input_in_ns / clk_in_ns)
+							port map(DB_in => OCIO_in_Data_Deb1_i(I),  Reset => Powerup_Res, clk => clk_sys, DB_Out => OCIO_in_Data_Deb1_o(I));
+							end generate OCIO_in_Data_Deb1;
+
+OCIO_in_Data_Deb2:	for I in 0 to 7 generate
+							DB_I:	debounce generic map(DB_Cnt => C_OCIO_Data_Debounce_input_in_ns / clk_in_ns)
+							port map(DB_in => OCIO_in_Data_Deb2_i(I),  Reset => Powerup_Res, clk => clk_sys, DB_Out => OCIO_in_Data_Deb2_o(I));
+							end generate OCIO_in_Data_Deb2;
+							
+  
+
+--  +============================================================================================================================+
+--  |                                      		Anwender-IO:	SPSIO	--  FG900.770 ---                                           |
+--  +============================================================================================================================+
+
+SPSIO_in_Data_Deb:	for I in 0 to 23 generate
+							DB_I:	debounce generic map(DB_Cnt => C_SPSIO_Data_Debounce_input_in_ns / clk_in_ns)
+							port map(DB_in => SPSIO_in_Data_Deb_i(I),  Reset => Powerup_Res, clk => clk_sys, DB_Out => SPSIO_in_Data_Deb_o(I));
+							end generate SPSIO_in_Data_Deb;
+
+--  +============================================================================================================================+
+--  |                                      		Anwender-IO:	HFIO	--  FG900.780 ---                                           |
+--  +============================================================================================================================+
+
+
+HFIO_nLED_Tastpuls: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => HFIO_Tastpuls_i,    nLED => HFIO_nLED_Tastpuls_o);
+
+HFIO_nLED_Sample_Puls_inv: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => HFIO_Sample_Puls_inv_i,    nLED => HFIO_nLED_Sample_Puls_inv_o);
+
+HFIO_nLED_Aux: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => HFIO_Aux_i,    nLED => HFIO_nLED_Aux_o);
+
+HFIO_nLED_Sample_Puls_Display: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => HFIO_Sample_Puls_Display_i,    nLED => HFIO_nLED_Sample_Puls_Display_o);
+
+
+
+HFIO_in_AMP_FEHLER_Deb:  Debounce
+  GENERIC MAP (DB_Cnt => C_HFIO_AMP_FEHLER_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
+  PORT MAP  (DB_in => HFIO_in_AMP_FEHLER_Deb_i,  Reset => Powerup_Res, clk => clk_sys, DB_Out => HFIO_in_AMP_FEHLER_Deb_o);
+ 
+HFIO_in_PHASE_FEHLER_Deb:  Debounce
+  GENERIC MAP (DB_Cnt => C_HFIO_PHASE_FEHLER_Debounce_input_in_ns / clk_in_ns)    -- Entprellung (C_Debounce_input_in_ns / clk_in_ns)
+  PORT MAP  (DB_in => HFIO_in_PHASE_FEHLER_Deb_i,  Reset => Powerup_Res, clk => clk_sys, DB_Out => HFIO_in_PHASE_FEHLER_Deb_o);
+ 
+ 
+  
+  
 
 --  +============================================================================================================================+
 --  +============================================================================================================================+
@@ -1057,7 +1256,6 @@ BEGIN
     AWin5(15 downto 0)  <=  x"0000";  -- AW-in-Register 5
     AWin6(15 downto 0)  <=  x"0000";  -- AW-in-Register 6
     s_AW_ID(7 downto 0) <=  x"FF";    -- Anwender-Karten ID
-    UIO(15 downto 0)    <=  (OTHERS => '0');  -- USER-IO-Pins zu VG-Leiste
     
     extension_cid_system <= 0;  -- extension card: cid_system
     extension_cid_group  <= 0;  -- extension card: cid_group
@@ -1068,10 +1266,9 @@ BEGIN
 --  IF  A_SEL = not (X"F")   THEN   -- Codierschalter = x"F" --> Testmode 
 
 
-      UIO(15 downto 0)    <=  AWOut_Reg6(15 downto 0);  -- Test USER-IO-Pins zu VG-Leiste ber die "USER-Register" 
-  
+		--- Test der PIO-Pins ---
 
-      AWin1(15 downto 0)  <=  (   CLK_IO, PIO(16),  PIO(17),  PIO(18),  PIO(19),  PIO(20),  PIO(21),  PIO(22),
+      AWin1(15 downto 0)  <=  ( CLK_IO,   PIO(16),  PIO(17),  PIO(18),  PIO(19),  PIO(20),  PIO(21),  PIO(22),
                                 PIO(23),  PIO(24),  PIO(25),  PIO(26),  PIO(27),  PIO(28),  PIO(29),  PIO(30)   );
 
           ( PIO(61),  PIO(62),  PIO(59),  PIO(60),  PIO(57),  PIO(58),  PIO(55),  PIO(56),                      
@@ -1099,13 +1296,21 @@ BEGIN
             PIO(133), PIO(134), PIO(131), PIO(132), PIO(129), PIO(130), PIO(127), PIO(128)  )   <=  AWOut_Reg4(15 downto 0) ;
 
 
-      AWin5(15 downto 0)  <=  ( AWOut_Reg5(15), AWOut_Reg5(14), AWOut_Reg5(13), AWOut_Reg5(12), --+   input [15..0] ist eine
-                                AWOut_Reg5(11), AWOut_Reg5(10), AWOut_Reg5(9),  AWOut_Reg5(8),  --+-> Copy der Output-Bits, weil das  
-                                AWOut_Reg5(7),  AWOut_Reg5(6),  AWOut_Reg5(5),  AWOut_Reg5(4),  --+   Testprog. nur 16 Bit Vergleiche kann.
-                                PIO(143),       PIO(144),       PIO(149),       PIO(150) );
 
-            ( PIO(147), PIO(148), PIO(145), PIO(146) )    <=  AWOut_Reg5(3 downto 0) ;
-      
+		AWin5(15 downto 4)  <=   AWOut_Reg5(15 downto 4); --+   Input [15..4] = Copy der Output-Bits, da Testprog. nur 16 Bit Vergleich.
+ 		AWin5(3  downto 0)  <=  (PIO(143), PIO(144), PIO(149), PIO(150));
+ 
+										(PIO(147), PIO(148), PIO(145), PIO(146))    <=  AWOut_Reg5(3 downto 0) ;
+
+
+		--- Test der User-Pins zur VG-Leiste ---
+
+      AWin6(15 downto 8)  <=   AWOut_Reg6(15 downto 8); --+   Input [15..8] = Copy der Output-Bits, da Testprog. nur 16 Bit Vergleich.
+      AWin6(7  downto 0)  <= 	(UIO(7),	UIO(6),	UIO(5),	UIO(4), UIO(3), UIO(2), UIO(1), UIO(0));
+
+										(UIO(15), UIO(14), UIO(13), UIO(12), UIO(11), UIO(10), UIO(9), UIO(8)) <=  AWOut_Reg6(7 downto 0) ;
+
+ 
 
   else
   
@@ -1120,20 +1325,19 @@ BEGIN
   
 
     --input: Anwender_ID ---      
-      s_AW_ID(7 downto 0)   <=  (PIO(150),PIO(149),PIO(148),PIO(147),PIO(146),PIO(145),PIO(144),PIO(143));
+      s_AW_ID(7 downto 0)   <=  PIO(150 downto 143);
       AWin5(15 downto 0)    <=  x"00" & s_AW_ID(7 downto 0);-- Anwender_ID
     
   
     --  --- Output: Anwender-LED's ---
 
-		PIO(17) <= s_nLED_Sel;        -- LED7 = sel Board 
-      PIO(19) <= s_nLED_Dtack;      -- LED6 = Dtack 
-      PIO(21) <= s_nLED_inR;        -- LED5 = interrupt
---      PIO(23) <= (Powerup_Done AND not (not clk_blink And Powerup_Done ));  -- -- LED4 = Powerup  
-      PIO(23) <= not Powerup_Done or clk_blink;          -- LED4 = Powerup 
-      PIO(25) <= '1';
-      PIO(27) <= '1';  
-      PIO(29) <= '1';  
+		PIO(17) <= s_nLED_Sel;        						-- LED7 = sel Board 
+      PIO(19) <= s_nLED_Dtack;      						-- LED6 = Dtack 
+      PIO(21) <= s_nLED_inR;        						-- LED5 = interrupt
+      PIO(23) <= not Powerup_Done or clk_blink;			-- LED4 = Powerup 
+      PIO(25) <= s_nLED_User1_o;								-- LED3 = User 1
+      PIO(27) <= s_nLED_User2_o;								-- LED2 = User 2  
+      PIO(29) <= s_nLED_User3_o;								-- LED1 = User 3 
       PIO(31) <= local_clk_is_running and clk_blink;  -- LED0 (User-4) = int. Clock 
     
     
@@ -1150,7 +1354,11 @@ BEGIN
       extension_cid_group  <= 27; -- extension card: cid_group, "FG900700_P37IO1" = 27
     
 
+		s_nLED_User1_i <= '0';				-- LED3 = User 1, -- frei -- 
+		s_nLED_User2_i <= '0';				-- LED3 = User 2, -- frei -- 
+		s_nLED_User3_i <= '0';				-- LED3 = User 3, -- frei -- 
 
+		
     --############################# Start/Stop FF ######################################
 
 		P37IO_Start_i		<=	not PIO(139);       		-- input "LemoBuchse-Start" H-Aktiv, nach dem Optokoppler aber L-Aktiv
@@ -1178,25 +1386,31 @@ BEGIN
       PIO(57) <=  not AWOut_Reg2(1);  --  Output "CO_FAULT"
       PIO(59) <=  not AWOut_Reg2(0);  --  Output "CO_STAT"
                 
- 
-      AWin1(15) <=  PIO(131); --  input "HI7"
-      AWin1(14) <=  PIO(129); --  input "HI6"
-      AWin1(13) <=  PIO(127); --  input "HI5"
-      AWin1(12) <=  PIO(125); --  input "HI4"
-      AWin1(11) <=  PIO(123); --  input "HI3"
-      AWin1(10) <=  PIO(121); --  input "HI2"
-      AWin1(9)  <=  PIO(119); --  input "HI1"
-      AWin1(8)  <=  PIO(117); --  input "HI0"
+
+					
+
+    --############################# Debounce Input ######################################
+			
+      P37IO_in_Data_Deb_i(15) <=  PIO(131); --  input "HI7"
+      P37IO_in_Data_Deb_i(14) <=  PIO(129); --  input "HI6"
+      P37IO_in_Data_Deb_i(13) <=  PIO(127); --  input "HI5"
+      P37IO_in_Data_Deb_i(12) <=  PIO(125); --  input "HI4"
+      P37IO_in_Data_Deb_i(11) <=  PIO(123); --  input "HI3"
+      P37IO_in_Data_Deb_i(10) <=  PIO(121); --  input "HI2"
+      P37IO_in_Data_Deb_i(9)  <=  PIO(119); --  input "HI1"
+      P37IO_in_Data_Deb_i(8)  <=  PIO(117); --  input "HI0"
     
-      AWin1(7)  <=  PIO(115); --  input "LO7"
-      AWin1(6)  <=  PIO(113); --  input "LO6"
-      AWin1(5)  <=  PIO(111); --  input "LO5"
-      AWin1(4)  <=  PIO(109); --  input "LO4"
-      AWin1(3)  <=  PIO(107); --  input "LO3"
-      AWin1(2)  <=  PIO(105); --  input "LO2"
-      AWin1(1)  <=  PIO(103); --  input "LO1"
-      AWin1(0)  <=  PIO(101); --  input "LO0"
-  
+      P37IO_in_Data_Deb_i(7)  <=  PIO(115); --  input "LO7"
+      P37IO_in_Data_Deb_i(6)  <=  PIO(113); --  input "LO6"
+      P37IO_in_Data_Deb_i(5)  <=  PIO(111); --  input "LO5"
+      P37IO_in_Data_Deb_i(4)  <=  PIO(109); --  input "LO4"
+      P37IO_in_Data_Deb_i(3)  <=  PIO(107); --  input "LO3"
+      P37IO_in_Data_Deb_i(2)  <=  PIO(105); --  input "LO2"
+      P37IO_in_Data_Deb_i(1)  <=  PIO(103); --  input "LO1"
+      P37IO_in_Data_Deb_i(0)  <=  PIO(101); --  input "LO0"
+		
+		AWin1	<=	P37IO_in_Data_Deb_o;
+
 
 
   WHEN   c_AW_P25IO =>
@@ -1208,6 +1422,12 @@ BEGIN
 		extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
 		extension_cid_group  <= 28; -- extension card: cid_group, "FG900710_P25IO1" = 28
 
+		
+      s_nLED_User1_i <= AW_Config(1);				-- LED3 = User 1, DAC-Data vom FG
+      s_nLED_User2_i <= not P25IO_nADC_ECC_o;	-- LED2 = User 2, ECC zum ADC (Enable)  
+      s_nLED_User3_i <= P25IO_EOC_deb_o;			-- LED1 = User 3, EOC vom ADC 
+		
+		
  
     --############################# Start/Stop FF ######################################
 
@@ -1278,29 +1498,32 @@ BEGIN
 		P25IO_Ext_Tim_i			<=	not PIO(85);       		-- input "LemoBuchse-ExtTiming" H-Aktiv, nach dem Optokoppler aber L-Aktiv
       PIO(93)   					<= P25IO_nLED_Ext_Tim_o;   --	Output "nLED_Extern-Timing"
 
-		PIO(101)						<=	P25IO_nADC_ECC_o;			--	Der Strobe-Output ist "LO"-Aktiv, ECC
+		PIO(101)						<=	not P25IO_nADC_ECC_o;	--	Der Strobe-Output für ECC "Hi"-Aktiv
 		
 
 --		input ADC-Daten
-		P25IO_ADC_Data_FF_i(15)	<=	  PIO(41);  --------------  input "HI7"      
-		P25IO_ADC_Data_FF_i(14)	<=   PIO(43);  --------------  input "HI6"     
-		P25IO_ADC_Data_FF_i(13)	<=   PIO(37);  --------------  input "HI5"     
-		P25IO_ADC_Data_FF_i(12)	<=   PIO(39);  --------------  input "HI4"     
-		P25IO_ADC_Data_FF_i(11)	<=   PIO(33);  --------------  input "HI3"     
-		P25IO_ADC_Data_FF_i(10)	<=   PIO(35);  --------------  input "HI2"     
-		P25IO_ADC_Data_FF_i(9)	<=   PIO(49);  --------------  input "HI1"    
-		P25IO_ADC_Data_FF_i(8)	<=   PIO(51);  --------------  input "HI0"    
-		P25IO_ADC_Data_FF_i(7)	<=   PIO(53);  --  input "Lo7"    
-		P25IO_ADC_Data_FF_i(6)	<=   PIO(55);  --  input "LO6"    
-		P25IO_ADC_Data_FF_i(5)	<=   PIO(45);  --  input "LO5"    
-		P25IO_ADC_Data_FF_i(4)	<=   PIO(47);  --  input "LO4"    
-		P25IO_ADC_Data_FF_i(3)	<=   PIO(57);  --  input "LO3"    
-		P25IO_ADC_Data_FF_i(2)	<=   PIO(59);  --  input "LO2"    
-		P25IO_ADC_Data_FF_i(1)	<=   PIO(61);  --  input "LO1"    
-		P25IO_ADC_Data_FF_i(0)	<=   PIO(63);  --  input "LO0"    
+		P25IO_in_Data_Deb_i(15)	<=	  PIO(41);  --------------  input "HI7"      
+		P25IO_in_Data_Deb_i(14)	<=   PIO(43);  --------------  input "HI6"     
+		P25IO_in_Data_Deb_i(13)	<=   PIO(37);  --------------  input "HI5"     
+		P25IO_in_Data_Deb_i(12)	<=   PIO(39);  --------------  input "HI4"     
+		P25IO_in_Data_Deb_i(11)	<=   PIO(33);  --------------  input "HI3"     
+		P25IO_in_Data_Deb_i(10)	<=   PIO(35);  --------------  input "HI2"     
+		P25IO_in_Data_Deb_i(9)	<=   PIO(49);  --------------  input "HI1"    
+		P25IO_in_Data_Deb_i(8)	<=   PIO(51);  --------------  input "HI0"    
+		P25IO_in_Data_Deb_i(7)	<=   PIO(53);  --  input "Lo7"    
+		P25IO_in_Data_Deb_i(6)	<=   PIO(55);  --  input "LO6"    
+		P25IO_in_Data_Deb_i(5)	<=   PIO(45);  --  input "LO5"    
+		P25IO_in_Data_Deb_i(4)	<=   PIO(47);  --  input "LO4"    
+		P25IO_in_Data_Deb_i(3)	<=   PIO(57);  --  input "LO3"    
+		P25IO_in_Data_Deb_i(2)	<=   PIO(59);  --  input "LO2"    
+		P25IO_in_Data_Deb_i(1)	<=   PIO(61);  --  input "LO1"    
+		P25IO_in_Data_Deb_i(0)	<=   PIO(63);  --  input "LO0"    
+			
+		P25IO_ADC_Data_FF_i		<=	P25IO_in_Data_Deb_o;
 
+		
 --		ADC-EOC
-		P27IO_EOC_i		<=		PIO(101); -- input Strobe für ADC-Daten
+		P25IO_EOC_i		<=		PIO(65); -- input Strobe für ADC-Daten
 
 	
 		
@@ -1313,53 +1536,68 @@ BEGIN
 				AWin1		<=		P25IO_ADC_Data_FF_i;     -- Output "Daten ADC-Register"
       END IF; 
 
+ 
+
+
+
+ 
   
-  
-  WHEN   c_AW_OCin =>
+	WHEN   c_AW_OCin =>
 
     --#################################################################################
-    --####                    Anwender-IO: OCin -- FG900_720                        ###
+    --####                    Anwender-IO: OCIN -- FG900_720                        ###
     --#################################################################################
 
       extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
       extension_cid_group  <= 29; -- extension card: cid_group, "FG900720_OCin1" = 29
 
 
-      AWin1(15) <=  '0';      --------------  Frei
-      AWin1(14) <=  '0';      --------------  Frei
-      AWin1(13) <=  PIO(73);  --------------  input "B5"
-      AWin1(12) <=  PIO(75);  --------------  input "B4"
-      AWin1(11) <=  PIO(93);  --------------  input "B3"
-      AWin1(10) <=  PIO(95);  --------------  input "B2"
-      AWin1(9)  <=  PIO(97);  --------------  input "B1"
-      AWin1(8)  <=  PIO(99);  --------------  input "B0"
-      AWin1(7)  <=  PIO(117); --  input "A7"
-      AWin1(6)  <=  PIO(119); --  input "A6"
-      AWin1(5)  <=  PIO(121); --  input "A5"
-      AWin1(4)  <=  PIO(123); --  input "A4"
-      AWin1(3)  <=  PIO(133); --  input "A3"
-      AWin1(2)  <=  PIO(135); --  input "A2"
-      AWin1(1)  <=  PIO(137); --  input "A1"
-      AWin1(0)  <=  PIO(139); --  input "A0"
+		s_nLED_User1_i <= '0';				-- LED3 = User 1, -- frei -- 
+		s_nLED_User2_i <= '0';				-- LED3 = User 2, -- frei -- 
+		s_nLED_User3_i <= '0';				-- LED3 = User 3, -- frei -- 
+		
+		
+		
 
+      OCIN_in_Data_Deb1_i(15) <=  '0';      --------------  Frei
+      OCIN_in_Data_Deb1_i(14) <=  '0';      --------------  Frei
+      OCIN_in_Data_Deb1_i(13) <=  PIO(73);  --------------  input "B5"
+      OCIN_in_Data_Deb1_i(12) <=  PIO(75);  --------------  input "B4"
+      OCIN_in_Data_Deb1_i(11) <=  PIO(93);  --------------  input "B3"
+      OCIN_in_Data_Deb1_i(10) <=  PIO(95);  --------------  input "B2"
+      OCIN_in_Data_Deb1_i(9)  <=  PIO(97);  --------------  input "B1"
+      OCIN_in_Data_Deb1_i(8)  <=  PIO(99);  --------------  input "B0"
+      OCIN_in_Data_Deb1_i(7)  <=  PIO(117); --  input "A7"
+      OCIN_in_Data_Deb1_i(6)  <=  PIO(119); --  input "A6"
+      OCIN_in_Data_Deb1_i(5)  <=  PIO(121); --  input "A5"
+      OCIN_in_Data_Deb1_i(4)  <=  PIO(123); --  input "A4"
+      OCIN_in_Data_Deb1_i(3)  <=  PIO(133); --  input "A3"
+      OCIN_in_Data_Deb1_i(2)  <=  PIO(135); --  input "A2"
+      OCIN_in_Data_Deb1_i(1)  <=  PIO(137); --  input "A1"
+      OCIN_in_Data_Deb1_i(0)  <=  PIO(139); --  input "A0"
+		
+		AWin1		<=		OCIN_in_Data_Deb1_o;
+		
   
-      AWin2(15) <=  PIO(81);  --------------  input "D7"
-      AWin2(14) <=  PIO(79);  --------------  input "D6"
-      AWin2(13) <=  PIO(77);  --------------  input "D5"
-      AWin2(12) <=  PIO(83);  --------------  input "D4"
-      AWin2(11) <=  PIO(85);  --------------  input "D3"
-      AWin2(10) <=  PIO(87);  --------------  input "D2"
-      AWin2(9)  <=  PIO(89);  --------------  input "D1"
-      AWin2(8)  <=  PIO(91);  --------------  input "D0"
-      AWin2(7)  <=  PIO(109); --  input "C7"
-      AWin2(6)  <=  PIO(111); --  input "C6"
-      AWin2(5)  <=  PIO(113); --  input "C5"
-      AWin2(4)  <=  PIO(115); --  input "C4"
-      AWin2(3)  <=  PIO(125); --  input "C3"
-      AWin2(2)  <=  PIO(127); --  input "C2"
-      AWin2(1)  <=  PIO(129); --  input "C1"
-      AWin2(0)  <=  PIO(131); --  input "C0"
-    
+      OCIN_in_Data_Deb2_i(15) <=  PIO(81);  --------------  input "D7"
+      OCIN_in_Data_Deb2_i(14) <=  PIO(79);  --------------  input "D6"
+      OCIN_in_Data_Deb2_i(13) <=  PIO(77);  --------------  input "D5"
+      OCIN_in_Data_Deb2_i(12) <=  PIO(83);  --------------  input "D4"
+      OCIN_in_Data_Deb2_i(11) <=  PIO(85);  --------------  input "D3"
+      OCIN_in_Data_Deb2_i(10) <=  PIO(87);  --------------  input "D2"
+      OCIN_in_Data_Deb2_i(9)  <=  PIO(89);  --------------  input "D1"
+      OCIN_in_Data_Deb2_i(8)  <=  PIO(91);  --------------  input "D0"
+      OCIN_in_Data_Deb2_i(7)  <=  PIO(109); --  input "C7"
+      OCIN_in_Data_Deb2_i(6)  <=  PIO(111); --  input "C6"
+      OCIN_in_Data_Deb2_i(5)  <=  PIO(113); --  input "C5"
+      OCIN_in_Data_Deb2_i(4)  <=  PIO(115); --  input "C4"
+      OCIN_in_Data_Deb2_i(3)  <=  PIO(125); --  input "C3"
+      OCIN_in_Data_Deb2_i(2)  <=  PIO(127); --  input "C2"
+      OCIN_in_Data_Deb2_i(1)  <=  PIO(129); --  input "C1"
+      OCIN_in_Data_Deb2_i(0)  <=  PIO(131); --  input "C0"
+
+		AWin2		<=		OCIN_in_Data_Deb2_o;
+   
     
       PIO(39)   <=  '0';  ------------------------------- Output_Enable (nach init vom ALTERA)
 
@@ -1380,38 +1618,43 @@ BEGIN
       extension_cid_group  <= 30; -- extension card: cid_group, "FG900730_OCIO1" = 30
 
     
+		s_nLED_User1_i <= '0';				-- LED3 = User 1, -- frei -- 
+		s_nLED_User2_i <= '0';				-- LED3 = User 2, -- frei -- 
+		s_nLED_User3_i <= '0';				-- LED3 = User 3, -- frei -- 
     
 
-      AWin1(15) <=  PIO(45);  --------------  input "C7"
-      AWin1(14) <=  PIO(47);  --------------  input "C6"
-      AWin1(13) <=  PIO(51);  --------------  input "C5"
-      AWin1(12) <=  PIO(53);  --------------  input "C4"
-      AWin1(11) <=  PIO(37);  --------------  input "C3"
-      AWin1(10) <=  PIO(39);  --------------  input "C2"
-      AWin1(9)  <=  PIO(41);  --------------  input "C1"
-      AWin1(8)  <=  PIO(43);  --------------  input "C0"
-      AWin1(7)  <=  PIO(127); --  input "A7"
-      AWin1(6)  <=  PIO(125); --  input "A6"
-      AWin1(5)  <=  PIO(123); --  input "A5"
-      AWin1(4)  <=  PIO(121); --  input "A4"
-      AWin1(3)  <=  PIO(99);  --  input "A3"
-      AWin1(2)  <=  PIO(97);  --  input "A2"
-      AWin1(1)  <=  PIO(95);  --  input "A1"
-      AWin1(0)  <=  PIO(93);  --  input "A0"
+      OCIO_in_Data_Deb1_i(15) <=  PIO(45);  --------------  input "C7"
+      OCIO_in_Data_Deb1_i(14) <=  PIO(47);  --------------  input "C6"
+      OCIO_in_Data_Deb1_i(13) <=  PIO(51);  --------------  input "C5"
+      OCIO_in_Data_Deb1_i(12) <=  PIO(53);  --------------  input "C4"
+      OCIO_in_Data_Deb1_i(11) <=  PIO(37);  --------------  input "C3"
+      OCIO_in_Data_Deb1_i(10) <=  PIO(39);  --------------  input "C2"
+      OCIO_in_Data_Deb1_i(9)  <=  PIO(41);  --------------  input "C1"
+      OCIO_in_Data_Deb1_i(8)  <=  PIO(43);  --------------  input "C0"
+      OCIO_in_Data_Deb1_i(7)  <=  PIO(127); --  input "A7"
+      OCIO_in_Data_Deb1_i(6)  <=  PIO(125); --  input "A6"
+      OCIO_in_Data_Deb1_i(5)  <=  PIO(123); --  input "A5"
+      OCIO_in_Data_Deb1_i(4)  <=  PIO(121); --  input "A4"
+      OCIO_in_Data_Deb1_i(3)  <=  PIO(99);  --  input "A3"
+      OCIO_in_Data_Deb1_i(2)  <=  PIO(97);  --  input "A2"
+      OCIO_in_Data_Deb1_i(1)  <=  PIO(95);  --  input "A1"
+      OCIO_in_Data_Deb1_i(0)  <=  PIO(93);  --  input "A0"
 
-
+		AWin1		<=		OCIO_in_Data_Deb1_o;
+		
+		
+      OCIO_in_Data_Deb2_i(7)  <=  PIO(89);  --  input "D7"		
+      OCIO_in_Data_Deb2_i(6)  <=  PIO(91);  --  input "D6"
+      OCIO_in_Data_Deb2_i(5)  <=  PIO(119); --  input "D5"
+      OCIO_in_Data_Deb2_i(4)  <=  PIO(117); --  input "D4"
+      OCIO_in_Data_Deb2_i(3)  <=  PIO(87);  --  input "D3"
+      OCIO_in_Data_Deb2_i(2)  <=  PIO(85);  --  input "D2"
+      OCIO_in_Data_Deb2_i(1)  <=  PIO(83);  --  input "D1"
+      OCIO_in_Data_Deb2_i(0)  <=  PIO(81);  --  input "D0"
 
       AWin2(15 downto 8)  <=  (OTHERS => '0');  -- inPUT = 0; 
-      AWin2(7)  <=  PIO(89);  --  input "D7"
-      AWin2(6)  <=  PIO(91);  --  input "D6"
-      AWin2(5)  <=  PIO(119); --  input "D5"
-      AWin2(4)  <=  PIO(117); --  input "D4"
-      AWin2(3)  <=  PIO(87);  --  input "D3"
-      AWin2(2)  <=  PIO(85);  --  input "D2"
-      AWin2(1)  <=  PIO(83);  --  input "D1"
-      AWin2(0)  <=  PIO(81);  --  input "D0"
-      
-    
+      AWin2(15 downto 8)  <=  OCIO_in_Data_Deb2_o;  
+  
 
       PIO(77)   <=  '0';  ------------------------------- Output_Enable (nach init vom ALTERA)
       
@@ -1460,7 +1703,63 @@ BEGIN
     --####                  Anwender-IO: DA(DAC/ADC)  -- FG900_770                    ###
     --###################################################################################
 
+		extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
+      extension_cid_group  <= 35; -- extension card: cid_group, "FG900770_SPSIO1" = 34
 
+		s_nLED_User1_i <= '0';				-- LED3 = User 1, -- frei -- 
+		s_nLED_User2_i <= '0';				-- LED3 = User 2, -- frei -- 
+		s_nLED_User3_i <= '0';				-- LED3 = User 3, -- frei -- 
+
+
+
+	--========================== Input Register 1+2 ======================================
+
+      SPSIO_in_Data_Deb_i(23) <=  PIO(35); --  input "23"
+      SPSIO_in_Data_Deb_i(22) <=  PIO(37); --  input "22"
+      SPSIO_in_Data_Deb_i(21) <=  PIO(39); --  input "21"
+      SPSIO_in_Data_Deb_i(20) <=  PIO(41); --  input "20"
+      SPSIO_in_Data_Deb_i(19) <=  PIO(43); --  input "19"
+      SPSIO_in_Data_Deb_i(18) <=  PIO(45); --  input "18"
+      SPSIO_in_Data_Deb_i(17) <=  PIO(47); --  input "17"
+      SPSIO_in_Data_Deb_i(16) <=  PIO(49); --  input "16"
+      SPSIO_in_Data_Deb_i(15) <=  PIO(51); --  input "15"
+      SPSIO_in_Data_Deb_i(14) <=  PIO(53); --  input "14"
+      SPSIO_in_Data_Deb_i(13) <=  PIO(55); --  input "13"
+      SPSIO_in_Data_Deb_i(12) <=  PIO(57); --  input "12"
+      SPSIO_in_Data_Deb_i(11) <=  PIO(59); --  input "11"
+      SPSIO_in_Data_Deb_i(10) <=  PIO(61); --  input "10"
+      SPSIO_in_Data_Deb_i(9)  <=  PIO(63); --  input "9"
+      SPSIO_in_Data_Deb_i(8)  <=  PIO(65); --  input "8"
+      SPSIO_in_Data_Deb_i(7)  <=  PIO(67); --  input "7"
+      SPSIO_in_Data_Deb_i(6)  <=  PIO(69); --  input "6"
+      SPSIO_in_Data_Deb_i(5)  <=  PIO(71); --  input "5"
+      SPSIO_in_Data_Deb_i(4)  <=  PIO(73); --  input "4"
+      SPSIO_in_Data_Deb_i(3)  <=  PIO(75); --  input "3"
+      SPSIO_in_Data_Deb_i(2)  <=  PIO(77); --  input "2"
+      SPSIO_in_Data_Deb_i(1)  <=  PIO(79); --  input "1"
+      SPSIO_in_Data_Deb_i(0)  <=  PIO(81); --  input "0"
+
+
+		AWin1(15 downto 0)		<=		SPSIO_in_Data_Deb_o(15 downto 0);
+		AWin2(15 downto 8)		<=		(OTHERS => '0');  -- InPUT = 0; 
+		AWin2(7  downto 0)		<=		SPSIO_in_Data_Deb_o(23 downto 16);
+		
+
+
+	--========================== Output Register 1 ======================================
+		
+      PIO(101)   <=  '0';  ------------------------------- Output_Enable (nach init vom ALTERA)
+      PIO(119)   <=  '0';  ------------------------------- Output_Enable (nach init vom ALTERA)
+      
+      PIO(111)  <=  AWOut_Reg1(7);  --  Output "7"
+      PIO(113)  <=  AWOut_Reg1(6);  --  Output "6"
+      PIO(115)  <=  AWOut_Reg1(5);  --  Output "5"
+      PIO(117)  <=  AWOut_Reg1(4);  --  Output "4"
+      PIO(103)  <=  AWOut_Reg1(3);  --  Output "3"
+      PIO(105)  <=  AWOut_Reg1(2);  --  Output "2"
+      PIO(107)  <=  AWOut_Reg1(1);  --  Output "1"
+      PIO(109)  <=  AWOut_Reg1(0);  --  Output "0"
+		
 	 	 
 
   WHEN   c_AW_HFIO =>
@@ -1469,7 +1768,90 @@ BEGIN
     --####                  Anwender-IO: DA(DAC/ADC)  -- FG900_780                    ###
     --###################################################################################
   
-  
+      extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
+      extension_cid_group  <= 34; -- extension card: cid_group, "FG900780_HFIO1" = 34
+
+		s_nLED_User1_i <= '0';				-- LED3 = User 1, -- frei -- 
+		s_nLED_User2_i <= '0';				-- LED3 = User 2, -- frei -- 
+		s_nLED_User3_i <= '0';				-- LED3 = User 3, -- frei -- 
+
+		
+
+	 --========================== Output Register 1 ======================================
+
+													 --   +-- Pin-Nr. D-Sub37-F(J5)
+													 --   |
+      PIO(83)   <=  not AWOut_Reg1(12); --  14, OE12, "Strobe Amplitude"
+      PIO(85)   <=  not AWOut_Reg1(11); --  13, OE11, "Amplitude-Bit11"
+      PIO(87)   <=  not AWOut_Reg1(10); --  12, OE10, "Amplitude-Bit10"
+      PIO(89)   <=  not AWOut_Reg1(9);  --  11, OE9,  "Amplitude-Bit9"
+      PIO(91)   <=  not AWOut_Reg1(8);  --  10, OE8,  "Amplitude-Bit8"
+      PIO(93)   <=  not AWOut_Reg1(7);  --  9,  OE7,  "Amplitude-Bit7"
+      PIO(95)   <=  not AWOut_Reg1(6);  --  8,  OE6,  "Amplitude-Bit6"
+      PIO(97)   <=  not AWOut_Reg1(5);  --  7,  OE5,  "Amplitude-Bit5"
+      PIO(99)   <=  not AWOut_Reg1(4);  --  6,  OE4,  "Amplitude-Bit4"
+      PIO(101)  <=  not AWOut_Reg1(3);  --  5,  OE3,  "Amplitude-Bit3"
+      PIO(103)  <=  not AWOut_Reg1(2);  --  4,  OE2,  "Amplitude-Bit2"
+      PIO(105)  <=  not AWOut_Reg1(1);  --  3,  OE1,  "Amplitude-Bit1"
+      PIO(107)  <=  not AWOut_Reg1(0);  --  2,  OE0,  "Amplitude-Bit0"
+                                                
+                                                
+		--========================== Output Register 2 ======================================
+		
+													 --   +-- Pin-Nr. D-Sub37-F(J5)
+													 --   |
+      PIO(61)   <=  not AWOut_Reg2(10); --  31, OC10, "Strobe Phase"
+		PIO(63)   <=  not AWOut_Reg2(9);  --  30, OC9,  "Phase-Bit9"
+      PIO(65)   <=  not AWOut_Reg2(8);  --  29, OC8,  "Phase-Bit8"
+      PIO(67)   <=  not AWOut_Reg2(7);  --  28, OC7,  "Phase-Bit7"
+      PIO(69)   <=  not AWOut_Reg2(6);  --  27, OC6,  "Phase-Bit6"
+      PIO(71)   <=  not AWOut_Reg2(5);  --  26, OC5,  "Phase-Bit5"
+      PIO(73)   <=  not AWOut_Reg2(4);  --  25, OC4,  "Phase-Bit4"
+      PIO(75)   <=  not AWOut_Reg2(3);  --  24, OC3,  "Phase-Bit3"
+      PIO(77)   <=  not AWOut_Reg2(2);  --  23, OC2,  "Phase-Bit2"
+      PIO(79)   <=  not AWOut_Reg2(1);  --  22, OC1,  "Phase-Bit1"
+      PIO(81)   <=  not AWOut_Reg2(0);  --  21, OC0,  "Phase-Bit0"
+
+
+
+		--========================== Output Register 3 ======================================
+		
+		PIO(133)   <=  '0';  ---------------- Output_Enable (nach init vom ALTERA) für Tastpuls,Sample_Puls_Display und Reserve
+		
+		
+      PIO(113)  			<=  not AWOut_Reg3(7); 		--  LEMO2(Frei, J7),  "Aux "
+      HFIO_Aux_i			<= AWOut_Reg3(7);				--	Input  "nLED_Aux"
+      PIO(35)   			<= HFIO_nLED_Aux_o;   		--	Output "nLED_Aux"
+
+      PIO(59)   			<=  not AWOut_Reg3(6); 		--  D-Sub37-F(J5)_Pin-Nr. 32, OC11, "Flattop-Puls"
+
+      PIO(111)  			<=  not AWOut_Reg3(5); 		--  Lemo4(Tastpuls),          OE15, "Tastpuls(Gating) "
+      HFIO_Tastpuls_i	<= AWOut_Reg3(5);				--	Input  "nLED_Tastpuls"
+      PIO(39)   			<= HFIO_nLED_Tastpuls_o;	--	Output "nLED_Tastpuls"
+
+      PIO(57)   			<=  not AWOut_Reg3(4);		--  D-Sub37-F(J5)_Pin-Nr. 33, OC12, "Tast-Puls inv."
+      PIO(55)   			<=  not AWOut_Reg3(3);		--  D-Sub37-F(J5)_Pin-Nr. 34, OC13, "Tast-Puls"
+		
+      PIO(115)  						<=  not AWOut_Reg3(2); 					--  LEMO1(Sample_Puls_Display, J8),       "Sample_Puls_Display"
+      HFIO_Sample_Puls_Display_i	<= AWOut_Reg3(2);							--	Input  "nLED_Sample-Puls-Display"
+      PIO(33)   						<= HFIO_nLED_Sample_Puls_Display_o;	--	Output "nLED_Sample_Puls_Display"
+
+      PIO(51)   						<=  not AWOut_Reg3(1); 				--  LEMO3(Sample_Puls_inv, J6),     OC15, "Sample_Puls_inv. "
+      HFIO_Sample_Puls_inv_i		<= AWOut_Reg3(1);						--	Input  "nLED_Sample_Puls_inv"
+      PIO(37)   						<= HFIO_nLED_Sample_Puls_inv_o;	--	Output "nLED_Sample_Puls_inv"
+
+		PIO(53)   <=  not AWOut_Reg3(0); --  D-Sub37-F(J5)_Pin-Nr. 35,       OC14, "Sample-Puls"
+
+		
+
+		--========================== Input Register 1 ======================================
+
+      HFIO_in_AMP_FEHLER_Deb_i	<=	PIO(43);  							--  input "AMP_FEHLER"
+		AWin1(1)							<=	HFIO_in_AMP_FEHLER_Deb_o;
+      HFIO_in_PHASE_FEHLER_Deb_i	<=	PIO(41);  							--  input "PHASE_FEHLER"
+		AWin1(0)							<=	HFIO_in_PHASE_FEHLER_Deb_o;
+
+	
       
   WHEN OTHERS =>
 
