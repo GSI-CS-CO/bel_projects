@@ -1,4 +1,4 @@
-set platform "scu +comexpress +wrex1"        
+set platform "scu2 +comexpress +wrex1"        
 source ../../autogen.tcl
 source ../../../modules/build_id/build_id.tcl 
 source ../../../ip_cores/general-cores/platform/altera/networks/arria2gx.tcl
