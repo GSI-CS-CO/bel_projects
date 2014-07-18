@@ -6,7 +6,7 @@
 
 #define   MAX_FG_DEVICES 12
 #define   MAX_FG_PER_SLAVE 2
-#define   BUFFER_SIZE 10
+#define   BUFFER_SIZE 100 
 
 struct fg_dev {
   unsigned int dev_number;
@@ -39,9 +39,9 @@ struct fg_list {
 };
 
 struct param_set {
-  unsigned short coeff_a;
-  unsigned short coeff_b;
-  unsigned int coeff_c;
+  short coeff_a;
+  short coeff_b;
+  int coeff_c;
   unsigned int control; /* Bit 2..0   step
                                5..3   freq
                               11..6   shift_b
