@@ -14,6 +14,7 @@
 #include "w1.h"
 #include "fg.h"
 #include "cb.h"
+#include "scu_mil.h"
 
 //#define DEBUG
 //#define FGDEBUG
@@ -38,9 +39,10 @@ volatile unsigned short* scub_base;
 volatile unsigned int* BASE_ONEWIRE;
 volatile unsigned int* BASE_UART;
 volatile unsigned int* scub_irq_base;
+volatile unsigned int* scu_mil_base;
 sdb_location lm32_irq_endp[10]; // there are two queues for msis
 
-volatile unsigned short icounter[MAX_SCU_SLAVES+1];
+volatile unsigned int param_sent[MAX_FG_DEVICES];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
 
 void usleep(int us)
@@ -134,24 +136,34 @@ void slave_irq_handler()
   
   if (slv_int_act_reg & (1<<15)) { //FG1 irq?
     fg_number = (scub_base[(slave_nr << 16) + FG1_BASE + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
-    if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number))
+    //mprintf("fg_number called: %d\n", fg_number);
+    if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number)) {
       cbRead((struct circ_buffer *)&fg_buffer, fg_number, &pset);
-    else
-      return; 
-    scub_base[(slave_nr << 16) + FG1_BASE + FG_A] = pset.coeff_a;
-    scub_base[(slave_nr << 16) + FG1_BASE + FG_B] = pset.coeff_b;
-    slave_acks |= (1<<15); //ack FG1 irq
+      scub_base[(slave_nr << 16) + FG1_BASE + FG_A] = pset.coeff_a;
+      scub_base[(slave_nr << 16) + FG1_BASE + FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
+      scub_base[(slave_nr << 16) + FG1_BASE + FG_B] = pset.coeff_b;
+      scub_base[(slave_nr << 16) + FG1_BASE + FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
+      //scub_base[(slave_nr << 16) + FG1_BASE + FG_STARTL] = pset.coeff_c & 0xffff;
+      //scub_base[(slave_nr << 16) + FG1_BASE + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+      param_sent[fg_number]++;
+      slave_acks |= (1<<15); //ack FG1 irq
+    }
   } 
  
   if (slv_int_act_reg & (1<<14)) { //FG2 irq?
     fg_number = (scub_base[(slave_nr << 16) + FG2_BASE + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
-    if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number))
+    //mprintf("fg_number called: %d\n", fg_number);
+    if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number)) {
       cbRead((struct circ_buffer *)&fg_buffer, fg_number, &pset);
-    else 
-      return; 
-    scub_base[(slave_nr << 16) + FG2_BASE + FG_A] = pset.coeff_a;
-    scub_base[(slave_nr << 16) + FG2_BASE + FG_B] = pset.coeff_b;
-    slave_acks |= (1<<14); //ack FG2 irq
+      scub_base[(slave_nr << 16) + FG2_BASE + FG_A] = pset.coeff_a;
+      scub_base[(slave_nr << 16) + FG2_BASE + FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
+      scub_base[(slave_nr << 16) + FG2_BASE + FG_B] = pset.coeff_b;
+      scub_base[(slave_nr << 16) + FG2_BASE + FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
+      //scub_base[(slave_nr << 16) + FG2_BASE + FG_STARTL] = pset.coeff_c & 0xffff;
+      //scub_base[(slave_nr << 16) + FG2_BASE + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+      param_sent[fg_number]++;
+      slave_acks |= (1<<14); //ack FG2 irq
+    }
   } 
 
   scub_base[(slave_nr << 16) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
@@ -206,6 +218,7 @@ void configure_slaves(unsigned int tmr_value) {
 void configure_fgs() {
   int i = 0, j = 0;
   int slot;
+  struct param_set pset;
   mprintf("configuring fgs.\n");
   while(scub.slaves[i].unique_id) { /* more slaves in list */
     /* actions per slave card */
@@ -223,22 +236,31 @@ void configure_fgs() {
     j = 0;
     while(scub.slaves[i].devs[j].version) { /* more fgs in this device */
       /* actions per fg */
-      mprintf("enable fg[%d] in slot %d\n", scub.slaves[i].devs[j].dev_number, slot);
+      //mprintf("enable fg[%d] in slot %d\n", scub.slaves[i].devs[j].dev_number, slot);
       scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_CNTRL] = 0x1; // reset fg
-      scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_CNTRL] = (5<<13); //set frequency Bit 15..13  
-      scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_CNTRL] |= (2<<10); //set step count Bit 12..10
-      scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_A] = 0x1;
-      scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_SHIFTA] = 0x20;
-      scub_base[(slot << 16) + scub.slaves[i].devs[j].offset + FG_SHIFTB] = 0x20;
-      scub.slaves[i].devs[j].running = 1;
       j++;
     }
     i++;
   }
   i = 0;
-  while(fgs.devs[i]) {
+  while(fgs.devs[i]) { 
+    //set virtual fg number Bit 9..4, set frequency Bit 15..13, set step count Bit 12..10
+    scub_base[(slot << 16) + fgs.devs[i]->offset + FG_CNTRL] |= (i << 4) | (5<<13) | (2<<10);
+    //fetch parameter set from buffer
+    if(!cbisEmpty((struct circ_buffer *)&fg_buffer, i)) {
+      cbRead((struct circ_buffer *)&fg_buffer, i, &pset);
+      scub_base[(slot << 16) + fgs.devs[i]->offset + FG_A] = pset.coeff_a;
+      scub_base[(slot << 16) + fgs.devs[i]->offset + FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
+      scub_base[(slot << 16) + fgs.devs[i]->offset + FG_B] = pset.coeff_b;
+      scub_base[(slot << 16) + fgs.devs[i]->offset + FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
+      //scub_base[(slot << 16) + fgs.devs[i]->offset + FG_STARTL] = pset.coeff_c & 0xffff;
+      //scub_base[(slot << 16) + fgs.devs[i]->offset + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+      scub_base[(slot << 16) + fgs.devs[i]->offset + FG_STARTL] = 0;
+      scub_base[(slot << 16) + fgs.devs[i]->offset + FG_STARTH] = 0; // data written with high word
+      param_sent[i]++;
+    }
     slot = fgs.devs[i]->slave->slot;
-    scub_base[(slot << 16) + fgs.devs[i]->offset + FG_CNTRL] |= (i << 4); //set virtual fg number Bit 9..4
+    fgs.devs[i]->running = 1;
     i++;
   } 
 } 
@@ -286,6 +308,8 @@ void sw_irq_handler() {
     case 0:
       disable_msi_irqs();  
       init_buffers(&fg_buffer);
+      for (i=0; i < MAX_FG_DEVICES; i++) // clear statistics
+        param_sent[i] = 0;
     break;
     case 1:
       configure_slaves(global_msi.msg);
@@ -303,18 +327,22 @@ void sw_irq_handler() {
     break;
     case 4:
       for (i = 0; i < MAX_FG_DEVICES; i++)
-        mprintf("fg[%d] buffer: %d\n", i, cbgetCount((struct circ_buffer *)&fg_buffer, i));
+        mprintf("fg[%d] buffer: %d param_sent: %d\n", i, cbgetCount((struct circ_buffer *)&fg_buffer, i), param_sent[i]);
     break;
     case 5:
       if (global_msi.msg >= 0 && global_msi.msg < MAX_FG_DEVICES) {
         if(!cbisEmpty((struct circ_buffer *)&fg_buffer, global_msi.msg)) {
           cbRead((struct circ_buffer *)&fg_buffer, global_msi.msg, &pset);
-          mprintf("read buffer[%d]: %d, %d, %d, 0x%x\n", global_msi.msg, pset.coeff_a, pset.coeff_b, pset.coeff_c, pset.control);
+          mprintf("read buffer[%d]: a 0x%x, l_a %d, b 0x%x, l_b %d, 0x%x\n",
+                   global_msi.msg, pset.coeff_a, (pset.control & 0xfc0) >> 6, pset.coeff_b, (pset.control & 0x1f000) >> 12, pset.coeff_c);
         } else {
           mprintf("read buffer[%d]: buffer empty!\n", global_msi.msg);
         }
           
       }
+    break;
+    case 6:
+      run_mil_test(scu_mil_base, global_msi.msg & 0xff);
     break;   
     default:
       mprintf("swi: 0x%x\n", global_msi.adr);
@@ -350,6 +378,7 @@ int main(void) {
   BASE_ONEWIRE  = (unsigned int*)find_device_adr(CERN, WR_1Wire);
   scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);
   find_device_multi(lm32_irq_endp, &idx, 10, GSI, IRQ_ENDPOINT);
+  scu_mil_base = (unsigned int*)find_device(SCU_MIL);
   
 
   disp_reset();
@@ -362,7 +391,7 @@ int main(void) {
   }
   mprintf("scub_irq_base is: 0x%x\n", scub_irq_base); 
 
-
+  while(1); /*FIXME*/
   //while(1);
   while(1) { 
     i = 0; 
