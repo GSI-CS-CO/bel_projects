@@ -106,7 +106,8 @@ begin
     s_Q_reg     <=  (others => '0');
     s_X_reg     <=  (others => '0');
   elsif rising_edge(clk) then
-    if a_en = '1' or s_stp_reached = '1' then
+    --if a_en = '1' or s_stp_reached = '1' then
+    if s_stp_reached = '1' then
       -- shifting for quadratic coefficient a
       s_a_reg <= shift_left(resize(signed(data_a), 64), shift_a);
     end if;
@@ -121,11 +122,12 @@ begin
     -- increment quad term
     if s_inc_quad = '1' then
       s_Q_reg <= signed(s_Q_reg) + signed(s_a_reg);
+      s_X_reg <= signed(s_X_reg) + signed(s_Q_reg);
     end if; 
     
     -- sum of linear and quadratic term
     if s_add_lin_quad = '1' then
-      s_X_reg <= signed(s_X_reg) + signed(s_Q_reg);
+      --s_X_reg <= signed(s_X_reg) + signed(s_Q_reg);
     end if; 
   end if;
 
