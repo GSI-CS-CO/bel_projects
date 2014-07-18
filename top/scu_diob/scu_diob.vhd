@@ -147,6 +147,7 @@ port (Adr_from_SCUB_LA    :  in std_logic_vector(15 downto 0);
     AWin4   :  in std_logic_vector(15 downto 0);
     AWin5   :  in std_logic_vector(15 downto 0);
     AWin6   :  in std_logic_vector(15 downto 0);
+    AWin7   :  in std_logic_vector(15 downto 0);
     AW_Config     :  out std_logic_vector(15 downto 0);
     AWOut_Reg1    :  out std_logic_vector(15 downto 0);
     AWOut_Reg2    :  out std_logic_vector(15 downto 0);
@@ -154,6 +155,7 @@ port (Adr_from_SCUB_LA    :  in std_logic_vector(15 downto 0);
     AWOut_Reg4    :  out std_logic_vector(15 downto 0);
     AWOut_Reg5    :  out std_logic_vector(15 downto 0);
     AWOut_Reg6    :  out std_logic_vector(15 downto 0);
+    AWOut_Reg7    :  out std_logic_vector(15 downto 0);
     AW_Config_Wr  :  out std_logic;  
     AWOut_Reg1_Wr :  out std_logic;   
     AWOut_Reg2_Wr :  out std_logic;   
@@ -161,6 +163,7 @@ port (Adr_from_SCUB_LA    :  in std_logic_vector(15 downto 0);
     AWOut_Reg4_Wr :  out std_logic;   
     AWOut_Reg5_Wr :  out std_logic;   
     AWOut_Reg6_Wr :  out std_logic;   
+    AWOut_Reg7_Wr :  out std_logic;   
     AWOut_Reg_rd_active   :  out std_logic;
     Data_to_SCUB    :  out std_logic_vector(15 downto 0);
     Dtack_to_SCUB   :  out std_logic
@@ -295,6 +298,7 @@ end component;
   signal AWin4: std_logic_vector(15 downto 0);
   signal AWin5: std_logic_vector(15 downto 0);
   signal AWin6: std_logic_vector(15 downto 0);
+  signal AWin7: std_logic_vector(15 downto 0);
   signal AW_Config: std_logic_vector(15 downto 0);
   signal AWOut_Reg1: std_logic_vector(15 downto 0);
   signal AWOut_Reg2: std_logic_vector(15 downto 0);
@@ -302,6 +306,7 @@ end component;
   signal AWOut_Reg4: std_logic_vector(15 downto 0);
   signal AWOut_Reg5: std_logic_vector(15 downto 0);
   signal AWOut_Reg6: std_logic_vector(15 downto 0);
+  signal AWOut_Reg7: std_logic_vector(15 downto 0);
   signal AW_Config_Wr:  std_logic;  
   signal AWOut_Reg1_Wr: std_logic;
   signal AWOut_Reg2_Wr: std_logic;
@@ -309,10 +314,14 @@ end component;
   signal AWOut_Reg4_Wr: std_logic;
   signal AWOut_Reg5_Wr: std_logic;
   signal AWOut_Reg6_Wr: std_logic;
+  signal AWOut_Reg7_Wr: std_logic;
   signal AWOut_Reg_rd_active: std_logic;
   signal aw_port1_Dtack: std_logic;
   signal aw_port1_data_to_SCUB: std_logic_vector(15 downto 0);
-   
+
+
+  signal hp_la_o:			std_logic_vector(15 downto 0); -- Output für HP-Logicanalysator
+  
    
   signal IO_Test_Port0: std_logic_vector(15 downto 0);
   signal IO_Test_Port1: std_logic_vector(15 downto 0);
@@ -589,6 +598,7 @@ port map  (
       AWin4               =>  AWin4,
       AWin5               =>  AWin5,
       AWin6               =>  AWin6,
+      AWin7               =>  AWin7,
       AW_Config           =>  AW_Config,
       AWOut_Reg1          =>  AWOut_Reg1,
       AWOut_Reg2          =>  AWOut_Reg2,
@@ -596,6 +606,7 @@ port map  (
       AWOut_Reg4          =>  AWOut_Reg4,
       AWOut_Reg5          =>  AWOut_Reg5,
       AWOut_Reg6          =>  AWOut_Reg6,
+      AWOut_Reg7          =>  AWOut_Reg7,
       AW_Config_Wr        =>  AW_Config_Wr, 
       AWOut_Reg1_Wr       =>  AWOut_Reg1_Wr,  
       AWOut_Reg2_Wr       =>  AWOut_Reg2_Wr,
@@ -603,6 +614,7 @@ port map  (
       AWOut_Reg4_Wr       =>  AWOut_Reg4_Wr,  
       AWOut_Reg5_Wr       =>  AWOut_Reg5_Wr,  
       AWOut_Reg6_Wr       =>  AWOut_Reg6_Wr,  
+      AWOut_Reg7_Wr       =>  AWOut_Reg7_Wr,  
       AWOut_Reg_rd_active =>  AWOut_Reg_rd_active,
       Dtack_to_SCUB       =>  aw_port1_Dtack,
       Data_to_SCUB        =>  aw_port1_data_to_SCUB
@@ -652,10 +664,10 @@ begin
     when X"F" => test_out := test_port_in_0;
     when others =>  test_out := (others => '0');
   end case;
-    A_TA <= test_out(15 downto 0);
+    hp_la_o <= test_out(15 downto 0);
 end process testport_mux;
 
-
+ 
 
 A_Tclk  <=   la_clk;  -- Clock fr Logikanalysator: = Sysclk x 2         
 
@@ -1255,6 +1267,7 @@ BEGIN
     AWin4(15 downto 0)  <=  x"0000";  -- AW-in-Register 4
     AWin5(15 downto 0)  <=  x"0000";  -- AW-in-Register 5
     AWin6(15 downto 0)  <=  x"0000";  -- AW-in-Register 6
+    AWin7(15 downto 0)  <=  x"0000";  -- AW-in-Register 7
     s_AW_ID(7 downto 0) <=  x"FF";    -- Anwender-Karten ID
     
     extension_cid_system <= 0;  -- extension card: cid_system
@@ -1303,12 +1316,17 @@ BEGIN
 										(PIO(147), PIO(148), PIO(145), PIO(146))    <=  AWOut_Reg5(3 downto 0) ;
 
 
-		--- Test der User-Pins zur VG-Leiste ---
+		--- Test der User-Pins zur VG-Leiste und HPLA1 (HP-Logicanalysator) ---
 
-      AWin6(15 downto 8)  <=   AWOut_Reg6(15 downto 8); --+   Input [15..8] = Copy der Output-Bits, da Testprog. nur 16 Bit Vergleich.
-      AWin6(7  downto 0)  <= 	(UIO(7),	UIO(6),	UIO(5),	UIO(4), UIO(3), UIO(2), UIO(1), UIO(0));
+		AWin6(15 downto 0)	<=		UIO(15 downto 0); 			-- User-Pins zur VG-Leiste als Input
+		A_TA(15 downto 0)		<=  	AWOut_Reg6(15 downto 0);	-- HPLA1 (HP-Logicanalysator) als Output
+		
 
-										(UIO(15), UIO(14), UIO(13), UIO(12), UIO(11), UIO(10), UIO(9), UIO(8)) <=  AWOut_Reg6(7 downto 0) ;
+		--- Test Codierschalter ---
+
+		AWin7(15 downto 4)	<=	(OTHERS => '0'); 			-- setze alle unbenutzten Bit's = 0
+		AWin7(3 downto 0)		<=	not A_SEL(3 downto 0); 	-- Lese Codierschalter (neg. Logic)
+
 
  
 
@@ -1339,7 +1357,10 @@ BEGIN
       PIO(27) <= s_nLED_User2_o;								-- LED2 = User 2  
       PIO(29) <= s_nLED_User3_o;								-- LED1 = User 3 
       PIO(31) <= local_clk_is_running and clk_blink;  -- LED0 (User-4) = int. Clock 
-    
+
+		A_TA	  <= hp_la_o; -- Output für HP-Logicanalysator
+
+		
     
   CASE s_AW_ID(7 downto 0) IS
   
