@@ -1,7 +1,7 @@
 TARGET		= scu_control
 DEVICE		= EP2AGX125
 FLASH		  = EPCS128
-RAM_SIZE	= 131072
+RAM_SIZE	= 49152
 PATHSCU   = ../../../top/gsi_scu
 LM32INC   = ../../../modules/lm32-include
 PSCU      = ../../../modules/scu_bus/housekeeping_sw
