@@ -294,7 +294,7 @@ architecture rtl of monster is
   constant c_topm_fpq       : natural := 5;
   
   -- required slaves
-  constant c_top_slaves     : natural := 20;
+  constant c_top_slaves     : natural := 21;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -316,6 +316,7 @@ architecture rtl of monster is
   constant c_tops_ow        : natural := 17;
   constant c_tops_scubirq   : natural := 18;
   constant c_tops_ssd1325   : natural := 19;
+  constant c_tops_vme_info  : natural := 20;
   
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -350,6 +351,7 @@ architecture rtl of monster is
     c_tops_scubirq   => f_sdb_auto_device(c_scu_irq_ctrl_sdb,               g_en_scubus),
     c_tops_mil       => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
     c_tops_mil_ctrl  => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_mil),
+    c_tops_vme_info  => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme),
     c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow));
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
@@ -880,7 +882,9 @@ begin
   
   vme_n : if not g_en_vme generate
     top_cbar_slave_i (c_topm_vme) <= cc_dummy_master_out;
+    top_cbar_master_i(c_tops_vme_info) <= cc_dummy_slave_out;
     irq_cbar_master_i(c_irqs_vme) <= cc_dummy_slave_out;
+
     vme_addr_data_b <= (others => 'Z');
   end generate;
   vme_y : if g_en_vme generate
@@ -929,6 +933,8 @@ begin
         master_i        => top_cbar_slave_o(c_topm_vme),
         slave_o         => irq_cbar_master_i(c_irqs_vme),
         slave_i         => irq_cbar_master_o(c_irqs_vme), 
+        info_slave_i    => top_cbar_master_o(c_tops_vme_info),
+        info_slave_o    => top_cbar_master_i(c_tops_vme_info),
         debug           => open);
     
     U_BUFFER_CTRL : VME_Buffer_ctrl
