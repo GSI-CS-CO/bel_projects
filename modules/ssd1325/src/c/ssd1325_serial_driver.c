@@ -1,7 +1,6 @@
 /* Includes */
 /* ==================================================================================================== */
 #include "ssd1325_serial_driver.h" /* Include SSD1325 Header */
-#include "mini_sdb.h"              /* GSI LM32 Includes (find_device_adr) */
 
 /* Lookup table for characters */
 /* ==================================================================================================== */
@@ -147,9 +146,71 @@ int32_t iSSD1325_GetParameter(e_SSD1325_RegisterArea eParameter, uint32_t *p_uVa
     }
   }
 #else
-#error "Error @ ssd1325_serial_driver.c: This path is not implemented yet!"
+  /* Helpers */
+  eb_status_t status;
+  eb_format_t format = EB_ADDR32|EB_DATA32;
+  eb_cycle_t cycle;
+  eb_data_t data;
+  
+  /* Switch depending on parameter */
+  switch(eParameter)
+  {
+    case eTxFifoDataRegister:
+    {
+      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
+      {
+        printf("Error: Failed to create cycle: %s\n", eb_status(status));
+        return(SSD1325_RETURN_FAILURE_CODE);
+      }
+      eb_cycle_read(cycle, (eb_address_t)(p_uSSD1325_Area), format, &data);     
+      eb_cycle_close(cycle);
+      break;
+    }
+    case eTxFifoStatusRegister:
+    {
+      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
+      {
+        printf("Error: Failed to create cycle: %s\n", eb_status(status));
+        return(SSD1325_RETURN_FAILURE_CODE);
+      }
+      eb_cycle_read(cycle, (eb_address_t)(p_uSSD1325_Area+1), format, &data);     
+      eb_cycle_close(cycle);
+      break;
+    }
+    case eTxFifoFillLevelRegister:
+    {
+      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
+      {
+        printf("Error: Failed to create cycle: %s\n", eb_status(status));
+        return(SSD1325_RETURN_FAILURE_CODE);
+      }
+      eb_cycle_read(cycle, (eb_address_t)(p_uSSD1325_Area+2), format, &data);   
+      eb_cycle_close(cycle);
+      break;
+    }
+    case eControlRegister:
+    {
+      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
+      {
+        printf("Error: Failed to create cycle: %s\n", eb_status(status));
+        return(SSD1325_RETURN_FAILURE_CODE);
+      }
+      eb_cycle_read(cycle, (eb_address_t)(p_uSSD1325_Area+3), format, &data); 
+      eb_cycle_close(cycle);
+      break;
+    }
+    default:
+    {
+      return(SSD1325_RETURN_FAILURE_CODE);
+      break;
+    }
+  }
+  
+  /* Convert eb_data_t to uint32_t */
+  *p_uValue = (uint32_t) data;
+  
 #endif
-
+  
   /* Operation done */
   return(SSD1325_RETURN_SUCCESS_CODE);
   
@@ -191,9 +252,66 @@ int32_t iSSD1325_SetParameter(e_SSD1325_RegisterArea eParameter, uint32_t uValue
     }
   }
 #else
-#error "Error @ ssd1325_serial_driver.c: This path is not implemented yet!"
+  /* Helpers */
+  eb_status_t status;
+  eb_format_t format = EB_ADDR32|EB_DATA32;
+  eb_cycle_t cycle;
+  
+  /* Switch depending on parameter */
+  switch(eParameter)
+  {
+    case eTxFifoDataRegister:
+    {
+      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
+      {
+        printf("Error: Failed to create cycle: %s\n", eb_status(status));
+        return(SSD1325_RETURN_FAILURE_CODE);
+      }
+      eb_cycle_write(cycle, (eb_address_t)(p_uSSD1325_Area), format, uValue);      
+      eb_cycle_close(cycle);
+      break;
+    }
+    case eTxFifoStatusRegister:
+    {
+      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
+      {
+        printf("Error: Failed to create cycle: %s\n", eb_status(status));
+        return(SSD1325_RETURN_FAILURE_CODE);
+      }
+      eb_cycle_write(cycle, (eb_address_t)(p_uSSD1325_Area+1), format, uValue);      
+      eb_cycle_close(cycle);
+      break;
+    }
+    case eTxFifoFillLevelRegister:
+    {
+      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
+      {
+        printf("Error: Failed to create cycle: %s\n", eb_status(status));
+        return(SSD1325_RETURN_FAILURE_CODE);
+      }
+      eb_cycle_write(cycle, (eb_address_t)(p_uSSD1325_Area+2), format, uValue);      
+      eb_cycle_close(cycle);
+      break;
+    }
+    case eControlRegister:
+    {
+      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
+      {
+        printf("Error: Failed to create cycle: %s\n", eb_status(status));
+        return(SSD1325_RETURN_FAILURE_CODE);
+      }
+      eb_cycle_write(cycle, (eb_address_t)(p_uSSD1325_Area+3), format, uValue);      
+      eb_cycle_close(cycle);
+      break;
+    }
+    default:
+    {
+      return(SSD1325_RETURN_FAILURE_CODE);
+      break;
+    }
+  }
 #endif
-
+  
   /* Operation done */
   return(SSD1325_RETURN_SUCCESS_CODE);
   
@@ -217,13 +335,31 @@ int32_t iSSD1325_AutoInitialize(void)
   else
   {
     /* Set control register zo zero */
-    p_sSSD1325_Area->uControlRegister = 0;
+    iSSD1325_SetParameter(eControlRegister, 0);
     
     /* Device was found and resetted */
     return(SSD1325_RETURN_SUCCESS_CODE);
   }
 #else
-#error "Error @ ssd1325_serial_driver.c: This path is not implemented yet!"
+  /* Helper */
+  struct sdb_device s_SSD1325Display;
+  int32_t iDevicesFound = 1;
+  
+  /* Get device */
+  eb_sdb_find_by_identity(s_DeviceName, SSD1325_GSI_VENDOR_ID, SSD1325_GSI_DEVICE_ID, &s_SSD1325Display, &iDevicesFound);
+  
+  /* Check if device was found */
+  if (!iDevicesFound)
+  { 
+    /* Device was not found */
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  else
+  {
+    /* Device was found */
+    p_uSSD1325_Area = (uint32_t*)(s_SSD1325Display.sdb_component.addr_first);
+    return(SSD1325_RETURN_SUCCESS_CODE);
+  }
 #endif
   
 }
@@ -238,12 +374,16 @@ int32_t iSSD1325_ManualInitialize(uint32_t uAreaAddress)
   p_sSSD1325_Area = (s_SSD1325_RegisterArea*) uAreaAddress;
     
   /* Set control register zo zero */
-  p_sSSD1325_Area->uControlRegister = 0;
+  iSSD1325_SetParameter(eControlRegister, 0);
       
   /* No plausibility check here */
   return(SSD1325_RETURN_SUCCESS_CODE);  
 #else
-#error "Error @ ssd1325_serial_driver.c: This path is not implemented yet!"
+  /* Set address directly */
+  //p_uSSD1325_Area = (uint32_t*) uAreaAddress;
+  
+  /* No plausibility check here */
+  return(SSD1325_RETURN_SUCCESS_CODE);
 #endif
   
 }
@@ -794,3 +934,161 @@ int32_t iSSD1325_DrawBitmap(uint32_t uStartPositionX, uint32_t uStartPositionY,
   return(SSD1325_RETURN_SUCCESS_CODE);     
 
 }
+
+#if SSD1325_TARGET_EMBEDDED==0
+/* Function vSSD1325_InitDisplay(...) */
+/* ==================================================================================================== */
+void vSSD1325_InitDisplay(eb_device_t device)
+{
+
+  /* Helper */
+  static bool fInitDone = false; /* For further use */
+  uint32_t uLineIterator = 0;
+  
+  /* Get the device */
+  s_DeviceName = device;
+  
+  /* Check if display was been initialized already */
+  if (fInitDone)
+  {
+    return;
+  }
+  else
+  {
+    /* Find device */
+    if (iSSD1325_AutoInitialize())
+    {
+      printf("Error: Can't find SDB record!\n");
+    }
+    
+    /* Reset the display */
+    if (iSSD1325_ResetDevice())
+    {
+      printf("Error: Display reset failed!\n");
+    }
+    
+    /* Configure the display */
+    if (iSSD1325_ConfigureScreen())
+    {
+      printf("Error: Display configuration failed!\n");
+    }
+    
+    /* Clear each line */
+    for (uLineIterator=0; uLineIterator<SSD1325_ROW_CHAR_COUNT; uLineIterator++)
+    {
+      if (iSSD1325_ClearLine(uLineIterator,0x00))
+      {
+        printf("Error: Clearing screen failed!\n");
+      }
+    }
+  
+    /* Reset done */
+    fInitDone = true;
+    
+  }
+  
+}
+
+/* Function vSSD1325_HostPutLocC(...) */
+/* ==================================================================================================== */
+void vSSD1325_HostPutLocC(eb_device_t device, char ascii, unsigned char row, unsigned char col)
+{
+  
+  /* Initialize the display */
+  vSSD1325_InitDisplay(device);
+  
+  /* Placeholder according to "simple-display" binary/application */
+  if (iSSD1325_PrintChar(ascii, col, row))
+  {
+    printf("Error: PrintChar(...) failed!\n");
+  }
+  
+}
+
+/* Function vSSD1325_HostPutC(...) */
+/* ==================================================================================================== */
+void vSSD1325_HostPutC(eb_device_t device, char ascii)
+{
+  
+  /* Initialize the display */
+  vSSD1325_InitDisplay(device);
+  
+  /* Placeholder according to "simple-display" binary/application */
+  if (iSSD1325_PrintChar(ascii, 0, 0))
+  {
+    printf("Error: PrintChar(...) failed!\n");
+  }
+
+}
+
+/* Function vSSD1325_HostPutS(...) */
+/* ==================================================================================================== */
+void vSSD1325_HostPutS (eb_device_t device, const char* str)
+{
+  
+  /* Helpers */
+  uint32_t uCurrentCol = 0;
+  uint32_t uCurrentRow = 0;
+  uint32_t uStringIterator = 0;
+  uint32_t uTotalStringLenght = 0;
+  char buffer[8*21];
+  
+  /* Initialize the display */
+  vSSD1325_InitDisplay(device);
+  
+  /* Get string length and copy string to local buffer */
+  while (*str != '\0')
+  {
+    str++; /* Increase pointer directly, because on position 0 comes junk ('\f') */
+    buffer[uTotalStringLenght] = *str; 
+    uTotalStringLenght++;
+  }
+  
+  /* Check if the string contains data */
+  if (uTotalStringLenght>0)
+  {
+  
+    /* Print each character to the correct position */
+    for(uStringIterator=0; uStringIterator<uTotalStringLenght-1; uStringIterator++)
+    {
+    
+      /* Print each character */
+      iSSD1325_PrintChar(buffer[uStringIterator], uCurrentCol, uCurrentRow);
+
+      /* Next position */
+      uCurrentCol++;
+      
+      /* Range check */
+      if (uCurrentCol>SSD1325_COL_CHAR_COUNT-1)
+      { 
+        /* Col correction */
+        uCurrentCol=0; 
+        uCurrentRow++;
+        /* Row correction */
+        if(uCurrentRow>SSD1325_ROW_CHAR_COUNT-1)
+        {
+          uCurrentRow=0;
+        }
+      }
+      
+    } /* Print each character to the correct position */
+  } /* if (uTotalStringLenght>0) */
+
+}
+
+/* Function vSSD1325_HostPutLine(...) */
+/* ==================================================================================================== */
+void vSSD1325_HostPutLine (eb_device_t device, const char *sPtr, unsigned char row)
+{
+  
+  /* Initialize the display */
+  vSSD1325_InitDisplay(device);
+  
+  /* Placeholder according to "simple-display" binary/application */
+  if (iSSD1325_PrintString(sPtr, 0, row))
+  {
+    printf("Error: PrintString(...) failed!\n");
+  }
+  
+}
+#endif

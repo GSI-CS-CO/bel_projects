@@ -6,6 +6,7 @@
 
 * Synopsis
 * Register Layout
+* Characters
 * Files
 
 ---
@@ -31,7 +32,7 @@ A wishbone interface with four registers is provided by this unit. For details s
 | Bit(s) | Reset      | R/W | Description                                                       | 
 |:-------|-----------:|:---:|:------------------------------------------------------------------| 
 | 31-8   |        0x0 |  R  | -Reserved-                                                        | 
-|  7-0   |        0x0 | R/W | Read: Get last byte which was been placed into the transmit FIFO. Write: Put a byte into the transmit FIFO. | 
+|  7-0   |        0x0 |  W  | Write: Put a byte into the transmit FIFO.                         | 
 
 ### TX FIFO STATUS REGISTER @ 0x04
 
@@ -55,13 +56,46 @@ A wishbone interface with four registers is provided by this unit. For details s
 |:-------|-----------:|:---:|:------------------------------------------------------------------| 
 | 31-6   |        0x0 |  R  | -Reserved-                                                        | 
 | 5      |        0x0 | R/W | Read: Get value. Write: Clear pending interrupt(0x1). |
-| 4      |        0x0 |  R  | Read: Get value. Write: Enable(0x1) or disable(0x0) interrupt. |
+| 4      |        0x0 | R/W | Read: Get value. Write: Enable(0x1) or disable(0x0) interrupt. |
 | 3      |        0x0 | R/W | Read: Get value. Write: Control slave select pin directly: 0x1 => High; 0x0 => Low. |
 | 2      |        0x0 | R/W | Read: Get value. Write: Enable(0x1) or disable(0x0) manual slave select driving. If this bit is set to 0x1, the slave select output will become the value of bit 3
 | 1      |        0x0 | R/W | Read: Get value. Write: Drive DC to high or low (depending on this bit value). |
 | 0      |        0x0 | R/W | Read: Get value. Write: Drive RST to high or low (depending on this bit value). |
 
 ---
+
+## Characters
+
+The driver (c-file) can display all ASCII characters from 0x20 to 0x7E. Each character is consists of a 8x6 pixel array.
+Every character is printed with this order:
+
+[00][08][16][24][32][40]<br>
+[01][09][17][25][33][41]<br>
+[02][10][18][26][34][42]<br>
+[03][11][19][27][35][43]<br>
+[04][12][20][28][36][44]<br>
+[05][13][21][29][37][45]<br>
+[06][14][22][30][38][46]<br>
+[07][15][23][31][39][47]<br>
+
+Example for character 'A':
+
+Byte array: {0x0f,0xf0,0xf0,0xff,0xf0,0xf0,0xf0,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00}
+
+Output:
+
+[ ][#][#][#][ ][ ]<br>
+[#][ ][ ][ ][#][ ]<br>
+[#][ ][ ][ ][#][ ]<br>
+[#][#][#][#][#][ ]<br>
+[#][ ][ ][ ][#][ ]<br>
+[#][ ][ ][ ][#][ ]<br>
+[#][ ][ ][ ][#][ ]<br>
+[ ][ ][ ][ ][ ][ ]<br>
+
+Each nibble (half byte) will set one pixel.
+
+--- 
 
 ## Files
 
