@@ -147,56 +147,33 @@ int32_t iSSD1325_GetParameter(e_SSD1325_RegisterArea eParameter, uint32_t *p_uVa
   }
 #else
   /* Helpers */
-  eb_status_t status;
-  eb_format_t format = EB_ADDR32|EB_DATA32;
-  eb_cycle_t cycle;
-  eb_data_t data;
+  eb_format_t s_EBFormat = EB_ADDR32|EB_DATA32;
+  eb_status_t s_EBStatus;
+  eb_cycle_t  s_EBCycle;
+  eb_data_t   s_EBData;
+  uint32_t    uRegisterOffset = 0;
   
   /* Switch depending on parameter */
   switch(eParameter)
   {
     case eTxFifoDataRegister:
     {
-      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
-      {
-        printf("Error: Failed to create cycle: %s\n", eb_status(status));
-        return(SSD1325_RETURN_FAILURE_CODE);
-      }
-      eb_cycle_read(cycle, (eb_address_t)(p_uSSD1325_Area), format, &data);     
-      eb_cycle_close(cycle);
+      uRegisterOffset = 0;
       break;
     }
     case eTxFifoStatusRegister:
     {
-      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
-      {
-        printf("Error: Failed to create cycle: %s\n", eb_status(status));
-        return(SSD1325_RETURN_FAILURE_CODE);
-      }
-      eb_cycle_read(cycle, (eb_address_t)(p_uSSD1325_Area+1), format, &data);     
-      eb_cycle_close(cycle);
+      uRegisterOffset = 1;
       break;
     }
     case eTxFifoFillLevelRegister:
     {
-      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
-      {
-        printf("Error: Failed to create cycle: %s\n", eb_status(status));
-        return(SSD1325_RETURN_FAILURE_CODE);
-      }
-      eb_cycle_read(cycle, (eb_address_t)(p_uSSD1325_Area+2), format, &data);   
-      eb_cycle_close(cycle);
+      uRegisterOffset = 2;
       break;
     }
     case eControlRegister:
     {
-      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
-      {
-        printf("Error: Failed to create cycle: %s\n", eb_status(status));
-        return(SSD1325_RETURN_FAILURE_CODE);
-      }
-      eb_cycle_read(cycle, (eb_address_t)(p_uSSD1325_Area+3), format, &data); 
-      eb_cycle_close(cycle);
+      uRegisterOffset = 3;
       break;
     }
     default:
@@ -206,9 +183,17 @@ int32_t iSSD1325_GetParameter(e_SSD1325_RegisterArea eParameter, uint32_t *p_uVa
     }
   }
   
-  /* Convert eb_data_t to uint32_t */
-  *p_uValue = (uint32_t) data;
+  /* Get data */
+  if ((s_EBStatus = eb_cycle_open(s_DeviceName, 0, eb_block, &s_EBCycle)) != EB_OK)
+  {
+    printf("Error: Failed to create cycle: %s\n", eb_status(s_EBStatus));
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  eb_cycle_read(s_EBCycle, (eb_address_t)(p_uSSD1325_Area+uRegisterOffset), s_EBFormat, &s_EBData); 
+  eb_cycle_close(s_EBCycle);
   
+  /* Convert eb_data_t to uint32_t */
+  *p_uValue = (uint32_t) s_EBData;
 #endif
   
   /* Operation done */
@@ -253,55 +238,32 @@ int32_t iSSD1325_SetParameter(e_SSD1325_RegisterArea eParameter, uint32_t uValue
   }
 #else
   /* Helpers */
-  eb_status_t status;
-  eb_format_t format = EB_ADDR32|EB_DATA32;
-  eb_cycle_t cycle;
+  eb_format_t s_EBFormat = EB_ADDR32|EB_DATA32;
+  eb_status_t s_EBStatus;
+  eb_cycle_t  s_EBCycle;
+  uint32_t    uRegisterOffset = 0;
   
   /* Switch depending on parameter */
   switch(eParameter)
   {
     case eTxFifoDataRegister:
     {
-      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
-      {
-        printf("Error: Failed to create cycle: %s\n", eb_status(status));
-        return(SSD1325_RETURN_FAILURE_CODE);
-      }
-      eb_cycle_write(cycle, (eb_address_t)(p_uSSD1325_Area), format, uValue);      
-      eb_cycle_close(cycle);
+      uRegisterOffset = 0;
       break;
     }
     case eTxFifoStatusRegister:
     {
-      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
-      {
-        printf("Error: Failed to create cycle: %s\n", eb_status(status));
-        return(SSD1325_RETURN_FAILURE_CODE);
-      }
-      eb_cycle_write(cycle, (eb_address_t)(p_uSSD1325_Area+1), format, uValue);      
-      eb_cycle_close(cycle);
+      uRegisterOffset = 1;
       break;
     }
     case eTxFifoFillLevelRegister:
     {
-      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
-      {
-        printf("Error: Failed to create cycle: %s\n", eb_status(status));
-        return(SSD1325_RETURN_FAILURE_CODE);
-      }
-      eb_cycle_write(cycle, (eb_address_t)(p_uSSD1325_Area+2), format, uValue);      
-      eb_cycle_close(cycle);
+      uRegisterOffset = 2;
       break;
     }
     case eControlRegister:
     {
-      if ((status = eb_cycle_open(s_DeviceName, 0, eb_block, &cycle)) != EB_OK)
-      {
-        printf("Error: Failed to create cycle: %s\n", eb_status(status));
-        return(SSD1325_RETURN_FAILURE_CODE);
-      }
-      eb_cycle_write(cycle, (eb_address_t)(p_uSSD1325_Area+3), format, uValue);      
-      eb_cycle_close(cycle);
+      uRegisterOffset = 3;
       break;
     }
     default:
@@ -310,6 +272,15 @@ int32_t iSSD1325_SetParameter(e_SSD1325_RegisterArea eParameter, uint32_t uValue
       break;
     }
   }
+  
+  /* Write data */
+  if ((s_EBStatus = eb_cycle_open(s_DeviceName, 0, eb_block, &s_EBCycle)) != EB_OK)
+  {
+    printf("Error: Failed to create cycle: %s\n", eb_status(s_EBStatus));
+    return(SSD1325_RETURN_FAILURE_CODE);
+  }
+  eb_cycle_write(s_EBCycle, (eb_address_t)(p_uSSD1325_Area+uRegisterOffset), s_EBFormat, uValue);      
+  eb_cycle_close(s_EBCycle);
 #endif
   
   /* Operation done */
@@ -380,7 +351,7 @@ int32_t iSSD1325_ManualInitialize(uint32_t uAreaAddress)
   return(SSD1325_RETURN_SUCCESS_CODE);  
 #else
   /* Set address directly */
-  //p_uSSD1325_Area = (uint32_t*) uAreaAddress;
+  p_uSSD1325_Area = (uint32_t*) uAreaAddress;
   
   /* No plausibility check here */
   return(SSD1325_RETURN_SUCCESS_CODE);
