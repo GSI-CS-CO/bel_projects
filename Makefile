@@ -112,6 +112,9 @@ scu3-clean::
 vetar::		firmware
 	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
 
+vetar2a::		firmware
+	$(MAKE) -C syn/gsi_vetar2a/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
+
 vetar-clean::
 	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
