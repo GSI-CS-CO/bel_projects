@@ -31,13 +31,13 @@ use work.wishbone_pkg.all;
 package monster_pkg is
 
   function f_sub1(x : natural) return natural;
+  function f_pick(x : boolean; y : integer; z : integer) return natural;
 
   component monster is
     generic(
       g_family      : string; -- "Arria II" or "Arria V"
       g_project     : string;
       g_flash_bits  : natural;
-      g_pll_skew    : natural := 0; -- (ref-tx) in ps
       g_ram_size    : natural := 131072;
       g_gpio_inout  : natural := 0;
       g_gpio_in     : natural := 0;
@@ -55,7 +55,6 @@ package monster_pkg is
       g_en_oled     : boolean := false;
       g_en_lcd      : boolean := false;
       g_en_user_ow  : boolean := false;  
-      g_en_power_test:  boolean := false;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4;
@@ -211,9 +210,7 @@ package monster_pkg is
       lcd_flm_o              : out   std_logic;
       lcd_in_o               : out   std_logic;
       -- g_en_user_ow
-      ow_io                  : inout std_logic_vector(1 downto 0);
-      -- g_en_power_test
-      power_test_pwm_o       : out    std_logic);
+      ow_io                  : inout std_logic_vector(1 downto 0));
   end component;
 
   constant c_iodir_sdb : t_sdb_device := (
@@ -248,6 +245,7 @@ package monster_pkg is
 end package;
 
 package body monster_pkg is
+
   function f_sub1(x : natural) return natural is
   begin
     if x = 0
@@ -255,4 +253,13 @@ package body monster_pkg is
     else return x-1;
     end if;
   end f_sub1;
+
+  function f_pick(x : boolean; y : integer; z : integer) return natural is
+  begin
+    if x
+    then return y;
+    else return z;
+    end if;
+  end f_pick;
+
 end monster_pkg;
