@@ -1,6 +1,6 @@
 /* Synopsis */
 /* ==================================================================================================== */
-/* Example for OneWire unit (read temperature sensor and write/read EEPROM
+/* Example for OneWire unit (read temperature sensor and write/read EEPROM)
  * Tested on pexaria5 
  */
 
@@ -28,7 +28,6 @@
 #define ONEWIRE_TEMPERATURE_ID 0x24000003b16f6c28
 #define ONEWIRE_EEPROM_ID      0xf70000005627fc43
 #define TIMEOUT                2500000
-#define FUNCTION_TEST          0
 
 /* External functions */
 /* ==================================================================================================== */
@@ -43,11 +42,9 @@ int usleep(useconds_t usec);
 int usleep(useconds_t usec)
 {
   /* TBD: Ensure right sleep time (using timer?) */
-#if FUNCTION_TEST==0  
   volatile uint32_t uCounter = 0;
   while (uCounter < usec*1000) { uCounter++; }
   return 0;
-#endif  
 }
 
 /* Function main(...) */
@@ -56,7 +53,6 @@ int main (void)
 {
   
   /* Helper */
-
   uint32_t uCounter = 0;            /* Counter for cyclic actions */
   uint32_t uEEPROMIterator = 0;     /* Iterator for EEPROM bytes */
   uint32_t uEEPROMPageIterator = 0; /* Iterator for EEPROM pages */
@@ -77,9 +73,7 @@ int main (void)
   uart_init_hw();
   
   /* TBD: Find the right one wire instance automatically */
-#if FUNCTION_TEST==0  
   pOneWire = (unsigned int*) 0x80000300;
-#endif
   
   /* Check if one wire was found */
   if(pOneWire==NULL)
