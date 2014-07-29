@@ -72,9 +72,6 @@ int main (void)
   /* Initialize uart unit */
   uart_init_hw();
   
-  /* TBD: Find the right one wire instance automatically */
-  pOneWire = (unsigned int*) 0x80000300;
-  
   /* Check if one wire was found */
   if(pOneWire==NULL)
   {
