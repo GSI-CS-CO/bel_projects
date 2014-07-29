@@ -115,6 +115,12 @@ vetar::		firmware
 vetar-clean::
 	$(MAKE) -C syn/gsi_vetar/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
+vetar2a::	firmware
+	$(MAKE) -C syn/gsi_vetar2a/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+vetar2a-clean::
+	$(MAKE) -C syn/gsi_vetar2a/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
 exploder::	firmware
 	$(MAKE) -C syn/gsi_exploder/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all
 

@@ -24,16 +24,19 @@ extern struct w1_bus wrpc_w1_bus;
 
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED board_id = -1;
-uint16_t SHARED board_temp = -1;
+uint32_t SHARED board_temp = -1;
 uint64_t SHARED ext_id = -1;
-uint16_t SHARED ext_temp = -1; 
+uint32_t SHARED ext_temp = -1; 
 uint64_t SHARED backplane_id = -1;
-uint16_t SHARED backplane_temp = -1;
+uint32_t SHARED backplane_temp = -1;
 uint32_t SHARED fg_magic_number = 0xdeadbeef;
 uint32_t SHARED fg_version = 0x1;
 struct circ_buffer SHARED fg_buffer[MAX_FG_DEVICES]; 
-struct scu_bus SHARED scub;
-struct fg_list SHARED fgs;
+uint32_t SHARED num_fgs_found;  // shows the number of found fgs on scu bus
+struct fg_status SHARED fgstat; // shows the status for choosen fg. switched by SWI function
+
+struct scu_bus scub;
+struct fg_list fgs;
 
 volatile unsigned short* scub_base;
 volatile unsigned int* BASE_ONEWIRE;
@@ -83,11 +86,32 @@ void show_msi()
   disp_put_c('\n');
 }
 
+void send_fg_param(int slave_nr, int fg_base) {
+  struct param_set pset;
+  int fg_number, add_freq_sel, step_cnt_sel;
+  
+  fg_number = (scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
+  //mprintf("fg_number called: %d\n", fg_number);
+  if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number)) {
+    cbRead((struct circ_buffer *)&fg_buffer, fg_number, &pset);
+    step_cnt_sel = pset.control & 0x7;
+    add_freq_sel = (pset.control & 0x38) >> 3;
+    scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] &= ~(0xfc00); // clear freq and step select /*FIXME*/
+    scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] |= (add_freq_sel << 13) | (step_cnt_sel << 10);
+    scub_base[(slave_nr << 16) + fg_base + FG_A] = pset.coeff_a;
+    scub_base[(slave_nr << 16) + fg_base + FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
+    scub_base[(slave_nr << 16) + fg_base + FG_B] = pset.coeff_b;
+    scub_base[(slave_nr << 16) + fg_base + FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
+    //scub_base[(slave_nr << 16) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
+    //scub_base[(slave_nr << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+    param_sent[fg_number]++;
+  }
+}
+
 void slave_irq_handler()
 {
   int j = 0;
   char buffer[12];
-  struct param_set pset;
   unsigned char slave_nr = global_msi.adr>>2 & 0xf;
   volatile unsigned short tmr_irq_cnts; 
   static unsigned short old_tmr_cnt[MAX_SCU_SLAVES];
@@ -95,7 +119,6 @@ void slave_irq_handler()
   unsigned int slave_acks = 0;
   struct fg_dev* fg1 = 0;
   struct fg_dev* fg2 = 0;
-  int fg_number;
 
 
   if (slave_nr < 0 || slave_nr > MAX_SCU_SLAVES) {
@@ -135,35 +158,13 @@ void slave_irq_handler()
   }
   
   if (slv_int_act_reg & (1<<15)) { //FG1 irq?
-    fg_number = (scub_base[(slave_nr << 16) + FG1_BASE + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
-    //mprintf("fg_number called: %d\n", fg_number);
-    if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number)) {
-      cbRead((struct circ_buffer *)&fg_buffer, fg_number, &pset);
-      scub_base[(slave_nr << 16) + FG1_BASE + FG_A] = pset.coeff_a;
-      scub_base[(slave_nr << 16) + FG1_BASE + FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
-      scub_base[(slave_nr << 16) + FG1_BASE + FG_B] = pset.coeff_b;
-      scub_base[(slave_nr << 16) + FG1_BASE + FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
-      //scub_base[(slave_nr << 16) + FG1_BASE + FG_STARTL] = pset.coeff_c & 0xffff;
-      //scub_base[(slave_nr << 16) + FG1_BASE + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
-      param_sent[fg_number]++;
-      slave_acks |= (1<<15); //ack FG1 irq
-    }
+    send_fg_param(slave_nr, FG1_BASE);
+    slave_acks |= (1<<15); //ack FG1 irq
   } 
  
   if (slv_int_act_reg & (1<<14)) { //FG2 irq?
-    fg_number = (scub_base[(slave_nr << 16) + FG2_BASE + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
-    //mprintf("fg_number called: %d\n", fg_number);
-    if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number)) {
-      cbRead((struct circ_buffer *)&fg_buffer, fg_number, &pset);
-      scub_base[(slave_nr << 16) + FG2_BASE + FG_A] = pset.coeff_a;
-      scub_base[(slave_nr << 16) + FG2_BASE + FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
-      scub_base[(slave_nr << 16) + FG2_BASE + FG_B] = pset.coeff_b;
-      scub_base[(slave_nr << 16) + FG2_BASE + FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
-      //scub_base[(slave_nr << 16) + FG2_BASE + FG_STARTL] = pset.coeff_c & 0xffff;
-      //scub_base[(slave_nr << 16) + FG2_BASE + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
-      param_sent[fg_number]++;
-      slave_acks |= (1<<14); //ack FG2 irq
-    }
+    send_fg_param(slave_nr, FG2_BASE);  
+    slave_acks |= (1<<14); //ack FG2 irq
   } 
 
   scub_base[(slave_nr << 16) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
@@ -219,6 +220,7 @@ void configure_fgs() {
   int i = 0, j = 0;
   int slot;
   struct param_set pset;
+  int add_freq_sel, step_cnt_sel;
   mprintf("configuring fgs.\n");
   while(scub.slaves[i].unique_id) { /* more slaves in list */
     /* actions per slave card */
@@ -244,19 +246,20 @@ void configure_fgs() {
   }
   i = 0;
   while(fgs.devs[i]) { 
-    //set virtual fg number Bit 9..4, set frequency Bit 15..13, set step count Bit 12..10
-    scub_base[(slot << 16) + fgs.devs[i]->offset + FG_CNTRL] |= (i << 4) | (5<<13) | (2<<10);
+    //set virtual fg number Bit 9..4
+    scub_base[(slot << 16) + fgs.devs[i]->offset + FG_CNTRL] |= (i << 4);
     //fetch parameter set from buffer
     if(!cbisEmpty((struct circ_buffer *)&fg_buffer, i)) {
       cbRead((struct circ_buffer *)&fg_buffer, i, &pset);
+      step_cnt_sel = pset.control & 0x7;
+      add_freq_sel = (pset.control & 0x38) >> 3;
+      scub_base[(slot << 16) + fgs.devs[i]->offset + FG_CNTRL] |= add_freq_sel << 13 | step_cnt_sel << 10;
       scub_base[(slot << 16) + fgs.devs[i]->offset + FG_A] = pset.coeff_a;
       scub_base[(slot << 16) + fgs.devs[i]->offset + FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
       scub_base[(slot << 16) + fgs.devs[i]->offset + FG_B] = pset.coeff_b;
       scub_base[(slot << 16) + fgs.devs[i]->offset + FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
-      //scub_base[(slot << 16) + fgs.devs[i]->offset + FG_STARTL] = pset.coeff_c & 0xffff;
-      //scub_base[(slot << 16) + fgs.devs[i]->offset + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
-      scub_base[(slot << 16) + fgs.devs[i]->offset + FG_STARTL] = 0;
-      scub_base[(slot << 16) + fgs.devs[i]->offset + FG_STARTH] = 0; // data written with high word
+      scub_base[(slot << 16) + fgs.devs[i]->offset + FG_STARTL] = pset.coeff_c & 0xffff;
+      scub_base[(slot << 16) + fgs.devs[i]->offset + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
       param_sent[i]++;
     }
     slot = fgs.devs[i]->slave->slot;
@@ -277,10 +280,11 @@ void reset_slaves() {
   }
 }
 
+/* scans for slaves and the for fgs */
 scan_bus() {
   int i=0, j=0;
   scan_scu_bus(&scub, backplane_id, scub_base);
-  scan_for_fgs(&scub, &fgs);
+  num_fgs_found = scan_for_fgs(&scub, &fgs);
   mprintf("ID: 0x%08x%08x\n", (int)(scub.unique_id >> 32), (int)scub.unique_id); 
   while(scub.slaves[i].unique_id) { /* more slaves in list */ 
       mprintf("slaves[%d] ID:  0x%08x%08x\n",i, (int)(scub.slaves[i].unique_id>>32), (int)scub.slaves[i].unique_id); 
@@ -294,7 +298,7 @@ scan_bus() {
       i++; 
   }
   i = 0;
-  mprintf("FGs found:\n");
+  mprintf("Found %d FGs:\n", num_fgs_found);
   while(fgs.devs[i]) {
     mprintf("fg[%d] slot: %d \n", i, fgs.devs[i]->slave->slot);
     i++;
@@ -333,8 +337,9 @@ void sw_irq_handler() {
       if (global_msi.msg >= 0 && global_msi.msg < MAX_FG_DEVICES) {
         if(!cbisEmpty((struct circ_buffer *)&fg_buffer, global_msi.msg)) {
           cbRead((struct circ_buffer *)&fg_buffer, global_msi.msg, &pset);
-          mprintf("read buffer[%d]: a 0x%x, l_a %d, b 0x%x, l_b %d, 0x%x\n",
-                   global_msi.msg, pset.coeff_a, (pset.control & 0xfc0) >> 6, pset.coeff_b, (pset.control & 0x1f000) >> 12, pset.coeff_c);
+          mprintf("read buffer[%d]: a %d, l_a %d, b %d, l_b %d, c %d, n %d\n",
+                   global_msi.msg, pset.coeff_a, (pset.control & 0x1f000) >> 12, pset.coeff_b,
+                   (pset.control & 0xfc0) >> 6, pset.coeff_c, (pset.control & 0x7));
         } else {
           mprintf("read buffer[%d]: buffer empty!\n", global_msi.msg);
         }
@@ -361,10 +366,10 @@ void init_msi() {
 }
 
 void init() {
-  uart_init_hw();
-  scan_bus();
-  init_buffers(&fg_buffer);
-  init_msi();
+  uart_init_hw();           //enables the uart for debug messages
+  scan_bus();               //scans for slave cards and fgs
+  init_buffers(&fg_buffer); //init the ring buffer
+  init_msi();               //enable the irqs
 } 
 
 int main(void) {
@@ -383,6 +388,8 @@ int main(void) {
 
   disp_reset();
   disp_put_c('\f');
+  
+  usleep(1500000); //wait for powerup of the slave cards
   init(); 
 
   mprintf("number of irq_endpoints found: %d\n", idx);

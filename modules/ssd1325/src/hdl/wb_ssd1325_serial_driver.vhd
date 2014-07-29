@@ -121,9 +121,6 @@ begin
   );  
   
   -- register bit layout
-  s_tx_fifo_data_reg(g_data_size-1 downto 8)       <= (others => '0');
-  s_tx_fifo_data_reg(7 downto 0)                   <= s_tx_fifo_data_in;
-  
   s_tx_fifo_status_reg(g_data_size-1 downto 3)     <= (others => '0');
   s_tx_fifo_status_reg(2 downto 0)                 <= s_irq & s_tx_fifo_empty & s_tx_fifo_full;
   
@@ -199,10 +196,13 @@ begin
       s_tx_fifo_write_en <= '0'; 
       -- process with normal flow 
     elsif (rising_edge(clk_sys_i)) then
-      -- generate ack and stall
-      s_ack <= slave_i.cyc and slave_i.stb;
-      s_stall <= '0';
-      
+      -- generate ack and others wishbone signals
+      s_ack       <= slave_i.cyc and slave_i.stb; -- and not(s_stall) -- (for fifo full check/if stall is wanted)
+      s_stall     <= '0';                         -- s_tx_fifo_full   -- (for fifo full check/...)
+      slave_o.int <= '0';
+      slave_o.err <= '0';
+      slave_o.rty <= '0';
+		
       -- check if a request is incoming   
       if (slave_i.stb='1' and slave_i.cyc='1') then
         -- evaluate address and write enable signals
@@ -213,25 +213,16 @@ begin
             if (slave_i.we='1') then
               s_tx_fifo_data_in  <= slave_i.dat(7 downto 0);
               s_tx_fifo_write_en <= '1';
-            else  
-              slave_o.dat        <= s_tx_fifo_data_reg; -- last written data
             end if;
+            slave_o.dat          <= c_wb_bus_read_error; -- this is no read address
             
           -- handle requests for tx status register 
           when c_address_tx_data_status_reg =>
-            if (slave_i.we='1') then
-              null; -- don't care
-            else  
-              slave_o.dat        <= s_tx_fifo_status_reg;
-            end if;
+            slave_o.dat          <= s_tx_fifo_status_reg; -- this is read only
             
           -- handle requests for tx fill level register
           when c_address_tx_fill_level_reg =>
-            if (slave_i.we='1') then
-              null; -- don't care
-            else  
-              slave_o.dat        <= s_tx_fifo_fill_level_reg;
-            end if;
+            slave_o.dat          <= s_tx_fifo_fill_level_reg; -- this is read only
             
           -- handle requests for tx control register
           when c_address_tx_control_reg =>
@@ -242,26 +233,22 @@ begin
               s_ss_state         <= slave_i.dat(3);
               s_irq_en           <= slave_i.dat(4);
               s_irq_clear        <= slave_i.dat(5);
-            else  
-              slave_o.dat        <= s_tx_control_reg;
             end if;
+            slave_o.dat          <= s_tx_control_reg; -- this is read only
             
           -- unknown access
           when others =>
-            if (slave_i.we='1') then
-              null; -- don't care
-            else
-              slave_o.dat        <= c_wb_bus_read_error; -- this is no write no read address
-            end if;
+            slave_o.dat          <= c_wb_bus_read_error; -- this is no write or read address
             
         end case; -- end address based switching
+     
       -- no cycle or strobe
       else
-        -- clean up
         s_tx_fifo_write_en <= '0';
         s_irq_clear        <= '0';
         slave_o.dat        <= (others => '0');
       end if; -- check for cycle and strobe
+    
     end if; -- check reset
   end process;
 

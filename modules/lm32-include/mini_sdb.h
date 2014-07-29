@@ -41,8 +41,6 @@
 #define WR_UART               0xe2d13d04
 #define SCU_BUS_MASTER        0x9602eb6f
 #define SCU_IRQ_CTRL          0x9602eb70
-#define WR_1Wire              0x779c5443
-
 
 #define SCU_BUS_MASTER        0x9602eb6f
 #define WR_1Wire              0x779c5443
@@ -63,64 +61,64 @@ volatile unsigned int* pUart;
 volatile unsigned int* BASE_UART;
 volatile unsigned int* pSharedRam;
 volatile unsigned int* pCluCB;
-
+volatile unsigned int* pOneWire;
 
 typedef struct pair64 {
-        unsigned int high;
-        unsigned int low;
+  unsigned int high;
+  unsigned int low;
 } pair64_t;
 
 struct sdb_empty {
-        char reserved[63];
-        unsigned char record_type;
+  char reserved[63];
+  unsigned char record_type;
 };
 
 struct sdb_product {
-        pair64_t vendor_id;
-        unsigned int device_id;
-        unsigned int version;
-        unsigned int date;
-        char name[19];
-        unsigned char record_type;
+  pair64_t vendor_id;
+  unsigned int device_id;
+  unsigned int version;
+  unsigned int date;
+  char name[19];
+  unsigned char record_type;
 };
 
 struct sdb_component {
-        pair64_t addr_first;
-        pair64_t addr_last;
-        struct sdb_product product;
+  pair64_t addr_first;
+  pair64_t addr_last;
+  struct sdb_product product;
 };
 
 struct sdb_device {
-        unsigned short abi_class;
-        unsigned char abi_ver_major;
-        unsigned char abi_ver_minor;
-        unsigned int bus_specific;
-        struct sdb_component sdb_component;
+  unsigned short abi_class;
+  unsigned char abi_ver_major;
+  unsigned char abi_ver_minor;
+  unsigned int bus_specific;
+  struct sdb_component sdb_component;
 };
 
 struct sdb_bridge {
-	pair64_t sdb_child;
-	struct sdb_component sdb_component;
+  pair64_t sdb_child;
+  struct sdb_component sdb_component;
 };
 
 struct SDB_INTERCONNECT {
-        unsigned int sdb_magic;
-        unsigned short sdb_records;
-        unsigned char sdb_version;
-        unsigned char sdb_bus_type;
-        struct sdb_component sdb_component;
+  unsigned int sdb_magic;
+  unsigned short sdb_records;
+  unsigned char sdb_version;
+  unsigned char sdb_bus_type;
+  struct sdb_component sdb_component;
 };
 
 typedef union sdb_record {
-        struct sdb_empty empty;
-        struct sdb_device device;
-        struct sdb_bridge bridge;
-        struct SDB_INTERCONNECT interconnect;
+  struct sdb_empty empty;
+  struct sdb_device device;
+  struct sdb_bridge bridge;
+  struct SDB_INTERCONNECT interconnect;
 } sdb_record_t;
 
 typedef struct sdb_location {
-        sdb_record_t* sdb;
-        unsigned int adr;
+  sdb_record_t* sdb;
+  unsigned int adr;
 } sdb_location;
 
 sdb_location*  find_device_multi(sdb_location *found_sdb, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId);
@@ -134,10 +132,6 @@ sdb_record_t*  getChild(sdb_location *loc);
 
 unsigned char *find_device(unsigned int devid); //DEPRECATED, USE find_device_adr INSTEAD!
 
-
-
-
-void discoverPeriphery();
-
+void discoverPeriphery(void);
 
 #endif

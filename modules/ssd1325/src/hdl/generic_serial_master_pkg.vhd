@@ -21,7 +21,6 @@ package generic_serial_master_pkg is
            mosi_o     : out std_logic;                           
            sclk_o     : out std_logic;
            ss_o       : out std_logic;
-           dc_o       : out std_logic;
            tx_start_i : in  std_logic;
            tx_done_o  : out std_logic;
            rx_read_o  : out std_logic

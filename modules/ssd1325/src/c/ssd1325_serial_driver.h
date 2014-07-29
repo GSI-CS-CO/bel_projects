@@ -1,11 +1,14 @@
 #ifndef SSD1325_SERIAL_DRIVER
 #define SSD1325_SERIAL_DRIVER
 
-/* C Standard Includes */
+/* Compile Options */
 /* ==================================================================================================== */
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
+#ifndef SSD1325_USE_LOWER_CHARS
+#define SSD1325_USE_LOWER_CHARS                                1 /* 1=Use all characters; 0=Use uppercase characters only (and save memory) */
+#endif
+#ifndef SSD1325_TARGET_EMBEDDED
+#define SSD1325_TARGET_EMBEDDED                                1 /* 1=Compile for embedded device; 0=Compile for Host (x86, ...) */
+#endif
 
 /* Defines (SSD1325 Manual) */
 /* ==================================================================================================== */
@@ -80,13 +83,25 @@
 #define SSD1325_REG_CONTROL_BIT_IRQ_ENABLE                     0x10
 #define SSD1325_REG_CONTROL_BIT_IRQ_CLEAR                      0x20
 
-/* Compile Options */
+/* C Standard Includes */
 /* ==================================================================================================== */
-#define SSD1325_USE_LOWER_CHARS                                1 /* 1=Use all characters; 0=Use uppercase characters only */
-#define SSD1325_TARGET_EMBEDDED                                1 /* 1=Compile for embedded device; 0=To be done */
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+
+/* Device Specific Includes */
+/* ==================================================================================================== */
+#if SSD1325_TARGET_EMBEDDED
+#include "mini_sdb.h"   /* GSI LM32 Includes (find_device_adr) */
+#else
+#include <etherbone.h>  /* Include Etherbone */
+#define SSD1325_GSI_VENDOR_ID 0x0000000000000651LL
+#define SSD1325_GSI_DEVICE_ID 0x55d1325d
+#endif 
 
 /* Structures */
 /* ==================================================================================================== */
+#if SSD1325_TARGET_EMBEDDED
 typedef struct
 {
   uint32_t uTxFifoDataRegister;
@@ -94,6 +109,7 @@ typedef struct
   uint32_t uTxFifoFillLevelRegister;
   uint32_t uControlRegister;
 } s_SSD1325_RegisterArea;
+#endif
 
 /* Enumerations */
 /* ==================================================================================================== */
@@ -107,8 +123,10 @@ typedef enum
 
 /* Globals */
 /* ==================================================================================================== */
+#if SSD1325_TARGET_EMBEDDED
 volatile s_SSD1325_RegisterArea* p_sSSD1325_Area;
-  
+#endif
+
 /* Prototypes */
 /* ==================================================================================================== */
 int32_t iSSD1325_GetParameter       (e_SSD1325_RegisterArea eParameter, uint32_t *p_uValue);
@@ -133,5 +151,17 @@ int32_t iSSD1325_DrawRectangle      (uint32_t uStartPositionX, uint32_t uStartPo
 int32_t iSSD1325_DrawBitmap         (uint32_t uStartPositionX, uint32_t uStartPositionY, 
                                      uint32_t uEndPositionX, uint32_t uEndPositionY, 
                                      int8_t a_iBitmap[]);
+
+#if SSD1325_TARGET_EMBEDDED==0  
+/* Wrappers (for host display functions -> see https://www-acc.gsi.de/svn/bel/timing/.../development) */
+/* ==================================================================================================== */
+eb_device_t s_DeviceName;
+volatile uint32_t* p_uSSD1325_Area;
+void vSSD1325_InitDisplay (eb_device_t device);
+void vSSD1325_HostPutLocC (eb_device_t device, char ascii, unsigned char row, unsigned char col);
+void vSSD1325_HostPutC    (eb_device_t device, char ascii);
+void vSSD1325_HostPutS    (eb_device_t device, const char* str);
+void vSSD1325_HostPutLine (eb_device_t device, const char *sPtr, unsigned char row);
+#endif
 
 #endif /* SSD1325_SERIAL_DRIVER */

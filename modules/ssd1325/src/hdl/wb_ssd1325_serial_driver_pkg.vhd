@@ -33,7 +33,7 @@ package wb_ssd1325_serial_driver_pkg is
       -- optional system interface
       ssd_irq_o  : out std_logic
   );    
-  end component;    
+  end component;
 
   constant c_ssd1325_sdb : t_sdb_device := (
     abi_class     => x"0000", -- undocumented device
@@ -43,7 +43,7 @@ package wb_ssd1325_serial_driver_pkg is
     wbd_width     => x"4", -- 32-bit port granularity
     sdb_component => (
     addr_first    => x"0000000000000000",
-    addr_last     => x"000000000000000f",
+    addr_last     => x"00000000000000ff",
     product => (
     vendor_id     => x"0000000000000651", -- GSI
     device_id     => x"55D1325D",
