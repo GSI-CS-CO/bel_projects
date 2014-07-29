@@ -256,8 +256,6 @@ architecture rtl of scu_control is
   signal s_lemo_leds    : std_logic_vector(2 downto 1);
   signal s_tled_sfp_grn : std_logic;
   signal s_tled_sfp_red : std_logic;
-  signal s_aled_sfp_grn : std_logic;
-  signal s_aled_sfp_red : std_logic;
   signal clk_ref      : std_logic;
   signal rstn_ref     : std_logic;
   
@@ -426,8 +424,8 @@ begin
   lemo_led        <= not s_lemo_leds;
   ntiming_sfp_grn <= not s_tled_sfp_grn;
   ntiming_sfp_red <= not s_tled_sfp_red;
-  naux_sfp_grn    <= not s_aled_sfp_grn;
-  naux_sfp_red    <= not s_aled_sfp_red;
+  naux_sfp_grn    <= 'Z';
+  naux_sfp_red    <= 'Z';
   
   -- Logic analyzer port (0,2,4,6,8,10 = OLED)
   -- Don't put debug clocks too close (makes display flicker)
