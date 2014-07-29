@@ -95,7 +95,7 @@ unsigned char *find_device(unsigned int devid)
   return (unsigned char *)find_device_adr(GSI, devid);
 }
 
-void discoverPeriphery()
+void discoverPeriphery(void)
 {
   sdb_location found_sdb[20];
   sdb_location found_sdb_w1[2];

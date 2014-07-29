@@ -132,6 +132,6 @@ sdb_record_t*  getChild(sdb_location *loc);
 
 unsigned char *find_device(unsigned int devid); //DEPRECATED, USE find_device_adr INSTEAD!
 
-void discoverPeriphery();
+void discoverPeriphery(void);
 
 #endif
