@@ -59,6 +59,7 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list) {
     i++;
   }
   list->devs[j] = 0;
+  return j; //return number of found fgs
 }
 
 void init_buffers(struct circ_buffer *buf) {
