@@ -123,6 +123,7 @@ void discoverPeriphery()
    pUart          = find_device_adr(CERN, WR_UART);
    BASE_UART      = pUart; //make WR happy ...
    
+   pOneWire       = find_device_adr(CERN, WR_1Wire);
    
 }
 

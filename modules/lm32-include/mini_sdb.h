@@ -63,7 +63,7 @@ volatile unsigned int* pUart;
 volatile unsigned int* BASE_UART;
 volatile unsigned int* pSharedRam;
 volatile unsigned int* pCluCB;
-
+volatile unsigned int* pOneWire;
 
 typedef struct pair64 {
         unsigned int high;
