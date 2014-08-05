@@ -7,95 +7,96 @@ use work.monster_pkg.all;
 
 entity vetar2a_top is
   port(
-    clk_20m_vcxo_i    : in std_logic; -- N3          --  20 MHz WR VCXO clock
-    clk_125m_pllref_i : in std_logic; -- AE15p AF15n -- 125 MHz WR PLL reference
-    clk_125m_local_i  : in std_logic; -- D14p  C14n  -- 125 MHz local oscillator (CKPLL_125P)
-    --clk_pll_o         : out std_logic;-- V24p  U24p  -- clock pll output
+    clk_20m_vcxo_i    : in std_logic; -- N3          --  20 MHz WR VCXO clock                   -- CHECKED
+    clk_125m_pllref_i : in std_logic; -- AE15p AF15n -- 125 MHz WR PLL reference                -- CHECKED
+    clk_125m_local_i  : in std_logic; -- D14p  C14n  -- 125 MHz local oscillator (CKPLL_125P)   -- CHECKED
+    --clk_pll_o         : out std_logic;-- V24p  U24p  -- clock pll output                      -- CHECKED: What to do with this clock?
         
     -----------------------------------------------------------------------
     -- OneWire 3.3V
     -----------------------------------------------------------------------
-    rom_data_io : inout std_logic; -- E3
+    rom_data_io : inout std_logic; -- E3                                                        -- CHECKED
     
     -----------------------------------------
     -- Timing SFPs 3.3v
     -----------------------------------------
-    sfp_ref_clk_i  : in    std_logic; -- AE27p AE28n
-    sfp_td_o       : out   std_logic; -- AE24p AF24n
-    sfp_rd_i       : in    std_logic; -- AG23p AH23n
-    sfp_tx_fault_i : in    std_logic; -- J4
-    sfp_los_i      : in    std_logic; -- J5
-    sfp_tx_dis_o   : out   std_logic; -- K9
-    sfp_mod0_i     : in    std_logic; -- K7
-    sfp_mod1_io    : inout std_logic; -- J8
-    sfp_mod2_io    : inout std_logic; -- K8
-    
+    sfp_ref_clk_i  : in    std_logic; -- AE27p AE28n                                            -- CHECKED
+    sfp_td_o       : out   std_logic; -- AE24p AF24n                                            -- CHECKED
+    sfp_rd_i       : in    std_logic; -- AG23p AH23n                                            -- CHECKED
+    sfp_tx_fault_i : in    std_logic; -- J4                                                     -- CHECKED
+    sfp_los_i      : in    std_logic; -- J5                                                     -- CHECKED
+    sfp_tx_dis_o   : out   std_logic; -- K9                                                     -- CHECKED
+    sfp_mod0_i     : in    std_logic; -- K7                                                     -- CHECKED
+    sfp_mod1_io    : inout std_logic; -- J8                                                     -- CHECKED
+    sfp_mod2_io    : inout std_logic; -- K8                                                     -- CHECKED
+
     ------------------------------------------------------------------------
     -- WR DAC signals 3.3V
     ------------------------------------------------------------------------
-    dac_sclk_o      : out std_logic; -- T1
-    dac_din_o       : out std_logic; -- P3
+    dac_sclk_o      : out std_logic; -- T1                                                      -- CHECKED
+    dac_din_o       : out std_logic; -- P3                                                      -- CHECKED
     ndac_cs_o       : out std_logic_vector(2 downto 1);
-    -- ndac_cs_o(1) -- AG1
-    -- ndac_cs_o(2) -- AF1
+    -- ndac_cs_o(1) -- AG1                                                                      -- CHECKED
+    -- ndac_cs_o(2) -- AF1                                                                      -- CHECKED
     
     -----------------------------------------
     -- Logic analyzer HPLA1 2.5V
     -----------------------------------------
     hpw_io : inout std_logic_vector(15 downto 0);
-    -- hpw_io( 0) -- AB16 
-    -- hpw_io( 1) -- AC17
-    -- hpw_io( 2) -- AC16
-    -- hpw_io( 3) -- AE17
-    -- hpw_io( 4) -- AF17
-    -- hpw_io( 5) -- AB17
-    -- hpw_io( 6) -- AD18
-    -- hpw_io( 7) -- AF19
-    -- hpw_io( 8) -- AF20
-    -- hpw_io( 9) -- AE19 
-    -- hpw_io(10) -- AE20
-    -- hpw_io(11) -- AE21
-    -- hpw_io(12) -- AC22
-    -- hpw_io(13) -- AE22
-    -- hpw_io(14) -- AC23
-    -- hpw_io(15) -- AC18
+    -- hpw_io( 0) -- AB16                                                                       -- CHECKED
+    -- hpw_io( 1) -- AC17                                                                       -- CHECKED
+    -- hpw_io( 2) -- AC16                                                                       -- CHECKED
+    -- hpw_io( 3) -- AE17                                                                       -- CHECKED
+    -- hpw_io( 4) -- AF17                                                                       -- CHECKED
+    -- hpw_io( 5) -- AB17                                                                       -- CHECKED
+    -- hpw_io( 6) -- AD18                                                                       -- CHECKED
+    -- hpw_io( 7) -- AF19                                                                       -- CHECKED
+    -- hpw_io( 8) -- AF20                                                                       -- CHECKED
+    -- hpw_io( 9) -- AE19                                                                       -- CHECKED
+    -- hpw_io(10) -- AE20                                                                       -- CHECKED
+    -- hpw_io(11) -- AE21                                                                       -- CHECKED
+    -- hpw_io(12) -- AC22                                                                       -- CHECKED
+    -- hpw_io(13) -- AE22                                                                       -- CHECKED
+    -- hpw_io(14) -- AC23                                                                       -- CHECKED
+    -- hpw_io(15) -- AC18                                                                       -- CHECKED
     
     -----------------------------------------
     -- LEDs on baseboard 2.5V
     -----------------------------------------
     -- CHANGE FOR LED_O
     leds_o : out std_logic_vector(15 downto 0);
-    -- leds_o(0) --      -- leds_o(1) -- -- AH15 - Y19
-    -- leds_o(2) --      -- leds_o(3) -- -- AH18 - AG18
-    -- leds_o(4) --      -- leds_o(5) -- -- AH19 - AG19
-    -- leds_o(6) --      -- leds_o(7) -- -- AD21 - AD22
-    -- leds_o(8) --      -- leds_o(9) -- -- AD23 - AD24
-    -- leds_o(10)--      -- leds_o(11)-- -- AC24 - AC21
-    -- leds_o(12)--      -- leds_o(13)-- -- Y20  - Y22
-    -- leds_o(14)--      -- leds_o(15)-- -- W21  - V23
+    -- leds_o(0) --      -- leds_o(1) -- -- AH15 - Y19                                          -- CHECKED: AH15=LED1, Y19=LED2 ... and so on
+    -- leds_o(2) --      -- leds_o(3) -- -- AH18 - AG18                                         -- CHECKED
+    -- leds_o(4) --      -- leds_o(5) -- -- AH19 - AG19                                         -- CHECKED
+    -- leds_o(6) --      -- leds_o(7) -- -- AD21 - AD22                                         -- CHECKED
+    -- leds_o(8) --      -- leds_o(9) -- -- AD23 - AD24                                         -- CHECKED
+    -- leds_o(10)--      -- leds_o(11)-- -- AC24 - AC21                                         -- CHECKED
+    -- leds_o(12)--      -- leds_o(13)-- -- Y20  - Y22                                          -- CHECKED
+    -- leds_o(14)--      -- leds_o(15)-- -- W21  - V23                                          -- CHECKED
 
     -----------------------------------------
     -- USB micro controller 3.3V
     -----------------------------------------
     --pres_o  is '0', it is by design 
-    sres_o    : out   std_logic; -- AB8 - active low reset#
-    slrdn_o   : out   std_logic; -- AC10 - read strobe
-    slwrn_o   : out   std_logic; -- AB9 - write strobe
-    speed_i   : in    std_logic; -- PA0 = AF8
-    shift_i   : in    std_logic; -- PA1 = AE8
-    sloen_o   : out   std_logic; -- PA2 = W11
-    ebcyc_i   : in    std_logic; -- PA3 = W12
-    fifoadr_o : out   std_logic_vector(1 downto 0); -- 0=PA4=AC12, 1=PA5=W13
-    pktendn_o : out   std_logic; -- PA6 = Y12
-    readyn_io : inout std_logic; -- PA7 = AD12
+    sres_o    : out   std_logic; -- AB8 - active low reset#                                     -- CHECKED
+    slrdn_o   : out   std_logic; -- AC10 - read strobe                                          -- CHECKED
+    slwrn_o   : out   std_logic; -- AB9 - write strobe                                          -- CHECKED
+    speed_i   : in    std_logic; -- PA0 = AF8                                                   -- CHECKED
+    shift_i   : in    std_logic; -- PA1 = AE8                                                   -- CHECKED
+    sloen_o   : out   std_logic; -- PA2 = W11                                                   -- CHECKED
+    ebcyc_i   : in    std_logic; -- PA3 = W12                                                   -- CHECKED
+    fifoadr_o : out   std_logic_vector(1 downto 0); -- 0=PA4=AC12, 1=PA5=W13                    -- CHECKED
+    pktendn_o : out   std_logic; -- PA6 = Y12                                                   -- CHECKED
+    readyn_io : inout std_logic; -- PA7 = AD12                                                  -- CHECKED
     fulln_i   : in    std_logic; -- CTL1 = AA9
     emptyn_i  : in    std_logic; -- CTL2 = AB10
     fd_io     : inout std_logic_vector(7 downto 0); -- FIFO bus
-                                                    -- AH2,AA10,AC6,AH3,    -- OK: AH2=7, AA10=6, AC6=5, AH3=4
-                                                    -- Y10,AD6,W10,Y1       -- OK: Y10=3, AD6=2, W10=1, Y11=0
+                                                    -- AH2,AA10,AC6,AH3,                        -- CHECKED: AH2=7, AA10=6, AC6=5, AH3=4
+                                                    -- Y10,AD6,W10,Y1                           -- CHECKED: Y10=3, AD6=2, W10=1, Y11=0
 
     -----------------------------------------------------------------------
     -- RAM
+	 -- CHECKED: Is this in use?
     -----------------------------------------------------------------------
 --    ram_gw	   :	in		std_logic;					      -- Synchronous Global Write Enable
 --    ram_bwe	   :	out	std_logic;							-- Synchronous Byte Write Enable
@@ -113,14 +114,14 @@ entity vetar2a_top is
     -- Display
     -----------------------------------------------------------------------	
    di_o    : out std_logic_vector(3 downto 0);
-    -- di[0] AH7-DIS0 DIN  shift register in ?????                  -- USE THIS   
+    -- di[0] AH7-DIS0 DIN  shift register in ?????                                              -- CHECKED: USE THIS   
     -- di[0] Y14-DIS0 DOUT shift register out?????
     -- di[1] AD7-DIS1 LP   latch pulse (end-of-40-bit-row)
     -- di[2] AH8-DIS2 FLM  first-line marker               
     -- di[3] AC7-DIS3 SCP  clock                              
 
     --di_i    : in std_logic;
-    -- di_i  AH7-DIS0 DIN  shift register in????
+    -- di_i  AH7-DIS0 DIN  shift register in????                                                -- CHECKED: USE THIS 
 
    color_o : out std_logic_vector(2 downto 0);
     -- color[0] AH4-BLU   Blue DON'T drive this pin fast, close to pll!!!
@@ -130,7 +131,8 @@ entity vetar2a_top is
     -----------------------------------------------------------------------
      -- VME bus
     -----------------------------------------------------------------------
-    vme_as_n_i          : in    std_logic;   -- M3               
+    -- CHECKED all VME IOs
+	 vme_as_n_i          : in    std_logic;   -- M3               
     vme_rst_n_i         : in    std_logic;   -- J1              
     vme_write_n_i       : in    std_logic;   -- M4               
     vme_am_i            : in    std_logic_vector(5 downto 0);    -- 5=V3, 4=Y1, 3=AA1, 2=AD1, 1=AE1, 0=Y4
@@ -139,7 +141,7 @@ entity vetar2a_top is
     vme_addr_data_b     : inout std_logic_vector(31 downto 0);   -- 31=L6, 30=M5, 29=P1,  28=R1,  27=M6, 26=N6, 25=T4,  24=U3
                                                                  -- 23=P6, 22=R6, 21=V1,  20=W1,  19=P5, 18=N4, 17=AB1, 16=AC1
                                                                  -- 15=T7, 14=T6, 13=AB3, 12=AB2, 11=U6, 10=V6, 9=AC3,  8=AC22
-                                                                -- 7=V7,  6=W6,  5=AB4,  4=AC4,  3=Y9,  2=W8,  1=AB7,  0=AA6
+                                                                 -- 7=V7,  6=W6,  5=AB4,  4=AC4,  3=Y9,  2=W8,  1=AB7,  0=AA6
     vme_iackin_n_i      : in    std_logic;   -- H1               
     vme_iackout_n_o     : out   std_logic;   -- E1               
     vme_iack_n_i        : in    std_logic;   -- K3               
@@ -155,10 +157,10 @@ entity vetar2a_top is
     -----------------------------------------
     -- LEMO on front panel NIM/TTL
     -----------------------------------------
-    lemo_i            : in std_logic;   -- K4
-    lemo_o            : out std_logic;  -- H4
+    lemo_i            : in std_logic;   -- K4 -- CHECKED: Called LEMIN1
+    lemo_o            : out std_logic;  -- H4 -- CHECKED: Called LEMOU1
     lemo_o_en_o       : out std_logic;  -- H3 -- TO BE CHECKED: H3=SELECT? (Page 2)
-    lemo_i_en_o       : out std_logic;  -- C1 -- TO BE CHECKED: C1=SHDN? (Page 2)
+    lemo_i_en_o       : out std_logic;  -- C1 -- TO BE CHECKED: C1=SHDN? (Page 2) -- leads to page8
 
     -----------------------------------------
     -- VETAR1DB2a ADD-ON Board 
@@ -166,52 +168,80 @@ entity vetar2a_top is
    
     -- LVDS
     lvds_in_i				: in  std_logic_vector(1 downto 0);
-    --lvds_in_i[0] PG1P12 5 G13             -- ! PG2P1 (Page1)
-    --lvds_in_i[1] PG1N12 7 F13             -- ! PG2N1 (Page1)
-
+    --lvds_in_i[0] PG1P12 5 G13             -- TO BE CHECKED: Schematic: PG2P1 (Page1) => PG2 5 -- CHECKED: DRX1(Page2)
+    --lvds_in_i[1] PG1N12 7 F13             -- TO BE CHECKED: Schematic: PG2N1 (Page1) => PG2 7 -- CHECKED: DRX1(Page2)
+	 
     lvds_out_o				: out std_logic_vector(1 downto 0);
-    --lvds_out_o[0] PG1P13 11  E12          -- ! PG2P2 (Page1)
-    --lvds_out_o[1] PG1N13 13  D12          -- ! PG2N2 (Page1)
+    --lvds_out_o[0] PG1P13 11  E12          -- TO BE CHECKED: Schematic: PG2P2 (Page1) -- CHECKED: LVDS_TR1 (Page2)
+    --lvds_out_o[1] PG1N13 13  D12          -- TO BE CHECKED: Schematic: PG2N2 (Page1) -- CHECKED: LVDS_TR1 (Page2)
+	 
+	 
+	 
+	 
 
+	 
+	 
+	 
+	 
+	 
+	 
     -- HDMI
     hdmi_o					: out std_logic_vector(1 downto 0);
 	 -- HDMI_O TO BE CHECKED!
-    -- hdmi_o[0] U24  wr_clkoutp-36 V24 wr_clockoutn-38           -- ! U24=WR_CLKOUTn V24=CLKOUTp (Page2)
-    -- hdmi_o[1] F9   PG1P4-97      F8  PG1N4-99                  -- ! F9 = PG2P16 (Page1)
+    -- hdmi_o[0] U24  wr_clkoutp-36 V24 wr_clockoutn-38           -- TO BE CHECKED: U24=WR_CLKOUTn V24=CLKOUTp (Page2)
+    -- hdmi_o[1] F9   PG1P4-97      F8  PG1N4-99                  -- TO BE CHECKED: Schematic: F9 = PG2P16 (Page1)
 	 
 	 -- original
 	 -- hdmi_o[0] => F10=PG2P15 => 91(PG2)              E10(n)=PG2N15 => 93(PG2)
 	 -- hdmi_o[1] => F9=PG2P16  => 97(PG2)              F8(n)=PG2N16  => 99(PG2)
 	 
+	 
     hdmi_i					: in  std_logic_vector(1 downto 0);
 	 -- HDMI_I TO BE CHECKED!
-    -- hdmi_i[0]    F10  PG1P5-91   E10  PG1N5-93                 -- ! F10 = PG2P15 (Page1)
-    -- hdmi_i[1]    B3   PG1P6-85   A3   PG1N6-87                 -- ! B3 = PG2P14 (Page1)
+    -- hdmi_i[0]    F10  PG1P5-91   E10  PG1N5-93                 -- TO BE CHECKED: Schematic: F10 = PG2P15 (Page1) PG2@91
+    -- hdmi_i[1]    B3   PG1P6-85   A3   PG1N6-87                 -- TO BE CHECKED: Schematic: B3 = PG2P14 (Page1)  PG2@85
+	                                                               -- TO BE CHECKED: E10=PG2N15 => PG2@93  => ADDON-BOARD: PG1N5
+																						-- TO BE CHECKED: A3=PG2N14  => PG2@87  => ADDON-BOARD: PG1N6
 	 
 	 
 	 -- original
-	 -- Everything on E9
+	 -- Everything connected to E9?
+	 
+	 
+	 
+	 
 	 
 	 
 	 
    
     -- NIM/TTL LEMOs 1 and 2
     lemo_nim_ttl_i		: in  std_logic_vector(1  downto 0);
-    -- lemo_nim_ttl_i[0] 5-PG1P1 E6 DON'T DRIVE FAST, CLOSE TO PLL!!
-    -- lemo_nim_ttl_i[1] 7-PG1N1 D5 DON'T DRIVE FAST, CLOSE TO PLL!!
+    -- lemo_nim_ttl_i[0] 5-PG1P1 E6 DON'T DRIVE FAST, CLOSE TO PLL!!          -- CHECKED: E6
+    -- lemo_nim_ttl_i[1] 7-PG1N1 D5 DON'T DRIVE FAST, CLOSE TO PLL!!          -- CHECKED: D5
 
     -- Only Output LEMOs 3-5
     lemo_addOn_o	    : out std_logic_vector(2 downto 0);
-    -- lemo_addOn_o[0] PG1P9  - 55 Y18 
-    -- lemo_addOn_o[1] PG1N9  - 57 AA19
-    -- lemo_addOn_o[2] PG1P10 - 61 AA15
+    -- lemo_addOn_o[0] PG1P9  - 55 Y18                                        -- CHECKED
+    -- lemo_addOn_o[1] PG1N9  - 57 AA19                                       -- CHECKED
+    -- lemo_addOn_o[2] PG1P10 - 61 AA15                                       -- CHECKED
     
    lemo_addOn_eo_o  : out std_logic;
-   -- lemo_eo_o   LEN - 47 G11                                    -- ! To be checked: G11=PG1P8? 
+   -- lemo_eo_o   LEN - 47 G11                                                -- TO BE CHECKED: G11=PG1P8?  => PG1=>47 ADDON-BOARD: LEN
+	                                                                           -- CHECKED: Addon-Board => Used as output enable for
+																										-- LEMO3(DRO1), LEMO4(DRO2), LEMO5(DRO3)
+																										-- DROA1, DROA2, DROA3
 
     -- I/O LEMOs 6-8
-    lemo_addOn_io_o  : out std_logic_vector(2 downto 0);
-    lemo_addOn_io_i  : in  std_logic_vector(2 downto 0);
+    lemo_addOn_io_o  : out std_logic_vector(2 downto 0);                      -- TO BE CHECKED: Where to connect this?
+	 
+	 
+	 
+	 
+																										
+	 
+	 
+	 
+    lemo_addOn_io_i  : in  std_logic_vector(2 downto 0);                      -- TO BE CHECKED: There are no assignments for there pins
     -- lemo_addOn_io_X[0]  output P_LVDS_5/N_LVDS_5 11/13 - A5/A4               -- ! To be checked: A5=PG1P2, A4=PG1N2
     --                     input  P_LVDS_6/N_LVDS_6 17/19 - D10/C10             -- ! To be checked: D10=PG1P3, C10=PG1N3
     
@@ -220,29 +250,40 @@ entity vetar2a_top is
     
     -- lemo_addOn_io_X[2]  output P_LVDS_9/N_LVDS_9 35/37 - K11/J10             -- ! To be checked: K11=PG1P6, J10=PG1N6
     --                     input  P_LVDS_10/N_LVDS_10 41/43 - J12/J11           -- ! To be checked: J12=PG1P7, J11=PG1N7
+	 
+	 
+	 
+	 
     
-    lemo_addOn_term_o  : out std_logic_vector(2 downto 0) := (others => 'Z');
-    -- lemo_addOn_term_o  TERMEN1/TERMEN2/TERMEN3 67/69/73 Y16/AA16/AH16        -- ! To be checked: Y16=PG1P11, AA16=PG1N11, AH16=PG1P12
-    lemo_addOn_oen_o   : out std_logic_vector(2 downto 0) := (others => 'Z');
-    -- lemo_addOn_eo_o   TTLEN1/TTLEN2/TTLEN3 75/79/81  AH17/AE18/AF18          -- ! To be checked: AH17=PG1N12, AE18=PG1P13, AF18=PG1N13
-
+    lemo_addOn_term_o  : out std_logic_vector(2 downto 0) := (others => 'Z');   -- CHECKED
+    -- lemo_addOn_term_o  TERMEN1/TERMEN2/TERMEN3 67/69/73 Y16/AA16/AH16        -- Y16=PG1P11(PG1-67=TERMEN1), 
+	                                                                             -- AA16=PG1N11(PG1-69=TERMEN2), 
+																										  -- AH16=PG1P12(PG1-73=TERMEN3)
+  
+	 lemo_addOn_oen_o   : out std_logic_vector(2 downto 0) := (others => 'Z');   -- CHECKED
+    -- lemo_addOn_eo_o   TTLEN1/TTLEN2/TTLEN3 75/79/81  AH17/AE18/AF18          -- AH17=PG1N12(PG1-75=TTLEN1), 
+	                                                                             -- AE18=PG1P13(PG1-79=TTLEN3), 
+																										  -- AF18=PG1N13(PG1-81=TTLEN5)
     -- ROM 
     rom_addOn_io  : inout std_logic := 'Z';
-    --rom_add_on_io  ROM_DATA-37 B9                     -- ! PG2N6?
-
+    --rom_add_on_io  ROM_DATA-37 B9                                             -- CHECKED
+	 
     -- LEDS
+	 -- CHECKED
     leds_lemo_addOn_o	: out std_logic_vector(2 downto 0);
-    -- leds_lemo_addOn_o[0] E7  lemo_lemo_addOn_o[1] D7 lemo_lemo_addOn_o[2] C7       -- e7=PG2P9, d7=PG2N9, c7=PG2P10
-    -- leds_lemo_addOn_o[2 downto 0] DON'T DRIVE FAST, CLOSE TO PLL!!
+    -- leds_lemo_addOn_o[0] E7  lemo_lemo_addOn_o[1] D7 lemo_lemo_addOn_o[2] C7       -- e7=PG2P9(PG2-55), d7=PG2N9(PG2-57), c7=PG2P10(PG2-61)
+    -- leds_lemo_addOn_o[2 downto 0] DON'T DRIVE FAST, CLOSE TO PLL!!                 -- LED1               LED2               LED3
 
     leds_lemo_io_on_o	: out std_logic_vector(2 downto 0);
-    -- leds_lemo_io_on_o[2] C6  leds_lemo_io_on_o[1] B6 leds_lemo_io_on_o[2] A6       -- c6=PG2N10, b6=PG2P11, a6=PG2N11
-    
+    -- leds_lemo_io_on_o[2] C6  leds_lemo_io_on_o[1] B6 leds_lemo_io_on_o[2] A6       -- c6=PG2N10,(PG2-63) b6=PG2P11(PG2-67), a6=PG2N11(PG2-69)
+                                                                                      -- LED4(green)        LED5(orange)       LED6(green)
+	 
     leds_lemo_io_off_o	: out std_logic_vector(2 downto 0);
-    -- leds_lemo_io_off_o[2] D6 leds_lemo_io_off_o[1] C5  leds_lemo_io_off_o[0] D4    -- d6=PG2P12, c5=PG2N12,  PG2P13
-    
+    -- leds_lemo_io_off_o[2] D6 leds_lemo_io_off_o[1] C5  leds_lemo_io_off_o[0] D4    -- d6=PG2P12(PG2-73), c5=PG2N12(PG2-75),  PG2P13(PG2-79)
+                                                                                      -- LED7(orange)       LED8(green)         LED9(orange)     
     led_lemo_term_o     : out std_logic);
-    -- led_lemo_term_o C4                                                             -- c4=PG2N13 
+    -- led_lemo_term_o C4                                                             -- c4=PG2N13 PG2@81 => TTLEN3
+	                                                                                   -- Connected to TR5, TRA5 ?
 
 end vetar2a_top;
 
