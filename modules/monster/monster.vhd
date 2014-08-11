@@ -52,6 +52,7 @@ use work.VME_Buffer_pack.all;
 use work.wb_mil_scu_pkg.all;
 use work.wr_serialtimestamp_pkg.all;
 use work.wb_ssd1325_serial_driver_pkg.all;
+use work.fg_quad_pkg.all;
 
 entity monster is
   generic(
@@ -74,8 +75,9 @@ entity monster is
     g_en_mil               : boolean;
     g_en_oled              : boolean;
     g_en_lcd               : boolean;
-	 g_en_ssd1325           : boolean;
+    g_en_ssd1325           : boolean;
     g_en_user_ow           : boolean;
+    g_en_fg                : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -247,13 +249,14 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   -- MSI IRQ Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
-  constant c_irq_masters : natural := 6;
+  constant c_irq_masters : natural := 7;
   constant c_irqm_top    : natural := 0;
   constant c_irqm_eca    : natural := 1;
   constant c_irqm_aq     : natural := 2;
   constant c_irqm_scubus : natural := 3;
   constant c_irqm_tlu    : natural := 4;
   constant c_irqm_mil    : natural := 5;
+  constant c_irqm_fg     : natural := 6;
   
   constant c_irq_slaves     : natural := 3;
   constant c_irqs_lm32      : natural := 0;
@@ -285,16 +288,17 @@ architecture rtl of monster is
   -- GSI Top Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
   
-  constant c_top_masters    : natural := 6;
+  constant c_top_masters    : natural := 7;
   constant c_topm_ebs       : natural := 0;
   constant c_topm_lm32      : natural := 1;
   constant c_topm_pcie      : natural := 2;
   constant c_topm_vme       : natural := 3;
   constant c_topm_usb       : natural := 4;
   constant c_topm_fpq       : natural := 5;
+  constant c_topm_fg        : natural := 6;
   
   -- required slaves
-  constant c_top_slaves     : natural := 21;
+  constant c_top_slaves     : natural := 23;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -317,6 +321,8 @@ architecture rtl of monster is
   constant c_tops_scubirq   : natural := 18;
   constant c_tops_ssd1325   : natural := 19;
   constant c_tops_vme_info  : natural := 20;
+  constant c_tops_fg        : natural := 21;
+  constant c_tops_fgirq     : natural := 22;
   
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -352,7 +358,9 @@ architecture rtl of monster is
     c_tops_mil       => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
     c_tops_mil_ctrl  => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_mil),
     c_tops_vme_info  => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme),
-    c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow));
+    c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow),
+    c_tops_fg        => f_sdb_auto_device(c_wb_fg_sdb,                      g_en_fg),
+    c_tops_fgirq     => f_sdb_auto_device(c_fg_irq_ctrl_sdb,                g_en_fg));
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_top_layout_req);
@@ -1589,7 +1597,38 @@ begin
         owr_i       => ow_io
         );
   end generate;
-
+  
+  
+  -- fg quad with wb interface, special solution for ring RF
+  fg_n  : if not g_en_fg generate
+    top_cbar_master_i(c_tops_fg) <= cc_dummy_slave_out;
+  end generate;
+  fg_y  : if g_en_fg generate
+    fg_quad: wb_fg_quad
+      generic map (
+        Clk_in_Hz => 62_500_000)
+      port map (
+        clk_i   => clk_sys,
+        rst_n_i => rstn_sys,
+        
+        -- slave wb port to fg
+        fg_slave_i => top_cbar_master_o(c_tops_fg),
+        fg_slave_o => top_cbar_master_i(c_tops_fg),
+        
+        -- master interface for output from fg to the top crossbar
+        fg_mst_i => top_cbar_slave_o(c_topm_fg),
+        fg_mst_o => top_cbar_slave_i(c_topm_fg),
+        
+        -- control interface for msi to top crossbar
+        ctrl_irq_i => top_cbar_master_o(c_tops_fgirq),
+        ctrl_irq_o => top_cbar_master_i(c_tops_fgirq),
+        
+        -- master interface to irq crossbar
+        irq_mst_i => irq_cbar_slave_o(c_irqm_fg),
+        irq_mst_o => irq_cbar_slave_i(c_irqm_fg));
+      
+  end generate;
+ 
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------
   

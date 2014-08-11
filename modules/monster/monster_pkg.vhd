@@ -55,7 +55,8 @@ package monster_pkg is
       g_en_oled     : boolean := false;
       g_en_lcd      : boolean := false;
       g_en_ssd1325  : boolean := false;
-      g_en_user_ow  : boolean := false;  
+      g_en_user_ow  : boolean := false;
+      g_en_fg       : boolean := false;  
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4;

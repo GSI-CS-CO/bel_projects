@@ -3,6 +3,7 @@ use IEEE.STD_LOGIC_1164.all;
 use ieee.numeric_std.all;
 
 library work;
+use work.wishbone_pkg.all;
 
 package fg_quad_pkg is
 
@@ -57,5 +58,62 @@ component fg_quad_scu_bus is
     sw_strobe:          out   std_logic 
     );
 end component fg_quad_scu_bus;
+
+component wb_fg_quad is
+  generic (
+            Clk_in_hz   : integer := 62_500_000);
+  port (
+        clk_i         : std_logic;
+        rst_n_i       : std_logic;
+
+        -- slave wb port to fg_quad
+        fg_slave_i    : in t_wishbone_slave_in;
+        fg_slave_o    : out t_wishbone_slave_out;
+
+        -- master interface for output from fg to the scu_bus
+        fg_mst_i      : in t_wishbone_master_in;
+        fg_mst_o      : out t_wishbone_master_out;
+
+        -- control interface for msi generator
+        ctrl_irq_i    : in t_wishbone_slave_in;
+        ctrl_irq_o    : out t_wishbone_slave_out;
+
+        -- master interface for msi generator
+        irq_mst_i     : in t_wishbone_master_in;
+        irq_mst_o     : out t_wishbone_master_out);
+end component wb_fg_quad;
+
+constant c_wb_fg_sdb : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"4", -- 32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"00000000000000ff",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"863e07f0",
+    version       => x"00000001",
+    date          => x"20140730",
+    name          => "WB_FG_QUAD         ")));
+
+constant c_fg_irq_ctrl_sdb : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"00000000000000ff",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"9602eb71",
+    version       => x"00000001",
+    date          => x"20140730",
+    name          => "IRQ_MASTER_CTRL    ")));
+
 
 end package fg_quad_pkg;

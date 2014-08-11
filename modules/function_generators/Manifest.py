@@ -4,4 +4,5 @@ files = [
   "fg_quad/fg_quad_pkg.vhd",
   "fg_quad/fg_quad_scu_bus.vhd",
   "fg_quad/fg_quad_datapath.vhd",
+  "fg_quad/wb_fg_quad.vhd",
 ]
