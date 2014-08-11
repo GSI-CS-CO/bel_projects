@@ -28,6 +28,7 @@ entity fg_quad_scu_bus is
     brdcst_o:           out   std_logic;                      -- broadcast start out for triggering another fg
     -- fg_quad
     dreq:               out   std_logic;
+      
     sw_out:             out   std_logic_vector(31 downto 0);  -- function generator output
     sw_strobe:          out   std_logic
     );

@@ -47,7 +47,7 @@ signal step_sel_reg:  std_logic_vector(2 downto 0);
 
 -- signals statemachine
 signal s_inc_quad:      std_logic;
-signal s_inc_lin:       std_logic;
+--signal s_inc_lin:       std_logic;
 signal s_add_lin_quad:  std_logic;
 
 type cntrl_type is (idle, load, quad_inc, lin_inc, addXQ, stopped);
@@ -144,7 +144,7 @@ end process;
 
 
   -- downcounter for frequency division
-  freq_cnt: process(clk, nrst, sync_rst, freq_sel, sync_start)
+  freq_cnt: process(clk, nrst, sync_rst, freq_sel, sync_start, freq_sel_reg)
   begin
     -- important for synced start 
     --if nrst = '0' or s_reset_freq_cnt = '1' then
@@ -174,7 +174,7 @@ end process;
       
     elsif rising_edge(clk) then
       s_inc_quad      <= '0';
-      s_inc_lin       <= '0';
+      --s_inc_lin       <= '0';
       s_add_lin_quad  <= '0';
       s_freq_cnt_en   <= '1';
       s_stopped       <= '0';
@@ -218,7 +218,7 @@ end process;
           
         when lin_inc =>
           s_running <= '1';
-          s_inc_lin <= '1'; 
+          --s_inc_lin <= '1'; 
           control_state <= addXQ;
         
         when addXQ =>
