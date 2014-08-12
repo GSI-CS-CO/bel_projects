@@ -96,7 +96,7 @@ void send_fg_param(int slave_nr, int fg_base) {
     cbRead((struct circ_buffer *)&fg_buffer, fg_number, &pset);
     step_cnt_sel = pset.control & 0x7;
     add_freq_sel = (pset.control & 0x38) >> 3;
-    scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] &= ~(0xfc00); // clear freq and step select /*FIXME*/
+    scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] &= ~(0xfc00); // clear freq and step select
     scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] |= (add_freq_sel << 13) | (step_cnt_sel << 10);
     scub_base[(slave_nr << 16) + fg_base + FG_A] = pset.coeff_a;
     scub_base[(slave_nr << 16) + fg_base + FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
@@ -170,7 +170,8 @@ void slave_irq_handler()
   scub_base[(slave_nr << 16) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
 }
 
-
+void wb_fg_irq_handler() {
+}
 
 void enable_msi_irqs() {
   int i;
@@ -359,8 +360,9 @@ void sw_irq_handler() {
 void init_msi() {
   isr_table_clr();
   isr_ptr_table[1] = &slave_irq_handler;
-  isr_ptr_table[2] = &sw_irq_handler;  
-  irq_set_mask(0x06);
+  isr_ptr_table[2] = &sw_irq_handler;
+  isr_ptr_table[3] = &wb_fg_irq_handler;  
+  irq_set_mask(0x07);
   irq_enable();
   mprintf("MSI IRQs configured.\n");
 }
