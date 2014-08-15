@@ -10,7 +10,7 @@ entity vetar2a_top is
     clk_20m_vcxo_i    : in std_logic; -- N3          --  20 MHz WR VCXO clock                   -- CHECKED
     clk_125m_pllref_i : in std_logic; -- AE15p AF15n -- 125 MHz WR PLL reference                -- CHECKED
     clk_125m_local_i  : in std_logic; -- D14p  C14n  -- 125 MHz local oscillator (CKPLL_125P)   -- CHECKED
-    --clk_pll_o         : out std_logic;-- V24p  U24p  -- clock pll output                      -- CHECKED: What to do with this clock?
+    clk_pll_o         : out std_logic;-- V24p  U24p  -- clock pll output (lvds_buf3)            -- CHECKED
         
     -----------------------------------------------------------------------
     -- OneWire 3.3V
@@ -175,45 +175,16 @@ entity vetar2a_top is
     --lvds_out_o[0] PG1P13 11  E12          -- TO BE CHECKED: Schematic: PG2P2 (Page1) -- CHECKED: LVDS_TR1 (Page2)
     --lvds_out_o[1] PG1N13 13  D12          -- TO BE CHECKED: Schematic: PG2N2 (Page1) -- CHECKED: LVDS_TR1 (Page2)
 	 
-	 
-	 
-	 
-
-	 
-	 
-	 
-	 
-	 
-	 
     -- HDMI
-    hdmi_o					: out std_logic_vector(1 downto 0);
-	 -- HDMI_O TO BE CHECKED!
-    -- hdmi_o[0] U24  wr_clkoutp-36 V24 wr_clockoutn-38           -- TO BE CHECKED: U24=WR_CLKOUTn V24=CLKOUTp (Page2)
-    -- hdmi_o[1] F9   PG1P4-97      F8  PG1N4-99                  -- TO BE CHECKED: Schematic: F9 = PG2P16 (Page1)
-	 
-	 -- original
-	 -- hdmi_o[0] => F10=PG2P15 => 91(PG2)              E10(n)=PG2N15 => 93(PG2)
-	 -- hdmi_o[1] => F9=PG2P16  => 97(PG2)              F8(n)=PG2N16  => 99(PG2)
-	 
-	 
+    -- hdmi_o					: out std_logic_vector(1 downto 0);
+	 hdmi_o					: out std_logic;
+    -- hdmi_o => B3 => PG2P14 => 85 A3 => PG2P15 => 87
+
     hdmi_i					: in  std_logic_vector(1 downto 0);
 	 -- HDMI_I TO BE CHECKED!
-    -- hdmi_i[0]    F10  PG1P5-91   E10  PG1N5-93                 -- TO BE CHECKED: Schematic: F10 = PG2P15 (Page1) PG2@91
-    -- hdmi_i[1]    B3   PG1P6-85   A3   PG1N6-87                 -- TO BE CHECKED: Schematic: B3 = PG2P14 (Page1)  PG2@85
-	                                                               -- TO BE CHECKED: E10=PG2N15 => PG2@93  => ADDON-BOARD: PG1N5
-																						-- TO BE CHECKED: A3=PG2N14  => PG2@87  => ADDON-BOARD: PG1N6
-	 
-	 
-	 -- original
-	 -- Everything connected to E9?
-	 
-	 
-	 
-	 
-	 
-	 
-	 
-   
+    -- hdmi_i[0]    F10  PG2P15-91   E10  PG2N15-93
+    -- hdmi_i[1]    F9   PG2P16-85   F8   PG2N16-87                 -- TO BE CHECKED: Schematic: B3 = PG2P14 (Page1)  PG2@85
+
     -- NIM/TTL LEMOs 1 and 2
     lemo_nim_ttl_i		: in  std_logic_vector(1  downto 0);
     -- lemo_nim_ttl_i[0] 5-PG1P1 E6 DON'T DRIVE FAST, CLOSE TO PLL!!          -- CHECKED: E6
@@ -226,35 +197,24 @@ entity vetar2a_top is
     -- lemo_addOn_o[2] PG1P10 - 61 AA15                                       -- CHECKED
     
    lemo_addOn_eo_o  : out std_logic;
-   -- lemo_eo_o   LEN - 47 G11                                                -- TO BE CHECKED: G11=PG1P8?  => PG1=>47 ADDON-BOARD: LEN
+   -- lemo_eo_o   LEN - 47 G11                                                -- CHECKED: G11=PG1P8?  => PG1=>47 ADDON-BOARD: LEN
 	                                                                           -- CHECKED: Addon-Board => Used as output enable for
 																										-- LEMO3(DRO1), LEMO4(DRO2), LEMO5(DRO3)
 																										-- DROA1, DROA2, DROA3
 
     -- I/O LEMOs 6-8
     lemo_addOn_io_o  : out std_logic_vector(2 downto 0);                      -- TO BE CHECKED: Where to connect this?
-	 
-	 
-	 
-	 
-																										
-	 
-	 
-	 
     lemo_addOn_io_i  : in  std_logic_vector(2 downto 0);                      -- TO BE CHECKED: There are no assignments for there pins
-    -- lemo_addOn_io_X[0]  output P_LVDS_5/N_LVDS_5 11/13 - A5/A4               -- ! To be checked: A5=PG1P2, A4=PG1N2
-    --                     input  P_LVDS_6/N_LVDS_6 17/19 - D10/C10             -- ! To be checked: D10=PG1P3, C10=PG1N3
+ 
+    -- lemo_addOn_io_X[0]  output P_LVDS_5/N_LVDS_5 11/13 - A5/A4               -- !checked: A5=PG1P2, A4=PG1N2
+    --                     input  P_LVDS_6/N_LVDS_6 17/19 - D10/C10             -- !checked: D10=PG1P3, C10=PG1N3
     
-    -- lemo_addOn_io_X[1]  output P_LVDS_7/N_LVDS_7 23/25 - E9/D9               -- ! To be checked: E9=PG1P4, D9=PG1N4
-    --                     input  P_LVDS_8/N_LVDS_8 29/31 - H10/G10             -- ! To be checked: H10=PG1P5, G10=PG1N5
+    -- lemo_addOn_io_X[1]  output P_LVDS_7/N_LVDS_7 23/25 - E9/D9               -- !checked: E9=PG1P4, D9=PG1N4
+    --                     input  P_LVDS_8/N_LVDS_8 29/31 - H10/G10             -- !checked: H10=PG1P5, G10=PG1N5
     
-    -- lemo_addOn_io_X[2]  output P_LVDS_9/N_LVDS_9 35/37 - K11/J10             -- ! To be checked: K11=PG1P6, J10=PG1N6
-    --                     input  P_LVDS_10/N_LVDS_10 41/43 - J12/J11           -- ! To be checked: J12=PG1P7, J11=PG1N7
+    -- lemo_addOn_io_X[2]  output P_LVDS_9/N_LVDS_9 35/37 - K11/J10             -- !checked: K11=PG1P6, J10=PG1N6
+    --                     input  P_LVDS_10/N_LVDS_10 41/43 - J12/J11           -- !checked: J12=PG1P7, J11=PG1N7
 	 
-	 
-	 
-	 
-    
     lemo_addOn_term_o  : out std_logic_vector(2 downto 0) := (others => 'Z');   -- CHECKED
     -- lemo_addOn_term_o  TERMEN1/TERMEN2/TERMEN3 67/69/73 Y16/AA16/AH16        -- Y16=PG1P11(PG1-67=TERMEN1), 
 	                                                                             -- AA16=PG1N11(PG1-69=TERMEN2), 
@@ -275,7 +235,7 @@ entity vetar2a_top is
     -- leds_lemo_addOn_o[2 downto 0] DON'T DRIVE FAST, CLOSE TO PLL!!                 -- LED1               LED2               LED3
 
     leds_lemo_io_on_o	: out std_logic_vector(2 downto 0);
-    -- leds_lemo_io_on_o[2] C6  leds_lemo_io_on_o[1] B6 leds_lemo_io_on_o[2] A6       -- c6=PG2N10,(PG2-63) b6=PG2P11(PG2-67), a6=PG2N11(PG2-69)
+    -- leds_lemo_io_on_o[0] C6  leds_lemo_io_on_o[1] B6 leds_lemo_io_on_o[2] A6       -- c6=PG2N10,(PG2-63) b6=PG2P11(PG2-67), a6=PG2N11(PG2-69)
                                                                                       -- LED4(green)        LED5(orange)       LED6(green)
 	 
     leds_lemo_io_off_o	: out std_logic_vector(2 downto 0);
@@ -423,6 +383,7 @@ begin
 
   -- On board leds
   -----------------
+  
    -- Link Activity
   --!!! DON'T USE leds_o(0) leds_o(1) are too close to
   -- a clock and they can be harmfull
@@ -459,8 +420,8 @@ begin
   lvds_out_o(1)        <= s_butis_t0;
 
   -- HDMI
-  hdmi_o(0) <= s_clk_butis;
-  hdmi_o(1) <= s_butis_t0;
+  clk_pll_o <= s_clk_butis;
+  hdmi_o    <= s_butis_t0;
 
   -- test
   lemo_addOn_io_o(0)  <= s_clk_butis;
@@ -494,5 +455,7 @@ begin
   --gpio_i(3 downto 2)     => hdmi_i,
   --gpio_i(4)              => lemo_i,
   --gpio_i(7 downto 5)     => lemo_addOn_io_i,
+  
+
   
 end rtl;

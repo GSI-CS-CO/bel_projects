@@ -1,5 +1,5 @@
 set_global_assignment -name FAMILY "Arria II GX"
-set_global_assignment -name DEVICE EP2AGX125EF29C5
+set_global_assignment -name DEVICE EP2AGX125EF29C4
 set_global_assignment -name TOP_LEVEL_ENTITY vetar2a_top
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
@@ -11,7 +11,6 @@ set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 2
 set_global_assignment -name OPTIMIZATION_TECHNIQUE BALANCED
 set_global_assignment -name EDA_BOARD_DESIGN_BOUNDARY_SCAN_TOOL "<None>"
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_board_design_boundary_scan
-set_global_assignment -name DEVICE_FILTER_SPEED_GRADE 5
 set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 200 LFPM AIRFLOW"
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name ALLOW_POWER_UP_DONT_CARE ON
@@ -156,9 +155,9 @@ set_location_assignment PIN_AC17 -to hpw_io[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to hpw_io[1]
 set_location_assignment PIN_AB16 -to hpw_io[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to hpw_io[0]
-set_location_assignment PIN_AH4 -to color_o[2]
+set_location_assignment PIN_AH13 -to color_o[2]
 set_location_assignment PIN_AH5 -to color_o[1]
-set_location_assignment PIN_AH13 -to color_o[0]
+set_location_assignment PIN_AH4 -to color_o[0]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to color_o[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to color_o[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to color_o[0]
@@ -363,18 +362,10 @@ set_location_assignment PIN_L3 -to vme_ds_n_i[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_ds_n_i[1]
 set_location_assignment PIN_M3 -to vme_as_n_i
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_as_n_i
-set_location_assignment PIN_K6 -to vme_data_clk_ab_o
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_data_clk_ab_o
-set_location_assignment PIN_J2 -to vme_data_clk_ba_o
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_data_clk_ba_o
 set_location_assignment PIN_L7 -to vme_data_oe_ab_o
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_data_oe_ab_o
 set_location_assignment PIN_J3 -to vme_data_oe_ba_o
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_data_oe_ba_o
-set_location_assignment PIN_E4 -to vme_addr_clk_ab_o
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_addr_clk_ab_o
-set_location_assignment PIN_L1 -to vme_addr_clk_ba_o
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_addr_clk_ba_o
 set_location_assignment PIN_F5 -to vme_addr_oe_ab_o
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_addr_oe_ab_o
 set_location_assignment PIN_K1 -to vme_addr_oe_ba_o
@@ -387,36 +378,21 @@ set_location_assignment PIN_G1 -to vme_buffer_latch_o[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_buffer_latch_o[2]
 set_location_assignment PIN_F1 -to vme_buffer_latch_o[3]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_buffer_latch_o[3]
-set_location_assignment PIN_AH16 -to lvds_in_i[0]
+set_location_assignment PIN_G13 -to lvds_in_i[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to lvds_in_i[0]
-set_location_assignment PIN_AH17 -to lvds_in_i[1]
+set_location_assignment PIN_F13 -to lvds_in_i[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to lvds_in_i[1]
-set_location_assignment PIN_E12 -to lvds_out_o[0]
+set_location_assignment PIN_E13 -to lvds_out_o[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to lvds_out_o[0]
 set_location_assignment PIN_D12 -to lvds_out_o[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to lvds_out_o[1]
-set_location_assignment PIN_F10 -to hdmi_o[0]
-set_instance_assignment -name IO_STANDARD LVDS_E_3R -to hdmi_o[0]
-set_location_assignment PIN_E10 -to "hdmi_o[0](n)"
-set_location_assignment PIN_F9 -to hdmi_o[1]
-set_instance_assignment -name IO_STANDARD LVDS_E_3R -to hdmi_o[1]
-set_location_assignment PIN_F8 -to "hdmi_o[1](n)"
 set_instance_assignment -name IO_STANDARD LVDS -to hdmi_i
-set_location_assignment PIN_D9 -to "hdmi_i(n)"
-set_location_assignment PIN_Y16 -to lemo_addOn_o[0]
+set_location_assignment PIN_Y18 -to lemo_addOn_o[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to lemo_addOn_o[0]
-set_location_assignment PIN_AA16 -to lemo_addOn_o[1]
+set_location_assignment PIN_AA19 -to lemo_addOn_o[1]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to lemo_addOn_o[1]
-set_location_assignment PIN_AC15 -to lemo_addOn_o[2]
+set_location_assignment PIN_AA15 -to lemo_addOn_o[2]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to lemo_addOn_o[2]
-set_location_assignment PIN_AD15 -to lemo_addOn_o[3]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to lemo_addOn_o[3]
-set_location_assignment PIN_AA15 -to lemo_addOn_o[4]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to lemo_addOn_o[4]
-set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lemo_addOn_o[4]
-set_location_assignment PIN_AB15 -to lemo_addOn_o[5]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to lemo_addOn_o[5]
-set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lemo_addOn_o[5]
 set_location_assignment PIN_E7 -to leds_lemo_addOn_o[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lemo_addOn_o[0]
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_addOn_o[0]
@@ -426,13 +402,6 @@ set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_addOn
 set_location_assignment PIN_C7 -to leds_lemo_addOn_o[2]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lemo_addOn_o[2]
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_addOn_o[2]
-set_location_assignment PIN_C6 -to leds_lemo_addOn_o[3]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lemo_addOn_o[3]
-set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_addOn_o[3]
-set_location_assignment PIN_B6 -to leds_lemo_addOn_o[4]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lemo_addOn_o[4]
-set_location_assignment PIN_A6 -to leds_lemo_addOn_o[5]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_lemo_addOn_o[5]
 set_location_assignment PIN_E6 -to lemo_nim_ttl_i[0]
 set_instance_assignment -name IO_STANDARD "2.5 V" -to lemo_nim_ttl_i[0]
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lemo_nim_ttl_i[0]
@@ -475,7 +444,6 @@ set_global_assignment -name LL_ROUTING_REGION_EXPANSION_SIZE 2147483647 -section
 set_global_assignment -name LL_WIDTH 1 -section_id "wr_arria2:tx"
 set_global_assignment -name LL_HEIGHT 1 -section_id "wr_arria2:tx"
 set_global_assignment -name LL_ORIGIN X1_Y1 -section_id "wr_arria2:tx"
-set_instance_assignment -name IO_STANDARD LVDS -to "hdmi_i(n)"
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_vic/vic_prio_enc.vhd"
 set_global_assignment -name VHDL_FILE ../../../modules/chopper/Bus_io.vhd
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_tx.vhd"
@@ -892,4 +860,50 @@ set_location_assignment PIN_C4 -to led_lemo_term_o
 set_location_assignment PIN_D6 -to leds_lemo_io_off_o[2]
 set_location_assignment PIN_C5 -to leds_lemo_io_off_o[1]
 set_location_assignment PIN_D4 -to leds_lemo_io_off_o[0]
+set_location_assignment PIN_B3 -to hdmi_o
+set_instance_assignment -name IO_STANDARD LVDS_E_3R -to hdmi_o
+set_location_assignment PIN_A3 -to "hdmi_o(n)"
+set_location_assignment PIN_F10 -to hdmi_i[0]
+set_location_assignment PIN_E10 -to "hdmi_i[0](n)"
+set_location_assignment PIN_F9 -to hdmi_i[1]
+set_location_assignment PIN_F8 -to "hdmi_i[1](n)"
+set_location_assignment PIN_B9 -to rom_addOn_io
+set_location_assignment PIN_AH16 -to lemo_addOn_term_o[2]
+set_location_assignment PIN_G11 -to lemo_addOn_eo_o
+set_instance_assignment -name IO_STANDARD LVDS -to lemo_addOn_io_i[0]
+set_instance_assignment -name IO_STANDARD LVDS -to lemo_addOn_io_i[1]
+set_instance_assignment -name IO_STANDARD LVDS -to lemo_addOn_io_i[2]
+set_instance_assignment -name IO_STANDARD LVDS -to lemo_addOn_io_o[0]
+set_instance_assignment -name IO_STANDARD LVDS -to lemo_addOn_io_o[1]
+set_instance_assignment -name IO_STANDARD LVDS -to lemo_addOn_io_o[2]
+set_location_assignment PIN_J10 -to "lemo_addOn_io_o[2](n)"
+set_location_assignment PIN_K11 -to lemo_addOn_io_o[2]
+set_location_assignment PIN_E9 -to lemo_addOn_io_o[1]
+set_location_assignment PIN_D9 -to "lemo_addOn_io_o[1](n)"
+set_location_assignment PIN_A5 -to lemo_addOn_io_o[0]
+set_location_assignment PIN_A4 -to "lemo_addOn_io_o[0](n)"
+set_location_assignment PIN_J12 -to lemo_addOn_io_i[2]
+set_location_assignment PIN_J11 -to "lemo_addOn_io_i[2](n)"
+set_location_assignment PIN_H10 -to lemo_addOn_io_i[1]
+set_location_assignment PIN_G10 -to "lemo_addOn_io_i[1](n)"
+set_location_assignment PIN_D10 -to lemo_addOn_io_i[0]
+set_location_assignment PIN_C10 -to "lemo_addOn_io_i[0](n)"
+set_location_assignment PIN_AA16 -to lemo_addOn_term_o[1]
+set_location_assignment PIN_Y16 -to lemo_addOn_term_o[0]
+set_location_assignment PIN_AH17 -to lemo_addOn_oen_o[0]
+set_location_assignment PIN_AE18 -to lemo_addOn_oen_o[1]
+set_location_assignment PIN_AF18 -to lemo_addOn_oen_o[2]
+set_location_assignment PIN_C6 -to leds_lemo_io_on_o[0]
+set_location_assignment PIN_B6 -to leds_lemo_io_on_o[1]
+set_location_assignment PIN_A6 -to leds_lemo_io_on_o[2]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lemo_addOn_eo_o
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_io_on_o[0]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_io_off_o[2]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_io_off_o[1]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_io_off_o[0]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to led_lemo_term_o
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lemo_addOn_io_i[0]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to color_o[2]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lvds_out_o[1]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lemo_addOn_o[2]
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
