@@ -857,9 +857,9 @@ set_global_assignment -name ENABLE_BOOT_SEL_PIN OFF
 set_global_assignment -name GENERATE_RBF_FILE ON
 
 set_location_assignment PIN_C4 -to led_lemo_term_o
-set_location_assignment PIN_D6 -to leds_lemo_io_off_o[2]
-set_location_assignment PIN_C5 -to leds_lemo_io_off_o[1]
-set_location_assignment PIN_D4 -to leds_lemo_io_off_o[0]
+set_location_assignment PIN_D4 -to leds_lemo_io_off_o[2]
+set_location_assignment PIN_D6 -to leds_lemo_io_off_o[1]
+set_location_assignment PIN_B6 -to leds_lemo_io_off_o[0]
 set_location_assignment PIN_B3 -to hdmi_o
 set_instance_assignment -name IO_STANDARD LVDS_E_3R -to hdmi_o
 set_location_assignment PIN_A3 -to "hdmi_o(n)"
@@ -894,8 +894,8 @@ set_location_assignment PIN_AH17 -to lemo_addOn_oen_o[0]
 set_location_assignment PIN_AE18 -to lemo_addOn_oen_o[1]
 set_location_assignment PIN_AF18 -to lemo_addOn_oen_o[2]
 set_location_assignment PIN_C6 -to leds_lemo_io_on_o[0]
-set_location_assignment PIN_B6 -to leds_lemo_io_on_o[1]
-set_location_assignment PIN_A6 -to leds_lemo_io_on_o[2]
+set_location_assignment PIN_A6 -to leds_lemo_io_on_o[1]
+set_location_assignment PIN_C5 -to leds_lemo_io_on_o[2]
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lemo_addOn_eo_o
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_io_on_o[0]
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_io_off_o[2]
@@ -906,4 +906,7 @@ set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lemo_addOn_io_i
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to color_o[2]
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lvds_out_o[1]
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lemo_addOn_o[2]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_io_on_o[1]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_lemo_io_on_o[2]
+set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to clk_pll_o
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
