@@ -96,31 +96,31 @@ entity vetar2a_top is
 
     -----------------------------------------------------------------------
     -- RAM
-	 -- CHECKED: Is this in use?
+    -- CHECKED: Is this in use?
     -----------------------------------------------------------------------
---    ram_gw	   :	in		std_logic;					      -- Synchronous Global Write Enable
---    ram_bwe	   :	out	std_logic;							-- Synchronous Byte Write Enable
---    ram_bwx	   :	out	std_logic_vector(3 downto 0);	-- Synchronous Byte Write Enable
---    ram_oe	   :	out 	std_logic;					      -- Output Enable
---    ram_ce	   :	out	std_logic_vector(1 downto 0);	-- Synchronous Chip Enable
---    ram_adv	   :	out	std_logic;							-- Synchronous Burst Write Enable
---    ram_adsc   :	out	std_logic;							-- Synchronous Controller Address Status
---    ram_adsp   :	out	std_logic;							-- Synchronous Processor Address Status
---    ram_address:	in		std_logic_vector(18 downto 0);
---    ram_data	:	inout	std_logic_vector(31 downto 0);
---    ram_clk    :  out   std_logic;
+--    ram_gw      : in    std_logic;                          -- Synchronous Global Write Enable
+--    ram_bwe     : out   std_logic;                          -- Synchronous Byte Write Enable
+--    ram_bwx     : out   std_logic_vector(3 downto 0);       -- Synchronous Byte Write Enable
+--    ram_oe      : out   std_logic;                          -- Output Enable
+--    ram_ce      : out   std_logic_vector(1 downto 0);       -- Synchronous Chip Enable
+--    ram_adv     : out   std_logic;                          -- Synchronous Burst Write Enable
+--    ram_adsc    : out   std_logic;                          -- Synchronous Controller Address Status
+--    ram_adsp    : out   std_logic;                           -- Synchronous Processor Address Status
+--    ram_address : in    std_logic_vector(18 downto 0);
+--    ram_data    : inout std_logic_vector(31 downto 0);
+--    ram_clk     : out   std_logic;
 
     -----------------------------------------------------------------------
     -- Display
     -----------------------------------------------------------------------	
-   di_o    : out std_logic_vector(3 downto 0);
+   di_o : out std_logic_vector(3 downto 0); 
     -- di[0] AH7-DIS0 DIN  shift register in ?????                                              -- CHECKED: USE THIS   
     -- di[0] Y14-DIS0 DOUT shift register out?????
     -- di[1] AD7-DIS1 LP   latch pulse (end-of-40-bit-row)
     -- di[2] AH8-DIS2 FLM  first-line marker               
     -- di[3] AC7-DIS3 SCP  clock                              
 
-    --di_i    : in std_logic;
+    -- di_i : in std_logic;
     -- di_i  AH7-DIS0 DIN  shift register in????                                                -- CHECKED: USE THIS 
 
    color_o : out std_logic_vector(2 downto 0);
@@ -132,7 +132,7 @@ entity vetar2a_top is
      -- VME bus
     -----------------------------------------------------------------------
     -- CHECKED all VME IOs
-	 vme_as_n_i          : in    std_logic;   -- M3               
+    vme_as_n_i          : in    std_logic;   -- M3               
     vme_rst_n_i         : in    std_logic;   -- J1              
     vme_write_n_i       : in    std_logic;   -- M4               
     vme_am_i            : in    std_logic_vector(5 downto 0);    -- 5=V3, 4=Y1, 3=AA1, 2=AD1, 1=AE1, 0=Y4
@@ -167,40 +167,40 @@ entity vetar2a_top is
     -----------------------------------------
    
     -- LVDS
-    lvds_in_i				: in  std_logic_vector(1 downto 0);
+    lvds_in_i : in  std_logic_vector(1 downto 0);
     --lvds_in_i[0] PG1P12 5 G13             -- TO BE CHECKED: Schematic: PG2P1 (Page1) => PG2 5 -- CHECKED: DRX1(Page2)
     --lvds_in_i[1] PG1N12 7 F13             -- TO BE CHECKED: Schematic: PG2N1 (Page1) => PG2 7 -- CHECKED: DRX1(Page2)
-	 
-    lvds_out_o				: out std_logic_vector(1 downto 0);
+ 
+    lvds_out_o : out std_logic_vector(1 downto 0);
     --lvds_out_o[0] PG1P13 11  E12          -- TO BE CHECKED: Schematic: PG2P2 (Page1) -- CHECKED: LVDS_TR1 (Page2)
     --lvds_out_o[1] PG1N13 13  D12          -- TO BE CHECKED: Schematic: PG2N2 (Page1) -- CHECKED: LVDS_TR1 (Page2)
-	 
+
     -- HDMI
-    -- hdmi_o					: out std_logic_vector(1 downto 0);
-	 hdmi_o					: out std_logic;
+    -- hdmi_o : out std_logic_vector(1 downto 0);
+    hdmi_o : out std_logic;
     -- hdmi_o => B3 => PG2P14 => 85 A3 => PG2P15 => 87
 
-    hdmi_i					: in  std_logic_vector(1 downto 0);
-	 -- HDMI_I TO BE CHECKED!
+    hdmi_i : in  std_logic_vector(1 downto 0);
+    -- HDMI_I TO BE CHECKED!
     -- hdmi_i[0]    F10  PG2P15-91   E10  PG2N15-93
     -- hdmi_i[1]    F9   PG2P16-85   F8   PG2N16-87                 -- TO BE CHECKED: Schematic: B3 = PG2P14 (Page1)  PG2@85
 
     -- NIM/TTL LEMOs 1 and 2
-    lemo_nim_ttl_i		: in  std_logic_vector(1  downto 0);
+    lemo_nim_ttl_i : in  std_logic_vector(1  downto 0);
     -- lemo_nim_ttl_i[0] 5-PG1P1 E6 DON'T DRIVE FAST, CLOSE TO PLL!!          -- CHECKED: E6
     -- lemo_nim_ttl_i[1] 7-PG1N1 D5 DON'T DRIVE FAST, CLOSE TO PLL!!          -- CHECKED: D5
 
     -- Only Output LEMOs 3-5
-    lemo_addOn_o	    : out std_logic_vector(2 downto 0);
+    lemo_addOn_o : out std_logic_vector(2 downto 0);
     -- lemo_addOn_o[0] PG1P9  - 55 Y18                                        -- CHECKED
     -- lemo_addOn_o[1] PG1N9  - 57 AA19                                       -- CHECKED
     -- lemo_addOn_o[2] PG1P10 - 61 AA15                                       -- CHECKED
     
-   lemo_addOn_eo_o  : out std_logic;
+   lemo_addOn_eo_o : out std_logic;
    -- lemo_eo_o   LEN - 47 G11                                                -- CHECKED: G11=PG1P8?  => PG1=>47 ADDON-BOARD: LEN
-	                                                                           -- CHECKED: Addon-Board => Used as output enable for
-																										-- LEMO3(DRO1), LEMO4(DRO2), LEMO5(DRO3)
-																										-- DROA1, DROA2, DROA3
+                                                                              -- CHECKED: Addon-Board => Used as output enable for
+                                                                              -- LEMO3(DRO1), LEMO4(DRO2), LEMO5(DRO3)
+                                                                              -- DROA1, DROA2, DROA3
 
     -- I/O LEMOs 6-8
     lemo_addOn_io_o  : out std_logic_vector(2 downto 0);                      -- TO BE CHECKED: Where to connect this?
@@ -214,22 +214,23 @@ entity vetar2a_top is
     
     -- lemo_addOn_io_X[2]  output P_LVDS_9/N_LVDS_9 35/37 - K11/J10             -- !checked: K11=PG1P6, J10=PG1N6
     --                     input  P_LVDS_10/N_LVDS_10 41/43 - J12/J11           -- !checked: J12=PG1P7, J11=PG1N7
-	 
+   
     lemo_addOn_term_o  : out std_logic_vector(2 downto 0) := (others => 'Z');   -- CHECKED
     -- lemo_addOn_term_o  TERMEN1/TERMEN2/TERMEN3 67/69/73 Y16/AA16/AH16        -- Y16=PG1P11(PG1-67=TERMEN1), 
-	                                                                             -- AA16=PG1N11(PG1-69=TERMEN2), 
-																										  -- AH16=PG1P12(PG1-73=TERMEN3)
+                                                                                -- AA16=PG1N11(PG1-69=TERMEN2), 
+                                                                                -- AH16=PG1P12(PG1-73=TERMEN3)
   
-	 lemo_addOn_oen_o   : out std_logic_vector(2 downto 0) := (others => 'Z');   -- CHECKED
+    lemo_addOn_oen_o   : out std_logic_vector(2 downto 0) := (others => 'Z');   -- CHECKED
     -- lemo_addOn_eo_o   TTLEN1/TTLEN2/TTLEN3 75/79/81  AH17/AE18/AF18          -- AH17=PG1N12(PG1-75=TTLEN1), 
-	                                                                             -- AE18=PG1P13(PG1-79=TTLEN3), 
-																										  -- AF18=PG1N13(PG1-81=TTLEN5)
+                                                                                -- AE18=PG1P13(PG1-79=TTLEN3), 
+                                                                                -- AF18=PG1N13(PG1-81=TTLEN5)
+                                                                                
     -- ROM 
     rom_addOn_io  : inout std_logic := 'Z';
     --rom_add_on_io  ROM_DATA-37 B9                                             -- CHECKED
-	 
+
     -- LEDS
-	 -- CHECKED
+    -- CHECKED
     leds_lemo_addOn_o	: out std_logic_vector(2 downto 0);
     -- leds_lemo_addOn_o[0] E7  lemo_lemo_addOn_o[1] D7 lemo_lemo_addOn_o[2] C7       -- e7=PG2P9(PG2-55), d7=PG2N9(PG2-57), c7=PG2P10(PG2-61)
     -- leds_lemo_addOn_o[2 downto 0] DON'T DRIVE FAST, CLOSE TO PLL!!                 -- LED1               LED2               LED3
@@ -237,13 +238,13 @@ entity vetar2a_top is
     leds_lemo_io_on_o	: out std_logic_vector(2 downto 0);
     -- leds_lemo_io_on_o[0] C6  leds_lemo_io_on_o[1] B6 leds_lemo_io_on_o[2] A6       -- c6=PG2N10,(PG2-63) b6=PG2P11(PG2-67), a6=PG2N11(PG2-69)
                                                                                       -- LED4(green)        LED5(orange)       LED6(green)
-	 
+
     leds_lemo_io_off_o	: out std_logic_vector(2 downto 0);
     -- leds_lemo_io_off_o[2] D6 leds_lemo_io_off_o[1] C5  leds_lemo_io_off_o[0] D4    -- d6=PG2P12(PG2-73), c5=PG2N12(PG2-75),  PG2P13(PG2-79)
                                                                                       -- LED7(orange)       LED8(green)         LED9(orange)     
     led_lemo_term_o     : out std_logic);
     -- led_lemo_term_o C4                                                             -- c4=PG2N13 PG2@81 => TTLEN3
-	                                                                                   -- Connected to TR5, TRA5 ?
+                                                                                      -- Connected to TR5, TRA5 ?
 
 end vetar2a_top;
 
@@ -259,9 +260,8 @@ architecture rtl of vetar2a_top is
   signal s_butis_t0     : std_logic;
   signal s_dedicated_out: std_logic;
 
-  signal s_lemo_addOn   : std_logic_vector(2 downto 0);
-  --signal s_lemo_oen     : std_logic_vector(2 downto 0);
-  signal s_lemo_oen        : std_logic;
+  signal s_lemo_addOn      : std_logic_vector(2 downto 0);
+  signal s_lemo_oen        : std_logic_vector(2 downto 0);
   signal s_lemo_addOn_io   : std_logic_vector(2 downto 0);
   signal s_leds_lemo_addOn : std_logic_vector(2 downto 0);
   
@@ -281,12 +281,9 @@ begin
     generic map(
       g_family     => "Arria II",
       g_project    => "vetar_top2a",
-      --g_gpio_in    => 1, -- old
-      --g_gpio_out   => 0, -- old
-      --g_gpio_inout => 0, -- old
-		--g_gpio_in    => 4, -- from vetar
-		g_gpio_in    => 8,
-      g_gpio_out   => 15, -- from vetar
+      g_gpio_inout => 3,
+      g_gpio_in    => 8,
+      g_gpio_out   => 12,
       g_flash_bits => 24,
       g_en_vme     => true,
       g_en_usb     => true,
@@ -300,29 +297,14 @@ begin
       core_clk_butis_o       => s_clk_butis,
       core_clk_butis_t0_o    => s_butis_t0,
       -- gpio
-      --gpio_i(0)              => lemo_i, -- old
-      --gpio_oen_o(0)          => s_lemo_oen, --old
-		
-		-- 0 => butis
-      gpio_o(2 downto 1)      => s_lemo_addOn(2 downto 1),
-		gpio_o(5 downto 3)      => s_lemo_addOn_io(2 downto 0),
-		gpio_o(8 downto 6)      => s_leds_lemo_addOn,
-		gpio_o(9)               => leds_lemo_io_on_o(0),
-		gpio_o(10)              => leds_lemo_io_off_o(0),
-		gpio_o(11)              => leds_lemo_io_on_o(1),
-		gpio_o(12)              => leds_lemo_io_off_o(1),
-		gpio_o(13)              => leds_lemo_io_on_o(2),
-		gpio_o(14)              => leds_lemo_io_off_o(2),
-		
-		-- 0 => butis
-      gpio_i(1 downto 0)     => lvds_in_i(1 downto 0), -- from vetar
-      gpio_i(2)              => lemo_i,  -- from vetar	
-		gpio_i(5 downto 3)     => lemo_addOn_io_i(2 downto 0),
-		gpio_i(6)              => lemo_nim_ttl_i(0),
-		gpio_i(7)              => lemo_nim_ttl_i(1),
-		
-		--wr_ext_clk_i           => lemo_nim_ttl_i(1),
-      --wr_ext_pps_i           => lemo_nim_ttl_i(0),
+      gpio_oen_o(2 downto 0)  => s_lemo_oen(2 downto 0),
+      gpio_o(2 downto 0)      => s_lemo_addOn(2 downto 0),
+      gpio_o(5 downto 3)      => s_lemo_addOn_io(2 downto 0),
+      gpio_i(1 downto 0)      => lvds_in_i(1 downto 0),
+      gpio_i(2)               => lemo_i,
+      gpio_i(5 downto 3)     => lemo_addOn_io_i(2 downto 0),
+      gpio_i(6)              => lemo_nim_ttl_i(0),
+      gpio_i(7)              => lemo_nim_ttl_i(1),
       -- wr core
       wr_onewire_io          => rom_data_io,
       wr_sfp_sda_io          => sfp_mod2_io,
@@ -333,9 +315,8 @@ begin
       wr_dac_sclk_o          => dac_sclk_o,
       wr_dac_din_o           => dac_din_o,
       wr_ndac_cs_o           => ndac_cs_o,
-		--wr_ext_clk_i           => lemo_nim_ttl_i(1),
-      --wr_ext_pps_i           => lemo_nim_ttl_i(0),
-		
+      --wr_ext_clk_i           => lemo_nim_ttl_i(1), -- TBD: Use this instead of gpio_i(6)
+      --wr_ext_pps_i           => lemo_nim_ttl_i(0), -- TBD: Use this instead of gpio_i(7)
       led_link_up_o          => s_led_link_up,
       led_link_act_o         => s_led_link_act,
       led_track_o            => s_led_track,
@@ -404,7 +385,7 @@ begin
   -- On board leds
   -----------------
   
-   -- Link Activity
+  -- Link Activity
   --!!! DON'T USE leds_o(0) leds_o(1) are too close to
   -- a clock and they can be harmfull
   leds_o(15) <= not (s_led_link_act and s_led_link_up); -- Link active
@@ -428,55 +409,35 @@ begin
   lemo_addOn_o      <= s_lemo_addOn;
   lemo_addOn_io_o   <= s_lemo_addOn_io;
   leds_lemo_addOn_o <= s_leds_lemo_addOn;
-  lemo_addOn_eo_o   <= '0'; -- TEST (should be '0')
-  --leds_lemo_addOn_o(2 downto 0) <= (others => '0');
-  
-  --test
-  --s_lemo_addOn(2) <= s_clk_butis;
-  --s_lemo_addOn(1) <= s_clk_butis;
-  --s_lemo_addOn(0) <= s_clk_butis;
+  lemo_addOn_eo_o   <= '0';
    
   -- LVDS outputs GPIO6-8
-  lvds_out_o(0)        <= s_clk_butis;
-  lvds_out_o(1)        <= s_butis_t0;
+  lvds_out_o(0) <= s_clk_butis;
+  lvds_out_o(1) <= s_butis_t0;
 
   -- HDMI
   clk_pll_o <= s_clk_butis;
-  hdmi_o    <= s_butis_t0;
+  hdmi_o <= s_butis_t0;
 
-  -- test
-  --lemo_addOn_io_o(0)  <= s_clk_butis;
-  --lemo_addOn_io_o(1)  <= s_clk_butis;
-  --lemo_addOn_io_o(2)  <= s_clk_butis;
+  -- OE and TERM for LEMOs (s_lemo_oen is driven by monster iodir hack)
+  lemo_addOn_oen_o(0)  <= '0' when s_lemo_oen(0)='0' else 'Z'; -- TTLIO1 output enable
+  lemo_addOn_oen_o(1)  <= '0' when s_lemo_oen(1)='0' else 'Z'; -- TTLIO2 output enable
+  lemo_addOn_oen_o(2)  <= '0' when s_lemo_oen(2)='0' else 'Z'; -- TTLIO3 output enable
 
---  lemo_addOn_oen_o(0) <= '0' when s_lemo_oen(0)='0' else 'Z'; -- TTLIO1 output enable
---  lemo_addOn_oen_o(1) <= '0' when s_lemo_oen(1)='0' else 'Z'; -- TTLIO2 output enable
---  lemo_addOn_oen_o(2) <= '0' when s_lemo_oen(2)='0' else 'Z'; -- TTLIO3 output enable
---
---  lemo_addOn_term_o(0)  <= '1' when s_lemo_oen(0)='1' else '0'; -- TERMEN1 (terminate when input)
---  lemo_addOn_term_o(1)  <= '1' when s_lemo_oen(1)='1' else '0'; -- TERMEN2 (terminate when input)
---  lemo_addOn_term_o(2)  <= '1' when s_lemo_oen(2)='1' else '0'; -- TERMEN3 (terminate when input)
---
---  led_lemo_term_o <= '0' when s_lemo_oen(0) ='0' else 'Z'; -- red  when output enable
+  lemo_addOn_term_o(0) <= '1' when s_lemo_oen(0)='1' else '0'; -- TERMEN1 (terminate when input)
+  lemo_addOn_term_o(1) <= '1' when s_lemo_oen(1)='1' else '0'; -- TERMEN2 (terminate when input)
+  lemo_addOn_term_o(2) <= '1' when s_lemo_oen(2)='1' else '0'; -- TERMEN3 (terminate when input)
+
+  led_lemo_term_o <= '0'; -- TBD: What to do with this LED?
   
-  lemo_addOn_oen_o(0) <= '0' when s_lemo_oen='0' else 'Z'; -- TTLIO1 output enable
-  lemo_addOn_oen_o(1) <= '0' when s_lemo_oen='0' else 'Z'; -- TTLIO2 output enable
-  lemo_addOn_oen_o(2) <= '0' when s_lemo_oen='0' else 'Z'; -- TTLIO3 output enable
-
-  lemo_addOn_term_o(0)  <= '1' when s_lemo_oen='1' else '0'; -- TERMEN1 (terminate when input)
-  lemo_addOn_term_o(1)  <= '1' when s_lemo_oen='1' else '0'; -- TERMEN2 (terminate when input)
-  lemo_addOn_term_o(2)  <= '1' when s_lemo_oen='1' else '0'; -- TERMEN3 (terminate when input)
-
-  led_lemo_term_o <= '0' when s_lemo_oen ='0' else 'Z'; -- red  when output enable
-
-  --leds_lemo_io_on_o   <= (others => '0');
-  --leds_lemo_io_off_o  <= (others => '0');
-
-  --gpio_i(1 downto 0)     => lvds_in_i,
-  --gpio_i(3 downto 2)     => hdmi_i,
-  --gpio_i(4)              => lemo_i,
-  --gpio_i(7 downto 5)     => lemo_addOn_io_i,
+  -- INOUT LEMOs
+  -- Red => Output enable LEDs
+  leds_lemo_io_off_o(2 downto 0) <= s_lemo_oen(2 downto 0);
+  -- Green => Activity LEDs
+  leds_lemo_io_on_o(2 downto 0) <= not(s_lemo_addOn_io(2 downto 0));
   
-  s_lemo_addOn(0) <= s_clk_butis;
+  -- OUTPUT LEMOs
+  -- Orange => Activity LEDs
+  s_leds_lemo_addOn(2 downto 0) <= not(s_lemo_addOn(2 downto 0));
   
 end rtl;
