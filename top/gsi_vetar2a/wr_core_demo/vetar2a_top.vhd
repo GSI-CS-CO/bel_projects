@@ -282,8 +282,8 @@ begin
       g_family     => "Arria II",
       g_project    => "vetar_top2a",
       g_gpio_inout => 3,
-      g_gpio_in    => 8,
-      g_gpio_out   => 12,
+      g_gpio_in    => 10,
+      g_gpio_out   => 10,
       g_flash_bits => 24,
       g_en_vme     => true,
       g_en_usb     => true,
@@ -296,15 +296,20 @@ begin
       core_clk_wr_ref_o      => s_clk_ref,
       core_clk_butis_o       => s_clk_butis,
       core_clk_butis_t0_o    => s_butis_t0,
-      -- gpio
-      gpio_oen_o(2 downto 0)  => s_lemo_oen(2 downto 0),
-      gpio_o(2 downto 0)      => s_lemo_addOn(2 downto 0),
-      gpio_o(5 downto 3)      => s_lemo_addOn_io(2 downto 0),
-      gpio_i(1 downto 0)      => lvds_in_i(1 downto 0),
-      gpio_i(2)               => lemo_i,
+      -- gpio oe
+      gpio_oen_o(2 downto 0) => s_lemo_oen(2 downto 0),
+      -- gpio out
+      gpio_o(1 downto 0)     => lvds_out_o(1 downto 0),
+      gpio_o(2)              => lemo_o,
+      gpio_o(5 downto 3)     => s_lemo_addOn(2 downto 0),
+      gpio_o(8 downto 6)     => s_lemo_addOn_io(2 downto 0),
+      gpio_o(9)              => hdmi_o,
+      -- gpio in
+      gpio_i(1 downto 0)     => lvds_in_i(1 downto 0),
+      gpio_i(2)              => lemo_i,
       gpio_i(5 downto 3)     => lemo_addOn_io_i(2 downto 0),
-      gpio_i(6)              => lemo_nim_ttl_i(0),
-      gpio_i(7)              => lemo_nim_ttl_i(1),
+      gpio_i(7 downto 6)     => hdmi_i(1 downto 0),
+      gpio_i(9 downto 8)     => lemo_nim_ttl_i(1 downto 0),
       -- wr core
       wr_onewire_io          => rom_data_io,
       wr_sfp_sda_io          => sfp_mod2_io,
@@ -315,8 +320,8 @@ begin
       wr_dac_sclk_o          => dac_sclk_o,
       wr_dac_din_o           => dac_din_o,
       wr_ndac_cs_o           => ndac_cs_o,
-      --wr_ext_clk_i           => lemo_nim_ttl_i(1), -- TBD: Use this instead of gpio_i(6)
-      --wr_ext_pps_i           => lemo_nim_ttl_i(0), -- TBD: Use this instead of gpio_i(7)
+      wr_ext_clk_i           => lemo_nim_ttl_i(1),
+      wr_ext_pps_i           => lemo_nim_ttl_i(0),
       led_link_up_o          => s_led_link_up,
       led_link_act_o         => s_led_link_act,
       led_track_o            => s_led_track,
@@ -401,7 +406,7 @@ begin
   lemo_i_en_o <= '1';
   -- PPS output
   lemo_o_en_o <= '1';
-  lemo_o      <= s_led_pps;
+  --lemo_o      <= s_led_pps;
 
   -- VETAR1DB1 ADD-ON Board
   -------------------------
@@ -412,12 +417,12 @@ begin
   lemo_addOn_eo_o   <= '0';
    
   -- LVDS outputs GPIO6-8
-  lvds_out_o(0) <= s_clk_butis;
-  lvds_out_o(1) <= s_butis_t0;
+  --lvds_out_o(0) <= s_clk_butis;
+  --lvds_out_o(1) <= s_butis_t0;
 
   -- HDMI
   clk_pll_o <= s_clk_butis;
-  hdmi_o <= s_butis_t0;
+  --hdmi_o <= s_butis_t0;
 
   -- OE and TERM for LEMOs (s_lemo_oen is driven by monster iodir hack)
   lemo_addOn_oen_o(0)  <= '0' when s_lemo_oen(0)='0' else 'Z'; -- TTLIO1 output enable
@@ -428,7 +433,7 @@ begin
   lemo_addOn_term_o(1) <= '1' when s_lemo_oen(1)='1' else '0'; -- TERMEN2 (terminate when input)
   lemo_addOn_term_o(2) <= '1' when s_lemo_oen(2)='1' else '0'; -- TERMEN3 (terminate when input)
 
-  led_lemo_term_o <= '0'; -- TBD: What to do with this LED?
+  led_lemo_term_o <= '0'; -- TBD: What to do with this LED? (this is DAK1 on the addon board)
   
   -- INOUT LEMOs
   -- Red => Output enable LEDs
