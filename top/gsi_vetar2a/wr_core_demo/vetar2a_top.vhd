@@ -439,7 +439,7 @@ begin
   -- Red => Output enable LEDs
   leds_lemo_io_off_o(2 downto 0) <= s_lemo_oen(2 downto 0);
   -- Green => Activity LEDs
-  leds_lemo_io_on_o(2 downto 0) <= not(s_lemo_addOn_io(2 downto 0));
+  leds_lemo_io_on_o(2 downto 0) <= not(s_lemo_addOn_io(2 downto 0) or lemo_addOn_io_i(2 downto 0)); -- TBD: Or with lemo_addOn_io_i for activity in each direction
   
   -- OUTPUT LEMOs
   -- Orange => Activity LEDs
