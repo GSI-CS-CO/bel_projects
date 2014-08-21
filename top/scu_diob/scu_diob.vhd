@@ -130,45 +130,78 @@ architecture scu_diob_arch of scu_diob is
 
 component aw_io_reg
 generic (
-    Base_addr : integer
+    AW_Base_addr  : integer;
+    Tag_Base_addr : integer
     );
-port (Adr_from_SCUB_LA    :  in std_logic_vector(15 downto 0);
-    Data_from_SCUB_LA   :  in std_logic_vector(15 downto 0);
-    Ext_Adr_Val   :  in std_logic;
-    Ext_Rd_active   :  in std_logic;
-    Ext_Rd_fin    :  in std_logic;
-    Ext_Wr_active   :  in std_logic;
-    Ext_Wr_fin    :  in std_logic;
-    clk   :  in std_logic;
-    nReset    :  in std_logic;
-    AWin1   :  in std_logic_vector(15 downto 0);
-    AWin2   :  in std_logic_vector(15 downto 0);
-    AWin3   :  in std_logic_vector(15 downto 0);
-    AWin4   :  in std_logic_vector(15 downto 0);
-    AWin5   :  in std_logic_vector(15 downto 0);
-    AWin6   :  in std_logic_vector(15 downto 0);
-    AWin7   :  in std_logic_vector(15 downto 0);
-    AW_Config     :  out std_logic_vector(15 downto 0);
-    AWOut_Reg1    :  out std_logic_vector(15 downto 0);
-    AWOut_Reg2    :  out std_logic_vector(15 downto 0);
-    AWOut_Reg3    :  out std_logic_vector(15 downto 0);
-    AWOut_Reg4    :  out std_logic_vector(15 downto 0);
-    AWOut_Reg5    :  out std_logic_vector(15 downto 0);
-    AWOut_Reg6    :  out std_logic_vector(15 downto 0);
-    AWOut_Reg7    :  out std_logic_vector(15 downto 0);
-    AW_Config_Wr  :  out std_logic;  
-    AWOut_Reg1_Wr :  out std_logic;   
-    AWOut_Reg2_Wr :  out std_logic;   
-    AWOut_Reg3_Wr :  out std_logic;   
-    AWOut_Reg4_Wr :  out std_logic;   
-    AWOut_Reg5_Wr :  out std_logic;   
-    AWOut_Reg6_Wr :  out std_logic;   
-    AWOut_Reg7_Wr :  out std_logic;   
-    AWOut_Reg_rd_active   :  out std_logic;
-    Data_to_SCUB    :  out std_logic_vector(15 downto 0);
-    Dtack_to_SCUB   :  out std_logic
-  );
+port (Adr_from_SCUB_LA: in std_logic_vector(15 downto 0);
+    Data_from_SCUB_LA:  in std_logic_vector(15 downto 0);
+    Ext_Adr_Val:        in std_logic;
+    Ext_Rd_active:      in std_logic;
+    Ext_Rd_fin:         in std_logic;
+    Ext_Wr_active:      in std_logic;
+    Ext_Wr_fin:         in std_logic;
+    Timing_Pattern_LA:  in std_logic_vector(31 downto 0);-- latched timing pattern from SCU_Bus for external user functions
+    Timing_Pattern_RCV: in std_logic;							-- timing pattern received
+    clk:                in std_logic;
+    nReset:             in std_logic;
+    AWin1:              in std_logic_vector(15 downto 0);
+    AWin2:              in std_logic_vector(15 downto 0);
+    AWin3:              in std_logic_vector(15 downto 0);
+    AWin4:              in std_logic_vector(15 downto 0);
+    AWin5:              in std_logic_vector(15 downto 0);
+    AWin6:              in std_logic_vector(15 downto 0);
+    AWin7:              in std_logic_vector(15 downto 0);
+    AW_Config:          out std_logic_vector(15 downto 0);
+    AWOut_Reg1:         out std_logic_vector(15 downto 0);
+    AWOut_Reg2:         out std_logic_vector(15 downto 0);
+    AWOut_Reg3:         out std_logic_vector(15 downto 0);
+    AWOut_Reg4:         out std_logic_vector(15 downto 0);
+    AWOut_Reg5:         out std_logic_vector(15 downto 0);
+    AWOut_Reg6:         out std_logic_vector(15 downto 0);
+    AWOut_Reg7:         out std_logic_vector(15 downto 0);
+    AW_Config_Wr:       out std_logic;  
+    AWOut_Reg1_Wr:      out std_logic;   
+    AWOut_Reg2_Wr:      out std_logic;   
+    AWOut_Reg3_Wr:      out std_logic;   
+    AWOut_Reg4_Wr:      out std_logic;   
+    AWOut_Reg5_Wr:      out std_logic;   
+    AWOut_Reg6_Wr:      out std_logic;   
+    AWOut_Reg7_Wr:      out std_logic;   
+    AWOut_Reg_rd_active:out std_logic;
+    Data_to_SCUB:       out std_logic_vector(15 downto 0);
+    Dtack_to_SCUB:      out std_logic;
+    LA_aw_io_reg:       out std_logic_vector(15 downto 0)
+	 );
 end component aw_io_reg;
+
+
+COMPONENT io_reg
+	GENERIC ( Base_addr : INTEGER );
+	PORT
+	(
+		Adr_from_SCUB_LA:		IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+		Data_from_SCUB_LA:	IN STD_LOGIC_VECTOR(15 DOWNTO 0);
+		Ext_Adr_Val:	 		IN STD_LOGIC;
+		Ext_Rd_active:			IN STD_LOGIC;
+		Ext_Rd_fin:			 	IN STD_LOGIC;
+		Ext_Wr_active:			IN STD_LOGIC;
+		Ext_Wr_fin:				IN STD_LOGIC;
+		clk:	 					IN STD_LOGIC;
+		nReset:	 				IN STD_LOGIC;
+		Reg_IO1:					OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+		Reg_IO2:					OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+		Reg_IO3:					OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+		Reg_IO4:					OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+		Reg_IO5:					OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+		Reg_IO6:					OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+		Reg_IO7:					OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+		Reg_IO8:					OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+		Reg_rd_active:	 		OUT STD_LOGIC;
+		Data_to_SCUB:	 		OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
+		Dtack_to_SCUB:	 		OUT STD_LOGIC
+	);
+END COMPONENT io_reg;
+
 
 
 component flash_loader_v01
@@ -229,10 +262,11 @@ end component;
   signal Ext_Wr_fin_ovl: std_logic;
   signal SCU_Ext_Wr_fin: std_logic;
   signal nPowerup_Res: std_logic;
-
+  signal Timing_Pattern_LA:  std_logic_vector(31 downto 0);--  latched timing pattern from SCU_Bus for external user functions
+  signal Timing_Pattern_RCV: std_logic;-------------------  timing pattern received
+  
   signal extension_cid_system:  integer range 0 to 16#FFFF#;  -- in,  extension card: cid_system
   signal extension_cid_group:   integer range 0 to 16#FFFF#;  --in, extension card: cid_group
-  signal DAC_Out: std_logic_vector(15 downto 0);
  
   signal fg_1_dtack: std_logic;
   signal fg_1_data_to_SCUB: std_logic_vector(15 downto 0);
@@ -318,8 +352,39 @@ end component;
   signal AWOut_Reg_rd_active: std_logic;
   signal aw_port1_Dtack: std_logic;
   signal aw_port1_data_to_SCUB: std_logic_vector(15 downto 0);
+  signal LA_aw_io_reg: std_logic_vector(15 downto 0);
 
 
+
+  signal INL_msk_IO1: std_logic_vector(15 downto 0);	       
+  signal INL_msk_IO2: std_logic_vector(15 downto 0);	       
+  signal INL_msk_IO3: std_logic_vector(15 downto 0);			 
+  signal INL_msk_IO4: std_logic_vector(15 downto 0);	       
+  signal INL_msk_IO5: std_logic_vector(15 downto 0);	       
+  signal INL_msk1_rd_active: std_logic;	 
+  signal INL_msk1_Dtack: std_logic;      
+  signal INL_msk1_data_to_SCUB: std_logic_vector(15 downto 0);
+
+
+  signal INL_xor_IO1: std_logic_vector(15 downto 0);		    
+  signal INL_xor_IO2: std_logic_vector(15 downto 0);		    
+  signal INL_xor_IO3: std_logic_vector(15 downto 0);		    
+  signal INL_xor_IO4: std_logic_vector(15 downto 0);		    
+  signal INL_xor_IO5: std_logic_vector(15 downto 0);		    
+  signal INL_xor1_rd_active: std_logic;	 
+  signal INL_xor1_Dtack: std_logic;      
+  signal INL_xor1_data_to_SCUB: std_logic_vector(15 downto 0);
+       
+
+  signal INL_IO1: std_logic_vector(15 downto 0);		    
+  signal INL_IO2: std_logic_vector(15 downto 0);		    
+  signal INL_IO3: std_logic_vector(15 downto 0);		    
+  signal INL_IO4: std_logic_vector(15 downto 0);		    
+  signal INL_IO5: std_logic_vector(15 downto 0);		    
+  signal Interlock: std_logic;		    
+
+
+	
   signal hp_la_o:			std_logic_vector(15 downto 0); -- Output für HP-Logicanalysator
   
    
@@ -373,6 +438,7 @@ end component;
 	signal P25IO_BNC_o:					std_logic;   			-- Output "BNC"
 	signal P25IO_nELD_BNC_o:			std_logic;     		-- Output "nLED_BNC"
 
+   signal P25IO_DAC_Out: 		      std_logic_vector(15 downto 0); -- Zwischenspeicher
 	signal P25IO_DAC_Strobe_Start_i:	std_logic;				-- input  "Start-Signal für den Stobe vom DAC"
 	signal P25IO_DAC_Strobe_Start_o:	std_logic;				-- Output "Start-Puls für den Stobe vom DAC (1 CLK breit)"
 	signal P25IO_DAC_Strobe_i:			std_logic;				-- input  "Start-Puls für den DAC-Strobe"
@@ -580,7 +646,8 @@ end component;
       
 aw_port1: aw_io_reg     
 generic map(
-      Base_addr =>  16#200#
+      AW_Base_addr =>   16#200#,
+      Tag_Base_addr =>  16#280#
       )
 port map  (     
       Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,
@@ -590,6 +657,8 @@ port map  (
       Ext_Rd_fin          =>  Ext_Rd_fin,
       Ext_Wr_active       =>  Ext_Wr_active,
       Ext_Wr_fin          =>  Ext_Wr_fin,
+      Timing_Pattern_LA   => Timing_Pattern_LA, -- out,        latched timing pattern from SCU_Bus for external user functions
+      Timing_Pattern_RCV  => Timing_Pattern_RCV, -- out,        timing pattern received
       clk                 =>  clk_sys,
       nReset              =>  nPowerup_Res,
       AWin1               =>  AWin1,
@@ -617,9 +686,72 @@ port map  (
       AWOut_Reg7_Wr       =>  AWOut_Reg7_Wr,  
       AWOut_Reg_rd_active =>  AWOut_Reg_rd_active,
       Dtack_to_SCUB       =>  aw_port1_Dtack,
-      Data_to_SCUB        =>  aw_port1_data_to_SCUB
+      Data_to_SCUB        =>  aw_port1_data_to_SCUB,
+		LA_aw_io_reg        =>  LA_aw_io_reg
       );
-      
+
+
+		
+inl_xor1: io_reg     
+generic map(
+      Base_addr =>  16#230#
+      )
+port map  (     
+      Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+      Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+      Ext_Adr_Val        =>  Ext_Adr_Val,
+      Ext_Rd_active      =>  Ext_Rd_active,
+      Ext_Rd_fin         =>  Ext_Rd_fin,
+      Ext_Wr_active      =>  Ext_Wr_active,
+      Ext_Wr_fin         =>  Ext_Wr_fin,
+      clk                =>  clk_sys,
+      nReset             =>  nPowerup_Res,
+--
+		Reg_IO1		       =>  open,		
+		Reg_IO2		       =>  INL_xor_IO1,		
+		Reg_IO3		       =>  INL_xor_IO2,		
+		Reg_IO4		       =>  INL_xor_IO3,		
+		Reg_IO5		       =>  INL_xor_IO4,		
+		Reg_IO6		       =>  INL_xor_IO5,	
+		Reg_IO7			    =>  open,		
+		Reg_IO8			    =>  open,		
+--
+		Reg_rd_active		 =>  INL_xor1_rd_active,
+      Dtack_to_SCUB      =>  INL_xor1_Dtack,
+      Data_to_SCUB       =>  INL_xor1_data_to_SCUB
+		);
+		
+		
+inl_msk1: io_reg     
+generic map(
+      Base_addr =>  16#240#
+      )
+port map  (     
+      Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+      Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+      Ext_Adr_Val        =>  Ext_Adr_Val,
+      Ext_Rd_active      =>  Ext_Rd_active,
+      Ext_Rd_fin         =>  Ext_Rd_fin,
+      Ext_Wr_active      =>  Ext_Wr_active,
+      Ext_Wr_fin         =>  Ext_Wr_fin,
+      clk                =>  clk_sys,
+      nReset             =>  nPowerup_Res,
+--
+		Reg_IO1		       =>  open,	   
+		Reg_IO2		       =>  INL_msk_IO1,   
+		Reg_IO3			    =>  INL_msk_IO2,	
+		Reg_IO4		       =>  INL_msk_IO3,  
+		Reg_IO5		       =>  INL_msk_IO4,  
+		Reg_IO6		       =>  INL_msk_IO5,  
+		Reg_IO7		       =>  open,	  
+		Reg_IO8		       =>  open,	  
+--
+		Reg_rd_active		 =>  INL_msk1_rd_active,
+      Dtack_to_SCUB      =>  INL_msk1_Dtack,
+      Data_to_SCUB       =>  INL_msk1_data_to_SCUB
+		);
+
+ 
   
     timer_irq: process (clk_sys, reset_rstn)
     begin
@@ -639,7 +771,8 @@ port map  (
     
 testport_mux: process (A_SEL, AW_Config, AWin1, AWOut_Reg1,
                        IO_Test_Port0, IO_Test_Port1, IO_Test_Port2, IO_Test_Port3,
-                       test_port_in_0, test_clocks)
+                       test_port_in_0, test_clocks,
+							  uart_txd_out)
 variable test_out: std_logic_vector(15 downto 0);
 begin
   case (not A_SEL) is
@@ -655,10 +788,10 @@ begin
 --                                                 +--- '1' drives the external max level shifter
     when X"8" => test_out := X"000" & '0' & '0' & '1' & uart_txd_out;
     when X"9" => test_out := X"0000";
-    when X"A" => test_out := X"0000";
+    when X"A" => test_out := LA_aw_io_reg;
     when X"B" => test_out := X"0000";
---
-    when X"C" => test_out := X"0000";
+    when X"C" => test_out := Timing_Pattern_RCV & Timing_Pattern_LA(14 downto 0);-- Timing
+	 --
     when X"D" => test_out := X"0000";
     when X"E" => test_out := test_clocks;
     when X"F" => test_out := test_port_in_0;
@@ -666,6 +799,8 @@ begin
   end case;
     hp_la_o <= test_out(15 downto 0);
 end process testport_mux;
+
+
 
  
 
@@ -814,8 +949,8 @@ port map (
     extension_cid_group => extension_cid_group, --in,     extension card: cid_group
     Data_from_SCUB_LA => Data_from_SCUB_LA, -- out,        latched data from SCU_Bus for external user functions
     ADR_from_SCUB_LA => ADR_from_SCUB_LA, -- out,        latched address from SCU_Bus for external user functions
-    Timing_Pattern_LA => open, -- out,        latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV => open, -- out,        timing pattern received
+    Timing_Pattern_LA => Timing_Pattern_LA, -- out,        latched timing pattern from SCU_Bus for external user functions
+    Timing_Pattern_RCV => Timing_Pattern_RCV, -- out,        timing pattern received
     nSCUB_Dtack_Opdrn => open, -- out,        for direct connect to SCU_Bus opendrain signal
                                                     -- '0' => slave give dtack to SCU master
     SCUB_Dtack => SCUB_Dtack, -- out,        for connect via ext. open collector driver
@@ -871,7 +1006,7 @@ lm32_ow: housekeeping
     debug_serial_i    => '0');
 
 
-    Dtack_to_SCUB <= clk_switch_dtack or wb_scu_dtack or fg_1_dtack or aw_port1_Dtack;
+    Dtack_to_SCUB <= clk_switch_dtack or wb_scu_dtack or fg_1_dtack or aw_port1_Dtack or INL_msk1_Dtack or INL_xor1_Dtack;
 
 
     A_nDtack <= NOT(SCUB_Dtack);
@@ -910,23 +1045,53 @@ fg_1: fg_quad_scu_bus
 rd_port_mux:  process ( clk_switch_rd_active, clk_switch_rd_data,
                         wb_scu_rd_active,     wb_scu_data_to_SCUB,
                         fg_1_rd_active,       fg_1_data_to_SCUB,
-                        AWOut_Reg_rd_active,  aw_port1_data_to_SCUB )
+                        AWOut_Reg_rd_active,  aw_port1_data_to_SCUB,
+								INL_msk1_rd_active,	 INL_msk1_data_to_SCUB,
+								INL_xor1_rd_active,	 INL_xor1_data_to_SCUB )
 
-  variable sel: unsigned(3 downto 0);
+  variable sel: unsigned(5 downto 0);
   begin
-    sel :=  clk_switch_rd_active & wb_scu_rd_active & fg_1_rd_active & AWOut_Reg_rd_active;
+    sel :=  clk_switch_rd_active & wb_scu_rd_active & fg_1_rd_active & AWOut_Reg_rd_active & INL_msk1_rd_active & INL_xor1_rd_active;
     case sel IS
-      when "0001" => Data_to_SCUB <= aw_port1_data_to_SCUB;
-      when "0010" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "0100" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "1000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "000001" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
+      when "000010" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
+      when "000100" => Data_to_SCUB <= aw_port1_data_to_SCUB;
+      when "001000" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "010000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "100000" => Data_to_SCUB <= clk_switch_rd_data;
       when others => Data_to_SCUB <= (others => '0');
     end case;
   end process rd_port_mux;
 
 
 
-  
+p_interlock:  
+process (AWin1, AWin2, AWin3, AWin4, AWin5,											-- Input-Register
+			INL_xor_IO1, INL_xor_IO2, INL_xor_IO3, INL_xor_IO4, INL_xor_IO5,	-- Pegel(xor)-Register (default = 0)
+			INL_msk_IO1, INL_msk_IO2, INL_msk_IO3, INL_msk_IO4, INL_msk_IO5,	-- Maskenregister		  (default = 0)
+			INL_IO1, 	 INL_IO2,	  INL_IO3,		INL_IO4,		 INL_IO5)		-- Zwischenergebnis: Interlock-Bits xor, Maske
+begin
+--
+	INL_IO1	<=	((AWin1 xor INL_xor_IO1) and not INL_msk_IO1);
+	INL_IO2	<=	((AWin2 xor INL_xor_IO2) and not INL_msk_IO2);
+	INL_IO3	<=	((AWin3 xor INL_xor_IO3) and not INL_msk_IO3);
+	INL_IO4	<=	((AWin4 xor INL_xor_IO4) and not INL_msk_IO4);
+	INL_IO5	<=	((AWin5 xor INL_xor_IO5) and not INL_msk_IO5);
+
+-- "Oder-Veknüpfung aller Statusbits (nach Aktiv-Pegel-Selekt und Maske) ---	
+	
+  interlock <=	(INL_IO1(15) or INL_IO1(14) or INL_IO1(13) or INL_IO1(12) or INL_IO1(11) or INL_IO1(10) or INL_IO1(9) or INL_IO1(8) or
+		          INL_IO1(7)  or INL_IO1(6)  or INL_IO1(5)  or INL_IO1(4)  or INL_IO1(3)  or INL_IO1(2)  or INL_IO1(1) or INL_IO1(0) or
+		          INL_IO2(15) or INL_IO2(14) or INL_IO2(13) or INL_IO2(12) or INL_IO2(11) or INL_IO2(10) or INL_IO2(9) or INL_IO2(8) or
+		          INL_IO2(7)  or INL_IO2(6)  or INL_IO2(5)  or INL_IO2(4)  or INL_IO2(3)  or INL_IO2(2)  or INL_IO2(1) or INL_IO2(0) or
+		          INL_IO3(15) or INL_IO3(14) or INL_IO3(13) or INL_IO3(12) or INL_IO3(11) or INL_IO3(10) or INL_IO3(9) or INL_IO3(8) or
+		          INL_IO3(7)  or INL_IO3(6)  or INL_IO3(5)  or INL_IO3(4)  or INL_IO3(3)  or INL_IO3(2)  or INL_IO3(1) or INL_IO3(0) or
+		          INL_IO4(15) or INL_IO4(14) or INL_IO4(13) or INL_IO4(12) or INL_IO4(11) or INL_IO4(10) or INL_IO4(9) or INL_IO4(8) or
+		          INL_IO4(7)  or INL_IO4(6)  or INL_IO4(5)  or INL_IO4(4)  or INL_IO4(3)  or INL_IO4(2)  or INL_IO4(1) or INL_IO4(0) or
+		          INL_IO5(15) or INL_IO5(14) or INL_IO5(13) or INL_IO5(12) or INL_IO5(11) or INL_IO5(10) or INL_IO5(9) or INL_IO5(8) or
+		          INL_IO5(7)  or INL_IO5(6)  or INL_IO5(5)  or INL_IO5(4)  or INL_IO5(3)  or INL_IO5(2)  or INL_IO5(1) or INL_IO5(0));
+end process;
+ 
   
 --  +============================================================================================================================+
 --  |                                      		Anwender-IO: P37IO  -- FG900_700		                                             |
@@ -1239,27 +1404,31 @@ HFIO_in_PHASE_FEHLER_Deb:  Debounce
   
   
 
-p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO, A_SEL, fg_1_sw, fg_1_strobe,
-                   AWin1, AWin2, AWin3, AWin4, AWin5, AWin6, 
-                   AWOut_Reg1, AWOut_Reg2, AWOut_Reg3, AWOut_Reg4, AWOut_Reg5, AWOut_Reg6,
-                   DAC_Out, P25IO_ADC_Data_FF_i,
-						 IO_Test_Port0, IO_Test_Port1, IO_Test_Port2, IO_Test_Port3,
-                   CLK_IO, clk_blink, s_nLED_Sel, s_nLED_Dtack, s_nLED_inR, 
-                   Ena_Every_1us, ena_Every_20ms, ena_Every_250ms
+p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO, A_SEL,
+						 fg_1_sw, fg_1_strobe, P25IO_DAC_Out,
+                   AW_Config, CLK_IO, AWin1, AWin2, AWin3, AWin4, AWin5, AWin6, AWin7, 
+                   AWOut_Reg1, AWOut_Reg1_wr, AWOut_Reg2, AWOut_Reg2_wr, AWOut_Reg3, AWOut_Reg4, AWOut_Reg5, AWOut_Reg6, AWOut_Reg7, 
+                   Interlock, UIO, hp_la_o, local_clk_is_running, clk_blink,
+						 s_nLED_Sel, s_nLED_Dtack, s_nLED_inR, s_nLED_User1_o, s_nLED_User2_o, s_nLED_User3_o, 
+						 P37IO_nLED_Start_o, P37IO_nLED_Stop_o, P37IO_BNC_o, P37IO_nELD_BNC_o, P37IO_in_Data_Deb_o,
+						 P25IO_EOC_deb_o, P25IO_nLED_Start_o, P25IO_nLED_Stop_o, P25IO_BNC_o, P25IO_nELD_BNC_o,
+						 P25IO_nDAC_Strobe_o, P25IO_nLED_Ext_Tim_o, P25IO_nADC_ECC_o, P25IO_in_Data_Deb_o, P25IO_ADC_Data_FF_o,
+					    P25IO_ADC_Data_FF_i, P25IO_ADC_ECC_Start_o, P25IO_Ext_Tim_Strobe_Start_o,
+						 OCIN_in_Data_Deb1_o, OCIN_in_Data_Deb2_o,
+						 OCIO_in_Data_Deb1_o, OCIO_in_Data_Deb2_o,
+						 SPSIO_in_Data_Deb_o,
+						 HFIO_nLED_Aux_o, HFIO_nLED_Tastpuls_o, HFIO_nLED_Sample_Puls_Display_o,
+						 HFIO_in_AMP_FEHLER_Deb_o, HFIO_in_PHASE_FEHLER_Deb_o, HFIO_nLED_Sample_Puls_inv_o 
                    )
   
 BEGIN
 
-    --#################################################################################
-    --#################################################################################
-    --###                                                                           ###
-    --###                    IO-Stecker-Test mit "BrückenStecker                    ###
-    --###                                                                           ###
-    --#################################################################################
-  
-    --############################# Set Defaults ######################################
+
+
+  --############################# Set Defaults ######################################
 
     PIO(150 downto 16)  <= (OTHERS => 'Z'); -- setze alle IO-Pins auf input;
+	 UIO(15 downto 0)  	<= (OTHERS => 'Z'); 				-- UIO = Input;
 
     AWin1(15 downto 0)  <=  x"0000";  -- AW-in-Register 1
     AWin2(15 downto 0)  <=  x"0000";  -- AW-in-Register 2
@@ -1273,6 +1442,47 @@ BEGIN
     extension_cid_system <= 0;  -- extension card: cid_system
     extension_cid_group  <= 0;  -- extension card: cid_group
 
+	 s_nLED_User1_i <= '0';				-- LED3 = User 1, -- frei -- 
+	 s_nLED_User2_i <= '0';				-- LED3 = User 2, -- frei -- 
+	 s_nLED_User3_i <= '0';				-- LED3 = User 3, -- frei -- 
+	 
+    P37IO_Start_i         <= '0';
+    P37IO_Stop_i          <= '0';
+    P37IO_Reset_i         <= '0';
+    P37IO_in_Data_Deb_i   <= (OTHERS => '0');
+    
+    P25IO_Start_i            <= '0';
+    P25IO_Stop_i             <= '0';
+    P25IO_Reset_i            <= '0';
+    P25IO_DAC_Strobe_Start_i <= '0';
+    P25IO_DAC_Out            <=  (OTHERS => '0');
+    P25IO_ADC_ECC_i          <= '0';
+    P25IO_ADC_ECC_Start_i    <= '0';
+    P25IO_Ext_Tim_i          <= '0';
+    P25IO_in_Data_Deb_i      <=  (OTHERS => '0');
+    P25IO_ADC_Data_FF_i      <=  (OTHERS => '0');
+    P25IO_EOC_i              <= '0';
+    
+    OCIN_in_Data_Deb1_i      <=  (OTHERS => '0');
+    OCIN_in_Data_Deb2_i      <=  (OTHERS => '0');
+    OCIO_in_Data_Deb1_i      <=  (OTHERS => '0');
+    OCIO_in_Data_Deb2_i      <=  (OTHERS => '0');
+                        
+    SPSIO_in_Data_Deb_i      <=  (OTHERS => '0');
+    
+    HFIO_Aux_i						  <= '0';
+    HFIO_Tastpuls_i             <= '0';
+    HFIO_Sample_Puls_Display_i  <= '0';
+    HFIO_Sample_Puls_inv_i      <= '0';
+    HFIO_in_AMP_FEHLER_Deb_i	  <= '0';    	 
+	 HFIO_in_PHASE_FEHLER_Deb_i  <= '0';    	 
+  
+	 
+    --#################################################################################
+    --###                                                                           ###
+    --###                    IO-Stecker-Test mit "BrückenStecker                    ###
+    --###                                                                           ###
+    --#################################################################################
     
     
     IF  AW_Config(15) = '1'  THEN   -- Config-Reg Bit15 = 1  --> Testmode 
@@ -1318,9 +1528,10 @@ BEGIN
 
 		--- Test der User-Pins zur VG-Leiste und HPLA1 (HP-Logicanalysator) ---
 
-		AWin6(15 downto 0)	<=		UIO(15 downto 0); 			-- User-Pins zur VG-Leiste als Input
-		A_TA(15 downto 0)		<=  	AWOut_Reg6(15 downto 0);	-- HPLA1 (HP-Logicanalysator) als Output
-		
+		UIO(15 downto 0)  	<= (OTHERS => 'Z'); 				-- UIO = Input;
+		AWin6(15 downto 0)	<=	UIO(15 downto 0); 			-- User-Pins zur VG-Leiste als Input
+		A_TA(15 downto 0)		<= AWOut_Reg6(15 downto 0);	-- HPLA1 (HP-Logicanalysator) als Output
+
 
 		--- Test Codierschalter ---
 
@@ -1346,7 +1557,8 @@ BEGIN
       s_AW_ID(7 downto 0)   <=  PIO(150 downto 143);
       AWin5(15 downto 0)    <=  x"00" & s_AW_ID(7 downto 0);-- Anwender_ID
     
-  
+
+	
     --  --- Output: Anwender-LED's ---
 
 		PIO(17) <= s_nLED_Sel;        						-- LED7 = sel Board 
@@ -1358,9 +1570,10 @@ BEGIN
       PIO(29) <= s_nLED_User3_o;								-- LED1 = User 3 
       PIO(31) <= local_clk_is_running and clk_blink;  -- LED0 (User-4) = int. Clock 
 
-		A_TA	  <= hp_la_o; -- Output für HP-Logicanalysator
-
 		
+		A_TA		<= hp_la_o; ----- Output für HP-Logicanalysator
+
+		UIO(0)	<= not Interlock; -- Ist kein Interlock-Bit gesetzt ==> UIO(0) = 1 (low-aktiv)
     
   CASE s_AW_ID(7 downto 0) IS
   
@@ -1470,13 +1683,13 @@ BEGIN
 
 				P25IO_DAC_Strobe_Start_i	<=	fg_1_strobe;  				-- fg_1_strobe (vom Funktionsgen)
 				PIO(105)							<=	P25IO_nDAC_Strobe_o;		--	Der Strobe-Output ist "LO"-Aktiv
-            DAC_Out(15 downto 0)    	<= fg_1_sw(31 downto 16);  
+            P25IO_DAC_Out(15 downto 0) <= fg_1_sw(31 downto 16);  
         Else
 --           Software-Mode, DAC-Werte, kommen vom SCU-Bus-Slave. Externe Triggerung mit pos. oder neg. Flanke, kann eingeschaltet werden. 
 
 				P25IO_DAC_Strobe_Start_i	<=	AWOut_Reg1_wr;				-- AWOut_Reg1_wr (vom SCU-Bus-Slave)
 				PIO(105)							<=	P25IO_nDAC_Strobe_o;		--	Der Strobe-Output ist "LO"-Aktiv	
-            DAC_Out(15 downto 0)    	<= AWOut_Reg1(15 downto 0);
+            P25IO_DAC_Out(15 downto 0) <= AWOut_Reg1(15 downto 0);
       END IF; 
 
 
@@ -1489,22 +1702,22 @@ BEGIN
       PIO(95) <=  '0';  ------------------------------- Output_Enable (nach init vom ALTERA)
 
 
-      PIO(107)  <=  not DAC_Out(15);  -- Output Bit-15
-      PIO(109)  <=  not DAC_Out(14);  -- Output Bit-14
-      PIO(111)  <=  not DAC_Out(13);  -- Output Bit-13
-      PIO(113)  <=  not DAC_Out(12);  -- Output Bit-12
-      PIO(115)  <=  not DAC_Out(11);  -- Output Bit-11
-      PIO(117)  <=  not DAC_Out(10);  -- Output Bit-10
-      PIO(119)  <=  not DAC_Out(9);   -- Output Bit-9
-      PIO(121)  <=  not DAC_Out(8);   -- Output Bit-8
-      PIO(123)  <=  not DAC_Out(7);   -- Output Bit-7
-      PIO(125)  <=  not DAC_Out(6);   -- Output Bit-6
-      PIO(127)  <=  not DAC_Out(5);   -- Output Bit-5
-      PIO(129)  <=  not DAC_Out(4);   -- Output Bit-4
-      PIO(131)  <=  not DAC_Out(3);   -- Output Bit-3
-      PIO(133)  <=  not DAC_Out(2);   -- Output Bit-2
-      PIO(135)  <=  not DAC_Out(1);   -- Output Bit-1
-      PIO(137)  <=  not DAC_Out(0);   -- Output Bit-0
+      PIO(107)  <=  not P25IO_DAC_Out(15);  -- Output Bit-15
+      PIO(109)  <=  not P25IO_DAC_Out(14);  -- Output Bit-14
+      PIO(111)  <=  not P25IO_DAC_Out(13);  -- Output Bit-13
+      PIO(113)  <=  not P25IO_DAC_Out(12);  -- Output Bit-12
+      PIO(115)  <=  not P25IO_DAC_Out(11);  -- Output Bit-11
+      PIO(117)  <=  not P25IO_DAC_Out(10);  -- Output Bit-10
+      PIO(119)  <=  not P25IO_DAC_Out(9);   -- Output Bit-9
+      PIO(121)  <=  not P25IO_DAC_Out(8);   -- Output Bit-8
+      PIO(123)  <=  not P25IO_DAC_Out(7);   -- Output Bit-7
+      PIO(125)  <=  not P25IO_DAC_Out(6);   -- Output Bit-6
+      PIO(127)  <=  not P25IO_DAC_Out(5);   -- Output Bit-5
+      PIO(129)  <=  not P25IO_DAC_Out(4);   -- Output Bit-4
+      PIO(131)  <=  not P25IO_DAC_Out(3);   -- Output Bit-3
+      PIO(133)  <=  not P25IO_DAC_Out(2);   -- Output Bit-2
+      PIO(135)  <=  not P25IO_DAC_Out(1);   -- Output Bit-1
+      PIO(137)  <=  not P25IO_DAC_Out(0);   -- Output Bit-0
 		
 
 
@@ -1876,7 +2089,13 @@ BEGIN
       
   WHEN OTHERS =>
 
-      -- Output: Anwender-LED's ---
+
+		s_nLED_User1_i <= '0';				-- LED3 = User 1, -- frei -- 
+		s_nLED_User2_i <= '0';				-- LED3 = User 2, -- frei -- 
+		s_nLED_User3_i <= '0';				-- LED3 = User 3, -- frei -- 
+
+
+  -- Output: Anwender-LED's ---
 
       PIO(17)   <=    clk_blink; -- LED7
       PIO(19)   <=    clk_blink; -- LED6   
