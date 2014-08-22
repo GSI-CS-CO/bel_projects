@@ -124,9 +124,9 @@ entity vetar2a_top is
     -- di_i  AH7-DIS0 DIN  shift register in????                                                -- CHECKED: USE THIS 
 
    color_o : out std_logic_vector(2 downto 0);
-    -- color[0] AH4-BLU   Blue DON'T drive this pin fast, close to pll!!!
-    -- color[1] AH5-DIS4  Green                                           
-    -- color[2] AH13-DIS5 Red                                           
+    -- color[0] AH13-BLU Blue
+    -- color[1] AH5-DIS4 Green                                           
+    -- color[2] AH4-DIS5 Red                                           
    
     -----------------------------------------------------------------------
      -- VME bus
