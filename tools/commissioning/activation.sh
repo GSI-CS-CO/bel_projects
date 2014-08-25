@@ -6,24 +6,63 @@ QUARTUS=/home/alex/workspace/optional/quartus/altera/quartus
 QUARTUS_BIN=$QUARTUS/bin
 VETAR2A_SOF_FILE=../../syn/gsi_vetar2a/wr_core_demo/vetar2a.sof
 VETAR2A_RPD_FILE=../../syn/gsi_vetar2a/wr_core_demo/vetar2a.rpd
-USB_FLASHER=/../../ip_cores/etherbone-core/hdl/eb_usb_core
+USB_FLASHER=../../ip_cores/etherbone-core/hdl/eb_usb_core
 OW_WRITE=../../ip_cores/wrpc-sw/tools/eb-w1-write
 WRPC_BIN=../../ip_cores/wrpc-sw/tools/sdb-wrpc.bin
 BASE_DIR=$PWD # Working directory
 USB_DEVICE=$1 # Argument 1
 HARDWARE=$2   # Argument 2
-CONTINUE=;
-USB_LINK=;
+CONTINUE=;    # Read user input (continue ...)
+USB_LINK=;    # Contains USB link status
+SKIP=;        # Skip section/test
+RET=;         # Contains return value of the latest system call
 
 # User setup
 # ====================================================================================================
-FLASH_USB="no"
+FLASH_USB="yes"
 FLASH_FPGA="yes"
-FORMAT_OW="no"
-ADDON_JTAG="no"
-IO_TEST_STEP1="no"
-IO_TEST_STEP2="no"
-SET_MAC="no"
+FORMAT_OW="yes"
+ADDON_JTAG="yes"
+IO_TEST_STEP1="yes"
+IO_TEST_STEP2="yes"
+SET_MAC="yes"
+
+# Function check_usb_connection() - Checks USB connection
+# ====================================================================================================
+check_usb_connection()
+{
+  # Wait until device is up
+  USB_LINK=n;
+  while [ $USB_LINK = n ]; do
+    eb-ls $USB_DEVICE > /dev/null 2>&1; # Little hack, using return code for eb-ls #TBD: Evaluate "time-out"?
+    RET=$?
+    if [ $RET -ne 1 ]; then
+      echo "USB link established ($USB_DEVICE)!"
+      USB_LINK=y;
+    else
+      echo "Waiting for USB link ($USB_DEVICE)..."
+      USB_LINK=n;
+    fi
+    sleep 1;
+  done;
+}
+
+# Function continue_or_skip() - Skips or continues next step
+# ====================================================================================================
+continue_or_skip()
+{
+  CONTINUE=;
+  SKIP=;
+  while [ -z "$CONTINUE" ]; do
+    read -r -p "Type anything but \"c\" to continue or \"s\" to skip. [c/s]: " CONTINUE; 
+  done;
+  if [ $CONTINUE = s ]
+  then
+    SKIP=y
+  else
+    SKIP=;
+  fi
+}
 
 # Script start
 # ====================================================================================================
@@ -60,7 +99,7 @@ fi
 if [ -f "$BASE_DIR/$USB_FLASHER/flash-fx2lp.sh" ]
 then
   echo -n "Using USB flash script: "
-  file $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh
+  file $USB_FLASHER/flash-fx2lp.sh
 else
   echo "Error: USB flash script is missing!"  
   exit 1
@@ -68,11 +107,8 @@ fi
 echo "All files are present!\n"
 echo "Compiling the device test ..."
 make device-test
-echo "\nPlease turn off the complete board, attach the WRPX1 and the addon board and do a power cycle";
-CONTINUE=;
-while [ -z "$CONTINUE" ]; do
-  read -r -p "Type anything but C or c to continue. [C/c]: " CONTINUE; 
-done;
+echo "\nPlease turn off the complete board, attach the WRPX1 and the addon board and do a power cycle.";
+
 
 # Flash USB device
 # ====================================================================================================
@@ -81,30 +117,29 @@ echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 if [ $FLASH_USB = "yes" ]
 then
   echo "Please connect the USB connector to the base board.";
-  CONTINUE=;
-  while [ -z "$CONTINUE" ]; do
-    read -r -p "Type anything but C or c to continue. [C/c]: " CONTINUE; 
-  done;
-  echo "Trying to flash the USB device now..."
-  cd $BASE_DIR/$USB_FLASHER;
-  $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh -E;
-  RET=$?
-  if [ $RET -ne 0 ]
-  then
-    echo "Error: Flash attempt failed!"
-    exit 1;
+  continue_or_skip
+  if [ -z "$SKIP" ]; then
+    echo "Trying to flash the USB device now..."
+    cd $BASE_DIR/$USB_FLASHER;
+    $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh -E;
+    RET=$?
+    if [ $RET -ne 0 ]
+    then
+      echo "Error: Flash attempt failed!"
+      exit 1;
+    fi
+    $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh;
+    RET=$?
+    if [ $RET -ne 0 ]
+    then
+      echo "Error: Flash attempt failed!"
+      exit 1;
+    fi
+    cd $BASE_DIR;
+    echo "USB device is flashed now!"
+  else
+    echo "Skipping this step ..."
   fi
-  $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh;
-  RET=$?
-  if [ $RET -ne 0 ]
-  then
-    echo "Error: Flash attempt failed!"
-    exit 1;
-  fi
-  cd $BASE_DIR;
-  echo "USB device is flashed now!"
-else
-  echo "Skipping this step ..."
 fi
 
 # Flash FPGA
@@ -114,21 +149,21 @@ echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 if [ $FLASH_FPGA = "yes" ]
 then
   echo "Please connect the JTAG connector to the base board and reset it (power cycle).";
-  CONTINUE=;
-  while [ -z "$CONTINUE" ]; do
-    read -r -p "Type anything but C or c to continue. [C/c]: " CONTINUE; 
-  done;
-  echo "Trying to flash the FPGA now ..."
-  eb-flash $USB_DEVICE $VETAR2A_RPD_FILE
-  RET=$?
-  if [ $RET -ne 0 ]
-  then
-    echo "Error: Flash attempt failed!"
-    exit 1;
+  continue_or_skip
+  if [ -z "$SKIP" ]; then
+    check_usb_connection
+    echo "Trying to flash the FPGA now ..."
+    eb-flash $USB_DEVICE $VETAR2A_RPD_FILE
+    RET=$?
+    if [ $RET -ne 0 ]
+    then
+      echo "Error: Flash attempt failed!"
+      exit 1;
+    fi
+    echo "FPGA is flashed now!"
+  else
+    echo "Skipping this step ..."
   fi
-  echo "FPGA is flashed now!"
-else
-  echo "Skipping this step ..."
 fi
 
 # Format 1-wire
@@ -138,21 +173,21 @@ echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 if [ $FORMAT_OW = "yes" ]
 then
   echo "Please do a power cycle";
-  CONTINUE=;
-  while [ -z "$CONTINUE" ]; do
-    read -r -p "Type anything but C or c to continue. [C/c]: " CONTINUE; 
-  done;
-  echo "Formating the 1-wire EEPROM ..."
-  $OW_WRITE $USB_DEVICE 0 320 < $WRPC_BIN
-  RET=$?
-  if [ $RET -ne 0 ]
-  then
-    echo "Error: Formating attempt failed!"
-    exit 1;
+  continue_or_skip
+  if [ -z "$SKIP" ]; then
+    check_usb_connection
+    echo "Formating the 1-wire EEPROM ..."
+    $OW_WRITE $USB_DEVICE 0 320 < $WRPC_BIN
+    RET=$?
+    if [ $RET -ne 0 ]
+    then
+      echo "Error: Formating attempt failed!"
+      exit 1;
+    fi
+    echo "1-wire EEPROM is formated now!"
+  else
+    echo "Skipping this step ..."
   fi
-  echo "1-wire EEPROM is formated now!"
-else
-  echo "Skipping this step ..."
 fi
 
 # JTAG addon test
@@ -162,14 +197,14 @@ echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 if [ $FLASH_USB = "yes" ]
 then
   echo "Please connect the JTAG connector to the addon board and reset it (power cycle).";
-  CONTINUE=;
-  while [ -z "$CONTINUE" ]; do
-    read -r -p "Type anything but C or c to continue. [C/c]: " CONTINUE; 
-  done;
-  echo "Programming the Vetar2a"
-  $QUARTUS_BIN/quartus_pgm -c 1 -m jtag -o "p;$VETAR2A_SOF_FILE" 
-else
-  echo "Skipping this step ..."
+  continue_or_skip
+  if [ -z "$SKIP" ]; then
+    check_usb_connection
+    echo "Programming the Vetar2a"
+    $QUARTUS_BIN/quartus_pgm -c 1 -m jtag -o "p;$VETAR2A_SOF_FILE" 
+  else
+    echo "Skipping this step ..."
+  fi
 fi
 
 # IO Connection test
@@ -185,19 +220,19 @@ then
   echo "- OUT  <=> IN (lemo - near SFP cage)";
   echo "- I1   <=> O1 (LVDS box header)";
   echo "- I2   <=> O2 (LVDS box header)";
-  CONTINUE=;
-  while [ -z "$CONTINUE" ]; do
-    read -r -p "Type anything but C or c to continue. [C/c]: " CONTINUE; 
-  done;
-  ./device-test $USB_DEVICE testcase1
-  RET=$?
-  if [ $RET -ne 0 ]
-  then
-    echo "Error: I/O test failed!"
-    exit 1;
+  continue_or_skip
+  if [ -z "$SKIP" ]; then
+    check_usb_connection
+    ./device-test $USB_DEVICE testcase1
+    RET=$?
+    if [ $RET -ne 0 ]
+    then
+      echo "Error: I/O test failed!"
+      exit 1;
+    fi
+  else
+    echo "Skipping step #1 ..."
   fi
-else
-  echo "Skipping step #1 ..."
 fi
 
 if [ $IO_TEST_STEP2 = "yes" ]
@@ -207,19 +242,20 @@ then
   echo "- IO2  <=> IN2 (lemo)";
   echo "- IO3  <=> IN (lemo - near SFP cag)";
   echo "- HDMI <=> HDMI";
-  CONTINUE=;
-  while [ -z "$CONTINUE" ]; do
-    read -r -p "Type anything but C or c to continue. [C/c]: " CONTINUE; 
-  done;
-  ./device-test $USB_DEVICE testcase2
-  RET=$?
-  if [ $RET -ne 0 ]
-  then
-    echo "Error: I/O test failed!"
-    exit 1;
+  continue_or_skip
+  if [ -z "$SKIP" ]; then
+    check_usb_connection
+    ./device-test $USB_DEVICE testcase2
+    check_usb_connection
+    RET=$?
+    if [ $RET -ne 0 ]
+    then
+      echo "Error: I/O test failed!"
+      exit 1;
+    fi
+  else
+    echo "Skipping step #2 ..."
   fi
-else
-  echo "Skipping step #2 ..."
 fi
 
 echo "I/O test finished successfully!"
@@ -235,17 +271,15 @@ then
   echo "- Use the command \"mac setp 02:ff:00:02:00:XX "
   echo "- Attach a SFP to the base board"
   echo "- After setting the MAC address press ctrl+c" 
-  CONTINUE=;
-  while [ -z "$CONTINUE" ]; do
-    read -r -p "Type anything but C or c to continue. [C/c]: " CONTINUE; 
-  done;
-  eb-console $USB_DEVICE
-else
-  echo "Skipping this step ..."
+  continue_or_skip
+  if [ -z "$SKIP" ]; then
+    check_usb_connection
+    eb-console $USB_DEVICE
+    echo "MAC address set!"
+  else
+    echo "Skipping this step ..."
+  fi
 fi
-
-echo "MAC address set!"
-
 
 # Finish test
 # ====================================================================================================
