@@ -14,7 +14,7 @@ FLASH_USB="no"
 FLASH_FPGA="no"
 FORMAT_OW="no"
 ADDON_JTAG="no"
-IO_TEST_STEP1="no"
+IO_TEST_STEP1="yes"
 IO_TEST_STEP2="yes"
 USB_DEVICE=$1
 HARDWARE=$2
@@ -197,10 +197,10 @@ fi
 if [ $IO_TEST_STEP2 = "yes" ]
 then
   echo "Please connect the following I/Os:";
-  echo "- IO1 <=> IN1 (lemo)";
-  echo "- IO2 <=> IN2 (lemo)";
-  echo "- IO3 <=> IN (lemo - near SFP cag)";
-  echo "- HDMI";
+  echo "- IO1  <=> IN1 (lemo)";
+  echo "- IO2  <=> IN2 (lemo)";
+  echo "- IO3  <=> IN (lemo - near SFP cag)";
+  echo "- HDMI <=> HDMI";
   CONTINUE=;
   while [ -z "$CONTINUE" ]; do
     read -r -p "Type anything but C or c to continue. [C/c]: " CONTINUE; 

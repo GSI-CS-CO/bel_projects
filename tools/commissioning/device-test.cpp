@@ -37,11 +37,14 @@ uint32_t a_uEdgesExpectedTestCase1[EVENTS] = {EVENT_MULTI,  EVENT_MULTI,  EVENT_
                                               EVENT_MULTI,  0,            0,             0,             0          };
 uint32_t a_uEdgesExpectedTestCase2[EVENTS] = {0,            0,            EVENT_MULTI,    EVENT_MULTI,  EVENT_MULTI, 
                                               EVENT_MULTI,  EVENT_MULTI,  SPECIAL_MUTLI,  EVENT_MULTI,  EVENT_MULTI};
+
 uint32_t a_uFrequencyExpectedTestCase1[EVENTS] = {GPIO_TOGGLE_RATE,  GPIO_TOGGLE_RATE,  GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE, 
                                                   GPIO_TOGGLE_RATE,  0,                 0,                  0,                  0               };
-uint32_t a_uFrequencyExpectedTestCase1[EVENTS] = {0,                 0,                 GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE, 
-                                                  GPIO_TOGGLE_RATE,  0,                 GPIO_LVDS_RATE,     0,                  0               };
-                                                  
+uint32_t a_uFrequencyExpectedTestCase2[EVENTS] = {0,                 0,                 GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE, 
+                                                  GPIO_TOGGLE_RATE,  GPIO_TOGGLE_RATE,  GPIO_LVDS_RATE,     GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE};
+
+/* Function main(...) */
+/* ==================================================================================================== */
 int main (int argc, const char** argv)
 {
 
@@ -64,6 +67,10 @@ int main (int argc, const char** argv)
   uint32_t uArrayIterator = 0;
   uint32_t uTestCase = 0;
   uint32_t uIOConfig = 0;
+  uint32_t * p_uEdgesExpected = NULL;
+  uint32_t * p_uFrequencyExpected = NULL;
+  double dExpectedFrequency = 0.0;
+  double dMeasuredFrequency = 0.0;
   
   /* Plausibility check for arguments */
   if (argc != 3)
@@ -84,11 +91,15 @@ int main (int argc, const char** argv)
   {
     uTestCase = 1;
     uIOConfig = 0x0; /* All IOs = Inputs */
+    p_uEdgesExpected = a_uEdgesExpectedTestCase1;
+    p_uFrequencyExpected = a_uFrequencyExpectedTestCase1;
   }
   else  if(!strcmp(argv[2],"testcase2"))
   {
     uTestCase = 2;
     uIOConfig = 0x7; /* All IOs = Outputs */
+    p_uEdgesExpected = a_uEdgesExpectedTestCase2;
+    p_uFrequencyExpected = a_uFrequencyExpectedTestCase2;
   }
   else
   {
@@ -146,8 +157,8 @@ int main (int argc, const char** argv)
   
   /* Configure ECA to create IO pulses on GPIO and LVDS */
   eca.channels[0].drain(false); // GPIO
-  eca.channels[1].drain(true);  // PCIe
-  eca.channels[2].drain(false); // LVDS
+  eca.channels[1].drain(true); // PCIe
+  eca.channels[2].drain(true); // LVDS
   eca.channels[0].freeze(false);
   eca.channels[1].freeze(false);
   eca.channels[2].freeze(false);
@@ -209,64 +220,50 @@ int main (int argc, const char** argv)
   {
     fprintf(stdout, "%s: edges on %d: %d\n", argv[0], uArrayIterator, a_uEdges[uArrayIterator]);
     fprintf(stdout, "%s: average frequency on %d: (%"PRIu64")\n", argv[0], uArrayIterator, a_uFrequency[uArrayIterator]/(EVENT_MULTI-1));
-
-    switch(uTestCase)
+  }
+  
+  /* Evaluate test case */
+  for(uArrayIterator=0; uArrayIterator<EVENTS; uArrayIterator++)
+  {
+    /* Compare expected edges */
+    if(a_uEdges[uArrayIterator] != *p_uEdgesExpected)
     {
-      case 1:
-      {
-        /* Check if all edges occurred */ 
-        if(a_uEdges[uArrayIterator] != a_uEdgesExpectedTestCase1[uArrayIterator])
-        {
-          fprintf(stdout, "%s: wrong number of seen edges for IO %d!\n", argv[0], uArrayIterator);
-          fprintf(stdout, "%s: expected %d edges!\n", argv[0], a_uEdgesExpectedTestCase1[uArrayIterator]);
-          fprintf(stdout, "%s: seen %d edges!\n", argv[0], a_uEdges[uArrayIterator]);
-          return 1;
-        }
-        /* Check if the average frequency is okay */
-        if(a_uEdgesExpectedTestCase1[uArrayIterator]!=0)
-        {
-          if((a_uFrequency[uArrayIterator]/(EVENT_MULTI-1))!=((EVENTS)*(HIGH_NS+LOW_NS)))
-          {
-            fprintf(stdout, "%s: average frequency does not match for IO %d!\n", argv[0], uArrayIterator);
-            fprintf(stdout, "%s: average frequency on %d: (%"PRIu64")\n", argv[0], uArrayIterator, a_uFrequency[uArrayIterator]/(EVENT_MULTI-1));
-            fprintf(stdout, "%s: expected average frequency on %d: (%"PRIu64")\n", argv[0], uArrayIterator, uint64_t((EVENTS)*(HIGH_NS+LOW_NS)));
-            return 1;
-          }
-        }
-        break;
-      }
-      case 2:
-      {
-        /* Check if all edges occurred */ 
-        if(a_uEdges[uArrayIterator] != a_uEdgesExpectedTestCase2[uArrayIterator])
-        {
-          fprintf(stdout, "%s: wrong number of seen edges for IO %d!\n", argv[0], uArrayIterator);
-          fprintf(stdout, "%s: expected %d edges!\n", argv[0], a_uEdgesExpectedTestCase2[uArrayIterator]);
-          fprintf(stdout, "%s: seen %d edges!\n", argv[0], a_uEdges[uArrayIterator]);
-          return 1;
-        }
-        /* Check if the average frequency is okay */
-        if(a_uEdgesExpectedTestCase2[uArrayIterator]!=0)
-        {
-          if((a_uFrequency[uArrayIterator]/(EVENT_MULTI-1))!=((EVENTS)*(HIGH_NS+LOW_NS)))
-          {
-            fprintf(stdout, "%s: average frequency does not match for IO %d!\n", argv[0], uArrayIterator);
-            fprintf(stdout, "%s: average frequency on %d: (%"PRIu64")\n", argv[0], uArrayIterator, a_uFrequency[uArrayIterator]/(EVENT_MULTI-1));
-            fprintf(stdout, "%s: expected average frequency on %d: (%"PRIu64")\n", argv[0], uArrayIterator, uint64_t((EVENTS)*(HIGH_NS+LOW_NS)));
-            return 1;
-          }
-        }
-        break;
-      }
-      default:
-      {
-        fprintf(stdout, "%s: unknown test case!\n", argv[0]);
-        return 1;
-        break;
-      }
+      fprintf(stdout, "%s: wrong number of seen edges for IO %d!\n", argv[0], uArrayIterator);
+      fprintf(stdout, "%s: expected %d edges!\n", argv[0], *p_uEdgesExpected);
+      fprintf(stdout, "%s: measured %d edges!\n", argv[0], a_uEdges[uArrayIterator]);
+      return 1;
     }
     
+    /* Compare expected frequency (if we expected edges on this IO) */
+    if(*p_uEdgesExpected)
+    {
+      dExpectedFrequency = *p_uFrequencyExpected;
+      dMeasuredFrequency = a_uFrequency[uArrayIterator] / (a_uEdges[uArrayIterator]-1);
+      
+      if(dMeasuredFrequency!=dExpectedFrequency)
+      {
+        if( ((dExpectedFrequency+TOLERANCE_FACTOR_NS)<dMeasuredFrequency) ||
+            ((dExpectedFrequency-TOLERANCE_FACTOR_NS)>dMeasuredFrequency)
+          )
+        {
+          fprintf(stdout, "%s: average frequency does not match for IO %d!\n", argv[0], uArrayIterator);
+          fprintf(stdout, "%s: expected average frequency on %f: \n", argv[0], dExpectedFrequency);
+          fprintf(stdout, "%s: measured average frequency on %f: \n", argv[0], dMeasuredFrequency);
+          return 1;
+        }
+      }
+        fprintf(stdout, "%s: IO %d:\n", argv[0], uArrayIterator);
+        fprintf(stdout, "%s: expected average frequency on %f: \n", argv[0], dExpectedFrequency);
+        fprintf(stdout, "%s: measured average frequency on %f: \n", argv[0], dMeasuredFrequency);
+    }
+    
+    /* Increase compare pointers */
+    p_uFrequencyExpected++;
+    p_uEdgesExpected++;
+    
   }
+
+  /* Done */
   return 0;
   
 }
