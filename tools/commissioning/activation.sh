@@ -27,6 +27,7 @@ ADDON_JTAG="yes"
 IO_TEST_STEP1="yes"
 IO_TEST_STEP2="yes"
 SET_MAC="yes"
+CHECK_GUI="yes"
 
 # Function check_usb_connection() - Checks USB connection
 # ====================================================================================================
@@ -161,7 +162,7 @@ echo "\nStep 3: Flashing FPGA";
 echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
 if [ $FLASH_FPGA = "yes" ]
 then
-  echo "Please connect the JTAG connector to the base board and reset it (power cycle).";
+  echo "Please connect the JTAG connector to the BASE BOARD and reset it (power cycle).";
   continue_or_skip
   if [ -z "$SKIP" ]; then
     check_usb_connection
@@ -209,7 +210,7 @@ echo "\nStep 5: Check JTAG connection from addon board";
 echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
 if [ $FLASH_USB = "yes" ]
 then
-  echo "Please connect the JTAG connector to the addon board and reset it (power cycle).";
+  echo "Please connect the JTAG connector to the ADDON BOARD and reset it (power cycle).";
   continue_or_skip
   if [ -z "$SKIP" ]; then
     check_usb_connection
@@ -288,6 +289,27 @@ then
     check_usb_connection
     eb-console $USB_DEVICE
     echo "MAC address set!"
+  else
+    echo "Skipping this step ..."
+  fi
+fi
+
+# Set MAC address
+# ====================================================================================================
+echo "\nStep 8: Check WR LINK";
+echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+if [ $CHECK_GUI = "yes" ]
+then
+  echo "Setting MAC address now to 02:ff:00:02:00:XX";
+  echo "- Please make sure that the USB cable is connected to the base board"
+  echo "- Do a power cycle"
+  echo "- Use the command \"gui\""
+  echo "- After setting the MAC address press ctrl+c" 
+  continue_or_skip
+  if [ -z "$SKIP" ]; then
+    check_usb_connection
+    eb-console $USB_DEVICE
+    echo "WR LINK IS UP"
   else
     echo "Skipping this step ..."
   fi
