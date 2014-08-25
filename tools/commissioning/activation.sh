@@ -14,6 +14,7 @@ USB_DEVICE=$1 # Argument 1
 HARDWARE=$2   # Argument 2
 CONTINUE=;    # Read user input (continue ...)
 USB_LINK=;    # Contains USB link status
+USB_HWDET=;   # USB hardware detected?
 SKIP=;        # Skip section/test
 RET=;         # Contains return value of the latest system call
 
@@ -32,16 +33,28 @@ SET_MAC="yes"
 check_usb_connection()
 {
   # Wait until device is up
-  USB_LINK=n;
-  while [ $USB_LINK = n ]; do
-    eb-ls $USB_DEVICE > /dev/null 2>&1; # Little hack, using return code for eb-ls #TBD: Evaluate "time-out"?
+  USB_LINK=0;
+  USB_HWDET=0;
+  
+  while [ $USB_HWDET -ne 1 ]; do
+    lsusb | grep "OpenMoko";
     RET=$?
     if [ $RET -ne 1 ]; then
-      echo "USB link established ($USB_DEVICE)!"
-      USB_LINK=y;
+      USB_HWDET=1;
+      while [ $USB_LINK = 0 ]; do
+        eb-ls $USB_DEVICE > /dev/null 2>&1; # Little hack, using return code for eb-ls #TBD: Evaluate "time-out"?
+        RET=$?
+        if [ $RET -ne 1 ]; then
+          echo "USB link established ($USB_DEVICE)!"
+          USB_LINK=1;
+        else
+          echo "Waiting for USB link ($USB_DEVICE)..."
+          USB_LINK=0;
+        fi
+        sleep 1;
+      done;
     else
-      echo "Waiting for USB link ($USB_DEVICE)..."
-      USB_LINK=n;
+      echo "Missing OpenMoko device ..."
     fi
     sleep 1;
   done;
@@ -246,7 +259,6 @@ then
   if [ -z "$SKIP" ]; then
     check_usb_connection
     ./device-test $USB_DEVICE testcase2
-    check_usb_connection
     RET=$?
     if [ $RET -ne 0 ]
     then
