@@ -9,15 +9,21 @@ VETAR2A_RPD_FILE=../../syn/gsi_vetar2a/wr_core_demo/vetar2a.rpd
 USB_FLASHER=/../../ip_cores/etherbone-core/hdl/eb_usb_core
 OW_WRITE=../../ip_cores/wrpc-sw/tools/eb-w1-write
 WRPC_BIN=../../ip_cores/wrpc-sw/tools/sdb-wrpc.bin
-BASE_DIR=$PWD
+BASE_DIR=$PWD # Working directory
+USB_DEVICE=$1 # Argument 1
+HARDWARE=$2   # Argument 2
+CONTINUE=;
+USB_LINK=;
+
+# User setup
+# ====================================================================================================
 FLASH_USB="no"
-FLASH_FPGA="no"
+FLASH_FPGA="yes"
 FORMAT_OW="no"
 ADDON_JTAG="no"
-IO_TEST_STEP1="yes"
-IO_TEST_STEP2="yes"
-USB_DEVICE=$1
-HARDWARE=$2
+IO_TEST_STEP1="no"
+IO_TEST_STEP2="no"
+SET_MAC="no"
 
 # Script start
 # ====================================================================================================
@@ -217,4 +223,31 @@ else
 fi
 
 echo "I/O test finished successfully!"
+
+# Set MAC address
+# ====================================================================================================
+echo "\nStep 7: Set MAC address";
+echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+if [ $SET_MAC = "yes" ]
+then
+  echo "Setting MAC address now to 02:ff:00:02:00:XX";
+  echo "- Please make sure that the USB cable is connected to the base board"
+  echo "- Use the command \"mac setp 02:ff:00:02:00:XX "
+  echo "- Attach a SFP to the base board"
+  echo "- After setting the MAC address press ctrl+c" 
+  CONTINUE=;
+  while [ -z "$CONTINUE" ]; do
+    read -r -p "Type anything but C or c to continue. [C/c]: " CONTINUE; 
+  done;
+  eb-console $USB_DEVICE
+else
+  echo "Skipping this step ..."
+fi
+
+echo "MAC address set!"
+
+
+# Finish test
+# ====================================================================================================
+echo "\nCommissioning script finished successfully!\n"
 exit 0;

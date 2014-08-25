@@ -28,7 +28,7 @@ using namespace GSI_TLU;
 #define CPU_DELAY_MS        20        /* Sleep for test cpu */
 #define TLU_CHANNELS        10        /* Inputs */
 #define TOLERANCE_FACTOR_NS 2         /* Tolerance for frequency measurement */
-#define GPIO_LVDS_RATE      40
+#define GPIO_LVDS_RATE      40        /* Detection rate of HDMI clock signal */
 #define GPIO_TOGGLE_RATE    ((EVENTS)*(HIGH_NS+LOW_NS))
 
 /* Test case setup */
@@ -190,11 +190,14 @@ int main (int argc, const char** argv)
   tlu.pop_all(queues);
   uQueuesTotal = queues.size();
   fprintf(stdout, "%s: found queues %d ...\n", argv[0], uQueuesTotal);
+  
+  /* Check each queue now */
   for(uQueueInterator=0; uQueueInterator<uQueuesTotal; uQueueInterator++)
   {
     std::vector<uint64_t>& queue = queues[uQueueInterator];
-    uQueneItems = queue.size();
+    uQueneItems = queue.size(); /* Get the actual size */
     fprintf(stdout, "%s: queue %d has a size of %d ...\n", argv[0], uQueueInterator, uQueneItems);
+    /* Inspect items with queue contains data */
     if(uQueneItems)
     {
       for(uQueueItemIterator=0; uQueueItemIterator<uQueneItems; uQueueItemIterator++)
@@ -206,6 +209,14 @@ int main (int argc, const char** argv)
           uTimeDiff = queue[uQueueItemIterator]-queue[uQueueItemIterator-1]; 
           fprintf(stdout, "(difference to previous time stamp 0x%"PRIx64" (%"PRIu64"))\n", uTimeDiff, uTimeDiff);
           a_uFrequency[uQueueInterator] += uTimeDiff; /* Sum up time stamps */
+          /* Allow little jitter/uncertainty */
+          if( ((*p_uFrequencyExpected+TOLERANCE_FACTOR_NS)<uTimeDiff) ||
+              ((*p_uFrequencyExpected-TOLERANCE_FACTOR_NS)>uTimeDiff)
+          )
+          {
+            fprintf(stdout, "%s: too much jitter for IO %d!\n", argv[0], uQueueInterator);
+            return 1;
+          }
         }
         else
         {
@@ -213,14 +224,12 @@ int main (int argc, const char** argv)
         }
       }
     }
+    p_uFrequencyExpected++;
   }
   
-  /* Evaluate test case */
-  for(uArrayIterator=0; uArrayIterator<EVENTS; uArrayIterator++)
-  {
-    fprintf(stdout, "%s: edges on %d: %d\n", argv[0], uArrayIterator, a_uEdges[uArrayIterator]);
-    fprintf(stdout, "%s: average frequency on %d: (%"PRIu64")\n", argv[0], uArrayIterator, a_uFrequency[uArrayIterator]/(EVENT_MULTI-1));
-  }
+  /* Reset Frequency expected pointer */
+  if(uTestCase==1) { p_uFrequencyExpected = a_uFrequencyExpectedTestCase1; }
+  else             { p_uFrequencyExpected = a_uFrequencyExpectedTestCase2; }
   
   /* Evaluate test case */
   for(uArrayIterator=0; uArrayIterator<EVENTS; uArrayIterator++)
@@ -242,6 +251,7 @@ int main (int argc, const char** argv)
       
       if(dMeasuredFrequency!=dExpectedFrequency)
       {
+        /* Allow little jitter/uncertainty */
         if( ((dExpectedFrequency+TOLERANCE_FACTOR_NS)<dMeasuredFrequency) ||
             ((dExpectedFrequency-TOLERANCE_FACTOR_NS)>dMeasuredFrequency)
           )
@@ -252,9 +262,6 @@ int main (int argc, const char** argv)
           return 1;
         }
       }
-        fprintf(stdout, "%s: IO %d:\n", argv[0], uArrayIterator);
-        fprintf(stdout, "%s: expected average frequency on %f: \n", argv[0], dExpectedFrequency);
-        fprintf(stdout, "%s: measured average frequency on %f: \n", argv[0], dMeasuredFrequency);
     }
     
     /* Increase compare pointers */
