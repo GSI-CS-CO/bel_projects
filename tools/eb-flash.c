@@ -60,6 +60,7 @@ static int invert;
 static int verbose;
 static int quiet;
 static int old_erase;
+static int erase_only;
 
 static eb_address_t firmware_length;
 static eb_format_t format;
@@ -87,6 +88,7 @@ static void help(void) {
   fprintf(stderr, "  -f             full; skip quick scan and erase everything\n");
   fprintf(stderr, "  -p             disable self-describing wishbone device probe\n");
   fprintf(stderr, "  -n             do not verify contents after programming\n");
+  fprintf(stderr, "  -z             simply erase everything\n");
   fprintf(stderr, "  -v             verbose operation\n");
   fprintf(stderr, "  -q             quiet: do not display warnings\n");
   fprintf(stderr, "  -h             display this help and exit\n");
@@ -426,6 +428,7 @@ static void erase_flash(eb_device_t device) {
   }
   
   if (!quiet) printf("done!\n");
+  
 }
 
 static void program_decrement(eb_user_data_t user, eb_device_t dev, eb_operation_t op, eb_status_t status) {
@@ -694,10 +697,11 @@ int main(int argc, char** argv) {
   invert = -1; /* auto */
   verbose = 0;
   quiet = 0;
+  erase_only = 0;
   
   /* Process the command-line arguments */
   error = 0;
-  while ((opt = getopt(argc, argv, "t:e:a:d:bli:s:w:c:r:fpnvqh")) != -1) {
+  while ((opt = getopt(argc, argv, "t:e:a:d:bli:s:w:c:r:fpnzvqh")) != -1) {
     switch (opt) {
     case 't':
       address = strtoull(optarg, &value_end, 0);
@@ -782,6 +786,9 @@ int main(int argc, char** argv) {
       break;
     case 'p':
       probe = 0;
+      break;
+    case 'z':
+      erase_only = 1;
       break;
     case 'n':
       verify = 0;
@@ -1025,6 +1032,8 @@ int main(int argc, char** argv) {
   }
   
   erase_flash(device);
+  if (erase_only) return 0;
+    
   program_flash(device);
   if (verify) verify_flash(device);
   
