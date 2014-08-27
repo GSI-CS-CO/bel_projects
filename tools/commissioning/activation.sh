@@ -28,8 +28,8 @@
 
 # Quartus
 # ====================================================================================================
-QUARTUS_BASE=/home/alex/workspace/optional/quartus/altera/quartus;
-QUARTUS_BIN=$QUARTUS_BASE/bin;
+QUARTUS_BASE=/home/alex/workspace/optional/quartus/altera/quartus
+QUARTUS_BIN=$QUARTUS_BASE/bin
 
 # Environment setup (binaries, variables and paths)
 # ====================================================================================================
@@ -67,31 +67,35 @@ SET_MAC="yes"
 func_check_usb_connection()
 {
   # Wait until device is up
-  USB_LINK=0;
-  USB_HWDET=0;
-  while [ $USB_HWDET -ne 1 ]; do
-    lsusb | grep "OpenMoko";
+  USB_LINK=0
+  USB_HWDET=0
+  while [ $USB_HWDET -ne 1 ]
+  do
+    lsusb | grep "OpenMoko"
     RET=$?
-    if [ $RET -ne 1 ]; then
-      USB_HWDET=1;
-      while [ $USB_LINK = 0 ]; do
+    if [ $RET -ne 1 ]
+    then
+      USB_HWDET=1
+      while [ $USB_LINK = 0 ]
+      do
         # Little hack, using return code from eb-ls #TBD: Evaluate "time-out"?
-        eb-ls $USB_DEVICE > /dev/null 2>&1;
+        eb-ls $USB_DEVICE > /dev/null 2>&1
         RET=$?
-        if [ $RET -ne 1 ]; then
+        if [ $RET -ne 1 ]
+        then
           echo "USB link established ($USB_DEVICE)!"
-          USB_LINK=1;
+          USB_LINK=1
         else
           echo "Waiting for USB link ($USB_DEVICE)..."
-          USB_LINK=0;
+          USB_LINK=0
         fi
-        sleep 1;
-      done;
+        sleep 1
+      done
     else
       echo "Missing OpenMoko device ..."
     fi
-    sleep 1;
-  done;
+    sleep 1
+  done
 }
 
 # Function func_continue_or_skip()
@@ -101,9 +105,10 @@ func_continue_or_skip()
 {
   CONTINUE=;
   SKIP=;
-  while [ -z "$CONTINUE" ]; do
-    read -r -p "Type anything but \"c\" to continue or \"s\" to skip. [c/s]: " CONTINUE; 
-  done;
+  while [ -z "$CONTINUE" ] 
+  do
+    read -r -p "Type anything but \"c\" to continue or \"s\" to skip. [c/s]: " CONTINUE
+  done
   if [ $CONTINUE = s ]
   then
     SKIP=y
@@ -117,8 +122,8 @@ func_continue_or_skip()
 # ====================================================================================================
 func_check_environment()
 {
-  echo "\nCheck for dependencies/necessary files";
-  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  echo "\nCheck for dependencies/necessary files"
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   # Check RPD file
   if [ -f "$VETAR2A_RPD_FILE" ]
   then
@@ -171,9 +176,10 @@ func_check_environment()
   if [ $RET -ne 0 ]
   then
     echo "Error: Can't compile device test!"
-    exit 1;
+    exit 1
   fi
-  echo "\nPlease turn off the complete board, attach the WRPX1 and the addon board.";
+  echo "\nPlease turn off the complete board, attach the WRPX1 and the addon board."
+  echo "Warning: DISCONNECT ALL OTHER DEVICES FROM USB (LIKE EXPLODERx, VETARx, ...)!"
 }
 
 # Function func_program_fpga(...)
@@ -184,13 +190,14 @@ func_check_environment()
 # ====================================================================================================
 func_program_fpga()
 {
-  echo "\nCheck JTAG connection and program FPGA";
-  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  echo "\nCheck JTAG connection and program FPGA"
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   if [ $FLASH_USB = "yes" ]
   then
-    echo "Please connect the JTAG connector to the ADDON BOARD.";
+    echo "Please connect the JTAG connector to the ADDON BOARD."
     func_continue_or_skip
-    if [ -z "$SKIP" ]; then
+    if [ -z "$SKIP" ] 
+    then
       if [ $1 -eq 0 ]
       then
         echo "Skipping USB connection test ..."
@@ -203,7 +210,7 @@ func_program_fpga()
       if [ $RET -ne 0 ]
       then
         echo "Error: Flash attempt failed!"
-        exit 1;
+        exit 1
       fi
     else
       echo "Skipping this step ..."
@@ -216,31 +223,32 @@ func_program_fpga()
 # ====================================================================================================
 func_flash_usb_device()
 {
-  echo "\nFlash USB device";
-  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  echo "\nFlash USB device"
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   if [ $FLASH_USB = "yes" ]
   then
-    echo "Please connect the USB connector to the base board.";
+    echo "Please connect the USB connector to the base board."
     func_continue_or_skip
-    if [ -z "$SKIP" ]; then
+    if [ -z "$SKIP" ]
+    then
       echo "Trying to erase the USB device now..."
-      cd $BASE_DIR/$USB_FLASHER;
-      $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh _E;
+      cd $BASE_DIR/$USB_FLASHER
+      $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh -E
       RET=$?
       if [ $RET -ne 0 ]
       then
         echo "Error: Flash attempt failed!"
-        exit 1;
+        exit 1
       fi
       echo "Trying to flash the USB device now..."
-      $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh;
+      $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh
       RET=$?
       if [ $RET -ne 0 ]
       then
         echo "Error: Flash attempt failed!"
-        exit 1;
+        exit 1
       fi
-      cd $BASE_DIR;
+      cd $BASE_DIR
       echo "USB device is flashed now!"
     else
       echo "Skipping this step ..."
@@ -253,13 +261,14 @@ func_flash_usb_device()
 # ====================================================================================================
 func_flash_fpga()
 {
-  echo "\nFlash FPGA";
-  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  echo "\nFlash FPGA"
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   if [ $FLASH_FPGA = "yes" ]
   then
-    echo "Please connect the JTAG connector to the BASE BOARD.";
+    echo "Please connect the JTAG connector to the BASE BOARD."
     func_continue_or_skip
-    if [ -z "$SKIP" ]; then
+    if [ -z "$SKIP" ]
+    then
       func_check_usb_connection
       echo "Trying to flash the FPGA now ..."
       eb-flash $USB_DEVICE $VETAR2A_RPD_FILE
@@ -267,7 +276,7 @@ func_flash_fpga()
       if [ $RET -ne 0 ]
       then
         echo "Error: Flash attempt failed!"
-        exit 1;
+        exit 1
       fi
       echo "FPGA is flashed now!"
     else
@@ -282,13 +291,14 @@ func_flash_fpga()
 # ====================================================================================================
 func_format_onewire()
 {
-  echo "\nFormat the 1-wire EEPROM";
-  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  echo "\nFormat the 1-wire EEPROM"
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   if [ $FORMAT_OW = "yes" ]
   then
-    echo "Please do a power cycle";
+    echo "Please do a power cycle"
     func_continue_or_skip
-    if [ -z "$SKIP" ]; then
+    if [ -z "$SKIP" ]
+    then
       func_check_usb_connection
       echo "Formating the 1-wire EEPROM ..."
       $OW_WRITE $USB_DEVICE 0 320 < $WRPC_BIN
@@ -296,7 +306,7 @@ func_format_onewire()
       if [ $RET -ne 0 ]
       then
         echo "Error: Formating attempt failed!"
-        exit 1;
+        exit 1
       fi
       echo "1-wire EEPROM is formated now!"
     else
@@ -311,27 +321,28 @@ func_format_onewire()
 # ====================================================================================================
 func_io_connection_test()
 {
-  echo "\nTest I/Os";
+  echo "\nTest I/Os"
   # Step 1
-  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   if [ $IO_TEST_STEP1 = "yes" ]
   then
-    echo "Please connect the following I/Os:";
-    echo "- OUT1 <=> IO1 (lemo)";
-    echo "- OUT2 <=> IO2 (lemo)";
-    echo "- OUT3 <=> IO3 (lemo)";
-    echo "- OUT  <=> IN (lemo - near SFP cage)";
-    echo "- I1   <=> O1 (LVDS box header)";
-    echo "- I2   <=> O2 (LVDS box header)";
+    echo "Please connect the following I/Os:"
+    echo "- OUT1 <=> IO1 (lemo)"
+    echo "- OUT2 <=> IO2 (lemo)"
+    echo "- OUT3 <=> IO3 (lemo)"
+    echo "- OUT  <=> IN (lemo - near SFP cage)"
+    echo "- I1   <=> O1 (LVDS box header)"
+    echo "- I2   <=> O2 (LVDS box header)"
     func_continue_or_skip
-    if [ -z "$SKIP" ]; then
+    if [ -z "$SKIP" ]
+    then
       func_check_usb_connection
       ./device-test-$HARDWARE $USB_DEVICE testcase1
       RET=$?
       if [ $RET -ne 0 ]
       then
         echo "Error: I/O test failed!"
-        exit 1;
+        exit 1
       fi
     else
       echo "Skipping step #1 ..."
@@ -339,23 +350,24 @@ func_io_connection_test()
   fi
   echo "\n"
   # Step 2
-  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   if [ $IO_TEST_STEP2 = "yes" ]
   then
-    echo "Please connect the following I/Os:";
-    echo "- IO1  <=> IN1 (lemo)";
-    echo "- IO2  <=> IN2 (lemo)";
-    echo "- IO3  <=> IN (lemo - near SFP cag)";
-    echo "- HDMI <=> HDMI";
+    echo "Please connect the following I/Os:"
+    echo "- IO1  <=> IN1 (lemo)"
+    echo "- IO2  <=> IN2 (lemo)"
+    echo "- IO3  <=> IN (lemo - near SFP cag)"
+    echo "- HDMI <=> HDMI"
     func_continue_or_skip
-    if [ -z "$SKIP" ]; then
+    if [ -z "$SKIP" ]
+    then
       func_check_usb_connection
       ./device-test-$HARDWARE $USB_DEVICE testcase2
       RET=$?
       if [ $RET -ne 0 ]
       then
         echo "Error: I/O test failed!"
-        exit 1;
+        exit 1
       fi
     else
       echo "Skipping step #2 ..."
@@ -363,19 +375,20 @@ func_io_connection_test()
   fi
   echo "\n"
   # Step 3
-  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   if [ $IO_TEST_STEP3 = "yes" ]
   then
-    echo "Please disconnect all LEMOs, LVDS-connections and HDMI cable.";
+    echo "Please disconnect all LEMOs, LVDS-connections and HDMI cable."
     func_continue_or_skip
-    if [ -z "$SKIP" ]; then
+    if [ -z "$SKIP" ]
+    then
       func_check_usb_connection
       ./device-test-$HARDWARE $USB_DEVICE testcase3
       RET=$?
       if [ $RET -ne 0 ]
       then
         echo "Error: I/O test failed!"
-        exit 1;
+        exit 1
       fi
     else
       echo "Skipping step #3 ..."
@@ -395,13 +408,14 @@ func_set_mac_address()
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   if [ $SET_MAC = "yes" ]
   then
-    echo "Setting MAC address now to $MAC_ADDRESS_PATTERN";
+    echo "Setting MAC address now to $MAC_ADDRESS_PATTERN"
     echo "- Please make sure that the USB cable is connected to the base board"
     echo "- Use the command \"mac setp $MAC_ADDRESS_PATTERN"
     echo "- Attach a SFP to the base board"
     echo "- After setting the MAC address press ctrl+c" 
     func_continue_or_skip
-    if [ -z "$SKIP" ]; then
+    if [ -z "$SKIP" ]
+    then
       func_check_usb_connection
       eb-console $USB_DEVICE
       echo "MAC address set!"
@@ -426,7 +440,8 @@ func_check_wr_link()
     echo "- Do a power cycle"
     echo "- Use the command \"gui\""
     echo "- After setting the MAC address press ctrl+c" 
-    if [ -z "$SKIP" ]; then
+    if [ -z "$SKIP" ]
+    then
       func_check_usb_connection
       eb-console $USB_DEVICE
       echo "WR LINK IS UP"
@@ -459,6 +474,6 @@ func_format_onewire
 func_io_connection_test
 func_set_mac_address
 # Done
-echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-echo "\nCommissioning script finished successfully!\n"
+echo "\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+echo "Commissioning script finished successfully!\n"
 exit 0
