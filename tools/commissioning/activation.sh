@@ -1,49 +1,82 @@
 #!/bin/sh
-
-# Environment setup
 # ====================================================================================================
-QUARTUS=/home/alex/workspace/optional/quartus/altera/quartus
-QUARTUS_BIN=$QUARTUS/bin
-VETAR2A_SOF_FILE=../../syn/gsi_vetar2a/wr_core_demo/vetar2a.sof
-VETAR2A_RPD_FILE=../../syn/gsi_vetar2a/wr_core_demo/vetar2a.rpd
-USB_FLASHER=../../ip_cores/etherbone-core/hdl/eb_usb_core
-OW_WRITE=../../ip_cores/wrpc-sw/tools/eb-w1-write
-WRPC_BIN=../../ip_cores/wrpc-sw/tools/sdb-wrpc.bin
-BASE_DIR=$PWD # Working directory
-USB_DEVICE=$1 # Argument 1
-HARDWARE=$2   # Argument 2
-CONTINUE=;    # Read user input (continue ...)
-USB_LINK=;    # Contains USB link status
-USB_HWDET=;   # USB hardware detected?
-SKIP=;        # Skip section/test
-RET=;         # Contains return value of the latest system call
+################################################################################
+# @file activation.sh
+# @brief Commissioning and activation for new (vetar2a) boards
+#
+# Copyright (C) 2014 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+#
+# @author C. Prados <c.prados@gsi.de>
+# @author A. Hahn <a.hahn@gsi.de>
+#
+# @bug No know bugs.
+#
+################################################################################
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 3 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#  
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library. If not, see <http://www.gnu.org/licenses/>.
+################################################################################
 
-# User setup
+# Quartus
 # ====================================================================================================
-FLASH_USB="yes"
-FLASH_FPGA="yes"
-FORMAT_OW="yes"
-ADDON_JTAG="yes"
+QUARTUS_BASE=/home/alex/workspace/optional/quartus/altera/quartus;
+QUARTUS_BIN=$QUARTUS_BASE/bin;
+
+# Environment setup (binaries, variables and paths)
+# ====================================================================================================
+VETAR2A_SOF_FILE=../../syn/gsi_vetar2a/wr_core_demo/vetar2a.sof # See func_check_environment
+VETAR2A_RPD_FILE=../../syn/gsi_vetar2a/wr_core_demo/vetar2a.rpd # ...
+USB_FLASHER=../../ip_cores/etherbone-core/hdl/eb_usb_core       # ...
+OW_WRITE=../../ip_cores/wrpc-sw/tools/eb-w1-write               # ...
+WRPC_BIN=../../ip_cores/wrpc-sw/tools/sdb-wrpc.bin              # ...
+BASE_DIR=$PWD            # Working directory
+USB_DEVICE=$1            # Argument 1
+HARDWARE=$2              # Argument 2
+CONTINUE=;               # Read user input (continue ...)
+USB_LINK=;               # Contains USB link status
+USB_HWDET=;              # USB hardware detected?
+SKIP=;                   # Skip section/test
+RET=;                    # Contains return value of the last system call
+
+# User setup (only change this if you really know what you are doing)
+# ====================================================================================================
+MAC_ADDRESS_PATTERN="02:ff:00:02:00:XX"
 IO_TEST_STEP1="yes"
 IO_TEST_STEP2="yes"
-SET_MAC="yes"
+IO_TEST_STEP3="yes"
+PROGRAM_FPGA="yes"
+ADDON_JTAG="yes"
+FLASH_FPGA="yes"
+FORMAT_OW="yes"
+FLASH_USB="yes"
 CHECK_GUI="yes"
+SET_MAC="yes"
 
-# Function check_usb_connection() - Checks USB connection
+# Function check_usb_connection()
+# - Checks the USB connection
 # ====================================================================================================
-check_usb_connection()
+func_check_usb_connection()
 {
   # Wait until device is up
   USB_LINK=0;
   USB_HWDET=0;
-  
   while [ $USB_HWDET -ne 1 ]; do
     lsusb | grep "OpenMoko";
     RET=$?
     if [ $RET -ne 1 ]; then
       USB_HWDET=1;
       while [ $USB_LINK = 0 ]; do
-        eb-ls $USB_DEVICE > /dev/null 2>&1; # Little hack, using return code for eb-ls #TBD: Evaluate "time-out"?
+        # Little hack, using return code from eb-ls #TBD: Evaluate "time-out"?
+        eb-ls $USB_DEVICE > /dev/null 2>&1;
         RET=$?
         if [ $RET -ne 1 ]; then
           echo "USB link established ($USB_DEVICE)!"
@@ -61,9 +94,10 @@ check_usb_connection()
   done;
 }
 
-# Function continue_or_skip() - Skips or continues next step
+# Function func_continue_or_skip()
+# - Skips or continues next step
 # ====================================================================================================
-continue_or_skip()
+func_continue_or_skip()
 {
   CONTINUE=;
   SKIP=;
@@ -78,10 +112,336 @@ continue_or_skip()
   fi
 }
 
-# Script start
+# Function func_check_environment(...)
+# - Checks files and binaries
 # ====================================================================================================
+func_check_environment()
+{
+  echo "\nCheck for dependencies/necessary files";
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  # Check RPD file
+  if [ -f "$VETAR2A_RPD_FILE" ]
+  then
+    echo -n "Using RPD file: "
+    file $VETAR2A_RPD_FILE
+  else
+    echo "Error: RPD file is missing!"  
+    exit 1
+  fi
+  # Check SOF file
+  if [ -f "$VETAR2A_SOF_FILE" ]
+  then
+    echo -n "Using SOF file: "
+    file $VETAR2A_SOF_FILE
+  else
+    echo "Error: SOF file is missing!"  
+    exit 1
+  fi
+  # Check USB flash script
+  if [ -f "$BASE_DIR/$USB_FLASHER/flash-fx2lp.sh" ]
+  then
+    echo -n "Using USB flash script: "
+    file $USB_FLASHER/flash-fx2lp.sh
+  else
+    echo "Error: USB flash script is missing!"  
+    exit 1
+  fi
+  # Check OneWire write script
+  if [ -f "$OW_WRITE" ]
+  then
+    echo -n "Using OneWire write script: "
+    file $OW_WRITE
+  else
+    echo "Error: OneWire write script is missing!"  
+    exit 1
+  fi
+  # Check WRPC binary
+  if [ -f "$WRPC_BIN" ]
+  then
+    echo -n "Using WRPC sdb binary: "
+    file $OW_WRITE
+  else
+    echo "Error: WRPC sdb binary is missing!"  
+    exit 1
+  fi
+  echo "\nAll files are present!\n"
+  echo "Compiling the device test ..."
+  make device-test-$HARDWARE
+  RET=$?
+  if [ $RET -ne 0 ]
+  then
+    echo "Error: Can't compile device test!"
+    exit 1;
+  fi
+  echo "\nPlease turn off the complete board, attach the WRPX1 and the addon board.";
+}
+
+# Function func_program_fpga(...)
+# - Programs the FPGA
+# - Parameter $1:
+# - => 0      = Skip USB connection test
+# - => 1/else = Do USB connection test
+# ====================================================================================================
+func_program_fpga()
+{
+  echo "\nCheck JTAG connection and program FPGA";
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  if [ $FLASH_USB = "yes" ]
+  then
+    echo "Please connect the JTAG connector to the ADDON BOARD.";
+    func_continue_or_skip
+    if [ -z "$SKIP" ]; then
+      if [ $1 -eq 0 ]
+      then
+        echo "Skipping USB connection test ..."
+      else
+        func_check_usb_connection
+      fi
+      echo "Programming the Vetar2a"
+      $QUARTUS_BIN/quartus_pgm -c 1 -m jtag -o "p;$VETAR2A_SOF_FILE" 
+      RET=$?
+      if [ $RET -ne 0 ]
+      then
+        echo "Error: Flash attempt failed!"
+        exit 1;
+      fi
+    else
+      echo "Skipping this step ..."
+    fi
+  fi
+}
+
+# Function func_flash_usb_device(...)
+# - Flashed the USB chip/device
+# ====================================================================================================
+func_flash_usb_device()
+{
+  echo "\nFlash USB device";
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  if [ $FLASH_USB = "yes" ]
+  then
+    echo "Please connect the USB connector to the base board.";
+    func_continue_or_skip
+    if [ -z "$SKIP" ]; then
+      echo "Trying to erase the USB device now..."
+      cd $BASE_DIR/$USB_FLASHER;
+      $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh _E;
+      RET=$?
+      if [ $RET -ne 0 ]
+      then
+        echo "Error: Flash attempt failed!"
+        exit 1;
+      fi
+      echo "Trying to flash the USB device now..."
+      $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh;
+      RET=$?
+      if [ $RET -ne 0 ]
+      then
+        echo "Error: Flash attempt failed!"
+        exit 1;
+      fi
+      cd $BASE_DIR;
+      echo "USB device is flashed now!"
+    else
+      echo "Skipping this step ..."
+    fi
+  fi
+}
+
+# Function func_flash_fpga(...)
+# - Used to flash the FPGA (writes RPD file to SPI flash)
+# ====================================================================================================
+func_flash_fpga()
+{
+  echo "\nFlash FPGA";
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  if [ $FLASH_FPGA = "yes" ]
+  then
+    echo "Please connect the JTAG connector to the BASE BOARD.";
+    func_continue_or_skip
+    if [ -z "$SKIP" ]; then
+      func_check_usb_connection
+      echo "Trying to flash the FPGA now ..."
+      eb-flash $USB_DEVICE $VETAR2A_RPD_FILE
+      RET=$?
+      if [ $RET -ne 0 ]
+      then
+        echo "Error: Flash attempt failed!"
+        exit 1;
+      fi
+      echo "FPGA is flashed now!"
+    else
+      echo "Skipping this step ..."
+    fi
+  fi
+}
+
+# Function func_format_onewire(...)
+# - This function is used to format the OneWire EEPROM
+# - The EEPROM is needed to store the MAC address. Necessary for function func_set_mac_address.
+# ====================================================================================================
+func_format_onewire()
+{
+  echo "\nFormat the 1-wire EEPROM";
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  if [ $FORMAT_OW = "yes" ]
+  then
+    echo "Please do a power cycle";
+    func_continue_or_skip
+    if [ -z "$SKIP" ]; then
+      func_check_usb_connection
+      echo "Formating the 1-wire EEPROM ..."
+      $OW_WRITE $USB_DEVICE 0 320 < $WRPC_BIN
+      RET=$?
+      if [ $RET -ne 0 ]
+      then
+        echo "Error: Formating attempt failed!"
+        exit 1;
+      fi
+      echo "1-wire EEPROM is formated now!"
+    else
+      echo "Skipping this step ..."
+    fi
+  fi
+}
+
+# Function func_io_connection_test (...)
+# - This is an IO connection test with 3 steps
+# - At each step the must change or remove some cables and wires
+# ====================================================================================================
+func_io_connection_test()
+{
+  echo "\nTest I/Os";
+  # Step 1
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  if [ $IO_TEST_STEP1 = "yes" ]
+  then
+    echo "Please connect the following I/Os:";
+    echo "- OUT1 <=> IO1 (lemo)";
+    echo "- OUT2 <=> IO2 (lemo)";
+    echo "- OUT3 <=> IO3 (lemo)";
+    echo "- OUT  <=> IN (lemo - near SFP cage)";
+    echo "- I1   <=> O1 (LVDS box header)";
+    echo "- I2   <=> O2 (LVDS box header)";
+    func_continue_or_skip
+    if [ -z "$SKIP" ]; then
+      func_check_usb_connection
+      ./device-test-$HARDWARE $USB_DEVICE testcase1
+      RET=$?
+      if [ $RET -ne 0 ]
+      then
+        echo "Error: I/O test failed!"
+        exit 1;
+      fi
+    else
+      echo "Skipping step #1 ..."
+    fi
+  fi
+  echo "\n"
+  # Step 2
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  if [ $IO_TEST_STEP2 = "yes" ]
+  then
+    echo "Please connect the following I/Os:";
+    echo "- IO1  <=> IN1 (lemo)";
+    echo "- IO2  <=> IN2 (lemo)";
+    echo "- IO3  <=> IN (lemo - near SFP cag)";
+    echo "- HDMI <=> HDMI";
+    func_continue_or_skip
+    if [ -z "$SKIP" ]; then
+      func_check_usb_connection
+      ./device-test-$HARDWARE $USB_DEVICE testcase2
+      RET=$?
+      if [ $RET -ne 0 ]
+      then
+        echo "Error: I/O test failed!"
+        exit 1;
+      fi
+    else
+      echo "Skipping step #2 ..."
+    fi
+  fi
+  echo "\n"
+  # Step 3
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+  if [ $IO_TEST_STEP3 = "yes" ]
+  then
+    echo "Please disconnect all LEMOs, LVDS-connections and HDMI cable.";
+    func_continue_or_skip
+    if [ -z "$SKIP" ]; then
+      func_check_usb_connection
+      ./device-test-$HARDWARE $USB_DEVICE testcase3
+      RET=$?
+      if [ $RET -ne 0 ]
+      then
+        echo "Error: I/O test failed!"
+        exit 1;
+      fi
+    else
+      echo "Skipping step #3 ..."
+    fi
+  fi
+  echo "\n"
+  # Done
+  echo "I/O test finished successfully!"
+}
+
+# Function func_set_mac_address(...)
+# - MAC address should be set by user here (according to the given MAC pattern)
+# ====================================================================================================
+func_set_mac_address()
+{
+  echo "\nSet MAC address"
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  if [ $SET_MAC = "yes" ]
+  then
+    echo "Setting MAC address now to $MAC_ADDRESS_PATTERN";
+    echo "- Please make sure that the USB cable is connected to the base board"
+    echo "- Use the command \"mac setp $MAC_ADDRESS_PATTERN"
+    echo "- Attach a SFP to the base board"
+    echo "- After setting the MAC address press ctrl+c" 
+    func_continue_or_skip
+    if [ -z "$SKIP" ]; then
+      func_check_usb_connection
+      eb-console $USB_DEVICE
+      echo "MAC address set!"
+      func_check_wr_link
+    else
+      echo "Skipping this step ..."
+    fi
+  fi
+}
+
+# Function func_check_wr_link(...)
+# - Link to WR network should be checked by user here
+# ====================================================================================================
+func_check_wr_link()
+{
+  echo "\nCheck WR LINK"
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  if [ $CHECK_GUI = "yes" ]
+  then
+    echo "Check WR link with"
+    echo "- Please make sure that the USB cable is connected to the base board"
+    echo "- Do a power cycle"
+    echo "- Use the command \"gui\""
+    echo "- After setting the MAC address press ctrl+c" 
+    if [ -z "$SKIP" ]; then
+      func_check_usb_connection
+      eb-console $USB_DEVICE
+      echo "WR LINK IS UP"
+    else
+      echo "Skipping this step ..."
+    fi
+  fi
+}
+
+# Script starts here
+# ====================================================================================================
+# Welcome message
 echo "Commissioning script started ..."
-if [ 2 -ne $# ] # Expecting two arguments
+# Expecting two arguments
+if [ 2 -ne $# ]
 then
   echo "Error: This script needs exactly 2 parameters:"
   echo "- Parameter #1: Device"
@@ -89,233 +449,16 @@ then
   echo "Example usage: ./activation.sh dev/ttyUSB0 vetar2a"
   exit 1
 fi
-
-# Check files and binaries
-# ====================================================================================================
-echo "\nStep 1: Checking dependencies/necessary files";
-echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-if [ -f "$VETAR2A_RPD_FILE" ]
-then
-  echo -n "Using RPD file: "
-  file $VETAR2A_RPD_FILE
-else
-  echo "Error: RPD file is missing!"  
-  exit 1
-fi
-if [ -f "$VETAR2A_SOF_FILE" ]
-then
-  echo -n "Using SOF file: "
-  file $VETAR2A_SOF_FILE
-else
-  echo "Error: SOF file is missing!"  
-  exit 1
-fi
-if [ -f "$BASE_DIR/$USB_FLASHER/flash-fx2lp.sh" ]
-then
-  echo -n "Using USB flash script: "
-  file $USB_FLASHER/flash-fx2lp.sh
-else
-  echo "Error: USB flash script is missing!"  
-  exit 1
-fi
-echo "All files are present!\n"
-echo "Compiling the device test ..."
-make device-test
-echo "\nPlease turn off the complete board, attach the WRPX1 and the addon board and do a power cycle.";
-
-
-# Flash USB device
-# ====================================================================================================
-echo "\nStep 2: Flashing USB device";
-echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-if [ $FLASH_USB = "yes" ]
-then
-  echo "Please connect the USB connector to the base board.";
-  continue_or_skip
-  if [ -z "$SKIP" ]; then
-    echo "Trying to flash the USB device now..."
-    cd $BASE_DIR/$USB_FLASHER;
-    $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh -E;
-    RET=$?
-    if [ $RET -ne 0 ]
-    then
-      echo "Error: Flash attempt failed!"
-      exit 1;
-    fi
-    $BASE_DIR/$USB_FLASHER/flash-fx2lp.sh;
-    RET=$?
-    if [ $RET -ne 0 ]
-    then
-      echo "Error: Flash attempt failed!"
-      exit 1;
-    fi
-    cd $BASE_DIR;
-    echo "USB device is flashed now!"
-  else
-    echo "Skipping this step ..."
-  fi
-fi
-
-# Flash FPGA
-# ====================================================================================================
-echo "\nStep 3: Flashing FPGA";
-echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-if [ $FLASH_FPGA = "yes" ]
-then
-  echo "Please connect the JTAG connector to the BASE BOARD and reset it (power cycle).";
-  continue_or_skip
-  if [ -z "$SKIP" ]; then
-    check_usb_connection
-    echo "Trying to flash the FPGA now ..."
-    eb-flash $USB_DEVICE $VETAR2A_RPD_FILE
-    RET=$?
-    if [ $RET -ne 0 ]
-    then
-      echo "Error: Flash attempt failed!"
-      exit 1;
-    fi
-    echo "FPGA is flashed now!"
-  else
-    echo "Skipping this step ..."
-  fi
-fi
-
-# Format 1-wire
-# ====================================================================================================
-echo "\nStep 4: Format the 1-wire EEPROM";
-echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-if [ $FORMAT_OW = "yes" ]
-then
-  echo "Please do a power cycle";
-  continue_or_skip
-  if [ -z "$SKIP" ]; then
-    check_usb_connection
-    echo "Formating the 1-wire EEPROM ..."
-    $OW_WRITE $USB_DEVICE 0 320 < $WRPC_BIN
-    RET=$?
-    if [ $RET -ne 0 ]
-    then
-      echo "Error: Formating attempt failed!"
-      exit 1;
-    fi
-    echo "1-wire EEPROM is formated now!"
-  else
-    echo "Skipping this step ..."
-  fi
-fi
-
-# JTAG addon test
-# ====================================================================================================
-echo "\nStep 5: Check JTAG connection from addon board";
-echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-if [ $FLASH_USB = "yes" ]
-then
-  echo "Please connect the JTAG connector to the ADDON BOARD and reset it (power cycle).";
-  continue_or_skip
-  if [ -z "$SKIP" ]; then
-    check_usb_connection
-    echo "Programming the Vetar2a"
-    $QUARTUS_BIN/quartus_pgm -c 1 -m jtag -o "p;$VETAR2A_SOF_FILE" 
-  else
-    echo "Skipping this step ..."
-  fi
-fi
-
-# IO Connection test
-# ====================================================================================================
-echo "\nStep 6: Test I/Os";
-echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-if [ $IO_TEST_STEP1 = "yes" ]
-then
-  echo "Please connect the following I/Os:";
-  echo "- OUT1 <=> IO1 (lemo)";
-  echo "- OUT2 <=> IO2 (lemo)";
-  echo "- OUT3 <=> IO3 (lemo)";
-  echo "- OUT  <=> IN (lemo - near SFP cage)";
-  echo "- I1   <=> O1 (LVDS box header)";
-  echo "- I2   <=> O2 (LVDS box header)";
-  continue_or_skip
-  if [ -z "$SKIP" ]; then
-    check_usb_connection
-    ./device-test $USB_DEVICE testcase1
-    RET=$?
-    if [ $RET -ne 0 ]
-    then
-      echo "Error: I/O test failed!"
-      exit 1;
-    fi
-  else
-    echo "Skipping step #1 ..."
-  fi
-fi
-
-if [ $IO_TEST_STEP2 = "yes" ]
-then
-  echo "Please connect the following I/Os:";
-  echo "- IO1  <=> IN1 (lemo)";
-  echo "- IO2  <=> IN2 (lemo)";
-  echo "- IO3  <=> IN (lemo - near SFP cag)";
-  echo "- HDMI <=> HDMI";
-  continue_or_skip
-  if [ -z "$SKIP" ]; then
-    check_usb_connection
-    ./device-test $USB_DEVICE testcase2
-    RET=$?
-    if [ $RET -ne 0 ]
-    then
-      echo "Error: I/O test failed!"
-      exit 1;
-    fi
-  else
-    echo "Skipping step #2 ..."
-  fi
-fi
-
-echo "I/O test finished successfully!"
-
-# Set MAC address
-# ====================================================================================================
-echo "\nStep 7: Set MAC address";
-echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-if [ $SET_MAC = "yes" ]
-then
-  echo "Setting MAC address now to 02:ff:00:02:00:XX";
-  echo "- Please make sure that the USB cable is connected to the base board"
-  echo "- Use the command \"mac setp 02:ff:00:02:00:XX "
-  echo "- Attach a SFP to the base board"
-  echo "- After setting the MAC address press ctrl+c" 
-  continue_or_skip
-  if [ -z "$SKIP" ]; then
-    check_usb_connection
-    eb-console $USB_DEVICE
-    echo "MAC address set!"
-  else
-    echo "Skipping this step ..."
-  fi
-fi
-
-# Set MAC address
-# ====================================================================================================
-echo "\nStep 8: Check WR LINK";
-echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-if [ $CHECK_GUI = "yes" ]
-then
-  echo "Setting MAC address now to 02:ff:00:02:00:XX";
-  echo "- Please make sure that the USB cable is connected to the base board"
-  echo "- Do a power cycle"
-  echo "- Use the command \"gui\""
-  echo "- After setting the MAC address press ctrl+c" 
-  continue_or_skip
-  if [ -z "$SKIP" ]; then
-    check_usb_connection
-    eb-console $USB_DEVICE
-    echo "WR LINK IS UP"
-  else
-    echo "Skipping this step ..."
-  fi
-fi
-
-# Finish test
-# ====================================================================================================
+# Run functions
+func_check_environment
+func_program_fpga 0
+func_flash_usb_device
+func_program_fpga 0
+func_flash_fpga
+func_format_onewire
+func_io_connection_test
+func_set_mac_address
+# Done
+echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 echo "\nCommissioning script finished successfully!\n"
-exit 0;
+exit 0

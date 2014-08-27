@@ -1,6 +1,30 @@
 /* Synopsis */
 /* ==================================================================================================== */
-/* IO test for Vetar2a board */
+/*
+ * @file device-test-vetar2a.cpp
+ * @brief Simple IO test for Vetar2a board
+ *
+ * Copyright (C) 2014 GSI Helmholtz Centre for Heavy Ion Research GmbH 
+ *
+ * @author A. Hahn <a.hahn@gsi.de>
+ *
+ * @bug No know bugs.
+ *
+ * *****************************************************************************
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ * *****************************************************************************
+ */
 
 /* Includes */
 /* ==================================================================================================== */
@@ -37,12 +61,16 @@ uint32_t a_uEdgesExpectedTestCase1[EVENTS] = {EVENT_MULTI,  EVENT_MULTI,  EVENT_
                                               EVENT_MULTI,  0,            0,             0,             0          };
 uint32_t a_uEdgesExpectedTestCase2[EVENTS] = {0,            0,            EVENT_MULTI,    EVENT_MULTI,  EVENT_MULTI, 
                                               EVENT_MULTI,  EVENT_MULTI,  SPECIAL_MUTLI,  EVENT_MULTI,  EVENT_MULTI};
-
+uint32_t a_uEdgesExpectedTestCase3[EVENTS] = {0,            0,            0,              0,            0, 
+                                              0,            0,            0,              0,            0};
+                                              
 uint32_t a_uFrequencyExpectedTestCase1[EVENTS] = {GPIO_TOGGLE_RATE,  GPIO_TOGGLE_RATE,  GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE, 
                                                   GPIO_TOGGLE_RATE,  0,                 0,                  0,                  0               };
 uint32_t a_uFrequencyExpectedTestCase2[EVENTS] = {0,                 0,                 GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE, 
                                                   GPIO_TOGGLE_RATE,  GPIO_TOGGLE_RATE,  GPIO_LVDS_RATE,     GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE};
-
+uint32_t a_uFrequencyExpectedTestCase3[EVENTS] = {0,                 0,                 0,                  0,                  0, 
+                                                  0,                 0,                 0,                  0,                  0               };
+                                                  
 /* Function main(...) */
 /* ==================================================================================================== */
 int main (int argc, const char** argv)
@@ -100,6 +128,13 @@ int main (int argc, const char** argv)
     uIOConfig = 0x7; /* All IOs = Outputs */
     p_uEdgesExpected = a_uEdgesExpectedTestCase2;
     p_uFrequencyExpected = a_uFrequencyExpectedTestCase2;
+  }
+  else  if(!strcmp(argv[2],"testcase3"))
+  {
+    uTestCase = 3;
+    uIOConfig = 0x0; /* All IOs = Inputs */
+    p_uEdgesExpected = a_uEdgesExpectedTestCase3;
+    p_uFrequencyExpected = a_uFrequencyExpectedTestCase3;
   }
   else
   {
@@ -228,8 +263,9 @@ int main (int argc, const char** argv)
   }
   
   /* Reset Frequency expected pointer */
-  if(uTestCase==1) { p_uFrequencyExpected = a_uFrequencyExpectedTestCase1; }
-  else             { p_uFrequencyExpected = a_uFrequencyExpectedTestCase2; }
+  if(uTestCase==1)      { p_uFrequencyExpected = a_uFrequencyExpectedTestCase1; }
+  else if(uTestCase==2) { p_uFrequencyExpected = a_uFrequencyExpectedTestCase2; }
+  else                  { p_uFrequencyExpected = a_uFrequencyExpectedTestCase3; }
   
   /* Evaluate test case */
   for(uArrayIterator=0; uArrayIterator<EVENTS; uArrayIterator++)
