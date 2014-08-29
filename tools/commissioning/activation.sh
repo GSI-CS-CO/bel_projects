@@ -2,14 +2,14 @@
 # ====================================================================================================
 ################################################################################
 # @file activation.sh
-# @brief Commissioning and activation for new (vetar2a) boards
+# @brief Commissioning and activation for new boards (vetar2a, ...)
 #
 # Copyright (C) 2014 GSI Helmholtz Centre for Heavy Ion Research GmbH 
 #
 # @author C. Prados <c.prados@gsi.de>
 # @author A. Hahn <a.hahn@gsi.de>
 #
-# @bug No know bugs.
+# @bug No known bugs.
 #
 ################################################################################
 # This library is free software; you can redistribute it and/or
@@ -26,11 +26,6 @@
 # License along with this library. If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 
-# Quartus
-# ====================================================================================================
-QUARTUS_BASE=/home/alex/workspace/optional/quartus/altera/quartus
-QUARTUS_BIN=$QUARTUS_BASE/bin
-
 # Environment setup (binaries, variables and paths)
 # ====================================================================================================
 VETAR2A_SOF_FILE=../../syn/gsi_vetar2a/wr_core_demo/vetar2a.sof # See func_check_environment
@@ -38,14 +33,20 @@ VETAR2A_RPD_FILE=../../syn/gsi_vetar2a/wr_core_demo/vetar2a.rpd # ...
 USB_FLASHER=../../ip_cores/etherbone-core/hdl/eb_usb_core       # ...
 OW_WRITE=../../ip_cores/wrpc-sw/tools/eb-w1-write               # ...
 WRPC_BIN=../../ip_cores/wrpc-sw/tools/sdb-wrpc.bin              # ...
-BASE_DIR=$PWD            # Working directory
-USB_DEVICE=$1            # Argument 1
-HARDWARE=$2              # Argument 2
-CONTINUE=;               # Read user input (continue ...)
-USB_LINK=;               # Contains USB link status
-USB_HWDET=;              # USB hardware detected?
-SKIP=;                   # Skip section/test
-RET=;                    # Contains return value of the last system call
+BASE_DIR=$PWD                                                   # Working directory
+USB_DEVICE=$1  # Argument 1 (USB device)
+HARDWARE=$2    # Argument 2 (hardware target)
+QUARTUS_DIR=$3 # Argument 3 (Quartus base directory)
+CONTINUE=;     # Read user input (continue ...)
+USB_LINK=;     # Contains USB link status
+USB_HWDET=;    # USB hardware detected?
+SKIP=;         # Skip section/test
+RET=;          # Contains return value of the last system call
+
+# Quartus
+# ====================================================================================================
+QUARTUS_BASE=$QUARTUS
+QUARTUS_BIN=$QUARTUS_BASE/bin
 
 # User setup (only change this if you really know what you are doing)
 # ====================================================================================================
@@ -124,6 +125,22 @@ func_check_environment()
 {
   echo "\nCheck for dependencies/necessary files"
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  # Check Quartus directory
+  if [ -d "$QUARTUS_BASE" ]
+  then
+    echo "Found Quartus directory at: $QUARTUS_BASE"
+  else
+    # Take Quartus base directory from argument
+    echo "Note: Missing Quartus, using path from argument ..."
+    QUARTUS_BASE=$QUARTUS_DIR
+    if [ -d "$QUARTUS_BASE" ]
+    then
+      echo "Found Quartus directory at: $QUARTUS_BASE"
+    else
+      echo "Error: Missing Quartus base directory ($QUARTUS_BASE)!"
+      exit 1
+    fi
+  fi
   # Check RPD file
   if [ -f "$VETAR2A_RPD_FILE" ]
   then
@@ -456,13 +473,22 @@ func_check_wr_link()
 # Welcome message
 echo "Commissioning script started ..."
 # Expecting two arguments
-if [ 2 -ne $# ]
+if [ 2 -ne $# ] && [ 3 -ne $# ]
 then
   echo "Error: This script needs exactly 2 parameters:"
   echo "- Parameter #1: Device"
   echo "- Parameter #2: Hardware target"
+  echo "- Parameter #3: Quartus base directory (optional)"
   echo "Example usage: ./activation.sh dev/ttyUSB0 vetar2a"
+  echo "Example optional usage: ./activation.sh dev/ttyUSB0 vetar2a /bin/quartus/"
   exit 1
+fi
+# Show parameters
+echo "Device: $USB_DEVICE"
+echo "Hardware target: $HARDWARE"
+if [ $QUARTUS_DIR ]
+then
+  echo "Optional Quartus directory: $QUARTUS_DIR"
 fi
 # Run functions
 func_check_environment
