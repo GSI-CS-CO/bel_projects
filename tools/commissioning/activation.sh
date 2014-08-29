@@ -475,12 +475,12 @@ echo "Commissioning script started ..."
 # Expecting two arguments
 if [ 2 -ne $# ] && [ 3 -ne $# ]
 then
-  echo "Error: This script needs exactly 2 parameters:"
+  echo "Error: This script needs exactly 2 or 3 parameters:"
   echo "- Parameter #1: Device"
   echo "- Parameter #2: Hardware target"
   echo "- Parameter #3: Quartus base directory (optional)"
   echo "Example usage: ./activation.sh dev/ttyUSB0 vetar2a"
-  echo "Example optional usage: ./activation.sh dev/ttyUSB0 vetar2a /bin/quartus/"
+  echo "Example usage (optional): ./activation.sh dev/ttyUSB0 vetar2a /bin/quartus/"
   exit 1
 fi
 # Show parameters
