@@ -62,6 +62,16 @@
 #define FG_STARTH         0x6
 #define FG_STARTL         0x7
 
+#define WB_FG_CNTRL       0x0
+#define WB_FG_A           0x1
+#define WB_FG_B           0x2
+#define WB_FG_BROAD       0x3
+#define WB_FG_SHIFTA      0x4
+#define WB_FG_SHIFTB      0x5
+#define WB_FG_START       0x6
+#define WB_RAMP_CNT       0x7
+#define WB_FG_SW_DST      0x8
+
 #define TMR_BASE          0x330
 #define TMR_CNTRL         0x0
 #define TMR_IRQ_CNT       0x1

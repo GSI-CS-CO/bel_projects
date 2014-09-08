@@ -41,9 +41,11 @@
 #define WR_UART               0xe2d13d04
 #define SCU_BUS_MASTER        0x9602eb6f
 #define SCU_IRQ_CTRL          0x9602eb70
+#define WB_FG_IRQ_CTRL        0x9602eb71
 
 #define SCU_BUS_MASTER        0x9602eb6f
 #define WR_1Wire              0x779c5443
+#define WB_FG_QUAD            0x863e07f0
 
 //periphery device pointers
 volatile unsigned int* pEbm;     

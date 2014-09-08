@@ -37,11 +37,14 @@ struct fg_status SHARED fgstat; // shows the status for choosen fg. switched by 
 
 struct scu_bus scub;
 struct fg_list fgs;
+struct fg_dev wb_fg_dev;
 
 volatile unsigned short* scub_base;
 volatile unsigned int* BASE_ONEWIRE;
 volatile unsigned int* BASE_UART;
 volatile unsigned int* scub_irq_base;
+volatile unsigned int* wb_fg_irq_base;
+volatile unsigned int* wb_fg_base;
 volatile unsigned int* scu_mil_base;
 sdb_location lm32_irq_endp[10]; // there are two queues for msis
 
@@ -171,6 +174,31 @@ void slave_irq_handler()
 }
 
 void wb_fg_irq_handler() {
+  struct param_set pset;
+  int fg_number, add_freq_sel, step_cnt_sel;
+  static int first_irq;
+
+  if (first_irq < 2) {
+    first_irq++;
+    return;
+  }
+  
+  fg_number = (wb_fg_base[WB_FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
+  if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number)) {
+    cbRead((struct circ_buffer *)&fg_buffer, fg_number, &pset);
+    step_cnt_sel = pset.control & 0x7;
+    add_freq_sel = (pset.control & 0x38) >> 3;
+    wb_fg_base[WB_FG_CNTRL] &= ~(0xfc00); // clear freq and step select
+    wb_fg_base[WB_FG_CNTRL] |= (add_freq_sel << 13) | (step_cnt_sel << 10);
+    wb_fg_base[WB_FG_A] = pset.coeff_a;
+    wb_fg_base[WB_FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
+    wb_fg_base[WB_FG_B] = pset.coeff_b;
+    wb_fg_base[WB_FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
+    param_sent[fg_number]++;
+  }
+  mprintf("fg[%d] wb_fg serviced\n", fg_number);
+  mprintf("wb_fg: 0x%x\n", global_msi.adr);
+  mprintf("       0x%x\n", global_msi.msg);
 }
 
 void enable_msi_irqs() {
@@ -181,7 +209,7 @@ void enable_msi_irqs() {
   for (i = 0; i < 12; i++) {
     scub_irq_base[8] = i;  //channel select
     scub_irq_base[9] = 0x08154711;  //msg
-    scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[4]) + ((i+1) << 2); //destination address, do not use lower 2 bits 
+    scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[3]) + ((i+1) << 2); //destination address, do not use lower 2 bits 
   }
   i = 0;
   while(scub.slaves[i].unique_id) {
@@ -189,13 +217,30 @@ void enable_msi_irqs() {
     scub_irq_base[2] |= (1 << (scub.slaves[i].slot - 1)); //enable slaves
     i++;
   }
+  //wb_fg_irq_ctrl
+  //wb_fg_irq_base[0] = 0x1;                            // reset irq master
+  //wb_fg_irq_base[8] = 0;                              // only one channel
+  //wb_fg_irq_base[9] = 0x47110815;                     // msg
+  //wb_fg_irq_base[10] = getSdbAdr(&lm32_irq_endp[5]);  //destination address, do not use lower 2 bits
+  //wb_fg_irq_base[2] = 0x1;                            //enable irq channel
   mprintf("IRQs for all slave channels enabled.\n");
 }
 
 
 void disable_msi_irqs() {
   scub_irq_base[3] = 0xfff; //disable irqs for all channels
+  wb_fg_irq_base[3] = 0x1; //disable irqs for wb_fg_quad
   mprintf("IRQs for all slave channels disabled.\n");
+}
+
+void ack_pui() {
+  int i = 0;
+  int slot;
+  while(scub.slaves[i].unique_id) {
+    slot = scub.slaves[i].slot;
+    scub_base[(slot << 16) + SLAVE_INT_ACT] = 0x1;
+    i++;
+  }
 }
 
 void configure_slaves(unsigned int tmr_value) {
@@ -228,6 +273,11 @@ void configure_fgs() {
     slot = scub.slaves[i].slot;
     scub_base[SRQ_ENA] |= (1 << (slot-1));  //enable irqs for the slave
     scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1)); //set bitmask for broadcast select
+    /* only receive irqs from slaves with fg devices */
+    if (scub.slaves[i].devs[j].version) {
+      scub_base[SRQ_ENA] |= (1 << (slot-1));  //enable irqs for the slave
+      scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1)); //set bitmask for broadcast select
+    }
     if(scub.slaves[i].cid_group == 3 || scub.slaves[i].cid_group == 38) { /* ADDAC -> 2 FGs */
       scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000; /* enable fg1 and fg2 irq */
       scub_base[(slot << 16) + DAC1_BASE + DAC_CNTRL] = 0x10; // set FG mode
@@ -247,7 +297,9 @@ void configure_fgs() {
   }
   i = 0;
   while(fgs.devs[i]) { 
+    slot = fgs.devs[i]->slave->slot;
     //set virtual fg number Bit 9..4
+    mprintf("virtual fg %d in slot %d\n", i, slot);
     scub_base[(slot << 16) + fgs.devs[i]->offset + FG_CNTRL] |= (i << 4);
     //fetch parameter set from buffer
     if(!cbisEmpty((struct circ_buffer *)&fg_buffer, i)) {
@@ -263,7 +315,6 @@ void configure_fgs() {
       scub_base[(slot << 16) + fgs.devs[i]->offset + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
       param_sent[i]++;
     }
-    slot = fgs.devs[i]->slave->slot;
     fgs.devs[i]->running = 1;
     i++;
   } 
@@ -282,7 +333,7 @@ void reset_slaves() {
 }
 
 /* scans for slaves and the for fgs */
-scan_bus() {
+void print_fgs() {
   int i=0, j=0;
   scan_scu_bus(&scub, backplane_id, scub_base);
   num_fgs_found = scan_for_fgs(&scub, &fgs);
@@ -301,7 +352,12 @@ scan_bus() {
   i = 0;
   mprintf("Found %d FGs:\n", num_fgs_found);
   while(fgs.devs[i]) {
-    mprintf("fg[%d] slot: %d \n", i, fgs.devs[i]->slave->slot);
+    if (fgs.devs[i]->version == 0x1)
+      mprintf("fg[%d] slot: %d \n", i, fgs.devs[i]->slave->slot);
+    else if (fgs.devs[i]->version == 0x2)
+      mprintf("fg[%d] wb_fg_quad\n", i);
+    else
+      mprintf("fg[%d] unknown fg dev\n");
     i++;
   } 
 }
@@ -323,7 +379,7 @@ void sw_irq_handler() {
     break;
     case 2:
       disable_msi_irqs();
-      scan_bus();
+      print_fgs();
     break;
     case 3:
       enable_msi_irqs();
@@ -357,21 +413,26 @@ void sw_irq_handler() {
   }
 }
 
-void init_msi() {
+void error_handler() {
+  mprintf("timer isr called!\n");
+}
+
+void init_irq_handlers() {
   isr_table_clr();
+  isr_ptr_table[0] = &error_handler;
   isr_ptr_table[1] = &slave_irq_handler;
   isr_ptr_table[2] = &sw_irq_handler;
   isr_ptr_table[3] = &wb_fg_irq_handler;  
-  irq_set_mask(0x07);
+  irq_set_mask(0x0e);
   irq_enable();
   mprintf("MSI IRQs configured.\n");
 }
 
 void init() {
   uart_init_hw();           //enables the uart for debug messages
-  scan_bus();               //scans for slave cards and fgs
+  print_fgs();              //scans for slave cards and fgs
   init_buffers(&fg_buffer); //init the ring buffer
-  init_msi();               //enable the irqs
+  init_irq_handlers();      //enable the irqs
 } 
 
 int main(void) {
@@ -383,9 +444,11 @@ int main(void) {
   discoverPeriphery();  
   scub_base     = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
   BASE_ONEWIRE  = (unsigned int*)find_device_adr(CERN, WR_1Wire);
-  scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);
+  scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL); // irq controller for scu bus
+  wb_fg_irq_base = (unsigned int*)find_device_adr(GSI, WB_FG_IRQ_CTRL); // irq controller for wb_fg
   find_device_multi(lm32_irq_endp, &idx, 10, GSI, IRQ_ENDPOINT);
   scu_mil_base = (unsigned int*)find_device(SCU_MIL);
+  wb_fg_base = (unsigned int*)find_device_adr(GSI, WB_FG_QUAD);
   
 
   disp_reset();
@@ -398,7 +461,10 @@ int main(void) {
   for (i=0; i < idx; i++) {
     mprintf("irq_endp[%d] is: 0x%x\n",i, getSdbAdr(&lm32_irq_endp[i]));
   }
-  mprintf("scub_irq_base is: 0x%x\n", scub_irq_base); 
+  mprintf("scub_irq_base is: 0x%x\n", scub_irq_base);
+  mprintf("wb_fg_irq_base is: 0x%x\n", wb_fg_irq_base); 
+  mprintf("wb_fg_base is: 0x%x\n", wb_fg_base); 
+
 
   while(1); /*FIXME*/
   //while(1);
