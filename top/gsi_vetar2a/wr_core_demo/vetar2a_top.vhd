@@ -269,7 +269,8 @@ begin
       g_project    => "vetar_top2a",
       g_gpio_inout => 3,
       g_gpio_in    => 10,
-      g_gpio_out   => 10,
+      --g_gpio_out   => 10,
+		g_gpio_out   => 7,
       g_flash_bits => 24,
       g_en_vme     => true,
       g_en_usb     => true,
@@ -285,15 +286,22 @@ begin
       -- gpio oe
       gpio_oen_o(2 downto 0) => s_lemo_oen(2 downto 0),
       -- gpio out
-      gpio_o(1 downto 0)     => lvds_out_o(1 downto 0),
-      gpio_o(2)              => lemo_o,
-      gpio_o(5 downto 3)     => s_lemo_addOn(2 downto 0),
-      gpio_o(8 downto 6)     => s_lemo_addOn_io(2 downto 0),
-      gpio_o(9)              => hdmi_o,
+      --gpio_o(1 downto 0)     => lvds_out_o(1 downto 0),
+      --gpio_o(2)              => lemo_o,
+      --gpio_o(5 downto 3)     => s_lemo_addOn(2 downto 0),
+      --gpio_o(8 downto 6)     => s_lemo_addOn_io(2 downto 0),
+      --gpio_o(9)              => hdmi_o,
+      gpio_o(0)              => lemo_o,
+      gpio_o(3 downto 1)     => s_lemo_addOn(2 downto 0),
+      gpio_o(6 downto 4)     => s_lemo_addOn_io(2 downto 0),
       -- gpio in
-      gpio_i(1 downto 0)     => lvds_in_i(1 downto 0),
-      gpio_i(2)              => lemo_i,
-      gpio_i(5 downto 3)     => lemo_addOn_io_i(2 downto 0),
+      --gpio_i(1 downto 0)     => lvds_in_i(1 downto 0),
+      --gpio_i(2)              => lemo_i,
+      --gpio_i(5 downto 3)     => lemo_addOn_io_i(2 downto 0),
+		-- SPECIAL FOR NIKOLAUS: He needs LEMO_I at TLU/IN #3
+		gpio_i(2 downto 0)     => lemo_addOn_io_i(2 downto 0),
+      gpio_i(3)              => lemo_i,
+		gpio_i(5 downto 4)     => lvds_in_i(1 downto 0),
       gpio_i(7 downto 6)     => hdmi_i(1 downto 0),
       gpio_i(9 downto 8)     => lemo_nim_ttl_i(1 downto 0),
       -- wr core
@@ -402,7 +410,12 @@ begin
 
   -- PLL
   clk_pll_o <= s_clk_butis;
-
+  hdmi_o    <= s_butis_t0;
+  
+  -- LVDS
+  lvds_out_o(0) <= s_clk_butis;
+  lvds_out_o(1) <= s_butis_t0;
+  
   -- OE and TERM for LEMOs (s_lemo_oen is driven by monster iodir hack)
   lemo_addOn_oen_o(0)  <= '0' when s_lemo_oen(0)='0' else 'Z'; -- TTLIO1 output enable
   lemo_addOn_oen_o(1)  <= '0' when s_lemo_oen(1)='0' else 'Z'; -- TTLIO2 output enable
