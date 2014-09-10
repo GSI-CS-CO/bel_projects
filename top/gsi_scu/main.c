@@ -178,10 +178,10 @@ void wb_fg_irq_handler() {
   int fg_number, add_freq_sel, step_cnt_sel;
   static int first_irq;
 
-  if (first_irq < 2) {
-    first_irq++;
-    return;
-  }
+//  if (first_irq < 2) {
+//    first_irq++;
+//    return;
+//  }
   
   fg_number = (wb_fg_base[WB_FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
   if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number)) {

@@ -63,13 +63,13 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
 
   /* special solution for RF group, wb fg in scu */
   /* this fg dev is always last in the list */
-  //if (wb_fg_base) {
-  //  wbfg->dev_number = 0;
-  //  wbfg->version = 0x2;
-  //  wbfg->offset = (int)wb_fg_base;
-  //  list->devs[j] = wbfg;
-  //  j++;
-  //}
+  if (wb_fg_base) {
+    wbfg->dev_number = 0;
+    wbfg->version = 0x2;
+    wbfg->offset = (int)wb_fg_base;
+    list->devs[j] = wbfg;
+    j++;
+  }
 
   list->devs[j] = 0;
   return j; //return number of found fgs
