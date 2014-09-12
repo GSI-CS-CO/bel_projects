@@ -198,20 +198,21 @@ void wb_fg_irq_handler() {
 }
 
 void enable_msi_irqs() {
-  int i;
+  int i, slot;
   //SCU Bus Master
   scub_base[GLOBAL_IRQ_ENA] = 0x20; //enable slave irqs
   scub_irq_base[0] = 0x1; // reset irq master
-  for (i = 0; i < 12; i++) {
-    scub_irq_base[8] = i;  //channel select
-    scub_irq_base[9] = 0x08154711;  //msg
-    scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[3]) + ((i+1) << 2); //destination address, do not use lower 2 bits 
-  }
   i = 0;
-  while(scub.slaves[i].unique_id) {
-    initialized[scub.slaves[i].slot - 1] = 0; // counter needs to be resynced
-    scub_irq_base[2] |= (1 << (scub.slaves[i].slot - 1)); //enable slaves
-    i++;
+  while(fgs.devs[i]) { 
+    slot = fgs.devs[i]->slave->slot;
+    if (fgs.devs[i]->version == 0x1) {
+      scub_irq_base[8] = slot-1;                                      //channel select
+      scub_irq_base[9] = 0x08154711;                                  //msg
+      scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[3]) + (slot << 2); //destination address, do not use lower 2 bits
+      initialized[slot - 1] = 0;                                      //counter needs to be resynced
+      scub_irq_base[2] |= (1 << (slot - 1));                          //enable slaves
+    }
+    i++; 
   }
   //wb_fg_irq_ctrl
   wb_fg_irq_base[0] = 0x1;                            // reset irq master
@@ -219,7 +220,7 @@ void enable_msi_irqs() {
   wb_fg_irq_base[9] = 0x47110815;                     // msg
   wb_fg_irq_base[10] = getSdbAdr(&lm32_irq_endp[5]);  //destination address, do not use lower 2 bits
   wb_fg_irq_base[2] = 0x1;                            //enable irq channel
-  mprintf("IRQs for all slave channels enabled.\n");
+  mprintf("IRQs for slaves with fg enabled.\n");
 }
 
 
