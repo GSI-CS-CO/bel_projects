@@ -83,7 +83,7 @@ begin
       fg_slave_o.dat <= (others => '0');
 
       if rst_n_i = '0' or fg_cntrl_reg(0) = '1' then
-        fg_cntrl_reg    <= (others => '0');
+        fg_cntrl_reg    <= x"03f0";         -- mark virtual fg number as unconfigured
         fg_cntrl_rd_reg <= (others => '0');
         coeff_a_reg     <= (others => '0');
         coeff_b_reg     <= (others => '0');

@@ -39,14 +39,16 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
         bus->slaves[i].devs[0].version = 0x1;
         bus->slaves[i].devs[0].offset = FG1_BASE;
         bus->slaves[i].devs[0].slave = &(bus->slaves[i]);
-        if (j < MAX_FG_DEVICES)
+        if (j < MAX_FG_DEVICES) {
           list->devs[j] = &(bus->slaves[i].devs[0]);j++;
+        }
         bus->slaves[i].devs[1].dev_number = 0x1;
         bus->slaves[i].devs[1].version = 0x1;
         bus->slaves[i].devs[1].offset = FG2_BASE;
         bus->slaves[i].devs[1].slave = &(bus->slaves[i]);
-        if (j < MAX_FG_DEVICES)
+        if (j < MAX_FG_DEVICES) {
           list->devs[j] = &(bus->slaves[i].devs[1]);j++;
+        }
         
       } else if (bus->slaves[i].cid_group == 26) { /* DIOB */
         /* one FG */
@@ -54,8 +56,9 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
         bus->slaves[i].devs[0].version = 0x1;
         bus->slaves[i].devs[0].offset = FG1_BASE;
         bus->slaves[i].devs[0].slave = &(bus->slaves[i]);
-        if (j < MAX_FG_DEVICES)
+        if (j < MAX_FG_DEVICES) {
           list->devs[j] = &(bus->slaves[i].devs[0]);j++;
+        }
       }
     }
     i++;
@@ -63,7 +66,7 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
 
   /* special solution for RF group, wb fg in scu */
   /* this fg dev is always last in the list */
-  if (wb_fg_base) {
+  if (wb_fg_base && j < MAX_FG_DEVICES) {
     wbfg->dev_number = 0;
     wbfg->version = 0x2;
     wbfg->offset = (int)wb_fg_base;

@@ -176,19 +176,15 @@ void slave_irq_handler()
 void wb_fg_irq_handler() {
   struct param_set pset;
   int fg_number, add_freq_sel, step_cnt_sel;
-  static int first_irq;
-
-//  if (first_irq < 2) {
-//    first_irq++;
-//    return;
-//  }
   
   fg_number = (wb_fg_base[WB_FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
+  if (fg_number < 0 && fg_number > 11)                // check if fg was configured
+    return;
   if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number)) {
     cbRead((struct circ_buffer *)&fg_buffer, fg_number, &pset);
     step_cnt_sel = pset.control & 0x7;
     add_freq_sel = (pset.control & 0x38) >> 3;
-    wb_fg_base[WB_FG_CNTRL] &= ~(0xfc00); // clear freq and step select
+    wb_fg_base[WB_FG_CNTRL] &= ~(0xfc00);             // clear freq and step select
     wb_fg_base[WB_FG_CNTRL] |= (add_freq_sel << 13) | (step_cnt_sel << 10);
     wb_fg_base[WB_FG_A] = pset.coeff_a;
     wb_fg_base[WB_FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
@@ -303,7 +299,7 @@ void configure_fgs() {
     if (fgs.devs[i]->version == 0x1) {
       slot = fgs.devs[i]->slave->slot;
       //set virtual fg number Bit 9..4
-      mprintf("virtual fg %d in slot %d\n", i, slot);
+      //mprintf("virtual fg %d in slot %d\n", i, slot);
       scub_base[(slot << 16) + fgs.devs[i]->offset + FG_CNTRL] |= (i << 4);
       //fetch parameter set from buffer
       if(!cbisEmpty((struct circ_buffer *)&fg_buffer, i)) {
@@ -323,7 +319,7 @@ void configure_fgs() {
     } else if (fgs.devs[i]->version == 0x2) { //fg in scu
       //set virtual fg number Bit 9..4
       //mprintf("virtual fg %d in scu\n", i, slot);
-      wb_fg_base[WB_FG_CNTRL] |= (i << 4);
+      wb_fg_base[WB_FG_CNTRL] = (i << 4);
       //fetch parameter set from buffer
       if(!cbisEmpty((struct circ_buffer *)&fg_buffer, i)) {
         cbRead((struct circ_buffer *)&fg_buffer, i, &pset);
