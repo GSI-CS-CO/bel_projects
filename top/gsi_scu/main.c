@@ -113,7 +113,7 @@ void send_fg_param(int slave_nr, int fg_base) {
 
 void slave_irq_handler()
 {
-  int j = 0;
+  int i, j = 0;
   char buffer[12];
   unsigned char slave_nr = global_msi.adr>>2 & 0xf;
   volatile unsigned short tmr_irq_cnts; 
@@ -129,13 +129,23 @@ void slave_irq_handler()
     return;
   }
 
+  i = 0;
+  while(fgs.devs[i]) {
+    if (fgs.devs[i]->slave->slot == slave_nr) {
+      break;
+    } else if (fgs.devs[i] == 0) {
+      mprintf("IRQ from unknown slave.\n");
+      return; 
+    }
+    i++;
+  }
+
   j = 0;
   while(scub.slaves[slave_nr-1].devs[j].version) { /* more fgs in list */
     if (scub.slaves[slave_nr-1].devs[j].dev_number == 0) 
       fg1 = &scub.slaves[slave_nr-1].devs[j];
     if (scub.slaves[slave_nr-1].devs[j].dev_number == 1) 
       fg2 = &scub.slaves[slave_nr-1].devs[j];
-
     j++; 
   } 
 
