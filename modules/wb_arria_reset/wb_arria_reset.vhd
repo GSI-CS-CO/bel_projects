@@ -58,7 +58,7 @@ use work.wb_arria_reset_pkg.all;
 entity wb_arria_reset is
   generic (
             arria_family: string := "Arria II";
-            rst_channels: integer range 1 to 7 := 2
+            rst_channels: integer range 1 to 32 := 2
           );
   port (
           clk_sys_i:  in std_logic;
@@ -75,7 +75,7 @@ end entity;
 
 
 architecture wb_arria_reset_arch of wb_arria_reset is
-  signal reset_reg: std_logic_vector(7 downto 0);
+  signal reset_reg: std_logic_vector(31 downto 0);
   signal reset : std_logic;
 begin
   
@@ -124,15 +124,27 @@ begin
         reset_reg <= (others => '0');
       else
         -- Detect a write to the register byte
-        if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.we = '1' and slave_i.sel(0) = '1' then
-          case to_integer(unsigned(slave_i.adr(3 downto 2))) is
-            when 0 => reset_reg(reset_reg'left downto 1) <= slave_i.dat(reset_reg'left downto 1);
-							 if(slave_i.dat = x"DEADBEEF") then
-								reset_reg(0) <= '1';
-							 end if;		
-            when others => null;
-          end case;
+        if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.sel(0) = '1' then
+          if(slave_i.we = '1') then
+				 case to_integer(unsigned(slave_i.adr(3 downto 2))) is
+					when 0 => if(slave_i.dat = x"DEADBEEF") then
+									reset_reg(0) <= '1';
+								 end if;
+					
+					when 2 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) OR slave_i.dat(reset_reg'left-1 downto 0);
+					when 3 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) AND NOT slave_i.dat(reset_reg'left-1 downto 0);
+					
+					when others => null;
+				 end case;
+			 else
+				 case to_integer(unsigned(slave_i.adr(3 downto 2))) is
+					when 1 => slave_o.dat <= '0' & reset_reg(reset_reg'left downto 1); 
+					when others => null;
+				 end case;
+			 end if;
         end if;
+		  
+		  
       end if;
     end if;
   end process;

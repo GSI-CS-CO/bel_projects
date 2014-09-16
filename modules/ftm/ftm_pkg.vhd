@@ -100,7 +100,7 @@ package ftm_pkg is
    port(
    clk_sys_i      : in  std_logic;
    rst_n_i        : in  std_logic;
-   rst_lm32_n_i   : in  std_logic;
+   rst_lm32_n_i   : in  std_logic_vector(g_cores-1 downto 0);
 
    tm_tai8ns_i    : in std_logic_vector(63 downto 0);
 

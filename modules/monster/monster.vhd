@@ -435,7 +435,7 @@ architecture rtl of monster is
   signal s_usb_fd_o   : std_logic_vector(7 downto 0);
   signal s_usb_fd_oen : std_logic;
   
-  signal s_lm32_rstn : std_logic;
+  signal s_lm32_rstn : std_logic_vector(g_lm32_cores-1 downto 0);
 
   -- END OF Master signals
   ----------------------------------------------------------------------------------
@@ -1222,7 +1222,7 @@ begin
   wb_reset : wb_arria_reset
     generic map(
       arria_family => g_family,
-      rst_channels => 1)
+      rst_channels => g_lm32_cores)
     port map(
       clk_sys_i  => clk_sys,
       rstn_sys_i => rstn_sys,
@@ -1230,7 +1230,7 @@ begin
       rstn_upd_i => rstn_update,
       slave_o    => top_cbar_master_i(c_tops_reset),
       slave_i    => top_cbar_master_o(c_tops_reset),
-      rstn_o(0)  => s_lm32_rstn);
+      rstn_o     => s_lm32_rstn);
   
   iodir : monster_iodir
     generic map(
