@@ -84,10 +84,12 @@ void cmdEval()
    
    cmd = pFtmIf->cmd;
    stat = pFtmIf->status;
-   pFtmIf->cmd = 0; 
+   
    
    if(cmd)
    {
+      
+      
       if(cmd & CMD_RST)          { showId(); mprintf("Ftm Init done\n"); stat = 0; ftmInit(); }
       if(cmd & CMD_START)        { showId(); mprintf("Starting, IP: 0x%08x, SP: 0x%08x\n", &pFtmIf->idle, pFtmIf->pAct->pStart); 
                                    pFtmIf->pAct->pBp = pFtmIf->pAct->pStart;
@@ -110,14 +112,17 @@ void cmdEval()
       
       if(cmd & CMD_SHOW_ACT)     {  showId(); mprintf("Showing Active\n"); showFtmPage(pFtmIf->pAct);}
       if(cmd & CMD_SHOW_INA)     {  showId(); mprintf("Showing Inactive\n"); showFtmPage(pFtmIf->pIna);}
-                           
+      
+      //only zero the command reg if you found a command. otherwise this becomes race-condition-hell!
+      pFtmIf->cmd = 0;                       
    }
    
    if(pCurrentChain == &pFtmIf->idle)  {stat |=  STAT_IDLE;}
    else                       {stat &= ~STAT_IDLE;}
    if(pCurrentChain == &pFtmIf->idle && (stat & STAT_STOP_REQ)) { stat = (stat & STAT_ERROR) & ~STAT_RUNNING; mprintf("Stopped\n");}
    
-   pFtmIf->status = stat; 
+   pFtmIf->status = stat;
+   
 }
 
 void processFtm()

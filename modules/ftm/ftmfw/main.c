@@ -13,6 +13,7 @@
  
 unsigned int cpuId, cpuQty, heapCap;
 
+
 void show_msi()
 {
   mprintf(" Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
@@ -43,7 +44,7 @@ void ebmInit()
 
 void init()
 { 
-   char buffer[] = "\nFTM Core #00 rdy"; 
+   char buffer[] = "\nFTM Core #00 rdy ________"; 
    char itoaBuffer[3];
    
    discoverPeriphery();
@@ -51,8 +52,10 @@ void init()
    ebmInit();
    ftmInit();
  
+   cmdCnt = 0;
    cpuId = getCpuIdx();
    itoa(cpuId, itoaBuffer, 10);
+   itoa((uint32_t)&pFtmIf->cmd, &buffer[18], 8);
    if(itoaBuffer[1]) {buffer[12] = itoaBuffer[1]; buffer[11] = itoaBuffer[0];}
    if(itoaBuffer[0]) {buffer[12] = itoaBuffer[0];}
 
@@ -61,6 +64,7 @@ void init()
    isr_ptr_table[1] = isr1;   
    irq_set_mask(0x03);
    irq_enable();
+   
    
    atomic_on(); 
    uart_write_string(buffer);

@@ -9,6 +9,7 @@
 #include "irq.h"
 #include "aux.h"
 
+uint32_t cmdCnt;
 
 #define MSI_SIG             0
 #define TLU_CH_TEST         0x60
