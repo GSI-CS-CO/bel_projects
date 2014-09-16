@@ -327,6 +327,7 @@ int main(int argc, char** argv) {
    int opt;
    char *value_end;
    const char* netaddress, *command;
+   uint32_t resetBits;
    
    uint8_t  bufWrite[BUF_SIZE];
    uint8_t  bufRead[BUF_SIZE];
@@ -420,20 +421,28 @@ int main(int argc, char** argv) {
    
    ebRamOpen(netaddress, 0);
    
-   if (!strcasecmp(command, "loadfw")) {
-      resetOffset = getResetAdr();
-      printf("Putting CPU into Reset for FW load\n");
-      ebstatus = eb_device_write(device, resetOffset, EB_BIG_ENDIAN | EB_DATA32, CMD_LM32_RST, 0, eb_block);
-      if (ebstatus != EB_OK) die(ebstatus, "failed to create cycle");
-   }
-   ebRamClose();
-   
-   if(cpuId < 0) { firstCpu   = 0; 
+    if(cpuId < 0) { firstCpu   = 0; 
                    lastCpu    = cpuQty-1;
                   } // bit wasteful but safer than self modifiying loop
    else { firstCpu = (uint8_t)cpuId; 
           lastCpu  = (uint8_t)cpuId;
-        }    
+        }  
+   
+   if(cpuId < 0) {
+         resetBits = (1 << cpuQty) -1;
+      } else {
+         resetBits = 1 << cpuId;
+      }
+   
+   if (!strcasecmp(command, "loadfw")) {
+      resetOffset = getResetAdr();
+      printf("Putting CPU into Reset for FW load\n");
+      ebstatus = eb_device_write(device, (eb_address_t)(resetOffset + FTM_RST_SET), EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)resetBits, 0, eb_block);
+      if (ebstatus != EB_OK) die(ebstatus, "failed to create cycle");
+   }
+   ebRamClose();
+   
+    
    
    if (!strcasecmp(command, "status")) { printf("#### FTM @ %s ####\n", netaddress); }
    
@@ -594,7 +603,7 @@ int main(int argc, char** argv) {
        if(!strcasecmp(command, "put")) {
           if(!readonly) {
             printf("Parsing %s ...", filename);
-            pPage = parseXml(filename);
+            pPage = parseXmlFile(filename);
             printf("done.\n");
             if(verbose) showFtmPage(pPage);
             serPage (pPage, pBufWrite, targetOffset, k);
@@ -638,7 +647,7 @@ int main(int argc, char** argv) {
    if(!strcasecmp(command, "loadfw")) {
       ebRamOpen(netaddress, 0);
       printf("Releasing all CPUs from Reset\n\n");
-      ebstatus = eb_device_write(device, resetOffset, EB_BIG_ENDIAN | EB_DATA32, 0, 0, eb_block);
+       ebstatus = eb_device_write(device, (eb_address_t)(resetOffset + FTM_RST_CLR), EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)resetBits, 0, eb_block);
       if (ebstatus != EB_OK) die(ebstatus, "failed to create cycle"); 
       ebRamClose(); 
     }

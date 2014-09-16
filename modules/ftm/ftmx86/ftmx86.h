@@ -10,6 +10,11 @@
 
 #define BUF_SIZE            FTM_PAGESIZE
 
+#define FTM_RST_FPGA        0x0
+#define FTM_RST_GET         (FTM_RST_FPGA + 4)
+#define FTM_RST_SET         (FTM_RST_GET  + 4)
+#define FTM_RST_CLR         (FTM_RST_SET  + 4)
+
 #define FTM_SHARED_OFFSET   0xC000
 #define FTM_CMD_OFFSET      (FTM_SHARED_OFFSET  + 2*FTM_PAGESIZE)
 #define FTM_STAT_OFFSET     (FTM_CMD_OFFSET     + 4)
@@ -145,8 +150,9 @@ typedef struct {
    uint64_t offs;
 } t_ftmMsg;
 
-typedef struct {
-   
+typedef struct t_ftmChain t_ftmChain;
+
+struct t_ftmChain {   
    uint64_t             tStart;  //desired start time of this chain
    uint64_t             tPeriod; //chain period
    uint64_t             tExec;   //chain execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod
@@ -162,9 +168,9 @@ typedef struct {
    uint32_t             msgQty;  //Number of messages
    uint32_t             msgIdx;  //idx of the currently processed msg 
    t_ftmMsg*            pMsg;    //pointer to messages
-   struct t_ftmChain*   pNext;   //pointer to next chain
+   t_ftmChain*          pNext;   //pointer to next chain
    
-} t_ftmChain;
+};
 
 typedef struct {
    uint32_t       chainQty;

@@ -304,7 +304,7 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
    return pPage;    
 }
 
-t_ftmPage* parseXml(const char* filename)
+t_ftmPage* parseXmlFile(const char* filename)
 {
    xmlDoc *doc = NULL;
     xmlNode *root_element = NULL;
@@ -336,3 +336,37 @@ t_ftmPage* parseXml(const char* filename)
     return pPage;
 
 }
+
+t_ftmPage* parseXmlString(const char* sXml)
+{
+   xmlDoc *doc = NULL;
+    xmlNode *root_element = NULL;
+   t_ftmPage* pPage = NULL;
+
+    LIBXML_TEST_VERSION
+
+    /*parse the file and get the DOM */
+    doc = xmlParseDoc((const xmlChar *)sXml);
+
+    if (doc == NULL) {
+        printf("error: could not parse string \n");
+    }
+
+    /*Get the root element node */
+    root_element = xmlDocGetRootElement(doc);
+
+
+    pPage = convertDOM2ftmPage(root_element);
+
+    /*free the document */
+    xmlFreeDoc(doc);
+
+    /*
+     *Free the global variables that may
+     *have been allocated by the parser.
+     */
+    xmlCleanupParser();
+    return pPage;
+
+}
+
