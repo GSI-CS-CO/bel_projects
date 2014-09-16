@@ -12,6 +12,7 @@ use work.diob_sys_clk_local_clk_switch_pkg.all;
 
 
 
+
 ----------------------------------------------------------------------------------------------------------------------
 --  Vers: 1 Revi: 0: erstellt am 28.01.2014, Autor: R.Hartmann                                                      --
 --                                                                                                                  --
@@ -2089,10 +2090,12 @@ BEGIN
       
   WHEN OTHERS =>
 
+      extension_cid_system <=  0;  -- extension card: cid_system
+      extension_cid_group  <=  0;  -- extension card: cid_group
 
-		s_nLED_User1_i <= '0';				-- LED3 = User 1, -- frei -- 
-		s_nLED_User2_i <= '0';				-- LED3 = User 2, -- frei -- 
-		s_nLED_User3_i <= '0';				-- LED3 = User 3, -- frei -- 
+		s_nLED_User1_i       <= '0';				-- LED3 = User 1, -- frei -- 
+		s_nLED_User2_i       <= '0';				-- LED3 = User 2, -- frei -- 
+		s_nLED_User3_i       <= '0';				-- LED3 = User 3, -- frei -- 
 
 
   -- Output: Anwender-LED's ---
