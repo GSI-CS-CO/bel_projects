@@ -482,7 +482,7 @@ int main(void) {
   wb_fg_base = (unsigned int*)find_device_adr(GSI, WB_FG_QUAD);
  
   if(wb_fg_base)
-    wb_fg_base[WB_FG_SW_DST]  = 0x80420010; // choose a save desination address
+    wb_fg_base[WB_FG_SW_DST]  = 0x80420808; // write to the first slave, offset 0x404 and 0x405
 
   disp_reset();
   disp_put_c('\f');

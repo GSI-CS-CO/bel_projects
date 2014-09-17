@@ -115,5 +115,18 @@ constant c_fg_irq_ctrl_sdb : t_sdb_device := (
     date          => x"20140730",
     name          => "IRQ_MASTER_CTRL    ")));
 
+component wbmstr_core is 
+port    (clk_i          : in  std_logic;   -- clock
+         rst_n_i        : in  std_logic;   -- reset, active LO
+         --msi if
+         irq_master_o   : out t_wishbone_master_out;  -- Wishbone msi irq interface
+         irq_master_i   : in  t_wishbone_master_in;
+         --config 
+         -- we assume these as stable, they won't be synced!			
+         wb_dst         : in  std_logic_vector(31 downto 0);
+         wb_msg         : in  std_logic_vector(31 downto 0);
 
+         strobe         : in std_logic
+);
+end component;
 end package fg_quad_pkg;

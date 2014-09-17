@@ -61,7 +61,7 @@ architecture wb_fg_quad_arch of wb_fg_quad is
   signal fg_running:        std_logic;
   signal ramp_sec_fin:      std_logic;
   signal sw_out:            std_logic_vector(31 downto 0);
-  signal sw_strobe:         std_logic_vector(0 downto 0);
+  signal sw_strobe:         std_logic;
   
   signal s_msg         : t_wishbone_data_array(0 downto 0);
   signal s_dst         : t_wishbone_address_array(0 downto 0);
@@ -148,8 +148,6 @@ begin
   fg_slave_o.rty <= '0';
   fg_slave_o.stall <= '0'; -- always ready
   
-  s_dst(0) <= t_wishbone_address(sw_dst_reg); -- configure destination address of the wb master 
-
   -----------------------------------------------------------------------------------------
   -- instance of fg_quad_datapath
   -----------------------------------------------------------------------------------------
@@ -174,12 +172,10 @@ begin
       dreq                => fg_dreq(0),
       ramp_sec_fin        => ramp_sec_fin,
       sw_out              => sw_out,
-      sw_strobe           => sw_strobe(0),
+      sw_strobe           => sw_strobe,
       fg_stopped          => fg_stopped,
       fg_running          => fg_running       
     );
-    
-  s_msg(0) <= t_wishbone_data(sw_out); -- generate wb accesss with sw_out as message
     
   -----------------------------------------------------------------------------------------
   -- wb master for generating dreq msi
@@ -207,11 +203,7 @@ begin
   ------------------------------------------------------------------------------------------
   -- wb master for converting sw_out to wishbone
   ------------------------------------------------------------------------------------------
-  fg_sw_master: irqm_core
-    generic map (
-      g_channels => 1,
-      g_round_rb => true,
-      g_det_edge => true) 
+  fg_sw_master: wbmstr_core
     port map (
       clk_i   => clk_i,
       rst_n_i => rst_n_i,
@@ -221,12 +213,9 @@ begin
       irq_master_i => fg_mst_i,
       
       -- config
-      msi_dst_array => s_dst,
-      msi_msg_array => s_msg,
+      wb_dst => sw_dst_reg,
+      wb_msg => sw_out,
 
-      en_i        => '1',
-      mask_i      => "1",
-      -- irq lines
-      irq_i        => sw_strobe(0 downto 0)); 
+      strobe => sw_strobe); 
 
 end architecture;

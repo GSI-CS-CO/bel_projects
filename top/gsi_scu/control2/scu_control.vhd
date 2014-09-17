@@ -267,7 +267,8 @@ begin
       g_en_scubus  => true,
       g_en_mil     => true,
       g_en_oled    => true,
-      g_en_user_ow => true)
+      g_en_user_ow => true,
+      g_en_fg      => true)
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_sfpref_i => sfp2_ref_clk_i,
