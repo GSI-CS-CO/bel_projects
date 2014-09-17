@@ -6,20 +6,15 @@
 -- Author     : Stefan Rauch
 -- Company    : GSI
 -- Created    : 2013-12-12
--- Last update: 2013-12-16
+-- Last update: 2014-09-16
 -- Platform   : Altera
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
 -- Description: resets FPGA with internal logic using alt remote update 
--- 
+-- n: number of user LM32 cores in system
+--
 -- Bit 0 => reload FPGA configuration (active high)
--- Bit 1 => reset_out(0)
--- Bit 2 => reset_out(1)
--- Bit 3 => reset_out(2)
--- Bit 4 => reset_out(3)
--- Bit 5 => reset_out(4)
--- Bit 6 => reset_out(5)
--- Bit 7 => reset_out(6)
+-- Bit 1..n => reset_out(1 .. n)
 -------------------------------------------------------------------------------
 --
 -- Copyright (c) 2013 GSI / Stefan Rauch
@@ -46,7 +41,11 @@
 -- Date        Version  Author      Description
 -- 2013-09-13  1.0      stefanrauch first version
 -------------------------------------------------------------------------------
-
+-- 2014-09-16  1.1      mkreider 	- FPGA reset needs DEADBEEF as magic
+--					word at address 0x0
+--					- 0x4 - 0xC are now GET, SET, CLR for
+--                                        individual LM32 reset lines  		
+-------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
