@@ -18,7 +18,7 @@ generic(g_is_ftm        : boolean := false;
 port(
    clk_sys_i      : in  std_logic;
    rst_n_i        : in  std_logic;
-   rst_lm32_n_i   : in  std_logic;
+   rst_lm32_n_i   : in  std_logic_vector(g_cores-1 downto 0); 
 
    tm_tai8ns_i    : in std_logic_vector(63 downto 0);
 
@@ -109,9 +109,7 @@ architecture rtl of ftm_lm32_cluster is
    signal clu_cbar_slaveport_out   : t_wishbone_slave_out_array  (c_clu_masters-1 downto 0);
    ------------------------------------------------------------------------------
    
-   signal r_rst_lm32_n,
-          s_rst_lm32_n,
-          s_rst_lm32_n_aux           : std_logic_vector(31 downto 0);            
+   signal s_rst_lm32_n : std_logic_vector(g_cores-1 downto 0);            
 
    begin
 
@@ -319,9 +317,8 @@ architecture rtl of ftm_lm32_cluster is
    );
  end generate;
  
-    
---******************************************************************************
--- makeshift ftm load manager / rst control
+ --******************************************************************************
+-- makeshift ftm load manager 
 --------------------------------------------------------------------------------
    rst_ctrl : process(clk_sys_i)
    variable vIdx : natural; 
@@ -330,31 +327,16 @@ architecture rtl of ftm_lm32_cluster is
     
     if rising_edge(clk_sys_i) then
       if(rst_n_i = '0') then
-        r_rst_lm32_n <= (others => '1');
       else
     
         clu_cbar_masterport_in(vIdx).dat <= (others => '0');      
         clu_cbar_masterport_in(vIdx).ack <= clu_cbar_masterport_out(vIdx).cyc and clu_cbar_masterport_out(vIdx).stb;
          
-        if(clu_cbar_masterport_out(vIdx).cyc = '1' and clu_cbar_masterport_out(vIdx).stb = '1') then         
-           case(to_integer(unsigned(clu_cbar_masterport_out(vIdx).adr(7 downto 2)) & "00")) is
-              when 0 => clu_cbar_masterport_in(vIdx).dat <= r_rst_lm32_n;
-                        if(clu_cbar_masterport_out(vIdx).we = '1') then
-                          r_rst_lm32_n <= clu_cbar_masterport_out(vIdx).dat;
-                        end if; 
-                           
-              when others => null;
-           end case;
-        end if;
       end if;
     end if;
   end process;   
-
-  clu_cbar_masterport_in(c_clu_load_mgr).stall <= '0';
-  clu_cbar_masterport_in(c_clu_load_mgr).err   <= '0';   
   
-  s_rst_lm32_n_aux <= (others => rst_lm32_n_i);
-  s_rst_lm32_n <= r_rst_lm32_n and s_rst_lm32_n_aux;
+  s_rst_lm32_n <= rst_lm32_n_i;
    
    
 

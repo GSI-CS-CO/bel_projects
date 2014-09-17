@@ -37,7 +37,8 @@
 #define FTM_PRIOQ_DATA        0x10040201
 
 #define ECA_EVENT             0x8752bf45
-#define ECA_CTRL              0x8752bf44 
+#define ECA_CTRL              0x8752bf44
+#define TLU                   0x10051981 
 #define WR_UART               0xe2d13d04
 #define SCU_BUS_MASTER        0x9602eb6f
 #define SCU_IRQ_CTRL          0x9602eb70
@@ -46,6 +47,7 @@
 #define WR_1Wire              0x779c5443
 
 //periphery device pointers
+volatile unsigned int* pTlu; 
 volatile unsigned int* pEbm;     
 volatile unsigned int* pOledDisplay;     
 volatile unsigned int* pFpqCtrl;

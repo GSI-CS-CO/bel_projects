@@ -6,20 +6,15 @@
 -- Author     : Stefan Rauch
 -- Company    : GSI
 -- Created    : 2013-12-12
--- Last update: 2013-12-16
+-- Last update: 2014-09-16
 -- Platform   : Altera
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
 -- Description: resets FPGA with internal logic using alt remote update 
--- 
+-- n: number of user LM32 cores in system
+--
 -- Bit 0 => reload FPGA configuration (active high)
--- Bit 1 => reset_out(0)
--- Bit 2 => reset_out(1)
--- Bit 3 => reset_out(2)
--- Bit 4 => reset_out(3)
--- Bit 5 => reset_out(4)
--- Bit 6 => reset_out(5)
--- Bit 7 => reset_out(6)
+-- Bit 1..n => reset_out(1 .. n)
 -------------------------------------------------------------------------------
 --
 -- Copyright (c) 2013 GSI / Stefan Rauch
@@ -46,7 +41,11 @@
 -- Date        Version  Author      Description
 -- 2013-09-13  1.0      stefanrauch first version
 -------------------------------------------------------------------------------
-
+-- 2014-09-16  1.1      mkreider 	- FPGA reset needs DEADBEEF as magic
+--					word at address 0x0
+--					- 0x4 - 0xC are now GET, SET, CLR for
+--                                        individual LM32 reset lines  		
+-------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -58,7 +57,7 @@ use work.wb_arria_reset_pkg.all;
 entity wb_arria_reset is
   generic (
             arria_family: string := "Arria II";
-            rst_channels: integer range 1 to 7 := 2
+            rst_channels: integer range 1 to 32 := 2
           );
   port (
           clk_sys_i:  in std_logic;
@@ -75,7 +74,7 @@ end entity;
 
 
 architecture wb_arria_reset_arch of wb_arria_reset is
-  signal reset_reg: std_logic_vector(7 downto 0);
+  signal reset_reg: std_logic_vector(31 downto 0);
   signal reset : std_logic;
 begin
   
@@ -124,12 +123,27 @@ begin
         reset_reg <= (others => '0');
       else
         -- Detect a write to the register byte
-        if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.we = '1' and slave_i.sel(0) = '1' then
-          case to_integer(unsigned(slave_i.adr(3 downto 2))) is
-            when 0 => reset_reg <= slave_i.dat(reset_reg'range);
-            when others => null;
-          end case;
+        if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.sel(0) = '1' then
+          if(slave_i.we = '1') then
+				 case to_integer(unsigned(slave_i.adr(3 downto 2))) is
+					when 0 => if(slave_i.dat = x"DEADBEEF") then
+									reset_reg(0) <= '1';
+								 end if;
+					
+					when 2 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) OR slave_i.dat(reset_reg'left-1 downto 0);
+					when 3 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) AND NOT slave_i.dat(reset_reg'left-1 downto 0);
+					
+					when others => null;
+				 end case;
+			 else
+				 case to_integer(unsigned(slave_i.adr(3 downto 2))) is
+					when 1 => slave_o.dat <= '0' & reset_reg(reset_reg'left downto 1); 
+					when others => null;
+				 end case;
+			 end if;
         end if;
+		  
+		  
       end if;
     end if;
   end process;
