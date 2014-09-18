@@ -1,11 +1,11 @@
 library ieee;
-use ieee.std_logic_1164.all; 
+use ieee.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use work.diob_sys_clk_local_clk_switch_pkg.all;
 
 library work;
 
-entity diob_sys_clk_local_clk_switch is 
+entity diob_sys_clk_local_clk_switch is
   port(
     local_clk_i:          in    std_logic;
     sys_clk_i:            in    std_logic;
@@ -85,7 +85,7 @@ signal    clk_switch_cnt:       integer range 0 to clk_switch_cnt_max;
 
 
 
-begin 
+begin
 
 local_clk: diob_local_clk_to_12p5_mhz
   port map(
@@ -206,7 +206,7 @@ p_sys_freq_test:  process (master_clk, nReset)
   begin
     if nReset = '0' then
       f_local_12p5_mhz_sync <= b"000";  
-      sys_clk_i_sync        <= b"000"; 
+      sys_clk_i_sync        <= b"000";
       test_time_cnt         <= 0;
       sys_clk_cnt           <= 0;
       s_sys_clk_deviation     <= '0';
@@ -214,10 +214,10 @@ p_sys_freq_test:  process (master_clk, nReset)
       compare                 <= '0';
 
     elsif rising_edge(master_clk) then
-      f_local_12p5_mhz_sync   <= f_local_12p5_mhz_sync(1 downto 0) & f_local_12p5_mhz;  
+      f_local_12p5_mhz_sync   <= f_local_12p5_mhz_sync(1 downto 0) & f_local_12p5_mhz;
       sys_clk_i_sync          <= sys_clk_i_sync(1 downto 0) & sys_clk_i;
 
-      
+
       if start_pll_control = '1' then
 
         if f_local_12p5_mhz_sync(2 downto 1) = "01" then
