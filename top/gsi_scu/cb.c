@@ -40,9 +40,9 @@ void cbRead(volatile struct circ_buffer *cb, int num, struct param_set *pset) {
   }
   /* read element */
   *pset = cb[num].pset[rptr];
-  mprintf("%x(%d) ", cb[num].pset[rptr].coeff_c, rptr);
-  if (!(cb[num].pset[rptr].coeff_c % 10))
-    mprintf("\n");
+  //mprintf("%x(%d) ", cb[num].pset[rptr].coeff_c, rptr);
+  //if (!(cb[num].pset[rptr].coeff_c % 10))
+  //  mprintf("\n");
   /* move read pointer forward */
   cb[num].rd_ptr = (rptr + 1) % size;    
 }

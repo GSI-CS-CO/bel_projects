@@ -28,6 +28,7 @@ entity fg_quad_scu_bus is
     brdcst_o:           out   std_logic;                      -- broadcast start out for triggering another fg
     -- fg_quad
     dreq:               out   std_logic;
+      
     sw_out:             out   std_logic_vector(31 downto 0);  -- function generator output
     sw_strobe:          out   std_logic
     );
@@ -251,7 +252,7 @@ adr_decoder: process (clk, nReset)
 -- fg_cntrl_reg(1)            : -
 -- fg_cntrl_reg(2)            : running (ro)
 -- fg_cntrl_reg(3)            : stopped (ro)
--- fg_cntrl_reg(9 downto 4)   : shift value b (wo)
+-- fg_cntrl_reg(9 downto 4)   : virtual fg number (rw)
 -- fg_cntrl_reg(12 downto 10) : step value M (wo)
 -- fg_cntrl_reg(15 downto 13) : add frequency select (wo)
 cntrl_reg: process (clk, nReset, rd_fg_cntrl, fg_cntrl_reg, wr_fg_cntrl)

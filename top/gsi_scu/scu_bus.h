@@ -51,15 +51,26 @@
 #define ADC_CHN8          0x8   
 
 
-#define FG_QUAD_BASE      0x300
-#define FG_QUAD_CNTRL     0x0
-#define FG_QUAD_A         0x1
-#define FG_QUAD_B         0x2
-#define FG_QUAD_BROAD     0x3
-#define FG_QUAD_SHIFTA    0x4
-#define FG_QUAD_SHIFTB    0x5
-#define FG_QUAD_H         0x6
-#define FG_QUAD_L         0x7
+#define FG1_BASE          0x300
+#define FG2_BASE          0x340
+#define FG_CNTRL          0x0
+#define FG_A              0x1
+#define FG_B              0x2
+#define FG_BROAD          0x3
+#define FG_SHIFTA         0x4
+#define FG_SHIFTB         0x5
+#define FG_STARTH         0x6
+#define FG_STARTL         0x7
+
+#define WB_FG_CNTRL       0x0
+#define WB_FG_A           0x1
+#define WB_FG_B           0x2
+#define WB_FG_BROAD       0x3
+#define WB_FG_SHIFTA      0x4
+#define WB_FG_SHIFTB      0x5
+#define WB_FG_START       0x6
+#define WB_RAMP_CNT       0x7
+#define WB_FG_SW_DST      0x8
 
 #define TMR_BASE          0x330
 #define TMR_CNTRL         0x0

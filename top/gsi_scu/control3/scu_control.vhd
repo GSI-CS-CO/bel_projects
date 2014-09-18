@@ -256,8 +256,6 @@ architecture rtl of scu_control is
   signal s_lemo_leds    : std_logic_vector(2 downto 1);
   signal s_tled_sfp_grn : std_logic;
   signal s_tled_sfp_red : std_logic;
-  signal s_aled_sfp_grn : std_logic;
-  signal s_aled_sfp_red : std_logic;
   signal clk_ref      : std_logic;
   signal rstn_ref     : std_logic;
   
@@ -270,13 +268,14 @@ begin
       g_gpio_in    => 1,
       g_gpio_out   => 1,
       g_flash_bits => 24,
-      g_lm32_ramsizes => 49152,--98304,
-      g_lm32_msis  => 2,
+      g_lm32_ramsizes => 49152,
+      g_lm32_msis  => 3,
       g_en_pcie    => true,
       g_en_scubus  => true,
       g_en_mil     => true,
       g_en_oled    => true,
-      g_en_user_ow => true)
+      g_en_user_ow => true,
+      g_en_fg      => true)
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_sfpref_i => sfp2_ref_clk_i,
@@ -426,8 +425,8 @@ begin
   lemo_led        <= not s_lemo_leds;
   ntiming_sfp_grn <= not s_tled_sfp_grn;
   ntiming_sfp_red <= not s_tled_sfp_red;
-  naux_sfp_grn    <= not s_aled_sfp_grn;
-  naux_sfp_red    <= not s_aled_sfp_red;
+  naux_sfp_grn    <= 'Z';
+  naux_sfp_red    <= 'Z';
   
   -- Logic analyzer port (0,2,4,6,8,10 = OLED)
   -- Don't put debug clocks too close (makes display flicker)
