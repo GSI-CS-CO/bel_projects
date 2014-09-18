@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 
+extern unsigned int* wb_fg_base;
+
 int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr) {
   int i, j = 0;
   memset(bus->slaves, 0, sizeof(bus->slaves));
@@ -26,7 +28,7 @@ int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base
   return j; /* return number of slaves found */
 }
 
-int scan_for_fgs(struct scu_bus *bus, struct fg_list *list) {
+int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg) {
   int i = 0, j = 0;
   
   while(bus->slaves[i].unique_id) {
@@ -35,30 +37,45 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list) {
         /* two FGs */
         bus->slaves[i].devs[0].dev_number = 0x0;
         bus->slaves[i].devs[0].version = 0x1;
-        bus->slaves[i].devs[0].offset = 0x300;
+        bus->slaves[i].devs[0].offset = FG1_BASE;
         bus->slaves[i].devs[0].slave = &(bus->slaves[i]);
-        if (j < MAX_FG_DEVICES)
+        if (j < MAX_FG_DEVICES) {
           list->devs[j] = &(bus->slaves[i].devs[0]);j++;
+        }
         bus->slaves[i].devs[1].dev_number = 0x1;
         bus->slaves[i].devs[1].version = 0x1;
-        bus->slaves[i].devs[1].offset = 0x320;
+        bus->slaves[i].devs[1].offset = FG2_BASE;
         bus->slaves[i].devs[1].slave = &(bus->slaves[i]);
-        if (j < MAX_FG_DEVICES)
+        if (j < MAX_FG_DEVICES) {
           list->devs[j] = &(bus->slaves[i].devs[1]);j++;
+        }
         
       } else if (bus->slaves[i].cid_group == 26) { /* DIOB */
         /* one FG */
         bus->slaves[i].devs[0].dev_number = 0x0;
         bus->slaves[i].devs[0].version = 0x1;
-        bus->slaves[i].devs[0].offset = 0x300;
+        bus->slaves[i].devs[0].offset = FG1_BASE;
         bus->slaves[i].devs[0].slave = &(bus->slaves[i]);
-        if (j < MAX_FG_DEVICES)
+        if (j < MAX_FG_DEVICES) {
           list->devs[j] = &(bus->slaves[i].devs[0]);j++;
+        }
       }
     }
     i++;
   }
+
+  /* special solution for RF group, wb fg in scu */
+  /* this fg dev is always last in the list */
+  if (wb_fg_base && j < MAX_FG_DEVICES) {
+    wbfg->dev_number = 0;
+    wbfg->version = 0x2;
+    wbfg->offset = (int)wb_fg_base;
+    list->devs[j] = wbfg;
+    j++;
+  }
+
   list->devs[j] = 0;
+  return j; //return number of found fgs
 }
 
 void init_buffers(struct circ_buffer *buf) {
