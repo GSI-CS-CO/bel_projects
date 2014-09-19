@@ -46,7 +46,8 @@ volatile unsigned int* scub_irq_base;
 volatile unsigned int* wb_fg_irq_base;
 volatile unsigned int* wb_fg_base;
 volatile unsigned int* scu_mil_base;
-sdb_location lm32_irq_endp[10]; // there are two queues for msis
+sdb_location lm32_irq_endp[10]; // there are three queues for msis
+volatile unsigned int* pcie_irq_endp;
 
 volatile unsigned int param_sent[MAX_FG_DEVICES];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
@@ -475,9 +476,10 @@ int main(void) {
   discoverPeriphery();  
   scub_base     = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
   BASE_ONEWIRE  = (unsigned int*)find_device_adr(CERN, WR_1Wire);
-  scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL); // irq controller for scu bus
+  scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);    // irq controller for scu bus
   wb_fg_irq_base = (unsigned int*)find_device_adr(GSI, WB_FG_IRQ_CTRL); // irq controller for wb_fg
   find_device_multi(lm32_irq_endp, &idx, 10, GSI, IRQ_ENDPOINT);
+  pcie_irq_endp = (unsigned int *)find_device_adr(GSI, PCIE_IRQ_ENDP);
   scu_mil_base = (unsigned int*)find_device(SCU_MIL);
   wb_fg_base = (unsigned int*)find_device_adr(GSI, WB_FG_QUAD);
  
@@ -490,10 +492,11 @@ int main(void) {
   usleep(1500000); //wait for powerup of the slave cards
   init(); 
 
-  mprintf("number of irq_endpoints found: %d\n", idx);
+  mprintf("number of lm32_irq_endpoints found: %d\n", idx);
   for (i=0; i < idx; i++) {
     mprintf("irq_endp[%d] is: 0x%x\n",i, getSdbAdr(&lm32_irq_endp[i]));
   }
+  mprintf("pcie_irq_endp is: 0x%x\n", pcie_irq_endp);
   mprintf("scub_irq_base is: 0x%x\n", scub_irq_base);
   mprintf("wb_fg_irq_base is: 0x%x\n", wb_fg_irq_base); 
   mprintf("wb_fg_base is: 0x%x\n", wb_fg_base); 

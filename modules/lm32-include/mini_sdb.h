@@ -28,6 +28,7 @@
 #define IRQ_TIMER_CTRL_IF     0x10040088
 #define IRQ_MSI_CTRL_IF       0x10040083
 #define IRQ_ENDPOINT          0x10050082
+#define PCIE_IRQ_ENDP         0x8a670e73
 
 #define OLED_DISPLAY          0x93a6f3c4
 #define SSD1325_SER_DRIVER    0x55d1325d
