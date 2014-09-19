@@ -4,5 +4,6 @@ files = [
   "Mil_Enc_Vhdl.vhd",
   "mil_en_decoder.vhd",
   "mil_hw_or_soft_ip.vhd",
+  "hw6408_vhdl.vhd",
   "Mil_pkg.vhd"
 ]

@@ -28,6 +28,7 @@
 #define IRQ_TIMER_CTRL_IF     0x10040088
 #define IRQ_MSI_CTRL_IF       0x10040083
 #define IRQ_ENDPOINT          0x10050082
+#define PCIE_IRQ_ENDP         0x8a670e73
 
 #define OLED_DISPLAY          0x93a6f3c4
 #define SSD1325_SER_DRIVER    0x55d1325d
@@ -37,15 +38,19 @@
 #define FTM_PRIOQ_DATA        0x10040201
 
 #define ECA_EVENT             0x8752bf45
-#define ECA_CTRL              0x8752bf44 
+#define ECA_CTRL              0x8752bf44
+#define TLU                   0x10051981 
 #define WR_UART               0xe2d13d04
 #define SCU_BUS_MASTER        0x9602eb6f
 #define SCU_IRQ_CTRL          0x9602eb70
+#define WB_FG_IRQ_CTRL        0x9602eb71
 
 #define SCU_BUS_MASTER        0x9602eb6f
 #define WR_1Wire              0x779c5443
+#define WB_FG_QUAD            0x863e07f0
 
 //periphery device pointers
+volatile unsigned int* pTlu; 
 volatile unsigned int* pEbm;     
 volatile unsigned int* pOledDisplay;     
 volatile unsigned int* pFpqCtrl;

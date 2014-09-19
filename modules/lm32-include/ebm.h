@@ -77,7 +77,7 @@ static const adress_type_t  IP      = 2;
 static const adress_type_t  PORT    = 3;
 static const unsigned short myPort  = 0xEBD0;
 
-
+extern volatile unsigned int* pEbm;
 
 void ebm_config_if(target_t conf, const char* con_info);
 void ebm_config_meta(unsigned int pac_len, unsigned int hi_bits, unsigned int max_ops, unsigned int eb_ops);

@@ -26,7 +26,7 @@ entity addac_sys_clk_local_clk_switch is
     Rd_Port:              out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Rd_Activ:             out   std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:                out   std_logic;
-    sig_tap_clk_250mhz:   out   std_logic
+    signal_tap_clk_250mhz:   out   std_logic
     );
 end addac_sys_clk_local_clk_switch;
 
@@ -83,8 +83,6 @@ constant  clk_switch_cnt_max:   integer := 3;
 signal    clk_switch_cnt:       integer range 0 to clk_switch_cnt_max;
 
 
-
-signal  signal_tap_clk_250mhz:  std_logic;
 
 begin 
 

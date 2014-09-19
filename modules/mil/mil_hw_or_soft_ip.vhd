@@ -95,40 +95,83 @@ end mil_hw_or_soft_ip;
 
 ARCHITECTURE arch_mil_hw_or_soft_ip OF mil_hw_or_soft_ip IS 
 
-component ser_par
-generic (
-    Clk_in_Hz:  integer
+--component ser_par
+--generic (
+--    Clk_in_Hz:  integer
+--    );
+--port  (
+--    Mil_WR:       in    std_logic;
+--    Mil_Send_CMD: in    std_logic;
+--    ME_SD:        in    std_logic;
+--    ME_ESC:       in    std_logic;
+--    SEL_6408:     in    std_logic;
+--    RD_MIL:       in    std_logic;
+--    ME_CDS:       in    std_logic;
+--    ME_VW:        in    std_logic;
+--    ME_TD:        in    std_logic;
+--    ME_DSC:       in    std_logic;
+--    ME_SDO:       in    std_logic;
+--    nME_BOO:      in    std_logic;
+--    nME_BZO:      in    std_logic;
+--    Reset:        in    std_logic;
+--    Clk:          in    std_logic;
+--    DI:           in    std_logic_vector(15 downto 0);
+--    ME_SS:        out   std_logic;
+--    ME_SDI:       out   std_logic;
+--    ME_EE:        out   std_logic;
+--    nRCV_Ena:     out   std_logic;
+--    nTRM_Ena:     out   std_logic;
+--    Trm_Rdy:      out   std_logic;
+--    CMD_RCV:      out   std_logic;
+--    Valid_W:      out   std_logic;
+--    RCV_Err:      out   std_logic;
+--    Reset_6408:   out   std_logic;
+--    D_out:        out   std_logic_vector(15 downto 0)
+--    );
+--end component;
+
+component hw6408_vhdl
+  generic (
+    clk_in_hz:  integer := 125_000_000
     );
-port  (
-    Mil_WR:       in    std_logic;
-    Mil_Send_CMD: in    std_logic;
-    ME_SD:        in    std_logic;
-    ME_ESC:       in    std_logic;
-    SEL_6408:     in    std_logic;
-    RD_MIL:       in    std_logic;
-    ME_CDS:       in    std_logic;
-    ME_VW:        in    std_logic;
-    ME_TD:        in    std_logic;
-    ME_DSC:       in    std_logic;
-    ME_SDO:       in    std_logic;
-    nME_BOO:      in    std_logic;
-    nME_BZO:      in    std_logic;
-    Reset:        in    std_logic;
-    Clk:          in    std_logic;
-    DI:           in    std_logic_vector(15 downto 0);
-    ME_SS:        out   std_logic;
-    ME_SDI:       out   std_logic;
-    ME_EE:        out   std_logic;
-    nRCV_Ena:     out   std_logic;
-    nTRM_Ena:     out   std_logic;
-    Trm_Rdy:      out   std_logic;
-    CMD_RCV:      out   std_logic;
-    Valid_W:      out   std_logic;
-    RCV_Err:      out   std_logic;
-    Reset_6408:   out   std_logic;
-    D_out:        out   std_logic_vector(15 downto 0)
-    );
-end component;
+  port (
+    data_i:       in  std_logic_vector(15 downto 0) := (others => '0');  -- Eingang fuer das zu sendende Datum/Komando
+    wr_mil:       in  std_logic := '0';                                 -- '1' => data_i wird uebernommen und des Senden gestartet.
+    mil_send_cmd: in  std_logic := '0';                                 -- '1' => data_i wird als Kommando, '0' => data_i wird als Datum
+                                                                        -- gesendet. Vorgabe muss waehrend  wr_mil = '1' stabil sein.
+    shift_sd:     in  std_logic := '0';                                 -- verbinde mit HD6408(sd). '1' der serielle Sende-Datenstrom an sd_o
+                                                                        -- (mit encoder shift clock getaktet) wird erwartet.
+    esc:          in  std_logic := '0';                                 -- hw6408(esc) liefert den encoder shift clock.
+    sdi:          out std_logic;                                        -- verbinde mit hw6408(sdi) = serieller Sende-Datenstrom
+    ee:           out std_logic;                                        -- hw6408(ee) = encoder enable.
+    ss:           out std_logic;                                        -- hw6408(ss) = syc select. '1' => Kommando Sync, '0' => Data sync.
+    boo_n:        in  std_logic := '0';                                 -- verbinde mit HD6408(nBOO) = encoder bipolar one out.
+    bzo_n:        in  std_logic := '0';                                 -- verbinde mit HD6408(nBZO) = encoder bipolar zero out.
+    trm_ena_n:    out std_logic;                                        -- '0' => der externe Sendetreiber wird selektiert.
+    
+    rd_mil:       in  std_logic := '0';                                 -- liest das empfangene Datum oder Kommando.
+    data_o:       out std_logic_vector(15 downto 0);                    -- Ausgang fuer das empfangene Datum/Kommando.
+    cds:          in  std_logic := '0';                                 -- verbinde mit HD6408(cds) = command data sync.
+                                                                        -- '1' => Rcv CMD, '0' =>  Rcv Data.
+    vw:           in  std_logic := '0';                                 -- verbinde mit HD6408(vw) = valid word.
+    td:           in  std_logic := '0';                                 -- verbinde mit HD6408(td) = take data.
+    dsc:          in  std_logic := '0';                                 -- verbinde mit HD6408(dsc) = decoder shift clock.
+    sdo:          in  std_logic := '0';                                 -- verbinde mit HD6408(sdo) = Rcv serial data out.
+    rcv_ena_n:    out std_logic;                                        -- '0' der externe Empfangspuffer wird selektiert.
+    
+    rcv_cmd:      out std_logic;                                        -- Statusbit: '1 '=> ein Kommando wurde empfangen.
+    rcv_err:      out std_logic;                                        -- Statusbit: '1' => ein fehlerhaftes Telegramm wurde empfangen. 
+    valid_w:      out std_logic;                                        -- Statusbit: '1' => ein Telegram, wurde empfangen.
+    trm_rdy:      out std_logic;                                        -- Statusbit: '1' => Sender ist frei.
+    
+    nrst_i:       in  std_logic;
+    clk_i:        in  std_logic;
+    
+    res_6408:     out std_logic := '0';                                 -- verbinde mit HD6408(mr) = master reset.
+    sel_6408:     in  std_logic := '0'                                  -- '1' => hw6408_vhd kann betrieben werden. '0' => hw6408_vhd
+                                                                        -- ausgeschaltet.
+  );
+  end component;
 
 
 signal    nMil_OUT_Neg_M:     std_logic;
@@ -157,39 +200,48 @@ begin
 
 SEL_6408 <= not EPLD_Manchester_Enc;
 
-HW6408: ser_par
-generic map (
-      Clk_in_Hz => Clk_in_Hz
-      )
-port map  (
-      Mil_WR      => Wr_Mil,
-      Mil_Send_CMD  => Mil_Cmd,
-      ME_SD       => ME_SD,
-      ME_ESC      => ME_ESC,
-      SEL_6408    => SEL_6408,
-      RD_MIL      => Rd_Mil,
-      ME_CDS      => ME_CDS,
-      ME_VW       => ME_VW,
-      ME_TD       => ME_TD,
-      ME_DSC      => ME_DSC,
-      ME_SDO      => ME_SDO,
-      nME_BOO     => nME_BOO,
-      nME_BZO     => nME_BZO,
-      Reset       => Reset_Puls,
-      Clk         => Clk,
-      DI          => MIL_TRM_D,
-      ME_SS       => ME_SS,
-      ME_SDI      => ME_SDI,
-      ME_EE       => ME_EE,
-      nRCV_Ena    => nRCV_ENA_6408,
-      nTRM_Ena    => nTRM_ENA_6408,
-      Trm_Rdy     => TRM_RDY_6408,
-      CMD_RCV     => CMD_RCV_6408,
-      Valid_W     => Valid_W_6408,
-      RCV_Err     => RCV_Err_6408,
-      Reset_6408  => Reset_6408,
-      D_out       => D_OUT
-      );
+
+hw6408: hw6408_vhdl
+  generic map(
+    clk_in_hz => Clk_in_Hz
+    )
+  port map(
+    data_i       => MIL_TRM_D,        -- Eingang fuer das zu sendende Datum/Komando
+    wr_mil       => Wr_Mil,           -- '1' => data_i wird uebernommen und des Senden gestartet.
+    mil_send_cmd => Mil_Cmd,          -- '1' => data_i wird als Kommando, '0' => data_i wird als Datum
+                                      -- gesendet. Vorgabe muss waehrend  wr_mil = '1' stabil sein.
+    shift_sd      => ME_SD,           -- verbinde mit HD6408(sd). '1' der serielle Sende-Datenstrom an sd_o
+                                      -- (mit encoder shift clock getaktet) wird erwartet.
+    esc           => ME_ESC,          -- hw6408(esc) liefert den encoder shift clock.
+    sdi           => ME_SDI,          -- verbinde mit hw6408(sdi) = serieller Sende-Datenstrom
+    ee            => ME_EE,           -- hw6408(ee) = encoder enable.
+    ss            => ME_SS,           -- hw6408(ss) = syc select. '1' => Kommando Sync, '0' => Data sync.
+    boo_n         => nME_BOO,         -- verbinde mit HD6408(nBOO) = encoder bipolar one out.
+    bzo_n         => nME_BZO,         -- verbinde mit HD6408(nBZO) = encoder bipolar zero out.
+    trm_ena_n     => nTRM_ENA_6408,   -- '0' => der externe Sendetreiber wird selektiert.
+    
+    rd_mil        => Rd_Mil,          -- liest das empfangene Datum oder Kommando.
+    data_o        => D_OUT,           -- Ausgang fuer das empfangene Datum/Kommando.
+    cds           => ME_CDS,          -- verbinde mit HD6408(cds) = command data sync.
+                                      -- '1' => Rcv CMD, '0' =>  Rcv Data.
+    vw            => ME_VW,           -- verbinde mit HD6408(vw) = valid word.
+    td            => ME_TD,           -- verbinde mit HD6408(td) = take data.
+    dsc           => ME_DSC,          -- verbinde mit HD6408(dsc) = decoder shift clock.
+    sdo           => ME_SDO,          -- verbinde mit HD6408(sdo) = Rcv serial data out.
+    rcv_ena_n     => nRCV_ENA_6408,   -- '0' der externe Empfangspuffer wird selektiert.
+    
+    rcv_cmd       => CMD_RCV_6408,    -- Statusbit: '1 '=> ein Kommando wurde empfangen.
+    rcv_err       => RCV_Err_6408,    -- Statusbit: '1' => ein fehlerhaftes Telegramm wurde empfangen. 
+    valid_w       => Valid_W_6408,    -- Statusbit: '1' => ein Telegram, wurde empfangen.
+    trm_rdy       => TRM_RDY_6408,    -- Statusbit: '1' => Sender ist frei.
+    
+    nrst_i        => not Reset_Puls,
+    clk_i         => Clk,
+    
+    res_6408      => Reset_6408,      -- verbinde mit HD6408(mr) = master reset.
+    sel_6408      => SEL_6408         -- '1' => hw6408_vhd kann betrieben werden. '0' => hw6408_vhd
+                                      -- ausgeschaltet.
+  );
 
       
 mil_en_dec: mil_en_decoder
@@ -254,11 +306,14 @@ ME_BZI <= '1' when EPLD_Manchester_Enc = '1' else MIL_in_Neg;
 
 
 P_Mil_Rcv_Err:  process (clk, Reset_Puls)
+  variable  mil_rcv_error_edge: std_logic_vector(2 downto 0) := (others => '0');
   begin
     if Reset_Puls = '1' then
       Mil_Rcv_Err <= '0';
+      mil_rcv_error_edge := (others => '0');
     elsif rising_edge(clk) then
-      if Mil_Rcv_Error = '1' then
+      mil_rcv_error_edge := mil_rcv_error_edge(1 downto 0) & Mil_Rcv_Error;
+      if mil_rcv_error_edge(2 downto 1) = "01" then
         Mil_Rcv_Err <= '1';
       elsif clr_mil_rcv_err = '1' then
         Mil_Rcv_Err <= '0';

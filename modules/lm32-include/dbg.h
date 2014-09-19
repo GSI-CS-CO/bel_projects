@@ -1,12 +1,15 @@
 #ifndef _DBG_H_
 #define _DBG_H_
 
+#include <stdio.h>
+#include <string.h>
+#include <inttypes.h>
+#include <stdint.h>
+
 // Provides some control on how talkative your dbg statements get
-
-//**************************//
-   #define DEBUGLEVEL   0   //
-//**************************//
-
+#ifndef DEBUGLEVEL
+   #define DEBUGLEVEL 0
+#endif
 //print macro for debuglevel 1-3
 #ifdef DEBUGLEVEL
    #if DEBUGLEVEL>=1
@@ -31,3 +34,7 @@
 #endif
 
 #endif
+
+void strreverse(char* begin, char* end);
+void itoa(int value, char* str, int base);
+void hexDump (char *desc, void *addr, int len);
