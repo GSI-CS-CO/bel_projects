@@ -246,10 +246,8 @@ architecture rtl of vetar2a_top is
   signal s_butis_t0        : std_logic;
   signal s_dedicated_out   : std_logic;
 
-  signal s_lemo_addOn      : std_logic_vector(2 downto 0);
-  signal s_lemo_oen        : std_logic_vector(2 downto 0);
-  signal s_lemo_addOn_io   : std_logic_vector(2 downto 0);
-  signal s_leds_lemo_addOn : std_logic_vector(2 downto 0);
+  signal s_lvds_in         : std_logic_vector(4 downto 0);
+  signal s_lvds_out        : std_logic_vector(4 downto 0);
   
   signal s_di_scp          : std_logic;
   signal s_di_flm          : std_logic;
