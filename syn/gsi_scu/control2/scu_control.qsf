@@ -22,7 +22,7 @@ set_global_assignment -fall -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO"
 set_global_assignment -rise -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING"
 set_global_assignment -fall -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING"
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_40MHZ
-set_global_assignment -name ENABLE_SIGNALTAP OFF
+set_global_assignment -name ENABLE_SIGNALTAP ON
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_location_assignment PIN_Y10 -to nres
 set_global_assignment -name SMART_RECOMPILE ON
@@ -231,51 +231,51 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_OneWire
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_RnW
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_Spare[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to A_Spare[0]
-set_location_assignment PIN_J14 -to AD[25]
-set_location_assignment PIN_G13 -to AD[24]
-set_location_assignment PIN_E12 -to AD[23]
-set_location_assignment PIN_K13 -to AD[22]
-set_location_assignment PIN_B9 -to AD[21]
-set_location_assignment PIN_C9 -to AD[20]
-set_location_assignment PIN_G12 -to AD[19]
+set_location_assignment PIN_C9 -to AD[25]
+set_location_assignment PIN_K12 -to AD[24]
+set_location_assignment PIN_E13 -to AD[23]
+set_location_assignment PIN_G12 -to AD[22]
+set_location_assignment PIN_J14 -to AD[21]
+set_location_assignment PIN_F10 -to AD[20]
+set_location_assignment PIN_G13 -to AD[19]
 set_location_assignment PIN_F12 -to AD[18]
-set_location_assignment PIN_B6 -to AD[17]
+set_location_assignment PIN_K13 -to AD[17]
 set_location_assignment PIN_K14 -to AD[16]
-set_location_assignment PIN_A11 -to AD[15]
-set_location_assignment PIN_K12 -to AD[14]
-set_location_assignment PIN_A8 -to AD[13]
-set_location_assignment PIN_C11 -to AD[12]
-set_location_assignment PIN_D13 -to AD[11]
-set_location_assignment PIN_A7 -to AD[10]
-set_location_assignment PIN_D12 -to AD[9]
-set_location_assignment PIN_C12 -to AD[8]
-set_location_assignment PIN_D11 -to AD[7]
-set_location_assignment PIN_A6 -to AD[6]
+set_location_assignment PIN_B6 -to AD[15]
+set_location_assignment PIN_B9 -to AD[14]
+set_location_assignment PIN_A6 -to AD[13]
+set_location_assignment PIN_A7 -to AD[12]
+set_location_assignment PIN_E12 -to AD[11]
+set_location_assignment PIN_A8 -to AD[10]
+set_location_assignment PIN_A9 -to AD[9]
+set_location_assignment PIN_A10 -to AD[8]
+set_location_assignment PIN_C12 -to AD[7]
+set_location_assignment PIN_A11 -to AD[6]
 set_location_assignment PIN_C13 -to AD[5]
-set_location_assignment PIN_A10 -to AD[4]
-set_location_assignment PIN_A9 -to AD[3]
-set_location_assignment PIN_E13 -to AD[2]
-set_location_assignment PIN_F10 -to AD[1]
+set_location_assignment PIN_D13 -to AD[4]
+set_location_assignment PIN_D12 -to AD[3]
+set_location_assignment PIN_D11 -to AD[2]
+set_location_assignment PIN_C11 -to AD[1]
 set_location_assignment PIN_AA10 -to ADR_TO_SCUB
 set_location_assignment PIN_A3 -to ADV_FSH
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ADR_TO_SCUB
 set_location_assignment PIN_K11 -to CLK_FSH
-set_location_assignment PIN_D8 -to DF[15]
-set_location_assignment PIN_C6 -to DF[14]
-set_location_assignment PIN_J11 -to DF[13]
-set_location_assignment PIN_B12 -to DF[12]
-set_location_assignment PIN_C7 -to DF[11]
-set_location_assignment PIN_G11 -to DF[10]
-set_location_assignment PIN_C5 -to DF[9]
-set_location_assignment PIN_C10 -to DF[8]
-set_location_assignment PIN_D9 -to DF[7]
-set_location_assignment PIN_D6 -to DF[6]
-set_location_assignment PIN_E7 -to DF[5]
-set_location_assignment PIN_J12 -to DF[4]
+set_location_assignment PIN_D6 -to DF[15]
+set_location_assignment PIN_D10 -to DF[14]
+set_location_assignment PIN_J12 -to DF[13]
+set_location_assignment PIN_A4 -to DF[12]
+set_location_assignment PIN_J11 -to DF[11]
+set_location_assignment PIN_D9 -to DF[10]
+set_location_assignment PIN_C7 -to DF[9]
+set_location_assignment PIN_D8 -to DF[8]
+set_location_assignment PIN_E7 -to DF[7]
+set_location_assignment PIN_C5 -to DF[6]
+set_location_assignment PIN_G11 -to DF[5]
+set_location_assignment PIN_C6 -to DF[4]
 set_location_assignment PIN_D7 -to DF[3]
-set_location_assignment PIN_A4 -to DF[2]
+set_location_assignment PIN_B12 -to DF[2]
 set_location_assignment PIN_C8 -to DF[1]
-set_location_assignment PIN_D10 -to DF[0]
+set_location_assignment PIN_C10 -to DF[0]
 set_location_assignment PIN_AH17 -to sfp1_tx_disable_o
 set_location_assignment PIN_AH13 -to sfp2_mod0
 set_location_assignment PIN_T3 -to sfp2_mod1
@@ -790,403 +790,842 @@ set_global_assignment -name FITTER_AGGRESSIVE_ROUTABILITY_OPTIMIZATION NEVER
 set_global_assignment -name ENABLE_BENEFICIAL_SKEW_OPTIMIZATION OFF
 set_global_assignment -name FORCE_FITTER_TO_AVOID_PERIPHERY_PLACEMENT_WARNINGS ON
 set_global_assignment -name ENABLE_LOGIC_ANALYZER_INTERFACE OFF
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wb_reset.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/cfi_flash_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Buffer_pack.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_register_link.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/reverse_lpb/reverse_lpb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_input_filter.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/vic_prio_enc.vhd
-set_global_assignment -name QIP_FILE ../../../ip_cores/wr-cores/platform/altera/arria2_pll/arria2_pll.qip
-set_global_assignment -name VHDL_FILE ../../../modules/chopper/Kicker_Leds.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/wr_serialtimestamp_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_altera.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_8bit.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_16750.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_input_sync.vhd
-set_global_assignment -name SDC_FILE ../../../top/gsi_scu/control2/scu_control.sdc
-set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_scu_bus.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/wb_console.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_adder.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/xVME64xCore_Top.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/softpll_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_crc_gen.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tbi_phy/wr_tbi_phy.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_dma.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/hpll_period_detect.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/led.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_obuf.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_ram.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/led_n.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Wb_master_eb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_framer.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_word_packer.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/eca_lvds_channel.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_tx.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/multi_dmtd_with_deglitcher.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_phase.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_dpssram.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_pathfinder.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_tlp.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Buffer.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_periph.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_path.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_uart.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/xwb_lm32.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_hw_or_soft_ip.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2/arria2_lvds_obuf.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Access_Decode.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/display_console.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_receiver.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_wb_master.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/dac714/dac714_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/wb_scu_bus.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tag_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_fifo_sync.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/simple_pwm_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/i8042_kbc.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_vlan_unit.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/wb_slave_vic.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Init.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_fifo_async.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_wbm_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/xwb_simple_uart.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_logic_op.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/xwr_syscon_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/wr_eca.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_dpram/xwb_dpram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_sync_ffs.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gencores_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/xwb_i2c_master.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_gpio_port/xwb_gpio_port.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_pps_gen/pps_gen_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_arbitrated_mux.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_async_bridge/xwb_async_bridge.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_big_adder.vhd
-set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl_engine.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi_flash/wb_spi_flash.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_glitch_filt.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/f_divider.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_ibuf.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_serial_dac.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_event.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/postcode.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_dyn_glitch_filt.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2/arria2_lvds_tx.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_reset.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/power_test/row.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/power_test/row_array.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Funct_Match.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_mc_arithmetic.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_autonegotiation.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_pcs_tbi_mdio_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_interrupt.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_timestamping_unit.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_extend_pulse.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2_lvds_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_clock_alignment_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_rx.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CRAM.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_clgen.v
-set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/dac714/dac714.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/xwb_spi.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/monster/monster.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_modul_bus.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/inferred_async_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/generic_shiftreg_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5_lvds_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_wb_if.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CSR_pack.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_early_address_match.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/BuTis_T0_generator.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_top.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wbgen2_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_counter.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/tmr_scu_bus.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_core.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/xwb_vic.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_8bit.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/flash/altera_spi.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/wb_onewire_master.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tlu/tlu_fsm.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/chopper/Independent_Clk.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_record_gen.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_bit_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_dp_ram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wbgen2_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/wr_mini_nic.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_slave_wrapper.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/wb_irq_scu_bus.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/flash/altera_flash_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_edge_detect.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/gc_shiftreg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_bangbang_pd.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_64to32.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/monster/monster_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_async_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_channel.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wr_core.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/xvme64x_pack.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/sys_clk_or_local_clk.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tlu/tlu.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/trans_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/ftm/time_clk_cross.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_32to64.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Epcs_spi.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_mv_filter.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/wb_spi.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_bus.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_datapath.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/wb_scu_reg/wb_scu_reg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_16bit.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_clock_div.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/Display_RAM_Ini_v01.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/trans_pll/trans_pll.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_ethernet_slave.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_swapper.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_sync_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/wr_softpll_ng.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_addsub.v
-set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_top.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/xwb_onewire_master.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/I2C_Cntrl.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_bicolor_led_ctrl.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_top.v
-set_global_assignment -name VHDL_FILE ../../../modules/ad7606/ad7606.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_eic.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd
-set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modulbus_loader.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_async_bridge/wb_async_bridge.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_Enc_Vhdl.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_top.vhd
-set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_slave.v
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_tx.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_i2c_slave.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrcore_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/K_EPCS_IF.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_flags.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/wr_endpoint.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampDecoder.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_shifter.v
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/rdram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_delay_gen.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2/arria2_lvds_rx.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/housekeeping.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_frequency_meter.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/pulse_stamper.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_bypass_queue.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tbi_phy/enc_8b10b.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_status_reg_insert.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect_16bit.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria_reset.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_walker.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/power_test/pwm.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_bus_fanout/xwb_bus_fanout.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/sockit_owm.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/xwr_endpoint.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_fsm_watchdog.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_peripheral.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_pkg.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_adder.v
-set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/arria2_pcie.qip
-set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_defines.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/chopper/Kanal.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_channel.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_narrow.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic/lm32_multiplier.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_wishbone_controller.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Am_Match.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/pulse_gen.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/transceiver_prbs/trans_loop.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_gpio_port/wb_gpio_port.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/xwr_mini_nic.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_period_detect.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/irqm_core.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_prio_encoder.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_dual_pi_controller.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CR_pack.vhd
-set_global_assignment -name QIP_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.qip
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_gpio_channel.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/si570_if_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_streamer.vhd
-set_global_assignment -name QIP_FILE ../../../modules/wb_mil_scu/wb_mil_scu.qip
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/Debounce.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_scu_bus.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/power_test/power_test_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/wb_vic.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria5_reset.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/wb_scu_reg/wb_scu_reg_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/global_reg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_moving_average.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_rx.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_timer/xwb_tics.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tbi_phy/dec_8b10b.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/spi_master.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/xwrf_mux.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32_cluster.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/wb_simple_uart.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_tx.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tbi_phy/disparity_gen_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/crc8_data8.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_leds_controller.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/simple_pwm_wbgen2_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_uart_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_source.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_packet_filter.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/wb_i2c_master.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_rr_arbiter.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2/arria2_lvds_ibuf.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_reset.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/chopper/Debounce_Skal.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/xwr_core.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_dec_edge_timed.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_shift.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/wb_simple_pwm.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_timer/wb_tics.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_transmitter.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/xwr_softpll_ng.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/mil_pll.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/memory_loader_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/simple_pwm_wb.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_dpram/xwb_dpram.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_vlan_unit.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_sdp.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_status_reg_insert.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_record_gen.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_narrow.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2/arria2_lvds_obuf.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_8bit.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_ethernet_slave.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modulbus_loader.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_wb_master.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/networks/altera_networks_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wb_slave.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tbi_phy/dec_8b10b.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_wbm_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_top.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/generic_shiftreg_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_reset.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_bipol_dec.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampDecoder.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_dpssram.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_arbitrated_mux.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wr_core.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tbi_phy/disparity_gen_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_fifo_async.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/reverse_lpb/reverse_lpb.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tlu/tlu_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_crossbar.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/power_test/pwm.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_uart_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/trans_pll/trans_pll.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/Debounce.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/xwr_core.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_lm32.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_tx.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_serial_lcd/wb_serial_lcd.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_16750.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_sink.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/xwb_spi.vhd
+set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/networks/arria2gx_networks.qip
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_shifter.v
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/housekeeping.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/dmtd_with_deglitcher.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_path.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_pps_gen/wr_pps_gen.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_source.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Epcs_spi.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_pps_gen/pps_gen_wb.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/genram_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/xwr_si57x_interface.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wbgen2_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/chopper/Debounce_Skal.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_slave.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_extend_pulse.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_serial_master_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/wb_scu_bus.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_pcs_tbi_mdio_wb.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_baudgen.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_crc32_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_scu_bus.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/xwr_syscon_wb.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_ram.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_serial_master.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2/arria2_lvds_ibuf.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_byte_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_register_link.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_pcs_16bit.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_eic.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/cfi_flash_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_cfg_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_dec_edge_timed.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Funct_Match.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/power_test/row_array.vhd
+set_global_assignment -name QIP_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/arria2_pcie.qip
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CR_pack.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_fifo_pkg.vhd
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v
+set_global_assignment -name VHDL_FILE ../../../modules/dac714/dac714.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_stream_widen.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/wr_endpoint.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/irqm_core.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_timestamping_unit.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CSR_pack.vhd
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/jtag_cores.v
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/scu_slave_fg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/wb_onewire_master.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/hpll_period_detect.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_en_decoder.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca.vhd
+set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl_engine.v
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Access_Decode.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/aux_functions_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/I2C_Cntrl.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/chopper/Bus_io.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/event_processing.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_timer/xwb_tics.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/xVME64xCore_Top.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/trans_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_pathfinder.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/eca_lvds_channel.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32.vhd
+set_global_assignment -name QIP_FILE ../../../ip_cores/wr-cores/platform/altera/arria2_pll/arria2_pll.qip
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer2.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_packet_buffer.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_bit_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_tx.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_bangbang_pd.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_modul_bus.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_reset.vhd
+set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_slave.v
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/si570_if_wb.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_serial_dac.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/flash/altera_flash_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/Display_RAM_Ini_v01.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/gc_shiftreg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/BuTis_T0_generator.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_Enc_Vhdl.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_framer.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/wb_simple_uart.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_adder.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/softpll_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_dyn_glitch_filt.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Buffer_pack.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modulbus_v5.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/led.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/flash/altera_spi.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/div_n.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_delay_gen.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wbgen2_pkg.vhd
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_addsub.v
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_wb.vhd
+set_global_assignment -name SDC_FILE ../../../top/gsi_scu/control2/scu_control.sdc
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_gpio_port/wb_gpio_port.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2/arria2_lvds_tx.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_top.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_i2c_slave.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_wb.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_registers_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_sync_ffs.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/i8042_kbc.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/simple_pwm_wbgen2_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/dac714/dac714_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/chopper/Independent_Clk.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/pulse_gen.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/sys_clk_or_local_clk.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/monster/monster_iodir.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_swapper.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_sync_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_flags.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_commit_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_input_sync.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_oob_insert.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_event.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_obuf.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_fifos.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_pass_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/memory_loader_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/pulse_stamper.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_dpram.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/wb_ssd1325_serial_driver.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rtu_header_extract.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_crc_gen.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_top.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/mil_pll.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_bypass_queue.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_prio_encoder.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/wb_console.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_timer.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_commit_len_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/xwb_simple_pwm.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/crc8_data8.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_scu_bus.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/xwrf_mux.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wb_reset.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_syscon_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tlu/tlu_fsm.vhd
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_top.v
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Buffer.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/wr_eca.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac_arb.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_SharedComps.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/wb_scu_reg/wb_scu_reg_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/monster/monster_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_edge_detect.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_spram.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/chopper/Kicker_Leds.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_gpio_port/xwb_gpio_port.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_pps_gen/xwr_pps_gen.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/global_reg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_walker.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_mv_filter.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/tmr_scu_bus.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria5_reset.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_glitch_filt.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/time_clk_cross.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/heap/xwb_heap.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ad7606/ad7606.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CRAM.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_interrupt.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_bicolor_led_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2_lvds_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_async_bridge/xwb_async_bridge.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Loader_MB.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_1000basex_pcs.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_butis.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/char_render.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_offset.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_crc_size_check.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modulbus_v5.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_dacs/spec_serial_dac_arb.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/monster/monster_iodir.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wb_slave.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/event_processing.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_hdr_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_ts_counter.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/div_n.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/dmtd_phase_meas.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_pps_gen/xwr_pps_gen.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_SharedComps.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_master.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/dmtd_with_deglitcher.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_16bit.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_lm32.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/xwr_si57x_interface.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_commit_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_checksum.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_bridge/wb_i2c_bridge.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/lemo_io.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_bipol_dec.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_slave.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CR_CSR_Space.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_serial_lcd/wb_serial_lcd.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_priority_queue.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/jtag_cores.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_pulse_synchronizer2.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_baudgen.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_rx.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/simple_uart_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_timer.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_top.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rtu_header_extract.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_packet_buffer.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_registers_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_dpram.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_pass_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tx_mux.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/oled_display/oled_display_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_search.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_baud_gen.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampEncoder.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/wr_si57x_interface.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_tag_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_datapath.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/transceiver_prbs/trans_loop.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_IRQ_Controller.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/power_test/power_test_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_autonegotiation.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_clock_alignment_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/arria_reset.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/wr_fabric_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/xwb_vic.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_rx.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/dmtd_phase_meas.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_lm32_cluster.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/monster/monster.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/wb_i2c_master.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gencores_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_period_detect.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_16bit.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/inferred_sync_fifo.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/power_test/power_test.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd
-set_global_assignment -name VHDL_FILE ../../../top/gsi_scu/control2/scu_control.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/lm32_allprofiles.v
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tlu/tlu_pkg.vhd
-set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/altera/jtag_tap.v
-set_global_assignment -name VHDL_FILE ../../../modules/heap/xwb_heap.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/transceiver_prbs/trans_rcfg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Rd_mb_ld.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_timer/wb_tics.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/si570_if_wbgen2_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modul2spi.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_private_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_oob_insert.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/etherbone_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/xwb_fabric_sink.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/aux_functions_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/xwb_onewire_master.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_32to64.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/TimestampEncoder.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_hw_or_soft_ip.vhd
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/sockit_owm.v
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_core.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/flash/flash_top.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/wr_softpll_ng.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_bus.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_offset.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/inferred_async_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/uart_receiver.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_peripheral.vhd
+set_global_assignment -name VERILOG_FILE ../../../modules/lpc_uart/serirq_defines.v
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_input_filter.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wishbone_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/xwr_endpoint.vhd
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_adder.v
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_tx_pcs_8bit.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_frequency_meter.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tbi_phy/wr_tbi_phy.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_bus_fanout/xwb_bus_fanout.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_packet_filter.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/rdram.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/wb_simple_pwm.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/oled_display_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_moving_average.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_dp_ram.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_big_adder.vhd
+set_global_assignment -name VHDL_FILE ../../../top/gsi_scu/control2/scu_control.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/wb_ssd1325_serial_driver_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/xwb_i2c_master.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/wr_mini_nic.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_fsm_watchdog.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/K_EPCS_IF.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_top.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/power_test/row.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/vic_prio_enc.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_leds_controller.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_priority_queue.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/wb_scu_reg/wb_scu_reg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_channel.vhd
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_logic_op.v
+set_global_assignment -name VHDL_FILE ../../../modules/chopper/Kanal.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/xwr_softpll_ng.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/multi_dmtd_with_deglitcher.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_rx.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_CR_CSR_Space.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_search.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_wb_if.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/wb_mil_scu/wb_mil_scu.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_streamer.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/postcode.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/xwb_sdb_crossbar.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_word_packer.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/spi_master.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_buffer.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/led_n.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/generic/lm32_multiplier.v
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Rd_mb_ld.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/cfi_flash/xwb_cfi_wrapper.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/wb_spi.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/minic_wb_slave.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_wishbone_controller.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_gpio_channel.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/led_blink.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_clock_div.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/wb_vic.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/xwb_simple_uart.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ssd1325/src/hdl/generic_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrcore_pkg.vhd
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_clgen.v
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Am_Match.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_rr_arbiter.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lpc_uart/lpc_uart.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_wb_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_dual_pi_controller.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_tlp.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/power_test/power_test.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tlu/tlu.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_async_fifo.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_sync_detect_16bit.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/modul2spi.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_eth_tx.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/wr_si57x_interface.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_raw_slave.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_dma/xwb_dma.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/ad7606/adc_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_async_bridge/wb_async_bridge.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/scu_bus_slave.vhd
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/src/lm32_mc_arithmetic.v
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_early_address_match.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/butis_t0/wr_serialtimestamp_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_si57x_interface/si570_if_wbgen2_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_uart/uart_async_tx.vhd
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi/spi_shift.v
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_periph.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Wb_slave.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_tbi_phy/enc_8b10b.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/chopper/K12_K23_Logik_Leds.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_crc32_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_crossbar/sdb_rom.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_ts_counter.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/modulbus/f_divider.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/aux_functions/lemo_io.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_private_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_channel.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd
-set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl.v
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/generated/xwb_lm32.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/transceiver_prbs/trans_rcfg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_64to32.vhd
+set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_lm32/platform/altera/jtag_tap.v
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_wr_time.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_master/i2c_master_byte_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_simple_pwm/xwb_simple_pwm.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_en_decoder.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_mini_nic/xwr_mini_nic.vhd
+set_global_assignment -name VERILOG_FILE ../../../modules/cfi_flash/cfi_ctrl.v
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_i2c_bridge/wb_i2c_bridge.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/build_id/build_id.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/char_render.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria5_lvds_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/oled_display/display_console.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_framer.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_clock_crossing/xwb_clock_crossing.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/wb_arria_reset/wb_arria_reset.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/altera_lvds_ibuf.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/endpoint_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/uart/slib_counter.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_checksum.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/heap/heap_writer.vhd
-set_global_assignment -name VHDL_FILE ../../../modules/chopper/Bus_io.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/scu_bus/wb_irq_scu_bus.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/mil/Mil_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_altera.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Wb_master_eb.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_master_core/eb_master_slave_wrapper.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_butis.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_wb_channel.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_crc_size_check.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_Init.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/lvds/arria2/arria2_lvds_rx.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_slave_adapter/wb_slave_adapter.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wb_slave.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_spi_flash/wb_spi_flash.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_phase.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_eth_rx.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_vic/wb_slave_vic.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wb_irq/wb_irq_master.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_fifo_sync.vhd
+set_global_assignment -name VHDL_FILE ../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/xvme64x_pack.vhd
+set_global_assignment -name QIP_FILE ../../../modules/wb_mil_scu/wb_mil_scu.qip
+set_global_assignment -name QIP_FILE ../../../ip_cores/wr-cores/platform/altera/wr_arria2_phy/wr_arria2_phy.qip
 set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:scu_control.tcl"
 
+
+set_global_assignment -name USE_SIGNALTAP_FILE stp2.stp
+set_global_assignment -name SIGNALTAP_FILE stp2.stp
+set_global_assignment -name SLD_NODE_CREATOR_ID 110 -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_ENTITY_NAME sld_signaltap -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_clk -to "monster:main|sys_pll:\\sys_a2:sys_inst|inclk0" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[0] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|ADV_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[1] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[2] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[3] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[4] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[5] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[6] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[7] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[8] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[9] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[10] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[11] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[12] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[13] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[14] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[15] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[16] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[17] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[18] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[19] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[20] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[21] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[22] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[23] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[24] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[25] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[26] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|CLK_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[27] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[28] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[29] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[30] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[31] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[32] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[33] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[34] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[35] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[36] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[37] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[38] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[39] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[40] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[41] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[42] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[43] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|WAIT_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[0] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|ADV_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[1] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[2] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[3] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[4] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[5] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[6] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[7] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[8] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[9] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[10] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[11] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[12] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[13] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[14] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[15] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[16] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[17] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[18] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[19] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[20] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[21] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[22] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[23] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[24] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[25] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|AD[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[26] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|CLK_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[27] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[28] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[29] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[30] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[31] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[32] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[33] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[34] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[35] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[36] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[37] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[38] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[39] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[40] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[41] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[42] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|DF[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[43] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|WAIT_FSH" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_RAM_BLOCK_TYPE=AUTO" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_INFO=805334528" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_POWER_UP_TRIGGER=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STORAGE_QUALIFIER_INVERSION_MASK_LENGTH=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SEGMENT_SIZE=512" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ATTRIBUTE_MEM_MODE=OFF" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_FLOW_USE_GENERATED=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STATE_BITS=11" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_BUFFER_FULL_STOP=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_CURRENT_RESOURCE_WIDTH=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_SAMPLE_DEPTH=512" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_IN_ENABLED=0" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ADVANCED_TRIGGER_ENTITY=basic,1," -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_LEVEL_PIPELINE=1" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ENABLE_ADVANCED_TRIGGER=0" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[44] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|bus_control_state" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[45] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_cfiquery_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[46] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_clearstatus_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[47] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_eraseblock_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[48] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_init_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[49] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_read_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[50] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_readdeviceident_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[51] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_readstatus_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[52] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_rst_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[53] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_unlockblock_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[54] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_write_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[55] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[56] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[57] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[58] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[59] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[60] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[61] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[62] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[63] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[64] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[65] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[66] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[67] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[68] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[69] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[70] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[71] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_device_read_mode" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[72] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_ctr[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[73] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_ctr[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[74] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_ctr[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[75] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_ctr[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[76] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0000" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[77] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0001" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[78] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0010" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[79] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0011" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[80] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0100" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[81] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0101" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[82] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0110" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[83] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0111" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[84] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.1000" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[85] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.1001" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[86] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|clk_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[87] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|nCE_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[88] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|nOE_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[89] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|nRST_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[90] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|nWE_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[91] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|rst_n_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[92] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[93] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[94] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[95] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[96] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[97] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[98] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[99] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[100] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[101] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[102] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[103] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[104] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[105] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[106] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[107] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[108] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[109] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[110] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[111] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[112] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[113] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[114] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[115] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[116] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[117] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[118] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[119] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[120] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[121] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[122] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[123] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[124] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.cyc" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[125] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[126] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[127] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[128] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[129] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[130] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[131] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[132] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[133] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[134] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[135] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[136] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[137] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[138] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[139] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[140] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[141] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[142] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[143] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[144] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[145] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[146] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[147] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[148] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[149] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[150] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[151] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[152] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[153] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[154] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[155] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[156] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[157] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.sel[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[158] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.sel[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[159] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.sel[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[160] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.sel[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[161] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.stb" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[162] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.we" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[163] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.ack" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[164] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[165] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[166] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[167] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[168] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[169] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[170] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[171] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[172] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[173] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[174] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[175] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[176] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[177] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[178] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[179] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[180] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[181] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[182] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[183] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[184] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[185] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[186] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[187] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[188] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[189] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[190] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[191] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[192] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[193] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[194] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[195] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[196] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.err" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[197] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.rty" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[198] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.stall" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[199] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|stb_del" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_trigger_in[200] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|stb_int" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[44] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|bus_control_state" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[45] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_cfiquery_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[46] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_clearstatus_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[47] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_eraseblock_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[48] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_init_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[49] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_read_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[50] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_readdeviceident_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[51] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_readstatus_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[52] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_rst_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[53] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_unlockblock_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[54] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|do_write_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[55] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[56] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[57] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[58] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[59] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[60] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[61] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[62] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[63] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[64] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[65] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[66] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[67] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[68] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[69] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[70] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_cmd_to_write[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[71] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_device_read_mode" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[72] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_ctr[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[73] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_ctr[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[74] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_ctr[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[75] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_ctr[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[76] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0000" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[77] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0001" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[78] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0010" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[79] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0011" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[80] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0100" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[81] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0101" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[82] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0110" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[83] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.0111" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[84] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.1000" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[85] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|cfi_ctrl:CFI_PARALLEL_FLASH|cfi_ctrl_engine:cfi_engine_gen.cfi_ctrl_engine0|flash_phy_state.1001" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[86] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|clk_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[87] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|nCE_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[88] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|nOE_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[89] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|nRST_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[90] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|nWE_FSH" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[91] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|rst_n_i" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[92] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[93] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[94] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[95] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[96] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[97] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[98] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[99] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[100] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[101] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[102] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[103] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[104] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[105] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[106] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[107] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[108] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[109] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[110] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[111] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[112] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[113] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[114] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[115] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[116] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[117] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[118] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[119] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[120] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[121] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[122] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[123] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.adr[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[124] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.cyc" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[125] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[126] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[127] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[128] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[129] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[130] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[131] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[132] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[133] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[134] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[135] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[136] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[137] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[138] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[139] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[140] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[141] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[142] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[143] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[144] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[145] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[146] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[147] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[148] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[149] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[150] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[151] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[152] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[153] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[154] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[155] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[156] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[157] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.sel[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[158] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.sel[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[159] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.sel[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[160] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.sel[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[161] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.stb" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[162] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_i.we" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[163] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.ack" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[164] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[0]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[165] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[10]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[166] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[11]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[167] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[12]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[168] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[13]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[169] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[14]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[170] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[15]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[171] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[16]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[172] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[17]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[173] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[18]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[174] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[19]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[175] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[1]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[176] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[20]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[177] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[21]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[178] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[22]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[179] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[23]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[180] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[24]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[181] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[25]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[182] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[26]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[183] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[27]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[184] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[28]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[185] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[29]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[186] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[2]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[187] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[30]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[188] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[31]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[189] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[3]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[190] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[4]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[191] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[5]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[192] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[6]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[193] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[7]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[194] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[8]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[195] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.dat[9]" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[196] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.err" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[197] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.rty" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[198] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|slave_o.stall" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[199] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|stb_del" -section_id auto_signaltap_0
+set_instance_assignment -name CONNECT_TO_SLD_NODE_ENTITY_PORT acq_data_in[200] -to "monster:main|XWB_CFI_WRAPPER:\\CfiPFlash_y:CfiPFlash|stb_int" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_DATA_BITS=201" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_TRIGGER_BITS=201" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK=00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_INVERSION_MASK_LENGTH=626" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_LOWORD=32937" -section_id auto_signaltap_0
+set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_HIWORD=49781" -section_id auto_signaltap_0
+set_global_assignment -name SLD_FILE db/stp2_auto_stripped.stp
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -123,6 +123,7 @@ void discoverPeriphery(void)
   pEca           = find_device_adr(GSI, ECA_EVENT);
   pUart          = find_device_adr(CERN, WR_UART);
   BASE_UART      = pUart; //make WR happy ...
+  pCfiPFlash     = find_device_adr(GSI, WR_CfiPFlash);
   
   /* Get the second onewire/w1 record (0=white rabbit w1 unit, 1=user w1 unit) */
   find_device_multi(&found_sdb_w1[0], &idx_w1, 2, CERN, WR_1Wire);

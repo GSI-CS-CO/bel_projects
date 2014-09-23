@@ -119,7 +119,7 @@ module cfi_ctrl
    parameter flash_adr_width = 24;
  
    parameter flash_write_cycles = 4; // wlwh/Tclk = 55ns / 16 ns (62,5Mhz)
-   parameter flash_read_cycles = 6;  // elqv/Tclk = 95 / 16 ns (62,5MHz)
+   parameter flash_read_cycles = 7;  // elqv/Tclk = 105 / 16 ns (62,5MHz)
  
    parameter cfi_engine = "ENABLED";
  

@@ -25,7 +25,7 @@ component cfi_ctrl
   
   
     flash_dq_io     : inout std_logic_vector(15 downto 0);
-    flash_adr_o     : out std_logic_vector(24 downto 0);
+    flash_adr_o     : out std_logic_vector(23 downto 0);
     flash_adv_n_o   : out std_logic;
     flash_ce_n_o    : out std_logic;
     flash_clk_o     : out std_logic;
@@ -38,4 +38,6 @@ component cfi_ctrl
 	);
 end component;
 
+
 end package;
+

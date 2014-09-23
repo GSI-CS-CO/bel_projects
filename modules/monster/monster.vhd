@@ -74,7 +74,8 @@ entity monster is
     g_en_mil               : boolean;
     g_en_oled              : boolean;
     g_en_lcd               : boolean;
-	 g_en_ssd1325           : boolean;
+    g_en_CfiPFlash         : boolean;
+	  g_en_ssd1325           : boolean;
     g_en_user_ow           : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
@@ -235,6 +236,16 @@ entity monster is
 	 ssd1325_ss_o           : out   std_logic := 'Z';
 	 ssd1325_sclk_o         : out   std_logic := 'Z';
 	 ssd1325_data_o         : out   std_logic := 'Z';
+		-- g_en_CfiParFlash
+    AD                     : out   std_logic_vector(25 downto 1):= (others => 'Z');
+    DF                     : inout std_logic_vector(15 downto 0);
+    ADV_FSH                : out   std_logic := 'Z';
+    nCE_FSH                : out   std_logic := 'Z';
+    CLK_FSH                : out   std_logic := 'Z';
+    nWE_FSH                : out   std_logic := 'Z';
+    nOE_FSH                : out   std_logic := 'Z';
+    nRST_FSH               : out   std_logic := 'Z';
+    WAIT_FSH               : in    std_logic;
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0));
 end monster;
@@ -294,7 +305,7 @@ architecture rtl of monster is
   constant c_topm_fpq       : natural := 5;
   
   -- required slaves
-  constant c_top_slaves     : natural := 21;
+  constant c_top_slaves     : natural := 22; --KK 21 + CfiPFlash
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -317,6 +328,7 @@ architecture rtl of monster is
   constant c_tops_scubirq   : natural := 18;
   constant c_tops_ssd1325   : natural := 19;
   constant c_tops_vme_info  : natural := 20;
+  constant c_tops_CfiPFlash : natural := 21;
   
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -344,6 +356,7 @@ architecture rtl of monster is
     c_tops_eca_event => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
     c_tops_eca_aq    => f_sdb_auto_device(c_eca_queue_sdb,                  true),
     c_tops_iodir     => f_sdb_auto_device(c_iodir_sdb,                      true),
+    c_tops_CfiPFlash => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_CfiPFlash),
     c_tops_lcd       => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_tops_ssd1325   => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325),
@@ -1362,6 +1375,35 @@ begin
       lvds_n_o     => lvds_n_o,
       lvds_o_led_o => lvds_o_led_o);
   
+
+  CfiPFlash_n : if not g_en_CfiPFlash generate
+    top_cbar_master_i(c_tops_CfiPFlash) <= cc_dummy_slave_out;
+  end generate;
+
+  CfiPFlash_y : if g_en_CfiPFlash generate
+  CfiPFlash: XWB_CFI_WRAPPER 
+    port map(
+      clk_i          => clk_sys,
+      rst_n_i        => rstn_sys,
+
+      -- Wishbone
+      slave_i        => top_cbar_master_o(c_tops_CfiPFlash),    -- to Slave
+      slave_o        => top_cbar_master_i(c_tops_CfiPFlash),    -- to WB
+	  
+	    -- External Parallel Flash Pins
+      AD             => AD,
+      DF             => DF,
+      ADV_FSH        => ADV_FSH,
+      nCE_FSH        => nCE_FSH,
+      CLK_FSH        => CLK_FSH,
+      nWE_FSH        => nWE_FSH,
+      nOE_FSH        => nOE_FSH,
+      nRST_FSH       => nRST_FSH,
+      WAIT_FSH       => WAIT_FSH
+     );
+  end generate;
+
+
   lcd_n : if not g_en_lcd generate
     top_cbar_master_i(c_tops_lcd) <= cc_dummy_slave_out;
   end generate;
