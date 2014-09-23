@@ -53,6 +53,7 @@ use work.wb_mil_scu_pkg.all;
 use work.wr_serialtimestamp_pkg.all;
 use work.wb_ssd1325_serial_driver_pkg.all;
 use work.fg_quad_pkg.all;
+use work.cfi_flash_pkg.all;
 
 entity monster is
   generic(
