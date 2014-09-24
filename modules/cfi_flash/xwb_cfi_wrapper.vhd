@@ -75,37 +75,14 @@ end entity;--XWB_CFI_WRAPPER
 architecture rtl of XWB_CFI_WRAPPER is
 	
 signal  rst_i   : std_logic;
-signal  stb_del : std_logic;
-signal  stb_int : std_logic;
-signal  stall_tmp : std_logic;
+signal  ack_int : std_logic;
 signal  remapped_adr : std_logic_vector (31 downto 0);
 begin
 
-slave_o.stall <= stall_tmp;
-
+slave_o.stall <= not ack_int;
+slave_o.ack <= ack_int;
 
 AD(25) <='0';   -- A25 (Pin B6) is a no connect for 256 MB Densities
-
-process (clk_i)  --need stb of cyc pulse length for classic_type flash controller
-begin
-if (rising_edge(clk_i)) then
-  if rst_i='1' then 
-    	 stb_del <= '0';
-  else
-	 if slave_i.stb='1' and slave_i.cyc='1'  and stb_del='0' then
-		stb_del <= '1';
-	 else
-		if stb_del='1' and slave_i.cyc='1' and stall_tmp='0' then
-		  stb_del <= '0';
-		else 
-		  stb_del <= stb_del;
-	   end if;
-	 end if;
-  end if; 
-end if;
-end process;  
-
-stb_int <= (slave_i.stb or stb_del) and slave_i.cyc;
 
 rst_i <= not rst_n_i;
 
@@ -134,15 +111,15 @@ CFI_PARALLEL_FLASH: cfi_ctrl port map (
  
     wb_dat_i        =>  slave_i.dat,    --(31 downto 0);
     wb_adr_i        =>  remapped_adr,   --(31 downto 0);
-    wb_stb_i        =>  stb_int,
+    wb_stb_i        =>  slave_i.stb,
     wb_cyc_i        =>  slave_i.cyc,
     wb_we_i         =>  slave_i.we,
     wb_sel_i        =>  slave_i.sel,    --(3 downto 0);
     wb_dat_o        =>  slave_o.dat,    --(31 downto 0);
-    wb_ack_o        =>  slave_o.ack,
+    wb_ack_o        =>  ack_int,
     wb_err_o        =>  slave_o.err,    --static '0' in cfi_ctrl
     wb_rty_o        =>  slave_o.rty,    --static '0' in cfi_ctrl
-    wb_stall_o      =>  stall_tmp,
+    wb_stall_o      =>  open,
   
   
     flash_dq_io     =>  DF,				  --(15 downto 0);
