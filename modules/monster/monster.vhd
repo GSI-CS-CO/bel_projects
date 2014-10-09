@@ -77,7 +77,7 @@ entity monster is
     g_en_oled              : boolean;
     g_en_lcd               : boolean;
     g_en_ssd1325           : boolean;
-    g_en_CfiPFlash         : boolean;
+    g_en_cfi               : boolean;
     g_en_user_ow           : boolean;
     g_en_fg                : boolean;
     g_lm32_cores           : natural;
@@ -234,21 +234,21 @@ entity monster is
     lcd_flm_o              : out   std_logic := 'Z';
     lcd_in_o               : out   std_logic := 'Z';
     -- g_en_ssd1325
-	  ssd1325_rst_o          : out   std_logic := 'Z';
-	  ssd1325_dc_o           : out   std_logic := 'Z';
-	  ssd1325_ss_o           : out   std_logic := 'Z';
-	  ssd1325_sclk_o         : out   std_logic := 'Z';
-	  ssd1325_data_o         : out   std_logic := 'Z';
-		-- g_en_CfiParFlash
-    AD                     : out   std_logic_vector(25 downto 1):= (others => 'Z');
-    DF                     : inout std_logic_vector(15 downto 0);
-    ADV_FSH                : out   std_logic := 'Z';
-    nCE_FSH                : out   std_logic := 'Z';
-    CLK_FSH                : out   std_logic := 'Z';
-    nWE_FSH                : out   std_logic := 'Z';
-    nOE_FSH                : out   std_logic := 'Z';
-    nRST_FSH               : out   std_logic := 'Z';
-    WAIT_FSH               : in    std_logic;
+	 ssd1325_rst_o          : out   std_logic := 'Z';
+	 ssd1325_dc_o           : out   std_logic := 'Z';
+	 ssd1325_ss_o           : out   std_logic := 'Z';
+	 ssd1325_sclk_o         : out   std_logic := 'Z';
+	 ssd1325_data_o         : out   std_logic := 'Z';
+	 -- g_en_cfi
+    cfi_ad                 : out   std_logic_vector(25 downto 1):= (others => 'Z');
+    cfi_df                 : inout std_logic_vector(15 downto 0);
+    cfi_adv_fsh            : out   std_logic := 'Z';
+    cfi_nce_fsh            : out   std_logic := 'Z';
+    cfi_clk_fsh            : out   std_logic := 'Z';
+    cfi_nwe_fsh            : out   std_logic := 'Z';
+    cfi_noe_fsh            : out   std_logic := 'Z';
+    cfi_nrst_fsh           : out   std_logic := 'Z';
+    cfi_wait_fsh           : in    std_logic;
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0));
 end monster;
@@ -363,7 +363,7 @@ architecture rtl of monster is
     c_tops_eca_event => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
     c_tops_eca_aq    => f_sdb_auto_device(c_eca_queue_sdb,                  true),
     c_tops_iodir     => f_sdb_auto_device(c_iodir_sdb,                      true),
-    c_tops_CfiPFlash => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_CfiPFlash),
+    c_tops_CfiPFlash => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
     c_tops_lcd       => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_tops_ssd1325   => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325),
@@ -1385,11 +1385,11 @@ begin
       lvds_o_led_o => lvds_o_led_o);
   
 
-  CfiPFlash_n : if not g_en_CfiPFlash generate
+  CfiPFlash_n : if not g_en_cfi generate
     top_cbar_master_i(c_tops_CfiPFlash) <= cc_dummy_slave_out;
   end generate;
 
-  CfiPFlash_y : if g_en_CfiPFlash generate
+  CfiPFlash_y : if g_en_cfi generate
   CfiPFlash: XWB_CFI_WRAPPER 
     port map(
       clk_i          => clk_sys,
@@ -1400,15 +1400,15 @@ begin
       slave_o        => top_cbar_master_i(c_tops_CfiPFlash),    -- to WB
 	  
 	    -- External Parallel Flash Pins
-      AD             => AD,
-      DF             => DF,
-      ADV_FSH        => ADV_FSH,
-      nCE_FSH        => nCE_FSH,
-      CLK_FSH        => CLK_FSH,
-      nWE_FSH        => nWE_FSH,
-      nOE_FSH        => nOE_FSH,
-      nRST_FSH       => nRST_FSH,
-      WAIT_FSH       => WAIT_FSH
+      AD             => cfi_ad,
+      DF             => cfi_df,
+      ADV_FSH        => cfi_adv_fsh,
+      nCE_FSH        => cfi_nce_fsh,
+      CLK_FSH        => cfi_clk_fsh,
+      nWE_FSH        => cfi_nwe_fsh,
+      nOE_FSH        => cfi_noe_fsh,
+      nRST_FSH       => cfi_nrst_fsh,
+      WAIT_FSH       => cfi_wait_fsh
      );
   end generate;
 

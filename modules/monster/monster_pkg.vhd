@@ -54,7 +54,7 @@ package monster_pkg is
       g_en_mil      : boolean := false;
       g_en_oled     : boolean := false;
       g_en_lcd      : boolean := false;
-      g_en_CfiPFlash: boolean := false;
+      g_en_cfi      : boolean := false;
       g_en_ssd1325  : boolean := false;
       g_en_user_ow  : boolean := false;
       g_en_fg       : boolean := false;  
@@ -218,16 +218,16 @@ package monster_pkg is
 	   ssd1325_ss_o           : out   std_logic;
 	   ssd1325_sclk_o         : out   std_logic;
 	   ssd1325_data_o         : out   std_logic;
-		 -- g_en_CfiParFlash
-     AD                     : out   std_logic_vector(25 downto 1);
-     DF                     : inout std_logic_vector(15 downto 0);
-     ADV_FSH                : out   std_logic;
-     nCE_FSH                : out   std_logic;
-     CLK_FSH                : out   std_logic;
-     nWE_FSH                : out   std_logic;
-     nOE_FSH                : out   std_logic;
-     nRST_FSH               : out   std_logic;
-     WAIT_FSH               : in    std_logic;
+		-- g_en_cfi
+      cfi_ad                 : out   std_logic_vector(25 downto 1);
+      cfi_df                 : inout std_logic_vector(15 downto 0) := (others => 'Z');
+      cfi_adv_fsh            : out   std_logic ;
+      cfi_nce_fsh            : out   std_logic ;
+      cfi_clk_fsh            : out   std_logic ;
+      cfi_nwe_fsh            : out   std_logic ;
+      cfi_noe_fsh            : out   std_logic ;
+      cfi_nrst_fsh           : out   std_logic ;
+      cfi_wait_fsh           : in    std_logic := '0';
 
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0));

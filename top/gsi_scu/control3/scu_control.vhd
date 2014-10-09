@@ -263,20 +263,20 @@ begin
 
   main : monster
     generic map(
-      g_family     => "Arria II",
-      g_project    => "scu_control",
-      g_gpio_in    => 1,
-      g_gpio_out   => 1,
-      g_flash_bits => 24,
+      g_family        => "Arria II",
+      g_project       => "scu_control",
+      g_gpio_in       => 1,
+      g_gpio_out      => 1,
+      g_flash_bits    => 24,
       g_lm32_ramsizes => 49152,
-      g_lm32_msis  => 3,
-      g_en_pcie    => true,
-      g_en_scubus  => true,
-      g_en_mil     => true,
-      g_en_oled    => true,
-      g_en_user_ow => true,
-      g_en_fg      => true,
-      g_en_CfiPFlash=>true)
+      g_lm32_msis     => 3,
+      g_en_pcie       => true,
+      g_en_scubus     => true,
+      g_en_mil        => true,
+      g_en_oled       => true,
+      g_en_user_ow    => true,
+      g_en_fg         => true,
+      g_en_cfi        => true)
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_sfpref_i => sfp2_ref_clk_i,
@@ -363,15 +363,15 @@ begin
       oled_sh_vr_o           => hpla_ch(0),
       ow_io(0)               => onewire_ext,
       ow_io(1)               => A_OneWire,
-      AD                     => AD,
-      DF                     => DF,
-      ADV_FSH                => ADV_FSH,
-      nCE_FSH                => nCE_FSH,
-      CLK_FSH                => CLK_FSH,
-      nWE_FSH                => nWE_FSH,
-      nOE_FSH                => nOE_FSH,
-      nRST_FSH               => nRST_FSH,
-      WAIT_FSH               => WAIT_FSH);
+      cfi_ad                 => AD,
+      cfi_df                 => DF,
+      cfi_adv_fsh            => ADV_FSH,
+      cfi_nce_fsh            => nCE_FSH,
+      cfi_clk_fsh            => CLK_FSH,
+      cfi_nwe_fsh            => nWE_FSH,
+      cfi_noe_fsh            => nOE_FSH,
+      cfi_nrst_fsh           => nRST_FSH,
+      cfi_wait_fsh           => WAIT_FSH);
       
   -- LPC UART
   lpc_slave: lpc_uart
