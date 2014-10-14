@@ -204,6 +204,9 @@ func_check_environment()
 # - Parameter $1:
 # - => 0      = Skip USB connection test
 # - => 1/else = Do USB connection test
+# - Parameter $2:
+# - => 0      = Use base board JTAG
+# - => 1/else = Use addon board JTAG
 # ====================================================================================================
 func_program_fpga()
 {
@@ -211,7 +214,13 @@ func_program_fpga()
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   if [ $FLASH_USB = "yes" ]
   then
-    echo "Please connect the JTAG connector to the ADDON BOARD."
+    if [ $2 -eq 0 ]
+    then
+      echo "Please connect the JTAG connector to the BASE BOARD."
+    else
+      echo "Please do a power-cycle."
+      echo "Please connect the JTAG connector to the ADDON BOARD."
+    fi
     func_continue_or_skip
     if [ -z "$SKIP" ] 
     then
@@ -244,7 +253,7 @@ func_flash_usb_device()
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   if [ $FLASH_USB = "yes" ]
   then
-    echo "Please connect the USB connector to the base board."
+    echo "JTAG should be connected."
     func_continue_or_skip
     if [ -z "$SKIP" ]
     then
@@ -282,7 +291,7 @@ func_flash_fpga()
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   if [ $FLASH_FPGA = "yes" ]
   then
-    echo "Please connect the JTAG connector to the BASE BOARD."
+    echo "USB should be connected."
     func_continue_or_skip
     if [ -z "$SKIP" ]
     then
@@ -427,8 +436,8 @@ func_set_mac_address()
   then
     echo "Setting MAC address now to $MAC_ADDRESS_PATTERN"
     echo "- Please make sure that the USB cable is connected to the base board"
-    echo "- Use the command \"mac setp $MAC_ADDRESS_PATTERN"
     echo "- Attach a SFP to the base board"
+    echo "- Use the command \"mac setp $MAC_ADDRESS_PATTERN"
     echo "- After setting the MAC address press ctrl+c" 
     func_continue_or_skip
     if [ -z "$SKIP" ]
@@ -481,6 +490,16 @@ then
   echo "- Parameter #3: Quartus base directory (optional)"
   echo "Example usage: ./activation.sh dev/ttyUSB0 vetar2a"
   echo "Example usage (optional): ./activation.sh dev/ttyUSB0 vetar2a /bin/quartus/"
+  echo ""
+  echo "JTAG Setup Vetar2a"
+  echo "++++++++++++++++++"
+  echo "PROMO5 configuration: 0x1 0x4 (recommended JTAG adapter)"
+  echo "PROMO3 configuration: 0x3"
+  echo ""
+  echo "Trouble shooting"
+  echo "++++++++++++++++"
+  echo "Error (213019): Can't scan JTAG chain. Error code 87: Close the Quartus programmer and SignalTap"
+  echo "Permission denied: /dev/bus/usb/0NN/0XX: Get the rights for this device (sudo chmod 777 /dev/bus/usb/0NN/0XX) or use sudo (i.e. Ubuntu)"
   exit 1
 fi
 # Show parameters
@@ -492,9 +511,9 @@ then
 fi
 # Run functions
 func_check_environment
-func_program_fpga 0
+func_program_fpga 0 0
 func_flash_usb_device
-func_program_fpga 0
+func_program_fpga 0 1
 func_flash_fpga
 func_format_onewire
 func_io_connection_test
