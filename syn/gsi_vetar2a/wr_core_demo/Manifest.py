@@ -9,7 +9,7 @@ syn_package = "29"
 syn_top = "vetar2a_top"
 syn_project = "vetar2a"
 
-quartus_preflow = "veta2ar_top.tcl"
+quartus_preflow = "vetar2a_top.tcl"
 
 modules = {
   "local" : [ 
