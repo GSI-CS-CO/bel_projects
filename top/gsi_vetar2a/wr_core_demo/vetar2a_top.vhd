@@ -246,14 +246,16 @@ architecture rtl of vetar2a_top is
   signal s_butis_t0        : std_logic;
   signal s_dedicated_out   : std_logic;
 
-  signal s_lvds_in         : std_logic_vector(4 downto 0);
-  signal s_lvds_out        : std_logic_vector(4 downto 0);
+  signal s_lemo_addOn      : std_logic_vector(2 downto 0);
+  signal s_lemo_oen        : std_logic_vector(2 downto 0);
+  signal s_lemo_addOn_io   : std_logic_vector(2 downto 0);
+  signal s_leds_lemo_addOn : std_logic_vector(2 downto 0);
   
   signal s_di_scp          : std_logic;
   signal s_di_flm          : std_logic;
   signal s_di_lp           : std_logic; 
   signal s_di_dat          : std_logic;
- 
+
   constant c_black         : std_logic_vector := "111";
   constant c_red           : std_logic_vector := "101";
   constant c_green         : std_logic_vector := "110";
@@ -268,6 +270,7 @@ begin
       g_gpio_inout => 3,
       g_gpio_in    => 10,
       g_gpio_out   => 10,
+      -- g_gpio_out   => 7, for CSEE special (butis_t0 and 200Mhz on LVDS and HDMK)
       g_flash_bits => 24,
       g_en_vme     => true,
       g_en_usb     => true,
@@ -294,6 +297,10 @@ begin
       gpio_i(5 downto 3)     => lemo_addOn_io_i(2 downto 0),
       gpio_i(7 downto 6)     => hdmi_i(1 downto 0),
       gpio_i(9 downto 8)     => lemo_nim_ttl_i(1 downto 0),
+      -- gpio out CSEE special
+      --gpio_o(0)              => lemo_o,
+      --gpio_o(3 downto 1)     => s_lemo_addOn(2 downto 0),
+      --gpio_o(6 downto 4)     => s_lemo_addOn_io(2 downto 0),
       -- wr core
       wr_onewire_io          => rom_data_io,
       wr_sfp_sda_io          => sfp_mod2_io,
@@ -400,7 +407,14 @@ begin
 
   -- PLL
   clk_pll_o <= s_clk_butis;
-
+  
+  -- HDMI CSEE special
+  --hdmi_o    <= s_butis_t0;
+  
+  -- LVDS CSEE special
+  --lvds_out_o(0) <= s_clk_butis;
+  --lvds_out_o(1) <= s_butis_t0;
+  
   -- OE and TERM for LEMOs (s_lemo_oen is driven by monster iodir hack)
   lemo_addOn_oen_o(0)  <= '0' when s_lemo_oen(0)='0' else 'Z'; -- TTLIO1 output enable
   lemo_addOn_oen_o(1)  <= '0' when s_lemo_oen(1)='0' else 'Z'; -- TTLIO2 output enable
