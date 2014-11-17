@@ -23,7 +23,6 @@ eca-table $dev flip-active
 
 echo "done."
 
-
 echo -n "Pulse? "
 period=125000000
 last=0
@@ -34,7 +33,7 @@ while true; do
  # What time is it?
  when=`eca-ctl $dev -n | grep time | cut -d: -f2`
  # Round up to the next second.
- let next=(when+period+period-1)/period*period
+ next="$(((when+period+period-1)/period*period))"
  # If we haven't scheduled this PPS pulse yet, do it now. 
  if [ $next -ne $last ]; then 
    eca-ctl $dev send 0xdeadbeef 0 0 $next
@@ -43,5 +42,5 @@ while true; do
  else
    echo -n ". "
  fi
- let last=next
+ last="$next"
 done
