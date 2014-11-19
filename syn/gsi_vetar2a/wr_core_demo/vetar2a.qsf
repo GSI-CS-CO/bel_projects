@@ -1,5 +1,5 @@
 set_global_assignment -name FAMILY "Arria II GX"
-set_global_assignment -name DEVICE EP2AGX125EF29C4
+set_global_assignment -name DEVICE EP2AGX125EF29C5
 set_global_assignment -name TOP_LEVEL_ENTITY vetar2a_top
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
@@ -21,7 +21,7 @@ set_global_assignment -fall -name OUTPUT_IO_TIMING_NEAR_END_VMEAS "HALF VCCIO"
 set_global_assignment -rise -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING"
 set_global_assignment -fall -name OUTPUT_IO_TIMING_FAR_END_VMEAS "HALF SIGNAL SWING"
 set_global_assignment -name ACTIVE_SERIAL_CLOCK FREQ_20MHZ
-set_global_assignment -name ENABLE_SIGNALTAP ON
+set_global_assignment -name ENABLE_SIGNALTAP OFF
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
