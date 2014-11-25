@@ -175,6 +175,14 @@ entity exploder5_csco_tr is
     dsp_d1_o          : out   std_logic;
     dsp_d0_o          : out   std_logic;
     
+    aud_spi_csb_o     : out   std_logic;
+    aud_spi_sclk_o    : out   std_logic;
+    aud_spi_sdio_o    : out   std_logic;
+    aud_iis_fs_o      : out   std_logic;
+    aud_iis_bclk_o    : out   std_logic;
+    aud_iis_adcout_o  : out   std_logic;
+    aud_iis_dacin_i   : in    std_logic;
+    
     rs232_dtr_i       : in    std_logic; -- !!! unused
     rs232_dcd_o       : out   std_logic;
     rs232_dsr_o       : out   std_logic;
@@ -219,6 +227,7 @@ begin
       g_en_pcie     => true,
       g_en_usb      => true,
       g_en_ssd1325  => true,
+      --g_en_nau8811  => true,
       g_en_user_ow  => true)
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
@@ -272,6 +281,13 @@ begin
       ssd1325_ss_o           => dsp_csn_o,
       ssd1325_sclk_o         => dsp_d0_o,
       ssd1325_data_o         => dsp_d1_o,
+      --nau8811_spi_csb_o      => aud_spi_csb_o,
+      --nau8811_spi_sclk_o     => aud_spi_sclk_o,
+      --nau8811_spi_sdio_o     => aud_spi_sdio_o,
+      --nau8811_iis_fs_o       => aud_iis_fs_o,
+      --nau8811_iis_bclk_o     => aud_iis_bclk_o,
+      --nau8811_iis_adcout_o   => aud_iis_adcout_o,
+      --nau8811_iis_dacin_i    => aud_iis_dacin_i,
       ow_io(0)               => db_rom_data_io,
       ow_io(1)               => 'Z');
 
