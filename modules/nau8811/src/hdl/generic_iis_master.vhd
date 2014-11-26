@@ -47,15 +47,15 @@ architecture rtl of generic_iis_master is
   constant c_sample_frequency         : natural := 48000; -- Hz
   constant c_tone_frequency           : natural := 500; -- Hz
   constant c_tone_duration            : natural := 250; -- ms
-  constant c_period_length            : natural := 96;  -- c_sample_frequency/c_tone_frequency;
-  constant c_period_tone              : natural := 125; -- (c_tone_duration/(c_period_length*(1/c_sample_frequency)))/100
+  constant c_period_length            : natural := c_sample_frequency/c_tone_frequency; -- samples needed to output one period
+  constant c_period_tone              : natural := (c_tone_duration*c_tone_frequency)/1000; -- times to play the square-wave sound
   signal   s_heartbeat_counter        : natural range 0 to c_period_length+1;
   signal   s_heartbeat_period_counter : natural range 0 to c_period_tone+1;
   type     t_iis_heartbeat_state is (state_iis_heartbeat_waiting, state_iis_heartbeat_sync, state_iis_heartbeat_active);
   signal   s_iis_heartbeat_state      : t_iis_heartbeat_state := state_iis_heartbeat_waiting;
-  signal   s_last_trigger             : std_logic;
-  signal   s_prev_trigger             : std_logic;
-  signal   s_frame_done               : std_logic;
+  signal   s_current_trigger          : std_logic; -- actual trigger signal
+  signal   s_prev_trigger             : std_logic; -- value of the previous trigger signal
+  signal   s_frame_done               : std_logic; -- pulse every new frame sync cycle
   
 begin
 
@@ -177,17 +177,17 @@ begin
   begin
     -- reset
     if (rst_n_i = '0') then
-      iis_adcout_o <= '0';
-      s_last_trigger <= '0';
-      s_prev_trigger <= '0';
-      s_iis_heartbeat_state <= state_iis_heartbeat_waiting;
+      iis_adcout_o               <= '0';
+      s_current_trigger          <= '0';
+      s_prev_trigger             <= '0';
+      s_iis_heartbeat_state      <= state_iis_heartbeat_waiting;
       s_heartbeat_period_counter <= 0;
     -- process
     elsif (rising_edge(clk_sys_i)) then
       if (s_clock_phase = '1') then
-        -- sync trigger signals
-        s_last_trigger <= iis_trigger_i;
-        s_prev_trigger <= s_last_trigger;
+        -- sync trigger signals and latch them
+        s_current_trigger <= iis_trigger_i;
+        s_prev_trigger    <= s_current_trigger;
         if (iis_heartbeat_i = '0') then
         -- normal mode
         -- use the next bit (overflow protection)
@@ -211,21 +211,33 @@ begin
           end if;
         else
           -- heartbeat mode
-          if (s_iis_heartbeat_state = state_iis_heartbeat_waiting and s_prev_trigger = '1' and s_last_trigger = '0' and iis_trigger_pol_i = '0') then
+          -- wait for falling trigger edge
+          if (s_iis_heartbeat_state = state_iis_heartbeat_waiting and s_prev_trigger = '1' and s_current_trigger = '0' and iis_trigger_pol_i = '0') then
             s_iis_heartbeat_state <= state_iis_heartbeat_sync;
-          elsif (s_iis_heartbeat_state = state_iis_heartbeat_waiting and s_prev_trigger = '0' and s_last_trigger = '1' and iis_trigger_pol_i = '1') then
+          -- wait for rising trigger edge
+          elsif (s_iis_heartbeat_state = state_iis_heartbeat_waiting and s_prev_trigger = '0' and s_current_trigger = '1' and iis_trigger_pol_i = '1') then
             s_iis_heartbeat_state <= state_iis_heartbeat_sync;
           elsif (s_iis_heartbeat_state = state_iis_heartbeat_sync ) then
             -- sync to frame sync signal
-            if (s_bit_counter=(g_word_width*2*4)-1) then
+            if (s_bit_counter=(g_word_width*2*4)-2) then
               s_iis_heartbeat_state <= state_iis_heartbeat_active;
             end if;
           elsif (s_iis_heartbeat_state = state_iis_heartbeat_active) then
             -- generate square-wave-signal
             if (s_heartbeat_counter < (c_period_length/2)) then
-              iis_adcout_o <= '1';
+              -- full positive value (no minus sign)
+              if(s_bit_counter<g_word_width-1) then
+                iis_adcout_o <= '1';
+              else
+                iis_adcout_o <= '0';
+              end if;
             else
-              iis_adcout_o <= '0';
+             -- full negative value (minus sign)
+              if(s_bit_counter<g_word_width-1 or s_bit_counter=(g_word_width*2*4)-1) then
+                iis_adcout_o <= '1';
+              else
+                iis_adcout_o <= '0';
+              end if;
             end if;
             -- increase period counter if a frame sync cycle is done
             if (s_frame_done = '1' and s_heartbeat_counter = (c_period_length-1)) then
