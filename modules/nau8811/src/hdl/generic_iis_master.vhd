@@ -46,7 +46,7 @@ architecture rtl of generic_iis_master is
   -- heartbeat
   constant c_sample_frequency         : natural := 48000; -- Hz
   constant c_tone_frequency           : natural := 500; -- Hz
-  constant c_tone_duration            : natural := 250; -- ms
+  constant c_tone_duration            : natural := 100; -- ms
   constant c_period_length            : natural := c_sample_frequency/c_tone_frequency; -- samples needed to output one period
   constant c_period_tone              : natural := (c_tone_duration*c_tone_frequency)/1000; -- times to play the square-wave sound
   signal   s_heartbeat_counter        : natural range 0 to c_period_length+1;
@@ -55,10 +55,11 @@ architecture rtl of generic_iis_master is
   signal   s_iis_heartbeat_state      : t_iis_heartbeat_state := state_iis_heartbeat_waiting;
   signal   s_current_trigger          : std_logic; -- actual trigger signal
   signal   s_prev_trigger             : std_logic; -- value of the previous trigger signal
+  signal   s_sync_trigger             : std_logic; -- sync stage for trigger signal
   signal   s_frame_done               : std_logic; -- pulse every new frame sync cycle
   
 begin
-
+  
   p_generate_bit_clock : process(clk_sys_i, rst_n_i)
   begin
     -- reset
@@ -186,7 +187,7 @@ begin
     elsif (rising_edge(clk_sys_i)) then
       if (s_clock_phase = '1') then
         -- sync trigger signals and latch them
-        s_current_trigger <= iis_trigger_i;
+        s_current_trigger <= s_sync_trigger;
         s_prev_trigger    <= s_current_trigger;
         if (iis_heartbeat_i = '0') then
         -- normal mode
@@ -297,6 +298,16 @@ begin
   p_provide_rx_ouput : process(s_received_data)
   begin
     rx_data_o <= s_received_data;
+  end process;
+  
+  -- sync trigger signal
+  p_sync_trigger : process(clk_sys_i, rst_n_i)
+  begin
+    if (rst_n_i = '0') then
+      s_sync_trigger <= '0';
+    elsif (rising_edge(clk_sys_i)) then
+      s_sync_trigger <= iis_trigger_i;
+    end if;
   end process;
   
 end rtl;
