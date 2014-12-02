@@ -175,13 +175,13 @@ entity exploder5_csco_tr is
     dsp_d1_o          : out   std_logic;
     dsp_d0_o          : out   std_logic;
     
-    aud_spi_csb_o     : out   std_logic;
-    aud_spi_sclk_o    : out   std_logic;
-    aud_spi_sdio_o    : out   std_logic;
-    aud_iis_fs_o      : out   std_logic;
-    aud_iis_bclk_o    : out   std_logic;
-    aud_iis_adcout_o  : out   std_logic;
-    aud_iis_dacin_i   : in    std_logic;
+    --aud_spi_csb_o     : out   std_logic;
+    --aud_spi_sclk_o    : out   std_logic;
+    --aud_spi_sdio_o    : out   std_logic;
+    --aud_iis_fs_o      : out   std_logic;
+    --aud_iis_bclk_o    : out   std_logic;
+    --aud_iis_adcout_o  : out   std_logic;
+    --aud_iis_dacin_i   : in    std_logic;
     
     rs232_dtr_i       : in    std_logic; -- !!! unused
     rs232_dcd_o       : out   std_logic;
