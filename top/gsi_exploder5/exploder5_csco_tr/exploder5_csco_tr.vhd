@@ -163,7 +163,6 @@ entity exploder5_csco_tr is
 --    lvds_clk_n_o      : out   std_logic;
     
     button_i          : in    std_logic_vector(4 downto 1);
-    button_ledn_o     : out   std_logic_vector(4 downto 1);
     
     pe_smdat          : inout std_logic; -- unused (needed for CvP)
     pe_smclk          : out   std_logic := 'Z';
@@ -175,20 +174,16 @@ entity exploder5_csco_tr is
     dsp_d1_o          : out   std_logic;
     dsp_d0_o          : out   std_logic;
     
-    --aud_spi_csb_o     : out   std_logic;
-    --aud_spi_sclk_o    : out   std_logic;
-    --aud_spi_sdio_o    : out   std_logic;
-    --aud_iis_fs_o      : out   std_logic;
-    --aud_iis_bclk_o    : out   std_logic;
-    --aud_iis_adcout_o  : out   std_logic;
-    --aud_iis_dacin_i   : in    std_logic;
+    aud_spi_csb_o     : out   std_logic;
+    aud_spi_sclk_o    : out   std_logic;
+    aud_spi_sdio_o    : out   std_logic;
+    aud_iis_fs_o      : out   std_logic;
+    aud_iis_bclk_o    : out   std_logic;
+    aud_iis_adcout_o  : out   std_logic;
+    aud_iis_dacin_i   : in    std_logic;
     
-    rs232_dtr_i       : in    std_logic; -- !!! unused
-    rs232_dcd_o       : out   std_logic;
-    rs232_dsr_o       : out   std_logic;
-    rs232_ri_o        : out   std_logic;
     rs232_rts_i       : in    std_logic;
-    rs232_cts_o       : out   std_logic;
+    rs232_cts_o       : out   std_logic := '1';
     rs232_tx_o        : out   std_logic;
     rs232_rx_i        : in    std_logic;
     
@@ -202,7 +197,7 @@ architecture rtl of exploder5_csco_tr is
   signal led_track    : std_logic;
   signal led_pps      : std_logic;
   
-  signal s_gpio_o       : std_logic_vector( 8 downto 1);
+  signal s_gpio_o       : std_logic_vector( 4 downto 1);
   signal s_gpio_i       : std_logic_vector( 4 downto 1);
   signal s_lvds_p_i     : std_logic_vector(11 downto 1);
   signal s_lvds_n_i     : std_logic_vector(11 downto 1);
@@ -211,6 +206,10 @@ architecture rtl of exploder5_csco_tr is
   signal s_lvds_n_o     : std_logic_vector(11 downto 1);
   signal s_lvds_o_led   : std_logic_vector(11 downto 1);
   signal s_lvds_oen     : std_logic_vector( 8 downto 1);
+  
+  signal s_nau8811_spi_csb  : std_logic;
+  signal s_nau8811_spi_sclk : std_logic;
+  signal s_nau8811_spi_sdio : std_logic;
 
 begin
 
@@ -220,14 +219,14 @@ begin
       g_project     => "exploder5_csco_tr",
       g_flash_bits  => 25,
       g_gpio_in     => 4,
-      g_gpio_out    => 8,
+      g_gpio_out    => 4,
       g_lvds_in     => 3,
       g_lvds_out    => 3,
       g_lvds_inout  => 8,
       g_en_pcie     => true,
       g_en_usb      => true,
       g_en_ssd1325  => true,
-      --g_en_nau8811  => true,
+      g_en_nau8811  => true,
       g_en_user_ow  => true)
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
@@ -246,6 +245,8 @@ begin
       wr_dac_din_o           => dac_din,
       wr_ndac_cs_o           => ndac_cs,
       wr_ext_clk_i           => lvds_clk_p_i,
+      wr_uart_o              => rs232_tx_o,
+      wr_uart_i              => rs232_rx_i,
       gpio_o                 => s_gpio_o,
       gpio_i                 => s_gpio_i,
       lvds_p_i               => s_lvds_p_i,
@@ -281,16 +282,21 @@ begin
       ssd1325_ss_o           => dsp_csn_o,
       ssd1325_sclk_o         => dsp_d0_o,
       ssd1325_data_o         => dsp_d1_o,
-      --nau8811_spi_csb_o      => aud_spi_csb_o,
-      --nau8811_spi_sclk_o     => aud_spi_sclk_o,
-      --nau8811_spi_sdio_o     => aud_spi_sdio_o,
-      --nau8811_iis_fs_o       => aud_iis_fs_o,
-      --nau8811_iis_bclk_o     => aud_iis_bclk_o,
-      --nau8811_iis_adcout_o   => aud_iis_adcout_o,
-      --nau8811_iis_dacin_i    => aud_iis_dacin_i,
-      ow_io(0)               => db_rom_data_io,
+      nau8811_spi_csb_o      => s_nau8811_spi_csb,
+      nau8811_spi_sclk_o     => s_nau8811_spi_sclk,
+      nau8811_spi_sdio_o     => s_nau8811_spi_sdio,
+      nau8811_iis_fs_o       => aud_iis_fs_o,
+      nau8811_iis_bclk_o     => aud_iis_bclk_o,
+      nau8811_iis_adcout_o   => aud_iis_adcout_o,
+      nau8811_iis_dacin_i    => aud_iis_dacin_i,
+      ow_io(0)               => rom_data_io,
       ow_io(1)               => 'Z');
 
+  -- Open-drain for 3.3V pull-up on nau SPI
+  aud_spi_csb_o  <= '0' when s_nau8811_spi_csb ='0' else 'Z';
+  aud_spi_sclk_o <= '0' when s_nau8811_spi_sclk='0' else 'Z';
+  aud_spi_sdio_o <= '0' when s_nau8811_spi_sdio='0' else 'Z';
+  
   -- SFP1-3 are not mounted
   sfp1_tx_disable_o <= '1';
   sfp2_tx_disable_o <= '1';
@@ -300,7 +306,7 @@ begin
   -- Base board LEDs (2.5V outputs, with 2.5V pull-up)
   led_o(1) <= '0' when (led_link_act and led_link_up)='1' else 'Z'; -- red   = traffic/no-link
   led_o(2) <= '0' when led_link_up                   ='1' else 'Z'; -- blue  = link
-  led_o(3) <= '0' when not led_track                 ='1' else 'Z'; -- green = timing valid
+  led_o(3) <= '0' when led_track                     ='1' else 'Z'; -- green = timing valid
   led_o(4) <= '0' when led_pps                       ='1' else 'Z'; -- white = PPS
   
   -- Link LEDs (2.5V outputs, with 2.5V pull-up)
@@ -312,10 +318,6 @@ begin
   led_o(6)         <= '0' when s_gpio_o(2)='1' else 'Z'; -- 2.5V output, with 2.5V pull-up
   led_o(7)         <= '0' when s_gpio_o(3)='1' else 'Z';
   led_o(8)         <= '0' when s_gpio_o(4)='1' else 'Z';
-  button_ledn_o(1) <= '0' when s_gpio_o(5)='1' else 'Z'; -- (daughter)
-  button_ledn_o(2) <= '0' when s_gpio_o(6)='1' else 'Z'; -- 2.5V output, with 3.3V pull-up
-  button_ledn_o(3) <= '0' when s_gpio_o(7)='1' else 'Z';
-  button_ledn_o(4) <= '0' when s_gpio_o(8)='1' else 'Z';
   
   -- GPIO inputs
   s_gpio_i <= not button_i;
