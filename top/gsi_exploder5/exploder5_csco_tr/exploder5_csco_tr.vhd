@@ -186,7 +186,7 @@ entity exploder5_csco_tr is
     rs232_cts_o       : out   std_logic := '1';
     rs232_tx_o        : out   std_logic;
     rs232_rx_i        : in    std_logic;
-    
+
     db_rom_data_io    : inout std_logic);
 end exploder5_csco_tr;
 
@@ -289,7 +289,7 @@ begin
       nau8811_iis_bclk_o     => aud_iis_bclk_o,
       nau8811_iis_adcout_o   => aud_iis_adcout_o,
       nau8811_iis_dacin_i    => aud_iis_dacin_i,
-      ow_io(0)               => rom_data_io,
+      ow_io(0)               => db_rom_data_io,
       ow_io(1)               => 'Z');
 
   -- Open-drain for 3.3V pull-up on nau SPI
