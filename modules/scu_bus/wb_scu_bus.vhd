@@ -56,6 +56,9 @@ PORT(
                     
   clk                     : in    std_logic;
   nrst                    : in    std_logic;
+  
+  Timing_In               : in  std_logic_vector(31 downto 0) := (others => '0');
+  Start_Timing_Cycle      : in  std_logic := '0';
 
   SCUB_Data               : INOUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
   nSCUB_DS                : OUT   STD_LOGIC;                      -- SCU_Bus Data Strobe, low active.
@@ -81,8 +84,8 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
   signal Start_Cycle        : std_logic;                      -- IN start data access from/to SCU_Bus
   signal Wr                 : std_logic;                      -- IN direction of SCU_Bus data access, write is active high.
   signal Rd                 : std_logic;                      -- IN
-  signal Timing_In          : std_logic_vector(31 downto 0) := (others => '0'); 
-  signal Start_Timing_Cycle : std_logic := '0';               -- IN start timing cycle to SCU_Bus
+  --signal Timing_In          : std_logic_vector(31 downto 0) := (others => '0'); 
+  --signal Start_Timing_Cycle : std_logic := '0';               -- IN start timing cycle to SCU_Bus
   
   signal SCU_Bus_Access_Active : std_logic;                   -- OUT active high signal: read or write access to SCUB is not finished
                                                               -- the access can be terminated bei an error, so look also to the
@@ -208,7 +211,7 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
   SIGNAL    S_SCUB_Wr_Err_no_Dtack  : STD_LOGIC;
 
   SIGNAL    S_Ti_Cyc_Err      : STD_LOGIC;
-  SIGNAL    S_Timing_In       : STD_LOGIC_VECTOR(15 DOWNTO 0);  -- store input timing_in
+  SIGNAL    S_Timing_In       : STD_LOGIC_VECTOR(31 DOWNTO 0);  -- store input timing_in
   SIGNAL    S_SCUB_Ti_Fin     : STD_LOGIC;
 
   SIGNAL    S_SRQ_Ena       : STD_LOGIC_VECTOR(nSCUB_SRQ_Slaves'range);
@@ -261,7 +264,7 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
 
   SIGNAL  SCUB_SM : T_SCUB_SM;
   
-  type wb_ctrl_type is ( idle, cyc_start, int_acc, ext_stall, ext_err, ext_acc, invalid_slave);
+  type wb_ctrl_type is ( idle, cyc_wait, cyc_start, int_acc, ext_stall, ext_err, ext_acc, invalid_slave);
   
   signal wb_state : wb_ctrl_type;
 
@@ -366,8 +369,6 @@ S_Status(bit_scub_wr_err)       <= S_SCUB_Wr_Err_no_Dtack;
 p_wb_ctrl: process (clk, s_reset)
 begin
   if s_reset = '0' then
-    S_Start_Ti_Cy           <= '0';           -- reset start SCU_Bus timing cycle
-    S_Ti_Cy(S_Ti_Cy'range)  <= (OTHERS => '0');     -- shift reg to generate pulse
     s_stall                 <= '0';
     s_ext_read_err          <= '0';
     s_ack                   <= '0';
@@ -388,20 +389,31 @@ begin
     S_Start_SCUB_Wr         <= '0';             -- reset start SCU_Bus write
 
     
+
     case wb_state is
     
       when idle =>
-        S_Multi_Wr_Flag <= '0';                                   -- clear signal multicast write
-        if slave_i.cyc = '1' and slave_i.stb = '1' then           -- begin of wishbone cycle
-          if slave_i.sel(0) = '1' and slave_i.adr(1) = '0' then   -- fix for LM32
-            s_adr <= std_logic_vector(unsigned(adr) + 1);         -- register address and slave_nr
+        S_Multi_Wr_Flag <= '0';                                     -- clear signal multicast write
+        if slave_i.cyc = '1' and slave_i.stb = '1' then             -- begin of wishbone cycle
+          if slave_i.sel(0) = '1' and slave_i.adr(1) = '0' then     -- fix for LM32
+            s_adr <= std_logic_vector(unsigned(adr) + 1);           -- register address and slave_nr
           else
             s_adr <= adr;
           end if;
           s_slave_nr <= slave_nr;
-          s_stall <= '1';                                         -- no pipelining
-          wb_state <= cyc_start;
+          s_stall <= '1';                                           -- no pipelining
+          if S_Start_Ti_Cy = '0' and Start_Timing_Cycle = '0' then  -- no active or planned timing cycle
+            wb_state <= cyc_start;
+          else
+            wb_state <= cyc_wait;
+          end if;
         end if;
+        
+      when cyc_wait =>
+          s_stall <= '1';
+          if S_Start_Ti_Cy = '0' and Start_Timing_Cycle = '0' then  -- no active or planned timing cycle
+            wb_state <= cyc_start;
+          end if;
           
       when cyc_start =>
           s_stall <= '1';
@@ -484,6 +496,8 @@ begin
     S_SCUB_Rd_Err_no_Dtack  <= '0';             -- reset read timeout flag
     S_SCUB_Wr_Err_no_Dtack  <= '0';             -- reset write timeout flag
     S_Ti_Cyc_Err            <= '0';             -- reset timing error flag
+    S_Start_Ti_Cy           <= '0';             -- reset start SCU_Bus timing cycle
+    S_Ti_Cy(S_Ti_Cy'range)  <= (OTHERS => '0'); -- shift reg to generate pulse
     
     s_Invalid_Intern_Acc    <= '0';
     S_Invalid_Slave_Nr      <= '0';
@@ -492,7 +506,7 @@ begin
   elsif rising_edge(clk) then
     S_SCUB_Rd_Err_no_Dtack  <= '0';
     S_SCUB_Wr_Err_no_Dtack  <= '0';
-
+      
     if wb_state = idle then             -- clear ack and err for next cycle
       s_int_ack <= '0';
       S_Invalid_Intern_Acc <= '0';
@@ -603,6 +617,21 @@ begin
         end if;
     end case;
 
+    S_Ti_Cy(S_Ti_Cy'range) <= (S_Ti_Cy(S_Ti_Cy'high-1 DOWNTO 0) & Start_Timing_Cycle);    -- shift reg to generate pulse
+    
+    
+    if S_Ti_Cy = "01" then                       -- positive edge off start_timing_cycle
+      if S_Start_Ti_Cy = '1' then     
+        S_Ti_Cyc_Err <= '1';                     -- SCU_Bus timing error, new request but old request not finished
+      else
+        S_Start_Ti_Cy <= '1';                    -- store timing request
+        S_Timing_In <= Timing_In(31 DOWNTO 0);   -- store timing pattern
+      end if;
+    end if;
+    
+    if SCUB_SM = E_Ti_Cyc then
+         S_Start_Ti_Cy <= '0';
+    end if;
 
 
   end if;

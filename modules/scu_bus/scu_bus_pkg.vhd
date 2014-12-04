@@ -33,6 +33,9 @@ component wb_scu_bus is
 
     clk                     : IN		STD_LOGIC;
     nrst                    : IN		STD_LOGIC;
+    
+    Timing_In               : in  std_logic_vector(31 downto 0) := (others => '0');
+    Start_Timing_Cycle      : in  std_logic := '0';
 
     SCUB_Data				        : INOUT		STD_LOGIC_VECTOR(15 DOWNTO 0);
     nSCUB_DS				        : OUT		STD_LOGIC;							        -- SCU_Bus Data Strobe, low active.
@@ -58,6 +61,9 @@ component wb_irq_scu_bus is
   port (
         clk_i               : std_logic;
         rst_n_i             : std_logic;
+        
+        tag                 : in std_logic_vector(31 downto 0);
+        tag_valid           : in std_logic;
         
         irq_master_o        : out t_wishbone_master_out;
         irq_master_i        : in t_wishbone_master_in;

@@ -19,6 +19,9 @@ entity wb_irq_scu_bus is
         clk_i               : std_logic;
         rst_n_i             : std_logic;
         
+        tag                 : in std_logic_vector(31 downto 0);
+        tag_valid           : in std_logic;
+        
         irq_master_o        : out t_wishbone_master_out;
         irq_master_i        : in t_wishbone_master_in;
 
@@ -51,11 +54,13 @@ begin
       Test                  => 0,
       Time_Out_in_ns        => 350)
    port map(
-     clk          => clk_i,
-     nrst         => rst_n_i,
-     slave_i      => scu_slave_i,
-     slave_o      => scu_slave_o,
-     srq_active   => scu_srq_active,
+     clk                => clk_i,
+     nrst               => rst_n_i,
+     Timing_In          => tag,
+     Start_Timing_Cycle => tag_valid,
+     slave_i            => scu_slave_i,
+     slave_o            => scu_slave_o,
+     srq_active         => scu_srq_active,
      
      SCUB_Data          => scub_data,
      nSCUB_DS           => nscub_ds,

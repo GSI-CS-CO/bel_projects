@@ -512,7 +512,7 @@ architecture rtl of monster is
   signal sfp_scl_o : std_logic;
   signal sfp_sda_o : std_logic;
   
-  signal channels : t_channel_array(2 downto 0);
+  signal channels : t_channel_array(3 downto 0);
   
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
@@ -529,6 +529,16 @@ architecture rtl of monster is
   signal  mil_every_ms_intr_o:  std_logic;
   
   -- Mil-Extension signals
+  ----------------------------------------------------------------------------------
+  
+  ----------------------------------------------------------------------------------
+  -- SCU bus signals ---------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  
+  signal  tag        : std_logic_vector(31 downto 0);
+  signal  tag_valid  : std_logic;
+  
+  -- SCU bus signals
   ----------------------------------------------------------------------------------
   
   
@@ -1311,10 +1321,11 @@ begin
       g_eca_name      => f_name(g_project & " top"),
       g_channel_names => (f_name("GPIO: gpio triggers"),
                           f_name("RTOS: Action Queue"),
-                          f_name("GPIO: lvds triggers")),
+                          f_name("GPIO: lvds triggers"),
+                          f_name("SCUBUS: tag to scubus")),
       g_log_table_size => 7,
       g_log_queue_len  => 8,
-      g_num_channels   => 3,
+      g_num_channels   => 4,
       g_num_streams    => 1)
     port map(
       e_clk_i  (0)=> clk_sys,
@@ -1363,6 +1374,14 @@ begin
       rst_n_i   => rstn_ref,
       channel_i => channels(2),
       lvds_o    => lvds_o);
+  
+  c3 : eca_scubus_channel
+    port map(
+      clk_i     => clk_ref,
+      rst_n_i   => rstn_ref,
+      channel_i => channels(3),
+      tag_valid => tag_valid,
+      tag       => tag);
   
   lvds_pins : altera_lvds
     generic map(
@@ -1492,6 +1511,8 @@ begin
       port map(
         clk_i    => clk_sys,
         rst_n_i  => rstn_sys,
+        tag                => tag,
+        tag_valid          => tag_valid,
         irq_master_o       => irq_cbar_slave_i (c_irqm_scubus),
         irq_master_i       => irq_cbar_slave_o (c_irqm_scubus),
         ctrl_irq_o         => top_cbar_master_i(c_tops_scubirq),
