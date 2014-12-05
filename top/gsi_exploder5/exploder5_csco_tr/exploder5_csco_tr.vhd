@@ -41,6 +41,7 @@ entity exploder5_csco_tr is
     ctl               : in    std_logic_vector(2 downto 0);
     uclk              : in    std_logic;
     ures              : out   std_logic;
+    uclkin            : in    std_logic;
       
     -----------------------------------------------------------------------
     -- SRAM (with DDR hidden inside)
