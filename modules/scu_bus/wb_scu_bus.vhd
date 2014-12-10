@@ -29,6 +29,7 @@ use IEEE.STD_LOGIC_1164.all;
 use ieee.numeric_std.all;
 
 use work.wishbone_pkg.all;
+use work.genram_pkg.all;
 
 
 ENTITY wb_scu_bus IS
@@ -243,6 +244,12 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
   
   signal    wr_acc              : std_logic;
   signal    rd_acc              : std_logic;
+  
+  signal    tag_fifo_we         : std_logic;
+  signal    tag_fifo_rd         : std_logic;
+  signal    tag_fifo_empty      : std_logic;
+  signal    tag_fifo_full       : std_logic;
+  signal    tag_fifo_q          : std_logic_vector(31 downto 0);
 
   TYPE  T_SCUB_SM IS  (
               Idle,
@@ -366,6 +373,25 @@ S_Status(bit_scub_rd_err)       <= S_SCUB_Rd_Err_no_Dtack;
 S_Status(bit_scub_wr_err)       <= S_SCUB_Wr_Err_no_Dtack;
 
 
+tag_fifo: generic_sync_fifo
+generic map (
+              g_data_width  => 32,
+              g_size        => 10)
+                
+port map (
+            rst_n_i => s_reset,
+            clk_i   => clk,
+            d_i     => timing_in,
+            we_i    => tag_fifo_we,
+            q_o     => tag_fifo_q,
+            rd_i    => tag_fifo_rd,
+            
+            empty_o => tag_fifo_empty,
+            full_o  => tag_fifo_full);
+
+              
+
+
 p_wb_ctrl: process (clk, s_reset)
 begin
   if s_reset = '0' then
@@ -402,7 +428,7 @@ begin
           end if;
           s_slave_nr <= slave_nr;
           s_stall <= '1';                                           -- no pipelining
-          if S_Start_Ti_Cy = '0' and Start_Timing_Cycle = '0' then  -- no active or planned timing cycle
+          if tag_fifo_empty = '1' and SCUB_SM = idle then           -- no active or planned timing cycle
             wb_state <= cyc_start;
           else
             wb_state <= cyc_wait;
@@ -411,7 +437,7 @@ begin
         
       when cyc_wait =>
           s_stall <= '1';
-          if S_Start_Ti_Cy = '0' and Start_Timing_Cycle = '0' then  -- no active or planned timing cycle
+          if tag_fifo_empty = '1' and SCUB_SM = idle then           -- no active or planned timing cycle
             wb_state <= cyc_start;
           end if;
           
@@ -502,10 +528,12 @@ begin
     s_Invalid_Intern_Acc    <= '0';
     S_Invalid_Slave_Nr      <= '0';
     s_int_ack               <= '0';
+    tag_fifo_we             <= '0';
       
   elsif rising_edge(clk) then
     S_SCUB_Rd_Err_no_Dtack  <= '0';
     S_SCUB_Wr_Err_no_Dtack  <= '0';
+    tag_fifo_we             <= '0';
       
     if wb_state = idle then             -- clear ack and err for next cycle
       s_int_ack <= '0';
@@ -621,11 +649,11 @@ begin
     
     
     if S_Ti_Cy = "01" then                       -- positive edge off start_timing_cycle
-      if S_Start_Ti_Cy = '1' then     
-        S_Ti_Cyc_Err <= '1';                     -- SCU_Bus timing error, new request but old request not finished
+      if tag_fifo_full = '1' then     
+        S_Ti_Cyc_Err <= '1';                     -- FIFO full
       else
         S_Start_Ti_Cy <= '1';                    -- store timing request
-        S_Timing_In <= Timing_In(31 DOWNTO 0);   -- store timing pattern
+        tag_fifo_we <= '1';                      -- store tag in fifo
       end if;
     end if;
     
@@ -641,19 +669,19 @@ end process;
   
 
 
-P_SCUB_SM:  PROCESS (clk, s_reset)
-
-BEGIN
-  IF s_reset = '0' THEN
-    SCUB_SM <= Idle;
+P_SCUB_SM:  process (clk, s_reset)
+begin
+  if s_reset = '0' then
+    SCUB_SM             <= Idle;
     S_Last_Cycle_Timing <= '0';
     S_SCUB_Timing_Cycle <= '0';
-    S_SCUB_RDnWR    <= '1';
-    S_SCUB_DS     <= '0';
-    S_SCUB_Slave_Sel  <= (OTHERS => '0');
+    S_SCUB_RDnWR        <= '1';
+    S_SCUB_DS           <= '0';
+    S_SCUB_Slave_Sel    <= (others => '0');
     S_Sel_Ext_Data_Drv  <= '0';
+    tag_fifo_rd         <= '0';
 
-  ELSIF rising_edge(clk) THEN
+  elsif rising_edge(clk) then
 
     IF Test = 0 THEN
       S_nSync_Dtack(0) <= nSCUB_Dtack;  -- SCU_Bus_Dtack is an asynchronous Signal. S_nSync_Dtack is the synchronized nSCU_Bus_Dtack
@@ -668,50 +696,38 @@ BEGIN
       s_ext_ack <= '0';
     end if;
     
-    CASE SCUB_SM IS         -- = SCU_Bus State Machine
+    tag_fifo_rd <= '0';
+    
+    case SCUB_SM is         -- = SCU_Bus State Machine
 
-      WHEN Idle =>
-        S_Sel_dly_cnt   <= to_unsigned(C_Sel_dly_cnt, S_Sel_dly_cnt'length);
+      when Idle =>
+        S_Sel_dly_cnt       <= to_unsigned(C_Sel_dly_cnt, S_Sel_dly_cnt'length);
         S_D_Valid_to_DS_cnt <= to_unsigned(C_D_Valid_to_DS_cnt, S_D_Valid_to_DS_cnt'length);
-        S_Sel_release_cnt <= to_unsigned(C_Sel_release_cnt, S_Sel_release_cnt'length);
-        S_SCUB_Slave_Sel  <= (OTHERS => '0');
-        S_SCUB_Addr     <= (OTHERS => '1');
-        S_SCUB_RDnWR    <= '1';
+        S_Sel_release_cnt   <= to_unsigned(C_Sel_release_cnt, S_Sel_release_cnt'length);
+        S_SCUB_Slave_Sel    <= (others => '0');
+        S_SCUB_Addr         <= (others => '1');
+        S_SCUB_RDnWR        <= '1';
         S_SCUB_Timing_Cycle <= '0';
-        S_SCUB_DS     <= '0';
+        S_SCUB_DS           <= '0';
         S_Sel_Ext_Data_Drv  <= '0';
 
 
-        IF ((S_Start_SCUB_Rd = '1') AND (S_Start_Ti_Cy = '0')) THEN
+        --if ((S_Start_SCUB_Rd = '1') and (tag_fifo_empty = '1')) then
+        if (S_Start_SCUB_Rd = '1') then
           S_SCUB_Addr <= s_adr;                   -- store slave address
           SCUB_SM <= S_Rd_Cyc;                    -- jump to start read cycle
-        ELSIF ((S_Start_SCUB_Wr = '1') AND (S_Start_Ti_Cy = '0')) THEN
+        --elsif ((S_Start_SCUB_Wr = '1') and (tag_fifo_empty = '1')) then
+        elsif (S_Start_SCUB_Wr = '1') then
           S_SCUB_Addr <= s_adr;                   -- store slave address
           S_SCUB_RDnWR <= '0';                    -- set master writes
           SCUB_SM <= S_Wr_Cyc;                    -- jump to start write cycle
-        ELSIF ((S_Start_SCUB_Rd = '0') AND (S_Start_SCUB_Wr = '0') AND (S_Start_Ti_Cy = '1')) THEN
-          S_SCUB_RDnWR <= '0';                    -- set master writes
+        elsif (tag_fifo_empty = '0' and (wb_state = idle or wb_state = cyc_wait)) then
+          S_SCUB_RDnWR  <= '0';                   -- set master writes
+          tag_fifo_rd   <= '1';                   -- read tag from fifo
           SCUB_SM <= S_Ti_Cyc;                    -- jump to start Timing cycle
-        ELSIF ((S_Start_SCUB_Wr = '1') AND (S_Start_Ti_Cy = '1')) THEN
-          IF (S_Last_Cycle_Timing = '1') THEN
-            S_SCUB_Addr <= s_adr;                 -- store slave address
-            S_SCUB_RDnWR <= '0';                  -- set master writes
-            SCUB_SM <= S_Wr_Cyc;                  -- jump to start write cycle
-          ELSE
-            S_SCUB_RDnWR <= '0';                  -- set master writes
-            SCUB_SM <= S_Ti_Cyc;                  -- jump to start Timing cycle
-          END IF;
-        ELSIF ((S_Start_SCUB_Rd = '1') AND (S_Start_Ti_Cy = '1')) THEN
-          IF (S_Last_Cycle_Timing = '1') THEN
-            S_SCUB_Addr <= s_adr;                 -- store slave address
-            SCUB_SM <= S_Rd_Cyc;                  -- jump to start read cycle
-          ELSE
-            S_SCUB_RDnWR <= '0';                  -- set master writes
-            SCUB_SM <= S_Ti_Cyc;                  -- jump to start Timing cycle
-          END IF;
-        ELSE
-          NULL;
-        END IF;
+        else
+          null;
+        end if;
 
       WHEN S_Rd_Cyc =>                            -- start read cycle
         S_Sel_Ext_Data_Drv <= '1';
@@ -793,22 +809,24 @@ BEGIN
       WHEN F_Wr_Cyc =>
           SCUB_SM <= Idle;                  -- jump to Idle
 
-      WHEN S_Ti_Cyc =>                      -- start Timing cycle
-        S_Last_Cycle_Timing <= '1';               -- last SCU_Bus cycle is a timing cycle
-        S_SCUB_Addr <= Timing_In(31 DOWNTO 16);         -- Timing to S_SCUB_Addr
+      WHEN S_Ti_Cyc =>                                    -- start Timing cycle
+        S_Last_Cycle_Timing <= '1';                       -- last SCU_Bus cycle is a timing cycle
+        
         IF S_Sel_dly_cnt(S_Sel_dly_cnt'high) = '1' THEN
+          
           S_Sel_Ext_Data_Drv <= '1';
-          S_SCUB_Slave_Sel <= (OTHERS => '1');        -- in this version select all slaves.
+          S_SCUB_Slave_Sel <= (OTHERS => '1');            -- in this version select all slaves.
           S_Timing_str_cnt <= to_unsigned(C_Timing_str_cnt, S_Timing_str_cnt'length);
-          SCUB_SM <= Ti_Cyc;                  -- jump to active Timing cycle
+          SCUB_SM <= Ti_Cyc;                              -- jump to active Timing cycle
         END IF;
 
-      WHEN Ti_Cyc =>                        -- Timing cycle active
-        S_SCUB_Timing_Cycle <= '1';               -- timing cycle signal active
+      WHEN Ti_Cyc =>                                    -- Timing cycle active
+        S_SCUB_Timing_Cycle <= '1';                     -- timing cycle signal active
+        S_SCUB_Addr <= tag_fifo_q(31 downto 16);        -- Timing to S_SCUB_Addr
         IF S_Timing_str_cnt(S_Timing_str_cnt'high) = '1' THEN
-          S_SCUB_Timing_Cycle <= '0';             -- timing cycle signal inactive
-          S_SCUB_Slave_Sel <= (OTHERS => '0');        -- deselect all slaves.
-          SCUB_SM <= E_Ti_Cyc;                -- jump to end Timing cycle
+          S_SCUB_Timing_Cycle <= '0';                   -- timing cycle signal inactive
+          S_SCUB_Slave_Sel <= (OTHERS => '0');          -- deselect all slaves.
+          SCUB_SM <= E_Ti_Cyc;                          -- jump to end Timing cycle
         END IF;
 
       WHEN E_Ti_Cyc =>                      -- end Timing cycle
@@ -959,12 +977,12 @@ p_intr: PROCESS (clk, s_reset)
   END PROCESS p_intr;
 
 
-P_SCUB_Tri_State: PROCESS (SCUB_SM, S_Wr_Data, S_Timing_In)
+P_SCUB_Tri_State: PROCESS (SCUB_SM, S_Wr_Data, tag_fifo_q)
   BEGIN
     IF (SCUB_SM = S_Wr_Cyc) OR (SCUB_SM = Wr_Cyc) THEN
       SCUB_Data <= S_Wr_Data;
     ELSIF (SCUB_SM = Ti_Cyc) OR (SCUB_SM = E_Ti_Cyc) THEN
-      SCUB_Data <= S_Timing_In(15 DOWNTO 0);
+      SCUB_Data <= tag_fifo_q(15 DOWNTO 0);
     ELSE
       SCUB_Data <= (OTHERS => 'Z');
     END IF;
