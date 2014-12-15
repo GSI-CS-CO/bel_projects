@@ -268,9 +268,8 @@ begin
       g_family     => "Arria II",
       g_project    => "vetar_top2a",
       g_gpio_inout => 3,
-      g_gpio_in    => 10,
-      g_gpio_out   => 10,
-      -- g_gpio_out   => 7, for CSEE special (butis_t0 and 200Mhz on LVDS and HDMK)
+      g_gpio_in    => 7,
+      g_gpio_out   => 7,
       g_flash_bits => 24,
       g_en_vme     => true,
       g_en_usb     => true,
@@ -297,10 +296,6 @@ begin
       gpio_i(5 downto 3)     => lemo_addOn_io_i(2 downto 0),
       gpio_i(7 downto 6)     => hdmi_i(1 downto 0),
       gpio_i(9 downto 8)     => lemo_nim_ttl_i(1 downto 0),
-      -- gpio out CSEE special
-      --gpio_o(0)              => lemo_o,
-      --gpio_o(3 downto 1)     => s_lemo_addOn(2 downto 0),
-      --gpio_o(6 downto 4)     => s_lemo_addOn_io(2 downto 0),
       -- wr core
       wr_onewire_io          => rom_data_io,
       wr_sfp_sda_io          => sfp_mod2_io,
@@ -424,7 +419,7 @@ begin
   lemo_addOn_term_o(1) <= '1' when s_lemo_oen(1)='1' else '0'; -- TERMEN2 (terminate when input)
   lemo_addOn_term_o(2) <= '1' when s_lemo_oen(2)='1' else '0'; -- TERMEN3 (terminate when input)
 
-  led_lemo_term_o <= not(s_led_pps); -- TBD: This is DAK1 on the addon board
+  led_lemo_term_o <= s_led_pps; -- TBD: This is DAK1 on the addon board
   
   -- INOUT LEMOs
   -- Red => Output enable LEDs
