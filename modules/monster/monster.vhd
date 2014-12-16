@@ -250,8 +250,8 @@ entity monster is
     nau8811_iis_adcout_o   : out   std_logic := 'Z';
     nau8811_iis_dacin_i    : in    std_logic;
     -- g_en_cfi
-    cfi_ad                 : out   std_logic_vector(25 downto 1):= (others => 'Z');
-    cfi_df                 : inout std_logic_vector(15 downto 0);
+    cfi_ad                 : out   std_logic_vector(25 downto 1) := (others => 'Z');
+    cfi_df                 : inout std_logic_vector(15 downto 0) := (others => 'Z');
     cfi_adv_fsh            : out   std_logic := 'Z';
     cfi_nce_fsh            : out   std_logic := 'Z';
     cfi_clk_fsh            : out   std_logic := 'Z';
@@ -1681,7 +1681,10 @@ begin
   
   -- fg quad with wb interface, special solution for ring RF
   fg_n  : if not g_en_fg generate
-    top_cbar_master_i(c_tops_fg) <= cc_dummy_slave_out;
+    top_cbar_master_i(c_tops_fg)    <= cc_dummy_slave_out;
+    top_cbar_master_i(c_tops_fgirq) <= cc_dummy_slave_out;
+    top_cbar_slave_i(c_topm_fg)     <= cc_dummy_master_out;
+    irq_cbar_slave_i(c_irqm_fg)     <= cc_dummy_master_out;
   end generate;
   fg_y  : if g_en_fg generate
     fg_quad: wb_fg_quad

@@ -152,12 +152,15 @@ int32_t iNAU8811_GetParameter(e_NAU8811_RegisterArea eParameter, uint32_t *p_uVa
   /* Switch depending on parameter */
   switch(eParameter)
   {
-    case eStatusRegister:    { *p_uValue = p_sNAU8811_Area->uStatusRegister;    break; }
-    case eControlRegister:   { *p_uValue = p_sNAU8811_Area->uControlRegister;   break; }
-    case eTxSpiDataRegister: { *p_uValue = p_sNAU8811_Area->uTxSpiDataRegister; break; }
-    case eTxIisDataRegister: { *p_uValue = p_sNAU8811_Area->uTxIisDataRegister; break; }
-    case eRxIisDataRegister: { *p_uValue = p_sNAU8811_Area->uRxIisDataRegister; break; }
-    default:                 { return(NAU8811_RETURN_FAILURE_CODE);             break; }
+    case eStatusRegister:       { *p_uValue = p_sNAU8811_Area->uStatusRegister;       break; }
+    case eControlRegister:      { *p_uValue = p_sNAU8811_Area->uControlRegister;      break; }
+    case eTxSpiDataRegister:    { *p_uValue = p_sNAU8811_Area->uTxSpiDataRegister;    break; }
+    case eTxIisDataRegister:    { *p_uValue = p_sNAU8811_Area->uTxIisDataRegister;    break; }
+    case eRxIisDataRegister:    { *p_uValue = p_sNAU8811_Area->uRxIisDataRegister;    break; }
+    case eTxIisStreamRegister:  { *p_uValue = p_sNAU8811_Area->uTxIisStreamRegister;  break; }
+    case eRxIisStreamRegister:  { *p_uValue = p_sNAU8811_Area->uRxIisStreamRegister;  break; }
+    case eFillLevelIisRegister: { *p_uValue = p_sNAU8811_Area->uFillLevelIisRegister; break; }
+    default:                    { return(NAU8811_RETURN_FAILURE_CODE);                break; }
   }
 #else
   /* Helpers */
@@ -170,12 +173,15 @@ int32_t iNAU8811_GetParameter(e_NAU8811_RegisterArea eParameter, uint32_t *p_uVa
   /* Switch depending on parameter */
   switch(eParameter)
   {
-    case eStatusRegister:    { uRegisterOffset = 0;                 break; }
-    case eControlRegister:   { uRegisterOffset = 1;                 break; }
-    case eTxSpiDataRegister: { uRegisterOffset = 2;                 break; }
-    case eTxIisDataRegister: { uRegisterOffset = 3;                 break; }
-    case eRxIisDataRegister: { uRegisterOffset = 4;                 break; }
-    default:                 { return(NAU8811_RETURN_FAILURE_CODE); break; }
+    case eStatusRegister:       { uRegisterOffset = 0;                 break; }
+    case eControlRegister:      { uRegisterOffset = 1;                 break; }
+    case eTxSpiDataRegister:    { uRegisterOffset = 2;                 break; }
+    case eTxIisDataRegister:    { uRegisterOffset = 3;                 break; }
+    case eRxIisDataRegister:    { uRegisterOffset = 4;                 break; }
+    case eTxIisStreamRegister:  { uRegisterOffset = 5;                 break; }
+    case eRxIisStreamRegister:  { uRegisterOffset = 6;                 break; }
+    case eFillLevelIisRegister: { uRegisterOffset = 7;                 break; }
+    default:                    { return(NAU8811_RETURN_FAILURE_CODE); break; }
   }
   
   /* Get data */
@@ -205,12 +211,15 @@ int32_t iNAU8811_SetParameter(e_NAU8811_RegisterArea eParameter, uint32_t uValue
   /* Switch depending on parameter */
   switch(eParameter)
   {
-    case eStatusRegister:    { p_sNAU8811_Area->uStatusRegister    = uValue; break; }
-    case eControlRegister:   { p_sNAU8811_Area->uControlRegister   = uValue; break; }
-    case eTxSpiDataRegister: { p_sNAU8811_Area->uTxSpiDataRegister = uValue; break; }
-    case eTxIisDataRegister: { p_sNAU8811_Area->uTxIisDataRegister = uValue; break; }
-    case eRxIisDataRegister: { p_sNAU8811_Area->uRxIisDataRegister = uValue; break; }
-    default:                 { return(NAU8811_RETURN_FAILURE_CODE);          break; }
+    case eStatusRegister:       { p_sNAU8811_Area->uStatusRegister       = uValue; break; }
+    case eControlRegister:      { p_sNAU8811_Area->uControlRegister      = uValue; break; }
+    case eTxSpiDataRegister:    { p_sNAU8811_Area->uTxSpiDataRegister    = uValue; break; }
+    case eTxIisDataRegister:    { p_sNAU8811_Area->uTxIisDataRegister    = uValue; break; }
+    case eRxIisDataRegister:    { p_sNAU8811_Area->uRxIisDataRegister    = uValue; break; }
+    case eTxIisStreamRegister:  { p_sNAU8811_Area->uTxIisStreamRegister  = uValue; break; }
+    case eRxIisStreamRegister:  { p_sNAU8811_Area->uRxIisStreamRegister  = uValue; break; }
+    case eFillLevelIisRegister: { p_sNAU8811_Area->uFillLevelIisRegister = uValue; break; }
+    default:                    { return(NAU8811_RETURN_FAILURE_CODE);             break; }
   }
 #else
   /* Helpers */
@@ -222,12 +231,15 @@ int32_t iNAU8811_SetParameter(e_NAU8811_RegisterArea eParameter, uint32_t uValue
   /* Switch depending on parameter */
   switch(eParameter)
   {
-    case eStatusRegister:    { uRegisterOffset = 0;                 break; }
-    case eControlRegister:   { uRegisterOffset = 1;                 break; }
-    case eTxSpiDataRegister: { uRegisterOffset = 2;                 break; }
-    case eTxIisDataRegister: { uRegisterOffset = 3;                 break; }
-    case eRxIisDataRegister: { uRegisterOffset = 4;                 break; }
-    default:                 { return(NAU8811_RETURN_FAILURE_CODE); break; }
+    case eStatusRegister:       { uRegisterOffset = 0;                 break; }
+    case eControlRegister:      { uRegisterOffset = 1;                 break; }
+    case eTxSpiDataRegister:    { uRegisterOffset = 2;                 break; }
+    case eTxIisDataRegister:    { uRegisterOffset = 3;                 break; }
+    case eRxIisDataRegister:    { uRegisterOffset = 4;                 break; }
+    case eTxIisStreamRegister:  { uRegisterOffset = 5;                 break; }
+    case eRxIisStreamRegister:  { uRegisterOffset = 6;                 break; }
+    case eFillLevelIisRegister: { uRegisterOffset = 7;                 break; }
+    default:                    { return(NAU8811_RETURN_FAILURE_CODE); break; }
   }
   
   /* Write data */

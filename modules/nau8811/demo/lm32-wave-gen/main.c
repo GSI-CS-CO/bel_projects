@@ -330,6 +330,15 @@ void vFixedFrequency(void)
   } 
 }
 
+/* Function myrandom16(...) */
+/* ==================================================================================================== */ 
+uint32_t myrandom16() {
+  static uint32_t seed = 1;
+  //seed *= 0x7B337813;
+  seed = p_sNAU8811_Area->uRxIisDataRegister;
+  return seed >> 16;
+}
+
 /* Function vVariousFrequency(...) */
 /* ==================================================================================================== */ 
 void vVariousFrequency(void)
@@ -392,7 +401,16 @@ void vVariousFrequency(void)
 #if GEN_WAVEFORM == GEN_SINE_WAVE
     uPhase += 2*SAMPLE_FREQUENCY*uFrequency;
     cordic(uPhase, &iSine, &iCosine);
-    uValue = iSine;
+    uValue = iSine/2;
+
+#define EFFECTIVE_BITS 16
+#define LOW_BITS ((1<<(32-EFFECTIVE_BITS))-1)
+    uint32_t low  = uValue &  LOW_BITS;
+    uint32_t high = uValue & ~LOW_BITS;
+    uint32_t uniform = (low * myrandom16());
+    uint32_t dither = ((uniform >> 30)-1) << (32-EFFECTIVE_BITS);
+    uValue = high + dither;
+    
     /* Transmit value */
     vNAU8811_TransmitStream(uValue);
 #else
