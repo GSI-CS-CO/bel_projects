@@ -44,33 +44,42 @@ using namespace GSI_TLU;
 
 /* Defines */
 /* ==================================================================================================== */
-#define HIGH_NS             100000000 /* Duration of a high pulse */
-#define LOW_NS              100000000 /* Duration of a low pulse */
-#define EVENTS              10        /* Events/GPIOs to toggle */
-#define EVENT_MULTI         4         /* How often those events should occur */ 
-#define SPECIAL_MUTLI       256       /* Needed for 200MHz input clock, will fill the TLU FIFO completely */
-#define CPU_DELAY_MS        20        /* Sleep for test cpu */
-#define TLU_CHANNELS        10        /* Inputs */
-#define TOLERANCE_FACTOR_NS 2         /* Tolerance for frequency measurement */
-#define GPIO_LVDS_RATE      40        /* Detection rate of HDMI clock signal */
+#define HIGH_NS             50000000 /* Duration of a high pulse */
+#define LOW_NS              50000000 /* Duration of a low pulse */
+#define EVENTS              14       /* Events/GPIOs to toggle */
+#define EVENT_MULTI         4        /* How often those events should occur */ 
+#define SPECIAL_MUTLI       256      /* Needed for 200MHz input clock, will fill the TLU FIFO completely */
+#define CPU_DELAY_MS        20       /* Sleep for test cpu */
+#define TLU_CHANNELS        10       /* Inputs */
+#define TOLERANCE_FACTOR_NS 2        /* Tolerance for frequency measurement */
+#define GPIO_LVDS_RATE      40       /* Detection rate of HDMI clock signal */
 #define GPIO_TOGGLE_RATE    ((EVENTS)*(HIGH_NS+LOW_NS))
 
 /* Test case setup */
 /* ==================================================================================================== */
-uint32_t a_uEdgesExpectedTestCase1[EVENTS] = {EVENT_MULTI,  EVENT_MULTI,  EVENT_MULTI,   EVENT_MULTI,   EVENT_MULTI, 
-                                              EVENT_MULTI,  0,            0,             0,             0          };
+uint32_t a_uEdgesExpectedTestCase1[EVENTS] = {EVENT_MULTI,  EVENT_MULTI,  EVENT_MULTI,    EVENT_MULTI,   EVENT_MULTI, 
+                                              EVENT_MULTI,  0,            0,              0,             0          ,
+                                              0,            0};
+                                              
 uint32_t a_uEdgesExpectedTestCase2[EVENTS] = {0,            0,            EVENT_MULTI,    EVENT_MULTI,  EVENT_MULTI, 
-                                              EVENT_MULTI,  EVENT_MULTI,  SPECIAL_MUTLI,  EVENT_MULTI,  EVENT_MULTI};
+                                              EVENT_MULTI,  EVENT_MULTI,  SPECIAL_MUTLI,  EVENT_MULTI,  EVENT_MULTI,
+                                              0,            0};
+                                              
 uint32_t a_uEdgesExpectedTestCase3[EVENTS] = {0,            0,            0,              0,            0, 
-                                              0,            0,            0,              0,            0};
+                                              0,            0,            0,              0,            0,
+                                              0,            0};
                                               
 uint32_t a_uFrequencyExpectedTestCase1[EVENTS] = {GPIO_TOGGLE_RATE,  GPIO_TOGGLE_RATE,  GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE, 
-                                                  GPIO_TOGGLE_RATE,  0,                 0,                  0,                  0               };
-uint32_t a_uFrequencyExpectedTestCase2[EVENTS] = {0,                 0,                 GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE, 
-                                                  GPIO_TOGGLE_RATE,  GPIO_TOGGLE_RATE,  GPIO_LVDS_RATE,     GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE};
-uint32_t a_uFrequencyExpectedTestCase3[EVENTS] = {0,                 0,                 0,                  0,                  0, 
-                                                  0,                 0,                 0,                  0,                  0               };
+                                                  GPIO_TOGGLE_RATE,  0,                 0,                  0,                  0,
+                                                  0,                 0};
                                                   
+uint32_t a_uFrequencyExpectedTestCase2[EVENTS] = {0,                 0,                 GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE, 
+                                                  GPIO_TOGGLE_RATE,  GPIO_TOGGLE_RATE,  GPIO_LVDS_RATE,     GPIO_TOGGLE_RATE,   GPIO_TOGGLE_RATE,
+                                                  0,                 0};
+                                                  
+uint32_t a_uFrequencyExpectedTestCase3[EVENTS] = {0,                 0,                 0,                  0,                  0, 
+                                                  0,                 0,                 0,                  0,                  0,
+                                                  0,                 0};
 /* Function main(...) */
 /* ==================================================================================================== */
 int main (int argc, const char** argv)

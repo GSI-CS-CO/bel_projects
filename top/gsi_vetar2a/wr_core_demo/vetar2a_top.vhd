@@ -135,7 +135,8 @@ entity vetar2a_top is
     vme_write_n_i       : in    std_logic;   -- M4               
     vme_am_i            : in    std_logic_vector(5 downto 0);    -- 5=V3, 4=Y1, 3=AA1, 2=AD1, 1=AE1, 0=Y4
     vme_ds_n_i          : in    std_logic_vector(1 downto 0);    -- 1=L3, 0=M2
-    vme_ga_i            : in    std_logic_vector(3 downto 0);    -- 3=U4, 2=w3, 1=W2, 0=V4 -- MON3..MON0
+    vme_ga_i            : in    std_logic_vector(3 downto 0);    -- VN1: 3=U4, 2=W3, 1=W2, 0=V4 -- MON3..MON0
+    vme_ga_extended_i   : in    std_logic_vector(3 downto 0);    -- VN2: 7=U1, 6=R3, 5=T3, 4=U5 -- MON7..MON4
     vme_addr_data_b     : inout std_logic_vector(31 downto 0);   -- 31=L6, 30=M5, 29=P1,  28=R1,  27=M6, 26=N6, 25=T4,  24=U3
                                                                  -- 23=P6, 22=R6, 21=V1,  20=W1,  19=P5, 18=N4, 17=AB1, 16=AC1
                                                                  -- 15=T7, 14=T6, 13=AB3, 12=AB2, 11=U6, 10=V6, 9=AC3,  8=AC22
@@ -240,6 +241,10 @@ architecture rtl of vetar2a_top is
   signal s_led_link_act    : std_logic;
   signal s_led_track       : std_logic;
   signal s_led_pps         : std_logic;
+  signal s_led_gpio        : std_logic_vector(3 downto 0);
+  
+  signal s_hex_vn1_i       : std_logic_vector(3 downto 0);
+  signal s_hex_vn2_i       : std_logic_vector(3 downto 0);
   
   signal s_clk_ref         : std_logic;
   signal s_clk_butis       : std_logic;
@@ -269,7 +274,7 @@ begin
       g_project    => "vetar_top2a",
       g_gpio_inout => 3,
       g_gpio_in    => 7,
-      g_gpio_out   => 7,
+      g_gpio_out   => 11,
       g_flash_bits => 24,
       g_en_vme     => true,
       g_en_usb     => true,
@@ -290,6 +295,7 @@ begin
       gpio_o(5 downto 3)     => s_lemo_addOn(2 downto 0),
       gpio_o(8 downto 6)     => s_lemo_addOn_io(2 downto 0),
       gpio_o(9)              => hdmi_o,
+      gpio_o(13 downto 10)   => s_led_gpio(3 downto 0),
       -- gpio in
       gpio_i(1 downto 0)     => lvds_in_i(1 downto 0),
       gpio_i(2)              => lemo_i,
@@ -384,8 +390,16 @@ begin
   leds_o(13) <= not s_led_track;                        -- Timing Valid
   leds_o(12) <= not s_led_pps;
   
+  -- Display VME address
+  s_hex_vn1_i         <= vme_ga_i;
+  s_hex_vn2_i         <= vme_ga_extended_i;
+  leds_o (3 downto 0) <= not(s_hex_vn1_i);
+  leds_o (7 downto 4) <= not(s_hex_vn2_i);
+  
   -- not assigned leds
-  leds_o(11 downto 0)	<= (others => '1'); -- power off
+  --leds_o (3 downto 2) <= not(s_led_gpio(1 downto 0));
+  --leds_o (1 downto 0) <= (others => '1'); -- power off
+  leds_o (11 downto 8) <= not(s_led_gpio(3 downto 0));
   
   -- On board lemo
   ---------------- 
@@ -419,7 +433,7 @@ begin
   lemo_addOn_term_o(1) <= '1' when s_lemo_oen(1)='1' else '0'; -- TERMEN2 (terminate when input)
   lemo_addOn_term_o(2) <= '1' when s_lemo_oen(2)='1' else '0'; -- TERMEN3 (terminate when input)
 
-  led_lemo_term_o <= s_led_pps; -- TBD: This is DAK1 on the addon board
+  led_lemo_term_o <= s_led_pps; -- TBD: This is DAK1 on the addon board -> Future plans?
   
   -- INOUT LEMOs
   -- Red => Output enable LEDs

@@ -82,39 +82,23 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ndac_cs_o[1]
 set_location_assignment PIN_AF1 -to ndac_cs_o[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ndac_cs_o[2]
 set_location_assignment PIN_AH15 -to leds_o[0]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[0]
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_o[0]
 set_location_assignment PIN_Y19 -to leds_o[1]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[1]
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to leds_o[1]
 set_location_assignment PIN_AH18 -to leds_o[2]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[2]
 set_location_assignment PIN_AG18 -to leds_o[3]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[3]
 set_location_assignment PIN_AH19 -to leds_o[4]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[4]
 set_location_assignment PIN_AG19 -to leds_o[5]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[5]
 set_location_assignment PIN_AD21 -to leds_o[6]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[6]
 set_location_assignment PIN_AD22 -to leds_o[7]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[7]
 set_location_assignment PIN_AD23 -to leds_o[8]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[8]
 set_location_assignment PIN_AD24 -to leds_o[9]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[9]
 set_location_assignment PIN_AC24 -to leds_o[10]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[10]
 set_location_assignment PIN_AC21 -to leds_o[11]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[11]
 set_location_assignment PIN_Y20 -to leds_o[12]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[12]
 set_location_assignment PIN_Y22 -to leds_o[13]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[13]
 set_location_assignment PIN_W21 -to leds_o[14]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[14]
 set_location_assignment PIN_V23 -to leds_o[15]
-set_instance_assignment -name IO_STANDARD "2.5 V" -to leds_o[15]
 set_location_assignment PIN_H3 -to lemo_o_en_o
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to lemo_o_en_o
 set_location_assignment PIN_K4 -to lemo_i
@@ -503,6 +487,15 @@ set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to clk_pll_o
 set_instance_assignment -name IO_STANDARD LVDS_E_3R -to "hdmi_o(n)"
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to lvds_out_o[0]
 set_instance_assignment -name IO_MAXIMUM_TOGGLE_RATE "0 MHz" -to color_o[1]
+set_location_assignment PIN_U1 -to vme_ga_extended_i[3]
+set_location_assignment PIN_R3 -to vme_ga_extended_i[2]
+set_location_assignment PIN_T3 -to vme_ga_extended_i[1]
+set_location_assignment PIN_U5 -to vme_ga_extended_i[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_ga_extended_i[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_ga_extended_i[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_ga_extended_i[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_ga_extended_i[3]
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name VHDL_FILE ../../../modules/modulbus/Loader_MB.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_dpram.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/platform/altera/altera_butis.vhd
@@ -917,5 +910,3 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/wi
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/genrams/altera/generic_simple_dpram.vhd
 set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:vetar2a_top.tcl"
 
-
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
