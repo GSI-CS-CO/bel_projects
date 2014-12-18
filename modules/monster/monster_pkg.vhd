@@ -93,7 +93,7 @@ package monster_pkg is
       wr_ext_clk_i           : in    std_logic := '0'; -- 10MHz
       wr_ext_pps_i           : in    std_logic := '0';
       wr_uart_o              : out   std_logic;
-      wr_uart_i              : in    std_logic := '0';
+      wr_uart_i              : in    std_logic := '1';
       -- GPIO for the board (inouts start at 0, dedicated in/outs come after)
       gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0) := (others => '0');
       gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0);

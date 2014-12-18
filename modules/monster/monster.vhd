@@ -1000,7 +1000,7 @@ begin
   
   usb_n : if not g_en_usb generate
     top_cbar_slave_i (c_topm_usb) <= cc_dummy_master_out;
-    uart_usb <= '0';
+    uart_usb <= '1';
     usb_readyn_io <= 'Z';
     usb_fd_io <= (others => 'Z');
   end generate;
@@ -1035,7 +1035,7 @@ begin
   end generate;
   
   wr_uart_o <= uart_wrc;
-  uart_mux <= uart_usb or wr_uart_i;
+  uart_mux <= uart_usb and wr_uart_i;
   
   -- END OF Wishbone masters
   ----------------------------------------------------------------------------------
