@@ -5,9 +5,8 @@
 ##Contents
 
 * Synopsis
-* Register Layout
 * Characters
-* Files
+* Register Layout
 
 ---
 
@@ -23,6 +22,43 @@ The driver is designed to use the serial mode (similar to SPI). Only five pins a
 * Reset (RST)
 
 A wishbone interface with four registers is provided by this unit. For details see section "Register Layout".
+
+---
+
+## Characters
+
+The driver (c-file) can display all ASCII characters from 0x20 to 0x7E. Each character is consists of a 8x6 pixel array.
+Every character is printed with this order:
+
+<pre>
+[00][01][16][17][32][33]
+[02][03][18][19][34][35]
+[04][05][20][21][36][37]
+[06][07][22][23][38][39]
+[08][09][24][25][40][41]
+[10][11][26][27][42][43]
+[12][13][28][29][44][45]
+[14][15][30][31][46][47]
+</pre>
+
+Example for character 'A':
+
+Byte array: {0x0f,0xf0,0xf0,0xff,0xf0,0xf0,0xf0,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00}
+
+Output:
+
+<pre>
+[ ][#][#][#][ ][ ]
+[#][ ][ ][ ][#][ ]
+[#][ ][ ][ ][#][ ]
+[#][#][#][#][#][ ]
+[#][ ][ ][ ][#][ ]
+[#][ ][ ][ ][#][ ]
+[#][ ][ ][ ][#][ ]
+[ ][ ][ ][ ][ ][ ]
+</pre>
+
+Each nibble (half byte) will set one pixel.
 
 ---
 
@@ -61,53 +97,3 @@ A wishbone interface with four registers is provided by this unit. For details s
 | 2      |        0x0 | R/W | Read: Get value. Write: Enable(0x1) or disable(0x0) manual slave select driving. If this bit is set to 0x1, the slave select output will become the value of bit 3
 | 1      |        0x0 | R/W | Read: Get value. Write: Drive DC to high or low (depending on this bit value). |
 | 0      |        0x0 | R/W | Read: Get value. Write: Drive RST to high or low (depending on this bit value). |
-
----
-
-## Characters
-
-The driver (c-file) can display all ASCII characters from 0x20 to 0x7E. Each character is consists of a 8x6 pixel array.
-Every character is printed with this order:
-
-[00][08][16][24][32][40]<br>
-[01][09][17][25][33][41]<br>
-[02][10][18][26][34][42]<br>
-[03][11][19][27][35][43]<br>
-[04][12][20][28][36][44]<br>
-[05][13][21][29][37][45]<br>
-[06][14][22][30][38][46]<br>
-[07][15][23][31][39][47]<br>
-
-Example for character 'A':
-
-Byte array: {0x0f,0xf0,0xf0,0xff,0xf0,0xf0,0xf0,0x00,0xff,0x00,0x00,0xff,0x00,0x00,0x00,0x00,0x00,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0x00}
-
-Output:
-
-[ ][#][#][#][ ][ ]<br>
-[#][ ][ ][ ][#][ ]<br>
-[#][ ][ ][ ][#][ ]<br>
-[#][#][#][#][#][ ]<br>
-[#][ ][ ][ ][#][ ]<br>
-[#][ ][ ][ ][#][ ]<br>
-[#][ ][ ][ ][#][ ]<br>
-[ ][ ][ ][ ][ ][ ]<br>
-
-Each nibble (half byte) will set one pixel.
-
---- 
-
-## Files
-
-### HDL Files
-
-* generic_fifo(_pkg).vhd -> Used as FIFO between wishbone interface and serial master
-* generic_serial_master(_pkg).vhd -> Serial master, will control clock, data and slave select
-* wb_ssd1325_serial_driver(_pkg).vhd -> Main wishbone interface, used to control reset, data/command and slave select (depending on setup)
-* ssd1325_serial_driver_test_bench.vhd -> Simple test bench for the complete unit
-
-### C Files
-
-* ssd1325_serial_driver.h -> Header file for c driver functions
-* ssd1325_serial_driver.c -> Implementation of c driver functions
-

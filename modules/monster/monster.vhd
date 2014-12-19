@@ -52,6 +52,7 @@ use work.VME_Buffer_pack.all;
 use work.wb_mil_scu_pkg.all;
 use work.wr_serialtimestamp_pkg.all;
 use work.wb_ssd1325_serial_driver_pkg.all;
+use work.wb_nau8811_audio_driver_pkg.all;
 use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
 
@@ -76,8 +77,9 @@ entity monster is
     g_en_mil               : boolean;
     g_en_oled              : boolean;
     g_en_lcd               : boolean;
-    g_en_ssd1325           : boolean;
     g_en_cfi               : boolean;
+    g_en_ssd1325           : boolean;
+    g_en_nau8811           : boolean;
     g_en_user_ow           : boolean;
     g_en_fg                : boolean;
     g_lm32_cores           : natural;
@@ -234,14 +236,22 @@ entity monster is
     lcd_flm_o              : out   std_logic := 'Z';
     lcd_in_o               : out   std_logic := 'Z';
     -- g_en_ssd1325
-	 ssd1325_rst_o          : out   std_logic := 'Z';
-	 ssd1325_dc_o           : out   std_logic := 'Z';
-	 ssd1325_ss_o           : out   std_logic := 'Z';
-	 ssd1325_sclk_o         : out   std_logic := 'Z';
-	 ssd1325_data_o         : out   std_logic := 'Z';
-	 -- g_en_cfi
-    cfi_ad                 : out   std_logic_vector(25 downto 1):= (others => 'Z');
-    cfi_df                 : inout std_logic_vector(15 downto 0);
+    ssd1325_rst_o          : out   std_logic := 'Z';
+    ssd1325_dc_o           : out   std_logic := 'Z';
+    ssd1325_ss_o           : out   std_logic := 'Z';
+    ssd1325_sclk_o         : out   std_logic := 'Z';
+    ssd1325_data_o         : out   std_logic := 'Z';
+    -- g_en_nau8811
+    nau8811_spi_csb_o      : out   std_logic := 'Z';
+    nau8811_spi_sclk_o     : out   std_logic := 'Z';
+    nau8811_spi_sdio_o     : out   std_logic := 'Z';
+    nau8811_iis_fs_o       : out   std_logic := 'Z';
+    nau8811_iis_bclk_o     : out   std_logic := 'Z';
+    nau8811_iis_adcout_o   : out   std_logic := 'Z';
+    nau8811_iis_dacin_i    : in    std_logic;
+    -- g_en_cfi
+    cfi_ad                 : out   std_logic_vector(25 downto 1) := (others => 'Z');
+    cfi_df                 : inout std_logic_vector(15 downto 0) := (others => 'Z');
     cfi_adv_fsh            : out   std_logic := 'Z';
     cfi_nce_fsh            : out   std_logic := 'Z';
     cfi_clk_fsh            : out   std_logic := 'Z';
@@ -310,7 +320,7 @@ architecture rtl of monster is
   constant c_topm_fg        : natural := 6;
   
   -- required slaves
-  constant c_top_slaves     : natural := 24;
+  constant c_top_slaves     : natural := 25;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -336,7 +346,8 @@ architecture rtl of monster is
   constant c_tops_fg        : natural := 21;
   constant c_tops_fgirq     : natural := 22;
   constant c_tops_CfiPFlash : natural := 23;
-  
+  constant c_tops_nau8811   : natural := 24;  
+
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   
@@ -367,6 +378,7 @@ architecture rtl of monster is
     c_tops_lcd       => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_tops_ssd1325   => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325),
+    c_tops_nau8811   => f_sdb_auto_device(c_nau8811_sdb,                    g_en_nau8811),
     c_tops_scubus    => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
     c_tops_scubirq   => f_sdb_auto_device(c_scu_irq_ctrl_sdb,               g_en_scubus),
     c_tops_mil       => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
@@ -998,7 +1010,7 @@ begin
   
   usb_n : if not g_en_usb generate
     top_cbar_slave_i (c_topm_usb) <= cc_dummy_master_out;
-    uart_usb <= '0';
+    uart_usb <= '1';
     usb_readyn_io <= 'Z';
     usb_fd_io <= (others => 'Z');
   end generate;
@@ -1033,7 +1045,7 @@ begin
   end generate;
   
   wr_uart_o <= uart_wrc;
-  uart_mux <= uart_usb or wr_uart_i;
+  uart_mux <= uart_usb and wr_uart_i;
   
   -- END OF Wishbone masters
   ----------------------------------------------------------------------------------
@@ -1413,12 +1425,12 @@ begin
     port map(
       clk_i          => clk_sys,
       rst_n_i        => rstn_sys,
-
+      
       -- Wishbone
       slave_i        => top_cbar_master_o(c_tops_CfiPFlash),    -- to Slave
       slave_o        => top_cbar_master_i(c_tops_CfiPFlash),    -- to WB
-	  
-	    -- External Parallel Flash Pins
+      
+      -- External Parallel Flash Pins
       AD             => cfi_ad,
       DF             => cfi_df,
       ADV_FSH        => cfi_adv_fsh,
@@ -1490,6 +1502,31 @@ begin
         ssd_ss_o   => ssd1325_ss_o,    
         ssd_sclk_o => ssd1325_sclk_o,   
         ssd_data_o => ssd1325_data_o    
+      );
+  end generate;
+
+  nau8811_n : if not g_en_nau8811 generate
+    top_cbar_master_i(c_tops_nau8811) <= cc_dummy_slave_out;
+  end generate;
+  nau8811_y : if g_en_nau8811 generate
+    nau8811_audio : wb_nau8811_audio_driver
+      generic map (
+        g_use_external_pll => true
+      )
+      port map (
+        clk_sys_i    => clk_sys,
+        rst_n_i      => rstn_sys,
+        pll_ref_i    => core_clk_125m_local_i,
+        trigger_i    => ext_pps,
+        slave_i      => top_cbar_master_o(c_tops_nau8811),
+        slave_o      => top_cbar_master_i(c_tops_nau8811),
+        spi_csb_o    => nau8811_spi_csb_o,
+        spi_sclk_o   => nau8811_spi_sclk_o,
+        spi_sdio_o   => nau8811_spi_sdio_o, 
+        iis_fs_o     => nau8811_iis_fs_o,
+        iis_bclk_o   => nau8811_iis_bclk_o,
+        iis_adcout_o => nau8811_iis_adcout_o,
+        iis_dacin_i  => nau8811_iis_dacin_i
       );
   end generate;
   
@@ -1665,7 +1702,10 @@ begin
   
   -- fg quad with wb interface, special solution for ring RF
   fg_n  : if not g_en_fg generate
-    top_cbar_master_i(c_tops_fg) <= cc_dummy_slave_out;
+    top_cbar_master_i(c_tops_fg)    <= cc_dummy_slave_out;
+    top_cbar_master_i(c_tops_fgirq) <= cc_dummy_slave_out;
+    top_cbar_slave_i(c_topm_fg)     <= cc_dummy_master_out;
+    irq_cbar_slave_i(c_irqm_fg)     <= cc_dummy_master_out;
   end generate;
   fg_y  : if g_en_fg generate
     fg_quad: wb_fg_quad

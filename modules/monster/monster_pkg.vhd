@@ -35,29 +35,30 @@ package monster_pkg is
 
   component monster is
     generic(
-      g_family      : string; -- "Arria II" or "Arria V"
-      g_project     : string;
-      g_flash_bits  : natural;
-      g_ram_size    : natural := 131072;
-      g_gpio_inout  : natural := 0;
-      g_gpio_in     : natural := 0;
-      g_gpio_out    : natural := 0;
-      g_tlu_fifo_size : natural := 256;
-      g_lvds_inout  : natural := 0;
-      g_lvds_in     : natural := 0;
-      g_lvds_out    : natural := 0;
-      g_lvds_invert : boolean := false;
-      g_en_pcie     : boolean := false;
-      g_en_vme      : boolean := false;
-      g_en_usb      : boolean := false;
-      g_en_scubus   : boolean := false;
-      g_en_mil      : boolean := false;
-      g_en_oled     : boolean := false;
-      g_en_lcd      : boolean := false;
-      g_en_cfi      : boolean := false;
-      g_en_ssd1325  : boolean := false;
-      g_en_user_ow  : boolean := false;
-      g_en_fg       : boolean := false;  
+      g_family               : string; -- "Arria II" or "Arria V"
+      g_project              : string;
+      g_flash_bits           : natural;
+      g_ram_size             : natural := 131072;
+      g_gpio_inout           : natural := 0;
+      g_gpio_in              : natural := 0;
+      g_gpio_out             : natural := 0;
+      g_tlu_fifo_size        : natural := 256;
+      g_lvds_inout           : natural := 0;
+      g_lvds_in              : natural := 0;
+      g_lvds_out             : natural := 0;
+      g_lvds_invert          : boolean := false;
+      g_en_pcie              : boolean := false;
+      g_en_vme               : boolean := false;
+      g_en_usb               : boolean := false;
+      g_en_scubus            : boolean := false;
+      g_en_mil               : boolean := false;
+      g_en_oled              : boolean := false;
+      g_en_lcd               : boolean := false;
+      g_en_cfi               : boolean := false;
+      g_en_ssd1325           : boolean := false;
+      g_en_nau8811           : boolean := false;
+      g_en_user_ow           : boolean := false;
+      g_en_fg                : boolean := false;  
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4;
@@ -92,7 +93,7 @@ package monster_pkg is
       wr_ext_clk_i           : in    std_logic := '0'; -- 10MHz
       wr_ext_pps_i           : in    std_logic := '0';
       wr_uart_o              : out   std_logic;
-      wr_uart_i              : in    std_logic := '0';
+      wr_uart_i              : in    std_logic := '1';
       -- GPIO for the board (inouts start at 0, dedicated in/outs come after)
       gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0) := (others => '0');
       gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0);
@@ -212,13 +213,21 @@ package monster_pkg is
       lcd_lp_o               : out   std_logic;
       lcd_flm_o              : out   std_logic;
       lcd_in_o               : out   std_logic;
-	   -- g_en_ssd1325
-	   ssd1325_rst_o          : out   std_logic;
-	   ssd1325_dc_o           : out   std_logic;
-	   ssd1325_ss_o           : out   std_logic;
-	   ssd1325_sclk_o         : out   std_logic;
-	   ssd1325_data_o         : out   std_logic;
-		-- g_en_cfi
+      -- g_en_ssd1325
+      ssd1325_rst_o          : out   std_logic;
+      ssd1325_dc_o           : out   std_logic;
+      ssd1325_ss_o           : out   std_logic;
+      ssd1325_sclk_o         : out   std_logic;
+      ssd1325_data_o         : out   std_logic;
+      -- g_en_nau8811
+      nau8811_spi_csb_o      : out   std_logic;
+      nau8811_spi_sclk_o     : out   std_logic;
+      nau8811_spi_sdio_o     : out   std_logic;
+      nau8811_iis_fs_o       : out   std_logic;
+      nau8811_iis_bclk_o     : out   std_logic;
+      nau8811_iis_adcout_o   : out   std_logic;
+      nau8811_iis_dacin_i    : in    std_logic := '0';
+      -- g_en_cfi
       cfi_ad                 : out   std_logic_vector(25 downto 1);
       cfi_df                 : inout std_logic_vector(15 downto 0) := (others => 'Z');
       cfi_adv_fsh            : out   std_logic ;
@@ -228,7 +237,6 @@ package monster_pkg is
       cfi_noe_fsh            : out   std_logic ;
       cfi_nrst_fsh           : out   std_logic ;
       cfi_wait_fsh           : in    std_logic := '0';
-
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0));
   end component;

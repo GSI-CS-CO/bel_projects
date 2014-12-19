@@ -1,4 +1,4 @@
-set platform "vetar2a +vetar1db2 +wrex1"
+set platform "vetar2a +vetar1db2a +wrex1"
 source ../../autogen.tcl
 source ../../../modules/build_id/build_id.tcl
 source ../../../ip_cores/general-cores/platform/altera/networks/arria2gx.tcl

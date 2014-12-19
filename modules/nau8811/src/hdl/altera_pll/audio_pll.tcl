@@ -1,0 +1,1 @@
+qmegawiz { audio_pll }

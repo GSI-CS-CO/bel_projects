@@ -31,5 +31,6 @@ modules = {
     "butis_t0",
     "power_test",
     "ssd1325",
+    "nau8811",
   ]
 }

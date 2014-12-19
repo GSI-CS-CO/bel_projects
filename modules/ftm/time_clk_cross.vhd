@@ -81,7 +81,7 @@ begin
       g_parts     => 4,
       g_offset    => g_delay_comp)
     port map(
-      clk_i => clk_sys_i,
+      clk_i => clk_ref_i,
       a_i   => s_time_ref,
       c1_o  => open,
       x2_o  => s_time_ref_cor,
