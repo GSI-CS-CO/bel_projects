@@ -46,16 +46,16 @@ entity exploder5_csco_tr is
     -----------------------------------------------------------------------
     -- SRAM (with DDR hidden inside)
     -----------------------------------------------------------------------
-    sram_a            : out   std_logic_vector(23 downto 0); -- !!! unused
-    sram_dq           : inout std_logic_vector(15 downto 0);
-    sram_clk          : out   std_logic;
-    sram_advn         : out   std_logic;
-    sram_cre          : out   std_logic;
-    sram_cen          : out   std_logic;
-    sram_oen          : out   std_logic;
-    sram_wen          : out   std_logic;
-    sram_be0          : out   std_logic;
-    sram_be1          : out   std_logic;
+    sram_a            : out   std_logic_vector(23 downto 0) := (others => 'Z');
+    sram_dq           : inout std_logic_vector(15 downto 0) := (others => 'Z');
+    sram_clk          : out   std_logic := 'Z';
+    sram_advn         : out   std_logic := 'Z';
+    sram_cre          : out   std_logic := 'Z';
+    sram_cen          : out   std_logic := 'Z';
+    sram_oen          : out   std_logic := 'Z';
+    sram_wen          : out   std_logic := 'Z';
+    sram_be0          : out   std_logic := 'Z';
+    sram_be1          : out   std_logic := 'Z';
     sram_wait         : in    std_logic; -- DDR magic
     
     -----------------------------------------------------------------------
@@ -193,6 +193,8 @@ end exploder5_csco_tr;
 
 architecture rtl of exploder5_csco_tr is
 
+  constant c_psram_bits : natural := 22;  -- Shitty ISSI chip is only 8MB (16*2^22/8)
+
   signal led_link_up  : std_logic;
   signal led_link_act : std_logic;
   signal led_track    : std_logic;
@@ -219,6 +221,7 @@ begin
       g_family      => "Arria V",
       g_project     => "exploder5_csco_tr",
       g_flash_bits  => 25,
+      g_psram_bits  => c_psram_bits,
       g_gpio_in     => 4,
       g_gpio_out    => 4,
       g_lvds_in     => 3,
@@ -228,6 +231,7 @@ begin
       g_en_usb      => true,
       g_en_ssd1325  => true,
       g_en_nau8811  => true,
+      g_en_psram    => true,
       g_en_user_ow  => true)
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
@@ -290,6 +294,17 @@ begin
       nau8811_iis_bclk_o     => aud_iis_bclk_o,
       nau8811_iis_adcout_o   => aud_iis_adcout_o,
       nau8811_iis_dacin_i    => aud_iis_dacin_i,
+      ps_clk                 => sram_clk,
+      ps_addr                => sram_a(c_psram_bits-1 downto 0),
+      ps_data                => sram_dq,
+      ps_seln(0)             => sram_be0,
+      ps_seln(1)             => sram_be1,
+      ps_cen                 => sram_cen,
+      ps_oen                 => sram_oen,
+      ps_wen                 => sram_wen,
+      ps_cre                 => sram_cre,
+      ps_advn                => sram_advn,
+      ps_wait                => sram_wait,
       ow_io(0)               => db_rom_data_io,
       ow_io(1)               => 'Z');
 
