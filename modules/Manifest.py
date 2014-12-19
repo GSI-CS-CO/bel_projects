@@ -32,5 +32,6 @@ modules = {
     "power_test",
     "ssd1325",
     "nau8811",
+    "psram",
   ]
 }
