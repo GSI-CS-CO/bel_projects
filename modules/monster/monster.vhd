@@ -55,12 +55,14 @@ use work.wb_ssd1325_serial_driver_pkg.all;
 use work.wb_nau8811_audio_driver_pkg.all;
 use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
+use work.psram_pkg.all;
 
 entity monster is
   generic(
     g_family               : string; -- "Arria II" or "Arria V"
     g_project              : string;
     g_flash_bits           : natural;
+    g_psram_bits           : natural;
     g_ram_size             : natural;
     g_gpio_inout           : natural;
     g_gpio_in              : natural;
@@ -82,6 +84,7 @@ entity monster is
     g_en_nau8811           : boolean;
     g_en_user_ow           : boolean;
     g_en_fg                : boolean;
+    g_en_psram             : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -251,7 +254,7 @@ entity monster is
     nau8811_iis_dacin_i    : in    std_logic;
     -- g_en_cfi
     cfi_ad                 : out   std_logic_vector(25 downto 1) := (others => 'Z');
-    cfi_df                 : inout std_logic_vector(15 downto 0) := (others => 'Z');
+    cfi_df                 : inout std_logic_vector(15 downto 0);
     cfi_adv_fsh            : out   std_logic := 'Z';
     cfi_nce_fsh            : out   std_logic := 'Z';
     cfi_clk_fsh            : out   std_logic := 'Z';
@@ -259,6 +262,17 @@ entity monster is
     cfi_noe_fsh            : out   std_logic := 'Z';
     cfi_nrst_fsh           : out   std_logic := 'Z';
     cfi_wait_fsh           : in    std_logic;
+    -- g_en_psram
+    ps_clk                 : out   std_logic := 'Z';
+    ps_addr                : out   std_logic_vector(g_psram_bits-1 downto 0) := (others => 'Z');
+    ps_data                : inout std_logic_vector(15 downto 0);
+    ps_seln                : out   std_logic_vector(1 downto 0) := (others => 'Z');
+    ps_cen                 : out   std_logic := 'Z';
+    ps_oen                 : out   std_logic := 'Z';
+    ps_wen                 : out   std_logic := 'Z';
+    ps_cre                 : out   std_logic := 'Z';
+    ps_advn                : out   std_logic := 'Z';
+    ps_wait                : in    std_logic;
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0));
 end monster;
@@ -320,7 +334,7 @@ architecture rtl of monster is
   constant c_topm_fg        : natural := 6;
   
   -- required slaves
-  constant c_top_slaves     : natural := 25;
+  constant c_top_slaves     : natural := 26;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -346,7 +360,8 @@ architecture rtl of monster is
   constant c_tops_fg        : natural := 21;
   constant c_tops_fgirq     : natural := 22;
   constant c_tops_CfiPFlash : natural := 23;
-  constant c_tops_nau8811   : natural := 24;  
+  constant c_tops_nau8811   : natural := 24;
+  constant c_tops_psram     : natural := 25;
 
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -386,7 +401,8 @@ architecture rtl of monster is
     c_tops_vme_info  => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme),
     c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow),
     c_tops_fg        => f_sdb_auto_device(c_wb_fg_sdb,                      g_en_fg),
-    c_tops_fgirq     => f_sdb_auto_device(c_fg_irq_ctrl_sdb,                g_en_fg));
+    c_tops_fgirq     => f_sdb_auto_device(c_fg_irq_ctrl_sdb,                g_en_fg),
+    c_tops_psram     => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram));
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_top_layout_req);
@@ -1699,7 +1715,6 @@ begin
         );
   end generate;
   
-  
   -- fg quad with wb interface, special solution for ring RF
   fg_n  : if not g_en_fg generate
     top_cbar_master_i(c_tops_fg)    <= cc_dummy_slave_out;
@@ -1730,7 +1745,30 @@ begin
         -- master interface to irq crossbar
         irq_mst_i => irq_cbar_slave_o(c_irqm_fg),
         irq_mst_o => irq_cbar_slave_i(c_irqm_fg));
-      
+  end generate;
+  
+  psram_n : if not g_en_psram generate
+    top_cbar_master_i(c_tops_psram) <= cc_dummy_slave_out;
+  end generate;
+  psram_y : if g_en_psram generate
+    ram : psram
+      generic map(
+        g_bits => g_psram_bits)
+      port map(
+      clk_i     => clk_sys,
+      rstn_i    => rstn_sys,
+      slave_i   => top_cbar_master_o(c_tops_psram),
+      slave_o   => top_cbar_master_i(c_tops_psram),
+      ps_clk    => ps_clk,
+      ps_addr   => ps_addr,
+      ps_data   => ps_data,
+      ps_seln   => ps_seln,
+      ps_cen    => ps_cen,
+      ps_oen    => ps_oen,
+      ps_wen    => ps_wen,
+      ps_cre    => ps_cre,
+      ps_advn   => ps_advn,
+      ps_wait   => ps_wait);
   end generate;
  
   -- END OF Wishbone slaves

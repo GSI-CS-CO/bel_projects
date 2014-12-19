@@ -38,6 +38,7 @@ package monster_pkg is
       g_family               : string; -- "Arria II" or "Arria V"
       g_project              : string;
       g_flash_bits           : natural;
+      g_psram_bits           : natural := 24;
       g_ram_size             : natural := 131072;
       g_gpio_inout           : natural := 0;
       g_gpio_in              : natural := 0;
@@ -59,6 +60,7 @@ package monster_pkg is
       g_en_nau8811           : boolean := false;
       g_en_user_ow           : boolean := false;
       g_en_fg                : boolean := false;  
+      g_en_psram             : boolean := false;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4;
@@ -237,8 +239,19 @@ package monster_pkg is
       cfi_noe_fsh            : out   std_logic ;
       cfi_nrst_fsh           : out   std_logic ;
       cfi_wait_fsh           : in    std_logic := '0';
+      -- g_en_psram
+      ps_clk                 : out   std_logic;
+      ps_addr                : out   std_logic_vector(g_psram_bits-1 downto 0);
+      ps_data                : inout std_logic_vector(15 downto 0) := (others => 'Z');
+      ps_seln                : out   std_logic_vector(1 downto 0);
+      ps_cen                 : out   std_logic;
+      ps_oen                 : out   std_logic;
+      ps_wen                 : out   std_logic;
+      ps_cre                 : out   std_logic;
+      ps_advn                : out   std_logic;
+      ps_wait                : in    std_logic := '0';
       -- g_en_user_ow
-      ow_io                  : inout std_logic_vector(1 downto 0));
+      ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z'));
   end component;
 
   constant c_iodir_sdb : t_sdb_device := (
