@@ -32,7 +32,8 @@ package psram_pkg is
   
   component psram is
     generic(
-      g_bits : natural := 24);
+      g_bits     : natural := 24;
+      g_row_bits : natural := 8);
     port(
       clk_i     : in    std_logic;
       rstn_i    : in    std_logic;
@@ -65,7 +66,7 @@ package body psram_pkg is
     result.wbd_endian    := c_sdb_endian_big;
     
     result.sdb_component.addr_first := (others => '0');
-    result.sdb_component.addr_last  := std_logic_vector(to_unsigned(2**g_bits, 64));
+    result.sdb_component.addr_last  := std_logic_vector(to_unsigned(2**(g_bits+1)-1, 64));
     
     result.sdb_component.product.vendor_id := x"0000000000000651";
     result.sdb_component.product.device_id := x"169edcb7";
