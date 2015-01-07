@@ -324,7 +324,7 @@ architecture rtl of monster is
   -- GSI Top Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
   
-  constant c_top_masters    : natural := 7;
+  constant c_top_masters    : natural := 8;
   constant c_topm_ebs       : natural := 0;
   constant c_topm_lm32      : natural := 1;
   constant c_topm_pcie      : natural := 2;
@@ -332,9 +332,10 @@ architecture rtl of monster is
   constant c_topm_usb       : natural := 4;
   constant c_topm_fpq       : natural := 5;
   constant c_topm_fg        : natural := 6;
+  constant c_topm_eca_wbm   : natural := 7;
   
   -- required slaves
-  constant c_top_slaves     : natural := 26;
+  constant c_top_slaves     : natural := 27;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -347,6 +348,8 @@ architecture rtl of monster is
   constant c_tops_eca_event : natural := 9;
   constant c_tops_eca_aq    : natural := 10;
   constant c_tops_iodir     : natural := 11;
+  constant c_tops_eca_wbm   : natural := 26;
+
   -- optional slaves:
   constant c_tops_lcd       : natural := 12;
   constant c_tops_oled      : natural := 13;
@@ -402,7 +405,9 @@ architecture rtl of monster is
     c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow),
     c_tops_fg        => f_sdb_auto_device(c_wb_fg_sdb,                      g_en_fg),
     c_tops_fgirq     => f_sdb_auto_device(c_fg_irq_ctrl_sdb,                g_en_fg),
-    c_tops_psram     => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram));
+    c_tops_psram     => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
+    c_tops_eca_wbm   => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           true)
+);
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_top_layout_req);
@@ -540,7 +545,7 @@ architecture rtl of monster is
   signal sfp_scl_o : std_logic;
   signal sfp_sda_o : std_logic;
   
-  signal channels : t_channel_array(3 downto 0);
+  signal channels : t_channel_array(4 downto 0);
   
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
@@ -1350,10 +1355,11 @@ begin
       g_channel_names => (f_name("GPIO: gpio triggers"),
                           f_name("RTOS: Action Queue"),
                           f_name("GPIO: lvds triggers"),
-                          f_name("SCUBUS: tag to scubus")),
+                          f_name("SCUBUS: tag to scubus"),
+                          f_name("WB:   WB Master")),
       g_log_table_size => 7,
       g_log_queue_len  => 8,
-      g_num_channels   => 4,
+      g_num_channels   => 5,
       g_num_streams    => 1)
     port map(
       e_clk_i  (0)=> clk_sys,
@@ -1411,6 +1417,24 @@ begin
       tag_valid => tag_valid,
       tag       => tag);
   
+c4: eca_ac_wbm
+  generic map(
+     g_entries  => 16,
+     g_ram_size => 128   
+  )
+  Port map(
+   clk_ref_i   => clk_ref,                                           
+   rst_ref_n_i => rstn_ref,
+   channel_i   => channels(4),
+   
+   clk_sys_i   => clk_sys,
+   rst_sys_n_i => rstn_sys,
+   slave_i     => top_cbar_master_o(c_tops_eca_wbm),
+   slave_o     => top_cbar_master_i(c_tops_eca_wbm),
+   master_o    => top_cbar_slave_i(c_topm_eca_wbm),
+   master_i    => top_cbar_slave_o(c_topm_eca_wbm)                                         
+  );
+
   lvds_pins : altera_lvds
     generic map(
       g_family  => g_family,
