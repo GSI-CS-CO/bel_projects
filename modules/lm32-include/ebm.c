@@ -29,7 +29,7 @@
 static inline char* strsplit(const char*  numstr, const char* delimeter);
 static inline unsigned char* numStrToBytes(const char*  numstr, unsigned char* bytes,  unsigned char len,  unsigned char base, const char* delimeter);
 static inline unsigned char* addressStrToBytes(const char* addressStr, unsigned char* addressBytes, adress_type_t addtype);
-static inline unsigned int ebm_parse_adr(eb_lm32_udp_link* link, const char* address);
+static inline uint32_t ebm_parse_adr(eb_lm32_udp_link* link, const char* address);
 
 void ebm_init()
 {
@@ -44,9 +44,9 @@ void ebm_init()
 void ebm_config_if(target_t conf, const char* con_info)
 {
   eb_lm32_udp_link link;
-  unsigned int offset;
+  uint32_t offset;
   
-  unsigned int tmp;
+  uint32_t tmp;
   ebm_parse_adr(&link, con_info);
   
   
@@ -62,11 +62,11 @@ void ebm_config_if(target_t conf, const char* con_info)
   tmp = (link.ipv4[0] << 24) | (link.ipv4[1] << 16) | (link.ipv4[2] << 8) | link.ipv4[3];
   *(pEbm + ((offset + EBM_OFFS_IPV4)     >>2)) =  tmp;  
   
-  *(pEbm + ((offset + EBM_OFFS_UDP_PORT) >>2)) = (unsigned int)link.port;
+  *(pEbm + ((offset + EBM_OFFS_UDP_PORT) >>2)) = (uint32_t)link.port;
   
 }
 
-void ebm_config_meta(unsigned int mtu, unsigned int hi_bits, unsigned int max_ops, unsigned int eb_ops)
+void ebm_config_meta(uint32_t mtu, uint32_t hi_bits, uint32_t max_ops, uint32_t eb_ops)
 {
   *(pEbm + (EBM_REG_MTU      >>2)) = mtu;  
   *(pEbm + (EBM_REG_ADR_HI   >>2)) = hi_bits;
@@ -75,23 +75,45 @@ void ebm_config_meta(unsigned int mtu, unsigned int hi_bits, unsigned int max_op
 }
 
 
-void ebm_hi(unsigned int address)
+void ebm_hi(uint32_t address)
 {
     *(pEbm + (EBM_REG_ADR_HI   >>2)) = address;
     return;
 }
 
-void ebm_op(unsigned int address, unsigned int value, unsigned int optype)
+void ebm_op(uint32_t address, uint32_t value, uint32_t optype)
 {
-    unsigned int offset = EBM_OFFS_DAT;
+    uint32_t offset = EBM_OFFS_DAT;
     offset += (address & EBM_ADR_MASK) + optype;
     *(pEbm + (offset>>2)) = value;
     return;
 }
 
+
+void ebm_clr(void)
+{
+  *(pEbm + (EBM_REG_CLEAR>>2)) = 0x01;
+}
+
+
 void ebm_flush(void)
 {
   *(pEbm + (EBM_REG_FLUSH>>2)) = 0x01;
+}
+
+void ebm_udp(uint32_t value)
+{
+    *(pEbm + (EBM_REG_UDP_DATA>>2)) = value;
+}
+
+void ebm_udp_start(void)
+{
+  *(pEbm + (EBM_REG_UDP_RAW>>2)) = 0x01;
+}
+
+void ebm_udp_end(void)
+{
+  ebm_flush();
 }
 
 
@@ -158,11 +180,11 @@ static  unsigned char* addressStrToBytes(const char* addressStr, unsigned char* 
 	
 }
 
-static unsigned int ebm_parse_adr(eb_lm32_udp_link* link, const char* address) {
+static uint32_t ebm_parse_adr(eb_lm32_udp_link* link, const char* address) {
   
 
   char * pch;
-  unsigned int stat = 1;
+  uint32_t stat = 1;
 
 	//a proper address string must contain, MAC, IP and port: "hw/11:22:33:44:55:66/udp/192.168.0.1/port/60368"
 	//parse and fill link struct
