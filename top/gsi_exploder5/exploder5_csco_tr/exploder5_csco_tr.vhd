@@ -287,9 +287,9 @@ begin
       ssd1325_ss_o           => dsp_csn_o,
       ssd1325_sclk_o         => dsp_d0_o,
       ssd1325_data_o         => dsp_d1_o,
-      nau8811_spi_csb_o      => s_nau8811_spi_csb,
-      nau8811_spi_sclk_o     => s_nau8811_spi_sclk,
-      nau8811_spi_sdio_o     => s_nau8811_spi_sdio,
+      nau8811_spi_csb_o      => aud_spi_csb_o,
+      nau8811_spi_sclk_o     => aud_spi_sclk_o,
+      nau8811_spi_sdio_o     => aud_spi_sdio_o,
       nau8811_iis_fs_o       => aud_iis_fs_o,
       nau8811_iis_bclk_o     => aud_iis_bclk_o,
       nau8811_iis_adcout_o   => aud_iis_adcout_o,
@@ -307,11 +307,6 @@ begin
       ps_wait                => sram_wait,
       ow_io(0)               => db_rom_data_io,
       ow_io(1)               => 'Z');
-
-  -- Open-drain for 3.3V pull-up on nau SPI
-  aud_spi_csb_o  <= '0' when s_nau8811_spi_csb ='0' else 'Z';
-  aud_spi_sclk_o <= '0' when s_nau8811_spi_sclk='0' else 'Z';
-  aud_spi_sdio_o <= '0' when s_nau8811_spi_sdio='0' else 'Z';
   
   -- SFP1-3 are not mounted
   sfp1_tx_disable_o <= '1';
