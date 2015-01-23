@@ -31,6 +31,16 @@ static inline unsigned char* numStrToBytes(const char*  numstr, unsigned char* b
 static inline unsigned char* addressStrToBytes(const char* addressStr, unsigned char* addressBytes, adress_type_t addtype);
 static inline unsigned int ebm_parse_adr(eb_lm32_udp_link* link, const char* address);
 
+void ebm_init()
+{
+   uintptr_t ebmMask = (uintptr_t)pEbmLast - (uintptr_t)pEbm;
+   EBM_ADR_MASK  = ebmMask >> 2;
+   EBM_OFFS_DAT  = ebmMask ^ (ebmMask >> 1);
+   EBM_OFFS_WR   = EBM_OFFS_DAT >> 1; 
+   EBM_WRITE     = EBM_OFFS_WR;
+   EBM_READ      = 0;  
+}
+
 void ebm_config_if(target_t conf, const char* con_info)
 {
   eb_lm32_udp_link link;
@@ -56,23 +66,25 @@ void ebm_config_if(target_t conf, const char* con_info)
   
 }
 
-void ebm_config_meta(unsigned int pac_len, unsigned int hi_bits, unsigned int max_ops, unsigned int eb_ops)
+void ebm_config_meta(unsigned int mtu, unsigned int hi_bits, unsigned int max_ops, unsigned int eb_ops)
 {
-  *(pEbm + (EBM_REG_PAC_LEN  >>2)) = pac_len;  
-  *(pEbm + (EBM_REG_OPA_HI   >>2)) = hi_bits;
+  *(pEbm + (EBM_REG_MTU      >>2)) = mtu;  
+  *(pEbm + (EBM_REG_ADR_HI   >>2)) = hi_bits;
   *(pEbm + (EBM_REG_OPS_MAX  >>2)) = max_ops;
   *(pEbm + (EBM_REG_EB_OPT   >>2)) = eb_ops;
 }
 
 
+void ebm_hi(unsigned int address)
+{
+    *(pEbm + (EBM_REG_ADR_HI   >>2)) = address;
+    return;
+}
+
 void ebm_op(unsigned int address, unsigned int value, unsigned int optype)
 {
     unsigned int offset = EBM_OFFS_DAT;
-    //set hibits according to desired address
-    //*(pEbm + (EBM_REG_OPA_HI >> 2)) = (address & ~ADR_MASK);
-    
-    offset += optype;
-     offset += (address & ADR_MASK);
+    offset += (address & EBM_ADR_MASK) + optype;
     *(pEbm + (offset>>2)) = value;
     return;
 }

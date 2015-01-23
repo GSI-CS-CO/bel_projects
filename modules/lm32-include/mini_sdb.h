@@ -49,9 +49,12 @@
 #define WR_1Wire              0x779c5443
 #define WB_FG_QUAD            0x863e07f0
 
+#define WR_CFIPFlash          0x12122121  
+
 //periphery device pointers
 volatile unsigned int* pTlu; 
-volatile unsigned int* pEbm;     
+volatile unsigned int* pEbm;
+volatile unsigned int* pEbmLast;
 volatile unsigned int* pOledDisplay;     
 volatile unsigned int* pFpqCtrl;
 volatile unsigned int* pFpqData;
@@ -67,6 +70,8 @@ volatile unsigned int* BASE_UART;
 volatile unsigned int* pSharedRam;
 volatile unsigned int* pCluCB;
 volatile unsigned int* pOneWire;
+
+volatile unsigned int* pCfiPFlash;
 
 typedef struct pair64 {
   unsigned int high;
@@ -133,6 +138,7 @@ unsigned int*  find_device_adr_in_subtree(sdb_location *loc, unsigned int venId,
 
 sdb_location*  find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, unsigned int base, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId);
 unsigned int   getSdbAdr(sdb_location *loc);
+unsigned int getSdbAdrLast(sdb_location *loc);
 sdb_record_t*  getChild(sdb_location *loc);
 
 unsigned char *find_device(unsigned int devid); //DEPRECATED, USE find_device_adr INSTEAD!

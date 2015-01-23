@@ -46,7 +46,8 @@ volatile unsigned int* scub_irq_base;
 volatile unsigned int* wb_fg_irq_base;
 volatile unsigned int* wb_fg_base;
 volatile unsigned int* scu_mil_base;
-sdb_location lm32_irq_endp[10]; // there are three queues for msis
+sdb_location lm32_irq_endp[10];       // there are three queues for msis
+sdb_location ow_base[2];              // there should be two controllers
 volatile unsigned int* pcie_irq_endp;
 
 volatile unsigned int param_sent[MAX_FG_DEVICES];
@@ -444,14 +445,25 @@ void sw_irq_handler() {
     break;
   }
 }
+void updateTemp() {
+  BASE_ONEWIRE = (unsigned int *)getSdbAdr(&ow_base[0]);
+  wrpc_w1_init();
+  ReadTempDevices(0, &board_id, &board_temp);
+  BASE_ONEWIRE = (unsigned int *)getSdbAdr(&ow_base[1]);
+  wrpc_w1_init();
+  ReadTempDevices(0, &ext_id, &ext_temp);
+  ReadTempDevices(1, &backplane_id, &backplane_temp);
+  BASE_ONEWIRE = (unsigned int *)getSdbAdr(&ow_base[0]); // important for PTP deamon 
+  wrpc_w1_init();
+}
 
-void error_handler() {
-  mprintf("timer isr called!\n");
+void tmr_irq_handler() {
+  updateTemp();
 }
 
 void init_irq_handlers() {
   isr_table_clr();
-  isr_ptr_table[0] = &error_handler;
+  isr_ptr_table[0] = &tmr_irq_handler;
   isr_ptr_table[1] = &slave_irq_handler;
   isr_ptr_table[2] = &sw_irq_handler;
   isr_ptr_table[3] = &wb_fg_irq_handler;  
@@ -460,8 +472,10 @@ void init_irq_handlers() {
   mprintf("MSI IRQs configured.\n");
 }
 
+
 void init() {
   uart_init_hw();           //enables the uart for debug messages
+  updateTemp();            //update 1Wire ID and temperatures
   print_fgs();              //scans for slave cards and fgs
   init_buffers(&fg_buffer); //init the ring buffer
   init_irq_handlers();      //enable the irqs
@@ -470,18 +484,20 @@ void init() {
 int main(void) {
   char input;
   int i, j;
-  int idx = 0;
+  int lm32_endp_idx = 0;
+  int ow_base_idx = 0;
   int slot;
   int fg_is_running[MAX_FG_DEVICES];
   discoverPeriphery();  
   scub_base     = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
-  BASE_ONEWIRE  = (unsigned int*)find_device_adr(CERN, WR_1Wire);
+  //BASE_ONEWIRE  = (unsigned int*)find_device_adr(CERN, WR_1Wire);
   scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);    // irq controller for scu bus
   wb_fg_irq_base = (unsigned int*)find_device_adr(GSI, WB_FG_IRQ_CTRL); // irq controller for wb_fg
-  find_device_multi(lm32_irq_endp, &idx, 10, GSI, IRQ_ENDPOINT);
+  find_device_multi(lm32_irq_endp, &lm32_endp_idx, 10, GSI, IRQ_ENDPOINT);
   pcie_irq_endp = (unsigned int *)find_device_adr(GSI, PCIE_IRQ_ENDP);
   scu_mil_base = (unsigned int*)find_device(SCU_MIL);
   wb_fg_base = (unsigned int*)find_device_adr(GSI, WB_FG_QUAD);
+  find_device_multi(ow_base, &ow_base_idx, 2, CERN, WR_1Wire);
  
   if(wb_fg_base)
     wb_fg_base[WB_FG_SW_DST]  = 0x80420808; // write to the first slave, offset 0x404 and 0x405
@@ -492,17 +508,23 @@ int main(void) {
   usleep(1500000); //wait for powerup of the slave cards
   init(); 
 
-  mprintf("number of lm32_irq_endpoints found: %d\n", idx);
-  for (i=0; i < idx; i++) {
+  mprintf("number of lm32_irq_endpoints found: %d\n", lm32_endp_idx);
+  for (i=0; i < lm32_endp_idx; i++) {
     mprintf("irq_endp[%d] is: 0x%x\n",i, getSdbAdr(&lm32_irq_endp[i]));
+  }
+  mprintf("number of 1Wire controllers found: %d\n", ow_base_idx);
+  for (i=0; i < ow_base_idx; i++) {
+    mprintf("ow_base[%d] is: 0x%x\n",i, getSdbAdr(&ow_base[i]));
   }
   mprintf("pcie_irq_endp is: 0x%x\n", pcie_irq_endp);
   mprintf("scub_irq_base is: 0x%x\n", scub_irq_base);
   mprintf("wb_fg_irq_base is: 0x%x\n", wb_fg_irq_base); 
-  mprintf("wb_fg_base is: 0x%x\n", wb_fg_base); 
+  mprintf("wb_fg_base is: 0x%x\n", wb_fg_base);
 
-
-  while(1); /*FIXME*/
+  while(1) {
+    updateTemp();
+    msDelay(2500);
+  }
   while(1) { 
     i = 0; 
     while(scub.slaves[i].unique_id) { /* more slaves in list */ 

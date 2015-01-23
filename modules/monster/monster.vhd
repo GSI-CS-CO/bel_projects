@@ -52,13 +52,17 @@ use work.VME_Buffer_pack.all;
 use work.wb_mil_scu_pkg.all;
 use work.wr_serialtimestamp_pkg.all;
 use work.wb_ssd1325_serial_driver_pkg.all;
+use work.wb_nau8811_audio_driver_pkg.all;
 use work.fg_quad_pkg.all;
+use work.cfi_flash_pkg.all;
+use work.psram_pkg.all;
 
 entity monster is
   generic(
     g_family               : string; -- "Arria II" or "Arria V"
     g_project              : string;
     g_flash_bits           : natural;
+    g_psram_bits           : natural;
     g_ram_size             : natural;
     g_gpio_inout           : natural;
     g_gpio_in              : natural;
@@ -75,9 +79,12 @@ entity monster is
     g_en_mil               : boolean;
     g_en_oled              : boolean;
     g_en_lcd               : boolean;
+    g_en_cfi               : boolean;
     g_en_ssd1325           : boolean;
+    g_en_nau8811           : boolean;
     g_en_user_ow           : boolean;
     g_en_fg                : boolean;
+    g_en_psram             : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -231,12 +238,41 @@ entity monster is
     lcd_lp_o               : out   std_logic := 'Z';
     lcd_flm_o              : out   std_logic := 'Z';
     lcd_in_o               : out   std_logic := 'Z';
-	 -- g_en_ssd1325
-	 ssd1325_rst_o          : out   std_logic := 'Z';
-	 ssd1325_dc_o           : out   std_logic := 'Z';
-	 ssd1325_ss_o           : out   std_logic := 'Z';
-	 ssd1325_sclk_o         : out   std_logic := 'Z';
-	 ssd1325_data_o         : out   std_logic := 'Z';
+    -- g_en_ssd1325
+    ssd1325_rst_o          : out   std_logic := 'Z';
+    ssd1325_dc_o           : out   std_logic := 'Z';
+    ssd1325_ss_o           : out   std_logic := 'Z';
+    ssd1325_sclk_o         : out   std_logic := 'Z';
+    ssd1325_data_o         : out   std_logic := 'Z';
+    -- g_en_nau8811
+    nau8811_spi_csb_o      : out   std_logic := 'Z';
+    nau8811_spi_sclk_o     : out   std_logic := 'Z';
+    nau8811_spi_sdio_o     : out   std_logic := 'Z';
+    nau8811_iis_fs_o       : out   std_logic := 'Z';
+    nau8811_iis_bclk_o     : out   std_logic := 'Z';
+    nau8811_iis_adcout_o   : out   std_logic := 'Z';
+    nau8811_iis_dacin_i    : in    std_logic;
+    -- g_en_cfi
+    cfi_ad                 : out   std_logic_vector(25 downto 1) := (others => 'Z');
+    cfi_df                 : inout std_logic_vector(15 downto 0);
+    cfi_adv_fsh            : out   std_logic := 'Z';
+    cfi_nce_fsh            : out   std_logic := 'Z';
+    cfi_clk_fsh            : out   std_logic := 'Z';
+    cfi_nwe_fsh            : out   std_logic := 'Z';
+    cfi_noe_fsh            : out   std_logic := 'Z';
+    cfi_nrst_fsh           : out   std_logic := 'Z';
+    cfi_wait_fsh           : in    std_logic;
+    -- g_en_psram
+    ps_clk                 : out   std_logic := 'Z';
+    ps_addr                : out   std_logic_vector(g_psram_bits-1 downto 0) := (others => 'Z');
+    ps_data                : inout std_logic_vector(15 downto 0);
+    ps_seln                : out   std_logic_vector(1 downto 0) := (others => 'Z');
+    ps_cen                 : out   std_logic := 'Z';
+    ps_oen                 : out   std_logic := 'Z';
+    ps_wen                 : out   std_logic := 'Z';
+    ps_cre                 : out   std_logic := 'Z';
+    ps_advn                : out   std_logic := 'Z';
+    ps_wait                : in    std_logic;
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0));
 end monster;
@@ -298,7 +334,7 @@ architecture rtl of monster is
   constant c_topm_fg        : natural := 6;
   
   -- required slaves
-  constant c_top_slaves     : natural := 23;
+  constant c_top_slaves     : natural := 26;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -323,7 +359,10 @@ architecture rtl of monster is
   constant c_tops_vme_info  : natural := 20;
   constant c_tops_fg        : natural := 21;
   constant c_tops_fgirq     : natural := 22;
-  
+  constant c_tops_CfiPFlash : natural := 23;
+  constant c_tops_nau8811   : natural := 24;
+  constant c_tops_psram     : natural := 25;
+
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   
@@ -350,9 +389,11 @@ architecture rtl of monster is
     c_tops_eca_event => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
     c_tops_eca_aq    => f_sdb_auto_device(c_eca_queue_sdb,                  true),
     c_tops_iodir     => f_sdb_auto_device(c_iodir_sdb,                      true),
+    c_tops_CfiPFlash => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
     c_tops_lcd       => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_tops_ssd1325   => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325),
+    c_tops_nau8811   => f_sdb_auto_device(c_nau8811_sdb,                    g_en_nau8811),
     c_tops_scubus    => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
     c_tops_scubirq   => f_sdb_auto_device(c_scu_irq_ctrl_sdb,               g_en_scubus),
     c_tops_mil       => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
@@ -360,7 +401,8 @@ architecture rtl of monster is
     c_tops_vme_info  => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme),
     c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow),
     c_tops_fg        => f_sdb_auto_device(c_wb_fg_sdb,                      g_en_fg),
-    c_tops_fgirq     => f_sdb_auto_device(c_fg_irq_ctrl_sdb,                g_en_fg));
+    c_tops_fgirq     => f_sdb_auto_device(c_fg_irq_ctrl_sdb,                g_en_fg),
+    c_tops_psram     => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram));
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_top_layout_req);
@@ -498,7 +540,7 @@ architecture rtl of monster is
   signal sfp_scl_o : std_logic;
   signal sfp_sda_o : std_logic;
   
-  signal channels : t_channel_array(2 downto 0);
+  signal channels : t_channel_array(3 downto 0);
   
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
@@ -515,6 +557,16 @@ architecture rtl of monster is
   signal  mil_every_ms_intr_o:  std_logic;
   
   -- Mil-Extension signals
+  ----------------------------------------------------------------------------------
+  
+  ----------------------------------------------------------------------------------
+  -- SCU bus signals ---------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  
+  signal  tag        : std_logic_vector(31 downto 0);
+  signal  tag_valid  : std_logic;
+  
+  -- SCU bus signals
   ----------------------------------------------------------------------------------
   
   
@@ -974,7 +1026,7 @@ begin
   
   usb_n : if not g_en_usb generate
     top_cbar_slave_i (c_topm_usb) <= cc_dummy_master_out;
-    uart_usb <= '0';
+    uart_usb <= '1';
     usb_readyn_io <= 'Z';
     usb_fd_io <= (others => 'Z');
   end generate;
@@ -1009,7 +1061,7 @@ begin
   end generate;
   
   wr_uart_o <= uart_wrc;
-  uart_mux <= uart_usb or wr_uart_i;
+  uart_mux <= uart_usb and wr_uart_i;
   
   -- END OF Wishbone masters
   ----------------------------------------------------------------------------------
@@ -1297,10 +1349,11 @@ begin
       g_eca_name      => f_name(g_project & " top"),
       g_channel_names => (f_name("GPIO: gpio triggers"),
                           f_name("RTOS: Action Queue"),
-                          f_name("GPIO: lvds triggers")),
+                          f_name("GPIO: lvds triggers"),
+                          f_name("SCUBUS: tag to scubus")),
       g_log_table_size => 7,
       g_log_queue_len  => 8,
-      g_num_channels   => 3,
+      g_num_channels   => 4,
       g_num_streams    => 1)
     port map(
       e_clk_i  (0)=> clk_sys,
@@ -1350,6 +1403,14 @@ begin
       channel_i => channels(2),
       lvds_o    => lvds_o);
   
+  c3 : eca_scubus_channel
+    port map(
+      clk_i     => clk_ref,
+      rst_n_i   => rstn_ref,
+      channel_i => channels(3),
+      tag_valid => tag_valid,
+      tag       => tag);
+  
   lvds_pins : altera_lvds
     generic map(
       g_family  => g_family,
@@ -1370,6 +1431,35 @@ begin
       lvds_n_o     => lvds_n_o,
       lvds_o_led_o => lvds_o_led_o);
   
+
+  CfiPFlash_n : if not g_en_cfi generate
+    top_cbar_master_i(c_tops_CfiPFlash) <= cc_dummy_slave_out;
+  end generate;
+
+  CfiPFlash_y : if g_en_cfi generate
+  CfiPFlash: XWB_CFI_WRAPPER 
+    port map(
+      clk_i          => clk_sys,
+      rst_n_i        => rstn_sys,
+      
+      -- Wishbone
+      slave_i        => top_cbar_master_o(c_tops_CfiPFlash),    -- to Slave
+      slave_o        => top_cbar_master_i(c_tops_CfiPFlash),    -- to WB
+      
+      -- External Parallel Flash Pins
+      AD             => cfi_ad,
+      DF             => cfi_df,
+      ADV_FSH        => cfi_adv_fsh,
+      nCE_FSH        => cfi_nce_fsh,
+      CLK_FSH        => cfi_clk_fsh,
+      nWE_FSH        => cfi_nwe_fsh,
+      nOE_FSH        => cfi_noe_fsh,
+      nRST_FSH       => cfi_nrst_fsh,
+      WAIT_FSH       => cfi_wait_fsh
+     );
+  end generate;
+
+
   lcd_n : if not g_en_lcd generate
     top_cbar_master_i(c_tops_lcd) <= cc_dummy_slave_out;
   end generate;
@@ -1430,6 +1520,31 @@ begin
         ssd_data_o => ssd1325_data_o    
       );
   end generate;
+
+  nau8811_n : if not g_en_nau8811 generate
+    top_cbar_master_i(c_tops_nau8811) <= cc_dummy_slave_out;
+  end generate;
+  nau8811_y : if g_en_nau8811 generate
+    nau8811_audio : wb_nau8811_audio_driver
+      generic map (
+        g_use_external_pll => true
+      )
+      port map (
+        clk_sys_i    => clk_sys,
+        rst_n_i      => rstn_sys,
+        pll_ref_i    => core_clk_125m_local_i,
+        trigger_i    => ext_pps,
+        slave_i      => top_cbar_master_o(c_tops_nau8811),
+        slave_o      => top_cbar_master_i(c_tops_nau8811),
+        spi_csb_o    => nau8811_spi_csb_o,
+        spi_sclk_o   => nau8811_spi_sclk_o,
+        spi_sdio_o   => nau8811_spi_sdio_o, 
+        iis_fs_o     => nau8811_iis_fs_o,
+        iis_bclk_o   => nau8811_iis_bclk_o,
+        iis_adcout_o => nau8811_iis_adcout_o,
+        iis_dacin_i  => nau8811_iis_dacin_i
+      );
+  end generate;
   
   scub_n : if not g_en_scubus generate
     top_cbar_master_i(c_tops_scubus) <= cc_dummy_slave_out;
@@ -1449,6 +1564,8 @@ begin
       port map(
         clk_i    => clk_sys,
         rst_n_i  => rstn_sys,
+        tag                => tag,
+        tag_valid          => tag_valid,
         irq_master_o       => irq_cbar_slave_i (c_irqm_scubus),
         irq_master_i       => irq_cbar_slave_o (c_irqm_scubus),
         ctrl_irq_o         => top_cbar_master_i(c_tops_scubirq),
@@ -1598,10 +1715,12 @@ begin
         );
   end generate;
   
-  
   -- fg quad with wb interface, special solution for ring RF
   fg_n  : if not g_en_fg generate
-    top_cbar_master_i(c_tops_fg) <= cc_dummy_slave_out;
+    top_cbar_master_i(c_tops_fg)    <= cc_dummy_slave_out;
+    top_cbar_master_i(c_tops_fgirq) <= cc_dummy_slave_out;
+    top_cbar_slave_i(c_topm_fg)     <= cc_dummy_master_out;
+    irq_cbar_slave_i(c_irqm_fg)     <= cc_dummy_master_out;
   end generate;
   fg_y  : if g_en_fg generate
     fg_quad: wb_fg_quad
@@ -1626,7 +1745,30 @@ begin
         -- master interface to irq crossbar
         irq_mst_i => irq_cbar_slave_o(c_irqm_fg),
         irq_mst_o => irq_cbar_slave_i(c_irqm_fg));
-      
+  end generate;
+  
+  psram_n : if not g_en_psram generate
+    top_cbar_master_i(c_tops_psram) <= cc_dummy_slave_out;
+  end generate;
+  psram_y : if g_en_psram generate
+    ram : psram
+      generic map(
+        g_bits => g_psram_bits)
+      port map(
+      clk_i     => clk_sys,
+      rstn_i    => rstn_sys,
+      slave_i   => top_cbar_master_o(c_tops_psram),
+      slave_o   => top_cbar_master_i(c_tops_psram),
+      ps_clk    => ps_clk,
+      ps_addr   => ps_addr,
+      ps_data   => ps_data,
+      ps_seln   => ps_seln,
+      ps_cen    => ps_cen,
+      ps_oen    => ps_oen,
+      ps_wen    => ps_wen,
+      ps_cre    => ps_cre,
+      ps_advn   => ps_advn,
+      ps_wait   => ps_wait);
   end generate;
  
   -- END OF Wishbone slaves

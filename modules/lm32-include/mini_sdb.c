@@ -84,6 +84,16 @@ unsigned int getSdbAdr(sdb_location *loc)
    else return loc->adr + loc->sdb->bridge.sdb_component.addr_first.low;
 }
 
+unsigned int getSdbAdrLast(sdb_location *loc)
+{
+   if (loc->sdb->empty.record_type == SDB_DEVICE ) 
+   {
+      return loc->adr + loc->sdb->device.sdb_component.addr_last.low;
+   }
+   else return loc->adr + loc->sdb->bridge.sdb_component.addr_last.low;
+}
+
+
 sdb_record_t* getChild(sdb_location *loc)
 {
    return (sdb_record_t*)(loc->adr + loc->sdb->bridge.sdb_child.low);
@@ -120,11 +130,15 @@ void discoverPeriphery(void)
    pFpqData       = find_device_adr_in_subtree(&found_sdb[0], GSI, FTM_PRIOQ_DATA); 
    
   pOledDisplay   = find_device_adr(GSI, OLED_DISPLAY);  
-  pEbm           = find_device_adr(GSI, ETHERBONE_MASTER);
+  idx = 0;
+  find_device_multi(&found_sdb[0], &idx, 20, GSI, ETHERBONE_MASTER);
+  pEbm           = (unsigned int*)getSdbAdr(&found_sdb[0]);
+  pEbmLast       = (unsigned int*)getSdbAdrLast(&found_sdb[0]);
   pEca           = find_device_adr(GSI, ECA_EVENT);
   pTlu           = find_device_adr(GSI, TLU);
   pUart          = find_device_adr(CERN, WR_UART);
   BASE_UART      = pUart; //make WR happy ...
+  pCfiPFlash     = find_device_adr(GSI, WR_CFIPFlash);
   
   /* Get the second onewire/w1 record (0=white rabbit w1 unit, 1=user w1 unit) */
   find_device_multi(&found_sdb_w1[0], &idx_w1, 2, CERN, WR_1Wire);

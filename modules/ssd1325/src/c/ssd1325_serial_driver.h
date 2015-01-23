@@ -9,6 +9,9 @@
 #ifndef SSD1325_TARGET_EMBEDDED
 #define SSD1325_TARGET_EMBEDDED                                1 /* 1=Compile for embedded device; 0=Compile for Host (x86, ...) */
 #endif
+#ifndef SSD1325_DEMO_CONFIGURATION
+#define SSD1325_DEMO_CONFIGURATION                             1 /* 1=Display demo configuration; 0=Display minimal configuration */
+#endif
 
 /* Defines (SSD1325 Manual) */
 /* ==================================================================================================== */
@@ -54,7 +57,7 @@
 /* Display Attributes */
 /* ==================================================================================================== */
 #define SSD1325_COL_COUNT                                      128
-#define SSD1325_ROW_COUNT                                      80
+#define SSD1325_ROW_COUNT                                      64
 #define SSD1325_COL_CHAR_COUNT                                 21
 #define SSD1325_ROW_CHAR_COUNT                                 8
 #define SSD1325_PIXELS_PER_CHAR_Y                              8

@@ -11,13 +11,13 @@ PREFIX      ?= /usr/local
 EXTRA_FLAGS ?=
 PWD         := $(shell pwd)
 
-all::	etherbone tools eca tlu sdbfs toolchain firmware driver
+all::		etherbone tools eca tlu sdbfs toolchain firmware driver
 
-gateware:	all pexarria5 exploder vetar scu2 scu3
+gateware:	all pexarria5 exploder exploder5 vetar scu2 scu3
 
 install::	etherbone-install tools-install eca-install tlu-install driver-install
 
-clean::	etherbone-clean tools-clean eca-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean pexarria5-clean
+clean::		etherbone-clean tools-clean eca-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean exploder5-clean pexarria5-clean
 
 distclean::	clean
 	git clean -xfd .
@@ -132,6 +132,18 @@ pexarria5::	firmware
 
 pexarria5-clean::
 	$(MAKE) -C syn/gsi_pexarria5/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+microtca::	firmware
+	$(MAKE) -C syn/gsi_microtca/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+microtca-clean::
+	$(MAKE) -C syn/gsi_microtca/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+exploder5::	firmware
+	$(MAKE) -C syn/gsi_exploder5/exploder5_csco_tr PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+exploder5-clean::
+	$(MAKE) -C syn/gsi_exploder5/exploder5_csco_tr PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
 addac::		firmware
 	$(MAKE) -C syn/gsi_addac PATH=$(PWD)/toolchain/bin:$(PATH) all

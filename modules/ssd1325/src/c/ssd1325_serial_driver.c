@@ -398,6 +398,42 @@ int32_t iSSD1325_ConfigureScreen(void)
   }
   
   /* Initialize sequence */
+#if SSD1325_DEMO_CONFIGURATION
+  /* Demo (UG-2864ASYDT03 - May 15, 2008) configuration */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xae); /* Set Display off */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xb3); /* Set Display Clock Divide Ratio/Oscillator Frequency */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x91); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xa8); /* Set Multiplex Ratio */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x42); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xa2); /* Set Display Offset */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x4c); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xa1); /* Set Display Start Line */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x00); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xad); /* Set Master Configuration */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x02); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xa0); /* Set Re-Map */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x50); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x86); /* Set Current Range */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x81); /* Set Contrast Control */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x7f); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xB2); /* Set Row Period */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x51); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xB1); /* Set Phase length */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x55); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xBC); /* Set Pre-Charge Voltage */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x10); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xB4); /* Set Pre-Charge Compensation Level */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x02); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xB0); /* Set Pre-Charge Compensation Enable */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x28); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xBE); /* Set VCOMH Voltage */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x1C); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xBF); /* Set VSL */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0x0D); /* <<Subsequent Instruction>> */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xA4); /* Set Display Mode */
+  iSSD1325_SetParameter (eTxFifoDataRegister, 0xAF); /* Set Display On */
+#else
+  /* Minimal configuration */
   iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_DISPLAY_OFF);
   iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_OFFSET);
   iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_OFFSET_0);
@@ -422,6 +458,7 @@ int32_t iSSD1325_ConfigureScreen(void)
   iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_VSL_DEFAULT);
   iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_NORMAL_MODE);
   iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_DISPLAY_ON);
+#endif
   
   /* Make sure configuration is done */
   if(iSSD1325_WaitUntilTxDone())
