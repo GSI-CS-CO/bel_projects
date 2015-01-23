@@ -19,13 +19,6 @@ ENTITY tag_n IS
     Tag_n_Puls_Width:      in   std_logic_vector(15 downto 0);    -- 
     Tag_n_Prescale:        in   std_logic_vector(15 downto 0);    -- 
     Tag_n_Trigger:         in   std_logic_vector(15 downto 0);    -- 
-    AWOut_Reg_1:           in   std_logic_vector(15 downto 0);    -- 
-    AWOut_Reg_2:           in   std_logic_vector(15 downto 0);    -- 
-    AWOut_Reg_3:           in   std_logic_vector(15 downto 0);    -- 
-    AWOut_Reg_4:           in   std_logic_vector(15 downto 0);    -- 
-    AWOut_Reg_5:           in   std_logic_vector(15 downto 0);    -- 
-    AWOut_Reg_6:           in   std_logic_vector(15 downto 0);    -- 
-    AWOut_Reg_7:           in   std_logic_vector(15 downto 0);    -- 
     AWIn1:                 in   std_logic_vector(15 downto 0);    -- 
     AWIn2:                 in   std_logic_vector(15 downto 0);    -- 
     AWIn3:                 in   std_logic_vector(15 downto 0);    -- 
@@ -123,8 +116,13 @@ p_Tag_Reg_Bit:  PROCESS (clk, nReset)
 
 
   
-P_Tag_Deco:  process (clk, nReset)
-
+P_Tag_Deco:  process (clk, nReset,
+                      AWIn_Reg_Array, AWIn1, AWIn2, AWIn3, AWIn4, AWIn5, AWIn6, AWIn7,
+                      AWOut_Reg_Array,
+                      Tag_Level, Tag_AWOut_Reg_Nr, Tag_FG_Start, Tag_Delay_Cnt, Tag_Puls_Width,
+                      Tag_Pre_VZ, Tag_Pre_MF, Tag_Trig_Reg_Nr, Tag_Trig_Reg_Bit, Tag_Trig_Pol,
+                      Tag_Timeout_Loop_Cnt, Tag_Trig_Mux, Tag_New_Data, Tag_Timeout_Cnt,
+                      Tag_New_AWOut_Data, Tag_Reg_Bit_Strobe_i, Wait_Counter)
     begin
       if (nReset = '0') then
         sm_state   <= sm_idle;
@@ -152,16 +150,9 @@ P_Tag_Deco:  process (clk, nReset)
 
   ELSIF rising_edge(clk) then
 
--------------------------------------Copy Input- und Output-Register in Array's -------------------------------------------
-
-        AWOut_Reg_Array(1)  <=  AWOut_Reg_1;      -- copy Daten-Reg. AWOut1
-        AWOut_Reg_Array(2)  <=  AWOut_Reg_2;      -- copy Daten-Reg. AWOut2
-        AWOut_Reg_Array(3)  <=  AWOut_Reg_3;      -- copy Daten-Reg. AWOut3
-        AWOut_Reg_Array(4)  <=  AWOut_Reg_4;      -- copy Daten-Reg. AWOut4
-        AWOut_Reg_Array(5)  <=  AWOut_Reg_5;      -- copy Daten-Reg. AWOut5
-        AWOut_Reg_Array(6)  <=  AWOut_Reg_6;      -- copy Daten-Reg. AWOut6
-        AWOut_Reg_Array(7)  <=  AWOut_Reg_7;      -- copy Daten-Reg. AWOut7
+-------------------------------------------Copy Input-Register in Array ----------------------------------------------------
       
+        AWIn_Reg_Array(0)    <=  (others => '0');  -- Dummy
         AWIn_Reg_Array(1)    <=  AWIn1;            -- copy Input-Reg. AWIn1
         AWIn_Reg_Array(2)    <=  AWIn2;            -- copy Input-Reg. AWIn2
         AWIn_Reg_Array(3)    <=  AWIn3;            -- copy Input-Reg. AWIn3
@@ -170,7 +161,7 @@ P_Tag_Deco:  process (clk, nReset)
         AWIn_Reg_Array(6)    <=  AWIn6;            -- copy Input-Reg. AWIn6
         AWIn_Reg_Array(7)    <=  AWIn7;            -- copy Input-Reg. AWIn7
   
----------------------------------------------------------- TAG 0 -----------------------------------------------------------
+---------------------------------------------------------- TAG 'n' ---------------------------------------------------------
       case sm_state is
         when sm_idle  =>      if ((Timing_Pattern_RCV = '1') and (Timing_Pattern_LA(31 downto 0) = (Tag_n_hw & Tag_n_lw))) then
 
@@ -260,14 +251,17 @@ P_Tag_Deco:  process (clk, nReset)
                                 sm_state     <= sm_rd1;
                               end if;
 
-        when sm_rd1     =>    IF    ((Tag_FG_Start  = '1') and (Tag_AWOut_Reg_Nr  = 0)) then   -- Start FG-Trigger gesetzt
-                                sm_state        <= sm_fg_start;
-                              ELSIF ((Tag_FG_Start  = '1') and (Tag_AWOut_Reg_Nr /= 0)) then   -- Register-Nr. ungleich 0 ==> Error
-                                sm_state        <= sm_reg_err;
-                              ELSIF ((Tag_FG_Start  = '0') and (Tag_AWOut_Reg_Nr  = 0)) then   -- Register-Nr. gleich 0 ==> Error
-                                sm_state        <= sm_reg_err;
-                              ELSIF Tag_AWOut_Reg_Nr > Max_AWOut_Reg_Nr then                   -- Register-Nr. im unzulässigen Bereich
-                                sm_state        <= sm_reg_max_err;
+
+        when sm_rd1     =>    IF    (((Tag_FG_Start  = '0') and (Tag_AWOut_Reg_Nr  = 0))  or      -- Register-Nr. gleich 0 ==> Error
+                                     ((Tag_FG_Start  = '1') and (Tag_AWOut_Reg_Nr /= 0))) then    -- Register-Nr. ungleich 0 ==> Error
+                                    sm_state        <= sm_reg_err;
+
+                              elsif Tag_AWOut_Reg_Nr > Max_AWOut_Reg_Nr then                      -- Register-Nr. im unzulässigen Bereich
+                                        sm_state        <= sm_reg_max_err;
+
+                              elsif  ((Tag_FG_Start  = '1') and (Tag_AWOut_Reg_Nr  = 0)) then     -- Start FG-Trigger gesetzt
+                                        sm_state        <= sm_fg_start;
+
                               ELSE
                                 IF Tag_Level     = '0' then                       -- Register-Nr. = ok 
                                 Tag_New_Data  <=  (AWOut_Reg_Array(Tag_AWOut_Reg_Nr) and (not Tag_n_Maske));  -- die "1"-Bits der Maske, werden auf 0 gesetzt

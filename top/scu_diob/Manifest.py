@@ -8,7 +8,9 @@ files = [
    "diob_sys_clk_local_clk_switch_pkg.vhd",
    "diob_sys_clk_local_clk_switch.vhd",
    "diob_local_clk_to_12p5_mhz.vhd",  
-   "tag_n.vhd"
+   "tag_ctrl.vhd",
+   "tag_n.vhd",
+   "config_status.vhd"
 ]
 
 modules = {
