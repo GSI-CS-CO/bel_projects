@@ -16,3 +16,6 @@
 [submodule "ip_cores/hdl-make"]
 	path = ip_cores/hdl-make
 	url = git://ohwr.org/misc/hdl-make.git
+[submodule "ip_cores/pmc-host-bridge"]
+	path = ip_cores/pmc-host-bridge
+	url = git@ohwr.org:white-rabbit/tr-pmc.git
