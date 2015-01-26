@@ -56,6 +56,7 @@ use work.wb_nau8811_audio_driver_pkg.all;
 use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
+use work.wb_pmc_host_bridge_pkg.all;
 
 entity monster is
   generic(
@@ -85,6 +86,7 @@ entity monster is
     g_en_user_ow           : boolean;
     g_en_fg                : boolean;
     g_en_psram             : boolean;
+    g_en_pmc               : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -273,6 +275,28 @@ entity monster is
     ps_cre                 : out   std_logic := 'Z';
     ps_advn                : out   std_logic := 'Z';
     ps_wait                : in    std_logic;
+    -- g_en_pmc
+    pmc_pci_clk_i          : in    std_logic;
+    pmc_pci_rst_i          : in    std_logic;
+    pmc_buf_oe_o           : out   std_logic := 'Z';
+    pmc_busmode_io         : inout std_logic_vector(3 downto 0);
+    pmc_ad_io              : inout std_logic_vector(31 downto 0);
+    pmc_c_be_io            : inout std_logic_vector(3 downto 0);
+    pmc_par_io             : inout std_logic;
+    pmc_frame_io           : inout std_logic;
+    pmc_trdy_io            : inout std_logic;
+    pmc_irdy_io            : inout std_logic;
+    pmc_stop_io            : inout std_logic;
+    pmc_devsel_io          : inout std_logic;
+    pmc_idsel_i            : in    std_logic;
+    pmc_perr_io            : inout std_logic;
+    pmc_serr_io            : inout std_logic;
+    pmc_req_o              : out   std_logic := 'Z';
+    pmc_gnt_i              : in    std_logic;
+    pmc_inta_o             : out   std_logic := 'Z';
+    pmc_intb_o             : out   std_logic := 'Z';
+    pmc_intc_o             : out   std_logic := 'Z';
+    pmc_intd_o             : out   std_logic := 'Z';
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0));
 end monster;
@@ -294,10 +318,11 @@ architecture rtl of monster is
   constant c_irqm_mil    : natural := 5;
   constant c_irqm_fg     : natural := 6;
   
-  constant c_irq_slaves     : natural := 3;
+  constant c_irq_slaves     : natural := 4;
   constant c_irqs_lm32      : natural := 0;
   constant c_irqs_pcie      : natural := 1;
   constant c_irqs_vme       : natural := 2;
+  constant c_irqs_pmc       : natural := 3;
   
   constant c_lm32_irq_bridge_sdb : t_sdb_bridge := 
     f_lm32_irq_bridge_sdb(g_lm32_cores, g_lm32_MSIs);
@@ -305,7 +330,8 @@ architecture rtl of monster is
   constant c_irq_layout_req : t_sdb_record_array(c_irq_slaves-1 downto 0) :=
    (c_irqs_lm32     => f_sdb_auto_bridge(c_lm32_irq_bridge_sdb,  true),
     c_irqs_pcie     => f_sdb_auto_device(c_msi_pcie_sdb,      g_en_pcie),
-    c_irqs_vme      => f_sdb_auto_device(c_vme_msi_sdb,       g_en_vme));
+    c_irqs_vme      => f_sdb_auto_device(c_vme_msi_sdb,       g_en_vme),
+    c_irqs_pmc      => f_sdb_auto_device(c_msi_pmc_sdb,       g_en_pmc));
   
   constant c_irq_layout      : t_sdb_record_array(c_irq_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_irq_layout_req);
@@ -324,7 +350,7 @@ architecture rtl of monster is
   -- GSI Top Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
   
-  constant c_top_masters    : natural := 7;
+  constant c_top_masters    : natural := 8;
   constant c_topm_ebs       : natural := 0;
   constant c_topm_lm32      : natural := 1;
   constant c_topm_pcie      : natural := 2;
@@ -332,6 +358,7 @@ architecture rtl of monster is
   constant c_topm_usb       : natural := 4;
   constant c_topm_fpq       : natural := 5;
   constant c_topm_fg        : natural := 6;
+  constant c_topm_pmc       : natural := 7;
   
   -- required slaves
   constant c_top_slaves     : natural := 26;
@@ -1062,6 +1089,42 @@ begin
   
   wr_uart_o <= uart_wrc;
   uart_mux <= uart_usb and wr_uart_i;
+  
+  pmc_n : if not g_en_pmc generate
+    top_cbar_slave_i (c_topm_pmc) <= cc_dummy_master_out;
+    irq_cbar_master_i(c_irqs_pmc) <= cc_dummy_slave_out;
+  end generate;
+  pmc_y : if g_en_pmc generate
+    pmc : wb_pmc_host_bridge
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      master_o      => top_cbar_slave_i (c_topm_pmc),
+      master_i      => top_cbar_slave_o (c_topm_pmc),
+      slave_i       => irq_cbar_master_o(c_irqs_pmc),
+      slave_o       => irq_cbar_master_i(c_irqs_pmc), 
+      pci_clk_i     => pmc_pci_clk_i,
+      pci_rst_i     => pmc_pci_rst_i,
+      buf_oe_o      => pmc_buf_oe_o,
+      busmode_io    => pmc_busmode_io,
+      ad_io         => pmc_ad_io,
+      c_be_io       => pmc_c_be_io,
+      par_io        => pmc_par_io,
+      frame_io      => pmc_frame_io,
+      trdy_io       => pmc_trdy_io,
+      irdy_io       => pmc_irdy_io,
+      stop_io       => pmc_stop_io,
+      devsel_io     => pmc_devsel_io,
+      idsel_i       => pmc_idsel_i,
+      perr_io       => pmc_perr_io,
+      serr_io       => pmc_serr_io,
+      req_o         => pmc_req_o,
+      gnt_i         => pmc_gnt_i,
+      inta_o        => pmc_inta_o,
+      intb_o        => pmc_intb_o,
+      intc_o        => pmc_intc_o,
+      intd_o        => pmc_intd_o);
+  end generate;
   
   -- END OF Wishbone masters
   ----------------------------------------------------------------------------------

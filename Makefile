@@ -139,6 +139,12 @@ microtca::	firmware
 microtca-clean::
 	$(MAKE) -C syn/gsi_microtca/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
+pmc::	firmware
+	$(MAKE) -C syn/gsi_pmc/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+pmc-clean::
+	$(MAKE) -C syn/gsi_pmc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
 exploder5::	firmware
 	$(MAKE) -C syn/gsi_exploder5/exploder5_csco_tr PATH=$(PWD)/toolchain/bin:$(PATH) all
 

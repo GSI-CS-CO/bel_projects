@@ -61,6 +61,7 @@ package monster_pkg is
       g_en_user_ow           : boolean := false;
       g_en_fg                : boolean := false;  
       g_en_psram             : boolean := false;
+      g_en_pmc               : boolean := false;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4;
@@ -250,6 +251,28 @@ package monster_pkg is
       ps_cre                 : out   std_logic;
       ps_advn                : out   std_logic;
       ps_wait                : in    std_logic := '0';
+      -- g_en_pmc
+      pmc_pci_clk_i          : in    std_logic := '0';
+      pmc_pci_rst_i          : in    std_logic := '0';
+      pmc_buf_oe_o           : out   std_logic;
+      pmc_busmode_io         : inout std_logic_vector(3 downto 0) := (others => 'Z');
+      pmc_ad_io              : inout std_logic_vector(31 downto 0) := (others => 'Z');
+      pmc_c_be_io            : inout std_logic_vector(3 downto 0) := (others => 'Z');
+      pmc_par_io             : inout std_logic := 'Z';
+      pmc_frame_io           : inout std_logic := 'Z';
+      pmc_trdy_io            : inout std_logic := 'Z';
+      pmc_irdy_io            : inout std_logic := 'Z';
+      pmc_stop_io            : inout std_logic := 'Z';
+      pmc_devsel_io          : inout std_logic := 'Z';
+      pmc_idsel_i            : in    std_logic := '0';
+      pmc_perr_io            : inout std_logic := 'Z';
+      pmc_serr_io            : inout std_logic := 'Z';
+      pmc_req_o              : out   std_logic;
+      pmc_gnt_i              : in    std_logic := '0';
+      pmc_inta_o             : out   std_logic;
+      pmc_intb_o             : out   std_logic;
+      pmc_intc_o             : out   std_logic;
+      pmc_intd_o             : out   std_logic;
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z'));
   end component;
