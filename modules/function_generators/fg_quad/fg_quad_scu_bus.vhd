@@ -74,8 +74,7 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  wr_brc_start:     std_logic;
   signal  rd_ramp_cnt:      std_logic;
   
-  signal  fg_stopped:       std_logic;
-  signal  fg_running:       std_logic;
+  signal  fg_is_running:    std_logic;
   signal  ramp_sec_fin:     std_logic;
 
 
@@ -101,8 +100,7 @@ begin
       ramp_sec_fin        => ramp_sec_fin,
       sw_out              => sw_out,
       sw_strobe           => sw_strobe,
-      fg_stopped          => fg_stopped,
-      fg_running          => fg_running       
+      fg_is_running       => fg_is_running       
     );
     
 adr_decoder: process (clk, nReset)
@@ -250,8 +248,8 @@ adr_decoder: process (clk, nReset)
 
 -- fg_cntrl_reg(0)            : reset, 1 -> active 
 -- fg_cntrl_reg(1)            : -
--- fg_cntrl_reg(2)            : running (ro)
--- fg_cntrl_reg(3)            : stopped (ro)
+-- fg_cntrl_reg(2)            : 1 -> running, 0 -> stopped (ro)
+-- fg_cntrl_reg(3)            : -
 -- fg_cntrl_reg(9 downto 4)   : virtual fg number (rw)
 -- fg_cntrl_reg(12 downto 10) : step value M (wo)
 -- fg_cntrl_reg(15 downto 13) : add frequency select (wo)
@@ -297,14 +295,14 @@ begin
         reset_cnt := "00";
       end if;
     end if;
-    if ramp_sec_fin = '1' and fg_running = '1' then -- increment with every finished ramp section
+    if ramp_sec_fin = '1' and fg_is_running = '1' then -- increment with every finished ramp section
       ramp_cnt_reg <= ramp_cnt_reg + 1;
     end if;
   end if;
 end process;
 
 fg_cntrl_rd_reg <= fg_cntrl_reg(15 downto 13) & fg_cntrl_reg(12 downto 10) &
-                    fg_cntrl_reg(9 downto 4) & fg_stopped & fg_running & fg_cntrl_reg(1 downto 0);
+                    fg_cntrl_reg(9 downto 4) & '0' & fg_is_running & fg_cntrl_reg(1 downto 0);
 
 user_rd_active <= rd_fg_cntrl or rd_coeff_a or rd_coeff_b or rd_start_value_h
                   or rd_start_value_l or rd_shift_a or rd_shift_b or rd_ramp_cnt;
