@@ -523,7 +523,7 @@ int main(void) {
 
   while(1) {
     updateTemp();
-    msDelay(2500);
+    msDelay(15000);
   }
   while(1) { 
     i = 0; 
