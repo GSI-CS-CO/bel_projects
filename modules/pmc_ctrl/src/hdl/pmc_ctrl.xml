@@ -1,0 +1,18 @@
+<wbdevice unitname="pmc_ctrl" author="A. Hahn" email="a.hahn@gsi.de" version="0.0.1">
+  
+  <codegen>
+    <generate language="vhdl" documentation="yes" test="yes"></generate>
+  </codegen>
+  
+  <generics>
+  </generics>
+   
+  <slaveinterface name="slave" data="32" type="pipelined" pages="0">
+     <sdb vendorID="GSI" productID="0x98C59EC1" version="1" date="auto" name="PMC_CONTROL_UNIT"></sdb>
+     <registers>
+       <reg name="HEX_SWITCH"    read="yes" write="no"  mask="0xf" comment="Shows hex switch inputs"></reg>
+       <reg name="CLOCK_CONTROL" read="yes" write="yes" mask="0x1" comment="Control external clock enable"></reg>
+     </registers>
+  </slaveinterface>
+  
+</wbdevice>

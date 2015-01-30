@@ -62,6 +62,7 @@ package monster_pkg is
       g_en_fg                : boolean := false;  
       g_en_psram             : boolean := false;
       g_en_pmc               : boolean := false;
+      g_en_pmc_ctrl          : boolean := false;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4;
@@ -273,6 +274,9 @@ package monster_pkg is
       pmc_intb_o             : out   std_logic;
       pmc_intc_o             : out   std_logic;
       pmc_intd_o             : out   std_logic;
+      -- g_en_pmc_ctrl
+      pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0) := (others => '0');
+      pmc_clk_en_o           : out   std_logic;
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z'));
   end component;

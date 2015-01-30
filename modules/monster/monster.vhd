@@ -57,6 +57,8 @@ use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
 use work.wb_pmc_host_bridge_pkg.all;
+use work.pmc_ctrl_pkg.all;
+use work.pmc_ctrl_auto_pkg.all;
 
 entity monster is
   generic(
@@ -87,6 +89,7 @@ entity monster is
     g_en_fg                : boolean;
     g_en_psram             : boolean;
     g_en_pmc               : boolean;
+    g_en_pmc_ctrl          : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -297,6 +300,9 @@ entity monster is
     pmc_intb_o             : out   std_logic := 'Z';
     pmc_intc_o             : out   std_logic := 'Z';
     pmc_intd_o             : out   std_logic := 'Z';
+    -- g_en_pmc_ctrl
+    pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0);
+    pmc_clk_en_o           : out   std_logic := 'Z';
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0));
 end monster;
@@ -361,7 +367,7 @@ architecture rtl of monster is
   constant c_topm_pmc       : natural := 7;
   
   -- required slaves
-  constant c_top_slaves     : natural := 26;
+  constant c_top_slaves     : natural := 27;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -389,6 +395,7 @@ architecture rtl of monster is
   constant c_tops_CfiPFlash : natural := 23;
   constant c_tops_nau8811   : natural := 24;
   constant c_tops_psram     : natural := 25;
+  constant c_tops_pmc_ctrl  : natural := 26;
 
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -429,7 +436,8 @@ architecture rtl of monster is
     c_tops_ow        => f_sdb_auto_device(c_wrc_periph2_sdb,                g_en_user_ow),
     c_tops_fg        => f_sdb_auto_device(c_wb_fg_sdb,                      g_en_fg),
     c_tops_fgirq     => f_sdb_auto_device(c_fg_irq_ctrl_sdb,                g_en_fg),
-    c_tops_psram     => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram));
+    c_tops_psram     => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
+    c_tops_pmc_ctrl  => f_sdb_auto_device(c_pmc_ctrl_slave_sdb,             g_en_pmc_ctrl));
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_top_layout_req);
@@ -1833,7 +1841,22 @@ begin
       ps_advn   => ps_advn,
       ps_wait   => ps_wait);
   end generate;
- 
+  
+  pmc_ctrl_n : if not g_en_pmc_ctrl generate
+    top_cbar_master_i(c_tops_pmc_ctrl) <= cc_dummy_slave_out;
+  end generate;
+  pmc_ctrl_y : if g_en_pmc_ctrl generate
+    pmc_ctrl_unit : pmc_ctrl
+      port map (
+        clk_sys_i      => clk_sys,
+        rst_n_i        => rstn_sys,
+        slave_i        => top_cbar_master_o(c_tops_pmc_ctrl),
+        slave_o        => top_cbar_master_i(c_tops_pmc_ctrl),
+        clock_enable_o => pmc_clk_en_o,
+        hex_switch_i   => pmc_ctrl_hs_i
+      );
+  end generate;  
+  
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------
   

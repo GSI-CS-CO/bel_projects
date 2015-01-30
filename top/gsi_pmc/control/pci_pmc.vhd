@@ -229,7 +229,8 @@ begin
       g_gpio_out    => 10, -- 2 LEDs at front panel + 8 on-boards LEDs
       g_en_usb      => true,
       g_en_lcd      => true,
-      g_en_pmc      => true)
+      g_en_pmc      => true,
+      g_en_pmc_ctrl => true)
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,
@@ -294,6 +295,8 @@ begin
       pmc_intb_o             => open,
       pmc_intc_o             => open,
       pmc_intd_o             => open,
+      pmc_ctrl_hs_i          => hswf,
+      pmc_clk_en_o           => lvttl_in_clk_en_o,
       lcd_scp_o              => dis_di(3),
       lcd_lp_o               => dis_di(1),
       lcd_flm_o              => dis_di(2),
@@ -369,9 +372,6 @@ begin
   lvttio_act_led_3 <= '0' when s_lvds_i_led(2) = '1' else 'Z';
   lvttio_act_led_4 <= '0' when s_lvds_i_led(3) = '1' else 'Z';
   lvttio_act_led_5 <= '0' when s_lvds_i_led(4) = '1' else 'Z';
-  
-  -- LVTTL clock enable
-  lvttl_in_clk_en_o <= '0';
   
   -- Wires to CPLD, currently unused
   con <= (others => 'Z');
