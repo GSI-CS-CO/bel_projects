@@ -393,6 +393,15 @@ end component;
   signal FG_1_strobe:        std_logic;
   signal FG_1_dreq:          std_logic;
   
+  signal FG_2_dtack:         std_logic;
+  signal FG_2_data_to_SCUB:  std_logic_vector(15 downto 0);
+  signal FG_2_rd_active:     std_logic;
+  signal FG_2_sw:            std_logic_vector(31 downto 0);
+  signal FG_2_strobe:        std_logic;
+  signal FG_2_dreq:          std_logic;
+
+  signal fg_start:           std_logic;
+  
   signal tmr_rd_active:      std_logic;
   signal tmr_data_to_SCUB:   std_logic_vector(15 downto 0);
   signal tmr_dtack:          std_logic;
@@ -1300,62 +1309,62 @@ clk_switch_intr <= local_clk_is_running or sys_clk_deviation_la;
 
 SCU_Slave: SCU_Bus_Slave
 generic map (
-    CLK_in_Hz => clk_sys_in_Hz,
+    CLK_in_Hz               => clk_sys_in_Hz,
     Firmware_Release        => 3,
     Firmware_Version        => 0,
-    CID_System => 55, --------------------------------------------- important: => CSCOHW
-    CID_Group  => 26, --------------------------------------------- important: => "FG900500_SCU_Diob1"
-    intr_Enable          => b"0000_0000_0000_0001")
+    CID_System              => 55, --------------------------------------------- important: => CSCOHW
+    CID_Group               => 26, --------------------------------------------- important: => "FG900500_SCU_Diob1"
+    intr_Enable             => b"0000_0000_0000_0001")
 port map (
-    SCUB_Addr => A_A, -- in,                          SCU_Bus: address bus
-    nSCUB_Timing_Cyc         => A_nEvent_Str, -- in,  SCU_Bus signal: low active SCU_Bus runs timing cycle
-    SCUB_Data => A_D, -- inout,                       SCU_Bus: data bus (FPGA tri state buffer)
-    nSCUB_Slave_Sel => A_nBoardSel, -- in,            SCU_Bus: '0' => SCU master select slave
-    nSCUB_DS => A_nDS, -- in,                         SCU_Bus: '0' => SCU master activate data strobe
-    SCUB_RDnWR => A_RnW, -- in,                       SCU_Bus: '1' => SCU master read slave
-    clk => clk_sys,
-    nSCUB_Reset_in => A_nReset, -- in,                SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
-    Data_to_SCUB => Data_to_SCUB, -- in,              connect read sources from external user functions
-    Dtack_to_SCUB => Dtack_to_SCUB, -- in,            connect Dtack from from external user functions
-    intr_in => FG_1_dreq & '0' & tmr_irq & '0'        -- bit 15..12
-            & x"0"                                    -- bit 11..8
-            & x"0"                                    -- bit 7..4
-            & '0' & '0' & clk_switch_intr,            -- bit 3..1
-    User_Ready => '1',
-    extension_cid_system => extension_cid_system, -- in,   extension card: cid_system
-    extension_cid_group => extension_cid_group, --in,      extension card: cid_group
-    Data_from_SCUB_LA => Data_from_SCUB_LA, -- out,        latched data from SCU_Bus for external user functions
-    ADR_from_SCUB_LA => ADR_from_SCUB_LA, -- out,          latched address from SCU_Bus for external user functions
-    Timing_Pattern_LA => Timing_Pattern_LA, -- out,        latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV => Timing_Pattern_RCV, -- out,      timing pattern received
-    nSCUB_Dtack_Opdrn => open, -- out,                     for direct connect to SCU_Bus opendrain signal
-                                                 -- '0' => slave give dtack to SCU master
-    SCUB_Dtack => SCUB_Dtack, -- out,                      for connect via ext. open collector driver
-                                                 -- '1' => slave give dtack to SCU master
-    nSCUB_SRQ_Opdrn => open, -- out,                       for direct connect to SCU_Bus opendrain signal
-                                                 -- '0' => slave service request to SCU ma
-    SCUB_SRQ => SCUB_SRQ, -- out,                          for connect via ext. open collector driver
-                                                 -- '1' => slave service request to SCU master
-    nSel_Ext_Data_Drv => A_nSel_Ext_Data_Drv, -- out,      '0' => select the external data driver on the SCU_Bus slave
-    Ext_Data_Drv_Rd         => A_Ext_Data_RD, -- out,      '1' => direction of the external data driver on the
-                                                        -- SCU_Bus slave is to the SCU_Bus
-    Standard_Reg_Acc => Standard_Reg_Acc, -- out,          '1' => mark the access to register of this macro
-    Ext_Adr_Val => Ext_Adr_Val, -- out,                    for external user functions: '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active => Ext_Rd_active, -- out,                '1' => Rd-Cycle to external user register is active
-    Ext_Rd_fin => Ext_Rd_fin, -- out,                      marks end of read cycle, active one for one clock period
-                                                        -- of clk past cycle end (no overlap)
-    Ext_Rd_Fin_ovl => Ext_Rd_Fin_ovl, -- out,              marks end of read cycle, active one for one clock period
-                                                        -- of clk during cycle end (overlap)
-    Ext_Wr_active => Ext_Wr_active, -- out,         '1' => Wr-Cycle to external user register is active
-    Ext_Wr_fin => SCU_Ext_Wr_fin, -- out,                  marks end of write cycle, active high for one clock period
-                                                        -- of clk past cycle end (no overlap)
-    Ext_Wr_fin_ovl => Ext_Wr_fin_ovl, -- out,              marks end of write cycle, active high for one clock period
-                                                        -- of clk before write cycle finished (with overlap)
-    Deb_SCUB_Reset_out => Deb_SCUB_Reset_out, -- out,      the debounced 'nSCUB_Reset_in'-signal, is active high,
-                                                        -- can be used to reset
-                                                        -- external macros, when 'nSCUB_Reset_in' is '0'
-    nPowerup_Res => nPowerup_Res, -- out,                  this macro generated a power up reset
-    Powerup_Done => Powerup_Done          -- out           this memory is set to one if an Powerup is done. Only the SCUB-Master can clear this bit.
+    SCUB_Addr               => A_A,                                   -- in, SCU_Bus: address bus
+    nSCUB_Timing_Cyc        => A_nEvent_Str,                          -- in, SCU_Bus signal: low active SCU_Bus runs timing cycle
+    SCUB_Data               => A_D,                                   -- inout, SCU_Bus: data bus (FPGA tri state buffer)
+    nSCUB_Slave_Sel         => A_nBoardSel,                           -- in, SCU_Bus: '0' => SCU master select slave
+    nSCUB_DS                => A_nDS,                                 -- in, SCU_Bus: '0' => SCU master activate data strobe
+    SCUB_RDnWR              => A_RnW,                                 -- in, SCU_Bus: '1' => SCU master read slave
+    clk                     => clk_sys,
+    nSCUB_Reset_in          => A_nReset,                              -- in, SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
+    Data_to_SCUB            => Data_to_SCUB,                          -- in, connect read sources from external user functions
+    Dtack_to_SCUB           => Dtack_to_SCUB,                         -- in, connect Dtack from from external user functions
+    intr_in                 => FG_1_dreq & FG_2_dreq & tmr_irq & '0'  -- bit 15..12
+                              & x"0"                                  -- bit 11..8
+                              & x"0"                                  -- bit 7..4
+                              & '0' & '0' & clk_switch_intr,          -- bit 3..1
+    User_Ready              => '1',
+    extension_cid_system    => extension_cid_system,                  -- in, extension card: cid_system
+    extension_cid_group     => extension_cid_group,                   -- in, extension card: cid_group
+    Data_from_SCUB_LA       => Data_from_SCUB_LA,                     -- out, latched data from SCU_Bus for external user functions
+    ADR_from_SCUB_LA        => ADR_from_SCUB_LA,                      -- out, latched address from SCU_Bus for external user functions
+    Timing_Pattern_LA       => Timing_Pattern_LA,                     -- out, latched timing pattern from SCU_Bus for external user functions
+    Timing_Pattern_RCV      => Timing_Pattern_RCV,                    -- out, timing pattern received
+    nSCUB_Dtack_Opdrn       => open,                                  -- out, for direct connect to SCU_Bus opendrain signal
+                                                                      -- '0' => slave give dtack to SCU master
+    SCUB_Dtack              => SCUB_Dtack,                            -- out, for connect via ext. open collector driver
+                                                                      -- '1' => slave give dtack to SCU master
+    nSCUB_SRQ_Opdrn         => open,                                  -- out, for direct connect to SCU_Bus opendrain signal
+                                                                      -- '0' => slave service request to SCU ma
+    SCUB_SRQ                => SCUB_SRQ,                              -- out, for connect via ext. open collector driver
+                                                                      -- '1' => slave service request to SCU master
+    nSel_Ext_Data_Drv       => A_nSel_Ext_Data_Drv,                   -- out, '0' => select the external data driver on the SCU_Bus slave
+    Ext_Data_Drv_Rd         => A_Ext_Data_RD,                         -- out, '1' => direction of the external data driver on the
+                                                                      -- SCU_Bus slave is to the SCU_Bus
+    Standard_Reg_Acc        => Standard_Reg_Acc,                      -- out, '1' => mark the access to register of this macro
+    Ext_Adr_Val             => Ext_Adr_Val,                           -- out, for external user functions: '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active           => Ext_Rd_active,                         -- out, '1' => Rd-Cycle to external user register is active
+    Ext_Rd_fin              => Ext_Rd_fin,                            -- out, marks end of read cycle, active one for one clock period
+                                                                      -- of clk past cycle end (no overlap)
+    Ext_Rd_Fin_ovl          => Ext_Rd_Fin_ovl,                        -- out, marks end of read cycle, active one for one clock period
+                                                                      -- of clk during cycle end (overlap)
+    Ext_Wr_active           => Ext_Wr_active,                         -- out, '1' => Wr-Cycle to external user register is active
+    Ext_Wr_fin              => SCU_Ext_Wr_fin,                        -- out, marks end of write cycle, active high for one clock period
+                                                                      -- of clk past cycle end (no overlap)
+    Ext_Wr_fin_ovl          => Ext_Wr_fin_ovl,                        -- out, marks end of write cycle, active high for one clock period
+                                                                      -- of clk before write cycle finished (with overlap)
+    Deb_SCUB_Reset_out      => Deb_SCUB_Reset_out,                    -- out, the debounced 'nSCUB_Reset_in'-signal, is active high,
+                                                                      -- can be used to reset
+                                                                      -- external macros, when 'nSCUB_Reset_in' is '0'
+    nPowerup_Res            => nPowerup_Res,                          -- out, this macro generates a power up reset
+    Powerup_Done            => Powerup_Done                           -- out, this signal is set after powerup. Only the SCUB-Master can clear this bit.
     );
 
 
@@ -1403,12 +1412,40 @@ fg_1: fg_quad_scu_bus
     user_rd_active    => FG_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => FG_1_dtack,            -- connect Dtack to SCUB-Macro
     dreq              => FG_1_dreq,             -- request of new parameter set
-    brdcst_i          => '0',
-    brdcst_o          => open,          
+    brdcst_i          => '0',                   -- starts the fg
+    brdcst_o          => fg_start,              -- goes high when fg is started
 
     -- fg output
     sw_out            => FG_1_sw,               -- 24bit output from fg
     sw_strobe         => FG_1_strobe            -- signals new output data
+  );
+
+fg_2: fg_quad_scu_bus
+  generic map (
+    Base_addr => x"0340",
+    clk_in_hz => clk_sys_in_Hz,
+    diag_on_is_1 => 0 -- if 1 then diagnosic information is generated during compilation
+    )
+  port map (
+
+    -- SCUB interface
+    Adr_from_SCUB_LA  => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+    Data_from_SCUB_LA => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+    Ext_Adr_Val       => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+    Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+    clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
+    nReset            => nPowerup_Res,          -- in, '0' => resets the fg_1
+    Rd_Port           => FG_2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
+    user_rd_active    => FG_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
+    Dtack             => FG_2_dtack,            -- connect Dtack to SCUB-Macro
+    dreq              => FG_2_dreq,             -- request of new parameter set
+    brdcst_i          => fg_start,
+    brdcst_o          => open,          
+
+    -- fg output
+    sw_out            => FG_2_sw,               -- 24bit output from fg
+    sw_strobe         => FG_2_strobe            -- signals new output data
   );
 
   tmr: tmr_scu_bus
@@ -1432,6 +1469,7 @@ fg_1: fg_quad_scu_bus
 rd_port_mux:  process ( clk_switch_rd_active, clk_switch_rd_data,
                         wb_scu_rd_active,     wb_scu_data_to_SCUB,
                         FG_1_rd_active,       FG_1_data_to_SCUB,
+                        FG_2_rd_active,       FG_2_data_to_SCUB,
                         AW_Port1_rd_active,   AW_Port1_data_to_SCUB,
                         Tag_Ctrl1_rd_active,  Tag_Ctrl1_data_to_SCUB,
                         Conf_Sts1_rd_active,  Conf_Sts1_data_to_SCUB,
@@ -1439,21 +1477,22 @@ rd_port_mux:  process ( clk_switch_rd_active, clk_switch_rd_data,
                         INL_xor1_rd_active,   INL_xor1_data_to_SCUB,
                         tmr_rd_active,        tmr_data_to_SCUB )
 
-  variable sel: unsigned(8 downto 0);
+  variable sel: unsigned(9 downto 0);
   begin
-    sel :=  tmr_rd_active     & INL_xor1_rd_active    & INL_msk1_rd_active   &  AW_Port1_rd_active   &  FG_1_rd_active &
-            wb_scu_rd_active  & clk_switch_rd_active  & Conf_Sts1_rd_active  &  Tag_Ctrl1_rd_active ;
+    sel :=  tmr_rd_active   & INL_xor1_rd_active  & INL_msk1_rd_active    &  AW_Port1_rd_active &  FG_1_rd_active &
+            FG_2_rd_active  & wb_scu_rd_active    & clk_switch_rd_active  & Conf_Sts1_rd_active &  Tag_Ctrl1_rd_active ;
     
   case sel IS
-      when "100000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "010000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
-      when "001000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
-      when "000100000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
-      when "000010000" => Data_to_SCUB <= FG_1_data_to_SCUB;
-      when "000001000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "000000100" => Data_to_SCUB <= clk_switch_rd_data;
-      when "000000010" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
-      when "000000001" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
+      when "1000000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "0100000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
+      when "0010000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
+      when "0001000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
+      when "0000100000" => Data_to_SCUB <= FG_1_data_to_SCUB;
+      when "0000010000" => Data_to_SCUB <= FG_2_data_to_SCUB;
+      when "0000001000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "0000000100" => Data_to_SCUB <= clk_switch_rd_data;
+      when "0000000010" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
+      when "0000000001" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
       when others      => Data_to_SCUB <= (others => '0');
     end case;
   end process rd_port_mux;
@@ -1461,8 +1500,8 @@ rd_port_mux:  process ( clk_switch_rd_active, clk_switch_rd_data,
     
 -------------- Dtack_to_SCUB -----------------------------   
 
-    Dtack_to_SCUB <= ( tmr_dtack    or INL_xor1_Dtack   or INL_msk1_Dtack  or AW_Port1_Dtack  or FG_1_dtack  or 
-                       wb_scu_dtack or clk_switch_dtack or Conf_Sts1_Dtack or Tag_Ctrl1_Dtack );
+    Dtack_to_SCUB <= ( tmr_dtack  or INL_xor1_Dtack or INL_msk1_Dtack   or AW_Port1_Dtack  or FG_1_dtack  or 
+                       FG_2_dtack or wb_scu_dtack   or clk_switch_dtack or Conf_Sts1_Dtack or Tag_Ctrl1_Dtack );
                      
 
     A_nDtack <= NOT(SCUB_Dtack);
@@ -2825,8 +2864,8 @@ BEGIN
 
       elsif  (AW_Config2(4) = '1')  THEN 
 
-      DA_DAC2_Data(15 downto 0)  <=  FG_1_sw(31 downto 16);    -- FG1-Output
-      DA_DAC2_Str            <=  FG_1_strobe;              -- FG_2_Strobe (vom Funktionsgen)
+      DA_DAC2_Data(15 downto 0) <=  FG_2_sw(31 downto 16);    -- FG_2-Output
+      DA_DAC2_Str               <=  FG_2_strobe;              -- FG_2_Strobe (vom Funktionsgen)
 
   ----------------------------- SCU-Bus-Daten für DAC2 -------------------------------------
       else
