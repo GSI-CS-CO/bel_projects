@@ -90,8 +90,8 @@ begin
       nrst                => nReset,
       sync_rst            => fg_cntrl_reg(0),
       a_en                => wr_coeff_a,
-      sync_start          => wr_brc_start or brdcst_i,  -- start at write to broadcast reg or from external signal
-      load_start          => wr_start_value_h,          -- when high word was written, load into datapath
+      sync_start          => (wr_brc_start or brdcst_i ) and fg_cntrl_reg(1),   -- start at write to broadcast reg or from external signal
+      load_start          => wr_start_value_h,                                  -- when high word was written, load into datapath
       step_sel            => fg_cntrl_reg(12 downto 10),
       shift_b             => to_integer(unsigned(shift_b_reg(5 downto 0))),
       shift_a             => to_integer(unsigned(shift_a_reg(5 downto 0))),
@@ -247,7 +247,7 @@ adr_decoder: process (clk, nReset)
   end process adr_decoder;
 
 -- fg_cntrl_reg(0)            : reset, 1 -> active 
--- fg_cntrl_reg(1)            : -
+-- fg_cntrl_reg(1)            : 1 -> fg enabled, 0 -> fg disabled
 -- fg_cntrl_reg(2)            : 1 -> running, 0 -> stopped (ro)
 -- fg_cntrl_reg(3)            : -
 -- fg_cntrl_reg(9 downto 4)   : virtual fg number (rw)

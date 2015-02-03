@@ -12,10 +12,11 @@ struct fg_dev {
   unsigned int dev_number;
   unsigned int version;
   unsigned int offset;
-  char running;
-  char timeout;
-  int rampcnt;
-  int endvalue; /* ramp value in case of timeout */
+  unsigned char running;
+  unsigned char timeout;
+  unsigned int rampcnt;
+  unsigned int endvalue; /* ramp value in case of timeout */
+  unsigned char enabled;
   struct scu_slave *slave;
 };
 
@@ -56,12 +57,14 @@ struct circ_buffer {
 };
 
 struct fg_status {
+  unsigned int slot;
   unsigned int dev_number;
   unsigned int version;
   unsigned int offset;
   unsigned int running;
   unsigned int timeout;
   unsigned int rampcnt;
+  unsigned int enabled;
 };
 
 

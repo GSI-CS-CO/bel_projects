@@ -162,8 +162,8 @@ begin
       nrst                => rst_n_i,
       sync_rst            => fg_cntrl_reg(0),
       a_en                => wr_coeff_a,
-      sync_start          => wr_brc_start,              -- start at write to broadcast reg
-      load_start          => wr_start_value,            -- load into datapath
+      sync_start          => wr_brc_start and fg_cntrl_reg(1),    -- start at write to broadcast reg
+      load_start          => wr_start_value,                      -- load into datapath
       step_sel            => fg_cntrl_reg(12 downto 10),
       shift_b             => to_integer(unsigned(shift_b_reg(5 downto 0))),
       shift_a             => to_integer(unsigned(shift_a_reg(5 downto 0))),
