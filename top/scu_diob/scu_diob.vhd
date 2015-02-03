@@ -11,7 +11,7 @@ use work.diob_sys_clk_local_clk_switch_pkg.all;
 
 
 ------------------------------------------------------------------------------------------------------------------------------------
---  Vers: 0 Revi: 4: erstellt am 12.12.2014, Autor: R.Hartmann                                                                    --
+--  Vers: 0 Revi: 4: erstellt am 02.02.2015, Autor: R.Hartmann                                                                    --
 --                                                                                                                                --
 --      Base_addr    : DIOB-Config-Register1 (alle Bit können gelesen und geschrieben werden)                                     --
 --   -----+-------------------------------------------------------------------------------------------------------------------    --
@@ -173,6 +173,11 @@ component config_status
     AW_Config1:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut3
     AW_Config2:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut4
 
+    Diob_Config1_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut1
+    Diob_Config2_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut2
+    AW_Config1_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut3
+    AW_Config2_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut4
+    
     Rd_active:            out  std_logic;                        -- read data available at 'Data_to_SCUB'-AWOut
     Data_to_SCUB:         out  std_logic_vector(15 downto 0);    -- connect read sources to SCUB-Macro
     Dtack_to_SCUB:        out  std_logic;                        -- connect Dtack to SCUB-Macro
@@ -460,6 +465,11 @@ end component;
   signal AW_Status1:      std_logic_vector(15 downto 0);
   signal AW_Status2:      std_logic_vector(15 downto 0);
 
+  signal Diob_Config1_wr: std_logic;                        -- write-Strobe, Daten-Reg. AWOut1
+  signal Diob_Config2_wr: std_logic;                        -- write-Strobe, Daten-Reg. AWOut2
+  signal AW_Config1_wr:   std_logic;                        -- write-Strobe, Daten-Reg. AWOut3
+  signal AW_Config2_wr:   std_logic;                        -- write-Strobe, Daten-Reg. AWOut4
+  
   signal Conf_Sts1_rd_active:    std_logic;
   signal Conf_Sts1_Dtack:        std_logic;
   signal Conf_Sts1_data_to_SCUB: std_logic_vector(15 downto 0);
@@ -586,10 +596,10 @@ end component;
 
   signal P37IO_Start_i:        std_logic;    -- input "Start" L-Aktiv
   signal P37IO_Start_deb_o:    std_logic;    -- input "Start" entprellt
-  signal P37IO_nLED_Start_o:   std_logic;    --  Output "nLED_Start"
+  signal P37IO_nLED_Start_o:   std_logic;    -- Output "nLED_Start"
   signal P37IO_Stop_i:         std_logic;    -- input "Stop" L-Aktiv
   signal P37IO_Stop_deb_o:     std_logic;    -- input "Stop" entprellt
-  signal P37IO_nLED_Stop_o:    std_logic;    --  Output "nLED_Stop"
+  signal P37IO_nLED_Stop_o:    std_logic;    -- Output "nLED_Stop"
   signal P37IO_Reset_i:        std_logic;    -- input "Reset" L-Aktiv
   signal P37IO_Reset_deb_o:    std_logic;    -- input "Rest" entprellt
   signal P37IO_BNC_o:          std_logic;    -- Output "BNC"
@@ -605,17 +615,17 @@ end component;
 
   signal P25IO_Start_i:        std_logic;        -- input "Start" L-Aktiv
   signal P25IO_Start_deb_o:    std_logic;        -- input "Start" entprellt
-  signal P25IO_nLED_Start_o:   std_logic;        --  Output "nLED_Start"
+  signal P25IO_nLED_Start_o:   std_logic;        -- Output "nLED_Start"
   signal P25IO_Stop_i:         std_logic;        -- input "Stop" L-Aktiv
   signal P25IO_Stop_deb_o:     std_logic;        -- input "Stop" entprellt
-  signal P25IO_nLED_Stop_o:    std_logic;        --  Output "nLED_Stop"
+  signal P25IO_nLED_Stop_o:    std_logic;        -- Output "nLED_Stop"
   signal P25IO_Reset_i:        std_logic;        -- input "Reset" L-Aktiv
   signal P25IO_Reset_deb_o:    std_logic;        -- input "Rest" entprellt
   signal P25IO_BNC_o:          std_logic;        -- Output "BNC"
   signal P25IO_nELD_BNC_o:     std_logic;        -- Output "nLED_BNC"
 
   signal P25IO_DAC_Out:             std_logic_vector(15 downto 0); -- Zwischenspeicher
-  signal P25IO_DAC_Strobe_Start_i:  std_logic;        -- input  "Start-Signal für den Stobe vom DAC"
+  signal P25IO_DAC_Strobe_Start_i:  std_logic;        -- input  "Start-Signal für den Strobe vom DAC"
   signal P25IO_DAC_Strobe_Start_o:  std_logic;        -- Output "Start-Puls für den Stobe vom DAC (1 CLK breit)"
   signal P25IO_DAC_Strobe_i:        std_logic;        -- input  "Start-Puls für den DAC-Strobe"
   signal P25IO_nDAC_Strobe_o:       std_logic;        -- Output "DAC-Stobe"
@@ -702,12 +712,16 @@ end component;
 --  +============================================================================================================================+
 
 
+  signal DA_DAC1_Data:            std_logic_vector(15 downto 0); -- Zwischenspeicher
+  signal DA_DAC1_Str:             std_logic;                     -- DAC1-Strobe
   signal DA_DAC1_Out:             std_logic_vector(15 downto 0); -- Zwischenspeicher
-  signal DA_DAC1_Strobe:          std_logic;                     -- Output Strobe
+  signal DA_DAC1_Str_Out:         std_logic;                     -- DAC1-Output-Strobe
 
+  signal DA_DAC2_Data:            std_logic_vector(15 downto 0); -- Zwischenspeicher
+  signal DA_DAC2_Str:             std_logic;                     -- DAC2-Strobe
   signal DA_DAC2_Out:             std_logic_vector(15 downto 0); -- Zwischenspeicher
-  signal DA_DAC2_Strobe:          std_logic;                     -- Output Strobe
-  
+  signal DA_DAC2_Str_Out:         std_logic;                     -- DAC2-Output-Strobe
+
   signal DAC_Test_Out:            std_logic_vector(15 downto 0); -- Test-Bitmuster
   signal DAC_Test_Strobe:         std_logic;                     -- Output Test-Strobe
 
@@ -717,9 +731,33 @@ end component;
   type dac_state_t is   (dac_idle, dac_data1, dac_str1h, dac_str1l, dac_loop1, dac_wait1, dac_wait2, dac_data2, dac_str2h, dac_str2l, dac_loop2, dac_end);
   signal dac_state:      dac_state_t := dac_idle;
 
+  
+  signal DA_LED_Ext_Trig1_i:    std_logic;      --  Input  "nLED_Ext_Trig1"
+  signal DA_LED_Ext_Trig1_o:    std_logic;      --  Output "nLED_Ext_Trig1"
+  signal DA_LED_Ext_Trig2_i:    std_logic;      --  Input  "nLED_Ext_Trig2"
+  signal DA_LED_Ext_Trig2_o:    std_logic;      --  Output "nLED_Ext_Trig2"
+    
+  signal DA_LED_Trig_Out1_i:    std_logic;      --  Input  "nLED_Trig_Out1"
+  signal DA_LED_Trig_Out1_o:    std_logic;      --  Output "nLED_Trig_Out1"
+  signal DA_LED_Trig_Out2_i:    std_logic;      --  Input  "nLED_Trig_Out2"
+  signal DA_LED_Trig_Out2_o:    std_logic;      --  Output "nLED_Trig_Out2"
+   
+  signal DA_Trig1_i:            std_logic;      -- Input  "DAC-Strobe1"
+  signal DA_Trig1_1us_o:        std_logic;      -- Output "Trig1_1µs" breit
+  signal DA_Trig2_i:            std_logic;      -- Input  "DAC-Strobe2"
+  signal DA_Trig2_1us_o:        std_logic;      -- Output "Trig2_1µs" breit
+ 
+  
+  signal DA_Trig1_Strobe_i:     std_logic;                      -- input  "Start-Signal für ext. Trigger 1"
+  signal DA_Trig1_Strobe_o:     std_logic;                      -- Output "Start-Puls   für ext. Trigger 1 (1 CLK breit)"
+  signal DA_Trig1_shift:        std_logic_vector(2  downto 0);  -- Shift-Reg.
 
+  signal DA_Trig2_Strobe_i:     std_logic;                      -- input  "Start-Signal für ext. Trigger 2"
+  signal DA_Trig2_Strobe_o:     std_logic;                      -- Output "Start-Puls   für ext. Trigger 2 (1 CLK breit)"
+  signal DA_Trig2_shift:        std_logic_vector(2  downto 0);  -- Shift-Reg.
 
---  +============================================================================================================================+
+  
+  --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: SPSIO  -- FG900.770                                    |
 --  +============================================================================================================================+
 
@@ -773,28 +811,38 @@ end component;
   signal pll_locked:              std_logic;
   signal clk_switch_intr:         std_logic;
   
-  signal signal_tap_clk_250mhz: std_logic;
+  signal signal_tap_clk_250mhz:   std_logic;
   
-  
---  constant  C_Debounce_input_in_ns: integer := 5000;
 
-  constant  C_P37IO_Start_Debounce_input_in_ns:   integer := 5000;    -- Debounce, Start-Input von FG900_700
-  constant  C_P37IO_Stop_Debounce_input_in_ns:    integer := 5000;    -- Debounce, Stop-Input  von FG900_700
-  constant  C_P37IO_Reset_Debounce_input_in_ns:   integer := 5000;    -- Debounce, Reset-Input von FG900_700
-  constant  C_P37IO_Data_Debounce_input_in_ns:    integer := 5000;    -- Debounce, Data-Input  von FG900_700
-                                                                     
-  constant  C_P25IO_Start_Debounce_input_in_ns:   integer := 5000;    -- Debounce, Data-Input von FG900_710
-  constant  C_P25IO_Stop_Debounce_input_in_ns:    integer := 5000;    -- Debounce, Data-Input von FG900_710
-  constant  C_P25IO_Reset_Debounce_input_in_ns:   integer := 5000;    -- Debounce, Data-Input von FG900_710
-  constant  C_P25IO_Ext_Tim_Debounce_input_in_ns: integer := 5000;    -- Debounce, Data-Input von FG900_710
-  constant  C_P25IO_EOC_Debounce_input_in_ns:     integer := 500;     -- Debounce, Data-Input von FG900_710
-  constant  C_P25IO_Data_Debounce_input_in_ns:    integer := 5000;    -- Debounce, Data-Input von FG900_710
-                                                                     
-  constant  C_OCIN_Data_Debounce_input_in_ns:     integer := 5000;    -- Debounce, Data-Input  von FG900_720
-  constant  C_OCIO_Data_Debounce_input_in_ns:     integer := 5000;    -- Debounce, Data-Input  von FG900_730
-  constant  C_UIO_Lo_Data_Debounce_input_in_ns:   integer := 5000;    -- Debounce, Data-Input  von FG900_740
-  constant  C_UIO_Hi_Data_Debounce_input_in_ns:   integer := 5000;    -- Debounce, Data-Input  von FG900_740
-  constant  C_UIO_Lemo_Debounce_input_in_ns:      integer := 5000;    -- Debounce, Lemo-Input  von FG900_740
+
+  constant  Clk_in_ns:     integer := 1000000000 /  clk_sys_in_Hz;      -- (=8ns,    bei 125MHz)
+
+  constant  C_Strobe_1us:  integer := 1000 / Clk_in_ns;                 -- Anzahl der Clocks für 1us
+  constant  C_Strobe_2us:  integer := 2000 / Clk_in_ns;                 -- Anzahl der Clocks für 2us
+
+  constant  stretch_cnt:   integer := 5;
+
+  -----------------------------------------------5000 ==> 5000/8= 625 Clocks ==> 625 * 8ns = 5us --------------------------------------------
+
+  constant  C_P37IO_Start_Debounce_input_in_ns:       integer := 5000;    -- Debounce, Start-Input von FG900_700
+  constant  C_P37IO_Stop_Debounce_input_in_ns:        integer := 5000;    -- Debounce, Stop-Input  von FG900_700
+  constant  C_P37IO_Reset_Debounce_input_in_ns:       integer := 5000;    -- Debounce, Reset-Input von FG900_700
+  constant  C_P37IO_Data_Debounce_input_in_ns:        integer := 5000;    -- Debounce, Data-Input  von FG900_700
+                                                                        
+  constant  C_P25IO_Start_Debounce_input_in_ns:       integer := 5000;    -- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_Stop_Debounce_input_in_ns:        integer := 5000;    -- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_Reset_Debounce_input_in_ns:       integer := 5000;    -- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_Ext_Tim_Debounce_input_in_ns:     integer := 5000;    -- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_EOC_Debounce_input_in_ns:         integer := 500;     -- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_Data_Debounce_input_in_ns:        integer := 5000;    -- Debounce, Data-Input von FG900_710
+                                                                        
+  constant  C_OCIN_Data_Debounce_input_in_ns:         integer := 5000;    -- Debounce, Data-Input  von FG900_720
+    
+  constant  C_OCIO_Data_Debounce_input_in_ns:         integer := 5000;    -- Debounce, Data-Input  von FG900_730
+    
+  constant  C_UIO_Lo_Data_Debounce_input_in_ns:       integer := 5000;    -- Debounce, Data-Input  von FG900_740
+  constant  C_UIO_Hi_Data_Debounce_input_in_ns:       integer := 5000;    -- Debounce, Data-Input  von FG900_740
+  constant  C_UIO_Lemo_Debounce_input_in_ns:          integer := 5000;    -- Debounce, Lemo-Input  von FG900_740
 
 
   
@@ -805,8 +853,6 @@ end component;
  
   
   
-  constant  Clk_in_ns: integer:= 1000000000/clk_sys_in_Hz;
-  constant  stretch_cnt: integer := 5;
   
 
   CONSTANT c_AW_P37IO:   std_logic_vector(7 downto 0):= B"00000001"; -- FG900_700
@@ -895,7 +941,12 @@ port map  (
       Diob_Config2        =>  Diob_Config2,              -- Daten-Reg_Diob_Config2
       AW_Config1          =>  AW_Config1,                -- Daten-Reg_AW_Config1  
       AW_Config2          =>  AW_Config2,                -- Daten-Reg_AW_Config2  
-     
+
+      Diob_Config1_wr     =>  Diob_Config1_wr,           -- write-Strobe, Daten-Reg. AWOut1
+      Diob_Config2_wr     =>  Diob_Config2_wr,           -- write-Strobe, Daten-Reg. AWOut2
+      AW_Config1_wr       =>  AW_Config1_wr,             -- write-Strobe, Daten-Reg. AWOut3
+      AW_Config2_wr       =>  AW_Config2_wr,             -- write-Strobe, Daten-Reg. AWOut4
+ 
       Rd_active           =>  Conf_Sts1_rd_active,       -- read data available at 'Data_to_SCUB'-AWOut
       Dtack_to_SCUB       =>  Conf_Sts1_Dtack,           -- connect read sources to SCUB-Macro
       Data_to_SCUB        =>  Conf_Sts1_data_to_SCUB,    -- connect Dtack to SCUB-Macro
@@ -1179,7 +1230,7 @@ port map  (
     
 p_led_sel: led_n
   generic map (stretch_cnt => stretch_cnt)
-  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => not A_nBoardSel, nLED => s_nLED_Sel);-- LED: sel Board
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => (not A_nBoardSel and not A_nDS), nLED => s_nLED_Sel);-- LED: sel Board
   
 p_led_dtack: led_n
   generic map (stretch_cnt => stretch_cnt)
@@ -1252,59 +1303,59 @@ generic map (
     CLK_in_Hz => clk_sys_in_Hz,
     Firmware_Release        => 3,
     Firmware_Version        => 0,
-    CID_System => 55, -- important: 55 => CSCOHW
-    CID_Group => 26, --- important: 26 => "FG900500_SCU_Diob1"
+    CID_System => 55, --------------------------------------------- important: => CSCOHW
+    CID_Group  => 26, --------------------------------------------- important: => "FG900500_SCU_Diob1"
     intr_Enable          => b"0000_0000_0000_0001")
 port map (
-    SCUB_Addr => A_A, -- in,        SCU_Bus: address bus
-    nSCUB_Timing_Cyc         => A_nEvent_Str, -- in,        SCU_Bus signal: low active SCU_Bus runs timing cycle
-    SCUB_Data => A_D, -- inout,        SCU_Bus: data bus (FPGA tri state buffer)
-    nSCUB_Slave_Sel => A_nBoardSel, -- in, SCU_Bus: '0' => SCU master select slave
-    nSCUB_DS => A_nDS, -- in,        SCU_Bus: '0' => SCU master activate data strobe
-    SCUB_RDnWR => A_RnW, -- in, SCU_Bus: '1' => SCU master read slave
+    SCUB_Addr => A_A, -- in,                          SCU_Bus: address bus
+    nSCUB_Timing_Cyc         => A_nEvent_Str, -- in,  SCU_Bus signal: low active SCU_Bus runs timing cycle
+    SCUB_Data => A_D, -- inout,                       SCU_Bus: data bus (FPGA tri state buffer)
+    nSCUB_Slave_Sel => A_nBoardSel, -- in,            SCU_Bus: '0' => SCU master select slave
+    nSCUB_DS => A_nDS, -- in,                         SCU_Bus: '0' => SCU master activate data strobe
+    SCUB_RDnWR => A_RnW, -- in,                       SCU_Bus: '1' => SCU master read slave
     clk => clk_sys,
-    nSCUB_Reset_in => A_nReset, -- in,        SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
-    Data_to_SCUB => Data_to_SCUB, -- in,        connect read sources from external user functions
-    Dtack_to_SCUB => Dtack_to_SCUB, -- in,        connect Dtack from from external user functions
-    intr_in => FG_1_dreq & '0' & tmr_irq & '0'  -- bit 15..12
-            & x"0"                              -- bit 11..8
-            & x"0"                              -- bit 7..4
-            & '0' & '0' & clk_switch_intr,      -- bit 3..1
+    nSCUB_Reset_in => A_nReset, -- in,                SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
+    Data_to_SCUB => Data_to_SCUB, -- in,              connect read sources from external user functions
+    Dtack_to_SCUB => Dtack_to_SCUB, -- in,            connect Dtack from from external user functions
+    intr_in => FG_1_dreq & '0' & tmr_irq & '0'        -- bit 15..12
+            & x"0"                                    -- bit 11..8
+            & x"0"                                    -- bit 7..4
+            & '0' & '0' & clk_switch_intr,            -- bit 3..1
     User_Ready => '1',
-    extension_cid_system => extension_cid_system, -- in,  extension card: cid_system
-    extension_cid_group => extension_cid_group, --in,     extension card: cid_group
+    extension_cid_system => extension_cid_system, -- in,   extension card: cid_system
+    extension_cid_group => extension_cid_group, --in,      extension card: cid_group
     Data_from_SCUB_LA => Data_from_SCUB_LA, -- out,        latched data from SCU_Bus for external user functions
-    ADR_from_SCUB_LA => ADR_from_SCUB_LA, -- out,        latched address from SCU_Bus for external user functions
+    ADR_from_SCUB_LA => ADR_from_SCUB_LA, -- out,          latched address from SCU_Bus for external user functions
     Timing_Pattern_LA => Timing_Pattern_LA, -- out,        latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV => Timing_Pattern_RCV, -- out,        timing pattern received
-    nSCUB_Dtack_Opdrn => open, -- out,        for direct connect to SCU_Bus opendrain signal
-                                                    -- '0' => slave give dtack to SCU master
-    SCUB_Dtack => SCUB_Dtack, -- out,        for connect via ext. open collector driver
-                                                    -- '1' => slave give dtack to SCU master
-    nSCUB_SRQ_Opdrn => open, -- out,        for direct connect to SCU_Bus opendrain signal
-                                                    -- '0' => slave service request to SCU ma
-    SCUB_SRQ => SCUB_SRQ, -- out,        for connect via ext. open collector driver
-                                                    -- '1' => slave service request to SCU master
-    nSel_Ext_Data_Drv => A_nSel_Ext_Data_Drv, -- out,        '0' => select the external data driver on the SCU_Bus slave
-    Ext_Data_Drv_Rd         => A_Ext_Data_RD, -- out,        '1' => direction of the external data driver on the
-                                                    -- SCU_Bus slave is to the SCU_Bus
-    Standard_Reg_Acc => Standard_Reg_Acc, -- out,        '1' => mark the access to register of this macro
-    Ext_Adr_Val => Ext_Adr_Val, -- out,        for external user functions: '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active => Ext_Rd_active, -- out,        '1' => Rd-Cycle to external user register is active
-    Ext_Rd_fin => Ext_Rd_fin, -- out,        marks end of read cycle, active one for one clock period
-                                                    -- of clk past cycle end (no overlap)
-    Ext_Rd_Fin_ovl => Ext_Rd_Fin_ovl, -- out,        marks end of read cycle, active one for one clock period
-                                                    -- of clk during cycle end (overlap)
-    Ext_Wr_active => Ext_Wr_active, -- out,        '1' => Wr-Cycle to external user register is active
-    Ext_Wr_fin => SCU_Ext_Wr_fin, -- out,        marks end of write cycle, active high for one clock period
-                                                    -- of clk past cycle end (no overlap)
-    Ext_Wr_fin_ovl => Ext_Wr_fin_ovl, -- out, marks end of write cycle, active high for one clock period
-                                                    -- of clk before write cycle finished (with overlap)
-    Deb_SCUB_Reset_out => Deb_SCUB_Reset_out, -- out,        the debounced 'nSCUB_Reset_in'-signal, is active high,
-                                                    -- can be used to reset
-                                                    -- external macros, when 'nSCUB_Reset_in' is '0'
-    nPowerup_Res => nPowerup_Res, -- out,        this macro generated a power up reset
-    Powerup_Done => Powerup_Done          -- out  this memory is set to one if an Powerup is done. Only the SCUB-Master can clear this bit.
+    Timing_Pattern_RCV => Timing_Pattern_RCV, -- out,      timing pattern received
+    nSCUB_Dtack_Opdrn => open, -- out,                     for direct connect to SCU_Bus opendrain signal
+                                                 -- '0' => slave give dtack to SCU master
+    SCUB_Dtack => SCUB_Dtack, -- out,                      for connect via ext. open collector driver
+                                                 -- '1' => slave give dtack to SCU master
+    nSCUB_SRQ_Opdrn => open, -- out,                       for direct connect to SCU_Bus opendrain signal
+                                                 -- '0' => slave service request to SCU ma
+    SCUB_SRQ => SCUB_SRQ, -- out,                          for connect via ext. open collector driver
+                                                 -- '1' => slave service request to SCU master
+    nSel_Ext_Data_Drv => A_nSel_Ext_Data_Drv, -- out,      '0' => select the external data driver on the SCU_Bus slave
+    Ext_Data_Drv_Rd         => A_Ext_Data_RD, -- out,      '1' => direction of the external data driver on the
+                                                        -- SCU_Bus slave is to the SCU_Bus
+    Standard_Reg_Acc => Standard_Reg_Acc, -- out,          '1' => mark the access to register of this macro
+    Ext_Adr_Val => Ext_Adr_Val, -- out,                    for external user functions: '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active => Ext_Rd_active, -- out,                '1' => Rd-Cycle to external user register is active
+    Ext_Rd_fin => Ext_Rd_fin, -- out,                      marks end of read cycle, active one for one clock period
+                                                        -- of clk past cycle end (no overlap)
+    Ext_Rd_Fin_ovl => Ext_Rd_Fin_ovl, -- out,              marks end of read cycle, active one for one clock period
+                                                        -- of clk during cycle end (overlap)
+    Ext_Wr_active => Ext_Wr_active, -- out,         '1' => Wr-Cycle to external user register is active
+    Ext_Wr_fin => SCU_Ext_Wr_fin, -- out,                  marks end of write cycle, active high for one clock period
+                                                        -- of clk past cycle end (no overlap)
+    Ext_Wr_fin_ovl => Ext_Wr_fin_ovl, -- out,              marks end of write cycle, active high for one clock period
+                                                        -- of clk before write cycle finished (with overlap)
+    Deb_SCUB_Reset_out => Deb_SCUB_Reset_out, -- out,      the debounced 'nSCUB_Reset_in'-signal, is active high,
+                                                        -- can be used to reset
+                                                        -- external macros, when 'nSCUB_Reset_in' is '0'
+    nPowerup_Res => nPowerup_Res, -- out,                  this macro generated a power up reset
+    Powerup_Done => Powerup_Done          -- out           this memory is set to one if an Powerup is done. Only the SCUB-Master can clear this bit.
     );
 
 
@@ -1601,7 +1652,7 @@ p_P25IO_DAC_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_DAC_Strobe_Start
   
   --------- DAC_Out-Strobe --------------------
 P25IO_DAC_Strobe: led_n
-  generic map (stretch_cnt => 125) -- 125 x 8ns(1/125 MHz) = 1us
+  generic map (stretch_cnt => C_Strobe_1us) -- = 1us
   port map      (ena => '1', CLK => clk_sys,   Sig_in => P25IO_DAC_Strobe_Start_o,    nLED => P25IO_nDAC_Strobe_o);-- 
 
 
@@ -1659,7 +1710,7 @@ p_P25IO_Ext_Tim_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_Ext_Tim_deb_
 
   
 P25IO_ADC_ECC: led_n
-  generic map (stretch_cnt => 250) -- 250 x 8ns(1/125 MHz) = 2us
+  generic map (stretch_cnt => C_Strobe_2us) -- = 2us
   port map      (ena => '1', CLK => clk_sys,   Sig_in => (P25IO_ADC_ECC_i), nLED => P25IO_nADC_ECC_o);-- 
   
 
@@ -1751,7 +1802,11 @@ UIO_in_Hi_Data_Deb1:  for I in 0 to 23 generate
 --  |                                          Anwender-IO: DA  -- FG900_750                                                     |
 --  +============================================================================================================================+
 
--------- DAC_Test_Loop:  AWOut_Reg3 = 1. DAC-Wert, AWOut_Reg4 = 2. DAC-Wert, AWOut_Reg5 = Verzögerungszeit in Taktperioden (8ns)                                                                       
+
+------------------------------------------------------------------------------------------------------------------
+-------- DAC_Test_Loop:                                                                         
+-------- AWOut_Reg3 = 1. DAC-Wert, AWOut_Reg4 = 2. DAC-Wert, AWOut_Reg5 = Verzögerungszeit in Taktperioden (8ns)                                                                       
+------------------------------------------------------------------------------------------------------------------
 
   
 P_Dac_Test_Loop:  process (clk_sys, Powerup_Res, dac_state, AWOut_Reg3, AWOut_Reg4, AWOut_Reg5)
@@ -1823,15 +1878,83 @@ P_Dac_Test_Loop:  process (clk_sys, Powerup_Res, dac_state, AWOut_Reg3, AWOut_Re
     end if;
   end process P_Dac_Test_Loop;
   
+
   
+  
+ ------------------------------ LED'S und Strobe's ------------------------------------------
+
+
+  DA_LED_Ext_Trig1: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => DA_LED_Ext_Trig1_i,    nLED => DA_LED_Ext_Trig1_o);
+
+  DA_LED_Ext_Trig2: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => DA_LED_Ext_Trig2_i,    nLED => DA_LED_Ext_Trig2_o);
+
+  DA_LED_Trig_Out1: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => DA_LED_Trig_Out1_i,    nLED => DA_LED_Trig_Out1_o);
+
+  DA_LED_Trig_Out2: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => DA_LED_Trig_Out2_i,    nLED => DA_LED_Trig_Out2_o);
+
+
+  
+  --------- DAC1_Out-Strobe --------------------
+  DA_Trig1: led_n
+  generic map (stretch_cnt => C_Strobe_1us) -- = 1us
+  port map      (ena => '1', CLK => clk_sys,   Sig_in => DA_Trig1_i,    nLED => DA_Trig1_1us_o);-- 
+
+  --------- DAC2_Out-Strobe --------------------
+  DA_Trig2: led_n
+  generic map (stretch_cnt => C_Strobe_1us) -- = 1us
+  port map      (ena => '1', CLK => clk_sys,   Sig_in => DA_Trig2_i,    nLED => DA_Trig2_1us_o);-- 
+
+
+
+
+ --------- Ext. Trigger1 (Puls aus Signal (1 Clock breit)) --------------------
+
+p_DA_Trig1_Strobe:  PROCESS (clk_sys, Powerup_Res, DA_Trig1_Strobe_i)
+  BEGin
+    IF Powerup_Res  = '1' THEN
+      DA_Trig1_shift  <= (OTHERS => '0');
+      DA_Trig1_Strobe_o    <= '0';
+
+    ELSIF rising_edge(clk_sys) THEN
+      DA_Trig1_shift <= (DA_Trig1_shift(DA_Trig1_shift'high-1 downto 0) & (DA_Trig1_Strobe_i));
+
+      IF DA_Trig1_shift(DA_Trig1_shift'high) = '0' AND DA_Trig1_shift(DA_Trig1_shift'high-1) = '1' THEN
+        DA_Trig1_Strobe_o <= '1';
+      ELSE
+        DA_Trig1_Strobe_o <= '0';
+      END IF;
+    END IF;
+  END PROCESS p_DA_Trig1_Strobe;
  
+
+ --------- Ext. Trigger2 (Puls aus Signal (1 Clock breit)) --------------------
+
+p_DA_Trig2_Strobe:  PROCESS (clk_sys, Powerup_Res, DA_Trig2_Strobe_i)
+  BEGin
+    IF Powerup_Res  = '1' THEN
+      DA_Trig2_shift  <= (OTHERS => '0');
+      DA_Trig2_Strobe_o    <= '0';
+
+    ELSIF rising_edge(clk_sys) THEN
+      DA_Trig2_shift <= (DA_Trig2_shift(DA_Trig2_shift'high-1 downto 0) & (DA_Trig2_Strobe_i));
+
+      IF DA_Trig2_shift(DA_Trig2_shift'high) = '0' AND DA_Trig2_shift(DA_Trig2_shift'high-1) = '1' THEN
+        DA_Trig2_Strobe_o <= '1';
+      ELSE
+        DA_Trig2_Strobe_o <= '0';
+      END IF;
+    END IF;
+  END PROCESS p_DA_Trig2_Strobe;
  
- 
- 
- 
- 
- 
- 
+  
  
  
 --  +===========================================================================================================================+
@@ -1885,7 +2008,11 @@ HFIO_in_PHASE_FEHLER_Deb:  Debounce
 
 p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO, A_SEL, signal_tap_clk_250mhz,
              FG_1_sw, FG_1_strobe, P25IO_DAC_Out,
-             AW_Config1, CLK_IO, AWin1, AWin2, AWin3, AWin4, AWin5, AWin6, AWin7, 
+             CLK_IO,
+             DIOB_Status1, DIOB_Status2, AW_Status1, AW_Status2, 
+             AWin1, AWin2, AWin3, AWin4, AWin5, AWin6, AWin7, 
+             DIOB_Config1, DIOB_Config2, AW_Config1, AW_Config2, 
+             DIOB_Config1_wr, DIOB_Config2_wr, AW_Config1_wr, AW_Config2_wr, 
              AWOut_Reg1, AWOut_Reg1_wr, AWOut_Reg2, AWOut_Reg2_wr, AWOut_Reg3, AWOut_Reg4, AWOut_Reg5, AWOut_Reg6, AWOut_Reg7, 
              Interlock, UIO, hp_la_o, local_clk_is_running, clk_blink,
              s_nLED_Sel, s_nLED_Dtack, s_nLED_inR, s_nLED_User1_o, s_nLED_User2_o, s_nLED_User3_o, 
@@ -1901,10 +2028,18 @@ p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO,
              UIO_HS_IN, UIO_LS_IN,
              UIO_Out, UIO_Data_FG_Out, UIO_nLED_Lemo_In_o, UIO_nLED_Lemo_Out_o,   
              UIO_Lemo_deb_o, UIO_in_Lo_Data_Deb1_o, UIO_in_Hi_Data_Deb1_o,
-             DIOB_Config1, DA_DAC1_Out, DA_DAC1_Strobe, DA_DAC2_Out, DA_DAC2_Strobe,
-             Tag_Sts, DAC_Test_Out, DAC_Test_Strobe
+             DIOB_Config1, Tag_Sts, 
+             DA_DAC1_Data, DA_DAC1_Out, DA_DAC1_Str, DA_DAC1_Str_Out,
+             DA_DAC2_Data, DA_DAC2_Out, DA_DAC2_Str, DA_DAC2_Str_Out,
+             DAC_Test_Out, DAC_Test_Strobe, DA_Trig1_Strobe_o, DA_Trig2_Strobe_o,
+             DA_LED_Ext_Trig1_o, DA_LED_Ext_Trig2_o,
+             DA_Trig1_1us_o,  DA_Trig2_1us_o,
+             DA_LED_Trig_Out1_o, DA_LED_Trig_Out2_o
              )
-  
+
+
+
+ 
 BEGIN
 
   --############################# Set Defaults ######################################
@@ -1984,12 +2119,32 @@ BEGIN
     UIO_LED_Lemo_Out_i          <=  '0';            -- Input  "nLED_Lemo_Out"
     UIO_Lemo_deb_i              <=  '0';            -- Input "Lemo" 
 
-    DA_DAC1_Strobe              <=  '0';                -- Output Strobe
-    DA_DAC1_Out                 <=   (OTHERS => '0');   -- Output Bit-15
-    DA_DAC2_Strobe              <=  '0';                -- Output Strobe
-    DA_DAC2_Out                 <=   (OTHERS => '0');   -- Output Bit-15
+    DA_DAC1_Str                 <=  '0';                -- DAC1-Strobe
+    DA_DAC1_Str_Out             <=  '0';                -- DAC1-Output-Strobe
+    DA_DAC1_Data                <=   (OTHERS => '0');   -- DAC1-Data   Bit-15
+    DA_DAC1_Out                 <=   (OTHERS => '0');   -- DAC1-Output Bit-15
 
+    DA_DAC2_Str                 <=  '0';                -- DAC2-Strobe
+    DA_DAC2_Str_Out             <=  '0';                -- DAC2-Output-Strobe
+    DA_DAC2_Data                <=   (OTHERS => '0');   -- DAC2-Data   Bit-15
+    DA_DAC2_Out                 <=   (OTHERS => '0');   -- DAC2-Output Bit-15
 
+    DA_Trig1_i                  <= '0';
+    DA_Trig2_i                  <= '0';
+    DA_Trig1_Strobe_i           <= '0';
+    DA_Trig2_Strobe_i           <= '0';
+    DA_LED_Trig_Out1_i          <= '0';
+    DA_LED_Trig_Out2_i          <= '0';
+    DA_LED_Ext_Trig1_i          <= '0';
+    DA_LED_Ext_Trig2_i          <= '0';
+
+    
+    
+    
+    
+    
+    
+    
   
   
     --#################################################################################
@@ -2074,13 +2229,13 @@ BEGIN
   
     --  --- Output: Anwender-LED's ---
 
-    PIO(17) <= s_nLED_Sel;                    -- LED7 = sel Board 
-    PIO(19) <= s_nLED_Dtack;                  -- LED6 = Dtack 
-    PIO(21) <= s_nLED_inR;                    -- LED5 = interrupt
-    PIO(23) <= not Powerup_Done or clk_blink;  -- LED4 = Powerup 
-    PIO(25) <= s_nLED_User1_o;                -- LED3 = User 1
-    PIO(27) <= s_nLED_User2_o;                -- LED2 = User 2  
-    PIO(29) <= s_nLED_User3_o;                -- LED1 = User 3 
+    PIO(17) <= s_nLED_Sel;                          -- LED7 = sel Board 
+    PIO(19) <= s_nLED_Dtack;                        -- LED6 = Dtack 
+    PIO(21) <= s_nLED_inR;                          -- LED5 = interrupt
+    PIO(23) <= not Powerup_Done or clk_blink;       -- LED4 = Powerup 
+    PIO(25) <= s_nLED_User1_o;                      -- LED3 = User 1
+    PIO(27) <= s_nLED_User2_o;                      -- LED2 = User 2  
+    PIO(29) <= s_nLED_User3_o;                      -- LED1 = User 3 
     PIO(31) <= local_clk_is_running and clk_blink;  -- LED0 (User-4) = int. Clock 
     
 
@@ -2099,15 +2254,15 @@ BEGIN
     --####                  Anwender-IO: P37IO  -- FG900_700                        ###
     --#################################################################################
 
-      extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
-      extension_cid_group  <= 27; -- extension card: cid_group, "FG900700_P37IO1" = 27
+      extension_cid_system <= 55;     -- extension card: cid_system, CSCOHW=55
+      extension_cid_group  <= 27;     -- extension card: cid_group, "FG900700_P37IO1" = 27
+    
+      Max_AWOut_Reg_Nr     <= 2;      -- Maximale AWOut-Reg-Nummer der Anwendung
+      Max_AWIn_Reg_Nr      <= 1;      -- Maximale AWIn-Reg-Nummer der Anwendung
 
-      Max_AWOut_Reg_Nr     <= 2;  -- Maximale AWOut-Reg-Nummer der Anwendung
-      Max_AWIn_Reg_Nr      <= 1;  -- Maximale AWIn-Reg-Nummer der Anwendung
-
-    s_nLED_User1_i <= '0';        -- LED3 = User 1, -- frei -- 
-    s_nLED_User2_i <= '0';        -- LED3 = User 2, -- frei -- 
-    s_nLED_User3_i <= '0';        -- LED3 = User 3, -- frei -- 
+      s_nLED_User1_i       <= '0';    -- LED3 = User 1, -- frei -- 
+      s_nLED_User2_i       <= '0';    -- LED3 = User 2, -- frei -- 
+      s_nLED_User3_i       <= '0';    -- LED3 = User 3, -- frei -- 
 
     
     --############################# Start/Stop FF ######################################
@@ -2188,7 +2343,7 @@ BEGIN
     Max_AWIn_Reg_Nr      <= 1;  -- Maximale AWIn-Reg-Nummer der Anwendung
 
     
-      s_nLED_User1_i <= AW_Config1(0);          -- LED3 = User 1, DAC-Data vom FG
+      s_nLED_User1_i <= AW_Config1(0);         -- LED3 = User 1, DAC-Data vom FG
       s_nLED_User2_i <= not P25IO_nADC_ECC_o;  -- LED2 = User 2, ECC zum ADC (Enable)  
       s_nLED_User3_i <= P25IO_EOC_deb_o;       -- LED1 = User 3, EOC vom ADC 
     
@@ -2596,71 +2751,178 @@ BEGIN
     Max_AWIn_Reg_Nr      <= 1;  -- Maximale AWIn-Reg-Nummer der Anwendung
 
     
-      s_nLED_User1_i <= AW_Config1(0);        -- LED3 = User 1, DAC-Data vom FG
-      s_nLED_User2_i <= '0';                  -- LED3 = User 2, -- frei -- 
-      s_nLED_User3_i <= '0';                  -- LED3 = User 3, -- frei -- 
-    
-    
-    IF  (AW_Config1(15) = '1')  THEN
-    
-      DA_DAC1_Strobe   <=  DAC_Test_Strobe;        -- Output Strobe
-      DA_DAC1_Out      <=  DAC_Test_Out;           -- Test-Bitmuster
-      DA_DAC2_Strobe   <=  '0';                    -- Output Strobe
-      DA_DAC2_Out      <=  (others => '0');        -- Test-Bitmuster
-    
-      Else
+      s_nLED_User1_i <= AW_Config1(4);        -- LED3 = User 1, DAC-Data vom FG1
+      s_nLED_User2_i <= AW_Config2(4);        -- LED2 = User 2, DAC-Data vom FG2 
+      s_nLED_User3_i <= '0';                  -- LED1 = User 3, -- frei --
 
-      DA_DAC1_Strobe <=  (AWOut_Reg1_wr or (Powerup_Res));  -- Output Strobe
-      DA_DAC1_Out    <=   AWOut_Reg1;  -- Output Bit-15
+      
+  -------------------------------- Testmode für DAC1 ---------------------------------------
     
+    IF  (AW_Config1(15) = '1')  THEN   
+    
+      DA_DAC1_Str     <=  DAC_Test_Strobe;        -- Output Strobe
+      DA_DAC1_Data    <=  DAC_Test_Out;           -- Test-Bitmuster
 
-      DA_DAC2_Strobe <=  (AWOut_Reg2_wr or (Powerup_Res));  -- Output Strobe
-      DA_DAC2_Out    <=   AWOut_Reg2;  -- Output Bit-15
+  --------------------------------- ext. Trigger für DAC1 ---------------------------------------
 
+      elsif  (AW_Config1(2) = '1')  THEN 
+
+        if   (AW_Config1(3) = '1')  THEN 
+              DA_Trig1_Strobe_i   <=     PIO(43);       -- Lemo: Input Ext-Trigger1 (neg.)
+        else
+              DA_Trig1_Strobe_i   <= not PIO(43);       -- Lemo: Input Ext-Trigger1 (pos.)
+        end if;
+
+      DA_LED_Ext_Trig1_i  <= DA_Trig1_Strobe_o;         -- LED:  Input Ext-Trigger1 
+      PIO(51)             <= DA_LED_Ext_Trig1_o;        -- LED:  Extrern_Trigger1
+      
+     
+      DA_DAC1_Data(15 downto 0)  <=  AWOut_Reg1;        -- Output Daten
+      DA_DAC1_Str            <=  DA_Trig1_Strobe_o;     -- FG_1_strobe (vom Funktionsgen)
+
+  --------------------------------- FG-Mode für DAC1 ---------------------------------------
+
+      elsif  (AW_Config1(4) = '1')  THEN 
+
+      DA_DAC1_Data(15 downto 0)  <=  FG_1_sw(31 downto 16);    -- FG1-Output
+      DA_DAC1_Str            <=  FG_1_strobe;                  -- FG_1_strobe (vom Funktionsgen)
+
+  ----------------------------- SCU-Bus-Daten für DAC1 -------------------------------------
+      else
+
+      DA_DAC1_Data    <=   AWOut_Reg1;                   -- Output Daten
+      DA_DAC1_Str <=  (AWOut_Reg1_wr or (Powerup_Res));  -- Output Strobe für SCU-Bus Daten und Einschalt-Reset
     
     END IF; 
 
- --############################# DAC out ######################################
-
-      PIO(99)   <=  not DA_DAC1_Strobe;  -- Output Strobe
-      PIO(133)  <=  not DA_DAC2_Strobe;  -- Output Strobe
     
-      PIO(97)  <=  not  DA_DAC1_Out(15);  -- Output Bit-15
-      PIO(95)  <=       DA_DAC1_Out(14);  -- Output Bit-14
-      PIO(93)  <=       DA_DAC1_Out(13);  -- Output Bit-13
-      PIO(91)  <=       DA_DAC1_Out(12);  -- Output Bit-12
-      PIO(89)  <=       DA_DAC1_Out(11);  -- Output Bit-11
-      PIO(87)  <=       DA_DAC1_Out(10);  -- Output Bit-10
-      PIO(85)  <=       DA_DAC1_Out(9);   -- Output Bit-9
-      PIO(83)  <=       DA_DAC1_Out(8);   -- Output Bit-8
-      PIO(81)  <=       DA_DAC1_Out(7);   -- Output Bit-7
-      PIO(79)  <=       DA_DAC1_Out(6);   -- Output Bit-6
-      PIO(77)  <=       DA_DAC1_Out(5);   -- Output Bit-5
-      PIO(75)  <=       DA_DAC1_Out(4);   -- Output Bit-4
-      PIO(73)  <=       DA_DAC1_Out(3);   -- Output Bit-3
-      PIO(71)  <=       DA_DAC1_Out(2);   -- Output Bit-2
-      PIO(69)  <=       DA_DAC1_Out(1);   -- Output Bit-1
-      PIO(67)  <=       DA_DAC1_Out(0);   -- Output Bit-0
+    
+  -------------------------------- Testmode für DAC2 ---------------------------------------
+    
+    IF  (AW_Config2(15) = '1')  THEN   
+    
+      DA_DAC2_Str    <=  DAC_Test_Strobe;        -- Output Strobe
+      DA_DAC2_Data   <=  DAC_Test_Out;           -- Test-Bitmuster
+
+  --------------------------------- ext. Trigger für DAC2 ---------------------------------------
+
+      elsif  (AW_Config2(2) = '1')  THEN 
+
+        if   (AW_Config2(3) = '1')  THEN 
+              DA_Trig2_Strobe_i   <=     PIO(45);     -- Lemo: Input Ext-Trigger2 (neg.)
+        else
+              DA_Trig2_Strobe_i   <= not PIO(45);     -- Lemo: Input Ext-Trigger2 (pos.)
+        end if;
+
+      DA_LED_Ext_Trig2_i  <= DA_Trig2_Strobe_o;       -- LED:  Input Ext-Trigger1 
+      PIO(53)             <= DA_LED_Ext_Trig2_o;      -- LED:  Extrern_Trigger1
+      
+     
+      DA_DAC2_Data(15 downto 0)  <=  AWOut_Reg2;      -- Output Daten
+      DA_DAC2_Str            <=  DA_Trig2_Strobe_o;   -- FG_1_strobe (vom Funktionsgen)
+
+  --------------------------------- FG-Mode für DAC2 ---------------------------------------
+
+      elsif  (AW_Config2(4) = '1')  THEN 
+
+      DA_DAC2_Data(15 downto 0)  <=  FG_1_sw(31 downto 16);    -- FG1-Output
+      DA_DAC2_Str            <=  FG_1_strobe;              -- FG_2_Strobe (vom Funktionsgen)
+
+  ----------------------------- SCU-Bus-Daten für DAC2 -------------------------------------
+      else
+
+      DA_DAC2_Data    <=   AWOut_Reg2;                       -- Output Daten
+      DA_DAC2_Str <=  (AWOut_Reg2_wr or (Powerup_Res));  -- Output Strobe für SCU-Bus Daten und Einschalt-Reset
+   
+    END IF; 
+
+    
+    
+ --############################ Reset DAC1/DAC2 mit dem "Reset-Befehl ######################################
  
-    
-      PIO(131)  <=  not DA_DAC2_Out(15);  -- Output Bit-15
-      PIO(129)  <=      DA_DAC2_Out(14);  -- Output Bit-14
-      PIO(127)  <=      DA_DAC2_Out(13);  -- Output Bit-13
-      PIO(125)  <=      DA_DAC2_Out(12);  -- Output Bit-12
-      PIO(123)  <=      DA_DAC2_Out(11);  -- Output Bit-11
-      PIO(121)  <=      DA_DAC2_Out(10);  -- Output Bit-10
-      PIO(119)  <=      DA_DAC2_Out(9);   -- Output Bit-9
-      PIO(117)  <=      DA_DAC2_Out(8);   -- Output Bit-8
-      PIO(115)  <=      DA_DAC2_Out(7);   -- Output Bit-7
-      PIO(113)  <=      DA_DAC2_Out(6);   -- Output Bit-6
-      PIO(111)  <=      DA_DAC2_Out(5);   -- Output Bit-5
-      PIO(109)  <=      DA_DAC2_Out(4);   -- Output Bit-4
-      PIO(107)  <=      DA_DAC2_Out(3);   -- Output Bit-3
-      PIO(105)  <=      DA_DAC2_Out(2);   -- Output Bit-2
-      PIO(103)  <=      DA_DAC2_Out(1);   -- Output Bit-1
-      PIO(101)  <=      DA_DAC2_Out(0);   -- Output Bit-0
+ 
+    if  (AW_Config1(1) = '1') and (AW_Config1_wr = '1')  THEN
+
+       DA_DAC1_Out     <= (OTHERS => '0');  -- Zwischenspeicher
+       DA_DAC1_Str_Out <=  '1';             -- DAC1-Output-Strobe 
+     else
+       DA_DAC1_Out     <= DA_DAC1_Data;  -- Zwischenspeicher
+       DA_DAC1_Str_Out <= DA_DAC1_Str;   -- DAC1-Output-Strobe
+    end if;
+ 
+    if  (AW_Config2(1) = '1') and (AW_Config2_wr = '1')  THEN
+
+       DA_DAC2_Out     <= (OTHERS => '0');  -- Zwischenspeicher
+       DA_DAC2_Str_Out <=  '1';             -- DAC1-Output-Strobe 
+     else
+       DA_DAC2_Out     <= DA_DAC2_Data;  -- Zwischenspeicher
+       DA_DAC2_Str_Out <= DA_DAC2_Str;   -- DAC1-Output-Strobe
+    end if;
+ 
+
+
+ --################## DAC-Daten und Strobe zum DIOB-Output-Stecker ######################################
+ 
+ 
+      PIO(99)   <=  not DA_DAC1_STR_Out;  -- Output Strobe
+      PIO(133)  <=  not DA_DAC2_STR_Out;  -- Output Strobe
     
 
+      PIO(97) <= not  DA_DAC1_Out(15); PIO(95)  <= DA_DAC1_Out(14); PIO(93)  <= DA_DAC1_Out(13); PIO(91)  <= DA_DAC1_Out(12);
+      PIO(89) <=      DA_DAC1_Out(11); PIO(87)  <= DA_DAC1_Out(10); PIO(85)  <= DA_DAC1_Out(9);  PIO(83)  <= DA_DAC1_Out(8); 
+      PIO(81) <=      DA_DAC1_Out(7);  PIO(79)  <= DA_DAC1_Out(6);  PIO(77)  <= DA_DAC1_Out(5);  PIO(75)  <= DA_DAC1_Out(4); 
+      PIO(73) <=      DA_DAC1_Out(3);  PIO(71)  <= DA_DAC1_Out(2);  PIO(69)  <= DA_DAC1_Out(1);  PIO(67)  <= DA_DAC1_Out(0); 
+    
+      PIO(131) <= not DA_DAC2_Out(15); PIO(129) <= DA_DAC2_Out(14); PIO(127) <= DA_DAC2_Out(13); PIO(125) <= DA_DAC2_Out(12);
+      PIO(123) <=     DA_DAC2_Out(11); PIO(121) <= DA_DAC2_Out(10); PIO(119) <= DA_DAC2_Out(9);  PIO(117) <= DA_DAC2_Out(8); 
+      PIO(115) <=     DA_DAC2_Out(7);  PIO(113) <= DA_DAC2_Out(6);  PIO(111) <= DA_DAC2_Out(5);  PIO(109) <= DA_DAC2_Out(4); 
+      PIO(107) <=     DA_DAC2_Out(3);  PIO(105) <= DA_DAC2_Out(2);  PIO(103) <= DA_DAC2_Out(1);  PIO(101) <= DA_DAC2_Out(0); 
+    
+
+
+  ------------------ DAC1_Out-Strobe --------------------
+
+
+    IF  (AW_Config1(5)   = '1')  THEN               -- DAC1_Out-Strobe Enable   
+      DA_Trig1_i            <=  DA_DAC1_Str_Out;   
+      PIO(55)               <=  DA_LED_Trig_Out1_o; -- LED: Trigger DAC1      
+
+      IF  (AW_Config1(6) = '1')  THEN               -- DAC1_Out-Strobe negativ Enable   
+        DA_LED_Trig_Out1_i  <=  DA_DAC1_Str_Out;
+        PIO(49)             <=  DA_Trig1_1us_o;     -- Lemo: Trigger_Out1 = neg.
+      Else
+        DA_LED_Trig_Out1_i  <=  DA_DAC1_Str_Out;
+        PIO(49)             <=  not DA_Trig1_1us_o; -- Lemo: Trigger_Out1 = pos.
+      end if;
+
+    Else
+      PIO(55)               <=  '1';  -- LED: Trigger DAC1  = Aus      
+      PIO(49)               <=  '0';  -- Lemo: Trigger_Out1 = Aus
+    end if;
+
+
+  ------------------ DAC2_Out-Strobe --------------------
+
+
+    IF  (AW_Config2(5)   = '1')  THEN               -- DAC2_Out-Strobe Enable   
+      DA_LED_Trig_Out2_i    <=  DA_DAC2_Str_Out;
+      PIO(57)               <=  DA_LED_Trig_Out2_o; -- LED: Trigger DAC2      
+
+      IF  (AW_Config2(6) = '1')  THEN               -- DAC2_Out-Strobe negativ Enable   
+        DA_Trig2_i          <=  DA_DAC2_Str_Out;   
+        PIO(47)             <=  DA_Trig2_1us_o;     -- Lemo: Trigger_Out2 = neg.
+      Else
+        DA_Trig2_i          <=  DA_DAC2_Str_Out;   
+        PIO(47)             <=  not DA_Trig2_1us_o; -- Lemo: Trigger_Out2 = pos.
+      end if;
+
+    Else
+      PIO(57)               <=  '1';  -- LED: Trigger DAC2  = Aus      
+      PIO(47)               <=  '0';  -- Lemo: Trigger_Out2 = Aus
+    end if;
+
+      
+    
 
   WHEN   c_AW_Frei =>
       

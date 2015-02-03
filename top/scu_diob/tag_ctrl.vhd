@@ -1065,7 +1065,8 @@ P_AWOut_Array:  process (nReset, clk,
 --  +============================================================================================================================+
   
   
-P_AWOut_Reg:  process (S_Tag_Base_0_Addr_Wr, S_Tag_Base_1_Addr_Wr, S_Tag_Base_2_Addr_Wr, S_Tag_Base_3_Addr_Wr,
+P_AWOut_Reg:  process (clk, nReset,
+                       S_Tag_Base_0_Addr_Wr, S_Tag_Base_1_Addr_Wr, S_Tag_Base_2_Addr_Wr, S_Tag_Base_3_Addr_Wr,
                        S_Tag_Base_4_Addr_Wr, S_Tag_Base_5_Addr_Wr, S_Tag_Base_6_Addr_Wr, S_Tag_Base_7_Addr_Wr,
                        Data_from_SCUB_LA )
   begin

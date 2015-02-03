@@ -32,6 +32,11 @@ ENTITY config_status IS
     AW_Config1:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut3
     AW_Config2:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut4
 
+    Diob_Config1_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut1
+    Diob_Config2_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut2
+    AW_Config1_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut3
+    AW_Config2_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut4
+
     Rd_active:            out  std_logic;                        -- read data available at 'Data_to_SCUB'-AWOut
     Data_to_SCUB:         out  std_logic_vector(15 downto 0);    -- connect read sources to SCUB-Macro
     Dtack_to_SCUB:        out  std_logic;                        -- connect Dtack to SCUB-Macro
@@ -356,7 +361,15 @@ Data_to_SCUB <= S_Read_Port;
 
 Diob_Config1      <=  S_Diob_Config1;     -- Daten-Reg. AWOut1
 Diob_Config2      <=  S_Diob_Config2;     -- Daten-Reg. AWOut2
-AW_Config1        <=  S_AW_Config1;     -- Daten-Reg. AWOut3
-AW_Config2        <=  S_AW_Config2;     -- Daten-Reg. AWOut4
+AW_Config1        <=  S_AW_Config1;       -- Daten-Reg. AWOut3
+AW_Config2        <=  S_AW_Config2;       -- Daten-Reg. AWOut4
+
+
+Diob_Config1_wr   <=  S_Diob_Config1_Wr;  -- write-Strobe, Daten-Reg. AWOut1
+Diob_Config2_wr   <=  S_Diob_Config2_Wr;  -- write-Strobe, Daten-Reg. AWOut2
+AW_Config1_wr     <=  S_AW_Config1_Wr;    -- write-Strobe, Daten-Reg. AWOut3
+AW_Config2_wr     <=  S_AW_Config2_Wr;    -- write-Strobe, Daten-Reg. AWOut4
+
+
 
 end Arch_config_status;
