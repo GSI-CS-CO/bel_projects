@@ -209,10 +209,6 @@ architecture rtl of exploder5_csco_tr is
   signal s_lvds_n_o     : std_logic_vector(11 downto 1);
   signal s_lvds_o_led   : std_logic_vector(11 downto 1);
   signal s_lvds_oen     : std_logic_vector( 8 downto 1);
-  
-  signal s_nau8811_spi_csb  : std_logic;
-  signal s_nau8811_spi_sclk : std_logic;
-  signal s_nau8811_spi_sdio : std_logic;
 
 begin
 
