@@ -446,6 +446,8 @@ int32_t iSSD1325_ConfigureScreen(void)
   iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_ROW_PERIOD_DEFAULT);
   iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PHASE_LENGHT);
   iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PHASE_LENGHT_DEFAULT);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_CLOCK);
+  iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_DISPLAY_CLOCK_DEFAULT);
   iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PRE_CHARGE_VOLTAGE);
   iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PRE_CHARGE_VOLTAGE_DEFAULT);
   iSSD1325_SetParameter (eTxFifoDataRegister, SSD1325_CMD_SET_PRE_CHARGE_COMPENSATION);

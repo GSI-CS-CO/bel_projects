@@ -17,5 +17,5 @@ static inline void delay(int x)
 
 extern void usleep(int x);
 extern volatile unsigned int* BASE_ONEWIRE;
-extern volatile unsigned int* BASE_UART;
+extern volatile uint32_t* BASE_UART;
 #endif

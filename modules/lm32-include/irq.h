@@ -43,38 +43,121 @@
 #ifndef __IRQ_H_
 #define __IRQ_H_
 
-extern volatile unsigned int* pCpuIrqSlave;
+#include <inttypes.h>
+#include <stdint.h>
+
+#ifndef __GNUC_STDC_INLINE__
+#error NEEDS gnu99 EXTENSIONS - ADD '-std=gnu99' TO THE CFGLAGS OF YOUR Makefile!
+#endif
+
+extern volatile uint32_t* pCpuIrqSlave;
+
+#define NESTED_IRQS 0
+
+#define IRQ_REG_RST  0x00000000
+#define IRQ_REG_STAT 0x00000004
+#define IRQ_REG_POP  0x00000008
+#define IRQ_OFFS_MSG 0x00000000
+#define IRQ_OFFS_ADR 0x00000004
+#define IRQ_OFFS_SEL 0x00000008
 
 typedef struct
 {
-   unsigned int  msg;
-   unsigned int  adr;
-   unsigned int  sel;
+   uint32_t  msg;
+   uint32_t  adr;
+   uint32_t  sel;
 } msi; 
 
 //ISR function pointer table
 typedef void (*isr_ptr_t)(void);
-isr_ptr_t isr_ptr_table[32]; 
+
+extern volatile isr_ptr_t isr_ptr_table[32]; 
 
 //Global containing last processed MSI message
-volatile msi global_msi;
+extern volatile msi global_msi;
 
-inline void irq_pop_msi( unsigned int irq_no);
+inline void irq_pop_msi( uint32_t irq_no)
+{
+    uint32_t* msg_queue = (uint32_t*)(pCpuIrqSlave + ((irq_no +1)<<2));
+    
+    global_msi.msg =  *(msg_queue+((uint32_t)IRQ_OFFS_MSG>>2));
+    global_msi.adr =  *(msg_queue+((uint32_t)IRQ_OFFS_ADR>>2)); 
+    global_msi.sel =  *(msg_queue+((uint32_t)IRQ_OFFS_SEL>>2));
+    *(pCpuIrqSlave + (IRQ_REG_POP>>2)) = 1<<irq_no;   
+} 
 
-inline  unsigned int  irq_get_mask(void);
+inline void isr_table_clr(void)
+{
+  //set all ISR table entries to Null
+  uint32_t i;
+  for(i=0;i<32;i++)  isr_ptr_table[i] = 0; 
+}
 
-inline void irq_set_mask( unsigned int im);
+inline  uint32_t  irq_get_mask(void)
+{
+    //read IRQ mask
+    uint32_t im;
+    asm ( "rcsr %0, im": "=&r" (im));
+    return im;                   
+}
 
-inline  unsigned int  irq_get_enable(void);
 
-inline void irq_disable(void);
+inline void irq_set_mask( uint32_t im)
+{
+    //write IRQ mask
+    asm (   "wcsr im, %0" \
+            :             \
+            : "r" (im)    \
+        );
+}
 
-inline void irq_enable(void);
+inline  uint32_t  irq_get_enable(void)
+{
+    //read global IRQ enable bit
+    uint32_t ie;
+    asm ( "rcsr %0, ie\n"  \
+          "andi %0, %0, 1" \
+         : "=&r" (ie));
+    return ie;                   
+}
 
-inline void irq_clear( unsigned int mask);
+inline void irq_disable(void)
+{
+   //globally disable interrupts
+   unsigned foo;
+   asm volatile   (  "rcsr %0, IE\n"            \
+                     "andi  %0, %0, 0xFFFE\n"   \
+                     "wcsr IE, %0"              \
+                     : "=r" (foo)               \
+                     :                          \
+                     : 
+                     );
+}
 
-inline void isr_table_clr(void);
+inline void irq_enable(void)
+{
+   //globally enable interrupts
+   unsigned foo;
+   asm volatile   (  "rcsr %0, IE\n"      \
+                     "ori  %0, %0, 1\n"   \
+                     "wcsr IE, %0"        \
+                     : "=r" (foo)         \
+                     :                    \
+                     :                    \
+                     );
+}
 
-inline void irq_process(void);
 
-#endif
+inline void irq_clear( uint32_t mask)
+{
+    //clear pending interrupt flag(s)
+    asm           (  "wcsr ip, %0"  \
+                     :              \
+                     : "r" (mask)   \
+                     :              \
+                     );
+}
+
+void _irq_entry(void); 
+
+#endif // include guard
