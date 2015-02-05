@@ -57,8 +57,7 @@ architecture wb_fg_quad_arch of wb_fg_quad is
   signal wr_brc_start:      std_logic;
   signal wr_coeff_a:        std_logic;
   signal wr_start_value:    std_logic;
-  signal fg_stopped:        std_logic;
-  signal fg_running:        std_logic;
+  signal fg_is_running:     std_logic;
   signal ramp_sec_fin:      std_logic;
   signal sw_out:            std_logic_vector(31 downto 0);
   signal sw_strobe:         std_logic;
@@ -119,7 +118,7 @@ begin
         end if;
         --read from registers
         case unsigned(fg_slave_i.adr(7 downto 0)) is
-          when cntrl_reg_adr    => fg_slave_o.dat <= x"0000" & fg_cntrl_reg(15 downto 4) & fg_stopped & fg_running & fg_cntrl_reg(1 downto 0); 
+          when cntrl_reg_adr    => fg_slave_o.dat <= x"0000" & fg_cntrl_reg(15 downto 4) & '0' & fg_is_running & fg_cntrl_reg(1 downto 0); 
           when coeff_a_reg_adr  => fg_slave_o.dat <= x"0000" & coeff_a_reg; 
           when coeff_b_reg_adr  => fg_slave_o.dat <= x"0000" & coeff_b_reg; 
           when start_reg_adr    => fg_slave_o.dat <= start_value_reg; 
@@ -173,8 +172,7 @@ begin
       ramp_sec_fin        => ramp_sec_fin,
       sw_out              => sw_out,
       sw_strobe           => sw_strobe,
-      fg_stopped          => fg_stopped,
-      fg_running          => fg_running       
+      fg_is_running       => fg_is_running       
     );
     
   -----------------------------------------------------------------------------------------
