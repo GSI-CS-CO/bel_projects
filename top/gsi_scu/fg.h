@@ -64,5 +64,8 @@ struct fg_status {
   unsigned int rampcnt;
 };
 
+int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr);
+int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg);
+void init_buffers(struct circ_buffer *buf);
 
 #endif

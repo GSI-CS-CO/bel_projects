@@ -8,7 +8,7 @@ PSCU      = ../../../modules/scu_bus/housekeeping_sw
 PDEV      = $(PSCU)/dev
 W1        = ../../../ip_cores/wrpc-sw
 CFLAGS    = -I$(PSCU)/include -I$(PATHSCU) -I$(LM32INC) -mmultiply-enabled \
-            -mbarrel-shift-enabled -Os -I$(W1)/include -I$(W1)/pp_printf
+            -mbarrel-shift-enabled -Os -I$(W1)/include -I$(W1)/pp_printf -std=gnu99
 
 include ../../build.mk
 

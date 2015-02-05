@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "mprintf.h"
 #include "display.h"
 #include "irq.h"
 #include "scu_bus.h"
@@ -41,7 +42,7 @@ struct fg_dev wb_fg_dev;
 
 volatile unsigned short* scub_base;
 volatile unsigned int* BASE_ONEWIRE;
-volatile unsigned int* BASE_UART;
+volatile uint32_t* BASE_UART;
 volatile unsigned int* scub_irq_base;
 volatile unsigned int* wb_fg_irq_base;
 volatile unsigned int* wb_fg_base;
@@ -368,7 +369,7 @@ void reset_slaves() {
 void print_fgs() {
   int i=0, j=0;
   scan_scu_bus(&scub, backplane_id, scub_base);
-  num_fgs_found = scan_for_fgs(&scub, &fgs);
+  num_fgs_found = scan_for_fgs(&scub, &fgs, &wb_fg_dev);
   mprintf("ID: 0x%08x%08x\n", (int)(scub.unique_id >> 32), (int)scub.unique_id); 
   while(scub.slaves[i].unique_id) { /* more slaves in list */ 
       mprintf("slaves[%d] ID:  0x%08x%08x\n",i, (int)(scub.slaves[i].unique_id>>32), (int)scub.slaves[i].unique_id); 
@@ -400,7 +401,7 @@ void sw_irq_handler() {
   switch(global_msi.adr>>2 & 0xf) {
     case 0:
       disable_msi_irqs();  
-      init_buffers(&fg_buffer);
+      init_buffers((struct circ_buffer *)&fg_buffer);
       for (i=0; i < MAX_FG_DEVICES; i++) // clear statistics
         param_sent[i] = 0;
     break;
@@ -477,15 +478,15 @@ void init() {
   uart_init_hw();           //enables the uart for debug messages
   updateTemp();            //update 1Wire ID and temperatures
   print_fgs();              //scans for slave cards and fgs
-  init_buffers(&fg_buffer); //init the ring buffer
+  init_buffers((struct circ_buffer *)&fg_buffer); //init the ring buffer
   init_irq_handlers();      //enable the irqs
 } 
 
 int main(void) {
   char input;
   int i, j;
-  int lm32_endp_idx = 0;
-  int ow_base_idx = 0;
+  uint32_t lm32_endp_idx = 0;
+  uint32_t ow_base_idx = 0;
   int slot;
   int fg_is_running[MAX_FG_DEVICES];
   discoverPeriphery();  
