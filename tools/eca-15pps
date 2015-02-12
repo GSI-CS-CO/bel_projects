@@ -1,0 +1,63 @@
+#! /bin/bash
+
+dev="$1"
+set -e
+
+echo -n "Configuring ECA: "
+
+eca-ctl $dev enable
+eca-ctl $dev idisable # No interrupts, please
+
+eca-table $dev flush
+
+# LEDs/ channel0 (pulse width = 100ms)
+eca-ctl $dev activate -c 0
+eca-table $dev add 0xdeadbeef/64 +0.0 0 0x0000ffff
+eca-table $dev add 0xdeadbeef/64 +0.1 0 0xffff0000
+
+# LEMOs/channel2 (pulse width = 4*8=32ns)
+eca-ctl $dev activate -c 2
+eca-table $dev add 0xdeadbeef/64 0 2 0x000fff
+eca-table $dev add 0xdeadbeef/64 4 2 0xfff000
+eca-table $dev flip-active
+
+echo "done."
+
+echo -n "Pulse? "
+period=125000000
+last=0
+counter=0
+
+ while true
+do
+ # Try to schedule next pulse 3x a second.
+ # This way we don't miss any pulses due to slow scheduling on linux.
+ sleep 0.3
+ # What time is it?
+ when=`eca-ctl $dev -n | grep time | cut -d: -f2`
+ # Round up to the next second.
+ next="$(((when+period+period-1)/period*period))"
+ # If we haven't scheduled this PPS pulse yet, do it now. 
+ if [ $next -ne $last ]; then 
+   eca-ctl $dev send 0xdeadbeef 0 0 $next
+   echo "now"
+   echo -n "Pulse? "
+ else
+   echo -n ". "
+ fi
+ last="$next"
+
+
+
+ counter=$((counter+1))
+
+ echo "Pulses Counter from eca-pps" $counter
+
+ if [ $counter != 15 ]
+ then
+  continue
+ else
+  exit
+ fi
+
+done
