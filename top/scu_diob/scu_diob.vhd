@@ -10,74 +10,74 @@ use work.fg_quad_pkg.all;
 use work.diob_sys_clk_local_clk_switch_pkg.all;
 
 
-----------------------------------------------------------------------------------------------------------------------
---  Vers: 0 Revi: 4: erstellt am 12.12.2014, Autor: R.Hartmann                                                      --
---                                                                                                                  --
---      Base_addr    : DIOB-Config-Register1 (alle Bit können gelesen und geschrieben werden)                        --
---   -----+-----------------------------------------------------------------------------------------------------    --
---    15  | Leiterplatten-Test-Mode;  0 = Betrieb   / 1 = Test                                                      --
---   -----+-----------------------------------------------------------------------------------------------------    --
---   14-0 |  frei                                                                                                   --
---   -----+-----------------------------------------------------------------------------------------------------    --
---                                                                                                                  --
---      Base_addr +1 : DIOB-Config-Register2 (alle Bit können gelesen und geschrieben werden)                       --
---   -----+-----------------------------------------------------------------------------------------------------    --
---   15-0 |  frei                                                                                                   --
---   -----+-----------------------------------------------------------------------------------------------------    --
---                                                                                                                  --
---                                                                                                                  --
---      Base_addr +2 : DIOB-Status-Register1 (die Status-Bit's werden nach dem Lesen glöscht)                       --
---   -----+-----------------------------------------------------------------------------------------------------    --
---      5 |  TAG-ID-Config-Error     | zwei oder mehr Ereigniskanäle mit gleicher Maske und gleichem Ausgangsregister
---      4 |  OutReg-Select-Error     | in einem oder mehr Ereigniskanälen ist kein Ausgangsregister ausgewählt
---      3 |  TriggerReg-Select-Error | in einem oder mehr Ereigniskanälen ist kein Eingangsregister für Triggersignal ausgewählt
---      2 |  Unknown-OutReg-Select   | in einem oder mehr Ereigniskanälen ist ein nicht unterstütztes Ausgangsregister gewählt
---      1 |  Unknown-InReg-Select    | in einem oder mehr Ereigniskanälen ist ein nicht unterstütztes Eingangsregister gewählt
---      0 |  Trigger-Time-Out        | zulässige Wartezeit auf externes Triggersignal wurde überschritten (Time-Out) 
---   -----+-----------------------------------------------------------------------------------------------------    --
---                                                                                                                  --
---                                                                                                                  --
---      Base_addr +3 : DIOB-Status-Register1 (die Status-Bit's werden nach dem Lesen glöscht)                       --
---   -----+-----------------------------------------------------------------------------------------------------    --
---   15-0 |  frei                                                                                                   --
---   -----+-----------------------------------------------------------------------------------------------------    --
---                                                                                                                  --
---                                                                                                                  --
---     Base_addr + 4: Die Bits im Anwender(Piggy)Config-Register1 haben für jedes Piggy eine andere Bedeutung       --
---                                                                                                                  --
---     ##########################################################################################################   --
---     ####                                 Anwender-IO: P25IO  -- FG900_710                                  ###   --
---     ##########################################################################################################   --
---                                                                                                                  --
---   ----+--------------------------------------------------------------------------------------------------------  --
---     1 | Input:  1 = ADC-Daten aus dem Input-Speicher (gespeichert mit EOC)                                       --
---       |         2 = Daten die am Sub-D Stecker anstehen.                                                         --
---   ----+--------------------------------------------------------------------------------------------------------  --
---     0 | Output: 1 = Output-Daten(DAC-Werte), kommen vom Funktionsgen. und werden mit FG_Strobe uebernommen.      --
---       |         0 = Output-Daten(DAC-Werte), kommen vom SCU-Bus-Slave.                                           -- 
---   ----+--------------------------------------------------------------------------------------------------------  --
---                                                                                                                  --
---     ##########################################################################################################   --
---     ####                                 Anwender-IO: P25IO  -- FG900_740                                  ###   --
---     ##########################################################################################################   --
---                                                                                                                  --
---   ----+-----------------------------------------------------------------------                                   --
---     9 | FG_mode;  1 = Funktiongenerator-Mode, DAC-Werte kommen von FG_Data und                                   --
---       |           0 = Software-Mode, DAC-Werte, kommen vom SCU-Bus-Slave.                                        --
---   ----+-----------------------------------------------------------------------                                   --
---     8 | Output-Polarität Lemo,         1 = Negativ,  0 = Positiv(Default)                                        --
---     7 | Output-Polarität Bit [23..0],  1 = Negativ,  0 = Positiv(Default)                                        --
---   ----+-----------------------------------------------------------------------                                   --
---     6 | Enable Output-Lemo,            1 = Enable,   0 = Disable(Default)                                        --
---     5 | Enable Output-Bit [23..20],    1 = Enable,   0 = Disable(Default)                                        --
---     4 | Enable Output-Bit [19..16],    1 = Enable,   0 = Disable(Default)                                        --
---     3 | Enable Output-Bit [15..12],    1 = Enable,   0 = Disable(Default)                                        --
---     2 | Enable Output-Bit [11..8],     1 = Enable,   0 = Disable(Default)                                        --
---     1 | Enable Output-Bit [7..4],      1 = Enable,   0 = Disable(Default)                                        --
---     0 | Enable Output-Bit [3..0],      1 = Enable,   0 = Disable(Default)                                        --
---   ----+-----------------------------------------------------------------------                                   --
---                                                                                                                  --
-----------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------
+--  Vers: 0 Revi: 4: erstellt am 02.02.2015, Autor: R.Hartmann                                                                    --
+--                                                                                                                                --
+--      Base_addr    : DIOB-Config-Register1 (alle Bit können gelesen und geschrieben werden)                                     --
+--   -----+-------------------------------------------------------------------------------------------------------------------    --
+--    15  | Leiterplatten-Test-Mode;  0 = Betrieb   / 1 = Test                                                                    --
+--   -----+-------------------------------------------------------------------------------------------------------------------    --
+--   14-0 |  frei                                                                                                                 --
+--   -----+-------------------------------------------------------------------------------------------------------------------    --
+--                                                                                                                                --
+--      Base_addr +1 : DIOB-Config-Register2 (alle Bit können gelesen und geschrieben werden)                                     --
+--   -----+-------------------------------------------------------------------------------------------------------------------    --
+--   15-0 |  frei                                                                                                                 --
+--   -----+-------------------------------------------------------------------------------------------------------------------    --
+--                                                                                                                                --
+--                                                                                                                                --
+--      Base_addr +2 : DIOB-Status-Register1 (die Status-Bit's werden nach dem Lesen glöscht)                                     --
+--   -----+-------------------------------------------------------------------------------------------------------------------    --
+--      5 |  TAG-ID-Config-Error     | zwei oder mehr Ereigniskanäle mit gleicher Maske und gleichem Ausgangsregister             --
+--      4 |  OutReg-Select-Error     | in einem oder mehr Ereigniskanälen ist kein Ausgangsregister ausgewählt                    --
+--      3 |  TriggerReg-Select-Error | in einem oder mehr Ereigniskanälen ist kein Eingangsregister für Triggersignal ausgewählt  --
+--      2 |  Unknown-OutReg-Select   | in einem oder mehr Ereigniskanälen ist ein nicht unterstütztes Ausgangsregister gewählt    --
+--      1 |  Unknown-InReg-Select    | in einem oder mehr Ereigniskanälen ist ein nicht unterstütztes Eingangsregister gewählt    --
+--      0 |  Trigger-Time-Out        | zulässige Wartezeit auf externes Triggersignal wurde überschritten (Time-Out)              -- 
+--   -----+-------------------------------------------------------------------------------------------------------------------    --
+--                                                                                                                                --
+--                                                                                                                                --
+--      Base_addr +3 : DIOB-Status-Register1 (die Status-Bit's werden nach dem Lesen glöscht)                                     --
+--   -----+-------------------------------------------------------------------------------------------------------------------    --
+--   15-0 |  frei                                                                                                                 --
+--   -----+-------------------------------------------------------------------------------------------------------------------    --
+--                                                                                                                                --
+--                                                                                                                                --
+--     Base_addr + 4: Die Bits im Anwender(Piggy)Config-Register1 haben für jedes Piggy eine andere Bedeutung                     --
+--                                                                                                                                --
+--     ##########################################################################################################                 --
+--     ####                                 Anwender-IO: P25IO  -- FG900_710                                  ###                 --
+--     ##########################################################################################################                 --
+--                                                                                                                                --
+--   ----+----------------------------------------------------------------------------------------------------------------------  --
+--     1 | Input:  1 = ADC-Daten aus dem Input-Speicher (gespeichert mit EOC)                                                     --
+--       |         2 = Daten die am Sub-D Stecker anstehen.                                                                       --
+--   ----+----------------------------------------------------------------------------------------------------------------------  --
+--     0 | Output: 1 = Output-Daten(DAC-Werte), kommen vom Funktionsgen. und werden mit FG_Strobe uebernommen.                    --
+--       |         0 = Output-Daten(DAC-Werte), kommen vom SCU-Bus-Slave.                                                         -- 
+--   ----+----------------------------------------------------------------------------------------------------------------------  --
+--                                                                                                                                --
+--     ##########################################################################################################                 --
+--     ####                                 Anwender-IO: P25IO  -- FG900_740                                  ###                 --
+--     ##########################################################################################################                 --
+--                                                                                                                                --
+--   ----+-----------------------------------------------------------------------                                                 --
+--     9 | FG_mode;  1 = Funktiongenerator-Mode, DAC-Werte kommen von FG_Data und                                                 --
+--       |           0 = Software-Mode, DAC-Werte, kommen vom SCU-Bus-Slave.                                                      --
+--   ----+-----------------------------------------------------------------------                                                 --
+--     8 | Output-Polarität Lemo,         1 = Negativ,  0 = Positiv(Default)                                                      --
+--     7 | Output-Polarität Bit [23..0],  1 = Negativ,  0 = Positiv(Default)                                                      --
+--   ----+-----------------------------------------------------------------------                                                 --
+--     6 | Enable Output-Lemo,            1 = Enable,   0 = Disable(Default)                                                      --
+--     5 | Enable Output-Bit [23..20],    1 = Enable,   0 = Disable(Default)                                                      --
+--     4 | Enable Output-Bit [19..16],    1 = Enable,   0 = Disable(Default)                                                      --
+--     3 | Enable Output-Bit [15..12],    1 = Enable,   0 = Disable(Default)                                                      --
+--     2 | Enable Output-Bit [11..8],     1 = Enable,   0 = Disable(Default)                                                      --
+--     1 | Enable Output-Bit [7..4],      1 = Enable,   0 = Disable(Default)                                                      --
+--     0 | Enable Output-Bit [3..0],      1 = Enable,   0 = Disable(Default)                                                      --
+--   ----+-----------------------------------------------------------------------                                                 --
+--                                                                                                                                --
+------------------------------------------------------------------------------------------------------------------------------------
 
 
 entity scu_diob is
@@ -122,7 +122,8 @@ port  (
     ------------ Logic analyser Signals -------------------------------------------------------------------------------
     A_SEL: in std_logic_vector(3 downto 0); -- use to select sources for the logic analyser ports
     A_Tclk: out std_logic; -- Clock  for Logikanalysator Port A
-    A_TA: inout std_logic_vector(15 downto 0); -- test port a
+    A_TA:   out std_logic_vector(15 downto 0); -- test port a
+--    A_TA: inout std_logic_vector(15 downto 0); -- test port a
 
     ---------------------------------- Diagnose-LED's -----------------------------------------------------------------
     A_nLED_D2: out std_logic; -- Diagnose-LED_D2 auf dem Basis-Board
@@ -149,70 +150,140 @@ architecture scu_diob_arch of scu_diob is
 --  +============================================================================================================================+
 
 
+component config_status
+  generic ( CS_Base_addr  : integer );
+  port (
+    Adr_from_SCUB_LA:     in   std_logic_vector(15 downto 0);    -- latched address from SCU_Bus
+    Data_from_SCUB_LA:    in   std_logic_vector(15 downto 0);    -- latched data from SCU_Bus 
+    Ext_Adr_Val:          in   std_logic;                        -- '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active:        in   std_logic;                        -- '1' => Rd-Cycle is active
+    Ext_Rd_fin:           in   std_logic;                        -- marks end of read cycle, active one for one clock period of sys_clk
+    Ext_Wr_active:        in   std_logic;                        -- '1' => Wr-Cycle is active
+    Ext_Wr_fin:           in   std_logic;                        -- marks end of write cycle, active one for one clock period of sys_clk
+    clk:                  in   std_logic;                        -- should be the same clk, used by SCU_Bus_Slave
+    nReset:               in   std_logic;
+
+    Diob_Status1:         in   std_logic_vector(15 downto 0);    -- Input-Port 1
+    Diob_Status2:         in   std_logic_vector(15 downto 0);    -- Input-Port 2
+    AW_Status1:           in   std_logic_vector(15 downto 0);    -- Input-Port 3
+    AW_Status2:           in   std_logic_vector(15 downto 0);    -- Input-Port 4
+   
+    Diob_Config1:         out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut1
+    Diob_Config2:         out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut2
+    AW_Config1:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut3
+    AW_Config2:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut4
+
+    Diob_Config1_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut1
+    Diob_Config2_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut2
+    AW_Config1_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut3
+    AW_Config2_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut4
+    
+    Rd_active:            out  std_logic;                        -- read data available at 'Data_to_SCUB'-AWOut
+    Data_to_SCUB:         out  std_logic_vector(15 downto 0);    -- connect read sources to SCUB-Macro
+    Dtack_to_SCUB:        out  std_logic;                        -- connect Dtack to SCUB-Macro
+    LA:                   out  std_logic_vector(15 downto 0)
+      );
+end component config_status;
+
+
 component aw_io_reg
-generic (
-    AW_Base_addr  : integer;
-    Tag_Base_addr : integer
-    );
-port (Adr_from_SCUB_LA: in  std_logic_vector(15 downto 0);
-    Data_from_SCUB_LA:  in  std_logic_vector(15 downto 0);
-    Ext_Adr_Val:        in  std_logic;
-    Ext_Rd_active:      in  std_logic;
-    Ext_Rd_fin:         in  std_logic;
-    Ext_Wr_active:      in  std_logic;
-    Ext_Wr_fin:         in  std_logic;
-    Timing_Pattern_LA:  in  std_logic_vector(31 downto 0);  -- latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV: in  std_logic;                      -- timing pattern received
-    Spare0:             in  std_logic;                      -- vom Master getrieben
-    Spare1:             in  std_logic;                      -- vom Master getrieben
-    clk:                in  std_logic;
-    nReset:             in  std_logic;
-    AWin1:              in  std_logic_vector(15 downto 0);
-    AWin2:              in  std_logic_vector(15 downto 0);
-    AWin3:              in  std_logic_vector(15 downto 0);
-    AWin4:              in  std_logic_vector(15 downto 0);
-    AWin5:              in  std_logic_vector(15 downto 0);
-    AWin6:              in  std_logic_vector(15 downto 0);
-    AWin7:              in  std_logic_vector(15 downto 0);
-    Max_AWOut_Reg_Nr:   in  integer range 0 to 7;           -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr:    in  integer range 0 to 7;           -- Maximale AWIn-Reg-Nummer der Anwendung
+  generic ( AW_Base_addr  : integer );
+  port (
+        Adr_from_SCUB_LA:     in   std_logic_vector(15 downto 0);    -- latched address from SCU_Bus
+        Data_from_SCUB_LA:    in   std_logic_vector(15 downto 0);    -- latched data from SCU_Bus 
+        Ext_Adr_Val:          in   std_logic;                        -- '1' => "ADR_from_SCUB_LA" is valid
+        Ext_Rd_active:        in   std_logic;                        -- '1' => Rd-Cycle is active
+        Ext_Rd_fin:           in   std_logic;                        -- marks end of read cycle, active one for one clock period of sys_clk
+        Ext_Wr_active:        in   std_logic;                        -- '1' => Wr-Cycle is active
+        Ext_Wr_fin:           in   std_logic;                        -- marks end of write cycle, active one for one clock period of sys_clk
+        clk:                  in   std_logic;                        -- should be the same clk, used by SCU_Bus_Slave
+        nReset:               in   std_logic;
+    
+        AWIn1:                in   std_logic_vector(15 downto 0);    -- Input-Port 1
+        AWIn2:                in   std_logic_vector(15 downto 0);    -- Input-Port 2
+        AWIn3:                in   std_logic_vector(15 downto 0);    -- Input-Port 3
+        AWIn4:                in   std_logic_vector(15 downto 0);    -- Input-Port 4
+        AWIn5:                in   std_logic_vector(15 downto 0);    -- Input-Port 5
+        AWIn6:                in   std_logic_vector(15 downto 0);    -- Input-Port 6
+        AWIn7:                in   std_logic_vector(15 downto 0);    -- Input-Port 7
+      
+        AWOut_Reg1:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut1
+        AWOut_Reg2:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut2
+        AWOut_Reg3:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut3
+        AWOut_Reg4:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut4
+        AWOut_Reg5:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut5
+        AWOut_Reg6:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut6
+        AWOut_Reg7:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut7
 
-    AW_Sts1:            in  std_logic_vector(15 downto 0);  -- Input-Port-AW_Sts1
-    AW_Sts2:            in  std_logic_vector(15 downto 0);  -- Input-Port-AW_Sts2
-
-    DIOB_Sts1_Rd:       out  std_logic;                     -- Read Input-Port-DIOB_Sts1
-    DIOB_Sts2_Rd:       out  std_logic;                     -- Read Input-Port-DIOB_Sts2
-    AW_Sts1_Rd:         out  std_logic;                     -- Read Input-Port-AW_Sts1
-    AW_Sts2_Rd:         out  std_logic;                     -- Read Input-Port-AW_Sts2
-
-    DIOB_Config1:       out std_logic_vector(15 downto 0);  -- Diob-Config1-Register
-    DIOB_Config2:       out std_logic_vector(15 downto 0);  -- Diob-Config2-Register
-    AW_Config1:         out std_logic_vector(15 downto 0);  -- Anwender-Config1-Register
-    AW_Config2:         out std_logic_vector(15 downto 0);  -- Anwender-Config2-Register
-
-    AWOut_Reg1:         out std_logic_vector(15 downto 0);
-    AWOut_Reg2:         out std_logic_vector(15 downto 0);
-    AWOut_Reg3:         out std_logic_vector(15 downto 0);
-    AWOut_Reg4:         out std_logic_vector(15 downto 0);
-    AWOut_Reg5:         out std_logic_vector(15 downto 0);
-    AWOut_Reg6:         out std_logic_vector(15 downto 0);
-    AWOut_Reg7:         out std_logic_vector(15 downto 0);
-
-    AWOut_Reg1_wr:      out  std_logic;                     -- Daten-Reg. AWOut1
-    AWOut_Reg2_wr:      out  std_logic;                     -- Daten-Reg. AWOut2
-    AWOut_Reg3_wr:      out  std_logic;                     -- Daten-Reg. AWOut3
-    AWOut_Reg4_wr:      out  std_logic;                     -- Daten-Reg. AWOut4
-    AWOut_Reg5_wr:      out  std_logic;                     -- Daten-Reg. AWOut5
-    AWOut_Reg6_wr:      out  std_logic;                     -- Daten-Reg. AWOut6
-    AWOut_Reg7_wr:      out  std_logic;                     -- Daten-Reg. AWOut7
-
-    AWOut_Reg_rd_active:out std_logic;
-    Data_to_SCUB:       out std_logic_vector(15 downto 0);
-    Dtack_to_SCUB:      out std_logic;
-    Tag_Reg_Conf_Err:   out std_logic;
-    LA_aw_io_reg:       out std_logic_vector(15 downto 0)
-   );
+        AWOut_Reg1_wr:        out  std_logic;                      -- Daten-Reg. AWOut1
+        AWOut_Reg2_wr:        out  std_logic;                      -- Daten-Reg. AWOut2
+        AWOut_Reg3_wr:        out  std_logic;                      -- Daten-Reg. AWOut3
+        AWOut_Reg4_wr:        out  std_logic;                      -- Daten-Reg. AWOut4
+        AWOut_Reg5_wr:        out  std_logic;                      -- Daten-Reg. AWOut5
+        AWOut_Reg6_wr:        out  std_logic;                      -- Daten-Reg. AWOut6
+        AWOut_Reg7_wr:        out  std_logic;                      -- Daten-Reg. AWOut7
+      
+        Rd_active:            out  std_logic;                        -- read data available at 'Data_to_SCUB'-AWOut
+        Data_to_SCUB:         out  std_logic_vector(15 downto 0);    -- connect read sources to SCUB-Macro
+        Dtack_to_SCUB:        out  std_logic;                        -- connect Dtack to SCUB-Macro
+        LA:                   out  std_logic_vector(15 downto 0)
+      );
 end component aw_io_reg;
+
+
+
+component tag_ctrl
+  generic ( TAG_Base_addr  : integer );
+  port (
+    Adr_from_SCUB_LA:     in   std_logic_vector(15 downto 0);    -- latched address from SCU_Bus
+    Data_from_SCUB_LA:    in   std_logic_vector(15 downto 0);    -- latched data from SCU_Bus 
+    Ext_Adr_Val:          in   std_logic;                        -- '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active:        in   std_logic;                        -- '1' => Rd-Cycle is active
+    Ext_Rd_fin:           in   std_logic;                        -- marks end of read cycle, active one for one clock period of sys_clk
+    Ext_Wr_active:        in   std_logic;                        -- '1' => Wr-Cycle is active
+    Ext_Wr_fin:           in   std_logic;                        -- marks end of write cycle, active one for one clock period of sys_clk
+    Timing_Pattern_LA:    in   std_logic_vector(31 downto 0);   -- latched timing pattern from SCU_Bus for external user functions
+    Timing_Pattern_RCV:   in   std_logic;                        -- timing pattern received
+    Spare0:               in   std_logic;                          -- vom Master getrieben
+    Spare1:               in   std_logic;                          -- vom Master getrieben
+    clk:                  in   std_logic;                            -- should be the same clk, used by SCU_Bus_Slave
+    nReset:               in   std_logic;
+    AWIn1:                in   std_logic_vector(15 downto 0);  -- Input-Port 1
+    AWIn2:                in   std_logic_vector(15 downto 0);  -- Input-Port 2
+    AWIn3:                in   std_logic_vector(15 downto 0);  -- Input-Port 3
+    AWIn4:                in   std_logic_vector(15 downto 0);  -- Input-Port 4
+    AWIn5:                in   std_logic_vector(15 downto 0);  -- Input-Port 5
+    AWIn6:                in   std_logic_vector(15 downto 0);  -- Input-Port 6
+    AWIn7:                in   std_logic_vector(15 downto 0);  -- Input-Port 7
+    Max_AWOut_Reg_Nr:     in   integer range 0 to 7;           -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr:      in   integer range 0 to 7;           -- Maximale AWIn-Reg-Nummer der Anwendung
+    
+    Tag_Reg1_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Reg2_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Reg3_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Reg4_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Reg5_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Reg6_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Reg7_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+
+    Tag_Outp_Reg1:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Outp_Reg2:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Outp_Reg3:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Outp_Reg4:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Outp_Reg5:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Outp_Reg6:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Outp_Reg7:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+
+    Tag_FG_Start:         out  std_logic;                      -- Start-Puls für den FG
+    Tag_Sts:              out  std_logic_vector(15 downto 0);  -- Tag-Status
+
+    Rd_active:            out  std_logic;                      -- read data available at 'Data_to_SCUB'-AWOut
+    Data_to_SCUB:         out  std_logic_vector(15 downto 0);  -- connect read sources to SCUB-Macro
+    Dtack_to_SCUB:        out  std_logic;                      -- connect Dtack to SCUB-Macro
+    LA_tag_ctrl:          out  std_logic_vector(15 downto 0)
+    );  
+end component tag_ctrl;
+
 
 
 COMPONENT io_reg
@@ -286,7 +357,8 @@ end component;
 --  +============================================================================================================================+
 
   signal clk_sys, clk_cal, locked : std_logic;
-  signal clk:                       std_logic := '0';
+
+  --  signal clk:                       std_logic := '0';
 
   signal SCUB_SRQ:            std_logic;
   signal SCUB_Dtack:          std_logic;
@@ -301,6 +373,7 @@ end component;
   signal Ext_Rd_active:       std_logic;
   signal Ext_Wr_active:       std_logic;
   signal Ext_Wr_fin_ovl:      std_logic;
+  signal Ext_RD_fin_ovl:      std_logic;
   signal SCU_Ext_Wr_fin:      std_logic;
   signal nPowerup_Res:        std_logic;
   signal Timing_Pattern_LA:   std_logic_vector(31 downto 0);--  latched timing pattern from SCU_Bus for external user functions
@@ -313,12 +386,21 @@ end component;
   signal Max_AWIn_Reg_Nr:       integer range 0 to 7;           -- Maximale AWIn-Reg-Nummer der Anwendung
 
  
-  signal fg_1_dtack:         std_logic;
-  signal fg_1_data_to_SCUB:  std_logic_vector(15 downto 0);
-  signal fg_1_rd_active:     std_logic;
-  signal fg_1_sw:            std_logic_vector(31 downto 0);
-  signal fg_1_strobe:        std_logic;
-  signal fg_1_dreq:          std_logic;
+  signal FG_1_dtack:         std_logic;
+  signal FG_1_data_to_SCUB:  std_logic_vector(15 downto 0);
+  signal FG_1_rd_active:     std_logic;
+  signal FG_1_sw:            std_logic_vector(31 downto 0);
+  signal FG_1_strobe:        std_logic;
+  signal FG_1_dreq:          std_logic;
+  
+  signal FG_2_dtack:         std_logic;
+  signal FG_2_data_to_SCUB:  std_logic_vector(15 downto 0);
+  signal FG_2_rd_active:     std_logic;
+  signal FG_2_sw:            std_logic_vector(31 downto 0);
+  signal FG_2_strobe:        std_logic;
+  signal FG_2_dreq:          std_logic;
+
+  signal fg_start:           std_logic;
   
   signal tmr_rd_active:      std_logic;
   signal tmr_data_to_SCUB:   std_logic_vector(15 downto 0);
@@ -349,7 +431,7 @@ end component;
   signal Deb_SCUB_Reset_out:  std_logic;
   signal Standard_Reg_Acc:    std_logic;
   signal Ext_Rd_fin:          std_logic;
-  signal Ext_Wr_fin:          std_logic;
+--  signal Ext_Wr_fin:          std_logic;
 
   
   signal Ena_Every_100ns: std_logic;
@@ -365,9 +447,8 @@ end component;
   signal test_clocks:     std_logic_vector(15 downto 0);
   
   signal s_nLED_Sel:      std_logic;   -- LED = Sel
-  signal s_nLED_Dtack:    std_logic; -- LED = Dtack
+  signal s_nLED_Dtack:    std_logic;   -- LED = Dtack
   signal s_nLED_inR:      std_logic;   -- LED = interrupt
-  signal s_nLED_PU:       std_logic;    -- LED = Powerup_Reset
    
   signal s_nLED:          std_logic_vector(7 downto 0); -- LED's
   signal s_nLED_Out:      std_logic_vector(7 downto 0); -- LED's
@@ -381,25 +462,38 @@ end component;
   signal AWin6:           std_logic_vector(15 downto 0);
   signal AWin7:           std_logic_vector(15 downto 0);
 
+  
+--------------------------- Conf_Sts1 ----------------------------------------------------------------------
+    
   signal DIOB_Config1:    std_logic_vector(15 downto 0);
   signal DIOB_Config2:    std_logic_vector(15 downto 0);
+  signal DIOB_Status1:    std_logic_vector(15 downto 0);
+  signal DIOB_Status2:    std_logic_vector(15 downto 0);
   signal AW_Config1:      std_logic_vector(15 downto 0);
   signal AW_Config2:      std_logic_vector(15 downto 0);
-  signal AW_Sts1:         std_logic_vector(15 downto 0);
-  signal AW_Sts2:         std_logic_vector(15 downto 0);
+  signal AW_Status1:      std_logic_vector(15 downto 0);
+  signal AW_Status2:      std_logic_vector(15 downto 0);
 
-  signal DIOB_Sts1_Rd:    std_logic;                        -- Read Input-Port-DIOB_Sts1
-  signal DIOB_Sts2_Rd:    std_logic;                        -- Read Input-Port-DIOB_Sts2
-  signal AW_Sts1_Rd:      std_logic;                        -- Read Input-Port-AW_Sts1
-  signal AW_Sts2_Rd:      std_logic;                        -- Read Input-Port-AW_Sts2
+  signal Diob_Config1_wr: std_logic;                        -- write-Strobe, Daten-Reg. AWOut1
+  signal Diob_Config2_wr: std_logic;                        -- write-Strobe, Daten-Reg. AWOut2
+  signal AW_Config1_wr:   std_logic;                        -- write-Strobe, Daten-Reg. AWOut3
+  signal AW_Config2_wr:   std_logic;                        -- write-Strobe, Daten-Reg. AWOut4
   
-  signal AWOut_Reg1:      std_logic_vector(15 downto 0);
-  signal AWOut_Reg2:      std_logic_vector(15 downto 0);
-  signal AWOut_Reg3:      std_logic_vector(15 downto 0);
-  signal AWOut_Reg4:      std_logic_vector(15 downto 0);
-  signal AWOut_Reg5:      std_logic_vector(15 downto 0);
-  signal AWOut_Reg6:      std_logic_vector(15 downto 0);
-  signal AWOut_Reg7:      std_logic_vector(15 downto 0);
+  signal Conf_Sts1_rd_active:    std_logic;
+  signal Conf_Sts1_Dtack:        std_logic;
+  signal Conf_Sts1_data_to_SCUB: std_logic_vector(15 downto 0);
+  signal LA_Conf_Sts1:           std_logic_vector(15 downto 0);
+
+  
+--------------------------- AWOut ----------------------------------------------------------------------
+    
+  signal AWOut_Reg1_int:      std_logic_vector(15 downto 0);
+  signal AWOut_Reg2_int:      std_logic_vector(15 downto 0);
+  signal AWOut_Reg3_int:      std_logic_vector(15 downto 0);
+  signal AWOut_Reg4_int:      std_logic_vector(15 downto 0);
+  signal AWOut_Reg5_int:      std_logic_vector(15 downto 0);
+  signal AWOut_Reg6_int:      std_logic_vector(15 downto 0);
+  signal AWOut_Reg7_int:      std_logic_vector(15 downto 0);
 
   signal AWOut_Reg1_Wr:   std_logic;
   signal AWOut_Reg2_Wr:   std_logic;
@@ -408,13 +502,52 @@ end component;
   signal AWOut_Reg5_Wr:   std_logic;
   signal AWOut_Reg6_Wr:   std_logic;
   signal AWOut_Reg7_Wr:   std_logic;
-
-  signal AWOut_Reg_rd_active:   std_logic;
-  signal aw_port1_Dtack:        std_logic;
-  signal aw_port1_data_to_SCUB: std_logic_vector(15 downto 0);
+  
+  signal AW_Port1_rd_active:    std_logic;
+  signal AW_Port1_Dtack:        std_logic;
+  signal AW_Port1_data_to_SCUB: std_logic_vector(15 downto 0);
   signal Tag_Reg_Conf_Err:      std_logic;
-  signal LA_aw_io_reg:          std_logic_vector(15 downto 0);
+  signal LA_AW_Port1:           std_logic_vector(15 downto 0);
 
+--------------------------- Ctrl1 ----------------------------------------------------------------------
+  
+  signal Tag_Reg1_Maske:     std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Reg2_Maske:     std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Reg3_Maske:     std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Reg4_Maske:     std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Reg5_Maske:     std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Reg6_Maske:     std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Reg7_Maske:     std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Outp_Reg1:      std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Outp_Reg2:      std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Outp_Reg3:      std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Outp_Reg4:      std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Outp_Reg5:      std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Outp_Reg6:      std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+  signal Tag_Outp_Reg7:      std_logic_vector(15 downto 0);       -- Tag-Output-Maske für Register 1
+
+
+  signal Tag_FG_Start:           std_logic;                       -- Start-Puls für den FG
+  signal Tag_Sts:                std_logic_vector(15 downto 0);   -- Tag-Status
+
+  signal Tag_Ctrl1_rd_active:    std_logic;                       -- read data available at 'Data_to_SCUB'-Tag_Ctrl1
+  signal Tag_Ctrl1_Dtack:        std_logic;                       -- connect read sources to SCUB-Macro         
+  signal Tag_Ctrl1_data_to_SCUB: std_logic_vector(15 downto 0);   -- connect Dtack to SCUB-Macro                
+  signal LA_Tag_Ctrl1:           std_logic_vector(15 downto 0);  
+  
+
+--------------------------- Ouput-Register ----------------------------------------------------------------------
+    
+  signal AWOut_Reg1:      std_logic_vector(15 downto 0);
+  signal AWOut_Reg2:      std_logic_vector(15 downto 0);
+  signal AWOut_Reg3:      std_logic_vector(15 downto 0);
+  signal AWOut_Reg4:      std_logic_vector(15 downto 0);
+  signal AWOut_Reg5:      std_logic_vector(15 downto 0);
+  signal AWOut_Reg6:      std_logic_vector(15 downto 0);
+  signal AWOut_Reg7:      std_logic_vector(15 downto 0);
+  
+--------------------------- INL_msk ----------------------------------------------------------------------
+  
   signal INL_msk_IO1:           std_logic_vector(15 downto 0);         
   signal INL_msk_IO2:           std_logic_vector(15 downto 0);         
   signal INL_msk_IO3:           std_logic_vector(15 downto 0);       
@@ -427,6 +560,8 @@ end component;
   signal INL_msk1_data_to_SCUB: std_logic_vector(15 downto 0);
 
 
+  --------------------------- INL_xor ----------------------------------------------------------------------
+  
   signal INL_xor_IO1:           std_logic_vector(15 downto 0);        
   signal INL_xor_IO2:           std_logic_vector(15 downto 0);        
   signal INL_xor_IO3:           std_logic_vector(15 downto 0);        
@@ -439,6 +574,9 @@ end component;
   signal INL_xor1_data_to_SCUB: std_logic_vector(15 downto 0);
        
 
+       
+       
+       
   signal INL_IO1:   std_logic_vector(15 downto 0);        
   signal INL_IO2:   std_logic_vector(15 downto 0);        
   signal INL_IO3:   std_logic_vector(15 downto 0);        
@@ -467,10 +605,10 @@ end component;
 
   signal P37IO_Start_i:        std_logic;    -- input "Start" L-Aktiv
   signal P37IO_Start_deb_o:    std_logic;    -- input "Start" entprellt
-  signal P37IO_nLED_Start_o:   std_logic;    --  Output "nLED_Start"
+  signal P37IO_nLED_Start_o:   std_logic;    -- Output "nLED_Start"
   signal P37IO_Stop_i:         std_logic;    -- input "Stop" L-Aktiv
   signal P37IO_Stop_deb_o:     std_logic;    -- input "Stop" entprellt
-  signal P37IO_nLED_Stop_o:    std_logic;    --  Output "nLED_Stop"
+  signal P37IO_nLED_Stop_o:    std_logic;    -- Output "nLED_Stop"
   signal P37IO_Reset_i:        std_logic;    -- input "Reset" L-Aktiv
   signal P37IO_Reset_deb_o:    std_logic;    -- input "Rest" entprellt
   signal P37IO_BNC_o:          std_logic;    -- Output "BNC"
@@ -486,17 +624,17 @@ end component;
 
   signal P25IO_Start_i:        std_logic;        -- input "Start" L-Aktiv
   signal P25IO_Start_deb_o:    std_logic;        -- input "Start" entprellt
-  signal P25IO_nLED_Start_o:   std_logic;        --  Output "nLED_Start"
+  signal P25IO_nLED_Start_o:   std_logic;        -- Output "nLED_Start"
   signal P25IO_Stop_i:         std_logic;        -- input "Stop" L-Aktiv
   signal P25IO_Stop_deb_o:     std_logic;        -- input "Stop" entprellt
-  signal P25IO_nLED_Stop_o:    std_logic;        --  Output "nLED_Stop"
+  signal P25IO_nLED_Stop_o:    std_logic;        -- Output "nLED_Stop"
   signal P25IO_Reset_i:        std_logic;        -- input "Reset" L-Aktiv
   signal P25IO_Reset_deb_o:    std_logic;        -- input "Rest" entprellt
   signal P25IO_BNC_o:          std_logic;        -- Output "BNC"
   signal P25IO_nELD_BNC_o:     std_logic;        -- Output "nLED_BNC"
 
   signal P25IO_DAC_Out:             std_logic_vector(15 downto 0); -- Zwischenspeicher
-  signal P25IO_DAC_Strobe_Start_i:  std_logic;        -- input  "Start-Signal für den Stobe vom DAC"
+  signal P25IO_DAC_Strobe_Start_i:  std_logic;        -- input  "Start-Signal für den Strobe vom DAC"
   signal P25IO_DAC_Strobe_Start_o:  std_logic;        -- Output "Start-Puls für den Stobe vom DAC (1 CLK breit)"
   signal P25IO_DAC_Strobe_i:        std_logic;        -- input  "Start-Puls für den DAC-Strobe"
   signal P25IO_nDAC_Strobe_o:       std_logic;        -- Output "DAC-Stobe"
@@ -577,8 +715,58 @@ end component;
   signal UIO_in_Hi_Data_Deb1_i: std_logic_vector(23 downto 0); -- Data_Input über Optokoppler
   signal UIO_in_Hi_Data_Deb1_o: std_logic_vector(23 downto 0); -- entprellter Data_Input
 
- 
+
 --  +============================================================================================================================+
+--  |                                   Übergabe-Signale für Anwender-IO: DA    -- FG900_750                                     |
+--  +============================================================================================================================+
+
+
+  signal DA_DAC1_Data:            std_logic_vector(15 downto 0); -- Zwischenspeicher
+  signal DA_DAC1_Str:             std_logic;                     -- DAC1-Strobe
+  signal DA_DAC1_Out:             std_logic_vector(15 downto 0); -- Zwischenspeicher
+  signal DA_DAC1_Str_Out:         std_logic;                     -- DAC1-Output-Strobe
+
+  signal DA_DAC2_Data:            std_logic_vector(15 downto 0); -- Zwischenspeicher
+  signal DA_DAC2_Str:             std_logic;                     -- DAC2-Strobe
+  signal DA_DAC2_Out:             std_logic_vector(15 downto 0); -- Zwischenspeicher
+  signal DA_DAC2_Str_Out:         std_logic;                     -- DAC2-Output-Strobe
+
+  signal DAC_Test_Out:            std_logic_vector(15 downto 0); -- Test-Bitmuster
+  signal DAC_Test_Strobe:         std_logic;                     -- Output Test-Strobe
+
+  signal DAC_Wait_cnt:            integer range 0 to 65535;      -- 0-FFFF -- Wait-Counter
+  
+
+  type dac_state_t is   (dac_idle, dac_data1, dac_str1h, dac_str1l, dac_loop1, dac_wait1, dac_wait2, dac_data2, dac_str2h, dac_str2l, dac_loop2, dac_end);
+  signal dac_state:      dac_state_t := dac_idle;
+
+  
+  signal DA_LED_Ext_Trig1_i:    std_logic;      --  Input  "nLED_Ext_Trig1"
+  signal DA_LED_Ext_Trig1_o:    std_logic;      --  Output "nLED_Ext_Trig1"
+  signal DA_LED_Ext_Trig2_i:    std_logic;      --  Input  "nLED_Ext_Trig2"
+  signal DA_LED_Ext_Trig2_o:    std_logic;      --  Output "nLED_Ext_Trig2"
+    
+  signal DA_LED_Trig_Out1_i:    std_logic;      --  Input  "nLED_Trig_Out1"
+  signal DA_LED_Trig_Out1_o:    std_logic;      --  Output "nLED_Trig_Out1"
+  signal DA_LED_Trig_Out2_i:    std_logic;      --  Input  "nLED_Trig_Out2"
+  signal DA_LED_Trig_Out2_o:    std_logic;      --  Output "nLED_Trig_Out2"
+   
+  signal DA_Trig1_i:            std_logic;      -- Input  "DAC-Strobe1"
+  signal DA_Trig1_1us_o:        std_logic;      -- Output "Trig1_1µs" breit
+  signal DA_Trig2_i:            std_logic;      -- Input  "DAC-Strobe2"
+  signal DA_Trig2_1us_o:        std_logic;      -- Output "Trig2_1µs" breit
+ 
+  
+  signal DA_Trig1_Strobe_i:     std_logic;                      -- input  "Start-Signal für ext. Trigger 1"
+  signal DA_Trig1_Strobe_o:     std_logic;                      -- Output "Start-Puls   für ext. Trigger 1 (1 CLK breit)"
+  signal DA_Trig1_shift:        std_logic_vector(2  downto 0);  -- Shift-Reg.
+
+  signal DA_Trig2_Strobe_i:     std_logic;                      -- input  "Start-Signal für ext. Trigger 2"
+  signal DA_Trig2_Strobe_o:     std_logic;                      -- Output "Start-Puls   für ext. Trigger 2 (1 CLK breit)"
+  signal DA_Trig2_shift:        std_logic_vector(2  downto 0);  -- Shift-Reg.
+
+  
+  --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: SPSIO  -- FG900.770                                    |
 --  +============================================================================================================================+
 
@@ -632,28 +820,38 @@ end component;
   signal pll_locked:              std_logic;
   signal clk_switch_intr:         std_logic;
   
-  signal signal_tap_clk_250mhz: std_logic;
+  signal signal_tap_clk_250mhz:   std_logic;
   
-  
---  constant  C_Debounce_input_in_ns: integer := 5000;
 
-  constant  C_P37IO_Start_Debounce_input_in_ns:   integer := 5000;    -- Debounce, Start-Input von FG900_700
-  constant  C_P37IO_Stop_Debounce_input_in_ns:    integer := 5000;    -- Debounce, Stop-Input  von FG900_700
-  constant  C_P37IO_Reset_Debounce_input_in_ns:   integer := 5000;    -- Debounce, Reset-Input von FG900_700
-  constant  C_P37IO_Data_Debounce_input_in_ns:    integer := 5000;    -- Debounce, Data-Input  von FG900_700
-                                                                     
-  constant  C_P25IO_Start_Debounce_input_in_ns:   integer := 5000;    -- Debounce, Data-Input von FG900_710
-  constant  C_P25IO_Stop_Debounce_input_in_ns:    integer := 5000;    -- Debounce, Data-Input von FG900_710
-  constant  C_P25IO_Reset_Debounce_input_in_ns:   integer := 5000;    -- Debounce, Data-Input von FG900_710
-  constant  C_P25IO_Ext_Tim_Debounce_input_in_ns: integer := 5000;    -- Debounce, Data-Input von FG900_710
-  constant  C_P25IO_EOC_Debounce_input_in_ns:     integer := 500;     -- Debounce, Data-Input von FG900_710
-  constant  C_P25IO_Data_Debounce_input_in_ns:    integer := 5000;    -- Debounce, Data-Input von FG900_710
-                                                                     
-  constant  C_OCIN_Data_Debounce_input_in_ns:     integer := 5000;    -- Debounce, Data-Input  von FG900_720
-  constant  C_OCIO_Data_Debounce_input_in_ns:     integer := 5000;    -- Debounce, Data-Input  von FG900_730
-  constant  C_UIO_Lo_Data_Debounce_input_in_ns:   integer := 5000;    -- Debounce, Data-Input  von FG900_740
-  constant  C_UIO_Hi_Data_Debounce_input_in_ns:   integer := 5000;    -- Debounce, Data-Input  von FG900_740
-  constant  C_UIO_Lemo_Debounce_input_in_ns:      integer := 5000;    -- Debounce, Lemo-Input  von FG900_740
+
+  constant  Clk_in_ns:     integer := 1000000000 /  clk_sys_in_Hz;      -- (=8ns,    bei 125MHz)
+
+  constant  C_Strobe_1us:  integer := 1000 / Clk_in_ns;                 -- Anzahl der Clocks für 1us
+  constant  C_Strobe_2us:  integer := 2000 / Clk_in_ns;                 -- Anzahl der Clocks für 2us
+
+  constant  stretch_cnt:   integer := 5;
+
+  -----------------------------------------------5000 ==> 5000/8= 625 Clocks ==> 625 * 8ns = 5us --------------------------------------------
+
+  constant  C_P37IO_Start_Debounce_input_in_ns:       integer := 5000;    -- Debounce, Start-Input von FG900_700
+  constant  C_P37IO_Stop_Debounce_input_in_ns:        integer := 5000;    -- Debounce, Stop-Input  von FG900_700
+  constant  C_P37IO_Reset_Debounce_input_in_ns:       integer := 5000;    -- Debounce, Reset-Input von FG900_700
+  constant  C_P37IO_Data_Debounce_input_in_ns:        integer := 5000;    -- Debounce, Data-Input  von FG900_700
+                                                                        
+  constant  C_P25IO_Start_Debounce_input_in_ns:       integer := 5000;    -- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_Stop_Debounce_input_in_ns:        integer := 5000;    -- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_Reset_Debounce_input_in_ns:       integer := 5000;    -- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_Ext_Tim_Debounce_input_in_ns:     integer := 5000;    -- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_EOC_Debounce_input_in_ns:         integer := 500;     -- Debounce, Data-Input von FG900_710
+  constant  C_P25IO_Data_Debounce_input_in_ns:        integer := 5000;    -- Debounce, Data-Input von FG900_710
+                                                                        
+  constant  C_OCIN_Data_Debounce_input_in_ns:         integer := 5000;    -- Debounce, Data-Input  von FG900_720
+    
+  constant  C_OCIO_Data_Debounce_input_in_ns:         integer := 5000;    -- Debounce, Data-Input  von FG900_730
+    
+  constant  C_UIO_Lo_Data_Debounce_input_in_ns:       integer := 5000;    -- Debounce, Data-Input  von FG900_740
+  constant  C_UIO_Hi_Data_Debounce_input_in_ns:       integer := 5000;    -- Debounce, Data-Input  von FG900_740
+  constant  C_UIO_Lemo_Debounce_input_in_ns:          integer := 5000;    -- Debounce, Lemo-Input  von FG900_740
 
 
   
@@ -664,8 +862,6 @@ end component;
  
   
   
-  constant  Clk_in_ns: integer:= 1000000000/clk_sys_in_Hz;
-  constant  stretch_cnt: integer := 5;
   
 
   CONSTANT c_AW_P37IO:   std_logic_vector(7 downto 0):= B"00000001"; -- FG900_700
@@ -727,74 +923,175 @@ end component;
       signal_tap_clk_250mhz => signal_tap_clk_250mhz
       );
     
-
-
+    
       
-aw_port1: aw_io_reg     
+Conf_Sts1: config_status     
 generic map(
-      AW_Base_addr =>   16#500#,
-      Tag_Base_addr =>  16#580#
-      )
+      CS_Base_addr =>   16#500#
+           )
 port map  (     
-      Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,
-      Data_from_SCUB_LA   =>  Data_from_SCUB_LA,
-      Ext_Adr_Val         =>  Ext_Adr_Val,
-      Ext_Rd_active       =>  Ext_Rd_active,
-      Ext_Rd_fin          =>  Ext_Rd_fin,
-      Ext_Wr_active       =>  Ext_Wr_active,
-      Ext_Wr_fin          =>  Ext_Wr_fin,
-      Timing_Pattern_LA   =>  Timing_Pattern_LA, -- out,        latched timing pattern from SCU_Bus for external user functions
-      Timing_Pattern_RCV  =>  Timing_Pattern_RCV, -- out,        timing pattern received
-      Spare0              =>  A_Spare0,                          -- vom Master getrieben
-      Spare1              =>  A_Spare1,                          -- vom Master getrieben
-      clk                 =>  clk_sys,
-      nReset              =>  nPowerup_Res,
-      AWin1               =>  AWin1,
-      AWin2               =>  AWin2,
-      AWin3               =>  AWin3,
-      AWin4               =>  AWin4,
-      AWin5               =>  AWin5,
-      AWin6               =>  AWin6,
-      AWin7               =>  AWin7,
-      Max_AWOut_Reg_Nr    =>  Max_AWOut_Reg_Nr,           -- Maximale AWOut-Reg-Nummer der Anwendung
-      Max_AWIn_Reg_Nr     =>  Max_AWIn_Reg_Nr,            -- Maximale AWIn-Reg-Nummer der Anwendung
 
-      AW_Sts1             =>  AW_Sts1,                    -- Input-Port-AW_Sts1
-      AW_Sts2             =>  AW_Sts2,                    -- Input-Port-AW_Sts2
-      AW_Sts1_Rd          =>  AW_Sts1_Rd,                 -- Read Input-Port-AW_Sts1
-      AW_Sts2_Rd          =>  AW_Sts2_Rd,                 -- Read Input-Port-AW_Sts2
+      Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,          -- latched address from SCU_Bus
+      Data_from_SCUB_LA   =>  Data_from_SCUB_LA,         -- latched data from SCU_Bus 
+      Ext_Adr_Val         =>  Ext_Adr_Val,               -- '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Rd_active       =>  Ext_Rd_active,             -- '1' => Rd-Cycle is active
+      Ext_Rd_fin          =>  Ext_Rd_fin,                -- marks end of read cycle, active one for one clock period of sys_clk
+      Ext_Wr_active       =>  Ext_Wr_active,             -- '1' => Wr-Cycle is active
+      Ext_Wr_fin          =>  SCU_Ext_Wr_fin,            -- marks end of write cycle, active one for one clock period of sys_clk
+      clk                 =>  clk_sys,                   -- should be the same clk, used by SCU_Bus_Slave
+      nReset              =>  nPowerup_Res,              
+      
+      Diob_Status1        =>  Diob_Status1,              -- Input-Diob_Status1 
+      Diob_Status2        =>  Diob_Status2,              -- Input-Diob_Status2 
+      AW_Status1          =>  AW_Status1,                -- Input-AW_Status1   
+      AW_Status2          =>  AW_Status2,                -- Input-AW_Status2   
+                                        
+      Diob_Config1        =>  Diob_Config1,              -- Daten-Reg_Diob_Config1
+      Diob_Config2        =>  Diob_Config2,              -- Daten-Reg_Diob_Config2
+      AW_Config1          =>  AW_Config1,                -- Daten-Reg_AW_Config1  
+      AW_Config2          =>  AW_Config2,                -- Daten-Reg_AW_Config2  
 
-      DIOB_Config1        =>  DIOB_Config1,               -- Diob-Config1-Register
-      DIOB_Config2        =>  DIOB_Config2,               -- Diob-Config2-Register
-      AW_Config1          =>  AW_Config1,                 -- Anwender-Config1-Register
-      AW_Config2          =>  AW_Config2,                 -- Anwender-Config2-Register
+      Diob_Config1_wr     =>  Diob_Config1_wr,           -- write-Strobe, Daten-Reg. AWOut1
+      Diob_Config2_wr     =>  Diob_Config2_wr,           -- write-Strobe, Daten-Reg. AWOut2
+      AW_Config1_wr       =>  AW_Config1_wr,             -- write-Strobe, Daten-Reg. AWOut3
+      AW_Config2_wr       =>  AW_Config2_wr,             -- write-Strobe, Daten-Reg. AWOut4
+ 
+      Rd_active           =>  Conf_Sts1_rd_active,       -- read data available at 'Data_to_SCUB'-AWOut
+      Dtack_to_SCUB       =>  Conf_Sts1_Dtack,           -- connect read sources to SCUB-Macro
+      Data_to_SCUB        =>  Conf_Sts1_data_to_SCUB,    -- connect Dtack to SCUB-Macro
+      LA                  =>  LA_Conf_Sts1            
+      );
+  
+      
+AW_Port1: aw_io_reg     
+generic map(
+      AW_Base_addr =>   16#510#
+           )
+port map  (     
 
-      AWOut_Reg1          =>  AWOut_Reg1,
-      AWOut_Reg2          =>  AWOut_Reg2,
-      AWOut_Reg3          =>  AWOut_Reg3,
-      AWOut_Reg4          =>  AWOut_Reg4,
-      AWOut_Reg5          =>  AWOut_Reg5,
-      AWOut_Reg6          =>  AWOut_Reg6,
-      AWOut_Reg7          =>  AWOut_Reg7,
+      Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,  -- latched address from SCU_Bus
+      Data_from_SCUB_LA   =>  Data_from_SCUB_LA, -- latched data from SCU_Bus 
+      Ext_Adr_Val         =>  Ext_Adr_Val,       -- '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Rd_active       =>  Ext_Rd_active,     -- '1' => Rd-Cycle is active
+      Ext_Rd_fin          =>  Ext_Rd_fin,        -- marks end of read cycle, active one for one clock period of sys_clk
+      Ext_Wr_active       =>  Ext_Wr_active,     -- '1' => Wr-Cycle is active
+      Ext_Wr_fin          =>  SCU_Ext_Wr_fin,    -- marks end of write cycle, active one for one clock period of sys_clk
+      clk                 =>  clk_sys,           -- should be the same clk, used by SCU_Bus_Slave
+      nReset              =>  nPowerup_Res,      
 
-      AWOut_Reg1_wr       =>  AWOut_Reg1_wr,  -- Daten-Reg. AWOut1
-      AWOut_Reg2_wr       =>  AWOut_Reg2_wr,  -- Daten-Reg. AWOut2
-      AWOut_Reg3_wr       =>  AWOut_Reg3_wr,  -- Daten-Reg. AWOut3
-      AWOut_Reg4_wr       =>  AWOut_Reg4_wr,  -- Daten-Reg. AWOut4
-      AWOut_Reg5_wr       =>  AWOut_Reg5_wr,  -- Daten-Reg. AWOut5
-      AWOut_Reg6_wr       =>  AWOut_Reg6_wr,  -- Daten-Reg. AWOut6
-      AWOut_Reg7_wr       =>  AWOut_Reg7_wr,  -- Daten-Reg. AWOut7
+      AWin1               =>  AWin1,             -- Input-Port 1
+      AWin2               =>  AWin2,             -- Input-Port 2
+      AWin3               =>  AWin3,             -- Input-Port 3
+      AWin4               =>  AWin4,             -- Input-Port 4
+      AWin5               =>  AWin5,             -- Input-Port 5
+      AWin6               =>  AWin6,             -- Input-Port 6
+      AWin7               =>  AWin7,             -- Input-Port 7
+      
+      AWOut_Reg1          =>  AWOut_Reg1_int,    -- Daten-Reg. AWOut1 -+--> zu Output-Multiplexer 
+      AWOut_Reg2          =>  AWOut_Reg2_int,    -- Daten-Reg. AWOut2  |
+      AWOut_Reg3          =>  AWOut_Reg3_int,    -- Daten-Reg. AWOut3  |
+      AWOut_Reg4          =>  AWOut_Reg4_int,    -- Daten-Reg. AWOut4  |
+      AWOut_Reg5          =>  AWOut_Reg5_int,    -- Daten-Reg. AWOut5  |
+      AWOut_Reg6          =>  AWOut_Reg6_int,    -- Daten-Reg. AWOut6  |
+      AWOut_Reg7          =>  AWOut_Reg7_int,    -- Daten-Reg. AWOut7 -+
 
-      AWOut_Reg_rd_active =>  AWOut_Reg_rd_active,
-      Dtack_to_SCUB       =>  aw_port1_Dtack,
-      Data_to_SCUB        =>  aw_port1_data_to_SCUB,
-      Tag_Reg_Conf_Err    =>  Tag_Reg_Conf_Err,          -- Config-Error im TAG_Array
-      LA_aw_io_reg        =>  LA_aw_io_reg
+      AWOut_Reg1_wr       =>  AWOut_Reg1_wr,     -- Daten-Reg. AWOut1
+      AWOut_Reg2_wr       =>  AWOut_Reg2_wr,     -- Daten-Reg. AWOut2
+      AWOut_Reg3_wr       =>  AWOut_Reg3_wr,     -- Daten-Reg. AWOut3
+      AWOut_Reg4_wr       =>  AWOut_Reg4_wr,     -- Daten-Reg. AWOut4
+      AWOut_Reg5_wr       =>  AWOut_Reg5_wr,     -- Daten-Reg. AWOut5
+      AWOut_Reg6_wr       =>  AWOut_Reg6_wr,     -- Daten-Reg. AWOut6
+      AWOut_Reg7_wr       =>  AWOut_Reg7_wr,     -- Daten-Reg. AWOut7
+      
+      Rd_active           =>  AW_Port1_rd_active,       -- read data available at 'Data_to_SCUB'-AWOut
+      Dtack_to_SCUB       =>  AW_Port1_Dtack,           -- connect read sources to SCUB-Macro
+      Data_to_SCUB        =>  AW_Port1_data_to_SCUB,    -- connect Dtack to SCUB-Macro
+      LA                  =>  LA_AW_Port1            
       );
 
+      
+      
 
+
+Tag_Ctrl1: tag_ctrl     
+generic map(
+      TAG_Base_addr =>   16#580#
+           )
+port map  (     
+
+      Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,          -- latched address from SCU_Bus
+      Data_from_SCUB_LA   =>  Data_from_SCUB_LA,         -- latched data from SCU_Bus 
+      Ext_Adr_Val         =>  Ext_Adr_Val,               -- '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Rd_active       =>  Ext_Rd_active,             -- '1' => Rd-Cycle is active
+      Ext_Rd_fin          =>  Ext_Rd_fin,                -- marks end of read cycle, active one for one clock period of sys_clk
+      Ext_Wr_active       =>  Ext_Wr_active,             -- '1' => Wr-Cycle is active
+      Ext_Wr_fin          =>  SCU_Ext_Wr_fin,            -- marks end of write cycle, active one for one clock period of sys_clk
+      
+      Timing_Pattern_LA   =>  Timing_Pattern_LA,         -- latched timing pattern from SCU_Bus for external user functions
+      Timing_Pattern_RCV  =>  Timing_Pattern_RCV,        -- timing pattern received
+      Spare0              =>  A_Spare0,                  -- vom Master getrieben
+      Spare1              =>  A_Spare1,                  -- vom Master getrieben
+      clk                 =>  clk_sys,                   -- should be the same clk, used by SCU_Bus_Slave
+      nReset              =>  nPowerup_Res,              
+      AWin1               =>  AWin1,                     -- Input-Port 1
+      AWin2               =>  AWin2,                     -- Input-Port 2
+      AWin3               =>  AWin3,                     -- Input-Port 3
+      AWin4               =>  AWin4,                     -- Input-Port 4
+      AWin5               =>  AWin5,                     -- Input-Port 5      
+      AWin6               =>  AWin6,                     -- Input-Port 6      
+      AWin7               =>  AWin7,                     -- Input-Port 7      
+      
+      Max_AWOut_Reg_Nr    =>  Max_AWOut_Reg_Nr,          -- Maximale AWOut-Reg-Nummer der Anwendung
+      Max_AWIn_Reg_Nr     =>  Max_AWIn_Reg_Nr,           -- Maximale AWIn-Reg-Nummer der Anwendung
     
-inl_xor1: io_reg     
+      Tag_Reg1_Maske      =>  Tag_Reg1_Maske,            -- Tag-Output-Maske für Register 1
+      Tag_Reg2_Maske      =>  Tag_Reg2_Maske,            -- Tag-Output-Maske für Register 1
+      Tag_Reg3_Maske      =>  Tag_Reg3_Maske,            -- Tag-Output-Maske für Register 1
+      Tag_Reg4_Maske      =>  Tag_Reg4_Maske,            -- Tag-Output-Maske für Register 1
+      Tag_Reg5_Maske      =>  Tag_Reg5_Maske,            -- Tag-Output-Maske für Register 1
+      Tag_Reg6_Maske      =>  Tag_Reg6_Maske,            -- Tag-Output-Maske für Register 1
+      Tag_Reg7_Maske      =>  Tag_Reg7_Maske,            -- Tag-Output-Maske für Register 1
+      Tag_Outp_Reg1       =>  Tag_Outp_Reg1,             -- Tag-Output-Maske für Register 1
+      Tag_Outp_Reg2       =>  Tag_Outp_Reg2,             -- Tag-Output-Maske für Register 1
+      Tag_Outp_Reg3       =>  Tag_Outp_Reg3,             -- Tag-Output-Maske für Register 1
+      Tag_Outp_Reg4       =>  Tag_Outp_Reg4,             -- Tag-Output-Maske für Register 1
+      Tag_Outp_Reg5       =>  Tag_Outp_Reg5,             -- Tag-Output-Maske für Register 1
+      Tag_Outp_Reg6       =>  Tag_Outp_Reg6,             -- Tag-Output-Maske für Register 1
+      Tag_Outp_Reg7       =>  Tag_Outp_Reg7,             -- Tag-Output-Maske für Register 1
+
+      Tag_FG_Start        =>  Tag_FG_Start,              -- Start-Puls für den FG
+      Tag_Sts             =>  Tag_Sts,                   -- Tag-Status
+
+      Rd_active           =>  Tag_Ctrl1_rd_active,       -- read data available at 'Data_to_SCUB'-AWOut
+      Data_to_SCUB        =>  Tag_Ctrl1_Data_to_SCUB,    -- connect read sources to SCUB-Macro
+      Dtack_to_SCUB       =>  Tag_Ctrl1_Dtack,           -- connect Dtack to SCUB-Macro
+      LA_Tag_Ctrl         =>  LA_Tag_Ctrl1
+      );  
+      
+
+
+
+--------- AW-Output Mux --------------------
+
+p_AW_Out_Mux:  PROCESS (Tag_Reg1_Maske, Tag_Reg2_Maske, Tag_Reg3_Maske, Tag_Reg4_Maske, Tag_Reg5_Maske, Tag_Reg6_Maske, Tag_Reg7_Maske,
+                        Tag_Outp_Reg1,  Tag_Outp_Reg2,  Tag_Outp_Reg3,  Tag_Outp_Reg4,  Tag_Outp_Reg5,  Tag_Outp_Reg6,  Tag_Outp_Reg7,
+                        AWOut_Reg1_int, AWOut_Reg2_int, AWOut_Reg3_int, AWOut_Reg4_int, AWOut_Reg5_int, AWOut_Reg6_int, AWOut_Reg7_int) 
+    BEGin
+    for i in 0 to 15 loop
+      IF Tag_Reg1_Maske(i)  = '0' then AWOut_Reg1(i)  <= AWOut_Reg1_int(i);  else  AWOut_Reg1(i)  <= Tag_Outp_Reg1(i);  end if;    -- Daten-Reg. AWOut1
+      IF Tag_Reg2_Maske(i)  = '0' then AWOut_Reg2(i)  <= AWOut_Reg2_int(i);  else  AWOut_Reg2(i)  <= Tag_Outp_Reg2(i);  end if;    -- Daten-Reg. AWOut2
+      IF Tag_Reg3_Maske(i)  = '0' then AWOut_Reg3(i)  <= AWOut_Reg3_int(i);  else  AWOut_Reg3(i)  <= Tag_Outp_Reg3(i);  end if;    -- Daten-Reg. AWOut3
+      IF Tag_Reg4_Maske(i)  = '0' then AWOut_Reg4(i)  <= AWOut_Reg4_int(i);  else  AWOut_Reg4(i)  <= Tag_Outp_Reg4(i);  end if;    -- Daten-Reg. AWOut4
+      IF Tag_Reg5_Maske(i)  = '0' then AWOut_Reg5(i)  <= AWOut_Reg5_int(i);  else  AWOut_Reg5(i)  <= Tag_Outp_Reg5(i);  end if;    -- Daten-Reg. AWOut5
+      IF Tag_Reg6_Maske(i)  = '0' then AWOut_Reg6(i)  <= AWOut_Reg6_int(i);  else  AWOut_Reg6(i)  <= Tag_Outp_Reg6(i);  end if;    -- Daten-Reg. AWOut6
+      IF Tag_Reg7_Maske(i)  = '0' then AWOut_Reg7(i)  <= AWOut_Reg7_int(i);  else  AWOut_Reg7(i)  <= Tag_Outp_Reg7(i);  end if;    -- Daten-Reg. AWOut7
+    end loop;  
+  END PROCESS p_AW_Out_Mux;
+
+
+
+  
+INL_xor1: io_reg     
 generic map(
       Base_addr =>  16#530#
       )
@@ -805,7 +1102,7 @@ port map  (
       Ext_Rd_active      =>  Ext_Rd_active,
       Ext_Rd_fin         =>  Ext_Rd_fin,
       Ext_Wr_active      =>  Ext_Wr_active,
-      Ext_Wr_fin         =>  Ext_Wr_fin,
+      Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
       clk                =>  clk_sys,
       nReset             =>  nPowerup_Res,
 --
@@ -824,7 +1121,7 @@ port map  (
     );
     
     
-inl_msk1: io_reg     
+INL_msk1: io_reg     
 generic map(
       Base_addr =>  16#540#
       )
@@ -835,7 +1132,7 @@ port map  (
       Ext_Rd_active      =>  Ext_Rd_active,
       Ext_Rd_fin         =>  Ext_Rd_fin,
       Ext_Wr_active      =>  Ext_Wr_active,
-      Ext_Wr_fin         =>  Ext_Wr_fin,
+      Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
       clk                =>  clk_sys,
       nReset             =>  nPowerup_Res,
 --
@@ -855,8 +1152,10 @@ port map  (
 
  
     
-testport_mux: process (A_SEL, AW_Config1, AWin1, AWOut_Reg1, LA_aw_io_reg, Timing_Pattern_RCV,
-                       Timing_Pattern_LA, test_port_in_0, test_clocks, uart_txd_out)
+testport_mux: process (A_SEL, AW_Config1, AWin1, AWOut_Reg1, LA_AW_Port1, LA_Conf_Sts1, Timing_Pattern_RCV,
+                       Timing_Pattern_LA, test_port_in_0, test_clocks, uart_txd_out,
+                       Ext_Rd_active, Ext_Rd_fin, Ext_Rd_Fin_ovl, Ext_Wr_active, SCU_Ext_Wr_fin, Ext_Wr_fin_ovl
+                       )
 variable test_out: std_logic_vector(15 downto 0);
 begin
   case (not A_SEL) is
@@ -871,9 +1170,20 @@ begin
     when X"7" => test_out := X"0000";
 --                                                 +--- '1' drives the external max level shifter
     when X"8" => test_out := X"000" & '0' & '0' & '1' & uart_txd_out;
-    when X"9" => test_out := X"0000";
-    when X"A" => test_out := LA_aw_io_reg;
-    when X"B" => test_out := X"0000";
+    when X"9" => test_out := LA_Conf_Sts1;
+    when X"A" => test_out := LA_AW_Port1;
+--
+
+    when X"B" => test_out := X"00"&
+                              '0' &
+                              '0' &
+                              Ext_Rd_active  &  -- out, '1' => Rd-Cycle to external user register is active
+                              Ext_Rd_fin     &  -- out, marks end of read cycle, active one for one clock period of clk past cycle end (no overlap)
+                              Ext_Rd_Fin_ovl &  -- out, marks end of read cycle, active one for one clock period of clk during cycle end (overlap)
+                              Ext_Wr_active  &  -- out, '1' => Wr-Cycle to external user register is active
+                              SCU_Ext_Wr_fin &  -- out, marks end of write cycle, active high for one clock period of clk past cycle end (no overlap)
+                              Ext_Wr_fin_ovl;   -- out, marks end of write cycle, active high for one clock period of clk before write cycle finished (with overlap)
+--
     when X"C" => test_out := Timing_Pattern_RCV & Timing_Pattern_LA(14 downto 0);-- Timing
    --
     when X"D" => test_out := X"0000";
@@ -887,10 +1197,10 @@ end process testport_mux;
 
 
 
-test_port_in_0 <= nPowerup_Res          & clk             & Ena_Every_100ns & Ena_Every_166ns & -- bit15..12
-                  Ext_Wr_active         & SCU_Ext_Wr_fin  & AWOut_Reg1_wr   & fg_1_strobe     & -- bit11..8
+test_port_in_0 <= nPowerup_Res          & clk_sys         & Ena_Every_100ns & Ena_Every_166ns & -- bit15..12
+                  Ext_Wr_active         & SCU_Ext_Wr_fin  & '0'             & FG_1_strobe     & -- bit11..8
                   signal_tap_clk_250mhz & pll_locked      & A_RnW & A_nDS   &                   -- bit7..4
-                  A_nBoardSel           & fg_1_strobe     & '0'             & SCUB_Dtack      ; -- bit3..0
+                  A_nBoardSel           & FG_1_strobe     & '0'             & SCUB_Dtack      ; -- bit3..0
 
             
 test_clocks <=  X"0"                                                                              -- bit15..12
@@ -929,7 +1239,7 @@ port map  (
     
 p_led_sel: led_n
   generic map (stretch_cnt => stretch_cnt)
-  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => not A_nBoardSel, nLED => s_nLED_Sel);-- LED: sel Board
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => (not A_nBoardSel and not A_nDS), nLED => s_nLED_Sel);-- LED: sel Board
   
 p_led_dtack: led_n
   generic map (stretch_cnt => stretch_cnt)
@@ -939,9 +1249,9 @@ p_led_inr: led_n
   generic map (stretch_cnt => stretch_cnt)
   port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => SCUB_SRQ, nLED => s_nLED_inR);-- LED: interrupt
 
-p_led_pu: led_n
-  generic map (stretch_cnt => stretch_cnt)
-  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => not (nPowerup_Res), nLED => s_nLED_PU);-- LED: nPowerup_Reset
+--p_led_pu: led_n
+--  generic map (stretch_cnt => stretch_cnt)
+--  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => not (nPowerup_Res), nLED => s_nLED_PU);-- LED: nPowerup_Reset
   
 p_led_user1: led_n
   generic map (stretch_cnt => stretch_cnt)
@@ -999,62 +1309,62 @@ clk_switch_intr <= local_clk_is_running or sys_clk_deviation_la;
 
 SCU_Slave: SCU_Bus_Slave
 generic map (
-    CLK_in_Hz => clk_sys_in_Hz,
+    CLK_in_Hz               => clk_sys_in_Hz,
     Firmware_Release        => 3,
     Firmware_Version        => 0,
-    CID_System => 55, -- important: 55 => CSCOHW
-    CID_Group => 26, --- important: 26 => "FG900500_SCU_Diob1"
-    intr_Enable          => b"0000_0000_0000_0001")
+    CID_System              => 55, --------------------------------------------- important: => CSCOHW
+    CID_Group               => 26, --------------------------------------------- important: => "FG900500_SCU_Diob1"
+    intr_Enable             => b"0000_0000_0000_0001")
 port map (
-    SCUB_Addr => A_A, -- in,        SCU_Bus: address bus
-    nSCUB_Timing_Cyc         => A_nEvent_Str, -- in,        SCU_Bus signal: low active SCU_Bus runs timing cycle
-    SCUB_Data => A_D, -- inout,        SCU_Bus: data bus (FPGA tri state buffer)
-    nSCUB_Slave_Sel => A_nBoardSel, -- in, SCU_Bus: '0' => SCU master select slave
-    nSCUB_DS => A_nDS, -- in,        SCU_Bus: '0' => SCU master activate data strobe
-    SCUB_RDnWR => A_RnW, -- in, SCU_Bus: '1' => SCU master read slave
-    clk => clk_sys,
-    nSCUB_Reset_in => A_nReset, -- in,        SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
-    Data_to_SCUB => Data_to_SCUB, -- in,        connect read sources from external user functions
-    Dtack_to_SCUB => Dtack_to_SCUB, -- in,        connect Dtack from from external user functions
-    intr_in => fg_1_dreq & '0' & tmr_irq & '0'  -- bit 15..12
-            & x"0"                              -- bit 11..8
-            & x"0"                              -- bit 7..4
-            & '0' & '0' & clk_switch_intr,      -- bit 3..1
-    User_Ready => '1',
-    extension_cid_system => extension_cid_system, -- in,  extension card: cid_system
-    extension_cid_group => extension_cid_group, --in,     extension card: cid_group
-    Data_from_SCUB_LA => Data_from_SCUB_LA, -- out,        latched data from SCU_Bus for external user functions
-    ADR_from_SCUB_LA => ADR_from_SCUB_LA, -- out,        latched address from SCU_Bus for external user functions
-    Timing_Pattern_LA => Timing_Pattern_LA, -- out,        latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV => Timing_Pattern_RCV, -- out,        timing pattern received
-    nSCUB_Dtack_Opdrn => open, -- out,        for direct connect to SCU_Bus opendrain signal
-                                                    -- '0' => slave give dtack to SCU master
-    SCUB_Dtack => SCUB_Dtack, -- out,        for connect via ext. open collector driver
-                                                    -- '1' => slave give dtack to SCU master
-    nSCUB_SRQ_Opdrn => open, -- out,        for direct connect to SCU_Bus opendrain signal
-                                                    -- '0' => slave service request to SCU ma
-    SCUB_SRQ => SCUB_SRQ, -- out,        for connect via ext. open collector driver
-                                                    -- '1' => slave service request to SCU master
-    nSel_Ext_Data_Drv => A_nSel_Ext_Data_Drv, -- out,        '0' => select the external data driver on the SCU_Bus slave
-    Ext_Data_Drv_Rd         => A_Ext_Data_RD, -- out,        '1' => direction of the external data driver on the
-                                                    -- SCU_Bus slave is to the SCU_Bus
-    Standard_Reg_Acc => Standard_Reg_Acc, -- out,        '1' => mark the access to register of this macro
-    Ext_Adr_Val => Ext_Adr_Val, -- out,        for external user functions: '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active => Ext_Rd_active, -- out,        '1' => Rd-Cycle to external user register is active
-    Ext_Rd_fin => open, -- out,        marks end of read cycle, active one for one clock period
-                                                    -- of clk past cycle end (no overlap)
-    Ext_Rd_Fin_ovl => open, -- out,        marks end of read cycle, active one for one clock period
-                                                    -- of clk during cycle end (overlap)
-    Ext_Wr_active => Ext_Wr_active, -- out,        '1' => Wr-Cycle to external user register is active
-    Ext_Wr_fin => SCU_Ext_Wr_fin, -- out,        marks end of write cycle, active high for one clock period
-                                                    -- of clk past cycle end (no overlap)
-    Ext_Wr_fin_ovl => Ext_Wr_fin_ovl, -- out, marks end of write cycle, active high for one clock period
-                                                    -- of clk before write cycle finished (with overlap)
-    Deb_SCUB_Reset_out => Deb_SCUB_Reset_out, -- out,        the debounced 'nSCUB_Reset_in'-signal, is active high,
-                                                    -- can be used to reset
-                                                    -- external macros, when 'nSCUB_Reset_in' is '0'
-    nPowerup_Res => nPowerup_Res, -- out,        this macro generated a power up reset
-    Powerup_Done => Powerup_Done          -- out  this memory is set to one if an Powerup is done. Only the SCUB-Master can clear this bit.
+    SCUB_Addr               => A_A,                                   -- in, SCU_Bus: address bus
+    nSCUB_Timing_Cyc        => A_nEvent_Str,                          -- in, SCU_Bus signal: low active SCU_Bus runs timing cycle
+    SCUB_Data               => A_D,                                   -- inout, SCU_Bus: data bus (FPGA tri state buffer)
+    nSCUB_Slave_Sel         => A_nBoardSel,                           -- in, SCU_Bus: '0' => SCU master select slave
+    nSCUB_DS                => A_nDS,                                 -- in, SCU_Bus: '0' => SCU master activate data strobe
+    SCUB_RDnWR              => A_RnW,                                 -- in, SCU_Bus: '1' => SCU master read slave
+    clk                     => clk_sys,
+    nSCUB_Reset_in          => A_nReset,                              -- in, SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
+    Data_to_SCUB            => Data_to_SCUB,                          -- in, connect read sources from external user functions
+    Dtack_to_SCUB           => Dtack_to_SCUB,                         -- in, connect Dtack from from external user functions
+    intr_in                 => FG_1_dreq & FG_2_dreq & tmr_irq & '0'  -- bit 15..12
+                              & x"0"                                  -- bit 11..8
+                              & x"0"                                  -- bit 7..4
+                              & '0' & '0' & clk_switch_intr,          -- bit 3..1
+    User_Ready              => '1',
+    extension_cid_system    => extension_cid_system,                  -- in, extension card: cid_system
+    extension_cid_group     => extension_cid_group,                   -- in, extension card: cid_group
+    Data_from_SCUB_LA       => Data_from_SCUB_LA,                     -- out, latched data from SCU_Bus for external user functions
+    ADR_from_SCUB_LA        => ADR_from_SCUB_LA,                      -- out, latched address from SCU_Bus for external user functions
+    Timing_Pattern_LA       => Timing_Pattern_LA,                     -- out, latched timing pattern from SCU_Bus for external user functions
+    Timing_Pattern_RCV      => Timing_Pattern_RCV,                    -- out, timing pattern received
+    nSCUB_Dtack_Opdrn       => open,                                  -- out, for direct connect to SCU_Bus opendrain signal
+                                                                      -- '0' => slave give dtack to SCU master
+    SCUB_Dtack              => SCUB_Dtack,                            -- out, for connect via ext. open collector driver
+                                                                      -- '1' => slave give dtack to SCU master
+    nSCUB_SRQ_Opdrn         => open,                                  -- out, for direct connect to SCU_Bus opendrain signal
+                                                                      -- '0' => slave service request to SCU ma
+    SCUB_SRQ                => SCUB_SRQ,                              -- out, for connect via ext. open collector driver
+                                                                      -- '1' => slave service request to SCU master
+    nSel_Ext_Data_Drv       => A_nSel_Ext_Data_Drv,                   -- out, '0' => select the external data driver on the SCU_Bus slave
+    Ext_Data_Drv_Rd         => A_Ext_Data_RD,                         -- out, '1' => direction of the external data driver on the
+                                                                      -- SCU_Bus slave is to the SCU_Bus
+    Standard_Reg_Acc        => Standard_Reg_Acc,                      -- out, '1' => mark the access to register of this macro
+    Ext_Adr_Val             => Ext_Adr_Val,                           -- out, for external user functions: '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active           => Ext_Rd_active,                         -- out, '1' => Rd-Cycle to external user register is active
+    Ext_Rd_fin              => Ext_Rd_fin,                            -- out, marks end of read cycle, active one for one clock period
+                                                                      -- of clk past cycle end (no overlap)
+    Ext_Rd_Fin_ovl          => Ext_Rd_Fin_ovl,                        -- out, marks end of read cycle, active one for one clock period
+                                                                      -- of clk during cycle end (overlap)
+    Ext_Wr_active           => Ext_Wr_active,                         -- out, '1' => Wr-Cycle to external user register is active
+    Ext_Wr_fin              => SCU_Ext_Wr_fin,                        -- out, marks end of write cycle, active high for one clock period
+                                                                      -- of clk past cycle end (no overlap)
+    Ext_Wr_fin_ovl          => Ext_Wr_fin_ovl,                        -- out, marks end of write cycle, active high for one clock period
+                                                                      -- of clk before write cycle finished (with overlap)
+    Deb_SCUB_Reset_out      => Deb_SCUB_Reset_out,                    -- out, the debounced 'nSCUB_Reset_in'-signal, is active high,
+                                                                      -- can be used to reset
+                                                                      -- external macros, when 'nSCUB_Reset_in' is '0'
+    nPowerup_Res            => nPowerup_Res,                          -- out, this macro generates a power up reset
+    Powerup_Done            => Powerup_Done                           -- out, this signal is set after powerup. Only the SCUB-Master can clear this bit.
     );
 
 
@@ -1081,14 +1391,6 @@ lm32_ow: housekeeping
     debug_serial_o    => uart_txd_out,
     debug_serial_i    => '0');
 
-
-    Dtack_to_SCUB <= clk_switch_dtack or wb_scu_dtack or fg_1_dtack or aw_port1_Dtack or tmr_dtack or INL_msk1_Dtack or INL_xor1_Dtack;
-
-
-    A_nDtack <= NOT(SCUB_Dtack);
-    A_nSRQ   <= NOT(SCUB_SRQ);
-
-
     
 fg_1: fg_quad_scu_bus
   generic map (
@@ -1106,16 +1408,44 @@ fg_1: fg_quad_scu_bus
     Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
     nReset            => nPowerup_Res,          -- in, '0' => resets the fg_1
-    Rd_Port           => fg_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
-    user_rd_active    => fg_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
-    Dtack             => fg_1_dtack,            -- connect Dtack to SCUB-Macro
-    dreq              => fg_1_dreq,             -- request of new parameter set
-    brdcst_i          => '0',
+    Rd_Port           => FG_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
+    user_rd_active    => FG_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
+    Dtack             => FG_1_dtack,            -- connect Dtack to SCUB-Macro
+    dreq              => FG_1_dreq,             -- request of new parameter set
+    brdcst_i          => '0',                   -- starts the fg
+    brdcst_o          => fg_start,              -- goes high when fg is started
+
+    -- fg output
+    sw_out            => FG_1_sw,               -- 24bit output from fg
+    sw_strobe         => FG_1_strobe            -- signals new output data
+  );
+
+fg_2: fg_quad_scu_bus
+  generic map (
+    Base_addr => x"0340",
+    clk_in_hz => clk_sys_in_Hz,
+    diag_on_is_1 => 0 -- if 1 then diagnosic information is generated during compilation
+    )
+  port map (
+
+    -- SCUB interface
+    Adr_from_SCUB_LA  => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+    Data_from_SCUB_LA => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+    Ext_Adr_Val       => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+    Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+    clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
+    nReset            => nPowerup_Res,          -- in, '0' => resets the fg_1
+    Rd_Port           => FG_2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
+    user_rd_active    => FG_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
+    Dtack             => FG_2_dtack,            -- connect Dtack to SCUB-Macro
+    dreq              => FG_2_dreq,             -- request of new parameter set
+    brdcst_i          => fg_start,
     brdcst_o          => open,          
 
     -- fg output
-    sw_out            => fg_1_sw,               -- 24bit output from fg
-    sw_strobe         => fg_1_strobe            -- signals new output data
+    sw_out            => FG_2_sw,               -- 24bit output from fg
+    sw_strobe         => FG_2_strobe            -- signals new output data
   );
 
   tmr: tmr_scu_bus
@@ -1138,31 +1468,48 @@ fg_1: fg_quad_scu_bus
 
 rd_port_mux:  process ( clk_switch_rd_active, clk_switch_rd_data,
                         wb_scu_rd_active,     wb_scu_data_to_SCUB,
-                        fg_1_rd_active,       fg_1_data_to_SCUB,
-                        AWOut_Reg_rd_active,  aw_port1_data_to_SCUB,
+                        FG_1_rd_active,       FG_1_data_to_SCUB,
+                        FG_2_rd_active,       FG_2_data_to_SCUB,
+                        AW_Port1_rd_active,   AW_Port1_data_to_SCUB,
+                        Tag_Ctrl1_rd_active,  Tag_Ctrl1_data_to_SCUB,
+                        Conf_Sts1_rd_active,  Conf_Sts1_data_to_SCUB,
                         INL_msk1_rd_active,   INL_msk1_data_to_SCUB,
                         INL_xor1_rd_active,   INL_xor1_data_to_SCUB,
-                        tmr_rd_active,      tmr_data_to_SCUB )
+                        tmr_rd_active,        tmr_data_to_SCUB )
 
-  variable sel: unsigned(6 downto 0);
+  variable sel: unsigned(9 downto 0);
   begin
-    sel :=  clk_switch_rd_active & wb_scu_rd_active & fg_1_rd_active & AWOut_Reg_rd_active & INL_msk1_rd_active & INL_xor1_rd_active & tmr_rd_active;
-    case sel IS
-      when "0000001" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "0000010" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
-      when "0000100" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
-      when "0001000" => Data_to_SCUB <= aw_port1_data_to_SCUB;
-      when "0010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "0100000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "1000000" => Data_to_SCUB <= clk_switch_rd_data;
-      when others => Data_to_SCUB <= (others => '0');
+    sel :=  tmr_rd_active   & INL_xor1_rd_active  & INL_msk1_rd_active    &  AW_Port1_rd_active &  FG_1_rd_active &
+            FG_2_rd_active  & wb_scu_rd_active    & clk_switch_rd_active  & Conf_Sts1_rd_active &  Tag_Ctrl1_rd_active ;
+    
+  case sel IS
+      when "1000000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "0100000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
+      when "0010000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
+      when "0001000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
+      when "0000100000" => Data_to_SCUB <= FG_1_data_to_SCUB;
+      when "0000010000" => Data_to_SCUB <= FG_2_data_to_SCUB;
+      when "0000001000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "0000000100" => Data_to_SCUB <= clk_switch_rd_data;
+      when "0000000010" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
+      when "0000000001" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
+      when others      => Data_to_SCUB <= (others => '0');
     end case;
   end process rd_port_mux;
 
+    
+-------------- Dtack_to_SCUB -----------------------------   
+
+    Dtack_to_SCUB <= ( tmr_dtack  or INL_xor1_Dtack or INL_msk1_Dtack   or AW_Port1_Dtack  or FG_1_dtack  or 
+                       FG_2_dtack or wb_scu_dtack   or clk_switch_dtack or Conf_Sts1_Dtack or Tag_Ctrl1_Dtack );
+                     
+
+    A_nDtack <= NOT(SCUB_Dtack);
+    A_nSRQ   <= NOT(SCUB_SRQ);
 
 
 p_interlock:  
-process (AWin1, AWin2, AWin3, AWin4, AWin5,                      -- Input-Register
+process (AWin1, AWin2, AWin3, AWin4, AWin5, AWin6, AWin7, Max_AWIn_Reg_Nr,                        -- Input-Register
       INL_xor_IO1, INL_xor_IO2, INL_xor_IO3, INL_xor_IO4, INL_xor_IO5, INL_xor_IO6, INL_xor_IO7,  -- Pegel(xor)-Register (default = 0)
       INL_msk_IO1, INL_msk_IO2, INL_msk_IO3, INL_msk_IO4, INL_msk_IO5, INL_msk_IO6, INL_msk_IO7,  -- Maskenregister      (default = 0)
       INL_IO1,    INL_IO2,    INL_IO3,    INL_IO4,     INL_IO5,    INL_IO6,     INL_IO7)          -- Zwischenergebnis: Interlock-Bits xor, Maske
@@ -1174,7 +1521,7 @@ begin
   INL_IO4  <=  ((AWin4 xor INL_xor_IO4) and not INL_msk_IO4);
   INL_IO5  <=  ((AWin5 xor INL_xor_IO5) and not INL_msk_IO5);
   INL_IO6  <=  ((AWin6 xor INL_xor_IO6) and not INL_msk_IO6);
-  INL_IO7  <=  ((AWin7 xor INL_xor_IO6) and not INL_msk_IO7);
+  INL_IO7  <=  ((AWin7 xor INL_xor_IO7) and not INL_msk_IO7);
 
 -- "Oder-Veknüpfung aller Statusbits (nach Aktiv-Pegel-Selekt und Maske) ---  
 
@@ -1344,7 +1691,7 @@ p_P25IO_DAC_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_DAC_Strobe_Start
   
   --------- DAC_Out-Strobe --------------------
 P25IO_DAC_Strobe: led_n
-  generic map (stretch_cnt => 125) -- 125 x 8ns(1/125 MHz) = 1us
+  generic map (stretch_cnt => C_Strobe_1us) -- = 1us
   port map      (ena => '1', CLK => clk_sys,   Sig_in => P25IO_DAC_Strobe_Start_o,    nLED => P25IO_nDAC_Strobe_o);-- 
 
 
@@ -1402,7 +1749,7 @@ p_P25IO_Ext_Tim_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_Ext_Tim_deb_
 
   
 P25IO_ADC_ECC: led_n
-  generic map (stretch_cnt => 250) -- 250 x 8ns(1/125 MHz) = 2us
+  generic map (stretch_cnt => C_Strobe_2us) -- = 2us
   port map      (ena => '1', CLK => clk_sys,   Sig_in => (P25IO_ADC_ECC_i), nLED => P25IO_nADC_ECC_o);-- 
   
 
@@ -1488,18 +1835,179 @@ UIO_in_Hi_Data_Deb1:  for I in 0 to 23 generate
               end generate UIO_in_Hi_Data_Deb1;
  
 
+ 
+
 --  +============================================================================================================================+
+--  |                                          Anwender-IO: DA  -- FG900_750                                                     |
+--  +============================================================================================================================+
+
+
+------------------------------------------------------------------------------------------------------------------
+-------- DAC_Test_Loop:                                                                         
+-------- AWOut_Reg3 = 1. DAC-Wert, AWOut_Reg4 = 2. DAC-Wert, AWOut_Reg5 = Verzögerungszeit in Taktperioden (8ns)                                                                       
+------------------------------------------------------------------------------------------------------------------
+
+  
+P_Dac_Test_Loop:  process (clk_sys, Powerup_Res, dac_state, AWOut_Reg3, AWOut_Reg4, AWOut_Reg5)
+
+    begin
+      if (Powerup_Res = '1') then
+        dac_state         <= dac_idle;
+        DAC_Test_Out      <= (others => '0');    -- Test-Bitmuster
+        DAC_Test_Strobe   <=  '0';               -- Output Test-Strobe
+        DAC_Wait_cnt      <= 0;                  -- Wait-Counter
+
+        
+    ELSIF rising_edge(clk_sys) then
+      case dac_state is
+        when dac_idle   =>     if  (AW_Config1(15) = '1')  THEN
+                                   dac_state          <= dac_data1;
+                               else
+                                   dac_state          <= dac_idle;
+                               end if;
+                               
+--------------------------------- DAC-Daten und Strobe für Datenwert 1 ------------------------------------------
+
+        when dac_data1    =>    DAC_Test_Out       <= AWOut_Reg3;         -- 1. Dac-Sollwert
+                                 dac_state          <= dac_str1h;     
+          
+        when dac_str1h    =>    DAC_Test_Strobe    <=  '1';               -- Output Test-Strobe
+                                dac_state          <= dac_str1l;      
+          
+        when dac_str1l    =>    DAC_Test_Strobe    <=  '0';               -- Output Test-Strobe
+                                DAC_Wait_cnt       <=  to_integer(unsigned(AWOut_Reg5));   -- Wait-Counter 
+                                dac_state          <= dac_loop1;
+    
+        when dac_loop1    =>   if (DAC_Wait_cnt  > 0) then 
+                                   DAC_Wait_cnt <= DAC_Wait_cnt-1;    
+                                   dac_state    <= dac_loop1;
+                               elsE
+                                   dac_state    <= dac_wait1;
+                               end if;
+
+------------------------------ DAC-Daten und Strobe für Datenwert 2 ------------------------------------------
+ 
+        when dac_wait1    =>    dac_state          <= dac_wait2;          --+--> Laufzeitausgleich    
+        when dac_wait2    =>    dac_state          <= dac_data2;          --+
+
+
+ 
+        when dac_data2    =>    DAC_Test_Out       <= AWOut_Reg4;         -- 2. Dac-Sollwert
+                                dac_state          <= dac_str2h;     
+              
+        when dac_str2h    =>    DAC_Test_Strobe    <=  '1';               -- Output Test-Strobe
+                                dac_state          <= dac_str2l;      
+          
+        when dac_str2l    =>    DAC_Test_Strobe    <=  '0';               -- Output Test-Strobe
+                                DAC_Wait_cnt       <=  to_integer(unsigned(AWOut_Reg5));   -- Wait-Counter 
+                                dac_state          <= dac_loop2;
+    
+        when dac_loop2    =>   if (DAC_Wait_cnt  > 0) then 
+                                      DAC_Wait_cnt <= DAC_Wait_cnt-1;    
+                                      dac_state    <= dac_loop2;
+                                  elsE
+                                      dac_state    <= dac_end;
+                                  end if;
+
+                                  
+         when dac_end     =>   dac_state          <= dac_idle;
+
+
+      end case;
+    end if;
+  end process P_Dac_Test_Loop;
+  
+
+  
+  
+ ------------------------------ LED'S und Strobe's ------------------------------------------
+
+
+  DA_LED_Ext_Trig1: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => DA_LED_Ext_Trig1_i,    nLED => DA_LED_Ext_Trig1_o);
+
+  DA_LED_Ext_Trig2: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => DA_LED_Ext_Trig2_i,    nLED => DA_LED_Ext_Trig2_o);
+
+  DA_LED_Trig_Out1: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => DA_LED_Trig_Out1_i,    nLED => DA_LED_Trig_Out1_o);
+
+  DA_LED_Trig_Out2: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => DA_LED_Trig_Out2_i,    nLED => DA_LED_Trig_Out2_o);
+
+
+  
+  --------- DAC1_Out-Strobe --------------------
+  DA_Trig1: led_n
+  generic map (stretch_cnt => C_Strobe_1us) -- = 1us
+  port map      (ena => '1', CLK => clk_sys,   Sig_in => DA_Trig1_i,    nLED => DA_Trig1_1us_o);-- 
+
+  --------- DAC2_Out-Strobe --------------------
+  DA_Trig2: led_n
+  generic map (stretch_cnt => C_Strobe_1us) -- = 1us
+  port map      (ena => '1', CLK => clk_sys,   Sig_in => DA_Trig2_i,    nLED => DA_Trig2_1us_o);-- 
+
+
+
+
+ --------- Ext. Trigger1 (Puls aus Signal (1 Clock breit)) --------------------
+
+p_DA_Trig1_Strobe:  PROCESS (clk_sys, Powerup_Res, DA_Trig1_Strobe_i)
+  BEGin
+    IF Powerup_Res  = '1' THEN
+      DA_Trig1_shift  <= (OTHERS => '0');
+      DA_Trig1_Strobe_o    <= '0';
+
+    ELSIF rising_edge(clk_sys) THEN
+      DA_Trig1_shift <= (DA_Trig1_shift(DA_Trig1_shift'high-1 downto 0) & (DA_Trig1_Strobe_i));
+
+      IF DA_Trig1_shift(DA_Trig1_shift'high) = '0' AND DA_Trig1_shift(DA_Trig1_shift'high-1) = '1' THEN
+        DA_Trig1_Strobe_o <= '1';
+      ELSE
+        DA_Trig1_Strobe_o <= '0';
+      END IF;
+    END IF;
+  END PROCESS p_DA_Trig1_Strobe;
+ 
+
+ --------- Ext. Trigger2 (Puls aus Signal (1 Clock breit)) --------------------
+
+p_DA_Trig2_Strobe:  PROCESS (clk_sys, Powerup_Res, DA_Trig2_Strobe_i)
+  BEGin
+    IF Powerup_Res  = '1' THEN
+      DA_Trig2_shift  <= (OTHERS => '0');
+      DA_Trig2_Strobe_o    <= '0';
+
+    ELSIF rising_edge(clk_sys) THEN
+      DA_Trig2_shift <= (DA_Trig2_shift(DA_Trig2_shift'high-1 downto 0) & (DA_Trig2_Strobe_i));
+
+      IF DA_Trig2_shift(DA_Trig2_shift'high) = '0' AND DA_Trig2_shift(DA_Trig2_shift'high-1) = '1' THEN
+        DA_Trig2_Strobe_o <= '1';
+      ELSE
+        DA_Trig2_Strobe_o <= '0';
+      END IF;
+    END IF;
+  END PROCESS p_DA_Trig2_Strobe;
+ 
+  
+ 
+ 
+--  +===========================================================================================================================+
 --  |                                          Anwender-IO:  SPSIO  --  FG900.770 ---                                           |
---  +============================================================================================================================+
+--  +===========================================================================================================================+
 
 SPSIO_in_Data_Deb:  for I in 0 to 23 generate
               DB_I:  debounce generic map(DB_Cnt => C_SPSIO_Data_Debounce_input_in_ns / clk_in_ns)
               port map(DB_in => SPSIO_in_Data_Deb_i(I),  Reset => Powerup_Res, clk => clk_sys, DB_Out => SPSIO_in_Data_Deb_o(I));
               end generate SPSIO_in_Data_Deb;
 
---  +============================================================================================================================+
+--  +==========================================================================================================================+
 --  |                                          Anwender-IO:  HFIO  --  FG900.780 ---                                           |
---  +============================================================================================================================+
+--  +==========================================================================================================================+
 
 
 HFIO_nLED_Tastpuls: led_n
@@ -1537,9 +2045,13 @@ HFIO_in_PHASE_FEHLER_Deb:  Debounce
   
   
 
-p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO, A_SEL,
-             fg_1_sw, fg_1_strobe, P25IO_DAC_Out,
-             AW_Config1, CLK_IO, AWin1, AWin2, AWin3, AWin4, AWin5, AWin6, AWin7, 
+p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO, A_SEL, signal_tap_clk_250mhz,
+             FG_1_sw, FG_1_strobe, P25IO_DAC_Out,
+             CLK_IO,
+             DIOB_Status1, DIOB_Status2, AW_Status1, AW_Status2, 
+             AWin1, AWin2, AWin3, AWin4, AWin5, AWin6, AWin7, 
+             DIOB_Config1, DIOB_Config2, AW_Config1, AW_Config2, 
+             DIOB_Config1_wr, DIOB_Config2_wr, AW_Config1_wr, AW_Config2_wr, 
              AWOut_Reg1, AWOut_Reg1_wr, AWOut_Reg2, AWOut_Reg2_wr, AWOut_Reg3, AWOut_Reg4, AWOut_Reg5, AWOut_Reg6, AWOut_Reg7, 
              Interlock, UIO, hp_la_o, local_clk_is_running, clk_blink,
              s_nLED_Sel, s_nLED_Dtack, s_nLED_inR, s_nLED_User1_o, s_nLED_User2_o, s_nLED_User3_o, 
@@ -1554,9 +2066,19 @@ p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO,
              HFIO_in_AMP_FEHLER_Deb_o, HFIO_in_PHASE_FEHLER_Deb_o, HFIO_nLED_Sample_Puls_inv_o,
              UIO_HS_IN, UIO_LS_IN,
              UIO_Out, UIO_Data_FG_Out, UIO_nLED_Lemo_In_o, UIO_nLED_Lemo_Out_o,   
-             UIO_Lemo_deb_o, UIO_in_Lo_Data_Deb1_o, UIO_in_Hi_Data_Deb1_o
+             UIO_Lemo_deb_o, UIO_in_Lo_Data_Deb1_o, UIO_in_Hi_Data_Deb1_o,
+             DIOB_Config1, Tag_Sts, 
+             DA_DAC1_Data, DA_DAC1_Out, DA_DAC1_Str, DA_DAC1_Str_Out,
+             DA_DAC2_Data, DA_DAC2_Out, DA_DAC2_Str, DA_DAC2_Str_Out,
+             DAC_Test_Out, DAC_Test_Strobe, DA_Trig1_Strobe_o, DA_Trig2_Strobe_o,
+             DA_LED_Ext_Trig1_o, DA_LED_Ext_Trig2_o,
+             DA_Trig1_1us_o,  DA_Trig2_1us_o,
+             DA_LED_Trig_Out1_o, DA_LED_Trig_Out2_o
              )
-  
+
+
+
+ 
 BEGIN
 
   --############################# Set Defaults ######################################
@@ -1576,11 +2098,20 @@ BEGIN
     extension_cid_system <= 0;   -- extension card: cid_system
     extension_cid_group  <= 0;   -- extension card: cid_group
     
-    Max_AWOut_Reg_Nr    <= 0;    -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr     <= 0;    -- Maximale AWIn-Reg-Nummer der Anwendung
+    Max_AWOut_Reg_Nr     <= 0;    -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr      <= 0;    -- Maximale AWIn-Reg-Nummer der Anwendung
+ 
 
-    AW_Sts1             <= (OTHERS => '0');  -- Input-Port-AW_Sts1
-    AW_Sts2             <= (OTHERS => '0');  -- Input-Port-AW_Sts2
+
+    Diob_Status1(15 downto 6) <= (OTHERS => '0');       -- Reserve
+    Diob_Status1(5 downto 0)  <= Tag_Sts(5 downto 0);   -- Tag-Ctrl Status
+
+    Diob_Status2    <= x"123B";  -- Input-Port-Diob_Status2
+    AW_Status1      <= x"123C";  -- "Dummy" Input-Port-AW_Sts    
+    AW_Status2      <= x"123D";  -- "Dummy" Input-Port-AW_Sts2
+     
+    A_Tclk               <= '0';  -- Clock  für HP-Logic-Analysator
+
     
     s_nLED_User1_i <= '0';        -- LED3 = User 1, -- frei -- 
     s_nLED_User2_i <= '0';        -- LED3 = User 2, -- frei -- 
@@ -1627,6 +2158,32 @@ BEGIN
     UIO_LED_Lemo_Out_i          <=  '0';            -- Input  "nLED_Lemo_Out"
     UIO_Lemo_deb_i              <=  '0';            -- Input "Lemo" 
 
+    DA_DAC1_Str                 <=  '0';                -- DAC1-Strobe
+    DA_DAC1_Str_Out             <=  '0';                -- DAC1-Output-Strobe
+    DA_DAC1_Data                <=   (OTHERS => '0');   -- DAC1-Data   Bit-15
+    DA_DAC1_Out                 <=   (OTHERS => '0');   -- DAC1-Output Bit-15
+
+    DA_DAC2_Str                 <=  '0';                -- DAC2-Strobe
+    DA_DAC2_Str_Out             <=  '0';                -- DAC2-Output-Strobe
+    DA_DAC2_Data                <=   (OTHERS => '0');   -- DAC2-Data   Bit-15
+    DA_DAC2_Out                 <=   (OTHERS => '0');   -- DAC2-Output Bit-15
+
+    DA_Trig1_i                  <= '0';
+    DA_Trig2_i                  <= '0';
+    DA_Trig1_Strobe_i           <= '0';
+    DA_Trig2_Strobe_i           <= '0';
+    DA_LED_Trig_Out1_i          <= '0';
+    DA_LED_Trig_Out2_i          <= '0';
+    DA_LED_Ext_Trig1_i          <= '0';
+    DA_LED_Ext_Trig2_i          <= '0';
+
+    
+    
+    
+    
+    
+    
+    
   
   
     --#################################################################################
@@ -1711,22 +2268,20 @@ BEGIN
   
     --  --- Output: Anwender-LED's ---
 
-    PIO(17) <= s_nLED_Sel;                    -- LED7 = sel Board 
-    PIO(19) <= s_nLED_Dtack;                  -- LED6 = Dtack 
-    PIO(21) <= s_nLED_inR;                    -- LED5 = interrupt
-    PIO(23) <= not Powerup_Done or clk_blink;  -- LED4 = Powerup 
-    PIO(25) <= s_nLED_User1_o;                -- LED3 = User 1
-    PIO(27) <= s_nLED_User2_o;                -- LED2 = User 2  
-    PIO(29) <= s_nLED_User3_o;                -- LED1 = User 3 
+    PIO(17) <= s_nLED_Sel;                          -- LED7 = sel Board 
+    PIO(19) <= s_nLED_Dtack;                        -- LED6 = Dtack 
+    PIO(21) <= s_nLED_inR;                          -- LED5 = interrupt
+    PIO(23) <= not Powerup_Done or clk_blink;       -- LED4 = Powerup 
+    PIO(25) <= s_nLED_User1_o;                      -- LED3 = User 1
+    PIO(27) <= s_nLED_User2_o;                      -- LED2 = User 2  
+    PIO(29) <= s_nLED_User3_o;                      -- LED1 = User 3 
     PIO(31) <= local_clk_is_running and clk_blink;  -- LED0 (User-4) = int. Clock 
+    
 
-    
-    A_TA     <= hp_la_o; ----- Output für HP-Logicanalysator
+    A_TA     <= hp_la_o; ----------------- Output für HP-Logic-Analysator
+    A_Tclk   <= signal_tap_clk_250mhz;  -- Clock  für HP-Logic-Analysator
 
-    AW_Sts1  <= x"123C";  -- "Dummy" Input-Port-AW_Sts1
-    AW_Sts2  <= x"123D";  -- "Dummy" Input-Port-AW_Sts2
-    
-    
+
     UIO(0)  <= not Interlock; -- Ist kein Interlock-Bit gesetzt ==> UIO(0) = 1 (low-aktiv)
     
   CASE s_AW_ID(7 downto 0) IS
@@ -1738,15 +2293,15 @@ BEGIN
     --####                  Anwender-IO: P37IO  -- FG900_700                        ###
     --#################################################################################
 
-      extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
-      extension_cid_group  <= 27; -- extension card: cid_group, "FG900700_P37IO1" = 27
+      extension_cid_system <= 55;     -- extension card: cid_system, CSCOHW=55
+      extension_cid_group  <= 27;     -- extension card: cid_group, "FG900700_P37IO1" = 27
+    
+      Max_AWOut_Reg_Nr     <= 2;      -- Maximale AWOut-Reg-Nummer der Anwendung
+      Max_AWIn_Reg_Nr      <= 1;      -- Maximale AWIn-Reg-Nummer der Anwendung
 
-      Max_AWOut_Reg_Nr     <= 2;  -- Maximale AWOut-Reg-Nummer der Anwendung
-      Max_AWIn_Reg_Nr      <= 1;  -- Maximale AWIn-Reg-Nummer der Anwendung
-
-    s_nLED_User1_i <= '0';        -- LED3 = User 1, -- frei -- 
-    s_nLED_User2_i <= '0';        -- LED3 = User 2, -- frei -- 
-    s_nLED_User3_i <= '0';        -- LED3 = User 3, -- frei -- 
+      s_nLED_User1_i       <= '0';    -- LED3 = User 1, -- frei -- 
+      s_nLED_User2_i       <= '0';    -- LED3 = User 2, -- frei -- 
+      s_nLED_User3_i       <= '0';    -- LED3 = User 3, -- frei -- 
 
     
     --############################# Start/Stop FF ######################################
@@ -1813,7 +2368,7 @@ BEGIN
 
 --    ------+-----------------------------------------------------------------------    --
 --     1    | ADC_mode;  1 = ADC-Daten aus dem Speicher, gespeichert mit EOC            --
---          |            0 = ADC-Daten die am Sub-D Stecker anstehen.                    --
+--          |            0 = ADC-Daten die am Sub-D Stecker anstehen.                   --
 --    ------+-----------------------------------------------------------------------    --
 --     0    | FG_mode;  1 = Funktiongenerator-Mode, DAC-Werte kommen von FG_Data und    --
 --          |               werden mit FG_Strobe uebernommen. Kein externer Trigger!    --
@@ -1827,7 +2382,7 @@ BEGIN
     Max_AWIn_Reg_Nr      <= 1;  -- Maximale AWIn-Reg-Nummer der Anwendung
 
     
-      s_nLED_User1_i <= AW_Config1(0);          -- LED3 = User 1, DAC-Data vom FG
+      s_nLED_User1_i <= AW_Config1(0);         -- LED3 = User 1, DAC-Data vom FG
       s_nLED_User2_i <= not P25IO_nADC_ECC_o;  -- LED2 = User 2, ECC zum ADC (Enable)  
       s_nLED_User3_i <= P25IO_EOC_deb_o;       -- LED1 = User 3, EOC vom ADC 
     
@@ -1851,14 +2406,14 @@ BEGIN
   
 --           FG_mode; DAC-Werte kommen von FG_Data und werden mit FG_Strobe uebernommen. Kein externer Trigger! 
 
-        P25IO_DAC_Strobe_Start_i  <=  fg_1_strobe;          -- fg_1_strobe (vom Funktionsgen)
+        P25IO_DAC_Strobe_Start_i  <=  FG_1_strobe;          -- FG_1_strobe (vom Funktionsgen)
         PIO(105)              <=  P25IO_nDAC_Strobe_o;    --  Der Strobe-Output ist "LO"-Aktiv
-            P25IO_DAC_Out(15 downto 0) <= fg_1_sw(31 downto 16);  
+            P25IO_DAC_Out(15 downto 0) <= FG_1_sw(31 downto 16);  
         Else
 --           Software-Mode, DAC-Werte, kommen vom SCU-Bus-Slave. Externe Triggerung mit pos. oder neg. Flanke, kann eingeschaltet werden. 
 
         P25IO_DAC_Strobe_Start_i  <=  AWOut_Reg1_wr;        -- AWOut_Reg1_wr (vom SCU-Bus-Slave)
-        PIO(105)              <=  P25IO_nDAC_Strobe_o;    --  Der Strobe-Output ist "LO"-Aktiv  
+        PIO(105)                  <=  P25IO_nDAC_Strobe_o;    --  Der Strobe-Output ist "LO"-Aktiv  
             P25IO_DAC_Out(15 downto 0) <= AWOut_Reg1(15 downto 0);
       END IF; 
 
@@ -2111,7 +2666,7 @@ BEGIN
     --################### Output-Daten von den AWOut_Registern oder dem FG ##################
 
     IF  (AW_Config1(9) = '1')  THEN
-            UIO_Data_FG_Out(23 downto 0) <= fg_1_sw(31 downto 8);       -- Daten vom FG 
+            UIO_Data_FG_Out(23 downto 0) <= FG_1_sw(31 downto 8);       -- Daten vom FG 
         Else
             UIO_Data_FG_Out(23 DOWNTO 20) <=  AWOut_Reg2( 7 DOWNTO  4); -- IO(23..20) = AWOut_Reg2( 7 ...4)
             UIO_Data_FG_Out(19 DOWNTO 16) <=  AWOut_Reg2( 3 DOWNTO  0); -- IO(19..16) = AWOut_Reg2( 3 ...0)
@@ -2207,8 +2762,206 @@ BEGIN
     --###################################################################################
     --####                  Anwender-IO: DA(DAC/ADC)  -- FG900_750                    ###
     --###################################################################################
+--
+--                                                                                
+--   ----+------------------------------------------------------------------------------------- 
+--    15 | Test_Mode;  0 = Normalbetrieb      
+--       |             1 = Testbetrieb :  AWOut_Reg3 = 1. DAC-Wert
+--       |                                AWOut_Reg4 = 2. DAC-Wert
+--       |                                AWOut_Reg5 = Verzögerungszeit in Taktperioden (8ns)                                                                       
+--   ----+------------------------------------------------------------------------------------- 
+--     8 | frei     
+--     | | frei 
+--     1 | frei     
+--   ----+------------------------------------------------------------------------------------ 
+--     0 | FG_mode;  1 = Funktiongenerator-Mode, DAC-Werte kommen von FG_Data und 
+--       |               werden mit FG_Strobe uebernommen. Kein externer Trigger! 
+--       |           0 = Software-Mode, DAC-Werte, kommen vom SCU-Bus-Slave.      
+--    ---+------------------------------------------------------------------------------------ 
+
+    extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
+    extension_cid_group  <= 32; -- extension card: cid_group, "FG900740_UIO1" = 31
+
+    Max_AWOut_Reg_Nr     <= 2;  -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr      <= 2;  -- Maximale AWIn-Reg-Nummer der Anwendung
+    
+
+    Max_AWOut_Reg_Nr     <= 3;  -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr      <= 1;  -- Maximale AWIn-Reg-Nummer der Anwendung
+
+    
+      s_nLED_User1_i <= AW_Config1(4);        -- LED3 = User 1, DAC-Data vom FG1
+      s_nLED_User2_i <= AW_Config2(4);        -- LED2 = User 2, DAC-Data vom FG2 
+      s_nLED_User3_i <= '0';                  -- LED1 = User 3, -- frei --
+
+      
+  -------------------------------- Testmode für DAC1 ---------------------------------------
+    
+    IF  (AW_Config1(15) = '1')  THEN   
+    
+      DA_DAC1_Str     <=  DAC_Test_Strobe;        -- Output Strobe
+      DA_DAC1_Data    <=  DAC_Test_Out;           -- Test-Bitmuster
+
+  --------------------------------- ext. Trigger für DAC1 ---------------------------------------
+
+      elsif  (AW_Config1(2) = '1')  THEN 
+
+        if   (AW_Config1(3) = '1')  THEN 
+              DA_Trig1_Strobe_i   <=     PIO(43);       -- Lemo: Input Ext-Trigger1 (neg.)
+        else
+              DA_Trig1_Strobe_i   <= not PIO(43);       -- Lemo: Input Ext-Trigger1 (pos.)
+        end if;
+
+      DA_LED_Ext_Trig1_i  <= DA_Trig1_Strobe_o;         -- LED:  Input Ext-Trigger1 
+      PIO(51)             <= DA_LED_Ext_Trig1_o;        -- LED:  Extrern_Trigger1
+      
+     
+      DA_DAC1_Data(15 downto 0)  <=  AWOut_Reg1;        -- Output Daten
+      DA_DAC1_Str            <=  DA_Trig1_Strobe_o;     -- FG_1_strobe (vom Funktionsgen)
+
+  --------------------------------- FG-Mode für DAC1 ---------------------------------------
+
+      elsif  (AW_Config1(4) = '1')  THEN 
+
+      DA_DAC1_Data(15 downto 0)  <=  FG_1_sw(31 downto 16);    -- FG1-Output
+      DA_DAC1_Str            <=  FG_1_strobe;                  -- FG_1_strobe (vom Funktionsgen)
+
+  ----------------------------- SCU-Bus-Daten für DAC1 -------------------------------------
+      else
+
+      DA_DAC1_Data    <=   AWOut_Reg1;                   -- Output Daten
+      DA_DAC1_Str <=  (AWOut_Reg1_wr or (Powerup_Res));  -- Output Strobe für SCU-Bus Daten und Einschalt-Reset
+    
+    END IF; 
+
+    
+    
+  -------------------------------- Testmode für DAC2 ---------------------------------------
+    
+    IF  (AW_Config2(15) = '1')  THEN   
+    
+      DA_DAC2_Str    <=  DAC_Test_Strobe;        -- Output Strobe
+      DA_DAC2_Data   <=  DAC_Test_Out;           -- Test-Bitmuster
+
+  --------------------------------- ext. Trigger für DAC2 ---------------------------------------
+
+      elsif  (AW_Config2(2) = '1')  THEN 
+
+        if   (AW_Config2(3) = '1')  THEN 
+              DA_Trig2_Strobe_i   <=     PIO(45);     -- Lemo: Input Ext-Trigger2 (neg.)
+        else
+              DA_Trig2_Strobe_i   <= not PIO(45);     -- Lemo: Input Ext-Trigger2 (pos.)
+        end if;
+
+      DA_LED_Ext_Trig2_i  <= DA_Trig2_Strobe_o;       -- LED:  Input Ext-Trigger1 
+      PIO(53)             <= DA_LED_Ext_Trig2_o;      -- LED:  Extrern_Trigger1
+      
+     
+      DA_DAC2_Data(15 downto 0)  <=  AWOut_Reg2;      -- Output Daten
+      DA_DAC2_Str            <=  DA_Trig2_Strobe_o;   -- FG_1_strobe (vom Funktionsgen)
+
+  --------------------------------- FG-Mode für DAC2 ---------------------------------------
+
+      elsif  (AW_Config2(4) = '1')  THEN 
+
+      DA_DAC2_Data(15 downto 0) <=  FG_2_sw(31 downto 16);    -- FG_2-Output
+      DA_DAC2_Str               <=  FG_2_strobe;              -- FG_2_Strobe (vom Funktionsgen)
+
+  ----------------------------- SCU-Bus-Daten für DAC2 -------------------------------------
+      else
+
+      DA_DAC2_Data    <=   AWOut_Reg2;                       -- Output Daten
+      DA_DAC2_Str <=  (AWOut_Reg2_wr or (Powerup_Res));  -- Output Strobe für SCU-Bus Daten und Einschalt-Reset
+   
+    END IF; 
+
+    
+    
+ --############################ Reset DAC1/DAC2 mit dem "Reset-Befehl ######################################
+ 
+ 
+    if  (AW_Config1(1) = '1') and (AW_Config1_wr = '1')  THEN
+
+       DA_DAC1_Out     <= (OTHERS => '0');  -- Zwischenspeicher
+       DA_DAC1_Str_Out <=  '1';             -- DAC1-Output-Strobe 
+     else
+       DA_DAC1_Out     <= DA_DAC1_Data;  -- Zwischenspeicher
+       DA_DAC1_Str_Out <= DA_DAC1_Str;   -- DAC1-Output-Strobe
+    end if;
+ 
+    if  (AW_Config2(1) = '1') and (AW_Config2_wr = '1')  THEN
+
+       DA_DAC2_Out     <= (OTHERS => '0');  -- Zwischenspeicher
+       DA_DAC2_Str_Out <=  '1';             -- DAC1-Output-Strobe 
+     else
+       DA_DAC2_Out     <= DA_DAC2_Data;  -- Zwischenspeicher
+       DA_DAC2_Str_Out <= DA_DAC2_Str;   -- DAC1-Output-Strobe
+    end if;
+ 
 
 
+ --################## DAC-Daten und Strobe zum DIOB-Output-Stecker ######################################
+ 
+ 
+      PIO(99)   <=  not DA_DAC1_STR_Out;  -- Output Strobe
+      PIO(133)  <=  not DA_DAC2_STR_Out;  -- Output Strobe
+    
+
+      PIO(97) <= not  DA_DAC1_Out(15); PIO(95)  <= DA_DAC1_Out(14); PIO(93)  <= DA_DAC1_Out(13); PIO(91)  <= DA_DAC1_Out(12);
+      PIO(89) <=      DA_DAC1_Out(11); PIO(87)  <= DA_DAC1_Out(10); PIO(85)  <= DA_DAC1_Out(9);  PIO(83)  <= DA_DAC1_Out(8); 
+      PIO(81) <=      DA_DAC1_Out(7);  PIO(79)  <= DA_DAC1_Out(6);  PIO(77)  <= DA_DAC1_Out(5);  PIO(75)  <= DA_DAC1_Out(4); 
+      PIO(73) <=      DA_DAC1_Out(3);  PIO(71)  <= DA_DAC1_Out(2);  PIO(69)  <= DA_DAC1_Out(1);  PIO(67)  <= DA_DAC1_Out(0); 
+    
+      PIO(131) <= not DA_DAC2_Out(15); PIO(129) <= DA_DAC2_Out(14); PIO(127) <= DA_DAC2_Out(13); PIO(125) <= DA_DAC2_Out(12);
+      PIO(123) <=     DA_DAC2_Out(11); PIO(121) <= DA_DAC2_Out(10); PIO(119) <= DA_DAC2_Out(9);  PIO(117) <= DA_DAC2_Out(8); 
+      PIO(115) <=     DA_DAC2_Out(7);  PIO(113) <= DA_DAC2_Out(6);  PIO(111) <= DA_DAC2_Out(5);  PIO(109) <= DA_DAC2_Out(4); 
+      PIO(107) <=     DA_DAC2_Out(3);  PIO(105) <= DA_DAC2_Out(2);  PIO(103) <= DA_DAC2_Out(1);  PIO(101) <= DA_DAC2_Out(0); 
+    
+
+
+  ------------------ DAC1_Out-Strobe --------------------
+
+
+    IF  (AW_Config1(5)   = '1')  THEN               -- DAC1_Out-Strobe Enable   
+      DA_Trig1_i            <=  DA_DAC1_Str_Out;   
+      PIO(55)               <=  DA_LED_Trig_Out1_o; -- LED: Trigger DAC1      
+
+      IF  (AW_Config1(6) = '1')  THEN               -- DAC1_Out-Strobe negativ Enable   
+        DA_LED_Trig_Out1_i  <=  DA_DAC1_Str_Out;
+        PIO(49)             <=  DA_Trig1_1us_o;     -- Lemo: Trigger_Out1 = neg.
+      Else
+        DA_LED_Trig_Out1_i  <=  DA_DAC1_Str_Out;
+        PIO(49)             <=  not DA_Trig1_1us_o; -- Lemo: Trigger_Out1 = pos.
+      end if;
+
+    Else
+      PIO(55)               <=  '1';  -- LED: Trigger DAC1  = Aus      
+      PIO(49)               <=  '0';  -- Lemo: Trigger_Out1 = Aus
+    end if;
+
+
+  ------------------ DAC2_Out-Strobe --------------------
+
+
+    IF  (AW_Config2(5)   = '1')  THEN               -- DAC2_Out-Strobe Enable   
+      DA_LED_Trig_Out2_i    <=  DA_DAC2_Str_Out;
+      PIO(57)               <=  DA_LED_Trig_Out2_o; -- LED: Trigger DAC2      
+
+      IF  (AW_Config2(6) = '1')  THEN               -- DAC2_Out-Strobe negativ Enable   
+        DA_Trig2_i          <=  DA_DAC2_Str_Out;   
+        PIO(47)             <=  DA_Trig2_1us_o;     -- Lemo: Trigger_Out2 = neg.
+      Else
+        DA_Trig2_i          <=  DA_DAC2_Str_Out;   
+        PIO(47)             <=  not DA_Trig2_1us_o; -- Lemo: Trigger_Out2 = pos.
+      end if;
+
+    Else
+      PIO(57)               <=  '1';  -- LED: Trigger DAC2  = Aus      
+      PIO(47)               <=  '0';  -- Lemo: Trigger_Out2 = Aus
+    end if;
+
+      
+    
 
   WHEN   c_AW_Frei =>
       
@@ -2263,8 +3016,8 @@ BEGIN
     SPSIO_in_Data_Deb_i(2)  <=  PIO(77); --  input "2"
     SPSIO_in_Data_Deb_i(1)  <=  PIO(79); --  input "1"
     SPSIO_in_Data_Deb_i(0)  <=  PIO(81); --  input "0"
-
-
+   
+    
     AWin1(15 downto 0)    <=    SPSIO_in_Data_Deb_o(15 downto 0);
     AWin2(15 downto 8)    <=    (OTHERS => '0');  -- InPUT = 0; 
     AWin2(7  downto 0)    <=    SPSIO_in_Data_Deb_o(23 downto 16);
