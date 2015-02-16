@@ -3,6 +3,14 @@
 #include <string.h>
 #include <unistd.h>
 
+#define SYS_CSCO    55
+#define SYS_PBRF    42
+
+#define GRP_ADDAC1  3
+#define GRP_ADDAC2  38
+#define GRP_DIOB    26
+#define GRP_FIB_DDS 1
+
 extern unsigned int* wb_fg_base;
 
 int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr) {
@@ -32,8 +40,10 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
   int i = 0, j = 0;
   
   while(bus->slaves[i].unique_id) {
-    if (bus->slaves[i].cid_sys == 55) { /* slave card from CSCO */
-      if (bus->slaves[i].cid_group == 3 || bus->slaves[i].cid_group == 38) {/* ADDAC1 or ADDAC2 */
+    if (bus->slaves[i].cid_sys == SYS_CSCO || bus->slaves[i].cid_sys == SYS_PBRF) {
+      if (bus->slaves[i].cid_group == GRP_ADDAC1 ||
+          bus->slaves[i].cid_group == GRP_ADDAC2 ||
+          bus->slaves[i].cid_group == GRP_DIOB) {
         /* two FGs */
         bus->slaves[i].devs[0].dev_number = 0x0;
         bus->slaves[i].devs[0].version = 0x1;
@@ -50,7 +60,7 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
           list->devs[j] = &(bus->slaves[i].devs[1]);j++;
         }
         
-      } else if (bus->slaves[i].cid_group == 26) { /* DIOB */
+      } else if (bus->slaves[i].cid_group == GRP_FIB_DDS) { /* FIB */
         /* one FG */
         bus->slaves[i].devs[0].dev_number = 0x0;
         bus->slaves[i].devs[0].version = 0x1;
