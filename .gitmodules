@@ -16,3 +16,6 @@
 [submodule "ip_cores/hdl-make"]
 	path = ip_cores/hdl-make
 	url = git://ohwr.org/misc/hdl-make.git
+[submodule "modules/wb_fec/gray_counter"]
+	path = modules/wb_fec/gray_counter
+	url = https://github.com/bradomyn/gray_counter.git

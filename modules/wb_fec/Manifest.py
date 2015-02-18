@@ -10,6 +10,7 @@ files = [
   "fec_encoder.vhd",
   "fec_decoder.vhd",
   "packet_gen.vhd",
-  "wb_slave_fec.vhd"
+  "wb_slave_fec.vhd",
+  "gray_counter"
   ]
 
