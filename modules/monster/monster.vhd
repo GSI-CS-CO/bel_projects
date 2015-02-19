@@ -56,6 +56,7 @@ use work.wb_nau8811_audio_driver_pkg.all;
 use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
+use work.fec_pkg.all;
 
 entity monster is
   generic(
@@ -89,7 +90,10 @@ entity monster is
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
     g_lm32_shared_ramsize  : natural;
-    g_lm32_are_ftm         : boolean);
+    g_lm32_are_ftm         : boolean;
+    g_fec_encoder          : boolean := true;
+    g_fec_decoder          : boolean := true
+    );
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -324,7 +328,7 @@ architecture rtl of monster is
   -- GSI Top Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
   
-  constant c_top_masters    : natural := 8;
+  constant c_top_masters    : natural := 9;
   constant c_topm_ebs       : natural := 0;
   constant c_topm_lm32      : natural := 1;
   constant c_topm_pcie      : natural := 2;
@@ -333,9 +337,10 @@ architecture rtl of monster is
   constant c_topm_fpq       : natural := 5;
   constant c_topm_fg        : natural := 6;
   constant c_topm_eca_wbm   : natural := 7;
+  constant c_topm_fec       : natural := 8;
   
   -- required slaves
-  constant c_top_slaves     : natural := 27;
+  constant c_top_slaves     : natural := 28;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -349,6 +354,7 @@ architecture rtl of monster is
   constant c_tops_eca_aq    : natural := 10;
   constant c_tops_iodir     : natural := 11;
   constant c_tops_eca_wbm   : natural := 26;
+  constant c_tops_fec_reg   : natural := 27;
 
   -- optional slaves:
   constant c_tops_lcd       : natural := 12;
@@ -406,7 +412,8 @@ architecture rtl of monster is
     c_tops_fg        => f_sdb_auto_device(c_wb_fg_sdb,                      g_en_fg),
     c_tops_fgirq     => f_sdb_auto_device(c_fg_irq_ctrl_sdb,                g_en_fg),
     c_tops_psram     => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
-    c_tops_eca_wbm   => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           true)
+    c_tops_eca_wbm   => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           true),
+    c_tops_fec_reg   => f_sdb_auto_device(c_fec_reg_sdb,                    true)
 );
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
@@ -492,7 +499,11 @@ architecture rtl of monster is
   signal eb_src_out    : t_wrf_source_out;
   signal eb_src_in     : t_wrf_source_in;
   signal eb_snk_out    : t_wrf_sink_out;
-  signal eb_snk_in     : t_wrf_sink_in;
+  signal eb_snk_in     : t_wrf_sink_in;  
+  signal wr_src_out    : t_wrf_source_out;
+  signal wr_src_in     : t_wrf_source_in;
+  signal wr_snk_out    : t_wrf_sink_out;
+  signal wr_snk_in     : t_wrf_sink_in;
   
   signal uart_usb : std_logic; -- from usb
   signal uart_mux : std_logic; -- either usb or external
@@ -1067,7 +1078,45 @@ begin
   
   wr_uart_o <= uart_wrc;
   uart_mux <= uart_usb and wr_uart_i;
-  
+
+  FEC : xwb_fec
+    generic map(
+      g_fec_encoder      => g_fec_encoder,
+      g_fec_decoder      => g_fec_decoder,
+      g_packet_gen       => true,
+      g_dpram_size       => 131072/4,
+      g_init_file        => "fec_dec.mif",
+      g_upper_bridge_sdb => c_top_bridge_sdb)
+    port map(
+      clk_i         => clk_sys,
+      rst_n_i       => rstn_sys,
+      rst_lm32_n_i  => s_lm32_rstn(0),
+
+      wr_snk_i    => wr_snk_in,            
+      wr_snk_o    => wr_snk_out,
+      wr_src_o    => wr_src_out,
+      wr_src_i    => wr_src_in,
+
+      eb_snk_i    => eb_snk_in,
+      eb_snk_o    => eb_snk_out,
+      eb_src_o    => eb_src_out,
+      eb_src_i    => eb_src_in,
+
+      wb_ctrl_stat_slave_o    => top_cbar_master_i(c_tops_fec_reg),
+      wb_ctrl_stat_slave_i    => top_cbar_master_o(c_tops_fec_reg),
+
+      wb_cross_master_o       => top_cbar_slave_i(c_topm_fec),
+      wb_cross_master_i       => top_cbar_slave_o(c_topm_fec),      
+      
+      time_code_i.time_valid  => tm_valid,
+      time_code_i.tai         => tm_tai,
+      time_code_i.cycles      => tm_cycles);
+
+
+  fec_dec_n: if (not g_fec_decoder) and (not g_fec_encoder) generate
+    top_cbar_slave_i(c_topm_fec) <= cc_dummy_master_out;
+  end generate;
+
   -- END OF Wishbone masters
   ----------------------------------------------------------------------------------
   
@@ -1135,10 +1184,10 @@ begin
       slave_o              => wrc_slave_o,
       aux_master_o         => wrc_master_o,
       aux_master_i         => wrc_master_i,
-      wrf_src_o            => eb_snk_in,
-      wrf_src_i            => eb_snk_out,
-      wrf_snk_o            => eb_src_in,
-      wrf_snk_i            => eb_src_out,
+      wrf_src_o            => wr_snk_in,
+      wrf_src_i            => wr_snk_out,
+      wrf_snk_o            => wr_src_in,
+      wrf_snk_i            => wr_src_out,
       tm_link_up_o         => open,
       tm_dac_value_o       => open,
       tm_dac_wr_o          => open,

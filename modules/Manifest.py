@@ -33,5 +33,6 @@ modules = {
     "ssd1325",
     "nau8811",
     "psram",
+    "wb_fec",
   ]
 }
