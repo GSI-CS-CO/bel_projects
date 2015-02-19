@@ -106,9 +106,9 @@ begin
   fec_decoder_y   : if g_fec_decoder generate
   fec_de       : fec_decoder
     generic map (
-      g_dpram_size  => 90112/4,
-      g_init_file   => "",
-      g_upper_bridge_sdb => g_upper_bridge_sdb)
+      g_dpram_size        => 90112/4,
+      g_init_file         => g_init_file,
+      g_upper_bridge_sdb  => g_upper_bridge_sdb)
     port map (
       clk_i             => clk_i,
       rst_n_i           => rst_n_i,

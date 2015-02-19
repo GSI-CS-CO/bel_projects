@@ -51,12 +51,12 @@ architecture rtl of fec_decoder is
   -----------------------------------------------------------------------------  
   constant c_layout_req : t_sdb_record_array(c_slave-1 downto 0) :=
      (c_lm32_dpram        => f_sdb_embed_device((f_xwb_dpram(g_dpram_size)),      x"00000000"),
-      c_frame_dpram       => f_sdb_embed_device((f_xwb_dpram(c_dpram_frame_size)),x"01000000"),
-      c_f2wb_lc           => f_sdb_embed_device(c_fec_fabric2wb_sdb,              x"02000000"),
-      c_wb2f              => f_sdb_embed_device(c_fec_wb2fabric_sdb,              x"08000000"),
-      c_upper_bridge      => f_sdb_embed_bridge(g_upper_bridge_sdb,               x"80000000"));
+   c_frame_dpram       => f_sdb_embed_device((f_xwb_dpram(c_dpram_frame_size)),   x"00100000"),
+   c_f2wb_lc           => f_sdb_embed_device(c_fec_fabric2wb_sdb,                 x"00200000"),
+   c_wb2f              => f_sdb_embed_device(c_fec_wb2fabric_sdb,                 x"00300000"),
+   c_upper_bridge      => f_sdb_embed_bridge(g_upper_bridge_sdb,                  x"80000000"));
  
-   constant c_sdb_address : t_wishbone_address := x"3FFFE000";
+   constant c_sdb_address : t_wishbone_address := x"000F0000";
 
    signal cbar_slave_i  : t_wishbone_slave_in_array  (c_master-1 downto 0);
    signal cbar_slave_o  : t_wishbone_slave_out_array (c_master-1 downto 0);
