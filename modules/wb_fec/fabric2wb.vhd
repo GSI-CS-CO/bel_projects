@@ -96,19 +96,13 @@ begin
         s_new_frame_d0    <= '0';
         s_cnt_overrun     <= (others => '0');
         s_cnt_words_ram   <= (others => '0');
-        --s_hot_slot        <= (others => '0');
         s_hot_slot        <= 0;
         s_cnt_frames_ts   <= (others => '0');
         s_write_slot      <= (others => '0'); 
         s_freed_slot      <= (others => '0'); 
       else
-        if dec_snk_i.adr = "00" then
-          s_new_frame_d0 <= dec_snk_i.stb;
-        else
-          s_new_frame_d0 <= '0';
-        end if;        
 
-        if s_new_frame_d0 = '1' and dec_snk_i.stb = '0' and dec_snk_i.adr = c_WRF_DATA then
+        if dec_snk_i.cyc = '1' and dec_snk_i.stb = '1' and dec_snk_i.adr = c_WRF_STATUS then
            v_new_frame := '1';
         else
            v_new_frame := '0';
