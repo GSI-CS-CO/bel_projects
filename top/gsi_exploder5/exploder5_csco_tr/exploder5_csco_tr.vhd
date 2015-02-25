@@ -30,15 +30,15 @@ entity exploder5_csco_tr is
     dac_sclk          : out   std_logic;
     dac_din           : out   std_logic;
     ndac_cs           : out   std_logic_vector(2 downto 1);
-	 
+  
     ------------------------------------------------------------------------
     -- Additional WREX/WR1 pins
     ------------------------------------------------------------------------
-	 wr1_nc1           : inout std_logic;
- 	 wr1_nc4           : inout std_logic;
-	 wr1_nc5           : inout std_logic;
-	 wr1_nc6           : inout std_logic;
-	 
+    wr1_nc1           : inout std_logic;
+    wr1_nc4           : inout std_logic;
+    wr1_nc5           : inout std_logic;
+    wr1_nc6           : inout std_logic;
+    
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
@@ -50,7 +50,7 @@ entity exploder5_csco_tr is
     uclk              : in    std_logic;
     ures              : out   std_logic;
     uclkin            : in    std_logic;
-      
+    
     -----------------------------------------------------------------------
     -- SRAM (with DDR hidden inside)
     -----------------------------------------------------------------------
@@ -65,19 +65,19 @@ entity exploder5_csco_tr is
     sram_be0          : out   std_logic := 'Z';
     sram_be1          : out   std_logic := 'Z';
     sram_wait         : in    std_logic; -- DDR magic
-	 
+    
     -----------------------------------------------------------------------
     -- SD-CARD
     -----------------------------------------------------------------------
     sd_dat0           : inout std_logic := 'Z';
-	 sd_dat1           : inout std_logic := 'Z';
-	 sd_dat2           : inout std_logic := 'Z';
-	 sd_dat3           : inout std_logic := 'Z';
-	 sd_cmd            : inout std_logic := 'Z';
-	 sd_clk            : inout std_logic := 'Z';
-	 sd_switch_a       : inout std_logic := 'Z';
-	 sd_switch_b       : inout std_logic := 'Z';
-	 
+    sd_dat1           : inout std_logic := 'Z';
+    sd_dat2           : inout std_logic := 'Z';
+    sd_dat3           : inout std_logic := 'Z';
+    sd_cmd            : inout std_logic := 'Z';
+    sd_clk            : inout std_logic := 'Z';
+    sd_switch_a       : inout std_logic := 'Z';
+    sd_switch_b       : inout std_logic := 'Z';
+    
     -----------------------------------------------------------------------
     -- misc base board IO: leds, cpld, 1wire
     -----------------------------------------------------------------------
@@ -86,7 +86,7 @@ entity exploder5_csco_tr is
     nres_o            : in    std_logic; -- unused ("con_io(6)")
     fpga_res_i        : in    std_logic; -- reset from CPLD
     rom_data_io       : inout std_logic;
-      
+    
     -----------------------------------------------------------------------
     -- SFP1  
     -----------------------------------------------------------------------
