@@ -1,13 +1,16 @@
 #!/bin/bash
 # Functional Test SCU3, created 2015-02-10 by Karlheinz Kaiser (k.kaiser@gsi.de)
 
+
+
+
+
 clear
 echo "-------------------Funktionstest Visatronic Fertigungslos SCU3--------------------"
 echo "--------------       Abbruch des Scripts mit CTRL-Z        -----------------------"
 echo "--Testaufbau vorzugsweise: Voller FG900.901 mit 12 Slaves und SCU mit MIL Option--"
 
-whotest[0]='test' || (echo 'Failure: arrays not supported in this version of
-bash.' && exit 2)
+whotest[0]='test' || (echo 'Failure: arrays not supported in this version of bash.' && exit 2)
 
 
 # In diesem Script verwendete Adressen
@@ -101,15 +104,71 @@ while eingabefehler=j
    fi
 done
 
+clear
+
+
+eingabefehler=j
+while eingabefehler=j 
+do
+  read -p "Geben Sie Seriennummer und Checksum des Carrierboards ein (z.B. 00236 für CID 55 0036 0023 6):" cidname
+  echo ""
+  echo -e "Der verwendete Name ist\e[7m" CID 55 0036 ${cidname:0:4}  ""${cidname:4:1} "\e[0m"
+
+  mynumber=550036$cidname
+  for ((i=0;i<=10;i++))
+  do
+    a[i+1]=`echo ${mynumber:i:1}`
+    #echo "a("$i")=" ${a[i]}
+  done
+  checksum_to_be_verified=`echo ${mynumber:10:1}`
+  ((checksum_calculated = (10- ( (( a[1]+a[3]+a[5]+a[7]+a[9]+3*(a[2]+a[4]+a[6]+a[8]+a[10]))) %10) ) %10))
+  echo "Errechnete  Checksumme " $checksum_calculated
+  echo "Eingegebene Checksumme " $checksum_to_be_verified
+
+
+  if  [ $checksum_calculated == $checksum_to_be_verified ]
+  then
+    echo "Checksumme ist o.k."
+    break
+  else
+    echo "Checksummenfehler" 
+    read -p  "Wollen Sie  dieses Board trotz falscher Checksum testen ( j / n ):" eingabefehler 
+    if [ "$eingabefehler" == "j" ] 
+    then
+      break
+    else
+      #echo -e "\e[7mSie können den Namen nun aendern\e[0m"
+      echo "Auf Wiedersehen"
+      sleep 2s
+      exit 1
+    fi
+  fi
+
+
+done
+
+
 
 
 # Loesche alte File Leichen mit dem gleichen SCU Rechnernamen
+
+echo ""
+
+file="scuxl$scuname.txt"
+
+#if [ -f "$file"] 
+# then 
+#  echo "File" $file "besteht bereits! Diese File löschen und Test abbrechen (j/n):"
+#else
+#  exit
+#fi
+[[ -f "$file" ]] && rm -f "$file"
+    
 file="1W_scuxl$scuname.txt"
 [[ -f "$file" ]] && rm -f "$file"
 
 
-file="scuxl$scuname.txt"
-[[ -f "$file" ]] && rm -f "$file"
+
 
 echo "----------------------------------------------------------------------------------">> ./scuxl$scuname.txt
 echo "Funktionaltest SCU : "                      >> ./scuxl$scuname.txt
@@ -495,6 +554,10 @@ lesewert1=$(eb-read  tcp/scuxl$scuname.acc  ${Onewire_Carrierboard_MSW_Adr}/4)
 lesewert2=$(eb-read  tcp/scuxl$scuname.acc  ${Onewire_Carrierboard_LSW_Adr}/4)
 echo    " 1Wire SCU Carrier Board U1=Temp ID:" $lesewert1$lesewert2
 echo -n scuxl$scuname";">> ./1W_scuxl$scuname.txt
+
+
+echo -n "CID Carrierboard;550036$cidname;">> ./1W_scuxl$scuname.txt
+
 echo -n "One-Wire-U1;"$lesewert1$lesewert2";" >> ./1W_scuxl$scuname.txt
 
 echo    "1Wire SCU Carrier Board  U1=Temp ID:" $lesewert1$lesewert2 >> ./scuxl$scuname.txt
@@ -607,7 +670,7 @@ echo "Verbinden Sie LEMO B1 mit einem Oszilloskop"
 echo ""
 echo "Erwartete Reaktion: Rechtecksignal an B1,  rote B1Out aktiv, grüne B1act Led blinkt"
 echo ""
-read -p "Drücken Sie die Returntaste zum Weitertesten " proceed
+read -p "Drücken Sie die Returntaste zum Start des LEMO Tests " proceed
 
 echo ""
 

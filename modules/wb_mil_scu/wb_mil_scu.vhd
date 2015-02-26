@@ -52,8 +52,8 @@ ENTITY wb_mil_scu IS
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
 --|   05    | W.Panschow  | 22.04.2014  | a) evyer_10ms_intr_o changed to every_ms_intr_o.                                          |
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
---|                                                                                                                                 |
---+---------------------------------------------------------------------------------------------------------------------------------+
+--|   06    | K.Kaiser    | 25.02.2015  | a) generic map: Berechnung fuer every_ms, every_us  korrigiert                            |
+--| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
 
 generic (
     Clk_in_Hz:  INTEGER := 125_000_000    -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
@@ -247,7 +247,7 @@ ena_led_cnt: div_n
 
 every_1ms_inst: div_n
   generic map (
-    n         => clk_in_hz / 1000 * 1000, -- Vorgabe der Taktuntersetzung. 1ms = 0.001 = 1/1000 * ena_every_us (1000)
+    n         => 1000, -- kk              -- Vorgabe der Taktuntersetzung. 1ms = 0.001 = 1/1000 * ena_every_us (1000)
     diag_on   => 0                        -- diag_on = 1 die Breite des Untersetzungzaehlers
                                           -- mit assert .. note ausgegeben.
     )
@@ -262,6 +262,8 @@ every_1ms_inst: div_n
     );
 
 every_ms_intr_o <= every_ms;
+
+
 
 
 led_rcv: led_n
@@ -852,7 +854,7 @@ p_regs_acc: process (clk_i, nrst_i)
 
 p_every_us: div_n
   generic map (
-    n         => 1_000,           -- alle us einen Takt aktiv (ena_every_us * 1000 = 1ms)
+    n         => integer(clk_in_hz/1_000_000), -- KK alle us einen Takt aktiv (ena_every_us * 1000 = 1ms)
     diag_on   => 0                -- diag_on = 1 die Breite des Untersetzungzaehlers
                                   -- mit assert .. note ausgegeben.
     )
@@ -866,6 +868,8 @@ p_every_us: div_n
     div_o     => ena_every_us     -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
     );
 
+
+	 
 
 p_ev_timer: process (clk_i, nRst_i)
   begin
