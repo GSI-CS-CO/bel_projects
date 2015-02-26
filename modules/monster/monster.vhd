@@ -1102,8 +1102,11 @@ begin
     top_cbar_slave_i (c_topm_pmc) <= cc_dummy_master_out;
     irq_cbar_master_i(c_irqs_pmc) <= cc_dummy_slave_out;
   end generate;
-  pmc_y : if g_en_pmc generate
+ pmc_y : if g_en_pmc generate
     pmc : wb_pmc_host_bridge
+    generic map(
+      g_family      => "Arria V",
+      g_sdb_addr    => c_top_sdb_address) 
     port map(
       clk_sys_i     => clk_sys,
       rst_n_i       => rstn_sys,
@@ -1126,12 +1129,7 @@ begin
       idsel_i       => pmc_idsel_i,
       perr_io       => pmc_perr_io,
       serr_io       => pmc_serr_io,
-      req_o         => pmc_req_o,
-      gnt_i         => pmc_gnt_i,
-      inta_o        => pmc_inta_o,
-      intb_o        => pmc_intb_o,
-      intc_o        => pmc_intc_o,
-      intd_o        => pmc_intd_o);
+      inta_o        => pmc_inta_o);
   end generate;
   
   -- END OF Wishbone masters
