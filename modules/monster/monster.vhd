@@ -294,12 +294,7 @@ entity monster is
     pmc_idsel_i            : in    std_logic;
     pmc_perr_io            : inout std_logic;
     pmc_serr_io            : inout std_logic;
-    pmc_req_o              : out   std_logic := 'Z';
-    pmc_gnt_i              : in    std_logic;
     pmc_inta_o             : out   std_logic := 'Z';
-    pmc_intb_o             : out   std_logic := 'Z';
-    pmc_intc_o             : out   std_logic := 'Z';
-    pmc_intd_o             : out   std_logic := 'Z';
     -- g_en_pmc_ctrl
     pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0);
     pmc_clk_en_o           : out   std_logic := 'Z';
