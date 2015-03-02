@@ -19,7 +19,7 @@ entity pci_pmc is
     -----------------------------------------
     -- PMC/PCI2.2 pins
     -----------------------------------------
-    --pmc_clk_i         : in    std_logic;                     -- P => U18 -- N => U19
+    pmc_clk_i         : in    std_logic;                     -- P => B15 -- N => C15
     pmc_rst_i         : in    std_logic;                     -- H19
     pmc_buf_oe_o      : out   std_logic;                     -- A23
     pmc_busmode_io    : inout std_logic_vector(4 downto 1);  -- 04 => B19  -- 03 => C19  -- 02 => D19  -- 01 => A20
@@ -30,7 +30,7 @@ entity pci_pmc is
                                                              -- 27 => AB16 -- 19 => AC14 -- 11 => AC17 -- 03 => Y14
                                                              -- 26 => AC16 -- 18 => AD14 -- 10 => AD17 -- 02 => AA14
                                                              -- 25 => V16  -- 17 => AF14 -- 09 => AD16 -- 01 => AA16
-                                                             -- 24 => W16  -- 16 => AF13 -- 08 => AE16 -- 00 => Y16
+                                                             -- 24 => W16  -- 16 => AF13 -- 08 => AE16 -- 00 => AD19
     pmc_c_be_io       : inout std_logic_vector(3 downto 0);  -- 03 => C20  -- 02 => D20  -- 01 => B21  -- 00 => C21
     pmc_par_io        : inout std_logic;                     -- B22
     pmc_frame_io      : inout std_logic;                     -- P19
@@ -41,12 +41,7 @@ entity pci_pmc is
     pmc_idsel_i       : in    std_logic;                     -- H21
     pmc_perr_io       : inout std_logic;                     -- J19
     pmc_serr_io       : inout std_logic;                     -- E21
-    --pmc_req_o         : out   std_logic;                     -- ???
-    --pmc_gnt_i         : in    std_logic;                     -- ???
     pmc_inta_o        : out   std_logic;                     -- D21
-    --pmc_intb_o        : out   std_logic;                     -- ???
-    --pmc_intc_o        : out   std_logic;                     -- ???
-    --pmc_intd_o        : out   std_logic;                     -- ???
     
     ------------------------------------------------------------------------
     -- WR DAC signals
@@ -73,8 +68,8 @@ entity pci_pmc is
     -----------------------------------------------------------------------
     -- reset
     -----------------------------------------------------------------------
-    fpga_res          : in    std_logic; -- V7
-    nres              : in    std_logic; -- Y8
+    fpga_res          : in    std_logic; -- Y1
+    nres              : in    std_logic; -- AC7
     
     -----------------------------------------------------------------------
      -- logic analyzer
@@ -274,7 +269,7 @@ begin
       usb_slwrn_o            => slwr,
       usb_pktendn_o          => pa(6),
       usb_fd_io              => fd,
-      pmc_pci_clk_i          => open,
+      pmc_pci_clk_i          => pmc_clk_i,
       pmc_pci_rst_i          => pmc_rst_i,
       pmc_buf_oe_o           => pmc_buf_oe_o,
       pmc_busmode_io         => pmc_busmode_io,
@@ -289,12 +284,7 @@ begin
       pmc_idsel_i            => pmc_idsel_i,
       pmc_perr_io            => pmc_perr_io,
       pmc_serr_io            => pmc_serr_io,
-      pmc_req_o              => open,
-      pmc_gnt_i              => open,
       pmc_inta_o             => pmc_inta_o,
-      pmc_intb_o             => open,
-      pmc_intc_o             => open,
-      pmc_intd_o             => open,
       pmc_ctrl_hs_i          => hswf,
       pmc_clk_en_o           => lvttl_in_clk_en_o,
       lcd_scp_o              => dis_di(3),
