@@ -135,7 +135,7 @@ begin
                   -- WISHBONE READ ACTIONS
                   case v_adr is
                      when c_slave_HEX_SWITCH_GET      => r_slave_out_dat0(3 downto 0)  <= s_slave.HEX_SWITCH;     -- Shows hex switch inputs
-                     when c_slave_PUSH_BUTTON_GET     => r_slave_out_dat0(0 downto 0)  <= s_slave.PUSH_BUTTON;    -- Shows status of the push buttion
+                     when c_slave_PUSH_BUTTON_GET     => r_slave_out_dat0(0 downto 0)  <= s_slave.PUSH_BUTTON;    -- Shows status of the push button
                      when c_slave_CLOCK_CONTROL_RW    => r_slave_out_dat0(0 downto 0)  <= r_slave.CLOCK_CONTROL;  -- Control external clock enable
                      when others => r_slave_out_ack0 <= '0'; r_slave_out_err0 <= '1';
                   end case;

@@ -11,7 +11,7 @@
      <sdb vendorID="GSI" productID="0x98C59EC1" version="1" date="auto" name="PMC_CONTROL_UNIT"></sdb>
      <registers>
        <reg name="HEX_SWITCH"    read="yes" write="no"  mask="0xf" comment="Shows hex switch inputs"></reg>
-       <reg name="PUSH_BUTTON"   read="yes" write="no"  mask="0x1" comment="Shows status of the push buttion"></reg>
+       <reg name="PUSH_BUTTON"   read="yes" write="no"  mask="0x1" comment="Shows status of the push button"></reg>
        <reg name="CLOCK_CONTROL" read="yes" write="yes" mask="0x1" comment="Control external clock enable"></reg>
      </registers>
   </slaveinterface>

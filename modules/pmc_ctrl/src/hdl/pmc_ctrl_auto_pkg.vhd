@@ -42,7 +42,7 @@ package pmc_ctrl_auto_pkg is
 
    --| WBS Adr ------------------------------ slave --------------------------------------------|
       constant c_slave_HEX_SWITCH_GET     : natural   := 16#0#;   -- r  0x0000000f, Shows hex switch inputs
-      constant c_slave_PUSH_BUTTON_GET    : natural   := 16#4#;   -- r  0x00000001, Shows status of the push buttion
+      constant c_slave_PUSH_BUTTON_GET    : natural   := 16#4#;   -- r  0x00000001, Shows status of the push button
       constant c_slave_CLOCK_CONTROL_RW   : natural   := 16#8#;   -- rw 0x00000001, Control external clock enable
 
    --+******************************************************************************************+
@@ -63,14 +63,14 @@ package pmc_ctrl_auto_pkg is
       STALL          : std_logic;                        -- Stall control for outside entity
       ERR            : std_logic;                        -- Error control for outside entity
       HEX_SWITCH     : std_logic_vector(4-1 downto 0);   -- Shows hex switch inputs
-      PUSH_BUTTON    : std_logic_vector(1-1 downto 0);   -- Shows status of the push buttion
+      PUSH_BUTTON    : std_logic_vector(1-1 downto 0);   -- Shows status of the push button
    end record t_slave_regs_i;
 
    type t_slave_regs_clk_sys_i is record
       STALL          : std_logic;                        -- Stall control for outside entity
       ERR            : std_logic;                        -- Error control for outside entity
       HEX_SWITCH     : std_logic_vector(4-1 downto 0);   -- Shows hex switch inputs
-      PUSH_BUTTON    : std_logic_vector(1-1 downto 0);   -- Shows status of the push buttion
+      PUSH_BUTTON    : std_logic_vector(1-1 downto 0);   -- Shows status of the push button
    end record t_slave_regs_clk_sys_i;
 
    --| Component ----------------------- pmc_ctrl_auto -----------------------------------------|
