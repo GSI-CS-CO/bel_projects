@@ -33,7 +33,6 @@
 | 31-1   |        0x0 |  R  | Reserved                                                          | 
 | 3-0    |        0x0 | R/W | Control external clock enable                                     | 
 
-
 ## Code Generation
 
 The wishbone slave code was generated with wbgenplus. 
