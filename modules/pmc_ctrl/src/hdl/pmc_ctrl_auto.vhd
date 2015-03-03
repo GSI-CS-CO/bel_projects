@@ -1,7 +1,7 @@
 --! @file        pmc_ctrl_auto.vhd
 --  DesignUnit   pmc_ctrl_auto
 --! @author      A. Hahn <a.hahn@gsi.de>
---! @date        30/01/2015
+--! @date        03/03/2015
 --! @version     0.0.1
 --! @copyright   2015 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -38,14 +38,13 @@ use work.pmc_ctrl_auto_pkg.all;
 
 entity pmc_ctrl_auto is
 Port(
-   clk_sys_i      : in  std_logic;
-   rst_n_i        : in  std_logic;
+   clk_sys_i            : in  std_logic;
+   rst_n_i              : in  std_logic;
 
-   slave_regs_i   : in  t_slave_regs_i;
-   slave_regs_o   : out t_slave_regs_o;
-   
-   slave_i        : in  t_wishbone_slave_in  := ('0', '0', x"00000000", x"F", '0', x"00000000");
-   slave_o        : out t_wishbone_slave_out
+   slave_regs_clk_sys_o : out t_slave_regs_clk_sys_o;
+   slave_regs_clk_sys_i : in  t_slave_regs_clk_sys_i;
+   slave_i              : in  t_wishbone_slave_in;
+   slave_o              : out t_wishbone_slave_out
    
 );
 end pmc_ctrl_auto;
@@ -72,6 +71,17 @@ architecture rtl of pmc_ctrl_auto is
 begin
 
    --+******************************************************************************************+
+   --| Sync Signal Assignments ------ slave ----------------------------------------------------|
+   --+******************************************************************************************+
+   -- slave sys domain out
+   slave_regs_clk_sys_o.CLOCK_CONTROL  <= r_slave.CLOCK_CONTROL;
+   -- slave sys domain in
+   s_slave.STALL                       <= slave_regs_clk_sys_i.STALL;
+   s_slave.ERR                         <= slave_regs_clk_sys_i.ERR;
+   s_slave.HEX_SWITCH                  <= slave_regs_clk_sys_i.HEX_SWITCH;
+   s_slave.PUSH_BUTTON                 <= slave_regs_clk_sys_i.PUSH_BUTTON;
+   
+   --+******************************************************************************************+
    --| WBS FSM ------------------------------ slave --------------------------------------------|
    --+******************************************************************************************+
    slave : process(clk_sys_i)
@@ -93,12 +103,13 @@ begin
             r_slave_out_ack1        <= '0';
             r_slave_out_err1        <= '0';
             r_slave_out_dat1        <= (others => '0');
+            
          else
             -- short names
             v_dat_i           := slave_i.dat;
             v_adr             := to_integer(unsigned(slave_i.adr(2 downto 2)) & "00");
             v_sel             := slave_i.sel;
-            v_en              := slave_i.cyc and slave_i.stb and not (r_slave_out_stall or slave_regs_i.STALL);
+            v_en              := slave_i.cyc and slave_i.stb and not (r_slave_out_stall or slave_regs_clk_sys_i.STALL);
             v_we              := slave_i.we;
 
             --interface outputs
@@ -117,13 +128,15 @@ begin
                if(v_we = '1') then
                   -- WISHBONE WRITE ACTIONS
                   case v_adr is
-                     when c_slave_CLOCK_CONTROL_OWR   => r_slave.CLOCK_CONTROL   <= f_wb_wr(r_slave.CLOCK_CONTROL,   v_dat_i, v_sel, "owr"); -- Control external clock enable
+                     when c_slave_CLOCK_CONTROL_RW    => r_slave.CLOCK_CONTROL   <= f_wb_wr(r_slave.CLOCK_CONTROL,   v_dat_i, v_sel, "owr"); -- Control external clock enable
                      when others => r_slave_out_ack0 <= '0'; r_slave_out_err0 <= '1';
                   end case;
                else
                   -- WISHBONE READ ACTIONS
                   case v_adr is
-                     when c_slave_HEX_SWITCH_GET   => r_slave_out_dat0(3 downto 0)  <= s_slave.HEX_SWITCH;  -- Shows hex switch inputs
+                     when c_slave_HEX_SWITCH_GET      => r_slave_out_dat0(3 downto 0)  <= s_slave.HEX_SWITCH;     -- Shows hex switch inputs
+                     when c_slave_PUSH_BUTTON_GET     => r_slave_out_dat0(0 downto 0)  <= s_slave.PUSH_BUTTON;    -- Shows status of the push buttion
+                     when c_slave_CLOCK_CONTROL_RW    => r_slave_out_dat0(0 downto 0)  <= r_slave.CLOCK_CONTROL;  -- Control external clock enable
                      when others => r_slave_out_ack0 <= '0'; r_slave_out_err0 <= '1';
                   end case;
                end if; -- v_we
@@ -132,12 +145,11 @@ begin
       end if; -- clk edge
    end process;
 
-   slave_regs_o   <= r_slave;
-   s_slave        <= slave_regs_i;
-   slave_o.stall  <= r_slave_out_stall or slave_regs_i.STALL;
+   slave_o.stall  <= r_slave_out_stall or slave_regs_clk_sys_i.STALL;
    slave_o.dat    <= r_slave_out_dat1;
-   slave_o.ack    <= r_slave_out_ack1 and not slave_regs_i.ERR;
-   slave_o.err    <= r_slave_out_err1 or      slave_regs_i.ERR;
-
-
+   slave_o.ack    <= r_slave_out_ack1 and not slave_regs_clk_sys_i.ERR;
+   slave_o.err    <= r_slave_out_err1 or      slave_regs_clk_sys_i.ERR;
+   slave_o.rty    <= '0';
+   slave_o.int    <= '0';
+   
 end rtl;

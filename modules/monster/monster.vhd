@@ -58,7 +58,6 @@ use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
 use work.wb_pmc_host_bridge_pkg.all;
 use work.pmc_ctrl_pkg.all;
-use work.pmc_ctrl_auto_pkg.all;
 
 entity monster is
   generic(
@@ -296,6 +295,7 @@ entity monster is
     pmc_serr_io            : inout std_logic;
     pmc_inta_o             : out   std_logic := 'Z';
     -- g_en_pmc_ctrl
+    pmc_pb_i               : in    std_logic;
     pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0);
     pmc_clk_en_o           : out   std_logic := 'Z';
     -- g_en_user_ow
@@ -1841,12 +1841,13 @@ begin
   pmc_ctrl_y : if g_en_pmc_ctrl generate
     pmc_ctrl_unit : pmc_ctrl
       port map (
-        clk_sys_i      => clk_sys,
-        rst_n_i        => rstn_sys,
-        slave_i        => top_cbar_master_o(c_tops_pmc_ctrl),
-        slave_o        => top_cbar_master_i(c_tops_pmc_ctrl),
-        clock_enable_o => pmc_clk_en_o,
-        hex_switch_i   => pmc_ctrl_hs_i
+        clk_sys_i        => clk_sys,
+        rst_n_i          => rstn_sys,
+        slave_i          => top_cbar_master_o(c_tops_pmc_ctrl),
+        slave_o          => top_cbar_master_i(c_tops_pmc_ctrl),
+        clock_enable_o   => pmc_clk_en_o,
+        hex_switch_i     => pmc_ctrl_hs_i,
+        push_button_i(0) => pmc_pb_i
       );
   end generate;  
   

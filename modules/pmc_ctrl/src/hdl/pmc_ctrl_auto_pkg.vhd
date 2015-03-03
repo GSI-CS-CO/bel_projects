@@ -1,7 +1,7 @@
 --! @file        pmc_ctrl_auto_pkg.vhd
 --  DesignUnit   pmc_ctrl_auto
 --! @author      A. Hahn <a.hahn@gsi.de>
---! @date        30/01/2015
+--! @date        03/03/2015
 --! @version     0.0.1
 --! @copyright   2015 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -42,7 +42,8 @@ package pmc_ctrl_auto_pkg is
 
    --| WBS Adr ------------------------------ slave --------------------------------------------|
       constant c_slave_HEX_SWITCH_GET     : natural   := 16#0#;   -- r  0x0000000f, Shows hex switch inputs
-      constant c_slave_CLOCK_CONTROL_OWR  : natural   := 16#4#;   -- rw 0x00000001, Control external clock enable
+      constant c_slave_PUSH_BUTTON_GET    : natural   := 16#4#;   -- r  0x00000001, Shows status of the push buttion
+      constant c_slave_CLOCK_CONTROL_RW   : natural   := 16#8#;   -- rw 0x00000001, Control external clock enable
 
    --+******************************************************************************************+
    --|  ------------------------- WB Slaves - Control Register Records -------------------------|
@@ -54,24 +55,34 @@ package pmc_ctrl_auto_pkg is
       CLOCK_CONTROL  : std_logic_vector(1-1 downto 0);   -- Control external clock enable
    end record t_slave_regs_o;
 
-   
+   type t_slave_regs_clk_sys_o is record
+      CLOCK_CONTROL  : std_logic_vector(1-1 downto 0);   -- Control external clock enable
+   end record t_slave_regs_clk_sys_o;
+
    type t_slave_regs_i is record
       STALL          : std_logic;                        -- Stall control for outside entity
       ERR            : std_logic;                        -- Error control for outside entity
       HEX_SWITCH     : std_logic_vector(4-1 downto 0);   -- Shows hex switch inputs
+      PUSH_BUTTON    : std_logic_vector(1-1 downto 0);   -- Shows status of the push buttion
    end record t_slave_regs_i;
+
+   type t_slave_regs_clk_sys_i is record
+      STALL          : std_logic;                        -- Stall control for outside entity
+      ERR            : std_logic;                        -- Error control for outside entity
+      HEX_SWITCH     : std_logic_vector(4-1 downto 0);   -- Shows hex switch inputs
+      PUSH_BUTTON    : std_logic_vector(1-1 downto 0);   -- Shows status of the push buttion
+   end record t_slave_regs_clk_sys_i;
 
    --| Component ----------------------- pmc_ctrl_auto -----------------------------------------|
    component pmc_ctrl_auto is
    Port(
-      clk_sys_i      : in  std_logic;
-      rst_n_i        : in  std_logic;
+      clk_sys_i            : in  std_logic;
+      rst_n_i              : in  std_logic;
 
-      slave_regs_i   : in  t_slave_regs_i;
-      slave_regs_o   : out t_slave_regs_o;
-      
-      slave_i        : in  t_wishbone_slave_in  := ('0', '0', x"00000000", x"F", '0', x"00000000");
-      slave_o        : out t_wishbone_slave_out
+      slave_regs_clk_sys_o : out t_slave_regs_clk_sys_o;
+      slave_regs_clk_sys_i : in  t_slave_regs_clk_sys_i;
+      slave_i              : in  t_wishbone_slave_in;
+      slave_o              : out t_wishbone_slave_out
       
    );
    end component;
@@ -84,12 +95,12 @@ package pmc_ctrl_auto_pkg is
    wbd_width     => x"7", -- 8/16/32-bit port granularity
    sdb_component => (
    addr_first    => x"0000000000000000",
-   addr_last     => x"0000000000000007",
+   addr_last     => x"000000000000000f",
    product => (
    vendor_id     => x"0000000000000651",
    device_id     => x"98c59ec1",
    version       => x"00000001",
-   date          => x"20150130",
+   date          => x"20150303",
    name          => "PMC_CONTROL_UNIT   ")));
    
 end pmc_ctrl_auto_pkg;

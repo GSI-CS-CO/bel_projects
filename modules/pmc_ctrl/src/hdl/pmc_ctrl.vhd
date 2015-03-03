@@ -1,13 +1,13 @@
 --! @file        pmc_ctrl.vhd
 --  DesignUnit   pmc_ctrl
 --! @author      A. Hahn <a.hahn@gsi.de>
---! @date        30/01/2015
+--! @date        03/03/2015
 --! @version     0.0.1
 --! @copyright   2015 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
 
---! @brief       Used to control the clock enable signal (external clock) and
---!              to get the hex switch state.
+--TODO: This is a stub, finish/update it yourself
+--! @brief *** ADD BRIEF DESCRIPTION HERE ***
 --!
 --------------------------------------------------------------------------------
 --! This library is free software; you can redistribute it and/or
@@ -28,37 +28,41 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.wishbone_pkg.all;
-use work.pmc_ctrl_pkg.all;
 use work.pmc_ctrl_auto_pkg.all;
 
 entity pmc_ctrl is
 Port(
   clk_sys_i      : in  std_logic;
   rst_n_i        : in  std_logic;
-  slave_i        : in  t_wishbone_slave_in  := ('0', '0', x"00000000", x"F", '0', x"00000000");
+
+  slave_i        : in  t_wishbone_slave_in;
   slave_o        : out t_wishbone_slave_out;
+
   clock_enable_o : out std_logic;
-  hex_switch_i   : in  std_logic_vector(3 downto 0)
+  hex_switch_i   : in std_logic_vector(3 downto 0);
+  push_button_i  : in std_logic_vector(0 downto 0)
 );
 end pmc_ctrl;
 
 architecture rtl of pmc_ctrl is
-  
-  signal s_slave_i        : t_wishbone_slave_in   := ('0', '0', x"00000000", x"F", '0', x"00000000");
-  signal s_slave_o        : t_wishbone_slave_out;
-  signal s_slave_regs_o   : t_slave_regs_o;
-  signal s_slave_regs_i   : t_slave_regs_i;
-  
+
+  signal s_slave_regs_clk_sys_o : t_slave_regs_clk_sys_o;
+  signal s_slave_regs_clk_sys_i : t_slave_regs_clk_sys_i;
+  signal s_slave_i              : t_wishbone_slave_in;
+  signal s_slave_o              : t_wishbone_slave_out;
+
+
 begin
 
-  INST_pmc_ctrl : pmc_ctrl_auto
+  INST_pmc_ctrl_auto : pmc_ctrl_auto
   port map (
-    clk_sys_i      => clk_sys_i,
-    rst_n_i        => rst_n_i,
-    slave_regs_o   => s_slave_regs_o,
-    slave_regs_i   => s_slave_regs_i,
-    slave_i        => s_slave_i,
-    slave_o        => s_slave_o
+    clk_sys_i            => clk_sys_i,
+    rst_n_i              => rst_n_i,
+
+    slave_regs_clk_sys_o => s_slave_regs_clk_sys_o,
+    slave_regs_clk_sys_i => s_slave_regs_clk_sys_i,
+    slave_i              => s_slave_i,
+    slave_o              => s_slave_o
   );
   
   -- wishbone
@@ -66,9 +70,17 @@ begin
   s_slave_i <= slave_i;
   
   -- hex switch
-  s_slave_regs_i.HEX_SWITCH <= hex_switch_i;
+  s_slave_regs_clk_sys_i.HEX_SWITCH <= hex_switch_i;
+  
+  -- push button
+  s_slave_regs_clk_sys_i.PUSH_BUTTON <= push_button_i;
+  
+  -- misc. signals
+  s_slave_regs_clk_sys_i.STALL <= '0';
+  s_slave_regs_clk_sys_i.ERR   <= '0';
   
   -- clock enable
-  clock_enable_o <= not(s_slave_regs_o.CLOCK_CONTROL(0));
+  clock_enable_o <= not(s_slave_regs_clk_sys_o.CLOCK_CONTROL(0));
   
+
 end rtl;
