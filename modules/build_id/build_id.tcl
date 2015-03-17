@@ -9,14 +9,14 @@ set build_date [ clock format [ clock seconds ] -format "%a %b %d %H:%M:%S %Z %Y
 set user [open "| git config user.name" "r"]
 gets $user username
 if { [catch {close $user}] } {
-  post_message -type error "Git user name not set -- please run: git config user.name \"your name here\""
+  post_message -type error "Git user name not set -- please run: git config --global user.name \"your name here\""
   exit 1
 }
 
 set user [open "| git config user.email" "r"]
 gets $user email
 if { [catch {close $user}] } {
-  post_message -type error "Git user email not set -- please run: git config user.email \"your email here\""
+  post_message -type error "Git user email not set -- please run: git config --global user.email \"your email here\""
   exit 1
 }
 
