@@ -1,4 +1,4 @@
---TITLE "'config_status' Autor: R.Hartmann, Stand: 15.01.2015, Vers: V02 ";
+--TITLE "'config_status' Autor: R.Hartmann, Stand: 19.03.2015";
 --
 
 library IEEE;
@@ -32,10 +32,11 @@ ENTITY config_status IS
     AW_Config1:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut3
     AW_Config2:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut4
 
-    Diob_Config1_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut1
-    Diob_Config2_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut2
-    AW_Config1_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut3
-    AW_Config2_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut4
+    Diob_Config1_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. Diob_Config1
+    Diob_Config2_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. Diob_Config2
+    AW_Config1_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AW_Config1  
+    AW_Config2_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AW_Config2  
+    clr_Tag_Maske:        out  std_logic;                        -- clear alle Tag-Masken
 
     Rd_active:            out  std_logic;                        -- read data available at 'Data_to_SCUB'-AWOut
     Data_to_SCUB:         out  std_logic_vector(15 downto 0);    -- connect read sources to SCUB-Macro
@@ -88,7 +89,9 @@ signal    S_AW_Config2_Rd:     std_logic;
 signal    S_AW_Config2_Wr:     std_logic;
 
 signal    S_Diob_Status1_Rd:   std_logic;
+signal    S_Diob_Status1_Wr:   std_logic;
 signal    S_Diob_Status2_Rd:   std_logic;
+signal    S_Diob_Status2_Wr:   std_logic;
 signal    S_AW_Status1_Rd:     std_logic;
 signal    S_AW_Status2_Rd:     std_logic;
 
@@ -98,6 +101,7 @@ signal    DIOB_Sts1_rd_Strobe_o:  std_logic;        -- Output
 signal    DIOB_Sts1_rd_shift:     std_logic_vector(2  downto 0); -- Shift-Reg.
 
 signal    s_Diob_Status1:         std_logic_vector(15 downto 0);
+signal    s_Diob_Status2:         std_logic_vector(15 downto 0);
  
 signal    S_Dtack:             std_logic;
 signal    S_Read_Port:         std_logic_vector(Data_to_SCUB'range);
@@ -111,10 +115,13 @@ P_Adr_Deco:  process (nReset, clk)
       
       S_Diob_Config1_Rd <= '0';  S_Diob_Config1_Wr <= '0';
       S_Diob_Config2_Rd <= '0';  S_Diob_Config2_Wr <= '0';
-      S_AW_Config1_Rd   <= '0';  S_AW_Config1_Wr <= '0';
-      S_AW_Config2_Rd   <= '0';  S_AW_Config2_Wr <= '0';
+      S_AW_Config1_Rd   <= '0';  S_AW_Config1_Wr   <= '0';
+      S_AW_Config2_Rd   <= '0';  S_AW_Config2_Wr   <= '0';
 
-      S_Diob_Status1_Rd <= '0';  S_Diob_Status2_Rd <= '0';  S_AW_Status1_Rd <= '0';  S_AW_Status2_Rd <= '0';
+      S_Diob_Status1_Rd <= '0';  S_Diob_Status1_Wr <= '0';
+      S_Diob_Status2_Rd <= '0';  S_Diob_Status2_Wr <= '0';
+      S_AW_Status1_Rd   <= '0';
+      S_AW_Status2_Rd   <= '0';
       
       S_Dtack <= '0';
       Rd_active <= '0';
@@ -123,10 +130,13 @@ P_Adr_Deco:  process (nReset, clk)
 
       S_Diob_Config1_Rd <= '0';  S_Diob_Config1_Wr <= '0';
       S_Diob_Config2_Rd <= '0';  S_Diob_Config2_Wr <= '0';
-      S_AW_Config1_Rd   <= '0';  S_AW_Config1_Wr <= '0';
-      S_AW_Config2_Rd   <= '0';  S_AW_Config2_Wr <= '0';
+      S_AW_Config1_Rd   <= '0';  S_AW_Config1_Wr   <= '0';
+      S_AW_Config2_Rd   <= '0';  S_AW_Config2_Wr   <= '0';
 
-      S_Diob_Status1_Rd <= '0';  S_Diob_Status2_Rd <= '0';  S_AW_Status1_Rd <= '0';  S_AW_Status2_Rd <= '0';
+      S_Diob_Status1_Rd <= '0';  S_Diob_Status1_Wr <= '0';
+      S_Diob_Status2_Rd <= '0';  S_Diob_Status2_Wr <= '0';
+      S_AW_Status1_Rd   <= '0';
+      S_AW_Status2_Rd   <= '0';
 
       S_Dtack <= '0';
       Rd_active <= '0';
@@ -182,7 +192,8 @@ P_Adr_Deco:  process (nReset, clk)
             
             when C_Diob_Status1_Addr =>
             if Ext_Wr_active = '1' then
-              S_Dtack <= '0';        -- kein DTACK beim Lese-Port
+              S_Dtack <= '1';        
+              S_Diob_Status1_Wr   <= '1';
             end if;
             if Ext_Rd_active = '1' then
               S_Dtack     <= '1';
@@ -192,7 +203,8 @@ P_Adr_Deco:  process (nReset, clk)
 
             when C_Diob_Status2_Addr =>
             if Ext_Wr_active = '1' then
-              S_Dtack <= '0';        -- kein DTACK beim Lese-Port
+              S_Dtack <= '1';        
+              S_Diob_Status2_Wr   <= '1';
             end if;
             if Ext_Rd_active = '1' then
               S_Dtack     <= '1';
@@ -224,10 +236,12 @@ P_Adr_Deco:  process (nReset, clk)
             
             S_Diob_Config1_Rd <= '0';  S_Diob_Config1_Wr <= '0';
             S_Diob_Config2_Rd <= '0';  S_Diob_Config2_Wr <= '0';
-            S_AW_Config1_Rd <= '0';    S_AW_Config1_Wr <= '0';
-            S_AW_Config2_Rd <= '0';    S_AW_Config2_Wr <= '0';
+            S_AW_Config1_Rd   <= '0';  S_AW_Config1_Wr   <= '0';
+            S_AW_Config2_Rd   <= '0';  S_AW_Config2_Wr   <= '0';
 
-            S_Diob_Status1_Rd <= '0';  S_Diob_Status2_Rd <= '0';  S_AW_Status1_Rd <= '0';  S_AW_Status2_Rd <= '0';
+            S_Diob_Status1_Rd <= '0';  S_Diob_Status1_Wr <= '0'; 
+            S_Diob_Status2_Rd <= '0';  S_Diob_Status2_Wr <= '0';   
+            S_AW_Status1_Rd   <= '0';  S_AW_Status2_Rd   <= '0';
                       
             S_Dtack <= '0';
             Rd_active <= '0';
@@ -251,7 +265,9 @@ P_AWOut_Reg:  process (nReset, clk,
     
     elsif rising_edge(clk) then
       
-      if S_Diob_Config1_Wr = '1' then  S_Diob_Config1 <= Data_from_SCUB_LA;   -- Output-Daten vom SCU-Bus
+      if S_Diob_Config1_Wr = '1' then
+        S_Diob_Config1(15 downto 1) <= Data_from_SCUB_LA(15 downto 1);   -- Output-Daten vom SCU-Bus
+        S_Diob_Config1(0)           <= '0';                              -- mit Bit-0 werden die Tag-Masken gelöscht, wird nicht gespeichert
       end if;
       if S_Diob_Config2_Wr = '1' then  S_Diob_Config2 <= Data_from_SCUB_LA;
       end if;
@@ -269,7 +285,7 @@ P_AWOut_Reg:  process (nReset, clk,
                         S_AW_Config1_Rd,    S_AW_Config1,
                         S_AW_Config2_Rd,    S_AW_Config2,
                         S_Diob_Status1_Rd,  s_Diob_Status1,
-                        S_Diob_Status2_Rd,  Diob_Status2,
+                        S_Diob_Status2_Rd,  s_Diob_Status2,
                         S_AW_Status1_Rd,    AW_Status1,
                         S_AW_Status2_Rd,    AW_Status2)
 
@@ -281,7 +297,7 @@ P_AWOut_Reg:  process (nReset, clk,
     elsif S_AW_Config2_Rd   = '1' then  S_Read_port <= S_AW_Config2;
 
     elsif S_Diob_Status1_Rd = '1' then  S_Read_port <= s_Diob_Status1;    -- read Input-Port1
-    elsif S_Diob_Status2_Rd = '1' then  S_Read_port <= Diob_Status2;
+    elsif S_Diob_Status2_Rd = '1' then  S_Read_port <= s_Diob_Status2;
     elsif S_AW_Status1_Rd   = '1' then  S_Read_port <= AW_Status1;
     elsif S_AW_Status2_Rd   = '1' then  S_Read_port <= AW_Status2;
 
@@ -291,65 +307,158 @@ P_AWOut_Reg:  process (nReset, clk,
   end process P_Read_mux;
 
   
-  
+--  
+--
+--
+--  
+----------- Reset DIOB-Status1 nach read (1 Clock breit) --------------------
+--
+--p_AW_Config1_Rd:  PROCESS (clk, nReset)
+--  BEGin
+--    IF  nReset                = '0' then
+--        DIOB_Sts1_rd_shift    <= (OTHERS => '0');
+--        DIOB_Sts1_rd_Strobe_o <= '0';
+--
+--    ELSIF rising_edge(clk) THEN
+--
+--      DIOB_Sts1_rd_shift <= (DIOB_Sts1_rd_shift(DIOB_Sts1_rd_shift'high-1 downto 0) & (Not S_Diob_Status1_Rd)); -- DIOB_Sts1_rd_Strobe_o = Puls, nach der neg. Flanke von S_AW_Config_Rd 
+--
+--      IF DIOB_Sts1_rd_shift(DIOB_Sts1_rd_shift'high) = '0' AND DIOB_Sts1_rd_shift(DIOB_Sts1_rd_shift'high-1) = '1' THEN
+--        DIOB_Sts1_rd_Strobe_o <= '1';
+--      ELSE
+--        DIOB_Sts1_rd_Strobe_o <= '0';
+--      END IF;
+--    END IF;
+--  END PROCESS p_AW_Config1_Rd;
+--
+--
+--
 
 
   
---------- Reset DIOB-Status1 nach read (1 Clock breit) --------------------
+--------- DIOB_Staus_1 --------------------
 
-p_AW_Config1_Rd:  PROCESS (clk, nReset)
-  BEGin
-    IF  nReset                = '0' then
-        DIOB_Sts1_rd_shift    <= (OTHERS => '0');
-        DIOB_Sts1_rd_Strobe_o <= '0';
-
-    ELSIF rising_edge(clk) THEN
-
-      DIOB_Sts1_rd_shift <= (DIOB_Sts1_rd_shift(DIOB_Sts1_rd_shift'high-1 downto 0) & (Not S_Diob_Status1_Rd)); -- DIOB_Sts1_rd_Strobe_o = Puls, nach der neg. Flanke von S_AW_Config_Rd 
-
-      IF DIOB_Sts1_rd_shift(DIOB_Sts1_rd_shift'high) = '0' AND DIOB_Sts1_rd_shift(DIOB_Sts1_rd_shift'high-1) = '1' THEN
-        DIOB_Sts1_rd_Strobe_o <= '1';
-      ELSE
-        DIOB_Sts1_rd_Strobe_o <= '0';
-      END IF;
-    END IF;
-  END PROCESS p_AW_Config1_Rd;
-
-
-  
---------- DIOB-Staus-1 --------------------
-
-P_Tag_Reg_Conf_Err:  process (clk, nReset)
+P_DIOB_Staus_1:  process (clk, nReset)
   begin
     IF  nReset  = '0' then   s_Diob_Status1  <= (OTHERS => '0');
 
     elsif rising_edge(clk) then
+      
+      if        (                               Diob_Status1     (15) = '1')   then s_Diob_Status1(15)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA(15) = '1'))  then s_Diob_Status1(15)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     (14) = '1')   then s_Diob_Status1(14)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA(14) = '1'))  then s_Diob_Status1(14)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     (13) = '1')   then s_Diob_Status1(13)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA(13) = '1'))  then s_Diob_Status1(13)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     (12) = '1')   then s_Diob_Status1(12)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA(12) = '1'))  then s_Diob_Status1(12)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     (11) = '1')   then s_Diob_Status1(11)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA(11) = '1'))  then s_Diob_Status1(11)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     (10) = '1')   then s_Diob_Status1(10)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA(10) = '1'))  then s_Diob_Status1(10)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     ( 9) = '1')   then s_Diob_Status1( 9)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA( 9) = '1'))  then s_Diob_Status1( 9)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     ( 8) = '1')   then s_Diob_Status1( 8)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA( 8) = '1'))  then s_Diob_Status1( 8)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     ( 7) = '1')   then s_Diob_Status1( 7)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA( 7) = '1'))  then s_Diob_Status1( 7)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     ( 6) = '1')   then s_Diob_Status1( 6)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA( 6) = '1'))  then s_Diob_Status1( 6)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     ( 5) = '1')   then s_Diob_Status1( 5)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA( 5) = '1'))  then s_Diob_Status1( 5)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     ( 4) = '1')   then s_Diob_Status1( 4)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA( 4) = '1'))  then s_Diob_Status1( 4)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     ( 3) = '1')   then s_Diob_Status1( 3)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA( 3) = '1'))  then s_Diob_Status1( 3)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     ( 2) = '1')   then s_Diob_Status1( 2)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA( 2) = '1'))  then s_Diob_Status1( 2)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     ( 1) = '1')   then s_Diob_Status1( 1)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA( 1) = '1'))  then s_Diob_Status1( 1)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status1     ( 0) = '1')   then s_Diob_Status1( 0)  <= '1';
+        else if ((S_Diob_Status1_Wr = '1') and (Data_from_SCUB_LA( 0) = '1'))  then s_Diob_Status1( 0)  <= '0'; end if; end if;  -- Clear Stausbit
 
-      if    (DIOB_Sts1_rd_Strobe_o = '1') then s_Diob_Status1    <= (OTHERS => '0');   -- reset Status-Register nach dem Read
 
-      elsif (Diob_Status1(15) = '1')    then s_Diob_Status1(15)  <= '1';
-      elsif (Diob_Status1(14) = '1')    then s_Diob_Status1(14)  <= '1';
-      elsif (Diob_Status1(13) = '1')    then s_Diob_Status1(13)  <= '1';
-      elsif (Diob_Status1(12) = '1')    then s_Diob_Status1(12)  <= '1';
-      elsif (Diob_Status1(11) = '1')    then s_Diob_Status1(11)  <= '1';
-      elsif (Diob_Status1(10) = '1')    then s_Diob_Status1(10)  <= '1';
-      elsif (Diob_Status1(9)  = '1')    then s_Diob_Status1(9)   <= '1';
-      elsif (Diob_Status1(8)  = '1')    then s_Diob_Status1(8)   <= '1';
-      elsif (Diob_Status1(7)  = '1')    then s_Diob_Status1(7)   <= '1';
-      elsif (Diob_Status1(6)  = '1')    then s_Diob_Status1(6)   <= '1';
-      elsif (Diob_Status1(5)  = '1')    then s_Diob_Status1(5)   <= '1';
-      elsif (Diob_Status1(4)  = '1')    then s_Diob_Status1(4)   <= '1';
-      elsif (Diob_Status1(3)  = '1')    then s_Diob_Status1(3)   <= '1';
-      elsif (Diob_Status1(2)  = '1')    then s_Diob_Status1(2)   <= '1';
-      elsif (Diob_Status1(1)  = '1')    then s_Diob_Status1(1)   <= '1';
-      elsif (Diob_Status1(0)  = '1')    then s_Diob_Status1(0)   <= '1';
-        
       end if;
-     end if;
-
-  end process P_Tag_Reg_Conf_Err;
+  end process P_DIOB_Staus_1;
   
+  
+--------- DIOB_Staus_2 --------------------
 
+P_DIOB_Staus_2:  process (clk, nReset)
+  begin
+    IF  nReset  = '0' then   s_Diob_Status2  <= (OTHERS => '0');
+
+    elsif rising_edge(clk) then
+      
+      if        (                               Diob_Status2     (15) = '1')   then s_Diob_Status2(15)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA(15) = '1'))  then s_Diob_Status2(15)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     (14) = '1')   then s_Diob_Status2(14)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA(14) = '1'))  then s_Diob_Status2(14)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     (13) = '1')   then s_Diob_Status2(13)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA(13) = '1'))  then s_Diob_Status2(13)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     (12) = '1')   then s_Diob_Status2(12)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA(12) = '1'))  then s_Diob_Status2(12)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     (11) = '1')   then s_Diob_Status2(11)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA(11) = '1'))  then s_Diob_Status2(11)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     (10) = '1')   then s_Diob_Status2(10)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA(10) = '1'))  then s_Diob_Status2(10)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     ( 9) = '1')   then s_Diob_Status2( 9)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA( 9) = '1'))  then s_Diob_Status2( 9)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     ( 8) = '1')   then s_Diob_Status2( 8)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA( 8) = '1'))  then s_Diob_Status2( 8)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     ( 7) = '1')   then s_Diob_Status2( 7)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA( 7) = '1'))  then s_Diob_Status2( 7)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     ( 6) = '1')   then s_Diob_Status2( 6)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA( 6) = '1'))  then s_Diob_Status2( 6)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     ( 5) = '1')   then s_Diob_Status2( 5)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA( 5) = '1'))  then s_Diob_Status2( 5)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     ( 4) = '1')   then s_Diob_Status2( 4)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA( 4) = '1'))  then s_Diob_Status2( 4)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     ( 3) = '1')   then s_Diob_Status2( 3)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA( 3) = '1'))  then s_Diob_Status2( 3)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     ( 2) = '1')   then s_Diob_Status2( 2)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA( 2) = '1'))  then s_Diob_Status2( 2)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     ( 1) = '1')   then s_Diob_Status2( 1)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA( 1) = '1'))  then s_Diob_Status2( 1)  <= '0'; end if; end if;  -- Clear Stausbit
+                                                                                                  
+      if        (                               Diob_Status2     ( 0) = '1')   then s_Diob_Status2( 0)  <= '1';
+        else if ((S_Diob_Status2_Wr = '1') and (Data_from_SCUB_LA( 0) = '1'))  then s_Diob_Status2( 0)  <= '0'; end if; end if;  -- Clear Stausbit
+
+
+      end if;
+  end process P_DIOB_Staus_2;
+
+  
+  
   
 -- Testport für Logic-Analysator
   
@@ -369,7 +478,7 @@ Diob_Config1_wr   <=  S_Diob_Config1_Wr;  -- write-Strobe, Daten-Reg. AWOut1
 Diob_Config2_wr   <=  S_Diob_Config2_Wr;  -- write-Strobe, Daten-Reg. AWOut2
 AW_Config1_wr     <=  S_AW_Config1_Wr;    -- write-Strobe, Daten-Reg. AWOut3
 AW_Config2_wr     <=  S_AW_Config2_Wr;    -- write-Strobe, Daten-Reg. AWOut4
-
+clr_Tag_Maske     <= (S_Diob_Config1_Wr and Data_from_SCUB_LA(0)); -- clear alle Tag-Masken
 
 
 end Arch_config_status;
