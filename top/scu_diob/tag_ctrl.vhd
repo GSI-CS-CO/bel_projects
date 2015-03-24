@@ -1,4 +1,4 @@
---TITLE "'tag_ctrl' Autor: R.Hartmann, Stand: 14.01.2015, Vers: V01 ";
+--TITLE "'tag_ctrl' Autor: R.Hartmann, Stand: 18.03.2015 ";
 --
 library IEEE;
 USE IEEE.std_logic_1164.all;
@@ -32,6 +32,7 @@ ENTITY tag_ctrl IS
     AWIn5:                in   std_logic_vector(15 downto 0);  -- Input-Port 5
     AWIn6:                in   std_logic_vector(15 downto 0);  -- Input-Port 6
     AWIn7:                in   std_logic_vector(15 downto 0);  -- Input-Port 7
+    clr_Tag_Maske:        in   std_logic;                      -- clear alle Tag-Masken
     Max_AWOut_Reg_Nr:     in   integer range 0 to 7;           -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr:      in   integer range 0 to 7;           -- Maximale AWIn-Reg-Nummer der Anwendung
     
@@ -57,6 +58,7 @@ ENTITY tag_ctrl IS
     Rd_active:            out  std_logic;                      -- read data available at 'Data_to_SCUB'-AWOut
     Data_to_SCUB:         out  std_logic_vector(15 downto 0);  -- connect read sources to SCUB-Macro
     Dtack_to_SCUB:        out  std_logic;                      -- connect Dtack to SCUB-Macro
+    Tag_Aktiv:            out  std_logic_vector( 7 downto 0);  -- Flag: Bit7 = Tag7 (aktiv) --- Bit0 = Tag0 (aktiv)  
     LA_tag_ctrl:          out  std_logic_vector(15 downto 0)
     );  
   end tag_ctrl;
@@ -322,18 +324,9 @@ signal TErr_Cnt : integer range 0 to 7 := 0;
 
 signal  Tag_Conf_Err:       std_logic := '0'; -- Tag Auswerte-Loop
 
-
-
-type sum_state_t is   (sum_idle,  sum_Wait,  sum_Loop,  sum_End);
-signal sum_state:      sum_state_t := sum_idle;
-
-signal Sum_Tag_Cnt:   integer range 0 to 7 := 0;
-signal Sum_Wait_Cnt:  integer range 0 to 100 := 0;    -- Loop-Counter
-signal Sum_Tag_Code:  std_logic_vector(31 downto 0);  -- Basis Tag-Code
-signal Sum_Reg_Nr:    integer range 0 to 7 := 0;      -- Basis Tag_Register
 signal Sum_Reg_MSK:   t_Word_Array;
 
-
+signal s_Tag_Aktiv:   std_logic_vector(7 downto 0); -- Flag: Bit7 = Tag7 (aktiv) --- Bit0 = Tag0 (aktiv)
 
 begin
 
@@ -590,61 +583,6 @@ P_Tag_Config_ok:  process (clk, nReset)
   end process P_Tag_Config_ok;
   
 
-  
-  
-P_Sum_Reg_MSK:  process (clk, nReset, Tag_Array)
-
-    begin
-      if (nReset = '0') then
-        sum_state        <= Sum_idle;
-        Sum_Tag_Cnt      <= 0;                            -- Tag_Counter
-        Sum_Wait_Cnt     <= 0;                            -- Sum_Wait_Counter
-        Sum_Tag_Code     <= (others => '0');              -- Tag-Code
-        Sum_Reg_Nr       <= 0;                            -- Tag_Register
-        Sum_Reg_MSK      <= (others => (others => '0'));  -- Summen-Maske für alle Tag-Register
-
-    ELSIF rising_edge(clk) then
-      case sum_state is
-         when Sum_idle  =>  Sum_Tag_Cnt      <= 0;                -- Tag_Counter
-                            Sum_Wait_Cnt     <= 0;                -- Sum_Wait_Counter
-                            Sum_Tag_Code     <= (others => '0');  -- Tag-Code
-                            Sum_Reg_Nr       <= 0;                -- Tag_Register
-                            sum_state        <= Sum_Wait;
-
-         when Sum_Wait    =>   if (Sum_Wait_Cnt  < 50) then 
-                                   Sum_Wait_Cnt  <= Sum_Wait_Cnt+1;    
-                                  sum_state      <= Sum_Wait;
-                                elsE
-                                  sum_state      <= Sum_Loop;
-                                end if;
-                            
-         when Sum_Loop    => if (Sum_Tag_Cnt < 8) then      -- solange kleiner 8 (0-7)
-
-                              Sum_Tag_Code  <= (Tag_Array(Sum_Tag_Cnt)(i_tag_hw) & Tag_Array(Sum_Tag_Cnt)(i_tag_lw));   -- Tag-Code(0-7)
-                              Sum_Reg_Nr    <= to_integer(unsigned(Tag_Array(Sum_Tag_Cnt)(i_Tag_Lev_Reg)(3 downto 0))); -- Register-Nummer (0-7)
-
-                              IF (Sum_Tag_Code = (31 downto 0=>'0') or          -- Tag-Code    = 0 +==> zum nächsten Tag
-                                  Sum_Reg_Nr   = 0                )    THEN     -- Reg.-Nummer = 0 +
-
-                              Else
-                                Sum_Reg_MSK(Sum_Reg_Nr) <= (Sum_Reg_MSK(Sum_Reg_Nr) or Tag_Array(Sum_Tag_Cnt)(i_Tag_Maske));
-                              end if;
-
-                            sum_state     <= Sum_End;
-
-                            end if;
-         
-                           
-         when Sum_End    =>  Sum_Tag_Cnt <= Sum_Tag_Cnt+1; 
-                            IF (Sum_Tag_Cnt = 8) THEN
-                                sum_state <= Sum_idle;
-                            ELSE
-                             sum_state <= Sum_Loop;
-                            end if;
-      end case;
-    end if;
-  end process P_Sum_Reg_MSK;
-  
   
   
  
@@ -1015,46 +953,69 @@ port map  (
 --  +============================================================================================================================+
 --  |                           Übernahme der Daten aus Component Tag_n, für Tag0- Tag7 und Eintrag in                           |
 --  |                        Tag_Out_Reg_Array und Tag_New_AWOut_Data, zum überschreiben der Output-Register.                    |
+--  |                                       "Veroderung" der Output-Masken für Tag0- Tag7.                                       |
 --  +============================================================================================================================+
 
 P_AWOut_Array:  process (nReset, clk,
                          Tag0_New_AWOut_Data, Tag1_New_AWOut_Data, Tag2_New_AWOut_Data, Tag3_New_AWOut_Data,
                          Tag4_New_AWOut_Data, Tag5_New_AWOut_Data, Tag6_New_AWOut_Data, Tag7_New_AWOut_Data,
-                         Tag0_New_Data, Tag1_New_Data, Tag2_New_Data, Tag3_New_Data, Tag4_New_Data, Tag5_New_Data, Tag6_New_Data, Tag7_New_Data)
+                         Tag0_New_Data, Tag1_New_Data, Tag2_New_Data, Tag3_New_Data, Tag4_New_Data, Tag5_New_Data, Tag6_New_Data, Tag7_New_Data,
+                         Tag_Array, clr_Tag_Maske)
   begin
     if nReset = '0' then
      
-      Tag_Out_Reg_Array     <= (others => (others => '0'));   --
+      Tag_Out_Reg_Array   <= (others => (others => '0'));   --
       Tag_New_AWOut_Data  <= (others => false);             --  
+      Sum_Reg_MSK         <= (others => (others => '0'));  -- Summen-Maske für alle Tag-Register
       
       elsif rising_edge(clk) then
 
-        if Tag0_New_AWOut_Data = true   then
-          Tag_Out_Reg_Array   (Tag0_Reg_Nr) <= Tag0_New_Data;       -- die Daten aus "Tag0" werden in das Register mit der "Tag0_Reg_Nr" geschrieben.
-  
+        if clr_Tag_Maske = '1'   then
+          Sum_Reg_MSK         <= (others => (others => '0'));  -- Clear alle Summen-Maske für die Tag-Register
+
+        elsif Tag0_New_AWOut_Data = true   then
+          s_Tag_Aktiv(0)                 <= '1';
+          Tag_Out_Reg_Array(Tag0_Reg_Nr) <= Tag0_New_Data;            -- die Daten aus "Tag0" werden in das Register mit der "Tag0_Reg_Nr" geschrieben.
+          Sum_Reg_MSK(Tag0_Reg_Nr)       <= (Sum_Reg_MSK(Tag0_Reg_Nr) or (Tag_Array(i_Tag0)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
+    
         elsif Tag1_New_AWOut_Data = true   then
-          Tag_Out_Reg_Array   (Tag1_Reg_Nr) <= Tag1_New_Data;
+          s_Tag_Aktiv(1)                 <= '1';
+          Tag_Out_Reg_Array(Tag1_Reg_Nr) <= Tag1_New_Data;
+          Sum_Reg_MSK(Tag1_Reg_Nr)       <= (Sum_Reg_MSK(Tag1_Reg_Nr) or (Tag_Array(i_Tag1)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
   
         elsif Tag2_New_AWOut_Data = true   then
-          Tag_Out_Reg_Array   (Tag2_Reg_Nr) <= Tag2_New_Data;
+          s_Tag_Aktiv(2)                 <= '1';
+          Tag_Out_Reg_Array(Tag2_Reg_Nr) <= Tag2_New_Data;
+          Sum_Reg_MSK(Tag2_Reg_Nr)       <= (Sum_Reg_MSK(Tag2_Reg_Nr) or (Tag_Array(i_Tag2)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
   
         elsif Tag3_New_AWOut_Data = true   then
-          Tag_Out_Reg_Array   (Tag3_Reg_Nr) <= Tag3_New_Data;
+          s_Tag_Aktiv(3)                 <= '1';
+          Tag_Out_Reg_Array(Tag3_Reg_Nr) <= Tag3_New_Data;
+          Sum_Reg_MSK(Tag3_Reg_Nr)       <= (Sum_Reg_MSK(Tag3_Reg_Nr) or (Tag_Array(i_Tag3)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
   
         elsif Tag4_New_AWOut_Data = true   then
-          Tag_Out_Reg_Array   (Tag4_Reg_Nr) <= Tag4_New_Data;
+          s_Tag_Aktiv(4)                 <= '1';
+          Tag_Out_Reg_Array(Tag4_Reg_Nr) <= Tag4_New_Data;
+          Sum_Reg_MSK(Tag4_Reg_Nr)       <= (Sum_Reg_MSK(Tag4_Reg_Nr) or (Tag_Array(i_Tag4)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
   
         elsif Tag5_New_AWOut_Data = true   then
-          Tag_Out_Reg_Array   (Tag5_Reg_Nr) <= Tag5_New_Data;
+          s_Tag_Aktiv(5)                 <= '1';
+          Tag_Out_Reg_Array(Tag5_Reg_Nr) <= Tag5_New_Data;
+          Sum_Reg_MSK(Tag5_Reg_Nr)       <= (Sum_Reg_MSK(Tag5_Reg_Nr) or (Tag_Array(i_Tag5)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
   
         elsif Tag6_New_AWOut_Data = true   then
-          Tag_Out_Reg_Array   (Tag6_Reg_Nr) <= Tag6_New_Data;
+          s_Tag_Aktiv(6)                 <= '1';
+          Tag_Out_Reg_Array(Tag6_Reg_Nr) <= Tag6_New_Data;
+          Sum_Reg_MSK(Tag6_Reg_Nr)       <= (Sum_Reg_MSK(Tag6_Reg_Nr) or (Tag_Array(i_Tag6)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
 
         elsif Tag7_New_AWOut_Data = true   then
-          Tag_Out_Reg_Array   (Tag7_Reg_Nr) <= Tag7_New_Data;
+          s_Tag_Aktiv(7)                 <= '1';
+          Tag_Out_Reg_Array(Tag7_Reg_Nr) <= Tag7_New_Data;
+          Sum_Reg_MSK(Tag7_Reg_Nr)       <= (Sum_Reg_MSK(Tag7_Reg_Nr) or (Tag_Array(i_Tag7)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
 
         else
           Tag_New_AWOut_Data  <= (others => false);
+          s_Tag_Aktiv         <= (others => '0'  );
         end if;
     end if;
   end process P_AWOut_Array;
@@ -1233,6 +1194,10 @@ Tag_Sts      <= (x"00"              &
                   Tag_Timeout
                 );
 
+
+                
+Tag_Aktiv         <=    s_Tag_Aktiv;     -- Flag: Bit7 = Tag7 (aktiv) --- Bit0 = Tag0 (aktiv)
+                       
                               
 Tag_Reg1_Maske    <=    Sum_Reg_MSK(1);  -- Tag-Output-Maske für Register 1
 Tag_Reg2_Maske    <=    Sum_Reg_MSK(2);  -- Tag-Output-Maske für Register 2
