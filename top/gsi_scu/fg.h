@@ -12,10 +12,11 @@ struct fg_dev {
   unsigned int dev_number;
   unsigned int version;
   unsigned int offset;
-  char running;
-  char timeout;
-  int rampcnt;
-  int endvalue; /* ramp value in case of timeout */
+  unsigned char running;
+  unsigned char timeout;
+  unsigned int rampcnt;
+  unsigned int endvalue; /* ramp value in case of timeout */
+  unsigned char enabled;
   struct scu_slave *slave;
 };
 
@@ -56,13 +57,18 @@ struct circ_buffer {
 };
 
 struct fg_status {
+  unsigned int slot;
   unsigned int dev_number;
   unsigned int version;
   unsigned int offset;
   unsigned int running;
   unsigned int timeout;
   unsigned int rampcnt;
+  unsigned int enabled;
 };
 
+int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr);
+int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg);
+void init_buffers(struct circ_buffer *buf);
 
 #endif

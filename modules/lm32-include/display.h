@@ -1,19 +1,21 @@
 #ifndef _DISPLAY_H_
 #define _DISPLAY_H_
-extern volatile unsigned int* pOledDisplay;
+#include <inttypes.h>
+#include <stdint.h>
+extern volatile uint32_t* pOledDisplay;
 
 // Oled Display RegisterLayout
 static const struct {
-   unsigned int rst;
-   unsigned int mode;
-   unsigned int uart;
-   unsigned int character;
-   unsigned int raw;
-   unsigned int mode_RAW;
-   unsigned int mode_UART;
-   unsigned int mode_CHAR;
-   unsigned int mode_IDLE;
-   unsigned int ROW_LEN;
+   uint32_t rst;
+   uint32_t mode;
+   uint32_t uart;
+   uint32_t character;
+   uint32_t raw;
+   uint32_t mode_RAW;
+   uint32_t mode_UART;
+   uint32_t mode_CHAR;
+   uint32_t mode_IDLE;
+   uint32_t ROW_LEN;
    
 } r_oledDisp = {  .rst        = 0x04 >> 2,
                   .mode       = 0x00 >> 2,
@@ -36,11 +38,11 @@ void disp_put_line(const char *sPtr, unsigned char row);
 void disp_reset();
 
 void disp_loc_c(char ascii, unsigned char row, unsigned char col);
-void disp_put_raw(char pixcol, unsigned int address, char color);
+void disp_put_raw(char pixcol, uint32_t address, char color);
 
-unsigned int get_pixcol_addr(unsigned char x_in, unsigned char y_in);
+uint32_t get_pixcol_addr(unsigned char x_in, unsigned char y_in);
 
-unsigned int get_pixcol_val(unsigned char y_in);
+uint32_t get_pixcol_val(unsigned char y_in);
 
 
 #endif 

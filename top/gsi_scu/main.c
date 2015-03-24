@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "mprintf.h"
 #include "display.h"
 #include "irq.h"
 #include "scu_bus.h"
@@ -41,7 +42,7 @@ struct fg_dev wb_fg_dev;
 
 volatile unsigned short* scub_base;
 volatile unsigned int* BASE_ONEWIRE;
-volatile unsigned int* BASE_UART;
+volatile uint32_t* BASE_UART;
 volatile unsigned int* scub_irq_base;
 volatile unsigned int* wb_fg_irq_base;
 volatile unsigned int* wb_fg_base;
@@ -93,12 +94,11 @@ void show_msi()
 
 void send_fg_param(int slave_nr, int fg_base) {
   struct param_set pset;
-  int fg_number, add_freq_sel, step_cnt_sel;
+  int fg_num, add_freq_sel, step_cnt_sel;
   
-  fg_number = (scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
-  //mprintf("fg_number called: %d\n", fg_number);
-  if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number)) {
-    cbRead((struct circ_buffer *)&fg_buffer, fg_number, &pset);
+  fg_num = (scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
+  if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_num)) {
+    cbRead((struct circ_buffer *)&fg_buffer, fg_num, &pset);
     step_cnt_sel = pset.control & 0x7;
     add_freq_sel = (pset.control & 0x38) >> 3;
     scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] &= ~(0xfc00); // clear freq and step select
@@ -107,9 +107,7 @@ void send_fg_param(int slave_nr, int fg_base) {
     scub_base[(slave_nr << 16) + fg_base + FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
     scub_base[(slave_nr << 16) + fg_base + FG_B] = pset.coeff_b;
     scub_base[(slave_nr << 16) + fg_base + FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
-    //scub_base[(slave_nr << 16) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
-    //scub_base[(slave_nr << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
-    param_sent[fg_number]++;
+    param_sent[fg_num]++;
   }
 }
 
@@ -187,13 +185,13 @@ void slave_irq_handler()
 
 void wb_fg_irq_handler() {
   struct param_set pset;
-  int fg_number, add_freq_sel, step_cnt_sel;
+  int fg_num, add_freq_sel, step_cnt_sel;
   
-  fg_number = (wb_fg_base[WB_FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
-  if (fg_number < 0 && fg_number > 11)                // check if fg was configured
+  fg_num = (wb_fg_base[WB_FG_CNTRL] & 0x3f0) >> 4;  // virtual fg number Bits 9..4
+  if (fg_num < 0 && fg_num > 11)                    // check if fg was configured
     return;
-  if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_number)) {
-    cbRead((struct circ_buffer *)&fg_buffer, fg_number, &pset);
+  if(!cbisEmpty((struct circ_buffer *)&fg_buffer, fg_num)) {
+    cbRead((struct circ_buffer *)&fg_buffer, fg_num, &pset);
     step_cnt_sel = pset.control & 0x7;
     add_freq_sel = (pset.control & 0x38) >> 3;
     wb_fg_base[WB_FG_CNTRL] &= ~(0xfc00);             // clear freq and step select
@@ -202,11 +200,8 @@ void wb_fg_irq_handler() {
     wb_fg_base[WB_FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
     wb_fg_base[WB_FG_B] = pset.coeff_b;
     wb_fg_base[WB_FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
-    param_sent[fg_number]++;
+    param_sent[fg_num]++;
   }
-  //mprintf("fg[%d] wb_fg serviced\n", fg_number);
-  //mprintf("wb_fg: 0x%x\n", global_msi.adr);
-  //mprintf("       0x%x\n", global_msi.msg);
 }
 
 void enable_msi_irqs() {
@@ -319,7 +314,7 @@ void configure_fgs() {
         cbRead((struct circ_buffer *)&fg_buffer, i, &pset);
         step_cnt_sel = pset.control & 0x7;
         add_freq_sel = (pset.control & 0x38) >> 3;
-        scub_base[(slot << 16) + fgs.devs[i]->offset + FG_CNTRL] |= add_freq_sel << 13 | step_cnt_sel << 10;
+        scub_base[(slot << 16) + fgs.devs[i]->offset + FG_CNTRL] |= add_freq_sel << 13 | step_cnt_sel << 10 | 0x2;
         scub_base[(slot << 16) + fgs.devs[i]->offset + FG_A] = pset.coeff_a;
         scub_base[(slot << 16) + fgs.devs[i]->offset + FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
         scub_base[(slot << 16) + fgs.devs[i]->offset + FG_B] = pset.coeff_b;
@@ -338,7 +333,7 @@ void configure_fgs() {
         cbRead((struct circ_buffer *)&fg_buffer, i, &pset);
         step_cnt_sel = pset.control & 0x7;
         add_freq_sel = (pset.control & 0x38) >> 3;
-        wb_fg_base[WB_FG_CNTRL]  |= add_freq_sel << 13 | step_cnt_sel << 10;
+        wb_fg_base[WB_FG_CNTRL]  |= add_freq_sel << 13 | step_cnt_sel << 10 | 0x2;
         wb_fg_base[WB_FG_A]       = pset.coeff_a;
         wb_fg_base[WB_FG_SHIFTA]  = (pset.control & 0x1f000) >> 12;
         wb_fg_base[WB_FG_B]       = pset.coeff_b;
@@ -368,7 +363,7 @@ void reset_slaves() {
 void print_fgs() {
   int i=0, j=0;
   scan_scu_bus(&scub, backplane_id, scub_base);
-  num_fgs_found = scan_for_fgs(&scub, &fgs);
+  num_fgs_found = scan_for_fgs(&scub, &fgs, &wb_fg_dev);
   mprintf("ID: 0x%08x%08x\n", (int)(scub.unique_id >> 32), (int)scub.unique_id); 
   while(scub.slaves[i].unique_id) { /* more slaves in list */ 
       mprintf("slaves[%d] ID:  0x%08x%08x\n",i, (int)(scub.slaves[i].unique_id>>32), (int)scub.slaves[i].unique_id); 
@@ -394,13 +389,29 @@ void print_fgs() {
   } 
 }
 
+/* updates status information in shared memory */
+void update_status(int fg_num) {
+  if (fg_num < 0 || fg_num > MAX_FG_DEVICES-1)
+    return;
+  else {
+    fgstat.slot       = fgs.devs[fg_num]->slave->slot;
+    fgstat.dev_number = fgs.devs[fg_num]->dev_number;
+    fgstat.version    = fgs.devs[fg_num]->version;
+    fgstat.offset     = fgs.devs[fg_num]->offset;
+    fgstat.running    = fgs.devs[fg_num]->running;
+    fgstat.timeout    = fgs.devs[fg_num]->timeout;
+    fgstat.rampcnt    = fgs.devs[fg_num]->rampcnt;
+    fgstat.enabled    = fgs.devs[fg_num]->enabled;
+  }  
+}
+
 void sw_irq_handler() {
   int i;
   struct param_set pset;
   switch(global_msi.adr>>2 & 0xf) {
     case 0:
       disable_msi_irqs();  
-      init_buffers(&fg_buffer);
+      init_buffers((struct circ_buffer *)&fg_buffer);
       for (i=0; i < MAX_FG_DEVICES; i++) // clear statistics
         param_sent[i] = 0;
     break;
@@ -438,7 +449,10 @@ void sw_irq_handler() {
     break;
     case 6:
       run_mil_test(scu_mil_base, global_msi.msg & 0xff);
-    break;   
+    break;
+    case 7:
+      update_status(global_msi.msg & 0xf);
+    break;
     default:
       mprintf("swi: 0x%x\n", global_msi.adr);
       mprintf("     0x%x\n", global_msi.msg);
@@ -477,15 +491,15 @@ void init() {
   uart_init_hw();           //enables the uart for debug messages
   updateTemp();            //update 1Wire ID and temperatures
   print_fgs();              //scans for slave cards and fgs
-  init_buffers(&fg_buffer); //init the ring buffer
+  init_buffers((struct circ_buffer *)&fg_buffer); //init the ring buffer
   init_irq_handlers();      //enable the irqs
 } 
 
 int main(void) {
   char input;
   int i, j;
-  int lm32_endp_idx = 0;
-  int ow_base_idx = 0;
+  uint32_t lm32_endp_idx = 0;
+  uint32_t ow_base_idx = 0;
   int slot;
   int fg_is_running[MAX_FG_DEVICES];
   discoverPeriphery();  
@@ -523,7 +537,7 @@ int main(void) {
 
   while(1) {
     updateTemp();
-    msDelay(2500);
+    msDelay(15000);
   }
   while(1) { 
     i = 0; 

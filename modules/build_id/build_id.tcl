@@ -8,11 +8,17 @@ set build_date [ clock format [ clock seconds ] -format "%a %b %d %H:%M:%S %Z %Y
 
 set user [open "| git config user.name" "r"]
 gets $user username
-close $user
+if { [catch {close $user}] } {
+  post_message -type error "Git user name not set -- please run: git config --global user.name \"your name here\""
+  exit 1
+}
 
 set user [open "| git config user.email" "r"]
 gets $user email
-close $user
+if { [catch {close $user}] } {
+  post_message -type error "Git user email not set -- please run: git config --global user.email \"your email here\""
+  exit 1
+}
 
 if {$tcl_platform(os) == "Linux"} {
   set lsb [open "| lsb_release -d" "r"]

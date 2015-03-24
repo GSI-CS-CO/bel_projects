@@ -2,12 +2,12 @@
 #include "mini_sdb.h"
 #include "dbg.h"
 
-sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, unsigned int base, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId)
+sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, uint32_t base, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId)
 {
      sdb_record_t *record = parent_sdb;
      int records = record->interconnect.sdb_records;
      int i;
-     DBPRINT1("base 0x%08x par 0x%08x\n", base, (unsigned int)(unsigned char*)parent_sdb);
+     DBPRINT1("base 0x%08x par 0x%08x\n", base, (uint32_t)(unsigned char*)parent_sdb);
      for (i = 0; i < records; ++i, ++record) {
          if (record->empty.record_type == SDB_BRIDGE) {
 
@@ -37,45 +37,45 @@ sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, u
 }
 
 // convenience wrappers
-sdb_location* find_device_multi(sdb_location *found_sdb, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId)
+sdb_location* find_device_multi(sdb_location *found_sdb, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId)
 {
-   return find_sdb_deep((sdb_record_t *)((unsigned int)(SBD_BASE)), found_sdb, 0, idx, qty, venId, devId);
+   return find_sdb_deep((sdb_record_t *)((uint32_t)(SBD_BASE)), found_sdb, 0, idx, qty, venId, devId);
 }
 
-unsigned int* find_device_adr(unsigned int venId, unsigned int devId)
+uint32_t* find_device_adr(uint32_t venId, uint32_t devId)
 {
    sdb_location found_sdb;
-   unsigned int idx = 0;
-   unsigned int* adr;
+   uint32_t idx = 0;
+   uint32_t* adr;
    
    find_device_multi(&found_sdb, &idx, 1, venId, devId);
-   if(idx > 0) adr = (unsigned int*)getSdbAdr(&found_sdb);
+   if(idx > 0) adr = (uint32_t*)getSdbAdr(&found_sdb);
    else        adr = NULL;
    
    return adr;
 }
 
 
-sdb_location* find_device_multi_in_subtree(sdb_location *loc, sdb_location *found_sdb, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId)
+sdb_location* find_device_multi_in_subtree(sdb_location *loc, sdb_location *found_sdb, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId)
 {
    return find_sdb_deep(getChild(loc), found_sdb, getSdbAdr(loc), idx, qty, venId, devId);
 }
 
 
 
-unsigned int* find_device_adr_in_subtree(sdb_location *loc, unsigned int venId, unsigned int devId)
+uint32_t* find_device_adr_in_subtree(sdb_location *loc, uint32_t venId, uint32_t devId)
 {
    sdb_location found_sdb;
-   unsigned int idx = 0;
-   unsigned int* adr;
+   uint32_t idx = 0;
+   uint32_t* adr;
    find_sdb_deep(getChild(loc), &found_sdb, getSdbAdr(loc), &idx, 1, venId, devId);
-   if(idx > 0) adr = (unsigned int*)getSdbAdr(&found_sdb);
+   if(idx > 0) adr = (uint32_t*)getSdbAdr(&found_sdb);
    else        adr = NULL;
    return adr;
 }
 
 
-unsigned int getSdbAdr(sdb_location *loc)
+uint32_t getSdbAdr(sdb_location *loc)
 {
    if (loc->sdb->empty.record_type == SDB_DEVICE ) 
    {
@@ -84,7 +84,7 @@ unsigned int getSdbAdr(sdb_location *loc)
    else return loc->adr + loc->sdb->bridge.sdb_component.addr_first.low;
 }
 
-unsigned int getSdbAdrLast(sdb_location *loc)
+uint32_t getSdbAdrLast(sdb_location *loc)
 {
    if (loc->sdb->empty.record_type == SDB_DEVICE ) 
    {
@@ -101,7 +101,7 @@ sdb_record_t* getChild(sdb_location *loc)
 }
 
 //DEPRECATED, USE find_device_adr INSTEAD!
-unsigned char *find_device(unsigned int devid)
+uint8_t* find_device(uint32_t devid)
 {
         return (unsigned char *)find_device_adr(GSI, devid);
 }
@@ -110,8 +110,8 @@ void discoverPeriphery(void)
 {
   sdb_location found_sdb[20];
   sdb_location found_sdb_w1[2];
-  unsigned int idx = 0;
-  unsigned int idx_w1 = 0;
+  uint32_t idx = 0;
+  uint32_t idx_w1 = 0;
    
    pCpuId         = find_device_adr(GSI, CPU_INFO_ROM);
    pCpuAtomic     = find_device_adr(GSI, CPU_ATOM_ACC);
@@ -119,11 +119,8 @@ void discoverPeriphery(void)
    pCpuIrqSlave   = find_device_adr(GSI, IRQ_MSI_CTRL_IF);   
    pCpuTimer      = find_device_adr(GSI, IRQ_TIMER_CTRL_IF);
    
-   //FIXME this should not count found std CBs, but use a CB with a special devId
-   
    find_device_multi(&found_sdb[0], &idx, 20, GSI, CB_CLUSTER);
-   //find_device_multi(&found_sdb[0], &idx, 20, GSI, CB_GENERIC);
-   pCluCB         = (unsigned int*)getSdbAdr(&found_sdb[0]);
+   pCluCB         = (uint32_t*)getSdbAdr(&found_sdb[0]);
    pSharedRam     = find_device_adr_in_subtree(&found_sdb[0], CERN, DPRAM_GENERIC);
    pCluInfo       = find_device_adr_in_subtree(&found_sdb[0], GSI, CPU_CLU_INFO_ROM);
    pFpqCtrl       = find_device_adr_in_subtree(&found_sdb[0], GSI, FTM_PRIOQ_CTRL); 
@@ -132,8 +129,8 @@ void discoverPeriphery(void)
   pOledDisplay   = find_device_adr(GSI, OLED_DISPLAY);  
   idx = 0;
   find_device_multi(&found_sdb[0], &idx, 20, GSI, ETHERBONE_MASTER);
-  pEbm           = (unsigned int*)getSdbAdr(&found_sdb[0]);
-  pEbmLast       = (unsigned int*)getSdbAdrLast(&found_sdb[0]);
+  pEbm           = (uint32_t*)getSdbAdr(&found_sdb[0]);
+  pEbmLast       = (uint32_t*)getSdbAdrLast(&found_sdb[0]);
   pEca           = find_device_adr(GSI, ECA_EVENT);
   pTlu           = find_device_adr(GSI, TLU);
   pUart          = find_device_adr(CERN, WR_UART);
@@ -142,7 +139,7 @@ void discoverPeriphery(void)
   
   /* Get the second onewire/w1 record (0=white rabbit w1 unit, 1=user w1 unit) */
   find_device_multi(&found_sdb_w1[0], &idx_w1, 2, CERN, WR_1Wire);
-  pOneWire         = (unsigned int*)getSdbAdr(&found_sdb_w1[1]);
+  pOneWire         = (uint32_t*)getSdbAdr(&found_sdb_w1[1]);
 
 }
 

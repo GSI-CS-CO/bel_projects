@@ -5,6 +5,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
+#include "mprintf.h"
 
 // Provides some control on how talkative your dbg statements get
 #ifndef DEBUGLEVEL

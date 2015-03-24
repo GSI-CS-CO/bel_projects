@@ -27,8 +27,7 @@ entity fg_quad_datapath is
   ramp_sec_fin:       out std_logic;
   sw_out:             out std_logic_vector(31 downto 0);
   sw_strobe:          out std_logic;
-  fg_stopped:         out std_logic;
-  fg_running:         out std_logic);
+  fg_is_running:      out std_logic);
 end entity;
 
 architecture fg_quad_dp_arch of fg_quad_datapath is
@@ -95,8 +94,7 @@ signal s_step_cnt:     unsigned(c_step_cnt_width - 1 downto 0);
 signal s_stp_reached: std_logic;
 signal s_cont:        std_logic;
 
-signal s_stopped:     std_logic;
-signal s_running:     std_logic;
+signal s_is_running:  std_logic;
 
 begin
 
@@ -177,8 +175,7 @@ end process;
       --s_inc_lin       <= '0';
       s_add_lin_quad  <= '0';
       s_freq_cnt_en   <= '1';
-      s_stopped       <= '0';
-      s_running       <= '0';
+      s_is_running    <= '0';
     
       if a_en = '1' then
         s_coeff_rcvd <= '1';
@@ -195,7 +192,7 @@ end process;
           end if;
     
         when quad_inc =>
-          s_running <= '1';
+          s_is_running <= '1';
           if s_stp_reached = '1' and s_freq_en = '1' then
             if s_coeff_rcvd = '1' then
               -- continue with new parameter set
@@ -217,18 +214,16 @@ end process;
           end if;
           
         when lin_inc =>
-          s_running <= '1';
+          s_is_running <= '1';
           --s_inc_lin <= '1'; 
           control_state <= addXQ;
         
         when addXQ =>
-            s_running <= '1';
+            s_is_running <= '1';
             s_add_lin_quad <= '1';
             control_state <= quad_inc;
             
         when stopped =>
-              s_stopped <= '1';
-         
           
         when others =>
           
@@ -243,7 +238,6 @@ ramp_sec_fin <= s_stp_reached;
 sw_out    <= std_logic_vector(s_X_reg(63 downto 32));
 sw_strobe <= s_add_lin_quad;
 
-fg_stopped <= s_stopped;
-fg_running <= s_running;
+fg_is_running <= s_is_running;
 
 end FG_quad_DP_arch;

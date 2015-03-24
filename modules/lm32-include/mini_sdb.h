@@ -1,6 +1,9 @@
 #ifndef _MINI_SDB_
 #define _MINI_SDB_
 
+#include <inttypes.h>
+#include <stdint.h>
+
 ////////////////////////////////////////////
 //  SBD BASE ADR IS GATEWARE DEPENDENT!   //
 //  SEE modules/ftm/ftm_lm32.vhd          // 
@@ -52,44 +55,44 @@
 #define WR_CFIPFlash          0x12122121  
 
 //periphery device pointers
-volatile unsigned int* pTlu; 
-volatile unsigned int* pEbm;
-volatile unsigned int* pEbmLast;
-volatile unsigned int* pOledDisplay;     
-volatile unsigned int* pFpqCtrl;
-volatile unsigned int* pFpqData;
-volatile unsigned int* pEca;
-volatile unsigned int* pCpuId;
-volatile unsigned int* pCpuIrqSlave;
-volatile unsigned int* pCpuAtomic;
-volatile unsigned int* pCpuSysTime;
-volatile unsigned int* pCpuTimer;
-volatile unsigned int* pCluInfo;
-volatile unsigned int* pUart;
-volatile unsigned int* BASE_UART;
-volatile unsigned int* pSharedRam;
-volatile unsigned int* pCluCB;
-volatile unsigned int* pOneWire;
+volatile uint32_t* pTlu; 
+volatile uint32_t* pEbm;
+volatile uint32_t* pEbmLast;
+volatile uint32_t* pOledDisplay;     
+volatile uint32_t* pFpqCtrl;
+volatile uint32_t* pFpqData;
+volatile uint32_t* pEca;
+volatile uint32_t* pCpuId;
+volatile uint32_t* pCpuIrqSlave;
+volatile uint32_t* pCpuAtomic;
+volatile uint32_t* pCpuSysTime;
+volatile uint32_t* pCpuTimer;
+volatile uint32_t* pCluInfo;
+volatile uint32_t* pUart;
+volatile uint32_t* BASE_UART;
+volatile uint32_t* pSharedRam;
+volatile uint32_t* pCluCB;
+volatile uint32_t* pOneWire;
 
-volatile unsigned int* pCfiPFlash;
+volatile uint32_t* pCfiPFlash;
 
 typedef struct pair64 {
-  unsigned int high;
-  unsigned int low;
+  uint32_t high;
+  uint32_t low;
 } pair64_t;
 
 struct sdb_empty {
   char reserved[63];
-  unsigned char record_type;
+  uint8_t record_type;
 };
 
 struct sdb_product {
-  pair64_t vendor_id;
-  unsigned int device_id;
-  unsigned int version;
-  unsigned int date;
-  char name[19];
-  unsigned char record_type;
+  pair64_t  vendor_id;
+  uint32_t  device_id;
+  uint32_t  version;
+  uint32_t  date;
+  char      name[19];
+  uint8_t   record_type;
 };
 
 struct sdb_component {
@@ -99,10 +102,10 @@ struct sdb_component {
 };
 
 struct sdb_device {
-  unsigned short abi_class;
-  unsigned char abi_ver_major;
-  unsigned char abi_ver_minor;
-  unsigned int bus_specific;
+  uint16_t abi_class;
+  uint8_t abi_ver_major;
+  uint8_t abi_ver_minor;
+  uint32_t bus_specific;
   struct sdb_component sdb_component;
 };
 
@@ -112,10 +115,10 @@ struct sdb_bridge {
 };
 
 struct SDB_INTERCONNECT {
-  unsigned int sdb_magic;
-  unsigned short sdb_records;
-  unsigned char sdb_version;
-  unsigned char sdb_bus_type;
+  uint32_t sdb_magic;
+  uint16_t sdb_records;
+  uint8_t sdb_version;
+  uint8_t sdb_bus_type;
   struct sdb_component sdb_component;
 };
 
@@ -128,21 +131,21 @@ typedef union sdb_record {
 
 typedef struct sdb_location {
   sdb_record_t* sdb;
-  unsigned int adr;
+  uint32_t adr;
 } sdb_location;
 
-sdb_location*  find_device_multi(sdb_location *found_sdb, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId);
-unsigned int*  find_device_adr(unsigned int venId, unsigned int devId);
-sdb_location*  find_device_multi_in_subtree(sdb_location *loc, sdb_location *found_sdb, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId);
-unsigned int*  find_device_adr_in_subtree(sdb_location *loc, unsigned int venId, unsigned int devId);
+sdb_location*  find_device_multi(sdb_location *found_sdb, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId);
+uint32_t*      find_device_adr(uint32_t venId, uint32_t devId);
+sdb_location*  find_device_multi_in_subtree(sdb_location *loc, sdb_location *found_sdb, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId);
+uint32_t*      find_device_adr_in_subtree(sdb_location *loc, uint32_t venId, uint32_t devId);
 
-sdb_location*  find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, unsigned int base, unsigned int *idx, unsigned int qty, unsigned int venId, unsigned int devId);
-unsigned int   getSdbAdr(sdb_location *loc);
-unsigned int getSdbAdrLast(sdb_location *loc);
+sdb_location*  find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, uint32_t base, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId);
+uint32_t       getSdbAdr(sdb_location *loc);
+uint32_t       getSdbAdrLast(sdb_location *loc);
 sdb_record_t*  getChild(sdb_location *loc);
 
-unsigned char *find_device(unsigned int devid); //DEPRECATED, USE find_device_adr INSTEAD!
+uint8_t*       find_device(uint32_t devid); //DEPRECATED, USE find_device_adr INSTEAD!
 
-void discoverPeriphery(void);
+void           discoverPeriphery(void);
 
 #endif

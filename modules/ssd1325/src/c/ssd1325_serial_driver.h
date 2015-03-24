@@ -10,7 +10,7 @@
 #define SSD1325_TARGET_EMBEDDED                                1 /* 1=Compile for embedded device; 0=Compile for Host (x86, ...) */
 #endif
 #ifndef SSD1325_DEMO_CONFIGURATION
-#define SSD1325_DEMO_CONFIGURATION                             1 /* 1=Display demo configuration; 0=Display minimal configuration */
+#define SSD1325_DEMO_CONFIGURATION                             0 /* 1=Display demo configuration; 0=Display minimal configuration */
 #endif
 
 /* Defines (SSD1325 Manual) */
@@ -30,13 +30,15 @@
 #define SSD1325_CMD_SET_ROW_PERIOD                             0xB2
 #define SSD1325_CMD_SET_ROW_PERIOD_DEFAULT                     0x25
 #define SSD1325_CMD_SET_PHASE_LENGHT                           0xB1
-#define SSD1325_CMD_SET_PHASE_LENGHT_DEFAULT                   0x55
+#define SSD1325_CMD_SET_PHASE_LENGHT_DEFAULT                   0x33
 #define SSD1325_CMD_SET_PRE_CHARGE_VOLTAGE                     0xBC
 #define SSD1325_CMD_SET_PRE_CHARGE_VOLTAGE_DEFAULT             0x10
 #define SSD1325_CMD_SET_PRE_CHARGE_COMPENSATION                0xB4
 #define SSD1325_CMD_SET_PRE_CHARGE_COMPENSATION_DEFAULT        0x02
 #define SSD1325_CMD_SET_PRE_CHARGE_COMPENSATION_ENABLE         0xB0
 #define SSD1325_CMD_SET_PRE_CHARGE_COMPENSATION_ENABLE_DEFAULT 0x28
+#define SSD1325_CMD_SET_DISPLAY_CLOCK                          0xB3
+#define SSD1325_CMD_SET_DISPLAY_CLOCK_DEFAULT                  0xF4
 #define SSD1325_CMD_SET_VCOMH_VOLTAGE                          0xBE
 #define SSD1325_CMD_SET_VCOMH_VOLTAGE_DEFAULT                  0x1C
 #define SSD1325_CMD_SET_VSL                                    0xBF

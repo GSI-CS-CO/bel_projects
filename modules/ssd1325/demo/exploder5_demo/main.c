@@ -17,7 +17,7 @@
 
 /* Timer defines */
 /* ==================================================================================================== */
-#define DELAY               25000000/10
+#define DELAY               2500000/100
 #define EB_REG_IP           0x00000018
 #define EP_REG_MACH         0x00000024
 #define EP_REG_MACL         0x00000028
