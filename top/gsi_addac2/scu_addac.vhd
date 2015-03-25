@@ -116,6 +116,15 @@ architecture scu_addac_arch of scu_addac is
 constant clk_sys_in_Hz: integer := 125_000_000;
 constant dac_spi_clk_in_hz: integer := 10_000_000;
 
+-- macro base address map
+constant c_housekeeping_base: unsigned := x"0040";
+constant c_dac1_base:         unsigned := x"0200";
+constant c_dac2_base:         unsigned := x"0210";
+constant c_io4x8_base:        unsigned := x"0220";
+constant c_adc_base:          unsigned := x"0230";
+constant c_fg1_base:          unsigned := x"0300";
+constant c_tmr_base:          unsigned := x"0330";
+constant c_fg2_base:          unsigned := x"0340";
 
 component IO_4x8
   generic (
@@ -370,7 +379,7 @@ SCU_Slave: SCU_Bus_Slave
 
 lm32_ow: housekeeping
 generic map (
-  Base_Addr => x"0040" )
+  Base_addr => c_housekeeping_base)
 port map (
   clk_sys => clk_sys,
   n_rst => nPowerup_Res,
@@ -394,7 +403,7 @@ port map (
 
 dac_1: dac714
   generic map(
-    Base_addr         => x"0200",
+    Base_addr         => c_dac1_base,
     CLK_in_Hz         => clk_sys_in_Hz,
     SPI_CLK_in_Hz     => dac_spi_clk_in_hz)
   port map(
@@ -424,7 +433,7 @@ dac_1: dac714
     
 dac_2: dac714
   generic map(
-    Base_addr         => x"0210",
+    Base_addr         => c_dac2_base,
     CLK_in_Hz         => clk_sys_in_Hz,
     SPI_CLK_in_Hz     => dac_spi_clk_in_hz)
   port map(
@@ -454,7 +463,7 @@ dac_2: dac714
 
 io_port: IO_4x8
   generic map (
-    Base_addr => x"0220")
+    Base_addr => c_io4x8_base)
   port map (
     Adr_from_SCUB_LA    => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
     Data_from_SCUB_LA   => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
@@ -479,7 +488,7 @@ io_port: IO_4x8
     
 adc: adc_scu_bus
   generic map (
-    Base_addr     => x"0230",
+    Base_addr     => c_adc_base,
     clk_in_Hz     => clk_sys_in_Hz,
     diag_on_is_1  => 1)
   port map (
@@ -522,7 +531,7 @@ adc: adc_scu_bus
     
 fg_1: fg_quad_scu_bus
   generic map (
-    Base_addr     => x"0300",
+    Base_addr     => c_fg1_base,
     clk_in_hz     => clk_sys_in_Hz,
     diag_on_is_1  => 0 -- if 1 then diagnosic information is generated during compilation
     )
@@ -550,7 +559,7 @@ fg_1: fg_quad_scu_bus
 
 fg_2: fg_quad_scu_bus
   generic map (
-    Base_addr     => x"0340",
+    Base_addr     => c_fg2_base,
     clk_in_hz     => clk_sys_in_Hz,
     diag_on_is_1  => 0 -- if 1 then diagnosic information is generated during compilation
     )
@@ -578,7 +587,7 @@ fg_2: fg_quad_scu_bus
 
   tmr: tmr_scu_bus
   generic map (
-    Base_addr     => x"0330",
+    Base_addr     => c_tmr_base,
     diag_on_is_1  => 1)
   port map (
     clk           => clk_sys,
