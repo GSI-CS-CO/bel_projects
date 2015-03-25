@@ -10,7 +10,9 @@ files = [
    "diob_local_clk_to_12p5_mhz.vhd",  
    "tag_ctrl.vhd",
    "tag_n.vhd",
-   "config_status.vhd"
+   "config_status.vhd",
+   "outpuls.vhd",
+   "flanke.vhd"
 ]
 
 modules = {
