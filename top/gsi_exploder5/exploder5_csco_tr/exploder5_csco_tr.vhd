@@ -193,7 +193,7 @@ end exploder5_csco_tr;
 
 architecture rtl of exploder5_csco_tr is
 
-  constant c_psram_bits : natural := 22;  -- Shitty ISSI chip is only 8MB (16*2^22/8)
+  constant c_psram_bits : natural := 24;
 
   signal led_link_up  : std_logic;
   signal led_link_act : std_logic;
@@ -291,7 +291,7 @@ begin
       nau8811_iis_adcout_o   => aud_iis_adcout_o,
       nau8811_iis_dacin_i    => aud_iis_dacin_i,
       ps_clk                 => sram_clk,
-      ps_addr                => sram_a(c_psram_bits-1 downto 0),
+      ps_addr                => sram_a,
       ps_data                => sram_dq,
       ps_seln(0)             => sram_be0,
       ps_seln(1)             => sram_be1,
