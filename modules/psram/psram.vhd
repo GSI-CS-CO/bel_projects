@@ -69,11 +69,11 @@ architecture rtl of psram is
     (0 => '1', 1 => '1', 2 => '1', 4 => '1', 8 => '1', 12 => '1', 19 => '1', 
      others => '0');
   
-  type t_state is (S_RESET, S_IDLE, S_WRITE_REQUEST, S_WRITE_WAIT, S_WRITE_LATCH, S_READ_REQUEST, S_READ_WAIT, S_READ_LATCH, S_BCR_REQUEST, S_BCR_WAIT, S_BCR_READ);
+  type t_state is (S_RESET, S_IDLE, S_WRITE_REQUEST, S_WRITE_WAIT, S_WRITE_LATCH, S_READ_REQUEST, S_READ_WAIT, S_READ_LATCH, S_BCR_REQUEST, S_BCR_WAIT, S_BCR_GAP, S_BCR_READ);
   
   -- PSRAM input path
   signal r_state   : t_state := S_RESET;
-  signal r_count   : unsigned(1 downto 0) := (others => '0');
+  signal r_count   : unsigned(2 downto 0) := (others => '0');
   signal r_adr     : std_logic_vector(g_bits-1 downto 1);
   signal s_adr     : std_logic_vector(g_bits-1 downto 1);
   
@@ -156,12 +156,15 @@ begin
         
         when S_BCR_WAIT =>
           r_count <= r_count + 1;
-          if r_count = 3 then
-            r_state <= S_BCR_READ;
+          if r_count = 5 then
+            r_state <= S_BCR_GAP;
           end if;
+        
+        when S_BCR_GAP =>
+          r_state <= S_BCR_READ;
           
         when S_BCR_READ =>
-          r_state <= S_READ_REQUEST;
+          r_state <= S_IDLE;
       end case;
     end if;
   end process;
@@ -327,30 +330,30 @@ begin
   sram_output : process(clk_i, rstn_i) is
   begin
     if rstn_i = '0' then
-      ps_addr <= (others => '0');
+      ps_addr <= (others => '-');
       ps_data <= (others => 'Z');
       ps_advn <= '1';
       ps_cen  <= '1';
-      ps_seln <= (others => '1');
+      ps_seln <= (others => '-');
       ps_wen  <= '1';
       ps_oen  <= '1';
       ps_cre  <= '0';
     elsif falling_edge(clk_i) then
       case r_state is
       
-        when S_IDLE | S_RESET | S_BCR_READ =>
+        when S_IDLE | S_RESET | S_BCR_GAP =>
           ps_addr <= (others => '-');
           ps_data <= (others => 'Z');
           ps_advn <= '1';
           ps_cen  <= '1';
           ps_seln <= (others => '-');
-          ps_wen  <= '-';
+          ps_wen  <= '1';
           ps_oen  <= '1';
           ps_cre  <= '0';
       
         when S_WRITE_REQUEST =>
           ps_addr <= r_adr & "0";
-          ps_data <= (others => 'Z');
+          ps_data <= r_adr(15 downto 1) & "0";
           ps_advn <= '0';
           ps_cen  <= '0';
           ps_seln <= (others => '-');
@@ -364,13 +367,13 @@ begin
           ps_advn <= '1';
           ps_cen  <= '0';
           ps_seln <= not s_fo_sel;
-          ps_wen  <= '-';
+          ps_wen  <= '0';
           ps_oen  <= '1';
           ps_cre  <= '0';
         
         when S_READ_REQUEST =>
           ps_addr <= r_adr & "0";
-          ps_data <= (others => 'Z');
+          ps_data <= r_adr(15 downto 1) & "0";
           ps_advn <= '0';
           ps_cen  <= '0';
           ps_seln <= (others => '0');
@@ -384,30 +387,40 @@ begin
           ps_advn <= '1';
           ps_cen  <= '0';
           ps_seln <= (others => '0');
-          ps_wen  <= '-';
+          ps_wen  <= '1';
           ps_oen  <= '0';
           ps_cre  <= '0';
         
         when S_BCR_REQUEST =>
           ps_addr <= c_bcr_setup;
-          ps_data <= (others => 'Z');
+          ps_data <= c_bcr_setup(ps_data'range);
           ps_advn <= '0';
+          ps_cen  <= '0';
+          ps_seln <= (others => '-');
+          ps_wen  <= '1';
+          ps_oen  <= '1';
+          ps_cre  <= '1';
+        
+        when S_BCR_WAIT =>
+          ps_addr <= c_bcr_setup;
+          ps_data <= c_bcr_setup(ps_data'range);
+          ps_advn <= '1';
           ps_cen  <= '0';
           ps_seln <= (others => '-');
           ps_wen  <= '0';
           ps_oen  <= '1';
           ps_cre  <= '1';
         
-        when S_BCR_WAIT =>
+        when S_BCR_READ => -- read wherever
           ps_addr <= (others => '-');
           ps_data <= (others => 'Z');
-          ps_advn <= '1';
+          ps_advn <= '0';
           ps_cen  <= '0';
-          ps_seln <= (others => '-');
-          ps_wen  <= '-';
+          ps_seln <= (others => '0');
+          ps_wen  <= '1';
           ps_oen  <= '1';
           ps_cre  <= '0';
-        
+
       end case;
     end if;
   end process;
