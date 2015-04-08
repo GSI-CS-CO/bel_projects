@@ -35,7 +35,7 @@ package psram_pkg is
       g_bits     : natural := 24;
       g_row_bits : natural := 8);
     port(
-      clk_i     : in    std_logic;
+      clk_i     : in    std_logic; -- Must be <= 66MHz, modify c_bcr_* otherwise
       rstn_i    : in    std_logic;
       slave_i   : in    t_wishbone_slave_in;
       slave_o   : out   t_wishbone_slave_out;

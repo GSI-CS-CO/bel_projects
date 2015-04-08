@@ -31,7 +31,7 @@ entity psram is
     g_bits     : natural := 24;
     g_row_bits : natural := 8);
   port(
-    clk_i     : in    std_logic;
+    clk_i     : in    std_logic; -- Must be <= 66MHz, modify c_bcr_* otherwise
     rstn_i    : in    std_logic;
     slave_i   : in    t_wishbone_slave_in;
     slave_o   : out   t_wishbone_slave_out;
@@ -68,12 +68,13 @@ architecture rtl of psram is
   constant c_bcr_setup : std_logic_vector(ps_addr'range) :=
     (0 => '1', 1 => '1', 2 => '1', 4 => '1', 8 => '1', 12 => '1', 19 => '1', 
      others => '0');
+  constant c_bcr_time : natural := 5; -- at least 70ns in clocks
   
   type t_state is (S_RESET, S_IDLE, S_WRITE_REQUEST, S_WRITE_WAIT, S_WRITE_LATCH, S_READ_REQUEST, S_READ_WAIT, S_READ_LATCH, S_BCR_REQUEST, S_BCR_WAIT, S_BCR_GAP, S_BCR_READ);
   
   -- PSRAM input path
   signal r_state   : t_state := S_RESET;
-  signal r_count   : unsigned(2 downto 0) := (others => '0');
+  signal r_count   : unsigned(f_ceil_log2(c_bcr_time+1)-1 downto 0) := (others => '0');
   signal r_adr     : std_logic_vector(g_bits-1 downto 1);
   signal s_adr     : std_logic_vector(g_bits-1 downto 1);
   
@@ -114,7 +115,7 @@ begin
   begin
     if rstn_i = '0' then
       r_state <= S_RESET;
-      r_count <= to_unsigned(0, r_count'length);
+      r_count <= (others => '0');
     elsif rising_edge(clk_i) then
       case r_state is
         when S_RESET =>
@@ -156,7 +157,7 @@ begin
         
         when S_BCR_WAIT =>
           r_count <= r_count + 1;
-          if r_count = 5 then
+          if r_count = c_bcr_time then
             r_state <= S_BCR_GAP;
           end if;
         
