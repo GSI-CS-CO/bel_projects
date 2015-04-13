@@ -93,6 +93,8 @@ _start:
         .global _reset_handler
         .type 	_reset_handler, @function
 _reset_handler:
+//init r0 from a CSR before XOR. this way, it can never be undefined
+    rcsr r0, CFG 
     xor r0, r0, r0
     wcsr    IE, r0
     wcsr    IM, r0
@@ -100,7 +102,6 @@ _reset_handler:
     ori     r1, r1, lo(_reset_handler)
     wcsr    EBA, r1
     calli   _crt0
-    nop
         .size	_reset_handler, .-_reset_handler
 	
 .extern _irq_entry
@@ -255,5 +256,3 @@ _restore_all_and_return:
 #endif
     nop
     eret
-        .size   _restore_all_and_return, .-_restore_all_and_return
-
