@@ -215,7 +215,7 @@ void enable_msi_irqs() {
     if (fgs.devs[i]->version == 0x1) {
       scub_irq_base[8] = slot-1;                                      //channel select
       scub_irq_base[9] = 0x08154711;                                  //msg
-      scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[3]) + (slot << 2); //destination address, do not use lower 2 bits
+      scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[0]) + (slot << 2); //destination address, do not use lower 2 bits
       initialized[slot - 1] = 0;                                      //counter needs to be resynced
       scub_irq_base[2] |= (1 << (slot - 1));                          //enable slaves
     }
@@ -225,7 +225,7 @@ void enable_msi_irqs() {
   wb_fg_irq_base[0] = 0x1;                            // reset irq master
   wb_fg_irq_base[8] = 0;                              // only one channel
   wb_fg_irq_base[9] = 0x47110815;                     // msg
-  wb_fg_irq_base[10] = getSdbAdr(&lm32_irq_endp[5]);  //destination address, do not use lower 2 bits
+  wb_fg_irq_base[10] = getSdbAdr(&lm32_irq_endp[2]);  //destination address, do not use lower 2 bits
   wb_fg_irq_base[2] = 0x1;                            //enable irq channel
   mprintf("IRQs for slaves with fg enabled.\n");
 }
@@ -498,16 +498,18 @@ void init() {
 int main(void) {
   char input;
   int i, j;
+  sdb_location found_sdb[20];
   uint32_t lm32_endp_idx = 0;
   uint32_t ow_base_idx = 0;
+  uint32_t clu_cb_idx = 0;
   int slot;
   int fg_is_running[MAX_FG_DEVICES];
   discoverPeriphery();  
   scub_base     = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
-  //BASE_ONEWIRE  = (unsigned int*)find_device_adr(CERN, WR_1Wire);
   scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);    // irq controller for scu bus
   wb_fg_irq_base = (unsigned int*)find_device_adr(GSI, WB_FG_IRQ_CTRL); // irq controller for wb_fg
-  find_device_multi(lm32_irq_endp, &lm32_endp_idx, 10, GSI, IRQ_ENDPOINT);
+  find_device_multi(&found_sdb[0], &clu_cb_idx, 20, GSI, CB_CLUSTER); // find location of cluster crossbar
+  find_device_multi_in_subtree(&found_sdb[0], lm32_irq_endp, &lm32_endp_idx, 10, GSI, IRQ_ENDPOINT); // list irq endpoints in cluster crossbar
   pcie_irq_endp = (unsigned int *)find_device_adr(GSI, PCIE_IRQ_ENDP);
   scu_mil_base = (unsigned int*)find_device(SCU_MIL);
   wb_fg_base = (unsigned int*)find_device_adr(GSI, WB_FG_QUAD);
