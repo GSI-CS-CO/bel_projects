@@ -69,29 +69,6 @@ void msDelay(int msecs) {
   usleep(1000 * msecs);
 }
 
-
-void show_msi()
-{
-  char buffer[12];
-  
-  mat_sprinthex(buffer, global_msi.msg);
-  disp_put_str("D ");
-  disp_put_str(buffer);
-  disp_put_c('\n');
-
-  
-  mat_sprinthex(buffer, global_msi.adr);
-  disp_put_str("A ");
-  disp_put_str(buffer);
-  disp_put_c('\n');
-
-  
-  mat_sprinthex(buffer, (unsigned long)global_msi.sel);
-  disp_put_str("S ");
-  disp_put_str(buffer);
-  disp_put_c('\n');
-}
-
 void send_fg_param(int slave_nr, int fg_base) {
   struct param_set pset;
   int fg_num, add_freq_sel, step_cnt_sel;
@@ -155,19 +132,22 @@ void slave_irq_handler()
   }
 
   if (slv_int_act_reg & 0x2000) { //tmr irq?
-    tmr_irq_cnts = scub_base[(slave_nr << 16) + TMR_BASE + TMR_IRQ_CNT];
+    //tmr_irq_cnts = scub_base[(slave_nr << 16) + TMR_BASE + TMR_IRQ_CNT];
     // init old_tmr_cnt
     if (!initialized[slave_nr-1]) {
-      old_tmr_cnt[slave_nr-1] = tmr_irq_cnts - 1;
+      //old_tmr_cnt[slave_nr-1] = tmr_irq_cnts - 1;
+      old_tmr_cnt[slave_nr-1] = 0;
       mprintf("init slave: %d with %x\n", slave_nr, tmr_irq_cnts - 1); 
       initialized[slave_nr-1] = 1;
     }  
     // check for lost IRQs
-    if ((tmr_irq_cnts == (unsigned short)(old_tmr_cnt[slave_nr-1] + 1))) {
-      slave_acks |= (1 << 13); //ack timer irq
-      old_tmr_cnt[slave_nr-1] = tmr_irq_cnts;
-    } else
-      mprintf("irq1 slave: %d, old: %x, act: %x\n", slave_nr, old_tmr_cnt[slave_nr-1], tmr_irq_cnts);
+//    if ((tmr_irq_cnts == (unsigned short)(old_tmr_cnt[slave_nr-1] + 1))) {
+//      slave_acks |= (1 << 13); //ack timer irq
+//      old_tmr_cnt[slave_nr-1] = tmr_irq_cnts;
+//    } else
+    old_tmr_cnt[slave_nr-1]++;
+    slave_acks |= (1 << 13); //ack timer irq
+    mprintf("irq1 slave: %d, cnt: %x, act: %x\n", slave_nr, old_tmr_cnt[slave_nr-1], tmr_irq_cnts);
   }
   
   if (slv_int_act_reg & (1<<15)) { //FG1 irq?
@@ -186,7 +166,8 @@ void slave_irq_handler()
 void wb_fg_irq_handler() {
   struct param_set pset;
   int fg_num, add_freq_sel, step_cnt_sel;
-  
+  //printf("wb_fg_irq_handler called!\n");  
+
   fg_num = (wb_fg_base[WB_FG_CNTRL] & 0x3f0) >> 4;  // virtual fg number Bits 9..4
   if (fg_num < 0 && fg_num > 11)                    // check if fg was configured
     return;
@@ -204,29 +185,31 @@ void wb_fg_irq_handler() {
   }
 }
 
-void enable_msi_irqs() {
+void enable_msi_irqs(int fg_mask) {
   int i, slot;
   //SCU Bus Master
   scub_base[GLOBAL_IRQ_ENA] = 0x20; //enable slave irqs
   scub_irq_base[0] = 0x1; // reset irq master
   i = 0;
   while(fgs.devs[i]) { 
-    slot = fgs.devs[i]->slave->slot;
-    if (fgs.devs[i]->version == 0x1) {
-      scub_irq_base[8] = slot-1;                                      //channel select
-      scub_irq_base[9] = 0x08154711;                                  //msg
-      scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[0]) + (slot << 2); //destination address, do not use lower 2 bits
-      initialized[slot - 1] = 0;                                      //counter needs to be resynced
-      scub_irq_base[2] |= (1 << (slot - 1));                          //enable slaves
+    if ((fg_mask >> i) & 1) {                                           //only activate channel for selected fgs
+      slot = fgs.devs[i]->slave->slot;
+      if (fgs.devs[i]->version == 0x1) {
+        scub_irq_base[8] = slot-1;                                      //channel select
+        scub_irq_base[9] = 0x08154711;                                  //msg
+        scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[0]) + (slot << 2); //destination address, do not use lower 2 bits
+        initialized[slot - 1] = 0;                                      //counter needs to be resynced
+        scub_irq_base[2] |= (1 << (slot - 1));                          //enable slaves
+      } else if (fgs.devs[i]->version == 0x2) {
+        wb_fg_irq_base[0] = 0x1;                                        // reset irq master
+        wb_fg_irq_base[8] = 0;                                          // only one channel
+        wb_fg_irq_base[9] = 0x47110815;                                 // msg
+        wb_fg_irq_base[10] = getSdbAdr(&lm32_irq_endp[2]);              //destination address, do not use lower 2 bits
+        wb_fg_irq_base[2] = 0x1;                                        //enable irq channel
+      }
     }
     i++; 
   }
-  //wb_fg_irq_ctrl
-  wb_fg_irq_base[0] = 0x1;                            // reset irq master
-  wb_fg_irq_base[8] = 0;                              // only one channel
-  wb_fg_irq_base[9] = 0x47110815;                     // msg
-  wb_fg_irq_base[10] = getSdbAdr(&lm32_irq_endp[2]);  //destination address, do not use lower 2 bits
-  wb_fg_irq_base[2] = 0x1;                            //enable irq channel
   mprintf("IRQs for slaves with fg enabled.\n");
 }
 
@@ -262,11 +245,12 @@ void configure_slaves(unsigned int tmr_value) {
     scub_base[(slot << 16) + TMR_BASE + TMR_CNTRL] = 0x1; //reset TMR
     scub_base[(slot << 16) + TMR_BASE + TMR_VALUEL] = tmr_value & 0xffff; //enable generation of tmr irqs, 1ms, 0xe848
     scub_base[(slot << 16) + TMR_BASE + TMR_VALUEH] = tmr_value >> 16; //enable generation of tmr irqs, 1ms, 0x001e
+    scub_base[(slot << 16) + TMR_BASE + TMR_REPEAT] = 0x14; //number of generated irqs
     i++;
   }
 }
 
-void configure_fgs() {
+void configure_fgs(int fg_mask) {
   int i = 0, j = 0;
   int slot;
   struct param_set pset;
@@ -275,12 +259,12 @@ void configure_fgs() {
   while(scub.slaves[i].unique_id) { /* more slaves in list */
     /* actions per slave card */
     slot = scub.slaves[i].slot;
-    scub_base[SRQ_ENA] |= (1 << (slot-1));  //enable irqs for the slave
-    scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1)); //set bitmask for broadcast select
+    scub_base[SRQ_ENA] |= (1 << (slot-1));            //enable irqs for the slave
+    scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1));    //set bitmask for broadcast select
     /* only receive irqs from slaves with fg devices */
     if (scub.slaves[i].devs[j].version) {
-      scub_base[SRQ_ENA] |= (1 << (slot-1));  //enable irqs for the slave
-      scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1)); //set bitmask for broadcast select
+      scub_base[SRQ_ENA] |= (1 << (slot-1));          //enable irqs for the slave
+      scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1));  //set bitmask for broadcast select
     }
     if(scub.slaves[i].cid_group == 3 || scub.slaves[i].cid_group == 38) { /* ADDAC -> 2 FGs */
       scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000; /* enable fg1 and fg2 irq */
@@ -299,10 +283,10 @@ void configure_fgs() {
     }
     i++;
   }
-  /*reset wb_fg_quad */
-  wb_fg_base[WB_FG_CNTRL] = 0x1;
-  i = 0;
-  while(fgs.devs[i]) { 
+  wb_fg_base[WB_FG_CNTRL] = 0x1;  //reset wb_fg_quad
+  for(i = 0; fgs.devs[i]; i++) {
+    if(!((fg_mask >> i) & 1))     //only enable selected fgs
+      continue;  
     //fg in scu bus slave
     if (fgs.devs[i]->version == 0x1) {
       slot = fgs.devs[i]->slave->slot;
@@ -343,7 +327,6 @@ void configure_fgs() {
       }
     }
     fgs.devs[i]->running = 1;
-    i++; //next device
   } 
 } 
 
@@ -359,7 +342,7 @@ void reset_slaves() {
   }
 }
 
-/* scans for slaves and the for fgs */
+/* scans for slaves and then for fgs */
 void print_fgs() {
   int i=0, j=0;
   scan_scu_bus(&scub, backplane_id, scub_base);
@@ -417,7 +400,7 @@ void sw_irq_handler() {
     break;
     case 1:
       configure_slaves(global_msi.msg);
-      enable_msi_irqs();
+      enable_msi_irqs(global_msi.msg);
       scub_base[(0xd << 16) + TMR_BASE + TMR_CNTRL] = 0x2; //multicast tmr enable
     break;
     case 2:
@@ -425,8 +408,8 @@ void sw_irq_handler() {
       print_fgs();
     break;
     case 3:
-      enable_msi_irqs();
-      configure_fgs();
+      enable_msi_irqs(global_msi.msg);
+      configure_fgs(global_msi.msg);
       wb_fg_base[WB_FG_BROAD] = 0x4711; //start fg in scu
       scub_base[(0xd << 16) + FG1_BASE + FG_BROAD] = 0x4711; //start all FG1s (and linked FG2s)
     break;
@@ -489,8 +472,9 @@ void init_irq_handlers() {
 
 void init() {
   uart_init_hw();           //enables the uart for debug messages
-  updateTemp();            //update 1Wire ID and temperatures
+  updateTemp();             //update 1Wire ID and temperatures
   print_fgs();              //scans for slave cards and fgs
+  ack_pui();                //acknowledge powerup irqs
   init_buffers((struct circ_buffer *)&fg_buffer); //init the ring buffer
   init_irq_handlers();      //enable the irqs
 } 
