@@ -138,7 +138,10 @@ int main(int argc, char** argv)
   fseek(fp, 0, SEEK_END); /* Seek to end of file */
   uFileSize = ftell(fp); /* Get current file pointer */
   fseek(fp, 0, SEEK_SET); /* seek back to beginning of file */
-  printf("%s: File size (with header): %d bytes\n", program, uFileSize);
+  if (uFileSize != -1)
+  {
+    printf("%s: File size (with header): %d bytes\n", program, uFileSize);
+  }
   uFileSizeNoHeader = uFileSize - WAV_HEADER_LENGTH;
   
   /* Read the file header */
