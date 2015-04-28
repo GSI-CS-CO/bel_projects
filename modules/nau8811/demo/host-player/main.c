@@ -138,7 +138,7 @@ int main(int argc, char** argv)
   fseek(fp, 0, SEEK_END); /* Seek to end of file */
   uFileSize = ftell(fp); /* Get current file pointer */
   fseek(fp, 0, SEEK_SET); /* seek back to beginning of file */
-  if (uFileSize != -1)
+  if (uFileSize != (uint32_t)-1)
   {
     printf("%s: File size (with header): %d bytes\n", program, uFileSize);
   }
@@ -214,7 +214,15 @@ int main(int argc, char** argv)
     }
     
     /* Display status */
-    printf("\r%s: Streamed %d bytes (%d%%) ... ", program, uPacketCounter*4, (uPacketCounter*4*100)/(uFileSize-WAV_HEADER_LENGTH) );
+    if (uFileSize != (uint32_t)-1)
+    {
+      printf("\r%s: Streamed %d bytes (%d%%) ... ", program, uPacketCounter*4, (uPacketCounter*4*100)/(uFileSize-WAV_HEADER_LENGTH) );
+    }
+    else
+    {
+      printf("\r%s: Streamed %d bytes ... ", program, uPacketCounter*4 );
+    }
+    
     fflush(stdout);
     
     /* Wait until FIFO needs to be refilled */
