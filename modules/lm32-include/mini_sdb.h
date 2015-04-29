@@ -20,25 +20,34 @@
 #define GSI                   0x00000651
 #define CERN                  0x0000ce42
 
-#define CB_CLUSTER            0x10041000
-#define CB_GENERIC            0xeef0b198
-#define DPRAM_GENERIC         0x66cfeb52
-
+//CPU periphery
 #define CPU_INFO_ROM          0x10040085
 #define CPU_ATOM_ACC          0x10040100
 #define CPU_SYSTEM_TIME       0x10040084
-#define CPU_CLU_INFO_ROM      0x10040086
-#define IRQ_TIMER_CTRL_IF     0x10040088
-#define IRQ_MSI_CTRL_IF       0x10040083
+#define CPU_TIMER_CTRL_IF     0x10040088
+#define CPU_MSI_CTRL_IF       0x10040083
+
+//Cluster periphery
+#define LM32_CB_CLUSTER       0x10041000
+#define CLU_INFO_ROM          0x10040086
+#define LM32_RAM_SHARED       0x81111444
+#define FTM_PRIOQ_CTRL        0x10040200
+#define FTM_PRIOQ_DATA        0x10040201
+
+//External interface to CPU RAMs & IRQs
+#define LM32_RAM_USER         0x54111351
+#define LM32_IRQ_EP           0x10050083
+
+//Generic stuff
+#define CB_GENERIC            0xeef0b198
+#define DPRAM_GENERIC         0x66cfeb52
 #define IRQ_ENDPOINT          0x10050082
 #define PCIE_IRQ_ENDP         0x8a670e73
 
+//IO Devices
 #define OLED_DISPLAY          0x93a6f3c4
 #define SSD1325_SER_DRIVER    0x55d1325d
 #define ETHERBONE_MASTER      0x00000815
-
-#define FTM_PRIOQ_CTRL        0x10040200
-#define FTM_PRIOQ_DATA        0x10040201
 
 #define ECA_EVENT             0x8752bf45
 #define ECA_CTRL              0x8752bf44

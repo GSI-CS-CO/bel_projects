@@ -896,6 +896,8 @@ begin
       ebm_wb_slave_i  => top_cbar_master_o(c_tops_ebm),
       ebm_wb_slave_o  => top_cbar_master_i(c_tops_ebm));
  
+ 
+   
   lm32 : ftm_lm32_cluster 
     generic map(
       g_is_ftm           => g_lm32_are_ftm,	
@@ -906,10 +908,12 @@ begin
       g_init_file        => g_project & ".mif",
       g_msi_per_core     => g_lm32_MSIs)
     port map(
+      clk_ref_i            => clk_ref,
+      rst_ref_n_i          => rstn_ref,
       clk_sys_i            => clk_sys,
-      rst_n_i              => rstn_sys,
+      rst_sys_n_i          => rstn_sys,
       rst_lm32_n_i         => s_lm32_rstn,
-      tm_tai8ns_i     	   => sys_tai8ns,
+      tm_tai8ns_i     	   => ref_tai8ns,
       irq_slave_o     	   => irq_cbar_master_i(c_irqs_lm32),
       irq_slave_i     	   => irq_cbar_master_o(c_irqs_lm32),
       cluster_slave_o      => top_cbar_master_i(c_tops_lm32),

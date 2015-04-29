@@ -1,3 +1,37 @@
+--! @file        ftm_lm32_cluster.vhd
+--  DesignUnit   ftm_lm32_cluster
+--! @author      M. Kreider <>
+--! @date        25/02/2014
+--! @version     0.0.3
+--! @copyright   2015 GSI Helmholtz Centre for Heavy Ion Research GmbH
+--!
+
+--! @brief LM32 Cluster. Instantiates desired number of LM32 CPUs + Periphery 
+--!
+--! Cluster Info ROM Registers:
+--! 0x00 Number of Cores
+--! 0x04 MSI Endpoints per Core
+--! 0x08 RAM size per Core
+--! 0x0C Cluster shared RAM size
+--! 0x10 Configured as DataMaster?
+--
+--------------------------------------------------------------------------------
+--! This library is free software; you can redistribute it and/or
+--! modify it under the terms of the GNU Lesser General Public
+--! License as published by the Free Software Foundation; either
+--! version 3 of the License, or (at your option) any later version.
+--!
+--! This library is distributed in the hope that it will be useful,
+--! but WITHOUT ANY WARRANTY; without even the implied warranty of
+--! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--! Lesser General Public License for more details.
+--!
+--! You should have received a copy of the GNU Lesser General Public
+--! License along with this library. If not, see <http://www.gnu.org/licenses/>.
+--------------------------------------------------------------------------------
+--
+
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -112,7 +146,9 @@ architecture rtl of ftm_lm32_cluster is
    signal clu_cbar_slaveport_out   : t_wishbone_slave_out_array  (c_clu_masters-1 downto 0);
    ------------------------------------------------------------------------------
    
-   signal s_rst_lm32_n : std_logic_vector(g_cores-1 downto 0);            
+   signal s_rst_lm32_n,
+          r_rst_lm32_n0,
+          r_rst_lm32_n1 : std_logic_vector(g_cores-1 downto 0);            
    signal s_clu_info   : t_wishbone_master_in;
 
    signal s_ftm_queue_master_out : t_wishbone_master_out;
@@ -298,6 +334,8 @@ architecture rtl of ftm_lm32_cluster is
 --------------------------------------------------------------------------------
 -- Slave - CLUSTER INFO ROM 
 --------------------------------------------------------------------------------  
+ 
+
    
    cluster_info_rom : process(clk_ref_i)
    variable vIdx : natural;
@@ -309,13 +347,24 @@ architecture rtl of ftm_lm32_cluster is
       else 
         -- rom is an easy solution for a device that never stalls:
         s_clu_info.dat <= (others => '0');      
-        s_clu_info.ack <= clu_cbar_masterport_out(vIdx).cyc and clu_cbar_masterport_out(vIdx).stb;
+        -- read only
+        s_clu_info.ack <= clu_cbar_masterport_out(vIdx).cyc and clu_cbar_masterport_out(vIdx).stb and not   clu_cbar_masterport_out(vIdx).we;
+        s_clu_info.err <= clu_cbar_masterport_out(vIdx).cyc and clu_cbar_masterport_out(vIdx).stb and       clu_cbar_masterport_out(vIdx).we;
          
         if(clu_cbar_masterport_out(vIdx).cyc = '1' and clu_cbar_masterport_out(vIdx).stb = '1') then         
-           case(to_integer(unsigned(clu_cbar_masterport_out(vIdx).adr(2 downto 2)))) is
+           case(to_integer(unsigned(clu_cbar_masterport_out(vIdx).adr(4 downto 2)))) is
               when 0 => s_clu_info.dat <= std_logic_vector(to_unsigned(g_cores,32));
-              when 1 => s_clu_info.dat <= (others => '0');
-              when others => null;
+              when 1 => s_clu_info.dat <= std_logic_vector(to_unsigned(g_msi_per_core,32));
+              when 2 => s_clu_info.dat <= std_logic_vector(to_unsigned(g_ram_per_core*4,32));
+              when 3 => s_clu_info.dat <= std_logic_vector(to_unsigned(g_shared_mem*4,32));
+              when 4 => if(g_is_ftm) then
+                           s_clu_info.dat <= std_logic_vector(to_unsigned(1,32));
+                        else
+                           s_clu_info.dat <= (others => '0');
+                        end if;
+              -- unmapped addresses return error
+              when others =>  s_clu_info.ack <= '0';
+                              s_clu_info.err <= '1';
            end case;
         end if;
       end if;
@@ -389,11 +438,17 @@ architecture rtl of ftm_lm32_cluster is
       master_o       => ftm_queue_master_o);
 
 
-  s_rst_lm32_n <= rst_lm32_n_i;
-   
-   
+   sync_individual_resets : process(clk_ref_i)
+   begin
+      -- no need to sync vector, just individual bits.
+      -- CPU's shouldn't rely on simultaneous reset anyway
+      if rising_edge(clk_ref_i) then
+         r_rst_lm32_n0 <= rst_lm32_n_i;
+         r_rst_lm32_n1 <= r_rst_lm32_n0;
+      end if;
+   end process;  
 
-
+   s_rst_lm32_n <= r_rst_lm32_n1;
       
  
   end architecture rtl;

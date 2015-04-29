@@ -1,3 +1,38 @@
+--! @file        ftm_lm32.vhd
+--  DesignUnit   ftm_lm32
+--! @author      M. Kreider <>
+--! @date        25/02/2014
+--! @version     0.0.3
+--! @copyright   2015 GSI Helmholtz Centre for Heavy Ion Research GmbH
+--!
+
+--! @brief LM32 embedded system. CPU, RAM, MSI-IRQ interface, system time, timer module, atomic cycle line control
+--!
+--
+--! CPU Info ROM Registers:
+--! 0x00 CPU ID
+--! 0x04 Number of MSI Endpoints
+--! 0x08 RAM size
+--! 0x10 Is part of a Cluster?
+--
+--------------------------------------------------------------------------------
+--! This library is free software; you can redistribute it and/or
+--! modify it under the terms of the GNU Lesser General Public
+--! License as published by the Free Software Foundation; either
+--! version 3 of the License, or (at your option) any later version.
+--!
+--! This library is distributed in the hope that it will be useful,
+--! but WITHOUT ANY WARRANTY; without even the implied warranty of
+--! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--! Lesser General Public License for more details.
+--!
+--! You should have received a copy of the GNU Lesser General Public
+--! License along with this library. If not, see <http://www.gnu.org/licenses/>.
+--------------------------------------------------------------------------------
+--
+
+
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -5,40 +40,14 @@ use work.wishbone_pkg.all;
 use work.wb_irq_pkg.all;
 use work.ftm_pkg.all;
 
-
-   --TODO:
-   -- important:
-   -- connect timer as master to msi cb (figure out how)
-   -- change lm32 profile to use inline memory to speed up access
-
 entity ftm_lm32 is
 generic(g_cpu_id              : t_wishbone_data := x"CAFEBABE";
         g_size                : natural := 65536;                 -- size of the dpram
-        g_is_in_cluster       : boolean := true; 
-        g_cluster_bridge_sdb  : t_sdb_bridge := (
-   sdb_child     => x"0000_0000_4000_0000",
-   sdb_component => (
-   addr_first    => x"0000_0000_4000_0000",
-   addr_last     => x"0000_0000_7fff_ffff",
-   product => (
-   vendor_id     => x"0000_0000_0000_0651",  
-   device_id     => x"8351_1512",
-   version       => (others => '0'),
-   date          => (others => '0'),
-   name          => "D2MMYDUMMYDUMMYDUMM")));   --
-        g_world_bridge_sdb    : t_sdb_bridge := (
-   sdb_child     => x"0000_0000_8000_0000",
-   sdb_component => (
-   addr_first    => x"0000_0000_8000_0000",
-   addr_last     => x"0000_0000_ffff_ffff",
-   product => (
-   vendor_id     => x"0000_0000_0000_0651", 
-   device_id     => x"8351_1511",
-   version       => x"8000_0000",
-   date          => (others => '0'),
-   name          => "D1MMYDUMMYDUMMYDUMM")));                     -- record for the superior bridge
+        g_is_in_cluster       : boolean := false; 
+        g_cluster_bridge_sdb  : t_sdb_bridge := c_dummy_bridge;   -- record for optional (superior) cluster bridge
+        g_world_bridge_sdb    : t_sdb_bridge;                     -- record for (superior) world bridge
         g_profile             : string  := "medium_icache_debug"; -- lm32 profile
-        g_init_file           : string;                    -- memory init file - binary for lm32
+        g_init_file           : string;                           -- memory init file - binary for lm32
         g_msi_queues          : natural := 1);                    -- number of msi queues connected to the lm32 (added at prio 1 !!! 0 is always timer
 port(
 clk_sys_i      : in  std_logic;  -- system clock 
@@ -103,7 +112,7 @@ architecture rtl of ftm_lm32 is
    end f_sdb_auto_fixed_bridge;
    
    constant c_lm32_layout : t_sdb_record_array(c_lm32_slaves-1 downto 0) :=
-   (c_lm32_ram                => f_sdb_embed_device(f_xwb_dpram(g_size),   x"00000000"), -- this CPU's RAM
+   (c_lm32_ram                => f_sdb_embed_device(f_xwb_dpram_userlm32(g_size),   x"00000000"), -- this CPU's RAM
     c_lm32_timer              => f_sdb_embed_device(c_irq_timer_sdb,       x"3FFFFB00"),
     c_lm32_msi_ctrl           => f_sdb_embed_device(c_irq_slave_ctrl_sdb,  x"3FFFFC00"),
     c_lm32_cpu_info           => f_sdb_embed_device(c_cpu_info_sdb,        x"3FFFFEF0"),
@@ -254,13 +263,22 @@ begin
       else 
         -- rom is an easy solution for a device that never stalls:
         s_cpu_info.dat <= (others => '0');      
-        s_cpu_info.ack <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb;
+        s_cpu_info.ack <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb and not lm32_cb_master_out(vIdx).we;
+        s_cpu_info.err <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb and     lm32_cb_master_out(vIdx).we;
          
         if(lm32_cb_master_out(vIdx).cyc = '1' and lm32_cb_master_out(vIdx).stb = '1') then         
-           case(to_integer(unsigned(lm32_cb_master_out(vIdx).adr(2 downto 2)))) is
+           case(to_integer(unsigned(lm32_cb_master_out(vIdx).adr(3 downto 2)))) is
               when 0 => s_cpu_info.dat <= g_cpu_id;
-              when 1 => s_cpu_info.dat <= c_lm32_sdb_address;
-              when others => null;
+              when 1 => s_cpu_info.dat <= std_logic_vector(to_unsigned(g_msi_queues,32));
+              when 2 => s_cpu_info.dat <= std_logic_vector(to_unsigned(g_size*4,32));
+              when 3 => if(g_is_in_cluster) then
+                           s_cpu_info.dat <= std_logic_vector(to_unsigned(1,32));
+                        else
+                           s_cpu_info.dat <= (others => '0');
+                        end if;
+              -- unmapped addresses return error
+              when others =>  s_cpu_info.ack <= '0';
+                              s_cpu_info.err <= '1';
            end case;
         end if;
       end if;
@@ -281,7 +299,8 @@ begin
             s_sys_time <= ('0', '0', '0', '0', '0', (others => '0'));
         else
            -- rom is an easy solution for a device that never stalls:
-           s_sys_time.ack <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb;
+           s_sys_time.ack <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb and not lm32_cb_master_out(vIdx).we;
+           s_sys_time.err <= lm32_cb_master_out(vIdx).cyc and lm32_cb_master_out(vIdx).stb and     lm32_cb_master_out(vIdx).we;
            s_sys_time.dat <= (others => '0');
            
            r_tai_8ns_HI <= tm_tai8ns_i(63 downto 32);  --register hi and low to reduce load on fan out       

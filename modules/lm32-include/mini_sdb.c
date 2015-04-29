@@ -116,13 +116,13 @@ void discoverPeriphery(void)
    pCpuId         = find_device_adr(GSI, CPU_INFO_ROM);
    pCpuAtomic     = find_device_adr(GSI, CPU_ATOM_ACC);
    pCpuSysTime    = find_device_adr(GSI, CPU_SYSTEM_TIME);
-   pCpuIrqSlave   = find_device_adr(GSI, IRQ_MSI_CTRL_IF);   
-   pCpuTimer      = find_device_adr(GSI, IRQ_TIMER_CTRL_IF);
+   pCpuIrqSlave   = find_device_adr(GSI, CPU_MSI_CTRL_IF);   
+   pCpuTimer      = find_device_adr(GSI, CPU_TIMER_CTRL_IF);
    
-   find_device_multi(&found_sdb[0], &idx, 20, GSI, CB_CLUSTER);
+   find_device_multi(&found_sdb[0], &idx, 20, GSI, LM32_CB_CLUSTER);
    pCluCB         = (uint32_t*)getSdbAdr(&found_sdb[0]);
-   pSharedRam     = find_device_adr_in_subtree(&found_sdb[0], CERN, DPRAM_GENERIC);
-   pCluInfo       = find_device_adr_in_subtree(&found_sdb[0], GSI, CPU_CLU_INFO_ROM);
+   pSharedRam     = find_device_adr_in_subtree(&found_sdb[0], GSI, LM32_RAM_SHARED);
+   pCluInfo       = find_device_adr_in_subtree(&found_sdb[0], GSI, CLU_INFO_ROM);
    pFpqCtrl       = find_device_adr_in_subtree(&found_sdb[0], GSI, FTM_PRIOQ_CTRL); 
    pFpqData       = find_device_adr_in_subtree(&found_sdb[0], GSI, FTM_PRIOQ_DATA); 
    
