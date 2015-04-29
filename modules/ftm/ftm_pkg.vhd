@@ -9,20 +9,25 @@ use work.wb_irq_pkg.all;
 
 package ftm_pkg is
 
+
 ------------------------------------------------------------------------------
 -- Components declaration
 -------------------------------------------------------------------------------
   
-   constant c_clu_slaves   : natural := 7; 
+   constant c_clu_slaves   : natural := 6; 
    
    constant c_clu_cluster_info  : natural := 0;
    constant c_clu_shared_mem    : natural := 1;
-   constant c_clu_load_mgr      : natural := 2;
-   constant c_clu_ebm_queue_c   : natural := 3;
-   constant c_clu_ebm_queue_d   : natural := 4;
-   constant c_clu_irq_bridge    : natural := 5;
-   constant c_clu_ram_bridge    : natural := 6;
+   constant c_clu_ebm_queue_c   : natural := 2;
+   constant c_clu_ebm_queue_d   : natural := 3;
+   constant c_clu_irq_bridge    : natural := 4;
+   constant c_clu_ram_bridge    : natural := 5;
 
+
+   function f_substr(s : string; idx : natural; p : character) return string;  
+   function f_substr_start(s : string; idx : natural; p : character) return integer;
+   function f_substr_end(s : string; idx : natural; p : character) return integer; 
+   
    -- generator functions for ftm crossbars. workaround for no-reverse-generic in VHDL,
    -- use this when placing the ftm bridges outside
    function f_multi_inst_sdb(times : natural; device : t_sdb_device)         return t_sdb_record_array;
@@ -62,8 +67,7 @@ package ftm_pkg is
         g_cluster_bridge_sdb  : t_sdb_bridge := c_dummy_bridge;   --
         g_world_bridge_sdb    : t_sdb_bridge;                     -- record for the superior bridge
         g_profile             : string  := "medium_icache_debug"; -- lm32 profile
-        g_init_file           : string  := "";                    -- memory init file - binary for lm32
-        g_addr_ext_bits       : natural := 1;                     -- address extension bits (starting from MSB)
+        g_init_file          : string  := "";                 -- memory init files - binaries for lm32
         g_msi_queues          : natural := 3);                    -- number of msi queues connected to the lm32 (added at prio 1 !!! 0 is always timer
    port(
    clk_sys_i      : in  std_logic;  -- system clock 
@@ -94,13 +98,16 @@ package ftm_pkg is
            g_shared_mem    : natural := 0;
            g_msi_per_core  : natural := 2;
            g_profile       : string  := "medium_icache_debug";
-           g_init_file     : string  := "msidemo.mif";   
+           g_init_files    : string;   
            g_world_bridge_sdb    : t_sdb_bridge                      -- superior crossbar         
       );
    port(
+   clk_ref_i      : in  std_logic;
+   rst_ref_n_i    : in  std_logic;
+   
    clk_sys_i      : in  std_logic;
-   rst_n_i        : in  std_logic;
-   rst_lm32_n_i   : in  std_logic_vector(g_cores-1 downto 0);
+   rst_sys_n_i    : in  std_logic;
+   rst_lm32_n_i   : in  std_logic_vector(g_cores-1 downto 0); 
 
    tm_tai8ns_i    : in std_logic_vector(63 downto 0);
 
@@ -242,22 +249,7 @@ package ftm_pkg is
    date          => x"20131009",
    name          => "EBM_MSG_QUEUE_CTRL "))); 
 
-   constant c_load_mgr_sdb : t_sdb_device := (
-   abi_class     => x"0000", -- undocumented device
-   abi_ver_major => x"01",
-   abi_ver_minor => x"01",
-   wbd_endian    => c_sdb_endian_big,
-   wbd_width     => x"7", -- 8/16/32-bit port granularity
-   sdb_component => (
-   addr_first    => x"0000000000000000",
-   addr_last     => x"00000000000000ff",
-   product => (
-   vendor_id     => x"0000000000000651", -- GSI
-   device_id     => x"10040202",
-   version       => x"00000001",
-   date          => x"20131009",
-   name          => "LOAD_MANAGER       ")));
-                    
+                
 
    constant c_cluster_info_sdb : t_sdb_device := (
    abi_class     => x"0000", -- undocumented device
@@ -286,6 +278,57 @@ end ftm_pkg;
 
    package body ftm_pkg is
 
+   function f_substr(s : string; idx : natural; p : character) return string is
+      constant startp : integer := f_substr_start(s, idx, p);
+      constant endp : integer := f_substr_end(s, idx, p);
+      variable result : string(1 to endp - startp +1);
+      variable i : natural;
+   begin
+      if(result = "" or startp=endp) then
+         report "CPU" & integer'image(idx) & " has no init file." severity warning;
+         return "";
+      end if;   
+      for i in startp to endp loop
+         result(i - startp +1) := s(i);
+      end loop;   
+      report "CPU" & integer'image(idx) & " InitFile: " & result severity note;      
+      return result;
+   end f_substr;   
+   
+   function f_substr_start(s : string; idx : natural; p : character) return integer is
+      variable i, j : integer;
+   begin
+      if(idx = 0) then
+         return 1;
+      end if;
+         
+      j := 0;
+      for i in s'range loop
+         if(j = idx) then
+            return i;
+         end if;
+         if s(i) = p then
+            j := j +1;
+         end if;   
+      end loop;
+      return s'high;
+   end f_substr_start;
+   
+   function f_substr_end(s : string; idx : natural; p : character) return integer is
+      variable i, j : integer;
+   begin
+      j := 0;
+      for i in s'range loop
+         if s(i) = p then
+            if(j = idx) then
+               return i-1;
+            end if; 
+            j := j +1;
+         end if;   
+      end loop;
+      return s'high;
+   end f_substr_end;    
+   
    -- generator functions for ftm crossbars. workaround for no-reverse-generic in VHDL,
    -- use this when placing the ftm bridges outside
    function f_multi_inst_sdb(times : natural; device : t_sdb_device)
@@ -304,7 +347,6 @@ end ftm_pkg;
       variable v_clu_layout :  t_sdb_record_array(c_clu_slaves-1 downto 0); 
    begin
       v_clu_layout :=   (  c_clu_cluster_info => f_sdb_auto_device(c_cluster_info_sdb,            true),
-                           c_clu_load_mgr     => f_sdb_auto_device(c_load_mgr_sdb,                true), 
                            c_clu_ebm_queue_c  => f_sdb_auto_device(c_ebm_queue_ctrl_sdb,          is_ftm),
                            c_clu_ebm_queue_d  => f_sdb_auto_device(c_ebm_queue_data_sdb,          is_ftm),
                            c_clu_shared_mem   => f_sdb_auto_device(f_xwb_dpram(shared_ramsize),  (shared_ramsize > 0)),
