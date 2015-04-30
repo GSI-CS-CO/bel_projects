@@ -881,8 +881,8 @@ begin
   eb : eb_master_slave_wrapper
     generic map(
       g_with_master     => true,
-      g_ebs_sdb_address => (x"00000000" & c_top_sdb_address),
-      g_ebm_adr_bits_hi => 10)
+      g_ebs_sdb_address => (x"00000000" & c_top_sdb_address)
+    )
     port map(
       clk_i           => clk_sys,
       nRst_i          => rstn_sys,
