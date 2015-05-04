@@ -16,4 +16,4 @@ modules = {
     "../../../top/gsi_pexarria5/ftm", 
   ]
 }
-syn_tool = "quartus"
+
