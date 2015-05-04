@@ -17,7 +17,7 @@ static inline void delay(int x)
   while(x--) asm volatile("nop");
 }
 
-extern void usleep(int x);
+extern void usleep(uint32_t x);
 extern volatile unsigned int* BASE_ONEWIRE;
 extern volatile uint32_t* BASE_UART;
 #endif

@@ -20,6 +20,9 @@
 //#define DEBUG
 //#define FGDEBUG
 //#define CBDEBUG
+#define MSI_SLAVE 0
+#define MSI_WB_FG 2
+#define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
 
 extern struct w1_bus wrpc_w1_bus;
 
@@ -50,22 +53,29 @@ volatile unsigned int* scu_mil_base;
 sdb_location lm32_irq_endp[10];       // there are three queues for msis
 sdb_location ow_base[2];              // there should be two controllers
 volatile unsigned int* pcie_irq_endp;
+volatile unsigned int* cpu_info_base;
 
 volatile unsigned int param_sent[MAX_FG_DEVICES];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
+int endp_idx = 0;
 
-void usleep(int us)
+
+void msDelayBig(uint64_t ms)
 {
-  unsigned i;
-  unsigned long long delay = us;
+  uint64_t later = getSysTime() + ms * 1000000ULL / 8;
+  while(getSysTime() < later) {asm("# noop");}
+}
+
+void usleep(uint32_t us)
+{
+  uint32_t i;
+  uint32_t delay = us*1000;
   /* prevent arithmetic overflow */
-  delay *= CPU_CLOCK;
-  delay /= 1000000;
-  delay /= 4; // instructions per loop
+  delay /= (CLK_PERIOD<<1); //two cycles per loop
   for (i = delay; i > 0; i--) asm("# noop");
 }  
 
-void msDelay(int msecs) {
+void msDelay(uint32_t msecs) {
   usleep(1000 * msecs);
 }
 
@@ -187,6 +197,7 @@ void wb_fg_irq_handler() {
 
 void enable_msi_irqs(int fg_mask) {
   int i, slot;
+  unsigned int slave_endp_addr;
   //SCU Bus Master
   scub_base[GLOBAL_IRQ_ENA] = 0x20; //enable slave irqs
   scub_irq_base[0] = 0x1; // reset irq master
@@ -197,14 +208,14 @@ void enable_msi_irqs(int fg_mask) {
       if (fgs.devs[i]->version == 0x1) {
         scub_irq_base[8] = slot-1;                                      //channel select
         scub_irq_base[9] = 0x08154711;                                  //msg
-        scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[0]) + (slot << 2); //destination address, do not use lower 2 bits
+        scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[endp_idx + MSI_SLAVE]) + (slot << 2); //destination address, do not use lower 2 bits
         initialized[slot - 1] = 0;                                      //counter needs to be resynced
         scub_irq_base[2] |= (1 << (slot - 1));                          //enable slaves
       } else if (fgs.devs[i]->version == 0x2) {
         wb_fg_irq_base[0] = 0x1;                                        // reset irq master
         wb_fg_irq_base[8] = 0;                                          // only one channel
         wb_fg_irq_base[9] = 0x47110815;                                 // msg
-        wb_fg_irq_base[10] = getSdbAdr(&lm32_irq_endp[2]);              //destination address, do not use lower 2 bits
+        wb_fg_irq_base[10] = getSdbAdr(&lm32_irq_endp[endp_idx + MSI_WB_FG]);  //destination address, do not use lower 2 bits
         wb_fg_irq_base[2] = 0x1;                                        //enable irq channel
       }
     }
@@ -455,7 +466,7 @@ void updateTemp() {
 }
 
 void tmr_irq_handler() {
-  updateTemp();
+  //updateTemp();
 }
 
 void init_irq_handlers() {
@@ -488,16 +499,33 @@ int main(void) {
   uint32_t clu_cb_idx = 0;
   int slot;
   int fg_is_running[MAX_FG_DEVICES];
-  discoverPeriphery();  
-  scub_base     = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
-  scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);    // irq controller for scu bus
-  wb_fg_irq_base = (unsigned int*)find_device_adr(GSI, WB_FG_IRQ_CTRL); // irq controller for wb_fg
-  find_device_multi(&found_sdb[0], &clu_cb_idx, 20, GSI, CB_CLUSTER); // find location of cluster crossbar
-  find_device_multi_in_subtree(&found_sdb[0], lm32_irq_endp, &lm32_endp_idx, 10, GSI, IRQ_ENDPOINT); // list irq endpoints in cluster crossbar
-  pcie_irq_endp = (unsigned int *)find_device_adr(GSI, PCIE_IRQ_ENDP);
-  scu_mil_base = (unsigned int*)find_device(SCU_MIL);
-  wb_fg_base = (unsigned int*)find_device_adr(GSI, WB_FG_QUAD);
+  discoverPeriphery();
+  cpu_info_base   = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);  
+  scub_base       = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
+  scub_irq_base   = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);    // irq controller for scu bus
+  wb_fg_irq_base  = (unsigned int*)find_device_adr(GSI, WB_FG_IRQ_CTRL); // irq controller for wb_fg
+  find_device_multi(&found_sdb[0], &clu_cb_idx, 20, GSI, LM32_CB_CLUSTER); // find location of cluster crossbar
+  find_device_multi_in_subtree(&found_sdb[0], lm32_irq_endp, &lm32_endp_idx, 10, GSI, LM32_IRQ_EP); // list irq endpoints in cluster crossbar
+  pcie_irq_endp   = (unsigned int *)find_device_adr(GSI, PCIE_IRQ_ENDP);
+  scu_mil_base    = (unsigned int*)find_device(SCU_MIL);
+  wb_fg_base      = (unsigned int*)find_device_adr(GSI, WB_FG_QUAD);
   find_device_multi(ow_base, &ow_base_idx, 2, CERN, WR_1Wire);
+
+  msDelay(1500); //wait for powerup of the slave cards
+  init(); 
+  
+  if(cpu_info_base) {
+    mprintf("CPU ID: 0x%x\n", cpu_info_base[0]);
+    mprintf("number MSI endpoints: %d\n", cpu_info_base[1]);
+  } else 
+    mprintf("no CPU INFO ROM found!\n");
+
+  if(cpu_info_base[1] < 3) {
+    mprintf("not enough MSI endpoints for FG program!\n");
+    while(1);
+  }
+
+  endp_idx = getCpuIdx() * cpu_info_base[1]; // calculate index from CPU ID and number of endpoints
  
   if(wb_fg_base)
     wb_fg_base[WB_FG_SW_DST]  = 0x80420808; // write to the first slave, offset 0x404 and 0x405
@@ -505,8 +533,6 @@ int main(void) {
   disp_reset();
   disp_put_c('\f');
   
-  usleep(1500000); //wait for powerup of the slave cards
-  init(); 
 
   mprintf("number of lm32_irq_endpoints found: %d\n", lm32_endp_idx);
   for (i=0; i < lm32_endp_idx; i++) {
@@ -523,7 +549,7 @@ int main(void) {
 
   while(1) {
     updateTemp();
-    msDelay(15000);
+    msDelayBig(15000);
   }
   while(1) { 
     i = 0; 
