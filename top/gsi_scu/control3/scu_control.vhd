@@ -261,7 +261,7 @@ architecture rtl of scu_control is
   
   constant c_family  : string := "Arria II"; 
   constant c_project : string := "scu_control";
-  constant c_initf   : string := c_project & ".mif"; 
+  constant c_initf   : string := c_project & ".mif" & ';' & c_project & "_stub.mif";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
   -- multiple init files for n processors are to be seperated by semicolon ';'
   

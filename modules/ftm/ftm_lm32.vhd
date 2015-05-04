@@ -115,7 +115,7 @@ architecture rtl of ftm_lm32 is
    (c_lm32_ram                => f_sdb_embed_device(f_xwb_dpram_userlm32(g_size),   x"00000000"), -- this CPU's RAM
     c_lm32_timer              => f_sdb_embed_device(c_irq_timer_sdb,       x"3FFFFB00"),
     c_lm32_msi_ctrl           => f_sdb_embed_device(c_irq_slave_ctrl_sdb,  x"3FFFFC00"),
-    c_lm32_cpu_info           => f_sdb_embed_device(c_cpu_info_sdb,        x"3FFFFEF0"),
+    c_lm32_cpu_info           => f_sdb_embed_device(c_cpu_info_sdb,        x"3FFFFEE0"),
     c_lm32_sys_time           => f_sdb_embed_device(c_sys_time_sdb,        x"3FFFFEF8"),
     c_lm32_atomic             => f_sdb_embed_device(c_atomic_sdb,          x"3FFFFF00"),
     c_lm32_clu_bridge         => f_sdb_auto_fixed_bridge(g_cluster_bridge_sdb, g_is_in_cluster, true, x"40000000"),

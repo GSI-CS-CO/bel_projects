@@ -344,7 +344,7 @@ package body ftm_pkg is
    begin
       --report "Calling substr function" severity warning;
       if(result = "" or startp=endp) then
-         report "CPU" & integer'image(idx) & " has no init file!" severity warning;
+         report "CPU" & integer'image(idx) & " has no init file!" severity error;
          return "";
       end if;   
       for i in startp to endp loop
