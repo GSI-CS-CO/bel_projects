@@ -89,6 +89,7 @@ entity monster is
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
     g_lm32_shared_ramsize  : natural;
+    g_lm32_init_files      : string;
     g_lm32_are_ftm         : boolean);
   port(
     -- Required: core signals
@@ -905,7 +906,7 @@ begin
       g_ram_per_core     => g_lm32_ramsizes,
       g_shared_mem       => g_lm32_shared_ramsize,
       g_world_bridge_sdb => c_top_bridge_sdb,
-      g_init_file        => g_project & ".mif",
+      g_init_files       => g_lm32_init_files,
       g_msi_per_core     => g_lm32_MSIs)
     port map(
       clk_ref_i            => clk_ref,

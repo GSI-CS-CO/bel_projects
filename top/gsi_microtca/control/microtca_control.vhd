@@ -180,19 +180,27 @@ architecture rtl of microtca_control is
   signal s_lvds_o_led   : std_logic_vector(4 downto 0);
   signal s_lvds_oen     : std_logic_vector(4 downto 0);
   
+  constant c_family  : string := "Arria V"; 
+  constant c_project : string := "microtca_control";
+  constant c_initf   : string := c_project & ".mif" 
+  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
+  -- multiple init files for n processors are to be seperated by semicolon ';'
+  
 begin
 
   main : monster
     generic map(
-      g_family      => "Arria V",
-      g_project     => "microtca_control",
+      g_family      => c_family,
+      g_project     => c_project,
       g_flash_bits  => 25,
       g_gpio_out    => 6, -- 2xfront end+4xuser leds
       g_lvds_inout  => 5, -- front end lemos
       g_lvds_invert => true,
       g_en_pcie     => true,
       g_en_usb      => true,
-      g_en_lcd      => true)
+      g_en_lcd      => true,
+      g_lm32_init_files => c_initf
+    )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,

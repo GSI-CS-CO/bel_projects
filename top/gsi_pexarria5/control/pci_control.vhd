@@ -223,12 +223,18 @@ architecture rtl of pci_control is
   signal lvds_o_led   : std_logic_vector(2 downto 0);
   signal lvds_oen     : std_logic_vector(2 downto 0);
 
+  constant c_family  : string := "Arria V"; 
+  constant c_project : string := "pci_control";
+  constant c_initf   : string := c_project & ".mif";
+  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
+  -- multiple init files for n processors are to be seperated by semicolon ';'
+
 begin
 
   main : monster
     generic map(
-      g_family      => "Arria V",
-      g_project     => "pci_control",
+      g_family      => c_family,
+      g_project     => c_project,
       g_flash_bits  => 25,
       g_gpio_out    => 8,
       g_lvds_in     => 2,
@@ -237,7 +243,9 @@ begin
       g_lvds_invert => true,
       g_en_pcie     => true,
       g_en_usb      => true,
-      g_en_lcd      => true)
+      g_en_lcd      => true,
+      g_lm32_init_files =>  c_initf
+    )  
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,

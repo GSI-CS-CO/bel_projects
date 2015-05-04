@@ -210,12 +210,18 @@ architecture rtl of exploder5_csco_tr is
   signal s_lvds_o_led   : std_logic_vector(11 downto 1);
   signal s_lvds_oen     : std_logic_vector( 8 downto 1);
 
+  constant c_family  : string := "Arria V"; 
+  constant c_project : string := "exploder5_csco_tr";
+  constant c_initf   : string := c_project & ".mif"
+  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
+  -- multiple init files for n processors are to be seperated by semicolon ';' 
+
 begin
 
   main : monster
     generic map(
-      g_family      => "Arria V",
-      g_project     => "exploder5_csco_tr",
+      g_family      => c_family,
+      g_project     => c_project,
       g_flash_bits  => 25,
       g_psram_bits  => c_psram_bits,
       g_gpio_in     => 4,
@@ -228,7 +234,9 @@ begin
       g_en_ssd1325  => true,
       g_en_nau8811  => true,
       g_en_psram    => true,
-      g_en_user_ow  => true)
+      g_en_user_ow  => true,
+      g_lm32_init_files => c_initf
+    )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,
