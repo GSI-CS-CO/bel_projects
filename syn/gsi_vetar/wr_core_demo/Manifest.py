@@ -16,3 +16,4 @@ modules = {
     "../../../top/gsi_vetar/wr_core_demo",
   ]
 }
+syn_tool = "quartus"
