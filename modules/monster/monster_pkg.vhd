@@ -197,12 +197,17 @@ package monster_pkg is
       mil_nled_interl_o      : out   std_logic;
       mil_nled_dry_o         : out   std_logic;
       mil_nled_drq_o         : out   std_logic;
-      mil_io1_o              : out   std_logic;
-      mil_io1_is_in_o        : out   std_logic;
-      mil_nled_io1_o         : out   std_logic;
-      mil_io2_o              : out   std_logic;
-      mil_io2_is_in_o        : out   std_logic;
-      mil_nled_io2_o         : out   std_logic;
+	   mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
+      mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
+	   mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
+      mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');	
+		
+--      mil_io1_o              : out   std_logic;
+--      mil_io1_is_in_o        : out   std_logic;
+--      mil_nled_io1_o         : out   std_logic;
+--      mil_io2_o              : out   std_logic;
+--      mil_io2_is_in_o        : out   std_logic;
+--      mil_nled_io2_o         : out   std_logic;
       -- g_en_oled
       oled_rstn_o            : out   std_logic;
       oled_dc_o              : out   std_logic;

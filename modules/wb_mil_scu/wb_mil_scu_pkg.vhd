@@ -55,6 +55,15 @@ constant  rd_wr_dly_timer_a:  integer := 16#07#;  -- read delay timer:          
                                                   -- write delay timer:           wb_mil_scu_offset + 16#1C#.
 constant  rd_clr_wait_timer_a:integer := 16#08#;  -- read wait timer:             wb_mil_scu_offset + 16#20#.
                                                   -- write (clear) wait timer:    wb_mil_scu_offset + 16#20#.
+constant  mil_wr_rd_lemo_conf_a:integer:= 16#09#; -- read mil lemo config:        wb_mil_scu_offset + 16#24#, data[31..4] always zero.
+                                                  -- write mil lemo config:       wb_mil_scu_offset + 16#24#, only specific bits can be changed.Data[31..4] don't care.
+constant  mil_wr_rd_lemo_dat_a:integer := 16#0A#; -- read mil lemo dat:           wb_mil_scu_offset + 16#28#, data[31..4] always zero.
+                                                  -- write mil lemo dat:          wb_mil_scu_offset + 16#28#, only specific bits can be changed.Data[31..4] don't care.
+constant  mil_rd_lemo_inp_a:   integer := 16#0B#; -- read mil lemo inp:           wb_mil_scu_offset + 16#2C#, data[31..4] always zero.
+
+																  
+																  
+																  
 
 constant  ev_filt_first_a:    integer := 16#1000#;  -- first event filter ram address: wb_mil_scu_offset + 16#4000. 
 constant  ev_filt_last_a:     integer := 16#1FFF#;  -- last event filter  ram address: wb_mil_scu_offset + 16#7FFC.
@@ -79,6 +88,26 @@ constant  b_data_req:       integer := 2;   -- '1' => data request interrupt of 
 constant  b_data_rdy:       integer := 1;   -- '1' => data ready interrupt of device bus is active.
 constant  b_interlock:      integer := 0;   -- '1' => Interlock of device bus is active.
 
+
+constant  b_lemo1_out_en:   integer := 0;   -- '1' => MIL Lemo 1 is enabled as output
+constant  b_lemo2_out_en:   integer := 1;   -- '1' => MIL Lemo 2 is enabled as output
+constant  b_lemo3_out_en:   integer := 2;   -- '1' => MIL Lemo 3 is enabled as output
+constant  b_lemo4_out_en:   integer := 3;   -- '1' => MIL Lemo 4 is enabled as output
+
+constant  b_lemo1_event_en: integer := 4;   -- '1' => MIL Lemo 1 is in Event driven mode
+constant  b_lemo2_event_en: integer := 5;   -- '1' => MIL Lemo 2 is in Event driven mode
+constant  b_lemo3_event_en: integer := 6;   -- '1' => MIL Lemo 3 is in Event driven mode
+constant  b_lemo4_event_en: integer := 7;   -- '1' => MIL Lemo 4 is in Event driven mode
+
+constant  b_lemo1_dat:      integer := 0;   -- '1' => MIL Lemo 1 output data (default='0')
+constant  b_lemo2_dat:      integer := 1;   -- '1' => MIL Lemo 2 output data (default='0')
+constant  b_lemo3_dat:      integer := 2;   -- '1' => MIL Lemo 3 output data (default='0')
+constant  b_lemo4_dat:      integer := 3;   -- '1' => MIL Lemo 4 output data (default='0')
+
+constant  b_lemo1_inp:      integer := 0;   -- '1' => MIL Lemo 1 (debounced) pin input status
+constant  b_lemo2_inp:      integer := 1;   -- '1' => MIL Lemo 2 (debounced) pin input status
+constant  b_lemo3_inp:      integer := 2;   -- '1' => MIL Lemo 3 (debounced) pin input status
+constant  b_lemo4_inp:      integer := 3;   -- '1' => MIL Lemo 4 (debounced) pin input status
 
 
 component wb_mil_scu IS 
@@ -161,12 +190,16 @@ port  (
     nLed_Dry:       out     std_logic;
     nLed_Drq:       out     std_logic;
     every_ms_intr_o:  out std_logic;
-    io_1:           out     std_logic;
-    io_1_is_in:     out     std_logic := '0';
-    nLed_io_1:      out     std_logic;
-    io_2:           out     std_logic;
-    io_2_is_in:     out     std_logic := '0';
-    nLed_io_2:      out     std_logic;
+	 lemo_data_o:    out     std_logic_vector(4 downto 1);
+    lemo_nled_o:    out     std_logic_vector(4 downto 1);
+	 lemo_out_en_o:  out     std_logic_vector(4 downto 1);  
+    lemo_data_i:    in      std_logic_vector(4 downto 1):= (others => '0');
+--    io_1:           out     std_logic;
+--    io_1_is_in:     out     std_logic := '0';
+--    nLed_io_1:      out     std_logic;
+--    io_2:           out     std_logic;
+--    io_2_is_in:     out     std_logic := '0';
+--    nLed_io_2:      out     std_logic;
     nsig_wb_err:    out     std_logic       -- '0' => gestretchte wishbone access Fehlermeldung
 
     );

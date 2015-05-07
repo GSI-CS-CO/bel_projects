@@ -54,7 +54,15 @@ ENTITY wb_mil_scu IS
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
 --|   06    | K.Kaiser    | 25.02.2015  | a) generic map: Berechnung fuer every_ms, every_us  korrigiert                            |
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
-
+--|   07    | K.Kaiser    | 05.05.2015  |    Bis zu 4 LEMO Buchsen (SIO) nun über Register auslesbar und kontrollierbar             |
+--|         |             |             |    Die vorherige Funktion (Steuerung beliebiger LEMO Ausgänge per Event) bleibt erhalten  |
+--|         |             |             |    wenn das entsprechende "event_cntrl" Statusbit gesetzt ist.                            |
+--|         |             |             |    Ist das entsprechende "event_cntrl" Statusbit gleich '0'(=default), dann sind LEMOs    |                          |
+--|         |             |             |    a1) nach Reset als Inputs geschaltet.Dise sind (transparent)per Input Reg abfragbar    |
+--|         |             |             |    a2) wird Lemo Out Enable Reg.Bit auf 1 gesetzt,dann werden das entsprechen Reg-Bit     |
+--|         |             |             |        auf den entsprechenden LEMO Ausgang übertragen.                                    |
+--|         |             |             |    Jeder Lemo Buchse sind eigene Bits zugeordnet, sie sind somit einzeln ansteuerbar.     |      
+--| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
 generic (
     Clk_in_Hz:  INTEGER := 125_000_000    -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
                                           -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
@@ -134,12 +142,16 @@ port  (
     nLed_Dry:       out     std_logic;
     nLed_Drq:       out     std_logic;
     every_ms_intr_o:  out std_logic;
-    io_1:           buffer  std_logic;
-    io_1_is_in:     out     std_logic := '0';
-    nLed_io_1:      out     std_logic;
-    io_2:           buffer  std_logic;
-    io_2_is_in:     out     std_logic := '0';
-    nLed_io_2:      out     std_logic;
+	 lemo_data_o:    out     std_logic_vector(4 downto 1);
+    lemo_nled_o:    out     std_logic_vector(4 downto 1);
+	 lemo_out_en_o:  out     std_logic_vector(4 downto 1);  
+    lemo_data_i:    in      std_logic_vector(4 downto 1):= (others => '0');
+    --io_1:           buffer  std_logic;
+    --io_1_is_in:     out     std_logic := '0';
+    --nLed_io_1:      out     std_logic;
+    --io_2:           buffer  std_logic;
+    --io_2_is_in:     out     std_logic := '0';
+    --nLed_io_2:      out     std_logic;
     nsig_wb_err:    out     std_logic       -- '0' => gestretchte wishbone access Fehlermeldung
     );
 end wb_mil_scu;
@@ -215,7 +227,19 @@ signal    db_data_rdy_intr: std_logic;
 signal    db_data_req_intr: std_logic;
 
 signal    dly_intr:         std_logic;
-signal    every_ms:       std_logic;
+signal    every_ms:         std_logic;
+
+signal    lemo_inp:         std_logic_vector (4 downto 1);
+signal    lemo_i_reg:       std_logic_vector (4 downto 1);
+signal    lemo_dat:         std_logic_vector (4 downto 1);
+signal    lemo_out_en:      std_logic_vector (4 downto 1);
+signal    lemo_event_en:    std_logic_vector (4 downto 1);
+
+
+
+signal    io_1:             std_logic;
+signal    io_2:             std_logic;
+
 
 
 begin
@@ -366,21 +390,10 @@ led_timing: led_n
     nLed_opdrn  => nLed_Timing      -- open drain output, active low, inactive tristate.
     );
 
-led_io_1: led_n
-  generic map (
-    stretch_cnt => 4
-    )
-  port map (
-    ena         =>  ena_led_count,  -- if you use ena for a reduction, signal should be generated from the same 
-                                    -- clock domain and should be only one clock period active.
-    CLK         => clk_i,
-    Sig_In      => io_1,            -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
-                                    -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => open,            -- Push-Pull output, active low, inactive high.
-    nLed_opdrn  => nLed_io_1        -- open drain output, active low, inactive tristate.
-    );
+	 
+lemo_nled_i: for i in 1 to 4 generate
 
-led_io_2: led_n
+lemo_nled_o_x: led_n
   generic map (
     stretch_cnt => 4
     )
@@ -388,11 +401,14 @@ led_io_2: led_n
     ena         =>  ena_led_count,  -- if you use ena for a reduction, signal should be generated from the same 
                                     -- clock domain and should be only one clock period active.
     CLK         => clk_i,
-    Sig_In      => io_2,            -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
+    Sig_In      => lemo_data_i(i),  -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => open,            -- Push-Pull output, active low, inactive high.
-    nLed_opdrn  => nLed_io_2        -- open drain output, active low, inactive tristate.
+    nLed_opdrn  => lemo_nled_o(i)   -- open drain output, active low, inactive tristate.
     );
+end generate;
+
+
 
 sig_wb_err: led_n
   generic map (
@@ -454,6 +470,23 @@ p_deb_dreq: debounce
     );
     
 Data_Req_Intr_o <= db_data_req_intr;
+
+p_deb_lemo_i: for i in 1 to 4 generate
+p_deb_lemo_x: debounce
+  generic map (
+    DB_Cnt  => clk_in_hz / (1_000_000/ 2)   -- "DB_Cnt" = fuer 2 us, DB_Cnt gibt die Zahl der Takte vor, die das
+                                            -- Signal "DB_In" mindestens '1' oder '0' sein muss,damit "DB_Out" diesem Pegel folgt.     
+    )
+  port map (
+    DB_In   => lemo_data_i(i),              -- Das zu entprellende Signal
+    Reset   => not nRst_i,                  -- Asynchroner reset. Achtung der sollte nicht Stoerungsbehaftet sein.
+    Clk     => clk_i,
+    DB_Out  => lemo_inp(i)                  -- Das entprellte Signal von "DB_In".
+    );
+end generate;
+
+	 
+
 
 
 Mil_1:  mil_hw_or_soft_ip
@@ -606,8 +639,19 @@ p_regs_acc: process (clk_i, nrst_i)
       sw_clr_ev_timer <= '1';
       ld_dly_timer    <= '0';
       clr_wait_timer  <= '1';
+		
+
+		lemo_out_en      <= (others => '0');	
+		lemo_dat        <= (others => '0');		
+		lemo_i_reg      <= (others => '0');
+
+
       
     elsif rising_edge(clk_i) then
+
+		lemo_i_reg      <= lemo_inp;
+ 
+	   
 
       ex_stall        <= '1';
       ex_ack          <= '0';
@@ -700,6 +744,75 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_stall <= '0';
               ex_err <= '1';
             end if;
+				
+          when mil_wr_rd_lemo_conf_a =>  -- read or write lemo config register
+            if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
+              if slave_i.we = '1' then
+                -- write lemo config register
+                lemo_out_en(1)       <= slave_i.dat(b_lemo1_out_en);
+                lemo_out_en(2)       <= slave_i.dat(b_lemo2_out_en);
+                lemo_out_en(3)       <= slave_i.dat(b_lemo3_out_en);
+                lemo_out_en(4)       <= slave_i.dat(b_lemo4_out_en);
+                lemo_event_en(1)     <= slave_i.dat(b_lemo1_event_en);                                        
+                lemo_event_en(2)     <= slave_i.dat(b_lemo2_event_en); 
+					 lemo_event_en(3)     <= slave_i.dat(b_lemo3_event_en); 
+					 lemo_event_en(4)     <= slave_i.dat(b_lemo4_event_en); 
+                ex_stall <= '0';
+                ex_ack <= '1';
+              else
+                -- read lemo config register
+                slave_o.dat(15 downto 0) <= ( "00000000" & lemo_event_en(4 downto 1) & lemo_out_en(4 downto 1) );-- mil-lemo config[15..0]
+                ex_stall <= '0';
+                ex_ack <= '1';
+              end if;
+            else
+              -- access to high word or unaligned word is not allowed
+              ex_stall <= '0';
+              ex_err <= '1';
+            end if;				
+
+          when mil_wr_rd_lemo_dat_a  =>  -- read or write lemo data register
+            if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
+              if slave_i.we = '1' then
+                -- write lemo data register
+                lemo_dat(1)        <= slave_i.dat(b_lemo1_dat);
+                lemo_dat(2)        <= slave_i.dat(b_lemo2_dat);
+                lemo_dat(3)        <= slave_i.dat(b_lemo3_dat);
+                lemo_dat(4)        <= slave_i.dat(b_lemo4_dat);					 
+                ex_stall <= '0';
+                ex_ack <= '1';
+              else
+                -- read lemo data register
+                slave_o.dat(15 downto 0) <=  "000000000000" & lemo_dat(4 downto 1 );-- mil lemo data [15..0]
+                ex_stall <= '0';
+                ex_ack <= '1';
+              end if;
+            else
+              -- access to high word or unaligned word is not allowed
+              ex_stall <= '0';
+              ex_err <= '1';
+            end if;				
+								
+          when mil_rd_lemo_inp_a  =>  -- read or write lemo input register
+            if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
+              if slave_i.we = '1' then
+                -- write to lemo input register is without effect
+                ex_stall <= '0';
+                ex_ack <= '1';
+              else
+                -- read lemo input register register
+                slave_o.dat(15 downto 0) <= ( "000000000000" & lemo_i_reg (4 downto 1));--lemo input data [15..0]
+                ex_stall <= '0';
+                ex_ack <= '1';
+              end if;
+            else
+              -- access to high word or unaligned word is not allowed
+              ex_stall <= '0';
+              ex_err <= '1';
+            end if;				
+												
+				
+				
               
           when rd_clr_no_vw_cnt_a =>  -- read or clear no valid word counters
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
@@ -851,7 +964,20 @@ p_regs_acc: process (clk_i, nrst_i)
     end if;
   end process p_regs_acc;
 
+  
+ 
+lemo_data_o(1) <= io_1 when (lemo_event_en(1)='1') else lemo_dat(1);   -- To be compatible with former SCU solution
+lemo_data_o(2) <= io_2 when (lemo_event_en(2)='1') else lemo_dat(2);   -- which allows 2 event-driven lemo outputs
+lemo_data_o(3) <= lemo_dat(3);                                         -- This is used in SIO (not event drive-able)
+lemo_data_o(4) <= lemo_dat(4);                                         -- This is used in SIO (not event drive-able)
 
+lemo_out_en_o(1)   <= '1' when puls1_frame='1' else lemo_out_en(1);   -- To be compatible with former SCU solution
+lemo_out_en_o(2)   <= '1' when puls2_frame='1' else lemo_out_en(2);   -- which allows 2 event-driven lemo outputs
+lemo_out_en_o(3)   <= lemo_out_en(3);                                 -- This is used in SIO
+lemo_out_en_o(4)   <= lemo_out_en(4);                                 -- This is used in SIO
+
+  
+  
 p_every_us: div_n
   generic map (
     n         => integer(clk_in_hz/1_000_000), -- KK alle us einen Takt aktiv (ena_every_us * 1000 = 1ms)

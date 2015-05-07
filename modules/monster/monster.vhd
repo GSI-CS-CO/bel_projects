@@ -220,12 +220,17 @@ entity monster is
     mil_nled_interl_o      : out   std_logic := 'Z';
     mil_nled_dry_o         : out   std_logic := 'Z';
     mil_nled_drq_o         : out   std_logic := 'Z';
-    mil_io1_o              : out   std_logic := 'Z';
-    mil_io1_is_in_o        : out   std_logic := 'Z';
-    mil_nled_io1_o         : out   std_logic := 'Z';
-    mil_io2_o              : out   std_logic := 'Z';
-    mil_io2_is_in_o        : out   std_logic := 'Z';
-    mil_nled_io2_o         : out   std_logic := 'Z';
+	 mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
+    mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
+	 mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
+    mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');
+	 
+--    mil_io1_o              : out   std_logic := 'Z';
+--    mil_io1_is_in_o        : out   std_logic := 'Z';
+--    mil_nled_io1_o         : out   std_logic := 'Z';
+--    mil_io2_o              : out   std_logic := 'Z';
+--    mil_io2_is_in_o        : out   std_logic := 'Z';
+--    mil_nled_io2_o         : out   std_logic := 'Z';
     -- g_en_oled
     oled_rstn_o            : out   std_logic := 'Z';
     oled_dc_o              : out   std_logic := 'Z';
@@ -1698,12 +1703,16 @@ c4: eca_ac_wbm
         nLed_drq       => mil_nled_drq_o,
         nLed_dry       => mil_nled_dry_o,
         every_ms_intr_o => mil_every_ms_intr_o,
-        io_1           => mil_io1_o,
-        io_1_is_in     => mil_io1_is_in_o,
-        nLed_io_1      => mil_nled_io1_o,
-        io_2           => mil_io2_o,
-        io_2_is_in     => mil_io2_is_in_o,
-        nLed_io_2      => mil_nled_io2_o,
+        lemo_data_o     => mil_lemo_data_o,
+        lemo_nled_o     => mil_lemo_nled_o, 
+	     lemo_out_en_o   => mil_lemo_out_en_o,     
+        lemo_data_i     => mil_lemo_data_i, 
+--        io_1           => mil_io1_o,
+--        io_1_is_in     => mil_io1_is_in_o,
+--        nLed_io_1      => mil_nled_io1_o,
+--        io_2           => mil_io2_o,
+--        io_2_is_in     => mil_io2_is_in_o,
+--        nLed_io_2      => mil_nled_io2_o,
         nsig_wb_err    => open);
   end generate;
   

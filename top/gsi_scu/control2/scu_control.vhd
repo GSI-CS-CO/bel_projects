@@ -251,6 +251,12 @@ architecture rtl of scu_control is
   signal s_lemo_leds  : std_logic_vector(2 downto 1);
   signal clk_ref      : std_logic;
   signal rstn_ref     : std_logic;
+  signal mil_lemo_data_o_tmp   : std_logic_vector(4 downto 1);
+  signal mil_lemo_nled_o_tmp   : std_logic_vector(4 downto 1);
+  signal mil_lemo_out_en_o_tmp : std_logic_vector(4 downto 1);
+  signal mil_lemo_data_i_tmp   : std_logic_vector(4 downto 1);	
+ 
+  
   
 begin
 
@@ -342,12 +348,17 @@ begin
       mil_nled_interl_o      => a_ext_conn3_a15,
       mil_nled_dry_o         => a_ext_conn3_a11,
       mil_nled_drq_o         => a_ext_conn3_a14,
-      mil_io1_o              => eio(11),
-      mil_io1_is_in_o        => eio(12),
-      mil_nled_io1_o         => eio(13),
-      mil_io2_o              => eio(14),
-      mil_io2_is_in_o        => eio(15),
-      mil_nled_io2_o         => eio(16),
+	   mil_lemo_data_o        => mil_lemo_data_o_tmp,
+      mil_lemo_nled_o        => mil_lemo_nled_o_tmp,
+	   mil_lemo_out_en_o      => mil_lemo_out_en_o_tmp,
+      mil_lemo_data_i        => mil_lemo_data_i_tmp,		
+--      mil_io1_o              => eio(11),
+--      mil_io1_is_in_o        => eio(12),
+--      mil_nled_io1_o         => eio(13),
+--      mil_io2_o              => eio(14),
+--      mil_io2_is_in_o        => eio(15),
+--      mil_nled_io2_o         => eio(16),
+
       oled_rstn_o            => hpla_ch(8),
       oled_dc_o              => hpla_ch(6),
       oled_ss_o              => hpla_ch(4),
@@ -441,7 +452,27 @@ begin
  -- CLK_FSH  <= 'Z';
  -- nWE_FSH  <= 'Z';
  -- nOE_FSH  <= 'Z';
+ 
+
+  -- MIL Option LEMO Control  
   
+  eio(11) <= mil_lemo_data_o_tmp(1) when mil_lemo_out_en_o_tmp(1)='1' else 'Z'; --SCU A17, A_LEMO3_IO
+  eio(14) <= mil_lemo_data_o_tmp(2) when mil_lemo_out_en_o_tmp(1)='1' else 'Z'; --SCU A20, A_LEMO4_IO
+  mil_lemo_data_i_tmp(1) <= eio(11); 
+  mil_lemo_data_i_tmp(2) <= eio(14);
+  mil_lemo_data_i_tmp(3) <= '0'; -- not used for SCU, to be used in SIO
+  mil_lemo_data_i_tmp(4) <= '0'; -- not used for SCU, to be used in SIO 
+
+  eio(12) <= not mil_lemo_out_en_o_tmp(1);    --SCU A18, A_LEMO3_EN_IN, low = Lemo is output
+  eio(15) <= not mil_lemo_out_en_o_tmp(2);    --SCU A21, A_LEMO3_EN_IN, low = Lemo is output
+
+  eio(13) <= mil_lemo_nled_o_tmp(1);--SCU A19, A_nLEMO3_LED, low = Activity led on
+  eio(16) <= mil_lemo_nled_o_tmp(2);--SCU A23, A_nLEMO4_LED, low = Activity led on
+  
+  
+
+
+ 
   -- DDR3 not connected
   DDR3_RES_n <= '0';
   DDR3_DQ    <= (others => 'Z');
