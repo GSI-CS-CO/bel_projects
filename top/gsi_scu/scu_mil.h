@@ -4,7 +4,9 @@
 #include <stdint.h>
 #include <board.h>
 #include <mprintf.h>
+#include <syscon.h>
 
+extern int usleep(useconds_t usec);
 int trm_free(volatile unsigned int *base);
 int write_mil(volatile unsigned int *base, short data, short fc_ifk_addr);
 int rcv_flag(volatile unsigned int *base);

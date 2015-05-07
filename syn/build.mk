@@ -13,11 +13,15 @@ GENRAMMIF	?= $(TOP)/ip_cores/wrpc-sw/tools/genrammif
 INCPATH	:= $(TOP)/modules/lm32-include
 W1    	:= $(TOP)/ip_cores/wrpc-sw
 USRCPUCLK	?= 62500
-CFLAGS	+= -mmultiply-enabled -mbarrel-shift-enabled -Os -DUSRCPUCLK=$(USRCPUCLK) -I$(INCPATH) -I$(W1)/include -I$(W1)/pp_printf -std=gnu99
+CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os -DUSRCPUCLK=$(USRCPUCLK) -I$(INCPATH) -I$(W1)/include \
+		-I$(W1)/sdb-lib -I$(W1)/pp_printf -std=gnu99 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=100 -DSDBFS_BIG_ENDIAN
+
 
 STUBD	?= $(TOP)/modules/lm32_stub
 STUBS	?= $(STUBD)/stubs.c $(STUBD)/crt0.S
-INCLUDES  += $(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c $(INCPATH)/mprintf.c $(W1)/dev/uart.c
+INCLUDES  += 	$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/irq.c $(INCPATH)/mini_sdb.c $(INCPATH)/mprintf.c \
+		$(W1)/dev/uart.c $(W1)/lib/usleep.c $(W1)/dev/devicelist.c $(W1)/dev/syscon.c $(W1)/pp_printf/printf.c \
+		$(W1)/sdb-lib/glue.c $(W1)/pp_printf/vsprintf-mini.c
 LDFLAGS		?= -nostdlib -T ram.ld -Wl,--defsym,_fstack=$(RAM_SIZE)-4 -lgcc -lc
 
 ifndef RAM_SIZE

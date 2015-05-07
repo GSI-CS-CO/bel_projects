@@ -61,7 +61,8 @@
 #define WR_1Wire              0x779c5443
 #define WB_FG_QUAD            0x863e07f0
 
-#define WR_CFIPFlash          0x12122121  
+#define WR_CFIPFlash          0x12122121
+#define WR_SYS_CON            0xff07fc47  
 
 //periphery device pointers
 volatile uint32_t* pTlu; 
@@ -78,7 +79,7 @@ volatile uint32_t* pCpuSysTime;
 volatile uint32_t* pCpuTimer;
 volatile uint32_t* pCluInfo;
 volatile uint32_t* pUart;
-volatile uint32_t* BASE_UART;
+//volatile uint32_t* BASE_UART;
 volatile uint32_t* pSharedRam;
 volatile uint32_t* pCluCB;
 volatile uint32_t* pOneWire;

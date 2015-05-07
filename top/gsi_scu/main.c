@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "syscon.h"
+#include "hw/memlayout.h"
 #include "mprintf.h"
 #include "display.h"
 #include "irq.h"
@@ -44,8 +46,6 @@ struct fg_list fgs;
 struct fg_dev wb_fg_dev;
 
 volatile unsigned short* scub_base;
-volatile unsigned int* BASE_ONEWIRE;
-volatile uint32_t* BASE_UART;
 volatile unsigned int* scub_irq_base;
 volatile unsigned int* wb_fg_irq_base;
 volatile unsigned int* wb_fg_base;
@@ -66,14 +66,14 @@ void msDelayBig(uint64_t ms)
   while(getSysTime() < later) {asm("# noop");}
 }
 
-void usleep(uint32_t us)
-{
-  uint32_t i;
-  uint32_t delay = us*1000;
-  /* prevent arithmetic overflow */
-  delay /= (CLK_PERIOD<<1); //two cycles per loop
-  for (i = delay; i > 0; i--) asm("# noop");
-}  
+//void usleep(uint32_t us)
+//{
+//  uint32_t i;
+//  uint32_t delay = us*1000;
+//  /* prevent arithmetic overflow */
+//  delay /= (CLK_PERIOD<<1); //two cycles per loop
+//  for (i = delay; i > 0; i--) asm("# noop");
+//}  
 
 void msDelay(uint32_t msecs) {
   usleep(1000 * msecs);
@@ -454,14 +454,14 @@ void sw_irq_handler() {
   }
 }
 void updateTemp() {
-  BASE_ONEWIRE = (unsigned int *)getSdbAdr(&ow_base[0]);
+  BASE_ONEWIRE = (unsigned char *)getSdbAdr(&ow_base[0]);
   wrpc_w1_init();
   ReadTempDevices(0, &board_id, &board_temp);
-  BASE_ONEWIRE = (unsigned int *)getSdbAdr(&ow_base[1]);
+  BASE_ONEWIRE = (unsigned char *)getSdbAdr(&ow_base[1]);
   wrpc_w1_init();
   ReadTempDevices(0, &ext_id, &ext_temp);
   ReadTempDevices(1, &backplane_id, &backplane_temp);
-  BASE_ONEWIRE = (unsigned int *)getSdbAdr(&ow_base[0]); // important for PTP deamon 
+  BASE_ONEWIRE = (unsigned char *)getSdbAdr(&ow_base[0]); // important for PTP deamon 
   wrpc_w1_init();
 }
 
@@ -500,6 +500,7 @@ int main(void) {
   int slot;
   int fg_is_running[MAX_FG_DEVICES];
   discoverPeriphery();
+  /* additional periphery needed for scu */
   cpu_info_base   = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);  
   scub_base       = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
   scub_irq_base   = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);    // irq controller for scu bus
@@ -510,9 +511,17 @@ int main(void) {
   scu_mil_base    = (unsigned int*)find_device(SCU_MIL);
   wb_fg_base      = (unsigned int*)find_device_adr(GSI, WB_FG_QUAD);
   find_device_multi(ow_base, &ow_base_idx, 2, CERN, WR_1Wire);
+  
+  
+  msDelayBig(1500); //wait for wr deamon to read sdbfs
+  init();  
+  if (BASE_SYSCON)
+    mprintf("SYS_CON found on adr: 0x%x\n", BASE_SYSCON);
+  else
+    mprintf("no SYS_CON found!\n"); 
 
-  msDelay(1500); //wait for powerup of the slave cards
-  init(); 
+  timer_init(1); //needed by usleep_init() 
+  usleep_init();
   
   if(cpu_info_base) {
     mprintf("CPU ID: 0x%x\n", cpu_info_base[0]);

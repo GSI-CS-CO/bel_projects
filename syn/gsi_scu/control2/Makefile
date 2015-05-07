@@ -4,8 +4,8 @@ FLASH		      = EPCS128
 RAM_SIZE	    = 65536
 SHARED_SIZE 	= 24K
 USRCPUCLK     = 125000
-PATHSCU   = ../../../top/gsi_scu
-CFLAGS    = -I$(PSCU)/include -I$(PATHSCU)
+PATHSCU       = ../../../top/gsi_scu
+CFLAGS        = -I$(PSCU)/include -I$(PATHSCU)
 
 include ../../build.mk
 
