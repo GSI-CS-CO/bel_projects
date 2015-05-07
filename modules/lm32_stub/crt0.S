@@ -91,6 +91,8 @@
 .global _reset_handler
 .type 	_reset_handler, @function
 _reset_handler:
+//init r0 from CSR to make sure it's got a valid state before XOR (simulation)    
+    rcsr    r0, CFG 
     xor r0, r0, r0
     wcsr    IE, r0
     wcsr    IM, r0
@@ -98,7 +100,6 @@ _reset_handler:
     ori     r1, r1, lo(_reset_handler)
     wcsr    EBA, r1
     calli   _crt0
-    nop
 .size	_reset_handler, .-_reset_handler
 
 .global _breakpoint_handler

@@ -77,6 +77,7 @@
 #define TMR_IRQ_CNT       0x1
 #define TMR_VALUEL        0x2
 #define TMR_VALUEH        0x3
+#define TMR_REPEAT        0x4
  
 #define GLOBAL_IRQ_ENA    0x2
 #define SRQ_ENA           0x6
