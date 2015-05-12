@@ -265,16 +265,23 @@ architecture rtl of scu_control is
   
   
   
+  constant c_family  : string := "Arria II"; 
+  constant c_project : string := "scu_control";
+  constant c_initf   : string := c_project & ".mif" & ';' & c_project & "_stub.mif";
+  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
+  -- multiple init files for n processors are to be seperated by semicolon ';'
+  
 begin
 
   main : monster
     generic map(
-      g_family        => "Arria II",
-      g_project       => "scu_control",
+      g_family        => c_family,
+      g_project       => c_project,
       g_gpio_in       => 1,
       g_gpio_out      => 1,
       g_flash_bits    => 24,
-      g_lm32_ramsizes => 49152,
+      g_lm32_cores    => 2,
+      g_lm32_ramsizes => 65536/4,
       g_lm32_msis     => 3,
       g_en_pcie       => true,
       g_en_scubus     => true,
@@ -282,7 +289,9 @@ begin
       g_en_oled       => true,
       g_en_user_ow    => true,
       g_en_fg         => true,
-      g_en_cfi        => true)
+      g_en_cfi        => true,
+      g_lm32_init_files => c_initf
+    )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_sfpref_i => sfp2_ref_clk_i,

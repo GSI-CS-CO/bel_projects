@@ -2,6 +2,7 @@
 #include "display.h"
 #include "w1.h"
 #include "inttypes.h"
+#include "mprintf.h"
 
 //#define DEBUG
 

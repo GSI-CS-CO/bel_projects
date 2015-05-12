@@ -89,6 +89,7 @@ entity monster is
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
     g_lm32_shared_ramsize  : natural;
+    g_lm32_init_files      : string;
     g_lm32_are_ftm         : boolean);
   port(
     -- Required: core signals
@@ -885,8 +886,8 @@ begin
   eb : eb_master_slave_wrapper
     generic map(
       g_with_master     => true,
-      g_ebs_sdb_address => (x"00000000" & c_top_sdb_address),
-      g_ebm_adr_bits_hi => 10)
+      g_ebs_sdb_address => (x"00000000" & c_top_sdb_address)
+    )
     port map(
       clk_i           => clk_sys,
       nRst_i          => rstn_sys,
@@ -901,6 +902,8 @@ begin
       ebm_wb_slave_i  => top_cbar_master_o(c_tops_ebm),
       ebm_wb_slave_o  => top_cbar_master_i(c_tops_ebm));
  
+ 
+   
   lm32 : ftm_lm32_cluster 
     generic map(
       g_is_ftm           => g_lm32_are_ftm,	
@@ -908,13 +911,15 @@ begin
       g_ram_per_core     => g_lm32_ramsizes,
       g_shared_mem       => g_lm32_shared_ramsize,
       g_world_bridge_sdb => c_top_bridge_sdb,
-      g_init_file        => g_project & ".mif",
+      g_init_files       => g_lm32_init_files,
       g_msi_per_core     => g_lm32_MSIs)
     port map(
+      clk_ref_i            => clk_ref,
+      rst_ref_n_i          => rstn_ref,
       clk_sys_i            => clk_sys,
-      rst_n_i              => rstn_sys,
+      rst_sys_n_i          => rstn_sys,
       rst_lm32_n_i         => s_lm32_rstn,
-      tm_tai8ns_i     	   => sys_tai8ns,
+      tm_tai8ns_i     	   => ref_tai8ns,
       irq_slave_o     	   => irq_cbar_master_i(c_irqs_lm32),
       irq_slave_i     	   => irq_cbar_master_o(c_irqs_lm32),
       cluster_slave_o      => top_cbar_master_i(c_tops_lm32),

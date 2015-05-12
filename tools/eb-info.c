@@ -34,11 +34,18 @@
 
 #define GSI_ID	0x651
 #define ROM_ID	0x2d39fa8b
+#define CERN_ID 0xce42
+
+#define RAM_ID	0x54111351
+#define FWID_LEN 0x400
+#define BOOTL_LEN 0x100
 
 const char *program;
 
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <proto/host/port>\n", program);
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  -w             show found firmware IDs\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h             display this help and exit\n");
   fprintf(stderr, "\n");
@@ -51,22 +58,30 @@ static void die(const char* msg, eb_status_t status) {
 }
 
 int main(int argc, char** argv) {
-  int opt, error, c, i, len;
-  struct sdb_device sdb;
+  int opt, error, c, i, j, k, inc, len;
+  struct sdb_device sdb[25];
   eb_status_t status;
   eb_socket_t socket;
   eb_device_t device;
   eb_cycle_t cycle;
   eb_data_t *data;
-  
+  eb_data_t *fwdata;
+  eb_data_t *pCur;
+  const char cFwMagic[] = "UserLM32";
+  unsigned char detectFW = 0;
+  struct sdb_device fwram[25];
   /* Default arguments */
   program = argv[0];
   error = 0;
   
+  
   /* Process the command-line arguments */
   error = 0;
-  while ((opt = getopt(argc, argv, "h")) != -1) {
+  while ((opt = getopt(argc, argv, "hw")) != -1) {
     switch (opt) {
+    case 'w':
+      detectFW = 1;
+      break;
     case 'h':
       help();
       return 0;
@@ -94,7 +109,7 @@ int main(int argc, char** argv) {
     die(argv[optind], status);
   
   c = 1;
-  if ((status = eb_sdb_find_by_identity(device, GSI_ID, ROM_ID, &sdb, &c)) != EB_OK)
+  if ((status = eb_sdb_find_by_identity(device, GSI_ID, ROM_ID, &sdb[0], &c)) != EB_OK)
     die("eb_sdb_find_by_identity", status);
   if (c != 1) {
     fprintf(stderr, "Found %d ROM identifiers on that device\n", c);
@@ -104,16 +119,16 @@ int main(int argc, char** argv) {
   if ((status = eb_cycle_open(device, 0, 0, &cycle)) != EB_OK)
     die("eb_cycle_open", status);
   
-  len = ((sdb.sdb_component.addr_last - sdb.sdb_component.addr_first) + 1) / 4;
+  len = ((sdb[0].sdb_component.addr_last - sdb[0].sdb_component.addr_first) + 1) / 4;
   if ((data = malloc(len * sizeof(eb_data_t))) == 0)
     die("malloc", EB_OOM);
   
   for (i = 0; i < len; ++i)
-    eb_cycle_read(cycle, sdb.sdb_component.addr_first + i*4, EB_DATA32|EB_BIG_ENDIAN, &data[i]);
+    eb_cycle_read(cycle, sdb[0].sdb_component.addr_first + i*4, EB_DATA32|EB_BIG_ENDIAN, &data[i]);
   
   if ((status = eb_cycle_close(cycle)) != EB_OK)
     die("eb_cycle_close", status);
-  
+    
   for (i = 0; i < len; ++i) {
     printf("%c%c%c%c", 
       (char)(data[i] >> 24) & 0xff, 
@@ -121,6 +136,68 @@ int main(int argc, char** argv) {
       (char)(data[i] >>  8) & 0xff,
       (char)(data[i]      ) & 0xff);
   }
+  
+  if(detectFW) {
+    printf("\nDetecting Firmwares ...\n");
+    c = 25;
+    if ((status = eb_sdb_find_by_identity(device, GSI_ID, RAM_ID, &sdb[0], &c)) != EB_OK)
+      die("eb_sdb_find_by_identity", status);
+    if (c > 25) {
+      fprintf(stderr, "Found %d RAM identifiers on that device\n", c);
+      exit(1);
+    }
+    
+    len = FWID_LEN/4; 
+    if ((fwdata = malloc(c * len * (sizeof(eb_data_t)))) == 0)
+      die("malloc", EB_OOM);
+    
+    k = 0;
+    for(i=0;i<c;i++) {
+      //RAM Big enough to actually contain a FW ID?
+      pCur = &fwdata[k * len]; 
+      inc = 1;
+      if ((sdb[i].sdb_component.addr_last - sdb[i].sdb_component.addr_first + 1) >= (FWID_LEN + BOOTL_LEN)) {
+
+        
+        if ((status = eb_cycle_open(device, 0, 0, &cycle)) != EB_OK)
+          die("eb_cycle_open", status);
+      
+        for (j = 0; j < len; ++j)
+          eb_cycle_read(cycle, sdb[i].sdb_component.addr_first + BOOTL_LEN + j*4, EB_DATA32|EB_BIG_ENDIAN, &pCur[j]);
+      
+        if ((status = eb_cycle_close(cycle)) != EB_OK)
+          die("eb_cycle_close", status);
+        
+
+          
+        //check for magic word
+        for (j = 0; j < 2; ++j) {
+           if (((char)(pCur[j] >> 24) & 0xff) != cFwMagic[j*4+0] || 
+               ((char)(pCur[j] >> 16) & 0xff) != cFwMagic[j*4+1] ||
+               ((char)(pCur[j] >>  8) & 0xff) != cFwMagic[j*4+2] || 
+               ((char)(pCur[j] >>  0) & 0xff) != cFwMagic[j*4+3]) {inc = 0;} 
+        }
+          
+      } else {inc = 0;}
+      if(inc){fwram[k] = sdb[i]; k++;} 
+    }             
+    printf("\nFound %u RAMs, %u holding a Firmware ID\n\n", c, k); 
+    
+    for (i = 0; i < k; i++) {
+      printf("RAM @ 0x%08x: \n\n", (unsigned int)fwram[i].sdb_component.addr_first);
+      for (j = 0; j < len; ++j) {
+        printf("%c%c%c%c", 
+          (char)(fwdata[j] >> 24) & 0xff, 
+          (char)(fwdata[j] >> 16) & 0xff, 
+          (char)(fwdata[j] >>  8) & 0xff,
+          (char)(fwdata[j]      ) & 0xff);
+      }
+    }
+    
+  }
+  
+  
+  
   
   return 0;
 }

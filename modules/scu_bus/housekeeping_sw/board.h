@@ -1,7 +1,9 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-#define CPU_CLOCK 62500000ULL
+#ifndef CPU_CLOCK
+#define CPU_CLOCK 125000000ULL
+#endif
 
 #define BASE_PIO	    0x100400
 #define BASE_OW_WR    0x80060600

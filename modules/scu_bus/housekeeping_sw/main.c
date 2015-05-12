@@ -3,13 +3,13 @@
 #include <inttypes.h>
 #include <stdarg.h>
 
+#include "mprintf.h"
 #include "board.h"
 #include "uart.h"
 #include "w1.h"
 
 extern struct w1_bus wrpc_w1_bus;
 
-void _irq_entry(void) {}
 volatile unsigned short* scu_reg = (unsigned short*)BASE_SCU_REG;
 
 void usleep(int x)

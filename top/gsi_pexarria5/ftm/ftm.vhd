@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 library work;
 use work.monster_pkg.all;
 
-entity pci_control is
+entity ftm is
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
     clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
@@ -205,9 +205,9 @@ entity pci_control is
     sfp4_mod0         : in    std_logic; -- grounded by module
     sfp4_mod1         : inout std_logic; -- SCL
     sfp4_mod2         : inout std_logic); -- SDA
-end pci_control;
+end ftm;
 
-architecture rtl of pci_control is
+architecture rtl of ftm is
 
   signal led_link_up  : std_logic;
   signal led_link_act : std_logic;
@@ -224,8 +224,8 @@ architecture rtl of pci_control is
   signal lvds_oen     : std_logic_vector(2 downto 0);
 
   constant c_family  : string := "Arria V"; 
-  constant c_project : string := "pci_control";
-  constant c_initf   : string := c_project & ".mif";
+  constant c_project : string := "ftm";
+  constant c_initf   : string := c_project & ".mif" & ';' & c_project & ".mif" & ';' & c_project & ".mif" & ';' & c_project & ".mif";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
   -- multiple init files for n processors are to be seperated by semicolon ';'
 
@@ -243,8 +243,13 @@ begin
       g_lvds_invert => true,
       g_en_pcie     => true,
       g_en_usb      => true,
-      g_en_lcd      => true,
-      g_lm32_init_files =>  c_initf
+      g_en_lcd      => false, 
+      g_lm32_are_ftm        => true,	
+      g_lm32_cores          => 4,
+      g_lm32_ramsizes       => 131072/4,
+      g_lm32_shared_ramsize => 4096/4,
+      g_lm32_MSIs           => 1,
+      g_lm32_init_files     => c_initf
     )  
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,

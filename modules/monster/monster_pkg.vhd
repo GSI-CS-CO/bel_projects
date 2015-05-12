@@ -63,8 +63,9 @@ package monster_pkg is
       g_en_psram             : boolean := false;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
-      g_lm32_ramsizes        : natural := 131072/4;
-      g_lm32_shared_ramsize  : natural := 16384/4; -- will only be used if g_lm32_cores > 1
+      g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
+      g_lm32_shared_ramsize  : natural := 16384/4; -- in 32b words -- will only be used if g_lm32_cores > 1
+      g_lm32_init_files      : string; -- multiple init files must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false
     );
     port(
