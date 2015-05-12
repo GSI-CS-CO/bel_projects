@@ -221,9 +221,9 @@ entity monster is
     mil_nled_interl_o      : out   std_logic := 'Z';
     mil_nled_dry_o         : out   std_logic := 'Z';
     mil_nled_drq_o         : out   std_logic := 'Z';
-	 mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
+	  mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
     mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
-	 mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
+    mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
     mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');
 	 
 --    mil_io1_o              : out   std_logic := 'Z';
