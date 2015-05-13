@@ -11,7 +11,7 @@
 #define FTM_PAGESIZE        (FTM_PAGEDATA + FTM_PAGEMETA)
 
 
-#define FTM_SHARED_OFFSET   0xC000
+#define FTM_SHARED_OFFSET   0x0500
 #define FTM_CMD_OFFSET      (2*FTM_PAGESIZE)
 
 #define FTM_STAT_OFFSET       (FTM_CMD_OFFSET      + 4) //9c    

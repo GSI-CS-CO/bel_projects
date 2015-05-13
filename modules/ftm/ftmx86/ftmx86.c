@@ -1,11 +1,14 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 #include "ftmx86.h"
 #include <etherbone.h>
+#include "access.h"
 
-extern uint8_t cpuId;
-
+extern uint8_t cpuIdx;
+extern bool bigEndian = true;
+extern t_ftmAccess* pAccess;
 uint16_t getIdFID(uint64_t id)     {return ((uint16_t)(id >> ID_FID_POS))     & (ID_MSK_B16 >> (16 - ID_FID_LEN));}
 uint16_t getIdGID(uint64_t id)     {return ((uint16_t)(id >> ID_GID_POS))     & (ID_MSK_B16 >> (16 - ID_GID_LEN));}
 uint16_t getIdEVTNO(uint64_t id)   {return ((uint16_t)(id >> ID_EVTNO_POS))   & (ID_MSK_B16 >> (16 - ID_EVTNO_LEN));}
@@ -49,18 +52,24 @@ const t_ftmChain Idle = { .tStart         = 0,
                           .pMsg           = NULL,
                           .pNext          = NULL
                           };
+
+
                           
 static uint8_t* uint32ToBytes(uint8_t* pBuf, uint32_t val)
 {
    uint8_t i;
+   if(bigEndian)  
    for(i=0;i<FTM_WORD_SIZE;   i++) pBuf[i]  = val >> (8*i) & 0xff;
+   else           for(i=0;i<FTM_WORD_SIZE;   i++) pBuf[i]  = val >> (8*(FTM_WORD_SIZE - 1 -i)) & 0xff;
+   
    return pBuf+4;
 }
 
 static uint8_t* uint64ToBytes(uint8_t* pBuf, uint64_t val)
 {
-   uint32ToBytes(pBuf+0, (uint32_t)(val>>32));
-   uint32ToBytes(pBuf+4, (uint32_t)val);
+  uint32ToBytes(pBuf+0, (uint32_t)(val>>32));
+  uint32ToBytes(pBuf+4, (uint32_t)val);
+
    return pBuf+8;
 }
 
@@ -84,11 +93,12 @@ static uint64_t bytesToUint64(uint8_t* pBuf)
 
 uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint32_t embeddedOffs, uint8_t cpuId) 
 {
+   printf("Writing ptrPage %p to ptrWrite %p with offset %08x for cpu %u\n", pPage, pBufStart, embeddedOffs, cpuId);
    uint8_t j,  planIdx, chainIdx;
    uint8_t*    pBuf;
    t_ftmChain* pChain;
    uint32_t    pBufPlans[FTM_PLAN_MAX];
-   
+   if(bigEndian) printf("BIGENDIAN FOUND!\n");
    pBuf = pBufStart + FTM_PAGEMETA;
    //leave space for page meta info, write all plans to pBuffer
    for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
@@ -110,17 +120,18 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint32_t embeddedOffs, 
    for(j=pPage->planQty;j<FTM_PLAN_MAX;    j++)
       uint32ToBytes(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE], FTM_NULL);
    
-   if( pPage->idxBp == 0xdeadbeef)    pPage->pBp = FTM_IDLE_OFFSET;
+   if( pPage->idxBp == 0xdeadbeef)    pPage->pBp = FTM_SHARED_OFFSET + FTM_IDLE_OFFSET;
    else pPage->pBp     = pBufPlans[pPage->idxBp];
    
-   if( pPage->idxStart == 0xdeadbeef) pPage->pStart = FTM_IDLE_OFFSET;
+   if( pPage->idxStart == 0xdeadbeef) pPage->pStart = FTM_SHARED_OFFSET + FTM_IDLE_OFFSET;
    else pPage->pStart  = pBufPlans[pPage->idxStart];
    
-   //printf("BP: %08x, Start: %08x\n", pPage->pBp, pPage->pStart);
+   printf("BP: %08x, Start: %08x\n", pPage->pBp, pPage->pStart);
    
    uint32ToBytes(&pBufStart[FTM_PAGE_PTR_BP],         pPage->pBp);
    uint32ToBytes(&pBufStart[FTM_PAGE_PTR_START],      pPage->pStart);
-   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_SHAREDMEM],  pPage->pSharedMem);
+   //printf ("Shared mem will be at %08x", pPage->ppAccess->sharedAdr);
+   //uint32ToBytes(&pBufStart[FTM_PAGE_PTR_pAccess->sharedAdr],  pPage->ppAccess->sharedAdr);
    
    return pBuf;   
 }
@@ -136,13 +147,13 @@ static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufS
    condSrc  = 0;
    
    //FIXME: change to proper sdb find
-   if (pChain->flags & FLAGS_IS_SIG_MSI)           sigDst = 0x40000800 + pChain->sigCpu * 0x100;
-   else if (pChain->flags & FLAGS_IS_SIG_SHARED)   sigDst = 0x40001000 + pChain->sigCpu * 0xC;
+   if (pChain->flags & FLAGS_IS_SIG_MSI)           sigDst = 0x40000800 + pChain->sigCpu * 0x100; //FIXME !!!!
+   else if (pChain->flags & FLAGS_IS_SIG_SHARED)   sigDst = pAccess->sharedAdr  + pChain->sigCpu * 0xC; 
    else if (pChain->flags & FLAGS_IS_SIG_ADR)      sigDst = pChain->sigDst;
    
    //FIXME: change to proper sdb find
    if (pChain->flags & FLAGS_IS_COND_MSI)          condSrc = 0x0;
-   else if (pChain->flags & FLAGS_IS_COND_SHARED)  condSrc = 0x40001000 + cpuId * 0xC;
+   else if (pChain->flags & FLAGS_IS_COND_SHARED)  { condSrc = pAccess->sharedAdr + cpuId * 0xC; printf("SharedCondLoc: 0x%08x\n", condSrc);}
    else if (pChain->flags & FLAGS_IS_COND_ADR)     condSrc = pChain->condSrc;
    
    uint64ToBytes(&pBuf[FTM_CHAIN_TSTART],    pChain->tStart);
@@ -159,19 +170,19 @@ static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufS
    uint32ToBytes(&pBuf[FTM_CHAIN_MSGQTY],    pChain->msgQty);
    uint32ToBytes(&pBuf[FTM_CHAIN_MSGIDX],    0);
    
-   pBufMsg  = embeddedOffs + _FTM_CHAIN_LEN + ( (uint32_t)( (uintptr_t)pBuf - (uintptr_t)pBufStart ) );
+   pBufMsg  = embeddedOffs + FTM_CHAIN_END_ + ( (uint32_t)( (uintptr_t)pBuf - (uintptr_t)pBufStart ) );
    uint32ToBytes(&pBuf[FTM_CHAIN_PMSG],    pBufMsg);
    
    if(pChain->pNext != NULL) {
       if(((pChain->flags & FLAGS_IS_END) && (pChain->flags & FLAGS_IS_ENDLOOP)))   pBufNext = (uint32_t)pPlanStart;
-      else                                                                         pBufNext = pBufMsg + pChain->msgQty * _FTM_MSG_LEN;
+      else                                                                         pBufNext = pBufMsg + pChain->msgQty * FTM_MSG_END_;
    } 
    else pBufNext = FTM_NULL;
    uint32ToBytes(&pBuf[FTM_CHAIN_PNEXT],    pBufNext);
  
-   pBuf += _FTM_CHAIN_LEN;
+   pBuf += FTM_CHAIN_END_;
    for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++) pBuf = serMsg(&pMsg[msgIdx], pBuf);   
-   
+   printf("Chain placed @ 0x%08x\n", pBuf-pBufStart);
    return pBuf;   
 
 }
@@ -185,7 +196,7 @@ static uint8_t* serMsg(  t_ftmMsg* pMsg, uint8_t* pBuf)
    uint64ToBytes(&pBuf[FTM_MSG_TS],     0);
    uint64ToBytes(&pBuf[FTM_MSG_OFFS],   pMsg->offs);
    
-   return pBuf + _FTM_MSG_LEN;
+   return pBuf + FTM_MSG_END_;
 }
 
 t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs)
@@ -215,6 +226,8 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
       pPage->plans[j].pStart = pChain;
       //deserialise (pBufStart +  offset) to pChain and fix pChains next ptr
       pBuf = deserChain(pChain, pNext, pBufPlans[j], pBufStart, embeddedOffs);
+      printf("PChain %p Start %p offs %08x\n", pChain, pBufStart, embeddedOffs);
+      //printf("Plan %u Chain 0 @ %08x\n", j, pBufStart-pBuf);
       //deserialise chains until we reached the end or we reached max
       
       while(!(pChain->flags & FLAGS_IS_END) && chainQty < 10)
@@ -222,7 +235,7 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
          pChain   = pNext;
          pNext    = calloc(1, sizeof(t_ftmChain));
          pBuf     = deserChain(pChain, pNext, pBuf, pBufStart, embeddedOffs);
-         chainQty++;
+         //printf("Plan %u Chain %u @ %08x\n", j, chainQty, pBufStart-pBuf);
          
       } 
       //no next after the end, free this one
@@ -236,19 +249,19 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
    pPage->pStart     = bytesToUint32(&pBufStart[FTM_PAGE_PTR_START]);
    
    if       (pPage->pBp    == FTM_NULL)         {pPage->idxBp  = 0xcafebabe;}
-   else if  (pPage->pBp    == FTM_IDLE_OFFSET)  {pPage->idxBp  = 0xdeadbeef;}
+   else if  (pPage->pBp    == FTM_SHARED_OFFSET + FTM_IDLE_OFFSET)  {pPage->idxBp  = 0xdeadbeef;}
    else for (j=0; j<pPage->planQty; j++)      
    {
       if(pBufPlans[j]-pBufStart == ((uintptr_t)pPage->pBp - (uintptr_t)embeddedOffs)) {pPage->idxBp = j;}
    }  
       
    if       (pPage->pStart == FTM_NULL)           {pPage->idxStart = 0xcafebabe;}
-   else if  (pPage->pStart == FTM_IDLE_OFFSET)    {pPage->idxStart = 0xdeadbeef;}
+   else if  (pPage->pStart == FTM_SHARED_OFFSET + FTM_IDLE_OFFSET)    {pPage->idxStart = 0xdeadbeef;}
    else for(j=0; j<pPage->planQty; j++) 
    {
       if(pBufPlans[j]-pBufStart == ((uintptr_t)pPage->pStart - (uintptr_t)embeddedOffs)) {pPage->idxStart = j;}
    }    
-   //pPage->pSharedMem = pBufStart[FTM_PAGE_PTR_SHAREDMEM];    
+   //pPage->ppAccess->sharedAdr = pBufStart[FTM_PAGE_PTR_pAccess->sharedAdr];    
       
    return pPage;     
 }
@@ -275,7 +288,7 @@ static uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChai
    pChain->pMsg     = calloc(pChain->msgQty, sizeof(t_ftmMsg));
    pChain->pNext    = (struct t_ftmChain*)pNext;
    //deserialise messages until msgQty is reached
-   pBuf = &pBuf[_FTM_CHAIN_LEN];
+   pBuf = &pBuf[FTM_CHAIN_END_];
    for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++) pBuf = deserMsg(pBuf, &pChain->pMsg[msgIdx]);   
    //set pBuf ptr to 
    
@@ -293,8 +306,63 @@ static uint8_t* deserMsg(uint8_t* pBuf, t_ftmMsg* pMsg)
    pMsg->ts    = bytesToUint64(&pBuf[FTM_MSG_TS]); 
    pMsg->offs  = bytesToUint64(&pBuf[FTM_MSG_OFFS]); 
    
-   return pBuf + (uintptr_t)_FTM_MSG_LEN; 
+   return pBuf + (uintptr_t)FTM_MSG_END_; 
 }
+
+t_ftmPage* freePage(t_ftmPage* pPage)
+{
+   uint32_t planIdx, chainIdx;
+   t_ftmChain* pChain   = NULL;
+   t_ftmChain* pNext    = NULL;
+   t_ftmMsg*   pMsg     = NULL;
+                    
+   for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
+   {
+      chainIdx = 0;
+      pChain = pPage->plans[planIdx].pStart;
+      while(chainIdx++ < pPage->plans[planIdx].chainQty && pChain != NULL)
+      {
+         pMsg = pChain->pMsg;
+         free(pMsg);
+         pNext = (t_ftmChain*)pChain->pNext;
+         free(pChain);
+         pChain = pNext;
+      }
+   }
+   free(pPage);
+   return NULL; 
+}
+
+
+
+//DEBUG functions, mainly for FESA bullshit
+t_ftmChain* getChain(t_ftmPage* pPage, uint32_t planIdx, uint32_t chainIdx)
+{
+   uint32_t cIdx = 0;
+   t_ftmChain* pChain   = NULL;
+
+   if(chainIdx < pPage->plans[planIdx].chainQty) {
+   
+      pChain = pPage->plans[planIdx].pStart;
+      while(cIdx++ < chainIdx && pChain != NULL) {pChain = (t_ftmChain*)pChain->pNext;}
+   }  
+   
+   return pChain;
+}
+
+t_ftmMsg* getMsg(t_ftmChain* pChain, uint32_t msgIdx)
+{
+   t_ftmMsg*   pMsg     = NULL;
+   
+   if(pChain != NULL) {
+      pMsg = pChain->pMsg;
+      if(msgIdx < pChain->msgQty) pMsg += (uintptr_t)msgIdx;
+   }
+   
+   return pMsg;
+}
+
+
 
 void showFtmPage(t_ftmPage* pPage)
 {

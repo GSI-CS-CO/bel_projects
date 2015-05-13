@@ -11,6 +11,8 @@
 #include "dbg.h"
  
 unsigned int cpuId, cpuQty, heapCap;
+#define SHARED __attribute__((section(".shared")))
+uint64_t SHARED dummy = 0;
 
 
 void show_msi()
