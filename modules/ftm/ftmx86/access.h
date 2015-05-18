@@ -38,9 +38,9 @@ typedef struct {
    uint32_t ebmAdr;
 } t_ftmAccess;
 
+uint32_t ftm_shared_offs;
 
-
-t_ftmAccess* openFtm(const char* netaddress, t_ftmAccess* p);
+t_ftmAccess* openFtm(const char* netaddress, t_ftmAccess* p, uint8_t overrideFWcheck);
 void closeFtm(void);
 const uint8_t*  ebRamRead(uint32_t address, uint32_t len, const uint8_t* buf);
 const uint8_t*  ebRamWrite(const uint8_t* buf, uint32_t address, uint32_t len);

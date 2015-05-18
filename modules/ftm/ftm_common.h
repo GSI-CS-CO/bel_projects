@@ -11,7 +11,10 @@
 #define FTM_PAGESIZE        (FTM_PAGEDATA + FTM_PAGEMETA)
 
 
-#define FTM_SHARED_OFFSET   0x0500
+#define FTM_SHARED_OFFSET_NEW 0x0500
+#define FTM_SHARED_OFFSET     FTM_SHARED_OFFSET_NEW
+#define FTM_SHARED_OFFSET_OLD 0xC000
+
 #define FTM_CMD_OFFSET      (2*FTM_PAGESIZE)
 
 #define FTM_STAT_OFFSET       (FTM_CMD_OFFSET      + 4) //9c    
@@ -32,8 +35,8 @@
 
 //masks & constants
 #define CMD_RST           		0x0001	//Reset FTM status and counters
-#define CMD_START      		   0x0002	//Start FTM
-#define CMD_IDLE   		      0x0004	//Jump into IDLE at next BP
+#define CMD_START      		    0x0002	//Start FTM
+#define CMD_IDLE   		        0x0004	//Jump into IDLE at next BP
 #define CMD_STOP_REQ          0x0008	//Stop FTM if when it reaches IDLE state
 #define CMD_STOP_NOW          0x0010	//Stop FTM immediately
 

@@ -253,7 +253,7 @@ static void status(uint8_t cpuIdx)
   eb_status_t status;
   eb_data_t tmpRd[4];
   eb_cycle_t cycle;
-  eb_address_t tmpAdr = pAccess->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET;
+  eb_address_t tmpAdr = pAccess->pCores[cpuIdx].ramAdr + ftm_shared_offs;
   long long unsigned int ftmTPrep;
 
   if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die(status, "failed to create cycle"); 
@@ -317,7 +317,7 @@ int main(int argc, char** argv) {
    memset(pBufRead, 0, BUF_SIZE);
    
    int cpuId;
-   uint8_t firstCpu, lastCpu;
+   uint8_t firstCpu, lastCpu, overrideFWcheck;
    
    eb_status_t ebstatus;
    eb_cycle_t  cycle;
@@ -326,22 +326,25 @@ int main(int argc, char** argv) {
    error    = 0;
    verbose  = 0;
    readonly = 1;
+   overrideFWcheck = 0;
    program  = argv[0];
    
   
 
-   while ((opt = getopt(argc, argv, "c:vh")) != -1) {
+   while ((opt = getopt(argc, argv, "c:ovh")) != -1) {
       switch (opt) {
-         
+         case 'o':
+            overrideFWcheck = 1;
+            break;
+         case 'v':
+            verbose = 1;
+            break;
          case 'c':
             cpuId = strtol(optarg, &value_end, 0);
             if (*value_end || cpuId < -1 ||cpuId > 32) {
               fprintf(stderr, "%s: invalid cpu id -- '%s'\n", program, optarg);
               error = 1;
             }
-         break;
-         case 'v':
-            verbose = 1;
             break;
          case 'h':
             help();
@@ -396,7 +399,7 @@ int main(int argc, char** argv) {
          FILE *dst = fopen("testfw.bin", "w");
          pPage = parseXmlFile(filename);
          if(verbose) showFtmPage(pPage);
-         serPage (pPage, pBufWrite, FTM_SHARED_OFFSET, cpuId);
+         serPage (pPage, pBufWrite, ftm_shared_offs, cpuId);
        
          size_t l1;
          unsigned char buffer[8192];
@@ -418,8 +421,8 @@ int main(int argc, char** argv) {
 	
 	
          fclose(src);
-         printf("Writing to offset %08x\n", FTM_SHARED_OFFSET);
-         fseek(dst, FTM_SHARED_OFFSET, 0);
+         printf("Writing to offset %08x\n", ftm_shared_offs);
+         fseek(dst, ftm_shared_offs, 0);
          fwrite(pBufWrite, 1, FTM_PAGESIZE, dst);     
          fclose(dst); 
       
@@ -457,7 +460,7 @@ int main(int argc, char** argv) {
 //*****************************************************************************************************************//
 
   printf("Connecting to FTM\n");
-  openFtm(netaddress, pAccess);
+  openFtm(netaddress, pAccess, overrideFWcheck);
 
   //op for one CPU or all?
   if(cpuId < 0) { firstCpu   = 0; 
@@ -507,12 +510,10 @@ int main(int argc, char** argv) {
    
 
   
-   printf("First: %u Last: %u\n", firstCpu, lastCpu);
    //Cycle through selected CPUs
    uint8_t cpuIdx;
    for(cpuIdx = firstCpu; cpuIdx <= lastCpu; cpuIdx++)
    {
-      printf("#%u: cmd: %s\n", cpuIdx, command);
       //if the op is NOT fw load, verify that a valid fw is already in there
       if (strcasecmp(command, "loadfw")) {
          if(!(pAccess->pCores[cpuIdx].hasValidFW)) {
@@ -533,7 +534,7 @@ int main(int argc, char** argv) {
          if (verbose) {
             printf("Starting FTM Core %u\n", cpuIdx);
          }
-         ebstatus = eb_device_write(device, pAccess->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_START, 0, eb_block);
+         ebstatus = eb_device_write(device, pAccess->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_START, 0, eb_block);
          if (ebstatus != EB_OK) die(ebstatus, "failed to create cycle");
 
       }
@@ -542,7 +543,7 @@ int main(int argc, char** argv) {
          if (verbose) {
             printf("Requesting FTM Core %u to stop\n", cpuIdx);
          }
-         ebstatus = eb_device_write(device, pAccess->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_STOP_REQ, 0, eb_block);
+         ebstatus = eb_device_write(device, pAccess->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_STOP_REQ, 0, eb_block);
          if (ebstatus != EB_OK) die(ebstatus, "failed to create cycle");
       }
 
@@ -551,7 +552,7 @@ int main(int argc, char** argv) {
          if (verbose) {
             printf("Setting BP of FTM COre %u to idle\n", cpuIdx);
          }
-         ebstatus = eb_device_write(device, pAccess->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_IDLE, 0, eb_block);
+         ebstatus = eb_device_write(device, pAccess->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_IDLE, 0, eb_block);
          if (ebstatus != EB_OK) die(ebstatus, "failed to create cycle");
 
       }
@@ -561,7 +562,7 @@ int main(int argc, char** argv) {
          if (verbose) {
             printf("Forcing FTM Core %u to stop\n", cpuIdx);
          }
-         ebstatus = eb_device_write(device, pAccess->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_STOP_NOW, 0, eb_block);
+         ebstatus = eb_device_write(device, pAccess->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_STOP_NOW, 0, eb_block);
          if (ebstatus != EB_OK) die(ebstatus, "failed to create cycle");
       } 
 
@@ -569,14 +570,14 @@ int main(int argc, char** argv) {
          if (verbose) {
             printf("Resetting FTM Core %u\n", cpuIdx);
          }
-         ebstatus = eb_device_write(device, pAccess->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_RST, 0, eb_block);
+         ebstatus = eb_device_write(device, pAccess->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_RST, 0, eb_block);
          if (ebstatus != EB_OK) die(ebstatus, "failed to create cycle"); 
       }
      
       else if (!strcasecmp(command, "preptime")) {
          if ((ebstatus = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die(ebstatus, "failed to create cycle"); 
-         eb_cycle_write(cycle, (eb_address_t)(pAccess->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_TPREP_OFFSET +0), EB_BIG_ENDIAN | EB_DATA32, (uint32_t)(uint64val>>32));
-         eb_cycle_write(cycle, (eb_address_t)(pAccess->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_TPREP_OFFSET +4), EB_BIG_ENDIAN | EB_DATA32, (uint32_t)uint64val);
+         eb_cycle_write(cycle, (eb_address_t)(pAccess->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_TPREP_OFFSET +0), EB_BIG_ENDIAN | EB_DATA32, (uint32_t)(uint64val>>32));
+         eb_cycle_write(cycle, (eb_address_t)(pAccess->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_TPREP_OFFSET +4), EB_BIG_ENDIAN | EB_DATA32, (uint32_t)uint64val);
          if ((ebstatus = eb_cycle_close(cycle)) != EB_OK)  die(ebstatus, "failed to close write cycle");
     }
      
@@ -593,7 +594,7 @@ int main(int argc, char** argv) {
       eb_cycle_read(cycle, (eb_address_t)(pAccess->pCores[cpuIdx].ramAdr + pAccess->pCores[cpuIdx].actOffs + FTM_PAGE_PLANQTY_OFFSET), EB_BIG_ENDIAN | EB_DATA32, &tmpRead[0]);
       //if the user wanted to go to idle, read idle ptr from interface, else read plan ptr
       if(planIdx == -1)
-      {eb_cycle_read(cycle, (eb_address_t)(pAccess->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_IDLE_OFFSET), EB_BIG_ENDIAN | EB_DATA32, &tmpRead[1]);}
+      {eb_cycle_read(cycle, (eb_address_t)(pAccess->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_IDLE_OFFSET), EB_BIG_ENDIAN | EB_DATA32, &tmpRead[1]);}
       else 
       {eb_cycle_read(cycle, (eb_address_t)(pAccess->pCores[cpuIdx].ramAdr + pAccess->pCores[cpuIdx].actOffs + FTM_PAGE_PLANS_OFFSET + 4*planIdx), EB_BIG_ENDIAN | EB_DATA32, &tmpRead[1]);}
       if((ebstatus = eb_cycle_close(cycle)) != EB_OK) die(ebstatus, "failed to close read cycle"); 
@@ -651,7 +652,7 @@ int main(int argc, char** argv) {
        if (verbose) {
          printf("Swapping Active/Inactive page on CPU %u\n", cpuIdx);
        }
-       ebstatus = eb_device_write(device, (eb_address_t)(pAccess->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_CMD_OFFSET), EB_BIG_ENDIAN | EB_DATA32, 
+       ebstatus = eb_device_write(device, (eb_address_t)(pAccess->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_CMD_OFFSET), EB_BIG_ENDIAN | EB_DATA32, 
                                     (eb_data_t)CMD_COMMIT_PAGE, 0, eb_block);
       if (ebstatus != EB_OK) die(ebstatus, "failed to create cycle"); 
 
@@ -662,7 +663,7 @@ int main(int argc, char** argv) {
        if (verbose) {
          printf("Commanding FTM CPU %u to show FTM Data on console\n", cpuIdx);
        }
-       ebstatus = eb_device_write(device, pAccess->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_SHOW_ACT, 0, eb_block) ;
+       ebstatus = eb_device_write(device, pAccess->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_CMD_OFFSET, EB_BIG_ENDIAN | EB_DATA32, CMD_SHOW_ACT, 0, eb_block) ;
        if (ebstatus != EB_OK) die(ebstatus, "failed to create cycle"); 
        sleep(1); 
      } 

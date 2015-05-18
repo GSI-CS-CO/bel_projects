@@ -14,7 +14,7 @@ const uint32_t devID_ClusterCB   = 0x10041000;
 const uint32_t devID_Ebm         = 0x00000815;
 const uint32_t devID_Prioq       = 0x10040200;
 
-t_ftmAccess* openFtm(const char* netaddress, t_ftmAccess* p)
+t_ftmAccess* openFtm(const char* netaddress, t_ftmAccess* p, uint8_t overrideFWcheck)
 {
   eb_cycle_t cycle;
   eb_status_t status;
@@ -105,15 +105,25 @@ t_ftmAccess* openFtm(const char* netaddress, t_ftmAccess* p)
   
   //Old or new Gateware ?
   //FIXME: the cumbersome legacy code has to go sometime
+  if(overrideFWcheck) printf("Gate-/firmware check disabled by override option\n");
+  
   if(num_devices > 0) {
     //new
+    ftm_shared_offs = FTM_SHARED_OFFSET_NEW;
     for(cpuIdx = 0; cpuIdx < p->cpuQty; cpuIdx++) {
       p->pCores[cpuIdx].ramAdr = devices[cpuIdx].sdb_component.addr_first;
       //check for valid firmware
-      p->pCores[cpuIdx].hasValidFW = isFwValid(&devices[cpuIdx], &myVer[0], &myName[0]);
+      if(overrideFWcheck) p->pCores[cpuIdx].hasValidFW = 1;
+      else                p->pCores[cpuIdx].hasValidFW = isFwValid(&devices[cpuIdx], &myVer[0], &myName[0]);
     }
   } else {
     //Old
+    ftm_shared_offs = FTM_SHARED_OFFSET_OLD;
+    if(!overrideFWcheck) {
+      printf("ERROR: FTM is using old gate-/firmware. Sure this is the FTM you want ? Use option '-o' if you want to override\n");
+      goto error;
+    } else printf("WARNING: FTM is using old gateware. Be sure you know what you're doing\n");
+    
     for(cpuIdx = 0; cpuIdx < p->cpuQty; cpuIdx++) {
       devName_RAM_post[0] = '0';
       devName_RAM_post[1] = '0' + (p->cpuQty & 0xf);
@@ -135,23 +145,16 @@ t_ftmAccess* openFtm(const char* netaddress, t_ftmAccess* p)
     
   // get the active, inactive and shared pointer values from the core RAM
   for(cpuIdx = 0; cpuIdx < p->cpuQty; cpuIdx++) {
-    
     if (p->pCores[cpuIdx].hasValidFW) {
-    
-      printf("Base: 0x%08x, Offs: 0x%08x\n", p->pCores[cpuIdx].ramAdr, FTM_SHARED_OFFSET + FTM_PACT_OFFSET );
+      
       if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die(status, "failed to create cycle"); 
+      eb_cycle_read(cycle, (eb_address_t)(p->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_PACT_OFFSET), EB_BIG_ENDIAN | EB_DATA32, &tmpRead[0]);
+      eb_cycle_read(cycle, (eb_address_t)(p->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_PINA_OFFSET), EB_BIG_ENDIAN | EB_DATA32, &tmpRead[1]);
+      eb_cycle_read(cycle, (eb_address_t)(p->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_SHARED_PTR_OFFSET),   EB_BIG_ENDIAN | EB_DATA32, &tmpRead[2]); 
       
-      
-      eb_cycle_read(cycle, (eb_address_t)(p->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_PACT_OFFSET), EB_BIG_ENDIAN | EB_DATA32, &tmpRead[0]);
-      eb_cycle_read(cycle, (eb_address_t)(p->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_PINA_OFFSET), EB_BIG_ENDIAN | EB_DATA32, &tmpRead[1]);
-      eb_cycle_read(cycle, (eb_address_t)(p->pCores[cpuIdx].ramAdr + FTM_SHARED_OFFSET + FTM_SHARED_PTR_OFFSET),   EB_BIG_ENDIAN | EB_DATA32, &tmpRead[2]); 
       if ((status = eb_cycle_close(cycle)) != EB_OK) die(status, "failed to close read cycle");
-
       p->pCores[cpuIdx].actOffs     = (uint32_t) tmpRead[0];
-      printf("PACT: 0x%08x\n", p->pCores[cpuIdx].actOffs);
       p->pCores[cpuIdx].inaOffs     = (uint32_t) tmpRead[1];
-      printf("PINA: 0x%08x\n", p->pCores[cpuIdx].inaOffs);
-      
       p->pCores[cpuIdx].sharedOffs  = (uint32_t) tmpRead[2];
     
     } else printf("Core #%u: Can't read core offsets - no valid firmware present.\n", cpuIdx);
