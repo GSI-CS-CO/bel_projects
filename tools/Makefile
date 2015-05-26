@@ -6,7 +6,7 @@ TLU	?= ../ip_cores/wr-cores/modules/wr_tlu
 TARGETS := eb-flash eb-info eb-console eb-config-nv eca-snoop button-game io-test
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(ECA)
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(ECA) -I $(TLU)
 LIBS        ?= -L $(EB) -L $(ECA) -L $(TLU) -Wl,-rpath,$(PREFIX)/lib -letherbone -leca -ltlu
 
 all:	$(TARGETS)
