@@ -11,44 +11,37 @@ entity pci_pmc is
     -----------------------------------------
     -- Clocks
     -----------------------------------------
-    clk_20m_vcxo_i    : in    std_logic;  -- 20MHz VCXO clock                 -- AF21
-    clk_125m_pllref_i : in    std_logic;  -- 125 MHz PLL reference            -- N => G15 -- P => H15
-    clk_125m_local_i  : in    std_logic;  -- local clk from 125Mhz oszillator -- N => C22 -- P => C223
-    sfp234_ref_clk_i  : in    std_logic;                                      -- AF21
+    clk_20m_vcxo_i    : in    std_logic;  -- 20MHz VCXO clock                
+    clk_125m_pllref_i : in    std_logic;  -- 125 MHz PLL reference           
+    clk_125m_local_i  : in    std_logic;  -- local clk from 125Mhz oszillator
+    sfp234_ref_clk_i  : in    std_logic;                                     
    
     -----------------------------------------
     -- PMC/PCI2.2 pins
     -----------------------------------------
-    pmc_clk_i         : in    std_logic;                     -- P => B15 -- N => C15
-    pmc_rst_i         : in    std_logic;                     -- H19
-    pmc_buf_oe_o      : out   std_logic;                     -- A23
-    pmc_busmode_io    : inout std_logic_vector(4 downto 1);  -- 04 => B19  -- 03 => C19  -- 02 => D19  -- 01 => A20
-    pmc_ad_io         : inout std_logic_vector(31 downto 0); -- 31 => AD18 -- 23 => AF15 -- 15 => AA18 -- 07 => AA15
-                                                             -- 30 => AE18 -- 22 => AF16 -- 14 => AB18 -- 06 => AB15
-                                                             -- 29 => W18  -- 21 => V15  -- 13 => Y17  -- 05 => AD15
-                                                             -- 28 => Y18  -- 20 => W15  -- 12 => AA17 -- 04 => AE15
-                                                             -- 27 => AB16 -- 19 => AC14 -- 11 => AC17 -- 03 => Y14
-                                                             -- 26 => AC16 -- 18 => AD14 -- 10 => AD17 -- 02 => AA14
-                                                             -- 25 => V16  -- 17 => AF14 -- 09 => AD16 -- 01 => AA16
-                                                             -- 24 => W16  -- 16 => AF13 -- 08 => AE16 -- 00 => AD19
-    pmc_c_be_io       : inout std_logic_vector(3 downto 0);  -- 03 => C20  -- 02 => D20  -- 01 => B21  -- 00 => C21
-    pmc_par_io        : inout std_logic;                     -- B22
-    pmc_frame_io      : inout std_logic;                     -- P19
-    pmc_trdy_io       : inout std_logic;                     -- A22
-    pmc_irdy_io       : inout std_logic;                     -- E19
-    pmc_stop_io       : inout std_logic;                     -- A21
-    pmc_devsel_io     : inout std_logic;                     -- G21
-    pmc_idsel_i       : in    std_logic;                     -- H21
-    pmc_perr_io       : inout std_logic;                     -- J19
-    pmc_serr_io       : inout std_logic;                     -- E21
-    pmc_inta_o        : out   std_logic;                     -- D21
+    pmc_clk_i         : in    std_logic;                    
+    pmc_rst_i         : in    std_logic;                    
+    pmc_buf_oe_o      : out   std_logic;                    
+    pmc_busmode_io    : inout std_logic_vector(4 downto 1); 
+    pmc_ad_io         : inout std_logic_vector(31 downto 0);
+    pmc_c_be_io       : inout std_logic_vector(3 downto 0); 
+    pmc_par_io        : inout std_logic;                    
+    pmc_frame_io      : inout std_logic;                    
+    pmc_trdy_io       : inout std_logic;                    
+    pmc_irdy_io       : inout std_logic;                    
+    pmc_stop_io       : inout std_logic;                    
+    pmc_devsel_io     : inout std_logic;                    
+    pmc_idsel_i       : in    std_logic;                    
+    pmc_perr_io       : inout std_logic;                    
+    pmc_serr_io       : inout std_logic;                    
+    pmc_inta_o        : out   std_logic;                    
     
     ------------------------------------------------------------------------
     -- WR DAC signals
     ------------------------------------------------------------------------
-    wr_dac_sclk       : out std_logic;                    -- AC8
-    wr_dac_din        : out std_logic;                    -- AD8
-    wr_ndac_cs        : out std_logic_vector(2 downto 1); -- 2 => AF7 -- 1 => AF8
+    wr_dac_sclk       : out std_logic;                   
+    wr_dac_din        : out std_logic;                   
+    wr_ndac_cs        : out std_logic_vector(2 downto 1);
     
     -----------------------------------------------------------------------
     -- OneWire
@@ -58,137 +51,134 @@ entity pci_pmc is
     -----------------------------------------------------------------------
     -- display
     -----------------------------------------------------------------------
-    dis_di            : out   std_logic_vector(6 downto 0); -- 6 => AB1 -- 5 => AA1 -- 4 => W4 -- 3 => W3
-                                                            -- 2 => Y4  -- 1 => Y5  -- 0 => AA4
-    dis_ai            : in    std_logic_vector(1 downto 0); -- 1 => W6 -- 0 => W7
-    dis_do            : in    std_logic;                    -- AA5
-    dis_wr            : out   std_logic := '0';             -- AA6
-    dis_res           : out   std_logic := '1';             -- AA3
+    dis_di            : out   std_logic_vector(6 downto 0);
+                                                           
+    dis_ai            : in    std_logic_vector(1 downto 0);
+    dis_do            : in    std_logic;                   
+    dis_wr            : out   std_logic := '0';            
+    dis_res           : out   std_logic := '1';            
     
     -----------------------------------------------------------------------
     -- reset
     -----------------------------------------------------------------------
-    fpga_res          : in    std_logic; -- Y1
-    nres              : in    std_logic; -- AC7
+    fpga_res          : in    std_logic;
+    nres              : in    std_logic;
     
     -----------------------------------------------------------------------
      -- logic analyzer
     -----------------------------------------------------------------------
-    hpwck             : inout std_logic := 'Z';                                 -- K3
-    hpw               : inout std_logic_vector(15 downto 0) := (others => 'Z'); -- 15 => D1 -- 14 => F1 -- 13 => B1 -- 12 => D2
-                                                                                -- 11 => J2 -- 10 => F2 --  9 => J3 --  8 => E3
-                                                                                --  7 => G2 --  6 => K6 --  5 => G3 --  4 => K4
-                                                                                --  3 => F3 --  2 => J2 --  1 => H3 --  0 => L3
-    
+    hpwck             : inout std_logic := 'Z';                                
+    hpw               : inout std_logic_vector(15 downto 0) := (others => 'Z');
+   
     -----------------------------------------------------------------------
     -- lvttio/lvds
     -----------------------------------------------------------------------
-    lvttio_in_p_1     : in    std_logic; -- D6
-    lvttio_in_p_2     : in    std_logic; -- E7
-    lvttio_in_p_3     : in    std_logic; -- A5
-    lvttio_in_p_4     : in    std_logic; -- B6
-    lvttio_in_p_5     : in    std_logic; -- G9
-    lvttio_in_n_1     : in    std_logic; -- E6
-    lvttio_in_n_2     : in    std_logic; -- F7
-    lvttio_in_n_3     : in    std_logic; -- A6
-    lvttio_in_n_4     : in    std_logic; -- C6
-    lvttio_in_n_5     : in    std_logic; -- H9
+    lvttio_in_p_1     : in    std_logic;
+    lvttio_in_p_2     : in    std_logic;
+    lvttio_in_p_3     : in    std_logic;
+    lvttio_in_p_4     : in    std_logic;
+    lvttio_in_p_5     : in    std_logic;
+    lvttio_in_n_1     : in    std_logic;
+    lvttio_in_n_2     : in    std_logic;
+    lvttio_in_n_3     : in    std_logic;
+    lvttio_in_n_4     : in    std_logic;
+    lvttio_in_n_5     : in    std_logic;
                               
-    lvttio_out_p_1    : out   std_logic; -- J9
-    lvttio_out_p_2    : out   std_logic; -- C5
-    lvttio_out_p_3    : out   std_logic; -- F8
-    lvttio_out_p_4    : out   std_logic; -- B7
-    lvttio_out_p_5    : out   std_logic; -- A8
-    lvttio_out_n_1    : out   std_logic; -- J8
-    lvttio_out_n_2    : out   std_logic; -- D5
-    lvttio_out_n_3    : out   std_logic; -- G8
-    lvttio_out_n_4    : out   std_logic; -- C7
-    lvttio_out_n_5    : out   std_logic; -- A9
+    lvttio_out_p_1    : out   std_logic;
+    lvttio_out_p_2    : out   std_logic;
+    lvttio_out_p_3    : out   std_logic;
+    lvttio_out_p_4    : out   std_logic;
+    lvttio_out_p_5    : out   std_logic;
+    lvttio_out_n_1    : out   std_logic;
+    lvttio_out_n_2    : out   std_logic;
+    lvttio_out_n_3    : out   std_logic;
+    lvttio_out_n_4    : out   std_logic;
+    lvttio_out_n_5    : out   std_logic;
                               
-    lvttio_oe_1       : out   std_logic; -- N5
-    lvttio_oe_2       : out   std_logic; -- R3
-    lvttio_oe_3       : out   std_logic; -- T3
-    lvttio_oe_4       : out   std_logic; -- U5
-    lvttio_oe_5       : out   std_logic; -- W1
+    lvttio_oe_1       : out   std_logic;
+    lvttio_oe_2       : out   std_logic;
+    lvttio_oe_3       : out   std_logic;
+    lvttio_oe_4       : out   std_logic;
+    lvttio_oe_5       : out   std_logic;
                               
-    lvttio_term_en_1  : out   std_logic; -- P1
-    lvttio_term_en_2  : out   std_logic; -- R6
-    lvttio_term_en_3  : out   std_logic; -- T6
-    lvttio_term_en_4  : out   std_logic; -- V1
-    lvttio_term_en_5  : out   std_logic; -- W2
+    lvttio_term_en_1  : out   std_logic;
+    lvttio_term_en_2  : out   std_logic;
+    lvttio_term_en_3  : out   std_logic;
+    lvttio_term_en_4  : out   std_logic;
+    lvttio_term_en_5  : out   std_logic;
                               
-    lvttio_dir_led_1  : out   std_logic; -- R2
-    lvttio_dir_led_2  : out   std_logic; -- T2
-    lvttio_dir_led_3  : out   std_logic; -- U1
-    lvttio_dir_led_4  : out   std_logic; -- V5
-    lvttio_dir_led_5  : out   std_logic; -- P4
+    lvttio_dir_led_1  : out   std_logic;
+    lvttio_dir_led_2  : out   std_logic;
+    lvttio_dir_led_3  : out   std_logic;
+    lvttio_dir_led_4  : out   std_logic;
+    lvttio_dir_led_5  : out   std_logic;
                               
-    lvttio_act_led_1  : out   std_logic; -- P3
-    lvttio_act_led_2  : out   std_logic; -- T1
-    lvttio_act_led_3  : out   std_logic; -- T7
-    lvttio_act_led_4  : out   std_logic; -- V4
-    lvttio_act_led_5  : out   std_logic; -- N6
+    lvttio_act_led_1  : out   std_logic;
+    lvttio_act_led_2  : out   std_logic;
+    lvttio_act_led_3  : out   std_logic;
+    lvttio_act_led_4  : out   std_logic;
+    lvttio_act_led_5  : out   std_logic;
     
-    lvttl_clk_i       : in    std_logic; -- P => M1 -- N => N1
-    lvttl_in_clk_en_o : out   std_logic; -- P6
+    lvttl_clk_i       : in    std_logic;
+    lvttl_in_clk_en_o : out   std_logic;
     
     -----------------------------------------------------------------------
     -- connector cpld
     -----------------------------------------------------------------------
-    con               : out   std_logic_vector(5 downto 1); -- 5 => L4 -- 4 => K7 -- 3 => J5 -- 2 => E1
-                                                            -- 1 => C1
+    con               : out   std_logic_vector(5 downto 1);
+                                                           
     
     -----------------------------------------------------------------------
     -- hex switch
     -----------------------------------------------------------------------
-    hswf              : in    std_logic_vector(4 downto 1); -- 4 => M2 -- 3 => L1 -- 2 => H1 -- 1 => J1
+    hswf              : in    std_logic_vector(4 downto 1);
     
     -----------------------------------------------------------------------
     -- push buttons
     -----------------------------------------------------------------------
-    pbs_f             : in    std_logic; -- AF18
+    pbs_f             : in    std_logic;
     
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
-    slrd              : out   std_logic;                                       -- AF5
-    slwr              : out   std_logic;                                       -- AE4
-    fd                : inout std_logic_vector(7 downto 0) := (others => 'Z'); -- 7 => AC1 -- 6 => AF3 -- 5 => AD4 -- 4 => AE3
-                                                                               -- 3 => AB2 -- 2 => AD5 -- 1 => AB4 -- 0 => AB3
-    pa                : inout std_logic_vector(7 downto 0) := (others => 'Z'); -- 7 => AC5 -- 6 => AD6 -- 5 => AF6 -- 4 => AE6
-                                                                               -- 3 => AA9 -- 2 => Y9  -- 1 => W9  -- 0 => V9
-    ctl               : in    std_logic_vector(2 downto 0);                    -- 2 => AD3 -- 1 => AC3 -- 0 => AA7
-    uclk              : in    std_logic;                                       -- AB6
-    ures              : out   std_logic;                                       -- AC6
-    ifclk             : inout std_logic := 'Z';                                -- AD7
-    wakeup            : inout std_logic := 'Z';                                -- AA8
+    slrd              : out   std_logic;                                      
+    slwr              : out   std_logic;                                      
+    fd                : inout std_logic_vector(7 downto 0) := (others => 'Z');
+                                                                              
+    pa                : inout std_logic_vector(7 downto 0) := (others => 'Z');
+                                                                              
+    ctl               : in    std_logic_vector(2 downto 0);                   
+    uclk              : in    std_logic;                                      
+    ures              : out   std_logic;                                      
+    ifclk             : inout std_logic := 'Z';                               
+    wakeup            : inout std_logic := 'Z';                               
     
     -----------------------------------------------------------------------
     -- leds on board
     -----------------------------------------------------------------------
-    user_led_o        : out   std_logic_vector(8 downto 1); -- 8 => AC19 -- 7 => AC20 -- 6 => AE23 -- 5 => AD23
-                                                            -- 4 => AA21 -- 3 => Y21  -- 2 => AB19 -- 1 => AA20
+    user_led_o        : out   std_logic_vector(8 downto 1);
+                                                           
     
     -----------------------------------------------------------------------
     -- leds front panel
     -----------------------------------------------------------------------
-    status_led_o      : out   std_logic_vector(6 downto 1); -- 6 => AE19 -- 5 => AF19 -- 4 => AF23 -- 3 => AC22
-                                                            -- 2 => AC21 -- 1 => AB21
+    status_led_o      : out   std_logic_vector(6 downto 1);
+                                                          
 
     -----------------------------------------------------------------------
     -- SFP4 
     -----------------------------------------------------------------------
     
-    sfp4_tx_disable_o : out std_logic := '0';                  -- H12
-    sfp4_tx_fault     : in std_logic;                          -- C12
-    sfp4_los          : in std_logic;                          -- B12
+    sfp4_tx_disable_o : out std_logic := '0';                 
+    sfp4_tx_fault     : in std_logic;                         
+    sfp4_los          : in std_logic;                         
     
-    sfp4_txp_o        : out std_logic;                         -- N => J23 -- P => J24
-    sfp4_rxp_i        : in  std_logic;                         -- N => K25 -- P => K26
+    sfp4_txp_o        : out std_logic;                        
+    sfp4_rxp_i        : in  std_logic;                        
     
-    sfp4_mod0         : in    std_logic; -- grounded by module -- A12
-    sfp4_mod1         : inout std_logic; -- SCL                -- A11
-    sfp4_mod2         : inout std_logic  -- SDA                -- J12
+    sfp4_mod0         : in    std_logic; -- grounded by module
+    sfp4_mod1         : inout std_logic; -- SCL               
+    sfp4_mod2         : inout std_logic  -- SDA               
     
     );
 end pci_pmc;
