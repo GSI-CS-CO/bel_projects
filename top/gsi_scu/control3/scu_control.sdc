@@ -41,3 +41,9 @@ set_clock_groups -asynchronous                           \
 # cut: wb sys <=> wb flash   (different frequencies and using xwb_clock_crossing)
 set_false_path -from [get_clocks {main|\sys_a2:sys_inst|*|clk[0]}] -to [get_clocks {main|\sys_a2:sys_inst|*|clk[1]}]
 set_false_path -from [get_clocks {main|\sys_a2:sys_inst|*|clk[1]}] -to [get_clocks {main|\sys_a2:sys_inst|*|clk[0]}]
+
+set_max_delay 0 -from [get_clocks {main|\ref_a2:ref_inst|*|clk[0]}] -to [get_clocks {main|\lvds_a2:lvds_inst|*|clk[0]}]
+#set_max_delay 4 -from [get_clocks {main|\lvds_a2:lvds_inst|*|clk[0]}] -to [get_clocks {main|\ref_a2:ref_inst|*|clk[0]}]
+
+set_min_delay 0 -from [get_clocks {main|\ref_a2:ref_inst|*|clk[0]}] -to [get_clocks {main|\lvds_a2:lvds_inst|*|clk[0]}]
+#set_max_delay 4 -from [get_clocks {main|\lvds_a2:lvds_inst|*|clk[0]}] -to [get_clocks {main|\ref_a2:ref_inst|*|clk[0]}]

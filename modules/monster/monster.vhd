@@ -97,6 +97,7 @@ entity monster is
     core_clk_125m_pllref_i : in    std_logic;
     core_clk_125m_sfpref_i : in    std_logic;
     core_clk_125m_local_i  : in    std_logic;
+    core_clk_ext_lvds_i    : in    std_logic;
     core_rstn_i            : in    std_logic;
     -- Optional clock outputs
     core_clk_wr_ref_o      : out   std_logic;
@@ -465,6 +466,7 @@ architecture rtl of monster is
   signal clk_butis        : std_logic;
   signal clk_phase        : std_logic;
   signal clk_lvds         : std_logic;
+  signal clk_lvds2        : std_logic;
   signal clk_enable       : std_logic;
   signal clk_12_5         : std_logic;
   signal rstn_ref         : std_logic;
@@ -484,6 +486,9 @@ architecture rtl of monster is
   -- BuTiS T0 clocks
   signal clk_butis_t0     : std_logic; -- 100KHz
   signal clk_butis_t0_ts  : std_logic; -- 100KHz + timestamp
+  
+  signal lvds_locked      : std_logic;
+  signal rstn_lvds        : std_logic;
   
   -- END OF Clock networks
   ----------------------------------------------------------------------------------
@@ -636,8 +641,8 @@ begin
   
   reset : altera_reset
     generic map(
-      g_plls   => 4,
-      g_clocks => 4,
+      g_plls   => 5,
+      g_clocks => 5,
       g_areset => f_pick(c_is_arria5, 100, 1)*1024,
       g_stable => f_pick(c_is_arria5, 100, 1)*1024)
     port map(
@@ -647,15 +652,18 @@ begin
       pll_lock_i(1) => ref_locked,
       pll_lock_i(2) => sys_locked,
       pll_lock_i(3) => gxb_locked,
+      pll_lock_i(4) => lvds_locked,
       pll_arst_o    => pll_rst,
       clocks_i(0)   => clk_free,
       clocks_i(1)   => clk_sys,
       clocks_i(2)   => clk_update,
       clocks_i(3)   => clk_ref,
+      clocks_i(4)   => clk_lvds,
       rstn_o(0)     => rstn_free,
       rstn_o(1)     => rstn_sys,
       rstn_o(2)     => rstn_update,
-      rstn_o(3)     => rstn_ref);
+      rstn_o(3)     => rstn_ref,
+      rstn_o(4)     => rstn_lvds);
 
   dmtd_a2 : if c_is_arria2 generate
     dmtd_inst : dmtd_pll port map(
@@ -719,15 +727,25 @@ begin
     ref_inst : ref_pll port map( -- see "Phase Counter Select Mapping" table for arria2gx
       areset => pll_rst,
       inclk0 => core_clk_125m_pllref_i, -- 125 MHz
-      c0     => clk_ref0,          -- 125 MHz, counter: 0010 - #2
-      c1     => clk_ref1,          -- 200 MHz, counter: 0011 = #3
-      c2     => clk_ref2,          --  25 MHz, counter: 0100 = #4
+      c0     => clk_ref0,               -- 125 MHz, counter: 0010 - #2
+      c1     => clk_ref1,               -- 200 MHz, counter: 0011 = #3
+      c2     => clk_ref2,               --  25 MHz, counter: 0100 = #4
       locked => ref_locked,
       scanclk            => clk_free,
       phasedone          => phase_done,
       phasecounterselect => phase_sel(3 downto 0),
       phasestep          => phase_step,
       phaseupdown        => '1');
+  end generate;
+  
+  lvds_a2: if c_is_arria2 generate
+    lvds_inst : lvds_pll port map(
+      areset => pll_rst,
+      inclk0 => core_clk_ext_lvds_i,    -- 125MHz
+      c0     => clk_lvds2,              -- 125Mhz
+      c1     => clk_ref3,               -- 1000 MHz
+      c2     => clk_ref4,               -- 125 MHz, 1/8 duty, -1.5ns phase
+      locked => lvds_locked);
   end generate;
 
   ref_a5 : if c_is_arria5 generate
@@ -793,6 +811,8 @@ begin
   
   clk_lvds   <= clk_ref3;
   clk_enable <= clk_ref4;
+  core_debug_o(0) <= clk_lvds2;
+  core_debug_o(1) <= clk_ref0;
 
   butis : altera_butis
     port map(
@@ -1452,7 +1472,7 @@ c4: eca_ac_wbm
       g_outputs => f_sub1(g_lvds_inout+g_lvds_out)+1,
       g_invert  => g_lvds_invert)
     port map(
-      clk_ref_i    => clk_ref,
+      clk_ref_i    => clk_lvds2,
       rstn_ref_i   => rstn_ref,
       clk_lvds_i   => clk_lvds,
       clk_enable_i => clk_enable,

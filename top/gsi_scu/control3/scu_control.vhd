@@ -8,11 +8,18 @@ use work.lpc_uart_pkg.all;
 use work.monster_pkg.all;
 
 entity scu_control is
+  generic (
+            extension_card: string := "fastio" -- "mil"
+          );
   port(
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
     clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
     clk_125m_local_i  : in std_logic;  -- local clk from 125Mhz oszillator
+    clk_ext_lvds_i    : in std_logic;  -- clk input from ext connector
     nres              : in std_logic; -- powerup reset
+    
+    lvds_clk_o        : out std_logic;
+    ref_clk_o         : out std_logic;
     
     -----------------------------------------
     -- UART on front panel
@@ -151,23 +158,20 @@ entity scu_control is
     -- EXT CONN3
     -----------------------------------------------------------------------
 
- --   A_EXT_LVDS_RX     : in  std_logic_vector( 3 downto 0);    -- von Mil-Extension verwendet
- --   A_EXT_LVDS_TX     : out std_logic_vector( 3 downto 0);    -- von Mil-Extension verwendet
- --   A_EXT_LVDS_CLKOUT : out std_logic;                        -- von Mil-Extension verwendet
-    A_EXT_LVDS_CLKIN  : in    std_logic;
+    --a_ext_conn3_a2:     inout std_logic;      -- Optokoppler Interlock
+    --a_ext_conn3_a3:     inout std_logic;      -- Optokoppler Data Ready
+    a_ext_conn3_a6:     out std_logic;        -- Optokoppler Data Request
+    a_ext_conn3_a7:     out std_logic;        -- Optokoppler Timing
+    a_ext_conn3_a14:    out std_logic;
+    a_ext_conn3_a15:    out std_logic;
 
-    a_ext_conn3_a2:     inout std_logic;        -- Optokoppler Interlock
-    a_ext_conn3_a3:     inout std_logic;        -- Optokoppler Data Ready
-    a_ext_conn3_a6:     inout std_logic;        -- Optokoppler Data Request
-    a_ext_conn3_a7:     inout std_logic;        -- Optokoppler Timing
-    a_ext_conn3_a10:    inout std_logic;
-    a_ext_conn3_a11:    inout std_logic;
-    a_ext_conn3_a14:    inout std_logic;
-    a_ext_conn3_a15:    inout std_logic;
-    a_ext_conn3_a18:    inout std_logic;
-    a_ext_conn3_a19:    inout std_logic;
-    a_ext_conn3_b4:     inout std_logic;
-    a_ext_conn3_b5:     inout std_logic;
+
+    a_ext_conn3_b8:     in std_logic;
+    a_ext_conn3_b9:     in std_logic;
+    a_ext_conn3_b12:    in std_logic;
+    a_ext_conn3_b13:    in std_logic;
+    a_ext_conn3_b16:    in std_logic;
+    a_ext_conn3_b17:    in std_logic;
     
     -----------------------------------------------------------------------
     -- serial channel SCU bus
@@ -212,7 +216,7 @@ entity scu_control is
     -----------------------------------------------------------------------
     -- SCU-CB Version
     -----------------------------------------------------------------------
-    scu_cb_version    : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
+    --scu_cb_version    : in  std_logic_vector(3 downto 0); -- must be assigned with weak pull ups
     
     
     -----------------------------------------------------------------------
@@ -261,7 +265,14 @@ architecture rtl of scu_control is
   signal mil_lemo_data_o_tmp   : std_logic_vector(4 downto 1);
   signal mil_lemo_nled_o_tmp   : std_logic_vector(4 downto 1);
   signal mil_lemo_out_en_o_tmp : std_logic_vector(4 downto 1);
-  signal mil_lemo_data_i_tmp   : std_logic_vector(4 downto 1);	
+  signal mil_lemo_data_i_tmp   : std_logic_vector(4 downto 1);
+  signal lvds_p_i     : std_logic_vector(2 downto 0);
+  signal lvds_n_i     : std_logic_vector(2 downto 0);
+  signal lvds_i_led   : std_logic_vector(2 downto 0);
+  signal lvds_p_o     : std_logic_vector(2 downto 0);
+  signal lvds_n_o     : std_logic_vector(2 downto 0);
+  signal lvds_o_led   : std_logic_vector(2 downto 0);
+  signal lvds_oen     : std_logic_vector(1 downto 0);
   
   
   
@@ -275,22 +286,26 @@ begin
 
   main : monster
     generic map(
-      g_family        => c_family,
-      g_project       => c_project,
-      g_gpio_in       => 1,
-      g_gpio_out      => 1,
-      g_flash_bits    => 24,
-      g_lm32_cores    => 2,
-      g_lm32_ramsizes => 65536/4,
-      g_lm32_msis     => 3,
-      g_en_pcie       => true,
-      g_en_scubus     => true,
-      g_en_mil        => true,
-      g_en_oled       => true,
-      g_en_user_ow    => true,
-      g_en_fg         => true,
-      g_en_cfi        => true,
-      g_lm32_init_files => c_initf
+      g_family            => c_family,
+      g_project           => c_project,
+      g_gpio_in           => 1,
+      g_gpio_out          => 1,
+      g_lvds_in           => 1,
+      g_lvds_out          => 1,
+      g_lvds_inout        => 2,
+      g_lvds_invert       => true,
+      g_flash_bits        => 24,
+      g_lm32_cores        => 2,
+      g_lm32_ramsizes     => 65536/4, -- in 32b words
+      g_lm32_msis         => 3,
+      g_en_pcie           => true,
+      g_en_scubus         => true,
+      g_en_mil            => false,
+      g_en_oled           => true,
+      g_en_user_ow        => true,
+      g_en_fg             => true,
+      g_en_cfi            => true,
+      g_lm32_init_files   => c_initf
     )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
@@ -298,9 +313,19 @@ begin
       core_clk_125m_pllref_i => clk_125m_pllref_i,
       core_clk_125m_local_i  => clk_125m_local_i,
       core_clk_wr_ref_o      => clk_ref,
+      core_clk_ext_lvds_i    => clk_ext_lvds_i,
       core_rstn_wr_ref_o     => rstn_ref,
+      core_debug_o(0)        => lvds_clk_o,
+      core_debug_o(1)        => ref_clk_o,
       gpio_o(0)              => lemo_io(1),
       gpio_i(0)              => lemo_io(2),
+      lvds_p_i               => lvds_p_i,
+      lvds_n_i               => lvds_n_i,
+      lvds_i_led_o           => lvds_i_led,
+      lvds_p_o               => lvds_p_o,
+      lvds_n_o               => lvds_n_o,
+      lvds_o_led_o           => lvds_o_led,
+      lvds_oen_o             => lvds_oen,
       wr_onewire_io          => OneWire_CB,
       wr_sfp_sda_io          => sfp2_mod2,
       wr_sfp_scl_io          => sfp2_mod1,
@@ -312,8 +337,8 @@ begin
       wr_ndac_cs_o           => ndac_cs,
       wr_uart_o              => uart_txd_o(0),
       wr_uart_i              => uart_rxd_i(0),
-      led_link_up_o          => s_tled_sfp_grn,
-      led_link_act_o         => s_tled_sfp_red,
+      led_link_up_o          => s_leds(3),
+      led_link_act_o         => s_leds(2),
       led_track_o            => s_leds(4),
       led_pps_o              => s_leds(1),
       pcie_refclk_i          => pcie_refclk_i,
@@ -352,21 +377,21 @@ begin
       mil_nsel_rcv_o         => eio(7),
       mil_nboo_o             => eio(10),
       mil_nbzo_o             => eio(8),
-      mil_nled_rcv_o         => a_ext_conn3_b4,
-      mil_nled_trm_o         => a_ext_conn3_b5,
-      mil_nled_err_o         => a_ext_conn3_a19,
-      mil_timing_i           => not a_ext_conn3_a7,
+      mil_nled_rcv_o         => open, --a_ext_conn3_b4,
+      mil_nled_trm_o         => open, --a_ext_conn3_b5,
+      mil_nled_err_o         => open, --a_ext_conn3_a19,
+      mil_timing_i           => '0', -- not a_ext_conn3_a7,
       mil_nled_timing_o      => eio(17),
-      mil_nled_fifo_ne_o     => a_ext_conn3_a19,
-      mil_interlock_intr_i   => not a_ext_conn3_a2,
-      mil_data_rdy_intr_i    => not a_ext_conn3_a3,
-      mil_data_req_intr_i    => not a_ext_conn3_a6,
-      mil_nled_interl_o      => a_ext_conn3_a15,
-      mil_nled_dry_o         => a_ext_conn3_a11,
-      mil_nled_drq_o         => a_ext_conn3_a14,
-	   mil_lemo_data_o        => mil_lemo_data_o_tmp,
+      mil_nled_fifo_ne_o     => open, --a_ext_conn3_a19,
+      mil_interlock_intr_i   => '0', --not a_ext_conn3_a2,
+      mil_data_rdy_intr_i    => '0', -- not a_ext_conn3_a3,
+      mil_data_req_intr_i    => '0', -- not a_ext_conn3_a6,
+      mil_nled_interl_o      => open, -- a_ext_conn3_a15,
+      mil_nled_dry_o         => open, -- a_ext_conn3_a11,
+      mil_nled_drq_o         => open, -- a_ext_conn3_a14,
+      mil_lemo_data_o        => mil_lemo_data_o_tmp,
       mil_lemo_nled_o        => mil_lemo_nled_o_tmp,
-	   mil_lemo_out_en_o      => mil_lemo_out_en_o_tmp,
+      mil_lemo_out_en_o      => mil_lemo_out_en_o_tmp,
       mil_lemo_data_i        => mil_lemo_data_i_tmp,		
 --      mil_io1_o              => eio(11),
 --      mil_io1_is_in_o        => eio(12),
@@ -374,6 +399,7 @@ begin
 --      mil_io2_o              => eio(14),
 --      mil_io2_is_in_o        => eio(15),
 --      mil_nled_io2_o         => eio(16),
+
       oled_rstn_o            => hpla_ch(8),
       oled_dc_o              => hpla_ch(6),
       oled_ss_o              => hpla_ch(4),
@@ -421,7 +447,6 @@ begin
   A_OneWire   <= 'Z';
   
   A20GATE     <= kbc_out_port(1);
-  a_ext_conn3_a10 <= '1'; -- wishbone errors should never leave the FPGA!
   
   -- connects the serial ports to the carrier board
   serial_to_cb_o <= '0';
@@ -449,19 +474,51 @@ begin
         extended_o => s_lemo_leds(i));
   end generate;
   
-  -- MIL Option LEMO Control  
-  eio(11) <= mil_lemo_data_o_tmp(1) when mil_lemo_out_en_o_tmp(1)='1' else 'Z'; --SCU A17, A_LEMO3_IO
-  eio(14) <= mil_lemo_data_o_tmp(2) when mil_lemo_out_en_o_tmp(1)='1' else 'Z'; --SCU A20, A_LEMO4_IO
-  mil_lemo_data_i_tmp(1) <= eio(11); 
-  mil_lemo_data_i_tmp(2) <= eio(14);
-  mil_lemo_data_i_tmp(3) <= '0'; -- not used for SCU, to be used in SIO
-  mil_lemo_data_i_tmp(4) <= '0'; -- not used for SCU, to be used in SIO 
+  -- LVDS->LEMO output enable / termination
+  eio(17) <= '0' when lvds_oen(0)='0' else 'Z'; -- TTLIO1 output enable
+  eio(16) <= '0' when lvds_oen(1)='0' else 'Z'; -- TTLIO2 output enable
+  eio(15) <= '1' when lvds_oen(0)='1' else '0'; -- TERMEN1 (terminate when input)
+  eio(14) <= '1' when lvds_oen(1)='1' else '0'; -- TERMEN2 (terminate when input)
+  IO_2_5V(15) <= '0' when lvds_oen(0)='0' else 'Z'; -- FPLED1/TTLIO1 red
+  IO_2_5V(14) <= '0' when lvds_oen(1)='0' else 'Z'; -- FPLED3/TTLIO2 red
+  
+  -- LVDS inputs
+  lvds_p_i(0) <= a_ext_conn3_b16; -- TTLIO1
+  lvds_n_i(0) <= a_ext_conn3_b17; -- TTLIO1
+  
+  lvds_p_i(1) <= a_ext_conn3_b8; -- TTLIO2
+  lvds_n_i(1) <= a_ext_conn3_b9; -- TTLIO2
+  
+  lvds_p_i(2) <= a_ext_conn3_b12; -- TRIN
+  lvds_n_i(2) <= a_ext_conn3_b13; -- TRIN
+      
+  -- LVDS outputs
+  a_ext_conn3_a14 <= lvds_p_o(0); -- TTLIO1
+  a_ext_conn3_a15 <= lvds_n_o(0); -- TTLIO1
+   
+  a_ext_conn3_a6 <= lvds_p_o(1); -- TTLIO2
+  a_ext_conn3_a7 <= lvds_n_o(1); -- TTLIO2
+  
+  -- LVDS activity LEDs
+  IO_2_5V(13) <= '0' when lvds_i_led(0)='1' else 'Z'; -- FPLED2/TTLIO1 blue
+  IO_2_5V(12) <= '0' when lvds_i_led(1)='1' else 'Z'; -- FPLED4/TTLIO2 blue
+  IO_2_5V(10) <= '0' when lvds_i_led(2)='1' else 'Z'; -- LED2 (near HDMI = TRIN  / LVDS2)
+  
+  -- MIL Option LEMO Control
+  mil_lemo: if extension_card = "mil" generate
+    eio(11) <= mil_lemo_data_o_tmp(1) when mil_lemo_out_en_o_tmp(1)='1' else 'Z'; --SCU A17, A_LEMO3_IO
+    eio(14) <= mil_lemo_data_o_tmp(2) when mil_lemo_out_en_o_tmp(1)='1' else 'Z'; --SCU A20, A_LEMO4_IO
+    mil_lemo_data_i_tmp(1) <= eio(11); 
+    mil_lemo_data_i_tmp(2) <= eio(14);
+    mil_lemo_data_i_tmp(3) <= '0'; -- not used for SCU, to be used in SIO
+    mil_lemo_data_i_tmp(4) <= '0'; -- not used for SCU, to be used in SIO 
 
-  eio(12) <= not mil_lemo_out_en_o_tmp(1);    --SCU A18, A_LEMO3_EN_IN, low = Lemo is output
-  eio(15) <= not mil_lemo_out_en_o_tmp(2);    --SCU A21, A_LEMO3_EN_IN, low = Lemo is output
+    eio(12) <= not mil_lemo_out_en_o_tmp(1);    --SCU A18, A_LEMO3_EN_IN, low = Lemo is output
+    eio(15) <= not mil_lemo_out_en_o_tmp(2);    --SCU A21, A_LEMO3_EN_IN, low = Lemo is output
 
-  eio(13) <= mil_lemo_nled_o_tmp(1);--SCU A19, A_nLEMO3_LED, low = Activity led on
-  eio(16) <= mil_lemo_nled_o_tmp(2);--SCU A23, A_nLEMO4_LED, low = Activity led on
+    eio(13) <= mil_lemo_nled_o_tmp(1);--SCU A19, A_nLEMO3_LED, low = Activity led on
+    eio(16) <= mil_lemo_nled_o_tmp(2);--SCU A23, A_nLEMO4_LED, low = Activity led on
+  end generate mil_lemo;
   
   
   -- LEDs

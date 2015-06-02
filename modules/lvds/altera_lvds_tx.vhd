@@ -19,12 +19,14 @@ end altera_lvds_tx;
 
 architecture rtl of altera_lvds_tx is
   signal reg : std_logic_vector(7 downto 0);
+  signal reg1 : std_logic_vector(7 downto 0);
 begin
 
   main : process(tx_core) is
   begin
     if rising_edge(tx_core) then
       reg <= tx_in;
+      reg1 <= reg;
     end if;
   end process;
 
@@ -33,7 +35,7 @@ begin
       port map(
         tx_inclock => tx_inclock,
         tx_enable  => tx_enable,
-        tx_in      => reg,
+        tx_in      => reg1,
         tx_out(0)  => tx_out);
   end generate;
   
@@ -42,7 +44,7 @@ begin
       port map(
         tx_inclock => tx_inclock,
         tx_enable  => tx_enable,
-        tx_in      => reg,
+        tx_in      => reg1,
         tx_out(0)  => tx_out);
   end generate;
   

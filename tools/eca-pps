@@ -12,13 +12,21 @@ eca-table $dev flush
 
 # LEDs/ channel0 (pulse width = 100ms)
 eca-ctl $dev activate -c 0
+eca-ctl $dev activate -c 2
 eca-table $dev add 0xdeadbeef/64 +0.0 0 0x0000ffff
 eca-table $dev add 0xdeadbeef/64 +0.1 0 0xffff0000
+eca-table $dev add 0xdeadbeef/64 0 2 0xe0000fff
+eca-table $dev add 0xdeadbeef/64 1 2 0x00fff000
+eca-table $dev add 0xdeadbeef/64 2 2 0xc0000fff
+eca-table $dev add 0xdeadbeef/64 3 2 0x00fff000
+eca-table $dev add 0xdeadbeef/64 4 2 0x80000fff
+eca-table $dev add 0xdeadbeef/64 5 2 0x00fff000
+
 
 # LEMOs/channel2 (pulse width = 4*8=32ns)
-eca-ctl $dev activate -c 2
-eca-table $dev add 0xdeadbeef/64 0 2 0x000fff
-eca-table $dev add 0xdeadbeef/64 4 2 0xfff000
+eca-ctl $dev activate -c 3
+eca-table $dev add 0xdeadbeef/64 0 3 0xfeedbabe
+#eca-table $dev add 0xdeadbeef/64 4 2 0xfff000
 eca-table $dev flip-active
 
 echo "done."

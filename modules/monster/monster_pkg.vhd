@@ -74,6 +74,7 @@ package monster_pkg is
       core_clk_125m_sfpref_i : in    std_logic;
       core_clk_125m_pllref_i : in    std_logic;
       core_clk_125m_local_i  : in    std_logic;
+      core_clk_ext_lvds_i    : in    std_logic;
       core_rstn_i            : in    std_logic := '1';
       -- Optional clock outputs
       core_clk_wr_ref_o      : out   std_logic;

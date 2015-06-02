@@ -33,32 +33,29 @@
 --applicable agreement for further details.
 
 
---altiobuf_out CBX_AUTO_BLACKBOX="ALL" DEVICE_FAMILY="Arria II GX" ENABLE_BUS_HOLD="FALSE" LEFT_SHIFT_SERIES_TERMINATION_CONTROL="FALSE" NUMBER_OF_CHANNELS=1 OPEN_DRAIN_OUTPUT="FALSE" PSEUDO_DIFFERENTIAL_MODE="TRUE" USE_DIFFERENTIAL_MODE="TRUE" USE_OE="FALSE" USE_TERMINATION_CONTROL="FALSE" datain dataout dataout_b
+--altiobuf_out CBX_AUTO_BLACKBOX="ALL" DEVICE_FAMILY="Arria II GX" ENABLE_BUS_HOLD="FALSE" LEFT_SHIFT_SERIES_TERMINATION_CONTROL="FALSE" NUMBER_OF_CHANNELS=1 OPEN_DRAIN_OUTPUT="FALSE" PSEUDO_DIFFERENTIAL_MODE="FALSE" USE_DIFFERENTIAL_MODE="TRUE" USE_OE="FALSE" USE_TERMINATION_CONTROL="FALSE" datain dataout dataout_b
 --VERSION_BEGIN 13.1 cbx_altiobuf_out 2013:10:17:04:07:49:SJ cbx_mgl 2013:10:17:04:34:36:SJ cbx_stratixiii 2013:10:17:04:07:49:SJ cbx_stratixv 2013:10:17:04:07:49:SJ  VERSION_END
 
  LIBRARY arriaii;
  USE arriaii.all;
 
---synthesis_resources = arriaii_io_obuf 2 arriaii_pseudo_diff_out 1 
+--synthesis_resources = arriaii_io_obuf 1 
  LIBRARY ieee;
  USE ieee.std_logic_1164.all;
 
- ENTITY  arria2_lvds_obuf_iobuf_out_gmt IS 
+ ENTITY  arria2_lvds_obuf_iobuf_out_rot IS 
 	 PORT 
 	 ( 
 		 datain	:	IN  STD_LOGIC_VECTOR (0 DOWNTO 0);
 		 dataout	:	OUT  STD_LOGIC_VECTOR (0 DOWNTO 0);
 		 dataout_b	:	OUT  STD_LOGIC_VECTOR (0 DOWNTO 0)
 	 ); 
- END arria2_lvds_obuf_iobuf_out_gmt;
+ END arria2_lvds_obuf_iobuf_out_rot;
 
- ARCHITECTURE RTL OF arria2_lvds_obuf_iobuf_out_gmt IS
+ ARCHITECTURE RTL OF arria2_lvds_obuf_iobuf_out_rot IS
 
-	 SIGNAL  wire_obuf_ba_o	:	STD_LOGIC;
 	 SIGNAL  wire_obufa_o	:	STD_LOGIC;
-	 SIGNAL  wire_pseudo_diffa_o	:	STD_LOGIC;
-	 SIGNAL  wire_pseudo_diffa_obar	:	STD_LOGIC;
-	 SIGNAL  oe_b	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_obufa_obar	:	STD_LOGIC;
 	 SIGNAL  oe_w :	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 COMPONENT  arriaii_io_obuf
 	 GENERIC 
@@ -76,48 +73,24 @@
 		seriesterminationcontrol	:	IN STD_LOGIC_VECTOR(15 DOWNTO 0) := (OTHERS => '0')
 	 ); 
 	 END COMPONENT;
-	 COMPONENT  arriaii_pseudo_diff_out
-	 PORT
-	 ( 
-		i	:	IN STD_LOGIC := '0';
-		o	:	OUT STD_LOGIC;
-		obar	:	OUT STD_LOGIC
-	 ); 
-	 END COMPONENT;
  BEGIN
 
 	dataout(0) <= wire_obufa_o;
-	dataout_b(0) <= wire_obuf_ba_o;
-	oe_b <= (OTHERS => '1');
+	dataout_b(0) <= wire_obufa_obar;
 	oe_w <= (OTHERS => '1');
-	obuf_ba :  arriaii_io_obuf
-	  GENERIC MAP (
-		bus_hold => "false",
-		open_drain_output => "false"
-	  )
-	  PORT MAP ( 
-		i => wire_pseudo_diffa_obar,
-		o => wire_obuf_ba_o,
-		oe => oe_b(0)
-	  );
 	obufa :  arriaii_io_obuf
 	  GENERIC MAP (
 		bus_hold => "false",
 		open_drain_output => "false"
 	  )
 	  PORT MAP ( 
-		i => wire_pseudo_diffa_o,
+		i => datain(0),
 		o => wire_obufa_o,
+		obar => wire_obufa_obar,
 		oe => oe_w(0)
 	  );
-	pseudo_diffa :  arriaii_pseudo_diff_out
-	  PORT MAP ( 
-		i => datain(0),
-		o => wire_pseudo_diffa_o,
-		obar => wire_pseudo_diffa_obar
-	  );
 
- END RTL; --arria2_lvds_obuf_iobuf_out_gmt
+ END RTL; --arria2_lvds_obuf_iobuf_out_rot
 --VALID FILE
 
 
@@ -141,7 +114,7 @@ ARCHITECTURE RTL OF arria2_lvds_obuf IS
 
 
 
-	COMPONENT arria2_lvds_obuf_iobuf_out_gmt
+	COMPONENT arria2_lvds_obuf_iobuf_out_rot
 	PORT (
 			datain	: IN STD_LOGIC_VECTOR (0 DOWNTO 0);
 			dataout	: OUT STD_LOGIC_VECTOR (0 DOWNTO 0);
@@ -153,7 +126,7 @@ BEGIN
 	dataout    <= sub_wire0(0 DOWNTO 0);
 	dataout_b    <= sub_wire1(0 DOWNTO 0);
 
-	arria2_lvds_obuf_iobuf_out_gmt_component : arria2_lvds_obuf_iobuf_out_gmt
+	arria2_lvds_obuf_iobuf_out_rot_component : arria2_lvds_obuf_iobuf_out_rot
 	PORT MAP (
 		datain => datain,
 		dataout => sub_wire0,
@@ -175,7 +148,7 @@ END RTL;
 -- Retrieval info: CONSTANT: left_shift_series_termination_control STRING "FALSE"
 -- Retrieval info: CONSTANT: number_of_channels NUMERIC "1"
 -- Retrieval info: CONSTANT: open_drain_output STRING "FALSE"
--- Retrieval info: CONSTANT: pseudo_differential_mode STRING "TRUE"
+-- Retrieval info: CONSTANT: pseudo_differential_mode STRING "FALSE"
 -- Retrieval info: CONSTANT: use_differential_mode STRING "TRUE"
 -- Retrieval info: CONSTANT: use_oe STRING "FALSE"
 -- Retrieval info: CONSTANT: use_termination_control STRING "FALSE"
