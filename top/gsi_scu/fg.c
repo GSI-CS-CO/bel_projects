@@ -3,14 +3,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define SYS_CSCO    55
-#define SYS_PBRF    42
-
-#define GRP_ADDAC1  3
-#define GRP_ADDAC2  38
-#define GRP_DIOB    26
-#define GRP_FIB_DDS 1
-
 extern unsigned int* wb_fg_base;
 
 int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr) {
@@ -49,14 +41,14 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
         bus->slaves[i].devs[0].version = 0x1;
         bus->slaves[i].devs[0].offset = FG1_BASE;
         bus->slaves[i].devs[0].slave = &(bus->slaves[i]);
-        if (j < MAX_FG_DEVICES) {
+        if (j < MAX_FG_MACROS) {
           list->devs[j] = &(bus->slaves[i].devs[0]);j++;
         }
         bus->slaves[i].devs[1].dev_number = 0x1;
         bus->slaves[i].devs[1].version = 0x1;
         bus->slaves[i].devs[1].offset = FG2_BASE;
         bus->slaves[i].devs[1].slave = &(bus->slaves[i]);
-        if (j < MAX_FG_DEVICES) {
+        if (j < MAX_FG_MACROS) {
           list->devs[j] = &(bus->slaves[i].devs[1]);j++;
         }
         
@@ -66,7 +58,7 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
         bus->slaves[i].devs[0].version = 0x1;
         bus->slaves[i].devs[0].offset = FG1_BASE;
         bus->slaves[i].devs[0].slave = &(bus->slaves[i]);
-        if (j < MAX_FG_DEVICES) {
+        if (j < MAX_FG_MACROS) {
           list->devs[j] = &(bus->slaves[i].devs[0]);j++;
         }
       }
@@ -76,7 +68,7 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
 
   /* special solution for RF group, wb fg in scu */
   /* this fg dev is always last in the list */
-  if (wb_fg_base && j < MAX_FG_DEVICES) {
+  if (wb_fg_base && j < MAX_FG_MACROS) {
     wbfg->dev_number = 0;
     wbfg->version = 0x2;
     wbfg->offset = (int)wb_fg_base;
@@ -88,9 +80,11 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
   return j; //return number of found fgs
 }
 
+
+/* init the buffers for MAX_FG_CHANNELS */
 void init_buffers(struct circ_buffer *buf) {
   int i;
-  for (i = 0; i < MAX_FG_DEVICES; i++) {
+  for (i = 0; i < MAX_FG_CHANNELS; i++) {
     buf[i].wr_ptr = 0;
     buf[i].rd_ptr = 0;
     buf[i].size = BUFFER_SIZE + 1; 

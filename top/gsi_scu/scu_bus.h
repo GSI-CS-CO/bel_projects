@@ -86,6 +86,15 @@
 #define MULTICAST_ACC     0x8
 #define MAX_SCU_SLAVES    12
 
+#define SYS_CSCO    55
+#define SYS_PBRF    42
+
+#define GRP_ADDAC1  3
+#define GRP_ADDAC2  38
+#define GRP_DIOB    26
+#define GRP_FIB_DDS 1
+
+
 extern struct w1_bus wrpc_w1_bus;
 void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);
 void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*);

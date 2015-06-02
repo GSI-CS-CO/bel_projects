@@ -4,9 +4,11 @@
 #include <stdint.h>
 #include <scu_bus.h>
 
-#define   MAX_FG_DEVICES 12
-#define   MAX_FG_PER_SLAVE 2
-#define   BUFFER_SIZE 120 
+#define   MAX_FG_MACROS     24
+#define   MAX_FG_CHANNELS   12
+#define   MAX_FG_PER_SLAVE  2
+#define   MAX_WB_FG_MACROS  1
+#define   BUFFER_SIZE       120 
 
 struct fg_dev {
   unsigned int dev_number;
@@ -36,7 +38,7 @@ struct scu_bus {
 };
 
 struct fg_list {
-  struct fg_dev *devs[MAX_FG_DEVICES + 1];
+  struct fg_dev *devs[MAX_FG_MACROS + MAX_WB_FG_MACROS + 1];
 };
 
 struct param_set {

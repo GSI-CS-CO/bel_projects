@@ -37,7 +37,7 @@ uint64_t SHARED backplane_id = -1;
 uint32_t SHARED backplane_temp = -1;
 uint32_t SHARED fg_magic_number = 0xdeadbeef;
 uint32_t SHARED fg_version = 0x1;
-struct circ_buffer SHARED fg_buffer[MAX_FG_DEVICES]; 
+struct circ_buffer SHARED fg_buffer[MAX_FG_CHANNELS]; 
 uint32_t SHARED num_fgs_found;  // shows the number of found fgs on scu bus
 struct fg_status SHARED fgstat; // shows the status for choosen fg. switched by SWI function
 
@@ -55,7 +55,7 @@ sdb_location ow_base[2];              // there should be two controllers
 volatile unsigned int* pcie_irq_endp;
 volatile unsigned int* cpu_info_base;
 
-volatile unsigned int param_sent[MAX_FG_DEVICES];
+volatile unsigned int param_sent[MAX_FG_CHANNELS];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
 int endp_idx = 0;
 
@@ -96,6 +96,19 @@ void send_fg_param(int slave_nr, int fg_base) {
     scub_base[(slave_nr << 16) + fg_base + FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
     param_sent[fg_num]++;
   }
+}
+
+void update_fgstatus(int slave_nr, int fg_base) {
+  int fg_num;
+  fg_num = (scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
+
+  if ((scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] & 0x4) == 0) {  // fg stopped
+  
+    fgs.devs[fg_num]->rampcnt = scub_base[(slave_nr << 16) + fg_base + 0x8]; // last cnt from from fg macro
+    //mprintf("fg %d in slot %d stopped at ramp value 0x%x.\n",
+    //scub.slaves[i].devs[j].dev_number, slot, scub.slaves[i].devs[j].endvalue);
+    fgs.devs[fg_num]->running = 0;
+  }  
 }
 
 void slave_irq_handler()
@@ -162,11 +175,13 @@ void slave_irq_handler()
   
   if (slv_int_act_reg & (1<<15)) { //FG1 irq?
     send_fg_param(slave_nr, FG1_BASE);
+    update_fgstatus(slave_nr, FG1_BASE);
     slave_acks |= (1<<15); //ack FG1 irq
   } 
  
   if (slv_int_act_reg & (1<<14)) { //FG2 irq?
-    send_fg_param(slave_nr, FG2_BASE);  
+    send_fg_param(slave_nr, FG2_BASE);
+    update_fgstatus(slave_nr, FG2_BASE);
     slave_acks |= (1<<14); //ack FG2 irq
   } 
 
@@ -241,7 +256,7 @@ void ack_pui() {
   }
 }
 
-void configure_slaves(unsigned int tmr_value) {
+void configure_timer(unsigned int tmr_value) {
   mprintf("configuring slaves.\n");
   int i = 0;
   int slot;
@@ -277,14 +292,22 @@ void configure_fgs(int fg_mask) {
       scub_base[SRQ_ENA] |= (1 << (slot-1));          //enable irqs for the slave
       scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1));  //set bitmask for broadcast select
     }
-    if(scub.slaves[i].cid_group == 3 || scub.slaves[i].cid_group == 38) { /* ADDAC -> 2 FGs */
-      scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000; /* enable fg1 and fg2 irq */
-      scub_base[(slot << 16) + DAC1_BASE + DAC_CNTRL] = 0x10; // set FG mode
-      scub_base[(slot << 16) + DAC2_BASE + DAC_CNTRL] = 0x10; // set FG mode
-    } else if (scub.slaves[i].cid_group == 26) {
-      scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0x8000; /* enable fg1 irq */
-      scub_base[(slot << 16) + DAC1_BASE + DAC_CNTRL] = 0x10; // set FG mode
+    /* enable irqs in the slave cards */
+    if(scub.slaves[i].cid_sys = SYS_CSCO) {
+      if(scub.slaves[i].cid_group == GRP_ADDAC1 || scub.slaves[i].cid_group == GRP_ADDAC2) { /* ADDAC -> 2 FGs */
+        scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000; /* enable fg1 and fg2 irq */
+        scub_base[(slot << 16) + DAC1_BASE + DAC_CNTRL] = 0x10; // set FG mode
+        scub_base[(slot << 16) + DAC2_BASE + DAC_CNTRL] = 0x10; // set FG mode
+      } else if (scub.slaves[i].cid_group == GRP_DIOB) {
+        scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000; /* enable fg1 and fg2 irq */
+      }
+    } else if (scub.slaves[i].cid_sys = SYS_PBRF) {
+      if(scub.slaves[i].cid_group == GRP_FIB_DDS) {
+        scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000; /* enable fg1 and fg2 irq */
+      }
     }
+    
+    
     j = 0;
     while(scub.slaves[i].devs[j].version) { /* more fgs in this device */
       /* actions per fg */
@@ -385,7 +408,8 @@ void print_fgs() {
 
 /* updates status information in shared memory */
 void update_status(int fg_num) {
-  if (fg_num < 0 || fg_num > MAX_FG_DEVICES-1)
+  atomic_on();
+  if (fg_num < 0 || fg_num > MAX_FG_MACROS-1)
     return;
   else {
     fgstat.slot       = fgs.devs[fg_num]->slave->slot;
@@ -397,6 +421,7 @@ void update_status(int fg_num) {
     fgstat.rampcnt    = fgs.devs[fg_num]->rampcnt;
     fgstat.enabled    = fgs.devs[fg_num]->enabled;
   }  
+  atomic_off();
 }
 
 void sw_irq_handler() {
@@ -406,11 +431,11 @@ void sw_irq_handler() {
     case 0:
       disable_msi_irqs();  
       init_buffers((struct circ_buffer *)&fg_buffer);
-      for (i=0; i < MAX_FG_DEVICES; i++) // clear statistics
+      for (i=0; i < MAX_FG_CHANNELS; i++) // clear statistics
         param_sent[i] = 0;
     break;
     case 1:
-      configure_slaves(global_msi.msg);
+      configure_timer(global_msi.msg);
       enable_msi_irqs(global_msi.msg);
       scub_base[(0xd << 16) + TMR_BASE + TMR_CNTRL] = 0x2; //multicast tmr enable
     break;
@@ -425,11 +450,11 @@ void sw_irq_handler() {
       scub_base[(0xd << 16) + FG1_BASE + FG_BROAD] = 0x4711; //start all FG1s (and linked FG2s)
     break;
     case 4:
-      for (i = 0; i < MAX_FG_DEVICES; i++)
+      for (i = 0; i < MAX_FG_CHANNELS; i++)
         mprintf("fg[%d] buffer: %d param_sent: %d\n", i, cbgetCount((struct circ_buffer *)&fg_buffer, i), param_sent[i]);
     break;
     case 5:
-      if (global_msi.msg >= 0 && global_msi.msg < MAX_FG_DEVICES) {
+      if (global_msi.msg >= 0 && global_msi.msg < MAX_FG_CHANNELS) {
         if(!cbisEmpty((struct circ_buffer *)&fg_buffer, global_msi.msg)) {
           cbRead((struct circ_buffer *)&fg_buffer, global_msi.msg, &pset);
           mprintf("read buffer[%d]: a %d, l_a %d, b %d, l_b %d, c %d, n %d\n",
@@ -445,7 +470,8 @@ void sw_irq_handler() {
       run_mil_test(scu_mil_base, global_msi.msg & 0xff);
     break;
     case 7:
-      update_status(global_msi.msg & 0xf);
+      mprintf("update_status: %d\n", global_msi.msg);
+      update_status(global_msi.msg & 0xff);
     break;
     default:
       mprintf("swi: 0x%x\n", global_msi.adr);
@@ -498,7 +524,7 @@ int main(void) {
   uint32_t ow_base_idx = 0;
   uint32_t clu_cb_idx = 0;
   int slot;
-  int fg_is_running[MAX_FG_DEVICES];
+  int fg_is_running[MAX_FG_CHANNELS];
   discoverPeriphery();
   /* additional periphery needed for scu */
   cpu_info_base   = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);  
