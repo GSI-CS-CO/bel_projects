@@ -175,8 +175,8 @@ int main(int argc, char** argv) {
             cBuff[j*4+i] = (char)(pCur[j] >> (8*(3-i)) & 0xff);
           }  
         }
-        //checcnt for magic word
-        for(i = 0; i< 8; i++) printf("%c %c\n", cBuff[i], cFwMagic[i]); 
+        //check for magic word
+//        for(i = 0; i< 8; i++) printf("%c %c\n", cBuff[i], cFwMagic[i]); 
         if(strncmp(cBuff, cFwMagic, 8)) {inc = 0;} 
           
       } else {inc = 0;}
@@ -185,13 +185,21 @@ int main(int argc, char** argv) {
     printf("\nFound %u RAMs, %u holding a Firmware ID\n\n", c, cnt); 
     
     for( idx = 0; idx < cnt; idx++) {
-      printf("\nRAM @ 0x%08x: \n\n", (unsigned int)fwram[idx].sdb_component.addr_first);
+
+      printf("\n********************\n");
+      printf("* RAM @ 0x%08x *\n", (unsigned int)fwram[idx].sdb_component.addr_first);
+      printf("********************\n");
+
       pCur = &fwdata[idx * len];
       for (j = 0; j < len; ++j) {
         for (i = 0; i < 4; i++) {
-          printf("%c", (char)(pCur[j] >> (8*(3-i)) & 0xff) );
+          char tmp = (char)(pCur[j] >> (8*(3-i)) & 0xff); 
+	  if(tmp) printf("%c", tmp );
+          else goto zeroTerm;
         }  
       }
+      zeroTerm:
+      printf("*****\n\n");		
     }
   }
   
