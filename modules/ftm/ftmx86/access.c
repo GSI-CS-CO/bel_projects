@@ -52,7 +52,7 @@ t_ftmAccess* openFtm(const char* netaddress, t_ftmAccess* p, uint8_t overrideFWc
 
   //get clusterInfo
   num_devices = MAX_DEVICES;
-  if ((status = eb_sdb_find_by_identity_at(device, vendID_GSI, devID_ClusterInfo, &devices[0], &num_devices, &CluCB)) != EB_OK)
+  if ((status = eb_sdb_find_by_identity_at(device, &CluCB, vendID_GSI, devID_ClusterInfo, &devices[0], &num_devices)) != EB_OK)
   die(status, "failed to when searching for device");
   if (num_devices == 0) {
     fprintf(stderr, "%s: No lm32 clusterId rom found\n", program);
@@ -67,13 +67,13 @@ t_ftmAccess* openFtm(const char* netaddress, t_ftmAccess* p, uint8_t overrideFWc
 
   // Get Shared RAM
   num_devices = 1;
-  if ((status = eb_sdb_find_by_identity_at(device, vendID_GSI, devID_SharedRAM, &devices[0], &num_devices, &CluCB)) != EB_OK)
+  if ((status = eb_sdb_find_by_identity_at(device, &CluCB, vendID_GSI, devID_SharedRAM, &devices[0], &num_devices)) != EB_OK)
   die(status, "failed to when searching for Shared RAM ");
   //Old or new Gateware ?
   //FIXME: the cumbersome legacy code has to go sometime
   if(num_devices < 1) {
     //Old
-    if ((status = eb_sdb_find_by_identity_at(device, vendID_CERN, devID_RAM, &devices[0], &num_devices, &CluCB)) != EB_OK)
+    if ((status = eb_sdb_find_by_identity_at(device, &CluCB, vendID_CERN, devID_RAM, &devices[0], &num_devices)) != EB_OK)
     die(status, "failed to when searching for Shared RAM ");
   }
   p->sharedAdr = (eb_address_t)devices[0].sdb_component.addr_first;
@@ -100,7 +100,7 @@ t_ftmAccess* openFtm(const char* netaddress, t_ftmAccess* p, uint8_t overrideFWc
   
   //Get RAMs 
   num_devices = MAX_DEVICES;
-  if ((status = eb_sdb_find_by_identity_at(device, vendID_GSI, devID_CoreRAM, &devices[0], &num_devices, &CluCB)) != EB_OK)
+  if ((status = eb_sdb_find_by_identity_at(device, &CluCB, vendID_GSI, devID_CoreRAM, &devices[0], &num_devices)) != EB_OK)
   die(status, "failed to when searching for device");
   
   //Old or new Gateware ?
