@@ -3,7 +3,7 @@
  *
  *  Copyright (C) 2013 GSI Helmholtz Centre for Heavy Ion Research GmbH 
  *
- *  A complete skeleton of an application using the Etherbone library.
+ *  A complete scnteleton of an application using the Etherbone library.
  *
  *  @author Wesley W. Terpstra <w.terpstra@gsi.de>
  *
@@ -58,7 +58,7 @@ static void die(const char* msg, eb_status_t status) {
 }
 
 int main(int argc, char** argv) {
-  int opt, error, c, i, j, k, inc, len;
+  int opt, error, c, i, j, cnt, idx, inc, len;
   struct sdb_device sdb[25];
   eb_status_t status;
   eb_socket_t socket;
@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
   }
   
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_DATAX|EB_ADDRX, &socket)) != EB_OK)
-    die("eb_socket_open", status);
+    die("eb_soccntet_open", status);
   
   if ((status = eb_device_open(socket, argv[optind], EB_DATAX|EB_ADDRX, 3, &device)) != EB_OK)
     die(argv[optind], status);
@@ -150,50 +150,49 @@ int main(int argc, char** argv) {
     len = FWID_LEN/4; 
     if ((fwdata = malloc(c * len * (sizeof(eb_data_t)))) == 0)
       die("malloc", EB_OOM);
+    char cBuff[FWID_LEN];    
     
-    k = 0;
-    for(i=0;i<c;i++) {
+    cnt = 0;
+    for(idx=0;idx<c;idx++) {
       //RAM Big enough to actually contain a FW ID?
-      pCur = &fwdata[k * len]; 
+      pCur = &fwdata[cnt * len]; 
       inc = 1;
-      if ((sdb[i].sdb_component.addr_last - sdb[i].sdb_component.addr_first + 1) >= (FWID_LEN + BOOTL_LEN)) {
+      if ((sdb[idx].sdb_component.addr_last - sdb[idx].sdb_component.addr_first + 1) >= (FWID_LEN + BOOTL_LEN)) {
 
         
         if ((status = eb_cycle_open(device, 0, 0, &cycle)) != EB_OK)
           die("eb_cycle_open", status);
       
         for (j = 0; j < len; ++j)
-          eb_cycle_read(cycle, sdb[i].sdb_component.addr_first + BOOTL_LEN + j*4, EB_DATA32|EB_BIG_ENDIAN, &pCur[j]);
+          eb_cycle_read(cycle, sdb[idx].sdb_component.addr_first + BOOTL_LEN + j*4, EB_DATA32|EB_BIG_ENDIAN, &pCur[j]);
       
         if ((status = eb_cycle_close(cycle)) != EB_OK)
           die("eb_cycle_close", status);
         
-
-          
-        //check for magic word
-        for (j = 0; j < 2; ++j) {
-           if (((char)(pCur[j] >> 24) & 0xff) != cFwMagic[j*4+0] || 
-               ((char)(pCur[j] >> 16) & 0xff) != cFwMagic[j*4+1] ||
-               ((char)(pCur[j] >>  8) & 0xff) != cFwMagic[j*4+2] || 
-               ((char)(pCur[j] >>  0) & 0xff) != cFwMagic[j*4+3]) {inc = 0;} 
+        //reorder to a normal string
+        for (j = 0; j < len; ++j) {
+          for (i = 0; i < 4; i++) {
+            cBuff[j*4+i] = (char)(pCur[j] >> (8*(3-i)) & 0xff);
+          }  
         }
+        //checcnt for magic word
+        for(i = 0; i< 8; i++) printf("%c %c\n", cBuff[i], cFwMagic[i]); 
+        if(strncmp(cBuff, cFwMagic, 8)) {inc = 0;} 
           
       } else {inc = 0;}
-      if(inc){fwram[k] = sdb[i]; k++;} 
+      if(inc){fwram[cnt] = sdb[idx]; cnt++;} 
     }             
-    printf("\nFound %u RAMs, %u holding a Firmware ID\n\n", c, k); 
+    printf("\nFound %u RAMs, %u holding a Firmware ID\n\n", c, cnt); 
     
-    for (i = 0; i < k; i++) {
-      printf("RAM @ 0x%08x: \n\n", (unsigned int)fwram[i].sdb_component.addr_first);
+    for( idx = 0; idx < cnt; idx++) {
+      printf("\nRAM @ 0x%08x: \n\n", (unsigned int)fwram[idx].sdb_component.addr_first);
+      pCur = &fwdata[idx * len];
       for (j = 0; j < len; ++j) {
-        printf("%c%c%c%c", 
-          (char)(fwdata[j] >> 24) & 0xff, 
-          (char)(fwdata[j] >> 16) & 0xff, 
-          (char)(fwdata[j] >>  8) & 0xff,
-          (char)(fwdata[j]      ) & 0xff);
+        for (i = 0; i < 4; i++) {
+          printf("%c", (char)(pCur[j] >> (8*(3-i)) & 0xff) );
+        }  
       }
     }
-    
   }
   
   
