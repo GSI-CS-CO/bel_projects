@@ -27,9 +27,17 @@ entity exploder5_csco_tr is
     ------------------------------------------------------------------------
     -- WR DAC signals
     ------------------------------------------------------------------------
-    dac_sclk          : out std_logic;
-    dac_din           : out std_logic;
-    ndac_cs           : out std_logic_vector(2 downto 1);
+    dac_sclk          : out   std_logic;
+    dac_din           : out   std_logic;
+    ndac_cs           : out   std_logic_vector(2 downto 1);
+  
+    ------------------------------------------------------------------------
+    -- Additional WREX/WR1 pins
+    ------------------------------------------------------------------------
+    wr1_nc1           : inout std_logic;
+    wr1_nc4           : inout std_logic;
+    wr1_nc5           : inout std_logic;
+    wr1_nc6           : inout std_logic;
     
     -----------------------------------------------------------------------
     -- usb
@@ -42,7 +50,7 @@ entity exploder5_csco_tr is
     uclk              : in    std_logic;
     ures              : out   std_logic;
     uclkin            : in    std_logic;
-      
+    
     -----------------------------------------------------------------------
     -- SRAM (with DDR hidden inside)
     -----------------------------------------------------------------------
@@ -59,14 +67,26 @@ entity exploder5_csco_tr is
     sram_wait         : in    std_logic; -- DDR magic
     
     -----------------------------------------------------------------------
+    -- SD-CARD
+    -----------------------------------------------------------------------
+    sd_dat0           : inout std_logic := 'Z';
+    sd_dat1           : inout std_logic := 'Z';
+    sd_dat2           : inout std_logic := 'Z';
+    sd_dat3           : inout std_logic := 'Z';
+    sd_cmd            : inout std_logic := 'Z';
+    sd_clk            : inout std_logic := 'Z';
+    sd_switch_a       : inout std_logic := 'Z';
+    sd_switch_b       : inout std_logic := 'Z';
+    
+    -----------------------------------------------------------------------
     -- misc base board IO: leds, cpld, 1wire
     -----------------------------------------------------------------------
     led_o             : out   std_logic_vector( 8 downto 1) := (others => '1');
-    con_io            : inout std_logic_vector( 5 downto 1) := (others => 'Z'); -- unused
+    con_io            : inout std_logic_vector( 9 downto 1) := (others => 'Z'); -- unused
     nres_o            : in    std_logic; -- unused ("con_io(6)")
     fpga_res_i        : in    std_logic; -- reset from CPLD
     rom_data_io       : inout std_logic;
-      
+    
     -----------------------------------------------------------------------
     -- SFP1  
     -----------------------------------------------------------------------
@@ -212,7 +232,7 @@ architecture rtl of exploder5_csco_tr is
 
   constant c_family  : string := "Arria V"; 
   constant c_project : string := "exploder5_csco_tr";
-  constant c_initf   : string := c_project & ".mif"
+  constant c_initf   : string := c_project & ".mif";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
   -- multiple init files for n processors are to be seperated by semicolon ';' 
 
