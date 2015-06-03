@@ -232,7 +232,7 @@ architecture rtl of exploder5_csco_tr is
 
   constant c_family  : string := "Arria V"; 
   constant c_project : string := "exploder5_csco_tr";
-  constant c_initf   : string := c_project & ".mif"
+  constant c_initf   : string := c_project & ".mif";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
   -- multiple init files for n processors are to be seperated by semicolon ';' 
 
