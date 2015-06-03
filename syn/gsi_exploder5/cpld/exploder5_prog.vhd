@@ -46,10 +46,10 @@ begin
   
   -- drive LEDs
   pled(1)  <= not(cdone);   -- yellow
-  pled(2)  <= not(config);  -- red
-  pled(3)  <= not(config1); -- white
-  pled(4)  <= not(crc_er);  -- blue
-  pled(5)  <= not(nstat);   -- green
+  pled(2)  <= config;  -- red
+  pled(3)  <= config1; -- white
+  pled(4)  <= crc_er;  -- blue
+  pled(5)  <= nstat;   -- green
   
   -- drive additional connections pins to fpga
   con(9 downto 1) <= (others => 'Z');
