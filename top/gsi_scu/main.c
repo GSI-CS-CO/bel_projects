@@ -149,10 +149,10 @@ void slave_irq_handler()
     j++; 
   } 
 
-  if (slv_int_act_reg & 0x1) { //powerup irq?
-    mprintf("ack powerup irq in slave %d\n", slave_nr);
-    slave_acks |= 0x1; //ack powerup irq
-  }
+  //if (slv_int_act_reg & 0x1) { //powerup irq?
+  //  mprintf("ack powerup irq in slave %d\n", slave_nr);
+  //  slave_acks |= 0x1; //ack powerup irq
+  //}
 
   if (slv_int_act_reg & 0x2000) { //tmr irq?
     //tmr_irq_cnts = scub_base[(slave_nr << 16) + TMR_BASE + TMR_IRQ_CNT];
@@ -244,16 +244,6 @@ void disable_msi_irqs() {
   scub_irq_base[3] = 0xfff; //disable irqs for all channels
   wb_fg_irq_base[3] = 0x1; //disable irqs for wb_fg_quad
   mprintf("IRQs for all slave channels disabled.\n");
-}
-
-void ack_pui() {
-  int i = 0;
-  int slot;
-  while(scub.slaves[i].unique_id) {
-    slot = scub.slaves[i].slot;
-    scub_base[(slot << 16) + SLAVE_INT_ACT] = 0x1;
-    i++;
-  }
 }
 
 void configure_timer(unsigned int tmr_value) {
@@ -511,7 +501,6 @@ void init() {
   uart_init_hw();           //enables the uart for debug messages
   updateTemp();             //update 1Wire ID and temperatures
   print_fgs();              //scans for slave cards and fgs
-  ack_pui();                //acknowledge powerup irqs
   init_buffers((struct circ_buffer *)&fg_buffer); //init the ring buffer
   init_irq_handlers();      //enable the irqs
 } 
