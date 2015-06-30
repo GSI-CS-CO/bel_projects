@@ -11,6 +11,7 @@ use work.adc_pkg.all;
 use work.dac714_pkg.all;
 use work.fg_quad_pkg.all;
 use work.addac_sys_clk_local_clk_switch_pkg.all;
+use work.simple_tag_decoder_pkg.all;
 
 entity scu_addac is
   generic(
@@ -186,13 +187,15 @@ component flash_loader_v01
   signal  dac2_convert:      std_logic;
   signal  dac2_convert_led_n:  std_logic;
     
-  signal  ADR_from_SCUB_LA:  std_logic_vector(15 downto 0);
-  signal  Data_from_SCUB_LA: std_logic_vector(15 downto 0);
-  signal  Ext_Adr_Val:       std_logic;
-  signal  Ext_Rd_active:     std_logic;
-  signal  Ext_Wr_active:     std_logic;
-  signal  Ext_Wr_fin_ovl:    std_logic;
-  signal  nPowerup_Res:      std_logic;
+  signal  ADR_from_SCUB_LA:   std_logic_vector(15 downto 0);
+  signal  Data_from_SCUB_LA:  std_logic_vector(15 downto 0);
+  signal  Timing_Pattern_LA:  std_logic_vector(31 downto 0);
+  signal  Timing_Pattern_RCV: std_logic;
+  signal  Ext_Adr_Val:        std_logic;
+  signal  Ext_Rd_active:      std_logic;
+  signal  Ext_Wr_active:      std_logic;
+  signal  Ext_Wr_fin_ovl:     std_logic;
+  signal  nPowerup_Res:       std_logic;
     
   signal  adc_rd_active:     std_logic;
   signal  adc_data_to_SCUB:  std_logic_vector(15 downto 0);
@@ -202,7 +205,7 @@ component flash_loader_v01
   signal  tmr_data_to_SCUB:  std_logic_vector(15 downto 0);
   signal  tmr_dtack:         std_logic;
    
-  signal  fg_brdcst:         std_logic; 
+  signal  fg_tag_start:      std_logic; 
   signal  fg_1_dtack:        std_logic;
   signal  fg_1_data_to_SCUB: std_logic_vector(15 downto 0);
   signal  fg_1_rd_active:    std_logic;
@@ -344,8 +347,8 @@ SCU_Slave: SCU_Bus_Slave
     User_Ready          => '1',
     Data_from_SCUB_LA   => Data_from_SCUB_LA,   -- out,   latched data from SCU_Bus for external user functions
     ADR_from_SCUB_LA    => ADR_from_SCUB_LA,    -- out,   latched address from SCU_Bus for external user functions
-    Timing_Pattern_LA   => open,                -- out,   latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV  => open,                -- out,   timing pattern received
+    Timing_Pattern_LA   => Timing_Pattern_LA,   -- out,   latched timing pattern from SCU_Bus for external user functions
+    Timing_Pattern_RCV  => Timing_Pattern_RCV,  -- out,   timing pattern received
     nSCUB_Dtack_Opdrn   => open,                -- out,   for direct connect to SCU_Bus opendrain signal
                                                 --        '0' => slave give dtack to SCU master
     SCUB_Dtack          => SCUB_Dtack,          -- out,   for connect via ext. open collector driver
@@ -528,7 +531,21 @@ adc: adc_scu_bus
     channel_7 => ADC_channel_7,
     channel_8 => ADC_channel_8);
    
-    
+ simple_tag_decoder_inst : simple_tag_decoder
+  generic map (
+    start_tag           => x"feedbabe"
+  )
+  port map (
+    clk_i             =>   clk_sys,              
+    nrst_i            =>   nPowerup_Res,
+
+    -- SCU_bus_slave interface
+    Timing_Pattern_LA_i   => Timing_Pattern_LA,	
+    Timing_Pattern_RCV_i  => Timing_Pattern_RCV,
+    -- fg_quad_scu_bus interface              
+    start_o               => fg_tag_start
+  ); 
+
 fg_1: fg_quad_scu_bus
   generic map (
     Base_addr     => c_fg1_base,
@@ -549,8 +566,7 @@ fg_1: fg_quad_scu_bus
     user_rd_active    => fg_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_1_dtack,            -- connect Dtack to SCUB-Macro
     dreq              => fg_1_dreq,             -- request of new parameter set
-    brdcst_i          => '0',
-    brdcst_o          => fg_brdcst,             -- sync start fg 2
+    tag_start_i       => fg_tag_start,          -- start signal from tag decoder
 
     -- fg output
     sw_out            => fg_1_sw,               -- 24bit output from fg
@@ -577,8 +593,7 @@ fg_2: fg_quad_scu_bus
     user_rd_active    => fg_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_2_dtack,            -- connect Dtack to SCUB-Macro
     dreq              => fg_2_dreq,             -- request of new parameter set
-    brdcst_i          => fg_brdcst,             -- triggered by fg 1
-    brdcst_o          => open,
+    tag_start_i       => fg_tag_start,          -- start signal from tag decoder
 
     -- fg output
     sw_out            => fg_2_sw,               -- 24bit output from fg

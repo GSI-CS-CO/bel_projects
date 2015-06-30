@@ -49,7 +49,7 @@ signal s_inc_quad:      std_logic;
 --signal s_inc_lin:       std_logic;
 signal s_add_lin_quad:  std_logic;
 
-type cntrl_type is (idle, load, quad_inc, lin_inc, addXQ, stopped);
+type cntrl_type is (idle, load, quad_inc, lin_inc, addXQ);
 signal control_state: cntrl_type;
 
 signal s_coeff_rcvd:  std_logic;
@@ -90,11 +90,12 @@ signal  s_freq_cnt:    unsigned(c_freq_cnt_width - 1 downto 0);
 signal  s_freq_en:     std_logic;
 signal  s_freq_cnt_en: std_logic := '1';
 
-signal s_step_cnt:     unsigned(c_step_cnt_width - 1 downto 0);
-signal s_stp_reached: std_logic;
-signal s_cont:        std_logic;
+signal s_step_cnt:      unsigned(c_step_cnt_width - 1 downto 0);
+signal s_stp_reached:   std_logic;
+signal s_cont:          std_logic;
 
-signal s_is_running:  std_logic;
+signal s_is_running:          std_logic;
+signal s_signal_state_change: std_logic;
 
 begin
 
@@ -168,14 +169,17 @@ end process;
   control_sm: process (clk, nrst, sync_rst, s_cont)
   begin
     if nrst = '0' or sync_rst = '1' then
-      control_state <= idle;
+      control_state         <= idle;
+      s_is_running          <= '0';
+      s_inc_quad            <= '0';
+      s_signal_state_change <= '0';
       
     elsif rising_edge(clk) then
-      s_inc_quad      <= '0';
-      --s_inc_lin       <= '0';
-      s_add_lin_quad  <= '0';
-      s_freq_cnt_en   <= '1';
-      s_is_running    <= '0';
+      s_inc_quad            <= '0';
+      s_add_lin_quad        <= '0';
+      s_freq_cnt_en         <= '1';
+      s_is_running          <= '0';
+      s_signal_state_change <= '0';
     
       if a_en = '1' then
         s_coeff_rcvd <= '1';
@@ -202,9 +206,10 @@ end process;
               s_inc_quad <= '1';
               control_state <= lin_inc;
             else
-              -- no paramters received
+              -- no parameters received
               -- go to stop mode
-              control_state <= stopped;
+              s_signal_state_change <= '1';
+              control_state <= idle;
             end if;
           
           elsif s_freq_en = '1' then
@@ -222,8 +227,6 @@ end process;
             s_is_running <= '1';
             s_add_lin_quad <= '1';
             control_state <= quad_inc;
-            
-        when stopped =>
           
         when others =>
           
@@ -232,7 +235,7 @@ end process;
   end process;
 
 
-dreq <= s_stp_reached or sync_start;
+dreq <= s_stp_reached or sync_start or s_signal_state_change;
 ramp_sec_fin <= s_stp_reached;
 -- output register for the 24 most significant bits
 sw_out    <= std_logic_vector(s_X_reg(63 downto 32));

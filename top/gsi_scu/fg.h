@@ -4,11 +4,13 @@
 #include <stdint.h>
 #include <scu_bus.h>
 
-#define   MAX_FG_MACROS     24
+#define   MAX_FG_MACROS     256
 #define   MAX_FG_CHANNELS   12
 #define   MAX_FG_PER_SLAVE  2
 #define   MAX_WB_FG_MACROS  1
-#define   BUFFER_SIZE       120 
+#define   BUFFER_SIZE       120
+#define   THRESHOLD         BUFFER_SIZE * 40 / 100
+#define   OUTPUT_BITS       24 
 
 struct fg_dev {
   unsigned int dev_number;
@@ -38,39 +40,35 @@ struct scu_bus {
 };
 
 struct fg_list {
-  struct fg_dev *devs[MAX_FG_MACROS + MAX_WB_FG_MACROS + 1];
+  struct fg_dev *devs[MAX_FG_MACROS + 1];
 };
 
 struct param_set {
-  int coeff_a;
-  int coeff_b;
-  int coeff_c;
+  signed short coeff_a;
+  signed short coeff_b;
+  signed int coeff_c;
   unsigned int control; /* Bit 2..0   step
                                5..3   freq
                               11..6   shift_b
                               17..12  shift_a */                           
 };
 
-struct circ_buffer {
+struct channel_regs {
   unsigned int wr_ptr;
   unsigned int rd_ptr;
-  unsigned int size;
+  unsigned int irq;
+  unsigned int macro_number;
+  unsigned int ramp_count;
+  unsigned int tag;
+  unsigned int state; // meaning private to LM32
+};
+
+struct channel_buffer {
   struct param_set pset[BUFFER_SIZE+1];
 };
 
-struct fg_status {
-  unsigned int slot;
-  unsigned int dev_number;
-  unsigned int version;
-  unsigned int offset;
-  unsigned int running;
-  unsigned int timeout;
-  unsigned int rampcnt;
-  unsigned int enabled;
-};
-
 int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr);
-int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg);
-void init_buffers(struct circ_buffer *buf);
+int scan_for_fgs(struct scu_bus *bus, uint32_t *fglist);
+void init_buffers(struct channel_regs *cr, int channel, uint32_t *macro, volatile unsigned short* scub_base);
 
 #endif

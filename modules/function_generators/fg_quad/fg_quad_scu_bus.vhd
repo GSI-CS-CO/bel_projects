@@ -22,10 +22,9 @@ entity fg_quad_scu_bus is
     user_rd_active:     out   std_logic;                      -- '1' = read data available at 'Data_to_SCUB'-output
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     nReset:             in    std_logic;
-    brdcst_i:           in    std_logic;                      -- broadcast in from another fg
+    tag_start_i:        in    std_logic;                      -- start signal from tag decoder
     Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Dtack:              out   std_logic;                      -- connect Dtack to SCUB-Macro
-    brdcst_o:           out   std_logic;                      -- broadcast start out for triggering another fg
     -- fg_quad
     dreq:               out   std_logic;
       
@@ -90,8 +89,8 @@ begin
       nrst                => nReset,
       sync_rst            => fg_cntrl_reg(0),
       a_en                => wr_coeff_a,
-      sync_start          => (wr_brc_start or brdcst_i ) and fg_cntrl_reg(1),   -- start at write to broadcast reg or from external signal
-      load_start          => wr_start_value_h,                                  -- when high word was written, load into datapath
+      sync_start          => tag_start_i and fg_cntrl_reg(1),   -- start at write to broadcast reg or from external signal
+      load_start          => wr_start_value_h,                  -- when high word was written, load into datapath
       step_sel            => fg_cntrl_reg(12 downto 10),
       shift_b             => to_integer(unsigned(shift_b_reg(5 downto 0))),
       shift_a             => to_integer(unsigned(shift_a_reg(5 downto 0))),
@@ -112,7 +111,6 @@ adr_decoder: process (clk, nReset)
       rd_coeff_a        <= '0';
       wr_coeff_b        <= '0';
       rd_coeff_b        <= '0';
-      wr_brc_start      <= '0';
       wr_start_value_h  <= '0';
       rd_start_value_h  <= '0';
       wr_start_value_l  <= '0';
@@ -131,7 +129,6 @@ adr_decoder: process (clk, nReset)
       rd_coeff_a        <= '0';
       wr_coeff_b        <= '0';
       rd_coeff_b        <= '0';
-      wr_brc_start      <= '0';
       wr_start_value_h  <= '0';
       rd_start_value_h  <= '0';
       wr_start_value_l  <= '0';
@@ -154,12 +151,6 @@ adr_decoder: process (clk, nReset)
             end if;
             if Ext_Rd_active = '1' then
               rd_fg_cntrl <= '1';
-              dtack       <= '1';
-            end if;
-            
-          when broad_start_adr =>
-            if Ext_Wr_active = '1' then
-              wr_brc_start <= '1';
               dtack       <= '1';
             end if;
           
@@ -230,7 +221,6 @@ adr_decoder: process (clk, nReset)
             rd_coeff_a        <= '0';
             wr_coeff_b        <= '0';
             rd_coeff_b        <= '0';
-            wr_brc_start      <= '0';
             wr_start_value_h  <= '0';
             rd_start_value_h  <= '0';
             wr_start_value_l  <= '0';
@@ -269,24 +259,31 @@ begin
     if wr_fg_cntrl = '1' then
       fg_cntrl_reg <= Data_from_SCUB_LA;
     end if;
+    
     if wr_coeff_a = '1' then
       coeff_a_reg <= Data_from_SCUB_LA;
     end if;
+    
     if wr_coeff_b = '1' then
       coeff_b_reg <= Data_from_SCUB_LA;
     end if;
+    
     if wr_shift_a = '1' then
       shift_a_reg <= Data_from_SCUB_LA;
     end if;
+    
     if wr_shift_b = '1' then
       shift_b_reg <= Data_from_SCUB_LA;
     end if;
+    
     if wr_start_value_h = '1' then
       start_value_reg(31 downto 16) <= Data_from_SCUB_LA;
     end if;
+    
     if wr_start_value_l = '1' then
       start_value_reg(15 downto 0) <= Data_from_SCUB_LA;
     end if;
+    
     if  fg_cntrl_reg(0) = '1' then
       if reset_cnt < 3 then
         reset_cnt := reset_cnt + 1;
@@ -295,8 +292,13 @@ begin
         reset_cnt := "00";
       end if;
     end if;
+    
     if ramp_sec_fin = '1' and fg_is_running = '1' then -- increment with every finished ramp section
       ramp_cnt_reg <= ramp_cnt_reg + 1;
+    end if;
+    
+    if tag_start_i = '1' and fg_cntrl_reg(1) = '1' then -- disable after Started. Prevents unintended triggering by the next tag.
+      fg_cntrl_reg(1) <= '0';
     end if;
   end if;
 end process;
@@ -316,7 +318,5 @@ Rd_Port <= fg_cntrl_rd_reg                  when rd_fg_cntrl = '1' else
             shift_b_reg                     when rd_shift_b = '1' else
             std_logic_vector(ramp_cnt_reg)  when rd_ramp_cnt = '1' else
             x"0000";
-
-brdcst_o <= wr_brc_start; -- for sync start of another fg
             
 end architecture;

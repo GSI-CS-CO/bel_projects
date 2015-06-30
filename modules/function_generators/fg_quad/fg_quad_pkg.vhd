@@ -47,10 +47,9 @@ component fg_quad_scu_bus is
     user_rd_active:     out   std_logic;                      -- '1' = read data available at 'Data_to_SCUB'-output
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     nReset:             in    std_logic;
-    brdcst_i:           in    std_logic;                      -- broadcast in from another fg
+    tag_start_i:        in    std_logic;                      -- start signal from tag decoder
     Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Dtack:              out   std_logic;                      -- connect Dtack to SCUB-Macro
-    brdcst_o:           out   std_logic;                      -- broadcast start out for triggering another fg
     -- fg_quad
     dreq:               out   std_logic;
     sw_out:             out   std_logic_vector(31 downto 0);  -- function generator output
