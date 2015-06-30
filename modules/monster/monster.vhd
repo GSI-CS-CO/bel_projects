@@ -56,6 +56,7 @@ use work.wb_nau8811_audio_driver_pkg.all;
 use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
+use work.wb_serdes_clk_gen_pkg.all;
 
 entity monster is
   generic(
@@ -325,6 +326,32 @@ architecture rtl of monster is
 
   -- END OF MSI IRQ Crossbar
   ----------------------------------------------------------------------------------
+
+  ----------------------------------------------------------------------------------
+  -- IO Configuration Crossbar --------------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  constant c_iocfg_masters         : natural := 1;
+  constant c_iocfgm_top            : natural := 0;
+  
+  constant c_iocfg_slaves          : natural := 2;
+  constant c_iocfgs_dir            : natural := 0;
+  constant c_iocfgs_serdes_clk_gen : natural := 1;
+  
+  constant c_iocfg_layout_req : t_sdb_record_array(c_iocfg_slaves-1 downto 0) :=
+   (c_iocfgs_dir            => f_sdb_auto_device(c_iodir_sdb,             true),
+    c_iocfgs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb, true));
+
+  constant c_iocfg_layout      : t_sdb_record_array(c_iocfg_slaves-1 downto 0) := f_sdb_auto_layout(c_iocfg_layout_req);
+  constant c_iocfg_sdb_address : t_wishbone_address                         := f_sdb_auto_sdb(c_iocfg_layout_req);
+  constant c_iocfg_bridge_sdb  : t_sdb_bridge                               := f_xwb_bridge_layout_sdb(true, c_iocfg_layout, c_iocfg_sdb_address);
+
+  signal iocfg_cbar_slave_i  : t_wishbone_slave_in_array  (c_iocfg_masters-1 downto 0);
+  signal iocfg_cbar_slave_o  : t_wishbone_slave_out_array (c_iocfg_masters-1 downto 0);
+  signal iocfg_cbar_master_i : t_wishbone_master_in_array (c_iocfg_slaves -1 downto 0);
+  signal iocfg_cbar_master_o : t_wishbone_master_out_array(c_iocfg_slaves -1 downto 0); 
+  
+  -- END OF IO Configuration Crossbar
+  ----------------------------------------------------------------------------------
   
   ----------------------------------------------------------------------------------
   -- GSI Top Crossbar --------------------------------------------------------------
@@ -353,8 +380,7 @@ architecture rtl of monster is
   constant c_tops_eca_ctl   : natural := 8;
   constant c_tops_eca_event : natural := 9;
   constant c_tops_eca_aq    : natural := 10;
-  constant c_tops_iodir     : natural := 11;
-  constant c_tops_eca_wbm   : natural := 26;
+  constant c_tops_eca_wbm   : natural := 11;
 
   -- optional slaves:
   constant c_tops_lcd       : natural := 12;
@@ -371,6 +397,7 @@ architecture rtl of monster is
   constant c_tops_CfiPFlash : natural := 23;
   constant c_tops_nau8811   : natural := 24;
   constant c_tops_psram     : natural := 25;
+  constant c_tops_iocfg     : natural := 26;
 
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -397,7 +424,6 @@ architecture rtl of monster is
     c_tops_eca_ctl   => f_sdb_auto_device(c_eca_sdb,                        true),
     c_tops_eca_event => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
     c_tops_eca_aq    => f_sdb_auto_device(c_eca_queue_sdb,                  true),
-    c_tops_iodir     => f_sdb_auto_device(c_iodir_sdb,                      true),
     c_tops_CfiPFlash => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
     c_tops_lcd       => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
@@ -412,7 +438,8 @@ architecture rtl of monster is
     c_tops_fg        => f_sdb_auto_device(c_wb_fg_sdb,                      g_en_fg),
     c_tops_fgirq     => f_sdb_auto_device(c_fg_irq_ctrl_sdb,                g_en_fg),
     c_tops_psram     => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
-    c_tops_eca_wbm   => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           true)
+    c_tops_eca_wbm   => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           true),
+    c_tops_iocfg     => f_sdb_auto_bridge(c_iocfg_bridge_sdb,               true)
 );
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
@@ -605,8 +632,15 @@ architecture rtl of monster is
   signal gpio    : std_logic_vector(15 downto 0);
   signal user_ow_pwren  : std_logic_vector(1 downto 0);
   signal user_ow_en     : std_logic_vector(1 downto 0);
-  signal lvds_o  : t_lvds_byte_array(11 downto 0);
-  signal lvds_i  : t_lvds_byte_array(15 downto 0);
+
+
+  constant lvds_clk_outputs   : natural := g_lvds_inout+g_lvds_out;
+  signal lvds_dat_fr_eca_chan : t_lvds_byte_array(11 downto 0);
+  signal lvds_dat_fr_clk_gen  : t_lvds_byte_array(11 downto 0);
+  signal lvds_dum             : t_lvds_byte_array(lvds_clk_outputs-1 downto 0);
+  signal lvds_dat             : t_lvds_byte_array(11 downto 0);
+  signal lvds_i               : t_lvds_byte_array(15 downto 0);
+  signal lvds_o               : t_lvds_byte_array(11 downto 0);
   
   signal s_triggers : t_trigger_array(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto 0);
   
@@ -859,6 +893,22 @@ begin
       master_i      => irq_cbar_master_i,
       master_o      => irq_cbar_master_o);
   
+  iocfg_bar : xwb_sdb_crossbar
+    generic map(
+      g_num_masters => c_iocfg_masters,
+      g_num_slaves  => c_iocfg_slaves,
+      g_registered  => true,
+      g_wraparound  => true,
+      g_layout      => c_iocfg_layout,
+      g_sdb_addr    => c_iocfg_sdb_address)
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => iocfg_cbar_slave_i,
+      slave_o       => iocfg_cbar_slave_o,
+      master_i      => iocfg_cbar_master_i,
+      master_o      => iocfg_cbar_master_o);
+  
   top2irq : xwb_register_link
     port map(
       clk_sys_i     => clk_sys,
@@ -867,6 +917,15 @@ begin
       slave_o       => top_cbar_master_i(c_tops_irq),
       master_i      => irq_cbar_slave_o (c_irqm_top),
       master_o      => irq_cbar_slave_i (c_irqm_top));
+  
+  top2iocfg : xwb_register_link
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => top_cbar_master_o(c_tops_iocfg),
+      slave_o       => top_cbar_master_i(c_tops_iocfg),
+      master_i      => iocfg_cbar_slave_o (c_iocfgm_top),
+      master_o      => iocfg_cbar_slave_i (c_iocfgm_top));
   
   top2wrc : xwb_register_link
     port map(
@@ -1329,10 +1388,34 @@ begin
     port map(
       clk_i      => clk_sys,
       rst_n_i    => rstn_sys,
-      slave_i    => top_cbar_master_o(c_tops_iodir),
-      slave_o    => top_cbar_master_i(c_tops_iodir),
+      slave_i    => iocfg_cbar_master_o(c_iocfgs_dir),
+      slave_o    => iocfg_cbar_master_i(c_iocfgs_dir),
       gpio_oen_o => gpio_oen_o,
       lvds_oen_o => lvds_oen_o);
+  
+  -- Instantiate SERDES clock generator
+  cmp_serdes_clk_gen : xwb_serdes_clk_gen
+    generic map
+    (
+      g_num_serdes_bits => 8,
+      g_num_outputs     => lvds_clk_outputs)
+    port map
+    (
+      clk_sys_i    => clk_sys,
+      rst_sys_n_i  => rstn_sys,
+      wbs_i        => iocfg_cbar_master_o(c_iocfgs_serdes_clk_gen),
+      wbs_o        => iocfg_cbar_master_i(c_iocfgs_serdes_clk_gen),
+      clk_ref_i    => clk_ref,
+      rst_ref_n_i  => rstn_ref,
+      eca_time_i   => ref_tai8ns,
+      serdes_dat_o => lvds_dum);
+
+  -- LVDS component data input is OR between ECA chan output and SERDES clk. gen.
+  lvds_dat_fr_clk_gen(lvds_clk_outputs-1 downto 0) <= lvds_dum;
+  lvds_dat_fr_clk_gen(11 downto lvds_clk_outputs) <= (others => (others => '0'));
+  gen_lvds_dat : for i in 0 to 11 generate
+    lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i);
+  end generate gen_lvds_dat;
   
   tlu_gpio : if (g_gpio_in + g_gpio_inout > 0) generate
    s_triggers(g_gpio_in + g_gpio_inout -1 downto 0) <= f_gpio_to_trigger_array(gpio_i);
@@ -1417,7 +1500,8 @@ begin
       clk_i     => clk_ref,
       rst_n_i   => rstn_ref,
       channel_i => channels(2),
-      lvds_o    => lvds_o);
+      --lvds_o    => lvds_o);
+      lvds_o    => lvds_dat_fr_eca_chan);
   
   c3 : eca_scubus_channel
     port map(
@@ -1460,7 +1544,8 @@ c4: eca_ac_wbm
       lvds_p_i     => lvds_p_i,
       lvds_n_i     => lvds_n_i,
       lvds_i_led_o => lvds_i_led_o,
-      dat_i        => lvds_o(f_sub1(g_lvds_inout+g_lvds_out) downto 0),
+      --dat_i        => lvds_o(f_sub1(g_lvds_inout+g_lvds_out) downto 0),
+      dat_i        => lvds_dat(f_sub1(g_lvds_inout+g_lvds_out) downto 0),
       lvds_p_o     => lvds_p_o,
       lvds_n_o     => lvds_n_o,
       lvds_o_led_o => lvds_o_led_o);
