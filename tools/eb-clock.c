@@ -31,8 +31,8 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h             display this help and exit\n");
   fprintf(stderr, "  -c <channel>   channel number to access\n");
-  fprintf(stderr, "  -H <hi-period> set high period on the channel\n");
-  fprintf(stderr, "  -L <lo-period> set low period on the channel\n");
+  fprintf(stderr, "  -H <hi-period> set high period (in nanosec.) on the channel\n");
+  fprintf(stderr, "  -L <lo-period> set low period (in nanosec.) on the channel\n");
   fprintf(stderr, "  -p <ns>        set channel phase offset in nanoseconds\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report bugs to <t.stana@gsi.de>\n");

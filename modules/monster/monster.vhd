@@ -633,11 +633,10 @@ architecture rtl of monster is
   signal user_ow_pwren  : std_logic_vector(1 downto 0);
   signal user_ow_en     : std_logic_vector(1 downto 0);
 
-
-  constant lvds_clk_outputs   : natural := g_lvds_inout+g_lvds_out;
+  constant c_lvds_clk_outputs : natural := g_lvds_inout+g_lvds_out;
   signal lvds_dat_fr_eca_chan : t_lvds_byte_array(11 downto 0);
   signal lvds_dat_fr_clk_gen  : t_lvds_byte_array(11 downto 0);
-  signal lvds_dum             : t_lvds_byte_array(lvds_clk_outputs-1 downto 0);
+  signal lvds_dum             : t_lvds_byte_array(c_lvds_clk_outputs-1 downto 0);
   signal lvds_dat             : t_lvds_byte_array(11 downto 0);
   signal lvds_i               : t_lvds_byte_array(15 downto 0);
   signal lvds_o               : t_lvds_byte_array(11 downto 0);
@@ -1395,12 +1394,12 @@ begin
   
   -- Instantiate SERDES clock generator
   cmp_serdes_clk_gen : xwb_serdes_clk_gen
-    generic map
-    (
-      g_num_serdes_bits => 8,
-      g_num_outputs     => lvds_clk_outputs)
-    port map
-    (
+    generic map(
+      g_num_serdes_bits       => 8,
+      g_selectable_duty_cycle => true,
+      g_with_frac_counter     => true,
+      g_num_outputs           => c_lvds_clk_outputs)
+    port map(
       clk_sys_i    => clk_sys,
       rst_sys_n_i  => rstn_sys,
       wbs_i        => iocfg_cbar_master_o(c_iocfgs_serdes_clk_gen),
@@ -1411,8 +1410,8 @@ begin
       serdes_dat_o => lvds_dum);
 
   -- LVDS component data input is OR between ECA chan output and SERDES clk. gen.
-  lvds_dat_fr_clk_gen(lvds_clk_outputs-1 downto 0) <= lvds_dum;
-  lvds_dat_fr_clk_gen(11 downto lvds_clk_outputs) <= (others => (others => '0'));
+  lvds_dat_fr_clk_gen(c_lvds_clk_outputs-1 downto 0) <= lvds_dum;
+  lvds_dat_fr_clk_gen(11 downto c_lvds_clk_outputs) <= (others => (others => '0'));
   gen_lvds_dat : for i in 0 to 11 generate
     lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i);
   end generate gen_lvds_dat;
