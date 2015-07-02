@@ -62,6 +62,9 @@
 #define FG_STARTH         0x6
 #define FG_STARTL         0x7
 
+#define FG1_IRQ           (1<<15)
+#define FG2_IRQ           (1<<14)
+
 #define WB_FG_CNTRL       0x0
 #define WB_FG_A           0x1
 #define WB_FG_B           0x2

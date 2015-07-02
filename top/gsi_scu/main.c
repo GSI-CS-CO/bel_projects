@@ -21,7 +21,7 @@
 
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2
-
+#define SEND_SIG(SIG)     *(volatile unsigned int *)(char*)(fg_regs[channel].irq | 0x80000000UL) = SIG
 #define SIG_REFILL      0
 #define SIG_START       1
 #define SIG_STOP_EMPTY  2
@@ -63,7 +63,28 @@ volatile unsigned int param_sent[MAX_FG_CHANNELS];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
 int endp_idx = 0;
 
+void enable_msis(int channel) {
+  int slot;
+  //SCU Bus Master
+  scub_base[GLOBAL_IRQ_ENA] = 0x20;                                 //enable slave irqs in scu bus master
+  if (channel >= 0 && channel < MAX_FG_CHANNELS) {
+    slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
+    scub_irq_base[8] = slot-1;                                      //channel select
+    scub_irq_base[9] = 0x08154711;                                  //msg
+    scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[endp_idx + MSI_SLAVE]) + (slot << 2); //destination address, do not use lower 2 bits
+    scub_irq_base[2] |= (1 << (slot - 1));                          //enable slave
+    //mprintf("IRQs for slave %d enabled.\n", slot);
+  }
+}
 
+void disable_msis(int channel) {
+  int slot;
+  if (channel >= 0 && channel < MAX_FG_CHANNELS) {
+    slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
+    scub_irq_base[3] |= (1 << (slot - 1));                          //disable slave
+    //mprintf("IRQs for slave %d disabled.\n", slot);
+  }
+}
 
 void msDelayBig(uint64_t ms)
 {
@@ -80,8 +101,8 @@ void send_fg_param(int slave_nr, int fg_base) {
   int fg_num, add_freq_sel, step_cnt_sel;
   
   fg_num = (scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
-  if(!cbisEmpty((struct channel_regs *)&fg_regs, fg_num)) {
-    cbRead((struct channel_buffer *)&fg_buffer, (struct channel_regs *)&fg_regs, fg_num, &pset);
+  if(!cbisEmpty(&fg_regs[0], fg_num)) {
+    cbRead(&fg_buffer[0], &fg_regs[0], fg_num, &pset);
     step_cnt_sel = pset.control & 0x7;
     add_freq_sel = (pset.control & 0x38) >> 3;
     scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] &= ~(0xfc00); // clear freq and step select
@@ -101,6 +122,27 @@ void update_fgstatus(int slave_nr, int fg_base) {
   fg_regs[fg_num].state = 0;
 }
 
+void handle(int slave_nr, unsigned FG_BASE)
+{
+    int channel = (scub_base[(slave_nr << 16) + FG_BASE + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
+    //mprintf("irq received for channel[%d]\n", channel);
+    if ((scub_base[(slave_nr << 16) + FG_BASE + FG_CNTRL] & 0x4) == 0) {  // fg stopped
+      mprintf(" stopped\n");
+      update_fgstatus(slave_nr, FG_BASE);
+      // signal saftlib
+      if (cbisEmpty(&fg_regs[0], channel))
+        SEND_SIG(SIG_STOP_EMPTY);
+      else
+        SEND_SIG(SIG_STOP_NEMPTY);
+      disable_msis(channel);
+    } else {
+      if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
+        SEND_SIG(SIG_REFILL);
+      send_fg_param(slave_nr, FG_BASE);
+      mprintf(".");
+    }
+}
+
 void slave_irq_handler()
 {
   int i, j = 0;
@@ -115,7 +157,8 @@ void slave_irq_handler()
     mprintf("IRQ unknown.\n");
     return;
   }
-
+  mprintf("%d", slave_nr);
+  
   if (slv_int_act_reg & 0x2000) { //tmr irq?
     //tmr_irq_cnts = scub_base[(slave_nr << 16) + TMR_BASE + TMR_IRQ_CNT];
     // init old_tmr_cnt
@@ -129,69 +172,16 @@ void slave_irq_handler()
     slave_acks |= (1 << 13); //ack timer irq
     mprintf("irq1 slave: %d, cnt: %x, act: %x\n", slave_nr, old_tmr_cnt[slave_nr-1], tmr_irq_cnts);
   }
-  
-  if (slv_int_act_reg & (1<<15)) { //FG1 irq?
-    channel = (scub_base[(slave_nr << 16) + FG1_BASE + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
-    mprintf("irq received for channel[%d]\n", channel);
-    if ((scub_base[(slave_nr << 16) + FG1_BASE + FG_CNTRL] & 0x4) == 0) {     // fg stopped
-      update_fgstatus(slave_nr, FG1_BASE);
-      // signal saftlib
-      if (cbisEmpty((struct channel_regs *)&fg_regs, channel))
-       *(unsigned int *)(fg_regs[channel].irq | 0x80000000UL) = SIG_STOP_EMPTY;
-      else
-       *(unsigned int *)(fg_regs[channel].irq | 0x80000000UL) = SIG_STOP_NEMPTY;
-    } else {
-      if (cbgetCount((struct channel_regs *)&fg_regs, channel) == THRESHOLD)
-        *(unsigned int *)(fg_regs[channel].irq | 0x80000000UL)= SIG_REFILL;
-      send_fg_param(slave_nr, FG1_BASE);
-    }
-    slave_acks |= (1<<15); //ack FG1 irq
+
+  if (slv_int_act_reg & FG1_IRQ) { //FG irq?
+    handle(slave_nr, FG1_BASE);
+    slave_acks |= FG1_IRQ;
   } 
- 
-  if (slv_int_act_reg & (1<<14)) { //FG2 irq?
-    channel = (scub_base[(slave_nr << 16) + FG2_BASE + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
-    mprintf("irq received for channel[%d]\n", channel);
-    if ((scub_base[(slave_nr << 16) + FG2_BASE + FG_CNTRL] & 0x4) == 0) {  // fg stopped
-      update_fgstatus(slave_nr, FG2_BASE);
-      // signal saftlib
-      if (cbisEmpty((struct channel_regs *)&fg_regs, channel))
-        *(unsigned int *)(fg_regs[channel].irq | 0x80000000UL) = SIG_STOP_EMPTY;
-      else
-        *(unsigned int *)(fg_regs[channel].irq | 0x80000000UL) = SIG_STOP_NEMPTY;
-    } else {
-      if (cbgetCount((struct channel_regs *)&fg_regs, channel) == THRESHOLD)
-        *(unsigned int *)(fg_regs[channel].irq | 0x80000000UL) = SIG_REFILL;
-      send_fg_param(slave_nr, FG2_BASE);
-    }
-    slave_acks |= (1<<14); //ack FG2 irq
+  if (slv_int_act_reg & FG2_IRQ) { //FG irq?
+    handle(slave_nr, FG2_BASE);
+    slave_acks |= FG2_IRQ;
   } 
-
-  scub_base[(slave_nr << 16) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
-}
-
-
-void enable_msis(int channel) {
-  int slot;
-  //SCU Bus Master
-  scub_base[GLOBAL_IRQ_ENA] = 0x20;                                 //enable slave irqs in scu bus master
-  if (channel >= 0 && channel < MAX_FG_CHANNELS) {
-    slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
-    scub_irq_base[8] = slot-1;                                      //channel select
-    scub_irq_base[9] = 0x08154711;                                  //msg
-    scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[endp_idx + MSI_SLAVE]) + (slot << 2); //destination address, do not use lower 2 bits
-    scub_irq_base[2] |= (1 << (slot - 1));                          //enable slave
-    //mprintf("IRQs for slave %d enabled.\n", slot);
-  }
-}
-
-
-void disable_msis(int channel) {
-  int slot;
-  if (channel >= 0 && channel < MAX_FG_CHANNELS) {
-    slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
-    scub_irq_base[3] |= (1 << (slot - 1));                          //disable slave
-    //mprintf("IRQs for slave %d disabled.\n", slot);
-  }
+  scub_base[(slave_nr << 16) + SLAVE_INT_ACT] = slv_int_act_reg; // slave_acks; // ack all pending irqs 
 }
 
 void configure_timer(unsigned int tmr_value) {
@@ -221,6 +211,7 @@ int configure_fg_macro(int channel) {
   int add_freq_sel, step_cnt_sel;
   
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
+    mprintf("e");
     /* actions per slave card */
     slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
     dev =  (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
@@ -242,8 +233,9 @@ int configure_fg_macro(int channel) {
     //set virtual fg number Bit 9..4
     scub_base[(slot << 16) + offset + FG_CNTRL] |= (channel << 4);
     //fetch first parameter set from buffer
-    if(!cbisEmpty((struct channel_regs *)&fg_regs, channel)) {
-      cbRead((struct channel_buffer *)&fg_buffer, (struct channel_regs *)fg_regs, channel, &pset);
+    //mprintf("wrptr 0x%x rdptr 0x%x\n", fg_regs[channel].wr_ptr, fg_regs[channel].rd_ptr);
+    if(!cbisEmpty(&fg_regs[0], channel)) {
+      cbRead(&fg_buffer[0], &fg_regs[0], channel, &pset);
       step_cnt_sel = pset.control & 0x7;
       add_freq_sel = (pset.control & 0x38) >> 3;
       scub_base[(slot << 16) + offset + FG_CNTRL] |= add_freq_sel << 13 | step_cnt_sel << 10;
@@ -255,12 +247,12 @@ int configure_fg_macro(int channel) {
       scub_base[(slot << 16) + offset + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
       param_sent[i]++;
     }
-
+    //mprintf("enable channel[%d] 0x%x\n", channel, fg_regs[channel].irq);
     //enable the fg macro
     scub_base[(slot << 16) + offset + FG_CNTRL] |= 0x2;
     fg_regs[channel].state = 1; 
-    *(unsigned int *)(fg_regs[channel].irq | 0x80000000UL) = SIG_ARMED; // signal armed
-    *(unsigned int *)(fg_regs[channel].irq | 0x80000000UL) = SIG_START; // signal start
+    SEND_SIG(SIG_ARMED);
+    SEND_SIG(SIG_START);
   }
   return 0; 
 } 
@@ -281,7 +273,7 @@ void reset_slaves() {
 void print_fgs() {
   int i=0, j=0;
   scan_scu_bus(&scub, backplane_id, scub_base);
-  scan_for_fgs(&scub, (uint32_t *)&fg_macros);
+  scan_for_fgs(&scub, &fg_macros[0]);
   mprintf("ID: 0x%08x%08x\n", (int)(scub.unique_id >> 32), (int)scub.unique_id); 
   while(scub.slaves[i].unique_id) { /* more slaves in list */ 
       mprintf("slaves[%d] ID:  0x%08x%08x\n",i, (int)(scub.slaves[i].unique_id>>32), (int)scub.slaves[i].unique_id); 
@@ -318,12 +310,24 @@ void print_regs() {
   } 
 }
 
+void disable_channel(unsigned int channel) {
+  int slot, dev;
+  slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
+  dev =  (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
+  if (fg_regs[channel].state == 1) {    // hw is running
+    fg_regs[channel].wr_ptr = 0;        // flush buffer
+    fg_regs[channel].rd_ptr = 0;
+  } else {
+    SEND_SIG(SIG_DISARMED);
+  } 
+}
+
 void sw_irq_handler() {
   int i;
   struct param_set pset;
   switch(global_msi.adr>>2 & 0xf) {
     case 0:
-      init_buffers((struct channel_regs *)&fg_regs, global_msi.msg, (uint32_t *)&fg_macros, scub_base);
+      init_buffers(&fg_regs[0], global_msi.msg, &fg_macros[0], scub_base);
       param_sent[global_msi.msg] = 0;
       //mprintf("swi flush %d\n", global_msi.msg);
     break;
@@ -335,19 +339,20 @@ void sw_irq_handler() {
     case 2:
       enable_msis(global_msi.msg);
       configure_fg_macro(global_msi.msg);
-      print_regs();
+      //print_regs();
     break;
     case 3:
       disable_msis(global_msi.msg);
+      disable_channel(global_msi.msg);
     break;
     case 4:
       for (i = 0; i < MAX_FG_CHANNELS; i++)
-        mprintf("fg[%d] buffer: %d param_sent: %d\n", i, cbgetCount((struct channel_regs *)&fg_regs, i), param_sent[i]);
+        mprintf("fg[%d] buffer: %d param_sent: %d\n", i, cbgetCount(&fg_regs[0], i), param_sent[i]);
     break;
     case 5:
       if (global_msi.msg >= 0 && global_msi.msg < MAX_FG_CHANNELS) {
-        if(!cbisEmpty((struct channel_regs *)&fg_regs, global_msi.msg)) {
-          cbRead((struct channel_buffer *)&fg_buffer, (struct channel_regs *)&fg_regs, global_msi.msg, &pset);
+        if(!cbisEmpty(&fg_regs[0], global_msi.msg)) {
+          cbRead(&fg_buffer[0], &fg_regs[0], global_msi.msg, &pset);
           mprintf("read buffer[%d]: a %d, l_a %d, b %d, l_b %d, c %d, n %d\n",
                    global_msi.msg, pset.coeff_a, (pset.control & 0x1f000) >> 12, pset.coeff_b,
                    (pset.control & 0xfc0) >> 6, pset.coeff_c, (pset.control & 0x7));
