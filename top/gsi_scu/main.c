@@ -139,7 +139,6 @@ void handle(int slave_nr, unsigned FG_BASE)
       if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
         SEND_SIG(SIG_REFILL);
       send_fg_param(slave_nr, FG_BASE);
-      mprintf(".");
     }
 }
 
@@ -157,7 +156,6 @@ void slave_irq_handler()
     mprintf("IRQ unknown.\n");
     return;
   }
-  mprintf("%d", slave_nr);
   
   if (slv_int_act_reg & 0x2000) { //tmr irq?
     //tmr_irq_cnts = scub_base[(slave_nr << 16) + TMR_BASE + TMR_IRQ_CNT];
@@ -211,7 +209,6 @@ int configure_fg_macro(int channel) {
   int add_freq_sel, step_cnt_sel;
   
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
-    mprintf("e");
     /* actions per slave card */
     slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
     dev =  (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
