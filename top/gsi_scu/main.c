@@ -29,6 +29,10 @@
 #define SIG_ARMED       4
 #define SIG_DISARMED    5
 
+#define FG_RUNNING  0x4
+#define FG_ENABLED  0x2
+#define FG_DREQ     0x8
+
 #define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
 
 extern struct w1_bus wrpc_w1_bus;
@@ -72,16 +76,22 @@ void enable_msis(int channel) {
     scub_irq_base[8] = slot-1;                                      //channel select
     scub_irq_base[9] = 0x08154711;                                  //msg
     scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[endp_idx + MSI_SLAVE]) + (slot << 2); //destination address, do not use lower 2 bits
-    scub_irq_base[2] |= (1 << (slot - 1));                          //enable slave
+    scub_irq_base[2] = (1 << (slot - 1));                          //enable slave
     //mprintf("IRQs for slave %d enabled.\n", slot);
   }
 }
 
-void disable_msis(int channel) {
-  int slot;
+void disable_slave_irq(int channel) {
+  int slot, dev;
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
-    slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
-    scub_irq_base[3] |= (1 << (slot - 1));                          //disable slave
+    slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //slot number
+    dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff;  //dev number
+    if (dev == 0)
+      scub_base[(slot << 16) + SLAVE_INT_ENA] &= ~(0x8000);         //disable fg1 irq
+    else if (dev == 1)
+      scub_base[(slot << 16) + SLAVE_INT_ENA] &= ~(0x4000);         //disable fg2 irq
+      
+
     //mprintf("IRQs for slave %d disabled.\n", slot);
   }
 }
@@ -115,27 +125,27 @@ void send_fg_param(int slave_nr, int fg_base) {
   }
 }
 
-void update_fgstatus(int slave_nr, int fg_base) {
-  int fg_num;
-  fg_num = (scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
-  fg_regs[fg_num].ramp_count = scub_base[(slave_nr << 16) + fg_base + 0x8];  // last cnt from from fg macro
-  fg_regs[fg_num].state = 0;
-}
-
 void handle(int slave_nr, unsigned FG_BASE)
 {
-    int channel = (scub_base[(slave_nr << 16) + FG_BASE + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
+
+    short cntrl_reg = scub_base[(slave_nr << 16) + FG_BASE + FG_CNTRL];
+    int channel = (cntrl_reg & 0x3f0) >> 4;        // virtual fg number Bits 9..4
+    fg_regs[channel].ramp_count = scub_base[(slave_nr << 16) + FG_BASE + FG_RAMP_CNT];    // last cnt from from fg macro
     //mprintf("irq received for channel[%d]\n", channel);
-    if ((scub_base[(slave_nr << 16) + FG_BASE + FG_CNTRL] & 0x4) == 0) {  // fg stopped
-      mprintf(" stopped\n");
-      update_fgstatus(slave_nr, FG_BASE);
-      // signal saftlib
+    if (!(cntrl_reg  & FG_RUNNING)) {  // fg stopped
+      //mprintf("fg 0x%x in slave %d stopped after %d tuples\n", FG_BASE, slave_nr, fg_regs[channel].ramp_count);
       if (cbisEmpty(&fg_regs[0], channel))
-        SEND_SIG(SIG_STOP_EMPTY);
+        SEND_SIG(SIG_STOP_EMPTY); // normal stop
       else
-        SEND_SIG(SIG_STOP_NEMPTY);
-      disable_msis(channel);
-    } else {
+        SEND_SIG(SIG_STOP_NEMPTY); // something went wrong
+      //disable_slave_irq(channel);
+      fg_regs[channel].state = 0;
+    } else if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
+      SEND_SIG(SIG_START); // fg has received the tag
+      if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
+        SEND_SIG(SIG_REFILL);
+      send_fg_param(slave_nr, FG_BASE);
+    } else if ((cntrl_reg & FG_RUNNING) && (cntrl_reg & FG_DREQ)) {
       if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
         SEND_SIG(SIG_REFILL);
       send_fg_param(slave_nr, FG_BASE);
@@ -155,6 +165,10 @@ void slave_irq_handler()
   if (slave_nr < 0 || slave_nr > MAX_SCU_SLAVES) {
     mprintf("IRQ unknown.\n");
     return;
+  }
+
+  if (slv_int_act_reg & 0x1) {// powerup interrupt
+    slave_acks |= 0x1;
   }
   
   if (slv_int_act_reg & 0x2000) { //tmr irq?
@@ -179,7 +193,7 @@ void slave_irq_handler()
     handle(slave_nr, FG2_BASE);
     slave_acks |= FG2_IRQ;
   } 
-  scub_base[(slave_nr << 16) + SLAVE_INT_ACT] = slv_int_act_reg; // slave_acks; // ack all pending irqs 
+  scub_base[(slave_nr << 16) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
 }
 
 void configure_timer(unsigned int tmr_value) {
@@ -244,12 +258,13 @@ int configure_fg_macro(int channel) {
       scub_base[(slot << 16) + offset + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
       param_sent[i]++;
     }
-    //mprintf("enable channel[%d] 0x%x\n", channel, fg_regs[channel].irq);
+    //mprintf("enable channel[%d] 0x%x PLEASE REMOVE AFTER USE!!!!!!!\n", channel, fg_regs[channel].irq);
+    scub_base[(slot << 16) + offset + FG_TAG_LOW] = fg_regs[channel].tag & 0xffff;
+    scub_base[(slot << 16) + offset + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
     //enable the fg macro
-    scub_base[(slot << 16) + offset + FG_CNTRL] |= 0x2;
+    scub_base[(slot << 16) + offset + FG_CNTRL] |= FG_ENABLED;
     fg_regs[channel].state = 1; 
     SEND_SIG(SIG_ARMED);
-    SEND_SIG(SIG_START);
   }
   return 0; 
 } 
@@ -308,12 +323,22 @@ void print_regs() {
 }
 
 void disable_channel(unsigned int channel) {
-  int slot, dev;
-  slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
-  dev =  (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
+  int slot, dev, offset;
+  if (fg_regs[channel].macro_number == -1) return;
+  slot = fg_macros[fg_regs[channel].macro_number] >> 24;         //dereference slot number
+  dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
+  //mprintf("disarmed slot %d dev %d in channel[%d] state %d\n", slot, dev, channel, fg_regs[channel].state); 
+  /* which macro are we? */
+  if (dev == 0) {
+    offset = FG1_BASE;
+  } else if (dev == 1) {
+    offset = FG2_BASE;
+  } else
+    return;
+  // disarm hardware
+  scub_base[(slot >> 16) + offset + FG_CNTRL] &= ~(0x2);
   if (fg_regs[channel].state == 1) {    // hw is running
-    fg_regs[channel].wr_ptr = 0;        // flush buffer
-    fg_regs[channel].rd_ptr = 0;
+    fg_regs[channel].rd_ptr = fg_regs[channel].wr_ptr;
   } else {
     SEND_SIG(SIG_DISARMED);
   } 
@@ -339,7 +364,6 @@ void sw_irq_handler() {
       //print_regs();
     break;
     case 3:
-      disable_msis(global_msi.msg);
       disable_channel(global_msi.msg);
     break;
     case 4:
@@ -406,6 +430,12 @@ void init() {
   init_irq_handlers();      //enable the irqs
 } 
 
+void _segfault(int sig)
+{
+  mprintf("KABOOM!\n");
+  while (1) {}
+}
+
 int main(void) {
   int i;
   sdb_location found_sdb[20];
@@ -463,8 +493,8 @@ int main(void) {
   mprintf("scub_irq_base is: 0x%x\n", scub_irq_base);
 
   while(1) {
-    updateTemp();
-    msDelayBig(15000);
+ //   updateTemp();
+ //   msDelayBig(15000);
   }
 
   return(0);

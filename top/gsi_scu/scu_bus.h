@@ -61,6 +61,9 @@
 #define FG_SHIFTB         0x5
 #define FG_STARTH         0x6
 #define FG_STARTL         0x7
+#define FG_RAMP_CNT       0x8
+#define FG_TAG_LOW        0x9
+#define FG_TAG_HIGH       0xa
 
 #define FG1_IRQ           (1<<15)
 #define FG2_IRQ           (1<<14)
