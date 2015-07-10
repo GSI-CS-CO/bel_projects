@@ -150,26 +150,33 @@ end process tmr_decoder;
 cntrl_reg: process (clk, nrst, tmr_cntrl_reg, rd_tmr_cntrl, wr_tmr_cntrl, wr_tmr_valuel, wr_tmr_valueh)
   variable reset_cnt: unsigned(1 downto 0) := "00";
 begin
-  if nrst = '0' or tmr_cntrl_reg(0) = '1' then
+  if nrst = '0' then
     tmr_cntrl_reg <= x"0000";
     tmr_valuel_reg <= x"0000";
     tmr_valueh_reg <= x"0000";
     reset_cnt := "00";
   elsif rising_edge(clk) then
-    if wr_tmr_cntrl = '1' then
-      tmr_cntrl_reg <= Data_from_SCUB_LA;
-    elsif wr_tmr_valuel = '1' then
-      tmr_valuel_reg <= Data_from_SCUB_LA;
-    elsif wr_tmr_valueh = '1' then
-      tmr_valueh_reg <= Data_from_SCUB_LA;
-    elsif wr_tmr_repeat = '1' then
-      tmr_repeat_reg <= Data_from_SCUB_LA;
-    elsif  tmr_cntrl_reg(0) = '1' then
-      if reset_cnt < 3 then
-        reset_cnt := reset_cnt + 1;
-      else
-        tmr_cntrl_reg(0) <= '0';
-        reset_cnt := "00";
+    if tmr_cntrl_reg(0) = '1' then
+      tmr_cntrl_reg <= x"0000";
+      tmr_valuel_reg <= x"0000";
+      tmr_valueh_reg <= x"0000";
+      reset_cnt := "00";
+    else
+      if wr_tmr_cntrl = '1' then
+        tmr_cntrl_reg <= Data_from_SCUB_LA;
+      elsif wr_tmr_valuel = '1' then
+        tmr_valuel_reg <= Data_from_SCUB_LA;
+      elsif wr_tmr_valueh = '1' then
+        tmr_valueh_reg <= Data_from_SCUB_LA;
+      elsif wr_tmr_repeat = '1' then
+        tmr_repeat_reg <= Data_from_SCUB_LA;
+      elsif  tmr_cntrl_reg(0) = '1' then
+        if reset_cnt < 3 then
+          reset_cnt := reset_cnt + 1;
+        else
+          tmr_cntrl_reg(0) <= '0';
+          reset_cnt := "00";
+        end if;
       end if;
     end if;
   end if;
