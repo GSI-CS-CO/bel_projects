@@ -23,6 +23,7 @@ entity fg_quad_datapath is
   shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
   shift_b:            in  integer range 0 to 48;          -- shiftvalue coeff b
   freq_sel:           in  std_logic_vector(2 downto 0);
+  state_change_irq:   out std_logic;
   dreq:               out std_logic;
   ramp_sec_fin:       out std_logic;
   sw_out:             out std_logic_vector(31 downto 0);
@@ -85,10 +86,10 @@ constant  c_freq_cnt_width:       integer := integer(ceil(log2(real(c_freq_cnt(0
 constant  c_step_cnt_width:       integer := integer(ceil(log2(real(c_step_cnt(7))))) + 1;
 
 
-signal  s_cnt:         unsigned(7 downto 0);
-signal  s_freq_cnt:    unsigned(c_freq_cnt_width - 1 downto 0);
-signal  s_freq_en:     std_logic;
-signal  s_freq_cnt_en: std_logic := '1';
+signal s_cnt:         unsigned(7 downto 0);
+signal s_freq_cnt:    unsigned(c_freq_cnt_width - 1 downto 0);
+signal s_freq_en:     std_logic;
+signal s_freq_cnt_en: std_logic := '1';
 
 signal s_step_cnt:      unsigned(c_step_cnt_width - 1 downto 0);
 signal s_stp_reached:   std_logic;
@@ -96,6 +97,7 @@ signal s_cont:          std_logic;
 
 signal s_is_running:          std_logic;
 signal s_signal_state_change: std_logic;
+signal s_segment_finished:    std_logic;
 
 begin
 
@@ -173,6 +175,7 @@ end process;
       s_is_running          <= '0';
       s_inc_quad            <= '0';
       s_signal_state_change <= '0';
+      s_segment_finished    <= '0';
       
     elsif rising_edge(clk) then
       s_inc_quad            <= '0';
@@ -180,6 +183,7 @@ end process;
       s_freq_cnt_en         <= '1';
       s_is_running          <= '0';
       s_signal_state_change <= '0';
+      s_segment_finished    <= '0';
     
       if a_en = '1' then
         s_coeff_rcvd <= '1';
@@ -220,7 +224,9 @@ end process;
           
         when lin_inc =>
           s_is_running <= '1';
-          --s_inc_lin <= '1'; 
+          if s_stp_reached = '1' then
+            s_segment_finished <= '1';
+          end if;
           control_state <= addXQ;
         
         when addXQ =>
@@ -235,8 +241,9 @@ end process;
   end process;
 
 
-dreq <= s_stp_reached or sync_start or s_signal_state_change;
-ramp_sec_fin <= s_stp_reached;
+state_change_irq <= sync_start or s_signal_state_change;
+dreq <= s_stp_reached;
+ramp_sec_fin <= s_segment_finished;
 -- output register for the 24 most significant bits
 sw_out    <= std_logic_vector(s_X_reg(63 downto 32));
 sw_strobe <= s_add_lin_quad;

@@ -57,8 +57,7 @@
 #define FG_A              0x1
 #define FG_B              0x2
 #define FG_BROAD          0x3
-#define FG_SHIFTA         0x4
-#define FG_SHIFTB         0x5
+#define FG_SHIFT          0x4
 #define FG_STARTH         0x6
 #define FG_STARTL         0x7
 #define FG_RAMP_CNT       0x8

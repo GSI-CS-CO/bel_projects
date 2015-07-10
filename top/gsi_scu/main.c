@@ -118,9 +118,8 @@ void send_fg_param(int slave_nr, int fg_base) {
     scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] &= ~(0xfc00); // clear freq and step select
     scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] |= (add_freq_sel << 13) | (step_cnt_sel << 10);
     scub_base[(slave_nr << 16) + fg_base + FG_A] = pset.coeff_a;
-    scub_base[(slave_nr << 16) + fg_base + FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
     scub_base[(slave_nr << 16) + fg_base + FG_B] = pset.coeff_b;
-    scub_base[(slave_nr << 16) + fg_base + FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
+    scub_base[(slave_nr << 16) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
     param_sent[fg_num]++;
   }
 }
@@ -251,9 +250,8 @@ int configure_fg_macro(int channel) {
       add_freq_sel = (pset.control & 0x38) >> 3;
       scub_base[(slot << 16) + offset + FG_CNTRL] |= add_freq_sel << 13 | step_cnt_sel << 10;
       scub_base[(slot << 16) + offset + FG_A] = pset.coeff_a;
-      scub_base[(slot << 16) + offset + FG_SHIFTA] = (pset.control & 0x1f000) >> 12;
       scub_base[(slot << 16) + offset + FG_B] = pset.coeff_b;
-      scub_base[(slot << 16) + offset + FG_SHIFTB] = (pset.control & 0xfc0) >> 6;
+      scub_base[(slot << 16) + offset + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
       scub_base[(slot << 16) + offset + FG_STARTL] = pset.coeff_c & 0xffff;
       scub_base[(slot << 16) + offset + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
       param_sent[i]++;
@@ -433,7 +431,8 @@ void init() {
 void _segfault(int sig)
 {
   mprintf("KABOOM!\n");
-  while (1) {}
+  //while (1) {}
+  return;
 }
 
 int main(void) {

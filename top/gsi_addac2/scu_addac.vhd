@@ -11,7 +11,6 @@ use work.adc_pkg.all;
 use work.dac714_pkg.all;
 use work.fg_quad_pkg.all;
 use work.addac_sys_clk_local_clk_switch_pkg.all;
-use work.simple_tag_decoder_pkg.all;
 
 entity scu_addac is
   generic(
@@ -205,7 +204,6 @@ component flash_loader_v01
   signal  tmr_data_to_SCUB:  std_logic_vector(15 downto 0);
   signal  tmr_dtack:         std_logic;
    
-  signal  fg_tag_start:      std_logic; 
   signal  fg_1_dtack:        std_logic;
   signal  fg_1_data_to_SCUB: std_logic_vector(15 downto 0);
   signal  fg_1_rd_active:    std_logic;
@@ -530,21 +528,6 @@ adc: adc_scu_bus
     channel_6 => ADC_channel_6,
     channel_7 => ADC_channel_7,
     channel_8 => ADC_channel_8);
-   
- simple_tag_decoder_inst : simple_tag_decoder
-  generic map (
-    start_tag           => x"feedbabe"
-  )
-  port map (
-    clk_i             =>   clk_sys,              
-    nrst_i            =>   nPowerup_Res,
-
-    -- SCU_bus_slave interface
-    Timing_Pattern_LA_i   => Timing_Pattern_LA,	
-    Timing_Pattern_RCV_i  => Timing_Pattern_RCV,
-    -- fg_quad_scu_bus interface              
-    start_o               => fg_tag_start
-  ); 
 
 fg_1: fg_quad_scu_bus
   generic map (
@@ -565,8 +548,9 @@ fg_1: fg_quad_scu_bus
     Rd_Port           => fg_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => fg_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_1_dtack,            -- connect Dtack to SCUB-Macro
-    dreq              => fg_1_dreq,             -- request of new parameter set
-    tag_start_i       => fg_tag_start,          -- start signal from tag decoder
+    irq               => fg_1_dreq,             -- request of new parameter set
+    tag               => Timing_Pattern_LA,     --
+    tag_valid         => Timing_Pattern_RCV,    --
 
     -- fg output
     sw_out            => fg_1_sw,               -- 24bit output from fg
@@ -592,8 +576,10 @@ fg_2: fg_quad_scu_bus
     Rd_Port           => fg_2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => fg_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_2_dtack,            -- connect Dtack to SCUB-Macro
-    dreq              => fg_2_dreq,             -- request of new parameter set
-    tag_start_i       => fg_tag_start,          -- start signal from tag decoder
+    irq               => fg_2_dreq,             -- request of new parameter set
+    tag               => Timing_Pattern_LA,     --
+    tag_valid         => Timing_Pattern_RCV,    --
+
 
     -- fg output
     sw_out            => fg_2_sw,               -- 24bit output from fg

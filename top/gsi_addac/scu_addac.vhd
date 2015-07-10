@@ -200,13 +200,15 @@ end component;
   signal  dac2_convert:      std_logic;
   signal  dac2_convert_led_n:  std_logic;
     
-  signal  ADR_from_SCUB_LA:  std_logic_vector(15 downto 0);
-  signal  Data_from_SCUB_LA: std_logic_vector(15 downto 0);
-  signal  Ext_Adr_Val:       std_logic;
-  signal  Ext_Rd_active:     std_logic;
-  signal  Ext_Wr_active:     std_logic;
-  signal  Ext_Wr_fin_ovl:    std_logic;
-  signal  nPowerup_Res:      std_logic;
+  signal  ADR_from_SCUB_LA:   std_logic_vector(15 downto 0);
+  signal  Data_from_SCUB_LA:  std_logic_vector(15 downto 0);
+  signal  Timing_Pattern_LA:  std_logic_vector(31 downto 0);
+  signal  Timing_Pattern_RCV: std_logic;
+  signal  Ext_Adr_Val:        std_logic;
+  signal  Ext_Rd_active:      std_logic;
+  signal  Ext_Wr_active:      std_logic;
+  signal  Ext_Wr_fin_ovl:     std_logic;
+  signal  nPowerup_Res:       std_logic;
     
   signal  adc_rd_active:     std_logic;
   signal  adc_data_to_SCUB:  std_logic_vector(15 downto 0);
@@ -562,9 +564,9 @@ fg_1: fg_quad_scu_bus
     Rd_Port           => fg_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => fg_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_1_dtack,            -- connect Dtack to SCUB-Macro
-    dreq              => fg_1_dreq,             -- request of new parameter set
-    brdcst_i          => '0',
-    brdcst_o          => fg_brdcst,             -- sync start fg 2
+    irq               => fg_1_dreq,             -- request of new parameter set
+    tag               => Timing_Pattern_LA,     --
+    tag_valid         => Timing_Pattern_RCV,    --
 
     -- fg output
     sw_out            => fg_1_sw,               -- 24bit output from fg
@@ -573,7 +575,7 @@ fg_1: fg_quad_scu_bus
 
 fg_2: fg_quad_scu_bus
   generic map (
-    Base_addr     => c_fg1_base,
+    Base_addr     => c_fg2_base,
     clk_in_hz     => clk_sys_in_Hz,
     diag_on_is_1  => 0 -- if 1 then diagnosic information is generated during compilation
     )
@@ -590,9 +592,10 @@ fg_2: fg_quad_scu_bus
     Rd_Port           => fg_2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => fg_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_2_dtack,            -- connect Dtack to SCUB-Macro
-    dreq              => fg_2_dreq,             -- request of new parameter set
-    brdcst_i          => fg_brdcst,             -- triggered by fg 1
-    brdcst_o          => open,
+    irq               => fg_2_dreq,             -- request of new parameter set
+    tag               => Timing_Pattern_LA,     --
+    tag_valid         => Timing_Pattern_RCV,    --
+
 
     -- fg output
     sw_out            => fg_2_sw,               -- 24bit output from fg
