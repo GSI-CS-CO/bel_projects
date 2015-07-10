@@ -1051,4 +1051,9 @@ set_location_assignment PIN_M6 -to wr1_nc4
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wr1_nc4
 set_location_assignment PIN_B1 -to wr1_nc1
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wr1_nc1
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/xwb_serdes_clk_gen.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/wb_serdes_clk_gen_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/wb_serdes_clk_gen.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/serdes_clk_gen_regs.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/function_generators/serdes_clk_gen/serdes_clk_gen.vhd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

@@ -7,3 +7,5 @@ files = [
   "fg_quad/wb_fg_quad.vhd",
   "fg_quad/wbmstr_core.vhd",
 ]
+
+modules = {"local" : ["serdes_clk_gen/"]}

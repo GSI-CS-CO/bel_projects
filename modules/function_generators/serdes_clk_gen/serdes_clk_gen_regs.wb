@@ -1,0 +1,128 @@
+peripheral {
+    name = "Wishbone SERDES clock generator";
+    description = "Generate a clock signal out of a SERDES transceiver by writing \
+        a series of registers";
+    hdl_entity = "serdes_clk_gen_regs";
+    prefix = "reg";
+
+    reg {
+        name = "CHSELR";
+        description = "Channel select register, selects for which output channel \
+            the banked registers are set.";
+        prefix = "chsel";
+        field {
+            name = "Channel select bits";
+            type = SLV;
+            size = 32;
+            access_dev = READ_ONLY;
+            access_bus = READ_WRITE;
+        };
+    };
+
+    reg {
+        name = "PERR";
+        description = "Period register -- banked";
+        prefix = "per";
+        field {
+            name = "Bits of currently selected banked register";
+            type = SLV;
+            size = 32;
+            access_dev = READ_WRITE;
+            access_bus = READ_WRITE;
+            load = LOAD_EXT;
+            clock = "clk_ref_i";
+        };
+    };
+
+    reg {
+        name = "PERHIR";
+        description = "High period register -- banked";
+        prefix = "perhi";
+        field {
+            name = "Bits of currently selected banked register";
+            type = SLV;
+            size = 32;
+            access_dev = READ_WRITE;
+            access_bus = READ_WRITE;
+            load = LOAD_EXT;
+            clock = "clk_ref_i";
+        };
+    };
+
+    reg {
+        name = "FRACR";
+        description = "Fraction register -- banked";
+        prefix = "frac";
+        field {
+            name = "Bits of currently selected banked register";
+            type = SLV;
+            size = 32;
+            access_dev = READ_WRITE;
+            access_bus = READ_WRITE;
+            load = LOAD_EXT;
+            clock = "clk_ref_i";
+        };
+    };
+
+    reg {
+        name = "NORMBITPATTR";
+        description = "Normal bit mask register -- banked";
+        prefix = "bitpatt_normal";
+        field {
+            name = "Bits of currently selected banked register";
+            type = SLV;
+            size = 32;
+            access_dev = READ_WRITE;
+            access_bus = READ_WRITE;
+            load = LOAD_EXT;
+            clock = "clk_ref_i";
+        };
+    };
+
+    reg {
+        name = "SKIPBITPATTR";
+        description = "Skip bit mask register -- banked";
+        prefix = "bitpatt_skip";
+        field {
+            name = "Bits of currently selected banked register";
+            type = SLV;
+            size = 32;
+            access_dev = READ_WRITE;
+            access_bus = READ_WRITE;
+            load = LOAD_EXT;
+            clock = "clk_ref_i";
+        };
+    };
+
+    reg {
+        name = "PHOFSLR";
+        description = "Phase offset from TAI time 0, low 32 bits -- banked";
+        prefix = "phofsl";
+        field {
+            name = "Bits of currently selected banked register";
+            type = SLV;
+            size = 32;
+            access_dev = READ_WRITE;
+            access_bus = READ_WRITE;
+            load = LOAD_EXT;
+            clock = "clk_ref_i";
+        };
+    };
+
+    reg {
+        name = "PHOFSHR";
+        description = "Phase offset from TAI time 0, high 32 bits -- banked";
+        prefix = "phofsh";
+        field {
+            name = "Bits of currently selected banked register";
+            type = SLV;
+            size = 32;
+            access_dev = READ_WRITE;
+            access_bus = READ_WRITE;
+            load = LOAD_EXT;
+            clock = "clk_ref_i";
+        };
+    };
+
+};
+
