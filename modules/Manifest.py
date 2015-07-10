@@ -29,6 +29,7 @@ modules = {
     "monster",
     "heap",
     "butis_t0",
+    "fabric_snooper",
     "power_test",
   ]
 }

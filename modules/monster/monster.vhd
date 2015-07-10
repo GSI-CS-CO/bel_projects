@@ -51,6 +51,7 @@ use work.xvme64x_pack.all;
 use work.VME_Buffer_pack.all;
 use work.wb_mil_scu_pkg.all;
 use work.wr_serialtimestamp_pkg.all;
+use work.fabric_snooper_pkg.all;
 
 entity monster is
   generic(
@@ -286,7 +287,7 @@ architecture rtl of monster is
   constant c_topm_fpq       : natural := 5;
   
   -- required slaves
-  constant c_top_slaves     : natural := 19;
+  constant c_top_slaves     : natural := 20;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -307,7 +308,7 @@ architecture rtl of monster is
   constant c_tops_mil_ctrl  : natural := 16;
   constant c_tops_ow        : natural := 17;
   constant c_tops_scubirq   : natural := 18;
-
+  constant c_tops_snooper   : natural := 19;
   
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -332,6 +333,7 @@ architecture rtl of monster is
     c_tops_ebm       => f_sdb_auto_device(c_ebm_sdb,                        true),
     c_tops_tlu       => f_sdb_auto_device(c_tlu_sdb,                        true),
     c_tops_eca_ctl   => f_sdb_auto_device(c_eca_sdb,                        true),
+    c_tops_snooper   => f_sdb_auto_device(c_snooper_sdb,                    true),
     c_tops_eca_event => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
     c_tops_eca_aq    => f_sdb_auto_device(c_eca_queue_sdb,                  true),
     c_tops_iodir     => f_sdb_auto_device(c_iodir_sdb,                      true),
@@ -819,6 +821,14 @@ begin
       ebs_wb_master_i => top_cbar_slave_o (c_topm_ebs),
       ebm_wb_slave_i  => top_cbar_master_o(c_tops_ebm),
       ebm_wb_slave_o  => top_cbar_master_i(c_tops_ebm));
+
+  snooper : fabric_snooper
+  port map(
+      clk_i     => clk_sys,
+      rstn_i    => rstn_sys,
+      snk_i     => eb_snk_in,
+      slave_o   => top_cbar_master_i(c_tops_snooper),
+      slave_i   => top_cbar_master_o(c_tops_snooper));
  
   lm32 : ftm_lm32_cluster 
     generic map(
