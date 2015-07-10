@@ -84,6 +84,7 @@
 //#define MICO32_FULL_CONTEXT_SAVE_RESTORE
 
 .extern _irq_entry
+.extern _segfault
 
 /* Exception handlers - Must be 32 bytes long. */
 .section    .boot, "ax", @progbits
@@ -144,11 +145,11 @@ _watchpoint_handler:
 .global _data_bus_error_handler
 .type 	_data_bus_error_handler, @function
 _data_bus_error_handler:
-    nop
-    nop
-    nop
-    nop
-    nop
+    sw      (sp+0), ra
+    calli   _save_all
+    mvi     r1, SIGSEGV
+    calli  _segfault
+    bi      _restore_all_and_return
     nop
     nop
     nop
