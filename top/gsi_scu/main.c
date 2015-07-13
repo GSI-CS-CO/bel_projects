@@ -120,6 +120,8 @@ void send_fg_param(int slave_nr, int fg_base) {
     scub_base[(slave_nr << 16) + fg_base + FG_A] = pset.coeff_a;
     scub_base[(slave_nr << 16) + fg_base + FG_B] = pset.coeff_b;
     scub_base[(slave_nr << 16) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
+    scub_base[(slave_nr << 16) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
+    scub_base[(slave_nr << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
     param_sent[fg_num]++;
   }
 }

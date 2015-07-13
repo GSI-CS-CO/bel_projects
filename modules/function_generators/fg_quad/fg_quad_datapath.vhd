@@ -116,6 +116,7 @@ begin
       -- shifting for quadratic coefficient a
       s_a_reg <= shift_left(resize(signed(data_a), 64), shift_a);
       s_Q_reg <= shift_left(resize(signed(data_b), 64), shift_b);
+      s_X_reg <= shift_left(resize(signed(data_c), 64), 40);
     end if;
     
     if s_stp_reached = '1' or load_start = '1' then
@@ -125,9 +126,9 @@ begin
     
     -- init quad term with start values b and c
     -- Q0 = b and X0 = c
-    if load_start = '1' then
-      s_X_reg <= shift_left(resize(signed(data_c), 64), 40);
-    end if;
+    --if load_start = '1' then
+    --  s_X_reg <= shift_left(resize(signed(data_c), 64), 40);
+    --end if;
     
     -- increment quad term
     if s_inc_quad = '1' then
