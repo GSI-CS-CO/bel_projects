@@ -695,7 +695,9 @@ p_led_mux: process (
     ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4,
     ADC_channel_5, ADC_channel_6, ADC_channel_7, ADC_channel_8,
     A_ADC_DAC_SEL(3 downto 0), A_MODE_SEL(1 downto 0),
-    nADC_PAR_SER_SEL, NDIFF_IN_EN
+    nADC_PAR_SER_SEL, NDIFF_IN_EN, dac1_convert_led_n, dac2_convert_led_n,
+    local_clk_runs_led_n, sys_clk_deviation_led_n, sys_clk_is_bad_led_n,
+    s_test_vector
     )
   begin
     if A_MODE_SEL = "11" then

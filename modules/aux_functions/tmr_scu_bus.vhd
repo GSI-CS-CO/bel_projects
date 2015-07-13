@@ -184,16 +184,21 @@ end process;
 
 timer_irq: process (clk, nrst, tmr_cntrl_reg, tmr_valuel_reg, tmr_valueh_reg)
   begin
-    if nrst = '0' or tmr_cntrl_reg(0) = '1' then
-      irqcnt <= '0' & unsigned(tmr_valueh_reg & tmr_valuel_reg);
+    if nrst = '0' then
+      irqcnt <= (others => '0');
       tmr_irq_cnt <= x"0000";
     elsif rising_edge(clk) then
-      if irqcnt(irqcnt'high) = '1' then
-        tmr_irq_cnt <= tmr_irq_cnt + 1; -- increment with every interrupt
+      if tmr_cntrl_reg(0) = '1' then
         irqcnt <= '0' & unsigned(tmr_valueh_reg & tmr_valuel_reg);
-      elsif tmr_cntrl_reg(1) = '1' and tmr_irq_cnt < unsigned(tmr_repeat_reg) then
-        irqcnt <= irqcnt - 1;
-      end if;
+        tmr_irq_cnt <= x"0000";
+      else
+        if irqcnt(irqcnt'high) = '1' then
+          tmr_irq_cnt <= tmr_irq_cnt + 1; -- increment with every interrupt
+          irqcnt <= '0' & unsigned(tmr_valueh_reg & tmr_valuel_reg);
+        elsif tmr_cntrl_reg(1) = '1' and tmr_irq_cnt < unsigned(tmr_repeat_reg) then
+          irqcnt <= irqcnt - 1;
+        end if;
+       end if;
     end if;
   end process;
  

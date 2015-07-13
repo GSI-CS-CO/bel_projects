@@ -104,42 +104,43 @@ begin
 -- registers a, b, Q, X, start und adder for lin und quad term
 reg_file: process (clk, nrst, sync_rst, a_en, load_start)
 begin
-  if nrst = '0' or sync_rst = '1' then
+  if nrst = '0' then
     s_a_reg       <=  (others => '0');
     s_Q_reg       <=  (others => '0');
     s_X_reg       <=  (others => '0');
     freq_sel_reg  <=  (others => '0');
     step_sel_reg  <=  (others => '0');
   elsif rising_edge(clk) then
-
-    if s_stp_reached = '1' or sync_start = '1' then
-      -- shifting for quadratic coefficient a
-      s_a_reg <= shift_left(resize(signed(data_a), 64), shift_a);
-      s_Q_reg <= shift_left(resize(signed(data_b), 64), shift_b);
-      s_X_reg <= shift_left(resize(signed(data_c), 64), 40);
+    if sync_rst = '1' then
+      s_a_reg       <=  (others => '0');
+      s_Q_reg       <=  (others => '0');
+      s_X_reg       <=  (others => '0');
+      freq_sel_reg  <=  (others => '0');
+      step_sel_reg  <=  (others => '0');
+    else
+      if s_stp_reached = '1' or sync_start = '1' then
+        -- shifting for quadratic coefficient a
+        s_a_reg <= shift_left(resize(signed(data_a), 64), shift_a);
+        s_Q_reg <= shift_left(resize(signed(data_b), 64), shift_b); -- Q0 = b
+        s_X_reg <= shift_left(resize(signed(data_c), 64), 40);      -- X0 = c
+      end if;
+      
+      if s_stp_reached = '1' or load_start = '1' then
+        step_sel_reg <= step_sel;
+        freq_sel_reg <= freq_sel;
+      end if;
+      
+      -- increment quad term
+      if s_inc_quad = '1' then
+        s_Q_reg <= s_Q_reg + s_a_reg;
+        s_X_reg <= s_X_reg + s_Q_reg;
+      end if; 
+      
+      -- sum of linear and quadratic term
+      if s_add_lin_quad = '1' then
+        --s_X_reg <= signed(s_X_reg) + signed(s_Q_reg);
+      end if;
     end if;
-    
-    if s_stp_reached = '1' or load_start = '1' then
-      step_sel_reg <= step_sel;
-      freq_sel_reg <= freq_sel;
-    end if;
-    
-    -- init quad term with start values b and c
-    -- Q0 = b and X0 = c
-    --if load_start = '1' then
-    --  s_X_reg <= shift_left(resize(signed(data_c), 64), 40);
-    --end if;
-    
-    -- increment quad term
-    if s_inc_quad = '1' then
-      s_Q_reg <= s_Q_reg + s_a_reg;
-      s_X_reg <= s_X_reg + s_Q_reg;
-    end if; 
-    
-    -- sum of linear and quadratic term
-    if s_add_lin_quad = '1' then
-      --s_X_reg <= signed(s_X_reg) + signed(s_Q_reg);
-    end if; 
   end if;
 
 end process;
@@ -148,17 +149,19 @@ end process;
   -- downcounter for frequency division
   freq_cnt: process(clk, nrst, sync_rst, freq_sel, sync_start, freq_sel_reg)
   begin
-    -- important for synced start 
-    --if nrst = '0' or s_reset_freq_cnt = '1' then
-    if nrst = '0' or sync_rst = '1' or sync_start = '1' then
-      s_freq_cnt <= to_unsigned(c_freq_cnt(to_integer(unsigned(freq_sel_reg))), c_freq_cnt_width);
+    if nrst = '0' then
+      s_freq_cnt <= to_unsigned(c_freq_cnt(0), c_freq_cnt_width);
     elsif rising_edge(clk) then
-      -- reload count at overflow
-      if s_freq_en = '1' then      
-        -- choosing constant from array
-        s_freq_cnt <= to_unsigned(c_freq_cnt(to_integer(unsigned(freq_sel_reg))), c_freq_cnt_width);      
-      elsif s_freq_cnt_en = '1' then
-        s_freq_cnt <= s_freq_cnt - 1;
+      if sync_rst = '1' or sync_start = '1' then
+        s_freq_cnt <= to_unsigned(c_freq_cnt(to_integer(unsigned(freq_sel_reg))), c_freq_cnt_width);
+      else
+        -- reload count at overflow
+        if s_freq_en = '1' then      
+          -- choosing constant from array
+          s_freq_cnt <= to_unsigned(c_freq_cnt(to_integer(unsigned(freq_sel_reg))), c_freq_cnt_width);      
+        elsif s_freq_cnt_en = '1' then
+          s_freq_cnt <= s_freq_cnt - 1;
+        end if;
       end if;
     end if;
   end process freq_cnt; 
@@ -171,7 +174,7 @@ end process;
 -- control state machine
   control_sm: process (clk, nrst, sync_rst, s_cont)
   begin
-    if nrst = '0' or sync_rst = '1' then
+    if nrst = '0' then
       control_state         <= idle;
       s_is_running          <= '0';
       s_inc_quad            <= '0';
@@ -179,65 +182,73 @@ end process;
       s_segment_finished    <= '0';
       
     elsif rising_edge(clk) then
-      s_inc_quad            <= '0';
-      s_add_lin_quad        <= '0';
-      s_freq_cnt_en         <= '1';
-      s_is_running          <= '0';
-      s_signal_state_change <= '0';
-      s_segment_finished    <= '0';
-    
-      if a_en = '1' then
-        s_coeff_rcvd <= '1';
-      end if;
-    
-      case control_state is
-        when idle =>
-          s_freq_cnt_en   <= '0';
-          -- load step counter from array
-          s_step_cnt <= to_unsigned(c_step_cnt(to_integer(unsigned(step_sel_reg))), c_step_cnt_width);
-          if sync_start = '1' then
-            s_coeff_rcvd <= '0';
-            control_state <= quad_inc;
-          end if;
-    
-        when quad_inc =>
-          s_is_running <= '1';
-          if s_stp_reached = '1' and s_freq_en = '1' then
-            if s_coeff_rcvd = '1' then
-              -- continue with new parameter set
-              -- reload step counter from array
-              s_step_cnt <= to_unsigned(c_step_cnt(to_integer(unsigned(step_sel_reg))), c_step_cnt_width);
+      if sync_rst = '1' then
+        control_state         <= idle;
+        s_is_running          <= '0';
+        s_inc_quad            <= '0';
+        s_signal_state_change <= '0';
+        s_segment_finished    <= '0';
+      else
+        s_inc_quad            <= '0';
+        s_add_lin_quad        <= '0';
+        s_freq_cnt_en         <= '1';
+        s_is_running          <= '0';
+        s_signal_state_change <= '0';
+        s_segment_finished    <= '0';
+      
+        if a_en = '1' then
+          s_coeff_rcvd <= '1';
+        end if;
+      
+        case control_state is
+          when idle =>
+            s_freq_cnt_en   <= '0';
+            -- load step counter from array
+            s_step_cnt <= to_unsigned(c_step_cnt(to_integer(unsigned(step_sel_reg))), c_step_cnt_width);
+            if sync_start = '1' then
               s_coeff_rcvd <= '0';
+              control_state <= quad_inc;
+            end if;
+      
+          when quad_inc =>
+            s_is_running <= '1';
+            if s_stp_reached = '1' and s_freq_en = '1' then
+              if s_coeff_rcvd = '1' then
+                -- continue with new parameter set
+                -- reload step counter from array
+                s_step_cnt <= to_unsigned(c_step_cnt(to_integer(unsigned(step_sel_reg))), c_step_cnt_width);
+                s_coeff_rcvd <= '0';
+                s_inc_quad <= '1';
+                control_state <= lin_inc;
+              else
+                -- no parameters received
+                -- go to stop mode
+                s_signal_state_change <= '1';
+                control_state <= idle;
+              end if;
+            
+            elsif s_freq_en = '1' then
+              s_step_cnt <= s_step_cnt - 1;
               s_inc_quad <= '1';
               control_state <= lin_inc;
-            else
-              -- no parameters received
-              -- go to stop mode
-              s_signal_state_change <= '1';
-              control_state <= idle;
             end if;
-          
-          elsif s_freq_en = '1' then
-            s_step_cnt <= s_step_cnt - 1;
-            s_inc_quad <= '1';
-            control_state <= lin_inc;
-          end if;
-          
-        when lin_inc =>
-          s_is_running <= '1';
-          if s_stp_reached = '1' then
-            s_segment_finished <= '1';
-          end if;
-          control_state <= addXQ;
-        
-        when addXQ =>
+            
+          when lin_inc =>
             s_is_running <= '1';
-            s_add_lin_quad <= '1';
-            control_state <= quad_inc;
+            if s_stp_reached = '1' then
+              s_segment_finished <= '1';
+            end if;
+            control_state <= addXQ;
           
-        when others =>
-          
-      end case;
+          when addXQ =>
+              s_is_running <= '1';
+              s_add_lin_quad <= '1';
+              control_state <= quad_inc;
+            
+          when others =>
+            
+        end case;
+      end if;
     end if;
   end process;
 
