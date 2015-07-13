@@ -288,7 +288,7 @@ begin
       g_en_mil        => true,
       g_en_oled       => true,
       g_en_user_ow    => true,
-      g_en_fg         => true,
+      g_en_fg         => false,
       g_en_cfi        => true,
       g_lm32_init_files => c_initf
     )
