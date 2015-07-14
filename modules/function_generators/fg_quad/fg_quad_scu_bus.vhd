@@ -42,9 +42,10 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   constant coeff_b_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0002";
   constant broad_start_adr:   unsigned(15 downto 0) := Base_addr + x"0003";
   constant shift_reg_adr:     unsigned(15 downto 0) := Base_addr + x"0004";
-  constant start_h_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0006";
-  constant start_l_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0007";
-  constant ramp_cnt_reg_adr:  unsigned(15 downto 0) := Base_addr + x"0008";
+  constant start_hi_reg_adr:  unsigned(15 downto 0) := Base_addr + x"0005";
+  constant start_lo_reg_adr:  unsigned(15 downto 0) := Base_addr + x"0006";
+  constant ramp_cnt_lo_adr:   unsigned(15 downto 0) := Base_addr + x"0007";
+  constant ramp_cnt_hi_adr:   unsigned(15 downto 0) := Base_addr + x"0008";
   constant tag_low_reg_adr:   unsigned(15 downto 0) := Base_addr + x"0009";
   constant tag_high_reg_adr:  unsigned(15 downto 0) := Base_addr + x"000a";
 
@@ -55,7 +56,8 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  coeff_b_reg:      std_logic_vector(15 downto 0);
   signal  start_value_reg:  std_logic_vector(31 downto 0);
   signal  shift_reg:        std_logic_vector(15 downto 0);
-  signal  ramp_cnt_reg:     unsigned(15 downto 0);
+  signal  ramp_cnt_reg:     unsigned(31 downto 0);
+  signal  ramp_cnt_shadow:  unsigned(31 downto 0);
   signal  tag_low_reg:      std_logic_vector(15 downto 0);
   signal  tag_high_reg:     std_logic_vector(15 downto 0);
 
@@ -72,7 +74,8 @@ architecture fg_quad_scu_bus_arch of fg_quad_scu_bus is
   signal  wr_shift:         std_logic;
   signal  rd_shift:         std_logic;
   signal  wr_brc_start:     std_logic;
-  signal  rd_ramp_cnt:      std_logic;
+  signal  rd_ramp_cnt_lo:   std_logic;
+  signal  rd_ramp_cnt_hi:   std_logic;
   signal  wr_tag_low:       std_logic;
   signal  wr_tag_high:      std_logic;
   signal  rd_tag_low:       std_logic;
@@ -128,7 +131,8 @@ adr_decoder: process (clk, nReset)
       rd_start_value_l  <= '0';
       wr_shift          <= '0';
       rd_shift          <= '0';
-      rd_ramp_cnt       <= '0';
+      rd_ramp_cnt_lo    <= '0';
+      rd_ramp_cnt_hi    <= '0';
       wr_tag_low        <= '0';
       wr_tag_high       <= '0';
       rd_tag_low        <= '0';
@@ -148,7 +152,8 @@ adr_decoder: process (clk, nReset)
       rd_start_value_l  <= '0';
       wr_shift          <= '0';
       rd_shift          <= '0';
-      rd_ramp_cnt       <= '0';
+      rd_ramp_cnt_lo    <= '0';
+      rd_ramp_cnt_hi    <= '0';
       wr_tag_low        <= '0';
       wr_tag_high       <= '0';
       rd_tag_low        <= '0';
@@ -187,7 +192,7 @@ adr_decoder: process (clk, nReset)
               dtack       <= '1';
             end if;
             
-          when start_h_reg_adr =>
+          when start_hi_reg_adr =>
             if Ext_Wr_active = '1' then
               wr_start_value_h  <= '1';
               dtack             <= '1';
@@ -196,7 +201,7 @@ adr_decoder: process (clk, nReset)
               dtack             <= '1';
             end if;
             
-          when start_l_reg_adr =>
+          when start_lo_reg_adr =>
             if Ext_Wr_active = '1' then
               wr_start_value_l  <= '1';
               dtack             <= '1';
@@ -214,9 +219,15 @@ adr_decoder: process (clk, nReset)
               dtack     <= '1';
             end if;
             
-          when ramp_cnt_reg_adr =>
+          when ramp_cnt_lo_adr =>
             if Ext_Rd_active = '1' then
-              rd_ramp_cnt  <= '1';
+              rd_ramp_cnt_lo  <= '1';
+              dtack       <= '1';
+            end if;
+          
+          when ramp_cnt_hi_adr =>
+            if Ext_Rd_active = '1' then
+              rd_ramp_cnt_hi  <= '1';
               dtack       <= '1';
             end if;
             
@@ -251,7 +262,8 @@ adr_decoder: process (clk, nReset)
             rd_start_value_l  <= '0';
             wr_shift          <= '0';
             rd_shift          <= '0';
-            rd_ramp_cnt       <= '0';
+            rd_ramp_cnt_lo    <= '0';
+            rd_ramp_cnt_hi    <= '0';
             wr_tag_low        <= '0';
             wr_tag_high       <= '0';
             rd_tag_low        <= '0';
@@ -316,7 +328,7 @@ begin
       coeff_b_reg     <= (others => '0');
       shift_reg       <= (others => '0');
       start_value_reg <= (others => '0');
-      ramp_cnt_reg <= (others => '0');
+      ramp_cnt_reg    <= (others => '0');
       tag_low_reg     <= x"babe";
       tag_high_reg    <= x"feed";
       reset_cnt := "00";
@@ -377,6 +389,10 @@ begin
         tag_low_reg <= Data_from_SCUB_LA;
       end if;
       
+      if rd_ramp_cnt_lo = '1' then -- save counter to shadow register
+        ramp_cnt_shadow <= ramp_cnt_reg;
+      end if;
+      
     end if;
     
   end if;
@@ -386,8 +402,8 @@ fg_cntrl_rd_reg <= fg_cntrl_reg(15 downto 13) & fg_cntrl_reg(12 downto 10) &
                     fg_cntrl_reg(9 downto 4) & fg_cntrl_reg(3) & fg_is_running & fg_cntrl_reg(1 downto 0);
 
 user_rd_active <= rd_fg_cntrl or rd_coeff_a or rd_coeff_b or rd_start_value_h
-                  or rd_start_value_l or rd_shift or rd_ramp_cnt or rd_tag_high
-                  or rd_tag_low;
+                  or rd_start_value_l or rd_shift or rd_ramp_cnt_lo or rd_ramp_cnt_hi
+                  or rd_tag_high or rd_tag_low;
 
 Rd_Port <= fg_cntrl_rd_reg                  when rd_fg_cntrl = '1' else
             coeff_a_reg                     when rd_coeff_a = '1' else
@@ -395,9 +411,10 @@ Rd_Port <= fg_cntrl_rd_reg                  when rd_fg_cntrl = '1' else
             start_value_reg(31 downto 16)   when rd_start_value_h = '1' else
             start_value_reg(15 downto 0)    when rd_start_value_l = '1' else
             shift_reg                       when rd_shift = '1' else
-            std_logic_vector(ramp_cnt_reg)  when rd_ramp_cnt = '1' else
             tag_low_reg                     when rd_tag_low = '1' else
             tag_high_reg                    when rd_tag_high = '1' else
+            std_logic_vector(ramp_cnt_shadow(31 downto 16))   when rd_ramp_cnt_hi = '1' else
+            std_logic_vector(ramp_cnt_shadow(15 downto 0))    when rd_ramp_cnt_lo = '1' else
             x"0000";
 
 irq <= state_change_irq or dreq;

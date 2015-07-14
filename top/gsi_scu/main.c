@@ -131,7 +131,8 @@ void handle(int slave_nr, unsigned FG_BASE)
 
     short cntrl_reg = scub_base[(slave_nr << 16) + FG_BASE + FG_CNTRL];
     int channel = (cntrl_reg & 0x3f0) >> 4;        // virtual fg number Bits 9..4
-    fg_regs[channel].ramp_count = scub_base[(slave_nr << 16) + FG_BASE + FG_RAMP_CNT];    // last cnt from from fg macro
+    fg_regs[channel].ramp_count = scub_base[(slave_nr << 16) + FG_BASE + FG_RAMP_CNT_LO];          // last cnt from from fg macro, read from LO address copies hardware counter to shadow reg
+    fg_regs[channel].ramp_count |= scub_base[(slave_nr << 16) + FG_BASE + FG_RAMP_CNT_HI] << 16;    // last cnt from from fg macro
     //mprintf("irq received for channel[%d]\n", channel);
     if (!(cntrl_reg  & FG_RUNNING)) {  // fg stopped
       //mprintf("fg 0x%x in slave %d stopped after %d tuples\n", FG_BASE, slave_nr, fg_regs[channel].ramp_count);

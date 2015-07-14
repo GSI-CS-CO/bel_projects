@@ -58,9 +58,10 @@
 #define FG_B              0x2
 #define FG_BROAD          0x3
 #define FG_SHIFT          0x4
-#define FG_STARTH         0x6
-#define FG_STARTL         0x7
-#define FG_RAMP_CNT       0x8
+#define FG_STARTH         0x5
+#define FG_STARTL         0x6
+#define FG_RAMP_CNT_LO    0x7
+#define FG_RAMP_CNT_HI    0x8
 #define FG_TAG_LOW        0x9
 #define FG_TAG_HIGH       0xa
 
