@@ -24,6 +24,7 @@ entity fg_quad_scu_bus is
     nReset:             in    std_logic;
     tag:                in    std_logic_vector(31 downto 0);  -- 32Bit tag from timing 
     tag_valid:          in    std_logic;                      -- tag valid
+    ext_trigger:        in    std_logic;                      -- external trigger for ramp start
     Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Dtack:              out   std_logic;                      -- connect Dtack to SCUB-Macro
     -- fg_quad
@@ -102,7 +103,7 @@ begin
       nrst                => nReset,
       sync_rst            => fg_cntrl_reg(0),
       a_en                => wr_coeff_a,
-      sync_start          => tag_start and fg_cntrl_reg(1),   -- start at write to broadcast reg or from external signal
+      sync_start          => (tag_start or ext_trigger) and fg_cntrl_reg(1),   -- start with tag or from external signal
       load_start          => wr_start_value_h,                  -- when high word was written, load into datapath
       step_sel            => fg_cntrl_reg(12 downto 10),
       shift_b             => to_integer(unsigned(shift_reg(5 downto 0))),

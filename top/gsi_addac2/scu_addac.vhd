@@ -417,7 +417,7 @@ dac_1: dac714
     nReset            => nPowerup_Res,          -- in, '0' => resets the DAC_1
     nExt_Trig_DAC     => EXT_TRIG_DAC,          -- external trigger input over optocoupler,
                                                 -- led on -> nExt_Trig_DAC is low
-    FG_Data           => fg_1_sw(23 downto 8),  -- parallel dac data during FG-Mode
+    FG_Data           => fg_1_sw(31 downto 16), -- parallel dac data during FG-Mode
     FG_Strobe         => fg_1_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
     DAC_SI            => DAC1_SDI,              -- out, is connected to DAC1-SDI
     nDAC_CLK          => nDAC1_CLK,             -- out, spi-clock of DAC1
@@ -447,7 +447,7 @@ dac_2: dac714
     nReset            => nPowerup_Res,          -- in, '0' => resets the DAC_2
     nExt_Trig_DAC     => EXT_TRIG_DAC,          -- external trigger input over optocoupler,
                                                 -- led on -> nExt_Trig_DAC is low
-    FG_Data           => fg_2_sw(23 downto 8),  -- parallel dac data during FG-Mode
+    FG_Data           => fg_2_sw(31 downto 16), -- parallel dac data during FG-Mode
     FG_Strobe         => fg_2_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
     DAC_SI            => DAC2_SDI,              -- out, is connected to DAC2-SDI
     nDAC_CLK          => nDAC2_CLK,             -- out, spi-clock of DAC2
@@ -551,6 +551,7 @@ fg_1: fg_quad_scu_bus
     irq               => fg_1_dreq,             -- request of new parameter set
     tag               => Timing_Pattern_LA,     --
     tag_valid         => Timing_Pattern_RCV,    --
+    ext_trigger       => '0',
 
     -- fg output
     sw_out            => fg_1_sw,               -- 24bit output from fg
@@ -579,6 +580,7 @@ fg_2: fg_quad_scu_bus
     irq               => fg_2_dreq,             -- request of new parameter set
     tag               => Timing_Pattern_LA,     --
     tag_valid         => Timing_Pattern_RCV,    --
+    ext_trigger       => '0',
 
 
     -- fg output
