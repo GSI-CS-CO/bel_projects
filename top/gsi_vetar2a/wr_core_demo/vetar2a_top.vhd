@@ -266,19 +266,28 @@ architecture rtl of vetar2a_top is
   constant c_green         : std_logic_vector := "110";
   constant c_blue          : std_logic_vector := "011";
   
+  constant c_family  : string := "Arria II"; 
+  constant c_project : string := "vetar_top2a";
+  constant c_initf   : string := c_project & ".mif"; 
+  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
+  -- multiple init files for n processors are to be seperated by semicolon ';'
+
+
 begin
 
   main : monster
     generic map(
-      g_family     => "Arria II",
-      g_project    => "vetar_top2a",
+      g_family     => c_family,
+      g_project    => c_project,
       g_gpio_inout => 3,
       g_gpio_in    => 7,
       g_gpio_out   => 11,
       g_flash_bits => 24,
       g_en_vme     => true,
       g_en_usb     => true,
-      g_en_lcd     => true)
+      g_en_lcd     => true,
+      g_lm32_init_files => c_initf
+    )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,

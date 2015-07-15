@@ -1609,9 +1609,9 @@ fg_1: fg_quad_scu_bus
     Rd_Port           => FG_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => FG_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => FG_1_dtack,            -- connect Dtack to SCUB-Macro
-    dreq              => FG_1_dreq,             -- request of new parameter set
-    brdcst_i          => Tag_fg_start,          -- starts the fg
-    brdcst_o          => fg_start,              -- goes high when fg is started
+    irq               => FG_1_dreq,             -- request of new parameter set
+    tag               => Timing_Pattern_LA,     -- 
+    tag_valid         => Timing_Pattern_RCV,    --
 
     -- fg output
     sw_out            => FG_1_sw,               -- 24bit output from fg
@@ -1637,9 +1637,9 @@ fg_2: fg_quad_scu_bus
     Rd_Port           => FG_2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => FG_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => FG_2_dtack,            -- connect Dtack to SCUB-Macro
-    dreq              => FG_2_dreq,             -- request of new parameter set
-    brdcst_i          => fg_start,
-    brdcst_o          => open,          
+    irq               => FG_2_dreq,             -- request of new parameter set
+    tag               => Timing_Pattern_LA,     --   
+    tag_valid         => Timing_Pattern_RCV,    --      
 
     -- fg output
     sw_out            => FG_2_sw,               -- 24bit output from fg
@@ -2434,7 +2434,8 @@ p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO,
              Timing_Pattern_LA, Tag_Aktiv,
              DAC1_Config, DAC1_Config_wr, DAC1_Out, DAC1_Out_wr,   
              DAC2_Config,	DAC2_Config_wr, DAC2_Out, DAC2_Out_wr,   
-             ADC_Config, ADC_In1, ADC_In2, ADC_In3, ADC_In4, ADC_In5, ADC_In6, ADC_In7, ADC_In8	      
+             ADC_Config, ADC_In1, ADC_In2, ADC_In3, ADC_In4, ADC_In5, ADC_In6, ADC_In7, ADC_In8,
+             AWOut_Reg1_wr, AWOut_Reg2_wr
              )
 
  

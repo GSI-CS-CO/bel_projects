@@ -16,3 +16,4 @@ modules = {
     "../../../top/gsi_microtca/control", 
   ]
 }
+syn_tool = "quartus"

@@ -4,61 +4,54 @@
 #include <aux.h>
 #include <mprintf.h>
 
-int cbisEmpty(volatile struct circ_buffer* cb, int num) {
-  return cb[num].wr_ptr == cb[num].rd_ptr;
+int cbisEmpty(volatile struct channel_regs* cr, int channel) {
+  return cr[channel].wr_ptr == cr[channel].rd_ptr;
 }
 
-int cbisFull(volatile struct circ_buffer* cb, int num) {
+int cbisFull(volatile struct channel_regs* cr, int channel) {
   int ret = 0;
-  ret = (cb[num].wr_ptr + 1) % cb[num].size == cb[num].rd_ptr;
+  ret = (cr[channel].wr_ptr + 1) % (BUFFER_SIZE+1) == cr[channel].rd_ptr;
   return ret; 
 }
 
-int cbgetCount(volatile struct circ_buffer* cb, int num) {
-  return abs(cb[num].wr_ptr - cb[num].rd_ptr);
+int cbgetCount(volatile struct channel_regs* cr, int channel) {
+  return abs(cr[channel].wr_ptr - cr[channel].rd_ptr);
 }
 
-void cbWrite(volatile struct circ_buffer* cb, int num, struct param_set *pset) {
-  int rptr = cb[num].rd_ptr;
-  int wptr = cb[num].wr_ptr;
-  int size = cb[num].size;
+void cbWrite(volatile struct channel_buffer* cb, volatile struct channel_regs* cr, int channel, struct param_set *pset) {
+  unsigned int wptr = cr[channel].wr_ptr;
   /* write element to free slot */
-  cb[num].pset[wptr] = *pset;
+  cb[channel].pset[wptr] = *pset;
   /* move write pointer forward */
-  cb[num].wr_ptr = (wptr + 1) % size;
+  cr[channel].wr_ptr = (wptr + 1) % (BUFFER_SIZE+1);
   /* overwrite */
-  if (cb[num].wr_ptr == cb[num].rd_ptr)
-    cb[num].rd_ptr = (cb[num].rd_ptr + 1) % cb[num].size;
+  if (cr[channel].wr_ptr == cr[channel].rd_ptr)
+    cr[channel].rd_ptr = (cr[channel].rd_ptr + 1) % (BUFFER_SIZE+1);
 }
 
-void cbRead(volatile struct circ_buffer *cb, int num, struct param_set *pset) {
-  int rptr = cb[num].rd_ptr;
-  int wptr = cb[num].wr_ptr;
-  int size = cb[num].size;
+void cbRead(volatile struct channel_buffer *cb, volatile struct channel_regs* cr, int channel, struct param_set *pset) {
+  unsigned int rptr = cr[channel].rd_ptr;
+  unsigned int wptr = cr[channel].wr_ptr;
   /* check empty */
   if (wptr == rptr) {
     return;
   }
   /* read element */
-  *pset = cb[num].pset[rptr];
-  //mprintf("%x(%d) ", cb[num].pset[rptr].coeff_c, rptr);
-  //if (!(cb[num].pset[rptr].coeff_c % 10))
-  //  mprintf("\n");
+  *pset = cb[channel].pset[rptr];
   /* move read pointer forward */
-  cb[num].rd_ptr = (rptr + 1) % size;    
+  cr[channel].rd_ptr = (rptr + 1) % (BUFFER_SIZE+1);    
 }
 
-void cbDump(volatile struct circ_buffer *cb, int num) {
+void cbDump(volatile struct channel_buffer *cb, volatile struct channel_regs* cr, int channel) {
   int i = 0, col;
   struct param_set *pset;
-  mprintf("dumped cb[%d]: \n", num);  
-  mprintf ("wr_ptr: %d rd_ptr: %d size: %d\n", cb[num].wr_ptr, cb[num].rd_ptr, cb[num].size);
-  while(i < cb[num].size) {
+  mprintf("dumped cb[%d]: \n", channel);  
+  mprintf ("wr_ptr: %d rd_ptr: %d size: %d\n", cr[channel].wr_ptr, cr[channel].rd_ptr, BUFFER_SIZE+1);
+  while(i < BUFFER_SIZE+1) {
     mprintf("%d ", i);
-    for(col = 0; (col < 8) && (i < cb[num].size); col++) {
-      *pset = cb[num].pset[i++];
+    for(col = 0; (col < 8) && (i < BUFFER_SIZE+1); col++) {
+      *pset = cb[channel].pset[i++];
       mprintf("0x%x ", pset->coeff_c);
     }
-    mprintf("\n");
   }
 }

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "mini_sdb.h"
 #include "dbg.h"
+#include "hw/memlayout.h"
 
 sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, uint32_t base, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId)
 {
@@ -112,19 +113,19 @@ void discoverPeriphery(void)
   sdb_location found_sdb_w1[2];
   uint32_t idx = 0;
   uint32_t idx_w1 = 0;
+  
+  pCpuId         = find_device_adr(GSI, CPU_INFO_ROM);
+  pCpuAtomic     = find_device_adr(GSI, CPU_ATOM_ACC);
+  pCpuSysTime    = find_device_adr(GSI, CPU_SYSTEM_TIME);
+  pCpuIrqSlave   = find_device_adr(GSI, CPU_MSI_CTRL_IF);   
+  pCpuTimer      = find_device_adr(GSI, CPU_TIMER_CTRL_IF);
    
-   pCpuId         = find_device_adr(GSI, CPU_INFO_ROM);
-   pCpuAtomic     = find_device_adr(GSI, CPU_ATOM_ACC);
-   pCpuSysTime    = find_device_adr(GSI, CPU_SYSTEM_TIME);
-   pCpuIrqSlave   = find_device_adr(GSI, IRQ_MSI_CTRL_IF);   
-   pCpuTimer      = find_device_adr(GSI, IRQ_TIMER_CTRL_IF);
-   
-   find_device_multi(&found_sdb[0], &idx, 20, GSI, CB_CLUSTER);
-   pCluCB         = (uint32_t*)getSdbAdr(&found_sdb[0]);
-   pSharedRam     = find_device_adr_in_subtree(&found_sdb[0], CERN, DPRAM_GENERIC);
-   pCluInfo       = find_device_adr_in_subtree(&found_sdb[0], GSI, CPU_CLU_INFO_ROM);
-   pFpqCtrl       = find_device_adr_in_subtree(&found_sdb[0], GSI, FTM_PRIOQ_CTRL); 
-   pFpqData       = find_device_adr_in_subtree(&found_sdb[0], GSI, FTM_PRIOQ_DATA); 
+  find_device_multi(&found_sdb[0], &idx, 20, GSI, LM32_CB_CLUSTER);
+  pCluCB         = (uint32_t*)getSdbAdr(&found_sdb[0]);
+  pSharedRam     = find_device_adr_in_subtree(&found_sdb[0], GSI, LM32_RAM_SHARED);
+  pCluInfo       = find_device_adr_in_subtree(&found_sdb[0], GSI, CLU_INFO_ROM);
+  pFpqCtrl       = find_device_adr_in_subtree(&found_sdb[0], GSI, FTM_PRIOQ_CTRL); 
+  pFpqData       = find_device_adr_in_subtree(&found_sdb[0], GSI, FTM_PRIOQ_DATA); 
    
   pOledDisplay   = find_device_adr(GSI, OLED_DISPLAY);  
   idx = 0;
@@ -134,12 +135,13 @@ void discoverPeriphery(void)
   pEca           = find_device_adr(GSI, ECA_EVENT);
   pTlu           = find_device_adr(GSI, TLU);
   pUart          = find_device_adr(CERN, WR_UART);
-  BASE_UART      = pUart; //make WR happy ...
+  BASE_UART      = (char *)pUart; //make WR happy ...
   pCfiPFlash     = find_device_adr(GSI, WR_CFIPFlash);
   
   /* Get the second onewire/w1 record (0=white rabbit w1 unit, 1=user w1 unit) */
   find_device_multi(&found_sdb_w1[0], &idx_w1, 2, CERN, WR_1Wire);
   pOneWire         = (uint32_t*)getSdbAdr(&found_sdb_w1[1]);
 
+  BASE_SYSCON     = (char *)find_device_adr(CERN, WR_SYS_CON);
 }
 

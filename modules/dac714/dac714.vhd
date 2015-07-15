@@ -233,7 +233,7 @@ architecture arch_dac714 OF dac714 IS
 
 
   constant  rw_dac_cntrl_addr:            unsigned(15 downto 0) := Base_addr + rw_dac_cntrl_addr_offset;
-  constant  wr_dac_addr:                  unsigned(15 downto 0) := Base_addr + wr_dac_addr_offset;
+  constant  rw_dac_data_addr:             unsigned(15 downto 0) := Base_addr + wr_dac_addr_offset;
   constant  clr_rd_shift_err_cnt_addr:    unsigned(15 downto 0) := Base_addr + clr_rd_shift_err_cnt_addr_offset;
   constant  clr_rd_old_data_err_cnt_addr: unsigned(15 downto 0) := Base_addr + clr_rd_old_data_err_cnt_addr_offset;
   constant  clr_rd_trm_during_trm_active_err_cnt_addr:  unsigned(15 downto 0) := Base_addr + clr_rd_trm_during_trm_active_err_cnt_addr_offset;
@@ -280,32 +280,34 @@ architecture arch_dac714 OF dac714 IS
   signal    SPI_TRM:          std_logic;
   
 ----------------- bits of control register ------------------------------------
-  signal    nCLR_DAC_dly:       std_logic;
-  signal    dac_conv_extern:    std_logic;    -- '1' => enable external convert dac strobe, its bit(2) of DAC control register
-  signal    dac_neg_edge_conv:  std_logic;    -- '1' => negative edge convert dac strobe,   its bit(3) of DAC control register
-  signal    FG_mode:            std_logic;    -- '1' => enable fuction generator mode,      its bit(4) of DAC control register
+  signal  nCLR_DAC_dly:       std_logic;
+  signal  dac_conv_extern:    std_logic;    -- '1' => enable external convert dac strobe, its bit(2) of DAC control register
+  signal  dac_neg_edge_conv:  std_logic;    -- '1' => negative edge convert dac strobe,   its bit(3) of DAC control register
+  signal  FG_mode:            std_logic;    -- '1' => enable fuction generator mode,      its bit(4) of DAC control register
 
-  signal    clear_spi_clk:    std_logic;
+  signal  clear_spi_clk:    std_logic;
 
-  signal    nReset_ff:        std_logic;
-  signal    nReset_sync:      std_logic_vector(1 downto 0); -- design assistant generates error msg, if the input nReset isn't sychronised
+  signal  nReset_ff:        std_logic;
+  signal  nReset_sync:      std_logic_vector(1 downto 0); -- design assistant generates error msg, if the input nReset isn't sychronised
 
-  signal    Trig_DAC_during_shift_err_cnt:    unsigned (7 downto 0);
-  signal    Trig_DAC_during_shift_err_cnt_b:  unsigned (7 downto 0);  -- holds during read a copy of Trig_DAC_during_shift_err_cnt 
-  signal    clr_shift_err_cnt:                std_logic;
-  signal    rd_shift_err_cnt:                 std_logic;
+  signal  Trig_DAC_during_shift_err_cnt:    unsigned (7 downto 0);
+  signal  Trig_DAC_during_shift_err_cnt_b:  unsigned (7 downto 0);  -- holds during read a copy of Trig_DAC_during_shift_err_cnt 
+  signal  clr_shift_err_cnt:                std_logic;
+  signal  rd_shift_err_cnt:                 std_logic;
   
-  signal    Trig_DAC_with_old_data_err_cnt:   unsigned (7 downto 0);
-  signal    Trig_DAC_with_old_data_err_cnt_b: unsigned (7 downto 0);  -- holds during read a copy of Trig_DAC_with_old_data_err_cnt
-  signal    clr_old_data_err_cnt:             std_logic;
-  signal    rd_old_data_err_cnt:              std_logic;
+  signal  Trig_DAC_with_old_data_err_cnt:   unsigned (7 downto 0);
+  signal  Trig_DAC_with_old_data_err_cnt_b: unsigned (7 downto 0);  -- holds during read a copy of Trig_DAC_with_old_data_err_cnt
+  signal  clr_old_data_err_cnt:             std_logic;
+  signal  rd_old_data_err_cnt:              std_logic;
   
-  signal    New_trm_during_trm_active_err_cnt:    unsigned (7 downto 0);
-  signal    New_trm_during_trm_active_err_cnt_b:  unsigned (7 downto 0);  -- holds during read a copy of New_trm_during_trm_active_err_cnt 
-  signal    clr_trm_during_trm_active_err_cnt:    std_logic;
-  signal    rd_trm_during_trm_active_err_cnt:     std_logic;
-  signal    Ext_Trig_wait:     std_logic;
-  signal    DAC_convert:       std_logic;
+  signal  New_trm_during_trm_active_err_cnt:    unsigned (7 downto 0);
+  signal  New_trm_during_trm_active_err_cnt_b:  unsigned (7 downto 0);  -- holds during read a copy of New_trm_during_trm_active_err_cnt 
+  signal  clr_trm_during_trm_active_err_cnt:    std_logic;
+  signal  rd_trm_during_trm_active_err_cnt:     std_logic;
+  signal  Ext_Trig_wait:      std_logic;
+  signal  DAC_convert:        std_logic;
+  signal  dac_data:           unsigned(15 downto 0);
+  signal  rd_dac_data:        std_logic;
 
 begin
 
@@ -329,30 +331,32 @@ spi_clk_gen:  div_n
 P_dac714_Adr_Deco: process (clk, nReset_sync(1))
   begin
     if nReset_sync(1) = '0' then
-      Wr_DAC_Cntrl          <= '0';
-      Rd_DAC_Cntrl          <= '0';
-      Wr_Shift_Reg          <= '0';
-      Wr_Shift_Reg_dly      <= '0';
-      clr_shift_err_cnt     <= '0';
-      rd_shift_err_cnt      <= '0';
-      clr_old_data_err_cnt  <= '0';
-      rd_old_data_err_cnt   <= '0';
+      Wr_DAC_Cntrl                      <= '0';
+      Rd_DAC_Cntrl                      <= '0';
+      Wr_Shift_Reg                      <= '0';
+      Wr_Shift_Reg_dly                  <= '0';
+      clr_shift_err_cnt                 <= '0';
+      rd_shift_err_cnt                  <= '0';
+      clr_old_data_err_cnt              <= '0';
+      rd_old_data_err_cnt               <= '0';
       clr_trm_during_trm_active_err_cnt <= '0';
       rd_trm_during_trm_active_err_cnt  <= '0';
-      S_Dtack               <= '0';
+      rd_dac_data                       <= '0';
+      S_Dtack                           <= '0';
 
     elsif rising_edge(clk) then
     
-      Wr_DAC_Cntrl          <= '0';
-      Rd_DAC_Cntrl          <= '0';
-      Wr_Shift_Reg          <= '0';
-      clr_shift_err_cnt     <= '0';
-      rd_shift_err_cnt      <= '0';
-      clr_old_data_err_cnt  <= '0';
-      rd_old_data_err_cnt   <= '0';
+      Wr_DAC_Cntrl                      <= '0';
+      Rd_DAC_Cntrl                      <= '0';
+      Wr_Shift_Reg                      <= '0';
+      clr_shift_err_cnt                 <= '0';
+      rd_shift_err_cnt                  <= '0';
+      clr_old_data_err_cnt              <= '0';
+      rd_old_data_err_cnt               <= '0';
       clr_trm_during_trm_active_err_cnt <= '0';
       rd_trm_during_trm_active_err_cnt  <= '0';
-      S_Dtack               <= '0';
+      rd_dac_data                       <= '0';
+      S_Dtack                           <= '0';
       
       Wr_Shift_Reg_dly <= Wr_Shift_Reg;
 
@@ -370,10 +374,13 @@ P_dac714_Adr_Deco: process (clk, nReset_sync(1))
               S_Dtack       <= '1';
             end if;
             
-          when wr_dac_addr =>
+          when rw_dac_data_addr =>
             if Ext_Wr_active = '1' and FG_mode = '0' then
               Wr_Shift_Reg  <= '1';
               S_Dtack       <= '1';
+            elsif Ext_Rd_active = '1' then
+              rd_dac_data <= '1';
+              S_Dtack     <= '1';
             end if;
 
           when clr_rd_shift_err_cnt_addr =>
@@ -407,16 +414,17 @@ P_dac714_Adr_Deco: process (clk, nReset_sync(1))
             end if;
 
           when others =>
-            Wr_DAC_Cntrl          <= '0';
-            Rd_DAC_Cntrl          <= '0';
-            Wr_Shift_Reg          <= '0';
-            clr_shift_err_cnt     <= '0';
-            rd_shift_err_cnt      <= '0';
-            clr_old_data_err_cnt  <= '0';
-            rd_old_data_err_cnt   <= '0';
-            clr_trm_during_trm_active_err_cnt <= '0';
-            rd_trm_during_trm_active_err_cnt  <= '0';
-            S_Dtack               <= '0';
+            Wr_DAC_Cntrl                        <= '0';
+            Rd_DAC_Cntrl                        <= '0';
+            Wr_Shift_Reg                        <= '0';
+            clr_shift_err_cnt                   <= '0';
+            rd_shift_err_cnt                    <= '0';
+            clr_old_data_err_cnt                <= '0';
+            rd_old_data_err_cnt                 <= '0';
+            clr_trm_during_trm_active_err_cnt   <= '0';
+            rd_trm_during_trm_active_err_cnt    <= '0';
+            rd_dac_data                         <= '0';
+            S_Dtack                             <= '0';
 
         end case;
       end if;
@@ -440,6 +448,18 @@ P_reset: process (clk)
       end if;
     end if;
   end process P_reset;
+
+-- data register for readback of set value
+data_reg: process (clk, nReset)
+begin
+  if rising_edge(clk) then
+    if nReset = '0' then
+      dac_data <= (others => '0');
+    elsif Wr_Shift_Reg = '1' then
+      dac_data <= unsigned(Data_from_SCUB_LA);
+    end if;
+  end if;
+end process;
 
 
 P_SPI_SM: process (clk, nReset_ff)
@@ -729,21 +749,23 @@ DAC_convert_o <= DAC_convert; -- '1' when DAC convert driven by software, functi
 
 P_read_mux: process (rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_shift_err_cnt, Rd_DAC_Cntrl,
                      Ext_Trig_wait, FG_mode, dac_neg_edge_conv, dac_conv_extern, nCLR_DAC, SPI_TRM, 
-                     Trig_DAC_during_shift_err_cnt_b, Trig_DAC_with_old_data_err_cnt_b, New_trm_during_trm_active_err_cnt_b)
+                     Trig_DAC_during_shift_err_cnt_b, Trig_DAC_with_old_data_err_cnt_b, New_trm_during_trm_active_err_cnt_b,
+                     rd_dac_data, dac_data)
   variable  sel_mux:  std_logic_vector(5 downto 0);
   begin
-    sel_mux := ('0' ,'0', rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_shift_err_cnt, Rd_DAC_Cntrl);
+    sel_mux := ('0' , rd_dac_data, rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_shift_err_cnt, Rd_DAC_Cntrl);
     case sel_mux is
       when "000001" => Rd_Port <= (X"00" & "00" & Ext_Trig_wait & FG_mode & dac_neg_edge_conv & dac_conv_extern & not nCLR_DAC & SPI_TRM);
       when "000010" => Rd_Port <= (X"00" & std_logic_vector(Trig_DAC_during_shift_err_cnt_b));
       when "000100" => Rd_Port <= (X"00" & std_logic_vector(Trig_DAC_with_old_data_err_cnt_b));
       when "001000" => Rd_Port <= (X"00" & std_logic_vector(New_trm_during_trm_active_err_cnt_b));
+      when "010000" => Rd_port <= std_logic_vector(dac_data);
       when others   => Rd_Port <= (others => '0');
     end case;
   end process P_read_mux;
   
 Dtack <= S_Dtack;
 
-Rd_Activ <= rd_trm_during_trm_active_err_cnt or rd_old_data_err_cnt or rd_shift_err_cnt or Rd_DAC_Cntrl;
+Rd_Activ <= rd_dac_data or rd_trm_during_trm_active_err_cnt or rd_old_data_err_cnt or rd_shift_err_cnt or Rd_DAC_Cntrl;
 
 end Arch_dac714;

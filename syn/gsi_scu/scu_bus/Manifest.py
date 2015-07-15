@@ -14,3 +14,4 @@ modules = {
     "../../../top/gsi_scu/scu_bus"
   ]
 }
+syn_tool = "quartus"

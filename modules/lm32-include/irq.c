@@ -42,9 +42,10 @@ void _irq_entry(void)
 {
   uint32_t  ip;
   unsigned char irq_no = 0;
+  isr_ptr_t handler;
 #if NESTED_IRQS
   uint32_t  msk;
-#endif  
+#endif
   asm ("rcsr %0, ip": "=r"(ip)); //get pending flags
   while(ip) 
   {
@@ -56,8 +57,9 @@ void _irq_entry(void)
       irq_enable();
 #endif  
       irq_pop_msi(irq_no);      //pop msg from msi queue into global_msi variable
+      handler = isr_ptr_table[irq_no];
+      if (handler) (*handler)();  //execute isr
       irq_clear(1<<irq_no);     //clear pending bit
-      isr_ptr_table[irq_no]();  //execute isr
 #if NESTED_IRQS
       irq_set_mask(msk);
       irq_disable();
