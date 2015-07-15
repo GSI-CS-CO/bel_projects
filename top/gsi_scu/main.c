@@ -220,7 +220,7 @@ void configure_timer(unsigned int tmr_value) {
 
 int configure_fg_macro(int channel) {
   int i = 0;
-  int slot, dev, offset;
+  int slot, dev, fg_base, dac_base;
   struct param_set pset;
   int add_freq_sel, step_cnt_sel;
   
@@ -231,39 +231,40 @@ int configure_fg_macro(int channel) {
     scub_base[SRQ_ENA] |= (1 << (slot-1));                          //enable irqs for the slave
     /* enable irqs in the slave cards */
     scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000;      //enable fg1 and fg2 irq
-    scub_base[(slot << 16) + DAC1_BASE + DAC_CNTRL] = 0x10; // set FG mode
-    scub_base[(slot << 16) + DAC2_BASE + DAC_CNTRL] = 0x10; // set FG mode
     
     /* which macro are we? */
     if (dev == 0) {
-      offset = FG1_BASE;
+      fg_base = FG1_BASE;
+      dac_base = DAC1_BASE;
     } else if (dev == 1) {
-      offset = FG2_BASE;
+      fg_base = FG2_BASE;
+      dac_base = DAC2_BASE;
     } else
       return -1;
     
-    scub_base[(slot << 16) + offset + FG_CNTRL] = 0x1; // reset fg
+    scub_base[(slot << 16) + dac_base + DAC_CNTRL] = 0x10; // set FG mode
+    scub_base[(slot << 16) + fg_base + FG_CNTRL] = 0x1; // reset fg
     //set virtual fg number Bit 9..4
-    scub_base[(slot << 16) + offset + FG_CNTRL] |= (channel << 4);
+    scub_base[(slot << 16) + fg_base + FG_CNTRL] |= (channel << 4);
     //fetch first parameter set from buffer
     //mprintf("wrptr 0x%x rdptr 0x%x\n", fg_regs[channel].wr_ptr, fg_regs[channel].rd_ptr);
     if(!cbisEmpty(&fg_regs[0], channel)) {
       cbRead(&fg_buffer[0], &fg_regs[0], channel, &pset);
       step_cnt_sel = pset.control & 0x7;
       add_freq_sel = (pset.control & 0x38) >> 3;
-      scub_base[(slot << 16) + offset + FG_CNTRL] |= add_freq_sel << 13 | step_cnt_sel << 10;
-      scub_base[(slot << 16) + offset + FG_A] = pset.coeff_a;
-      scub_base[(slot << 16) + offset + FG_B] = pset.coeff_b;
-      scub_base[(slot << 16) + offset + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
-      scub_base[(slot << 16) + offset + FG_STARTL] = pset.coeff_c & 0xffff;
-      scub_base[(slot << 16) + offset + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+      scub_base[(slot << 16) + fg_base + FG_CNTRL] |= add_freq_sel << 13 | step_cnt_sel << 10;
+      scub_base[(slot << 16) + fg_base + FG_A] = pset.coeff_a;
+      scub_base[(slot << 16) + fg_base + FG_B] = pset.coeff_b;
+      scub_base[(slot << 16) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
+      scub_base[(slot << 16) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
+      scub_base[(slot << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
       param_sent[i]++;
     }
     //mprintf("enable channel[%d] 0x%x PLEASE REMOVE AFTER USE!!!!!!!\n", channel, fg_regs[channel].irq);
-    scub_base[(slot << 16) + offset + FG_TAG_LOW] = fg_regs[channel].tag & 0xffff;
-    scub_base[(slot << 16) + offset + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
+    scub_base[(slot << 16) + fg_base + FG_TAG_LOW] = fg_regs[channel].tag & 0xffff;
+    scub_base[(slot << 16) + fg_base + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
     //enable the fg macro
-    scub_base[(slot << 16) + offset + FG_CNTRL] |= FG_ENABLED;
+    scub_base[(slot << 16) + fg_base + FG_CNTRL] |= FG_ENABLED;
     fg_regs[channel].state = 1; 
     SEND_SIG(SIG_ARMED);
   }
@@ -324,20 +325,23 @@ void print_regs() {
 }
 
 void disable_channel(unsigned int channel) {
-  int slot, dev, offset;
+  int slot, dev, fg_base, dac_base;
   if (fg_regs[channel].macro_number == -1) return;
   slot = fg_macros[fg_regs[channel].macro_number] >> 24;         //dereference slot number
   dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
   //mprintf("disarmed slot %d dev %d in channel[%d] state %d\n", slot, dev, channel, fg_regs[channel].state); 
   /* which macro are we? */
   if (dev == 0) {
-    offset = FG1_BASE;
+    fg_base = FG1_BASE;
+    dac_base = DAC1_BASE;
   } else if (dev == 1) {
-    offset = FG2_BASE;
+    fg_base = FG2_BASE;
+    dac_base = DAC2_BASE;
   } else
     return;
   // disarm hardware
-  scub_base[(slot >> 16) + offset + FG_CNTRL] &= ~(0x2);
+  scub_base[(slot >> 16) + fg_base + FG_CNTRL] &= ~(0x2);
+  scub_base[(slot << 16) + dac_base + DAC_CNTRL] &= ~(0x10); // set FG mode
   if (fg_regs[channel].state == 1) {    // hw is running
     fg_regs[channel].rd_ptr = fg_regs[channel].wr_ptr;
   } else {
