@@ -80,7 +80,7 @@ int main (void)
   /* Flush reception fifo */
   vFlushRxFifo();
   
-  /* Start transmission by writing date into the transmit fifo */
+  /* Start transmission by writing data into the transmit fifo */
   vNAU8811_TransmitStream (uData);
   
   /* Loop back audio data */
