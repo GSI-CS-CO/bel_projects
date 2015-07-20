@@ -16,6 +16,6 @@ set_clock_groups -asynchronous                        \
  -group { a_me_dsc_clk                              } \
  -group { [get_ports {CLK_20MHZ_D}]                 }
 
-set_false_path																																											\
-      -from [get_clocks {sio3_clk_sw|local_clk|altpll_component|auto_generated|pll1|clk[0]}]				\
-			-to   [get_clocks {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[0]}]
+set_false_path  \
+      -from [get_clocks {sio3_clk_sw|local_clk|altpll_component|auto_generated|pll1|clk[0]}]  \
+      -to   [get_clocks {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[0]}]
