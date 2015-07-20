@@ -57,10 +57,16 @@
 #define FG_A              0x1
 #define FG_B              0x2
 #define FG_BROAD          0x3
-#define FG_SHIFTA         0x4
-#define FG_SHIFTB         0x5
-#define FG_STARTH         0x6
-#define FG_STARTL         0x7
+#define FG_SHIFT          0x4
+#define FG_STARTH         0x5
+#define FG_STARTL         0x6
+#define FG_RAMP_CNT_LO    0x7
+#define FG_RAMP_CNT_HI    0x8
+#define FG_TAG_LOW        0x9
+#define FG_TAG_HIGH       0xa
+
+#define FG1_IRQ           (1<<15)
+#define FG2_IRQ           (1<<14)
 
 #define WB_FG_CNTRL       0x0
 #define WB_FG_A           0x1
@@ -77,6 +83,7 @@
 #define TMR_IRQ_CNT       0x1
 #define TMR_VALUEL        0x2
 #define TMR_VALUEH        0x3
+#define TMR_REPEAT        0x4
  
 #define GLOBAL_IRQ_ENA    0x2
 #define SRQ_ENA           0x6
@@ -84,6 +91,15 @@
 #define MULTI_SLAVE_SEL   0xc
 #define MULTICAST_ACC     0x8
 #define MAX_SCU_SLAVES    12
+
+#define SYS_CSCO    55
+#define SYS_PBRF    42
+
+#define GRP_ADDAC1  3
+#define GRP_ADDAC2  38
+#define GRP_DIOB    26
+#define GRP_FIB_DDS 1
+
 
 extern struct w1_bus wrpc_w1_bus;
 void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);

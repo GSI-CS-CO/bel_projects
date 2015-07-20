@@ -16,3 +16,4 @@ modules = {
     "../../../top/gsi_exploder5/exploder5_csco_tr", 
   ]
 }
+syn_tool = "quartus"

@@ -85,8 +85,6 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
   signal Start_Cycle        : std_logic;                      -- IN start data access from/to SCU_Bus
   signal Wr                 : std_logic;                      -- IN direction of SCU_Bus data access, write is active high.
   signal Rd                 : std_logic;                      -- IN
-  --signal Timing_In          : std_logic_vector(31 downto 0) := (others => '0'); 
-  --signal Start_Timing_Cycle : std_logic := '0';               -- IN start timing cycle to SCU_Bus
   
   signal SCU_Bus_Access_Active : std_logic;                   -- OUT active high signal: read or write access to SCUB is not finished
                                                               -- the access can be terminated bei an error, so look also to the
@@ -165,15 +163,18 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
   CONSTANT  c_dly_multicast_dt_cnt  : INTEGER := set_ge_1(dly_multicast_dt_in_ns * 1000 / Clk_in_ps)-2;   --  -2 because counter needs two more clock for unerflow
   SIGNAL    s_dly_multicast_dt_cnt  : unsigned(How_many_Bits(c_dly_multicast_dt_cnt) DOWNTO 0);
   
-  CONSTANT  c_adr_width                 : INTEGER := 16;          -- define how many address bits are used to decode the internal FPGA-register
-  CONSTANT  C_Status_Adr                : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0000#, c_adr_width);	-- real address is multiplied by two
-  CONSTANT  C_Global_Intr_Ena_Adr       : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0002#, c_adr_width);	-- real address is multiplied by two
-  CONSTANT  C_Vers_Revi_Adr             : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0004#, c_adr_width);	-- real address is multiplied by two
-  CONSTANT  C_SRQ_Ena_Adr               : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0006#, c_adr_width);	-- real address is multiplied by two
-  CONSTANT  C_SRQ_Active_Adr            : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0008#, c_adr_width);	-- real address is multiplied by two
-  CONSTANT  C_SRQ_In_Adr                : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#000A#, c_adr_width);	-- real address is multiplied by two
-  CONSTANT  C_Wr_Multi_Slave_Sel_Adr    : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#000C#, c_adr_width);	-- real address is multiplied by two
-  CONSTANT  C_Bus_master_intern_Echo_1_Adr  : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#000E#, c_adr_width);	-- real address is multiplied by two
+  constant  c_adr_width                     : INTEGER := 16;          -- define how many address bits are used to decode the internal FPGA-register
+  constant  C_Status_Adr                    : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0000#, c_adr_width);	-- real address is multiplied by two
+  constant  C_Global_Intr_Ena_Adr           : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0002#, c_adr_width);	-- real address is multiplied by two
+  constant  C_Vers_Revi_Adr                 : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0004#, c_adr_width);	-- real address is multiplied by two
+  constant  C_SRQ_Ena_Adr                   : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0006#, c_adr_width);	-- real address is multiplied by two
+  constant  C_SRQ_Active_Adr                : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0008#, c_adr_width);	-- real address is multiplied by two
+  constant  C_SRQ_In_Adr                    : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#000A#, c_adr_width);	-- real address is multiplied by two
+  constant  C_Wr_Multi_Slave_Sel_Adr        : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#000C#, c_adr_width);	-- real address is multiplied by two
+  constant  C_Bus_master_intern_Echo_1_Adr  : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#000E#, c_adr_width);	-- real address is multiplied by two
+  constant  C_Sw_Tag_Low_Adr                : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0010#, c_adr_width);	-- real address is multiplied by two
+  constant  C_Sw_Tag_High_Adr               : unsigned(c_adr_width-1 DOWNTO 0) := to_unsigned(16#0012#, c_adr_width);	-- real address is multiplied by two
+  
   
   
   SIGNAL    s_reset         : STD_LOGIC;
@@ -233,7 +234,9 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
   
   SIGNAL    S_Intern_Echo_1     : STD_LOGIC_VECTOR(15 DOWNTO 0);
   
-  SIGNAL    S_Global_Intr_Ena   : STD_LOGIC_VECTOR(15 DOWNTO 0);
+  signal    s_global_intr_ena   : std_logic_vector(15 downto 0);
+  signal    s_sw_tag_low        : std_logic_vector(15 downto 0);
+  signal    s_sw_tag_high       : std_logic_vector(15 downto 0);
   
   signal    s_int_ack           : std_logic;
   signal    s_ext_ack           : std_logic;
@@ -250,6 +253,9 @@ ARCHITECTURE Arch_SCU_Bus_Master OF wb_scu_bus IS
   signal    tag_fifo_empty      : std_logic;
   signal    tag_fifo_full       : std_logic;
   signal    tag_fifo_q          : std_logic_vector(31 downto 0);
+  signal    tag_fifo_in         : std_logic_vector(31 downto 0);
+  
+  signal    s_sw_tag            : std_logic;
 
   TYPE  T_SCUB_SM IS  (
               Idle,
@@ -373,6 +379,8 @@ S_Status(bit_scub_rd_err)       <= S_SCUB_Rd_Err_no_Dtack;
 S_Status(bit_scub_wr_err)       <= S_SCUB_Wr_Err_no_Dtack;
 
 
+tag_fifo_in <= s_sw_tag_high & s_sw_tag_low when s_sw_tag = '1' else timing_in;
+
 tag_fifo: generic_sync_fifo
 generic map (
               g_data_width  => 32,
@@ -381,7 +389,7 @@ generic map (
 port map (
             rst_n_i => s_reset,
             clk_i   => clk,
-            d_i     => timing_in,
+            d_i     => tag_fifo_in,
             we_i    => tag_fifo_we,
             q_o     => tag_fifo_q,
             rd_i    => tag_fifo_rd,
@@ -518,6 +526,8 @@ begin
     S_SRQ_Ena           <= (others => '0');     -- all SRQs[12..1] are disabled
     S_Intern_Echo_1     <= (others => '0');
     S_Global_Intr_Ena   <= (others => '0');
+    s_sw_tag_low        <= (others => '0');
+    s_sw_tag_high       <= (others => '0');
     
     S_SCUB_Rd_Err_no_Dtack  <= '0';             -- reset read timeout flag
     S_SCUB_Wr_Err_no_Dtack  <= '0';             -- reset write timeout flag
@@ -529,6 +539,7 @@ begin
     S_Invalid_Slave_Nr      <= '0';
     s_int_ack               <= '0';
     tag_fifo_we             <= '0';
+    s_sw_tag                <= '0';
       
   elsif rising_edge(clk) then
     S_SCUB_Rd_Err_no_Dtack  <= '0';
@@ -638,6 +649,25 @@ begin
               s_int_ack <= '1';
               int_rd_data <= S_Intern_Echo_1;
             end if;
+            
+      when C_Sw_Tag_Low_Adr => 
+        if wr_acc = '1' then
+              s_int_ack <= '1';
+              s_sw_tag_low <= Wr_Data; -- store the low 16Bit of the software triggered SCUbus tag
+        elsif rd_acc = '1' then
+              s_int_ack <= '1';
+              int_rd_data <= s_sw_tag_low;
+            end if;
+            
+      when C_Sw_Tag_High_Adr =>
+        if wr_acc = '1' then
+              s_int_ack <= '1';
+              s_sw_tag <= '1';
+              s_sw_tag_high <= Wr_Data; -- store the high 16Bit of the software triggered SCUbus tag
+        elsif rd_acc = '1' then
+              s_int_ack <= '1';
+              int_rd_data <= s_sw_tag_high;
+            end if;
 
       when others =>
         if wb_state = cyc_start then
@@ -648,7 +678,7 @@ begin
     S_Ti_Cy(S_Ti_Cy'range) <= (S_Ti_Cy(S_Ti_Cy'high-1 DOWNTO 0) & Start_Timing_Cycle);    -- shift reg to generate pulse
     
     
-    if S_Ti_Cy = "01" then                       -- positive edge off start_timing_cycle
+    if S_Ti_Cy = "01" or (s_sw_tag = '1' and s_ack = '1') then     -- positive edge off start_timing_cycle
       if tag_fifo_full = '1' then     
         S_Ti_Cyc_Err <= '1';                     -- FIFO full
       else
@@ -659,6 +689,7 @@ begin
     
     if SCUB_SM = E_Ti_Cyc then
          S_Start_Ti_Cy <= '0';
+         s_sw_tag <= '0';
     end if;
 
 

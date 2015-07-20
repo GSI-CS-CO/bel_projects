@@ -74,9 +74,6 @@ constant  rd_wr_dly_timer_LW_a:     integer := 16#410#;  -- read event timer low
                                                          -- write (sw-clear) event timer wb_mil_scu_offset + 16#40#.
 constant  rd_wr_dly_timer_HW_a:     integer := 16#411#;  -- read event timer high Word   wb_mil_scu_offset + 16#44#.
                                                          -- write (sw-clear) event timer wb_mil_scu_offset + 16#44#.                                                         
-																  
-																  
-																  
 
 constant  ev_filt_first_a:    integer := 16#1000#;  -- first event filter ram address: wb_mil_scu_offset + 16#4000. 
 constant  ev_filt_last_a:     integer := 16#1FFF#;  -- last event filter  ram address: wb_mil_scu_offset + 16#7FFC.
@@ -213,7 +210,6 @@ port  (
     nsig_wb_err:    out     std_logic       -- '0' => gestretchte wishbone access Fehlermeldung
     );
 end component wb_mil_scu;
-
 
 
 component wb_mil_scu_v2 IS 

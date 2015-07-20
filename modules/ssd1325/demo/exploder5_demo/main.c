@@ -10,7 +10,6 @@
 /* ==================================================================================================== */
 #include "irq.h"
 #include "uart.h"
-#include "timer.h"
 #include "mini_sdb.h"
 #include "aux.h"
 #include "ssd1325_serial_driver.h"
