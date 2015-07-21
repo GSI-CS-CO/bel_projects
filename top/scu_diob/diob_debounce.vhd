@@ -21,7 +21,7 @@ generic
     Test:       integer range 0 TO 1 := 0
     );
 port(
-    DB_Cnt:     in  integer range 0 to 131072 := 3;   
+    DB_Cnt:     in  integer range 0 to 16383 := 3;   
     DB_In:      in  std_logic;
     Reset:      in  std_logic;
     Clk:        in  std_logic;
@@ -33,10 +33,12 @@ architecture Arch_diob_debounce OF diob_debounce is
     
 SIGNAL      S_DB_In_Sync:   std_logic;
 --SIGNAL      S_DB_Cnt:       unsigned(DB_Cnt-1 DOWNTO 0);
-SIGNAL      S_DB_Cnt:       integer range 0 to 131072;
+--SIGNAL      S_DB_Cnt:       integer range 0 to 131072;
+SIGNAL      S_DB_Cnt:       integer range 0 to 16383;
 SIGNAL      S_DB_Out:       std_logic;
 --SIGNAL      S_DB_On_Cnt:    unsigned(DB_Cnt'range);
-SIGNAL      S_DB_On_Cnt:    integer range 0 to 131072;
+--SIGNAL      S_DB_On_Cnt:    integer range 0 to 131072;
+SIGNAL      S_DB_On_Cnt:    integer range 0 to 16383;
 SIGNAL      S_DB_Cnt_Ena:   std_logic;
 
 begin
