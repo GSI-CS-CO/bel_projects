@@ -56,12 +56,9 @@ use work.wb_nau8811_audio_driver_pkg.all;
 use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
-<<<<<<< HEAD
+use work.wb_serdes_clk_gen_pkg.all;
 use work.wb_pmc_host_bridge_pkg.all;
 use work.pmc_ctrl_pkg.all;
-=======
-use work.wb_serdes_clk_gen_pkg.all;
->>>>>>> proposed_master
 
 entity monster is
   generic(
