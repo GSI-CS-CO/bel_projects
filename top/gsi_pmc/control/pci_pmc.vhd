@@ -191,20 +191,27 @@ architecture rtl of pci_pmc is
   
   signal s_butis        : std_logic;
   signal s_butis_t0     : std_logic;
+  
+  constant c_family     : string := "Arria V"; 
+  constant c_project    : string := "pci_pmc";
+  constant c_initf      : string := c_project & ".mif";
+  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
+  -- multiple init files for n processors are to be seperated by semicolon ';' 
 
 begin
 
   main : monster
     generic map(
-      g_family      => "Arria V",
-      g_project     => "pci_pmc",
-      g_flash_bits  => 25,
-      g_lvds_inout  => 5,  -- 5 LEMOs at front panel
-      g_gpio_out    => 10, -- 2 LEDs at front panel + 8 on-boards LEDs
-      g_en_usb      => true,
-      g_en_lcd      => true,
-      g_en_pmc      => true,
-      g_en_pmc_ctrl => true)
+      g_family          => c_family,
+      g_project         => c_project,
+      g_flash_bits      => 25,
+      g_lvds_inout      => 5,  -- 5 LEMOs at front panel
+      g_gpio_out        => 10, -- 2 LEDs at front panel + 8 on-boards LEDs
+      g_en_usb          => true,
+      g_en_lcd          => true,
+      g_en_pmc          => true,
+      g_en_pmc_ctrl     => true,
+      g_lm32_init_files => c_initf)
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,
