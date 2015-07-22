@@ -27,9 +27,17 @@ entity exploder5_csco_tr is
     ------------------------------------------------------------------------
     -- WR DAC signals
     ------------------------------------------------------------------------
-    dac_sclk          : out std_logic;
-    dac_din           : out std_logic;
-    ndac_cs           : out std_logic_vector(2 downto 1);
+    dac_sclk          : out   std_logic;
+    dac_din           : out   std_logic;
+    ndac_cs           : out   std_logic_vector(2 downto 1);
+  
+    ------------------------------------------------------------------------
+    -- Additional WREX/WR1 pins
+    ------------------------------------------------------------------------
+    wr1_nc1           : inout std_logic;
+    wr1_nc4           : inout std_logic;
+    wr1_nc5           : inout std_logic;
+    wr1_nc6           : inout std_logic;
     
     -----------------------------------------------------------------------
     -- usb
@@ -42,7 +50,7 @@ entity exploder5_csco_tr is
     uclk              : in    std_logic;
     ures              : out   std_logic;
     uclkin            : in    std_logic;
-      
+    
     -----------------------------------------------------------------------
     -- SRAM (with DDR hidden inside)
     -----------------------------------------------------------------------
@@ -59,14 +67,26 @@ entity exploder5_csco_tr is
     sram_wait         : in    std_logic; -- DDR magic
     
     -----------------------------------------------------------------------
+    -- SD-CARD
+    -----------------------------------------------------------------------
+    sd_dat0           : inout std_logic := 'Z';
+    sd_dat1           : inout std_logic := 'Z';
+    sd_dat2           : inout std_logic := 'Z';
+    sd_dat3           : inout std_logic := 'Z';
+    sd_cmd            : inout std_logic := 'Z';
+    sd_clk            : inout std_logic := 'Z';
+    sd_switch_a       : inout std_logic := 'Z';
+    sd_switch_b       : inout std_logic := 'Z';
+    
+    -----------------------------------------------------------------------
     -- misc base board IO: leds, cpld, 1wire
     -----------------------------------------------------------------------
     led_o             : out   std_logic_vector( 8 downto 1) := (others => '1');
-    con_io            : inout std_logic_vector( 5 downto 1) := (others => 'Z'); -- unused
+    con_io            : inout std_logic_vector( 9 downto 1) := (others => 'Z'); -- unused
     nres_o            : in    std_logic; -- unused ("con_io(6)")
     fpga_res_i        : in    std_logic; -- reset from CPLD
     rom_data_io       : inout std_logic;
-      
+    
     -----------------------------------------------------------------------
     -- SFP1  
     -----------------------------------------------------------------------
@@ -193,7 +213,7 @@ end exploder5_csco_tr;
 
 architecture rtl of exploder5_csco_tr is
 
-  constant c_psram_bits : natural := 22;  -- Shitty ISSI chip is only 8MB (16*2^22/8)
+  constant c_psram_bits : natural := 24;
 
   signal led_link_up  : std_logic;
   signal led_link_act : std_logic;
@@ -209,17 +229,19 @@ architecture rtl of exploder5_csco_tr is
   signal s_lvds_n_o     : std_logic_vector(11 downto 1);
   signal s_lvds_o_led   : std_logic_vector(11 downto 1);
   signal s_lvds_oen     : std_logic_vector( 8 downto 1);
-  
-  signal s_nau8811_spi_csb  : std_logic;
-  signal s_nau8811_spi_sclk : std_logic;
-  signal s_nau8811_spi_sdio : std_logic;
+
+  constant c_family  : string := "Arria V"; 
+  constant c_project : string := "exploder5_csco_tr";
+  constant c_initf   : string := c_project & ".mif";
+  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
+  -- multiple init files for n processors are to be seperated by semicolon ';' 
 
 begin
 
   main : monster
     generic map(
-      g_family      => "Arria V",
-      g_project     => "exploder5_csco_tr",
+      g_family      => c_family,
+      g_project     => c_project,
       g_flash_bits  => 25,
       g_psram_bits  => c_psram_bits,
       g_gpio_in     => 4,
@@ -232,7 +254,9 @@ begin
       g_en_ssd1325  => true,
       g_en_nau8811  => true,
       g_en_psram    => true,
-      g_en_user_ow  => true)
+      g_en_user_ow  => true,
+      g_lm32_init_files => c_initf
+    )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,
@@ -287,15 +311,15 @@ begin
       ssd1325_ss_o           => dsp_csn_o,
       ssd1325_sclk_o         => dsp_d0_o,
       ssd1325_data_o         => dsp_d1_o,
-      nau8811_spi_csb_o      => s_nau8811_spi_csb,
-      nau8811_spi_sclk_o     => s_nau8811_spi_sclk,
-      nau8811_spi_sdio_o     => s_nau8811_spi_sdio,
+      nau8811_spi_csb_o      => aud_spi_csb_o,
+      nau8811_spi_sclk_o     => aud_spi_sclk_o,
+      nau8811_spi_sdio_o     => aud_spi_sdio_o,
       nau8811_iis_fs_o       => aud_iis_fs_o,
       nau8811_iis_bclk_o     => aud_iis_bclk_o,
       nau8811_iis_adcout_o   => aud_iis_adcout_o,
       nau8811_iis_dacin_i    => aud_iis_dacin_i,
       ps_clk                 => sram_clk,
-      ps_addr                => sram_a(c_psram_bits-1 downto 0),
+      ps_addr                => sram_a,
       ps_data                => sram_dq,
       ps_seln(0)             => sram_be0,
       ps_seln(1)             => sram_be1,
@@ -307,11 +331,6 @@ begin
       ps_wait                => sram_wait,
       ow_io(0)               => db_rom_data_io,
       ow_io(1)               => 'Z');
-
-  -- Open-drain for 3.3V pull-up on nau SPI
-  aud_spi_csb_o  <= '0' when s_nau8811_spi_csb ='0' else 'Z';
-  aud_spi_sclk_o <= '0' when s_nau8811_spi_sclk='0' else 'Z';
-  aud_spi_sdio_o <= '0' when s_nau8811_spi_sdio='0' else 'Z';
   
   -- SFP1-3 are not mounted
   sfp1_tx_disable_o <= '1';

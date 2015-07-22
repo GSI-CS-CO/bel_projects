@@ -2,6 +2,7 @@
 #include <cb.h>
 #include <fg.h>
 #include <aux.h>
+#include <mprintf.h>
 
 int cbisEmpty(volatile struct circ_buffer* cb, int num) {
   return cb[num].wr_ptr == cb[num].rd_ptr;
@@ -61,5 +62,3 @@ void cbDump(volatile struct circ_buffer *cb, int num) {
     mprintf("\n");
   }
 }
-
-

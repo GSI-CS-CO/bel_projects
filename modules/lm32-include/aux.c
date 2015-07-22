@@ -27,66 +27,22 @@ inline void atomic_off()
 	 return;	             	
 }
 */
+extern inline uint64_t  getSysTime();
+extern inline void      cycSleep(uint32_t cycs);
+extern inline void      uSleep(uint64_t uSecs);
+extern inline uint32_t  getCpuID();
+extern inline uint32_t  getCpuIdx();
+extern inline uint32_t  getCores();
 
-
-unsigned int ier = 5;
-
-inline unsigned long long getSysTime()
-{
-   unsigned long long systime;  
-   systime =  ((unsigned long long)*(pCpuSysTime+0))<<32;
-   systime |= ((unsigned long long)*(pCpuSysTime+1)) & 0x00000000ffffffff;
-   return systime;  
-}
-
-inline void cycSleep(unsigned int cycs)
-{
-   unsigned int j;
-   for (j = 0; j < cycs; ++j) asm("# noop"); 
-}
-
-inline void uSleep(unsigned long long uSecs)
-{
-   cycSleep((unsigned int)(uSecs * 1000 / T_SYS));
-}
-
-inline unsigned int  getCpuID()  {return *pCpuId;}
-inline unsigned int  getCpuIdx() {return *pCpuId & 0xff;}
-inline unsigned int  getCores()  {return *pCluInfo  & 0xff;}
-
-inline  unsigned int  atomic_get(void)
-{
-	 return *pCpuAtomic;	             	
-}
-
-inline void atomic_on()
-{
-   ier = irq_get_enable();
-   irq_disable();
-   *pCpuAtomic = 1;
-}
+extern inline  uint32_t  atomic_get(void);
+extern inline void atomic_on();
+extern inline void atomic_off();
 
 char progressWheel()
 {
-   static unsigned char index = 0;
+   static unsigned char index;
    const char c_running[4] = {'|', '/', '-', '\\'};
-   
    return c_running[index++ & 0x03];
-
-}
-
-
-inline void atomic_off()
-{
-	*pCpuAtomic = 0;
-	unsigned int foo = 0;
-	// or the IE bit with ier
-	asm volatile ("rcsr  %0, IE\n"      \
-	              "or    %0, %0, %1\n"  \
-	              "wcsr  IE, %0\n"      \
-                : "+r" (foo)           \
-                : "r" (ier)            \
-        );        	
 }
 
 char* sprinthex(char* buffer, unsigned long val, unsigned char digits)
@@ -111,3 +67,4 @@ char* mat_sprinthex(char* buffer, unsigned long val)
 {
    return sprinthex(buffer, val, 8);
 }
+

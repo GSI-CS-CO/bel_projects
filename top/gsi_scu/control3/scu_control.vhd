@@ -258,17 +258,30 @@ architecture rtl of scu_control is
   signal s_tled_sfp_red : std_logic;
   signal clk_ref      : std_logic;
   signal rstn_ref     : std_logic;
+  signal mil_lemo_data_o_tmp   : std_logic_vector(4 downto 1);
+  signal mil_lemo_nled_o_tmp   : std_logic_vector(4 downto 1);
+  signal mil_lemo_out_en_o_tmp : std_logic_vector(4 downto 1);
+  signal mil_lemo_data_i_tmp   : std_logic_vector(4 downto 1);	
+  
+  
+  
+  constant c_family  : string := "Arria II"; 
+  constant c_project : string := "scu_control";
+  constant c_initf   : string := c_project & ".mif" & ';' & c_project & "_stub.mif";
+  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
+  -- multiple init files for n processors are to be seperated by semicolon ';'
   
 begin
 
   main : monster
     generic map(
-      g_family        => "Arria II",
-      g_project       => "scu_control",
+      g_family        => c_family,
+      g_project       => c_project,
       g_gpio_in       => 1,
       g_gpio_out      => 1,
       g_flash_bits    => 24,
-      g_lm32_ramsizes => 49152,
+      g_lm32_cores    => 2,
+      g_lm32_ramsizes => 65536/4,
       g_lm32_msis     => 3,
       g_en_pcie       => true,
       g_en_scubus     => true,
@@ -276,7 +289,9 @@ begin
       g_en_oled       => true,
       g_en_user_ow    => true,
       g_en_fg         => true,
-      g_en_cfi        => true)
+      g_en_cfi        => true,
+      g_lm32_init_files => c_initf
+    )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_sfpref_i => sfp2_ref_clk_i,
@@ -349,12 +364,16 @@ begin
       mil_nled_interl_o      => a_ext_conn3_a15,
       mil_nled_dry_o         => a_ext_conn3_a11,
       mil_nled_drq_o         => a_ext_conn3_a14,
-      mil_io1_o              => eio(11),
-      mil_io1_is_in_o        => eio(12),
-      mil_nled_io1_o         => eio(13),
-      mil_io2_o              => eio(14),
-      mil_io2_is_in_o        => eio(15),
-      mil_nled_io2_o         => eio(16),
+	   mil_lemo_data_o        => mil_lemo_data_o_tmp,
+      mil_lemo_nled_o        => mil_lemo_nled_o_tmp,
+	   mil_lemo_out_en_o      => mil_lemo_out_en_o_tmp,
+      mil_lemo_data_i        => mil_lemo_data_i_tmp,		
+--      mil_io1_o              => eio(11),
+--      mil_io1_is_in_o        => eio(12),
+--      mil_nled_io1_o         => eio(13),
+--      mil_io2_o              => eio(14),
+--      mil_io2_is_in_o        => eio(15),
+--      mil_nled_io2_o         => eio(16),
       oled_rstn_o            => hpla_ch(8),
       oled_dc_o              => hpla_ch(6),
       oled_ss_o              => hpla_ch(4),
@@ -429,6 +448,21 @@ begin
         pulse_i    => lemo_io(i),
         extended_o => s_lemo_leds(i));
   end generate;
+  
+  -- MIL Option LEMO Control  
+  eio(11) <= mil_lemo_data_o_tmp(1) when mil_lemo_out_en_o_tmp(1)='1' else 'Z'; --SCU A17, A_LEMO3_IO
+  eio(14) <= mil_lemo_data_o_tmp(2) when mil_lemo_out_en_o_tmp(1)='1' else 'Z'; --SCU A20, A_LEMO4_IO
+  mil_lemo_data_i_tmp(1) <= eio(11); 
+  mil_lemo_data_i_tmp(2) <= eio(14);
+  mil_lemo_data_i_tmp(3) <= '0'; -- not used for SCU, to be used in SIO
+  mil_lemo_data_i_tmp(4) <= '0'; -- not used for SCU, to be used in SIO 
+
+  eio(12) <= not mil_lemo_out_en_o_tmp(1);    --SCU A18, A_LEMO3_EN_IN, low = Lemo is output
+  eio(15) <= not mil_lemo_out_en_o_tmp(2);    --SCU A21, A_LEMO3_EN_IN, low = Lemo is output
+
+  eio(13) <= mil_lemo_nled_o_tmp(1);--SCU A19, A_nLEMO3_LED, low = Activity led on
+  eio(16) <= mil_lemo_nled_o_tmp(2);--SCU A23, A_nLEMO4_LED, low = Activity led on
+  
   
   -- LEDs
   nuser_leds_o    <= not s_leds;

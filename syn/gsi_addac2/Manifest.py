@@ -14,3 +14,4 @@ modules = {
     "../../top/gsi_addac2/", 
   ]
 }
+syn_tool = "quartus"

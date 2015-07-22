@@ -2,6 +2,7 @@
 #include "display.h"
 #include "w1.h"
 #include "inttypes.h"
+#include "mprintf.h"
 
 //#define DEBUG
 
@@ -20,7 +21,7 @@ void probe_scu_bus(volatile unsigned short* bus_addr, unsigned short system_addr
   *slaves = 0; // end of device list 
 }
 
-void ReadTempDevices(int bus, uint64_t *id, uint16_t *temp) {
+void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp) {
   struct w1_dev *d;
   int i;
   int tvalue;

@@ -65,8 +65,9 @@ package monster_pkg is
       g_en_pmc_ctrl          : boolean := false;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
-      g_lm32_ramsizes        : natural := 131072/4;
-      g_lm32_shared_ramsize  : natural := 16384/4; -- will only be used if g_lm32_cores > 1
+      g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
+      g_lm32_shared_ramsize  : natural := 16384/4; -- in 32b words -- will only be used if g_lm32_cores > 1
+      g_lm32_init_files      : string; -- multiple init files must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false
     );
     port(
@@ -199,12 +200,17 @@ package monster_pkg is
       mil_nled_interl_o      : out   std_logic;
       mil_nled_dry_o         : out   std_logic;
       mil_nled_drq_o         : out   std_logic;
-      mil_io1_o              : out   std_logic;
-      mil_io1_is_in_o        : out   std_logic;
-      mil_nled_io1_o         : out   std_logic;
-      mil_io2_o              : out   std_logic;
-      mil_io2_is_in_o        : out   std_logic;
-      mil_nled_io2_o         : out   std_logic;
+	   mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
+      mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
+	   mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
+      mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');	
+		
+--      mil_io1_o              : out   std_logic;
+--      mil_io1_is_in_o        : out   std_logic;
+--      mil_nled_io1_o         : out   std_logic;
+--      mil_io2_o              : out   std_logic;
+--      mil_io2_is_in_o        : out   std_logic;
+--      mil_nled_io2_o         : out   std_logic;
       -- g_en_oled
       oled_rstn_o            : out   std_logic;
       oled_dc_o              : out   std_logic;

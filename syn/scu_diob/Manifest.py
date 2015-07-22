@@ -14,3 +14,4 @@ modules = {
     "../../top/scu_diob/", 
   ]
 }
+syn_tool = "quartus"

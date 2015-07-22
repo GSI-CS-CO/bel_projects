@@ -84,6 +84,7 @@
 //#define MICO32_FULL_CONTEXT_SAVE_RESTORE
 
 .extern _irq_entry
+.extern _segfault
 
 /* Exception handlers - Must be 32 bytes long. */
 .section    .boot, "ax", @progbits
@@ -91,6 +92,8 @@
 .global _reset_handler
 .type 	_reset_handler, @function
 _reset_handler:
+//init r0 from CSR to make sure it's got a valid state before XOR (simulation)    
+    rcsr    r0, CFG 
     xor r0, r0, r0
     wcsr    IE, r0
     wcsr    IM, r0
@@ -98,7 +101,6 @@ _reset_handler:
     ori     r1, r1, lo(_reset_handler)
     wcsr    EBA, r1
     calli   _crt0
-    nop
 .size	_reset_handler, .-_reset_handler
 
 .global _breakpoint_handler
@@ -143,11 +145,11 @@ _watchpoint_handler:
 .global _data_bus_error_handler
 .type 	_data_bus_error_handler, @function
 _data_bus_error_handler:
-    nop
-    nop
-    nop
-    nop
-    nop
+    sw      (sp+0), ra
+    calli   _save_all
+    mvi     r1, SIGSEGV
+    calli  _segfault
+    bi      _restore_all_and_return
     nop
     nop
     nop

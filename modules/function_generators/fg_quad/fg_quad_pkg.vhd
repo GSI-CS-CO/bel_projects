@@ -28,8 +28,7 @@ component fg_quad_datapath is
   ramp_sec_fin:       out std_logic;
   sw_out:             out std_logic_vector(31 downto 0);
   sw_strobe:          out std_logic;
-  fg_stopped:         out std_logic;
-  fg_running:         out std_logic);
+  fg_is_running:      out std_logic);
 end component;
 
 component fg_quad_scu_bus is

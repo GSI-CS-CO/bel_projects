@@ -77,6 +77,7 @@
 #define TMR_IRQ_CNT       0x1
 #define TMR_VALUEL        0x2
 #define TMR_VALUEH        0x3
+#define TMR_REPEAT        0x4
  
 #define GLOBAL_IRQ_ENA    0x2
 #define SRQ_ENA           0x6
@@ -85,8 +86,17 @@
 #define MULTICAST_ACC     0x8
 #define MAX_SCU_SLAVES    12
 
+#define SYS_CSCO    55
+#define SYS_PBRF    42
+
+#define GRP_ADDAC1  3
+#define GRP_ADDAC2  38
+#define GRP_DIOB    26
+#define GRP_FIB_DDS 1
+
+
 extern struct w1_bus wrpc_w1_bus;
 void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);
 void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*);
-
+void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp);
 #endif

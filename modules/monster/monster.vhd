@@ -56,8 +56,12 @@ use work.wb_nau8811_audio_driver_pkg.all;
 use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
+<<<<<<< HEAD
 use work.wb_pmc_host_bridge_pkg.all;
 use work.pmc_ctrl_pkg.all;
+=======
+use work.wb_serdes_clk_gen_pkg.all;
+>>>>>>> proposed_master
 
 entity monster is
   generic(
@@ -93,6 +97,7 @@ entity monster is
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
     g_lm32_shared_ramsize  : natural;
+    g_lm32_init_files      : string;
     g_lm32_are_ftm         : boolean);
   port(
     -- Required: core signals
@@ -224,12 +229,17 @@ entity monster is
     mil_nled_interl_o      : out   std_logic := 'Z';
     mil_nled_dry_o         : out   std_logic := 'Z';
     mil_nled_drq_o         : out   std_logic := 'Z';
-    mil_io1_o              : out   std_logic := 'Z';
-    mil_io1_is_in_o        : out   std_logic := 'Z';
-    mil_nled_io1_o         : out   std_logic := 'Z';
-    mil_io2_o              : out   std_logic := 'Z';
-    mil_io2_is_in_o        : out   std_logic := 'Z';
-    mil_nled_io2_o         : out   std_logic := 'Z';
+	  mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
+    mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
+    mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
+    mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');
+	 
+--    mil_io1_o              : out   std_logic := 'Z';
+--    mil_io1_is_in_o        : out   std_logic := 'Z';
+--    mil_nled_io1_o         : out   std_logic := 'Z';
+--    mil_io2_o              : out   std_logic := 'Z';
+--    mil_io2_is_in_o        : out   std_logic := 'Z';
+--    mil_nled_io2_o         : out   std_logic := 'Z';
     -- g_en_oled
     oled_rstn_o            : out   std_logic := 'Z';
     oled_dc_o              : out   std_logic := 'Z';
@@ -346,12 +356,38 @@ architecture rtl of monster is
 
   -- END OF MSI IRQ Crossbar
   ----------------------------------------------------------------------------------
+
+  ----------------------------------------------------------------------------------
+  -- IO Configuration Crossbar --------------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  constant c_iocfg_masters         : natural := 1;
+  constant c_iocfgm_top            : natural := 0;
+  
+  constant c_iocfg_slaves          : natural := 2;
+  constant c_iocfgs_dir            : natural := 0;
+  constant c_iocfgs_serdes_clk_gen : natural := 1;
+  
+  constant c_iocfg_layout_req : t_sdb_record_array(c_iocfg_slaves-1 downto 0) :=
+   (c_iocfgs_dir            => f_sdb_auto_device(c_iodir_sdb,             true),
+    c_iocfgs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb, true));
+
+  constant c_iocfg_layout      : t_sdb_record_array(c_iocfg_slaves-1 downto 0) := f_sdb_auto_layout(c_iocfg_layout_req);
+  constant c_iocfg_sdb_address : t_wishbone_address                         := f_sdb_auto_sdb(c_iocfg_layout_req);
+  constant c_iocfg_bridge_sdb  : t_sdb_bridge                               := f_xwb_bridge_layout_sdb(true, c_iocfg_layout, c_iocfg_sdb_address);
+
+  signal iocfg_cbar_slave_i  : t_wishbone_slave_in_array  (c_iocfg_masters-1 downto 0);
+  signal iocfg_cbar_slave_o  : t_wishbone_slave_out_array (c_iocfg_masters-1 downto 0);
+  signal iocfg_cbar_master_i : t_wishbone_master_in_array (c_iocfg_slaves -1 downto 0);
+  signal iocfg_cbar_master_o : t_wishbone_master_out_array(c_iocfg_slaves -1 downto 0); 
+  
+  -- END OF IO Configuration Crossbar
+  ----------------------------------------------------------------------------------
   
   ----------------------------------------------------------------------------------
   -- GSI Top Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
   
-  constant c_top_masters    : natural := 8;
+  constant c_top_masters    : natural := 9;
   constant c_topm_ebs       : natural := 0;
   constant c_topm_lm32      : natural := 1;
   constant c_topm_pcie      : natural := 2;
@@ -359,10 +395,11 @@ architecture rtl of monster is
   constant c_topm_usb       : natural := 4;
   constant c_topm_fpq       : natural := 5;
   constant c_topm_fg        : natural := 6;
-  constant c_topm_pmc       : natural := 7;
+  constant c_topm_eca_wbm   : natural := 7;
+  constant c_topm_pmc       : natural := 8;
   
   -- required slaves
-  constant c_top_slaves     : natural := 27;
+  constant c_top_slaves     : natural := 28;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -374,7 +411,8 @@ architecture rtl of monster is
   constant c_tops_eca_ctl   : natural := 8;
   constant c_tops_eca_event : natural := 9;
   constant c_tops_eca_aq    : natural := 10;
-  constant c_tops_iodir     : natural := 11;
+  constant c_tops_eca_wbm   : natural := 11;
+
   -- optional slaves:
   constant c_tops_lcd       : natural := 12;
   constant c_tops_oled      : natural := 13;
@@ -390,7 +428,8 @@ architecture rtl of monster is
   constant c_tops_CfiPFlash : natural := 23;
   constant c_tops_nau8811   : natural := 24;
   constant c_tops_psram     : natural := 25;
-  constant c_tops_pmc_ctrl  : natural := 26;
+  constant c_tops_iocfg     : natural := 26;
+  constant c_tops_pmc_ctrl  : natural := 27;
 
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -417,7 +456,6 @@ architecture rtl of monster is
     c_tops_eca_ctl   => f_sdb_auto_device(c_eca_sdb,                        true),
     c_tops_eca_event => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
     c_tops_eca_aq    => f_sdb_auto_device(c_eca_queue_sdb,                  true),
-    c_tops_iodir     => f_sdb_auto_device(c_iodir_sdb,                      true),
     c_tops_CfiPFlash => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
     c_tops_lcd       => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
@@ -432,7 +470,10 @@ architecture rtl of monster is
     c_tops_fg        => f_sdb_auto_device(c_wb_fg_sdb,                      g_en_fg),
     c_tops_fgirq     => f_sdb_auto_device(c_fg_irq_ctrl_sdb,                g_en_fg),
     c_tops_psram     => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
-    c_tops_pmc_ctrl  => f_sdb_auto_device(c_pmc_ctrl_slave_sdb,             g_en_pmc_ctrl));
+    c_tops_eca_wbm   => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           true),
+    c_tops_iocfg     => f_sdb_auto_bridge(c_iocfg_bridge_sdb,               true),
+    c_tops_pmc_ctrl  => f_sdb_auto_device(c_pmc_ctrl_slave_sdb,             g_en_pmc_ctrl)
+);
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
                                                   := f_sdb_auto_layout(c_top_layout_req);
@@ -570,7 +611,7 @@ architecture rtl of monster is
   signal sfp_scl_o : std_logic;
   signal sfp_sda_o : std_logic;
   
-  signal channels : t_channel_array(3 downto 0);
+  signal channels : t_channel_array(4 downto 0);
   
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
@@ -624,8 +665,14 @@ architecture rtl of monster is
   signal gpio    : std_logic_vector(15 downto 0);
   signal user_ow_pwren  : std_logic_vector(1 downto 0);
   signal user_ow_en     : std_logic_vector(1 downto 0);
-  signal lvds_o  : t_lvds_byte_array(11 downto 0);
-  signal lvds_i  : t_lvds_byte_array(15 downto 0);
+
+  constant c_lvds_clk_outputs : natural := g_lvds_inout+g_lvds_out;
+  signal lvds_dat_fr_eca_chan : t_lvds_byte_array(11 downto 0);
+  signal lvds_dat_fr_clk_gen  : t_lvds_byte_array(11 downto 0);
+  signal lvds_dum             : t_lvds_byte_array(c_lvds_clk_outputs-1 downto 0);
+  signal lvds_dat             : t_lvds_byte_array(11 downto 0);
+  signal lvds_i               : t_lvds_byte_array(15 downto 0);
+  signal lvds_o               : t_lvds_byte_array(11 downto 0);
   
   signal s_triggers : t_trigger_array(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto 0);
   
@@ -878,6 +925,22 @@ begin
       master_i      => irq_cbar_master_i,
       master_o      => irq_cbar_master_o);
   
+  iocfg_bar : xwb_sdb_crossbar
+    generic map(
+      g_num_masters => c_iocfg_masters,
+      g_num_slaves  => c_iocfg_slaves,
+      g_registered  => true,
+      g_wraparound  => true,
+      g_layout      => c_iocfg_layout,
+      g_sdb_addr    => c_iocfg_sdb_address)
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => iocfg_cbar_slave_i,
+      slave_o       => iocfg_cbar_slave_o,
+      master_i      => iocfg_cbar_master_i,
+      master_o      => iocfg_cbar_master_o);
+  
   top2irq : xwb_register_link
     port map(
       clk_sys_i     => clk_sys,
@@ -886,6 +949,15 @@ begin
       slave_o       => top_cbar_master_i(c_tops_irq),
       master_i      => irq_cbar_slave_o (c_irqm_top),
       master_o      => irq_cbar_slave_i (c_irqm_top));
+  
+  top2iocfg : xwb_register_link
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => top_cbar_master_o(c_tops_iocfg),
+      slave_o       => top_cbar_master_i(c_tops_iocfg),
+      master_i      => iocfg_cbar_slave_o (c_iocfgm_top),
+      master_o      => iocfg_cbar_slave_i (c_iocfgm_top));
   
   top2wrc : xwb_register_link
     port map(
@@ -905,8 +977,8 @@ begin
   eb : eb_master_slave_wrapper
     generic map(
       g_with_master     => true,
-      g_ebs_sdb_address => (x"00000000" & c_top_sdb_address),
-      g_ebm_adr_bits_hi => 10)
+      g_ebs_sdb_address => (x"00000000" & c_top_sdb_address)
+    )
     port map(
       clk_i           => clk_sys,
       nRst_i          => rstn_sys,
@@ -921,6 +993,8 @@ begin
       ebm_wb_slave_i  => top_cbar_master_o(c_tops_ebm),
       ebm_wb_slave_o  => top_cbar_master_i(c_tops_ebm));
  
+ 
+   
   lm32 : ftm_lm32_cluster 
     generic map(
       g_is_ftm           => g_lm32_are_ftm,	
@@ -928,13 +1002,15 @@ begin
       g_ram_per_core     => g_lm32_ramsizes,
       g_shared_mem       => g_lm32_shared_ramsize,
       g_world_bridge_sdb => c_top_bridge_sdb,
-      g_init_file        => g_project & ".mif",
+      g_init_files       => g_lm32_init_files,
       g_msi_per_core     => g_lm32_MSIs)
     port map(
+      clk_ref_i            => clk_ref,
+      rst_ref_n_i          => rstn_ref,
       clk_sys_i            => clk_sys,
-      rst_n_i              => rstn_sys,
+      rst_sys_n_i          => rstn_sys,
       rst_lm32_n_i         => s_lm32_rstn,
-      tm_tai8ns_i     	   => sys_tai8ns,
+      tm_tai8ns_i     	   => ref_tai8ns,
       irq_slave_o     	   => irq_cbar_master_i(c_irqs_lm32),
       irq_slave_i     	   => irq_cbar_master_o(c_irqs_lm32),
       cluster_slave_o      => top_cbar_master_i(c_tops_lm32),
@@ -1378,10 +1454,34 @@ begin
     port map(
       clk_i      => clk_sys,
       rst_n_i    => rstn_sys,
-      slave_i    => top_cbar_master_o(c_tops_iodir),
-      slave_o    => top_cbar_master_i(c_tops_iodir),
+      slave_i    => iocfg_cbar_master_o(c_iocfgs_dir),
+      slave_o    => iocfg_cbar_master_i(c_iocfgs_dir),
       gpio_oen_o => gpio_oen_o,
       lvds_oen_o => lvds_oen_o);
+  
+  -- Instantiate SERDES clock generator
+  cmp_serdes_clk_gen : xwb_serdes_clk_gen
+    generic map(
+      g_num_serdes_bits       => 8,
+      g_selectable_duty_cycle => true,
+      g_with_frac_counter     => true,
+      g_num_outputs           => c_lvds_clk_outputs)
+    port map(
+      clk_sys_i    => clk_sys,
+      rst_sys_n_i  => rstn_sys,
+      wbs_i        => iocfg_cbar_master_o(c_iocfgs_serdes_clk_gen),
+      wbs_o        => iocfg_cbar_master_i(c_iocfgs_serdes_clk_gen),
+      clk_ref_i    => clk_ref,
+      rst_ref_n_i  => rstn_ref,
+      eca_time_i   => ref_tai8ns,
+      serdes_dat_o => lvds_dum);
+
+  -- LVDS component data input is OR between ECA chan output and SERDES clk. gen.
+  lvds_dat_fr_clk_gen(c_lvds_clk_outputs-1 downto 0) <= lvds_dum;
+  lvds_dat_fr_clk_gen(11 downto c_lvds_clk_outputs) <= (others => (others => '0'));
+  gen_lvds_dat : for i in 0 to 11 generate
+    lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i);
+  end generate gen_lvds_dat;
   
   tlu_gpio : if (g_gpio_in + g_gpio_inout > 0) generate
    s_triggers(g_gpio_in + g_gpio_inout -1 downto 0) <= f_gpio_to_trigger_array(gpio_i);
@@ -1414,10 +1514,11 @@ begin
       g_channel_names => (f_name("GPIO: gpio triggers"),
                           f_name("RTOS: Action Queue"),
                           f_name("GPIO: lvds triggers"),
-                          f_name("SCUBUS: tag to scubus")),
+                          f_name("SCUBUS: tag to scubus"),
+                          f_name("WB:   WB Master")),
       g_log_table_size => 7,
       g_log_queue_len  => 8,
-      g_num_channels   => 4,
+      g_num_channels   => 5,
       g_num_streams    => 1)
     port map(
       e_clk_i  (0)=> clk_sys,
@@ -1465,7 +1566,8 @@ begin
       clk_i     => clk_ref,
       rst_n_i   => rstn_ref,
       channel_i => channels(2),
-      lvds_o    => lvds_o);
+      --lvds_o    => lvds_o);
+      lvds_o    => lvds_dat_fr_eca_chan);
   
   c3 : eca_scubus_channel
     port map(
@@ -1475,6 +1577,24 @@ begin
       tag_valid => tag_valid,
       tag       => tag);
   
+c4: eca_ac_wbm
+  generic map(
+     g_entries  => 16,
+     g_ram_size => 128   
+  )
+  Port map(
+   clk_ref_i   => clk_ref,                                           
+   rst_ref_n_i => rstn_ref,
+   channel_i   => channels(4),
+   
+   clk_sys_i   => clk_sys,
+   rst_sys_n_i => rstn_sys,
+   slave_i     => top_cbar_master_o(c_tops_eca_wbm),
+   slave_o     => top_cbar_master_i(c_tops_eca_wbm),
+   master_o    => top_cbar_slave_i(c_topm_eca_wbm),
+   master_i    => top_cbar_slave_o(c_topm_eca_wbm)                                         
+  );
+
   lvds_pins : altera_lvds
     generic map(
       g_family  => g_family,
@@ -1490,7 +1610,8 @@ begin
       lvds_p_i     => lvds_p_i,
       lvds_n_i     => lvds_n_i,
       lvds_i_led_o => lvds_i_led_o,
-      dat_i        => lvds_o(f_sub1(g_lvds_inout+g_lvds_out) downto 0),
+      --dat_i        => lvds_o(f_sub1(g_lvds_inout+g_lvds_out) downto 0),
+      dat_i        => lvds_dat(f_sub1(g_lvds_inout+g_lvds_out) downto 0),
       lvds_p_o     => lvds_p_o,
       lvds_n_o     => lvds_n_o,
       lvds_o_led_o => lvds_o_led_o);
@@ -1738,12 +1859,16 @@ begin
         nLed_drq       => mil_nled_drq_o,
         nLed_dry       => mil_nled_dry_o,
         every_ms_intr_o => mil_every_ms_intr_o,
-        io_1           => mil_io1_o,
-        io_1_is_in     => mil_io1_is_in_o,
-        nLed_io_1      => mil_nled_io1_o,
-        io_2           => mil_io2_o,
-        io_2_is_in     => mil_io2_is_in_o,
-        nLed_io_2      => mil_nled_io2_o,
+        lemo_data_o     => mil_lemo_data_o,
+        lemo_nled_o     => mil_lemo_nled_o, 
+	     lemo_out_en_o   => mil_lemo_out_en_o,     
+        lemo_data_i     => mil_lemo_data_i, 
+--        io_1           => mil_io1_o,
+--        io_1_is_in     => mil_io1_is_in_o,
+--        nLed_io_1      => mil_nled_io1_o,
+--        io_2           => mil_io2_o,
+--        io_2_is_in     => mil_io2_is_in_o,
+--        nLed_io_2      => mil_nled_io2_o,
         nsig_wb_err    => open);
   end generate;
   

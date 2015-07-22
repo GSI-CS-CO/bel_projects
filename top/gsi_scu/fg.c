@@ -32,31 +32,33 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
   int i = 0, j = 0;
   
   while(bus->slaves[i].unique_id) {
-    if (bus->slaves[i].cid_sys == 55) { /* slave card from CSCO */
-      if (bus->slaves[i].cid_group == 3 || bus->slaves[i].cid_group == 38) {/* ADDAC1 or ADDAC2 */
+    if (bus->slaves[i].cid_sys == SYS_CSCO || bus->slaves[i].cid_sys == SYS_PBRF) {
+      if (bus->slaves[i].cid_group == GRP_ADDAC1 ||
+          bus->slaves[i].cid_group == GRP_ADDAC2 ||
+          bus->slaves[i].cid_group == GRP_DIOB) {
         /* two FGs */
         bus->slaves[i].devs[0].dev_number = 0x0;
         bus->slaves[i].devs[0].version = 0x1;
         bus->slaves[i].devs[0].offset = FG1_BASE;
         bus->slaves[i].devs[0].slave = &(bus->slaves[i]);
-        if (j < MAX_FG_DEVICES) {
+        if (j < MAX_FG_MACROS) {
           list->devs[j] = &(bus->slaves[i].devs[0]);j++;
         }
         bus->slaves[i].devs[1].dev_number = 0x1;
         bus->slaves[i].devs[1].version = 0x1;
         bus->slaves[i].devs[1].offset = FG2_BASE;
         bus->slaves[i].devs[1].slave = &(bus->slaves[i]);
-        if (j < MAX_FG_DEVICES) {
+        if (j < MAX_FG_MACROS) {
           list->devs[j] = &(bus->slaves[i].devs[1]);j++;
         }
         
-      } else if (bus->slaves[i].cid_group == 26) { /* DIOB */
+      } else if (bus->slaves[i].cid_group == GRP_FIB_DDS) { /* FIB */
         /* one FG */
         bus->slaves[i].devs[0].dev_number = 0x0;
         bus->slaves[i].devs[0].version = 0x1;
         bus->slaves[i].devs[0].offset = FG1_BASE;
         bus->slaves[i].devs[0].slave = &(bus->slaves[i]);
-        if (j < MAX_FG_DEVICES) {
+        if (j < MAX_FG_MACROS) {
           list->devs[j] = &(bus->slaves[i].devs[0]);j++;
         }
       }
@@ -66,7 +68,7 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
 
   /* special solution for RF group, wb fg in scu */
   /* this fg dev is always last in the list */
-  if (wb_fg_base && j < MAX_FG_DEVICES) {
+  if (wb_fg_base && j < MAX_FG_MACROS) {
     wbfg->dev_number = 0;
     wbfg->version = 0x2;
     wbfg->offset = (int)wb_fg_base;
@@ -78,9 +80,11 @@ int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg)
   return j; //return number of found fgs
 }
 
+
+/* init the buffers for MAX_FG_CHANNELS */
 void init_buffers(struct circ_buffer *buf) {
   int i;
-  for (i = 0; i < MAX_FG_DEVICES; i++) {
+  for (i = 0; i < MAX_FG_CHANNELS; i++) {
     buf[i].wr_ptr = 0;
     buf[i].rd_ptr = 0;
     buf[i].size = BUFFER_SIZE + 1; 

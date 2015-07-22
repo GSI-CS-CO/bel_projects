@@ -4,18 +4,21 @@
 #include <stdint.h>
 #include <scu_bus.h>
 
-#define   MAX_FG_DEVICES 12
-#define   MAX_FG_PER_SLAVE 2
-#define   BUFFER_SIZE 120
+#define   MAX_FG_MACROS     24
+#define   MAX_FG_CHANNELS   12
+#define   MAX_FG_PER_SLAVE  2
+#define   MAX_WB_FG_MACROS  1
+#define   BUFFER_SIZE       120 
 
 struct fg_dev {
   unsigned int dev_number;
   unsigned int version;
   unsigned int offset;
-  char running;
-  char timeout;
-  int rampcnt;
-  int endvalue; /* ramp value in case of timeout */
+  unsigned char running;
+  unsigned char timeout;
+  unsigned int rampcnt;
+  unsigned int endvalue; /* ramp value in case of timeout */
+  unsigned char enabled;
   struct scu_slave *slave;
 };
 
@@ -35,7 +38,7 @@ struct scu_bus {
 };
 
 struct fg_list {
-  struct fg_dev *devs[MAX_FG_DEVICES + 1];
+  struct fg_dev *devs[MAX_FG_MACROS + MAX_WB_FG_MACROS + 1];
 };
 
 struct param_set {
@@ -56,13 +59,18 @@ struct circ_buffer {
 };
 
 struct fg_status {
+  unsigned int slot;
   unsigned int dev_number;
   unsigned int version;
   unsigned int offset;
   unsigned int running;
   unsigned int timeout;
   unsigned int rampcnt;
+  unsigned int enabled;
 };
 
+int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr);
+int scan_for_fgs(struct scu_bus *bus, struct fg_list *list, struct fg_dev *wbfg);
+void init_buffers(struct circ_buffer *buf);
 
 #endif

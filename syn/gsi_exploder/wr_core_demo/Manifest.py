@@ -14,3 +14,4 @@ quartus_preflow = "exploder_top.tcl"
 modules = {"local" : [ "../../../top/gsi_exploder/wr_core_demo"]}
 
 				 
+syn_tool = "quartus"

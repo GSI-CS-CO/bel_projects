@@ -314,17 +314,25 @@ architecture rtl of exploder_top is
   signal lemo_i   : std_logic_vector(8 downto 1);
   signal lemo_o   : std_logic_vector(4 downto 1);
   
+  constant c_family  : string := "Arria II"; 
+  constant c_project : string := "exploder_top";
+  constant c_initf   : string := c_project & ".mif"
+  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
+  -- multiple init files for n processors are to be seperated by semicolon ';'
+  
 begin
 
   main : monster
     generic map(
-      g_family     => "Arria II",
-      g_project    => "exploder_top",
+      g_family     => c_family,
+      g_project    => c_project,
       g_gpio_in    => 16,
       g_gpio_out   => 16,
       g_flash_bits => 24,
       g_en_usb     => true,
-      g_en_lcd     => true)
+      g_en_lcd     => true,
+      g_lm32_init_files => c_initf
+    )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,
