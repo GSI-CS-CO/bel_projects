@@ -282,13 +282,16 @@ begin
   -- SFP1-3 are not mounted
   sfp4_tx_disable_o <= '0';
 
-  -- Link LEDs
+  -- Display
   dis_wr    <= '0';
   dis_res   <= '1';
+  
+  -- WR LEDs
   dis_di(5) <= '0' when (not s_led_link_up)                     = '1' else 'Z'; -- red
   dis_di(6) <= '0' when (    s_led_link_up and not s_led_track) = '1' else 'Z'; -- blue
   dis_di(4) <= '0' when (    s_led_link_up and     s_led_track) = '1' else 'Z'; -- green
   
+  -- Link LEDs
   status_led_o(1) <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
   status_led_o(2) <= not s_led_link_up;                      -- blue  = link
   status_led_o(3) <= not s_led_track;                        -- green = timing valid

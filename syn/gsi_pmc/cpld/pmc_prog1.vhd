@@ -31,24 +31,24 @@ architecture rtl of pmc_tr_prog is
   
 begin
   
-    -- fixed configuration
-    m          <= b"10010"; -- master SPI
-    sel_clk(0) <= '1';      -- in1 to q0 SW1
-    sel_clk(1) <= '1';      -- in1 to q1 SW1
-    confix     <= '1';      -- immediaty ready
-
-    -- counter process
-    process(pgclk) begin
-      if (rising_edge(pgclk)) then 
-        countx <= countx + 1;
-      end if;
-    end process;
-
-    -- LEDs
-    pled(1) <= '1' when pbs1='0' else hsw(1); -- yellow
-    pled(2) <= '1' when pbs1='0' else hsw(2); -- red
-    pled(3) <= '1' when pbs1='0' else hsw(3); -- white
-    pled(4) <= '1' when pbs1='0' else hsw(4); -- blue
-    pled(5) <= '1' when pbs1='0' else confix; -- green
-
+  -- fixed configuration
+  m          <= b"10010"; -- master SPI
+  sel_clk(0) <= '1';      -- in1 to q0 SW1
+  sel_clk(1) <= '1';      -- in1 to q1 SW1
+  confix     <= '1';      -- immediaty ready
+  
+  -- counter process
+  process(pgclk) begin
+    if (rising_edge(pgclk)) then 
+      countx <= countx + 1;
+    end if;
+  end process;
+  
+  -- LEDs
+  pled(1) <= '0'         when pbs1='0' else not(cdone); -- yellow
+  pled(2) <= not(hsw(1)) when pbs1='0' else confix;     -- red
+  pled(3) <= not(hsw(2)) when pbs1='0' else config1;    -- white
+  pled(4) <= not(hsw(3)) when pbs1='0' else nstat;      -- blue
+  pled(5) <= not(hsw(4)) when pbs1='0' else pgclk;      -- green
+  
 end;
