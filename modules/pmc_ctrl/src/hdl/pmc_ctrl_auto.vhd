@@ -74,12 +74,17 @@ begin
    --| Sync Signal Assignments ------ slave ----------------------------------------------------|
    --+******************************************************************************************+
    -- slave sys domain out
-   slave_regs_clk_sys_o.CLOCK_CONTROL  <= r_slave.CLOCK_CONTROL;
+   slave_regs_clk_sys_o.CLOCK_CONTROL_OE  <= r_slave.CLOCK_CONTROL_OE;
+   slave_regs_clk_sys_o.LOGIC_CONTROL_OE  <= r_slave.LOGIC_CONTROL_OE;
+   slave_regs_clk_sys_o.LOGIC_OUTPUT      <= r_slave.LOGIC_OUTPUT;
    -- slave sys domain in
-   s_slave.STALL                       <= slave_regs_clk_sys_i.STALL;
-   s_slave.ERR                         <= slave_regs_clk_sys_i.ERR;
-   s_slave.HEX_SWITCH                  <= slave_regs_clk_sys_i.HEX_SWITCH;
-   s_slave.PUSH_BUTTON                 <= slave_regs_clk_sys_i.PUSH_BUTTON;
+   s_slave.STALL                          <= slave_regs_clk_sys_i.STALL;
+   s_slave.ERR                            <= slave_regs_clk_sys_i.ERR;
+   s_slave.HEX_SWITCH                     <= slave_regs_clk_sys_i.HEX_SWITCH;
+   s_slave.PUSH_BUTTON                    <= slave_regs_clk_sys_i.PUSH_BUTTON;
+   s_slave.HEX_SWITCH_CPLD                <= slave_regs_clk_sys_i.HEX_SWITCH_CPLD;
+   s_slave.PUSH_BUTTON_CPLD               <= slave_regs_clk_sys_i.PUSH_BUTTON_CPLD;
+   s_slave.LOGIC_INPUT                    <= slave_regs_clk_sys_i.LOGIC_INPUT;
    
    --+******************************************************************************************+
    --| WBS FSM ------------------------------ slave --------------------------------------------|
@@ -95,14 +100,16 @@ begin
    begin
       if rising_edge(clk_sys_i) then
          if(rst_n_i = '0') then
-            r_slave.CLOCK_CONTROL   <= (others => '0');
-            r_slave_out_stall       <= '0';
-            r_slave_out_ack0        <= '0';
-            r_slave_out_err0        <= '0';
-            r_slave_out_dat0        <= (others => '0');
-            r_slave_out_ack1        <= '0';
-            r_slave_out_err1        <= '0';
-            r_slave_out_dat1        <= (others => '0');
+            r_slave.CLOCK_CONTROL_OE <= (others => '0');
+            r_slave.LOGIC_CONTROL_OE <= (others => '0');
+            r_slave.LOGIC_OUTPUT     <= (others => '0');
+            r_slave_out_stall        <= '0';
+            r_slave_out_ack0         <= '0';
+            r_slave_out_err0         <= '0';
+            r_slave_out_dat0         <= (others => '0');
+            r_slave_out_ack1         <= '0';
+            r_slave_out_err1         <= '0';
+            r_slave_out_dat1         <= (others => '0');
             
          else
             -- short names
@@ -128,15 +135,22 @@ begin
                if(v_we = '1') then
                   -- WISHBONE WRITE ACTIONS
                   case v_adr is
-                     when c_slave_CLOCK_CONTROL_RW    => r_slave.CLOCK_CONTROL   <= f_wb_wr(r_slave.CLOCK_CONTROL,   v_dat_i, v_sel, "owr"); -- Control external clock enable
+                     when c_slave_CLOCK_CONTROL_OE_RW    => r_slave.CLOCK_CONTROL_OE   <= f_wb_wr(r_slave.CLOCK_CONTROL_OE,   v_dat_i, v_sel, "owr"); -- External input clock output enable
+                     when c_slave_LOGIC_CONTROL_OE_RW    => r_slave.LOGIC_CONTROL_OE   <= f_wb_wr(r_slave.LOGIC_CONTROL_OE,   v_dat_i, v_sel, "owr"); -- External logic analyzer output enable
+                     when c_slave_LOGIC_OUTPUT_RW        => r_slave.LOGIC_OUTPUT       <= f_wb_wr(r_slave.LOGIC_OUTPUT,       v_dat_i, v_sel, "owr"); -- External logic analyzer output (write)
                      when others => r_slave_out_ack0 <= '0'; r_slave_out_err0 <= '1';
                   end case;
                else
                   -- WISHBONE READ ACTIONS
                   case v_adr is
-                     when c_slave_HEX_SWITCH_GET      => r_slave_out_dat0(3 downto 0)  <= s_slave.HEX_SWITCH;     -- Shows hex switch inputs
-                     when c_slave_PUSH_BUTTON_GET     => r_slave_out_dat0(0 downto 0)  <= s_slave.PUSH_BUTTON;    -- Shows status of the push button
-                     when c_slave_CLOCK_CONTROL_RW    => r_slave_out_dat0(0 downto 0)  <= r_slave.CLOCK_CONTROL;  -- Control external clock enable
+                     when c_slave_HEX_SWITCH_GET         => r_slave_out_dat0(3 downto 0)  <= s_slave.HEX_SWITCH;        -- Shows hex switch inputs
+                     when c_slave_PUSH_BUTTON_GET        => r_slave_out_dat0(0 downto 0)  <= s_slave.PUSH_BUTTON;       -- Shows status of the push button
+                     when c_slave_HEX_SWITCH_CPLD_GET    => r_slave_out_dat0(3 downto 0)  <= s_slave.HEX_SWITCH_CPLD;   -- Shows hex switch inputs
+                     when c_slave_PUSH_BUTTON_CPLD_GET   => r_slave_out_dat0(0 downto 0)  <= s_slave.PUSH_BUTTON_CPLD;  -- Shows status of the push button
+                     when c_slave_CLOCK_CONTROL_OE_RW    => r_slave_out_dat0(0 downto 0)  <= r_slave.CLOCK_CONTROL_OE;  -- External input clock output enable
+                     when c_slave_LOGIC_CONTROL_OE_RW    => r_slave_out_dat0(16 downto 0) <= r_slave.LOGIC_CONTROL_OE;  -- External logic analyzer output enable
+                     when c_slave_LOGIC_OUTPUT_RW        => r_slave_out_dat0(16 downto 0) <= r_slave.LOGIC_OUTPUT;      -- External logic analyzer output (write)
+                     when c_slave_LOGIC_INPUT_GET        => r_slave_out_dat0(16 downto 0) <= s_slave.LOGIC_INPUT;       -- External logic analyzer input (read)
                      when others => r_slave_out_ack0 <= '0'; r_slave_out_err0 <= '1';
                   end case;
                end if; -- v_we

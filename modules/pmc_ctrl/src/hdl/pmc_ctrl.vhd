@@ -32,15 +32,20 @@ use work.pmc_ctrl_auto_pkg.all;
 
 entity pmc_ctrl is
 Port(
-  clk_sys_i      : in  std_logic;
-  rst_n_i        : in  std_logic;
+  clk_sys_i          : in  std_logic;
+  rst_n_i            : in  std_logic;
 
-  slave_i        : in  t_wishbone_slave_in;
-  slave_o        : out t_wishbone_slave_out;
+  slave_i            : in  t_wishbone_slave_in;
+  slave_o            : out t_wishbone_slave_out;
 
-  clock_enable_o : out std_logic;
-  hex_switch_i   : in std_logic_vector(3 downto 0);
-  push_button_i  : in std_logic_vector(0 downto 0)
+  hex_switch_i       : in  std_logic_vector(3 downto 0);
+  push_button_i      : in  std_logic_vector(0 downto 0);
+  hex_switch_cpld_i  : in  std_logic_vector(3 downto 0);
+  push_button_cpld_i : in  std_logic_vector(0 downto 0);
+  clock_control_oe_o : out std_logic;
+  logic_control_oe_o : out std_logic_vector(16 downto 0);
+  logic_output_o     : out std_logic_vector(16 downto 0);
+  logic_input_i      : in  std_logic_vector(16 downto 0)
 );
 end pmc_ctrl;
 
@@ -69,18 +74,28 @@ begin
   slave_o   <= s_slave_o;
   s_slave_i <= slave_i;
   
-  -- hex switch
-  s_slave_regs_clk_sys_i.HEX_SWITCH <= hex_switch_i;
-  
-  -- push button
-  s_slave_regs_clk_sys_i.PUSH_BUTTON <= push_button_i;
-  
   -- misc. signals
   s_slave_regs_clk_sys_i.STALL <= '0';
   s_slave_regs_clk_sys_i.ERR   <= '0';
   
-  -- clock enable
-  clock_enable_o <= not(s_slave_regs_clk_sys_o.CLOCK_CONTROL(0));
+  -- hex switches
+  s_slave_regs_clk_sys_i.HEX_SWITCH      <= hex_switch_i;
+  s_slave_regs_clk_sys_i.HEX_SWITCH_CPLD <= hex_switch_cpld_i;
   
-
+  -- push buttons
+  s_slave_regs_clk_sys_i.PUSH_BUTTON      <= push_button_i;
+  s_slave_regs_clk_sys_i.PUSH_BUTTON_CPLD <= push_button_cpld_i;
+  
+  -- input clock output enable
+  clock_control_oe_o <= s_slave_regs_clk_sys_o.CLOCK_CONTROL_OE(0);
+  
+  -- logic analyzer output enable
+  logic_control_oe_o <= s_slave_regs_clk_sys_o.LOGIC_CONTROL_OE(16 downto 0);
+  
+  -- logic analyzer output
+  logic_output_o <= s_slave_regs_clk_sys_o.LOGIC_OUTPUT(16 downto 0);
+  
+  -- logic analyzer input
+  s_slave_regs_clk_sys_i.LOGIC_INPUT <= logic_input_i(16 downto 0);
+  
 end rtl;

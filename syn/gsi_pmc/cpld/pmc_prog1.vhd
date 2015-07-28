@@ -9,7 +9,7 @@ entity pmc_tr_prog is
     cdone    : in    std_logic;                    -- from FPGA, low during configuration
     confix   : inout std_logic;                    -- input from reset chip (on schematics CONFIG)
     config1  : in    std_logic;                    -- input from reset chip (on schematics CONFIG1)
-    con      : in    std_logic_vector(5 downto 1); -- connection to/from fpga
+    con      : out   std_logic_vector(5 downto 1); -- connection to/from fpga
     pgclk    : in    std_logic;                    -- clock from 50 MHz oscillator
     sel_clk  : inout std_logic_vector(1 downto 0); -- output to gbit switch
     hsw      : in    std_logic_vector(4 downto 1); -- input from hex switch
@@ -44,11 +44,15 @@ begin
     end if;
   end process;
   
-  -- LEDs
-  pled(1) <= '0'         when pbs1='0' else not(cdone); -- yellow
-  pled(2) <= not(hsw(1)) when pbs1='0' else confix;     -- red
-  pled(3) <= not(hsw(2)) when pbs1='0' else config1;    -- white
-  pled(4) <= not(hsw(3)) when pbs1='0' else nstat;      -- blue
-  pled(5) <= not(hsw(4)) when pbs1='0' else pgclk;      -- green
+  -- leds
+  pled(1) <= not(cdone); -- yellow
+  pled(2) <= confix;     -- red
+  pled(3) <= config1;    -- white
+  pled(4) <= nstat;      -- blue
+  pled(5) <= pgclk;      -- green
+  
+  -- connection to fpga
+  con(4 downto 1) <= hsw;
+  con(5)          <= pbs1;
   
 end;

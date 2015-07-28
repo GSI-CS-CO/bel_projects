@@ -41,9 +41,14 @@ package pmc_ctrl_auto_pkg is
    --+******************************************************************************************+
 
    --| WBS Adr ------------------------------ slave --------------------------------------------|
-      constant c_slave_HEX_SWITCH_GET     : natural   := 16#0#;   -- r  0x0000000f, Shows hex switch inputs
-      constant c_slave_PUSH_BUTTON_GET    : natural   := 16#4#;   -- r  0x00000001, Shows status of the push button
-      constant c_slave_CLOCK_CONTROL_RW   : natural   := 16#8#;   -- rw 0x00000001, Control external clock enable
+      constant c_slave_HEX_SWITCH_GET        : natural   := 16#00#;  -- r  0x0000000f, Shows hex switch inputs
+      constant c_slave_PUSH_BUTTON_GET       : natural   := 16#04#;  -- r  0x00000001, Shows status of the push button
+      constant c_slave_HEX_SWITCH_CPLD_GET   : natural   := 16#08#;  -- r  0x0000000f, Shows hex switch inputs
+      constant c_slave_PUSH_BUTTON_CPLD_GET  : natural   := 16#0c#;  -- r  0x00000001, Shows status of the push button
+      constant c_slave_CLOCK_CONTROL_OE_RW   : natural   := 16#10#;  -- rw 0x00000001, External input clock output enable
+      constant c_slave_LOGIC_CONTROL_OE_RW   : natural   := 16#14#;  -- rw 0x0001ffff, External logic analyzer output enable
+      constant c_slave_LOGIC_OUTPUT_RW       : natural   := 16#18#;  -- rw 0x0001ffff, External logic analyzer output (write)
+      constant c_slave_LOGIC_INPUT_GET       : natural   := 16#1c#;  -- r  0x0001ffff, External logic analyzer input (read)
 
    --+******************************************************************************************+
    --|  ------------------------- WB Slaves - Control Register Records -------------------------|
@@ -52,25 +57,35 @@ package pmc_ctrl_auto_pkg is
    --| WBS Register Record ------------ slave --------------------------------------------------|
    
    type t_slave_regs_o is record
-      CLOCK_CONTROL  : std_logic_vector(1-1 downto 0);   -- Control external clock enable
+      CLOCK_CONTROL_OE  : std_logic_vector(1-1 downto 0);   -- External input clock output enable
+      LOGIC_CONTROL_OE  : std_logic_vector(17-1 downto 0);  -- External logic analyzer output enable
+      LOGIC_OUTPUT      : std_logic_vector(17-1 downto 0);  -- External logic analyzer output (write)
    end record t_slave_regs_o;
 
    type t_slave_regs_clk_sys_o is record
-      CLOCK_CONTROL  : std_logic_vector(1-1 downto 0);   -- Control external clock enable
+      CLOCK_CONTROL_OE  : std_logic_vector(1-1 downto 0);   -- External input clock output enable
+      LOGIC_CONTROL_OE  : std_logic_vector(17-1 downto 0);  -- External logic analyzer output enable
+      LOGIC_OUTPUT      : std_logic_vector(17-1 downto 0);  -- External logic analyzer output (write)
    end record t_slave_regs_clk_sys_o;
 
    type t_slave_regs_i is record
-      STALL          : std_logic;                        -- Stall control for outside entity
-      ERR            : std_logic;                        -- Error control for outside entity
-      HEX_SWITCH     : std_logic_vector(4-1 downto 0);   -- Shows hex switch inputs
-      PUSH_BUTTON    : std_logic_vector(1-1 downto 0);   -- Shows status of the push button
+      STALL             : std_logic;                        -- Stall control for outside entity
+      ERR               : std_logic;                        -- Error control for outside entity
+      HEX_SWITCH        : std_logic_vector(4-1 downto 0);   -- Shows hex switch inputs
+      PUSH_BUTTON       : std_logic_vector(1-1 downto 0);   -- Shows status of the push button
+      HEX_SWITCH_CPLD   : std_logic_vector(4-1 downto 0);   -- Shows hex switch inputs
+      PUSH_BUTTON_CPLD  : std_logic_vector(1-1 downto 0);   -- Shows status of the push button
+      LOGIC_INPUT       : std_logic_vector(17-1 downto 0);  -- External logic analyzer input (read)
    end record t_slave_regs_i;
 
    type t_slave_regs_clk_sys_i is record
-      STALL          : std_logic;                        -- Stall control for outside entity
-      ERR            : std_logic;                        -- Error control for outside entity
-      HEX_SWITCH     : std_logic_vector(4-1 downto 0);   -- Shows hex switch inputs
-      PUSH_BUTTON    : std_logic_vector(1-1 downto 0);   -- Shows status of the push button
+      STALL             : std_logic;                        -- Stall control for outside entity
+      ERR               : std_logic;                        -- Error control for outside entity
+      HEX_SWITCH        : std_logic_vector(4-1 downto 0);   -- Shows hex switch inputs
+      PUSH_BUTTON       : std_logic_vector(1-1 downto 0);   -- Shows status of the push button
+      HEX_SWITCH_CPLD   : std_logic_vector(4-1 downto 0);   -- Shows hex switch inputs
+      PUSH_BUTTON_CPLD  : std_logic_vector(1-1 downto 0);   -- Shows status of the push button
+      LOGIC_INPUT       : std_logic_vector(17-1 downto 0);  -- External logic analyzer input (read)
    end record t_slave_regs_clk_sys_i;
 
    --| Component ----------------------- pmc_ctrl_auto -----------------------------------------|
@@ -100,7 +115,7 @@ package pmc_ctrl_auto_pkg is
    vendor_id     => x"0000000000000651",
    device_id     => x"98c59ec1",
    version       => x"00000001",
-   date          => x"20150303",
+   date          => x"20150728",
    name          => "PMC_CONTROL_UNIT   ")));
    
 end pmc_ctrl_auto_pkg;

@@ -10,10 +10,10 @@ entity pci_pmc is
     -----------------------------------------
     -- Clocks
     -----------------------------------------
-    clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
-    clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
-    clk_125m_local_i  : in std_logic;  -- local clk from 125Mhz oszillator
-    sfp234_ref_clk_i  : in std_logic;
+    clk_20m_vcxo_i    : in std_logic; -- 20MHz VCXO clock
+    clk_125m_pllref_i : in std_logic; -- 125 MHz PLL reference
+    clk_125m_local_i  : in std_logic; -- local clk from 125Mhz oszillator
+    sfp234_ref_clk_i  : in std_logic; -- SFP clk
    
     -----------------------------------------
     -- PMC/PCI2.2 pins
@@ -123,7 +123,7 @@ entity pci_pmc is
     -----------------------------------------------------------------------
     -- connector cpld
     -----------------------------------------------------------------------
-    con               : out std_logic_vector(5 downto 1);
+    con               : in std_logic_vector(5 downto 1);
     
     -----------------------------------------------------------------------
     -- hex switch
@@ -188,6 +188,12 @@ architecture rtl of pci_pmc is
   signal s_lvds_n_o     : std_logic_vector(4 downto 0);
   signal s_lvds_o_led   : std_logic_vector(4 downto 0);
   signal s_lvds_oen     : std_logic_vector(4 downto 0);
+  
+  signal s_log_oe       : std_logic_vector(16 downto 0);
+  signal s_log_out      : std_logic_vector(16 downto 0);
+  signal s_log_in       : std_logic_vector(16 downto 0);
+  
+  signal s_wr_ext_in    : std_logic;
   
   signal s_butis        : std_logic;
   signal s_butis_t0     : std_logic;
@@ -273,7 +279,12 @@ begin
       pmc_inta_o             => pmc_inta_o,
       pmc_ctrl_hs_i          => hswf,
       pmc_pb_i               => pbs_f,
-      pmc_clk_en_o           => lvttl_in_clk_en_o,
+      pmc_ctrl_hs_cpld_i     => con(4 downto 1),
+      pmc_pb_cpld_i          => con(5),
+      pmc_clk_oe_o           => s_wr_ext_in,
+      pmc_log_oe_o           => s_log_oe,
+      pmc_log_out_o          => s_log_out,
+      pmc_log_in_i           => s_log_in,
       lcd_scp_o              => dis_di(3),
       lcd_lp_o               => dis_di(1),
       lcd_flm_o              => dis_di(2),
@@ -352,8 +363,29 @@ begin
   lvttio_act_led_3 <= '0' when s_lvds_i_led(2) = '1' else 'Z';
   lvttio_act_led_4 <= '0' when s_lvds_i_led(3) = '1' else 'Z';
   lvttio_act_led_5 <= '0' when s_lvds_i_led(4) = '1' else 'Z';
+
+  -- Logic analyzer
+  s_log_in(15 downto 0) <= hpw(15 downto 0);
+  s_log_in(16)          <= hpwck;
+  hpwck                 <= s_log_out(16) when s_log_oe(16) = '1' else 'Z';
+  hpw(15)               <= s_log_out(15) when s_log_oe(15) = '1' else 'Z';
+  hpw(14)               <= s_log_out(14) when s_log_oe(14) = '1' else 'Z';
+  hpw(13)               <= s_log_out(13) when s_log_oe(13) = '1' else 'Z';
+  hpw(12)               <= s_log_out(12) when s_log_oe(12) = '1' else 'Z';
+  hpw(11)               <= s_log_out(11) when s_log_oe(11) = '1' else 'Z';
+  hpw(10)               <= s_log_out(10) when s_log_oe(10) = '1' else 'Z';
+  hpw(9)                <= s_log_out(9)  when s_log_oe(9)  = '1' else 'Z';
+  hpw(8)                <= s_log_out(8)  when s_log_oe(8)  = '1' else 'Z';
+  hpw(7)                <= s_log_out(7)  when s_log_oe(7)  = '1' else 'Z';
+  hpw(6)                <= s_log_out(6)  when s_log_oe(6)  = '1' else 'Z';
+  hpw(5)                <= s_log_out(5)  when s_log_oe(5)  = '1' else 'Z';
+  hpw(4)                <= s_log_out(4)  when s_log_oe(4)  = '1' else 'Z';
+  hpw(3)                <= s_log_out(3)  when s_log_oe(3)  = '1' else 'Z';
+  hpw(2)                <= s_log_out(2)  when s_log_oe(2)  = '1' else 'Z';
+  hpw(1)                <= s_log_out(1)  when s_log_oe(1)  = '1' else 'Z';
+  hpw(0)                <= s_log_out(0)  when s_log_oe(0)  = '1' else 'Z';
   
-  -- Wires to CPLD, currently unused
-  con <= (others => 'Z');
+  -- External white rabbit clock input
+  lvttl_in_clk_en_o <= not(s_wr_ext_in); 
   
 end rtl;

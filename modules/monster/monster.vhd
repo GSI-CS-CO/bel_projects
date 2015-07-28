@@ -302,9 +302,14 @@ entity monster is
     pmc_serr_io            : inout std_logic;
     pmc_inta_o             : out   std_logic := 'Z';
     -- g_en_pmc_ctrl
-    pmc_pb_i               : in    std_logic;
     pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0);
-    pmc_clk_en_o           : out   std_logic := 'Z';
+    pmc_pb_i               : in    std_logic;
+    pmc_ctrl_hs_cpld_i     : in    std_logic_vector(3 downto 0);
+    pmc_pb_cpld_i          : in    std_logic;
+    pmc_clk_oe_o           : out   std_logic := 'Z';
+    pmc_log_oe_o           : out   std_logic_vector(16 downto 0) := (others => 'Z');
+    pmc_log_out_o          : out   std_logic_vector(16 downto 0) := (others => 'Z');
+    pmc_log_in_i           : in    std_logic_vector(16 downto 0);
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0));
 end monster;
@@ -1963,15 +1968,21 @@ c4: eca_ac_wbm
   pmc_ctrl_y : if g_en_pmc_ctrl generate
     pmc_ctrl_unit : pmc_ctrl
       port map (
-        clk_sys_i        => clk_sys,
-        rst_n_i          => rstn_sys,
-        slave_i          => top_cbar_master_o(c_tops_pmc_ctrl),
-        slave_o          => top_cbar_master_i(c_tops_pmc_ctrl),
-        clock_enable_o   => pmc_clk_en_o,
-        hex_switch_i     => pmc_ctrl_hs_i,
-        push_button_i(0) => pmc_pb_i
+        clk_sys_i             => clk_sys,
+        rst_n_i               => rstn_sys,
+        slave_i               => top_cbar_master_o(c_tops_pmc_ctrl),
+        slave_o               => top_cbar_master_i(c_tops_pmc_ctrl),
+        hex_switch_i          => pmc_ctrl_hs_i,
+        push_button_i(0)      => pmc_pb_i,
+        hex_switch_cpld_i     => pmc_ctrl_hs_cpld_i,
+        push_button_cpld_i(0) => pmc_pb_cpld_i,
+        clock_control_oe_o    => pmc_clk_oe_o,
+        logic_control_oe_o    => pmc_log_oe_o,
+        logic_output_o        => pmc_log_out_o,
+        logic_input_i         => pmc_log_in_i
       );
   end generate;  
+  
   
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------

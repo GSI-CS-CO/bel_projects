@@ -276,9 +276,14 @@ package monster_pkg is
       pmc_serr_io            : inout std_logic := 'Z';
       pmc_inta_o             : out   std_logic;
       -- g_en_pmc_ctrl
-      pmc_pb_i               : in    std_logic := '0';
       pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0) := (others => '0');
-      pmc_clk_en_o           : out   std_logic;
+      pmc_pb_i               : in    std_logic := '0';
+      pmc_ctrl_hs_cpld_i     : in    std_logic_vector(3 downto 0) := (others => '0');
+      pmc_pb_cpld_i          : in    std_logic := '0';
+      pmc_clk_oe_o           : out   std_logic;
+      pmc_log_oe_o           : out   std_logic_vector(16 downto 0);
+      pmc_log_out_o          : out   std_logic_vector(16 downto 0);
+      pmc_log_in_i           : in    std_logic_vector(16 downto 0):= (others => '0');
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z'));
   end component;

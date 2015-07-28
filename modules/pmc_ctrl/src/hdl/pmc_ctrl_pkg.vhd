@@ -34,15 +34,20 @@ package pmc_ctrl_pkg is
       --| Component ------------------------- pmc_ctrl --------------------------------------------|
    component pmc_ctrl is
    Port(
-      clk_sys_i      : in  std_logic;
-      rst_n_i        : in  std_logic;
-
-      slave_i        : in  t_wishbone_slave_in;
-      slave_o        : out t_wishbone_slave_out;
-      
-      clock_enable_o : out std_logic;
-      hex_switch_i   : in std_logic_vector(3 downto 0);
-      push_button_i  : in std_logic_vector(0 downto 0)
+      clk_sys_i          : in  std_logic;
+      rst_n_i            : in  std_logic;
+    
+      slave_i            : in  t_wishbone_slave_in;
+      slave_o            : out t_wishbone_slave_out;
+    
+      hex_switch_i       : in  std_logic_vector(3 downto 0);
+      push_button_i      : in  std_logic_vector(0 downto 0);
+      hex_switch_cpld_i  : in  std_logic_vector(3 downto 0);
+      push_button_cpld_i : in  std_logic_vector(0 downto 0);
+      clock_control_oe_o : out std_logic;
+      logic_control_oe_o : out std_logic_vector(16 downto 0);
+      logic_output_o     : out std_logic_vector(16 downto 0);
+      logic_input_i      : in  std_logic_vector(16 downto 0)
    );
    end component;
 

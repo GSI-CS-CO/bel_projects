@@ -26,12 +26,47 @@
 | 31-1   |        0x0 |  R  | Reserved                                                          | 
 | 0      |        0x0 |  R  | Shows status of the push button                                   | 
 
-### Clock Control Register @ 0x8
+### Hex Switch (CPLD) Register @ 0x8
+
+| Bit(s) | Reset      | R/W | Description                                                       | 
+|:-------|-----------:|:---:|:------------------------------------------------------------------| 
+| 31-4   |        0x0 |  R  | Reserved                                                          | 
+| 3-0    |        0x0 |  R  | Shows hex switch inputs (CPLD)                                    | 
+
+### Push Button (CPLD) Register @ 0xC
 
 | Bit(s) | Reset      | R/W | Description                                                       | 
 |:-------|-----------:|:---:|:------------------------------------------------------------------| 
 | 31-1   |        0x0 |  R  | Reserved                                                          | 
-| 0      |        0x0 | R/W | Control external clock enable                                     | 
+| 0      |        0x0 |  R  | Shows status of the push button (CPLD)                            | 
+
+### Clock Control Register @ 0x10
+
+| Bit(s) | Reset      | R/W | Description                                                       | 
+|:-------|-----------:|:---:|:------------------------------------------------------------------| 
+| 31-1   |        0x0 |  R  | Reserved                                                          | 
+| 0      |        0x0 | R/W | External input clock output enable                                | 
+
+### Logic Control Register @ 0x14
+
+| Bit(s) | Reset      | R/W | Description                                                       | 
+|:-------|-----------:|:---:|:------------------------------------------------------------------| 
+| 31-17  |        0x0 |  R  | Reserved                                                          | 
+| 16-0   |        0x0 | R/W | External logic analyzer output enable                             | 
+
+### Logic Control Output Register @ 0x18
+
+| Bit(s) | Reset      | R/W | Description                                                       | 
+|:-------|-----------:|:---:|:------------------------------------------------------------------| 
+| 31-17  |        0x0 |  R  | Reserved                                                          | 
+| 16-0   |        0x0 | R/W | External logic analyzer output (write)                            | 
+
+### Logic Control Output Register @ 0x1c
+
+| Bit(s) | Reset      | R/W | Description                                                       | 
+|:-------|-----------:|:---:|:------------------------------------------------------------------| 
+| 31-17  |        0x0 |  R  | Reserved                                                          | 
+| 16-0   |        0x0 |  R  | External logic analyzer input (read)                              | 
 
 ## Code Generation
 
