@@ -56,6 +56,7 @@ use work.wb_nau8811_audio_driver_pkg.all;
 use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
+use work.lvds_pll_pkg.all;
 
 entity monster is
   generic(

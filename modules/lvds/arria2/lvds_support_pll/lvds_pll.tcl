@@ -1,0 +1,1 @@
+qmegawiz { lvds_pll }

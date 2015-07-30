@@ -293,6 +293,7 @@ begin
       core_clk_125m_pllref_i => clk_125m_pllref_i,
       core_clk_125m_sfpref_i => sfp_ref_clk_i,
       core_clk_125m_local_i  => clk_125m_local_i,
+      core_clk_ext_lvds_i    => clk_125m_local_i,
       core_clk_wr_ref_o      => s_clk_ref,
       core_clk_butis_o       => s_clk_butis,
       core_clk_butis_t0_o    => s_butis_t0,
