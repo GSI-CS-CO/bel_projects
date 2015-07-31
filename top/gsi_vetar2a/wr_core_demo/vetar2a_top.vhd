@@ -379,7 +379,9 @@ begin
       core_clk_125m_pllref_i => clk_125m_pllref_i,
       core_clk_125m_sfpref_i => sfp_ref_clk_i,
       core_clk_125m_local_i  => clk_125m_local_i,
-      core_clk_ext_lvds_i    => clk_125m_local_i,
+      --core_clk_ext_lvds_i    => clk_125m_local_i,
+      --core_clk_ext_lvds_i    => clk_125m_pllref_i,
+      core_clk_ext_lvds_i    => clk_125m_pllref_i,
       core_clk_wr_ref_o      => s_clk_ref,
       core_clk_butis_o       => s_clk_butis,
       core_clk_butis_t0_o    => s_butis_t0,
@@ -398,8 +400,8 @@ begin
       gpio_o(9 downto 6)     => s_led_gpio(3 downto 0),
       -- gpio in
       gpio_i(1 downto 0)     => lemo_nim_ttl_i(1 downto 0),
-      gpio_i(3 downto 2)     => lvds_in_i(1 downto 0),
-      gpio_i(4)              => lemo_i,
+      gpio_i(2)              => lemo_i,
+      gpio_i(4 downto 3)     => lvds_in_i(1 downto 0),
       -- wr core
       wr_onewire_io          => rom_data_io,
       wr_sfp_sda_io          => sfp_mod2_io,
@@ -462,7 +464,7 @@ begin
   -- Baseboard logic analyzer
   ------------------------------
   hpw_io(15 downto 0) <= (others => 'Z');
-
+  
   -- Display
   ----------------
   di_o(3) <= '0' when (s_di_scp = '0') else 'Z'; -- clock (run at 2MHz)                            
@@ -476,7 +478,7 @@ begin
   c_blue  when (s_led_link_up and not s_led_track)='1' else
   c_green when (s_led_link_up and     s_led_track)='1' else
   c_black;          
-
+  
   -- On board leds
   -----------------
   -- Link Activity Track PPS for White arbbit
@@ -484,6 +486,7 @@ begin
   leds_o(14) <= not s_led_link_up;                      -- Link up
   leds_o(13) <= not s_led_track;                        -- Timing Valid
   leds_o(12) <= not s_led_pps;
+  
   -- Display VME address
   s_hex_vn1_i         <= vme_ga_i;
   s_hex_vn2_i         <= vme_ga_extended_i;

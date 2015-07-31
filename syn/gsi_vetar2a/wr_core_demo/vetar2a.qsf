@@ -495,6 +495,9 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_ga_extended_i[0]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_ga_extended_i[1]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_ga_extended_i[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to vme_ga_extended_i[3]
+set_instance_assignment -name IO_STANDARD LVDS -to clk_ext_lvds_i
+set_location_assignment PIN_M1 -to clk_ext_lvds_i
+set_location_assignment PIN_N1 -to "clk_ext_lvds_i(n)"
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_internals_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/platform/altera/wb_pcie/pcie_64to32.vhd
