@@ -30,7 +30,7 @@ CBR_HOST := `hostname`
 CBR_GCC  := `lm32-elf-gcc --version | grep gcc`
 CBR_FLGS := $(CFLAGS)
 CBR_KRNL := `uname -mrs`
-CBR_OS   := `lsb_release -d -s` 
+CBR_OS   := `lsb_release -d -s | tr -d '"'` 
 CBR_PF   := ""
 CBR_GIT1  := `git log HEAD~0 --oneline --decorate=no -n 1`
 CBR_GIT2  := `git log HEAD~1 --oneline --decorate=no -n 1`
