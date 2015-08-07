@@ -316,7 +316,7 @@ architecture rtl of exploder_top is
   
   constant c_family  : string := "Arria II"; 
   constant c_project : string := "exploder_top";
-  constant c_initf   : string := c_project & ".mif"
+  constant c_initf   : string := c_project & ".mif";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
   -- multiple init files for n processors are to be seperated by semicolon ';'
   
