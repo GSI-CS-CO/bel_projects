@@ -159,4 +159,26 @@ component tmr_scu_bus is
 
 end component;
 
+component zeitbasis is
+  generic
+    (
+    CLK_in_Hz: INTEGER := 120000000;
+    diag_on:   INTEGER range 0 to 1 := 0
+    );
+  port
+    (
+    -- Input ports
+      Res       : IN  STD_LOGIC := '0';
+      Clk       : IN  STD_LOGIC;
+
+    -- Output ports
+      Ena_every_100ns:  OUT STD_LOGIC;
+      Ena_every_166ns:  OUT STD_LOGIC;
+      Ena_every_250ns:  OUT STD_LOGIC;
+      Ena_every_500ns:  OUT STD_LOGIC;
+      Ena_every_1us:    OUT STD_LOGIC;
+      Ena_Every_20ms:   OUT STD_LOGIC
+    );
+end component;
+
 end package aux_functions_pkg;
