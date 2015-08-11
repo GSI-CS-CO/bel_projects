@@ -142,16 +142,10 @@ port  (
     nLed_Dry:       out     std_logic;
     nLed_Drq:       out     std_logic;
     every_ms_intr_o:  out std_logic;
-	 lemo_data_o:    out     std_logic_vector(4 downto 1);
+    lemo_data_o:    out     std_logic_vector(4 downto 1);
     lemo_nled_o:    out     std_logic_vector(4 downto 1);
-	 lemo_out_en_o:  out     std_logic_vector(4 downto 1);  
+    lemo_out_en_o:  out     std_logic_vector(4 downto 1);  
     lemo_data_i:    in      std_logic_vector(4 downto 1):= (others => '0');
-    --io_1:           buffer  std_logic;
-    --io_1_is_in:     out     std_logic := '0';
-    --nLed_io_1:      out     std_logic;
-    --io_2:           buffer  std_logic;
-    --io_2_is_in:     out     std_logic := '0';
-    --nLed_io_2:      out     std_logic;
     nsig_wb_err:    out     std_logic       -- '0' => gestretchte wishbone access Fehlermeldung
     );
 end wb_mil_scu_v2;
@@ -639,36 +633,29 @@ p_regs_acc: process (clk_i, nrst_i)
       sw_clr_ev_timer <= '1';
       ld_dly_timer    <= '0';
       clr_wait_timer  <= '1';
-		
-
-		lemo_out_en      <= (others => '0');	
-		lemo_dat        <= (others => '0');		
-		lemo_i_reg      <= (others => '0');
+      lemo_out_en     <= (others => '0');
+      lemo_dat        <= (others => '0');
+      lemo_i_reg      <= (others => '0');
 
 
       
     elsif rising_edge(clk_i) then
+      lemo_i_reg        <= lemo_inp;
+      ex_stall          <= '1';
+      ex_ack            <= '0';
+      ex_err            <= '0';
 
-		lemo_i_reg      <= lemo_inp;
- 
-	   
+      rd_ev_fifo        <= '0';
+      clr_ev_fifo       <= '0';
+      wr_filt_ram       <= '0';
+      rd_filt_ram       <= '0';
 
-      ex_stall        <= '1';
-      ex_ack          <= '0';
-      ex_err          <= '0';
-
-      rd_ev_fifo      <= '0';
-      clr_ev_fifo     <= '0';
-      wr_filt_ram     <= '0';
-      rd_filt_ram     <= '0';
-
-      clr_no_VW_cnt   <= '0';
+      clr_no_VW_cnt     <= '0';
       clr_not_equal_cnt <= '0';
-      sw_clr_ev_timer <= '0';
-      ld_dly_timer    <= '0';
-      clr_wait_timer  <= '0';
-      
-      slave_o.dat <= (others => '0');
+      sw_clr_ev_timer   <= '0';
+      ld_dly_timer      <= '0';
+      clr_wait_timer    <= '0';
+      slave_o.dat       <= (others => '0');
 
       if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';
       elsif manchester_fpga = '1' then  mil_trm_start <= '0'; end if;
@@ -732,10 +719,10 @@ p_regs_acc: process (clk_i, nrst_i)
                 ex_ack <= '1';
               else
                 -- read status register
-                slave_o.dat(15 downto 0) <= ( manchester_fpga & ev_filt_12_8b & ev_filt_on & debounce_on    -- mil-status[15..12]
-                                            & puls2_frame & puls1_frame & ev_reset_on & mil_rcv_error       -- mil-status[11..8]
-                                            & mil_trm_rdy & Mil_Cmd_Rcv & mil_rcv_rdy & ev_fifo_full        -- mil-status[7..4]
-                                            & ev_fifo_ne & db_data_req_intr & db_data_rdy_intr & db_interlock_intr );-- mil-status[3..0]
+                slave_o.dat(15 downto 0) <= ( manchester_fpga & ev_filt_12_8b & ev_filt_on & debounce_on              -- mil-status[15..12]
+                                            & puls2_frame & puls1_frame & ev_reset_on & mil_rcv_error                 -- mil-status[11..8]
+                                            & mil_trm_rdy & Mil_Cmd_Rcv & mil_rcv_rdy & ev_fifo_full                  -- mil-status[7..4]
+                                            & ev_fifo_ne & db_data_req_intr & db_data_rdy_intr & db_interlock_intr ); -- mil-status[3..0]
                 ex_stall <= '0';
                 ex_ack <= '1';
               end if;
@@ -744,7 +731,7 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_stall <= '0';
               ex_err <= '1';
             end if;
-				
+            
           when mil_wr_rd_lemo_conf_a =>  -- read or write lemo config register
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
@@ -753,10 +740,10 @@ p_regs_acc: process (clk_i, nrst_i)
                 lemo_out_en(2)       <= slave_i.dat(b_lemo2_out_en);
                 lemo_out_en(3)       <= slave_i.dat(b_lemo3_out_en);
                 lemo_out_en(4)       <= slave_i.dat(b_lemo4_out_en);
-                lemo_event_en(1)     <= slave_i.dat(b_lemo1_event_en);                                        
-                lemo_event_en(2)     <= slave_i.dat(b_lemo2_event_en); 
-					 lemo_event_en(3)     <= slave_i.dat(b_lemo3_event_en); 
-					 lemo_event_en(4)     <= slave_i.dat(b_lemo4_event_en); 
+                lemo_event_en(1)     <= slave_i.dat(b_lemo1_event_en);
+                lemo_event_en(2)     <= slave_i.dat(b_lemo2_event_en);
+                lemo_event_en(3)     <= slave_i.dat(b_lemo3_event_en);
+                lemo_event_en(4)     <= slave_i.dat(b_lemo4_event_en);
                 ex_stall <= '0';
                 ex_ack <= '1';
               else
@@ -769,7 +756,7 @@ p_regs_acc: process (clk_i, nrst_i)
               -- access to high word or unaligned word is not allowed
               ex_stall <= '0';
               ex_err <= '1';
-            end if;				
+            end if;
 
           when mil_wr_rd_lemo_dat_a  =>  -- read or write lemo data register
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
@@ -778,7 +765,7 @@ p_regs_acc: process (clk_i, nrst_i)
                 lemo_dat(1)        <= slave_i.dat(b_lemo1_dat);
                 lemo_dat(2)        <= slave_i.dat(b_lemo2_dat);
                 lemo_dat(3)        <= slave_i.dat(b_lemo3_dat);
-                lemo_dat(4)        <= slave_i.dat(b_lemo4_dat);					 
+                lemo_dat(4)        <= slave_i.dat(b_lemo4_dat);
                 ex_stall <= '0';
                 ex_ack <= '1';
               else
@@ -791,8 +778,8 @@ p_regs_acc: process (clk_i, nrst_i)
               -- access to high word or unaligned word is not allowed
               ex_stall <= '0';
               ex_err <= '1';
-            end if;				
-								
+            end if;
+            
           when mil_rd_lemo_inp_a  =>  -- read or write lemo input register
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
@@ -809,10 +796,7 @@ p_regs_acc: process (clk_i, nrst_i)
               -- access to high word or unaligned word is not allowed
               ex_stall <= '0';
               ex_err <= '1';
-            end if;				
-												
-				
-				
+            end if;
               
           when rd_clr_no_vw_cnt_a =>  -- read or clear no valid word counters
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
@@ -966,23 +950,23 @@ p_regs_acc: process (clk_i, nrst_i)
 
   
  
-lemo_data_o(1) <= io_1 when (lemo_event_en(1)='1') else lemo_dat(1);   -- To be compatible with former SCU solution
-lemo_data_o(2) <= io_2 when (lemo_event_en(2)='1') else lemo_dat(2);   -- which allows 2 event-driven lemo outputs
-lemo_data_o(3) <= lemo_dat(3);                                         -- This is used in SIO (not event drive-able)
-lemo_data_o(4) <= lemo_dat(4);                                         -- This is used in SIO (not event drive-able)
+lemo_data_o(1)  <= io_1 when (lemo_event_en(1)='1') else lemo_dat(1);     -- To be compatible with former SCU solution
+lemo_data_o(2)  <= io_2 when (lemo_event_en(2)='1') else lemo_dat(2);     -- which allows 2 event-driven lemo outputs
+lemo_data_o(3)  <= lemo_dat(3);                                           -- This is used in SIO (not event drive-able)
+lemo_data_o(4)  <= lemo_dat(4);                                           -- This is used in SIO (not event drive-able)
 
-lemo_out_en_o(1)   <= '1' when puls1_frame='1' else lemo_out_en(1);   -- To be compatible with former SCU solution
-lemo_out_en_o(2)   <= '1' when puls2_frame='1' else lemo_out_en(2);   -- which allows 2 event-driven lemo outputs
-lemo_out_en_o(3)   <= lemo_out_en(3);                                 -- This is used in SIO
-lemo_out_en_o(4)   <= lemo_out_en(4);                                 -- This is used in SIO
+lemo_out_en_o(1)<= '1' when puls1_frame='1' else lemo_out_en(1);          -- To be compatible with former SCU solution
+lemo_out_en_o(2)<= '1' when puls2_frame='1' else lemo_out_en(2);          -- which allows 2 event-driven lemo outputs
+lemo_out_en_o(3)<= lemo_out_en(3);                                        -- This is used in SIO
+lemo_out_en_o(4)<= lemo_out_en(4);                                        -- This is used in SIO
 
   
   
 p_every_us: div_n
   generic map (
-    n         => integer(clk_in_hz/1_000_000), -- KK alle us einen Takt aktiv (ena_every_us * 1000 = 1ms)
-    diag_on   => 0                -- diag_on = 1 die Breite des Untersetzungzaehlers
-                                  -- mit assert .. note ausgegeben.
+    n         => integer(clk_in_hz/1_000_000),  -- KK alle us einen Takt aktiv (ena_every_us * 1000 = 1ms)
+    diag_on   => 0                              -- diag_on = 1 die Breite des Untersetzungzaehlers
+                                                -- mit assert .. note ausgegeben.
     )
 
   port map (
@@ -993,9 +977,6 @@ p_every_us: div_n
                                   -- Z.B. koennte eine weitere div_n-Instanz dieses Signal erzeugen.  
     div_o     => ena_every_us     -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
     );
-
-
-	 
 
 p_ev_timer: process (clk_i, nRst_i)
   begin
@@ -1017,14 +998,11 @@ p_delay_timer: process (clk_i, nRst_i)
 
   begin
     if nRst_i = '0' then
-      dly_timer       <= (others => '1'); --to_unsigned(-1, dly_timer'length);
+      dly_timer       <= (others => '1');           --to_unsigned(-1, dly_timer'length);
       dly_timer_start := '0';
       dly_intr        <= '0';
-
     elsif rising_edge(clk_i) then
-      
       stall_dly_timer <= '1';
-      
       if ld_dly_timer = '1' then
         stall_dly_timer <= '0';
         dly_intr <= '0';                            -- laden des delay timers setzt delay interrupt zurueck

@@ -111,23 +111,24 @@ port	(
 end component;
 
 component flash_loader_v01
-	port(
-		noe_in:		in		std_logic
+	PORT
+	(
+		noe_in		: IN STD_LOGIC 
 	);
-end component;
+END component flash_loader_v01;
 
 
-component led_n
-	generic(
-		stretch_cnt:			INTEGER := 3
-	); 
-	port(
-			ena:		in			std_logic := '1';
-			CLK:		in			std_logic;
-			Sig_In:	in			std_logic;
-			nLED:		out			std_logic
-	);
-END component led_n;
+--component led_n
+--	generic(
+--		stretch_cnt:			INTEGER := 3
+--	); 
+--	port(
+--			ena:		in			std_logic := '1';
+--			CLK:		in			std_logic;
+--			Sig_In:	in			std_logic;
+--			nLED:		out			std_logic
+--	);
+--END component led_n;
 
 
 component pll_sio
@@ -168,21 +169,5 @@ component pu_reset
 	);
 end component;
 
-component zeitbasis
-	generic	(
-		CLK_in_Hz:				INTEGER;
-		diag_on:					INTEGER
-		);
-	port(
-		Res:							in		std_logic;
-		Clk:							in		std_logic;
-		Ena_every_100ns:	out		std_logic;
-		Ena_every_166ns:	out		std_logic;
-		Ena_every_250ns:	out		std_logic;
-		Ena_every_500ns:	out		std_logic;
-		Ena_every_1us:		out		std_logic;
-		Ena_Every_20ms:		out		std_logic
-	);
-end component;
 
 end package scu_sio3_pkg;

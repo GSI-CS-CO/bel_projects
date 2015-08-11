@@ -3,7 +3,11 @@ use ieee.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use work.sio3_sys_clk_local_clk_switch_pkg.all;
 use work.addac_sys_clk_local_clk_switch_pkg.all;
+use work.aux_functions_pkg.all;
 library work;
+
+LIBRARY altera_mf;
+USE altera_mf.altera_mf_components.all;
 
 entity sio3_sys_clk_local_clk_switch is 
   port(
@@ -12,7 +16,7 @@ entity sio3_sys_clk_local_clk_switch is
     nReset:               in    std_logic;
     master_clk_o:         out   std_logic;
     pll_locked:           out   std_logic;
-		A_ME_12MHz:           out   std_logic;
+    A_ME_12MHz:           out   std_logic;
     sys_clk_is_bad:       out   std_logic;
     sys_clk_is_bad_la:    out   std_logic;
     local_clk_is_bad:     out   std_logic;
@@ -55,14 +59,15 @@ component sys_clk_or_local_clk
     );
 end component;
 
-signal  master_clk:         std_logic;
-signal  f_local_12p5_mhz:   std_logic;
-signal  s_rd_active:        std_logic;
-signal  s_dtack:            std_logic;
-signal  clk_switch_cntrl:   std_logic;
-signal  s_sys_clk_is_bad_la: std_logic;
+signal  master_clk:           std_logic;
+signal  f_local_12p5_mhz:     std_logic;
 
-signal  start_pll_control:  std_logic;
+signal  s_rd_active:          std_logic;
+signal  s_dtack:              std_logic;
+signal  clk_switch_cntrl:     std_logic;
+signal  s_sys_clk_is_bad_la:  std_logic;
+
+signal  start_pll_control:    std_logic;
 
 constant  test_time_cnt_max:  integer := 12_500;  -- die Testzeit soll eine Millisekunde betragen. Ein Zaehler muss bei 12,5Mhz
                                                   -- einen Zaehlerstand von 12500 erreichen.
@@ -84,7 +89,6 @@ constant  clk_switch_cnt_max:   integer := 3;
 signal    clk_switch_cnt:       integer range 0 to clk_switch_cnt_max;
 
 
-
 begin 
 
 
@@ -94,9 +98,11 @@ local_clk: addac_local_clk_to_12p5_mhz
   port map(
     inclk0  => local_clk_i,
     c0      => f_local_12p5_mhz
-    );
+  );
 
 
+
+    
 sys_or_local_pll: sys_clk_or_local_clk
   port map(
     clkswitch		=> start_switch_clk_input,
@@ -208,10 +214,10 @@ p_err_latch: process (master_clk, nReset)
 p_sys_freq_test:  process (master_clk, nReset)
   begin
     if nReset = '0' then
-      f_local_12p5_mhz_sync 	<= b"000";  
-      sys_clk_i_sync        	<= b"000"; 
-      test_time_cnt         	<= 0;
-      sys_clk_cnt           	<= 0;
+      f_local_12p5_mhz_sync   <= b"000";
+      sys_clk_i_sync          <= b"000";
+      test_time_cnt           <= 0;
+      sys_clk_cnt             <= 0;
       s_sys_clk_deviation     <= '0';
       s_sys_clk_deviation_la  <= '0';
       compare                 <= '0';
@@ -252,10 +258,10 @@ p_sys_freq_test:  process (master_clk, nReset)
   end process p_sys_freq_test;
 
 
-sys_clk_deviation 		<= s_sys_clk_deviation;
-sys_clk_deviation_la 	<= s_sys_clk_deviation_la;
+sys_clk_deviation     <= s_sys_clk_deviation;
+sys_clk_deviation_la  <= s_sys_clk_deviation_la;
 
-sys_clk_is_bad_la 		<= s_sys_clk_is_bad_la;
-master_clk_o 					<= master_clk;
+sys_clk_is_bad_la     <= s_sys_clk_is_bad_la;
+master_clk_o          <= master_clk;
 
 end arch_sio3_sys_clk_local_clk_switch;

@@ -30,7 +30,7 @@ ENTITY sio3_Test_User_Reg IS
 		User_Reg_rd_active:	out		std_logic;												-- read data available at 'Data_to_SCUB'-output
 		Data_to_SCUB:				out		std_logic_vector(15 downto 0);		-- connect read sources to SCUB-Macro
 		Dtack_to_SCUB:			out		std_logic													-- connect Dtack to SCUB-Macro
-		);	
+		);
 	end sio3_Test_User_Reg;
 
 

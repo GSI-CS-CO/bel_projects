@@ -55,25 +55,21 @@ constant  rd_clr_ev_timer_a:        integer := 16#406#;  -- read event timer:   
 constant  rd_wr_dly_timer_a:        integer := 16#407#;  -- read delay timer:            wb_mil_scu_offset + 16#1C#.
                                                          -- write delay timer:           wb_mil_scu_offset + 16#1C#.
 constant  rd_clr_wait_timer_a:      integer := 16#408#;  -- read wait timer:             wb_mil_scu_offset + 16#20#.
-                                                        -- write (clear) wait timer:     wb_mil_scu_offset + 16#20#.
-constant  mil_wr_rd_lemo_conf_a:    integer := 16#409#; -- read mil lemo config:         wb_mil_scu_offset + 16#24#, data[31..4] always zero.
-                                                        -- write mil lemo config:        wb_mil_scu_offset + 16#24#, bits 3..0 can be changed.Data[31..4] don't care
-constant  mil_wr_rd_lemo_dat_a:     integer := 16#40A#; -- read mil lemo dat:            wb_mil_scu_offset + 16#28#, data[31..4] always zero.
-                                                        -- write mil lemo dat:           wb_mil_scu_offset + 16#28#, bits 3..0 can be changed.Data[31..4] don't car
-constant  mil_rd_lemo_inp_a:        integer := 16#40B#; -- read mil lemo inp:            wb_mil_scu_offset + 16#2C#, data[31..4] always zero.
+                                                         -- write (clear) wait timer:    wb_mil_scu_offset + 16#20#.
+constant  mil_wr_rd_lemo_conf_a:    integer := 16#409#;  -- read mil lemo config:        wb_mil_scu_offset + 16#24#, data[31..4] always zero.
+                                                         -- write mil lemo config:       wb_mil_scu_offset + 16#24#, bits 3..0 can be changed.Data[31..4] don't care
+constant  mil_wr_rd_lemo_dat_a:     integer := 16#40A#;  -- read mil lemo dat:           wb_mil_scu_offset + 16#28#, data[31..4] always zero.
+                                                         -- write mil lemo dat:          wb_mil_scu_offset + 16#28#, bits 3..0 can be changed.Data[31..4] don't car
+constant  mil_rd_lemo_inp_a:        integer := 16#40B#;  -- read mil lemo inp:           wb_mil_scu_offset + 16#2C#, data[31..4] always zero.
 
-constant  rd_clr_ev_timer_LW_a:     integer := 16#40C#;  -- read event timer lower Word  wb_mil_scu_offset + 16#30#.
-                                                         -- writesw-clear)event timer    wb_mil_scu_offset + 16#30#.
-constant  rd_clr_ev_timer_HW_a:     integer := 16#40D#;  -- read event timer high Word   wb_mil_scu_offset + 16#34#.
-                                                         -- write (sw-clear) event timer wb_mil_scu_offset + 16#34#.      
-constant  rd_clr_wait_timer_LW_a:   integer := 16#40e#;  -- read event timer lower Word  wb_mil_scu_offset + 16#38#.
-                                                         -- write (sw-clear) event timer wb_mil_scu_offset + 16#38#.
-constant  rd_clr_wait_timer_HW_a:   integer := 16#40f#;  -- read event timer high Word   wb_mil_scu_offset + 16#3c#.
-                                                         -- write (sw-clear) event timer wb_mil_scu_offset + 16#3c#.   
-constant  rd_wr_dly_timer_LW_a:     integer := 16#410#;  -- read event timer lower Word  wb_mil_scu_offset + 16#40#.
-                                                         -- write (sw-clear) event timer wb_mil_scu_offset + 16#40#.
-constant  rd_wr_dly_timer_HW_a:     integer := 16#411#;  -- read event timer high Word   wb_mil_scu_offset + 16#44#.
-                                                         -- write (sw-clear) event timer wb_mil_scu_offset + 16#44#.                                                         
+constant  rd_ev_timer_LW_a:         integer := 16#40C#;  -- read event timer lower Word  wb_mil_scu_offset + 16#30#.
+                                                         -- reserved                     wb_mil_scu_offset + 16#34#.
+constant  rd_wait_timer_LW_a:       integer := 16#40e#;  -- read wait timer lower Word   wb_mil_scu_offset + 16#38#.
+                                                         -- reserved                     wb_mil_scu_offset + 16#3c#..   
+constant  rd_wr_dly_timer_LW_a:     integer := 16#410#;  -- read event timer latch LW    wb_mil_scu_offset + 16#40#.
+                                                         -- write event timer latch LW   wb_mil_scu_offset + 16#40#.
+constant  rd_wr_dly_timer_HW_a:     integer := 16#411#;  -- read event timer latch HW    wb_mil_scu_offset + 16#44#.
+                                                         -- write event timer latch HW   wb_mil_scu_offset + 16#44#.                                                         
 
 constant  ev_filt_first_a:    integer := 16#1000#;  -- first event filter ram address: wb_mil_scu_offset + 16#4000. 
 constant  ev_filt_last_a:     integer := 16#1FFF#;  -- last event filter  ram address: wb_mil_scu_offset + 16#7FFC.
@@ -201,12 +197,16 @@ port  (
     nLed_Dry:       out     std_logic;
     nLed_Drq:       out     std_logic;
     every_ms_intr_o:  out std_logic;
-    io_1:           buffer  std_logic;
-    io_1_is_in:     out     std_logic := '0';
-    nLed_io_1:      out     std_logic;
-    io_2:           buffer  std_logic;
-    io_2_is_in:     out     std_logic := '0';
-    nLed_io_2:      out     std_logic;
+--  io_1:           buffer  std_logic;
+--    io_1_is_in:     out     std_logic := '0';
+--    nLed_io_1:      out     std_logic;
+--    io_2:           buffer  std_logic;
+--    io_2_is_in:     out     std_logic := '0';
+--    nLed_io_2:      out     std_logic;
+    lemo_data_o:    out     std_logic_vector(4 downto 1);
+    lemo_nled_o:    out     std_logic_vector(4 downto 1);
+    lemo_out_en_o:  out     std_logic_vector(4 downto 1);  
+    lemo_data_i:    in      std_logic_vector(4 downto 1):= (others => '0');
     nsig_wb_err:    out     std_logic       -- '0' => gestretchte wishbone access Fehlermeldung
     );
 end component wb_mil_scu;
