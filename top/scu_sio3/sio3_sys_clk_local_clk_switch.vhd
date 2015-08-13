@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all; 
 use IEEE.numeric_std.all;
 use work.sio3_sys_clk_local_clk_switch_pkg.all;
-use work.addac_sys_clk_local_clk_switch_pkg.all;
+--use work.addac_sys_clk_local_clk_switch_pkg.all;
 use work.aux_functions_pkg.all;
 library work;
 
@@ -94,7 +94,7 @@ begin
 
 A_ME_12MHz  <= f_local_12p5_mhz;
 
-local_clk: addac_local_clk_to_12p5_mhz
+local_clk: sio3_local_clk_to_12p5_mhz
   port map(
     inclk0  => local_clk_i,
     c0      => f_local_12p5_mhz

@@ -104,19 +104,19 @@ signal dly_buf_ack:              std_logic;
 
 signal cycle_finished:           std_logic;
 signal access_LB:                std_logic;
+
+signal mil_reg_access:           std_logic;
+signal mil_ram_access:           std_logic;
 ----------------------------------------------------------------------------------------------
 begin
 
--- Event, Delay, Wait-timer need extra handling due to 32 bit access
--- SCU  with 32 bit access uses one hit, SIO with 16bit needs 2 hits (HW,LW)
+-- Event, Delay, Wait-timer need extra 16 bit LW read latches due to 32 bit data
 -- For Read:
--- For SIO read the HW first! This causes latching the LW to keep timer value integrity.
+-- Timers need to read HW (=0x406|0x407|0x408) first. This latches LW to keep timer value integrity.
 -- For Write:
--- Write to Event and Wait timers, clears this timers no matter if written on HW or LW.
--- Delay Timer needs preloading LW and HW, then write to rd_wr_dly_timer_a  for loading.
--- Start of Delay Timer needs two accesses to Delay Register. 
---      First set DelayTimer  with MSB=0 (this is bit 8 of HW15:0). 
---      Then start Delay timer by doing a second write with same data on same address.
+-- Write to Event and Wait timers (=0x406|0x408) clears whole timer
+-- Delay Timer needs preloading LW and HW, then write to rd_wr_dly_timer_a(=0x407)for loading.
+-- Start of Delay Timer needs set of MSB=0 (this is bit 8 of High Word 15:0)
 
 nReset       <= not Reset_Puls;
 nSel_Mil_Drv <= not Sel_Mil_Drv;
@@ -128,12 +128,6 @@ nSel_Mil_Drv <= not Sel_Mil_Drv;
 process (Adr_from_SCUB_LA, wr_latch_dly_timer_hw,wr_latch_dly_timer_lw,Ext_wr_active,Data_from_SCUB_LA) 
 begin
   case conv_integer(unsigned(Adr_from_SCUB_LA)) is
-   -- these other regs have no address equivalent in wb_mil_scu 
-   -- when rd_clr_ev_timer_LW_a  | rd_clr_ev_timer_HW_a | rd_clr_wait_timer_LW_a | rd_clr_wait_timer_HW_a =>
-   --    slave_i.adr   <= x"000" & b"00" & Adr_from_SCUB_LA & b"00";
-   --    slave_i.dat   <= (others =>'0'); 
-   --    slave_i.we    <= Ext_wr_active;      
-   -- Delay timer regs need preloaded latches
     when rd_wr_dly_timer_LW_a   =>
       slave_i.adr   <= x"000" & b"00" & Adr_from_SCUB_LA & b"00";
       slave_i.dat   <= x"0000" & Data_from_SCUB_LA; --dummy write, Data_from_SCUB_LA feeds wr_latch_dly_timer_lw
@@ -153,8 +147,6 @@ begin
       slave_i.we    <= Ext_wr_active;
     end case;
 end process;
-
-
 
 
 
@@ -183,14 +175,32 @@ end process;
 
 Dtack_to_SCUB <= ack_stretched or slave_o.ack;
 Data_for_SCUB <= ack_stretched or slave_o.ack;
---Data_to_SCUB  <= rd_latch;
+
+process (Adr_from_SCUB_LA)
+begin
+  if (
+     conv_integer(unsigned(Adr_from_SCUB_LA)) >=  mil_rd_wr_data_a  and
+     conv_integer(unsigned(Adr_from_SCUB_LA)) <=    rd_wr_dly_timer_HW_a 
+     ) then
+     mil_reg_access  <= '1';
+  elsif(
+     conv_integer(unsigned(Adr_from_SCUB_LA)) >=  ev_filt_first_a  and
+     conv_integer(unsigned(Adr_from_SCUB_LA)) <=  ev_filt_last_a 
+     ) then
+      mil_ram_access <= '1';
+  else
+      mil_reg_access <= '0';
+      mil_ram_access <= '0';
+  end if;
+end process;
+
 
 --this mux handles read sources to have data for 1 additional clock present
 
 process (Adr_from_SCUB_LA,ack_stretched,slave_o, rd_latch_ev_timer, rd_latch_wait_timer,rd_latch_dly_timer,rd_latch) 
 begin
 
-     if slave_o.ack  then  --for first few clocks
+     if slave_o.ack  and (mil_reg_access or mil_ram_access )then  --for first few clocks
             -- get data direct from sources for quick response
             if    (conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_clr_ev_timer_a)    then
               Data_to_SCUB            <=  slave_o.dat(31 downto 16);
@@ -219,36 +229,33 @@ end process;
 process (clk) 
 begin
   if (clk'event and clk='1') then
-    if Reset_Puls ='1' then
+    if Reset_Puls then
       ack_stretched         <= '0';     
       rd_latch              <= (others=>'0');
       rd_latch_ev_timer     <= (others=>'0');
       rd_latch_wait_timer   <= (others=>'0');
       rd_latch_dly_timer    <= (others=>'0');
     else  
-      if Ext_Rd_active = '1' then 
-        if slave_o.ack= '1' or dly_buf_ack='1'  then
-              --stores timer value in one hit to keep timer value consistency
-              --rd_latch is  transport to SCU_Bus within access
-              --LW latch has to be read in an second SCU Bus access
-              --therefore a LW latch for every timer to avoid data mixup       
-           if    (conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_clr_ev_timer_a    ) then  -- rd captures both
+      if Ext_Rd_active  and (mil_reg_access or mil_ram_access) then 
+        if slave_o.ack  or dly_buf_ack   then  
+              --read of timer data (hw directly, lw thru latch)    
+           if    (conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_clr_ev_timer_a)   then
               rd_latch            <=  slave_o.dat(31 downto 16);
               rd_latch_ev_timer   <=  slave_o.dat(15 downto  0); 
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_ev_timer_LW_a ) then
+            elsif(conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_ev_timer_LW_a )   then
               rd_latch            <=  rd_latch_ev_timer;
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_clr_wait_timer_a  ) then  -- rd captures both
+            elsif(conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_clr_wait_timer_a) then
               rd_latch            <=  slave_o.dat(31 downto 16);
               rd_latch_wait_timer <=  slave_o.dat(15 downto  0); 
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_wait_timer_LW_a )then
+            elsif(conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_wait_timer_LW_a)  then
               rd_latch            <=  rd_latch_wait_timer;
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_wr_dly_timer_a )     then -- rd captures both
+            elsif(conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_wr_dly_timer_a )  then
               rd_latch            <=  slave_o.dat(31 downto 16);
               rd_latch_dly_timer  <=  slave_o.dat(15 downto  0);
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_wr_dly_timer_LW_a )   then
+            elsif(conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_wr_dly_timer_LW_a )then
               rd_latch            <=  rd_latch_dly_timer;
             else
-               -- all other data is 16 bit only 
+               -- read of other wb_mil_scu data including filter ram and fifo
               rd_latch            <=  slave_o.dat(15 downto  0);
            end if;           
         end if;
@@ -267,12 +274,12 @@ end process;
 process (clk) 
 begin
   if (clk'event and clk='1') then
-    if Reset_Puls ='1' then
+    if Reset_Puls then
       wr_latch_dly_timer_hw <= ( others => '0'); 
       wr_latch_dly_timer_lw <= ( others => '0'); 
       dly_buf_ack <='0';
     else
-      if  Ext_Wr_Active ='1' then
+      if  Ext_Wr_Active then
         case conv_integer(unsigned(Adr_from_SCUB_LA)) is 
          when rd_wr_dly_timer_LW_a =>
               wr_latch_dly_timer_lw <= Data_from_SCUB_LA;
@@ -286,12 +293,12 @@ begin
       elsif Ext_Rd_Active ='1' then
         case conv_integer(unsigned(Adr_from_SCUB_LA)) is 
           when rd_ev_timer_LW_a |rd_wait_timer_LW_a | rd_wr_dly_timer_LW_a|rd_wr_dly_timer_HW_a =>
-            dly_buf_ack           <='1';
+              dly_buf_ack  <='1';
           when others  =>
-            dly_buf_ack <='0';
+              dly_buf_ack  <='0';
         end case;
       else
-          dly_buf_ack <='0';
+              dly_buf_ack  <='0';
       end if;
     end if;
   end if;  

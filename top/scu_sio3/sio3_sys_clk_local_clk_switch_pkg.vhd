@@ -6,7 +6,7 @@ library work;
 
 package sio3_sys_clk_local_clk_switch_pkg is
 
---constant  clk_switch_status_cntrl_addr:  unsigned(15 downto 0) := x"0030";
+constant  clk_switch_status_cntrl_addr:  unsigned(15 downto 0) := x"0030";
 
 
 component sio3_sys_clk_local_clk_switch is
@@ -34,5 +34,16 @@ component sio3_sys_clk_local_clk_switch is
     signal_tap_clk_250mhz:   out   std_logic
     );
 end component;
+
+
+component sio3_local_clk_to_12p5_mhz is
+  port
+  (
+    inclk0    : IN STD_LOGIC  := '0';
+    c0        : OUT STD_LOGIC ;
+    locked    : OUT STD_LOGIC 
+  );
+end component;
+
 
 end package;
