@@ -34,6 +34,8 @@ entity pci_pmc is
     pmc_perr_io       : inout std_logic;
     pmc_serr_io       : inout std_logic;
     pmc_inta_o        : out   std_logic;
+    pmc_req_o         : out   std_logic;
+    pmc_gnt_i         : in    std_logic;
     
     ------------------------------------------------------------------------
     -- WR DAC signals
@@ -277,6 +279,9 @@ begin
       pmc_perr_io            => pmc_perr_io,
       pmc_serr_io            => pmc_serr_io,
       pmc_inta_o             => pmc_inta_o,
+      pmc_req_o              => pmc_req_o,
+      pmc_gnt_i              => pmc_gnt_i,
+
       pmc_ctrl_hs_i          => hswf,
       pmc_pb_i               => pbs_f,
       pmc_ctrl_hs_cpld_i     => con(4 downto 1),

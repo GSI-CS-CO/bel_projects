@@ -28,7 +28,7 @@ ifndef RAM_SIZE
 $(error Missing mandatory RAM_SIZE parameter! Quitting ...)
 endif
 
-.PHONY: ram.ld buildid.c
+#.PHONY: ram.ld buildid.c
 
 include $(INCPATH)/build_lm32.mk
  

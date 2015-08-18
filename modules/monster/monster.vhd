@@ -301,6 +301,9 @@ entity monster is
     pmc_perr_io            : inout std_logic;
     pmc_serr_io            : inout std_logic;
     pmc_inta_o             : out   std_logic := 'Z';
+    pmc_req_o              : out   std_logic;
+    pmc_gnt_i              : in    std_logic;
+
     -- g_en_pmc_ctrl
     pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0);
     pmc_pb_i               : in    std_logic;
@@ -1202,7 +1205,10 @@ begin
       idsel_i       => pmc_idsel_i,
       perr_io       => pmc_perr_io,
       serr_io       => pmc_serr_io,
-      inta_o        => pmc_inta_o);
+      inta_o        => pmc_inta_o,
+      req_o         => pmc_req_o,
+      gnt_i         => pmc_gnt_i
+);
   end generate;
   
   -- END OF Wishbone masters
