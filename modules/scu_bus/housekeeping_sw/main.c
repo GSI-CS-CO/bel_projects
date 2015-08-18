@@ -11,6 +11,7 @@
 extern struct w1_bus wrpc_w1_bus;
 
 volatile unsigned short* scu_reg = (unsigned short*)BASE_SCU_REG;
+volatile unsigned int* aru_base = (unsigned int*)BASE_ARU;
 
 //void usleep(int x)
 //{
@@ -66,6 +67,20 @@ void init() {
 int main(void)
 {
 	init();
+
+  if (aru_base[CONFIG_SRC] == 0) {  //PowerUp
+    aru_base[PAGE_SEL] = 0x90000; // start address for Application image
+    aru_base[CONFIG_MODE] = 0x1;  // set to Application mode
+    aru_base[CONFIG] = 0x1; // trigger reconfiguration
+  }
+
+    
+    
+  mprintf("%x", aru_base[2]);
+  mprintf("%x", aru_base[3]);
+  mprintf("%x", aru_base[4]);
+  mprintf("%x", aru_base[5]);
+  mprintf("%x", aru_base[POF_ERROR]);
 	
 	while(1) {
     ReadTempDevices(0); 

@@ -6,6 +6,7 @@ library work;
 use work.wishbone_pkg.all;
 use work.gencores_pkg.all;
 use work.wb_scu_reg_pkg.all;
+use work.remote_update_pkg.all;
 
 entity housekeeping is
   generic ( 
@@ -13,6 +14,7 @@ entity housekeeping is
           );
   port (
         clk_sys:            in std_logic;
+        clk_20Mhz:          in std_logic;
         n_rst:              in std_logic;
 
         ADR_from_SCUB_LA:   in std_logic_vector(15 downto 0);
@@ -72,20 +74,24 @@ architecture housekeeping_arch of housekeeping is
   signal lm32_rstn:        std_logic;
 
   -- Top crossbar layout
-  constant c_slaves     : natural := 4;
+  constant c_slaves     : natural := 5;
   constant c_masters    : natural := 2;
   constant c_dpram_size : natural := 32768; -- in 32-bit words (64KB)
   constant c_layout     : t_sdb_record_array(c_slaves-1 downto 0) :=
    (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),  x"00000000"),
     1 => f_sdb_embed_device(c_xwb_owm,                  x"00100600"),
     2 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"),
-    3 => f_sdb_embed_device(c_xwb_scu_reg,              x"00100800"));
+    3 => f_sdb_embed_device(c_xwb_scu_reg,              x"00100800"),
+    4 => f_sdb_embed_device(c_wb_rem_upd_sdb,           x"00100900"));
   constant c_sdb_address : t_wishbone_address := x"00100000";
 
   signal cbar_slave_i : t_wishbone_slave_in_array (c_masters-1 downto 0);
   signal cbar_slave_o : t_wishbone_slave_out_array(c_masters-1 downto 0);
   signal cbar_master_i : t_wishbone_master_in_array(c_slaves-1 downto 0);
   signal cbar_master_o : t_wishbone_master_out_array(c_slaves-1 downto 0);
+  
+  signal slave_i : t_wishbone_slave_in;
+  signal slave_o : t_wishbone_slave_out;
 
 begin
 
@@ -214,8 +220,38 @@ begin
       user_rd_active    => user_rd_active,
       Data_to_SCUB      => Data_to_SCUB,
       Dtack_to_SCUB     => Dtack_to_SCUB);
-
-
+      
+  --------------------------------------------
+  -- clock crossing from sys clk to clk_20Mhz
+  --------------------------------------------
+   cross_systo20 : xwb_clock_crossing
+    port map(
+      -- Slave control port
+      slave_clk_i    => clk_sys,
+      slave_rst_n_i  => n_rst,
+      slave_i        => cbar_master_o(4),
+      slave_o        => cbar_master_i(4),
+      -- Master reader port
+      master_clk_i   => clk_20Mhz,
+      master_rst_n_i => n_rst,
+      master_i       => slave_o,
+      master_o       => slave_i);
+  
+  
+  -----------------------------------------
+  -- wb interface for altera remote update
+  -----------------------------------------
+  wb_aru: wb_remote_update
+    port map (
+      clk_sys_i => clk_20Mhz,
+      rst_n_i   => n_rst,
+      
+      slave_i      =>  slave_i,
+      slave_o      =>  slave_o);
+    
+  
+      
+      
 
 end architecture;
 
