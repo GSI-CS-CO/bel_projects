@@ -6,6 +6,7 @@ PHK       = ../../modules/scu_bus/housekeeping_sw
 PADDAC    = ../../top/gsi_addac2
 W1        = ../../ip_cores/wrpc-sw
 CFLAGS    = -I$(PHK)/include -I$(PADDAC)
+USRCPUCLK = 125000
 
 include ../build.mk
 

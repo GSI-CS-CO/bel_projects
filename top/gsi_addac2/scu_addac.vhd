@@ -151,13 +151,6 @@ component IO_4x8
     Dtack_to_SCUB:      out   std_logic                       -- connect Dtack to SCUB-Macro
     );
   end component IO_4x8;
-
- 
-component flash_loader_v01
-  port (
-    noe_in: in std_logic
-    );
-  end component;
   
   signal clk_sys, clk_cal, locked : std_logic;
   
@@ -237,22 +230,24 @@ component flash_loader_v01
   signal  wb_scu_dtack:        std_logic;
   signal  wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
     
-  signal  sys_clk_is_bad:        std_logic;
-  signal  sys_clk_is_bad_led_n:  std_logic;
-  signal  sys_clk_is_bad_la:     std_logic;
-  signal  local_clk_is_bad:      std_logic;
-  signal  local_clk_is_running:  std_logic;
-  signal  local_clk_runs_led_n:  std_logic;
-  signal  sys_clk_failed:        std_logic;
-  signal  sys_clk_deviation:     std_logic;
-  signal  sys_clk_deviation_la:  std_logic;
-  signal  sys_clk_deviation_led_n: std_logic;
-  signal  clk_switch_rd_data:    std_logic_vector(15 downto 0);
-  signal  clk_switch_rd_active:  std_logic;
-  signal  clk_switch_dtack:      std_logic;
-  signal  clk_switch_intr:       std_logic;
+  signal  sys_clk_is_bad:         std_logic;
+  signal  sys_clk_is_bad_led_n:   std_logic;
+  signal  sys_clk_is_bad_la:      std_logic;
+  signal  local_clk_is_bad:       std_logic;
+  signal  local_clk_is_running:   std_logic;
+  signal  local_clk_runs_led_n:   std_logic;
+  signal  sys_clk_failed:         std_logic;
+  signal  sys_clk_deviation:      std_logic;
+  signal  sys_clk_deviation_la:   std_logic;
+  signal  sys_clk_deviation_led_n:std_logic;
+  signal  clk_switch_rd_data:     std_logic_vector(15 downto 0);
+  signal  clk_switch_rd_active:   std_logic;
+  signal  clk_switch_dtack:       std_logic;
+  signal  clk_switch_intr:        std_logic;
   
-  signal signal_tap_clk_250mhz: std_logic;
+  signal  signal_tap_clk_250mhz: std_logic;
+  signal  clk_10Mhz:             std_logic;
+  signal  clk_25Mhz:             std_logic;
 
   
   --signal irqcnt:  unsigned(12 downto 0);
@@ -268,32 +263,31 @@ component flash_loader_v01
   signal s_test_vector: std_logic_vector(15 downto 0) := x"8000";
 
   begin
-    
-  fl : flash_loader_v01
-    port map (noe_in => '0');
 
   addac_clk_switch: addac_sys_clk_local_clk_switch
     port map(
-      local_clk_i           => CLK_FPGA,
-      sys_clk_i             => A_SysClock,
-      nReset                => nPowerup_Res,
-      master_clk_o          => clk_sys,               -- core clocking
-      pll_locked            => open,
-      sys_clk_is_bad        => sys_clk_is_bad,
-      sys_clk_is_bad_la     => sys_clk_is_bad_la,
-      local_clk_is_bad      => local_clk_is_bad,
-      local_clk_is_running  => local_clk_is_running,
-      sys_clk_deviation     => sys_clk_deviation,
-      sys_clk_deviation_la  => sys_clk_deviation_la,
-      Adr_from_SCUB_LA      => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
-      Data_from_SCUB_LA     => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
-      Ext_Adr_Val           => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
-      Ext_Rd_active         => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
-      Ext_Wr_active         => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
-      Rd_Port               => clk_switch_rd_data,    -- output for all read sources of this macro
-      Rd_Activ              => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
-      Dtack                 => clk_switch_dtack,
-      signal_tap_clk_250mhz    => signal_tap_clk_250mhz
+      local_clk_i             => CLK_FPGA,
+      sys_clk_i               => A_SysClock,
+      nReset                  => nPowerup_Res,
+      master_clk_o            => clk_sys,               -- core clocking
+      pll_locked              => open,
+      sys_clk_is_bad          => sys_clk_is_bad,
+      sys_clk_is_bad_la       => sys_clk_is_bad_la,
+      local_clk_is_bad        => local_clk_is_bad,
+      local_clk_is_running    => local_clk_is_running,
+      sys_clk_deviation       => sys_clk_deviation,
+      sys_clk_deviation_la    => sys_clk_deviation_la,
+      Adr_from_SCUB_LA        => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+      Data_from_SCUB_LA       => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+      Ext_Adr_Val             => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Rd_active           => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+      Ext_Wr_active           => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+      Rd_Port                 => clk_switch_rd_data,    -- output for all read sources of this macro
+      Rd_Activ                => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
+      Dtack                   => clk_switch_dtack,
+      signal_tap_clk_250mhz   => signal_tap_clk_250mhz,
+      clk_10Mhz               => clk_10Mhz,
+      clk_25Mhz               => clk_25Mhz
       );
     
 
@@ -382,8 +376,10 @@ lm32_ow: housekeeping
 generic map (
   Base_addr => c_housekeeping_base)
 port map (
-  clk_sys => clk_sys,
-  n_rst => nPowerup_Res,
+  clk_sys   => clk_sys,
+  clk_10Mhz => clk_10Mhz,
+  clk_25Mhz => clk_25Mhz,
+  n_rst     => nPowerup_Res,
 
   ADR_from_SCUB_LA  => ADR_from_SCUB_LA,
   Data_from_SCUB_LA => Data_from_SCUB_LA,

@@ -4,11 +4,12 @@ use ieee.numeric_std.all;
 
 library work;
 use work.wishbone_pkg.all;
+use work.genram_pkg.all;
 
 entity wb_scu_reg is
   generic (
     Base_addr:      unsigned(15 downto 0);
-    register_cnt: integer
+    size:           integer
   );
   port (
     clk_sys_i : in std_logic;
@@ -31,48 +32,80 @@ entity wb_scu_reg is
 end entity;
 
 architecture wb_scu_reg_arch of wb_scu_reg is
-  type channel_reg_type is array(0 to register_cnt-1) of std_logic_vector(15 downto 0);    -- array for register_count registers
-  signal s_shadow_regs:   channel_reg_type;
-  signal s_ext_regs:      channel_reg_type;
-  
-  signal rd_pulse1: std_logic;
-  signal rd_pulse2: std_logic;
-  signal copy_shadow: std_logic;
-  signal rd_active: std_logic;
-  
-  signal dtack:         std_logic;
-begin
 
-  wb_regs: process (clk_sys_i, rst_n_i, s_shadow_regs, slave_i)
+  signal rd_active:         std_logic;
+  signal dtack:             std_logic;
+  signal rd_active_dly:     std_logic;
+  signal dtack_dly:         std_logic;
+  constant scubus_width :   integer := 16;
+  constant wishbone_width : integer := 32;
+  signal s_adr_a :          std_logic_vector(15 downto 0);
+  signal s_scub_sel:        std_logic_vector(3 downto 0);
+  signal s_qa_o:            std_logic_vector(31 downto 0);
+  
+  signal wrpulse:           std_logic;
+  signal pulse1:            std_logic;
+  signal pulse2:            std_logic;
+  
+  
+  
+begin
+  
+  -- only 16Bit writes from scubus
+  with Adr_from_SCUB_LA(0) select s_scub_sel <=
+                                 "1100" when '0',
+                                 "0011" when '1';
+  with Adr_from_SCUB_LA(0) select Data_to_SCUB <=
+                                  s_qa_o(31 downto 16) when '0',
+                                  s_qa_o(15 downto 0) when '1';
+                          
+  s_adr_a <= std_logic_vector(unsigned(Adr_from_SCUB_LA) - Base_addr);
+  
+  write_pulse: process(clk_sys_i, Ext_Wr_active, Ext_Adr_Val)
   begin
     if rising_edge(clk_sys_i) then
-      -- It is vitally important that for each occurance of
-      --   (cyc and stb and not stall) there is (ack or rty or err)
-      --   sometime later on the bus.
-      --
-      -- This is an easy solution for a device that never stalls:
-      slave_o.ack <= slave_i.cyc and slave_i.stb;
-      slave_o.dat <= (others => '0');
-      
       if rst_n_i = '0' then
-        for I in 0 to register_cnt-1 loop
-          s_shadow_regs(I) <= (others => '0');
-        end loop;
+        pulse1 <= '0';
+        pulse2 <= '0';
       else
-        -- Detect a write to the register byte
-        if slave_i.cyc = '1' and slave_i.stb = '1' and
-          slave_i.we = '1' then
-            if slave_i.sel = x"3" then
-              s_shadow_regs(to_integer(unsigned(slave_i.adr(4 downto 1)))) <= slave_i.dat(15 downto 0);
-            elsif slave_i.sel = x"c" then
-              s_shadow_regs(to_integer(unsigned(slave_i.adr(4 downto 1)))) <= slave_i.dat(31 downto 16);
-            end if;
-        end if;
-        
-        slave_o.dat <= s_shadow_regs(to_integer(unsigned(slave_i.adr(4 downto 1)))) & s_shadow_regs(to_integer(unsigned(slave_i.adr(4 downto 1))));
+        pulse1 <= Ext_Wr_active;
+        pulse2 <= pulse1;
       end if;
     end if;
-   
+  end process;
+
+  wrpulse <= pulse1 and not pulse2;
+  
+  dpram:  generic_dpram
+  generic map (
+    g_data_width        => 32,
+    g_size              => size,
+    g_with_byte_enable  => true,
+    g_dual_clock        => false,
+    g_addr_conflict_resolution => "read_first")
+  port map (
+    -- port A
+    clka_i  => clk_sys_i,
+    bwea_i  => s_scub_sel,  
+    wea_i   => wrpulse and Ext_Adr_Val,
+    aa_i    => '0' & s_adr_a(f_log2_size(size)-1 downto 1),
+    da_i    => Data_from_SCUB_LA & Data_from_SCUB_LA,
+    qa_o    => s_qa_o,
+    
+    -- port B
+    clkb_i  => clk_sys_i,
+    bweb_i  => slave_i.sel,
+    web_i   => slave_i.we and slave_i.stb and slave_i.cyc,
+    ab_i    => "00" & slave_i.adr(f_log2_size(size)-1 downto 2),
+    db_i    => slave_i.dat,
+    qb_o    => slave_o.dat);
+
+  wb_regs: process (clk_sys_i, rst_n_i, slave_i)
+  begin
+    if rising_edge(clk_sys_i) then
+      -- This is an easy solution for a device that never stalls:
+      slave_o.ack <= slave_i.cyc and slave_i.stb; 
+    end if;  
   end process;
   
   slave_o.int <= '0';
@@ -80,26 +113,7 @@ begin
   slave_o.rty <= '0';
   slave_o.stall <= '0'; -- always ready
   
-  rd_pulse: process(clk_sys_i)
-  begin
-    if rising_edge(clk_sys_i) then
-      rd_pulse1 <= Ext_Rd_active;
-      rd_pulse2 <= rd_pulse1;
-    end if;
-  end process;
-
-  copy_shadow <= '1' when rd_pulse1 = '1' and rd_pulse2 = '0' else '0';
-
-  shadow_2_ext: process(clk_sys_i)
-  begin
-    if rising_edge(clk_sys_i) then
-      if copy_shadow = '1' then
-        for I in 0 to register_cnt-1 loop
-          s_ext_regs(I) <= s_shadow_regs(I);
-        end loop;
-      end if;
-    end if;
-  end process;
+  
   
   adr_decoder: process (clk_sys_i)
   begin
@@ -108,10 +122,12 @@ begin
       rd_active     <= '0';
       
       if Ext_Adr_Val = '1' then
-        if unsigned(Adr_from_SCUB_LA) >= Base_addr and unsigned(Adr_from_SCUB_LA) < Base_addr + register_cnt then
+        if unsigned(Adr_from_SCUB_LA) >= Base_addr and unsigned(Adr_from_SCUB_LA) < Base_addr + size then
           if Ext_Rd_active = '1' then
             dtack        <= '1';
             rd_active    <= '1';
+          elsif Ext_Wr_active = '1' then
+            dtack        <= '1';
           end if;
         end if;
       end if;
@@ -119,11 +135,16 @@ begin
     end if;
   end process adr_decoder;
   
-  user_rd_active <= rd_active;
-
-  Data_to_SCUB <= s_ext_regs(to_integer(unsigned(Adr_from_SCUB_LA))) when rd_active = '1' else
-                  x"0000";
-                  
-  Dtack_to_SCUB <= dtack;
+  rd_delay: process(clk_sys_i, rd_active, dtack)
+  begin
+    if rising_edge(clk_sys_i) then
+      rd_active_dly <= rd_active;
+      dtack_dly <= dtack;
+    end if;
+  end process;
+  
+  
+  user_rd_active <= rd_active_dly;
+  Dtack_to_SCUB <= dtack_dly;
 
 end architecture;

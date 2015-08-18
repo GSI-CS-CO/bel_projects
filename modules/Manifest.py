@@ -36,5 +36,6 @@ modules = {
     "simple_tag_decoder",
     "flash_loader",
     "pll",
+    "remote_update",
   ]
 }
