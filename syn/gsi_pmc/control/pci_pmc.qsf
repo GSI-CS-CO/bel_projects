@@ -333,6 +333,57 @@ set_location_assignment PIN_E21 -to pmc_serr_io
 set_location_assignment PIN_D21 -to pmc_inta_o
 set_location_assignment PIN_F18 -to pmc_req_o
 set_location_assignment PIN_E16 -to pmc_gnt_i
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_rst_i
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_busmode_io[1]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_busmode_io[2]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_busmode_io[3]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_buf_oe_o
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[31]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[30]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[29]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[28]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[27]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[26]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[25]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[24]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[23]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[22]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[21]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[20]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[19]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[18]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[17]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[16]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[15]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[14]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[13]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[12]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[11]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[10]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[9]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[8]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[7]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[6]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[5]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[4]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[3]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[2]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[1]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_ad_io[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_c_be_io[3]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_c_be_io[2]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_c_be_io[1]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_c_be_io[0]
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_trdy_io
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_irdy_io
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_stop_io
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_devsel_io
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_idsel_i
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_perr_io
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_serr_io
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_inta_o
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_req_o
+set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_gnt_i
 set_location_assignment PIN_AF23 -to status_led_o[6]
 set_location_assignment PIN_AC22 -to status_led_o[5]
 set_location_assignment PIN_AE19 -to status_led_o[1]
