@@ -275,6 +275,9 @@ package monster_pkg is
       pmc_perr_io            : inout std_logic := 'Z';
       pmc_serr_io            : inout std_logic := 'Z';
       pmc_inta_o             : out   std_logic;
+      pmc_req_o              : out   std_logic;
+      pmc_gnt_i              : in    std_logic := '1';
+
       -- g_en_pmc_ctrl
       pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0) := (others => '0');
       pmc_pb_i               : in    std_logic := '0';

@@ -331,8 +331,8 @@ set_location_assignment PIN_H21 -to pmc_idsel_i
 set_location_assignment PIN_J19 -to pmc_perr_io
 set_location_assignment PIN_E21 -to pmc_serr_io
 set_location_assignment PIN_D21 -to pmc_inta_o
-set_location_assignment bus -to pmc_req_o
-set_location_assignment arbiter -to pmc_gnt_i
+set_location_assignment PIN_F18 -to pmc_req_o
+set_location_assignment PIN_E16 -to pmc_gnt_i
 set_location_assignment PIN_AF23 -to status_led_o[6]
 set_location_assignment PIN_AC22 -to status_led_o[5]
 set_location_assignment PIN_AE19 -to status_led_o[1]
