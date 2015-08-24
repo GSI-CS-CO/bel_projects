@@ -57,6 +57,9 @@ use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
 use work.wb_serdes_clk_gen_pkg.all;
+use work.packet_pkg.all;
+use work.endpoint_pkg.all;
+
 
 entity monster is
   generic(
@@ -368,7 +371,7 @@ architecture rtl of monster is
   constant c_topm_eca_wbm   : natural := 7;
   
   -- required slaves
-  constant c_top_slaves     : natural := 27;
+  constant c_top_slaves     : natural := 28;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -398,6 +401,8 @@ architecture rtl of monster is
   constant c_tops_nau8811   : natural := 24;
   constant c_tops_psram     : natural := 25;
   constant c_tops_iocfg     : natural := 26;
+  -- packet generator
+  constant c_tops_packet    : natural := 27;
 
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -422,6 +427,7 @@ architecture rtl of monster is
     c_tops_ebm       => f_sdb_auto_device(c_ebm_sdb,                        true),
     c_tops_tlu       => f_sdb_auto_device(c_tlu_sdb,                        true),
     c_tops_eca_ctl   => f_sdb_auto_device(c_eca_sdb,                        true),
+    c_tops_packet    => f_sdb_auto_device(c_packet_gen_sdb, true),
     c_tops_eca_event => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
     c_tops_eca_aq    => f_sdb_auto_device(c_eca_queue_sdb,                  true),
     c_tops_CfiPFlash => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
@@ -526,7 +532,13 @@ architecture rtl of monster is
   signal eb_src_in     : t_wrf_source_in;
   signal eb_snk_out    : t_wrf_sink_out;
   signal eb_snk_in     : t_wrf_sink_in;
-  
+
+
+  signal wr_src_out    : t_wrf_source_out;
+  signal wr_src_in     : t_wrf_source_in;
+  signal wr_snk_out    : t_wrf_sink_out;
+  signal wr_snk_in     : t_wrf_sink_in;
+
   signal uart_usb : std_logic; -- from usb
   signal uart_mux : std_logic; -- either usb or external
   signal uart_wrc : std_logic; -- from wrc
@@ -603,7 +615,7 @@ architecture rtl of monster is
   
   signal  tag        : std_logic_vector(31 downto 0);
   signal  tag_valid  : std_logic;
-  
+  signal s_timestamps: t_txtsu_timestamp; 
   -- SCU bus signals
   ----------------------------------------------------------------------------------
   
@@ -1132,7 +1144,24 @@ begin
         fd_o      => s_usb_fd_o,
         fd_oen_o  => s_usb_fd_oen);
   end generate;
-  
+
+  Packet_generator : xwb_packet
+    port map(
+        clk_i               => clk_sys,
+        rst_n_i             => rstn_sys,
+   
+        wr_src_o            => wr_src_out,
+        wr_src_i            => wr_src_in,
+   
+        timestamps_i        => s_timestamps,
+        tm_tai_i            => tm_tai,
+        tm_cycle_i          => tm_cycles,
+   
+   
+        wb_ctrl_stat_slave_o  => top_cbar_master_i(c_tops_packet),
+        wb_ctrl_stat_slave_i  => top_cbar_master_o(c_tops_packet));
+
+
   wr_uart_o <= uart_wrc;
   uart_mux <= uart_usb and wr_uart_i;
   
@@ -1203,11 +1232,16 @@ begin
       slave_o              => wrc_slave_o,
       aux_master_o         => wrc_master_o,
       aux_master_i         => wrc_master_i,
-      wrf_src_o            => eb_snk_in,
-      wrf_src_i            => eb_snk_out,
-      wrf_snk_o            => eb_src_in,
-      wrf_snk_i            => eb_src_out,
-      tm_link_up_o         => open,
+
+      wrf_src_o            => wr_snk_in,
+      wrf_src_i            => wr_snk_out,
+      wrf_snk_o            => wr_src_in,
+      wrf_snk_i            => wr_src_out,
+
+      timestamps_o         => s_timestamps,
+      timestamps_ack_i     => '1',
+
+      tm_link_up_o          => open,
       tm_dac_value_o       => open,
       tm_dac_wr_o          => open,
       tm_clk_aux_lock_en_i => (others => '0'),
