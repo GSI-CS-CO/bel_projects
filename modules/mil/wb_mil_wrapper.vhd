@@ -160,10 +160,10 @@ slave_i.cyc <= access_LB and not cycle_finished;
 process (clk) 
 begin
   if (clk'event and clk='1') then
-    if Reset_Puls or not access_LB  then
+    if  Reset_Puls='1' or access_LB='0'  then
         cycle_finished <= '0';
     else
-      if  access_LB  and slave_o.ack then
+      if  access_LB='1'  and slave_o.ack='1' then
         cycle_finished <= '1'; -- first ack causes finish
       end if;
     end if;
@@ -183,10 +183,12 @@ begin
      conv_integer(unsigned(Adr_from_SCUB_LA)) <=    rd_wr_dly_timer_HW_a 
      ) then
      mil_reg_access  <= '1';
+     mil_ram_access  <= '0';
   elsif(
      conv_integer(unsigned(Adr_from_SCUB_LA)) >=  ev_filt_first_a  and
      conv_integer(unsigned(Adr_from_SCUB_LA)) <=  ev_filt_last_a 
      ) then
+      mil_reg_access <= '0';
       mil_ram_access <= '1';
   else
       mil_reg_access <= '0';
@@ -197,10 +199,10 @@ end process;
 
 --this mux handles read sources to have data for 1 additional clock present
 
-process (Adr_from_SCUB_LA,ack_stretched,slave_o, rd_latch_ev_timer, rd_latch_wait_timer,rd_latch_dly_timer,rd_latch) 
+process (Adr_from_SCUB_LA,ack_stretched,slave_o, rd_latch_ev_timer, rd_latch_wait_timer,rd_latch_dly_timer,rd_latch, mil_reg_access, mil_ram_access) 
 begin
 
-     if slave_o.ack  and (mil_reg_access or mil_ram_access )then  --for first few clocks
+     if slave_o.ack='1'  and (mil_reg_access='1' or mil_ram_access='1' )then  --for first few clocks
             -- get data direct from sources for quick response
             if    (conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_clr_ev_timer_a)    then
               Data_to_SCUB            <=  slave_o.dat(31 downto 16);
@@ -217,7 +219,7 @@ begin
             else
              Data_to_SCUB            <=  slave_o.dat(15 downto 0);
             end if;
-      elsif ack_stretched then     
+      elsif ack_stretched='1' then     
             -- get data from latch for rest of SCU Bus access cycle
             Data_to_SCUB            <=   rd_latch;
       else
@@ -229,15 +231,15 @@ end process;
 process (clk) 
 begin
   if (clk'event and clk='1') then
-    if Reset_Puls then
+    if Reset_Puls='1' then
       ack_stretched         <= '0';     
       rd_latch              <= (others=>'0');
       rd_latch_ev_timer     <= (others=>'0');
       rd_latch_wait_timer   <= (others=>'0');
       rd_latch_dly_timer    <= (others=>'0');
     else  
-      if Ext_Rd_active  and (mil_reg_access or mil_ram_access) then 
-        if slave_o.ack  or dly_buf_ack   then  
+      if Ext_Rd_active='1'  and (mil_reg_access='1' or mil_ram_access='1') then 
+        if slave_o.ack='1'  or dly_buf_ack='1'   then  
               --read of timer data (hw directly, lw thru latch)    
            if    (conv_integer(unsigned(Adr_from_SCUB_LA)) = rd_clr_ev_timer_a)   then
               rd_latch            <=  slave_o.dat(31 downto 16);
@@ -274,12 +276,12 @@ end process;
 process (clk) 
 begin
   if (clk'event and clk='1') then
-    if Reset_Puls then
+    if Reset_Puls='1' then
       wr_latch_dly_timer_hw <= ( others => '0'); 
       wr_latch_dly_timer_lw <= ( others => '0'); 
       dly_buf_ack <='0';
     else
-      if  Ext_Wr_Active then
+      if  Ext_Wr_Active='1' then
         case conv_integer(unsigned(Adr_from_SCUB_LA)) is 
          when rd_wr_dly_timer_LW_a =>
               wr_latch_dly_timer_lw <= Data_from_SCUB_LA;
