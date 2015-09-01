@@ -39,12 +39,14 @@ package packet_pkg is
 
   type t_pg_ctrl_reg is
     record
-      en_pg       : std_logic;
-      mode        : std_logic_vector(1 downto 0);
-      payload     : std_logic_vector(15 downto 0);
-      rate        : std_logic_vector(31 downto 0);
-      udp         : std_logic_vector(7 downto 0);
-      eth_hdr     : t_eth_frame_header;
+      en_pg              : std_logic;
+      mode               : std_logic_vector(1 downto 0);
+      random_rate_time   : std_logic_vector(27 downto 0);
+      random_fix         : std_logic_vector(3 downto 0);
+      payload            : std_logic_vector(15 downto 0);
+      rate               : std_logic_vector(31 downto 0);
+      udp                : std_logic_vector(7 downto 0);
+      eth_hdr            : t_eth_frame_header;
   end record;
 
   type t_pg_stat_reg is
@@ -55,6 +57,7 @@ package packet_pkg is
 
   type t_pg_state is
     record
+      idle             : std_logic;
       gen_con_packet   : std_logic;
       gen_dis_packet   : std_logic;
       cyc_ended        : std_logic;
@@ -90,14 +93,17 @@ package packet_pkg is
     count           => x"00000000");
 
   constant c_pg_ctrl_default    : t_pg_ctrl_reg   := (
-    en_pg       => '0',
-    mode        => "00",
-    payload     => x"01f4",
-    rate        => x"00000404",
-    udp         => x"11",
-    eth_hdr     => c_eth_frame_header_default);
+    en_pg            => '0',
+    mode             => "00",
+    random_rate_time => x"3B9ACA0",
+    random_fix       => "0000",
+    payload          => x"01f4",
+    rate             => x"00000404",
+    udp              => x"11",
+    eth_hdr          => c_eth_frame_header_default);
 
   constant c_pg_state_default   : t_pg_state      := (
+    idle            => '0',
     gen_con_packet  => '0',
 	  gen_dis_packet  => '0',
     cyc_ended       => '0',

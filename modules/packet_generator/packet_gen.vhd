@@ -7,6 +7,7 @@ use work.wishbone_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.packet_pkg.all;
 use work.endpoint_pkg.all;
+use work.lfsr_pkg.all;
 
 entity packet_gen is
 port (
@@ -41,18 +42,25 @@ architecture rtl of packet_gen is
   signal s_hdr_cntr          : integer := 0;
   signal s_load_cntr         : integer := 0;   
   signal s_rate_max          : integer := 0;
+  signal s_rate_label       : std_logic := '1';
+  signal s_rate_random_cont  : integer := 0;
   signal s_load_max          : integer := 0;
   signal s_rate_wb           : std_logic := '1';
+  signal s_rate_time        : integer := 62500000;
+
   signal s_old_rate          : integer := 0;
   signal s_random_seq        : integer := 0; 
   signal s_random_ethtype    : integer := 0; 
-  signal s_random_rate       : integer := 0; 
+  signal s_random_pkt1       : integer := 0; 
+  signal s_random_pkt2       : integer := 0; 
   signal s_random_payload    : integer := 0; 
   signal s_ether_hdr         : t_eth_frame_header;
   signal s_random_seq_o      : std_logic_vector(31 downto 0);
   signal s_random_ethtype_o  : std_logic_vector(2 downto 0);
-  signal s_random_rate_o     : std_logic_vector(25 downto 0);
+  signal s_random_pkt1_o     : std_logic_vector(15 downto 0);
+  signal s_random_pkt2_o     : std_logic_vector(13 downto 0);
   signal s_random_payload_o  : std_logic_vector(10 downto 0);
+  signal s_pg_fsm_IDLE       : std_logic := '0';
   signal s_first             : integer := 0;
   signal s_pkg_cntr          : integer := 0; 
   signal s_con_count         : integer := 0; 
@@ -74,6 +82,52 @@ architecture rtl of packet_gen is
 
   signal s_gen_con_packet    : std_logic;
   signal s_gen_dis_packet    : std_logic;
+
+  type lut1 is array ( 0 to 3) of std_logic_vector(47 downto 0);
+  constant des_mac_lut : lut1 := (
+    0 => x"123456789021",
+    1 => x"222222222222",
+    2 => x"333333333333",
+    3 => x"444444444444");
+
+  type lut2 is array ( 0 to 7) of std_logic_vector(15 downto 0);
+  constant ether_type_lut : lut2 := (
+    0 => x"0800",
+    1 => x"88b7",
+    2 => x"86dd",
+    3 => x"8100",
+    4 => x"8914",
+    5 => x"8137",
+    6 => x"88b7",
+    7 => x"88cc");
+ 
+  Procedure rdm_fix_cfg (x: in std_logic_vector(3 downto 0):="0000"; mac_address: out std_logic_vector (47 downto 0); ether_type: out std_logic_vector (15 downto 0); payload_length: out integer) is
+  begin
+
+    -- mac address from random or wb
+    if (x(0) = '0') then
+      mac_address(47 downto 0) := s_ctrl_reg.eth_hdr.eth_des_addr;
+    else
+      mac_address(47 downto 0) := des_mac_lut(s_random_seq mod 4);
+    end if;
+    -- ether type from random(1) or wb(0)
+    if (x(1) = '0') then
+      ether_type(15 downto 0) := s_ctrl_reg.eth_hdr.eth_etherType;
+    else
+     -- ether_type(15 downto 0) := ether_type_lut(s_random_seq mod 5); 
+     ether_type(15 downto 0) := ether_type_lut(s_random_ethtype);     
+    end if;
+    -- payload length from random(1) or wb(0)
+    if (x(2) = '0') then
+      payload_length := to_integer(unsigned(s_ctrl_reg.payload));	
+    else
+      if (0 <= s_random_payload and s_random_payload <= 1454) then
+	payload_length := (s_random_payload + 46)/2;
+      else
+	payload_length := (s_random_payload - 1000)/2;
+      end if;
+    end if;
+  END PROCEDURE rdm_fix_cfg;
 
   begin
   -- default mac add  
@@ -99,13 +153,23 @@ architecture rtl of packet_gen is
               if( s_ctrl_reg.en_pg = '1'and s_ctrl_reg.mode = "01") then 
                 s_pg_fsm <= DISCRETE;
               else
-                s_pg_fsm <= IDLE;
+                -- package generator in continuous and discrete alternate pattern
+                if( s_ctrl_reg.en_pg = '1'and s_ctrl_reg.mode = "10") then 
+                  s_pg_fsm <= CONTINUOUS;
+                  -- lasting time of continuous mode in alternate pattern 
+                  s_con_time <= 62500000 + (s_random_seq mod 250000001);
+                  s_con_count<= 0;
+                else
+                  s_pg_fsm <= IDLE;
+                end if;
               end if;
+              s_pg_state.idle           <= '1';
+              s_pg_state.gen_con_packet <= '0';
+              s_pg_state.gen_dis_packet <= '0';
+              s_pg_state.halt           <= '0';
             end if;
-            s_pg_state.gen_con_packet <= '0';
-            s_pg_state.gen_dis_packet <= '0';
-            s_pg_state.halt           <= '0';
           when CONTINUOUS =>
+            s_pg_state.idle      <= '0';
             s_pg_state.new_start <= '0';
             -- stop packet generator
             if( s_ctrl_reg.en_pg = '0') then 
@@ -120,16 +184,38 @@ architecture rtl of packet_gen is
                 else
                   s_pg_fsm <= CONTINUOUS;
                 end if;
-              else
-              -- continue continuous mode
-                s_pg_fsm <= CONTINUOUS;
+                else
+                -- switch to the alternate pattern
+                  if( s_ctrl_reg.mode = "10") then 
+                    -- gaurantee continuous mode run a random time before switch
+                    if s_con_time /= s_con_count then
+                      s_pg_fsm <= CONTINUOUS;
+                      s_con_count<= s_con_count + 1;
+                    else
+                      -- gaurantee a whole packet is transfered before switch to discrete mode
+                      if(s_pg_state.cyc_ended = '1') then
+                        s_pg_state.new_start <= '1';
+                        s_pg_fsm <= DISCRETE;
+                        s_dis_time <= 312500000 + (s_random_seq mod 312500001);
+                        s_dis_count<= 0;
+                      else
+                        s_pg_fsm <= CONTINUOUS;
+                      end if; 
+                    end if;
+                else
+                  -- continue continuous mode
+                  s_pg_fsm <= CONTINUOUS;
+                  s_con_time <= 62500000+ (s_random_seq mod 250000001);
+                  s_con_count<= 0;
+                end if;
               end if;
-            s_pg_state.gen_con_packet <= '1';
-            s_pg_state.gen_dis_packet <= '0';
-            s_pg_state.halt           <= '0';
+              s_pg_state.gen_con_packet <= '1';
+              s_pg_state.gen_dis_packet <= '0';
+              s_pg_state.halt           <= '0';
             end if;
           when DISCRETE =>
           -- stop packet generator
+            s_pg_state.idle      <= '0';
             s_pg_state.new_start <= '0';
             if( s_ctrl_reg.en_pg = '0') then 
               s_pg_fsm <= DIS_HALTING;                     
@@ -144,8 +230,29 @@ architecture rtl of packet_gen is
                   s_pg_fsm <= DISCRETE;
                 end if;
               else
-                -- continue continuous mode
-                s_pg_fsm <= DISCRETE;
+                -- switch to the alternate pattern
+                if ( s_ctrl_reg.mode = "10") then 
+                  -- gaurantee discrete mode run a random time before switch
+                  if s_dis_time /= s_dis_count then
+                    s_pg_fsm  <= DISCRETE;
+                    s_dis_count <= s_dis_count + 1;
+                  else
+                    -- gaurantee a whole packet is transfered before switch to discrete mode
+                    if(s_pg_state.cyc_ended = '1') then
+                      s_pg_fsm <= CONTINUOUS;
+                      s_con_time <= 62500000+ (s_random_seq mod 250000001);
+                      s_con_count<= 0;
+                      s_pg_state.new_start <= '1';
+                    else
+                      s_pg_fsm <= DISCRETE;
+                    end if; 
+                  end if;
+                else
+                  --continue continuous mode
+                  s_pg_fsm <= DISCRETE;
+                  s_dis_time <= 312500000 + (s_random_seq mod 312500001);
+                  s_dis_count<= 0;
+                end if;
               end if;
               s_pg_state.gen_con_packet <= '0';
               s_pg_state.gen_dis_packet <= '1';
@@ -181,7 +288,10 @@ architecture rtl of packet_gen is
 
   -- Frame Generation
   frame_gen : process(clk_i)
-    variable v_payload_length  : integer;
+  variable v_mac_address             : std_logic_vector(47 downto 0);
+  variable v_ether_type              : std_logic_vector(15 downto 0);
+  variable v_payload_length          : integer;
+
   begin
     if rising_edge(clk_i) then       
       if rst_n_i = '0' then
@@ -204,31 +314,54 @@ architecture rtl of packet_gen is
 
         s_gen_con_packet <= s_pg_state.gen_con_packet;
         s_gen_dis_packet <= s_pg_state.gen_dis_packet;
+        s_pg_fsm_IDLE    <= s_pg_state.idle;
 
-        if (s_gen_con_packet = '0' and s_pg_state.gen_con_packet = '1') or 
-          (s_gen_dis_packet = '0' and s_pg_state.gen_dis_packet = '1') then
+        if (s_gen_con_packet = '0' and s_pg_state.gen_con_packet = '1'and
+                s_pg_fsm_IDLE = '1') or 
+          (s_gen_dis_packet = '0' and s_pg_state.gen_dis_packet = '1' and
+          s_pg_fsm_IDLE = '1') then
           s_count_num     <= 0;
         elsif s_frame_fsm = INIT_HDR and (s_pg_state.gen_con_packet = '1' or  s_pg_state.gen_dis_packet = '1' ) then
           s_count_num     <= s_count_num + 1;
           s_count_num_i   <=std_logic_vector(to_unsigned(s_count_num,32));
         end if;
 
-
-        if s_rate_wb = '1' and (s_pg_state.gen_con_packet = '1' or  s_pg_state.gen_dis_packet = '1' ) then
+        if s_ctrl_reg.random_fix(3) = '0' and s_rate_wb = '1' and
+                (s_pg_state.gen_con_packet = '1' or  s_pg_state.gen_dis_packet =
+                '1' )then
           s_rate_max <= to_integer (unsigned(s_ctrl_reg.rate));
+          s_rate_random_cont <= 0;
+        else
+          if s_ctrl_reg.random_fix(3) = '1' and s_rate_label = '1' then
+            --gaurantee the runing time for a random rate value
+            if s_rate_random_cont = 0 then
+              s_rate_max <= 62500000/(s_random_pkt1+s_random_pkt2);
+              s_rate_time<=
+              to_integer(unsigned(s_ctrl_reg.random_rate_time));
+              s_rate_random_cont <= s_rate_random_cont + 1;
+            else
+            s_rate_random_cont <= s_rate_random_cont + 1;
+            end if;
+          else
+            s_rate_random_cont <= s_rate_random_cont + 1;
+          end if;
         end if;
+
 
         if s_frame_fsm = INIT_HDR and (s_pg_state.gen_con_packet = '1' or s_pg_state.gen_dis_packet = '1' ) then
           s_frame_fsm      	         <= ETH_HDR;
           s_rate_wb                  <= '0';
           s_pg_state.cyc_ended       <= '0';
-          s_ether_hdr. eth_des_addr  <= s_ctrl_reg.eth_hdr.eth_des_addr;
-          s_ether_hdr. eth_etherType <= s_ctrl_reg.eth_hdr.eth_etherType;
-          s_hdr_reg                  <= f_eth_hdr(s_ether_hdr);
-          s_load_max                 <= to_integer(unsigned(s_ctrl_reg.payload));
           -- get time when Ether Header leave packet generator
           s_tm_tai_i                 <= pg_tm_tai_i;
           s_tm_cycle_i               <= pg_tm_cycle_i;
+          -- s_ether_hdr. eth_des_addr  <= des_mac_lut(i mod 4);
+          rdm_fix_cfg(s_ctrl_reg.random_fix,v_mac_address,v_ether_type,v_payload_length);
+          s_ether_hdr. eth_des_addr  <= v_mac_address;
+          s_ether_hdr. eth_etherType <= v_ether_type;
+          s_load_max                 <= v_payload_length;
+          s_hdr_reg                  <= f_eth_hdr(s_ether_hdr);
+
         end if;
 
         if s_frame_fsm = ETH_HDR and (s_pg_state.gen_con_packet = '1' or
@@ -321,6 +454,7 @@ architecture rtl of packet_gen is
           --gaurantee change pattern 
           if s_pg_state.new_start = '1' then
             s_frame_fsm        <= INIT_HDR;
+            s_rate_random_cont <= 0;
             s_rate_wb          <= '1';
           end if;
         end if;
@@ -349,6 +483,9 @@ architecture rtl of packet_gen is
             s_rate_con          <= 0;  
             s_frame_fsm         <= INIT_HDR;
             s_rate_wb           <= '1';
+            if s_rate_random_cont >= s_rate_time then
+              s_rate_random_cont <= 0;
+            end if;
           end if;
         else
           s_rate_con            <= 0;
@@ -356,10 +493,6 @@ architecture rtl of packet_gen is
 
         -- packet generator works on the discrete mode
         if s_pg_state.gen_dis_packet = '1' then --discrete mode begin
-          if s_rate_wb = '1' then
-            --get the rate from wb 
-            s_rate_max <= to_integer (unsigned(s_ctrl_reg.rate));
-          end if;
 
           if s_rate_dis /= 62500000 then
             case s_frame_fsm is
@@ -373,6 +506,9 @@ architecture rtl of packet_gen is
               if (s_pkg_cntr * s_rate_max >= 62500000 ) then
               s_frame_fsm     <= IDLE;
               s_rate_wb       <= '1';
+                if s_rate_random_cont >= s_rate_time then
+                  s_rate_random_cont <= 0;
+                end if;
               else
               s_frame_fsm     <= INIT_HDR ;
               end if;
@@ -385,11 +521,11 @@ architecture rtl of packet_gen is
           else
             s_old_rate          <= s_rate_max;
             s_rate_dis        	<= 0;--configure rate
-            s_pkg_cntr    			<= 0;
-            s_frame_fsm   			<= INIT_HDR;
+            s_pkg_cntr    	<= 0;
+            s_frame_fsm   	<= INIT_HDR;
           end if;
         else
-          s_rate_dis       		<= 0;
+          s_rate_dis          <= 0;
           s_pkg_cntr          <= 0;
         end if;--discrete mode end
 
@@ -439,4 +575,50 @@ architecture rtl of packet_gen is
       end if;
     end process;
 
-  end rtl;
+  -- random sequence for mac address/ether type
+  Random_seq : LFSR_GENERIC 
+  generic map(Width    => 32)
+  port map(
+    clock      => clk_i,
+    resetn     => rst_n_i,
+    random_out => s_random_seq_o);
+  s_random_seq <= to_integer(unsigned(s_random_seq_o));
+
+  -- packet num: packets from 1 to 82562 packets    
+  Packet_num1: LFSR_GENERIC 
+  generic map(Width    => 16)
+  port map(
+    clock      => clk_i,
+    resetn     => rst_n_i,
+    random_out => s_random_pkt1_o);
+    s_random_pkt1 <= to_integer(unsigned(s_random_pkt1_o));
+ 
+  -- packet num: packets num from 1 to 82562 packets    
+  Packet_num2: LFSR_GENERIC 
+  generic map(Width    => 14)
+  port map(
+    clock      => clk_i,
+    resetn     => rst_n_i,
+    random_out => s_random_pkt2_o);
+    s_random_pkt2 <= to_integer(unsigned(s_random_pkt2_o));
+
+  -- random sequence for mac ether type
+  Ethtype_seq : LFSR_GENERIC 
+  generic map(Width    => 3)
+  port map(
+    clock      => clk_i,
+    resetn     => rst_n_i,
+    random_out => s_random_ethtype_o);
+  s_random_ethtype <= to_integer(unsigned(s_random_ethtype_o));
+ 
+  -- random sequence for payload
+  Payload_seq : LFSR_GENERIC 
+  generic map(Width    => 11)
+  port map(
+    clock      => clk_i,
+    resetn     => rst_n_i,
+    random_out => s_random_payload_o);
+  s_random_payload <= to_integer(unsigned(s_random_payload_o)); 
+  end rtl;  
+ 
+

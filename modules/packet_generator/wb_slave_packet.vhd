@@ -5,9 +5,14 @@
 --! 0x0C, wr, destination address lb
 --! 0x10, wr, generated frames
 --! 0x14, wr, set about packet generator rate
---! 0x18, wr, choose packet mode 0x0:continuous  0x1:discrete 
+--! 0x18, wr, choose packet mode 0x0:continuous  0x1:discrete 0x2:alternate 
 --! 0x1c,  r, counter valuee 
 --! 0x20, wr, set protocol (default UDP) 
+--! 0x24, wr, 0x0 mac, ether type, payload length, rate from wb; 0x1 mac from
+--!           random sequence; 0x2 ether type from random sequence; 0x4 payload 
+--!           from random sequence; 0x8 rate from random sequence
+--! 0x28, wr, set a specified rate running time at random mode
+
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -103,6 +108,19 @@ begin
                end if;
                wb_slave_o.dat(7 downto 0) 		<= s_pg_ctrl.udp;
                wb_slave_o.dat(31 downto 8) 		<= (others => '0');
+             when "1001"   => -- choose packet generator mac, ether type,length, rate from random or fixed 0x24
+               if wb_slave_i.we = '1' then
+                 s_pg_ctrl.random_fix(3 downto 0) <= wb_slave_i.dat(3 downto 0);
+               end if;
+               wb_slave_o.dat(3 downto 0)      <= s_pg_ctrl.random_fix(3 downto 0);
+               wb_slave_o.dat(31 downto 4)     <= (others => '0');
+             when "1010"   => -- set random rate last time 0x28
+               if wb_slave_i.we = '1' then
+                 s_pg_ctrl.random_rate_time(27 downto 0) <= wb_slave_i.dat(27 downto 0);
+               end if;
+               wb_slave_o.dat(27 downto 0)       <= s_pg_ctrl.random_rate_time(27 downto 0);
+               wb_slave_o.dat(31 downto 28)      <= (others => '0');
+
              when others =>
            end case;
          end if;      
