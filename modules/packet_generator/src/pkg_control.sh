@@ -17,8 +17,7 @@ do
     # sleep h(hour) m(minute) s(second) d(day) 
     sleep 1s
     sudo eb-write $dev 0x10000/4 0x0
-    echo "The counter for the bandwidth of $((bandwidth)) and payload of
-    $((payload))" >> $log_file
+    echo "The counter for the bandwidth of $((bandwidth))bps and payload of $((payload))bytes" >> $log_file
     sudo eb-read $dev 0x1001c/4 >>$log_file
   done
 done
