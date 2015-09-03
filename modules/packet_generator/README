@@ -1,14 +1,20 @@
 Readme for Packet generator, J.bai@gsi.de  C.prados@gsi.de 
 =======================================================================
+
 The packet contents:
-0x0  - 0x1   0xbeefbeef
-0x2  - 0x3   0xbeef+protocol(default 0x11 UDP)
-0x4  - 0x8   Timstamp when the packet goes through the WR core
-0x9          0x0000
-0xa  - 0xe   Timestamp when the packet leaves the packet generator
-0x10 - 0x11  0xdeabbeef
-0x12 - 0x13  Packet counter
-0x14 - 0x14  Packet length
+0x1  - 0x2   0xbeefbeef
+0x3  - 0x4   0xbeef+protocol(default 0x11 UDP)
+#Time info when the last packet goes throgh the WR core
+0x5  - 0x6   Timstamp 
+0x7  - 0x9   0x00+tai
+0xa          0x0000
+#Time info when the current packet leaves the packet generator
+0xb  - 0xc   0x0+cycle
+0xd  - 0xf   0x00+tai
+0x10         0x0000
+0x11 - 0x12  0xdeadbeef
+0x13 - 0x14  Packet counter
+0x15 - 0x16  Packet length
 ========================================================================
 Packet Configuration
 pkg_gen_conf.sh
