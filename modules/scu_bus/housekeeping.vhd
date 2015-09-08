@@ -14,7 +14,7 @@ entity housekeeping is
           );
   port (
         clk_sys:            in std_logic;
-        clk_20Mhz:          in std_logic;
+        clk_40Mhz:          in std_logic;
         n_rst:              in std_logic;
 
         ADR_from_SCUB_LA:   in std_logic_vector(15 downto 0);
@@ -74,24 +74,40 @@ architecture housekeeping_arch of housekeeping is
   signal lm32_rstn:        std_logic;
 
   -- Top crossbar layout
-  constant c_slaves     : natural := 5;
+  constant c_slaves     : natural := 6;
   constant c_masters    : natural := 2;
   constant c_dpram_size : natural := 32768; -- in 32-bit words (64KB)
-  constant c_layout     : t_sdb_record_array(c_slaves-1 downto 0) :=
-   (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size),  x"00000000"),
-    1 => f_sdb_embed_device(c_xwb_owm,                  x"00100600"),
-    2 => f_sdb_embed_device(c_xwb_uart,                 x"00100700"),
-    3 => f_sdb_embed_device(c_xwb_scu_reg,              x"00100800"),
-    4 => f_sdb_embed_device(c_wb_rem_upd_sdb,           x"00100900"));
-  constant c_sdb_address : t_wishbone_address := x"00100000";
+  constant c_layout_req     : t_sdb_record_array(c_slaves-1 downto 0) :=
+   (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size), x"00000000"),
+    1 => f_sdb_embed_device(c_xwb_owm,                 x"00020000"),
+    2 => f_sdb_embed_device(c_xwb_uart,                x"00020100"),
+    3 => f_sdb_embed_device(c_xwb_scu_reg,             x"00020200"),
+    4 => f_sdb_embed_device(c_wb_rem_upd_sdb,          x"00020500"),
+    5 => f_sdb_embed_device(c_wb_asmi_sdb,             x"02000000"));
+  
+  constant c_top_layout  : t_sdb_record_array(c_slaves-1 downto 0) := f_sdb_auto_layout(c_layout_req);
+  constant c_sdb_address : t_wishbone_address := x"3FFFE000";
 
   signal cbar_slave_i : t_wishbone_slave_in_array (c_masters-1 downto 0);
   signal cbar_slave_o : t_wishbone_slave_out_array(c_masters-1 downto 0);
   signal cbar_master_i : t_wishbone_master_in_array(c_slaves-1 downto 0);
   signal cbar_master_o : t_wishbone_master_out_array(c_slaves-1 downto 0);
   
-  signal slave_i : t_wishbone_slave_in;
-  signal slave_o : t_wishbone_slave_out;
+  signal aru_i : t_wishbone_slave_in;
+  signal aru_o : t_wishbone_slave_out;
+  
+  signal asmi_i : t_wishbone_slave_in;
+  signal asmi_o : t_wishbone_slave_out;
+  
+  -- asmi interface, needed for pof check
+  signal asmi_busy       :  std_logic;
+  signal asmi_data_valid :  std_logic;
+  signal asmi_dataout    :  std_logic_vector(7 downto 0);
+  signal asmi_addr_ext   :  std_logic_vector(23 downto 0);
+  signal asmi_rden_ext   :  std_logic;
+  signal asmi_read_ext   :  std_logic;
+  signal asmi_to_ext     :  std_logic;
+  
 
 begin
 
@@ -102,7 +118,7 @@ begin
      g_num_slaves => c_slaves,
      g_registered => true,
      g_wraparound => false, -- Should be true for nested buses
-     g_layout => c_layout,
+     g_layout => c_layout_req,
      g_sdb_addr => c_sdb_address)
    port map(
      clk_sys_i => clk_sys,
@@ -224,7 +240,8 @@ begin
   --------------------------------------------
   -- clock crossing from sys clk to clk_20Mhz
   --------------------------------------------
-   cross_systo20 : xwb_clock_crossing
+   cross_systoaru : xwb_clock_crossing
+    generic map ( g_size => 32)
     port map(
       -- Slave control port
       slave_clk_i    => clk_sys,
@@ -232,10 +249,10 @@ begin
       slave_i        => cbar_master_o(4),
       slave_o        => cbar_master_i(4),
       -- Master reader port
-      master_clk_i   => clk_20Mhz,
+      master_clk_i   => clk_40Mhz,
       master_rst_n_i => n_rst,
-      master_i       => slave_o,
-      master_o       => slave_i);
+      master_i       => aru_o,
+      master_o       => aru_i);
   
   
   -----------------------------------------
@@ -243,13 +260,59 @@ begin
   -----------------------------------------
   wb_aru: wb_remote_update
     port map (
-      clk_sys_i => clk_20Mhz,
+      clk_sys_i => clk_40Mhz,
       rst_n_i   => n_rst,
       
-      slave_i      =>  slave_i,
-      slave_o      =>  slave_o);
-    
+      slave_i      =>  aru_i,
+      slave_o      =>  aru_o,
+      
+      -- asmi interface, needed for pof check
+      asmi_busy       => asmi_busy,
+      asmi_data_valid => asmi_data_valid,
+      asmi_dataout    => asmi_dataout,
+      asmi_addr       => asmi_addr_ext,
+      asmi_rden       => asmi_rden_ext,
+      asmi_read       => asmi_read_ext,
+      asmi_to_aru     => asmi_to_ext);
+      
+  --------------------------------------------
+  -- clock crossing from sys clk to clk_20Mhz
+  --------------------------------------------
+   cross_systoasmi : xwb_clock_crossing
+    generic map ( g_size => 32)
+    port map(
+      -- Slave control port
+      slave_clk_i    => clk_sys,
+      slave_rst_n_i  => n_rst,
+      slave_i        => cbar_master_o(5),
+      slave_o        => cbar_master_i(5),
+      -- Master reader port
+      master_clk_i   => clk_40Mhz,
+      master_rst_n_i => n_rst,
+      master_i       => asmi_o,
+      master_o       => asmi_i);
   
+  
+  -----------------------------------------
+  -- wb interface for altera remote update
+  -----------------------------------------
+  asmi: wb_asmi
+    port map (
+      clk_sys_i => clk_40Mhz,
+      rst_n_i   => n_rst,
+      
+      slave_i      =>  asmi_i,
+      slave_o      =>  asmi_o,
+      
+      -- asmi interface, needed for pof check
+      asmi_busy         => asmi_busy,
+      asmi_data_valid   => asmi_data_valid,
+      asmi_dataout      => asmi_dataout,
+      asmi_addr_ext     => asmi_addr_ext,
+      asmi_rden_ext     => asmi_rden_ext,
+      asmi_read_ext     => asmi_read_ext,
+      -- needed for multiplexing
+      asmi_to_ext       => asmi_to_ext);  
       
       
 

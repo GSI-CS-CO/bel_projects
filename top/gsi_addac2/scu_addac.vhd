@@ -246,7 +246,7 @@ component IO_4x8
   signal  clk_switch_intr:        std_logic;
   
   signal  signal_tap_clk_250mhz: std_logic;
-  signal  clk_20Mhz:             std_logic;
+  signal  clk_40Mhz:             std_logic;
 
   
   --signal irqcnt:  unsigned(12 downto 0);
@@ -285,7 +285,7 @@ component IO_4x8
       Rd_Activ                => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
       Dtack                   => clk_switch_dtack,
       signal_tap_clk_250mhz   => signal_tap_clk_250mhz,
-      clk_20Mhz               => clk_20Mhz
+      clk_40Mhz               => clk_40Mhz
       );
     
 
@@ -375,7 +375,7 @@ generic map (
   Base_addr => c_housekeeping_base)
 port map (
   clk_sys   => clk_sys,
-  clk_20Mhz => clk_20Mhz,
+  clk_40Mhz => clk_40Mhz,
   n_rst     => nPowerup_Res,
 
   ADR_from_SCUB_LA  => ADR_from_SCUB_LA,

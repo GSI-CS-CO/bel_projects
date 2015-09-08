@@ -33,7 +33,7 @@
 --applicable agreement for further details.
 
 
---altasmi_parallel CBX_AUTO_BLACKBOX="ALL" DATA_WIDTH="STANDARD" DEVICE_FAMILY="Arria II GX" EPCS_TYPE="EPCS128" PAGE_SIZE=1 PORT_BULK_ERASE="PORT_UNUSED" PORT_DIE_ERASE="PORT_UNUSED" PORT_EN4B_ADDR="PORT_UNUSED" PORT_EX4B_ADDR="PORT_UNUSED" PORT_FAST_READ="PORT_UNUSED" PORT_ILLEGAL_ERASE="PORT_UNUSED" PORT_ILLEGAL_WRITE="PORT_UNUSED" PORT_RDID_OUT="PORT_UNUSED" PORT_READ_ADDRESS="PORT_UNUSED" PORT_READ_DUMMYCLK="PORT_UNUSED" PORT_READ_RDID="PORT_UNUSED" PORT_READ_SID="PORT_UNUSED" PORT_READ_STATUS="PORT_UNUSED" PORT_SECTOR_ERASE="PORT_UNUSED" PORT_SECTOR_PROTECT="PORT_UNUSED" PORT_SHIFT_BYTES="PORT_UNUSED" PORT_WREN="PORT_UNUSED" PORT_WRITE="PORT_UNUSED" USE_ASMIBLOCK="ON" USE_EAB="ON" WRITE_DUMMY_CLK=0 addr busy clkin data_valid dataout rden read reset INTENDED_DEVICE_FAMILY="Arria II GX" ALTERA_INTERNAL_OPTIONS=SUPPRESS_DA_RULE_INTERNAL=C106
+--altasmi_parallel CBX_AUTO_BLACKBOX="ALL" DATA_WIDTH="STANDARD" DEVICE_FAMILY="Arria II GX" EPCS_TYPE="EPCS128" PAGE_SIZE=1 PORT_BULK_ERASE="PORT_UNUSED" PORT_DIE_ERASE="PORT_UNUSED" PORT_EN4B_ADDR="PORT_UNUSED" PORT_EX4B_ADDR="PORT_UNUSED" PORT_FAST_READ="PORT_USED" PORT_ILLEGAL_ERASE="PORT_UNUSED" PORT_ILLEGAL_WRITE="PORT_UNUSED" PORT_RDID_OUT="PORT_USED" PORT_READ_ADDRESS="PORT_UNUSED" PORT_READ_DUMMYCLK="PORT_UNUSED" PORT_READ_RDID="PORT_USED" PORT_READ_SID="PORT_UNUSED" PORT_READ_STATUS="PORT_USED" PORT_SECTOR_ERASE="PORT_UNUSED" PORT_SECTOR_PROTECT="PORT_UNUSED" PORT_SHIFT_BYTES="PORT_USED" PORT_WREN="PORT_UNUSED" PORT_WRITE="PORT_UNUSED" USE_ASMIBLOCK="ON" USE_EAB="ON" WRITE_DUMMY_CLK=0 addr busy clkin data_valid dataout fast_read rden rdid_out read_rdid read_status reset shift_bytes status_out INTENDED_DEVICE_FAMILY="Arria II GX" ALTERA_INTERNAL_OPTIONS=SUPPRESS_DA_RULE_INTERNAL=C106
 --VERSION_BEGIN 13.1 cbx_a_gray2bin 2013:10:17:04:07:49:SJ cbx_a_graycounter 2013:10:17:04:07:49:SJ cbx_altasmi_parallel 2013:10:17:04:07:49:SJ cbx_altdpram 2013:10:17:04:07:49:SJ cbx_altsyncram 2013:10:17:04:07:49:SJ cbx_arriav 2013:10:17:04:07:49:SJ cbx_cyclone 2013:10:17:04:07:49:SJ cbx_cycloneii 2013:10:17:04:07:49:SJ cbx_fifo_common 2013:10:17:04:07:49:SJ cbx_lpm_add_sub 2013:10:17:04:07:49:SJ cbx_lpm_compare 2013:10:17:04:07:49:SJ cbx_lpm_counter 2013:10:17:04:07:49:SJ cbx_lpm_decode 2013:10:17:04:07:49:SJ cbx_lpm_mux 2013:10:17:04:07:49:SJ cbx_mgl 2013:10:17:04:34:36:SJ cbx_nightfury 2013:10:17:04:07:49:SJ cbx_scfifo 2013:10:17:04:07:49:SJ cbx_stratix 2013:10:17:04:07:49:SJ cbx_stratixii 2013:10:17:04:07:49:SJ cbx_stratixiii 2013:10:17:04:07:49:SJ cbx_stratixv 2013:10:17:04:07:49:SJ cbx_util_mgl 2013:10:17:04:07:49:SJ  VERSION_END
 
  LIBRARY altera_mf;
@@ -42,11 +42,11 @@
  LIBRARY arriaii;
  USE arriaii.all;
 
---synthesis_resources = a_graycounter 3 arriaii_asmiblock 1 lut 6 mux21 1 reg 66 
+--synthesis_resources = a_graycounter 3 arriaii_asmiblock 1 lut 6 mux21 2 reg 97 
  LIBRARY ieee;
  USE ieee.std_logic_1164.all;
 
- ENTITY  altasmi_altasmi_parallel_76h2 IS 
+ ENTITY  altasmi_altasmi_parallel_rsl2 IS 
 	 PORT 
 	 ( 
 		 addr	:	IN  STD_LOGIC_VECTOR (23 DOWNTO 0);
@@ -54,69 +54,74 @@
 		 clkin	:	IN  STD_LOGIC;
 		 data_valid	:	OUT  STD_LOGIC;
 		 dataout	:	OUT  STD_LOGIC_VECTOR (7 DOWNTO 0);
+		 fast_read	:	IN  STD_LOGIC := '0';
 		 rden	:	IN  STD_LOGIC;
-		 read	:	IN  STD_LOGIC := '0';
-		 reset	:	IN  STD_LOGIC := '0'
+		 rdid_out	:	OUT  STD_LOGIC_VECTOR (7 DOWNTO 0);
+		 read_rdid	:	IN  STD_LOGIC := '0';
+		 read_status	:	IN  STD_LOGIC := '0';
+		 reset	:	IN  STD_LOGIC := '0';
+		 shift_bytes	:	IN  STD_LOGIC := '0';
+		 status_out	:	OUT  STD_LOGIC_VECTOR (7 DOWNTO 0)
 	 ); 
- END altasmi_altasmi_parallel_76h2;
+ END altasmi_altasmi_parallel_rsl2;
 
- ARCHITECTURE RTL OF altasmi_altasmi_parallel_76h2 IS
+ ARCHITECTURE RTL OF altasmi_altasmi_parallel_rsl2 IS
 
 	 ATTRIBUTE synthesis_clearbox : natural;
 	 ATTRIBUTE synthesis_clearbox OF RTL : ARCHITECTURE IS 2;
 	 ATTRIBUTE ALTERA_ATTRIBUTE : string;
 	 ATTRIBUTE ALTERA_ATTRIBUTE OF RTL : ARCHITECTURE IS "SUPPRESS_DA_RULE_INTERNAL=C106";
 
-	 SIGNAL  wire_addbyte_cntr_w_lg_w_q_range144w149w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_addbyte_cntr_w_lg_w_q_range147w148w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_addbyte_cntr_w_lg_w_q_range167w172w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_addbyte_cntr_w_lg_w_q_range170w171w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_addbyte_cntr_clk_en	:	STD_LOGIC;
-	 SIGNAL  wire_stage_cntr_w143w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w166w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_addbyte_cntr_clock	:	STD_LOGIC;
 	 SIGNAL  wire_addbyte_cntr_q	:	STD_LOGIC_VECTOR (2 DOWNTO 0);
 	 SIGNAL  wire_addbyte_cntr_sclr	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_end_operation86w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_addbyte_cntr_w_q_range147w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_addbyte_cntr_w_q_range144w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_gen_cntr_w_lg_w_q_range99w100w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_gen_cntr_w_lg_w_q_range97w98w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_operation99w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_addbyte_cntr_w_q_range170w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_addbyte_cntr_w_q_range167w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_gen_cntr_w_lg_w_q_range111w112w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_gen_cntr_w_lg_w_q_range109w110w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_gen_cntr_clk_en	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_w_lg_w_lg_in_operation26w27w28w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_in_operation39w40w41w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_gen_cntr_q	:	STD_LOGIC_VECTOR (2 DOWNTO 0);
 	 SIGNAL  wire_gen_cntr_sclr	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_w_lg_end1_cyc_reg_in_wire29w30w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_gen_cntr_w_q_range97w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_gen_cntr_w_q_range99w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w318w319w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w318w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w323w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range89w92w315w316w317w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range89w92w320w321w322w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range89w90w91w329w330w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w94w406w407w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w92w315w316w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w92w340w341w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w92w320w321w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w90w91w329w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range89w94w406w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range89w92w315w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range89w92w340w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range89w92w320w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range89w92w140w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range89w92w313w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range88w93w119w120w121w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range88w93w119w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range89w90w91w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_q_range89w94w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_q_range89w92w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range88w93w119w120w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_q_range88w93w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_lg_w_q_range89w90w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_end1_cyc_reg_in_wire42w43w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_gen_cntr_w_q_range109w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_gen_cntr_w_q_range111w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w341w342w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w341w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w346w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range101w104w338w339w340w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range101w104w343w344w345w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range101w102w103w352w353w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w106w429w430w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w104w338w339w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w104w363w364w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w104w343w344w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w102w103w352w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range101w106w429w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range101w104w338w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range101w104w363w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range101w104w343w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range101w104w163w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range101w104w336w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range100w105w131w132w133w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range100w105w131w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_q_range101w102w103w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_q_range101w106w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_q_range101w104w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range100w105w131w132w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_q_range100w105w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_lg_w_q_range101w102w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_stage_cntr_clk_en	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w82w83w84w85w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w95w96w97w98w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_stage_cntr_q	:	STD_LOGIC_VECTOR (1 DOWNTO 0);
 	 SIGNAL  wire_stage_cntr_sclr	:	STD_LOGIC;
-	 SIGNAL  wire_stage_cntr_w_q_range88w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_stage_cntr_w_q_range89w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_q_range100w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_stage_cntr_w_q_range101w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL	 add_msb_reg	:	STD_LOGIC
 	 -- synopsys translate_off
 	  := '0'
@@ -130,7 +135,7 @@
 	 -- synopsys translate_on
 	 ;
 	 SIGNAL	 wire_addr_reg_ena	:	STD_LOGIC_VECTOR(23 DOWNTO 0);
-	 SIGNAL  wire_addr_reg_w_q_range379w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_addr_reg_w_q_range402w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
 	 SIGNAL	 wire_asmi_opcode_reg_d	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL	 asmi_opcode_reg	:	STD_LOGIC_VECTOR(7 DOWNTO 0)
 	 -- synopsys translate_off
@@ -138,8 +143,18 @@
 	 -- synopsys translate_on
 	 ;
 	 SIGNAL	 wire_asmi_opcode_reg_ena	:	STD_LOGIC_VECTOR(7 DOWNTO 0);
-	 SIGNAL  wire_asmi_opcode_reg_w_q_range154w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_asmi_opcode_reg_w_q_range177w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL	 busy_delay_reg	:	STD_LOGIC
+	 -- synopsys translate_off
+	  := '0'
+	 -- synopsys translate_on
+	 ;
 	 SIGNAL	 busy_det_reg	:	STD_LOGIC
+	 -- synopsys translate_off
+	  := '0'
+	 -- synopsys translate_on
+	 ;
+	 SIGNAL	 clr_rdid_reg	:	STD_LOGIC
 	 -- synopsys translate_off
 	  := '0'
 	 -- synopsys translate_on
@@ -154,7 +169,7 @@
 	  := '0'
 	 -- synopsys translate_on
 	 ;
-	 SIGNAL	 dffe3	:	STD_LOGIC
+	 SIGNAL	 clr_rstat_reg	:	STD_LOGIC
 	 -- synopsys translate_off
 	  := '0'
 	 -- synopsys translate_on
@@ -203,13 +218,29 @@
 	  := '0'
 	 -- synopsys translate_on
 	 ;
+	 SIGNAL	 fast_read_reg	:	STD_LOGIC
+	 -- synopsys translate_off
+	  := '0'
+	 -- synopsys translate_on
+	 ;
+	 SIGNAL	 wire_fast_read_reg_ena	:	STD_LOGIC;
 	 SIGNAL	 ncs_reg	:	STD_LOGIC
 	 -- synopsys translate_off
 	  := '0'
 	 -- synopsys translate_on
 	 ;
 	 SIGNAL	 wire_ncs_reg_sclr	:	STD_LOGIC;
-	 SIGNAL  wire_ncs_reg_w_lg_q366w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_ncs_reg_w_lg_q389w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL	 power_up_reg	:	STD_LOGIC
+	 -- synopsys translate_off
+	  := '0'
+	 -- synopsys translate_on
+	 ;
+	 SIGNAL	 rdid_out_reg	:	STD_LOGIC_VECTOR(7 DOWNTO 0)
+	 -- synopsys translate_off
+	  := (OTHERS => '0')
+	 -- synopsys translate_on
+	 ;
 	 SIGNAL	 wire_read_data_reg_d	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL	 read_data_reg	:	STD_LOGIC_VECTOR(7 DOWNTO 0)
 	 -- synopsys translate_off
@@ -224,18 +255,29 @@
 	 -- synopsys translate_on
 	 ;
 	 SIGNAL	 wire_read_dout_reg_ena	:	STD_LOGIC_VECTOR(7 DOWNTO 0);
-	 SIGNAL	 read_reg	:	STD_LOGIC
+	 SIGNAL	 read_rdid_reg	:	STD_LOGIC
 	 -- synopsys translate_off
 	  := '0'
 	 -- synopsys translate_on
 	 ;
-	 SIGNAL	 wire_read_reg_ena	:	STD_LOGIC;
+	 SIGNAL	 wire_read_rdid_reg_ena	:	STD_LOGIC;
+	 SIGNAL	 read_status_reg	:	STD_LOGIC
+	 -- synopsys translate_off
+	  := '0'
+	 -- synopsys translate_on
+	 ;
+	 SIGNAL	 wire_read_status_reg_ena	:	STD_LOGIC;
 	 SIGNAL	 shift_op_reg	:	STD_LOGIC
 	 -- synopsys translate_off
 	  := '0'
 	 -- synopsys translate_on
 	 ;
 	 SIGNAL	 stage2_reg	:	STD_LOGIC
+	 -- synopsys translate_off
+	  := '0'
+	 -- synopsys translate_on
+	 ;
+	 SIGNAL	 stage3_dly_reg	:	STD_LOGIC
 	 -- synopsys translate_off
 	  := '0'
 	 -- synopsys translate_on
@@ -250,215 +292,251 @@
 	  := '0'
 	 -- synopsys translate_on
 	 ;
+	 SIGNAL	 wire_statreg_int_d	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL	 statreg_int	:	STD_LOGIC_VECTOR(7 DOWNTO 0)
+	 -- synopsys translate_off
+	  := (OTHERS => '0')
+	 -- synopsys translate_on
+	 ;
+	 SIGNAL	 wire_statreg_int_ena	:	STD_LOGIC_VECTOR(7 DOWNTO 0);
+	 SIGNAL	 wire_statreg_out_d	:	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL	 statreg_out	:	STD_LOGIC_VECTOR(7 DOWNTO 0)
+	 -- synopsys translate_off
+	  := (OTHERS => '0')
+	 -- synopsys translate_on
+	 ;
+	 SIGNAL	 wire_statreg_out_ena	:	STD_LOGIC_VECTOR(7 DOWNTO 0);
 	 SIGNAL	wire_mux211_dataout	:	STD_LOGIC;
-	 SIGNAL  wire_stratixii_asmiblock2_data0out	:	STD_LOGIC;
-	 SIGNAL  wire_stratixii_asmiblock2_sdoin	:	STD_LOGIC;
-	 SIGNAL  wire_w_lg_sdoin_wire306w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w273w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w213w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w271w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w206w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w463w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode170w171w172w257w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode170w171w172w173w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode175w176w177w259w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode175w176w177w178w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode209w210w211w212w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode180w181w182w261w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode180w181w182w183w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode221w222w223w279w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode221w222w223w224w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode202w203w204w205w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read345w346w347w348w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read393w460w461w462w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_sec_erase40w402w403w404w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode170w171w172w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode175w176w177w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode185w190w265w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode185w190w191w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode185w186w263w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode185w186w187w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode209w210w211w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode180w181w182w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode221w222w223w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode202w203w204w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read345w346w347w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read345w346w405w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read393w460w461w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_sec_erase40w402w403w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_4baddr162w163w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_ex4baddr157w158w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read_stat109w110w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_write193w194w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_write49w324w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode164w253w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode164w165w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode159w251w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode159w160w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode195w267w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode195w196w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode170w171w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode175w176w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode215w275w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode215w216w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode218w277w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL	wire_mux212_dataout	:	STD_LOGIC;
+	 SIGNAL  wire_stratixii_asmiblock3_data0out	:	STD_LOGIC;
+	 SIGNAL  wire_stratixii_asmiblock3_sdoin	:	STD_LOGIC;
+	 SIGNAL  wire_w_lg_sdoin_wire329w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w527w528w529w530w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w527w528w529w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w527w528w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w527w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w296w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w236w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w294w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w229w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w486w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_end_operation523w524w525w526w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode193w194w195w280w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode193w194w195w196w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode198w199w200w282w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode198w199w200w201w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode232w233w234w235w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode203w204w205w284w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode203w204w205w206w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode244w245w246w302w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode244w245w246w247w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode225w226w227w228w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read368w369w370w371w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read416w483w484w485w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_sec_erase53w425w426w427w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_end_operation523w524w525w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode193w194w195w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode198w199w200w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode208w213w288w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode208w213w214w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode208w209w286w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode208w209w210w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode232w233w234w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode203w204w205w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode244w245w246w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode225w226w227w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read368w369w370w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read368w369w428w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read416w483w484w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_sec_erase53w425w426w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_4baddr185w186w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_ex4baddr180w181w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_polling536w537w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read_stat121w122w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_write216w217w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_write62w347w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_end_operation523w524w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode187w276w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode187w188w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode182w274w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode182w183w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode218w290w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_w_lg_load_opcode218w219w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode198w269w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode198w199w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode226w281w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode226w227w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode229w283w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode229w230w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode185w190w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode185w186w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode209w210w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode180w181w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode221w222w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode167w255w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode167w168w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_load_opcode202w203w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_stage3_wire31w32w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_start_poll331w332w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read345w346w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write58w102w103w116w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_write58w59w394w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read393w460w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read_rdid111w112w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_sec_erase40w402w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_rden_wire398w399w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_addr_overdie388w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_addr_overdie378w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_4baddr162w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_bulk_erase325w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_ex4baddr157w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_read_nonvolatile311w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_read_stat109w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_write193w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_write56w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_write49w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode164w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode159w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode195w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode170w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode175w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode215w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode193w194w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode198w199w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode238w298w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode238w239w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode241w300w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode241w242w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode221w292w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode221w222w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode249w304w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode249w250w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode252w306w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode252w253w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode208w213w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode208w209w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode232w233w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode203w204w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode244w245w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode190w278w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode190w191w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_load_opcode225w226w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_stage3_wire44w45w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_start_poll354w355w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read368w369w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write71w114w115w128w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_write71w72w417w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read416w483w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read_rdid123w124w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_sec_erase53w425w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_end_operation538w539w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_rden_wire421w422w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_addr_overdie411w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_addr_overdie401w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_4baddr185w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_bulk_erase348w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_ex4baddr180w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_polling536w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_read_nonvolatile334w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_read_stat121w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_write216w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_write69w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_write62w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_operation523w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode187w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode182w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_load_opcode218w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode193w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_load_opcode198w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode226w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode229w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode185w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode209w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode180w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode238w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode241w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  wire_w_lg_load_opcode221w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode167w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode202w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_not_busy390w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_not_busy382w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_w_lg_shift_opcode155w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_stage3_wire396w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_stage3_wire427w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_stage3_wire41w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_stage3_wire31w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_stage3_wire380w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_w_lg_stage4_wire429w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_stage4_wire397w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_start_poll331w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_write49w343w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w105w106w107w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_addr_overdie476w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_busy_wire1w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_clkin_wire87w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_fast_read344w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_memadd411w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_polling189w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_read345w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_read_rdid37w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_read_stat38w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_read_volatile201w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_wren39w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_write_volatile208w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_end_add_cycle69w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_end_fast_read63w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_end_ophdly25w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_end_pgwr_data48w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_end_read66w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_rden_wire478w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_read_rdid_wire7w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_read_sid_wire6w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_sec_protect_wire5w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_st_busy_wire113w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_start_poll108w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range54w55w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode229w283w284w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode229w230w231w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write58w59w394w395w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_rden_wire398w399w400w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_not_busy390w391w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_not_busy382w383w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_stage4_wire429w430w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode229w283w284w285w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode229w230w231w232w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_rden_wire398w399w400w401w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_not_busy382w383w384w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_w286w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w233w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w286w287w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w233w234w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w286w287w288w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w233w234w235w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w286w287w288w289w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w233w234w235w236w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w286w287w288w289w290w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w233w234w235w236w237w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w_lg_w286w287w288w289w290w291w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w_lg_w233w234w235w236w237w238w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w292w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w239w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w292w293w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w239w240w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w292w293w294w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w239w240w241w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w292w293w294w295w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w239w240w241w242w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w292w293w294w295w296w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w239w240w241w242w243w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w_lg_w292w293w294w295w296w297w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w_lg_w239w240w241w242w243w244w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w298w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w245w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w298w299w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w245w246w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w245w246w247w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w137w138w139w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w137w138w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w105w106w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w137w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w105w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read393w414w415w416w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read_sid133w134w135w136w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write58w102w103w104w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read393w414w415w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read_sid133w134w135w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read_stat424w425w426w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_w_lg_do_write58w102w103w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read393w428w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read393w414w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read_sid133w134w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_read_stat424w425w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_write58w102w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_w_lg_do_write58w59w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_data0out_wire432w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_4baddr327w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_ex4baddr326w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_read393w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_read_rdid111w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_read_sid133w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_read_stat424w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_sec_erase40w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_wren328w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_do_write58w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_load_opcode301w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_lg_rden_wire398w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode249w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode252w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode208w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode232w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode203w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode244w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode190w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode225w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_not_busy413w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_not_busy405w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_lg_shift_opcode178w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_stage3_wire419w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_stage3_wire450w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_stage3_wire54w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_stage3_wire44w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_stage3_wire403w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_lg_stage4_wire452w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_stage4_wire420w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_start_poll354w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_write62w366w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w117w118w119w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_addr_overdie499w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_busy_wire2w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_clkin_wire37w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_4baddr517w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_bulk_erase519w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_die_erase520w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_ex4baddr516w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_fast_read367w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_memadd434w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_polling212w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_read368w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_read_rdid50w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_read_stat51w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_read_volatile224w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_sec_erase521w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_sec_prot518w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_wren52w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_write522w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_write_volatile231w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_add_cycle82w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_fast_read76w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_ophdly38w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_pgwr_data61w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_read79w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_rden_wire501w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_read_rdid_wire10w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_read_sid_wire9w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_sec_protect_wire8w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_st_busy_wire125w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_start_poll120w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_write_wire14w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_pagewr_buf_not_empty_range67w68w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode252w306w307w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_load_opcode252w253w254w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write71w72w417w418w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_end_operation538w539w540w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_rden_wire421w422w423w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_not_busy413w414w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_not_busy405w406w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_stage4_wire452w453w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode252w306w307w308w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_load_opcode252w253w254w255w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_rden_wire421w422w423w424w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_not_busy405w406w407w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w309w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w256w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w309w310w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w256w257w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w309w310w311w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w256w257w258w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w309w310w311w312w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w256w257w258w259w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w309w310w311w312w313w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w256w257w258w259w260w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w_lg_w309w310w311w312w313w314w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w_lg_w256w257w258w259w260w261w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w315w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w262w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w315w316w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w262w263w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w315w316w317w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w262w263w264w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w315w316w317w318w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w262w263w264w265w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w315w316w317w318w319w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w262w263w264w265w266w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w_lg_w315w316w317w318w319w320w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_w_lg_w262w263w264w265w266w267w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w321w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w268w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w321w322w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w268w269w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w268w269w270w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w160w161w162w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w160w161w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w117w118w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w160w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w117w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read416w437w438w439w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_read_sid156w157w158w159w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_w_lg_do_write71w114w115w116w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read416w437w438w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read_sid156w157w158w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_read_stat447w448w449w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_w_lg_do_write71w114w115w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read416w451w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read416w437w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read_sid156w157w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_read_stat447w448w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_write71w114w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_w_lg_do_write71w72w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_data0out_wire455w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_4baddr350w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_ex4baddr349w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_read416w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_read_rdid123w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_read_sid156w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_read_stat447w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_sec_erase53w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_wren351w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_do_write71w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_end_operation538w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_load_opcode324w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_lg_rden_wire421w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  addr_overdie :	STD_LOGIC;
 	 SIGNAL  addr_overdie_pos :	STD_LOGIC;
 	 SIGNAL  addr_reg_overdie :	STD_LOGIC_VECTOR (23 DOWNTO 0);
@@ -468,8 +546,10 @@
 	 SIGNAL  clkin_wire :	STD_LOGIC;
 	 SIGNAL  clr_addmsb_wire :	STD_LOGIC;
 	 SIGNAL  clr_endrbyte_wire :	STD_LOGIC;
+	 SIGNAL  clr_rdid_wire :	STD_LOGIC;
 	 SIGNAL  clr_read_wire :	STD_LOGIC;
 	 SIGNAL  clr_read_wire2 :	STD_LOGIC;
+	 SIGNAL  clr_rstat_wire :	STD_LOGIC;
 	 SIGNAL  clr_write_wire2 :	STD_LOGIC;
 	 SIGNAL  data0out_wire :	STD_LOGIC;
 	 SIGNAL  data_valid_wire :	STD_LOGIC;
@@ -494,11 +574,15 @@
 	 SIGNAL  do_sec_erase :	STD_LOGIC;
 	 SIGNAL  do_sec_prot :	STD_LOGIC;
 	 SIGNAL  do_sprot_polling :	STD_LOGIC;
+	 SIGNAL  do_sprot_rstat :	STD_LOGIC;
 	 SIGNAL  do_wait_dummyclk :	STD_LOGIC;
 	 SIGNAL  do_wren :	STD_LOGIC;
 	 SIGNAL  do_write :	STD_LOGIC;
 	 SIGNAL  do_write_polling :	STD_LOGIC;
+	 SIGNAL  do_write_rstat :	STD_LOGIC;
 	 SIGNAL  do_write_volatile :	STD_LOGIC;
+	 SIGNAL  do_write_volatile_rstat :	STD_LOGIC;
+	 SIGNAL  end1_cyc_dlyncs_in_wire :	STD_LOGIC;
 	 SIGNAL  end1_cyc_gen_cntr_wire :	STD_LOGIC;
 	 SIGNAL  end1_cyc_normal_in_wire :	STD_LOGIC;
 	 SIGNAL  end1_cyc_reg_in_wire :	STD_LOGIC;
@@ -515,6 +599,7 @@
 	 SIGNAL  end_read_byte :	STD_LOGIC;
 	 SIGNAL  exb4addr_opcode :	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL  fast_read_opcode :	STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 SIGNAL  fast_read_wire :	STD_LOGIC;
 	 SIGNAL  freadwrv_sdoin :	STD_LOGIC;
 	 SIGNAL  in_operation :	STD_LOGIC;
 	 SIGNAL  load_opcode :	STD_LOGIC;
@@ -524,12 +609,14 @@
 	 SIGNAL  oe_wire :	STD_LOGIC;
 	 SIGNAL  pagewr_buf_not_empty :	STD_LOGIC_VECTOR (0 DOWNTO 0);
 	 SIGNAL  rden_wire :	STD_LOGIC;
+	 SIGNAL  rdid_load :	STD_LOGIC;
 	 SIGNAL  rdid_opcode :	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL  rdummyclk_opcode :	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL  read_data_reg_in_wire :	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL  read_opcode :	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL  read_rdid_wire :	STD_LOGIC;
 	 SIGNAL  read_sid_wire :	STD_LOGIC;
+	 SIGNAL  read_status_wire :	STD_LOGIC;
 	 SIGNAL  read_wire :	STD_LOGIC;
 	 SIGNAL  rflagstat_opcode :	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL  rnvdummyclk_opcode :	STD_LOGIC_VECTOR (7 DOWNTO 0);
@@ -559,47 +646,48 @@
 	 SIGNAL  write_opcode :	STD_LOGIC_VECTOR (7 DOWNTO 0);
 	 SIGNAL  write_prot_true :	STD_LOGIC;
 	 SIGNAL  write_sdoin :	STD_LOGIC;
+	 SIGNAL  write_wire :	STD_LOGIC;
 	 SIGNAL  wrvolatile_opcode :	STD_LOGIC_VECTOR (7 DOWNTO 0);
-	 SIGNAL  wire_w_addr_range389w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_addr_range381w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_w_addr_reg_overdie_range387w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_addr_reg_overdie_range377w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
-	 SIGNAL  wire_w_b4addr_opcode_range252w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_b4addr_opcode_range161w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_berase_opcode_range256w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_berase_opcode_range169w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_dataout_wire_range431w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_derase_opcode_range258w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_derase_opcode_range174w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_exb4addr_opcode_range250w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_exb4addr_opcode_range156w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_fast_read_opcode_range274w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_fast_read_opcode_range214w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_pagewr_buf_not_empty_range54w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rdid_opcode_range280w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rdid_opcode_range225w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_rdummyclk_opcode_range272w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rdummyclk_opcode_range207w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_read_opcode_range276w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_read_opcode_range217w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_rflagstat_opcode_range262w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rflagstat_opcode_range184w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_rnvdummyclk_opcode_range268w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rnvdummyclk_opcode_range197w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_rsid_opcode_range282w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rsid_opcode_range228w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_rstat_opcode_range264w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_rstat_opcode_range188w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_secprot_opcode_range278w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_secprot_opcode_range220w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_serase_opcode_range260w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_serase_opcode_range179w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_wren_opcode_range254w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_wren_opcode_range166w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_write_opcode_range266w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_write_opcode_range192w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
-	 SIGNAL  wire_w_wrvolatile_opcode_range270w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
-	 SIGNAL  wire_w_wrvolatile_opcode_range200w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_addr_range412w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_addr_range404w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_addr_reg_overdie_range410w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_addr_reg_overdie_range400w	:	STD_LOGIC_VECTOR (22 DOWNTO 0);
+	 SIGNAL  wire_w_b4addr_opcode_range275w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_b4addr_opcode_range184w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_berase_opcode_range279w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_berase_opcode_range192w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_dataout_wire_range454w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_derase_opcode_range281w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_derase_opcode_range197w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_exb4addr_opcode_range273w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_exb4addr_opcode_range179w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_fast_read_opcode_range297w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_fast_read_opcode_range237w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_pagewr_buf_not_empty_range67w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rdid_opcode_range303w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rdid_opcode_range248w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_rdummyclk_opcode_range295w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rdummyclk_opcode_range230w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_read_opcode_range299w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_read_opcode_range240w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_rflagstat_opcode_range285w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rflagstat_opcode_range207w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_rnvdummyclk_opcode_range291w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rnvdummyclk_opcode_range220w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_rsid_opcode_range305w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rsid_opcode_range251w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_rstat_opcode_range287w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_rstat_opcode_range211w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_secprot_opcode_range301w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_secprot_opcode_range243w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_serase_opcode_range283w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_serase_opcode_range202w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_wren_opcode_range277w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_wren_opcode_range189w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_write_opcode_range289w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_write_opcode_range215w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
+	 SIGNAL  wire_w_wrvolatile_opcode_range293w	:	STD_LOGIC_VECTOR (0 DOWNTO 0);
+	 SIGNAL  wire_w_wrvolatile_opcode_range223w	:	STD_LOGIC_VECTOR (6 DOWNTO 0);
 	 COMPONENT  a_graycounter
 	 GENERIC 
 	 (
@@ -635,305 +723,328 @@
 	 END COMPONENT;
  BEGIN
 
-	wire_w273w(0) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode209w210w211w212w(0) AND wire_w_rdummyclk_opcode_range272w(0);
+	wire_w_lg_w_lg_w_lg_w527w528w529w530w(0) <= wire_w_lg_w_lg_w527w528w529w(0) AND wire_w_lg_do_ex4baddr516w(0);
+	wire_w_lg_w_lg_w527w528w529w(0) <= wire_w_lg_w527w528w(0) AND wire_w_lg_do_4baddr517w(0);
+	wire_w_lg_w527w528w(0) <= wire_w527w(0) AND wire_w_lg_do_sec_prot518w(0);
+	wire_w527w(0) <= wire_w_lg_w_lg_w_lg_w_lg_end_operation523w524w525w526w(0) AND wire_w_lg_do_bulk_erase519w(0);
+	wire_w296w(0) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode232w233w234w235w(0) AND wire_w_rdummyclk_opcode_range295w(0);
 	loop0 : FOR i IN 0 TO 6 GENERATE 
-		wire_w213w(i) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode209w210w211w212w(0) AND wire_w_rdummyclk_opcode_range207w(i);
+		wire_w236w(i) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode232w233w234w235w(0) AND wire_w_rdummyclk_opcode_range230w(i);
 	END GENERATE loop0;
-	wire_w271w(0) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode202w203w204w205w(0) AND wire_w_wrvolatile_opcode_range270w(0);
+	wire_w294w(0) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode225w226w227w228w(0) AND wire_w_wrvolatile_opcode_range293w(0);
 	loop1 : FOR i IN 0 TO 6 GENERATE 
-		wire_w206w(i) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode202w203w204w205w(0) AND wire_w_wrvolatile_opcode_range200w(i);
+		wire_w229w(i) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode225w226w227w228w(0) AND wire_w_wrvolatile_opcode_range223w(i);
 	END GENERATE loop1;
-	wire_w463w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_read393w460w461w462w(0) AND end_read_byte;
-	wire_w_lg_w_lg_w_lg_w_lg_load_opcode170w171w172w257w(0) <= wire_w_lg_w_lg_w_lg_load_opcode170w171w172w(0) AND wire_w_berase_opcode_range256w(0);
+	wire_w486w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_read416w483w484w485w(0) AND end_read_byte;
+	wire_w_lg_w_lg_w_lg_w_lg_end_operation523w524w525w526w(0) <= wire_w_lg_w_lg_w_lg_end_operation523w524w525w(0) AND wire_w_lg_do_die_erase520w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_load_opcode193w194w195w280w(0) <= wire_w_lg_w_lg_w_lg_load_opcode193w194w195w(0) AND wire_w_berase_opcode_range279w(0);
 	loop2 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_w_lg_load_opcode170w171w172w173w(i) <= wire_w_lg_w_lg_w_lg_load_opcode170w171w172w(0) AND wire_w_berase_opcode_range169w(i);
+		wire_w_lg_w_lg_w_lg_w_lg_load_opcode193w194w195w196w(i) <= wire_w_lg_w_lg_w_lg_load_opcode193w194w195w(0) AND wire_w_berase_opcode_range192w(i);
 	END GENERATE loop2;
-	wire_w_lg_w_lg_w_lg_w_lg_load_opcode175w176w177w259w(0) <= wire_w_lg_w_lg_w_lg_load_opcode175w176w177w(0) AND wire_w_derase_opcode_range258w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_load_opcode198w199w200w282w(0) <= wire_w_lg_w_lg_w_lg_load_opcode198w199w200w(0) AND wire_w_derase_opcode_range281w(0);
 	loop3 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_w_lg_load_opcode175w176w177w178w(i) <= wire_w_lg_w_lg_w_lg_load_opcode175w176w177w(0) AND wire_w_derase_opcode_range174w(i);
+		wire_w_lg_w_lg_w_lg_w_lg_load_opcode198w199w200w201w(i) <= wire_w_lg_w_lg_w_lg_load_opcode198w199w200w(0) AND wire_w_derase_opcode_range197w(i);
 	END GENERATE loop3;
-	wire_w_lg_w_lg_w_lg_w_lg_load_opcode209w210w211w212w(0) <= wire_w_lg_w_lg_w_lg_load_opcode209w210w211w(0) AND wire_w_lg_do_read_stat38w(0);
-	wire_w_lg_w_lg_w_lg_w_lg_load_opcode180w181w182w261w(0) <= wire_w_lg_w_lg_w_lg_load_opcode180w181w182w(0) AND wire_w_serase_opcode_range260w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_load_opcode232w233w234w235w(0) <= wire_w_lg_w_lg_w_lg_load_opcode232w233w234w(0) AND wire_w_lg_do_read_stat51w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_load_opcode203w204w205w284w(0) <= wire_w_lg_w_lg_w_lg_load_opcode203w204w205w(0) AND wire_w_serase_opcode_range283w(0);
 	loop4 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_w_lg_load_opcode180w181w182w183w(i) <= wire_w_lg_w_lg_w_lg_load_opcode180w181w182w(0) AND wire_w_serase_opcode_range179w(i);
+		wire_w_lg_w_lg_w_lg_w_lg_load_opcode203w204w205w206w(i) <= wire_w_lg_w_lg_w_lg_load_opcode203w204w205w(0) AND wire_w_serase_opcode_range202w(i);
 	END GENERATE loop4;
-	wire_w_lg_w_lg_w_lg_w_lg_load_opcode221w222w223w279w(0) <= wire_w_lg_w_lg_w_lg_load_opcode221w222w223w(0) AND wire_w_secprot_opcode_range278w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_load_opcode244w245w246w302w(0) <= wire_w_lg_w_lg_w_lg_load_opcode244w245w246w(0) AND wire_w_secprot_opcode_range301w(0);
 	loop5 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_w_lg_load_opcode221w222w223w224w(i) <= wire_w_lg_w_lg_w_lg_load_opcode221w222w223w(0) AND wire_w_secprot_opcode_range220w(i);
+		wire_w_lg_w_lg_w_lg_w_lg_load_opcode244w245w246w247w(i) <= wire_w_lg_w_lg_w_lg_load_opcode244w245w246w(0) AND wire_w_secprot_opcode_range243w(i);
 	END GENERATE loop5;
-	wire_w_lg_w_lg_w_lg_w_lg_load_opcode202w203w204w205w(0) <= wire_w_lg_w_lg_w_lg_load_opcode202w203w204w(0) AND wire_w_lg_do_read_stat38w(0);
-	wire_w_lg_w_lg_w_lg_w_lg_do_read345w346w347w348w(0) <= wire_w_lg_w_lg_w_lg_do_read345w346w347w(0) AND end_one_cycle;
-	wire_w_lg_w_lg_w_lg_w_lg_do_read393w460w461w462w(0) <= wire_w_lg_w_lg_w_lg_do_read393w460w461w(0) AND end_one_cyc_pos;
-	wire_w_lg_w_lg_w_lg_w_lg_do_sec_erase40w402w403w404w(0) <= wire_w_lg_w_lg_w_lg_do_sec_erase40w402w403w(0) AND end_operation;
-	wire_w_lg_w_lg_w_lg_load_opcode170w171w172w(0) <= wire_w_lg_w_lg_load_opcode170w171w(0) AND wire_w_lg_do_read_stat38w(0);
-	wire_w_lg_w_lg_w_lg_load_opcode175w176w177w(0) <= wire_w_lg_w_lg_load_opcode175w176w(0) AND wire_w_lg_do_read_stat38w(0);
-	wire_w_lg_w_lg_w_lg_load_opcode185w190w265w(0) <= wire_w_lg_w_lg_load_opcode185w190w(0) AND wire_w_rstat_opcode_range264w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_load_opcode225w226w227w228w(0) <= wire_w_lg_w_lg_w_lg_load_opcode225w226w227w(0) AND wire_w_lg_do_read_stat51w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_do_read368w369w370w371w(0) <= wire_w_lg_w_lg_w_lg_do_read368w369w370w(0) AND end_one_cycle;
+	wire_w_lg_w_lg_w_lg_w_lg_do_read416w483w484w485w(0) <= wire_w_lg_w_lg_w_lg_do_read416w483w484w(0) AND end_one_cyc_pos;
+	wire_w_lg_w_lg_w_lg_w_lg_do_sec_erase53w425w426w427w(0) <= wire_w_lg_w_lg_w_lg_do_sec_erase53w425w426w(0) AND end_operation;
+	wire_w_lg_w_lg_w_lg_end_operation523w524w525w(0) <= wire_w_lg_w_lg_end_operation523w524w(0) AND wire_w_lg_do_sec_erase521w(0);
+	wire_w_lg_w_lg_w_lg_load_opcode193w194w195w(0) <= wire_w_lg_w_lg_load_opcode193w194w(0) AND wire_w_lg_do_read_stat51w(0);
+	wire_w_lg_w_lg_w_lg_load_opcode198w199w200w(0) <= wire_w_lg_w_lg_load_opcode198w199w(0) AND wire_w_lg_do_read_stat51w(0);
+	wire_w_lg_w_lg_w_lg_load_opcode208w213w288w(0) <= wire_w_lg_w_lg_load_opcode208w213w(0) AND wire_w_rstat_opcode_range287w(0);
 	loop6 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_load_opcode185w190w191w(i) <= wire_w_lg_w_lg_load_opcode185w190w(0) AND wire_w_rstat_opcode_range188w(i);
+		wire_w_lg_w_lg_w_lg_load_opcode208w213w214w(i) <= wire_w_lg_w_lg_load_opcode208w213w(0) AND wire_w_rstat_opcode_range211w(i);
 	END GENERATE loop6;
-	wire_w_lg_w_lg_w_lg_load_opcode185w186w263w(0) <= wire_w_lg_w_lg_load_opcode185w186w(0) AND wire_w_rflagstat_opcode_range262w(0);
+	wire_w_lg_w_lg_w_lg_load_opcode208w209w286w(0) <= wire_w_lg_w_lg_load_opcode208w209w(0) AND wire_w_rflagstat_opcode_range285w(0);
 	loop7 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_load_opcode185w186w187w(i) <= wire_w_lg_w_lg_load_opcode185w186w(0) AND wire_w_rflagstat_opcode_range184w(i);
+		wire_w_lg_w_lg_w_lg_load_opcode208w209w210w(i) <= wire_w_lg_w_lg_load_opcode208w209w(0) AND wire_w_rflagstat_opcode_range207w(i);
 	END GENERATE loop7;
-	wire_w_lg_w_lg_w_lg_load_opcode209w210w211w(0) <= wire_w_lg_w_lg_load_opcode209w210w(0) AND wire_w_lg_do_wren39w(0);
-	wire_w_lg_w_lg_w_lg_load_opcode180w181w182w(0) <= wire_w_lg_w_lg_load_opcode180w181w(0) AND wire_w_lg_do_read_stat38w(0);
-	wire_w_lg_w_lg_w_lg_load_opcode221w222w223w(0) <= wire_w_lg_w_lg_load_opcode221w222w(0) AND wire_w_lg_do_read_stat38w(0);
-	wire_w_lg_w_lg_w_lg_load_opcode202w203w204w(0) <= wire_w_lg_w_lg_load_opcode202w203w(0) AND wire_w_lg_do_wren39w(0);
-	wire_w_lg_w_lg_w_lg_do_read345w346w347w(0) <= wire_w_lg_w_lg_do_read345w346w(0) AND wire_w_lg_w_lg_do_write49w343w(0);
-	wire_w_lg_w_lg_w_lg_do_read345w346w405w(0) <= wire_w_lg_w_lg_do_read345w346w(0) AND clr_write_wire2;
-	wire_w_lg_w_lg_w_lg_do_read393w460w461w(0) <= wire_w_lg_w_lg_do_read393w460w(0) AND wire_stage_cntr_w_lg_w_q_range88w93w(0);
-	wire_w_lg_w_lg_w_lg_do_sec_erase40w402w403w(0) <= wire_w_lg_w_lg_do_sec_erase40w402w(0) AND wire_w_lg_do_read_stat38w(0);
-	wire_w_lg_w_lg_do_4baddr162w163w(0) <= wire_w_lg_do_4baddr162w(0) AND wire_w_lg_do_wren39w(0);
-	wire_w_lg_w_lg_do_ex4baddr157w158w(0) <= wire_w_lg_do_ex4baddr157w(0) AND wire_w_lg_do_wren39w(0);
-	wire_w_lg_w_lg_do_read_stat109w110w(0) <= wire_w_lg_do_read_stat109w(0) AND wire_w_lg_w_lg_w105w106w107w(0);
-	wire_w_lg_w_lg_do_write193w194w(0) <= wire_w_lg_do_write193w(0) AND wire_w_lg_do_wren39w(0);
-	wire_w_lg_w_lg_do_write49w324w(0) <= wire_w_lg_do_write49w(0) AND end_pgwr_data;
-	wire_w_lg_w_lg_load_opcode164w253w(0) <= wire_w_lg_load_opcode164w(0) AND wire_w_b4addr_opcode_range252w(0);
+	wire_w_lg_w_lg_w_lg_load_opcode232w233w234w(0) <= wire_w_lg_w_lg_load_opcode232w233w(0) AND wire_w_lg_do_wren52w(0);
+	wire_w_lg_w_lg_w_lg_load_opcode203w204w205w(0) <= wire_w_lg_w_lg_load_opcode203w204w(0) AND wire_w_lg_do_read_stat51w(0);
+	wire_w_lg_w_lg_w_lg_load_opcode244w245w246w(0) <= wire_w_lg_w_lg_load_opcode244w245w(0) AND wire_w_lg_do_read_stat51w(0);
+	wire_w_lg_w_lg_w_lg_load_opcode225w226w227w(0) <= wire_w_lg_w_lg_load_opcode225w226w(0) AND wire_w_lg_do_wren52w(0);
+	wire_w_lg_w_lg_w_lg_do_read368w369w370w(0) <= wire_w_lg_w_lg_do_read368w369w(0) AND wire_w_lg_w_lg_do_write62w366w(0);
+	wire_w_lg_w_lg_w_lg_do_read368w369w428w(0) <= wire_w_lg_w_lg_do_read368w369w(0) AND clr_write_wire2;
+	wire_w_lg_w_lg_w_lg_do_read416w483w484w(0) <= wire_w_lg_w_lg_do_read416w483w(0) AND wire_stage_cntr_w_lg_w_q_range100w105w(0);
+	wire_w_lg_w_lg_w_lg_do_sec_erase53w425w426w(0) <= wire_w_lg_w_lg_do_sec_erase53w425w(0) AND wire_w_lg_do_read_stat51w(0);
+	wire_w_lg_w_lg_do_4baddr185w186w(0) <= wire_w_lg_do_4baddr185w(0) AND wire_w_lg_do_wren52w(0);
+	wire_w_lg_w_lg_do_ex4baddr180w181w(0) <= wire_w_lg_do_ex4baddr180w(0) AND wire_w_lg_do_wren52w(0);
+	wire_w_lg_w_lg_do_polling536w537w(0) <= wire_w_lg_do_polling536w(0) AND stage3_dly_reg;
+	wire_w_lg_w_lg_do_read_stat121w122w(0) <= wire_w_lg_do_read_stat121w(0) AND wire_w_lg_w_lg_w117w118w119w(0);
+	wire_w_lg_w_lg_do_write216w217w(0) <= wire_w_lg_do_write216w(0) AND wire_w_lg_do_wren52w(0);
+	wire_w_lg_w_lg_do_write62w347w(0) <= wire_w_lg_do_write62w(0) AND end_pgwr_data;
+	wire_w_lg_w_lg_end_operation523w524w(0) <= wire_w_lg_end_operation523w(0) AND wire_w_lg_do_write522w(0);
+	wire_w_lg_w_lg_load_opcode187w276w(0) <= wire_w_lg_load_opcode187w(0) AND wire_w_b4addr_opcode_range275w(0);
 	loop8 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_load_opcode164w165w(i) <= wire_w_lg_load_opcode164w(0) AND wire_w_b4addr_opcode_range161w(i);
+		wire_w_lg_w_lg_load_opcode187w188w(i) <= wire_w_lg_load_opcode187w(0) AND wire_w_b4addr_opcode_range184w(i);
 	END GENERATE loop8;
-	wire_w_lg_w_lg_load_opcode159w251w(0) <= wire_w_lg_load_opcode159w(0) AND wire_w_exb4addr_opcode_range250w(0);
+	wire_w_lg_w_lg_load_opcode182w274w(0) <= wire_w_lg_load_opcode182w(0) AND wire_w_exb4addr_opcode_range273w(0);
 	loop9 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_load_opcode159w160w(i) <= wire_w_lg_load_opcode159w(0) AND wire_w_exb4addr_opcode_range156w(i);
+		wire_w_lg_w_lg_load_opcode182w183w(i) <= wire_w_lg_load_opcode182w(0) AND wire_w_exb4addr_opcode_range179w(i);
 	END GENERATE loop9;
-	wire_w_lg_w_lg_load_opcode195w267w(0) <= wire_w_lg_load_opcode195w(0) AND wire_w_write_opcode_range266w(0);
+	wire_w_lg_w_lg_load_opcode218w290w(0) <= wire_w_lg_load_opcode218w(0) AND wire_w_write_opcode_range289w(0);
 	loop10 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_load_opcode195w196w(i) <= wire_w_lg_load_opcode195w(0) AND wire_w_write_opcode_range192w(i);
+		wire_w_lg_w_lg_load_opcode218w219w(i) <= wire_w_lg_load_opcode218w(0) AND wire_w_write_opcode_range215w(i);
 	END GENERATE loop10;
-	wire_w_lg_w_lg_load_opcode170w171w(0) <= wire_w_lg_load_opcode170w(0) AND wire_w_lg_do_wren39w(0);
-	wire_w_lg_w_lg_load_opcode175w176w(0) <= wire_w_lg_load_opcode175w(0) AND wire_w_lg_do_wren39w(0);
-	wire_w_lg_w_lg_load_opcode215w275w(0) <= wire_w_lg_load_opcode215w(0) AND wire_w_fast_read_opcode_range274w(0);
+	wire_w_lg_w_lg_load_opcode193w194w(0) <= wire_w_lg_load_opcode193w(0) AND wire_w_lg_do_wren52w(0);
+	wire_w_lg_w_lg_load_opcode198w199w(0) <= wire_w_lg_load_opcode198w(0) AND wire_w_lg_do_wren52w(0);
+	wire_w_lg_w_lg_load_opcode238w298w(0) <= wire_w_lg_load_opcode238w(0) AND wire_w_fast_read_opcode_range297w(0);
 	loop11 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_load_opcode215w216w(i) <= wire_w_lg_load_opcode215w(0) AND wire_w_fast_read_opcode_range214w(i);
+		wire_w_lg_w_lg_load_opcode238w239w(i) <= wire_w_lg_load_opcode238w(0) AND wire_w_fast_read_opcode_range237w(i);
 	END GENERATE loop11;
-	wire_w_lg_w_lg_load_opcode218w277w(0) <= wire_w_lg_load_opcode218w(0) AND wire_w_read_opcode_range276w(0);
+	wire_w_lg_w_lg_load_opcode241w300w(0) <= wire_w_lg_load_opcode241w(0) AND wire_w_read_opcode_range299w(0);
 	loop12 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_load_opcode218w219w(i) <= wire_w_lg_load_opcode218w(0) AND wire_w_read_opcode_range217w(i);
+		wire_w_lg_w_lg_load_opcode241w242w(i) <= wire_w_lg_load_opcode241w(0) AND wire_w_read_opcode_range240w(i);
 	END GENERATE loop12;
-	wire_w_lg_w_lg_load_opcode198w269w(0) <= wire_w_lg_load_opcode198w(0) AND wire_w_rnvdummyclk_opcode_range268w(0);
+	wire_w_lg_w_lg_load_opcode221w292w(0) <= wire_w_lg_load_opcode221w(0) AND wire_w_rnvdummyclk_opcode_range291w(0);
 	loop13 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_load_opcode198w199w(i) <= wire_w_lg_load_opcode198w(0) AND wire_w_rnvdummyclk_opcode_range197w(i);
+		wire_w_lg_w_lg_load_opcode221w222w(i) <= wire_w_lg_load_opcode221w(0) AND wire_w_rnvdummyclk_opcode_range220w(i);
 	END GENERATE loop13;
-	wire_w_lg_w_lg_load_opcode226w281w(0) <= wire_w_lg_load_opcode226w(0) AND wire_w_rdid_opcode_range280w(0);
+	wire_w_lg_w_lg_load_opcode249w304w(0) <= wire_w_lg_load_opcode249w(0) AND wire_w_rdid_opcode_range303w(0);
 	loop14 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_load_opcode226w227w(i) <= wire_w_lg_load_opcode226w(0) AND wire_w_rdid_opcode_range225w(i);
+		wire_w_lg_w_lg_load_opcode249w250w(i) <= wire_w_lg_load_opcode249w(0) AND wire_w_rdid_opcode_range248w(i);
 	END GENERATE loop14;
-	wire_w_lg_w_lg_load_opcode229w283w(0) <= wire_w_lg_load_opcode229w(0) AND wire_w_rsid_opcode_range282w(0);
+	wire_w_lg_w_lg_load_opcode252w306w(0) <= wire_w_lg_load_opcode252w(0) AND wire_w_rsid_opcode_range305w(0);
 	loop15 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_load_opcode229w230w(i) <= wire_w_lg_load_opcode229w(0) AND wire_w_rsid_opcode_range228w(i);
+		wire_w_lg_w_lg_load_opcode252w253w(i) <= wire_w_lg_load_opcode252w(0) AND wire_w_rsid_opcode_range251w(i);
 	END GENERATE loop15;
-	wire_w_lg_w_lg_load_opcode185w190w(0) <= wire_w_lg_load_opcode185w(0) AND wire_w_lg_do_polling189w(0);
-	wire_w_lg_w_lg_load_opcode185w186w(0) <= wire_w_lg_load_opcode185w(0) AND do_polling;
-	wire_w_lg_w_lg_load_opcode209w210w(0) <= wire_w_lg_load_opcode209w(0) AND wire_w_lg_do_write_volatile208w(0);
-	wire_w_lg_w_lg_load_opcode180w181w(0) <= wire_w_lg_load_opcode180w(0) AND wire_w_lg_do_wren39w(0);
-	wire_w_lg_w_lg_load_opcode221w222w(0) <= wire_w_lg_load_opcode221w(0) AND wire_w_lg_do_wren39w(0);
-	wire_w_lg_w_lg_load_opcode167w255w(0) <= wire_w_lg_load_opcode167w(0) AND wire_w_wren_opcode_range254w(0);
+	wire_w_lg_w_lg_load_opcode208w213w(0) <= wire_w_lg_load_opcode208w(0) AND wire_w_lg_do_polling212w(0);
+	wire_w_lg_w_lg_load_opcode208w209w(0) <= wire_w_lg_load_opcode208w(0) AND do_polling;
+	wire_w_lg_w_lg_load_opcode232w233w(0) <= wire_w_lg_load_opcode232w(0) AND wire_w_lg_do_write_volatile231w(0);
+	wire_w_lg_w_lg_load_opcode203w204w(0) <= wire_w_lg_load_opcode203w(0) AND wire_w_lg_do_wren52w(0);
+	wire_w_lg_w_lg_load_opcode244w245w(0) <= wire_w_lg_load_opcode244w(0) AND wire_w_lg_do_wren52w(0);
+	wire_w_lg_w_lg_load_opcode190w278w(0) <= wire_w_lg_load_opcode190w(0) AND wire_w_wren_opcode_range277w(0);
 	loop16 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_load_opcode167w168w(i) <= wire_w_lg_load_opcode167w(0) AND wire_w_wren_opcode_range166w(i);
+		wire_w_lg_w_lg_load_opcode190w191w(i) <= wire_w_lg_load_opcode190w(0) AND wire_w_wren_opcode_range189w(i);
 	END GENERATE loop16;
-	wire_w_lg_w_lg_load_opcode202w203w(0) <= wire_w_lg_load_opcode202w(0) AND wire_w_lg_do_read_volatile201w(0);
-	wire_w_lg_w_lg_stage3_wire31w32w(0) <= wire_w_lg_stage3_wire31w(0) AND do_wait_dummyclk;
-	wire_w_lg_w_lg_start_poll331w332w(0) <= wire_w_lg_start_poll331w(0) AND do_polling;
-	wire_w_lg_w_lg_do_read345w346w(0) <= wire_w_lg_do_read345w(0) AND wire_w_lg_do_fast_read344w(0);
-	wire_w_lg_w_lg_w_lg_w_lg_do_write58w102w103w116w(0) <= wire_w_lg_w_lg_w_lg_do_write58w102w103w(0) AND write_prot_true;
-	wire_w_lg_w_lg_w_lg_do_write58w59w394w(0) <= wire_w_lg_w_lg_do_write58w59w(0) AND do_memadd;
-	wire_w_lg_w_lg_do_read393w460w(0) <= wire_w_lg_do_read393w(0) AND wire_stage_cntr_w_q_range89w(0);
-	wire_w_lg_w_lg_do_read_rdid111w112w(0) <= wire_w_lg_do_read_rdid111w(0) AND end_op_wire;
-	wire_w_lg_w_lg_do_sec_erase40w402w(0) <= wire_w_lg_do_sec_erase40w(0) AND wire_w_lg_do_wren39w(0);
-	wire_w_lg_w_lg_rden_wire398w399w(0) <= wire_w_lg_rden_wire398w(0) AND not_busy;
-	wire_w_lg_addr_overdie388w(0) <= addr_overdie AND wire_w_addr_reg_overdie_range387w(0);
+	wire_w_lg_w_lg_load_opcode225w226w(0) <= wire_w_lg_load_opcode225w(0) AND wire_w_lg_do_read_volatile224w(0);
+	wire_w_lg_w_lg_stage3_wire44w45w(0) <= wire_w_lg_stage3_wire44w(0) AND do_wait_dummyclk;
+	wire_w_lg_w_lg_start_poll354w355w(0) <= wire_w_lg_start_poll354w(0) AND do_polling;
+	wire_w_lg_w_lg_do_read368w369w(0) <= wire_w_lg_do_read368w(0) AND wire_w_lg_do_fast_read367w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_do_write71w114w115w128w(0) <= wire_w_lg_w_lg_w_lg_do_write71w114w115w(0) AND write_prot_true;
+	wire_w_lg_w_lg_w_lg_do_write71w72w417w(0) <= wire_w_lg_w_lg_do_write71w72w(0) AND do_memadd;
+	wire_w_lg_w_lg_do_read416w483w(0) <= wire_w_lg_do_read416w(0) AND wire_stage_cntr_w_q_range101w(0);
+	wire_w_lg_w_lg_do_read_rdid123w124w(0) <= wire_w_lg_do_read_rdid123w(0) AND end_op_wire;
+	wire_w_lg_w_lg_do_sec_erase53w425w(0) <= wire_w_lg_do_sec_erase53w(0) AND wire_w_lg_do_wren52w(0);
+	wire_w_lg_w_lg_end_operation538w539w(0) <= wire_w_lg_end_operation538w(0) AND do_read_stat;
+	wire_w_lg_w_lg_rden_wire421w422w(0) <= wire_w_lg_rden_wire421w(0) AND not_busy;
+	wire_w_lg_addr_overdie411w(0) <= addr_overdie AND wire_w_addr_reg_overdie_range410w(0);
 	loop17 : FOR i IN 0 TO 22 GENERATE 
-		wire_w_lg_addr_overdie378w(i) <= addr_overdie AND wire_w_addr_reg_overdie_range377w(i);
+		wire_w_lg_addr_overdie401w(i) <= addr_overdie AND wire_w_addr_reg_overdie_range400w(i);
 	END GENERATE loop17;
-	wire_w_lg_do_4baddr162w(0) <= do_4baddr AND wire_w_lg_do_read_stat38w(0);
-	wire_w_lg_do_bulk_erase325w(0) <= do_bulk_erase AND wire_w_lg_do_read_stat38w(0);
-	wire_w_lg_do_ex4baddr157w(0) <= do_ex4baddr AND wire_w_lg_do_read_stat38w(0);
-	wire_w_lg_do_read_nonvolatile311w(0) <= do_read_nonvolatile AND wire_addbyte_cntr_w_q_range144w(0);
-	wire_w_lg_do_read_stat109w(0) <= do_read_stat AND wire_w_lg_start_poll108w(0);
-	wire_w_lg_do_write193w(0) <= do_write AND wire_w_lg_do_read_stat38w(0);
-	wire_w_lg_do_write56w(0) <= do_write AND wire_w_lg_w_pagewr_buf_not_empty_range54w55w(0);
-	wire_w_lg_do_write49w(0) <= do_write AND shift_pgwr_data;
-	wire_w_lg_load_opcode164w(0) <= load_opcode AND wire_w_lg_w_lg_do_4baddr162w163w(0);
-	wire_w_lg_load_opcode159w(0) <= load_opcode AND wire_w_lg_w_lg_do_ex4baddr157w158w(0);
-	wire_w_lg_load_opcode195w(0) <= load_opcode AND wire_w_lg_w_lg_do_write193w194w(0);
-	wire_w_lg_load_opcode170w(0) <= load_opcode AND do_bulk_erase;
-	wire_w_lg_load_opcode175w(0) <= load_opcode AND do_die_erase;
-	wire_w_lg_load_opcode215w(0) <= load_opcode AND do_fast_read;
-	wire_w_lg_load_opcode218w(0) <= load_opcode AND do_read;
-	wire_w_lg_load_opcode198w(0) <= load_opcode AND do_read_nonvolatile;
-	wire_w_lg_load_opcode226w(0) <= load_opcode AND do_read_rdid;
-	wire_w_lg_load_opcode229w(0) <= load_opcode AND do_read_sid;
-	wire_w_lg_load_opcode185w(0) <= load_opcode AND do_read_stat;
-	wire_w_lg_load_opcode209w(0) <= load_opcode AND do_read_volatile;
-	wire_w_lg_load_opcode180w(0) <= load_opcode AND do_sec_erase;
-	wire_w_lg_load_opcode221w(0) <= load_opcode AND do_sec_prot;
-	wire_w_lg_load_opcode167w(0) <= load_opcode AND do_wren;
-	wire_w_lg_load_opcode202w(0) <= load_opcode AND do_write_volatile;
-	wire_w_lg_not_busy390w(0) <= not_busy AND wire_w_addr_range389w(0);
+	wire_w_lg_do_4baddr185w(0) <= do_4baddr AND wire_w_lg_do_read_stat51w(0);
+	wire_w_lg_do_bulk_erase348w(0) <= do_bulk_erase AND wire_w_lg_do_read_stat51w(0);
+	wire_w_lg_do_ex4baddr180w(0) <= do_ex4baddr AND wire_w_lg_do_read_stat51w(0);
+	wire_w_lg_do_polling536w(0) <= do_polling AND end_one_cyc_pos;
+	wire_w_lg_do_read_nonvolatile334w(0) <= do_read_nonvolatile AND wire_addbyte_cntr_w_q_range167w(0);
+	wire_w_lg_do_read_stat121w(0) <= do_read_stat AND wire_w_lg_start_poll120w(0);
+	wire_w_lg_do_write216w(0) <= do_write AND wire_w_lg_do_read_stat51w(0);
+	wire_w_lg_do_write69w(0) <= do_write AND wire_w_lg_w_pagewr_buf_not_empty_range67w68w(0);
+	wire_w_lg_do_write62w(0) <= do_write AND shift_pgwr_data;
+	wire_w_lg_end_operation523w(0) <= end_operation AND do_read_stat;
+	wire_w_lg_load_opcode187w(0) <= load_opcode AND wire_w_lg_w_lg_do_4baddr185w186w(0);
+	wire_w_lg_load_opcode182w(0) <= load_opcode AND wire_w_lg_w_lg_do_ex4baddr180w181w(0);
+	wire_w_lg_load_opcode218w(0) <= load_opcode AND wire_w_lg_w_lg_do_write216w217w(0);
+	wire_w_lg_load_opcode193w(0) <= load_opcode AND do_bulk_erase;
+	wire_w_lg_load_opcode198w(0) <= load_opcode AND do_die_erase;
+	wire_w_lg_load_opcode238w(0) <= load_opcode AND do_fast_read;
+	wire_w_lg_load_opcode241w(0) <= load_opcode AND do_read;
+	wire_w_lg_load_opcode221w(0) <= load_opcode AND do_read_nonvolatile;
+	wire_w_lg_load_opcode249w(0) <= load_opcode AND do_read_rdid;
+	wire_w_lg_load_opcode252w(0) <= load_opcode AND do_read_sid;
+	wire_w_lg_load_opcode208w(0) <= load_opcode AND do_read_stat;
+	wire_w_lg_load_opcode232w(0) <= load_opcode AND do_read_volatile;
+	wire_w_lg_load_opcode203w(0) <= load_opcode AND do_sec_erase;
+	wire_w_lg_load_opcode244w(0) <= load_opcode AND do_sec_prot;
+	wire_w_lg_load_opcode190w(0) <= load_opcode AND do_wren;
+	wire_w_lg_load_opcode225w(0) <= load_opcode AND do_write_volatile;
+	wire_w_lg_not_busy413w(0) <= not_busy AND wire_w_addr_range412w(0);
 	loop18 : FOR i IN 0 TO 22 GENERATE 
-		wire_w_lg_not_busy382w(i) <= not_busy AND wire_w_addr_range381w(i);
+		wire_w_lg_not_busy405w(i) <= not_busy AND wire_w_addr_range404w(i);
 	END GENERATE loop18;
 	loop19 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_shift_opcode155w(i) <= shift_opcode AND wire_asmi_opcode_reg_w_q_range154w(i);
+		wire_w_lg_shift_opcode178w(i) <= shift_opcode AND wire_asmi_opcode_reg_w_q_range177w(i);
 	END GENERATE loop19;
-	wire_w_lg_stage3_wire396w(0) <= stage3_wire AND wire_w_lg_w_lg_w_lg_w_lg_do_write58w59w394w395w(0);
-	wire_w_lg_stage3_wire427w(0) <= stage3_wire AND wire_w_lg_w_lg_w_lg_do_read_stat424w425w426w(0);
-	wire_w_lg_stage3_wire41w(0) <= stage3_wire AND wire_w_lg_do_sec_erase40w(0);
-	wire_w_lg_stage3_wire31w(0) <= stage3_wire AND do_fast_read;
+	wire_w_lg_stage3_wire419w(0) <= stage3_wire AND wire_w_lg_w_lg_w_lg_w_lg_do_write71w72w417w418w(0);
+	wire_w_lg_stage3_wire450w(0) <= stage3_wire AND wire_w_lg_w_lg_w_lg_do_read_stat447w448w449w(0);
+	wire_w_lg_stage3_wire54w(0) <= stage3_wire AND wire_w_lg_do_sec_erase53w(0);
+	wire_w_lg_stage3_wire44w(0) <= stage3_wire AND do_fast_read;
 	loop20 : FOR i IN 0 TO 22 GENERATE 
-		wire_w_lg_stage3_wire380w(i) <= stage3_wire AND wire_addr_reg_w_q_range379w(i);
+		wire_w_lg_stage3_wire403w(i) <= stage3_wire AND wire_addr_reg_w_q_range402w(i);
 	END GENERATE loop20;
-	wire_w_lg_stage4_wire429w(0) <= stage4_wire AND wire_w_lg_w_lg_do_read393w428w(0);
-	wire_w_lg_stage4_wire397w(0) <= stage4_wire AND addr_overdie;
-	wire_w_lg_start_poll331w(0) <= start_poll AND do_read_stat;
-	wire_w_lg_w_lg_do_write49w343w(0) <= NOT wire_w_lg_do_write49w(0);
-	wire_w_lg_w_lg_w105w106w107w(0) <= NOT wire_w_lg_w105w106w(0);
-	wire_w_lg_addr_overdie476w(0) <= NOT addr_overdie;
-	wire_w_lg_busy_wire1w(0) <= NOT busy_wire;
-	wire_w_lg_clkin_wire87w(0) <= NOT clkin_wire;
-	wire_w_lg_do_fast_read344w(0) <= NOT do_fast_read;
-	wire_w_lg_do_memadd411w(0) <= NOT do_memadd;
-	wire_w_lg_do_polling189w(0) <= NOT do_polling;
-	wire_w_lg_do_read345w(0) <= NOT do_read;
-	wire_w_lg_do_read_rdid37w(0) <= NOT do_read_rdid;
-	wire_w_lg_do_read_stat38w(0) <= NOT do_read_stat;
-	wire_w_lg_do_read_volatile201w(0) <= NOT do_read_volatile;
-	wire_w_lg_do_wren39w(0) <= NOT do_wren;
-	wire_w_lg_do_write_volatile208w(0) <= NOT do_write_volatile;
-	wire_w_lg_end_add_cycle69w(0) <= NOT end_add_cycle;
-	wire_w_lg_end_fast_read63w(0) <= NOT end_fast_read;
-	wire_w_lg_end_ophdly25w(0) <= NOT end_ophdly;
-	wire_w_lg_end_pgwr_data48w(0) <= NOT end_pgwr_data;
-	wire_w_lg_end_read66w(0) <= NOT end_read;
-	wire_w_lg_rden_wire478w(0) <= NOT rden_wire;
-	wire_w_lg_read_rdid_wire7w(0) <= NOT read_rdid_wire;
-	wire_w_lg_read_sid_wire6w(0) <= NOT read_sid_wire;
-	wire_w_lg_sec_protect_wire5w(0) <= NOT sec_protect_wire;
-	wire_w_lg_st_busy_wire113w(0) <= NOT st_busy_wire;
-	wire_w_lg_start_poll108w(0) <= NOT start_poll;
-	wire_w_lg_w_pagewr_buf_not_empty_range54w55w(0) <= NOT wire_w_pagewr_buf_not_empty_range54w(0);
-	wire_w_lg_w_lg_w_lg_load_opcode229w283w284w(0) <= wire_w_lg_w_lg_load_opcode229w283w(0) OR wire_w_lg_w_lg_load_opcode226w281w(0);
+	wire_w_lg_stage4_wire452w(0) <= stage4_wire AND wire_w_lg_w_lg_do_read416w451w(0);
+	wire_w_lg_stage4_wire420w(0) <= stage4_wire AND addr_overdie;
+	wire_w_lg_start_poll354w(0) <= start_poll AND do_read_stat;
+	wire_w_lg_w_lg_do_write62w366w(0) <= NOT wire_w_lg_do_write62w(0);
+	wire_w_lg_w_lg_w117w118w119w(0) <= NOT wire_w_lg_w117w118w(0);
+	wire_w_lg_addr_overdie499w(0) <= NOT addr_overdie;
+	wire_w_lg_busy_wire2w(0) <= NOT busy_wire;
+	wire_w_lg_clkin_wire37w(0) <= NOT clkin_wire;
+	wire_w_lg_do_4baddr517w(0) <= NOT do_4baddr;
+	wire_w_lg_do_bulk_erase519w(0) <= NOT do_bulk_erase;
+	wire_w_lg_do_die_erase520w(0) <= NOT do_die_erase;
+	wire_w_lg_do_ex4baddr516w(0) <= NOT do_ex4baddr;
+	wire_w_lg_do_fast_read367w(0) <= NOT do_fast_read;
+	wire_w_lg_do_memadd434w(0) <= NOT do_memadd;
+	wire_w_lg_do_polling212w(0) <= NOT do_polling;
+	wire_w_lg_do_read368w(0) <= NOT do_read;
+	wire_w_lg_do_read_rdid50w(0) <= NOT do_read_rdid;
+	wire_w_lg_do_read_stat51w(0) <= NOT do_read_stat;
+	wire_w_lg_do_read_volatile224w(0) <= NOT do_read_volatile;
+	wire_w_lg_do_sec_erase521w(0) <= NOT do_sec_erase;
+	wire_w_lg_do_sec_prot518w(0) <= NOT do_sec_prot;
+	wire_w_lg_do_wren52w(0) <= NOT do_wren;
+	wire_w_lg_do_write522w(0) <= NOT do_write;
+	wire_w_lg_do_write_volatile231w(0) <= NOT do_write_volatile;
+	wire_w_lg_end_add_cycle82w(0) <= NOT end_add_cycle;
+	wire_w_lg_end_fast_read76w(0) <= NOT end_fast_read;
+	wire_w_lg_end_ophdly38w(0) <= NOT end_ophdly;
+	wire_w_lg_end_pgwr_data61w(0) <= NOT end_pgwr_data;
+	wire_w_lg_end_read79w(0) <= NOT end_read;
+	wire_w_lg_rden_wire501w(0) <= NOT rden_wire;
+	wire_w_lg_read_rdid_wire10w(0) <= NOT read_rdid_wire;
+	wire_w_lg_read_sid_wire9w(0) <= NOT read_sid_wire;
+	wire_w_lg_sec_protect_wire8w(0) <= NOT sec_protect_wire;
+	wire_w_lg_st_busy_wire125w(0) <= NOT st_busy_wire;
+	wire_w_lg_start_poll120w(0) <= NOT start_poll;
+	wire_w_lg_write_wire14w(0) <= NOT write_wire;
+	wire_w_lg_w_pagewr_buf_not_empty_range67w68w(0) <= NOT wire_w_pagewr_buf_not_empty_range67w(0);
+	wire_w_lg_w_lg_w_lg_load_opcode252w306w307w(0) <= wire_w_lg_w_lg_load_opcode252w306w(0) OR wire_w_lg_w_lg_load_opcode249w304w(0);
 	loop21 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_load_opcode229w230w231w(i) <= wire_w_lg_w_lg_load_opcode229w230w(i) OR wire_w_lg_w_lg_load_opcode226w227w(i);
+		wire_w_lg_w_lg_w_lg_load_opcode252w253w254w(i) <= wire_w_lg_w_lg_load_opcode252w253w(i) OR wire_w_lg_w_lg_load_opcode249w250w(i);
 	END GENERATE loop21;
-	wire_w_lg_w_lg_w_lg_w_lg_do_write58w59w394w395w(0) <= wire_w_lg_w_lg_w_lg_do_write58w59w394w(0) OR wire_w_lg_do_read393w(0);
-	wire_w_lg_w_lg_w_lg_rden_wire398w399w400w(0) <= wire_w_lg_w_lg_rden_wire398w399w(0) OR wire_w_lg_stage4_wire397w(0);
-	wire_w_lg_w_lg_not_busy390w391w(0) <= wire_w_lg_not_busy390w(0) OR wire_w_lg_addr_overdie388w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_do_write71w72w417w418w(0) <= wire_w_lg_w_lg_w_lg_do_write71w72w417w(0) OR wire_w_lg_do_read416w(0);
+	wire_w_lg_w_lg_w_lg_end_operation538w539w540w(0) <= wire_w_lg_w_lg_end_operation538w539w(0) OR clr_rstat_wire;
+	wire_w_lg_w_lg_w_lg_rden_wire421w422w423w(0) <= wire_w_lg_w_lg_rden_wire421w422w(0) OR wire_w_lg_stage4_wire420w(0);
+	wire_w_lg_w_lg_not_busy413w414w(0) <= wire_w_lg_not_busy413w(0) OR wire_w_lg_addr_overdie411w(0);
 	loop22 : FOR i IN 0 TO 22 GENERATE 
-		wire_w_lg_w_lg_not_busy382w383w(i) <= wire_w_lg_not_busy382w(i) OR wire_w_lg_stage3_wire380w(i);
+		wire_w_lg_w_lg_not_busy405w406w(i) <= wire_w_lg_not_busy405w(i) OR wire_w_lg_stage3_wire403w(i);
 	END GENERATE loop22;
-	wire_w_lg_w_lg_stage4_wire429w430w(0) <= wire_w_lg_stage4_wire429w(0) OR wire_w_lg_stage3_wire427w(0);
-	wire_w_lg_w_lg_w_lg_w_lg_load_opcode229w283w284w285w(0) <= wire_w_lg_w_lg_w_lg_load_opcode229w283w284w(0) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode221w222w223w279w(0);
+	wire_w_lg_w_lg_stage4_wire452w453w(0) <= wire_w_lg_stage4_wire452w(0) OR wire_w_lg_stage3_wire450w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_load_opcode252w306w307w308w(0) <= wire_w_lg_w_lg_w_lg_load_opcode252w306w307w(0) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode244w245w246w302w(0);
 	loop23 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_w_lg_load_opcode229w230w231w232w(i) <= wire_w_lg_w_lg_w_lg_load_opcode229w230w231w(i) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode221w222w223w224w(i);
+		wire_w_lg_w_lg_w_lg_w_lg_load_opcode252w253w254w255w(i) <= wire_w_lg_w_lg_w_lg_load_opcode252w253w254w(i) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode244w245w246w247w(i);
 	END GENERATE loop23;
-	wire_w_lg_w_lg_w_lg_w_lg_rden_wire398w399w400w401w(0) <= wire_w_lg_w_lg_w_lg_rden_wire398w399w400w(0) OR wire_w_lg_stage3_wire396w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_rden_wire421w422w423w424w(0) <= wire_w_lg_w_lg_w_lg_rden_wire421w422w423w(0) OR wire_w_lg_stage3_wire419w(0);
 	loop24 : FOR i IN 0 TO 22 GENERATE 
-		wire_w_lg_w_lg_w_lg_not_busy382w383w384w(i) <= wire_w_lg_w_lg_not_busy382w383w(i) OR wire_w_lg_addr_overdie378w(i);
+		wire_w_lg_w_lg_w_lg_not_busy405w406w407w(i) <= wire_w_lg_w_lg_not_busy405w406w(i) OR wire_w_lg_addr_overdie401w(i);
 	END GENERATE loop24;
-	wire_w286w(0) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode229w283w284w285w(0) OR wire_w_lg_w_lg_load_opcode218w277w(0);
+	wire_w309w(0) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode252w306w307w308w(0) OR wire_w_lg_w_lg_load_opcode241w300w(0);
 	loop25 : FOR i IN 0 TO 6 GENERATE 
-		wire_w233w(i) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode229w230w231w232w(i) OR wire_w_lg_w_lg_load_opcode218w219w(i);
+		wire_w256w(i) <= wire_w_lg_w_lg_w_lg_w_lg_load_opcode252w253w254w255w(i) OR wire_w_lg_w_lg_load_opcode241w242w(i);
 	END GENERATE loop25;
-	wire_w_lg_w286w287w(0) <= wire_w286w(0) OR wire_w_lg_w_lg_load_opcode215w275w(0);
+	wire_w_lg_w309w310w(0) <= wire_w309w(0) OR wire_w_lg_w_lg_load_opcode238w298w(0);
 	loop26 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w233w234w(i) <= wire_w233w(i) OR wire_w_lg_w_lg_load_opcode215w216w(i);
+		wire_w_lg_w256w257w(i) <= wire_w256w(i) OR wire_w_lg_w_lg_load_opcode238w239w(i);
 	END GENERATE loop26;
-	wire_w_lg_w_lg_w286w287w288w(0) <= wire_w_lg_w286w287w(0) OR wire_w273w(0);
+	wire_w_lg_w_lg_w309w310w311w(0) <= wire_w_lg_w309w310w(0) OR wire_w296w(0);
 	loop27 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w233w234w235w(i) <= wire_w_lg_w233w234w(i) OR wire_w213w(i);
+		wire_w_lg_w_lg_w256w257w258w(i) <= wire_w_lg_w256w257w(i) OR wire_w236w(i);
 	END GENERATE loop27;
-	wire_w_lg_w_lg_w_lg_w286w287w288w289w(0) <= wire_w_lg_w_lg_w286w287w288w(0) OR wire_w271w(0);
+	wire_w_lg_w_lg_w_lg_w309w310w311w312w(0) <= wire_w_lg_w_lg_w309w310w311w(0) OR wire_w294w(0);
 	loop28 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_w233w234w235w236w(i) <= wire_w_lg_w_lg_w233w234w235w(i) OR wire_w206w(i);
+		wire_w_lg_w_lg_w_lg_w256w257w258w259w(i) <= wire_w_lg_w_lg_w256w257w258w(i) OR wire_w229w(i);
 	END GENERATE loop28;
-	wire_w_lg_w_lg_w_lg_w_lg_w286w287w288w289w290w(0) <= wire_w_lg_w_lg_w_lg_w286w287w288w289w(0) OR wire_w_lg_w_lg_load_opcode198w269w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_w309w310w311w312w313w(0) <= wire_w_lg_w_lg_w_lg_w309w310w311w312w(0) OR wire_w_lg_w_lg_load_opcode221w292w(0);
 	loop29 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_w_lg_w233w234w235w236w237w(i) <= wire_w_lg_w_lg_w_lg_w233w234w235w236w(i) OR wire_w_lg_w_lg_load_opcode198w199w(i);
+		wire_w_lg_w_lg_w_lg_w_lg_w256w257w258w259w260w(i) <= wire_w_lg_w_lg_w_lg_w256w257w258w259w(i) OR wire_w_lg_w_lg_load_opcode221w222w(i);
 	END GENERATE loop29;
-	wire_w_lg_w_lg_w_lg_w_lg_w_lg_w286w287w288w289w290w291w(0) <= wire_w_lg_w_lg_w_lg_w_lg_w286w287w288w289w290w(0) OR wire_w_lg_w_lg_load_opcode195w267w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_w_lg_w309w310w311w312w313w314w(0) <= wire_w_lg_w_lg_w_lg_w_lg_w309w310w311w312w313w(0) OR wire_w_lg_w_lg_load_opcode218w290w(0);
 	loop30 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_w_lg_w_lg_w233w234w235w236w237w238w(i) <= wire_w_lg_w_lg_w_lg_w_lg_w233w234w235w236w237w(i) OR wire_w_lg_w_lg_load_opcode195w196w(i);
+		wire_w_lg_w_lg_w_lg_w_lg_w_lg_w256w257w258w259w260w261w(i) <= wire_w_lg_w_lg_w_lg_w_lg_w256w257w258w259w260w(i) OR wire_w_lg_w_lg_load_opcode218w219w(i);
 	END GENERATE loop30;
-	wire_w292w(0) <= wire_w_lg_w_lg_w_lg_w_lg_w_lg_w286w287w288w289w290w291w(0) OR wire_w_lg_w_lg_w_lg_load_opcode185w190w265w(0);
+	wire_w315w(0) <= wire_w_lg_w_lg_w_lg_w_lg_w_lg_w309w310w311w312w313w314w(0) OR wire_w_lg_w_lg_w_lg_load_opcode208w213w288w(0);
 	loop31 : FOR i IN 0 TO 6 GENERATE 
-		wire_w239w(i) <= wire_w_lg_w_lg_w_lg_w_lg_w_lg_w233w234w235w236w237w238w(i) OR wire_w_lg_w_lg_w_lg_load_opcode185w190w191w(i);
+		wire_w262w(i) <= wire_w_lg_w_lg_w_lg_w_lg_w_lg_w256w257w258w259w260w261w(i) OR wire_w_lg_w_lg_w_lg_load_opcode208w213w214w(i);
 	END GENERATE loop31;
-	wire_w_lg_w292w293w(0) <= wire_w292w(0) OR wire_w_lg_w_lg_w_lg_load_opcode185w186w263w(0);
+	wire_w_lg_w315w316w(0) <= wire_w315w(0) OR wire_w_lg_w_lg_w_lg_load_opcode208w209w286w(0);
 	loop32 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w239w240w(i) <= wire_w239w(i) OR wire_w_lg_w_lg_w_lg_load_opcode185w186w187w(i);
+		wire_w_lg_w262w263w(i) <= wire_w262w(i) OR wire_w_lg_w_lg_w_lg_load_opcode208w209w210w(i);
 	END GENERATE loop32;
-	wire_w_lg_w_lg_w292w293w294w(0) <= wire_w_lg_w292w293w(0) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode180w181w182w261w(0);
+	wire_w_lg_w_lg_w315w316w317w(0) <= wire_w_lg_w315w316w(0) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode203w204w205w284w(0);
 	loop33 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w239w240w241w(i) <= wire_w_lg_w239w240w(i) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode180w181w182w183w(i);
+		wire_w_lg_w_lg_w262w263w264w(i) <= wire_w_lg_w262w263w(i) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode203w204w205w206w(i);
 	END GENERATE loop33;
-	wire_w_lg_w_lg_w_lg_w292w293w294w295w(0) <= wire_w_lg_w_lg_w292w293w294w(0) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode175w176w177w259w(0);
+	wire_w_lg_w_lg_w_lg_w315w316w317w318w(0) <= wire_w_lg_w_lg_w315w316w317w(0) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode198w199w200w282w(0);
 	loop34 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_w239w240w241w242w(i) <= wire_w_lg_w_lg_w239w240w241w(i) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode175w176w177w178w(i);
+		wire_w_lg_w_lg_w_lg_w262w263w264w265w(i) <= wire_w_lg_w_lg_w262w263w264w(i) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode198w199w200w201w(i);
 	END GENERATE loop34;
-	wire_w_lg_w_lg_w_lg_w_lg_w292w293w294w295w296w(0) <= wire_w_lg_w_lg_w_lg_w292w293w294w295w(0) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode170w171w172w257w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_w315w316w317w318w319w(0) <= wire_w_lg_w_lg_w_lg_w315w316w317w318w(0) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode193w194w195w280w(0);
 	loop35 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_w_lg_w239w240w241w242w243w(i) <= wire_w_lg_w_lg_w_lg_w239w240w241w242w(i) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode170w171w172w173w(i);
+		wire_w_lg_w_lg_w_lg_w_lg_w262w263w264w265w266w(i) <= wire_w_lg_w_lg_w_lg_w262w263w264w265w(i) OR wire_w_lg_w_lg_w_lg_w_lg_load_opcode193w194w195w196w(i);
 	END GENERATE loop35;
-	wire_w_lg_w_lg_w_lg_w_lg_w_lg_w292w293w294w295w296w297w(0) <= wire_w_lg_w_lg_w_lg_w_lg_w292w293w294w295w296w(0) OR wire_w_lg_w_lg_load_opcode167w255w(0);
+	wire_w_lg_w_lg_w_lg_w_lg_w_lg_w315w316w317w318w319w320w(0) <= wire_w_lg_w_lg_w_lg_w_lg_w315w316w317w318w319w(0) OR wire_w_lg_w_lg_load_opcode190w278w(0);
 	loop36 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w_lg_w_lg_w_lg_w239w240w241w242w243w244w(i) <= wire_w_lg_w_lg_w_lg_w_lg_w239w240w241w242w243w(i) OR wire_w_lg_w_lg_load_opcode167w168w(i);
+		wire_w_lg_w_lg_w_lg_w_lg_w_lg_w262w263w264w265w266w267w(i) <= wire_w_lg_w_lg_w_lg_w_lg_w262w263w264w265w266w(i) OR wire_w_lg_w_lg_load_opcode190w191w(i);
 	END GENERATE loop36;
-	wire_w298w(0) <= wire_w_lg_w_lg_w_lg_w_lg_w_lg_w292w293w294w295w296w297w(0) OR wire_w_lg_w_lg_load_opcode164w253w(0);
+	wire_w321w(0) <= wire_w_lg_w_lg_w_lg_w_lg_w_lg_w315w316w317w318w319w320w(0) OR wire_w_lg_w_lg_load_opcode187w276w(0);
 	loop37 : FOR i IN 0 TO 6 GENERATE 
-		wire_w245w(i) <= wire_w_lg_w_lg_w_lg_w_lg_w_lg_w239w240w241w242w243w244w(i) OR wire_w_lg_w_lg_load_opcode164w165w(i);
+		wire_w268w(i) <= wire_w_lg_w_lg_w_lg_w_lg_w_lg_w262w263w264w265w266w267w(i) OR wire_w_lg_w_lg_load_opcode187w188w(i);
 	END GENERATE loop37;
-	wire_w_lg_w298w299w(0) <= wire_w298w(0) OR wire_w_lg_w_lg_load_opcode159w251w(0);
+	wire_w_lg_w321w322w(0) <= wire_w321w(0) OR wire_w_lg_w_lg_load_opcode182w274w(0);
 	loop38 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w245w246w(i) <= wire_w245w(i) OR wire_w_lg_w_lg_load_opcode159w160w(i);
+		wire_w_lg_w268w269w(i) <= wire_w268w(i) OR wire_w_lg_w_lg_load_opcode182w183w(i);
 	END GENERATE loop38;
 	loop39 : FOR i IN 0 TO 6 GENERATE 
-		wire_w_lg_w_lg_w245w246w247w(i) <= wire_w_lg_w245w246w(i) OR wire_w_lg_shift_opcode155w(i);
+		wire_w_lg_w_lg_w268w269w270w(i) <= wire_w_lg_w268w269w(i) OR wire_w_lg_shift_opcode178w(i);
 	END GENERATE loop39;
-	wire_w_lg_w_lg_w137w138w139w(0) <= wire_w_lg_w137w138w(0) OR do_read_nonvolatile;
-	wire_w_lg_w137w138w(0) <= wire_w137w(0) OR do_fast_read;
-	wire_w_lg_w105w106w(0) <= wire_w105w(0) OR do_ex4baddr;
-	wire_w137w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_read_sid133w134w135w136w(0) OR do_read;
-	wire_w105w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_write58w102w103w104w(0) OR do_4baddr;
-	wire_w_lg_w_lg_w_lg_w_lg_do_read393w414w415w416w(0) <= wire_w_lg_w_lg_w_lg_do_read393w414w415w(0) OR do_die_erase;
-	wire_w_lg_w_lg_w_lg_w_lg_do_read_sid133w134w135w136w(0) <= wire_w_lg_w_lg_w_lg_do_read_sid133w134w135w(0) OR do_read_rdid;
-	wire_w_lg_w_lg_w_lg_w_lg_do_write58w102w103w104w(0) <= wire_w_lg_w_lg_w_lg_do_write58w102w103w(0) OR do_fread_epcq;
-	wire_w_lg_w_lg_w_lg_do_read393w414w415w(0) <= wire_w_lg_w_lg_do_read393w414w(0) OR do_sec_erase;
-	wire_w_lg_w_lg_w_lg_do_read_sid133w134w135w(0) <= wire_w_lg_w_lg_do_read_sid133w134w(0) OR do_die_erase;
-	wire_w_lg_w_lg_w_lg_do_read_stat424w425w426w(0) <= wire_w_lg_w_lg_do_read_stat424w425w(0) OR do_read_nonvolatile;
-	wire_w_lg_w_lg_w_lg_do_write58w102w103w(0) <= wire_w_lg_w_lg_do_write58w102w(0) OR do_die_erase;
-	wire_w_lg_w_lg_do_read393w428w(0) <= wire_w_lg_do_read393w(0) OR do_read_sid;
-	wire_w_lg_w_lg_do_read393w414w(0) <= wire_w_lg_do_read393w(0) OR do_write;
-	wire_w_lg_w_lg_do_read_sid133w134w(0) <= wire_w_lg_do_read_sid133w(0) OR do_sec_erase;
-	wire_w_lg_w_lg_do_read_stat424w425w(0) <= wire_w_lg_do_read_stat424w(0) OR do_read_volatile;
-	wire_w_lg_w_lg_do_write58w102w(0) <= wire_w_lg_do_write58w(0) OR do_bulk_erase;
-	wire_w_lg_w_lg_do_write58w59w(0) <= wire_w_lg_do_write58w(0) OR do_die_erase;
-	wire_w_lg_data0out_wire432w(0) <= data0out_wire OR wire_w_dataout_wire_range431w(0);
-	wire_w_lg_do_4baddr327w(0) <= do_4baddr OR wire_w_lg_do_ex4baddr326w(0);
-	wire_w_lg_do_ex4baddr326w(0) <= do_ex4baddr OR wire_w_lg_do_bulk_erase325w(0);
-	wire_w_lg_do_read393w(0) <= do_read OR do_fast_read;
-	wire_w_lg_do_read_rdid111w(0) <= do_read_rdid OR wire_w_lg_w_lg_do_read_stat109w110w(0);
-	wire_w_lg_do_read_sid133w(0) <= do_read_sid OR do_write;
-	wire_w_lg_do_read_stat424w(0) <= do_read_stat OR do_read_rdid;
-	wire_w_lg_do_sec_erase40w(0) <= do_sec_erase OR do_die_erase;
-	wire_w_lg_do_wren328w(0) <= do_wren OR wire_w_lg_do_4baddr327w(0);
-	wire_w_lg_do_write58w(0) <= do_write OR do_sec_erase;
-	wire_w_lg_load_opcode301w(0) <= load_opcode OR shift_opcode;
-	wire_w_lg_rden_wire398w(0) <= rden_wire OR wren_wire;
+	wire_w_lg_w_lg_w160w161w162w(0) <= wire_w_lg_w160w161w(0) OR do_read_nonvolatile;
+	wire_w_lg_w160w161w(0) <= wire_w160w(0) OR do_fast_read;
+	wire_w_lg_w117w118w(0) <= wire_w117w(0) OR do_ex4baddr;
+	wire_w160w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_read_sid156w157w158w159w(0) OR do_read;
+	wire_w117w(0) <= wire_w_lg_w_lg_w_lg_w_lg_do_write71w114w115w116w(0) OR do_4baddr;
+	wire_w_lg_w_lg_w_lg_w_lg_do_read416w437w438w439w(0) <= wire_w_lg_w_lg_w_lg_do_read416w437w438w(0) OR do_die_erase;
+	wire_w_lg_w_lg_w_lg_w_lg_do_read_sid156w157w158w159w(0) <= wire_w_lg_w_lg_w_lg_do_read_sid156w157w158w(0) OR do_read_rdid;
+	wire_w_lg_w_lg_w_lg_w_lg_do_write71w114w115w116w(0) <= wire_w_lg_w_lg_w_lg_do_write71w114w115w(0) OR do_fread_epcq;
+	wire_w_lg_w_lg_w_lg_do_read416w437w438w(0) <= wire_w_lg_w_lg_do_read416w437w(0) OR do_sec_erase;
+	wire_w_lg_w_lg_w_lg_do_read_sid156w157w158w(0) <= wire_w_lg_w_lg_do_read_sid156w157w(0) OR do_die_erase;
+	wire_w_lg_w_lg_w_lg_do_read_stat447w448w449w(0) <= wire_w_lg_w_lg_do_read_stat447w448w(0) OR do_read_nonvolatile;
+	wire_w_lg_w_lg_w_lg_do_write71w114w115w(0) <= wire_w_lg_w_lg_do_write71w114w(0) OR do_die_erase;
+	wire_w_lg_w_lg_do_read416w451w(0) <= wire_w_lg_do_read416w(0) OR do_read_sid;
+	wire_w_lg_w_lg_do_read416w437w(0) <= wire_w_lg_do_read416w(0) OR do_write;
+	wire_w_lg_w_lg_do_read_sid156w157w(0) <= wire_w_lg_do_read_sid156w(0) OR do_sec_erase;
+	wire_w_lg_w_lg_do_read_stat447w448w(0) <= wire_w_lg_do_read_stat447w(0) OR do_read_volatile;
+	wire_w_lg_w_lg_do_write71w114w(0) <= wire_w_lg_do_write71w(0) OR do_bulk_erase;
+	wire_w_lg_w_lg_do_write71w72w(0) <= wire_w_lg_do_write71w(0) OR do_die_erase;
+	wire_w_lg_data0out_wire455w(0) <= data0out_wire OR wire_w_dataout_wire_range454w(0);
+	wire_w_lg_do_4baddr350w(0) <= do_4baddr OR wire_w_lg_do_ex4baddr349w(0);
+	wire_w_lg_do_ex4baddr349w(0) <= do_ex4baddr OR wire_w_lg_do_bulk_erase348w(0);
+	wire_w_lg_do_read416w(0) <= do_read OR do_fast_read;
+	wire_w_lg_do_read_rdid123w(0) <= do_read_rdid OR wire_w_lg_w_lg_do_read_stat121w122w(0);
+	wire_w_lg_do_read_sid156w(0) <= do_read_sid OR do_write;
+	wire_w_lg_do_read_stat447w(0) <= do_read_stat OR do_read_rdid;
+	wire_w_lg_do_sec_erase53w(0) <= do_sec_erase OR do_die_erase;
+	wire_w_lg_do_wren351w(0) <= do_wren OR wire_w_lg_do_4baddr350w(0);
+	wire_w_lg_do_write71w(0) <= do_write OR do_sec_erase;
+	wire_w_lg_end_operation538w(0) <= end_operation OR wire_w_lg_w_lg_do_polling536w537w(0);
+	wire_w_lg_load_opcode324w(0) <= load_opcode OR shift_opcode;
+	wire_w_lg_rden_wire421w(0) <= rden_wire OR wren_wire;
 	addr_overdie <= '0';
 	addr_overdie_pos <= '0';
 	addr_reg_overdie <= (OTHERS => '0');
 	b4addr_opcode <= (OTHERS => '0');
 	berase_opcode <= (OTHERS => '0');
-	busy <= busy_wire;
+	busy <= (busy_wire OR busy_delay_reg);
 	busy_wire <= ((((((((((((((do_read_rdid OR do_read_sid) OR do_read) OR do_fast_read) OR do_write) OR do_sec_prot) OR do_read_stat) OR do_sec_erase) OR do_bulk_erase) OR do_die_erase) OR do_4baddr) OR do_read_volatile) OR do_fread_epcq) OR do_read_nonvolatile) OR do_ex4baddr);
 	clkin_wire <= clkin;
-	clr_addmsb_wire <= ((wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w94w406w407w(0) OR wire_w_lg_w_lg_w_lg_do_read345w346w405w(0)) OR wire_w_lg_w_lg_w_lg_w_lg_do_sec_erase40w402w403w404w(0));
-	clr_endrbyte_wire <= ((((wire_w_lg_do_read393w(0) AND (NOT wire_gen_cntr_q(2))) AND wire_gen_cntr_q(1)) AND wire_gen_cntr_q(0)) OR clr_read_wire2);
+	clr_addmsb_wire <= ((wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w106w429w430w(0) OR wire_w_lg_w_lg_w_lg_do_read368w369w428w(0)) OR wire_w_lg_w_lg_w_lg_w_lg_do_sec_erase53w425w426w427w(0));
+	clr_endrbyte_wire <= ((((wire_w_lg_do_read416w(0) AND (NOT wire_gen_cntr_q(2))) AND wire_gen_cntr_q(1)) AND wire_gen_cntr_q(0)) OR clr_read_wire2);
+	clr_rdid_wire <= clr_rdid_reg;
 	clr_read_wire <= clr_read_reg;
 	clr_read_wire2 <= clr_read_reg2;
+	clr_rstat_wire <= clr_rstat_reg;
 	clr_write_wire2 <= '0';
-	data0out_wire <= wire_stratixii_asmiblock2_data0out;
+	data0out_wire <= wire_stratixii_asmiblock3_data0out;
 	data_valid <= data_valid_wire;
 	data_valid_wire <= dvalid_reg2;
 	datain_wire <= ( "0000");
@@ -944,63 +1055,71 @@
 	do_bulk_erase <= '0';
 	do_die_erase <= '0';
 	do_ex4baddr <= '0';
-	do_fast_read <= '0';
+	do_fast_read <= (((wire_w_lg_read_rdid_wire10w(0) AND wire_w_lg_read_sid_wire9w(0)) AND wire_w_lg_sec_protect_wire8w(0)) AND fast_read_wire);
 	do_fread_epcq <= '0';
 	do_freadwrv_polling <= '0';
 	do_memadd <= '0';
 	do_polling <= ((do_write_polling OR do_sprot_polling) OR do_freadwrv_polling);
-	do_read <= (((wire_w_lg_read_rdid_wire7w(0) AND wire_w_lg_read_sid_wire6w(0)) AND wire_w_lg_sec_protect_wire5w(0)) AND read_wire);
+	do_read <= '0';
 	do_read_nonvolatile <= '0';
-	do_read_rdid <= '0';
+	do_read_rdid <= read_rdid_wire;
 	do_read_sid <= '0';
-	do_read_stat <= '0';
+	do_read_stat <= ((((((((wire_w_lg_read_rdid_wire10w(0) AND wire_w_lg_read_sid_wire9w(0)) AND wire_w_lg_sec_protect_wire8w(0)) AND (NOT (read_wire OR fast_read_wire))) AND wire_w_lg_write_wire14w(0)) AND read_status_wire) OR do_write_rstat) OR do_sprot_rstat) OR do_write_volatile_rstat);
 	do_read_volatile <= '0';
 	do_sec_erase <= '0';
 	do_sec_prot <= '0';
 	do_sprot_polling <= '0';
+	do_sprot_rstat <= '0';
 	do_wait_dummyclk <= '0';
 	do_wren <= '0';
 	do_write <= '0';
 	do_write_polling <= '0';
+	do_write_rstat <= '0';
 	do_write_volatile <= '0';
-	end1_cyc_gen_cntr_wire <= (wire_gen_cntr_w_lg_w_q_range99w100w(0) AND (NOT wire_gen_cntr_q(0)));
-	end1_cyc_normal_in_wire <= ((((((((((wire_stage_cntr_w_lg_w_lg_w_q_range88w93w119w(0) AND (NOT wire_gen_cntr_q(2))) AND wire_gen_cntr_q(1)) AND wire_gen_cntr_q(0)) OR wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range88w93w119w120w121w(0)) OR (do_read AND end_read)) OR (do_fast_read AND end_fast_read)) OR wire_w_lg_w_lg_w_lg_w_lg_do_write58w102w103w116w(0)) OR wire_w_lg_do_write56w(0)) OR ((do_read_stat AND start_poll) AND wire_w_lg_st_busy_wire113w(0))) OR wire_w_lg_w_lg_do_read_rdid111w112w(0));
-	end1_cyc_reg_in_wire <= end1_cyc_normal_in_wire;
-	end_add_cycle <= wire_mux211_dataout;
+	do_write_volatile_rstat <= '0';
+	end1_cyc_dlyncs_in_wire <= (((((((((wire_stage_cntr_w_lg_w_lg_w_q_range100w105w131w(0) AND (NOT wire_gen_cntr_q(2))) AND wire_gen_cntr_q(1)) AND (NOT wire_gen_cntr_q(0))) OR wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range100w105w131w132w133w(0)) OR (do_read AND end_read)) OR (do_fast_read AND end_fast_read)) OR wire_w_lg_w_lg_w_lg_w_lg_do_write71w114w115w128w(0)) OR wire_w_lg_do_write69w(0)) OR ((do_read_stat AND start_poll) AND wire_w_lg_st_busy_wire125w(0)));
+	end1_cyc_gen_cntr_wire <= (wire_gen_cntr_w_lg_w_q_range111w112w(0) AND (NOT wire_gen_cntr_q(0)));
+	end1_cyc_normal_in_wire <= ((((((((((wire_stage_cntr_w_lg_w_lg_w_q_range100w105w131w(0) AND (NOT wire_gen_cntr_q(2))) AND wire_gen_cntr_q(1)) AND wire_gen_cntr_q(0)) OR wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range100w105w131w132w133w(0)) OR (do_read AND end_read)) OR (do_fast_read AND end_fast_read)) OR wire_w_lg_w_lg_w_lg_w_lg_do_write71w114w115w128w(0)) OR wire_w_lg_do_write69w(0)) OR ((do_read_stat AND start_poll) AND wire_w_lg_st_busy_wire125w(0))) OR wire_w_lg_w_lg_do_read_rdid123w124w(0));
+	end1_cyc_reg_in_wire <= wire_mux211_dataout;
+	end_add_cycle <= wire_mux212_dataout;
 	end_add_cycle_mux_datab_wire <= (wire_addbyte_cntr_q(2) AND wire_addbyte_cntr_q(1));
 	end_fast_read <= end_read_reg;
 	end_one_cyc_pos <= end1_cyc_reg2;
 	end_one_cycle <= end1_cyc_reg;
-	end_op_wire <= (((((((((((wire_stage_cntr_w_lg_w_q_range89w94w(0) AND ((wire_w_lg_w_lg_w_lg_w_lg_do_read345w346w347w348w(0) OR (do_read AND end_read)) OR (do_fast_read AND end_fast_read))) OR (wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w92w340w341w(0) AND wire_w_lg_do_polling189w(0))) OR ((((((do_read_rdid AND end_one_cyc_pos) AND wire_stage_cntr_q(1)) AND wire_stage_cntr_q(0)) AND wire_addbyte_cntr_q(2)) AND wire_addbyte_cntr_q(1)) AND wire_addbyte_cntr_w_lg_w_q_range147w148w(0))) OR (wire_w_lg_w_lg_start_poll331w332w(0) AND wire_w_lg_st_busy_wire113w(0))) OR wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range89w90w91w329w330w(0)) OR wire_w_lg_w_lg_w_lg_w_lg_do_write58w102w103w116w(0)) OR wire_w_lg_w_lg_do_write49w324w(0)) OR wire_w_lg_do_write56w(0)) OR wire_stage_cntr_w323w(0)) OR wire_stage_cntr_w_lg_w318w319w(0)) OR (wire_stage_cntr_w_lg_w_lg_w_q_range89w92w313w(0) AND ((do_write_volatile OR do_read_volatile) OR wire_w_lg_do_read_nonvolatile311w(0))));
+	end_op_wire <= (((((((((((wire_stage_cntr_w_lg_w_q_range101w106w(0) AND ((wire_w_lg_w_lg_w_lg_w_lg_do_read368w369w370w371w(0) OR (do_read AND end_read)) OR (do_fast_read AND end_fast_read))) OR (wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w104w363w364w(0) AND wire_w_lg_do_polling212w(0))) OR ((((((do_read_rdid AND end_one_cyc_pos) AND wire_stage_cntr_q(1)) AND wire_stage_cntr_q(0)) AND wire_addbyte_cntr_q(2)) AND wire_addbyte_cntr_q(1)) AND wire_addbyte_cntr_w_lg_w_q_range170w171w(0))) OR (wire_w_lg_w_lg_start_poll354w355w(0) AND wire_w_lg_st_busy_wire125w(0))) OR wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range101w102w103w352w353w(0)) OR wire_w_lg_w_lg_w_lg_w_lg_do_write71w114w115w128w(0)) OR wire_w_lg_w_lg_do_write62w347w(0)) OR wire_w_lg_do_write69w(0)) OR wire_stage_cntr_w346w(0)) OR wire_stage_cntr_w_lg_w341w342w(0)) OR (wire_stage_cntr_w_lg_w_lg_w_q_range101w104w336w(0) AND ((do_write_volatile OR do_read_volatile) OR wire_w_lg_do_read_nonvolatile334w(0))));
 	end_operation <= end_op_reg;
 	end_ophdly <= end_op_hdlyreg;
 	end_pgwr_data <= '0';
 	end_read <= end_read_reg;
-	end_read_byte <= (end_rbyte_reg AND wire_w_lg_addr_overdie476w(0));
+	end_read_byte <= (end_rbyte_reg AND wire_w_lg_addr_overdie499w(0));
 	exb4addr_opcode <= (OTHERS => '0');
-	fast_read_opcode <= (OTHERS => '0');
+	fast_read_opcode <= "00001011";
+	fast_read_wire <= fast_read_reg;
 	freadwrv_sdoin <= '0';
 	in_operation <= busy_wire;
-	load_opcode <= ((((wire_stage_cntr_w_lg_w_q_range89w90w(0) AND wire_stage_cntr_w_lg_w_q_range88w93w(0)) AND (NOT wire_gen_cntr_q(2))) AND wire_gen_cntr_w_lg_w_q_range97w98w(0)) AND wire_gen_cntr_q(0));
+	load_opcode <= ((((wire_stage_cntr_w_lg_w_q_range101w102w(0) AND wire_stage_cntr_w_lg_w_q_range100w105w(0)) AND (NOT wire_gen_cntr_q(2))) AND wire_gen_cntr_w_lg_w_q_range109w110w(0)) AND wire_gen_cntr_q(0));
 	memadd_sdoin <= add_msb_reg;
-	ncs_reg_ena_wire <= (((wire_stage_cntr_w_lg_w_lg_w_q_range89w90w91w(0) AND end_one_cyc_pos) OR addr_overdie_pos) OR end_operation);
+	ncs_reg_ena_wire <= (((wire_stage_cntr_w_lg_w_lg_w_q_range101w102w103w(0) AND end_one_cyc_pos) OR addr_overdie_pos) OR end_operation);
 	not_busy <= busy_det_reg;
 	oe_wire <= '0';
 	pagewr_buf_not_empty <= ( "1");
 	rden_wire <= rden;
-	rdid_opcode <= (OTHERS => '0');
+	rdid_load <= (end_operation AND do_read_rdid);
+	rdid_opcode <= "10011111";
+	rdid_out <= ( rdid_out_reg(7 DOWNTO 0));
 	rdummyclk_opcode <= (OTHERS => '0');
 	read_data_reg_in_wire <= ( read_dout_reg(7 DOWNTO 0));
-	read_opcode <= "00000011";
-	read_rdid_wire <= '0';
+	read_opcode <= (OTHERS => '0');
+	read_rdid_wire <= read_rdid_reg;
 	read_sid_wire <= '0';
-	read_wire <= read_reg;
-	rflagstat_opcode <= (OTHERS => '0');
+	read_status_wire <= read_status_reg;
+	read_wire <= '0';
+	rflagstat_opcode <= "00000101";
 	rnvdummyclk_opcode <= (OTHERS => '0');
 	rsid_opcode <= (OTHERS => '0');
 	rsid_sdoin <= '0';
-	rstat_opcode <= (OTHERS => '0');
-	scein_wire <= wire_ncs_reg_w_lg_q366w(0);
+	rstat_opcode <= "00000101";
+	scein_wire <= wire_ncs_reg_w_lg_q389w(0);
 	sdoin_wire <= to_sdoin_wire;
 	sec_protect_wire <= '0';
 	secprot_opcode <= (OTHERS => '0');
@@ -1009,7 +1128,7 @@
 	shift_opcode <= shift_op_reg;
 	shift_opdata <= stage2_wire;
 	shift_pgwr_data <= '0';
-	st_busy_wire <= '0';
+	st_busy_wire <= statreg_int(0);
 	stage2_wire <= stage2_reg;
 	stage3_wire <= stage3_reg;
 	stage4_wire <= stage4_reg;
@@ -1017,62 +1136,64 @@
 	start_poll <= ((start_wrpoll OR start_sppoll) OR start_frpoll);
 	start_sppoll <= '0';
 	start_wrpoll <= '0';
+	status_out <= ( statreg_out(7 DOWNTO 0));
 	to_sdoin_wire <= ((((((shift_opdata AND asmi_opcode_reg(7)) OR rsid_sdoin) OR memadd_sdoin) OR write_sdoin) OR secprot_sdoin) OR freadwrv_sdoin);
 	wren_opcode <= (OTHERS => '0');
 	wren_wire <= '1';
 	write_opcode <= (OTHERS => '0');
 	write_prot_true <= '0';
 	write_sdoin <= '0';
+	write_wire <= '0';
 	wrvolatile_opcode <= (OTHERS => '0');
-	wire_w_addr_range389w(0) <= addr(0);
-	wire_w_addr_range381w <= addr(23 DOWNTO 1);
-	wire_w_addr_reg_overdie_range387w(0) <= addr_reg_overdie(0);
-	wire_w_addr_reg_overdie_range377w <= addr_reg_overdie(23 DOWNTO 1);
-	wire_w_b4addr_opcode_range252w(0) <= b4addr_opcode(0);
-	wire_w_b4addr_opcode_range161w <= b4addr_opcode(7 DOWNTO 1);
-	wire_w_berase_opcode_range256w(0) <= berase_opcode(0);
-	wire_w_berase_opcode_range169w <= berase_opcode(7 DOWNTO 1);
-	wire_w_dataout_wire_range431w(0) <= dataout_wire(1);
-	wire_w_derase_opcode_range258w(0) <= derase_opcode(0);
-	wire_w_derase_opcode_range174w <= derase_opcode(7 DOWNTO 1);
-	wire_w_exb4addr_opcode_range250w(0) <= exb4addr_opcode(0);
-	wire_w_exb4addr_opcode_range156w <= exb4addr_opcode(7 DOWNTO 1);
-	wire_w_fast_read_opcode_range274w(0) <= fast_read_opcode(0);
-	wire_w_fast_read_opcode_range214w <= fast_read_opcode(7 DOWNTO 1);
-	wire_w_pagewr_buf_not_empty_range54w(0) <= pagewr_buf_not_empty(0);
-	wire_w_rdid_opcode_range280w(0) <= rdid_opcode(0);
-	wire_w_rdid_opcode_range225w <= rdid_opcode(7 DOWNTO 1);
-	wire_w_rdummyclk_opcode_range272w(0) <= rdummyclk_opcode(0);
-	wire_w_rdummyclk_opcode_range207w <= rdummyclk_opcode(7 DOWNTO 1);
-	wire_w_read_opcode_range276w(0) <= read_opcode(0);
-	wire_w_read_opcode_range217w <= read_opcode(7 DOWNTO 1);
-	wire_w_rflagstat_opcode_range262w(0) <= rflagstat_opcode(0);
-	wire_w_rflagstat_opcode_range184w <= rflagstat_opcode(7 DOWNTO 1);
-	wire_w_rnvdummyclk_opcode_range268w(0) <= rnvdummyclk_opcode(0);
-	wire_w_rnvdummyclk_opcode_range197w <= rnvdummyclk_opcode(7 DOWNTO 1);
-	wire_w_rsid_opcode_range282w(0) <= rsid_opcode(0);
-	wire_w_rsid_opcode_range228w <= rsid_opcode(7 DOWNTO 1);
-	wire_w_rstat_opcode_range264w(0) <= rstat_opcode(0);
-	wire_w_rstat_opcode_range188w <= rstat_opcode(7 DOWNTO 1);
-	wire_w_secprot_opcode_range278w(0) <= secprot_opcode(0);
-	wire_w_secprot_opcode_range220w <= secprot_opcode(7 DOWNTO 1);
-	wire_w_serase_opcode_range260w(0) <= serase_opcode(0);
-	wire_w_serase_opcode_range179w <= serase_opcode(7 DOWNTO 1);
-	wire_w_wren_opcode_range254w(0) <= wren_opcode(0);
-	wire_w_wren_opcode_range166w <= wren_opcode(7 DOWNTO 1);
-	wire_w_write_opcode_range266w(0) <= write_opcode(0);
-	wire_w_write_opcode_range192w <= write_opcode(7 DOWNTO 1);
-	wire_w_wrvolatile_opcode_range270w(0) <= wrvolatile_opcode(0);
-	wire_w_wrvolatile_opcode_range200w <= wrvolatile_opcode(7 DOWNTO 1);
-	wire_addbyte_cntr_w_lg_w_q_range144w149w(0) <= wire_addbyte_cntr_w_q_range144w(0) AND wire_addbyte_cntr_w_lg_w_q_range147w148w(0);
-	wire_addbyte_cntr_w_lg_w_q_range147w148w(0) <= NOT wire_addbyte_cntr_w_q_range147w(0);
-	wire_addbyte_cntr_clk_en <= wire_stage_cntr_w143w(0);
-	wire_stage_cntr_w143w(0) <= ((wire_stage_cntr_w_lg_w_lg_w_q_range89w92w140w(0) AND wire_w_lg_w_lg_w137w138w139w(0)) OR addr_overdie) OR end_operation;
-	wire_addbyte_cntr_clock <= wire_w_lg_clkin_wire87w(0);
-	wire_addbyte_cntr_sclr <= wire_w_lg_end_operation86w(0);
-	wire_w_lg_end_operation86w(0) <= end_operation OR addr_overdie;
-	wire_addbyte_cntr_w_q_range147w(0) <= wire_addbyte_cntr_q(0);
-	wire_addbyte_cntr_w_q_range144w(0) <= wire_addbyte_cntr_q(1);
+	wire_w_addr_range412w(0) <= addr(0);
+	wire_w_addr_range404w <= addr(23 DOWNTO 1);
+	wire_w_addr_reg_overdie_range410w(0) <= addr_reg_overdie(0);
+	wire_w_addr_reg_overdie_range400w <= addr_reg_overdie(23 DOWNTO 1);
+	wire_w_b4addr_opcode_range275w(0) <= b4addr_opcode(0);
+	wire_w_b4addr_opcode_range184w <= b4addr_opcode(7 DOWNTO 1);
+	wire_w_berase_opcode_range279w(0) <= berase_opcode(0);
+	wire_w_berase_opcode_range192w <= berase_opcode(7 DOWNTO 1);
+	wire_w_dataout_wire_range454w(0) <= dataout_wire(1);
+	wire_w_derase_opcode_range281w(0) <= derase_opcode(0);
+	wire_w_derase_opcode_range197w <= derase_opcode(7 DOWNTO 1);
+	wire_w_exb4addr_opcode_range273w(0) <= exb4addr_opcode(0);
+	wire_w_exb4addr_opcode_range179w <= exb4addr_opcode(7 DOWNTO 1);
+	wire_w_fast_read_opcode_range297w(0) <= fast_read_opcode(0);
+	wire_w_fast_read_opcode_range237w <= fast_read_opcode(7 DOWNTO 1);
+	wire_w_pagewr_buf_not_empty_range67w(0) <= pagewr_buf_not_empty(0);
+	wire_w_rdid_opcode_range303w(0) <= rdid_opcode(0);
+	wire_w_rdid_opcode_range248w <= rdid_opcode(7 DOWNTO 1);
+	wire_w_rdummyclk_opcode_range295w(0) <= rdummyclk_opcode(0);
+	wire_w_rdummyclk_opcode_range230w <= rdummyclk_opcode(7 DOWNTO 1);
+	wire_w_read_opcode_range299w(0) <= read_opcode(0);
+	wire_w_read_opcode_range240w <= read_opcode(7 DOWNTO 1);
+	wire_w_rflagstat_opcode_range285w(0) <= rflagstat_opcode(0);
+	wire_w_rflagstat_opcode_range207w <= rflagstat_opcode(7 DOWNTO 1);
+	wire_w_rnvdummyclk_opcode_range291w(0) <= rnvdummyclk_opcode(0);
+	wire_w_rnvdummyclk_opcode_range220w <= rnvdummyclk_opcode(7 DOWNTO 1);
+	wire_w_rsid_opcode_range305w(0) <= rsid_opcode(0);
+	wire_w_rsid_opcode_range251w <= rsid_opcode(7 DOWNTO 1);
+	wire_w_rstat_opcode_range287w(0) <= rstat_opcode(0);
+	wire_w_rstat_opcode_range211w <= rstat_opcode(7 DOWNTO 1);
+	wire_w_secprot_opcode_range301w(0) <= secprot_opcode(0);
+	wire_w_secprot_opcode_range243w <= secprot_opcode(7 DOWNTO 1);
+	wire_w_serase_opcode_range283w(0) <= serase_opcode(0);
+	wire_w_serase_opcode_range202w <= serase_opcode(7 DOWNTO 1);
+	wire_w_wren_opcode_range277w(0) <= wren_opcode(0);
+	wire_w_wren_opcode_range189w <= wren_opcode(7 DOWNTO 1);
+	wire_w_write_opcode_range289w(0) <= write_opcode(0);
+	wire_w_write_opcode_range215w <= write_opcode(7 DOWNTO 1);
+	wire_w_wrvolatile_opcode_range293w(0) <= wrvolatile_opcode(0);
+	wire_w_wrvolatile_opcode_range223w <= wrvolatile_opcode(7 DOWNTO 1);
+	wire_addbyte_cntr_w_lg_w_q_range167w172w(0) <= wire_addbyte_cntr_w_q_range167w(0) AND wire_addbyte_cntr_w_lg_w_q_range170w171w(0);
+	wire_addbyte_cntr_w_lg_w_q_range170w171w(0) <= NOT wire_addbyte_cntr_w_q_range170w(0);
+	wire_addbyte_cntr_clk_en <= wire_stage_cntr_w166w(0);
+	wire_stage_cntr_w166w(0) <= ((wire_stage_cntr_w_lg_w_lg_w_q_range101w104w163w(0) AND wire_w_lg_w_lg_w160w161w162w(0)) OR addr_overdie) OR end_operation;
+	wire_addbyte_cntr_clock <= wire_w_lg_clkin_wire37w(0);
+	wire_addbyte_cntr_sclr <= wire_w_lg_end_operation99w(0);
+	wire_w_lg_end_operation99w(0) <= end_operation OR addr_overdie;
+	wire_addbyte_cntr_w_q_range170w(0) <= wire_addbyte_cntr_q(0);
+	wire_addbyte_cntr_w_q_range167w(0) <= wire_addbyte_cntr_q(1);
 	addbyte_cntr :  a_graycounter
 	  GENERIC MAP (
 		WIDTH => 3
@@ -1084,14 +1205,14 @@
 		q => wire_addbyte_cntr_q,
 		sclr => wire_addbyte_cntr_sclr
 	  );
-	wire_gen_cntr_w_lg_w_q_range99w100w(0) <= wire_gen_cntr_w_q_range99w(0) AND wire_gen_cntr_w_lg_w_q_range97w98w(0);
-	wire_gen_cntr_w_lg_w_q_range97w98w(0) <= NOT wire_gen_cntr_w_q_range97w(0);
-	wire_gen_cntr_clk_en <= wire_w_lg_w_lg_w_lg_in_operation26w27w28w(0);
-	wire_w_lg_w_lg_w_lg_in_operation26w27w28w(0) <= ((in_operation AND wire_w_lg_end_ophdly25w(0)) OR do_wait_dummyclk) OR addr_overdie;
-	wire_gen_cntr_sclr <= wire_w_lg_w_lg_end1_cyc_reg_in_wire29w30w(0);
-	wire_w_lg_w_lg_end1_cyc_reg_in_wire29w30w(0) <= (end1_cyc_reg_in_wire OR addr_overdie) OR do_wait_dummyclk;
-	wire_gen_cntr_w_q_range97w(0) <= wire_gen_cntr_q(1);
-	wire_gen_cntr_w_q_range99w(0) <= wire_gen_cntr_q(2);
+	wire_gen_cntr_w_lg_w_q_range111w112w(0) <= wire_gen_cntr_w_q_range111w(0) AND wire_gen_cntr_w_lg_w_q_range109w110w(0);
+	wire_gen_cntr_w_lg_w_q_range109w110w(0) <= NOT wire_gen_cntr_w_q_range109w(0);
+	wire_gen_cntr_clk_en <= wire_w_lg_w_lg_w_lg_in_operation39w40w41w(0);
+	wire_w_lg_w_lg_w_lg_in_operation39w40w41w(0) <= ((in_operation AND wire_w_lg_end_ophdly38w(0)) OR do_wait_dummyclk) OR addr_overdie;
+	wire_gen_cntr_sclr <= wire_w_lg_w_lg_end1_cyc_reg_in_wire42w43w(0);
+	wire_w_lg_w_lg_end1_cyc_reg_in_wire42w43w(0) <= (end1_cyc_reg_in_wire OR addr_overdie) OR do_wait_dummyclk;
+	wire_gen_cntr_w_q_range109w(0) <= wire_gen_cntr_q(1);
+	wire_gen_cntr_w_q_range111w(0) <= wire_gen_cntr_q(2);
 	gen_cntr :  a_graycounter
 	  GENERIC MAP (
 		WIDTH => 3
@@ -1103,36 +1224,36 @@
 		q => wire_gen_cntr_q,
 		sclr => wire_gen_cntr_sclr
 	  );
-	wire_stage_cntr_w_lg_w318w319w(0) <= wire_stage_cntr_w318w(0) AND end_one_cycle;
-	wire_stage_cntr_w318w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range89w92w315w316w317w(0) AND end_add_cycle;
-	wire_stage_cntr_w323w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range89w92w320w321w322w(0) AND end_one_cycle;
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range89w92w315w316w317w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w92w315w316w(0) AND wire_w_lg_do_read_stat38w(0);
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range89w92w320w321w322w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w92w320w321w(0) AND wire_w_lg_do_read_stat38w(0);
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range89w90w91w329w330w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w90w91w329w(0) AND end_one_cycle;
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w94w406w407w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range89w94w406w(0) AND end_one_cyc_pos;
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w92w315w316w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range89w92w315w(0) AND wire_w_lg_do_wren39w(0);
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w92w340w341w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range89w92w340w(0) AND end_one_cycle;
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w92w320w321w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range89w92w320w(0) AND wire_w_lg_do_wren39w(0);
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range89w90w91w329w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range89w90w91w(0) AND wire_w_lg_do_wren328w(0);
-	wire_stage_cntr_w_lg_w_lg_w_q_range89w94w406w(0) <= wire_stage_cntr_w_lg_w_q_range89w94w(0) AND end_add_cycle;
-	wire_stage_cntr_w_lg_w_lg_w_q_range89w92w315w(0) <= wire_stage_cntr_w_lg_w_q_range89w92w(0) AND wire_w_lg_do_sec_erase40w(0);
-	wire_stage_cntr_w_lg_w_lg_w_q_range89w92w340w(0) <= wire_stage_cntr_w_lg_w_q_range89w92w(0) AND do_read_stat;
-	wire_stage_cntr_w_lg_w_lg_w_q_range89w92w320w(0) <= wire_stage_cntr_w_lg_w_q_range89w92w(0) AND do_sec_prot;
-	wire_stage_cntr_w_lg_w_lg_w_q_range89w92w140w(0) <= wire_stage_cntr_w_lg_w_q_range89w92w(0) AND end_one_cyc_pos;
-	wire_stage_cntr_w_lg_w_lg_w_q_range89w92w313w(0) <= wire_stage_cntr_w_lg_w_q_range89w92w(0) AND end_one_cycle;
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range88w93w119w120w121w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range88w93w119w120w(0) AND end1_cyc_gen_cntr_wire;
-	wire_stage_cntr_w_lg_w_lg_w_q_range88w93w119w(0) <= wire_stage_cntr_w_lg_w_q_range88w93w(0) AND wire_stage_cntr_w_lg_w_q_range89w90w(0);
-	wire_stage_cntr_w_lg_w_lg_w_q_range89w90w91w(0) <= wire_stage_cntr_w_lg_w_q_range89w90w(0) AND wire_stage_cntr_w_q_range88w(0);
-	wire_stage_cntr_w_lg_w_q_range89w94w(0) <= wire_stage_cntr_w_q_range89w(0) AND wire_stage_cntr_w_lg_w_q_range88w93w(0);
-	wire_stage_cntr_w_lg_w_q_range89w92w(0) <= wire_stage_cntr_w_q_range89w(0) AND wire_stage_cntr_w_q_range88w(0);
-	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range88w93w119w120w(0) <= NOT wire_stage_cntr_w_lg_w_lg_w_q_range88w93w119w(0);
-	wire_stage_cntr_w_lg_w_q_range88w93w(0) <= NOT wire_stage_cntr_w_q_range88w(0);
-	wire_stage_cntr_w_lg_w_q_range89w90w(0) <= NOT wire_stage_cntr_w_q_range89w(0);
-	wire_stage_cntr_clk_en <= wire_w_lg_w_lg_w_lg_w82w83w84w85w(0);
-	wire_w_lg_w_lg_w_lg_w82w83w84w85w(0) <= (((((((((((((in_operation AND end_one_cycle) AND (NOT (stage3_wire AND wire_w_lg_end_add_cycle69w(0)))) AND (NOT (stage4_wire AND wire_w_lg_end_read66w(0)))) AND (NOT (stage4_wire AND wire_w_lg_end_fast_read63w(0)))) AND (NOT ((wire_w_lg_w_lg_do_write58w59w(0) OR do_bulk_erase) AND write_prot_true))) AND (NOT wire_w_lg_do_write56w(0))) AND (NOT (stage3_wire AND st_busy_wire))) AND (NOT (wire_w_lg_do_write49w(0) AND wire_w_lg_end_pgwr_data48w(0)))) AND (NOT (stage2_wire AND do_wren))) AND (NOT (((wire_w_lg_stage3_wire41w(0) AND wire_w_lg_do_wren39w(0)) AND wire_w_lg_do_read_stat38w(0)) AND wire_w_lg_do_read_rdid37w(0)))) AND (NOT (stage3_wire AND ((do_write_volatile OR do_read_volatile) OR do_read_nonvolatile)))) OR wire_w_lg_w_lg_stage3_wire31w32w(0)) OR addr_overdie) OR end_ophdly;
-	wire_stage_cntr_sclr <= wire_w_lg_end_operation86w(0);
-	wire_stage_cntr_w_q_range88w(0) <= wire_stage_cntr_q(0);
-	wire_stage_cntr_w_q_range89w(0) <= wire_stage_cntr_q(1);
+	wire_stage_cntr_w_lg_w341w342w(0) <= wire_stage_cntr_w341w(0) AND end_one_cycle;
+	wire_stage_cntr_w341w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range101w104w338w339w340w(0) AND end_add_cycle;
+	wire_stage_cntr_w346w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range101w104w343w344w345w(0) AND end_one_cycle;
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range101w104w338w339w340w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w104w338w339w(0) AND wire_w_lg_do_read_stat51w(0);
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range101w104w343w344w345w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w104w343w344w(0) AND wire_w_lg_do_read_stat51w(0);
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range101w102w103w352w353w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w102w103w352w(0) AND end_one_cycle;
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w106w429w430w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range101w106w429w(0) AND end_one_cyc_pos;
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w104w338w339w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range101w104w338w(0) AND wire_w_lg_do_wren52w(0);
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w104w363w364w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range101w104w363w(0) AND end_one_cycle;
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w104w343w344w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range101w104w343w(0) AND wire_w_lg_do_wren52w(0);
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range101w102w103w352w(0) <= wire_stage_cntr_w_lg_w_lg_w_q_range101w102w103w(0) AND wire_w_lg_do_wren351w(0);
+	wire_stage_cntr_w_lg_w_lg_w_q_range101w106w429w(0) <= wire_stage_cntr_w_lg_w_q_range101w106w(0) AND end_add_cycle;
+	wire_stage_cntr_w_lg_w_lg_w_q_range101w104w338w(0) <= wire_stage_cntr_w_lg_w_q_range101w104w(0) AND wire_w_lg_do_sec_erase53w(0);
+	wire_stage_cntr_w_lg_w_lg_w_q_range101w104w363w(0) <= wire_stage_cntr_w_lg_w_q_range101w104w(0) AND do_read_stat;
+	wire_stage_cntr_w_lg_w_lg_w_q_range101w104w343w(0) <= wire_stage_cntr_w_lg_w_q_range101w104w(0) AND do_sec_prot;
+	wire_stage_cntr_w_lg_w_lg_w_q_range101w104w163w(0) <= wire_stage_cntr_w_lg_w_q_range101w104w(0) AND end_one_cyc_pos;
+	wire_stage_cntr_w_lg_w_lg_w_q_range101w104w336w(0) <= wire_stage_cntr_w_lg_w_q_range101w104w(0) AND end_one_cycle;
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_lg_w_q_range100w105w131w132w133w(0) <= wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range100w105w131w132w(0) AND end1_cyc_gen_cntr_wire;
+	wire_stage_cntr_w_lg_w_lg_w_q_range100w105w131w(0) <= wire_stage_cntr_w_lg_w_q_range100w105w(0) AND wire_stage_cntr_w_lg_w_q_range101w102w(0);
+	wire_stage_cntr_w_lg_w_lg_w_q_range101w102w103w(0) <= wire_stage_cntr_w_lg_w_q_range101w102w(0) AND wire_stage_cntr_w_q_range100w(0);
+	wire_stage_cntr_w_lg_w_q_range101w106w(0) <= wire_stage_cntr_w_q_range101w(0) AND wire_stage_cntr_w_lg_w_q_range100w105w(0);
+	wire_stage_cntr_w_lg_w_q_range101w104w(0) <= wire_stage_cntr_w_q_range101w(0) AND wire_stage_cntr_w_q_range100w(0);
+	wire_stage_cntr_w_lg_w_lg_w_lg_w_q_range100w105w131w132w(0) <= NOT wire_stage_cntr_w_lg_w_lg_w_q_range100w105w131w(0);
+	wire_stage_cntr_w_lg_w_q_range100w105w(0) <= NOT wire_stage_cntr_w_q_range100w(0);
+	wire_stage_cntr_w_lg_w_q_range101w102w(0) <= NOT wire_stage_cntr_w_q_range101w(0);
+	wire_stage_cntr_clk_en <= wire_w_lg_w_lg_w_lg_w95w96w97w98w(0);
+	wire_w_lg_w_lg_w_lg_w95w96w97w98w(0) <= (((((((((((((in_operation AND end_one_cycle) AND (NOT (stage3_wire AND wire_w_lg_end_add_cycle82w(0)))) AND (NOT (stage4_wire AND wire_w_lg_end_read79w(0)))) AND (NOT (stage4_wire AND wire_w_lg_end_fast_read76w(0)))) AND (NOT ((wire_w_lg_w_lg_do_write71w72w(0) OR do_bulk_erase) AND write_prot_true))) AND (NOT wire_w_lg_do_write69w(0))) AND (NOT (stage3_wire AND st_busy_wire))) AND (NOT (wire_w_lg_do_write62w(0) AND wire_w_lg_end_pgwr_data61w(0)))) AND (NOT (stage2_wire AND do_wren))) AND (NOT (((wire_w_lg_stage3_wire54w(0) AND wire_w_lg_do_wren52w(0)) AND wire_w_lg_do_read_stat51w(0)) AND wire_w_lg_do_read_rdid50w(0)))) AND (NOT (stage3_wire AND ((do_write_volatile OR do_read_volatile) OR do_read_nonvolatile)))) OR wire_w_lg_w_lg_stage3_wire44w45w(0)) OR addr_overdie) OR end_ophdly;
+	wire_stage_cntr_sclr <= wire_w_lg_end_operation99w(0);
+	wire_stage_cntr_w_q_range100w(0) <= wire_stage_cntr_q(0);
+	wire_stage_cntr_w_q_range101w(0) <= wire_stage_cntr_q(1);
 	stage_cntr :  a_graycounter
 	  GENERIC MAP (
 		WIDTH => 2
@@ -1155,7 +1276,7 @@
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_add_msb_reg_ena <= ((((wire_w_lg_w_lg_w_lg_w_lg_do_read393w414w415w416w(0) AND (NOT (wire_w_lg_w_lg_do_write58w59w(0) AND wire_w_lg_do_memadd411w(0)))) AND wire_stage_cntr_q(1)) AND wire_stage_cntr_q(0)) OR clr_addmsb_wire);
+	wire_add_msb_reg_ena <= ((((wire_w_lg_w_lg_w_lg_w_lg_do_read416w437w438w439w(0) AND (NOT (wire_w_lg_w_lg_do_write71w72w(0) AND wire_w_lg_do_memadd434w(0)))) AND wire_stage_cntr_q(1)) AND wire_stage_cntr_q(0)) OR clr_addmsb_wire);
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN addr_reg(0) <= '0';
@@ -1348,11 +1469,11 @@
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_addr_reg_d <= ( wire_w_lg_w_lg_w_lg_not_busy382w383w384w & wire_w_lg_w_lg_not_busy390w391w);
+	wire_addr_reg_d <= ( wire_w_lg_w_lg_w_lg_not_busy405w406w407w & wire_w_lg_w_lg_not_busy413w414w);
 	loop40 : FOR i IN 0 TO 23 GENERATE
-		wire_addr_reg_ena(i) <= wire_w_lg_w_lg_w_lg_w_lg_rden_wire398w399w400w401w(0);
+		wire_addr_reg_ena(i) <= wire_w_lg_w_lg_w_lg_w_lg_rden_wire421w422w423w424w(0);
 	END GENERATE loop40;
-	wire_addr_reg_w_q_range379w <= addr_reg(22 DOWNTO 0);
+	wire_addr_reg_w_q_range402w <= addr_reg(22 DOWNTO 0);
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN asmi_opcode_reg(0) <= '0';
@@ -1417,15 +1538,29 @@
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_asmi_opcode_reg_d <= ( wire_w_lg_w_lg_w245w246w247w & wire_w_lg_w298w299w);
+	wire_asmi_opcode_reg_d <= ( wire_w_lg_w_lg_w268w269w270w & wire_w_lg_w321w322w);
 	loop41 : FOR i IN 0 TO 7 GENERATE
-		wire_asmi_opcode_reg_ena(i) <= wire_w_lg_load_opcode301w(0);
+		wire_asmi_opcode_reg_ena(i) <= wire_w_lg_load_opcode324w(0);
 	END GENERATE loop41;
-	wire_asmi_opcode_reg_w_q_range154w <= asmi_opcode_reg(6 DOWNTO 0);
+	wire_asmi_opcode_reg_w_q_range177w <= asmi_opcode_reg(6 DOWNTO 0);
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN busy_delay_reg <= '0';
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN 
+			IF (power_up_reg = '1') THEN busy_delay_reg <= busy_wire;
+			END IF;
+		END IF;
+	END PROCESS;
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN busy_det_reg <= '0';
-		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN busy_det_reg <= wire_w_lg_busy_wire1w(0);
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN busy_det_reg <= wire_w_lg_busy_wire2w(0);
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN clr_rdid_reg <= '0';
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN clr_rdid_reg <= end_operation;
 		END IF;
 	END PROCESS;
 	PROCESS (clkin_wire, reset)
@@ -1440,7 +1575,12 @@
 		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN clr_read_reg2 <= clr_read_reg;
 		END IF;
 	END PROCESS;
-	dffe3 <= '0';
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN clr_rstat_reg <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN clr_rstat_reg <= ((end_operation OR do_read_sid) OR do_read);
+		END IF;
+	END PROCESS;
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN dvalid_reg <= '0';
@@ -1452,7 +1592,7 @@
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_dvalid_reg_ena <= wire_w_lg_do_read393w(0);
+	wire_dvalid_reg_ena <= wire_w_lg_do_read416w(0);
 	wire_dvalid_reg_sclr <= (end_op_wire OR end_operation);
 	PROCESS (clkin_wire, reset)
 	BEGIN
@@ -1490,19 +1630,31 @@
 		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
 			IF (wire_end_rbyte_reg_ena = '1') THEN 
 				IF (wire_end_rbyte_reg_sclr = '1') THEN end_rbyte_reg <= '0';
-				ELSE end_rbyte_reg <= wire_w_lg_w_lg_w_lg_do_read393w460w461w(0);
+				ELSE end_rbyte_reg <= wire_w_lg_w_lg_w_lg_do_read416w483w484w(0);
 				END IF;
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_end_rbyte_reg_ena <= ((wire_gen_cntr_w_lg_w_q_range99w100w(0) AND wire_gen_cntr_q(0)) OR clr_endrbyte_wire);
+	wire_end_rbyte_reg_ena <= ((wire_gen_cntr_w_lg_w_q_range111w112w(0) AND wire_gen_cntr_q(0)) OR clr_endrbyte_wire);
 	wire_end_rbyte_reg_sclr <= (clr_endrbyte_wire OR addr_overdie);
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN end_read_reg <= '0';
-		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN end_read_reg <= (((wire_w_lg_rden_wire478w(0) AND wire_w_lg_do_read393w(0)) AND data_valid_wire) AND end_read_byte);
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN end_read_reg <= (((wire_w_lg_rden_wire501w(0) AND wire_w_lg_do_read416w(0)) AND data_valid_wire) AND end_read_byte);
 		END IF;
 	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN fast_read_reg <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
+			IF (wire_fast_read_reg_ena = '1') THEN 
+				IF (clr_read_wire = '1') THEN fast_read_reg <= '0';
+				ELSE fast_read_reg <= fast_read;
+				END IF;
+			END IF;
+		END IF;
+	END PROCESS;
+	wire_fast_read_reg_ena <= ((wire_w_lg_busy_wire2w(0) AND rden_wire) OR clr_read_wire);
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN ncs_reg <= '0';
@@ -1515,7 +1667,21 @@
 		END IF;
 	END PROCESS;
 	wire_ncs_reg_sclr <= (end_operation OR addr_overdie_pos);
-	wire_ncs_reg_w_lg_q366w(0) <= NOT ncs_reg;
+	wire_ncs_reg_w_lg_q389w(0) <= NOT ncs_reg;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN power_up_reg <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN power_up_reg <= (busy_wire OR busy_delay_reg);
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN rdid_out_reg <= (OTHERS => '0');
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN 
+			IF (rdid_load = '1') THEN rdid_out_reg <= ( read_dout_reg(7 DOWNTO 0));
+			END IF;
+		END IF;
+	END PROCESS;
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN read_data_reg(0) <= '0';
@@ -1582,7 +1748,7 @@
 	END PROCESS;
 	wire_read_data_reg_d <= ( read_data_reg_in_wire(7 DOWNTO 0));
 	loop42 : FOR i IN 0 TO 7 GENERATE
-		wire_read_data_reg_ena(i) <= wire_w463w(0);
+		wire_read_data_reg_ena(i) <= wire_w486w(0);
 	END GENERATE loop42;
 	PROCESS (clkin_wire, reset)
 	BEGIN
@@ -1648,59 +1814,238 @@
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_read_dout_reg_d <= ( read_dout_reg(6 DOWNTO 0) & wire_w_lg_data0out_wire432w);
+	wire_read_dout_reg_d <= ( read_dout_reg(6 DOWNTO 0) & wire_w_lg_data0out_wire455w);
 	loop43 : FOR i IN 0 TO 7 GENERATE
-		wire_read_dout_reg_ena(i) <= wire_w_lg_w_lg_stage4_wire429w430w(0);
+		wire_read_dout_reg_ena(i) <= wire_w_lg_w_lg_stage4_wire452w453w(0);
 	END GENERATE loop43;
 	PROCESS (clkin_wire, reset)
 	BEGIN
-		IF (reset = '1') THEN read_reg <= '0';
+		IF (reset = '1') THEN read_rdid_reg <= '0';
 		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
-			IF (wire_read_reg_ena = '1') THEN 
-				IF (clr_read_wire = '1') THEN read_reg <= '0';
-				ELSE read_reg <= read;
+			IF (wire_read_rdid_reg_ena = '1') THEN 
+				IF (clr_rdid_wire = '1') THEN read_rdid_reg <= '0';
+				ELSE read_rdid_reg <= read_rdid;
 				END IF;
 			END IF;
 		END IF;
 	END PROCESS;
-	wire_read_reg_ena <= ((wire_w_lg_busy_wire1w(0) AND rden_wire) OR clr_read_wire);
+	wire_read_rdid_reg_ena <= (wire_w_lg_busy_wire2w(0) OR clr_rdid_wire);
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN read_status_reg <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
+			IF (wire_read_status_reg_ena = '1') THEN 
+				IF (clr_rstat_wire = '1') THEN read_status_reg <= '0';
+				ELSE read_status_reg <= read_status;
+				END IF;
+			END IF;
+		END IF;
+	END PROCESS;
+	wire_read_status_reg_ena <= (wire_w_lg_busy_wire2w(0) OR clr_rstat_wire);
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN shift_op_reg <= '0';
-		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN shift_op_reg <= wire_stage_cntr_w_lg_w_lg_w_q_range89w90w91w(0);
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN shift_op_reg <= wire_stage_cntr_w_lg_w_lg_w_q_range101w102w103w(0);
 		END IF;
 	END PROCESS;
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN stage2_reg <= '0';
-		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN stage2_reg <= wire_stage_cntr_w_lg_w_lg_w_q_range89w90w91w(0);
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN stage2_reg <= wire_stage_cntr_w_lg_w_lg_w_q_range101w102w103w(0);
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN stage3_dly_reg <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN stage3_dly_reg <= wire_stage_cntr_w_lg_w_q_range101w104w(0);
 		END IF;
 	END PROCESS;
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN stage3_reg <= '0';
-		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN stage3_reg <= wire_stage_cntr_w_lg_w_q_range89w92w(0);
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN stage3_reg <= wire_stage_cntr_w_lg_w_q_range101w104w(0);
 		END IF;
 	END PROCESS;
 	PROCESS (clkin_wire, reset)
 	BEGIN
 		IF (reset = '1') THEN stage4_reg <= '0';
-		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN stage4_reg <= wire_stage_cntr_w_lg_w_q_range89w94w(0);
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN stage4_reg <= wire_stage_cntr_w_lg_w_q_range101w106w(0);
 		END IF;
 	END PROCESS;
-	wire_mux211_dataout <= end_add_cycle_mux_datab_wire WHEN do_fast_read = '1'  ELSE wire_addbyte_cntr_w_lg_w_q_range144w149w(0);
-	wire_stratixii_asmiblock2_sdoin <= wire_w_lg_sdoin_wire306w(0);
-	wire_w_lg_sdoin_wire306w(0) <= sdoin_wire OR datain_wire(0);
-	stratixii_asmiblock2 :  arriaii_asmiblock
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_int(0) <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
+			IF (wire_statreg_int_ena(0) = '1') THEN 
+				IF (clr_rstat_wire = '1') THEN statreg_int(0) <= '0';
+				ELSE statreg_int(0) <= wire_statreg_int_d(0);
+				END IF;
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_int(1) <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
+			IF (wire_statreg_int_ena(1) = '1') THEN 
+				IF (clr_rstat_wire = '1') THEN statreg_int(1) <= '0';
+				ELSE statreg_int(1) <= wire_statreg_int_d(1);
+				END IF;
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_int(2) <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
+			IF (wire_statreg_int_ena(2) = '1') THEN 
+				IF (clr_rstat_wire = '1') THEN statreg_int(2) <= '0';
+				ELSE statreg_int(2) <= wire_statreg_int_d(2);
+				END IF;
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_int(3) <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
+			IF (wire_statreg_int_ena(3) = '1') THEN 
+				IF (clr_rstat_wire = '1') THEN statreg_int(3) <= '0';
+				ELSE statreg_int(3) <= wire_statreg_int_d(3);
+				END IF;
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_int(4) <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
+			IF (wire_statreg_int_ena(4) = '1') THEN 
+				IF (clr_rstat_wire = '1') THEN statreg_int(4) <= '0';
+				ELSE statreg_int(4) <= wire_statreg_int_d(4);
+				END IF;
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_int(5) <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
+			IF (wire_statreg_int_ena(5) = '1') THEN 
+				IF (clr_rstat_wire = '1') THEN statreg_int(5) <= '0';
+				ELSE statreg_int(5) <= wire_statreg_int_d(5);
+				END IF;
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_int(6) <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
+			IF (wire_statreg_int_ena(6) = '1') THEN 
+				IF (clr_rstat_wire = '1') THEN statreg_int(6) <= '0';
+				ELSE statreg_int(6) <= wire_statreg_int_d(6);
+				END IF;
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_int(7) <= '0';
+		ELSIF (clkin_wire = '1' AND clkin_wire'event) THEN 
+			IF (wire_statreg_int_ena(7) = '1') THEN 
+				IF (clr_rstat_wire = '1') THEN statreg_int(7) <= '0';
+				ELSE statreg_int(7) <= wire_statreg_int_d(7);
+				END IF;
+			END IF;
+		END IF;
+	END PROCESS;
+	wire_statreg_int_d <= ( read_dout_reg(7 DOWNTO 0));
+	loop44 : FOR i IN 0 TO 7 GENERATE
+		wire_statreg_int_ena(i) <= wire_w_lg_w_lg_w_lg_end_operation538w539w540w(0);
+	END GENERATE loop44;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_out(0) <= '0';
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN 
+			IF (wire_statreg_out_ena(0) = '1') THEN statreg_out(0) <= wire_statreg_out_d(0);
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_out(1) <= '0';
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN 
+			IF (wire_statreg_out_ena(1) = '1') THEN statreg_out(1) <= wire_statreg_out_d(1);
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_out(2) <= '0';
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN 
+			IF (wire_statreg_out_ena(2) = '1') THEN statreg_out(2) <= wire_statreg_out_d(2);
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_out(3) <= '0';
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN 
+			IF (wire_statreg_out_ena(3) = '1') THEN statreg_out(3) <= wire_statreg_out_d(3);
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_out(4) <= '0';
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN 
+			IF (wire_statreg_out_ena(4) = '1') THEN statreg_out(4) <= wire_statreg_out_d(4);
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_out(5) <= '0';
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN 
+			IF (wire_statreg_out_ena(5) = '1') THEN statreg_out(5) <= wire_statreg_out_d(5);
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_out(6) <= '0';
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN 
+			IF (wire_statreg_out_ena(6) = '1') THEN statreg_out(6) <= wire_statreg_out_d(6);
+			END IF;
+		END IF;
+	END PROCESS;
+	PROCESS (clkin_wire, reset)
+	BEGIN
+		IF (reset = '1') THEN statreg_out(7) <= '0';
+		ELSIF (clkin_wire = '0' AND clkin_wire'event) THEN 
+			IF (wire_statreg_out_ena(7) = '1') THEN statreg_out(7) <= wire_statreg_out_d(7);
+			END IF;
+		END IF;
+	END PROCESS;
+	wire_statreg_out_d <= ( read_dout_reg(7 DOWNTO 0));
+	loop45 : FOR i IN 0 TO 7 GENERATE
+		wire_statreg_out_ena(i) <= wire_w_lg_w_lg_w_lg_w527w528w529w530w(0);
+	END GENERATE loop45;
+	wire_mux211_dataout <= end1_cyc_dlyncs_in_wire WHEN ((((do_write OR do_sec_prot) OR do_sec_erase) OR do_bulk_erase) OR do_die_erase) = '1'  ELSE end1_cyc_normal_in_wire;
+	wire_mux212_dataout <= end_add_cycle_mux_datab_wire WHEN do_fast_read = '1'  ELSE wire_addbyte_cntr_w_lg_w_q_range167w172w(0);
+	wire_stratixii_asmiblock3_sdoin <= wire_w_lg_sdoin_wire329w(0);
+	wire_w_lg_sdoin_wire329w(0) <= sdoin_wire OR datain_wire(0);
+	stratixii_asmiblock3 :  arriaii_asmiblock
 	  PORT MAP ( 
-		data0out => wire_stratixii_asmiblock2_data0out,
+		data0out => wire_stratixii_asmiblock3_data0out,
 		dclkin => clkin_wire,
 		oe => oe_wire,
 		scein => scein_wire,
-		sdoin => wire_stratixii_asmiblock2_sdoin
+		sdoin => wire_stratixii_asmiblock3_sdoin
 	  );
 
- END RTL; --altasmi_altasmi_parallel_76h2
+ END RTL; --altasmi_altasmi_parallel_rsl2
 --VALID FILE
 
 
@@ -1712,12 +2057,17 @@ ENTITY altasmi IS
 	(
 		addr		: IN STD_LOGIC_VECTOR (23 DOWNTO 0);
 		clkin		: IN STD_LOGIC ;
+		fast_read		: IN STD_LOGIC ;
 		rden		: IN STD_LOGIC ;
-		read		: IN STD_LOGIC ;
+		read_rdid		: IN STD_LOGIC ;
+		read_status		: IN STD_LOGIC ;
 		reset		: IN STD_LOGIC ;
+		shift_bytes		: IN STD_LOGIC ;
 		busy		: OUT STD_LOGIC ;
 		data_valid		: OUT STD_LOGIC ;
-		dataout		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
+		dataout		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
+		rdid_out		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
+		status_out		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
 	);
 END altasmi;
 
@@ -1729,41 +2079,55 @@ ARCHITECTURE RTL OF altasmi IS
 	ATTRIBUTE clearbox_macroname: string;
 	ATTRIBUTE clearbox_macroname OF RTL: ARCHITECTURE IS "ALTASMI_PARALLEL";
 	ATTRIBUTE clearbox_defparam: string;
-	ATTRIBUTE clearbox_defparam OF RTL: ARCHITECTURE IS "data_width=STANDARD;epcs_type=EPCS128;intended_device_family=Arria II GX;lpm_hint=UNUSED;lpm_type=altasmi_parallel;page_size=1;port_bulk_erase=PORT_UNUSED;port_die_erase=PORT_UNUSED;port_en4b_addr=PORT_UNUSED;port_ex4b_addr=PORT_UNUSED;port_fast_read=PORT_UNUSED;port_illegal_erase=PORT_UNUSED;port_illegal_write=PORT_UNUSED;port_rdid_out=PORT_UNUSED;port_read_address=PORT_UNUSED;port_read_dummyclk=PORT_UNUSED;port_read_rdid=PORT_UNUSED;port_read_sid=PORT_UNUSED;port_read_status=PORT_UNUSED;port_sector_erase=PORT_UNUSED;port_sector_protect=PORT_UNUSED;port_shift_bytes=PORT_UNUSED;port_wren=PORT_UNUSED;port_write=PORT_UNUSED;use_asmiblock=ON;use_eab=ON;write_dummy_clk=0;";
-	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (7 DOWNTO 0);
-	SIGNAL sub_wire1	: STD_LOGIC ;
-	SIGNAL sub_wire2	: STD_LOGIC ;
+	ATTRIBUTE clearbox_defparam OF RTL: ARCHITECTURE IS "data_width=STANDARD;epcs_type=EPCS128;intended_device_family=Arria II GX;lpm_hint=UNUSED;lpm_type=altasmi_parallel;page_size=1;port_bulk_erase=PORT_UNUSED;port_die_erase=PORT_UNUSED;port_en4b_addr=PORT_UNUSED;port_ex4b_addr=PORT_UNUSED;port_fast_read=PORT_USED;port_illegal_erase=PORT_UNUSED;port_illegal_write=PORT_UNUSED;port_rdid_out=PORT_USED;port_read_address=PORT_UNUSED;port_read_dummyclk=PORT_UNUSED;port_read_rdid=PORT_USED;port_read_sid=PORT_UNUSED;port_read_status=PORT_USED;port_sector_erase=PORT_UNUSED;port_sector_protect=PORT_UNUSED;port_shift_bytes=PORT_USED;port_wren=PORT_UNUSED;port_write=PORT_UNUSED;use_asmiblock=ON;use_eab=ON;write_dummy_clk=0;";
+	SIGNAL sub_wire0	: STD_LOGIC ;
+	SIGNAL sub_wire1	: STD_LOGIC_VECTOR (7 DOWNTO 0);
+	SIGNAL sub_wire2	: STD_LOGIC_VECTOR (7 DOWNTO 0);
+	SIGNAL sub_wire3	: STD_LOGIC ;
+	SIGNAL sub_wire4	: STD_LOGIC_VECTOR (7 DOWNTO 0);
 
 
 
-	COMPONENT altasmi_altasmi_parallel_76h2
+	COMPONENT altasmi_altasmi_parallel_rsl2
 	PORT (
-			dataout	: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
-			read	: IN STD_LOGIC ;
-			addr	: IN STD_LOGIC_VECTOR (23 DOWNTO 0);
-			busy	: OUT STD_LOGIC ;
+			shift_bytes	: IN STD_LOGIC ;
 			clkin	: IN STD_LOGIC ;
 			data_valid	: OUT STD_LOGIC ;
+			fast_read	: IN STD_LOGIC ;
 			rden	: IN STD_LOGIC ;
-			reset	: IN STD_LOGIC 
+			dataout	: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
+			rdid_out	: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
+			read_rdid	: IN STD_LOGIC ;
+			addr	: IN STD_LOGIC_VECTOR (23 DOWNTO 0);
+			busy	: OUT STD_LOGIC ;
+			read_status	: IN STD_LOGIC ;
+			reset	: IN STD_LOGIC ;
+			status_out	: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
 	);
 	END COMPONENT;
 
 BEGIN
-	dataout    <= sub_wire0(7 DOWNTO 0);
-	busy    <= sub_wire1;
-	data_valid    <= sub_wire2;
+	data_valid    <= sub_wire0;
+	dataout    <= sub_wire1(7 DOWNTO 0);
+	rdid_out    <= sub_wire2(7 DOWNTO 0);
+	busy    <= sub_wire3;
+	status_out    <= sub_wire4(7 DOWNTO 0);
 
-	altasmi_altasmi_parallel_76h2_component : altasmi_altasmi_parallel_76h2
+	altasmi_altasmi_parallel_rsl2_component : altasmi_altasmi_parallel_rsl2
 	PORT MAP (
-		read => read,
-		addr => addr,
+		shift_bytes => shift_bytes,
 		clkin => clkin,
+		fast_read => fast_read,
 		rden => rden,
+		read_rdid => read_rdid,
+		addr => addr,
+		read_status => read_status,
 		reset => reset,
-		dataout => sub_wire0,
-		busy => sub_wire1,
-		data_valid => sub_wire2
+		data_valid => sub_wire0,
+		dataout => sub_wire1,
+		rdid_out => sub_wire2,
+		busy => sub_wire3,
+		status_out => sub_wire4
 	);
 
 
@@ -1785,18 +2149,18 @@ END RTL;
 -- Retrieval info: CONSTANT: PORT_DIE_ERASE STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_EN4B_ADDR STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_EX4B_ADDR STRING "PORT_UNUSED"
--- Retrieval info: CONSTANT: PORT_FAST_READ STRING "PORT_UNUSED"
+-- Retrieval info: CONSTANT: PORT_FAST_READ STRING "PORT_USED"
 -- Retrieval info: CONSTANT: PORT_ILLEGAL_ERASE STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_ILLEGAL_WRITE STRING "PORT_UNUSED"
--- Retrieval info: CONSTANT: PORT_RDID_OUT STRING "PORT_UNUSED"
+-- Retrieval info: CONSTANT: PORT_RDID_OUT STRING "PORT_USED"
 -- Retrieval info: CONSTANT: PORT_READ_ADDRESS STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_READ_DUMMYCLK STRING "PORT_UNUSED"
--- Retrieval info: CONSTANT: PORT_READ_RDID STRING "PORT_UNUSED"
+-- Retrieval info: CONSTANT: PORT_READ_RDID STRING "PORT_USED"
 -- Retrieval info: CONSTANT: PORT_READ_SID STRING "PORT_UNUSED"
--- Retrieval info: CONSTANT: PORT_READ_STATUS STRING "PORT_UNUSED"
+-- Retrieval info: CONSTANT: PORT_READ_STATUS STRING "PORT_USED"
 -- Retrieval info: CONSTANT: PORT_SECTOR_ERASE STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_SECTOR_PROTECT STRING "PORT_UNUSED"
--- Retrieval info: CONSTANT: PORT_SHIFT_BYTES STRING "PORT_UNUSED"
+-- Retrieval info: CONSTANT: PORT_SHIFT_BYTES STRING "PORT_USED"
 -- Retrieval info: CONSTANT: PORT_WREN STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: PORT_WRITE STRING "PORT_UNUSED"
 -- Retrieval info: CONSTANT: USE_ASMIBLOCK STRING "ON"
@@ -1812,12 +2176,22 @@ END RTL;
 -- Retrieval info: CONNECT: data_valid 0 0 0 0 @data_valid 0 0 0 0
 -- Retrieval info: USED_PORT: dataout 0 0 8 0 OUTPUT NODEFVAL "dataout[7..0]"
 -- Retrieval info: CONNECT: dataout 0 0 8 0 @dataout 0 0 8 0
+-- Retrieval info: USED_PORT: fast_read 0 0 0 0 INPUT NODEFVAL "fast_read"
+-- Retrieval info: CONNECT: @fast_read 0 0 0 0 fast_read 0 0 0 0
 -- Retrieval info: USED_PORT: rden 0 0 0 0 INPUT NODEFVAL "rden"
 -- Retrieval info: CONNECT: @rden 0 0 0 0 rden 0 0 0 0
--- Retrieval info: USED_PORT: read 0 0 0 0 INPUT NODEFVAL "read"
--- Retrieval info: CONNECT: @read 0 0 0 0 read 0 0 0 0
+-- Retrieval info: USED_PORT: rdid_out 0 0 8 0 OUTPUT NODEFVAL "rdid_out[7..0]"
+-- Retrieval info: CONNECT: rdid_out 0 0 8 0 @rdid_out 0 0 8 0
+-- Retrieval info: USED_PORT: read_rdid 0 0 0 0 INPUT NODEFVAL "read_rdid"
+-- Retrieval info: CONNECT: @read_rdid 0 0 0 0 read_rdid 0 0 0 0
+-- Retrieval info: USED_PORT: read_status 0 0 0 0 INPUT NODEFVAL "read_status"
+-- Retrieval info: CONNECT: @read_status 0 0 0 0 read_status 0 0 0 0
 -- Retrieval info: USED_PORT: reset 0 0 0 0 INPUT NODEFVAL "reset"
 -- Retrieval info: CONNECT: @reset 0 0 0 0 reset 0 0 0 0
+-- Retrieval info: USED_PORT: shift_bytes 0 0 0 0 INPUT NODEFVAL "shift_bytes"
+-- Retrieval info: CONNECT: @shift_bytes 0 0 0 0 shift_bytes 0 0 0 0
+-- Retrieval info: USED_PORT: status_out 0 0 8 0 OUTPUT NODEFVAL "status_out[7..0]"
+-- Retrieval info: CONNECT: status_out 0 0 8 0 @status_out 0 0 8 0
 -- Retrieval info: GEN_FILE: TYPE_NORMAL altasmi.vhd TRUE FALSE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL altasmi.qip TRUE FALSE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL altasmi.bsf FALSE TRUE

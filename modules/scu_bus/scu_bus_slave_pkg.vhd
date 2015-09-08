@@ -106,7 +106,7 @@ component housekeeping is
     Base_addr:  unsigned(15 downto 0));
   port (
     clk_sys:            in std_logic;
-    clk_20Mhz:          in std_logic;
+    clk_40Mhz:          in std_logic;
     n_rst:              in std_logic;
     
     ADR_from_SCUB_LA:   in std_logic_vector(15 downto 0);

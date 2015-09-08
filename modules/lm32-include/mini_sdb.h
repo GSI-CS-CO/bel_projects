@@ -63,6 +63,9 @@
 
 #define WR_CFIPFlash          0x12122121
 #define WR_SYS_CON            0xff07fc47  
+#define WB_REMOTE_UPDATE      0x38956271
+#define WB_ASMI               0x48526423
+#define WB_SCU_REG            0xe2d13d04
 
 //periphery device pointers
 volatile uint32_t* pTlu; 

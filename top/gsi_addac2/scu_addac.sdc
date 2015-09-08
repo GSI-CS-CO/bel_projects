@@ -10,4 +10,6 @@ set_clock_groups -asynchronous                           \
  -group {addac_clk_switch|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[0]}\
  -group {addac_clk_switch|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[0]~1}\
  -group {addac_clk_switch|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[1]}\
- -group {addac_clk_switch|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[1]~1}
+ -group {addac_clk_switch|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[1]~1}\
+ -group {addac_clk_switch|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[2]}\
+ -group {addac_clk_switch|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[2]~1}
