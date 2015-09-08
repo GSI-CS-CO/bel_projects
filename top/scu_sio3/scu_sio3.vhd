@@ -126,7 +126,7 @@ ARCHITECTURE arch_scu_sio3 OF scu_sio3 IS
 CONSTANT c_Firmware_Version:         Integer              := 5;         -- important: => Firmware_Version
 CONSTANT c_Firmware_Release:         Integer              := 2;         -- important: => Firmware_Release
 
-CONSTANT c_lm32_ow_Base_Addr:        unsigned(15 downto 0):=  x"0040";  -- housekeeping/LM32
+CONSTANT c_housekeeping_base:        unsigned(15 downto 0):=  x"0040";  -- housekeeping/LM32
 CONSTANT c_test_usr_reg_Base_Addr:   integer              :=  16#0200#; -- Test Usr Reg
 CONSTANT c_wb_mil_wrapper_Base_Addr: integer              :=  16#0400#; -- Mil Wrapper
 
@@ -294,15 +294,14 @@ user_reg1: sio3_Test_User_Reg
 
 -- open drain buffer for one wire
 
-owr_i(0)   <= A_OneWire;
-owr_i(1)   <= A_OneWire_EEPROM;
-A_OneWire         <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
-A_OneWire_EEPROM  <= owr_pwren_o(1) when (owr_pwren_o(1) = '1' or owr_en_o(1) = '1') else 'Z';
+owr_i(0)          <= A_OneWire_EEPROM;
+owr_i(1)          <= A_OneWire;
+A_OneWire_EEPROM  <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
+A_OneWire         <= owr_pwren_o(1) when (owr_pwren_o(1) = '1' or owr_en_o(1) = '1') else 'Z';
 
 lm32_ow: housekeeping
   generic map (
-    Base_Addr => c_lm32_ow_Base_Addr 
-    )
+    Base_Addr => c_housekeeping_base)
   port map (
     clk_sys             => clk,
     n_rst               => nPowerup_Res,
@@ -457,9 +456,9 @@ begin
     Data_to_SCUB <= Mil_Data_to_SCUB;
   elsif User_Reg_rd_active = '1' then 
     Data_to_SCUB <= user_reg1_data_to_SCUB;
-  elsif clk_switch_rd_active ='1' then
+  elsif clk_switch_rd_active = '1' then
     Data_to_SCUB <= clk_switch_rd_data;
-  elsif wb_scu_rd_active ='1' then
+  elsif wb_scu_rd_active = '1' then
     Data_to_SCUB <= wb_scu_data_to_SCUB;
   else
     Data_to_SCUB <= (others => '-');
