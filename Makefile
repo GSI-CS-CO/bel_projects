@@ -17,7 +17,7 @@ gateware:	all pexarria5 exploder exploder5 vetar scu2 scu3
 
 install::	etherbone-install tools-install eca-install tlu-install driver-install
 
-clean::		etherbone-clean tools-clean eca-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean exploder5-clean pexarria5-clean
+clean::		etherbone-clean tools-clean eca-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean exploder5-clean pexarria5-clean scu_sio3-clean
 
 distclean::	clean
 	git clean -xfd .
