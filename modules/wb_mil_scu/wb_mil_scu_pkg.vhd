@@ -21,8 +21,7 @@ constant c_xwb_gsi_mil_scu : t_sdb_device := (
   wbd_width     => x"4",                -- only 32-bit port granularity allowed
   sdb_component => (
   addr_first    => x"0000000000000000",
-  --addr_last     => std_logic_vector(to_unsigned(c_mil_byte_addr_range-1, t_sdb_component.addr_last'length)),
-  addr_last     => std_logic_vector(to_unsigned(16#1FFF#, 64)),
+  addr_last     => std_logic_vector(to_unsigned(c_mil_byte_addr_range-1, t_sdb_component.addr_last'length)),
   product => (
   vendor_id     => x"0000000000000651", -- GSI
   device_id     => x"35aa6b96",
@@ -39,36 +38,36 @@ constant  filter_addr_width:  integer := integer(ceil(log2(real(filter_ram_size)
 -- allowed wishbone address offsets for calulating the true wishbone address you have to multiply the constant by 4.    --
 -- Only 32 bit access allowed.                                                                                          --
 --------------------------------------------------------------------------------------------------------------------------
-constant  mil_rd_wr_data_a:         integer := 16#400#;   -- read mil bus:               wb_mil_scu_offset + 16#00#, only allowed when mil data received. Data[31..16] always zero.
+constant  mil_rd_wr_data_a:         integer := 16#00#;   -- read mil bus:               wb_mil_scu_offset + 16#00#, only allowed when mil data received. Data[31..16] always zero.
                                                           -- write data to mil bus:      wb_mil_scu_offset + 16#00#, only allowed when transmitter free. Data[31..16] don't care.
-constant  mil_wr_cmd_a:             integer := 16#401#;    -- write command to mil bus:   wb_mil_scu_offset + 16#04#, only allowed when transmitter free. Data[31..16] don't care.
-constant  mil_wr_rd_status_a:       integer := 16#402#;   -- kk read mil status:         wb_mil_scu_offset + 16#08#, data[31..16] always zero.
+constant  mil_wr_cmd_a:             integer := 16#01#;    -- write command to mil bus:   wb_mil_scu_offset + 16#04#, only allowed when transmitter free. Data[31..16] don't care.
+constant  mil_wr_rd_status_a:       integer := 16#02#;   -- kk read mil status:         wb_mil_scu_offset + 16#08#, data[31..16] always zero.
                                                           -- write mil control reg:      wb_mil_scu_offset + 16#08#, bits 15..0 can be changed. Data[31..16] don't care.
-constant  rd_clr_no_vw_cnt_a:       integer := 16#403#;  -- read no valid counters:      wb_mil_scu_offset + 16#0C#. Data[31..16] always zero.
+constant  rd_clr_no_vw_cnt_a:       integer := 16#03#;  -- read no valid counters:      wb_mil_scu_offset + 16#0C#. Data[31..16] always zero.
                                                          -- write(clears)novalid counter wb_mil_scu_offset + 16#0C#. Data[31..0] don't care
-constant  rd_wr_not_eq_cnt_a:       integer := 16#404#;  -- read not equal counters:     wb_mil_scu_offset + 16#10#. Data[31..16] always zero.
+constant  rd_wr_not_eq_cnt_a:       integer := 16#04#;  -- read not equal counters:     wb_mil_scu_offset + 16#10#. Data[31..16] always zero.
                                                          -- write (clears) not equal counters: wb_mil_scu_offset + 16#10#. Data[31..0] don't care.
-constant  rd_clr_ev_fifo_a:         integer := 16#405#;  -- read event fifo:             wb_mil_scu_offset + 16#14#, only allowed when event fifo is not empty. Data[31..16] always zero.
+constant  rd_clr_ev_fifo_a:         integer := 16#05#;  -- read event fifo:             wb_mil_scu_offset + 16#14#, only allowed when event fifo is not empty. Data[31..16] always zero.
                                                          -- write (clears) event fifo:   wb_mil_scu_offset + 16#14#. Data[31..0] don't care. 
-constant  rd_clr_ev_timer_a:        integer := 16#406#;  -- read event timer:            wb_mil_scu_offset + 16#18#.
+constant  rd_clr_ev_timer_a:        integer := 16#06#;  -- read event timer:            wb_mil_scu_offset + 16#18#.
                                                          -- write (sw-clear) event timer wb_mil_scu_offset + 16#18#.
-constant  rd_wr_dly_timer_a:        integer := 16#407#;  -- read delay timer:            wb_mil_scu_offset + 16#1C#.
+constant  rd_wr_dly_timer_a:        integer := 16#07#;  -- read delay timer:            wb_mil_scu_offset + 16#1C#.
                                                          -- write delay timer:           wb_mil_scu_offset + 16#1C#.
-constant  rd_clr_wait_timer_a:      integer := 16#408#;  -- read wait timer:             wb_mil_scu_offset + 16#20#.
+constant  rd_clr_wait_timer_a:      integer := 16#08#;  -- read wait timer:             wb_mil_scu_offset + 16#20#.
                                                          -- write (clear) wait timer:    wb_mil_scu_offset + 16#20#.
-constant  mil_wr_rd_lemo_conf_a:    integer := 16#409#;  -- read mil lemo config:        wb_mil_scu_offset + 16#24#, data[31..4] always zero.
+constant  mil_wr_rd_lemo_conf_a:    integer := 16#09#;  -- read mil lemo config:        wb_mil_scu_offset + 16#24#, data[31..4] always zero.
                                                          -- write mil lemo config:       wb_mil_scu_offset + 16#24#, bits 3..0 can be changed.Data[31..4] don't care
-constant  mil_wr_rd_lemo_dat_a:     integer := 16#40A#;  -- read mil lemo dat:           wb_mil_scu_offset + 16#28#, data[31..4] always zero.
+constant  mil_wr_rd_lemo_dat_a:     integer := 16#0A#;  -- read mil lemo dat:           wb_mil_scu_offset + 16#28#, data[31..4] always zero.
                                                          -- write mil lemo dat:          wb_mil_scu_offset + 16#28#, bits 3..0 can be changed.Data[31..4] don't car
-constant  mil_rd_lemo_inp_a:        integer := 16#40B#;  -- read mil lemo inp:           wb_mil_scu_offset + 16#2C#, data[31..4] always zero.
+constant  mil_rd_lemo_inp_a:        integer := 16#0B#;  -- read mil lemo inp:           wb_mil_scu_offset + 16#2C#, data[31..4] always zero.
 
-constant  rd_ev_timer_LW_a:         integer := 16#40C#;  -- read event timer lower Word  wb_mil_scu_offset + 16#30#.
+constant  rd_ev_timer_LW_a:         integer := 16#0C#;  -- read event timer lower Word  wb_mil_scu_offset + 16#30#.
                                                          -- reserved                     wb_mil_scu_offset + 16#34#.
-constant  rd_wait_timer_LW_a:       integer := 16#40e#;  -- read wait timer lower Word   wb_mil_scu_offset + 16#38#.
+constant  rd_wait_timer_LW_a:       integer := 16#0e#;  -- read wait timer lower Word   wb_mil_scu_offset + 16#38#.
                                                          -- reserved                     wb_mil_scu_offset + 16#3c#..   
-constant  rd_wr_dly_timer_LW_a:     integer := 16#410#;  -- read event timer latch LW    wb_mil_scu_offset + 16#40#.
+constant  rd_wr_dly_timer_LW_a:     integer := 16#10#;  -- read event timer latch LW    wb_mil_scu_offset + 16#40#.
                                                          -- write event timer latch LW   wb_mil_scu_offset + 16#40#.
-constant  rd_wr_dly_timer_HW_a:     integer := 16#411#;  -- read event timer latch HW    wb_mil_scu_offset + 16#44#.
+constant  rd_wr_dly_timer_HW_a:     integer := 16#11#;  -- read event timer latch HW    wb_mil_scu_offset + 16#44#.
                                                          -- write event timer latch HW   wb_mil_scu_offset + 16#44#.                                                         
 
 constant  ev_filt_first_a:    integer := 16#1000#;  -- first event filter ram address: wb_mil_scu_offset + 16#4000. 
