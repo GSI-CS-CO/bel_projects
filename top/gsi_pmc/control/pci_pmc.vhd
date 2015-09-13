@@ -265,7 +265,7 @@ begin
       usb_fd_io              => fd,
       pmc_pci_clk_i          => pmc_clk_i,
       pmc_pci_rst_i          => pmc_rst_i,
-      pmc_buf_oe_o           => pmc_buf_oe_o,
+      pmc_buf_oe_o           => open, -- pmc_buf_oe_o,
       pmc_busmode_io         => pmc_busmode_io,
       pmc_ad_io              => pmc_ad_io,
       pmc_c_be_io            => pmc_c_be_io,
@@ -295,6 +295,9 @@ begin
       lcd_flm_o              => dis_di(2),
       lcd_in_o               => dis_di(0));
 
+
+pmc_buf_oe_o <= '1'; -- enable PCI bus translators
+
   -- SFP1-3 are not mounted
   sfp4_tx_disable_o <= '0';
 
@@ -314,8 +317,8 @@ begin
   status_led_o(4) <= not s_led_pps;                          -- white = PPS
 
   -- GPIOs
-  status_led_o(6 downto 5) <= s_gpio (1 downto 0);
-  user_led_o(8 downto 1)   <= s_gpio (9 downto 2);
+  status_led_o(6 downto 5) <= not s_gpio (1 downto 0);
+  user_led_o(8 downto 1)   <= not s_gpio (9 downto 2);
   
   -- LVDS inputs
   s_lvds_p_i(0) <= lvttio_in_p_1;
@@ -363,11 +366,11 @@ begin
   lvttio_dir_led_5 <= '0' when s_lvds_oen(4) = '1' else 'Z';
   
   -- LVDS activity indicator LEDs
-  lvttio_act_led_1 <= '0' when s_lvds_i_led(0) = '1' else 'Z';
-  lvttio_act_led_2 <= '0' when s_lvds_i_led(1) = '1' else 'Z';
-  lvttio_act_led_3 <= '0' when s_lvds_i_led(2) = '1' else 'Z';
-  lvttio_act_led_4 <= '0' when s_lvds_i_led(3) = '1' else 'Z';
-  lvttio_act_led_5 <= '0' when s_lvds_i_led(4) = '1' else 'Z';
+  lvttio_act_led_1 <= '1' when s_lvds_i_led(0) = '1' else '0';
+  lvttio_act_led_2 <= '1' when s_lvds_i_led(1) = '1' else '0';
+  lvttio_act_led_3 <= '1' when s_lvds_i_led(2) = '1' else '0';
+  lvttio_act_led_4 <= '1' when s_lvds_i_led(3) = '1' else '0';
+  lvttio_act_led_5 <= '1' when s_lvds_i_led(4) = '1' else '0';
 
   -- Logic analyzer
   s_log_in(15 downto 0) <= hpw(15 downto 0);
