@@ -24,7 +24,7 @@ set_global_assignment -name ENABLE_SIGNALTAP OFF
 set_global_assignment -name STRATIX_DEVICE_IO_STANDARD "2.5 V"
 set_global_assignment -name SMART_RECOMPILE ON
 set_global_assignment -name STRATIXIII_CONFIGURATION_SCHEME "ACTIVE SERIAL"
-set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ256
+set_global_assignment -name STRATIXII_CONFIGURATION_DEVICE EPCQ512
 set_global_assignment -name EDA_SIMULATION_TOOL "<None>"
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT NONE -section_id eda_simulation
 set_global_assignment -name CYCLONEII_RESERVE_NCEO_AFTER_CONFIGURATION "USE AS REGULAR IO"
