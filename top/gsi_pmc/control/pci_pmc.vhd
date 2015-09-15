@@ -231,7 +231,7 @@ begin
       wr_onewire_io          => rom_data,
       wr_sfp_sda_io          => sfp_mod2,
       wr_sfp_scl_io          => sfp_mod1,
-      wr_sfp_det_i           => sfp_mod0,
+      wr_sfp_det_i           => sfp_mod0_i,
       wr_sfp_tx_o            => sfp_txp_o,
       wr_sfp_rx_i            => sfp_rxp_i,
       wr_ext_clk_i           => lvttl_clk_i,

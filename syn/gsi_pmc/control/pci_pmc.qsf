@@ -274,12 +274,12 @@ set_location_assignment PIN_U5 -to lvttio_oe_4
 set_location_assignment PIN_W1 -to lvttio_oe_5
 set_location_assignment PIN_R2 -to lvttio_dir_led_1
 set_location_assignment PIN_T2 -to lvttio_dir_led_2
-set_location_assignment PIN_T7 -to lvttio_dir_led_3
+set_location_assignment PIN_U1 -to lvttio_dir_led_3
 set_location_assignment PIN_V5 -to lvttio_dir_led_4
 set_location_assignment PIN_P4 -to lvttio_dir_led_5
 set_location_assignment PIN_P3 -to lvttio_act_led_1
 set_location_assignment PIN_T1 -to lvttio_act_led_2
-set_location_assignment PIN_U1 -to lvttio_act_led_3
+set_location_assignment PIN_T7 -to lvttio_act_led_3
 set_location_assignment PIN_V4 -to lvttio_act_led_4
 set_location_assignment PIN_N6 -to lvttio_act_led_5
 set_instance_assignment -name IO_STANDARD LVDS -to pmc_clk_i
