@@ -1,4 +1,3 @@
-set_global_assignment -name FAMILY "Arria V"
 set_global_assignment -name DEVICE 5AGXMA3D4F27I3
 set_global_assignment -name TOP_LEVEL_ENTITY pci_pmc
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
@@ -44,10 +43,12 @@ set_global_assignment -name OPTIMIZE_HOLD_TIMING "ALL PATHS"
 set_global_assignment -name OPTIMIZE_MULTI_CORNER_TIMING ON
 set_location_assignment PIN_C22 -to "clk_125m_local_i(n)"
 set_location_assignment PIN_H15 -to "clk_125m_pllref_i(n)"
-set_location_assignment PIN_D14 -to sfp2_mod0
-set_location_assignment PIN_D12 -to sfp2_mod1
-set_location_assignment PIN_F14 -to sfp2_mod2
-set_location_assignment PIN_G14 -to sfp2_tx_disable_o
+set_location_assignment PIN_A12 -to sfp_mod0_i
+set_location_assignment PIN_A11 -to sfp_mod1
+set_location_assignment PIN_J12 -to sfp_mod2
+set_location_assignment PIN_H12 -to sfp_tx_disable_o
+set_location_assignment PIN_B12 -to sfp_los_i
+set_location_assignment PIN_C12 -to sfp_tx_fault_i
 set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "ACTIVE SERIAL X4"
 set_global_assignment -name CRC_ERROR_OPEN_DRAIN ON
 set_location_assignment PIN_AF21 -to clk_20m_vcxo_i
@@ -148,13 +149,13 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to slrd
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to slwr
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to uclk
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to ures
-set_location_assignment PIN_K26 -to sfp4_rxp_i
-set_location_assignment PIN_J24 -to sfp4_txp_o
+set_location_assignment PIN_K26 -to sfp_rxp_i
+set_location_assignment PIN_J24 -to sfp_txp_o
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to con[5]
-set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to sfp4_rxp_i
-set_location_assignment PIN_K25 -to "sfp4_rxp_i(n)"
-set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to sfp4_txp_o
-set_location_assignment PIN_J23 -to "sfp4_txp_o(n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to sfp_rxp_i
+set_location_assignment PIN_K25 -to "sfp_rxp_i(n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to sfp_txp_o
+set_location_assignment PIN_J23 -to "sfp_txp_o(n)"
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to rom_data
 set_location_assignment PIN_AC7 -to nres
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to nres
@@ -282,55 +283,55 @@ set_location_assignment PIN_U1 -to lvttio_act_led_3
 set_location_assignment PIN_V4 -to lvttio_act_led_4
 set_location_assignment PIN_N6 -to lvttio_act_led_5
 set_instance_assignment -name IO_STANDARD LVDS -to pmc_clk_i
-set_location_assignment PIN_H19 -to pmc_rst_i
-set_location_assignment PIN_A20 -to pmc_busmode_io[1]
-set_location_assignment PIN_D19 -to pmc_busmode_io[2]
-set_location_assignment PIN_C19 -to pmc_busmode_io[3]
-set_location_assignment PIN_A23 -to pmc_buf_oe_o
-set_location_assignment PIN_AD15 -to pmc_ad_io[31]
-set_location_assignment PIN_W18 -to pmc_ad_io[30]
-set_location_assignment PIN_AC16 -to pmc_ad_io[29]
-set_location_assignment PIN_V15 -to pmc_ad_io[28]
-set_location_assignment PIN_AB15 -to pmc_ad_io[27]
-set_location_assignment PIN_W15 -to pmc_ad_io[26]
-set_location_assignment PIN_AA18 -to pmc_ad_io[25]
-set_location_assignment PIN_AA17 -to pmc_ad_io[24]
-set_location_assignment PIN_AF15 -to pmc_ad_io[23]
-set_location_assignment PIN_AF16 -to pmc_ad_io[22]
-set_location_assignment PIN_Y14 -to pmc_ad_io[21]
-set_location_assignment PIN_AA14 -to pmc_ad_io[20]
+set_location_assignment PIN_A22 -to pmc_rst_i
+set_location_assignment PIN_D21 -to pmc_busmode_io[1]
+set_location_assignment PIN_A23 -to pmc_busmode_io[2]
+set_location_assignment PIN_B22 -to pmc_busmode_io[3]
+set_location_assignment PIN_H19 -to pmc_buf_oe_o
+set_location_assignment PIN_AF13 -to pmc_ad_io[31]
+set_location_assignment PIN_AD14 -to pmc_ad_io[30]
+set_location_assignment PIN_AF14 -to pmc_ad_io[29]
+set_location_assignment PIN_AE15 -to pmc_ad_io[28]
+set_location_assignment PIN_AF15 -to pmc_ad_io[27]
+set_location_assignment PIN_AE16 -to pmc_ad_io[26]
+set_location_assignment PIN_AF16 -to pmc_ad_io[25]
+set_location_assignment PIN_AD16 -to pmc_ad_io[24]
+set_location_assignment PIN_W15 -to pmc_ad_io[23]
+set_location_assignment PIN_Y14 -to pmc_ad_io[22]
+set_location_assignment PIN_AA14 -to pmc_ad_io[21]
+set_location_assignment PIN_AA15 -to pmc_ad_io[20]
 set_location_assignment PIN_AC14 -to pmc_ad_io[19]
-set_location_assignment PIN_AD14 -to pmc_ad_io[18]
-set_location_assignment PIN_AF14 -to pmc_ad_io[17]
-set_location_assignment PIN_AF13 -to pmc_ad_io[16]
+set_location_assignment PIN_AB15 -to pmc_ad_io[18]
+set_location_assignment PIN_AD15 -to pmc_ad_io[17]
+set_location_assignment PIN_AC16 -to pmc_ad_io[16]
 set_location_assignment PIN_AB16 -to pmc_ad_io[15]
 set_location_assignment PIN_AD17 -to pmc_ad_io[14]
 set_location_assignment PIN_AC17 -to pmc_ad_io[13]
 set_location_assignment PIN_AE18 -to pmc_ad_io[12]
 set_location_assignment PIN_AD18 -to pmc_ad_io[11]
 set_location_assignment PIN_AB18 -to pmc_ad_io[10]
-set_location_assignment PIN_AD16 -to pmc_ad_io[9]
-set_location_assignment PIN_AE16 -to pmc_ad_io[8]
+set_location_assignment PIN_AA17 -to pmc_ad_io[9]
+set_location_assignment PIN_AA18 -to pmc_ad_io[8]
 set_location_assignment PIN_Y18 -to pmc_ad_io[7]
-set_location_assignment PIN_Y17 -to pmc_ad_io[6]
-set_location_assignment PIN_AA15 -to pmc_ad_io[5]
-set_location_assignment PIN_AE15 -to pmc_ad_io[4]
+set_location_assignment PIN_W18 -to pmc_ad_io[6]
+set_location_assignment PIN_Y17 -to pmc_ad_io[5]
+set_location_assignment PIN_W16 -to pmc_ad_io[4]
 set_location_assignment PIN_V16 -to pmc_ad_io[3]
-set_location_assignment PIN_W16 -to pmc_ad_io[2]
+set_location_assignment PIN_V15 -to pmc_ad_io[2]
 set_location_assignment PIN_AA16 -to pmc_ad_io[1]
 set_location_assignment PIN_AD19 -to pmc_ad_io[0]
-set_location_assignment PIN_C20 -to pmc_c_be_io[3]
-set_location_assignment PIN_D20 -to pmc_c_be_io[2]
-set_location_assignment PIN_B21 -to pmc_c_be_io[1]
-set_location_assignment PIN_C21 -to pmc_c_be_io[0]
-set_location_assignment PIN_A22 -to pmc_trdy_io
-set_location_assignment PIN_E19 -to pmc_irdy_io
-set_location_assignment PIN_A21 -to pmc_stop_io
-set_location_assignment PIN_G21 -to pmc_devsel_io
-set_location_assignment PIN_H21 -to pmc_idsel_i
-set_location_assignment PIN_J19 -to pmc_perr_io
-set_location_assignment PIN_E21 -to pmc_serr_io
-set_location_assignment PIN_D21 -to pmc_inta_o
+set_location_assignment PIN_C19 -to pmc_c_be_io[3]
+set_location_assignment PIN_A20 -to pmc_c_be_io[2]
+set_location_assignment PIN_G21 -to pmc_c_be_io[1]
+set_location_assignment PIN_E21 -to pmc_c_be_io[0]
+set_location_assignment PIN_E19 -to pmc_trdy_io
+set_location_assignment PIN_F19 -to pmc_irdy_io
+set_location_assignment PIN_J19 -to pmc_stop_io
+set_location_assignment PIN_D19 -to pmc_devsel_io
+set_location_assignment PIN_B21 -to pmc_idsel_i
+set_location_assignment PIN_H21 -to pmc_perr_io
+set_location_assignment PIN_C21 -to pmc_serr_io
+set_location_assignment PIN_C20 -to pmc_inta_o
 set_location_assignment PIN_F18 -to pmc_req_o
 set_location_assignment PIN_E16 -to pmc_gnt_i
 set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_rst_i
@@ -431,9 +432,9 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wr_ndac_cs[2]
 set_location_assignment PIN_Y5 -to dis_do
 set_location_assignment PIN_AA3 -to dis_res
 set_location_assignment PIN_W7 -to dis_wr
-set_location_assignment PIN_B19 -to pmc_busmode_io[4]
-set_location_assignment PIN_B22 -to pmc_par_io
-set_location_assignment PIN_F19 -to pmc_frame_io
+set_location_assignment PIN_A21 -to pmc_busmode_io[4]
+set_location_assignment PIN_D20 -to pmc_par_io
+set_location_assignment PIN_B19 -to pmc_frame_io
 set_location_assignment PIN_P6 -to lvttl_in_clk_en_o
 set_location_assignment PIN_B16 -to lvttl_clk_i
 set_instance_assignment -name IO_STANDARD LVDS -to lvttl_clk_i

@@ -161,16 +161,16 @@ entity pci_pmc is
     status_led_o      : out std_logic_vector(6 downto 1);
     
     -----------------------------------------------------------------------
-    -- SFP4 
+    -- SFP 
     -----------------------------------------------------------------------
-    sfp4_tx_disable_o : out   std_logic := '0';
-    sfp4_tx_fault     : in    std_logic;
-    sfp4_los          : in    std_logic;
-    sfp4_txp_o        : out   std_logic;
-    sfp4_rxp_i        : in    std_logic;
-    sfp4_mod0         : in    std_logic; -- grounded by module
-    sfp4_mod1         : inout std_logic; -- SCL
-    sfp4_mod2         : inout std_logic  -- SDA
+    sfp_tx_disable_o : out   std_logic := '0';
+    sfp_tx_fault_i   : in    std_logic;
+    sfp_los_i        : in    std_logic;
+    sfp_txp_o        : out   std_logic;
+    sfp_rxp_i        : in    std_logic;
+    sfp_mod0_i       : in    std_logic; -- grounded by module
+    sfp_mod1         : inout std_logic; -- SCL
+    sfp_mod2         : inout std_logic  -- SDA
     );
 end pci_pmc;
 
@@ -229,11 +229,11 @@ begin
       core_clk_butis_o       => s_butis,
       core_clk_butis_t0_o    => s_butis_t0,
       wr_onewire_io          => rom_data,
-      wr_sfp_sda_io          => sfp4_mod2,
-      wr_sfp_scl_io          => sfp4_mod1,
-      wr_sfp_det_i           => sfp4_mod0,
-      wr_sfp_tx_o            => sfp4_txp_o,
-      wr_sfp_rx_i            => sfp4_rxp_i,
+      wr_sfp_sda_io          => sfp_mod2,
+      wr_sfp_scl_io          => sfp_mod1,
+      wr_sfp_det_i           => sfp_mod0,
+      wr_sfp_tx_o            => sfp_txp_o,
+      wr_sfp_rx_i            => sfp_rxp_i,
       wr_ext_clk_i           => lvttl_clk_i,
       wr_dac_sclk_o          => wr_dac_sclk,
       wr_dac_din_o           => wr_dac_din,
@@ -298,8 +298,8 @@ begin
 
 pmc_buf_oe_o <= '1'; -- enable PCI bus translators
 
-  -- SFP1-3 are not mounted
-  sfp4_tx_disable_o <= '0';
+  -- SFP always enabled
+  sfp_tx_disable_o <= '0';
 
   -- Display
   dis_wr    <= '0';
