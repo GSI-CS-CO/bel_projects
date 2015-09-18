@@ -16,7 +16,7 @@
 extern struct w1_bus wrpc_w1_bus;
 volatile unsigned short* scu_reg;
 volatile unsigned int* aru_base;
-volatile unsigned int* asmi_base;
+volatile unsigned char* asmi_base;
 
 
 //getSysTime() needs extra hardware from ftm cluster
@@ -59,17 +59,18 @@ void ReadTempDevices(int bus) {
 
 int main(void)
 {
+  int i, j;
   discoverPeriphery();
   aru_base      = (unsigned int *)find_device_adr(GSI, WB_REMOTE_UPDATE);
   scu_reg       = (unsigned short *)find_device_adr(GSI, WB_SCU_REG);
-  asmi_base     = (unsigned int *)find_device_adr(GSI, WB_ASMI);
+  asmi_base     = (unsigned char *)find_device_adr(GSI, WB_ASMI);
   BASE_ONEWIRE  = (unsigned char *)find_device_adr(CERN, WR_1Wire);
 
   if (!BASE_UART) {
     while (1) {};
   }
   uart_init_hw();
-  uart_write_string("Debug Port\n");
+  uart_write_string("\nDebug Port\n");
 
   mprintf("aru_base: 0x%x\n", aru_base);
   mprintf("scu_reg: 0x%x\n", scu_reg);
@@ -101,6 +102,31 @@ int main(void)
     aru_base[CONFIG_MODE] = 0x1;  // set to Application mode
     //aru_base[CONFIG] = 0x1; // trigger reconfiguration
   }
+
+
+  // read status
+  mprintf("status byte: 0x%x \n", *(char*)(asmi_base + 0x4));
+  mprintf("mem id: 0x%x \n", *(char*)(asmi_base + 0x8));
+
+  // erase sector 0  
+  //*(asmi_base + 0xc) = 1;
+
+  // fill page buffer
+  for(i = 0; i < 256; i++)
+    *(char *)(asmi_base + (i << 4)) = i;
+
+  //write to flash
+  //*(unsigned int*)(asmi_base + 0xf) = 0x40000;
+
+  j = 0;
+  for(i = 0x40000; i <= 0x40100; i += j) {
+    mprintf("0x%x: ", i);
+    for (j = 0; j < 8; j++) { 
+      mprintf("%x ", *(char*)(asmi_base + (i + j << 4)));
+    }
+    mprintf("\n");
+  }
+  while(1);
 
     
 	while(1) {

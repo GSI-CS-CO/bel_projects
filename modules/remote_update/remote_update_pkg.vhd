@@ -34,15 +34,20 @@ component altasmi
 	(
 		addr		: IN STD_LOGIC_VECTOR (23 DOWNTO 0);
 		clkin		: IN STD_LOGIC ;
-		rden		: IN STD_LOGIC ;
+		datain		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
 		fast_read		: IN STD_LOGIC ;
+		rden		: IN STD_LOGIC ;
 		read_rdid		: IN STD_LOGIC ;
 		read_status		: IN STD_LOGIC ;
 		reset		: IN STD_LOGIC ;
+		sector_erase		: IN STD_LOGIC ;
 		shift_bytes		: IN STD_LOGIC ;
+		write		: IN STD_LOGIC ;
 		busy		: OUT STD_LOGIC ;
 		data_valid		: OUT STD_LOGIC ;
 		dataout		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
+		illegal_erase		: OUT STD_LOGIC ;
+		illegal_write		: OUT STD_LOGIC ;
 		rdid_out		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
 		status_out		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
 	);
@@ -70,6 +75,7 @@ component wb_remote_update is
 end component;
 
 component wb_asmi is
+  generic ( PAGESIZE : integer );
   port (
     clk_sys_i : in std_logic;
     rst_n_i   : in std_logic;
@@ -116,7 +122,7 @@ constant c_wb_asmi_sdb : t_sdb_device := (
    wbd_width     => x"7", -- 8/16/32-bit port granularity
    sdb_component => (
    addr_first    => x"0000000000000000",
-   addr_last     => x"0000000001ffffff",
+   addr_last     => x"000000000fffffff",
    product => (
    vendor_id     => x"0000000000000651",
    device_id     => x"48526423",

@@ -83,7 +83,7 @@ architecture housekeeping_arch of housekeeping is
     2 => f_sdb_embed_device(c_xwb_uart,                x"00020100"),
     3 => f_sdb_embed_device(c_xwb_scu_reg,             x"00020200"),
     4 => f_sdb_embed_device(c_wb_rem_upd_sdb,          x"00020500"),
-    5 => f_sdb_embed_device(c_wb_asmi_sdb,             x"02000000"));
+    5 => f_sdb_embed_device(c_wb_asmi_sdb,             x"10000000"));
   
   constant c_top_layout  : t_sdb_record_array(c_slaves-1 downto 0) := f_sdb_auto_layout(c_layout_req);
   constant c_sdb_address : t_wishbone_address := x"3FFFE000";
@@ -297,6 +297,7 @@ begin
   -- wb interface for altera remote update
   -----------------------------------------
   asmi: wb_asmi
+    generic map ( PAGESIZE => 256 )
     port map (
       clk_sys_i => clk_40Mhz,
       rst_n_i   => n_rst,
