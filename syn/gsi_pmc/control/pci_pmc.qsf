@@ -386,24 +386,6 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_serr_io
 set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_inta_o
 set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_req_o
 set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_gnt_i
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_busmode_io[1]
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_busmode_io[2]
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_busmode_io[3]
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_c_be_io[3]
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_c_be_io[2]
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_c_be_io[1]
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_c_be_io[0]
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_trdy_io
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_irdy_io
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_stop_io
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_devsel_io
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_idsel_i
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_perr_io
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_serr_io
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_inta_o
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_req_o
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_gnt_i
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_rst_i
 set_location_assignment PIN_AF23 -to status_led_o[6]
 set_location_assignment PIN_AC22 -to status_led_o[5]
 set_location_assignment PIN_AE19 -to status_led_o[1]
