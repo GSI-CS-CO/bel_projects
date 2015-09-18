@@ -212,7 +212,7 @@ begin
     generic map(
       g_family          => c_family,
       g_project         => c_project,
-      g_flash_bits      => 25,
+      g_flash_bits      => 26,
       g_lvds_inout      => 5,  -- 5 LEMOs at front panel
       g_gpio_out        => 10, -- 2 LEDs at front panel + 8 on-boards LEDs
       g_en_usb          => true,
