@@ -33,10 +33,11 @@ set_clock_groups -asynchronous                           \
 # -group [get_clocks {pmc_clk_i}]
 
 
-create_clock \
-  -name {pmc_clk_i} \
-  -period 30.000 \
-  -waveform { 0.000 15.000 } [get_ports {pmc_clk_i}]
+create_clock -name {pmc_clk_i} -period 31.000 [get_ports {pmc_clk_i}]
+create_clock -name {clk_20m_vcxo_i} -period 50.000 [get_ports {clk_20m_vcxo_i}]
+create_clock -name {clk_125m_local_i} -period 8.000 [get_ports {clk_125m_local_i}]
+create_clock -name {sfp234_ref_clk_i} -period 8.000 [get_ports {sfp234_ref_clk_i}]
+
 
 # cut: wb sys <=> pci (different frequencies and using xwb_clock_crossing)
 set_false_path -from [get_clocks {pci_clk}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}]
