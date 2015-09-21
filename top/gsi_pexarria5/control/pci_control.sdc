@@ -28,18 +28,6 @@ set_clock_groups -asynchronous                           \
  -group { main|\pcie_y:pcie|*|rx_pmas[3]*|clk90bdes      \
           main|\pcie_y:pcie|*|rx_pmas[3]*|clk90b       } \
  -group { main|\pcie_y:pcie|*|coreclkout               } \
- -group [get_clocks {pmc_clk_i}]
-
-
-create_clock \
-  -name {pmc_clk_i} \
-  -period 30.000 \
-  -waveform { 0.000 15.000 } [get_ports {pmc_clk_i}]
-
-# cut: wb sys <=> pci (different frequencies and using xwb_clock_crossing)
-set_false_path -from [get_clocks {pci_clk}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}]
-set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {pci_clk}]
-
 
 # cut: wb sys <=> wb flash   (different frequencies and using xwb_clock_crossing)
 set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[3].*}]
