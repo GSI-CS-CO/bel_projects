@@ -1,3 +1,8 @@
+create_clock -name {pmc_clk_i}        -period 31.000 [get_ports {pmc_clk_i}       ]
+create_clock -name {clk_20m_vcxo_i}   -period 50.000 [get_ports {clk_20m_vcxo_i}  ]
+create_clock -name {clk_125m_local_i} -period  8.000 [get_ports {clk_125m_local_i}]
+create_clock -name {sfp234_ref_clk_i} -period  8.000 [get_ports {sfp234_ref_clk_i}]
+
 derive_pll_clocks -create_base_clocks
 derive_clock_uncertainty
 
@@ -15,34 +20,11 @@ set_clock_groups -asynchronous                           \
           main|\phy_a5:phy|*|inst_av_pcs|*|tx*         } \
  -group { main|\phy_a5:phy|*|clk90bdes                   \
           main|\phy_a5:phy|*|clk90b                      \
-          main|\phy_a5:phy|*|rcvdclkpma                } \
- -group { pcie_refclk_i                                  \
-          main|\pcie_y:pcie|*.cdr_refclk*                \
-          main|\pcie_y:pcie|*.cmu_pll.*                  \
-          main|\pcie_y:pcie|*|av_tx_pma|*                \
-          main|\pcie_y:pcie|*|inst_av_pcs|*|tx*        } \
- -group { main|\pcie_y:pcie|*|rx_pmas[0]*|clk90bdes      \
-          main|\pcie_y:pcie|*|rx_pmas[0]*|clk90b       } \
- -group { main|\pcie_y:pcie|*|rx_pmas[1]*|clk90bdes      \
-          main|\pcie_y:pcie|*|rx_pmas[1]*|clk90b       } \
- -group { main|\pcie_y:pcie|*|rx_pmas[2]*|clk90bdes      \
-          main|\pcie_y:pcie|*|rx_pmas[2]*|clk90b       } \
- -group { main|\pcie_y:pcie|*|rx_pmas[3]*|clk90bdes      \
-          main|\pcie_y:pcie|*|rx_pmas[3]*|clk90b       } \
- -group { main|\pcie_y:pcie|*|coreclkout               } #\
-# -group [get_clocks {pmc_clk_i}]
-
-
-create_clock -name {pmc_clk_i} -period 31.000 [get_ports {pmc_clk_i}]
-create_clock -name {clk_20m_vcxo_i} -period 50.000 [get_ports {clk_20m_vcxo_i}]
-create_clock -name {clk_125m_local_i} -period 8.000 [get_ports {clk_125m_local_i}]
-create_clock -name {sfp234_ref_clk_i} -period 8.000 [get_ports {sfp234_ref_clk_i}]
-
+          main|\phy_a5:phy|*|rcvdclkpma                } 
 
 # cut: wb sys <=> pci (different frequencies and using xwb_clock_crossing)
-set_false_path -from [get_clocks {pci_clk}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}]
-set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {pci_clk}]
-
+set_false_path -from [get_clocks {pmc_clk_i}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}]
+set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {pmc_clk_i}]
 
 # cut: wb sys <=> wb flash   (different frequencies and using xwb_clock_crossing)
 set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[3].*}]
