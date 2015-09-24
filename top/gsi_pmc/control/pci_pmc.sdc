@@ -1,7 +1,4 @@
 create_clock -name {pmc_clk_i}        -period 31.000 [get_ports {pmc_clk_i}       ]
-create_clock -name {clk_20m_vcxo_i}   -period 50.000 [get_ports {clk_20m_vcxo_i}  ]
-create_clock -name {clk_125m_local_i} -period  8.000 [get_ports {clk_125m_local_i}]
-create_clock -name {sfp234_ref_clk_i} -period  8.000 [get_ports {sfp234_ref_clk_i}]
 
 derive_pll_clocks -create_base_clocks
 derive_clock_uncertainty
