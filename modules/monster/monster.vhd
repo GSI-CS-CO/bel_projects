@@ -1187,6 +1187,11 @@ begin
     port map(
       clk_sys_i     => clk_sys,
       rst_n_i       => rstn_sys,
+
+      master_clk_i  => clk_sys,
+      master_rstn_i => rstn_sys,
+      slave_clk_i   => clk_sys,
+      slave_rstn_i  => rstn_sys,
       master_o      => top_cbar_slave_i (c_topm_pmc),
       master_i      => top_cbar_slave_o (c_topm_pmc),
       slave_i       => irq_cbar_master_o(c_irqs_pmc),
