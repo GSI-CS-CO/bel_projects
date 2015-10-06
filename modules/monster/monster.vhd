@@ -915,21 +915,21 @@ begin
       master_o      => top_cbar_master_o);
 
 		
---  irq_bar : xwb_sdb_crossbar
---    generic map(
---      g_num_masters => c_irq_masters,
---      g_num_slaves  => c_irq_slaves,
---      g_registered  => true,
---      g_wraparound  => true,
---      g_layout      => c_irq_layout,
---      g_sdb_addr    => c_irq_sdb_address)
---    port map(
---      clk_sys_i     => clk_sys,
---      rst_n_i       => rstn_sys,
---      slave_i       => irq_cbar_slave_i,
---      slave_o       => irq_cbar_slave_o,
---      master_i      => irq_cbar_master_i,
---      master_o      => irq_cbar_master_o);
+  irq_bar : xwb_sdb_crossbar
+    generic map(
+      g_num_masters => c_irq_masters,
+      g_num_slaves  => c_irq_slaves,
+      g_registered  => true,
+      g_wraparound  => true,
+      g_layout      => c_irq_layout,
+      g_sdb_addr    => c_irq_sdb_address)
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => irq_cbar_slave_i,
+      slave_o       => irq_cbar_slave_o,
+      master_i      => irq_cbar_master_i,
+      master_o      => irq_cbar_master_o);
   
   iocfg_bar : xwb_sdb_crossbar
     generic map(
@@ -947,14 +947,14 @@ begin
       master_i      => iocfg_cbar_master_i,
       master_o      => iocfg_cbar_master_o);
   
---  top2irq : xwb_register_link
---    port map(
---      clk_sys_i     => clk_sys,
---      rst_n_i       => rstn_sys,
---      slave_i       => top_cbar_master_o(c_tops_irq),
---      slave_o       => top_cbar_master_i(c_tops_irq),
---      master_i      => irq_cbar_slave_o (c_irqm_top),
---      master_o      => irq_cbar_slave_i (c_irqm_top));
+  top2irq : xwb_register_link
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => top_cbar_master_o(c_tops_irq),
+      slave_o       => top_cbar_master_i(c_tops_irq),
+      master_i      => irq_cbar_slave_o (c_irqm_top),
+      master_o      => irq_cbar_slave_i (c_irqm_top));
   
   top2iocfg : xwb_register_link
     port map(
@@ -965,14 +965,14 @@ begin
       master_i      => iocfg_cbar_slave_o (c_iocfgm_top),
       master_o      => iocfg_cbar_slave_i (c_iocfgm_top));
   
---  top2wrc : xwb_register_link
---    port map(
---      clk_sys_i     => clk_sys,
---      rst_n_i       => rstn_sys,
---      slave_i       => top_cbar_master_o(c_tops_wrc),
---      slave_o       => top_cbar_master_i(c_tops_wrc),
---      master_i      => wrc_slave_o,
---      master_o      => wrc_slave_i);
+  top2wrc : xwb_register_link
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+      slave_i       => top_cbar_master_o(c_tops_wrc),
+      slave_o       => top_cbar_master_i(c_tops_wrc),
+      master_i      => wrc_slave_o,
+      master_o      => wrc_slave_i);
   
   -- END OF Wishbone crossbars
   ----------------------------------------------------------------------------------
