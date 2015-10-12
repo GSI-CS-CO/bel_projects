@@ -691,6 +691,13 @@ architecture rtl of monster is
     return result;
   end f_lvds_array_to_trigger_array; 
   
+
+  -----------------------------------------------------------------------------
+  signal s_pmc_debug_in   : std_logic_vector(7 downto 0);
+  signal s_pmc_debug_out  : std_logic_vector(7 downto 0);
+
+
+
 begin
 
   ----------------------------------------------------------------------------------
@@ -1213,9 +1220,15 @@ begin
       serr_io       => pmc_serr_io,
       inta_o        => pmc_inta_o,
       req_o         => pmc_req_o,
-      gnt_i         => pmc_gnt_i
+      gnt_i         => pmc_gnt_i,
+      debug_i       => s_pmc_debug_in,
+      debug_o       => s_pmc_debug_out
 );
   end generate;
+
+s_pmc_debug_in(0)          <= not pmc_pb_i; -- push button used to trigger IRQ
+s_pmc_debug_in(7 downto 1) <= (others => '0');
+
   
   -- END OF Wishbone masters
   ----------------------------------------------------------------------------------
