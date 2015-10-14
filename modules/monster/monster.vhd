@@ -1226,8 +1226,9 @@ begin
 );
   end generate;
 
-s_pmc_debug_in(0)          <= not pmc_pb_i; -- push button used to trigger IRQ
-s_pmc_debug_in(7 downto 1) <= (others => '0');
+s_pmc_debug_in(0)          <= pmc_pb_i;      -- FPGA push button used to trigger INTx IRQ
+s_pmc_debug_in(1)          <= pmc_pb_cpld_i; -- CPLD push button used to trigger MSI IRQ
+s_pmc_debug_in(7 downto 2) <= (others => '0');
 
   
   -- END OF Wishbone masters
