@@ -386,9 +386,6 @@ set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_serr_io
 set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_inta_o
 set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_req_o
 set_instance_assignment -name IO_STANDARD "2.5 V" -to pmc_gnt_i
-
-set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to pmc_irdy_io
-
 set_location_assignment PIN_AF23 -to status_led_o[6]
 set_location_assignment PIN_AC22 -to status_led_o[5]
 set_location_assignment PIN_AE19 -to status_led_o[1]
@@ -2282,5 +2279,6 @@ set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_LOWORD=4
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_NODE_CRC_HIWORD=30100" -section_id auto_signaltap_0
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_ADVANCED_TRIGGER_ENTITY=sld_reserved_pci_pmc_auto_signaltap_0_1_ae72," -section_id auto_signaltap_0
 set_global_assignment -name SLD_NODE_PARAMETER_ASSIGNMENT "SLD_STORAGE_QUALIFIER_ADVANCED_CONDITION_ENTITY=sld_reserved_sq_pci_pmc_auto_signaltap_0_1_ae72," -section_id auto_signaltap_0
-set_global_assignment -name SLD_FILE db/pci_debug_wbm_side_4k_PCI_irdy_dbg_2_auto_stripped.stp
+
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_global_assignment -name SLD_FILE db/pci_debug_wbm_side_4k_PCI_irdy_dbg_2_auto_stripped.stp
