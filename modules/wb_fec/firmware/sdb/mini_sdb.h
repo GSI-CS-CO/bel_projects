@@ -5,7 +5,7 @@
 //  SBD BASE ADR IS GATEWARE DEPENDENT!   //
 //  SEE modules/ftm/ftm_lm32.vhd          //
 //                                        //
-#define SBD_BASE        0x3FFFE000
+#define SBD_BASE        0x000F0000
 //                                        //
 ////////////////////////////////////////////
 

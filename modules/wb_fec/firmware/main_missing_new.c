@@ -101,6 +101,10 @@ unsigned int slot = 0;
 unsigned int slot_max = 0;
 unsigned int prev_cnt = 0;
 
+
+unsigned int i = 0;
+unsigned int cnt_frames = 0;
+
 init();
 
 pp_printf("FEC Unit starting!\n");
@@ -113,31 +117,39 @@ pp_printf("Max Slot %x \n",slot_max);
 
 while(1)
 {
-        written_slot = *(volatile uint32_t *)(BASE_FR2WB + SLOT_RW);
-        //pp_printf("\n ADD %08x Writen slot %d Read slot %d \n",(slot*words_frame) + cnt, written_slot, 0x1<<slot);
+        written_slot = *(volatile uint32_t *)(BASE_FRAME_RAM + (slot*words_frame))>>16;
 
-        if( written_slot & (0x1<<slot))
+        if( written_slot == 0xdeed)
         {
-                //pp_printf("\n ADD %08x Writen slot %d Read slot %d \n",(slot*words_frame) + cnt, written_slot, 0x1<<slot);
-                //frame_chunk = *(volatile uint32_t *)(BASE_FRAME_RAM + (slot*words_frame) + 6) & 0xffff;
-                frame_chunk = *(volatile uint32_t *)(BASE_FRAME_RAM + (slot*words_frame) + 12);
-                //pp_printf("%u ADD %08x Writen slot %d Read slot %d \n",frame_chunk, (slot*words_frame) + cnt, written_slot, 0x1<<slot);
-                //pp_printf("%u ADD %d SLOT \n",frame_chunk, 0x1<<slot);
-                //pp_printf("%u  \n",frame_chunk);
+                //for (i=0; i<16; i++) {
 
-                if (prev_cnt != (frame_chunk -1)) {
-                        pp_printf("---Missing Prev %d Cnt %d diff %d  write %d  slot %d \n", prev_cnt, frame_chunk, frame_chunk - prev_cnt, written_slot,  0x1<<slot);
-                }
-                prev_cnt = frame_chunk;
+                        //frame_chunk = *(volatile uint32_t *)(BASE_FRAME_RAM + (slot*words_frame) + i);
+                        frame_chunk = *(volatile uint32_t *)(BASE_FRAME_RAM + (slot*words_frame) + 13);
 
-                *(volatile uint32_t *)(BASE_FR2WB + SLOT_RW) = slot;
+                        if(frame_chunk == 0xcacacaca)
+                        {
+                                cnt_frames++;
+                        }
+
+                        //if(i == 13) {
+                                //pp_printf("%08x ",frame_chunk>>16);
+                                //if (prev_cnt != (frame_chunk -1)) {
+                                //        pp_printf("---Missing Prev %u Cnt %u diff %u slot %d \n", prev_cnt, frame_chunk, frame_chunk - prev_cnt, 0x1<<slot);
+                                //}
+                                //prev_cnt = frame_chunk;
+                        //}
+                //}
+                //pp_printf("\n");
+
+                *(volatile uint32_t *)(BASE_FRAME_RAM + (slot*words_frame)) = 0xbabe;
+
+                if(slot < slot_max-1)
+                        slot += 1;
+                else
+                        slot = 0;
 
         }
-
-        if(slot < slot_max-1)
-                slot += 1;
-        else
-                slot = 0;
+        pp_printf("%08d \n",cnt_frames);
 
 }
 

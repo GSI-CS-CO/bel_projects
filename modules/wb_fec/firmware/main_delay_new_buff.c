@@ -21,9 +21,9 @@
 #define REF_CLOCK_PERIOD_PS 8000
 #define REF_CLOCK_FREQ_HZ 125000000
 
-volatile uint8_t *BASE_FRAME_RAM = (uint8_t *) 0x1000000;
-volatile uint8_t *BASE_FR2WB     = (uint8_t *) 0x2000000;
-volatile uint16_t *BASE_WB2FR    = (uint8_t *) 0x8000000;
+volatile uint8_t *BASE_FRAME_RAM = (uint8_t *) 0x100000;
+volatile uint8_t *BASE_FR2WB     = (uint8_t *) 0x200000;
+volatile uint16_t *BASE_WB2FR    = (uint8_t *) 0x300000;
 
 int frame = 0;
 
@@ -104,7 +104,7 @@ init();
 
 pp_printf("FEC Unit starting!\n");
 pp_printf("SDB Record %x \n", r_sdb_add());
-pp_printf("FEC Wb %x \n",*(volatile uint32_t *)(BASE_FR2WB+OTHERS_WB));
+pp_printf("End FEC Reg %x \n",*(volatile uint32_t *)(BASE_FR2WB+OTHERS_WB));
 words_frame = *(volatile uint32_t *)(BASE_FR2WB + WORDS_FRAME_WB);
 pp_printf("Words per Frame %d \n",words_frame);
 slot_max = *(volatile uint32_t *)(BASE_FR2WB + WORDS_MEMORY);
@@ -116,11 +116,11 @@ while(1)
 
         if( written_slot & (0x1<<slot))
         {
-                //pp_printf("\n ADD %08x Writen slot %d Read slot %d \n",(slot*words_frame) + cnt, written_slot, 0x1<<slot);
+                pp_printf("\n ADD %08x Writen slot %d Read slot %d \n",(slot*words_frame) + cnt, written_slot, 0x1<<slot);
                 for(cnt = 0; cnt < 15; cnt++)
                 {
                         frame_chunk = *(volatile uint32_t *)(BASE_FRAME_RAM + (slot*words_frame) + cnt);
-                        //pp_printf("%08x ",frame_chunk);
+                        pp_printf("%08x ",frame_chunk);
 
                         *(volatile uint32_t *)(BASE_WB2FR) = frame_chunk;
 
@@ -222,7 +222,7 @@ while(1)
                         }
 
                 }
-                //pp_printf("\n");
+                pp_printf("\n");
                 *(volatile uint32_t *)(BASE_FR2WB + SLOT_RW) = slot;
         }
 

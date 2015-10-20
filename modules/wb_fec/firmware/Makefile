@@ -18,9 +18,7 @@ SDB			 := ./sdb
 
 OUTPUT   := fec_dec
 
-#SRCS     := $(ARCH)/irq.c $(SDB)/mini_sdb.c $(WRPC)/dev/uart.c $(SDB)/sdb_arg.c main_missing.c\
-
-SRCS     := $(ARCH)/irq.c $(SDB)/mini_sdb.c $(WRPC)/dev/uart.c $(SDB)/sdb_arg.c main_missing.c\
+SRCS     := $(ARCH)/irq.c $(SDB)/mini_sdb.c $(WRPC)/dev/uart.c $(SDB)/sdb_arg.c main_missing_new.c\
 						$(WRPC)/pp_printf/printf.c $(WRPC)/pp_printf/vsprintf-full.c deco.c
 ASS_SRCS := $(ARCH)/sdb_add.S $(ARCH)/crt0.S
 
