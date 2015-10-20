@@ -445,11 +445,13 @@ architecture rtl of monster is
   signal clk_sys1         : std_logic;
   signal clk_sys2         : std_logic;
   signal clk_sys3         : std_logic;
+  signal clk_sys4         : std_logic;
   
   signal clk_sys          : std_logic;
   signal clk_reconf       : std_logic; -- 50MHz on arrai2, 100MHz on arria5
   signal clk_flash        : std_logic; -- for now, the same as clk_reconf
   signal clk_20m          : std_logic;
+  signal clk_125m         : std_logic;
   signal clk_update       : std_logic;
   signal rstn_sys         : std_logic;
   signal rstn_update      : std_logic;
@@ -689,6 +691,7 @@ begin
       c1     => clk_sys1,         --  50  Mhz
       c2     => clk_sys2,         --  20  MHz
       c3     => clk_sys3,         --  10  MHz
+      c4     => clk_sys4,         -- 125  MHz
       locked => sys_locked);
   end generate;
   sys_a5 : if c_is_arria5 generate
@@ -715,7 +718,11 @@ begin
   c20m_clk : single_region port map(
     inclk  => clk_sys2,
     outclk => clk_20m);
-  
+   
+  c125m_clk : single_region port map(
+    inclk  => clk_sys4,
+    outclk => clk_125m);
+ 
   update_clk : single_region port map(
     inclk  => clk_sys3,
     outclk => clk_update);
@@ -1089,6 +1096,7 @@ begin
       g_upper_bridge_sdb => c_top_bridge_sdb)
     port map(
       clk_i         => clk_sys,
+      clk_fast_i    => clk_sys,
       rst_n_i       => rstn_sys,
       rst_lm32_n_i  => s_lm32_rstn(0),
 

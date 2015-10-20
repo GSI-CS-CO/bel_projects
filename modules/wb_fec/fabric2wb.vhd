@@ -13,6 +13,7 @@ entity fabric2wb is
 
   port(
     clk_i           : in  std_logic;
+    clk_fast_i      : in  std_logic;
     rst_n_i         : in  std_logic;
     dec_snk_i       : in  t_wrf_sink_in;
     dec_snk_o       : out t_wrf_sink_out;
@@ -24,11 +25,13 @@ entity fabric2wb is
 end fabric2wb;
 
 architecture rtl of fabric2wb is
-  constant c_num_fec_blocks: integer := 4;
-  constant c_num_frames_ram: integer := 4;
+  constant c_num_fec_blocks: integer := 16;
+  constant c_num_frames_ram: integer := 16;
   constant c_words_frame   : integer := (g_size_ram / c_num_frames_ram);
   constant c_words_frame_wb: integer := (g_size_ram / c_num_frames_ram)/2;
   constant c_sel           : std_logic_vector(3 downto 0) := ("0011");
+  constant c_written_slot  : std_logic_vector(31 downto 0) := x"deeddeed";
+  constant c_empty_slot    : std_logic_vector(15 downto 0) := x"babe";
   signal s_new_frame_d0    : std_logic;
   signal s_cnt_words       : unsigned(f_log2_size(c_words_frame)-1 downto 0);
   signal s_cnt_words_last  : unsigned(f_log2_size(c_words_frame)-1 downto 0);
@@ -57,33 +60,47 @@ begin
   dec_snk_o.stall <= wb_ram_master_i.stall;
 
   -- fabric2master
-  wb_ram_master_o.dat <= x"0000" & dec_snk_i.dat;
-
-  wb_ram_master_o.sel <= c_sel;
-
-  wb_ram_master_o.cyc <= dec_snk_i.cyc when dec_snk_i.adr = c_WRF_DATA or 
-                                            dec_snk_i.adr = c_WRF_OOB else
-                          '0';
-  wb_ram_master_o.stb <= dec_snk_i.stb when dec_snk_i.adr = c_WRF_DATA or
-                                            dec_snk_i.adr = c_WRF_OOB else
-                          '0';
-  wb_ram_master_o.we  <= dec_snk_i.we  when dec_snk_i.adr = c_WRF_DATA or
-                                            dec_snk_i.adr = c_WRF_OOB else
-                          '0';
+  wb_ram_master_o.dat <= x"0000" & dec_snk_i.dat  when dec_snk_i.adr = c_WRF_DATA or 
+                                                       dec_snk_i.adr = c_WRF_OOB    else
+                         c_written_slot           when dec_snk_i.adr = c_WRF_STATUS else
+                         (others => '0'); 
+  
   wb_ram_master_o.adr <=  std_logic_vector(to_unsigned(c_words_frame * s_hot_slot + 
                                            to_integer(s_cnt_words), c_wishbone_address_width))
-                          when dec_snk_i.adr = c_WRF_DATA else
+                              when dec_snk_i.adr = c_WRF_DATA or dec_snk_i.adr = c_WRF_STATUS else
                           std_logic_vector(to_unsigned(c_words_frame * s_hot_slot + 
                                            to_integer(s_cnt_ts), c_wishbone_address_width))
-                          when dec_snk_i.adr = c_WRF_OOB  else
+                              when dec_snk_i.adr = c_WRF_OOB                                  else
                           (others => '0');
+
+
+  wb_ram_master_o.sel <= c_sel;
+  wb_ram_master_o.cyc <= dec_snk_i.cyc;
+  wb_ram_master_o.stb <= dec_snk_i.stb;
+  wb_ram_master_o.we  <= dec_snk_i.we;
+
+--  wb_ram_master_o.cyc <= dec_snk_i.cyc when dec_snk_i.adr = c_WRF_DATA or 
+--                                            dec_snk_i.adr = c_WRF_OOB else
+--                          '0';
+--  wb_ram_master_o.stb <= dec_snk_i.stb when dec_snk_i.adr = c_WRF_DATA or
+--                                            dec_snk_i.adr = c_WRF_OOB else
+--                          '0';
+--  wb_ram_master_o.we  <= dec_snk_i.we  when dec_snk_i.adr = c_WRF_DATA or
+--                                            dec_snk_i.adr = c_WRF_OOB else
+--                          '0';
+--  wb_ram_master_o.adr <=  std_logic_vector(to_unsigned(c_words_frame * s_hot_slot + 
+--                                           to_integer(s_cnt_words), c_wishbone_address_width))
+--                          when dec_snk_i.adr = c_WRF_DATA else
+--                          std_logic_vector(to_unsigned(c_words_frame * s_hot_slot + 
+--                                           to_integer(s_cnt_ts), c_wishbone_address_width))
+--                          when dec_snk_i.adr = c_WRF_OOB  else
+--                          (others => '0');
   
   cnt_proc : process(clk_i)
     variable v_new_frame      : std_logic;
     variable v_getting_frame  : std_logic;
     variable v_getting_ts     : std_logic;
     variable v_check_overrun  : std_logic;
-    --variable v_w_slot         : unsigned(f_log2_size(c_num_frames_ram)-1 downto 0);
     variable v_w_slot         : integer range 0 to c_num_frames_ram-1;
 
   begin
@@ -157,7 +174,9 @@ begin
         end if;
 
         -- counts the number of words in memory for a frame
-        if v_getting_frame = '1' and wb_ram_master_i.stall = '0' then
+        if v_new_frame = '1' then
+          s_cnt_words       <= s_cnt_words + 1;
+        elsif v_getting_frame = '1' and wb_ram_master_i.stall = '0' then
           s_cnt_words       <= s_cnt_words + 1;
           s_cnt_words_last  <= s_cnt_words_last;
         elsif v_getting_frame = '1' and wb_ram_master_i.stall = '1' then
@@ -190,9 +209,9 @@ begin
     end if;
   end process;
   
-  wb_slave_if : process(clk_i)
+  wb_slave_if : process(clk_fast_i)
   begin
-    if rising_edge(clk_i) then
+    if rising_edge(clk_fast_i) then
       if rst_n_i = '0' then
         wb_fwb_slave_o.ack  <= '0';
         wb_fwb_slave_o.dat  <= (others=>'0');

@@ -18,6 +18,7 @@ entity xwb_fec is
 
   port(
     clk_i                 : in std_logic;
+    clk_fast_i            : in std_logic;
     rst_n_i               : in std_logic;
     rst_lm32_n_i          : in std_logic;
 
@@ -111,6 +112,7 @@ begin
       g_upper_bridge_sdb  => g_upper_bridge_sdb)
     port map (
       clk_i             => clk_i,
+      clk_fast_i        => clk_fast_i,
       rst_n_i           => rst_n_i,
       rst_lm32_n_i      => rst_lm32_n_i,
       ctrl_reg_i        => s_fec_ctrl,

@@ -254,6 +254,7 @@ package fec_pkg is
 
     port(
       clk_i                 : in std_logic;
+      clk_fast_i            : in std_logic;
       rst_n_i               : in std_logic;
       rst_lm32_n_i          : in std_logic;
       wr_snk_i              : in  t_wrf_sink_in;
@@ -292,6 +293,7 @@ package fec_pkg is
       g_upper_bridge_sdb: t_sdb_bridge);
     port(
       clk_i             : in  std_logic;
+      clk_fast_i        : in  std_logic;
       rst_n_i           : in  std_logic;
       rst_lm32_n_i      : in  std_logic;
       ctrl_reg_i        : in  t_fec_ctrl_reg;
@@ -354,6 +356,7 @@ package fec_pkg is
       g_size_ram      : integer);
     port(
       clk_i           : in  std_logic;
+      clk_fast_i      : in  std_logic;
       rst_n_i         : in  std_logic;
       dec_snk_i       : in  t_wrf_sink_in;
       dec_snk_o       : out t_wrf_sink_out;

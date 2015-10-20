@@ -17,6 +17,7 @@ entity fec_decoder is
     g_upper_bridge_sdb   : t_sdb_bridge);
   port(
     clk_i             : in  std_logic;
+    clk_fast_i        : in  std_logic;
     rst_n_i           : in  std_logic;
     rst_lm32_n_i      : in  std_logic;
     ctrl_reg_i        : in  t_fec_ctrl_reg;
@@ -31,7 +32,8 @@ end fec_decoder;
 
 architecture rtl of fec_decoder is
   --constant c_dpram_frame_size : integer := 3056; -- 12224/4
-  constant c_dpram_frame_size : integer := 3200;
+  --constant c_dpram_frame_size : integer := 3200;
+  constant c_dpram_frame_size : integer := 12800;
 
   constant c_master       : natural := 2;
 
@@ -50,11 +52,11 @@ architecture rtl of fec_decoder is
   --WB intercon
   -----------------------------------------------------------------------------  
   constant c_layout_req : t_sdb_record_array(c_slave-1 downto 0) :=
-     (c_lm32_dpram        => f_sdb_embed_device((f_xwb_dpram(g_dpram_size)),      x"00000000"),
-   c_frame_dpram       => f_sdb_embed_device((f_xwb_dpram(c_dpram_frame_size)),   x"00100000"),
-   c_f2wb_lc           => f_sdb_embed_device(c_fec_fabric2wb_sdb,                 x"00200000"),
-   c_wb2f              => f_sdb_embed_device(c_fec_wb2fabric_sdb,                 x"00300000"),
-   c_upper_bridge      => f_sdb_embed_bridge(g_upper_bridge_sdb,                  x"80000000"));
+     (c_lm32_dpram        => f_sdb_embed_device((f_xwb_dpram(g_dpram_size)),       x"00000000"),
+      c_frame_dpram       => f_sdb_embed_device((f_xwb_dpram(c_dpram_frame_size)), x"00100000"),
+      c_f2wb_lc           => f_sdb_embed_device(c_fec_fabric2wb_sdb,               x"00200000"),
+      c_wb2f              => f_sdb_embed_device(c_fec_wb2fabric_sdb,               x"00300000"),
+      c_upper_bridge      => f_sdb_embed_bridge(g_upper_bridge_sdb,                x"80000000"));
  
    constant c_sdb_address : t_wishbone_address := x"000F0000";
 
@@ -109,6 +111,7 @@ begin
     generic map( g_size_ram => c_dpram_frame_size)
     port map(
       clk_i           => clk_i,
+      clk_fast_i      => clk_fast_i,
       rst_n_i         => rst_n_i,
       dec_snk_i       => dec_snk_i,  
       dec_snk_o       => dec_snk_o,
@@ -141,7 +144,7 @@ begin
     generic map(g_profile => "medium_icache_debug",
                 g_sdb_address => c_sdb_address)
     port map(
-      clk_sys_i => clk_i,
+      clk_sys_i => clk_fast_i,
       rst_n_i   => s_rst_lm32_n,
       irq_i     => s_lm32_irq,
       dwb_o     => cbar_slave_i(c_lm32_data), -- Data bus
@@ -161,7 +164,7 @@ begin
       g_slave1_granularity    => BYTE,
       g_slave2_granularity    => BYTE)  
     port map(
-      clk_sys_i => clk_i,
+      clk_sys_i => clk_fast_i,
       rst_n_i   => rst_n_i,
       slave1_i  => cbar_master_o(c_lm32_dpram),
       slave1_o  => cbar_master_i(c_lm32_dpram),
@@ -186,7 +189,7 @@ begin
       g_slave1_granularity     => WORD,
       g_slave2_granularity     => WORD)
     port map(
-      clk_slave1_i  => clk_i,
+      clk_slave1_i  => clk_fast_i,
       clk_slave2_i  => clk_i,
       rst_n_i       => rst_n_i,
       slave1_i      => cbar_master_o(c_frame_dpram),
@@ -198,8 +201,17 @@ begin
   -- WB gateway to the next WB intercon
   -----------------------------------------------------------------------------
 
-  cbar_master_i(c_upper_bridge)	<= wb_cross_master_i;
-  wb_cross_master_o  				    <= cbar_master_o(c_upper_bridge);
+  WB_FIFO : xwb_clock_crossing port map(
+      slave_clk_i    => clk_fast_i,
+      slave_rst_n_i  => rst_n_i,      
+      slave_i        => cbar_master_o(c_upper_bridge),
+      slave_o        => cbar_master_i(c_upper_bridge),      
+      master_clk_i   => clk_i,
+      master_rst_n_i => rst_n_i,
+      master_i       => wb_cross_master_i,
+      master_o       => wb_cross_master_o);
+  --cbar_master_i(c_upper_bridge)	<= wb_cross_master_i;
+  --wb_cross_master_o  				    <= cbar_master_o(c_upper_bridge);
 
   -----------------------------------------------------------------------------
   -- WB intercon
@@ -213,7 +225,7 @@ begin
       g_layout      => c_layout_req,
       g_sdb_addr    => c_sdb_address)  
     port map(
-      clk_sys_i => clk_i,
+      clk_sys_i => clk_fast_i,
       rst_n_i   => rst_n_i,
       -- Master connections (INTERCON is a slave)
       slave_i   => cbar_slave_i,
@@ -231,7 +243,7 @@ begin
 
   LATENCY : fec_timekeeper 
     port map(
-      clk_i       => clk_i,
+      clk_i       => clk_fast_i,
       rst_n_i     => rst_n_i,
       ctrl_reg_i  => ctrl_reg_i,
       lat_stat_o  => stat_reg_o.latency_dec,
