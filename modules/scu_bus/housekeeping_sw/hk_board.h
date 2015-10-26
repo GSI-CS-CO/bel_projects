@@ -21,5 +21,18 @@
 #define NCONFIG       0x8
 #define WDTIMER       0x10
 
+#define ASMI_PARAM    0x20
+#define ASMI_CMD      0x24
+#define ASMI_STATUS   0x28
+#define ASMI_RDID     0x2c
+#define ASMI_BUFFER   0x40
+
+#define DONE              0x0
+#define READ_ASMI_STATUS  0x1
+#define READ_ASMI_ID      0x2
+#define SECTOR_ERASE      0x3
+#define PAGE_WRITE        0x4
+#define PAGE_READ         0x5
+
 
 #endif

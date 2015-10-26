@@ -31,6 +31,26 @@ entity wb_asmi is
 end entity;
 
 architecture arch of wb_asmi is
+
+  component altera_spi is
+    generic(
+      g_family     : string  := "none";
+      g_port_width : natural := 1);
+    port(
+      dclk_i : in  std_logic;
+      ncs_i  : in  std_logic;
+      oe_i   : in  std_logic_vector(0 downto 0);
+      asdo_i : in  std_logic_vector(0 downto 0);
+      data_o : out std_logic_vector(0 downto 0));
+  end component;
+  
+  signal flash_ncs  : std_logic;
+  signal flash_dclk : std_logic;
+  signal flash_oe   : std_logic_vector(0 downto 0);
+  signal flash_asdo : std_logic_vector(0 downto 0);
+  signal flash_data : std_logic_vector(0 downto 0);
+  
+
   signal  s_busy          : std_logic;
   signal  s_data_valid    : std_logic;
   signal  s_dataout       : std_logic_vector(7 downto 0);
@@ -46,7 +66,7 @@ architecture arch of wb_asmi is
   signal  s_status_out		: std_logic_vector(7 downto 0);
   
       
-  type    t_wb_cyc  is (idle, stall, busy_wait, read_valid, cycle_end, err); 
+  type    t_wb_cyc  is (idle, stall, busy_wait, read_valid, cycle_end, err, write_addr_ready, read_addr_ready); 
   signal  wb_state            : t_wb_cyc;
 
   signal  s_addr_ext    : std_logic_vector(23 downto 0);
@@ -80,13 +100,23 @@ begin
                           s_read when '0';
   
   
+  spi : altera_spi
+    generic map(
+      g_family     => "Arria II GX",
+      g_port_width => 1)
+    port map(
+      dclk_i => flash_dclk,
+      ncs_i  => flash_ncs,
+      oe_i   => flash_oe,
+      asdo_i => flash_asdo,
+      data_o => flash_data);
   
   asmi: altasmi
     port map (
      addr         => s_addr,
      clkin        => clk_sys_i,
      rden         => s_rden,
-     fast_read    => s_read,
+     read         => s_read,
      read_rdid	  => s_read_rdid,
      read_status  => s_read_status,
      shift_bytes  => s_shift_bytes,
@@ -101,7 +131,15 @@ begin
      data_valid   => s_data_valid,
      dataout      => s_dataout,
      rdid_out     => s_rdid_out,
-     status_out   => s_status_out);
+     status_out   => s_status_out,
+     asmi_dataout => flash_data,
+     asmi_sdoin   => flash_asdo,
+     asmi_dataoe  => flash_oe,
+     asmi_dclk    => flash_dclk,
+     asmi_scein   => flash_ncs
+     
+     
+     );
 
 
   with slave_i.sel(3 downto 0) select s_datain <=
@@ -173,24 +211,29 @@ begin
                 wb_state <= stall;
                 slave_o.stall <= '1';
                 if slave_i.we = '1' then
+                  if (slave_i.sel(3 downto 0) = x"f") then
+                    s_addr <= slave_i.dat(23 downto 0);
                   -- shift sector number (0-63) 18 Bits for sector size (2**18)
-                  case slave_i.sel is
-                    when x"1" =>  s_addr <= slave_i.dat(5 downto 0) & "00" & x"0000";
-                    when x"2" =>  s_addr <= slave_i.dat(13 downto 8) & "00" & x"0000";
-                    when x"4" =>  s_addr <= slave_i.dat(21 downto 16) & "00" & x"0000";
-                    when x"8" =>  s_addr <= slave_i.dat(29 downto 24) & "00" & x"0000";
-                    when others => s_addr <= (others => '0');
-                  end case;
-                  s_sector_erase <= '1';
+--                  case slave_i.sel is
+--                    when x"1" =>  s_addr <= slave_i.dat(5 downto 0) & "00" & x"0000";
+--                    when x"2" =>  s_addr <= slave_i.dat(13 downto 8) & "00" & x"0000";
+--                    when x"4" =>  s_addr <= slave_i.dat(21 downto 16) & "00" & x"0000";
+--                    when x"8" =>  s_addr <= slave_i.dat(29 downto 24) & "00" & x"0000";
+--                    when x"f" =>  s_addr <= slave_i.dat(5 downto 0) & "00" & x"0000";
+--                    when x"c" =>  s_addr <= slave_i.dat(21 downto 16) & "00" & x"0000";
+--                    when x"3" =>  s_addr <= slave_i.dat(5 downto 0) & "00" & x"0000";
+--                    when others => s_addr <= (others => '0');
+--                  end case;
+                    s_sector_erase <= '1';
+                   end if;
                 end if;
               
-              -- write buffer to flash
+              -- set addr for write
               elsif (slave_i.adr(3 downto 0) = x"f") then
                 if (slave_i.sel(3 downto 0) = x"f") then
                   s_addr <= slave_i.dat(23 downto 0);
                   slave_o.stall <= '1';
-                  wb_state <= stall;
-                  s_write <= '1';
+                  wb_state <= write_addr_ready;    
                   s_byte_count := 0;
                 else
                   wb_state <= err;
@@ -198,13 +241,11 @@ begin
                 
               -- access to flash          
               elsif (slave_i.adr(3 downto 0) = x"0") then
-                -- read from flash
+                -- set addr for read
                 if slave_i.we = '0' then
                   s_addr <= slave_i.adr(27 downto 4);
-                  s_read <= '1';
-                  s_rden <= '1';
                   slave_o.stall <= '1';
-                  wb_state <= read_valid;
+                  wb_state <= read_addr_ready;
                 -- write to page buffer
                 elsif slave_i.we = '1' then
                   s_shift_bytes <= '1';
@@ -220,6 +261,19 @@ begin
                   slave_o.err <= '1';
                end if;
             end if;
+          
+          -- start read
+          when read_addr_ready =>
+            s_read <= '1';
+            s_rden <= '1';
+            slave_o.stall <= '1';
+            wb_state <= read_valid;
+          
+          -- write buffer to flash
+          when write_addr_ready =>
+            s_write <= '1';
+            slave_o.stall <= '1';
+            wb_state <= stall;
              
           when read_valid =>
             slave_o.stall <= '1';

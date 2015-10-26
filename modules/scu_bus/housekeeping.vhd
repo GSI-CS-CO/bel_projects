@@ -14,7 +14,8 @@ entity housekeeping is
           );
   port (
         clk_sys:            in std_logic;
-        clk_40Mhz:          in std_logic;
+        clk_10Mhz:          in std_logic;
+        clk_25Mhz:          in std_logic;
         n_rst:              in std_logic;
 
         ADR_from_SCUB_LA:   in std_logic_vector(15 downto 0);
@@ -219,7 +220,7 @@ begin
   SCU_WB_Reg: wb_scu_reg
     generic map (
       Base_addr => Base_addr,
-      register_cnt => 16 )
+      size => 300 )
     port map (
       clk_sys_i => clk_sys,
       rst_n_i => n_rst,
@@ -238,7 +239,7 @@ begin
       Dtack_to_SCUB     => Dtack_to_SCUB);
       
   --------------------------------------------
-  -- clock crossing from sys clk to clk_20Mhz
+  -- clock crossing from sys clk to clk_10Mhz
   --------------------------------------------
    cross_systoaru : xwb_clock_crossing
     generic map ( g_size => 32)
@@ -249,7 +250,7 @@ begin
       slave_i        => cbar_master_o(4),
       slave_o        => cbar_master_i(4),
       -- Master reader port
-      master_clk_i   => clk_40Mhz,
+      master_clk_i   => clk_10Mhz,
       master_rst_n_i => n_rst,
       master_i       => aru_o,
       master_o       => aru_i);
@@ -260,7 +261,7 @@ begin
   -----------------------------------------
   wb_aru: wb_remote_update
     port map (
-      clk_sys_i => clk_40Mhz,
+      clk_sys_i => clk_10Mhz,
       rst_n_i   => n_rst,
       
       slave_i      =>  aru_i,
@@ -276,7 +277,7 @@ begin
       asmi_to_aru     => asmi_to_ext);
       
   --------------------------------------------
-  -- clock crossing from sys clk to clk_20Mhz
+  -- clock crossing from sys clk to clk_25Mhz
   --------------------------------------------
    cross_systoasmi : xwb_clock_crossing
     generic map ( g_size => 32)
@@ -287,7 +288,7 @@ begin
       slave_i        => cbar_master_o(5),
       slave_o        => cbar_master_i(5),
       -- Master reader port
-      master_clk_i   => clk_40Mhz,
+      master_clk_i   => clk_10Mhz,
       master_rst_n_i => n_rst,
       master_i       => asmi_o,
       master_o       => asmi_i);
@@ -299,7 +300,7 @@ begin
   asmi: wb_asmi
     generic map ( PAGESIZE => 256 )
     port map (
-      clk_sys_i => clk_40Mhz,
+      clk_sys_i => clk_10Mhz,
       rst_n_i   => n_rst,
       
       slave_i      =>  asmi_i,

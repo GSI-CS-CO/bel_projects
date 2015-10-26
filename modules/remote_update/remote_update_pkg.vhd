@@ -33,9 +33,10 @@ component altasmi
 	PORT
 	(
 		addr		: IN STD_LOGIC_VECTOR (23 DOWNTO 0);
+		asmi_dataout		: IN STD_LOGIC_VECTOR (0 DOWNTO 0);
 		clkin		: IN STD_LOGIC ;
 		datain		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
-		fast_read		: IN STD_LOGIC ;
+		read		: IN STD_LOGIC ;
 		rden		: IN STD_LOGIC ;
 		read_rdid		: IN STD_LOGIC ;
 		read_status		: IN STD_LOGIC ;
@@ -43,6 +44,10 @@ component altasmi
 		sector_erase		: IN STD_LOGIC ;
 		shift_bytes		: IN STD_LOGIC ;
 		write		: IN STD_LOGIC ;
+		asmi_dataoe		: OUT STD_LOGIC_VECTOR (0 DOWNTO 0);
+		asmi_dclk		: OUT STD_LOGIC ;
+		asmi_scein		: OUT STD_LOGIC ;
+		asmi_sdoin		: OUT STD_LOGIC_VECTOR (0 DOWNTO 0);
 		busy		: OUT STD_LOGIC ;
 		data_valid		: OUT STD_LOGIC ;
 		dataout		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
