@@ -1008,30 +1008,30 @@ begin
  
  
    
---  lm32 : ftm_lm32_cluster 
---    generic map(
---      g_is_ftm           => g_lm32_are_ftm,	
---      g_cores            => g_lm32_cores,
---      g_ram_per_core     => g_lm32_ramsizes,
---      g_shared_mem       => g_lm32_shared_ramsize,
---      g_world_bridge_sdb => c_top_bridge_sdb,
---      g_init_files       => g_lm32_init_files,
---      g_msi_per_core     => g_lm32_MSIs)
---    port map(
---      clk_ref_i            => clk_ref,
---      rst_ref_n_i          => rstn_ref,
---      clk_sys_i            => clk_sys,
---      rst_sys_n_i          => rstn_sys,
---      rst_lm32_n_i         => s_lm32_rstn,
---      tm_tai8ns_i     	   => ref_tai8ns,
---      irq_slave_o     	   => irq_cbar_master_i(c_irqs_lm32),
---      irq_slave_i     	   => irq_cbar_master_o(c_irqs_lm32),
---      cluster_slave_o      => top_cbar_master_i(c_tops_lm32),
---      cluster_slave_i      => top_cbar_master_o(c_tops_lm32),
---      ftm_queue_master_o   => top_cbar_slave_i (c_topm_fpq),
---      ftm_queue_master_i   => top_cbar_slave_o (c_topm_fpq),
---      master_o             => top_cbar_slave_i (c_topm_lm32),
---      master_i             => top_cbar_slave_o (c_topm_lm32));
+  lm32 : ftm_lm32_cluster 
+    generic map(
+      g_is_ftm           => g_lm32_are_ftm,	
+      g_cores            => g_lm32_cores,
+      g_ram_per_core     => g_lm32_ramsizes,
+      g_shared_mem       => g_lm32_shared_ramsize,
+      g_world_bridge_sdb => c_top_bridge_sdb,
+      g_init_files       => g_lm32_init_files,
+      g_msi_per_core     => g_lm32_MSIs)
+    port map(
+      clk_ref_i            => clk_ref,
+      rst_ref_n_i          => rstn_ref,
+      clk_sys_i            => clk_sys,
+      rst_sys_n_i          => rstn_sys,
+      rst_lm32_n_i         => s_lm32_rstn,
+      tm_tai8ns_i     	   => ref_tai8ns,
+      irq_slave_o     	   => irq_cbar_master_i(c_irqs_lm32),
+      irq_slave_i     	   => irq_cbar_master_o(c_irqs_lm32),
+      cluster_slave_o      => top_cbar_master_i(c_tops_lm32),
+      cluster_slave_i      => top_cbar_master_o(c_tops_lm32),
+      ftm_queue_master_o   => top_cbar_slave_i (c_topm_fpq),
+      ftm_queue_master_i   => top_cbar_slave_o (c_topm_fpq),
+      master_o             => top_cbar_slave_i (c_topm_lm32),
+      master_i             => top_cbar_slave_o (c_topm_lm32));
   
   pcie_n : if not g_en_pcie generate
     top_cbar_slave_i (c_topm_pcie) <= cc_dummy_master_out;
@@ -1238,125 +1238,125 @@ s_pmc_debug_in(7 downto 2) <= (others => '0');
   -- White Rabbit ------------------------------------------------------------------
   ----------------------------------------------------------------------------------
   
---  U_WR_CORE : xwr_core
---    generic map (
---      g_simulation                => 0,
---      g_phys_uart                 => true,
---      g_virtual_uart              => true,
---      g_with_external_clock_input => true,
---      g_aux_clks                  => 1,
---      g_ep_rxbuf_size             => 1024,
---      g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
---      g_dpram_size                => 131072/4,
---      g_interface_mode            => PIPELINED,
---      g_address_granularity       => BYTE,
---      g_aux_sdb                   => c_etherbone_sdb)
---    port map (
---      clk_sys_i            => clk_sys,
---      clk_dmtd_i           => clk_dmtd,
---      clk_ref_i            => clk_ref,
---      clk_aux_i            => (others => '0'),
---      clk_ext_i            => wr_ext_clk_i,
---      pps_ext_i            => wr_ext_pps_i,
---      rst_n_i              => rstn_sys,
---      dac_hpll_load_p1_o   => dac_hpll_load_p1,
---      dac_hpll_data_o      => dac_hpll_data,
---      dac_dpll_load_p1_o   => dac_dpll_load_p1,
---      dac_dpll_data_o      => dac_dpll_data,
---      phy_ref_clk_i        => clk_ref,
---      phy_tx_data_o        => phy_tx_data,
---      phy_tx_k_o           => phy_tx_k,
---      phy_tx_disparity_i   => phy_tx_disparity,
---      phy_tx_enc_err_i     => phy_tx_enc_err,
---      phy_rx_data_i        => phy_rx_data,
---      phy_rx_rbclk_i       => phy_rx_rbclk,
---      phy_rx_k_i           => phy_rx_k,
---      phy_rx_enc_err_i     => phy_rx_enc_err,
---      phy_rx_bitslide_i    => phy_rx_bitslide,
---      phy_rst_o            => phy_rst,
---      phy_loopen_o         => phy_loopen,
---      led_act_o            => link_act,
---      led_link_o           => link_up,
---      scl_o                => open, -- Our ROM is on onewire, not i2c
---      scl_i                => '0',
---      sda_i                => '0',
---      sda_o                => open,
---      sfp_scl_i            => wr_sfp_scl_io,
---      sfp_sda_i            => wr_sfp_sda_io,
---      sfp_scl_o            => sfp_scl_o,
---      sfp_sda_o            => sfp_sda_o,
---      sfp_det_i            => wr_sfp_det_i,
---      btn1_i               => '0',
---      btn2_i               => '0',
---      uart_rxd_i           => uart_mux,
---      uart_txd_o           => uart_wrc,
---      owr_pwren_o          => owr_pwren,
---      owr_en_o             => owr_en,
---      owr_i(0)             => wr_onewire_io,
---      owr_i(1)             => '0',
---      slave_i              => wrc_slave_i,
---      slave_o              => wrc_slave_o,
---      aux_master_o         => wrc_master_o,
---      aux_master_i         => wrc_master_i,
---      wrf_src_o            => eb_snk_in,
---      wrf_src_i            => eb_snk_out,
---      wrf_snk_o            => eb_src_in,
---      wrf_snk_i            => eb_src_out,
---      tm_link_up_o         => open,
---      tm_dac_value_o       => open,
---      tm_dac_wr_o          => open,
---      tm_clk_aux_lock_en_i => (others => '0'),
---      tm_clk_aux_locked_o  => open,
---      tm_time_valid_o      => tm_valid,
---      tm_tai_o             => tm_tai,
---      tm_cycles_o          => tm_cycles,
---      pps_p_o              => pps,
---      dio_o                => open,
---      rst_aux_n_o          => open,
---      link_ok_o            => open);
---  
---  U_DAC_ARB : spec_serial_dac_arb
---    generic map (
---      g_invert_sclk    => false,
---      g_num_extra_bits => 8) -- AD DACs with 24bit interface
---    port map (
---      clk_i         => clk_sys,
---      rst_n_i       => rstn_sys,
---      val1_i        => dac_dpll_data,
---      load1_i       => dac_dpll_load_p1,
---      val2_i        => dac_hpll_data,
---      load2_i       => dac_hpll_load_p1,
---      dac_cs_n_o(0) => wr_ndac_cs_o(1),
---      dac_cs_n_o(1) => wr_ndac_cs_o(2),
---      dac_clr_n_o   => open,
---      dac_sclk_o    => wr_dac_sclk_o,
---      dac_din_o     => wr_dac_din_o);
---
---  phy_a2 : if c_is_arria2 generate
---    phy : wr_arria2_phy
---      port map (
---        clk_reconf_i   => clk_reconf,
---        clk_pll_i      => clk_ref0, -- PLL cascade
---        clk_cru_i      => core_clk_125m_sfpref_i,
---        clk_free_i     => clk_free,
---        rst_i          => pll_rst,
---        locked_o       => gxb_locked,
---        loopen_i       => phy_loopen,
---        drop_link_i    => phy_rst,
---        tx_clk_i       => clk_ref,
---        tx_data_i      => phy_tx_data,
---        tx_k_i         => phy_tx_k,
---        tx_disparity_o => phy_tx_disparity,
---        tx_enc_err_o   => phy_tx_enc_err,
---        rx_rbclk_o     => phy_rx_rbclk,
---        rx_data_o      => phy_rx_data,
---        rx_k_o         => phy_rx_k,
---        rx_enc_err_o   => phy_rx_enc_err,
---        rx_bitslide_o  => phy_rx_bitslide,
---        pad_txp_o      => wr_sfp_tx_o,
---        pad_rxp_i      => wr_sfp_rx_i);    
---  end generate;
---  
+  U_WR_CORE : xwr_core
+    generic map (
+      g_simulation                => 0,
+      g_phys_uart                 => true,
+      g_virtual_uart              => true,
+      g_with_external_clock_input => true,
+      g_aux_clks                  => 1,
+      g_ep_rxbuf_size             => 1024,
+      g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
+      g_dpram_size                => 131072/4,
+      g_interface_mode            => PIPELINED,
+      g_address_granularity       => BYTE,
+      g_aux_sdb                   => c_etherbone_sdb)
+    port map (
+      clk_sys_i            => clk_sys,
+      clk_dmtd_i           => clk_dmtd,
+      clk_ref_i            => clk_ref,
+      clk_aux_i            => (others => '0'),
+      clk_ext_i            => wr_ext_clk_i,
+      pps_ext_i            => wr_ext_pps_i,
+      rst_n_i              => rstn_sys,
+      dac_hpll_load_p1_o   => dac_hpll_load_p1,
+      dac_hpll_data_o      => dac_hpll_data,
+      dac_dpll_load_p1_o   => dac_dpll_load_p1,
+      dac_dpll_data_o      => dac_dpll_data,
+      phy_ref_clk_i        => clk_ref,
+      phy_tx_data_o        => phy_tx_data,
+      phy_tx_k_o           => phy_tx_k,
+      phy_tx_disparity_i   => phy_tx_disparity,
+      phy_tx_enc_err_i     => phy_tx_enc_err,
+      phy_rx_data_i        => phy_rx_data,
+      phy_rx_rbclk_i       => phy_rx_rbclk,
+      phy_rx_k_i           => phy_rx_k,
+      phy_rx_enc_err_i     => phy_rx_enc_err,
+      phy_rx_bitslide_i    => phy_rx_bitslide,
+      phy_rst_o            => phy_rst,
+      phy_loopen_o         => phy_loopen,
+      led_act_o            => link_act,
+      led_link_o           => link_up,
+      scl_o                => open, -- Our ROM is on onewire, not i2c
+      scl_i                => '0',
+      sda_i                => '0',
+      sda_o                => open,
+      sfp_scl_i            => wr_sfp_scl_io,
+      sfp_sda_i            => wr_sfp_sda_io,
+      sfp_scl_o            => sfp_scl_o,
+      sfp_sda_o            => sfp_sda_o,
+      sfp_det_i            => wr_sfp_det_i,
+      btn1_i               => '0',
+      btn2_i               => '0',
+      uart_rxd_i           => uart_mux,
+      uart_txd_o           => uart_wrc,
+      owr_pwren_o          => owr_pwren,
+      owr_en_o             => owr_en,
+      owr_i(0)             => wr_onewire_io,
+      owr_i(1)             => '0',
+      slave_i              => wrc_slave_i,
+      slave_o              => wrc_slave_o,
+      aux_master_o         => wrc_master_o,
+      aux_master_i         => wrc_master_i,
+      wrf_src_o            => eb_snk_in,
+      wrf_src_i            => eb_snk_out,
+      wrf_snk_o            => eb_src_in,
+      wrf_snk_i            => eb_src_out,
+      tm_link_up_o         => open,
+      tm_dac_value_o       => open,
+      tm_dac_wr_o          => open,
+      tm_clk_aux_lock_en_i => (others => '0'),
+      tm_clk_aux_locked_o  => open,
+      tm_time_valid_o      => tm_valid,
+      tm_tai_o             => tm_tai,
+      tm_cycles_o          => tm_cycles,
+      pps_p_o              => pps,
+      dio_o                => open,
+      rst_aux_n_o          => open,
+      link_ok_o            => open);
+  
+  U_DAC_ARB : spec_serial_dac_arb
+    generic map (
+      g_invert_sclk    => false,
+      g_num_extra_bits => 8) -- AD DACs with 24bit interface
+    port map (
+      clk_i         => clk_sys,
+      rst_n_i       => rstn_sys,
+      val1_i        => dac_dpll_data,
+      load1_i       => dac_dpll_load_p1,
+      val2_i        => dac_hpll_data,
+      load2_i       => dac_hpll_load_p1,
+      dac_cs_n_o(0) => wr_ndac_cs_o(1),
+      dac_cs_n_o(1) => wr_ndac_cs_o(2),
+      dac_clr_n_o   => open,
+      dac_sclk_o    => wr_dac_sclk_o,
+      dac_din_o     => wr_dac_din_o);
+
+  phy_a2 : if c_is_arria2 generate
+    phy : wr_arria2_phy
+      port map (
+        clk_reconf_i   => clk_reconf,
+        clk_pll_i      => clk_ref0, -- PLL cascade
+        clk_cru_i      => core_clk_125m_sfpref_i,
+        clk_free_i     => clk_free,
+        rst_i          => pll_rst,
+        locked_o       => gxb_locked,
+        loopen_i       => phy_loopen,
+        drop_link_i    => phy_rst,
+        tx_clk_i       => clk_ref,
+        tx_data_i      => phy_tx_data,
+        tx_k_i         => phy_tx_k,
+        tx_disparity_o => phy_tx_disparity,
+        tx_enc_err_o   => phy_tx_enc_err,
+        rx_rbclk_o     => phy_rx_rbclk,
+        rx_data_o      => phy_rx_data,
+        rx_k_o         => phy_rx_k,
+        rx_enc_err_o   => phy_rx_enc_err,
+        rx_bitslide_o  => phy_rx_bitslide,
+        pad_txp_o      => wr_sfp_tx_o,
+        pad_rxp_i      => wr_sfp_rx_i);    
+  end generate;
+  
   phy_a5 : if c_is_arria5 generate
     phy : wr_arria5_phy
       port map (
@@ -1379,35 +1379,35 @@ s_pmc_debug_in(7 downto 2) <= (others => '0');
         pad_rxp_i      => wr_sfp_rx_i);    
   end generate;
   
---  sys_time : time_clk_cross
---    port map(
---      clk_ref_i           => clk_ref,
---      rst_ref_n_i         => rstn_ref,
---      clk_sys_i           => clk_sys,
---      rst_sys_n_i         => rstn_sys,
---      tm_time_valid_i     => tm_valid,
---      tm_tai_i            => tm_tai,
---      tm_cycles_i         => tm_cycles,
---      tm_ref_tai_cycles_o => ref_tai8ns,
---      tm_sys_tai_cycles_o => sys_tai8ns);
---
---  pps_ext : gc_extend_pulse
---    generic map(
---      g_width => 10000000)
---    port map(
---      clk_i      => clk_ref,
---      rst_n_i    => rstn_ref,
---      pulse_i    => pps,
---      extended_o => ext_pps);
---  
---  wr_onewire_io <= owr_pwren(0) when (owr_pwren(0) = '1' or owr_en(0) = '1') else 'Z';
---  wr_sfp_scl_io <= '0' when sfp_scl_o = '0' else 'Z';
---  wr_sfp_sda_io <= '0' when sfp_sda_o = '0' else 'Z';
---  
---  led_link_up_o  <= link_up;
---  led_link_act_o <= link_act;
---  led_track_o    <= tm_valid;
---  led_pps_o      <= ext_pps;
+  sys_time : time_clk_cross
+    port map(
+      clk_ref_i           => clk_ref,
+      rst_ref_n_i         => rstn_ref,
+      clk_sys_i           => clk_sys,
+      rst_sys_n_i         => rstn_sys,
+      tm_time_valid_i     => tm_valid,
+      tm_tai_i            => tm_tai,
+      tm_cycles_i         => tm_cycles,
+      tm_ref_tai_cycles_o => ref_tai8ns,
+      tm_sys_tai_cycles_o => sys_tai8ns);
+
+  pps_ext : gc_extend_pulse
+    generic map(
+      g_width => 10000000)
+    port map(
+      clk_i      => clk_ref,
+      rst_n_i    => rstn_ref,
+      pulse_i    => pps,
+      extended_o => ext_pps);
+  
+  wr_onewire_io <= owr_pwren(0) when (owr_pwren(0) = '1' or owr_en(0) = '1') else 'Z';
+  wr_sfp_scl_io <= '0' when sfp_scl_o = '0' else 'Z';
+  wr_sfp_sda_io <= '0' when sfp_sda_o = '0' else 'Z';
+  
+  led_link_up_o  <= link_up;
+  led_link_act_o <= link_act;
+  led_track_o    <= tm_valid;
+  led_pps_o      <= ext_pps;
   
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
@@ -1442,25 +1442,25 @@ s_pmc_debug_in(7 downto 2) <= (others => '0');
         clk_out_i => clk_flash,
         clk_in_i  => clk_flash);
   end generate;
---  flash_a5 : if c_is_arria5 generate
---    flash : flash_top
---      generic map(
---        g_family                 => "Arria V",
---        g_port_width             => 4,  -- quad-lane SPI bus
---        g_addr_width             => g_flash_bits,
---        g_dummy_time             => 10,
---        g_input_latch_edge       => '1',
---        g_output_latch_edge      => '1',
---        g_input_to_output_cycles => 3)
---      port map(
---        clk_i     => clk_sys,
---        rstn_i    => rstn_sys,
---        slave_i   => top_cbar_master_o(c_tops_flash),
---        slave_o   => top_cbar_master_i(c_tops_flash),
---        clk_ext_i => clk_flash,
---        clk_out_i => clk_flash,
---        clk_in_i  => clk_flash);
---  end generate;
+  flash_a5 : if c_is_arria5 generate
+    flash : flash_top
+      generic map(
+        g_family                 => "Arria V",
+        g_port_width             => 4,  -- quad-lane SPI bus
+        g_addr_width             => g_flash_bits,
+        g_dummy_time             => 10,
+        g_input_latch_edge       => '1',
+        g_output_latch_edge      => '1',
+        g_input_to_output_cycles => 3)
+      port map(
+        clk_i     => clk_sys,
+        rstn_i    => rstn_sys,
+        slave_i   => top_cbar_master_o(c_tops_flash),
+        slave_o   => top_cbar_master_i(c_tops_flash),
+        clk_ext_i => clk_flash,
+        clk_out_i => clk_flash,
+        clk_in_i  => clk_flash);
+  end generate;
   
   wb_reset : wb_arria_reset
     generic map(
@@ -1487,506 +1487,506 @@ s_pmc_debug_in(7 downto 2) <= (others => '0');
       gpio_oen_o => gpio_oen_o,
       lvds_oen_o => lvds_oen_o);
   
---  -- Instantiate SERDES clock generator
---  cmp_serdes_clk_gen : xwb_serdes_clk_gen
---    generic map(
---      g_num_serdes_bits       => 8,
---      g_selectable_duty_cycle => true,
---      g_with_frac_counter     => true,
---      g_num_outputs           => c_lvds_clk_outputs)
---    port map(
---      clk_sys_i    => clk_sys,
---      rst_sys_n_i  => rstn_sys,
---      wbs_i        => iocfg_cbar_master_o(c_iocfgs_serdes_clk_gen),
---      wbs_o        => iocfg_cbar_master_i(c_iocfgs_serdes_clk_gen),
---      clk_ref_i    => clk_ref,
---      rst_ref_n_i  => rstn_ref,
---      eca_time_i   => ref_tai8ns,
---      serdes_dat_o => lvds_dum);
+  -- Instantiate SERDES clock generator
+  cmp_serdes_clk_gen : xwb_serdes_clk_gen
+    generic map(
+      g_num_serdes_bits       => 8,
+      g_selectable_duty_cycle => true,
+      g_with_frac_counter     => true,
+      g_num_outputs           => c_lvds_clk_outputs)
+    port map(
+      clk_sys_i    => clk_sys,
+      rst_sys_n_i  => rstn_sys,
+      wbs_i        => iocfg_cbar_master_o(c_iocfgs_serdes_clk_gen),
+      wbs_o        => iocfg_cbar_master_i(c_iocfgs_serdes_clk_gen),
+      clk_ref_i    => clk_ref,
+      rst_ref_n_i  => rstn_ref,
+      eca_time_i   => ref_tai8ns,
+      serdes_dat_o => lvds_dum);
 
---  -- LVDS component data input is OR between ECA chan output and SERDES clk. gen.
---  lvds_dat_fr_clk_gen(c_lvds_clk_outputs-1 downto 0) <= lvds_dum;
---  lvds_dat_fr_clk_gen(11 downto c_lvds_clk_outputs) <= (others => (others => '0'));
---  gen_lvds_dat : for i in 0 to 11 generate
---    lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i);
---  end generate gen_lvds_dat;
---  
---  tlu_gpio : if (g_gpio_in + g_gpio_inout > 0) generate
---   s_triggers(g_gpio_in + g_gpio_inout -1 downto 0) <= f_gpio_to_trigger_array(gpio_i);
---  end generate;
---   
---  tlu_lvds : if (g_lvds_inout + g_lvds_in > 0) generate
---   s_triggers(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto g_gpio_in + g_gpio_inout) <= f_lvds_array_to_trigger_array(lvds_i(f_sub1(g_lvds_inout+g_lvds_in) downto 0));
---  end generate;
+  -- LVDS component data input is OR between ECA chan output and SERDES clk. gen.
+  lvds_dat_fr_clk_gen(c_lvds_clk_outputs-1 downto 0) <= lvds_dum;
+  lvds_dat_fr_clk_gen(11 downto c_lvds_clk_outputs) <= (others => (others => '0'));
+  gen_lvds_dat : for i in 0 to 11 generate
+    lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i);
+  end generate gen_lvds_dat;
   
---  tlu : wr_tlu
---    generic map(
---      g_num_triggers => g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in,
---      g_fifo_depth   => g_tlu_fifo_size)
---    port map(
---      clk_ref_i      => clk_ref,
---      rst_ref_n_i    => rstn_ref,
---      clk_sys_i      => clk_sys,
---      rst_sys_n_i    => rstn_sys,
---      triggers_i     => s_triggers,
---      tm_tai_cyc_i   => ref_tai8ns,
---      ctrl_slave_i   => top_cbar_master_o(c_tops_tlu),
---      ctrl_slave_o   => top_cbar_master_i(c_tops_tlu),
---      irq_master_o   => irq_cbar_slave_i(c_irqm_tlu),
---      irq_master_i   => irq_cbar_slave_o(c_irqm_tlu)
---      );
---  
---  eca : wr_eca
---    generic map(
---      g_eca_name      => f_name(g_project & " top"),
---      g_channel_names => (f_name("GPIO: gpio triggers"),
---                          f_name("RTOS: Action Queue"),
---                          f_name("GPIO: lvds triggers"),
---                          f_name("SCUBUS: tag to scubus"),
---                          f_name("WB:   WB Master")),
---      g_log_table_size => 7,
---      g_log_queue_len  => 8,
---      g_num_channels   => 5,
---      g_num_streams    => 1)
---    port map(
---      e_clk_i  (0)=> clk_sys,
---      e_rst_n_i(0)=> rstn_sys,
---      e_slave_i(0)=> top_cbar_master_o(c_tops_eca_event),
---      e_slave_o(0)=> top_cbar_master_i(c_tops_eca_event),
---      c_clk_i     => clk_sys,
---      c_rst_n_i   => rstn_sys,
---      c_slave_i   => top_cbar_master_o(c_tops_eca_ctl),
---      c_slave_o   => top_cbar_master_i(c_tops_eca_ctl),
---      a_clk_i     => clk_ref,
---      a_rst_n_i   => rstn_ref,
---      a_tai_i     => tm_tai,  
---      a_cycles_i  => tm_cycles,
---      a_channel_o => channels, 
---      i_clk_i     => clk_sys,  
---      i_rst_n_i   => rstn_sys, 
---      i_master_i  => irq_cbar_slave_o(c_irqm_eca),
---      i_master_o  => irq_cbar_slave_i(c_irqm_eca));
---    
---  c0 : eca_gpio_channel
---    port map(
---      clk_i     => clk_ref,
---      rst_n_i   => rstn_ref,
---      channel_i => channels(0),
---      gpio_o    => gpio);
---  gpio_o <= gpio(gpio_o'range);
---  
---  c1 : eca_queue_channel
---    port map(   
---      a_clk_i     => clk_ref,
---      a_rst_n_i   => rstn_ref,
---      a_channel_i => channels(1),
---      i_clk_i     => clk_sys,
---      i_rst_n_i   => rstn_sys,
---      i_master_o  => irq_cbar_slave_i(c_irqm_aq),
---      i_master_i  => irq_cbar_slave_o(c_irqm_aq),
---      q_clk_i     => clk_sys,
---      q_rst_n_i   => rstn_sys,  
---      q_slave_i   => top_cbar_master_o(c_tops_eca_aq),
---      q_slave_o   => top_cbar_master_i(c_tops_eca_aq)); 
---  
---  c2 : eca_lvds_channel
---    port map(
---      clk_i     => clk_ref,
---      rst_n_i   => rstn_ref,
---      channel_i => channels(2),
---      --lvds_o    => lvds_o);
---      lvds_o    => lvds_dat_fr_eca_chan);
---  
---  c3 : eca_scubus_channel
---    port map(
---      clk_i     => clk_ref,
---      rst_n_i   => rstn_ref,
---      channel_i => channels(3),
---      tag_valid => tag_valid,
---      tag       => tag);
---  
---c4: eca_ac_wbm
---  generic map(
---     g_entries  => 16,
---     g_ram_size => 128   
---  )
---  Port map(
---   clk_ref_i   => clk_ref,                                           
---   rst_ref_n_i => rstn_ref,
---   channel_i   => channels(4),
---   
---   clk_sys_i   => clk_sys,
---   rst_sys_n_i => rstn_sys,
---   slave_i     => top_cbar_master_o(c_tops_eca_wbm),
---   slave_o     => top_cbar_master_i(c_tops_eca_wbm),
---   master_o    => top_cbar_slave_i(c_topm_eca_wbm),
---   master_i    => top_cbar_slave_o(c_topm_eca_wbm)                                         
---  );
---
---  lvds_pins : altera_lvds
---    generic map(
---      g_family  => g_family,
---      g_inputs  => f_sub1(g_lvds_inout+g_lvds_in) +1,
---      g_outputs => f_sub1(g_lvds_inout+g_lvds_out)+1,
---      g_invert  => g_lvds_invert)
---    port map(
---      clk_ref_i    => clk_ref,
---      rstn_ref_i   => rstn_ref,
---      clk_lvds_i   => clk_lvds,
---      clk_enable_i => clk_enable,
---      dat_o        => lvds_i(f_sub1(g_lvds_inout+g_lvds_in) downto 0),
---      lvds_p_i     => lvds_p_i,
---      lvds_n_i     => lvds_n_i,
---      lvds_i_led_o => lvds_i_led_o,
---      --dat_i        => lvds_o(f_sub1(g_lvds_inout+g_lvds_out) downto 0),
---      dat_i        => lvds_dat(f_sub1(g_lvds_inout+g_lvds_out) downto 0),
---      lvds_p_o     => lvds_p_o,
---      lvds_n_o     => lvds_n_o,
---      lvds_o_led_o => lvds_o_led_o);
---  
---
---  CfiPFlash_n : if not g_en_cfi generate
---    top_cbar_master_i(c_tops_CfiPFlash) <= cc_dummy_slave_out;
---  end generate;
---
---  CfiPFlash_y : if g_en_cfi generate
---  CfiPFlash: XWB_CFI_WRAPPER 
---    port map(
---      clk_i          => clk_sys,
---      rst_n_i        => rstn_sys,
---      
---      -- Wishbone
---      slave_i        => top_cbar_master_o(c_tops_CfiPFlash),    -- to Slave
---      slave_o        => top_cbar_master_i(c_tops_CfiPFlash),    -- to WB
---      
---      -- External Parallel Flash Pins
---      AD             => cfi_ad,
---      DF             => cfi_df,
---      ADV_FSH        => cfi_adv_fsh,
---      nCE_FSH        => cfi_nce_fsh,
---      CLK_FSH        => cfi_clk_fsh,
---      nWE_FSH        => cfi_nwe_fsh,
---      nOE_FSH        => cfi_noe_fsh,
---      nRST_FSH       => cfi_nrst_fsh,
---      WAIT_FSH       => cfi_wait_fsh
---     );
---  end generate;
---
---
---  lcd_n : if not g_en_lcd generate
---    top_cbar_master_i(c_tops_lcd) <= cc_dummy_slave_out;
---  end generate;
---  lcd_y : if g_en_lcd generate
---    lcd : wb_serial_lcd
---      generic map(
---        g_wait => 1,
---        g_hold => 15)
---      port map(
---        slave_clk_i  => clk_sys,
---        slave_rstn_i => rstn_sys,
---        slave_i      => top_cbar_master_o(c_tops_lcd),
---        slave_o      => top_cbar_master_i(c_tops_lcd),
---        di_clk_i     => clk_20m,
---        di_scp_o     => lcd_scp,
---        di_lp_o      => lcd_lp,
---        di_flm_o     => lcd_flm,
---        di_dat_o     => lcd_in);
---    
---    lcd_scp_o <= '0' when lcd_scp = '0' else 'Z';
---    lcd_lp_o  <= '0' when lcd_lp  = '0' else 'Z';
---    lcd_flm_o <= '0' when lcd_flm = '0' else 'Z';
---    lcd_in_o  <= '0' when lcd_in  = '0' else 'Z';
---  end generate;
---  
---  oled_n : if not g_en_oled generate
---    top_cbar_master_i(c_tops_oled) <= cc_dummy_slave_out;
---  end generate;
---  oled_y : if g_en_oled generate
---    oled : display_console
---      port map(
---        clk_i      => clk_sys,
---        nRst_i     => rstn_sys,
---        slave_i    => top_cbar_master_o(c_tops_oled),
---        slave_o    => top_cbar_master_i(c_tops_oled),
---        RST_DISP_o => oled_rstn_o,
---        DC_SPI_o   => oled_dc_o,
---        SS_SPI_o   => oled_ss_o,
---        SCK_SPI_o  => oled_sck_o, 
---        SD_SPI_o   => oled_sd_o,
---        SH_VR_o    => oled_sh_vr_o);
---  end generate;
---  
---  ssd1325_n : if not g_en_ssd1325 generate
---    top_cbar_master_i(c_tops_ssd1325) <= cc_dummy_slave_out;
---  end generate;
---  ssd1325_y : if g_en_ssd1325 generate
---    ssd1325_display : wb_ssd1325_serial_driver
---      port map (
---        clk_sys_i  => clk_sys,
---        rst_n_i    => rstn_sys,
---        slave_i    => top_cbar_master_o(c_tops_ssd1325),
---        slave_o    => top_cbar_master_i(c_tops_ssd1325),
---        ssd_rst_o  => ssd1325_rst_o,
---        ssd_dc_o   => ssd1325_dc_o,    
---        ssd_ss_o   => ssd1325_ss_o,    
---        ssd_sclk_o => ssd1325_sclk_o,   
---        ssd_data_o => ssd1325_data_o    
---      );
---  end generate;
---
---  nau8811_n : if not g_en_nau8811 generate
---    top_cbar_master_i(c_tops_nau8811) <= cc_dummy_slave_out;
---  end generate;
---  nau8811_y : if g_en_nau8811 generate
---    nau8811_audio : wb_nau8811_audio_driver
---      generic map (
---        g_use_external_pll => true
---      )
---      port map (
---        clk_sys_i    => clk_sys,
---        rst_n_i      => rstn_sys,
---        pll_ref_i    => core_clk_125m_local_i,
---        trigger_i    => ext_pps,
---        slave_i      => top_cbar_master_o(c_tops_nau8811),
---        slave_o      => top_cbar_master_i(c_tops_nau8811),
---        spi_csb_o    => nau8811_spi_csb_o,
---        spi_sclk_o   => nau8811_spi_sclk_o,
---        spi_sdio_o   => nau8811_spi_sdio_o, 
---        iis_fs_o     => nau8811_iis_fs_o,
---        iis_bclk_o   => nau8811_iis_bclk_o,
---        iis_adcout_o => nau8811_iis_adcout_o,
---        iis_dacin_i  => nau8811_iis_dacin_i
---      );
---  end generate;
---  
---  scub_n : if not g_en_scubus generate
---    top_cbar_master_i(c_tops_scubus) <= cc_dummy_slave_out;
---    top_cbar_master_i(c_tops_scubirq) <= cc_dummy_slave_out;
---    irq_cbar_slave_i (c_irqm_scubus) <= cc_dummy_master_out;
---    scubus_a_d <= (others => 'Z');
---  end generate;
---  scub_y : if g_en_scubus generate
---    scubus_a_sysclock <= clk_12_5;
---    scub : wb_irq_scu_bus
---      generic map(
---        g_interface_mode      => PIPELINED,
---        g_address_granularity => BYTE,
---        clk_in_hz             => 62_500_000,
---        Test                  => 0,  
---        Time_Out_in_ns        => 350)
---      port map(
---        clk_i    => clk_sys,
---        rst_n_i  => rstn_sys,
---        tag                => tag,
---        tag_valid          => tag_valid,
---        irq_master_o       => irq_cbar_slave_i (c_irqm_scubus),
---        irq_master_i       => irq_cbar_slave_o (c_irqm_scubus),
---        ctrl_irq_o         => top_cbar_master_i(c_tops_scubirq),
---        ctrl_irq_i         => top_cbar_master_o(c_tops_scubirq),
---        scu_slave_o        => top_cbar_master_i(c_tops_scubus),
---        scu_slave_i        => top_cbar_master_o(c_tops_scubus),
---        scub_data          => scubus_a_d,
---        nscub_ds           => scubus_a_nds,
---        nscub_dtack        => scubus_a_ndtack,
---        scub_addr          => scubus_a_a,
---        scub_rdnwr         => scubus_a_rnw,
---        nscub_srq_slaves   => scubus_a_nsrq,
---        nscub_slave_sel    => scubus_a_nsel,
---        nscub_timing_cycle => scubus_a_ntiming_cycle,
---        nsel_ext_data_drv  => scubus_nsel_data_drv);
---  end generate;
---  
---  mil_n : if not g_en_mil generate
---    top_cbar_master_i(c_tops_mil) <= cc_dummy_slave_out;
---    top_cbar_master_i(c_tops_mil_ctrl) <= cc_dummy_slave_out;
---    irq_cbar_slave_i(c_irqm_mil) <= cc_dummy_master_out;
---  end generate;
---  
---  mil_y : if g_en_mil generate
---  
---    milp : mil_pll
---      port map(
---        inclk0 => clk_sys1,
---        c0     => mil_me_12mhz_o);
---
---   mil_irq_inst:  wb_irq_master
---    generic map(
---      g_channels     => 6,        -- number of interrupt lines
---      g_round_rb     => true,     -- scheduler       true: round robin,                         false: prioritised 
---      g_det_edge     => true,     -- edge detection. true: trigger on rising edge of irq lines, false: trigger on high level
---      g_has_dev_id   => false,    -- if set, dst adr bits 11..7 hold g_dev_id as device identifier
---      g_dev_id       => (others => '0'), -- device identifier
---      g_has_ch_id    => false,           -- if set, dst adr bits  6..2 hold g_ch_id  as device identifier         
---      g_default_msg  => true             -- initialises msgs to a default value in order to detect uninitialised irq master
---      )
---    port map(
---      clk_i           => clk_sys,
---      rst_n_i         => rstn_sys,
---      --msi if
---      irq_master_o    => irq_cbar_slave_i(c_irqm_mil),
---      irq_master_i    => irq_cbar_slave_o(c_irqm_mil),
---      -- ctrl interface  
---      ctrl_slave_o    => top_cbar_master_i(c_tops_mil_ctrl),       
---      ctrl_slave_i    => top_cbar_master_o(c_tops_mil_ctrl),
---      --irq lines
---      irq_i           => (mil_every_ms_intr_o,
---                          mil_ev_fifo_ne_intr_o,
---                          mil_dly_intr_o,
---                          mil_data_req_intr_o,
---                          mil_data_rdy_intr_o,
---                          mil_interlock_intr_o)
---      );
---     
---    mil : wb_mil_scu
---      generic map(
---        Clk_in_Hz     => 62_500_000)
---      port map(
---        clk_i         => clk_sys,
---        nRst_i        => rstn_sys,
---        slave_i       => top_cbar_master_o(c_tops_mil),
---        slave_o       => top_cbar_master_i(c_tops_mil),
---        nME_BOO       => mil_nme_boo_i,
---        nME_BZO       => mil_nme_bzo_i,
---        ME_SD         => mil_me_sd_i,
---        ME_ESC        => mil_me_esc_i,
---        ME_SDI        => mil_me_sdi_o,
---        ME_EE         => mil_me_ee_o,
---        ME_SS         => mil_me_ss_o,
---        ME_BOI        => mil_me_boi_o,
---        ME_BZI        => mil_me_bzi_o,
---        ME_UDI        => mil_me_udi_o,
---        ME_CDS        => mil_me_cds_i,
---        ME_SDO        => mil_me_sdo_i,
---        ME_DSC        => mil_me_dsc_i,
---        ME_VW         => mil_me_vw_i,
---        ME_TD         => mil_me_td_i,
---        Mil_BOI       => mil_boi_i,
---        Mil_BZI       => mil_bzi_i,
---        Sel_Mil_Drv   => mil_sel_drv_o,
---        nSel_Mil_Rcv  => mil_nsel_rcv_o,
---        Mil_nBOO      => mil_nboo_o,
---        Mil_nBZO      => mil_nbzo_o,
---        nLed_Mil_Rcv  => mil_nled_rcv_o,
---        nLed_Mil_Trm  => mil_nled_trm_o,
---        nLed_Mil_Err  => mil_nled_err_o,
---        error_limit_reached => open,
---        Mil_Decoder_Diag_p  => open,
---        Mil_Decoder_Diag_n  => open,
---        timing         => mil_timing_i,
---        dly_intr_o     => mil_dly_intr_o,
---        nLed_Timing    => mil_nled_timing_o,
---        nLed_Fifo_ne   => mil_nled_fifo_ne_o,
---        ev_fifo_ne_intr_o => mil_ev_fifo_ne_intr_o,
---        Interlock_Intr_i => mil_interlock_intr_i,
---        Data_Rdy_Intr_i  => mil_data_rdy_intr_i,
---        Data_Req_Intr_i  => mil_data_req_intr_i,
---        Interlock_Intr_o => mil_interlock_intr_o,
---        Data_Rdy_Intr_o  => mil_data_rdy_intr_o,
---        Data_Req_Intr_o  => mil_data_req_intr_o,
---        nLed_Interl    => mil_nled_interl_o,
---        nLed_drq       => mil_nled_drq_o,
---        nLed_dry       => mil_nled_dry_o,
---        every_ms_intr_o => mil_every_ms_intr_o,
---        lemo_data_o     => mil_lemo_data_o,
---        lemo_nled_o     => mil_lemo_nled_o, 
---	     lemo_out_en_o   => mil_lemo_out_en_o,     
---        lemo_data_i     => mil_lemo_data_i, 
-----        io_1           => mil_io1_o,
-----        io_1_is_in     => mil_io1_is_in_o,
-----        nLed_io_1      => mil_nled_io1_o,
-----        io_2           => mil_io2_o,
-----        io_2_is_in     => mil_io2_is_in_o,
-----        nLed_io_2      => mil_nled_io2_o,
---        nsig_wb_err    => open);
---  end generate;
---  
---  
---  ow_n : if not g_en_user_ow generate
---    top_cbar_master_i(c_tops_ow) <= cc_dummy_slave_out;
---  end generate;
---  ow_y : if g_en_user_ow generate
---    
---    ow_io(0) <= user_ow_pwren(0) when (user_ow_pwren(0) = '1' or user_ow_en(0) = '1') else 'Z';
---    ow_io(1) <= user_ow_pwren(1) when (user_ow_pwren(1) = '1' or user_ow_en(1) = '1') else 'Z';
---    
---    ONEWIRE : xwb_onewire_master
---      generic map(
---        g_interface_mode      => PIPELINED,
---        g_address_granularity => BYTE,
---        g_num_ports           => 2,
---        g_ow_btp_normal       => "5.0",
---        g_ow_btp_overdrive    => "1.0"
---        )
---      port map(
---        clk_sys_i => clk_sys,
---        rst_n_i   => rstn_sys,
---
---        -- Wishbone
---        slave_i => top_cbar_master_o(c_tops_ow),
---        slave_o => top_cbar_master_i(c_tops_ow),
---        desc_o  => open,
---
---        owr_pwren_o => user_ow_pwren,
---        owr_en_o    => user_ow_en,
---        owr_i       => ow_io
---        );
---  end generate;
---  
---  -- fg quad with wb interface, special solution for ring RF
---  fg_n  : if not g_en_fg generate
---    top_cbar_master_i(c_tops_fg)    <= cc_dummy_slave_out;
---    top_cbar_master_i(c_tops_fgirq) <= cc_dummy_slave_out;
---    top_cbar_slave_i(c_topm_fg)     <= cc_dummy_master_out;
---    irq_cbar_slave_i(c_irqm_fg)     <= cc_dummy_master_out;
---  end generate;
---  fg_y  : if g_en_fg generate
---    fg_quad: wb_fg_quad
---      generic map (
---        Clk_in_Hz => 62_500_000)
---      port map (
---        clk_i   => clk_sys,
---        rst_n_i => rstn_sys,
---        
---        -- slave wb port to fg
---        fg_slave_i => top_cbar_master_o(c_tops_fg),
---        fg_slave_o => top_cbar_master_i(c_tops_fg),
---        
---        -- master interface for output from fg to the top crossbar
---        fg_mst_i => top_cbar_slave_o(c_topm_fg),
---        fg_mst_o => top_cbar_slave_i(c_topm_fg),
---        
---        -- control interface for msi to top crossbar
---        ctrl_irq_i => top_cbar_master_o(c_tops_fgirq),
---        ctrl_irq_o => top_cbar_master_i(c_tops_fgirq),
---        
---        -- master interface to irq crossbar
---        irq_mst_i => irq_cbar_slave_o(c_irqm_fg),
---        irq_mst_o => irq_cbar_slave_i(c_irqm_fg));
---  end generate;
---  
---  psram_n : if not g_en_psram generate
---    top_cbar_master_i(c_tops_psram) <= cc_dummy_slave_out;
---  end generate;
---  psram_y : if g_en_psram generate
---    ram : psram
---      generic map(
---        g_bits => g_psram_bits)
---      port map(
---      clk_i     => clk_sys,
---      rstn_i    => rstn_sys,
---      slave_i   => top_cbar_master_o(c_tops_psram),
---      slave_o   => top_cbar_master_i(c_tops_psram),
---      ps_clk    => ps_clk,
---      ps_addr   => ps_addr,
---      ps_data   => ps_data,
---      ps_seln   => ps_seln,
---      ps_cen    => ps_cen,
---      ps_oen    => ps_oen,
---      ps_wen    => ps_wen,
---      ps_cre    => ps_cre,
---      ps_advn   => ps_advn,
---      ps_wait   => ps_wait);
---  end generate;
+  tlu_gpio : if (g_gpio_in + g_gpio_inout > 0) generate
+   s_triggers(g_gpio_in + g_gpio_inout -1 downto 0) <= f_gpio_to_trigger_array(gpio_i);
+  end generate;
+   
+  tlu_lvds : if (g_lvds_inout + g_lvds_in > 0) generate
+   s_triggers(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto g_gpio_in + g_gpio_inout) <= f_lvds_array_to_trigger_array(lvds_i(f_sub1(g_lvds_inout+g_lvds_in) downto 0));
+  end generate;
+  
+  tlu : wr_tlu
+    generic map(
+      g_num_triggers => g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in,
+      g_fifo_depth   => g_tlu_fifo_size)
+    port map(
+      clk_ref_i      => clk_ref,
+      rst_ref_n_i    => rstn_ref,
+      clk_sys_i      => clk_sys,
+      rst_sys_n_i    => rstn_sys,
+      triggers_i     => s_triggers,
+      tm_tai_cyc_i   => ref_tai8ns,
+      ctrl_slave_i   => top_cbar_master_o(c_tops_tlu),
+      ctrl_slave_o   => top_cbar_master_i(c_tops_tlu),
+      irq_master_o   => irq_cbar_slave_i(c_irqm_tlu),
+      irq_master_i   => irq_cbar_slave_o(c_irqm_tlu)
+      );
+  
+  eca : wr_eca
+    generic map(
+      g_eca_name      => f_name(g_project & " top"),
+      g_channel_names => (f_name("GPIO: gpio triggers"),
+                          f_name("RTOS: Action Queue"),
+                          f_name("GPIO: lvds triggers"),
+                          f_name("SCUBUS: tag to scubus"),
+                          f_name("WB:   WB Master")),
+      g_log_table_size => 7,
+      g_log_queue_len  => 8,
+      g_num_channels   => 5,
+      g_num_streams    => 1)
+    port map(
+      e_clk_i  (0)=> clk_sys,
+      e_rst_n_i(0)=> rstn_sys,
+      e_slave_i(0)=> top_cbar_master_o(c_tops_eca_event),
+      e_slave_o(0)=> top_cbar_master_i(c_tops_eca_event),
+      c_clk_i     => clk_sys,
+      c_rst_n_i   => rstn_sys,
+      c_slave_i   => top_cbar_master_o(c_tops_eca_ctl),
+      c_slave_o   => top_cbar_master_i(c_tops_eca_ctl),
+      a_clk_i     => clk_ref,
+      a_rst_n_i   => rstn_ref,
+      a_tai_i     => tm_tai,  
+      a_cycles_i  => tm_cycles,
+      a_channel_o => channels, 
+      i_clk_i     => clk_sys,  
+      i_rst_n_i   => rstn_sys, 
+      i_master_i  => irq_cbar_slave_o(c_irqm_eca),
+      i_master_o  => irq_cbar_slave_i(c_irqm_eca));
+    
+  c0 : eca_gpio_channel
+    port map(
+      clk_i     => clk_ref,
+      rst_n_i   => rstn_ref,
+      channel_i => channels(0),
+      gpio_o    => gpio);
+  gpio_o <= gpio(gpio_o'range);
+  
+  c1 : eca_queue_channel
+    port map(   
+      a_clk_i     => clk_ref,
+      a_rst_n_i   => rstn_ref,
+      a_channel_i => channels(1),
+      i_clk_i     => clk_sys,
+      i_rst_n_i   => rstn_sys,
+      i_master_o  => irq_cbar_slave_i(c_irqm_aq),
+      i_master_i  => irq_cbar_slave_o(c_irqm_aq),
+      q_clk_i     => clk_sys,
+      q_rst_n_i   => rstn_sys,  
+      q_slave_i   => top_cbar_master_o(c_tops_eca_aq),
+      q_slave_o   => top_cbar_master_i(c_tops_eca_aq)); 
+  
+  c2 : eca_lvds_channel
+    port map(
+      clk_i     => clk_ref,
+      rst_n_i   => rstn_ref,
+      channel_i => channels(2),
+      --lvds_o    => lvds_o);
+      lvds_o    => lvds_dat_fr_eca_chan);
+  
+  c3 : eca_scubus_channel
+    port map(
+      clk_i     => clk_ref,
+      rst_n_i   => rstn_ref,
+      channel_i => channels(3),
+      tag_valid => tag_valid,
+      tag       => tag);
+  
+c4: eca_ac_wbm
+  generic map(
+     g_entries  => 16,
+     g_ram_size => 128   
+  )
+  Port map(
+   clk_ref_i   => clk_ref,                                           
+   rst_ref_n_i => rstn_ref,
+   channel_i   => channels(4),
+   
+   clk_sys_i   => clk_sys,
+   rst_sys_n_i => rstn_sys,
+   slave_i     => top_cbar_master_o(c_tops_eca_wbm),
+   slave_o     => top_cbar_master_i(c_tops_eca_wbm),
+   master_o    => top_cbar_slave_i(c_topm_eca_wbm),
+   master_i    => top_cbar_slave_o(c_topm_eca_wbm)                                         
+  );
+
+  lvds_pins : altera_lvds
+    generic map(
+      g_family  => g_family,
+      g_inputs  => f_sub1(g_lvds_inout+g_lvds_in) +1,
+      g_outputs => f_sub1(g_lvds_inout+g_lvds_out)+1,
+      g_invert  => g_lvds_invert)
+    port map(
+      clk_ref_i    => clk_ref,
+      rstn_ref_i   => rstn_ref,
+      clk_lvds_i   => clk_lvds,
+      clk_enable_i => clk_enable,
+      dat_o        => lvds_i(f_sub1(g_lvds_inout+g_lvds_in) downto 0),
+      lvds_p_i     => lvds_p_i,
+      lvds_n_i     => lvds_n_i,
+      lvds_i_led_o => lvds_i_led_o,
+      --dat_i        => lvds_o(f_sub1(g_lvds_inout+g_lvds_out) downto 0),
+      dat_i        => lvds_dat(f_sub1(g_lvds_inout+g_lvds_out) downto 0),
+      lvds_p_o     => lvds_p_o,
+      lvds_n_o     => lvds_n_o,
+      lvds_o_led_o => lvds_o_led_o);
+  
+
+  CfiPFlash_n : if not g_en_cfi generate
+    top_cbar_master_i(c_tops_CfiPFlash) <= cc_dummy_slave_out;
+  end generate;
+
+  CfiPFlash_y : if g_en_cfi generate
+  CfiPFlash: XWB_CFI_WRAPPER 
+    port map(
+      clk_i          => clk_sys,
+      rst_n_i        => rstn_sys,
+      
+      -- Wishbone
+      slave_i        => top_cbar_master_o(c_tops_CfiPFlash),    -- to Slave
+      slave_o        => top_cbar_master_i(c_tops_CfiPFlash),    -- to WB
+      
+      -- External Parallel Flash Pins
+      AD             => cfi_ad,
+      DF             => cfi_df,
+      ADV_FSH        => cfi_adv_fsh,
+      nCE_FSH        => cfi_nce_fsh,
+      CLK_FSH        => cfi_clk_fsh,
+      nWE_FSH        => cfi_nwe_fsh,
+      nOE_FSH        => cfi_noe_fsh,
+      nRST_FSH       => cfi_nrst_fsh,
+      WAIT_FSH       => cfi_wait_fsh
+     );
+  end generate;
+
+
+  lcd_n : if not g_en_lcd generate
+    top_cbar_master_i(c_tops_lcd) <= cc_dummy_slave_out;
+  end generate;
+  lcd_y : if g_en_lcd generate
+    lcd : wb_serial_lcd
+      generic map(
+        g_wait => 1,
+        g_hold => 15)
+      port map(
+        slave_clk_i  => clk_sys,
+        slave_rstn_i => rstn_sys,
+        slave_i      => top_cbar_master_o(c_tops_lcd),
+        slave_o      => top_cbar_master_i(c_tops_lcd),
+        di_clk_i     => clk_20m,
+        di_scp_o     => lcd_scp,
+        di_lp_o      => lcd_lp,
+        di_flm_o     => lcd_flm,
+        di_dat_o     => lcd_in);
+    
+    lcd_scp_o <= '0' when lcd_scp = '0' else 'Z';
+    lcd_lp_o  <= '0' when lcd_lp  = '0' else 'Z';
+    lcd_flm_o <= '0' when lcd_flm = '0' else 'Z';
+    lcd_in_o  <= '0' when lcd_in  = '0' else 'Z';
+  end generate;
+  
+  oled_n : if not g_en_oled generate
+    top_cbar_master_i(c_tops_oled) <= cc_dummy_slave_out;
+  end generate;
+  oled_y : if g_en_oled generate
+    oled : display_console
+      port map(
+        clk_i      => clk_sys,
+        nRst_i     => rstn_sys,
+        slave_i    => top_cbar_master_o(c_tops_oled),
+        slave_o    => top_cbar_master_i(c_tops_oled),
+        RST_DISP_o => oled_rstn_o,
+        DC_SPI_o   => oled_dc_o,
+        SS_SPI_o   => oled_ss_o,
+        SCK_SPI_o  => oled_sck_o, 
+        SD_SPI_o   => oled_sd_o,
+        SH_VR_o    => oled_sh_vr_o);
+  end generate;
+  
+  ssd1325_n : if not g_en_ssd1325 generate
+    top_cbar_master_i(c_tops_ssd1325) <= cc_dummy_slave_out;
+  end generate;
+  ssd1325_y : if g_en_ssd1325 generate
+    ssd1325_display : wb_ssd1325_serial_driver
+      port map (
+        clk_sys_i  => clk_sys,
+        rst_n_i    => rstn_sys,
+        slave_i    => top_cbar_master_o(c_tops_ssd1325),
+        slave_o    => top_cbar_master_i(c_tops_ssd1325),
+        ssd_rst_o  => ssd1325_rst_o,
+        ssd_dc_o   => ssd1325_dc_o,    
+        ssd_ss_o   => ssd1325_ss_o,    
+        ssd_sclk_o => ssd1325_sclk_o,   
+        ssd_data_o => ssd1325_data_o    
+      );
+  end generate;
+
+  nau8811_n : if not g_en_nau8811 generate
+    top_cbar_master_i(c_tops_nau8811) <= cc_dummy_slave_out;
+  end generate;
+  nau8811_y : if g_en_nau8811 generate
+    nau8811_audio : wb_nau8811_audio_driver
+      generic map (
+        g_use_external_pll => true
+      )
+      port map (
+        clk_sys_i    => clk_sys,
+        rst_n_i      => rstn_sys,
+        pll_ref_i    => core_clk_125m_local_i,
+        trigger_i    => ext_pps,
+        slave_i      => top_cbar_master_o(c_tops_nau8811),
+        slave_o      => top_cbar_master_i(c_tops_nau8811),
+        spi_csb_o    => nau8811_spi_csb_o,
+        spi_sclk_o   => nau8811_spi_sclk_o,
+        spi_sdio_o   => nau8811_spi_sdio_o, 
+        iis_fs_o     => nau8811_iis_fs_o,
+        iis_bclk_o   => nau8811_iis_bclk_o,
+        iis_adcout_o => nau8811_iis_adcout_o,
+        iis_dacin_i  => nau8811_iis_dacin_i
+      );
+  end generate;
+  
+  scub_n : if not g_en_scubus generate
+    top_cbar_master_i(c_tops_scubus) <= cc_dummy_slave_out;
+    top_cbar_master_i(c_tops_scubirq) <= cc_dummy_slave_out;
+    irq_cbar_slave_i (c_irqm_scubus) <= cc_dummy_master_out;
+    scubus_a_d <= (others => 'Z');
+  end generate;
+  scub_y : if g_en_scubus generate
+    scubus_a_sysclock <= clk_12_5;
+    scub : wb_irq_scu_bus
+      generic map(
+        g_interface_mode      => PIPELINED,
+        g_address_granularity => BYTE,
+        clk_in_hz             => 62_500_000,
+        Test                  => 0,  
+        Time_Out_in_ns        => 350)
+      port map(
+        clk_i    => clk_sys,
+        rst_n_i  => rstn_sys,
+        tag                => tag,
+        tag_valid          => tag_valid,
+        irq_master_o       => irq_cbar_slave_i (c_irqm_scubus),
+        irq_master_i       => irq_cbar_slave_o (c_irqm_scubus),
+        ctrl_irq_o         => top_cbar_master_i(c_tops_scubirq),
+        ctrl_irq_i         => top_cbar_master_o(c_tops_scubirq),
+        scu_slave_o        => top_cbar_master_i(c_tops_scubus),
+        scu_slave_i        => top_cbar_master_o(c_tops_scubus),
+        scub_data          => scubus_a_d,
+        nscub_ds           => scubus_a_nds,
+        nscub_dtack        => scubus_a_ndtack,
+        scub_addr          => scubus_a_a,
+        scub_rdnwr         => scubus_a_rnw,
+        nscub_srq_slaves   => scubus_a_nsrq,
+        nscub_slave_sel    => scubus_a_nsel,
+        nscub_timing_cycle => scubus_a_ntiming_cycle,
+        nsel_ext_data_drv  => scubus_nsel_data_drv);
+  end generate;
+  
+  mil_n : if not g_en_mil generate
+    top_cbar_master_i(c_tops_mil) <= cc_dummy_slave_out;
+    top_cbar_master_i(c_tops_mil_ctrl) <= cc_dummy_slave_out;
+    irq_cbar_slave_i(c_irqm_mil) <= cc_dummy_master_out;
+  end generate;
+  
+  mil_y : if g_en_mil generate
+  
+    milp : mil_pll
+      port map(
+        inclk0 => clk_sys1,
+        c0     => mil_me_12mhz_o);
+
+   mil_irq_inst:  wb_irq_master
+    generic map(
+      g_channels     => 6,        -- number of interrupt lines
+      g_round_rb     => true,     -- scheduler       true: round robin,                         false: prioritised 
+      g_det_edge     => true,     -- edge detection. true: trigger on rising edge of irq lines, false: trigger on high level
+      g_has_dev_id   => false,    -- if set, dst adr bits 11..7 hold g_dev_id as device identifier
+      g_dev_id       => (others => '0'), -- device identifier
+      g_has_ch_id    => false,           -- if set, dst adr bits  6..2 hold g_ch_id  as device identifier         
+      g_default_msg  => true             -- initialises msgs to a default value in order to detect uninitialised irq master
+      )
+    port map(
+      clk_i           => clk_sys,
+      rst_n_i         => rstn_sys,
+      --msi if
+      irq_master_o    => irq_cbar_slave_i(c_irqm_mil),
+      irq_master_i    => irq_cbar_slave_o(c_irqm_mil),
+      -- ctrl interface  
+      ctrl_slave_o    => top_cbar_master_i(c_tops_mil_ctrl),       
+      ctrl_slave_i    => top_cbar_master_o(c_tops_mil_ctrl),
+      --irq lines
+      irq_i           => (mil_every_ms_intr_o,
+                          mil_ev_fifo_ne_intr_o,
+                          mil_dly_intr_o,
+                          mil_data_req_intr_o,
+                          mil_data_rdy_intr_o,
+                          mil_interlock_intr_o)
+      );
+     
+    mil : wb_mil_scu
+      generic map(
+        Clk_in_Hz     => 62_500_000)
+      port map(
+        clk_i         => clk_sys,
+        nRst_i        => rstn_sys,
+        slave_i       => top_cbar_master_o(c_tops_mil),
+        slave_o       => top_cbar_master_i(c_tops_mil),
+        nME_BOO       => mil_nme_boo_i,
+        nME_BZO       => mil_nme_bzo_i,
+        ME_SD         => mil_me_sd_i,
+        ME_ESC        => mil_me_esc_i,
+        ME_SDI        => mil_me_sdi_o,
+        ME_EE         => mil_me_ee_o,
+        ME_SS         => mil_me_ss_o,
+        ME_BOI        => mil_me_boi_o,
+        ME_BZI        => mil_me_bzi_o,
+        ME_UDI        => mil_me_udi_o,
+        ME_CDS        => mil_me_cds_i,
+        ME_SDO        => mil_me_sdo_i,
+        ME_DSC        => mil_me_dsc_i,
+        ME_VW         => mil_me_vw_i,
+        ME_TD         => mil_me_td_i,
+        Mil_BOI       => mil_boi_i,
+        Mil_BZI       => mil_bzi_i,
+        Sel_Mil_Drv   => mil_sel_drv_o,
+        nSel_Mil_Rcv  => mil_nsel_rcv_o,
+        Mil_nBOO      => mil_nboo_o,
+        Mil_nBZO      => mil_nbzo_o,
+        nLed_Mil_Rcv  => mil_nled_rcv_o,
+        nLed_Mil_Trm  => mil_nled_trm_o,
+        nLed_Mil_Err  => mil_nled_err_o,
+        error_limit_reached => open,
+        Mil_Decoder_Diag_p  => open,
+        Mil_Decoder_Diag_n  => open,
+        timing         => mil_timing_i,
+        dly_intr_o     => mil_dly_intr_o,
+        nLed_Timing    => mil_nled_timing_o,
+        nLed_Fifo_ne   => mil_nled_fifo_ne_o,
+        ev_fifo_ne_intr_o => mil_ev_fifo_ne_intr_o,
+        Interlock_Intr_i => mil_interlock_intr_i,
+        Data_Rdy_Intr_i  => mil_data_rdy_intr_i,
+        Data_Req_Intr_i  => mil_data_req_intr_i,
+        Interlock_Intr_o => mil_interlock_intr_o,
+        Data_Rdy_Intr_o  => mil_data_rdy_intr_o,
+        Data_Req_Intr_o  => mil_data_req_intr_o,
+        nLed_Interl    => mil_nled_interl_o,
+        nLed_drq       => mil_nled_drq_o,
+        nLed_dry       => mil_nled_dry_o,
+        every_ms_intr_o => mil_every_ms_intr_o,
+        lemo_data_o     => mil_lemo_data_o,
+        lemo_nled_o     => mil_lemo_nled_o, 
+	     lemo_out_en_o   => mil_lemo_out_en_o,     
+        lemo_data_i     => mil_lemo_data_i, 
+--        io_1           => mil_io1_o,
+--        io_1_is_in     => mil_io1_is_in_o,
+--        nLed_io_1      => mil_nled_io1_o,
+--        io_2           => mil_io2_o,
+--        io_2_is_in     => mil_io2_is_in_o,
+--        nLed_io_2      => mil_nled_io2_o,
+        nsig_wb_err    => open);
+  end generate;
+  
+  
+  ow_n : if not g_en_user_ow generate
+    top_cbar_master_i(c_tops_ow) <= cc_dummy_slave_out;
+  end generate;
+  ow_y : if g_en_user_ow generate
+    
+    ow_io(0) <= user_ow_pwren(0) when (user_ow_pwren(0) = '1' or user_ow_en(0) = '1') else 'Z';
+    ow_io(1) <= user_ow_pwren(1) when (user_ow_pwren(1) = '1' or user_ow_en(1) = '1') else 'Z';
+    
+    ONEWIRE : xwb_onewire_master
+      generic map(
+        g_interface_mode      => PIPELINED,
+        g_address_granularity => BYTE,
+        g_num_ports           => 2,
+        g_ow_btp_normal       => "5.0",
+        g_ow_btp_overdrive    => "1.0"
+        )
+      port map(
+        clk_sys_i => clk_sys,
+        rst_n_i   => rstn_sys,
+
+        -- Wishbone
+        slave_i => top_cbar_master_o(c_tops_ow),
+        slave_o => top_cbar_master_i(c_tops_ow),
+        desc_o  => open,
+
+        owr_pwren_o => user_ow_pwren,
+        owr_en_o    => user_ow_en,
+        owr_i       => ow_io
+        );
+  end generate;
+  
+  -- fg quad with wb interface, special solution for ring RF
+  fg_n  : if not g_en_fg generate
+    top_cbar_master_i(c_tops_fg)    <= cc_dummy_slave_out;
+    top_cbar_master_i(c_tops_fgirq) <= cc_dummy_slave_out;
+    top_cbar_slave_i(c_topm_fg)     <= cc_dummy_master_out;
+    irq_cbar_slave_i(c_irqm_fg)     <= cc_dummy_master_out;
+  end generate;
+  fg_y  : if g_en_fg generate
+    fg_quad: wb_fg_quad
+      generic map (
+        Clk_in_Hz => 62_500_000)
+      port map (
+        clk_i   => clk_sys,
+        rst_n_i => rstn_sys,
+        
+        -- slave wb port to fg
+        fg_slave_i => top_cbar_master_o(c_tops_fg),
+        fg_slave_o => top_cbar_master_i(c_tops_fg),
+        
+        -- master interface for output from fg to the top crossbar
+        fg_mst_i => top_cbar_slave_o(c_topm_fg),
+        fg_mst_o => top_cbar_slave_i(c_topm_fg),
+        
+        -- control interface for msi to top crossbar
+        ctrl_irq_i => top_cbar_master_o(c_tops_fgirq),
+        ctrl_irq_o => top_cbar_master_i(c_tops_fgirq),
+        
+        -- master interface to irq crossbar
+        irq_mst_i => irq_cbar_slave_o(c_irqm_fg),
+        irq_mst_o => irq_cbar_slave_i(c_irqm_fg));
+  end generate;
+  
+  psram_n : if not g_en_psram generate
+    top_cbar_master_i(c_tops_psram) <= cc_dummy_slave_out;
+  end generate;
+  psram_y : if g_en_psram generate
+    ram : psram
+      generic map(
+        g_bits => g_psram_bits)
+      port map(
+      clk_i     => clk_sys,
+      rstn_i    => rstn_sys,
+      slave_i   => top_cbar_master_o(c_tops_psram),
+      slave_o   => top_cbar_master_i(c_tops_psram),
+      ps_clk    => ps_clk,
+      ps_addr   => ps_addr,
+      ps_data   => ps_data,
+      ps_seln   => ps_seln,
+      ps_cen    => ps_cen,
+      ps_oen    => ps_oen,
+      ps_wen    => ps_wen,
+      ps_cre    => ps_cre,
+      ps_advn   => ps_advn,
+      ps_wait   => ps_wait);
+  end generate;
   
   pmc_ctrl_n : if not g_en_pmc_ctrl generate
     top_cbar_master_i(c_tops_pmc_ctrl) <= cc_dummy_slave_out;

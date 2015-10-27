@@ -212,7 +212,7 @@ begin
     generic map(
       g_family          => c_family,
       g_project         => c_project,
-      g_flash_bits      => 26,
+      g_flash_bits      => 25,
       g_lvds_inout      => 5,  -- 5 LEMOs at front panel
       g_gpio_out        => 10, -- 2 LEDs at front panel + 8 on-boards LEDs
       g_en_usb          => true,
@@ -318,7 +318,18 @@ pmc_buf_oe_o <= '1'; -- enable PCI bus translators
 
   -- GPIOs
   status_led_o(6 downto 5) <= not s_gpio (1 downto 0);
-  user_led_o(8 downto 1)   <= not s_gpio (9 downto 2);
+--  user_led_o(8 downto 1)   <= not s_gpio (9 downto 2);
+
+-- for testing CPLD to FPGA connection
+p_led_val_sel : process( pbs_f, con, s_gpio ) 
+begin
+  if pbs_f = '0' then -- when pressed pass CPLD hex switch and button to FPGA user LEDs
+    user_led_o(8 downto 6)   <= (others => '0'); 
+    user_led_o(5 downto 1)   <= not con; -- driven by con from CPLD (HEX switch and button)
+  else 
+    user_led_o(8 downto 1)   <= not s_gpio (9 downto 2); -- driven by monster
+  end if;
+end process;
   
   -- LVDS inputs
   s_lvds_p_i(0) <= lvttio_in_p_1;
