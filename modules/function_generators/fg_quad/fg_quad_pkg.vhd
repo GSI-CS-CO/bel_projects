@@ -24,6 +24,7 @@ component fg_quad_datapath is
   shift_a:            in  integer range 0 to 48;          -- shiftvalue coeff b
   shift_b:            in  integer range 0 to 48;          -- shiftvalue coeff b
   freq_sel:           in  std_logic_vector(2 downto 0);
+  state_change_irq:   out std_logic;
   dreq:               out std_logic;
   ramp_sec_fin:       out std_logic;
   sw_out:             out std_logic_vector(31 downto 0);
@@ -47,12 +48,13 @@ component fg_quad_scu_bus is
     user_rd_active:     out   std_logic;                      -- '1' = read data available at 'Data_to_SCUB'-output
     clk:                in    std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     nReset:             in    std_logic;
-    brdcst_i:           in    std_logic;                      -- broadcast in from another fg
+    tag:                in    std_logic_vector(31 downto 0);  -- 32Bit tag from timing 
+    tag_valid:          in    std_logic;                      -- tag valid
+    ext_trigger:        in    std_logic;                      -- external trigger for ramp start
     Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Dtack:              out   std_logic;                      -- connect Dtack to SCUB-Macro
-    brdcst_o:           out   std_logic;                      -- broadcast start out for triggering another fg
     -- fg_quad
-    dreq:               out   std_logic;
+    irq:                out   std_logic;
     sw_out:             out   std_logic_vector(31 downto 0);  -- function generator output
     sw_strobe:          out   std_logic 
     );

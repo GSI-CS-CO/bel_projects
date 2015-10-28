@@ -200,13 +200,15 @@ end component;
   signal  dac2_convert:      std_logic;
   signal  dac2_convert_led_n:  std_logic;
     
-  signal  ADR_from_SCUB_LA:  std_logic_vector(15 downto 0);
-  signal  Data_from_SCUB_LA: std_logic_vector(15 downto 0);
-  signal  Ext_Adr_Val:       std_logic;
-  signal  Ext_Rd_active:     std_logic;
-  signal  Ext_Wr_active:     std_logic;
-  signal  Ext_Wr_fin_ovl:    std_logic;
-  signal  nPowerup_Res:      std_logic;
+  signal  ADR_from_SCUB_LA:   std_logic_vector(15 downto 0);
+  signal  Data_from_SCUB_LA:  std_logic_vector(15 downto 0);
+  signal  Timing_Pattern_LA:  std_logic_vector(31 downto 0);
+  signal  Timing_Pattern_RCV: std_logic;
+  signal  Ext_Adr_Val:        std_logic;
+  signal  Ext_Rd_active:      std_logic;
+  signal  Ext_Wr_active:      std_logic;
+  signal  Ext_Wr_fin_ovl:     std_logic;
+  signal  nPowerup_Res:       std_logic;
     
   signal  adc_rd_active:     std_logic;
   signal  adc_data_to_SCUB:  std_logic_vector(15 downto 0);
@@ -430,7 +432,7 @@ dac_1: dac714
     nReset            => nPowerup_Res,          -- in, '0' => resets the DAC_1
     nExt_Trig_DAC     => EXT_TRIG_DAC,          -- external trigger input over optocoupler,
                                                 -- led on -> nExt_Trig_DAC is low
-    FG_Data           => fg_1_sw(23 downto 8),  -- parallel dac data during FG-Mode
+    FG_Data           => fg_1_sw(31 downto 16), -- parallel dac data during FG-Mode
     FG_Strobe         => fg_1_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
     DAC_SI            => DAC1_SDI,              -- out, is connected to DAC1-SDI
     nDAC_CLK          => nDAC1_CLK,             -- out, spi-clock of DAC1
@@ -460,7 +462,7 @@ dac_2: dac714
     nReset            => nPowerup_Res,          -- in, '0' => resets the DAC_2
     nExt_Trig_DAC     => EXT_TRIG_DAC,          -- external trigger input over optocoupler,
                                                 -- led on -> nExt_Trig_DAC is low
-    FG_Data           => fg_2_sw(23 downto 8),  -- parallel dac data during FG-Mode
+    FG_Data           => fg_2_sw(31 downto 16), -- parallel dac data during FG-Mode
     FG_Strobe         => fg_2_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
     DAC_SI            => DAC2_SDI,              -- out, is connected to DAC2-SDI
     nDAC_CLK          => nDAC2_CLK,             -- out, spi-clock of DAC2
@@ -562,9 +564,10 @@ fg_1: fg_quad_scu_bus
     Rd_Port           => fg_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => fg_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_1_dtack,            -- connect Dtack to SCUB-Macro
-    dreq              => fg_1_dreq,             -- request of new parameter set
-    brdcst_i          => '0',
-    brdcst_o          => fg_brdcst,             -- sync start fg 2
+    irq               => fg_1_dreq,             -- request of new parameter set
+    tag               => Timing_Pattern_LA,     --
+    tag_valid         => Timing_Pattern_RCV,    --
+    ext_trigger       => '0',                   -- start ramp with external trigger
 
     -- fg output
     sw_out            => fg_1_sw,               -- 24bit output from fg
@@ -573,7 +576,7 @@ fg_1: fg_quad_scu_bus
 
 fg_2: fg_quad_scu_bus
   generic map (
-    Base_addr     => c_fg1_base,
+    Base_addr     => c_fg2_base,
     clk_in_hz     => clk_sys_in_Hz,
     diag_on_is_1  => 0 -- if 1 then diagnosic information is generated during compilation
     )
@@ -590,9 +593,11 @@ fg_2: fg_quad_scu_bus
     Rd_Port           => fg_2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => fg_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_2_dtack,            -- connect Dtack to SCUB-Macro
-    dreq              => fg_2_dreq,             -- request of new parameter set
-    brdcst_i          => fg_brdcst,             -- triggered by fg 1
-    brdcst_o          => open,
+    irq               => fg_2_dreq,             -- request of new parameter set
+    tag               => Timing_Pattern_LA,     --
+    tag_valid         => Timing_Pattern_RCV,    --
+    ext_trigger       => '0',                   -- start ramp with external trigger
+
 
     -- fg output
     sw_out            => fg_2_sw,               -- 24bit output from fg
@@ -692,7 +697,9 @@ p_led_mux: process (
     ADC_channel_1, ADC_channel_2, ADC_channel_3, ADC_channel_4,
     ADC_channel_5, ADC_channel_6, ADC_channel_7, ADC_channel_8,
     A_ADC_DAC_SEL(3 downto 0), A_MODE_SEL(1 downto 0),
-    nADC_PAR_SER_SEL, NDIFF_IN_EN
+    nADC_PAR_SER_SEL, NDIFF_IN_EN, dac1_convert_led_n, dac2_convert_led_n,
+    local_clk_runs_led_n, sys_clk_deviation_led_n, sys_clk_is_bad_led_n,
+    s_test_vector
     )
   begin
     if A_MODE_SEL = "11" then

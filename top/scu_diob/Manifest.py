@@ -1,6 +1,8 @@
 files = [
    "scu_diob.vhd",
+   "scu_diob_pkg.vhd",
    "scu_diob.sdc",
+   "diob_debounce.vhd",
    "flash_loader_v01.vhd",
    "Zeitbasis.vhd",
    "aw_io_reg.vhd",
@@ -12,7 +14,8 @@ files = [
    "tag_n.vhd",
    "config_status.vhd",
    "outpuls.vhd",
-   "flanke.vhd"
+   "flanke.vhd",
+   "addac_reg.vhd",
 ]
 
 modules = {

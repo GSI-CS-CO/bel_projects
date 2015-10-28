@@ -5,6 +5,10 @@ USE IEEE.std_logic_1164.all;
 USE IEEE.numeric_std.all;
 --USE IEEE.std_logic_arith.all;
 
+library work;
+use work.scu_diob_pkg.all;
+
+
 ENTITY tag_ctrl IS
   generic
       (
@@ -12,45 +16,28 @@ ENTITY tag_ctrl IS
     );
     
   port(
-    Adr_from_SCUB_LA:     in   std_logic_vector(15 downto 0);    -- latched address from SCU_Bus
-    Data_from_SCUB_LA:    in   std_logic_vector(15 downto 0);    -- latched data from SCU_Bus 
-    Ext_Adr_Val:          in   std_logic;                        -- '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active:        in   std_logic;                        -- '1' => Rd-Cycle is active
-    Ext_Rd_fin:           in   std_logic;                        -- marks end of read cycle, active one for one clock period of sys_clk
-    Ext_Wr_active:        in   std_logic;                        -- '1' => Wr-Cycle is active
-    Ext_Wr_fin:           in   std_logic;                        -- marks end of write cycle, active one for one clock period of sys_clk
-    Timing_Pattern_LA:    in   std_logic_vector(31 downto 0);   -- latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV:   in   std_logic;                        -- timing pattern received
-    Spare0:               in   std_logic;                          -- vom Master getrieben
-    Spare1:               in   std_logic;                          -- vom Master getrieben
-    clk:                  in   std_logic;                            -- should be the same clk, used by SCU_Bus_Slave
+    Adr_from_SCUB_LA:     in   std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
+    Data_from_SCUB_LA:    in   std_logic_vector(15 downto 0);  -- latched data from SCU_Bus 
+    Ext_Adr_Val:          in   std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active:        in   std_logic;                      -- '1' => Rd-Cycle is active
+    Ext_Rd_fin:           in   std_logic;                      -- marks end of read cycle, active one for one clock period of sys_clk
+    Ext_Wr_active:        in   std_logic;                      -- '1' => Wr-Cycle is active
+    Ext_Wr_fin:           in   std_logic;                      -- marks end of write cycle, active one for one clock period of sys_clk
+    Timing_Pattern_LA:    in   std_logic_vector(31 downto 0);  -- latched timing pattern from SCU_Bus for external user functions
+    Timing_Pattern_RCV:   in   std_logic;                      -- timing pattern received
+    Spare0:               in   std_logic;                      -- vom Master getrieben
+    Spare1:               in   std_logic;                      -- vom Master getrieben
+    clk:                  in   std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
     nReset:               in   std_logic;
-    AWIn1:                in   std_logic_vector(15 downto 0);  -- Input-Port 1
-    AWIn2:                in   std_logic_vector(15 downto 0);  -- Input-Port 2
-    AWIn3:                in   std_logic_vector(15 downto 0);  -- Input-Port 3
-    AWIn4:                in   std_logic_vector(15 downto 0);  -- Input-Port 4
-    AWIn5:                in   std_logic_vector(15 downto 0);  -- Input-Port 5
-    AWIn6:                in   std_logic_vector(15 downto 0);  -- Input-Port 6
-    AWIn7:                in   std_logic_vector(15 downto 0);  -- Input-Port 7
+
+    SCU_AW_Input_Reg:     in   t_IO_Reg_1_to_7_Array;          -- Input-Port's wie zum SCU-Bus
+
     clr_Tag_Maske:        in   std_logic;                      -- clear alle Tag-Masken
     Max_AWOut_Reg_Nr:     in   integer range 0 to 7;           -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr:      in   integer range 0 to 7;           -- Maximale AWIn-Reg-Nummer der Anwendung
     
-    Tag_Reg1_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-    Tag_Reg2_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-    Tag_Reg3_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-    Tag_Reg4_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-    Tag_Reg5_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-    Tag_Reg6_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-    Tag_Reg7_Maske:       out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-
-    Tag_Outp_Reg1:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-    Tag_Outp_Reg2:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-    Tag_Outp_Reg3:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-    Tag_Outp_Reg4:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-    Tag_Outp_Reg5:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-    Tag_Outp_Reg6:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
-    Tag_Outp_Reg7:        out  std_logic_vector(15 downto 0);  -- Tag-Output-Maske für Register 1
+    Tag_Maske_Reg:        out  t_IO_Reg_1_to_7_Array;          -- Tag-Output-Maske für Register 1-7
+    Tag_Outp_Reg:         out  t_IO_Reg_1_to_7_Array;          -- Tag-Output-Maske für Register 1-7
 
     Tag_FG_Start:         out  std_logic;                      -- Start-Puls für den FG
     Tag_Sts:              out  std_logic_vector(15 downto 0);  -- Tag-Status
@@ -87,15 +74,9 @@ COMPONENT tag_n
     Tag_n_Puls_Width:       in    std_logic_vector(15 downto 0);    -- 
     Tag_n_Prescale:         in    std_logic_vector(15 downto 0);    -- 
     Tag_n_Trigger:          in    std_logic_vector(15 downto 0);    -- 
-    Max_AWOut_Reg_Nr:       in    integer range 0 to 7;           -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr:        in    integer range 0 to 7;           -- Maximale AWIn-Reg-Nummer der Anwendung
-    AWIn1:                  in    std_logic_vector(15 downto 0);    -- 
-    AWIn2:                  in    std_logic_vector(15 downto 0);    -- 
-    AWIn3:                  in    std_logic_vector(15 downto 0);    -- 
-    AWIn4:                  in    std_logic_vector(15 downto 0);    -- 
-    AWIn5:                  in    std_logic_vector(15 downto 0);    -- 
-    AWIn6:                  in    std_logic_vector(15 downto 0);    -- 
-    AWIn7:                  in    std_logic_vector(15 downto 0);    -- 
+    Max_AWOut_Reg_Nr:       in    integer range 0 to 7;             -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr:        in    integer range 0 to 7;             -- Maximale AWIn-Reg-Nummer der Anwendung
+    SCU_AW_Input_Reg:       in    t_IO_Reg_1_to_7_Array;            -- 
     Spare0_Strobe:          in    std_logic;                        -- 
     Spare1_Strobe:          in    std_logic;                        -- 
       
@@ -201,7 +182,7 @@ Type   t_Int_0_to_31    is array (0 to 7)  of integer range 0 to 31;
 ---------------------- Output-Signale von "Tag_n" für Tag0-T-------------------------------
 
 signal  Tag_Array:              t_Tag_Array;                    -- Init über den SCU-Bus
-signal  Tag_Out_Reg_Array:      t_Word_Array;                   -- Copy der AWOut-Register
+signal  Tag_Out_Reg_Array:      t_IO_Reg_1_to_7_Array;          -- Copy der AWOut-Register
 signal  Tag_New_AWOut_Data:     t_Boolean_Array;                -- Flag's für New Data von Register 1-7 
 
 signal  Tag0_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
@@ -324,7 +305,7 @@ signal TErr_Cnt : integer range 0 to 7 := 0;
 
 signal  Tag_Conf_Err:       std_logic := '0'; -- Tag Auswerte-Loop
 
-signal Sum_Reg_MSK:   t_Word_Array;
+signal Sum_Reg_MSK:   t_IO_Reg_1_to_7_Array;
 
 signal s_Tag_Aktiv:   std_logic_vector(7 downto 0); -- Flag: Bit7 = Tag7 (aktiv) --- Bit0 = Tag0 (aktiv)
 
@@ -638,25 +619,19 @@ port map  (
     nReset                =>    nReset,   
     Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
     Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag0)(i_tag_hw)),          --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag0)(i_tag_lw)),          --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag0)(i_Tag_Maske)),       --| 
-    Tag_n_Lev_Reg         =>   (Tag_Array(i_Tag0)(i_Tag_Lev_Reg)),     --+-----> Tag-Array 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag0)(i_Tag_Delay_Cnt)),   --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag0)(i_Tag_Puls_Width)),  --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag0)(i_Tag_Prescale)),    --| 
+    Tag_n_hw              =>   (Tag_Array(i_Tag0)(i_tag_hw)),         --+ 
+    Tag_n_lw              =>   (Tag_Array(i_Tag0)(i_tag_lw)),         --| 
+    Tag_n_Maske           =>   (Tag_Array(i_Tag0)(i_Tag_Maske)),      --| 
+    Tag_n_Lev_Reg         =>   (Tag_Array(i_Tag0)(i_Tag_Lev_Reg)),    --+-----> Tag-Array 
+    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag0)(i_Tag_Delay_Cnt)),  --| 
+    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag0)(i_Tag_Puls_Width)), --| 
+    Tag_n_Prescale        =>   (Tag_Array(i_Tag0)(i_Tag_Prescale)),   --| 
     Tag_n_Trigger         =>   (Tag_Array(i_Tag0)(i_Tag_Trigger)),    --+ 
-    AWIn1                 =>    AWIn1,                 -- Input-Reg. AWIn1  
-    AWIn2                 =>    AWIn2,                 -- Input-Reg. AWIn2  
-    AWIn3                 =>    AWIn3,                 -- Input-Reg. AWIn3  
-    AWIn4                 =>    AWIn4,                 -- Input-Reg. AWIn4  
-    AWIn5                 =>    AWIn5,                 -- Input-Reg. AWIn5  
-    AWIn6                 =>    AWIn6,                 -- Input-Reg. AWIn6  
-    AWIn7                 =>    AWIn7,                 -- Input-Reg. AWIn7  
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,      -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,       -- Maximale AWIn-Reg-Nummer der Anwendung
-    Spare0_Strobe         =>    Spare0_Strobe,         -- 
-    Spare1_Strobe         =>    Spare1_Strobe,         -- 
+    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,             -- Input-Reg. SCU_AW_Input_Reg
+    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
+    Spare0_Strobe         =>    Spare0_Strobe,            -- 
+    Spare1_Strobe         =>    Spare1_Strobe,            -- 
       
     Tag_n_Reg_Nr          =>    Tag0_Reg_Nr,              -- AWOut-Reg-Pointer 
     Tag_n_New_AWOut_Data  =>    Tag0_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
@@ -685,21 +660,15 @@ port map  (
     Tag_n_Puls_Width      =>   (Tag_Array(i_Tag1)(i_Tag_Puls_Width)),  --| 
     Tag_n_Prescale        =>   (Tag_Array(i_Tag1)(i_Tag_Prescale)),    --| 
     Tag_n_Trigger         =>   (Tag_Array(i_Tag1)(i_Tag_Trigger)),    --+ 
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,      -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,       -- Maximale AWIn-Reg-Nummer der Anwendung
-    AWIn1                 =>    AWIn1,                 -- Input-Reg. AWIn1  
-    AWIn2                 =>    AWIn2,                 -- Input-Reg. AWIn2  
-    AWIn3                 =>    AWIn3,                 -- Input-Reg. AWIn3  
-    AWIn4                 =>    AWIn4,                 -- Input-Reg. AWIn4  
-    AWIn5                 =>    AWIn5,                 -- Input-Reg. AWIn5  
-    AWIn6                 =>    AWIn6,                 -- Input-Reg. AWIn6  
-    AWIn7                 =>    AWIn7,                 -- Input-Reg. AWIn7  
-    Spare0_Strobe         =>    Spare0_Strobe,         -- 
-    Spare1_Strobe         =>    Spare1_Strobe,         -- 
+    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
+    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,             -- Input-Reg. SCU_AW_Input_Reg
+    Spare0_Strobe         =>    Spare0_Strobe,            -- 
+    Spare1_Strobe         =>    Spare1_Strobe,            -- 
       
-    Tag_n_Reg_Nr          =>    Tag1_Reg_Nr,          -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag1_New_AWOut_Data,  -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag1_New_Data,        -- Copy der AWOut-Register  
+    Tag_n_Reg_Nr          =>    Tag1_Reg_Nr,              -- AWOut-Reg-Pointer 
+    Tag_n_New_AWOut_Data  =>    Tag1_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
+    Tag_n_New_Data        =>    Tag1_New_Data,            -- Copy der AWOut-Register  
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(1),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(1),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(1),        -- Config-Error: Trig-Reg
@@ -724,21 +693,15 @@ port map  (
     Tag_n_Puls_Width      =>   (Tag_Array(i_Tag2)(i_Tag_Puls_Width)),  --| 
     Tag_n_Prescale        =>   (Tag_Array(i_Tag2)(i_Tag_Prescale)),    --| 
     Tag_n_Trigger         =>   (Tag_Array(i_Tag2)(i_Tag_Trigger)),    --+ 
-    AWIn1                 =>    AWIn1,                 -- Input-Reg. AWIn1  
-    AWIn2                 =>    AWIn2,                 -- Input-Reg. AWIn2  
-    AWIn3                 =>    AWIn3,                 -- Input-Reg. AWIn3  
-    AWIn4                 =>    AWIn4,                 -- Input-Reg. AWIn4  
-    AWIn5                 =>    AWIn5,                 -- Input-Reg. AWIn5  
-    AWIn6                 =>    AWIn6,                 -- Input-Reg. AWIn6  
-    AWIn7                 =>    AWIn7,                 -- Input-Reg. AWIn7  
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,      -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,       -- Maximale AWIn-Reg-Nummer der Anwendung
-    Spare0_Strobe         =>    Spare0_Strobe,         -- 
-    Spare1_Strobe         =>    Spare1_Strobe,         -- 
-      
-    Tag_n_Reg_Nr          =>    Tag2_Reg_Nr,          -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag2_New_AWOut_Data,  -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag2_New_Data,        -- Copy der AWOut-Register  
+    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,         -- Input-Reg. SCU_AW_Input_Reg
+    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
+    Spare0_Strobe         =>    Spare0_Strobe,            -- 
+    Spare1_Strobe         =>    Spare1_Strobe,            -- 
+          
+    Tag_n_Reg_Nr          =>    Tag2_Reg_Nr,              -- AWOut-Reg-Pointer 
+    Tag_n_New_AWOut_Data  =>    Tag2_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
+    Tag_n_New_Data        =>    Tag2_New_Data,            -- Copy der AWOut-Register  
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(2),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(2),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(2),        -- Config-Error: Trig-Reg
@@ -763,21 +726,15 @@ port map  (
     Tag_n_Puls_Width      =>   (Tag_Array(i_Tag3)(i_Tag_Puls_Width)),  --| 
     Tag_n_Prescale        =>   (Tag_Array(i_Tag3)(i_Tag_Prescale)),    --| 
     Tag_n_Trigger         =>   (Tag_Array(i_Tag3)(i_Tag_Trigger)),    --+ 
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,      -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,       -- Maximale AWIn-Reg-Nummer der Anwendung
-    AWIn1                 =>    AWIn1,                 -- Input-Reg. AWIn1  
-    AWIn2                 =>    AWIn2,                 -- Input-Reg. AWIn2  
-    AWIn3                 =>    AWIn3,                 -- Input-Reg. AWIn3  
-    AWIn4                 =>    AWIn4,                 -- Input-Reg. AWIn4  
-    AWIn5                 =>    AWIn5,                 -- Input-Reg. AWIn5  
-    AWIn6                 =>    AWIn6,                 -- Input-Reg. AWIn6  
-    AWIn7                 =>    AWIn7,                 -- Input-Reg. AWIn7  
-    Spare0_Strobe         =>    Spare0_Strobe,         -- 
-    Spare1_Strobe         =>    Spare1_Strobe,         -- 
+    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
+    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,         -- Input-Reg. SCU_AW_Input_Reg
+    Spare0_Strobe         =>    Spare0_Strobe,            -- 
+    Spare1_Strobe         =>    Spare1_Strobe,            -- 
       
-    Tag_n_Reg_Nr          =>    Tag3_Reg_Nr,          -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag3_New_AWOut_Data,  -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag3_New_Data,        -- Copy der AWOut-Register  
+    Tag_n_Reg_Nr          =>    Tag3_Reg_Nr,              -- AWOut-Reg-Pointer 
+    Tag_n_New_AWOut_Data  =>    Tag3_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
+    Tag_n_New_Data        =>    Tag3_New_Data,            -- Copy der AWOut-Register  
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(3),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(3),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(3),        -- Config-Error: Trig-Reg
@@ -802,13 +759,7 @@ port map  (
     Tag_n_Puls_Width      =>   (Tag_Array(i_Tag4)(i_Tag_Puls_Width)),  --| 
     Tag_n_Prescale        =>   (Tag_Array(i_Tag4)(i_Tag_Prescale)),    --| 
     Tag_n_Trigger         =>   (Tag_Array(i_Tag4)(i_Tag_Trigger)),    --+ 
-    AWIn1                 =>    AWIn1,                 -- Input-Reg. AWIn1  
-    AWIn2                 =>    AWIn2,                 -- Input-Reg. AWIn2  
-    AWIn3                 =>    AWIn3,                 -- Input-Reg. AWIn3  
-    AWIn4                 =>    AWIn4,                 -- Input-Reg. AWIn4  
-    AWIn5                 =>    AWIn5,                 -- Input-Reg. AWIn5  
-    AWIn6                 =>    AWIn6,                 -- Input-Reg. AWIn6  
-    AWIn7                 =>    AWIn7,                 -- Input-Reg. AWIn7  
+    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,          -- Input-Reg. SCU_AW_Input_Reg
     Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,      -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,       -- Maximale AWIn-Reg-Nummer der Anwendung
     Spare0_Strobe         =>    Spare0_Strobe,         -- 
@@ -841,21 +792,15 @@ port map  (
     Tag_n_Puls_Width      =>   (Tag_Array(i_Tag5)(i_Tag_Puls_Width)),  --| 
     Tag_n_Prescale        =>   (Tag_Array(i_Tag5)(i_Tag_Prescale)),    --| 
     Tag_n_Trigger         =>   (Tag_Array(i_Tag5)(i_Tag_Trigger)),    --+ 
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,      -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,       -- Maximale AWIn-Reg-Nummer der Anwendung
-    AWIn1                 =>    AWIn1,                 -- Input-Reg. AWIn1  
-    AWIn2                 =>    AWIn2,                 -- Input-Reg. AWIn2  
-    AWIn3                 =>    AWIn3,                 -- Input-Reg. AWIn3  
-    AWIn4                 =>    AWIn4,                 -- Input-Reg. AWIn4  
-    AWIn5                 =>    AWIn5,                 -- Input-Reg. AWIn5  
-    AWIn6                 =>    AWIn6,                 -- Input-Reg. AWIn6  
-    AWIn7                 =>    AWIn7,                 -- Input-Reg. AWIn7  
-    Spare0_Strobe         =>    Spare0_Strobe,         -- 
-    Spare1_Strobe         =>    Spare1_Strobe,         -- 
-      
-    Tag_n_Reg_Nr          =>    Tag5_Reg_Nr,          -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag5_New_AWOut_Data,  -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag5_New_Data,        -- Copy der AWOut-Register  
+    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
+    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,             -- Input-Reg. SCU_AW_Input_Reg
+    Spare0_Strobe         =>    Spare0_Strobe,            -- 
+    Spare1_Strobe         =>    Spare1_Strobe,            -- 
+          
+    Tag_n_Reg_Nr          =>    Tag5_Reg_Nr,              -- AWOut-Reg-Pointer 
+    Tag_n_New_AWOut_Data  =>    Tag5_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
+    Tag_n_New_Data        =>    Tag5_New_Data,            -- Copy der AWOut-Register  
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(5),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(5),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(5),        -- Config-Error: Trig-Reg
@@ -880,21 +825,15 @@ port map  (
     Tag_n_Puls_Width      =>   (Tag_Array(i_Tag6)(i_Tag_Puls_Width)),  --| 
     Tag_n_Prescale        =>   (Tag_Array(i_Tag6)(i_Tag_Prescale)),    --| 
     Tag_n_Trigger         =>   (Tag_Array(i_Tag6)(i_Tag_Trigger)),    --+ 
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,      -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,       -- Maximale AWIn-Reg-Nummer der Anwendung
-    AWIn1                 =>    AWIn1,                 -- Input-Reg. AWIn1  
-    AWIn2                 =>    AWIn2,                 -- Input-Reg. AWIn2  
-    AWIn3                 =>    AWIn3,                 -- Input-Reg. AWIn3  
-    AWIn4                 =>    AWIn4,                 -- Input-Reg. AWIn4  
-    AWIn5                 =>    AWIn5,                 -- Input-Reg. AWIn5  
-    AWIn6                 =>    AWIn6,                 -- Input-Reg. AWIn6  
-    AWIn7                 =>    AWIn7,                 -- Input-Reg. AWIn7  
-    Spare0_Strobe         =>    Spare0_Strobe,         -- 
-    Spare1_Strobe         =>    Spare1_Strobe,         -- 
-      
-    Tag_n_Reg_Nr          =>    Tag6_Reg_Nr,          -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag6_New_AWOut_Data,  -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag6_New_Data,        -- Copy der AWOut-Register  
+    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
+    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,         -- Input-Reg. SCU_AW_Input_Reg
+    Spare0_Strobe         =>    Spare0_Strobe,            -- 
+    Spare1_Strobe         =>    Spare1_Strobe,            -- 
+          
+    Tag_n_Reg_Nr          =>    Tag6_Reg_Nr,              -- AWOut-Reg-Pointer 
+    Tag_n_New_AWOut_Data  =>    Tag6_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
+    Tag_n_New_Data        =>    Tag6_New_Data,            -- Copy der AWOut-Register  
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(6),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(6),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(6),        -- Config-Error: Trig-Reg
@@ -919,21 +858,15 @@ port map  (
     Tag_n_Puls_Width      =>   (Tag_Array(i_Tag7)(i_Tag_Puls_Width)),  --| 
     Tag_n_Prescale        =>   (Tag_Array(i_Tag7)(i_Tag_Prescale)),    --| 
     Tag_n_Trigger         =>   (Tag_Array(i_Tag7)(i_Tag_Trigger)),    --+ 
-    AWIn1                 =>    AWIn1,                 -- Input-Reg. AWIn1  
-    AWIn2                 =>    AWIn2,                 -- Input-Reg. AWIn2  
-    AWIn3                 =>    AWIn3,                 -- Input-Reg. AWIn3  
-    AWIn4                 =>    AWIn4,                 -- Input-Reg. AWIn4  
-    AWIn5                 =>    AWIn5,                 -- Input-Reg. AWIn5  
-    AWIn6                 =>    AWIn6,                 -- Input-Reg. AWIn6  
-    AWIn7                 =>    AWIn7,                 -- Input-Reg. AWIn7  
-    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,      -- Maximale AWOut-Reg-Nummer der Anwendung
-    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,       -- Maximale AWIn-Reg-Nummer der Anwendung
-    Spare0_Strobe         =>    Spare0_Strobe,         -- 
-    Spare1_Strobe         =>    Spare1_Strobe,         -- 
-      
-    Tag_n_Reg_Nr          =>    Tag7_Reg_Nr,          -- AWOut-Reg-Pointer 
-    Tag_n_New_AWOut_Data  =>    Tag7_New_AWOut_Data,  -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag7_New_Data,        -- Copy der AWOut-Register  
+    SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,         -- Input-Reg. SCU_AW_Input_Reg
+    Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
+    Spare0_Strobe         =>    Spare0_Strobe,            -- 
+    Spare1_Strobe         =>    Spare1_Strobe,            -- 
+          
+    Tag_n_Reg_Nr          =>    Tag7_Reg_Nr,              -- AWOut-Reg-Pointer 
+    Tag_n_New_AWOut_Data  =>    Tag7_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
+    Tag_n_New_Data        =>    Tag7_New_Data,            -- Copy der AWOut-Register  
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(7),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(7),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(7),        -- Config-Error: Trig-Reg
@@ -1196,26 +1129,10 @@ Tag_Sts      <= (x"00"              &
 
 
                 
-Tag_Aktiv         <=    s_Tag_Aktiv;     -- Flag: Bit7 = Tag7 (aktiv) --- Bit0 = Tag0 (aktiv)
-                       
-                              
-Tag_Reg1_Maske    <=    Sum_Reg_MSK(1);  -- Tag-Output-Maske für Register 1
-Tag_Reg2_Maske    <=    Sum_Reg_MSK(2);  -- Tag-Output-Maske für Register 2
-Tag_Reg3_Maske    <=    Sum_Reg_MSK(3);  -- Tag-Output-Maske für Register 3
-Tag_Reg4_Maske    <=    Sum_Reg_MSK(4);  -- Tag-Output-Maske für Register 4
-Tag_Reg5_Maske    <=    Sum_Reg_MSK(5);  -- Tag-Output-Maske für Register 5
-Tag_Reg6_Maske    <=    Sum_Reg_MSK(6);  -- Tag-Output-Maske für Register 6
-Tag_Reg7_Maske    <=    Sum_Reg_MSK(7);  -- Tag-Output-Maske für Register 7
-  
-Tag_Outp_Reg1     <=    Tag_Out_Reg_Array(1);  -- Tag-Output-Register 1
-Tag_Outp_Reg2     <=    Tag_Out_Reg_Array(2);  -- Tag-Output-Register 2
-Tag_Outp_Reg3     <=    Tag_Out_Reg_Array(3);  -- Tag-Output-Register 3
-Tag_Outp_Reg4     <=    Tag_Out_Reg_Array(4);  -- Tag-Output-Register 4
-Tag_Outp_Reg5     <=    Tag_Out_Reg_Array(5);  -- Tag-Output-Register 5
-Tag_Outp_Reg6     <=    Tag_Out_Reg_Array(6);  -- Tag-Output-Register 6
-Tag_Outp_Reg7     <=    Tag_Out_Reg_Array(7);  -- Tag-Output-Register 7
-
-Tag_FG_Start      <=    s_Tag_FG_Start;        -- Start-Puls für den FG
+Tag_Aktiv        <=    s_Tag_Aktiv;       -- Flag: Bit7 = Tag7 (aktiv) --- Bit0 = Tag0 (aktiv)
+Tag_Maske_Reg    <=    Sum_Reg_MSK;       -- Tag-Output-Maske für Register 1-7
+Tag_Outp_Reg     <=    Tag_Out_Reg_Array; -- Tag-Output-Register 1-7
+Tag_FG_Start     <=    s_Tag_FG_Start;    -- Start-Puls für den FG
   
 Dtack_to_SCUB <= S_Dtack;
 Data_to_SCUB <= S_Read_Port;

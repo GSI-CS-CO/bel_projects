@@ -64,6 +64,8 @@ architecture wb_fg_quad_arch of wb_fg_quad is
   
   signal s_msg         : t_wishbone_data_array(0 downto 0);
   signal s_dst         : t_wishbone_address_array(0 downto 0);
+  
+  signal state_change_irq:  std_logic;
 
 
 begin
@@ -168,6 +170,7 @@ begin
       shift_b             => to_integer(unsigned(shift_b_reg(5 downto 0))),
       shift_a             => to_integer(unsigned(shift_a_reg(5 downto 0))),
       freq_sel            => fg_cntrl_reg(15 downto 13),
+      state_change_irq    => state_change_irq,
       dreq                => fg_dreq(0),
       ramp_sec_fin        => ramp_sec_fin,
       sw_out              => sw_out,

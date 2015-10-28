@@ -150,26 +150,33 @@ end process tmr_decoder;
 cntrl_reg: process (clk, nrst, tmr_cntrl_reg, rd_tmr_cntrl, wr_tmr_cntrl, wr_tmr_valuel, wr_tmr_valueh)
   variable reset_cnt: unsigned(1 downto 0) := "00";
 begin
-  if nrst = '0' or tmr_cntrl_reg(0) = '1' then
+  if nrst = '0' then
     tmr_cntrl_reg <= x"0000";
     tmr_valuel_reg <= x"0000";
     tmr_valueh_reg <= x"0000";
     reset_cnt := "00";
   elsif rising_edge(clk) then
-    if wr_tmr_cntrl = '1' then
-      tmr_cntrl_reg <= Data_from_SCUB_LA;
-    elsif wr_tmr_valuel = '1' then
-      tmr_valuel_reg <= Data_from_SCUB_LA;
-    elsif wr_tmr_valueh = '1' then
-      tmr_valueh_reg <= Data_from_SCUB_LA;
-    elsif wr_tmr_repeat = '1' then
-      tmr_repeat_reg <= Data_from_SCUB_LA;
-    elsif  tmr_cntrl_reg(0) = '1' then
-      if reset_cnt < 3 then
-        reset_cnt := reset_cnt + 1;
-      else
-        tmr_cntrl_reg(0) <= '0';
-        reset_cnt := "00";
+    if tmr_cntrl_reg(0) = '1' then
+      tmr_cntrl_reg <= x"0000";
+      tmr_valuel_reg <= x"0000";
+      tmr_valueh_reg <= x"0000";
+      reset_cnt := "00";
+    else
+      if wr_tmr_cntrl = '1' then
+        tmr_cntrl_reg <= Data_from_SCUB_LA;
+      elsif wr_tmr_valuel = '1' then
+        tmr_valuel_reg <= Data_from_SCUB_LA;
+      elsif wr_tmr_valueh = '1' then
+        tmr_valueh_reg <= Data_from_SCUB_LA;
+      elsif wr_tmr_repeat = '1' then
+        tmr_repeat_reg <= Data_from_SCUB_LA;
+      elsif  tmr_cntrl_reg(0) = '1' then
+        if reset_cnt < 3 then
+          reset_cnt := reset_cnt + 1;
+        else
+          tmr_cntrl_reg(0) <= '0';
+          reset_cnt := "00";
+        end if;
       end if;
     end if;
   end if;
@@ -177,16 +184,21 @@ end process;
 
 timer_irq: process (clk, nrst, tmr_cntrl_reg, tmr_valuel_reg, tmr_valueh_reg)
   begin
-    if nrst = '0' or tmr_cntrl_reg(0) = '1' then
-      irqcnt <= '0' & unsigned(tmr_valueh_reg & tmr_valuel_reg);
+    if nrst = '0' then
+      irqcnt <= (others => '0');
       tmr_irq_cnt <= x"0000";
     elsif rising_edge(clk) then
-      if irqcnt(irqcnt'high) = '1' then
-        tmr_irq_cnt <= tmr_irq_cnt + 1; -- increment with every interrupt
+      if tmr_cntrl_reg(0) = '1' then
         irqcnt <= '0' & unsigned(tmr_valueh_reg & tmr_valuel_reg);
-      elsif tmr_cntrl_reg(1) = '1' and tmr_irq_cnt < unsigned(tmr_repeat_reg) then
-        irqcnt <= irqcnt - 1;
-      end if;
+        tmr_irq_cnt <= x"0000";
+      else
+        if irqcnt(irqcnt'high) = '1' then
+          tmr_irq_cnt <= tmr_irq_cnt + 1; -- increment with every interrupt
+          irqcnt <= '0' & unsigned(tmr_valueh_reg & tmr_valuel_reg);
+        elsif tmr_cntrl_reg(1) = '1' and tmr_irq_cnt < unsigned(tmr_repeat_reg) then
+          irqcnt <= irqcnt - 1;
+        end if;
+       end if;
     end if;
   end process;
  

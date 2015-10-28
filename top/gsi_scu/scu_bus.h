@@ -26,6 +26,7 @@
 
 #include "inttypes.h"
 
+
 #define CID_SYS           0x4
 #define CID_GROUP         0x5
 #define SLAVE_VERSION     0x6
@@ -57,10 +58,16 @@
 #define FG_A              0x1
 #define FG_B              0x2
 #define FG_BROAD          0x3
-#define FG_SHIFTA         0x4
-#define FG_SHIFTB         0x5
-#define FG_STARTH         0x6
-#define FG_STARTL         0x7
+#define FG_SHIFT          0x4
+#define FG_STARTH         0x5
+#define FG_STARTL         0x6
+#define FG_RAMP_CNT_LO    0x7
+#define FG_RAMP_CNT_HI    0x8
+#define FG_TAG_LOW        0x9
+#define FG_TAG_HIGH       0xa
+
+#define FG1_IRQ           (1<<15)
+#define FG2_IRQ           (1<<14)
 
 #define WB_FG_CNTRL       0x0
 #define WB_FG_A           0x1
@@ -86,6 +93,7 @@
 #define MULTICAST_ACC     0x8
 #define MAX_SCU_SLAVES    12
 
+#define SYS_LOEP    3
 #define SYS_CSCO    55
 #define SYS_PBRF    42
 
@@ -93,6 +101,7 @@
 #define GRP_ADDAC2  38
 #define GRP_DIOB    26
 #define GRP_FIB_DDS 1
+#define GRP_MFU     2
 
 
 extern struct w1_bus wrpc_w1_bus;

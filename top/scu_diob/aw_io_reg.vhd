@@ -6,6 +6,11 @@ USE IEEE.std_logic_1164.all;
 USE IEEE.numeric_std.all;
 --USE IEEE.std_logic_arith.all;
 
+library work;
+use work.scu_diob_pkg.all;
+
+
+
 ENTITY aw_io_reg IS
   generic
       (
@@ -21,23 +26,11 @@ ENTITY aw_io_reg IS
     Ext_Wr_active:        in   std_logic;                        -- '1' => Wr-Cycle is active
     Ext_Wr_fin:           in   std_logic;                        -- marks end of write cycle, active one for one clock period of sys_clk
     clk:                  in   std_logic;                        -- should be the same clk, used by SCU_Bus_Slave
+    Ena_every_1us:        in   std_logic;                        -- Clock-Enable-Puls alle Mikrosekunde, 1 Clock breit
     nReset:               in   std_logic;
 
-    AWIn1:                in   std_logic_vector(15 downto 0);    -- Input-Port 1
-    AWIn2:                in   std_logic_vector(15 downto 0);    -- Input-Port 2
-    AWIn3:                in   std_logic_vector(15 downto 0);    -- Input-Port 3
-    AWIn4:                in   std_logic_vector(15 downto 0);    -- Input-Port 4
-    AWIn5:                in   std_logic_vector(15 downto 0);    -- Input-Port 5
-    AWIn6:                in   std_logic_vector(15 downto 0);    -- Input-Port 6
-    AWIn7:                in   std_logic_vector(15 downto 0);    -- Input-Port 7
-   
-    AWOut_Reg1:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut1
-    AWOut_Reg2:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut2
-    AWOut_Reg3:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut3
-    AWOut_Reg4:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut4
-    AWOut_Reg5:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut5
-    AWOut_Reg6:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut6
-    AWOut_Reg7:           out  std_logic_vector(15 downto 0);    -- Daten-Reg. AWOut7
+    SCU_AW_Input_Reg:     in   t_IO_Reg_1_to_7_Array;    
+    SCU_AW_Output_Reg:    out  t_IO_Reg_1_to_7_Array;
 
     AWOut_Reg1_wr:        out  std_logic;                      -- Daten-Reg. AWOut1
     AWOut_Reg2_wr:        out  std_logic;                      -- Daten-Reg. AWOut2
@@ -58,10 +51,12 @@ ENTITY aw_io_reg IS
 ARCHITECTURE Arch_aw_io_reg OF aw_io_reg IS
 
 
-  constant  Clk_in_ns:     integer := 1000000000 /  clk_sys_in_Hz;      -- (=8ns,    bei 125MHz)
-  constant  C_Strobe_1us:  integer := 1000 / Clk_in_ns;                 -- Anzahl der Clocks für 1us
+  constant  Clk_in_ns:            integer := 1000000000 /  clk_sys_in_Hz;      -- (=8ns,    bei 125MHz)
+  constant  C_Strobe_1us:         integer := 1000  / Clk_in_ns;                -- Anzahl der Clocks für 1us
+	CONSTANT	c_Ena_every_1us_cnt:  INTEGER	:= 1000  / CLK_in_ns;
+  constant  C_Loop_cnt_10us:      integer := 10;                               -- Anzahl der Counts für 10us
 
-
+  
 COMPONENT flanke
 	PORT
 	(
@@ -78,12 +73,13 @@ END COMPONENT;
 COMPONENT outpuls
 	PORT
 	(
-		nReset		  :	 IN STD_LOGIC;
-		clk		      :	 IN STD_LOGIC;
-		Start		    :	 IN STD_LOGIC;
-		Base_cnt		:	 IN INTEGER RANGE 0 TO 255;
-		Mult_cnt		:	 IN INTEGER RANGE 0 TO 65535;
-		Sign_Out		:	 OUT STD_LOGIC
+		nReset		    :	 IN STD_LOGIC;
+		clk		        :	 IN STD_LOGIC;
+		Start		      :	 IN STD_LOGIC;
+    cnt_ena       :  IN STD_LOGIC;              -- Enable für die Basis_Verzögerungszeit
+		Base_cnt		  :	 IN INTEGER RANGE 0 TO 15;
+		Mult_cnt		  :	 IN INTEGER RANGE 0 TO 65535;
+		Sign_Out		  :	 OUT STD_LOGIC
 	);
 END COMPONENT;
 
@@ -231,6 +227,7 @@ signal    s_AWIn2_Strobe_Flanke:  std_logic_vector(15 downto 0);  -- Output-Sign
 
 
 signal    S_Str_AWOut_Reg_1: std_logic;
+signal  	s_every_1us:       STD_LOGIC;
 
 TYPE   t_Integer_Array     is array (0 to 15) of integer range 0 to 65535;
 
@@ -665,13 +662,14 @@ P_AWOut_Reg:  process (nReset, clk,
                         S_AWOut_Reg_5_Rd,  S_AWOut_Reg_5,
                         S_AWOut_Reg_6_Rd,  S_AWOut_Reg_6,
                         S_AWOut_Reg_7_Rd,  S_AWOut_Reg_7,
-                        S_AWIn1_Rd,        AWIn1,
-                        S_AWIn2_Rd,        AWIn2,
-                        S_AWIn3_Rd,        AWIn3,
-                        S_AWIn4_Rd,        AWIn4,
-                        S_AWIn5_Rd,        AWIn5,
-                        S_AWIn6_Rd,        AWIn6,
-                        S_AWIn7_Rd,        AWIn7,
+                        S_AWIn1_Rd,        
+                        S_AWIn2_Rd,        
+                        S_AWIn3_Rd,        
+                        S_AWIn4_Rd,        
+                        S_AWIn5_Rd,        
+                        S_AWIn6_Rd,        
+                        S_AWIn7_Rd,        
+                        SCU_AW_Input_Reg,
                         S_AW_Reg1_Msk_Rd,  S_AW_Reg1_Msk,      ----+-- Pulse an den Outputs von AWOut_Reg_1       
                         S_AW_Reg1_PW1_Rd,  S_AW_Reg1_PW1,      --  |   
                         S_AW_Reg1_PW2_Rd,  S_AW_Reg1_PW2,      --  |                
@@ -693,13 +691,13 @@ P_AWOut_Reg:  process (nReset, clk,
     elsif S_AWOut_Reg_6_Rd = '1' then  S_Read_port <= S_AWOut_Reg_6;
     elsif S_AWOut_Reg_7_Rd = '1' then  S_Read_port <= S_AWOut_Reg_7;
 
-    elsif S_AWIn1_Rd = '1' then  S_Read_port <= AWIn1;    -- read Input-Port1
-    elsif S_AWIn2_Rd = '1' then  S_Read_port <= AWIn2;
-    elsif S_AWIn3_Rd = '1' then  S_Read_port <= AWIn3;
-    elsif S_AWIn4_Rd = '1' then  S_Read_port <= AWIn4;
-    elsif S_AWIn5_Rd = '1' then  S_Read_port <= AWIn5;
-    elsif S_AWIn6_Rd = '1' then  S_Read_port <= AWIn6;
-    elsif S_AWIn7_Rd = '1' then  S_Read_port <= AWIn7;
+    elsif S_AWIn1_Rd = '1' then  S_Read_port <= SCU_AW_Input_Reg(1);    -- read Input-Port1
+    elsif S_AWIn2_Rd = '1' then  S_Read_port <= SCU_AW_Input_Reg(2);
+    elsif S_AWIn3_Rd = '1' then  S_Read_port <= SCU_AW_Input_Reg(3);
+    elsif S_AWIn4_Rd = '1' then  S_Read_port <= SCU_AW_Input_Reg(4);
+    elsif S_AWIn5_Rd = '1' then  S_Read_port <= SCU_AW_Input_Reg(5);
+    elsif S_AWIn6_Rd = '1' then  S_Read_port <= SCU_AW_Input_Reg(6);
+    elsif S_AWIn7_Rd = '1' then  S_Read_port <= SCU_AW_Input_Reg(7);
     
     elsif S_AW_Reg1_Msk_Rd = '1' then  S_Read_port <= S_AW_Reg1_Msk;    ----+-- Pulse an den Outputs von AWOut_Reg_1
     elsif S_AW_Reg1_PW1_Rd = '1' then  S_Read_port <= S_AW_Reg1_PW1;    --  |   
@@ -772,35 +770,24 @@ P_AWOut_Puls:  process (nReset, clk, S_AWOut_Reg_1_Wr, Data_from_SCUB_LA, Ext_Wr
   end process P_AWOut_Puls;
   
 
+
 -------------- Übergabe der Zälerstände für die Outputpulsbreite -----------------------------------
 
+
 Puls_Reg1: for I in 0 to 15 generate 
-   Puls_n: outpuls port map(nReset => nReset, CLK => CLK, Start => S_AW_Reg1_Puls_in(i), Base_cnt => C_Strobe_1us,
-                            Mult_cnt => S_Mult_cnt_Reg1(i), Sign_Out => S_AW_Reg1_Puls_out(i));
+   Puls_n: outpuls port map(nReset => nReset, CLK => CLK, Cnt_ena => Ena_every_1us, Start => S_AW_Reg1_Puls_in(i),
+                            Base_cnt => C_Loop_cnt_10us, Mult_cnt => S_Mult_cnt_Reg1(i), Sign_Out => S_AW_Reg1_Puls_out(i));
   end generate Puls_Reg1;
   
   
---------- Multiplexer für das AWOut_Reg1 --------------------
-
-p_AW_Out_Mux:  PROCESS (S_AW_Reg1_Msk, S_AWOut_Reg_1, S_AW_Reg1_Puls_out) 
-    BEGin
-    for i in 0 to 15 loop
-      IF  S_AW_Reg1_Msk(i)  = '0' then AWOut_Reg1(i)  <= S_AWOut_Reg_1(i);
-      else                             AWOut_Reg1(i)  <= S_AW_Reg1_Puls_out(i);
-      end if;
-  end loop;  
-END PROCESS p_AW_Out_Mux;
-
-
-
 -------------------  Flakendetektor für AWIn1 und AWIn2--------------------
 
 Flanke_Reg1: for I in 0 to 15 generate 
-   Reg1_n: flanke port map(nReset => nReset, CLK => CLK, Sign_In => AWIn1(i), Pegel => S_AWIn1_Level(i), Strobe_out => s_AWIn1_Strobe_Flanke(i));
+   Reg1_n: flanke port map(nReset => nReset, CLK => CLK, Sign_In => SCU_AW_Input_Reg(1)(i), Pegel => S_AWIn1_Level(i), Strobe_out => s_AWIn1_Strobe_Flanke(i));
   end generate Flanke_Reg1;
 
 Flanke_Reg2: for I in 0 to 15 generate 
-   Reg2_n: flanke port map(nReset => nReset, CLK => CLK, Sign_In => AWIn2(i), Pegel => S_AWIn2_Level(i), Strobe_out => s_AWIn2_Strobe_Flanke(i));
+   Reg2_n: flanke port map(nReset => nReset, CLK => CLK, Sign_In => SCU_AW_Input_Reg(2)(i), Pegel => S_AWIn2_Level(i), Strobe_out => s_AWIn2_Strobe_Flanke(i));
   end generate Flanke_Reg2;
 
 
@@ -870,17 +857,31 @@ P_AWIn2_Store:  process (clk, nReset)
 
   end process P_AWIn2_Store;
 
+  
+  
+--------- Multiplexer für das SCU_AW_Output_Reg(1) --------------------
+
+p_AW_Out_Mux:  PROCESS (S_AW_Reg1_Msk, S_AWOut_Reg_1, S_AW_Reg1_Puls_out) 
+    BEGin
+    for i in 0 to 15 loop
+      IF  S_AW_Reg1_Msk(i)  = '0' then SCU_AW_Output_Reg(1)(i)  <= S_AWOut_Reg_1(i);
+      else                             SCU_AW_Output_Reg(1)(i)  <= S_AW_Reg1_Puls_out(i);
+      end if;
+  end loop;  
+END PROCESS p_AW_Out_Mux;
 
   
 ---------------------- Outputs --------------------------------------------------
 
---AWOut_Reg1      <=  S_AWOut_Reg_1;     -- Daten-Reg. AWOut1
-AWOut_Reg2      <=  S_AWOut_Reg_2;     -- Daten-Reg. AWOut2
-AWOut_Reg3      <=  S_AWOut_Reg_3;     -- Daten-Reg. AWOut3
-AWOut_Reg4      <=  S_AWOut_Reg_4;     -- Daten-Reg. AWOut4
-AWOut_Reg5      <=  S_AWOut_Reg_5;     -- Daten-Reg. AWOut5
-AWOut_Reg6      <=  S_AWOut_Reg_6;     -- Daten-Reg. AWOut6
-AWOut_Reg7      <=  S_AWOut_Reg_7;     -- Daten-Reg. AWOut7
+--SCU_AW_Output_Reg(1)      <=  S_AWOut_Reg_1;     -- Daten-Reg. AWOut1
+SCU_AW_Output_Reg(2)      <=  S_AWOut_Reg_2;     -- Daten-Reg. AWOut2
+SCU_AW_Output_Reg(3)      <=  S_AWOut_Reg_3;     -- Daten-Reg. AWOut3
+SCU_AW_Output_Reg(4)      <=  S_AWOut_Reg_4;     -- Daten-Reg. AWOut4
+SCU_AW_Output_Reg(5)      <=  S_AWOut_Reg_5;     -- Daten-Reg. AWOut5
+SCU_AW_Output_Reg(6)      <=  S_AWOut_Reg_6;     -- Daten-Reg. AWOut6
+SCU_AW_Output_Reg(7)      <=  S_AWOut_Reg_7;     -- Daten-Reg. AWOut7
+
+
 
 AWOut_Reg1_wr   <=  S_AWOut_Reg_1_wr;  -- Daten-Reg. AWOut1
 AWOut_Reg2_wr   <=  S_AWOut_Reg_2_wr;  -- Daten-Reg. AWOut2
