@@ -50,6 +50,7 @@ component fg_quad_scu_bus is
     nReset:             in    std_logic;
     tag:                in    std_logic_vector(31 downto 0);  -- 32Bit tag from timing 
     tag_valid:          in    std_logic;                      -- tag valid
+    ext_trigger:        in    std_logic;                      -- external trigger for ramp start
     Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Dtack:              out   std_logic;                      -- connect Dtack to SCUB-Macro
     -- fg_quad

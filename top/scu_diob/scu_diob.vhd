@@ -1612,9 +1612,10 @@ fg_1: fg_quad_scu_bus
     irq               => FG_1_dreq,             -- request of new parameter set
     tag               => Timing_Pattern_LA,     -- 
     tag_valid         => Timing_Pattern_RCV,    --
+    ext_trigger       => Tag_FG_Start,          -- starts the ramping by external signal
 
     -- fg output
-    sw_out            => FG_1_sw,               -- 24bit output from fg
+    sw_out            => FG_1_sw,               -- 32bit output from fg
     sw_strobe         => FG_1_strobe            -- signals new output data
   );
 
@@ -1639,10 +1640,11 @@ fg_2: fg_quad_scu_bus
     Dtack             => FG_2_dtack,            -- connect Dtack to SCUB-Macro
     irq               => FG_2_dreq,             -- request of new parameter set
     tag               => Timing_Pattern_LA,     --   
-    tag_valid         => Timing_Pattern_RCV,    --      
+    tag_valid         => Timing_Pattern_RCV,    --
+    ext_trigger       => Tag_FG_Start,          -- starts the ramping by external signal
 
     -- fg output
-    sw_out            => FG_2_sw,               -- 24bit output from fg
+    sw_out            => FG_2_sw,               -- 32bit output from fg
     sw_strobe         => FG_2_strobe            -- signals new output data
   );
 

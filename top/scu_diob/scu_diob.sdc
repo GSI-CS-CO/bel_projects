@@ -9,7 +9,3 @@ set_clock_groups -asynchronous                           \
  -group {diob_clk_switch|local_clk|altpll_component|auto_generated|pll1|clk[0]}\
  -group {diob_clk_switch|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[0]}\
  -group {diob_clk_switch|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[0]~1}
- 
-
-
-
