@@ -114,7 +114,7 @@ begin
   asmi: altasmi
     port map (
      addr         => s_addr,
-     clkin        => clk_sys_i,
+     clkin        => not clk_sys_i,
      rden         => s_rden,
      read         => s_read,
      read_rdid	  => s_read_rdid,
