@@ -139,8 +139,8 @@ int main(void)
         // start address of page
         addr = *(volatile int*)(scu_reg + ASMI_PARAM);
         // read 256 bytes from flash
-        for(i = 0; i < 256; i++)
-          *(char*)(scu_reg + ASMI_BUFFER + i) = *(char*)(asmi_base + ((i + addr) << 4));
+ /*FIXME*/       //for(i = 0; i < 256; i++)
+        //  *(char*)(scu_reg + ASMI_BUFFER + i) = *(char*)(asmi_base + ((i + addr) << 4));
         // signal end of operation 
         *(volatile int*)(scu_reg + ASMI_CMD) = DONE;
       break;
