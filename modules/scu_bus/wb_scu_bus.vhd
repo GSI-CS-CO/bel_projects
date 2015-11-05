@@ -435,6 +435,9 @@ begin
             s_adr <= adr;
           end if;
           s_slave_nr <= slave_nr;
+          if Wr = '1' then
+            S_Wr_Data <= Wr_Data;                                   -- register data
+          end if;
           s_stall <= '1';                                           -- no pipelining
           if tag_fifo_empty = '1' and SCUB_SM = idle then           -- no active or planned timing cycle
             wb_state <= cyc_start;
@@ -456,7 +459,7 @@ begin
           elsif s_slave_nr >= x"1" and s_slave_nr <= x"c" then    -- external bus access
             if Wr = '1' then
               S_Start_SCUB_Wr <= '1';                             -- store write request
-              S_Wr_Data <= Wr_Data;                               -- store write pattern
+              --S_Wr_Data <= Wr_Data;                               -- store write pattern
             elsif Rd = '1' then
               S_Start_SCUB_Rd <= '1';                             -- store read request
             end if;
@@ -464,7 +467,7 @@ begin
           elsif s_slave_nr = c_multicast_slave_acc then
             if Wr = '1' then
               S_Start_SCUB_Wr <= '1';                             -- store write request
-              S_Wr_Data <= Wr_Data;                               -- store write pattern
+              --S_Wr_Data <= Wr_Data;                               -- store write pattern
               S_Multi_Wr_Flag <= '1';                             -- signal multicast write
               wb_state <= ext_stall;                              -- multicast read not allowed
             else
