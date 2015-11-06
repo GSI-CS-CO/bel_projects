@@ -71,24 +71,24 @@ fi
 
 # Try to login
 echo "Trying to log in..."
-auto_transmit "C_LOGON ${PASSWORD}"
+auto_exchange_flow_control "C_LOGON ${PASSWORD}"
 
 # Try to reserve our resources
-auto_transmit "C_OWNER ${OWNER}"
+auto_exchange_flow_control "C_OWNER ${OWNER}"
 
 # Set the timeout 
-auto_transmit "C_TIMEOUT ${TIMEOUT}"
+auto_exchange_flow_control "C_TIMEOUT ${TIMEOUT}"
 
 # Parse the given script here
 while read line
 do
-  auto_transmit $line
+  auto_exchange_flow_control $line
 done < $FILE
 
 # Wait for further messages or SIGINT
 while [ ${TERMINATE_APP} -eq 0 ]
 do
-  auto_transmit
+  auto_exchange_flow_control
 done
 
 # Close file handle 3

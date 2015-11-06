@@ -15,4 +15,3 @@ USERNAME=$(whoami)
 # Define password and owner
 PASSWORD='"xena"'  # Must be in double quotes
 OWNER='"BASHTEST"' # Must be in double quotes
-

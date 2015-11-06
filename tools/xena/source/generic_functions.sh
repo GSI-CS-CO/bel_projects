@@ -1,5 +1,35 @@
 #!/bin/bash
 
+# Global flags
+flag_found_constant=0      # C_xxx
+flag_found_wait=0          # WAIT xxx
+flag_found_filter_term=0   # PM_xxx, PL_xxx, PF_xxx
+flag_found_statistics=0    # PT_xxx, PR_xxx
+flag_found_query=0         # xx_xxx ?
+flag_found_comment=0       # ; xxx xxx xxx
+expected_reply=None        # expected reply
+
+# Clear all global flags
+function clear_flags ()
+{
+  return 0
+}
+
+# Set global flags
+function inspect_command_and_command ()
+{
+  INSPECTION=$*
+  if [[ ${INSPECTION} == *"C_"* ]]
+  then
+    echo "Found CONSTANT in ${INSPECTION}!";
+  fi
+  if [[ ${INSPECTION} == *"WAIT"* ]]
+  then
+    echo "Found WAIT in ${INSPECTION}!";
+  fi
+  return 0
+}
+
 # Write/Send commands
 function write_to_file_handle ()
 {
@@ -24,10 +54,37 @@ function read_from_file_handle ()
   return 0
 }
 
-# Combine write and read functions
-function auto_transmit()
+# Simple command -> reply chain
+function auto_exchange ()
 {
   write_to_file_handle $*
   read_from_file_handle
   return 0
+}
+
+# Exchange date with automatic flow control
+function auto_exchange_flow_control ()
+{
+  inspect_command_and_command $*
+  write_to_file_handle $*
+  read_from_file_handle
+  return 0
+}
+
+# Connect to Xena Chassis
+function telnet_connect ()
+{
+  return 0 # TBD
+}
+
+# Disconnect from Xena Chassis
+function telnet_disconnect ()
+{
+  return 0 # TBD
+}
+
+# Log in to Xena Chassis
+function telnet_login ()
+{
+  return 0 # TBD
 }
