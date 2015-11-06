@@ -60,6 +60,7 @@ void ReadTempDevices(int bus) {
 int main(void)
 {
   int i, j, addr;
+  unsigned char flash_word;
   discoverPeriphery();
   aru_base      = (unsigned int *)find_device_adr(GSI, WB_REMOTE_UPDATE);
   scu_reg       = (unsigned char *)find_device_adr(GSI, WB_SCU_REG);
@@ -117,12 +118,24 @@ int main(void)
 
       case PAGE_WRITE:
         j = 0;
-        /*for(i=0; i < 256; i += j) {
-          mprintf("0x%x: ", i);
-          for(j=0; j<8; j++) {
-            mprintf("0x%x ", *(char*)(scu_reg + ASMI_BUFFER + (i + j)));
-          }
-          mprintf("\n");
+        //check
+        //for(i = 0; i < 256; i++) {
+        //  if (*(char *)(scu_reg + ASMI_BUFFER + i) != i) {
+        //    mprintf("write failed!\n");
+        //  }
+       // }
+          /*  //print buffer
+            for(i=0; i < 256; i += j) {
+              mprintf("0x%x: ", i);
+              for(j=0; j<8; j++) {
+                mprintf("0x%x ", *(char*)(scu_reg + ASMI_BUFFER + (i + j)));
+              }
+              mprintf("\n");
+            }
+        //    // signal error 
+        //    *(volatile int*)(scu_reg + ASMI_CMD) = ERROR;
+        //    break;
+          } 
         } */
         // fill page buffer
         for(i = 0; i < 256; i++)
@@ -138,9 +151,18 @@ int main(void)
       case PAGE_READ:
         // start address of page
         addr = *(volatile int*)(scu_reg + ASMI_PARAM);
+        //mprintf("read from 0x%x\n", addr);   
+        
         // read 256 bytes from flash
- /*FIXME*/       //for(i = 0; i < 256; i++)
-        //  *(char*)(scu_reg + ASMI_BUFFER + i) = *(char*)(asmi_base + ((i + addr) << 4));
+        for(i = 0; i < 256; i++) {
+          flash_word = *(char*)(asmi_base + ((i + addr) << 4));
+          *(char*)(scu_reg + ASMI_BUFFER + i) = flash_word;
+          //mprintf("%d 0x%x ", i, flash_word);
+          //if ((i % 10) == 0)
+          //  mprintf("\n");
+        }
+        //mprintf("\n");
+          
         // signal end of operation 
         *(volatile int*)(scu_reg + ASMI_CMD) = DONE;
       break;

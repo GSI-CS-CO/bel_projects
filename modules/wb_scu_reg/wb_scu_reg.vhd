@@ -35,11 +35,18 @@ architecture wb_scu_reg_arch of wb_scu_reg is
 
   signal rd_active:         std_logic;
   signal dtack:             std_logic;
+  signal rd_active_dly:     std_logic;
+  signal dtack_dly:         std_logic;
   constant scubus_width :   integer := 16;
   constant wishbone_width : integer := 32;
   signal s_adr_a :          std_logic_vector(15 downto 0);
   signal s_scub_sel:        std_logic_vector(3 downto 0);
   signal s_qa_o:            std_logic_vector(31 downto 0);
+  
+  signal wrpulse:           std_logic;
+  signal pulse1:            std_logic;
+  signal pulse2:            std_logic;
+  
   
   
 begin
@@ -53,18 +60,34 @@ begin
                                   s_qa_o(15 downto 0) when '1';
                           
   s_adr_a <= std_logic_vector(unsigned(Adr_from_SCUB_LA) - Base_addr);
+  
+  write_pulse: process(clk_sys_i, Ext_Wr_active, Ext_Adr_Val)
+  begin
+    if rising_edge(clk_sys_i) then
+      if rst_n_i = '0' then
+        pulse1 <= '0';
+        pulse2 <= '0';
+      else
+        pulse1 <= Ext_Wr_active;
+        pulse2 <= pulse1;
+      end if;
+    end if;
+  end process;
 
+  wrpulse <= pulse1 and not pulse2;
+  
   dpram:  generic_dpram
   generic map (
     g_data_width        => 32,
     g_size              => size,
     g_with_byte_enable  => true,
-    g_dual_clock        => false)
+    g_dual_clock        => false,
+    g_addr_conflict_resolution => "read_first")
   port map (
     -- port A
     clka_i  => clk_sys_i,
     bwea_i  => s_scub_sel,  
-    wea_i   => Ext_Wr_active and Ext_Adr_Val,
+    wea_i   => wrpulse and Ext_Adr_Val,
     aa_i    => '0' & s_adr_a(f_log2_size(size)-1 downto 1),
     da_i    => Data_from_SCUB_LA & Data_from_SCUB_LA,
     qa_o    => s_qa_o,
@@ -112,7 +135,16 @@ begin
     end if;
   end process adr_decoder;
   
-  user_rd_active <= rd_active;
-  Dtack_to_SCUB <= dtack;
+  rd_delay: process(clk_sys_i, rd_active, dtack)
+  begin
+    if rising_edge(clk_sys_i) then
+      rd_active_dly <= rd_active;
+      dtack_dly <= dtack;
+    end if;
+  end process;
+  
+  
+  user_rd_active <= rd_active_dly;
+  Dtack_to_SCUB <= dtack_dly;
 
 end architecture;

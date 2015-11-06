@@ -77,13 +77,13 @@ architecture arch of wb_asmi is
   signal  s_write_strobe  : std_logic;
   signal  s_read_strobe   : std_logic;
   
-  --signal  s_wren          : std_logic;
   signal  s_write         : std_logic;
   signal  s_datain        : std_logic_vector(7 downto 0);
   signal  s_illegal_write : std_logic;
   
   signal  s_sector_erase    : std_logic;
   signal  s_illegal_erase   : std_logic;
+  signal  s_read_addr       : std_logic_vector(23 downto 0);
 
 begin
   
@@ -114,14 +114,13 @@ begin
   asmi: altasmi
     port map (
      addr         => s_addr,
-     clkin        => not clk_sys_i,
+     clkin        => clk_sys_i,
      rden         => s_rden,
-     read         => s_read,
+     fast_read    => s_read,
      read_rdid	  => s_read_rdid,
      read_status  => s_read_status,
      shift_bytes  => s_shift_bytes,
      write        => s_write,
-     --wren         => s_wren,
      sector_erase   => s_sector_erase,
      illegal_write => s_illegal_write,
      illegal_erase => s_illegal_erase,
@@ -132,6 +131,7 @@ begin
      dataout      => s_dataout,
      rdid_out     => s_rdid_out,
      status_out   => s_status_out,
+     read_address => s_read_addr,
      asmi_dataout => flash_data,
      asmi_sdoin   => flash_asdo,
      asmi_dataoe  => flash_oe,
@@ -213,17 +213,6 @@ begin
                 if slave_i.we = '1' then
                   if (slave_i.sel(3 downto 0) = x"f") then
                     s_addr <= slave_i.dat(23 downto 0);
-                  -- shift sector number (0-63) 18 Bits for sector size (2**18)
---                  case slave_i.sel is
---                    when x"1" =>  s_addr <= slave_i.dat(5 downto 0) & "00" & x"0000";
---                    when x"2" =>  s_addr <= slave_i.dat(13 downto 8) & "00" & x"0000";
---                    when x"4" =>  s_addr <= slave_i.dat(21 downto 16) & "00" & x"0000";
---                    when x"8" =>  s_addr <= slave_i.dat(29 downto 24) & "00" & x"0000";
---                    when x"f" =>  s_addr <= slave_i.dat(5 downto 0) & "00" & x"0000";
---                    when x"c" =>  s_addr <= slave_i.dat(21 downto 16) & "00" & x"0000";
---                    when x"3" =>  s_addr <= slave_i.dat(5 downto 0) & "00" & x"0000";
---                    when others => s_addr <= (others => '0');
---                  end case;
                     s_sector_erase <= '1';
                    end if;
                 end if;

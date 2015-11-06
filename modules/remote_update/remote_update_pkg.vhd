@@ -36,7 +36,7 @@ component altasmi
 		asmi_dataout		: IN STD_LOGIC_VECTOR (0 DOWNTO 0);
 		clkin		: IN STD_LOGIC ;
 		datain		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
-		read		: IN STD_LOGIC ;
+		fast_read		: IN STD_LOGIC ;
 		rden		: IN STD_LOGIC ;
 		read_rdid		: IN STD_LOGIC ;
 		read_status		: IN STD_LOGIC ;
@@ -54,6 +54,7 @@ component altasmi
 		illegal_erase		: OUT STD_LOGIC ;
 		illegal_write		: OUT STD_LOGIC ;
 		rdid_out		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
+		read_address		: OUT STD_LOGIC_VECTOR (23 DOWNTO 0);
 		status_out		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
 	);
 end component;
