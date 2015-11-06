@@ -36,7 +36,7 @@ function inspect_command_and_command ()
   fi
   if [[ ${INSPECTION} == *"WAIT"* ]]
   then
-    echo "Found WAIT in ${INSPECTION}!";
+    #echo "Found WAIT in ${INSPECTION}!";
     flag_found_wait=1
   fi
   if [[ ${INSPECTION} == *"PM_"* ]] || [[ ${INSPECTION} == *"PL_"* ]] || [[ ${INSPECTION} == *"PF_"* ]]
