@@ -7,11 +7,21 @@ flag_found_filter_term=0   # PM_xxx, PL_xxx, PF_xxx
 flag_found_statistics=0    # PT_xxx, PR_xxx
 flag_found_query=0         # xx_xxx ?
 flag_found_comment=0       # ; xxx xxx xxx
+flag_found_port_setup=0    # P_xxx
+flag_found_port_stream=0   # PS_xxx
 expected_reply=None        # expected reply
 
 # Clear all global flags
 function clear_flags ()
 {
+  flag_found_constant=0
+  flag_found_wait=0
+  flag_found_filter_term=0
+  flag_found_statistics=0
+  flag_found_query=0
+  flag_found_comment=0
+  flag_found_port_setup=0
+  flag_found_port_stream=0
   return 0
 }
 
@@ -21,11 +31,43 @@ function inspect_command_and_command ()
   INSPECTION=$*
   if [[ ${INSPECTION} == *"C_"* ]]
   then
-    echo "Found CONSTANT in ${INSPECTION}!";
+    #echo "Found CONSTANT in ${INSPECTION}!";
+    flag_found_constant=1
   fi
   if [[ ${INSPECTION} == *"WAIT"* ]]
   then
     echo "Found WAIT in ${INSPECTION}!";
+    flag_found_wait=1
+  fi
+  if [[ ${INSPECTION} == *"PM_"* ]] || [[ ${INSPECTION} == *"PL_"* ]] || [[ ${INSPECTION} == *"PF_"* ]]
+  then
+    #echo "Found Filter in ${INSPECTION}!";
+    flag_found_filter_term=1
+  fi
+  if [[ ${INSPECTION} == *"PT_"* ]] || [[ ${INSPECTION} == *"PR_"* ]]
+  then
+    #echo "Found Statistics in ${INSPECTION}!";
+    flag_found_statistics=1
+  fi
+  if [[ ${INSPECTION} == *" ?"* ]]
+  then
+    #echo "Found Query in ${INSPECTION}!";
+    flag_found_query=1
+  fi
+  if [[ ${INSPECTION} == *";"* ]]
+  then
+    #echo "Found Comment in ${INSPECTION}!";
+    flag_found_comment=1
+  fi
+  if [[ ${INSPECTION} == *"P_"* ]]
+  then
+    #echo "Found Port Setup in ${INSPECTION}!";
+    flag_found_port_setup=1
+  fi
+  if [[ ${INSPECTION} == *"PS_"* ]]
+  then
+    #echo "Found Port Stream in ${INSPECTION}!";
+    flag_found_port_stream=1
   fi
   return 0
 }
