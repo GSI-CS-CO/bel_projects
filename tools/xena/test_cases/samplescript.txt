@@ -1,0 +1,117 @@
+; This is an example of using the Xena scripting language to set-up and
+; execute a simple test case.
+;
+; This file is simply sent to TCP/IP port 22611 on a Xena chassis,
+; and while it is executing on the chassis it sends lines of text
+; back on the same TCP/IP connection.
+;
+; Much of what you see in response from the chassis is an "<OK>" for
+; each new parameter value that you have sent. There will also be a
+; blank line in response to each comment you send to the chassis. More
+; importantly, of course, you will see the values of the parameters and
+; statistics that you explicitly query for.
+;
+; The chassis has a basic "WAIT" command to allow simple server-side
+; waiting. For more advanced scripting logic, you should use a client-
+; side scripting environment like Tcl/Perl/Python/Basic/C to send commands
+; to the chassis, and retrieve and parse the responses.
+;
+; The example works on a single port configured in TX-to-RX loop mode
+; so that everything sent is also received on the same port.
+
+; First we authenticate the connection to the chassis and provide a user
+; name for reservation:
+; Login is done at the xena_parser script
+; C_LOGON "xena"
+; C_OWNER "example"
+
+; We now set a default port for the session so that all port-specific
+; parameters go to this port; this also gives you a single place to edit
+; if you want to run the example on a different port. The syntax is
+; simply "m/p" where "m" is the module number and "p" is the port number:
+0/2
+
+; Let's see what kind of port this is by querying for the interface type:
+P_INTERFACE ?
+
+; Now relinquish and reserve the port, clear any existing configuration, 
+; and set it in loop-mode:
+P_RESERVATION RELINQUISH
+P_RESERVATION RESERVE
+P_RESET
+P_LOOPBACK TXON2RX
+
+; Make a stream for transmitting 1000 packets of varying size at a 50% of
+; the wire rate for the port. The packet data is just an Ethernet header,
+; and we put a modifier on the last byte of the MAC destination address.
+; The rest of the packet payload is and incrementing pattern of bytes.
+; Finally we insert a Xena test payload at the end containing a TID value
+; of 77. We use index 10 for the stream definition itself:
+PS_CREATE [10]
+PS_COMMENT [10] "Example stream of 1000 packets"
+PS_PACKETLIMIT [10] 1000
+PS_PACKETLENGTH [10] RANDOM 100 200
+PS_RATEFRACTION [10] 500000
+PS_MODIFIERCOUNT [10] 1
+PS_MODIFIER [10,0] 5 0xFF000000 DEC 1
+PS_PAYLOAD [10] INCREMENTING
+PS_TPLDID [10] 77
+PS_ENABLE [10] ON
+
+; That was the stream definition. Until now we have been sending values
+; to the chassis. Now we'll ask for information from the chassis just to
+; verify our configuration. Queries have the same format as used when
+; setting values, but with a "?" instead of the values:
+PS_PACKETLENGTH [10] ?
+P_MACADDRESS ?
+; You can also ask for multiple parameters a at time using some special
+; pseudo-parameters. Here we'll query for the complete stream definition.
+; This will give us all the parameters defined for the stream, including
+; some which we have not set explicitly and therefore still have their
+; default values from when the configuration was reset:
+PS_CONFIG [10] ?
+
+; When parsing the responses from a multi-parameter query you cannot
+; immediately tell which parameter value is the last one. To establish a
+; fix-point in the stream of response lines you can issue the special "SYNC"
+; command which simply responds with "<SYNC>"; so when you receive this
+; response you know that there are no more parameters coming:
+SYNC
+
+; We're finally ready to run some traffic, but before we start the stream
+; we have just defined we'll start the capture function and send out a single
+; packet. Since we are in loop mode this packet will be captured on our port,
+; and we'll pull it over to the client:
+
+P_CAPTURE ON
+P_XMITONE 0x001122334455,AABBCCDDEEFF,2222,FEDCBA9876543210,00000000
+PC_STATS ?
+PC_PACKET [0] ?
+
+; Ok, now we'll start the stream. Capture is already on. Since this may be a
+; slow port we insert a short wait period to make sure all 1000 packets are
+; sent, and then we query for the TX and RX statistics:
+P_TRAFFIC ON
+WAIT 3
+PT_ALL ?
+PR_ALL ?
+
+; All the packets should have been captured. We pull in a few of them to see
+; the varying length and check that the modifier has correctly varied the 5th
+; byte. We'll use another multi-parameter query that gives us both the packet
+; data and the extra information available for each capture event:
+PC_STATS ?
+PC_INFO [1] ?
+PC_INFO [2] ?
+PC_INFO [3] ?
+PC_INFO [4] ?
+PC_INFO [5] ?
+
+; Even though the single stream of the port has run dry we must still explicitly
+; stop traffic generation, and we also stop capturing:
+P_TRAFFIC OFF
+P_CAPTURE OFF
+
+; That's it.
+; You have now seen how to build a stream, transmit the packets, do some
+; capturing, and issue queries for statistics, capture, and configuration.
