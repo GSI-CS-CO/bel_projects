@@ -295,6 +295,13 @@
 --    vorgnommen werden, wie bei den Generics CID_System und CID_Group.                                             --
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers_5_Revi_3: erstellt am 29.10.2015, Autor: K.Kaiser                                                          --
+--  A) Die CID_Group Kennung (Type integer range 0 to 16#FFFF#) wurde aus dem generic map in den port map verschoben--
+--     Hiermit ist es moeglich, für SIO, ADDAC und DIOB entsprechend dem Hex Dial bei Auslieferung eine Variante    --
+--     einzustellen ( z.B. SIO1, SIO2, SIO3). Damit kann die SW nicht nur über 1Wire ID die Variante bestimmen      --
+----------------------------------------------------------------------------------------------------------------------
+
 library IEEE;
 USE IEEE.std_logic_1164.all;
 USE IEEE.numeric_std.all;
@@ -325,7 +332,7 @@ generic
     -- zwischenzeitlich  "CID-Group"-Nummern für andere Projekte (Funktionen) vergeben wurden, und die "CID-Group"-Nummer
     -- kontinuierlich hochgezählt werden soll.                                  --
     -- Falls keine verbindliche "CID-Group"-Nummer vorliegt, muss der Defaultwert 0 stehen bleiben!
-    CID_Group: integer range 0 to 16#FFFF# := 0;
+    -- CID_Group: integer range 0 to 16#FFFF# := 0;
 
     -- the bit positions are corresponding to Intr_In. A '1' enable Intr_In(n), '0' disable Intr_In(n)
     -- The least significant bit don't care, because it represent the powerup interrupt. This interrupt is always enabled.
@@ -356,6 +363,9 @@ port
     -- '1' => the user function(s), device, is ready to work with the control system
     User_Ready:         in    std_logic;
     
+    -- CID Group has default as 0x0000, or mapped to actual parameter as defined by hex dial in top level.
+    CID_Group:            in    integer range 0 to 16#FFFF# := 0;
+    
     -- if an extension card is connected to the slave card, than you can map cid_system of this extension
     -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
     extension_cid_system: in  integer range 0 to 16#FFFF# := 0;
@@ -363,7 +373,7 @@ port
     -- if an extension card is connected to the slave card, than you can map cid_group of this extension
     -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
     extension_cid_group:  in    integer range 0 to 16#FFFF# := 0;
-    
+  
     -- latched data from SCU_Bus for external user functions
     Data_from_SCUB_LA:  out   std_logic_vector(15 DOWNTO 0);
 

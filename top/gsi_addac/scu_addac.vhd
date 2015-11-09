@@ -340,7 +340,6 @@ SCU_Slave: SCU_Bus_Slave
     Firmware_Release    => 0,
     Firmware_Version    => 0,
     CID_System          => 55,                    -- important: 55 => CSCOHW
-    CID_Group           => g_cid_group,           -- must be defined as global parameter in project file xyz.qsf (scu_addac1 = 03, scu_addac2 = 38)
     Intr_Enable         => b"0000_0000_0000_0001")
   port map (
     SCUB_Addr           => A_A,                 -- in,    SCU_Bus: address bus
@@ -358,6 +357,8 @@ SCU_Slave: SCU_Bus_Slave
                           & x"0"                                  -- intrrupt 7..4
                           & '0' & '0' &  clk_switch_intr,         -- intrrupt 3..1, (interrupt 0 is internal generated)
     User_Ready          => '1',
+    CID_Group           =>  g_cid_group,        --must be defined as global parameter in project file xyz.qsf (scu_addac1 = 03, scu_addac2 = 38)
+
     Data_from_SCUB_LA   => Data_from_SCUB_LA,   -- out,   latched data from SCU_Bus for external user functions
     ADR_from_SCUB_LA    => ADR_from_SCUB_LA,    -- out,   latched address from SCU_Bus for external user functions
     Timing_Pattern_LA   => open,                -- out,   latched timing pattern from SCU_Bus for external user functions
