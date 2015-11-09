@@ -9,5 +9,4 @@ files = [
   "PLL_SIO.vhd",
   "PU_Reset.vhd",
   "SysClock.vhd",
-  "wb_mil_wrapper.vhd",
  ]

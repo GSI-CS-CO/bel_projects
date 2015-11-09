@@ -3,11 +3,12 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 use work.wishbone_pkg.all;
-use work.aux_functions_pkg.all;
-use work.mil_pkg.all;
 use work.wb_mil_scu_pkg.all;
+use work.mil_pkg.all;
+use work.aux_functions_pkg.all;
 
-ENTITY wb_mil_scu_v2 IS
+
+ENTITY wb_mil_sio IS
 --+---------------------------------------------------------------------------------------------------------------------------------+
 --| "wb_mil_scu" stellt in Verbindung mit der SCU-Aufsteck-Karte "FG900170_SCU_MIL1" alle Funktionen bereit, die benoetigt werden,  |
 --| um SE-Funktionalitaet mit einer SCU realistieren zu koennen.                                                                    |
@@ -148,10 +149,10 @@ port  (
     lemo_data_i:    in      std_logic_vector(4 downto 1):= (others => '0');
     nsig_wb_err:    out     std_logic       -- '0' => gestretchte wishbone access Fehlermeldung
     );
-end wb_mil_scu_v2;
+end wb_mil_sio;
 
 
-ARCHITECTURE arch_wb_mil_scu_v2 OF wb_mil_scu_v2 IS 
+ARCHITECTURE arch_wb_mil_sio OF wb_mil_sio IS 
 
 
 signal    manchester_fpga:  std_logic;  -- '1' => fpga manchester endecoder selected, '0' => external hardware manchester endecoder 6408 selected.
@@ -294,8 +295,11 @@ led_rcv: led_n
     CLK         => clk_i,
     Sig_In      => Mil_Rcv_Rdy,     -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => open,            -- Push-Pull output, active low, inactive high.
-    nLed_opdrn  => nLed_Mil_Rcv     -- open drain output, active low, inactive tristate.
+    nLED        => nLed_Mil_Rcv,    --  KK 20151026 Push-Pull output, active low, inactive high.
+    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate.
+                                    
+    --nLED        => open,            -- Push-Pull output, active low, inactive high.
+    --nLed_opdrn  => nLed_Mil_Rcv     -- open drain output, active low, inactive tristate.
     );
 
 
@@ -309,8 +313,10 @@ led_trm: led_n
     CLK         => clk_i,
     Sig_In      => Sel_Mil_Drv,     -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => open,            -- Push-Pull output, active low, inactive high.
-    nLed_opdrn  => nLed_Mil_Trm     -- open drain output, active low, inactive tristate.
+    nLED        => nLed_Mil_Trm,    --  KK 20151026 Push-Pull output, active low, inactive high.
+    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate
+    --nLED        => open,            -- Push-Pull output, active low, inactive high.
+    --nLed_opdrn  => nLed_Mil_Trm     -- open drain output, active low, inactive tristate.
     );
 
 
@@ -324,8 +330,10 @@ led_err: led_n
     CLK         => clk_i,
     Sig_In      => Mil_Rcv_Error,   -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => open,            -- Push-Pull output, active low, inactive high.
-    nLed_opdrn  => nLed_Mil_Err     -- open drain output, active low, inactive tristate.
+    nLED        => nLed_Mil_Err,    --  KK 20151026 Push-Pull output, active low, inactive high.
+    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate
+    --nLED        => open,            -- Push-Pull output, active low, inactive high.
+   -- nLed_opdrn  => nLed_Mil_Err     -- open drain output, active low, inactive tristate.
     );
 
 led_interl: led_n
@@ -338,8 +346,10 @@ led_interl: led_n
     CLK         => clk_i,
     Sig_In      => db_interlock_intr,  -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => open,            -- Push-Pull output, active low, inactive high.
-    nLed_opdrn  => nLed_Interl      -- open drain output, active low, inactive tristate.
+    nLED        => nLed_Interl,    --  KK 20151026 Push-Pull output, active low, inactive high.
+    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate
+    --nLED        => open,          -- Push-Pull output, active low, inactive high.
+    --nLed_opdrn  => nLed_Interl    -- open drain output, active low, inactive tristate.
     );
 
 led_dry: led_n
@@ -352,8 +362,10 @@ led_dry: led_n
     CLK         => clk_i,
     Sig_In      => db_data_rdy_intr,-- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => open,            -- Push-Pull output, active low, inactive high.
-    nLed_opdrn  => nLed_dry         -- open drain output, active low, inactive tristate.
+    nLED        => nLed_dry,    --  KK 20151026 Push-Pull output, active low, inactive high.
+    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate
+    --nLED        => open,            -- Push-Pull output, active low, inactive high.
+    --nLed_opdrn  => nLed_dry         -- open drain output, active low, inactive tristate.
     );
 
 led_drq: led_n
@@ -365,9 +377,11 @@ led_drq: led_n
                                     -- clock domain and should be only one clock period active.
     CLK         => clk_i,
     Sig_In      => db_data_req_intr,-- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
-                                    -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => open,            -- Push-Pull output, active low, inactive high.
-    nLed_opdrn  => nLed_drq         -- open drain output, active low, inactive tristate.
+    nLED        => nLed_drq,    --  KK 20151026 Push-Pull output, active low, inactive high.
+    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate                                    -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
+                                    
+    --nLED        => open,            -- Push-Pull output, active low, inactive high.
+    --nLed_opdrn  => nLed_drq         -- open drain output, active low, inactive tristate.
     );
 
 led_timing: led_n
@@ -380,8 +394,10 @@ led_timing: led_n
     CLK         => clk_i,
     Sig_In      => timing_received, -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => open,            -- Push-Pull output, active low, inactive high.
-    nLed_opdrn  => nLed_Timing      -- open drain output, active low, inactive tristate.
+    nLED        => nLed_Timing,     --  KK 20151026 Push-Pull output, active low, inactive high.
+    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate
+    --nLED        => open,          -- Push-Pull output, active low, inactive high.
+    --nLed_opdrn  => nLed_Timing    -- open drain output, active low, inactive tristate.
     );
 
 	 
@@ -600,8 +616,10 @@ led_fifo_ne: led_n
     CLK         => clk_i,
     Sig_In      => ev_fifo_ne,      -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => open,            -- Push-Pull output, active low, inactive high.
-    nLed_opdrn  => nLed_Fifo_ne     -- open drain output, active low, inactive tristate.
+    nLED        => nLed_Fifo_ne,    -- KK 20151026 Push-Pull output, active low, inactive high.
+    nLed_opdrn  => open             -- KK 20151026 open drain output, active low, inactive tristate.
+    --nLED        => open,          -- Push-Pull output, active low, inactive high.
+    --nLed_opdrn  => nLed_Fifo_ne   -- open drain output, active low, inactive tristate.
     );
 
     
@@ -1043,4 +1061,4 @@ p_wait_timer: process (clk_i, nRst_i)
   end process p_wait_timer;
 
 
-end arch_wb_mil_scu_v2;
+end arch_wb_mil_sio;

@@ -164,8 +164,8 @@ diob-clean::
 	$(MAKE) -C syn/scu_diob PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
 
-scu_sio3::		firmware		
+sio3::		firmware		
 	$(MAKE) -C syn/scu_sio3 PATH=$(PWD)/toolchain/bin:$(PATH) all
 
-scu_sio3-clean::
+sio3-clean::
 	$(MAKE) -C syn/scu_sio3 PATH=$(PWD)/toolchain/bin:$(PATH) clean
