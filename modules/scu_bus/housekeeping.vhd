@@ -288,7 +288,7 @@ begin
       slave_i        => cbar_master_o(5),
       slave_o        => cbar_master_i(5),
       -- Master reader port
-      master_clk_i   => clk_10Mhz,
+      master_clk_i   => clk_25Mhz,
       master_rst_n_i => n_rst,
       master_i       => asmi_o,
       master_o       => asmi_i);
@@ -300,7 +300,7 @@ begin
   asmi: wb_asmi
     generic map ( PAGESIZE => 256 )
     port map (
-      clk_sys_i => clk_10Mhz,
+      clk_flash_i => clk_25Mhz,
       rst_n_i   => n_rst,
       
       slave_i      =>  asmi_i,
