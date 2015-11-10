@@ -9,7 +9,7 @@ use work.remote_update_pkg.all;
 entity wb_asmi is
   generic ( PAGESIZE : INTEGER );
   port (
-    clk_sys_i : in std_logic;
+    clk_flash_i : in std_logic;
     rst_n_i   : in std_logic;
 
     -- Wishbone
@@ -55,50 +55,74 @@ architecture arch of wb_asmi is
   signal  s_data_valid    : std_logic;
   signal  s_dataout       : std_logic_vector(7 downto 0);
   signal  s_addr          : std_logic_vector(23 downto 0);
+  signal  s_asmi_addr     : std_logic_vector(23 downto 0);
   signal  s_rden          : std_logic;
+  signal  s_asmi_rden     : std_logic;
   signal  s_read          : std_logic;
+  signal  s_asmi_read     : std_logic;
   signal  s_rdid          : std_logic;
   signal  s_shift_bytes   : std_logic;
-  signal  s_read_status	  : std_logic;
+  signal  s_read_status   : std_logic;
   signal  s_data_in       : std_logic_vector(23 downto 0);
 
-  signal  s_rdid_out		  : std_logic_vector(7 downto 0);
-  signal  s_status_out		: std_logic_vector(7 downto 0);
-  
-      
-  type    t_wb_cyc  is (idle, stall, busy_wait, read_valid, cycle_end, err, write_addr_ready, read_addr_ready); 
+  signal  s_rdid_out      : std_logic_vector(7 downto 0);
+  signal  s_status_out    : std_logic_vector(7 downto 0);
+
+
+  type    t_wb_cyc  is (idle, stall, busy_wait, read_valid, cycle_end, err, write_addr_ready, read_addr_ready);
   signal  wb_state            : t_wb_cyc;
 
   signal  s_addr_ext    : std_logic_vector(23 downto 0);
   signal  s_rden_ext    : std_logic;
   signal  s_read_ext    : std_logic;
-  
+
   signal  s_read_rdid     : std_logic;
   signal  s_write_strobe  : std_logic;
   signal  s_read_strobe   : std_logic;
-  
+
   signal  s_write         : std_logic;
   signal  s_datain        : std_logic_vector(7 downto 0);
   signal  s_illegal_write : std_logic;
-  
+
   signal  s_sector_erase    : std_logic;
   signal  s_illegal_erase   : std_logic;
   signal  s_read_addr       : std_logic_vector(23 downto 0);
 
 begin
   
-  with asmi_to_ext select s_addr <=
-                          s_addr_ext when '1',
-                          s_addr when '0';
-                          
-  with asmi_to_ext select s_rden <=
-                          s_rden_ext when '1',
-                          s_rden when '0';
-                          
-  with asmi_to_ext select s_read <=
-                          s_read_ext when '1',
-                          s_read when '0';
-  
+  asmi_addr_mux: process (clk_flash_i, asmi_to_ext)
+  begin
+    if rising_edge(clk_flash_i) then
+      if asmi_to_ext = '1' then
+        s_asmi_addr <= asmi_addr_ext;
+      else
+        s_asmi_addr <= s_addr;
+      end if;
+    end if;
+  end process;
+
+  asmi_rden_mux: process (clk_flash_i, asmi_to_ext)
+  begin
+    if rising_edge(clk_flash_i) then
+      if asmi_to_ext = '1' then
+        s_asmi_rden <= asmi_rden_ext;
+      else
+        s_asmi_rden <= s_rden;
+      end if;
+    end if;
+  end process;
+
+  asmi_read_mux: process (clk_flash_i, asmi_to_ext)
+  begin
+    if rising_edge(clk_flash_i) then
+      if asmi_to_ext = '1' then
+        s_asmi_read <= asmi_read_ext;
+      else
+        s_asmi_read <= s_read;
+      end if;
+    end if;
+  end process;
+ 
   
   spi : altera_spi
     generic map(
@@ -113,10 +137,10 @@ begin
   
   asmi: altasmi
     port map (
-     addr         => s_addr,
-     clkin        => clk_sys_i,
-     rden         => s_rden,
-     fast_read    => s_read,
+     addr         => s_asmi_addr,
+     clkin        => clk_flash_i,
+     rden         => s_asmi_rden,
+     fast_read    => s_asmi_read,
      read_rdid	  => s_read_rdid,
      read_status  => s_read_status,
      shift_bytes  => s_shift_bytes,
@@ -140,27 +164,46 @@ begin
      
      
      );
+  input_mux: process(clk_flash_i, slave_i.sel(3 downto 0))
+  begin
+    if rising_edge(clk_flash_i) then
+      case slave_i.sel(3 downto 0) is
+        when x"1" =>
+          s_datain <= slave_i.dat(7 downto 0);
+        when x"2" =>
+          s_datain <= slave_i.dat(15 downto 8);
+        when x"4" =>
+          s_datain <= slave_i.dat(23 downto 16);
+        when x"8" =>
+          s_datain <= slave_i.dat(31 downto 24);
+        when others =>
+          s_datain <= (others => '0');
+      end case;
+    end if;
+  end process;
+
+  output_mux: process(clk_flash_i, slave_i.adr(3 downto 0))
+  begin
+    if rising_edge(clk_flash_i) then
+      case slave_i.adr(3 downto 0) is
+        when x"4" =>
+          slave_o.dat <= s_status_out & s_status_out & s_status_out & s_status_out;
+        when x"8" =>
+          slave_o.dat <= s_rdid_out & s_rdid_out & s_rdid_out & s_rdid_out;
+        when x"0" =>
+          slave_o.dat <= s_dataout & s_dataout & s_dataout & s_dataout;
+        when others =>
+          slave_o.dat <= (others => '0');
+      end case;
+    end if;
+  end process;
 
 
-  with slave_i.sel(3 downto 0) select s_datain <=
-                                      slave_i.dat(7 downto 0)   when x"1",
-                                      slave_i.dat(15 downto 8)  when x"2",
-                                      slave_i.dat(23 downto 16) when x"4",
-                                      slave_i.dat(31 downto 24) when x"8",
-                                      (others => '0')           when others;
-      
-  with slave_i.adr(3 downto 0) select slave_o.dat <=
-                                      s_status_out & s_status_out & s_status_out & s_status_out  when  x"4",
-                                      s_rdid_out & s_rdid_out & s_rdid_out & s_rdid_out          when  x"8",
-                                      s_dataout & s_dataout & s_dataout & s_dataout              when  x"0",
-                                      (others => '0')                                            when others;
 
-  --s_addr <= slave_i.adr(27 downto 4); -- lower addresses are mapped to special registers
-
-  wb_cycle: process (clk_sys_i, rst_n_i, slave_i)
+  wb_cycle: process (clk_flash_i, rst_n_i, slave_i)
     variable  s_byte_count : integer range  0 to PAGESIZE;
   begin
-    if rising_edge(clk_sys_i) then
+    if rising_edge(clk_flash_i) then
       
       if rst_n_i = '0' then
         s_write_strobe  <= '0';

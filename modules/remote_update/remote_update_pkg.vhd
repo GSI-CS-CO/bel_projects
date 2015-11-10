@@ -83,7 +83,7 @@ end component;
 component wb_asmi is
   generic ( PAGESIZE : integer );
   port (
-    clk_sys_i : in std_logic;
+    clk_flash_i : in std_logic;
     rst_n_i   : in std_logic;
 
     -- Wishbone
