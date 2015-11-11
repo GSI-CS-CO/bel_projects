@@ -194,8 +194,9 @@ architecture scu_diob_arch of scu_diob is
     constant  C_Strobe_2us:   integer := 2000 / Clk_in_ns;                       -- Anzahl der Clocks für 2us
   
   
-    TYPE      t_Integer_Array  is array (0 to 7) of integer range 0 to 131072;
-
+ --   TYPE      t_Integer_Array  is array (0 to 7) of integer range 0 to 131072;
+   TYPE      t_Integer_Array  is array (0 to 7) of integer range 0 to 16383;
+   
   --------------- Array für die Anzahl der Clock's für die Bebounce-Zeiten von 1,2,4,8,16,32,64,128 us ---------------
 
 
@@ -464,7 +465,8 @@ component IO_4x8
     DB_Tst_Cnt: integer := 3;
     Test:       integer range 0 TO 1);
   port (
-    DB_Cnt:     in  integer range 0 to 131072;   
+ --   DB_Cnt:     in  integer range 0 to 131072;   
+    DB_Cnt:     in  integer range 0 to 16383;    
     DB_In:      in  std_logic;
     Reset:      in  std_logic;
     Clk:        in  std_logic;
@@ -987,7 +989,8 @@ component IO_4x8
 --                                                 064000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von  64uS 
 --                                                 128000	* 1000 / CLK_sys_in_ps);  -- Anzahl der Clock's für die Debounce-Zeit von 128uS 
 
-  signal    Deb32_Cnt:    integer range 0 to 131072;
+ -- signal    Deb32_Cnt:    integer range 0 to 131072;
+  signal    Deb32_Cnt:    integer range 0 to 16383;  
   signal    Deb32_in:     std_logic_vector(31 downto 0);
   signal    Deb32_out:    std_logic_vector(31 downto 0);
 
@@ -1508,7 +1511,6 @@ generic map (
     Firmware_Release        => c_Firmware_Release,  -------------------- important: => Firmware_Release
     Firmware_Version        => c_Firmware_Version,  -------------------- important: => Firmware_Version
     CID_System              => 55, ------------------------------------- important: => CSCOHW
-    CID_Group               => 26, ------------------------------------- important: => "FG900500_SCU_Diob1"
     intr_Enable             => b"0000_0000_0000_0001")
 port map (
     SCUB_Addr               => A_A,                                   -- in, SCU_Bus: address bus
@@ -1526,6 +1528,7 @@ port map (
                               & x"0"                                  -- bit 7..4
                               & '0' & '0' & clk_switch_intr,          -- bit 3..1
     User_Ready              => '1',
+    CID_GROUP               => 26,                                    -- important: => "FG900500_SCU_Diob1"
     extension_cid_system    => extension_cid_system,                  -- in, extension card: cid_system
     extension_cid_group     => extension_cid_group,                   -- in, extension card: cid_group
     Data_from_SCUB_LA       => Data_from_SCUB_LA,                     -- out, latched data from SCU_Bus for external user functions
@@ -2397,6 +2400,8 @@ P_AW_SCU_In:  process (nPowerup_Res, clk_sys, Diob_Config1, Mirr_AWOut_Reg_Nr, S
 p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO, A_SEL, signal_tap_clk_250mhz,
              FG_1_sw, FG_1_strobe, FG_2_sw, FG_2_strobe, P25IO_DAC_Out,
              CLK_IO,
+             AWOUT_REG1_WR,
+             AWOUT_REG2_WR,            
              AWIn_Deb_Time, Min_AWIn_Deb_Time, Deb32_out, Deb32_in,
              DIOB_Status1, DIOB_Status2, AW_Status1, AW_Status2, 
              AW_Input_Reg, 
@@ -3866,8 +3871,8 @@ BEGIN
 
 
   END IF;
---
---  
+
+  
 END PROCESS p_AW_MUX;
 
 

@@ -7,4 +7,5 @@ files = [
   "tmr_scu_bus.vhd",
   "sys_clk_or_local_clk.vhd",
   "IO_4x8.vhd",
+  "Zeitbasis.vhd",
 ]
