@@ -14,9 +14,11 @@ entity housekeeping is
           );
   port (
         clk_sys:            in std_logic;
-        clk_10Mhz:          in std_logic;
-        clk_25Mhz:          in std_logic;
-        n_rst:              in std_logic;
+        clk_update:         in std_logic;
+        clk_flash:          in std_logic;
+        rstn_sys:           in std_logic;
+        rstn_update:        in std_logic;
+        rstn_flash:         in std_logic;
 
         ADR_from_SCUB_LA:   in std_logic_vector(15 downto 0);
         Data_from_SCUB_LA:  in std_logic_vector(15 downto 0);
@@ -123,7 +125,7 @@ begin
      g_sdb_addr => c_sdb_address)
    port map(
      clk_sys_i => clk_sys,
-     rst_n_i => n_rst,
+     rst_n_i => rstn_sys,
      -- Master connections (INTERCON is a slave)
      slave_i => cbar_slave_i,
      slave_o => cbar_slave_o,
@@ -137,7 +139,7 @@ begin
       g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => n_rst,
+      rst_n_i => rstn_sys,
       irq_i => lm32_interrupt,
       dwb_o => cbar_slave_i(0), -- Data bus
       dwb_i => cbar_slave_o(0),
@@ -157,7 +159,7 @@ begin
       g_init_file => "housekeeping.mif")
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i => n_rst,
+      rst_n_i => rstn_sys,
       -- First port connected to the crossbar
       slave1_i => cbar_master_o(0),
       slave1_o => cbar_master_i(0),
@@ -178,7 +180,7 @@ begin
       )
     port map(
       clk_sys_i   => clk_sys,
-      rst_n_i     => n_rst,
+      rst_n_i     => rstn_sys,
 
       -- Wishbone
       slave_i     => cbar_master_o(1),
@@ -203,7 +205,7 @@ begin
       )
     port map(
       clk_sys_i => clk_sys,
-      rst_n_i   => n_rst,
+      rst_n_i   => rstn_sys,
 
       -- Wishbone
       slave_i => cbar_master_o(2),
@@ -223,7 +225,7 @@ begin
       size => 300 )
     port map (
       clk_sys_i => clk_sys,
-      rst_n_i => n_rst,
+      rst_n_i => rstn_sys,
 
       -- Wishbone
       slave_i => cbar_master_o(3),
@@ -246,12 +248,12 @@ begin
     port map(
       -- Slave control port
       slave_clk_i    => clk_sys,
-      slave_rst_n_i  => n_rst,
+      slave_rst_n_i  => rstn_sys,
       slave_i        => cbar_master_o(4),
       slave_o        => cbar_master_i(4),
       -- Master reader port
-      master_clk_i   => clk_10Mhz,
-      master_rst_n_i => n_rst,
+      master_clk_i   => clk_update,
+      master_rst_n_i => rstn_update,
       master_i       => aru_o,
       master_o       => aru_i);
   
@@ -261,8 +263,8 @@ begin
   -----------------------------------------
   wb_aru: wb_remote_update
     port map (
-      clk_sys_i => clk_10Mhz,
-      rst_n_i   => n_rst,
+      clk_sys_i => clk_update,
+      rst_n_i   => rstn_update,
       
       slave_i      =>  aru_i,
       slave_o      =>  aru_o,
@@ -284,12 +286,12 @@ begin
     port map(
       -- Slave control port
       slave_clk_i    => clk_sys,
-      slave_rst_n_i  => n_rst,
+      slave_rst_n_i  => rstn_sys,
       slave_i        => cbar_master_o(5),
       slave_o        => cbar_master_i(5),
       -- Master reader port
-      master_clk_i   => clk_25Mhz,
-      master_rst_n_i => n_rst,
+      master_clk_i   => clk_flash,
+      master_rst_n_i => rstn_flash,
       master_i       => asmi_o,
       master_o       => asmi_i);
   
@@ -300,8 +302,8 @@ begin
   asmi: wb_asmi
     generic map ( PAGESIZE => 256 )
     port map (
-      clk_flash_i => clk_25Mhz,
-      rst_n_i   => n_rst,
+      clk_flash_i => clk_flash,
+      rst_n_i   => rstn_flash,
       
       slave_i      =>  asmi_i,
       slave_o      =>  asmi_o,

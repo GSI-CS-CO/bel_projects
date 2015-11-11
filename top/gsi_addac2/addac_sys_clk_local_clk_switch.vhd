@@ -27,8 +27,8 @@ entity addac_sys_clk_local_clk_switch is
     Rd_Activ:               out   std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:                  out   std_logic;
     signal_tap_clk_250mhz:  out   std_logic;
-    clk_10Mhz:              out   std_logic;
-    clk_25Mhz:              out   std_logic
+    clk_update:             out   std_logic;
+    clk_flash:              out   std_logic
     );
 end addac_sys_clk_local_clk_switch;
 
@@ -104,8 +104,8 @@ sys_or_local_pll: sys_clk_or_local_clk
     inclk1      => f_local_12p5_mhz,
     c0          => master_clk,
     c1          => signal_tap_clk_250mhz,
-    c2          => clk_10Mhz,
-    c3          => clk_25Mhz,
+    c2          => clk_update,
+    c3          => clk_flash,
     locked      => pll_locked,
     activeclock => local_clk_is_running,
     clkbad0     => sys_clk_is_bad,
