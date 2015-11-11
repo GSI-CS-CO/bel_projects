@@ -40,6 +40,10 @@ USE altera_mf.altera_mf_components.all;
 
 
 entity sio3_sys_clk_local_clk_switch is 
+  generic (
+    Base_Addr:  unsigned(15 downto 0)  := x"0040"
+    );
+
   port(
     local_clk_i:          in    std_logic;
     sys_clk_i:            in    std_logic;
@@ -88,7 +92,7 @@ component sys_clk_or_local_clk
     clkbad1:  out   std_logic
     );
 end component;
-
+constant clk_switch_status_cntrl_addr: unsigned (15 downto 0) := base_Addr;
 signal  master_clk:           std_logic;
 signal  f_local_12p5_mhz:     std_logic;
 

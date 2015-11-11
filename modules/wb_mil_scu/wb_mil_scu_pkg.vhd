@@ -74,8 +74,8 @@ constant  rd_wr_dly_timer_LW_a:     integer := 16#10#;   -- read event timer lat
 constant  rd_wr_dly_timer_HW_a:     integer := 16#11#;   -- read event timer latch HW    wb_mil_scu_offset + 16#44#.
                                                          -- write event timer latch HW   wb_mil_scu_offset + 16#44#.                                                         
 
-constant  ev_filt_first_a:    integer := 16#1000#;  -- first event filter ram address: wb_mil_scu_offset + 16#4000. 
-constant  ev_filt_last_a:     integer := 16#1FFF#;  -- last event filter  ram address: wb_mil_scu_offset + 16#7FFC.
+constant  ev_filt_first_a:          integer := 16#1000#;  -- first event filter ram address: wb_mil_scu_offset + 16#4000. 
+constant  ev_filt_last_a:           integer := 16#1FFF#;  -- last event filter  ram address: wb_mil_scu_offset + 16#7FFC.
 
 
 -- bit positions of mil control/status register
@@ -126,96 +126,177 @@ generic (
                                           -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
     );
 port  (
-    clk_i:          in    std_logic;
-    nRst_i:         in    std_logic;
-    slave_i:        in    t_wishbone_slave_in;
-    slave_o:        out   t_wishbone_slave_out;
+    clk_i:              in      std_logic;
+    nRst_i:             in      std_logic;
+    slave_i:            in      t_wishbone_slave_in;
+    slave_o:            out     t_wishbone_slave_out;
     
     -- encoder (transmiter) signals of HD6408 --------------------------------------------------------------------------------
-    nME_BOO:        in      std_logic;      -- HD6408-output: transmit bipolar positive.
-    nME_BZO:        in      std_logic;      -- HD6408-output: transmit bipolar negative.
+    nME_BOO:            in      std_logic;      -- HD6408-output: transmit bipolar positive.
+    nME_BZO:            in      std_logic;      -- HD6408-output: transmit bipolar negative.
     
-    ME_SD:          in      std_logic;      -- HD6408-output: '1' => send data is active.
-    ME_ESC:         in      std_logic;      -- HD6408-output: encoder shift clock for shifting data into the encoder. The
-                                            --                encoder samples ME_SDI on low-to-high transition of ME_ESC.
-    ME_SDI:         out     std_logic;      -- HD6408-input:  serial data in accepts a serial data stream at a data rate
-                                            --                equal to encoder shift clock.
-    ME_EE:          out     std_logic;      -- HD6408-input:  a high on encoder enable initiates the encode cycle.
-                                            --                (Subject to the preceding cycle being completed).
-    ME_SS:          out     std_logic;      -- HD6408-input:  sync select actuates a Command sync for an input high
-                                            --                and data sync for an input low.
+    ME_SD:              in      std_logic;      -- HD6408-output: '1' => send data is active.
+    ME_ESC:             in      std_logic;      -- HD6408-output: encoder shift clock for shifting data into the encoder. The
+                                                --                encoder samples ME_SDI on low-to-high transition of ME_ESC.
+    ME_SDI:             out     std_logic;      -- HD6408-input:  serial data in accepts a serial data stream at a data rate
+                                                --                equal to encoder shift clock.
+    ME_EE:              out     std_logic;      -- HD6408-input:  a high on encoder enable initiates the encode cycle.
+                                                --                (Subject to the preceding cycle being completed).
+    ME_SS:              out     std_logic;      -- HD6408-input:  sync select actuates a Command sync for an input high
+                                                --                and data sync for an input low.
 
     -- decoder (receiver) signals of HD6408 ---------------------------------------------------------------------------------
-    ME_BOI:         out     std_logic;      -- HD6408-input:  A high input should be applied to bipolar one in when the bus is in its
-                                            --                positive state, this pin must be held low when the Unipolar input is used.
-    ME_BZI:         out     std_logic;      -- HD6408-input:  A high input should be applied to bipolar zero in when the bus is in its
-                                            --                negative state. This pin must be held high when the Unipolar input is used.
-    ME_UDI:         out     std_logic;      -- HD6408-input:  With ME_BZI high and ME_BOI low, this pin enters unipolar data in to the
-                                            --                transition finder circuit. If not used this input must be held low.
-    ME_CDS:         in      std_logic;      -- HD6408-output: high occurs during output of decoded data which was preced
-                                            --                by a command synchronizing character. Low indicares a data sync.
-    ME_SDO:         in      std_logic;      -- HD6408-output: serial data out delivers received data in correct NRZ format.
-    ME_DSC:         in      std_logic;      -- HD6408-output: decoder shift clock delivers a frequency (decoder clock : 12),
-                                            --                synchronized by the recovered serial data stream.
-    ME_VW:          in      std_logic;      -- HD6408-output: high indicates receipt of a VALID WORD.
-    ME_TD:          in      std_logic;      -- HD6408-output: take data is high during receipt of data after identification
-                                            --                of a sync pulse and two valid Manchester data bits
+    ME_BOI:             out     std_logic;      -- HD6408-input:  A high input should be applied to bipolar one in when the bus is in its
+                                                --                positive state, this pin must be held low when the Unipolar input is used.
+    ME_BZI:             out     std_logic;      -- HD6408-input:  A high input should be applied to bipolar zero in when the bus is in its
+                                                --                negative state. This pin must be held high when the Unipolar input is used.
+    ME_UDI:             out     std_logic;      -- HD6408-input:  With ME_BZI high and ME_BOI low, this pin enters unipolar data in to the
+                                                --                transition finder circuit. If not used this input must be held low.
+    ME_CDS:             in      std_logic;      -- HD6408-output: high occurs during output of decoded data which was preced
+                                                --                by a command synchronizing character. Low indicares a data sync.
+    ME_SDO:             in      std_logic;      -- HD6408-output: serial data out delivers received data in correct NRZ format.
+    ME_DSC:             in      std_logic;      -- HD6408-output: decoder shift clock delivers a frequency (decoder clock : 12),
+                                                --                synchronized by the recovered serial data stream.
+    ME_VW:              in      std_logic;      -- HD6408-output: high indicates receipt of a VALID WORD.
+    ME_TD:              in      std_logic;      -- HD6408-output: take data is high during receipt of data after identification
+                                                --                of a sync pulse and two valid Manchester data bits
 
     -- decoder/encoder signals of HD6408 ------------------------------------------------------------------------------------
---    ME_12MHz:       out     std_logic;      -- HD6408-input:    is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
+--    ME_12MHz:       out     std_logic;        -- HD6408-input:  is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
     
 
-    Mil_BOI:        in  std_logic;          -- HD6408-input:  connect positive bipolar receiver, in FPGA directed to the external
-                                            --                manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
-                                            --                vhdl manchester macro.
-    Mil_BZI:        in  std_logic;          -- HD6408-input:  connect negative bipolar receiver, in FPGA directed to the external
-                                            --                manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
-                                            --                vhdl manchester macro.
-    Sel_Mil_Drv:    buffer  std_logic;      -- HD6408-output: active high, enable the external open collector driver to the transformer
-    nSel_Mil_Rcv:   out     std_logic;      -- HD6408-output: active low, enable the external differtial receive circuit.
-    Mil_nBOO:       out     std_logic;      -- HD6408-output: connect bipolar positive output to external open collector driver of
-                                            --                the transformer. Source is the external manchester en/decoder HD6408 via
-                                            --                nME_BOO or the internal FPGA vhdl manchester macro.
-    Mil_nBZO:       out     std_logic;      -- HD6408-output: connect bipolar negative output to external open collector driver of
-                                            --                the transformer. Source is the external manchester en/decoder HD6408 via
-                                            --                nME_BZO or the internal FPGA vhdl manchester macro.
-    nLed_Mil_Rcv:   out     std_logic;
-    nLed_Mil_Trm:   out     std_logic;
-    nLed_Mil_Err:   out     std_logic;
-    error_limit_reached:  out   std_logic;
-    Mil_Decoder_Diag_p: out   std_logic_vector(15 downto 0);
-    Mil_Decoder_Diag_n: out   std_logic_vector(15 downto 0);
-    timing:         in      std_logic;
-    nLed_Timing:    out     std_logic;
-    dly_intr_o:     out     std_logic;
-    nLed_Fifo_ne:   out     std_logic;
-    ev_fifo_ne_intr_o:  out   std_logic;
-    Interlock_Intr_i: in      std_logic;
-    Data_Rdy_Intr_i:  in      std_logic;
-    Data_Req_Intr_i:  in      std_logic;
-    Interlock_Intr_o: out     std_logic;
-    Data_Rdy_Intr_o:  out     std_logic;
-    Data_Req_Intr_o:  out     std_logic;
-    nLed_Interl:    out     std_logic;
-    nLed_Dry:       out     std_logic;
-    nLed_Drq:       out     std_logic;
-    every_ms_intr_o:  out std_logic;
---  io_1:           buffer  std_logic;
---    io_1_is_in:     out     std_logic := '0';
---    nLed_io_1:      out     std_logic;
---    io_2:           buffer  std_logic;
---    io_2_is_in:     out     std_logic := '0';
---    nLed_io_2:      out     std_logic;
-    lemo_data_o:    out     std_logic_vector(4 downto 1);
-    lemo_nled_o:    out     std_logic_vector(4 downto 1);
-    lemo_out_en_o:  out     std_logic_vector(4 downto 1);  
-    lemo_data_i:    in      std_logic_vector(4 downto 1):= (others => '0');
-    nsig_wb_err:    out     std_logic       -- '0' => gestretchte wishbone access Fehlermeldung
+    Mil_BOI:            in      std_logic;      -- HD6408-input:  connect positive bipolar receiver, in FPGA directed to the external
+                                                --                manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
+                                                --                vhdl manchester macro.
+    Mil_BZI:            in      std_logic;      -- HD6408-input:  connect negative bipolar receiver, in FPGA directed to the external
+                                                --                manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
+                                                --                vhdl manchester macro.
+    Sel_Mil_Drv:        buffer  std_logic;      -- HD6408-output: active high, enable the external open collector driver to the transformer
+    nSel_Mil_Rcv:       out     std_logic;      -- HD6408-output: active low, enable the external differtial receive circuit.
+    Mil_nBOO:           out     std_logic;      -- HD6408-output: connect bipolar positive output to external open collector driver of
+                                                --                the transformer. Source is the external manchester en/decoder HD6408 via
+                                                --                nME_BOO or the internal FPGA vhdl manchester macro.
+    Mil_nBZO:           out     std_logic;      -- HD6408-output: connect bipolar negative output to external open collector driver of
+                                                --                the transformer. Source is the external manchester en/decoder HD6408 via
+                                                --                nME_BZO or the internal FPGA vhdl manchester macro.
+    nLed_Mil_Rcv:       out     std_logic;
+    nLed_Mil_Trm:       out     std_logic;
+    nLed_Mil_Err:       out     std_logic;
+    error_limit_reached:out     std_logic;
+    Mil_Decoder_Diag_p: out     std_logic_vector(15 downto 0);
+    Mil_Decoder_Diag_n: out     std_logic_vector(15 downto 0);
+    timing:             in      std_logic;
+    nLed_Timing:        out     std_logic;
+    dly_intr_o:         out     std_logic;
+    nLed_Fifo_ne:       out     std_logic;
+    ev_fifo_ne_intr_o:  out     std_logic;
+    Interlock_Intr_i:   in      std_logic;
+    Data_Rdy_Intr_i:    in      std_logic;
+    Data_Req_Intr_i:    in      std_logic;
+    Interlock_Intr_o:   out     std_logic;
+    Data_Rdy_Intr_o:    out     std_logic;
+    Data_Req_Intr_o:    out     std_logic;
+    nLed_Interl:        out     std_logic;
+    nLed_Dry:           out     std_logic;
+    nLed_Drq:           out     std_logic;
+    every_ms_intr_o:    out     std_logic;
+    lemo_data_o:        out     std_logic_vector(4 downto 1);
+    lemo_nled_o:        out     std_logic_vector(4 downto 1);
+    lemo_out_en_o:      out     std_logic_vector(4 downto 1);  
+    lemo_data_i:        in      std_logic_vector(4 downto 1):= (others => '0');
+    nsig_wb_err:        out     std_logic                           -- '0' => gestretchte wishbone access Fehlermeldung
     );
 end component wb_mil_scu;
 
 
+component wb_mil_scu_v2 IS 
+generic (
+    Clk_in_Hz:  INTEGER := 125_000_000    -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
+                                          -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+    );
+port  (
+    clk_i:              in      std_logic;
+    nRst_i:             in      std_logic;
+    slave_i:            in      t_wishbone_slave_in;
+    slave_o:            out     t_wishbone_slave_out;
+    
+    -- encoder (transmiter) signals of HD6408 --------------------------------------------------------------------------------
+    nME_BOO:            in      std_logic;      -- HD6408-output: transmit bipolar positive.
+    nME_BZO:            in      std_logic;      -- HD6408-output: transmit bipolar negative.
+    
+    ME_SD:              in      std_logic;      -- HD6408-output: '1' => send data is active.
+    ME_ESC:             in      std_logic;      -- HD6408-output: encoder shift clock for shifting data into the encoder. The
+                                                --                encoder samples ME_SDI on low-to-high transition of ME_ESC.
+    ME_SDI:             out     std_logic;      -- HD6408-input:  serial data in accepts a serial data stream at a data rate
+                                                --                equal to encoder shift clock.
+    ME_EE:              out     std_logic;      -- HD6408-input:  a high on encoder enable initiates the encode cycle.
+                                                --                (Subject to the preceding cycle being completed).
+    ME_SS:              out     std_logic;      -- HD6408-input:  sync select actuates a Command sync for an input high
+                                                --                and data sync for an input low.
 
+    -- decoder (receiver) signals of HD6408 ---------------------------------------------------------------------------------
+    ME_BOI:             out     std_logic;      -- HD6408-input:  A high input should be applied to bipolar one in when the bus is in its
+                                                --                positive state, this pin must be held low when the Unipolar input is used.
+    ME_BZI:             out     std_logic;      -- HD6408-input:  A high input should be applied to bipolar zero in when the bus is in its
+                                                --                negative state. This pin must be held high when the Unipolar input is used.
+    ME_UDI:             out     std_logic;      -- HD6408-input:  With ME_BZI high and ME_BOI low, this pin enters unipolar data in to the
+                                                --                transition finder circuit. If not used this input must be held low.
+    ME_CDS:             in      std_logic;      -- HD6408-output: high occurs during output of decoded data which was preced
+                                                --                by a command synchronizing character. Low indicares a data sync.
+    ME_SDO:             in      std_logic;      -- HD6408-output: serial data out delivers received data in correct NRZ format.
+    ME_DSC:             in      std_logic;      -- HD6408-output: decoder shift clock delivers a frequency (decoder clock : 12),
+                                                --                synchronized by the recovered serial data stream.
+    ME_VW:              in      std_logic;      -- HD6408-output: high indicates receipt of a VALID WORD.
+    ME_TD:              in      std_logic;      -- HD6408-output: take data is high during receipt of data after identification
+                                                --                of a sync pulse and two valid Manchester data bits
+
+    -- decoder/encoder signals of HD6408 ------------------------------------------------------------------------------------
+--    ME_12MHz:       out     std_logic;        -- HD6408-input:  is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
+    
+
+    Mil_BOI:            in      std_logic;      -- connect positive bipolar receiver, in FPGA directed to the external
+                                                -- manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
+                                                -- vhdl manchester macro.
+    Mil_BZI:            in      std_logic;      -- connect negative bipolar receiver, in FPGA directed to the external
+                                                -- manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
+                                                -- vhdl manchester macro.
+    Sel_Mil_Drv:        out     std_logic;      -- HD6408-output: active high, enable the external open collector driver to the transformer
+    nSel_Mil_Rcv:       out     std_logic;      -- HD6408-output: active low, enable the external differtial receive circuit.
+    Mil_nBOO:           out     std_logic;      -- connect bipolar positive output to external open collector driver of
+                                                -- the transformer. Source is the external manchester en/decoder HD6408 via
+                                                -- nME_BOO or the internal FPGA vhdl manchester macro.
+    Mil_nBZO:           out     std_logic;      -- connect bipolar negative output to external open collector driver of
+                                                -- the transformer. Source is the external manchester en/decoder HD6408 via
+                                                -- nME_BZO or the internal FPGA vhdl manchester macro.
+    nLed_Mil_Rcv:       out     std_logic;
+    nLed_Mil_Trm:       out     std_logic;
+    nLed_Mil_Err:       out     std_logic;
+    error_limit_reached:out     std_logic;
+    Mil_Decoder_Diag_p: out     std_logic_vector(15 downto 0);
+    Mil_Decoder_Diag_n: out     std_logic_vector(15 downto 0);
+    timing:             in      std_logic;
+    nLed_Timing:        out     std_logic;
+    dly_intr_o:         out     std_logic;
+    nLed_Fifo_ne:       out     std_logic;
+    ev_fifo_ne_intr_o:  out     std_logic;
+    Interlock_Intr_i:   in      std_logic;
+    Data_Rdy_Intr_i:    in      std_logic;
+    Data_Req_Intr_i:    in      std_logic;
+    Interlock_Intr_o:   out     std_logic;
+    Data_Rdy_Intr_o:    out     std_logic;
+    Data_Req_Intr_o:    out     std_logic;
+    nLed_Interl:        out     std_logic;
+    nLed_Dry:           out     std_logic;
+    nLed_Drq:           out     std_logic;
+    every_ms_intr_o:    out     std_logic;
+	 lemo_data_o:         out     std_logic_vector(4 downto 1);
+    lemo_nled_o:        out     std_logic_vector(4 downto 1);
+	 lemo_out_en_o:       out     std_logic_vector(4 downto 1);  
+    lemo_data_i:        in      std_logic_vector(4 downto 1):= (others => '0');
+    nsig_wb_err:        out     std_logic       -- '0' => gestretchte wishbone access Fehlermeldung
+
+    );
+end component wb_mil_scu_v2;
 
 component event_processing is 
   generic (
@@ -250,9 +331,9 @@ end component event_processing;
 
 component mil_pll is
   port(
-    inclk0 : in  std_logic;
-    c0     : out std_logic;
-    locked : out std_logic);
+    inclk0:           in    std_logic;
+    c0:               out   std_logic;
+    locked:           out   std_logic);
 end component mil_pll;
 
 end package wb_mil_scu_pkg;

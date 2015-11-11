@@ -1,6 +1,7 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.all;
-USE ieee.std_logic_arith.all;
+use ieee.numeric_std.all;
+
 use work.wishbone_pkg.all;
 use work.aux_functions_pkg.all;
 use work.mil_pkg.all;
@@ -10,10 +11,15 @@ use work.scu_sio3_pkg.all;
 
 entity wb_mil_wrapper_sio IS  
   generic (
-    Clk_in_Hz:    INTEGER := 125_000_000;    -- Manchester IP needs 20 Mhz clock for proper detection of short 500ns data pulses
-                                            -- Generic "Mil_clk_in_Hz"  "Baudrate" des Manchester-Ein-/Ausgangsdatenstroms umgepolt.
-    Base_Addr:    INTEGER := 16#400#
-  );
+    Clk_in_Hz:              integer := 125_000_000;  -- Manchester IP needs 20 Mhz clock for proper detection of short 500ns data pulse
+    sio_mil_first_reg_a:    unsigned(15 downto 0)  := x"0400";
+    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0411";
+    evt_filt_first_a:       unsigned(15 downto 0)  := x"1000";
+    evt_filt_last_a:        unsigned(15 downto 0)  := x"1FFF"
+
+
+
+    );
 port  (
     -- SCU Bus Slave I/F
     Adr_from_SCUB_LA:     in      std_logic_vector(15 downto 0);
@@ -85,6 +91,15 @@ end wb_mil_wrapper_sio;
 ARCHITECTURE arch_wb_mil_wrapper_sio OF wb_mil_wrapper_sio IS
 
 
+constant rd_clr_ev_timer_a_map:         unsigned (15 downto 0)    := sio_mil_first_reg_a + rd_clr_ev_timer_a;
+constant rd_ev_timer_LW_a_map:          unsigned (15 downto 0)    := sio_mil_first_reg_a + rd_ev_timer_LW_a;
+constant rd_clr_wait_timer_a_map:       unsigned (15 downto 0)    := sio_mil_first_reg_a + rd_clr_wait_timer_a;
+constant rd_wait_timer_LW_a_map:        unsigned (15 downto 0)    := sio_mil_first_reg_a + rd_wait_timer_LW_a;
+constant rd_wr_dly_timer_a_map:         unsigned (15 downto 0)    := sio_mil_first_reg_a + rd_wr_dly_timer_a;
+constant rd_wr_dly_timer_LW_a_map:      unsigned (15 downto 0)    := sio_mil_first_reg_a + rd_wr_dly_timer_LW_a;
+constant rd_wr_dly_timer_HW_a_map:      unsigned (15 downto 0)    := sio_mil_first_reg_a + rd_wr_dly_timer_HW_a;
+
+
 signal slave_i:                  t_wishbone_slave_in;
 signal slave_o:                  t_wishbone_slave_out;
 
@@ -99,7 +114,6 @@ signal rd_latch_dly_timer:       std_logic_vector(15 downto 0);
 signal wr_latch_dly_timer_lw:    std_logic_vector(15 downto 0);
 signal wr_latch_dly_timer_hw:    std_logic_vector(15 downto 0);
 
-signal Adr_from_SCUB_LA_remap:   std_logic_vector(15 downto 0);
 
 signal ack_stretched:            std_logic;
 signal dly_buf_ack:              std_logic;
@@ -128,43 +142,27 @@ nSel_Mil_Drv <= not Sel_Mil_Drv;
 
 -- Process for writing to wb_mil_scu directly or via latches
 
-process (Adr_from_SCUB_LA_remap, wr_latch_dly_timer_hw,wr_latch_dly_timer_lw,Ext_wr_active,Data_from_SCUB_LA) 
+process (Adr_from_SCUB_LA, wr_latch_dly_timer_hw,wr_latch_dly_timer_lw,Ext_wr_active,Data_from_SCUB_LA) 
 begin
-  case conv_integer(unsigned(Adr_from_SCUB_LA_remap)) is
-    when rd_wr_dly_timer_LW_a   =>
-      slave_i.adr   <= x"000" & b"00" & Adr_from_SCUB_LA_remap & b"00";
+  case (unsigned(Adr_from_SCUB_LA (15 downto 0))) is
+    when rd_wr_dly_timer_LW_a_map  =>
+      slave_i.adr   <= x"000" & b"00" & Adr_from_SCUB_LA & b"00";
       slave_i.dat   <= x"0000" & Data_from_SCUB_LA; --dummy write, Data_from_SCUB_LA feeds wr_latch_dly_timer_lw
       slave_i.we    <= '0';
-    when rd_wr_dly_timer_HW_a  =>
-      slave_i.adr   <= x"000" & b"00" & Adr_from_SCUB_LA_remap & b"00";
+    when rd_wr_dly_timer_HW_a_map =>
+      slave_i.adr   <= x"000" & b"00" & Adr_from_SCUB_LA & b"00";
       slave_i.dat   <= Data_from_SCUB_LA & x"0000"; --dummy write, Data_from_SCUB_LA feeds wr_latch_dly_timer_hw
       slave_i.we    <= '0';
-    when rd_wr_dly_timer_a  =>
-      slave_i.adr   <= x"000" & b"00" & Adr_from_SCUB_LA_remap & b"00";
+    when rd_wr_dly_timer_a_map  =>
+      slave_i.adr   <= x"000" & b"00" & Adr_from_SCUB_LA & b"00";
       slave_i.dat   <= wr_latch_dly_timer_hw & wr_latch_dly_timer_lw;
       slave_i.we    <= Ext_wr_active;
     -- this regs and filter ram is loaded directly, using bits 15:0
     when others =>
-      slave_i.adr   <= x"000" & b"00" & Adr_from_SCUB_LA_remap & b"00";
+      slave_i.adr   <= x"000" & b"00" & Adr_from_SCUB_LA & b"00";
       slave_i.dat   <= x"0000" & Data_from_SCUB_LA; 
       slave_i.we    <= Ext_wr_active;
     end case;
-end process;
-
--- For use in both address schemes ( SCU_MIL_OPTION and SIO), 
--- register addresses 0x400 .. 41A have to be remapped
--- since 0x00 .... 0x1A is used by SCU Slave standard register set
--- and   0x200   is used by the CLK CTRL register
--- p.E. SCU addresses 0x400 (first MIL reg), remap is 0x000(for dual use in Mil Option)
-
-process (Adr_from_SCUB_LA)
-begin
-  if conv_integer(unsigned(Adr_from_SCUB_LA)) >= sio_mil_first_reg_a and conv_integer(unsigned(Adr_from_SCUB_LA)) <= sio_mil_last_reg_a then
-     Adr_from_SCUB_LA_remap <= Adr_from_SCUB_LA (15 downto 11) & "0" & Adr_from_SCUB_LA (9 downto 0); --reg access
-     -- this is done only for dual use of wb_mil_scu_v2 in both, SIO and SCU MIL Option
-   else
-     Adr_from_SCUB_LA_remap <= Adr_from_SCUB_LA;                                                          --event ram access
-  end if;
 end process;
 
 
@@ -203,23 +201,13 @@ Dtack_to_SCUB <= ack_stretched or slave_o_ack_la or dly_buf_ack;
 Data_for_SCUB <= ack_stretched or slave_o_ack_la;
 
 
-
-
-
-
 process (Adr_from_SCUB_LA)
 begin
-  if (
-     conv_integer(unsigned(Adr_from_SCUB_LA)) >=  sio_mil_first_reg_a  and  --x400 .. 411)
-     conv_integer(unsigned(Adr_from_SCUB_LA)) <=  sio_mil_last_reg_a
-     ) then
+  if   (unsigned (Adr_from_SCUB_LA) >=  sio_mil_first_reg_a  and  unsigned (Adr_from_SCUB_LA) <=  sio_mil_last_reg_a ) then
      mil_reg_access  <= '1';
      mil_ram_access  <= '0';
-  elsif(
-     conv_integer(unsigned(Adr_from_SCUB_LA)) >=  ev_filt_first_a  and      --x1000 .. 1fff
-     conv_integer(unsigned(Adr_from_SCUB_LA)) <=  ev_filt_last_a 
-     ) then
-      mil_reg_access <= '0';
+  elsif(unsigned(Adr_from_SCUB_LA) >= (evt_filt_first_a)  and  unsigned (Adr_from_SCUB_LA) <=   (evt_filt_last_a)) then
+     mil_reg_access <= '0';
       mil_ram_access <= '1';
   else
       mil_reg_access <= '0';
@@ -228,24 +216,22 @@ begin
 end process;
 
 
---this mux handles read sources to have data for 1 additional clock present
-
-process (Adr_from_SCUB_LA_remap,ack_stretched,slave_o, rd_latch_ev_timer, rd_latch_wait_timer,rd_latch_dly_timer,rd_latch, mil_reg_access, mil_ram_access) 
+process (Adr_from_SCUB_LA,ack_stretched,slave_o, rd_latch_ev_timer, rd_latch_wait_timer,rd_latch_dly_timer,rd_latch, mil_reg_access, mil_ram_access) 
 begin
 
      if slave_o.ack='1'  and (mil_reg_access='1' or mil_ram_access='1' )then  --for first few clocks
             -- get data direct from sources for quick response
-            if    (conv_integer(unsigned(Adr_from_SCUB_LA_remap)) = rd_clr_ev_timer_a)    then
+            if    (unsigned(Adr_from_SCUB_LA)) = rd_clr_ev_timer_a_map    then
               Data_to_SCUB            <=  slave_o.dat(31 downto 16);
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA_remap))  = rd_ev_timer_LW_a )    then
+            elsif (unsigned(Adr_from_SCUB_LA)) = rd_ev_timer_LW_a_map     then
               Data_to_SCUB            <=  rd_latch_ev_timer;
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA_remap))  = rd_clr_wait_timer_a ) then
+            elsif (unsigned(Adr_from_SCUB_LA)) = rd_clr_wait_timer_a_map  then
               Data_to_SCUB            <=  slave_o.dat(31 downto 16);
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA_remap))  = rd_wait_timer_LW_a )  then
+            elsif (unsigned(Adr_from_SCUB_LA)) = rd_wait_timer_LW_a_map   then
                Data_to_SCUB            <=  rd_latch_wait_timer;
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA_remap))  = rd_wr_dly_timer_a )   then
+            elsif (unsigned(Adr_from_SCUB_LA)) = rd_wr_dly_timer_a_map    then
               Data_to_SCUB            <=  slave_o.dat(31 downto 16);
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA_remap))  = rd_wr_dly_timer_LW_a )then
+            elsif (unsigned(Adr_from_SCUB_LA)) = rd_wr_dly_timer_LW_a_map then
               Data_to_SCUB            <=  rd_latch_dly_timer;
             else
              Data_to_SCUB            <=  slave_o.dat(15 downto 0);
@@ -272,20 +258,20 @@ begin
       if Ext_Rd_active='1'  and (mil_reg_access='1' or mil_ram_access='1') then 
         if slave_o.ack='1'  or dly_buf_ack='1'   then  
               --read of timer data (hw directly, lw thru latch)    
-           if    (conv_integer(unsigned(Adr_from_SCUB_LA_remap)) = rd_clr_ev_timer_a)   then
+           if     (unsigned(Adr_from_SCUB_LA)) = rd_clr_ev_timer_a_map   then
               rd_latch            <=  slave_o.dat(31 downto 16);
               rd_latch_ev_timer   <=  slave_o.dat(15 downto  0); 
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA_remap)) = rd_ev_timer_LW_a )   then
+            elsif (unsigned(Adr_from_SCUB_LA)) = rd_ev_timer_LW_a_map    then
               rd_latch            <=  rd_latch_ev_timer;
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA_remap)) = rd_clr_wait_timer_a) then
+            elsif (unsigned(Adr_from_SCUB_LA)) = rd_clr_wait_timer_a_map then
               rd_latch            <=  slave_o.dat(31 downto 16);
               rd_latch_wait_timer <=  slave_o.dat(15 downto  0); 
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA_remap)) = rd_wait_timer_LW_a)  then
+            elsif (unsigned(Adr_from_SCUB_LA)) = rd_wait_timer_LW_a_map  then
               rd_latch            <=  rd_latch_wait_timer;
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA_remap)) = rd_wr_dly_timer_a )  then
+            elsif (unsigned(Adr_from_SCUB_LA)) = rd_wr_dly_timer_a_map   then
               rd_latch            <=  slave_o.dat(31 downto 16);
               rd_latch_dly_timer  <=  slave_o.dat(15 downto  0);
-            elsif(conv_integer(unsigned(Adr_from_SCUB_LA_remap)) = rd_wr_dly_timer_LW_a )then
+            elsif (unsigned(Adr_from_SCUB_LA)) = rd_wr_dly_timer_LW_a_map then
               rd_latch            <=  rd_latch_dly_timer;
             else
                -- read of other wb_mil_scu data including filter ram and fifo
@@ -301,8 +287,6 @@ begin
   end if;  
 end process;
 
-
-
 -- Latch for Delay Timer, which needs to be feed 32 bit in one hit
 process (clk) 
 begin
@@ -313,19 +297,19 @@ begin
       dly_buf_ack <='0';
     else
       if  Ext_Wr_Active='1' then
-        case conv_integer(unsigned(Adr_from_SCUB_LA_remap)) is 
-         when rd_wr_dly_timer_LW_a =>
+        case unsigned(Adr_from_SCUB_LA)is 
+         when rd_wr_dly_timer_LW_a_map =>
               wr_latch_dly_timer_lw <= Data_from_SCUB_LA;
               dly_buf_ack           <='1';
-         when rd_wr_dly_timer_HW_a =>
+         when rd_wr_dly_timer_HW_a_map =>
               wr_latch_dly_timer_hw <= Data_from_SCUB_LA;
               dly_buf_ack           <='1';              
          when others  =>
               dly_buf_ack <='0';
         end case;
       elsif Ext_Rd_Active ='1' then
-        case conv_integer(unsigned(Adr_from_SCUB_LA_remap)) is 
-          when rd_ev_timer_LW_a |rd_wait_timer_LW_a | rd_wr_dly_timer_LW_a|rd_wr_dly_timer_HW_a =>
+        case unsigned(Adr_from_SCUB_LA) is 
+          when rd_ev_timer_LW_a_map |rd_wait_timer_LW_a_map | rd_wr_dly_timer_LW_a_map|rd_wr_dly_timer_HW_a_map =>
               dly_buf_ack  <='1';
           when others  =>
               dly_buf_ack  <='0';
@@ -340,7 +324,12 @@ end process;
 
 mil : wb_mil_sio
   generic map(
-    Clk_in_Hz           => clk_in_hz)
+    Clk_in_Hz           => clk_in_hz,
+    sio_mil_first_reg_a => sio_mil_first_reg_a,
+    sio_mil_last_reg_a  => sio_mil_last_reg_a,
+    evt_filt_first_a    => evt_filt_first_a,
+    evt_filt_last_a     => evt_filt_last_a
+    )
   port map(
     clk_i               => clk,
     nRst_i              => nReset,

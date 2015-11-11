@@ -3,12 +3,13 @@
 LIBRARY IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
-use IEEE.std_logic_unsigned.all;
+
+
 use work.scu_bus_slave_pkg.all;
 use work.scu_sio3_pkg.all;
-use work.wishbone_pkg.all;
 use work.sio3_sys_clk_local_clk_switch_pkg.all;
 use work.aux_functions_pkg.all;
+
 
 
 --+-----------------------------------------------------------------------------------------------------------------+
@@ -128,10 +129,25 @@ ARCHITECTURE arch_scu_sio3 OF scu_sio3 IS
 
 CONSTANT  c_Firmware_Version:     integer                   := 5;         -- important: => Firmware_Version
 CONSTANT  c_Firmware_Release:     integer                   := 2;         -- important: => Firmware_Release
-CONSTANT  c_housekeeping_base:    unsigned(15 downto 0)     := x"0040";   -- housekeeping/LM32
+CONSTANT  SCU_SIO2_ID:            integer range 16#0200# to 16#020F# := 16#0200#;
 CONSTANT  stretch_cnt:            integer                   := 5;
 
-signal    CID_Group:              integer range 0 to 65535  := 0;
+SIGNAL    CID_Group:              integer range 0 to 65535  := 0;
+
+--        SCU Slave Standard Register                          := x"0000" - x"002f"
+CONSTANT  clk_switch_status_cntrl_addr:  unsigned(15 downto 0) := x"0030";
+CONSTANT  c_housekeeping_base_a:         unsigned(15 downto 0) := x"0040";
+---       Eb-Flash Macro                                       := x"0040   - x1E0
+CONSTANT  c_sio_mil_first_reg_a:         unsigned(15 downto 0) := x"0400";--x"0400";
+CONSTANT  c_sio_mil_last_reg_a:          unsigned(15 downto 0) := x"0411";--x"0411";
+CONSTANT  c_ev_filt_first_a:             unsigned(15 downto 0) := x"1000";--x"1000";
+CONSTANT  c_ev_filt_last_a:              unsigned(15 downto 0) := x"1FFF";--x"1FFF";
+
+--SCU Bus Address Range is 0000 ... 1FFFF per Slave (for 8 bit accesses).
+--SCU Slaves (LA=Local Access) use 16 bit accesses, so they have 0x0000. 0xFFFF per slave.
+--To have full address shift capability all 16 address bits are needed for LA
+
+
 
 -- Clocks, Resets, clock enables
 signal    Powerup_Res:            std_logic;  
@@ -184,10 +200,7 @@ signal    wb_scu_data_to_SCUB:    std_logic_vector(15 downto 0);
 signal    wb_scu_dtack:           std_logic;
 signal    wb_scu_rd_active:       std_logic;
 
-signal    User1_Reg:              std_logic_vector(15 downto 0);
-signal    user_reg1_dtack:        std_logic;
-signal    user_reg1_data_to_SCUB: std_logic_vector(15 downto 0);
-signal    user_reg_rd_active:     std_logic;
+
 
 -- Timing LEMO I/F
 signal    Timing_Pattern_RCV:     std_logic;
@@ -212,7 +225,8 @@ signal    owr_en_o:               std_logic_vector(1 downto 0);
 signal    owr_i:                  std_logic_vector(1 downto 0);
 
 -- led stuff
-signal    led_ctr:                std_logic_vector (7 downto 0);
+signal    led_ctr_vec:            std_logic_vector (7 downto 0);             
+signal    led_ctr:                integer range 0 to 255;
 signal    nLed:                   std_logic_vector (15 downto 0);   
 signal    nLED_out:               std_logic_vector (15 downto 0);
 signal    nLED_Mil_Rcv:           std_logic;  
@@ -250,7 +264,7 @@ A_nLEMO_3_LED    <= lemo_nled_o(3);
 A_nLEMO_4_LED    <= lemo_nled_o(4);
 
 nLED(3)             <= not A_UMIL15V;
-nLED(14 downto 11)  <= not User1_Reg(14 downto 11);
+nLED(14 downto 11)  <= "1111";
 nLED(7)             <= not A_UMIL5V;
 
 
@@ -259,13 +273,14 @@ TristateDrivers: for i in 0 to 15 generate
   A_nLED(i) <='0' when nLED_out (i) = '0'  else 'Z';
 end generate TristateDrivers;
 
+led_ctr_vec <= std_logic_vector (to_unsigned(led_ctr,8));
 
 process (nLED, led_ctr )
 begin 
-  if led_ctr="00000000" then
+  if led_ctr = 0 then
     nLED_out <= nLED;
   else --do initial led check
-    if led_ctr(6)='1' then
+    if led_ctr_vec(6)='1' then
       nLED_out <= "1010101010101010";
     else
       nLED_out <= "0101010101010101";
@@ -278,10 +293,10 @@ end process;
 initial_led_check: process (clk,nPowerup_Res)
 begin
   if nPowerup_Res ='0' then
-    led_ctr <= "11111111";
+    led_ctr <= led_ctr'HIGH;
   elsif rising_edge (clk) then
     if ena_Every_20ms then
-      if led_ctr /= "00000000" then
+      if led_ctr /= 0 then
         led_ctr <= led_ctr - 1;
       end if;
     end if;
@@ -300,26 +315,6 @@ Powerup_Res       <= not nPowerup_Res;
 clk_switch_intr   <= sys_clk_is_bad_la or sys_clk_deviation_la;
 
 
-user_reg1: sio3_Test_User_Reg  
-  generic map(
-    Base_addr  =>  c_test_usr_reg_Base_Addr
-    )
-  port map  (
-    Adr_from_SCUB_LA      =>  ADR_from_SCUB_LA,                   -- latched address from SCU_Bus  
-    Data_from_SCUB_LA     =>  Data_from_SCUB_LA,                  -- latched data from SCU_Bus 
-    Ext_Adr_Val           =>  Ext_Adr_Val,                        -- '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active         =>  Ext_Rd_active,                      -- '1' => Rd-Cycle is active
-    Ext_Rd_fin            =>  Ext_Rd_fin,                         -- marks end of read cycle,  active high for one clock period of sys_cl
-    Ext_Wr_active         =>  Ext_Wr_active,                      -- '1' => Wr-Cycle is active
-    Ext_Wr_fin            =>  Ext_Wr_fin,                         -- marks end of write cycle,  active high for one clock period of sys_cl
-    clk                   =>  clk,                                -- should be the same clk as used by SCU_Bus_Slave
-    nReset                =>  nPowerup_Res,                   
-    User1_Reg             =>  User1_Reg,                          -- Daten-Reg. User1
-    User2_Reg             =>  open,                               -- Daten-Reg. User2    -- User2_Reg not used
-    User_Reg_rd_active    =>  User_Reg_rd_active,                 -- read data available at 'Dat
-    Data_to_SCUB          =>  user_reg1_data_to_SCUB,             -- connect read sources to SCU
-    Dtack_to_SCUB         =>  user_reg1_Dtack                     -- connect Dtack to SCUB-Macro
-  );
 
 
 -- open drain buffer for one wire
@@ -331,7 +326,7 @@ A_OneWire         <= owr_pwren_o(1) when (owr_pwren_o(1) = '1' or owr_en_o(1) = 
 
 lm32_ow: housekeeping
   generic map (
-    Base_Addr => c_housekeeping_base)
+    Base_Addr => c_housekeeping_base_a)
   port map (
     clk_sys             => clk,
     n_rst               => nPowerup_Res,
@@ -356,6 +351,8 @@ lm32_ow: housekeeping
 
 
 sio3_clk_sw: sio3_sys_clk_local_clk_switch
+  generic map (
+    Base_Addr => clk_switch_status_cntrl_addr)
   port map(
     local_clk_i             => CLK_FPGA,              --125MHz XTAL
     sys_clk_i               => A_SysClock,            --12p5MHz SCU Bus
@@ -382,9 +379,13 @@ sio3_clk_sw: sio3_sys_clk_local_clk_switch
       
 mil_slave_1: wb_mil_wrapper_sio 
   generic map(
-    Clk_in_Hz  =>  clk_in_hz,  -- Für Messung 1Mb/s (Flanke/Flanke=500 ns), mindestens mit 20 Mhz takten!
-                               -- "Mil_Clk" im Generic "Mil_clk_in_Hz" sonst ist die Manchester Baudrate falsch.
-    Base_Addr  =>  c_wb_mil_wrapper_Base_Addr
+    Clk_in_Hz           => clk_in_hz,  -- Wg Bitmessung 1Mb/s (Flanke/Flanke=500 ns), clk_in_hz >= 20 Mhz!
+    sio_mil_first_reg_a => c_sio_mil_first_reg_a,
+    sio_mil_last_reg_a  => c_sio_mil_last_reg_a,
+    evt_filt_first_a     => c_ev_filt_first_a,
+    evt_filt_last_a      => c_ev_filt_last_a
+
+    
   )
   port map(
     Adr_from_SCUB_LA    =>  ADR_from_SCUB_LA,   -- in   
@@ -483,14 +484,11 @@ end process Group_CID_sel;
 
 rd_port_mux:  process  ( 
   mil_rd_active,        Mil_Data_to_SCUB, 
-  User_Reg_rd_active,   user_reg1_data_to_SCUB,
   clk_switch_rd_active, clk_switch_rd_data,
   wb_scu_rd_active,     wb_scu_data_to_SCUB )
 begin
   if mil_rd_active = '1' then
     Data_to_SCUB <= Mil_Data_to_SCUB;
-  elsif User_Reg_rd_active = '1' then 
-    Data_to_SCUB <= user_reg1_data_to_SCUB;
   elsif clk_switch_rd_active = '1' then
     Data_to_SCUB <= clk_switch_rd_data;
   elsif wb_scu_rd_active = '1' then
@@ -578,7 +576,7 @@ SCU_Slave:scu_bus_slave
     Powerup_Done        =>  open
   );  
 
-Dtack_to_SCUB <=  user_reg1_Dtack  or mil_Dtack_to_SCUB or clk_switch_dtack or wb_scu_dtack;
+Dtack_to_SCUB <=  mil_Dtack_to_SCUB or clk_switch_dtack or wb_scu_dtack;
 
 A_nDtack  <= NOT(SCU_Dtack);
 A_nSRQ    <= NOT(SCUB_SRQ);

@@ -31,7 +31,7 @@ read -p " Starte Auslesen des 4096x6 Filter RAM Inhalts  (Abbruch mit ^C, weiter
 
 clear
 echo "Auslesen des 4096x6 Filter RAM. Nach Powerup sind die Zellen 0x0000"
-echo "Es weren 2 Zellen mehr ausgelesen, der Read Error am Ende ist beabsichtigt"
+
 
 
 
@@ -41,7 +41,9 @@ echo "Es weren 2 Zellen mehr ausgelesen, der Read Error am Ende ist beabsichtigt
     echo "ibase=10;obase=16;$((var))"|bc
     eb-read $scuname $((var))/2
   done
-
+echo "Es weren 2 Zellen mehr ausgelesen, um Adressende zu checken. Der Read Error am Ende ist beabsichtigt"
+echo ""
+echo ""
 
 read -p  " Starte Beschreiben des 4096x6 Filter RAM Inhalts  (Abbruch mit ^C, weiter mit CR)"
 clear
@@ -54,6 +56,10 @@ echo " Beschreiben des 4096x6 Filter RAM mit 0x002C"
      echo "ibase=10;obase=16;$((var))"|bc
    eb-write  $scuname $((var))/2 0x002c
    done
+echo "Es werden 2 Zellen mehr ausgelesen, um Adressende zu checken. Der Read Error am Ende ist beabsichtigt"
+echo ""
+echo ""
+   
    
 read -p  " Auslesen des 4096x6 Filter RAM Inhalts 0x002C (Abbruch mit ^C, weiter mit CR)"
 clear
@@ -74,6 +80,10 @@ read -p " Continue with Return " weiter
        echo $lesewert
       fi
    done
+   
+echo "Es werden 2 Zellen mehr ausgelesen, um Adressende zu checken. Der Read Error am Ende ist beabsichtigt"
+echo ""
+echo ""
 
 
 

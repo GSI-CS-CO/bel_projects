@@ -6,10 +6,13 @@ library work;
 
 package sio3_sys_clk_local_clk_switch_pkg is
 
-constant  clk_switch_status_cntrl_addr:  unsigned(15 downto 0) := x"0030";
+
 
 
 component sio3_sys_clk_local_clk_switch is
+  generic (
+    Base_Addr:  unsigned(15 downto 0)  := x"0040"
+    );
   port(
     local_clk_i:          in    std_logic;
     sys_clk_i:            in    std_logic;

@@ -65,8 +65,12 @@ ENTITY wb_mil_sio IS
 --|         |             |             |    Jeder Lemo Buchse sind eigene Bits zugeordnet, sie sind somit einzeln ansteuerbar.     |      
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
 generic (
-    Clk_in_Hz:  INTEGER := 125_000_000    -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
+    Clk_in_Hz:  INTEGER := 125_000_000;   -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
                                           -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+    sio_mil_first_reg_a:    unsigned(15 downto 0)  := x"0400";
+    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0411";
+    evt_filt_first_a:       unsigned(15 downto 0)  := x"1000";
+    evt_filt_last_a:        unsigned(15 downto 0)  := x"1FFF"
     );
 port  (
     clk_i:          in    std_logic;
@@ -154,6 +158,19 @@ end wb_mil_sio;
 
 ARCHITECTURE arch_wb_mil_sio OF wb_mil_sio IS 
 
+constant mil_rd_wr_data_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + mil_rd_wr_data_a;
+constant mil_wr_cmd_a_map:          unsigned (15 downto 0) := sio_mil_first_reg_a + mil_wr_cmd_a;
+constant mil_wr_rd_status_a_map:    unsigned (15 downto 0) := sio_mil_first_reg_a + mil_wr_rd_status_a;
+constant rd_clr_no_vw_cnt_a_map:    unsigned (15 downto 0) := sio_mil_first_reg_a + rd_clr_no_vw_cnt_a;
+constant rd_wr_not_eq_cnt_a_map:    unsigned (15 downto 0) := sio_mil_first_reg_a + rd_wr_not_eq_cnt_a;
+constant rd_clr_ev_fifo_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + rd_clr_ev_fifo_a;
+constant rd_clr_ev_timer_a_map:     unsigned (15 downto 0) := sio_mil_first_reg_a + rd_clr_ev_timer_a ;
+constant rd_wr_dly_timer_a_map:     unsigned (15 downto 0) := sio_mil_first_reg_a + rd_wr_dly_timer_a;
+constant rd_clr_wait_timer_a_map:   unsigned (15 downto 0) := sio_mil_first_reg_a + rd_clr_wait_timer_a;
+constant mil_wr_rd_lemo_conf_a_map: unsigned (15 downto 0) := sio_mil_first_reg_a + mil_wr_rd_lemo_conf_a;
+constant mil_wr_rd_lemo_dat_a_map:  unsigned (15 downto 0) := sio_mil_first_reg_a + mil_wr_rd_lemo_dat_a;
+constant mil_rd_lemo_inp_a_map:     unsigned (15 downto 0) := sio_mil_first_reg_a + mil_rd_lemo_inp_a;
+
 
 signal    manchester_fpga:  std_logic;  -- '1' => fpga manchester endecoder selected, '0' => external hardware manchester endecoder 6408 selected.
 signal    ev_filt_12_8b:    std_logic;  -- '1' => event filter is on, '0' => event filter is off.
@@ -230,8 +247,6 @@ signal    lemo_dat:         std_logic_vector (4 downto 1);
 signal    lemo_out_en:      std_logic_vector (4 downto 1);
 signal    lemo_event_en:    std_logic_vector (4 downto 1);
 
-
-
 signal    io_1:             std_logic;
 signal    io_2:             std_logic;
 
@@ -257,9 +272,9 @@ ena_led_cnt: div_n
   port map (
     res       => '0',
     clk       => clk_i,
-    ena       => open,            -- das untersetzende enable muss in der gleichen ClockdomÃ¤ne erzeugt werden.
+    ena       => open,            -- das untersetzende enable muss in der gleichen Clockdomaene erzeugt werden.
                                   -- Das enable sollte nur ein Takt lang sein.
-                                  -- Z.B. kÃ¶nnte eine weitere div_n-Instanz dieses Signal erzeugen.  
+                                  -- Z.B. koennte eine weitere div_n-Instanz dieses Signal erzeugen.  
     div_o     => ena_led_count    -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
     );
 
@@ -274,9 +289,9 @@ every_1ms_inst: div_n
   port map (
     res       => '0',
     clk       => clk_i,
-    ena       => ena_every_us,    -- das untersetzende enable muss in der gleichen ClockdomÃ¤ne erzeugt werden.
+    ena       => ena_every_us,    -- das untersetzende enable muss in der gleichen Clockdomaene erzeugt werden.
                                   -- Das enable sollte nur ein Takt lang sein.
-                                  -- Z.B. kÃ¶nnte eine weitere div_n-Instanz dieses Signal erzeugen.  
+                                  -- Z.B. koennte eine weitere div_n-Instanz dieses Signal erzeugen.  
     div_o     => every_ms         -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
     );
 
@@ -295,11 +310,8 @@ led_rcv: led_n
     CLK         => clk_i,
     Sig_In      => Mil_Rcv_Rdy,     -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => nLed_Mil_Rcv,    --  KK 20151026 Push-Pull output, active low, inactive high.
-    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate.
-                                    
-    --nLED        => open,            -- Push-Pull output, active low, inactive high.
-    --nLed_opdrn  => nLed_Mil_Rcv     -- open drain output, active low, inactive tristate.
+    nLED        => nLed_Mil_Rcv,    -- changed from opendrain to pushpull due to LED Selftest KK 20151015
+    nLed_opdrn  => open           
     );
 
 
@@ -313,10 +325,8 @@ led_trm: led_n
     CLK         => clk_i,
     Sig_In      => Sel_Mil_Drv,     -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => nLed_Mil_Trm,    --  KK 20151026 Push-Pull output, active low, inactive high.
-    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate
-    --nLED        => open,            -- Push-Pull output, active low, inactive high.
-    --nLed_opdrn  => nLed_Mil_Trm     -- open drain output, active low, inactive tristate.
+    nLED        => nLed_Mil_Trm,    -- changed from opendrain to pushpull due to LED Selftest KK 20151015
+    nLed_opdrn  => open            
     );
 
 
@@ -330,10 +340,8 @@ led_err: led_n
     CLK         => clk_i,
     Sig_In      => Mil_Rcv_Error,   -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => nLed_Mil_Err,    --  KK 20151026 Push-Pull output, active low, inactive high.
-    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate
-    --nLED        => open,            -- Push-Pull output, active low, inactive high.
-   -- nLed_opdrn  => nLed_Mil_Err     -- open drain output, active low, inactive tristate.
+    nLED        => nLed_Mil_Err,    -- changed from opendrain to pushpull due to LED Selftest KK 20151015
+    nLed_opdrn  => open             
     );
 
 led_interl: led_n
@@ -341,15 +349,13 @@ led_interl: led_n
     stretch_cnt => 4
     )
   port map (
-    ena         =>  ena_led_count,  -- if you use ena for a reduction, signal should be generated from the same 
-                                    -- clock domain and should be only one clock period active.
+    ena         =>  ena_led_count,   -- if you use ena for a reduction, signal should be generated from the same 
+                                     -- clock domain and should be only one clock period active.
     CLK         => clk_i,
-    Sig_In      => db_interlock_intr,  -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
-                                    -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => nLed_Interl,    --  KK 20151026 Push-Pull output, active low, inactive high.
-    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate
-    --nLED        => open,          -- Push-Pull output, active low, inactive high.
-    --nLed_opdrn  => nLed_Interl    -- open drain output, active low, inactive tristate.
+    Sig_In      => db_interlock_intr,-- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
+                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
+    nLED        => nLed_Interl,      -- changed from opendrain to pushpull due to LED Selftest KK 20151015
+    nLed_opdrn  => open             
     );
 
 led_dry: led_n
@@ -362,10 +368,8 @@ led_dry: led_n
     CLK         => clk_i,
     Sig_In      => db_data_rdy_intr,-- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => nLed_dry,    --  KK 20151026 Push-Pull output, active low, inactive high.
-    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate
-    --nLED        => open,            -- Push-Pull output, active low, inactive high.
-    --nLed_opdrn  => nLed_dry         -- open drain output, active low, inactive tristate.
+    nLED        => nLed_dry,        -- changed from opendrain to pushpull due to LED Selftest KK 20151015
+    nLed_opdrn  => open             
     );
 
 led_drq: led_n
@@ -377,11 +381,10 @@ led_drq: led_n
                                     -- clock domain and should be only one clock period active.
     CLK         => clk_i,
     Sig_In      => db_data_req_intr,-- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
-    nLED        => nLed_drq,    --  KK 20151026 Push-Pull output, active low, inactive high.
-    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate                                    -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-                                    
-    --nLED        => open,            -- Push-Pull output, active low, inactive high.
-    --nLed_opdrn  => nLed_drq         -- open drain output, active low, inactive tristate.
+    nLED        => nLed_drq,        -- changed from opendrain to pushpull due to LED Selftest KK 20151015
+    nLed_opdrn  => open                                               
+                                   
+    
     );
 
 led_timing: led_n
@@ -394,10 +397,8 @@ led_timing: led_n
     CLK         => clk_i,
     Sig_In      => timing_received, -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => nLed_Timing,     --  KK 20151026 Push-Pull output, active low, inactive high.
-    nLed_opdrn  => open             --  KK 20151026 open drain output, active low, inactive tristate
-    --nLED        => open,          -- Push-Pull output, active low, inactive high.
-    --nLed_opdrn  => nLed_Timing    -- open drain output, active low, inactive tristate.
+    nLED        => nLed_Timing,     --- changed from opendrain to pushpull due to LED Selftest KK 20151015
+    nLed_opdrn  => open             -- 
     );
 
 	 
@@ -616,15 +617,18 @@ led_fifo_ne: led_n
     CLK         => clk_i,
     Sig_In      => ev_fifo_ne,      -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
-    nLED        => nLed_Fifo_ne,    -- KK 20151026 Push-Pull output, active low, inactive high.
-    nLed_opdrn  => open             -- KK 20151026 open drain output, active low, inactive tristate.
-    --nLED        => open,          -- Push-Pull output, active low, inactive high.
-    --nLed_opdrn  => nLed_Fifo_ne   -- open drain output, active low, inactive tristate.
+    nLED        => nLed_Fifo_ne,    -- changed from opendrain to pushpull due to LED Selftest KK 20151015
+    nLed_opdrn  => open             -- 
     );
 
     
+--Register section
+
+    
 p_regs_acc: process (clk_i, nrst_i)
+variable LA_a_var : unsigned (17 downto 2);
   begin
+    LA_a_var := unsigned(slave_i.adr(17 downto 2));
     if nrst_i = '0' then
       ex_stall        <= '1';
       ex_ack          <= '0';
@@ -683,9 +687,8 @@ p_regs_acc: process (clk_i, nrst_i)
 
       if slave_i.cyc = '1' and slave_i.stb = '1' and ex_stall = '1' then
       -- begin of wishbone cycle
-        case to_integer(unsigned(slave_i.adr(c_mil_addr_width-1 downto 2))) is
+        if (LA_a_var = mil_wr_cmd_a_map) or  (LA_a_var = mil_rd_wr_data_a_map) then
         -- check existing word register
-          when mil_wr_cmd_a | mil_rd_wr_data_a =>
             if slave_i.sel = "1111" then
               if slave_i.we = '1' then
                 -- write low word
@@ -721,7 +724,7 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_err <= '1';
             end if;
  
-          when mil_wr_rd_status_a =>  -- read or write status register
+          elsif (LA_a_var = mil_wr_rd_status_a_map) then
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write status register
@@ -750,7 +753,7 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_err <= '1';
             end if;
             
-          when mil_wr_rd_lemo_conf_a =>  -- read or write lemo config register
+          elsif (LA_a_var = mil_wr_rd_lemo_conf_a_map) then
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write lemo config register
@@ -776,7 +779,7 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_err <= '1';
             end if;
 
-          when mil_wr_rd_lemo_dat_a  =>  -- read or write lemo data register
+          elsif (LA_a_var = mil_wr_rd_lemo_dat_a_map) then
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write lemo data register
@@ -798,7 +801,7 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_err <= '1';
             end if;
             
-          when mil_rd_lemo_inp_a  =>  -- read or write lemo input register
+          elsif (LA_a_var = mil_rd_lemo_inp_a_map)then
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write to lemo input register is without effect
@@ -816,7 +819,7 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_err <= '1';
             end if;
               
-          when rd_clr_no_vw_cnt_a =>  -- read or clear no valid word counters
+          elsif (LA_a_var = rd_clr_no_vw_cnt_a_map)then
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write access clears no valid word counters
@@ -835,7 +838,7 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_err <= '1';
             end if;
 
-          when rd_wr_not_eq_cnt_a =>  -- read or clear not equal counters
+          elsif (LA_a_var = rd_wr_not_eq_cnt_a_map)then
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write access clears not equal counters
@@ -854,7 +857,8 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_err <= '1';
             end if;
 
-          when rd_clr_ev_fifo_a =>  -- read or clear event fifo
+
+          elsif (LA_a_var = rd_clr_ev_fifo_a_map) then
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write access clears event fifo
@@ -881,7 +885,7 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_err <= '1';
             end if;
 
-          when rd_clr_ev_timer_a =>  -- read or clear event timer
+          elsif (LA_a_var = rd_clr_ev_timer_a_map) then
             if slave_i.sel = "1111" then -- only double word access allowed
               if slave_i.we = '1' then
                 -- write access clears event timer
@@ -900,7 +904,7 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_err <= '1';
             end if;
 
-          when rd_wr_dly_timer_a =>  -- read or write delay timer
+          elsif (LA_a_var = rd_wr_dly_timer_a_map) then
             if slave_i.sel = "1111" then -- only double word access allowed
               if slave_i.we = '1' then
                 -- write access clears event timer
@@ -919,7 +923,7 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_err <= '1';
             end if;
 
-          when rd_clr_wait_timer_a =>  -- read or clear wait timer
+          elsif (LA_a_var = rd_clr_wait_timer_a_map) then
             if slave_i.sel = "1111" then -- only double word access allowed
               if slave_i.we = '1' then
                 -- write access clears wait timer
@@ -937,8 +941,9 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_stall <= '0';
               ex_err <= '1';
             end if;
+            
 
-          when ev_filt_first_a to ev_filt_last_a =>  -- read or write event filter ram 
+          elsif (LA_a_var >= evt_filt_first_a)  and   (LA_a_var <= evt_filt_last_a)  then -- read or write event filter ram 
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
                 -- write event filter ram
@@ -958,10 +963,12 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_err <= '1';
             end if;
 
-          when others =>
+          --when others =>
+          else
             ex_stall <= '0';
             ex_err <= '1';
-        end case;
+        --end case;
+        end if;
       end if;
     end if;
   end process p_regs_acc;
@@ -995,6 +1002,8 @@ p_every_us: div_n
                                   -- Z.B. koennte eine weitere div_n-Instanz dieses Signal erzeugen.  
     div_o     => ena_every_us     -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
     );
+    
+-- Timer Section
 
 p_ev_timer: process (clk_i, nRst_i)
   begin
@@ -1046,7 +1055,6 @@ p_delay_timer: process (clk_i, nRst_i)
   
 dly_intr_o <= dly_intr;
 
-
 p_wait_timer: process (clk_i, nRst_i)
   begin
     if nRst_i = '0' then
@@ -1059,6 +1067,5 @@ p_wait_timer: process (clk_i, nRst_i)
       end if;
     end if;
   end process p_wait_timer;
-
 
 end arch_wb_mil_sio;

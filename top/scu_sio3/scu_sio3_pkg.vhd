@@ -7,40 +7,13 @@ library work;
 
 package scu_sio3_pkg is
 
-constant SCU_SIO2_ID:		             integer range 16#0200# to 16#020F# := 16#0200#;
-constant c_test_usr_reg_Base_Addr:   integer              :=  16#0200#; -- Test Usr Reg
-constant c_wb_mil_wrapper_Base_Addr: integer              :=  16#0400#; -- Mil Wrapper
-
-component sio3_Test_User_Reg
-	generic
-		(
-		Base_addr:	INTEGER
-		);
-	port(
-		Adr_from_SCUB_LA: 	in		std_logic_vector(15 downto 0);		-- latched address from SCU_Bus
-		Data_from_SCUB_LA:	in		std_logic_vector(15 downto 0);		-- latched data from SCU_Bus 
-		Ext_Adr_Val:				in		std_logic;												-- '1' => "ADR_from_SCUB_LA" is valid
-		Ext_Rd_active:			in		std_logic;												-- '1' => Rd-Cycle is active
-		Ext_Rd_fin:					in		std_logic;												-- marks end of read cycle, active one for one clock period of sys_clk
-		Ext_Wr_active:			in		std_logic;												-- '1' => Wr-Cycle is active
-		Ext_Wr_fin:					in		std_logic;												-- marks end of write cycle, active one for one clock period of sys_clk
-		clk:								in		std_logic;												-- should be the same clk, used by SCU_Bus_Slave
-		nReset:							in		std_logic;
-		User1_Reg:					out		std_logic_vector(15 downto 0);		-- Daten-Reg. User1
-		User2_Reg:					out		std_logic_vector(15 downto 0);		-- Daten-Reg. User2
-		User_Reg_rd_active:	out		std_logic;												-- read data available at 'Data_to_SCUB'-output
-		Data_to_SCUB:				out		std_logic_vector(15 downto 0);		-- connect read sources to SCUB-Macro
-		Dtack_to_SCUB:			out		std_logic													-- connect Dtack to SCUB-Macro
-		);	
-end component sio3_Test_User_Reg;
-
-
-
 component wb_mil_wrapper_sio is 
 generic (
 		Clk_in_Hz:		INTEGER := 125_000_000;		-- Manchester IP needs 20 Mhz clock for proper detection of short 500ns data pulses
-																						-- Generic "Mil_clk_in_Hz"	"Baudrate" des Manchester-Ein-/Ausgangsdatenstroms umgepolt.
-		Base_Addr:		INTEGER := 16#400#
+    sio_mil_first_reg_a:    unsigned(15 downto 0)  := x"0400";
+    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0411";
+    evt_filt_first_a:       unsigned(15 downto 0)  := x"1000";
+    evt_filt_last_a:        unsigned(15 downto 0)  := x"1FFF"
 		);
 port	(
 		Adr_from_SCUB_LA: 		in			std_logic_vector(15 downto 0);
@@ -109,8 +82,12 @@ end component;
 
 component wb_mil_sio IS 
 generic (
-    Clk_in_Hz:  INTEGER := 125_000_000  -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
-                                        -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+    Clk_in_Hz:               INTEGER := 125_000_000; -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
+                                                     -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+    sio_mil_first_reg_a:    unsigned(15 downto 0)  := x"0400";
+    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0411";
+    evt_filt_first_a:       unsigned(15 downto 0)  := x"1000";
+    evt_filt_last_a:        unsigned(15 downto 0)  := x"1FFF"
     );
 port    (
     clk_i:                in  std_logic;
@@ -193,7 +170,6 @@ port    (
 
     );
 end component wb_mil_sio;
-
 
 
 component flash_loader_v01
