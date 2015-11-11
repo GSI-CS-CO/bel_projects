@@ -31,8 +31,8 @@ component addac_sys_clk_local_clk_switch is
     Rd_Activ:               out   std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:                  out   std_logic;
     signal_tap_clk_250mhz:  out   std_logic;
-    clk_10Mhz:              out   std_logic;
-    clk_25Mhz:              out   std_logic
+    clk_update:             out   std_logic;
+    clk_flash:              out   std_logic
     );
 end component;
 
