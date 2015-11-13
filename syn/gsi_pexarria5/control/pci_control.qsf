@@ -373,13 +373,15 @@ set_global_assignment -name LL_HEIGHT 1 -section_id flash
 set_global_assignment -name LL_ORIGIN X28_Y1 -section_id flash
 set_instance_assignment -name LL_MEMBER_OF "wr_arria5:tx" -to "monster:main|wr_arria5_phy:\\phy_a5:phy|tx_gxb_datain" -section_id "wr_arria5:tx"
 set_instance_assignment -name LL_MEMBER_OF "wr_arria5:tx" -to "monster:main|wr_arria5_phy:\\phy_a5:phy|tx_reg_datain" -section_id "wr_arria5:tx"
+set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_data_i[0]" -section_id flash
+set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_data_i[1]" -section_id flash
+set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_data_i[2]" -section_id flash
+set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_data_i[3]" -section_id flash
 set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_ncs" -section_id flash
 set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_oe[0]" -section_id flash
 set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_oe[1]" -section_id flash
-set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_shift_i[0]" -section_id flash
-set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_shift_i[1]" -section_id flash
-set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_shift_i[2]" -section_id flash
-set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_shift_i[3]" -section_id flash
+set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_oe[2]" -section_id flash
+set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_oe[3]" -section_id flash
 set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_shift_o[28]" -section_id flash
 set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_shift_o[29]" -section_id flash
 set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a5:flash|wb_spi_flash:wb|r_shift_o[30]" -section_id flash
