@@ -86,7 +86,13 @@ architecture arch of wb_asmi is
 
   signal  s_sector_erase    : std_logic;
   signal  s_illegal_erase   : std_logic;
+  
   signal  s_read_addr       : std_logic_vector(23 downto 0);
+  
+  signal  illegal_erase     : std_logic;
+  signal  illegal_write     : std_logic;
+  signal  busy              : std_logic;
+  signal  data_valid        : std_logic;
 
 begin
   
@@ -138,7 +144,7 @@ begin
   asmi: altasmi
     port map (
      addr         => s_asmi_addr,
-     clkin        => clk_flash_i,
+     clkin        => not clk_flash_i,
      rden         => s_asmi_rden,
      fast_read    => s_asmi_read,
      read_rdid	  => s_read_rdid,
@@ -146,12 +152,12 @@ begin
      shift_bytes  => s_shift_bytes,
      write        => s_write,
      sector_erase   => s_sector_erase,
-     illegal_write => s_illegal_write,
-     illegal_erase => s_illegal_erase,
+     illegal_write => illegal_write,
+     illegal_erase => illegal_erase,
      reset        => not rst_n_i,
-     busy         => s_busy,
+     busy         => busy,
      datain       => s_datain, 
-     data_valid   => s_data_valid,
+     data_valid   => data_valid,
      dataout      => s_dataout,
      rdid_out     => s_rdid_out,
      status_out   => s_status_out,
@@ -198,10 +204,23 @@ begin
     end if;
   end process;
 
-
+  
+  reg_flash_signals: process(clk_flash_i)
+  begin
+    if rising_edge(clk_flash_i) then
+      s_data_valid      <= data_valid;
+      s_busy            <= busy;
+      s_illegal_write   <= illegal_write;
+      s_illegal_erase   <= illegal_erase;
+    end if;
+   
+  
+  end process;
+  
 
   wb_cycle: process (clk_flash_i, rst_n_i, slave_i)
     variable  s_byte_count : integer range  0 to PAGESIZE;
+    variable  v_read_tmo : integer range 0 to 70;
   begin
     if rising_edge(clk_flash_i) then
       
@@ -216,6 +235,7 @@ begin
         s_byte_count    :=  0;
         s_shift_bytes   <= '0';
         s_addr          <= (others => '0');
+        v_read_tmo      := 0;
       else
         s_write_strobe  <= '0';
         s_read_strobe   <= '0';
@@ -309,9 +329,16 @@ begin
              
           when read_valid =>
             slave_o.stall <= '1';
-            if s_data_valid = '1' then
+            -- check if data valid ever comes
+            if v_read_tmo = 70 then
+              wb_state <= err;
+              v_read_tmo := 0;
+            elsif s_data_valid = '1' then
               slave_o.ack <= '1';
               wb_state <= idle;
+              v_read_tmo := 0;
+            else
+              v_read_tmo := v_read_tmo + 1;
             end if;
           
           when stall =>

@@ -42,8 +42,6 @@ void ReadTempDevices(int bus) {
           mprintf("bus,device (%d,%d): 0x%08x%08x ", wrpc_w1_bus.detail, i, (int)(d->rom >> 32), (int)d->rom);
           *(int*)(scu_reg + 0) = (d->rom >> 32);
           *(int*)(scu_reg + 4) = d->rom;
-          //scu_reg[0] = 0x12345678;
-          //scu_reg[1] = 0xcafeaffe;
           if ((char)d->rom == 0x42) {
             tvalue = w1_read_temp(d, 0);
             *(int*)(scu_reg + 8) = (tvalue >> 12);
@@ -59,7 +57,7 @@ void ReadTempDevices(int bus) {
 
 int main(void)
 {
-  int i, j, addr;
+  int i, j, addr, magicword;
   unsigned char flash_word;
   discoverPeriphery();
   aru_base      = (unsigned int *)find_device_adr(GSI, WB_REMOTE_UPDATE);
@@ -118,25 +116,6 @@ int main(void)
 
       case PAGE_WRITE:
         j = 0;
-        //check
-        //for(i = 0; i < 256; i++) {
-        //  if (*(char *)(scu_reg + ASMI_BUFFER + i) != i) {
-        //    mprintf("write failed!\n");
-        //  }
-       // }
-          /*  //print buffer
-            for(i=0; i < 256; i += j) {
-              mprintf("0x%x: ", i);
-              for(j=0; j<8; j++) {
-                mprintf("0x%x ", *(char*)(scu_reg + ASMI_BUFFER + (i + j)));
-              }
-              mprintf("\n");
-            }
-        //    // signal error 
-        //    *(volatile int*)(scu_reg + ASMI_CMD) = ERROR;
-        //    break;
-          } 
-        } */
         // fill page buffer
         for(i = 0; i < 256; i++)
           *(char *)(asmi_base + (i << 4)) = *(char*)(scu_reg + ASMI_BUFFER + i);
@@ -151,60 +130,37 @@ int main(void)
       case PAGE_READ:
         // start address of page
         addr = *(volatile int*)(scu_reg + ASMI_PARAM);
-        //mprintf("read from 0x%x\n", addr);   
-        
         // read 256 bytes from flash
         for(i = 0; i < 256; i++) {
           flash_word = *(char*)(asmi_base + ((i + addr) << 4));
           *(char*)(scu_reg + ASMI_BUFFER + i) = flash_word;
-          //mprintf("%d 0x%x ", i, flash_word);
-          //if ((i % 10) == 0)
-          //  mprintf("\n");
         }
-        //mprintf("\n");
-          
         // signal end of operation 
         *(volatile int*)(scu_reg + ASMI_CMD) = DONE;
       break;
 
+      case RECONFIG:
+        magicword = *(volatile int*)(scu_reg + ASMI_PARAM);
+        
+        if (magicword == 0xdeadbeef)
+          aru_base[CONFIG] = 0x1;
+
+        // signal end of operation 
+        *(volatile int*)(scu_reg + ASMI_CMD) = DONE;
+      break;  
+      
+      case READ_TEMP:
+        ReadTempDevices(0);
+        // signal end of operation 
+        *(volatile int*)(scu_reg + ASMI_CMD) = DONE;
+      break;  
       default: break;
     }
-  }
-  if (aru_base[CONFIG_SRC] == 0) {  //PowerUp
-    aru_base[PAGE_SEL] = 0x90000; // start address for Application image
-    aru_base[CONFIG_MODE] = 0x1;  // set to Application mode
-    //aru_base[CONFIG] = 0x1; // trigger reconfiguration
-  }
-
-
-  // read status
-  //mprintf("status byte: 0x%x \n", *(char*)(asmi_base + 0x4));
-  //mprintf("mem id: 0x%x \n", *(char*)(asmi_base + 0x8));
-
-  // erase sector 0  
-  //*(asmi_base + 0xc) = 1;
-
-  // fill page buffer
-  for(i = 0; i < 256; i++)
-    *(char *)(asmi_base + (i << 4)) = i;
-
-  //write to flash
-  //*(unsigned int*)(asmi_base + 0xf) = 0x40000;
-
-  j = 0;
-  for(i = 0x40000; i <= 0x40100; i += j) {
-    mprintf("0x%x: ", i);
-    for (j = 0; j < 8; j++) { 
-      mprintf("%x ", *(char*)(asmi_base + (i + j << 4)));
-    }
-    mprintf("\n");
-  }
-
-  ReadTempDevices(0);
-  while(1);
-
     
-	while(1) {
-    ReadTempDevices(0); 
-	}
+  }
+  //if (aru_base[CONFIG_SRC] == 0) {  //PowerUp
+  //  aru_base[PAGE_SEL] = 0x90000; // start address for Application image
+  //  aru_base[CONFIG_MODE] = 0x1;  // set to Application mode
+    //aru_base[CONFIG] = 0x1; // trigger reconfiguration
+  //}
 }
