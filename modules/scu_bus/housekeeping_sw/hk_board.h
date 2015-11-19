@@ -33,6 +33,8 @@
 #define SECTOR_ERASE      0x3
 #define PAGE_WRITE        0x4
 #define PAGE_READ         0x5
+#define RECONFIG          0x6
+#define READ_TEMP         0x7
 
 
 #endif

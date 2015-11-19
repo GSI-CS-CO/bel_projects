@@ -9,6 +9,8 @@ use work.aux_functions_pkg.all;
 use work.fg_quad_pkg.all;
 use work.diob_sys_clk_local_clk_switch_pkg.all;
 use work.scu_diob_pkg.all;
+use work.wr_altera_pkg.all;
+use work.monster_pkg.all;
 
 
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -1015,9 +1017,17 @@ component IO_4x8
   signal pll_locked:              std_logic;
   signal clk_switch_intr:         std_logic;
   
-  signal signal_tap_clk_250mhz:   std_logic;
+  signal  signal_tap_clk_250mhz:  std_logic;
+  signal  clk_update:             std_logic;
+  signal  clk_flash:              std_logic;
   
-
+  
+  signal  rstn_sys:               std_logic;
+  signal  rstn_update:            std_logic;
+  signal  rstn_flash:             std_logic;
+  signal  rstn_stc:               std_logic;
+  
+  constant c_is_arria5: boolean := false;
   
 --  ###############################################################################################################################
 --  ###############################################################################################################################
@@ -1074,9 +1084,30 @@ component IO_4x8
       Rd_Port               => clk_switch_rd_data,    -- output for all read sources of this macro
       Rd_Activ              => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
       Dtack                 => clk_switch_dtack,
-      signal_tap_clk_250mhz => signal_tap_clk_250mhz
+      signal_tap_clk_250mhz => signal_tap_clk_250mhz,
+      clk_update              => clk_update,
+      clk_flash               => clk_flash
       );
-    
+   
+   reset : altera_reset
+    generic map(
+      g_plls   => 1,
+      g_clocks => 4,
+      g_areset => f_pick(c_is_arria5, 100, 1)*1024,
+      g_stable => f_pick(c_is_arria5, 100, 1)*1024)
+    port map(
+      clk_free_i    => clk_sys,
+      rstn_i        => A_nReset,
+      pll_lock_i(0) => pll_locked,
+      pll_arst_o    => open,
+      clocks_i(0)   => clk_sys,
+      clocks_i(1)   => signal_tap_clk_250mhz,
+      clocks_i(2)   => clk_update,
+      clocks_i(3)   => clk_flash,
+      rstn_o(0)     => rstn_sys,
+      rstn_o(1)     => rstn_stc,
+      rstn_o(2)     => rstn_update,
+      rstn_o(3)     => rstn_flash);
     
       
 Conf_Sts1: config_status     
@@ -1093,7 +1124,7 @@ port map  (
       Ext_Wr_active       =>  Ext_Wr_active,             -- '1' => Wr-Cycle is active
       Ext_Wr_fin          =>  SCU_Ext_Wr_fin,            -- marks end of write cycle, active one for one clock period of sys_clk
       clk                 =>  clk_sys,                   -- should be the same clk, used by SCU_Bus_Slave
-      nReset              =>  nPowerup_Res,              
+      nReset              =>  rstn_sys,              
       
       Diob_Status1        =>  Diob_Status1,              -- Input-Diob_Status1 
       Diob_Status2        =>  Diob_Status2,              -- Input-Diob_Status2 
@@ -1136,7 +1167,7 @@ port map  (
       Ext_Wr_fin          =>  SCU_Ext_Wr_fin,      -- marks end of write cycle, active one for one clock period of sys_clk
       clk                 =>  clk_sys,             -- should be the same clk, used by SCU_Bus_Slave
       Ena_every_1us       =>  Ena_every_1us,       -- Clock-Enable-Puls alle Mikrosekunde, 1 Clock breit
-      nReset              =>  nPowerup_Res,      
+      nReset              =>  rstn_sys,      
 
       SCU_AW_Input_Reg    =>  SCU_AW_Input_Reg,    -- Input-Port's  zum SCU-Bus
       SCU_AW_Output_Reg   =>  SCU_AW_Output_Reg,   -- Output-Port's vom SCU-Bus 
@@ -1176,7 +1207,7 @@ port map  (
       Spare0              =>  A_Spare0,                  -- vom Master getrieben
       Spare1              =>  A_Spare1,                  -- vom Master getrieben
       clk                 =>  clk_sys,                   -- should be the same clk, used by SCU_Bus_Slave
-      nReset              =>  nPowerup_Res,              
+      nReset              =>  rstn_sys,              
 
       SCU_AW_Input_Reg    =>  SCU_AW_Input_Reg,              -- die gleichen Input-Port's wie zum SCU-Bus
       clr_Tag_Maske       =>  clr_Tag_Maske,             -- clear alle Tag-Masken
@@ -1211,7 +1242,7 @@ addac:  addac_reg
     Ext_Wr_active       =>  Ext_Wr_active,     -- '1' => Wr-Cycle is active
     Ext_Wr_fin          =>  SCU_Ext_Wr_fin,    -- marks end of write cycle, active one for one clock period of sys_clk
     clk                 =>  clk_sys,           -- should be the same clk, used by SCU_Bus_Slave
-    nReset              =>  nPowerup_Res,      
+    nReset              =>  rstn_sys,      
 
 		DAC1_Config	        =>  DAC1_Config,       -- DAC1 Config-Register
 		DAC1_Config_wr      =>  DAC1_Config_wr,    -- DAC1 Output-Register
@@ -1249,7 +1280,7 @@ io_port: IO_4x8
     Ext_Rd_active       => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active       => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk                 => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset              => nPowerup_Res,          -- in, '0' => resets the IO_4x8
+    nReset              => rstn_sys,          -- in, '0' => resets the IO_4x8
     io                  => s_io,                  -- inout, select and set direction only in 8-bit partitions
     io_7_0_tx           => s_io_7_0_tx,           -- out, '1' = external io(7..0)-buffer set to output.
     ext_io_7_0_dis      => s_ext_io_7_0_dis,      -- out, '1' = disable external io(7..0)-buffer.
@@ -1297,7 +1328,7 @@ port map  (
       Ext_Wr_active      =>  Ext_Wr_active,
       Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
       clk                =>  clk_sys,
-      nReset             =>  nPowerup_Res,
+      nReset             =>  rstn_sys,
 --
       Reg_IO1             =>  INL_xor_IO1,
       Reg_IO2             =>  INL_xor_IO2,    
@@ -1327,7 +1358,7 @@ port map  (
       Ext_Wr_active      =>  Ext_Wr_active,
       Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
       clk                =>  clk_sys,
-      nReset             =>  nPowerup_Res,
+      nReset             =>  rstn_sys,
 --
       Reg_IO1            =>  INL_msk_IO1,
       Reg_IO2            =>  INL_msk_IO2,   
@@ -1395,23 +1426,18 @@ hp_la_o <= test_out(15 downto 0);
 
 
 
-test_port_in_0 <= nPowerup_Res          & clk_sys         & Ena_Every_100ns & Ena_Every_166ns & -- bit15..12
+test_port_in_0 <= rstn_sys          & clk_sys         & Ena_Every_100ns & Ena_Every_166ns & -- bit15..12
                   Ext_Wr_active         & SCU_Ext_Wr_fin  & '0'             & FG_1_strobe     & -- bit11..8
                   signal_tap_clk_250mhz & pll_locked      & A_RnW & A_nDS   &                   -- bit7..4
                   A_nBoardSel           & FG_1_strobe     & '0'             & SCUB_Dtack      ; -- bit3..0
 
             
 test_clocks <=  X"0"                                                                              -- bit15..12
-              & '0' & signal_tap_clk_250mhz & A_SysClock & CLK_20MHz_D                            -- bit11..8
+              -- use only outputs from PLL
+              --& '0' & signal_tap_clk_250mhz & A_SysClock & CLK_20MHz_D                          -- bit11..8
+              & '0' & signal_tap_clk_250mhz & '0' & '0'                                           -- bit11..8
               & '0' & pll_locked & sys_clk_deviation & sys_clk_deviation_la                       -- bit7..4
               & local_clk_is_running & local_clk_is_bad & sys_clk_is_bad & sys_clk_is_bad_la;     -- bit3..0
-
-
-
-fl : flash_loader_v01
-port map  (
-      noe_in  =>  '0'
-      );
   
     
   -- open drain buffer for one wire
@@ -1449,7 +1475,7 @@ p_led_inr: led_n
 
 --p_led_pu: led_n
 --  generic map (stretch_cnt => stretch_cnt)
---  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => not (nPowerup_Res), nLED => s_nLED_PU);-- LED: nPowerup_Reset
+--  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => not (rstn_sys), nLED => s_nLED_PU);-- LED: rstn_syset
   
 p_led_user1: led_n
   generic map (stretch_cnt => stretch_cnt)
@@ -1565,30 +1591,33 @@ port map (
     Powerup_Done            => Powerup_Done                           -- out, this signal is set after powerup. Only the SCUB-Master can clear this bit.
     );
 
-
 lm32_ow: housekeeping
-  generic map (
-    Base_Addr => c_lm32_ow_Base_Addr )
-  port map (
-    clk_sys => clk_sys,
-    n_rst => nPowerup_Res,
+generic map (
+  Base_addr => c_lm32_ow_Base_Addr)
+port map (
+  clk_sys     => clk_sys,
+  clk_update  => clk_update,
+  clk_flash   => clk_flash,
+  rstn_sys    => rstn_sys,
+  rstn_update => rstn_update,
+  rstn_flash  => rstn_flash,
 
-    ADR_from_SCUB_LA  => ADR_from_SCUB_LA,
-    Data_from_SCUB_LA => Data_from_SCUB_LA,
-    Ext_Adr_Val       => Ext_Adr_Val,
-    Ext_Rd_active     => Ext_Rd_active,
-    Ext_Wr_active     => Ext_Wr_active,
-    user_rd_active    => wb_scu_rd_active,
-    Data_to_SCUB      => wb_scu_data_to_SCUB,
-    Dtack_to_SCUB     => wb_scu_dtack,
 
-    owr_pwren_o       => owr_pwren_o,
-    owr_en_o          => owr_en_o,
-    owr_i             => owr_i,
+  ADR_from_SCUB_LA  => ADR_from_SCUB_LA,
+  Data_from_SCUB_LA => Data_from_SCUB_LA,
+  Ext_Adr_Val       => Ext_Adr_Val,
+  Ext_Rd_active     => Ext_Rd_active,
+  Ext_Wr_active     => Ext_Wr_active,
+  user_rd_active    => wb_scu_rd_active,
+  Data_to_SCUB      => wb_scu_data_to_SCUB,
+  Dtack_to_SCUB     => wb_scu_dtack,
 
-    debug_serial_o    => uart_txd_out,
-    debug_serial_i    => '0');
+  owr_pwren_o       => owr_pwren_o,
+  owr_en_o          => owr_en_o,
+  owr_i             => owr_i,
 
+  debug_serial_o    => uart_txd_out,
+  debug_serial_i    => '0');
     
 fg_1: fg_quad_scu_bus
   generic map (

@@ -48,9 +48,9 @@ begin
 
   aru:  remote_update
     port map (
-      asmi_busy         => asmi_busy,
-      asmi_data_valid   => asmi_data_valid,
-      asmi_dataout      => asmi_dataout,
+     -- asmi_busy         => asmi_busy,
+      --asmi_data_valid   => asmi_data_valid,
+      --asmi_dataout      => asmi_dataout,
       clock             => clk_sys_i,
       data_in           => slave_i.dat(23 downto 0),
       param             => slave_i.adr(4 downto 2),
@@ -59,12 +59,12 @@ begin
       reset             => not rst_n_i,
       reset_timer       => r_config(1),
       write_param       => s_write_strobe,
-      asmi_addr         => asmi_addr,
-      asmi_rden         => asmi_rden,
-      asmi_read         => asmi_read,
+      --asmi_addr         => asmi_addr,
+      --asmi_rden         => asmi_rden,
+      --asmi_read         => asmi_read,
       busy              => s_busy,
-      data_out          => s_data_out,
-      pof_error         => s_pof_error);
+      data_out          => s_data_out);
+      --pof_error         => s_pof_error);
 
       
   with slave_i.adr(5 downto 0) select slave_o.dat <=

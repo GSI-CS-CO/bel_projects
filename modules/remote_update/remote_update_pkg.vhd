@@ -9,9 +9,9 @@ package remote_update_pkg is
 
 component remote_update
 	port 	(
-		asmi_busy:        in std_logic  := '0';
-		asmi_data_valid:  in std_logic  := '0';
-		asmi_dataout:     in std_logic_vector(7 downto 0) :=  (others => '0');
+		--asmi_busy:        in std_logic  := '0';
+		--asmi_data_valid:  in std_logic  := '0';
+		--asmi_dataout:     in std_logic_vector(7 downto 0) :=  (others => '0');
 		clock:            in std_logic;
 		data_in:          in std_logic_vector(23 downto 0);
 		param:            in std_logic_vector(2 downto 0);
@@ -20,12 +20,12 @@ component remote_update
 		reset:            in std_logic;
 		reset_timer:      in std_logic;
 		write_param:      in std_logic;
-		asmi_addr:        out std_logic_vector(23 downto 0);
-		asmi_rden:        out std_logic;
-		asmi_read:        out std_logic;
+		--asmi_addr:        out std_logic_vector(23 downto 0);
+		--asmi_rden:        out std_logic;
+		--asmi_read:        out std_logic;
 		busy:             out std_logic;
-		data_out:         out std_logic_vector(23 downto 0);
-		pof_error:        out std_logic 
+		data_out:         out std_logic_vector(23 downto 0)
+		--pof_error:        out std_logic 
 	);
 end component;
 

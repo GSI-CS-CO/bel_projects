@@ -5,7 +5,8 @@ RAM_SIZE	= 32768
 PHK       = ../../modules/scu_bus/housekeeping_sw
 PDIOB     = ../../top/scu_diob
 W1        = ../../ip_cores/wrpc-sw
-CFLAGS      = -I$(PHK)/include -I$(PDIOB)
+CFLAGS    = -I$(PHK)/include -I$(PDIOB)
+USRCPUCLK = 125000
 
 include ../build.mk
 
