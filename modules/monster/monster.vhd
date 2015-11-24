@@ -28,6 +28,7 @@ use ieee.numeric_std.all;
 library work;
 use work.gencores_pkg.all;
 use work.wrcore_pkg.all;
+use work.pll_pkg.all;
 use work.monster_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.wishbone_pkg.all;
@@ -471,10 +472,14 @@ architecture rtl of monster is
   signal clk_sys1         : std_logic;
   signal clk_sys2         : std_logic;
   signal clk_sys3         : std_logic;
+  signal clk_sys4         : std_logic;
+  signal clk_sys5         : std_logic;
   
   signal clk_sys          : std_logic;
   signal clk_reconf       : std_logic; -- 50MHz on arrai2, 100MHz on arria5
-  signal clk_flash        : std_logic; -- for now, the same as clk_reconf
+  signal clk_flash_ext    : std_logic;
+  signal clk_flash_out    : std_logic;
+  signal clk_flash_in     : std_logic;
   signal clk_20m          : std_logic;
   signal clk_update       : std_logic;
   signal rstn_sys         : std_logic;
@@ -718,15 +723,19 @@ begin
       c2     => clk_sys2,         --  20  MHz
       c3     => clk_sys3,         --  10  MHz
       locked => sys_locked);
+    clk_sys4 <= clk_sys1;
+    clk_sys5 <= clk_sys1;
   end generate;
   sys_a5 : if c_is_arria5 generate
     sys_inst : sys_pll5 port map(
       rst      => pll_rst,
       refclk   => core_clk_125m_local_i, -- 125  Mhz 
       outclk_0 => clk_sys0,           --  62.5MHz
-      outclk_1 => clk_sys1,           -- 100  MHz
+      outclk_1 => clk_sys1,           -- 100  MHz +0   ns
       outclk_2 => clk_sys2,           --  20  MHz
       outclk_3 => clk_sys3,           --  10  MHz
+      outclk_4 => clk_sys4,           -- 100  MHz +0.5 ns
+      outclk_5 => clk_sys5,           -- 100  MHz +1.0 ns
       locked   => sys_locked);
   end generate;
   
@@ -738,8 +747,6 @@ begin
     inclk  => clk_sys1,
     outclk => clk_reconf);
   
-  clk_flash <= clk_reconf;
-  
   c20m_clk : single_region port map(
     inclk  => clk_sys2,
     outclk => clk_20m);
@@ -747,6 +754,16 @@ begin
   update_clk : single_region port map(
     inclk  => clk_sys3,
     outclk => clk_update);
+  
+  flash_out : global_region port map(
+    inclk  => clk_sys4,
+    outclk => clk_flash_ext);
+  
+  flash_in : global_region port map(
+    inclk  => clk_sys5,
+    outclk => clk_flash_in);
+  
+  clk_flash_out <= clk_reconf;
   
   ref_a2 : if c_is_arria2 generate
     ref_inst : ref_pll port map( -- see "Phase Counter Select Mapping" table for arria2gx
@@ -1170,12 +1187,12 @@ begin
       dac_dpll_data_o      => dac_dpll_data,
       phy_ref_clk_i        => clk_ref,
       phy_tx_data_o        => phy_tx_data,
-      phy_tx_k_o           => phy_tx_k,
+      phy_tx_k_o(0)        => phy_tx_k,
       phy_tx_disparity_i   => phy_tx_disparity,
       phy_tx_enc_err_i     => phy_tx_enc_err,
       phy_rx_data_i        => phy_rx_data,
       phy_rx_rbclk_i       => phy_rx_rbclk,
-      phy_rx_k_i           => phy_rx_k,
+      phy_rx_k_i(0)        => phy_rx_k,
       phy_rx_enc_err_i     => phy_rx_enc_err,
       phy_rx_bitslide_i    => phy_rx_bitslide,
       phy_rst_o            => phy_rst,
@@ -1337,15 +1354,15 @@ begin
         g_dummy_time             => 8,   -- 8 cycles between address and data
         g_input_latch_edge       => '0', -- 30ns at 50MHz (10+20) after falling edge sets up SPI output
         g_output_latch_edge      => '1', -- falling edge to meet SPI setup times
-        g_input_to_output_cycles => 2)   -- delayed to work-around unconstrained design
+        g_input_to_output_cycles => 3)   -- delayed to work-around unconstrained design
       port map(
         clk_i     => clk_sys,
         rstn_i    => rstn_sys,
         slave_i   => top_cbar_master_o(c_tops_flash),
         slave_o   => top_cbar_master_i(c_tops_flash),
-        clk_ext_i => clk_flash,
-        clk_out_i => clk_flash,
-        clk_in_i  => clk_flash);
+        clk_ext_i => clk_flash_ext,
+        clk_out_i => clk_flash_out,
+        clk_in_i  => clk_flash_in);
   end generate;
   flash_a5 : if c_is_arria5 generate
     flash : flash_top
@@ -1356,15 +1373,15 @@ begin
         g_dummy_time             => 10,
         g_input_latch_edge       => '1',
         g_output_latch_edge      => '1',
-        g_input_to_output_cycles => 3)
+        g_input_to_output_cycles => 4)
       port map(
         clk_i     => clk_sys,
         rstn_i    => rstn_sys,
         slave_i   => top_cbar_master_o(c_tops_flash),
         slave_o   => top_cbar_master_i(c_tops_flash),
-        clk_ext_i => clk_flash,
-        clk_out_i => clk_flash,
-        clk_in_i  => clk_flash);
+        clk_ext_i => clk_flash_ext, -- +0.5 ns
+        clk_out_i => clk_flash_out, -- +0.0 ns
+        clk_in_i  => clk_flash_in); -- +1.0 ns
   end generate;
   
   wb_reset : wb_arria_reset

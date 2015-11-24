@@ -28,7 +28,7 @@ generic
     -- zwischenzeitlich  "CID-Group"-Nummern für andere Projekte (Funktionen) vergeben wurden, und die "CID-Group"-Nummer
     -- kontinuierlich hochgezählt werden soll.                                  --
     -- Falls keine verbindliche "CID-Group"-Nummer vorliegt, muss der Defaultwert 0 stehen bleiben!
-    CID_Group: integer range 0 to 16#FFFF# := 0;
+    -- CID_Group: integer range 0 to 16#FFFF# := 0;
 
     -- the bit positions are corresponding to Intr_In. A '1' enable Intr_In(n), '0' disable Intr_In(n)
     -- The least significant bit don't care, because it represent the powerup interrupt. This interrupt is always enabled.
@@ -53,7 +53,10 @@ port
     
     -- '1' => the user function(s), device, is ready to work with the control system
     User_Ready:         in    std_logic;
-
+    
+    -- CID Group has default as 0x0000, or mapped to actual parameter as defined by hex dial in top level.
+    CID_Group:            in    integer range 0 to 16#FFFF# := 0;
+    
     -- if an extension card is connected to the slave card, than you can map cid_system of this extension
     -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
     extension_cid_system: in  integer range 0 to 16#FFFF# := 0;

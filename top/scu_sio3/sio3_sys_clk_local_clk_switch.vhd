@@ -9,7 +9,41 @@ library work;
 LIBRARY altera_mf;
 USE altera_mf.altera_mf_components.all;
 
+
+
+--+------------------------------------------------------------------------------------------------------------------+
+--|  "sio3_sys_clk_local_clk_switch"    Autor: W.Panschow                                                            |
+--|                                                                                                                  |
+--|                                                                                                                  |
+--|   Supports Clock monitoring and Clock Switch from local generated Clock to SCU Bus SYS_CLK                       |
+--|   When PLL gets alive at power up , Macro is running on local clock.                                             |
+--|   When SYS_CLK is healthy and power-on time is completed, PLL switches to SYS_CLK reference.                     |
+--|   When running on SYS_CLK reference, SYS_CLK_IS_BAD can cause an automatic switchover to local clock             |
+--|   When running on LOCAL_CLK reference, SYS_CLK_IS_BAD must be '0' to switch back to SYS_CLK reference            |
+--|                                                                                                                  |  
+--|   For switching back to SYS_CLK as reference, start_switch_clk_input signal has to be triggered by write access  |
+--|   to clock status register (write causes clk_switch_cntrl=1, which causes s_sys_clk_deviation_la=0               |
+--|   (healthy SYS_CLK assumed)                                                                                      |
+--|                                                                                                                  |
+--|   Macro monitors two clock error critera:                                                                        |
+--|      a) sys_clk_deviation: SYS_CLK is checked for Accuracy (+/- 3 Periods within 12500 clock cycles)             |
+--|      b) sys_clk_is_bad   : PLL detects, that  SYS_CLK PLL input has 3 missing edges and does automatic switch    |
+--|   Both are triggering an clock error interrupt in combination with set of status bits and led control            |
+--|                                                                                                                  |
+--|..................................................................................................................|
+--|   V.1 W.Panschow: Initial Version                                                                                            |
+--|..................................................................................................................|
+--|   V.2 K.Kaiser:   Connecting dtack to s_dtack, adding description header                                                     |
+--+------------------------------------------------------------------------------------------------------------------+
+
+
+
+
 entity sio3_sys_clk_local_clk_switch is 
+  generic (
+    Base_Addr:  unsigned(15 downto 0)  := x"0040"
+    );
+
   port(
     local_clk_i:          in    std_logic;
     sys_clk_i:            in    std_logic;
@@ -58,7 +92,7 @@ component sys_clk_or_local_clk
     clkbad1:  out   std_logic
     );
 end component;
-
+constant clk_switch_status_cntrl_addr: unsigned (15 downto 0) := base_Addr;
 signal  master_clk:           std_logic;
 signal  f_local_12p5_mhz:     std_logic;
 
@@ -158,6 +192,7 @@ p_adr_deco: process (master_clk, nReset)
   end process p_adr_deco;
   
 Rd_Activ <= s_rd_active;
+Dtack    <= s_dtack;
 
             
 p_err_latch: process (master_clk, nReset)

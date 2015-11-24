@@ -45,8 +45,8 @@ end monster_iodir;
 architecture rtl of monster_iodir is
   signal r_ack  : std_logic := '0';
   signal r_dat  : t_wishbone_data := (others => '0');
-  signal r_gpio : std_logic_vector(f_sub1(g_gpio_inout) downto 0) := (0 => '1', others => '0');
-  signal r_lvds : std_logic_vector(f_sub1(g_lvds_inout) downto 0) := (0 => '1', others => '0');
+  signal r_gpio : std_logic_vector(f_sub1(g_gpio_inout) downto 0) := (others => '1');
+  signal r_lvds : std_logic_vector(f_sub1(g_lvds_inout) downto 0) := (others => '1');
 begin
 
   slave_o.dat   <= r_dat;
@@ -66,8 +66,8 @@ begin
     if rst_n_i = '0' then
       r_ack  <= '0';
       r_dat  <= (others => '0');
-      r_gpio <= (0 => '1', others => '0');
-      r_lvds <= (0 => '1', others => '0');
+      r_gpio <= (others => '1');
+      r_lvds <= (others => '1');
     elsif rising_edge(clk_i) then
       r_ack <= slave_i.cyc and slave_i.stb;
       r_dat <= (others => '0');

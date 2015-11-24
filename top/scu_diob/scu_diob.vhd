@@ -9,7 +9,7 @@ use work.aux_functions_pkg.all;
 use work.fg_quad_pkg.all;
 use work.diob_sys_clk_local_clk_switch_pkg.all;
 use work.scu_diob_pkg.all;
-use work.wr_altera_pkg.all;
+use work.pll_pkg.all;
 use work.monster_pkg.all;
 
 
@@ -1537,7 +1537,6 @@ generic map (
     Firmware_Release        => c_Firmware_Release,  -------------------- important: => Firmware_Release
     Firmware_Version        => c_Firmware_Version,  -------------------- important: => Firmware_Version
     CID_System              => 55, ------------------------------------- important: => CSCOHW
-    CID_Group               => 26, ------------------------------------- important: => "FG900500_SCU_Diob1"
     intr_Enable             => b"0000_0000_0000_0001")
 port map (
     SCUB_Addr               => A_A,                                   -- in, SCU_Bus: address bus
@@ -1555,6 +1554,7 @@ port map (
                               & x"0"                                  -- bit 7..4
                               & '0' & '0' & clk_switch_intr,          -- bit 3..1
     User_Ready              => '1',
+    CID_GROUP               => 26,                                    -- important: => "FG900500_SCU_Diob1"
     extension_cid_system    => extension_cid_system,                  -- in, extension card: cid_system
     extension_cid_group     => extension_cid_group,                   -- in, extension card: cid_group
     Data_from_SCUB_LA       => Data_from_SCUB_LA,                     -- out, latched data from SCU_Bus for external user functions

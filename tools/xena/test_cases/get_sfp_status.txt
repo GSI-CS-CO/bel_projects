@@ -1,0 +1,16 @@
+; simply "m/p" where "m" is the module number and "p" is the port number: 0/0
+; Let's see what kind of port this is by querying for the interface type: P_INTERFACE ?
+0/0
+P_INTERFACE ?
+0/1
+P_INTERFACE ?
+0/2
+P_INTERFACE ?
+0/3
+P_INTERFACE ?
+0/4
+P_INTERFACE ?
+0/5
+P_INTERFACE ?
+
+

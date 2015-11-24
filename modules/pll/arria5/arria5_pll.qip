@@ -1,0 +1,3 @@
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "sys_pll5.qip"]
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "ref_pll5.qip"]
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "dmtd_pll5.qip"]
