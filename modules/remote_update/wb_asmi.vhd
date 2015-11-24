@@ -220,6 +220,7 @@ begin
 
   wb_cycle: process (clk_flash_i, rst_n_i, slave_i)
     variable  s_byte_count : integer range  0 to PAGESIZE;
+    variable  v_read_tmo : integer range 0 to 70;
   begin
     if rising_edge(clk_flash_i) then
       
@@ -234,6 +235,7 @@ begin
         s_byte_count    :=  0;
         s_shift_bytes   <= '0';
         s_addr          <= (others => '0');
+        v_read_tmo      := 0;
       else
         s_write_strobe  <= '0';
         s_read_strobe   <= '0';
@@ -327,9 +329,16 @@ begin
              
           when read_valid =>
             slave_o.stall <= '1';
-            if s_data_valid = '1' then
+            -- check if data valid ever comes
+            if v_read_tmo = 70 then
+              wb_state <= err;
+              v_read_tmo := 0;
+            elsif s_data_valid = '1' then
               slave_o.ack <= '1';
               wb_state <= idle;
+              v_read_tmo := 0;
+            else
+              v_read_tmo := v_read_tmo + 1;
             end if;
           
           when stall =>
