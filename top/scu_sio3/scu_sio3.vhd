@@ -6,9 +6,11 @@ use IEEE.numeric_std.all;
 
 
 use work.scu_bus_slave_pkg.all;
+use work.aux_functions_pkg.all;
 use work.scu_sio3_pkg.all;
 use work.sio3_sys_clk_local_clk_switch_pkg.all;
-use work.aux_functions_pkg.all;
+use work.pll_pkg.all;
+use work.monster_pkg.all;
 
 
 
@@ -131,6 +133,7 @@ CONSTANT  c_Firmware_Version:     integer                   := 5;         -- imp
 CONSTANT  c_Firmware_Release:     integer                   := 2;         -- important: => Firmware_Release
 CONSTANT  SCU_SIO2_ID:            integer range 16#0200# to 16#020F# := 16#0200#;
 CONSTANT  stretch_cnt:            integer                   := 5;
+CONSTANT  c_is_arria5:            boolean                   := false;
 
 SIGNAL    CID_Group:              integer range 0 to 65535  := 0;
 
@@ -152,16 +155,27 @@ CONSTANT  c_ev_filt_last_a:              unsigned(15 downto 0) := x"1FFF";--x"1F
 -- Clocks, Resets, clock enables
 signal    Powerup_Res:            std_logic;  
 signal    nPowerup_Res:           std_logic;
+
+signal    rstn_sys:               std_logic;
+signal    rstn_update:            std_logic;
+signal    rstn_flash:             std_logic;
+signal    rstn_stc:               std_logic;
+
+
 signal    ready:                  std_logic;
 signal    Deb_SCUB_Reset_out:     std_logic;
 
-signal    clk:                    std_logic;
+signal    clk_sys:                std_logic;
+signal    signal_tap_clk_250mhz:  std_logic;
+signal    clk_update:             std_logic;
+signal    clk_flash:              std_logic;
+
 
 signal    Ena_Every_100ns:        std_logic;
 signal    Ena_Every_166ns:        std_logic;
 signal    Ena_Every_20ms:         std_logic;
 --Clock Switch
-signal    pll_1_locked:           std_logic;
+signal    pll_locked:           std_logic;
 signal    local_clk_is_running:   std_logic;
 signal    sys_clk_is_bad:         std_logic;
 signal    sys_clk_is_bad_la:      std_logic;
@@ -290,11 +304,11 @@ end process;
 
 
 
-initial_led_check: process (clk,nPowerup_Res)
+initial_led_check: process (clk_sys,rstn_sys)
 begin
-  if nPowerup_Res ='0' then
+  if rstn_sys ='0' then
     led_ctr <= led_ctr'HIGH;
-  elsif rising_edge (clk) then
+  elsif rising_edge (clk_sys) then
     if ena_Every_20ms then
       if led_ctr /= 0 then
         led_ctr <= led_ctr - 1;
@@ -311,7 +325,7 @@ lemo_data_i(4)   <= A_LEMO_4_IO;
 
 A_ME_UDI <= '0';
 
-Powerup_Res       <= not nPowerup_Res; 
+Powerup_Res       <= not rstn_sys; 
 clk_switch_intr   <= sys_clk_is_bad_la or sys_clk_deviation_la;
 
 
@@ -328,9 +342,15 @@ lm32_ow: housekeeping
   generic map (
     Base_Addr => c_housekeeping_base_a)
   port map (
-    clk_sys             => clk,
-    n_rst               => nPowerup_Res,
-
+    clk_sys             => clk_sys,
+-------------------------------------------
+    clk_update          => clk_update,
+    clk_flash           => clk_flash,
+    rstn_sys            => rstn_sys,
+    rstn_update         => rstn_update,
+    rstn_flash          => rstn_flash,
+    --n_rst               => nPowerup_Res,
+-------------------------------------------------
     ADR_from_SCUB_LA    => ADR_from_SCUB_LA,
     Data_from_SCUB_LA   => Data_from_SCUB_LA,
     Ext_Adr_Val         => Ext_Adr_Val,
@@ -357,8 +377,8 @@ sio3_clk_sw: sio3_sys_clk_local_clk_switch
     local_clk_i             => CLK_FPGA,              --125MHz XTAL
     sys_clk_i               => A_SysClock,            --12p5MHz SCU Bus
     nReset                  => nPowerup_Res,
-    master_clk_o            => clk,                   --SysClk 125MHz
-    pll_locked              => pll_1_locked,          --open,
+    master_clk_o            => clk_sys,               --SysClk 125MHz
+    pll_locked              => pll_locked,             
     A_ME_12MHz              => A_ME_12MHz,            --12p5MHz to Pin
     sys_clk_is_bad          => sys_clk_is_bad,        
     sys_clk_is_bad_la       => sys_clk_is_bad_la,
@@ -374,16 +394,41 @@ sio3_clk_sw: sio3_sys_clk_local_clk_switch
     Rd_Port                 => clk_switch_rd_data,    -- output for all read sources of this macro
     Rd_Activ                => clk_switch_rd_active,  -- this macro has read data available at the Rd_Port.
     Dtack                   => clk_switch_dtack,
-    signal_tap_clk_250mhz   => open                   -- signal_tap_clk_250mhz
+    signal_tap_clk_250mhz   => signal_tap_clk_250mhz,  -- signal_tap_clk_250mhz
+--------------------------------------------------------------
+    clk_update              => clk_update,
+    clk_flash               => clk_flash
   );
+  
+  
+  reset : altera_reset
+    generic map(
+      g_plls   => 1,
+      g_clocks => 4,
+      g_areset => f_pick(c_is_arria5, 100, 1)*1024,
+      g_stable => f_pick(c_is_arria5, 100, 1)*1024)
+    port map(
+      clk_free_i    => clk_sys,
+      rstn_i        => A_nReset,
+      pll_lock_i(0) => pll_locked,
+      pll_arst_o    => open,
+      clocks_i(0)   => clk_sys,
+      clocks_i(1)   => signal_tap_clk_250mhz,
+      clocks_i(2)   => clk_update,
+      clocks_i(3)   => clk_flash,
+      rstn_o(0)     => rstn_sys,
+      rstn_o(1)     => rstn_stc,
+      rstn_o(2)     => rstn_update,
+      rstn_o(3)     => rstn_flash);
+--------------------------------------------------------------
       
 mil_slave_1: wb_mil_wrapper_sio 
   generic map(
-    Clk_in_Hz           => clk_in_hz,  -- Wg Bitmessung 1Mb/s (Flanke/Flanke=500 ns), clk_in_hz >= 20 Mhz!
+    Clk_in_Hz           => clk_in_hz,           -- Wg Bitmessung 1Mb/s (Flanke/Flanke=500 ns), clk_in_hz >= 20 Mhz!
     sio_mil_first_reg_a => c_sio_mil_first_reg_a,
     sio_mil_last_reg_a  => c_sio_mil_last_reg_a,
-    evt_filt_first_a     => c_ev_filt_first_a,
-    evt_filt_last_a      => c_ev_filt_last_a
+    evt_filt_first_a    => c_ev_filt_first_a,
+    evt_filt_last_a     => c_ev_filt_last_a
 
     
   )
@@ -395,7 +440,7 @@ mil_slave_1: wb_mil_wrapper_sio
     Ext_Rd_fin          =>  Ext_Rd_fin,         -- in  
     Ext_Wr_active       =>  Ext_Wr_active,      -- in  
     Ext_Wr_fin          =>  Ext_Wr_fin,         -- in
-    clk                 =>  clk,                -- in
+    clk                 =>  clk_sys,            -- in
     Data_to_SCUB        =>  Mil_Data_to_SCUB,   -- out
     Data_for_SCUB       =>  mil_rd_active,      -- out
     Dtack_to_SCUB       =>  mil_Dtack_to_SCUB,  -- out
@@ -452,7 +497,7 @@ mil_slave_1: wb_mil_wrapper_sio
 A_MIL1_Out_Ena  <= not nSel_Mil_Drv;
 A_ME_UDI        <= '0';
 
-nA_SEL            <= not A_SEL;
+nA_SEL          <= not A_SEL;
 
 testport_mux:  process  (nA_SEL, test_port_in_0, Timing_Pattern_LA, Mil_Decoder_Diag_p, Mil_Decoder_Diag_n)
 variable test_out: std_logic_vector(31 downto 0);
@@ -499,11 +544,11 @@ begin
 end process rd_port_mux;
 
 
-p_ready:  process(clk, nPowerup_Res, Deb_SCUB_Reset_out)
+p_ready:  process(clk_sys, rstn_sys, Deb_SCUB_Reset_out)
 begin
-  if (nPowerup_Res = '0') or (Deb_SCUB_Reset_out = '1') then
+  if (rstn_sys = '0') or (Deb_SCUB_Reset_out = '1') then
     ready <= '0';
-  elsif rising_edge(clk) then
+  elsif rising_edge(clk_sys) then
     ready <= '1';
   end if;
 end process;
@@ -512,17 +557,17 @@ end process;
 test_port_in_0 <=
 
    X"000"             & '0'                 & '0'              & Mil_Rcv_Rdy      & nLed(6) &  -- bit31..16
-   nPowerup_Res       & clk                 & Ena_Every_100ns  & Ena_Every_166ns  &            -- bit15..12
-   '0'                & '0'                 & pll_1_locked     & '0'              &            -- bit11..8
+   rstn_sys           & clk_sys             & Ena_Every_100ns  & Ena_Every_166ns  &            -- bit15..12
+   '0'                & '0'                 & pll_locked     & '0'              &            -- bit11..8
    '0'                & '0'                 & A_RnW            & A_nDS            &            -- bit7..4
   Timing_Pattern_RCV  & '0'                 & '0'              & SCU_Dtack                     -- bit3..0
   ;
 
 
-fl:flash_loader_v01
-  port map  (
-    noe_in  =>  '0'
-  );
+--fl:flash_loader_v01
+--  port map  (
+--    noe_in  =>  '0'
+--  );
 
 
 s_intr_in <= '0'& clk_switch_intr & "0000000"& Interlock_Intr_o & Data_Rdy_Intr_o & Data_Req_Intr_o & dly_intr_o & ev_fifo_ne_intr_o & every_ms_intr_o;
@@ -546,7 +591,7 @@ SCU_Slave:scu_bus_slave
     nSCUB_Slave_Sel     =>  A_nBoardSel,        -- in     SCU_Bus: '0' => SCU master select slave
     nSCUB_DS            =>  A_nDS,              -- in     SCU_Bus: '0' => SCU master activate data strobe
     SCUB_RDnWR          =>  A_RnW,              -- in     SCU_Bus: '1' => SCU master read slave
-    clk                 =>  clk,              
+    clk                 =>  clk_sys,              
     nSCUB_Reset_in      =>  A_nReset,           -- in     SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
     Data_to_SCUB        =>  Data_to_SCUB,       -- in     connect read sources from external user functions
     Dtack_to_SCUB       =>  Dtack_to_SCUB,      -- in     connect Dtack from from external user functions  
@@ -589,7 +634,7 @@ zeit1 : zeitbasis
   )
   port map  (
     Res                =>  Powerup_Res,
-    Clk                =>  clk,
+    Clk                =>  clk_sys,
     Ena_every_100ns    =>  Ena_Every_100ns,
     Ena_every_166ns    =>  Ena_Every_166ns,
     Ena_every_250ns    =>  open,
@@ -604,7 +649,7 @@ p_led_sel: led_n
     stretch_cnt => stretch_cnt)
   port map (
     ena         => Ena_Every_20ms,
-    CLK         => clk,
+    CLK         => clk_sys,
     Sig_In      => SCU_Dtack,
     nLED        => nled(15)
   );
@@ -614,7 +659,7 @@ clk_failed_led: led_n
     stretch_cnt => stretch_cnt)
   port map (
     ena         => Ena_Every_20ms,
-    CLK         => clk,
+    CLK         => clk_sys,
     Sig_In      => sys_clk_is_bad,
     nLED        => nLed(8)
   );
@@ -624,7 +669,7 @@ local_clk_led: led_n
     stretch_cnt  => stretch_cnt)
   port map  (
     ena         => Ena_Every_20ms,
-    CLK         => clk,
+    CLK         => clk_sys,
     Sig_In      => local_clk_is_running,
     nLED        => nled(10)
   );
@@ -634,7 +679,7 @@ clk_deviation_led: led_n
     stretch_cnt   => stretch_cnt)
   port map  (
     ena           => Ena_Every_20ms,
-    CLK           => clk,
+    CLK           => clk_sys,
     Sig_In        => sys_clk_deviation,
     nLED          => nLed(9)
   );
@@ -646,7 +691,7 @@ p_led_rcv: led_n
     stretch_cnt   => stretch_cnt)
   port map  (
     ena           => Ena_Every_20ms,
-    CLK           => clk,
+    CLK           => clk_sys,
     Sig_In        => Mil_Rcv_Rdy,
     nLED          => nLed(4)
   );

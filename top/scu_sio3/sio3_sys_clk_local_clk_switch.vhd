@@ -65,7 +65,9 @@ entity sio3_sys_clk_local_clk_switch is
     Rd_Port:              out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
     Rd_Activ:             out   std_logic;                      -- this acro has read data available at the Rd_Port.
     Dtack:                out   std_logic;
-    signal_tap_clk_250mhz:out   std_logic
+    signal_tap_clk_250mhz:out   std_logic;
+    clk_update:           out   std_logic;
+    clk_flash:            out   std_logic
     );
 end sio3_sys_clk_local_clk_switch;
 
@@ -73,23 +75,25 @@ architecture arch_sio3_sys_clk_local_clk_switch of sio3_sys_clk_local_clk_switch
 
 component addac_local_clk_to_12p5_mhz
   port(
-    inclk0:   in    std_logic;
-    c0:       out   std_logic;
-    locked:   out   std_logic
+    inclk0:     in    std_logic;
+    c0:         out   std_logic;
+    locked:     out   std_logic
     );
 end component;
 
 component sys_clk_or_local_clk
   port(
-    clkswitch:in    std_logic := '0';
-    inclk0:   in    std_logic;
-    inclk1:   in    std_logic;
-    c0:       out   std_logic;
-    c1:       out   std_logic;
-    locked:   out   std_logic;
+    clkswitch:    in    std_logic := '0';
+    inclk0:       in    std_logic;
+    inclk1:       in    std_logic;
+    c0:           out   std_logic;
+    c1:           out   std_logic;
+    c2:           out   std_logic;
+    c3:           out   std_logic;
+    locked:       out   std_logic;
     activeclock:  out   std_logic;
-    clkbad0:  out   std_logic;
-    clkbad1:  out   std_logic
+    clkbad0:      out   std_logic;
+    clkbad1:      out   std_logic
     );
 end component;
 constant clk_switch_status_cntrl_addr: unsigned (15 downto 0) := base_Addr;
@@ -143,7 +147,9 @@ sys_or_local_pll: sys_clk_or_local_clk
     inclk0      => sys_clk_i,
     inclk1      => f_local_12p5_mhz,
     c0          => master_clk,
-    c1          => signal_tap_clk_250mhz,
+    c1          => clk_update,
+    c2          => clk_flash,
+    c3          => signal_tap_clk_250mhz, 
     locked      => pll_locked,
     activeclock => local_clk_is_running,
     clkbad0     => sys_clk_is_bad,
