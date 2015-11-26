@@ -3,6 +3,7 @@ files = [
    "scu_diob_pkg.vhd",
    "scu_diob.sdc",
    "diob_debounce.vhd",
+   "diob_sync.vhd",
    "flash_loader_v01.vhd",
    "Zeitbasis.vhd",
    "aw_io_reg.vhd",
