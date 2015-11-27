@@ -4,7 +4,9 @@ FLASH		  = EPCS128
 RAM_SIZE	= 32768
 PHK       = ../../modules/scu_bus/housekeeping_sw
 PSIO3     = ../../top/scu_sio3
+W1        = ../../ip_cores/wrpc-sw
 CFLAGS    = -I$(PHK)/include -I$(PSIO3)
+USRCPUCLK = 125000
 
 include ../build.mk
 
