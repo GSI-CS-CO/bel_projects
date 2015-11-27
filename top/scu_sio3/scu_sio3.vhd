@@ -245,6 +245,7 @@ signal    nLed:                   std_logic_vector (15 downto 0);
 signal    nLED_out:               std_logic_vector (15 downto 0);
 signal    nLED_Mil_Rcv:           std_logic;  
 signal    lemo_nled_o:            std_logic_vector(4 downto 1);
+signal    debug_serial_out:       std_logic;
 
 
 
@@ -364,7 +365,7 @@ lm32_ow: housekeeping
     owr_en_o            => owr_en_o,
     owr_i               => owr_i,
     
-    debug_serial_o      => open,
+    debug_serial_o      => debug_serial_out,
     debug_serial_i      => '0'
 );
 
@@ -507,6 +508,7 @@ begin
     when X"E"    => test_out := x"CAFEBABE";
     when X"D"    => test_out := Timing_Pattern_LA;
     when X"C"    => test_out := Mil_Decoder_Diag_n & Mil_Decoder_Diag_p;
+    when X"B"    => test_out := x"0000000" & "001" & debug_serial_out;
     when others  => test_out := (others => '0');
   end case;
   
