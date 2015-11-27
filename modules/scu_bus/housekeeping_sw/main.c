@@ -11,26 +11,47 @@
 #include "uart.h"
 #include "w1.h"
 #include "mini_sdb.h"
+#include <hw/sockit_owm_regs.h>
+#include <hw/wb_vuart.h>
 
 
 extern struct w1_bus wrpc_w1_bus;
+volatile struct UART_WB *uart;
 volatile unsigned char* scu_reg;
 volatile unsigned int* aru_base;
 volatile unsigned char* asmi_base;
 
+#define CPU_CLOCK 125000000ULL
 
-//getSysTime() needs extra hardware from ftm cluster
-//void msDelayBig(uint64_t ms)
-//{
-//  uint64_t later = getSysTime() + ms * 1000000ULL / 8;
-//  while(getSysTime() < later) {asm("# noop");}
-//}
+
+#define CALC_BAUD(baudrate) \
+    ( ((( (unsigned long long)baudrate * 8ULL) << (16 - 7)) + \
+      (CPU_CLOCK >> 8)) / (CPU_CLOCK >> 7) )
+
+void uart_hw_init()
+{
+  uart = (volatile struct UART_WB *)BASE_UART;
+  uart->BCR = CALC_BAUD(UART_BAUDRATE);
+}
+
+/* Init from sockitowm code */
+#define CLK_DIV_NOR (CPU_CLOCK / 200000 - 1)  /* normal mode */
+#define CLK_DIV_OVD (CPU_CLOCK / 1000000 - 1) /* overdrive mode (not used) */
+void w1_init(void)
+{
+  IOWR_SOCKIT_OWM_CDR(BASE_ONEWIRE,
+          ((CLK_DIV_NOR & SOCKIT_OWM_CDR_N_MSK) |
+           ((CLK_DIV_OVD << SOCKIT_OWM_CDR_O_OFST) &
+            SOCKIT_OWM_CDR_O_MSK)));
+}
+
+
 
 void msDelay(uint32_t msecs) {
   usleep(1000 * msecs);
 }
 
-void ReadTempDevices(int bus) {
+void ReadOwDevices(int bus) {
   struct w1_dev *d;
   int i;
   int tvalue;
@@ -68,7 +89,7 @@ int main(void)
   if (!BASE_UART) {
     while (1) {};
   }
-  uart_init_hw();
+  uart_hw_init();
   uart_write_string("\nDebug Port\n");
 
   mprintf("aru_base: 0x%x\n", aru_base);
@@ -93,6 +114,10 @@ int main(void)
     mprintf("no 1Wire controller found!\n");
     while (1) {};
   }
+  
+  w1_init();
+  //read id and temp at least once
+  ReadOwDevices(0);
  
   wrpc_w1_init();
   while(1) {
@@ -150,7 +175,7 @@ int main(void)
       break;  
       
       case READ_TEMP:
-        ReadTempDevices(0);
+        ReadOwDevices(0);
         // signal end of operation 
         *(volatile int*)(scu_reg + ASMI_CMD) = DONE;
       break;  
