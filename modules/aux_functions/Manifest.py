@@ -8,4 +8,6 @@ files = [
   "sys_clk_or_local_clk.vhd",
   "IO_4x8.vhd",
   "Zeitbasis.vhd",
+  "slave_clk_switch.vhd",
+  "local_clk_to_12p5.vhd",
 ]

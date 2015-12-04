@@ -10,7 +10,6 @@ use work.aux_functions_pkg.all;
 use work.adc_pkg.all;
 use work.dac714_pkg.all;
 use work.fg_quad_pkg.all;
-use work.addac_sys_clk_local_clk_switch_pkg.all;
 use work.pll_pkg.all;
 use work.monster_pkg.all;
 
@@ -121,14 +120,15 @@ constant clk_sys_in_Hz: integer := 125_000_000;
 constant dac_spi_clk_in_hz: integer := 10_000_000;
 
 -- macro base address map
-constant c_housekeeping_base: unsigned := x"0040";
-constant c_dac1_base:         unsigned := x"0200";
-constant c_dac2_base:         unsigned := x"0210";
-constant c_io4x8_base:        unsigned := x"0220";
-constant c_adc_base:          unsigned := x"0230";
-constant c_fg1_base:          unsigned := x"0300";
-constant c_tmr_base:          unsigned := x"0330";
-constant c_fg2_base:          unsigned := x"0340";
+constant clk_switch_status_cntrl_addr:  unsigned := x"0030";
+constant c_housekeeping_base:           unsigned := x"0040";
+constant c_dac1_base:                   unsigned := x"0200";
+constant c_dac2_base:                   unsigned := x"0210";
+constant c_io4x8_base:                  unsigned := x"0220";
+constant c_adc_base:                    unsigned := x"0230";
+constant c_fg1_base:                    unsigned := x"0300";
+constant c_tmr_base:                    unsigned := x"0330";
+constant c_fg2_base:                    unsigned := x"0340";
 
 component IO_4x8
   generic (
@@ -276,32 +276,35 @@ component IO_4x8
 
   begin
 
-  addac_clk_switch: addac_sys_clk_local_clk_switch
-    port map(
-      local_clk_i             => CLK_FPGA,
-      sys_clk_i               => A_SysClock,
-      nReset                  => nPowerup_Res,
-      master_clk_o            => clk_sys,               -- core clocking
-      pll_locked              => pll_locked,
-      sys_clk_is_bad          => sys_clk_is_bad,
-      sys_clk_is_bad_la       => sys_clk_is_bad_la,
-      local_clk_is_bad        => local_clk_is_bad,
-      local_clk_is_running    => local_clk_is_running,
-      sys_clk_deviation       => sys_clk_deviation,
-      sys_clk_deviation_la    => sys_clk_deviation_la,
-      Adr_from_SCUB_LA        => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
-      Data_from_SCUB_LA       => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
-      Ext_Adr_Val             => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
-      Ext_Rd_active           => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
-      Ext_Wr_active           => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
-      Rd_Port                 => clk_switch_rd_data,    -- output for all read sources of this macro
-      Rd_Activ                => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
-      Dtack                   => clk_switch_dtack,
-      signal_tap_clk_250mhz   => signal_tap_clk_250mhz,
-      clk_update              => clk_update,
-      clk_flash               => clk_flash
-      );
-
+addac_clk_sw: slave_clk_switch
+  generic map (
+    Base_Addr => clk_switch_status_cntrl_addr)
+  port map(
+    local_clk_i             => CLK_FPGA,              --125MHz XTAL
+    sys_clk_i               => A_SysClock,            --12p5MHz SCU Bus
+    nReset                  => nPowerup_Res,
+    master_clk_o            => clk_sys,               --SysClk 125MHz
+    pll_locked              => pll_locked,             
+    sys_clk_is_bad          => sys_clk_is_bad,        
+    sys_clk_is_bad_la       => sys_clk_is_bad_la,
+    local_clk_is_bad        => open,                  --local_clk_is_bad,not used
+    local_clk_is_running    => local_clk_is_running, 
+    sys_clk_deviation       => sys_clk_deviation,     
+    sys_clk_deviation_la    => sys_clk_deviation_la, 
+    Adr_from_SCUB_LA        => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+    Data_from_SCUB_LA       => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+    Ext_Adr_Val             => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active           => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+    Ext_Wr_active           => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+    Rd_Port                 => clk_switch_rd_data,    -- output for all read sources of this macro
+    Rd_Activ                => clk_switch_rd_active,  -- this macro has read data available at the Rd_Port.
+    Dtack                   => clk_switch_dtack,
+    signal_tap_clk_250mhz   => signal_tap_clk_250mhz, -- signal_tap_clk_250mhz
+--------------------------------------------------------------
+    clk_update              => clk_update,
+    clk_flash               => clk_flash,
+    clk_encdec              => open
+  );
     
   
   reset : altera_reset

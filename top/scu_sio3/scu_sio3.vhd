@@ -8,7 +8,6 @@ use IEEE.numeric_std.all;
 use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
 use work.scu_sio3_pkg.all;
-use work.sio3_sys_clk_local_clk_switch_pkg.all;
 use work.pll_pkg.all;
 use work.monster_pkg.all;
 
@@ -290,7 +289,7 @@ end generate TristateDrivers;
 
 led_ctr_vec <= std_logic_vector (to_unsigned(led_ctr,8));
 
-process (nLED, led_ctr )
+process (nLED, led_ctr, led_ctr_vec)
 begin 
   if led_ctr = 0 then
     nLED_out <= nLED;
@@ -371,7 +370,7 @@ lm32_ow: housekeeping
 
 
 
-sio3_clk_sw: sio3_sys_clk_local_clk_switch
+sio3_clk_sw: slave_clk_switch
   generic map (
     Base_Addr => clk_switch_status_cntrl_addr)
   port map(
@@ -380,7 +379,6 @@ sio3_clk_sw: sio3_sys_clk_local_clk_switch
     nReset                  => nPowerup_Res,
     master_clk_o            => clk_sys,               --SysClk 125MHz
     pll_locked              => pll_locked,             
-    A_ME_12MHz              => A_ME_12MHz,            --12p5MHz to Pin
     sys_clk_is_bad          => sys_clk_is_bad,        
     sys_clk_is_bad_la       => sys_clk_is_bad_la,
     local_clk_is_bad        => open,                  --local_clk_is_bad,not used
@@ -395,10 +393,11 @@ sio3_clk_sw: sio3_sys_clk_local_clk_switch
     Rd_Port                 => clk_switch_rd_data,    -- output for all read sources of this macro
     Rd_Activ                => clk_switch_rd_active,  -- this macro has read data available at the Rd_Port.
     Dtack                   => clk_switch_dtack,
-    signal_tap_clk_250mhz   => signal_tap_clk_250mhz,  -- signal_tap_clk_250mhz
+    signal_tap_clk_250mhz   => signal_tap_clk_250mhz, -- signal_tap_clk_250mhz
 --------------------------------------------------------------
     clk_update              => clk_update,
-    clk_flash               => clk_flash
+    clk_flash               => clk_flash,
+    clk_encdec              => A_ME_12MHz             -- 12p5MHz to Pin
   );
   
   
@@ -500,7 +499,7 @@ A_ME_UDI        <= '0';
 
 nA_SEL          <= not A_SEL;
 
-testport_mux:  process  (nA_SEL, test_port_in_0, Timing_Pattern_LA, Mil_Decoder_Diag_p, Mil_Decoder_Diag_n)
+testport_mux:  process  (nA_SEL, test_port_in_0, Timing_Pattern_LA, Mil_Decoder_Diag_p, Mil_Decoder_Diag_n, debug_serial_out)
 variable test_out: std_logic_vector(31 downto 0);
 begin
   case (nA_SEL) is  -- depends on hex dial switch 
@@ -556,14 +555,14 @@ begin
 end process;
 
 
-test_port_in_0 <=
+test_port_in_0 <= x"00000000";
 
-   X"000"             & '0'                 & '0'              & Mil_Rcv_Rdy      & nLed(6) &  -- bit31..16
-   rstn_sys           & clk_sys             & Ena_Every_100ns  & Ena_Every_166ns  &            -- bit15..12
-   '0'                & '0'                 & pll_locked     & '0'              &            -- bit11..8
-   '0'                & '0'                 & A_RnW            & A_nDS            &            -- bit7..4
-  Timing_Pattern_RCV  & '0'                 & '0'              & SCU_Dtack                     -- bit3..0
-  ;
+   --X"000"             & '0'                 & '0'              & Mil_Rcv_Rdy      & nLed(6) &  -- bit31..16
+   --rstn_sys           & clk_sys             & Ena_Every_100ns  & Ena_Every_166ns  &            -- bit15..12
+   --'0'                & '0'                 & pll_locked     & '0'              &            -- bit11..8
+   --'0'                & '0'                 & A_RnW            & A_nDS            &            -- bit7..4
+  --Timing_Pattern_RCV  & '0'                 & '0'              & SCU_Dtack                     -- bit3..0
+  --;
 
 
 --fl:flash_loader_v01
