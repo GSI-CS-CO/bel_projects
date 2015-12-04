@@ -39,17 +39,17 @@ USE ieee.std_logic_1164.all;
 LIBRARY altera_mf;
 USE altera_mf.all;
 
-ENTITY sio3_local_clk_to_12p5_mhz IS
+ENTITY local_clk_to_12p5 IS
 	PORT
 	(
 		inclk0		: IN STD_LOGIC  := '0';
 		c0		: OUT STD_LOGIC ;
 		locked		: OUT STD_LOGIC 
 	);
-END sio3_local_clk_to_12p5_mhz;
+END local_clk_to_12p5;
 
 
-ARCHITECTURE SYN OF sio3_local_clk_to_12p5_mhz IS
+ARCHITECTURE SYN OF local_clk_to_12p5 IS
 
 	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (6 DOWNTO 0);
 	SIGNAL sub_wire1	: STD_LOGIC ;

@@ -4,12 +4,12 @@ use ieee.numeric_std.all;
 
 library work;
 
-package sio3_sys_clk_local_clk_switch_pkg is
+package slave_clk_switch_pkg is
 
 
 
 
-component sio3_sys_clk_local_clk_switch is
+component slave_clk_switch is
   generic (
     Base_Addr:  unsigned(15 downto 0)  := x"0040"
     );
@@ -19,7 +19,6 @@ component sio3_sys_clk_local_clk_switch is
     nReset:               in    std_logic;
     master_clk_o:         out   std_logic;
     pll_locked:           out   std_logic;
-    A_ME_12MHz:           out   std_logic;
     sys_clk_is_bad:       out   std_logic;
     sys_clk_is_bad_la:    out   std_logic;
     local_clk_is_bad:     out   std_logic;
@@ -36,13 +35,14 @@ component sio3_sys_clk_local_clk_switch is
     Dtack:                out   std_logic;
     signal_tap_clk_250mhz:out   std_logic;
     clk_update:           out   std_logic;
-    clk_flash:            out   std_logic
+    clk_flash:            out   std_logic;
+    clk_encdec:           out   std_logic
     
     );
 end component;
 
 
-component sio3_local_clk_to_12p5_mhz is
+component local_clk_to_12p5_mhz is
   port
   (
     inclk0    : IN STD_LOGIC  := '0';
