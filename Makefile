@@ -91,7 +91,7 @@ toolchain-clean::
 	rm -rf toolchain
 
 ip_cores/wrpc-sw/.config:
-	cp ip_cores/wrpc-sw/configs/gsi_defconfig $@
+	$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
 firmware::	sdbfs etherbone toolchain ip_cores/wrpc-sw/.config
 	$(MAKE) -C ip_cores/wrpc-sw EB=$(PWD)/ip_cores/etherbone-core/api SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace PATH=$(PWD)/toolchain/bin:$(PATH) all
