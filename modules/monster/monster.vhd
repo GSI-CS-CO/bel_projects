@@ -1354,7 +1354,7 @@ begin
         g_dummy_time             => 8,   -- 8 cycles between address and data
         g_input_latch_edge       => '0', -- 30ns at 50MHz (10+20) after falling edge sets up SPI output
         g_output_latch_edge      => '1', -- falling edge to meet SPI setup times
-        g_input_to_output_cycles => 3)   -- delayed to work-around unconstrained design
+        g_input_to_output_cycles => 4)   -- delayed to work-around unconstrained design
       port map(
         clk_i     => clk_sys,
         rstn_i    => rstn_sys,

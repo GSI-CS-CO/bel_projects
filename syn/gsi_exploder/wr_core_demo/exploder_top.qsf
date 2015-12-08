@@ -350,7 +350,7 @@ set_location_assignment PLL_1 -to "monster:main|ref_pll:\\ref_a2:ref_inst|altpll
 set_location_assignment PLL_2 -to "monster:main|sys_pll:\\sys_a2:sys_inst|altpll:altpll_component|sys_pll_altpll:auto_generated|pll1"
 set_location_assignment PLL_6 -to "monster:main|dmtd_pll:\\dmtd_a2:dmtd_inst|altpll:altpll_component|dmtd_pll_altpll:auto_generated|pll1"
 set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a2:flash|wb_spi_flash:wb|r_ncs" -section_id flash
-set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a2:flash|wb_spi_flash:wb|r_shift_i[0]" -section_id flash
+set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a2:flash|wb_spi_flash:wb|r_data_i[0]" -section_id flash
 set_instance_assignment -name LL_MEMBER_OF flash -to "monster:main|flash_top:\\flash_a2:flash|wb_spi_flash:wb|r_shift_o[31]" -section_id flash
 set_instance_assignment -name LL_MEMBER_OF "wr_arria2:tx" -to "monster:main|wr_arria2_phy:\\phy_a2:phy|tx_gxb_datain" -section_id "wr_arria2:tx"
 set_instance_assignment -name LL_MEMBER_OF "wr_arria2:tx" -to "monster:main|wr_arria2_phy:\\phy_a2:phy|tx_reg_datain" -section_id "wr_arria2:tx"
