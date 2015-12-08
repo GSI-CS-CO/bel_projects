@@ -23,5 +23,5 @@ clean::
 
 test:
 			lm32-elf-readelf -hS $(TARGET).elf
-			lm32-ctl load $(TARGET).elf
+			../../../../tools/lm32-ctl load $(TARGET).elf
 
