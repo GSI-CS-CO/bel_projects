@@ -975,6 +975,7 @@ show_hw_settings
 sync
 set nextcmd $argv
 set line ""
+set cmd ""
 while {$cmd != "quit"} {
   
 puts $argv
