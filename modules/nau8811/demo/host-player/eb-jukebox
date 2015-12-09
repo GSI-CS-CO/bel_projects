@@ -1,4 +1,4 @@
 #! /bin/bash
 # usage: ./eb-jukebox $DEV $FILE $LOUDNESS
 # example: ./eb-jukebox dev/ttyUSB0 ~/whatever.ogg -10
-sox "$2" -r 48000 -c 2 -b 16 -t wav - gain "${3:-+0}" | ./eb-player "$1" -f /dev/fd/0
+sox "$2" -r 48000 -c 2 -b 16 -t wav - gain -12 bass -6 1k contrast 25 | ./eb-player "$1" -f /dev/fd/0
