@@ -14,7 +14,7 @@ use work.monster_pkg.all;
 
 
 ------------------------------------------------------------------------------------------------------------------------------------
---      Vers: 0 Revi: 16: erstellt am 20.11.2015, Autor: R.Hartmann                                                               --
+--      Vers: 0 Revi: 16: erstellt am 10.12.2015, Autor: R.Hartmann                                                               --
 ------------------------------------------------------------------------------------------------------------------------------------
 --
 --                                                                                                                                
@@ -193,7 +193,8 @@ architecture scu_diob_arch of scu_diob is
 --  CONSTANT c_Firmware_Release:    Integer := 13;  ---- Firmware_Release Stand 09.10.2015 ('+ 16In, 16Out, CID SPSIOI1 60 geändert in 68)
 --  CONSTANT c_Firmware_Release:    Integer := 14;  ---- Firmware_Release Stand 12.10.2015 ( +'731 und Fehlerkorrektur)
 --  CONSTANT c_Firmware_Release:    Integer := 15;  ---- Firmware_Release Stand 21.10.2015 ( +'731 und Fehlerkorrektur)
-    CONSTANT c_Firmware_Release:    Integer := 16;  ---- Firmware_Release Stand 19.11.2015 ( Update Reg.-Belegung '700' u. '710')
+--  CONSTANT c_Firmware_Release:    Integer := 16;  ---- Firmware_Release Stand 19.11.2015 ( Update Reg.-Belegung '700' u. '710')
+    CONSTANT c_Firmware_Release:    Integer := 17;  ---- Firmware_Release Stand 02.12.2015 ( Strobe und Trigger (ECC) auf '710' geändert)
 
     
     
@@ -254,8 +255,10 @@ architecture scu_diob_arch of scu_diob is
       
     constant  C_Strobe_1us:   integer := 1000 / Clk_in_ns;                       -- Anzahl der Clocks für 1us
     constant  C_Strobe_2us:   integer := 2000 / Clk_in_ns;                       -- Anzahl der Clocks für 2us
-
-
+    constant  C_Strobe_3us:   integer := 003000 * 1000 / CLK_sys_in_ps;          -- Anzahl der Clock's für die Debounce-Zeit von   3uS 
+    constant  C_Strobe_7us:   integer := 007000 * 1000 / CLK_sys_in_ps;          -- Anzahl der Clock's für die Debounce-Zeit von   7uS 
+--  constant  C_Strobe_3us:   integer := 000300 * 1000 / CLK_sys_in_ps;          -- Anzahl der Clock's für die Debounce-Zeit von   300nS (Test)
+--  constant  C_Strobe_7us:   integer := 000700 * 1000 / CLK_sys_in_ps;          -- Anzahl der Clock's für die Debounce-Zeit von   700nS (Test) 
   
   
    TYPE      t_Integer_Array  is array (0 to 7) of integer range 0 to 16383;
@@ -921,8 +924,19 @@ END COMPONENT;
   signal P25IO_DAC_DAC_Strobe_o:     std_logic;                     -- Output "DAC-Strobe"
   signal P25IO_DAC_DAC_Strobe_Expo:  integer range 0 to 7;          -- Anzahl der Counts
   signal P25IO_DAC_Strobe:           std_logic;                     -- Output "DAC-Strobe"
+  
+  type   P25IO_Holec_state_t is   (holec_idle, holec_puls,  holec_puls_w,  holec_puls_e, holec_pause, holec_pause_w, holec_end);
+  signal P25IO_Holec_state:       P25IO_Holec_state_t:= holec_idle;
 
-
+  signal P25IO_DAC_Str_Puls_i:      std_logic;                  -- 
+  signal P25IO_DAC_Str_Puls_o:      std_logic;                  -- 
+  signal P25IO_DAC_Str_Pause_i:     std_logic;                  -- 
+  signal P25IO_DAC_Str_Pause_o:     std_logic;                  -- 
+  signal P25IO_Holec_Str_Cnt:       integer range 0 to 7;          -- Anzahl der Counts
+  
+  signal P25IO_Holec_Strobe_Start:  std_logic;                  -- Start Holec-Strobe-Sequence
+  signal P25IO_Holec_Strobe_Out:    std_logic;                  -- Output, Holec-Strobe-Sequence
+  
   signal P25IO_In:                std_logic_vector(15 downto 0); -- Data_Input
   signal P25IO_Strobe_in:         std_logic;                     -- Input  "Strobe"
   
@@ -945,11 +959,21 @@ END COMPONENT;
   signal P25IO_ADC_Data_FF_i:     std_logic_vector(15  downto 0);  -- input  "Daten ADC-Register"
   signal P25IO_ADC_Data_FF_o:     std_logic_vector(15  downto 0);  -- Output "Daten ADC-Register"
      
-  signal P25IO_Ext_Tim_i:           std_logic;        -- input "Start" L-Aktiv
-  signal P25IO_Ext_Tim_deb_o:       std_logic;        -- input "Start" entprellt
-  signal P25IO_nLED_Ext_Tim_o:      std_logic;        --  Output "nLED_Start"
-
-
+  signal P25IO_Ext_Tim_deb_i:     std_logic;        -- input "Start" L-Aktiv
+  signal P25IO_Ext_Tim_deb_o:     std_logic;        -- input "Start" entprellt
+  signal P25IO_Ext_Tim_syn_i:     std_logic;        -- input "Start" L-Aktiv
+  signal P25IO_Ext_Tim_syn_o:     std_logic;        -- input "Start" entprellt
+  signal P25IO_nLED_Ext_Tim_o:    std_logic;        --  Output "nLED_Start"
+  
+  signal P25IO_ECC_Puls_i:        std_logic;                       -- input  "ECC-Signal für den ADC"
+  signal P25IO_ECC_Puls_o:        std_logic;                       -- Output "ECC-Signal für den ADC (1 CLK breit)"
+  signal P25IO_ECC_Puls_shift:    std_logic_vector(2  downto 0);   -- Shift-Reg.
+  
+  signal P25IO_ECC_Strobe_i:     std_logic;                     -- Input  "ECC-Strobe"
+  signal P25IO_ECC_Strobe_o:     std_logic;                     -- Output "ECC-Strobe"
+  signal P25IO_ECC_Strobe_Expo:  integer range 0 to 7;          -- Anzahl der Counts
+  
+  
 --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: OCIN   -- FG900_720                                    |
 --  +============================================================================================================================+
@@ -1653,7 +1677,7 @@ port map  (
       Ext_Wr_active      =>  Ext_Wr_active,
       Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
       clk                =>  clk_sys,
-      nReset             =>  nPowerup_Res,
+      nReset             =>  rstn_sys,
 --
       Reg_IO1            =>  IOBP_Masken_Reg1,
       Reg_IO2            =>  IOBP_Masken_Reg2,   
@@ -1722,7 +1746,7 @@ hp_la_o <= test_out(15 downto 0);
 
 
 
-test_port_in_0 <= rstn_sys          & clk_sys         & Ena_Every_100ns & Ena_Every_166ns & -- bit15..12
+test_port_in_0 <= rstn_sys              & clk_sys         & Ena_Every_100ns & Ena_Every_166ns & -- bit15..12
                   Ext_Wr_active         & SCU_Ext_Wr_fin  & '0'             & FG_1_strobe     & -- bit11..8
                   signal_tap_clk_250mhz & pll_locked      & A_RnW & A_nDS   &                   -- bit7..4
                   A_nBoardSel           & FG_1_strobe     & '0'             & SCUB_Dtack      ; -- bit3..0
@@ -1746,7 +1770,7 @@ generic map (
       diag_on   =>  1
       )
 port map  (
-      Res               =>  Powerup_Res,
+      Res               =>  not rstn_sys,
       Clk               =>  clk_sys,
       Ena_every_100ns   =>  Ena_Every_100ns,
       Ena_every_166ns   =>  Ena_Every_166ns,
@@ -1795,7 +1819,7 @@ A_nLED_D3 <=   s_nLED_Dtack;  -- Diagnose-LED_D3 = Dtack
 
 sel_every_250ms: div_n
   generic map (n => 12, diag_on => 0)  -- ena nur alle 20ms fr einen Takt aktiv, deshalb 13x20ms = 260ms
-    port map  ( res => Powerup_Res,
+    port map  ( res => not rstn_sys,
                 clk => clk_sys,
                 ena => Ena_Every_20ms,
                 div_o => ENA_every_250ms
@@ -1803,7 +1827,7 @@ sel_every_250ms: div_n
               
 sel_every_500ms: div_n
   generic map (n => 25, diag_on => 0)  -- ena nur alle 20ms fr einen Takt aktiv, deshalb 25x20ms = 500ms
-    port map  ( res => Powerup_Res,
+    port map  ( res => not rstn_sys,
                 clk => clk_sys,
                 ena => Ena_Every_20ms,
                 div_o => ENA_every_500ms
@@ -1811,9 +1835,9 @@ sel_every_500ms: div_n
           
               
 p_clk_blink:  
-process (clk_sys, Powerup_Res, ENA_every_250ms)
+process (clk_sys, rstn_sys, ENA_every_250ms)
 begin
-  if  ( Powerup_Res    = '1') then
+  if  ( not rstn_sys    = '1') then
       clk_blink   <= '0';
   elsif (rising_edge(clk_sys)) then
     if (ENA_every_500ms = '1') then
@@ -1930,7 +1954,7 @@ fg_1: fg_quad_scu_bus
     Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset            => nPowerup_Res,          -- in, '0' => resets the fg_1
+    nReset            => rstn_sys,          -- in, '0' => resets the fg_1
     Rd_Port           => FG_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => FG_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => FG_1_dtack,            -- connect Dtack to SCUB-Macro
@@ -1959,7 +1983,7 @@ fg_2: fg_quad_scu_bus
     Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset            => nPowerup_Res,          -- in, '0' => resets the fg_1
+    nReset            => rstn_sys,          -- in, '0' => resets the fg_1
     Rd_Port           => FG_2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => FG_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => FG_2_dtack,            -- connect Dtack to SCUB-Macro
@@ -1979,7 +2003,7 @@ fg_2: fg_quad_scu_bus
     diag_on_is_1  => 1)
   port map (
     clk           => clk_sys,
-    nrst          => nPowerup_Res,
+    nrst          => rstn_sys,
     tmr_irq       => tmr_irq,
     
     Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
@@ -2097,12 +2121,12 @@ end process;
 P37_Deb:  for I in 0 to 15 generate
     DB_I:  diob_debounce
     GENERIC MAP (DB_Tst_Cnt => 3, Test => 0)     
-    port map(DB_Cnt => Deb60_Cnt, DB_in  => P37IO_Deb_in_Data_i(I), Reset => Powerup_Res, clk => clk_sys, DB_Out => P37IO_Deb_in_Data_o(I));
+    port map(DB_Cnt => Deb60_Cnt, DB_in  => P37IO_Deb_in_Data_i(I), Reset => not rstn_sys, clk => clk_sys, DB_Out => P37IO_Deb_in_Data_o(I));
     end generate P37_Deb;
 
 P37_Syn:  for I in 0 to 15 generate
     Sy_I:  diob_sync
-    port map(Sync_in => P37IO_Syn_in_Data_i(I), Reset => Powerup_Res, clk => clk_sys, Sync_out => P37IO_Syn_in_Data_o(I));  -- Sync-Signal
+    port map(Sync_in => P37IO_Syn_in_Data_i(I), Reset => not rstn_sys, clk => clk_sys, Sync_out => P37IO_Syn_in_Data_o(I));  -- Sync-Signal
     end generate P37_Syn;
 
 
@@ -2110,13 +2134,13 @@ P37IO_in_Start_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)   --     
   port map(DB_Cnt => Deb60_Cnt,               -- Debounce-Zeit in Clock's
            DB_in  => P37IO_Start_deb_i,       -- Signal-Input
-           Reset  => Powerup_Res,             -- Powerup-Reset
+           Reset  => not rstn_sys,             -- Powerup-Reset
            clk    => clk_sys,                 -- Sys-Clock
            DB_Out => P37IO_Start_deb_o);      -- Debounce-Signal-Out
 
 P37IO_in_Start_Syn:  diob_sync
   port map(Sync_in  => P37IO_Start_syn_i,     -- Signal-Input
-           Reset    => Powerup_Res,           -- Powerup-Reset
+           Reset    => not rstn_sys,           -- Powerup-Reset
            clk      => clk_sys,               -- Sys-Clock
            Sync_out => P37IO_Start_syn_o);    -- Sync-Signal-Out
         
@@ -2127,10 +2151,10 @@ P37IO_Out_Led_Start: led_n
   
 P37IO_in_Stop_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb60_Cnt, DB_in => P37IO_Stop_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => P37IO_Stop_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => P37IO_Stop_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => P37IO_Stop_deb_o);  
 
 P37IO_in_Stop_Syn:  diob_sync
-  port map(Sync_in  => P37IO_Stop_syn_i, Reset => Powerup_Res, clk  => clk_sys, Sync_out => P37IO_Stop_syn_o);
+  port map(Sync_in  => P37IO_Stop_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => P37IO_Stop_syn_o);
   
    
 P37IO_Out_Led_Stop: led_n
@@ -2140,18 +2164,18 @@ P37IO_Out_Led_Stop: led_n
 
 P37IO_in_Reset_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb60_Cnt, DB_in => P37IO_Reset_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => P37IO_Reset_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => P37IO_Reset_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => P37IO_Reset_deb_o);  
  
 P37IO_in_Reset_Syn:  diob_sync
-  port map(Sync_in  => P37IO_Reset_syn_i, Reset => Powerup_Res, clk  => clk_sys, Sync_out => P37IO_Reset_syn_o);
+  port map(Sync_in  => P37IO_Reset_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => P37IO_Reset_syn_o);
 
   
 p_P37IO_dff: 
-process (clk_sys, P37IO_FF_Start, P37IO_FF_Stop, P37IO_FF_Reset, Powerup_Res)
+process (clk_sys, P37IO_FF_Start, P37IO_FF_Stop, P37IO_FF_Reset, rstn_sys)
 begin
   -- Reset whenever the reset signal goes low, regardless of the clock
   -- or the clock enable
-  if  ( Powerup_Res    = '1') then
+  if  ( not rstn_sys    = '1') then
       P37IO_BNC_o  <= '0';
   elsif ( (P37IO_FF_Stop or P37IO_FF_Reset)  = '1') then
       P37IO_BNC_o  <= '0';
@@ -2180,10 +2204,10 @@ P37IO_Out_Led_BNC: led_n
 
 P25IO_in_Start_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb60_Cnt, DB_in => P25IO_Start_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_Start_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => P25IO_Start_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => P25IO_Start_deb_o);  
 
 P25IO_in_Start_Syn:  diob_sync
-  port map(Sync_in  => P25IO_Start_syn_i, Reset => Powerup_Res, clk  => clk_sys, Sync_out => P25IO_Start_syn_o);
+  port map(Sync_in  => P25IO_Start_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => P25IO_Start_syn_o);
   
 P25IO_Out_Led_Start: led_n
   generic map (stretch_cnt => stretch_cnt)
@@ -2191,10 +2215,10 @@ P25IO_Out_Led_Start: led_n
 
 P25IO_in_Stop_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb60_Cnt, DB_in => P25IO_Stop_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_Stop_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => P25IO_Stop_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => P25IO_Stop_deb_o);  
 
 P25IO_in_Stop_Syn:  diob_sync
-  port map(Sync_in  => P25IO_Stop_syn_i, Reset => Powerup_Res, clk  => clk_sys, Sync_out => P25IO_Stop_syn_o);
+  port map(Sync_in  => P25IO_Stop_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => P25IO_Stop_syn_o);
   
 P25IO_Out_Led_Stop: led_n
   generic map (stretch_cnt => stretch_cnt)
@@ -2203,20 +2227,19 @@ P25IO_Out_Led_Stop: led_n
 
 P25IO_in_Reset_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb60_Cnt, DB_in => P25IO_Reset_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_Reset_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => P25IO_Reset_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => P25IO_Reset_deb_o);  
 
 P25IO_in_Reset_Syn:  diob_sync
-  port map(Sync_in  => P25IO_Reset_syn_i, Reset => Powerup_Res, clk  => clk_sys, Sync_out => P25IO_Reset_syn_o);
-
-
-
+  port map(Sync_in  => P25IO_Reset_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => P25IO_Reset_syn_o);
+  
+  
   
 p_P25IO_dff: 
-process (clk_sys, P25IO_FF_Start, P25IO_FF_Stop, P25IO_FF_Reset, Powerup_Res)
+process (clk_sys, P25IO_FF_Start, P25IO_FF_Stop, P25IO_FF_Reset, rstn_sys)
 begin
   -- Reset whenever the reset signal goes low, regardless of the clock
   -- or the clock enable
-  if  ( Powerup_Res    = '1') then
+  if  ( not rstn_sys    = '1') then
       P25IO_BNC_o  <= '0';
   elsif ( (P25IO_FF_Stop or P25IO_FF_Reset)  = '1') then
       P25IO_BNC_o  <= '0';
@@ -2239,22 +2262,106 @@ P25IO_Out_Led_BNC: led_n
   
   --------- DAC_Out-Strobe --------------------
 
-P25IO_DAC_DAC_Strobe: outpuls port map(nReset   => not Powerup_Res,
-                                   CLK      => clk_sys,
-                                   Cnt_ena  => '1',
-                                   Start    => (P25IO_DAC_DAC_Strobe_i),
-                                   Base_cnt => C_Strobe_100ns, 
-                                   Mult_cnt => Wert_Strobe_2_Hoch_n(P25IO_DAC_DAC_Strobe_Expo),
-                                   Sign_Out => P25IO_DAC_DAC_Strobe_o);
+P25IO_DAC_DAC_Strobe: outpuls port map( nReset   => rstn_sys,
+                                        CLK      => clk_sys,
+                                        Cnt_ena  => '1',
+                                        Start    => (P25IO_DAC_DAC_Strobe_i),
+                                        Base_cnt => C_Strobe_100ns, 
+                                        Mult_cnt => Wert_Strobe_2_Hoch_n(P25IO_DAC_DAC_Strobe_Expo),
+                                        Sign_Out => P25IO_DAC_DAC_Strobe_o);
 
+
+                                  
+                             
+     -------------------------------------------------------------------------------------------------------
+     ---------------------------    Erzeugung des "Holec_DAC_Strobes"   ------------------------------------
+     -------------------------------------------------------------------------------------------------------
+--
+--              <-- 10us --|
+--              +--+       +--+       +--+       +--+
+--              | 3|  7us  | 3|  7us  | 3|  7us  | 3|
+--        ------+  +-------+  +-------+  +-------+  +-------
+   
+  --------- DAC_Strobe_Puls_1-3 --------------------
+P25IO_DAC_Puls: led_n
+  generic map (stretch_cnt => C_Strobe_3us) -- = 3us
+  port map      (ena => '1', CLK => clk_sys,   Sig_in => P25IO_DAC_Str_Puls_i,   nLED => P25IO_DAC_Str_Puls_o);-- 
+
+  --------- DAC_Strobe_Pause_1-3 --------------------
+P25IO_DAC_Pause: led_n
+  generic map (stretch_cnt => C_Strobe_7us) -- = 7us
+  port map      (ena => '1', CLK => clk_sys,   Sig_in => P25IO_DAC_Str_Pause_i,   nLED => P25IO_DAC_Str_Pause_o);-- 
    
 
+   
+P_P25IO_Holec_Strobe:  process (clk_sys, rstn_sys, P25IO_Holec_Strobe_Start, P25IO_DAC_Str_Puls_o, P25IO_DAC_Str_Pause_o)
+
+    begin
+      if (rstn_sys = '0') then
+        P25IO_Holec_state        <= holec_idle;
+        P25IO_DAC_Str_Puls_i     <= '0';          -- Input-Signal für Pulsbreite
+        P25IO_DAC_Str_Pause_i    <= '0';          -- Input-Signal für Pausenbreite
+        P25IO_Holec_Strobe_Out   <= '0';          -- Output-Signal
+        P25IO_Holec_Str_Cnt      <=  0 ;          -- Anzahl der Strobs
+
+        
+    ELSIF rising_edge(clk_sys) then
+      case P25IO_Holec_state is
+        when holec_idle   =>    if  (P25IO_Holec_Strobe_Start  = '1')  THEN
+                                     P25IO_Holec_Str_Cnt      <=  4 ;               -- Anzahl der Strobs
+                                     P25IO_Holec_state        <= holec_puls;
+                                else          
+                                     P25IO_Holec_state        <= holec_idle;
+                                end if;
+                               
+        when holec_puls   =>    P25IO_DAC_Str_Puls_i          <= '1';               -- Start Puls-Breiten-Counter
+                                P25IO_Holec_state             <= holec_puls_w;
+        
+        when holec_puls_w =>    P25IO_DAC_Str_Puls_i          <= '0';               -- Stop Puls-Breiten-Counter
+                                P25IO_Holec_Strobe_Out        <= '1';               -- Set Output-Strobe (Puls-n)
+                                if  (P25IO_DAC_Str_Puls_o      = '0')  THEN         -- Output ist Low-Akiv
+                                  P25IO_Holec_state           <= holec_puls_w;
+                                else
+                                  P25IO_Holec_Str_Cnt         <= P25IO_Holec_Str_Cnt-1 ;    -- Anzahl der Strobs
+                                  P25IO_Holec_state           <= holec_puls_e;
+                                end if;
+
+        when holec_puls_e =>    P25IO_Holec_Strobe_Out        <= '0';                   -- Reset Output-Strobe (Puls-n)
+                                IF  P25IO_Holec_Str_Cnt       <   1 THEN
+                                    P25IO_Holec_state         <= holec_end;
+                                else  
+                                    P25IO_Holec_state         <= holec_pause;
+                                end if; 
+                  
+        when holec_pause  =>    P25IO_DAC_Str_Pause_i         <= '1';                   -- Start Pause-Breiten-Counter
+                                P25IO_Holec_state             <= holec_pause_w;
   
+        when holec_pause_w =>   P25IO_DAC_Str_Pause_i         <= '0';                   -- Stop Pause-Breiten-Counter
+                                if  (P25IO_DAC_Str_Pause_o     = '0')  THEN             -- Output ist Low-Akiv
+                                    P25IO_Holec_state         <= holec_pause_w;
+                                else
+                                    P25IO_Holec_state         <= holec_puls;
+                                end if;
+                                
+        when holec_end     =>   P25IO_Holec_state           <= holec_idle;
+
+        when others =>          P25IO_Holec_state           <= holec_idle;
+
+      end case;
+    end if;
+  end process P_P25IO_Holec_Strobe;
+  
+
+
+
+
+
+
 --------- Puls als Strobe (1 Clock breit) --------------------
 
-p_P25IO_ADC_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_ADC_Strobe_i)
+p_P25IO_ADC_Strobe_Start:  PROCESS (clk_sys, rstn_sys, P25IO_ADC_Strobe_i)
   BEGin
-    IF Powerup_Res  = '1' THEN
+    IF not rstn_sys  = '1' THEN
       P25IO_ADC_shift  <= (OTHERS => '0');
       P25IO_ADC_Strobe_o    <= '0';
 
@@ -2271,9 +2378,9 @@ p_P25IO_ADC_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_ADC_Strobe_i)
   
   
 p_P25IO_ADC_FF: 
-process (clk_sys, P25IO_ADC_Strobe_o, P25IO_ADC_Data_FF_i, Powerup_Res)
+process (clk_sys, P25IO_ADC_Strobe_o, P25IO_ADC_Data_FF_i, rstn_sys)
 begin
-  if  ( Powerup_Res      = '1') then   P25IO_ADC_Data_FF_o  <= (OTHERS => '0');
+  if  ( not rstn_sys      = '1') then   P25IO_ADC_Data_FF_o  <= (OTHERS => '0');
   elsif (rising_edge(clk_sys)) then
     if (P25IO_ADC_Strobe_o = '1') then  P25IO_ADC_Data_FF_o  <= P25IO_ADC_Data_FF_i;
     end if;
@@ -2281,18 +2388,65 @@ begin
 end process;
   
 
+  
+
+P25IO_in_Ext_Tim_Deb:  diob_debounce
+  GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
+  port map(DB_Cnt => Deb60_Cnt, DB_in => P25IO_Ext_Tim_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => P25IO_Ext_Tim_deb_o);  
+
+P25IO_in_Ext_Tim_Syn:  diob_sync
+  port map(Sync_in  => P25IO_Ext_Tim_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => P25IO_Ext_Tim_syn_o);
+  
+P25IO_Out_Led_Ext_Tim: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => P25IO_Ext_Tim_syn_o,    nLED => P25IO_nLED_Ext_Tim_o);
+
+   
+--------- Puls als Strobe (1 Clock breit) --------------------
+
+p_P25IO_ECC_Puls_Start:  PROCESS (clk_sys, rstn_sys, P25IO_ECC_Puls_i)
+  BEGin
+    IF not rstn_sys  = '1' THEN
+      P25IO_ECC_Puls_shift  <= (OTHERS => '0');
+      P25IO_ECC_Puls_o    <= '0';
+
+    ELSIF rising_edge(clk_sys) THEN
+      P25IO_ECC_Puls_shift <= (P25IO_ECC_Puls_shift(P25IO_ECC_Puls_shift'high-1 downto 0) & (P25IO_ECC_Puls_i));
+
+      IF P25IO_ECC_Puls_shift(P25IO_ECC_Puls_shift'high) = '0' AND P25IO_ECC_Puls_shift(P25IO_ECC_Puls_shift'high-1) = '1' THEN
+        P25IO_ECC_Puls_o <= '1';
+      ELSE
+        P25IO_ECC_Puls_o <= '0';
+      END IF;
+    END IF;
+  END PROCESS p_P25IO_ECC_Puls_Start;
+  
+
+
+  --------- ECC_Out-Strobe --------------------
+
+P25IO_ECC_Strobe: outpuls port map( nReset   => rstn_sys,
+                                    CLK      => clk_sys,
+                                    Cnt_ena  => '1',
+                                    Start    => (P25IO_ECC_Strobe_i),
+                                    Base_cnt => C_Strobe_100ns,                  --+-> Outpuls = 3,2ys
+                                    Mult_cnt => Wert_Strobe_2_Hoch_n(5),         --+
+                                    Sign_Out => P25IO_ECC_Strobe_o);
+
+  
+  
 --  +============================================================================================================================+
---  |                                          Anwender-IO: OCIN  -- FG900_720                                                  |
+--  |                                           Anwender-IO: OCIN  -- FG900_720                                                  |
 --  +============================================================================================================================+
 
 
 --  +============================================================================================================================+
---  |                                          Anwender-IO: OCIO  -- FG900_730                                                  |
+--  |                                           Anwender-IO: OCIO  -- FG900_730                                                  |
 --  +============================================================================================================================+
 --
 
 --  +============================================================================================================================+
---  |                                          Anwender-IO: UIO  -- FG900_740                                                  |
+--  |                                           Anwender-IO: UIO  -- FG900_740                                                   |
 --  +============================================================================================================================+
 
 UIO_Out_Led_Lemo_In: led_n
@@ -2306,13 +2460,13 @@ UIO_Out_Led_Lemo_Out: led_n
   
 UIO_in_Start_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb60_Cnt, DB_in => UIO_Lemo_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => UIO_Lemo_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => UIO_Lemo_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => UIO_Lemo_deb_o);  
 
 UIO_in_Start_Syn:  diob_sync
-  port map(Sync_in  => UIO_Lemo_syn_i, Reset => Powerup_Res, clk  => clk_sys, Sync_out => UIO_Lemo_syn_o);
+  port map(Sync_in  => UIO_Lemo_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => UIO_Lemo_syn_o);
 
   
-  UIO_DAC_Strobe: outpuls port map(nReset   => not Powerup_Res,
+  UIO_DAC_Strobe: outpuls port map(nReset   => rstn_sys,
                                    CLK      => clk_sys,
                                    Cnt_ena  => '1',
                                    Start    => (UIO_DAC_Strobe_i),
@@ -2323,9 +2477,9 @@ UIO_in_Start_Syn:  diob_sync
   
   
 p_UIO_Out_dff: 
-process (clk_sys, UIO_Reg_Enable, Powerup_Res)
+process (clk_sys, UIO_Reg_Enable, rstn_sys)
 begin
-  if (Powerup_Res = '1') then UIO_Reg_Out_o <= (others => '0');
+  if (not rstn_sys = '1') then UIO_Reg_Out_o <= (others => '0');
   elsif (rising_edge(clk_sys)) then
     if (UIO_Reg_Enable = '1') then
        UIO_Reg_Out_o <= UIO_Reg_Out_i;
@@ -2342,18 +2496,18 @@ end process;
 
 DA_in_DA_Trig1_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb60_Cnt, DB_in => DA_Trig1_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => DA_Trig1_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => DA_Trig1_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => DA_Trig1_deb_o);  
 
 DA_in_DA_Trig1_Syn:  diob_sync
-  port map(Sync_in  => DA_Trig1_syn_i, Reset => Powerup_Res, clk  => clk_sys, Sync_out => DA_Trig1_syn_o);
+  port map(Sync_in  => DA_Trig1_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => DA_Trig1_syn_o);
 
   
 DA_in_DA_Trig2_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb60_Cnt, DB_in => DA_Trig2_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => DA_Trig2_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => DA_Trig2_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => DA_Trig2_deb_o);  
 
 DA_in_DA_Trig2_Syn:  diob_sync
-  port map(Sync_in  => DA_Trig2_syn_i, Reset => Powerup_Res, clk  => clk_sys, Sync_out => DA_Trig2_syn_o);
+  port map(Sync_in  => DA_Trig2_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => DA_Trig2_syn_o);
 
   
 ------------------------------------------------------------------------------------------------------------------
@@ -2362,10 +2516,10 @@ DA_in_DA_Trig2_Syn:  diob_sync
 ------------------------------------------------------------------------------------------------------------------
 
   
-P_Dac_Test_Loop:  process (clk_sys, Powerup_Res, dac_state, AW_Output_Reg)
+P_Dac_Test_Loop:  process (clk_sys, rstn_sys, dac_state, AW_Output_Reg)
 
     begin
-      if (Powerup_Res = '1') then
+      if (not rstn_sys = '1') then
         dac_state         <= dac_idle;
         DAC_Test_Out      <= (others => '0');    -- Test-Bitmuster
         DAC_Test_Strobe   <=  '0';               -- Output Test-Strobe
@@ -2436,10 +2590,10 @@ P_Dac_Test_Loop:  process (clk_sys, Powerup_Res, dac_state, AW_Output_Reg)
 ------------------------------------------------------------------------------------------------------------------
 
   
-P_Dac_tr_Test_Loop:  process (clk_sys, Powerup_Res, dac_state, AW_Output_Reg)
+P_Dac_tr_Test_Loop:  process (clk_sys, rstn_sys, dac_state, AW_Output_Reg)
 
     begin
-      if (Powerup_Res = '1') then
+      if (not rstn_sys = '1') then
         dac_tr_state         <= dac_tr_idle;
         DAC_tr_Test_Out      <= (others => '0');    -- Test-Bitmuster
         DAC_tr_Test_Strobe   <= '0';                -- Output Test-Strobe
@@ -2538,9 +2692,9 @@ P_Dac_tr_Test_Loop:  process (clk_sys, Powerup_Res, dac_state, AW_Output_Reg)
 
  --------- Ext. Trigger1 (Puls aus Signal (1 Clock breit)) --------------------
 
-p_DA_Trig1_Strobe:  PROCESS (clk_sys, Powerup_Res, DA_Trig1_Strobe_i)
+p_DA_Trig1_Strobe:  PROCESS (clk_sys, rstn_sys, DA_Trig1_Strobe_i)
   BEGin
-    IF Powerup_Res  = '1' THEN
+    IF not rstn_sys  = '1' THEN
       DA_Trig1_shift  <= (OTHERS => '0');
       DA_Trig1_Strobe_o    <= '0';
 
@@ -2558,9 +2712,9 @@ p_DA_Trig1_Strobe:  PROCESS (clk_sys, Powerup_Res, DA_Trig1_Strobe_i)
 
  --------- Ext. Trigger2 (Puls aus Signal (1 Clock breit)) --------------------
 
-p_DA_Trig2_Strobe:  PROCESS (clk_sys, Powerup_Res, DA_Trig2_Strobe_i)
+p_DA_Trig2_Strobe:  PROCESS (clk_sys, rstn_sys, DA_Trig2_Strobe_i)
   BEGin
-    IF Powerup_Res  = '1' THEN
+    IF not rstn_sys  = '1' THEN
       DA_Trig2_shift  <= (OTHERS => '0');
       DA_Trig2_Strobe_o    <= '0';
 
@@ -2578,9 +2732,9 @@ p_DA_Trig2_Strobe:  PROCESS (clk_sys, Powerup_Res, DA_Trig2_Strobe_i)
   
  --------- Strobe für DAC1 (Puls aus Signal (1 Clock breit)) --------------------
 
-p_DA_DAC1_Str_Puls:  PROCESS (clk_sys, Powerup_Res, DA_DAC1_Str_Puls_i)
+p_DA_DAC1_Str_Puls:  PROCESS (clk_sys, rstn_sys, DA_DAC1_Str_Puls_i)
   BEGin
-    IF Powerup_Res  = '1' THEN
+    IF not rstn_sys  = '1' THEN
       DA_DAC1_Str_Puls_shift  <= (OTHERS => '0');
       DA_DAC1_Str_Puls_o    <= '0';
 
@@ -2598,9 +2752,9 @@ p_DA_DAC1_Str_Puls:  PROCESS (clk_sys, Powerup_Res, DA_DAC1_Str_Puls_i)
 
   --------- Strobe für DAC2 (Puls aus Signal (1 Clock breit)) --------------------
 
-p_DA_DAC2_Str_Puls:  PROCESS (clk_sys, Powerup_Res, DA_DAC2_Str_Puls_i)
+p_DA_DAC2_Str_Puls:  PROCESS (clk_sys, rstn_sys, DA_DAC2_Str_Puls_i)
   BEGin
-    IF Powerup_Res  = '1' THEN
+    IF not rstn_sys  = '1' THEN
       DA_DAC2_Str_Puls_shift  <= (OTHERS => '0');
       DA_DAC2_Str_Puls_o    <= '0';
 
@@ -2647,18 +2801,18 @@ HFIO_nLED_Sample_Puls_Display: led_n
 
 HFIO_in_AMP_FEHLER_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb60_Cnt, DB_in => HFIO_in_AMP_FEHLER_Deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => HFIO_in_AMP_FEHLER_Deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => HFIO_in_AMP_FEHLER_Deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => HFIO_in_AMP_FEHLER_Deb_o);  
 
 HFIO_in_AMP_FEHLER_Syn:  diob_sync
-  port map(Sync_in  => HFIO_in_AMP_FEHLER_syn_i, Reset => Powerup_Res, clk  => clk_sys, Sync_out => HFIO_in_AMP_FEHLER_syn_o);
+  port map(Sync_in  => HFIO_in_AMP_FEHLER_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => HFIO_in_AMP_FEHLER_syn_o);
 
  
 HFIO_in_PHASE_FEHLER_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb60_Cnt, DB_in => HFIO_in_PHASE_FEHLER_Deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => HFIO_in_PHASE_FEHLER_Deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => HFIO_in_PHASE_FEHLER_Deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => HFIO_in_PHASE_FEHLER_Deb_o);  
 
 HFIO_in_PHASE_FEHLER_Syn:  diob_sync
-  port map(Sync_in  => HFIO_in_PHASE_FEHLER_syn_i, Reset => Powerup_Res, clk  => clk_sys, Sync_out => HFIO_in_PHASE_FEHLER_syn_o);
+  port map(Sync_in  => HFIO_in_PHASE_FEHLER_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => HFIO_in_PHASE_FEHLER_syn_o);
   
 
 --  +============================================================================================================================+
@@ -2687,10 +2841,10 @@ IOBP_In_LEDn:  for J in 1 to 12 generate
      -------------------------------------------------------------------------------------------------------
 
   
-P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, Powerup_Res, IOBP_state)
+P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
 
     begin
-      if (Powerup_Res = '1') then
+      if (not rstn_sys = '1') then
         Slave_Loop_cnt       <=   1;                 --  Loop-Counter
         IOBP_LED_En          <=  '0';                --  Output-Enable für LED- ID-Bus
         IOBP_STR_rot_o       <=  (others => '0');    --  Led-Strobs 'rot'
@@ -2775,13 +2929,13 @@ Out16_Out_Led_Lemo_In: led_n
   
 Out16_in_Start_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb60_Cnt, DB_in => Out16_Lemo_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => Out16_Lemo_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => Out16_Lemo_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => Out16_Lemo_deb_o);  
 
 Out16_in_Start_syn:  diob_sync
-  port map(Sync_in  => Out16_Lemo_syn_i, Reset => Powerup_Res, clk  => clk_sys, Sync_out => Out16_Lemo_syn_o);
+  port map(Sync_in  => Out16_Lemo_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => Out16_Lemo_syn_o);
   
   
-Out16_DAC_Strobe: outpuls port map(nReset   => not Powerup_Res,
+Out16_DAC_Strobe: outpuls port map(nReset   => rstn_sys,
                                    CLK      => clk_sys,
                                    Cnt_ena  => '1',
                                    Start    => (Out16_DAC_Strobe_i),
@@ -2802,9 +2956,9 @@ In16_LED_Lemo_Out: led_n
   
 --------- Puls als Strobe (1 Clock breit) --------------------
 
-p_In16_ADC_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, In16_ADC_Strobe_i)
+p_In16_ADC_Strobe_Start:  PROCESS (clk_sys, rstn_sys, In16_ADC_Strobe_i)
   BEGin
-    IF Powerup_Res  = '1' THEN
+    IF not rstn_sys  = '1' THEN
       In16_ADC_shift  <= (OTHERS => '0');
       In16_ADC_Strobe_o    <= '0';
 
@@ -2821,9 +2975,9 @@ p_In16_ADC_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, In16_ADC_Strobe_i)
   
   
 p_In16_ADC_FF: 
-process (clk_sys, In16_ADC_Strobe_o, In16_ADC_Data_FF_i, Powerup_Res)
+process (clk_sys, In16_ADC_Strobe_o, In16_ADC_Data_FF_i, rstn_sys)
 begin
-  if  ( Powerup_Res      = '1') then   In16_ADC_Data_FF_o  <= (OTHERS => '0');
+  if  ( not rstn_sys      = '1') then   In16_ADC_Data_FF_o  <= (OTHERS => '0');
   elsif (rising_edge(clk_sys)) then
     if (In16_ADC_Strobe_o = '1') then  In16_ADC_Data_FF_o  <= In16_ADC_Data_FF_i;
     end if;
@@ -2838,10 +2992,10 @@ end process;
 --  #####                                                                                                                     #####
 --  ###############################################################################################################################
  
-P_AW_SCU_In:  process (nPowerup_Res, clk_sys, Diob_Config1, Mirr_AWOut_Reg_Nr, SCU_AW_Output_Reg) 
+P_AW_SCU_In:  process (rstn_sys, clk_sys, Diob_Config1, Mirr_AWOut_Reg_Nr, SCU_AW_Output_Reg) 
 
   begin
-    if nPowerup_Res = '0' then
+    if rstn_sys = '0' then
 
       SCU_AW_Input_Reg <= (others => (others => '0')); 
   
@@ -2896,7 +3050,7 @@ P_AW_SCU_In:  process (nPowerup_Res, clk_sys, Diob_Config1, Mirr_AWOut_Reg_Nr, S
   
 -- §§PROZESS  
 
-p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, AW_ID, s_nLED_Out, PIO, A_SEL, signal_tap_clk_250mhz,
+p_AW_MUX: PROCESS (clk_sys, rstn_sys, Powerup_Done, AW_ID, s_nLED_Out, PIO, A_SEL, signal_tap_clk_250mhz,
              FG_1_sw, FG_1_strobe, FG_2_sw, FG_2_strobe, P25IO_DAC_Out,
              CLK_IO,
              AWIn_Deb_Time, Min_AWIn_Deb_Time, Deb60_out, Deb60_in, Syn60_in, Syn60_out, Deb_Sync60,
@@ -2920,7 +3074,9 @@ p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, AW_ID, s_nLED_Out, PIO, A
              P25IO_DAC_Mode, P25IO_DAC_DAC_Strobe_o, P25IO_nLED_Start_o, P25IO_nLED_Stop_o, P25IO_BNC_o, P25IO_nELD_BNC_o,
              P25IO_DAC_Data_FG_Out, P25IO_DAC_Strobe, P25IO_ADC_In, P25IO_ADC_Strobe_in, P25IO_ADC_Strobe, P25IO_ADC_Input,
              P25IO_ADC_Data_FF_o, P25IO_ADC_Strobe_o, 
-
+             P25IO_Ext_Tim_deb_o, P25IO_nLED_Ext_Tim_o, P25IO_Ext_Tim_syn_o,
+             P25IO_Holec_Strobe_Out, P25IO_ECC_Puls_o, P25IO_ECC_Strobe_o,
+             
              OCIN_Data1_in, OCIN_Data2_in,
              OCIO_Data1_in, OCIO_Data2_in,
              SPSIO_Data_in,
@@ -3034,15 +3190,20 @@ BEGIN
     P25IO_DAC_Strobe          <=  '0';              -- Output "nStrobe"               
     P25IO_DAC_DAC_Strobe_Expo <=   0;               -- Exponent für die Breite des Strobs
     P25IO_DAC_DAC_Strobe_i    <=  '0';              -- Input-Strobe
-
+    P25IO_Holec_Strobe_Start  <=  '0';              -- Start Holec Strobe-Sequence
+    
     P25IO_ADC_In              <=  (OTHERS => '0');  -- Input Daten   
     P25IO_ADC_Input           <=  (OTHERS => '0');  -- Input Daten   
     P25IO_ADC_Strobe_in       <= '0';               -- Input Strobe
     P25IO_ADC_Strobe          <= '0';               -- Input Strobe
     P25IO_ADC_Strobe_i        <= '0';               -- Input Strobe  
     P25IO_ADC_Data_FF_i       <=  (OTHERS => '0');  -- input  "Daten ADC-Register"
-    P25IO_Ext_Tim_i           <= '0';
-     
+    P25IO_Ext_Tim_deb_i       <= '0';
+    P25IO_Ext_Tim_syn_i       <= '0';
+    P25IO_ECC_Puls_i          <= '0';
+    P25IO_ECC_Strobe_i        <= '0';
+
+    
     OCIN_Data1_in             <=  (OTHERS => '0');
     OCIN_Data2_in             <=  (OTHERS => '0');
     OCIO_Data1_in             <=  (OTHERS => '0');
@@ -3406,7 +3567,7 @@ BEGIN
                                                          ELSE  s_nLED_User1_i <= '0';    -- LED3 = User 1, DAC-Data vom AW_Outreg
       END IF;
       
-      s_nLED_User2_i <= AW_Output_Reg(1)(0);       -- LED2 = User 2, ECC (Enable-Conv-CMD)
+      s_nLED_User2_i <= P25IO_ECC_Puls_o;          -- LED2 = User 2, ECC (Enable-Conv-CMD)
       s_nLED_User3_i <= P25IO_ADC_Strobe_in;       -- LED1 = User 3, EOC vom ADC 
     
     
@@ -3436,6 +3597,7 @@ BEGIN
       AW_Input_Reg(1)( 9)  <=  P25IO_FF_Stop;        --  Stop       |
       AW_Input_Reg(1)(10)  <=  P25IO_FF_Reset;       --  Reset      |
       AW_Input_Reg(1)(11)  <=  P25IO_BNC_o;          --  Output FF -+
+      AW_Input_Reg(1)(12)  <=  P25IO_Ext_Tim_deb_o;  --  Input "P25IO_Ext_Tim_deb_o" 
       
    --###################### FF ==> Output ########################
 
@@ -3454,8 +3616,6 @@ BEGIN
 --           +======================================================================+    --
 --           |                              DAC-Mode                                |
 --     ------+======================================================================+    --
---       8   | frei                                                                 |    --
---     ------+----------------------------------------------------------------------|    --
 --       7   | Output-Polarität Bit [15..0],  1 = Negativ,  0 = Positiv(Default)    |    --
 --     ------+----------------------------------------------------------------------|    --
 --       6   | Strobe-Polarität,         1 = Negativ,  0 = Positiv(Default)         |    --
@@ -3463,10 +3623,13 @@ BEGIN
 --    [5..3] | Strobe-Puls-Breite, Entprellzeit in in 2x 100ns;                     |    --
 --           | Vorgabe Exponent (x) für Pulsbreite: Wertebereich 100ns..12,8 µs *)  |    --
 --     ------+----------------------------------------------------------------------|    --
---       2   | DAC-Daten-Codierung:  | 0 = Bipolar, 1 = Unipolar                    |    --
+--       2   | DAC-Strobe:   | 0 = Holec_Mode (4x) (Default), 1 = Strobe (1x)       |    --
 --     ------+----------------------------------------------------------------------|    --
 --           |  Output-Mode:                                                        |    --
---    [1..0] | "00" = Output, "01" = 16 Bit-Dac, "10" = frei,  "11" = FG            |    --
+--           |    "11" =  FG  mit Strobe                                            |    --
+--    [1..0] |    "10" =  frei                                                      |     --
+--           |    "01" =  16 Bit Output, Strobe = wr auf AW_Output_Reg1(0)          |    --
+--           |    "00" =  16 Bit-Dac,    Strobe = wr auf AW_Output_Reg2 (Default)   |    --
 --     ------+----------------------------------------------------------------------+    --
       
       
@@ -3496,30 +3659,37 @@ BEGIN
 --  |  Daten-Bit#  |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0| Strobe | <-+-- AW_Output_Reg1(0)   (Default-Mode)
 --  +--------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+========+   |-- Strobe write 16-Bit (DAC-Mode bipol./unipol.) 
 --                                                                              +-- FG-Str.             (FG-Mode)      
-    
-
+-- P25IO_Holec_Strobe_Out    
+-- P25IO_Holec_Strobe_Start
   
       P25IO_DAC_Mode  <=  AW_Config1(1) & AW_Config1(0);         -- Output-Betriebsart
 
       case P25IO_DAC_Mode is
 
-        when "00"  =>  -- Output-Mode(Default):
-        
-              P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  AW_Output_Reg(2)(15 DOWNTO 0);
-              P25IO_DAC_Strobe                   <=  NOT AW_Output_Reg(1)(0);
   
-  
-        when "01"  =>  -- DAC16-Mode
+        when "00"  =>  -- DAC16-Mode
               
               P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  AW_Output_Reg(2)(15 DOWNTO 0); ------------------------- Bipolar
     
               P25IO_DAC_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config1)(5 downto 3)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
+
+              P25IO_Holec_Strobe_Start   <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
               P25IO_DAC_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
 
-              IF  (AW_Config1(6) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_DAC_DAC_Strobe_o; -- Strobe positiv
-                                         Else  P25IO_DAC_Strobe  <=      P25IO_DAC_DAC_Strobe_o; -- Strobe negativ
+              IF  (AW_Config1(2) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_Holec_Strobe_Out; -- Strobe positiv
+                                         Else  
+
+                                           IF  (AW_Config1(6) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_DAC_DAC_Strobe_o; -- Strobe positiv
+                                                                      Else  P25IO_DAC_Strobe  <=      P25IO_DAC_DAC_Strobe_o; -- Strobe negativ
+                                           END IF; 
               END IF; 
 
+              
+        when "01"  =>  -- Output-Mode(Default):
+        
+              P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  AW_Output_Reg(2)(15 DOWNTO 0);
+              P25IO_DAC_Strobe                   <=  NOT AW_Output_Reg(1)(0);
+              
                 
         when "10"  =>  -- frei:
 
@@ -3534,10 +3704,17 @@ BEGIN
               END IF; 
     
               P25IO_DAC_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config1)(5 downto 3)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
-              P25IO_DAC_DAC_Strobe_i     <=  FG_1_strobe;                                     -- FG_1_strobe (vom Funktionsgen)
 
-              IF  (AW_Config2(6) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_DAC_DAC_Strobe_o; -- Strobe positiv
-                                         Else  P25IO_DAC_Strobe  <=      P25IO_DAC_DAC_Strobe_o; -- Strobe negativ
+
+              P25IO_Holec_Strobe_Start   <=  FG_1_strobe;                   -- FG_1_strobe (vom Funktionsgen) 
+              P25IO_DAC_DAC_Strobe_i     <=  FG_1_strobe;                   -- FG_1_strobe (vom Funktionsgen)
+
+              IF  (AW_Config1(2) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_Holec_Strobe_Out; -- Strobe positiv
+                                         Else  
+
+                                           IF  (AW_Config1(6) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_DAC_DAC_Strobe_o; -- Strobe positiv
+                                                                      Else  P25IO_DAC_Strobe  <=      P25IO_DAC_DAC_Strobe_o; -- Strobe negativ
+                                           END IF; 
               END IF; 
 
       end case;
@@ -3576,7 +3753,8 @@ BEGIN
 --      10   | Triggerflanke: | 1 = neg. Flanke ist Trigger                         |
 --           |                | 0 = pos. Flanke ist Trigger                         |
 --     ------+----------------+-----------------------------------------------------|   
---       9   | frei                                                                 |   
+--       9   | ECC_Start:     | 0 = write auf AW_Output_Reg.(1)(1) (Default)        |   
+--           |                | 1 = Input ext. Timing                               |   
 --     ------+----------------------------------------------------------------------|   
 --       8   | Input-Mode:    | 0 = Input, 1 = Input mit Strobe                     |
 --     ------+----------------------------------------------------------------------+   
@@ -3605,7 +3783,7 @@ BEGIN
 --  +---------------==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+=======================+============================+                       
 --  |  Daten-Bit#  |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0| ECC (Enable-Conv-CMD) | Strobe: EOC (End-of-Conv.) |                       
 --  +--------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+=======================+============================+                       
---                                                                 |  AW_Output_Reg.(1)(0) |                                            
+--                                                                 |  AW_Output_Reg.(1)(1) |                                            
 --                                                                 +-----------------------+                                                  
 --                                                                                                                    
 
@@ -3656,13 +3834,27 @@ BEGIN
     END IF;
    
 
-   -----------------------------------------------------------------------------------------------------------------------------------------
+   --################################  Input ECC (Enable_Convert_Command)  ##################################
    
-    PIO(101)    <=  not AW_Output_Reg(1)(1); -- ECC (Enable-Conv-CMD) 
-      
-
-
+    P25IO_Ext_Tim_deb_i     <=  not PIO(85);            -- input(Debounce) "LemoBuchse-Ext_Timing" H-Aktiv, nach dem Optokoppler aber L-Aktiv
+    P25IO_Ext_Tim_syn_i     <=  not PIO(85);            -- input(Synch.)   "LemoBuchse-Ext_Timing" H-Aktiv, nach dem Optokoppler aber L-Aktiv
+    PIO(93)                 <=  P25IO_nLED_Ext_Tim_o;   -- Output "nLED_Ext_Timing"
    
+
+   --################################  ECC Pulsbreite (Enable_Convert_Command)  ##################################
+
+   IF  (AW_Config1(9) = '0')  THEN                                            -- 0 = Ecc-Intern
+        P25IO_ECC_Puls_i      <=  (AWOut_Reg1_wr AND AW_Output_Reg(1)(1) AND SCU_Ext_Wr_fin);    -- Software-Strobe   
+      ELSE    
+        P25IO_ECC_Puls_i      <=  P25IO_Ext_Tim_syn_o;              -- Ext. Trigger  
+   END IF;
+
+   P25IO_ECC_Strobe_i         <=  P25IO_ECC_Puls_o;
+   
+   PIO(101)  <=  not P25IO_ECC_Strobe_o;   -- ECC (Enable-Convert-CMD) 
+   
+
+    
     --#################################################################################
     --#################################################################################
 
@@ -4217,7 +4409,7 @@ BEGIN
       DA_DAC1_Data       <=   DAC1_Out;                            -- Output Daten
 
       DA_DAC1_Str_Puls_i <=   DAC1_Out_wr;                         -- DAC1-Output-Strobe
-      DA_DAC1_Str        <=  (DA_DAC1_Str_Puls_o or (Powerup_Res));  -- Output Strobe für SCU-Bus Daten und Einschalt-Reset
+      DA_DAC1_Str        <=  (DA_DAC1_Str_Puls_o or (not rstn_sys));  -- Output Strobe für SCU-Bus Daten und Einschalt-Reset
     
     END IF; 
 
@@ -4259,7 +4451,7 @@ BEGIN
 
       DA_DAC2_Data       <=   DAC2_Out;                            -- Output Daten
       DA_DAC2_Str_Puls_i <=   DAC2_Out_wr;                         -- DAC2-Output-Strobe
-      DA_DAC2_Str        <=  (DA_DAC2_Str_Puls_o or (Powerup_Res));  -- Output Strobe für SCU-Bus Daten und Einschalt-Reset
+      DA_DAC2_Str        <=  (DA_DAC2_Str_Puls_o or (not rstn_sys));  -- Output Strobe für SCU-Bus Daten und Einschalt-Reset
    
     END IF; 
 
