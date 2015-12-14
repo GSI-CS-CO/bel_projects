@@ -45,6 +45,7 @@ int main(int argc, char** argv)
 {
   
   /* Helpers */
+  int gotc;
   uint8_t  uLowByte  = 0;
   uint8_t  uHighByte = 0;
   int32_t  iOpt = 0;
@@ -168,7 +169,11 @@ int main(int argc, char** argv)
       uLowByte = getc(fp); 
       uHighByte = getc(fp);
       uLowByte = getc(fp); 
-      uHighByte = getc(fp);
+      uHighByte = gotc = getc(fp);
+      if (gotc == EOF) {
+        fReachedEndOfFile = true;
+        break;
+      }
       a_uTxBuffer[uIterator] = (uHighByte << 24) | (uLowByte << 16) | 0x0000;
       a_uTxBuffer[uIterator] = (int32_t)a_uTxBuffer[uIterator]/WAV_ATTENUATION; /* Decrease loudness and keep the sign */
       uPacketCounter++;
