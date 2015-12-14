@@ -14,7 +14,7 @@ create_clock -name scubus_clk  -period   12.5MHz   [get_ports A_SysClock]
 derive_clock_uncertainty
 
 
-create_generated_clock -name {sio3_clk_sw|local_clk|altpll_component|auto_generated|pll1|clk[0]} -source {sio3_clk_sw|local_clk|altpll_component|auto_generated|pll1|inclk[0]} -divide_by 10 -multiply_by 1 -duty_cycle 50.00 { sio3_clk_sw|local_clk|altpll_component|auto_generated|pll1|clk[0] }
+create_generated_clock -name { sio3_clk_sw|local_clk|altpll_component|auto_generated|pll1|clk[0] } -source [get_clocks sio3_clk_sw|local_clk|altpll_component|*|clk[0] ] -divide_by 8 -multiply_by 5 -duty_cycle 50.00 [get_clocks sio3_clk_sw|local_clk|altpll_component|*|clk[0] ]
 
 create_generated_clock -name {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[0]} -source {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|inclk[0]} -divide_by 1 -multiply_by 10 -duty_cycle 50.00 { sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[0] }
 create_generated_clock -name {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[1]} -source {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|inclk[0]} -divide_by 5 -multiply_by 4  -duty_cycle 50.00 { sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[1] }
@@ -27,7 +27,7 @@ set_clock_groups -asynchronous                                                  
  -group {altera_reserved_tck                                                      }\
  -group {pin_a_me_esc                                                             }\
  -group {pin_a_me_dsc                                                             }\
- -group {clk_local                                                                }\
+ -group {pin_clk_20                                                                }\
  -group {sio3_clk_sw|local_clk|altpll_component|auto_generated|pll1|clk[0]        }\
  -group {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[0] }\
  -group {sio3_clk_sw|sys_or_local_pll|altpll_component|auto_generated|pll1|clk[1] }\

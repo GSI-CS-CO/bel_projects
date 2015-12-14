@@ -4,7 +4,7 @@
 -- MODULE: altpll 
 
 -- ============================================================
--- File Name: addac_local_clk_to_12p5_mhz.vhd
+-- File Name: local_20_to12p5.vhd
 -- Megafunction Name(s):
 -- 			altpll
 --
@@ -39,17 +39,17 @@ USE ieee.std_logic_1164.all;
 LIBRARY altera_mf;
 USE altera_mf.all;
 
-ENTITY addac_local_clk_to_12p5_mhz IS
+ENTITY local_20_to_12p5 IS
 	PORT
 	(
 		inclk0		: IN STD_LOGIC  := '0';
 		c0		: OUT STD_LOGIC ;
 		locked		: OUT STD_LOGIC 
 	);
-END addac_local_clk_to_12p5_mhz;
+END local_20_to_12p5;
 
 
-ARCHITECTURE SYN OF addac_local_clk_to_12p5_mhz IS
+ARCHITECTURE SYN OF local_20_to_12p5 IS
 
 	SIGNAL sub_wire0	: STD_LOGIC_VECTOR (6 DOWNTO 0);
 	SIGNAL sub_wire1	: STD_LOGIC ;
@@ -140,14 +140,14 @@ BEGIN
 	altpll_component : altpll
 	GENERIC MAP (
 		bandwidth_type => "LOW",
-		clk0_divide_by => 10,
+		clk0_divide_by => 8,
 		clk0_duty_cycle => 50,
-		clk0_multiply_by => 1,
+		clk0_multiply_by => 5,
 		clk0_phase_shift => "0",
 		compensate_clock => "CLK0",
-		inclk0_input_frequency => 8000,
+		inclk0_input_frequency => 50000,
 		intended_device_family => "Arria II GX",
-		lpm_hint => "CBX_MODULE_PREFIX=addac_local_clk_to_12p5_mhz",
+		lpm_hint => "CBX_MODULE_PREFIX=local_20_to12p5",
 		lpm_type => "altpll",
 		operation_mode => "NORMAL",
 		pll_type => "Left_Right",
@@ -236,7 +236,7 @@ END SYN;
 -- Retrieval info: PRIVATE: GLOCKED_MODE_CHECK STRING "0"
 -- Retrieval info: PRIVATE: GLOCK_COUNTER_EDIT NUMERIC "1048575"
 -- Retrieval info: PRIVATE: HAS_MANUAL_SWITCHOVER STRING "1"
--- Retrieval info: PRIVATE: INCLK0_FREQ_EDIT STRING "125.000"
+-- Retrieval info: PRIVATE: INCLK0_FREQ_EDIT STRING "20.000"
 -- Retrieval info: PRIVATE: INCLK0_FREQ_UNIT_COMBO STRING "MHz"
 -- Retrieval info: PRIVATE: INCLK1_FREQ_EDIT STRING "100.000"
 -- Retrieval info: PRIVATE: INCLK1_FREQ_EDIT_CHANGED STRING "1"
@@ -270,7 +270,7 @@ END SYN;
 -- Retrieval info: PRIVATE: PLL_PFDENA_CHECK STRING "0"
 -- Retrieval info: PRIVATE: PLL_TARGET_HARCOPY_CHECK NUMERIC "0"
 -- Retrieval info: PRIVATE: PRIMARY_CLK_COMBO STRING "inclk0"
--- Retrieval info: PRIVATE: RECONFIG_FILE STRING "addac_local_clk_to_12p5_mhz.mif"
+-- Retrieval info: PRIVATE: RECONFIG_FILE STRING "local_20_to12p5.mif"
 -- Retrieval info: PRIVATE: SACN_INPUTS_CHECK STRING "0"
 -- Retrieval info: PRIVATE: SCAN_FEATURE_ENABLED STRING "1"
 -- Retrieval info: PRIVATE: SELF_RESET_LOCK_LOSS STRING "0"
@@ -290,12 +290,12 @@ END SYN;
 -- Retrieval info: PRIVATE: ZERO_DELAY_RADIO STRING "0"
 -- Retrieval info: LIBRARY: altera_mf altera_mf.altera_mf_components.all
 -- Retrieval info: CONSTANT: BANDWIDTH_TYPE STRING "LOW"
--- Retrieval info: CONSTANT: CLK0_DIVIDE_BY NUMERIC "10"
+-- Retrieval info: CONSTANT: CLK0_DIVIDE_BY NUMERIC "8"
 -- Retrieval info: CONSTANT: CLK0_DUTY_CYCLE NUMERIC "50"
--- Retrieval info: CONSTANT: CLK0_MULTIPLY_BY NUMERIC "1"
+-- Retrieval info: CONSTANT: CLK0_MULTIPLY_BY NUMERIC "5"
 -- Retrieval info: CONSTANT: CLK0_PHASE_SHIFT STRING "0"
 -- Retrieval info: CONSTANT: COMPENSATE_CLOCK STRING "CLK0"
--- Retrieval info: CONSTANT: INCLK0_INPUT_FREQUENCY NUMERIC "8000"
+-- Retrieval info: CONSTANT: INCLK0_INPUT_FREQUENCY NUMERIC "50000"
 -- Retrieval info: CONSTANT: INTENDED_DEVICE_FAMILY STRING "Arria II GX"
 -- Retrieval info: CONSTANT: LPM_TYPE STRING "altpll"
 -- Retrieval info: CONSTANT: OPERATION_MODE STRING "NORMAL"
@@ -354,11 +354,11 @@ END SYN;
 -- Retrieval info: CONNECT: @inclk 0 0 1 0 inclk0 0 0 0 0
 -- Retrieval info: CONNECT: c0 0 0 0 0 @clk 0 0 1 0
 -- Retrieval info: CONNECT: locked 0 0 0 0 @locked 0 0 0 0
--- Retrieval info: GEN_FILE: TYPE_NORMAL addac_local_clk_to_12p5_mhz.vhd TRUE
--- Retrieval info: GEN_FILE: TYPE_NORMAL addac_local_clk_to_12p5_mhz.ppf TRUE
--- Retrieval info: GEN_FILE: TYPE_NORMAL addac_local_clk_to_12p5_mhz.inc FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL addac_local_clk_to_12p5_mhz.cmp TRUE
--- Retrieval info: GEN_FILE: TYPE_NORMAL addac_local_clk_to_12p5_mhz.bsf FALSE
--- Retrieval info: GEN_FILE: TYPE_NORMAL addac_local_clk_to_12p5_mhz_inst.vhd FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL local_20_to12p5.vhd TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL local_20_to12p5.ppf TRUE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL local_20_to12p5.inc FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL local_20_to12p5.cmp FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL local_20_to12p5.bsf FALSE
+-- Retrieval info: GEN_FILE: TYPE_NORMAL local_20_to12p5_inst.vhd FALSE
 -- Retrieval info: LIB_FILE: altera_mf
 -- Retrieval info: CBX_MODULE_PREFIX: ON

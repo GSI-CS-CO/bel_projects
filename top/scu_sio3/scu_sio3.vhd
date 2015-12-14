@@ -29,7 +29,8 @@ use work.monster_pkg.all;
 
 ENTITY scu_sio3 IS 
 generic (
-    CLK_in_Hz:      integer := 125000000
+    CLK_in_Hz:      integer := 125000000;
+    g_card_type:    string := "sio"
     );
 port  (
     --nCB_RESET:        in      std_logic;  --PIN_R3            EXTCON1 , not wired here
@@ -94,8 +95,8 @@ port  (
     A_RnW:            in      std_logic;  --PIN_Y1            Schreib/Lese-Signal vom Master getrieben, '0' => lesen
     A_nSel_Ext_Data_Drv:out   std_logic;  --PIN_AB8           '0' => externe Datentreiber des Slaves aktiv
     A_Ext_Data_RD:    out     std_logic;  --PIN_AA7           '0' => externe Datentreiber-Richtung: SCU-Bus nach Slave (besser default 0, oder Treiber A/B tauschen)
-    A_nSEL_Ext_Signal_RDV:out std_logic;  --PIN_U9            '0' => Treiber für SCU-Bus-Steuer-Signale aktiv --here stuck at gnd
-    A_nExt_Signal_In: out     std_logic;  --PIN_AD6           '0' => Treiber für SCU-Bus-Steuer-Signale-Richtung: SCU-Bus nach Slave (besser default 0, oder Treiber A/B tauschen) here stuck at gnd
+    A_nSEL_Ext_Signal_RDV:out std_logic;  --PIN_U9            '0' => Treiber fr SCU-Bus-Steuer-Signale aktiv --here stuck at gnd
+    A_nExt_Signal_In: out     std_logic;  --PIN_AD6           '0' => Treiber fr SCU-Bus-Steuer-Signale-Richtung: SCU-Bus nach Slave (besser default 0, oder Treiber A/B tauschen) here stuck at gnd
     A_nDtack:         out     std_logic;  --PIN_AD8           Data-Acknowlege null aktiv, '0' => aktiviert externen Opendrain-Treiber
     A_nSRQ:           out     std_logic;  --PIN_W9            Service-Request null aktiv, '0' => aktiviert externen Opendrain-Treiber
     A_nBoardSel:      in      std_logic;  --PIN_V1            '0' => Master aktiviert diesen Slave
@@ -114,7 +115,7 @@ port  (
        
 ----------------------------------------- 3,3 Volt-IO zum Carrierboard des SCU-Bus-Masters ---------------------------------------------------------
     EIO:              inout   std_logic_vector(17 downto 0);   -- not used here
------------------------------------------ 2,5 Volt-IO zum Carrierboard des SCU-Bus-Masters (LVDS möglch) -------------------------------------------
+----------------------------------------- 2,5 Volt-IO zum Carrierboard des SCU-Bus-Masters (LVDS mglch) -------------------------------------------
     IO_2_5V:          inout   std_logic_vector(15 downto 0);   -- not used here
 ----------------------------------------- Altes GSI Timing -----------------------------------------------------------------------------------------
     A_Timing:         in      std_logic;                       -- From LEMO (Opto coupler)
@@ -372,9 +373,11 @@ lm32_ow: housekeeping
 
 sio3_clk_sw: slave_clk_switch
   generic map (
-    Base_Addr => clk_switch_status_cntrl_addr)
+    Base_Addr => clk_switch_status_cntrl_addr,
+    card_type => g_card_type
+  )
   port map(
-    local_clk_i             => CLK_FPGA,              --125MHz XTAL
+    local_clk_i             => clk_20,                --20MHz XTAL
     sys_clk_i               => A_SysClock,            --12p5MHz SCU Bus
     nReset                  => nPowerup_Res,
     master_clk_o            => clk_sys,               --SysClk 125MHz
