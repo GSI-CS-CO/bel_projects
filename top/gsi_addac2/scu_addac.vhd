@@ -17,7 +17,8 @@ use work.monster_pkg.all;
 
 entity scu_addac is
   generic(
-    g_cid_group: integer := 38
+    g_cid_group: integer := 38;
+    g_card_type: string := "addac"
     );
   port (
     -------------------------------------------------------------------------------------------------------------------
@@ -278,7 +279,9 @@ component IO_4x8
 
 addac_clk_sw: slave_clk_switch
   generic map (
-    Base_Addr => clk_switch_status_cntrl_addr)
+    Base_Addr => clk_switch_status_cntrl_addr,
+    card_type => g_card_type
+  )
   port map(
     local_clk_i             => CLK_FPGA,              --125MHz XTAL
     sys_clk_i               => A_SysClock,            --12p5MHz SCU Bus

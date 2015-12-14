@@ -183,7 +183,8 @@ end component;
 
 component slave_clk_switch is
   generic (
-    Base_Addr:  unsigned(15 downto 0)  := x"0040"
+    Base_Addr:  unsigned(15 downto 0)  := x"0040";
+    card_type: string
     );
   port(
     local_clk_i:          in    std_logic;
@@ -214,7 +215,16 @@ component slave_clk_switch is
 end component;
 
 
-component local_clk_to_12p5 is
+component local_125_to_12p5 is
+  port
+  (
+    inclk0    : IN STD_LOGIC  := '0';
+    c0        : OUT STD_LOGIC ;
+    locked    : OUT STD_LOGIC 
+  );
+end component;
+
+component local_20_to_12p5 is
   port
   (
     inclk0    : IN STD_LOGIC  := '0';

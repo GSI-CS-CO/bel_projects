@@ -9,5 +9,6 @@ files = [
   "IO_4x8.vhd",
   "Zeitbasis.vhd",
   "slave_clk_switch.vhd",
-  "local_clk_to_12p5.vhd",
+  "local_20_to_12p5.vhd",
+  "local_125_to_12p5.vhd",
 ]

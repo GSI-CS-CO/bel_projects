@@ -39,7 +39,8 @@ USE altera_mf.altera_mf_components.all;
 
 entity slave_clk_switch is 
   generic (
-    Base_Addr:  unsigned(15 downto 0)  := x"0040"
+    Base_Addr:  unsigned(15 downto 0)  := x"0040";
+    card_type:  string -- "diob" "addac" or "sio"
     );
 
   port(
@@ -124,11 +125,21 @@ begin
 
 clk_encdec  <= f_local_12p5_mhz;
 
-local_clk: local_clk_to_12p5
-  port map(
-    inclk0  => local_clk_i,
-    c0      => f_local_12p5_mhz
-  );
+pll_125 : if card_type = "addac" generate
+    local_clk: local_125_to_12p5
+      port map(
+        inclk0  => local_clk_i,
+        c0      => f_local_12p5_mhz
+      );
+end generate;
+
+pll_20 : if card_type = "diob" or card_type = "sio" generate
+    local_clk: local_20_to_12p5
+      port map(
+        inclk0  => local_clk_i,
+        c0      => f_local_12p5_mhz
+      );
+end generate;
 
 sys_or_local_pll: sys_clk_or_local_clk
   port map(

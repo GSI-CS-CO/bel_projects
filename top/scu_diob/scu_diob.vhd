@@ -7,7 +7,6 @@ use work.gencores_pkg.all;
 use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
 use work.fg_quad_pkg.all;
-use work.diob_sys_clk_local_clk_switch_pkg.all;
 use work.scu_diob_pkg.all;
 use work.pll_pkg.all;
 use work.monster_pkg.all;
@@ -119,7 +118,8 @@ use work.monster_pkg.all;
 
 entity scu_diob is
 generic (
-    CLK_sys_in_Hz:      integer := 125000000
+    CLK_sys_in_Hz:      integer := 125000000;
+    g_card_type:        string := "diob"
         );
 
 port  (
@@ -197,8 +197,8 @@ architecture scu_diob_arch of scu_diob is
     CONSTANT c_Firmware_Release:    Integer := 17;  ---- Firmware_Release Stand 02.12.2015 ( Strobe und Trigger (ECC) auf '710' geändert)
 
     
-    
-    CONSTANT c_lm32_ow_Base_Addr:   unsigned(15 downto 0):=  x"0040";  -- housekeeping/LM32
+    CONSTANT clk_switch_status_cntrl_addr:          unsigned := x"0030";
+    CONSTANT c_lm32_ow_Base_Addr:     unsigned(15 downto 0):=  x"0040";  -- housekeeping/LM32
 
     CONSTANT c_ADDAC_Base_addr:                  Integer := 16#0200#;  -- ADDAC (DAC = x"0200", ADC = x"0230")
     CONSTANT c_io_port_Base_Addr:   unsigned(15 downto 0):=  x"0220";  -- 4x8 Bit (ADDAC FG900.161)
@@ -1342,30 +1342,35 @@ END COMPONENT;
   Powerup_Res <= not nPowerup_Res;  -- only for modelsim!
   WRnRD       <= not A_RnW;         -- only for modelsim!
 
-  diob_clk_switch: diob_sys_clk_local_clk_switch
+  diob_clk_switch: slave_clk_switch
+    generic map (
+      Base_Addr => clk_switch_status_cntrl_addr,
+      card_type => g_card_type
+    )
     port map(
-      local_clk_i           => CLK_20MHz_D,
-      sys_clk_i             => A_SysClock,
-      nReset                => nPowerup_Res,
-      master_clk_o          => clk_sys,               -- core clocking
-      pll_locked            => pll_locked,
-      sys_clk_is_bad        => sys_clk_is_bad,
-      sys_clk_is_bad_la     => sys_clk_is_bad_la,
-      local_clk_is_bad      => local_clk_is_bad,
-      local_clk_is_running  => local_clk_is_running,
-      sys_clk_deviation     => sys_clk_deviation,
-      sys_clk_deviation_la  => sys_clk_deviation_la,
-      Adr_from_SCUB_LA      => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
-      Data_from_SCUB_LA     => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
-      Ext_Adr_Val           => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
-      Ext_Rd_active         => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
-      Ext_Wr_active         => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
-      Rd_Port               => clk_switch_rd_data,    -- output for all read sources of this macro
-      Rd_Activ              => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
-      Dtack                 => clk_switch_dtack,
-      signal_tap_clk_250mhz => signal_tap_clk_250mhz,
+      local_clk_i             => CLK_20MHz_D,
+      sys_clk_i               => A_SysClock,
+      nReset                  => nPowerup_Res,
+      master_clk_o            => clk_sys,               -- core clocking
+      pll_locked              => pll_locked,
+      sys_clk_is_bad          => sys_clk_is_bad,
+      sys_clk_is_bad_la       => sys_clk_is_bad_la,
+      local_clk_is_bad        => local_clk_is_bad,
+      local_clk_is_running    => local_clk_is_running,
+      sys_clk_deviation       => sys_clk_deviation,
+      sys_clk_deviation_la    => sys_clk_deviation_la,
+      Adr_from_SCUB_LA        => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+      Data_from_SCUB_LA       => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+      Ext_Adr_Val             => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Rd_active           => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+      Ext_Wr_active           => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+      Rd_Port                 => clk_switch_rd_data,    -- output for all read sources of this macro
+      Rd_Activ                => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
+      Dtack                   => clk_switch_dtack,
+      signal_tap_clk_250mhz   => signal_tap_clk_250mhz,
       clk_update              => clk_update,
-      clk_flash               => clk_flash
+      clk_flash               => clk_flash,
+      clk_encdec              => open
       );
    
    reset : altera_reset
