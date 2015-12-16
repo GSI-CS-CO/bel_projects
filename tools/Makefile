@@ -7,7 +7,7 @@ TARGETS := eb-flash eb-info eb-console eb-config-nv eca-snoop button-game io-tes
 
 EXTRA_FLAGS ?=
 CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(ECA) -I $(TLU)
-LIBS        ?= -L $(EB) -L $(ECA) -L $(TLU) -Wl,-rpath,$(PREFIX)/lib -letherbone -leca -ltlu
+LIBS        ?= -L $(EB)/.libs -L $(ECA) -L $(TLU) -Wl,-rpath,$(PREFIX)/lib -letherbone -leca -ltlu
 
 all:	$(TARGETS)
 clean:

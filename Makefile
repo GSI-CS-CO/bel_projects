@@ -24,7 +24,7 @@ distclean::	clean
 	for i in etherbone-core fpga-config-space general-cores wr-cores wrpc-sw; do cd ip_cores/$$i; git clean -xfd .; cd ../..; done
 
 etherbone::
-	test -f ip_cores/etherbone-core/api/configure || ./ip_cores/etherbone-core/api/autogen.sh
+	test -f ip_cores/etherbone-core/api/Makefile.in || ./ip_cores/etherbone-core/api/autogen.sh
 	cd ip_cores/etherbone-core/api; test -f Makefile || ./configure --enable-maintainer-mode
 	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
 
