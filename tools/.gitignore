@@ -2,6 +2,7 @@ eb-flash
 eb-info
 eb-console
 eb-config-nv
+eb-time
 eca-snoop
 io-test
 button-game
