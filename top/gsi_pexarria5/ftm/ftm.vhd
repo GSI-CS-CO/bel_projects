@@ -95,7 +95,7 @@ entity ftm is
     p18             : in    std_logic;        -- N_LVDS_2 / TRnIN
     n18             : in    std_logic;        -- P_LVDS_2 / TRpIN
     p19             : out   std_logic;        -- N_LVDS_3 / CK200n
---    n19             : out   std_logic;        -- P_LVDS_3 / CK200p
+    --n19             : out   std_logic;        -- P_LVDS_3 / CK200p -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
     p21             : in    std_logic;        -- N_LVDS_6  = TTLIO1 in
     n21             : in    std_logic;        -- P_LVDS_6
     p22             : in    std_logic;        -- N_LVDS_8  = TTLIO2 in
@@ -103,7 +103,7 @@ entity ftm is
     p23             : in    std_logic;        -- N_LVDS_10 = TTLIO3 in
     n23             : in    std_logic;        -- P_LVDS_10
     p24             : out   std_logic;        -- N_LVDS_4 / SYnOU
---    n24             : out   std_logic;        -- P_LVDS_4 / SYpOU
+    --n24             : out   std_logic;        -- P_LVDS_4 / SYpOU -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
     p25             : out   std_logic;        -- N_LVDS_5  = TTLIO1 out
     n25             : out   std_logic;        -- P_LVDS_5
     p26             : out   std_logic := 'Z'; -- FPLED3    = TTLIO2 (red)  0=on, Z=off
@@ -222,6 +222,10 @@ architecture rtl of ftm is
   signal lvds_n_o     : std_logic_vector(2 downto 0);
   signal lvds_o_led   : std_logic_vector(2 downto 0);
   signal lvds_oen     : std_logic_vector(2 downto 0);
+  signal lvds_term    : std_logic_vector(4 downto 0);
+  
+  signal butis_clk_200 : std_logic;
+  signal butis_t0_ts   : std_logic;
 
   constant c_family  : string := "Arria V"; 
   constant c_project : string := "ftm";
@@ -233,18 +237,19 @@ begin
 
   main : monster
     generic map(
-      g_family      => c_family,
-      g_project     => c_project,
-      g_flash_bits  => 25,
-      g_gpio_out    => 8,
-      g_lvds_in     => 2,
-      g_lvds_out    => 0,
-      g_lvds_inout  => 3,
-      g_lvds_invert => true,
-      g_en_pcie     => true,
-      g_en_usb      => true,
-      g_en_lcd      => false, 
-      g_lm32_are_ftm        => true,	
+      g_family              => c_family,
+      g_project             => c_project,
+      g_flash_bits          => 25,
+      g_gpio_out            => 8,
+      g_lvds_in             => 2,
+      g_lvds_out            => 0,
+      g_lvds_inout          => 3,
+      g_fixed               => 2,
+      g_lvds_invert         => true,
+      g_en_pcie             => true,
+      g_en_usb              => true,
+      g_en_lcd              => true, 
+      g_lm32_are_ftm        => true,
       g_lm32_cores          => 4,
       g_lm32_ramsizes       => 131072/4,
       g_lm32_shared_ramsize => 4096/4,
@@ -257,8 +262,8 @@ begin
       core_clk_125m_sfpref_i => sfp234_ref_clk_i,
       core_clk_125m_local_i  => clk_125m_local_i,
       core_rstn_i            => pbs2,
-      core_clk_butis_o       => p19,
-      core_clk_butis_t0_o    => p24,
+      core_clk_butis_o       => butis_clk_200,
+      core_clk_butis_t0_o    => butis_t0_ts,
       wr_onewire_io          => rom_data,
       wr_sfp_sda_io          => sfp4_mod2,
       wr_sfp_scl_io          => sfp4_mod1,
@@ -276,6 +281,7 @@ begin
       lvds_n_o               => lvds_n_o,
       lvds_o_led_o           => lvds_o_led,
       lvds_oen_o             => lvds_oen,
+      lvds_term_o            => lvds_term,
       led_link_up_o          => led_link_up,
       led_link_act_o         => led_link_act,
       led_track_o            => led_track,
@@ -326,25 +332,35 @@ begin
   ledsfpr(4) <= not led_link_act;
   
   -- GPIO LEDs
-  led(5) <= '0' when gpio_o(0)='1' else 'Z'; -- (baseboard)
-  led(6) <= '0' when gpio_o(1)='1' else 'Z';
-  led(7) <= '0' when gpio_o(2)='1' else 'Z';
-  led(8) <= '0' when gpio_o(3)='1' else 'Z';
-  p7     <= '0' when gpio_o(4)='1' else 'Z'; -- LED5 (DB1/2)
-  n7     <= '0' when gpio_o(5)='1' else 'Z'; -- LED6
-  p8     <= '0' when gpio_o(6)='1' else 'Z'; -- LED7
-  n8     <= '0' when gpio_o(7)='1' else 'Z'; -- LED8
+  led(5) <= '0' when gpio_o(0)='1'    else 'Z';                                -- (baseboard), red
+  led(6) <= '0' when gpio_o(1)='1'    else 'Z';                                -- blue
+  led(7) <= '0' when gpio_o(2)='1'    else 'Z';                                -- green
+  led(8) <= '0' when gpio_o(3)='1'    else 'Z';                                -- white
+  p7     <= '0' when gpio_o(4)='1'  else 'Z';   -- (add-on board), red
+  n7     <= '0' when gpio_o(5)='1'  else 'Z';   -- blue
+  p8     <= '0' when gpio_o(6)='1'  else 'Z';   -- green
+  n8     <= '0' when gpio_o(7)='1'  else 'Z';   -- white
+  
+  -- BuTiS/MDMHR Output
+  p19 <= butis_clk_200;
+  p24 <= butis_t0_ts;
+  
+  -- BuTiS/MHDMR activity LEDs
+  p6  <= '0' when butis_clk_200='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3)
+  n6  <= '0' when butis_t0_ts='1'   else 'Z'; -- LED4 (near HDMI = SYOU  / LVDS4)
   
   -- LVDS->LEMO output enable / termination
-  n10 <= '0' when lvds_oen(0)='0' else 'Z'; -- TTLIO1 output enable
-  n11 <= '0' when lvds_oen(1)='0' else 'Z'; -- TTLIO2 output enable
-  n14 <= '0' when lvds_oen(2)='0' else 'Z'; -- TTLIO3 output enable
-  p9  <= '1' when lvds_oen(0)='1' else '0'; -- TERMEN1 (terminate when input)
-  n9  <= '1' when lvds_oen(1)='1' else '0'; -- TERMEN2 (terminate when input)
-  p10 <= '1' when lvds_oen(2)='1' else '0'; -- TERMEN3 (terminate when input)
-  p29 <= '0' when lvds_oen(0)='0' else 'Z'; -- FPLED1/TTLIO1 red
-  p26 <= '0' when lvds_oen(1)='0' else 'Z'; -- FPLED3/TTLIO2 red
-  p16 <= '0' when lvds_oen(2)='0' else 'Z'; -- FPLED5/TTLIO3 red
+  n10 <= '0' when lvds_oen(0)='1' else 'Z'; -- TTLIO1 output enable
+  n11 <= '0' when lvds_oen(1)='1' else 'Z'; -- TTLIO2 output enable
+  n14 <= '0' when lvds_oen(2)='1' else 'Z'; -- TTLIO3 output enable
+  
+  p9  <= '1' when lvds_term(0)='1' else '0'; -- TERMEN1 (terminate when input)
+  n9  <= '1' when lvds_term(1)='1' else '0'; -- TERMEN2 (terminate when input)
+  p10 <= '1' when lvds_term(2)='1' else '0'; -- TERMEN3 (terminate when input)
+  
+  p29 <= '0' when lvds_oen(0)='1' else 'Z'; -- FPLED1/TTLIO1 red
+  p26 <= '0' when lvds_oen(1)='1' else 'Z'; -- FPLED3/TTLIO2 red
+  p16 <= '0' when lvds_oen(2)='1' else 'Z'; -- FPLED5/TTLIO3 red
   
   -- LVDS inputs
   lvds_p_i(0) <= p21; -- TTLIO1
@@ -357,18 +373,18 @@ begin
   lvds_n_i(2) <= n23; -- TTLIO3
   lvds_n_i(3) <= n17; -- LVDS_1 / SYIN
   lvds_n_i(4) <= n18; -- LVDS_2 / TRIN
-      
+  
   -- LVDS outputs
   n25 <= lvds_n_o(0); -- TTLIO1
   n27 <= lvds_n_o(1); -- TTLIO2
   n28 <= lvds_n_o(2); -- TTLIO3
---  n19 <= lvds_n_o(3); -- LVDS_3 / CK200
---  n24 <= lvds_n_o(4); -- LVDS_4 / SYOU
+  --n19 <= lvds_n_o(3); -- LVDS_3 / CK200 -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
+  --n24 <= lvds_n_o(4); -- LVDS_4 / SYOU  -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   p25 <= lvds_p_o(0); -- TTLIO1
   p27 <= lvds_p_o(1); -- TTLIO2
   p28 <= lvds_p_o(2); -- TTLIO3
---  p19 <= lvds_p_o(3); -- LVDS_3 / CK200
---  p24 <= lvds_p_o(4); -- LVDS_4 / SYOU
+  --p19 <= lvds_p_o(3); -- LVDS_3 / CK200 -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
+  --p24 <= lvds_p_o(4); -- LVDS_4 / SYOU  -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   
   -- LVDS activity LEDs
   n29 <= '0' when lvds_i_led(0)='1' else 'Z'; -- FPLED2/TTLIO1 blue
@@ -376,8 +392,8 @@ begin
   n16 <= '0' when lvds_i_led(2)='1' else 'Z'; -- FPLED6/TTLIO3 blue
   p5  <= '0' when lvds_i_led(3)='1' else 'Z'; -- LED1 (near HDMI = SYIN  / LVDS1)
   n5  <= '0' when lvds_i_led(4)='1' else 'Z'; -- LED2 (near HDMI = TRIN  / LVDS2)
---  p6  <= '0' when lvds_o_led(3)='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3)
---  n6  <= '0' when lvds_o_led(4)='1' else 'Z'; -- LED4 (near HDMI = SYOU  / LVDS4)
+  --p6  <= '0' when lvds_o_led(3)='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3) -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
+  --n6  <= '0' when lvds_o_led(4)='1' else 'Z'; -- LED4 (near HDMI = SYOU  / LVDS4) -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   
   -- Wires to CPLD, currently unused
   con <= (others => 'Z');
