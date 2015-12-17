@@ -1,4 +1,4 @@
-set platform "pexaria5 +db[12] +wrex1"
+set platform "exploder5 +db[12] +wrex2"
 source ../../autogen.tcl
 source ../../../modules/build_id/build_id.tcl
 source ../../../modules/nau8811/src/hdl/altera_pll/audio_pll.tcl
