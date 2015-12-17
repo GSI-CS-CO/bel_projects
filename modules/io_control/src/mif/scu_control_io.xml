@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<node>
+  <!-- Bidirectional IOs -->
+  <io name="B1"  delay="50"  internal_id="0"  direction="Inout"  channel="GPIO"  oe="Yes"  term="No"  special="No"  logic_level="TTL"></io>
+  <io name="B2"  delay="50"  internal_id="1"  direction="Inout"  channel="GPIO"  oe="Yes"  term="No"  special="No"  logic_level="TTL"></io>
+</node>
+
+
