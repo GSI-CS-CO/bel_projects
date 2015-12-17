@@ -249,6 +249,7 @@ architecture rtl of scu_control is
   signal kbc_out_port : std_logic_vector(7 downto 0);
   signal s_leds       : std_logic_vector(4 downto 1);
   signal s_lemo_leds  : std_logic_vector(2 downto 1);
+  signal s_led_pps    : std_logic;
   signal clk_ref      : std_logic;
   signal rstn_ref     : std_logic;
   signal mil_lemo_data_o_tmp   : std_logic_vector(4 downto 1);
@@ -257,6 +258,9 @@ architecture rtl of scu_control is
   signal mil_lemo_data_i_tmp   : std_logic_vector(4 downto 1);	
  
   
+  signal s_lemo_io    : std_logic_vector(1 downto 0);
+  signal s_lemo_oe    : std_logic_vector(1 downto 0);
+  signal s_lemo_input : std_logic_vector(1 downto 0);
   
   constant c_family  : string := "Arria II"; 
   constant c_project : string := "scu_control";
@@ -268,12 +272,11 @@ begin
 
   main : monster
     generic map(
-      g_family      => c_family,
-      g_project     => c_project,
-      g_gpio_in    => 1,
-      g_gpio_out   => 1,
-      g_flash_bits => 24,
-      g_lm32_cores => 2,
+      g_family        => c_family,
+      g_project       => c_project,
+      g_gpio_inout    => 2,
+      g_flash_bits    => 24,
+      g_lm32_cores    => 2,
       g_lm32_ramsizes => 65536/4, -- in 32b words
       g_lm32_msis  => 3,
       g_en_pcie    => true,
@@ -292,8 +295,9 @@ begin
       core_clk_125m_local_i  => clk_125m_local_i,
       core_clk_wr_ref_o      => clk_ref,
       core_rstn_wr_ref_o     => rstn_ref,
-      gpio_o(0)              => lemo_io(1),
-      gpio_i(0)              => lemo_io(2),
+      gpio_o                 => s_lemo_io,
+      gpio_i                 => s_lemo_input,
+      gpio_oen_o             => s_lemo_oe,
       wr_onewire_io          => OneWire_CB,
       wr_sfp_sda_io          => sfp2_mod2,
       wr_sfp_scl_io          => sfp2_mod1,
@@ -308,7 +312,7 @@ begin
       led_link_up_o          => s_leds(3),
       led_link_act_o         => s_leds(2),
       led_track_o            => s_leds(4),
-      led_pps_o              => s_leds(1),
+      led_pps_o              => s_led_pps,
       pcie_refclk_i          => pcie_refclk_i,
       pcie_rstn_i            => nPCI_RESET,
       pcie_rx_i              => pcie_rx_i,
@@ -426,10 +430,21 @@ begin
   sfp1_mod1 <= 'Z';
   sfp1_mod2 <= 'Z';
   
-  -- LEMO control
-  lemo_en_in(1) <= '0'; -- output
-  lemo_en_in(2) <= '1'; -- input
-  lemo_io(2) <= 'Z';
+  -- LEMO Outputs
+  lemo_io(1)     <= s_lemo_io(0) when s_lemo_oe(0)='1'   else 'Z';
+  lemo_io(2)     <= s_lemo_io(1) when s_lemo_oe(1)='1'   else 'Z';
+  
+  -- LEMO Inputs
+  s_lemo_input(0) <= lemo_io(1);
+  s_lemo_input(1) <= lemo_io(2);
+  
+  -- LEMO LEDs
+  lemo_led(1) <= not(s_lemo_leds(1));
+  lemo_led(2) <= not(s_lemo_leds(2));
+  
+  -- LEMO OE
+  lemo_en_in(1) <= '0' when s_lemo_oe(0)='1' else '1';
+  lemo_en_in(2) <= '0' when s_lemo_oe(1)='1' else '1';
   
   -- Extend LEMO input/outputs to LEDs at 20Hz
   lemo_leds : for i in 1 to 2 generate
@@ -444,8 +459,8 @@ begin
   end generate;
   
   -- LEDs
-  leds_o   <= not s_leds;
-  lemo_led <= not s_lemo_leds;
+  leds_o    <= not s_leds;
+  s_leds(1) <= s_led_pps;
   
   -- Logic analyzer port (0,2,4,6,8,10 = OLED)
   -- Don't put debug clocks too close (makes display flicker)
