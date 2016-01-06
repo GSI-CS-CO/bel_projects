@@ -36,10 +36,10 @@ include $(INCPATH)/build_lm32.mk
 all:	$(TARGET).mif $(TARGET)_stub.mif $(TARGET).sof $(TARGET).jic $(TARGET).rpd
 
 buildid.c:
-	@(echo $(CBR) 2>&1) > $@
+	@(printf %b $(CBR)) > $@
 
 ram.ld:
-	@(echo $(LDS) 2>&1) > $@
+	@(printf %b $(LDS)) > $@
 
 clean::
 	rm -rf db incremental_db PLLJ_PLLSPE_INFO.txt
