@@ -25,14 +25,14 @@ distclean::	clean
 
 etherbone::
 	test -f ip_cores/etherbone-core/api/Makefile.in || ./ip_cores/etherbone-core/api/autogen.sh
-	cd ip_cores/etherbone-core/api; test -f Makefile || ./configure --enable-maintainer-mode
+	cd ip_cores/etherbone-core/api; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX)
 	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
 
 etherbone-clean::
 	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" clean
 
 etherbone-install::
-	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" install
+	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" DESTDIR=$(STAGING) install
 
 tools::		etherbone eca tlu
 	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
