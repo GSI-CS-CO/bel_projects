@@ -12,7 +12,6 @@ files = [
    "outpuls.vhd",
    "flanke.vhd",
    "addac_reg.vhd",
-   "io_12_reg.vhd",
 ]  
 
 modules = {

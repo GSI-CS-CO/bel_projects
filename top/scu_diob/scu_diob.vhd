@@ -8,7 +8,7 @@ use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
 use work.fg_quad_pkg.all;
 use work.scu_diob_pkg.all;
-use work.wr_altera_pkg.all;
+use work.pll_pkg.all;
 use work.monster_pkg.all;
 
 
