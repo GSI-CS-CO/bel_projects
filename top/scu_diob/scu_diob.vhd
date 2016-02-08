@@ -194,7 +194,8 @@ architecture scu_diob_arch of scu_diob is
 --  CONSTANT c_Firmware_Release:    Integer := 14;  ---- Firmware_Release Stand 12.10.2015 ( +'731 und Fehlerkorrektur)
 --  CONSTANT c_Firmware_Release:    Integer := 15;  ---- Firmware_Release Stand 21.10.2015 ( +'731 und Fehlerkorrektur)
 --  CONSTANT c_Firmware_Release:    Integer := 16;  ---- Firmware_Release Stand 19.11.2015 ( Update Reg.-Belegung '700' u. '710')
-    CONSTANT c_Firmware_Release:    Integer := 17;  ---- Firmware_Release Stand 02.12.2015 ( Strobe und Trigger (ECC) auf '710' geändert)
+--  CONSTANT c_Firmware_Release:    Integer := 17;  ---- Firmware_Release Stand 02.12.2015 ( Strobe und Trigger (ECC) auf '710' geändert)
+    constant c_Firmware_Release:    integer := 18;  ---- Firmware_Release Stand 05.02.2016 ( changed housekeeping memory map, added remote update )
 
     
     CONSTANT clk_switch_status_cntrl_addr:          unsigned := x"0030";
