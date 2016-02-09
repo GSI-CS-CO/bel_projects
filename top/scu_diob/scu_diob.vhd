@@ -11,10 +11,6 @@ use work.scu_diob_pkg.all;
 use work.pll_pkg.all;
 use work.monster_pkg.all;
 
-
-------------------------------------------------------------------------------------------------------------------------------------
---      Vers: 0 Revi: 16: erstellt am 10.12.2015, Autor: R.Hartmann                                                               --
-------------------------------------------------------------------------------------------------------------------------------------
 --
 --                                                                                                                                
 --  Base_addr    : DIOB-Config-Register1 (alle Bit können gelesen und geschrieben werden)                                     
@@ -194,11 +190,13 @@ architecture scu_diob_arch of scu_diob is
 --  CONSTANT c_Firmware_Release:    Integer := 14;  ---- Firmware_Release Stand 12.10.2015 ( +'731 und Fehlerkorrektur)
 --  CONSTANT c_Firmware_Release:    Integer := 15;  ---- Firmware_Release Stand 21.10.2015 ( +'731 und Fehlerkorrektur)
 --  CONSTANT c_Firmware_Release:    Integer := 16;  ---- Firmware_Release Stand 19.11.2015 ( Update Reg.-Belegung '700' u. '710')
-    CONSTANT c_Firmware_Release:    Integer := 17;  ---- Firmware_Release Stand 02.12.2015 ( Strobe und Trigger (ECC) auf '710' geändert)
+--  CONSTANT c_Firmware_Release:    Integer := 17;  ---- Firmware_Release Stand 02.12.2015 ( Strobe und Trigger (ECC) auf '710' geändert)
+--  CONSTANT c_Firmware_Release:    Integer := 18;  ---- Firmware_Release Stand 28.01.2016 ( Error, Tag-Steuerung: überlappende Outputs im gleichen Register)
+    CONSTANT c_Firmware_Release:    Integer := 19;  ---- Firmware_Release Stand 08.02.2016 ( + Tag-Steuerung: Level für jedes Bit im Outp.-Register ist einstellbar)
 
     
-    CONSTANT clk_switch_status_cntrl_addr:          unsigned := x"0030";
-    CONSTANT c_lm32_ow_Base_Addr:     unsigned(15 downto 0):=  x"0040";  -- housekeeping/LM32
+    CONSTANT clk_switch_status_cntrl_addr:       unsigned := x"0030";
+    CONSTANT c_lm32_ow_Base_Addr:   unsigned(15 downto 0):=  x"0040";  -- housekeeping/LM32
 
     CONSTANT c_ADDAC_Base_addr:                  Integer := 16#0200#;  -- ADDAC (DAC = x"0200", ADC = x"0230")
     CONSTANT c_io_port_Base_Addr:   unsigned(15 downto 0):=  x"0220";  -- 4x8 Bit (ADDAC FG900.161)
@@ -323,7 +321,7 @@ component config_status
     Diob_Config2_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut2
     AW_Config1_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut3
     AW_Config2_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut4
-    clr_Tag_Maske:        out  std_logic;                        -- clear alle Tag-Masken
+    Clr_Tag_Config:        out  std_logic;                        -- Clear Tag-Konfigurations-Register
     
     Rd_active:            out  std_logic;                        -- read data available at 'Data_to_SCUB'-AWOut
     Data_to_SCUB:         out  std_logic_vector(15 downto 0);    -- connect read sources to SCUB-Macro
@@ -387,7 +385,7 @@ component tag_ctrl
 
     SCU_AW_Input_Reg:         in   t_IO_Reg_1_to_7_Array;            -- Input-Port's  zum SCU-Bus
 
-    clr_Tag_Maske:        in   std_logic;                        -- clear alle Tag-Masken
+    Clr_Tag_Config:        in   std_logic;                        -- clear alle Tag-Masken
     Max_AWOut_Reg_Nr:     in   integer range 0 to 7;             -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr:      in   integer range 0 to 7;             -- Maximale AWIn-Reg-Nummer der Anwendung
    
@@ -693,7 +691,7 @@ END COMPONENT;
   signal Diob_Config2_wr:       std_logic;                        -- write-Strobe, Daten-Reg. Diob_Config2
   signal AW_Config1_wr:         std_logic;                        -- write-Strobe, Daten-Reg. AW_Config1  
   signal AW_Config2_wr:         std_logic;                        -- write-Strobe, Daten-Reg. AW_Config2  
-  signal clr_Tag_Maske:         std_logic;                        -- clear alle Tag-Masken
+  signal Clr_Tag_Config:         std_logic;                        -- clear alle Tag-Masken
 
   signal Conf_Sts1_rd_active:    std_logic;
   signal Conf_Sts1_Dtack:        std_logic;
@@ -1419,7 +1417,7 @@ port map  (
       Diob_Config2        =>  Diob_Config2,              -- Daten-Reg_Diob_Config2
       AW_Config1          =>  AW_Config1,                -- Daten-Reg_AW_Config1  
       AW_Config2          =>  AW_Config2,                -- Daten-Reg_AW_Config2  
-      clr_Tag_Maske       =>  clr_Tag_Maske,             -- clear alle Tag-Masken
+      Clr_Tag_Config      =>  Clr_Tag_Config,            -- Clear Tag-Konfigurations-Register
 
       Diob_Config1_wr     =>  Diob_Config1_wr,           -- write-Strobe, Daten-Reg. AWOut1
       Diob_Config2_wr     =>  Diob_Config2_wr,           -- write-Strobe, Daten-Reg. AWOut2
@@ -1493,8 +1491,8 @@ port map  (
       clk                 =>  clk_sys,                   -- should be the same clk, used by SCU_Bus_Slave
       nReset              =>  rstn_sys,              
 
-      SCU_AW_Input_Reg    =>  SCU_AW_Input_Reg,              -- die gleichen Input-Port's wie zum SCU-Bus
-      clr_Tag_Maske       =>  clr_Tag_Maske,             -- clear alle Tag-Masken
+      SCU_AW_Input_Reg    =>  SCU_AW_Input_Reg,          -- die gleichen Input-Port's wie zum SCU-Bus
+      Clr_Tag_Config      =>  Clr_Tag_Config,            -- Clear Tag-Konfigurations-Register
       
       Max_AWOut_Reg_Nr    =>  Max_AWOut_Reg_Nr,          -- Maximale AWOut-Reg-Nummer der Anwendung
       Max_AWIn_Reg_Nr     =>  Max_AWIn_Reg_Nr,           -- Maximale AWIn-Reg-Nummer der Anwendung

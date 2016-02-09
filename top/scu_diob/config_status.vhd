@@ -1,4 +1,4 @@
---TITLE "'config_status' Autor: R.Hartmann, Stand: 19.03.2015";
+--TITLE "'config_status' Autor: R.Hartmann, Stand: 08.02.2016";
 --
 
 library IEEE;
@@ -38,7 +38,7 @@ ENTITY config_status IS
     Diob_Config2_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. Diob_Config2
     AW_Config1_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AW_Config1  
     AW_Config2_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AW_Config2  
-    clr_Tag_Maske:        out  std_logic;                        -- clear alle Tag-Masken
+    Clr_Tag_Config:       out  std_logic;                        -- clear alle Tag-Konfigurationen
 
     Rd_active:            out  std_logic;                        -- read data available at 'Data_to_SCUB'-AWOut
     Data_to_SCUB:         out  std_logic_vector(15 downto 0);    -- connect read sources to SCUB-Macro
@@ -512,7 +512,7 @@ Diob_Config1_wr   <=  S_Diob_Config1_Wr;  -- write-Strobe, Daten-Reg. AWOut1
 Diob_Config2_wr   <=  S_Diob_Config2_Wr;  -- write-Strobe, Daten-Reg. AWOut2
 AW_Config1_wr     <=  S_AW_Config1_Wr;    -- write-Strobe, Daten-Reg. AWOut3
 AW_Config2_wr     <=  S_AW_Config2_Wr;    -- write-Strobe, Daten-Reg. AWOut4
-clr_Tag_Maske     <= (S_Diob_Config1_Wr and Data_from_SCUB_LA(0)); -- clear alle Tag-Masken
+Clr_Tag_Config    <= (S_Diob_Config1_Wr and Data_from_SCUB_LA(0)); -- clear alle Tag-Masken
 
 
 end Arch_config_status;
