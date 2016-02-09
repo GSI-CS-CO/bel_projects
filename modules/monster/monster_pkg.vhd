@@ -257,7 +257,8 @@ package monster_pkg is
       ps_advn                : out   std_logic;
       ps_wait                : in    std_logic := '0';
       -- g_en_user_ow
-      ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z'));
+      ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z');
+      hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z'));
   end component;
 
   constant c_iodir_sdb : t_sdb_device := (

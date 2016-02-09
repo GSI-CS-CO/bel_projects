@@ -20,6 +20,26 @@ if { [catch {close $user}] } {
   exit 1
 }
 
+set revp [open "| git rev-parse --abbrev-ref HEAD" "r"]
+gets $revp branch
+if { [catch {close $revp}] } {
+  post_message -type error "Failed to determine current git branch"
+  exit 1
+}
+
+if { $branch == "HEAD" || $branch == "proposed_master" || $branch == "master" } {
+  set branch "zenith" ; # largest release possible
+}
+
+set revl [open "| git rev-list --count HEAD" "r"]
+gets $revl count
+if { [catch {close $revl}] } {
+  post_message -type error "Failed to determine commit count"
+  exit 1
+}
+
+set source_info "$branch-$count"
+
 if {$tcl_platform(os) == "Linux"} {
   set lsb [open "| lsb_release -d" "r"]
   gets $lsb desc
@@ -34,10 +54,11 @@ set output [list]
 lappend output "Project     : [lindex $quartus(args) 1]"
 lappend output "Platform    : $platform"
 lappend output "FPGA model  : [get_global_assignment -name FAMILY] ([get_global_assignment -name DEVICE])"
+lappend output "Source info : $source_info"
 lappend output "Build type  : $build_type"
 lappend output "Build date  : $build_date"
 lappend output "Prepared by : $username <$email>"
-lappend output "Perpared on : [info hostname]"
+lappend output "Prepared on : [info hostname]"
 lappend output "OS version  : $build_os"
 lappend output "Quartus     : $quartus(version)"
 lappend output ""

@@ -11,8 +11,7 @@ use work.scu_diob_pkg.all;
 use work.pll_pkg.all;
 use work.monster_pkg.all;
 
---
---                                                                                                                                
+
 --  Base_addr    : DIOB-Config-Register1 (alle Bit können gelesen und geschrieben werden)                                     
 --  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
 --  | Bit 15     | Test-Mode                 | 1 = Testmodus; für Inbetriebnahme und Diagnose, 0 = Normalbetrieb (default)

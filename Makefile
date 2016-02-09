@@ -24,15 +24,15 @@ distclean::	clean
 	for i in etherbone-core fpga-config-space general-cores wr-cores wrpc-sw; do cd ip_cores/$$i; git clean -xfd .; cd ../..; done
 
 etherbone::
-	test -f ip_cores/etherbone-core/api/configure || ./ip_cores/etherbone-core/api/autogen.sh
-	cd ip_cores/etherbone-core/api; test -f Makefile || ./configure --enable-maintainer-mode
+	test -f ip_cores/etherbone-core/api/Makefile.in || ./ip_cores/etherbone-core/api/autogen.sh
+	cd ip_cores/etherbone-core/api; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX)
 	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
 
 etherbone-clean::
-	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" clean
+	! test -f ip_cores/etherbone-core/Makefile || $(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" distclean
 
 etherbone-install::
-	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" install
+	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" DESTDIR=$(STAGING) install
 
 tools::		etherbone eca tlu
 	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
@@ -122,6 +122,12 @@ vetar2a::	firmware
 
 vetar2a-clean::
 	$(MAKE) -C syn/gsi_vetar2a/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+vetar2a-ee-butis::	firmware
+	$(MAKE) -C syn/gsi_vetar2a/ee_butis PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+vetar2a-ee-butis-clean::
+	$(MAKE) -C syn/gsi_vetar2a/ee_butis PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
 exploder::	firmware
 	$(MAKE) -C syn/gsi_exploder/wr_core_demo PATH=$(PWD)/toolchain/bin:$(PATH) all

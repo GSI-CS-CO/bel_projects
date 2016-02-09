@@ -37,5 +37,6 @@ modules = {
     "flash_loader",
     "remote_update",
     "pll",
+    "remote_update",
   ]
 }

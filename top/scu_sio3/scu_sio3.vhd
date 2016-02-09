@@ -129,8 +129,10 @@ end scu_sio3;
 
 ARCHITECTURE arch_scu_sio3 OF scu_sio3 IS
 
-CONSTANT  c_Firmware_Version:     integer                   := 5;         -- important: => Firmware_Version
-CONSTANT  c_Firmware_Release:     integer                   := 2;         -- important: => Firmware_Release
+constant clk_sys_in_Hz: integer := 125_000_000;
+
+CONSTANT  c_Firmware_Version:     integer                   := 6;         -- important: => Firmware_Version
+CONSTANT  c_Firmware_Release:     integer                   := 3;         -- important: => Firmware_Release
 CONSTANT  SCU_SIO2_ID:            integer range 16#0200# to 16#020F# := 16#0200#;
 CONSTANT  stretch_cnt:            integer                   := 5;
 CONSTANT  c_is_arria5:            boolean                   := false;
@@ -240,7 +242,7 @@ signal    owr_i:                  std_logic_vector(1 downto 0);
 
 -- led stuff
 signal    led_ctr_vec:            std_logic_vector (7 downto 0);             
-signal    led_ctr:                integer range 0 to 255;
+signal    led_ctr:                integer range 0 to 255 :=255;
 signal    nLed:                   std_logic_vector (15 downto 0);   
 signal    nLED_out:               std_logic_vector (15 downto 0);
 signal    nLED_Mil_Rcv:           std_logic;  
@@ -377,7 +379,7 @@ sio3_clk_sw: slave_clk_switch
     card_type => g_card_type
   )
   port map(
-    local_clk_i             => clk_20,                --20MHz XTAL
+    local_clk_i             => clk_20,                --used instead of noisy  local 125MHz CLK_FPGA
     sys_clk_i               => A_SysClock,            --12p5MHz SCU Bus
     nReset                  => nPowerup_Res,
     master_clk_o            => clk_sys,               --SysClk 125MHz
@@ -427,7 +429,7 @@ sio3_clk_sw: slave_clk_switch
       
 mil_slave_1: wb_mil_wrapper_sio 
   generic map(
-    Clk_in_Hz           => clk_in_hz,           -- Wg Bitmessung 1Mb/s (Flanke/Flanke=500 ns), clk_in_hz >= 20 Mhz!
+    Clk_in_Hz           => clk_sys_in_Hz,           -- Wg Bitmessung 1Mb/s (Flanke/Flanke=500 ns), clk_in_hz >= 20 Mhz!
     sio_mil_first_reg_a => c_sio_mil_first_reg_a,
     sio_mil_last_reg_a  => c_sio_mil_last_reg_a,
     evt_filt_first_a    => c_ev_filt_first_a,
@@ -567,19 +569,12 @@ test_port_in_0 <= x"00000000";
   --Timing_Pattern_RCV  & '0'                 & '0'              & SCU_Dtack                     -- bit3..0
   --;
 
-
---fl:flash_loader_v01
---  port map  (
---    noe_in  =>  '0'
---  );
-
-
 s_intr_in <= '0'& clk_switch_intr & "0000000"& Interlock_Intr_o & Data_Rdy_Intr_o & Data_Req_Intr_o & dly_intr_o & ev_fifo_ne_intr_o & every_ms_intr_o;
 
 
 SCU_Slave:scu_bus_slave
   generic map  (
-    CLK_in_Hz           =>  CLK_in_Hz,
+    CLK_in_Hz           =>  clk_sys_in_Hz,
     Slave_ID            =>  SCU_SIO2_ID,
     Firmware_Version    =>  c_Firmware_Version,
     Firmware_Release    =>  c_Firmware_Release,
@@ -633,7 +628,7 @@ A_nSRQ    <= NOT(SCUB_SRQ);
 
 zeit1 : zeitbasis
   generic map  (
-    CLK_in_Hz  =>  CLK_in_Hz,
+    CLK_in_Hz  =>  clk_sys_in_Hz,
     diag_on    =>  1
   )
   port map  (
