@@ -7,19 +7,49 @@ use work.gencores_pkg.all;
 use work.scu_bus_slave_pkg.all;
 use work.aux_functions_pkg.all;
 use work.fg_quad_pkg.all;
-use work.diob_sys_clk_local_clk_switch_pkg.all;
 use work.scu_diob_pkg.all;
+use work.pll_pkg.all;
+use work.monster_pkg.all;
 
 
-------------------------------------------------------------------------------------------------------------------------------------
---  Vers: 0 Revi: 8: erstellt am 16.06.2015, Autor: R.Hartmann                                                                    --
+--  Base_addr    : DIOB-Config-Register1 (alle Bit können gelesen und geschrieben werden)                                     
+--  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
+--  | Bit 15     | Test-Mode                 | 1 = Testmodus; für Inbetriebnahme und Diagnose, 0 = Normalbetrieb (default)
+--  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
+--  | Bit 14..12 | InReg-Debounce-Time       | Entprellzeit für digitale Eingänge;
+--  |            |                           | Entprellzeit in in 2x µs; Vorgabe Exponent (x) für Entprellzeit;
+--  |            |                           | Wertebereich 1 ... 128 µs *)
+--  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
+--  | Bit 11     | InReg-Debounce-Enable     | Steuerung (Einschalten/Ausschalten) der Entprelleinheit (debouncing unit) für externe digitale Signale
+--  |            |                           | 1 = Entprellung ausgeschaltet
+--  |            |                           | 0 = Entprellung eingeschaltet
+--  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
+--  | Bit 10..8  | MirrorMode-InReg-Sel      | Auswahl des Eingangsregisters für Spiegelung des gewählten Ausgangsregisters (siehe MirrorMode-OutReg-Sel)
+--  |            |                           | 0 = inaktiv
+--  |            |                           | 1...7 = Eingangsregister 1 bis 7; alle unmaskierten Bits (siehe MirrorMode-OutReg-Mask) des Ausgangsregisters x 
+--  |            |                           | (x gewählt über MirrorMode-OutReg-Sel) werden auf das hier gewählte Eingangsregister kopiert (gespiegelt)
+--  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
+--  | Bit 7..5   | MirrorMode-OutReg-Sel     | Auswahl des Ausgangsregister für Spiegelung der Bits in Eingangsregister x (x gewählt über MirrorMode-InReg-Sel)
+--  |            |                           | 0 = inaktiv
+--  |            |                           | 1...7 = Ausgangsregister 1 bis 7
+--  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
+--  | Bit 4      |--  Reserve                |  
+--  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
+--  | Bit 3      | MirrorMode-OutReg         | Aktiviert die Spiegelung des gewählten Ausgangsregisters (MirrorMode-OutReg-Sel) auf Eingangsregister 1 oder 2;
+--  |            |                           | 1 = Spiegelung aktiviert
+--  |            |                           | 0 = Spiegelung ausgeschaltet (default)
+--  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
+--  | Bit 2      | Clear-CntUnit-Config      | 1 = löschen aller Konfigurationsregister der Counter-Kanäle (CounterUnit-Config-Reg 1 und 2)
+--  |            |                           | Bit wird nach Auswertung automatisch gelöscht; ist nicht rücklesbar
+--  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
+--  | Bit 1      | Clear-CmpUnit-Config      | 1 = löschen aller Konfigurationsregister der Compare-Kanäle (CmpUnit-Config-Reg 1 und 2)
+--  |            |                           | Bit wird nach Auswertung automatisch gelöscht; ist nicht rücklesbar
+--  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
+--  | Bit 0      | Clear-TAG-Config          | 1 = löschen aller Konfigurationsregister der Event-Steuerung (TAG-Filterung)
+--  |                                        | Bit wird nach Auswertung automatisch gelöscht; ist nicht rücklesbar 
+--  +------------+---------------------------+------------------------------------------------------------------------------------------------------------------
 --                                                                                                                                --
---      Base_addr    : DIOB-Config-Register1 (alle Bit können gelesen und geschrieben werden)                                     --
---   -----+-------------------------------------------------------------------------------------------------------------------    --
---    15  | Leiterplatten-Test-Mode;  0 = Betrieb   / 1 = Test                                                                    --
---   -----+-------------------------------------------------------------------------------------------------------------------    --
---   14-0 |  frei                                                                                                                 --
---   -----+-------------------------------------------------------------------------------------------------------------------    --
+--                                                                                                                                --
 --                                                                                                                                --
 --      Base_addr +1 : DIOB-Config-Register2 (alle Bit können gelesen und geschrieben werden)                                     --
 --   -----+-------------------------------------------------------------------------------------------------------------------    --
@@ -83,7 +113,8 @@ use work.scu_diob_pkg.all;
 
 entity scu_diob is
 generic (
-    CLK_sys_in_Hz:      integer := 125000000
+    CLK_sys_in_Hz:      integer := 125000000;
+    g_card_type:        string := "diob"
         );
 
 port  (
@@ -149,9 +180,21 @@ architecture scu_diob_arch of scu_diob is
 --  |                                 Firmware_Version/Firmware_Release und Basis-Adressen                                       |
 --  +============================================================================================================================+
 
-    CONSTANT c_Firmware_Version:    Integer := 0;  ---------------------- important: => Firmware_Version
-    CONSTANT c_Firmware_Release:    Integer := 9;  ---------------------- important: => Firmware_Release
+    CONSTANT c_Firmware_Version:    Integer := 0;   ---- Firmware_Version
+--  CONSTANT c_Firmware_Release:    Integer := 9;   ---- Firmware_Release
+--  CONSTANT c_Firmware_Release:    Integer := 10;  ---- Firmware_Release Stand 03.08.2015 ('740 nur Standard- kein DAC/FG-Mode)
+--  CONSTANT c_Firmware_Release:    Integer := 11;  ---- Firmware_Release Stand 04.09.2015 ('Fehler LED-Lemo-Out, IO-Modul-Backplane-Test)
+--  CONSTANT c_Firmware_Release:    Integer := 12;  ---- Firmware_Release Stand 10.09.2015 ('IO-Modul-Backplane-Test Fortsetzung)
+--  CONSTANT c_Firmware_Release:    Integer := 13;  ---- Firmware_Release Stand 09.10.2015 ('+ 16In, 16Out, CID SPSIOI1 60 geändert in 68)
+--  CONSTANT c_Firmware_Release:    Integer := 14;  ---- Firmware_Release Stand 12.10.2015 ( +'731 und Fehlerkorrektur)
+--  CONSTANT c_Firmware_Release:    Integer := 15;  ---- Firmware_Release Stand 21.10.2015 ( +'731 und Fehlerkorrektur)
+--  CONSTANT c_Firmware_Release:    Integer := 16;  ---- Firmware_Release Stand 19.11.2015 ( Update Reg.-Belegung '700' u. '710')
+--  CONSTANT c_Firmware_Release:    Integer := 17;  ---- Firmware_Release Stand 02.12.2015 ( Strobe und Trigger (ECC) auf '710' geändert)
+--  CONSTANT c_Firmware_Release:    Integer := 18;  ---- Firmware_Release Stand 28.01.2016 ( Error, Tag-Steuerung: überlappende Outputs im gleichen Register)
+    CONSTANT c_Firmware_Release:    Integer := 19;  ---- Firmware_Release Stand 08.02.2016 ( + Tag-Steuerung: Level für jedes Bit im Outp.-Register ist einstellbar)
 
+    
+    CONSTANT clk_switch_status_cntrl_addr:       unsigned := x"0030";
     CONSTANT c_lm32_ow_Base_Addr:   unsigned(15 downto 0):=  x"0040";  -- housekeeping/LM32
 
     CONSTANT c_ADDAC_Base_addr:                  Integer := 16#0200#;  -- ADDAC (DAC = x"0200", ADC = x"0230")
@@ -165,6 +208,7 @@ architecture scu_diob_arch of scu_diob is
     CONSTANT c_INL_xor1_Base_Addr:               Integer := 16#0530#;  -- Interlock-Pegel-Register
     CONSTANT c_INL_msk1_Base_Addr:               Integer := 16#0540#;  -- Interlock-Masken-Register
     CONSTANT c_Tag_Ctrl1_Base_Addr:              Integer := 16#0580#;  -- Tag-Steuerung
+    CONSTANT c_IOBP_Masken_Base_Addr:            Integer := 16#0600#;  -- IO-Backplane Masken-Register
    
   
   
@@ -172,44 +216,75 @@ architecture scu_diob_arch of scu_diob is
 --  |                                                 CONSTANT                                                                   |
 --  +============================================================================================================================+
 
+
+    CONSTANT c_cid_system:     integer range 0 to 16#FFFF#:= 55;     -- extension card: cid_system, CSCOHW=55
+
+
+    type ID_CID is record
+      ID   : std_logic_vector(7 downto 0);
+      CID  : integer range 0 to 16#FFFF#;
+    end record;
+--                                        +--------------- Piggy-ID(Codierung)
+--                                        |     +--------- CID(extension card: cid_system)
+--                                        |     |     
+    CONSTANT c_AW_P37IO:      ID_CID:= (x"01", 27);   ---- Piggy-ID(Codierung), B"0000_0001", FG900_700
+    CONSTANT c_AW_P25IO:      ID_CID:= (x"02", 28);   ---- Piggy-ID(Codierung), B"0000_0010", FG900_710
+    CONSTANT c_AW_OCin:       ID_CID:= (x"03", 29);   ---- Piggy-ID(Codierung), B"0000_0011", FG900_720
+    CONSTANT c_AW_OCIO1:      ID_CID:= (x"04", 30);   ---- Piggy-ID(Codierung), B"0000_0100", FG900_730
+    CONSTANT c_AW_UIO:        ID_CID:= (x"05", 31);   ---- Piggy-ID(Codierung), B"0000_0101", FG900_740
+    CONSTANT c_AW_DA:         ID_CID:= (x"06", 32);   ---- Piggy-ID(Codierung), B"0000_0110", FG900_750
+    CONSTANT c_AW_Frei:       ID_CID:= (x"07", 00);   ---- Piggy-ID(Codierung), B"0000_0111", FG900_760
+    CONSTANT c_AW_SPSIO1:     ID_CID:= (x"08", 33);   ---- Piggy-ID(Codierung), B"0000_1000", FG900_770 -- Ausgänge schalten nach 24V
+    CONSTANT c_AW_HFIO:       ID_CID:= (x"09", 34);   ---- Piggy-ID(Codierung), B"0000_1001", FG900_780
+    CONSTANT c_AW_SPSIOI1:    ID_CID:= (x"0A", 68);   ---- Piggy-ID(Codierung), B"0000_1010", FG901_770 -- Ausgänge schalten nach GND
+    CONSTANT c_AW_INLB12S:    ID_CID:= (x"0B", 67);   ---- Piggy-ID(Codierung), B"0000_1011", FG902_050 -- IO-Modul-Backplane mit 12 Steckplätzen
+    CONSTANT c_AW_16Out2:     ID_CID:= (x"0C", 70);   ---- Piggy-ID(Codierung), B"0000_1100", FG901_010 -- Output 16 Bit
+    CONSTANT c_AW_16In2:      ID_CID:= (x"0D", 71);   ---- Piggy-ID(Codierung), B"0000_1101", FG901_020 -- Input 16 Bit
+    CONSTANT c_AW_OCIO2:      ID_CID:= (x"0E", 61);   ---- Piggy-ID(Codierung), B"0000_1110", FG900_731
+--  CONSTANT c_AW:            ID_CID:= (x"0F", 00);   ---- Piggy-ID(Codierung), B"0000_1111", 
+
   
-    CONSTANT c_AW_P37IO:      std_logic_vector(7 downto 0):= B"00000001"; -- FG900_700
-    CONSTANT c_AW_P25IO:      std_logic_vector(7 downto 0):= B"00000010"; -- FG900_710
-    CONSTANT c_AW_OCin:       std_logic_vector(7 downto 0):= B"00000011"; -- FG900_720
-    CONSTANT c_AW_OCIO:       std_logic_vector(7 downto 0):= B"00000100"; -- FG900_730
-    CONSTANT c_AW_UIO:        std_logic_vector(7 downto 0):= B"00000101"; -- FG900_740
-    CONSTANT c_AW_DA:         std_logic_vector(7 downto 0):= B"00000110"; -- FG900_750
-    CONSTANT c_AW_Frei:       std_logic_vector(7 downto 0):= B"00000111"; -- FG900_760
-    CONSTANT c_AW_SPSIO1:     std_logic_vector(7 downto 0):= B"00001000"; -- FG900_770 -- Ausgänge schalten nach 24V
-    CONSTANT c_AW_HFIO:       std_logic_vector(7 downto 0):= B"00001001"; -- FG900_780
-    CONSTANT c_AW_SPSIO2:     std_logic_vector(7 downto 0):= B"00001010"; -- FG900_771 -- Ausgänge schalten nach GND
-  
-    constant  stretch_cnt:    integer := 5;                                -- für LED's
+    constant  stretch_cnt:    integer := 5;                               -- für LED's
     
       
     constant  Clk_in_ns:      integer  :=  1000000000 /  clk_sys_in_Hz;          -- (=8ns,    bei 125MHz)
-    CONSTANT	CLK_sys_in_ps:  INTEGER	:= (1000000000 / (CLK_sys_in_Hz / 1000));  -- muss eigentlich clk-halbe sein
+    CONSTANT  CLK_sys_in_ps:  INTEGER  := (1000000000 / (CLK_sys_in_Hz / 1000));  -- muss eigentlich clk-halbe sein
       
     constant  C_Strobe_1us:   integer := 1000 / Clk_in_ns;                       -- Anzahl der Clocks für 1us
     constant  C_Strobe_2us:   integer := 2000 / Clk_in_ns;                       -- Anzahl der Clocks für 2us
+    constant  C_Strobe_3us:   integer := 003000 * 1000 / CLK_sys_in_ps;          -- Anzahl der Clock's für die Debounce-Zeit von   3uS 
+    constant  C_Strobe_7us:   integer := 007000 * 1000 / CLK_sys_in_ps;          -- Anzahl der Clock's für die Debounce-Zeit von   7uS 
+--  constant  C_Strobe_3us:   integer := 000300 * 1000 / CLK_sys_in_ps;          -- Anzahl der Clock's für die Debounce-Zeit von   300nS (Test)
+--  constant  C_Strobe_7us:   integer := 000700 * 1000 / CLK_sys_in_ps;          -- Anzahl der Clock's für die Debounce-Zeit von   700nS (Test) 
   
   
- --   TYPE      t_Integer_Array  is array (0 to 7) of integer range 0 to 131072;
    TYPE      t_Integer_Array  is array (0 to 7) of integer range 0 to 16383;
    
-  --------------- Array für die Anzahl der Clock's für die Bebounce-Zeiten von 1,2,4,8,16,32,64,128 us ---------------
+  --------------- Array für die Anzahl der Clock's für die B1dddebounce-Zeiten von 1,2,4,8,16,32,64,128 us ---------------
 
 
-  constant  Wert_2_Hoch_n:   t_Integer_Array := (001000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von   1uS 
-                                                 002000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von   2uS 
-                                                 004000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von   4uS 
-                                                 008000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von   8uS 
-                                                 016000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von  16uS 
-                                                 032000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von  32uS 
-                                                 064000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von  64uS 
-                                                 128000	* 1000 / CLK_sys_in_ps);  -- Anzahl der Clock's für die Debounce-Zeit von 128uS 
+  constant  Wert_2_Hoch_n:   t_Integer_Array := (001000 * 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von   1uS 
+                                                 002000 * 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von   2uS 
+                                                 004000 * 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von   4uS 
+                                                 008000 * 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von   8uS 
+                                                 016000 * 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von  16uS 
+                                                 032000 * 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von  32uS 
+                                                 064000 * 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von  64uS 
+                                                 128000 * 1000 / CLK_sys_in_ps);  -- Anzahl der Clock's für die Debounce-Zeit von 128uS 
+                                                 
+                                                 
 
-
+                                               
+                                             
+  CONSTANT C_Cnt_Syn_min:  integer := 3;   -- Anzahl der Clock's, für die Synchonnisation der Eingänge bei abgeschalter Entprellung 
+  
+  CONSTANT C_Strobe_100ns:  integer range 0 to 16383:= (000100 * 1000 / CLK_sys_in_ps);   -- Anzahl der Clock's für den Strobe 100ns 
+  
+  TYPE   t_Integer_Strobe_Array     is array (0 to 7) of integer range 0 to 65535;
+  
+  constant Wert_Strobe_2_Hoch_n : t_Integer_Strobe_Array := (00001, 00002, 00004, 00008, 00016, 00032, 00064, 00128);
+            
+            
   
 --  +============================================================================================================================+
 --  |                                                    Component                                                               |
@@ -245,7 +320,7 @@ component config_status
     Diob_Config2_wr:      out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut2
     AW_Config1_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut3
     AW_Config2_wr:        out  std_logic;                        -- write-Strobe, Daten-Reg. AWOut4
-    clr_Tag_Maske:        out  std_logic;                        -- clear alle Tag-Masken
+    Clr_Tag_Config:        out  std_logic;                        -- Clear Tag-Konfigurations-Register
     
     Rd_active:            out  std_logic;                        -- read data available at 'Data_to_SCUB'-AWOut
     Data_to_SCUB:         out  std_logic_vector(15 downto 0);    -- connect read sources to SCUB-Macro
@@ -309,7 +384,7 @@ component tag_ctrl
 
     SCU_AW_Input_Reg:         in   t_IO_Reg_1_to_7_Array;            -- Input-Port's  zum SCU-Bus
 
-    clr_Tag_Maske:        in   std_logic;                        -- clear alle Tag-Masken
+    Clr_Tag_Config:        in   std_logic;                        -- clear alle Tag-Masken
     Max_AWOut_Reg_Nr:     in   integer range 0 to 7;             -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr:      in   integer range 0 to 7;             -- Maximale AWIn-Reg-Nummer der Anwendung
    
@@ -356,15 +431,6 @@ COMPONENT io_reg
   );
 END COMPONENT io_reg;
 
-
-
-component flash_loader_v01
-port  (
-    noe_in:   in    std_logic
-    );
-end component;
-
-
 component pu_reset
 generic (
     PU_Reset_in_clks : integer
@@ -396,40 +462,40 @@ end component;
 
 
 COMPONENT addac_reg
-	GENERIC ( Base_addr : INTEGER);
-	PORT
-	(
-		Adr_from_SCUB_LA:	  IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
-		Data_from_SCUB_LA:	IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
-		Ext_Adr_Val:	      IN    STD_LOGIC;
-		Ext_Rd_active:	    IN    STD_LOGIC;
-		Ext_Rd_fin:	        IN    STD_LOGIC;
-		Ext_Wr_active:	    IN    STD_LOGIC;
-		Ext_Wr_fin:         IN    STD_LOGIC;
-		clk:                IN    STD_LOGIC;
-		nReset:             IN    STD_LOGIC;
-		DAC1_Config:	      OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
-		DAC1_Config_wr:     OUT   STD_LOGIC;
-		DAC1_Out:           OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
-    DAC1_Out_wr:        OUT   STD_LOGIC;
-		DAC2_Config:	      OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
-		DAC2_Config_wr:     OUT   STD_LOGIC;
-		DAC2_Out:           OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
-    DAC2_Out_wr:        OUT   STD_LOGIC;
-		ADC_Config:	        OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
-		ADC_In1:	          IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
-		ADC_In2:	          IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
-		ADC_In3:	          IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
-		ADC_In4:	          IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
-		ADC_In5:	          IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
-		ADC_In6:	          IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
-		ADC_In7:	          IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
-		ADC_In8:	          IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
-		Rd_active:	        OUT   STD_LOGIC;
-		Data_to_SCUB:	      OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
-		Dtack_to_SCUB:	    OUT   STD_LOGIC;
-		LA:	                OUT   STD_LOGIC_VECTOR(15 DOWNTO 0)
-	);
+ GENERIC ( Base_addr : INTEGER);
+ PORT
+ (
+  Adr_from_SCUB_LA:   IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
+  Data_from_SCUB_LA:  IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
+  Ext_Adr_Val:        IN    STD_LOGIC;
+  Ext_Rd_active:      IN    STD_LOGIC;
+  Ext_Rd_fin:         IN    STD_LOGIC;
+  Ext_Wr_active:      IN    STD_LOGIC;
+  Ext_Wr_fin:         IN    STD_LOGIC;
+  clk:                IN    STD_LOGIC;
+  nReset:             IN    STD_LOGIC;
+  DAC1_Config:        OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
+  DAC1_Config_wr:     OUT   STD_LOGIC;
+  DAC1_Out:           OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
+  DAC1_Out_wr:        OUT   STD_LOGIC;
+  DAC2_Config:        OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
+  DAC2_Config_wr:     OUT   STD_LOGIC;
+  DAC2_Out:           OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
+  DAC2_Out_wr:        OUT   STD_LOGIC;
+  ADC_Config:         OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
+  ADC_In1:            IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
+  ADC_In2:            IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
+  ADC_In3:            IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
+  ADC_In4:            IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
+  ADC_In5:            IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
+  ADC_In6:            IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
+  ADC_In7:            IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
+  ADC_In8:            IN    STD_LOGIC_VECTOR(15 DOWNTO 0);
+  Rd_active:          OUT   STD_LOGIC;
+  Data_to_SCUB:       OUT   STD_LOGIC_VECTOR(15 DOWNTO 0);
+  Dtack_to_SCUB:      OUT   STD_LOGIC;
+  LA:                 OUT   STD_LOGIC_VECTOR(15 DOWNTO 0)
+ );
 END COMPONENT;
 
 
@@ -465,7 +531,6 @@ component IO_4x8
     DB_Tst_Cnt: integer := 3;
     Test:       integer range 0 TO 1);
   port (
- --   DB_Cnt:     in  integer range 0 to 131072;   
     DB_Cnt:     in  integer range 0 to 16383;    
     DB_In:      in  std_logic;
     Reset:      in  std_logic;
@@ -473,7 +538,31 @@ component IO_4x8
     DB_Out:     out std_logic
     );
   end component diob_debounce;
-
+  
+  
+ component diob_sync
+  port (
+    Sync_In:    in  std_logic;
+    Reset:      in  std_logic;
+    Clk:        in  std_logic;
+    Sync_Out:   out std_logic
+    );
+  end component diob_sync;
+  
+  
+  
+ COMPONENT outpuls
+ PORT
+ (
+  nReset      :  IN STD_LOGIC;
+  clk         :  IN STD_LOGIC;
+  Start       :  IN STD_LOGIC;
+  cnt_ena     :  IN STD_LOGIC;              -- Enable für die Basis_Verzögerungszeit
+  Base_cnt    :  IN INTEGER RANGE 0 TO 15;
+  Mult_cnt    :  IN INTEGER RANGE 0 TO 65535;
+  Sign_Out    :  OUT STD_LOGIC
+ );
+END COMPONENT;
   
   
 
@@ -565,6 +654,8 @@ component IO_4x8
  
   signal Ena_Every_100ns: std_logic;
   signal Ena_Every_166ns: std_logic;
+  signal Ena_Every_250ns: std_logic;
+  signal Ena_Every_500ns: std_logic;
   signal Ena_Every_20ms:  std_logic;
   signal Ena_Every_1us:   std_logic;
   signal Ena_Every_250ms: std_logic;
@@ -581,7 +672,7 @@ component IO_4x8
    
   signal s_nLED:          std_logic_vector(7 downto 0); -- LED's
   signal s_nLED_Out:      std_logic_vector(7 downto 0); -- LED's
-  signal s_AW_ID:         std_logic_vector(7 downto 0); -- Anwender_ID
+  signal AW_ID:           std_logic_vector(7 downto 0); -- Anwender_ID
    
 
 --------------------------- Conf_Sts1 ----------------------------------------------------------------------
@@ -599,7 +690,7 @@ component IO_4x8
   signal Diob_Config2_wr:       std_logic;                        -- write-Strobe, Daten-Reg. Diob_Config2
   signal AW_Config1_wr:         std_logic;                        -- write-Strobe, Daten-Reg. AW_Config1  
   signal AW_Config2_wr:         std_logic;                        -- write-Strobe, Daten-Reg. AW_Config2  
-  signal clr_Tag_Maske:         std_logic;                        -- clear alle Tag-Masken
+  signal Clr_Tag_Config:         std_logic;                        -- clear alle Tag-Masken
 
   signal Conf_Sts1_rd_active:    std_logic;
   signal Conf_Sts1_Dtack:        std_logic;
@@ -702,26 +793,26 @@ component IO_4x8
   
   --------------------------- ADDAC ----------------------------------------------------------------------
 
-  signal DAC1_Config:	        STD_LOGIC_VECTOR(15 DOWNTO 0);  -- DAC  Config-Register
+  signal DAC1_Config:         STD_LOGIC_VECTOR(15 DOWNTO 0);  -- DAC  Config-Register
   signal DAC1_Config_wr:      STD_LOGIC;                      -- write DAC1 Config-Register
   signal DAC1_Out:            STD_LOGIC_VECTOR(15 DOWNTO 0);  -- DAC1 Output-Register
   signal DAC1_Out_wr:         STD_LOGIC;                      -- write DAC1 Output-Register
-  signal DAC2_Config:	        STD_LOGIC_VECTOR(15 DOWNTO 0);  -- DAC  Config-Register
+  signal DAC2_Config:         STD_LOGIC_VECTOR(15 DOWNTO 0);  -- DAC  Config-Register
   signal DAC2_Config_wr:      STD_LOGIC;                      -- write DAC2 Config-Register
   signal DAC2_Out:            STD_LOGIC_VECTOR(15 DOWNTO 0);  -- DAC1 Output-Register
   signal DAC2_Out_wr:         STD_LOGIC;                      -- write DAC2 Output-Register
-  signal ADC_Config:	        STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC  Config-Register
-  signal ADC_In1:	            STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC1 Input-Register
-  signal ADC_In2:	            STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC2 Input-Register 
-  signal ADC_In3:	            STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC3 Input-Register 
-  signal ADC_In4:	            STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC4 Input-Register 
-  signal ADC_In5:	            STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC5 Input-Register
-  signal ADC_In6:	            STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC6 Input-Register
-  signal ADC_In7:	            STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC7 Input-Register
-  signal ADC_In8:	            STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC8 Input-Register
-  signal addac_rd_active:	    STD_LOGIC;                      -- read data available at 'Data_to_SCUB'-AWOut
-  signal addac_Data_to_SCUB:	STD_LOGIC_VECTOR(15 DOWNTO 0);  -- connect read sources to SCUB-Macro
-  signal addac_Dtack:	        STD_LOGIC;                      -- connect Dtack to SCUB-Macro
+  signal ADC_Config:          STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC  Config-Register
+  signal ADC_In1:             STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC1 Input-Register
+  signal ADC_In2:             STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC2 Input-Register 
+  signal ADC_In3:             STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC3 Input-Register 
+  signal ADC_In4:             STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC4 Input-Register 
+  signal ADC_In5:             STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC5 Input-Register
+  signal ADC_In6:             STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC6 Input-Register
+  signal ADC_In7:             STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC7 Input-Register
+  signal ADC_In8:             STD_LOGIC_VECTOR(15 DOWNTO 0);  -- ADC8 Input-Register
+  signal addac_rd_active:     STD_LOGIC;                      -- read data available at 'Data_to_SCUB'-AWOut
+  signal addac_Data_to_SCUB:  STD_LOGIC_VECTOR(15 DOWNTO 0);  -- connect read sources to SCUB-Macro
+  signal addac_Dtack:         STD_LOGIC;                      -- connect Dtack to SCUB-Macro
   signal LA_addac:            STD_LOGIC_VECTOR(15 DOWNTO 0);
 
 
@@ -766,6 +857,12 @@ component IO_4x8
   signal P37IO_nLED_Stop_o:    std_logic;    -- Output "nLED_Stop"
   signal P37IO_Reset_deb_i:    std_logic;    -- input "Reset" L-Aktiv
   signal P37IO_Reset_deb_o:    std_logic;    -- input "Rest" entprellt
+  signal P37IO_Start_syn_i:    std_logic;    -- input "Start" L-Aktiv
+  signal P37IO_Start_syn_o:    std_logic;    -- input "Start" entprellt
+  signal P37IO_Stop_syn_i:     std_logic;    -- input "Stop" L-Aktiv
+  signal P37IO_Stop_syn_o:     std_logic;    -- input "Stop" entprellt
+  signal P37IO_Reset_syn_i:    std_logic;    -- input "Reset" L-Aktiv
+  signal P37IO_Reset_syn_o:    std_logic;    -- input "Rest" entprellt
   signal P37IO_BNC_o:          std_logic;    -- Output "BNC"
   signal P37IO_nELD_BNC_o:     std_logic;    -- Output "nLED_BNC"
 
@@ -773,8 +870,13 @@ component IO_4x8
   signal P37IO_FF_Stop:        std_logic;    -- FF-Input
   signal P37IO_FF_Reset:       std_logic;    -- FF-Input
   
-  signal P37IO_in_Data:        std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal P37IO_in_Data:           std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal P37IO_Deb_in_Data_i:     std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal P37IO_Deb_in_Data_o:     std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal P37IO_Syn_in_Data_i:     std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal P37IO_Syn_in_Data_o:     std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
 
+  
   
 --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: P25IO  -- FG900_710                                    |
@@ -782,12 +884,18 @@ component IO_4x8
 
   signal P25IO_Start_deb_i:         std_logic;        -- input "Start" L-Aktiv
   signal P25IO_Start_deb_o:         std_logic;        -- input "Start" entprellt
+  signal P25IO_Start_syn_i:         std_logic;        -- input "Start" L-Aktiv
+  signal P25IO_Start_syn_o:         std_logic;        -- input "Start" entprellt
   signal P25IO_nLED_Start_o:        std_logic;        -- Output "nLED_Start"
   signal P25IO_Stop_deb_i:          std_logic;        -- input "Stop" L-Aktiv
   signal P25IO_Stop_deb_o:          std_logic;        -- input "Stop" entprellt
+  signal P25IO_Stop_syn_i:          std_logic;        -- input "Stop" L-Aktiv
+  signal P25IO_Stop_syn_o:          std_logic;        -- input "Stop" entprellt
   signal P25IO_nLED_Stop_o:         std_logic;        -- Output "nLED_Stop"
   signal P25IO_Reset_deb_i:         std_logic;        -- input "Reset" L-Aktiv
   signal P25IO_Reset_deb_o:         std_logic;        -- input "Rest" entprellt
+  signal P25IO_Reset_syn_i:         std_logic;        -- input "Reset" L-Aktiv
+  signal P25IO_Reset_syn_o:         std_logic;        -- input "Rest" entprellt
   signal P25IO_BNC_o:               std_logic;        -- Output "BNC"
   signal P25IO_nELD_BNC_o:          std_logic;        -- Output "nLED_BNC"
 
@@ -795,47 +903,80 @@ component IO_4x8
   signal P25IO_FF_Stop:             std_logic;        -- FF-Input
   signal P25IO_FF_Reset:            std_logic;        -- FF-Input
 
-  signal P25IO_DAC_Out:             std_logic_vector(15 downto 0); -- Zwischenspeicher
-  signal P25IO_DAC_Strobe_Start_i:  std_logic;        -- input  "Start-Signal für den Strobe vom DAC"
-  signal P25IO_DAC_Strobe_Start_o:  std_logic;        -- Output "Start-Puls für den Stobe vom DAC (1 CLK breit)"
-  signal P25IO_DAC_Strobe_i:        std_logic;        -- input  "Start-Puls für den DAC-Strobe"
-  signal P25IO_nDAC_Strobe_o:       std_logic;        -- Output "DAC-Stobe"
-  signal P25IO_DAC_shift:           std_logic_vector(2  downto 0); -- Shift-Reg.
- 
-  signal P25IO_ADC_ECC_Start_i:     std_logic;        -- input  "Start-Signal für das Enable vom ADC"
-  signal P25IO_ADC_ECC_Start_o:     std_logic;        -- Output "Start-Puls für das Enable vom ADC (1 CLK breit)"
-  signal P25IO_ADC_ECC_i:           std_logic;        -- input  "Start-Puls für das Enable vom ADC"
-  signal P25IO_nADC_ECC_o:          std_logic;        -- Output "ADC-Enable"
-  signal P25IO_ADC_shift:           std_logic_vector(2  downto 0); -- Shift-Reg.
-    
-  signal P25IO_Ext_Tim_i:           std_logic;        -- input "Start" L-Aktiv
-  signal P25IO_Ext_Tim_deb_o:       std_logic;        -- input "Start" entprellt
-  signal P25IO_nLED_Ext_Tim_o:      std_logic;        --  Output "nLED_Start"
 
+  signal P25IO_DAC_Mode:             std_logic_vector( 1 downto 0); -- Output-Betriebsart
+  signal P25IO_DAC_Out:              std_logic_vector(15 downto 0); -- Data_Output
+  signal P25IO_DAC_Data_FG_Out:      std_logic_vector(15 downto 0); -- Data/FG-Output
 
-  signal P25IO_Ext_Tim_Strobe_Start_o:  std_logic;                      -- Output "Start-Puls für den ext. Trigger"
-  signal P25IO_Ext_Tim_shift:           std_logic_vector(2  downto 0);  -- Shift-Reg.
-
+  signal P25IO_DAC_DAC_Strobe_i:     std_logic;                     -- Input  "DAC-Strobe"
+  signal P25IO_DAC_DAC_Strobe_o:     std_logic;                     -- Output "DAC-Strobe"
+  signal P25IO_DAC_DAC_Strobe_Expo:  integer range 0 to 7;          -- Anzahl der Counts
+  signal P25IO_DAC_Strobe:           std_logic;                     -- Output "DAC-Strobe"
   
-  signal P25IO_EOC_i:          std_logic;                       --  input "nEOC"
-  signal P25IO_EOC_deb_o:      std_logic;                       -- input "EOC" entprellt
-  signal P25IO_ADC_Data_FF_i:  std_logic_vector(15  downto 0);  -- input  "Daten ADC-Register"
-  signal P25IO_ADC_Data_FF_o:  std_logic_vector(15  downto 0);  -- Output "Daten ADC-Register"
- 
- 
-  signal s_str_shift_EE_20ms:   std_logic_vector(2  downto 0);  -- Shift-Reg.
-  signal s_str_EE_20ms:         std_logic;                      -- Puls-Output
+  type   P25IO_Holec_state_t is   (holec_idle, holec_puls,  holec_puls_w,  holec_puls_e, holec_pause, holec_pause_w, holec_end);
+  signal P25IO_Holec_state:       P25IO_Holec_state_t:= holec_idle;
 
-  signal P25IO_Data_in:         std_logic_vector(15 downto 0);  -- Data_Input über Optokoppler
+  signal P25IO_DAC_Str_Puls_i:      std_logic;                  -- 
+  signal P25IO_DAC_Str_Puls_o:      std_logic;                  -- 
+  signal P25IO_DAC_Str_Pause_i:     std_logic;                  -- 
+  signal P25IO_DAC_Str_Pause_o:     std_logic;                  -- 
+  signal P25IO_Holec_Str_Cnt:       integer range 0 to 7;          -- Anzahl der Counts
+  
+  signal P25IO_Holec_Strobe_Start:  std_logic;                  -- Start Holec-Strobe-Sequence
+  signal P25IO_Holec_Strobe_Out:    std_logic;                  -- Output, Holec-Strobe-Sequence
+  
+  signal P25IO_In:                std_logic_vector(15 downto 0); -- Data_Input
+  signal P25IO_Strobe_in:         std_logic;                     -- Input  "Strobe"
+  
+  signal P25IO_LED_Lemo_Out_i:    std_logic;                     -- Input  "nLED_Lemo_In"
+  signal P25IO_nLED_Lemo_Out_o:   std_logic;                     -- Output "nLED_Lemo_In"
+                      
+  signal P25IO_ADC_In:            std_logic_vector(15  downto 0);  -- Input Daten
+  signal P25IO_ADC_Deb_In_i:      std_logic_vector(15  downto 0);  -- Input Daten
+  signal P25IO_ADC_Deb_In_o:      std_logic_vector(15  downto 0);  -- Input Daten
+  signal P25IO_ADC_Syn_In_i:      std_logic_vector(15  downto 0);  -- Input Daten
+  signal P25IO_ADC_Syn_In_O:      std_logic_vector(15  downto 0);  -- Input Daten
+  signal P25IO_ADC_Input:         std_logic_vector(15  downto 0);  -- Input Daten
+  signal P25IO_ADC_Strobe:        std_logic;                       -- Input Strobe
+  signal P25IO_ADC_Strobe_in:     std_logic;                       -- Input Strobe
+  
+  signal P25IO_ADC_Strobe_i:      std_logic;                       -- input  "Strobe-Signal für den ADC"
+  signal P25IO_ADC_Strobe_o:      std_logic;                       -- Output "Strobe-Signal für den ADC (1 CLK breit)"
+  signal P25IO_ADC_shift:         std_logic_vector(2  downto 0);   -- Shift-Reg.
 
+  signal P25IO_ADC_Data_FF_i:     std_logic_vector(15  downto 0);  -- input  "Daten ADC-Register"
+  signal P25IO_ADC_Data_FF_o:     std_logic_vector(15  downto 0);  -- Output "Daten ADC-Register"
+     
+  signal P25IO_Ext_Tim_deb_i:     std_logic;        -- input "Start" L-Aktiv
+  signal P25IO_Ext_Tim_deb_o:     std_logic;        -- input "Start" entprellt
+  signal P25IO_Ext_Tim_syn_i:     std_logic;        -- input "Start" L-Aktiv
+  signal P25IO_Ext_Tim_syn_o:     std_logic;        -- input "Start" entprellt
+  signal P25IO_nLED_Ext_Tim_o:    std_logic;        --  Output "nLED_Start"
+  
+  signal P25IO_ECC_Puls_i:        std_logic;                       -- input  "ECC-Signal für den ADC"
+  signal P25IO_ECC_Puls_o:        std_logic;                       -- Output "ECC-Signal für den ADC (1 CLK breit)"
+  signal P25IO_ECC_Puls_shift:    std_logic_vector(2  downto 0);   -- Shift-Reg.
+  
+  signal P25IO_ECC_Strobe_i:     std_logic;                     -- Input  "ECC-Strobe"
+  signal P25IO_ECC_Strobe_o:     std_logic;                     -- Output "ECC-Strobe"
+  signal P25IO_ECC_Strobe_Expo:  integer range 0 to 7;          -- Anzahl der Counts
+  
   
 --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: OCIN   -- FG900_720                                    |
 --  +============================================================================================================================+
 
 
-  signal OCIN_Data1_in: std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
-  signal OCIN_Data2_in: std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIN_Data1_in:          std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIN_Deb_Data1_in_i:    std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIN_Deb_Data1_in_o:    std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIN_Syn_Data1_in_i:    std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIN_Syn_Data1_in_o:    std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIN_Data2_in:          std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIN_Deb_Data2_in_i:    std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIN_Deb_Data2_in_o:    std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIN_Syn_Data2_in_i:    std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIN_Syn_Data2_in_o:    std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
 
 
 --  +============================================================================================================================+
@@ -843,32 +984,55 @@ component IO_4x8
 --  +============================================================================================================================+
 
 
-  signal OCIO_Data1_in: std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
-  signal OCIO_Data2_in: std_logic_vector(15 downto 0); -- entprellter Data_Input
+  signal OCIO_Data1_in:           std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIO_Deb_Data1_in_i:     std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIO_Deb_Data1_in_o:     std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIO_Syn_Data1_in_i:     std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIO_Syn_Data1_in_o:     std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIO_Data2_in:           std_logic_vector(15 downto 0); -- entprellter Data_Input
+  signal OCIO_Deb_Data2_in_i:     std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIO_Deb_Data2_in_o:     std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIO_Syn_Data2_in_i:     std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
+  signal OCIO_Syn_Data2_in_o:     std_logic_vector(15 downto 0); -- Data_Input über Optokoppler
 
   
 --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: OCIO   -- FG900_740                                    |
 --  +============================================================================================================================+
 
-  signal UIO_Out:               std_logic_vector(23 downto 0); -- Data_Output
-  signal UIO_Data_FG_Out:       std_logic_vector(23 downto 0); -- Data/FG-Output
-  signal UIO_HS_In:             std_logic_vector(23 downto 0); -- Input auf GND 
-  signal UIO_LS_In:             std_logic_vector(23 downto 0); -- Input Uext
 
-  signal UIO_LED_Lemo_In_i:     std_logic;  --  Input  "nLED_Lemo_In"
-  signal UIO_nLED_Lemo_In_o:    std_logic;  --  Output "nLED_Lemo_In"
-  signal UIO_LED_Lemo_Out_i:    std_logic;  --  Input  "nLED_Lemo_Out"
-  signal UIO_nLED_Lemo_Out_o:   std_logic;  --  Output "nLED_Lemo_Out"
-
-  signal UIO_Lemo_in:           std_logic;  --  Input "Lemo" 
-
-  signal UIO_Lemo_deb_i:        std_logic;  -- Input  "UIO_Lemo_in"
-  signal UIO_Lemo_deb_o:        std_logic;  -- Output "UIO_Lemo_in"
-
+  signal UIO_Mode:                std_logic_vector( 1 downto 0); -- Output-Betriebsart
+  signal UIO_Out:                 std_logic_vector(23 downto 0); -- Data_Output
+  signal UIO_Data_FG_Out:         std_logic_vector(23 downto 0); -- Data/FG-Output
+  signal UIO_HS_In:               std_logic_vector(23 downto 0); -- Input auf GND 
+  signal UIO_LS_In:               std_logic_vector(23 downto 0); -- Input Uext
+  signal UIO_Deb_In_i:            std_logic_vector(23 downto 0); -- 
+  signal UIO_Deb_In_o:            std_logic_vector(23 downto 0); -- 
+  signal UIO_Syn_In_i:            std_logic_vector(23 downto 0); -- 
+  signal UIO_Syn_In_o:            std_logic_vector(23 downto 0); -- 
   
-  signal UIO_in_Data:           std_logic_vector(23 downto 0); -- Data_Input über Optokoppler
+  signal UIO_LED_Lemo_In_i:       std_logic;  --  Input  "nLED_Lemo_In"
+  signal UIO_nLED_Lemo_In_o:      std_logic;  --  Output "nLED_Lemo_In"
+  signal UIO_LED_Lemo_Out_i:      std_logic;  --  Input  "nLED_Lemo_Out"
+  signal UIO_nLED_Lemo_Out_o:     std_logic;  --  Output "nLED_Lemo_Out"
+  
+  signal UIO_DAC_Strobe_i:        std_logic;                      -- Input  "DAC-Strobe"
+  signal UIO_DAC_Strobe_o:        std_logic;                      -- Output "DAC-Strobe"
+  signal UIO_DAC_Strobe_Expo:     integer range 0 to 7;           -- Anzahl der Counts
+  signal UIO_Lemo_in:             std_logic;                      -- Input "Lemo" 
+  
+  signal UIO_Lemo_deb_i:          std_logic;  -- Input  "UIO_Lemo_in"
+  signal UIO_Lemo_deb_o:          std_logic;  -- Output "UIO_Lemo_in"
+  signal UIO_Lemo_syn_i:          std_logic;  -- Input  "UIO_Lemo_in"
+  signal UIO_Lemo_syn_o:          std_logic;  -- Output "UIO_Lemo_in"
 
+  signal UIO_Reg_Enable:          std_logic;                     -- Input   Speicher-Strobe"
+  signal UIO_Reg_Out_i:           std_logic_vector(23 downto 0); -- Input:  Output-Register
+  signal UIO_Reg_Out_o:           std_logic_vector(23 downto 0); -- Output: Output-Register
+  
+  signal UIO_in_Data:             std_logic_vector(23 downto 0); -- Data_Input über Optokoppler
+  
+  
 
 --  +============================================================================================================================+
 --  |                                   Übergabe-Signale für Anwender-IO: DA    -- FG900_750                                     |
@@ -925,6 +1089,10 @@ component IO_4x8
   signal DA_Trig1_deb_o:           std_logic;      -- input "Trigger1" entprellt
   signal DA_Trig2_deb_i:           std_logic;      -- input "Trigger2"
   signal DA_Trig2_deb_o:           std_logic;      -- input "Trigger2" entprellt
+  signal DA_Trig1_syn_i:           std_logic;      -- input "Trigger1"
+  signal DA_Trig1_syn_o:           std_logic;      -- input "Trigger1" entprellt
+  signal DA_Trig2_syn_i:           std_logic;      -- input "Trigger2"
+  signal DA_Trig2_syn_o:           std_logic;      -- input "Trigger2" entprellt
    
   signal DA_Trig1_Strobe_i:        std_logic;                      -- input  "Start-Signal für ext. Trigger 1"
   signal DA_Trig1_Strobe_o:        std_logic;                      -- Output "Start-Puls   für ext. Trigger 1 (1 CLK breit)"
@@ -947,7 +1115,11 @@ component IO_4x8
 --  |                                   Übergabe-Signale für Anwender-IO: SPSIO  -- FG900.770                                    |
 --  +============================================================================================================================+
 
-  signal SPSIO_Data_in: std_logic_vector(23 downto 0); -- Data_Input über Optokoppler
+  signal SPSIO_Data_in:             std_logic_vector(23 downto 0); -- Data_Input über Optokoppler
+  signal SPSIO_Deb_Data_in_i:       std_logic_vector(23 downto 0);
+  signal SPSIO_Deb_Data_in_o:       std_logic_vector(23 downto 0);
+  signal SPSIO_Syn_Data_in_i:       std_logic_vector(23 downto 0);
+  signal SPSIO_Syn_Data_in_o:       std_logic_vector(23 downto 0);
 
 
 --  +============================================================================================================================+
@@ -965,36 +1137,130 @@ component IO_4x8
 
   signal HFIO_in_AMP_FEHLER_Deb_i:        std_logic;  -- Input  "AMP_FEHLER"
   signal HFIO_in_AMP_FEHLER_Deb_o:        std_logic;  -- Output "AMP_FEHLER"
+  signal HFIO_in_AMP_FEHLER_syn_i:        std_logic;  -- Input  "AMP_FEHLER"
+  signal HFIO_in_AMP_FEHLER_syn_o:        std_logic;  -- Output "AMP_FEHLER"
   signal HFIO_in_PHASE_FEHLER_Deb_i:      std_logic;  -- Input  "PHASE_FEHLER"
   signal HFIO_in_PHASE_FEHLER_Deb_o:      std_logic;  -- Output  PHASE_FEHLER"
+  signal HFIO_in_PHASE_FEHLER_syn_i:      std_logic;  -- Input  "PHASE_FEHLER"
+  signal HFIO_in_PHASE_FEHLER_syn_o:      std_logic;  -- Output  PHASE_FEHLER"
+  
+  
+--  +============================================================================================================================+
+--  |    §§§              Übergabe-Signale für Anwender-IO: FG902_050 -- Interlock-Backplane mit 12 Steckplätzen                 |
+--  +============================================================================================================================+
+
+
+  signal IOBP_Output: std_logic_vector(12 downto 1); -- Data_Output "Slave-Karten 1-12"
+  
+  TYPE   t_input_array      is array (1 to 12) of std_logic_vector(5 downto 1);
+  signal IOBP_Input:        t_input_array;    -- Inputs der "Slave-Karten"
+  
+  TYPE   t_id_array         is array (1 to 12) of std_logic_vector(7 downto 0);
+  signal IOBP_ID:           t_id_array;     -- ID's der "Slave-Karten"
+
+  TYPE   t_led_array        is array (1 to 12) of std_logic_vector(6 downto 1);
+  signal IOBP_Sel_LED:      t_led_array;    -- Sel-LED's der "Slave-Karten"
+
+  signal IOBP_Aktiv_LED_i:  t_led_array;    -- Aktiv-LED's der "Slave-Karten"
+  signal IOBP_Aktiv_LED_o:  t_led_array;    -- Aktiv-LED's der "Slave-Karten"  
+
+
+  
+  signal IOBP_STR_rot_o:    std_logic_vector(12 downto 1);  -- LED-Str Rot  für Slave 12-1
+  signal IOBP_STR_gruen_o:  std_logic_vector(12 downto 1);  -- LED-Str Grün für Slave 12-1
+  signal IOBP_STR_ID_o:     std_logic_vector(12 downto 1);  -- ID-Str Grün für Slave 12-1 
+  signal IOBP_LED_o:        std_logic_vector(7 downto 0);   -- LED_ID_Bus_Out
+  signal IOBP_LED_ID_Bus_o: std_logic_vector(7 downto 0);   -- LED_ID_Bus_Out
+  signal IOBP_LED_ID_Bus_i: std_logic_vector(7 downto 0);   -- LED_ID_Bus_In
+  signal IOBP_LED_En:       std_logic;                      -- Output-Enable für LED- ID-Bus
+
+  signal Slave_Loop_cnt:      integer range 0 to 12;         -- 1-12   -- Loop-Counter
+  
+  type   IOBP_LED_state_t is   (IOBP_idle, led_id_wait, led_id_loop, led_str_rot_h, led_str_rot_l, led_gruen,
+                                led_str_gruen_h, led_str_gruen_l, iobp_led_dis, iobp_led_z, iobp_id_str_h, iobp_rd_id, iobp_id_str_l, iobp_end);
+  signal IOBP_state:   IOBP_LED_state_t:= IOBP_idle;
+ 
+  
+  --------------------------- IO-Select ----------------------------------------------------------------------
+  
+  signal IOBP_Masken_Reg1:        std_logic_vector(15 downto 0);         
+  signal IOBP_Masken_Reg2:        std_logic_vector(15 downto 0);         
+  signal IOBP_Masken_Reg3:        std_logic_vector(15 downto 0);       
+  signal IOBP_Masken_Reg4:        std_logic_vector(15 downto 0);         
+  signal IOBP_Masken_Reg5:        std_logic_vector(15 downto 0);         
+  signal IOBP_sel1_rd_active:     std_logic;   
+  signal IOBP_sel1_Dtack:         std_logic;      
+  signal IOBP_sel1_data_to_SCUB:  std_logic_vector(15 downto 0);
+
+  
+--  +============================================================================================================================+
+
+  signal    Deb60_Cnt:    integer range 0 to 16383;  
+  signal    Deb60_in:     std_logic_vector(59 downto 0);
+  signal    Deb60_out:    std_logic_vector(59 downto 0);
+
+  signal    Syn60_in:     std_logic_vector(59 downto 0);  
+  signal    Syn60_out:    std_logic_vector(59 downto 0);  
+  
+  signal    Deb_Sync60:   std_logic_vector(59 downto 0);  
+  
+  
+  
+--  +============================================================================================================================+
+--  |                                   Übergabe-Signale für Anwender-IO: Out16   -- FG901_010                                   |
+--  +============================================================================================================================+
+
+
+  signal Out16_Mode:             std_logic_vector( 1 downto 0); -- Output-Betriebsart
+  signal Out16_Out:              std_logic_vector(15 downto 0); -- Data_Output
+  signal Out16_Data_FG_Out:      std_logic_vector(15 downto 0); -- Data/FG-Output
+
+  signal Out16_DAC_Strobe_i:     std_logic;                      -- Input  "DAC-Strobe"
+  signal Out16_DAC_Strobe_o:     std_logic;                      -- Output "DAC-Strobe"
+  signal Out16_DAC_Strobe_Expo:  integer range 0 to 7;           -- Anzahl der Counts
+  signal Out16_Strobe:           std_logic;                      -- Output "DAC-Strobe"
+
+  signal Out16_Lemo_in:          std_logic;                      -- Input "Lemo" 
+
+  signal Out16_LED_Lemo_In_i:    std_logic;  --  Input  "nLED_Lemo_In"
+  signal Out16_nLED_Lemo_In_o:   std_logic;  --  Output "nLED_Lemo_In"
+  
+  signal Out16_Lemo_deb_i:       std_logic;  -- Input  "UIO_Lemo_in"
+  signal Out16_Lemo_deb_o:       std_logic;  -- Output "UIO_Lemo_in"
+  signal Out16_Lemo_syn_i:       std_logic;  -- Input  "UIO_Lemo_in"
+  signal Out16_Lemo_syn_o:       std_logic;  -- Output "UIO_Lemo_in"
   
   
 
 --  +============================================================================================================================+
-
---	CONSTANT	CLK_sys_in_ps			: INTEGER	:= (1000000000 / (CLK_sys_in_Hz / 1000)); -- muss eigentlich clk-halbe sein
---
---
---  TYPE      t_Integer_Array  is array (0 to 7) of integer range 0 to 131072;
---
---  --------------- Array für die Anzahl der Clock's für die Bebounce-Zeiten von 1,2,4,8,16,32,64,128 us ---------------
---
---
---  constant  Wert_2_Hoch_n:   t_Integer_Array := (001000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von   1uS 
---                                                 002000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von   2uS 
---                                                 004000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von   4uS 
---                                                 008000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von   8uS 
---                                                 016000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von  16uS 
---                                                 032000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von  32uS 
---                                                 064000	* 1000 / CLK_sys_in_ps,   -- Anzahl der Clock's für die Debounce-Zeit von  64uS 
---                                                 128000	* 1000 / CLK_sys_in_ps);  -- Anzahl der Clock's für die Debounce-Zeit von 128uS 
-
- -- signal    Deb32_Cnt:    integer range 0 to 131072;
-  signal    Deb32_Cnt:    integer range 0 to 16383;  
-  signal    Deb32_in:     std_logic_vector(31 downto 0);
-  signal    Deb32_out:    std_logic_vector(31 downto 0);
-
+--  |                                   Übergabe-Signale für Anwender-IO: In16   -- FG901_020                                    |
 --  +============================================================================================================================+
+
+
+  signal In16_In:                std_logic_vector(15 downto 0); -- Data_Input
+  signal In16_Strobe_in:         std_logic;                     -- Input  "Strobe"
+  
+  signal In16_LED_Lemo_Out_i:    std_logic;                     -- Input  "nLED_Lemo_In"
+  signal In16_nLED_Lemo_Out_o:   std_logic;                     -- Output "nLED_Lemo_In"
+                      
+  signal In16_Input:             std_logic_vector(15  downto 0);  -- Input Daten
+  signal In16_Deb_Input_in:      std_logic_vector(15  downto 0);  -- Input Daten
+  signal In16_Deb_Input_out:     std_logic_vector(15  downto 0);  -- Input Daten
+  signal In16_Strobe:            std_logic;                       -- Input Strobe
+  signal In16_Deb_Strobe_in:     std_logic;                       -- Input Strobe
+  signal In16_Deb_Strobe_out:    std_logic;                       -- Input Strobe
+  
+  signal In16_ADC_Strobe_i:      std_logic;                       -- input  "Strobe-Signal für den ADC"
+  signal In16_ADC_Strobe_o:      std_logic;                       -- Output "Strobe-Signal für den ADC (1 CLK breit)"
+  signal In16_ADC_shift:         std_logic_vector(2  downto 0);   -- Shift-Reg.
+
+  signal In16_ADC_Data_FF_i:     std_logic_vector(15  downto 0);  -- input  "Daten ADC-Register"
+  signal In16_ADC_Data_FF_o:     std_logic_vector(15  downto 0);  -- Output "Daten ADC-Register"
+  
+  
+  --  +============================================================================================================================+
+
+
 
 
   signal clk_blink: std_logic;
@@ -1015,9 +1281,17 @@ component IO_4x8
   signal pll_locked:              std_logic;
   signal clk_switch_intr:         std_logic;
   
-  signal signal_tap_clk_250mhz:   std_logic;
+  signal  signal_tap_clk_250mhz:  std_logic;
+  signal  clk_update:             std_logic;
+  signal  clk_flash:              std_logic;
   
-
+  
+  signal  rstn_sys:               std_logic;
+  signal  rstn_update:            std_logic;
+  signal  rstn_flash:             std_logic;
+  signal  rstn_stc:               std_logic;
+  
+  constant c_is_arria5: boolean := false;
   
 --  ###############################################################################################################################
 --  ###############################################################################################################################
@@ -1038,45 +1312,83 @@ component IO_4x8
   A_nUser_EN            <= '0';
   
 
-  Deb32:  for I in 0 to 31 generate
+  
+  Deb60:  for I in 0 to 59 generate
     DB_I:  diob_debounce
     GENERIC MAP (DB_Tst_Cnt   => 3,
-                 Test         => 0)           --     
-              port map(DB_Cnt => Deb32_Cnt,     -- Debounce-Zeit in Clock's
-                       DB_in  => Deb32_in(I),   -- Signal-Input
-                       Reset  => Powerup_Res, -- Powerup-Reset
-                       clk    => clk_sys,     -- Sys-Clock
-                       DB_Out => Deb32_out(I)); -- Debounce-Signal-Out
-    end generate Deb32;
+                 Test         => 0)             --     
+              port map(DB_Cnt => Deb60_Cnt,     -- Debounce-Zeit in Clock's
+                       DB_in  => Deb60_in(I),   -- Signal-Input
+                       Reset  => Powerup_Res,   -- Powerup-Reset
+                       clk    => clk_sys,       -- Sys-Clock
+                       DB_Out => Deb60_out(I)); -- Debounce-Signal-Out
+    end generate Deb60;
+
+
+  Syn60:  for I in 0 to 59 generate
+    Sy_I:  diob_sync
+              port map(Sync_in  => Syn60_in(I),    -- Signal-Input
+                       Reset    => Powerup_Res,    -- Powerup-Reset
+                       clk      => clk_sys,        -- Sys-Clock
+                       Sync_out => Syn60_out(I));  -- Sync-Signal-Out
+    end generate Syn60;
   
+
+
   
   Powerup_Res <= not nPowerup_Res;  -- only for modelsim!
   WRnRD       <= not A_RnW;         -- only for modelsim!
 
-  diob_clk_switch: diob_sys_clk_local_clk_switch
+  diob_clk_switch: slave_clk_switch
+    generic map (
+      Base_Addr => clk_switch_status_cntrl_addr,
+      card_type => g_card_type
+    )
     port map(
-      local_clk_i           => CLK_20MHz_D,
-      sys_clk_i             => A_SysClock,
-      nReset                => nPowerup_Res,
-      master_clk_o          => clk_sys,               -- core clocking
-      pll_locked            => pll_locked,
-      sys_clk_is_bad        => sys_clk_is_bad,
-      sys_clk_is_bad_la     => sys_clk_is_bad_la,
-      local_clk_is_bad      => local_clk_is_bad,
-      local_clk_is_running  => local_clk_is_running,
-      sys_clk_deviation     => sys_clk_deviation,
-      sys_clk_deviation_la  => sys_clk_deviation_la,
-      Adr_from_SCUB_LA      => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
-      Data_from_SCUB_LA     => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
-      Ext_Adr_Val           => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
-      Ext_Rd_active         => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
-      Ext_Wr_active         => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
-      Rd_Port               => clk_switch_rd_data,    -- output for all read sources of this macro
-      Rd_Activ              => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
-      Dtack                 => clk_switch_dtack,
-      signal_tap_clk_250mhz => signal_tap_clk_250mhz
+      local_clk_i             => CLK_20MHz_D,
+      sys_clk_i               => A_SysClock,
+      nReset                  => nPowerup_Res,
+      master_clk_o            => clk_sys,               -- core clocking
+      pll_locked              => pll_locked,
+      sys_clk_is_bad          => sys_clk_is_bad,
+      sys_clk_is_bad_la       => sys_clk_is_bad_la,
+      local_clk_is_bad        => local_clk_is_bad,
+      local_clk_is_running    => local_clk_is_running,
+      sys_clk_deviation       => sys_clk_deviation,
+      sys_clk_deviation_la    => sys_clk_deviation_la,
+      Adr_from_SCUB_LA        => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+      Data_from_SCUB_LA       => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+      Ext_Adr_Val             => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Rd_active           => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+      Ext_Wr_active           => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+      Rd_Port                 => clk_switch_rd_data,    -- output for all read sources of this macro
+      Rd_Activ                => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
+      Dtack                   => clk_switch_dtack,
+      signal_tap_clk_250mhz   => signal_tap_clk_250mhz,
+      clk_update              => clk_update,
+      clk_flash               => clk_flash,
+      clk_encdec              => open
       );
-    
+   
+   reset : altera_reset
+    generic map(
+      g_plls   => 1,
+      g_clocks => 4,
+      g_areset => f_pick(c_is_arria5, 100, 1)*1024,
+      g_stable => f_pick(c_is_arria5, 100, 1)*1024)
+    port map(
+      clk_free_i    => clk_sys,
+      rstn_i        => A_nReset,
+      pll_lock_i(0) => pll_locked,
+      pll_arst_o    => open,
+      clocks_i(0)   => clk_sys,
+      clocks_i(1)   => signal_tap_clk_250mhz,
+      clocks_i(2)   => clk_update,
+      clocks_i(3)   => clk_flash,
+      rstn_o(0)     => rstn_sys,
+      rstn_o(1)     => rstn_stc,
+      rstn_o(2)     => rstn_update,
+      rstn_o(3)     => rstn_flash);
     
       
 Conf_Sts1: config_status     
@@ -1093,7 +1405,7 @@ port map  (
       Ext_Wr_active       =>  Ext_Wr_active,             -- '1' => Wr-Cycle is active
       Ext_Wr_fin          =>  SCU_Ext_Wr_fin,            -- marks end of write cycle, active one for one clock period of sys_clk
       clk                 =>  clk_sys,                   -- should be the same clk, used by SCU_Bus_Slave
-      nReset              =>  nPowerup_Res,              
+      nReset              =>  rstn_sys,              
       
       Diob_Status1        =>  Diob_Status1,              -- Input-Diob_Status1 
       Diob_Status2        =>  Diob_Status2,              -- Input-Diob_Status2 
@@ -1104,7 +1416,7 @@ port map  (
       Diob_Config2        =>  Diob_Config2,              -- Daten-Reg_Diob_Config2
       AW_Config1          =>  AW_Config1,                -- Daten-Reg_AW_Config1  
       AW_Config2          =>  AW_Config2,                -- Daten-Reg_AW_Config2  
-      clr_Tag_Maske       =>  clr_Tag_Maske,             -- clear alle Tag-Masken
+      Clr_Tag_Config      =>  Clr_Tag_Config,            -- Clear Tag-Konfigurations-Register
 
       Diob_Config1_wr     =>  Diob_Config1_wr,           -- write-Strobe, Daten-Reg. AWOut1
       Diob_Config2_wr     =>  Diob_Config2_wr,           -- write-Strobe, Daten-Reg. AWOut2
@@ -1136,7 +1448,7 @@ port map  (
       Ext_Wr_fin          =>  SCU_Ext_Wr_fin,      -- marks end of write cycle, active one for one clock period of sys_clk
       clk                 =>  clk_sys,             -- should be the same clk, used by SCU_Bus_Slave
       Ena_every_1us       =>  Ena_every_1us,       -- Clock-Enable-Puls alle Mikrosekunde, 1 Clock breit
-      nReset              =>  nPowerup_Res,      
+      nReset              =>  rstn_sys,      
 
       SCU_AW_Input_Reg    =>  SCU_AW_Input_Reg,    -- Input-Port's  zum SCU-Bus
       SCU_AW_Output_Reg   =>  SCU_AW_Output_Reg,   -- Output-Port's vom SCU-Bus 
@@ -1176,10 +1488,10 @@ port map  (
       Spare0              =>  A_Spare0,                  -- vom Master getrieben
       Spare1              =>  A_Spare1,                  -- vom Master getrieben
       clk                 =>  clk_sys,                   -- should be the same clk, used by SCU_Bus_Slave
-      nReset              =>  nPowerup_Res,              
+      nReset              =>  rstn_sys,              
 
-      SCU_AW_Input_Reg    =>  SCU_AW_Input_Reg,              -- die gleichen Input-Port's wie zum SCU-Bus
-      clr_Tag_Maske       =>  clr_Tag_Maske,             -- clear alle Tag-Masken
+      SCU_AW_Input_Reg    =>  SCU_AW_Input_Reg,          -- die gleichen Input-Port's wie zum SCU-Bus
+      Clr_Tag_Config      =>  Clr_Tag_Config,            -- Clear Tag-Konfigurations-Register
       
       Max_AWOut_Reg_Nr    =>  Max_AWOut_Reg_Nr,          -- Maximale AWOut-Reg-Nummer der Anwendung
       Max_AWIn_Reg_Nr     =>  Max_AWIn_Reg_Nr,           -- Maximale AWIn-Reg-Nummer der Anwendung
@@ -1211,25 +1523,25 @@ addac:  addac_reg
     Ext_Wr_active       =>  Ext_Wr_active,     -- '1' => Wr-Cycle is active
     Ext_Wr_fin          =>  SCU_Ext_Wr_fin,    -- marks end of write cycle, active one for one clock period of sys_clk
     clk                 =>  clk_sys,           -- should be the same clk, used by SCU_Bus_Slave
-    nReset              =>  nPowerup_Res,      
+    nReset              =>  rstn_sys,      
 
-		DAC1_Config	        =>  DAC1_Config,       -- DAC1 Config-Register
-		DAC1_Config_wr      =>  DAC1_Config_wr,    -- DAC1 Output-Register
-		DAC1_Out	          =>  DAC1_Out,          -- DAC1 Output-Register
-		DAC1_Out_wr         =>  DAC1_Out_wr,       -- DAC1 Output-Register
-		DAC2_Config	        =>  DAC2_Config,       -- DAC2 Config-Register
-		DAC2_Config_wr      =>  DAC2_Config_wr,    -- DAC2 Output-Register
-		DAC2_Out	          =>  DAC2_Out,          -- DAC2 Output-Register
-		DAC2_Out_wr         =>  DAC2_Out_wr,       -- DAC2 Output-Register
-		ADC_Config	        =>  ADC_Config,        -- ADC  Config-Register
-		ADC_In1	            =>  ADC_In1,	         -- ADC1 Input-Register
-		ADC_In2	            =>  ADC_In2,	         -- ADC2 Input-Register 
-		ADC_In3	            =>  ADC_In3,	         -- ADC3 Input-Register 
-		ADC_In4	            =>  ADC_In4,	         -- ADC4 Input-Register 
-		ADC_In5	            =>  ADC_In5,	         -- ADC5 Input-Register
-		ADC_In6	            =>  ADC_In6,	         -- ADC6 Input-Register
-		ADC_In7	            =>  ADC_In7,	         -- ADC7 Input-Register
-		ADC_In8	            =>  ADC_In8,	         -- ADC8 Input-Register
+    DAC1_Config         =>  DAC1_Config,       -- DAC1 Config-Register
+    DAC1_Config_wr      =>  DAC1_Config_wr,    -- DAC1 Output-Register
+    DAC1_Out            =>  DAC1_Out,          -- DAC1 Output-Register
+    DAC1_Out_wr         =>  DAC1_Out_wr,       -- DAC1 Output-Register
+    DAC2_Config         =>  DAC2_Config,       -- DAC2 Config-Register
+    DAC2_Config_wr      =>  DAC2_Config_wr,    -- DAC2 Output-Register
+    DAC2_Out            =>  DAC2_Out,          -- DAC2 Output-Register
+    DAC2_Out_wr         =>  DAC2_Out_wr,       -- DAC2 Output-Register
+    ADC_Config          =>  ADC_Config,        -- ADC  Config-Register
+    ADC_In1             =>  ADC_In1,          -- ADC1 Input-Register
+    ADC_In2             =>  ADC_In2,          -- ADC2 Input-Register 
+    ADC_In3             =>  ADC_In3,          -- ADC3 Input-Register 
+    ADC_In4             =>  ADC_In4,          -- ADC4 Input-Register 
+    ADC_In5             =>  ADC_In5,          -- ADC5 Input-Register
+    ADC_In6             =>  ADC_In6,          -- ADC6 Input-Register
+    ADC_In7             =>  ADC_In7,          -- ADC7 Input-Register
+    ADC_In8             =>  ADC_In8,          -- ADC8 Input-Register
 
     Rd_active           =>  addac_rd_active,       -- read data available at 'Data_to_SCUB'-AWOut
     Data_to_SCUB        =>  addac_Data_to_SCUB,    -- connect read sources to SCUB-Macro
@@ -1249,7 +1561,7 @@ io_port: IO_4x8
     Ext_Rd_active       => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active       => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk                 => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset              => nPowerup_Res,          -- in, '0' => resets the IO_4x8
+    nReset              => rstn_sys,          -- in, '0' => resets the IO_4x8
     io                  => s_io,                  -- inout, select and set direction only in 8-bit partitions
     io_7_0_tx           => s_io_7_0_tx,           -- out, '1' = external io(7..0)-buffer set to output.
     ext_io_7_0_dis      => s_ext_io_7_0_dis,      -- out, '1' = disable external io(7..0)-buffer.
@@ -1297,7 +1609,7 @@ port map  (
       Ext_Wr_active      =>  Ext_Wr_active,
       Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
       clk                =>  clk_sys,
-      nReset             =>  nPowerup_Res,
+      nReset             =>  rstn_sys,
 --
       Reg_IO1             =>  INL_xor_IO1,
       Reg_IO2             =>  INL_xor_IO2,    
@@ -1327,7 +1639,7 @@ port map  (
       Ext_Wr_active      =>  Ext_Wr_active,
       Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
       clk                =>  clk_sys,
-      nReset             =>  nPowerup_Res,
+      nReset             =>  rstn_sys,
 --
       Reg_IO1            =>  INL_msk_IO1,
       Reg_IO2            =>  INL_msk_IO2,   
@@ -1343,6 +1655,38 @@ port map  (
       Data_to_SCUB       =>  INL_msk1_data_to_SCUB
     );
 
+    
+    
+IOBP_Maske: io_reg     
+generic map(
+      Base_addr =>  c_IOBP_Masken_Base_Addr
+      )
+port map  (     
+      Adr_from_SCUB_LA   =>  ADR_from_SCUB_LA,
+      Data_from_SCUB_LA  =>  Data_from_SCUB_LA,
+      Ext_Adr_Val        =>  Ext_Adr_Val,
+      Ext_Rd_active      =>  Ext_Rd_active,
+      Ext_Rd_fin         =>  Ext_Rd_fin,
+      Ext_Wr_active      =>  Ext_Wr_active,
+      Ext_Wr_fin         =>  SCU_Ext_Wr_fin,
+      clk                =>  clk_sys,
+      nReset             =>  rstn_sys,
+--
+      Reg_IO1            =>  IOBP_Masken_Reg1,
+      Reg_IO2            =>  IOBP_Masken_Reg2,   
+      Reg_IO3            =>  IOBP_Masken_Reg3,  
+      Reg_IO4            =>  IOBP_Masken_Reg4,  
+      Reg_IO5            =>  IOBP_Masken_Reg5,  
+      Reg_IO6            =>  open,
+      Reg_IO7            =>  open,
+      Reg_IO8            =>  open,    
+--
+      Reg_rd_active      =>  IOBP_sel1_rd_active,
+      Dtack_to_SCUB      =>  IOBP_sel1_Dtack,
+      Data_to_SCUB       =>  IOBP_sel1_data_to_SCUB
+    );
+  
+    
  
     
 testport_mux: process (A_SEL, AW_Config1, AW_Input_Reg, AW_Output_Reg, LA_Tag_Ctrl1, 
@@ -1395,23 +1739,18 @@ hp_la_o <= test_out(15 downto 0);
 
 
 
-test_port_in_0 <= nPowerup_Res          & clk_sys         & Ena_Every_100ns & Ena_Every_166ns & -- bit15..12
+test_port_in_0 <= rstn_sys              & clk_sys         & Ena_Every_100ns & Ena_Every_166ns & -- bit15..12
                   Ext_Wr_active         & SCU_Ext_Wr_fin  & '0'             & FG_1_strobe     & -- bit11..8
                   signal_tap_clk_250mhz & pll_locked      & A_RnW & A_nDS   &                   -- bit7..4
                   A_nBoardSel           & FG_1_strobe     & '0'             & SCUB_Dtack      ; -- bit3..0
 
             
 test_clocks <=  X"0"                                                                              -- bit15..12
-              & '0' & signal_tap_clk_250mhz & A_SysClock & CLK_20MHz_D                            -- bit11..8
+              -- use only outputs from PLL
+              --& '0' & signal_tap_clk_250mhz & A_SysClock & CLK_20MHz_D                          -- bit11..8
+              & '0' & signal_tap_clk_250mhz & '0' & '0'                                           -- bit11..8
               & '0' & pll_locked & sys_clk_deviation & sys_clk_deviation_la                       -- bit7..4
               & local_clk_is_running & local_clk_is_bad & sys_clk_is_bad & sys_clk_is_bad_la;     -- bit3..0
-
-
-
-fl : flash_loader_v01
-port map  (
-      noe_in  =>  '0'
-      );
   
     
   -- open drain buffer for one wire
@@ -1424,12 +1763,12 @@ generic map (
       diag_on   =>  1
       )
 port map  (
-      Res               =>  Powerup_Res,
+      Res               =>  not rstn_sys,
       Clk               =>  clk_sys,
       Ena_every_100ns   =>  Ena_Every_100ns,
       Ena_every_166ns   =>  Ena_Every_166ns,
-      Ena_every_250ns   =>  open,
-      Ena_every_500ns   =>  open,
+      Ena_every_250ns   =>  Ena_every_250ns,
+      Ena_every_500ns   =>  Ena_every_500ns,
       Ena_every_1us     =>  Ena_every_1us,
       Ena_Every_20ms    =>  Ena_Every_20ms
       );
@@ -1449,7 +1788,7 @@ p_led_inr: led_n
 
 --p_led_pu: led_n
 --  generic map (stretch_cnt => stretch_cnt)
---  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => not (nPowerup_Res), nLED => s_nLED_PU);-- LED: nPowerup_Reset
+--  port map      (ena => Ena_Every_20ms, CLK => clk_sys, Sig_in => not (rstn_sys), nLED => s_nLED_PU);-- LED: rstn_syset
   
 p_led_user1: led_n
   generic map (stretch_cnt => stretch_cnt)
@@ -1473,7 +1812,7 @@ A_nLED_D3 <=   s_nLED_Dtack;  -- Diagnose-LED_D3 = Dtack
 
 sel_every_250ms: div_n
   generic map (n => 12, diag_on => 0)  -- ena nur alle 20ms fr einen Takt aktiv, deshalb 13x20ms = 260ms
-    port map  ( res => Powerup_Res,
+    port map  ( res => not rstn_sys,
                 clk => clk_sys,
                 ena => Ena_Every_20ms,
                 div_o => ENA_every_250ms
@@ -1481,7 +1820,7 @@ sel_every_250ms: div_n
               
 sel_every_500ms: div_n
   generic map (n => 25, diag_on => 0)  -- ena nur alle 20ms fr einen Takt aktiv, deshalb 25x20ms = 500ms
-    port map  ( res => Powerup_Res,
+    port map  ( res => not rstn_sys,
                 clk => clk_sys,
                 ena => Ena_Every_20ms,
                 div_o => ENA_every_500ms
@@ -1489,9 +1828,9 @@ sel_every_500ms: div_n
           
               
 p_clk_blink:  
-process (clk_sys, Powerup_Res, ENA_every_250ms)
+process (clk_sys, rstn_sys, ENA_every_250ms)
 begin
-  if  ( Powerup_Res    = '1') then
+  if  ( not rstn_sys    = '1') then
       clk_blink   <= '0';
   elsif (rising_edge(clk_sys)) then
     if (ENA_every_500ms = '1') then
@@ -1565,30 +1904,33 @@ port map (
     Powerup_Done            => Powerup_Done                           -- out, this signal is set after powerup. Only the SCUB-Master can clear this bit.
     );
 
-
 lm32_ow: housekeeping
-  generic map (
-    Base_Addr => c_lm32_ow_Base_Addr )
-  port map (
-    clk_sys => clk_sys,
-    n_rst => nPowerup_Res,
+generic map (
+  Base_addr => c_lm32_ow_Base_Addr)
+port map (
+  clk_sys     => clk_sys,
+  clk_update  => clk_update,
+  clk_flash   => clk_flash,
+  rstn_sys    => rstn_sys,
+  rstn_update => rstn_update,
+  rstn_flash  => rstn_flash,
 
-    ADR_from_SCUB_LA  => ADR_from_SCUB_LA,
-    Data_from_SCUB_LA => Data_from_SCUB_LA,
-    Ext_Adr_Val       => Ext_Adr_Val,
-    Ext_Rd_active     => Ext_Rd_active,
-    Ext_Wr_active     => Ext_Wr_active,
-    user_rd_active    => wb_scu_rd_active,
-    Data_to_SCUB      => wb_scu_data_to_SCUB,
-    Dtack_to_SCUB     => wb_scu_dtack,
 
-    owr_pwren_o       => owr_pwren_o,
-    owr_en_o          => owr_en_o,
-    owr_i             => owr_i,
+  ADR_from_SCUB_LA  => ADR_from_SCUB_LA,
+  Data_from_SCUB_LA => Data_from_SCUB_LA,
+  Ext_Adr_Val       => Ext_Adr_Val,
+  Ext_Rd_active     => Ext_Rd_active,
+  Ext_Wr_active     => Ext_Wr_active,
+  user_rd_active    => wb_scu_rd_active,
+  Data_to_SCUB      => wb_scu_data_to_SCUB,
+  Dtack_to_SCUB     => wb_scu_dtack,
 
-    debug_serial_o    => uart_txd_out,
-    debug_serial_i    => '0');
+  owr_pwren_o       => owr_pwren_o,
+  owr_en_o          => owr_en_o,
+  owr_i             => owr_i,
 
+  debug_serial_o    => uart_txd_out,
+  debug_serial_i    => '0');
     
 fg_1: fg_quad_scu_bus
   generic map (
@@ -1605,7 +1947,7 @@ fg_1: fg_quad_scu_bus
     Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset            => nPowerup_Res,          -- in, '0' => resets the fg_1
+    nReset            => rstn_sys,          -- in, '0' => resets the fg_1
     Rd_Port           => FG_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => FG_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => FG_1_dtack,            -- connect Dtack to SCUB-Macro
@@ -1634,7 +1976,7 @@ fg_2: fg_quad_scu_bus
     Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset            => nPowerup_Res,          -- in, '0' => resets the fg_1
+    nReset            => rstn_sys,          -- in, '0' => resets the fg_1
     Rd_Port           => FG_2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => FG_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => FG_2_dtack,            -- connect Dtack to SCUB-Macro
@@ -1654,7 +1996,7 @@ fg_2: fg_quad_scu_bus
     diag_on_is_1  => 1)
   port map (
     clk           => clk_sys,
-    nrst          => nPowerup_Res,
+    nrst          => rstn_sys,
     tmr_irq       => tmr_irq,
     
     Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
@@ -1677,28 +2019,30 @@ rd_port_mux:  process ( clk_switch_rd_active, clk_switch_rd_data,
                         INL_xor1_rd_active,   INL_xor1_data_to_SCUB,
                         tmr_rd_active,        tmr_data_to_SCUB,
                         addac_rd_active,      addac_Data_to_SCUB,
-                        io_port_rd_active,    io_port_data_to_SCUB
+                        io_port_rd_active,    io_port_data_to_SCUB,
+                        IOBP_sel1_rd_active,  IOBP_sel1_data_to_SCUB
                       )
 
-  variable sel: unsigned(11 downto 0);
+  variable sel: unsigned(12 downto 0);
   begin
     sel :=  tmr_rd_active   & INL_xor1_rd_active  & INL_msk1_rd_active    &  AW_Port1_rd_active &  FG_1_rd_active &
             FG_2_rd_active  & wb_scu_rd_active    & clk_switch_rd_active  & Conf_Sts1_rd_active &  Tag_Ctrl1_rd_active &
-            addac_rd_active & io_port_rd_active ;
+            addac_rd_active & io_port_rd_active   & IOBP_sel1_rd_active;
     
   case sel IS
-      when "100000000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "010000000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
-      when "001000000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
-      when "000100000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
-      when "000010000000" => Data_to_SCUB <= FG_1_data_to_SCUB;
-      when "000001000000" => Data_to_SCUB <= FG_2_data_to_SCUB;
-      when "000000100000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "000000010000" => Data_to_SCUB <= clk_switch_rd_data;
-      when "000000001000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
-      when "000000000100" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
-      when "000000000010" => Data_to_SCUB <= addac_Data_to_SCUB;
-      when "000000000001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "1000000000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "0100000000000" => Data_to_SCUB <= INL_xor1_data_to_SCUB;
+      when "0010000000000" => Data_to_SCUB <= INL_msk1_data_to_SCUB;
+      when "0001000000000" => Data_to_SCUB <= AW_Port1_data_to_SCUB;
+      when "0000100000000" => Data_to_SCUB <= FG_1_data_to_SCUB;
+      when "0000010000000" => Data_to_SCUB <= FG_2_data_to_SCUB;
+      when "0000001000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "0000000100000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "0000000010000" => Data_to_SCUB <= Conf_Sts1_data_to_SCUB;
+      when "0000000001000" => Data_to_SCUB <= Tag_Ctrl1_data_to_SCUB;
+      when "0000000000100" => Data_to_SCUB <= addac_Data_to_SCUB;
+      when "0000000000010" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "0000000000001" => Data_to_SCUB <= IOBP_sel1_data_to_SCUB;
 
 
       when others      => Data_to_SCUB <= (others => '0');
@@ -1711,7 +2055,7 @@ rd_port_mux:  process ( clk_switch_rd_active, clk_switch_rd_data,
 
     Dtack_to_SCUB <= ( tmr_dtack   or INL_xor1_Dtack  or INL_msk1_Dtack   or AW_Port1_Dtack  or FG_1_dtack  or 
                        FG_2_dtack  or wb_scu_dtack    or clk_switch_dtack or Conf_Sts1_Dtack or Tag_Ctrl1_Dtack or
-                       addac_Dtack or io_port_Dtack  );
+                       addac_Dtack or io_port_Dtack   or IOBP_sel1_Dtack);
                      
 
     A_nDtack <= NOT(SCUB_Dtack);
@@ -1766,24 +2110,44 @@ end process;
 --  +============================================================================================================================+
 
 
+  
+P37_Deb:  for I in 0 to 15 generate
+    DB_I:  diob_debounce
+    GENERIC MAP (DB_Tst_Cnt => 3, Test => 0)     
+    port map(DB_Cnt => Deb60_Cnt, DB_in  => P37IO_Deb_in_Data_i(I), Reset => not rstn_sys, clk => clk_sys, DB_Out => P37IO_Deb_in_Data_o(I));
+    end generate P37_Deb;
+
+P37_Syn:  for I in 0 to 15 generate
+    Sy_I:  diob_sync
+    port map(Sync_in => P37IO_Syn_in_Data_i(I), Reset => not rstn_sys, clk => clk_sys, Sync_out => P37IO_Syn_in_Data_o(I));  -- Sync-Signal
+    end generate P37_Syn;
+
+
 P37IO_in_Start_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)   --     
-  port map(DB_Cnt => Deb32_Cnt,               -- Debounce-Zeit in Clock's
-           DB_in  => P37IO_Start_deb_i,           -- Signal-Input
-           Reset  => Powerup_Res,             -- Powerup-Reset
+  port map(DB_Cnt => Deb60_Cnt,               -- Debounce-Zeit in Clock's
+           DB_in  => P37IO_Start_deb_i,       -- Signal-Input
+           Reset  => not rstn_sys,             -- Powerup-Reset
            clk    => clk_sys,                 -- Sys-Clock
            DB_Out => P37IO_Start_deb_o);      -- Debounce-Signal-Out
 
+P37IO_in_Start_Syn:  diob_sync
+  port map(Sync_in  => P37IO_Start_syn_i,     -- Signal-Input
+           Reset    => not rstn_sys,           -- Powerup-Reset
+           clk      => clk_sys,               -- Sys-Clock
+           Sync_out => P37IO_Start_syn_o);    -- Sync-Signal-Out
+        
       
 P37IO_Out_Led_Start: led_n
   generic map (stretch_cnt => stretch_cnt)
   port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => P37IO_Start_deb_o,    nLED => P37IO_nLED_Start_o);
   
-
-  
 P37IO_in_Stop_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb32_Cnt, DB_in => P37IO_Stop_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => P37IO_Stop_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => P37IO_Stop_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => P37IO_Stop_deb_o);  
+
+P37IO_in_Stop_Syn:  diob_sync
+  port map(Sync_in  => P37IO_Stop_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => P37IO_Stop_syn_o);
   
    
 P37IO_Out_Led_Stop: led_n
@@ -1793,17 +2157,18 @@ P37IO_Out_Led_Stop: led_n
 
 P37IO_in_Reset_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb32_Cnt, DB_in => P37IO_Reset_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => P37IO_Reset_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => P37IO_Reset_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => P37IO_Reset_deb_o);  
  
- 
+P37IO_in_Reset_Syn:  diob_sync
+  port map(Sync_in  => P37IO_Reset_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => P37IO_Reset_syn_o);
 
   
 p_P37IO_dff: 
-process (clk_sys, P37IO_FF_Start, P37IO_FF_Stop, P37IO_FF_Reset, Powerup_Res)
+process (clk_sys, P37IO_FF_Start, P37IO_FF_Stop, P37IO_FF_Reset, rstn_sys)
 begin
   -- Reset whenever the reset signal goes low, regardless of the clock
   -- or the clock enable
-  if  ( Powerup_Res    = '1') then
+  if  ( not rstn_sys    = '1') then
       P37IO_BNC_o  <= '0';
   elsif ( (P37IO_FF_Stop or P37IO_FF_Reset)  = '1') then
       P37IO_BNC_o  <= '0';
@@ -1832,17 +2197,22 @@ P37IO_Out_Led_BNC: led_n
 
 P25IO_in_Start_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb32_Cnt, DB_in => P25IO_Start_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_Start_deb_o);  
-      
+  port map(DB_Cnt => Deb60_Cnt, DB_in => P25IO_Start_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => P25IO_Start_deb_o);  
+
+P25IO_in_Start_Syn:  diob_sync
+  port map(Sync_in  => P25IO_Start_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => P25IO_Start_syn_o);
+  
 P25IO_Out_Led_Start: led_n
   generic map (stretch_cnt => stretch_cnt)
   port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => P25IO_Start_deb_o,    nLED => P25IO_nLED_Start_o);
 
-
 P25IO_in_Stop_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb32_Cnt, DB_in => P25IO_Stop_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_Stop_deb_o);  
- 
+  port map(DB_Cnt => Deb60_Cnt, DB_in => P25IO_Stop_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => P25IO_Stop_deb_o);  
+
+P25IO_in_Stop_Syn:  diob_sync
+  port map(Sync_in  => P25IO_Stop_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => P25IO_Stop_syn_o);
+  
 P25IO_Out_Led_Stop: led_n
   generic map (stretch_cnt => stretch_cnt)
   port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => P25IO_Stop_deb_o,    nLED => P25IO_nLED_Stop_o);
@@ -1850,17 +2220,19 @@ P25IO_Out_Led_Stop: led_n
 
 P25IO_in_Reset_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb32_Cnt, DB_in => P25IO_Reset_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_Reset_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => P25IO_Reset_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => P25IO_Reset_deb_o);  
 
-
-
+P25IO_in_Reset_Syn:  diob_sync
+  port map(Sync_in  => P25IO_Reset_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => P25IO_Reset_syn_o);
+  
+  
   
 p_P25IO_dff: 
-process (clk_sys, P25IO_FF_Start, P25IO_FF_Stop, P25IO_FF_Reset, Powerup_Res)
+process (clk_sys, P25IO_FF_Start, P25IO_FF_Stop, P25IO_FF_Reset, rstn_sys)
 begin
   -- Reset whenever the reset signal goes low, regardless of the clock
   -- or the clock enable
-  if  ( Powerup_Res    = '1') then
+  if  ( not rstn_sys    = '1') then
       P25IO_BNC_o  <= '0';
   elsif ( (P25IO_FF_Stop or P25IO_FF_Reset)  = '1') then
       P25IO_BNC_o  <= '0';
@@ -1880,125 +2252,194 @@ P25IO_Out_Led_BNC: led_n
   port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => P25IO_BNC_o,    nLED => P25IO_nELD_BNC_o);
 
 
- 
- 
---------- Puls als Signal (1 Clock breit) --------------------
-
-p_P25IO_DAC_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_DAC_Strobe_Start_i)
-  BEGin
-    IF Powerup_Res  = '1' THEN
-      P25IO_DAC_shift  <= (OTHERS => '0');
-      P25IO_DAC_Strobe_Start_o    <= '0';
-
-    ELSIF rising_edge(clk_sys) THEN
-      P25IO_DAC_shift <= (P25IO_DAC_shift(P25IO_DAC_shift'high-1 downto 0) & (P25IO_DAC_Strobe_Start_i));
-
-      IF P25IO_DAC_shift(P25IO_DAC_shift'high) = '0' AND P25IO_DAC_shift(P25IO_DAC_shift'high-1) = '1' THEN
-        P25IO_DAC_Strobe_Start_o <= '1';
-      ELSE
-        P25IO_DAC_Strobe_Start_o <= '0';
-      END IF;
-    END IF;
-  END PROCESS p_P25IO_DAC_Strobe_Start;
-  
   
   --------- DAC_Out-Strobe --------------------
-P25IO_DAC_Strobe: led_n
-  generic map (stretch_cnt => C_Strobe_1us) -- = 1us
-  port map      (ena => '1', CLK => clk_sys,   Sig_in => P25IO_DAC_Strobe_Start_o,    nLED => P25IO_nDAC_Strobe_o);-- 
+
+P25IO_DAC_DAC_Strobe: outpuls port map( nReset   => rstn_sys,
+                                        CLK      => clk_sys,
+                                        Cnt_ena  => '1',
+                                        Start    => (P25IO_DAC_DAC_Strobe_i),
+                                        Base_cnt => C_Strobe_100ns, 
+                                        Mult_cnt => Wert_Strobe_2_Hoch_n(P25IO_DAC_DAC_Strobe_Expo),
+                                        Sign_Out => P25IO_DAC_DAC_Strobe_o);
 
 
+                                  
+                             
+     -------------------------------------------------------------------------------------------------------
+     ---------------------------    Erzeugung des "Holec_DAC_Strobes"   ------------------------------------
+     -------------------------------------------------------------------------------------------------------
+--
+--              <-- 10us --|
+--              +--+       +--+       +--+       +--+
+--              | 3|  7us  | 3|  7us  | 3|  7us  | 3|
+--        ------+  +-------+  +-------+  +-------+  +-------
+   
+  --------- DAC_Strobe_Puls_1-3 --------------------
+P25IO_DAC_Puls: led_n
+  generic map (stretch_cnt => C_Strobe_3us) -- = 3us
+  port map      (ena => '1', CLK => clk_sys,   Sig_in => P25IO_DAC_Str_Puls_i,   nLED => P25IO_DAC_Str_Puls_o);-- 
+
+  --------- DAC_Strobe_Pause_1-3 --------------------
+P25IO_DAC_Pause: led_n
+  generic map (stretch_cnt => C_Strobe_7us) -- = 7us
+  port map      (ena => '1', CLK => clk_sys,   Sig_in => P25IO_DAC_Str_Pause_i,   nLED => P25IO_DAC_Str_Pause_o);-- 
    
 
---------- Puls als Signal (1 Clock breit) --------------------
+   
+P_P25IO_Holec_Strobe:  process (clk_sys, rstn_sys, P25IO_Holec_Strobe_Start, P25IO_DAC_Str_Puls_o, P25IO_DAC_Str_Pause_o)
 
-p_P25IO_ADC_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_ADC_ECC_Start_i)
+    begin
+      if (rstn_sys = '0') then
+        P25IO_Holec_state        <= holec_idle;
+        P25IO_DAC_Str_Puls_i     <= '0';          -- Input-Signal für Pulsbreite
+        P25IO_DAC_Str_Pause_i    <= '0';          -- Input-Signal für Pausenbreite
+        P25IO_Holec_Strobe_Out   <= '0';          -- Output-Signal
+        P25IO_Holec_Str_Cnt      <=  0 ;          -- Anzahl der Strobs
+
+        
+    ELSIF rising_edge(clk_sys) then
+      case P25IO_Holec_state is
+        when holec_idle   =>    if  (P25IO_Holec_Strobe_Start  = '1')  THEN
+                                     P25IO_Holec_Str_Cnt      <=  4 ;               -- Anzahl der Strobs
+                                     P25IO_Holec_state        <= holec_puls;
+                                else          
+                                     P25IO_Holec_state        <= holec_idle;
+                                end if;
+                               
+        when holec_puls   =>    P25IO_DAC_Str_Puls_i          <= '1';               -- Start Puls-Breiten-Counter
+                                P25IO_Holec_state             <= holec_puls_w;
+        
+        when holec_puls_w =>    P25IO_DAC_Str_Puls_i          <= '0';               -- Stop Puls-Breiten-Counter
+                                P25IO_Holec_Strobe_Out        <= '1';               -- Set Output-Strobe (Puls-n)
+                                if  (P25IO_DAC_Str_Puls_o      = '0')  THEN         -- Output ist Low-Akiv
+                                  P25IO_Holec_state           <= holec_puls_w;
+                                else
+                                  P25IO_Holec_Str_Cnt         <= P25IO_Holec_Str_Cnt-1 ;    -- Anzahl der Strobs
+                                  P25IO_Holec_state           <= holec_puls_e;
+                                end if;
+
+        when holec_puls_e =>    P25IO_Holec_Strobe_Out        <= '0';                   -- Reset Output-Strobe (Puls-n)
+                                IF  P25IO_Holec_Str_Cnt       <   1 THEN
+                                    P25IO_Holec_state         <= holec_end;
+                                else  
+                                    P25IO_Holec_state         <= holec_pause;
+                                end if; 
+                  
+        when holec_pause  =>    P25IO_DAC_Str_Pause_i         <= '1';                   -- Start Pause-Breiten-Counter
+                                P25IO_Holec_state             <= holec_pause_w;
+  
+        when holec_pause_w =>   P25IO_DAC_Str_Pause_i         <= '0';                   -- Stop Pause-Breiten-Counter
+                                if  (P25IO_DAC_Str_Pause_o     = '0')  THEN             -- Output ist Low-Akiv
+                                    P25IO_Holec_state         <= holec_pause_w;
+                                else
+                                    P25IO_Holec_state         <= holec_puls;
+                                end if;
+                                
+        when holec_end     =>   P25IO_Holec_state           <= holec_idle;
+
+        when others =>          P25IO_Holec_state           <= holec_idle;
+
+      end case;
+    end if;
+  end process P_P25IO_Holec_Strobe;
+  
+
+
+
+
+
+
+--------- Puls als Strobe (1 Clock breit) --------------------
+
+p_P25IO_ADC_Strobe_Start:  PROCESS (clk_sys, rstn_sys, P25IO_ADC_Strobe_i)
   BEGin
-    IF Powerup_Res  = '1' THEN
+    IF not rstn_sys  = '1' THEN
       P25IO_ADC_shift  <= (OTHERS => '0');
-      P25IO_ADC_ECC_Start_o    <= '0';
+      P25IO_ADC_Strobe_o    <= '0';
 
     ELSIF rising_edge(clk_sys) THEN
-      P25IO_ADC_shift <= (P25IO_ADC_shift(P25IO_ADC_shift'high-1 downto 0) & (P25IO_ADC_ECC_Start_i));
+      P25IO_ADC_shift <= (P25IO_ADC_shift(P25IO_ADC_shift'high-1 downto 0) & (P25IO_ADC_Strobe_i));
 
       IF P25IO_ADC_shift(P25IO_ADC_shift'high) = '0' AND P25IO_ADC_shift(P25IO_ADC_shift'high-1) = '1' THEN
-        P25IO_ADC_ECC_Start_o <= '1';
+        P25IO_ADC_Strobe_o <= '1';
       ELSE
-        P25IO_ADC_ECC_Start_o <= '0';
+        P25IO_ADC_Strobe_o <= '0';
       END IF;
     END IF;
   END PROCESS p_P25IO_ADC_Strobe_Start;
-
-
---------- ADC_Out-ECC --------------------
-
-P25IO_in_Ext_Tim_Deb:  diob_debounce
-  GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb32_Cnt, DB_in => P25IO_Ext_Tim_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_Ext_Tim_deb_o);  
-
-
   
-P25IO_Out_Led_Ext_Tim: led_n
-  generic map (stretch_cnt => stretch_cnt)
-  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => P25IO_Ext_Tim_deb_o, nLED => P25IO_nLED_Ext_Tim_o);
-
-  
---------- Puls als Signal (1 Clock breit) --------------------
-
-p_P25IO_Ext_Tim_Strobe_Start:  PROCESS (clk_sys, Powerup_Res, P25IO_Ext_Tim_deb_o)
-  BEGin
-    IF Powerup_Res  = '1' THEN
-      P25IO_Ext_Tim_shift  <= (OTHERS => '0');
-      P25IO_Ext_Tim_Strobe_Start_o    <= '0';
-
-    ELSIF rising_edge(clk_sys) THEN
-      P25IO_Ext_Tim_shift <= (P25IO_Ext_Tim_shift(P25IO_Ext_Tim_shift'high-1 downto 0) & (P25IO_Ext_Tim_deb_o));
-
-      IF P25IO_Ext_Tim_shift(P25IO_Ext_Tim_shift'high) = '0' AND P25IO_Ext_Tim_shift(P25IO_Ext_Tim_shift'high-1) = '1' THEN
-        P25IO_Ext_Tim_Strobe_Start_o <= '1';
-      ELSE
-        P25IO_Ext_Tim_Strobe_Start_o <= '0';
-      END IF;
-    END IF;
-  END PROCESS p_P25IO_Ext_Tim_Strobe_Start;
-
-  
-P25IO_ADC_ECC: led_n
-  generic map (stretch_cnt => C_Strobe_2us) -- = 2us
-  port map      (ena => '1', CLK => clk_sys,   Sig_in => (P25IO_ADC_ECC_i), nLED => P25IO_nADC_ECC_o);-- 
-  
-
-P25IO_in_EOC_Deb:  diob_debounce
-  GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb32_Cnt, DB_in => not P25IO_EOC_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => P25IO_EOC_deb_o);  
-  
-
   
 p_P25IO_ADC_FF: 
-process (clk_sys, P25IO_EOC_deb_o, P25IO_ADC_Data_FF_i, Powerup_Res)
+process (clk_sys, P25IO_ADC_Strobe_o, P25IO_ADC_Data_FF_i, rstn_sys)
 begin
-  if  ( Powerup_Res      = '1') then   P25IO_ADC_Data_FF_o  <= (OTHERS => '0');
+  if  ( not rstn_sys      = '1') then   P25IO_ADC_Data_FF_o  <= (OTHERS => '0');
   elsif (rising_edge(clk_sys)) then
-    if (P25IO_EOC_deb_o = '1') then  P25IO_ADC_Data_FF_o  <= P25IO_ADC_Data_FF_i;
+    if (P25IO_ADC_Strobe_o = '1') then  P25IO_ADC_Data_FF_o  <= P25IO_ADC_Data_FF_i;
     end if;
   end if;
 end process;
-
-        
   
 
+  
+
+P25IO_in_Ext_Tim_Deb:  diob_debounce
+  GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
+  port map(DB_Cnt => Deb60_Cnt, DB_in => P25IO_Ext_Tim_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => P25IO_Ext_Tim_deb_o);  
+
+P25IO_in_Ext_Tim_Syn:  diob_sync
+  port map(Sync_in  => P25IO_Ext_Tim_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => P25IO_Ext_Tim_syn_o);
+  
+P25IO_Out_Led_Ext_Tim: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => P25IO_Ext_Tim_syn_o,    nLED => P25IO_nLED_Ext_Tim_o);
+
+   
+--------- Puls als Strobe (1 Clock breit) --------------------
+
+p_P25IO_ECC_Puls_Start:  PROCESS (clk_sys, rstn_sys, P25IO_ECC_Puls_i)
+  BEGin
+    IF not rstn_sys  = '1' THEN
+      P25IO_ECC_Puls_shift  <= (OTHERS => '0');
+      P25IO_ECC_Puls_o    <= '0';
+
+    ELSIF rising_edge(clk_sys) THEN
+      P25IO_ECC_Puls_shift <= (P25IO_ECC_Puls_shift(P25IO_ECC_Puls_shift'high-1 downto 0) & (P25IO_ECC_Puls_i));
+
+      IF P25IO_ECC_Puls_shift(P25IO_ECC_Puls_shift'high) = '0' AND P25IO_ECC_Puls_shift(P25IO_ECC_Puls_shift'high-1) = '1' THEN
+        P25IO_ECC_Puls_o <= '1';
+      ELSE
+        P25IO_ECC_Puls_o <= '0';
+      END IF;
+    END IF;
+  END PROCESS p_P25IO_ECC_Puls_Start;
+  
+
+
+  --------- ECC_Out-Strobe --------------------
+
+P25IO_ECC_Strobe: outpuls port map( nReset   => rstn_sys,
+                                    CLK      => clk_sys,
+                                    Cnt_ena  => '1',
+                                    Start    => (P25IO_ECC_Strobe_i),
+                                    Base_cnt => C_Strobe_100ns,                  --+-> Outpuls = 3,2ys
+                                    Mult_cnt => Wert_Strobe_2_Hoch_n(5),         --+
+                                    Sign_Out => P25IO_ECC_Strobe_o);
+
+  
+  
 --  +============================================================================================================================+
---  |                                          Anwender-IO: OCIN  -- FG900_720                                                  |
+--  |                                           Anwender-IO: OCIN  -- FG900_720                                                  |
 --  +============================================================================================================================+
 
 
 --  +============================================================================================================================+
---  |                                          Anwender-IO: OCIO  -- FG900_730                                                  |
+--  |                                           Anwender-IO: OCIO  -- FG900_730                                                  |
 --  +============================================================================================================================+
 --
 
 --  +============================================================================================================================+
---  |                                          Anwender-IO: UIO  -- FG900_740                                                  |
+--  |                                           Anwender-IO: UIO  -- FG900_740                                                   |
 --  +============================================================================================================================+
 
 UIO_Out_Led_Lemo_In: led_n
@@ -2012,10 +2453,35 @@ UIO_Out_Led_Lemo_Out: led_n
   
 UIO_in_Start_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb32_Cnt, DB_in => UIO_Lemo_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => UIO_Lemo_deb_o);  
-  
-               
+  port map(DB_Cnt => Deb60_Cnt, DB_in => UIO_Lemo_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => UIO_Lemo_deb_o);  
 
+UIO_in_Start_Syn:  diob_sync
+  port map(Sync_in  => UIO_Lemo_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => UIO_Lemo_syn_o);
+
+  
+  UIO_DAC_Strobe: outpuls port map(nReset   => rstn_sys,
+                                   CLK      => clk_sys,
+                                   Cnt_ena  => '1',
+                                   Start    => (UIO_DAC_Strobe_i),
+                                   Base_cnt => C_Strobe_100ns, 
+                                   Mult_cnt => Wert_Strobe_2_Hoch_n(UIO_DAC_Strobe_Expo),
+                                   Sign_Out => UIO_DAC_Strobe_o);
+               
+  
+  
+p_UIO_Out_dff: 
+process (clk_sys, UIO_Reg_Enable, rstn_sys)
+begin
+  if (not rstn_sys = '1') then UIO_Reg_Out_o <= (others => '0');
+  elsif (rising_edge(clk_sys)) then
+    if (UIO_Reg_Enable = '1') then
+       UIO_Reg_Out_o <= UIO_Reg_Out_i;
+    end if;
+  end if;
+end process;
+               
+               
+               
 --  +============================================================================================================================+
 --  |                                          Anwender-IO: DA  -- FG900_750                                                     |
 --  +============================================================================================================================+
@@ -2023,12 +2489,18 @@ UIO_in_Start_Deb:  diob_debounce
 
 DA_in_DA_Trig1_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb32_Cnt, DB_in => DA_Trig1_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => DA_Trig1_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => DA_Trig1_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => DA_Trig1_deb_o);  
 
+DA_in_DA_Trig1_Syn:  diob_sync
+  port map(Sync_in  => DA_Trig1_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => DA_Trig1_syn_o);
+
+  
 DA_in_DA_Trig2_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb32_Cnt, DB_in => DA_Trig2_deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => DA_Trig2_deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => DA_Trig2_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => DA_Trig2_deb_o);  
 
+DA_in_DA_Trig2_Syn:  diob_sync
+  port map(Sync_in  => DA_Trig2_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => DA_Trig2_syn_o);
 
   
 ------------------------------------------------------------------------------------------------------------------
@@ -2037,10 +2509,10 @@ DA_in_DA_Trig2_Deb:  diob_debounce
 ------------------------------------------------------------------------------------------------------------------
 
   
-P_Dac_Test_Loop:  process (clk_sys, Powerup_Res, dac_state, AW_Output_Reg)
+P_Dac_Test_Loop:  process (clk_sys, rstn_sys, dac_state, AW_Output_Reg)
 
     begin
-      if (Powerup_Res = '1') then
+      if (not rstn_sys = '1') then
         dac_state         <= dac_idle;
         DAC_Test_Out      <= (others => '0');    -- Test-Bitmuster
         DAC_Test_Strobe   <=  '0';               -- Output Test-Strobe
@@ -2111,10 +2583,10 @@ P_Dac_Test_Loop:  process (clk_sys, Powerup_Res, dac_state, AW_Output_Reg)
 ------------------------------------------------------------------------------------------------------------------
 
   
-P_Dac_tr_Test_Loop:  process (clk_sys, Powerup_Res, dac_state, AW_Output_Reg)
+P_Dac_tr_Test_Loop:  process (clk_sys, rstn_sys, dac_state, AW_Output_Reg)
 
     begin
-      if (Powerup_Res = '1') then
+      if (not rstn_sys = '1') then
         dac_tr_state         <= dac_tr_idle;
         DAC_tr_Test_Out      <= (others => '0');    -- Test-Bitmuster
         DAC_tr_Test_Strobe   <= '0';                -- Output Test-Strobe
@@ -2213,9 +2685,9 @@ P_Dac_tr_Test_Loop:  process (clk_sys, Powerup_Res, dac_state, AW_Output_Reg)
 
  --------- Ext. Trigger1 (Puls aus Signal (1 Clock breit)) --------------------
 
-p_DA_Trig1_Strobe:  PROCESS (clk_sys, Powerup_Res, DA_Trig1_Strobe_i)
+p_DA_Trig1_Strobe:  PROCESS (clk_sys, rstn_sys, DA_Trig1_Strobe_i)
   BEGin
-    IF Powerup_Res  = '1' THEN
+    IF not rstn_sys  = '1' THEN
       DA_Trig1_shift  <= (OTHERS => '0');
       DA_Trig1_Strobe_o    <= '0';
 
@@ -2233,9 +2705,9 @@ p_DA_Trig1_Strobe:  PROCESS (clk_sys, Powerup_Res, DA_Trig1_Strobe_i)
 
  --------- Ext. Trigger2 (Puls aus Signal (1 Clock breit)) --------------------
 
-p_DA_Trig2_Strobe:  PROCESS (clk_sys, Powerup_Res, DA_Trig2_Strobe_i)
+p_DA_Trig2_Strobe:  PROCESS (clk_sys, rstn_sys, DA_Trig2_Strobe_i)
   BEGin
-    IF Powerup_Res  = '1' THEN
+    IF not rstn_sys  = '1' THEN
       DA_Trig2_shift  <= (OTHERS => '0');
       DA_Trig2_Strobe_o    <= '0';
 
@@ -2253,9 +2725,9 @@ p_DA_Trig2_Strobe:  PROCESS (clk_sys, Powerup_Res, DA_Trig2_Strobe_i)
   
  --------- Strobe für DAC1 (Puls aus Signal (1 Clock breit)) --------------------
 
-p_DA_DAC1_Str_Puls:  PROCESS (clk_sys, Powerup_Res, DA_DAC1_Str_Puls_i)
+p_DA_DAC1_Str_Puls:  PROCESS (clk_sys, rstn_sys, DA_DAC1_Str_Puls_i)
   BEGin
-    IF Powerup_Res  = '1' THEN
+    IF not rstn_sys  = '1' THEN
       DA_DAC1_Str_Puls_shift  <= (OTHERS => '0');
       DA_DAC1_Str_Puls_o    <= '0';
 
@@ -2273,9 +2745,9 @@ p_DA_DAC1_Str_Puls:  PROCESS (clk_sys, Powerup_Res, DA_DAC1_Str_Puls_i)
 
   --------- Strobe für DAC2 (Puls aus Signal (1 Clock breit)) --------------------
 
-p_DA_DAC2_Str_Puls:  PROCESS (clk_sys, Powerup_Res, DA_DAC2_Str_Puls_i)
+p_DA_DAC2_Str_Puls:  PROCESS (clk_sys, rstn_sys, DA_DAC2_Str_Puls_i)
   BEGin
-    IF Powerup_Res  = '1' THEN
+    IF not rstn_sys  = '1' THEN
       DA_DAC2_Str_Puls_shift  <= (OTHERS => '0');
       DA_DAC2_Str_Puls_o    <= '0';
 
@@ -2322,27 +2794,201 @@ HFIO_nLED_Sample_Puls_Display: led_n
 
 HFIO_in_AMP_FEHLER_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb32_Cnt, DB_in => HFIO_in_AMP_FEHLER_Deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => HFIO_in_AMP_FEHLER_Deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => HFIO_in_AMP_FEHLER_Deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => HFIO_in_AMP_FEHLER_Deb_o);  
+
+HFIO_in_AMP_FEHLER_Syn:  diob_sync
+  port map(Sync_in  => HFIO_in_AMP_FEHLER_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => HFIO_in_AMP_FEHLER_syn_o);
 
  
 HFIO_in_PHASE_FEHLER_Deb:  diob_debounce
   GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
-  port map(DB_Cnt => Deb32_Cnt, DB_in => HFIO_in_PHASE_FEHLER_Deb_i, Reset => Powerup_Res, clk => clk_sys, DB_Out => HFIO_in_PHASE_FEHLER_Deb_o);  
+  port map(DB_Cnt => Deb60_Cnt, DB_in => HFIO_in_PHASE_FEHLER_Deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => HFIO_in_PHASE_FEHLER_Deb_o);  
 
+HFIO_in_PHASE_FEHLER_Syn:  diob_sync
+  port map(Sync_in  => HFIO_in_PHASE_FEHLER_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => HFIO_in_PHASE_FEHLER_syn_o);
+  
 
- 
+--  +============================================================================================================================+
+--  |            §§§                        Anwender-IO: IOBP (INLB12S1)  -- FG902_050                                           |
+--  +============================================================================================================================+
+--
+--
+--         =========== Component's für die 72 "aktiv" Led's =========== 
+--
+IOBP_In_LEDn:  for J in 1 to 12 generate
+--                ---------------------------------------------------------------------------
+                  IOBP_In_LEDn_Slave1:  for I in 1 to 6 generate
+                    DB_I:  LED_n
+                    GENERIC MAP (stretch_cnt => stretch_cnt)             --     
+                              port map(ena   => Ena_Every_20ms,          -- Enable-Clock
+                                      CLK    => clk_sys,                 -- Sys-Clock
+                                      Sig_in => IOBP_Aktiv_LED_i(J)(I),  -- Signal-Input
+                                      nLED   => IOBP_Aktiv_LED_o(J)(I)); -- Signal-Out
+                    end generate IOBP_In_LEDn_Slave1;
+--                ---------------------------------------------------------------------------
+                  end generate IOBP_In_LEDn;
+--
+
+     -------------------------------------------------------------------------------------------------------
+     ------------------------------ Loop für LED_Output's und ID read --------------------------------------
+     -------------------------------------------------------------------------------------------------------
 
   
+P_IOBP_LED_ID_Loop:  process (clk_sys, Ena_Every_250ns, rstn_sys, IOBP_state)
+
+    begin
+      if (not rstn_sys = '1') then
+        Slave_Loop_cnt       <=   1;                 --  Loop-Counter
+        IOBP_LED_En          <=  '0';                --  Output-Enable für LED- ID-Bus
+        IOBP_STR_rot_o       <=  (others => '0');    --  Led-Strobs 'rot'
+        IOBP_STR_gruen_o     <=  (others => '0');    --  Led-Strobs 'grün'
+        IOBP_STR_id_o        <=  (others => '1');    --  ID-Strobs
+
+        
+    ELSIF (clk_sys'EVENT AND clk_sys = '1' AND Ena_Every_250ns = '1') THEN
+--  ELSIF ((rising_edge(clk_sys)) or Ena_Every_100ns)  then
+      case IOBP_state is
+        when IOBP_idle   =>  Slave_Loop_cnt       <=  1;                 -- Loop-Counter
+                       
+                            if  (AW_ID(7 downto 0) = c_AW_INLB12S.ID)  THEN  IOBP_state  <= led_id_wait;
+                                                                       else  IOBP_state  <= IOBP_idle;
+                            end if;
+                           
+        when led_id_wait      =>  IOBP_LED_En          <=  '1';                --  Output-Enable für LED- ID-Bus
+                                  IOBP_state  <= led_id_loop;
+
+        
+        when led_id_loop      =>  IOBP_LED_ID_Bus_o(7 downto 6)  <=  ("1" & "1");
+                                  IOBP_LED_ID_Bus_o(5 downto 0)  <=  IOBP_Aktiv_LED_o(Slave_Loop_cnt)(6 downto 1);   -- Aktiv-LED für Slave zum LED-Port
+                                  IOBP_state  <= led_str_rot_h;
+    
+        when led_str_rot_h    =>  IOBP_STR_rot_o(Slave_Loop_cnt) <=  '1';   -- Aktiv LED für Slave (Slave_Loop_cnt) zum LED-Port                       
+                                  IOBP_state  <= led_str_rot_l;
+    
+        when led_str_rot_l    =>  IOBP_STR_rot_o(Slave_Loop_cnt) <=  '0';   -- Aktiv LED für Slave (Slave_Loop_cnt) zum LED-Port                       
+                                  IOBP_state  <= led_gruen;
+
+        when led_gruen        =>  IOBP_LED_ID_Bus_o(7 downto 6)  <=  ("1" & "1");
+                                  IOBP_LED_ID_Bus_o(5 downto 0)  <=  not IOBP_Sel_LED(Slave_Loop_cnt)(6 downto 1);   -- Sel-LED für Slave zum LED-Port
+                                  IOBP_state  <= led_str_gruen_h;
+                                  
+        when led_str_gruen_h  =>  IOBP_STR_gruen_o(Slave_Loop_cnt) <=  '1';   -- Sel-LED für Slave (Slave_Loop_cnt) zum LED-Port                       
+                                  IOBP_state  <= led_str_gruen_l;
+
+        when led_str_gruen_l  =>  IOBP_STR_gruen_o(Slave_Loop_cnt) <=  '0';   -- Sel-LED für Slave (Slave_Loop_cnt) zum LED-Port                       
+                                  IOBP_state  <= iobp_led_dis;
+
+        when iobp_led_dis     =>  IOBP_LED_En <=  '0';                        --  Disable Output für LED- ID-Bus              
+                                  IOBP_state  <= iobp_led_z;
+
+        when iobp_led_z       =>  IOBP_state  <= iobp_id_str_l;
+
+          
+        when iobp_id_str_l    =>  --IOBP_STR_ID_o(Slave_Loop_cnt) <=  '0';   -- Sel-ID für Slave (Slave_Loop_cnt)                       
+                                  IOBP_STR_ID_o(Slave_Loop_cnt) <=  '1';   -- Sel-ID für Slave (Slave_Loop_cnt)                       
+                                  IOBP_state  <= iobp_rd_id;
+
+        when iobp_rd_id       =>  
+                                --IOBP_ID(Slave_Loop_cnt) <=  IOBP_LED_ID_Bus_i;   -- Sel-ID für Slave (Slave_Loop_cnt)
+                                  IOBP_state  <= iobp_id_str_h;
+
+        when iobp_id_str_h    =>  IOBP_STR_ID_o(Slave_Loop_cnt) <=  '1';   -- Sel-ID für Slave (Slave_Loop_cnt)                       
+                                  IOBP_state  <= iobp_end;
+
+
+                                  
+        when iobp_end         =>  Slave_Loop_cnt <=  Slave_Loop_cnt + 1;       -- Loop +1
+
+                                  if Slave_Loop_cnt < 13 then
+                                    IOBP_state     <= led_id_wait;
+                                  else
+                                    IOBP_state     <= IOBP_idle;
+                                  end if;
+
+        when others           =>  IOBP_state       <= IOBP_idle;
+
+      end case;
+    end if;
+  end process P_IOBP_LED_ID_Loop;
+  
+  
+--  +============================================================================================================================+
+--  |                                          Anwender-IO: Out16  -- FG901_010                                                  |
+--  +============================================================================================================================+
+
+Out16_Out_Led_Lemo_In: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => Out16_LED_Lemo_In_i,    nLED => Out16_nLED_Lemo_In_o);
+  
+Out16_in_Start_Deb:  diob_debounce
+  GENERIC MAP (DB_Tst_Cnt => 3, Test  => 0)
+  port map(DB_Cnt => Deb60_Cnt, DB_in => Out16_Lemo_deb_i, Reset => not rstn_sys, clk => clk_sys, DB_Out => Out16_Lemo_deb_o);  
+
+Out16_in_Start_syn:  diob_sync
+  port map(Sync_in  => Out16_Lemo_syn_i, Reset => not rstn_sys, clk  => clk_sys, Sync_out => Out16_Lemo_syn_o);
+  
+  
+Out16_DAC_Strobe: outpuls port map(nReset   => rstn_sys,
+                                   CLK      => clk_sys,
+                                   Cnt_ena  => '1',
+                                   Start    => (Out16_DAC_Strobe_i),
+                                   Base_cnt => C_Strobe_100ns, 
+                                   Mult_cnt => Wert_Strobe_2_Hoch_n(Out16_DAC_Strobe_Expo),
+                                   Sign_Out => Out16_DAC_Strobe_o);
+               
+  
+--  +============================================================================================================================+
+--  |   §§§                                    Anwender-IO: In16  -- FG901_020                                                   |
+--  +============================================================================================================================+
+
+
+In16_LED_Lemo_Out: led_n
+  generic map (stretch_cnt => stretch_cnt)
+  port map      (ena => Ena_Every_20ms, CLK => clk_sys,   Sig_in => In16_LED_Lemo_Out_i,    nLED => In16_nLED_Lemo_Out_o);
+  
+  
+--------- Puls als Strobe (1 Clock breit) --------------------
+
+p_In16_ADC_Strobe_Start:  PROCESS (clk_sys, rstn_sys, In16_ADC_Strobe_i)
+  BEGin
+    IF not rstn_sys  = '1' THEN
+      In16_ADC_shift  <= (OTHERS => '0');
+      In16_ADC_Strobe_o    <= '0';
+
+    ELSIF rising_edge(clk_sys) THEN
+      In16_ADC_shift <= (In16_ADC_shift(In16_ADC_shift'high-1 downto 0) & (In16_ADC_Strobe_i));
+
+      IF In16_ADC_shift(In16_ADC_shift'high) = '0' AND In16_ADC_shift(In16_ADC_shift'high-1) = '1' THEN
+        In16_ADC_Strobe_o <= '1';
+      ELSE
+        In16_ADC_Strobe_o <= '0';
+      END IF;
+    END IF;
+  END PROCESS p_In16_ADC_Strobe_Start;
+  
+  
+p_In16_ADC_FF: 
+process (clk_sys, In16_ADC_Strobe_o, In16_ADC_Data_FF_i, rstn_sys)
+begin
+  if  ( not rstn_sys      = '1') then   In16_ADC_Data_FF_o  <= (OTHERS => '0');
+  elsif (rising_edge(clk_sys)) then
+    if (In16_ADC_Strobe_o = '1') then  In16_ADC_Data_FF_o  <= In16_ADC_Data_FF_i;
+    end if;
+  end if;
+end process;
+  
+  
+           
 --  ###############################################################################################################################
 --  #####                                                                                                                     #####
 --  #####                             Input-Muliplexer zum SCU-Bus für den Mirror-Mode                                        #####
 --  #####                                                                                                                     #####
 --  ###############################################################################################################################
  
-P_AW_SCU_In:  process (nPowerup_Res, clk_sys, Diob_Config1, Mirr_AWOut_Reg_Nr, SCU_AW_Output_Reg) 
+P_AW_SCU_In:  process (rstn_sys, clk_sys, Diob_Config1, Mirr_AWOut_Reg_Nr, SCU_AW_Output_Reg) 
 
   begin
-    if nPowerup_Res = '0' then
+    if rstn_sys = '0' then
 
       SCU_AW_Input_Reg <= (others => (others => '0')); 
   
@@ -2395,14 +3041,12 @@ P_AW_SCU_In:  process (nPowerup_Res, clk_sys, Diob_Config1, Mirr_AWOut_Reg_Nr, S
 --  ###############################################################################################################################
 --  ###############################################################################################################################
   
-  
+-- §§PROZESS  
 
-p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO, A_SEL, signal_tap_clk_250mhz,
+p_AW_MUX: PROCESS (clk_sys, rstn_sys, Powerup_Done, AW_ID, s_nLED_Out, PIO, A_SEL, signal_tap_clk_250mhz,
              FG_1_sw, FG_1_strobe, FG_2_sw, FG_2_strobe, P25IO_DAC_Out,
              CLK_IO,
-             AWOUT_REG1_WR,
-             AWOUT_REG2_WR,            
-             AWIn_Deb_Time, Min_AWIn_Deb_Time, Deb32_out, Deb32_in,
+             AWIn_Deb_Time, Min_AWIn_Deb_Time, Deb60_out, Deb60_in, Syn60_in, Syn60_out, Deb_Sync60,
              DIOB_Status1, DIOB_Status2, AW_Status1, AW_Status2, 
              AW_Input_Reg, 
              DIOB_Config1,    DIOB_Config2,    AW_Config1,    AW_Config2, 
@@ -2410,47 +3054,72 @@ p_AW_MUX: PROCESS (clk_sys, Powerup_Res, Powerup_Done, s_AW_ID, s_nLED_Out, PIO,
              AW_Output_Reg, 
              Interlock, UIO, hp_la_o, local_clk_is_running, clk_blink,
              s_nLED_Sel, s_nLED_Dtack, s_nLED_inR, s_nLED_User1_o, s_nLED_User2_o, s_nLED_User3_o, 
-             P37IO_nLED_Start_o, P37IO_nLED_Stop_o, P37IO_BNC_o, P37IO_nELD_BNC_o, P37IO_in_Data,
-             P37IO_Start_deb_i, P37IO_Stop_deb_i, P37IO_Reset_deb_i, P37IO_Start_deb_o, P37IO_Stop_deb_o, P37IO_Reset_deb_o,
-             P25IO_Start_deb_i, P25IO_Stop_deb_i, P25IO_Reset_deb_i, P25IO_Start_deb_o, P25IO_Stop_deb_o, P25IO_Reset_deb_o,
-             P25IO_EOC_deb_o, P25IO_nLED_Start_o, P25IO_nLED_Stop_o, P25IO_BNC_o, P25IO_nELD_BNC_o,
-             P25IO_nDAC_Strobe_o, P25IO_nLED_Ext_Tim_o, P25IO_nADC_ECC_o, P25IO_ADC_Data_FF_o,
-             P25IO_ADC_Data_FF_i, P25IO_ADC_ECC_Start_o, P25IO_Ext_Tim_Strobe_Start_o,
-             P25IO_Data_in,
+
+             P37IO_FF_Start, P37IO_FF_Stop, P37IO_FF_Reset,
+             P37IO_Deb_in_Data_i, P37IO_Deb_in_Data_o, P37IO_Syn_in_Data_i, P37IO_Syn_in_Data_o,
+             P37IO_nLED_Start_o, P37IO_nLED_Stop_o, P37IO_BNC_o, P37IO_nELD_BNC_o, P37IO_in_Data, P37IO_Start_deb_i, P37IO_Stop_deb_i, P37IO_Reset_deb_i, 
+             P37IO_Start_deb_o, P37IO_Stop_deb_o, P37IO_Reset_deb_o, P37IO_Start_syn_i, P37IO_Stop_syn_i, P37IO_Reset_syn_i,
+             P37IO_Start_syn_o, P37IO_Stop_syn_o, P37IO_Reset_syn_o,
+
+             P25IO_FF_Start, P25IO_FF_Stop, P25IO_FF_Reset, P25IO_Start_deb_i, P25IO_Stop_deb_i, P25IO_Reset_deb_i,
+             P25IO_Start_deb_o, P25IO_Stop_deb_o, P25IO_Reset_deb_o, P25IO_Start_syn_i, P25IO_Stop_syn_i, P25IO_Reset_syn_i,
+             P25IO_Start_syn_o, P25IO_Stop_syn_o, P25IO_Reset_syn_o,
+             P25IO_DAC_Mode, P25IO_DAC_DAC_Strobe_o, P25IO_nLED_Start_o, P25IO_nLED_Stop_o, P25IO_BNC_o, P25IO_nELD_BNC_o,
+             P25IO_DAC_Data_FG_Out, P25IO_DAC_Strobe, P25IO_ADC_In, P25IO_ADC_Strobe_in, P25IO_ADC_Strobe, P25IO_ADC_Input,
+             P25IO_ADC_Data_FF_o, P25IO_ADC_Strobe_o, 
+             P25IO_Ext_Tim_deb_o, P25IO_nLED_Ext_Tim_o, P25IO_Ext_Tim_syn_o,
+             P25IO_Holec_Strobe_Out, P25IO_ECC_Puls_o, P25IO_ECC_Strobe_o,
+             
              OCIN_Data1_in, OCIN_Data2_in,
              OCIO_Data1_in, OCIO_Data2_in,
              SPSIO_Data_in,
              HFIO_nLED_Aux_o, HFIO_nLED_Tastpuls_o, HFIO_nLED_Sample_Puls_Display_o,
              HFIO_in_AMP_FEHLER_Deb_i, HFIO_in_PHASE_FEHLER_Deb_i,
-             HFIO_in_AMP_FEHLER_Deb_o, HFIO_in_PHASE_FEHLER_Deb_o, HFIO_nLED_Sample_Puls_inv_o,
-             UIO_HS_IN, UIO_LS_IN, UIO_Out, UIO_Data_FG_Out, UIO_in_Data, UIO_Lemo_in,
-             UIO_nLED_Lemo_In_o, UIO_nLED_Lemo_Out_o, UIO_Lemo_deb_i, UIO_Lemo_deb_o,
+             HFIO_in_AMP_FEHLER_Deb_o, HFIO_in_PHASE_FEHLER_Deb_o,
+             HFIO_in_AMP_FEHLER_syn_i, HFIO_in_PHASE_FEHLER_syn_i,
+             HFIO_in_AMP_FEHLER_syn_o, HFIO_in_PHASE_FEHLER_syn_o, HFIO_nLED_Sample_Puls_inv_o,
+             UIO_Mode, UIO_Reg_Out_o, SCU_Ext_Wr_fin,
+             UIO_DAC_Strobe_o, UIO_HS_IN, UIO_LS_IN,
+             UIO_Out, UIO_Data_FG_Out, UIO_in_Data, UIO_Lemo_in,
+             UIO_nLED_Lemo_In_o, UIO_nLED_Lemo_Out_o, UIO_Lemo_deb_i, UIO_Lemo_deb_o, UIO_Lemo_syn_i, UIO_Lemo_syn_o,
              Tag_Sts, 
              DA_DAC1_Data, DA_DAC1_Out, DA_DAC1_Str, DA_DAC1_Str_Out,
              DA_DAC2_Data, DA_DAC2_Out, DA_DAC2_Str, DA_DAC2_Str_Out,
              DA_Trig1_Strobe_o, DA_Trig2_Strobe_o, DA_DAC1_Str_Puls_o, DA_DAC2_Str_Puls_o,
              DAC_Test_Out,    DAC_Test_Strobe, DAC_tr_Test_Out, DAC_tr_Test_Strobe, 
              DA_LED_Ext_Trig1_o, DA_LED_Ext_Trig2_o,
-             DA_Trig1_deb_o, DA_Trig2_deb_o, DA_Trig1_1us_o,  DA_Trig2_1us_o,
+             DA_Trig1_deb_o, DA_Trig2_deb_o, DA_Trig1_syn_o, DA_Trig2_syn_o,
+             DA_Trig1_1us_o,  DA_Trig2_1us_o,
              DA_LED_Trig_Out1_o, DA_LED_Trig_Out2_o,
              Timing_Pattern_LA, Tag_Aktiv,
              DAC1_Config, DAC1_Config_wr, DAC1_Out, DAC1_Out_wr,   
-             DAC2_Config,	DAC2_Config_wr, DAC2_Out, DAC2_Out_wr,   
+             DAC2_Config, DAC2_Config_wr, DAC2_Out, DAC2_Out_wr,   
              ADC_Config, ADC_In1, ADC_In2, ADC_In3, ADC_In4, ADC_In5, ADC_In6, ADC_In7, ADC_In8,
-             AWOut_Reg1_wr, AWOut_Reg2_wr
+             AWOut_Reg1_wr, AWOut_Reg2_wr,
+             IOBP_Masken_Reg1, IOBP_Masken_Reg2, IOBP_Masken_Reg3, IOBP_Masken_Reg4, IOBP_Masken_Reg5, IOBP_Output,
+             IOBP_Input, IOBP_LED_ID_Bus_o, IOBP_ID, IOBP_LED_En, IOBP_STR_rot_o, IOBP_STR_gruen_o, IOBP_STR_ID_o,
+             Out16_Strobe, Out16_Mode, Out16_DAC_Strobe_o, Out16_Out, Out16_Data_FG_Out, Out16_Lemo_in,
+             Out16_nLED_Lemo_In_o, Out16_Lemo_deb_i, Out16_Lemo_deb_o, Out16_Lemo_syn_i, Out16_Lemo_syn_o,
+             In16_In, In16_Strobe_In, In16_nLED_Lemo_Out_o, In16_Strobe, In16_Input, IN16_ADC_Data_FF_o, IN16_ADC_Strobe_o
              )
+             
+           
+--  +============================================================================================================================+
+--  |                  Übergabe-Signale für Anwender-IO: FG902_050 -- Interlock-Backplane mit 12 Steckplätzen                    |
+--  +============================================================================================================================+
+
 
  
 BEGIN
 
   --############################# Set Defaults ######################################
 
-    PIO(150 downto 16)  <=  (OTHERS => 'Z');   -- setze alle IO-Pins auf input;
-    UIO(15 downto 0)    <=  (OTHERS => 'Z');   -- UIO = Input;
+    PIO(150 downto 16)   <=  (OTHERS => 'Z');   -- setze alle IO-Pins auf input;
+    UIO(15 downto 0)     <=  (OTHERS => 'Z');   -- UIO = Input;
 
-    AW_Input_Reg            <=  (OTHERS => (OTHERS => '0'));  -- AW_Input_Reg's = 0
+    AW_Input_Reg         <=  (OTHERS => (OTHERS => '0'));  -- AW_Input_Reg's = 0
 
-    s_AW_ID(7 downto 0) <=  x"FF";    -- Anwender-Karten ID
+    AW_ID(7 downto 0)    <=  x"FF";    -- Anwender-Karten ID
     
     extension_cid_system <= 0;   -- extension card: cid_system
     extension_cid_group  <= 0;   -- extension card: cid_group
@@ -2477,40 +3146,62 @@ BEGIN
     s_nLED_User2_i <= '0';        -- LED3 = User 2, -- frei -- 
     s_nLED_User3_i <= '0';        -- LED3 = User 3, -- frei -- 
 
-    Deb32_cnt                <= 0;
-    Deb32_in                 <= (OTHERS => '0');
+    Deb60_cnt                <= 0;
+    Deb60_in                 <= (OTHERS => '0');
+    Syn60_in                <= (OTHERS => '0');
+    Deb_Sync60               <= (OTHERS => '0');
+   
    
     P37IO_Start_deb_i        <= '0';
     P37IO_Stop_deb_i         <= '0';
     P37IO_Reset_deb_i        <= '0';
+    P37IO_Start_syn_i        <= '0';
+    P37IO_Stop_syn_i         <= '0';
+    P37IO_Reset_syn_i        <= '0';
     P37IO_FF_Start           <= '0';    -- Input mit Entprellung
     P37IO_FF_Stop            <= '0';    -- Input mit Entprellung
     P37IO_FF_Reset           <= '0';    -- Input mit Entprellung
 
     P37IO_in_Data            <= (OTHERS => '0');
+    P37IO_Deb_in_Data_i      <= (OTHERS => '0');
+    P37IO_Syn_in_Data_i      <= (OTHERS => '0');
 
 
     P25IO_Start_deb_i        <= '0';
     P25IO_Stop_deb_i         <= '0';
     P25IO_Reset_deb_i        <= '0';
+    P25IO_Start_syn_i        <= '0';
+    P25IO_Stop_syn_i         <= '0';
+    P25IO_Reset_syn_i        <= '0';
     P25IO_FF_Start           <= '0';    -- Input mit Entprellung
     P25IO_FF_Stop            <= '0';    -- Input mit Entprellung
     P25IO_FF_Reset           <= '0';    -- Input mit Entprellung
 
-    P25IO_DAC_Strobe_Start_i <= '0';
-    P25IO_DAC_Out            <=  (OTHERS => '0');
-    P25IO_ADC_ECC_i          <= '0';
-    P25IO_ADC_ECC_Start_i    <= '0';
-    P25IO_Ext_Tim_i          <= '0';
-    P25IO_Data_in            <=  (OTHERS => '0');
-    P25IO_ADC_Data_FF_i      <=  (OTHERS => '0');
-    P25IO_EOC_i              <= '0';
+    P25IO_DAC_Mode            <=  (OTHERS => '0');  -- P25IO_DAC_Mode 
+    P25IO_DAC_Data_FG_Out     <=  (OTHERS => '0');  -- Data/FG-Output 
+    P25IO_DAC_Out             <=  (OTHERS => '0');  -- Daten zum DAC
+    P25IO_DAC_Strobe          <=  '0';              -- Output "nStrobe"               
+    P25IO_DAC_DAC_Strobe_Expo <=   0;               -- Exponent für die Breite des Strobs
+    P25IO_DAC_DAC_Strobe_i    <=  '0';              -- Input-Strobe
+    P25IO_Holec_Strobe_Start  <=  '0';              -- Start Holec Strobe-Sequence
     
-    OCIN_Data1_in            <=  (OTHERS => '0');
-    OCIN_Data2_in            <=  (OTHERS => '0');
-    OCIO_Data1_in            <=  (OTHERS => '0');
-    OCIO_Data2_in            <=  (OTHERS => '0');
-    SPSIO_Data_in            <=  (OTHERS => '0');
+    P25IO_ADC_In              <=  (OTHERS => '0');  -- Input Daten   
+    P25IO_ADC_Input           <=  (OTHERS => '0');  -- Input Daten   
+    P25IO_ADC_Strobe_in       <= '0';               -- Input Strobe
+    P25IO_ADC_Strobe          <= '0';               -- Input Strobe
+    P25IO_ADC_Strobe_i        <= '0';               -- Input Strobe  
+    P25IO_ADC_Data_FF_i       <=  (OTHERS => '0');  -- input  "Daten ADC-Register"
+    P25IO_Ext_Tim_deb_i       <= '0';
+    P25IO_Ext_Tim_syn_i       <= '0';
+    P25IO_ECC_Puls_i          <= '0';
+    P25IO_ECC_Strobe_i        <= '0';
+
+    
+    OCIN_Data1_in             <=  (OTHERS => '0');
+    OCIN_Data2_in             <=  (OTHERS => '0');
+    OCIO_Data1_in             <=  (OTHERS => '0');
+    OCIO_Data2_in             <=  (OTHERS => '0');
+    SPSIO_Data_in             <=  (OTHERS => '0');
     
     HFIO_Aux_i                  <= '0';
     HFIO_Tastpuls_i             <= '0';
@@ -2518,16 +3209,26 @@ BEGIN
     HFIO_Sample_Puls_inv_i      <= '0';
     HFIO_in_AMP_FEHLER_Deb_i    <= '0';       
     HFIO_in_PHASE_FEHLER_Deb_i  <= '0';
+    HFIO_in_AMP_FEHLER_syn_i    <= '0';       
+    HFIO_in_PHASE_FEHLER_syn_i  <= '0';
 
-    UIO_Data_FG_Out             <= (OTHERS => '0'); -- Data/FG-Output
-    UIO_Out                     <= (OTHERS => '0'); -- Data_Output
-    UIO_HS_In                   <= (OTHERS => '0'); -- Input auf GND 
-    UIO_LS_In                   <= (OTHERS => '0'); -- Input Uext
-    UIO_in_Data                 <= (OTHERS => '0'); -- Data_Input über Optokoppler
-    UIO_LED_Lemo_In_i           <=  '0';            -- Input  "nLED_Lemo_In"
-    UIO_LED_Lemo_Out_i          <=  '0';            -- Input  "nLED_Lemo_Out"
-    UIO_Lemo_in                 <=  '0';            -- Input "Lemo" 
-    UIO_Lemo_deb_i              <=  '0';            -- Debounce: Input "Lemo" 
+    UIO_Mode                    <= (OTHERS => '0');     -- UIO ('740) Mode
+    UIO_Data_FG_Out             <= (OTHERS => '0');     -- Data/FG-Output
+    UIO_Out                     <= (OTHERS => '0');     -- Data_Output
+    UIO_HS_In                   <= (OTHERS => '0');     -- Input auf GND 
+    UIO_LS_In                   <= (OTHERS => '0');     -- Input Uext
+    UIO_in_Data                 <= (OTHERS => '0');     -- Data_Input über Optokoppler
+    UIO_LED_Lemo_In_i           <=  '0';                -- Input  "nLED_Lemo_In"
+    UIO_LED_Lemo_Out_i          <=  '0';                -- Input  "nLED_Lemo_Out"
+    UIO_Lemo_in                 <=  '0';                -- Input "Lemo" 
+    UIO_Lemo_deb_i              <=  '0';                -- Debounce: Input "Lemo" 
+    UIO_Lemo_syn_i              <=  '0';                -- Debounce: Input "Lemo" 
+    UIO_DAC_Strobe_i            <=  '0';                -- Input: UIO-Strobe
+    UIO_DAC_Strobe_Expo         <=   0;                 -- Exponent für die Breite des Strobs
+    UIO_Reg_Out_i               <= (OTHERS => '0');     -- Input vom Daten-OutputReg. 
+    UIO_Reg_Enable              <=  '0';                -- Enable-Input vom Daten-OutputReg.
+    
+    
     
     DA_DAC1_Str                 <=  '0';                -- DAC1-Strobe
     DA_DAC1_Str_Out             <=  '0';                -- DAC1-Output-Strobe
@@ -2541,6 +3242,8 @@ BEGIN
 
     DA_Trig1_deb_i              <= '0';
     DA_Trig2_deb_i              <= '0';
+    DA_Trig1_syn_i              <= '0';
+    DA_Trig2_syn_i              <= '0';
 
     DA_Trig1_i                  <= '0';
     DA_Trig2_i                  <= '0';
@@ -2561,8 +3264,37 @@ BEGIN
     ADC_In6(15 downto 0)  <=  x"0000";  -- ADC Input-Register
     ADC_In7(15 downto 0)  <=  x"0000";  -- ADC Input-Register
     ADC_In8(15 downto 0)  <=  x"0000";  -- ADC Input-Register
+ 
+    IOBP_Aktiv_LED_i  <=  (OTHERS => (OTHERS => '0'));  -- Inputs für die Aktiv-LED-Monoflops der "Slave-Karte 1-12"
+    IOBP_Input        <=  (OTHERS => (OTHERS => '0'));  -- Data_Input  "Slave-Karte 1-12"
+    IOBP_Output       <=             (OTHERS => '0');   -- Data_Output "Slave-Karte 1-12"
+    IOBP_Sel_LED      <=  (OTHERS => (OTHERS => '0'));  -- Inputs für die Aktiv-LED-Monoflops der "Slave-Karte 1-12"
+    IOBP_ID           <=  (OTHERS => (OTHERS => '1'));  -- Inputs für die Aktiv-LED-Monoflops der "Slave-Karte 1-12"
+    IOBP_LED_ID_Bus_i <=             (OTHERS => '1');   -- Data_Output "Slave-Karte 1-12"
     
-
+    Out16_Mode                    <= (OTHERS => '0');     -- Out16 ('901.010') Mode
+    Out16_Data_FG_Out             <= (OTHERS => '0');     -- Data/FG-Output
+    Out16_Out                     <= (OTHERS => '0');     -- Data_Output
+    Out16_Strobe                  <=  '0';                -- Output "nStrobe"
+    Out16_LED_Lemo_In_i           <=  '0';                -- Input  "nLED_Lemo_In"
+    Out16_Lemo_in                 <=  '0';                -- Input "Lemo" 
+    Out16_Lemo_deb_i              <=  '0';                -- Debounce: Input "Lemo" 
+    Out16_Lemo_syn_i              <=  '0';                -- Debounce: Input "Lemo" 
+    Out16_DAC_Strobe_i            <=  '0';                -- Input: UIO-Strobe
+    Out16_DAC_Strobe_Expo         <=   0;                 -- Exponent für die Breite des Strobs
+    
+    In16_In                      <= (OTHERS => '0');     -- Data_Input
+    In16_Strobe_in               <=  '0';                -- Input  "Strobe"
+    In16_Input                   <= (OTHERS => '0');     -- Data_Input
+    In16_Strobe                  <=  '0';                -- Input  "Strobe"
+    In16_LED_Lemo_Out_i          <=  '0';                -- Input  "nLED_Lemo_Out"
+    In16_ADC_Data_FF_i           <=  (OTHERS => '0');    -- Input-Register
+    In16_ADC_Strobe_i            <= '0';                 -- Input-Register-Strobe
+    
+    
+    
+    
+    
     --#################################################################################
     --###                                                                           ###
     --###                    IO-Stecker-Test mit "BrückenStecker                    ###
@@ -2606,7 +3338,9 @@ BEGIN
 
     AW_Input_Reg(5)(15 downto 4)  <=   AW_Output_Reg(5)(15 downto 4); --+   Input [15..4] = Copy der Output-Bits, da Testprog. nur 16 Bit Vergleich.
     AW_Input_Reg(5)(3  downto 0)  <=  (PIO(143), PIO(144), PIO(149), PIO(150));
- 
+
+   --  Beim Test, sind die Pins vom AW_Output_Reg(5)(3 downto 0) mit AW_Input_Reg(5)(3 downto 0) extern verbunden.
+    
                     (PIO(147), PIO(148), PIO(145), PIO(146))    <=  AW_Output_Reg(5)(3 downto 0) ;
 
 
@@ -2638,9 +3372,7 @@ BEGIN
   
 
     --input: Anwender_ID ---      
-      s_AW_ID(7 downto 0)         <=  PIO(150 downto 143);
-      AW_Input_Reg(5)(15 downto 0)    <=  x"00" & s_AW_ID(7 downto 0);-- Anwender_ID
-    
+      AW_ID(7 downto 0)         <=  PIO(150 downto 143);
 
   
     --  --- Output: Anwender-LED's ---
@@ -2666,10 +3398,10 @@ BEGIN
     AW_Input_Reg(7)   <=  Timing_Pattern_LA(15 downto 0);   -- L-Word vom Timing_Pattern
 
     
-  CASE s_AW_ID(7 downto 0) IS
+  CASE AW_ID(7 downto 0) IS
   
 
-  WHEN  c_AW_P37IO =>
+  WHEN  c_AW_P37IO.ID =>
 
     --#################################################################################
     --####                  Anwender-IO: P37IO  -- FG900_700                        ###
@@ -2678,7 +3410,7 @@ BEGIN
 --           +=======================================================================    --
 --           |         User-Config-Register 1 (AW_Config1)                               --
 --     ------+=======================================================================    --
---     15-10 | frei                                                                      --
+--     15-9  | frei                                                                      --
 --     ------+-----------------------------------------------------------------------    --
 --       8   | Output-Polarität Lemo,   1 = Negativ,  0 = Positiv(Default)               --
 --       7   | Output-Polarität Daten,  1 = Negativ,  0 = Positiv(Default)               --
@@ -2686,28 +3418,28 @@ BEGIN
 --      6-0  | frei                                                                      --
 --     ------+-----------------------------------------------------------------------    --
 
-      extension_cid_system <= 55;     -- extension card: cid_system, CSCOHW=55
-      extension_cid_group  <= 27;     -- extension card: cid_group, "FG900700_P37IO1" = 27
+      extension_cid_system <= c_cid_system;    -- extension card: CSCOHW
+      extension_cid_group  <= c_AW_P37IO.CID;  -- extension card
     
       Max_AWOut_Reg_Nr     <= 2;      -- Maximale AWOut-Reg-Nummer der Anwendung
       Max_AWIn_Reg_Nr      <= 1;      -- Maximale AWIn-Reg-Nummer der Anwendung
-      Min_AWIn_Deb_Time    <= 2;      -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
+      Min_AWIn_Deb_Time    <= 1;      -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
 
       s_nLED_User1_i       <= '0';    -- LED3 = User 1, -- frei -- 
       s_nLED_User2_i       <= '0';    -- LED3 = User 2, -- frei -- 
       s_nLED_User3_i       <= '0';    -- LED3 = User 3, -- frei -- 
       
 
-    --############################# Set Debounce-Time ######################################
+    --############################# Set Debounce- oder Syn-Time ######################################
       
       AWIn_Deb_Time   <= to_integer(unsigned(Diob_Config1)(14 downto 12)); -- -- Debounce-Zeit 2 Hoch "AWIn_Deb_Time" in us, Wert aus DIOB-Config 1        
 
       IF  (AWIn_Deb_Time < Min_AWIn_Deb_Time)  THEN         
-          Deb32_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
+          Deb60_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
       ELSE
-          Deb32_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
+          Deb60_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
       END IF;
-
+      
       
     --############################# Start/Stop FF ######################################
 
@@ -2717,7 +3449,7 @@ BEGIN
       PIO(35)             <=  P37IO_nLED_Stop_o;    --  Output "nLED_Stop"
       P37IO_Reset_deb_i   <=  not PIO(133);         -- input "Rest-Taster" L-Aktiv
 
-      PIO(37)          <=  P37IO_nELD_BNC_o;     -- Output "nLED_BNC"
+      PIO(37)          <=  P37IO_nELD_BNC_o;        -- Output "nLED_BNC"
 
       
    --###################### Input's ==> FF ########################
@@ -2731,6 +3463,11 @@ BEGIN
           P37IO_FF_Stop   <=  P37IO_Stop_deb_i;     -- Input ohne Entprellung
           P37IO_FF_Reset  <=  P37IO_Reset_deb_i;    -- Input ohne Entprellung
       END IF;
+    
+      AW_Input_Reg(1)( 8)  <=  P37IO_FF_Start;      --  Start     -+-- Signale am FF
+      AW_Input_Reg(1)( 9)  <=  P37IO_FF_Stop;       --  Stop       |
+      AW_Input_Reg(1)(10)  <=  P37IO_FF_Reset;      --  Reset      |
+      AW_Input_Reg(1)(11)  <=  P37IO_BNC_o;         --  Output FF -+
       
       
    --###################### FF ==> Output ########################
@@ -2752,13 +3489,13 @@ BEGIN
 
 
       IF  (AW_Config1(7) = '0')  THEN
-        (PIO(65), PIO(69), PIO(61), PIO(67), PIO(63), PIO(71), PIO(55), PIO(53)) <=      AW_Output_Reg(1)(7 downto 0);  --  Output "CO_D[7..0]" positiv
-         PIO(57)                                                                 <=      AW_Output_Reg(2)(1);           --  Output "CO_FAULT"
-         PIO(59)                                                                 <=      AW_Output_Reg(2)(0);           --  Output "CO_STAT"
+        (PIO(65), PIO(69), PIO(61), PIO(67), PIO(63), PIO(71), PIO(55), PIO(53)) <=  not AW_Output_Reg(1)(7 downto 0);  --  Output "CO_D[7..0]" positiv
+         PIO(57)                                                                 <=  not AW_Output_Reg(1)(8);           --  Output "CO_FAULT"
+         PIO(59)                                                                 <=  not AW_Output_Reg(1)(9);           --  Output "CO_STAT"
       Else                                                                                                                              
-        (PIO(65), PIO(69), PIO(61), PIO(67), PIO(63), PIO(71), PIO(55), PIO(53)) <=  not AW_Output_Reg(1)(7 downto 0);  --  Output "CO_D[7..0]" negativ
-         PIO(57)                                                                 <=  not AW_Output_Reg(2)(1);           --  Output "CO_FAULT"
-         PIO(59)                                                                 <=  not AW_Output_Reg(2)(0);           --  Output "CO_STAT"
+        (PIO(65), PIO(69), PIO(61), PIO(67), PIO(63), PIO(71), PIO(55), PIO(53)) <=      AW_Output_Reg(1)(7 downto 0);  --  Output "CO_D[7..0]" negativ
+         PIO(57)                                                                 <=      AW_Output_Reg(1)(8);           --  Output "CO_FAULT"
+         PIO(59)                                                                 <=      AW_Output_Reg(1)(9);           --  Output "CO_STAT"
       END IF;  
       
 
@@ -2767,49 +3504,42 @@ BEGIN
       P37IO_in_Data(15 downto 8) <=  not (PIO(131), PIO(129), PIO(127), PIO(125), PIO(123), PIO(121), PIO(119), PIO(117)); -- Input "HI[7..0]" 
       P37IO_in_Data(7  downto 0) <=  not (PIO(115), PIO(113), PIO(111), PIO(109), PIO(107), PIO(105), PIO(103), PIO(101)); -- Input "LO[7..0]" 
       
-      Deb32_in(15 downto 0)  <= P37IO_in_Data(15 downto 0);   -- Bebounce-Inputs         
+--      Deb60_in(15 downto 0)   <= P37IO_in_Data(15 downto 0);   -- Debounce-Inputs         
+--      Syn60_in(15 downto 0)   <= P37IO_in_Data(15 downto 0);   -- Sync-Inputs         
+
+      P37IO_Deb_in_Data_i(15 downto 0)   <= P37IO_in_Data(15 downto 0);   -- Debounce-Inputs         
+      P37IO_Syn_in_Data_i(15 downto 0)   <= P37IO_in_Data(15 downto 0);   -- Sync-Inputs         
       
       
-   --##################################### Input's ==> AW_Input_Reg(1) #########################################
+   --##################################### Input's ==> AW_Input_Reg(2) #########################################
       
       IF  (Diob_Config1(11) = '0')  THEN
-              AW_Input_Reg(1)(15 downto 0)  <=  Deb32_out(15 downto 0);     -- Input mit Entprellung
+              AW_Input_Reg(2)(15 downto 0)  <=  P37IO_Deb_in_Data_i(15 downto 0);   -- Input mit Entprellung
       ELSE    
-              AW_Input_Reg(1)(15 downto 0)  <=  P37IO_in_Data(15 downto 0); -- Input ohne Entprellung
+              AW_Input_Reg(2)(15 downto 0)  <=  P37IO_Syn_in_Data_i(15 downto 0);   -- Input ohne Entprellung
       END IF;
 
 
 
-  WHEN   c_AW_P25IO =>
+  WHEN   c_AW_P25IO.ID =>
   
     --#################################################################################
     --####                    Anwender-IO: P25IO  -- FG900_710                      ###
     --#################################################################################
     
---           +=======================================================================    --
---           |         User-Config-Register 1 (AW_Config1)                               --
---     ------+=======================================================================    --
---     15-10 | frei                                                                      --
---     ------+-----------------------------------------------------------------------    --
---       8   | Output-Polarität Lemo,   1 = Negativ,  0 = Positiv(Default)               --
---       7   | Output-Polarität Daten,  1 = Negativ,  0 = Positiv(Default)               --
---     ------+-----------------------------------------------------------------------    --
---      6-2  | frei                                                                      --
---     ------+-----------------------------------------------------------------------    --
---       1   | ADC_mode;  1 = ADC-Daten aus dem Speicher, gespeichert mit EOC            --
---           |            0 = ADC-Daten die am Sub-D Stecker anstehen.                   --
---     ------+-----------------------------------------------------------------------    --
---       0   | FG_mode;  1 = Funktiongenerator-Mode, DAC-Werte kommen von FG_Data und    --
---           |               werden mit FG_Strobe uebernommen. Kein externer Trigger!    --
---           |           0 = Software-Mode, DAC-Werte, kommen vom SCU-Bus-Slave.         --
---     ------+-----------------------------------------------------------------------    --
+--           +======================================================================+
+--           |            User-Config-Register 1 (AW_Config1)                       |
+--           +======================================================================+
+--           |                           DAC/ADC-Mode                               |
+--           +=======================================================================
+
     
-      extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
-      extension_cid_group  <= 28; -- extension card: cid_group, "FG900710_P25IO1" = 28
+      extension_cid_system <= c_cid_system;     -- extension card: CSCOHW
+      extension_cid_group  <= c_AW_P25IO.CID;   -- extension card: cid_group, "FG900710_P25IO1" = 28
   
       Max_AWOut_Reg_Nr     <= 1;  -- Maximale AWOut-Reg-Nummer der Anwendung
       Max_AWIn_Reg_Nr      <= 1;  -- Maximale AWIn-Reg-Nummer der Anwendung
-      Min_AWIn_Deb_Time    <= 2;  -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
+      Min_AWIn_Deb_Time    <= 1;  -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
   
       
       --############################# Set Debounce-Time ######################################
@@ -2817,31 +3547,35 @@ BEGIN
       AWIn_Deb_Time   <= to_integer(unsigned(Diob_Config1)(14 downto 12)); -- -- Debounce-Zeit 2 Hoch "AWIn_Deb_Time" in us, Wert aus DIOB-Config 1        
   
       IF  (AWIn_Deb_Time < Min_AWIn_Deb_Time)  THEN         
-          Deb32_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
+          Deb60_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
       ELSE
-          Deb32_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
+          Deb60_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
       END IF;
 
       
       --################################### Set LED's ########################################
     
-      s_nLED_User1_i <= AW_Config1(0);         -- LED3 = User 1, DAC-Data vom FG
-      s_nLED_User2_i <= not P25IO_nADC_ECC_o;  -- LED2 = User 2, ECC zum ADC (Enable)  
-      s_nLED_User3_i <= P25IO_EOC_deb_o;       -- LED1 = User 3, EOC vom ADC 
+
+      IF (AW_Config1(0) = '1') AND (AW_Config1(1) = '1') THEN  s_nLED_User1_i <= '1';    -- LED3 = User 1, DAC-Data vom FG
+                                                         ELSE  s_nLED_User1_i <= '0';    -- LED3 = User 1, DAC-Data vom AW_Outreg
+      END IF;
+      
+      s_nLED_User2_i <= P25IO_ECC_Puls_o;          -- LED2 = User 2, ECC (Enable-Conv-CMD)
+      s_nLED_User3_i <= P25IO_ADC_Strobe_in;       -- LED1 = User 3, EOC vom ADC 
     
     
  
     --############################# Start/Stop FF ######################################
 
       P25IO_Start_deb_i   <=  not PIO(71);          -- input "LemoBuchse-Start" H-Aktiv, nach dem Optokoppler aber L-Aktiv
-      PIO(87)             <=  P25IO_nLED_Start_o;   --  Output "nLED_Start"
+      PIO(87)             <=  P25IO_nLED_Start_o;   -- Output "nLED_Start"
       P25IO_Stop_deb_i    <=  not PIO(75);          -- input "LemoBuchse-Stop" L-Aktiv, nach dem Optokoppler aber L-Aktiv
-      PIO(89)             <=  P25IO_nLED_Stop_o;    --  Output "nLED_Stop"
+      PIO(89)             <=  P25IO_nLED_Stop_o;    -- Output "nLED_Stop"
       P25IO_Reset_deb_i   <=  not PIO(67);          -- input "Rest-Taster" L-Aktiv
 
       
    --###################### Input's ==> FF ########################
-      
+
       IF  (Diob_Config1(11) = '0')  THEN            -- 0 = Entprellung "Eingeschaltet" 
           P25IO_FF_Start  <=  P25IO_Start_deb_o;    -- Input mit Entprellung
           P25IO_FF_Stop   <=  P25IO_Stop_deb_o;     -- Input mit Entprellung
@@ -2851,12 +3585,17 @@ BEGIN
           P25IO_FF_Stop   <=  P25IO_Stop_deb_i;     -- Input ohne Entprellung
           P25IO_FF_Reset  <=  P25IO_Reset_deb_i;    -- Input ohne Entprellung
       END IF;
-      
+
+      AW_Input_Reg(1)( 8)  <=  P25IO_FF_Start;       --  Start     -+-- Signale am FF
+      AW_Input_Reg(1)( 9)  <=  P25IO_FF_Stop;        --  Stop       |
+      AW_Input_Reg(1)(10)  <=  P25IO_FF_Reset;       --  Reset      |
+      AW_Input_Reg(1)(11)  <=  P25IO_BNC_o;          --  Output FF -+
+      AW_Input_Reg(1)(12)  <=  P25IO_Ext_Tim_deb_o;  --  Input "P25IO_Ext_Tim_deb_o" 
       
    --###################### FF ==> Output ########################
 
 
-      IF  (AW_Config1(8) = '0')  THEN
+      IF  (AW_Config1(11) = '0')  THEN
         PIO(103)     <=      P25IO_BNC_o;          -- Output "BNC" positiv
       Else
         PIO(103)     <=  not P25IO_BNC_o;          -- Output "BNC" negativ  
@@ -2865,21 +3604,121 @@ BEGIN
       PIO(91)             <=  P25IO_nELD_BNC_o;     -- Output "nLED_BNC"
 
       
+--           +======================================================================+    --
+--           |         User-Config-Register 1 (AW_Config1)                          |    --
+--           +======================================================================+    --
+--           |                              DAC-Mode                                |
+--     ------+======================================================================+    --
+--       7   | Output-Polarität Bit [15..0],  1 = Negativ,  0 = Positiv(Default)    |    --
+--     ------+----------------------------------------------------------------------|    --
+--       6   | Strobe-Polarität,         1 = Negativ,  0 = Positiv(Default)         |    --
+--     ------+----------------------------------------------------------------------|    --
+--    [5..3] | Strobe-Puls-Breite, Entprellzeit in in 2x 100ns;                     |    --
+--           | Vorgabe Exponent (x) für Pulsbreite: Wertebereich 100ns..12,8 µs *)  |    --
+--     ------+----------------------------------------------------------------------|    --
+--       2   | DAC-Strobe:   | 0 = Holec_Mode (4x) (Default), 1 = Strobe (1x)       |    --
+--     ------+----------------------------------------------------------------------|    --
+--           |  Output-Mode:                                                        |    --
+--           |    "11" =  FG  mit Strobe                                            |    --
+--    [1..0] |    "10" =  frei                                                      |     --
+--           |    "01" =  16 Bit Output, Strobe = wr auf AW_Output_Reg1(0)          |    --
+--           |    "00" =  16 Bit-Dac,    Strobe = wr auf AW_Output_Reg2 (Default)   |    --
+--     ------+----------------------------------------------------------------------+    --
       
-    --############################# DAC out ######################################
+      
+--    ##################################################################################################      
+--    #                                                                                                #
+--    #                                      DAC                                                       #
+--    #                 Output-Daten von den AWOut_Registern oder vom FG mit Strobe                    #
+--    #                                                                                                #
+--    ##################################################################################################      
 
-    IF  (AW_Config1(0) = '1')  THEN
+--                 +-----------------------------------------------+-----------------------------------------------+
+--                 |                 AW_Output_Reg. 2              |                 AW_Output_Reg. 1              |
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|  16 Bit DAC 
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--              +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+    
+--              |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|    Output-Daten vom FG (unipol.)
+--              +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+    
+--                 |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|  Output-Daten vom FG (bipol.)  
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 |                                               |
+--    25pol. SubD  |                   DAC 16Bit                   |                                 
+--  +--------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+========+                    
+--  |     Pin #    |22| 9|21| 8|20| 7|19| 6|18| 5|17| 4|16| 3|15| 2|   24   |
+--  +---------------==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+========+                        
+--  |  Daten-Bit#  |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0| Strobe | <-+-- AW_Output_Reg1(0)   (Default-Mode)
+--  +--------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+========+   |-- Strobe write 16-Bit (DAC-Mode bipol./unipol.) 
+--                                                                              +-- FG-Str.             (FG-Mode)      
+-- P25IO_Holec_Strobe_Out    
+-- P25IO_Holec_Strobe_Start
   
---           FG_mode; DAC-Werte kommen von FG_Data und werden mit FG_Strobe uebernommen. Kein externer Trigger! 
+      P25IO_DAC_Mode  <=  AW_Config1(1) & AW_Config1(0);         -- Output-Betriebsart
 
-        P25IO_DAC_Strobe_Start_i    <=  FG_1_strobe;            -- FG_1_strobe (vom Funktionsgen)
-        P25IO_DAC_Out(15 downto 0)  <=  FG_1_sw(31 downto 16);  
-        Else
---           Software-Mode, DAC-Werte, kommen vom SCU-Bus-Slave. Externe Triggerung mit pos. oder neg. Flanke, kann eingeschaltet werden. 
+      case P25IO_DAC_Mode is
 
-        P25IO_DAC_Strobe_Start_i    <=  AWOut_Reg1_wr;          -- AWOut_Reg1_wr (vom SCU-Bus-Slave)
-        P25IO_DAC_Out(15 downto 0)  <=  AW_Output_Reg(1)(15 downto 0);
-      END IF; 
+  
+        when "00"  =>  -- DAC16-Mode
+              
+              P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  AW_Output_Reg(2)(15 DOWNTO 0); ------------------------- Bipolar
+    
+              P25IO_DAC_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config1)(5 downto 3)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
+
+              P25IO_Holec_Strobe_Start   <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
+              P25IO_DAC_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
+
+              IF  (AW_Config1(2) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_Holec_Strobe_Out; -- Strobe positiv
+                                         Else  
+
+                                           IF  (AW_Config1(6) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_DAC_DAC_Strobe_o; -- Strobe positiv
+                                                                      Else  P25IO_DAC_Strobe  <=      P25IO_DAC_DAC_Strobe_o; -- Strobe negativ
+                                           END IF; 
+              END IF; 
+
+              
+        when "01"  =>  -- Output-Mode(Default):
+        
+              P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  AW_Output_Reg(2)(15 DOWNTO 0);
+              P25IO_DAC_Strobe                   <=  NOT AW_Output_Reg(1)(0);
+              
+                
+        when "10"  =>  -- frei:
+
+              P25IO_DAC_Data_FG_Out(15 downto 0) <= (OTHERS => '0');  
+              P25IO_DAC_Strobe                   <= '0';
+ 
+
+        when "11"  =>  -- FG-Mode:
+              
+              IF  (AW_Config1(2) = '0')  THEN  P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  FG_1_sw(31 downto 16); -- Bipolar
+                                         Else  P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  FG_1_sw(30 downto 15); -- Unipolar
+              END IF; 
+    
+              P25IO_DAC_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config1)(5 downto 3)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
+
+
+              P25IO_Holec_Strobe_Start   <=  FG_1_strobe;                   -- FG_1_strobe (vom Funktionsgen) 
+              P25IO_DAC_DAC_Strobe_i     <=  FG_1_strobe;                   -- FG_1_strobe (vom Funktionsgen)
+
+              IF  (AW_Config1(2) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_Holec_Strobe_Out; -- Strobe positiv
+                                         Else  
+
+                                           IF  (AW_Config1(6) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_DAC_DAC_Strobe_o; -- Strobe positiv
+                                                                      Else  P25IO_DAC_Strobe  <=      P25IO_DAC_DAC_Strobe_o; -- Strobe negativ
+                                           END IF; 
+              END IF; 
+
+      end case;
+
+
+   
+    --############################ Einstellen der Output-Polarität ##################################
+
+    IF  (AW_Config1(7) = '0')  THEN  P25IO_DAC_Out(15 DOWNTO 0) <=  NOT P25IO_DAC_Data_FG_Out(15 downto 0); -- Output negativ 
+                               Else  P25IO_DAC_Out(15 DOWNTO 0) <=      P25IO_DAC_Data_FG_Out(15 downto 0); -- Output positiv 
+    END IF; 
 
 
     --    Output DAC-Daten
@@ -2890,66 +3729,132 @@ BEGIN
       PIO(83) <=  '0';  -----+
       PIO(95) <=  '0';  -----+
 
+     (PIO(107), PIO(109), PIO(111), PIO(113), PIO(115), PIO(117), PIO(119), PIO(121))  <=  P25IO_DAC_Out(15 downto 8);  -- Output Bit-[15..8]  
+     (PIO(123), PIO(125), PIO(127), PIO(129), PIO(131), PIO(133), PIO(135), PIO(137))  <=  P25IO_DAC_Out( 7 downto 0);  -- Output Bit-[ 8..0] 
+                                                                            PIO(105)   <=  P25IO_DAC_Strobe;            -- Strobe-Output
 
-      
-      IF  (AW_Config1(7) = '0')  THEN -- positiv
-        (PIO(107), PIO(109), PIO(111), PIO(113), PIO(115), PIO(117), PIO(119), PIO(121), 
-         PIO(123), PIO(125), PIO(127), PIO(129), PIO(131), PIO(133), PIO(135), PIO(137) )  <=      P25IO_DAC_Out(15 downto 0);  -- Output Bit-[15..0] 
-         PIO(105)                                                                          <=  not P25IO_nDAC_Strobe_o;         --  Der Strobe-Output ist "LO"-Aktiv
-      Else                                                                                                                              
-        (PIO(107), PIO(109), PIO(111), PIO(113), PIO(115), PIO(117), PIO(119), PIO(121), 
-         PIO(123), PIO(125), PIO(127), PIO(129), PIO(131), PIO(133), PIO(135), PIO(137) )  <=  not P25IO_DAC_Out(15 downto 0);  -- Output Bit-[15..0] 
-         PIO(105)                                                                          <=      P25IO_nDAC_Strobe_o;         --  Der Strobe-Output ist "LO"-Aktiv
-      END IF;  
-      
+                                                                            
+--           +======================================================================+   
+--           |         User-Config-Register 1 (AW_Config1)                          |   
+--           +======================================================================+   
+--           |                              ADC-Mode                                |
+--     ------+=======================================================================   
+--     15-12 | frei                                                                 |   
+--     ------+----------------------------------------------------------------------|   
+--      11   | Output-Polarität Lemo,   1 = Negativ,  0 = Positiv(Default)          |   
+--     ------+----------------------------------------------------------------------|   
+--      10   | Triggerflanke: | 1 = neg. Flanke ist Trigger                         |
+--           |                | 0 = pos. Flanke ist Trigger                         |
+--     ------+----------------+-----------------------------------------------------|   
+--       9   | ECC_Start:     | 0 = write auf AW_Output_Reg.(1)(1) (Default)        |   
+--           |                | 1 = Input ext. Timing                               |   
+--     ------+----------------------------------------------------------------------|   
+--       8   | Input-Mode:    | 0 = Input, 1 = Input mit Strobe                     |
+--     ------+----------------------------------------------------------------------+   
 
-    --############################# ADC in ######################################
+
+--    ##################################################################################################      
+--    #                                                                                                #
+--    #                                      ADC-Input                                                 #
+--    #                                                                                                #
+--    ##################################################################################################      
 
 
---    Start ADC-Conversion    
-    P25IO_ADC_ECC_Start_i  <=  AWOut_Reg2_wr;                                 -- pos. Flanke vom AWOut_Reg2_wr (vom SCU-Bus-Slave) ==> Puls von 1 Clock-Breite.
-    P25IO_ADC_ECC_i        <=  ((P25IO_ADC_ECC_Start_o and AW_Output_Reg(2)(0)) or  -- wenn AW_Output_Reg(2)(0)=1 ist oder  
-                                 P25IO_Ext_Tim_Strobe_Start_o);               -- ein ext. Trigger ==> Puls = 2us 
+--                 +-----------------------------------------------+-----------------------------------------------+
+--                 |                  AW_Input_Reg. 2              |                  AW_Input_Reg. 1              |
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 |                                               |                                             
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+                                       
+--                 |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0| 16 Bit ADC                                       
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+                                    
+--                 |                                               |                       +----------------------------*               
+--    25pol. SubD  |                  ADC 16 Bit                   |                       |    AW_Input_Reg.(1)(0)     |                  
+--  +--------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+=======================+============================+                       
+--  |     Pin #    |12|24|11|23|10|22| 9|21| 8|20| 7|19| 6|18| 5|17|             15        |              4             |                       
+--  +---------------==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+=======================+============================+                       
+--  |  Daten-Bit#  |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0| ECC (Enable-Conv-CMD) | Strobe: EOC (End-of-Conv.) |                       
+--  +--------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+=======================+============================+                       
+--                                                                 |  AW_Output_Reg.(1)(1) |                                            
+--                                                                 +-----------------------+                                                  
+--                                                                                                                    
 
-    P25IO_Ext_Tim_i        <=  not PIO(85);            -- input "LemoBuchse-ExtTiming" H-Aktiv, nach dem Optokoppler aber L-Aktiv
-    PIO(93)                <=  P25IO_nLED_Ext_Tim_o;   --  Output "nLED_Extern-Timing"
 
-    PIO(101)               <=  not P25IO_nADC_ECC_o;   --  Der Strobe-Output für ECC "Hi"-Aktiv
+    --############################# Signal-Input-Daten über Piggy-Stecker JPIO1 ###################################
+
+    
+    P25IO_ADC_IN(15 downto 8)  <=  not (PIO(41), PIO(43), PIO(37), PIO(39), PIO(33), PIO(35), PIO(49), PIO(51));  -- Input "HI[7..0]" 
+    P25IO_ADC_IN(7  downto 0)  <=  not (PIO(53), PIO(55), PIO(45), PIO(47), PIO(57), PIO(59), PIO(61), PIO(63));  -- Input "Lo[7..0]"   
+    
+    P25IO_ADC_Strobe_in    <=    not PIO(65); -- EOC (Input Strobe für ADC-Daten)
     
 
-    --####################### Debounce Input: ADC-Daten ############################
+   --################################ Input: Debounce oder Synchr.  ##################################
 
-    P25IO_Data_in(15 downto 8)  <=  not (PIO(41), PIO(43), PIO(37), PIO(39), PIO(33), PIO(35), PIO(49), PIO(51));  -- Input "HI[7..0]" 
-    P25IO_Data_in(7  downto 0)  <=  not (PIO(53), PIO(55), PIO(45), PIO(47), PIO(57), PIO(59), PIO(61), PIO(63));  -- Input "Lo[7..0]"   
-    
-    Deb32_in(15 downto 0)  <= P25IO_Data_in(15 downto 0);   -- Bebounce-Inputs         
-      
-      
-   --###################### Input's ==> P25IO_ADC_Data_FF_i ########################
-      
-      IF  (Diob_Config1(11) = '0')  THEN                                    -- 0 = Entprellung "Eingeschaltet" 
-          P25IO_ADC_Data_FF_i(15 downto 0)  <=  Deb32_out(15 downto 0);     -- Input mit Entprellung
-      ELSE
-          P25IO_ADC_Data_FF_i(15 downto 0)  <=  P25IO_Data_in(15 downto 0); -- Input ohne Entprellung
-      END IF;
-    
-    -------------------- ADC-EOC -----------------------------------------------
-    P25IO_EOC_i    <=    PIO(65); -- input Strobe für ADC-Daten
+    Deb60_in(15 DOWNTO 0)              <=  P25IO_ADC_IN(15 downto 0);  -- Entprellung der Input-Daten
+    Deb60_in(16)                       <=  P25IO_ADC_Strobe_in;        -- Entprellung des Input "Strobe" 
 
-  
-   --####################### ADC-Daten --> AW_Input_Reg(1) ############################
-    
-    IF  (AW_Config1(1) = '1')  THEN
-  
-            AW_Input_Reg(1)    <=    P25IO_ADC_Data_FF_o;     -- ADC-Daten aus dem Speicher (gespeichert mit EOC)
-    Else
-            AW_Input_Reg(1)    <=    P25IO_ADC_Data_FF_i;     -- ADC-Daten die am Sub-D Stecker anstehen.
+    Syn60_in(15 DOWNTO 0)              <=  P25IO_ADC_IN(15 downto 0);  -- Synchronisation der Input-Daten
+    Syn60_in(16)                       <=  P25IO_ADC_Strobe_in;        -- Synchronisation des Input "Strobe" 
+
+
+    IF  (Diob_Config1(11) = '0')  THEN                               -- 0 = Entprellung "Eingeschaltet" 
+      P25IO_ADC_Input(15 DOWNTO 0)   <=  Deb60_out(15 DOWNTO 0);     -- Debounce-Input-Daten   (Dafault)
+      P25IO_ADC_Strobe               <=  Deb60_out(16);              -- Debounce-Input-Strobe  (Dafault)
+    ELSE    
+      P25IO_ADC_Input(15 DOWNTO 0)   <=  Syn60_out(15 DOWNTO 0);     -- Syn-Input-Daten
+      P25IO_ADC_Strobe               <=  Syn60_out(16);              -- Syn-Input-Strobe
+    END IF;
+
+   --################################   Daten FF mit Strobe      ##################################
+
+    P25IO_ADC_Data_FF_i(15 DOWNTO 0)    <=  P25IO_ADC_Input(15 downto 0);  -- Input zum Daten-Input_FF
+
+    IF  (AW_Config1(10) = '0')  THEN  P25IO_ADC_Strobe_i <=  NOT P25IO_ADC_Strobe; -- pos. Flanke vom Strobe (Default)
+                                Else  P25IO_ADC_Strobe_i <=      P25IO_ADC_Strobe; -- neg. Flanke vom Strobe  
     END IF; 
+  
+  
+ --################################      Input oder ADC-Input-Mode     ##################################
+        
+    IF  (AW_Config1(8) = '0')  THEN                                            -- 0 = Input-Mode
+        AW_Input_Reg(2)(15 DOWNTO 0)    <=  P25IO_ADC_Input(15 DOWNTO 0);      -- Daten-Input  Deb/Syn
+        AW_Input_Reg(1)(0)              <=  P25IO_ADC_Strobe;                  -- Deb/Syn ADC-Strobe-Input
+      ELSE    
+        AW_Input_Reg(1)(0)              <=  P25IO_ADC_Strobe_o;                -- Daten-Strobe für die Input-Daten
+        AW_Input_Reg(2)(15 DOWNTO 0)    <=  P25IO_ADC_Data_FF_o(15 DOWNTO 0);  -- Input-Register-Daten
+    END IF;
+   
+
+   --################################  Input ECC (Enable_Convert_Command)  ##################################
+   
+    P25IO_Ext_Tim_deb_i     <=  not PIO(85);            -- input(Debounce) "LemoBuchse-Ext_Timing" H-Aktiv, nach dem Optokoppler aber L-Aktiv
+    P25IO_Ext_Tim_syn_i     <=  not PIO(85);            -- input(Synch.)   "LemoBuchse-Ext_Timing" H-Aktiv, nach dem Optokoppler aber L-Aktiv
+    PIO(93)                 <=  P25IO_nLED_Ext_Tim_o;   -- Output "nLED_Ext_Timing"
+   
+
+   --################################  ECC Pulsbreite (Enable_Convert_Command)  ##################################
+
+   IF  (AW_Config1(9) = '0')  THEN                                            -- 0 = Ecc-Intern
+        P25IO_ECC_Puls_i      <=  (AWOut_Reg1_wr AND AW_Output_Reg(1)(1) AND SCU_Ext_Wr_fin);    -- Software-Strobe   
+      ELSE    
+        P25IO_ECC_Puls_i      <=  P25IO_Ext_Tim_syn_o;              -- Ext. Trigger  
+   END IF;
+
+   P25IO_ECC_Strobe_i         <=  P25IO_ECC_Puls_o;
+   
+   PIO(101)  <=  not P25IO_ECC_Strobe_o;   -- ECC (Enable-Convert-CMD) 
+   
+
+    
+    --#################################################################################
+    --#################################################################################
 
 
  
   
-  WHEN   c_AW_OCin =>
+  WHEN   c_AW_OCin.ID =>
 
     --#################################################################################
     --####                    Anwender-IO: OCin -- FG900_720                        ###
@@ -2958,17 +3863,16 @@ BEGIN
 --           +=======================================================================    --
 --           |         User-Config-Register 1 (AW_Config1)                               --
 --     ------+=======================================================================    --
---     15-10 | frei                                                                      --
+--     15-8  | frei                                                                      --
 --     ------+-----------------------------------------------------------------------    --
---       8   | frei                                                                      --
 --       7   | Output-Polarität Daten,  1 = Negativ,  0 = Positiv(Default)               --
 --     ------+-----------------------------------------------------------------------    --
 --      6-0  | frei                                                                      --
 --     ------+-----------------------------------------------------------------------    --
 
 
-      extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
-      extension_cid_group  <= 29; -- extension card: cid_group, "FG900720_OCin1" = 29
+      extension_cid_system <= c_cid_system;    -- extension card: CSCOHW
+      extension_cid_group  <= c_AW_OCin.CID;   -- extension card: cid_group, "FG900720_OCin1" = 29
 
       Max_AWOut_Reg_Nr     <= 1;  -- Maximale AWOut-Reg-Nummer der Anwendung
       Max_AWIn_Reg_Nr      <= 2;  -- Maximale AWIn-Reg-Nummer der Anwendung
@@ -2980,9 +3884,9 @@ BEGIN
       AWIn_Deb_Time   <= to_integer(unsigned(Diob_Config1)(14 downto 12)); -- -- Debounce-Zeit 2 Hoch "AWIn_Deb_Time" in us, Wert aus DIOB-Config 1        
   
       IF  (AWIn_Deb_Time < Min_AWIn_Deb_Time)  THEN         
-          Deb32_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
+          Deb60_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
       ELSE
-          Deb32_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
+          Deb60_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
       END IF;
 
       
@@ -3002,18 +3906,21 @@ BEGIN
       OCIN_Data2_in(15 downto 8)  <=  not (PIO(81),  PIO(79),  PIO(77),  PIO(83),  PIO(85),  PIO(87),  PIO(89),  PIO(91));   -- Input "D[7..0]"
       OCIN_Data2_in(7  downto 0)  <=  not (PIO(109), PIO(111), PIO(113), PIO(115), PIO(125), PIO(127), PIO(129), PIO(131));  -- Input "C[7..0]"
 
-      Deb32_in(15 downto 0)   <= OCIN_Data1_in(15 downto 0);   -- Bebounce-Inputs         
-      Deb32_in(31 downto 16)  <= OCIN_Data2_in(15 downto 0);   -- Bebounce-Inputs         
+      Deb60_in(15 downto 0)   <= OCIN_Data1_in(15 downto 0);   -- Bebounce-Inputs         
+      Deb60_in(31 downto 16)  <= OCIN_Data2_in(15 downto 0);   -- Bebounce-Inputs         
+
+      Syn60_in(15 downto 0)   <= OCIN_Data1_in(15 downto 0);   -- Bebounce-Inputs         
+      Syn60_in(31 downto 16)  <= OCIN_Data2_in(15 downto 0);   -- Bebounce-Inputs         
       
       
    --###################### Input's ==> AW_Input_Reg(1)/AW_Input_Reg(2) ########################
       
       IF  (Diob_Config1(11) = '0')  THEN                        -- 0 = Entprellung "Eingeschaltet" 
-          AW_Input_Reg(1)(15 downto 0)  <=  Deb32_out(15 downto 0);       -- Input mit Entprellung
-          AW_Input_Reg(2)(15 downto 0)  <=  Deb32_out(31 downto 16);      -- Input mit Entprellung
+          AW_Input_Reg(1)(15 downto 0)  <=  Deb60_out(15 downto 0);    -- Input mit Entprellung
+          AW_Input_Reg(2)(15 downto 0)  <=  Deb60_out(31 downto 16);   -- Input mit Entprellung
       ELSE
-          AW_Input_Reg(1)(15 downto 0)  <=  OCIN_Data1_in(15 downto 0);   -- Input ohne Entprellung
-          AW_Input_Reg(2)(15 downto 0)  <=  OCIN_Data2_in(15 downto 0);   -- Input ohne Entprellung
+          AW_Input_Reg(1)(15 downto 0)  <=  Syn60_out(15 downto 0);    -- Input ohne Entprellung
+          AW_Input_Reg(2)(15 downto 0)  <=  Syn60_out(31 downto 16);   -- Input ohne Entprellung
       END IF;
     
       
@@ -3022,20 +3929,20 @@ BEGIN
       PIO(39)   <=  '0';  ------------------------------- Output_Enable (nach init vom ALTERA)
 
       IF  (AW_Config1(7) = '0')  THEN -- positiv
-        PIO(49) <=      AW_Output_Reg(1)(3);  --  Output "2CB2"
-        PIO(47) <=      AW_Output_Reg(1)(2);  --  Output "2CA2"
-        PIO(45) <=      AW_Output_Reg(1)(1);  --  Output "1CB2"
-        PIO(43) <=      AW_Output_Reg(1)(0);  --  Output "1CA2"
+        PIO(49) <=  not  AW_Output_Reg(1)(3);  --  Output "2CB2", '0' am Output --> Optokoppler EIN
+        PIO(47) <=  not  AW_Output_Reg(1)(2);  --  Output "2CA2"
+        PIO(45) <=  not  AW_Output_Reg(1)(1);  --  Output "1CB2"
+        PIO(43) <=  not  AW_Output_Reg(1)(0);  --  Output "1CA2"
       Else                                                                                                                              
-        PIO(49) <=  not AW_Output_Reg(1)(3);  --  Output "2CB2"
-        PIO(47) <=  not AW_Output_Reg(1)(2);  --  Output "2CA2"
-        PIO(45) <=  not AW_Output_Reg(1)(1);  --  Output "1CB2"
-        PIO(43) <=  not AW_Output_Reg(1)(0);  --  Output "1CA2"
+        PIO(49) <=       AW_Output_Reg(1)(3);  --  Output "2CB2"
+        PIO(47) <=       AW_Output_Reg(1)(2);  --  Output "2CA2"
+        PIO(45) <=       AW_Output_Reg(1)(1);  --  Output "1CB2"
+        PIO(43) <=       AW_Output_Reg(1)(0);  --  Output "1CA2"
       END IF;  
 
 
     
-  WHEN   c_AW_OCIO =>
+  WHEN   c_AW_OCIO1.ID | c_AW_OCIO2.ID  =>    --- OCIO1 oder OCIO2=>
   
     --#################################################################################
     --####                      Anwender-IO: OCIO -- FG900_730                      ###
@@ -3044,18 +3951,22 @@ BEGIN
 --           +=======================================================================    --
 --           |         User-Config-Register 1 (AW_Config1)                               --
 --     ------+=======================================================================    --
---     15-10 | frei                                                                      --
+--     15-8  | frei                                                                      --
 --     ------+-----------------------------------------------------------------------    --
---       8   | frei                                                                      --
 --       7   | Output-Polarität Daten,  1 = Negativ,  0 = Positiv(Default)               --
 --     ------+-----------------------------------------------------------------------    --
 --      6-0  | frei                                                                      --
 --     ------+-----------------------------------------------------------------------    --
 
 
-      extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
-      extension_cid_group  <= 30; -- extension card: cid_group, "FG900730_OCIO1" = 30
+      extension_cid_system <= c_cid_system;    -- extension card: CSCOHW
 
+    if  ( AW_ID(7 downto 0) = c_AW_OCIO1.ID) then
+      extension_cid_group  <= c_AW_OCIO1.CID; -- extension card: cid_group, "FG900730_OCIO1"
+    else
+      extension_cid_group  <= c_AW_OCIO2.CID; -- extension card: cid_group, "FG900731_OCIO2"
+    end if;
+      
       Max_AWOut_Reg_Nr     <= 1;  -- Maximale AWOut-Reg-Nummer der Anwendung
       Max_AWIn_Reg_Nr      <= 2;  -- Maximale AWIn-Reg-Nummer der Anwendung
       Min_AWIn_Deb_Time    <= 2;  -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
@@ -3066,9 +3977,9 @@ BEGIN
       AWIn_Deb_Time   <= to_integer(unsigned(Diob_Config1)(14 downto 12)); -- -- Debounce-Zeit 2 Hoch "AWIn_Deb_Time" in us, Wert aus DIOB-Config 1        
   
       IF  (AWIn_Deb_Time < Min_AWIn_Deb_Time)  THEN         
-          Deb32_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
+          Deb60_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
       ELSE
-          Deb32_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
+          Deb60_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
       END IF;
 
       
@@ -3088,36 +3999,33 @@ BEGIN
                                           PIO(87), PIO(85), PIO(83),  PIO(81));  --  input "D[3..0]"
 
                                           
-      Deb32_in(15 downto 0)   <= OCIO_Data1_in(15 downto 0);    -- Bebounce-Inputs         
-      Deb32_in(23 downto 16)  <= OCIO_Data2_in( 7 downto 0);    -- Bebounce-Inputs         
+      Deb60_in(15 downto 0)   <= OCIO_Data1_in(15 downto 0);    -- Bebounce-Inputs         
+      Deb60_in(23 downto 16)  <= OCIO_Data2_in( 7 downto 0);    -- Bebounce-Inputs         
+
+      Syn60_in(15 downto 0)   <= OCIO_Data1_in(15 downto 0);    -- Bebounce-Inputs         
+      Syn60_in(23 downto 16)  <= OCIO_Data2_in( 7 downto 0);    -- Bebounce-Inputs         
+
       
    --###################### Input's ==> AW_Input_Reg(1)/AW_Input_Reg(2) ########################
       
       IF  (Diob_Config1(11) = '0')  THEN                        -- 0 = Entprellung "Eingeschaltet" 
-          AW_Input_Reg(1)(15 downto 0)  <=  Deb32_out(15 downto 0);       -- Input mit Entprellung
-          AW_Input_Reg(2)(15 downto 8)  <=  (OTHERS => '0');              -- Inputs = 0; ;      -- Input mit Entprellung
-          AW_Input_Reg(2)( 7 downto 0)  <=  Deb32_out(23 downto 16);      -- Input mit Entprellung
+          AW_Input_Reg(1)(15 downto 0)  <=  Deb60_out(15 downto 0);      -- Input mit Entprellung
+          AW_Input_Reg(2)(15 downto 8)  <=  (OTHERS => '0');             -- Inputs = 0; ;      -- Input mit Entprellung
+          AW_Input_Reg(2)( 7 downto 0)  <=  Deb60_out(23 downto 16);     -- Input mit Entprellung
       ELSE
-          AW_Input_Reg(1)(15 downto 0)  <=  OCIO_Data1_in(15 downto 0);   -- Input ohne Entprellung
-          AW_Input_Reg(2)(15 downto 8)  <=  (OTHERS => '0');              -- Inputs = 0;
-          AW_Input_Reg(2)( 7 downto 0)  <=  OCIO_Data2_in( 7 downto 0);   -- Input ohne Entprellung
+          AW_Input_Reg(1)(15 downto 0)  <=  Syn60_out(15 downto 0);      -- Input ohne Entprellung
+          AW_Input_Reg(2)(15 downto 8)  <=  (OTHERS => '0');             -- Inputs = 0;
+          AW_Input_Reg(2)( 7 downto 0)  <=  Syn60_out(23 downto 16);     -- Input ohne Entprellung
       END IF;
 
     
     
     --####################### Output: AW_Output_Reg(1) ############################
 
-      PIO(77)   <=  '0';  ------------------------------- Output_Enable (nach init vom ALTERA)
+      PIO(77)   <=  '0';  ------------------------------- Output_Enable (nach init vom ALTERA) -- FG 900.730
+      PIO(79)   <=  '0';  ------------------------------- Output_Enable (nach init vom ALTERA) -- FG 900.731
       
       IF  (AW_Config1(7) = '0')  THEN -- positiv
-      PIO(105)  <=      AW_Output_Reg(1)(11); ----------------  Output "CD2"
-      PIO(61)   <=      AW_Output_Reg(1)(10); ----------------  Output "CC2"
-      PIO(107)  <=      AW_Output_Reg(1)(9);  ----------------  Output "CB2"
-      PIO(115)  <=      AW_Output_Reg(1)(8);  ----------------  Output "CA2"
-
-      (PIO(109), PIO(111), PIO(113), PIO(101), PIO(103), PIO(59), PIO(57), PIO(55))  <=      AW_Output_Reg(1)(7 downto 0);  --  Output "B[7..0]"  
-
-      Else                                                                                                                              
       PIO(105)  <=  not AW_Output_Reg(1)(11); ----------------  Output "CD2"
       PIO(61)   <=  not AW_Output_Reg(1)(10); ----------------  Output "CC2"
       PIO(107)  <=  not AW_Output_Reg(1)(9);  ----------------  Output "CB2"
@@ -3125,15 +4033,24 @@ BEGIN
 
       (PIO(109), PIO(111), PIO(113), PIO(101), PIO(103), PIO(59), PIO(57), PIO(55))  <=  not AW_Output_Reg(1)(7 downto 0);  --  Output "B[7..0]"  
 
+      Else                                                                                                                              
+      PIO(105)  <=      AW_Output_Reg(1)(11); ----------------  Output "CD2"
+      PIO(61)   <=      AW_Output_Reg(1)(10); ----------------  Output "CC2"
+      PIO(107)  <=      AW_Output_Reg(1)(9);  ----------------  Output "CB2"
+      PIO(115)  <=      AW_Output_Reg(1)(8);  ----------------  Output "CA2"
+
+      (PIO(109), PIO(111), PIO(113), PIO(101), PIO(103), PIO(59), PIO(57), PIO(55))  <=      AW_Output_Reg(1)(7 downto 0);  --  Output "B[7..0]"  
+
       END IF;  
 
       
-  WHEN   c_AW_UIO =>
+  WHEN   c_AW_UIO.ID =>
   
     --#####################################################################################
     --####                       Anwender-IO: UIO  -- FG900_740                         ###
     --#####################################################################################
-
+    
+    
 --           +=======================================================================    --
 --           |         User-Config-Register 1 (AW_Config1)                               --
 --     ------+=======================================================================    --
@@ -3142,8 +4059,7 @@ BEGIN
 --      10   | Input-Mode;  1 = High-Side Input-Mode                                     --
 --           |              0 = Low-Side  Input-Mode(Default)                            --
 --     ------+-----------------------------------------------------------------------    --
---      9    | FG_mode;  1 = Funktiongenerator-Mode, DAC-Werte kommen von FG_Data und    --
---           |           0 = Software-Mode, DAC-Werte, kommen vom SCU-Bus-Slave.         --
+--      9    | frei                                                                      --
 --     ------+-----------------------------------------------------------------------    --
 --      8    | Output-Polarität Lemo,         1 = Negativ,  0 = Positiv(Default)         --
 --      7    | Output-Polarität Bit [23..0],  1 = Negativ,  0 = Positiv(Default)         --
@@ -3156,13 +4072,30 @@ BEGIN
 --      1    | Enable Output-Bit [7..4],      1 = Enable,   0 = Disable(Default)         --
 --      0    | Enable Output-Bit [3..0],      1 = Enable,   0 = Disable(Default)         --
 --     ------+-----------------------------------------------------------------------    --
-
-    extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
-    extension_cid_group  <= 31; -- extension card: cid_group, "FG900740_UIO1" = 31
+    
+    
+    
+--           +=======================================================================    --
+--           |         User-Config-Register 2 (AW_Config2)                               --
+--     ------+=======================================================================    --
+--     15-6  | frei                                                                      --
+--     ------+-----------------------------------------------------------------------    --
+--      5    | Strobe-Polarität,         1 = Negativ,  0 = Positiv(Default)              --
+--     ------+-----------------------------------------------------------------------    --
+--    [4..2] | Strobe-Puls-Breite, Entprellzeit in in 2x 100ns;                          --
+--           | Vorgabe Exponent (x) für Pulsbreite: Wertebereich 100ns..12,8 µs *)       --
+--     ------+-----------------------------------------------------------------------    --
+--      1    |  Output-Mode:                                                             --
+--      0    | "00" = Output, "01" = 16 Bit-Dac, "10" = 32 Bit-Dac,  "11" = FG           --
+--     ------+-----------------------------------------------------------------------    --
+  
+  
+    extension_cid_system <= c_cid_system;    -- extension card: CSCOHW
+    extension_cid_group  <= c_AW_UIO.CID;    -- extension card: cid_group, "FG900740_UIO1"
 
     Max_AWOut_Reg_Nr     <= 2;  -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr      <= 2;  -- Maximale AWIn-Reg-Nummer der Anwendung
-    Min_AWIn_Deb_Time    <= 1;  -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
+    Min_AWIn_Deb_Time    <= 0;  -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
 
 
     --############################# Set Debounce-Time ######################################
@@ -3170,9 +4103,9 @@ BEGIN
     AWIn_Deb_Time   <= to_integer(unsigned(Diob_Config1)(14 downto 12)); -- -- Debounce-Zeit 2 Hoch "AWIn_Deb_Time" in us, Wert aus DIOB-Config 1        
 
     IF  (AWIn_Deb_Time < Min_AWIn_Deb_Time)  THEN         
-        Deb32_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
+        Deb60_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
     ELSE
-        Deb32_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
+        Deb60_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
     END IF;
 
     
@@ -3183,25 +4116,88 @@ BEGIN
     s_nLED_User3_i <= '0';        -- LED3 = User 3, -- frei -- 
 
     
-    --################### Output-Daten von den AWOut_Registern oder dem FG ##################
+    --################### Output-Daten von den AWOut_Registern oder dem FG mit Strobe ##################
 
-    IF  (AW_Config1(9) = '1')  THEN
-            UIO_Data_FG_Out(23 downto 0) <= FG_1_sw(31 downto 8);       -- Daten vom FG 
-        Else
-            UIO_Data_FG_Out(23 DOWNTO 20) <=  AW_Output_Reg(2)( 7 DOWNTO  4); -- IO(23..20) = AW_Output_Reg(2)( 7 ...4)
-            UIO_Data_FG_Out(19 DOWNTO 16) <=  AW_Output_Reg(2)( 3 DOWNTO  0); -- IO(19..16) = AW_Output_Reg(2)( 3 ...0)
-            UIO_Data_FG_Out(15 DOWNTO 12) <=  AW_Output_Reg(1)(15 DOWNTO 12); -- IO(15..12) = AW_Output_Reg(1)(15 ..12)
-            UIO_Data_FG_Out(11 DOWNTO  8) <=  AW_Output_Reg(1)(11 DOWNTO  8); -- IO(11...8) = AW_Output_Reg(1)(11 ...8)
-            UIO_Data_FG_Out( 7 DOWNTO  4) <=  AW_Output_Reg(1)( 7 DOWNTO  4); -- IO( 7...4) = AW_Output_Reg(1)( 7....4)
-            UIO_Data_FG_Out( 3 DOWNTO  0) <=  AW_Output_Reg(1)( 3 DOWNTO  0); -- IO( 3...0) = AW_Output_Reg(1)( 3....0)
-    END IF; 
+
+--                 +-----------------------------------------------+-----------------------------------------------+
+--                 |                 AW_Output_Reg. 2              |                 AW_Output_Reg. 1              |
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|    
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 |                                               |        +--------+  |                         |  
+--                 |  +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+ 18 Bit |  |                         |  
+--                 |  |17|16|15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|   DAC  |  |                         +--> Lemo_Buchse
+--                 |  +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+ unipol.|  |
+--    37pol. SubD  |                                               |        +--------+  |                          
+--  +--------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+               
+--  |     Pin #    |30|29|28|27|26|25|24|23|22|17|16|15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3|
+--  +--------------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+               
+--  |  Daten-Bit#  |23|22|21|20|19|18|17|16|15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|<-+-- AW_Output_Reg1(8)   (Default-Mode)   
+--  +--------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+  +-- Strobe write 16-Bit (DAC-Mode 16) 
+--                 |                                                                    |     +-- Strobe write 32-Bit (DAC-Mode 32) 
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+     +-- FG-Str.             (FG-Mode)        
+--                 |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|9 |                                                    
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 |                         Output-Daten vom FG                        | 
+--                 +--------------------------------------------------------------------+
+  
+  
+      UIO_Mode  <=  AW_Config2(1)& AW_Config2(0);         -- Output-Betriebsart
+
+      case UIO_Mode is
+
+        when "00"  =>  -- Output-Mode(Default): Out[23..8] = AW_Output_Reg2[15..0], Out[7..0] = AW_Output_Reg1[15..8] 
               
-    --######################## Einstellen der Output-Polarität ##############################
+              UIO_Data_FG_Out(23 DOWNTO 0) <=  (AW_Output_Reg(2)(15 DOWNTO 0) & AW_Output_Reg(1)(15 DOWNTO 8));
+  
+  
+        when "01"  =>  -- DAC16-Mode:  Output-Mode: Out[23..8] = AW_Output_Reg2[15..0], Out[7..1] = AW_Output_Reg1[15..7], Out[0] = DAC-Strobe 
+              
+              UIO_Reg_Out_i(23 DOWNTO 8)    <=  AW_Output_Reg(2)(15 DOWNTO 0);          --  Daten zum Register
+              UIO_Reg_Out_i( 7 DOWNTO 1)    <=  (others => '0');                        --  Daten zum Register
+              UIO_Reg_Enable                <=  AWOut_Reg2_wr;                          --  Enable für Daten Register
+              UIO_Data_FG_Out(23 DOWNTO 1)  <=  UIO_Reg_Out_o(23 DOWNTO 1);             --  Register-Daten zum Ausgang
+    
+              UIO_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config2)(4 downto 2)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
+              UIO_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
 
-    IF  (AW_Config1(7) = '1')  THEN
-            UIO_Out(23 DOWNTO 0) <=  Not UIO_Data_FG_Out(23 downto 0); -- Output negativ 
-        Else
-            UIO_Out(23 DOWNTO 0) <=      UIO_Data_FG_Out(23 downto 0); -- Output positiv 
+              IF  (AW_Config2(5) = '0')  THEN  UIO_Data_FG_Out(0) <=      UIO_DAC_Strobe_o; -- Strobe positiv
+                                         Else  UIO_Data_FG_Out(0) <=  not UIO_DAC_Strobe_o; -- Strobe negativ
+              END IF; 
+              
+        when "10"  =>  -- DAC32-Mode:  Output-Mode: Out[23..8] = AW_Output_Reg2[15..0], Out[7..1] = AW_Output_Reg1[15..7], Out[0] = DAC-Strobe 
+              
+              UIO_Reg_Out_i(23 DOWNTO 8)    <=  AW_Output_Reg(2)(15 DOWNTO 0);          --  Daten zum Register
+              UIO_Reg_Out_i( 7 DOWNTO 1)    <=  AW_Output_Reg(1)(15 DOWNTO 9);          --  Daten zum Register
+              UIO_Reg_Enable                <=  AWOut_Reg2_wr;                          --  Enable für Daten Register
+              UIO_Data_FG_Out(23 DOWNTO 1)  <=  UIO_Reg_Out_o(23 DOWNTO 1);             --  Register-Daten zum Ausgang
+    
+              UIO_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config2)(4 downto 2)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
+              UIO_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
+
+              IF  (AW_Config2(5) = '0')  THEN  UIO_Data_FG_Out(0) <=      UIO_DAC_Strobe_o; -- Strobe positiv
+                                         Else  UIO_Data_FG_Out(0) <=  not UIO_DAC_Strobe_o; -- Strobe negativ
+              END IF; 
+              
+  
+        when "11"  =>  -- FG-Mode:     Output-Mode: Out[23..1] = FG_Daten[31..9], Out[0] = FG_DAC-Strobe 
+              
+              UIO_Data_FG_Out(23 downto 1) <= FG_1_sw(31 downto 9);                     -- gespeicherte FG-Daten zum Ausgang
+  
+              UIO_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config2)(4 downto 2)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
+              UIO_DAC_Strobe_i     <=  FG_1_strobe;                                     -- FG_1_strobe (vom Funktionsgen)
+
+              IF  (AW_Config2(5) = '0')  THEN  UIO_Data_FG_Out(0) <=      UIO_DAC_Strobe_o; -- Strobe positiv
+                                         Else  UIO_Data_FG_Out(0) <=  not UIO_DAC_Strobe_o; -- Strobe negativ
+              END IF; 
+                
+      end case;
+
+    
+    --############################ Einstellen der Output-Polarität ##################################
+
+    IF  (AW_Config1(7) = '1')  THEN  UIO_Out(23 DOWNTO 0) <=  Not UIO_Data_FG_Out(23 downto 0); -- Output negativ 
+                               Else  UIO_Out(23 DOWNTO 0) <=      UIO_Data_FG_Out(23 downto 0); -- Output positiv 
     END IF; 
 
     --################################### Output-Enable ##################################
@@ -3217,23 +4213,22 @@ BEGIN
       
     --########################## Daten zum Piggy-Stecker JPIO1 ###########################
 
-    (PIO(69), PIO(71), PIO(73), PIO(75)) <=  UIO_Out(23 downto 20); --- Output-Pins zum Piggy [23..20]
-    (PIO(61), PIO(63), PIO(65), PIO(67)) <=  UIO_Out(19 downto 16); --- Output-Pins zum Piggy [19..16]
-    (PIO(62), PIO(66), PIO(70), PIO(74)) <=  UIO_Out(15 downto 12); --- Output-Pins zum Piggy [15..12]
-    (PIO(78), PIO(82), PIO(86), PIO(90)) <=  UIO_Out(11 downto 8);  --- Output-Pins zum Piggy [11.. 8]
-    (PIO(77), PIO(79), PIO(81), PIO(83)) <=  UIO_Out(7  downto 4);  --- Output-Pins zum Piggy [ 7.. 4]
-    (PIO(85), PIO(87), PIO(89), PIO(91)) <=  UIO_Out(3  downto 0);  --- Output-Pins zum Piggy [ 3.. 0]
+
+    (PIO(69), PIO(71), PIO(73), PIO(75),  PIO(61), PIO(63), PIO(65), PIO(67)) <=  UIO_Out(23 downto 16); --- Output-Pins zum Piggy [23..16]
+    (PIO(62), PIO(66), PIO(70), PIO(74),  PIO(78), PIO(82), PIO(86), PIO(90)) <=  UIO_Out(15 downto 8);  --- Output-Pins zum Piggy [15.. 8]
+    (PIO(77), PIO(79), PIO(81), PIO(83),  PIO(85), PIO(87), PIO(89), PIO(91)) <=  UIO_Out(7  downto 0);  --- Output-Pins zum Piggy [ 7.. 0]
+
 
     --####################### Lemo: Output, Polarität und LED ############################
 
     IF  (AW_Config1(8) = '1')  THEN
-            PIO(133)    <=  Not AW_Output_Reg(2)(15);   -- Lemo-Output negativ 
+            PIO(133)    <=  Not AW_Output_Reg(1)(0);   -- Lemo-Output negativ 
         Else
-            PIO(133)    <=      AW_Output_Reg(2)(15);   -- Lemo-Output positiv 
+            PIO(133)    <=      AW_Output_Reg(1)(0);   -- Lemo-Output positiv 
     END IF; 
 
-    UIO_LED_Lemo_Out_i  <=  AW_Output_Reg(2)(15);        --  Input  "nLED_Lemo_Out"
-    PIO(141)            <=  UIO_nLED_Lemo_Out_o;  --  Output "nLED_Lemo_Out"
+    UIO_LED_Lemo_Out_i  <=      AW_Output_Reg(1)(0);   --  Input  "nLED_Lemo_Out"
+    PIO(141)            <=      UIO_nLED_Lemo_Out_o;   --  Output "nLED_Lemo_Out"
 
 
     
@@ -3259,12 +4254,12 @@ BEGIN
    --################################ Debounce, Input 24-Bit und Lemo  ##################################
 
     
-    IF  (AW_Config1(10) = '0')  THEN
-        UIO_in_Data(23 DOWNTO 0)   <=  UIO_LS_IN(23 DOWNTO 0);  -- Low-Side  Input-Daten an Debounce-Input
-        Deb32_in   (23 DOWNTO 0)   <=  UIO_LS_IN(23 DOWNTO 0);  -- Low-Side  Input-Daten
+    IF  (AW_Config1(9) = '0')  THEN
+        Syn60_in(23 DOWNTO 0)   <=  UIO_LS_IN(23 DOWNTO 0);  -- Low-Side  Syn-Input-Daten
+        Deb60_in(23 DOWNTO 0)   <=  UIO_LS_IN(23 DOWNTO 0);  -- Low-Side  Debounce-Input-Daten
     Else  
-        UIO_in_Data(23 DOWNTO 0)   <=  UIO_HS_IN(23 DOWNTO 0);  -- High-Side Input-Daten an Debounce-Input
-        Deb32_in   (23 DOWNTO 0)   <=  UIO_HS_IN(23 DOWNTO 0);  -- High-Side Input-Daten
+        Syn60_in(23 DOWNTO 0)   <=  UIO_HS_IN(23 DOWNTO 0);  -- High-Side Syn-Input-Daten
+        Deb60_in(23 DOWNTO 0)   <=  UIO_HS_IN(23 DOWNTO 0);  -- High-Side Debounce-Input-Daten  
     END IF; 
 
 
@@ -3274,21 +4269,19 @@ BEGIN
     
    --########################### Input's 24-Bit und Lemo ==> AW_Input_Reg(1)/AW_Input_Reg(2) #################################
         
-    IF  (Diob_Config1(11) = '0')  THEN                          -- 0 = Entprellung "Eingeschaltet" 
-        AW_Input_Reg(2)(15)           <=  UIO_Lemo_deb_o;                 -- Input "Lemo-Buchse" ===== entprellt =====
-        AW_Input_Reg(2)( 7 DOWNTO 0)  <=  Deb32_out(23 DOWNTO 16);        -- Debounce-Output zum AW_Input_Reg(2)-Register (mit Entprellung)
-        AW_Input_Reg(1)(15 DOWNTO 0)  <=  Deb32_out(15 DOWNTO  0);        -- Debounce-Output zum AW_Input_Reg(1)-Register (mit Entprellung)
+    IF  (Diob_Config1(11) = '0')  THEN                                -- 0 = Entprellung "Eingeschaltet" 
+        AW_Input_Reg(2)(15 DOWNTO 0)  <=  Deb60_out(23 DOWNTO 8);     -- Debounce-Output zum AW_Input_Reg(2)-Register (mit Entprellung)
+        AW_Input_Reg(1)(15 DOWNTO 8)  <=  Deb60_out( 7 DOWNTO 0);     -- Debounce-Output zum AW_Input_Reg(1)-Register (mit Entprellung)
+        AW_Input_Reg(1)(0)            <=  UIO_Lemo_deb_o;             -- Input "Lemo-Buchse" ===== entprellt =====
     ELSE    
-        AW_Input_Reg(2)(15)           <=  UIO_Lemo_in;                    --  Input "Lemo-Buchse" ===== nicht entprellt =====
-        AW_Input_Reg(2)( 7 DOWNTO 0)  <=  UIO_in_Data(23 DOWNTO 16);      -- Input zum AW_Input_Reg(2)-Register (ohne Entprellung)
-        AW_Input_Reg(1)(15 DOWNTO 0)  <=  UIO_in_Data(15 DOWNTO  0);      -- Input zum AW_Input_Reg(1)-Register (ohne Entprellung)
+        AW_Input_Reg(2)(15 DOWNTO 0)  <=  Syn60_out(23 DOWNTO 8);     -- Input zum AW_Input_Reg(2)-Register (ohne Entprellung)
+        AW_Input_Reg(1)(15 DOWNTO 8)  <=  Syn60_out( 7 DOWNTO 0);     -- Input zum AW_Input_Reg(1)-Register (ohne Entprellung)
+        AW_Input_Reg(1)(0)            <=  UIO_Lemo_in;                --  Input "Lemo-Buchse" ===== nicht entprellt =====
     END IF;
 
 
     
-  
-
-  WHEN   c_AW_DA =>
+  WHEN   c_AW_DA.ID =>
       
     --###################################################################################
     --####                  Anwender-IO: DA(DAC/ADC)  -- FG900_750                    ###
@@ -3334,8 +4327,8 @@ BEGIN
 --    ---+------------------------------------------------------------------------------------ 
 
 
-    extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
-    extension_cid_group  <= 32; -- extension card: cid_group, "FG900740_UIO1" = 31
+    extension_cid_system <= c_cid_system;   -- extension card: CSCOHW
+    extension_cid_group  <= c_AW_DA.CID;    -- extension card: cid_group, "FG900750_DA"
 
     Max_AWOut_Reg_Nr     <= 2;  -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr      <= 2;  -- Maximale AWIn-Reg-Nummer der Anwendung
@@ -3351,9 +4344,9 @@ BEGIN
     AWIn_Deb_Time   <= to_integer(unsigned(Diob_Config1)(14 downto 12)); -- -- Debounce-Zeit 2 Hoch "AWIn_Deb_Time" in us, Wert aus DIOB-Config 1        
 
     IF  (AWIn_Deb_Time < Min_AWIn_Deb_Time)  THEN         
-        Deb32_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
+        Deb60_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
     ELSE
-        Deb32_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
+        Deb60_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
     END IF;
 
     
@@ -3409,7 +4402,7 @@ BEGIN
       DA_DAC1_Data       <=   DAC1_Out;                            -- Output Daten
 
       DA_DAC1_Str_Puls_i <=   DAC1_Out_wr;                         -- DAC1-Output-Strobe
-      DA_DAC1_Str        <=  (DA_DAC1_Str_Puls_o or (Powerup_Res));  -- Output Strobe für SCU-Bus Daten und Einschalt-Reset
+      DA_DAC1_Str        <=  (DA_DAC1_Str_Puls_o or (not rstn_sys));  -- Output Strobe für SCU-Bus Daten und Einschalt-Reset
     
     END IF; 
 
@@ -3451,7 +4444,7 @@ BEGIN
 
       DA_DAC2_Data       <=   DAC2_Out;                            -- Output Daten
       DA_DAC2_Str_Puls_i <=   DAC2_Out_wr;                         -- DAC2-Output-Strobe
-      DA_DAC2_Str        <=  (DA_DAC2_Str_Puls_o or (Powerup_Res));  -- Output Strobe für SCU-Bus Daten und Einschalt-Reset
+      DA_DAC2_Str        <=  (DA_DAC2_Str_Puls_o or (not rstn_sys));  -- Output Strobe für SCU-Bus Daten und Einschalt-Reset
    
     END IF; 
 
@@ -3545,7 +4538,7 @@ BEGIN
     end if;
       
 
-  WHEN   c_AW_Frei =>
+  WHEN   c_AW_Frei.ID =>
       
     --###################################################################################
     --####                  Anwender-IO: DA(DAC/ADC)  -- FG900_760                    ###
@@ -3553,30 +4546,29 @@ BEGIN
 
 
 
-  WHEN   c_AW_SPSIO1 | c_AW_SPSIO2  =>    --- SPSIO1 oder SPSIO2
+  WHEN   c_AW_SPSIO1.ID | c_AW_SPSIOI1.ID  =>    --- SPSIO1 oder SPSIOI1
       
     --###################################################################################
-    --####                  Anwender-IO: DA(DAC/ADC)  -- FG900_770/771                ###
+    --####                Anwender-IO: SPSIO1-FG900_770/SPSIOI1-FG901_770             ###
     --###################################################################################
 
 --           +=======================================================================    --
 --           |         User-Config-Register 1 (AW_Config1)                               --
 --     ------+=======================================================================    --
---     15-10 | frei                                                                      --
+--     15-8  | frei                                                                      --
 --     ------+-----------------------------------------------------------------------    --
---       8   | frei                                                                      --
 --       7   | Output-Polarität Daten,  1 = Negativ,  0 = Positiv(Default)               --
 --     ------+-----------------------------------------------------------------------    --
 --      6-0  | frei                                                                      --
 --     ------+-----------------------------------------------------------------------    --
 
 
-    extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
+    extension_cid_system <= c_cid_system;    -- extension card: CSCOHW
 
-    if  ( s_AW_ID(7 downto 0) = c_AW_SPSIO1) then
-      extension_cid_group  <= 33; -- extension card: cid_group, "FG900770_SPSIO1" = 33
+    if  ( AW_ID(7 downto 0) = c_AW_SPSIO1.ID) then
+      extension_cid_group  <= c_AW_SPSIO1.CID;    -- extension card: cid_group, "FG900770_SPSIO1"
     else
-      extension_cid_group  <= 60; -- extension card: cid_group, "FG900771_SPSIO2" = 60
+      extension_cid_group  <= c_AW_SPSIOI1.CID;   -- extension card: cid_group, "FG901770_SPSIOI1" = (SPSIO-invers)
     end if;
     
     Max_AWOut_Reg_Nr     <= 1;  -- Maximale AWOut-Reg-Nummer der Anwendung
@@ -3589,9 +4581,9 @@ BEGIN
     AWIn_Deb_Time   <= to_integer(unsigned(Diob_Config1)(14 downto 12)); -- -- Debounce-Zeit 2 Hoch "AWIn_Deb_Time" in us, Wert aus DIOB-Config 1        
 
     IF  (AWIn_Deb_Time < Min_AWIn_Deb_Time)  THEN         
-        Deb32_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
+        Deb60_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
     ELSE
-        Deb32_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
+        Deb60_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
     END IF;
 
     
@@ -3609,19 +4601,20 @@ BEGIN
                                          PIO(51), PIO(53), PIO(55), PIO(57), PIO(59), PIO(61), PIO(63), PIO(65),    --  Input "15-8"
                                          PIO(67), PIO(69), PIO(71), PIO(73), PIO(75), PIO(77), PIO(79), PIO(81));   --  Input "7-0"
 
-    Deb32_in(23 downto 0)  <= SPSIO_Data_in(23 downto 0);    -- Bebounce-Inputs         
+    Deb60_in(23 downto 0)  <= SPSIO_Data_in(23 downto 0);    -- Bebounce-Inputs         
+    Syn60_in(23 downto 0)  <= SPSIO_Data_in(23 downto 0);    -- Syn-Inputs         
 
     
    --###################### Input's ==> AW_Input_Reg(1)/AW_Input_Reg(2) ########################
       
-      IF  (Diob_Config1(11) = '0')  THEN                        -- 0 = Entprellung "Eingeschaltet" 
+      IF  (Diob_Config1(11) = '0')  THEN                                  -- 0 = Entprellung "Eingeschaltet" 
           AW_Input_Reg(2)(15 downto 8)  <=  (OTHERS => '0');              -- Input's = 0; 
-          AW_Input_Reg(2)(7  downto 0)  <=  Deb32_out(23 downto 16);      -- Debounce-Output "23-16"
-          AW_Input_Reg(1)(15 downto 0)  <=  Deb32_out(15 downto 0);       -- Debounce-Output "15-0"
+          AW_Input_Reg(2)(7  downto 0)  <=  Deb60_out(23 downto 16);      -- Debounce-Output "23-16"
+          AW_Input_Reg(1)(15 downto 0)  <=  Deb60_out(15 downto 0);       -- Debounce-Output "15-0"
       ELSE
           AW_Input_Reg(2)(15 downto 8)  <=  (OTHERS => '0');              -- Input's = 0; 
-          AW_Input_Reg(2)(7  downto 0)  <=  SPSIO_Data_in(23 downto 16);  -- Input "23-16"
-          AW_Input_Reg(1)(15 downto 0)  <=  SPSIO_Data_in(15 downto 0);   -- Input "15-0"
+          AW_Input_Reg(2)(7  downto 0)  <=  Syn60_out(23 downto 16);      -- Input "23-16"
+          AW_Input_Reg(1)(15 downto 0)  <=  Syn60_out(15 downto 0);       -- Input "15-0"
       END IF;
 
 
@@ -3639,7 +4632,7 @@ BEGIN
 
       
 
-  WHEN   c_AW_HFIO =>
+  WHEN   c_AW_HFIO.ID =>
       
     --###################################################################################
     --####                  Anwender-IO: DA(DAC/ADC)  -- FG900_780                    ###
@@ -3648,7 +4641,7 @@ BEGIN
 --           +=======================================================================    --
 --           |         User-Config-Register 1 (AW_Config1)                               --
 --     ------+=======================================================================    --
---     15-10 | frei                                                                      --
+--     15-9  | frei                                                                      --
 --     ------+-----------------------------------------------------------------------    --
 --       8   | Output-Polarität Lemo,   1 = Negativ,  0 = Positiv(Default)               --
 --       7   | Output-Polarität Daten,  1 = Negativ,  0 = Positiv(Default)               --
@@ -3657,12 +4650,12 @@ BEGIN
 --     ------+-----------------------------------------------------------------------    --
 
   
-    extension_cid_system <= 55; -- extension card: cid_system, CSCOHW=55
-    extension_cid_group  <= 34; -- extension card: cid_group, "FG900780_HFIO1" = 34
+    extension_cid_system <= c_cid_system;    -- extension card: CSCOHW
+    extension_cid_group  <= c_AW_HFIO.CID;   -- extension card: cid_group, "FG900780_HFIO1"
 
     Max_AWOut_Reg_Nr     <= 3;  -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr      <= 1;  -- Maximale AWIn-Reg-Nummer der Anwendung
-    Min_AWIn_Deb_Time    <= 2;  -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
+    Min_AWIn_Deb_Time    <= 1;  -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
 
     
     --############################# Set Debounce-Time ######################################
@@ -3670,9 +4663,9 @@ BEGIN
     AWIn_Deb_Time   <= to_integer(unsigned(Diob_Config1)(14 downto 12)); -- -- Debounce-Zeit 2 Hoch "AWIn_Deb_Time" in us, Wert aus DIOB-Config 1        
 
     IF  (AWIn_Deb_Time < Min_AWIn_Deb_Time)  THEN         
-        Deb32_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
+        Deb60_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
     ELSE
-        Deb32_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
+        Deb60_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
     END IF;
 
     
@@ -3831,7 +4824,7 @@ BEGIN
 
     
    --###################### Input's ==> AW_Input_Reg(1) ########################
-      
+
       IF  (Diob_Config1(11) = '0')  THEN                -- 0 = Entprellung "Eingeschaltet" 
         AW_Input_Reg(1)(1)   <=  HFIO_in_AMP_FEHLER_Deb_o;        -- Entprellung "eingeschaltet"
         AW_Input_Reg(1)(0)   <=  HFIO_in_PHASE_FEHLER_Deb_o;      -- Entprellung "eingeschaltet"
@@ -3839,9 +4832,531 @@ BEGIN
         AW_Input_Reg(1)(1)   <=  HFIO_in_AMP_FEHLER_Deb_i;        -- Entprellung "ausgeschaltet"
         AW_Input_Reg(1)(0)   <=  HFIO_in_PHASE_FEHLER_Deb_i;      -- Entprellung "ausgeschaltet"
       END IF;
-    
-  
+
+
+
+
+  WHEN   c_AW_INLB12S.ID =>
       
+    --###################################################################################
+    --###################################################################################
+    --####                                                                            ###
+    --####      Anwender-IO: FG902_050 -- Interlock-Backplane mit 12 Steckplätzen     ###
+    --####                                                                            ###
+    --###################################################################################
+    --###################################################################################
+
+      
+    extension_cid_system <= c_cid_system;       -- extension card: CSCOHW
+    extension_cid_group  <= c_AW_INLB12S.CID;   -- extension card: cid_group, "FG902_050"
+
+    Max_AWOut_Reg_Nr     <= 3;  -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr      <= 1;  -- Maximale AWIn-Reg-Nummer der Anwendung
+    Min_AWIn_Deb_Time    <= 0;  -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
+    
+    
+    --############################# Set Debounce- oder Syn-Time ######################################
+      
+      AWIn_Deb_Time   <= to_integer(unsigned(Diob_Config1)(14 downto 12)); -- -- Debounce-Zeit 2 Hoch "AWIn_Deb_Time" in us, Wert aus DIOB-Config 1        
+
+      IF (AWIn_Deb_Time < Min_AWIn_Deb_Time) THEN Deb60_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
+                                             ELSE Deb60_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
+      END IF;
+       
+    --################################### Set LED's ########################################
+
+    s_nLED_User1_i <= '0';        -- LED3 = User 1, -- frei -- 
+    s_nLED_User2_i <= '0';        -- LED3 = User 2, -- frei -- 
+    s_nLED_User3_i <= '0';        -- LED3 = User 3, -- frei -- 
+
+
+    --========================== Output Register 1 ======================================
+    
+    PIO(86)   <=  '0';  ---------------- Output_Enable OEn1 (nach init vom ALTERA) 
+    
+
+    ---------------------------------------------------------------------------------------------------------------------------------------
+
+
+    (PIO(112), PIO(48), PIO(130), PIO(30), PIO(137), PIO(35),
+     PIO(119), PIO(53), PIO(101), PIO(73), PIO(96),  PIO(56))   <= IOBP_Output; ----------- Data_Output-Pin's der "Slave-Karten 12-1"
+  
+
+    IOBP_Input(1)(5 downto 1)  <= ( PIO(62),  PIO(54),  PIO(60),  PIO(52),  PIO(58)  );  -- Input's 5-1 von den der Slave-Karte-1,  
+    IOBP_Input(2)(5 downto 1)  <= ( PIO(102), PIO(94),  PIO(100), PIO(92),  PIO(98)  );  -- Input's 5-1 von den der Slave-Karte-2,  
+    IOBP_Input(3)(5 downto 1)  <= ( PIO(79),  PIO(71),  PIO(77),  PIO(69),  PIO(75)  );  -- Input's 5-1 von den der Slave-Karte-3,  
+    IOBP_Input(4)(5 downto 1)  <= ( PIO(93),  PIO(103), PIO(91),  PIO(105), PIO(89)  );  -- Input's 5-1 von den der Slave-Karte-4,  
+    IOBP_Input(5)(5 downto 1)  <= ( PIO(63),  PIO(55),  PIO(61),  PIO(57),  PIO(59)  );  -- Input's 5-1 von den der Slave-Karte-5,  
+    IOBP_Input(6)(5 downto 1)  <= ( PIO(111), PIO(121), PIO(109), PIO(123), PIO(107) );  -- Input's 5-1 von den der Slave-Karte-6,  
+    IOBP_Input(7)(5 downto 1)  <= ( PIO(45),  PIO(37),  PIO(43),  PIO(39),  PIO(41)  );  -- Input's 5-1 von den der Slave-Karte-7,  
+    IOBP_Input(8)(5 downto 1)  <= ( PIO(129), PIO(139), PIO(127), PIO(141), PIO(125) );  -- Input's 5-1 von den der Slave-Karte-8,  
+    IOBP_Input(9)(5 downto 1)  <= ( PIO(20),  PIO(28),  PIO(22),  PIO(26),  PIO(24)  );  -- Input's 5-1 von den der Slave-Karte-9,  
+    IOBP_Input(10)(5 downto 1) <= ( PIO(138), PIO(128), PIO(140), PIO(126), PIO(142) );  -- Input's 5-1 von den der Slave-Karte-10, 
+    IOBP_Input(11)(5 downto 1) <= ( PIO(38),  PIO(46),  PIO(40),  PIO(44),  PIO(42)  );  -- Input's 5-1 von den der Slave-Karte-11, 
+    IOBP_Input(12)(5 downto 1) <= ( PIO(120), PIO(110), PIO(122), PIO(108), PIO(124) );  -- Input's 5-1 von den der Slave-Karte-12, 
+
+
+    (PIO(70), PIO(72), PIO(74), PIO(76), PIO(78), PIO(80), PIO(82), PIO(84))  <=  IOBP_LED_ID_Bus_o;   ---- LED_ID_Bus_Out
+
+
+    (PIO(114), PIO(50), PIO(132), PIO(32), PIO(135), PIO(33), PIO(117), PIO(51), PIO(99), PIO(83), PIO(106), PIO(66))  <=  IOBP_STR_rot_o;   -- LED-Str Rot  für Slave 12-1
+    (PIO(116), PIO(34), PIO(134), PIO(16), PIO(133), PIO(49), PIO(115), PIO(67), PIO(97), PIO(81), PIO(104), PIO(64))  <=  IOBP_STR_gruen_o; -- LED-Str Grün für Slave 12-1
+    (PIO(118), PIO(36), PIO(136), PIO(18), PIO(131), PIO(47), PIO(113), PIO(65), PIO(95), PIO(85), PIO(90),  PIO(68))  <=  IOBP_STR_ID_o;    -- ID-Str für Slave 12-1
+     
+      
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+
+---------------- Output-Register(Maske) für die Iput- und Output Sel-LED's vom Slave 1-12
+--
+--  IOBP_Sel_LED's sind Low-Aktiv             Bit5 = Output          Bit[4..0]  =  Input[5..1]
+--        |                                         |                           |
+    IOBP_Sel_LED(1) (6 downto 1)  <=  not ( IOBP_Masken_Reg5( 0) & IOBP_Masken_Reg1( 4 downto  0) );  -- Register für Sel-LED's vom Slave 1 
+    IOBP_Sel_LED(2) (6 downto 1)  <=  not ( IOBP_Masken_Reg5( 1) & IOBP_Masken_Reg1( 9 downto  5) );  -- Register für Sel-LED's vom Slave 2
+    IOBP_Sel_LED(3) (6 downto 1)  <=  not ( IOBP_Masken_Reg5( 2) & IOBP_Masken_Reg1(14 downto 10) );  -- Register für Sel-LED's vom Slave 3 
+    IOBP_Sel_LED(4) (6 downto 1)  <=  not ( IOBP_Masken_Reg5( 3) & IOBP_Masken_Reg2( 4 downto  0) );  -- Register für Sel-LED's vom Slave 4
+    IOBP_Sel_LED(5) (6 downto 1)  <=  not ( IOBP_Masken_Reg5( 4) & IOBP_Masken_Reg2( 9 downto  5) );  -- Register für Sel-LED's vom Slave 5
+    IOBP_Sel_LED(6) (6 downto 1)  <=  not ( IOBP_Masken_Reg5( 5) & IOBP_Masken_Reg2(14 downto 10) );  -- Register für Sel-LED's vom Slave 6
+    IOBP_Sel_LED(7) (6 downto 1)  <=  not ( IOBP_Masken_Reg5( 6) & IOBP_Masken_Reg3( 4 downto  0) );  -- Register für Sel-LED's vom Slave 7
+    IOBP_Sel_LED(8) (6 downto 1)  <=  not ( IOBP_Masken_Reg5( 7) & IOBP_Masken_Reg3( 9 downto  5) );  -- Register für Sel-LED's vom Slave 8
+    IOBP_Sel_LED(9) (6 downto 1)  <=  not ( IOBP_Masken_Reg5( 8) & IOBP_Masken_Reg3(14 downto 10) );  -- Register für Sel-LED's vom Slave 9
+    IOBP_Sel_LED(10)(6 downto 1)  <=  not ( IOBP_Masken_Reg5( 9) & IOBP_Masken_Reg4( 4 downto  0) );  -- Register für Sel-LED's vom Slave 10
+    IOBP_Sel_LED(11)(6 downto 1)  <=  not ( IOBP_Masken_Reg5(10) & IOBP_Masken_Reg4( 9 downto  5) );  -- Register für Sel-LED's vom Slave 11
+    IOBP_Sel_LED(12)(6 downto 1)  <=  not ( IOBP_Masken_Reg5(11) & IOBP_Masken_Reg4(14 downto 10) );  -- Register für Sel-LED's vom Slave 12
+
+
+    ---------------------------------------------------------------------------------------------------------------------------------------
+
+--                    ID-Input's z.Z. nicht möglich (keine Tri-State)    
+
+--      AW_Input_Reg(5)(15 downto 8) <=  IOBP_ID(2);   -- ID-Input vom  IO-Modul Nr. 2         
+--      AW_Input_Reg(5)( 7 downto 0) <=  IOBP_ID(1);   -- ID-Input vom  IO-Modul Nr. 1     
+
+   
+---------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+--################################ Debounce oder Sync Input's  ##################################
+
+--  Deb60_in = H-Aktiv             IOBP_Input = L-Aktiv  
+--        |                                |
+    Deb60_in( 4 DOWNTO  0)   <=  not IOBP_Input( 1)(5 downto 1);  -- Input-Daten
+    Deb60_in( 9 DOWNTO  5)   <=  not IOBP_Input( 2)(5 downto 1);
+    Deb60_in(14 DOWNTO 10)   <=  not IOBP_Input( 3)(5 downto 1);
+    Deb60_in(19 DOWNTO 15)   <=  not IOBP_Input( 4)(5 downto 1);
+    Deb60_in(24 DOWNTO 20)   <=  not IOBP_Input( 5)(5 downto 1);
+    Deb60_in(29 DOWNTO 25)   <=  not IOBP_Input( 6)(5 downto 1);
+    Deb60_in(34 DOWNTO 30)   <=  not IOBP_Input( 7)(5 downto 1);
+    Deb60_in(39 DOWNTO 35)   <=  not IOBP_Input( 8)(5 downto 1);
+    Deb60_in(44 DOWNTO 40)   <=  not IOBP_Input( 9)(5 downto 1);
+    Deb60_in(49 DOWNTO 45)   <=  not IOBP_Input(10)(5 downto 1);
+    Deb60_in(54 DOWNTO 50)   <=  not IOBP_Input(11)(5 downto 1);
+    Deb60_in(59 DOWNTO 55)   <=  not IOBP_Input(12)(5 downto 1);
+    
+    
+--  Syn60_in = H-Aktiv             IOBP_Input = L-Aktiv  
+--        |                                |
+    Syn60_in( 4 DOWNTO  0)   <=  not IOBP_Input( 1)(5 downto 1);  -- Input-Daten
+    Syn60_in( 9 DOWNTO  5)   <=  not IOBP_Input( 2)(5 downto 1);
+    Syn60_in(14 DOWNTO 10)   <=  not IOBP_Input( 3)(5 downto 1);
+    Syn60_in(19 DOWNTO 15)   <=  not IOBP_Input( 4)(5 downto 1);
+    Syn60_in(24 DOWNTO 20)   <=  not IOBP_Input( 5)(5 downto 1);
+    Syn60_in(29 DOWNTO 25)   <=  not IOBP_Input( 6)(5 downto 1);
+    Syn60_in(34 DOWNTO 30)   <=  not IOBP_Input( 7)(5 downto 1);
+    Syn60_in(39 DOWNTO 35)   <=  not IOBP_Input( 8)(5 downto 1);
+    Syn60_in(44 DOWNTO 40)   <=  not IOBP_Input( 9)(5 downto 1);
+    Syn60_in(49 DOWNTO 45)   <=  not IOBP_Input(10)(5 downto 1);
+    Syn60_in(54 DOWNTO 50)   <=  not IOBP_Input(11)(5 downto 1);
+    Syn60_in(59 DOWNTO 55)   <=  not IOBP_Input(12)(5 downto 1);
+    
+    
+    IF  (Diob_Config1(11) = '1')  THEN Deb_Sync60 <=  Syn60_out;    -- Dobounce = Abgeschaltet ==> nur Synchronisation
+                                  ELSE Deb_Sync60 <=  Deb60_out;     -- Debounce und Synchronisation
+    END IF;  
+     
+    
+--  ################################ Input's AND Maske zu Input-Register ##################################
+      
+--                  Input-Test, Stecker 1, 2, 3    
+
+    AW_Input_Reg(1)( 4 downto  0) <=   (Deb_Sync60( 4 downto  0) AND not IOBP_Masken_Reg1( 4 downto  0));  -- Input, IO-Modul Nr. 1
+    AW_Input_Reg(1)( 9 downto  5) <=   (Deb_Sync60( 9 downto  5) AND not IOBP_Masken_Reg1( 9 downto  5));  -- Input, IO-Modul Nr. 2
+    AW_Input_Reg(1)(14 downto 10) <=   (Deb_Sync60(14 downto 10) AND not IOBP_Masken_Reg1(14 downto 10));  -- Input, IO-Modul Nr. 3         
+    AW_Input_Reg(1)(15) <=  '0';        
+    
+--                  Input-Test, Stecker 4, 5, 6    
+    AW_Input_Reg(2)( 4 downto  0) <=   (Deb_Sync60(19 DOWNTO 15) AND not IOBP_Masken_Reg2( 4 downto  0));  -- Input, IO-Modul Nr. 4
+    AW_Input_Reg(2)( 9 downto  5) <=   (Deb_Sync60(24 DOWNTO 20) AND not IOBP_Masken_Reg2( 9 downto  5));  -- Input, IO-Modul Nr. 5
+    AW_Input_Reg(2)(14 downto 10) <=   (Deb_Sync60(29 DOWNTO 25) AND not IOBP_Masken_Reg2(14 downto 10));  -- Input, IO-Modul Nr. 6         
+    AW_Input_Reg(2)(15) <=  '0';        
+
+--                  Input-Test, Stecker 7, 8, 9    
+
+    AW_Input_Reg(3)( 4 downto  0) <=   (Deb_Sync60(34 DOWNTO 30) AND not IOBP_Masken_Reg3( 4 downto  0));  -- Input, IO-Modul Nr. 7
+    AW_Input_Reg(3)( 9 downto  5) <=   (Deb_Sync60(39 DOWNTO 35) AND not IOBP_Masken_Reg3( 9 downto  5));  -- Input, IO-Modul Nr. 8
+    AW_Input_Reg(3)(14 downto 10) <=   (Deb_Sync60(44 DOWNTO 40) AND not IOBP_Masken_Reg3(14 downto 10));  -- Input, IO-Modul Nr. 9         
+    AW_Input_Reg(3)(15) <=  '0';        
+      
+--                    Input-Test, Stecker 10, 11, 12    
+
+    AW_Input_Reg(4)( 4 downto  0) <=   (Deb_Sync60(49 DOWNTO 45) AND not IOBP_Masken_Reg4( 4 downto  0));  -- Input, IO-Modul Nr. 10
+    AW_Input_Reg(4)( 9 downto  5) <=   (Deb_Sync60(54 DOWNTO 50) AND not IOBP_Masken_Reg4( 9 downto  5));  -- Input, IO-Modul Nr. 11
+    AW_Input_Reg(4)(14 downto 10) <=   (Deb_Sync60(59 DOWNTO 55) AND not IOBP_Masken_Reg4(14 downto 10));  -- Input, IO-Modul Nr. 12         
+    AW_Input_Reg(4)(15) <=  '0';        
+    
+
+    
+--################################ Outputs AND Maske ##################################
+--
+--                                                    MaskenBit=0 --> Enable 
+    IOBP_Output(1)  <= (AW_Output_Reg(1)( 0) AND not IOBP_Masken_Reg5( 0));  -- Output von Slave 1 
+    IOBP_Output(2)  <= (AW_Output_Reg(1)( 1) AND not IOBP_Masken_Reg5( 1));  -- Output von Slave 2
+    IOBP_Output(3)  <= (AW_Output_Reg(1)( 2) AND not IOBP_Masken_Reg5( 2));  -- Output von Slave 3 
+    IOBP_Output(4)  <= (AW_Output_Reg(1)( 3) AND not IOBP_Masken_Reg5( 3));  -- Output von Slave 4
+    IOBP_Output(5)  <= (AW_Output_Reg(1)( 4) AND not IOBP_Masken_Reg5( 4));  -- Output von Slave 5
+    IOBP_Output(6)  <= (AW_Output_Reg(1)( 5) AND not IOBP_Masken_Reg5( 5));  -- Output von Slave 6
+    IOBP_Output(7)  <= (AW_Output_Reg(1)( 6) AND not IOBP_Masken_Reg5( 6));  -- Output von Slave 7
+    IOBP_Output(8)  <= (AW_Output_Reg(1)( 7) AND not IOBP_Masken_Reg5( 7));  -- Output von Slave 8
+    IOBP_Output(9)  <= (AW_Output_Reg(1)( 8) AND not IOBP_Masken_Reg5( 8));  -- Output von Slave 9
+    IOBP_Output(10) <= (AW_Output_Reg(1)( 9) AND not IOBP_Masken_Reg5( 9));  -- Output von Slave 10
+    IOBP_Output(11) <= (AW_Output_Reg(1)(10) AND not IOBP_Masken_Reg5(10));  -- Output von Slave 11
+    IOBP_Output(12) <= (AW_Output_Reg(1)(11) AND not IOBP_Masken_Reg5(11));  -- Output von Slave 12
+
+
+    
+--################################ Aktiv-Led's ##################################
+--
+--                          maskierte Outputs            entprellte Inputs
+--                                   |
+    IOBP_Aktiv_LED_i(1)  <=  (IOBP_Output(1)    &  Deb60_out( 4 DOWNTO  0));  -- Signale für Aktiv-LED's
+    IOBP_Aktiv_LED_i(2)  <=  (IOBP_Output(2)    &  Deb60_out( 9 DOWNTO  5));  -- Signale für Aktiv-LED's
+    IOBP_Aktiv_LED_i(3)  <=  (IOBP_Output(3)    &  Deb60_out(14 DOWNTO 10));  -- Signale für Aktiv-LED's
+    IOBP_Aktiv_LED_i(4)  <=  (IOBP_Output(4)    &  Deb60_out(19 DOWNTO 15));  -- Signale für Aktiv-LED's
+    IOBP_Aktiv_LED_i(5)  <=  (IOBP_Output(5)    &  Deb60_out(24 DOWNTO 20));  -- Signale für Aktiv-LED's
+    IOBP_Aktiv_LED_i(6)  <=  (IOBP_Output(6)    &  Deb60_out(29 DOWNTO 25));  -- Signale für Aktiv-LED's
+    IOBP_Aktiv_LED_i(7)  <=  (IOBP_Output(7)    &  Deb60_out(34 DOWNTO 30));  -- Signale für Aktiv-LED's
+    IOBP_Aktiv_LED_i(8)  <=  (IOBP_Output(8)    &  Deb60_out(39 DOWNTO 35));  -- Signale für Aktiv-LED's
+    IOBP_Aktiv_LED_i(9)  <=  (IOBP_Output(9)    &  Deb60_out(44 DOWNTO 40));  -- Signale für Aktiv-LED's
+    IOBP_Aktiv_LED_i(10) <=  (IOBP_Output(10)   &  Deb60_out(49 DOWNTO 45));  -- Signale für Aktiv-LED's
+    IOBP_Aktiv_LED_i(11) <=  (IOBP_Output(11)   &  Deb60_out(54 DOWNTO 50));  -- Signale für Aktiv-LED's
+    IOBP_Aktiv_LED_i(12) <=  (IOBP_Output(12)   &  Deb60_out(59 DOWNTO 55));  -- Signale für Aktiv-LED's
+
+
+
+      
+      -----------------------------------------------------------------------------------------------------------------------------------------
+
+
+  WHEN   c_AW_16Out2.ID  =>    
+
+  
+    --###################################################################################
+    --####                         Anwender-IO: 16Out-FG901_010                       ###
+    --###################################################################################
+
+--           +=======================================================================    --
+--           |         User-Config-Register 1 (AW_Config1)                               --
+--     ------+=======================================================================    --
+--     15-10 | frei                                                                      --
+--     ------+-----------------------------------------------------------------------    --
+--      8    | Output-Polarität Lemo,         1 = Negativ,  0 = Positiv(Default)         --
+--      7    | Output-Polarität Bit [15..0],  1 = Negativ,  0 = Positiv(Default)         --
+--     ------+-----------------------------------------------------------------------    --
+--      6-0  | frei                                                                      --
+--     ------+-----------------------------------------------------------------------    --
+    
+    
+--           +=======================================================================    --
+--           |         User-Config-Register 2 (AW_Config2)                               --
+--     ------+=======================================================================    --
+--     15-6  | frei                                                                      --
+--     ------+-----------------------------------------------------------------------    --
+--      5    | Strobe-Polarität,         1 = Negativ,  0 = Positiv(Default)              --
+--     ------+-----------------------------------------------------------------------    --
+--    [4..2] | Strobe-Puls-Breite, Entprellzeit in in 2x 100ns;                          --
+--           | Vorgabe Exponent (x) für Pulsbreite: Wertebereich 100ns..12,8 µs *)       --
+--     ------+-----------------------------------------------------------------------    --
+--           |  Output-Mode:                                                             --
+--    [1..0] | "00" = Output, "01" = 16 Bit-Dac, "10" = frei,  "11" = FG                 --
+--     ------+-----------------------------------------------------------------------    --
+    
+
+
+    extension_cid_system <= c_cid_system;     -- extension card: CSCOHW
+    extension_cid_group  <= c_AW_16Out2.CID;  -- extension card: cid_group, "FG901010_16Out"
+    
+    Max_AWOut_Reg_Nr     <= 2;  -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr      <= 1;  -- Maximale AWIn-Reg-Nummer der Anwendung
+    Min_AWIn_Deb_Time    <= 0;  -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
+
+    
+    --############################# Set Debounce-Time ######################################
+      
+    AWIn_Deb_Time   <= to_integer(unsigned(Diob_Config1)(14 downto 12)); -- -- Debounce-Zeit 2 Hoch "AWIn_Deb_Time" in us, Wert aus DIOB-Config 1        
+
+    IF  (AWIn_Deb_Time < Min_AWIn_Deb_Time)  THEN         
+        Deb60_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
+    ELSE
+        Deb60_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
+    END IF;
+
+    
+    --################################### Set LED's ########################################
+    
+    s_nLED_User1_i <= '0';        -- LED3 = User 1, -- frei -- 
+    s_nLED_User2_i <= '0';        -- LED3 = User 2, -- frei -- 
+    s_nLED_User3_i <= '0';        -- LED3 = User 3, -- frei -- 
+
+
+    
+    --################### Output-Daten von den AWOut_Registern oder dem FG mit Strobe ##################
+
+
+--                 +-----------------------------------------------+-----------------------------------------------+
+--                 |                 AW_Output_Reg. 2              |                 AW_Output_Reg. 1              |
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|    
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 |                                               |                                 
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+ 16 Bit        
+--                 |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|  DAC          
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+ bipol.
+--    25pol. SubD  |                                               |                                 
+--  +--------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+========+           
+--  |     Pin #    |22|21|20|19|18|17|16|15| 9| 8| 7| 6| 5| 4| 3| 2|   11   |
+--  +---------------==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+========+             
+--  |  Daten-Bit#  |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0| Strobe | <-+-- AW_Output_Reg1(0)   (Default-Mode)
+--  +--------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+========+   |-- Strobe write 16-Bit (DAC-Mode 16) 
+--                 |                                                            +-- FG-Str.             (FG-Mode)       
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+    
+--                 |31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|     
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 |               Output-Daten vom FG             | 
+--                 +---------------------------------------------- +
+
+  
+      Out16_Mode  <=  AW_Config2(1)& AW_Config2(0);         -- Output-Betriebsart
+
+      case Out16_Mode is
+
+        when "00"  =>  -- Output-Mode(Default):
+        
+              Out16_Data_FG_Out(15 DOWNTO 0) <=  AW_Output_Reg(2)(15 DOWNTO 0);
+              Out16_Strobe                   <=  AW_Output_Reg(1)(0);
+  
+  
+        when "01"  =>  -- DAC16-Mode:
+              
+              Out16_Data_FG_Out(15 DOWNTO 0) <=  AW_Output_Reg(2)(15 DOWNTO 0);
+    
+              Out16_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config2)(4 downto 2)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
+              Out16_DAC_Strobe_i     <=  (AWOut_Reg2_wr AND SCU_Ext_Wr_fin);              -- Software-Strobe   
+
+                IF  (AW_Config2(5) = '0')  THEN  Out16_Strobe  <=      Out16_DAC_Strobe_o; -- Strobe positiv
+                                           Else  Out16_Strobe  <=  not Out16_DAC_Strobe_o; -- Strobe negativ
+                END IF; 
+              
+              
+        when "10"  =>  -- frei-Mode:  
+              
+              Out16_Data_FG_Out(15 DOWNTO 0) <=  (others => '0');
+              Out16_Strobe                   <=  '0';
+  
+        when "11"  =>  -- FG-Mode:     Output-Mode: Out[23..1] = FG_Daten[31..9], Out[0] = FG_DAC-Strobe 
+              
+              Out16_Data_FG_Out(15 downto 0) <= FG_1_sw(31 downto 16);                    -- gespeicherte FG-Daten zum Ausgang
+  
+              Out16_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config2)(4 downto 2)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
+              Out16_DAC_Strobe_i     <=  FG_1_strobe;                                     -- FG_1_strobe (vom Funktionsgen)
+
+                IF  (AW_Config2(5) = '0')  THEN  Out16_Strobe  <=      Out16_DAC_Strobe_o; -- Strobe positiv
+                                           Else  Out16_Strobe  <=  not Out16_DAC_Strobe_o; -- Strobe negativ
+                END IF; 
+
+      end case;
+
+   
+    --############################ Einstellen der Output-Polarität ##################################
+
+    IF  (AW_Config1(7) = '1')  THEN  Out16_Out(15 DOWNTO 0) <=  Not Out16_Data_FG_Out(15 downto 0); -- Output negativ 
+                               Else  Out16_Out(15 DOWNTO 0) <=      Out16_Data_FG_Out(15 downto 0); -- Output positiv 
+    END IF; 
+
+    
+    --################################### Output-Enable ##################################
+
+    PIO(39)    <=  '0';  -- OEnStrobe,             Output_Enable (nach init vom ALTERA)
+    PIO(129)   <=  '0';  -- OEn1  (OEn0  & OEn8),  Output_Enable (nach init vom ALTERA)
+    PIO(121)   <=  '0';  -- OEn2  (OEn1  & OEn9),  Output_Enable (nach init vom ALTERA)
+    PIO(113)   <=  '0';  -- OEn3  (OEn2  & OEn10), Output_Enable (nach init vom ALTERA)
+    PIO(105)   <=  '0';  -- OEn4  (OEn11 & OEn13), Output_Enable (nach init vom ALTERA)
+    PIO(97)    <=  '0';  -- OEn5  (OEn4  & OEn12), Output_Enable (nach init vom ALTERA)
+    PIO(83)    <=  '0';  -- OEn6  (OEn5  & OEn13), Output_Enable (nach init vom ALTERA)
+    PIO(69)    <=  '0';  -- OEn7  (OEn6  & OEn14), Output_Enable (nach init vom ALTERA)
+    PIO(55)    <=  '0';  -- OEn8  (OEn7  & OEn15), Output_Enable (nach init vom ALTERA)
+      
+      
+    --########################## Daten zum Piggy-Stecker JPIO1 ###########################
+
+    (PIO(51), PIO(65), PIO(79), PIO(93),  PIO(101), PIO(109), PIO(117), PIO(125)) <=  Out16_Out(15 downto 8);  --- Output-Pins zum Piggy [15.. 8]
+    (PIO(53), PIO(67), PIO(81), PIO(95),  PIO(103), PIO(111), PIO(119), PIO(127)) <=  Out16_Out(7  downto 0);  --- Output-Pins zum Piggy [ 7.. 0]
+
+     PIO(37)    <=  Out16_Strobe;  -- Output-Strobe
+
+    
+    --########################### Debounce, Input und LED   ############################
+
+    Out16_Lemo_deb_i    <= not PIO(135);          -- Debounce-Lemo Input (Low-Aktiv)        
+
+
+    IF  (Diob_Config1(11) = '0')  THEN  AW_Input_Reg(1)(0)  <=  Out16_Lemo_deb_o;      -- Debounce-Output "Lemo" 
+                                  ELSE  AW_Input_Reg(1)(0)  <=  Out16_Lemo_deb_i;      -- Input "Lemo"
+    END IF;
+
+    Out16_LED_Lemo_In_i     <=  Out16_Lemo_deb_i;      --  Input  "nLED_Lemo_IN"
+    PIO(139)                <=  Out16_nLED_Lemo_In_o;  --  Output "nLED_Lemo_IN"
+    
+    
+      -----------------------------------------------------------------------------------------------------------------------------------------
+
+
+  WHEN   c_AW_16In2.ID  =>    
+
+  
+    --###################################################################################
+    --####                         Anwender-IO: 16In-FG901_020                        ###
+    --###################################################################################
+
+--           +=======================================================================    --
+--           |         User-Config-Register 1 (AW_Config1)                               --
+--     ------+=======================================================================    --
+--     15-9  | frei                                                                      --
+--     ------+-----------------------------------------------------------------------    --
+--      8    | Output-Polarität Lemo,         1 = Negativ,  0 = Positiv(Default)         --
+--     ------+-----------------------------------------------------------------------    --
+--      7-2  | frei                                                                      --
+--     ------+----------------+------------------------------------------------------    --
+--      1    | Triggerflanke: | 1 = neg. Flanke ist Trigger
+--           |                | 0 = pos. Flanke ist Trigger  
+--     ------+----------------+------------------------------------------------------    --
+--      0    | Input-Mode:    | 0 = Input, 1 = Input mit Strobe
+--     ------+-----------------------------------------------------------------------    --
+    
+
+    extension_cid_system <= c_cid_system;     -- extension card: CSCOHW
+    extension_cid_group  <= c_AW_16In2.CID;   -- extension card: cid_group, "FG901020_16In"
+    
+    Max_AWOut_Reg_Nr     <= 1;  -- Maximale AWOut-Reg-Nummer der Anwendung
+    Max_AWIn_Reg_Nr      <= 2;  -- Maximale AWIn-Reg-Nummer der Anwendung
+    Min_AWIn_Deb_Time    <= 0;  -- Minimale Debounce-Zeit 2 Hoch "Min_AWIn_Deb_Time" in us
+
+    
+    --############################# Set Debounce-Time ######################################
+      
+    AWIn_Deb_Time   <= to_integer(unsigned(Diob_Config1)(14 downto 12)); -- -- Debounce-Zeit 2 Hoch "AWIn_Deb_Time" in us, Wert aus DIOB-Config 1        
+
+    IF  (AWIn_Deb_Time < Min_AWIn_Deb_Time)  THEN         
+        Deb60_Cnt <= Wert_2_Hoch_n(Min_AWIn_Deb_Time);   -- Debounce-Zeit = Min_AWIn_Deb_Time
+    ELSE
+        Deb60_Cnt <= Wert_2_Hoch_n(AWIn_Deb_Time);       -- Debounce-Zeit = AWIn_Deb_Time
+    END IF;
+
+    
+    --################################### Set LED's ########################################
+    
+    s_nLED_User1_i <= '0';        -- LED3 = User 1, -- frei -- 
+    s_nLED_User2_i <= '0';        -- LED3 = User 2, -- frei -- 
+    s_nLED_User3_i <= '0';        -- LED3 = User 3, -- frei -- 
+
+
+    
+    --########################### Input-Daten zu den AWIn_Registern ########################
+
+
+--                 +-----------------------------------------------+-----------------------------------------------+
+--                 |                  AW_Input_Reg. 2              |                  AW_Input_Reg. 1              |
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+
+--                 |                                               |                                             
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+ 16 Bit                                      
+--                 |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|  ADC                                        
+--                 +==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+ bipol.                                      
+--    25pol. SubD  |                                               |               +-<----- AW_Input_Reg.(1)(0)                        
+--  +--------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+=========+=====+=====+                       
+--  |     Pin #    |22|21|20|19|18|17|16|15| 9| 8| 7| 6| 5| 4| 3| 2|    24   |     11    |                       
+--  +---------------==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+=========+===========+                       
+--  |  Daten-Bit#  |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0| Req_Out | Strobe_In |                       
+--  +--------------+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+==+=====+==+============+                       
+--                                                                       +-<--------------- AW_Output_Reg.(1)(1)                                             
+--                                                                                                                    
+--                                                                                                                    
+    --############################# Signal-Input-Daten über Piggy-Stecker JPIO1 ###################################
+
+    In16_IN(15 downto 0)  <=  not (PIO(97), PIO(89), PIO(81), PIO(73), PIO(65), PIO(57), PIO(49), PIO(41),     
+                                   PIO(95), PIO(87), PIO(79), PIO(71), PIO(63), PIO(55), PIO(47), PIO(39));
+
+    In16_Strobe_in        <=  NOT PIO(103);        --  Input "Strobe" 
+    
+
+   --################################ Input: Debounce oder Synchr.  ##################################
+
+    Deb60_in(15 DOWNTO 0)              <=  In16_IN(15 downto 0);  -- Entprellung der Input-Daten
+    Deb60_in(16)                       <=  In16_Strobe_in;        -- Entprellung des Input "Strobe" 
+
+    Syn60_in(15 DOWNTO 0)             <=  In16_IN(15 downto 0);  -- Synchronisation der Input-Daten
+    Syn60_in(16)                      <=  In16_Strobe_in;        -- Synchronisation des Input "Strobe" 
+
+
+    IF  (Diob_Config1(11) = '0')  THEN                          -- 0 = Entprellung "Eingeschaltet" 
+      In16_Input(15 DOWNTO 0)   <=  Deb60_out(15 DOWNTO 0);     -- Debounce-Input-Daten   (Dafault)
+      In16_Strobe               <=  Deb60_out(16);              -- Debounce-Input-Strobe  (Dafault)
+    ELSE    
+      In16_Input(15 DOWNTO 0)   <=  Syn60_out(15 DOWNTO 0);     -- Syn-Input-Daten
+      In16_Strobe               <=  Syn60_out(16);              -- Syn-Input-Strobe
+    END IF;
+
+   --################################   Daten FF mit Strobe      ##################################
+
+    In16_ADC_Data_FF_i(15 DOWNTO 0)    <=  In16_Input(15 downto 0);  -- Input zum Daten-Input_FF
+
+    IF  (AW_Config1(1) = '0')  THEN  In16_ADC_Strobe_i <=  NOT In16_Strobe; -- pos. Flanke vom Strobe (Default)
+                               Else  In16_ADC_Strobe_i <=      In16_Strobe; -- neg. Flanke vom Strobe  
+    END IF; 
+  
+  
+ --################################         Input-Mode     ##################################
+        
+    IF  (AW_Config1(0) = '0')  THEN                                       -- 0 = Input-Mode
+      AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_Input(15 DOWNTO 0);          -- Daten-Input  Deb/Syn
+      AW_Input_Reg(1)(0)            <=  In16_Strobe;                      -- Strobe-Input Deb/Syn
+    ELSE    
+      AW_Input_Reg(2)(15 DOWNTO 0)  <=  In16_ADC_Data_FF_o(15 DOWNTO 0);  -- Daten aus dem Input-Register
+      AW_Input_Reg(1)(0)            <=  In16_ADC_Strobe_o;                -- Daten-Strobe für die Input-Daten
+    END IF;
+   
+    
+    --################################### Output-Enable ##################################
+
+    PIO(121)   <=  '0';  -- OEnRequest,    Output_Enable (nach init vom ALTERA)
+    PIO(125)   <=  '0';  -- OEnLemo_out    Output_Enable (nach init vom ALTERA)
+      
+      
+    --############################ Lemo und Request Output ##################################
+
+    IF  (AW_Config1(8) = '0')  THEN  PIO(113) <=      AW_Output_Reg(1)(0); -- Output positiv (Default)
+                               Else  PIO(113) <=  Not AW_Output_Reg(1)(0); -- Output negativ 
+    END IF; 
+
+    In16_LED_Lemo_Out_i       <=  AW_Output_Reg(1)(0);           --  Input  "nLED_Lemo_Out"
+    PIO(131)                  <=  In16_nLED_Lemo_Out_o;          --  Output "nLED_Lemo_Out"
+    
+    PIO(117) <=    AW_Output_Reg(1)(1); -- Request-Output
+      
+      -----------------------------------------------------------------------------------------------------------------------------------------
+      
+  
   WHEN OTHERS =>
 
     extension_cid_system <=  0;  -- extension card: cid_system
@@ -3855,17 +5370,17 @@ BEGIN
     s_nLED_User2_i       <= '0';        -- LED3 = User 2, -- frei -- 
     s_nLED_User3_i       <= '0';        -- LED3 = User 3, -- frei -- 
 
-
+ 
   -- Output: Anwender-LED's ---
 
-    PIO(17)   <=    clk_blink; -- LED7
-    PIO(19)   <=    clk_blink; -- LED6   
-    PIO(21)   <=    clk_blink; -- LED5     
-    PIO(23)   <=    clk_blink; -- LED4   
-    PIO(25)   <=    clk_blink; -- LED3   
-    PIO(27)   <=    clk_blink; -- LED2      
-    PIO(29)   <=    clk_blink; -- LED1      
-    PIO(31)   <=    clk_blink; -- LED0   
+    PIO(17)   <=    AW_ID(7) AND clk_blink; -- LED7
+    PIO(19)   <=    AW_ID(6) AND clk_blink; -- LED6   
+    PIO(21)   <=    AW_ID(5) AND clk_blink; -- LED5     
+    PIO(23)   <=    AW_ID(4) AND clk_blink; -- LED4   
+    PIO(25)   <=    AW_ID(3) AND clk_blink; -- LED3   
+    PIO(27)   <=    AW_ID(2) AND clk_blink; -- LED2      
+    PIO(29)   <=    AW_ID(1) AND clk_blink; -- LED1      
+    PIO(31)   <=    AW_ID(0) AND clk_blink; -- LED0   
            
   END CASE;
 
@@ -3877,3 +5392,12 @@ END PROCESS p_AW_MUX;
 
 
 end architecture;
+
+
+
+
+
+
+
+
+

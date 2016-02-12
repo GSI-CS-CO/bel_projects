@@ -18,7 +18,8 @@ ENTITY tag_n IS
     Tag_n_hw:              in   std_logic_vector(15 downto 0);    -- 
     Tag_n_lw:              in   std_logic_vector(15 downto 0);    -- 
     Tag_n_Maske:           in   std_logic_vector(15 downto 0);    -- 
-    Tag_n_Lev_Reg:         in   std_logic_vector(15 downto 0);    -- 
+    Tag_n_Register:        in   std_logic_vector(15 downto 0);    -- Tag-Output-Register-Nummer
+    Tag_n_Level:           in   std_logic_vector(15 downto 0);    -- Tag-Level-Maske, Bit 15..0
     Tag_n_Delay_Cnt:       in   std_logic_vector(15 downto 0);    -- 
     Tag_n_Puls_Width:      in   std_logic_vector(15 downto 0);    -- 
     Tag_n_Prescale:        in   std_logic_vector(15 downto 0);    -- 
@@ -33,7 +34,8 @@ ENTITY tag_n IS
       
     Tag_n_Reg_Nr:          out  integer range 0 to 7;            -- AWOut-Reg-Pointer
     Tag_n_New_AWOut_Data:  out  boolean;                         -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data:        out  std_logic_vector(15 downto 0);   -- Copy der AWOut-Register 
+    Tag_n_Maske_Hi_Bits:   out  std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
+    Tag_n_Maske_Lo_Bits:   out  std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
     Tag_n_Reg_Err:         out  std_logic;                       -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err:     out  std_logic;                       -- Config-Error: TAG-Reg-Nr
     Tag_n_Trig_Err:        out  std_logic;                       -- Config-Error: Trig-Reg
@@ -54,8 +56,8 @@ TYPE   t_Word_Array     is array (0 to 7) of std_logic_vector(15 downto 0);
 
 TYPE   t_Boolean_Array  is array (0 to 7) of boolean;
 
-signal  Tag_Level:              std_logic;
-signal  Tag_New_Data:           std_logic_vector(15 downto 0);
+signal  Tag_Maske_Hi_Bits:      std_logic_vector(15 downto 0);  -- Maske für "High-Aktive" Bits im Ausgangs-Register
+signal  Tag_Maske_Lo_Bits:      std_logic_vector(15 downto 0);  -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
     
 signal  Tag_Delay_Cnt:          integer range 0 to 65535;       -- 0-FFFF -- Counter Delay
 signal  Tag_Puls_Width:         integer range 0 to 65535;       -- 0-FFFF -- Counter Delay
@@ -69,7 +71,6 @@ signal  Tag_Trig_Mux:           std_logic_vector(2 downto 0);   -- Mux-Sel
 signal  Tag_AWOut_Reg_Nr:       integer range 0 to 7;           -- AWOut-Reg-Pointer
 signal  Tag_FG_Start:           std_logic;                      -- FG-Start Flag
 
-signal  AWOut_Reg_Array:    t_Word_Array;   -- Copy der AWOut-Register 
 signal  Tag_New_AWOut_Data: boolean;        -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
 
 signal  Tag_Timeout_Cnt:    integer range 0 to 65535;  -- 0-FFFF -- Counter Timeout
@@ -236,18 +237,15 @@ P_Mf:  process (clk, nReset, Tag_Pre_Mf, Tag_Puls_Width, Mf_Start)
 
   
 P_Tag_Deco:  process (clk, nReset,
-                      SCU_AW_Input_Reg, AWOut_Reg_Array,
-                      Tag_Level, Tag_AWOut_Reg_Nr, Tag_FG_Start, Tag_Delay_Cnt, Tag_Puls_Width,
+                      SCU_AW_Input_Reg,
+                      Tag_AWOut_Reg_Nr, Tag_FG_Start, Tag_Delay_Cnt, Tag_Puls_Width,
                       Tag_Pre_VZ, Tag_Pre_MF, Tag_Trig_Reg_Nr, Tag_Trig_Reg_Bit, Tag_Trig_Pol,
-                      Tag_Timeout_Loop_Cnt, Tag_Trig_Mux, Tag_New_Data, Tag_Timeout_Cnt,
+                      Tag_Timeout_Loop_Cnt, Tag_Trig_Mux, Tag_Timeout_Cnt,
                       Tag_New_AWOut_Data, Tag_Reg_Bit_Strobe_i)
     begin
       if (nReset = '0') then
         sm_state   <= sm_idle;
 
-        AWOut_Reg_Array        <= (others => (others => '0'));
-
-        Tag_Level              <= '0';                -- clear Tag_Level
         Tag_AWOut_Reg_Nr       <= 0;                  -- clear AWOut_Reg_Nr
         Tag_FG_Start           <= '0';                -- Start-Flag für FG
         Tag_Delay_Cnt          <= 0;                  -- Counter Delay
@@ -259,7 +257,8 @@ P_Tag_Deco:  process (clk, nReset,
         Tag_Trig_Pol           <= '0';                -- Bit-Polatität, 0 = neg. Flanke, 1 = pos. Flanke
         Tag_Timeout_Loop_Cnt   <= 0;                  -- Anzahl der Timeoutzyklen in 10us Schritten
         Tag_Trig_Mux           <= (others => '0');    -- clear Tag_Trigger_Mux
-        Tag_New_Data           <= (others => '0');    -- clear Tag_New_Data-Register
+        Tag_Maske_Hi_Bits      <= (others => '0');    -- Maske für "High-Aktive" Bits im Ausgangs-Register
+        Tag_Maske_Lo_Bits      <= (others => '0');    -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
         Tag_Timeout_Cnt        <= 0;                  -- Counter Timeout
         Tag_New_AWOut_Data     <= false;              -- clear Tag_New_AWOut_Data-Flag
         Tag_Reg_Bit_Strobe_i   <= '0';
@@ -271,9 +270,8 @@ P_Tag_Deco:  process (clk, nReset,
       case sm_state is
         when sm_idle  =>      if ((Timing_Pattern_RCV = '1') and (Timing_Pattern_LA(31 downto 0) = (Tag_n_hw & Tag_n_lw))) then
 
-                                  Tag_Level             <= Tag_n_Lev_Reg(15);                                    -- Level für Output-Bits
-                                  Tag_AWOut_Reg_Nr      <= to_integer(unsigned(Tag_n_Lev_Reg)(2 downto 0));      -- Output-Reg. Nr. 0..7         
-                                  Tag_FG_Start          <= Tag_n_Lev_Reg(3);                                     -- Start-Flag für FG         
+                                  Tag_AWOut_Reg_Nr      <= to_integer(unsigned(Tag_n_Register)(2 downto 0));     -- Output-Reg. Nr. 0..7         
+                                  Tag_FG_Start          <= Tag_n_Register(3);                                     -- Start-Flag für FG         
                                   Tag_Delay_Cnt         <= to_integer(unsigned(Tag_n_Delay_Cnt)(15 downto 0));   -- Counter Delay
                                   Tag_Puls_Width        <= to_integer(unsigned(Tag_n_Puls_Width)(15 downto 0));  -- Counter Delay
                                   Tag_Pre_VZ            <= to_integer(unsigned(Tag_n_Prescale)(15 downto 8));    -- Prescale Verzögerungszeit
@@ -381,16 +379,13 @@ P_Tag_Deco:  process (clk, nReset,
                                         sm_state        <= sm_fg_start;
 
                               ELSE
-                                IF Tag_Level     = '0' then                       -- Register-Nr. = ok 
-                                Tag_New_Data  <=  (AWOut_Reg_Array(Tag_AWOut_Reg_Nr) and (not Tag_n_Maske));  -- die "1"-Bits der Maske, werden auf 0 gesetzt
-                                else
-                                  Tag_New_Data  <=  (AWOut_Reg_Array(Tag_AWOut_Reg_Nr) or Tag_n_Maske);         -- aie "1"-Bits der Maske, werden auf 1 gesetzt
-                                end if; 
-                                  sm_state        <= sm_wr1;
+                                
+                                Tag_Maske_Hi_Bits   <=      Tag_n_Level and Tag_n_Maske;  -- Set Maske für "High-Aktive" Bits im Ausgangs-Register
+                                Tag_Maske_Lo_Bits   <=  not Tag_n_Level and Tag_n_Maske;  -- Set Maske für "Low-Aktive"  Bits im Ausgangs-Register
+                                sm_state        <= sm_wr1;
                               end if; 
                               
-        when sm_wr1   =>      AWOut_Reg_Array(Tag_AWOut_Reg_Nr)     <= Tag_New_Data; -- neue Daten nach "Bit-Manipulation" zurückschreiben
-                              Tag_New_AWOut_Data  <= true;                           -- Set Flag: neue Daten für AWOut_Reg_Nr. im AWOut_Reg_Array
+        when sm_wr1   =>      Tag_New_AWOut_Data  <= true;                           -- Set Flag: neue Daten für AWOut_Reg_Nr. im AWOut_Reg_Array
  
                               IF Tag_Puls_Width = 0 then
                                 sm_state     <= sm_end;
@@ -418,18 +413,16 @@ P_Tag_Deco:  process (clk, nReset,
   
         when sm_rd2     =>    IF Tag_AWOut_Reg_Nr  /= 0 then  -- IF Register-Nr. im Bereich 1-7 
 
-                                IF Tag_Level      = not '0' then -- das inverse von rd1/wr1 (zum ausschalten)
-                                  Tag_New_Data  <= (AWOut_Reg_Array(Tag_AWOut_Reg_Nr) and (not Tag_n_Maske));  -- die "1"-Bits der Maske, werden auf 0 gesetzt
-                                else
-                                    Tag_New_Data  <= (AWOut_Reg_Array(Tag_AWOut_Reg_Nr) or Tag_n_Maske);         -- aie "1"-Bits der Maske, werden auf 1 gesetzt
-                                end if;   
+                              --- zum "Umschalten bei der Monoflop-Funktion, werden aus den "High-Bit" = "Low-Bits" und umgekehrt.
+                              Tag_Maske_Hi_Bits   <=  not Tag_n_Level and Tag_n_Maske;  -- Set Maske für "High-Aktive" Bits im Ausgangs-Register
+                              Tag_Maske_Lo_Bits   <=      Tag_n_Level and Tag_n_Maske;  -- Set Maske für "Low-Aktive"  Bits im Ausgangs-Register
+        
                               sm_state     <= sm_wr2;
                               else
                                 sm_state     <= sm_reg_err;
                               end if; 
                               
-        when sm_wr2     =>    AWOut_Reg_Array(Tag_AWOut_Reg_Nr) <= Tag_New_Data;  -- neue Daten nach "Bit-Manipulation" zurückschreiben
-                              Tag_New_AWOut_Data  <= true;                        -- Set Flag: neue Daten für AWOut_Reg_Nr. im AWOut_Reg_Array
+        when sm_wr2     =>    Tag_New_AWOut_Data  <= true;                        -- Set Flag: neue Daten für AWOut_Reg_Nr. im AWOut_Reg_Array
                               sm_state            <= sm_end;
 
 
@@ -469,7 +462,9 @@ P_Tag_Deco:  process (clk, nReset,
   end process P_Tag_Deco;
   
 
-Tag_n_New_Data        <=  Tag_New_Data;           -- Übergabe-Daten: Flag, das Register mit der Nummer (Tag_AWOut_Reg_Nr) soll überschrieben werden
+  
+Tag_n_Maske_Hi_Bits   <=  Tag_Maske_Hi_Bits;      -- Übergabe-Daten: Maske für "High-Aktive" Bits im Ausgangs-Register
+Tag_n_Maske_Lo_Bits   <=  Tag_Maske_Lo_Bits;      -- Übergabe-Daten:  Maske für "Low-Aktive"  Bits im Ausgangs-Register
 Tag_n_Reg_Nr          <=  Tag_AWOut_Reg_Nr;       -- Übergabe-Daten: Nr. des Registers, das überschriebe werden soll
 Tag_n_New_AWOut_Data  <=  Tag_New_AWOut_Data;     -- Übergabe-Daten: Daten, mit denen das Registers überschrieben werden soll
 Tag_n_ext_Trig_Strobe <=  Tag_Reg_Bit_Strobe_o;   -- Übergabe-Daten: ext. Trigger-Eingang, aus Input-Register-Bit

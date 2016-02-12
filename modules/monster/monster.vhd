@@ -290,7 +290,8 @@ entity monster is
     ps_advn                : out   std_logic := 'Z';
     ps_wait                : in    std_logic;
     -- g_en_user_ow
-    ow_io                  : inout std_logic_vector(1 downto 0));
+    ow_io                  : inout std_logic_vector(1 downto 0);
+    hw_version             : in    std_logic_vector(31 downto 0));
 end monster;
 
 architecture rtl of monster is
@@ -1412,6 +1413,7 @@ begin
       rstn_sys_i => rstn_sys,
       clk_upd_i  => clk_update,
       rstn_upd_i => rstn_update,
+      hw_version => hw_version,
       slave_o    => top_cbar_master_i(c_tops_reset),
       slave_i    => top_cbar_master_o(c_tops_reset),
       rstn_o     => s_lm32_rstn);

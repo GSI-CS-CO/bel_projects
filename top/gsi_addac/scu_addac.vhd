@@ -10,11 +10,15 @@ use work.aux_functions_pkg.all;
 use work.adc_pkg.all;
 use work.dac714_pkg.all;
 use work.fg_quad_pkg.all;
-use work.addac_sys_clk_local_clk_switch_pkg.all;
+use work.pll_pkg.all;
+use work.monster_pkg.all;
+
+
 
 entity scu_addac is
   generic(
-    g_cid_group: integer := 3
+    g_cid_group: integer := 38;
+    g_card_type: string := "addac"
     );
   port (
     -------------------------------------------------------------------------------------------------------------------
@@ -88,9 +92,7 @@ entity scu_addac is
     ------------ Logic analyser Signals -------------------------------------------------------------------------------
     A_SEL:            in    std_logic_vector(3 downto 0);   -- use to select sources for the logic analyser ports
     A_TA:             out   std_logic_vector(15 downto 0);  -- test port a
-    A_CLK_TA:         out   std_logic;
     A_TB:             inout std_logic_vector(15 downto 0);  -- test port b
-    A_CLK_TB:         out   std_logic;
     TP:               out   std_logic_vector(2 downto 1);   -- test points
     
     A_nState_LED:     out   std_logic_vector(2 downto 0);   --..LED(2) = R/W, ..LED(1) = Dtack, ..LED(0) = Sel
@@ -117,15 +119,15 @@ constant clk_sys_in_Hz: integer := 125_000_000;
 constant dac_spi_clk_in_hz: integer := 10_000_000;
 
 -- macro base address map
-constant c_housekeeping_base: unsigned := x"0040";
-constant c_dac1_base:         unsigned := x"0200";
-constant c_dac2_base:         unsigned := x"0210";
-constant c_io4x8_base:        unsigned := x"0220";
-constant c_adc_base:          unsigned := x"0230";
-constant c_fg1_base:          unsigned := x"0300";
-constant c_tmr_base:          unsigned := x"0330";
-constant c_fg2_base:          unsigned := x"0340";
-
+constant clk_switch_status_cntrl_addr:  unsigned := x"0030";
+constant c_housekeeping_base:           unsigned := x"0040";
+constant c_dac1_base:                   unsigned := x"0200";
+constant c_dac2_base:                   unsigned := x"0210";
+constant c_io4x8_base:                  unsigned := x"0220";
+constant c_adc_base:                    unsigned := x"0230";
+constant c_fg1_base:                    unsigned := x"0300";
+constant c_tmr_base:                    unsigned := x"0330";
+constant c_fg2_base:                    unsigned := x"0340";
 
 component IO_4x8
   generic (
@@ -152,27 +154,7 @@ component IO_4x8
     Dtack_to_SCUB:      out   std_logic                       -- connect Dtack to SCUB-Macro
     );
   end component IO_4x8;
-
- 
-component flash_loader_v01
-  port (
-    noe_in: in std_logic
-    );
-  end component;
-
-
-component adda_pll
-  PORT
-  (
-    inclk0: in std_logic := '0';
-    c0: out std_logic;
-    c1: out std_logic;
-    locked: out std_logic
-  );
-end component;
-
-
-
+  
   signal clk_sys, clk_cal, locked : std_logic;
   
   constant clk_in_hz: integer := 125_000_000;
@@ -217,8 +199,7 @@ end component;
   signal  tmr_rd_active:     std_logic;
   signal  tmr_data_to_SCUB:  std_logic_vector(15 downto 0);
   signal  tmr_dtack:         std_logic;
-  
-  signal  fg_brdcst:         std_logic; 
+   
   signal  fg_1_dtack:        std_logic;
   signal  fg_1_data_to_SCUB: std_logic_vector(15 downto 0);
   signal  fg_1_rd_active:    std_logic;
@@ -240,34 +221,44 @@ end component;
 
   signal  Data_to_SCUB:      std_logic_vector(15 downto 0);
   
-  signal reset_clks:          std_logic_vector(0 downto 0);
-  signal reset_rstn:          std_logic_vector(0 downto 0);
-  signal clk_sys_rstn:        std_logic;
-  signal wb_scu_dtack:        std_logic;
-  signal wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
-  signal wb_scu_rd_active:    std_logic;
-  
+  signal  reset_clks:        std_logic_vector(0 downto 0);
+  signal  reset_rstn:        std_logic_vector(0 downto 0);
+  signal  clk_sys_rstn:      std_logic;
+    
   signal  owr_pwren_o:   std_logic_vector(1 downto 0);
   signal  owr_en_o:      std_logic_vector(1 downto 0);
   signal  owr_i:         std_logic_vector(1 downto 0);
     
-  signal  sys_clk_is_bad:        std_logic;
-  signal  sys_clk_is_bad_led_n:  std_logic;
-  signal  sys_clk_is_bad_la:     std_logic;
-  signal  local_clk_is_bad:      std_logic;
-  signal  local_clk_is_running:  std_logic;
-  signal  local_clk_runs_led_n:  std_logic;
-  signal  sys_clk_failed:        std_logic;
-  signal  sys_clk_deviation:     std_logic;
-  signal  sys_clk_deviation_la:  std_logic;
-  signal  sys_clk_deviation_led_n: std_logic;
-  signal  clk_switch_rd_data:    std_logic_vector(15 downto 0);
-  signal  clk_switch_rd_active:  std_logic;
-  signal  clk_switch_dtack:      std_logic;
-  signal  clk_switch_intr:       std_logic;
+  signal  wb_scu_rd_active:    std_logic;
+  signal  wb_scu_dtack:        std_logic;
+  signal  wb_scu_data_to_SCUB: std_logic_vector(15 downto 0);
+    
+  signal  sys_clk_is_bad:         std_logic;
+  signal  sys_clk_is_bad_led_n:   std_logic;
+  signal  sys_clk_is_bad_la:      std_logic;
+  signal  local_clk_is_bad:       std_logic;
+  signal  local_clk_is_running:   std_logic;
+  signal  local_clk_runs_led_n:   std_logic;
+  signal  sys_clk_failed:         std_logic;
+  signal  sys_clk_deviation:      std_logic;
+  signal  sys_clk_deviation_la:   std_logic;
+  signal  sys_clk_deviation_led_n:std_logic;
+  signal  clk_switch_rd_data:     std_logic_vector(15 downto 0);
+  signal  clk_switch_rd_active:   std_logic;
+  signal  clk_switch_dtack:       std_logic;
+  signal  clk_switch_intr:        std_logic;
   
-  signal signal_tap_clk_250mhz: std_logic;
+  signal  signal_tap_clk_250mhz: std_logic;
+  signal  clk_update:            std_logic;
+  signal  clk_flash:             std_logic;
+  signal  pll_locked:            std_logic;
 
+  signal  rstn_sys:               std_logic;
+  signal  rstn_update:            std_logic;
+  signal  rstn_flash:             std_logic;
+  signal  rstn_stc:               std_logic;
+
+  
   --signal irqcnt:  unsigned(12 downto 0);
   signal tmr_irq: std_logic;
   
@@ -280,45 +271,65 @@ end component;
   signal s_led_en:      std_logic;
   signal s_test_vector: std_logic_vector(15 downto 0) := x"8000";
   
+  constant c_is_arria5: boolean := false;
+
   begin
+
+  addac_clk_sw: slave_clk_switch
+  generic map (
+    Base_Addr => clk_switch_status_cntrl_addr,
+    card_type => g_card_type
+    )
+  port map(
+    local_clk_i             => CLK_FPGA,              --125MHz XTAL
+    sys_clk_i               => A_SysClock,            --12p5MHz SCU Bus
+    nReset                  => nPowerup_Res,
+    master_clk_o            => clk_sys,               --SysClk 125MHz
+    pll_locked              => pll_locked,             
+    sys_clk_is_bad          => sys_clk_is_bad,        
+    sys_clk_is_bad_la       => sys_clk_is_bad_la,
+    local_clk_is_bad        => open,                  --local_clk_is_bad,not used
+    local_clk_is_running    => local_clk_is_running, 
+    sys_clk_deviation       => sys_clk_deviation,     
+    sys_clk_deviation_la    => sys_clk_deviation_la, 
+    Adr_from_SCUB_LA        => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
+    Data_from_SCUB_LA       => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
+    Ext_Adr_Val             => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active           => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
+    Ext_Wr_active           => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
+    Rd_Port                 => clk_switch_rd_data,    -- output for all read sources of this macro
+    Rd_Activ                => clk_switch_rd_active,  -- this macro has read data available at the Rd_Port.
+    Dtack                   => clk_switch_dtack,
+    signal_tap_clk_250mhz   => signal_tap_clk_250mhz, -- signal_tap_clk_250mhz
+--------------------------------------------------------------
+    clk_update              => clk_update,
+    clk_flash               => clk_flash,
+    clk_encdec              => open
+  );
+
     
-  fl : flash_loader_v01
-    port map (noe_in => '0');
-
-  addac_clk_switch: addac_sys_clk_local_clk_switch
+  
+  reset : altera_reset
+    generic map(
+      g_plls   => 1,
+      g_clocks => 4,
+      g_areset => f_pick(c_is_arria5, 100, 1)*1024,
+      g_stable => f_pick(c_is_arria5, 100, 1)*1024)
     port map(
-      local_clk_i           => CLK_FPGA,
-      sys_clk_i             => A_SysClock,
-      nReset                => nPowerup_Res,
-      master_clk_o          => clk_sys,               -- core clocking
-      pll_locked            => open,
-      sys_clk_is_bad        => sys_clk_is_bad,
-      sys_clk_is_bad_la     => sys_clk_is_bad_la,
-      local_clk_is_bad      => local_clk_is_bad,
-      local_clk_is_running  => local_clk_is_running,
-      sys_clk_deviation     => sys_clk_deviation,
-      sys_clk_deviation_la  => sys_clk_deviation_la,
-      Adr_from_SCUB_LA      => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
-      Data_from_SCUB_LA     => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
-      Ext_Adr_Val           => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
-      Ext_Rd_active         => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
-      Ext_Wr_active         => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
-      Rd_Port               => clk_switch_rd_data,    -- output for all read sources of this macro
-      Rd_Activ              => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
-      Dtack                 => clk_switch_dtack,
-      signal_tap_clk_250mhz    => signal_tap_clk_250mhz
-      );
-    
+      clk_free_i    => clk_sys,
+      rstn_i        => A_nReset,
+      pll_lock_i(0) => pll_locked,
+      pll_arst_o    => open,
+      clocks_i(0)   => clk_sys,
+      clocks_i(1)   => signal_tap_clk_250mhz,
+      clocks_i(2)   => clk_update,
+      clocks_i(3)   => clk_flash,
+      rstn_o(0)     => rstn_sys,
+      rstn_o(1)     => rstn_stc,
+      rstn_o(2)     => rstn_update,
+      rstn_o(3)     => rstn_flash);
 
-  reset : gc_reset
-    port map(
-      free_clk_i  =>   clk_sys,
-      locked_i    =>   locked,
-      clks_i      =>   reset_clks,
-      rstn_o      =>   reset_rstn);
 
-    reset_clks(0) <=   clk_sys;
-    clk_sys_rstn  <=    reset_rstn(0);
 
   -- open drain buffer for one wire
     owr_i(0) <= A_OneWire;
@@ -332,13 +343,11 @@ Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack
 
 clk_switch_intr <= sys_clk_is_bad_la or sys_clk_deviation_la;
 
-
-
 SCU_Slave: SCU_Bus_Slave
   generic map (
     CLK_in_Hz           => clk_sys_in_Hz,
     Firmware_Release    => 0,
-    Firmware_Version    => 0,
+    Firmware_Version    => 1,
     CID_System          => 55,                    -- important: 55 => CSCOHW
     Intr_Enable         => b"0000_0000_0000_0001")
   port map (
@@ -361,8 +370,8 @@ SCU_Slave: SCU_Bus_Slave
 
     Data_from_SCUB_LA   => Data_from_SCUB_LA,   -- out,   latched data from SCU_Bus for external user functions
     ADR_from_SCUB_LA    => ADR_from_SCUB_LA,    -- out,   latched address from SCU_Bus for external user functions
-    Timing_Pattern_LA   => open,                -- out,   latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV  => open,                -- out,   timing pattern received
+    Timing_Pattern_LA   => Timing_Pattern_LA,   -- out,   latched timing pattern from SCU_Bus for external user functions
+    Timing_Pattern_RCV  => Timing_Pattern_RCV,  -- out,   timing pattern received
     nSCUB_Dtack_Opdrn   => open,                -- out,   for direct connect to SCU_Bus opendrain signal
                                                 --        '0' => slave give dtack to SCU master
     SCUB_Dtack          => SCUB_Dtack,          -- out,   for connect via ext. open collector driver
@@ -396,11 +405,16 @@ SCU_Slave: SCU_Bus_Slave
 
 lm32_ow: housekeeping
 generic map (
-  Base_Addr => c_housekeeping_base)
+  Base_addr => c_housekeeping_base)
 port map (
-  clk_sys => clk_sys,
-  n_rst => nPowerup_Res,
-  
+  clk_sys     => clk_sys,
+  clk_update  => clk_update,
+  clk_flash   => clk_flash,
+  rstn_sys    => rstn_sys,
+  rstn_update => rstn_update,
+  rstn_flash  => rstn_flash,
+
+
   ADR_from_SCUB_LA  => ADR_from_SCUB_LA,
   Data_from_SCUB_LA => Data_from_SCUB_LA,
   Ext_Adr_Val       => Ext_Adr_Val,
@@ -417,7 +431,7 @@ port map (
   debug_serial_o    => A_TB(0),
   debug_serial_i    => '0');
 
-  
+
 dac_1: dac714
   generic map(
     Base_addr         => c_dac1_base,
@@ -430,7 +444,7 @@ dac_1: dac714
     Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset            => nPowerup_Res,          -- in, '0' => resets the DAC_1
+    nReset            => rstn_sys,              -- in, '0' => resets the DAC_1
     nExt_Trig_DAC     => EXT_TRIG_DAC,          -- external trigger input over optocoupler,
                                                 -- led on -> nExt_Trig_DAC is low
     FG_Data           => fg_1_sw(31 downto 16), -- parallel dac data during FG-Mode
@@ -460,7 +474,7 @@ dac_2: dac714
     Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset            => nPowerup_Res,          -- in, '0' => resets the DAC_2
+    nReset            => rstn_sys,              -- in, '0' => resets the DAC_2
     nExt_Trig_DAC     => EXT_TRIG_DAC,          -- external trigger input over optocoupler,
                                                 -- led on -> nExt_Trig_DAC is low
     FG_Data           => fg_2_sw(31 downto 16), -- parallel dac data during FG-Mode
@@ -488,7 +502,7 @@ io_port: IO_4x8
     Ext_Rd_active       => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active       => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk                 => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset              => nPowerup_Res,          -- in, '0' => resets the IO_4x8
+    nReset              => rstn_sys,              -- in, '0' => resets the IO_4x8
     io                  => a_io,                  -- inout, select and set direction only in 8-bit partitions
     io_7_0_tx           => a_io_7_0_tx,           -- out, '1' = external io(7..0)-buffer set to output.
     ext_io_7_0_dis      => a_ext_io_7_0_dis,      -- out, '1' = disable external io(7..0)-buffer.
@@ -510,7 +524,7 @@ adc: adc_scu_bus
     diag_on_is_1  => 1)
   port map (
     clk           => clk_sys,
-    nrst          => nPowerup_Res,
+    nrst          => rstn_sys,
     
     db            => ADC_DB(13 downto 0),
     db14_hben     => ADC_DB(14),
@@ -544,8 +558,7 @@ adc: adc_scu_bus
     channel_6 => ADC_channel_6,
     channel_7 => ADC_channel_7,
     channel_8 => ADC_channel_8);
-   
-    
+
 fg_1: fg_quad_scu_bus
   generic map (
     Base_addr     => c_fg1_base,
@@ -561,14 +574,14 @@ fg_1: fg_quad_scu_bus
     Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset            => nPowerup_Res,          -- in, '0' => resets the fg_1
+    nReset            => rstn_sys,              -- in, '0' => resets the fg_1
     Rd_Port           => fg_1_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => fg_1_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_1_dtack,            -- connect Dtack to SCUB-Macro
     irq               => fg_1_dreq,             -- request of new parameter set
     tag               => Timing_Pattern_LA,     --
     tag_valid         => Timing_Pattern_RCV,    --
-    ext_trigger       => '0',                   -- start ramp with external trigger
+    ext_trigger       => '0',
 
     -- fg output
     sw_out            => fg_1_sw,               -- 24bit output from fg
@@ -590,14 +603,14 @@ fg_2: fg_quad_scu_bus
     Ext_Rd_active     => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
     Ext_Wr_active     => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
     clk               => clk_sys,               -- in, should be the same clk, used by SCU_Bus_Slave
-    nReset            => nPowerup_Res,          -- in, '0' => resets the fg_1
+    nReset            => rstn_sys,              -- in, '0' => resets the fg_1
     Rd_Port           => fg_2_data_to_SCUB,     -- out, connect read sources (over multiplexer) to SCUB-Macro
     user_rd_active    => fg_2_rd_active,        -- '1' = read data available at 'Rd_Port'-output
     Dtack             => fg_2_dtack,            -- connect Dtack to SCUB-Macro
     irq               => fg_2_dreq,             -- request of new parameter set
     tag               => Timing_Pattern_LA,     --
     tag_valid         => Timing_Pattern_RCV,    --
-    ext_trigger       => '0',                   -- start ramp with external trigger
+    ext_trigger       => '0',
 
 
     -- fg output
@@ -611,7 +624,7 @@ fg_2: fg_quad_scu_bus
     diag_on_is_1  => 1)
   port map (
     clk           => clk_sys,
-    nrst          => nPowerup_Res,
+    nrst          => rstn_sys,
     tmr_irq       => tmr_irq,
     
     Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
@@ -628,7 +641,7 @@ p_led_ena: div_n
     n => clk_sys_in_Hz / 100,   -- div_o is every 10 ms for one clock period active
     diag_on => 0)
   port map (
-    res => not nPowerup_Res,    -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the
+    res => not rstn_sys,        -- in, '1' => set "div_n"-counter asynchron to generic-value "n"-2, so the
                                 -- countdown is "n"-1 clocks to activate the "div_o"-output for one clock periode.
     clk => clk_sys,             -- clk = clock
     ena => '1',                 -- in, can be used for a reduction, signal should be generated from the same
@@ -667,9 +680,9 @@ p_led_ena: div_n
   -------------------------------------------------------------------------------
   -- precsaler for the led test vector
   -------------------------------------------------------------------------------
-  sec_prescale:	process(clk_sys, nPowerup_Res)
+  sec_prescale:	process(clk_sys, rstn_sys)
   begin
-    if nPowerup_Res = '0' then
+    if rstn_sys = '0' then
       s_led_en <= '0';
     elsif rising_edge(clk_sys) then
       if s_led_cnt = to_unsigned(c_led_cnt, c_led_cnt_width) then
@@ -685,9 +698,9 @@ p_led_ena: div_n
   -------------------------------------------------------------------------------
   -- rotating bit as a test vector for led testing
   -------------------------------------------------------------------------------
-  test_signal: process(clk_sys, nPowerup_Res, s_led_en)
+  test_signal: process(clk_sys, rstn_sys, s_led_en)
   begin
-    if nPowerup_Res = '0' then
+    if rstn_sys = '0' then
       s_test_vector <= ('1', others => '0');
     elsif rising_edge(clk_sys) and s_led_en = '1' then
       s_test_vector <= s_test_vector(s_test_vector'high-1 downto 0) & s_test_vector(s_test_vector'high);
@@ -872,7 +885,7 @@ dac2_led: led_n
   --
   --A_TB <= fg_1_sw(7 downto 0) & fg_1_strobe & "0000000";
   
-  A_TA(2) <= signal_tap_clk_250mhz;
-  A_TA(0) <= clk_sys;
+  A_TA(2) <= '0'; -- signal_tap_clk_250mhz;
+  A_TA(0) <= '0'; --clk_sys;
 
 end architecture;

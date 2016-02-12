@@ -393,7 +393,8 @@ begin
       cfi_nwe_fsh            => nWE_FSH,
       cfi_noe_fsh            => nOE_FSH,
       cfi_nrst_fsh           => nRST_FSH,
-      cfi_wait_fsh           => WAIT_FSH);
+      cfi_wait_fsh           => WAIT_FSH,
+      hw_version             => x"0000000" & not scu_cb_version);
       
   -- LPC UART
   lpc_slave: lpc_uart

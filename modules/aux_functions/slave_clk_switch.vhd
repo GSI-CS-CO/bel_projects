@@ -1,8 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all; 
 use IEEE.numeric_std.all;
-use work.sio3_sys_clk_local_clk_switch_pkg.all;
---use work.addac_sys_clk_local_clk_switch_pkg.all;
 use work.aux_functions_pkg.all;
 library work;
 
@@ -39,59 +37,58 @@ USE altera_mf.altera_mf_components.all;
 
 
 
-entity sio3_sys_clk_local_clk_switch is 
+entity slave_clk_switch is 
   generic (
-    Base_Addr:  unsigned(15 downto 0)  := x"0040"
+    Base_Addr:  unsigned(15 downto 0)  := x"0040";
+    card_type:  string -- "diob" "addac" or "sio"
     );
 
   port(
-    local_clk_i:          in    std_logic;
-    sys_clk_i:            in    std_logic;
-    nReset:               in    std_logic;
-    master_clk_o:         out   std_logic;
-    pll_locked:           out   std_logic;
-    A_ME_12MHz:           out   std_logic;
-    sys_clk_is_bad:       out   std_logic;
-    sys_clk_is_bad_la:    out   std_logic;
-    local_clk_is_bad:     out   std_logic;
-    local_clk_is_running: out   std_logic;
-    sys_clk_deviation:    out   std_logic;
-    sys_clk_deviation_la: out   std_logic;
-    Adr_from_SCUB_LA:     in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
-    Data_from_SCUB_LA:    in    std_logic_vector(15 downto 0);  -- latched data from SCU_Bus
-    Ext_Adr_Val:          in    std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active:        in    std_logic;                      -- '1' => Rd-Cycle is active
-    Ext_Wr_active:        in    std_logic;                      -- '1' => Wr-Cycle is active
-    Rd_Port:              out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
-    Rd_Activ:             out   std_logic;                      -- this acro has read data available at the Rd_Port.
-    Dtack:                out   std_logic;
-    signal_tap_clk_250mhz:out   std_logic
+    local_clk_i:          in      std_logic;
+    sys_clk_i:            in      std_logic;
+    nReset:               in      std_logic;
+    master_clk_o:         out     std_logic;
+    pll_locked:           out     std_logic;
+    sys_clk_is_bad:       buffer  std_logic;
+    sys_clk_is_bad_la:    out     std_logic;
+    local_clk_is_bad:     buffer  std_logic;
+    local_clk_is_running: buffer  std_logic;
+    sys_clk_deviation:    out     std_logic;
+    sys_clk_deviation_la: out     std_logic;
+    Adr_from_SCUB_LA:     in      std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
+    Data_from_SCUB_LA:    in      std_logic_vector(15 downto 0);  -- latched data from SCU_Bus
+    Ext_Adr_Val:          in      std_logic;                      -- '1' => "ADR_from_SCUB_LA" is valid
+    Ext_Rd_active:        in      std_logic;                      -- '1' => Rd-Cycle is active
+    Ext_Wr_active:        in      std_logic;                      -- '1' => Wr-Cycle is active
+    Rd_Port:              out     std_logic_vector(15 downto 0);  -- output for all read sources of this macro
+    Rd_Activ:             out     std_logic;                      -- this acro has read data available at the Rd_Port.
+    Dtack:                out     std_logic;
+    signal_tap_clk_250mhz:out     std_logic;
+    clk_update:           out     std_logic;
+    clk_flash:            out     std_logic;
+    clk_encdec:           out     std_logic
     );
-end sio3_sys_clk_local_clk_switch;
+end slave_clk_switch;
 
-architecture arch_sio3_sys_clk_local_clk_switch of sio3_sys_clk_local_clk_switch is
+architecture arch_slave_clk_switch of slave_clk_switch is
 
-component addac_local_clk_to_12p5_mhz
-  port(
-    inclk0:   in    std_logic;
-    c0:       out   std_logic;
-    locked:   out   std_logic
-    );
-end component;
 
 component sys_clk_or_local_clk
   port(
-    clkswitch:in    std_logic := '0';
-    inclk0:   in    std_logic;
-    inclk1:   in    std_logic;
-    c0:       out   std_logic;
-    c1:       out   std_logic;
-    locked:   out   std_logic;
+    clkswitch:    in    std_logic := '0';
+    inclk0:       in    std_logic;
+    inclk1:       in    std_logic;
+    c0:           out   std_logic;
+    c1:           out   std_logic;
+    c2:           out   std_logic;
+    c3:           out   std_logic;
+    locked:       out   std_logic;
     activeclock:  out   std_logic;
-    clkbad0:  out   std_logic;
-    clkbad1:  out   std_logic
+    clkbad0:      out   std_logic;
+    clkbad1:      out   std_logic
     );
 end component;
+
 constant clk_switch_status_cntrl_addr: unsigned (15 downto 0) := base_Addr;
 signal  master_clk:           std_logic;
 signal  f_local_12p5_mhz:     std_logic;
@@ -126,24 +123,33 @@ signal    clk_switch_cnt:       integer range 0 to clk_switch_cnt_max;
 begin 
 
 
-A_ME_12MHz  <= f_local_12p5_mhz;
+clk_encdec  <= f_local_12p5_mhz;
 
-local_clk: sio3_local_clk_to_12p5_mhz
-  port map(
-    inclk0  => local_clk_i,
-    c0      => f_local_12p5_mhz
-  );
+pll_125 : if card_type = "addac" generate
+    local_clk: local_125_to_12p5
+      port map(
+        inclk0  => local_clk_i,
+        c0      => f_local_12p5_mhz
+      );
+end generate;
 
+pll_20 : if card_type = "diob" or card_type = "sio" generate
+    local_clk: local_20_to_12p5
+      port map(
+        inclk0  => local_clk_i,
+        c0      => f_local_12p5_mhz
+      );
+end generate;
 
-
-    
 sys_or_local_pll: sys_clk_or_local_clk
   port map(
     clkswitch		=> start_switch_clk_input,
     inclk0      => sys_clk_i,
     inclk1      => f_local_12p5_mhz,
     c0          => master_clk,
-    c1          => signal_tap_clk_250mhz,
+    c1          => clk_update,
+    c2          => clk_flash,
+    c3          => signal_tap_clk_250mhz, 
     locked      => pll_locked,
     activeclock => local_clk_is_running,
     clkbad0     => sys_clk_is_bad,
@@ -299,4 +305,4 @@ sys_clk_deviation_la  <= s_sys_clk_deviation_la;
 sys_clk_is_bad_la     <= s_sys_clk_is_bad_la;
 master_clk_o          <= master_clk;
 
-end arch_sio3_sys_clk_local_clk_switch;
+end arch_slave_clk_switch;

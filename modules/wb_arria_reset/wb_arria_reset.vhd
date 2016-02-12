@@ -46,6 +46,9 @@
 --					- 0x4 - 0xC are now GET, SET, CLR for
 --                                        individual LM32 reset lines  		
 -------------------------------------------------------------------------------
+-- 2016-01-7  1.2      srauch 	- added register for hw version number
+--					                    - read from address offset 0x8	
+-------------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -64,6 +67,8 @@ entity wb_arria_reset is
           rstn_sys_i: in std_logic;
           clk_upd_i:  in std_logic;
           rstn_upd_i: in std_logic;
+          
+          hw_version: in std_logic_vector(31 downto 0);
           
           slave_o:    out t_wishbone_slave_out;
           slave_i:    in t_wishbone_slave_in;
@@ -125,26 +130,24 @@ begin
         -- Detect a write to the register byte
         if slave_i.cyc = '1' and slave_i.stb = '1' and slave_i.sel(0) = '1' then
           if(slave_i.we = '1') then
-				 case to_integer(unsigned(slave_i.adr(3 downto 2))) is
-					when 0 => if(slave_i.dat = x"DEADBEEF") then
-									reset_reg(0) <= '1';
-								 end if;
-					
-					when 2 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) OR slave_i.dat(reset_reg'left-1 downto 0);
-					when 3 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) AND NOT slave_i.dat(reset_reg'left-1 downto 0);
-					
-					when others => null;
-				 end case;
-			 else
-				 case to_integer(unsigned(slave_i.adr(3 downto 2))) is
-					when 1 => slave_o.dat <= '0' & reset_reg(reset_reg'left downto 1); 
-					when others => null;
-				 end case;
-			 end if;
+            case to_integer(unsigned(slave_i.adr(3 downto 2))) is
+              when 0 => if(slave_i.dat = x"DEADBEEF") then
+                reset_reg(0) <= '1';
+							end if;
+              when 2 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) OR slave_i.dat(reset_reg'left-1 downto 0);
+              when 3 => reset_reg(reset_reg'left downto 1) <= reset_reg(reset_reg'left downto 1) AND NOT slave_i.dat(reset_reg'left-1 downto 0);
+              when others => null;
+            end case;
+          else -- read 
+            case to_integer(unsigned(slave_i.adr(3 downto 2))) is
+              when 1 => slave_o.dat <= '0' & reset_reg(reset_reg'left downto 1);
+              when 2 => slave_o.dat <= hw_version;
+              when others => null;
+            end case;
+          end if;
         end if;
 		  
-		  
-      end if;
-    end if;
+      end if; -- of sync reset
+    end if; -- of rising_edge
   end process;
 end architecture;

@@ -1,5 +1,0 @@
-set_global_assignment -name IP_TOOL_NAME "ALTPLL"
-set_global_assignment -name IP_TOOL_VERSION "13.1"
-set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "addac_local_clk_to_12p5_mhz.vhd"]
-set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) "addac_local_clk_to_12p5_mhz.cmp"]
-set_global_assignment -name MISC_FILE [file join $::quartus(qip_path) "addac_local_clk_to_12p5_mhz.ppf"]

@@ -10,7 +10,7 @@ package wb_scu_reg_pkg is
 component wb_scu_reg is
   generic (
     Base_addr:      unsigned(15 downto 0);
-    register_cnt: integer
+    size:           integer
   );
   port (
     clk_sys_i : in std_logic;
@@ -40,7 +40,7 @@ constant c_xwb_scu_reg : t_sdb_device := (
   wbd_width     => x"2", -- 8/16/32-bit port granularity
   sdb_component => (
   addr_first    => x"0000000000000000",
-  addr_last     => x"000000000000000f",
+  addr_last     => x"00000000000001ff",
   product => (
   vendor_id     => x"0000000000000651", -- GSI
   device_id     => x"e2d13d04",

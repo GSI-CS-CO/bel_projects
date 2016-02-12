@@ -1,4 +1,4 @@
---TITLE "'tag_ctrl' Autor: R.Hartmann, Stand: 18.03.2015 ";
+--TITLE "'tag_ctrl' Autor: R.Hartmann, Stand: 08.02.2016 ";
 --
 library IEEE;
 USE IEEE.std_logic_1164.all;
@@ -32,7 +32,7 @@ ENTITY tag_ctrl IS
 
     SCU_AW_Input_Reg:     in   t_IO_Reg_1_to_7_Array;          -- Input-Port's wie zum SCU-Bus
 
-    clr_Tag_Maske:        in   std_logic;                      -- clear alle Tag-Masken
+    Clr_Tag_Config:       in   std_logic;                      -- Clear Tag-Konfigurations-Register
     Max_AWOut_Reg_Nr:     in   integer range 0 to 7;           -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr:      in   integer range 0 to 7;           -- Maximale AWIn-Reg-Nummer der Anwendung
     
@@ -69,7 +69,8 @@ COMPONENT tag_n
     Tag_n_hw:               in    std_logic_vector(15 downto 0);    -- 
     Tag_n_lw:               in    std_logic_vector(15 downto 0);    -- 
     Tag_n_Maske:            in    std_logic_vector(15 downto 0);    -- 
-    Tag_n_Lev_Reg:          in    std_logic_vector(15 downto 0);    -- 
+    Tag_n_Register:         in    std_logic_vector(15 downto 0);    -- 
+    Tag_n_Level:            in    std_logic_vector(15 downto 0);    -- 
     Tag_n_Delay_Cnt:        in    std_logic_vector(15 downto 0);    -- 
     Tag_n_Puls_Width:       in    std_logic_vector(15 downto 0);    -- 
     Tag_n_Prescale:         in    std_logic_vector(15 downto 0);    -- 
@@ -82,7 +83,8 @@ COMPONENT tag_n
       
     Tag_n_Reg_Nr:           out   integer range 0 to 7;             -- AWOut-Reg-Pointer
     Tag_n_New_AWOut_Data:   out   boolean;                          -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data:         out   std_logic_vector(15 downto 0);    -- Copy der AWOut-Register 
+    Tag_n_Maske_Hi_Bits:    out  std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
+    Tag_n_Maske_Lo_Bits:    out  std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
     Tag_n_Reg_Err:          out   std_logic;                        -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err:      out   std_logic;                        -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err:         out   std_logic;                        -- Config-Error: Trig-Reg
@@ -147,12 +149,13 @@ constant  Timeout_Trigger:    INTEGER := 2500;   -- Counter Timeout (2500 x 8ns 
 
 constant  i_tag_hw:           INTEGER := 0; -- Index Tag-Data: High-Word
 constant  i_tag_lw:           INTEGER := 1; -- Index Tag-Data: Low-Word
-constant  i_Tag_Maske:        INTEGER := 2; -- Index Tag-Level und Tag-Maske
-constant  i_Tag_Lev_Reg:      INTEGER := 3; -- Index Tag-Data: High-Byte
+constant  i_Tag_Maske:        INTEGER := 2; -- Index Tag-Maske
+constant  i_Tag_Register:     INTEGER := 3; -- Index Tag-Register
 constant  i_Tag_Delay_Cnt:    INTEGER := 4; -- Index Tag_Array: Verzögerungszeit in Clock's
 constant  i_Tag_Puls_Width:   INTEGER := 5; -- Index Tag_Array: "Monoflop"-Pulsbreite in Clock's
 constant  i_Tag_Prescale:     INTEGER := 6; -- Index Tag_Array: Vorteiler für: D[15..8] = Verzögerungszeit, D[15..8] = Pulsbreite
 constant  i_Tag_Trigger:      INTEGER := 7; -- Index Tag_Array: Input-Trigger-Sel für:  D[11..8] = Input-Reg-Nr.,
+constant  i_Tag_Level:        INTEGER := 8; -- Index Tag-Register
 
 constant  i_Tag0:             INTEGER := 0; -- Index Tag_Array: Tag-Nr0
 constant  i_Tag1:             INTEGER := 1; -- Index Tag_Array: Tag-Nr1
@@ -187,43 +190,52 @@ signal  Tag_New_AWOut_Data:     t_Boolean_Array;                -- Flag's für N
 
 signal  Tag0_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
 signal  Tag0_New_AWOut_Data:    boolean; 
-signal  Tag0_New_Data:          std_logic_vector(15 downto 0); 
+signal  Tag0_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
+signal  Tag0_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
 signal  Tag0_LA:                std_logic_vector(15 downto 0); 
 
 signal  Tag1_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
 signal  Tag1_New_AWOut_Data:    boolean; 
-signal  Tag1_New_Data:          std_logic_vector(15 downto 0); 
+signal  Tag1_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
+signal  Tag1_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
 signal  Tag1_LA:                std_logic_vector(15 downto 0); 
 
 signal  Tag2_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
 signal  Tag2_New_AWOut_Data:    boolean; 
-signal  Tag2_New_Data:          std_logic_vector(15 downto 0); 
+signal  Tag2_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
+signal  Tag2_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
 signal  Tag2_LA:                std_logic_vector(15 downto 0); 
 
 signal  Tag3_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
 signal  Tag3_New_AWOut_Data:    boolean; 
-signal  Tag3_New_Data:          std_logic_vector(15 downto 0); 
+signal  Tag3_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
+signal  Tag3_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
 signal  Tag3_LA:                std_logic_vector(15 downto 0); 
 
 signal  Tag4_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
 signal  Tag4_New_AWOut_Data:    boolean; 
-signal  Tag4_New_Data:          std_logic_vector(15 downto 0); 
+signal  Tag4_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
+signal  Tag4_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
 signal  Tag4_LA:                std_logic_vector(15 downto 0); 
 
 signal  Tag5_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
 signal  Tag5_New_AWOut_Data:    boolean; 
-signal  Tag5_New_Data:          std_logic_vector(15 downto 0); 
+signal  Tag5_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
+signal  Tag5_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
 signal  Tag5_LA:                std_logic_vector(15 downto 0); 
 
 signal  Tag6_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
 signal  Tag6_New_AWOut_Data:    boolean; 
-signal  Tag6_New_Data:          std_logic_vector(15 downto 0); 
+signal  Tag6_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
+signal  Tag6_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
 signal  Tag6_LA:                std_logic_vector(15 downto 0); 
 
 signal  Tag7_Reg_Nr:            integer range 0 to 7;           -- AWOut-Reg-Nummer 
 signal  Tag7_New_AWOut_Data:    boolean; 
-signal  Tag7_New_Data:          std_logic_vector(15 downto 0); 
+signal  Tag7_Maske_Hi_Bits:     std_logic_vector(15 downto 0);   -- Maske für "High-Aktive" Bits im Ausgangs-Register
+signal  Tag7_Maske_Lo_Bits:     std_logic_vector(15 downto 0);   -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
 signal  Tag7_LA:                std_logic_vector(15 downto 0); 
+
 
 signal  DIOB_Sts1:              std_logic_vector(15 downto 0); 
 signal  DIOB_Sts2:              std_logic_vector(15 downto 0); 
@@ -524,8 +536,8 @@ P_Tag_Config_ok:  process (clk, nReset)
 
                               Tag_Code_Base    <= (Tag_Array(TC_Cnt)  (i_tag_hw) & Tag_Array(TC_Cnt)  (i_tag_lw)); -- merke Tag-Code(0-7), gegen den alle anderen Tag-Codes getestet werden sollen
                               Tag_Code_Compare <= (Tag_Array(TReg_Cnt)(i_tag_hw) & Tag_Array(TReg_Cnt)(i_tag_lw)); -- Tag-Code der anderen Tags
-                              Tag_Reg_Base     <=  Tag_Array(TC_Cnt)  (i_Tag_Lev_Reg)(3 downto 0); -- Register-Nr. des Tags, gegen den alle anderen Reg.-Nr. getestet werden sollen
-                              Tag_Reg_Compare  <=  Tag_Array(TReg_Cnt)(i_Tag_Lev_Reg)(3 downto 0); -- Register-Nr. der anderen Tags
+                              Tag_Reg_Base     <=  Tag_Array(TC_Cnt)  (i_Tag_Register)(3 downto 0); -- Register-Nr. des Tags, gegen den alle anderen Reg.-Nr. getestet werden sollen
+                              Tag_Reg_Compare  <=  Tag_Array(TReg_Cnt)(i_Tag_Register)(3 downto 0); -- Register-Nr. der anderen Tags
 
                               IF (Tag_Code_Base = (31 downto 0=>'0')) THEN     -- Tag-Code = 0
                                  state <= Weiter;
@@ -619,14 +631,15 @@ port map  (
     nReset                =>    nReset,   
     Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
     Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag0)(i_tag_hw)),         --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag0)(i_tag_lw)),         --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag0)(i_Tag_Maske)),      --| 
-    Tag_n_Lev_Reg         =>   (Tag_Array(i_Tag0)(i_Tag_Lev_Reg)),    --+-----> Tag-Array 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag0)(i_Tag_Delay_Cnt)),  --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag0)(i_Tag_Puls_Width)), --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag0)(i_Tag_Prescale)),   --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag0)(i_Tag_Trigger)),    --+ 
+    Tag_n_hw              =>   (Tag_Array(i_Tag0)(i_tag_hw)),           --+ 
+    Tag_n_lw              =>   (Tag_Array(i_Tag0)(i_tag_lw)),           --| 
+    Tag_n_Maske           =>   (Tag_Array(i_Tag0)(i_Tag_Maske)),        --| 
+    Tag_n_Register        =>   (Tag_Array(i_Tag0)(i_Tag_Register)),     --+-----> Tag-Array 
+    Tag_n_Level           =>   (Tag_Array(i_Tag0)(i_Tag_Level)),        --| 
+    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag0)(i_Tag_Delay_Cnt)),    --| 
+    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag0)(i_Tag_Puls_Width)),   --| 
+    Tag_n_Prescale        =>   (Tag_Array(i_Tag0)(i_Tag_Prescale)),     --| 
+    Tag_n_Trigger         =>   (Tag_Array(i_Tag0)(i_Tag_Trigger)),      --+ 
     SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,             -- Input-Reg. SCU_AW_Input_Reg
     Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
@@ -635,7 +648,8 @@ port map  (
       
     Tag_n_Reg_Nr          =>    Tag0_Reg_Nr,              -- AWOut-Reg-Pointer 
     Tag_n_New_AWOut_Data  =>    Tag0_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag0_New_Data,            -- Copy der AWOut-Register  
+    Tag_n_Maske_Hi_Bits   =>    Tag0_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
+    Tag_n_Maske_Lo_Bits   =>    Tag0_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(0),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(0),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(0),        -- Config-Error: Trig-Reg
@@ -652,14 +666,15 @@ port map  (
     nReset                =>    nReset,   
     Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
     Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag1)(i_tag_hw)),          --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag1)(i_tag_lw)),          --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag1)(i_Tag_Maske)),       --| 
-    Tag_n_Lev_Reg         =>   (Tag_Array(i_Tag1)(i_Tag_Lev_Reg)),     --+-----> Tag-Array 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag1)(i_Tag_Delay_Cnt)),   --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag1)(i_Tag_Puls_Width)),  --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag1)(i_Tag_Prescale)),    --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag1)(i_Tag_Trigger)),    --+ 
+    Tag_n_hw              =>   (Tag_Array(i_Tag1)(i_tag_hw)),           --+ 
+    Tag_n_lw              =>   (Tag_Array(i_Tag1)(i_tag_lw)),           --| 
+    Tag_n_Maske           =>   (Tag_Array(i_Tag1)(i_Tag_Maske)),        --| 
+    Tag_n_Register        =>   (Tag_Array(i_Tag1)(i_Tag_Register)),     --+-----> Tag-Array 
+    Tag_n_Level           =>   (Tag_Array(i_Tag1)(i_Tag_Level)),        --| 
+    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag1)(i_Tag_Delay_Cnt)),    --| 
+    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag1)(i_Tag_Puls_Width)),   --| 
+    Tag_n_Prescale        =>   (Tag_Array(i_Tag1)(i_Tag_Prescale)),     --| 
+    Tag_n_Trigger         =>   (Tag_Array(i_Tag1)(i_Tag_Trigger)),      --+ 
     Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
     SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,             -- Input-Reg. SCU_AW_Input_Reg
@@ -668,7 +683,8 @@ port map  (
       
     Tag_n_Reg_Nr          =>    Tag1_Reg_Nr,              -- AWOut-Reg-Pointer 
     Tag_n_New_AWOut_Data  =>    Tag1_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag1_New_Data,            -- Copy der AWOut-Register  
+    Tag_n_Maske_Hi_Bits   =>    Tag1_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
+    Tag_n_Maske_Lo_Bits   =>    Tag1_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(1),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(1),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(1),        -- Config-Error: Trig-Reg
@@ -685,14 +701,15 @@ port map  (
     nReset                =>    nReset,   
     Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
     Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag2)(i_tag_hw)),          --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag2)(i_tag_lw)),          --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag2)(i_Tag_Maske)),       --| 
-    Tag_n_Lev_Reg         =>   (Tag_Array(i_Tag2)(i_Tag_Lev_Reg)),     --+-----> Tag-Array 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag2)(i_Tag_Delay_Cnt)),   --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag2)(i_Tag_Puls_Width)),  --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag2)(i_Tag_Prescale)),    --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag2)(i_Tag_Trigger)),    --+ 
+    Tag_n_hw              =>   (Tag_Array(i_Tag2)(i_tag_hw)),           --+ 
+    Tag_n_lw              =>   (Tag_Array(i_Tag2)(i_tag_lw)),           --| 
+    Tag_n_Maske           =>   (Tag_Array(i_Tag2)(i_Tag_Maske)),        --| 
+    Tag_n_Register        =>   (Tag_Array(i_Tag2)(i_Tag_Register)),     --+-----> Tag-Array 
+    Tag_n_Level           =>   (Tag_Array(i_Tag2)(i_Tag_Level)),        --| 
+    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag2)(i_Tag_Delay_Cnt)),    --| 
+    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag2)(i_Tag_Puls_Width)),   --| 
+    Tag_n_Prescale        =>   (Tag_Array(i_Tag2)(i_Tag_Prescale)),     --| 
+    Tag_n_Trigger         =>   (Tag_Array(i_Tag2)(i_Tag_Trigger)),      --+ 
     SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,         -- Input-Reg. SCU_AW_Input_Reg
     Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
@@ -701,7 +718,8 @@ port map  (
           
     Tag_n_Reg_Nr          =>    Tag2_Reg_Nr,              -- AWOut-Reg-Pointer 
     Tag_n_New_AWOut_Data  =>    Tag2_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag2_New_Data,            -- Copy der AWOut-Register  
+    Tag_n_Maske_Hi_Bits   =>    Tag2_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
+    Tag_n_Maske_Lo_Bits   =>    Tag2_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(2),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(2),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(2),        -- Config-Error: Trig-Reg
@@ -718,14 +736,15 @@ port map  (
     nReset                =>    nReset,   
     Timing_Pattern_LA     =>    Timing_Pattern_LA,     -- latched timing pattern from SCU_Bus for external user functions
     Timing_Pattern_RCV    =>    Timing_Pattern_RCV,    -- timing pattern received
-    Tag_n_hw              =>   (Tag_Array(i_Tag3)(i_tag_hw)),          --+ 
-    Tag_n_lw              =>   (Tag_Array(i_Tag3)(i_tag_lw)),          --| 
-    Tag_n_Maske           =>   (Tag_Array(i_Tag3)(i_Tag_Maske)),       --| 
-    Tag_n_Lev_Reg         =>   (Tag_Array(i_Tag3)(i_Tag_Lev_Reg)),     --+-----> Tag-Array 
-    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag3)(i_Tag_Delay_Cnt)),   --| 
-    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag3)(i_Tag_Puls_Width)),  --| 
-    Tag_n_Prescale        =>   (Tag_Array(i_Tag3)(i_Tag_Prescale)),    --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag3)(i_Tag_Trigger)),    --+ 
+    Tag_n_hw              =>   (Tag_Array(i_Tag3)(i_tag_hw)),           --+ 
+    Tag_n_lw              =>   (Tag_Array(i_Tag3)(i_tag_lw)),           --| 
+    Tag_n_Maske           =>   (Tag_Array(i_Tag3)(i_Tag_Maske)),        --| 
+    Tag_n_Register        =>   (Tag_Array(i_Tag3)(i_Tag_Register)),     --+-----> Tag-Array 
+    Tag_n_Level           =>   (Tag_Array(i_Tag3)(i_Tag_Level)),        --| 
+    Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag3)(i_Tag_Delay_Cnt)),    --| 
+    Tag_n_Puls_Width      =>   (Tag_Array(i_Tag3)(i_Tag_Puls_Width)),   --| 
+    Tag_n_Prescale        =>   (Tag_Array(i_Tag3)(i_Tag_Prescale)),     --| 
+    Tag_n_Trigger         =>   (Tag_Array(i_Tag3)(i_Tag_Trigger)),      --+ 
     Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
     SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,         -- Input-Reg. SCU_AW_Input_Reg
@@ -734,7 +753,8 @@ port map  (
       
     Tag_n_Reg_Nr          =>    Tag3_Reg_Nr,              -- AWOut-Reg-Pointer 
     Tag_n_New_AWOut_Data  =>    Tag3_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag3_New_Data,            -- Copy der AWOut-Register  
+    Tag_n_Maske_Hi_Bits   =>    Tag3_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
+    Tag_n_Maske_Lo_Bits   =>    Tag3_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(3),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(3),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(3),        -- Config-Error: Trig-Reg
@@ -754,11 +774,12 @@ port map  (
     Tag_n_hw              =>   (Tag_Array(i_Tag4)(i_tag_hw)),          --+ 
     Tag_n_lw              =>   (Tag_Array(i_Tag4)(i_tag_lw)),          --| 
     Tag_n_Maske           =>   (Tag_Array(i_Tag4)(i_Tag_Maske)),       --| 
-    Tag_n_Lev_Reg         =>   (Tag_Array(i_Tag4)(i_Tag_Lev_Reg)),     --+-----> Tag-Array 
+    Tag_n_Register        =>   (Tag_Array(i_Tag4)(i_Tag_Register)),    --+-----> Tag-Array 
+    Tag_n_Level           =>   (Tag_Array(i_Tag4)(i_Tag_Level)),       --| 
     Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag4)(i_Tag_Delay_Cnt)),   --| 
     Tag_n_Puls_Width      =>   (Tag_Array(i_Tag4)(i_Tag_Puls_Width)),  --| 
     Tag_n_Prescale        =>   (Tag_Array(i_Tag4)(i_Tag_Prescale)),    --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag4)(i_Tag_Trigger)),    --+ 
+    Tag_n_Trigger         =>   (Tag_Array(i_Tag4)(i_Tag_Trigger)),     --+ 
     SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,          -- Input-Reg. SCU_AW_Input_Reg
     Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,      -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,       -- Maximale AWIn-Reg-Nummer der Anwendung
@@ -767,7 +788,8 @@ port map  (
       
     Tag_n_Reg_Nr          =>    Tag4_Reg_Nr,          -- AWOut-Reg-Pointer 
     Tag_n_New_AWOut_Data  =>    Tag4_New_AWOut_Data,  -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag4_New_Data,        -- Copy der AWOut-Register  
+    Tag_n_Maske_Hi_Bits   =>    Tag4_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
+    Tag_n_Maske_Lo_Bits   =>    Tag4_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(4),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(4),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(4),        -- Config-Error: Trig-Reg
@@ -787,11 +809,12 @@ port map  (
     Tag_n_hw              =>   (Tag_Array(i_Tag5)(i_tag_hw)),          --+ 
     Tag_n_lw              =>   (Tag_Array(i_Tag5)(i_tag_lw)),          --| 
     Tag_n_Maske           =>   (Tag_Array(i_Tag5)(i_Tag_Maske)),       --| 
-    Tag_n_Lev_Reg         =>   (Tag_Array(i_Tag5)(i_Tag_Lev_Reg)),     --+-----> Tag-Array 
+    Tag_n_Register        =>   (Tag_Array(i_Tag5)(i_Tag_Register)),    --+-----> Tag-Array 
+    Tag_n_Level           =>   (Tag_Array(i_Tag5)(i_Tag_Level)),       --| 
     Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag5)(i_Tag_Delay_Cnt)),   --| 
     Tag_n_Puls_Width      =>   (Tag_Array(i_Tag5)(i_Tag_Puls_Width)),  --| 
     Tag_n_Prescale        =>   (Tag_Array(i_Tag5)(i_Tag_Prescale)),    --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag5)(i_Tag_Trigger)),    --+ 
+    Tag_n_Trigger         =>   (Tag_Array(i_Tag5)(i_Tag_Trigger)),     --+ 
     Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
     SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,             -- Input-Reg. SCU_AW_Input_Reg
@@ -800,7 +823,8 @@ port map  (
           
     Tag_n_Reg_Nr          =>    Tag5_Reg_Nr,              -- AWOut-Reg-Pointer 
     Tag_n_New_AWOut_Data  =>    Tag5_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag5_New_Data,            -- Copy der AWOut-Register  
+    Tag_n_Maske_Hi_Bits   =>    Tag5_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
+    Tag_n_Maske_Lo_Bits   =>    Tag5_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(5),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(5),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(5),        -- Config-Error: Trig-Reg
@@ -820,11 +844,12 @@ port map  (
     Tag_n_hw              =>   (Tag_Array(i_Tag6)(i_tag_hw)),          --+ 
     Tag_n_lw              =>   (Tag_Array(i_Tag6)(i_tag_lw)),          --| 
     Tag_n_Maske           =>   (Tag_Array(i_Tag6)(i_Tag_Maske)),       --| 
-    Tag_n_Lev_Reg         =>   (Tag_Array(i_Tag6)(i_Tag_Lev_Reg)),     --+-----> Tag-Array 
+    Tag_n_Register        =>   (Tag_Array(i_Tag6)(i_Tag_Register)),    --+-----> Tag-Array 
+    Tag_n_Level           =>   (Tag_Array(i_Tag6)(i_Tag_Level)),       --| 
     Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag6)(i_Tag_Delay_Cnt)),   --| 
     Tag_n_Puls_Width      =>   (Tag_Array(i_Tag6)(i_Tag_Puls_Width)),  --| 
     Tag_n_Prescale        =>   (Tag_Array(i_Tag6)(i_Tag_Prescale)),    --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag6)(i_Tag_Trigger)),    --+ 
+    Tag_n_Trigger         =>   (Tag_Array(i_Tag6)(i_Tag_Trigger)),     --+ 
     Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
     SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,         -- Input-Reg. SCU_AW_Input_Reg
@@ -833,7 +858,8 @@ port map  (
           
     Tag_n_Reg_Nr          =>    Tag6_Reg_Nr,              -- AWOut-Reg-Pointer 
     Tag_n_New_AWOut_Data  =>    Tag6_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag6_New_Data,            -- Copy der AWOut-Register  
+    Tag_n_Maske_Hi_Bits   =>    Tag6_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
+    Tag_n_Maske_Lo_Bits   =>    Tag6_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(6),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(6),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(6),        -- Config-Error: Trig-Reg
@@ -853,11 +879,12 @@ port map  (
     Tag_n_hw              =>   (Tag_Array(i_Tag7)(i_tag_hw)),          --+ 
     Tag_n_lw              =>   (Tag_Array(i_Tag7)(i_tag_lw)),          --| 
     Tag_n_Maske           =>   (Tag_Array(i_Tag7)(i_Tag_Maske)),       --| 
-    Tag_n_Lev_Reg         =>   (Tag_Array(i_Tag7)(i_Tag_Lev_Reg)),     --+-----> Tag-Array 
+    Tag_n_Register        =>   (Tag_Array(i_Tag7)(i_Tag_Register)),    --+-----> Tag-Array 
+    Tag_n_Level           =>   (Tag_Array(i_Tag7)(i_Tag_Level)),       --| 
     Tag_n_Delay_Cnt       =>   (Tag_Array(i_Tag7)(i_Tag_Delay_Cnt)),   --| 
     Tag_n_Puls_Width      =>   (Tag_Array(i_Tag7)(i_Tag_Puls_Width)),  --| 
     Tag_n_Prescale        =>   (Tag_Array(i_Tag7)(i_Tag_Prescale)),    --| 
-    Tag_n_Trigger         =>   (Tag_Array(i_Tag7)(i_Tag_Trigger)),    --+ 
+    Tag_n_Trigger         =>   (Tag_Array(i_Tag7)(i_Tag_Trigger)),     --+ 
     SCU_AW_Input_Reg      =>    SCU_AW_Input_Reg,         -- Input-Reg. SCU_AW_Input_Reg
     Max_AWOut_Reg_Nr      =>    Max_AWOut_Reg_Nr,         -- Maximale AWOut-Reg-Nummer der Anwendung
     Max_AWIn_Reg_Nr       =>    Max_AWIn_Reg_Nr,          -- Maximale AWIn-Reg-Nummer der Anwendung
@@ -866,7 +893,8 @@ port map  (
           
     Tag_n_Reg_Nr          =>    Tag7_Reg_Nr,              -- AWOut-Reg-Pointer 
     Tag_n_New_AWOut_Data  =>    Tag7_New_AWOut_Data,      -- AWOut-Reg. werden mit AWOut_Reg_Array-Daten überschrieben
-    Tag_n_New_Data        =>    Tag7_New_Data,            -- Copy der AWOut-Register  
+    Tag_n_Maske_Hi_Bits   =>    Tag7_Maske_Hi_Bits,       -- Maske für "High-Aktive" Bits im Ausgangs-Register
+    Tag_n_Maske_Lo_Bits   =>    Tag7_Maske_Lo_Bits,       -- Maske für "Low-Aktive"  Bits im Ausgangs-Register
     Tag_n_Reg_Err         =>    Tag_n_Reg_Err(7),         -- Config-Error: TAG-Reg-Nr
     Tag_n_Reg_max_Err     =>    Tag_n_Reg_Max_Err(7),     -- Config-Error: TAG_Max_Reg_Nr
     Tag_n_Trig_Err        =>    Tag_n_Trig_Err(7),        -- Config-Error: Trig-Reg
@@ -892,8 +920,11 @@ port map  (
 P_AWOut_Array:  process (nReset, clk,
                          Tag0_New_AWOut_Data, Tag1_New_AWOut_Data, Tag2_New_AWOut_Data, Tag3_New_AWOut_Data,
                          Tag4_New_AWOut_Data, Tag5_New_AWOut_Data, Tag6_New_AWOut_Data, Tag7_New_AWOut_Data,
-                         Tag0_New_Data, Tag1_New_Data, Tag2_New_Data, Tag3_New_Data, Tag4_New_Data, Tag5_New_Data, Tag6_New_Data, Tag7_New_Data,
-                         Tag_Array, clr_Tag_Maske)
+                         Tag0_Maske_Hi_Bits, Tag1_Maske_Hi_Bits, Tag2_Maske_Hi_Bits, Tag3_Maske_Hi_Bits,
+                         Tag0_Maske_Lo_Bits, Tag1_Maske_Lo_Bits, Tag2_Maske_Lo_Bits, Tag3_Maske_Lo_Bits,
+                         Tag4_Maske_Hi_Bits, Tag5_Maske_Hi_Bits, Tag6_Maske_Hi_Bits, Tag7_Maske_Hi_Bits,
+                         Tag4_Maske_Lo_Bits, Tag5_Maske_Lo_Bits, Tag6_Maske_Lo_Bits, Tag7_Maske_Lo_Bits,
+                         Tag_Array, Clr_Tag_Config)
   begin
     if nReset = '0' then
      
@@ -903,47 +934,117 @@ P_AWOut_Array:  process (nReset, clk,
       
       elsif rising_edge(clk) then
 
-        if clr_Tag_Maske = '1'   then
+        if Clr_Tag_Config = '1'   then
           Sum_Reg_MSK         <= (others => (others => '0'));  -- Clear alle Summen-Maske für die Tag-Register
+
+        -------------------------- Tag "0" ------------------------
 
         elsif Tag0_New_AWOut_Data = true   then
           s_Tag_Aktiv(0)                 <= '1';
-          Tag_Out_Reg_Array(Tag0_Reg_Nr) <= Tag0_New_Data;            -- die Daten aus "Tag0" werden in das Register mit der "Tag0_Reg_Nr" geschrieben.
+
+          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
+            if     Tag0_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag0_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
+            elsif  Tag0_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag0_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
+            end if;
+          end loop;  
+
           Sum_Reg_MSK(Tag0_Reg_Nr)       <= (Sum_Reg_MSK(Tag0_Reg_Nr) or (Tag_Array(i_Tag0)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
-    
+
+        -------------------------- Tag "1" ------------------------
+
         elsif Tag1_New_AWOut_Data = true   then
           s_Tag_Aktiv(1)                 <= '1';
-          Tag_Out_Reg_Array(Tag1_Reg_Nr) <= Tag1_New_Data;
+
+          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
+            if     Tag1_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag1_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
+            elsif  Tag1_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag1_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
+            end if;
+          end loop;  
+
           Sum_Reg_MSK(Tag1_Reg_Nr)       <= (Sum_Reg_MSK(Tag1_Reg_Nr) or (Tag_Array(i_Tag1)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
   
+
+        -------------------------- Tag "2" ------------------------
+
         elsif Tag2_New_AWOut_Data = true   then
           s_Tag_Aktiv(2)                 <= '1';
-          Tag_Out_Reg_Array(Tag2_Reg_Nr) <= Tag2_New_Data;
+
+          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
+            if     Tag2_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag2_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
+            elsif  Tag2_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag2_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
+            end if;
+          end loop;  
+
           Sum_Reg_MSK(Tag2_Reg_Nr)       <= (Sum_Reg_MSK(Tag2_Reg_Nr) or (Tag_Array(i_Tag2)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
   
+
+        -------------------------- Tag "3" ------------------------
+
         elsif Tag3_New_AWOut_Data = true   then
           s_Tag_Aktiv(3)                 <= '1';
-          Tag_Out_Reg_Array(Tag3_Reg_Nr) <= Tag3_New_Data;
+
+          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
+            if     Tag3_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag3_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
+            elsif  Tag3_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag3_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
+            end if;
+          end loop;  
+
           Sum_Reg_MSK(Tag3_Reg_Nr)       <= (Sum_Reg_MSK(Tag3_Reg_Nr) or (Tag_Array(i_Tag3)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
   
+
+        -------------------------- Tag "4" ------------------------
+
         elsif Tag4_New_AWOut_Data = true   then
           s_Tag_Aktiv(4)                 <= '1';
-          Tag_Out_Reg_Array(Tag4_Reg_Nr) <= Tag4_New_Data;
+
+          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
+            if     Tag4_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag4_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
+            elsif  Tag4_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag4_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
+            end if;
+          end loop;  
+
           Sum_Reg_MSK(Tag4_Reg_Nr)       <= (Sum_Reg_MSK(Tag4_Reg_Nr) or (Tag_Array(i_Tag4)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
   
+
+        -------------------------- Tag "5" ------------------------
+
         elsif Tag5_New_AWOut_Data = true   then
           s_Tag_Aktiv(5)                 <= '1';
-          Tag_Out_Reg_Array(Tag5_Reg_Nr) <= Tag5_New_Data;
+
+          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
+            if     Tag5_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag5_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
+            elsif  Tag5_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag5_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
+            end if;
+          end loop;  
+
           Sum_Reg_MSK(Tag5_Reg_Nr)       <= (Sum_Reg_MSK(Tag5_Reg_Nr) or (Tag_Array(i_Tag5)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
   
+
+        -------------------------- Tag "6" ------------------------
+
         elsif Tag6_New_AWOut_Data = true   then
           s_Tag_Aktiv(6)                 <= '1';
-          Tag_Out_Reg_Array(Tag6_Reg_Nr) <= Tag6_New_Data;
+
+          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
+            if     Tag6_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag6_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
+            elsif  Tag6_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag6_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
+            end if;
+          end loop;  
+
           Sum_Reg_MSK(Tag6_Reg_Nr)       <= (Sum_Reg_MSK(Tag6_Reg_Nr) or (Tag_Array(i_Tag6)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
+
+
+        -------------------------- Tag "7" ------------------------
 
         elsif Tag7_New_AWOut_Data = true   then
           s_Tag_Aktiv(7)                 <= '1';
-          Tag_Out_Reg_Array(Tag7_Reg_Nr) <= Tag7_New_Data;
+
+          FOR Bit_Nr in 0 to 15 loop       -- Das der Maske entsprechende Bit wird im Output-Register gesetzt oder gelöscht
+            if     Tag7_Maske_Hi_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag7_Reg_Nr)(Bit_Nr) <= '1';    -- Set "H-Bits"
+            elsif  Tag7_Maske_Lo_Bits(Bit_Nr)  = '1'  then Tag_Out_Reg_Array(Tag7_Reg_Nr)(Bit_Nr) <= '0';    -- Set "L-Bits"
+            end if;
+          end loop;  
+
           Sum_Reg_MSK(Tag7_Reg_Nr)       <= (Sum_Reg_MSK(Tag7_Reg_Nr) or (Tag_Array(i_Tag7)(i_Tag_Maske))); -- "Oder" Maske für Outputregister
 
         else
@@ -959,7 +1060,7 @@ P_AWOut_Array:  process (nReset, clk,
 --  +============================================================================================================================+
   
   
-P_AWOut_Reg:  process (clk, nReset,
+P_AWOut_Reg:  process (clk, nReset, Clr_Tag_Config,
                        S_Tag_Base_0_Addr_Wr, S_Tag_Base_1_Addr_Wr, S_Tag_Base_2_Addr_Wr, S_Tag_Base_3_Addr_Wr,
                        S_Tag_Base_4_Addr_Wr, S_Tag_Base_5_Addr_Wr, S_Tag_Base_6_Addr_Wr, S_Tag_Base_7_Addr_Wr,
                        Data_from_SCUB_LA )
@@ -968,7 +1069,10 @@ P_AWOut_Reg:  process (clk, nReset,
       Tag_Array   <= (others => (others => (others => '0')));
     
     elsif rising_edge(clk) then
-
+    
+      if Clr_Tag_Config = '1' then  Tag_Array   <= (others => (others => (others => '0'))); -- Clear Tag-Konfigurations-Register
+      end if;
+    
     
       if S_Tag_Base_0_Addr_Wr = '1' then               
 --              +--- Zeilen-Nr. im Array
@@ -1013,17 +1117,17 @@ P_AWOut_Reg:  process (clk, nReset,
 
   begin
 
---                                                                    +--- Zeilen-Nr. im Array
---                                                                    |  +---- Adresse der "Wordposition" in der Zeile ----+
---                                                                    |  |                                                 |
-    if    S_Tag_Base_0_Addr_Rd = '1' then  S_Read_port <= Tag_Array(0)(to_integer(unsigned (Adr_from_SCUB_LA(2 downto 0))));
-    elsif S_Tag_Base_1_Addr_Rd = '1' then  S_Read_port <= Tag_Array(1)(to_integer(unsigned (Adr_from_SCUB_LA(2 downto 0))));
-    elsif S_Tag_Base_2_Addr_Rd = '1' then  S_Read_port <= Tag_Array(2)(to_integer(unsigned (Adr_from_SCUB_LA(2 downto 0))));
-    elsif S_Tag_Base_3_Addr_Rd = '1' then  S_Read_port <= Tag_Array(3)(to_integer(unsigned (Adr_from_SCUB_LA(2 downto 0))));
-    elsif S_Tag_Base_4_Addr_Rd = '1' then  S_Read_port <= Tag_Array(4)(to_integer(unsigned (Adr_from_SCUB_LA(2 downto 0))));
-    elsif S_Tag_Base_5_Addr_Rd = '1' then  S_Read_port <= Tag_Array(5)(to_integer(unsigned (Adr_from_SCUB_LA(2 downto 0))));
-    elsif S_Tag_Base_6_Addr_Rd = '1' then  S_Read_port <= Tag_Array(6)(to_integer(unsigned (Adr_from_SCUB_LA(2 downto 0))));
-    elsif S_Tag_Base_7_Addr_Rd = '1' then  S_Read_port <= Tag_Array(7)(to_integer(unsigned (Adr_from_SCUB_LA(2 downto 0))));
+--                                                                  +--- Zeilen-Nr. im Array
+--                                                                  |  +---- Adresse der "Wordposition" in der Zeile ----+
+--                                                                  |  |                                                 |
+    if    S_Tag_Base_0_Addr_Rd = '1' then  S_Read_port <= Tag_Array(0)(to_integer(unsigned (Adr_from_SCUB_LA(3 downto 0))));
+    elsif S_Tag_Base_1_Addr_Rd = '1' then  S_Read_port <= Tag_Array(1)(to_integer(unsigned (Adr_from_SCUB_LA(3 downto 0))));
+    elsif S_Tag_Base_2_Addr_Rd = '1' then  S_Read_port <= Tag_Array(2)(to_integer(unsigned (Adr_from_SCUB_LA(3 downto 0))));
+    elsif S_Tag_Base_3_Addr_Rd = '1' then  S_Read_port <= Tag_Array(3)(to_integer(unsigned (Adr_from_SCUB_LA(3 downto 0))));
+    elsif S_Tag_Base_4_Addr_Rd = '1' then  S_Read_port <= Tag_Array(4)(to_integer(unsigned (Adr_from_SCUB_LA(3 downto 0))));
+    elsif S_Tag_Base_5_Addr_Rd = '1' then  S_Read_port <= Tag_Array(5)(to_integer(unsigned (Adr_from_SCUB_LA(3 downto 0))));
+    elsif S_Tag_Base_6_Addr_Rd = '1' then  S_Read_port <= Tag_Array(6)(to_integer(unsigned (Adr_from_SCUB_LA(3 downto 0))));
+    elsif S_Tag_Base_7_Addr_Rd = '1' then  S_Read_port <= Tag_Array(7)(to_integer(unsigned (Adr_from_SCUB_LA(3 downto 0))));
 
 
 
