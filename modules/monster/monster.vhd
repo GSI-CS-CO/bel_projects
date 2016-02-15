@@ -652,8 +652,8 @@ architecture rtl of monster is
   
   signal s_gpio_mux      : std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0);
   signal s_lvds_mux      : std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0);
+  signal s_lvds_vec_i    : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
   
-
   constant c_lvds_clk_outputs : natural := g_lvds_inout+g_lvds_out;
   signal lvds_dat_fr_eca_chan : t_lvds_byte_array(11 downto 0);
   signal lvds_dat_fr_clk_gen  : t_lvds_byte_array(11 downto 0);
@@ -1384,6 +1384,7 @@ begin
         clk_out_i => clk_flash_out,
         clk_in_i  => clk_flash_in);
   end generate;
+  
   flash_a5 : if c_is_arria5 generate
     flash : flash_top
       generic map(
@@ -1418,74 +1419,45 @@ begin
       slave_i    => top_cbar_master_o(c_tops_reset),
       rstn_o     => s_lm32_rstn);
   
-  io_control_gpio_only : if c_is_arria2 generate
-    iocontrol : io_control
-      generic map(
-        g_project    => g_project,
-        g_syn_target => g_family,
-        g_gpio_in    => g_gpio_in,
-        g_gpio_out   => g_gpio_out,
-        g_gpio_inout => g_gpio_inout,
-        g_lvds_in    => g_lvds_in,
-        g_lvds_out   => g_lvds_out,
-        g_lvds_inout => g_lvds_inout,
-        g_fixed      => g_fixed)
-      port map(
-        clk_i           => clk_sys,
-        rst_n_i         => rstn_sys,
-        gpio_input_i    => gpio_i(f_sub1(g_gpio_in+g_gpio_inout) downto 0),
-        gpio_output_i   => s_gpio_out(f_sub1(g_gpio_out+g_gpio_inout) downto 0),
-        gpio_output_o   => s_gpio_src_ioc(f_sub1(g_gpio_out+g_gpio_inout) downto 0),
-        lvds_input_i    => (others => (others => '0')),
-        lvds_output_i   => (others => (others => '0')),
-        lvds_output_o   => lvds_dat_fr_ioc(f_sub1(g_lvds_out+g_lvds_inout) downto 0),
-        slave_i         => iocfg_cbar_master_o(c_iocfgs_control),
-        slave_o         => iocfg_cbar_master_i(c_iocfgs_control),
-        gpio_oe_o       => gpio_oen_o,
-        gpio_term_o     => gpio_term_o,
-        gpio_spec_out_o => gpio_spec_out_o,
-        gpio_spec_in_o  => gpio_spec_in_o,
-        gpio_mux_o      => s_gpio_mux,
-        lvds_oe_o       => lvds_oen_o,
-        lvds_term_o     => lvds_term_o,
-        lvds_spec_out_o => lvds_spec_out_o,
-        lvds_spec_in_o  => lvds_spec_in_o,
-        lvds_mux_o      => s_lvds_mux);
+  iocntrol : io_control
+    generic map(
+      g_project    => g_project,
+      g_syn_target => g_family,
+      g_gpio_in    => g_gpio_in,
+      g_gpio_out   => g_gpio_out,
+      g_gpio_inout => g_gpio_inout,
+      g_lvds_in    => g_lvds_in,
+      g_lvds_out   => g_lvds_out,
+      g_lvds_inout => g_lvds_inout,
+      g_fixed      => g_fixed)
+    port map(
+      clk_i           => clk_sys,
+      rst_n_i         => rstn_sys,
+      gpio_input_i    => gpio_i(f_sub1(g_gpio_in+g_gpio_inout) downto 0),
+      gpio_output_i   => s_gpio_out(f_sub1(g_gpio_out+g_gpio_inout) downto 0),
+      gpio_output_o   => s_gpio_src_ioc(f_sub1(g_gpio_out+g_gpio_inout) downto 0),
+      lvds_input_i    => s_lvds_vec_i(f_sub1(g_lvds_in+g_lvds_inout) downto 0),
+      lvds_output_i   => lvds_dat(f_sub1(g_lvds_out+g_lvds_inout) downto 0),
+      lvds_output_o   => lvds_dat_fr_ioc(f_sub1(g_lvds_out+g_lvds_inout) downto 0),
+      slave_i         => iocfg_cbar_master_o(c_iocfgs_control),
+      slave_o         => iocfg_cbar_master_i(c_iocfgs_control),
+      gpio_oe_o       => gpio_oen_o,
+      gpio_term_o     => gpio_term_o,
+      gpio_spec_out_o => gpio_spec_out_o,
+      gpio_spec_in_o  => gpio_spec_in_o,
+      gpio_mux_o      => s_gpio_mux,
+      lvds_oe_o       => lvds_oen_o,
+      lvds_term_o     => lvds_term_o,
+      lvds_spec_out_o => lvds_spec_out_o,
+      lvds_spec_in_o  => lvds_spec_in_o,
+      lvds_mux_o      => s_lvds_mux);
+  
+  lvds_vec_in_zero : if (g_lvds_inout + g_lvds_in = 0) generate
+    s_lvds_vec_i <= (others => (others => '0'));
   end generate;
   
-  io_control_gpio_and_lvds : if c_is_arria5 generate
-    iocontrol : io_control
-      generic map(
-        g_project    => g_project,
-        g_syn_target => g_family,
-        g_gpio_in    => g_gpio_in,
-        g_gpio_out   => g_gpio_out,
-        g_gpio_inout => g_gpio_inout,
-        g_lvds_in    => g_lvds_in,
-        g_lvds_out   => g_lvds_out,
-        g_lvds_inout => g_lvds_inout,
-        g_fixed      => g_fixed)
-      port map(
-        clk_i           => clk_sys,
-        rst_n_i         => rstn_sys,
-        gpio_input_i    => gpio_i(f_sub1(g_gpio_in+g_gpio_inout) downto 0),
-        gpio_output_i   => s_gpio_out(f_sub1(g_gpio_out+g_gpio_inout) downto 0),
-        gpio_output_o   => s_gpio_src_ioc(f_sub1(g_gpio_out+g_gpio_inout) downto 0),
-        lvds_input_i    => lvds_i(f_sub1(g_lvds_in+g_lvds_inout) downto 0),
-        lvds_output_i   => lvds_dat(f_sub1(g_lvds_out+g_lvds_inout) downto 0),
-        lvds_output_o   => lvds_dat_fr_ioc(f_sub1(g_lvds_out+g_lvds_inout) downto 0),
-        slave_i         => iocfg_cbar_master_o(c_iocfgs_control),
-        slave_o         => iocfg_cbar_master_i(c_iocfgs_control),
-        gpio_oe_o       => gpio_oen_o,
-        gpio_term_o     => gpio_term_o,
-        gpio_spec_out_o => gpio_spec_out_o,
-        gpio_spec_in_o  => gpio_spec_in_o,
-        gpio_mux_o      => s_gpio_mux,
-        lvds_oe_o       => lvds_oen_o,
-        lvds_term_o     => lvds_term_o,
-        lvds_spec_out_o => lvds_spec_out_o,
-        lvds_spec_in_o  => lvds_spec_in_o,
-        lvds_mux_o      => s_lvds_mux);
+  lvds_vec_in : if (g_lvds_inout + g_lvds_in > 0) generate
+    s_lvds_vec_i <= lvds_i(f_sub1(g_lvds_in+g_lvds_inout) downto 0);
   end generate;
   
   gpio_out_selector : for i in 0 to ((g_gpio_out+g_gpio_inout)-1) generate
