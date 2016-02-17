@@ -39,13 +39,18 @@
 #define RAM_ID	0x54111351
 #define FWID_LEN 0x400
 #define BOOTL_LEN 0x100
+#define SLV_INFO_ROM 0x1c0
+#define ECHO_REG 0x20
+#define SCU_BUS_ID 0x9602eb6f
 
+#define SLV_INFO_ROM_SIZE 256
 const char *program;
 
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <proto/host/port>\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -w             show found firmware IDs\n");
+  fprintf(stderr, "  -s 1..12       show build info of slave card\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h             display this help and exit\n");
   fprintf(stderr, "\n");
@@ -69,7 +74,9 @@ int main(int argc, char** argv) {
   eb_data_t *pCur;
   const char cFwMagic[] = "UserLM32";
   unsigned char detectFW = 0;
+  char *svalue = NULL;
   struct sdb_device fwram[25];
+  eb_address_t scu_bus;
   /* Default arguments */
   program = argv[0];
   error = 0;
@@ -77,10 +84,13 @@ int main(int argc, char** argv) {
   
   /* Process the command-line arguments */
   error = 0;
-  while ((opt = getopt(argc, argv, "hw")) != -1) {
+  while ((opt = getopt(argc, argv, "hws:")) != -1) {
     switch (opt) {
     case 'w':
       detectFW = 1;
+      break;
+    case 's':
+      svalue = optarg;
       break;
     case 'h':
       help();
@@ -135,6 +145,67 @@ int main(int argc, char** argv) {
       (char)(data[i] >> 16) & 0xff, 
       (char)(data[i] >>  8) & 0xff,
       (char)(data[i]      ) & 0xff);
+  }
+
+
+  if(svalue != NULL) {
+
+    int nDevices;
+    unsigned int slave_id = 0;
+    char *p;
+    errno = 0;
+    long conv = strtol(svalue, &p, 10);
+    eb_data_t echo;
+
+    if (errno != 0 || *p != '\0' || conv <= 0 || conv > 12) {
+      printf("parameter s is out of range 1-12\n");
+      exit(1);
+    } else {
+      slave_id = conv;
+    }
+
+    printf("\nInfo ROM of Slave %d\n", slave_id);
+    
+    nDevices = 1;
+    if ((status = eb_sdb_find_by_identity(device, GSI_ID, SCU_BUS_ID, &sdb[0], &nDevices)) != EB_OK)
+      die("find_by_identiy failed", status);
+
+    if (nDevices == 0)
+      die("no SCU bus found", EB_FAIL);
+    if (nDevices > 1)
+      die("more then one SCU bus", EB_FAIL);
+  
+    scu_bus = sdb[0].sdb_component.addr_first;
+ 
+    if ((eb_device_read(device, scu_bus + slave_id * (1<<17) + ECHO_REG, EB_DATA16|EB_BIG_ENDIAN, &echo, 0, eb_block)) != EB_OK) {
+      printf("no slave card found in this slot!\n");
+      exit(1);
+    }
+ 
+    if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+      die("EP eb_cycle_open", status);
+     
+    len = SLV_INFO_ROM_SIZE;
+    
+    if ((data = malloc(len * sizeof(eb_data_t))) == 0)
+      die("malloc", EB_OOM);
+  
+    for (i = 0; i < len; ++i)
+      eb_cycle_read(cycle, scu_bus + slave_id * (1<<17) + SLV_INFO_ROM + i*2, EB_DATA16|EB_BIG_ENDIAN, &data[i]);
+  
+    if ((status = eb_cycle_close(cycle)) != EB_OK) {
+      printf ("no INFO_ROM found on this slave!\n");
+      exit(1);
+    }
+
+    for (i = 0; i < len; ++i) {
+      printf("%c%c%c%c", 
+        (char)(data[i] >> 24) & 0xff, 
+        (char)(data[i] >> 16) & 0xff, 
+        (char)(data[i] >>  8) & 0xff,
+        (char)(data[i]      ) & 0xff);
+    }
+
   }
   
   if(detectFW) {

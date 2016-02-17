@@ -10,7 +10,8 @@ package wb_scu_reg_pkg is
 component wb_scu_reg is
   generic (
     Base_addr:      unsigned(15 downto 0);
-    size:           integer
+    size:           integer;
+    g_init_file:    string
   );
   port (
     clk_sys_i : in std_logic;

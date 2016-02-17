@@ -9,6 +9,8 @@ syn_package = "29"
 syn_top = "scu_diob"
 syn_project = "scu_diob"
 
+quartus_preflow = "scu_diob.tcl"
+
 modules = {
   "local" : [ 
     "../../top/scu_diob/", 

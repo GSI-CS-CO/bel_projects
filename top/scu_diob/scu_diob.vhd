@@ -191,7 +191,8 @@ architecture scu_diob_arch of scu_diob is
 --  CONSTANT c_Firmware_Release:    Integer := 16;  ---- Firmware_Release Stand 19.11.2015 ( Update Reg.-Belegung '700' u. '710')
 --  CONSTANT c_Firmware_Release:    Integer := 17;  ---- Firmware_Release Stand 02.12.2015 ( Strobe und Trigger (ECC) auf '710' geändert)
 --  CONSTANT c_Firmware_Release:    Integer := 18;  ---- Firmware_Release Stand 28.01.2016 ( Error, Tag-Steuerung: überlappende Outputs im gleichen Register)
-    CONSTANT c_Firmware_Release:    Integer := 19;  ---- Firmware_Release Stand 08.02.2016 ( + Tag-Steuerung: Level für jedes Bit im Outp.-Register ist einstellbar)
+--  CONSTANT c_Firmware_Release:    Integer := 19;  ---- Firmware_Release Stand 08.02.2016 ( + Tag-Steuerung: Level für jedes Bit im Outp.-Register ist einstellbar)
+    CONSTANT c_Firmware_Release:    Integer := 20;  ---- Firmware_release Stand 17.02.2016 ( INFO ROM in Housekeeping Modul eingefügt)
 
     
     CONSTANT clk_switch_status_cntrl_addr:       unsigned := x"0030";

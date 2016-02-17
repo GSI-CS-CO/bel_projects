@@ -347,7 +347,7 @@ SCU_Slave: SCU_Bus_Slave
   generic map (
     CLK_in_Hz           => clk_sys_in_Hz,
     Firmware_Release    => 0,
-    Firmware_Version    => 1,
+    Firmware_Version    => 2,
     CID_System          => 55,                    -- important: 55 => CSCOHW
     Intr_Enable         => b"0000_0000_0000_0001")
   port map (

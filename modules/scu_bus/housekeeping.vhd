@@ -111,6 +111,15 @@ architecture housekeeping_arch of housekeeping is
   signal asmi_read_ext   :  std_logic;
   signal asmi_to_ext     :  std_logic;
   
+  -- scu slave signals
+  signal wb_reg_dtack:      std_logic;
+  signal wb_reg_data:       std_logic_vector(15 downto 0);
+  signal wb_reg_rd_active:  std_logic;
+  
+  signal info_rom_data:       std_logic_vector(15 downto 0);
+  signal info_rom_dtack:      std_logic;
+  signal info_rom_rd_active:  std_logic;
+  
 
 begin
 
@@ -222,7 +231,8 @@ begin
   SCU_WB_Reg: wb_scu_reg
     generic map (
       Base_addr => Base_addr,
-      size => 300 )
+      size => 160,
+      g_init_file => "")
     port map (
       clk_sys_i => clk_sys,
       rst_n_i => rstn_sys,
@@ -236,9 +246,34 @@ begin
       Ext_Adr_Val       => Ext_Adr_Val,
       Ext_Rd_active     => Ext_Rd_active,
       Ext_Wr_active     => Ext_Wr_active,
-      user_rd_active    => user_rd_active,
-      Data_to_SCUB      => Data_to_SCUB,
-      Dtack_to_SCUB     => Dtack_to_SCUB);
+      user_rd_active    => wb_reg_rd_active,
+      Data_to_SCUB      => wb_reg_data,
+      Dtack_to_SCUB     => wb_reg_dtack);
+      
+  -------------------------------------
+  -- Interface to SCU Bus Slave
+  -------------------------------------
+  info_rom: wb_scu_reg
+    generic map (
+      Base_addr => Base_addr + 160,
+      size => 256,
+      g_init_file => "build_id.mif")
+    port map (
+      clk_sys_i => clk_sys,
+      rst_n_i => rstn_sys,
+
+      -- Wishbone
+      slave_i => cc_dummy_slave_in,
+      slave_o => open,
+
+      Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
+      Data_from_SCUB_LA => Data_from_SCUB_LA,
+      Ext_Adr_Val       => Ext_Adr_Val,
+      Ext_Rd_active     => Ext_Rd_active,
+      Ext_Wr_active     => Ext_Wr_active,
+      user_rd_active    => info_rom_rd_active,
+      Data_to_SCUB      => info_rom_data,
+      Dtack_to_SCUB     => info_rom_dtack);
       
   --------------------------------------------
   -- clock crossing from sys clk to clk_10Mhz
@@ -318,7 +353,15 @@ begin
       -- needed for multiplexing
       asmi_to_ext       => asmi_to_ext);  
       
-      
+  
+  Data_to_SCUB <= wb_reg_data when wb_reg_rd_active = '1' else
+                  info_rom_data when info_rom_rd_active = '1' else
+                  (others => '0');
+                  
+  user_rd_active <= wb_reg_rd_active or info_rom_rd_active;
+  
+  Dtack_to_SCUB <= wb_reg_dtack or info_rom_dtack;
+  
 
 end architecture;
 

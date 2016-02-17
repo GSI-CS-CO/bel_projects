@@ -9,6 +9,8 @@ syn_package = "29"
 syn_top = "scu_addac2"
 syn_project = "scu_addac2"
 
+quartus_preflow = "scu_addac2.tcl"
+
 modules = {
   "local" : [ 
     "../../top/gsi_addac2/", 

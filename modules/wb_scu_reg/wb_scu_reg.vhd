@@ -9,7 +9,8 @@ use work.genram_pkg.all;
 entity wb_scu_reg is
   generic (
     Base_addr:      unsigned(15 downto 0);
-    size:           integer
+    size:           integer;
+    g_init_file:    string
   );
   port (
     clk_sys_i : in std_logic;
@@ -79,16 +80,17 @@ begin
   dpram:  generic_dpram
   generic map (
     g_data_width        => 32,
-    g_size              => size,
+    g_size              => size * 2,
     g_with_byte_enable  => true,
     g_dual_clock        => false,
-    g_addr_conflict_resolution => "read_first")
+    g_addr_conflict_resolution => "read_first",
+    g_init_file           => g_init_file)
   port map (
     -- port A
     clka_i  => clk_sys_i,
     bwea_i  => s_scub_sel,  
     wea_i   => wrpulse and Ext_Adr_Val,
-    aa_i    => '0' & s_adr_a(f_log2_size(size)-1 downto 1),
+    aa_i    => '0' & s_adr_a(f_log2_size(size*2)-1 downto 1),
     da_i    => Data_from_SCUB_LA & Data_from_SCUB_LA,
     qa_o    => s_qa_o,
     
@@ -96,7 +98,7 @@ begin
     clkb_i  => clk_sys_i,
     bweb_i  => slave_i.sel,
     web_i   => slave_i.we and slave_i.stb and slave_i.cyc,
-    ab_i    => "00" & slave_i.adr(f_log2_size(size)-1 downto 2),
+    ab_i    => "00" & slave_i.adr(f_log2_size(size*2)-1 downto 2),
     db_i    => slave_i.dat,
     qb_o    => slave_o.dat);
 
