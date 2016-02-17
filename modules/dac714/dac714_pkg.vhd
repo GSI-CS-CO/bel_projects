@@ -234,6 +234,7 @@ end component dac714;
   constant  clr_rd_shift_err_cnt_addr_offset:     unsigned(15 downto 0) := X"0002";
   constant  clr_rd_old_data_err_cnt_addr_offset:  unsigned(15 downto 0) := X"0003";
   constant  clr_rd_trm_during_trm_active_err_cnt_addr_offset: unsigned(15 downto 0) := X"0004";
+  constant  rd_fw_version_offset:                 unsigned(15 downto 0) := X"0005";
 
 
 end package dac714_pkg;

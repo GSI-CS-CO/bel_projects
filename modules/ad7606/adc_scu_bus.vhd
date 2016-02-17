@@ -9,7 +9,8 @@ entity adc_scu_bus is
   generic (
     Base_addr:            unsigned(15 downto 0);
     clk_in_hz:            integer := 50_000_000;        -- 50Mhz
-    diag_on_is_1:         integer range 0 to 1 := 0);   -- if 1 then diagnosic information is generated during compilation
+    diag_on_is_1:         integer range 0 to 1 := 0;   -- if 1 then diagnosic information is generated during compilation
+    fw_version:           integer range 0 to 65535 := 1);
   port (
     clk:            in std_logic;
     nrst:           in std_logic;
@@ -59,15 +60,16 @@ signal  chn_1, chn_2, chn_3, chn_4,
 type channel_reg_type is array(0 to 7) of std_logic_vector(15 downto 0);    -- array for 8 registers
   signal s_ext_regs:  channel_reg_type;
   
-constant cntrl_reg_adr: unsigned(15 downto 0) := Base_addr + x"0000";
-constant chn_1_reg_adr: unsigned(15 downto 0) := Base_addr + x"0001";
-constant chn_2_reg_adr: unsigned(15 downto 0) := Base_addr + x"0002";
-constant chn_3_reg_adr: unsigned(15 downto 0) := Base_addr + x"0003";
-constant chn_4_reg_adr: unsigned(15 downto 0) := Base_addr + x"0004";
-constant chn_5_reg_adr: unsigned(15 downto 0) := Base_addr + x"0005";
-constant chn_6_reg_adr: unsigned(15 downto 0) := Base_addr + x"0006";
-constant chn_7_reg_adr: unsigned(15 downto 0) := Base_addr + x"0007";
-constant chn_8_reg_adr: unsigned(15 downto 0) := Base_addr + x"0008";
+constant cntrl_reg_adr:   unsigned(15 downto 0)   := Base_addr + x"0000";
+constant chn_1_reg_adr:   unsigned(15 downto 0)   := Base_addr + x"0001";
+constant chn_2_reg_adr:   unsigned(15 downto 0)   := Base_addr + x"0002";
+constant chn_3_reg_adr:   unsigned(15 downto 0)   := Base_addr + x"0003";
+constant chn_4_reg_adr:   unsigned(15 downto 0)   := Base_addr + x"0004";
+constant chn_5_reg_adr:   unsigned(15 downto 0)   := Base_addr + x"0005";
+constant chn_6_reg_adr:   unsigned(15 downto 0)   := Base_addr + x"0006";
+constant chn_7_reg_adr:   unsigned(15 downto 0)   := Base_addr + x"0007";
+constant chn_8_reg_adr:   unsigned(15 downto 0)   := Base_addr + x"0008";
+constant fw_version_adr:  unsigned(15 downto 0)   := Base_addr + x"0009";
 
 signal wr_adc_cntrl: std_logic;
 signal rd_adc_cntrl: std_logic;
@@ -79,6 +81,7 @@ signal rd_adc_chn_5: std_logic;
 signal rd_adc_chn_6: std_logic;
 signal rd_adc_chn_7: std_logic;
 signal rd_adc_chn_8: std_logic;
+signal rd_fw_version: std_logic;
 
 signal dtack:         std_logic;
 signal adc_cntrl_reg: std_logic_vector(15 downto 0);
@@ -136,6 +139,7 @@ begin
     rd_adc_chn_6  <= '0';
     rd_adc_chn_7  <= '0';
     rd_adc_chn_8  <= '0';
+    rd_fw_version <= '0';
     dtack         <= '0';
   elsif rising_edge(clk) then
     wr_adc_cntrl  <= '0';
@@ -148,6 +152,7 @@ begin
     rd_adc_chn_6  <= '0';
     rd_adc_chn_7  <= '0';
     rd_adc_chn_8  <= '0';
+    rd_fw_version <= '0';
     dtack         <= '0';
     
     if Ext_Adr_Val = '1' then
@@ -160,6 +165,12 @@ begin
           if Ext_Rd_active = '1' then
             rd_adc_cntrl  <= '1';
             dtack         <= '1';
+          end if;
+        
+        when fw_version_adr =>
+          if Ext_Rd_active = '1' then
+            rd_fw_version  <= '1';
+            dtack          <= '1'; 
           end if;
         
         when chn_1_reg_adr =>
@@ -211,17 +222,6 @@ begin
           end if;
           
         when others =>
-          wr_adc_cntrl  <= '0';
-          rd_adc_cntrl  <= '0';
-          rd_adc_chn_1  <= '0';
-          rd_adc_chn_2  <= '0';
-          rd_adc_chn_3  <= '0';
-          rd_adc_chn_4  <= '0';
-          rd_adc_chn_5  <= '0';
-          rd_adc_chn_6  <= '0';
-          rd_adc_chn_7  <= '0';
-          rd_adc_chn_8  <= '0';
-          dtack         <= '0';
       end case;
     end if;
   end if;
@@ -293,7 +293,7 @@ adc_cntrl_rd_reg <=  adc_cntrl_reg;
     
 user_rd_active <= rd_adc_cntrl or rd_adc_chn_1 or rd_adc_chn_2 or rd_adc_chn_3
                   or rd_adc_chn_4 or rd_adc_chn_5 or rd_adc_chn_6 or rd_adc_chn_7
-                  or rd_adc_chn_8;
+                  or rd_adc_chn_8 or rd_fw_version;
 
 Data_to_SCUB <= s_ext_regs(0) when rd_adc_chn_1 = '1' else
                 s_ext_regs(1) when rd_adc_chn_2 = '1' else
@@ -304,6 +304,7 @@ Data_to_SCUB <= s_ext_regs(0) when rd_adc_chn_1 = '1' else
                 s_ext_regs(6) when rd_adc_chn_7 = '1' else
                 s_ext_regs(7) when rd_adc_chn_8 = '1' else
                 adc_cntrl_rd_reg when rd_adc_cntrl = '1' else
+                std_logic_vector(to_unsigned(fw_version, 16)) when rd_fw_version = '1' else
                 x"0000";
                 
 Dtack_to_SCUB <= dtack;

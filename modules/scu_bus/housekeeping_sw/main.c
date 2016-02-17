@@ -22,7 +22,7 @@ volatile unsigned int* aru_base;
 volatile unsigned char* asmi_base;
 
 #define CPU_CLOCK 125000000ULL
-
+#define FW_VER 0x1
 
 #define CALC_BAUD(baudrate) \
     ( ((( (unsigned long long)baudrate * 8ULL) << (16 - 7)) + \
@@ -115,6 +115,8 @@ int main(void)
     while (1) {};
   }
   
+  *(volatile int *)(scu_reg + FW_VERSION) = FW_VER;
+
   w1_init();
   //read id and temp at least once
   ReadOwDevices(0);

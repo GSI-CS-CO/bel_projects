@@ -25,6 +25,7 @@
 #define ASMI_CMD      0x24
 #define ASMI_STATUS   0x28
 #define ASMI_RDID     0x2c
+#define FW_VERSION    0x30
 #define ASMI_BUFFER   0x40
 
 #define DONE              0x0

@@ -198,7 +198,8 @@ entity dac714 is
   generic (
     Base_addr:        unsigned(15 downto 0) := X"0300";
     CLK_in_Hz:        integer := 100_000_000;
-    SPI_CLK_in_Hz:    integer := 10_000_000
+    SPI_CLK_in_Hz:    integer := 10_000_000;
+    fw_version:       integer range 0 to 65535 := 1
     );
   port
     (
@@ -237,6 +238,7 @@ architecture arch_dac714 OF dac714 IS
   constant  clr_rd_shift_err_cnt_addr:    unsigned(15 downto 0) := Base_addr + clr_rd_shift_err_cnt_addr_offset;
   constant  clr_rd_old_data_err_cnt_addr: unsigned(15 downto 0) := Base_addr + clr_rd_old_data_err_cnt_addr_offset;
   constant  clr_rd_trm_during_trm_active_err_cnt_addr:  unsigned(15 downto 0) := Base_addr + clr_rd_trm_during_trm_active_err_cnt_addr_offset;
+  constant  rd_fw_version_adr:            unsigned(15 downto 0) := Base_addr + rd_fw_version_offset;
 
   constant  c_spi_clk_ena_cnt:  integer := (clk_in_hz / spi_clk_in_hz) / 2;
 
@@ -308,6 +310,7 @@ architecture arch_dac714 OF dac714 IS
   signal  DAC_convert:        std_logic;
   signal  dac_data:           unsigned(15 downto 0);
   signal  rd_dac_data:        std_logic;
+  signal  rd_fw_version:      std_logic;
 
 begin
 
@@ -342,6 +345,7 @@ P_dac714_Adr_Deco: process (clk, nReset_sync(1))
       clr_trm_during_trm_active_err_cnt <= '0';
       rd_trm_during_trm_active_err_cnt  <= '0';
       rd_dac_data                       <= '0';
+      rd_fw_version                     <= '0';
       S_Dtack                           <= '0';
 
     elsif rising_edge(clk) then
@@ -356,6 +360,7 @@ P_dac714_Adr_Deco: process (clk, nReset_sync(1))
       clr_trm_during_trm_active_err_cnt <= '0';
       rd_trm_during_trm_active_err_cnt  <= '0';
       rd_dac_data                       <= '0';
+      rd_fw_version                     <= '0';
       S_Dtack                           <= '0';
       
       Wr_Shift_Reg_dly <= Wr_Shift_Reg;
@@ -371,6 +376,12 @@ P_dac714_Adr_Deco: process (clk, nReset_sync(1))
             end if;
             if Ext_Rd_active = '1' then
               Rd_DAC_Cntrl  <= '1';
+              S_Dtack       <= '1';
+            end if;
+
+          when rd_fw_version_adr =>
+            if Ext_Rd_Active = '1' then
+              rd_fw_version <= '1';
               S_Dtack       <= '1';
             end if;
             
@@ -424,6 +435,7 @@ P_dac714_Adr_Deco: process (clk, nReset_sync(1))
             clr_trm_during_trm_active_err_cnt   <= '0';
             rd_trm_during_trm_active_err_cnt    <= '0';
             rd_dac_data                         <= '0';
+            rd_fw_version                       <= '0';
             S_Dtack                             <= '0';
 
         end case;
@@ -750,22 +762,23 @@ DAC_convert_o <= DAC_convert; -- '1' when DAC convert driven by software, functi
 P_read_mux: process (rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_shift_err_cnt, Rd_DAC_Cntrl,
                      Ext_Trig_wait, FG_mode, dac_neg_edge_conv, dac_conv_extern, nCLR_DAC, SPI_TRM, 
                      Trig_DAC_during_shift_err_cnt_b, Trig_DAC_with_old_data_err_cnt_b, New_trm_during_trm_active_err_cnt_b,
-                     rd_dac_data, dac_data)
+                     rd_dac_data, dac_data, rd_fw_version)
   variable  sel_mux:  std_logic_vector(5 downto 0);
   begin
-    sel_mux := ('0' , rd_dac_data, rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_shift_err_cnt, Rd_DAC_Cntrl);
+    sel_mux := (rd_fw_version, rd_dac_data, rd_trm_during_trm_active_err_cnt, rd_old_data_err_cnt, rd_shift_err_cnt, Rd_DAC_Cntrl);
     case sel_mux is
       when "000001" => Rd_Port <= (X"00" & "00" & Ext_Trig_wait & FG_mode & dac_neg_edge_conv & dac_conv_extern & not nCLR_DAC & SPI_TRM);
       when "000010" => Rd_Port <= (X"00" & std_logic_vector(Trig_DAC_during_shift_err_cnt_b));
       when "000100" => Rd_Port <= (X"00" & std_logic_vector(Trig_DAC_with_old_data_err_cnt_b));
       when "001000" => Rd_Port <= (X"00" & std_logic_vector(New_trm_during_trm_active_err_cnt_b));
       when "010000" => Rd_port <= std_logic_vector(dac_data);
+      when "100000" => Rd_port <= std_logic_vector(to_unsigned(fw_version, 16));
       when others   => Rd_Port <= (others => '0');
     end case;
   end process P_read_mux;
   
 Dtack <= S_Dtack;
 
-Rd_Activ <= rd_dac_data or rd_trm_during_trm_active_err_cnt or rd_old_data_err_cnt or rd_shift_err_cnt or Rd_DAC_Cntrl;
+Rd_Activ <= rd_dac_data or rd_trm_during_trm_active_err_cnt or rd_old_data_err_cnt or rd_shift_err_cnt or Rd_DAC_Cntrl or rd_fw_version;
 
 end Arch_dac714;
