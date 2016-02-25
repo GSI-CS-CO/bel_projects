@@ -18,7 +18,9 @@ use work.monster_pkg.all;
 entity scu_addac is
   generic(
     g_cid_group: integer := 38;
-    g_card_type: string := "addac"
+    g_card_type: string := "addac";
+    g_firmware_version: integer := 3;
+    g_firmware_release: integer := 0
     );
   port (
     -------------------------------------------------------------------------------------------------------------------
@@ -346,8 +348,8 @@ clk_switch_intr <= sys_clk_is_bad_la or sys_clk_deviation_la;
 SCU_Slave: SCU_Bus_Slave
   generic map (
     CLK_in_Hz           => clk_sys_in_Hz,
-    Firmware_Release    => 0,
-    Firmware_Version    => 2,
+    Firmware_Release    => g_firmware_release,
+    Firmware_Version    => g_firmware_version,
     CID_System          => 55,                    -- important: 55 => CSCOHW
     Intr_Enable         => b"0000_0000_0000_0001")
   port map (
