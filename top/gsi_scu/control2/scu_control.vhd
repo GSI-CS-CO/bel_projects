@@ -262,6 +262,13 @@ architecture rtl of scu_control is
   signal s_lemo_oe    : std_logic_vector(1 downto 0);
   signal s_lemo_input : std_logic_vector(1 downto 0);
   
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 1) := 
+  (
+  -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
+    ("B1         ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
+    ("B2         ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL)
+  );
+  
   constant c_family  : string := "Arria II"; 
   constant c_project : string := "scu_control";
   constant c_initf   : string := c_project & ".mif" & ';' & c_project & "_stub.mif";
@@ -286,6 +293,7 @@ begin
       g_en_user_ow => true,
       g_en_fg      => false,
       g_en_cfi     => true,
+      g_io_table        => io_mapping_table,
       g_lm32_init_files =>  c_initf
     )  
     port map(

@@ -272,7 +272,50 @@ architecture rtl of vetar2a_top is
   constant c_red           : std_logic_vector := "101";
   constant c_green         : std_logic_vector := "110";
   constant c_blue          : std_logic_vector := "011";
-  
+
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 38) := 
+  (
+  -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
+    ("IO1        ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  true,         true,        IO_LVTTL),
+    ("IO2        ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  true,         true,        IO_LVTTL),
+    ("IO3        ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_GPIO,  true,         true,        IO_LVTTL),
+    ("OUT1       ",  IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("OUT2       ",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("OUT3       ",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("O1         ",  IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVDS),
+    ("O2         ",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVDS),
+    ("OUT        ",  IO_TTL_TO_NIM,   true,    false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED9       ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED10      ",  IO_NONE,         false,   false,  10,    IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED11      ",  IO_NONE,         false,   false,  11,    IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED12      ",  IO_NONE,         false,   false,  12,    IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_DACK   ",  IO_NONE,         false,   false,  13,    IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("IN1_WR_CLK ",  IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_NIM),
+    ("IN2_WR_PPS ",  IO_NONE,         false,   false,  4,     IO_INPUT,    IO_GPIO,  false,        false,       IO_NIM),
+    ("MHDMR_SYIN ",  IO_NONE,         false,   false,  5,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
+    ("MHDMR_TRIN ",  IO_NONE,         false,   false,  6,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
+    ("I1         ",  IO_NONE,         false,   false,  7,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
+    ("I2         ",  IO_NONE,         false,   false,  8,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),
+    ("IN         ",  IO_TTL_TO_NIM,   false,   true,   9,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("MHDMR_CK200",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),
+    ("MHDMR_SYOU ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),
+    ("LED1_HX1_0 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),
+    ("LED2_HX1_1 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),
+    ("LED3_HX1_2 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),
+    ("LED4_HX1_3 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),
+    ("LED5_HX2_0 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),
+    ("LED6_HX2_1 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),
+    ("LED7_HX2_2 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),
+    ("LED8_HX2_3 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),
+    ("HX1_0      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),
+    ("HX1_1      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),
+    ("HX1_2      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),
+    ("HX1_3      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),
+    ("HX2_0      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),
+    ("HX2_1      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),
+    ("HX2_2      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),
+    ("HX2_3      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL)
+  );
   constant c_family  : string := "Arria II"; 
   constant c_project : string := "vetar_top2a";
   constant c_initf   : string := c_project & ".mif"; 
@@ -289,11 +332,12 @@ begin
       g_gpio_inout => 3,
       g_gpio_in    => 7,
       g_gpio_out   => 11,
-      g_fixed      => 10,
+      g_fixed      => 18,
       g_flash_bits => 24,
       g_en_vme     => true,
       g_en_usb     => true,
       g_en_lcd     => true,
+      g_io_table        => io_mapping_table,
       g_lm32_init_files => c_initf
     )
     port map(

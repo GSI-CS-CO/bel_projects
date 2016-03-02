@@ -51,16 +51,6 @@ package io_control_pkg is
     name          => "IO_CONTROL         "))
     );
   
-  component io_map_rom is
-    generic(
-      init_file              : string;
-      intended_device_family : string);
-    port(
-      address : in  std_logic_vector (8 downto 0)  := (others => '0');
-      clock   : in  std_logic                      := '1';
-      q       : out std_logic_vector (31 downto 0));
-  end component io_map_rom;
-  
   component io_control is
     generic(
       g_project     : string;
@@ -73,7 +63,8 @@ package io_control_pkg is
       g_lvds_in     : natural := 0;
       g_lvds_out    : natural := 0;
       g_lvds_inout  : natural := 0;
-      g_fixed       : natural := 0);
+      g_fixed       : natural := 0;
+      g_io_table    : t_io_mapping_table_arg_array(natural range <>));
     port(
       clk_i           : in  std_logic;
       rst_n_i         : in  std_logic;

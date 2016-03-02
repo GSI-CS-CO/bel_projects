@@ -25,14 +25,57 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+use std.textio.all;
+use IEEE.std_logic_textio.all;
+
 library work;
 use work.wishbone_pkg.all;
 
 package monster_pkg is
-
+  
+  type io_channel is (IO_GPIO, IO_LVDS, IO_FIXED);
+  type io_direction is (IO_OUTPUT, IO_INPUT, IO_INOUTPUT);
+  type io_logic_level is (IO_TTL, IO_LVTTL, IO_LVDS, IO_NIM);
+  type io_special_purpose is (IO_NONE, IO_TTL_TO_NIM, IO_CLK_IN_EN);
+  
+  type t_io_mapping_table is
+    record                                               -- Byte(s) = Bit(s)
+      info_name         : std_logic_vector(95 downto 0); --      12 = 96
+      info_special      : std_logic_vector(5 downto 0);  --       x = 6 \
+      info_special_out  : std_logic;                     --       x = 1  |
+      info_special_in   : std_logic;                     --       x = 1 /
+      info_index        : std_logic_vector(7 downto 0);  --       1 = 8
+      info_direction    : std_logic_vector(1 downto 0);  --       x = 2 \
+      info_channel      : std_logic_vector(2 downto 0);  --       x = 3  \
+      info_oe           : std_logic;                     --       x = 1   |
+      info_term         : std_logic;                     --       x = 1  /
+      info_res_bit      : std_logic;                     --       x = 1 /
+      info_logic_level  : std_logic_vector(3 downto 0);  --       x = 4 \
+      info_reserved     : std_logic_vector(3 downto 0);  --       x = 4 /
+    end record;                                          --      16 = 128 total each entry
+  type t_io_mapping_table_array is array (natural range <>) of t_io_mapping_table;
+  
+  type t_io_mapping_table_arg is
+    record 
+      info_name         : string (1 to 11); 
+      info_special      : io_special_purpose;
+      info_special_out  : boolean; 
+      info_special_in   : boolean;
+      info_index        : integer range 0 to 255;
+      info_direction    : io_direction;
+      info_channel      : io_channel;
+      info_oe           : boolean;
+      info_term         : boolean;
+      info_logic_level  : io_logic_level;
+    end record;
+  type t_io_mapping_table_arg_array is array (natural range <>) of t_io_mapping_table_arg;
+  
+  function to_io_slv(str : string) return std_logic_vector;
+  function f_gen_io_table(input : t_io_mapping_table_arg_array; ios_total : natural) return t_io_mapping_table_array;
+  
   function f_sub1(x : natural) return natural;
   function f_pick(x : boolean; y : integer; z : integer) return natural;
-
+  
   component monster is
     generic(
       g_family               : string; -- "Arria II" or "Arria V"
@@ -62,6 +105,7 @@ package monster_pkg is
       g_en_user_ow           : boolean := false;
       g_en_fg                : boolean := false;  
       g_en_psram             : boolean := false;
+      g_io_table             : t_io_mapping_table_arg_array(natural range <>);
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
@@ -316,5 +360,108 @@ package body monster_pkg is
     else return z;
     end if;
   end f_pick;
+
+  function to_io_slv(str : string) return std_logic_vector is
+    alias str_norm   : string(1 to str'length) is str;
+    variable res_v   : std_logic_vector(8 * (str'length+1) - 1 downto 0);
+    variable res_v_r : std_logic_vector(8 * (str'length+1) - 1 downto 0);
+  begin
+    for idx in 1 to (str'length+1) loop
+      if idx = (str'length+1) then
+        res_v(8 * idx - 1 downto 8 * idx - 8) := (others => '0'); -- Terminate string with zero
+      else
+        res_v(8 * idx - 1 downto 8 * idx - 8) := std_logic_vector(to_unsigned(character'pos(str_norm(idx)), 8));
+        if std_logic_vector(to_unsigned(character'pos(str_norm(idx)), 8)) = x"20" then -- Check for space
+          res_v(8 * idx - 1 downto 8 * idx - 8) := (others => '0'); -- Fill string with zeros
+        end if;
+      end if;
+    end loop;
+    -- Reverse byte order if needed
+    for idx in 1 to (str'length+1) loop
+      res_v_r(95+8 -(8 * idx) downto 95+1 - (8 * idx)) := res_v(8 * idx - 1 downto 8 * idx - 8);
+    end loop;
+    return res_v_r;
+  end function;
+  
+  function f_gen_io_table(input : t_io_mapping_table_arg_array; ios_total : natural) return t_io_mapping_table_array
+  is
+    variable result      : t_io_mapping_table_array(0 to ios_total);
+    variable name        : string (1 to 11); 
+    variable special     : integer range 0 to 63;
+    variable direction   : integer range 0 to 3;
+    variable channel     : integer range 0 to 7;
+    variable logic_level : integer range 0 to 15;
+  begin
+    for i in 0 to ios_total-1 loop 
+      report "IO ITERATOR: " & integer'image(i) severity note;
+      report "IO NAME: " & name severity note;
+      -- Convert name
+      name := input(i).info_name;
+      result(i).info_name:= to_io_slv(name);
+      -- Convert special information
+      case input(i).info_special is
+        when IO_NONE       => special := 0;
+        when IO_TTL_TO_NIM => special := 1;
+        when IO_CLK_IN_EN  => special := 2;
+        when others        => special := 63;
+      end case;
+      result(i).info_special := std_logic_vector(to_unsigned(special, result(i).info_special'length));
+      if input(i).info_special_out = true then
+        result(i).info_special_out := '1';
+      else
+        result(i).info_special_out := '0';
+      end if;
+      if input(i).info_special_in = true then
+        result(i).info_special_in := '1';
+      else
+        result(i).info_special_in := '0';
+      end if;
+      -- Convert Index
+      result(i).info_index := std_logic_vector(to_unsigned(input(i).info_index, result(i).info_index'length));
+      -- Convert Direction
+      case input(i).info_direction is
+        when IO_OUTPUT   => direction := 0;
+        when IO_INPUT    => direction := 1;
+        when IO_INOUTPUT => direction := 2;
+        when others      => direction := 3;
+      end case;
+      result(i).info_direction := std_logic_vector(to_unsigned(direction, result(i).info_direction'length));
+      -- Convert Channel
+      case input(i).info_channel is
+        when IO_GPIO  => channel := 0;
+        when IO_LVDS  => channel := 1;
+        when IO_FIXED => channel := 2;
+        when others   => channel := 7;
+      end case;
+      result(i).info_channel := std_logic_vector(to_unsigned(channel, result(i).info_channel'length));
+      -- Convert OutputEnable
+      if input(i).info_oe = true then
+        result(i).info_oe := '1';
+      else
+        result(i).info_oe := '0';
+      end if;
+      -- Convert Termination
+      if input(i).info_term = true then
+        result(i).info_term := '1';
+      else
+        result(i).info_term := '0';
+      end if;
+      -- Convert Reserved Bit
+      result(i).info_res_bit := '0';
+      -- Convert Logic Level
+      case input(i).info_logic_level is
+        when IO_TTL   => logic_level := 0;
+        when IO_LVTTL => logic_level := 1;
+        when IO_LVDS  => logic_level := 2;
+        when IO_NIM   => logic_level := 3;
+        when others   => logic_level := 15;
+      end case;
+      result(i).info_logic_level := std_logic_vector(to_unsigned(logic_level, result(i).info_logic_level'length));
+      -- Convert Reserved Vector
+      result(i).info_reserved := "0000";
+    end loop;
+    --report "DONE " & name severity failure;
+    return result;
+  end f_gen_io_table;
 
 end monster_pkg;

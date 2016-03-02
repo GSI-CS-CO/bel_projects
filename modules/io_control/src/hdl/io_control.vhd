@@ -43,7 +43,8 @@ entity io_control is
     g_lvds_in    : natural := 0;
     g_lvds_out   : natural := 0;
     g_lvds_inout : natural := 0;
-    g_fixed      : natural := 0);
+    g_fixed      : natural := 0;
+    g_io_table             : t_io_mapping_table_arg_array(natural range <>));
   port(
     clk_i           : in  std_logic;
     rst_n_i         : in  std_logic;
@@ -100,6 +101,8 @@ architecture rtl of io_control is
   signal r_lvds_drive                     : t_lvds_byte_array(f_sub1(g_lvds_out+g_lvds_inout) downto 0) := (others => (others => '0'));
   signal s_delay_counter                  : natural range 0 to 7;
   signal s_bit_selector                   : natural range 0 to (2**16)-1;
+  signal s_field_selector                 : natural range 0 to (2**16)-1;
+  signal s_entry_selector                 : natural range 0 to (2**16)-1;
   -- Generic constants                    
   constant c_table_pointer                : natural := (g_gpio_in+g_gpio_out+g_gpio_inout+g_lvds_in+g_lvds_out+g_lvds_inout)*4;
   constant c_gpio_inputs                  : natural := (g_gpio_inout+g_gpio_in);
@@ -205,65 +208,15 @@ architecture rtl of io_control is
   constant c_io_map_table_begin_reg       : std_logic_vector (13 downto 0) := "11100000000000"; -- 0xennn ...
   constant c_io_map_table_end_reg         : std_logic_vector (13 downto 0) := "11111111111100"; -- 0xfff0 ...
   -- IO mapping table layout
-  type t_io_mapping_table is
-    record                                               -- Byte(s) = Bit(s)
-      info_name         : string (1 to 13);              --      12 = 96
-      info_delay        : std_logic_vector(7 downto 0);  --       1 = 8
-      info_internal_id  : std_logic_vector(7 downto 0);  --       1 = 8
-      info_direction    : std_logic_vector(1 downto 0);  --       x = 2 \
-      info_oe           : std_logic;                     --       x = 1  \
-      info_term         : std_logic;                     --       x = 1   |
-      info_special      : std_logic;                     --       x = 1  /
-      info_channel      : std_logic_vector(2 downto 0);  --       x = 3 /
-      info_logic_level  : std_logic_vector(3 downto 0);  --       x = 4 \
-      info_reserved     : std_logic_vector(3 downto 0);  --       x = 4 /
-    end record;                                          --      16 = 128 total each entry
-  -- Simulation or FPGA synthesis
-  constant c_is_arria5     : boolean := g_syn_target = "Arria V";
-  constant c_is_arria2     : boolean := g_syn_target = "Arria II";
-  constant c_is_altera     : boolean := c_is_arria5 or c_is_arria2;
-  constant c_is_simulation : boolean := g_syn_target = "Simulation";
-  -- IO mapping table ROM
-  constant c_data_width   : integer := 32;
-  constant c_addr_width   : integer := 32;
-  constant c_mem_depth    : integer := ((c_gpio_total*4+c_lvds_total*4+g_fixed*4))+(4*4); -- IOs + Fixed IOs + Device name + end of table
-  constant c_mem_init_bin : string  := g_project & "_io.bin";
-  constant c_mem_init_mif : string  := g_project & "_io.mif";
-  type t_mem_type is array (0 to c_mem_depth-1) of unsigned(c_data_width-1 downto 0);
-  -- IO mapping table init_mem function
-  impure function init_mem(mif_file_name : in string) return t_mem_type is
-    file fp_mif_file    : text open read_mode is mif_file_name;
-    variable v_mif_line : line;
-    variable v_temp_bv  : bit_vector(c_data_width-1 downto 0);
-    variable v_temp_mem : t_mem_type;
-  begin
-    for i in t_mem_type'range loop
-      readline(fp_mif_file, v_mif_line);
-      read(v_mif_line, v_temp_bv);
-      v_temp_mem(i) := unsigned(to_stdlogicvector(v_temp_bv));
-    end loop;
-    return v_temp_mem;
-  end function;
-  -- Initialize memory
-  constant c_io_tab_mem : t_mem_type := init_mem(c_mem_init_bin);
+  constant c_is_arria5       : boolean := g_syn_target = "Arria V";
+  constant c_is_arria2       : boolean := g_syn_target = "Arria II";
+  constant c_is_altera       : boolean := c_is_arria5 or c_is_arria2;
+  constant c_is_simulation   : boolean := g_syn_target = "Simulation";
+  constant c_ios_total       : natural := c_gpio_total + c_lvds_total + g_fixed;
+  constant c_io_table_memory : t_io_mapping_table_array := f_gen_io_table(g_io_table, c_ios_total);
+  --signal   s_io_table_memory : t_io_mapping_table_array;
   
 begin
-  -- Generate FPGA ROM
-  rom_a5 : if c_is_altera generate
-    io_map_rom_inst : io_map_rom 
-    generic map (
-      init_file              => c_mem_init_mif,
-      intended_device_family => g_syn_target)
-    port map (
-      address => slave_i.adr(10 downto 2),
-      clock   => clk_i,
-      q       => r_rom_data);
-  end generate;
-  
-  -- Generate Simulation ROM
-  rom_sim : if c_is_simulation generate
-    r_rom_data <= std_logic_vector(c_io_tab_mem(s_bit_selector)) when (s_bit_selector < c_mem_depth) else (others => '1');
-  end generate;
   
   -- Wishbone slave interface
   slave_o.dat <= r_dat;
@@ -343,7 +296,9 @@ begin
   -- Decode selection from slave input address (use the least significant bits to selected IO number or table entry field)
   p_bit_selector : process(slave_i.adr) is
   begin
-    s_bit_selector <= to_integer(unsigned(slave_i.adr(9 downto 2)));
+    s_bit_selector   <= to_integer(unsigned(slave_i.adr(9  downto 2)));
+    s_field_selector <= to_integer(unsigned(slave_i.adr(3  downto 2)));
+    s_entry_selector <= to_integer(unsigned(slave_i.adr(11 downto 4)));
   end process;
   
   -- Handle wishbone requests
@@ -563,8 +518,23 @@ begin
           -- GET IO mapping table
           elsif (slave_i.adr(15 downto 2) >= c_io_map_table_begin_reg and slave_i.adr(15 downto 2) <= c_io_map_table_end_reg) then
               -- Prevent out of range access
-              if (s_bit_selector < c_mem_depth) then
-                r_dat <= r_rom_data;
+              if (s_entry_selector < c_ios_total) then
+                case s_field_selector is
+                  when 0      => r_dat               <= c_io_table_memory(s_entry_selector).info_name(95 downto 64);
+                  when 1      => r_dat               <= c_io_table_memory(s_entry_selector).info_name(63 downto 32);
+                  when 2      => r_dat               <= c_io_table_memory(s_entry_selector).info_name(31 downto 0);
+                  when others => r_dat(31 downto 26) <= c_io_table_memory(s_entry_selector).info_special;
+                                 r_dat(25)           <= c_io_table_memory(s_entry_selector).info_special_out;
+                                 r_dat(24)           <= c_io_table_memory(s_entry_selector).info_special_in;
+                                 r_dat(23 downto 16) <= c_io_table_memory(s_entry_selector).info_index;
+                                 r_dat(15 downto 14) <= c_io_table_memory(s_entry_selector).info_direction;
+                                 r_dat(13 downto 11) <= c_io_table_memory(s_entry_selector).info_channel;
+                                 r_dat(10)           <= c_io_table_memory(s_entry_selector).info_oe;
+                                 r_dat(9)            <= c_io_table_memory(s_entry_selector).info_term;
+                                 r_dat(8)            <= c_io_table_memory(s_entry_selector).info_res_bit;
+                                 r_dat(7 downto 4)   <= c_io_table_memory(s_entry_selector).info_logic_level;
+                                 r_dat(3 downto 0)   <= c_io_table_memory(s_entry_selector).info_reserved;
+                end case;
               else
                 report "Unknown table access (read)!" severity error;
                 r_dat(31 downto 16) <= x"beef";

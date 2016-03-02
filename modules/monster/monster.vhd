@@ -89,6 +89,7 @@ entity monster is
     g_en_user_ow           : boolean;
     g_en_fg                : boolean;
     g_en_psram             : boolean;
+    g_io_table             : t_io_mapping_table_arg_array(natural range <>);
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -1419,7 +1420,7 @@ begin
       slave_i    => top_cbar_master_o(c_tops_reset),
       rstn_o     => s_lm32_rstn);
   
-  iocntrol : io_control
+  iocontrol : io_control
     generic map(
       g_project    => g_project,
       g_syn_target => g_family,
@@ -1429,7 +1430,8 @@ begin
       g_lvds_in    => g_lvds_in,
       g_lvds_out   => g_lvds_out,
       g_lvds_inout => g_lvds_inout,
-      g_fixed      => g_fixed)
+      g_fixed      => g_fixed,
+      g_io_table   => g_io_table)
     port map(
       clk_i           => clk_sys,
       rst_n_i         => rstn_sys,
