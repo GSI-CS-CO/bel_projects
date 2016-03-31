@@ -7,7 +7,7 @@ TARGETS := eb-flash eb-sflash eb-info eb-console eb-config-nv eca-snoop button-g
 
 EXTRA_FLAGS ?=
 CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(ECA) -I $(TLU)
-LIBS        ?= -L $(EB)/.libs -L $(ECA) -L $(TLU) -Wl,-rpath,$(PREFIX)/lib -letherbone -leca -ltlu
+LIBS        ?= -L $(EB)/.libs -L $(ECA) -L $(TLU) -Wl,-rpath,$(PREFIX)/lib -letherbone -leca -ltlu -lm
 
 all:	$(TARGETS)
 clean:
