@@ -25,7 +25,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.genram_pkg.all;
-use work.eca_pkg.all;
+use work.eca_internals_pkg.all;
 use work.gencores_pkg.all;
 
 
