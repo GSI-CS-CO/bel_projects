@@ -53,7 +53,11 @@ entity altera_lvds is
 end altera_lvds;
 
 architecture rtl of altera_lvds is
-  constant c_toggle : t_lvds_byte := (others => f_eca_active_high(g_invert));
+  function f_1(x : boolean) return std_logic is begin 
+    if x then return '1'; else return '0'; end if;
+  end function;
+  
+  constant c_toggle : t_lvds_byte := (others => f_1(g_invert));
   
   signal clk_lvds   : std_logic;
   signal clk_enable : std_logic;
