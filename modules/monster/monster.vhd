@@ -592,9 +592,10 @@ architecture rtl of monster is
   signal sfp_scl_o : std_logic;
   signal sfp_sda_o : std_logic;
   
-  constant c_num_channels : natural := 3;
-  signal stalls   : std_logic_vector(c_num_channels-1 downto 0) := (others => '0');
-  signal channels : t_channel_array(c_num_channels-1 downto 0);
+  constant c_channel_types : t_nat_array(2 downto 0) := (
+    0 => c_linux, 1 => c_wb_master, 2 => c_scubus_tag);
+  signal stalls   : std_logic_vector(c_channel_types'range) := (others => '0');
+  signal channels : t_channel_array(c_channel_types'range);
   
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
@@ -1522,8 +1523,8 @@ begin
   
   eca : wr_eca
     generic map(
+      g_channel_types  => c_channel_types,
       g_num_ios        => c_eca_io,
-      g_num_channels   => c_num_channels,
       g_num_streams    => 1,
       g_log_table_size => 8,
       g_log_queue_size => 8) -- any smaller and g_log_latency must be decreased
@@ -1575,22 +1576,14 @@ begin
       q_slave_i   => top_cbar_master_o(c_tops_eca_aq),
       q_slave_o   => top_cbar_master_i(c_tops_eca_aq)); 
   
-  c1 : eca_scubus_channel
-    port map(
-      clk_i     => clk_ref,
-      rst_n_i   => rstn_ref,
-      channel_i => channels(1),
-      tag_valid => tag_valid,
-      tag       => tag);
-  
-  c2: eca_ac_wbm
+  c1: eca_ac_wbm
     generic map(
       g_entries  => 16,
       g_ram_size => 128)
     port map(
       clk_ref_i   => clk_ref,
       rst_ref_n_i => rstn_ref,
-      channel_i   => channels(2),
+      channel_i   => channels(1),
       clk_sys_i   => clk_sys,
       rst_sys_n_i => rstn_sys,
       slave_i     => top_cbar_master_o(c_tops_eca_wbm),
@@ -1598,6 +1591,14 @@ begin
       master_o    => top_cbar_slave_i(c_topm_eca_wbm),
       master_i    => top_cbar_slave_o(c_topm_eca_wbm));
 
+  c2 : eca_scubus_channel
+    port map(
+      clk_i     => clk_ref,
+      rst_n_i   => rstn_ref,
+      channel_i => channels(2),
+      tag_valid => tag_valid,
+      tag       => tag);
+  
   lvds_pins : altera_lvds
     generic map(
       g_family  => g_family,
