@@ -229,7 +229,37 @@ architecture rtl of exploder5_csco_tr is
   signal s_lvds_n_o     : std_logic_vector(11 downto 1);
   signal s_lvds_o_led   : std_logic_vector(11 downto 1);
   signal s_lvds_oen     : std_logic_vector( 8 downto 1);
-
+  signal s_lvds_term    : std_logic_vector(11 downto 1);
+  
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 24) := 
+  (
+  -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
+    ("LED1       ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED2       ",  IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED3       ",  IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED4       ",  IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("BUT1       ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("BUT2       ",  IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("BUT3       ",  IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("BUT4       ",  IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
+    ("IO1        ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("IO2        ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("IO3        ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("IO4        ",  IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("IO5        ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("IO6        ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("IO7        ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("IO8        ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("LVDSo1     ",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("LVDSo2     ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("LVDSo3     ",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("LVDSi1     ",  IO_NONE,         false,   false,  8,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("LVDSi2     ",  IO_NONE,         false,   false,  9,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("LVDSi3     ",  IO_NONE,         false,   false, 10,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("LVDSoClk   ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),
+    ("WR200MHz   ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),
+    ("LVDSiClk   ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_LVDS)
+  );
   constant c_family  : string := "Arria V"; 
   constant c_project : string := "exploder5_csco_tr";
   constant c_initf   : string := c_project & ".mif";
@@ -240,21 +270,23 @@ begin
 
   main : monster
     generic map(
-      g_family      => c_family,
-      g_project     => c_project,
-      g_flash_bits  => 25,
-      g_psram_bits  => c_psram_bits,
-      g_gpio_in     => 4,
-      g_gpio_out    => 4,
-      g_lvds_in     => 3,
-      g_lvds_out    => 3,
-      g_lvds_inout  => 8,
-      g_en_pcie     => true,
-      g_en_usb      => true,
-      g_en_ssd1325  => true,
-      g_en_nau8811  => true,
-      g_en_psram    => true,
-      g_en_user_ow  => true,
+      g_family          => c_family,
+      g_project         => c_project,
+      g_flash_bits      => 25,
+      g_psram_bits      => c_psram_bits,
+      g_gpio_in         => 4,
+      g_gpio_out        => 4,
+      g_lvds_in         => 3,
+      g_lvds_out        => 3,
+      g_lvds_inout      => 8,
+      g_fixed           => 3,
+      g_en_pcie         => true,
+      g_en_usb          => true,
+      g_en_ssd1325      => true,
+      g_en_nau8811      => true,
+      g_en_psram        => true,
+      g_en_user_ow      => true,
+      g_io_table        => io_mapping_table,
       g_lm32_init_files => c_initf
     )
     port map(
@@ -284,7 +316,8 @@ begin
       lvds_p_o               => s_lvds_p_o,
       lvds_n_o               => s_lvds_n_o,
       lvds_o_led_o           => s_lvds_o_led,
-      lvds_oen_o             => s_lvds_oen,
+      lvds_oen_o(7 downto 0) => s_lvds_oen,
+      lvds_term_o            => s_lvds_term,
       led_link_up_o          => led_link_up,
       led_link_act_o         => led_link_act,
       led_track_o            => led_track,
@@ -364,9 +397,9 @@ begin
     lemo_p_o(i) <= s_lvds_p_o(i);
     lemo_n_o(i) <= s_lvds_n_o(i);
     
-    lemo_oen_o(i)      <= '0' when s_lvds_oen(i)  ='0' else '1'; -- has pull-up to 3.3V, output is 3.3V
-    lemo_term_o(i)     <= '0' when s_lvds_oen(i)  ='0' else '1'; -- has pull-down,       output is 3.3V
-    lemo_oe_ledn_o(i)  <= '0' when s_lvds_oen(i)  ='0' else 'Z'; -- has pull-up to 3.3V, output is 2.5V
+    lemo_oen_o(i)      <= '0' when s_lvds_oen(i)  ='1' else '1'; -- has pull-up to 3.3V, output is 3.3V
+    lemo_term_o(i)     <= '1' when s_lvds_term(i) ='1' else '0'; -- has pull-down,       output is 3.3V
+    lemo_oe_ledn_o(i)  <= '0' when s_lvds_oen(i)  ='1' else 'Z'; -- has pull-up to 3.3V, output is 2.5V
     lemo_act_ledn_o(i) <= '0' when s_lvds_i_led(i)='1' else 'Z'; -- has pull-up to 3.3V, output is 2.5V
   end generate;
   

@@ -58,6 +58,7 @@ use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
 use work.wb_serdes_clk_gen_pkg.all;
+use work.io_control_pkg.all;
 
 entity monster is
   generic(
@@ -73,6 +74,7 @@ entity monster is
     g_lvds_inout           : natural;
     g_lvds_in              : natural;
     g_lvds_out             : natural;
+    g_fixed                : natural;
     g_lvds_invert          : boolean;
     g_en_pcie              : boolean;
     g_en_vme               : boolean;
@@ -87,6 +89,7 @@ entity monster is
     g_en_user_ow           : boolean;
     g_en_fg                : boolean;
     g_en_psram             : boolean;
+    g_io_table             : t_io_mapping_table_arg_array(natural range <>);
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -125,7 +128,10 @@ entity monster is
     -- GPIO for the board
     gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0);
     gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0) := (others => 'Z');
-    gpio_oen_o             : out   std_logic_vector(f_sub1(g_gpio_inout)            downto 0) := (others => '1');
+    gpio_oen_o             : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0) := (others => '0');
+    gpio_term_o            : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0) := (others => '1');
+    gpio_spec_in_o         : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0) := (others => '0');
+    gpio_spec_out_o        : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0) := (others => '0');
     -- LVDS for the board
     lvds_p_i               : in    std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)  downto 0);
     lvds_n_i               : in    std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)  downto 0);
@@ -133,7 +139,10 @@ entity monster is
     lvds_p_o               : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0) := (others => 'Z');
     lvds_n_o               : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0) := (others => 'Z');
     lvds_o_led_o           : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0) := (others => 'Z');
-    lvds_oen_o             : out   std_logic_vector(f_sub1(g_lvds_inout)            downto 0) := (others => '1');
+    lvds_oen_o             : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0) := (others => '0');
+    lvds_term_o            : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)  downto 0) := (others => '1');
+    lvds_spec_in_o         : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_in)  downto 0) := (others => '0');
+    lvds_spec_out_o        : out   std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0) := (others => '0');
     -- Optional status LEDs
     led_link_up_o          : out   std_logic;
     led_link_act_o         : out   std_logic;
@@ -336,12 +345,12 @@ architecture rtl of monster is
   constant c_iocfgm_top            : natural := 0;
   
   constant c_iocfg_slaves          : natural := 2;
-  constant c_iocfgs_dir            : natural := 0;
-  constant c_iocfgs_serdes_clk_gen : natural := 1;
+  constant c_iocfgs_serdes_clk_gen : natural := 0;
+  constant c_iocfgs_control        : natural := 1;
   
   constant c_iocfg_layout_req : t_sdb_record_array(c_iocfg_slaves-1 downto 0) :=
-   (c_iocfgs_dir            => f_sdb_auto_device(c_iodir_sdb,             true),
-    c_iocfgs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb, true));
+   (c_iocfgs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb, true),
+    c_iocfgs_control        => f_sdb_auto_device(c_io_control_sdb,        true));
 
   constant c_iocfg_layout      : t_sdb_record_array(c_iocfg_slaves-1 downto 0) := f_sdb_auto_layout(c_iocfg_layout_req);
   constant c_iocfg_sdb_address : t_wishbone_address                         := f_sdb_auto_sdb(c_iocfg_layout_req);
@@ -631,21 +640,32 @@ architecture rtl of monster is
   -- END OF VME signals
   ----------------------------------------------------------------------------------
   
-  signal lcd_scp : std_logic;
-  signal lcd_lp  : std_logic;
-  signal lcd_flm : std_logic;
-  signal lcd_in  : std_logic;
-  signal gpio    : std_logic_vector(15 downto 0);
-  signal user_ow_pwren  : std_logic_vector(1 downto 0);
-  signal user_ow_en     : std_logic_vector(1 downto 0);
-
+  signal lcd_scp       : std_logic;
+  signal lcd_lp        : std_logic;
+  signal lcd_flm       : std_logic;
+  signal lcd_in        : std_logic;
+  signal user_ow_pwren : std_logic_vector(1 downto 0);
+  signal user_ow_en    : std_logic_vector(1 downto 0);
+  
+  signal s_gpio_out     : std_logic_vector(15 downto 0);
+  signal s_gpio_src_eca : std_logic_vector(15 downto 0);
+  signal s_gpio_src_ioc : std_logic_vector(15 downto 0);
+  
+  signal s_gpio_mux      : std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0);
+  signal s_lvds_mux      : std_logic_vector(f_sub1(g_lvds_inout+g_lvds_out) downto 0);
+  signal s_lvds_vec_i    : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
+  
   constant c_lvds_clk_outputs : natural := g_lvds_inout+g_lvds_out;
   signal lvds_dat_fr_eca_chan : t_lvds_byte_array(11 downto 0);
   signal lvds_dat_fr_clk_gen  : t_lvds_byte_array(11 downto 0);
+  signal lvds_dat_fr_ioc      : t_lvds_byte_array(11 downto 0);
+  signal lvds_dat_fr_butis_t0 : t_lvds_byte_array(11 downto 0);
   signal lvds_dum             : t_lvds_byte_array(c_lvds_clk_outputs-1 downto 0);
   signal lvds_dat             : t_lvds_byte_array(11 downto 0);
   signal lvds_i               : t_lvds_byte_array(15 downto 0);
   signal lvds_o               : t_lvds_byte_array(11 downto 0);
+  signal lvds_i_dummy         : t_lvds_byte_array(15 downto 0);
+  signal lvds_o_dummy         : t_lvds_byte_array(11 downto 0);
   
   signal s_triggers : t_trigger_array(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto 0);
   
@@ -1365,6 +1385,7 @@ begin
         clk_out_i => clk_flash_out,
         clk_in_i  => clk_flash_in);
   end generate;
+  
   flash_a5 : if c_is_arria5 generate
     flash : flash_top
       generic map(
@@ -1399,17 +1420,56 @@ begin
       slave_i    => top_cbar_master_o(c_tops_reset),
       rstn_o     => s_lm32_rstn);
   
-  iodir : monster_iodir
+  iocontrol : io_control
     generic map(
+      g_project    => g_project,
+      g_syn_target => g_family,
+      g_gpio_in    => g_gpio_in,
+      g_gpio_out   => g_gpio_out,
       g_gpio_inout => g_gpio_inout,
-      g_lvds_inout => g_lvds_inout)
+      g_lvds_in    => g_lvds_in,
+      g_lvds_out   => g_lvds_out,
+      g_lvds_inout => g_lvds_inout,
+      g_fixed      => g_fixed,
+      g_io_table   => g_io_table)
     port map(
-      clk_i      => clk_sys,
-      rst_n_i    => rstn_sys,
-      slave_i    => iocfg_cbar_master_o(c_iocfgs_dir),
-      slave_o    => iocfg_cbar_master_i(c_iocfgs_dir),
-      gpio_oen_o => gpio_oen_o,
-      lvds_oen_o => lvds_oen_o);
+      clk_i           => clk_sys,
+      rst_n_i         => rstn_sys,
+      gpio_input_i    => gpio_i(f_sub1(g_gpio_in+g_gpio_inout) downto 0),
+      gpio_output_i   => s_gpio_out(f_sub1(g_gpio_out+g_gpio_inout) downto 0),
+      gpio_output_o   => s_gpio_src_ioc(f_sub1(g_gpio_out+g_gpio_inout) downto 0),
+      lvds_input_i    => s_lvds_vec_i(f_sub1(g_lvds_in+g_lvds_inout) downto 0),
+      lvds_output_i   => lvds_dat(f_sub1(g_lvds_out+g_lvds_inout) downto 0),
+      lvds_output_o   => lvds_dat_fr_ioc(f_sub1(g_lvds_out+g_lvds_inout) downto 0),
+      slave_i         => iocfg_cbar_master_o(c_iocfgs_control),
+      slave_o         => iocfg_cbar_master_i(c_iocfgs_control),
+      gpio_oe_o       => gpio_oen_o,
+      gpio_term_o     => gpio_term_o,
+      gpio_spec_out_o => gpio_spec_out_o,
+      gpio_spec_in_o  => gpio_spec_in_o,
+      gpio_mux_o      => s_gpio_mux,
+      lvds_oe_o       => lvds_oen_o,
+      lvds_term_o     => lvds_term_o,
+      lvds_spec_out_o => lvds_spec_out_o,
+      lvds_spec_in_o  => lvds_spec_in_o,
+      lvds_mux_o      => s_lvds_mux);
+  
+  lvds_vec_in_zero : if (g_lvds_inout + g_lvds_in = 0) generate
+    s_lvds_vec_i <= (others => (others => '0'));
+  end generate;
+  
+  lvds_vec_in : if (g_lvds_inout + g_lvds_in > 0) generate
+    s_lvds_vec_i <= lvds_i(f_sub1(g_lvds_in+g_lvds_inout) downto 0);
+  end generate;
+  
+  gpio_out_selector : for i in 0 to ((g_gpio_out+g_gpio_inout)-1) generate
+    gpio_o(i) <= s_gpio_out(i) when s_gpio_mux(i)='0' else clk_butis_t0_ts;
+  end generate;
+  s_gpio_out <= s_gpio_src_eca or s_gpio_src_ioc;
+  
+  lvds_out_selector : for i in 0 to ((g_lvds_out+g_lvds_inout)-1) generate
+    lvds_dat_fr_butis_t0(i) <= (others => clk_butis_t0_ts and s_lvds_mux(i));
+  end generate;
   
   -- Instantiate SERDES clock generator
   cmp_serdes_clk_gen : xwb_serdes_clk_gen
@@ -1432,7 +1492,7 @@ begin
   lvds_dat_fr_clk_gen(c_lvds_clk_outputs-1 downto 0) <= lvds_dum;
   lvds_dat_fr_clk_gen(11 downto c_lvds_clk_outputs) <= (others => (others => '0'));
   gen_lvds_dat : for i in 0 to 11 generate
-    lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i);
+    lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i) or lvds_dat_fr_ioc(i) or lvds_dat_fr_butis_t0(i);
   end generate gen_lvds_dat;
   
   tlu_gpio : if (g_gpio_in + g_gpio_inout > 0) generate
@@ -1496,8 +1556,7 @@ begin
       clk_i     => clk_ref,
       rst_n_i   => rstn_ref,
       channel_i => channels(0),
-      gpio_o    => gpio);
-  gpio_o <= gpio(gpio_o'range);
+      gpio_o    => s_gpio_src_eca);
   
   c1 : eca_queue_channel
     port map(   
