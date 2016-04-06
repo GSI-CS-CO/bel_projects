@@ -268,6 +268,7 @@ begin
       g_en_pcie         => true,
       g_en_usb          => true,
       g_en_lcd          => true,
+      g_en_tempsens     => true,
       g_io_table        => io_mapping_table,
       g_lm32_init_files => c_initf
     )  

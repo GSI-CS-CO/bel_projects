@@ -59,6 +59,7 @@ use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
 use work.wb_serdes_clk_gen_pkg.all;
 use work.io_control_pkg.all;
+use work.wb_temp_sense_pkg.all;
 
 entity monster is
   generic(
@@ -95,7 +96,9 @@ entity monster is
     g_lm32_ramsizes        : natural;
     g_lm32_shared_ramsize  : natural;
     g_lm32_init_files      : string;
-    g_lm32_are_ftm         : boolean);
+    g_lm32_are_ftm         : boolean;
+    g_en_tempsens          : boolean);
+
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -378,7 +381,7 @@ architecture rtl of monster is
   constant c_topm_eca_wbm   : natural := 7;
   
   -- required slaves
-  constant c_top_slaves     : natural := 27;
+  constant c_top_slaves     : natural := 28;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -408,6 +411,7 @@ architecture rtl of monster is
   constant c_tops_nau8811   : natural := 24;
   constant c_tops_psram     : natural := 25;
   constant c_tops_iocfg     : natural := 26;
+  constant c_tops_tempsens  : natural := 27;
 
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -449,7 +453,8 @@ architecture rtl of monster is
     c_tops_fgirq     => f_sdb_auto_device(c_fg_irq_ctrl_sdb,                g_en_fg),
     c_tops_psram     => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
     c_tops_eca_wbm   => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           true),
-    c_tops_iocfg     => f_sdb_auto_bridge(c_iocfg_bridge_sdb,               true)
+    c_tops_iocfg     => f_sdb_auto_bridge(c_iocfg_bridge_sdb,               true),
+    c_tops_tempsens  => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens)
 );
     
   constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
@@ -1961,6 +1966,20 @@ begin
       ps_wait   => ps_wait);
   end generate;
  
+  tempsens_n : if not g_en_tempsens generate
+    top_cbar_master_i(c_tops_tempsens) <= cc_dummy_slave_out;
+  end generate;
+
+  tempsens_y : if g_en_tempsens generate
+    tempsens_display : wbs_temp_sense
+      port map (
+        clk_sys_i  => clk_sys,
+        rst_n_i    => rstn_sys,
+        slave_i    => top_cbar_master_o(c_tops_tempsens),
+        slave_o    => top_cbar_master_i(c_tops_tempsens)
+      );
+  end generate;
+
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------
   

@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deploy
+ date="2016.04.06.12:49:20"
+ outputDirectory="/home/anjan/bel_temp/bel_projects/modules/temp_sens/src/hdl/temp_sens/">
+ <perimeter>
+  <parameter
+     name="AUTO_GENERATION_ID"
+     type="Integer"
+     defaultValue="0"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_UNIQUE_ID"
+     type="String"
+     defaultValue=""
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_DEVICE_FAMILY"
+     type="String"
+     defaultValue="Arria V"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_DEVICE"
+     type="String"
+     defaultValue="5AGXMA3D4F27C5"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_DEVICE_SPEEDGRADE"
+     type="String"
+     defaultValue="5_H4"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_CLK_CLOCK_RATE"
+     type="Long"
+     defaultValue="-1"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_CLK_CLOCK_DOMAIN"
+     type="Integer"
+     defaultValue="-1"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_CLK_RESET_DOMAIN"
+     type="Integer"
+     defaultValue="-1"
+     onHdl="0"
+     affectsHdl="1" />
+  <interface name="ce" kind="conduit" start="0">
+   <property name="associatedClock" value="" />
+   <property name="associatedReset" value="" />
+   <port name="ce" direction="input" role="ce" width="1" />
+  </interface>
+  <interface name="clk" kind="clock" start="0">
+   <property name="clockRate" value="0" />
+   <property name="externallyDriven" value="false" />
+   <property name="ptfSchematicName" value="" />
+   <port name="clk" direction="input" role="clk" width="1" />
+  </interface>
+  <interface name="clr" kind="reset" start="0">
+   <property name="associatedClock" value="clk" />
+   <property name="synchronousEdges" value="DEASSERT" />
+   <port name="clr" direction="input" role="reset" width="1" />
+  </interface>
+  <interface name="tsdcaldone" kind="conduit" start="0">
+   <property name="associatedClock" value="" />
+   <property name="associatedReset" value="" />
+   <port name="tsdcaldone" direction="output" role="tsdcaldone" width="1" />
+  </interface>
+  <interface name="tsdcalo" kind="conduit" start="0">
+   <property name="associatedClock" value="" />
+   <property name="associatedReset" value="" />
+   <port name="tsdcalo" direction="output" role="tsdcalo" width="8" />
+  </interface>
+ </perimeter>
+ <entity
+   path=""
+   parameterizationKey="temp_sens:1.0:AUTO_CLK_CLOCK_DOMAIN=-1,AUTO_CLK_CLOCK_RATE=-1,AUTO_CLK_RESET_DOMAIN=-1,AUTO_DEVICE=5AGXMA3D4F27C5,AUTO_DEVICE_FAMILY=Arria V,AUTO_DEVICE_SPEEDGRADE=5_H4,AUTO_GENERATION_ID=1459939760,AUTO_UNIQUE_ID=(altera_temp_sense:15.1:CBX_AUTO_BLACKBOX=ALL,CE_CHECK=true,CLK_FREQUENCY=10.0,CLOCK_DIVIDER_ENABLE=on,CLOCK_DIVIDER_VALUE=40,CLR_CHECK=true,DEVICE_FAMILY=Arria V,NUMBER_OF_SAMPLES=128,POI_CAL_TEMPERATURE=85,SIM_TSDCALO=0,USER_OFFSET_ENABLE=off,USE_WYS=on)"
+   instancePathKey="temp_sens"
+   kind="temp_sens"
+   version="1.0"
+   name="temp_sens">
+  <parameter name="AUTO_CLK_CLOCK_RATE" value="-1" />
+  <parameter name="AUTO_GENERATION_ID" value="1459939760" />
+  <parameter name="AUTO_DEVICE" value="5AGXMA3D4F27C5" />
+  <parameter name="AUTO_DEVICE_FAMILY" value="Arria V" />
+  <parameter name="AUTO_CLK_RESET_DOMAIN" value="-1" />
+  <parameter name="AUTO_CLK_CLOCK_DOMAIN" value="-1" />
+  <parameter name="AUTO_UNIQUE_ID" value="" />
+  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="5_H4" />
+  <generatedFiles>
+   <file
+       path="/home/anjan/bel_temp/bel_projects/modules/temp_sens/src/hdl/temp_sens/synthesis/temp_sens.vhd"
+       type="VHDL" />
+  </generatedFiles>
+  <childGeneratedFiles>
+   <file
+       path="/home/anjan/bel_temp/bel_projects/modules/temp_sens/src/hdl/temp_sens/synthesis/submodules/temp_sens_temp_sense_0.v"
+       type="VERILOG"
+       attributes="" />
+  </childGeneratedFiles>
+  <sourceFiles>
+   <file
+       path="/home/anjan/bel_temp/bel_projects/modules/temp_sens/src/hdl/temp_sens.qsys" />
+  </sourceFiles>
+  <childSourceFiles>
+   <file
+       path="/home/anjan/ip/altera/altera_temp_sense/altera_temp_sense_hw.tcl" />
+  </childSourceFiles>
+  <messages>
+   <message level="Debug" culprit="temp_sens">queue size: 0 starting:temp_sens "temp_sens"</message>
+   <message level="Progress" culprit="min"></message>
+   <message level="Progress" culprit="max"></message>
+   <message level="Progress" culprit="current"></message>
+   <message level="Debug">Transform: CustomInstructionTransform</message>
+   <message level="Debug">No custom instruction connections, skipping transform </message>
+   <message level="Debug" culprit="merlin_custom_instruction_transform"><![CDATA[After transform: <b>1</b> modules, <b>0</b> connections]]></message>
+   <message level="Debug">Transform: MMTransform</message>
+   <message level="Debug">Transform: InterruptMapperTransform</message>
+   <message level="Debug">Transform: InterruptSyncTransform</message>
+   <message level="Debug">Transform: InterruptFanoutTransform</message>
+   <message level="Debug">Transform: AvalonStreamingTransform</message>
+   <message level="Debug">Transform: ResetAdaptation</message>
+   <message level="Debug" culprit="temp_sens"><![CDATA["<b>temp_sens</b>" reuses <b>altera_temp_sense</b> "<b>submodules/temp_sens_temp_sense_0</b>"]]></message>
+   <message level="Debug" culprit="temp_sens">queue size: 0 starting:altera_temp_sense "submodules/temp_sens_temp_sense_0"</message>
+   <message level="Info" culprit="temp_sense_0">Generating top-level entity temp_sens_temp_sense_0.</message>
+   <message level="Info" culprit="temp_sense_0"><![CDATA["<b>temp_sens</b>" instantiated <b>altera_temp_sense</b> "<b>temp_sense_0</b>"]]></message>
+  </messages>
+ </entity>
+ <entity
+   path="submodules/"
+   parameterizationKey="altera_temp_sense:15.1:CBX_AUTO_BLACKBOX=ALL,CE_CHECK=true,CLK_FREQUENCY=10.0,CLOCK_DIVIDER_ENABLE=on,CLOCK_DIVIDER_VALUE=40,CLR_CHECK=true,DEVICE_FAMILY=Arria V,NUMBER_OF_SAMPLES=128,POI_CAL_TEMPERATURE=85,SIM_TSDCALO=0,USER_OFFSET_ENABLE=off,USE_WYS=on"
+   instancePathKey="temp_sens:.:temp_sense_0"
+   kind="altera_temp_sense"
+   version="15.1"
+   name="temp_sens_temp_sense_0">
+  <parameter name="CE_CHECK" value="true" />
+  <parameter name="NUMBER_OF_SAMPLES" value="128" />
+  <parameter name="CLOCK_DIVIDER_ENABLE" value="on" />
+  <parameter name="USE_WYS" value="on" />
+  <parameter name="DEVICE_FAMILY" value="Arria V" />
+  <parameter name="SIM_TSDCALO" value="0" />
+  <parameter name="POI_CAL_TEMPERATURE" value="85" />
+  <parameter name="USER_OFFSET_ENABLE" value="off" />
+  <parameter name="CLK_FREQUENCY" value="10.0" />
+  <parameter name="CBX_AUTO_BLACKBOX" value="ALL" />
+  <parameter name="CLR_CHECK" value="true" />
+  <parameter name="CLOCK_DIVIDER_VALUE" value="40" />
+  <generatedFiles>
+   <file
+       path="/home/anjan/bel_temp/bel_projects/modules/temp_sens/src/hdl/temp_sens/synthesis/submodules/temp_sens_temp_sense_0.v"
+       type="VERILOG"
+       attributes="" />
+  </generatedFiles>
+  <childGeneratedFiles/>
+  <sourceFiles>
+   <file
+       path="/home/anjan/ip/altera/altera_temp_sense/altera_temp_sense_hw.tcl" />
+  </sourceFiles>
+  <childSourceFiles/>
+  <instantiator instantiator="temp_sens" as="temp_sense_0" />
+  <messages>
+   <message level="Debug" culprit="temp_sens">queue size: 0 starting:altera_temp_sense "submodules/temp_sens_temp_sense_0"</message>
+   <message level="Info" culprit="temp_sense_0">Generating top-level entity temp_sens_temp_sense_0.</message>
+   <message level="Info" culprit="temp_sense_0"><![CDATA["<b>temp_sens</b>" instantiated <b>altera_temp_sense</b> "<b>temp_sense_0</b>"]]></message>
+  </messages>
+ </entity>
+</deploy>

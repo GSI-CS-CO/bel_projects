@@ -1,0 +1,9 @@
+# # File gsaved with Nlview version 6.3.8  2013-12-19 bk=1.2992 VDI=34 GEI=35
+# 
+preplace inst unsaved.temp_sense_0 -pg 1 -lvl 1 -y 30
+preplace inst unsaved -pg 1 -lvl 1 -y 40 -regy -20
+preplace netloc EXPORT<net_container>unsaved</net_container>(SLAVE)unsaved.tsdcaldone,(SLAVE)temp_sense_0.tsdcaldone) 1 0 1 NJ
+preplace netloc EXPORT<net_container>unsaved</net_container>(SLAVE)unsaved.clk,(SLAVE)temp_sense_0.clk) 1 0 1 NJ
+preplace netloc EXPORT<net_container>unsaved</net_container>(SLAVE)temp_sense_0.tsdcalo,(SLAVE)unsaved.tsdcalo) 1 0 1 NJ
+levelinfo -pg 1 0 80 240
+levelinfo -hier unsaved 90 120 230

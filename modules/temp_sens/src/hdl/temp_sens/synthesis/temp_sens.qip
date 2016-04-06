@@ -1,0 +1,50 @@
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_TOOL_NAME "Qsys"
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_TOOL_VERSION "15.1"
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_TOOL_ENV "Qsys"
+set_global_assignment -library "temp_sens" -name SOPCINFO_FILE [file join $::quartus(qip_path) "../../temp_sens.sopcinfo"]
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name SLD_INFO "QSYS_NAME temp_sens HAS_SOPCINFO 1 GENERATION_ID 1459939760"
+set_global_assignment -library "temp_sens" -name MISC_FILE [file join $::quartus(qip_path) "../temp_sens.cmp"]
+set_global_assignment -library "temp_sens" -name SLD_FILE [file join $::quartus(qip_path) "temp_sens.debuginfo"]
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_TARGETED_DEVICE_FAMILY "Arria V"
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_GENERATED_DEVICE_FAMILY "{Arria V}"
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_QSYS_MODE "STANDALONE"
+set_global_assignment -name SYNTHESIS_ONLY_QIP ON
+set_global_assignment -library "temp_sens" -name MISC_FILE [file join $::quartus(qip_path) "../../temp_sens.qsys"]
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_COMPONENT_NAME "dGVtcF9zZW5z"
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_COMPONENT_DISPLAY_NAME "dGVtcF9zZW5z"
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_COMPONENT_REPORT_HIERARCHY "On"
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_COMPONENT_INTERNAL "Off"
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_COMPONENT_VERSION "MS4w"
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_COMPONENT_PARAMETER "QVVUT19HRU5FUkFUSU9OX0lE::MTQ1OTkzOTc2MA==::QXV0byBHRU5FUkFUSU9OX0lE"
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_COMPONENT_PARAMETER "QVVUT19ERVZJQ0VfRkFNSUxZ::QXJyaWEgVg==::QXV0byBERVZJQ0VfRkFNSUxZ"
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_COMPONENT_PARAMETER "QVVUT19ERVZJQ0U=::NUFHWE1BM0Q0RjI3QzU=::QXV0byBERVZJQ0U="
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_COMPONENT_PARAMETER "QVVUT19ERVZJQ0VfU1BFRURHUkFERQ==::NV9INA==::QXV0byBERVZJQ0VfU1BFRURHUkFERQ=="
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_COMPONENT_PARAMETER "QVVUT19DTEtfQ0xPQ0tfUkFURQ==::LTE=::QXV0byBDTE9DS19SQVRF"
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_COMPONENT_PARAMETER "QVVUT19DTEtfQ0xPQ0tfRE9NQUlO::LTE=::QXV0byBDTE9DS19ET01BSU4="
+set_global_assignment -entity "temp_sens" -library "temp_sens" -name IP_COMPONENT_PARAMETER "QVVUT19DTEtfUkVTRVRfRE9NQUlO::LTE=::QXV0byBSRVNFVF9ET01BSU4="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_NAME "dGVtcF9zZW5zX3RlbXBfc2Vuc2VfMA=="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_DISPLAY_NAME "QWx0ZXJhIFRlbXBlcmF0dXJlIFNlbnNvcg=="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_REPORT_HIERARCHY "Off"
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_INTERNAL "Off"
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_AUTHOR "QWx0ZXJhIENvcnBvcmF0aW9u"
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_VERSION "MTUuMQ=="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_DESCRIPTION "VGhlIEFsdGVyYSBUZW1wZXJhdHVyZSBTZW5zb3IgbWVnYWZ1bmN0aW9uIGNvbmZpZ3VyZXMgdGhlIHRlbXBlcmF0dXJlIHNlbnNpbmcgZGlvZGUgKFRTRCkgIGJsb2NrIHRvIHV0aWxpemUgdGhlIHRlbXBlcmF0dXJlIG1lYXN1cmVtZW50IGZlYXR1cmUgaW4gdGhlIEZQR0Eu"
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_PARAMETER "REVWSUNFX0ZBTUlMWQ==::QXJyaWEgVg==::REVWSUNFX0ZBTUlMWQ=="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_PARAMETER "Q0JYX0FVVE9fQkxBQ0tCT1g=::QUxM::Q0JYX0FVVE9fQkxBQ0tCT1g="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_PARAMETER "Q0xLX0ZSRVFVRU5DWQ==::MTAuMA==::V2hhdCBpcyB0aGUgaW5wdXQgZnJlcXVlbmN5Pw=="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_PARAMETER "Q0xPQ0tfRElWSURFUl9WQUxVRQ==::NDA=::V2hhdCBpcyB0aGUgY2xvY2sgZGl2aWRlciB2YWx1ZT8="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_PARAMETER "Q0xPQ0tfRElWSURFUl9FTkFCTEU=::b24=::Q0xPQ0tfRElWSURFUl9FTkFCTEU="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_PARAMETER "Q0VfQ0hFQ0s=::dHJ1ZQ==::Q3JlYXRlIGEgY2xvY2sgZW5hYmxlIHBvcnQ="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_PARAMETER "Q0xSX0NIRUNL::dHJ1ZQ==::Q3JlYXRlIGFuIGFzeW5jaHJvbm91cyBjbGVhciBwb3J0"
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_PARAMETER "TlVNQkVSX09GX1NBTVBMRVM=::MTI4::TlVNQkVSX09GX1NBTVBMRVM="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_PARAMETER "UE9JX0NBTF9URU1QRVJBVFVSRQ==::ODU=::UE9JX0NBTF9URU1QRVJBVFVSRQ=="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_PARAMETER "U0lNX1RTRENBTE8=::MA==::U0lNX1RTRENBTE8="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_PARAMETER "VVNFX1dZUw==::b24=::VVNFX1dZUw=="
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_COMPONENT_PARAMETER "VVNFUl9PRkZTRVRfRU5BQkxF::b2Zm::VVNFUl9PRkZTRVRfRU5BQkxF"
+
+set_global_assignment -library "temp_sens" -name VHDL_FILE [file join $::quartus(qip_path) "temp_sens.vhd"]
+set_global_assignment -library "temp_sens" -name VERILOG_FILE [file join $::quartus(qip_path) "submodules/temp_sens_temp_sense_0.v"]
+
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_TOOL_NAME "altera_temp_sense"
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_TOOL_VERSION "15.1"
+set_global_assignment -entity "temp_sens_temp_sense_0" -library "temp_sens" -name IP_TOOL_ENV "Qsys"

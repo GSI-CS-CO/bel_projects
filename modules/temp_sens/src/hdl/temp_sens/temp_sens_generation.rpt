@@ -1,0 +1,29 @@
+Info: Starting: Create block symbol file (.bsf)
+Info: qsys-generate /home/anjan/bel_temp/bel_projects/modules/temp_sens/src/hdl/temp_sens.qsys --block-symbol-file --output-directory=/home/anjan/bel_temp/bel_projects/modules/temp_sens/src/hdl/temp_sens --family="Arria V" --part=5AGXMA3D4F27C5
+Progress: Loading hdl/temp_sens.qsys
+Progress: Reading input file
+Progress: Adding temp_sense_0 [altera_temp_sense 15.1]
+Progress: Parameterizing module temp_sense_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: qsys-generate succeeded.
+Info: Finished: Create block symbol file (.bsf)
+Info: 
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate /home/anjan/bel_temp/bel_projects/modules/temp_sens/src/hdl/temp_sens.qsys --synthesis=VHDL --output-directory=/home/anjan/bel_temp/bel_projects/modules/temp_sens/src/hdl/temp_sens/synthesis --family="Arria V" --part=5AGXMA3D4F27C5
+Progress: Loading hdl/temp_sens.qsys
+Progress: Reading input file
+Progress: Adding temp_sense_0 [altera_temp_sense 15.1]
+Progress: Parameterizing module temp_sense_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: temp_sens: Generating temp_sens "temp_sens" for QUARTUS_SYNTH
+Info: temp_sense_0: Generating top-level entity temp_sens_temp_sense_0.
+Info: temp_sense_0: "temp_sens" instantiated altera_temp_sense "temp_sense_0"
+Info: temp_sens: Done "temp_sens" with 2 modules, 2 files
+Info: qsys-generate succeeded.
+Info: Finished: Create HDL design files for synthesis

@@ -1,0 +1,10 @@
+	component temp_sens is
+		port (
+			ce         : in  std_logic                    := 'X'; -- ce
+			clk        : in  std_logic                    := 'X'; -- clk
+			clr        : in  std_logic                    := 'X'; -- reset
+			tsdcaldone : out std_logic;                           -- tsdcaldone
+			tsdcalo    : out std_logic_vector(7 downto 0)         -- tsdcalo
+		);
+	end component temp_sens;
+
