@@ -1,0 +1,18 @@
+SUBDESIGN reg16b
+(
+    I[15..0]	: INPUT;
+    CLK         : INPUT;
+	ENA: INPUT;
+    CLRN        : INPUT = VCC;
+	O[15..0]	: OUTPUT;
+)
+VARIABLE
+	qff[15..0]	: DFFE;
+BEGIN
+	qff[].clk  = clk;
+    qff[].clrn = clrn;
+	qff[].ena	= ena;
+	qff[]      = I[];
+    O[]        = qff[];
+END;
+

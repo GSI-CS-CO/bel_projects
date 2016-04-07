@@ -1,0 +1,161 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2007 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 320 208)
+	(text "Loader_MB" (rect 5 0 79 15)(font "Arial" ))
+	(text "inst" (rect 8 173 31 188)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "Data_In[15..0]" (rect 0 0 89 15)(font "Arial" ))
+		(text "Data_In[15..0]" (rect 21 27 110 42)(font "Arial" ))
+		(line (pt 0 32)(pt 16 32)(line_width 3))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "WR_FWL_Data" (rect 0 0 100 15)(font "Arial" ))
+		(text "WR_FWL_Data" (rect 21 43 121 58)(font "Arial" ))
+		(line (pt 0 48)(pt 16 48)(line_width 1))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "WR_FWL_Ctrl" (rect 0 0 92 15)(font "Arial" ))
+		(text "WR_FWL_Ctrl" (rect 21 59 113 74)(font "Arial" ))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "RD_FWL_Data" (rect 0 0 97 15)(font "Arial" ))
+		(text "RD_FWL_Data" (rect 21 75 118 90)(font "Arial" ))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "RD_FWL_STS" (rect 0 0 94 15)(font "Arial" ))
+		(text "RD_FWL_STS" (rect 21 91 115 106)(font "Arial" ))
+		(line (pt 0 96)(pt 16 96)(line_width 1))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "Powerup_Res" (rect 0 0 93 15)(font "Arial" ))
+		(text "Powerup_Res" (rect 21 107 114 122)(font "Arial" ))
+		(line (pt 0 112)(pt 16 112)(line_width 1))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "Clk" (rect 0 0 21 15)(font "Arial" ))
+		(text "Clk" (rect 21 123 42 138)(font "Arial" ))
+		(line (pt 0 128)(pt 16 128)(line_width 1))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "CTRL_LOAD" (rect 0 0 83 15)(font "Arial" ))
+		(text "CTRL_LOAD" (rect 21 139 104 154)(font "Arial" ))
+		(line (pt 0 144)(pt 16 144)(line_width 1))
+	)
+	(port
+		(pt 0 160)
+		(input)
+		(text "CTRL_RES" (rect 0 0 75 15)(font "Arial" ))
+		(text "CTRL_RES" (rect 21 155 96 170)(font "Arial" ))
+		(line (pt 0 160)(pt 16 160)(line_width 1))
+	)
+	(port
+		(pt 304 48)
+		(output)
+		(text "LOADER_WRnRD" (rect 0 0 119 15)(font "Arial" ))
+		(text "LOADER_WRnRD" (rect 164 43 283 58)(font "Arial" ))
+		(line (pt 304 48)(pt 288 48)(line_width 1))
+	)
+	(port
+		(pt 304 64)
+		(output)
+		(text "RELOAD" (rect 0 0 57 15)(font "Arial" ))
+		(text "RELOAD" (rect 226 59 283 74)(font "Arial" ))
+		(line (pt 304 64)(pt 288 64)(line_width 1))
+	)
+	(port
+		(pt 304 80)
+		(output)
+		(text "LOAD_OK" (rect 0 0 66 15)(font "Arial" ))
+		(text "LOAD_OK" (rect 217 75 283 90)(font "Arial" ))
+		(line (pt 304 80)(pt 288 80)(line_width 1))
+	)
+	(port
+		(pt 304 96)
+		(output)
+		(text "LOAD_ERROR" (rect 0 0 97 15)(font "Arial" ))
+		(text "LOAD_ERROR" (rect 186 91 283 106)(font "Arial" ))
+		(line (pt 304 96)(pt 288 96)(line_width 1))
+	)
+	(port
+		(pt 304 112)
+		(output)
+		(text "INIT_DONE" (rect 0 0 75 15)(font "Arial" ))
+		(text "INIT_DONE" (rect 208 107 283 122)(font "Arial" ))
+		(line (pt 304 112)(pt 288 112)(line_width 1))
+	)
+	(port
+		(pt 304 128)
+		(output)
+		(text "Loader_Rd_Port[15..0]" (rect 0 0 146 15)(font "Arial" ))
+		(text "Loader_Rd_Port[15..0]" (rect 137 123 283 138)(font "Arial" ))
+		(line (pt 304 128)(pt 288 128)(line_width 3))
+	)
+	(port
+		(pt 304 144)
+		(output)
+		(text "Rd_Loader_Activ" (rect 0 0 109 15)(font "Arial" ))
+		(text "Rd_Loader_Activ" (rect 174 139 283 154)(font "Arial" ))
+		(line (pt 304 144)(pt 288 144)(line_width 1))
+	)
+	(port
+		(pt 304 160)
+		(output)
+		(text "Dtack_Loader_Reg" (rect 0 0 126 15)(font "Arial" ))
+		(text "Dtack_Loader_Reg" (rect 157 155 283 170)(font "Arial" ))
+		(line (pt 304 160)(pt 288 160)(line_width 1))
+	)
+	(port
+		(pt 304 32)
+		(bidir)
+		(text "LOADER_DB[3..0]" (rect 0 0 116 15)(font "Arial" ))
+		(text "LOADER_DB[3..0]" (rect 167 27 283 42)(font "Arial" ))
+		(line (pt 304 32)(pt 288 32)(line_width 3))
+	)
+	(parameter
+		"Loader_CLK_in_Hz"
+		"50000000"
+		""
+	)
+	(drawing
+		(rectangle (rect 16 16 288 176)(line_width 1))
+	)
+	(annotation_block (parameter)(rect 320 -64 420 16))
+)

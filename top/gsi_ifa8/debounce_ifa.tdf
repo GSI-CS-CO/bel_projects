@@ -1,0 +1,159 @@
+Parameters (cnt);
+
+TITLE "Debounce   Autor: W.Panschow   Vers:5   d.05.09.01";
+
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--+																										+
+--+		Name des Macros:	Debounce																	+
+--+							Vers: 3		d. 17.11.97 komplett auf positive Logik umgestellt.				+
+--+							Vers: 4		d. 21.11.97 komplett auf LPM_MACROS umgestellt.					+
+--+							Vers: 5		d. 05.09.01 LPM_CONSTANT eingebaut. Sonst funkt. Cnt=5 nicht!	+
+--+																										+
+--+		Beschreibung:		Der Macro "Debounce" realisiert eine digitale Entprellung. Dies hat			+
+--+							mehrere Vorteile:															+
+--+								1) Die Entprellung ist unempfindlich gegen St�rungen, sowohl im aktiven	+
+--+								   als auch inaktiven Zustand von 'sig_deb'.						 	+
+--+								2) Sie ist mit 'sel' = 1 ein- und mit 'sel' = 0 leicht auszuschalten.	+
+--+								3) Die Entprellzeit ist genau, da sie mit einem Vor-R�ckw�rtsz�hler		+
+--+								   realisiert ist.														+
+--+								4) Die Aktiv- Inaktivzeit ist gleich und kann maximal +/- eine			+
+--+								   Clockperiode schwanken.												+
+--+							Ist die Entprellung eingeschaltet, dann mu� der Z�hler auf Zeitbasis von 	+
+--+							'clk' den Z�hlerstand 'cnt' erreichen, bevor 'sig_deb' aktiv wird.			+
+--+							Dies geht aber nur wenn das zu entprellende Eingangs-Signal 'sig' w�hrend	+
+--+							der ganzen Zeit aktiv (= 1) ist. Wird 'sig' w�hrend der Hochz�hlzeit		+
+--+							inaktiv, wird der Z�hler abw�rts z�hlen und den 'cnt' nicht erreichen.		+
+--+							Ist der Ausgang 'sig_deb' bei eingschalteter Entprellung aktiv geworden,	+
+--+							mu� 'sig' mindestens solange inaktiv sein, bis der Z�hler auf null			+
+--+							runtergez�hlt hat.															+
+--+							Der Parameter 'cnt' mu� beim Aufruf des Macros festgelegt werden.			+
+--+																										+
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--+																										+
+--+	A c h t u n g  das Reset-Signal 'res' wirkt direkt auf die asynchronen R�cksetzeing�nge				+
+--+		von 'sync_sig', 'count[]' und 'sig_deb_ff'. Ein von au�en �ber einen Pin oder intern von Logik	+
+--+		generiertes Reset-Signal sollte zu 'clk' aufsychronisiert, oder besser noch mit "Debounce"		+
+--+		entprellt sein. Bei diesem Debounce-Macro ist 'res' nat�rlich nicht anzuschlie�en.				+
+--+																										+
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+CONSTANT c_cnt_max = cnt-1; -- Tempor�re Konstante damit die 'group member size' immer pa�t. Funktioniert nicht mehr!
+CONSTANT null = 0;
+
+FUNCTION lpm_counter (	data[LPM_WIDTH-1..0], clock, clk_en, cnt_en, updown,
+						aclr, aset, aconst, aload, sclr, sset, sconst, sload	)
+   WITH (LPM_WIDTH, LPM_DIRECTION, LPM_MODULUS, LPM_AVALUE, LPM_SVALUE, CARRY_CNT_EN, LABWIDE_SCLR)
+   RETURNS (q[LPM_WIDTH-1..0], eq[15..0]);
+
+FUNCTION lpm_compare (dataa[LPM_WIDTH-1..0], datab[LPM_WIDTH-1..0], clock, aclr)
+   WITH (LPM_WIDTH, LPM_REPRESENTATION, LPM_PIPELINE, CHAIN_SIZE, ONE_INPUT_IS_CONSTANT)
+   RETURNS (alb, aeb, agb, ageb, aneb, aleb);
+
+FUNCTION lpm_constant ( )
+   WITH (LPM_WIDTH, LPM_CVALUE)
+   RETURNS (result[LPM_WIDTH-1..0]);
+
+ASSERT NOT(cnt <= 3)
+  REPORT "   cnt von Debounce sollte > 3 sein, ist aber % !" cnt
+SEVERITY ERROR;
+
+
+SUBDESIGN debounce_ifa
+(
+	sig:	INPUT;			-- das zu entprellende Signal
+	sel: 	INPUT = VCC;	-- wenn 'sel'=1 ist die Entprellung eingeschaltet. Nich angeschlossen ist 'sel'=1.
+	cnt_en:	INPUT = VCC;	--  
+	clk: 	INPUT;			-- Takt f�r die Aufsynchronisierung und den Z�hler der Entprellzeit.
+	res:	INPUT = GND;	-- Setzt asynchron 'sync_sig', 'count[]', 'sig_deb_ff' auf null! Nicht angeschlossen
+							-- ist 'res' nicht aktiv.
+	sig_deb: 	OUTPUT;		-- Wenn 'sel'=1 das entprellte Signal von 'Sig',
+							-- wenn 'sel'=0 folgt 'sig_deb' mit Gatterverz�gerung dem Signal 'sig'.
+)
+
+
+VARIABLE
+	sync_sig: 		DFFE;		-- Wenn die Entprellung aktiv ist, wird das Eingangs-Signal synchronisiert.
+	sig_deb_ff: 	SRFFE;		-- Wenn Entprellung=ein Merker f�r den letzten stabilen Zustand von 'sig_deb'.
+
+	count: lpm_counter WITH (LPM_WIDTH = ceil(log2(cnt)));	-- Der Z�hler f�r die Entprellzeit.
+
+	cnt_ein_comp: lpm_compare WITH ( LPM_WIDTH = ceil(log2(cnt)));	-- Komparator f�r den Einschalt-Z�hlerstand
+	cnt_ein: NODE;
+
+	cnt_aus_comp: lpm_compare WITH ( LPM_WIDTH = ceil(log2(cnt)));	-- Komparator f�r den Ausschalt-Z�hlerstand
+	cnt_aus: NODE;
+
+ -- Tempor�re Konstante damit die 'group member size' immer pa�t. Was ein Aufwand!
+	cnt_max: lpm_constant WITH (LPM_WIDTH = ceil(log2(cnt)), LPM_CVALUE = c_cnt_max);
+
+
+BEGIN
+
+--++++++++++++++++++++++++++++++++++++++++++++++++++++
+--+++++  Aufsynchronisation des Eingangs-Signals +++++
+--++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+sync_sig.(d, clk, ena, clrn) = (	sig,
+									clk,
+									cnt_en,
+									NOT res	); 
+
+
+--++++++++++++++++++++++++++++++++++++++++++++++++++++
+--+++++     Der Z�hler f�r die Entprellzeit      +++++
+--++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+count.(clock, updown, sclr) = (	clk,
+								sync_sig,	-- 'sync_sig' => count up
+								res	OR NOT sel);
+
+count.cnt_en = ((NOT cnt_ein AND sync_sig) OR (NOT cnt_aus AND NOT sync_sig)) AND cnt_en;
+
+
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--+++++  Komparator f�r den Z�hlerstand, ab dem 'sig' aktiv werden darf  +++++
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+cnt_ein_comp.dataa[] = count.q[];
+cnt_ein_comp.datab[] = cnt_max.result[];
+ 
+cnt_ein = cnt_ein_comp.aeb;			-- Ist 'wahr', wenn Count[] = c_cnt_max.
+ 
+
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--+++++  Komparator f�r den Z�hlerstand, ab dem 'sig' inaktiv werden darf  +++++
+--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+cnt_aus_comp.dataa[] = count.q[];
+cnt_aus_comp.datab[] = null;
+
+cnt_aus = cnt_aus_comp.aeb;			-- Ist 'wahr', wenn Count[] = null.
+ 
+
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+--+++++  Merker f�r den letzten stabilen Zustand von 'sig_deb'  +++++
+--+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+sig_deb_ff.(s, r, ena, clk, clrn) = (	cnt_ein,	
+							    		cnt_aus,
+										cnt_en,
+										clk,
+										NOT res	);
+
+
+--++++++++++++++++++++++++++++++++++++++++++++++++
+--+++++    Schalten des Ausgangs 'sig_deb'   +++++
+--++++++++++++++++++++++++++++++++++++++++++++++++
+
+IF sel THEN					-- Nur wenn Entprellung eingeschaltet wird 'sig_deb_ff' mit 'sig_deb' verbunden.
+	sig_deb = sig_deb_ff;
+ELSIF NOT res AND sig THEN	-- Wenn Entprellung ausgeschaltet und 'res' nicht aktiv ist, folgt 'sig_deb' dem 
+	sig_deb = VCC;			-- Eingang 'sig' direkt.
+ELSE
+	sig_deb = GND;
+END IF;
+
+END;
+

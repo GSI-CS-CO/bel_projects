@@ -1,0 +1,148 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2007 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 192 272)
+	(text "INL_Mux" (rect 5 0 60 15)(font "Arial" ))
+	(text "inst" (rect 8 237 31 252)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "MB_Mode" (rect 0 0 63 15)(font "Arial" ))
+		(text "MB_Mode" (rect 21 27 84 42)(font "Arial" ))
+		(line (pt 0 32)(pt 16 32)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "FB_Mode" (rect 0 0 61 15)(font "Arial" ))
+		(text "FB_Mode" (rect 21 43 82 58)(font "Arial" ))
+		(line (pt 0 48)(pt 16 48)(line_width 1))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "IFA_nINL" (rect 0 0 59 15)(font "Arial" ))
+		(text "IFA_nINL" (rect 21 59 80 74)(font "Arial" ))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "IFA_nDRQ" (rect 0 0 68 15)(font "Arial" ))
+		(text "IFA_nDRQ" (rect 21 75 89 90)(font "Arial" ))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "IFA_nDRDY" (rect 0 0 76 15)(font "Arial" ))
+		(text "IFA_nDRDY" (rect 21 91 97 106)(font "Arial" ))
+		(line (pt 0 96)(pt 16 96)(line_width 1))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "MB_nINL" (rect 0 0 59 15)(font "Arial" ))
+		(text "MB_nINL" (rect 21 107 80 122)(font "Arial" ))
+		(line (pt 0 112)(pt 16 112)(line_width 1))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "MB_nSRQ1" (rect 0 0 75 15)(font "Arial" ))
+		(text "MB_nSRQ1" (rect 21 123 96 138)(font "Arial" ))
+		(line (pt 0 128)(pt 16 128)(line_width 1))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "MB_nSRQ2" (rect 0 0 75 15)(font "Arial" ))
+		(text "MB_nSRQ2" (rect 21 139 96 154)(font "Arial" ))
+		(line (pt 0 144)(pt 16 144)(line_width 1))
+	)
+	(port
+		(pt 0 160)
+		(input)
+		(text "MB_Sel_Err" (rect 0 0 76 15)(font "Arial" ))
+		(text "MB_Sel_Err" (rect 21 155 97 170)(font "Arial" ))
+		(line (pt 0 160)(pt 16 160)(line_width 1))
+	)
+	(port
+		(pt 0 176)
+		(input)
+		(text "FB_nINL" (rect 0 0 56 15)(font "Arial" ))
+		(text "FB_nINL" (rect 21 171 77 186)(font "Arial" ))
+		(line (pt 0 176)(pt 16 176)(line_width 1))
+	)
+	(port
+		(pt 0 192)
+		(input)
+		(text "FB_nDRQ" (rect 0 0 66 15)(font "Arial" ))
+		(text "FB_nDRQ" (rect 21 187 87 202)(font "Arial" ))
+		(line (pt 0 192)(pt 16 192)(line_width 1))
+	)
+	(port
+		(pt 0 208)
+		(input)
+		(text "FB_nDRDY" (rect 0 0 74 15)(font "Arial" ))
+		(text "FB_nDRDY" (rect 21 203 95 218)(font "Arial" ))
+		(line (pt 0 208)(pt 16 208)(line_width 1))
+	)
+	(port
+		(pt 0 224)
+		(input)
+		(text "FB_Sel_Err" (rect 0 0 74 15)(font "Arial" ))
+		(text "FB_Sel_Err" (rect 21 219 95 234)(font "Arial" ))
+		(line (pt 0 224)(pt 16 224)(line_width 1))
+	)
+	(port
+		(pt 176 32)
+		(output)
+		(text "nINL" (rect 0 0 30 15)(font "Arial" ))
+		(text "nINL" (rect 125 27 155 42)(font "Arial" ))
+		(line (pt 176 32)(pt 160 32)(line_width 1))
+	)
+	(port
+		(pt 176 48)
+		(output)
+		(text "nDRQ" (rect 0 0 40 15)(font "Arial" ))
+		(text "nDRQ" (rect 115 43 155 58)(font "Arial" ))
+		(line (pt 176 48)(pt 160 48)(line_width 1))
+	)
+	(port
+		(pt 176 64)
+		(output)
+		(text "nDRDY" (rect 0 0 48 15)(font "Arial" ))
+		(text "nDRDY" (rect 107 59 155 74)(font "Arial" ))
+		(line (pt 176 64)(pt 160 64)(line_width 1))
+	)
+	(port
+		(pt 176 80)
+		(output)
+		(text "Sel_Err" (rect 0 0 48 15)(font "Arial" ))
+		(text "Sel_Err" (rect 107 75 155 90)(font "Arial" ))
+		(line (pt 176 80)(pt 160 80)(line_width 1))
+	)
+	(drawing
+		(rectangle (rect 16 16 160 240)(line_width 1))
+	)
+)

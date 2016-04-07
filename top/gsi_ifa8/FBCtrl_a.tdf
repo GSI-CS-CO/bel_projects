@@ -1,0 +1,389 @@
+TITLE "FBCtrl_a";
+
+PARAMETERS (TEST);
+PARAMETERS (Piggy_ID);
+
+FUNCTION SRFFE (S, R, CLK, CLRN, PRN, ENA)	RETURNS (Q);
+FUNCTION SRFF  (S, R, CLK, CLRN, PRN)		RETURNS (Q);
+FUNCTION DFF      (D, CLK, CLRN, PRN)		RETURNS (Q);
+FUNCTION DFFE     (D, CLK, CLRN, PRN, ENA)	RETURNS (Q);
+
+FUNCTION lpm_ff (data[LPM_WIDTH-1..0], clock, enable, sclr, sset, sload, aclr, aset, aload)
+   WITH (LPM_WIDTH, LPM_AVALUE, LPM_SVALUE, LPM_FFTYPE)
+   RETURNS (q[LPM_WIDTH-1..0]);
+
+FUNCTION lpm_mux (data[LPM_SIZE-1..0][LPM_WIDTH-1..0], sel[LPM_WIDTHS-1..0], clock, aclr) 
+   WITH (LPM_WIDTH, LPM_SIZE, LPM_WIDTHS, LPM_PIPELINE)
+   RETURNS (result[LPM_WIDTH-1..0]);
+
+
+
+--*******************************************************************************
+--                          Hier immer die aktuelle Versions-Nummer festlegen !!!
+--                                    |
+  CONSTANT Versions_nr = (TEST==0) ? 01 : 00;
+--                                         |
+--                     Eine Testversion bekommt immer die Nr. 00 !!!    
+
+--	1. Version
+
+--*******************************************************************************
+
+
+
+----- Funktions-Codes fuer Fair-Bus -----
+
+CONSTANT c_res			 = H"01"; -- FKT-Code Reset 
+
+CONSTANT C_wr_BusData	 = H"10";
+CONSTANT C_wr_BusAdr	 = H"11";
+CONSTANT C_wr_Board_SEL	 = H"2D";
+CONSTANT C_rd_EPLD_Vers	 = H"8D";
+CONSTANT C_rd_Piggy_ID	 = H"8E";
+CONSTANT C_rd_BusData	 = H"90";
+
+CONSTANT C_rd_FB_STS	 = H"9A";
+CONSTANT C_rd_FB_SRQ	 = H"CE";
+
+CONSTANT C_res_SelErr	 = H"75";
+
+
+
+SUBDESIGN FBCtrl_a
+
+    (
+	CLK,					-- System-Clock  
+    FB_Mode,				-- Betriebsart der Interface-Karte
+    FC_Str,					-- Funktionscode-Strobe	 ______+-+_______
+	FC[7..0],				-- Funktionscode
+	SW_INT[15..0],			-- Daten-Sollwert Intern
+	BUS_FC_RW,				-- FC's für Bus I/O
+	Bus_ADR[15..0],			-- Bus-Adr. vom MB-Macro (auch aus dem RAM-Decoder)
+	FB_Din[15..0],			-- FB-Data-In		
+	SCLR,					-- syn. Clear
+	FB_nSRQ[13..1],			-- FB-Service-Request		
+	FB_nDtack,				-- FB-DTACK	
+	FB_Master4,				-- Reserve-Inputs
+	FB_Master7,				-- Reserve-Inputs
+	FB_Master10,			-- Reserve-Inputs
+	FB_Master11				-- Reserve-Inputs
+					:	INPUT;
+
+	
+	Vers[7..0],				-- Software-Version
+	Dtack_Test,				-- Zeit-Fenster für DTACK Test
+	Dtack_Err_Q,			-- Dtack-Err-Q. ( "1" , wenn kein DTACK auf dem FB )
+	Res_Sel_Err,			-- Res_Sel-Err, clear Fehlerspeicher für Dtack-Err
+	Sel_Err_Q,				-- Sel-Err-Q, Fehlerspeicher für Dtack-Err
+	FB_SD_MUX[15..0],		-- Read-Daten: FB-Data und Status		
+	FB_nSend_En,			-- Enable des 'EE-FlipFlops' für den Sender '6408'
+	FB_nSend_STR,			-- Send-Strobe zum Starten des 'EE-FlipFlops' für den Sender '6408'
+
+	FB_Adr[15..0],			-- FB-ADR		
+	FB_nBSEL[13..1],		-- FB Board Select für die Slaves		
+	FB_Dout[15..0],			-- FB-Data-Out		
+	FB_R/nW,				-- FB-Read / nWrite	
+	FB_nDS,					-- FB-Data-Srobe	
+	FB_WR,					-- FB write	
+	FB_read_Reg,			-- read MB-Bus Register		
+	FB_RD,					-- FB read	
+    FB_SEL,					-- Sel für FB-Treiber		
+    FB_nSRQ_Sum,			-- Summen-Service-Request vom Fair-Bus		
+    FB_FC_Str_Syn			-- 
+				:	OUTPUT;
+    )
+
+
+VARIABLE
+
+
+	FB_RW_SM: MACHINE	WITH STATES	-- State-Machine: Fair-Bus Read oder Write
+		 (Idle, Enable, DS_A, DS_W1, DS_W2, DS_W3, DS_W4, DS_W5, DS_End, Disa, Send, ENDE);
+
+
+	v_FB_ADR			:	lpm_ff	WITH (LPM_WIDTH = 16);
+	v_FB_SEL			:	lpm_ff	WITH (LPM_WIDTH = 16);
+	v_FB_Din			:	lpm_ff	WITH (LPM_WIDTH = 16);
+
+	v_Read_Mux			:	LPM_MUX WITH (LPM_WIDTH  = 16,		-- Width of the data[][] and result[] ports. 
+										  LPM_SIZE   = 5,		-- Number of input buses to the multiplexer.
+										  LPM_WIDTHS = 3);	-- Width of the sel[] input port.
+
+	V_FB_RW_SEQ_ff		:	SRFF; -- Read/Write Datenbus Sequence
+	V_Enable_ff			:	SRFF; -- Datenbus Enable
+	V_DS_ff				:	SRFF; -- Datenstrobe
+    v_FB_Send_En		:	dffe;
+    v_FB_Send_STR		:	dffe;
+
+    v_FC_Str_Syn		:	DFF;
+    v_FC_STR_Syn1		:	DFF;
+    v_FC_STR_Syn2		:	DFF;
+    v_Dtack_Syn			:	DFF;
+	v_Dtack_Err			:	DFFE;
+	v_FB_read_Reg		:	DFF;
+	v_Sel_Err			:	DFFE;
+	v_res_SelErr		:	DFFE;
+	
+	
+BEGIN
+
+	Vers[] = Versions_nr;
+ 
+	ASSERT NOT(VERSIONS_NR == 0)
+	REPORT "      ----------- Dies ist eine Testversion der Modul-Bus-Contr. !!!!  -----------" 
+	SEVERITY Warning;
+
+	ASSERT NOT(VERSIONS_NR != 0)
+	REPORT "      Die Design-Version des Modul-Bus-Contr. lautet    -------->  %  <---------" Versions_nr
+	SEVERITY Warning;
+
+--+==========================================================================
+
+
+-----------Enable SM und FF's nur wenn FB_Mode = aktiv -----------
+--
+	FB_RW_SM.(clk,reset)		= (CLK, (SCLR AND NOT FB_Mode));
+	V_DS_ff. (clk,clrn)			= (CLK, (NOT SCLR AND FB_Mode));--Datenstrobe
+	V_Enable_ff. (clk,clrn)		= (CLK, (NOT SCLR AND FB_Mode));--Enable
+	V_FB_RW_SEQ_ff. (clk,clrn)	= (CLK, (NOT SCLR AND FB_Mode));--FB_RW_Sequence
+
+
+--
+-- CLK:  40Hz = 25ns                                                         
+--                                                                 
+--             1   2   3   4   5   6        14  15  16  17  18  19  20        28  29  30  31  32
+-- clk     +-+ +-+ +-+ +-+ +-+ +-+ +-+       +-+ +-+ +-+ +-+ +-+ +-+ +-+       +-+ +-+ +-+ +-+ +-+
+--       --+ +-+ +-+ +-+ +-+ +-+ +-+ +--///--+ +-+ +-+ +-+ +-+ +-+ +-+ +--///--+ +-+ +-+ +-+ +-+ +
+-- fktc_str  +------------------------------------------------------------------------------------
+--         --+                                                                                 
+-- enable        2 +----------------------------------- 3,0us ---------------------------------+ 32  
+--           ------+                                                                           +--
+-- hByte_en              4 +---------- 1,2 us -------+ 16                                          
+--           --------------+                         +--------------------------------------------
+-- lByte_en                                               18 +---------- 1,2 us -------+ 30       
+--           ------------------------------------------------+                         +----------
+-- data_str                      6 +- 800ns -+ 14                 20 +- 800ns -+ 28               
+--           ----------------------+         +-----------------------+         +------------------
+-- Dtack-Test                      10 +-- -+ 13                      24 +----+ 27                 
+--           -------------------------+    +----------------------------+    +-------------------- bei F380211B
+-- Dtack-Test                             +--+                              +--+                
+--           -----------------------------+  +------------------------------+  +------------------ ab  F380211C
+-- set_ee                                                                           30 +-+        
+--           --------------------------------------------------------------------------+ +--------
+
+
+	----- Synchronisation -----
+
+	v_FC_STR_Syn1.  (D, CLK) = ( (Fc_str AND FB_Mode),	    clk); 
+	v_FC_STR_Syn2.  (D, CLK) = ( v_FC_STR_Syn1, clk); 
+	v_FC_STR_Syn.   (D, CLK) = ( (v_FC_STR_Syn1.q AND (NOT v_FC_STR_Syn2.q)), clk); 
+
+	v_Dtack_syn.	(D, CLK) = ( FB_nDtack,	 clk); 
+
+
+
+
+ ------------------------------ Fair-Bus Timing ---------------------------------------------------
+
+  CASE FB_RW_SM IS
+	WHEN Idle =>
+
+	  IF    (v_FC_STR_Syn AND BUS_FC_RW) THEN --- IF Fair-Bus READ or Write
+
+				FB_RW_SM = Enable; --- weiter zum Fairbus Read/Write 
+	  ELSE		FB_RW_SM = Idle;  ---- Wait Loop
+      END IF;
+
+	WHEN Enable =>	
+		 V_FB_RW_SEQ_ff.s	=	VCC; --FB_RW_Sequence =EIN
+		 V_Enable_ff.s		=	VCC; --Signal Enable = Ein
+		 FB_RW_SM  			=	DS_A; 
+
+	WHEN DS_A =>
+		 V_DS_ff.s		=	VCC; --Signal DS = Ein
+		 FB_RW_SM  		=	DS_W1; 
+
+	WHEN DS_W1 =>
+		 FB_RW_SM  		=	DS_W2; 
+	WHEN DS_W2 =>
+		 FB_RW_SM  		=	DS_W3; 
+	WHEN DS_W3 =>
+		 FB_RW_SM  		=	DS_W4; 
+	WHEN DS_W4 =>
+		 FB_RW_SM  		=	DS_W5; 
+	WHEN DS_W5 =>
+		 FB_RW_SM  		=	DS_End; 
+
+	WHEN DS_END =>
+		 V_DS_ff.r		=	VCC; --Signal DS = AUS
+		 FB_RW_SM  		=	Disa; 
+
+	WHEN Disa =>
+		 V_Enable_ff.r	=	VCC; --Signal Enable = Aus
+
+		IF (FC7)
+			THEN  FB_RW_SM = Send; ----- FC7 = Read-Sequence  
+			ELSE  FB_RW_SM = Ende; -- Ende
+		END IF;
+
+	WHEN Send =>
+		 V_Enable_ff.r	=	VCC;  --Signal Enable = AUS
+		 FB_RW_SM 		=	Ende; -- Ende
+
+
+	WHEN Ende =>
+		 V_FB_RW_SEQ_ff.r	=	VCC; --FB_RW_Sequence = AUS
+		 FB_RW_SM 		=	Idle; -- Loop
+
+  END CASE;
+
+
+
+--+==========================================================================
+--| DTACK-Error   
+--+==========================================================================
+
+	-- Error, wenn waehrend des Daten-Strobes (bei v_Dtack_Test_Data.q) Dtack nicht aktiv = '0' ist.
+	-- Dtack_Err kann nur waehrend v_SEL_Bus.q aktiv = '1' werden. (NOT v_SEL_Bus.q aktiv = CLRN)
+	v_Dtack_Err.(D,CLK,ENA,CLRN) = ( v_Dtack_syn.q, clk, (DS_W4 OR DS_W5), V_FB_RW_SEQ_ff.q);
+
+	-- Error-Speicher, wenn v_Dtack_Err.q oder v_FC_Err.q aktiv = '1' sind.
+	v_Sel_Err  .(D,CLK,ENA,CLRN)   = ( VCC, clk, (v_Dtack_Err.q), NOT v_res_SelErr.q );
+
+	v_res_SelErr. (D, CLK, ENA)    = ( v_FC_STR_syn1, clk, fc[] == C_res_SelErr); 
+
+
+
+--+==========================================================================
+--| Fair-Bus-Signale
+--+==========================================================================
+
+	v_FB_Send_En	.(D,CLK,ENA)  = ((fc[] == C_rd_BusData),  clk,  v_FC_Str_Syn1 );-- FB-Read Seq.
+
+	v_FB_Send_STR	.(D,CLK,ENA)  = ( Send, clk,  ((fc[] == C_rd_BusData) AND NOT v_Dtack_Err.q ));
+
+
+--+==========================================================================
+--| Fair-Bus-Daten-Register 
+--+==========================================================================
+
+v_FB_Din.(data[], clock, enable, aclr) = (FB_Din[15..0], CLK, (V_DS_ff), SCLR); 		
+
+--+==========================================================================
+--| Daten-Read Muliplexer  
+--+==========================================================================
+
+
+IF 		(FC_Str AND (fc[] == C_rd_FB_STS)) 		THEN	v_Read_Mux.sel[] = 1; --
+ELSIF	(FC_Str AND (fc[] == C_rd_FB_SRQ)) 		THEN	v_Read_Mux.sel[] = 2; --
+ELSIF	(FC_Str AND (fc[] == C_rd_EPLD_Vers)) 	THEN	v_Read_Mux.sel[] = 3; --
+ELSIF	(FC_Str AND (fc[] == C_rd_Piggy_ID)) 	THEN	v_Read_Mux.sel[] = 4; --
+ELSE									 				v_Read_Mux.sel[] = 0; -- read FB-Daten
+END IF;
+
+
+v_Read_mux.data[0][]		= v_FB_Din.q[15..0];	-- Input-Daten Fair-Bus-Register 
+
+v_Read_mux.data[1][15]		=	 v_Dtack_Err.q;	 	
+v_Read_mux.data[1][14]		=	 v_Sel_Err.q;	 	
+v_Read_mux.data[1][13..4]	=	 GND;	 	
+v_Read_mux.data[1][3]		=	 FB_Master11;	 	
+v_Read_mux.data[1][2]		=	 FB_Master10;	 	
+v_Read_mux.data[1][1]		=	 FB_Master7;	 	
+v_Read_mux.data[1][0]		=	 FB_Master4;	 	
+	
+v_Read_mux.data[2][15..13]	=	 GND;	 	
+v_Read_mux.data[2][12]		=	 NOT FB_nSRQ[13];	 	
+v_Read_mux.data[2][11]		=	 NOT FB_nSRQ[12];	 	
+v_Read_mux.data[2][10]		=	 NOT FB_nSRQ[11];	 	
+v_Read_mux.data[2][9]		=	 NOT FB_nSRQ[10];	 	
+v_Read_mux.data[2][8]		=	 NOT FB_nSRQ[9];	 	
+v_Read_mux.data[2][7]		=	 NOT FB_nSRQ[8];	 	
+v_Read_mux.data[2][6]		=	 NOT FB_nSRQ[7];	 	
+v_Read_mux.data[2][5]		=	 NOT FB_nSRQ[6];	 	
+v_Read_mux.data[2][4]		=	 NOT FB_nSRQ[5];	 	
+v_Read_mux.data[2][3]		=	 NOT FB_nSRQ[4];	 	
+v_Read_mux.data[2][2]		=	 NOT FB_nSRQ[3];	 	
+v_Read_mux.data[2][1]		=	 NOT FB_nSRQ[2];	 	
+v_Read_mux.data[2][0]		=	 NOT FB_nSRQ[1];		 	
+
+v_Read_mux.data[3][15..8]	=	 GND;	 	
+v_Read_mux.data[3][7..0]	=	 Vers[7..0];	 	
+
+v_Read_mux.data[4][15..8]	=	 GND;	 	
+v_Read_mux.data[4][7..0]	=	 Piggy_ID; --Piggy-ID	 	
+
+
+------------ Summen-Service-Request vom Fair-Bus -----------------		
+
+FB_nSRQ_Sum	=	(FB_nSRQ[13] AND FB_nSRQ[12] AND FB_nSRQ[11] AND FB_nSRQ[10] AND		
+				 FB_nSRQ[9]  AND FB_nSRQ[8]  AND FB_nSRQ[7]  AND FB_nSRQ[6]  AND		
+				 FB_nSRQ[5]  AND FB_nSRQ[4]  AND FB_nSRQ[3]  AND FB_nSRQ[2]  AND FB_nSRQ[1]);
+		
+
+
+--+=====================================================================================
+--| "EE" Start im FB-Mode für Zugriffe die !!! nicht auf den Modulbus erfolgen
+--+=====================================================================================
+
+	v_FB_read_Reg.(D, CLK, CLRN)	=   ((FB_Mode) AND
+
+										((fc[] == C_rd_BusData)		OR	  -- read Fair-Bus-Daten
+										 (fc[] == C_rd_Piggy_ID)	OR	  -- read Piggy-ID	
+										 (fc[] == C_rd_EPLD_Vers)	OR    -- read EPLD-Version	
+										 (fc[] == C_rd_FB_STS)		OR    -- read FB-Status	
+										 (fc[] == C_rd_FB_SRQ)),	      -- read FB_SRQ-Status	
+										clk, NOT SCLR);
+
+
+--+==========================================================================
+--| Ausgänge 
+--+==========================================================================
+
+-------------- Slave-Selekt ---------
+
+CASE Bus_ADR[15..12] IS
+	WHEN H"1"		=>	FB_nBSel[13..1] = B"1111111111110"; -- Slave #1
+	WHEN H"2"		=>	FB_nBSel[13..1] = B"1111111111101"; -- Slave #2
+	WHEN H"3"		=>	FB_nBSel[13..1] = B"1111111111011"; -- Slave #3
+	WHEN H"4"		=>	FB_nBSel[13..1] = B"1111111110111"; -- Slave #4
+	WHEN H"5"		=>	FB_nBSel[13..1] = B"1111111101111"; -- Slave #5
+	WHEN H"6"		=>	FB_nBSel[13..1] = B"1111111011111"; -- Slave #6
+	WHEN H"7"		=>	FB_nBSel[13..1] = B"1111110111111"; -- Slave #7
+	WHEN H"8"		=>	FB_nBSel[13..1] = B"1111101111111"; -- Slave #8
+	WHEN H"9"		=>	FB_nBSel[13..1] = B"1111011111111"; -- Slave #9
+	WHEN H"A"		=>	FB_nBSel[13..1] = B"1110111111111"; -- Slave #10
+	WHEN H"B"		=>	FB_nBSel[13..1] = B"1101111111111"; -- Slave #11
+	WHEN H"C"		=>	FB_nBSel[13..1] = B"1011111111111"; -- Slave #12
+	WHEN H"D"		=>	FB_nBSel[13..1] = B"0111111111111"; -- Slave #13
+	WHEN OTHERS 	=>	FB_nBSel[13..1] = B"1111111111111";
+END CASE;
+
+	FB_Adr[15..12]	=	GND;			-- Bit [15..12] der FB-ADR. auf GND		
+	FB_Adr[11..0]	=	Bus_ADR[11..0];	-- FB-ADR		
+
+	FB_Dout[15..0]	=	SW_INT[15..0];	-- FB-Data-Out		
+
+	FB_SEL			=	V_Enable_ff	.q;	
+	FB_nDS			=	NOT	V_DS_ff		.q;	
+	FB_R/nW			=	FC7;				-- FB-Read / nWrite	
+
+	FB_WR			=	(V_Enable_ff	.q AND (Not FC7));
+	FB_RD			=	v_FB_read_Reg.q;
+	FB_read_Reg		=	v_FB_read_Reg.q; -- read FB-Bus Register		
+
+	FB_nSend_En		=	NOT v_FB_Send_En;
+	FB_nSend_STR	=	NOT	v_FB_Send_STR;
+	FB_SD_MUX[15..0]=	v_Read_mux.result[];
+
+
+	Dtack_Test		=	(DS_W4 OR DS_W5);
+	Dtack_Err_Q		=	v_Dtack_Err	  .q;
+	Sel_Err_Q		=	v_Sel_Err	  .q;
+	Res_Sel_Err 	=	v_res_SelErr  .q;
+
+    FB_FC_STR_Syn	=	v_FC_Str_Syn.q;		
+
+
+END;
+

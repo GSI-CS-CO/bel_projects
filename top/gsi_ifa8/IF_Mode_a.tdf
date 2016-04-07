@@ -1,0 +1,172 @@
+
+TITLE "IF_Mode_a";-- R. Hartmann 10.01.2013
+
+FUNCTION SRFFE (S, R, CLK, CLRN, PRN, ENA)	RETURNS (Q);
+FUNCTION SRFF  (S, R, CLK, CLRN, PRN)		RETURNS (Q);
+FUNCTION DFF      (D, CLK, CLRN, PRN)		RETURNS (Q);
+FUNCTION DFFE     (D, CLK, CLRN, PRN, ENA)	RETURNS (Q);
+
+FUNCTION lpm_ff (data[LPM_WIDTH-1..0], clock, enable, sclr, sset, sload, aclr, aset, aload)
+   WITH (LPM_WIDTH, LPM_AVALUE, LPM_SVALUE, LPM_FFTYPE)
+   RETURNS (q[LPM_WIDTH-1..0]);
+
+
+CONSTANT C_WR_IF_Mode		= H"60";
+
+CONSTANT C_IFA_Mode			= B"0000000000000000";
+CONSTANT C_FG_Mode			= B"0000000000000001";
+CONSTANT C_MB_Mode			= B"0000000000000010";
+CONSTANT C_Sweep_Mode		= B"0000000000000100";
+CONSTANT C_IO_Bus_Mode		= B"0000000000001000";
+CONSTANT C_FG_DDS_Mode		= B"0000000000010000";
+CONSTANT C_SCU_Mode			= B"0000000000100000";
+CONSTANT C_SCU_ACU_Mode		= B"0000000001000000";
+
+SUBDESIGN IF_Mode_a
+
+    (
+	HW_SEL_MB,				-- Hardware Select: Interface-Karte fest auf Modul-Bus-Mode eingestellt
+	HW_SEL_SCUB,			-- Hardware Select: Interface-Karte fest auf SCU-Bus-Mode eingestellt
+	CLK,					-- System-Clock  
+    FC_Str,					-- Funktionscode-Strobe	 ______+-+_______
+	FC[7..0],				-- Funktionscode
+	DI[15..0],				-- Daten-Sollwert Intern
+	FG_En,					-- Fuktionsg. Enable
+	FG_DDS_En,				-- Fuktionsg. mit DDS-Interface Enable
+	Sweep_En,				-- Sweeper-Modul Enable
+	SCLR					-- syn. Clear
+				:	INPUT;
+
+	IF_Mode[15..0],			-- Interface-Karten-Mode
+	IFA_Mode,				-- Interface-Karten-SEL
+	FG_Mode,				-- Funktongen.-SEL
+	FG_DDS_Mode,			-- Funktongen.-SEL
+	MB_Mode,				-- Modulbus-SEL
+	SCU_Mode,				-- SCU-BUS-Mode
+	SCU_ACU_Mode,			-- SCU_ACU_Mode
+	Sweep_Mode				-- Sweeper-SEL
+				:	OUTPUT;
+    )
+
+
+
+VARIABLE
+	v_IF_Mode 		: LPM_FF WITH (LPM_WIDTH=16); -- Mode-Register
+
+	v_IFA_Mode		: SRFF;
+	v_FG_Mode		: SRFF;
+	v_FG_DDS_Mode	: SRFF;
+	v_MB_Mode		: SRFF;
+	v_SCU_Mode		: SRFF;
+	v_SCU_ACU_Mode	: SRFF;
+	v_Sweep_Mode	: SRFF;
+
+BEGIN
+
+	v_IF_Mode .(data[], clock, enable, aclr) = (DI[], clk, ((fc[] == C_WR_IF_Mode ) & fc_str),  SCLR);
+
+	--+--------------------------------------------------------------------------
+	-- Interface-Karten-Modul-SEL    
+	--+--------------------------------------------------------------------------
+	
+	v_IFA_Mode.		(CLK, CLRN) = (CLK, NOT SCLR);
+	v_FG_Mode.		(CLK, CLRN) = (CLK, NOT SCLR);
+	v_FG_DDS_Mode.	(CLK, CLRN) = (CLK, NOT SCLR);
+	v_MB_Mode.		(CLK, CLRN) = (CLK, NOT SCLR);
+	v_SCU_Mode.		(CLK, CLRN) = (CLK, NOT SCLR);
+	v_SCU_ACU_Mode.	(CLK, CLRN) = (CLK, NOT SCLR);
+	v_Sweep_Mode.	(CLK, CLRN) = (CLK, NOT SCLR);
+
+
+	IF	HW_SEL_MB AND (NOT HW_SEL_SCUB) THEN   -- nur mit dem MB-SEl-Signal von VG-Leiste ==> Modul-Bus-Mode 
+	  			v_IFA_Mode	  .r	= VCC; -- clear IFA_Mode
+	  			v_FG_Mode	  .r	= VCC; -- clear FG_Mode
+	  			v_FG_DDS_Mode .r	= VCC; -- clear FG-DDS_Mode
+	  			v_MB_Mode	  .s	= VCC; -- set   MB_Mode
+	  			v_SCU_Mode	  .r	= VCC; -- Clear SCU_Mode
+	  			v_SCU_ACU_Mode.r	= VCC; -- Clear SCU_ACU_Mode
+	  			v_Sweep_Mode  .r	= VCC; -- clear Sweep_Mode
+				IF_Mode[]		 	= c_MB_Mode;		
+
+
+	  ELSIF	HW_SEL_SCUB AND (NOT HW_SEL_MB) THEN   -- nur mit dem SCU-SEl-Signal von VG-Leiste ==> FAIR-Bus-Mode 
+
+			IF	(v_IF_Mode.q[] == C_SCU_ACU_Mode)	THEN   	-- und Software-Mode SCU_ACU ==> IFA im SCU_ACU-Mode 
+
+	  			v_IFA_Mode	  .r	= VCC; -- clear IFA_Mode
+	  			v_FG_Mode	  .r	= VCC; -- clear FG_Mode
+	  			v_FG_DDS_Mode .r	= VCC; -- clear FG-DDS_Mode
+	  			v_MB_Mode	  .r	= VCC; -- Clear MB_Mode
+	  			v_SCU_Mode	  .s	= VCC; -- set   SCU_Mode
+	  			v_SCU_ACU_Mode.s	= VCC; -- Clear SCU_ACU_Mode
+	  			v_Sweep_Mode  .r	= VCC; -- clear Sweep_Mode
+				IF_Mode[]			= C_SCU_ACU_Mode;		
+			ELSE
+	  			v_IFA_Mode	  .r	= VCC; -- clear IFA_Mode
+	  			v_FG_Mode	  .r	= VCC; -- clear FG_Mode
+	  			v_FG_DDS_Mode .r	= VCC; -- clear FG-DDS_Mode
+	  			v_MB_Mode	  .r	= VCC; -- Clear MB_Mode
+	  			v_SCU_Mode	  .s	= VCC; -- set   SCU_Mode
+	  			v_SCU_ACU_Mode.r	= VCC; -- Clear SCU_ACU_Mode
+	  			v_Sweep_Mode  .r	= VCC; -- clear Sweep_Mode
+				IF_Mode[]			= c_SCU_Mode;		
+			END IF;
+
+
+	  ELSIF ((v_IF_Mode.q[] == C_FG_Mode) AND FG_EN) THEN
+	  			v_IFA_Mode	  .r	= VCC; -- clear IFA_Mode
+	  			v_FG_Mode	  .s	= VCC; -- set   FG_Mode
+	  			v_FG_DDS_Mode .r	= VCC; -- clear FG-DDS_Mode
+	  			v_MB_Mode	  .r	= VCC; -- clear MB_Mode
+	  			v_SCU_Mode	  .r	= VCC; -- clear SCU_Mode
+	  			v_SCU_ACU_Mode.r	= VCC; -- Clear SCU_ACU_Mode
+	  			v_Sweep_Mode  .r	= VCC; -- clear Sweep_Mode
+				IF_Mode[]			= c_FG_Mode;		
+
+	  ELSIF ((v_IF_Mode.q[] == C_FG_DDS_Mode) AND FG_DDS_EN) THEN
+	  			v_IFA_Mode	  .r	= VCC; -- clear IFA_Mode
+	  			v_FG_Mode	  .s	= VCC; -- set   FG_Mode
+	  			v_FG_DDS_Mode .s	= VCC; -- set   FG-DDS_Mode
+	  			v_MB_Mode	  .r	= VCC; -- clear MB_Mode
+	  			v_SCU_Mode	  .r	= VCC; -- clear SCU_Mode
+	  			v_SCU_ACU_Mode.r	= VCC; -- Clear SCU_ACU_Mode
+	  			v_Sweep_Mode  .r	= VCC; -- clear Sweep_Mode
+				IF_Mode[]			= c_FG_DDS_Mode;		
+
+	  ELSIF ((v_IF_Mode.q[] == C_Sweep_Mode) AND Sweep_EN) THEN
+	  			v_IFA_Mode	  .r	= VCC; -- clear IFA_Mode
+	  			v_FG_Mode	  .r	= VCC; -- clear FG_Mode
+	  			v_FG_DDS_Mode .r	= VCC; -- clear FG-DDS_Mode
+	  			v_MB_Mode	  .r	= VCC; -- clear MB_Mode
+	  			v_SCU_Mode	  .r	= VCC; -- clear SCU_Mode
+	  			v_SCU_ACU_Mode.r	= VCC; -- Clear SCU_ACU_Mode
+	  			v_Sweep_Mode  .s	= VCC; -- set   Sweep_Mode
+				IF_Mode[]			= c_SWEEP_Mode;		
+
+	ELSE
+	  			v_IFA_Mode	  .s	= VCC; -- set   IFA_Mode
+	  			v_FG_Mode	  .r	= VCC; -- clear FG_Mode
+	  			v_FG_DDS_Mode .r	= VCC; -- clear FG-DDS_Mode
+	  			v_MB_Mode	  .r	= VCC; -- clear MB_Mode
+	  			v_SCU_Mode	  .r	= VCC; -- clear SCU_Mode
+	  			v_SCU_ACU_Mode.r	= VCC; -- Clear SCU_ACU_Mode
+	  			v_Sweep_Mode  .r	= VCC; -- clear Sweep_Mode
+				IF_Mode[]			= c_IFA_Mode;		
+	END IF;
+
+
+	--+##########################################################################
+	--|                            Ausgänge 
+	--+##########################################################################
+
+
+	IFA_Mode		=   v_IFA_Mode		.q;
+	FG_Mode			=	v_FG_Mode		.q;
+	FG_DDS_Mode		=   v_FG_DDS_Mode	.q;
+	MB_Mode			=	v_MB_Mode		.q;
+	SCU_Mode		=	v_SCU_Mode		.q;
+	SCU_ACU_Mode	=	v_SCU_ACU_Mode	.q;
+	Sweep_Mode		=	v_Sweep_Mode	.q;
+END;
+
+	

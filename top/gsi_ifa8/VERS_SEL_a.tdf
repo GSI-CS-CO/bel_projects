@@ -1,0 +1,103 @@
+TITLE "VERS_SEL_a";
+
+FUNCTION SRFF  (S, R, CLK, CLRN, PRN)		RETURNS (Q);
+FUNCTION DFF      (D, CLK, CLRN, PRN)		RETURNS (Q);
+
+FUNCTION lpm_counter (data[LPM_WIDTH-1..0], clock, clk_en, cnt_en, updown, aclr,
+						 aset, aconst, aload, sclr, sset, sconst, sload)
+   WITH (LPM_WIDTH, LPM_DIRECTION, LPM_MODULUS, LPM_AVALUE, LPM_SVALUE, CARRY_CNT_EN, LABWIDE_SCLR)
+   RETURNS (q[LPM_WIDTH-1..0], eq[15..0]);
+
+
+SUBDESIGN VERS_SEL_a
+
+    (
+	CLK,			-- System-Clock  
+	ENA_Every_20ms,	  
+	SCLR  
+				:	INPUT;
+
+	VERS_IFA,
+	VERS_FG,
+	VERS_MB,
+	VERS_FB,
+	VERS_SWEEP,		
+	VERS_ENABLE,		
+	Blink,		
+	LED_CNT_CLK_EN	:	OUTPUT;		
+    )
+
+
+VARIABLE
+
+	teiler_cnt		:	lpm_counter WITH (LPM_WIDTH=8); -- Teiler Enable alle 2,5 Sec.
+	v_teiler_ff		:	dff;
+
+	blink_cnt		:	lpm_counter WITH (LPM_WIDTH=8); -- Teiler Enable alle ca. 1 Sec.
+	v_blink_en_ff	:	dff;
+	v_blink_ff		:	dffe;
+
+
+	sel_cnt			:	lpm_counter WITH (LPM_WIDTH=4);
+	sel_cnt_en		:	dff;
+
+	v_VERS_IFA,
+	v_VERS_FG,
+	v_VERS_MB,
+	v_VERS_FB,
+	v_VERS_SWEEP,
+	v_VERS_ENABLE	:dff;
+
+BEGIN
+
+	----- Teiler-Counter  -----
+
+	teiler_cnt.clock   = clk;
+	teiler_cnt.cnt_en  = ENA_Every_20ms;
+	teiler_cnt.aclr    = SCLR OR v_teiler_ff.q;
+--	teiler_cnt.sclr    = SCLR OR v_teiler_ff.q;
+
+	v_teiler_ff.(D, CLK) = ( (teiler_cnt.q[] == H"7F"), clk); -- Puls, eine clk-Breite 
+
+	----- Blink-Counter  -----
+
+	blink_cnt.clock   = clk;
+	blink_cnt.cnt_en  = ENA_Every_20ms;
+	blink_cnt.aclr    = SCLR OR v_blink_en_ff.q;
+--	blink_cnt.sclr    = SCLR OR v_blink_en_ff.q;
+
+	v_blink_en_ff.(D, CLK)   = ( (blink_cnt.q[] == H"30"), clk); -- Puls, eine clk-Breite 
+
+
+	v_blink_ff.(D, CLK, ENA) = ( (NOT v_blink_ff.q), clk, v_blink_en_ff.q); -- Puls, eine clk-Breite 
+
+
+
+	----- Counter pos. Flanke vom CLK -----
+	sel_cnt.clock   = clk;
+	sel_cnt.clk_en  = v_teiler_ff.q;
+	sel_cnt.cnt_en  = sel_cnt_En.q;
+	sel_cnt.aclr    = SCLR;
+--	sel_cnt.sclr    = SCLR;
+	sel_cnt_En. (D, CLK, CLRN) = ( sel_cnt.q[] < 7 , clk, NOT SCLR); 
+
+
+	v_VERS_IFA.		(D, CLK, CLRN) = ((sel_cnt.q[] == 0), clk, NOT SCLR); 
+	v_VERS_FG.		(D, CLK, CLRN) = ((sel_cnt.q[] == 1), clk, NOT SCLR); 
+	v_VERS_MB.		(D, CLK, CLRN) = ((sel_cnt.q[] == 2), clk, NOT SCLR); 
+	v_VERS_FB.		(D, CLK, CLRN) = ((sel_cnt.q[] == 3), clk, NOT SCLR); 
+	v_VERS_SWEEP.	(D, CLK, CLRN) = ((sel_cnt.q[] == 4), clk, NOT SCLR); 
+	v_VERS_ENABLE.	(D, CLK, CLRN) = ((sel_cnt.q[]  < 5), clk, NOT SCLR); 
+
+	VERS_IFA	 	= 	v_VERS_IFA		.q;	
+	VERS_FG		 	= 	v_VERS_FG		.q;
+	VERS_MB		 	= 	v_VERS_MB		.q;
+	VERS_FB		 	= 	v_VERS_FB		.q;
+	VERS_SWEEP   	= 	v_VERS_SWEEP	.q;  
+	VERS_ENABLE  	= 	v_VERS_ENABLE	.q;
+	LED_CNT_CLK_EN	= 	v_teiler_ff		.q;
+	Blink			=	v_blink_ff		.q;		
+
+END;
+
+

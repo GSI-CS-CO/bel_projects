@@ -1,0 +1,503 @@
+TITLE "MBCtrl_e";
+
+
+PARAMETERS (Piggy_ID);
+
+
+FUNCTION SRFFE (S, R, CLK, CLRN, PRN, ENA)	RETURNS (Q);
+FUNCTION SRFF  (S, R, CLK, CLRN, PRN)		RETURNS (Q);
+FUNCTION DFF      (D, CLK, CLRN, PRN)		RETURNS (Q);
+FUNCTION DFFE     (D, CLK, CLRN, PRN, ENA)	RETURNS (Q);
+
+FUNCTION lpm_ff (data[LPM_WIDTH-1..0], clock, enable, sclr, sset, sload, aclr, aset, aload)
+   WITH (LPM_WIDTH, LPM_AVALUE, LPM_SVALUE, LPM_FFTYPE)
+   RETURNS (q[LPM_WIDTH-1..0]);
+
+FUNCTION lpm_compare (dataa[LPM_WIDTH-1..0], datab[LPM_WIDTH-1..0], clock, aclr)
+   WITH (LPM_WIDTH, LPM_REPRESENTATION, LPM_PIPELINE, CHAIN_SIZE, ONE_INPUT_IS_CONSTANT)
+   RETURNS (alb, aeb, agb, ageb, aneb, aleb);
+
+FUNCTION lpm_counter (data[LPM_WIDTH-1..0], clock, clk_en, cnt_en, updown, aclr,
+						 aset, aconst, aload, sclr, sset, sconst, sload)
+   WITH (LPM_WIDTH, LPM_DIRECTION, LPM_MODULUS, LPM_AVALUE, LPM_SVALUE, CARRY_CNT_EN, LABWIDE_SCLR)
+   RETURNS (q[LPM_WIDTH-1..0], eq[15..0]);
+
+FUNCTION lpm_mux (data[LPM_SIZE-1..0][LPM_WIDTH-1..0], sel[LPM_WIDTHS-1..0], clock, aclr) 
+   WITH (LPM_WIDTH, LPM_SIZE, LPM_WIDTHS, LPM_PIPELINE)
+   RETURNS (result[LPM_WIDTH-1..0]);
+
+FUNCTION lpm_ram_dq (data[LPM_WIDTH-1..0], address[LPM_WIDTHAD-1..0], we, inclock, outclock)
+   WITH (LPM_WIDTH, LPM_WIDTHAD, LPM_NUMWORDS, LPM_FILE, LPM_INDATA, LPM_ADDRESS_CONTROL, LPM_OUTDATA)
+   RETURNS (q[LPM_WIDTH-1..0]);
+
+
+
+----- Constanten fuer Modulbus-Timing -----
+
+CONSTANT enable_a		= 02;	CONSTANT enable_e		= 32;
+CONSTANT hByte_en_a 	= 04;	CONSTANT hByte_en_e 	= 16;
+CONSTANT lByte_en_a		= 18;	CONSTANT lByte_en_e		= 30;
+CONSTANT word_str_a		= 11;	CONSTANT word_str_e		= 23;
+CONSTANT hByte_str_a	= 06;	CONSTANT hByte_str_e	= 14;
+CONSTANT lByte_str_a	= 20;	CONSTANT lByte_str_e	= 28;
+CONSTANT io_bus_str_a	= 11;	CONSTANT io_bus_str_e	= 23;
+CONSTANT hByte_Test_a	= 12;	CONSTANT hByte_Test_e	= 14;
+CONSTANT lByte_Test_a	= 26;	CONSTANT lByte_Test_e	= 28;
+
+CONSTANT set_send_str	= 30;
+CONSTANT cnt_max		= 34;
+
+
+----- Funktions-Codes fuer ModulBus -----
+
+CONSTANT c_unused		 = H"00"; -- FKT-Code ohne Funktion  
+CONSTANT c_res			 = H"01"; -- FKT-Code Reset 
+
+CONSTANT C_wr_BusData	 = H"10";
+CONSTANT C_wr_BusAdr	 = H"11";
+CONSTANT C_wr_RamAdr	 = H"62";
+CONSTANT C_wr_RamData  	 = H"63";
+CONSTANT C_wr_GrpCnt	 = H"64"; -- grp_cnt = Basis-IFK-ADR + n virt IFK-ADR
+CONSTANT C_res_SelErr	 = H"75";
+
+CONSTANT C_rd_EPLD_Vers	 = H"8D";
+CONSTANT C_rd_Piggy_ID	 = H"8E";
+CONSTANT C_rd_BusData	 = H"90";
+CONSTANT C_rd_RamData	 = H"99";
+CONSTANT C_rd_MB_STS	 = H"9A";
+CONSTANT C_rd_GrpCnt	 = H"9B"; -- grp_cnt = Basis-IFK-ADR + n virt IFK-ADR
+
+CONSTANT C_wr_fc_grp_l	 = H"3" ; -- Fkt-Code Gruppe für write  = 30 bis 3F
+CONSTANT C_wr_fc_grp_h	 = H"4" ; -- Fkt-Code Gruppe für write  = 40 bis 4F
+CONSTANT C_rd_fc_grp	 = H"B" ; -- Fkt-Code Gruppe für read   = B0 bis BF
+
+SUBDESIGN MBCtrl_e
+
+    (
+	CLK,					-- System-Clock  
+	Ena_Every_100ns,		-- Enable alle 100ns  
+	Ena_Every_500ns,		-- Enable alle 500ns  
+    MB_Mode,				-- Betriebsart der Interface-Karte
+    MB_FC_Str,				-- Funktionscode-Strobe	 ______+-+_______
+	FC[7..0],				-- Funktionscode
+	MB_virt_ADR[3..0],		-- virtuelle IFK-Sub-ADR im Modulbus-Betrieb
+	SW_INT[15..0],			-- Daten-Sollwert Intern
+	DIW[15..0],				-- Daten-Istwert vom Stecker STPIGGY1
+	MB_Din[7..0],			-- MB-Data-In		
+	EPLD_Vers[7..0],		-- MB-Piggy EPLD_Vers		
+--	Piggy_ID[7..0],			-- MB-Piggy EPLD_Vers		
+	MB_STS[15..0],			-- MB-Piggy Status		
+	SCLR,					-- syn. Clear
+	MB_nDtack				-- MB-DTACK	
+					:	INPUT;
+
+	
+	Dtack_Test,				-- Zeit-Fenster für DTACK Test
+	Dtack_Err_Q,			-- Dtack-Err-Q. ( "1" , wenn kein DTACK auf dem MB )
+	Res_Sel_Err,			-- Res_Sel-Err, clear Fehlerspeicher für Dtack-Err
+	MB_nSel_Err,			-- Sel-Err-Q, Fehlerspeicher für Dtack-Err
+	MB_D_Mux[15..0],		-- Ausgang des Muliplexers für Daten
+	mb_nSend_En,			-- Enable des 'EE-FlipFlops' für den Sender '6408'
+	mb_nSend_STR,			-- Send-Strobe zum Starten des 'EE-FlipFlops' für den Sender '6408'
+	MB_RD_AKTIV,			-- Sel für Daten vom MB-Teil
+
+	RAM_Adr[8..0],			-- RAM-ADR		
+	MB_Adr[4..0],			-- MB-ADR		
+	MB_SAdr[7..0],			-- MB-Sub-ADR		
+	MB_Dout[7..0],			-- MB-Data-Out		
+	MB_nDS,					-- MB-Data-Srobe	
+	MB_WR,					-- MB write	
+	MB_R/nW,				-- MB read/write	
+    MB_SEL,					-- Sel für MB-Treiber		
+    MB_nRESET,				-- MB-Reset		
+    MB_CLK,					-- MB-Clock	
+    LByte_Str,				-- Low-Byte Strobe		
+    HByte_Str,				-- High-Byte Strobe		
+    LByte_En_BUS,			-- Low-Byte Enable		
+    HByte_En_BUS,			-- High-Byte Enable		
+	MB_GRP_CNT[3..0],		-- mb_grp_cnt = Basis-IFK-ADR + n virt IFK-ADR (0,2,4,8,16)		
+	MB_virt_RW,				-- Zugriff auf MB-Bus und RAM bei virt IFK-ADR		
+	MB_read_Reg,			-- read MB-Bus Register		
+	Bus_FC_RW,				-- Bus FC's für read und Write		
+	Bus_ADR[15..0]			-- Bus ADR bei Betrieb über FC oder Decoder-RAM		
+				:	OUTPUT;
+    )
+
+
+VARIABLE
+
+    v_FC_cnt_Start		:	DFF;
+    v_FC_STR_Syn1		:	DFF;
+    v_FC_STR_Syn2		:	DFF;
+    v_Dtack_Syn			:	DFF;
+	v_Bus_FC_RW			:	DFF;
+	mb_cnt				:	lpm_counter WITH (LPM_WIDTH=6, LPM_SVALUE=1);
+	mb_cnt_En			:	DFF;
+	v_Bus_En			:	SRFF;
+	v_LByte_En			:	SRFF;
+	v_HByte_En			:	SRFF;
+	v_LByte_STR			:	SRFF;
+	v_HByte_STR			:	SRFF;
+	v_LByte_STR_data	:	DFF;
+	v_HByte_STR_data	:	DFF;
+	v_IO_BUS_STR		:	SRFF;
+	v_Data_Byte_STR		:	SRFF;
+	v_Data_Word_STR		:	SRFF;
+	v_Dtack_Test		:	SRFF;
+	v_EE_Start			:	DFF;
+	
+	v_RamAdr			:	lpm_ff	WITH (LPM_WIDTH = 16);
+	v_MB_ADR			:	lpm_ff	WITH (LPM_WIDTH = 16);
+	v_MB_LData			:	lpm_ff	WITH (LPM_WIDTH = 8);
+	v_MB_HData			:	lpm_ff	WITH (LPM_WIDTH = 8);
+	v_MB_GRP_CNT		:	lpm_ff	WITH (LPM_WIDTH = 4);
+    v_LByte_EN_Bus		:	dffe;
+    v_HByte_EN_Bus		:	dffe;
+    v_mb_Send_En		:	dffe;
+    v_mb_Send_STR		:	dffe;
+    v_mb_read_Reg		:	dffe;
+	v_SEL_WR_Bus		:	dffe;	
+	v_SEL_RAM_RW		:	dff;	
+	v_STR_WR_Ram_WR		:	dffe;	
+	v_STR_RD_Ram_WR		:	dffe;	
+	v_SEL_Bus			:	dffe;
+	v_DS_Bus			:	dffe;
+	v_MB_RD_AKTIV		:	dff;
+	v_MB_virt_RW		:	dff;
+	v_READ_WR_RAM		:	dff;
+	v_READ_RD_RAM		:	dff;
+	
+	v_GrpCnt			:	dff;
+	v_EPLD_Vers			:	dff;
+	v_Piggy_ID			:	dff;
+	v_MB_CLK			:	DFFE;
+	v_MB_STS			:	dff;
+	
+	v_Dtack_Err			:	SRFFE;
+	v_Sel_Err			:	DFFE;
+	v_res_SelErr		:	DFFE;
+	v_SEL_MB_D[2..0]	:	NODE;
+
+
+	v_Ram_ADR_mux		: LPM_MUX WITH (LPM_WIDTH  = 5,		-- Width of the data[][] and result[] ports. 
+										LPM_SIZE   = 2,		-- Number of input buses to the multiplexer.
+										LPM_WIDTHS = 1);	-- Width of the sel[] input port.
+	
+	v_MB_ADR_mux		: LPM_MUX WITH (LPM_WIDTH = 16, LPM_SIZE = 3, LPM_WIDTHS = 2);
+	v_MB_Dout_mux		: LPM_MUX WITH (LPM_WIDTH = 8,  LPM_SIZE = 2, LPM_WIDTHS = 1);
+	v_MB_D_mux			: LPM_MUX WITH (LPM_WIDTH = 16, LPM_SIZE = 7, LPM_WIDTHS = 3, LPM_PIPELINE = 1);
+	
+	v_FC_WR_Ram			: lpm_ram_dq WITH (LPM_WIDTH   = 16,			-- Width of data[] and q[] ports.
+										   LPM_WIDTHAD =  9);			-- Width of the address port.
+	v_FC_RD_Ram			: lpm_ram_dq WITH (LPM_WIDTH   = 16,			-- Width of data[] and q[] ports.
+										   LPM_WIDTHAD =  8);			-- Width of the address port.
+	
+	
+BEGIN
+
+--================================================================================================
+--------------------------------- Modulbus Timing  -----------------------------------------------
+--================================================================================================
+--
+--
+-- Clk = 120MHz = 8,33ns, Clock_Enable = Ena_every_100ns                                                               
+--                                                                 
+--             1   2   3   4   5   6        14  15  16  17  18  19  20        28  29  30  31  32
+-- clk     +-+ +-+ +-+ +-+ +-+ +-+ +-+       +-+ +-+ +-+ +-+ +-+ +-+ +-+       +-+ +-+ +-+ +-+ +-+
+--       --+ +-+ +-+ +-+ +-+ +-+ +-+ +--///--+ +-+ +-+ +-+ +-+ +-+ +-+ +--///--+ +-+ +-+ +-+ +-+ +
+-- fktc_str  +------------------------------------------------------------------------------------
+--         --+                                                                                 
+-- enable        2 +----------------------------------- 3,0us ---------------------------------+ 32  
+--           ------+                                                                           +--
+-- hByte_en              4 +---------- 1,2 us -------+ 16                                          
+--           --------------+                         +--------------------------------------------
+-- lByte_en                                               18 +---------- 1,2 us -------+ 30       
+--           ------------------------------------------------+                         +----------
+-- data_str                      6 +- 800ns -+ 14                 20 +- 800ns -+ 28               
+--           ----------------------+         +-----------------------+         +------------------
+-- Dtack-Test                             +--+                              +--+                
+--           -----------------------------+  +------------------------------+  +------------------ ab  F380211C
+-- set_ee                                                                           30 +-+        
+--           --------------------------------------------------------------------------+ +--------
+
+
+	----- Synchronisation -----
+
+	v_FC_STR_Syn1.  (D, CLK, CLRN) = ( mb_fc_str,	    clk, NOT SCLR); 
+	v_FC_STR_Syn2.  (D, CLK, CLRN) = ( v_FC_STR_Syn1,   clk, NOT SCLR); 
+	v_FC_cnt_Start. (D, CLK, CLRN) = ( (v_FC_STR_Syn1.q AND (NOT v_FC_STR_Syn2.q)), clk, NOT SCLR); 
+
+	v_Dtack_syn.	(D, CLK, CLRN) = ( NOT MB_nDtack,	clk, MB_Mode); 
+
+
+	----- Counter pos. Flanke vom CLK -----
+
+	mb_cnt.sset   = v_FC_cnt_Start;
+	mb_cnt.clock  = CLK;
+	mb_cnt.cnt_en = ENA_Every_100ns AND mb_cnt_En;
+	mb_cnt.sclr   = SCLR;
+
+	mb_cnt_En. (D, CLK) = ( (v_FC_cnt_Start OR ( (mb_cnt.q[] > 0 ) AND (mb_cnt.q[] < 34)) ), clk); 
+	mb_cnt_En. (CLRN)	= (NOT SCLR AND MB_Mode); 
+
+
+
+	-----  Modul-Bus Timing ----- 
+
+	v_Bus_En.	 (S, R, CLK, CLRN) = ((mb_cnt.q[] == enable_a),	   (mb_cnt.q[] == enable_e),    clk, NOT SCLR); 
+	v_LByte_En.	 (S, R, CLK, CLRN) = ((mb_cnt.q[] == lByte_en_a),  (mb_cnt.q[] == lByte_en_e),  clk, NOT SCLR);
+	v_HByte_En.	 (S, R, CLK, CLRN) = ((mb_cnt.q[] == hByte_en_a),  (mb_cnt.q[] == hByte_en_e),  clk, NOT SCLR);
+	v_LByte_STR. (S, R, CLK, CLRN) = ((mb_cnt.q[] == lByte_str_a), (mb_cnt.q[] == lByte_str_e), clk, NOT SCLR);
+	v_HByte_STR. (S, R, CLK, CLRN) = ((mb_cnt.q[] == hByte_str_a), (mb_cnt.q[] == hByte_str_e), clk, NOT SCLR);
+	v_IO_BUS_STR.(S, R, CLK, CLRN) = ((mb_cnt.q[] == io_bus_str_a),(mb_cnt.q[] == io_bus_str_e),clk, NOT SCLR);
+
+	v_Data_Byte_STR.(S, R, CLK, CLRN) = ((mb_cnt.q[] == lByte_str_a OR (mb_cnt.q[] == hByte_str_a)),
+ 									     (mb_cnt.q[] == lByte_str_e OR (mb_cnt.q[] == hByte_str_e)), clk, NOT SCLR);
+
+	v_Dtack_Test.(S, R, CLK, CLRN)	  = ((mb_cnt.q[] == lByte_Test_a OR (mb_cnt.q[] == hByte_Test_a)),
+ 									     (mb_cnt.q[] == lByte_Test_e OR (mb_cnt.q[] == hByte_Test_e)), clk, NOT SCLR);
+
+	v_Data_Word_STR.(S, R, CLK, CLRN) = ((mb_cnt.q[] == word_str_a),   (mb_cnt.q[] == word_str_e),  clk, NOT SCLR);
+	
+	v_EE_Start.	(D, CLK, CLRN)		  = ((mb_cnt.q[] == set_send_str), clk, NOT SCLR);
+
+--+==========================================================================
+--| Funktionscodes für read/write auf dem Modul-Bus
+--+==========================================================================
+
+	v_Bus_FC_RW.(D, CLK, CLRN) = ( (((fc[]     == C_rd_BusData) AND (MB_virt_ADR[] == 0)) OR -- read  MB-Data
+								    ((fc[]     == C_wr_BusData) AND (MB_virt_ADR[] == 0)) OR -- write MB-Data
+									 (fc[7..4] == C_wr_fc_grp_l) 						  OR -- write FC's für MB-Bus
+									 (fc[7..4] == C_wr_fc_grp_h)						  OR -- write FC's für MB-Bus
+									 (fc[7..4] == C_rd_fc_grp)     						)	 -- read  FC's für MB-Bus
+																, clk, NOT SCLR);
+
+--+=====================================================================================
+--| Sel. Signal, wenn Daten vom MB-Teil ausgelesen werden sollen
+--+=====================================================================================
+
+	v_MB_RD_AKTIV.(D, CLK) = ( MB_Mode AND 
+				   			  (((fc[]     == C_rd_BusData) AND (MB_virt_ADR[] == 0)) OR	-- read  MB-Data
+					 	        (fc[7..4] == C_rd_fc_grp)     						 OR	-- read  FC's für MB-Bus
+					   			(fc[] == C_rd_EPLD_Vers)	OR
+  								(fc[] == C_rd_Piggy_ID)		OR  
+				   				(fc[] == C_rd_RamData)    	OR
+								(fc[] == C_rd_MB_STS)		OR  
+				   				(fc[] == C_rd_GrpCnt) 			), clk); 
+
+--+=====================================================================================
+--| Signal, beim Zugriff auf MB-Bus und RAM bei virt IFK-ADR 
+--+=====================================================================================
+
+	v_MB_virt_RW.(D, CLK, CLRN) = ( mb_fc_str AND (MB_virt_ADR[] != 0) AND
+			   						((fc[]     == C_wr_RamAdr  ) OR			-- write Ram-ADR
+			   						 (fc[7..4] == C_wr_fc_grp_l) OR			-- write FC's für MB-Bus Group 1
+									 (fc[7..4] == C_wr_fc_grp_h) OR			-- write FC's für MB-Bus Group 2
+									 (fc[7..4] == C_rd_fc_grp)   OR			-- read  FC's für MB-Bus
+									 v_STR_WR_Ram_WR OR v_STR_RD_Ram_WR OR	-- RAM write
+									 v_READ_WR_RAM   OR v_READ_RD_RAM )		-- RAM read
+																		, clk, NOT SCLR);
+--+=====================================================================================
+--| "EE" Start im MB-Mode für Zugriffe die !!! nicht auf den Modulbus erfolgen
+--+=====================================================================================
+
+	v_MB_read_Reg.(D, ENA, CLK, CLRN) = ( mb_fc_str,
+
+						(((MB_virt_ADR[] != 0) AND v_READ_WR_RAM ) OR -- read Daten aus dem RAM der Write-FC's
+						 ((MB_virt_ADR[] != 0) AND v_READ_RD_RAM ) OR -- read Daten aus dem RAM der Read-FC's
+						           (fc[] == C_rd_GrpCnt)		   OR -- read Group-Count-Register	
+						           (fc[] == C_rd_EPLD_Vers)		   OR -- read EPLD-Version	
+						           (fc[] == C_rd_Piggy_ID)		   OR -- read Piggy-ID	
+						           (fc[] == C_rd_MB_STS))		      -- read Modbus-Status	
+														  , clk, NOT SCLR);
+
+--+==========================================================================
+--| Modulbus-Signale
+--+==========================================================================
+
+v_mb_Send_En	.(D,CLK,ENA)  = ( mb_fc_str,  	   clk,  (FC7 AND  v_Bus_FC_RW AND MB_Mode) );-- MB-Read Seq.
+v_mb_Send_STR	.(D,CLK,ENA)  = ( v_EE_Start,      clk,  (FC7 AND (v_Bus_FC_RW AND MB_Mode AND NOT v_Dtack_Err.q )) );
+
+v_SEL_Bus		.(D,CLK,ENA)  = ( v_Bus_En,		   clk,	 			   v_Bus_FC_RW AND MB_Mode  );
+v_SEL_WR_Bus	.(D,CLK,ENA)  = ( v_Bus_En, 	   clk, ((NOT fc7) AND v_Bus_FC_RW AND MB_Mode) );
+v_DS_Bus		.(D,CLK,ENA)  = ( v_Data_Byte_STR, clk,	               v_Bus_FC_RW AND MB_Mode  );
+v_LByte_EN_Bus	.(D,CLK,ENA)  = ( v_LByte_En,	   clk,	 			   v_Bus_FC_RW AND MB_Mode  );
+v_HByte_EN_Bus	.(D,CLK,ENA)  = ( v_HByte_En,	   clk,	 			   v_Bus_FC_RW AND MB_Mode  );
+
+v_MB_CLK		.(D,CLK,ENA)  = ( NOT v_MB_CLK.q, CLK, Ena_Every_500ns);
+
+
+--+==========================================================================
+--| DTACK-Error   
+--+==========================================================================
+
+	-- Error, wenn waehrend des Daten-Strobes (bei v_Dtack_Test_Data.q) Dtack nicht aktiv = '0' ist.
+	-- Dtack_Err kann nur waehrend v_SEL_Bus.q aktiv = '1' werden. (NOT v_SEL_Bus.q aktiv = CLRN)
+	v_Dtack_Err.(S,R,CLK,ENA,CLRN) = ( NOT v_Dtack_syn.q, GND, clk, v_Dtack_Test.q, v_SEL_Bus.q);
+
+	-- Error-Speicher, wenn v_Dtack_Err.q oder v_FC_Err.q aktiv = '1' sind.
+	v_Sel_Err  .(D,CLK,ENA,CLRN)   = ( VCC, clk, (v_Dtack_Err.q), NOT v_res_SelErr.q );
+
+	v_res_SelErr. (D, CLK, ENA)    = ( v_FC_STR_syn1, clk, fc[] == C_res_SelErr); 
+
+
+--+==========================================================================
+--| Daten-Register 
+--+==========================================================================
+
+v_RamAdr    .(data[], clock, enable, aclr) = (SW_INT[],     CLK,  ((fc[] == c_wr_RamAdr) AND v_FC_STR_Syn1), SCLR); 		
+v_MB_ADR    .(data[], clock, enable, aclr) = (SW_INT[],     CLK,  ((fc[] == c_wr_BusAdr) AND v_FC_STR_Syn1), SCLR); 		
+v_MB_GRP_CNT.(data[], clock, enable, aclr) = (SW_INT[3..0], CLK,  ((fc[] == c_wr_GrpCnt) AND v_FC_STR_Syn1), SCLR); 		
+
+
+
+v_LByte_STR_Data.  (D, CLK) = ( v_LByte_STR,	clk); --+--> Laufzeitausgleich, somit Strobes synchron mit MB_DS sind.
+v_HByte_STR_Data.  (D, CLK) = ( v_HByte_STR,	clk); --+
+
+
+v_MB_LData  .(data[], clock, enable, sclr) = (MB_Din[7..0], CLK, (v_DS_Bus.q AND (v_LByte_STR_data.q)),	SCLR); 		
+v_MB_HData  .(data[], clock, enable, sclr) = (MB_Din[7..0], CLK, (v_DS_Bus.q AND (v_hByte_STR_data.q)),	SCLR); 		
+
+--+==========================================================================
+--| Muliplexer RAM-ADR  
+--+==========================================================================
+
+v_SEL_RAM_RW  .(D,CLK,CLRN) = ( (    (v_Bus_En  & (fc[] == C_wr_RamData))
+								   # (mb_fc_str & (fc[] == C_rd_RamData)) ), clk, NOT SCLR); 
+
+v_Ram_ADR_mux.sel[]			= v_SEL_RAM_RW; 
+v_Ram_ADR_mux.data[1][4..0]	= v_RamADR.q[4..0];	-- RAM-ADR für RAM read/write 
+v_Ram_ADR_mux.data[0][4..0]	= FC[4..0];			-- RAM-ADR für MB read/write 	
+
+--+==========================================================================
+--| RAM  
+--+==========================================================================
+
+v_STR_WR_Ram_WR	.(D,CLK,ENA)  = ( v_Data_Word_STR, clk,
+								((fc[] == C_wr_RamData) AND (v_RamADR.q[15..8] == 0) AND
+								 (v_RamADR.q[7..4] == C_wr_fc_grp_l OR v_RamADR.q[7..4] == C_wr_fc_grp_h )) );
+
+v_FC_WR_Ram.data[]			= SW_INT[15..0];				-- Daten für Ram write
+v_FC_WR_Ram.address[8..4]	= v_Ram_ADR_mux.result[4..0];	-- ADR aus Muliplexer RAM-ADR
+v_FC_WR_Ram.address[3..0]	= MB_virt_ADR[3..0];			-- ADR der virt. IFK
+v_FC_WR_Ram.inclock			= clk;
+v_FC_WR_Ram.outclock		= clk;
+v_FC_WR_Ram.we				= v_STR_WR_Ram_WR;
+
+
+								
+v_STR_RD_Ram_WR	.(D,CLK,ENA)  = ( v_Data_Word_STR, clk,
+								((fc[] == C_wr_RamData) AND (v_RamADR.q[15..8] == 0) AND
+								 v_RamADR.q[7..4] == C_rd_fc_grp) );
+
+v_FC_RD_Ram.data[]			= SW_INT[15..0];				-- Daten für Ram write
+v_FC_RD_Ram.address[7..4]	= v_Ram_ADR_mux.result[3..0];	-- ADR aus Muliplexer RAM-ADR
+v_FC_RD_Ram.address[3..0]	= MB_virt_ADR[3..0];			-- ADR der virt. IFK
+v_FC_RD_Ram.inclock			= clk;
+v_FC_RD_Ram.outclock		= clk;
+v_FC_RD_Ram.we				= v_STR_RD_Ram_WR;
+
+
+--+==========================================================================
+--| Muliplexer Modulbus-ADR  
+--+==========================================================================
+
+	IF (FC[7..4] == C_wr_fc_grp_l OR FC[7..4] == C_wr_fc_grp_h ) THEN v_MB_ADR_mux.sel[] = 1; END IF;
+	IF (FC[7..4] == C_rd_fc_grp                                ) THEN v_MB_ADR_mux.sel[] = 2; END IF;
+
+	v_MB_ADR_mux.data[0][15..0]	=    v_MB_ADR.q[15..0];	-- MB-ADR aus dem MB-ADR-Register
+	v_MB_ADR_mux.data[1][15..0]	= v_FC_WR_Ram.q[15..0];	-- MB-ADR über Funktionscode aus dem RAM 
+	v_MB_ADR_mux.data[2][15..0]	= v_FC_RD_Ram.q[15..0];	-- MB-ADR über Funktionscode aus dem RAM 
+
+
+--+==========================================================================
+--| Muliplexer Modulbus-Daten-Out  
+--+==========================================================================
+	v_MB_Dout_mux.sel[]			= v_LByte_EN_Bus.q; 
+	v_MB_Dout_mux.data[1][7..0]	= SW_INT[7..0];		-- L-Byte des Internen Daten-Sollwertes
+	v_MB_Dout_mux.data[0][7..0]	= SW_INT[15..8];	-- H-Byte des Internen Daten-Sollwertes
+
+--+==========================================================================
+--| Muliplexer Modulbus-Daten-Output zur IFA  
+--+==========================================================================
+
+	v_READ_WR_RAM.(D,CLK) =	( (fc[] 	== C_rd_RamData) AND (v_RamADR.q[15..8] == 0)   AND
+		  					 ((v_RamADR.q[7..4] == C_wr_fc_grp_l) OR
+		  					  (v_RamADR.q[7..4] == C_wr_fc_grp_h))   ,CLK);   
+
+	v_READ_RD_RAM.(D,CLK) =	( (fc[] 	== C_rd_RamData) AND (v_RamADR.q[15..8] == 0)   AND
+		  					  (v_RamADR.q[7..4] == C_rd_fc_grp)      ,CLK);   
+
+
+
+	v_GrpCnt.	(d,clk)	=	((fc[]	== C_rd_GrpCnt)		, CLK);
+	v_EPLD_Vers.(d,clk)	=	((fc[] 	== C_rd_EPLD_Vers)	, CLK);
+	v_Piggy_ID.	(d,clk)	=	((fc[] 	== C_rd_Piggy_ID)	, CLK);
+	v_MB_STS.	(d,clk)	=	((fc[] 	== C_rd_MB_STS)		, CLK);
+
+
+	IF		v_READ_WR_RAM.q	THEN v_SEL_MB_D[] = 1;
+	ELSIF	v_READ_RD_RAM.q	THEN v_SEL_MB_D[] = 2;
+	ELSIF	v_GrpCnt.q		THEN v_SEL_MB_D[] = 3;
+	ELSIF	v_EPLD_Vers.q	THEN v_SEL_MB_D[] = 4;
+	ELSIF	v_Piggy_ID.q	THEN v_SEL_MB_D[] = 5;
+	ELSIF	v_MB_STS.q		THEN v_SEL_MB_D[] = 6;
+	ELSE						 v_SEL_MB_D[] = 0;
+	END IF;
+
+
+	v_MB_D_mux.clock		  = clk; 
+	v_MB_D_mux.sel[]		  = v_SEL_MB_D[]; 
+	v_MB_D_mux.data[0][15..8] = v_MB_HData.q[];	v_MB_D_mux.data[0][7..0] = v_MB_LData.q[];	-- MB-Daten
+	v_MB_D_mux.data[1][15..0]  = v_FC_WR_Ram.q[15..0];	-- Daten vom "write RAM"  
+	v_MB_D_mux.data[2][15..0]  = v_FC_RD_Ram.q[15..0];	-- Daten vom "read RAM"  
+	v_MB_D_mux.data[3][15..4] = GND;	v_MB_D_mux.data[3][3..0] = v_MB_GRP_CNT.q[]; -- virt-ADR
+	v_MB_D_mux.data[4][15..8] = GND;	v_MB_D_mux.data[4][7..0] = EPLD_Vers[7..0];	 -- EPLD-Version
+	v_MB_D_mux.data[5][15..8] = GND;	v_MB_D_mux.data[6][7..0] = Piggy_ID;	 	 -- Piggy-ID
+	v_MB_D_mux.data[6][15..0] = MB_STS[15..0];										 -- RAM Daten  
+
+
+------------------------------------ Ausgaenge ----------------------------------------------------
+
+
+	Ram_ADR[8..4]	=	v_Ram_ADR_mux.result[4..0];	-- ADR aus Muliplexer RAM-ADR
+	Ram_ADR[3..0]	=	MB_virt_ADR[3..0];			-- ADR der virt. IFK
+
+	MB_Adr[4..0]	=	v_MB_ADR_mux.result[12..8];	-- MB-ADR		
+	MB_SAdr[7..1]	=	v_MB_ADR_mux.result[7..1];	-- MB-Sub-ADR[7..1]		
+	MB_SAdr[0]		=	v_LByte_EN_Bus.q;		  	-- MB-Sub-ADR[0]	
+
+	MB_Dout[7..0]	=	v_MB_Dout_mux.result[7..0];	-- MB-Data-Out		
+	MB_D_Mux[15..0]	=	v_MB_D_Mux.result[15..0];	-- MB Daten-Output zur IFA
+
+	MB_RD_AKTIV		=	v_MB_RD_AKTIV .q;	
+
+    MB_CLK			=	v_MB_CLK	  .q;	-- MB-Clock	
+	MB_SEL			=	v_SEL_Bus	  .q;	
+	MB_nDS			=	NOT v_DS_Bus  .q;	
+	MB_WR			=	v_SEL_WR_Bus  .q;	
+	MB_R/nW			=	FC7;				-- MB read/write	
+    MB_nRESET		=	NOT SCLR;			-- MB-Reset		
+	MB_nSend_En		=	NOT v_mb_Send_En  .q;
+	MB_nSend_STR	=	NOT v_mb_Send_STR .q;
+
+	Dtack_Test		=	v_Dtack_Test  .q;
+	Dtack_Err_Q		=	v_Dtack_Err	  .q;
+	MB_nSEL_Err		=	NOT v_Sel_Err .q;
+	Res_Sel_Err 	=	v_res_SelErr  .q;
+
+    LByte_Str		=	v_LByte_Str_data.q;			
+    HByte_Str		=	v_HByte_Str_data.q;			
+    LByte_En_Bus	=	v_LByte_EN_Bus.q;			
+    HByte_En_Bus	=	v_HByte_EN_Bus.q;			
+
+	MB_GRP_CNT[]	=	v_MB_GRP_CNT.q[]; -- MB Daten-Output zur IFA
+	MB_virt_RW		=	v_MB_virt_RW.q;	
+	MB_read_Reg		=	v_MB_read_Reg.q;	
+
+	Bus_FC_RW		=	v_Bus_FC_RW.q;				-- Bus FC's für read und Write		
+	Bus_ADR[15..0]	=	v_MB_ADR_mux.result[15..0];	-- Bus ADR bei Betrieb über FC oder Decoder-RAM		
+
+END;
+
+

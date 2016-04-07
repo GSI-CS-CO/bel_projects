@@ -1,0 +1,59 @@
+TITLE "Freq_Teiler";
+
+PARAMETERS
+	(
+	Test = 0,
+	Teiler,
+	Test_cnt = 3
+	);
+
+CONSTANT C_Teiler	=	Test == 0	?	Teiler	:	Test_cnt;
+
+CONSTANT Z_Breite	= CEIL(LOG2(C_Teiler));
+CONSTANT Teiler_1	= C_Teiler - 1;
+
+FUNCTION lpm_counter (data[LPM_WIDTH-1..0], clock, clk_en, cnt_en, updown, cin, aclr, aset, aconst, aload, sclr, sset, sconst, sload)
+   WITH (LPM_WIDTH, LPM_DIRECTION, LPM_MODULUS, LPM_AVALUE, LPM_SVALUE, CARRY_CNT_EN, LABWIDE_SCLR)
+   RETURNS (q[LPM_WIDTH-1..0], cout, eq[15..0]);
+
+FUNCTION lpm_compare (dataa[LPM_WIDTH-1..0], datab[LPM_WIDTH-1..0], clock, aclr)
+   WITH (LPM_WIDTH, LPM_REPRESENTATION, LPM_PIPELINE, CHAIN_SIZE, ONE_INPUT_IS_CONSTANT)
+   RETURNS (alb, aeb, agb, ageb, aneb, aleb);
+
+
+SUBDESIGN Freq_Teiler
+(
+  clk			: INPUT;
+  cnt_en		: INPUT = VCC;
+  sclr			: INPUT = GND;
+  F_div			: OUTPUT;
+)
+
+VARIABLE
+  Zaehler		: LPM_COUNTER	WITH (LPM_WIDTH = Z_Breite);
+  End_Vergleich	: LPM_COMPARE	WITH (LPM_WIDTH = Z_Breite, ONE_INPUT_IS_CONSTANT = "YES");
+  F_div_ff		: DFF;
+
+BEGIN
+
+	ASSERT (Z_Breite > 1)
+		REPORT "Die Breite des Freq_Teilers ist %, muss aber >= 2 sein." Z_Breite
+	SEVERITY ERROR;
+	
+	ASSERT
+	    REPORT "Die Breite des Freq_Teilers ist %." Z_Breite
+	SEVERITY INFO;
+
+	Zaehler.clock  = clk;
+	Zaehler.cnt_en = cnt_en;
+	Zaehler.sclr   = (End_Vergleich.aeb AND cnt_en) OR sclr;
+
+	End_Vergleich.dataa[]	= Zaehler.q[];
+	End_Vergleich.datab[]	= Teiler_1;
+
+	F_Div_ff.clk	= clk;
+	F_Div_ff.d		= End_Vergleich.aeb AND cnt_en;
+	
+	F_Div = F_Div_ff;
+ 
+END;

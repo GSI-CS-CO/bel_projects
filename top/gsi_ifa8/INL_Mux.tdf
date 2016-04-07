@@ -1,0 +1,56 @@
+TITLE "INL_Mux";-- Mux für Interlock-Signale
+
+SUBDESIGN INL_Mux
+(
+MB_Mode		:	INPUT;
+FB_Mode		:	INPUT;
+
+IFA_nINL	:	INPUT;
+IFA_nDRQ	:	INPUT;
+IFA_nDRDY	:	INPUT;
+
+MB_nINL		:	INPUT;
+MB_nSRQ1	:	INPUT;
+MB_nSRQ2	:	INPUT;
+MB_Sel_Err 	:	INPUT;
+
+FB_nINL		:	INPUT;
+FB_nDRQ		:	INPUT;
+FB_nDRDY	:	INPUT;
+FB_Sel_Err 	:	INPUT;
+
+nINL		:	OUTPUT;
+nDRQ		:	OUTPUT;
+nDRDY		:	OUTPUT;
+Sel_Err 	:	OUTPUT;
+
+)
+
+BEGIN	
+
+	IF MB_Mode THEN
+
+		nINL		=	MB_nINL;
+		nDRQ		=	MB_nSRQ1;
+		nDRDY		=	MB_nSRQ2;
+		Sel_Err 	=	MB_Sel_Err;
+
+	ELSIF FB_Mode THEN
+
+		nINL		=	FB_nINL;
+		nDRQ		=	FB_nDRQ;
+		nDRDY		=	FB_nDRDY;
+		Sel_Err 	=	FB_Sel_Err;
+	
+	ELSE
+		nINL		=	IFA_nINL;
+		nDRQ		=	IFA_nDRQ;
+		nDRDY		=	IFA_nDRDY;
+		Sel_Err 	=	GND;
+	END IF;
+
+END;
+
+
+
+

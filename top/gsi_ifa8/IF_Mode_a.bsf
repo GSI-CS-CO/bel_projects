@@ -1,0 +1,155 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2010 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 288 240)
+	(text "IF_Mode_a" (rect 5 0 76 15)(font "Arial" ))
+	(text "inst" (rect 8 205 31 220)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "HW_SEL_MB" (rect 0 0 87 15)(font "Arial" ))
+		(text "HW_SEL_MB" (rect 21 27 108 42)(font "Arial" ))
+		(line (pt 0 32)(pt 16 32)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "HW_SEL_SCUB" (rect 0 0 107 15)(font "Arial" ))
+		(text "HW_SEL_SCUB" (rect 21 43 128 58)(font "Arial" ))
+		(line (pt 0 48)(pt 16 48)(line_width 1))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "CLK" (rect 0 0 28 15)(font "Arial" ))
+		(text "CLK" (rect 21 59 49 74)(font "Arial" ))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "FC_Str" (rect 0 0 44 15)(font "Arial" ))
+		(text "FC_Str" (rect 21 75 65 90)(font "Arial" ))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "FC[7..0]" (rect 0 0 49 15)(font "Arial" ))
+		(text "FC[7..0]" (rect 21 91 70 106)(font "Arial" ))
+		(line (pt 0 96)(pt 16 96)(line_width 3))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "DI[15..0]" (rect 0 0 53 15)(font "Arial" ))
+		(text "DI[15..0]" (rect 21 107 74 122)(font "Arial" ))
+		(line (pt 0 112)(pt 16 112)(line_width 3))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "FG_En" (rect 0 0 44 15)(font "Arial" ))
+		(text "FG_En" (rect 21 123 65 138)(font "Arial" ))
+		(line (pt 0 128)(pt 16 128)(line_width 1))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "FG_DDS_En" (rect 0 0 83 15)(font "Arial" ))
+		(text "FG_DDS_En" (rect 21 139 104 154)(font "Arial" ))
+		(line (pt 0 144)(pt 16 144)(line_width 1))
+	)
+	(port
+		(pt 0 160)
+		(input)
+		(text "Sweep_En" (rect 0 0 70 15)(font "Arial" ))
+		(text "Sweep_En" (rect 21 155 91 170)(font "Arial" ))
+		(line (pt 0 160)(pt 16 160)(line_width 1))
+	)
+	(port
+		(pt 0 176)
+		(input)
+		(text "sclr" (rect 0 0 23 15)(font "Arial" ))
+		(text "sclr" (rect 21 171 44 186)(font "Arial" ))
+		(line (pt 0 176)(pt 16 176)(line_width 1))
+	)
+	(port
+		(pt 272 32)
+		(output)
+		(text "IF_Mode[15..0]" (rect 0 0 94 15)(font "Arial" ))
+		(text "IF_Mode[15..0]" (rect 157 27 251 42)(font "Arial" ))
+		(line (pt 272 32)(pt 256 32)(line_width 3))
+	)
+	(port
+		(pt 272 48)
+		(output)
+		(text "IFA_Mode" (rect 0 0 63 15)(font "Arial" ))
+		(text "IFA_Mode" (rect 188 43 251 58)(font "Arial" ))
+		(line (pt 272 48)(pt 256 48)(line_width 1))
+	)
+	(port
+		(pt 272 64)
+		(output)
+		(text "FG_Mode" (rect 0 0 62 15)(font "Arial" ))
+		(text "FG_Mode" (rect 189 59 251 74)(font "Arial" ))
+		(line (pt 272 64)(pt 256 64)(line_width 1))
+	)
+	(port
+		(pt 272 80)
+		(output)
+		(text "FG_DDS_Mode" (rect 0 0 101 15)(font "Arial" ))
+		(text "FG_DDS_Mode" (rect 150 75 251 90)(font "Arial" ))
+		(line (pt 272 80)(pt 256 80)(line_width 1))
+	)
+	(port
+		(pt 272 96)
+		(output)
+		(text "MB_Mode" (rect 0 0 63 15)(font "Arial" ))
+		(text "MB_Mode" (rect 188 91 251 106)(font "Arial" ))
+		(line (pt 272 96)(pt 256 96)(line_width 1))
+	)
+	(port
+		(pt 272 112)
+		(output)
+		(text "SCU_Mode" (rect 0 0 74 15)(font "Arial" ))
+		(text "SCU_Mode" (rect 177 107 251 122)(font "Arial" ))
+		(line (pt 272 112)(pt 256 112)(line_width 1))
+	)
+	(port
+		(pt 272 128)
+		(output)
+		(text "SCU_ACU_Mode" (rect 0 0 112 15)(font "Arial" ))
+		(text "SCU_ACU_Mode" (rect 139 123 251 138)(font "Arial" ))
+		(line (pt 272 128)(pt 256 128)(line_width 1))
+	)
+	(port
+		(pt 272 144)
+		(output)
+		(text "Sweep_Mode" (rect 0 0 88 15)(font "Arial" ))
+		(text "Sweep_Mode" (rect 163 139 251 154)(font "Arial" ))
+		(line (pt 272 144)(pt 256 144)(line_width 1))
+	)
+	(drawing
+		(rectangle (rect 16 16 256 208)(line_width 1))
+	)
+)

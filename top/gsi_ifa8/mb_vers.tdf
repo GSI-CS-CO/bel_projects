@@ -1,0 +1,36 @@
+TITLE "MB_VERS sollte alle Änderungsbemerkungen des Modulbus-Contr. der IFA (FG 380.211) enthalten.";
+
+PARAMETERS (TEST);
+
+--*******************************************************************************
+--                          Hier immer die aktuelle Versions-Nummer festlegen !!!
+--                                    |
+  CONSTANT Versions_nr = (TEST==0) ? 02 : 00;
+--                                         |
+--                     Eine Testversion bekommt immer die Nr. 00 !!!    
+--*******************************************************************************
+
+SUBDESIGN MB_VERS
+(
+	v[7..0] : OUTPUT;
+)
+--
+--	1. Version
+--  2. Version:	Dtack-Error Erkennung verbessert. (Jetzt bei Modulbus read/write) 
+--				Ansteuerung für IO-Bus hinzugefügt.
+------------------------------------------------------------------------------------------
+
+BEGIN
+
+v[] = Versions_nr;
+ 
+ASSERT NOT(VERSIONS_NR == 0)
+  REPORT "      ----------- Dies ist eine Testversion der Modul-Bus-Contr. !!!!  -----------" 
+SEVERITY Warning;
+
+ASSERT NOT(VERSIONS_NR != 0)
+  REPORT "      Die Design-Version des Modul-Bus-Contr. lautet    -------->  %  <---------" Versions_nr
+SEVERITY Warning;
+
+END;
+

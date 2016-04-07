@@ -1,0 +1,113 @@
+TITLE "sweep_deco: Funktionscode-Dekodierung V03 den 09.12.99, W.Panschow";
+
+-- V02: Das Signal 'Broadcast' ist hinzugekommen. Das Signal 'Ld_SW' ist in 'Ld_SW_Int'			--
+--		umbenannt worden, da der Sollwert (Flattop-Wert) nur noch intern gespeichert wird und	--
+--		erst mit dem 'Broadcast_FKT' am Ausgang gesetzt wird.									--
+
+-- V03: Das Signal 'Stop' ist hinzugekommen. Es wird mit dem Funktionskode 'Stop_FKT' aktiv.	--
+--		Ausgewertet wird es im Macro 'Steuerung'.												--
+--		Signal 'Broadcast' in 'Set_Flattop' umbenannt.											--
+--		Signal 'Ld_SW_Int' in 'Ld_Flattop_Int' umbenannt.										--
+
+--+---------------------------------------------+
+--|				Die Funktionskodes				|
+--+---------------------------------------------+
+CONSTANT  Ld_Delta_FKT		=  H"06";	-- Legt die Steilheit fest, mit der der Flattop-Wert auf Null gefahren wird.	--
+CONSTANT  Ld_Delay_FKT		=  H"07";	-- Lädt Verzögerung zwischen Hard/Software-Trigger und dem Beginn der Rampe.	--
+CONSTANT  Ld_Flattop_Int_FKT=  H"08";	-- Lädt Flattop-Wert in ein internen Zwischenspeicher.							--
+CONSTANT  Set_Flattop_FKT	=  H"09";	-- Der Interne Flattop-Wert wird ins Ausgangsregister geschrieben.				--
+CONSTANT  RES_FKT			=  H"01";	-- Der Sweeper wird zurückgesetzt.												--
+CONSTANT  STAT1_FKT			=  H"91";	-- Status lesen																	--
+CONSTANT  Soft_Trig_FKT		=  H"20";	-- Software-Start der Rampe. Vorausgesetzt Software-Start ist selektiert.		--
+CONSTANT  Soft_Trig_ON		=  H"21";	-- Software-Start ist eingeschaltet, kann im Status kontrolliert werden.		--
+CONSTANT  Soft_Trig_OFF		=  H"22";	-- Software-Start ist ausgeschaltet, kann im Status kontrolliert werden.		--
+CONSTANT  Stop_FKT			=  H"23";	-- Flattop-Wert wird mit Maximalsteigung auf Null gefahren.						--
+
+
+SUBDESIGN SWEEP_DECO
+    (
+	 SWEEP_SEL:			INPUT;		-- Schaltet den Sweeper komplett inaktiv.											--
+     FKT[7..0]:			INPUT;		-- Funktionskode 7..0																--
+     TAKE_DA:			INPUT;		-- Funktionskode-Strobe, eins aktiv.												--
+     PU_RESET:			INPUT;		-- Powerup-Reset																	--
+     CLK:				INPUT;		-- Takt, mit dem auch alle anderen Register des Designs getaktet werden sollten.	--
+
+	 Ld_Delta:			OUTPUT;		-- Selekt zum Laden des Rampensteilheits-Registers, ist 'eins'-aktiv.				-- 
+	 Ld_Delay:			OUTPUT;		-- Selekt zum Laden der Trigger-Verzögerungs-Zeit, ist 'eins'-aktiv.				-- 
+	 Ld_Flattop_Int:	OUTPUT;		-- Selekt zum Laden des Flattop-Wert-Zwischenspeichers, ist 'eins'-aktiv.			--
+	 Set_Flattop:		OUTPUT;		-- Der Flattop-Wert-Zwischenspeicher wird in die Ausgangsregister übernommen.		--
+	 Ena_Soft_Trig:		OUTPUT;		-- 'eins' Software-Trigger, 'null' Hardware-Trigger ist eingeschaltet.				--
+	 Stop:				OUTPUT;		-- Flattop-Wert soll mit max. Steilheit auf null fahren.							--
+     RESET:				OUTPUT;		-- Eins aktiv bei: Sweeper nicht selektiert, Powerup-Reset, Reset-Funktionskode		--
+	 Stat_Sel:			OUTPUT;		-- Selekt für externe Treiber und Multiplexer während des Statuslesens.				--
+     Soft_Trig:			OUTPUT;		-- Sweeper-Rampe soll per Software gestartet werden.								--
+	)
+
+VARIABLE
+	--+-------------------------------------------------------------------------------------------------------------------
+	--| Alle nachfolgend definierten Register werden durch Schreib-Leseaktionen der Interfacekarte FG 380 211 gesetzt	--
+	--| und rückgesetzt. Die Register dienen der Synchronisation und dem Zusammenfassen der Logik in ein physikalisches	--
+	--| Signal. Ob diese Signale Gültigkeit bekommen, wird im Macro 'Steuerung' entschieden.							--
+	--+-------------------------------------------------------------------------------------------------------------------
+	Ld_Delta_DFF:		DFF;		-- Lade die Rampen-Steilheit.									--
+	Ld_Delay_DFF:		DFF;		-- Lade das Trigger-Delay.										--
+	Ld_Flattop_Int_DFF:	DFF;		-- Lade den Falttop-Wert in den internen Zwischenspeicher.		--
+	Set_Flattop_DFF:	DFF;		-- Übernehme den internen Flattop-Wert in das Ausgangsregister.	--
+	Stop_DFF:			DFF;		-- Fahre den Flattop-Wert mit max. Steilheit auf Null.			--
+	RES_DFF:			DFF;		-- Setze den Sweeper zurück.									--
+	Soft_Trig_ff:		DFF;		-- Starte Rampe per Software.									--
+	STAT1_DFF:			DFF;		-- Lese den Sweeper-Status.										--
+	Ena_Soft_Trig_Dff:	SRFF;		-- Schalte Software-Start ein oder aus.							--
+
+BEGIN
+
+STAT1_DFF.CLK	= CLK;
+STAT1_DFF.CLRN	= NOT RESET;
+STAT1_DFF.d 	= (FKT[] == STAT1_FKT)  & TAKE_DA AND SWEEP_SEL;
+Stat_Sel = STAT1_DFF;
+
+Ld_Delta_DFF.clk    = clk;
+Ld_Delta_DFF.clrn	= NOT RESET;
+Ld_Delta_DFF.d		= (FKT[] == Ld_Delta_FKT) & TAKE_DA AND SWEEP_SEL;
+Ld_Delta = Ld_Delta_DFF;
+
+Ld_Delay_DFF.clk    = clk;
+Ld_Delay_DFF.clrn	= NOT RESET;
+Ld_Delay_DFF.d		= (FKT[] == Ld_Delay_FKT) & TAKE_DA AND SWEEP_SEL;
+Ld_Delay = Ld_Delay_DFF;
+
+Stop_DFF.clk    = clk;
+Stop_DFF.clrn	= NOT RESET;
+Stop_DFF.d		= (FKT[] == Stop_FKT) & TAKE_DA AND SWEEP_SEL;
+Stop = Stop_DFF;
+
+Set_Flattop_DFF.clk		= clk;
+Set_Flattop_DFF.clrn	= NOT RESET;
+Set_Flattop_DFF.d		= (FKT[] == Set_Flattop_FKT) & TAKE_DA AND SWEEP_SEL;
+Set_Flattop	= Set_Flattop_DFF;
+
+Ld_Flattop_Int_DFF.clk	= clk;
+Ld_Flattop_Int_DFF.clrn	= NOT RESET;
+Ld_Flattop_Int_DFF.d	= (FKT[] == Ld_Flattop_Int_FKT) & TAKE_DA AND SWEEP_SEL;
+Ld_Flattop_Int = Ld_Flattop_Int_DFF;
+
+Ena_Soft_Trig_Dff.clk	= CLK;
+Ena_Soft_Trig_Dff.s		= (FKT[] == Soft_TRIG_ON)    & TAKE_DA AND SWEEP_SEL;
+Ena_Soft_Trig_Dff.r		= (FKT[] == Soft_TRIG_OFF)   & TAKE_DA AND SWEEP_SEL;
+Ena_Soft_Trig_Dff.clrn	= NOT RESET;
+Ena_Soft_Trig = Ena_Soft_Trig_Dff;
+
+RES_DFF.clk	= clk;
+RES_DFF.d	=	((FKT[] == RES_FKT) & TAKE_DA AND SWEEP_SEL)
+				OR NOT SWEEP_SEL		-- Solange der SWEEPER nicht eingeschaltet ist, wird für den Sweep-Macro ein	--
+				OR PU_RESET;			-- permanenter Reset erzeugt.													--
+RESET = RES_DFF;
+
+Soft_Trig_ff.d		= (FKT[] == Soft_Trig_FKT) & TAKE_DA AND SWEEP_SEL;
+Soft_Trig_ff.clk	= clk;
+Soft_Trig_ff.clrn	= NOT RESET;
+Soft_Trig = Soft_Trig_ff;
+
+END;
+
+

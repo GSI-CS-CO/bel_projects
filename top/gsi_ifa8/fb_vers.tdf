@@ -1,0 +1,35 @@
+TITLE "FB_VERS sollte alle Änderungsbemerkungen des Fairbus-Contr. der IFA (FG 380.220) enthalten.";
+
+PARAMETERS (TEST);
+
+--*******************************************************************************
+--                          Hier immer die aktuelle Versions-Nummer festlegen !!!
+--                                    |
+  CONSTANT Versions_nr = (TEST==0) ? 01 : 00;
+--                                         |
+--                     Eine Testversion bekommt immer die Nr. 00 !!!    
+--*******************************************************************************
+
+SUBDESIGN FB_VERS
+(
+	v[7..0] : OUTPUT;
+)
+--
+--	1. Version
+
+------------------------------------------------------------------------------------------
+
+BEGIN
+
+v[] = Versions_nr;
+ 
+ASSERT NOT(VERSIONS_NR == 0)
+  REPORT "      ----------- Dies ist eine Testversion der Modul-Bus-Contr. !!!!  -----------" 
+SEVERITY Warning;
+
+ASSERT NOT(VERSIONS_NR != 0)
+  REPORT "      Die Design-Version des Fair-Bus-Contr. lautet    -------->  %  <---------" Versions_nr
+SEVERITY Warning;
+
+END;
+

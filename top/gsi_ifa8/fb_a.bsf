@@ -1,0 +1,323 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2007 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 328 528)
+	(text "fb_a" (rect 5 0 33 16)(font "Arial" (font_size 8)))
+	(text "inst" (rect 8 493 31 508)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "CLK" (rect 0 0 29 16)(font "Arial" (font_size 8)))
+		(text "CLK" (rect 21 27 50 43)(font "Arial" (font_size 8)))
+		(line (pt 0 32)(pt 16 32)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "ENA_Every_100ns" (rect 0 0 127 16)(font "Arial" (font_size 8)))
+		(text "ENA_Every_100ns" (rect 21 43 148 59)(font "Arial" (font_size 8)))
+		(line (pt 0 48)(pt 16 48)(line_width 1))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "ENA_Every_500ns" (rect 0 0 127 16)(font "Arial" (font_size 8)))
+		(text "ENA_Every_500ns" (rect 21 59 148 75)(font "Arial" (font_size 8)))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "MB-FC-STR" (rect 0 0 82 16)(font "Arial" (font_size 8)))
+		(text "MB-FC-STR" (rect 21 75 103 91)(font "Arial" (font_size 8)))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "MB-Mode" (rect 0 0 66 16)(font "Arial" (font_size 8)))
+		(text "MB-Mode" (rect 21 91 87 107)(font "Arial" (font_size 8)))
+		(line (pt 0 96)(pt 16 96)(line_width 1))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "IO-BUS-Mode" (rect 0 0 94 16)(font "Arial" (font_size 8)))
+		(text "IO-BUS-Mode" (rect 21 107 115 123)(font "Arial" (font_size 8)))
+		(line (pt 0 112)(pt 16 112)(line_width 1))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "FC[7..0]" (rect 0 0 55 16)(font "Arial" (font_size 8)))
+		(text "FC[7..0]" (rect 21 123 76 139)(font "Arial" (font_size 8)))
+		(line (pt 0 128)(pt 16 128)(line_width 3))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "SW-INT[15..0]" (rect 0 0 96 16)(font "Arial" (font_size 8)))
+		(text "SW-INT[15..0]" (rect 21 139 117 155)(font "Arial" (font_size 8)))
+		(line (pt 0 144)(pt 16 144)(line_width 3))
+	)
+	(port
+		(pt 0 160)
+		(input)
+		(text "DIW[15..0]" (rect 0 0 73 16)(font "Arial" (font_size 8)))
+		(text "DIW[15..0]" (rect 21 155 94 171)(font "Arial" (font_size 8)))
+		(line (pt 0 160)(pt 16 160)(line_width 3))
+	)
+	(port
+		(pt 0 176)
+		(input)
+		(text "MB-Din[7..0]" (rect 0 0 86 16)(font "Arial" (font_size 8)))
+		(text "MB-Din[7..0]" (rect 21 171 107 187)(font "Arial" (font_size 8)))
+		(line (pt 0 176)(pt 16 176)(line_width 3))
+	)
+	(port
+		(pt 0 192)
+		(input)
+		(text "MB-virt-ADR[3..0]" (rect 0 0 119 16)(font "Arial" (font_size 8)))
+		(text "MB-virt-ADR[3..0]" (rect 21 187 140 203)(font "Arial" (font_size 8)))
+		(line (pt 0 192)(pt 16 192)(line_width 3))
+	)
+	(port
+		(pt 0 208)
+		(input)
+		(text "MB-Dtack" (rect 0 0 68 16)(font "Arial" (font_size 8)))
+		(text "MB-Dtack" (rect 21 203 89 219)(font "Arial" (font_size 8)))
+		(line (pt 0 208)(pt 16 208)(line_width 1))
+	)
+	(port
+		(pt 0 224)
+		(input)
+		(text "SCLR" (rect 0 0 40 16)(font "Arial" (font_size 8)))
+		(text "SCLR" (rect 21 219 61 235)(font "Arial" (font_size 8)))
+		(line (pt 0 224)(pt 16 224)(line_width 1))
+	)
+	(port
+		(pt 312 32)
+		(output)
+		(text "RAM-ADR[8..0]" (rect 0 0 106 16)(font "Arial" (font_size 8)))
+		(text "RAM-ADR[8..0]" (rect 185 27 291 43)(font "Arial" (font_size 8)))
+		(line (pt 312 32)(pt 296 32)(line_width 3))
+	)
+	(port
+		(pt 312 48)
+		(output)
+		(text "MB-GRP-CNT[3..0]" (rect 0 0 130 16)(font "Arial" (font_size 8)))
+		(text "MB-GRP-CNT[3..0]" (rect 161 43 291 59)(font "Arial" (font_size 8)))
+		(line (pt 312 48)(pt 296 48)(line_width 3))
+	)
+	(port
+		(pt 312 64)
+		(output)
+		(text "MB-RD-Aktiv" (rect 0 0 87 16)(font "Arial" (font_size 8)))
+		(text "MB-RD-Aktiv" (rect 204 59 291 75)(font "Arial" (font_size 8)))
+		(line (pt 312 64)(pt 296 64)(line_width 1))
+	)
+	(port
+		(pt 312 80)
+		(output)
+		(text "MB-SD[15..0]" (rect 0 0 93 16)(font "Arial" (font_size 8)))
+		(text "MB-SD[15..0]" (rect 198 75 291 91)(font "Arial" (font_size 8)))
+		(line (pt 312 80)(pt 296 80)(line_width 3))
+	)
+	(port
+		(pt 312 96)
+		(output)
+		(text "Dtack_Test" (rect 0 0 77 16)(font "Arial" (font_size 8)))
+		(text "Dtack_Test" (rect 214 91 291 107)(font "Arial" (font_size 8)))
+		(line (pt 312 96)(pt 296 96)(line_width 1))
+	)
+	(port
+		(pt 312 112)
+		(output)
+		(text "MB-Dtack-Err" (rect 0 0 93 16)(font "Arial" (font_size 8)))
+		(text "MB-Dtack-Err" (rect 198 107 291 123)(font "Arial" (font_size 8)))
+		(line (pt 312 112)(pt 296 112)(line_width 1))
+	)
+	(port
+		(pt 312 128)
+		(output)
+		(text "/MB-SEL-Err" (rect 0 0 87 16)(font "Arial" (font_size 8)))
+		(text "/MB-SEL-Err" (rect 204 123 291 139)(font "Arial" (font_size 8)))
+		(line (pt 312 128)(pt 296 128)(line_width 1))
+	)
+	(port
+		(pt 312 144)
+		(output)
+		(text "MB-Res-SEL-Err" (rect 0 0 114 16)(font "Arial" (font_size 8)))
+		(text "MB-Res-SEL-Err" (rect 177 139 291 155)(font "Arial" (font_size 8)))
+		(line (pt 312 144)(pt 296 144)(line_width 1))
+	)
+	(port
+		(pt 312 160)
+		(output)
+		(text "BA[4..0]" (rect 0 0 56 16)(font "Arial" (font_size 8)))
+		(text "BA[4..0]" (rect 235 155 291 171)(font "Arial" (font_size 8)))
+		(line (pt 312 160)(pt 296 160)(line_width 3))
+	)
+	(port
+		(pt 312 176)
+		(output)
+		(text "SUBA[7..0]" (rect 0 0 77 16)(font "Arial" (font_size 8)))
+		(text "SUBA[7..0]" (rect 214 171 291 187)(font "Arial" (font_size 8)))
+		(line (pt 312 176)(pt 296 176)(line_width 3))
+	)
+	(port
+		(pt 312 192)
+		(output)
+		(text "MB-DOUT[7..0]" (rect 0 0 105 16)(font "Arial" (font_size 8)))
+		(text "MB-DOUT[7..0]" (rect 186 187 291 203)(font "Arial" (font_size 8)))
+		(line (pt 312 192)(pt 296 192)(line_width 3))
+	)
+	(port
+		(pt 312 208)
+		(output)
+		(text "MB-R/W" (rect 0 0 59 16)(font "Arial" (font_size 8)))
+		(text "MB-R/W" (rect 232 203 291 219)(font "Arial" (font_size 8)))
+		(line (pt 312 208)(pt 296 208)(line_width 1))
+	)
+	(port
+		(pt 312 224)
+		(output)
+		(text "/MB-DS" (rect 0 0 54 16)(font "Arial" (font_size 8)))
+		(text "/MB-DS" (rect 237 219 291 235)(font "Arial" (font_size 8)))
+		(line (pt 312 224)(pt 296 224)(line_width 1))
+	)
+	(port
+		(pt 312 240)
+		(output)
+		(text "SEL-WR-MB" (rect 0 0 88 16)(font "Arial" (font_size 8)))
+		(text "SEL-WR-MB" (rect 203 235 291 251)(font "Arial" (font_size 8)))
+		(line (pt 312 240)(pt 296 240)(line_width 1))
+	)
+	(port
+		(pt 312 256)
+		(output)
+		(text "MB-CLK" (rect 0 0 57 16)(font "Arial" (font_size 8)))
+		(text "MB-CLK" (rect 234 251 291 267)(font "Arial" (font_size 8)))
+		(line (pt 312 256)(pt 296 256)(line_width 1))
+	)
+	(port
+		(pt 312 272)
+		(output)
+		(text "/MB-SEND-EN" (rect 0 0 101 16)(font "Arial" (font_size 8)))
+		(text "/MB-SEND-EN" (rect 190 267 291 283)(font "Arial" (font_size 8)))
+		(line (pt 312 272)(pt 296 272)(line_width 1))
+	)
+	(port
+		(pt 312 288)
+		(output)
+		(text "/MB-SEND-STR" (rect 0 0 109 16)(font "Arial" (font_size 8)))
+		(text "/MB-SEND-STR" (rect 182 283 291 299)(font "Arial" (font_size 8)))
+		(line (pt 312 288)(pt 296 288)(line_width 1))
+	)
+	(port
+		(pt 312 304)
+		(output)
+		(text "SEL-MB" (rect 0 0 57 16)(font "Arial" (font_size 8)))
+		(text "SEL-MB" (rect 234 299 291 315)(font "Arial" (font_size 8)))
+		(line (pt 312 304)(pt 296 304)(line_width 1))
+	)
+	(port
+		(pt 312 320)
+		(output)
+		(text "MB-Reset" (rect 0 0 68 16)(font "Arial" (font_size 8)))
+		(text "MB-Reset" (rect 223 315 291 331)(font "Arial" (font_size 8)))
+		(line (pt 312 320)(pt 296 320)(line_width 1))
+	)
+	(port
+		(pt 312 336)
+		(output)
+		(text "LBYTE_STR" (rect 0 0 86 16)(font "Arial" (font_size 8)))
+		(text "LBYTE_STR" (rect 205 331 291 347)(font "Arial" (font_size 8)))
+		(line (pt 312 336)(pt 296 336)(line_width 1))
+	)
+	(port
+		(pt 312 352)
+		(output)
+		(text "HBYTE_STR" (rect 0 0 88 16)(font "Arial" (font_size 8)))
+		(text "HBYTE_STR" (rect 203 347 291 363)(font "Arial" (font_size 8)))
+		(line (pt 312 352)(pt 296 352)(line_width 1))
+	)
+	(port
+		(pt 312 368)
+		(output)
+		(text "LByte-EN" (rect 0 0 66 16)(font "Arial" (font_size 8)))
+		(text "LByte-EN" (rect 225 363 291 379)(font "Arial" (font_size 8)))
+		(line (pt 312 368)(pt 296 368)(line_width 1))
+	)
+	(port
+		(pt 312 384)
+		(output)
+		(text "HByte-EN" (rect 0 0 68 16)(font "Arial" (font_size 8)))
+		(text "HByte-EN" (rect 223 379 291 395)(font "Arial" (font_size 8)))
+		(line (pt 312 384)(pt 296 384)(line_width 1))
+	)
+	(port
+		(pt 312 400)
+		(output)
+		(text "MB-virt-RW" (rect 0 0 77 16)(font "Arial" (font_size 8)))
+		(text "MB-virt-RW" (rect 214 395 291 411)(font "Arial" (font_size 8)))
+		(line (pt 312 400)(pt 296 400)(line_width 1))
+	)
+	(port
+		(pt 312 416)
+		(output)
+		(text "MB-read-Reg" (rect 0 0 89 16)(font "Arial" (font_size 8)))
+		(text "MB-read-Reg" (rect 202 411 291 427)(font "Arial" (font_size 8)))
+		(line (pt 312 416)(pt 296 416)(line_width 1))
+	)
+	(port
+		(pt 312 432)
+		(output)
+		(text "MB-VERS[7..0]" (rect 0 0 106 16)(font "Arial" (font_size 8)))
+		(text "MB-VERS[7..0]" (rect 185 427 291 443)(font "Arial" (font_size 8)))
+		(line (pt 312 432)(pt 296 432)(line_width 3))
+	)
+	(port
+		(pt 312 448)
+		(output)
+		(text "IO-BUS-ADR[7..0]" (rect 0 0 123 16)(font "Arial" (font_size 8)))
+		(text "IO-BUS-ADR[7..0]" (rect 168 443 291 459)(font "Arial" (font_size 8)))
+		(line (pt 312 448)(pt 296 448)(line_width 3))
+	)
+	(port
+		(pt 312 464)
+		(output)
+		(text "IO-BUS-RD" (rect 0 0 77 16)(font "Arial" (font_size 8)))
+		(text "IO-BUS-RD" (rect 214 459 291 475)(font "Arial" (font_size 8)))
+		(line (pt 312 464)(pt 296 464)(line_width 1))
+	)
+	(port
+		(pt 312 480)
+		(output)
+		(text "IO-BUS-WR" (rect 0 0 82 16)(font "Arial" (font_size 8)))
+		(text "IO-BUS-WR" (rect 209 475 291 491)(font "Arial" (font_size 8)))
+		(line (pt 312 480)(pt 296 480)(line_width 1))
+	)
+	(drawing
+		(rectangle (rect 16 16 296 496)(line_width 1))
+	)
+)

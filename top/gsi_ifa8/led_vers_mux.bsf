@@ -1,0 +1,225 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2009 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 280 496)
+	(text "led_vers_mux" (rect 5 0 98 16)(font "Arial" (font_size 8)))
+	(text "inst" (rect 8 461 31 476)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "SCLR" (rect 0 0 40 16)(font "Arial" (font_size 8)))
+		(text "SCLR" (rect 21 27 61 43)(font "Arial" (font_size 8)))
+		(line (pt 0 32)(pt 16 32)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "CLK" (rect 0 0 29 16)(font "Arial" (font_size 8)))
+		(text "CLK" (rect 21 43 50 59)(font "Arial" (font_size 8)))
+		(line (pt 0 48)(pt 16 48)(line_width 1))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "ENA_Every_20ms" (rect 0 0 123 16)(font "Arial" (font_size 8)))
+		(text "ENA_Every_20ms" (rect 21 59 144 75)(font "Arial" (font_size 8)))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "ADR[7..0]" (rect 0 0 67 16)(font "Arial" (font_size 8)))
+		(text "ADR[7..0]" (rect 21 75 88 91)(font "Arial" (font_size 8)))
+		(line (pt 0 80)(pt 16 80)(line_width 3))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "IFA_VERS[7..0]" (rect 0 0 109 16)(font "Arial" (font_size 8)))
+		(text "IFA_VERS[7..0]" (rect 21 91 130 107)(font "Arial" (font_size 8)))
+		(line (pt 0 96)(pt 16 96)(line_width 3))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "FG_VERS[6..0]" (rect 0 0 107 16)(font "Arial" (font_size 8)))
+		(text "FG_VERS[6..0]" (rect 21 107 128 123)(font "Arial" (font_size 8)))
+		(line (pt 0 112)(pt 16 112)(line_width 3))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "MB_VERS[7..0]" (rect 0 0 109 16)(font "Arial" (font_size 8)))
+		(text "MB_VERS[7..0]" (rect 21 123 130 139)(font "Arial" (font_size 8)))
+		(line (pt 0 128)(pt 16 128)(line_width 3))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "FB_VERS[7..0]" (rect 0 0 106 16)(font "Arial" (font_size 8)))
+		(text "FB_VERS[7..0]" (rect 21 139 127 155)(font "Arial" (font_size 8)))
+		(line (pt 0 144)(pt 16 144)(line_width 3))
+	)
+	(port
+		(pt 0 160)
+		(input)
+		(text "Sweep_VERS[7..0]" (rect 0 0 132 16)(font "Arial" (font_size 8)))
+		(text "Sweep_VERS[7..0]" (rect 21 155 153 171)(font "Arial" (font_size 8)))
+		(line (pt 0 160)(pt 16 160)(line_width 3))
+	)
+	(port
+		(pt 0 176)
+		(input)
+		(text "LED_SEL_IN" (rect 0 0 89 16)(font "Arial" (font_size 8)))
+		(text "LED_SEL_IN" (rect 21 171 110 187)(font "Arial" (font_size 8)))
+		(line (pt 0 176)(pt 16 176)(line_width 1))
+	)
+	(port
+		(pt 0 192)
+		(input)
+		(text "LED_RCV_IN" (rect 0 0 92 16)(font "Arial" (font_size 8)))
+		(text "LED_RCV_IN" (rect 21 187 113 203)(font "Arial" (font_size 8)))
+		(line (pt 0 192)(pt 16 192)(line_width 1))
+	)
+	(port
+		(pt 0 208)
+		(input)
+		(text "/LED_TRM_IN" (rect 0 0 96 16)(font "Arial" (font_size 8)))
+		(text "/LED_TRM_IN" (rect 21 203 117 219)(font "Arial" (font_size 8)))
+		(line (pt 0 208)(pt 16 208)(line_width 1))
+	)
+	(port
+		(pt 0 224)
+		(input)
+		(text "/LED_INL_IN" (rect 0 0 87 16)(font "Arial" (font_size 8)))
+		(text "/LED_INL_IN" (rect 21 219 108 235)(font "Arial" (font_size 8)))
+		(line (pt 0 224)(pt 16 224)(line_width 1))
+	)
+	(port
+		(pt 0 240)
+		(input)
+		(text "/LED_DRQ_IN" (rect 0 0 97 16)(font "Arial" (font_size 8)))
+		(text "/LED_DRQ_IN" (rect 21 235 118 251)(font "Arial" (font_size 8)))
+		(line (pt 0 240)(pt 16 240)(line_width 1))
+	)
+	(port
+		(pt 0 256)
+		(input)
+		(text "/LED_DRDY_IN" (rect 0 0 107 16)(font "Arial" (font_size 8)))
+		(text "/LED_DRDY_IN" (rect 21 251 128 267)(font "Arial" (font_size 8)))
+		(line (pt 0 256)(pt 16 256)(line_width 1))
+	)
+	(port
+		(pt 0 272)
+		(input)
+		(text "PowerUP_Flag" (rect 0 0 101 16)(font "Arial" (font_size 8)))
+		(text "PowerUP_Flag" (rect 21 267 122 283)(font "Arial" (font_size 8)))
+		(line (pt 0 272)(pt 16 272)(line_width 1))
+	)
+	(port
+		(pt 0 288)
+		(input)
+		(text "JP_SEL_6408" (rect 0 0 96 16)(font "Arial" (font_size 8)))
+		(text "JP_SEL_6408" (rect 21 283 117 299)(font "Arial" (font_size 8)))
+		(line (pt 0 288)(pt 16 288)(line_width 1))
+	)
+	(port
+		(pt 0 304)
+		(input)
+		(text "ME_Err_Limit" (rect 0 0 93 16)(font "Arial" (font_size 8)))
+		(text "ME_Err_Limit" (rect 21 299 114 315)(font "Arial" (font_size 8)))
+		(line (pt 0 304)(pt 16 304)(line_width 1))
+	)
+	(port
+		(pt 0 320)
+		(input)
+		(text "UMIL15V" (rect 0 0 62 16)(font "Arial" (font_size 8)))
+		(text "UMIL15V" (rect 21 315 83 331)(font "Arial" (font_size 8)))
+		(line (pt 0 320)(pt 16 320)(line_width 1))
+	)
+	(port
+		(pt 0 336)
+		(input)
+		(text "UMIL5V" (rect 0 0 54 16)(font "Arial" (font_size 8)))
+		(text "UMIL5V" (rect 21 331 75 347)(font "Arial" (font_size 8)))
+		(line (pt 0 336)(pt 16 336)(line_width 1))
+	)
+	(port
+		(pt 0 352)
+		(input)
+		(text "IFA_Mode" (rect 0 0 69 16)(font "Arial" (font_size 8)))
+		(text "IFA_Mode" (rect 21 347 90 363)(font "Arial" (font_size 8)))
+		(line (pt 0 352)(pt 16 352)(line_width 1))
+	)
+	(port
+		(pt 0 368)
+		(input)
+		(text "FG_Mode" (rect 0 0 67 16)(font "Arial" (font_size 8)))
+		(text "FG_Mode" (rect 21 363 88 379)(font "Arial" (font_size 8)))
+		(line (pt 0 368)(pt 16 368)(line_width 1))
+	)
+	(port
+		(pt 0 384)
+		(input)
+		(text "FG_DDS_Mode" (rect 0 0 107 16)(font "Arial" (font_size 8)))
+		(text "FG_DDS_Mode" (rect 21 379 128 395)(font "Arial" (font_size 8)))
+		(line (pt 0 384)(pt 16 384)(line_width 1))
+	)
+	(port
+		(pt 0 400)
+		(input)
+		(text "MB_Mode" (rect 0 0 69 16)(font "Arial" (font_size 8)))
+		(text "MB_Mode" (rect 21 395 90 411)(font "Arial" (font_size 8)))
+		(line (pt 0 400)(pt 16 400)(line_width 1))
+	)
+	(port
+		(pt 0 416)
+		(input)
+		(text "FB_Mode" (rect 0 0 66 16)(font "Arial" (font_size 8)))
+		(text "FB_Mode" (rect 21 411 87 427)(font "Arial" (font_size 8)))
+		(line (pt 0 416)(pt 16 416)(line_width 1))
+	)
+	(port
+		(pt 0 432)
+		(input)
+		(text "Sweep_Mode" (rect 0 0 92 16)(font "Arial" (font_size 8)))
+		(text "Sweep_Mode" (rect 21 427 113 443)(font "Arial" (font_size 8)))
+		(line (pt 0 432)(pt 16 432)(line_width 1))
+	)
+	(port
+		(pt 0 448)
+		(input)
+		(text "MB_virt_RW" (rect 0 0 84 16)(font "Arial" (font_size 8)))
+		(text "MB_virt_RW" (rect 21 443 105 459)(font "Arial" (font_size 8)))
+		(line (pt 0 448)(pt 16 448)(line_width 1))
+	)
+	(port
+		(pt 264 32)
+		(output)
+		(text "nLED[22..0]" (rect 0 0 81 16)(font "Arial" (font_size 8)))
+		(text "nLED[22..0]" (rect 162 27 243 43)(font "Arial" (font_size 8)))
+		(line (pt 264 32)(pt 248 32)(line_width 3))
+	)
+	(drawing
+		(rectangle (rect 16 16 248 464)(line_width 1))
+	)
+)

@@ -1,0 +1,425 @@
+TITLE "FBCtrl_c";-- Version 1.3 vom 14.09.2010 R. Hartmann
+
+--
+--V01_R03:	Ergänzung zum auslesen der Statusports vom Fair-Bus-Makro
+--V01_R04:	Kein Auslesen der INR-Maste über den SCU-Bus Macro
+--
+
+
+PARAMETERS (Piggy_ID);
+
+FUNCTION SRFFE (S, R, CLK, CLRN, PRN, ENA)	RETURNS (Q);
+FUNCTION SRFF  (S, R, CLK, CLRN, PRN)		RETURNS (Q);
+FUNCTION DFF      (D, CLK, CLRN, PRN)		RETURNS (Q);
+FUNCTION DFFE     (D, CLK, CLRN, PRN, ENA)	RETURNS (Q);
+
+FUNCTION lpm_ff (data[LPM_WIDTH-1..0], clock, enable, sclr, sset, sload, aclr, aset, aload)
+   WITH (LPM_WIDTH, LPM_AVALUE, LPM_SVALUE, LPM_FFTYPE)
+   RETURNS (q[LPM_WIDTH-1..0]);
+
+FUNCTION lpm_compare (dataa[LPM_WIDTH-1..0], datab[LPM_WIDTH-1..0], clock, aclr)
+   WITH (LPM_WIDTH, LPM_REPRESENTATION, LPM_PIPELINE, CHAIN_SIZE, ONE_INPUT_IS_CONSTANT)
+   RETURNS (alb, aeb, agb, ageb, aneb, aleb);
+
+FUNCTION lpm_counter (data[LPM_WIDTH-1..0], clock, clk_en, cnt_en, updown, aclr,
+						 aset, aconst, aload, sclr, sset, sconst, sload)
+   WITH (LPM_WIDTH, LPM_DIRECTION, LPM_MODULUS, LPM_AVALUE, LPM_SVALUE, CARRY_CNT_EN, LABWIDE_SCLR)
+   RETURNS (q[LPM_WIDTH-1..0], eq[15..0]);
+
+FUNCTION lpm_mux (data[LPM_SIZE-1..0][LPM_WIDTH-1..0], sel[LPM_WIDTHS-1..0], clock, aclr) 
+   WITH (LPM_WIDTH, LPM_SIZE, LPM_WIDTHS, LPM_PIPELINE)
+   RETURNS (result[LPM_WIDTH-1..0]);
+
+FUNCTION lpm_ram_dq (data[LPM_WIDTH-1..0], address[LPM_WIDTHAD-1..0], we, inclock, outclock)
+   WITH (LPM_WIDTH, LPM_WIDTHAD, LPM_NUMWORDS, LPM_FILE, LPM_INDATA, LPM_ADDRESS_CONTROL, LPM_OUTDATA)
+   RETURNS (q[LPM_WIDTH-1..0]);
+
+
+
+----- Funktions-Codes fuer Fair-Bus -----
+
+CONSTANT c_unused		 = H"00"; -- FKT-Code ohne Funktion  
+CONSTANT c_res			 = H"01"; -- FKT-Code Reset 
+
+CONSTANT C_wr_BusData	 = H"10";
+CONSTANT C_wr_BusAdr	 = H"11";
+CONSTANT C_wr_RamAdr	 = H"62";
+CONSTANT C_wr_RamData  	 = H"63";
+CONSTANT C_wr_GrpCnt	 = H"64"; -- grp_cnt = Basis-IFK-ADR + n virt IFK-ADR
+CONSTANT C_res_SelErr	 = H"75";
+
+CONSTANT C_rd_EPLD_Vers	 = H"8D";
+CONSTANT C_rd_Piggy_ID	 = H"8E";
+CONSTANT C_rd_BusData	 = H"90";
+CONSTANT C_rd_RamData	 = H"99";
+CONSTANT C_rd_GrpCnt	 = H"9B"; -- grp_cnt = Basis-IFK-ADR + n virt IFK-ADR
+
+CONSTANT C_wr_FB_STS	 	= H"67";	 -- write FB-Status
+CONSTANT C_wr_FB_SRQ_Enable = H"68";	 -- write FB-SRQ-Enable
+
+CONSTANT C_rd_FB_STS	 	= H"9A"; -- read FB-Status
+CONSTANT C_rd_FB_SRQ_Enable = H"D0"; -- read FB-SRQ-Enable
+CONSTANT C_rd_FB_SRQ_Activ	= H"D1"; -- read FB-SRQ-Activ
+CONSTANT C_rd_FB_SRQ_In		= H"D2"; -- read FB-SRQ-Input
+
+CONSTANT C_RD_INRM		 = H"C9";	 -- read Interrupt-Maske (read Powerup+Ready vom FB-Slave) 
+CONSTANT C_ADR_STS_Slave = H"1011";	 -- Adresse des Stus-Registers FB-Slave 
+
+CONSTANT C_wr_fc_grp_l	 = H"3" ; -- Fkt-Code Gruppe für write  = 30 bis 3F
+CONSTANT C_wr_fc_grp_h	 = H"4" ; -- Fkt-Code Gruppe für write  = 40 bis 4F
+CONSTANT C_rd_fc_grp	 = H"B" ; -- Fkt-Code Gruppe für read   = B0 bis BF
+
+SUBDESIGN FBCtrl_c
+
+    (
+	CLK,					-- System-Clock  
+    FB_Mode,				-- Betriebsart der Interface-Karte
+    FB_FC_Str,				-- Funktionscode-Strobe	 ______+-+_______
+	FC[7..0],				-- Funktionscode
+	FB_virt_ADR[3..0],		-- virtuelle IFK-Sub-ADR im Fair-Bus-Betrieb
+	SW_INT[15..0],			-- Daten-Sollwert Intern
+	EPLD_Vers[7..0],		-- FB-Piggy EPLD_Vers		
+--	Piggy_ID[7..0],			-- FB-Piggy-ID		
+	FB_Din[15..0],			-- FB-Data-In		
+	SCLR,					-- syn. Clear
+	FB_Send_in,				-- Starte MIL-Sender der IFK vom FAIR-Bus 
+	FB_RD_Port_aktiv,		-- Selekt für FB-Read-Port 
+	FB_RD_Port[15..0]		-- FB-Read-Ports (Status)		
+					:	INPUT;
+
+	FB_SD_Mux[15..0],		-- Ausgang des Muliplexers für Daten
+	FB_nSend_En,			-- Enable des 'EE-FlipFlops' für den Sender '6408'
+	FB_nSend_STR,			-- Send-Strobe zum Starten des 'EE-FlipFlops' für den Sender '6408'
+	FB_RD_AKTIV,			-- Sel für Daten vom FB-Teil
+
+	FB_Adr[15..0],			-- FB-ADR		
+	FB_Dout[15..0],			-- FB-Data-Out		
+	FB_RD,					-- Start Read-Sequence auf FB-Bus		
+	FB_WR,					-- Start Write-Sequence auf FB-Bus		
+	FB_RW,					-- Start Read-Write-Sequence auf FB-Bus		
+	FB_virt_RW,				-- Zugriff auf FB-Bus und RAM bei virt IFK-ADR		
+	FB_read_Reg,			-- read FB-Bus Register	(intern)	
+ 
+	Rd_INRM,				-- read Interrupt-Maske
+	FB_wr_STS,				-- write FB-Status
+	FB_rd_STS,				-- read FB-Status
+	FB_wr_SRQ_Enable,		-- write FB-SRQ-Enable
+	FB_rd_SRQ_Enable,		-- read FB-SRQ-Enable
+	FB_rd_SRQ_Activ,		-- read FB-SRQ-Activ
+	FB_rd_SRQ_In,			-- read FB-SRQ-Input
+	FB_rd_EPLD_Vers,		-- read FB-EPLD-Version
+
+    FB_FC_Str_Syn			-- 
+				:	OUTPUT;
+    )
+
+
+VARIABLE
+
+	V_FB_RW_SEQ_ff		:	SRFF; -- Read/Write Datenbus Sequence
+	V_Enable_ff			:	SRFF; -- Datenbus Enable
+	V_DS_ff				:	SRFF; -- Datenstrobe
+	V_Dtack_Test_ff		:	SRFF; -- Datenstrobe
+
+    v_FC_STR_Syn		:	DFF;
+    v_FC_STR_Syn1		:	DFF;
+    v_FC_STR_Syn2		:	DFF;
+    v_Dtack_Syn			:	DFF;
+	v_FC_FB_RD			:	DFF;
+	v_FC_FB_WR			:	DFF;
+	v_FC_FB_RW			:	DFF;
+	
+	v_RamAdr			:	lpm_ff	WITH (LPM_WIDTH = 16);
+	v_FB_ADR			:	lpm_ff	WITH (LPM_WIDTH = 16);
+	v_FB_Din			:	lpm_ff	WITH (LPM_WIDTH = 16);
+	v_FB_GRP_CNT		:	lpm_ff	WITH (LPM_WIDTH = 4);
+    v_FB_Send_En		:	dffe;
+    v_FB_Send_STR		:	dffe;
+    v_FB_read_Reg		:	dffe;
+	v_SEL_RAM_RW		:	dff;	
+	v_STR_WR_Ram_WR		:	dffe;	
+	v_STR_RD_Ram_WR		:	dffe;	
+	v_FB_RD_AKTIV		:	dff;
+	v_FB_virt_RW		:	dff;
+	v_READ_WR_RAM		:	dff;
+	v_READ_RD_RAM		:	dff;
+	
+	v_GrpCnt			:	dff;
+	v_EPLD_Vers			:	dff;
+	v_Piggy_ID			:	dff;
+
+	v_Rd_INRM			:	dff; -- read Interrupt-Maske
+    v_FB_rd_STS	 		:	dff; -- write FB-Status
+    v_FB_wr_STS	 		:	dff; -- read FB-Status
+    v_FB_rd_SRQ_Enable	:	dff; -- write FB-SRQ-Enable
+	v_FB_wr_SRQ_Enable 	:	dff; -- read FB-SRQ-Enable
+	v_FB_rd_SRQ_Activ	:	dff; -- read FB-SRQ-Activ
+	v_FB_rd_SRQ_In		:	dff; -- read FB-SRQ-Input
+                      
+	v_SEL_FB_D[2..0]	:	NODE;
+
+
+	v_Ram_ADR_mux		: LPM_MUX WITH (LPM_WIDTH  = 5,		-- Width of the data[][] and result[] ports. 
+										LPM_SIZE   = 2,		-- NuFBer of input buses to the multiplexer.
+										LPM_WIDTHS = 1);	-- Width of the sel[] input port.
+	
+	v_FB_ADR_mux		: LPM_MUX WITH (LPM_WIDTH = 16, LPM_SIZE = 4, LPM_WIDTHS = 2);
+	v_FB_D_mux			: LPM_MUX WITH (LPM_WIDTH = 16, LPM_SIZE = 6, LPM_WIDTHS = 3, LPM_PIPELINE = 1);
+	
+	v_FC_WR_Ram			: lpm_ram_dq WITH (LPM_WIDTH   = 16,			-- Width of data[] and q[] ports.
+										   LPM_WIDTHAD =  9);			-- Width of the address port.
+	v_FC_RD_Ram			: lpm_ram_dq WITH (LPM_WIDTH   = 16,			-- Width of data[] and q[] ports.
+										   LPM_WIDTHAD =  8);			-- Width of the address port.
+	
+	
+BEGIN
+
+	----- Synchronisation -----
+
+	v_FC_STR_Syn1.  (D, CLK) = ( (FB_Fc_str AND FB_Mode),	    clk); 
+	v_FC_STR_Syn2.  (D, CLK) = ( v_FC_STR_Syn1, clk); 
+	v_FC_STR_Syn.   (D, CLK) = ( (v_FC_STR_Syn1.q AND (NOT v_FC_STR_Syn2.q)), clk); 
+
+
+--+==========================================================================
+--| Funktionscodes für read auf dem Fair-Bus
+--+==========================================================================
+
+	v_FC_FB_RD.(D, CLK, CLRN) =	(  	FB_Mode AND
+				   (((fc[]     == C_rd_BusData) AND (FB_virt_ADR[] == 0)) OR	-- read  FB-Data
+					 (fc[7..4] == C_rd_fc_grp)     							 )	-- read  FC's für FB-Bus
+																, clk, NOT SCLR);
+
+
+--+==========================================================================
+--| Funktionscodes für write auf dem Fair-Bus
+--+==========================================================================
+
+	v_FC_FB_WR.(D, CLK, CLRN) =	(  	FB_Mode AND
+				   (((fc[]     == C_wr_BusData) AND (FB_virt_ADR[] == 0)) OR	-- write FB-Data
+					 (fc[7..4] == C_wr_fc_grp_l) 						  OR	-- write FC's für FB-Bus
+					 (fc[7..4] == C_wr_fc_grp_h)						    )	-- write FC's für FB-Bus
+																, clk, NOT SCLR);
+
+
+--+==========================================================================
+--| Funktionscodes für read/write auf dem Fair-Bus
+--+==========================================================================
+
+	v_FC_FB_RW.(D, CLK, CLRN) =	(  	FB_Mode AND
+				   (((fc[]     == C_rd_BusData) AND (FB_virt_ADR[] == 0)) OR	-- read  FB-Data
+					((fc[]     == C_wr_BusData) AND (FB_virt_ADR[] == 0)) OR	-- write FB-Data
+					 (fc[7..4] == C_wr_fc_grp_l) 						  OR	-- write FC's für FB-Bus
+					 (fc[7..4] == C_wr_fc_grp_h)						  OR	-- write FC's für FB-Bus
+					 (fc[7..4] == C_rd_fc_grp)     							 )	-- read  FC's für FB-Bus
+																, clk, NOT SCLR);
+
+--+=====================================================================================
+--| Sel. Signal, wenn Daten vom FB-Teil ausgelesen werden sollen
+--+=====================================================================================
+
+	v_FB_RD_AKTIV.(D, CLK) = ( FB_Mode AND 
+				   			  (((fc[]     == C_rd_BusData) AND (FB_virt_ADR[] == 0)) OR	-- read  FB-Data
+					 	        (fc[7..4] == C_rd_fc_grp)     						 OR	-- read  FC's für FB-Bus
+					   			(fc[] == C_rd_EPLD_Vers)	OR
+  								(fc[] == C_rd_Piggy_ID)		OR  
+				   				(fc[] == C_rd_RamData)    	OR
+								(fc[] == C_rd_FB_STS)		OR  
+								(fc[] == C_rd_FB_SRQ_Enable)OR  
+								(fc[] == C_rd_FB_SRQ_Activ) OR  
+								(fc[] == C_rd_FB_SRQ_In)	OR  
+				   				(fc[] == C_rd_GrpCnt) 			), clk); 
+
+--+=====================================================================================
+--| Signal, beim Zugriff auf FB-Bus und RAM bei virt IFK-ADR 
+--+=====================================================================================
+
+	v_FB_virt_RW.(D, CLK, CLRN) = ( FB_fc_str AND (FB_virt_ADR[] != 0) AND
+			   						((fc[]     == C_wr_RamAdr  ) OR			-- write Ram-ADR
+			   						 (fc[7..4] == C_wr_fc_grp_l) OR			-- write FC's für FB-Bus Group 1
+									 (fc[7..4] == C_wr_fc_grp_h) OR			-- write FC's für FB-Bus Group 2
+									 (fc[7..4] == C_rd_fc_grp)   OR			-- read  FC's für FB-Bus
+									 v_STR_WR_Ram_WR OR v_STR_RD_Ram_WR OR	-- RAM write
+									 v_READ_WR_RAM   OR v_READ_RD_RAM )		-- RAM read
+																		, clk, NOT SCLR);
+--+=====================================================================================
+--| "EE" Start im FB-Mode für Zugriffe die !!! nicht auf den Fairbus erfolgen
+--+=====================================================================================
+
+	v_FB_read_Reg.(D, ENA, CLK, CLRN) = ( FB_fc_str,
+
+						(((FB_virt_ADR[] != 0) AND v_READ_WR_RAM ) OR -- read Daten aus dem RAM der Write-FC's
+						 ((FB_virt_ADR[] != 0) AND v_READ_RD_RAM ) OR -- read Daten aus dem RAM der Read-FC's
+						           (fc[] == C_rd_GrpCnt)		   OR -- read Group-Count-Register	
+						           (fc[] == C_rd_EPLD_Vers)		   OR -- read EPLD-Version	
+						           (fc[] == C_rd_Piggy_ID)		   OR -- read Piggy-ID	
+						           (fc[] == C_rd_FB_STS)		   OR -- read FB-Status	
+						           (fc[] == C_rd_FB_SRQ_Enable)	   OR -- read FB-SRQ-Enable
+						           (fc[] == C_rd_FB_SRQ_Activ)	   OR -- read FB-SRQ-Activ
+						           (fc[] == C_rd_FB_SRQ_In))		  -- read FB-SRQ-Input	
+														  , clk, NOT SCLR);
+
+
+--+==========================================================================
+--| Fair-Bus-Signale
+--+==========================================================================
+
+	v_FB_Send_En	.(D,CLK,ENA)  = ((fc[] == C_rd_BusData),  clk,  v_FC_Str_Syn1 );-- FB-Read Seq.
+
+	v_FB_Send_STR	.(D,CLK,ENA)  = ( FB_Send_in, clk,  (fc[] == C_rd_BusData));
+
+
+--+==========================================================================
+--| Daten-Register 
+--+==========================================================================
+
+v_RamAdr    .(data[], clock, enable, aclr) = (SW_INT[],     CLK,  ((fc[] == c_wr_RamAdr) AND v_FC_STR_Syn1), SCLR); 		
+v_FB_ADR    .(data[], clock, enable, aclr) = (SW_INT[],     CLK,  ((fc[] == c_wr_BusAdr) AND v_FC_STR_Syn1), SCLR); 		
+v_FB_GRP_CNT.(data[], clock, enable, aclr) = (SW_INT[3..0], CLK,  ((fc[] == c_wr_GrpCnt) AND v_FC_STR_Syn1), SCLR); 		
+
+
+--+==========================================================================
+--| Muliplexer RAM-ADR  
+--+==========================================================================
+
+	v_SEL_RAM_RW  .(D,CLK,CLRN) = ((    (FB_FC_STR AND (fc[] == C_wr_RamData)) OR 
+										(FB_fc_str AND (fc[] == C_rd_RamData)) ), clk, NOT SCLR); 
+
+	v_Ram_ADR_mux.sel[]			= v_SEL_RAM_RW; 
+	v_Ram_ADR_mux.data[1][4..0]	= v_RamADR.q[4..0];	-- RAM-ADR für RAM read/write 
+	v_Ram_ADR_mux.data[0][4..0]	= FC[4..0];			-- RAM-ADR für FB read/write 	
+
+--+==========================================================================
+--| RAM  
+--+==========================================================================
+	v_STR_WR_Ram_WR	.(D,CLK,ENA)  = ( v_FC_STR_Syn.q, clk,
+									((fc[] == C_wr_RamData) AND (v_RamADR.q[15..8] == 0) AND
+									 (v_RamADR.q[7..4] == C_wr_fc_grp_l OR v_RamADR.q[7..4] == C_wr_fc_grp_h )) );
+
+	v_FC_WR_Ram.data[]			= SW_INT[15..0];				-- Daten für Ram write
+	v_FC_WR_Ram.address[8..4]	= v_Ram_ADR_mux.result[4..0];	-- ADR aus Muliplexer RAM-ADR
+	v_FC_WR_Ram.address[3..0]	= FB_virt_ADR[3..0];			-- ADR der virt. IFK
+	v_FC_WR_Ram.inclock			= clk;
+	v_FC_WR_Ram.outclock		= clk;
+	v_FC_WR_Ram.we				= v_STR_WR_Ram_WR;
+
+
+	v_STR_RD_Ram_WR	.(D,CLK,ENA)  = ( v_FC_STR_Syn.q, clk,
+									((fc[] == C_wr_RamData) AND (v_RamADR.q[15..8] == 0) AND
+									 v_RamADR.q[7..4] == C_rd_fc_grp) );
+
+	v_FC_RD_Ram.data[]			= SW_INT[15..0];				-- Daten für Ram write
+	v_FC_RD_Ram.address[7..4]	= v_Ram_ADR_mux.result[3..0];	-- ADR aus Muliplexer RAM-ADR
+	v_FC_RD_Ram.address[3..0]	= FB_virt_ADR[3..0];			-- ADR der virt. IFK
+	v_FC_RD_Ram.inclock			= clk;
+	v_FC_RD_Ram.outclock		= clk;
+	v_FC_RD_Ram.we				= v_STR_RD_Ram_WR;
+
+
+--+==========================================================================
+--| Muliplexer Fairbus-ADR  
+--+==========================================================================
+
+	IF (FC[7..4] == C_wr_fc_grp_l OR FC[7..4] == C_wr_fc_grp_h ) THEN v_FB_ADR_mux.sel[] = 1; END IF;
+	IF (FC[7..4] == C_rd_fc_grp                                ) THEN v_FB_ADR_mux.sel[] = 2; END IF;
+	IF (FB_Mode AND fc[] == C_rd_INRM AND FB_virt_ADR[] == 0)	 THEN v_FB_ADR_mux.sel[] = 3; END IF;
+
+
+	v_FB_ADR_mux.data[0][15..0]	=    v_FB_ADR.q[15..0];	-- FB-ADR aus dem FB-ADR-Register
+	v_FB_ADR_mux.data[1][15..0]	= v_FC_WR_Ram.q[15..0];	-- FB-ADR über Funktionscode aus dem RAM 
+	v_FB_ADR_mux.data[2][15..0]	= v_FC_RD_Ram.q[15..0];	-- FB-ADR über Funktionscode aus dem RAM 
+	v_FB_ADR_mux.data[3][15..0]	=      C_ADR_STS_Slave;	-- Adresse des Status-Registers vom FB-Slave (ACU)
+	
+--+==========================================================================
+--| Muliplexer Fairbus-Daten-Output zur IFA  
+--+==========================================================================
+
+	v_READ_WR_RAM.(D,CLK) =	( (fc[] 	== C_rd_RamData) AND (v_RamADR.q[15..8] == 0)   AND
+		  					 ((v_RamADR.q[7..4] == C_wr_fc_grp_l) OR
+		  					  (v_RamADR.q[7..4] == C_wr_fc_grp_h))   ,CLK);   
+
+	v_READ_RD_RAM.(D,CLK) =	( (fc[] 	== C_rd_RamData) AND (v_RamADR.q[15..8] == 0)   AND
+		  					  (v_RamADR.q[7..4] == C_rd_fc_grp)      ,CLK);   
+
+	IF		v_READ_WR_RAM.q		THEN v_SEL_FB_D[] = 1; 
+	ELSIF	v_READ_RD_RAM.q		THEN v_SEL_FB_D[] = 2; 
+	ELSIF	v_GrpCnt.q			THEN v_SEL_FB_D[] = 3;
+	ELSIF	v_Piggy_ID.q		THEN v_SEL_FB_D[] = 4;
+	ELSIF	FB_RD_Port_aktiv	THEN v_SEL_FB_D[] = 5;	-- V01_R03
+	ELSE							 v_SEL_FB_D[] = 0;	-- read FB-Daten
+	END IF;
+
+	v_FB_D_mux.clock		  	= clk; 
+	v_FB_D_mux.sel[]		 	= v_SEL_FB_D[]; 
+	v_FB_D_mux.data[0][15..0]	= FB_Din[15..0];		-- Input-Daten vom Fair-Bus 
+	v_FB_D_mux.data[1][15..0]	= v_FC_WR_Ram.q[15..0];	-- Daten vom "write RAM"  
+	v_FB_D_mux.data[2][15..0]	= v_FC_RD_Ram.q[15..0];	-- Daten vom "read RAM"  
+
+	v_FB_D_mux.data[3][15..4]	= GND;	v_FB_D_mux.data[3][3..0] = v_FB_GRP_CNT.q[];	-- virt-ADR
+	v_FB_D_mux.data[4][15..8]	= GND;	v_FB_D_mux.data[4][7..0] = Piggy_ID;			-- Piggy-ID
+	v_FB_D_mux.data[5][15..0]	= FB_RD_Port[15..0];	-- FB-Status-Register 			-- V01_R03
+
+
+--+==========================================================================
+--| Funktionscodes 
+--+==========================================================================
+
+	v_FB_wr_STS.	 	(d,clk)	=	((fc[]	== C_wr_FB_STS) 		AND v_FC_STR_Syn, CLK);
+	v_FB_wr_SRQ_Enable.	(d,clk)	=	((fc[]	== C_wr_FB_SRQ_Enable) 	AND v_FC_STR_Syn, CLK);
+
+
+	v_EPLD_Vers.		(d,clk)	=	((fc[] 	== C_rd_EPLD_Vers		), CLK);
+	v_GrpCnt.			(d,clk)	=	((fc[]	== C_rd_GrpCnt			), CLK);
+	v_Piggy_ID.			(d,clk)	=	((fc[] 	== C_rd_Piggy_ID		), CLK);
+	v_FB_rd_STS.	 	(d,clk)	=	((fc[]	== C_rd_FB_STS			), CLK);
+	v_FB_rd_SRQ_Enable.	(d,clk)	=	((fc[]	== C_rd_FB_SRQ_Enable	), CLK);
+	v_FB_rd_SRQ_Activ.	(d,clk)	=	((fc[]	== C_rd_FB_SRQ_Activ	), CLK);
+	v_FB_rd_SRQ_In.		(d,clk)	=	((fc[]	== C_rd_FB_SRQ_In		), CLK);
+
+
+	v_Rd_INRM.(d,clk) = (((fc[]	== C_rd_INRM AND FB_Fc_str AND FB_Mode)), CLK); -- read Interrupt-Maske
+
+
+--+==========================================================================
+--| Ausgänge 
+--+==========================================================================
+
+	FB_Adr[15..0]	=	v_FB_ADR_mux.result[15..0];	-- FB-ADR		
+	FB_Dout[15..0]	=	SW_INT[15..0];	-- FB-Data-Out		
+
+	FB_RD			=	v_FC_STR_Syn AND
+						(v_FC_FB_RD.q);									 -- V01_R04 Start Read-Sequence auf FB-Bus		
+
+--						(v_FC_FB_RD.q	OR								 -- V01_R04 Start Read-Sequence auf FB-Bus		
+--						((fc[] == C_rd_INRM) AND (FB_virt_ADR[] == 0))); -- V01_R04	read  FB-Slave-Status (mit "C9")
+
+	FB_WR			=	v_FC_STR_Syn AND v_FC_FB_WR.q;	-- Start Write-Sequence auf FB-Bus		
+	FB_RW			=	v_FC_STR_Syn AND v_FC_FB_RW.q;	-- Start Read-Write-Sequence auf FB-Bus		
+
+	FB_RD_AKTIV		=	v_FB_RD_AKTIV .q;	
+
+	FB_nSend_En		=	NOT v_FB_Send_En;
+	FB_nSend_STR	=	NOT	v_FB_Send_STR;
+	FB_SD_MUX[15..0]=	v_FB_D_mux.result[];
+
+	FB_virt_RW		=	v_FB_virt_RW.q;	
+	FB_read_Reg		=	v_FB_read_Reg.q;	
+    FB_FC_STR_Syn	=	v_FC_Str_Syn.q;		
+
+
+    FB_rd_STS	 		=	v_FB_rd_STS.q	 		; -- write FB-Status
+    FB_wr_STS	 		=	v_FB_wr_STS.q	 		; -- read FB-Status
+    FB_rd_SRQ_Enable	=	v_FB_rd_SRQ_Enable.q	; -- write FB-SRQ-Enable
+	FB_wr_SRQ_Enable 	=	v_FB_wr_SRQ_Enable.q 	; -- read FB-SRQ-Enable
+	FB_rd_SRQ_Activ		=	v_FB_rd_SRQ_Activ.q		; -- read FB-SRQ-Activ
+	FB_rd_SRQ_In		=	v_FB_rd_SRQ_In.q		; -- read FB-SRQ-Input
+	Rd_INRM				=	v_Rd_INRM.q				; -- read Interrupt-Maske
+	FB_rd_EPLD_Vers		=	v_EPLD_Vers.q			; -- read FB-EPLD-Version
+
+
+
+
+	                           
+END;
+
+

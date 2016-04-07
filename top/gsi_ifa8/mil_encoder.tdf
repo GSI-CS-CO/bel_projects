@@ -1,0 +1,189 @@
+TITLE "'Mil_Encoder' => MIl-Encoder-Macro von FG 450 370, Autor: W.Panschow, Stand: 15.10.98, Vers: V02 ";
+
+--+-------------------------------------------------------------------------------------------------------------+
+--| 'Mil_Encoder' bildet die Sendefunktion des Manchester-Transeivers von Harris Type "6408" nach. D.h. die		|
+--| 16 Bit Nutzdaten werden Mil 1553B konform gesendet, erst die 3 us lange Command-/Datenkennung, dann die 	|
+--| 16 Bit Daten manchester-dekodiert und zum Schluß die Odd-Parity.											|
+--+-------------------------------------------------------------------------------------------------------------+
+
+FUNCTION lpm_counter (	data[LPM_WIDTH-1..0], clock, clk_en, cnt_en, updown,
+						aclr, aset, aconst, aload, sclr, sset, sconst, sload	)
+   WITH (LPM_WIDTH, LPM_DIRECTION, LPM_MODULUS, LPM_AVALUE, LPM_SVALUE, CARRY_CNT_EN, LABWIDE_SCLR)
+   RETURNS (q[LPM_WIDTH-1..0], eq[15..0]);
+
+
+FUNCTION lpm_shiftreg (data[LPM_WIDTH-1..0], clock, enable, shiftin, load, sclr, sset, aclr, aset)
+   WITH (LPM_WIDTH, LPM_DIRECTION, LPM_AVALUE, LPM_SVALUE)
+   RETURNS (q[LPM_WIDTH-1..0], shiftout);
+
+
+
+SUBDESIGN mil_encoder
+(
+	Mil_TRM_D[15..0]:	INPUT;			-- solange 'Mil_TRM' aktiv ist muß hier das zu sendende Datum anliegen.					-- 
+	Cmd_Trm:			INPUT = VCC;	-- Cmd_Trm = Eins während 'Wr_Mil' aktiv => ein Command-Sync. wird erzeugt, sonst		--
+										-- wird ein Data-Sync. generiert.														--
+	Wr_Mil:			INPUT;				-- Startet ein Mil-Send, muß mindestens 1 Takt aktiv sein.								--
+	CLK:			INPUT;				-- Die Frequenz muß mindestens 4 MHz betragen.											--
+	Ena_every_500ns:INPUT;			-- Muss von CLK abgeleitet sein!															--
+	Reset:			INPUT;			-- Die Ablaufsteuerung 'Mil_TRM_SM' zurückgesetzt, unterbricht ein laufendes Mil-Send.		--
+	/Mil_Out_Pos:	OUTPUT;			-- Der positive Bipolare Ausgang ist null-aktiv.											--
+	/Mil_Out_Neg:	OUTPUT;			-- Der negative Bipolare Ausgang ist null-aktiv.											--
+	Mil_Unipol:		OUTPUT;			-- Der unipolare Ausgang ist eins-aktiv.													--
+	/Sel_Mil_Drv:	OUTPUT;			-- Soll die ext. bipolaren Treiber von '/Mil_Out_Pos/_Neg' einschalten (null-aktiv).		--
+	Mil_Rdy_4_Wr:	OUTPUT;			-- Das Sende-Register ist frei.																--
+	Send_Data:		OUTPUT;			-- Daten-Send-Signal.																--
+)
+
+------------------------------					'Mil_Encoder' Seite 2						------------------------------
+
+VARIABLE
+
+Wr_Mil_Merker:	SRFF;
+
+Mil_TRM_SM:	MACHINE OF BITS (Mil_TRM_SM_[3..1])		-- 'Mil_TRM_SM' steuert die die Phasen des Mil-Sendens.						--
+		WITH STATES (
+						Mil_T_Idle,					--		Die Ablaufsteuerung ist im Ruhezustand.								--
+						M_Syn,						--		Die Command/Data-Synchronisations-Präambel wird gesendet.			--
+						M_Send						--		Die Nutzdaten, und das Parity-Bit werden gesendet.					--
+					);			
+
+shift: lpm_shiftreg WITH ( LPM_WIDTH = 16,					-- In 'shift' wird das Sendedatum[15..0] in		--
+						   LPM_DIRECTION = "LEFT" );		-- einen seriellen Bitstrom umgewandelt.		--
+																		
+sync_shift_time: lpm_counter WITH ( LPM_WIDTH = 5,			-- Mit diesem Zähler wird das Timing der Synchr.-Präambel	--
+									LPM_DIRECTION = "UP");  -- erzeugt. Anschließend bestimmt er das Ende des seriellen	--
+															-- Datenstromes.											--
+
+F_1_MHz: DFFE;	-- Mit diesem Takt wird aus dem seriellen Datenstrom des 'shift'-Registers der				--
+				-- Machester-Datenstrom moduliert. Es wird das erforderliche Tastvehältnis von 50% erzeugt.	--
+
+
+Out_pos: NODE;	-- Ein Name für einen komplizierten Logik-Ausdruck, geht an den Eingang des 'Bipol_Out_Pos'-Register.	--
+Out_neg: NODE;	-- Ein Name für einen komplizierten Logik-Ausdruck, geht an den Eingang des 'Bipol_Out_Neg'-Register.	--
+
+Cmd_Trm_ff:		DFFE;
+
+Bipol_Out_Pos:	DFF;	-- Der bipolare positive Ausgang ist ein getaktetes Register, damit werden etwaige	--
+						-- Übergangsfunktionen von 'Out_Pos' unterdrückt.									--
+Bipol_Out_Neg:	DFF;	-- Der bipolare negative Ausgang ist ein getaktetes Register, damit werden etwaige	--
+						-- Übergangsfunktionen von 'Out_Neg' unterdrückt.									--
+
+
+Sel_Mil_Drv_FF: DFF;	-- Sind 'Out_Pos' und 'Out_Neg' ungleich in ihrem Logikpegel werden die Mil-Treiber aktiviert.	--
+						-- Damit etwaige Übergangsfunktionen weggefiltert werden ist das Register getaktet.				--
+
+Mil_Rdy_4_Wr_ff: DFF;
+
+Odd_Parity: TFFE;		-- Generiert das Parity-Bit.	--
+
+------------------------------					'Mil_Encoder' Seite 3						------------------------------
+
+BEGIN
+
+Wr_Mil_Merker.(s, r, clk)	= ( Wr_Mil, M_Syn, clk );
+
+--Mil_Rdy_4_Wr_ff.(r, clk, prn) = ( Wr_Mil, clk, !Reset );
+
+F_1_MHz.d		= not F_1_MHz;				-- Ergebnis: 1 Mhz mit 50 Prozent Taktverhältnis. Weitere Bemerkungen s.o.	--
+F_1_MHz.clk		= CLK;
+F_1_MHz.ena		= Ena_every_500ns;
+F_1_MHz.clrn	= NOT Mil_T_Idle;			-- Muß in Phase zur Ablaufsteuerung 'Mil_TRM_SM' stehen.					--
+
+sync_shift_time.clock	= CLK;
+sync_shift_time.sclr	= Mil_T_Idle;		-- Muß in Phase zur Ablaufsteuerung 'Mil_TRM_SM' stehen.					--
+
+Odd_Parity.clk	= CLK;
+Odd_Parity.prn	= NOT Mil_T_Idle;			-- Muß in Phase zur Ablaufsteuerung 'Mil_TRM_SM' stehen.					--
+
+Cmd_Trm_ff.clk	= clk;
+Cmd_Trm_ff.d	= Cmd_Trm;
+Cmd_Trm_ff.ena	= Wr_Mil;
+
+Mil_TRM_SM.(clk, reset) = ( CLK, Reset );
+
+CASE Mil_TRM_SM IS
+	WHEN Mil_T_Idle =>							--<< 'Mil_T_Idle': Ablaufsteuerung 'Mil_TRM_SM' ist im Ruhezustand			--<<
+		Out_pos = GND;									-- Die bipolaren Logik-Knoten sind								--
+		Out_neg = GND;									-- beide inaktiv (nicht bipolar).								--
+		IF Wr_Mil_Merker and Ena_every_500ns THEN				-- Soll gesendet werden?										--
+			Mil_TRM_SM = M_Syn;					-->> Ja, gehe in den 'M_Syn'-State											-->>
+		ELSE
+			Mil_TRM_SM = Mil_T_Idle;			-->> Nein, bleibe im 'Mil_T_Idle'-State										-->>
+		END IF;
+
+	WHEN M_Syn =>								--<< 'M_Syn': Das Command/Data-Sync. wird generiert.						--<<
+		Out_neg = Not Out_pos;							-- Die bipolaren Logik-Knoten werden aktiv, da bipolar.			--
+		sync_shift_time.cnt_en = Ena_every_500ns; 		-- 'sync_shift_time' zählt mit 2 MHz.							--
+								 						-- '.cnt_en' darf nur jeweils 1 Takt aktiv sein.				--
+
+		IF sync_shift_time.q[] < 3 THEN					-- 'Out_Pos' ist für 0 bis 2 = 3 Takte (= 1,5 us)		 		--
+			IF Cmd_Trm_ff THEN							--  abhängig von Eingang 'Cmd_Trm'								--
+				Out_pos = VCC;							--	eins für Kommando-Sync.										--
+			ELSE										-- 	und															--
+				Out_pos = GND;							-- 	null für Data-Sync.											--
+			END IF;
+		ELSIF sync_shift_time.q[] < 6 THEN				-- 'Out_Pos' ist für 3 bis 5 = 3 Takte (= 1,5 us) 				--
+			IF Cmd_Trm_ff THEN								--  abhängig von Eingang 'Cmd_Trm'							--
+				Out_pos = GND;							--	null für Kommando-Sync.										--
+			ELSE										--  und															--
+				Out_pos = VCC;							-- 	eins für Data-Sync.											--
+			END IF;
+		ELSE											-- nach 6 Takten wird 'Out_Pos'									--
+			Out_pos =  shift.q[15] XOR F_1_MHz;			-- auf Manchester-Kodierung umgeschaltet,						--
+			sync_shift_time.sclr = VCC;					-- und 'sync_shift_time' wird zurückgesetzt.					--
+			Mil_TRM_SM = M_Send;				-->> gehe in den 'M_Send'-State												-->> 
+		END IF;
+
+	WHEN M_Send =>								--<< 'M_Send': Das 16-Bit Datum und das Parity-Bit wird Manchester-Kodiert	--<<
+		sync_shift_time.cnt_en = F_1_MHz and Ena_every_500ns;	-- 'sync_shift_time' zählt jetzt mit 1 MHz.				--
+																-- '.cnt_en' darf nur jeweils 1 Takt aktiv sein.		--
+		Odd_Parity.t	= shift.q[15];							-- Bei jeder ungraden 'eins' wird Odd_parity 'true',	-- 
+		Odd_Parity.ena	= not F_1_MHz and Ena_every_500ns;		-- abgefragt wird 1 Takt vor dem nächsten Shift-Takt.	--
+
+		IF sync_shift_time.q[] <= 15 THEN				-- 16 Takte lang wird das Datum nach links geschoben,			--
+			Out_pos = shift.q[15] XOR F_1_MHz;			-- hier mit 'F_1_MHz' Manchester-Kodiert.						--
+			Out_neg = NOT Out_pos;						-- Bipolares Signal bilden.										--
+
+		ELSIF sync_shift_time.q[] == 16 THEN			-- Mit dem 17 Takt wird											--
+			Out_pos = Odd_Parity XOR F_1_MHz;			-- Parity-Bit Manchester-Kodiert.								--
+			Out_neg = NOT Out_pos;						-- Bipolares Signal bilden.										--
+		ELSE
+			Out_pos = GND;								-- Die bipolaren Logik-Knoten werden							--
+			Out_neg = GND;								-- beide inaktiv (nicht bipolar).								--
+			Mil_TRM_SM = Mil_T_Idle;			-->> Übertragung ist fertig, gehe in den 'Mil_T_Idle'-State					-->>
+--			Mil_Rdy_4_Wr_ff.s = VCC;
+		END IF;
+END CASE;
+
+shift.clock		= CLK;
+shift.enable 	= (F_1_MHz AND M_Send and Ena_every_500ns)	-- Datum wird im 1 MHz Takt nach links geschoben.			--
+				  OR (Mil_T_Idle AND Wr_Mil);				-- Das Schieberegister muß selektiert sein, wenn			--
+shift.load		= Wr_Mil;									-- das Datum geladen wird.									--
+shift.data[]	= Mil_TRM_D[];								-- Datum mit Schieberegister verbinden.						--
+shift.shiftin	= GND;										-- Im Schieberegister rücken rechts Nullen nach.			--
+
+Bipol_Out_Pos.(d, clk) = ( Out_pos, CLK );	-- Um Übergangsfunktionen von 'Out_Pos/Neg' zu vermeiden wird	--
+Bipol_Out_Neg.(d, clk) = ( Out_neg, CLK );	-- die Logik über Systemtakt getaktete Register geführt.		--
+
+/Mil_Out_Pos = NOT Bipol_Out_Pos;					-- Die Bipolaren Ausgänge müssen an den externen Treibern	--
+/Mil_Out_Neg = NOT Bipol_Out_Neg;					-- 'aktiv null' sein.										--
+
+Mil_Unipol = Bipol_Out_Pos;							-- Der unipolare Ausgang ist 'aktiv eins'.					--
+
+Sel_Mil_Drv_FF.d	= Out_pos XOR Out_neg;	-- Nur bei ungleichen Logikpegel werden die externen Treiber der 	--
+Sel_Mil_Drv_FF.clk	= CLK;					-- bipol. Ausgänge aktiviert. Um Übergangsfuktionen zu vermeiden,	--
+											-- und um das gleiche Timing zu haben wie 'Bipol_Out_Pos/Neg', wird	--
+											-- die Logik über Systemtakt getaktete Register geführt.			--
+
+/Sel_Mil_Drv = NOT Sel_Mil_Drv_FF;			-- Die externen Treiber werden mit Null-Pegel aktiviert.			--
+
+Mil_Rdy_4_Wr_ff.(d, clk) = ( Mil_T_Idle and not Wr_Mil_Merker, clk );
+
+Mil_Rdy_4_Wr = Mil_Rdy_4_Wr_ff;
+
+Send_Data	= M_Send;			-- Daten-Send-Signal.																--
+
+
+---------------------------------------------------------------------------------------------------
+END;

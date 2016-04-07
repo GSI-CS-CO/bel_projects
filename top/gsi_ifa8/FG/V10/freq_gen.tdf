@@ -1,0 +1,56 @@
+TITLE "'freq_gen' => Frequenz-Genreator-Macro von IFK-FG (FG 380 210), Autor: W.Panschow, Stand: 24.08.99, Vers: V08a ";
+
+FUNCTION lpm_mux (data[LPM_SIZE-1..0][LPM_WIDTH-1..0], sel[LPM_WIDTHS-1..0], clock, aclr) 
+   WITH (LPM_WIDTH, LPM_SIZE, LPM_WIDTHS, LPM_PIPELINE)
+   RETURNS (result[LPM_WIDTH-1..0]);
+
+FUNCTION lpm_counter (data[LPM_WIDTH-1..0], clock, clk_en, cnt_en, updown, aclr, aset, aconst, aload, sclr, sset, sconst, sload)
+   WITH (LPM_WIDTH, LPM_DIRECTION, LPM_MODULUS, LPM_AVALUE, LPM_SVALUE, CARRY_CNT_EN, LABWIDE_SCLR)
+   RETURNS (q[LPM_WIDTH-1..0], eq[15..0]);
+
+CONSTANT C_Frequenz_0 = 2^9 -1;		-- 16 kHz
+CONSTANT C_Frequenz_1 = 2^8 -1;		-- 32 kHz
+CONSTANT C_Frequenz_2 = 2^7 -1;		-- 64 kHz
+CONSTANT C_Frequenz_3 = 2^6 -1;		-- 128 kHz
+CONSTANT C_Frequenz_4 = 2^5 -1;		-- 256 kHz
+CONSTANT C_Frequenz_5 = 2^4 -1;		-- 512 kHz
+CONSTANT C_Frequenz_6 = 2^3 -1;		-- 1.024 MHz
+CONSTANT C_Frequenz_7 = 2^2 -1;		-- 2.048 MHz
+
+subdesign freq_gen
+	(
+	Freq_Sel[2..0]:	INPUT;
+	F_Add_En:		INPUT;
+	F_OSZ:			INPUT;
+	FG_SEL:			INPUT;
+	F_Add:			OUTPUT;
+	)
+	
+
+VARIABLE
+	Freq_Count_Mux:	lpm_mux WITH (LPM_WIDTH = CEIL(LOG2(C_Frequenz_0)), LPM_SIZE = 8, LPM_WIDTHS = 3); 
+	Freq_Count:		lpm_counter WITH (LPM_WIDTH = CEIL(LOG2(C_Frequenz_0)), LPM_DIRECTION = "DOWN");
+	F_Add_FF:		DFF;
+BEGIN
+
+Freq_Count_Mux.sel[] = Freq_Sel[];
+Freq_Count_Mux.data[0][] = C_Frequenz_0;
+Freq_Count_Mux.data[1][] = C_Frequenz_1;
+Freq_Count_Mux.data[2][] = C_Frequenz_2;
+Freq_Count_Mux.data[3][] = C_Frequenz_3;
+Freq_Count_Mux.data[4][] = C_Frequenz_4;
+Freq_Count_Mux.data[5][] = C_Frequenz_5;
+Freq_Count_Mux.data[6][] = C_Frequenz_6;
+Freq_Count_Mux.data[7][] = C_Frequenz_7;
+
+Freq_Count.data[]	= Freq_Count_Mux.result[];
+Freq_Count.clock	= F_OSZ;
+Freq_Count.sload	= NOT F_Add_En OR Freq_Count.eq0;
+Freq_Count.aclr		= NOT FG_SEL;
+
+F_Add_FF.clk	= F_OSZ;
+F_Add_FF.d	= Freq_Count.eq0;
+
+F_Add = F_Add_FF;
+
+END;

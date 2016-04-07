@@ -1,0 +1,323 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2007 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 304 432)
+	(text "ifa_a" (rect 5 0 36 16)(font "Arial" (font_size 8)))
+	(text "inst" (rect 8 397 31 412)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "CLK" (rect 0 0 29 16)(font "Arial" (font_size 8)))
+		(text "CLK" (rect 21 27 50 43)(font "Arial" (font_size 8)))
+		(line (pt 0 32)(pt 16 32)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "FC-STR" (rect 0 0 54 16)(font "Arial" (font_size 8)))
+		(text "FC-STR" (rect 21 43 75 59)(font "Arial" (font_size 8)))
+		(line (pt 0 48)(pt 16 48)(line_width 1))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "HW-SEL-MB-7B" (rect 0 0 112 16)(font "Arial" (font_size 8)))
+		(text "HW-SEL-MB-7B" (rect 21 59 133 75)(font "Arial" (font_size 8)))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "FC[7..0]" (rect 0 0 55 16)(font "Arial" (font_size 8)))
+		(text "FC[7..0]" (rect 21 75 76 91)(font "Arial" (font_size 8)))
+		(line (pt 0 80)(pt 16 80)(line_width 3))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "SW-Int[15..0]" (rect 0 0 90 16)(font "Arial" (font_size 8)))
+		(text "SW-Int[15..0]" (rect 21 91 111 107)(font "Arial" (font_size 8)))
+		(line (pt 0 96)(pt 16 96)(line_width 3))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "IF-Mode[15..0]" (rect 0 0 99 16)(font "Arial" (font_size 8)))
+		(text "IF-Mode[15..0]" (rect 21 107 120 123)(font "Arial" (font_size 8)))
+		(line (pt 0 112)(pt 16 112)(line_width 3))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "/SEL-STS-DATA" (rect 0 0 113 16)(font "Arial" (font_size 8)))
+		(text "/SEL-STS-DATA" (rect 21 123 134 139)(font "Arial" (font_size 8)))
+		(line (pt 0 128)(pt 16 128)(line_width 1))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "IFA-ADR[7..0]" (rect 0 0 95 16)(font "Arial" (font_size 8)))
+		(text "IFA-ADR[7..0]" (rect 21 139 116 155)(font "Arial" (font_size 8)))
+		(line (pt 0 144)(pt 16 144)(line_width 3))
+	)
+	(port
+		(pt 0 160)
+		(input)
+		(text "STS[7..0]" (rect 0 0 64 16)(font "Arial" (font_size 8)))
+		(text "STS[7..0]" (rect 21 155 85 171)(font "Arial" (font_size 8)))
+		(line (pt 0 160)(pt 16 160)(line_width 3))
+	)
+	(port
+		(pt 0 176)
+		(input)
+		(text "DIW[15..0]" (rect 0 0 73 16)(font "Arial" (font_size 8)))
+		(text "DIW[15..0]" (rect 21 171 94 187)(font "Arial" (font_size 8)))
+		(line (pt 0 176)(pt 16 176)(line_width 3))
+	)
+	(port
+		(pt 0 192)
+		(input)
+		(text "FWL_Data[15..0]" (rect 0 0 116 16)(font "Arial" (font_size 8)))
+		(text "FWL_Data[15..0]" (rect 21 187 137 203)(font "Arial" (font_size 8)))
+		(line (pt 0 192)(pt 16 192)(line_width 3))
+	)
+	(port
+		(pt 0 208)
+		(input)
+		(text "FWL_STS[15..0]" (rect 0 0 114 16)(font "Arial" (font_size 8)))
+		(text "FWL_STS[15..0]" (rect 21 203 135 219)(font "Arial" (font_size 8)))
+		(line (pt 0 208)(pt 16 208)(line_width 3))
+	)
+	(port
+		(pt 0 224)
+		(input)
+		(text "RCV-ERR" (rect 0 0 68 16)(font "Arial" (font_size 8)))
+		(text "RCV-ERR" (rect 21 219 89 235)(font "Arial" (font_size 8)))
+		(line (pt 0 224)(pt 16 224)(line_width 1))
+	)
+	(port
+		(pt 0 240)
+		(input)
+		(text "/UTR-15V" (rect 0 0 66 16)(font "Arial" (font_size 8)))
+		(text "/UTR-15V" (rect 21 235 87 251)(font "Arial" (font_size 8)))
+		(line (pt 0 240)(pt 16 240)(line_width 1))
+	)
+	(port
+		(pt 0 256)
+		(input)
+		(text "IRQ-EXT" (rect 0 0 57 16)(font "Arial" (font_size 8)))
+		(text "IRQ-EXT" (rect 21 251 78 267)(font "Arial" (font_size 8)))
+		(line (pt 0 256)(pt 16 256)(line_width 1))
+	)
+	(port
+		(pt 0 272)
+		(input)
+		(text "/JP-LE-SW" (rect 0 0 76 16)(font "Arial" (font_size 8)))
+		(text "/JP-LE-SW" (rect 21 267 97 283)(font "Arial" (font_size 8)))
+		(line (pt 0 272)(pt 16 272)(line_width 1))
+	)
+	(port
+		(pt 0 288)
+		(input)
+		(text "/JP-EN-IO" (rect 0 0 68 16)(font "Arial" (font_size 8)))
+		(text "/JP-EN-IO" (rect 21 283 89 299)(font "Arial" (font_size 8)))
+		(line (pt 0 288)(pt 16 288)(line_width 1))
+	)
+	(port
+		(pt 0 304)
+		(input)
+		(text "/INL" (rect 0 0 27 16)(font "Arial" (font_size 8)))
+		(text "/INL" (rect 21 299 48 315)(font "Arial" (font_size 8)))
+		(line (pt 0 304)(pt 16 304)(line_width 1))
+	)
+	(port
+		(pt 0 320)
+		(input)
+		(text "/DRQ" (rect 0 0 37 16)(font "Arial" (font_size 8)))
+		(text "/DRQ" (rect 21 315 58 331)(font "Arial" (font_size 8)))
+		(line (pt 0 320)(pt 16 320)(line_width 1))
+	)
+	(port
+		(pt 0 336)
+		(input)
+		(text "/DRDY" (rect 0 0 47 16)(font "Arial" (font_size 8)))
+		(text "/DRDY" (rect 21 331 68 347)(font "Arial" (font_size 8)))
+		(line (pt 0 336)(pt 16 336)(line_width 1))
+	)
+	(port
+		(pt 0 352)
+		(input)
+		(text "/SEL-ERR" (rect 0 0 70 16)(font "Arial" (font_size 8)))
+		(text "/SEL-ERR" (rect 21 347 91 363)(font "Arial" (font_size 8)))
+		(line (pt 0 352)(pt 16 352)(line_width 1))
+	)
+	(port
+		(pt 0 368)
+		(input)
+		(text "SCLR" (rect 0 0 40 16)(font "Arial" (font_size 8)))
+		(text "SCLR" (rect 21 363 61 379)(font "Arial" (font_size 8)))
+		(line (pt 0 368)(pt 16 368)(line_width 1))
+	)
+	(port
+		(pt 288 32)
+		(output)
+		(text "RES-VW-ERR" (rect 0 0 99 16)(font "Arial" (font_size 8)))
+		(text "RES-VW-ERR" (rect 168 27 267 43)(font "Arial" (font_size 8)))
+		(line (pt 288 32)(pt 272 32)(line_width 1))
+	)
+	(port
+		(pt 288 48)
+		(output)
+		(text "RESET-CMD" (rect 0 0 89 16)(font "Arial" (font_size 8)))
+		(text "RESET-CMD" (rect 178 43 267 59)(font "Arial" (font_size 8)))
+		(line (pt 288 48)(pt 272 48)(line_width 1))
+	)
+	(port
+		(pt 288 64)
+		(output)
+		(text "SEND-STR" (rect 0 0 76 16)(font "Arial" (font_size 8)))
+		(text "SEND-STR" (rect 191 59 267 75)(font "Arial" (font_size 8)))
+		(line (pt 288 64)(pt 272 64)(line_width 1))
+	)
+	(port
+		(pt 288 80)
+		(output)
+		(text "FC-EXT" (rect 0 0 51 16)(font "Arial" (font_size 8)))
+		(text "FC-EXT" (rect 216 75 267 91)(font "Arial" (font_size 8)))
+		(line (pt 288 80)(pt 272 80)(line_width 1))
+	)
+	(port
+		(pt 288 96)
+		(output)
+		(text "IFA-FC-INT" (rect 0 0 75 16)(font "Arial" (font_size 8)))
+		(text "IFA-FC-INT" (rect 192 91 267 107)(font "Arial" (font_size 8)))
+		(line (pt 288 96)(pt 272 96)(line_width 1))
+	)
+	(port
+		(pt 288 112)
+		(output)
+		(text "IFA-SD-SEL[3..0]" (rect 0 0 119 16)(font "Arial" (font_size 8)))
+		(text "IFA-SD-SEL[3..0]" (rect 148 107 267 123)(font "Arial" (font_size 8)))
+		(line (pt 288 112)(pt 272 112)(line_width 3))
+	)
+	(port
+		(pt 288 128)
+		(output)
+		(text "IFA-SD[15..0]" (rect 0 0 93 16)(font "Arial" (font_size 8)))
+		(text "IFA-SD[15..0]" (rect 174 123 267 139)(font "Arial" (font_size 8)))
+		(line (pt 288 128)(pt 272 128)(line_width 3))
+	)
+	(port
+		(pt 288 144)
+		(output)
+		(text "VG-Data[15..0]" (rect 0 0 102 16)(font "Arial" (font_size 8)))
+		(text "VG-Data[15..0]" (rect 165 139 267 155)(font "Arial" (font_size 8)))
+		(line (pt 288 144)(pt 272 144)(line_width 3))
+	)
+	(port
+		(pt 288 160)
+		(output)
+		(text "/OPT_INL" (rect 0 0 66 16)(font "Arial" (font_size 8)))
+		(text "/OPT_INL" (rect 201 155 267 171)(font "Arial" (font_size 8)))
+		(line (pt 288 160)(pt 272 160)(line_width 1))
+	)
+	(port
+		(pt 288 176)
+		(output)
+		(text "/OPT_DRDY" (rect 0 0 86 16)(font "Arial" (font_size 8)))
+		(text "/OPT_DRDY" (rect 181 171 267 187)(font "Arial" (font_size 8)))
+		(line (pt 288 176)(pt 272 176)(line_width 1))
+	)
+	(port
+		(pt 288 192)
+		(output)
+		(text "/OPT_DRQ" (rect 0 0 76 16)(font "Arial" (font_size 8)))
+		(text "/OPT_DRQ" (rect 191 187 267 203)(font "Arial" (font_size 8)))
+		(line (pt 288 192)(pt 272 192)(line_width 1))
+	)
+	(port
+		(pt 288 208)
+		(output)
+		(text "/POWER-UP" (rect 0 0 89 16)(font "Arial" (font_size 8)))
+		(text "/POWER-UP" (rect 178 203 267 219)(font "Arial" (font_size 8)))
+		(line (pt 288 208)(pt 272 208)(line_width 1))
+	)
+	(port
+		(pt 288 224)
+		(output)
+		(text "BROAD-EN" (rect 0 0 80 16)(font "Arial" (font_size 8)))
+		(text "BROAD-EN" (rect 187 219 267 235)(font "Arial" (font_size 8)))
+		(line (pt 288 224)(pt 272 224)(line_width 1))
+	)
+	(port
+		(pt 288 240)
+		(output)
+		(text "WR_FWL_Data" (rect 0 0 107 16)(font "Arial" (font_size 8)))
+		(text "WR_FWL_Data" (rect 160 235 267 251)(font "Arial" (font_size 8)))
+		(line (pt 288 240)(pt 272 240)(line_width 1))
+	)
+	(port
+		(pt 288 256)
+		(output)
+		(text "WR_FWL_Ctrl" (rect 0 0 99 16)(font "Arial" (font_size 8)))
+		(text "WR_FWL_Ctrl" (rect 168 251 267 267)(font "Arial" (font_size 8)))
+		(line (pt 288 256)(pt 272 256)(line_width 1))
+	)
+	(port
+		(pt 288 272)
+		(output)
+		(text "RD_FWL_Data" (rect 0 0 102 16)(font "Arial" (font_size 8)))
+		(text "RD_FWL_Data" (rect 165 267 267 283)(font "Arial" (font_size 8)))
+		(line (pt 288 272)(pt 272 272)(line_width 1))
+	)
+	(port
+		(pt 288 288)
+		(output)
+		(text "RD_FWL_STS" (rect 0 0 100 16)(font "Arial" (font_size 8)))
+		(text "RD_FWL_STS" (rect 167 283 267 299)(font "Arial" (font_size 8)))
+		(line (pt 288 288)(pt 272 288)(line_width 1))
+	)
+	(port
+		(pt 288 336)
+		(output)
+		(text "IFA-VERS[7..0]" (rect 0 0 106 16)(font "Arial" (font_size 8)))
+		(text "IFA-VERS[7..0]" (rect 161 331 267 347)(font "Arial" (font_size 8)))
+		(line (pt 288 336)(pt 272 336)(line_width 3))
+	)
+	(port
+		(pt 288 304)
+		(bidir)
+		(text "I2C-SDA" (rect 0 0 59 16)(font "Arial" (font_size 8)))
+		(text "I2C-SDA" (rect 208 299 267 315)(font "Arial" (font_size 8)))
+		(line (pt 288 304)(pt 272 304)(line_width 1))
+	)
+	(port
+		(pt 288 320)
+		(bidir)
+		(text "I2C-SCL" (rect 0 0 56 16)(font "Arial" (font_size 8)))
+		(text "I2C-SCL" (rect 211 315 267 331)(font "Arial" (font_size 8)))
+		(line (pt 288 320)(pt 272 320)(line_width 1))
+	)
+	(drawing
+		(rectangle (rect 16 16 272 400)(line_width 1))
+	)
+)

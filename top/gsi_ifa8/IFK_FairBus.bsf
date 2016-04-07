@@ -1,0 +1,423 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2010 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 384 560)
+	(text "IFK_FairBus" (rect 5 0 85 15)(font "Arial" ))
+	(text "inst" (rect 8 525 31 540)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "Data_from_DB[15..0]" (rect 0 0 135 15)(font "Arial" ))
+		(text "Data_from_DB[15..0]" (rect 21 27 156 42)(font "Arial" ))
+		(line (pt 0 32)(pt 16 32)(line_width 3))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "ADR_from_DB[15..0]" (rect 0 0 134 15)(font "Arial" ))
+		(text "ADR_from_DB[15..0]" (rect 21 43 155 58)(font "Arial" ))
+		(line (pt 0 48)(pt 16 48)(line_width 3))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "Start_Wr_Fair" (rect 0 0 88 15)(font "Arial" ))
+		(text "Start_Wr_Fair" (rect 21 59 109 74)(font "Arial" ))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "Start_Rd_Fair" (rect 0 0 89 15)(font "Arial" ))
+		(text "Start_Rd_Fair" (rect 21 75 110 90)(font "Arial" ))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "Timing_In[15..0]" (rect 0 0 103 15)(font "Arial" ))
+		(text "Timing_In[15..0]" (rect 21 91 124 106)(font "Arial" ))
+		(line (pt 0 96)(pt 16 96)(line_width 3))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "Start_Timing_Cycle" (rect 0 0 126 15)(font "Arial" ))
+		(text "Start_Timing_Cycle" (rect 21 107 147 122)(font "Arial" ))
+		(line (pt 0 112)(pt 16 112)(line_width 1))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "Data_from_Fair[15..0]" (rect 0 0 140 15)(font "Arial" ))
+		(text "Data_from_Fair[15..0]" (rect 21 123 161 138)(font "Arial" ))
+		(line (pt 0 128)(pt 16 128)(line_width 3))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "clk" (rect 0 0 17 15)(font "Arial" ))
+		(text "clk" (rect 21 139 38 154)(font "Arial" ))
+		(line (pt 0 144)(pt 16 144)(line_width 1))
+	)
+	(port
+		(pt 0 160)
+		(input)
+		(text "Reset_this_Macro" (rect 0 0 118 15)(font "Arial" ))
+		(text "Reset_this_Macro" (rect 21 155 139 170)(font "Arial" ))
+		(line (pt 0 160)(pt 16 160)(line_width 1))
+	)
+	(port
+		(pt 0 176)
+		(input)
+		(text "nFair_Dtack" (rect 0 0 77 15)(font "Arial" ))
+		(text "nFair_Dtack" (rect 21 171 98 186)(font "Arial" ))
+		(line (pt 0 176)(pt 16 176)(line_width 1))
+	)
+	(port
+		(pt 0 192)
+		(input)
+		(text "nFair_SRQ_Slaves[11..0]" (rect 0 0 162 15)(font "Arial" ))
+		(text "nFair_SRQ_Slaves[11..0]" (rect 21 187 183 202)(font "Arial" ))
+		(line (pt 0 192)(pt 16 192)(line_width 3))
+	)
+	(port
+		(pt 0 208)
+		(input)
+		(text "Wr_Status" (rect 0 0 67 15)(font "Arial" ))
+		(text "Wr_Status" (rect 21 203 88 218)(font "Arial" ))
+		(line (pt 0 208)(pt 16 208)(line_width 1))
+	)
+	(port
+		(pt 0 224)
+		(input)
+		(text "Rd_Status" (rect 0 0 68 15)(font "Arial" ))
+		(text "Rd_Status" (rect 21 219 89 234)(font "Arial" ))
+		(line (pt 0 224)(pt 16 224)(line_width 1))
+	)
+	(port
+		(pt 0 240)
+		(input)
+		(text "Wr_SRQ_Ena" (rect 0 0 90 15)(font "Arial" ))
+		(text "Wr_SRQ_Ena" (rect 21 235 111 250)(font "Arial" ))
+		(line (pt 0 240)(pt 16 240)(line_width 1))
+	)
+	(port
+		(pt 0 256)
+		(input)
+		(text "Rd_Srq_Ena" (rect 0 0 83 15)(font "Arial" ))
+		(text "Rd_Srq_Ena" (rect 21 251 104 266)(font "Arial" ))
+		(line (pt 0 256)(pt 16 256)(line_width 1))
+	)
+	(port
+		(pt 0 272)
+		(input)
+		(text "Rd_Srq_active" (rect 0 0 94 15)(font "Arial" ))
+		(text "Rd_Srq_active" (rect 21 267 115 282)(font "Arial" ))
+		(line (pt 0 272)(pt 16 272)(line_width 1))
+	)
+	(port
+		(pt 0 288)
+		(input)
+		(text "Rd_Srq_In" (rect 0 0 69 15)(font "Arial" ))
+		(text "Rd_Srq_In" (rect 21 283 90 298)(font "Arial" ))
+		(line (pt 0 288)(pt 16 288)(line_width 1))
+	)
+	(port
+		(pt 0 304)
+		(input)
+		(text "Rd_Vers_Revi" (rect 0 0 93 15)(font "Arial" ))
+		(text "Rd_Vers_Revi" (rect 21 299 114 314)(font "Arial" ))
+		(line (pt 0 304)(pt 16 304)(line_width 1))
+	)
+	(port
+		(pt 0 320)
+		(input)
+		(text "Sel_ACU_Mode" (rect 0 0 102 15)(font "Arial" ))
+		(text "Sel_ACU_Mode" (rect 21 315 123 330)(font "Arial" ))
+		(line (pt 0 320)(pt 16 320)(line_width 1))
+	)
+	(port
+		(pt 368 32)
+		(output)
+		(text "Data_to_DB[15..0]" (rect 0 0 118 15)(font "Arial" ))
+		(text "Data_to_DB[15..0]" (rect 229 27 347 42)(font "Arial" ))
+		(line (pt 368 32)(pt 352 32)(line_width 3))
+	)
+	(port
+		(pt 368 48)
+		(output)
+		(text "Data_to_Fair[15..0]" (rect 0 0 122 15)(font "Arial" ))
+		(text "Data_to_Fair[15..0]" (rect 225 43 347 58)(font "Arial" ))
+		(line (pt 368 48)(pt 352 48)(line_width 3))
+	)
+	(port
+		(pt 368 64)
+		(output)
+		(text "Ena_Tri_Buff" (rect 0 0 83 15)(font "Arial" ))
+		(text "Ena_Tri_Buff" (rect 264 59 347 74)(font "Arial" ))
+		(line (pt 368 64)(pt 352 64)(line_width 1))
+	)
+	(port
+		(pt 368 80)
+		(output)
+		(text "nFair_DS" (rect 0 0 61 15)(font "Arial" ))
+		(text "nFair_DS" (rect 286 75 347 90)(font "Arial" ))
+		(line (pt 368 80)(pt 352 80)(line_width 1))
+	)
+	(port
+		(pt 368 96)
+		(output)
+		(text "Fair_Addr[15..0]" (rect 0 0 101 15)(font "Arial" ))
+		(text "Fair_Addr[15..0]" (rect 246 91 347 106)(font "Arial" ))
+		(line (pt 368 96)(pt 352 96)(line_width 3))
+	)
+	(port
+		(pt 368 112)
+		(output)
+		(text "nFair_Adr_Sel" (rect 0 0 92 15)(font "Arial" ))
+		(text "nFair_Adr_Sel" (rect 255 107 347 122)(font "Arial" ))
+		(line (pt 368 112)(pt 352 112)(line_width 1))
+	)
+	(port
+		(pt 368 128)
+		(output)
+		(text "Fair_RDnWR" (rect 0 0 86 15)(font "Arial" ))
+		(text "Fair_RDnWR" (rect 261 123 347 138)(font "Arial" ))
+		(line (pt 368 128)(pt 352 128)(line_width 1))
+	)
+	(port
+		(pt 368 144)
+		(output)
+		(text "nSCUB_Reset" (rect 0 0 95 15)(font "Arial" ))
+		(text "nSCUB_Reset" (rect 252 139 347 154)(font "Arial" ))
+		(line (pt 368 144)(pt 352 144)(line_width 1))
+	)
+	(port
+		(pt 368 160)
+		(output)
+		(text "nFair_Board_Sel[11..0]" (rect 0 0 148 15)(font "Arial" ))
+		(text "nFair_Board_Sel[11..0]" (rect 199 155 347 170)(font "Arial" ))
+		(line (pt 368 160)(pt 352 160)(line_width 3))
+	)
+	(port
+		(pt 368 176)
+		(output)
+		(text "nFair_Timing_Cycle" (rect 0 0 129 15)(font "Arial" ))
+		(text "nFair_Timing_Cycle" (rect 218 171 347 186)(font "Arial" ))
+		(line (pt 368 176)(pt 352 176)(line_width 1))
+	)
+	(port
+		(pt 368 192)
+		(output)
+		(text "nSel_Ext_Data_Drv" (rect 0 0 125 15)(font "Arial" ))
+		(text "nSel_Ext_Data_Drv" (rect 222 187 347 202)(font "Arial" ))
+		(line (pt 368 192)(pt 352 192)(line_width 1))
+	)
+	(port
+		(pt 368 208)
+		(output)
+		(text "Ext_Data_Drv_WRnRd" (rect 0 0 146 15)(font "Arial" ))
+		(text "Ext_Data_Drv_WRnRd" (rect 201 203 347 218)(font "Arial" ))
+		(line (pt 368 208)(pt 352 208)(line_width 1))
+	)
+	(port
+		(pt 368 224)
+		(output)
+		(text "nStart_DB_Trm" (rect 0 0 100 15)(font "Arial" ))
+		(text "nStart_DB_Trm" (rect 247 219 347 234)(font "Arial" ))
+		(line (pt 368 224)(pt 352 224)(line_width 1))
+	)
+	(port
+		(pt 368 240)
+		(output)
+		(text "nInterlock" (rect 0 0 62 15)(font "Arial" ))
+		(text "nInterlock" (rect 285 235 347 250)(font "Arial" ))
+		(line (pt 368 240)(pt 352 240)(line_width 1))
+	)
+	(port
+		(pt 368 256)
+		(output)
+		(text "nData_RDY" (rect 0 0 76 15)(font "Arial" ))
+		(text "nData_RDY" (rect 271 251 347 266)(font "Arial" ))
+		(line (pt 368 256)(pt 352 256)(line_width 1))
+	)
+	(port
+		(pt 368 272)
+		(output)
+		(text "nData_REQ" (rect 0 0 77 15)(font "Arial" ))
+		(text "nData_REQ" (rect 270 267 347 282)(font "Arial" ))
+		(line (pt 368 272)(pt 352 272)(line_width 1))
+	)
+	(port
+		(pt 368 288)
+		(output)
+		(text "Read_Port[15..0]" (rect 0 0 108 15)(font "Arial" ))
+		(text "Read_Port[15..0]" (rect 239 283 347 298)(font "Arial" ))
+		(line (pt 368 288)(pt 352 288)(line_width 3))
+	)
+	(port
+		(pt 368 304)
+		(output)
+		(text "Read_Port_active" (rect 0 0 114 15)(font "Arial" ))
+		(text "Read_Port_active" (rect 233 299 347 314)(font "Arial" ))
+		(line (pt 368 304)(pt 352 304)(line_width 1))
+	)
+	(port
+		(pt 368 320)
+		(output)
+		(text "FB_Rd_Err_FB_Busy" (rect 0 0 138 15)(font "Arial" ))
+		(text "FB_Rd_Err_FB_Busy" (rect 209 315 347 330)(font "Arial" ))
+		(line (pt 368 320)(pt 352 320)(line_width 1))
+	)
+	(port
+		(pt 368 336)
+		(output)
+		(text "FB_Rd_Err_no_Dtack" (rect 0 0 141 15)(font "Arial" ))
+		(text "FB_Rd_Err_no_Dtack" (rect 206 331 347 346)(font "Arial" ))
+		(line (pt 368 336)(pt 352 336)(line_width 1))
+	)
+	(port
+		(pt 368 352)
+		(output)
+		(text "FB_Rd_Fin" (rect 0 0 73 15)(font "Arial" ))
+		(text "FB_Rd_Fin" (rect 274 347 347 362)(font "Arial" ))
+		(line (pt 368 352)(pt 352 352)(line_width 1))
+	)
+	(port
+		(pt 368 368)
+		(output)
+		(text "FB_Rd_active" (rect 0 0 89 15)(font "Arial" ))
+		(text "FB_Rd_active" (rect 258 363 347 378)(font "Arial" ))
+		(line (pt 368 368)(pt 352 368)(line_width 1))
+	)
+	(port
+		(pt 368 384)
+		(output)
+		(text "FB_Wr_Err_FB_Busy" (rect 0 0 136 15)(font "Arial" ))
+		(text "FB_Wr_Err_FB_Busy" (rect 211 379 347 394)(font "Arial" ))
+		(line (pt 368 384)(pt 352 384)(line_width 1))
+	)
+	(port
+		(pt 368 400)
+		(output)
+		(text "FB_Wr_Err_no_Dtack" (rect 0 0 140 15)(font "Arial" ))
+		(text "FB_Wr_Err_no_Dtack" (rect 207 395 347 410)(font "Arial" ))
+		(line (pt 368 400)(pt 352 400)(line_width 1))
+	)
+	(port
+		(pt 368 416)
+		(output)
+		(text "FB_Wr_Fin" (rect 0 0 71 15)(font "Arial" ))
+		(text "FB_Wr_Fin" (rect 276 411 347 426)(font "Arial" ))
+		(line (pt 368 416)(pt 352 416)(line_width 1))
+	)
+	(port
+		(pt 368 432)
+		(output)
+		(text "FB_Wr_active" (rect 0 0 88 15)(font "Arial" ))
+		(text "FB_Wr_active" (rect 259 427 347 442)(font "Arial" ))
+		(line (pt 368 432)(pt 352 432)(line_width 1))
+	)
+	(port
+		(pt 368 448)
+		(output)
+		(text "FB_Ti_Fin" (rect 0 0 66 15)(font "Arial" ))
+		(text "FB_Ti_Fin" (rect 281 443 347 458)(font "Arial" ))
+		(line (pt 368 448)(pt 352 448)(line_width 1))
+	)
+	(port
+		(pt 368 464)
+		(output)
+		(text "Status[15..0]" (rect 0 0 80 15)(font "Arial" ))
+		(text "Status[15..0]" (rect 267 459 347 474)(font "Arial" ))
+		(line (pt 368 464)(pt 352 464)(line_width 3))
+	)
+	(port
+		(pt 368 480)
+		(output)
+		(text "IFK_FB_Version[3..0]" (rect 0 0 135 15)(font "Arial" ))
+		(text "IFK_FB_Version[3..0]" (rect 212 475 347 490)(font "Arial" ))
+		(line (pt 368 480)(pt 352 480)(line_width 3))
+	)
+	(port
+		(pt 368 496)
+		(output)
+		(text "IFK_FB_Revision[3..0]" (rect 0 0 142 15)(font "Arial" ))
+		(text "IFK_FB_Revision[3..0]" (rect 205 491 347 506)(font "Arial" ))
+		(line (pt 368 496)(pt 352 496)(line_width 3))
+	)
+	(parameter
+		"CLK_in_Hz"
+		"100000000"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(parameter
+		"Time_Out_in_ns"
+		"250"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(parameter
+		"Sel_dly_in_ns"
+		"30"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(parameter
+		"Sel_release_in_ns"
+		"30"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(parameter
+		"D_Valid_to_DS_in_ns"
+		"30"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(parameter
+		"Timing_str_in_ns"
+		"80"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(parameter
+		"SRQ_Polling_in_ns"
+		"3000"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(parameter
+		"Drv_Adr_Idle_High"
+		"0"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(parameter
+		"Reset_SCUB_in_ns"
+		"600"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(parameter
+		"Test"
+		"0"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(drawing
+		(rectangle (rect 16 16 352 528)(line_width 1))
+	)
+	(annotation_block (parameter)(rect 384 -64 484 16))
+)

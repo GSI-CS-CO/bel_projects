@@ -1,0 +1,63 @@
+TITLE "Test_Mux";
+
+FUNCTION lpm_mux (data[LPM_SIZE-1..0][LPM_WIDTH-1..0], sel[LPM_WIDTHS-1..0], clock, aclr) 
+   WITH (LPM_WIDTH, LPM_SIZE, LPM_WIDTHS, LPM_PIPELINE)
+   RETURNS (result[LPM_WIDTH-1..0]);
+
+SUBDESIGN Test_Mux
+
+    (
+	A_SEL_B[3..0],		-- Test-SEL-Schalter
+
+	TBus0[15..0],		-- Testbits	
+	TBus1[15..0],		-- Testbits	
+	TBus2[15..0],		-- Testbits	
+	TBus3[15..0],		-- Testbits	
+	TBus4[15..0],		-- Testbits	
+	TBus5[15..0],		-- Testbits	
+	TBus6[15..0],		-- Testbits	
+	TBus7[15..0],		-- Testbits	
+	TBus8[15..0],		-- Testbits	
+	TBus9[15..0],		-- Testbits	
+	TBusA[15..0],		-- Testbits	
+	TBusB[15..0],		-- Testbits	
+	TBusC[15..0],		-- Testbits	
+	TBusD[15..0],		-- Testbits	
+	TBusE[15..0],		-- Testbits	
+	TBusF[15..0]		-- Testbits	
+				:	INPUT;
+
+	Test[15..0]			-- MUX-Output	
+				:	OUTPUT;
+    )
+
+BEGIN
+
+CASE A_SEL_B[] IS
+	WHEN H"0" =>	Test[15..0] = TBus0[15..0];	
+	WHEN H"1" =>	Test[15..0] = TBus1[15..0];	
+	WHEN H"2" =>	Test[15..0] = TBus2[15..0];	
+	WHEN H"3" =>	Test[15..0] = TBus3[15..0];	
+	WHEN H"4" =>	Test[15..0] = TBus4[15..0];	
+	WHEN H"5" =>	Test[15..0] = TBus5[15..0];	
+	WHEN H"6" =>	Test[15..0] = TBus6[15..0];	
+	WHEN H"7" =>	Test[15..0] = TBus7[15..0];	
+	WHEN H"8" =>	Test[15..0] = TBus8[15..0];	
+	WHEN H"9" =>	Test[15..0] = TBus9[15..0];	
+	WHEN H"A" =>	Test[15..0] = TBusA[15..0];	
+	WHEN H"B" =>	Test[15..0] = TBusB[15..0];	
+	WHEN H"C" =>	Test[15..0] = TBusC[15..0];	
+	WHEN H"D" =>	Test[15..0] = TBusD[15..0];	
+	WHEN H"E" =>	Test[15..0] = TBusE[15..0];	
+	WHEN H"F" =>	Test[15..0] = TBusF[15..0];	
+	WHEN OTHERS =>	Test[15..0] = GND;	
+END CASE;
+
+END;
+
+
+
+
+
+
+

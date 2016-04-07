@@ -1,0 +1,279 @@
+TITLE "Version sollte alle Änderungsbemerkungen enthalten V10 den 25.08.00 ( IFK_FG = FG380.211 !)";
+
+PARAMETERS (TEST);
+
+--*******************************************************************************
+--                          Hier immer die aktuelle Versions-Nummer festlegen !!!
+--                                    |
+--                                    |
+CONSTANT Versions_nr = (TEST==0) ?   10 : 00;
+--                                         |
+--                                         |
+--                      Eine Testversion bekommt immer die Nr. 00 !!!    
+--*******************************************************************************
+
+
+SUBDESIGN version
+(
+	v[6..0] : OUTPUT;
+)
+
+-- Änderungen Version 05
+
+% Übersetzt mit MAXPLUS V 6.0 ! %
+
+  -- In Modul fktcntrl
+    -- INTERPOL_DFF nach fkt_deco verlagert.
+    -- fktstate wird mit FOSZ getaktet (füher NOT(FOSZ)).
+
+  -- In Modul STGCNT
+    -- Das Ausgangsregister STG_CNT wird mit FOSZ statt mit NOT(FOSZ) getaktet.
+    -- cnt16-clrn wird mit FOSZ synchronsiert inaktiv.
+
+  -- In Modul cnt16
+    -- CLR in CLRN geändert.
+    -- DFFE verwendet, ENA mit F_ADD_EN verbunden. 
+
+  -- In Modul cnt8
+    -- CLR in CLRN geändert.
+    -- ENA geht direkt auf DFFE (ENA).
+
+  -- In Modul fgen
+    -- cnt8 wird synchron mit FOSZ getaktet.
+    -- FOSZ/2 geht direkt auf ENA der DFFEs von cnt8.
+    -- F_ADD_EN wird syncron mit FOSZ aktiv.
+    -- F_ADD ist jetzt synchron mit FOSZ getaktet.
+
+  -- In Modul fkt_deco
+    -- Statt /SW5_STR wird direkt das INTERPOL_DFF angesteuert. (neu: INTERPOL, /INTERPOL)
+
+-----------------------------------------------------------------------------------------
+-- Änderungen Version 06
+-----------------------------------------------------------------------------------------
+% Übersetzt mit MAXPLUS V 7.1 ! %
+
+-- Der Sollwert3, der die Steigung vorgibt (zusammen mit der Addier-Frequenz)
+-- kann jetzt unterschiedlich nach links geshiftet sein. Entweder um eins, was
+-- einer Multiplikation von 2 entspricht (ist bei allen FGs der Standard), oder um drei,
+-- was einer Multiplikation von 8 entspricht. Geräte, die schnell auf den Maximalwert laufen 
+-- sollen, können diesen jetzt vier mal schneller erreichen. Erkauft wird dies mit einem
+-- Verlust an Auflösung, denn der Wertebereich ändertet sich von +/-(65536..2) auf
+-- +/-(524280..8).
+-- Eine mit Test=1 übersetzte Version bekommt immer die Version 00hex!
+
+-- Modul fktadd
+  -- Wurde der Ausgang A1 in einen Eingang SHIFT_SW3I umgewandelt.
+  -- Das Register in dem der Summand B gespeichert wird ist jetzt 18 Bit breit. Und vor diesem
+  -- Register liegt jetzt ein Multiplexer der den Sollwert3 um eine (SHIFT_SW3I = Low), oder um
+  -- drei Stellen nach links shiftet (SHIFT_SW3I = High). Die höheren und niederwertigen Bits die
+  -- nicht mit dem geschifteten Sollwert3 belegt sind, werden mit dem Vorzeichenbit des SW3 belegt.
+
+-- Modul fktcntrl
+  -- Die Strobes für SW1+2 werden nicht mehr zum Chip fktadd geführt.
+  -- Es wird in fktadd nur noch mit f_add_hw und f_add_lw getaktet!.
+  -- Es ist ein weiterer Status eingebaut worden, der zur Piggykennung dient. Mit FC = 8E hex
+  -- steht in d7..d0 die Piggykennung. Der FG hat die Kennung 03 hex, die oberen 8 bit zeigen
+  -- wie bei Status1, und Status2 den Betriebszustand des FG an.
+
+  -- Modul fkt_deco
+    -- Die Signale: /SW1_STR, /SW2_STR, /SW3_STR, /SW4_STR, /STAT1_STR, /STAT2_STR sind jetzt
+    -- alle high-aktiv und haben die Namen: SW1_STR, SW2_STR, SW3_STR, SW4_STR, STAT1_STR, STAT2_STR.
+    -- Alle diese Signale laufen jetzt über DFFs.
+    -- Als neues Signal ist jetzt SHIFT_SW3 hinzugekommen. Es wird mit Sollwert5 D1=1 gesetzt und
+    -- mit D1=0 rückgesetzt. Nach einem Reset ist es rückgesetzt.
+    -- Achtung mit Sollwert5 D0 wird das Interpolieren ein und ausgeschaltet.
+    -- Mit dem 'Status3' ist ein entsprechender FC = 8E hex für die Piggykennung dazugekommen.
+
+  -- Modul fktstate
+    -- Die Signale: /SW1_STR, /SW2_STR, /SW3_STR, /SW4_STR sind jetzt
+    -- alle high-aktiv und haben die Namen: SW1_STR, SW2_STR, SW3_STR, SW4_STR.
+
+  -- Modul version
+    -- Die Versionskennung ist nur noch 7 Bit breit. Ein Bit mußte im Status2 frei-
+    -- geschaufelt werden um das Signal SHIFT_SW3 kontrollieren zu können.
+
+  -- Modul fgen
+    -- der Ausgang FOSZ/2 ist weggefallen.
+
+  -- Modul fkt_read
+    -- Das Eingangssignal /FKT_STR ist jetzt high-aktiv und heißt FKT_STR.
+    -- Der Zähler, von dem die Lesesignale abgeleitet werden, wird nicht mehr
+    -- mit FOSZ/2 sondern mit FOSZ getaktet.
+
+  -- Modul sw4reg
+    -- Das Register ist von einem DFF-Type in ein DFFE-Type geändert worden.
+    -- SW4 ist nicht mehr der Clock für das Register, sondern das Enable.
+    -- Als Clock dient jetzt FOSZ. Fazit: Die Sache ist synchroner.
+
+  -- Modul elatches
+    -- SW3_TO und (ADD_SM_ERR # SM_ERR) haben den asynchronen Preset der DFFs
+    -- getrieben. Es bestand die Gefahr, daß Glitches der Ablaufsteuerungen, die
+    -- Fehler-DFFs setzen. Da alle Eingangsignale synchron zu FOSZ sind, und mind.
+    -- ein Clock lang, werden die Signale jetzt in getakteten SRFFs gespeichert.
+    -- Während des Clocks gibt es keine Glitches.
+
+  -- Chip fktcntrl
+    -- Die Signale F_ADD_HW(LW) werden über getaktete Register erzeugt!
+    -- Diese Änderung wurde vorgenommen in:
+    -- Modul f_gen
+      -- F_SW1(2)_ADD werden mit 'F_GEN' verknüpft und über Register geführt
+      -- die mit FOSZ getaktet werden. Die Register haben die alten Signalnamen
+      -- F_ADD_HW(LW).
+
+  -- Chip fktadd
+    -- Die Register für Sollwert1+2 sind weggefallen. SW1 und SW2 werden direkt
+    -- in die dem Addierwerk nachgeschalteten Register geschrieben.
+    -- Diese Register werden den Signalen F_ADD_HW(LW) getaktet,
+    -- deshalb ist SW1I und SW2I nicht mehr nötig, die PINs werden frei!
+    -- Die Signale SW1(2)_LED können nicht mehr mit SW1(2) erzeugt werden,
+    -- deshalb wird mit FG/IFK=0 entschieden, daß die Signale F_ADD_HW(LW) die Funktion
+    -- der Strobes SW1(2) übernommen haben.
+    -- Aufgrund der Änderung mußte an anderer Stelle auch geändert werden:
+         -- Modul addstr generiert die Strobes für die externen Reg. nicht mehr
+         -- mit SW1 + SW2, sondern mit FG/IFC=0 werden die Strobes generiert, auch
+         -- wenn /INTERPOL=1, also ausgeschaltet ist. Generell werden die Strobes
+         -- nur noch durch STG_SW und F_ADD_HW(LW) erzeugt.
+    -- Durch die Shift_SW3 Funktion sind zwei neue Module hinzugekommen:
+         -- Modul shiftsw3
+           -- Hier wird mit einem Multiplexer der Sollwer3 um eine Stelle nach links
+           -- (Normalmode), oder um drei Stellen nach links (Shift_SW3_mode) geshiftet.
+           -- 'shift_sw3' = 1 schaltet in den Shift_SW3_mode. Die nicht mit SW3
+           -- beschalteten Bits werden mit dem Vorzeichen-Pegel (SW3D15) belegt.
+         -- Modul sw3_sum
+           -- Der geshiftet, oder nichtgeshiftete Wert muß gespeichert werden.
+           -- SW3 ändert sich während der alte SW3 addiert wird.
+
+    -- Modul f_add32
+      -- Das Carry_in ist jetzt mit dem Vorzeichenbit von Summand B (B[31]) verbunden.
+      -- Bis Version 5 wurde das Carry_out einfach auf das Carry_in rückgekoppelt, was
+      -- zur Folge hatte, daß nach einem Addierwerküberlauf einmal eine eins zuviel
+      -- addiert wurde.
+
+-----------------------------------------------------------------------------------------
+--									Änderungen Version 07
+-----------------------------------------------------------------------------------------
+-- Übersetzt mit MAXPLUS V 7.1 (es gab Schwierigkeiten mit der Tri-Statsteuerung der Max7160E-Typen)
+--
+-- a) Der Sollwert3 wird im 'Shift-Mode' um 5 nach links geschiftet.
+--    Das Entspricht einer Multiplikation von 32 entspricht. Geräte, die schnell auf den Maximalwert laufen 
+--    sollen, können diesen jetzt 16 mal schneller erreichen als ungeschiftet. Erkauft wird dies mit einem
+--    Verlust an Auflösung, denn der Wertebereich ändertet sich von ungeshiftet +/-(65536..2) auf
+--    +/-(1048576..32).
+--
+-- b) Ein Solwert3-Timeout stopt die Interpolation.
+--
+-- c) Der Eingang (Jumper) /BC_Sel hat keine Funktion mehr. wenn der FG mit Broadcast gestartet werden soll,
+--	  muss das mit Sollwert5 und Data[2] == 1 (Broadc_Ena) eingeschaltet werden. Nach einem Reset ist Broadc_Ena
+--	  ausgeschaltet, der FG erwartet zum synchronen Starten die Gate_In/ Gate_Out-Verdrahtung. Achtung D0 schaltet
+--	  den Treppchenmode und D1 den Shift_SW3-Mode. 
+
+  -- Chip fktadd
+
+	-- Modul shift_sw3_reg
+	  -- zu a) hier wird jetzt um 5 bit nach links geschiftet. Das Ergebnis ist 21 Bit breit.
+
+	-- Modul sw3_sum
+	  -- zu a) Musste auf 21 Bit breiten SW3 geändert werden.
+
+	-- Modul addstate
+	  -- zu b) Wenn die Ablaufsteuerung in den State 'SW3_TO' kommt, geht sie über den State 'FG_TO_IF'
+	  --	   nach 'IF_IDLE'. Dadurch werden die Signale 'F_ADD_EN', '/DATA_REQ', und 'GATE_OUT'
+	  --	   inaktiv. Ergebnis: Der Funktionsgenerator geht in den Interface-Karten-Modus.
+
+	-- Modul fkt_deco
+	  -- zu c) Als neuer Eingang ist D2 hinzugekommen.
+	  --	   Als neuer Ausgang ist Broadc_Ena hinzugekommen. Er wird mit Sollwert5 D2=1 gesetzt und
+      --	   mit D2=0 rückgesetzt. Nach einem Reset ist er zurückgesetzt.
+
+	-- Modul addstate
+	  -- zu c) Der Eingang /BC_Sel ist in Broadc_Ena umbenannt und in der Logik angepasst worden.
+
+	-- Modul status
+	  -- zu c) Der Eingang BC_Sel ist in Broadc_Ena umbenannt worden
+-----------------------------------------------------------------------------------------
+--									Änderungen Version 08
+-----------------------------------------------------------------------------------------
+--
+--  Der Treppchen-Mode (Interpol=Off) hat nicht richtig funktioniert.
+
+	-- Macro fktadd
+		-- Modul addstre
+			-- Die Signale LATCH_EXT und NEW_DATA werden nur dann vom internen Signal STD_SW
+			-- abgeleitet, wenn sich der FG im Funktionsgeneratormodus befindet und die 
+			-- Interpolation ausgeschaltet ist.
+
+--	Piggy-Kennung wird beim IFC-FG nicht gebraucht.
+
+	-- Macro FKTcntrl
+		-- Multiplexer zu schalten der Piggy-Kennung entfernt.
+	-- Macro FKT_Deco
+		-- STAT3_STR entfernt.
+
+--	Beim IFC-FG kann der Sollwert FG[31..16] und FG[15..0] zurückgelesen werden.
+
+	-- Macro FG-Out-Mux ist hinzugefügt worden.
+	-- Macro FKT_Deco hat zwei weitere Selekts bekommen.
+		-- IW1_RD_STR (=93hex) und IW2_RD_STR (=94hex).
+
+--	Beim IFC-FG wird der "Treppchen-Mode direkt im ATERA-Baustein realisiert.
+
+	--	Macro fktadd hat eine weitere Register-Bank am Ausgang. sie wird mit Latch_Ext
+	--	angsteuert.
+
+-----------------------------------------------------------------------------------------
+--									Änderungen Version 08a (bleibt Version 08)
+-----------------------------------------------------------------------------------------
+--
+-- Die Änderungen betreffen nicht die Funktion des FG. Falls der Macro aber ganz entfernt werden soll
+-- z.B. 'FG_SEL' ist permanent auf 'null' gesetzt, dann wurden bestimmte Macros, obwohl nicht benötig , trotzdem generiert.
+-- Damit dies nicht mehr geschieht sind folgende Macros geäandert worden.
+--
+	-- Macro 'FGEN', 'Freq_Gen' und 'STG_CNT' sind um den Eingang 'FG_SEL' erweitert worden, und an diesen Eingang ist
+	-- gleichnamige Signal 'FG_SEL' angeschlossen worden.  
+
+-----------------------------------------------------------------------------------------
+--									Änderungen Version 09
+-----------------------------------------------------------------------------------------
+--
+-- Der FG kann, wenn erwünscht, wieder mit einer Extenen Clock getaktet werden. Dies hat Änderungen
+-- an vielen Macros erfordert. Z.B. musste die externe Clock 'OSZ-EXT' an den Marco 'FG' angeschlossen werden.
+-- 'OSZ-EXT' wird dann ueber 'FKT' an 'fktcntrl' durchgereicht. In 'fktcntrl' wurde ein neuer Macro 'osz_cntrl'
+-- implementiert. Der Macro 'osz_cntrl' vergleicht die Interne Frequenz 'OSZ-INT' mit der externen Frequenz 'OSZ-EXT'.
+-- Wenn die externe Frequenz ansteht und der 'FG' auf mit dem Signal 'F_Ext/Int' = high auf externe Frequenz
+-- selektiert wurde, dann liefert 'osz_cntrl' das Signal 'Ext_Clk_Work' und über 'FOSZ' wird die
+-- externe Frequenz verteilt. Sollte die externe Frequenz nicht mehr zur Verfügung stehen wird automatisch die
+-- interne Frequenz 'OSZ-INT' über 'FOSZ' verteilt, der 'FG' läuft also weiter. Damit der Fehlerzustand
+-- dedektiert werden kann wird das Signal 'Ext_Clk_Work' inaktiv. Dies kann über eine LED und über das Statusregister
+-- kontrolliert werden.
+
+-----------------------------------------------------------------------------------------
+--									Änderungen Version 10
+-----------------------------------------------------------------------------------------
+--
+-- Der Stützpunkt-Strobe-Ausgang 'STG_STR' der den Trigger-Out-Treiber bedient kam 2 Takte (F_OSZ) zu früh in Bezug
+-- zum Einschwingen von 'FG[31..8]. Alle Macros die den Stützpunkt-Strobe intern verwenden, brauchen den Stützpunkt-Strobe
+-- im Timing wie bisher. Deshalb wurde in den Macros
+	-- 'fkt_add' und 'addstre' 'STG_SW' in 'STG_STR' umbenannt.
+	-- Der Macro 'addstre' generiert das um 2 Takte verzögerte Signal 'STG_STR_DYL'.
+	-- Dies Signal wird über den Macro 'fkt_add' zum Macro 'FG' durchgereicht. Bei diesen beiden Macros ist der
+	-- Ausgang 'STG_STR' in 'STG_STR_DLY' umbenannt worden.
+
+
+BEGIN
+IF TEST==1 GENERATE
+  v[] = 0;
+ELSE GENERATE
+  v[] = Versions_nr;
+END GENERATE;
+ 
+ASSERT NOT(TEST == 1)
+  REPORT "      ----------- Dies ist eine Testversion des FG  !!!!  -----------" 
+SEVERITY Warning;
+
+ASSERT NOT(VERSIONS_NR >= H"5")
+  REPORT "      Die Design-Version für FG mit SHIFT_SW3-Funktion lautet    -------->  %  <---------" Versions_nr
+SEVERITY Warning;
+
+END;
+
+

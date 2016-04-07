@@ -1,0 +1,339 @@
+TITLE "'Mil_Dec_Egde_Timed' => MIl-Decoder-Macro der jede Flanke ausmisst. Autor: W.Panschow, Stand: 22.05.03, Vers: V01";
+
+
+CONSTANT	Data_Size				= 16;
+
+CONSTANT	Delta					= 200;
+	
+CONSTANT	CLK_in_kHZ				= 20000;
+CONSTANT	CLK_in_ns				= ceil(1000000 div CLK_in_kHZ);
+	
+CONSTANT	Sync_max_ns				= 1500 + Delta;		CONSTANT	Sync_max_cnt			= ceil(Sync_max_ns DIV CLK_in_ns);
+CONSTANT	Sync_min_ns				= 1500 - Delta;		CONSTANT	Sync_min_cnt			= ceil(Sync_min_ns DIV CLK_in_ns);
+	
+CONSTANT	Sync_with_bit_max_ns	= 2000 + Delta;		CONSTANT	Sync_with_bit_max_cnt	= ceil(Sync_with_bit_max_ns DIV CLK_in_ns);
+CONSTANT	Sync_with_bit_min_ns	= 2000 - Delta;		CONSTANT	Sync_with_bit_min_cnt	= ceil(Sync_with_bit_min_ns DIV CLK_in_ns);
+	
+CONSTANT	Bit_short_time_max_ns	= 500 + Delta;		CONSTANT	Bit_short_time_max_cnt	= ceil(Bit_short_time_max_ns DIV CLK_in_ns);
+CONSTANT	Bit_short_time_min_ns	= 500 - Delta;		CONSTANT	Bit_short_time_min_cnt	= ceil(Bit_short_time_min_ns DIV CLK_in_ns);
+	
+CONSTANT	Bit_long_time_max_ns	= 1000 + Delta;		CONSTANT	Bit_long_time_max_cnt	= ceil(Bit_long_time_max_ns DIV CLK_in_ns);
+CONSTANT	Bit_long_time_min_ns	= 1000 - Delta;		CONSTANT	Bit_long_time_min_cnt	= ceil(Bit_long_time_min_ns DIV CLK_in_ns);
+
+CONSTANT	Timeout_Time_ns			= Sync_with_bit_max_ns + Delta;		CONSTANT	Timeout_Time_cnt	= ceil(Timeout_Time_ns DIV CLK_in_ns);
+	
+CONSTANT	C_Time_between_2_Edges_cnt_width	= ceil(log2(Sync_with_bit_max_cnt))+1;		-- um ein Bit größer
+
+FUNCTION lpm_counter (data[LPM_WIDTH-1..0], clock, clk_en, cnt_en, updown, cin, aclr, aset, aconst, aload, sclr, sset, sconst, sload)
+   WITH (LPM_WIDTH, LPM_DIRECTION, LPM_MODULUS, LPM_AVALUE, LPM_SVALUE, CARRY_CNT_EN, LABWIDE_SCLR)
+   RETURNS (q[LPM_WIDTH-1..0], cout, eq[15..0]);
+
+FUNCTION lpm_ff (data[LPM_WIDTH-1..0], clock, enable, sclr, sset, sload, aclr, aset, aload)
+   WITH (LPM_WIDTH, LPM_AVALUE, LPM_SVALUE, LPM_PVALUE, LPM_FFTYPE)
+   RETURNS (q[LPM_WIDTH-1..0]);
+
+FUNCTION lpm_shiftreg (data[LPM_WIDTH-1..0], clock, enable, shiftin, load, sclr, sset, aclr, aset)
+   WITH (LPM_WIDTH, LPM_DIRECTION, LPM_AVALUE, LPM_SVALUE)
+   RETURNS (q[LPM_WIDTH-1..0], shiftout);
+
+
+ASSERT
+  REPORT "Um Rundungsfehler zu minimieren:  Clk_in_ns = %,   count pro 1us = % "
+		CLK_in_ns, 1000 div CLK_in_ns
+SEVERITY WARNING;
+
+ASSERT
+  REPORT "Sync_min_cnt=%,  Sync_max_cnt=%,  Sync_with_bit_min_cnt=%, Sync_with_bit_max_cnt=%"
+		Sync_min_cnt,  Sync_max_cnt,  Sync_with_bit_min_cnt, Sync_with_bit_max_cnt
+SEVERITY WARNING;
+
+ASSERT
+  REPORT "Bit_long_min_cnt=%,  Bit_long_max_cnt=%,  Bit_short_min_cnt=%, Bit_short_max_cnt=%"
+		Bit_long_time_min_cnt,   Bit_long_time_max_cnt,  Bit_short_time_min_cnt, Bit_short_time_max_cnt
+SEVERITY WARNING;
+
+SUBDESIGN Mil_Dec_Egde_Timed
+	(
+	Pos_in					: INPUT;
+	Neg_in					: INPUT = GND;
+	RD_MIL					: INPUT;
+	Res						: INPUT = GND;
+	Speed_Ena				: INPUT = VCC;
+	Clk						: INPUT;
+	Rcv_Cmd					: OUTPUT;
+	RCV_Error				: OUTPUT;
+	Rcv_Rdy					: OUTPUT;
+	Mil_Rcv_Data[15..0]		: OUTPUT;
+	RCV_Idle				: OUTPUT;
+	Sync1or2				: OUTPUT;
+	Parity					: OUTPUT;
+	Sync2orData				: OUTPUT;
+	Data					: OUTPUT;
+	Err						: OUTPUT;
+	Parity_OK				: OUTPUT;
+	Pos_In_Edge_out			: OUTPUT;
+	Is_Timeout_Out			: OUTPUT;
+	Is_Sync_with_bit_Out	: OUTPUT;
+	Is_Sync_Out				: OUTPUT;
+	Is_Bit_long_Out			: OUTPUT;
+	Is_Bit_short_Out		: OUTPUT;
+	Mil_Decoder_Diag[12..0]	: OUTPUT;
+	)
+
+VARIABLE
+
+RCV_SM: MACHINE OF BITS (RCV_SM_[5..0])
+		WITH STATES (
+					RCV_Idle,
+					Sync1or2,
+					Sync2orData,		
+					Data,
+					Parity,
+					Err
+					);
+
+--------------------------------------------------
+-- Zähler misst die Zeit zwischen zwei Flanken	--
+--------------------------------------------------
+Time_between_2_Edges_cnt:	lpm_counter	WITH (LPM_WIDTH = C_Time_between_2_Edges_cnt_width);
+
+Is_Sync:			SRFF;
+Is_Sync_with_bit:	SRFF;
+Is_Bit_short:		SRFF;
+Is_Bit_long:		SRFF;
+Is_Timeout:			SRFF;
+
+next_short:			SRFF;
+
+Mil_Rcv_Shift_Reg:	lpm_shiftreg WITH (	LPM_WIDTH = Data_Size + 3,		-- + 3, weil in Bit [0] das Parity-Bit gespeichert wird,	--
+										LPM_SVALUE = 3 );				--	und weil ein impliziter Zähler mit der vorgeladen drei	--
+																		--	realisiert ist. Diese wird nach links geschoben.		--
+																		--	Das Bit[17] bedeutet das Ende der Datenaufnahme.		--
+																		--	Das Bit[18] bedeutet das Ende des Empfangs (Parity).	--
+																		-- 
+
+Mil_Rcv_Data_ff:	lpm_ff WITH (LPM_WIDTH = 16, LPM_FFTYPE = "DFF");
+
+Pos_In_Sync[2..0]:	DFFE;
+Pos_In_Edge:		NODE;
+
+Is_Cmd:				SRFF;
+Is_Cmd_Memory:		SRFF;
+
+Mil_Parity_Tst:		TFF;
+
+Rcv_Rdy_ff:			SRFF;
+RCV_Err_ff:			SRFF;
+
+
+
+
+BEGIN
+
+Pos_In_Edge	=	!Pos_In_Sync[2] and  Pos_In_Sync[1]		-- positive Flanke	--
+			or	 Pos_In_Sync[2] and !Pos_In_Sync[1];	-- nagative Flanke	--
+
+Pos_In_Sync[2..0].clk	= clk;
+Pos_In_Sync[2..0].d		= (Pos_In_Sync[1..0], Pos_In);
+
+Time_between_2_Edges_cnt.clock	= clk;
+Time_between_2_Edges_cnt.sclr	= Pos_In_Edge or RCV_Idle;
+Time_between_2_Edges_cnt.cnt_en	= not Time_between_2_Edges_cnt.q[C_Time_between_2_Edges_cnt_width-1] and Speed_Ena;
+
+Is_Sync.clk				= clk;
+Is_Sync.s				= (Time_between_2_Edges_cnt.q[] == Sync_min_cnt) and (Sync1or2 or Sync2orData);
+Is_Sync.r				= (Time_between_2_Edges_cnt.q[] == Sync_max_cnt) or RCV_Idle;
+
+Is_Sync_with_bit.clk	= clk;
+Is_Sync_with_bit.s		= (Time_between_2_Edges_cnt.q[] == Sync_with_bit_min_cnt) and (Sync1or2 or Sync2orData);
+Is_Sync_with_bit.r		= (Time_between_2_Edges_cnt.q[] == Sync_with_bit_max_cnt) or RCV_Idle;
+
+Is_Bit_short.clk		= clk;
+Is_Bit_short.s			= (Time_between_2_Edges_cnt.q[] == Bit_short_time_min_cnt) and (Data or Sync2orData);
+Is_Bit_short.r			= (Time_between_2_Edges_cnt.q[] == Bit_short_time_max_cnt) or RCV_Idle;
+
+Is_Bit_long.clk			= clk;
+Is_Bit_long.s			= (Time_between_2_Edges_cnt.q[] == Bit_long_time_min_cnt) and Data;
+Is_Bit_long.r			= (Time_between_2_Edges_cnt.q[] == Bit_long_time_max_cnt) or RCV_Idle;
+
+Is_Timeout.clk			= clk;
+Is_Timeout.s			= Time_between_2_Edges_cnt.q[] == (Timeout_Time_cnt);
+Is_Timeout.r			= RCV_Idle;
+
+Mil_Rcv_Data_ff.clock	= clk;
+Mil_Rcv_Data_ff.data[15..0]	= Mil_Rcv_Shift_Reg.q[16..1];	-- In Bit 0 steht das Parity-Bit	--
+
+Is_Cmd.clk			= clk;
+
+Mil_Parity_Tst.clk	= clk;
+next_short.clk		= clk;
+
+Mil_Rcv_Shift_Reg.clock		= clk;
+Mil_Rcv_Shift_Reg.(sset, enable)	= RCV_Idle;
+
+RCV_SM.clk		= clk;
+RCV_SM.Reset	= Res or Is_Timeout;
+CASE RCV_SM IS
+	WHEN RCV_Idle =>
+		next_short.r	= VCC;
+		Mil_Parity_Tst	= Mil_Parity_Tst; 	-- Clear T-FF
+		Is_Cmd.r		= VCC;
+   		IF Pos_In_Edge THEN
+			RCV_SM = Sync1or2;
+        ELSE
+			RCV_SM = RCV_Idle;
+		END IF;
+
+	WHEN Sync1or2 =>
+		IF Pos_In_Edge THEN
+			IF Is_Sync_with_bit THEN
+				Is_Sync_with_bit.r			= VCC;
+				Is_Cmd.r					= VCC;
+				Mil_Rcv_Shift_Reg.(shiftin, enable)	= (Pos_In_Sync[2], VCC);
+				Mil_Parity_Tst				= Pos_In_Sync[2];
+				RCV_SM = Data;
+			ELSIF Is_Sync THEN
+				Is_Sync.r	= VCC;
+				RCV_SM = Sync2orData;
+			ELSE
+				RCV_SM = RCV_Idle;
+			END IF;
+		ELSE
+			RCV_SM = Sync1or2;
+		END IF;
+
+	WHEN Sync2orData =>
+		IF Pos_In_Edge THEN
+			IF Is_Sync_with_bit THEN
+				Is_Sync_with_bit.r			= VCC;
+				Is_Cmd.s					= VCC;
+				Mil_Rcv_Shift_Reg.(shiftin, enable)	= (Pos_In_Sync[2], VCC);
+				Mil_Parity_Tst				= Pos_In_Sync[2];
+				RCV_SM = Data;
+			ELSIF Is_Sync THEN
+				Is_Sync.r					= VCC;
+				Is_Cmd.s					= VCC;
+				next_short.s				= VCC;
+				RCV_SM = Data;
+			ELSIF Is_Bit_short THEN
+				Is_Bit_short.r				= VCC;
+				Is_Cmd.r					= VCC;
+				Mil_Rcv_Shift_Reg.(shiftin, enable)	= (Pos_In_Sync[2], VCC);
+				Mil_Parity_Tst				= Pos_In_Sync[2];
+				RCV_SM = Data;
+			ELSE
+				RCV_SM = Err;
+			END IF;
+		ELSE
+			RCV_SM = Sync2orData;
+		END IF;
+
+	WHEN Data =>
+		IF Mil_Rcv_Shift_Reg.q[18] == GND THEN
+			IF Pos_In_Edge THEN
+				IF (Is_Bit_short and next_short) or (Is_Bit_long and not next_short) THEN
+					Is_Bit_long.r	= VCC;
+					Is_Bit_short.r	= VCC;
+					Mil_Rcv_Shift_Reg.(shiftin, enable)	= (Pos_In_Sync[2], VCC);
+					IF Mil_Rcv_Shift_Reg.q[17] == GND THEN
+						Mil_Parity_Tst = Pos_In_Sync[2];
+					END IF;
+					next_short.r	= VCC;
+					RCV_SM = Data;
+				ELSIF Is_Bit_short and not next_short THEN
+					Is_Bit_short.r	= VCC;
+					next_short.s	= VCC;
+					RCV_SM = Data;
+				ELSIF Is_Bit_long and next_short THEN
+					Is_Bit_long.r	= VCC;
+					RCV_SM = Err;
+				ELSE
+					Is_Bit_long.r	= VCC;
+					RCV_SM = Err;
+				END IF;
+			ELSE
+				RCV_SM = Data;
+			END IF;
+		ELSE
+			RCV_SM = Parity;
+		END IF;
+
+	WHEN Parity =>
+		IF Mil_Rcv_Shift_Reg.q[0] == GND THEN
+		--+-------------------------------------------------------------------------------------------------------------------------+
+		--| Das Empfangene letzte Bit war eine Null, d.h. es kommt noch eine Flanke! Diese muss noch abgewartet werden,	sonst ist	|
+		--| die Ablaufsteuerung zu früh in RCV_Idle und wertet die letzte Flanke als Sync-Flanke, was zu einem Fehler führt.		|
+		--+-------------------------------------------------------------------------------------------------------------------------+
+			IF Pos_In_Edge THEN		
+				IF Mil_Parity_Tst == not Mil_Rcv_Shift_Reg.q[0] THEN
+					Parity_OK				= VCC;
+					Rcv_Rdy_ff.s			= VCC;
+					Mil_Rcv_Data_ff.enable	= VCC;
+					Is_Cmd_Memory.s			= Is_CMD;
+					RCV_SM = RCV_Idle;
+				ELSE
+					RCV_SM = Err;
+				END IF;
+			ELSE
+				RCV_SM = Parity;
+			END IF;
+		--+-------------------------------------------------------------------------------------------------------------------------+
+		--| Das Empfangene letzte Bit war eine Eins, d.h. es kommt keine Flanke mehr! Es kann direkt nach RCV_Idle verzweigt		|
+		--| werden, wenn der Parity-Test keinen Fehler entdeckt.																	|
+		--+-------------------------------------------------------------------------------------------------------------------------+
+		ELSIF Mil_Parity_Tst == not Mil_Rcv_Shift_Reg.q[0] THEN
+			Parity_OK				= VCC;
+			Rcv_Rdy_ff.s			= VCC;
+			Mil_Rcv_Data_ff.enable	= VCC;
+			Is_Cmd_Memory.s			= Is_CMD;
+			RCV_SM = RCV_Idle;
+		ELSE
+			RCV_SM = Err;
+		END IF;
+
+	WHEN Err =>
+		RCV_SM = RCV_Idle;
+
+
+END case;
+
+Rcv_Rdy_ff.clk	= clk;
+Rcv_Rdy_ff.r	= Rd_Mil or Err or Res;
+Rcv_Rdy = Rcv_Rdy_ff;
+
+RCV_Err_ff.clk		= clk;
+RCV_Err_ff.s		= Err or Is_Timeout;
+RCV_Err_ff.r		= RCV_Idle;
+RCV_Error = RCV_Err_ff;
+
+Is_Cmd_Memory.clk	= clk;
+Is_Cmd_Memory.r		= Rd_Mil or Err or Res;
+Rcv_Cmd = Is_Cmd_Memory;
+
+Mil_Rcv_Data[] = Mil_Rcv_Data_ff.q[];
+
+Pos_In_Edge_out = Pos_In_Edge;
+
+Is_Timeout_Out			= Is_Timeout;
+Is_Sync_with_bit_Out	= Is_Sync_with_bit;
+Is_Sync_Out				= Is_Sync;
+Is_Bit_long_Out			= Is_Bit_long;
+Is_Bit_short_Out		= Is_Bit_short;
+
+Mil_Decoder_Diag[12..0]	=	(
+							RCV_Idle,				-- Bit12
+							Sync1or2,				-- Bit11
+							Parity,					-- Bit10	
+							Sync2orData,			-- Bit9	
+							Data,					-- Bit8	
+							Err,					-- Bit7	
+							Parity_OK,				-- Bit6	
+							Pos_In_Edge_out,		-- Bit5	
+							Is_Timeout_Out,			-- Bit4	
+							Is_Sync_with_bit_Out,	-- Bit3	
+							Is_Sync_Out,			-- Bit2
+							Is_Bit_long_Out,		-- Bit1
+							Is_Bit_short_Out		-- Bit0
+							);
+
+END;

@@ -1,0 +1,206 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2009 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 368 304)
+	(text "Mil_bipol_dec" (rect 5 0 94 15)(font "Arial" ))
+	(text "inst" (rect 8 269 31 284)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "Manchester_In_p" (rect 0 0 112 15)(font "Arial" ))
+		(text "Manchester_In_p" (rect 21 27 133 42)(font "Arial" ))
+		(line (pt 0 32)(pt 16 32)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "Manchester_In_n" (rect 0 0 112 15)(font "Arial" ))
+		(text "Manchester_In_n" (rect 21 43 133 58)(font "Arial" ))
+		(line (pt 0 48)(pt 16 48)(line_width 1))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "RD_MIL" (rect 0 0 51 15)(font "Arial" ))
+		(text "RD_MIL" (rect 21 59 72 74)(font "Arial" ))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "Clr_No_VW_Cnt" (rect 0 0 106 15)(font "Arial" ))
+		(text "Clr_No_VW_Cnt" (rect 21 75 127 90)(font "Arial" ))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "Clr_Not_Equal_Cnt" (rect 0 0 126 15)(font "Arial" ))
+		(text "Clr_Not_Equal_Cnt" (rect 21 91 147 106)(font "Arial" ))
+		(line (pt 0 96)(pt 16 96)(line_width 1))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "Res" (rect 0 0 27 15)(font "Arial" ))
+		(text "Res" (rect 21 107 48 122)(font "Arial" ))
+		(line (pt 0 112)(pt 16 112)(line_width 1))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "Power_up" (rect 0 0 66 15)(font "Arial" ))
+		(text "Power_up" (rect 21 123 87 138)(font "Arial" ))
+		(line (pt 0 128)(pt 16 128)(line_width 1))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "Clk" (rect 0 0 21 15)(font "Arial" ))
+		(text "Clk" (rect 21 139 42 154)(font "Arial" ))
+		(line (pt 0 144)(pt 16 144)(line_width 1))
+	)
+	(port
+		(pt 352 32)
+		(output)
+		(text "Rcv_Cmd" (rect 0 0 63 15)(font "Arial" ))
+		(text "Rcv_Cmd" (rect 268 27 331 42)(font "Arial" ))
+		(line (pt 352 32)(pt 336 32)(line_width 1))
+	)
+	(port
+		(pt 352 48)
+		(output)
+		(text "Rcv_Rdy" (rect 0 0 56 15)(font "Arial" ))
+		(text "Rcv_Rdy" (rect 275 43 331 58)(font "Arial" ))
+		(line (pt 352 48)(pt 336 48)(line_width 1))
+	)
+	(port
+		(pt 352 64)
+		(output)
+		(text "Mil_Rcv_Data[15..0]" (rect 0 0 127 15)(font "Arial" ))
+		(text "Mil_Rcv_Data[15..0]" (rect 204 59 331 74)(font "Arial" ))
+		(line (pt 352 64)(pt 336 64)(line_width 3))
+	)
+	(port
+		(pt 352 80)
+		(output)
+		(text "Error_detect" (rect 0 0 79 15)(font "Arial" ))
+		(text "Error_detect" (rect 252 75 331 90)(font "Arial" ))
+		(line (pt 352 80)(pt 336 80)(line_width 1))
+	)
+	(port
+		(pt 352 96)
+		(output)
+		(text "Rcv_Error_p" (rect 0 0 80 15)(font "Arial" ))
+		(text "Rcv_Error_p" (rect 251 91 331 106)(font "Arial" ))
+		(line (pt 352 96)(pt 336 96)(line_width 1))
+	)
+	(port
+		(pt 352 112)
+		(output)
+		(text "Rcv_Error_n" (rect 0 0 80 15)(font "Arial" ))
+		(text "Rcv_Error_n" (rect 251 107 331 122)(font "Arial" ))
+		(line (pt 352 112)(pt 336 112)(line_width 1))
+	)
+	(port
+		(pt 352 128)
+		(output)
+		(text "No_VW_p" (rect 0 0 64 15)(font "Arial" ))
+		(text "No_VW_p" (rect 267 123 331 138)(font "Arial" ))
+		(line (pt 352 128)(pt 336 128)(line_width 1))
+	)
+	(port
+		(pt 352 144)
+		(output)
+		(text "No_VW_n" (rect 0 0 64 15)(font "Arial" ))
+		(text "No_VW_n" (rect 267 139 331 154)(font "Arial" ))
+		(line (pt 352 144)(pt 336 144)(line_width 1))
+	)
+	(port
+		(pt 352 160)
+		(output)
+		(text "Data_not_equal" (rect 0 0 103 15)(font "Arial" ))
+		(text "Data_not_equal" (rect 228 155 331 170)(font "Arial" ))
+		(line (pt 352 160)(pt 336 160)(line_width 1))
+	)
+	(port
+		(pt 352 176)
+		(output)
+		(text "CMD_not_equal" (rect 0 0 105 15)(font "Arial" ))
+		(text "CMD_not_equal" (rect 226 171 331 186)(font "Arial" ))
+		(line (pt 352 176)(pt 336 176)(line_width 1))
+	)
+	(port
+		(pt 352 192)
+		(output)
+		(text "No_VW_Cnt[15..0]" (rect 0 0 118 15)(font "Arial" ))
+		(text "No_VW_Cnt[15..0]" (rect 213 187 331 202)(font "Arial" ))
+		(line (pt 352 192)(pt 336 192)(line_width 3))
+	)
+	(port
+		(pt 352 208)
+		(output)
+		(text "Not_Equal_Cnt[15..0]" (rect 0 0 138 15)(font "Arial" ))
+		(text "Not_Equal_Cnt[15..0]" (rect 193 203 331 218)(font "Arial" ))
+		(line (pt 352 208)(pt 336 208)(line_width 3))
+	)
+	(port
+		(pt 352 224)
+		(output)
+		(text "error_limit_reached" (rect 0 0 127 15)(font "Arial" ))
+		(text "error_limit_reached" (rect 204 219 331 234)(font "Arial" ))
+		(line (pt 352 224)(pt 336 224)(line_width 1))
+	)
+	(port
+		(pt 352 240)
+		(output)
+		(text "Mil_Decoder_Diag_p[15..0]" (rect 0 0 175 15)(font "Arial" ))
+		(text "Mil_Decoder_Diag_p[15..0]" (rect 156 235 331 250)(font "Arial" ))
+		(line (pt 352 240)(pt 336 240)(line_width 3))
+	)
+	(port
+		(pt 352 256)
+		(output)
+		(text "Mil_Decoder_Diag_n[15..0]" (rect 0 0 175 15)(font "Arial" ))
+		(text "Mil_Decoder_Diag_n[15..0]" (rect 156 251 331 266)(font "Arial" ))
+		(line (pt 352 256)(pt 336 256)(line_width 3))
+	)
+	(parameter
+		"CLK_in_Hz"
+		"24000000"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(parameter
+		"threshold_not_equal_err"
+		"15"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(parameter
+		"threshold_no_VW_err"
+		"15"
+		""
+		(type "PARAMETER_SIGNED_DEC")	)
+	(drawing
+		(rectangle (rect 16 16 336 272)(line_width 1))
+	)
+	(annotation_block (parameter)(rect 368 -64 468 16))
+)

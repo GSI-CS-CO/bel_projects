@@ -1,0 +1,582 @@
+TITLE "'IO_Buff' => I/O-Buffer-Steuerung f�r IFA8 , Autor: R. Hartmann, Stand: 24.02.2014, Vers: V1R8 ";
+
+FUNCTION TRI (in, oe)
+   RETURNS (out);
+
+FUNCTION DFF      (D, CLK, CLRN, PRN)		RETURNS (Q);
+
+
+SUBDESIGN IO_Buff
+(
+	CLK:				INPUT;
+	SCLR:				INPUT;
+
+	IFA_Mode:			INPUT;	
+	FG_Mode:			INPUT;
+	MB_Mode:			INPUT;
+	Sweep_Mode:	    	INPUT;
+	FG_DDS_Mode:		INPUT;
+	SCU_Mode:			INPUT;
+	SCU_ACU_Mode:   	INPUT;
+
+	FC[7..0]:			INPUT;
+	FC_Str:				INPUT;
+	FC_Str_Piggy:		INPUT;
+	Send_Data:			INPUT;
+	New_Data:			INPUT;
+	nIRQ:				INPUT;
+	nDRQ:				INPUT;
+	6MHZ:				INPUT;
+	nPu_Reset:			INPUT;
+	PowerUP_Flag:		INPUT;
+
+	MB_A[4..0]:			INPUT;
+	MB_SubA[7..0]:		INPUT;
+	MB_DOut[7..0]:		INPUT;
+	MB_SEL:				INPUT;
+	MB_R/nW:			INPUT;
+	MB_nDS:				INPUT;
+	MB_SEL_WR:			INPUT;
+	MB_CLK:				INPUT;
+	MB_nReset:			INPUT;
+
+	FB_A[15..0]:		INPUT;
+	FB_nAdr_Sel:		INPUT;
+	FB_nBSel[12..1]:	INPUT;
+	FB_DOut[15..0]:		INPUT;
+	FB_SEL:				INPUT;
+	FB_R/nW:			INPUT;
+	FB_nDS:				INPUT;
+	FB_Ena_Tri_Buff:	INPUT;
+	FB_nSel_Ext_Data_Drv:			INPUT;
+	FB_Ext_Data_Drv_WRnRd:			INPUT;
+	FB_nReset:			INPUT;
+	FB_nEVT_Str:		INPUT;
+
+	IFA_Data[15..0]:	INPUT;
+	FG[31..8]:			INPUT;
+	FG_DDS_Out[15..0]:	INPUT;
+	Sweep_Out[15..0]:	INPUT;
+
+	FB_nSRQ_SL[12..1]:	OUTPUT;
+	FB_DIN[15..0]:		OUTPUT;
+	FB_nDTACK:			OUTPUT;
+
+	MB_INL:				OUTPUT;
+	MB_SRQ1:			OUTPUT;
+	MB_SRQ2:			OUTPUT;
+	MB_nDTACK:			OUTPUT;
+	MB_DIN[7..0]:		OUTPUT;
+
+	nSend_Ena:			OUTPUT;
+	nSend_Str:			OUTPUT;
+	nSel_MB:			OUTPUT;
+	nSel_FB:			OUTPUT;
+	nDRQ_IFA:			OUTPUT;
+	nDRDY_IFA:			OUTPUT;
+	nIACK:				OUTPUT;
+                      
+	IFA[7..0]:			OUTPUT;
+	STS[7..0]:			OUTPUT;
+	DIW[15..0]:			OUTPUT;
+
+	VG_A[31..3]:		BIDIR;	-- BIDIR;
+	VG_B[32..3]:		BIDIR;	-- BIDIR;
+	VG_C[31..3]:		BIDIR;	-- BIDIR;
+	VG_C19S:			BIDIR;	-- BIDIR;
+	VG_A19S:			BIDIR;	-- BIDIR;
+
+	VG_nSwitch_Ena:		OUTPUT; -- ext. Buffersteuerung
+	VG_AC22_AC25_Out:	OUTPUT;
+	VG_nAC22_AC25_Ena:	OUTPUT;
+	VG_AC26_AC27_Out:	OUTPUT;
+	VG_nAC26_AC27_Ena:	OUTPUT;
+	VG_C20_21_Out:		OUTPUT;
+	VG_nC20_21_Ena:		OUTPUT;
+	VG_AC19_Out:		OUTPUT;
+	VG_nAC19_Ena:		OUTPUT;
+	VG_A17_Out:			OUTPUT;
+	VG_nA17_Ena:		OUTPUT;
+	VG_B17_Out:			OUTPUT;
+	VG_nB17_Ena:		OUTPUT;
+	VG_IO1_Out:			OUTPUT;
+	VG_nIO1_Ena:		OUTPUT;
+	VG_B18_B24_Out:		OUTPUT;
+	VG_nB18_B24_Ena:	OUTPUT;
+	VG_AC28_AC31_Out:	OUTPUT;
+	VG_nAC28_AC31_Ena:	OUTPUT;
+)
+
+VARIABLE
+
+	SW[15..0]:				Node;
+	SWF[7..0]:				Node;
+
+	v_IFA_Mode:				DFF;	
+	v_SCU_Mode:				DFF;	 	
+         
+	T_A[31..3]:				TRI;
+	T_B[32..3]:				TRI;
+	T_C[31..3]:				TRI;
+	T_C19S:					TRI;
+	T_A19S:					TRI;
+
+
+BEGIN
+
+
+	v_IFA_Mode.	(D, CLK) =((IFA_Mode OR FG_Mode OR Sweep_Mode OR FG_DDS_Mode), clk);
+	v_SCU_Mode.	(D, CLK) =((SCU_Mode OR SCU_ACU_Mode), clk); ---	
+
+
+		--================================  Sollwert-MUX  ========================================
+
+	IF		FG_Mode		THEN	SW[15..0] =	FG[31..16];			SWF[7..0] =	FG[15..8];	-- SW Funktionsgen.
+	ELSIF	FG_DDS_Mode	THEN	SW[15..0] =	FG_DDS_Out[15..0];	SWF[7..0] =	GND;		-- SW FG mit DDS Output
+	ELSIF	Sweep_Mode	THEN	SW[15..0] =	Sweep_Out[15..0];	SWF[7..0] =	GND;		-- SW Sweeper
+	ELSE						SW[15..0] =	IFA_Data[15..0];	SWF[7..0] =	GND;		-- SW IFA
+	END IF;
+
+		--==============================  allg. Festlegungen  ===================================
+	VG_nSwitch_Ena	=	GND;			-- enable Switchs 
+
+	VG_A[31..3]		=	T_A[31..3];
+	VG_B[32..3]		=	T_B[32..3];
+	VG_C[31..3]		=	T_C[31..3];
+	VG_C19S			=	T_C19S	;
+	VG_A19S			=	T_A19S	;
+
+
+		--================================  IF-ADR  ========================================
+
+	(IFA6, IFA4, IFA2, IFA0)	=  T_A[6..3].out;	(T_A[6..3],	T_A[6..3].oe)	= GND;-- Input
+	(IFA7, IFA5, IFA3, IFA1)	=  T_C[6..3].out;	(T_C[6..3],	T_C[6..3].oe)	= GND;-- Input
+
+
+		--===================  Hardware-SEL der Betriebsarten ================================
+
+	(nSel_FB, nSel_MB)	=  T_B[8..7].out;	(T_B[8..7], T_B[8..7].oe)	= GND;-- Input
+
+
+		--===========================  unbenutzte Pins  =====================================
+
+	(T_A[16],	T_A[16].oe)	= GND;-- Input
+	(T_B[16],	T_B[16].oe)	= GND;-- Input
+	(T_C[16],	T_C[16].oe)	= GND;-- Input
+
+
+
+
+		--###################################################################################
+		--########################## Start MB_Mode ##########################################
+		--###################################################################################
+
+	IF MB_Mode THEN
+	
+		--=======================  IO �ber Switch  ========================================
+
+		(STS6, STS4, STS2, STS0)	=  T_A[10..7].out;			(T_A[10..7], T_A[10..7].oe) 	= GND;-- Input
+		(STS7, STS5, STS3, STS1)	=  T_C[10..7].out;			(T_C[10..7], T_C[10..7].oe)		= GND;-- Input
+		T_A[11]						=  nIRQ;					 T_A[11].oe						= VCC;-- Output
+		nIACK						=  T_C[11].out;				(T_C[11], T_C[11].oe)			= GND;-- Input
+		T_A[14..12]					= (FC4, FC2, FC0);			 T_A[14..11].oe					= VCC;-- Output
+		T_C[15..12]					= (FC7, FC5, FC3, FC1);		 T_C[15..12].oe					= VCC;-- Output
+
+		MB_SRQ1						=  T_C[18].out;				(T_C[18], T_C[18].oe)			= GND;-- Input
+
+		--===========================  unbenutzte Pins  =====================================
+
+		(T_B[6..3],		T_B[6..3].oe)	= GND;-- unbenutzte Pins
+		(T_B[14..9],	T_B[14..9].oe)	= GND;-- unbenutzte Pins
+		(T_B[32..25],	T_B[32..25].oe)	= GND;-- unbenutzte Pins
+		(T_C[16],		T_C[16].oe)		= GND;-- unbenutzte Pins
+		(T_C[17],		T_C[17].oe)		= GND;-- unbenutzte Pins
+		(T_B[26],		T_B[26].oe)		= GND;-- unbenutzte Pins
+		(T_B[27],		T_B[27].oe)		= GND;-- unbenutzte Pins
+		(T_B[32],		T_B[32].oe)		= GND;-- unbenutzte Pins
+		(T_A19S,		T_A19S.oe)		= GND;-- unbenutzte Pins
+		(T_C19S,		T_C19S.oe)		= GND;-- unbenutzte Pins
+
+
+		--================================ Buffer I =============================================
+
+		VG_B17_Out				= VCC;		VG_nB17_Ena	= VCC;--> disable
+		(T_B[17],	T_B[17].oe)	= GND;-- Input
+
+		--================================ Buffer H =============================================
+
+
+		VG_nA17_Ena		=	GND;-- enable
+		(VG_A17_Out,		T_A[17].oe)	=	GND;-- Input
+
+		MB_SRQ2			=  T_A[17].out;				(T_A[17], T_A[17].oe) = GND;-- Input
+
+
+		--================================ Buffer G =============================================
+
+		VG_nC20_21_Ena	= GND;	-- enable
+		(VG_C20_21_Out,	T_C[21..20], T_C[21..20].oe) 	= GND;-- Input 
+
+		(MB_INL, MB_nDTACK)	=	T_C[21..20].out;
+
+
+		--================================ Buffer F =============================================
+
+		VG_nAC19_Ena	= GND;	-- enable
+		(VG_AC19_Out,	T_A[19].oe,	T_C[19].oe) 	= VCC;-- Output
+
+		T_A[19]		=	MB_nDS;
+		T_C[19]		=	MB_CLK;
+
+   		--================================ Buffer E =============================================
+
+--		VG_nIO1_Ena		= GND;	-- enable
+--		(VG_IO1_Out,	T_A[15].oe, T_B[15].oe, T_A[18].oe, T_A[20..21].oe) 	= VCC;-- Output
+
+--		VG_nIO1_Ena		= NOT v_MB_Mode;	-- enable
+		VG_nIO1_Ena		= NOT MB_SEL;-- enable mit MB_SEL
+		(VG_IO1_Out,	T_A[15].oe, T_B[15].oe, T_A[18].oe, T_A[21..20].oe) 	= MB_Mode;-- Output
+
+		T_A[15]		=	FC6;
+		T_B[15]		=	GND;
+		T_A[18]		=	MB_nReset;
+		T_A[21..20]	=	(MB_A4, MB_R/nW);
+		
+		--======================= Buffer Gruppe D ========================================
+		
+		VG_nB18_B24_Ena									=	 VCC; -- disable
+		(VG_B18_B24_Out, T_B[24..18], T_B[24..18].oe)	=	 GND; -- Input
+		
+		
+		--======================= Buffer Gruppe C ========================================
+
+		VG_nAC22_AC25_Ena	=	NOT MB_SEL;-- enable mit MB_SEL
+		(VG_AC22_AC25_Out,	T_A[25..22].oe, T_C[25..22].oe)	=	VCC;-- Output
+                               
+		T_A[25..22]		=	(MB_SUBA4, MB_SUBA4, MB_A0, MB_A2); 
+		T_C[25..22]		=	(MB_SUBA5, MB_SUBA7, MB_A1, MB_A3);
+
+		--======================= Buffer Gruppe B ========================================
+
+		VG_nAC26_AC27_Ena	=	NOT MB_SEL;-- enable mit MB_SEL
+		(VG_AC26_AC27_Out,		T_A[27..26].oe,	T_C[27..26].oe)	= VCC;-- Output
+
+		T_A[27..26]		=	( MB_SUBA0, MB_SUBA2);	
+		T_C[27..26]   =	( MB_SUBA1, MB_SUBA3);	
+                          
+		--======================= Buffer Gruppe A ========================================
+ 
+		VG_nAC28_AC31_Ena	=	NOT MB_SEL;-- enable mit MB_SEL
+
+		(VG_AC28_AC31_Out,		T_A[31..28].oe,	T_C[31..28].oe)	=	MB_SEL_WR;-- Output bei MB_SEL_WR 
+
+		(MB_Din0, MB_Din2, MB_Din4, MB_Din6)	=	T_A[31..28].out; -- Input Daten
+		(MB_Din1, MB_Din3, MB_Din5, MB_Din7)	=	T_C[31..28].out;
+
+		T_A[31..28]					=	(MB_Dout0, MB_Dout2, MB_Dout4, MB_Dout6); --Output Daten
+		T_C[31..28]					=	(MB_Dout1, MB_Dout3, MB_Dout5, MB_Dout7);
+                                         
+                                
+		--###################################################################################
+		--############################ END MB_Mode ##########################################
+		--###################################################################################
+
+
+		--###################################################################################
+		--########################### Start FB_Mode #########################################
+		--###################################################################################
+
+	ELSIF v_SCU_Mode THEN
+
+		--=======================  IO �ber Switch  ========================================
+
+
+		FB_nSRQ_SL1		=  T_A[10].out;	 (T_A[10],  T_A[10].oe) = GND;-- Input
+		FB_nSRQ_SL2		=  T_B[10].out;	 (T_B[10],  T_B[10].oe) = GND;-- Input
+		FB_nSRQ_SL3		=  T_C[10].out;	 (T_C[10],  T_C[10].oe) = GND;-- Input
+		FB_nSRQ_SL4		=  T_A[12].out;	 (T_A[12],  T_A[12].oe) = GND;-- Input
+		FB_nSRQ_SL5		=  T_B[12].out;	 (T_B[12],  T_B[12].oe) = GND;-- Input
+		FB_nSRQ_SL6		=  T_C[12].out;	 (T_C[12],  T_C[12].oe) = GND;-- Input
+		FB_nSRQ_SL7		=  T_C[15].out;	 (T_C[15],  T_C[15].oe) = GND;-- Input
+		FB_nSRQ_SL8		=  T_C19S.out;	 (T_C19S,   T_C19S.oe)  = GND;-- Input
+		FB_nSRQ_SL9		=  T_B[25].out;	 (T_B[25],  T_B[25].oe) = GND;-- Input
+		FB_nSRQ_SL10	=  T_B[27].out;	 (T_B[27],  T_B[27].oe) = GND;-- Input
+		FB_nSRQ_SL11	=  T_B[29].out;	 (T_B[29],  T_B[29].oe) = GND;-- Input
+		FB_nSRQ_SL12	=  T_B[31].out;	 (T_B[31],  T_B[31].oe) = GND;-- Input
+                                             
+
+		T_A[11]		=  FB_nBSel1;		T_A[11].oe	= FB_SEL;	-- VCC;-- Output
+		T_B[11]		=  FB_nBSel2;		T_B[11].oe	= FB_SEL;	-- VCC;-- Output
+		T_C[11]		=  FB_nBSel3;		T_C[11].oe	= FB_SEL;	-- VCC;-- Output
+		T_A[13]		=  FB_nBSel4;		T_A[13].oe	= FB_SEL;	-- VCC;-- Output
+		T_B[13]		=  FB_nBSel5;		T_B[13].oe	= FB_SEL;	-- VCC;-- Output
+		T_C[13]		=  FB_nBSel6;		T_C[13].oe	= FB_SEL;	-- VCC;-- Output
+		T_C[18]		=  FB_nBSel7;		T_C[18].oe	= FB_SEL;	-- VCC;-- Output
+		T_A19S		=  FB_nBSel8;		T_A19S .oe	= FB_SEL;	-- VCC;-- Output
+		T_B[26]		=  FB_nBSel9;		T_B[26].oe	= FB_SEL;	-- VCC;-- Output
+		T_B[28]		=  FB_nBSel10;		T_B[28].oe	= FB_SEL;	-- VCC;-- Output
+		T_B[30]		=  FB_nBSel11;		T_B[30].oe	= FB_SEL;	-- VCC;-- Output
+		T_B[32]		=  FB_nBSel12;		T_B[32].oe	= FB_SEL;	-- VCC;-- Output
+                                     
+		FB_nDtack	=  T_C[17] .out;	 (T_C[17] ,  T_C[17] .oe) = GND;-- Input
+
+
+		--===========================  unbenutzte Pins  =====================================
+
+	
+		(T_B[4],		T_B[4].oe)		= GND;-- unbenutzter Pin, FB_Master4
+		(T_B[5],		T_B[5].oe)		= GND;-- unbenutzter Pin, FB_Master7
+		(T_B[6],		T_B[6].oe)		= GND;-- unbenutzter Pin, FB_Master10
+		(T_A[7],		T_A[7].oe)		= GND;-- unbenutzter Pin, FB_Master12
+		(T_C[7],		T_C[7].oe)		= GND;-- unbenutzter Pin, FB_Master14
+		(T_A[8],		T_A[8].oe)		= GND;-- unbenutzter Pin, FB_Master15
+		(T_C[8],		T_C[8].oe)		= GND;-- unbenutzter Pin, FB_Master17
+		(T_A[9],		T_A[9].oe)		= GND;-- unbenutzter Pin, FB_Master18
+		(T_B[9],		T_B[9].oe)		= GND;-- unbenutzter Pin, FB_Master19
+
+		(T_C[9],		T_C[9].oe)		= GND;-- unbenutzter Pin, One-Wire
+                    			
+		 T_B[3]	 = GND; T_B[3].oe		= VCC;-- GND vom ALTERA als Output auf die Backplane
+		 T_A[14] = GND; T_A[14].oe		= VCC;-- GND vom ALTERA als Output auf die Backplane
+		 T_B[14] = GND; T_B[14].oe		= VCC;-- GND vom ALTERA als Output auf die Backplane
+		 T_C[14] = GND; T_C[14].oe		= VCC;-- GND vom ALTERA als Output auf die Backplane
+
+		--================================ Buffer I =============================================
+
+		VG_nB17_Ena	=	FB_nSel_Ext_Data_Drv;	-- Enable EXT_Data_Driver
+		VG_B17_Out	=	FB_Ext_Data_Drv_WRnRd;	-- WR/nRD EXT_Data_Driver                                            
+		T_B[17].oe	=	FB_Ena_Tri_Buff;		-- Enable INT_Data_Driver                                            
+
+		FB_Din[15]	=	T_B[17].out; -- Input Daten
+		T_B[17]		=	FB_Dout15;	 -- Output Daten
+
+		--================================ Buffer H =============================================
+
+									VG_nA17_Ena	=	GND;	-- Immer Enable bei FB_Mode
+		(VG_A17_Out,	T_A[17].oe,	T_A[17].oe) =	VCC;	-- Output
+
+		T_A[17]		=	FB_nEVT_Str;
+
+
+		--================================ Buffer G =============================================
+
+--							VG_nC20_21_Ena	=	FB_nAdr_Sel;	-- Enable bei FB_Mode
+							VG_nC20_21_Ena	=	GND;	-- Enable bei FB_Mode
+		(VG_C20_21_Out,	T_C[21..20].oe) 	=	VCC;	-- Output
+                                         
+		T_C[21..20]	=	(FB_A13, FB_A15);
+
+		--================================ Buffer F =============================================
+
+				VG_nAC19_Ena	= VCC;	-- disable
+		(T_A[19],	T_A[19].oe)	= GND;	-- Input
+		(T_C[19],	T_C[19].oe)	= GND;	-- Input
+
+
+		--================================ Buffer E =============================================
+
+																VG_nIO1_Ena		=	FB_nAdr_Sel; -- Enable bei FB_Mode
+		(VG_IO1_Out,	T_A[15].oe, T_B[15].oe, T_A[18].oe, T_A[21..20].oe) 	=	VCC; -- Output
+                                                                          
+		T_A[15]		=	FB_R/nW;
+		T_B[15]		=	FB_nDS;
+		T_A[18]		=	FB_nReset;
+		T_A[21..20]	=	(FB_A12, FB_A14);
+		
+		--======================= Buffer Gruppe D ========================================
+
+		VG_nB18_B24_Ena	=	FB_nSel_Ext_Data_Drv;	-- Enable EXT_Data_Driver
+		VG_B18_B24_Out	=	FB_Ext_Data_Drv_WRnRd;	-- WR/nRD EXT_Data_Driver                                            
+		T_B[24..18].oe	=	FB_Ena_Tri_Buff;		-- Enable INT_Data_Driver                                            
+                                                    
+		FB_Din[14..8]	=	T_B[18..24].out;	-- Input Daten
+		T_B[18..24]		=	FB_Dout[14..8];		-- Output Daten		
+		
+		--======================= Buffer Gruppe C ========================================
+
+		VG_nAC22_AC25_Ena	=	FB_nAdr_Sel;				-- Enable bei FB_Mode
+		(VG_AC22_AC25_Out,	T_A[25..22].oe, T_C[25..22].oe)	=	VCC;-- Output
+                               
+		T_A[25..22]		=	(FB_A4, FB_A6, FB_A8, FB_A10);
+		T_C[25..22]		=	(FB_A5, FB_A7, FB_A9, FB_A11);
+
+		--======================= Buffer Gruppe B ========================================
+
+		VG_nAC26_AC27_Ena	=	FB_nAdr_Sel;	-- Enable bei FB_Mode
+		(VG_AC26_AC27_Out,		T_A[27..26].oe,	T_C[27..26].oe)	= VCC;-- Output
+
+		T_A[27..26]		=	( FB_A0, FB_A2);	
+		T_C[27..26]   =	( FB_A1, FB_A3);	
+                          
+
+		--======================= Buffer Gruppe A ========================================
+
+		VG_nAC28_AC31_Ena	=	FB_nSel_Ext_Data_Drv;	-- Enable EXT_Data_Driver
+		VG_AC28_AC31_Out	=	FB_Ext_Data_Drv_WRnRd;	-- WR/nRD EXT_Data_Driver                                            
+		T_A[31..28].oe		=	FB_Ena_Tri_Buff;		-- Enable INT_Data_Driver                                            
+		T_C[31..28].oe		=	FB_Ena_Tri_Buff;		-- Enable INT_Data_Driver                                            
+
+		(FB_Din0, FB_Din2, FB_Din4, FB_Din6)	=	T_A[31..28].out; -- Input Daten
+		(FB_Din1, FB_Din3, FB_Din5, FB_Din7)	=	T_C[31..28].out;
+
+		T_A[31..28]					=	(FB_Dout0, FB_Dout2, FB_Dout4, FB_Dout6); --Output Daten
+		T_C[31..28]					=	(FB_Dout1, FB_Dout3, FB_Dout5, FB_Dout7);
+                                         
+                                
+		--###################################################################################
+		--############################ END FB_Mode ##########################################
+		--###################################################################################
+
+
+		--###################################################################################
+		--########################## Start IFA_Mode #########################################
+		--###################################################################################
+           	
+	ELSIF v_IFA_Mode THEN
+		
+		--=======================  IO ueber Switch  ========================================
+
+		(STS6, STS4, STS2, STS0)	=  T_A[10..7].out;			(T_A[10..7], T_A[10..7].oe) 	= GND;-- Input
+		(STS7, STS5, STS3, STS1)	=  T_C[10..7].out;			(T_C[10..7], T_C[10..7].oe)		= GND;-- Input
+		T_A[11]						=  nIRQ;					 T_A[11].oe						= VCC;-- Output
+		nIACK						=  T_C[11].out;				(T_C[11], T_C[11].oe)			= GND;-- Input
+		T_A[14..12]					= (FC4, FC2, FC0);			    T_A[14..12].oe	= VCC;-- Output
+		T_C[15..12]					= (FC7, FC5, FC3, FC1);		  T_C[15..12].oe	= VCC;-- Output
+		T_B[4]					    = (FC_StR_Piggy);	 		 T_B[3].oe						= VCC;-- Output
+		(nSend_Str, nSend_Ena)		=  T_B[6..5].out;			(T_B[6..5], T_B[6..5].oe)		= GND;-- Input
+		T_B[9]						= (Send_Data);				 T_B[9].oe						= VCC;-- Output
+		(nDRDY_IFA, nDRQ_IFA)		=  T_B[11..10].out;			(T_B[11..10], T_B[11..10].oe)	= GND; -- Input
+		T_B[14..12]					= (6MHZ,FC_Str, nPu_Reset);	 T_B[14..12].oe					= VCC;-- Output
+--
+		(DIW3, DIW2, DIW1, DIW0)	=  T_B[31..28].out;			(T_B[31..28], T_B[31..28].oe)	= GND;-- Input
+
+		-----------------------------------------------------------------------------------
+
+		T_B[3].oe		= VCC;-- Output
+		T_C[18].oe	= VCC;-- Output
+		T_B[25].oe	= VCC;-- Output 
+
+
+		IF PowerUP_Flag ==	1	THEN	T_B[3]	= GND;		-- Daten = "0" wenn PoweUP_Flag gesetzt
+										T_C[18]	= GND;		-- Daten = "0" wenn PoweUP_Flag gesetzt
+										T_B[25]	= GND;	 	-- Daten = "0" wenn PoweUP_Flag gesetzt
+								ELSE	T_B[3]	= (New_Data);
+										T_C[18]	= (SW1);	
+										T_B[25]	=  SWF7;
+		END IF;
+
+
+		--===========================  unbenutzte Pins  =====================================
+
+		(T_C[16],	T_C[16].oe)	= GND;-- Input
+		(T_C[17],	T_C[17].oe)	= GND;-- Input
+		(T_B[26],	T_B[26].oe)	= GND;-- Input
+		(T_B[27],	T_B[27].oe)	= GND;-- Input
+		(T_B[32],	T_B[32].oe)	= GND;-- Input
+		(T_A19S,	T_A19S.oe)	= GND;-- Input
+		(T_C19S,	T_C19S.oe)	= GND;-- Input
+
+
+		--================================ Buffer I =============================================
+
+		VG_B17_Out				= VCC;		VG_nB17_Ena	= VCC;--> disable
+		(T_B[17],	T_B[17].oe)	= GND;-- Input
+
+		--================================ Buffer H =============================================
+
+		VG_A17_Out				= VCC;		VG_nA17_Ena	= VCC;--> disable
+		(T_A[17],	T_A[17].oe)	= GND;-- Input
+
+		--================================ Buffer G =============================================
+
+		VG_nC20_21_Ena	= GND;	-- enable
+		(VG_C20_21_Out,	T_C[21..20].oe) 	= VCC;-- Output
+
+		IF PowerUP_Flag ==	1	THEN	T_C[21..20]	=	(GND, GND); -- Daten = "0" wenn PoweUP_Flag gesetzt
+								ELSE	T_C[21..20]	=	(SW7, SW5);
+		END IF;                       
+
+		--================================ Buffer F =============================================
+
+		VG_nAC19_Ena	= GND;	-- enable
+		(VG_AC19_Out,	T_A[19].oe,	T_C[19].oe) 	= VCC;-- Output
+
+		IF PowerUP_Flag ==	1	THEN	T_A[19]	= GND;	-- Daten = "0" wenn PoweUP_Flag gesetzt
+										T_C[19]	= GND;	-- Daten = "0" wenn PoweUP_Flag gesetzt
+								ELSE	T_A[19]	= SW2;  
+                                        T_C[19]	= SW3;
+		END IF;                         
+
+   		--================================ Buffer E =============================================
+
+--		VG_nIO1_Ena		= GND;	-- enable
+--		(VG_IO1_Out,	T_A[15].oe, T_B[15].oe, T_A[18].oe, T_A[20..21].oe) 	= VCC;-- Output
+		VG_nIO1_Ena		= NOT v_IFA_Mode;	-- enable
+		(VG_IO1_Out,	T_A[15].oe, T_B[15].oe, T_A[18].oe, T_A[21..20].oe) 	= v_IFA_Mode;-- Output
+
+		T_A[15]		=	FC6;
+		T_B[15]		=	not nDRQ;
+
+		IF PowerUP_Flag ==	1	THEN	T_A[18]		=	(GND); -- Daten = "0" wenn PoweUP_Flag gesetzt
+										T_A[21..20]	=	(GND, GND); -- Daten = "0" wenn PoweUP_Flag gesetzt
+								ELSE	T_A[18]		=	 SW0;
+										T_A[21..20]	=	(SW6, SW4);
+		END IF;                         
+		
+		--======================= Buffer Gruppe D ========================================
+		
+		VG_nB18_B24_Ena						=	 GND;	-- enable
+		(VG_B18_B24_Out,	T_B[24..18].oe)	=	 VCC;-- Output
+
+		IF PowerUP_Flag ==	1	THEN	T_B[24..18]		=	(GND,GND,GND,GND,GND,GND,GND); -- Daten = "0" wenn PoweUP_Flag gesetzt
+								ELSE	T_B[24..18]		=	SWF[6..0];
+		END IF;                         
+
+		--======================= Buffer Gruppe C ========================================
+
+		VG_nAC22_AC25_Ena	=	GND;-- enable
+		(VG_AC22_AC25_Out,	T_A[25..22].oe, T_C[25..22].oe)	=	VCC;-- Output
+                               
+
+		IF PowerUP_Flag ==	1	THEN	T_A[25..22]		=	(GND,  GND,  GND, GND);		-- Daten = "0" wenn PoweUP_Flag gesetzt
+                                        T_C[25..22]		=	(GND,  GND,  GND, GND);
+								ELSE	T_A[25..22]		=	(SW14, SW12, SW10, SW8);
+                                        T_C[25..22]		=	(SW15, SW13, SW11, SW9);
+        END IF;                         
+
+		--======================= Buffer Gruppe B ========================================
+
+		VG_nAC26_AC27_Ena	=	GND;-- enable
+
+		(VG_AC26_AC27_Out,		T_A[27..26].oe,	T_C[27..26].oe)	=	GND;-- Input
+							   (T_A[27..26],	T_C[27..26])	=	GND;-- festgelegter Eingang
+
+		(DIW6, DIW4)		=	T_A[27..26].out;
+		(DIW7, DIW5)		=	T_C[27..26].out;
+ 
+		--======================= Buffer Gruppe A ========================================
+
+ 		VG_nAC28_AC31_Ena	=	GND;-- enable
+
+		(VG_AC28_AC31_Out,		T_A[31..28].oe,	T_C[31..28].oe)	=	GND;-- Input 
+							   (T_A[31..28],	T_C[31..28])	=	GND;-- festgelegter Eingang
+
+		(DIW14, DIW12, DIW10, DIW8)	=	T_A[31..28].out;
+		(DIW15, DIW13, DIW11, DIW9)	=	T_C[31..28].out;
+                                
+		--###################################################################################
+		--########################### END IFA_Mode ##########################################
+		--###################################################################################
+
+	ELSE
+
+		T_A[31..3].oe	= GND;	-- INPUT;
+		T_B[32..3].oe	= GND;	-- INPUT;
+		T_C[31..3].oe	= GND;	-- INPUT;
+		T_C19S.oe		= GND;	-- INPUT;
+		T_A19S.oe		= GND;	-- INPUT;
+
+	END IF;
+             
+END;
+

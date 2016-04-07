@@ -1,0 +1,32 @@
+TITLE "STR_Mux";
+
+
+
+
+SUBDESIGN STR_Mux
+(
+	MB_Mode			:	INPUT; -- MB_Mode,
+	FB_Mode			:	INPUT; -- FB_Mode,
+	nEX_Send_Ena	:	INPUT; -- ENA von der VG- Leiste
+	nEX_Send_Str	:	INPUT; -- Str von der VG- Leiste
+	nMB_Send_Ena	:	INPUT; -- ENA vom Modulbus
+	nMB_Send_Str	:	INPUT; -- Str vom Modulbus
+	nFB_Send_Ena	:	INPUT; -- ENA vom Modulbus
+	nFB_Send_Str	:	INPUT; -- Str vom Modulbus
+
+	nSend_Ena		:	OUTPUT; -- Sender-Enable
+	nSend_Str		:	OUTPUT; -- Sender-Strobe
+)
+
+BEGIN
+
+IF 		MB_Mode THEN	nSend_Ena	=	nMB_Send_Ena;	
+						nSend_Str	=	nMB_Send_Str;	
+ELSIF 	FB_Mode	THEN	nSend_Ena	=	nFB_Send_Ena;	
+						nSend_Str	=	nFB_Send_Str;	
+ELSE					nSend_Ena	=	nEX_Send_Ena;	
+						nSend_Str	=	nEX_Send_Str;	
+END IF;
+
+
+END;

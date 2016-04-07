@@ -1,0 +1,64 @@
+TITLE "Timebase, Stand 12.03.2008" ;
+
+PARAMETERS(Test_Ein);
+
+FUNCTION freq_teiler (clk, cnt_en, sclr)
+	WITH (Test, Teiler, Test_cnt)
+	RETURNS (F_div);
+
+SUBDESIGN Timebase
+(
+	clk					: INPUT;
+	Ena_every_100ns		: OUTPUT;
+	Ena_every_166ns		: OUTPUT;
+	Ena_every_250ns		: OUTPUT;
+	Ena_every_500ns		: OUTPUT;
+	Ena_every_us		: OUTPUT;
+	Ena_every_ms		: OUTPUT;
+	Every_20ms			: OUTPUT;
+)
+
+VARIABLE
+	Ena_every_100ns_cnt		: freq_teiler	WITH (Test = 0, Teiler = 12, Test_cnt = 10);
+	Ena_every_166ns_cnt		: freq_teiler	WITH (Test = 0, Teiler = 20, Test_cnt = 10);
+	Ena_every_250ns_cnt		: freq_teiler	WITH (Test = 0, Teiler = 30, Test_cnt = 20);
+	Ena_every_500ns_cnt		: freq_teiler	WITH (Test = 0, Teiler = 60, Test_cnt = 20);
+	Ena_every_us_cnt		: freq_teiler	WITH (Test = 0, Teiler = 120, Test_cnt = 40);
+	Ena_every_500us_cnt		: freq_teiler	WITH (Test = Test_Ein, Teiler = 500, Test_cnt = 6);
+	Every_20ms_cnt			: freq_teiler	WITH (Test = Test_Ein, Teiler = 20, Test_cnt = 7);
+	Toggle_every_500us		: TFF;
+	Ena_every_ms_ff			: DFF;
+	
+BEGIN
+
+Ena_every_100ns_cnt.clk = clk;
+Ena_every_100ns = Ena_every_100ns_cnt.f_div;
+ 	
+Ena_every_166ns_cnt.clk = clk;
+Ena_every_166ns = Ena_every_166ns_cnt.f_div;
+ 	
+Ena_every_250ns_cnt.clk = clk;
+Ena_every_250ns = Ena_every_250ns_cnt.f_div;
+	
+Ena_every_500ns_cnt.clk = clk;
+Ena_every_500ns = Ena_every_500ns_cnt.f_div;
+	
+Ena_every_us_cnt.clk = clk;
+Ena_every_us = Ena_every_us_cnt.f_div;
+
+Ena_every_500us_cnt.clk		= clk;
+Ena_every_500us_cnt.cnt_en	= Ena_every_us;
+	
+Every_20ms_cnt.clk		= clk;		
+Every_20ms_cnt.cnt_en	= Ena_every_ms;
+Every_20ms = Every_20ms_cnt.f_div;
+
+Toggle_every_500us.clk	= clk;
+Toggle_every_500us.t	= Ena_every_500us_cnt.f_div;
+
+Ena_every_ms_ff.clk	= clk;
+Ena_every_ms_ff.d	= Ena_every_500us_cnt.f_div and not Toggle_every_500us;
+Ena_every_ms = Ena_every_ms_ff.q;
+
+
+END;

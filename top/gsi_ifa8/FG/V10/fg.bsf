@@ -1,0 +1,182 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2007 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 16 16 304 240)
+	(text "fg" (rect 5 0 16 16)(font "Arial" (font_size 8)))
+	(text "inst" (rect 8 205 31 220)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(input)
+		(text "/GATE-IN" (rect 0 0 64 16)(font "Arial" (font_size 8)))
+		(text "/GATE-IN" (rect 21 27 85 43)(font "Arial" (font_size 8)))
+		(line (pt 0 32)(pt 16 32)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(input)
+		(text "DI[15..0]" (rect 0 0 57 16)(font "Arial" (font_size 8)))
+		(text "DI[15..0]" (rect 21 43 78 59)(font "Arial" (font_size 8)))
+		(line (pt 0 48)(pt 16 48)(line_width 3))
+	)
+	(port
+		(pt 0 64)
+		(input)
+		(text "SCLR" (rect 0 0 40 16)(font "Arial" (font_size 8)))
+		(text "SCLR" (rect 21 59 61 75)(font "Arial" (font_size 8)))
+		(line (pt 0 64)(pt 16 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(input)
+		(text "FC-Str" (rect 0 0 44 16)(font "Arial" (font_size 8)))
+		(text "FC-Str" (rect 21 75 65 91)(font "Arial" (font_size 8)))
+		(line (pt 0 80)(pt 16 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(input)
+		(text "FC[7..0]" (rect 0 0 55 16)(font "Arial" (font_size 8)))
+		(text "FC[7..0]" (rect 21 91 76 107)(font "Arial" (font_size 8)))
+		(line (pt 0 96)(pt 16 96)(line_width 3))
+	)
+	(port
+		(pt 0 112)
+		(input)
+		(text "FG-Mode" (rect 0 0 63 16)(font "Arial" (font_size 8)))
+		(text "FG-Mode" (rect 21 107 84 123)(font "Arial" (font_size 8)))
+		(line (pt 0 112)(pt 16 112)(line_width 1))
+	)
+	(port
+		(pt 0 128)
+		(input)
+		(text "OSZ_EXT" (rect 0 0 66 16)(font "Arial" (font_size 8)))
+		(text "OSZ_EXT" (rect 21 123 87 139)(font "Arial" (font_size 8)))
+		(line (pt 0 128)(pt 16 128)(line_width 1))
+	)
+	(port
+		(pt 0 144)
+		(input)
+		(text "FG-CLK" (rect 0 0 55 16)(font "Arial" (font_size 8)))
+		(text "FG-CLK" (rect 21 139 76 155)(font "Arial" (font_size 8)))
+		(line (pt 0 144)(pt 16 144)(line_width 1))
+	)
+	(port
+		(pt 0 160)
+		(input)
+		(text "SD" (rect 0 0 21 16)(font "Arial" (font_size 8)))
+		(text "SD" (rect 21 155 42 171)(font "Arial" (font_size 8)))
+		(line (pt 0 160)(pt 16 160)(line_width 1))
+	)
+	(port
+		(pt 0 176)
+		(input)
+		(text "NEW_DATA_OUT" (rect 0 0 123 16)(font "Arial" (font_size 8)))
+		(text "NEW_DATA_OUT" (rect 21 171 144 187)(font "Arial" (font_size 8)))
+		(line (pt 0 176)(pt 16 176)(line_width 1))
+	)
+	(port
+		(pt 288 32)
+		(output)
+		(text "FG[31..8]" (rect 0 0 64 16)(font "Arial" (font_size 8)))
+		(text "FG[31..8]" (rect 203 27 267 43)(font "Arial" (font_size 8)))
+		(line (pt 288 32)(pt 272 32)(line_width 3))
+	)
+	(port
+		(pt 288 48)
+		(output)
+		(text "FG-SW-EN" (rect 0 0 77 16)(font "Arial" (font_size 8)))
+		(text "FG-SW-EN" (rect 190 43 267 59)(font "Arial" (font_size 8)))
+		(line (pt 288 48)(pt 272 48)(line_width 1))
+	)
+	(port
+		(pt 288 64)
+		(output)
+		(text "FG_NEW_DATA" (rect 0 0 114 16)(font "Arial" (font_size 8)))
+		(text "FG_NEW_DATA" (rect 153 59 267 75)(font "Arial" (font_size 8)))
+		(line (pt 288 64)(pt 272 64)(line_width 1))
+	)
+	(port
+		(pt 288 80)
+		(output)
+		(text "FG-SD[15..0]" (rect 0 0 90 16)(font "Arial" (font_size 8)))
+		(text "FG-SD[15..0]" (rect 177 75 267 91)(font "Arial" (font_size 8)))
+		(line (pt 288 80)(pt 272 80)(line_width 3))
+	)
+	(port
+		(pt 288 96)
+		(output)
+		(text "FG-RD-Aktiv" (rect 0 0 84 16)(font "Arial" (font_size 8)))
+		(text "FG-RD-Aktiv" (rect 183 91 267 107)(font "Arial" (font_size 8)))
+		(line (pt 288 96)(pt 272 96)(line_width 1))
+	)
+	(port
+		(pt 288 112)
+		(output)
+		(text "FG-T[15..0]" (rect 0 0 77 16)(font "Arial" (font_size 8)))
+		(text "FG-T[15..0]" (rect 190 107 267 123)(font "Arial" (font_size 8)))
+		(line (pt 288 112)(pt 272 112)(line_width 3))
+	)
+	(port
+		(pt 288 128)
+		(output)
+		(text "FG-LED[14..0]" (rect 0 0 99 16)(font "Arial" (font_size 8)))
+		(text "FG-LED[14..0]" (rect 168 123 267 139)(font "Arial" (font_size 8)))
+		(line (pt 288 128)(pt 272 128)(line_width 3))
+	)
+	(port
+		(pt 288 144)
+		(output)
+		(text "/DRQ-FG" (rect 0 0 63 16)(font "Arial" (font_size 8)))
+		(text "/DRQ-FG" (rect 204 139 267 155)(font "Arial" (font_size 8)))
+		(line (pt 288 144)(pt 272 144)(line_width 1))
+	)
+	(port
+		(pt 288 160)
+		(output)
+		(text "STG_STR_DLY" (rect 0 0 106 16)(font "Arial" (font_size 8)))
+		(text "STG_STR_DLY" (rect 161 155 267 171)(font "Arial" (font_size 8)))
+		(line (pt 288 160)(pt 272 160)(line_width 1))
+	)
+	(port
+		(pt 288 176)
+		(output)
+		(text "GATE_O/BC" (rect 0 0 87 16)(font "Arial" (font_size 8)))
+		(text "GATE_O/BC" (rect 180 171 267 187)(font "Arial" (font_size 8)))
+		(line (pt 288 176)(pt 272 176)(line_width 1))
+	)
+	(port
+		(pt 288 192)
+		(output)
+		(text "FG-VERS[6..0]" (rect 0 0 103 16)(font "Arial" (font_size 8)))
+		(text "FG-VERS[6..0]" (rect 164 187 267 203)(font "Arial" (font_size 8)))
+		(line (pt 288 192)(pt 272 192)(line_width 3))
+	)
+	(parameter
+		"Test"
+		"Test"
+		""
+	)
+	(drawing
+		(rectangle (rect 16 16 272 208)(line_width 1))
+	)
+	(annotation_block (parameter)(rect 304 -64 404 16))
+)

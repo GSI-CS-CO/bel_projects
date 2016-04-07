@@ -1,0 +1,141 @@
+/*
+WARNING: Do NOT edit the input and output ports in this file in a text
+editor if you plan to continue editing the block that represents it in
+the Block Editor! File corruption is VERY likely to occur.
+*/
+/*
+Copyright (C) 1991-2007 Altera Corporation
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and its AMPP partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, Altera MegaCore Function License 
+Agreement, or other applicable license agreement, including, 
+without limitation, that your use is for the sole purpose of 
+programming logic devices manufactured by Altera and sold by 
+Altera or its authorized distributors.  Please refer to the 
+applicable agreement for further details.
+*/
+(header "symbol" (version "1.1"))
+(symbol
+	(rect 64 64 200 248)
+	(text "8xCon" (rect 24 0 67 16)(font "Arial" (font_size 8)))
+	(text "inst" (rect 8 168 31 183)(font "Arial" ))
+	(port
+		(pt 0 32)
+		(bidir)
+		(text "IO-A7" (rect 56 0 94 16)(font "Arial" (font_size 8)))
+		(text "IO-A7" (rect 24 24 62 40)(font "Arial" (font_size 8)))
+		(line (pt 16 32)(pt 0 32)(line_width 1))
+	)
+	(port
+		(pt 136 32)
+		(bidir)
+		(text "IO-B7" (rect 40 0 78 16)(font "Arial" (font_size 8)))
+		(text "IO-B7" (rect 80 24 118 40)(font "Arial" (font_size 8)))
+		(line (pt 136 32)(pt 120 32)(line_width 1))
+	)
+	(port
+		(pt 0 48)
+		(bidir)
+		(text "IO-A6" (rect 56 0 94 16)(font "Arial" (font_size 8)))
+		(text "IO-A6" (rect 24 40 62 56)(font "Arial" (font_size 8)))
+		(line (pt 16 48)(pt 0 48)(line_width 1))
+	)
+	(port
+		(pt 136 48)
+		(bidir)
+		(text "IO-B6" (rect 40 0 78 16)(font "Arial" (font_size 8)))
+		(text "IO-B6" (rect 80 40 118 56)(font "Arial" (font_size 8)))
+		(line (pt 136 48)(pt 120 48)(line_width 1))
+	)
+	(port
+		(pt 0 64)
+		(bidir)
+		(text "IO-A5" (rect 56 0 94 16)(font "Arial" (font_size 8)))
+		(text "IO-A5" (rect 24 56 62 72)(font "Arial" (font_size 8)))
+		(line (pt 16 64)(pt 0 64)(line_width 1))
+	)
+	(port
+		(pt 136 64)
+		(bidir)
+		(text "IO-B5" (rect 40 0 78 16)(font "Arial" (font_size 8)))
+		(text "IO-B5" (rect 80 56 118 72)(font "Arial" (font_size 8)))
+		(line (pt 136 64)(pt 120 64)(line_width 1))
+	)
+	(port
+		(pt 0 80)
+		(bidir)
+		(text "IO-A4" (rect 56 0 94 16)(font "Arial" (font_size 8)))
+		(text "IO-A4" (rect 24 72 62 88)(font "Arial" (font_size 8)))
+		(line (pt 16 80)(pt 0 80)(line_width 1))
+	)
+	(port
+		(pt 136 80)
+		(bidir)
+		(text "IO-B4" (rect 40 0 78 16)(font "Arial" (font_size 8)))
+		(text "IO-B4" (rect 80 72 118 88)(font "Arial" (font_size 8)))
+		(line (pt 136 80)(pt 120 80)(line_width 1))
+	)
+	(port
+		(pt 0 96)
+		(bidir)
+		(text "IO-A3" (rect 56 0 94 16)(font "Arial" (font_size 8)))
+		(text "IO-A3" (rect 24 88 62 104)(font "Arial" (font_size 8)))
+		(line (pt 16 96)(pt 0 96)(line_width 1))
+	)
+	(port
+		(pt 136 96)
+		(bidir)
+		(text "IO-B3" (rect 40 0 78 16)(font "Arial" (font_size 8)))
+		(text "IO-B3" (rect 80 88 118 104)(font "Arial" (font_size 8)))
+		(line (pt 136 96)(pt 120 96)(line_width 1))
+	)
+	(port
+		(pt 0 112)
+		(bidir)
+		(text "IO-A2" (rect 56 0 94 16)(font "Arial" (font_size 8)))
+		(text "IO-A2" (rect 24 104 62 120)(font "Arial" (font_size 8)))
+		(line (pt 16 112)(pt 0 112)(line_width 1))
+	)
+	(port
+		(pt 136 112)
+		(bidir)
+		(text "IO-B2" (rect 40 0 78 16)(font "Arial" (font_size 8)))
+		(text "IO-B2" (rect 80 104 118 120)(font "Arial" (font_size 8)))
+		(line (pt 136 112)(pt 120 112)(line_width 1))
+	)
+	(port
+		(pt 0 128)
+		(bidir)
+		(text "IO-A1" (rect 56 0 94 16)(font "Arial" (font_size 8)))
+		(text "IO-A1" (rect 24 120 62 136)(font "Arial" (font_size 8)))
+		(line (pt 16 128)(pt 0 128)(line_width 1))
+	)
+	(port
+		(pt 136 128)
+		(bidir)
+		(text "IO-B1" (rect 40 0 78 16)(font "Arial" (font_size 8)))
+		(text "IO-B1" (rect 80 120 118 136)(font "Arial" (font_size 8)))
+		(line (pt 136 128)(pt 120 128)(line_width 1))
+	)
+	(port
+		(pt 0 144)
+		(bidir)
+		(text "IO-A0" (rect 56 0 94 16)(font "Arial" (font_size 8)))
+		(text "IO-A0" (rect 24 136 62 152)(font "Arial" (font_size 8)))
+		(line (pt 16 144)(pt 0 144)(line_width 1))
+	)
+	(port
+		(pt 136 144)
+		(bidir)
+		(text "IO-B0" (rect 40 0 78 16)(font "Arial" (font_size 8)))
+		(text "IO-B0" (rect 80 136 118 152)(font "Arial" (font_size 8)))
+		(line (pt 136 144)(pt 120 144)(line_width 1))
+	)
+	(drawing
+		(rectangle (rect 16 16 120 168)(line_width 1))
+	)
+)
