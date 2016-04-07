@@ -1559,7 +1559,9 @@ begin
   -- LVDS output from the ECA
   lvds1 : if c_eca_lvds > 0 generate
     lvds : for i in 0 to c_eca_lvds-1 generate
-      lvds_dat_fr_eca_chan(i) <= s_eca_io(i+c_eca_gpio);
+      bits : for b in 0 to 7 generate -- 0 goes first for ECA, 7 goes first for serdes
+        lvds_dat_fr_eca_chan(i)(b) <= s_eca_io(i+c_eca_gpio)(7-b);
+      end generate;
     end generate;
   end generate;
   
