@@ -2,6 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+
 -- wishbone/gsi/cern
 library work;
 use work.wishbone_pkg.all;
@@ -19,7 +20,8 @@ entity wbs_temp_sense is
       		rst_n_i    : in  std_logic;
       	-- wishbone slave interface
       		slave_i    : in  t_wishbone_slave_in;
-      		slave_o    : out t_wishbone_slave_out
+      		slave_o    : out t_wishbone_slave_out;
+		clr_out	   : out std_logic
 	     );
 end wbs_temp_sense;
 
@@ -39,9 +41,12 @@ architecture rtl of wbs_temp_sense is
 --temperature sensor signals
 	signal s_ce		:std_logic := '1';
 	signal s_clr		:std_logic := '0';
-	signal s_tsdcaldone	:std_logic;
+	signal s_tsdcaldone	:std_logic := '0';
 	signal s_tsdcalo	:std_logic_vector(7 downto 0);
 
+--internal signals
+	signal s_clr_out	:std_logic;
+	signal s_count		:integer range 0 to 200 := 0;
 --constants
 	constant c_address_tx_data	:    std_logic_vector (1 downto 0):= "00";
 
@@ -59,17 +64,35 @@ begin
 	slave_o.int	<= '0';
 	slave_o.rty	<= '0';
 
+	clr_out		<= s_clr_out;
+
+p_clk_process1: process(clk_sys_i)
+
+begin
+        if rising_edge (clk_sys_i) then
+
+                if (s_tsdcaldone='1') then
+                        s_clr_out <= '1';
+                        s_count   <= 0;
+                else
+                        s_count   <= s_count + 1;
+                        s_clr_out <= '0';
+                end if;
+        end if;
+end process;
+
+
 temperature_sensor : temp_sens
 
 port map (
 	ce		=> s_ce,
 	clk		=> clk_sys_i,
-	clr		=> s_clr,
+	clr		=> s_clr_out,
 	tsdcaldone	=> s_tsdcaldone,
 	tsdcalo		=> s_tsdcalo
 	);
 
-p_clk_process: process (clk_sys_i)
+p_clk_process2: process (clk_sys_i)
 
 begin
 
@@ -97,7 +120,7 @@ if rising_edge(clk_sys_i) then
 	
 					s_wb_dat(7 downto 0) 	<= s_tsdcalo;
 					s_wb_dat(31 downto 8)	<= x"000000";
-	
+		
 				else
 	
 --					s_wb_dat <= s_wb_dat_i;
@@ -109,7 +132,7 @@ if rising_edge(clk_sys_i) then
 	
 					s_wb_dat <= x"DEADC0DE";
 		end case;		
-	
+				
 	end if;
 
 end if;

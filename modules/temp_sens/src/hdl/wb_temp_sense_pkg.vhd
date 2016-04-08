@@ -22,7 +22,8 @@ package wb_temp_sense_pkg is
       rst_n_i    : in  std_logic;
       -- wishbone slave interface
       slave_i    : in  t_wishbone_slave_in;
-      slave_o    : out t_wishbone_slave_out);
+      slave_o    : out t_wishbone_slave_out;
+      clr_out	 : out std_logic);
   end component;
 
   constant c_temp_sense_sdb : t_sdb_device := (

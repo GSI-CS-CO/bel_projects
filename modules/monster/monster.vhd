@@ -295,7 +295,9 @@ entity monster is
     ps_wait                : in    std_logic;
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
-    hw_version             : in    std_logic_vector(31 downto 0));
+    hw_version             : in    std_logic_vector(31 downto 0);
+    -- g_en_tempsens
+    tempsens_clr_out	   : out   std_logic);
 end monster;
 
 architecture rtl of monster is
@@ -1976,8 +1978,8 @@ begin
         clk_sys_i  => clk_sys,
         rst_n_i    => rstn_sys,
         slave_i    => top_cbar_master_o(c_tops_tempsens),
-        slave_o    => top_cbar_master_i(c_tops_tempsens)
-      );
+        slave_o    => top_cbar_master_i(c_tops_tempsens),
+     	clr_out	   => tempsens_clr_out);
   end generate;
 
   -- END OF Wishbone slaves
