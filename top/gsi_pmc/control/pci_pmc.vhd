@@ -87,8 +87,8 @@ entity pci_pmc is
 --    lvttio_in_n_4     : in  std_logic;
 --    lvttio_in_n_5     : in  std_logic;
     
-    lvttio_out_p     : in  std_logic_vector(5 downto 1);
-    lvttio_out_n     : in  std_logic_vector(5 downto 1);
+    lvttio_out_p     : out  std_logic_vector(5 downto 1);
+    lvttio_out_n     : out  std_logic_vector(5 downto 1);
     
 --    lvttio_out_p_1    : out std_logic;
 --    lvttio_out_p_2    : out std_logic;
@@ -401,8 +401,8 @@ user_led_o <= not s_user_led;
 --  s_lvds_n_i(4) <= lvttio_in_n_5;
   
   -- LVDS outputs
-  lvttio_out_p <= s_lvds_p(4 downto 0);
-  lvttio_out_n <= s_lvds_n(4 downto 0);
+  lvttio_out_p <= s_lvds_p_o(4 downto 0);
+  lvttio_out_n <= s_lvds_n_o(4 downto 0);
   
 --  lvttio_out_p_1 <= s_lvds_p_o(0);
 --  lvttio_out_p_2 <= s_lvds_p_o(1);
