@@ -1,4 +1,4 @@
-create_clock -name {pmc_clk_i}        -period 31.000 [get_ports {pmc_clk_i}       ]
+create_clock -name {pmc_clk_i}        -period 29.000 [get_ports {pmc_clk_i}       ]
 
 derive_pll_clocks -create_base_clocks
 derive_clock_uncertainty

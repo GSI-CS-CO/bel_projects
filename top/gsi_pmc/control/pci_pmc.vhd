@@ -73,51 +73,65 @@ entity pci_pmc is
     -----------------------------------------------------------------------
     -- lvttio/lvds
     -----------------------------------------------------------------------
-    lvttio_in_p_1     : in  std_logic;
-    lvttio_in_p_2     : in  std_logic;
-    lvttio_in_p_3     : in  std_logic;
-    lvttio_in_p_4     : in  std_logic;
-    lvttio_in_p_5     : in  std_logic;
-    lvttio_in_n_1     : in  std_logic;
-    lvttio_in_n_2     : in  std_logic;
-    lvttio_in_n_3     : in  std_logic;
-    lvttio_in_n_4     : in  std_logic;
-    lvttio_in_n_5     : in  std_logic;
+    lvttio_in_p       : in  std_logic_vector(5 downto 1);
+    lvttio_in_n       : in  std_logic_vector(5 downto 1);
+    
+--    lvttio_in_p_1     : in  std_logic;
+--    lvttio_in_p_2     : in  std_logic;
+--    lvttio_in_p_3     : in  std_logic;
+--    lvttio_in_p_4     : in  std_logic;
+--    lvttio_in_p_5     : in  std_logic;
+--    lvttio_in_n_1     : in  std_logic;
+--    lvttio_in_n_2     : in  std_logic;
+--    lvttio_in_n_3     : in  std_logic;
+--    lvttio_in_n_4     : in  std_logic;
+--    lvttio_in_n_5     : in  std_logic;
+    
+    lvttio_out_p     : in  std_logic_vector(5 downto 1);
+    lvttio_out_n     : in  std_logic_vector(5 downto 1);
+    
+--    lvttio_out_p_1    : out std_logic;
+--    lvttio_out_p_2    : out std_logic;
+--    lvttio_out_p_3    : out std_logic;
+--    lvttio_out_p_4    : out std_logic;
+--    lvttio_out_p_5    : out std_logic;
+--    lvttio_out_n_1    : out std_logic;
+--    lvttio_out_n_2    : out std_logic;
+--    lvttio_out_n_3    : out std_logic;
+--    lvttio_out_n_4    : out std_logic;
+--    lvttio_out_n_5    : out std_logic;
+
+    lvttio_oe         : out std_logic_vector(5 downto 1);
                             
-    lvttio_out_p_1    : out std_logic;
-    lvttio_out_p_2    : out std_logic;
-    lvttio_out_p_3    : out std_logic;
-    lvttio_out_p_4    : out std_logic;
-    lvttio_out_p_5    : out std_logic;
-    lvttio_out_n_1    : out std_logic;
-    lvttio_out_n_2    : out std_logic;
-    lvttio_out_n_3    : out std_logic;
-    lvttio_out_n_4    : out std_logic;
-    lvttio_out_n_5    : out std_logic;
+--    lvttio_oe_1       : out std_logic;
+--    lvttio_oe_2       : out std_logic;
+--    lvttio_oe_3       : out std_logic;
+--    lvttio_oe_4       : out std_logic;
+--    lvttio_oe_5       : out std_logic;
+
+    lvttio_term_en    : out std_logic_vector(5 downto 1);
+
+--    lvttio_term_en_1  : out std_logic;
+--    lvttio_term_en_2  : out std_logic;
+--    lvttio_term_en_3  : out std_logic;
+--    lvttio_term_en_4  : out std_logic;
+--    lvttio_term_en_5  : out std_logic;
+
+    lvttio_dir_led    : out std_logic_vector(5 downto 1);
                             
-    lvttio_oe_1       : out std_logic;
-    lvttio_oe_2       : out std_logic;
-    lvttio_oe_3       : out std_logic;
-    lvttio_oe_4       : out std_logic;
-    lvttio_oe_5       : out std_logic;
+--    lvttio_dir_led_1  : out std_logic;
+--    lvttio_dir_led_2  : out std_logic;
+--    lvttio_dir_led_3  : out std_logic;
+--    lvttio_dir_led_4  : out std_logic;
+--    lvttio_dir_led_5  : out std_logic;
+
+    lvttio_act_led    : out std_logic_vector(5 downto 1);
                             
-    lvttio_term_en_1  : out std_logic;
-    lvttio_term_en_2  : out std_logic;
-    lvttio_term_en_3  : out std_logic;
-    lvttio_term_en_4  : out std_logic;
-    lvttio_term_en_5  : out std_logic;
-                            
-    lvttio_dir_led_1  : out std_logic;
-    lvttio_dir_led_2  : out std_logic;
-    lvttio_dir_led_3  : out std_logic;
-    lvttio_dir_led_4  : out std_logic;
-    lvttio_dir_led_5  : out std_logic;
-                            
-    lvttio_act_led_1  : out std_logic;
-    lvttio_act_led_2  : out std_logic;
-    lvttio_act_led_3  : out std_logic;
-    lvttio_act_led_4  : out std_logic;
-    lvttio_act_led_5  : out std_logic;
+--    lvttio_act_led_1  : out std_logic;
+--    lvttio_act_led_2  : out std_logic;
+--    lvttio_act_led_3  : out std_logic;
+--    lvttio_act_led_4  : out std_logic;
+--    lvttio_act_led_5  : out std_logic;
     
     lvttl_clk_i       : in  std_logic;
     lvttl_in_clk_en_o : out std_logic;
@@ -180,6 +194,16 @@ architecture rtl of pci_pmc is
   signal s_led_link_act : std_logic;
   signal s_led_track    : std_logic;
   signal s_led_pps      : std_logic;
+
+  signal s_status_led_moster  : std_logic_vector(6 downto 1);
+  signal s_user_led_monster   : std_logic_vector(8 downto 1);
+
+  signal s_status_led         : std_logic_vector(6 downto 1);
+  signal s_user_led           : std_logic_vector(8 downto 1);
+  
+  
+  constant c_test_pattern_a   : std_logic_vector(15 downto 0) := x"5555";
+  constant c_test_pattern_b   : std_logic_vector(15 downto 0) := x"0000";
   
   signal s_gpio         : std_logic_vector(9 downto 0);
   
@@ -190,10 +214,15 @@ architecture rtl of pci_pmc is
   signal s_lvds_n_o     : std_logic_vector(4 downto 0);
   signal s_lvds_o_led   : std_logic_vector(4 downto 0);
   signal s_lvds_oen     : std_logic_vector(4 downto 0);
+
+  signal s_lvds_oen_monster   : std_logic_vector(4 downto 0);
+
   
   signal s_log_oe       : std_logic_vector(16 downto 0);
   signal s_log_out      : std_logic_vector(16 downto 0);
   signal s_log_in       : std_logic_vector(16 downto 0);
+
+  signal s_test_sel    : std_logic_vector(4 downto 0);
   
   signal s_wr_ext_in    : std_logic;
   
@@ -245,7 +274,7 @@ begin
       lvds_p_o               => s_lvds_p_o,
       lvds_n_o               => s_lvds_n_o,
       lvds_o_led_o           => s_lvds_o_led,
-      lvds_oen_o             => s_lvds_oen,
+      lvds_oen_o             => s_lvds_oen_monster,
       led_link_up_o          => s_led_link_up,
       led_link_act_o         => s_led_link_act,
       led_track_o            => s_led_track,
@@ -304,6 +333,8 @@ pmc_buf_oe_o <= '1'; -- enable PCI bus translators
   -- Display
   dis_wr    <= '0';
   dis_res   <= '1';
+
+
   
   -- WR LEDs
   dis_di(5) <= '0' when (not s_led_link_up)                     = '1' else 'Z'; -- red
@@ -311,77 +342,148 @@ pmc_buf_oe_o <= '1'; -- enable PCI bus translators
   dis_di(4) <= '0' when (    s_led_link_up and     s_led_track) = '1' else 'Z'; -- green
   
   -- Link LEDs
-  status_led_o(1) <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
-  status_led_o(2) <= not s_led_link_up;                      -- blue  = link
-  status_led_o(3) <= not s_led_track;                        -- green = timing valid
-  status_led_o(4) <= not s_led_pps;                          -- white = PPS
+  s_status_led_moster(1) <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
+  s_status_led_moster(2) <= not s_led_link_up;                      -- blue  = link
+  s_status_led_moster(3) <= not s_led_track;                        -- green = timing valid
+  s_status_led_moster(4) <= not s_led_pps;                          -- white = PPS
 
   -- GPIOs
-  status_led_o(6 downto 5) <= not s_gpio (1 downto 0);
+  s_status_led_moster(6 downto 5) <= not s_gpio (1 downto 0);
 --  user_led_o(8 downto 1)   <= not s_gpio (9 downto 2);
 
--- for testing CPLD to FPGA connection
-p_led_val_sel : process( pbs_f, con, s_gpio ) 
-begin
-  if pbs_f = '0' then -- when pressed pass CPLD hex switch and button to FPGA user LEDs
-    user_led_o(8 downto 6)   <= (others => '0'); 
-    user_led_o(5 downto 1)   <= not con; -- driven by con from CPLD (HEX switch and button)
-  else 
-    user_led_o(8 downto 1)   <= not s_gpio (9 downto 2); -- driven by monster
-  end if;
-end process;
+-- Assign status leds according to FPGA HEX switch position
+-- LEDs are used for HW testing
+
+--p_led_val_sel : process( pbs_f, con, s_gpio ) 
+--begin
+--  if pbs_f = '0' then -- when pressed pass CPLD hex switch and button to FPGA user LEDs
+--    user_led_o(8 downto 6)   <= (others => '0'); 
+--    user_led_o(5 downto 1)   <= not con; -- driven by con from CPLD (HEX switch and button)
+--  else 
+--    user_led_o(8 downto 1)   <= not s_gpio (9 downto 2); -- driven by monster
+--  end if;
+--end process;
+
+-- invert FPGA button and HEX switch
+s_test_sel <= not pbs_f & not hswf;
+
+with s_test_sel select
+  s_status_led <= "101010"               when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
+                  "010101"               when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
+                  s_status_led_moster    when others;         -- driven by monster
+
+status_led_o <= not s_status_led;                  
+                  
+with s_test_sel select
+  s_user_led <= x"55"                    when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
+                x"AA"                    when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
+                ("000" &     con)        when ('0' & x"D"),   -- FPGA hex sw in position D, button not pressed, CPLD HEX SW and button test  
+                ("000" & not con)        when ('1' & x"D"),   -- FPGA hex sw in position D, button     pressed, CPLD HEX SW and button test  
+                not s_gpio (9 downto 2)  when others;         -- driven by monster
+
+user_led_o <= not s_user_led;
+
   
   -- LVDS inputs
-  s_lvds_p_i(0) <= lvttio_in_p_1;
-  s_lvds_p_i(1) <= lvttio_in_p_2;
-  s_lvds_p_i(2) <= lvttio_in_p_3;
-  s_lvds_p_i(3) <= lvttio_in_p_4;
-  s_lvds_p_i(4) <= lvttio_in_p_5;
-  s_lvds_n_i(0) <= lvttio_in_n_1;
-  s_lvds_n_i(1) <= lvttio_in_n_2;
-  s_lvds_n_i(2) <= lvttio_in_n_3;
-  s_lvds_n_i(3) <= lvttio_in_n_4;
-  s_lvds_n_i(4) <= lvttio_in_n_5;
+  s_lvds_p_i <= lvttio_in_p;
+  s_lvds_n_i <= lvttio_in_n;
+
+
+--  s_lvds_p_i(0) <= lvttio_in_p_1;
+--  s_lvds_p_i(1) <= lvttio_in_p_2;
+--  s_lvds_p_i(2) <= lvttio_in_p_3;
+--  s_lvds_p_i(3) <= lvttio_in_p_4;
+--  s_lvds_p_i(4) <= lvttio_in_p_5;
+--  s_lvds_n_i(0) <= lvttio_in_n_1;
+--  s_lvds_n_i(1) <= lvttio_in_n_2;
+--  s_lvds_n_i(2) <= lvttio_in_n_3;
+--  s_lvds_n_i(3) <= lvttio_in_n_4;
+--  s_lvds_n_i(4) <= lvttio_in_n_5;
   
   -- LVDS outputs
-  lvttio_out_p_1 <= s_lvds_p_o(0);
-  lvttio_out_p_2 <= s_lvds_p_o(1);
-  lvttio_out_p_3 <= s_lvds_p_o(2);
-  lvttio_out_p_4 <= s_lvds_p_o(3);
-  lvttio_out_p_5 <= s_lvds_p_o(4);
-  lvttio_out_n_1 <= s_lvds_n_o(0);
-  lvttio_out_n_2 <= s_lvds_n_o(1);
-  lvttio_out_n_3 <= s_lvds_n_o(2);
-  lvttio_out_n_4 <= s_lvds_n_o(3);
-  lvttio_out_n_5 <= s_lvds_n_o(4);
+  lvttio_out_p <= s_lvds_p(4 downto 0);
+  lvttio_out_n <= s_lvds_n(4 downto 0);
   
-  -- LVDS output enable pins
-  lvttio_oe_1 <= '0' when s_lvds_oen(0) = '0' else '1';
-  lvttio_oe_2 <= '0' when s_lvds_oen(1) = '0' else '1';
-  lvttio_oe_3 <= '0' when s_lvds_oen(2) = '0' else '1';
-  lvttio_oe_4 <= '0' when s_lvds_oen(3) = '0' else '1';
-  lvttio_oe_5 <= '0' when s_lvds_oen(4) = '0' else '1';
-  
-  -- LVDS termination pins
-  lvttio_term_en_1 <= '0' when s_lvds_oen(0) = '0' else '1';
-  lvttio_term_en_2 <= '0' when s_lvds_oen(1) = '0' else '1';
-  lvttio_term_en_3 <= '0' when s_lvds_oen(2) = '0' else '1';
-  lvttio_term_en_4 <= '0' when s_lvds_oen(3) = '0' else '1';
-  lvttio_term_en_5 <= '0' when s_lvds_oen(4) = '0' else '1';
-  
-  -- LVDS direction indicator LEDs
-  lvttio_dir_led_1 <= '0' when s_lvds_oen(0) = '1' else 'Z';
-  lvttio_dir_led_2 <= '0' when s_lvds_oen(1) = '1' else 'Z';
-  lvttio_dir_led_3 <= '0' when s_lvds_oen(2) = '1' else 'Z';
-  lvttio_dir_led_4 <= '0' when s_lvds_oen(3) = '1' else 'Z';
-  lvttio_dir_led_5 <= '0' when s_lvds_oen(4) = '1' else 'Z';
-  
-  -- LVDS activity indicator LEDs
-  lvttio_act_led_1 <= '1' when s_lvds_i_led(0) = '1' else '0';
-  lvttio_act_led_2 <= '1' when s_lvds_i_led(1) = '1' else '0';
-  lvttio_act_led_3 <= '1' when s_lvds_i_led(2) = '1' else '0';
-  lvttio_act_led_4 <= '1' when s_lvds_i_led(3) = '1' else '0';
-  lvttio_act_led_5 <= '1' when s_lvds_i_led(4) = '1' else '0';
+--  lvttio_out_p_1 <= s_lvds_p_o(0);
+--  lvttio_out_p_2 <= s_lvds_p_o(1);
+--  lvttio_out_p_3 <= s_lvds_p_o(2);
+--  lvttio_out_p_4 <= s_lvds_p_o(3);
+--  lvttio_out_p_5 <= s_lvds_p_o(4);
+--  lvttio_out_n_1 <= s_lvds_n_o(0);
+--  lvttio_out_n_2 <= s_lvds_n_o(1);
+--  lvttio_out_n_3 <= s_lvds_n_o(2);
+--  lvttio_out_n_4 <= s_lvds_n_o(3);
+--  lvttio_out_n_5 <= s_lvds_n_o(4);
+
+
+-- LVDS output enable pins (active low)
+lvttio_oe <= s_lvds_oen; -- driven by monster
+
+-- LVDS termination pins (active hi)
+with s_test_sel select
+  lvttio_term_en <= (others => '0') when ('0' & x"E"),   -- FPGA hex sw in position E, button not pressed, termination test
+                    (others => '1') when ('1' & x"E"),   -- FPGA hex sw in position E, button     pressed, termination test
+                     s_lvds_oen     when others;         -- driven by monster (enable termination when output disabled)
+
+-- LVDS direction indicator RED LEDs (active hi)
+with s_test_sel select
+  lvttio_dir_led <= (others => '0') when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
+                    (others => '1') when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
+                     not s_lvds_oen when others;         -- driven by monster
+
+-- LVDS activity indicator BLUE LEDs (active hi)
+with s_test_sel select
+  lvttio_act_led <= (others => '1') when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
+                    (others => '0') when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
+                     s_lvds_i_led   when others;         -- driven by monster
+                     
+
+---- assign IO leds and control signals  
+--gen_io_ctrl: for i in 1 to 5 generate
+--  -- LVDS output enable pins (active low)
+--  lvttio_oe(i) <= '0' when s_lvds_oen(i-1) = '0' else '1';
+--  
+--  -- LVDS termination pins (active hi)
+--  lvttio_term_en(i) <= '0' when s_lvds_oen(i-1) = '0' else '1';
+--  
+--  -- LVDS direction indicator RED LEDs (active hi)
+--  lvttio_dir_led(i) <= '0' when s_lvds_oen(i-1) = '1' else '1';
+--
+--  -- LVDS activity indicator BLUE LEDs (active hi)
+--  lvttio_act_led(i) <= '1' when s_lvds_i_led(i-1) = '1' else '0';
+--  
+--end generate;
+
+
+--  -- LVDS output enable pins (active low)
+--  lvttio_oe_1 <= '0' when s_lvds_oen(0) = '0' else '1';
+--  lvttio_oe_2 <= '0' when s_lvds_oen(1) = '0' else '1';
+--  lvttio_oe_3 <= '0' when s_lvds_oen(2) = '0' else '1';
+--  lvttio_oe_4 <= '0' when s_lvds_oen(3) = '0' else '1';
+--  lvttio_oe_5 <= '0' when s_lvds_oen(4) = '0' else '1';
+--  
+--  -- LVDS termination pins (active hi)
+--  lvttio_term_en_1 <= '0' when s_lvds_oen(0) = '0' else '1';
+--  lvttio_term_en_2 <= '0' when s_lvds_oen(1) = '0' else '1';
+--  lvttio_term_en_3 <= '0' when s_lvds_oen(2) = '0' else '1';
+--  lvttio_term_en_4 <= '0' when s_lvds_oen(3) = '0' else '1';
+--  lvttio_term_en_5 <= '0' when s_lvds_oen(4) = '0' else '1';
+--  
+--  --s_lvds_oen_monster
+--  
+--  -- LVDS direction indicator RED LEDs (active hi)
+--  lvttio_dir_led_1 <= '0' when s_lvds_oen(0) = '1' else '1';
+--  lvttio_dir_led_2 <= '0' when s_lvds_oen(1) = '1' else '1';
+--  lvttio_dir_led_3 <= '0' when s_lvds_oen(2) = '1' else '1';
+--  lvttio_dir_led_4 <= '0' when s_lvds_oen(3) = '1' else '1';
+--  lvttio_dir_led_5 <= '0' when s_lvds_oen(4) = '1' else '1';
+--  
+--  -- LVDS activity indicator BLUE LEDs (active hi)
+--  lvttio_act_led_1 <= '1' when s_lvds_i_led(0) = '1' else '0';
+--  lvttio_act_led_2 <= '1' when s_lvds_i_led(1) = '1' else '0';
+--  lvttio_act_led_3 <= '1' when s_lvds_i_led(2) = '1' else '0';
+--  lvttio_act_led_4 <= '1' when s_lvds_i_led(3) = '1' else '0';
+--  lvttio_act_led_5 <= '1' when s_lvds_i_led(4) = '1' else '0';
 
   -- Logic analyzer
   s_log_in(15 downto 0) <= hpw(15 downto 0);
