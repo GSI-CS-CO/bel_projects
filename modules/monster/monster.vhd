@@ -594,8 +594,12 @@ architecture rtl of monster is
   
   constant c_channel_types : t_nat_array(2 downto 0) := (
     0 => c_linux, 1 => c_wb_master, 2 => c_scubus_tag);
-  signal stalls   : std_logic_vector(c_channel_types'range) := (others => '0');
-  signal channels : t_channel_array(c_channel_types'range);
+  signal s_stall_i : std_logic_vector(c_channel_types'range) := (others => '0');
+  signal s_channel_o : t_channel_array(c_channel_types'range);
+  
+  constant c_num_streams : natural := 1;
+  signal s_stream_i : t_stream_array(c_num_streams-1 downto 0);
+  signal s_stall_o  : std_logic_vector(c_num_streams-1 downto 0);
   
   -- END OF White Rabbit
   ----------------------------------------------------------------------------------
@@ -1521,18 +1525,25 @@ begin
       irq_master_i   => irq_cbar_slave_o(c_irqm_tlu)
       );
   
+  ecawb : eca_wb_event
+    port map(
+      w_clk_i    => clk_sys,
+      w_rst_n_i  => rstn_sys,
+      w_slave_i  => top_cbar_master_o(c_tops_eca_event),
+      w_slave_o  => top_cbar_master_i(c_tops_eca_event),
+      e_clk_i    => clk_ref,
+      e_rst_n_i  => rstn_ref,
+      e_stream_o => s_stream_i(0),
+      e_stall_i  => s_stall_o(0));
+
   eca : wr_eca
     generic map(
       g_channel_types  => c_channel_types,
+      g_num_streams    => c_num_streams,
       g_num_ios        => c_eca_io,
-      g_num_streams    => 1,
       g_log_table_size => 8,
       g_log_queue_size => 8) -- any smaller and g_log_latency must be decreased
     port map(
-      e_clk_i  (0)=> clk_sys,
-      e_rst_n_i(0)=> rstn_sys,
-      e_slave_i(0)=> top_cbar_master_o(c_tops_eca_event),
-      e_slave_o(0)=> top_cbar_master_i(c_tops_eca_event),
       c_clk_i     => clk_sys,
       c_rst_n_i   => rstn_sys,
       c_slave_i   => top_cbar_master_o(c_tops_eca_ctl),
@@ -1541,8 +1552,11 @@ begin
       a_rst_n_i   => rstn_ref,
       a_tai_i     => tm_tai,  
       a_cycles_i  => tm_cycles,
-      a_stall_i   => stalls,
-      a_channel_o => channels, 
+      a_time_o    => open,
+      a_stream_i  => s_stream_i,
+      a_stall_o   => s_stall_o,
+      a_stall_i   => s_stall_i,
+      a_channel_o => s_channel_o,
       a_io_o      => s_eca_io,
       i_clk_i     => clk_sys,  
       i_rst_n_i   => rstn_sys, 
@@ -1571,8 +1585,8 @@ begin
     port map(   
       a_clk_i     => clk_ref,
       a_rst_n_i   => rstn_ref,
-      a_stall_o   => stalls(0),
-      a_channel_i => channels(0),
+      a_stall_o   => s_stall_i(0),
+      a_channel_i => s_channel_o(0),
       q_clk_i     => clk_sys,
       q_rst_n_i   => rstn_sys,  
       q_slave_i   => top_cbar_master_o(c_tops_eca_aq),
@@ -1585,7 +1599,7 @@ begin
     port map(
       clk_ref_i   => clk_ref,
       rst_ref_n_i => rstn_ref,
-      channel_i   => channels(1),
+      channel_i   => s_channel_o(1),
       clk_sys_i   => clk_sys,
       rst_sys_n_i => rstn_sys,
       slave_i     => top_cbar_master_o(c_tops_eca_wbm),
@@ -1597,7 +1611,7 @@ begin
     port map(
       clk_i     => clk_ref,
       rst_n_i   => rstn_ref,
-      channel_i => channels(2),
+      channel_i => s_channel_o(2),
       tag_valid => tag_valid,
       tag       => tag);
   
