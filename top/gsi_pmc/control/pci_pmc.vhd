@@ -342,13 +342,13 @@ pmc_buf_oe_o <= '1'; -- enable PCI bus translators
   dis_di(4) <= '0' when (    s_led_link_up and     s_led_track) = '1' else 'Z'; -- green
   
   -- Link LEDs
-  s_status_led_moster(1) <= not (s_led_link_act and s_led_link_up); -- red   = traffic/no-link
-  s_status_led_moster(2) <= not s_led_link_up;                      -- blue  = link
-  s_status_led_moster(3) <= not s_led_track;                        -- green = timing valid
-  s_status_led_moster(4) <= not s_led_pps;                          -- white = PPS
+  s_status_led_moster(1) <= s_led_link_act and s_led_link_up;   -- red   = traffic/no-link
+  s_status_led_moster(2) <= s_led_link_up;                      -- blue  = link
+  s_status_led_moster(3) <= s_led_track;                        -- green = timing valid
+  s_status_led_moster(4) <= s_led_pps;                          -- white = PPS
 
   -- GPIOs
-  s_status_led_moster(6 downto 5) <= not s_gpio (1 downto 0);
+  s_status_led_moster(6 downto 5) <= s_gpio (1 downto 0);
 --  user_led_o(8 downto 1)   <= not s_gpio (9 downto 2);
 
 -- Assign status leds according to FPGA HEX switch position
@@ -379,7 +379,7 @@ with s_test_sel select
                 x"AA"                    when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
                 ("000" &     con)        when ('0' & x"D"),   -- FPGA hex sw in position D, button not pressed, CPLD HEX SW and button test  
                 ("000" & not con)        when ('1' & x"D"),   -- FPGA hex sw in position D, button     pressed, CPLD HEX SW and button test  
-                not s_gpio (9 downto 2)  when others;         -- driven by monster
+                s_gpio (9 downto 2)  when others;         -- driven by monster
 
 user_led_o <= not s_user_led;
 
@@ -427,9 +427,9 @@ with s_test_sel select
 
 -- LVDS direction indicator RED LEDs (active hi)
 with s_test_sel select
-  lvttio_dir_led <= (others => '0') when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
-                    (others => '1') when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
-                     not s_lvds_oen when others;         -- driven by monster
+  lvttio_dir_led <= (others => '0')   when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
+                    (others => '1')   when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
+                     (not s_lvds_oen) when others;         -- driven by monster
 
 -- LVDS activity indicator BLUE LEDs (active hi)
 with s_test_sel select
