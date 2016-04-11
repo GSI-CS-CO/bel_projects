@@ -378,8 +378,8 @@ with s_test_sel select
 status_led_o <= not s_status_led;                  
                   
 with s_test_sel select
-  s_user_led <= x"55"                    when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
-                x"AA"                    when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
+  s_user_led <= x"AA"                    when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
+                x"55"                    when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
                 ("000" &     con)        when ('0' & x"D"),   -- FPGA hex sw in position D, button not pressed, CPLD HEX SW and button test  
                 ("000" & not con)        when ('1' & x"D"),   -- FPGA hex sw in position D, button     pressed, CPLD HEX SW and button test  
                 s_gpio (9 downto 2)  when others;         -- driven by monster
@@ -420,23 +420,23 @@ user_led_o <= not s_user_led;
 
 
 -- LVDS output enable pins (active low)
-lvttio_oe <= s_lvds_oen; -- driven by monster
+lvttio_oe <= s_lvds_oen_monster; -- driven by monster
 
-s_lvds_oe <= not s_lvds_oen;
+s_lvds_oe <= not s_lvds_oen_monster;
 
 s_lvds_led <= s_lvds_i_led or s_lvds_o_led;
 
 -- LVDS termination pins (active hi)
 with s_test_sel select
-  lvttio_term_en <= (others => '0') when ('0' & x"E"),   -- FPGA hex sw in position E, button not pressed, termination test
-                    (others => '1') when ('1' & x"E"),   -- FPGA hex sw in position E, button     pressed, termination test
-                     s_lvds_oen     when others;         -- driven by monster (enable termination when output disabled)
+  lvttio_term_en <= (others => '0')     when ('0' & x"E"),   -- FPGA hex sw in position E, button not pressed, termination test
+                    (others => '1')     when ('1' & x"E"),   -- FPGA hex sw in position E, button     pressed, termination test
+                     s_lvds_oen_monster when others;         -- driven by monster (enable termination when output disabled)
 
 -- LVDS direction indicator RED LEDs (active hi)
 with s_test_sel select
-  lvttio_dir_led <= (others => '0')   when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
-                    (others => '1')   when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
-                     s_lvds_oe        when others;         -- driven by monster
+  lvttio_dir_led <= (others => '0')  when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
+                    (others => '1')  when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
+                     s_lvds_oe       when others;         -- driven by monster
 
 -- LVDS activity indicator BLUE LEDs (active hi)
 with s_test_sel select
