@@ -46,7 +46,10 @@ architecture rtl of wbs_temp_sense is
 
 --internal signals
 	signal s_clr_out	:std_logic;
-	signal s_count		:integer range 0 to 200 := 0;
+	--signal s_count		:integer range 0 to 900 := 0;
+	signal s_count		: unsigned(11 downto 0);
+	signal s_temp_val	: std_logic_vector(7 downto 0);
+
 --constants
 	constant c_address_tx_data	:    std_logic_vector (1 downto 0):= "00";
 
@@ -69,16 +72,25 @@ begin
 p_clk_process1: process(clk_sys_i)
 
 begin
-        if rising_edge (clk_sys_i) then
+	if rising_edge (clk_sys_i) then
 
-                if (s_tsdcaldone='1') then
-                        s_clr_out <= '1';
-                        s_count   <= 0;
-                else
-                        s_count   <= s_count + 1;
-                        s_clr_out <= '0';
-                end if;
-        end if;
+		if (rst_n_i='0') then
+			s_count 	<= (others => '0');
+			s_clr_out 	<= '1';
+			s_temp_val	<= (others => '0');
+		else
+
+			if (s_count <= x"120") then
+				s_count   	<= s_count + 1;
+				s_clr_out	<= '1';
+			elsif (s_count > x"120") then
+				s_clr_out	<= '0';
+				s_count   	<= s_count+1;
+			elsif  (s_count > x"450") then
+				s_count 	<= (others => '0');
+			end if; 
+		end if;
+	end if;
 end process;
 
 
@@ -101,39 +113,35 @@ if rising_edge(clk_sys_i) then
 	if (rst_n_i='0') then
 
 		s_wb_ack	<= '0';
-	--	s_wb_stall	<= '1';
 
 	else
 
 		s_wb_ack        <= s_wb_cyc and s_wb_stb;
-          --      s_wb_stall      <= '0';
-
-	end if;
-
-	--if (s_wb_cyc='1' and s_wb_stb='1'and s_wb_sel="1111") then
-	if (s_wb_cyc='1' and s_wb_stb='1') then
+		
+		if (s_wb_cyc='1' and s_wb_stb='1') then
 
 		case s_wb_adr(3 downto 2) is
 			
 			when c_address_tx_data =>
-				if (s_wb_we='0') then
+				if (s_wb_we='0'and s_clr_out='0' and s_tsdcaldone='1') then
 	
 					s_wb_dat(7 downto 0) 	<= s_tsdcalo;
 					s_wb_dat(31 downto 8)	<= x"000000";
 		
 				else
 	
---					s_wb_dat <= s_wb_dat_i;
 					s_wb_dat <= x"DEADC0DE";
 	
 				end if;
 	
 			when others =>
-	
+		
 					s_wb_dat <= x"DEADC0DE";
 		end case;		
 				
+		end if;
 	end if;
+
 
 end if;
 end process;
