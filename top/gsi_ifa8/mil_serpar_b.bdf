@@ -2275,7 +2275,7 @@ applicable agreement for further details.
 	(section (rect 0 72 91 96)(text "SIZE" (rect 2 -3 24 7)(font "Arial" (color 0 0 255)(font_size 6)))(text "D" (rect 41 -1 52 15)(font "Arial" (color 0 0 0)(font_size 10)))(border))
 	(section (rect 91 72 280 96)(text "NUMBER" (rect 2 -4 51 7)(font "Arial" (color 0 0 255)))(text "1.00" (rect 77 -2 108 14)(font "Arial" (color 0 0 0)(font_size 10)))(border))
 	(section (rect 280 72 368 96)(text "REV" (rect 2 -3 27 8)(font "Arial" (color 0 0 255)))(text "A" (rect 43 -2 54 14)(font "Arial" (color 0 0 0)(font_size 10)))(border))
-	(section (rect 0 96 240 120)(text "DATE" (rect 1 -3 28 7)(font "Arial" (color 0 0 255)(font_size 6)))(text "Wed Apr  6 10:42:00 2016" (rect 35 0 220 16)(font "Arial" (color 0 0 0)(font_size 10)))(date)(border))
+	(section (rect 0 96 240 120)(text "DATE" (rect 1 -3 28 7)(font "Arial" (color 0 0 255)(font_size 6)))(text "Fri Apr  8 15:28:04 2016" (rect 35 0 206 16)(font "Arial" (color 0 0 0)(font_size 10)))(date)(border))
 	(section (rect 240 96 310 120)(text "SHEET" (rect 2 -3 35 7)(font "Arial" (color 0 0 255)(font_size 6)))(text "1" (rect 55 2 64 18)(font "Arial" (color 0 0 0)(font_size 10))))
 	(section (rect 310 96 368 120)(text "OF" (rect 10 -3 25 7)(font "Arial" (color 0 0 255)(font_size 6)))(text "1" (rect 34 1 43 17)(font "Arial" (color 0 0 0)(font_size 10))))
 	(drawing

@@ -15,19 +15,6 @@ create_clock -period "8.333 ns" \
              -name {A_ME_DSC} {A_ME_DSC}
 # ---------------------------------------------
 
-
-# Original Clock Setting Name: A_CLK_FG
-create_clock -period "8.333 ns" \
-             -name {A_CLK_FG} {A_CLK_FG}
-# ---------------------------------------------
-
-
-# Original Clock Setting Name: A_EXT_CLK
-create_clock -period "8.333 ns" \
-             -name {A_EXT_CLK} {A_EXT_CLK}
-# ---------------------------------------------
-
-
 # Original Clock Setting Name: A_ME_VW
 create_clock -period "8.333 ns" \
              -name {A_ME_VW} {A_ME_VW}
@@ -45,12 +32,6 @@ set_clock_groups -asynchronous \
                         } \
                  -group { \
                        A_ME_VW \
-                        } \
-                 -group { \
-                       A_EXT_CLK \
-                        } \
-                 -group { \
-                       A_CLK_FG \
                         } \
                  -group { \
                        inst8|altpll_component|pll|clk[0] \
