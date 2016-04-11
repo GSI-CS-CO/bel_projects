@@ -213,7 +213,9 @@ architecture rtl of pci_pmc is
   signal s_lvds_p_o     : std_logic_vector(4 downto 0);
   signal s_lvds_n_o     : std_logic_vector(4 downto 0);
   signal s_lvds_o_led   : std_logic_vector(4 downto 0);
+  signal s_lvds_led     : std_logic_vector(4 downto 0);  
   signal s_lvds_oen     : std_logic_vector(4 downto 0);
+  signal s_lvds_oe      : std_logic_vector(4 downto 0);
 
   signal s_lvds_oen_monster   : std_logic_vector(4 downto 0);
 
@@ -365,7 +367,8 @@ pmc_buf_oe_o <= '1'; -- enable PCI bus translators
 --end process;
 
 -- invert FPGA button and HEX switch
-s_test_sel <= not pbs_f & not hswf;
+s_test_sel(4)          <= not pbs_f;
+s_test_sel(3 downto 0) <= not hswf;
 
 with s_test_sel select
   s_status_led <= "101010"               when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
@@ -419,6 +422,10 @@ user_led_o <= not s_user_led;
 -- LVDS output enable pins (active low)
 lvttio_oe <= s_lvds_oen; -- driven by monster
 
+s_lvds_oe <= not s_lvds_oen;
+
+s_lvds_led <= s_lvds_i_led or s_lvds_o_led;
+
 -- LVDS termination pins (active hi)
 with s_test_sel select
   lvttio_term_en <= (others => '0') when ('0' & x"E"),   -- FPGA hex sw in position E, button not pressed, termination test
@@ -429,13 +436,13 @@ with s_test_sel select
 with s_test_sel select
   lvttio_dir_led <= (others => '0')   when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
                     (others => '1')   when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
-                     (not s_lvds_oen) when others;         -- driven by monster
+                     s_lvds_oe        when others;         -- driven by monster
 
 -- LVDS activity indicator BLUE LEDs (active hi)
 with s_test_sel select
   lvttio_act_led <= (others => '1') when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
                     (others => '0') when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
-                     s_lvds_i_led   when others;         -- driven by monster
+                     s_lvds_led     when others;         -- driven by monster
                      
 
 ---- assign IO leds and control signals  
