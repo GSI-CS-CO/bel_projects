@@ -378,7 +378,7 @@ architecture rtl of monster is
   constant c_topm_eca_wbm   : natural := 7;
   
   -- required slaves
-  constant c_top_slaves     : natural := 27;
+  constant c_top_slaves     : natural := 28;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -390,24 +390,25 @@ architecture rtl of monster is
   constant c_tops_eca_ctl   : natural := 8;
   constant c_tops_eca_event : natural := 9;
   constant c_tops_eca_aq    : natural := 10;
-  constant c_tops_eca_wbm   : natural := 11;
+  constant c_tops_eca_tlu   : natural := 11;
+  constant c_tops_eca_wbm   : natural := 12;
 
   -- optional slaves:
-  constant c_tops_lcd       : natural := 12;
-  constant c_tops_oled      : natural := 13;
-  constant c_tops_scubus    : natural := 14;
-  constant c_tops_mil       : natural := 15;
-  constant c_tops_mil_ctrl  : natural := 16;
-  constant c_tops_ow        : natural := 17;
-  constant c_tops_scubirq   : natural := 18;
-  constant c_tops_ssd1325   : natural := 19;
-  constant c_tops_vme_info  : natural := 20;
-  constant c_tops_fg        : natural := 21;
-  constant c_tops_fgirq     : natural := 22;
-  constant c_tops_CfiPFlash : natural := 23;
-  constant c_tops_nau8811   : natural := 24;
-  constant c_tops_psram     : natural := 25;
-  constant c_tops_iocfg     : natural := 26;
+  constant c_tops_lcd       : natural := 13;
+  constant c_tops_oled      : natural := 14;
+  constant c_tops_scubus    : natural := 15;
+  constant c_tops_mil       : natural := 16;
+  constant c_tops_mil_ctrl  : natural := 17;
+  constant c_tops_ow        : natural := 18;
+  constant c_tops_scubirq   : natural := 19;
+  constant c_tops_ssd1325   : natural := 20;
+  constant c_tops_vme_info  : natural := 21;
+  constant c_tops_fg        : natural := 22;
+  constant c_tops_fgirq     : natural := 23;
+  constant c_tops_CfiPFlash : natural := 24;
+  constant c_tops_nau8811   : natural := 25;
+  constant c_tops_psram     : natural := 26;
+  constant c_tops_iocfg     : natural := 27;
 
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -434,6 +435,7 @@ architecture rtl of monster is
     c_tops_eca_ctl   => f_sdb_auto_device(c_eca_slave_sdb,                  true),
     c_tops_eca_event => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
     c_tops_eca_aq    => f_sdb_auto_device(c_eca_queue_slave_sdb,            true),
+    c_tops_eca_tlu   => f_sdb_auto_device(c_eca_tlu_slave_sdb,              true),
     c_tops_CfiPFlash => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
     c_tops_lcd       => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_tops_oled      => f_sdb_auto_device(c_oled_display,                   g_en_oled),
@@ -594,10 +596,11 @@ architecture rtl of monster is
   
   constant c_channel_types : t_nat_array(2 downto 0) := (
     0 => c_linux, 1 => c_wb_master, 2 => c_scubus_tag);
-  signal s_stall_i : std_logic_vector(c_channel_types'range) := (others => '0');
+  signal s_stall_i   : std_logic_vector(c_channel_types'range) := (others => '0');
   signal s_channel_o : t_channel_array(c_channel_types'range);
+  signal s_time      : t_time;
   
-  constant c_num_streams : natural := 1;
+  constant c_num_streams : natural := 2;
   signal s_stream_i : t_stream_array(c_num_streams-1 downto 0);
   signal s_stall_o  : std_logic_vector(c_num_streams-1 downto 0);
   
@@ -656,8 +659,13 @@ architecture rtl of monster is
   constant c_eca_lvds : natural := g_lvds_inout + g_lvds_out;
   constant c_eca_gpio : natural := g_gpio_inout + g_gpio_out;
   constant c_eca_io   : natural := c_eca_lvds + c_eca_gpio;
+  
+  constant c_tlu_lvds : natural := g_lvds_inout + g_lvds_in;
+  constant c_tlu_gpio : natural := g_gpio_inout + g_gpio_in;
+  constant c_tlu_io   : natural := c_tlu_lvds + c_tlu_gpio;
 
   signal s_eca_io   : t_gpio_array(c_eca_io-1 downto 0);
+  signal s_tlu_io   : t_gpio_array(c_tlu_io-1 downto 0);
 
   signal s_gpio_out     : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
   signal s_gpio_src_eca : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
@@ -1535,6 +1543,21 @@ begin
       e_rst_n_i  => rstn_ref,
       e_stream_o => s_stream_i(0),
       e_stall_i  => s_stall_o(0));
+  
+  ecatlu : eca_tlu
+    generic map(
+      g_inputs => c_tlu_io)
+    port map(
+      c_clk_i    => clk_sys,
+      c_rst_n_i  => rstn_sys,
+      c_slave_i  => top_cbar_master_o(c_tops_eca_tlu),
+      c_slave_o  => top_cbar_master_i(c_tops_eca_tlu),
+      a_clk_i    => clk_ref,
+      a_rst_n_i  => rstn_ref,
+      a_time_i   => s_time,
+      a_gpio_i   => s_tlu_io,
+      a_stream_o => s_stream_i(1),
+      a_stall_i  => s_stall_o(1));
 
   eca : wr_eca
     generic map(
@@ -1552,7 +1575,7 @@ begin
       a_rst_n_i   => rstn_ref,
       a_tai_i     => tm_tai,  
       a_cycles_i  => tm_cycles,
-      a_time_o    => open,
+      a_time_o    => s_time,
       a_stream_i  => s_stream_i,
       a_stall_o   => s_stall_o,
       a_stall_i   => s_stall_i,
@@ -1575,6 +1598,22 @@ begin
     lvds : for i in 0 to c_eca_lvds-1 generate
       bits : for b in 0 to 7 generate -- 0 goes first for ECA, 7 goes first for serdes
         lvds_dat_fr_eca_chan(i)(b) <= s_eca_io(i+c_eca_gpio)(7-b);
+      end generate;
+    end generate;
+  end generate;
+  
+  -- GPIO input to the TLU
+  gpi1 : if c_tlu_gpio > 0 generate
+    gpio : for i in 0 to c_tlu_gpio-1 generate
+      s_tlu_io(i) <= (others => gpio_i(i));
+    end generate;
+  end generate;
+  
+  -- LVDS input to the TLU
+  lvd1 : if c_tlu_lvds > 0 generate
+    lvds : for i in 0 to c_tlu_lvds-1 generate
+      bits : for b in 0 to 7 generate -- 0 goes first for ECA
+        s_tlu_io(i+c_tlu_gpio)(b) <= lvds_i(i)(7-b);
       end generate;
     end generate;
   end generate;
