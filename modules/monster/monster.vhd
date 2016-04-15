@@ -585,7 +585,6 @@ architecture rtl of monster is
   signal tm_tai    : std_logic_vector(39 downto 0);
   signal tm_cycles : std_logic_vector(27 downto 0);
   
-  signal sys_tai8ns : std_logic_vector(63 downto 0);
   signal ref_tai8ns : std_logic_vector(63 downto 0);
 
   signal owr_pwren : std_logic_vector(1 downto 0);
@@ -893,8 +892,7 @@ begin
       wr_rst_n_i               => rstn_ref,
       wr_PPSpulse_i            => pps,
       BuTis_rst_n_i            => rstn_butis,
-      timestamp_i(63 downto 3) => ref_tai8ns(60 downto 0),
-      timestamp_i( 2 downto 0) => "000",
+      timestamp_i              => s_time,
       BuTis_C2_i               => clk_butis,
       BuTis_T0_o               => clk_butis_t0,
       BuTis_T0_timestamp_o     => clk_butis_t0_ts,
@@ -1030,7 +1028,7 @@ begin
       clk_sys_i            => clk_sys,
       rst_sys_n_i          => rstn_sys,
       rst_lm32_n_i         => s_lm32_rstn,
-      tm_tai8ns_i     	   => ref_tai8ns,
+      tm_tai8ns_i     	   => s_time,
       irq_slave_o     	   => irq_cbar_master_i(c_irqs_lm32),
       irq_slave_i     	   => irq_cbar_master_o(c_irqs_lm32),
       cluster_slave_o      => top_cbar_master_i(c_tops_lm32),
@@ -1337,18 +1335,6 @@ begin
         pad_rxp_i      => wr_sfp_rx_i);    
   end generate;
   
-  sys_time : time_clk_cross
-    port map(
-      clk_ref_i           => clk_ref,
-      rst_ref_n_i         => rstn_ref,
-      clk_sys_i           => clk_sys,
-      rst_sys_n_i         => rstn_sys,
-      tm_time_valid_i     => tm_valid,
-      tm_tai_i            => tm_tai,
-      tm_cycles_i         => tm_cycles,
-      tm_ref_tai_cycles_o => ref_tai8ns,
-      tm_sys_tai_cycles_o => sys_tai8ns);
-
   pps_ext : gc_extend_pulse
     generic map(
       g_width => 10000000)
@@ -1585,6 +1571,9 @@ begin
       i_rst_n_i   => rstn_sys, 
       i_master_i  => irq_cbar_slave_o(c_irqm_eca),
       i_master_o  => irq_cbar_slave_i(c_irqm_eca));
+
+  -- Legacy 8ns time
+  ref_tai8ns <= "000" & s_time(63 downto 3);
   
   -- GPIO output from the ECA
   gpio1 : if c_eca_gpio > 0 generate
