@@ -378,7 +378,7 @@ architecture rtl of monster is
   constant c_topm_eca_wbm   : natural := 7;
   
   -- required slaves
-  constant c_top_slaves     : natural := 28;
+  constant c_top_slaves     : natural := 29;
   constant c_tops_irq       : natural := 0;
   constant c_tops_wrc       : natural := 1;
   constant c_tops_lm32      : natural := 2;
@@ -392,23 +392,24 @@ architecture rtl of monster is
   constant c_tops_eca_aq    : natural := 10;
   constant c_tops_eca_tlu   : natural := 11;
   constant c_tops_eca_wbm   : natural := 12;
-
+  constant c_tops_emb_cpu   : natural := 13;
+  
   -- optional slaves:
-  constant c_tops_lcd       : natural := 13;
-  constant c_tops_oled      : natural := 14;
-  constant c_tops_scubus    : natural := 15;
-  constant c_tops_mil       : natural := 16;
-  constant c_tops_mil_ctrl  : natural := 17;
-  constant c_tops_ow        : natural := 18;
-  constant c_tops_scubirq   : natural := 19;
-  constant c_tops_ssd1325   : natural := 20;
-  constant c_tops_vme_info  : natural := 21;
-  constant c_tops_fg        : natural := 22;
-  constant c_tops_fgirq     : natural := 23;
-  constant c_tops_CfiPFlash : natural := 24;
-  constant c_tops_nau8811   : natural := 25;
-  constant c_tops_psram     : natural := 26;
-  constant c_tops_iocfg     : natural := 27;
+  constant c_tops_lcd       : natural := 14;
+  constant c_tops_oled      : natural := 15;
+  constant c_tops_scubus    : natural := 16;
+  constant c_tops_mil       : natural := 17;
+  constant c_tops_mil_ctrl  : natural := 18;
+  constant c_tops_ow        : natural := 19;
+  constant c_tops_scubirq   : natural := 20;
+  constant c_tops_ssd1325   : natural := 21;
+  constant c_tops_vme_info  : natural := 22;
+  constant c_tops_fg        : natural := 23;
+  constant c_tops_fgirq     : natural := 24;
+  constant c_tops_CfiPFlash : natural := 25;
+  constant c_tops_nau8811   : natural := 26;
+  constant c_tops_psram     : natural := 27;
+  constant c_tops_iocfg     : natural := 28;
 
   -- We have to specify the values for WRC as there is no generic out in vhdl
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -435,6 +436,7 @@ architecture rtl of monster is
     c_tops_eca_ctl   => f_sdb_auto_device(c_eca_slave_sdb,                  true),
     c_tops_eca_event => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
     c_tops_eca_aq    => f_sdb_auto_device(c_eca_queue_slave_sdb,            true),
+    c_tops_emb_cpu   => f_sdb_auto_device(c_eca_queue_slave_sdb,            true),
     c_tops_eca_tlu   => f_sdb_auto_device(c_eca_tlu_slave_sdb,              true),
     c_tops_CfiPFlash => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
     c_tops_lcd       => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
@@ -593,8 +595,11 @@ architecture rtl of monster is
   signal sfp_scl_o : std_logic;
   signal sfp_sda_o : std_logic;
   
-  constant c_channel_types : t_nat_array(2 downto 0) := (
-    0 => c_linux, 1 => c_wb_master, 2 => c_scubus_tag);
+  constant c_channel_types : t_nat_array(3 downto 0) := (
+    0 => c_linux, 
+    1 => c_wb_master, 
+    2 => c_scubus_tag, 
+    3 => c_embedded_cpu);
   signal s_stall_i   : std_logic_vector(c_channel_types'range) := (others => '0');
   signal s_channel_o : t_channel_array(c_channel_types'range);
   signal s_time      : t_time;
@@ -1642,7 +1647,20 @@ begin
       channel_i => s_channel_o(2),
       tag_valid => tag_valid,
       tag       => tag);
-  
+      
+  c3 : eca_queue
+    generic map(
+      g_queue_id  => 3)
+    port map(   
+      a_clk_i     => clk_ref,
+      a_rst_n_i   => rstn_ref,
+      a_stall_o   => s_stall_i(3),
+      a_channel_i => s_channel_o(3),
+      q_clk_i     => clk_sys,
+      q_rst_n_i   => rstn_sys,  
+      q_slave_i   => top_cbar_master_o(c_tops_emb_cpu),
+      q_slave_o   => top_cbar_master_i(c_tops_emb_cpu)); 
+      
   lvds_pins : altera_lvds
     generic map(
       g_family  => g_family,
