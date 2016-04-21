@@ -16,3 +16,6 @@
 [submodule "ip_cores/hdl-make"]
 	path = ip_cores/hdl-make
 	url = git://ohwr.org/misc/hdl-make.git
+[submodule "ip_cores/saftlib"]
+	path = ip_cores/saftlib
+	url = https://github.com/GSI-CS-CO/saftlib.git
