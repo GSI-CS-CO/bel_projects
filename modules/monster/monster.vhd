@@ -424,7 +424,17 @@ architecture rtl of monster is
   
   ----------------------------------------------------------------------------------------------------
   
-  constant c_top_layout_req : t_sdb_record_array(c_top_slaves-1 downto 0) :=
+  constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=
+   (c_topm_ebs     => f_sdb_auto_msi(c_ebs_msi,     true),
+    c_topm_lm32    => f_sdb_auto_msi(c_null_msi,    false), -- !!! needs subentity 
+    c_topm_pcie    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
+    c_topm_vme     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
+    c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
+    c_topm_fpq     => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for FTM queue master
+    c_topm_fg      => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for function generator
+    c_topm_eca_wbm => f_sdb_auto_msi(c_null_msi,    false));  -- no MSIs for ECA=>WB macro player
+  
+  constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (c_tops_irq       => f_sdb_auto_bridge(c_irq_bridge_sdb,                 true),
     c_tops_wrc       => f_sdb_auto_bridge(c_wrcore_bridge_sdb,              true),
     c_tops_lm32      => f_sdb_auto_bridge(c_lm32_main_bridge_sdb,           true),
@@ -453,12 +463,11 @@ architecture rtl of monster is
     c_tops_fgirq     => f_sdb_auto_device(c_fg_irq_ctrl_sdb,                g_en_fg),
     c_tops_psram     => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
     c_tops_eca_wbm   => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           true),
-    c_tops_iocfg     => f_sdb_auto_bridge(c_iocfg_bridge_sdb,               true)
-);
+    c_tops_iocfg     => f_sdb_auto_bridge(c_iocfg_bridge_sdb,               true));
     
-  constant c_top_layout      : t_sdb_record_array(c_top_slaves-1 downto 0) 
-                                                  := f_sdb_auto_layout(c_top_layout_req);
-  constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb(c_top_layout_req);
+  constant c_top_layout      : t_sdb_record_array(c_top_slaves+c_top_masters-1 downto 0) 
+                                                  := f_sdb_auto_layout(c_top_layout_req_slaves, c_top_layout_req_masters);
+  constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_slaves, c_top_layout_req_masters);
   constant c_top_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_top_layout, c_top_sdb_address);
   
   signal top_cbar_slave_i  : t_wishbone_slave_in_array (c_top_masters-1 downto 0);
