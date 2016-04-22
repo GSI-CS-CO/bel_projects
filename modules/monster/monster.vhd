@@ -1973,13 +1973,13 @@ begin
   end generate;
 
   tempsens_y : if g_en_tempsens generate
-    tempsens_display : wbs_temp_sense
+    tempsens_display : wb_temp_sense
       port map (
         clk_sys_i  => clk_sys,
         rst_n_i    => rstn_sys,
         slave_i    => top_cbar_master_o(c_tops_tempsens),
         slave_o    => top_cbar_master_i(c_tops_tempsens),
-     	clr_out	   => tempsens_clr_out);
+     	clr_o	   => tempsens_clr_out);
   end generate;
 
   -- END OF Wishbone slaves
