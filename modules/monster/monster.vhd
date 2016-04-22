@@ -338,32 +338,6 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   ----------------------------------------------------------------------------------
-  -- IO Configuration Crossbar --------------------------------------------------------------
-  ----------------------------------------------------------------------------------
-  constant c_iocfg_masters         : natural := 1;
-  constant c_iocfgm_top            : natural := 0;
-  
-  constant c_iocfg_slaves          : natural := 2;
-  constant c_iocfgs_serdes_clk_gen : natural := 0;
-  constant c_iocfgs_control        : natural := 1;
-  
-  constant c_iocfg_layout_req : t_sdb_record_array(c_iocfg_slaves-1 downto 0) :=
-   (c_iocfgs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb, true),
-    c_iocfgs_control        => f_sdb_auto_device(c_io_control_sdb,        true));
-
-  constant c_iocfg_layout      : t_sdb_record_array(c_iocfg_slaves-1 downto 0) := f_sdb_auto_layout(c_iocfg_layout_req);
-  constant c_iocfg_sdb_address : t_wishbone_address                         := f_sdb_auto_sdb(c_iocfg_layout_req);
-  constant c_iocfg_bridge_sdb  : t_sdb_bridge                               := f_xwb_bridge_layout_sdb(true, c_iocfg_layout, c_iocfg_sdb_address);
-
-  signal iocfg_cbar_slave_i  : t_wishbone_slave_in_array  (c_iocfg_masters-1 downto 0);
-  signal iocfg_cbar_slave_o  : t_wishbone_slave_out_array (c_iocfg_masters-1 downto 0);
-  signal iocfg_cbar_master_i : t_wishbone_master_in_array (c_iocfg_slaves -1 downto 0);
-  signal iocfg_cbar_master_o : t_wishbone_master_out_array(c_iocfg_slaves -1 downto 0); 
-  
-  -- END OF IO Configuration Crossbar
-  ----------------------------------------------------------------------------------
-  
-  ----------------------------------------------------------------------------------
   -- GSI Top Crossbar --------------------------------------------------------------
   ----------------------------------------------------------------------------------
   
@@ -376,6 +350,47 @@ architecture rtl of monster is
   constant c_topm_fpq       : natural := 5;
   constant c_topm_fg        : natural := 6;
   constant c_topm_eca_wbm   : natural := 7;
+  
+  constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=
+   (c_topm_ebs     => f_sdb_auto_msi(c_ebs_msi,     true),
+    c_topm_lm32    => f_sdb_auto_msi(c_null_msi,    false), -- !!! needs subentity 
+    c_topm_pcie    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
+    c_topm_vme     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
+    c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
+    c_topm_fpq     => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for FTM queue master
+    c_topm_fg      => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for function generator
+    c_topm_eca_wbm => f_sdb_auto_msi(c_null_msi,    false));  -- no MSIs for ECA=>WB macro player
+  constant c_top_layout_masters : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters);
+  constant c_top_bridge_msi     : t_sdb_msi          := f_xwb_msi_layout_sdb(c_top_layout_masters);
+  
+  ----------------------------------------------------------------------------------
+  -- IO Configuration Crossbar --------------------------------------------------------------
+  ----------------------------------------------------------------------------------
+  constant c_iocfg_masters         : natural := 1;
+  constant c_iocfgm_top            : natural := 0;
+  
+  constant c_iocfg_layout_req_masters : t_sdb_record_array(c_iocfg_masters-1 downto 0) :=
+    (c_iocfgm_top => f_sdb_auto_msi(c_top_bridge_msi, true));
+  constant c_iocfg_layout_masters : t_sdb_record_array := f_sdb_auto_layout(c_iocfg_layout_req_masters);
+  
+  constant c_iocfg_slaves          : natural := 2;
+  constant c_iocfgs_serdes_clk_gen : natural := 0;
+  constant c_iocfgs_control        : natural := 1;
+  
+  constant c_iocfg_layout_req_slaves : t_sdb_record_array(c_iocfg_slaves-1 downto 0) :=
+   (c_iocfgs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb, true),
+    c_iocfgs_control        => f_sdb_auto_device(c_io_control_sdb,        true));
+  constant c_iocfg_layout      : t_sdb_record_array := f_sdb_auto_layout(c_iocfg_layout_masters, c_iocfg_layout_req_slaves);
+  constant c_iocfg_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_iocfg_layout_masters, c_iocfg_layout_req_slaves);
+  constant c_iocfg_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_iocfg_layout, c_iocfg_sdb_address);
+
+  signal iocfg_cbar_slave_i  : t_wishbone_slave_in_array  (c_iocfg_masters-1 downto 0);
+  signal iocfg_cbar_slave_o  : t_wishbone_slave_out_array (c_iocfg_masters-1 downto 0);
+  signal iocfg_cbar_master_i : t_wishbone_master_in_array (c_iocfg_slaves -1 downto 0);
+  signal iocfg_cbar_master_o : t_wishbone_master_out_array(c_iocfg_slaves -1 downto 0); 
+  
+  -- END OF IO Configuration Crossbar
+  ----------------------------------------------------------------------------------
   
   -- required slaves
   constant c_top_slaves     : natural := 29;
@@ -421,18 +436,6 @@ architecture rtl of monster is
                            g_lm32_ramsizes,
                            g_lm32_shared_ramsize,
                            g_lm32_are_ftm);
-  
-  ----------------------------------------------------------------------------------------------------
-  
-  constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=
-   (c_topm_ebs     => f_sdb_auto_msi(c_ebs_msi,     true),
-    c_topm_lm32    => f_sdb_auto_msi(c_null_msi,    false), -- !!! needs subentity 
-    c_topm_pcie    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
-    c_topm_vme     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
-    c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     g_en_usb),
-    c_topm_fpq     => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for FTM queue master
-    c_topm_fg      => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for function generator
-    c_topm_eca_wbm => f_sdb_auto_msi(c_null_msi,    false));  -- no MSIs for ECA=>WB macro player
   
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (c_tops_irq       => f_sdb_auto_bridge(c_irq_bridge_sdb,                 true),
