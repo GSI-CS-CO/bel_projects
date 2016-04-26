@@ -13,7 +13,6 @@
 --! 0x00 CPU ID
 --! 0x04 Number of MSI Endpoints
 --! 0x08 RAM size
---! 0x10 Is part of a Cluster?
 --
 --------------------------------------------------------------------------------
 --! This library is free software; you can redistribute it and/or
@@ -267,11 +266,7 @@ begin
               when 0 => s_cpu_info.dat <= g_cpu_id;
               when 1 => s_cpu_info.dat <= std_logic_vector(to_unsigned(g_msi_queues,32));
               when 2 => s_cpu_info.dat <= std_logic_vector(to_unsigned(g_size*4,32));
-              when 3 => if(g_is_in_cluster) then
-                           s_cpu_info.dat <= std_logic_vector(to_unsigned(1,32));
-                        else
-                           s_cpu_info.dat <= (others => '0');
-                        end if;
+     
               -- unmapped addresses return error
               when others =>  s_cpu_info.ack <= '0';
                               s_cpu_info.err <= '1';

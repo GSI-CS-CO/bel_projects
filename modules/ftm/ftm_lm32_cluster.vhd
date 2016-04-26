@@ -36,7 +36,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.wishbone_pkg.all;
 use work.wb_irq_pkg.all;
-use work.dm_pkg.all;
+use work.ftm_pkg.all;
 
 entity ftm_lm32_cluster is
 generic(
@@ -46,7 +46,7 @@ generic(
   g_profile       : string  := "medium_icache_debug";
   g_init_files    : string;   
   g_world_bridge_sdb : t_sdb_bridge;   -- inferior sdb crossbar         
-  g_clu_msi_sdb      : t_sdb_record    -- superior msi crossbar          
+  g_clu_msi_sdb      : t_sdb_msi    -- superior msi crossbar          
 );
 port(
   clk_ref_i      : in  std_logic;
@@ -108,7 +108,7 @@ architecture rtl of ftm_lm32_cluster is
            f_cluster_sdb(c_clu_slaves, g_ram_per_core, g_is_dm);
 
   constant c_clu_layout_req_masters : t_sdb_record_array(c_clu_masters-1 downto 0) := 
-           (c_msi_slave => g_clu_msi_sdb, true);
+           (c_msi_slave =>  f_sdb_auto_msi(g_clu_msi_sdb, true));
 
   constant c_clu_sdb_address : t_wishbone_address :=
            f_sdb_auto_sdb(c_clu_layout_req_slaves, c_clu_layout_req_masters);
@@ -142,11 +142,10 @@ begin
 
   G1: for I in 0 to g_cores-1 generate
     --instantiate an dm-lm32 (LM32 core with its own DPRAM and 2..n msi queues)
-    LM32 : dm_lm32
+    LM32 : ftm_lm32
     generic map(
       g_cpu_id                         => x"BBEE" & std_logic_vector(to_unsigned(I, 16)),
       g_size                           => g_ram_per_core,
-      g_is_in_cluster                  => true,
       g_world_bridge_sdb               => g_world_bridge_sdb,
       g_profile                        => g_profile,
       g_init_file                      => f_substr(g_init_files, I, ';')
@@ -236,7 +235,7 @@ begin
     master_clk_i   => clk_ref_i,
     master_rst_n_i => rst_ref_n_i,
     master_i       => clu_cb_slaveport_out(0),
-    master_o       => clu_cb_slaveport_in(0);
+    master_o       => clu_cb_slaveport_in(0));
 
   clu_msi_sys2ref : xwb_clock_crossing
   port map(

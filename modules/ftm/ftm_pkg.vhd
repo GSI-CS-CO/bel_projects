@@ -26,7 +26,7 @@ package ftm_pkg is
   
 
   function f_cluster_sdb(cores : natural; ramPerCore  : natural;  is_dm : boolean ) return t_sdb_record_array;
-  function f_cluster_bridge(msi_slave : t_sdb_record, cores : natural; ramPerCore  : natural;  is_dm : boolean ) return t_sdb_bridge;
+  function f_cluster_bridge(msi_slave : t_sdb_record; cores : natural; ramPerCore  : natural;  is_dm : boolean ) return t_sdb_bridge;
                         
                         
   constant c_dummy_bridge : t_sdb_bridge := (
@@ -403,13 +403,13 @@ package body ftm_pkg is
 
   function f_cluster_sdb(cores : natural; ramPerCore  : natural;  is_dm : boolean )
   return t_sdb_record_array is
-    variable v_clu_req :  t_sdb_record_array(2 + cores) -1 downto 0);
+    variable v_clu_req :  t_sdb_record_array((2 + cores) -1 downto 0);
     variable i : natural;
   begin
     -- add info rom, prioq ctrl, rams 
     v_clu_req(0) := f_sdb_auto_device(c_cluster_info_sdb,        true);
-    v_clu_req(1) := f_sdb_auto_device(c_ebm_queue_ctrl_sdb,     is_dm));
-    for i in (2 to v_clu_req'length-1) loop
+    v_clu_req(1) := f_sdb_auto_device(c_ebm_queue_ctrl_sdb,     is_dm);
+    for i in 2 to v_clu_req'length-1 loop
       v_clu_req(i) := f_sdb_auto_device( f_xwb_dpram_userlm32(ramPerCore), True);
     end loop;
 
@@ -418,13 +418,14 @@ package body ftm_pkg is
 
 
 
-  function f_cluster_bridge(msi_slave : t_sdb_record, cores : natural; ramPerCore  : natural;  is_dm : boolean )
+  function f_cluster_bridge(msi_slave : t_sdb_record; cores : natural; ramPerCore  : natural;  is_dm : boolean )
   return t_sdb_bridge is 
     variable v_ret      :  t_sdb_bridge;
-    variable v_clu_req_slaves  :  t_sdb_record_array(msi_masters'length + cores + 2) -1 downto 0);
+    variable v_clu_req_slaves  :  t_sdb_record_array((cores + 2)-1 downto 0);
+	 variable v_clu_req_masters :  t_sdb_record_array(0 downto 0); 
   begin
     v_clu_req_slaves  :=  f_cluster_clu_sdb(cores, ramPerCore, is_dm);
-    v_clu_req_masters :=  (0 => msi_slave, true);
+    v_clu_req_masters :=  (0 =>  f_sdb_auto_msi(msi_slave, true));
 
     v_ret  := f_xwb_bridge_layout_sdb(
             true, 
