@@ -39,5 +39,6 @@ modules = {
     "remote_update",
     "pll",
     "remote_update",
+    "watchdog",
   ]
 }

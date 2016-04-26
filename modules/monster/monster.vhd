@@ -42,6 +42,7 @@ use work.altera_flash_pkg.all;
 use work.altera_networks_pkg.all;
 use work.altera_lvds_pkg.all;
 use work.build_id_pkg.all;
+use work.watchdog_pkg.all;
 use work.oled_display_pkg.all;
 use work.lpc_uart_pkg.all;
 use work.wb_irq_pkg.all;
@@ -360,40 +361,42 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- required slaves
-  constant c_dev_my_slaves       : natural := 25;
+  constant c_dev_my_slaves       : natural := 26;
   constant c_devs_build_id       : natural := 0;
-  constant c_devs_flash          : natural := 1;
-  constant c_devs_reset          : natural := 2;
-  constant c_devs_wrc            : natural := 3;
-  constant c_devs_ebm            : natural := 4;
-  constant c_devs_tlu            : natural := 5;
-  constant c_devs_eca_ctl        : natural := 6;
-  constant c_devs_eca_aq         : natural := 7;
-  constant c_devs_eca_tlu        : natural := 8;
-  constant c_devs_eca_wbm        : natural := 9;
-  constant c_devs_emb_cpu        : natural := 10;
-  constant c_devs_serdes_clk_gen : natural := 11;
-  constant c_devs_control        : natural := 12;
+  constant c_devs_watchdog       : natural := 1;
+  constant c_devs_flash          : natural := 2;
+  constant c_devs_reset          : natural := 3;
+  constant c_devs_wrc            : natural := 4;
+  constant c_devs_ebm            : natural := 5;
+  constant c_devs_tlu            : natural := 6;
+  constant c_devs_eca_ctl        : natural := 7;
+  constant c_devs_eca_aq         : natural := 8;
+  constant c_devs_eca_tlu        : natural := 9;
+  constant c_devs_eca_wbm        : natural := 10;
+  constant c_devs_emb_cpu        : natural := 11;
+  constant c_devs_serdes_clk_gen : natural := 12;
+  constant c_devs_control        : natural := 13;
   
   -- optional slaves:
-  constant c_devs_lcd            : natural := 13;
-  constant c_devs_oled           : natural := 14;
-  constant c_devs_scubus         : natural := 15;
-  constant c_devs_scubirq        : natural := 16;
-  constant c_devs_mil            : natural := 17;
-  constant c_devs_mil_ctrl       : natural := 18;
-  constant c_devs_ow             : natural := 19;
-  constant c_devs_ssd1325        : natural := 20;
-  constant c_devs_vme_info       : natural := 21;
-  constant c_devs_CfiPFlash      : natural := 22;
-  constant c_devs_nau8811        : natural := 23;
-  constant c_devs_psram          : natural := 24;
+  constant c_devs_lcd            : natural := 14;
+  constant c_devs_oled           : natural := 15;
+  constant c_devs_scubus         : natural := 16;
+  constant c_devs_scubirq        : natural := 17;
+  constant c_devs_mil            : natural := 18;
+  constant c_devs_mil_ctrl       : natural := 19;
+  constant c_devs_ow             : natural := 20;
+  constant c_devs_ssd1325        : natural := 21;
+  constant c_devs_vme_info       : natural := 22;
+  constant c_devs_CfiPFlash      : natural := 23;
+  constant c_devs_nau8811        : natural := 24;
+  constant c_devs_psram          : natural := 25;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
   
   constant c_dev_layout_my_slaves : t_sdb_record_array(c_dev_my_slaves-1 downto 0) :=
    (c_devs_build_id       => f_sdb_auto_device(c_build_id_sdb,                   true),
+    c_devs_watchdog       => f_sdb_auto_device(c_watchdog_sdb,                   true),
     c_devs_flash          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), true),
     c_devs_reset          => f_sdb_auto_device(c_arria_reset,                    true),
     c_devs_wrc            => f_sdb_auto_bridge(c_wrcore_bridge_sdb,              true),
@@ -1362,6 +1365,13 @@ begin
       rst_n_i => rstn_sys,
       slave_i => dev_bus_master_o(c_devs_build_id),
       slave_o => dev_bus_master_i(c_devs_build_id));
+  
+  dog : watchdog
+    port map(
+      clk_i   => clk_sys,
+      rst_n_i => rstn_sys,
+      slave_i => dev_bus_master_o(c_devs_watchdog),
+      slave_o => dev_bus_master_i(c_devs_watchdog));
   
   flash_a2 : if c_is_arria2 generate
     flash : flash_top
