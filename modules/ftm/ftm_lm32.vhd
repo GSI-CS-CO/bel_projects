@@ -73,66 +73,40 @@ end ftm_lm32;
 
 architecture rtl of ftm_lm32 is 
    
-   -- crossbar layout
-   constant c_lm32_slaves          : natural := 9;
-   constant c_lm32_masters         : natural := 2;
-
-   --indices  
-   constant c_lm32_ram             : natural := 0;
-   constant c_lm32_timer           : natural := 1;
-   constant c_lm32_msi_ctrl        : natural := 2;
-   constant c_lm32_cpu_info        : natural := 3;
-   constant c_lm32_sys_time        : natural := 4;
-   constant c_lm32_atomic          : natural := 5;
-   constant c_lm32_prioq           : natural := 6;
-   constant c_lm32_world_bridge    : natural := 7;
-
-   constant c_msi_lm32_real        : natural := 0; -- lm32 is no native MSI device, we have to hide its 2nd Master port
-   constant c_msi_lm32_fake        : natural := 1;
+ 
    
-   signal   s_cpu_info,
-            s_sys_time,
-            s_atomic               : t_wishbone_master_in;
+  signal   s_cpu_info,
+           s_sys_time,
+           s_atomic            : t_wishbone_master_in;
                
-   constant c_lm32_req_slaves : t_sdb_record_array(c_lm32_slaves-1 downto 0) :=
-   (c_lm32_ram                => f_sdb_embed_device(f_xwb_dpram_userlm32(g_size),   x"00000000"), -- this CPU's RAM
-    c_lm32_msi_ctrl           => f_sdb_auto_device(c_irq_slave_ctrl_sdb,  true),
-    c_lm32_cpu_info           => f_sdb_auto_device(c_cpu_info_sdb,        true),
-    c_lm32_sys_time           => f_sdb_auto_device(c_sys_time_sdb,        true),
-    c_lm32_atomic             => f_sdb_auto_device(c_atomic_sdb,          true),
-    c_lm32_prioq              => f_sdb_auto_device(c_ebm_queue_data_sdb,  g_is_dm),             
-    c_lm32_world_bridge       => f_sdb_embed_bridge(g_world_bridge_sdb,    x"80000000")
-  );
+  constant c_lm32_req_slaves   : t_sdb_record_array(c_lm32_slaves-1 downto 0) 	:= f_lm32_slaves_req(g_is_dm);
+  constant c_lm32_req_masters  : t_sdb_record_array(c_lm32_masters-1 downto 0) 	:= f_lm32_masters_req;
 
-   constant c_lm32_req_masters  : t_sdb_record_array(c_lm32_masters-1 downto 0) := 
-   (c_msi_lm32_real           => f_sdb_auto_msi(c_msi_lm32_sdb,           true),
-    c_msi_lm32_fake           => f_sdb_auto_msi(c_null_msi,               false)
-   );
-
-   constant c_lm32_layout      : t_sdb_record_array(c_lm32_slaves + c_lm32_masters -1 downto 0) := 
+  --FIXME: this is borderline and only works bevause this CB is the first in line. separate mastre and slave layout as done in the monster
+  constant c_lm32_layout       : t_sdb_record_array(c_lm32_slaves + c_lm32_masters -1 downto 0) := 
                                                        f_sdb_auto_layout(c_lm32_req_slaves, c_lm32_req_masters);
-   constant c_lm32_sdb_address : t_wishbone_address := f_sdb_auto_sdb(c_lm32_req_slaves, c_lm32_req_masters);
+  constant c_lm32_sdb_address  : t_wishbone_address := f_sdb_auto_sdb(c_lm32_req_slaves, c_lm32_req_masters);
  
    --signals
 
-   signal lm32_idwb_master_in    : t_wishbone_master_in_array(c_lm32_masters-1 downto 0);
-   signal lm32_idwb_master_out   : t_wishbone_master_out_array(c_lm32_masters-1 downto 0);
-   signal lm32_cb_master_in      : t_wishbone_master_in_array(c_lm32_slaves-1 downto 0);
-   signal lm32_cb_master_out     : t_wishbone_master_out_array(c_lm32_slaves-1 downto 0);
-   
-   signal msi_cb_master_in       : t_wishbone_master_in_array(c_lm32_masters-1 downto 0);
-   signal msi_cb_master_out      : t_wishbone_master_out_array(c_lm32_masters-1 downto 0);   
-   signal msi_cb_slave_in        : t_wishbone_slave_in_array(0 downto 0); -- single msi input from outside
-   signal msi_cb_slave_out       : t_wishbone_slave_out_array(0downto 0);   
+  signal lm32_idwb_master_in    : t_wishbone_master_in_array(c_lm32_masters-1 downto 0);
+  signal lm32_idwb_master_out   : t_wishbone_master_out_array(c_lm32_masters-1 downto 0);
+  signal lm32_cb_master_in      : t_wishbone_master_in_array(c_lm32_slaves-1 downto 0);
+  signal lm32_cb_master_out     : t_wishbone_master_out_array(c_lm32_slaves-1 downto 0);
 
-   signal s_irq : std_logic_vector(31 downto 0);
-   
-   signal r_tai_8ns_HI : std_logic_vector(31 downto 0);
-   signal r_tai_8ns_LO, r_time_freeze_LO : std_logic_vector(31 downto 0);
-   signal rst_lm32_n   : std_logic;
-   signal r_cyc_atomic : std_logic;
-   signal r_cyc, s_ext_clu_cyc, s_ext_world_cyc : std_logic;
-   
+  signal msi_cb_master_in       : t_wishbone_master_in_array(c_lm32_masters-1 downto 0);
+  signal msi_cb_master_out      : t_wishbone_master_out_array(c_lm32_masters-1 downto 0);   
+  signal msi_cb_slave_in        : t_wishbone_slave_in_array(0 downto 0); -- single msi input from outside
+  signal msi_cb_slave_out       : t_wishbone_slave_out_array(0downto 0);   
+
+  signal s_irq : std_logic_vector(31 downto 0);
+
+  signal r_tai_8ns_HI : std_logic_vector(31 downto 0);
+  signal r_tai_8ns_LO, r_time_freeze_LO : std_logic_vector(31 downto 0);
+  signal rst_lm32_n   : std_logic;
+  signal r_cyc_atomic : std_logic;
+  signal r_cyc, s_ext_clu_cyc, s_ext_world_cyc : std_logic;
+
 begin
    
 

@@ -24,7 +24,10 @@ package ftm_pkg is
   function f_substr_start(s : string; idx : natural; p : character) return integer;
   function f_substr_end(s : string; idx : natural; p : character) return integer; 
   
+  function f_lm32_slaves_req(is_dm : boolean) return t_sdb_record_array; 
+  function f_lm32_masters_req return t_sdb_record_array; 
 
+  function f_lm32_masters_bridge_msis(cores : natural) return t_sdb_record_array;
   function f_cluster_sdb(cores : natural; ramPerCore  : natural;  is_dm : boolean ) return t_sdb_record_array;
   function f_cluster_bridge(msi_slave : t_sdb_record; cores : natural; ramPerCore  : natural;  is_dm : boolean ) return t_sdb_bridge;
                         
@@ -155,7 +158,23 @@ package ftm_pkg is
   );
   end component;
   
-  
+    -- crossbar layout
+   constant c_lm32_slaves          : natural := 9;
+   constant c_lm32_masters         : natural := 2;
+
+   --indices  
+   constant c_lm32_ram             : natural := 0;
+   constant c_lm32_timer           : natural := 1;
+   constant c_lm32_msi_ctrl        : natural := 2;
+   constant c_lm32_cpu_info        : natural := 3;
+   constant c_lm32_sys_time        : natural := 4;
+   constant c_lm32_atomic          : natural := 5;
+   constant c_lm32_prioq           : natural := 6;
+   constant c_lm32_world_bridge    : natural := 7;
+
+   constant c_msi_lm32_real        : natural := 0; -- lm32 is no native MSI device, we have to hide its 2nd Master port
+   constant c_msi_lm32_fake        : natural := 1;  
+
   constant c_atomic_sdb : t_sdb_device := (
    abi_class    => x"0000", -- undocumented device
    abi_ver_major => x"01",
@@ -416,9 +435,43 @@ package body ftm_pkg is
     return v_clu_req;
   end f_cluster_sdb;
 
+  function f_lm32_masters_req
+  return t_sdb_record_array is
+    variable v_req :  t_sdb_record_array(1 downto 0);
+  begin
+    v_req := (c_msi_lm32_real => f_sdb_auto_msi(c_msi_lm32_sdb,           true),
+              c_msi_lm32_fake => f_sdb_auto_msi(c_null_msi,               false));
+    return v_req;
+  end f_lm32_masters_req;
+
+  function f_lm32_slaves_req(is_dm : boolean)
+  return t_sdb_record_array is
+    variable v_req :  t_sdb_record_array(c_lm32_slaves-1 downto 0);
+  begin
+    v_req := (c_lm32_ram                => f_sdb_embed_device(f_xwb_dpram_userlm32(g_size),   x"00000000"), -- this CPU's RAM
+              c_lm32_msi_ctrl           => f_sdb_auto_device(c_irq_slave_ctrl_sdb,  true),
+              c_lm32_cpu_info           => f_sdb_auto_device(c_cpu_info_sdb,        true),
+              c_lm32_sys_time           => f_sdb_auto_device(c_sys_time_sdb,        true),
+              c_lm32_atomic             => f_sdb_auto_device(c_atomic_sdb,          true),
+              c_lm32_prioq              => f_sdb_auto_device(c_ebm_queue_data_sdb,  is_dm),             
+              c_lm32_world_bridge       => f_sdb_embed_bridge(g_world_bridge_sdb,    x"80000000")
+            );
+    return v_req;
+  end f_lm32_slaves_req;
+
+  function f_lm32_masters_bridge_msis(cores : natural)
+  return t_sdb_record_array is
+    constant c_req         : t_sdb_record_array(1 downto 0) := f_lm32_masters_req;
+    constant c_layout     : t_sdb_record_array := f_sdb_auto_layout(c_req);
+    constant c_bridge_msi : t_sdb_msi          := f_xwb_msi_layout_sdb(c_layout);
+    constant c_result : t_sdb_record_array(cores-1 downto 0) := 
+       (others => f_sdb_auto_msi(c_bridge_msi, true));
+  begin
+    return c_result;
+  end f_lm32_masters_bridge_msis;
 
 
-  function f_cluster_bridge(msi_slave : t_sdb_record; cores : natural; ramPerCore  : natural;  is_dm : boolean )
+  function f_cluster_bridge(msi_slave : t_sdb_msi; cores : natural; ramPerCore  : natural;  is_dm : boolean )
   return t_sdb_bridge is 
     variable v_ret      :  t_sdb_bridge;
     variable v_clu_req_slaves  :  t_sdb_record_array((cores + 2)-1 downto 0);
@@ -429,6 +482,7 @@ package body ftm_pkg is
 
     v_ret  := f_xwb_bridge_layout_sdb(
             true, 
+              --FIXME: this is borderline and only works bevause this CB is last in line. separate mastre and slave layout as done in the monster
             f_sdb_auto_layout(v_clu_req_slaves, v_clu_req_masters),  
             f_sdb_auto_sdb(v_clu_req_slaves, v_clu_req_masters)
           );

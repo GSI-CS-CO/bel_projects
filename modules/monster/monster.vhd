@@ -312,22 +312,24 @@ architecture rtl of monster is
   -- GSI Top Crossbar Masters ------------------------------------------------------
   ----------------------------------------------------------------------------------
   
-  constant c_top_my_masters : natural := 5;
+  constant c_top_my_masters : natural := 6;
   constant c_topm_ebs       : natural := 0;
   constant c_topm_eca_wbm   : natural := 1;
   constant c_topm_pcie      : natural := 2;
   constant c_topm_vme       : natural := 3;
   constant c_topm_usb       : natural := 4;
+  constant c_topm_prioq     : natural := 5;
   
   constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) :=
    (c_topm_ebs     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
     c_topm_eca_wbm => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for ECA=>WB macro player
     c_topm_pcie    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
     c_topm_vme     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
-    c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     false));  -- Need to add MSI support !!!
+    c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     false), -- Need to add MSI support !!!
+    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false));  
   
   -- The FTM adds a bunch of masters to this crossbar
-  constant c_ftm_masters : t_sdb_record_array(0 downto 1) := (others => (others => '0')); -- !!! f_ftm_masters(g_lm32_cores, g_lm32_MSIs, g_lm32_ramsizes, g_lm32_shared_ramsize, g_lm32_are_ftm);
+  constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
   constant c_top_masters : natural := c_top_my_masters + c_ftm_masters'length;
   constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=
     c_top_layout_my_masters & c_ftm_masters;
@@ -361,7 +363,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- required slaves
-  constant c_dev_my_slaves       : natural := 26;
+  constant c_dev_slaves          : natural := 27;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
@@ -376,25 +378,27 @@ architecture rtl of monster is
   constant c_devs_emb_cpu        : natural := 11;
   constant c_devs_serdes_clk_gen : natural := 12;
   constant c_devs_control        : natural := 13;
+  constant c_devs_ftm_cluster    : natural := 14;
   
   -- optional slaves:
-  constant c_devs_lcd            : natural := 14;
-  constant c_devs_oled           : natural := 15;
-  constant c_devs_scubus         : natural := 16;
-  constant c_devs_scubirq        : natural := 17;
-  constant c_devs_mil            : natural := 18;
-  constant c_devs_mil_ctrl       : natural := 19;
-  constant c_devs_ow             : natural := 20;
-  constant c_devs_ssd1325        : natural := 21;
-  constant c_devs_vme_info       : natural := 22;
-  constant c_devs_CfiPFlash      : natural := 23;
-  constant c_devs_nau8811        : natural := 24;
-  constant c_devs_psram          : natural := 25;
+  constant c_devs_lcd            : natural := 15;
+  constant c_devs_oled           : natural := 16;
+  constant c_devs_scubus         : natural := 17;
+  constant c_devs_scubirq        : natural := 18;
+  constant c_devs_mil            : natural := 19;
+  constant c_devs_mil_ctrl       : natural := 20;
+  constant c_devs_ow             : natural := 21;
+  constant c_devs_ssd1325        : natural := 22;
+  constant c_devs_vme_info       : natural := 23;
+  constant c_devs_CfiPFlash      : natural := 24;
+  constant c_devs_nau8811        : natural := 25;
+  constant c_devs_psram          : natural := 26;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
+  constant c_ftm_slaves : t_sdb_bridge := f_cluster_bridge(c_dev_bridge_msi, g_lm32_cores, g_lm32_ramsizes, g_lm32_are_ftm);
   
-  constant c_dev_layout_my_slaves : t_sdb_record_array(c_dev_my_slaves-1 downto 0) :=
+  constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
    (c_devs_build_id       => f_sdb_auto_device(c_build_id_sdb,                   true),
     c_devs_watchdog       => f_sdb_auto_device(c_watchdog_sdb,                   true),
     c_devs_flash          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), true),
@@ -409,6 +413,7 @@ architecture rtl of monster is
     c_devs_emb_cpu        => f_sdb_auto_device(c_eca_queue_slave_sdb,            true),
     c_devs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          true),
     c_devs_control        => f_sdb_auto_device(c_io_control_sdb,                 true),
+    c_devs_ftm_cluster    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
     c_devs_lcd            => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_devs_oled           => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_devs_scubus         => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
@@ -421,12 +426,6 @@ architecture rtl of monster is
     c_devs_psram          => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
     c_devs_CfiPFlash      => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
     c_devs_ssd1325        => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325));
-
-  -- FTM provides some slaves we must place here
-  constant c_ftm_slaves : t_sdb_record_array(0 downto 1) := (others => (others => '0')); -- !!! f_ftm_slaves(c_dev_bridge_msi, g_lm32_cores, g_lm32_MSIs, g_lm32_ramsizes, g_lm32_shared_ramsize, g_lm32_are_ftm);
-  constant c_dev_slaves : natural := c_dev_my_slaves + c_ftm_slaves'length;
-  constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
-    c_dev_layout_my_slaves & c_ftm_slaves;
     
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
@@ -1010,32 +1009,32 @@ begin
       ebm_wb_slave_i  => dev_bus_master_o(c_devs_ebm),
       ebm_wb_slave_o  => dev_bus_master_i(c_devs_ebm));
    
---  !!!
---  lm32 : ftm_lm32_cluster 
---    generic map(
---      g_is_ftm           => g_lm32_are_ftm,	
---      g_cores            => g_lm32_cores,
---      g_ram_per_core     => g_lm32_ramsizes,
---      g_shared_mem       => g_lm32_shared_ramsize,
---      g_world_bridge_sdb => c_top_bridge_sdb,
---      g_bottom_bridge_msi=> c_dev_bridge_msi,
---      g_init_files       => g_lm32_init_files,
---      g_msi_per_core     => g_lm32_MSIs)
---    port map(
---      clk_ref_i            => clk_ref,
---      rst_ref_n_i          => rstn_ref,
---      clk_sys_i            => clk_sys,
---      rst_sys_n_i          => rstn_sys,
---      rst_lm32_n_i         => s_lm32_rstn,
---      tm_tai8ns_i          => s_time,
---      irq_slave_o          => irq_cbar_master_i(c_irqs_lm32),
---      irq_slave_i          => irq_cbar_master_o(c_irqs_lm32),
---      cluster_slave_o      => top_cbar_master_i(c_tops_lm32),
---      cluster_slave_i      => top_cbar_master_o(c_tops_lm32),
---      ftm_queue_master_o   => top_cbar_slave_i (c_topm_fpq),
---      ftm_queue_master_i   => top_cbar_slave_o (c_topm_fpq),
---      master_o             => top_cbar_slave_i (c_topm_lm32),
---      master_i             => top_cbar_slave_o (c_topm_lm32));
+
+  lm32 : ftm_lm32_cluster 
+    generic map(
+      g_is_dm            => g_lm32_are_ftm,	
+      g_cores            => g_lm32_cores,
+      g_ram_per_core     => g_lm32_ramsizes,
+      g_world_bridge_sdb => c_top_bridge_sdb,
+      g_clu_msi_sdb      => c_dev_bridge_msi,
+      g_init_files       => g_lm32_init_files)
+    port map(
+      clk_ref_i          => clk_ref,
+      rst_ref_n_i        => rstn_ref,
+      clk_sys_i          => clk_sys,
+      rst_sys_n_i        => rstn_sys,
+      rst_lm32_n_i       => s_lm32_rstn,
+      tm_tai8ns_i        => s_time,
+      lm32_masters_o     => top_bus_slave_i(top_bus_slave_i'high downto c_top_my_masters),
+      lm32_masters_i     => top_bus_slave_o(top_bus_slave_o'high downto c_top_my_masters),
+      lm32_msi_slaves_o  => top_msi_master_i(top_msi_master_i'high downto c_top_my_masters), 
+      lm32_msi_slaves_i  => top_msi_master_o(top_msi_master_o'high downto c_top_my_masters), 
+      clu_slave_o        => dev_bus_master_i(c_devs_ftm_cluster),
+      clu_slave_i        => dev_bus_master_o(c_devs_ftm_cluster),
+      clu_msi_master_o   => dev_msi_slave_i(c_devs_ftm_cluster),
+      clu_msi_master_i   => dev_msi_slave_o(c_devs_ftm_cluster),
+      dm_prioq_master_o  => top_bus_slave_i(c_topm_prioq),
+      dm_prioq_master_i  => top_bus_slave_i(c_topm_prioq));
   
   pcie_n : if not g_en_pcie generate
     top_bus_slave_i (c_topm_pcie) <= cc_dummy_master_out;

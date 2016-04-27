@@ -59,16 +59,16 @@ port(
   tm_tai8ns_i    : in std_logic_vector(63 downto 0);
 
   -- lm32 core interfaces       
-  lm32_masters_o   : out t_wishbone_master_out_array(g_cores-1 downto 0); 
-  lm32_masters_i   : in  t_wishbone_master_in_array(g_cores-1 downto 0);
-  lm32_msi_slaves_o  : out t_wishbone_slave_out_array(g_cores-1 downto 0); 
-  lm32_msi_slaves_i  : in  t_wishbone_slave_in_array(g_cores-1 downto 0);  
+  lm32_masters_o    : out t_wishbone_master_out_array(g_cores-1 downto 0); 
+  lm32_masters_i    : in  t_wishbone_master_in_array(g_cores-1 downto 0);
+  lm32_msi_slaves_o : out t_wishbone_slave_out_array(g_cores-1 downto 0); 
+  lm32_msi_slaves_i : in  t_wishbone_slave_in_array(g_cores-1 downto 0);  
 
   -- cluster crossbar interface
-  clu_slave_o  : out t_wishbone_slave_out; 
-  clu_slave_i  : in  t_wishbone_slave_in := ('0', '0', x"00000000", x"F", '0', x"00000000");
-  clu_msi_master_o : out t_wishbone_master_out;
-  clu_msi_master_i : in t_wishbone_master_in;
+  clu_slave_o       : out t_wishbone_slave_out; 
+  clu_slave_i       : in  t_wishbone_slave_in := ('0', '0', x"00000000", x"F", '0', x"00000000");
+  clu_msi_master_o  : out t_wishbone_master_out;
+  clu_msi_master_i  : in t_wishbone_master_in;
 
   -- optional prioq interface
   dm_prioq_master_o : out t_wishbone_master_out; 
@@ -85,8 +85,8 @@ architecture rtl of ftm_lm32_cluster is
 
   signal lm32_masters_in      : t_wishbone_master_in_array   (g_cores-1 downto 0);
   signal lm32_masters_out     : t_wishbone_master_out_array  (g_cores-1 downto 0);
-  signal lm32_msi_masters_in  : t_wishbone_slave_in_array   (g_cores-1 downto 0);
-  signal lm32_msi_masters_out : t_wishbone_slave_out_array  (g_cores-1 downto 0); 
+  signal lm32_msi_slaves_in   : t_wishbone_slave_in_array   (g_cores-1 downto 0);
+  signal lm32_msi_slaves_out  : t_wishbone_slave_out_array  (g_cores-1 downto 0); 
 
 
   --**************************************************************************--
@@ -161,11 +161,11 @@ begin
       world_master_o => lm32_masters_out(I),
       world_master_i => lm32_masters_in(I),
       --optional prioq interface for DM
-      prioq_master_o  => prioq_slaves_in (I),
-      prioq_master_i  => prioq_slaves_out(I),
+      prioq_master_o => prioq_slaves_in (I),
+      prioq_master_i => prioq_slaves_out(I),
       -- MSI
-      msi_master_o   => lm32_msi_masters_out (I),
-      msi_master_i   => lm32_msi_masters_in (I),       
+      msi_slave_i    => lm32_msi_slaves_in (I),
+      msi_slave_o    => lm32_msi_slaves_out (I),       
       --2nd RAM port               
       ram_slave_o    => clu_cb_masterport_in(2+I),                      
       ram_slave_i    => clu_cb_masterport_out(2+I)
@@ -191,13 +191,13 @@ begin
       -- Slave control port
       slave_clk_i    => clk_sys_i,
       slave_rst_n_i  => rst_sys_n_i,
-      slave_i        => lm32_msi_slave_i,
-      slave_o        => lm32_msi_slave_o,
+      slave_i        => lm32_msi_slaves_i(I),
+      slave_o        => lm32_msi_slaves_o(I),
       -- Master reader port
       master_clk_i   => clk_ref_i,
       master_rst_n_i => rst_ref_n_i,
-      master_i       => lm32_msi_slave_out,
-      master_o       => lm32_msi_slave_in
+      master_i       => lm32_msi_slaves_out(I),
+      master_o       => lm32_msi_slaves_in(I)
     );  
 
   end generate G1;  
