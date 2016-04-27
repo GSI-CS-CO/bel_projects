@@ -3,5 +3,4 @@ files = [
   "ftm_lm32_cluster.vhd",
   "ftm_pkg.vhd",
   "time_clk_cross.vhd",
-  "ftm_priority_queue.vhd"
   ]

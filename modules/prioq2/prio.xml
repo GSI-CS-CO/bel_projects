@@ -1,0 +1,31 @@
+<wbdevice author="M. Kreider" email="m.kreider@gsi.de" version="0.0.1">
+   
+   <clockdomain name="sys"></clockdomain>
+   
+   <generic name="channels" type="natural" default="16" comment="Input channels"></generic>
+
+   <slaveinterface name="ctrl" data="32" type="pipelined" pages="channels">          
+      <sdb vendorID="GSI" productID="0x10040200" version="2" date="auto" name="DM-PriorityQ-Ctrl"></sdb>
+      <registers>
+          <reg  name="reset"          write="yes"             bits="1"  pulse="yes"   comment="Resets the Priority Queue"></reg>
+          <reg  name="mode"           read="yes"  write="yes" bits="3"  access="atomic"  comment="b2: Time limit, b1: Msg limit, b0 enable"></reg>
+          <reg  name="clear"          write="yes"             bits="1"  pulse="yes"   comment="Clears counters and status"></reg>
+          <reg  name="st_full"        read="yes"  drive="yes" bits="channels"         comment="Channel Full flag (n..0) "></reg>
+          <reg  name="st_late"        read="yes"  drive="yes" bits="1"                comment="Late message detected"></reg>
+          <reg  name="ebm_adr"        read="yes"  write="yes" bits="32"               comment="Etherbone Master address"></reg>
+          <reg  name="eca_adr"        read="yes"  write="yes" bits="32"               comment="Event Condition Action Unit address"></reg>
+          <reg  name="tx_max_msgs"    read="yes"  write="yes" bits="8"                comment="Max msgs per packet"></reg>
+          <reg  name="tx_max_wait"    read="yes"  write="yes" bits="32"               comment="Max wait time for non empty packet"></reg>
+          <reg  name="tx_rate_limit"  read="yes"  write="yes" bits="32"               comment="Max msgs per milliseconds"></reg>
+          <reg  name="offs_late"      read="yes"  write="yes" bits="64"               comment="Time offset before message is late"></reg>
+          <reg  name="cnt_late"       read="yes"  drive="yes" bits="32"               comment="Sum of all late messages"></reg>
+          <reg  name="ts_late"        read="yes"  drive="yes" bits="64"               comment="First late Timestamp"></reg> 
+          <reg  name="cnt_out_all"    read="yes"  drive="yes" bits="64"               comment="Sum of all outgoing messages"></reg>
+          
+          <reg  name="ch_sel"         read="yes"  write="yes" bits="4"  address="0x100"           comment="Channel select"></reg>
+          <reg  name="cnt_out"        read="yes"  drive="yes" bits="32" paged="yes"     comment="Outgoing messages per Channel"></reg>
+          <reg  name="cnt_in"         read="yes"  drive="yes" bits="32" paged="yes"     comment="Incoming messages per Channel"></reg>
+      </registers>
+   </slaveinterface>
+
+</wbdevice>
