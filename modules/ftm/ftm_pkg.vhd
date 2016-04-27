@@ -24,12 +24,12 @@ package ftm_pkg is
   function f_substr_start(s : string; idx : natural; p : character) return integer;
   function f_substr_end(s : string; idx : natural; p : character) return integer; 
   
-  function f_lm32_slaves_req(is_dm : boolean) return t_sdb_record_array; 
+  function f_lm32_slaves_req(g_size : natural; g_world_bridge_sdb : t_sdb_bridge; is_dm : boolean) return t_sdb_record_array; 
   function f_lm32_masters_req return t_sdb_record_array; 
 
   function f_lm32_masters_bridge_msis(cores : natural) return t_sdb_record_array;
   function f_cluster_sdb(cores : natural; ramPerCore  : natural;  is_dm : boolean ) return t_sdb_record_array;
-  function f_cluster_bridge(msi_slave : t_sdb_record; cores : natural; ramPerCore  : natural;  is_dm : boolean ) return t_sdb_bridge;
+  function f_cluster_bridge(msi_slave : t_sdb_msi; cores : natural; ramPerCore  : natural;  is_dm : boolean ) return t_sdb_bridge;
                         
                         
   constant c_dummy_bridge : t_sdb_bridge := (
@@ -87,7 +87,7 @@ package ftm_pkg is
     g_profile       : string  := "medium_icache_debug";
     g_init_files    : string;   
     g_world_bridge_sdb : t_sdb_bridge;   -- inferior sdb crossbar         
-    g_clu_msi_sdb      : t_sdb_record    -- superior msi crossbar          
+    g_clu_msi_sdb      : t_sdb_msi       -- superior msi crossbar          
   );
   port(
     clk_ref_i      : in  std_logic;
@@ -158,160 +158,153 @@ package ftm_pkg is
   );
   end component;
   
-    -- crossbar layout
-   constant c_lm32_slaves          : natural := 9;
-   constant c_lm32_masters         : natural := 2;
+   -- crossbar layout
+  constant c_lm32_slaves          : natural := 7;
+  constant c_lm32_masters         : natural := 2;
 
-   --indices  
-   constant c_lm32_ram             : natural := 0;
-   constant c_lm32_timer           : natural := 1;
-   constant c_lm32_msi_ctrl        : natural := 2;
-   constant c_lm32_cpu_info        : natural := 3;
-   constant c_lm32_sys_time        : natural := 4;
-   constant c_lm32_atomic          : natural := 5;
-   constant c_lm32_prioq           : natural := 6;
-   constant c_lm32_world_bridge    : natural := 7;
+  --indices  
+  constant c_lm32_ram             : natural := 0;
+  constant c_lm32_msi_ctrl        : natural := 1;
+  constant c_lm32_cpu_info        : natural := 2;
+  constant c_lm32_sys_time        : natural := 3;
+  constant c_lm32_atomic          : natural := 4;
+  constant c_lm32_prioq           : natural := 5;
+  constant c_lm32_world_bridge    : natural := 6;
 
-   constant c_msi_lm32_real        : natural := 0; -- lm32 is no native MSI device, we have to hide its 2nd Master port
-   constant c_msi_lm32_fake        : natural := 1;  
+  constant c_msi_lm32_real        : natural := 0; -- lm32 is no native MSI device, we have to hide its 2nd Master port
+  constant c_msi_lm32_fake        : natural := 1;  
 
   constant c_atomic_sdb : t_sdb_device := (
-   abi_class    => x"0000", -- undocumented device
-   abi_ver_major => x"01",
-   abi_ver_minor => x"01",
-   wbd_endian   => c_sdb_endian_big,
-   wbd_width    => x"7", -- 8/16/32-bit port granularity
-   sdb_component => (
-   addr_first   => x"0000000000000000",
-   addr_last    => x"0000000000000003",
-   product => (
-   vendor_id    => x"0000000000000651", -- GSI
-   device_id    => x"10040100",
-   version     => x"00000001",
-   date       => x"20131119",
-   name       => "ATOMIC CYCLINE CTRL")));
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"0000000000000003",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"10040100",
+    version       => x"00000001",
+    date          => x"20131119",
+    name          => "ATOMIC CYCLINE CTRL")));
   
   constant c_sys_time_sdb : t_sdb_device := (
-   abi_class    => x"0000", -- undocumented device
-   abi_ver_major => x"01",
-   abi_ver_minor => x"01",
-   wbd_endian   => c_sdb_endian_big,
-   wbd_width    => x"7", -- 8/16/32-bit port granularity
-   sdb_component => (
-   addr_first   => x"0000000000000000",
-   addr_last    => x"0000000000000007",
-   product => (
-   vendor_id    => x"0000000000000651", -- GSI
-   device_id    => x"10040084",
-   version     => x"00000001",
-   date       => x"20131009",
-   name       => "TAI-Time-8ns     ")));
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"0000000000000007",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"10040084",
+    version       => x"00000001",
+    date          => x"20131009",
+    name          => "TAI-Time-8ns       ")));
   
   constant c_cpu_info_sdb : t_sdb_device := (
-   abi_class    => x"0000", -- undocumented device
-   abi_ver_major => x"01",
-   abi_ver_minor => x"01",
-   wbd_endian   => c_sdb_endian_big,
-   wbd_width    => x"7", -- 8/16/32-bit port granularity
-   sdb_component => (
-   addr_first   => x"0000000000000000",
-   addr_last    => x"000000000000000f",
-   product => (
-   vendor_id    => x"0000000000000651", -- GSI
-   device_id    => x"10040085",
-   version     => x"00000001",
-   date       => x"20131009",
-   name       => "CPU-Info-ROM     ")));
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"000000000000000f",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"10040085",
+    version       => x"00000001",
+    date          => x"20131009",
+    name          => "CPU-Info-ROM       ")));
 
   constant c_ebm_queue_data_sdb : t_sdb_device := (
-  abi_class    => x"0000", -- undocumented device
-  abi_ver_major => x"01",
-  abi_ver_minor => x"01",
-  wbd_endian   => c_sdb_endian_big,
-  wbd_width    => x"7", -- 8/16/32-bit port granularity
-  sdb_component => (
-  addr_first   => x"0000000000000000",
-  addr_last    => x"0000000000000003",
-  product => (
-  vendor_id    => x"0000000000000651", -- GSI
-  device_id    => x"10040201",
-  version     => x"00000001",
-  date       => x"20131009",
-  name       => "DM-Prio-Queue-Data ")));
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"0000000000000003",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"10040201",
+    version       => x"00000001",
+    date          => x"20131009",
+    name          => "DM-Prio-Queue-Data ")));
   
   constant c_ebm_queue_ctrl_sdb : t_sdb_device := (
-  abi_class    => x"0000", -- undocumented device
-  abi_ver_major => x"01",
-  abi_ver_minor => x"01",
-  wbd_endian   => c_sdb_endian_big,
-  wbd_width    => x"7", -- 8/16/32-bit port granularity
-  sdb_component => (
-  addr_first   => x"0000000000000000",
-  addr_last    => x"000000000000007f",
-  product => (
-  vendor_id    => x"0000000000000651", -- GSI
-  device_id    => x"10040200",
-  version     => x"00000001",
-  date       => x"20131009",
-  name       => "DM-Prio-Queue-Ctrl ")));
-           
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"000000000000007f",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"10040200",
+    version       => x"00000001",
+    date          => x"20131009",
+    name          => "DM-Prio-Queue-Ctrl ")));
 
   constant c_cluster_info_sdb : t_sdb_device := (
-  abi_class    => x"0000", -- undocumented device
-  abi_ver_major => x"01",
-  abi_ver_minor => x"01",
-  wbd_endian   => c_sdb_endian_big,
-  wbd_width    => x"7", -- 8/16/32-bit port granularity
-  sdb_component => (
-  addr_first   => x"0000000000000000",
-  addr_last    => x"000000000000001F",
-  product => (
-  vendor_id    => x"0000000000000651", -- GSI
-  device_id    => x"10040086",
-  version     => x"00000001",
-  date       => x"20131009",
-  name       => "Cluster-Info-ROM  ")));
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"000000000000001F",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"10040086",
+    version       => x"00000001",
+    date          => x"20131009",
+    name          => "Cluster-Info-ROM   ")));
   
   constant c_cluster_cb_product : t_sdb_product := (
-  vendor_id    => x"0000000000000651", -- GSI
-  device_id    => x"10041000",
-  version     => x"00000001",
-  date       => x"20140515",
-  name       => "LM32-CB-Cluster   ");
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"10041000",
+    version       => x"00000001",
+    date          => x"20140515",
+    name          => "LM32-CB-Cluster    ");
   
-
- constant c_msi_lm32_sdb : t_sdb_device := (
-   abi_class    => x"0000", -- undocumented device
-   abi_ver_major => x"01",
-   abi_ver_minor => x"01",
-   wbd_endian   => c_sdb_endian_big,
-   wbd_width    => x"7", -- 8/16/32-bit port granularity
-   sdb_component => (
-   addr_first   => x"0000000000000000",
-   addr_last    => x"00000000000000ff",
-   product => (
-   vendor_id    => x"0000000000000651", -- GSI
-   device_id    => x"1f1a4e39",
-   version     => x"00000001",
-   date       => x"20160425",
-   name       => "LM32-MSI-Tgt     ")));
-
+  constant c_msi_lm32_sdb : t_sdb_msi := (
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"00000000000000ff",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"1f1a4e39",
+    version       => x"00000001",
+    date          => x"20160425",
+    name          => "LM32-MSI-Tgt       ")));
 
   constant c_userlm32_irq_ep_sdb : t_sdb_device := (
-   abi_class    => x"0000", -- undocumented device        
-   abi_ver_major => x"01",
-   abi_ver_minor => x"01",
-   wbd_endian   => c_sdb_endian_big,
-   wbd_width    => x"7", -- 8/16/32-bit port granularity
-   sdb_component => (
-   addr_first   => x"0000000000000000",
-   addr_last    => x"00000000000000ff",
-   product => (
-   vendor_id    => x"0000000000000651", -- GSI
-   device_id    => x"10050083",
-   version     => x"00000001",
-   date       => x"20150128",
-   name       => "LM32-MSI-Tgt     ")));  
+    abi_class     => x"0000", -- undocumented device        
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"00000000000000ff",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"10050083",
+    version       => x"00000001",
+    date          => x"20150128",
+    name          => "LM32-MSI-Tgt       ")));
 
 end ftm_pkg;
 
@@ -333,9 +326,9 @@ package body ftm_pkg is
   begin
     product.vendor_id := x"0000000000000651";  -- GSI
     product.device_id := x"54111351";
-    product.version  := x"00000001";
-    product.date    := x"20140128";
-    product.name    := "LM32-RAM-User    ";
+    product.version   := x"00000001";
+    product.date      := x"20140128";
+    product.name      := "LM32-RAM-User      ";
     return f_xwb_dpram_aux(g_size, product);
   end f_xwb_dpram_userlm32;
   
@@ -344,20 +337,20 @@ package body ftm_pkg is
   begin
     product.vendor_id := x"0000000000000651";  -- GSI
     product.device_id := x"81111444";
-    product.version  := x"00000001";
-    product.date    := x"20140128";
-    product.name    := "LM32-RAM-Shared   ";
+    product.version   := x"00000001";
+    product.date      := x"20140128";
+    product.name      := "LM32-RAM-Shared    ";
     return f_xwb_dpram_aux(g_size, product);
   end f_xwb_dpram_shared;
   
   function f_xwb_dpram_aux(g_size : natural; product : t_sdb_product) return t_sdb_device is
     variable result : t_sdb_device;
   begin
-    result.abi_class    := x"0001";   -- RAM device
+    result.abi_class     := x"0001";   -- RAM device
     result.abi_ver_major := x"01";
     result.abi_ver_minor := x"00";
-    result.wbd_width    := x"7";     -- 32/16/8-bit supported
-    result.wbd_endian   := c_sdb_endian_big;
+    result.wbd_width     := x"7";     -- 32/16/8-bit supported
+    result.wbd_endian    := c_sdb_endian_big;
 
     result.sdb_component.addr_first := (others => '0');
     result.sdb_component.addr_last  := std_logic_vector(to_unsigned(g_size*4-1, 64));
@@ -444,7 +437,7 @@ package body ftm_pkg is
     return v_req;
   end f_lm32_masters_req;
 
-  function f_lm32_slaves_req(is_dm : boolean)
+  function f_lm32_slaves_req(g_size : natural; g_world_bridge_sdb : t_sdb_bridge; is_dm : boolean)
   return t_sdb_record_array is
     variable v_req :  t_sdb_record_array(c_lm32_slaves-1 downto 0);
   begin
@@ -477,7 +470,7 @@ package body ftm_pkg is
     variable v_clu_req_slaves  :  t_sdb_record_array((cores + 2)-1 downto 0);
 	 variable v_clu_req_masters :  t_sdb_record_array(0 downto 0); 
   begin
-    v_clu_req_slaves  :=  f_cluster_clu_sdb(cores, ramPerCore, is_dm);
+    v_clu_req_slaves  :=  f_cluster_sdb(cores, ramPerCore, is_dm);
     v_clu_req_masters :=  (0 =>  f_sdb_auto_msi(msi_slave, true));
 
     v_ret  := f_xwb_bridge_layout_sdb(

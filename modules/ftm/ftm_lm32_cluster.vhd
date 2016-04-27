@@ -37,6 +37,8 @@ use ieee.numeric_std.all;
 use work.wishbone_pkg.all;
 use work.wb_irq_pkg.all;
 use work.ftm_pkg.all;
+use work.prio_pkg.all;
+use work.etherbone_pkg.all;
 
 entity ftm_lm32_cluster is
 generic(
@@ -105,7 +107,7 @@ architecture rtl of ftm_lm32_cluster is
 
   --layout
   constant c_clu_layout_req_slaves  : t_sdb_record_array(c_clu_slaves-1 downto 0)  :=
-           f_cluster_sdb(c_clu_slaves, g_ram_per_core, g_is_dm);
+           f_cluster_sdb(g_cores, g_ram_per_core, g_is_dm);
 
   constant c_clu_layout_req_masters : t_sdb_record_array(c_clu_masters-1 downto 0) := 
            (c_msi_slave =>  f_sdb_auto_msi(g_clu_msi_sdb, true));
@@ -264,7 +266,7 @@ begin
       clk_i         => clk_ref_i,
       rst_n_i       => rst_ref_n_i,
 
-      time_i        => tm_tai8ns_ref_i,
+      time_i        => tm_tai8ns_i,
 
       ctrl_i        => clu_cb_masterport_out(c_clu_prioq_ctrl),
       ctrl_o        => clu_cb_masterport_in(c_clu_prioq_ctrl),
@@ -282,8 +284,8 @@ begin
       -- Slave control port
       slave_clk_i    => clk_ref_i,
       slave_rst_n_i  => rst_ref_n_i,
-      slave_i        => s_ftm_queue_master_out,
-      slave_o        => s_ftm_queue_master_in,
+      slave_i        => s_prio_data_out,
+      slave_o        => s_prio_data_in,
       -- Master reader port
       master_clk_i   => clk_sys_i,
       master_rst_n_i => rst_sys_n_i,

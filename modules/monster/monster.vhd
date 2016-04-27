@@ -330,9 +330,9 @@ architecture rtl of monster is
   
   -- The FTM adds a bunch of masters to this crossbar
   constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
-  constant c_top_masters : natural := c_top_my_masters + c_ftm_masters'length;
+  constant c_top_masters : natural := c_ftm_masters'length + c_top_my_masters;
   constant c_top_layout_req_masters : t_sdb_record_array(c_top_masters-1 downto 0) :=
-    c_top_layout_my_masters & c_ftm_masters;
+    c_ftm_masters & c_top_layout_my_masters;
     
   constant c_top_layout_masters : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters);
   constant c_top_bridge_msi     : t_sdb_msi          := f_xwb_msi_layout_sdb(c_top_layout_masters);
@@ -1034,7 +1034,7 @@ begin
       clu_msi_master_o   => dev_msi_slave_i(c_devs_ftm_cluster),
       clu_msi_master_i   => dev_msi_slave_o(c_devs_ftm_cluster),
       dm_prioq_master_o  => top_bus_slave_i(c_topm_prioq),
-      dm_prioq_master_i  => top_bus_slave_i(c_topm_prioq));
+      dm_prioq_master_i  => top_bus_slave_o(c_topm_prioq));
   
   pcie_n : if not g_en_pcie generate
     top_bus_slave_i (c_topm_pcie) <= cc_dummy_master_out;

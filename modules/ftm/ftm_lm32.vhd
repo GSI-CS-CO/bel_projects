@@ -55,15 +55,13 @@ port(
   -- wb world interface of the lm32
   world_master_o  : out t_wishbone_master_out; 
   world_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
-
+  msi_slave_o     : out t_wishbone_slave_out;
+  msi_slave_i     : in  t_wishbone_slave_in;
 
   -- optional wb interface to prioq for DM
   prioq_master_o  : out t_wishbone_master_out; 
   prioq_master_i  : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
   
-  -- msi interface
-  msi_slave_o   : out t_wishbone_slave_out;  
-  msi_slave_i   : in  t_wishbone_slave_in;
   -- port B of the LM32s DPRAM 
   ram_slave_o    : out t_wishbone_slave_out;                           
   ram_slave_i    : in  t_wishbone_slave_in
@@ -79,7 +77,7 @@ architecture rtl of ftm_lm32 is
            s_sys_time,
            s_atomic            : t_wishbone_master_in;
                
-  constant c_lm32_req_slaves   : t_sdb_record_array(c_lm32_slaves-1 downto 0) 	:= f_lm32_slaves_req(g_is_dm);
+  constant c_lm32_req_slaves   : t_sdb_record_array(c_lm32_slaves-1 downto 0) 	:= f_lm32_slaves_req(g_size, g_world_bridge_sdb, g_is_dm);
   constant c_lm32_req_masters  : t_sdb_record_array(c_lm32_masters-1 downto 0) 	:= f_lm32_masters_req;
 
   --FIXME: this is borderline and only works bevause this CB is the first in line. separate mastre and slave layout as done in the monster
@@ -88,6 +86,13 @@ architecture rtl of ftm_lm32 is
   constant c_lm32_sdb_address  : t_wishbone_address := f_sdb_auto_sdb(c_lm32_req_slaves, c_lm32_req_masters);
  
    --signals
+   constant c_zero_master : t_wishbone_master_out := (
+     cyc => '0',
+     stb => '0',
+     adr => (others => '0'),
+     sel => (others => '0'),
+     we  => '0',
+     dat => (others => '0'));
 
   signal lm32_idwb_master_in    : t_wishbone_master_in_array(c_lm32_masters-1 downto 0);
   signal lm32_idwb_master_out   : t_wishbone_master_out_array(c_lm32_masters-1 downto 0);
@@ -96,8 +101,8 @@ architecture rtl of ftm_lm32 is
 
   signal msi_cb_master_in       : t_wishbone_master_in_array(c_lm32_masters-1 downto 0);
   signal msi_cb_master_out      : t_wishbone_master_out_array(c_lm32_masters-1 downto 0);   
-  signal msi_cb_slave_in        : t_wishbone_slave_in_array(0 downto 0); -- single msi input from outside
-  signal msi_cb_slave_out       : t_wishbone_slave_out_array(0downto 0);   
+  signal msi_cb_slave_in        : t_wishbone_slave_in_array(c_lm32_slaves-1 downto 0) := (others => c_zero_master);
+  signal msi_cb_slave_out       : t_wishbone_slave_out_array(c_lm32_slaves-1 downto 0);   
 
   signal s_irq : std_logic_vector(31 downto 0);
 
@@ -136,8 +141,6 @@ begin
       msi_slave_i     => msi_cb_slave_in,
       msi_slave_o     => msi_cb_slave_out);
 
-      msi_cb_slave_in(0) <= msi_slave_i;
-      msi_slave_o <= msi_cb_slave_out(0);
 
 --******************************************************************************
 -- Masters *********************************************************************
@@ -181,22 +184,6 @@ begin
       slave2_o    => ram_slave_o);
 
 --******************************************************************************
--- TIMER IRQ 
---------------------------------------------------------------------------------
-   TIMER_IRQ: wb_irq_timer
-   generic map(g_timers    => 3)
-   port map(clk_sys_i      => clk_sys_i,            
-            rst_sys_n_i    => rst_n_i,             
-
-            tm_tai8ns_i    => tm_tai8ns_i,       
-
-            ctrl_slave_o   => lm32_cb_master_in(c_lm32_timer),
-            ctrl_slave_i   => lm32_cb_master_out(c_lm32_timer),
-
-            irq_master_o   => irq_timer_master_out,                             -- wb msi interface 
-            irq_master_i   => irq_timer_master_in);
-
---******************************************************************************
 -- MSI-IRQ -- reduce to 1 interface for now
 --------------------------------------------------------------------------------
    MSI_IRQ: wb_irq_slave 
@@ -238,7 +225,7 @@ begin
         if(lm32_cb_master_out(vIdx).cyc = '1' and lm32_cb_master_out(vIdx).stb = '1') then         
            case(to_integer(unsigned(lm32_cb_master_out(vIdx).adr(3 downto 2)))) is
               when 0 => s_cpu_info.dat <= g_cpu_id;
-              when 1 => s_cpu_info.dat <= std_logic_vector(to_unsigned(g_msi_queues,32));
+              when 1 => s_cpu_info.dat <= std_logic_vector(to_unsigned(1,32));
               when 2 => s_cpu_info.dat <= std_logic_vector(to_unsigned(g_size*4,32));
      
               -- unmapped addresses return error
@@ -329,7 +316,8 @@ begin
    world_master_o.adr <= lm32_cb_master_out(c_lm32_world_bridge).adr;
    world_master_o.dat <= lm32_cb_master_out(c_lm32_world_bridge).dat;
 
-   lm32_cb_master_in(c_lm32_world_bridge)   <= world_master_i;
+   lm32_cb_master_in(c_lm32_world_bridge) <= world_master_i;
+   msi_cb_slave_in  (c_lm32_world_bridge) <= msi_slave_i;
+   msi_slave_o <= msi_cb_slave_out(c_lm32_world_bridge);
 
 end rtl;
-  
