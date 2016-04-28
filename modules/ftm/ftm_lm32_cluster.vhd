@@ -247,8 +247,8 @@ begin
     slave_i        => clu_msi_masterport_out(c_msi_slave),
     slave_o        => clu_msi_masterport_in(c_msi_slave),
     -- Master reader port
-    master_clk_i   => clk_ref_i,
-    master_rst_n_i => rst_ref_n_i,
+    master_clk_i   => clk_sys_i,
+    master_rst_n_i => rst_sys_n_i,
     master_i       => clu_msi_master_i,
     master_o       => clu_msi_master_o);
 
