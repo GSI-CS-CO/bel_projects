@@ -291,7 +291,6 @@ begin
       g_en_mil     => true,
       g_en_oled    => true,
       g_en_user_ow => true,
-      g_en_fg      => false,
       g_en_cfi     => true,
       g_io_table        => io_mapping_table,
       g_lm32_init_files =>  c_initf
