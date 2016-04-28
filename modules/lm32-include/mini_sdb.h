@@ -4,21 +4,29 @@
 #include <inttypes.h>
 #include <stdint.h>
 
-////////////////////////////////////////////
-//  SBD BASE ADR IS GATEWARE DEPENDENT!   //
-//  SEE modules/ftm/ftm_lm32.vhd          // 
-//                                        //   
-#define SBD_BASE        0x3FFFE000        //
-//                                        //
-////////////////////////////////////////////
+///////////////////////////////////////////////////////////////
+//  SBD BASE ADR IS AUTOMAPPED IN GATEWARE. USE getRootSdb() //
+///////////////////////////////////////////////////////////////
 
 #define SDB_INTERCONNET 0x00
 #define SDB_DEVICE      0x01
 #define SDB_BRIDGE      0x02
+#define SDB_MSI         0x03
 #define SDB_EMPTY       0xFF
+
+
+
+#define ERROR_NOT_FOUND  0XDEADBEE2
+#define NO_MSI           0XDEADBEE3
+#define OWN_MSI          (1<<31)
+
 
 #define GSI                   0x00000651
 #define CERN                  0x0000ce42
+
+
+//MSI message forwarding box for master2master MSI
+#define MSI_MSG_BOX           0xfab0bdd8
 
 //CPU periphery
 #define CPU_INFO_ROM          0x10040085
@@ -26,6 +34,7 @@
 #define CPU_SYSTEM_TIME       0x10040084
 #define CPU_TIMER_CTRL_IF     0x10040088
 #define CPU_MSI_CTRL_IF       0x10040083
+#define CPU_MSI_TGT           0x1f1a4e39
 
 //Cluster periphery
 #define LM32_CB_CLUSTER       0x10041000
@@ -79,11 +88,11 @@ volatile uint32_t* pCpuId;
 volatile uint32_t* pCpuIrqSlave;
 volatile uint32_t* pCpuAtomic;
 volatile uint32_t* pCpuSysTime;
-volatile uint32_t* pCpuTimer;
 volatile uint32_t* pCluInfo;
+volatile uint32_t* pCpuMsiBox;
+volatile uint32_t* pMyMsi;
 volatile uint32_t* pUart;
 //volatile uint32_t* BASE_UART;
-volatile uint32_t* pSharedRam;
 volatile uint32_t* pCluCB;
 volatile uint32_t* pOneWire;
 
@@ -114,6 +123,12 @@ struct sdb_component {
   struct sdb_product product;
 };
 
+struct sdb_msi {
+  uint32_t msi_flags;
+  uint32_t bus_specific;
+  struct sdb_component sdb_component;
+};
+
 struct sdb_device {
   uint16_t abi_class;
   uint8_t abi_ver_major;
@@ -137,6 +152,7 @@ struct SDB_INTERCONNECT {
 
 typedef union sdb_record {
   struct sdb_empty empty;
+  struct sdb_msi msi;
   struct sdb_device device;
   struct sdb_bridge bridge;
   struct SDB_INTERCONNECT interconnect;
@@ -145,6 +161,8 @@ typedef union sdb_record {
 typedef struct sdb_location {
   sdb_record_t* sdb;
   uint32_t adr;
+  uint32_t msi_first;
+  uint32_t msi_last;
 } sdb_location;
 
 sdb_location*  find_device_multi(sdb_location *found_sdb, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId);
@@ -152,10 +170,14 @@ uint32_t*      find_device_adr(uint32_t venId, uint32_t devId);
 sdb_location*  find_device_multi_in_subtree(sdb_location *loc, sdb_location *found_sdb, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId);
 uint32_t*      find_device_adr_in_subtree(sdb_location *loc, uint32_t venId, uint32_t devId);
 
-sdb_location*  find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, uint32_t base, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId);
+sdb_location *find_sdb_deep(sdb_record_t *parent_sdb, sdb_location *found_sdb, uint32_t base, uint32_t msi_base,  uint32_t msi_last, uint32_t *idx, uint32_t qty, uint32_t venId, uint32_t devId);
 uint32_t       getSdbAdr(sdb_location *loc);
 uint32_t       getSdbAdrLast(sdb_location *loc);
+uint32_t       getMsiAdr(sdb_location *loc);
+uint32_t       getMsiAdrLast(sdb_location *loc);
 sdb_record_t*  getChild(sdb_location *loc);
+uint32_t       getMsiUpperRange();
+
 
 uint8_t*       find_device(uint32_t devid); //DEPRECATED, USE find_device_adr INSTEAD!
 

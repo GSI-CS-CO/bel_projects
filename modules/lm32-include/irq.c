@@ -38,6 +38,11 @@ extern inline void       irq_disable(void);
 extern inline void       irq_enable(void);
 extern inline void       irq_clear( uint32_t mask);
 
+
+void cfgMsiBox(uint8_t slot, uint32_t myOffs) {
+  *(pCpuMsiBox + (slot <<1)+1) = (uint32_t)(pMyMsi + (myOffs>>2));
+}
+
 void _irq_entry(void)
 {
   uint32_t  ip;

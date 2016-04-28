@@ -9,7 +9,7 @@ BUILDID_SIZE 	= 0x400
 ifdef SHARED_SIZE
 	SHARED = "$(BOOTL_SIZE) + $(BUILDID_SIZE) + $(SHARED_SIZE)"
 else
-	SHARED = ""
+	SHARED = "0"
 endif
 
 LDS := "OUTPUT_FORMAT(\"elf32-lm32\")\n"

@@ -89,7 +89,7 @@ void ftmInit()
                                 .pNext      = NULL
                                 };
    
-   pFtmIf->pSharedMem   = (t_shared*)pSharedRam;
+
    pFtmIf->sema.sig     = 1;
    pFtmIf->sema.cond    = 1;
    pCurrentChain        = (t_ftmChain*)&pFtmIf->idle;
@@ -99,7 +99,7 @@ void ftmInit()
    prioQueueInit();
 
    // MODELSIM FIRMWARE
-   pFtmIf->cmd = CMD_START;    
+   pFtmIf->cmd = 0; //CMD_START;    
  
    pFtmIf->debug[DBG_DISP_DUR_MIN] = 0xffffffff;
    pFtmIf->debug[DBG_DISP_DUR_MAX] = 0x0;

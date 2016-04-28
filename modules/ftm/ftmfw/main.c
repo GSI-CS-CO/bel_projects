@@ -128,7 +128,8 @@ void main(void) {
    #endif
     
    atomic_off();
-   mprintf("#%02u: Tprep @ 0x%08x\n", cpuId, test);
+   mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
+
    //hexDump ("Plan 0 Chain 0 : \n", (void*)pFtmIf->pAct->plans[0], 128);
    /*
    t_time now, later;

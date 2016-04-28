@@ -45,18 +45,22 @@
 
 #include <inttypes.h>
 #include <stdint.h>
+#include "mprintf.h"
 
 #ifndef __GNUC_STDC_INLINE__
 #error NEEDS gnu99 EXTENSIONS - ADD '-std=gnu99' TO THE CFGLAGS OF YOUR Makefile!
 #endif
 
 extern volatile uint32_t* pCpuIrqSlave;
+extern volatile uint32_t* pCpuMsiBox;
+extern volatile uint32_t* pMyMsi;
 
 #define NESTED_IRQS 0
 
 #define IRQ_REG_RST  0x00000000
 #define IRQ_REG_STAT 0x00000004
 #define IRQ_REG_POP  0x00000008
+#define IRQ_OFFS_QUE 0x00000020
 #define IRQ_OFFS_MSG 0x00000000
 #define IRQ_OFFS_ADR 0x00000004
 #define IRQ_OFFS_SEL 0x00000008
@@ -76,10 +80,12 @@ extern volatile isr_ptr_t isr_ptr_table[32];
 //Global containing last processed MSI message
 extern volatile msi global_msi;
 
+
 inline void irq_pop_msi( uint32_t irq_no)
 {
-    uint32_t* msg_queue = (uint32_t*)(pCpuIrqSlave + ((irq_no +1)<<2));
-    
+   
+   uint32_t  offset    = (IRQ_OFFS_QUE + (irq_no<<4));    //queue is at 32 + irq_no * 16
+   uint32_t* msg_queue = (uint32_t*)(pCpuIrqSlave + (offset >>2));
     global_msi.msg =  *(msg_queue+((uint32_t)IRQ_OFFS_MSG>>2));
     global_msi.adr =  *(msg_queue+((uint32_t)IRQ_OFFS_ADR>>2)); 
     global_msi.sel =  *(msg_queue+((uint32_t)IRQ_OFFS_SEL>>2));
@@ -159,5 +165,6 @@ inline void irq_clear( uint32_t mask)
 }
 
 void _irq_entry(void); 
+void cfgMsiBox(uint8_t slot, uint32_t myOffs);
 
 #endif // include guard
