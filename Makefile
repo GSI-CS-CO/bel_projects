@@ -13,7 +13,7 @@ PWD         := $(shell pwd)
 
 all::		etherbone tools eca tlu sdbfs toolchain firmware driver
 
-gateware:	all pexarria5 exploder5 vetar scu2 scu3
+gateware:	all pexarria5 exploder5 vetar2a scu2 scu3
 
 install::	etherbone-install tools-install eca-install tlu-install driver-install
 
