@@ -27,7 +27,7 @@ entity fg_quad_ifa is
     Rd_Port:            out   std_logic_vector(15 downto 0);  -- output for all read sources of this macro
 
     -- fg_quad
-    irq:                out   std_logic;
+    nirq:               out   std_logic;
       
     sw_out:             out   std_logic_vector(31 downto 8);  -- function generator output
     sw_strobe:          out   std_logic;
@@ -87,9 +87,14 @@ architecture fg_quad_scu_bus_arch of fg_quad_ifa is
   signal  state_change_irq: std_logic;
   signal  dreq:             std_logic;
   signal  tag_start:        std_logic;
+  
+  signal  s_fc_str:         std_logic_vector(1 downto 0);
+  signal  s_fc_valid:       std_logic;
 
   type tag_state_type is(IDLE, TAG_RECEIVED);
 	signal tag_state	:	tag_state_type;
+  
+  signal s_irq:             std_logic;
 
 begin
   quad_fg: fg_quad_datapath 
@@ -118,7 +123,21 @@ begin
       fg_is_running       => fg_is_running       
     );
     
-adr_decoder: process (clk, nReset)
+    
+  fc_str_edge: process (clk, nReset)
+  begin
+    if nReset = '0' then
+      s_fc_str <= (others => '0');
+    elsif rising_edge(clk) then
+      s_fc_str(0) <= fc_str;
+      s_fc_str(1) <= s_fc_str(0);
+    end if;
+  end process;
+  
+  s_fc_valid <= not s_fc_str(1) and s_fc_str(0);
+    
+    
+  adr_decoder: process (clk, nReset)
   begin
     if nReset = '0' then
       wr_fg_cntrl       <= '0';
@@ -154,7 +173,7 @@ adr_decoder: process (clk, nReset)
       wr_brc_start      <= '0';
 
     
-      if fc_str = '1' then
+      if s_fc_valid = '1' then
 
         case unsigned(fc) is
 
@@ -289,6 +308,19 @@ begin
   end if;
 end process;
 
+irqreg: process(clk, nreset)
+begin
+  if nreset= '0' then
+    s_irq <= '0';
+  elsif rising_edge(clk) then
+    if state_change_irq = '1' or dreq = '1' then
+      s_irq <= '1';
+    elsif wr_coeff_a = '1' then
+      s_irq <= '0';
+    end if;
+  end if;
+end process;
+
 fg_cntrl_rd_reg <= fg_cntrl_reg(15 downto 13) & fg_cntrl_reg(12 downto 10) &
                     fg_cntrl_reg(9 downto 4) & fg_cntrl_reg(3) & fg_is_running & fg_cntrl_reg(1 downto 0);
 
@@ -304,7 +336,7 @@ Rd_Port <= fg_cntrl_rd_reg                  when rd_fg_cntrl = '1' else
             std_logic_vector(to_unsigned(fw_version, 16)) when rd_fw_version = '1' else
             x"0000";
 
-irq <= state_change_irq or dreq;
+nirq <= not s_irq;
 
 fg_version <= std_logic_vector(to_unsigned(fw_version, 7));
             
