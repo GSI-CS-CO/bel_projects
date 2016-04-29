@@ -461,7 +461,7 @@ int main(void) {
   
   
   msDelayBig(1500); //wait for wr deamon to read sdbfs
-  init();  
+
   if (BASE_SYSCON)
     mprintf("SYS_CON found on adr: 0x%x\n", BASE_SYSCON);
   else
@@ -497,6 +497,8 @@ int main(void) {
   }
   mprintf("pcie_irq_endp is: 0x%x\n", pcie_irq_endp);
   mprintf("scub_irq_base is: 0x%x\n", scub_irq_base);
+
+  init(); // init and scan for fgs
 
   while(1) {
  //   updateTemp();
