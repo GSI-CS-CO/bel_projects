@@ -40,6 +40,7 @@ modules = {
     "pll",
     "remote_update",
     "watchdog",
+    "mbox",
     "prioq2",
   ]
 }
