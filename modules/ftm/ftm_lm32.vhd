@@ -149,7 +149,8 @@ begin
 --------------------------------------------------------------------------------  
    LM32_CORE : xwb_lm32
    generic map(g_profile     => g_profile,
-               g_sdb_address => c_lm32_sdb_address)
+               g_sdb_address => c_lm32_sdb_address,
+               g_reset_vector => c_ram_offset)
    port map(
       clk_sys_i   => clk_sys_i,
       rst_n_i     => rst_lm32_n,

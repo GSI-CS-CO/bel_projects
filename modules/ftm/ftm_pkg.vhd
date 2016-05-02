@@ -174,6 +174,8 @@ package ftm_pkg is
   constant c_msi_lm32_real        : natural := 0; -- lm32 is no native MSI device, we have to hide its 2nd Master port
   constant c_msi_lm32_fake        : natural := 1;  
 
+  constant c_ram_offset           : std_logic_vector(31 downto 0) := x"10000000"; -- not 0x0 or automap will interfere
+
   constant c_atomic_sdb : t_sdb_device := (
     abi_class     => x"0000", -- undocumented device
     abi_ver_major => x"01",
@@ -441,7 +443,7 @@ package body ftm_pkg is
   return t_sdb_record_array is
     variable v_req :  t_sdb_record_array(c_lm32_slaves-1 downto 0);
   begin
-    v_req := (c_lm32_ram                => f_sdb_embed_device(f_xwb_dpram_userlm32(g_size),   x"00000000"), -- this CPU's RAM
+    v_req := (c_lm32_ram                => f_sdb_embed_device(f_xwb_dpram_userlm32(g_size),   c_ram_offset), -- this CPU's RAM
               c_lm32_msi_ctrl           => f_sdb_auto_device(c_irq_slave_ctrl_sdb,  true),
               c_lm32_cpu_info           => f_sdb_auto_device(c_cpu_info_sdb,        true),
               c_lm32_sys_time           => f_sdb_auto_device(c_sys_time_sdb,        true),
