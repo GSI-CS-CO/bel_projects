@@ -122,7 +122,7 @@ begin
         -- shifting for quadratic coefficient a
         s_a_reg <= shift_left(resize(signed(data_a), 64), shift_a);
         s_Q_reg <= shift_left(resize(signed(data_b), 64), shift_b); -- Q0 = b
-        s_X_reg <= shift_left(resize(signed(data_c), 64), 40);      -- X0 = c
+        s_X_reg <= shift_left(resize(signed(data_c), 64), 32);      -- X0 = c
       end if;
       
       if s_stp_reached = '1' or load_start = '1' then
