@@ -5,9 +5,17 @@
 --! Copyright (C) 2016 GSI Helmholtz Centre for Heavy Ion Research GmbH 
 --!
 --! This WB slave can be used to pass MSIs from one master to another.
---! Even addresses are the destination MSI address.
---! Writes to odd address generate a corresponding write to the MSI target.
+--! Interface is stateless, the low (4B aligned) address bit is used to configure or send an MSI.
+--! 0x0: Send MSI
+--! 0x4: Configure MSI
 --!
+--! Example:
+--!
+--! WB Write, Mbox AdrOffset 0x1C, 0x1000 
+--! -> Configure Mbox Adr 0x18 to point to 0x1000 MSI
+--! WB Write, Mbox AdrOffset 0x18, 0xcafe
+--! -> Mbox sends "0xcafe" to MSI adr 0x1000
+--! 
 --------------------------------------------------------------------------------
 --! This library is free software; you can redistribute it and/or
 --! modify it under the terms of the GNU Lesser General Public
