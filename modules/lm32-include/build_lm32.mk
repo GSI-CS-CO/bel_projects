@@ -3,24 +3,40 @@
 ################################################################
 # don't touch anything below unless you know what you're doing #
 ################################################################
-BOOTL_SIZE 	= 0x100
-BUILDID_SIZE 	= 0x400
+RAM_OFFS     = 0x10000000
+BOOTL_SIZE 	 = 0x100
+BUILDID_SIZE = 0x400
+
 
 ifdef SHARED_SIZE
-	SHARED = "$(BOOTL_SIZE) + $(BUILDID_SIZE) + $(SHARED_SIZE)"
+	SHARED = "$(SHARED_SIZE)"
 else
 	SHARED = "0"
 endif
 
 LDS := "OUTPUT_FORMAT(\"elf32-lm32\")\n"
+LDS := "MEMORY { RAM (rwx) : ORIGIN = $(RAM_OFFS), LENGTH = $(RAM_SIZE) }\n"
 LDS += "SECTIONS\n{\n"
-LDS += ".boot			: { _fboot    = .; *(.boot); 			_eboot      = .; }\n"
-LDS += ".buildid $(BOOTL_SIZE)	: { _fbuildid = .; *(.buildid .buildid.*)   	_ebuildid   = .; }\n"
-LDS += ".shared  $(BOOTL_SIZE) + $(BUILDID_SIZE)	: { _fshared  = .; PROVIDE(_startshared = .);*(.shared .shared.*) 	_eshared    = .; }\n"	
-LDS += ".text    $(SHARED)	: { _ftext    = .; *(.text .text.*) 		_etext      = .; }\n"
-LDS += ".rodata			: { _frodata  = .; *(.rodata .rodata.*)     	_erodata    = .; }\n"
-LDS += ".data			: { _fdata    = .; *(.data .data.*)         	_edata      = .; }\n"
-LDS += ".bss			: { _fbss     = .; *(.bss .bss.*)           	_ebss       = .; }\n}\n"
+LDS += ". = ORIGIN(RAM);\n"
+LD  += "_fstack = . + LENGTH(RAM) - 4;\n"
+LDS += ".boot			: { _fboot   = .; *(.boot); 			     _eboot   = .; } > RAM\n"
+LDS += ".buildid ADDR(.boot)   + $(BOOTL_SIZE) : { _fbuildid = .; *(.buildid .buildid.*) _ebuildid = .; } > RAM\n"
+LDS += ".shared ADDR(.buildid) + $(BUILDID_SIZE) : { _fshared = .; PROVIDE(_startshared = .);*(.shared .shared.*)	_eshared = .; } > RAM\n"	
+LDS += ".text ADDR(.shared)    + $(SHARED) : { _ftext = .; *(.text .text.*)	_etext = .; } > RAM\n"
+LDS += ".rodata	  : { _frodata = .; *(.rodata .rodata.*) _erodata = .; } > RAM\n"
+LDS += ".data			: { _fdata   = .; *(.data .data.*)     _edata   = .; } > RAM\n"
+LDS += ".bss			: { _fbss    = .; *(.bss .bss.*)       _ebss    = .; } > RAM\n}\n"
+
+
+PKG := "library ieee;\n"
+PKG += "use ieee.std_logic_1164.all;\n"
+PKG += "use ieee.numeric_std.all;\n\n"
+PKG += "library work;\n"
+PKG += "package ramsize_pkg is\n"
+PKG += "  constant c_lm32_ramsizes : natural := $(RAM_SIZE);\n"
+PKG += "end ramsize_pkg;\n"
+
+
 
 VERSION  ?= "1.0.0"
 CBR_DATE := `date +"%a %b %d %H:%M:%S %Z %Y"`

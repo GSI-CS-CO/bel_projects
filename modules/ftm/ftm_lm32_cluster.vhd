@@ -45,7 +45,7 @@ generic(
   g_is_dm         : boolean := false;
   g_cores         : natural := 1;
   g_ram_per_core  : natural := 32768/4;
-  g_profile       : string  := "medium_icache_debug";
+  g_profiles      : string  := "medium_icache_debug";
   g_init_files    : string;   
   g_world_bridge_sdb : t_sdb_bridge;   -- inferior sdb crossbar         
   g_clu_msi_sdb      : t_sdb_msi    -- superior msi crossbar          
@@ -149,7 +149,7 @@ begin
       g_cpu_id                         => x"BBEE" & std_logic_vector(to_unsigned(I, 16)),
       g_size                           => g_ram_per_core,
       g_world_bridge_sdb               => g_world_bridge_sdb,
-      g_profile                        => g_profile,
+      g_profile                        => f_substr(g_profiles, I, ';'),
       g_init_file                      => f_substr(g_init_files, I, ';')
     ) 
     port map(

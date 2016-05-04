@@ -94,8 +94,8 @@ entity monster is
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
-    g_lm32_shared_ramsize  : natural;
     g_lm32_init_files      : string;
+	 g_lm32_profiles        : string;
     g_lm32_are_ftm         : boolean);
   port(
     -- Required: core signals
@@ -1020,7 +1020,8 @@ begin
       g_ram_per_core     => g_lm32_ramsizes,
       g_world_bridge_sdb => c_top_bridge_sdb,
       g_clu_msi_sdb      => c_dev_bridge_msi,
-      g_init_files       => g_lm32_init_files)
+      g_init_files       => g_lm32_init_files,
+		g_profiles         => g_lm32_profiles)
     port map(
       clk_ref_i          => clk_ref,
       rst_ref_n_i        => rstn_ref,

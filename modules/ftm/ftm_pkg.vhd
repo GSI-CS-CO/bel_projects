@@ -84,7 +84,7 @@ package ftm_pkg is
     g_is_dm         : boolean := false;
     g_cores         : natural := 1;
     g_ram_per_core  : natural := 32768/4;
-    g_profile       : string  := "medium_icache_debug";
+    g_profiles      : string  := "medium_icache_debug";
     g_init_files    : string;   
     g_world_bridge_sdb : t_sdb_bridge;   -- inferior sdb crossbar         
     g_clu_msi_sdb      : t_sdb_msi       -- superior msi crossbar          

@@ -44,7 +44,7 @@ generic(g_cpu_id              : t_wishbone_data := x"CAFEBABE";
         g_size                : natural := 65536;                 -- size of the dpram
         g_world_bridge_sdb    : t_sdb_bridge;                     -- record for superior bridge
         g_is_dm               : boolean := false;  
-        g_profile             : string  := "medium_icache_debug"; -- lm32 profile
+        g_profile             : string  := "medium_icache"; -- lm32 profile
         g_init_file           : string);                    -- number of msi queues connected to the lm32
 port(
   clk_sys_i      : in  std_logic;  -- system clock 

@@ -1,8 +1,7 @@
 TOP		:= $(dir $(lastword $(MAKEFILE_LIST)))..
-
 QUARTUS		?= /opt/quartus
 QUARTUS_BIN	=  $(QUARTUS)/bin
-
+PATHPKG		= $(shell hdlmake list-mods | grep "local" | grep "top" | grep -o '^\S*')
 SPI_LANES	?= ASx1
 
 CROSS_COMPILE	?= lm32-elf-
@@ -28,7 +27,7 @@ ifndef RAM_SIZE
 $(error Missing mandatory RAM_SIZE parameter! Quitting ...)
 endif
 
-.PHONY: ram.ld buildid.c
+.PHONY: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd
 
 include $(INCPATH)/build_lm32.mk
  
@@ -40,6 +39,9 @@ buildid.c:
 
 ram.ld:
 	@(printf %b $(LDS)) > $@
+
+$(PATHPKG)/ramsize_pkg.vhd:
+	@(printf %b $(PKG)) > $@
 
 clean::
 	rm -rf db incremental_db PLLJ_PLLSPE_INFO.txt
@@ -64,8 +66,8 @@ prog:
 %.mif:	%.bin
 	$(GENRAMMIF) $< $(RAM_SIZE) > $@
 
-%.sof:	%.qsf %.mif
-	python2.7 $(TOP)/ip_cores/hdl-make/hdlmake quartus-project
+%.sof:	%.qsf %.mif $(PATHPKG)/ramsize_pkg.vhd 
+	hdlmake quartus-project
 	find $(TOP) -name Manifest.py > $*.dep
 	sed -n -e 's/"//g;s/quartus_sh://;s/set_global_assignment.*-name.*_FILE //p' < $< >> $*.dep
 	echo "$*.sof $@:	$< " `cat $*.dep` > $*.dep

@@ -75,6 +75,7 @@ package monster_pkg is
   
   function f_sub1(x : natural) return natural;
   function f_pick(x : boolean; y : integer; z : integer) return natural;
+  function f_string_list_repeat(s : string; times : natural) return string;
   
   component monster is
     generic(
@@ -108,8 +109,8 @@ package monster_pkg is
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
-      g_lm32_shared_ramsize  : natural := 16384/4; -- in 32b words -- will only be used if g_lm32_cores > 1
       g_lm32_init_files      : string; -- multiple init files must be seperated by a semicolon ';'
+		g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false
     );
     port(
@@ -462,5 +463,18 @@ package body monster_pkg is
     --report "DONE " & name severity failure;
     return result;
   end f_gen_io_table;
+  
+  function f_string_list_repeat(s : string; times : natural)
+  return string is
+    variable i : natural := 0;
+	 constant delimeter : string := ";";
+	 constant str : string := s & delimeter;
+    variable res : string(1 to str'length*times);	 
+  begin
+    for i in 0 to times-1 loop
+	   res(i*str'length+1 to (i+1)*str'length) := str;
+    end loop;
+    return res;
+  end f_string_list_repeat;	
 
 end monster_pkg;
