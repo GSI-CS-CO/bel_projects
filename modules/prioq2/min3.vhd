@@ -103,7 +103,8 @@ begin
   if(rising_edge(clk_i)) then
     if(rst_n_i = '0') then
       y_abc_o <= "000"; 
-      e_o     <= '1'; 
+      e_o     <= '1';
+		min_o   <= (others => '0');	
     else
       e_o     <= s_e; 
       y_abc_o <= s_y_abc; 
