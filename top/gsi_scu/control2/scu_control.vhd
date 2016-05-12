@@ -6,6 +6,7 @@ library work;
 use work.gencores_pkg.all;
 use work.lpc_uart_pkg.all;
 use work.monster_pkg.all;
+use work.ramsize_pkg.c_lm32_ramsizes;
 
 entity scu_control is
   port(
@@ -271,6 +272,8 @@ architecture rtl of scu_control is
   
   constant c_family  : string := "Arria II"; 
   constant c_project : string := "scu_control";
+  constant c_cores   : natural := 2;
+  constant c_profile_name  : string := "medium_icache_debug";
   constant c_initf   : string := c_project & ".mif" & ';' & c_project & "_stub.mif";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
   -- multiple init files for n processors are to be seperated by semicolon ';'
@@ -283,9 +286,6 @@ begin
       g_project       => c_project,
       g_gpio_inout    => 2,
       g_flash_bits    => 24,
-      g_lm32_cores    => 2,
-      g_lm32_ramsizes => 65536/4, -- in 32b words
-      g_lm32_msis  => 3,
       g_en_pcie    => true,
       g_en_scubus  => true,
       g_en_mil     => true,
@@ -293,7 +293,10 @@ begin
       g_en_user_ow => true,
       g_en_cfi     => true,
       g_io_table        => io_mapping_table,
-      g_lm32_init_files =>  c_initf
+      g_lm32_cores      => c_cores,
+      g_lm32_ramsizes   => c_lm32_ramsizes/4,
+      g_lm32_init_files => c_initf,
+		g_lm32_profiles   => f_string_list_repeat(c_profile_name, c_cores)
     )  
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
