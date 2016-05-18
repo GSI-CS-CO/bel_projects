@@ -591,8 +591,8 @@ architecture rtl of monster is
     constant c_scu_channel_types : t_nat_array(3 downto 0) := (
       0 => c_linux, 
       1 => c_wb_master, 
-      2 => c_scubus_tag, 
-      3 => c_embedded_cpu);
+      2 => c_embedded_cpu,
+      3 => c_scubus_tag);
     constant c_channel_types : t_nat_array(2 downto 0) := c_scu_channel_types(2 downto 0);
   begin
     if g_en_scubus then
@@ -1670,7 +1670,7 @@ begin
       port map(
         clk_i     => clk_ref,
         rst_n_i   => rstn_ref,
-        channel_i => s_channel_o(2),
+        channel_i => s_channel_o(3),
         tag_valid => tag_valid,
         tag       => tag);
   end generate;
