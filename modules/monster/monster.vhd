@@ -587,12 +587,17 @@ architecture rtl of monster is
   signal sfp_scl_o : std_logic;
   signal sfp_sda_o : std_logic;
   
+  constant c_loc_linux        : natural := 0;
+  constant c_loc_wb_master    : natural := 1;
+  constant c_loc_embedded_cpu : natural := 2;
+  constant c_loc_scubus_tag   : natural := 3;
+  
   function f_channel_types return t_nat_array is
     constant c_scu_channel_types : t_nat_array(3 downto 0) := (
-      0 => c_linux, 
-      1 => c_wb_master, 
-      2 => c_embedded_cpu,
-      3 => c_scubus_tag);
+      0 => c_loc_linux, 
+      1 => c_loc_wb_master, 
+      2 => c_loc_embedded_cpu,
+      3 => c_loc_scubus_tag);
     constant c_channel_types : t_nat_array(2 downto 0) := c_scu_channel_types(2 downto 0);
   begin
     if g_en_scubus then
