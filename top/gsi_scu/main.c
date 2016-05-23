@@ -45,7 +45,9 @@ uint32_t SHARED board_temp = -1;
 uint32_t SHARED ext_temp = -1; 
 uint32_t SHARED backplane_temp = -1;
 uint32_t SHARED fg_magic_number = 0xdeadbeef;
-uint32_t SHARED fg_version = 0x2;
+uint32_t SHARED fg_version = 0x3; // 0x2 saftlib,
+                                  // 0x3 new msi system with mailbox
+uint32_t SHARED fg_sw_irq = -1;
 uint32_t SHARED fg_num_channels = MAX_FG_CHANNELS;
 uint32_t SHARED fg_buffer_size = BUFFER_SIZE+1;
 uint32_t SHARED fg_macros[MAX_FG_MACROS]; // hi..lo bytes: slot, device, version, output-bits
@@ -58,14 +60,25 @@ struct fg_list fgs;
 volatile unsigned short* scub_base = 0;
 volatile unsigned int* scub_irq_base = 0;
 volatile unsigned int* scu_mil_base = 0;
-sdb_location lm32_irq_endp[10];       // there are three queues for msis
 sdb_location ow_base[2];              // there should be two controllers
-volatile unsigned int* pcie_irq_endp = 0;
 volatile unsigned int* cpu_info_base = 0;
 
 volatile unsigned int param_sent[MAX_FG_CHANNELS];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
-int endp_idx = 0;
+
+
+void show_msi()
+{
+  mprintf(" Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
+
+}
+
+void isr0()
+{
+   mprintf("ISR0\n");
+   show_msi();
+}
+
 
 void enable_msis(int channel) {
   int slot;
@@ -75,7 +88,7 @@ void enable_msis(int channel) {
     slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
     scub_irq_base[8] = slot-1;                                      //channel select
     scub_irq_base[9] = 0x08154711;                                  //msg
-    scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[endp_idx + MSI_SLAVE]) + (slot << 2); //destination address, do not use lower 2 bits
+    //scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[endp_idx + MSI_SLAVE]) + (slot << 2); //destination address, do not use lower 2 bits
     scub_irq_base[2] = (1 << (slot - 1));                          //enable slave
     //mprintf("IRQs for slave %d enabled.\n", slot);
   }
@@ -415,11 +428,9 @@ void tmr_irq_handler() {
 
 void init_irq_handlers() {
   isr_table_clr();
-  isr_ptr_table[0] = &tmr_irq_handler;
+  isr_ptr_table[0] = &isr0;
   isr_ptr_table[1] = &slave_irq_handler;
-  isr_ptr_table[2] = &sw_irq_handler;
-  isr_ptr_table[3] = &tmr_irq_handler;  
-  irq_set_mask(0x06);
+  irq_set_mask(0x01);
   irq_enable();
   mprintf("MSI IRQs configured.\n");
 }
@@ -449,17 +460,21 @@ int main(void) {
   uint32_t ow_base_idx = 0;
   uint32_t clu_cb_idx = 0;
   discoverPeriphery();
+  fg_sw_irq = (uint32_t)pMyMsi; // set irq address for sw irqs from saftlib
+  uart_init_hw();
   /* additional periphery needed for scu */
   cpu_info_base   = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);  
   scub_base       = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
   scub_irq_base   = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);    // irq controller for scu bus
   find_device_multi(&found_sdb[0], &clu_cb_idx, 20, GSI, LM32_CB_CLUSTER); // find location of cluster crossbar
-  find_device_multi_in_subtree(&found_sdb[0], lm32_irq_endp, &lm32_endp_idx, 10, GSI, LM32_IRQ_EP); // list irq endpoints in cluster crossbar
-  pcie_irq_endp   = (unsigned int *)find_device_adr(GSI, PCIE_IRQ_ENDP);
   scu_mil_base    = (unsigned int*)find_device(SCU_MIL);
   find_device_multi(ow_base, &ow_base_idx, 2, CERN, WR_1Wire);
   
-  
+  init_irq_handlers();  
+
+  mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
+  cfgMsiBox(0, 0x10);
+
   msDelayBig(1500); //wait for wr deamon to read sdbfs
 
   if (BASE_SYSCON)
@@ -476,29 +491,14 @@ int main(void) {
   } else 
     mprintf("no CPU INFO ROM found!\n");
 
-  if(cpu_info_base[1] < 3) {
-    mprintf("not enough MSI endpoints for FG program!\n");
-    while(1);
-  }
 
-  endp_idx = getCpuIdx() * cpu_info_base[1]; // calculate index from CPU ID and number of endpoints
- 
-  disp_reset();
-  disp_put_c('\f');
-  
-
-  mprintf("number of lm32_irq_endpoints found: %d\n", lm32_endp_idx);
-  for (i=0; i < lm32_endp_idx; i++) {
-    mprintf("irq_endp[%d] is: 0x%x\n",i, getSdbAdr(&lm32_irq_endp[i]));
-  }
   mprintf("number of 1Wire controllers found: %d\n", ow_base_idx);
   for (i=0; i < ow_base_idx; i++) {
     mprintf("ow_base[%d] is: 0x%x\n",i, getSdbAdr(&ow_base[i]));
   }
-  mprintf("pcie_irq_endp is: 0x%x\n", pcie_irq_endp);
   mprintf("scub_irq_base is: 0x%x\n", scub_irq_base);
 
-  init(); // init and scan for fgs
+  //init(); // init and scan for fgs
 
   while(1) {
  //   updateTemp();
