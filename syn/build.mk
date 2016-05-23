@@ -1,7 +1,7 @@
 TOP		:= $(dir $(lastword $(MAKEFILE_LIST)))..
 QUARTUS		?= /opt/quartus
 QUARTUS_BIN	=  $(QUARTUS)/bin
-PATHPKG		= $(shell python2.7 ../../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep $(TARGET) | grep -o '^\S*')
+PATHPKG		= $(shell python2.7 ../../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
 SPI_LANES	?= ASx1
 
 CROSS_COMPILE	?= lm32-elf-
