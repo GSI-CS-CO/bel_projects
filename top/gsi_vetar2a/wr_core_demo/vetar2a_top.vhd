@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.monster_pkg.all;
-
+use work.ramsize_pkg.c_lm32_ramsizes;
 entity vetar2a_top is
   port(
     clk_20m_vcxo_i    : in std_logic; -- N3          --  20 MHz WR VCXO clock
@@ -316,29 +316,31 @@ architecture rtl of vetar2a_top is
     ("HX2_2      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),
     ("HX2_3      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL)
   );
-  constant c_family  : string := "Arria II"; 
-  constant c_project : string := "vetar_top2a";
-  constant c_initf   : string := c_project & ".mif"; 
-  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
-  -- multiple init files for n processors are to be seperated by semicolon ';'
-
+  constant c_family       : string := "Arria II"; 
+  constant c_project      : string := "vetar_top2a";
+  constant c_cores        : natural:= 1;
+  constant c_initf_name   : string := c_project & ".mif";
+  constant c_profile_name : string := "medium_icache_debug";
 
 begin
 
   main : monster
     generic map(
-      g_family     => c_family,
-      g_project    => c_project,
-      g_gpio_inout => 3,
-      g_gpio_in    => 7,
-      g_gpio_out   => 11,
-      g_fixed      => 18,
-      g_flash_bits => 24,
-      g_en_vme     => true,
-      g_en_usb     => true,
-      g_en_lcd     => true,
+      g_family          => c_family,
+      g_project         => c_project,
+      g_gpio_inout      => 3,
+      g_gpio_in         => 7,
+      g_gpio_out        => 11,
+      g_fixed           => 18,
+      g_flash_bits      => 24,
+      g_en_vme          => true,
+      g_en_usb          => true,
+      g_en_lcd          => true,
       g_io_table        => io_mapping_table,
-      g_lm32_init_files => c_initf
+      g_lm32_cores      => c_cores,
+      g_lm32_ramsizes   => c_lm32_ramsizes/4,
+      g_lm32_init_files => f_string_list_repeat(c_initf_name & ".mif", c_cores),
+      g_lm32_profiles   => f_string_list_repeat(c_profile_name, c_cores)
     )
     port map(
       core_clk_20m_vcxo_i          => clk_20m_vcxo_i,
