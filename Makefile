@@ -99,6 +99,12 @@ firmware::	sdbfs etherbone toolchain ip_cores/wrpc-sw/.config
 firmware-clean::
 	$(MAKE) -C ip_cores/wrpc-sw EB=$(PWD)/ip_cores/etherbone-core/api SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
+avsoc::		firmware
+	$(MAKE) -C syn/gsi_avsoc/av_rocket_board PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+avsoc-clean::
+	$(MAKE) -C syn/gsi_avsoc/av_rocket_board PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
 scu2::		firmware
 	$(MAKE) -C syn/gsi_scu/control2 PATH=$(PWD)/toolchain/bin:$(PATH) all
 
