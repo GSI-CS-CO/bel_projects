@@ -34,8 +34,8 @@
 #include <string.h>
 #include <errno.h>
 
-#include "../etherbone.h"
-
+#include <etherbone.h>
+#include <glue/version.h>
 
 #define OPERATIONS_PER_CYCLE 32
 
@@ -496,7 +496,7 @@ int main(int argc, char** argv) {
 
   
   /* Put CPU into reset */
-  if (verbose) fprintf(stdout, "Putting CPU %c%u into reset...\n", idType, idNum);
+  if (verbose) fprintf(stdout, "Getting CPU %c%u into reset..., writing 0x%08x @ 0x%"EB_ADDR_FMT"\n", idType, idNum, (unsigned int)resetSet, resetAddress + resetOffsSet);
   if ((status = eb_device_write(device, resetAddress + resetOffsSet, EB_BIG_ENDIAN | EB_DATA32, resetSet, 0, eb_block)) != EB_OK) {
     fprintf(stderr, "\r%s: cannot reset CPU(s): %s\n", program, eb_status(status));
     return 1;
@@ -557,7 +557,7 @@ int main(int argc, char** argv) {
     fprintf(stdout, " done!\n");
 
   /* Get CPU out of reset */
-  if (verbose) fprintf(stdout, "Getting CPU %c%u out of reset...\n", idType, idNum);
+  if (verbose) fprintf(stdout, "Getting CPU %c%u out of reset..., writing 0x%8x @ 0x%"EB_ADDR_FMT" \n", idType, idNum, (unsigned int)resetClr, resetAddress + resetOffsClr);
   if ((status = eb_device_write(device, resetAddress + resetOffsClr, EB_BIG_ENDIAN | EB_DATA32, resetClr, 0, eb_block)) != EB_OK) {
     fprintf(stderr, "\r%s: failed to get CPU(s) out of reset: %s\n", program, eb_status(status));
     return 1;
