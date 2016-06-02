@@ -1,0 +1,116 @@
+/* Bunch-to-bucket transfer */
+/* Author: Jiaoni Bai */
+/* Date: 04.11.2015 */
+
+/* Code for source B2B SCU */
+/* ===================================================================================
+Soure B2B SCU
+      Slot 1-2>> Phase advance prediction module
+      Slot 3-4>> Phase correction module
+      Slot 5-6>> Phase shift module
+      Slot 7-8>> Reference Group DDS
+===================================================================================*/
+
+/* C Standard Includes*/
+/*====================================================================================*/
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <math.h>
+
+/* GSI LM32 Includes */
+/*====================================================================================*/
+#include "mprintf.h"
+#include "mini_sdb.h"
+#include "ebm.h"
+#include "aux.h"
+#include "hw-tlu.h"
+#include "eca_queue_regs.h"
+#include "time_counter.h"
+
+/* Vender ID and device ID */
+#define venID 0x651
+#define devID_ECA   0xd5a3faea
+
+/* #define devID_ECA   0x9602eb6f for timestamp */
+
+/* SCU Slave address */
+/*====================================================================================
+  E.g. the slave is at slot 5
+  Base Address for the slave is 5 * 2^17 + 0x400000 = 0x4a0000
+  The Phase Advance Prediction module is in slot 1
+  The Phase Correction module is in slot 2
+  The Phase Shift module is in slot 3
+====================================================================================
+  EVT_B2B_START timestamp must be aligned with a T0 edge, tm + 100us corresponds to
+  the PAP predicted phase.
+
+====================================================================================*/
+
+
+/* Timining message structure */
+#define Param_os      0x4
+#define TEF_os        (Param_os + 0x4)
+#define Reserved_os   (TEF_os + 0x2)
+#define Timestamp_os  (Reserved_os + 0x2)
+
+
+/* variable to the base address */
+volatile unsigned int* pECA   = 0;
+volatile unsigned int* pECA_Q = 0;
+
+
+uint32_t eca_queue_flag;
+uint32_t event_id_hi;
+uint32_t event_id_lo;
+uint32_t event_param_hi;
+uint32_t event_param_lo;
+uint32_t event_tag;
+uint32_t event_tef;
+
+void init()
+{
+  /* Get uart unit address */
+  discoverPeriphery();
+  uart_init_hw();
+  //init_irq_handler();
+
+}
+
+void event_get_from_queue (uint32_t event_param_hi, uint32_t event_param_lo, uint32_t event_tag, uint32_t event_tef)
+{
+  event_param_hi   = *(pECA +(ECA_QUEUE_PARAM_HI_GET >> 2));
+  event_param_lo   = *(pECA +(ECA_QUEUE_PARAM_LO_GET >> 2));
+  event_tag        = *(pECA +(ECA_QUEUE_TAG_GET >> 2));
+  event_tef        = *(pECA +(ECA_QUEUE_TEF_GET >> 2));
+  //Pop the ECA queue
+  *(pECA +(ECA_QUEUE_POP_OWR >> 2)) = 0x1;
+
+  mprintf(" EVENT_QUEUE_FLAG: %x\n EVENT_ID_HI:%x\n EVENT_ID_LO:%x\n EVENT_PARAM_HI:%x\n EVENT_PARAM_LO:%x\n EVENT_TAG:%x\n EVENT_TEF:%x \n",eca_queue_flag,event_id_hi, event_id_lo,event_param_hi,event_param_lo,event_tag,event_tef);
+}
+
+/* Function main */
+int main (void)
+{
+
+  init();
+
+  mprintf("!!!welcome to the B2B world\n");
+  /* Base address of the related ep cores */
+  //pECA = (unsigned int*)find_device_adr(venID,devID_ECA);
+  pECA = 0x800000c0;
+  mprintf("base address %x \n",pECA);
+
+  eca_queue_flag = *(pECA +(ECA_QUEUE_FLAGS_GET >> 2));
+  event_id_hi    = *(pECA +(ECA_QUEUE_EVENT_ID_HI_GET >> 2));
+  event_id_lo    = *(pECA +(ECA_QUEUE_EVENT_ID_LO_GET >> 2));
+
+  if (eca_queue_flag == 0x11 && event_id_hi == ((EVT_START_B2B >> 32) & 0xffffffff) && event_id_lo == (EVT_START_B2B & 0xfffffff))
+  {
+
+  }
+
+}
+
+
+

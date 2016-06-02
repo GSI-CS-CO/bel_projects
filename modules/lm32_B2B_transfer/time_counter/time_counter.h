@@ -1,0 +1,8 @@
+#define TIME_CTRL 0x0
+#define TIME_START_TAI_LO 0x4
+#define TIME_START_TAI_HI 0x8
+#define TIME_START_CYCLE  0xC
+#define TIME_STOP_TAI_LO  0x10
+#define TIME_STOP_TAI_HI  0x14
+#define TIME_STOP_CYCLE   0x18
+

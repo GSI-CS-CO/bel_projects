@@ -1,0 +1,9 @@
+
+t@scuxl0041 ~]# saft-ecpu-ctl baseboard -c 0xdeadbeef00000000 32 0 5
+Action sink configured...
+
+[root@scuxl0041 jbai]# saft-ctl baseboard inject 0xdeadbeef11111111 0x123456789
+0
+[root@scuxl0041 jbai]# saft-ctl baseboard inject 0xdeadbeef22222222 0x123456789
+0
+

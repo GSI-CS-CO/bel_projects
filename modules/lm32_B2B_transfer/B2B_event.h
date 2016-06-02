@@ -1,0 +1,12 @@
+#define EVT_START_B2B   0xdeadbeef11111111
+#define TGM_PHASE_TIME  0xdeadbeef22222222
+#define TGM_SYNCH_WIN   0xdeadbeef33333333
+#define TGM_PHASE_CORRECTION 0xdeadbeef44444444
+#define TGM_PHASE_JUMP  0xdeadbeef55555555
+#define TGM_KICKER_TRIGGER_TS_S  0xdeadbeef66666666
+#define TGM_KICKER_TRIGGER_TS_T  0xdeadbeef77777777
+#define TGM_KICKER_EXT_TS_S  0xdeadbeef88888888
+#define TGM_KICKER_EXT_TS_T  0xdeadbeef99999999
+
+
+
