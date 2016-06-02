@@ -164,7 +164,7 @@ void ebmInit()
   //config the source and destination MAC, ip, port
   ebm_config_if(LOCAL, "hw/00:26:7b:00:03:d7/udp/192.168.0.1/port/60368");
   ebm_config_if(REMOTE, "hw/ff:ff:ff:ff:ff:ff/udp/192.168.0.2/port/60369");
-  ebm_config_meta(80, 0x11, 16, 0x00000000 );
+  ebm_config_meta(1400, 0, 255, 255 );
 }
 
 void init()

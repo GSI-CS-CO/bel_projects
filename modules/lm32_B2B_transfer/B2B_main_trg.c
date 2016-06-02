@@ -19,6 +19,7 @@ Soure B2B SCU
 #include <math.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <time.h>
 
 /* GSI LM32 Includes */
 /*====================================================================================*/
@@ -163,7 +164,9 @@ void ebmInit()
   //config the source and destination MAC, ip, port
   ebm_config_if(LOCAL, "hw/00:26:7b:00:03:d7/udp/192.168.0.1/port/60368");
   ebm_config_if(REMOTE, "hw/ff:ff:ff:ff:ff:ff/udp/192.168.0.2/port/60369");
-  ebm_config_meta(80, 0x11, 16, 0x00000000 );
+  //Parameters: Max packet size, high address bits inserted into WB operations,
+  //,Default Record Header Options for current transaction
+  ebm_config_meta(1400, 0, 255, 255 );
 }
 
 void init()
@@ -240,6 +243,7 @@ int ebm_send_msg (uint32_t WB_Addr_t, uint64_t eventID, uint64_t Param_t, uint32
   ebm_hi(WB_Addr);
   atomic_on();
   //256 bits Payload
+ // ebm_op(WB_Addr_t, EventID_H  , Ebm_WRITE);
   ebm_op(WB_Addr_t, EventID_H  , Ebm_WRITE);
   ebm_op(WB_Addr_t, EventID_L  , Ebm_WRITE);
   ebm_op(WB_Addr_t, Param_H    , Ebm_WRITE);
@@ -356,7 +360,6 @@ int main (void)
   //  mprintf("irq_endp[%d] is: 0x%x\n",i, getSdbAdr(&lm32_irq_endp[i]));
   //}
 
-
   while (1)
   {
     eca_queue_flag = *(pECA_Q +(ECA_QUEUE_FLAGS_GET >> 2));
@@ -386,12 +389,15 @@ int main (void)
         *(pECA_Q +(ECA_QUEUE_POP_OWR >> 2)) = 0x1;
         /* Function Generator simulates the zero crossing point of high harmonic. TLU gets the timestamp of source TTL signal */
         get_rising_edge_tm_from_FG ();
-        //event_get_from_queue(param_hi,param_lo,ts_ex_hi,ts_ex_lo);
+       // event_get_from_queue(param_hi,param_lo,ts_ex_hi,ts_ex_lo);
+        ts_ex_hi    = *(pECA_Q +(ECA_QUEUE_EXECUTED_HI_GET >> 2));
+        ts_ex_lo    = *(pECA_Q +(ECA_QUEUE_EXECUTED_LO_GET >> 2));
         ts_now = ((uint64_t)ts_ex_hi << 32) | ts_ex_lo;
-        mprintf("^^^^^^^^^time HI: %x LO:%x\n ts_ex_hi,ts_ex_lo");
-
-        ebm_send_msg (WB_Addr, TGM_PHASE_TIME, tm_high_zero_trg, 0,0,0);
-        //ebm_send_msg (WB_Addr, 0xdeadbeef22222222, 0x1234567811223344, 0x87654321,0xaabbccdd,0x9988776655443322);
+        mprintf("^^^^^^^^^time HI: %x LO:%x\n", ts_ex_hi,ts_ex_lo);
+        //all timestamp in the unit of ns
+        ebm_send_msg (WB_Addr, 0xffff000000000000, 0, 0,0,ts_now+10000000000);
+        //ebm_send_msg (WB_Addr, TGM_PHASE_TIME, tm_high_zero_trg, 0,0,0);
+        //ebm_send_msg (WB_Addr, 0xcafebabe22222222, 0x1234567811223344, 0x87654321,0xaabbccdd,0x9988776655443322);
         break;
 
       default: break;

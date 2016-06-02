@@ -8,8 +8,19 @@ jbai@belpc136:~/test/bel_projects_B2B/bel_projects/modules/lm32_B2B_transfer$
 ssh root@scuxl0020.acc.gsi.de
 root@scuxl0020.acc.gsi.de's password: geheim
 
+//load firmware to the LM32
+lm32-ctl
 config inst 1
 config hw 0
+load B2B_main_src.elf
+
+or
+(Prefer)
+make B2B_main_src.bin
+/bel_projects/tools$ ./eb-fwload tcp/scuxl0020.acc.gsi.de u0 0 ../modules/lm2B_transfer/B2B_main_trg.bin
+
+
+cd 
 
 # Start saftlib 
 /bel_projects/ip_cores/saftlib$ sudo saftd baseboard:tcp/scuxl0041.acc.gsi.de
