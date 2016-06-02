@@ -1,0 +1,225 @@
+Info: Starting: Create block symbol file (.bsf)
+Info: qsys-generate /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3.qsys --block-symbol-file --output-directory=/home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3 --family="Arria V" --part=5ASTFD5K3F40I3
+Progress: Loading av_soc_devkit_ghrd/ghrd_5astfd5k3.qsys
+Progress: Reading input file
+Progress: Adding ILC [interrupt_latency_counter 15.1]
+Progress: Parameterizing module ILC
+Progress: Adding button_pio [altera_avalon_pio 15.1]
+Progress: Parameterizing module button_pio
+Progress: Adding clk_0 [clock_source 15.1]
+Progress: Parameterizing module clk_0
+Progress: Adding dipsw_pio [altera_avalon_pio 15.1]
+Progress: Parameterizing module dipsw_pio
+Progress: Adding f2sdram_only_master [altera_jtag_avalon_master 15.1]
+Progress: Parameterizing module f2sdram_only_master
+Progress: Adding fpga_only_master [altera_jtag_avalon_master 15.1]
+Progress: Parameterizing module fpga_only_master
+Progress: Adding hps_0 [altera_hps 15.1]
+Progress: Parameterizing module hps_0
+Progress: Adding hps_only_master [altera_jtag_avalon_master 15.1]
+Progress: Parameterizing module hps_only_master
+Progress: Adding jtag_uart [altera_avalon_jtag_uart 15.1]
+Progress: Parameterizing module jtag_uart
+Progress: Adding led_pio [altera_avalon_pio 15.1]
+Progress: Parameterizing module led_pio
+Progress: Adding mm_bridge_0 [altera_avalon_mm_bridge 15.1]
+Progress: Parameterizing module mm_bridge_0
+Progress: Adding onchip_memory2_0 [altera_avalon_onchip_memory2 15.1]
+Progress: Parameterizing module onchip_memory2_0
+Progress: Adding sysid_qsys [altera_avalon_sysid_qsys 15.1]
+Progress: Parameterizing module sysid_qsys
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: ghrd_5astfd5k3.button_pio: PIO inputs are not hardwired in test bench. Undefined values will be read from PIO inputs during simulation.
+Info: ghrd_5astfd5k3.dipsw_pio: PIO inputs are not hardwired in test bench. Undefined values will be read from PIO inputs during simulation.
+Info: ghrd_5astfd5k3.hps_0: HPS Main PLL counter settings: n = 0  m = 41
+Info: ghrd_5astfd5k3.hps_0: HPS peripherial PLL counter settings: n = 0  m = 39
+Info: ghrd_5astfd5k3.hps_0: ECC will be enabled in the preloader because an interface width of 24 or 40 has been chosen.
+Info: ghrd_5astfd5k3.led_pio: PIO inputs are not hardwired in test bench. Undefined values will be read from PIO inputs during simulation.
+Info: ghrd_5astfd5k3.sysid_qsys: System ID is not assigned automatically. Edit the System ID parameter to provide a unique ID
+Info: ghrd_5astfd5k3.sysid_qsys: Time stamp will be automatically updated when this component is generated.
+Info: qsys-generate succeeded.
+Info: Finished: Create block symbol file (.bsf)
+Info: 
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3.qsys --synthesis=VHDL --output-directory=/home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis --family="Arria V" --part=5ASTFD5K3F40I3
+Progress: Loading av_soc_devkit_ghrd/ghrd_5astfd5k3.qsys
+Progress: Reading input file
+Progress: Adding ILC [interrupt_latency_counter 15.1]
+Progress: Parameterizing module ILC
+Progress: Adding button_pio [altera_avalon_pio 15.1]
+Progress: Parameterizing module button_pio
+Progress: Adding clk_0 [clock_source 15.1]
+Progress: Parameterizing module clk_0
+Progress: Adding dipsw_pio [altera_avalon_pio 15.1]
+Progress: Parameterizing module dipsw_pio
+Progress: Adding f2sdram_only_master [altera_jtag_avalon_master 15.1]
+Progress: Parameterizing module f2sdram_only_master
+Progress: Adding fpga_only_master [altera_jtag_avalon_master 15.1]
+Progress: Parameterizing module fpga_only_master
+Progress: Adding hps_0 [altera_hps 15.1]
+Progress: Parameterizing module hps_0
+Progress: Adding hps_only_master [altera_jtag_avalon_master 15.1]
+Progress: Parameterizing module hps_only_master
+Progress: Adding jtag_uart [altera_avalon_jtag_uart 15.1]
+Progress: Parameterizing module jtag_uart
+Progress: Adding led_pio [altera_avalon_pio 15.1]
+Progress: Parameterizing module led_pio
+Progress: Adding mm_bridge_0 [altera_avalon_mm_bridge 15.1]
+Progress: Parameterizing module mm_bridge_0
+Progress: Adding onchip_memory2_0 [altera_avalon_onchip_memory2 15.1]
+Progress: Parameterizing module onchip_memory2_0
+Progress: Adding sysid_qsys [altera_avalon_sysid_qsys 15.1]
+Progress: Parameterizing module sysid_qsys
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: ghrd_5astfd5k3.button_pio: PIO inputs are not hardwired in test bench. Undefined values will be read from PIO inputs during simulation.
+Info: ghrd_5astfd5k3.dipsw_pio: PIO inputs are not hardwired in test bench. Undefined values will be read from PIO inputs during simulation.
+Info: ghrd_5astfd5k3.hps_0: HPS Main PLL counter settings: n = 0  m = 41
+Info: ghrd_5astfd5k3.hps_0: HPS peripherial PLL counter settings: n = 0  m = 39
+Info: ghrd_5astfd5k3.hps_0: ECC will be enabled in the preloader because an interface width of 24 or 40 has been chosen.
+Info: ghrd_5astfd5k3.led_pio: PIO inputs are not hardwired in test bench. Undefined values will be read from PIO inputs during simulation.
+Info: ghrd_5astfd5k3.sysid_qsys: System ID is not assigned automatically. Edit the System ID parameter to provide a unique ID
+Info: ghrd_5astfd5k3.sysid_qsys: Time stamp will be automatically updated when this component is generated.
+Info: ghrd_5astfd5k3: Generating ghrd_5astfd5k3 "ghrd_5astfd5k3" for QUARTUS_SYNTH
+Info: Interconnect is inserted between master hps_0.h2f_lw_axi_master and slave mm_bridge_0.s0 because the master is of type axi and the slave is of type avalon.
+Info: Interconnect is inserted between master hps_only_master.master and slave hps_0.f2h_axi_slave because the master is of type avalon and the slave is of type axi.
+Info: Interconnect is inserted between master f2sdram_only_master.master and slave hps_0.f2h_sdram0_data because the master has address signal 32 bit wide, but the slave is 27 bit wide.
+Info: Interconnect is inserted between master f2sdram_only_master.master and slave hps_0.f2h_sdram0_data because the master has readdata signal 32 bit wide, but the slave is 256 bit wide.
+Info: Interconnect is inserted between master f2sdram_only_master.master and slave hps_0.f2h_sdram0_data because the master has writedata signal 32 bit wide, but the slave is 256 bit wide.
+Info: Interconnect is inserted between master f2sdram_only_master.master and slave hps_0.f2h_sdram0_data because the master has byteenable signal 4 bit wide, but the slave is 32 bit wide.
+Warning: hps_0.f2h_irq0: Cannot connect clock for irq_mapper_001.sender
+Warning: hps_0.f2h_irq0: Cannot connect reset for irq_mapper_001.sender
+Warning: hps_0.f2h_irq1: Cannot connect clock for irq_mapper_002.sender
+Warning: hps_0.f2h_irq1: Cannot connect reset for irq_mapper_002.sender
+Info: ILC: "ghrd_5astfd5k3" instantiated interrupt_latency_counter "ILC"
+Info: button_pio: Starting RTL generation for module 'ghrd_5astfd5k3_button_pio'
+Info: button_pio:   Generation command is [exec /home/alex/workspace/optional/altera/15.1/quartus/linux64/perl/bin/perl -I /home/alex/workspace/optional/altera/15.1/quartus/linux64/perl/lib -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin/europa -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin/perl_lib -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin -I /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/common -I /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_pio -- /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_pio/generate_rtl.pl --name=ghrd_5astfd5k3_button_pio --dir=/tmp/alt6954_8516970768623104365.dir/0002_button_pio_gen/ --quartus_dir=/home/alex/workspace/optional/altera/15.1/quartus --verilog --config=/tmp/alt6954_8516970768623104365.dir/0002_button_pio_gen//ghrd_5astfd5k3_button_pio_component_configuration.pl  --do_build_sim=0  ]
+Info: button_pio: Done RTL generation for module 'ghrd_5astfd5k3_button_pio'
+Info: button_pio: "ghrd_5astfd5k3" instantiated altera_avalon_pio "button_pio"
+Info: dipsw_pio: Starting RTL generation for module 'ghrd_5astfd5k3_dipsw_pio'
+Info: dipsw_pio:   Generation command is [exec /home/alex/workspace/optional/altera/15.1/quartus/linux64/perl/bin/perl -I /home/alex/workspace/optional/altera/15.1/quartus/linux64/perl/lib -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin/europa -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin/perl_lib -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin -I /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/common -I /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_pio -- /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_pio/generate_rtl.pl --name=ghrd_5astfd5k3_dipsw_pio --dir=/tmp/alt6954_8516970768623104365.dir/0003_dipsw_pio_gen/ --quartus_dir=/home/alex/workspace/optional/altera/15.1/quartus --verilog --config=/tmp/alt6954_8516970768623104365.dir/0003_dipsw_pio_gen//ghrd_5astfd5k3_dipsw_pio_component_configuration.pl  --do_build_sim=0  ]
+Info: dipsw_pio: Done RTL generation for module 'ghrd_5astfd5k3_dipsw_pio'
+Info: dipsw_pio: "ghrd_5astfd5k3" instantiated altera_avalon_pio "dipsw_pio"
+Info: f2sdram_only_master: "ghrd_5astfd5k3" instantiated altera_jtag_avalon_master "f2sdram_only_master"
+Info: hps_0: "Running  for module: hps_0"
+Info: hps_0: HPS Main PLL counter settings: n = 0  m = 41
+Info: hps_0: HPS peripherial PLL counter settings: n = 0  m = 39
+Info: hps_0: ECC will be enabled in the preloader because an interface width of 24 or 40 has been chosen.
+Info: hps_0: "ghrd_5astfd5k3" instantiated altera_hps "hps_0"
+Info: jtag_uart: Starting RTL generation for module 'ghrd_5astfd5k3_jtag_uart'
+Info: jtag_uart:   Generation command is [exec /home/alex/workspace/optional/altera/15.1/quartus/linux64/perl/bin/perl -I /home/alex/workspace/optional/altera/15.1/quartus/linux64/perl/lib -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin/europa -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin/perl_lib -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin -I /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/common -I /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_jtag_uart -- /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_jtag_uart/generate_rtl.pl --name=ghrd_5astfd5k3_jtag_uart --dir=/tmp/alt6954_8516970768623104365.dir/0004_jtag_uart_gen/ --quartus_dir=/home/alex/workspace/optional/altera/15.1/quartus --verilog --config=/tmp/alt6954_8516970768623104365.dir/0004_jtag_uart_gen//ghrd_5astfd5k3_jtag_uart_component_configuration.pl  --do_build_sim=0  ]
+Info: jtag_uart: Done RTL generation for module 'ghrd_5astfd5k3_jtag_uart'
+Info: jtag_uart: "ghrd_5astfd5k3" instantiated altera_avalon_jtag_uart "jtag_uart"
+Info: led_pio: Starting RTL generation for module 'ghrd_5astfd5k3_led_pio'
+Info: led_pio:   Generation command is [exec /home/alex/workspace/optional/altera/15.1/quartus/linux64/perl/bin/perl -I /home/alex/workspace/optional/altera/15.1/quartus/linux64/perl/lib -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin/europa -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin/perl_lib -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin -I /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/common -I /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_pio -- /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_pio/generate_rtl.pl --name=ghrd_5astfd5k3_led_pio --dir=/tmp/alt6954_8516970768623104365.dir/0005_led_pio_gen/ --quartus_dir=/home/alex/workspace/optional/altera/15.1/quartus --verilog --config=/tmp/alt6954_8516970768623104365.dir/0005_led_pio_gen//ghrd_5astfd5k3_led_pio_component_configuration.pl  --do_build_sim=0  ]
+Info: led_pio: Done RTL generation for module 'ghrd_5astfd5k3_led_pio'
+Info: led_pio: "ghrd_5astfd5k3" instantiated altera_avalon_pio "led_pio"
+Info: mm_bridge_0: "ghrd_5astfd5k3" instantiated altera_avalon_mm_bridge "mm_bridge_0"
+Info: onchip_memory2_0: Starting RTL generation for module 'ghrd_5astfd5k3_onchip_memory2_0'
+Info: onchip_memory2_0:   Generation command is [exec /home/alex/workspace/optional/altera/15.1/quartus/linux64/perl/bin/perl -I /home/alex/workspace/optional/altera/15.1/quartus/linux64/perl/lib -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin/europa -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin/perl_lib -I /home/alex/workspace/optional/altera/15.1/quartus/sopc_builder/bin -I /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/common -I /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_onchip_memory2 -- /home/alex/workspace/optional/altera/15.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_onchip_memory2/generate_rtl.pl --name=ghrd_5astfd5k3_onchip_memory2_0 --dir=/tmp/alt6954_8516970768623104365.dir/0006_onchip_memory2_0_gen/ --quartus_dir=/home/alex/workspace/optional/altera/15.1/quartus --verilog --config=/tmp/alt6954_8516970768623104365.dir/0006_onchip_memory2_0_gen//ghrd_5astfd5k3_onchip_memory2_0_component_configuration.pl  --do_build_sim=0  ]
+Info: onchip_memory2_0: Done RTL generation for module 'ghrd_5astfd5k3_onchip_memory2_0'
+Info: onchip_memory2_0: "ghrd_5astfd5k3" instantiated altera_avalon_onchip_memory2 "onchip_memory2_0"
+Info: sysid_qsys: "ghrd_5astfd5k3" instantiated altera_avalon_sysid_qsys "sysid_qsys"
+Info: avalon_st_adapter: Inserting error_adapter: error_adapter_0
+Info: avalon_st_adapter_001: Inserting error_adapter: error_adapter_0
+Info: avalon_st_adapter_002: Inserting error_adapter: error_adapter_0
+Info: avalon_st_adapter_003: Inserting error_adapter: error_adapter_0
+Info: avalon_st_adapter_004: Inserting error_adapter: error_adapter_0
+Info: avalon_st_adapter_005: Inserting error_adapter: error_adapter_0
+Info: avalon_st_adapter_006: Inserting error_adapter: error_adapter_0
+Info: mm_interconnect_0: "ghrd_5astfd5k3" instantiated altera_mm_interconnect "mm_interconnect_0"
+Info: avalon_st_adapter: Inserting error_adapter: error_adapter_0
+Info: mm_interconnect_1: "ghrd_5astfd5k3" instantiated altera_mm_interconnect "mm_interconnect_1"
+Info: mm_interconnect_2: "ghrd_5astfd5k3" instantiated altera_mm_interconnect "mm_interconnect_2"
+Info: avalon_st_adapter: Inserting error_adapter: error_adapter_0
+Info: mm_interconnect_3: "ghrd_5astfd5k3" instantiated altera_mm_interconnect "mm_interconnect_3"
+Info: irq_mapper: "ghrd_5astfd5k3" instantiated altera_irq_mapper "irq_mapper"
+Info: irq_mapper_001: "ghrd_5astfd5k3" instantiated altera_irq_mapper "irq_mapper_001"
+Info: irq_mapper_002: "ghrd_5astfd5k3" instantiated altera_irq_mapper "irq_mapper_002"
+Info: rst_controller: "ghrd_5astfd5k3" instantiated altera_reset_controller "rst_controller"
+Info: jtag_phy_embedded_in_jtag_master: "f2sdram_only_master" instantiated altera_jtag_dc_streaming "jtag_phy_embedded_in_jtag_master"
+Info: timing_adt: "f2sdram_only_master" instantiated timing_adapter "timing_adt"
+Info: fifo: "f2sdram_only_master" instantiated altera_avalon_sc_fifo "fifo"
+Info: b2p: "f2sdram_only_master" instantiated altera_avalon_st_bytes_to_packets "b2p"
+Info: p2b: "f2sdram_only_master" instantiated altera_avalon_st_packets_to_bytes "p2b"
+Info: transacto: "f2sdram_only_master" instantiated altera_avalon_packets_to_master "transacto"
+Info: b2p_adapter: "f2sdram_only_master" instantiated channel_adapter "b2p_adapter"
+Info: p2b_adapter: "f2sdram_only_master" instantiated channel_adapter "p2b_adapter"
+Info: fpga_interfaces: "hps_0" instantiated altera_interface_generator "fpga_interfaces"
+Info: hps_io: "hps_0" instantiated altera_hps_io "hps_io"
+Info: fpga_only_master_master_translator: "mm_interconnect_0" instantiated altera_merlin_master_translator "fpga_only_master_master_translator"
+Info: onchip_memory2_0_s1_translator: "mm_interconnect_0" instantiated altera_merlin_slave_translator "onchip_memory2_0_s1_translator"
+Info: hps_0_h2f_axi_master_agent: "mm_interconnect_0" instantiated altera_merlin_axi_master_ni "hps_0_h2f_axi_master_agent"
+Info: fpga_only_master_master_agent: "mm_interconnect_0" instantiated altera_merlin_master_agent "fpga_only_master_master_agent"
+Info: onchip_memory2_0_s1_agent: "mm_interconnect_0" instantiated altera_merlin_slave_agent "onchip_memory2_0_s1_agent"
+Info: router: "mm_interconnect_0" instantiated altera_merlin_router "router"
+Info: router_002: "mm_interconnect_0" instantiated altera_merlin_router "router_002"
+Info: router_003: "mm_interconnect_0" instantiated altera_merlin_router "router_003"
+Info: router_004: "mm_interconnect_0" instantiated altera_merlin_router "router_004"
+Info: router_005: "mm_interconnect_0" instantiated altera_merlin_router "router_005"
+Info: fpga_only_master_master_limiter: "mm_interconnect_0" instantiated altera_merlin_traffic_limiter "fpga_only_master_master_limiter"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_avalon_sc_fifo.v
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_avalon_st_pipeline_base.v
+Info: onchip_memory2_0_s1_burst_adapter: "mm_interconnect_0" instantiated altera_merlin_burst_adapter "onchip_memory2_0_s1_burst_adapter"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_address_alignment.sv
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_avalon_st_pipeline_stage.sv
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_avalon_st_pipeline_base.v
+Info: cmd_demux: "mm_interconnect_0" instantiated altera_merlin_demultiplexer "cmd_demux"
+Info: cmd_demux_002: "mm_interconnect_0" instantiated altera_merlin_demultiplexer "cmd_demux_002"
+Info: cmd_demux_003: "mm_interconnect_0" instantiated altera_merlin_demultiplexer "cmd_demux_003"
+Info: cmd_mux: "mm_interconnect_0" instantiated altera_merlin_multiplexer "cmd_mux"
+Info: cmd_mux_001: "mm_interconnect_0" instantiated altera_merlin_multiplexer "cmd_mux_001"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: rsp_demux: "mm_interconnect_0" instantiated altera_merlin_demultiplexer "rsp_demux"
+Info: rsp_demux_001: "mm_interconnect_0" instantiated altera_merlin_demultiplexer "rsp_demux_001"
+Info: rsp_mux: "mm_interconnect_0" instantiated altera_merlin_multiplexer "rsp_mux"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: rsp_mux_002: "mm_interconnect_0" instantiated altera_merlin_multiplexer "rsp_mux_002"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: rsp_mux_003: "mm_interconnect_0" instantiated altera_merlin_multiplexer "rsp_mux_003"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: hps_0_h2f_axi_master_wr_to_onchip_memory2_0_s1_cmd_width_adapter: "mm_interconnect_0" instantiated altera_merlin_width_adapter "hps_0_h2f_axi_master_wr_to_onchip_memory2_0_s1_cmd_width_adapter"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_address_alignment.sv
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_burst_uncompressor.sv
+Info: avalon_st_adapter: "mm_interconnect_0" instantiated altera_avalon_st_adapter "avalon_st_adapter"
+Info: avalon_st_adapter_001: "mm_interconnect_0" instantiated altera_avalon_st_adapter "avalon_st_adapter_001"
+Info: router: "mm_interconnect_1" instantiated altera_merlin_router "router"
+Info: router_002: "mm_interconnect_1" instantiated altera_merlin_router "router_002"
+Info: cmd_demux: "mm_interconnect_1" instantiated altera_merlin_demultiplexer "cmd_demux"
+Info: cmd_mux: "mm_interconnect_1" instantiated altera_merlin_multiplexer "cmd_mux"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: rsp_demux: "mm_interconnect_1" instantiated altera_merlin_demultiplexer "rsp_demux"
+Info: rsp_mux: "mm_interconnect_1" instantiated altera_merlin_multiplexer "rsp_mux"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: hps_0_f2h_axi_slave_agent: "mm_interconnect_2" instantiated altera_merlin_axi_slave_ni "hps_0_f2h_axi_slave_agent"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_burst_uncompressor.sv
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_avalon_sc_fifo.v
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_address_alignment.sv
+Info: router: "mm_interconnect_2" instantiated altera_merlin_router "router"
+Info: router_001: "mm_interconnect_2" instantiated altera_merlin_router "router_001"
+Info: cmd_demux: "mm_interconnect_2" instantiated altera_merlin_demultiplexer "cmd_demux"
+Info: cmd_mux: "mm_interconnect_2" instantiated altera_merlin_multiplexer "cmd_mux"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: rsp_demux: "mm_interconnect_2" instantiated altera_merlin_demultiplexer "rsp_demux"
+Info: rsp_mux: "mm_interconnect_2" instantiated altera_merlin_multiplexer "rsp_mux"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: router: "mm_interconnect_3" instantiated altera_merlin_router "router"
+Info: router_001: "mm_interconnect_3" instantiated altera_merlin_router "router_001"
+Info: cmd_demux: "mm_interconnect_3" instantiated altera_merlin_demultiplexer "cmd_demux"
+Info: cmd_mux: "mm_interconnect_3" instantiated altera_merlin_multiplexer "cmd_mux"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: rsp_mux: "mm_interconnect_3" instantiated altera_merlin_multiplexer "rsp_mux"
+Info: Reusing file /home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: avalon_st_adapter: "mm_interconnect_3" instantiated altera_avalon_st_adapter "avalon_st_adapter"
+Info: border: "hps_io" instantiated altera_interface_generator "border"
+Info: error_adapter_0: "avalon_st_adapter" instantiated error_adapter "error_adapter_0"
+Info: error_adapter_0: "avalon_st_adapter_001" instantiated error_adapter "error_adapter_0"
+Info: error_adapter_0: "avalon_st_adapter" instantiated error_adapter "error_adapter_0"
+Info: ghrd_5astfd5k3: Done "ghrd_5astfd5k3" with 77 modules, 148 files
+Info: qsys-generate succeeded.
+Info: Finished: Create HDL design files for synthesis

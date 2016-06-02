@@ -7,5 +7,6 @@ files = [
 modules = {
   "local" : [
     "../../..",
+    "../../../modules/soc/arm_cortex_a9_sys",
   ]
 }
