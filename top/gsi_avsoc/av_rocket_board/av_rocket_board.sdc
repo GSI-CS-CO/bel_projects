@@ -6,7 +6,6 @@ set_clock_groups -asynchronous                           \
  -group { altera_reserved_tck                          } \
  -group { clk_20m_vcxo_i    main|\dmtd_a5:dmtd_inst|*  } \
  -group { clk_125m_local_i  main|\sys_a5:sys_inst|*    } \
- -group { main|\nau8811_y:nau8811_audio|*              } \
  -group { clk_sfp_i         main|\ref_a5:ref_inst|*      \
           main|\phy_a5:phy|*.cdr_refclk*                 \
           main|\phy_a5:phy|*.cmu_pll.*                   \
