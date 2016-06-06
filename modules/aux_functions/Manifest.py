@@ -1,6 +1,6 @@
 files = [ 
   "aux_functions_pkg.vhd",
-  "Debounce.vhd",
+#  "Debounce.vhd",
   "div_n.vhd",
   "led_n.vhd",
   "lemo_io.vhd",

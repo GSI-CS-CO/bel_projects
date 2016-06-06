@@ -101,5 +101,14 @@ package ghrd_5astfd5k3_pkg is
 			memory_oct_rzqin                      : in    std_logic                     := 'X';             -- oct_rzqin
 			reset_reset_n                         : in    std_logic                     := 'X'              -- reset_n
 		);
-	end component; 
+	end component;
+	
+	component altera_wrapper_debounce is
+		port (
+			clk      : in std_logic;
+			reset_n  : in std_logic;
+			data_in  : in  std_logic_vector(3 downto 0);
+			data_out : out std_logic_vector(3 downto 0)
+		);
+	end component;
 end ghrd_5astfd5k3_pkg;

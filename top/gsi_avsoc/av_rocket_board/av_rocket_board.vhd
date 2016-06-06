@@ -115,10 +115,10 @@ begin
 
   -- Monster ...
 
-  fpga_led_pio                <= fpga_led_internal;
+  fpga_led_pio                <= not(fpga_led_internal);
   stm_hw_events(3  downto  0) <= fpga_debounced_buttons;
   stm_hw_events(7  downto  4) <= fpga_led_internal;
-  stm_hw_events(11 downto  8) <= fpga_led_internal; -- !!!
+  stm_hw_events(11 downto  8) <= fpga_dipsw_pio;
   stm_hw_events(27 downto 12) <= (others => '0');
   
   -- SoC sub-system module
@@ -215,6 +215,16 @@ begin
       reset_reset_n                         => hps_fpga_reset_n,
       hps_0_f2h_cold_reset_req_reset_n      => not(hps_cold_reset),
       hps_0_f2h_warm_reset_req_reset_n      => not(hps_warm_reset),
-      hps_0_f2h_debug_reset_req_reset_n     => not(hps_debug_reset));
+      hps_0_f2h_debug_reset_req_reset_n     => not(hps_debug_reset)
+    );
+  
+  -- SoC sub-system module
+  debounce_inst : altera_wrapper_debounce
+    port map(
+      clk      => fpga_clk_50,
+      reset_n  => hps_fpga_reset_n,
+      data_in  => fpga_button_pio,
+      data_out => fpga_debounced_buttons
+    );
   
 end rtl;
