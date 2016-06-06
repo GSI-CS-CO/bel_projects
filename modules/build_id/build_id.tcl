@@ -63,7 +63,7 @@ lappend output "OS version  : $build_os"
 lappend output "Quartus     : $quartus(version)"
 lappend output ""
 
-set gitlog [open "| git log --oneline --decorate=no -n 5" "r"]
+set gitlog [open "| git log --oneline --decorate=short -n 5" "r"]
 while {[gets $gitlog line] >= 0} { lappend output "  $line" }
 close $gitlog
 

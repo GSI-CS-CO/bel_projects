@@ -307,6 +307,35 @@ package monster_pkg is
       ps_cre                 : out   std_logic;
       ps_advn                : out   std_logic;
       ps_wait                : in    std_logic := '0';
+      -- g_en_pmc
+      pmc_pci_clk_i          : in    std_logic := '0';
+      pmc_pci_rst_i          : in    std_logic := '0';
+      pmc_buf_oe_o           : out   std_logic;
+      pmc_busmode_io         : inout std_logic_vector(3 downto 0) := (others => 'Z');
+      pmc_ad_io              : inout std_logic_vector(31 downto 0) := (others => 'Z');
+      pmc_c_be_io            : inout std_logic_vector(3 downto 0) := (others => 'Z');
+      pmc_par_io             : inout std_logic := 'Z';
+      pmc_frame_io           : inout std_logic := 'Z';
+      pmc_trdy_io            : inout std_logic := 'Z';
+      pmc_irdy_io            : inout std_logic := 'Z';
+      pmc_stop_io            : inout std_logic := 'Z';
+      pmc_devsel_io          : inout std_logic := 'Z';
+      pmc_idsel_i            : in    std_logic := '0';
+      pmc_perr_io            : inout std_logic := 'Z';
+      pmc_serr_io            : inout std_logic := 'Z';
+      pmc_inta_o             : out   std_logic;
+      pmc_req_o              : out   std_logic;
+      pmc_gnt_i              : in    std_logic := '1';
+
+      -- g_en_pmc_ctrl
+      pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0) := (others => '0');
+      pmc_pb_i               : in    std_logic := '0';
+      pmc_ctrl_hs_cpld_i     : in    std_logic_vector(3 downto 0) := (others => '0');
+      pmc_pb_cpld_i          : in    std_logic := '0';
+      pmc_clk_oe_o           : out   std_logic;
+      pmc_log_oe_o           : out   std_logic_vector(16 downto 0);
+      pmc_log_out_o          : out   std_logic_vector(16 downto 0);
+      pmc_log_in_i           : in    std_logic_vector(16 downto 0):= (others => '0');
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z');
       hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z'));

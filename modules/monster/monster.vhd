@@ -90,7 +90,8 @@ entity monster is
     g_en_nau8811           : boolean;
     g_en_user_ow           : boolean;
     g_en_psram             : boolean;
-    g_io_table             : t_io_mapping_table_arg_array(natural range <>);
+    g_en_pmc               : boolean;
+    g_en_pmc_ctrl          : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -291,6 +292,35 @@ entity monster is
     ps_cre                 : out   std_logic := 'Z';
     ps_advn                : out   std_logic := 'Z';
     ps_wait                : in    std_logic;
+    -- g_en_pmc
+    pmc_pci_clk_i          : in    std_logic;
+    pmc_pci_rst_i          : in    std_logic;
+    pmc_buf_oe_o           : out   std_logic := 'Z';
+    pmc_busmode_io         : inout std_logic_vector(3 downto 0);
+    pmc_ad_io              : inout std_logic_vector(31 downto 0);
+    pmc_c_be_io            : inout std_logic_vector(3 downto 0);
+    pmc_par_io             : inout std_logic;
+    pmc_frame_io           : inout std_logic;
+    pmc_trdy_io            : inout std_logic;
+    pmc_irdy_io            : inout std_logic;
+    pmc_stop_io            : inout std_logic;
+    pmc_devsel_io          : inout std_logic;
+    pmc_idsel_i            : in    std_logic;
+    pmc_perr_io            : inout std_logic;
+    pmc_serr_io            : inout std_logic;
+    pmc_inta_o             : out   std_logic := 'Z';
+    pmc_req_o              : out   std_logic;
+    pmc_gnt_i              : in    std_logic;
+
+    -- g_en_pmc_ctrl
+    pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0);
+    pmc_pb_i               : in    std_logic;
+    pmc_ctrl_hs_cpld_i     : in    std_logic_vector(3 downto 0);
+    pmc_pb_cpld_i          : in    std_logic;
+    pmc_clk_oe_o           : out   std_logic := 'Z';
+    pmc_log_oe_o           : out   std_logic_vector(16 downto 0) := (others => 'Z');
+    pmc_log_out_o          : out   std_logic_vector(16 downto 0) := (others => 'Z');
+    pmc_log_in_i           : in    std_logic_vector(16 downto 0);
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
     hw_version             : in    std_logic_vector(31 downto 0));
@@ -313,13 +343,14 @@ architecture rtl of monster is
   -- GSI Top Crossbar Masters ------------------------------------------------------
   ----------------------------------------------------------------------------------
   
-  constant c_top_my_masters : natural := 6;
+  constant c_top_my_masters : natural := 7;
   constant c_topm_ebs       : natural := 0;
   constant c_topm_eca_wbm   : natural := 1;
   constant c_topm_pcie      : natural := 2;
   constant c_topm_vme       : natural := 3;
   constant c_topm_usb       : natural := 4;
   constant c_topm_prioq     : natural := 5;
+  constant c_topm_pmc       : natural := 6;
   
   constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) :=
    (c_topm_ebs     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
@@ -327,7 +358,8 @@ architecture rtl of monster is
     c_topm_pcie    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
     c_topm_vme     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
     c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     false), -- Need to add MSI support !!!
-    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false));  
+    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false),
+    c_topm_pmc     => f_sdb_auto_msi(c_topm_pmc,    g_en_pmc));  
   
   -- The FTM adds a bunch of masters to this crossbar
   constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
@@ -1193,6 +1225,55 @@ begin
   
   wr_uart_o <= uart_wrc;
   uart_mux <= uart_usb and wr_uart_i;
+  
+  pmc_n : if not g_en_pmc generate
+    top_bus_slave_i (c_topm_pmc) <= cc_dummy_master_out;
+    top_msi_master_i(c_irqs_pmc) <= cc_dummy_slave_out;
+  end generate;
+ pmc_y : if g_en_pmc generate
+    pmc : wb_pmc_host_bridge
+    generic map(
+      g_family      => "Arria V",
+      g_sdb_addr    => c_top_sdb_address) 
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+
+      master_clk_i  => clk_sys,
+      master_rstn_i => rstn_sys,
+      slave_clk_i   => clk_sys,
+      slave_rstn_i  => rstn_sys,
+      master_o      => top_bus_slave_i (c_topm_pmc),
+      master_i      => top_bus_slave_o (c_topm_pmc),
+      slave_i       => top_msi_master_o(c_irqs_pmc),
+      slave_o       => top_msi_master_i(c_irqs_pmc), 
+      pci_clk_i     => pmc_pci_clk_i,
+      pci_rst_i     => pmc_pci_rst_i,
+      buf_oe_o      => pmc_buf_oe_o,
+      busmode_io    => pmc_busmode_io,
+      ad_io         => pmc_ad_io,
+      c_be_io       => pmc_c_be_io,
+      par_io        => pmc_par_io,
+      frame_io      => pmc_frame_io,
+      trdy_io       => pmc_trdy_io,
+      irdy_io       => pmc_irdy_io,
+      stop_io       => pmc_stop_io,
+      devsel_io     => pmc_devsel_io,
+      idsel_i       => pmc_idsel_i,
+      perr_io       => pmc_perr_io,
+      serr_io       => pmc_serr_io,
+      inta_o        => pmc_inta_o,
+      req_o         => pmc_req_o,
+      gnt_i         => pmc_gnt_i,
+      debug_i       => s_pmc_debug_in,
+      debug_o       => s_pmc_debug_out
+);
+  end generate;
+
+s_pmc_debug_in(0)          <= pmc_pb_i;      -- FPGA push button used to trigger INTx IRQ
+s_pmc_debug_in(1)          <= pmc_pb_cpld_i; -- CPLD push button used to trigger MSI IRQ
+s_pmc_debug_in(7 downto 2) <= (others => '0');
+
   
   -- END OF Wishbone masters
   ----------------------------------------------------------------------------------
