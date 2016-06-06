@@ -596,6 +596,9 @@ set_location_assignment PIN_D2 -to hps_memory_mem_dqs_n[3]
 set_location_assignment PIN_H1 -to hps_memory_mem_dqs_n[4]
 set_location_assignment PIN_K9 -to hps_memory_oct_rzqin
 
+
+set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ip/edge_detect/altera_edge_detector.v -library ghrd_5astfd5k3
+set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ip/altsource_probe/hps_reset.v -library ghrd_5astfd5k3
 set_global_assignment -name QIP_FILE ../../../modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/ghrd_5astfd5k3.qip
 set_global_assignment -name VHDL_FILE ../../../modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/ghrd_5astfd5k3_rst_controller_001.vhd -library ghrd_5astfd5k3
 set_global_assignment -name VHDL_FILE ../../../modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/ghrd_5astfd5k3_rst_controller.vhd -library ghrd_5astfd5k3
@@ -1097,6 +1100,10 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/w
 set_global_assignment -name VHDL_FILE ../../../modules/mil/mil_en_decoder.vhd
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca/eca_walker.vhd"
 set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/altera_wrapper_debounce.v
-
 set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ip/debounce/debounce.v
+set_global_assignment -name QIP_FILE ../../../modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ip/altsource_probe/hps_reset.qip
+set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ip/edge_detect/altera_edge_detector.v
+set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/altera_wrapper_pcr.v
+set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/altera_wrapper_pdr.v
+set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/altera_wrapper_pwr.v
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

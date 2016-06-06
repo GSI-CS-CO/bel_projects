@@ -103,6 +103,20 @@ end av_rocket_board;
 
 architecture rtl of av_rocket_board is
 
+  -- PLL stub signals
+  signal clk_20m_vcxo;
+  signal clk_125m_pllref;
+  signal clk_125m_sfpref;
+  signal clk_125m_local;
+  
+  -- Monster signals
+  constant c_family       : string := "Arria V"; 
+  constant c_project      : string := "av_rocket_board";
+  constant c_cores        : natural:= 1;
+  constant c_initf_name   : string := c_project & ".mif";
+  constant c_profile_name : string := "medium_icache_debug";
+
+  -- HPS signals
   signal stm_hw_events          : std_logic_vector(27 downto 0);
   signal fpga_led_internal      : std_logic_vector(3 downto 0);
   signal fpga_debounced_buttons : std_logic_vector(3 downto 0);
@@ -110,16 +124,40 @@ architecture rtl of av_rocket_board is
   signal hps_cold_reset         : std_logic;
   signal hps_warm_reset         : std_logic;
   signal hps_debug_reset        : std_logic;
-  
+  signal hps_reset_req          : std_logic_vector(2 downto 0);
+
 begin
 
-  -- Monster ...
+  -- PLL stub
+  
+  
+  
 
-  fpga_led_pio                <= not(fpga_led_internal);
-  stm_hw_events(3  downto  0) <= fpga_debounced_buttons;
-  stm_hw_events(7  downto  4) <= fpga_led_internal;
-  stm_hw_events(11 downto  8) <= fpga_dipsw_pio;
-  stm_hw_events(27 downto 12) <= (others => '0');
+  -- Monster ...
+  monster_inst : monster
+    generic map(
+      g_family          => c_family,
+      g_project         => c_project,
+      g_flash_bits      => 25,
+      g_lm32_cores      => c_cores,
+      g_lm32_ramsizes   => c_lm32_ramsizes/4,
+      g_lm32_init_files => f_string_list_repeat(c_initf_name & ".mif", c_cores),
+      g_lm32_profiles   => f_string_list_repeat(c_profile_name, c_cores)
+    )  
+    port map(
+      core_clk_20m_vcxo_i     => clk_20m_vcxo,
+      core_clk_125m_pllref_i  => clk_125m_pllref,
+      core_clk_125m_sfpref_i  => clk_125m_sfpref,
+      core_clk_125m_local_i   => clk_125m_local,
+      wr_onewire_io           => rom_data,
+      wr_sfp_sda_io           => sfp4_mod2,
+      wr_sfp_scl_io           => sfp4_mod1,
+      wr_sfp_det_i            => sfp4_mod0,
+      wr_sfp_tx_o             => sfp4_txp_o,
+      wr_sfp_rx_i             => sfp4_rxp_i,
+      wr_dac_sclk_o           => dac_sclk,
+      wr_dac_din_o            => dac_din,
+      wr_ndac_cs_o            => ndac_cs);
   
   -- SoC sub-system module
   soc_inst : ghrd_5astfd5k3
@@ -218,7 +256,7 @@ begin
       hps_0_f2h_debug_reset_req_reset_n     => not(hps_debug_reset)
     );
   
-  -- SoC sub-system module
+  -- SoC sub-system module, debounce logic to clean out glitches within 1ms
   debounce_inst : altera_wrapper_debounce
     port map(
       clk      => fpga_clk_50,
@@ -226,5 +264,46 @@ begin
       data_in  => fpga_button_pio,
       data_out => fpga_debounced_buttons
     );
+  
+  -- SoC sub-system module, source/probe megawizard instance
+  hps_reset_inst : hps_reset
+    port map(
+      source_clk => fpga_clk_50,
+      source     => hps_reset_req
+    );
+  
+  -- SoC sub-system reset handling (cold reset)
+  pulse_cold_reset_inst : altera_wrapper_pcr
+    port map(
+      clk       => fpga_clk_50,
+      rst_n     => hps_fpga_reset_n,
+      signal_in => hps_reset_req(0),
+      pulse_out => hps_cold_reset
+    );
+  
+  -- SoC sub-system reset handling (warm reset)
+  pulse_warm_reset_inst : altera_wrapper_pwr
+    port map(
+      clk       => fpga_clk_50,
+      rst_n     => hps_fpga_reset_n,
+      signal_in => hps_reset_req(1),
+      pulse_out => hps_warm_reset
+    );
+  
+  -- SoC sub-system reset handling (debug reset)
+  pulse_debug_reset_inst : altera_wrapper_pdr
+    port map(
+      clk       => fpga_clk_50,
+      rst_n     => hps_fpga_reset_n,
+      signal_in => hps_reset_req(2),
+      pulse_out => hps_debug_reset
+    );
+  
+  -- SoC connections
+  fpga_led_pio                <= not(fpga_led_internal); -- !!! Inverted to verify the correct bitstream
+  stm_hw_events(3  downto  0) <= fpga_debounced_buttons;
+  stm_hw_events(7  downto  4) <= fpga_led_internal;
+  stm_hw_events(11 downto  8) <= fpga_dipsw_pio;
+  stm_hw_events(27 downto 12) <= (others => '0');
   
 end rtl;
