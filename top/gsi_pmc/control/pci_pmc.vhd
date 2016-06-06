@@ -206,7 +206,7 @@ architecture rtl of pci_pmc is
   constant c_family     : string := "Arria V"; 
   constant c_project    : string := "pci_pmc";
   constant c_cores      : natural:= 1;
-  constant c_initf      : string := c_project & ".mif";
+  constant c_initf_name : string := c_project & ".mif";
   constant c_profile_name : string := "medium_icache_debug";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
   -- multiple init files for n processors are to be seperated by semicolon ';' 
