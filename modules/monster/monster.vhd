@@ -60,7 +60,8 @@ use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
 use work.wb_serdes_clk_gen_pkg.all;
-use work.io_control_pkg.all;
+use work.wb_pmc_host_bridge_pkg.all;
+use work.pmc_ctrl_pkg.all;
 
 entity monster is
   generic(
@@ -90,6 +91,7 @@ entity monster is
     g_en_nau8811           : boolean;
     g_en_user_ow           : boolean;
     g_en_psram             : boolean;
+    g_io_table             : : t_io_mapping_table_arg_array(natural range <>);
     g_en_pmc               : boolean;
     g_en_pmc_ctrl          : boolean;
     g_lm32_cores           : natural;
