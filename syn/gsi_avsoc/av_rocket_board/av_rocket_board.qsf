@@ -1102,8 +1102,9 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_eca
 set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/altera_wrapper_debounce.v
 set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ip/debounce/debounce.v
 set_global_assignment -name QIP_FILE ../../../modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ip/altsource_probe/hps_reset.qip
-set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ip/edge_detect/altera_edge_detector.v
 set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/altera_wrapper_pcr.v
 set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/altera_wrapper_pdr.v
 set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/altera_wrapper_pwr.v
+set_global_assignment -name QIP_FILE ../../../modules/soc/arm_cortex_a9_sys/stub_pll.qip
+set_global_assignment -name SIP_FILE ../../../modules/soc/arm_cortex_a9_sys/stub_pll.sip
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

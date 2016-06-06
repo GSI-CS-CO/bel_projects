@@ -147,4 +147,16 @@ package ghrd_5astfd5k3_pkg is
     );
   end component;
   
+  component stub_pll is
+    port (
+      refclk   : in  std_logic := 'X'; -- clk
+      rst      : in  std_logic := 'X'; -- reset
+      outclk_0 : out std_logic;        -- clk
+      outclk_1 : out std_logic;        -- clk
+      outclk_2 : out std_logic;        -- clk
+      outclk_3 : out std_logic;        -- clk
+      locked   : out std_logic         -- export
+    );
+  end component stub_pll;
+  
 end ghrd_5astfd5k3_pkg;
