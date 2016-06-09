@@ -182,7 +182,7 @@ void init()
 
 void event_get_from_queue (uint32_t event_param_hi, uint32_t event_param_lo, uint32_t event_ex_hi, uint32_t event_ex_lo)
 {
-  mprintf("/************************TIMING EVENT************************/\n");
+  mprintf(">>>>>>>>>>>>>>>>>>>>>>>>>Receive telegram from WR network\n");
   event_param_hi   = *(pECA_Q +(ECA_QUEUE_PARAM_HI_GET >> 2));
   event_param_lo   = *(pECA_Q +(ECA_QUEUE_PARAM_LO_GET >> 2));
   event_ex_hi      = *(pECA_Q +(ECA_QUEUE_EXECUTED_HI_GET >> 2));
@@ -190,7 +190,8 @@ void event_get_from_queue (uint32_t event_param_hi, uint32_t event_param_lo, uin
   //Pop the ECA queue
   *(pECA_Q +(ECA_QUEUE_POP_OWR >> 2)) = 0x1;
 
-  mprintf(" EVENT_PARAM_HI:%x\n EVENT_PARAM_LO:%x\n EVENT_EX_HI:%x\n EVENT_EX_LO:%x \n",event_param_hi,event_param_lo,event_ex_hi,event_ex_lo);
+  //mprintf(" EVENT_PARAM_HI:%x\n EVENT_PARAM_LO:%x\n EVENT_EX_HI:%x\n EVENT_EX_LO:%x \n",event_param_hi,event_param_lo,event_ex_hi,event_ex_lo);
+  mprintf("EVENT_ID : %x %x\n",*(pECA_Q +(ECA_QUEUE_EVENT_ID_HI_GET >> 2)), *(pECA_Q +(ECA_QUEUE_EVENT_ID_LO_GET >> 2)));
 }
 
 /* TLU simulates the next zero cross timestamp of two machines */
@@ -198,8 +199,8 @@ void event_get_from_queue (uint32_t event_param_hi, uint32_t event_param_lo, uin
 uint64_t get_rising_edge_tm_from_FG ()
 {
   mprintf("/************************TLU************************/\n");
-  uint32_t trg_ts_hi;
-  uint32_t trg_ts_lo;
+  uint32_t trg_ts_hi = 0;
+  uint32_t trg_ts_lo = 0;
   //uint32_t B2_timestamp_hi;
   //uint32_t B2_timestamp_lo;
   uint32_t count;
@@ -215,22 +216,27 @@ uint64_t get_rising_edge_tm_from_FG ()
   count = *(pTLU + (TLU_CH_FILL_COUNT >> 2));
   mprintf("TLU clear activate %x \n",count);
   //usleep (1000000);
-  //for the 1Hz signal, must give delay before to get the ts
-  *(pTLU + (TLU_CH_POP >> 2)) = 0x1;
-  trg_ts_hi = *(pTLU + (TLU_CH_TIME1 >> 2));
-  trg_ts_lo = *(pTLU + (TLU_CH_TIME0 >> 2));
+  while (trg_ts_hi == 0 )
+  {
+    //mprintf("--------------within while\n");
+    *(pTLU + (TLU_CH_POP >> 2)) = 0x1;
+    trg_ts_hi = *(pTLU + (TLU_CH_TIME1 >> 2));
+    trg_ts_lo = *(pTLU + (TLU_CH_TIME0 >> 2));
+  }
   tm_high_zero_trg = ((uint64_t)trg_ts_hi << 32) | trg_ts_lo;
-  mprintf("SIS18 src B2B SCU rf simulation timestamp (B2) %x %x\n",trg_ts_hi,trg_ts_lo);
+  //mprintf("SIS100 trg B2B SCU rf simulation timestamp (B2) %x %x\n",trg_ts_hi,trg_ts_lo);
+  mprintf("SIS100: target B2B SCU gets timestamp of rising zero-crossing of the simulated rf signal %x %x\n",trg_ts_hi,trg_ts_lo);
 
   return tm_high_zero_trg;
 }
 
 int ebm_send_msg (uint32_t WB_Addr_t, uint64_t eventID, uint64_t Param_t, uint32_t TEF, uint32_t Reserved, uint64_t Timestamp_t)
 {
-  mprintf("/************************EBm************************/\n");
+  mprintf("<<<<<<<<<<<<<<<<<<<<<<<<<Send telegram to WR network\n");
+
   uint32_t EventID_H = (uint32_t) ((eventID & 0xffffffff00000000 ) >> 32);
   uint32_t EventID_L = (uint32_t) (eventID & 0x00000000ffffffff );
-  mprintf("eventID = %x, eventID = %x",EventID_H, EventID_L);
+  mprintf("eventID = 0x%x %x",EventID_H, EventID_L);
   uint32_t Param_H   = (uint32_t)((Param_t & 0xffffffff00000000 ) >> 32);
   uint32_t Param_L   = (uint32_t)(Param_t & 0x00000000ffffffff );
   //uint32_t TEF       = 0x11111111;
@@ -260,7 +266,8 @@ int ebm_send_msg (uint32_t WB_Addr_t, uint64_t eventID, uint64_t Param_t, uint32
 /* Function main */
 int main (void)
 {
-  mprintf ("----------------------Target B2B SCU--------------------------\n ");
+  mprintf ("----------------------U28+ B2B transfer from SIS18 to SIS100--------------------------\n ");
+  mprintf ("--------------------------------Target B2B SCU----------------------------------------\n ");
   init();
   enum B2B_WAIT_machine trg_b2b_scu=IDLE;
 
@@ -362,6 +369,7 @@ int main (void)
 
   while (1)
   {
+    *(pECA_Q +(ECA_QUEUE_POP_OWR >> 2)) = 0x1;
     eca_queue_flag = *(pECA_Q +(ECA_QUEUE_FLAGS_GET >> 2));
     event_id_hi    = *(pECA_Q +(ECA_QUEUE_EVENT_ID_HI_GET >> 2));
     event_id_lo    = *(pECA_Q +(ECA_QUEUE_EVENT_ID_LO_GET >> 2));
@@ -389,14 +397,17 @@ int main (void)
         *(pECA_Q +(ECA_QUEUE_POP_OWR >> 2)) = 0x1;
         /* Function Generator simulates the zero crossing point of high harmonic. TLU gets the timestamp of source TTL signal */
         get_rising_edge_tm_from_FG ();
-       // event_get_from_queue(param_hi,param_lo,ts_ex_hi,ts_ex_lo);
-        ts_ex_hi    = *(pECA_Q +(ECA_QUEUE_EXECUTED_HI_GET >> 2));
-        ts_ex_lo    = *(pECA_Q +(ECA_QUEUE_EXECUTED_LO_GET >> 2));
-        ts_now = ((uint64_t)ts_ex_hi << 32) | ts_ex_lo;
-        mprintf("^^^^^^^^^time HI: %x LO:%x\n", ts_ex_hi,ts_ex_lo);
+        event_get_from_queue(param_hi,param_lo,ts_ex_hi,ts_ex_lo);
+        //ts_ex_hi    = *(pECA_Q +(ECA_QUEUE_DEADLINE_HI_GET >> 2));
+        //ts_ex_lo    = *(pECA_Q +(ECA_QUEUE_DEADLINE_LO_GET >> 2));
+        //ts_now = ((uint64_t)ts_ex_hi << 32) | ts_ex_lo;
+        //mprintf("^^^^^^^^^time HI: %x LO:%x\n", ts_ex_hi,ts_ex_lo);
         //all timestamp in the unit of ns
-        ebm_send_msg (WB_Addr, 0xffff000000000000, 0, 0,0,ts_now+10000000000);
-        //ebm_send_msg (WB_Addr, TGM_PHASE_TIME, tm_high_zero_trg, 0,0,0);
+        //ebm_send_msg (WB_Addr, 0xffff000000000000, tm_high_zero_trg, 0,0,tm_high_zero_trg*8+4000000000);
+        //ECA could accept early/late timing events, but only events within next 4 second could be executed.
+        //second. So the timestamp of ebm_send_msg could not be too late.
+        //ebm_send_msg (WB_Addr, TGM_PHASE_TIME, tm_high_zero_trg, 0,0,tm_high_zero_trg*8+4000000000);
+        ebm_send_msg (WB_Addr, TGM_PHASE_TIME, tm_high_zero_trg, 0,0,0);
         //ebm_send_msg (WB_Addr, 0xcafebabe22222222, 0x1234567811223344, 0x87654321,0xaabbccdd,0x9988776655443322);
         break;
 

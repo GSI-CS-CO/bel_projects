@@ -12,7 +12,7 @@ CFLAGS    = -I$(PSCU)/include -I$(MYPATH)/time_counter -I$(TLU)
 
 include /home/jbai/test/bel_projects_B2B/bel_projects/syn/build.mk
 
-$(TARGET1).elf: $(MYPATH)/B2B_main_src.c $(INCPATH)/ebm.c
+$(TARGET1).elf: $(MYPATH)/B2B_main_src.c $(INCPATH)/ebm.c $(MYPATH)/util.c 
 $(TARGET2).elf: $(MYPATH)/B2B_main_trg.c $(INCPATH)/ebm.c
 
 clean::

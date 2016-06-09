@@ -7,28 +7,77 @@ bel_projects/modules/syncmon/scripts/configure-data-master.sh
 jbai@belpc136:~/test/bel_projects_B2B/bel_projects/modules/lm32_B2B_transfer$
 ssh root@scuxl0020.acc.gsi.de
 root@scuxl0020.acc.gsi.de's password: geheim
+===============================================================================================================
+For the source B2B SCU, please do the following configuration:
+//configure the ECA queue
+ssh root@scuxlNo.acc.gsi.de pwd:geheim
+[root@scuxl0041 ~]# saft-ecpu-ctl baseboard -x
+[root@scuxl0041 ~]# saft-ecpu-ctl baseboard -c 0xdeadbeef00000000 32 0 0
+Action sink configured...
+
+//B2 output set to 0. B2 is an input
+[root@scuxl0041 jbai]# saft-io-ctl baseboard B2 -o 0
 
 //load firmware to the LM32
 lm32-ctl
 config inst 1
-config hw 0
+config hw 1/0
 load B2B_main_src.elf
 
 or
 (Prefer)
 make B2B_main_src.bin
+/bel_projects/tools$ ./eb-fwload tcp/scuxl0020.acc.gsi.de u0 0 ../modules/lm2B_transfer/B2B_main_src.bin
+
+===============================================================================================================
+For the target B2B SCU, please do the following configuration:
+//configure the ECA queue
+ssh root@scuxlNo.acc.gsi.de pwd:geheim
+[root@scuxl0041 ~]# saft-ecpu-ctl baseboard -x
+[root@scuxl0041 ~]# saft-ecpu-ctl baseboard -c 0xdeadbeef00000000 32 0 0
+Action sink configured...
+
+//B2 output set to 0. B2 is an input
+[root@scuxl0041 jbai]# saft-io-ctl baseboard B2 -o 0
+
+//load firmware to the LM32
+lm32-ctl
+config inst 1
+config hw 0/1
+load B2B_main_trg.elf
+
+or
+(Prefer)
+make B2B_main_trg.bin
 /bel_projects/tools$ ./eb-fwload tcp/scuxl0020.acc.gsi.de u0 0 ../modules/lm2B_transfer/B2B_main_trg.bin
 
+===============================================================================================================
+For the trigger SCU, please do the following configuration:
+//kill saftlib on SCU
+ssh root@scuxlNo.acc.gsi.de
+killall saftd
+//start saftlib in PC
+/bel_projects/ip_cores/saftlib$ sudo saftd baseboard:tcp/scuxlNo.acc.gsi.de
+//B2 output set to 1. B2 is an onput
+# saft-io-ctl baseboard B2 -o 1
+//check B2 info
+# saft-io-ctl baseboard B2
+//To monitor the timing events
+# saft-io-ctl baseboard B1 -s
+jbai@belpc136:~/test/bel_projects_B2B/bel_projects/ip_cores/saftlib$
+./saft-B2B-triggerSCU -v
 
-cd 
-
-# Start saftlib 
-/bel_projects/ip_cores/saftlib$ sudo saftd baseboard:tcp/scuxl0041.acc.gsi.de
-
+===============================================================================================================
+Use packeth to produce the timing event EVT_B2B_START
+or
 # simulation DM to produce the EVT_B2B_BEGIN
-~/test/bel_projects_dm/bel_projects/modules/DM_B2B$ 
+~/test/bel_projects_dm/bel_projects/modules/DM_B2B$./DM_configure.sh tcp/scuxl0041.acc.gsi.de
 
-eb-ls tcp/scuxl0041.acc.gsi.de
+===============================================================================================================
+Until here, TGM_PHASE_TS should be transferred from source B2B SCU to trigger
+SCU.
+==============================================================================================================
+
 
 SCU: three lm32  
 lm32 inst 0(ftm_lm32:\G1:0) => FG; LM32-IRQ-EP 20800 20900 20a00 (not aviable)
@@ -38,7 +87,6 @@ lm32 inst 2 => PTP core
 
 B2B_main.c.int => LM32 intrupt is OK
 Need to be done:(ECA updates...)
-ECA produces intrupt for LM32 and LM32 reads data from ECA Queue
 
 /* GSI_TM_LATCH_V2 */
 /* TLU */ there is one FIFO for channel 0 (B1) and other FIFO for channel 1 (B2)
@@ -58,10 +106,6 @@ For SCU B2 input => output: modify scu_control.vhd gpio_i(1) lemo_io
 
 ECA
 
-# Activate ECA Queue for events ID 0x881122 or Event tag 5
-[root@scuxl0041 ~]# saft-ecpu-ctl baseboard -x
-[root@scuxl0041 ~]# saft-ecpu-ctl baseboard -c 0xdeadbeef11111111 64 0 5
-Action sink configured...
 
 # Send event
 [root@scuxl0041 ~]# saft-ctl baseboard inject 0xdeadbeef11111111
@@ -71,12 +115,4 @@ eb-write tcp/scuxl0041.acc.gsi.de 0xc4/4 0x1
 # Read event content
 jbai@belpc136:~/test/bel_projects_B2B/bel_projects/modules/B2B_queue_test$ ./ECA_QUEUE_READ.sh
 
-Timing events assumption:
-EVT_B2B_BEGIN 0xdeadbeef11111111
 
-SCU IO config by saftlib
-//B2 output set to 0. B2 is an input
-[root@scuxl0041 jbai]# saft-io-ctl baseboard B2 -o 0 
-//check B2 info
-[root@scuxl0041 jbai]# saft-io-ctl baseboard B2
-[root@scuxl0041 jbai]# saft-io-ctl baseboard B1 -s
