@@ -3,6 +3,7 @@
 -- VERSION: WM1.0
 -- MODULE: altpll 
 
+
 -- ============================================================
 -- CNX file retrieval info
 -- ============================================================
@@ -203,5 +204,4 @@
 -- Retrieval info: GEN_FILE: TYPE_NORMAL ref_pll.cmp TRUE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL ref_pll.bsf FALSE
 -- Retrieval info: GEN_FILE: TYPE_NORMAL ref_pll_inst.vhd FALSE
--- Retrieval info: LIB_FILE: altera_mf
 -- Retrieval info: CBX_MODULE_PREFIX: ON
