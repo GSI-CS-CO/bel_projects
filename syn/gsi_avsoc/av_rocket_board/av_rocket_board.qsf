@@ -3,7 +3,7 @@ set_global_assignment -name DEVICE 5ASTFD5K3F40I3
 set_global_assignment -name TOP_LEVEL_ENTITY av_rocket_board
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
-set_global_assignment -name LAST_QUARTUS_VERSION 15.1.0
+set_global_assignment -name LAST_QUARTUS_VERSION 16.0.0
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP "-40"
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 2
@@ -414,22 +414,8 @@ set_location_assignment PIN_AD24 -to fpga_led_pio[3]
 set_location_assignment PIN_AT24 -to fpga_led_pio[2]
 set_location_assignment PIN_AU24 -to fpga_led_pio[1]
 set_location_assignment PIN_AH24 -to fpga_led_pio[0]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_uart0_RX
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_uart0_TX
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_uart1_RX
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_uart1_TX
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_CLK
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D0
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D1
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D2
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D3
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D4
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D5
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D6
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D7
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_DIR
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_NXT
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_STP
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_gpio_GPIO00
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_gpio_GPIO17
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_gpio_GPIO18
@@ -442,63 +428,8 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_gpio_GPIO40
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_gpio_GPIO41
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_gpio_GPIO42
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_gpio_GPIO43
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_MDC
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_MDIO
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_RXD0
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_RXD1
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_RXD2
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_RXD3
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_RX_CLK
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_RX_CTL
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_TXD0
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_TXD1
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_TXD2
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_TXD3
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_TX_CLK
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_TX_CTL
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_i2c0_SCL
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_i2c0_SDA
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to hps_i2c0_SCL
 set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to hps_i2c0_SDA
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_qspi_CLK
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_qspi_IO0
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_qspi_IO1
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_qspi_IO2
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_qspi_IO3
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_qspi_SS0
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_sdio_CLK
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_sdio_CMD
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_sdio_D0
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_sdio_D1
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_sdio_D2
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_sdio_D3
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_trace_CLK
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_trace_D0
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_trace_D1
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_trace_D2
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_trace_D3
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_trace_D4
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_trace_D5
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_trace_D6
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_trace_D7
-set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_CLK
-set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D0
-set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D1
-set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D2
-set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D3
-set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D4
-set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D5
-set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D6
-set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D7
-set_instance_assignment -name SLEW_RATE 1 -to hps_trace_CLK
-set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D0
-set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D1
-set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D2
-set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D3
-set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D4
-set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D5
-set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D6
-set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D7
 set_instance_assignment -name IO_STANDARD "1.5 V" -to fpga_button_pio[3]
 set_instance_assignment -name IO_STANDARD "1.5 V" -to fpga_button_pio[2]
 set_instance_assignment -name IO_STANDARD "1.5 V" -to fpga_button_pio[1]
@@ -767,6 +698,7 @@ set_global_assignment -name VERILOG_FILE "../../../ip_cores/general-cores/module
 set_global_assignment -name VHDL_FILE "../../../ip_cores/fpga-config-space/legacy-vme64x-core/hdl/VME_SharedComps.vhd"
 set_global_assignment -name VHDL_FILE "../../../ip_cores/etherbone-core/hdl/eb_usb_core/ez_usb.vhd"
 set_global_assignment -name QIP_FILE ../../../modules/nau8811/src/hdl/altera_pll/audio_pll_ref.qip
+set_global_assignment -name QIP_FILE ../../../modules/nau8811/src/hdl/altera_pll/audio_pll.qip
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_wb_slave.vhd"
 set_global_assignment -name VHDL_FILE "../../../ip_cores/wr-cores/modules/wr_streamers/tx_streamer.vhd"
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wbgen2/wbgen2_eic.vhd"
@@ -1107,4 +1039,317 @@ set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/
 set_global_assignment -name VERILOG_FILE ../../../modules/soc/arm_cortex_a9_sys/altera_wrapper_pwr.v
 set_global_assignment -name QIP_FILE ../../../modules/soc/arm_cortex_a9_sys/stub_pll.qip
 set_global_assignment -name SIP_FILE ../../../modules/soc/arm_cortex_a9_sys/stub_pll.sip
+
+
+
+
+
+
+
+
+
+
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_MDC
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_MDIO
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_RXD0
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_RXD1
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_RXD2
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_RXD3
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_RX_CLK
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_RX_CTL
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_TXD0
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_TXD3
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_TXD1
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_TXD2
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_TX_CLK
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_emac1_TX_CTL
+
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_MDC
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_MDIO
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_RXD0
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_RXD1
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_RXD2
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_RXD3
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_RX_CLK
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_RX_CTL
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_TXD0
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_TXD1
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_TXD2
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_TXD3
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_TX_CLK
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_emac1_TX_CTL
+
+set_location_assignment PIN_J18 -to hps_emac1_MDIO
+set_location_assignment PIN_L18 -to hps_emac1_MDC
+set_location_assignment PIN_E19 -to hps_emac1_RXD0
+set_location_assignment PIN_M17 -to hps_emac1_RXD1
+set_location_assignment PIN_G20 -to hps_emac1_RXD2
+set_location_assignment PIN_G19 -to hps_emac1_RXD3
+set_location_assignment PIN_G21 -to hps_emac1_RX_CLK
+set_location_assignment PIN_H19 -to hps_emac1_RX_CTL
+set_location_assignment PIN_H18 -to hps_emac1_TXD0
+set_location_assignment PIN_F19 -to hps_emac1_TXD1
+set_location_assignment PIN_K18 -to hps_emac1_TXD2
+set_location_assignment PIN_M18 -to hps_emac1_TXD3
+set_location_assignment PIN_D19 -to hps_emac1_TX_CLK
+set_location_assignment PIN_N18 -to hps_emac1_TX_CTL
+
+
+
+
+
+
+
+
+
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_qspi_CLK
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_qspi_IO0
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_qspi_IO1
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_qspi_IO2
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_qspi_IO3
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_qspi_SS0
+
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_qspi_CLK
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_qspi_IO0
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_qspi_IO1
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_qspi_IO2
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_qspi_IO3
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_qspi_SS0
+
+set_location_assignment PIN_F15 -to hps_qspi_CLK
+set_location_assignment PIN_D15 -to hps_qspi_IO0
+set_location_assignment PIN_G15 -to hps_qspi_IO1
+set_location_assignment PIN_M15 -to hps_qspi_IO2
+set_location_assignment PIN_H15 -to hps_qspi_IO3
+set_location_assignment PIN_N15 -to hps_qspi_SS0
+
+
+
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_sdio_CLK
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_sdio_CMD
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_sdio_D0
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_sdio_D1
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_sdio_D2
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_sdio_D3
+
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_sdio_CLK
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_sdio_CMD
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_sdio_D0
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_sdio_D1
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_sdio_D2
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_sdio_D3
+
+set_location_assignment PIN_L16 -to hps_sdio_CLK
+set_location_assignment PIN_D16 -to hps_sdio_CMD
+set_location_assignment PIN_C17 -to hps_sdio_D0
+set_location_assignment PIN_N16 -to hps_sdio_D1
+set_location_assignment PIN_J16 -to hps_sdio_D2
+set_location_assignment PIN_M16 -to hps_sdio_D3
+
+
+
+
+
+
+
+
+
+
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_CLK
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D0
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D1
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D2
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D3
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D4
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D5
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D6
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_D7
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_DIR
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_NXT
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_usb1_STP
+
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_usb1_CLK
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_usb1_D0
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_usb1_D1
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_usb1_D2
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_usb1_D3
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_usb1_D4
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_usb1_D5
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_usb1_D6
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_usb1_D7
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_usb1_DIR
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_usb1_NXT
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_usb1_STP
+
+set_location_assignment PIN_F17 -to hps_usb1_D0
+set_location_assignment PIN_P17 -to hps_usb1_D1
+set_location_assignment PIN_F18 -to hps_usb1_D2
+set_location_assignment PIN_E18 -to hps_usb1_D3
+set_location_assignment PIN_J17 -to hps_usb1_D4
+set_location_assignment PIN_D18 -to hps_usb1_D5
+set_location_assignment PIN_K17 -to hps_usb1_D6
+set_location_assignment PIN_B19 -to hps_usb1_D7
+set_location_assignment PIN_C18 -to hps_usb1_CLK
+set_location_assignment PIN_C19 -to hps_usb1_DIR
+set_location_assignment PIN_G18 -to hps_usb1_NXT
+
+
+
+
+
+
+
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_uart0_RX
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_uart0_TX
+
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_uart0_RX
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_uart0_TX
+
+set_location_assignment PIN_M13 -to hps_uart0_TX
+set_location_assignment PIN_M12 -to hps_uart0_RX
+
+
+
+
+
+
+
+
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_i2c0_SCL
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to hps_i2c0_SDA
+
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_i2c0_SCL
+set_instance_assignment -name CURRENT_STRENGTH_NEW 4MA -to hps_i2c0_SDA
+
+set_location_assignment PIN_C13 -to hps_i2c0_SDA
+set_location_assignment PIN_L13 -to hps_i2c0_SCL
+
+
+
+
+
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hps_trace_CLK
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hps_trace_D0
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hps_trace_D1
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hps_trace_D2
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hps_trace_D3
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hps_trace_D4
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hps_trace_D5
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hps_trace_D6
+set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to hps_trace_D7
+
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_CLK
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D0
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D1
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D2
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D3
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D4
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D5
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D6
+set_instance_assignment -name CURRENT_STRENGTH_NEW "MAXIMUM CURRENT" -to hps_trace_D7
+
+set_instance_assignment -name SLEW_RATE 1 -to hps_trace_CLK
+set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D0
+set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D1
+set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D2
+set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D3
+set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D4
+set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D5
+set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D6
+set_instance_assignment -name SLEW_RATE 1 -to hps_trace_D7
+
+set_location_assignment PIN_J11 -to hps_trace_CLK
+set_location_assignment PIN_K12 -to hps_trace_D0
+set_location_assignment PIN_K11 -to hps_trace_D1
+set_location_assignment PIN_J12 -to hps_trace_D2
+set_location_assignment PIN_H12 -to hps_trace_D3
+set_location_assignment PIN_E12 -to hps_trace_D4
+set_location_assignment PIN_G11 -to hps_trace_D5
+set_location_assignment PIN_F12 -to hps_trace_D6
+set_location_assignment PIN_A13 -to hps_trace_D7
+
+
+
+
+set_location_assignment PIN_R17 -to hps_gpio_GPIO00
+set_location_assignment PIN_R15 -to hps_gpio_GPIO17
+set_location_assignment PIN_C16 -to hps_gpio_GPIO18
+set_location_assignment PIN_L15 -to hps_gpio_GPIO22
+set_location_assignment PIN_K15 -to hps_gpio_GPIO24
+set_location_assignment PIN_K14 -to hps_gpio_GPIO26
+set_location_assignment PIN_C15 -to hps_gpio_GPIO27
+set_location_assignment PIN_E15 -to hps_gpio_GPIO35
+set_location_assignment PIN_F16 -to hps_gpio_GPIO40
+set_location_assignment PIN_G16 -to hps_gpio_GPIO41
+set_location_assignment PIN_E16 -to hps_gpio_GPIO42
+set_location_assignment PIN_H16 -to hps_gpio_GPIO43
+
+
+
+
+set_location_assignment PIN_AL6 -to pcie_resetn_i
+
+
+
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_refclk_i
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_rx_i[3]
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_rx_i[2]
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_rx_i[1]
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_rx_i[0]
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_tx_o[3]
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_tx_o[2]
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_tx_o[1]
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_tx_o[0]
+set_location_assignment PIN_AF8 -to pcie_refclk_i
+set_location_assignment PIN_AU1 -to pcie_rx_i[0]
+set_location_assignment PIN_AR1 -to pcie_rx_i[1]
+set_location_assignment PIN_AN1 -to pcie_rx_i[2]
+set_location_assignment PIN_AL1 -to pcie_rx_i[3]
+set_location_assignment PIN_AT3 -to pcie_tx_o[0]
+set_location_assignment PIN_AP3 -to pcie_tx_o[1]
+set_location_assignment PIN_AM4 -to pcie_tx_o[2]
+set_location_assignment PIN_AK3 -to pcie_tx_o[3]
+
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_refclk_i(n)
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_rx_i[3](n)
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_rx_i[2](n)
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_rx_i[1](n)
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_rx_i[0](n)
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_tx_o[3](n)
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_tx_o[2](n)
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_tx_o[1](n)
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_tx_o[0](n)
+set_location_assignment PIN_AF7 -to pcie_refclk_i(n)
+set_location_assignment PIN_AL2 -to pcie_rx_i[3](n)
+set_location_assignment PIN_AN2 -to pcie_rx_i[2](n)
+set_location_assignment PIN_AR2 -to pcie_rx_i[1](n)
+set_location_assignment PIN_AU2 -to pcie_rx_i[0](n)
+set_location_assignment PIN_AK4 -to pcie_tx_o[3](n)
+set_location_assignment PIN_AM3 -to pcie_tx_o[2](n)
+set_location_assignment PIN_AP4 -to pcie_tx_o[1](n)
+set_location_assignment PIN_AT4 -to pcie_tx_o[0](n)
+
+
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to sfp234_ref_clk_i
+set_location_assignment PIN_AB9 -to sfp234_ref_clk_i
+set_location_assignment PIN_AB8 -to "sfp234_ref_clk_i(n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to sfp4_txp_o
+set_location_assignment PIN_AD3 -to sfp4_txp_o
+set_location_assignment PIN_AD4 -to "sfp4_txp_o(n)"
+set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to sfp4_rxp_i
+set_location_assignment PIN_AE1 -to sfp4_rxp_i
+set_location_assignment PIN_AE2 -to "sfp4_rxp_i(n)"
+set_location_assignment PIN_AV7 -to sfp4_los
+set_location_assignment PIN_AR9 -to sfp4_mod0
+set_location_assignment PIN_AT8 -to sfp4_mod1
+set_location_assignment PIN_AL8 -to sfp4_mod2
+set_location_assignment PIN_AP7 -to sfp4_tx_disable_o
+set_location_assignment PIN_AL9 -to sfp4_tx_fault
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

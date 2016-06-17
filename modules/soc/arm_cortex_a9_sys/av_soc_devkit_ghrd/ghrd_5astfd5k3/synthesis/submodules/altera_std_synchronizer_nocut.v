@@ -1,4 +1,4 @@
-// (C) 2001-2015 Altera Corporation. All rights reserved.
+// (C) 2001-2016 Altera Corporation. All rights reserved.
 // Your use of Altera Corporation's design tools, logic functions and other 
 // software and tools, and its AMPP partner logic functions, and any output 
 // files any of the foregoing (including device programming or simulation 
@@ -62,9 +62,9 @@ module altera_std_synchronizer_nocut (
    //     1. Identify all flip-flops in this module as members of the synchronizer 
    //        to enable automatic metastability MTBF analysis.
 
-   (* altera_attribute = {"-name SYNCHRONIZER_IDENTIFICATION FORCED_IF_ASYNCHRONOUS; -name DONT_MERGE_REGISTER ON; -name PRESERVE_REGISTER ON  "} *) reg din_s1;
+   (* altera_attribute = {"-name ADV_NETLIST_OPT_ALLOWED NEVER_ALLOW; -name SYNCHRONIZER_IDENTIFICATION FORCED; -name DONT_MERGE_REGISTER ON; -name PRESERVE_REGISTER ON  "} *) reg din_s1;
 
-   (* altera_attribute = {"-name SYNCHRONIZER_IDENTIFICATION FORCED_IF_ASYNCHRONOUS; -name DONT_MERGE_REGISTER ON; -name PRESERVE_REGISTER ON"} *) reg [depth-2:0] dreg;    
+   (* altera_attribute = {"-name ADV_NETLIST_OPT_ALLOWED NEVER_ALLOW; -name DONT_MERGE_REGISTER ON; -name PRESERVE_REGISTER ON"} *) reg [depth-2:0] dreg;    
    
    //synthesis translate_off
    initial begin

@@ -55,6 +55,7 @@
     <config name='gpio_db_clk_hz' value='32000' />
     <config name='l4_mp_clk_hz' value='100000000' />
     <config name='l4_sp_clk_hz' value='100000000' />
+    <config name='sdram_pll_c5' value='1' />
   </system>
   <fpga_interfaces>
     <config name='F2H_AXI_SLAVE' used='true' />

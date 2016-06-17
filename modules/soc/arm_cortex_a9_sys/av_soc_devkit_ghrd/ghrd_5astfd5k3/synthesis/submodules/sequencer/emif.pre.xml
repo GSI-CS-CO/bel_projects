@@ -44,6 +44,7 @@
         <define name="ENABLE_SUPER_QUICK_CALIBRATION" value="0"/>
         <define name="ENABLE_TCL_DEBUG" value="0"/>
         <define name="FAKE_CAL_FAIL" value="0"/>
+        <define name="FIX_READ_LATENCY" value="8"/>
         <define name="FULL_RATE" value="1"/>
         <define name="GUARANTEED_READ_BRINGUP_TEST" value="0"/>
         <define name="HALF_RATE" value="0"/>
@@ -87,7 +88,7 @@
         <define name="RDIMM" value="0"/>
         <define name="READ_AFTER_WRITE_CALIBRATION" value="1"/>
         <define name="READ_VALID_FIFO_SIZE" value="16"/>
-        <define name="REG_FILE_INIT_SEQ_SIGNATURE" value="0x55550497"/>
+        <define name="REG_FILE_INIT_SEQ_SIGNATURE" value="0x555504a0"/>
         <define name="RLDRAM3" value="0"/>
         <define name="RLDRAMII" value="0"/>
         <define name="RLDRAMX" value="0"/>
@@ -113,6 +114,7 @@
         <define name="RW_MGR_MR0_CAS_LATENCY" value="3"/>
         <define name="RW_MGR_TRUE_MEM_DATA_MASK_WIDTH" value="5"/>
         <define name="RW_MGR_WRITE_TO_DEBUG_READ" value="1.0"/>
+        <define name="SET_FIX_READ_LATENCY_ENABLE" value="0"/>
         <define name="SKEW_CALIBRATION" value="0"/>
         <define name="SKIP_PTAP_0_DQS_EN_CAL" value="1"/>
         <define name="STATIC_FULL_CALIBRATION" value="1"/>

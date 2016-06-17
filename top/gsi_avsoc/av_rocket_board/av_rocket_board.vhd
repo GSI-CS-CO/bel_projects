@@ -10,6 +10,7 @@ use work.ghrd_5astfd5k3_pkg.all;
 entity av_rocket_board is
   port(
     -- Monster ports
+	 sfp234_ref_clk_i       : in  std_logic;
     sfp4_tx_disable_o      : out   std_logic;
     sfp4_tx_fault          : in    std_logic;
     sfp4_los               : in    std_logic;
@@ -22,6 +23,10 @@ entity av_rocket_board is
     dac_sclk               : out   std_logic; -- WR
     dac_din                : out   std_logic; -- WR
     ndac_cs                : out   std_logic_vector(2 downto 1); -- WR
+    pcie_refclk_i          : in    std_logic; -- PCIe
+    pcie_rx_i              : in    std_logic_vector(3 downto 0); -- PCIe
+    pcie_tx_o              : out   std_logic_vector(3 downto 0); -- PCIe
+    pcie_resetn_i          : in    std_logic; -- PCIe
     -- FPGA peripherals ports
     fpga_dipsw_pio         : in    std_logic_vector(3 downto 0);
     fpga_led_pio           : out   std_logic_vector(3 downto 0);
@@ -168,6 +173,7 @@ begin
       g_project         => c_project,
       g_flash_bits      => 25,
       g_gpio_inout      => 4,
+	   g_en_pcie         => true,
       g_io_table        => io_mapping_table,
       g_lm32_cores      => c_cores,
       g_lm32_ramsizes   => c_lm32_ramsizes/4,
@@ -177,7 +183,7 @@ begin
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo,
       core_clk_125m_pllref_i => clk_125m_pllref,
-      core_clk_125m_sfpref_i => clk_125m_sfpref,
+      core_clk_125m_sfpref_i => sfp234_ref_clk_i,
       core_clk_125m_local_i  => clk_125m_local,
       wr_onewire_io          => rom_data,
       wr_sfp_sda_io          => sfp4_mod2,
@@ -187,7 +193,11 @@ begin
       wr_sfp_rx_i            => sfp4_rxp_i,
       wr_dac_sclk_o          => dac_sclk,
       wr_dac_din_o           => dac_din,
-      wr_ndac_cs_o           => ndac_cs
+      wr_ndac_cs_o           => ndac_cs,
+      pcie_refclk_i          => pcie_refclk_i,
+      pcie_rstn_i            => pcie_resetn_i,
+      pcie_rx_i              => pcie_rx_i,
+      pcie_tx_o              => pcie_tx_o
     );
   
   -- Monster connections

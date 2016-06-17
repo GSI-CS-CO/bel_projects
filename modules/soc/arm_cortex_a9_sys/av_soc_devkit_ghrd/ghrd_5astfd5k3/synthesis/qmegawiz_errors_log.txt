@@ -1,0 +1,7 @@
+
+
+/home/alex/workspace/projects/r7/avsoc/bel_projects/modules/soc/arm_cortex_a9_sys/av_soc_devkit_ghrd/ghrd_5astfd5k3/synthesis/ghrd_5astfd5k3.qip
+
+Jun 02 05PM:15:25>: Illegal filename  extension (.qip).
+
+Do you want to edit the file anyway?
