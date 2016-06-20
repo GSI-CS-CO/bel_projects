@@ -70,7 +70,8 @@ begin
     generic map(
       g_data_width       => 32,
       g_size             => 256,
-      g_with_byte_enable => true)
+      g_with_byte_enable => true,
+      g_init_file        => "../../../modules/mbox/mbox_init.mif")
     port map(
       rst_n_i => rst_n_i,
       clk_i   => clk_i,
