@@ -581,6 +581,10 @@ architecture rtl of monster is
   
   signal s_lm32_rstn : std_logic_vector(g_lm32_cores-1 downto 0);
 
+
+  signal s_pmc_debug_in   : std_logic_vector(7 downto 0);
+  signal s_pmc_debug_out  : std_logic_vector(7 downto 0);  
+
   -- END OF Master signals
   ----------------------------------------------------------------------------------
 
