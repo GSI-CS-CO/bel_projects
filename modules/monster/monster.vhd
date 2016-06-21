@@ -60,6 +60,7 @@ use work.fg_quad_pkg.all;
 use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
 use work.wb_serdes_clk_gen_pkg.all;
+use work.io_control_pkg.all;
 use work.wb_pmc_host_bridge_pkg.all;
 use work.pmc_ctrl_pkg.all;
 
