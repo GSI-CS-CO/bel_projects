@@ -157,7 +157,7 @@ architecture rtl of pci_pmc is
   constant c_test_pattern_a   : std_logic_vector(15 downto 0) := x"5555";
   constant c_test_pattern_b   : std_logic_vector(15 downto 0) := x"0000";
   
-  signal s_gpio         : std_logic_vector(9 downto 0);
+  signal s_gpio         : std_logic_vector(7 downto 0);
   
   signal s_lvds_p_i     : std_logic_vector(4 downto 0);
   signal s_lvds_n_i     : std_logic_vector(4 downto 0);
@@ -352,7 +352,7 @@ begin
                   x"55"                    when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
                   ("000" &     con)        when ('0' & x"D"),   -- FPGA hex sw in position D, button not pressed, CPLD HEX SW and button test  
                   ("000" & not con)        when ('1' & x"D"),   -- FPGA hex sw in position D, button     pressed, CPLD HEX SW and button test  
-                  s_gpio (9 downto 2)  when others;         -- driven by monster
+                  s_gpio                   when others;         -- driven by monster
 
   user_led_o <= not s_user_led;
 
