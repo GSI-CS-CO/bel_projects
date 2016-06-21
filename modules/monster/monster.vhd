@@ -1231,7 +1231,7 @@ begin
   
   pmc_n : if not g_en_pmc generate
     top_bus_slave_i (c_topm_pmc) <= cc_dummy_master_out;
-    top_msi_master_i(c_irqs_pmc) <= cc_dummy_slave_out;
+    top_msi_master_i(c_topm_pmc) <= cc_dummy_slave_out;
   end generate;
  pmc_y : if g_en_pmc generate
     pmc : wb_pmc_host_bridge
@@ -1248,8 +1248,8 @@ begin
       slave_rstn_i  => rstn_sys,
       master_o      => top_bus_slave_i (c_topm_pmc),
       master_i      => top_bus_slave_o (c_topm_pmc),
-      slave_i       => top_msi_master_o(c_irqs_pmc),
-      slave_o       => top_msi_master_i(c_irqs_pmc), 
+      slave_i       => top_msi_master_o(c_topm_pmc),
+      slave_o       => top_msi_master_i(c_topm_pmc), 
       pci_clk_i     => pmc_pci_clk_i,
       pci_rst_i     => pmc_pci_rst_i,
       buf_oe_o      => pmc_buf_oe_o,
