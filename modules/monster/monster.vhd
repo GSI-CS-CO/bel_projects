@@ -91,7 +91,7 @@ entity monster is
     g_en_nau8811           : boolean;
     g_en_user_ow           : boolean;
     g_en_psram             : boolean;
-    g_io_table             : : t_io_mapping_table_arg_array(natural range <>);
+    g_io_table             : t_io_mapping_table_arg_array(natural range <>);
     g_en_pmc               : boolean;
     g_en_pmc_ctrl          : boolean;
     g_lm32_cores           : natural;
