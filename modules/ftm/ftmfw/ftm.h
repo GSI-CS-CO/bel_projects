@@ -9,46 +9,29 @@
 #include "irq.h"
 #include "aux.h"
 #include "../ftm_common.h"
+#include "prio_regs.h"
+
+
+
+#define PRIO_BIT_ENABLE     (1<<0)
+#define PRIO_BIT_MSG_LIMIT  (1<<1)
+#define PRIO_BIT_TIME_LIMIT (1<<2)
+
+#define PRIO_DAT_STD     0x00
+#define PRIO_DAT_TS_HI   0x04    
+#define PRIO_DAT_TS_LO   0x08 
+#define PRIO_DRP_TS_HI   0x14    
+#define PRIO_DRP_TS_LO   0x18  
+
+#define DIAG_PQ_MSG_CNT  0x0FA62F9000000000
+   
 
 uint32_t cmdCnt;
 
 #define MSI_SIG             0
 #define TLU_CH_TEST         0x60
 
-struct t_FPQ {
-   uint32_t rst;
-   uint32_t force;
-   uint32_t dbgSet;
-   uint32_t dbgGet;
-   uint32_t clear;
-   uint32_t cfgGet;
-   uint32_t cfgSet;
-   uint32_t cfgClr;
-   uint32_t dstAdr;
-   uint32_t heapCnt;
-   uint32_t msgCntO;
-   uint32_t msgCntI;
-   uint32_t tTrnHi;
-   uint32_t tTrnLo;
-   uint32_t tDueHi;
-   uint32_t tDueLo;
-   uint32_t capacity;
-   uint32_t msgMax;
-   uint32_t ebmAdr;
-   uint32_t tsAdr;
-   uint32_t tsCh;
-   uint32_t cfg_ENA;
-   uint32_t cfg_FIFO;    
-   uint32_t cfg_IRQ;
-   uint32_t cfg_AUTOPOP;
-   uint32_t cfg_AUTOFLUSH_TIME;
-   uint32_t cfg_AUTOFLUSH_MSGS;
-   uint32_t cfg_MSG_ARR_TS;
-   uint32_t force_POP;
-   uint32_t force_FLUSH;
-};
 
-extern const struct t_FPQ r_FPQ;
 
 uint32_t prioQcapacity;
 
@@ -127,20 +110,22 @@ typedef struct {
    uint32_t    debug[32];
 } t_ftmIf;
 
+volatile uint64_t* pMsgCntPQ;
 volatile t_ftmIf* pFtmIf;
 t_ftmChain* pCurrentChain;
 
-void              prioQueueInit();
-void              ftmInit(void);
-void              processFtm();
+void prioQueueInit();
+void ftmInit(void);
+void processFtm();
 
-void              cmdEval();
+void cmdEval();
 void showFtmPage(t_ftmPage* pPage);
 void showStatus();
 
 extern uint32_t * pEcaAdr;
 extern uint32_t * pEbmAdr;
 extern uint32_t * pFPQctrl;
+
 
 inline uint16_t getIdFID(uint64_t id)     {return ((uint16_t)(id >> ID_FID_POS))     & (ID_MSK_B16 >> (16 - ID_FID_LEN));}
 inline uint16_t getIdGID(uint64_t id)     {return ((uint16_t)(id >> ID_GID_POS))     & (ID_MSK_B16 >> (16 - ID_GID_LEN));}

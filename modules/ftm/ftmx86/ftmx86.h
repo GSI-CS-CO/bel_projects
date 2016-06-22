@@ -4,12 +4,7 @@
 #include <stdint.h>
 #include "../ftm_common.h"
 #include <stdbool.h>
-#define BUF_SIZE            FTM_PAGESIZE
 
-#define FTM_RST_FPGA        0x0
-#define FTM_RST_GET         (FTM_RST_FPGA + 4)
-#define FTM_RST_SET         (FTM_RST_GET  + 4)
-#define FTM_RST_CLR         (FTM_RST_SET  + 4)
 
 
 
@@ -24,6 +19,9 @@
 #define _FTM_PAGE_LEN         (FTM_PAGE_PTR_SHAREDMEM  +4)
 
 bool bigEndian;
+
+#define SNTPRINTF(b, ...) ((b) += sprintf((b), __VA_ARGS__))
+//#define SNTPRINTF(b, ...) (printf( __VA_ARGS__))
 
 typedef struct {
    uint64_t id;
@@ -75,7 +73,7 @@ typedef struct {
 
 t_ftmPage*  deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs);
 uint8_t*    serPage  (t_ftmPage* pPage, uint8_t* pBufStart, uint32_t offset, uint8_t cpuId);
-void showFtmPage(t_ftmPage* pPage);
+int showFtmPage(t_ftmPage* pPage, char* buff);
 
 t_ftmChain* getChain(t_ftmPage* pPage, uint32_t planIdx, uint32_t chainIdx);
 t_ftmMsg* getMsg(t_ftmChain* pChain, uint32_t msgIdx);

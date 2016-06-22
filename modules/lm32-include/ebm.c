@@ -26,6 +26,7 @@
 #include <string.h>
 #include "ebm.h"
 
+
 static inline char* strsplit(const char*  numstr, const char* delimeter);
 static inline unsigned char* numStrToBytes(const char*  numstr, unsigned char* bytes,  unsigned char len,  unsigned char base, const char* delimeter);
 static inline unsigned char* addressStrToBytes(const char* addressStr, unsigned char* addressBytes, adress_type_t addtype);
@@ -41,7 +42,30 @@ void ebm_init()
    EBM_READ      = 0;  
 }
 
-void ebm_config_if(target_t conf, const char* con_info)
+
+void ebm_config_if(target_t conf, uint64_t mac, uint32_t ip, uint16_t port)
+{
+  
+  uint32_t offset;
+  
+  if(conf == SOURCE) {
+    *(pEbm + (EBM_SRC_MAC_RW_0 >>2)) = (uint32_t)(mac);      
+    *(pEbm + (EBM_SRC_MAC_RW_1 >>2)) = (uint32_t)((mac>>32) & 0xffff);  
+    *(pEbm + (EBM_SRC_IP_RW   >>2)) = ip;  
+    *(pEbm + (EBM_SRC_PORT_RW >>2)) = (uint32_t)port;
+  }
+
+  if(conf == DESTINATION) {
+  
+    *(pEbm + (EBM_DST_MAC_RW_0 >>2)) = (uint32_t)(mac);      
+    *(pEbm + (EBM_DST_MAC_RW_1 >>2)) = (uint32_t)((mac>>32) & 0xffff);  
+    *(pEbm + (EBM_DST_IP_RW   >>2)) = ip;  
+    *(pEbm + (EBM_DST_PORT_RW >>2)) = (uint32_t)port;
+  }
+}
+
+
+void ebm_config_if_str(target_t conf, const char* con_info)
 {
   eb_lm32_udp_link link;
   uint32_t offset;
@@ -50,34 +74,46 @@ void ebm_config_if(target_t conf, const char* con_info)
   ebm_parse_adr(&link, con_info);
   
   
-  if(conf == LOCAL) offset = EBM_OFFS_LOCAL;
-  if(conf == REMOTE) offset = EBM_OFFS_REMOTE;
+  if(conf == SOURCE) {
+    tmp = (link.mac[0] << 24) | (link.mac[1] << 16) | (link.mac[2] << 8) | link.mac[3];
+    *(pEbm + ((offset + EBM_SRC_MAC_RW_1)   >>2)) =  tmp;  
+    tmp = (link.mac[4] << 8) | (link.mac[5] << 0);
+    *(pEbm + ((offset + EBM_SRC_MAC_RW_0)   >>2)) = tmp;
+    tmp = (link.ipv4[0] << 24) | (link.ipv4[1] << 16) | (link.ipv4[2] << 8) | link.ipv4[3];
+    *(pEbm + ((offset + EBM_SRC_IP_RW)     >>2)) =  tmp;  
+    *(pEbm + ((offset + EBM_SRC_PORT_RW) >>2)) = (uint32_t)link.port;
+
+  }
+  if(conf == DESTINATION) {
+
+    tmp = (link.mac[0] << 24) | (link.mac[1] << 16) | (link.mac[2] << 8) | link.mac[3];
+    *(pEbm + ((offset + EBM_DST_MAC_RW_1)   >>2)) =  tmp;  
+    tmp = (link.mac[4] << 8) | (link.mac[5] << 0);
+    *(pEbm + ((offset + EBM_DST_MAC_RW_0)   >>2)) = tmp;
+    tmp = (link.ipv4[0] << 24) | (link.ipv4[1] << 16) | (link.ipv4[2] << 8) | link.ipv4[3];
+    *(pEbm + ((offset + EBM_DST_IP_RW)     >>2)) =  tmp;  
+    *(pEbm + ((offset + EBM_DST_PORT_RW) >>2)) = (uint32_t)link.port;
+
+
+  }
   
-  tmp = (link.mac[0] << 24) | (link.mac[1] << 16) | (link.mac[2] << 8) | link.mac[3];
-  *(pEbm + ((offset + EBM_OFFS_MAC_HI)   >>2)) =  tmp;  
   
-  tmp = (link.mac[4] << 8) | (link.mac[5] << 0);
-  *(pEbm + ((offset + EBM_OFFS_MAC_LO)   >>2)) = tmp;
-  
-  tmp = (link.ipv4[0] << 24) | (link.ipv4[1] << 16) | (link.ipv4[2] << 8) | link.ipv4[3];
-  *(pEbm + ((offset + EBM_OFFS_IPV4)     >>2)) =  tmp;  
-  
-  *(pEbm + ((offset + EBM_OFFS_UDP_PORT) >>2)) = (uint32_t)link.port;
   
 }
 
-void ebm_config_meta(uint32_t mtu, uint32_t hi_bits, uint32_t max_ops, uint32_t eb_ops)
+
+
+void ebm_config_meta(uint32_t mtu, uint32_t hi_bits, uint32_t eb_ops)
 {
-  *(pEbm + (EBM_REG_MTU      >>2)) = mtu;  
-  *(pEbm + (EBM_REG_ADR_HI   >>2)) = hi_bits;
-  *(pEbm + (EBM_REG_OPS_MAX  >>2)) = max_ops;
-  *(pEbm + (EBM_REG_EB_OPT   >>2)) = eb_ops;
+  *(pEbm + (EBM_MTU_RW      >>2)) = mtu;  
+  *(pEbm + (EBM_ADR_HI_RW   >>2)) = hi_bits;
+  *(pEbm + (EBM_EB_OPT_RW   >>2)) = eb_ops;
 }
 
 
 void ebm_hi(uint32_t address)
 {
-    *(pEbm + (EBM_REG_ADR_HI   >>2)) = address;
+    *(pEbm + (EBM_ADR_HI_RW   >>2)) = address;
     return;
 }
 
@@ -92,28 +128,29 @@ void ebm_op(uint32_t address, uint32_t value, uint32_t optype)
 
 void ebm_clr(void)
 {
-  *(pEbm + (EBM_REG_CLEAR>>2)) = 0x01;
+  *(pEbm + (EBM_CLEAR_OWR>>2)) = 0x01;
 }
 
 
 void ebm_flush(void)
 {
-  *(pEbm + (EBM_REG_FLUSH>>2)) = 0x01;
+  *(pEbm + (EBM_FLUSH_OWR>>2)) = 0x01;
 }
 
 void ebm_udp(uint32_t value)
 {
-    *(pEbm + (EBM_REG_UDP_DATA>>2)) = value;
+    *(pEbm + (EBM_UDP_DATA_OWR>>2)) = value;
 }
 
 void ebm_udp_start(void)
 {
-  *(pEbm + (EBM_REG_UDP_RAW>>2)) = 0x01;
+  *(pEbm + (EBM_UDP_RAW_RW>>2)) = 0x01;
 }
 
 void ebm_udp_end(void)
 {
   ebm_flush();
+  *(pEbm + (EBM_UDP_RAW_RW>>2)) = 0x00;
 }
 
 
@@ -168,8 +205,6 @@ static  unsigned char* addressStrToBytes(const char* addressStr, unsigned char* 
 		base 	  = 10;
 		del 	  = '.';
 	}
-	
-
 	
 	else{
 	 return NULL;	

@@ -38,6 +38,7 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
 {
    xmlNode *fieldNode, *subFieldNode = NULL;
    uint32_t i;
+   uint64_t offset;
    uint16_t vals[5];
    
    fieldNode =  checkNode(msgNode->children, "id") ;
@@ -64,17 +65,21 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
    if(fieldNode != NULL) pMsg->par = strtou64( (const char*)xmlNodeGetContent(fieldNode));
    else printf("ERROR par\n");
    
-   fieldNode = checkNode(xmlNextElementSibling(fieldNode), "tef");
-   if(fieldNode != NULL) pMsg->tef = strtou64( (const char*)xmlNodeGetContent(fieldNode));
-   else printf("ERROR tef\n");
-   
+   //FIXME eca v1 only
+
+   //fieldNode = checkNode(xmlNextElementSibling(fieldNode), "tef");
+   //if(fieldNode != NULL) pMsg->tef = strtou64( (const char*)xmlNodeGetContent(fieldNode));
+   //else printf("ERROR tef\n");   
    
    fieldNode = checkNode(xmlNextElementSibling(fieldNode), "offs");
    
-   if(fieldNode != NULL) pMsg->offs = strtou64( (const char*)xmlNodeGetContent(fieldNode))>>3;
-   else printf("ERROR offs\n");
+   if(fieldNode != NULL) offset = strtou64( (const char*)xmlNodeGetContent(fieldNode));
+   else {offset = 0; printf("ERROR offs\n");}
    
-
+   pMsg->offs  = offset;// >>3;           //offset is a multiple of 8ns
+   //OBSOLOTE WITH ECA2 - DM USES NANOSECONDS NATIVELY NOW!!!	
+   //pMsg->tef   = ((uint32_t)offset & 0x7) << 29;  //Tef is 0-7ns, but left shifted because it's a fixed point fraction
+   
    return pMsg;       
 }
 
@@ -97,7 +102,7 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
    else printf("ERROR persistent cnt\n");
    */
    fieldNode = checkNode(xmlNextElementSibling(fieldNode), "period");
-   if(fieldNode != NULL) pChain->tPeriod = (uint64_t)strtou64( (const char*)xmlNodeGetContent(fieldNode))>>3;
+   if(fieldNode != NULL) pChain->tPeriod = (uint64_t)strtou64( (const char*)xmlNodeGetContent(fieldNode));
    else printf("ERROR Period\n");
    
    fieldNode = checkNode(xmlNextElementSibling(fieldNode), "branchpoint");
@@ -310,13 +315,14 @@ t_ftmPage* parseXmlFile(const char* filename)
     xmlNode *root_element = NULL;
    t_ftmPage* pPage = NULL;
 
-    LIBXML_TEST_VERSION
+    //qLIBXML_TEST_VERSION
 
     /*parse the file and get the DOM */
     doc = xmlReadFile(filename, NULL, 0);
 
     if (doc == NULL) {
         printf("error: could not parse file %s\n", filename);
+        return NULL;
     }
 
     /*Get the root element node */
@@ -340,16 +346,17 @@ t_ftmPage* parseXmlFile(const char* filename)
 t_ftmPage* parseXmlString(const char* sXml)
 {
    xmlDoc *doc = NULL;
-    xmlNode *root_element = NULL;
+   xmlNode *root_element = NULL;
    t_ftmPage* pPage = NULL;
 
-    LIBXML_TEST_VERSION
+    //LIBXML_TEST_VERSION
 
     /*parse the file and get the DOM */
     doc = xmlParseDoc((const xmlChar *)sXml);
 
     if (doc == NULL) {
-        printf("error: could not parse string \n");
+        fprintf(stderr, "error: could not parse string \n");
+        return NULL;
     }
 
     /*Get the root element node */

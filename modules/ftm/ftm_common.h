@@ -3,6 +3,8 @@
 #include <inttypes.h>
 #include <stdint.h>
 
+#define THR_SHARED_SIZE     16
+#define CPU_SHARED_SIZE     (8*THR_SHARED_SIZE + 40) 
 
 #define FTM_PAGE_QTY        0
 #define FTM_PLAN_MAX        16
@@ -10,6 +12,13 @@
 #define FTM_PAGEMETA        (4 + 4 * FTM_PLAN_MAX + 4 + 4)   
 #define FTM_PAGESIZE        (FTM_PAGEDATA + FTM_PAGEMETA)
 
+#define BUF_SIZE            FTM_PAGESIZE
+
+#define FTM_RST_FPGA        0x0
+#define FTM_RST_FPGA_CMD    0xDEADBEEF
+#define FTM_RST_GET         (FTM_RST_FPGA + 4)
+#define FTM_RST_SET         (FTM_RST_GET  + 4)
+#define FTM_RST_CLR         (FTM_RST_SET  + 4)
 
 #define FTM_SHARED_OFFSET_NEW 0x0500
 #define FTM_SHARED_OFFSET     FTM_SHARED_OFFSET_NEW

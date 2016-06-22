@@ -34,40 +34,46 @@ void isr1()
 }
 
 
+
 void ebmInit()
 {
+  
+   int j;
+   while (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) {
+     for (j = 0; j < (125000000/4); ++j) { asm("nop"); }
+   } 
+
    ebm_init();
-   ebm_config_if(LOCAL,   "hw/08:00:30:e3:b0:5a/udp/192.168.0.100/port/60368");
-   //ebm_config_if(REMOTE,  "hw/00:14:d1:fa:01:aa/udp/192.168.191.131/port/60368");
-   //ebm_config_if(REMOTE,  "hw/00:26:7b:00:04:08/udp/192.168.191.72/port/60368");
-   ebm_config_if(REMOTE,  "hw/ff:ff:ff:ff:ff:ff/udp/192.168.0.101/port/60368");
-   ebm_config_meta(1500, 0x11, 255, 0x00000000 );
+   ebm_config_meta(1500, 42, 0x00000000 );
+   ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff,                0xebd0); //Dst: EB broadcast 
+   ebm_config_if(SOURCE,      0xd15ea5edbeef, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: bogus mac (will be replaced by WR), WR IP
+   
+
 }
 
 void init()
 { 
    discoverPeriphery();
    uart_init_hw();
-   ebmInit();
-   ftmInit();
- 
    cmdCnt = 0;
    cpuId = getCpuIdx();
+   ftmInit();
+
+   if (cpuId == 0) {
+
+     ebmInit();
+     prioQueueInit();
+     mprintf("#%02u: Configured EBM and PQ\n", cpuId); 
+   }
    
    isr_table_clr();
-   isr_ptr_table[0] = isr0; //timer
-   isr_ptr_table[1] = isr1;   
-   irq_set_mask(0x03);
-   irq_enable();
+   irq_set_mask(0x00);
+   irq_disable(); 
    
 }
 
 
 
-void showFpqStatus()
-{
-   mprintf("Fpq: Cfg %x HeapCnt %d MsgO %d MsgI %d\n", *(pFpqCtrl + r_FPQ.cfgGet), *(pFpqCtrl + r_FPQ.heapCnt), *(pFpqCtrl + r_FPQ.msgCntO), *(pFpqCtrl + r_FPQ.msgCntI));
-}
 
 int insertFpqEntry()
 {
@@ -83,10 +89,8 @@ int insertFpqEntry()
 
    const unsigned int c_period = 375000000/1;
       
-   stime = getSysTime() + ct_sec + ct_trn - ((run++)<<3); //+ (1 + ((run>>5)*5))*ct_sec ;
-   diff = ( *(pFpqCtrl + r_FPQ.capacity) - *(pFpqCtrl + r_FPQ.heapCnt));
-   if(diff > 1)
-    {  
+   stime = getSysTime() + ct_sec + ct_trn - ((run++)); //+ (1 + ((run>>5)*5))*ct_sec ;
+   
       atomic_on();
       *pFpqData = (unsigned int)(stime>>32);
       *pFpqData = (unsigned int)(stime);
@@ -97,11 +101,7 @@ int insertFpqEntry()
        *pFpqData = 0x33333333;
        *pFpqData = run;
       atomic_off(); 
-    } else {
-       ret = -1;
-       mprintf("Queue full, waiting\n");
-    }   
- 
+  
     
     return ret;
  }
@@ -109,14 +109,16 @@ int insertFpqEntry()
 void main(void) {
    
    int j;
-   
+
    init();
    uint32_t test = &pFtmIf->tPrep;
    
-   //for (j = 0; j < (125000000/4); ++j) { asm("nop"); }
+   
+   // wait 1s + cpuIdx * 1/10s
+   for (j = 0; j < ((125000000/4)+(cpuId*300000)); ++j) { asm("nop"); }
    atomic_on();
       
-   mprintf("#%02u: Core ready. Hi! \n", cpuId);
+   mprintf("#%02u: Rdy\n", cpuId);
    #if DEBUGLEVEL != 0
       mprintf("#%02u: Debuglevel %u. Don't expect timeley delivery with console outputs on!\n", cpuId, DEBUGLEVEL);
    #endif   
@@ -126,10 +128,10 @@ void main(void) {
    #if DEBUGPRIOQ == 1
       mprintf("#%02u: Priority Queue Debugmode ON, timestamps will be written to 0x%08x on receivers", cpuId, DEBUGPRIOQDST);
    #endif
-    
-   atomic_off();
    mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
 
+   atomic_off();
+   //mprintf("#%02u: Tprep @ 0x%08x\n", cpuId, test);
    //hexDump ("Plan 0 Chain 0 : \n", (void*)pFtmIf->pAct->plans[0], 128);
    /*
    t_time now, later;

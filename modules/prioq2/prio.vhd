@@ -310,12 +310,15 @@ begin
   port map (
     clk_sys_i         => clk_i,
     rst_sys_n_i       => rst_n_i,
-    ctrl_stall_i      => "0",
+    stall_i           => "0",
+	 error_i         => "0",
     reset_o           => s_ctrl_reset_o,
     mode_o            => s_ctrl_mode_o,
     clear_o           => s_ctrl_clear_o,
     st_full_i         => s_ctrl_st_full_i,
+	 st_full_V_i       => "1", 
     st_late_i         => s_ctrl_st_late_i,
+	 st_late_V_i       => "1",
     ebm_adr_o         => s_ctrl_ebm_adr_o,
     eca_adr_o         => s_ctrl_eca_adr_o,
     tx_max_msgs_o     => s_ctrl_tx_max_msgs_o,
@@ -323,12 +326,12 @@ begin
     tx_rate_limit_o   => s_ctrl_tx_rate_limit_o,
     offs_late_o       => s_ctrl_offs_late_o,
     ts_late_i         => s_ctrl_ts_late_i,
-    cnt_late_i        => r_cnt_late,  
+	 ts_late_V_i       => "1", 
+    cnt_late_i        => r_cnt_late,
+    cnt_late_V_i       => "1",	 
     cnt_out_all_i     => s_ctrl_cnt_out_all_i,
-    ch_sel_o          => s_ctrl_ch_sel_o,
-    
-    cnt_out_i         => s_ctrl_cnt_out_i,
-    cnt_in_i          => s_ctrl_cnt_in_i,
+	 cnt_out_all_V_i   => "1",	
+ 
     ctrl_i            => ctrl_i,
     ctrl_o            => ctrl_o   );
 

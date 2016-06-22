@@ -7,8 +7,7 @@
 #include "access.h"
 
 extern uint8_t cpuIdx;
-extern bool bigEndian = true;
-extern t_ftmAccess* pAccess;
+extern t_ftmAccess* p;
 uint16_t getIdFID(uint64_t id)     {return ((uint16_t)(id >> ID_FID_POS))     & (ID_MSK_B16 >> (16 - ID_FID_LEN));}
 uint16_t getIdGID(uint64_t id)     {return ((uint16_t)(id >> ID_GID_POS))     & (ID_MSK_B16 >> (16 - ID_GID_LEN));}
 uint16_t getIdEVTNO(uint64_t id)   {return ((uint16_t)(id >> ID_EVTNO_POS))   & (ID_MSK_B16 >> (16 - ID_EVTNO_LEN));}
@@ -58,9 +57,7 @@ const t_ftmChain Idle = { .tStart         = 0,
 static uint8_t* uint32ToBytes(uint8_t* pBuf, uint32_t val)
 {
    uint8_t i;
-   if(bigEndian)  
    for(i=0;i<FTM_WORD_SIZE;   i++) pBuf[i]  = val >> (8*i) & 0xff;
-   else           for(i=0;i<FTM_WORD_SIZE;   i++) pBuf[i]  = val >> (8*(FTM_WORD_SIZE - 1 -i)) & 0xff;
    
    return pBuf+4;
 }
@@ -98,8 +95,9 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint32_t embeddedOffs, 
    uint8_t*    pBuf;
    t_ftmChain* pChain;
    uint32_t    pBufPlans[FTM_PLAN_MAX];
-   if(bigEndian) printf("BIGENDIAN FOUND!\n");
    pBuf = pBufStart + FTM_PAGEMETA;
+   
+   if(pPage == NULL) {fprintf(stderr, "error: Got no DOM to serialize from XML Parser. Something went wrong.\n"); return NULL;};
    //leave space for page meta info, write all plans to pBuffer
    for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
    {
@@ -126,12 +124,10 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint32_t embeddedOffs, 
    if( pPage->idxStart == 0xdeadbeef) pPage->pStart = ftm_shared_offs + FTM_IDLE_OFFSET;
    else pPage->pStart  = pBufPlans[pPage->idxStart];
    
-   printf("BP: %08x, Start: %08x\n", pPage->pBp, pPage->pStart);
+   //printf("BP: %08x, Start: %08x\n", pPage->pBp, pPage->pStart);
    
    uint32ToBytes(&pBufStart[FTM_PAGE_PTR_BP],         pPage->pBp);
    uint32ToBytes(&pBufStart[FTM_PAGE_PTR_START],      pPage->pStart);
-   //printf ("Shared mem will be at %08x", pPage->ppAccess->sharedAdr);
-   //uint32ToBytes(&pBufStart[FTM_PAGE_PTR_pAccess->sharedAdr],  pPage->ppAccess->sharedAdr);
    
    return pBuf;   
 }
@@ -148,12 +144,12 @@ static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufS
    
    //FIXME: change to proper sdb find
    if (pChain->flags & FLAGS_IS_SIG_MSI)           sigDst = 0x40000800 + pChain->sigCpu * 0x100; //FIXME !!!!
-   else if (pChain->flags & FLAGS_IS_SIG_SHARED)   sigDst = pAccess->sharedAdr  + pChain->sigCpu * 0xC; 
+   else if (pChain->flags & FLAGS_IS_SIG_SHARED)   sigDst = p->sharedAdr  + pChain->sigCpu * 0xC; 
    else if (pChain->flags & FLAGS_IS_SIG_ADR)      sigDst = pChain->sigDst;
    
    //FIXME: change to proper sdb find
    if (pChain->flags & FLAGS_IS_COND_MSI)          condSrc = 0x0;
-   else if (pChain->flags & FLAGS_IS_COND_SHARED)  { condSrc = pAccess->sharedAdr + cpuId * 0xC; printf("SharedCondLoc: 0x%08x\n", condSrc);}
+   else if (pChain->flags & FLAGS_IS_COND_SHARED)  { condSrc = p->sharedAdr + cpuId * 0xC; printf("SharedCondLoc: 0x%08x\n", condSrc);}
    else if (pChain->flags & FLAGS_IS_COND_ADR)     condSrc = pChain->condSrc;
    
    uint64ToBytes(&pBuf[FTM_CHAIN_TSTART],    pChain->tStart);
@@ -182,7 +178,7 @@ static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufS
  
    pBuf += FTM_CHAIN_END_;
    for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++) pBuf = serMsg(&pMsg[msgIdx], pBuf);   
-   printf("Chain placed @ 0x%08x\n", pBuf-pBufStart);
+   //printf("Chain placed @ 0x%08x\n", pBuf-pBufStart);
    return pBuf;   
 
 }
@@ -191,11 +187,11 @@ static uint8_t* serMsg(  t_ftmMsg* pMsg, uint8_t* pBuf)
 {
    uint64ToBytes(&pBuf[FTM_MSG_ID],     pMsg->id);
    uint64ToBytes(&pBuf[FTM_MSG_PAR],    pMsg->par);
+   
    uint32ToBytes(&pBuf[FTM_MSG_TEF],    pMsg->tef); 
    uint32ToBytes(&pBuf[FTM_MSG_RES],    pMsg->res); 
    uint64ToBytes(&pBuf[FTM_MSG_TS],     0);
    uint64ToBytes(&pBuf[FTM_MSG_OFFS],   pMsg->offs);
-   
    return pBuf + FTM_MSG_END_;
 }
 
@@ -226,7 +222,7 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
       pPage->plans[j].pStart = pChain;
       //deserialise (pBufStart +  offset) to pChain and fix pChains next ptr
       pBuf = deserChain(pChain, pNext, pBufPlans[j], pBufStart, embeddedOffs);
-      printf("PChain %p Start %p offs %08x\n", pChain, pBufStart, embeddedOffs);
+      //printf("PChain %p Start %p offs %08x\n", pChain, pBufStart, embeddedOffs);
       //printf("Plan %u Chain 0 @ %08x\n", j, pBufStart-pBuf);
       //deserialise chains until we reached the end or we reached max
       
@@ -261,7 +257,7 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
    {
       if(pBufPlans[j]-pBufStart == ((uintptr_t)pPage->pStart - (uintptr_t)embeddedOffs)) {pPage->idxStart = j;}
    }    
-   //pPage->ppAccess->sharedAdr = pBufStart[FTM_PAGE_PTR_pAccess->sharedAdr];    
+   //pPage->pp->sharedAdr = pBufStart[FTM_PAGE_PTR_p->sharedAdr];    
       
    return pPage;     
 }
@@ -301,8 +297,8 @@ static uint8_t* deserMsg(uint8_t* pBuf, t_ftmMsg* pMsg)
    //printf("desermsg\n");   
    pMsg->id    = bytesToUint64(&pBuf[FTM_MSG_ID]);
    pMsg->par   = bytesToUint64(&pBuf[FTM_MSG_PAR]); 
-   pMsg->tef   = bytesToUint64(&pBuf[FTM_MSG_TEF]);
-   pMsg->res   = bytesToUint64(&pBuf[FTM_MSG_RES]);
+   pMsg->tef   = bytesToUint32(&pBuf[FTM_MSG_TEF]);
+   pMsg->res   = bytesToUint32(&pBuf[FTM_MSG_RES]);
    pMsg->ts    = bytesToUint64(&pBuf[FTM_MSG_TS]); 
    pMsg->offs  = bytesToUint64(&pBuf[FTM_MSG_OFFS]); 
    
@@ -364,68 +360,65 @@ t_ftmMsg* getMsg(t_ftmChain* pChain, uint32_t msgIdx)
 
 
 
-void showFtmPage(t_ftmPage* pPage)
+int showFtmPage(t_ftmPage* pPage, char* buff)
 {
    uint32_t planIdx, chainIdx, msgIdx;
    t_ftmChain* pChain   = NULL;
    t_ftmMsg*   pMsg     = NULL;
    char noFlag[]        = "        -        ";
-                    
-   printf("---PAGE \n");
-   printf("StartPlan:\t");
+   char* sB = buff; //current string buffer pointer                
    
-   if(pPage->idxStart == 0xdeadbeef) printf("idle\n");
+   SNTPRINTF(sB , "---PAGE \nStartPlan:\t");
+   if(pPage->idxStart == 0xdeadbeef) SNTPRINTF(sB , "idle\n");
    else { 
-          if(pPage->idxStart == 0xcafebabe)  printf("NULL\n");
-          else                               printf("%c\n", pPage->idxStart + 'A');
+          if(pPage->idxStart == 0xcafebabe)  SNTPRINTF(sB , "NULL\n");
+          else                               SNTPRINTF(sB , "%c\n", pPage->idxStart + 'A');
         } 
    
-   printf("AltPlan:\t");
-   if(pPage->idxBp == 0xdeadbeef) printf("idle\n");
+   SNTPRINTF(sB , "AltPlan:\t");
+   if(pPage->idxBp == 0xdeadbeef) SNTPRINTF(sB , "idle\n");
    else { 
-          if(pPage->idxBp == 0xcafebabe)  printf("NULL\n");
-          else                            printf("%c\n", pPage->idxBp + 'A');
+          if(pPage->idxBp == 0xcafebabe)  SNTPRINTF(sB , "NULL\n");
+          else                            SNTPRINTF(sB , "%c\n", pPage->idxBp + 'A');
         }  
    
    for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
    {
-      printf("\t*******************************************************************************************************\n");
-      printf("\t---   PLAN %c\n", planIdx+'A');
-      printf("\t*******************************************************************************************************\n");
+      SNTPRINTF(sB , "\t*******************************************************************************************************\n");
+      SNTPRINTF(sB , "\t---   PLAN %c\n", planIdx+'A');
+      SNTPRINTF(sB , "\t*******************************************************************************************************\n");
       chainIdx = 0;
       pChain = pPage->plans[planIdx].pStart;
       while(chainIdx++ < pPage->plans[planIdx].chainQty && pChain != NULL)
       {
-         printf("\t\t-----------------------------------------------------------------------------------------------\n");
-         printf("\t\t---   CHAIN %c%u\n", planIdx+'A', chainIdx-1);
-         printf("\t\t-----------------------------------------------------------------------------------------------\n");
-         printf("\t\tFlags: 0x%08x\t", pChain->flags );                            
-         if(pChain->flags & FLAGS_IS_BP)                 printf("      IS_BP      "); else printf("%s", noFlag);
+         SNTPRINTF(sB , "\t\t-----------------------------------------------------------------------------------------------\n");
+         SNTPRINTF(sB , "\t\t---   CHAIN %c%u\n", planIdx+'A', chainIdx-1);
+         SNTPRINTF(sB , "\t\t-----------------------------------------------------------------------------------------------\n");
+         SNTPRINTF(sB , "\t\tFlags: 0x%08x\t", pChain->flags );                            
+         if(pChain->flags & FLAGS_IS_BP)                 SNTPRINTF(sB , "      IS_BP      "); else SNTPRINTF(sB , "%s", noFlag);
          if(pChain->flags & (FLAGS_IS_COND_MSI | FLAGS_IS_COND_SHARED))
          {
-              if(pChain->flags & FLAGS_IS_COND_SHARED)   printf(" IS_COND_SHA");
-              if(pChain->flags & FLAGS_IS_COND_MSI)      printf(" IS_COND_MSI");
-              if(pChain->flags & FLAGS_IS_COND_ALL)      printf("_ALL ");
-              else                                       printf("     ");
-         } else printf("%s", noFlag);      
+              if(pChain->flags & FLAGS_IS_COND_SHARED)   SNTPRINTF(sB , " IS_COND_SHA");
+              if(pChain->flags & FLAGS_IS_COND_MSI)      SNTPRINTF(sB , " IS_COND_MSI");
+              if(pChain->flags & FLAGS_IS_COND_ALL)      SNTPRINTF(sB , "_ALL ");
+              else                                       SNTPRINTF(sB , "     ");
+         } else SNTPRINTF(sB , "%s", noFlag);      
          if(pChain->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED))
          {
-              if(pChain->flags & FLAGS_IS_SIG_SHARED)    printf(" IS_SIG_SHA");
-              if(pChain->flags & FLAGS_IS_SIG_MSI)       printf(" IS_SIG_MSI");
-              if(pChain->flags & FLAGS_IS_SIG_ALL)       printf("_ALL  ");
-              else                                       printf("      ");
-         } else printf("%s", noFlag); 
+              if(pChain->flags & FLAGS_IS_SIG_SHARED)    SNTPRINTF(sB , " IS_SIG_SHA");
+              if(pChain->flags & FLAGS_IS_SIG_MSI)       SNTPRINTF(sB , " IS_SIG_MSI");
+              if(pChain->flags & FLAGS_IS_SIG_ALL)       SNTPRINTF(sB , "_ALL  ");
+              else                                       SNTPRINTF(sB , "      ");
+         } else SNTPRINTF(sB , "%s", noFlag); 
          
-         if(pChain->flags & FLAGS_IS_END)       printf("      IS_END     "); else printf("%s", noFlag);
-         if(pChain->flags & FLAGS_IS_ENDLOOP)   printf("      IS_LOOP    "); else printf("%s", noFlag);
-         printf("\n");
-         printf("\t\tStart:\t\t0x%08x%08x\n\t\tperiod:\t\t0x%08x%08x\n\t\trep:\t\t\t%10u\n\t\tmsg:\t\t\t%10u\n", 
-         (uint32_t)(pChain->tStart>>32), (uint32_t)pChain->tStart, 
-         (uint32_t)(pChain->tPeriod>>32), (uint32_t)pChain->tPeriod,
-         pChain->repQty,
-         pChain->msgQty);
+         if(pChain->flags & FLAGS_IS_END)       SNTPRINTF(sB , "      IS_END     "); else SNTPRINTF(sB , "%s", noFlag);
+         if(pChain->flags & FLAGS_IS_ENDLOOP)   SNTPRINTF(sB , "      IS_LOOP    "); else SNTPRINTF(sB , "%s", noFlag);
+         SNTPRINTF(sB , "\n");
+         
+         SNTPRINTF(sB , "\t\tStart:\t\t%18llu\n\t\tperiod:\t\t%18llu\n\t\trep:\t\t\t%10u\n\t\tmsg:\t\t\t%10u\n", 
+         (long long unsigned int)(pChain->tStart), (long long unsigned int)(pChain->tPeriod), pChain->repQty, pChain->msgQty);
        
-         printf("\t\tCondVal:\t\t0x%08x\n\t\tCondMsk:\t\t0x%08x\n\t\tSigDst:\t\t\t0x%08x\n\t\tSigVal:\t\t\t0x%08x\n", 
+         SNTPRINTF(sB , "\t\tCondVal:\t\t0x%08x\n\t\tCondMsk:\t\t0x%08x\n\t\tSigDst:\t\t\t0x%08x\n\t\tSigVal:\t\t\t0x%08x\n", 
          (uint32_t)pChain->condVal, 
          (uint32_t)pChain->condMsk,
          pChain->sigDst,
@@ -435,15 +428,18 @@ void showFtmPage(t_ftmPage* pPage)
          
          for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++)
          {
-            printf("\t\t\t---MSG %c%u%c\n", planIdx+'A', chainIdx-1, msgIdx+'A');
-            printf("\t\t\tid:\t0x%08x%08x\n\t\t\tpar:\t0x%08x%08x\n\t\t\ttef:\t\t0x%08x\n\t\t\toffs:\t0x%08x%08x\n", 
-            (uint32_t)(pMsg[msgIdx].id>>32), (uint32_t)pMsg[msgIdx].id, 
-            (uint32_t)(pMsg[msgIdx].par>>32), (uint32_t)pMsg[msgIdx].par,
-            pMsg[msgIdx].tef,
-            (uint32_t)(pMsg[msgIdx].offs>>32), (uint32_t)pMsg[msgIdx].offs);   
+            SNTPRINTF(sB , "\t\t\t---MSG %c%u%c\n", planIdx+'A', chainIdx-1, msgIdx+'A');
+            SNTPRINTF(sB , "\t\t\tid:\t0x%08x%08x", (uint32_t)(pMsg[msgIdx].id>>32), (uint32_t)pMsg[msgIdx].id);
+            SNTPRINTF(sB , "\t%u\t%u\t%u\t%u\t%u\t%u\n", getIdFID(pMsg[msgIdx].id), getIdGID(pMsg[msgIdx].id),
+            getIdEVTNO(pMsg[msgIdx].id), getIdSID(pMsg[msgIdx].id), getIdBPID(pMsg[msgIdx].id), getIdSCTR(pMsg[msgIdx].id));
+            SNTPRINTF(sB , "\t\t\tpar:\t0x%08x%08x\n\t\t\ttef:\t\t0x%08x\n", 
+            (uint32_t)(pMsg[msgIdx].par>>32), (uint32_t)pMsg[msgIdx].par, pMsg[msgIdx].tef);
+            SNTPRINTF(sB , "\t\t\toffs:\t%18llu \n", (long long unsigned int)((pMsg[msgIdx].offs) + (uint64_t)(pMsg[msgIdx].tef >> 29)));  
          }
          pChain = (t_ftmChain*)pChain->pNext;
       }
    }   
-   printf("\n\n");
+   SNTPRINTF(sB , "\n\n");
+   
+   return (int)(sB-buff);
 }

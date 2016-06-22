@@ -27,6 +27,10 @@
 #define EBM_H
 #include <inttypes.h>
 #include <stdint.h>
+#include "ebm_regs.h"
+
+#define EBC_SRC_IP 0x18 // reg offset in ebconfig space for source IP
+#define EBC_DEFAULT_IP 0xc0a80064
 
 extern volatile uint32_t* pEbm;
 extern volatile uint32_t* pEbmLast;
@@ -38,38 +42,11 @@ volatile uintptr_t EBM_ADR_MASK;
 volatile uintptr_t EBM_WRITE;           
 volatile uintptr_t EBM_READ;
 
-#define EBM_REG_CLEAR         0                         
-#define EBM_REG_FLUSH         (EBM_REG_CLEAR        +4)        
-#define EBM_REG_STATUS        (EBM_REG_FLUSH        +4)         
-#define EBM_REG_SRC_MAC_HI    (EBM_REG_STATUS       +4)       
-#define EBM_REG_SRC_MAC_LO    (EBM_REG_SRC_MAC_HI   +4)    
-#define EBM_REG_SRC_IPV4      (EBM_REG_SRC_MAC_LO   +4)    
-#define EBM_REG_SRC_UDP_PORT  (EBM_REG_SRC_IPV4     +4)   
-#define EBM_REG_DST_MAC_HI    (EBM_REG_SRC_UDP_PORT +4)  
-#define EBM_REG_DST_MAC_LO    (EBM_REG_DST_MAC_HI   +4)   
-#define EBM_REG_DST_IPV4      (EBM_REG_DST_MAC_LO   +4)  
-#define EBM_REG_DST_UDP_PORT  (EBM_REG_DST_IPV4     +4)   
-#define EBM_REG_MTU           (EBM_REG_DST_UDP_PORT +4)  
-#define EBM_REG_ADR_HI        (EBM_REG_MTU          +4)    
-#define EBM_REG_OPS_MAX       (EBM_REG_ADR_HI       +4) 
-#define EBM_REG_EB_OPT        (EBM_REG_OPS_MAX      +4)
-#define EBM_REG_SEMA          (EBM_REG_EB_OPT       +4)
-#define EBM_REG_UDP_RAW       (EBM_REG_SEMA         +4)
-#define EBM_REG_UDP_DATA      (EBM_REG_UDP_RAW      +4)
-#define EBM_REG_LAST          (EBM_REG_UDP_DATA) 
-
 #define EBM_STAT_CONFIGURED  0x00000001
 #define EBM_STAT_BUSY        0x00000002
 #define EBM_STAT_ERROR       0x00000004
 #define EBM_STAT_EB_SENT     0xFFFF0000
 
-#define EBM_OFFS_LOCAL  (EBM_REG_SRC_MAC_HI)
-#define EBM_OFFS_REMOTE (EBM_REG_DST_MAC_HI)
-
-#define EBM_OFFS_MAC_HI    0       
-#define EBM_OFFS_MAC_LO    (EBM_OFFS_MAC_HI   +4)    
-#define EBM_OFFS_IPV4      (EBM_OFFS_MAC_LO   +4)    
-#define EBM_OFFS_UDP_PORT  (EBM_OFFS_IPV4     +4)
 
 typedef struct {
   /* Contents must fit in 12 bytes */
@@ -80,16 +57,17 @@ typedef struct {
 typedef uint32_t adress_type_t;
 typedef unsigned char target_t;
 
-static const target_t       LOCAL   = 0;
-static const target_t       REMOTE  = 1;
-static const adress_type_t  MAC     = 1;
-static const adress_type_t  IP      = 2;
-static const adress_type_t  PORT    = 3;
-static const unsigned short myPort  = 0xEBD0;
+static const target_t       SOURCE      = 0;
+static const target_t       DESTINATION = 1;
+static const adress_type_t  MAC         = 1;
+static const adress_type_t  IP          = 2;
+static const adress_type_t  PORT        = 3;
+static const unsigned short myPort      = 0xEBD0;
 
 void ebm_init();
-void ebm_config_if(target_t conf, const char* con_info);
-void ebm_config_meta(uint32_t mtu, uint32_t hi_bits, uint32_t max_ops, uint32_t eb_ops);
+void ebm_config_if_str(target_t conf, const char* con_info);
+void ebm_config_if(target_t conf, uint64_t mac, uint32_t ip, uint16_t port);
+void ebm_config_meta(uint32_t mtu, uint32_t hi_bits, uint32_t eb_ops);
 void ebm_hi(uint32_t address);
 void ebm_op(uint32_t address, uint32_t value, uint32_t optype);
 void ebm_flush(void);

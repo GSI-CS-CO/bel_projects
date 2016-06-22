@@ -233,6 +233,7 @@ void discoverPeriphery(void)
   find_device_multi(&found_sdb[0], &idx, 20, GSI, ETHERBONE_MASTER);
   pEbm           = (uint32_t*)getSdbAdr(&found_sdb[0]);
   pEbmLast       = (uint32_t*)getSdbAdrLast(&found_sdb[0]);
+  pEbCfg         = find_device_adr(GSI, ETHERBONE_CFG);
   pEca           = find_device_adr(GSI, ECA_EVENT);
   pTlu           = find_device_adr(GSI, TLU);
 
