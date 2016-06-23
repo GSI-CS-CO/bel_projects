@@ -105,149 +105,164 @@ architecture rtl of prio is
   -- aux and fsm signals 
   signal s_reset_n              : std_logic;
   signal s_en                   : std_logic;
-  type t_state is (st_IDLE, st_PACKET_PREP, st_PACKET_EMPTY, st_PACKET_GATHER, st_PACKET_SEND, st_ERROR, st_WAIT_FOR_EBM);  
+  type t_state is (st_IDLE, st_PACKET_PREP, st_PACKET_EMPTY, st_PACKET_START, st_PACKET_GATHER, st_PACKET_SEND, st_ERROR, st_WAIT_FOR_EBM);  
   signal r_state                : t_state;
   signal r_state_after_wait     : t_state;
-  signal r_allow_sending        : std_logic;
+  signal s_allow_sending        : std_logic;
   signal r_dhol                 : unsigned(64-1 downto 0); 
   signal r_msg_cnt              : unsigned(7 downto 0); 
   signal r_cnt_late             : std_logic_vector(31 downto 0);
+  signal r_is_late, 
+         s_msg_cnt_clr,
+         s_save_packet_ts       : std_logic;
 
 begin
 
   s_reset_n <= not s_ctrl_reset_o(0)  and rst_n_i;
-  s_en      <= s_ctrl_mode_o(c_ENABLE) and r_allow_sending;
+  s_en      <= s_ctrl_mode_o(c_ENABLE) and s_allow_sending;
 
-  fsm : process(clk_i)
-    variable v_state : t_state;
+  late_cnt : process(clk_i)
+  begin
+    if rising_edge(clk_i) then
+      if s_reset_n = '0' or s_msg_cnt_clr ='1' then
+        r_msg_cnt         <= (others => '0');
+      end if;
+      if s_reset_n = '0' or (s_ctrl_clear_o = "1")  then 
+        s_ctrl_st_late_i  <= (others => '0');
+        r_cnt_late        <= (others => '0');
+        r_late_check      <= (others => '0'); --register the difference  
+        r_is_late         <= '0';
+        r_dhol            <= (others => '0'); 
+      else
+        --save packet start timestamp
+        if(s_save_packet_ts = '1') then
+          r_dhol          <= unsigned(time_i) + resize(unsigned(s_ctrl_tx_max_wait_o), time_i'length);
+        end if;
+  
+        -- count messages in packet
+        if (s_ts_valid_o and s_en) ='1' then
+          r_msg_cnt <= r_msg_cnt + 1; -- count total messages
+        end if;
+  
+        r_late_check <= unsigned(s_ts_o) - unsigned(s_ctrl_offs_late_o); --register the difference
+        if(r_late_check <= unsigned(time_i)) then      
+          r_is_late    <= '1'; --register the comparison
+        end if;
+
+        -- count late messages
+        if r_is_late = '1' then 
+          --avoid 64b adder feeding into another adder, add register stage         
+          s_ctrl_st_late_i(0) <= '1';
+          r_cnt_late          <= std_logic_vector(unsigned(r_cnt_late) + 1);
+          --only save the TS of the first message that was late
+          if (s_ctrl_st_late_i(0) = '0') then 
+            s_ctrl_ts_late_i    <= s_ts_o;
+          end if;
+        end if;
+      end if;  --rst
+    end if; --clk
+  end process;
+  
+  fsm_state : process(clk_i)
   begin
     if rising_edge(clk_i) then
       if s_reset_n = '0' then
-        s_ebm_ctrl_o.cyc  <= '0';
-        s_ebm_ctrl_o.stb  <= '0';
-        s_ebm_ctrl_o.we   <= '1';
-        s_ebm_ctrl_o.sel  <= (others => '1');        
-        s_ebm_ctrl_o.adr  <= (others => '0');
-        s_ebm_ctrl_o.dat  <= (others => '0');
-        r_dhol            <= (others => '0');
-        r_allow_sending   <= '0';
-        r_cnt_late        <= (others => '0');
-        s_ctrl_st_late_i  <= (others => '0');
-        s_ctrl_ts_late_i  <= (others => '0');
-        r_state           <= st_PACKET_PREP;
-        --r_state           <= st_EBM_CLEAR;
+        r_state             <= st_PACKET_PREP;
+        r_state_after_wait  <= st_IDLE;
       else
 
-        r_late_check <= unsigned(s_ts_o) - unsigned(s_ctrl_offs_late_o);
-  
-        v_state := r_state;
-        
         case r_state is
           when st_IDLE          =>  if(s_ctrl_mode_o(c_ENABLE) = '1') then
-                                      v_state := st_PACKET_PREP;  
+                                      r_state <= st_PACKET_PREP;  
                                     end if;
 
           when st_PACKET_PREP   =>  --set ebm high address
-                                    r_msg_cnt   <= (others => '0');
                                     if s_ebm_ctrl_i.stall = '0' then
-                                      r_state_after_wait <= st_PACKET_EMPTY;
-                                      v_state := st_WAIT_FOR_EBM;
+                                      r_state_after_wait  <= st_PACKET_EMPTY;
+                                      r_state             <= st_WAIT_FOR_EBM;
                                     end if;
 
           when st_PACKET_EMPTY  =>  if(s_ctrl_mode_o(c_ENABLE) = '0') then
-                                      v_state := st_IDLE;  
+                                      r_state <= st_IDLE;  
                                     elsif s_ts_valid_o = '1' then
-                                      r_dhol  <= unsigned(time_i) + resize(unsigned(s_ctrl_tx_max_wait_o), time_i'length);
-                                      v_state := st_PACKET_GATHER;
-                                    end if;
-                                           
-                                    
-          when st_PACKET_GATHER =>  --time limit reached?    
-                                    if (r_dhol  <= unsigned(time_i)) and s_ctrl_mode_o(c_TIME_LIMIT) = '1' then
-                                      v_state := st_PACKET_SEND;
-                                    end if;
-                                    --message limit reached?
-                                    if (r_msg_cnt >= unsigned(s_ctrl_tx_max_msgs_o))
-                                    and s_ctrl_mode_o(c_MSG_LIMIT) = '1' then
-                                      v_state := st_PACKET_SEND;
+                                      r_state <= st_PACKET_GATHER;
                                     end if;
           
+          when st_PACKET_START  =>  r_state <= st_PACKET_GATHER;
+                                                                    
+                                    
+          when st_PACKET_GATHER =>  if ((r_dhol  <= unsigned(time_i)) and s_ctrl_mode_o(c_TIME_LIMIT) = '1') or --time limit reached?  
+                                       (r_msg_cnt >= unsigned(s_ctrl_tx_max_msgs_o)) then  --message limit reached?
+                                      r_state <= st_PACKET_SEND;
+                                    end if;
+                                   
            when st_PACKET_SEND  =>  if s_ebm_ctrl_i.stall = '0' then
                                       report "Sending Packet containing " & integer'image(to_integer(r_msg_cnt)) severity note;
-                                      r_msg_cnt           <= (others => '0');
                                       r_state_after_wait  <= st_PACKET_EMPTY;
-                                      v_state := st_WAIT_FOR_EBM;
+                                      r_state             <= st_WAIT_FOR_EBM;
                                     end if;
 
-           when st_ERROR        =>  v_state := st_PACKET_PREP;
+           when st_ERROR        =>  r_state <= st_PACKET_PREP;
 
-           when st_WAIT_FOR_EBM =>  if (s_ebm_ctrl_i.ack = '1') then
-                                      v_state := r_state_after_wait;
-                                    end if;
-                                    if (s_ebm_ctrl_i.err = '1') then
-                                      v_state := st_ERROR;
+           when st_WAIT_FOR_EBM =>  if (s_ebm_ctrl_i.err = '1') then
+                                      r_state <= st_ERROR;
+                                    elsif (s_ebm_ctrl_i.ack = '1') then
+                                      r_state <= r_state_after_wait;
                                     end if;     
 
-            when others =>          v_state := st_ERROR;
+            when others =>          r_state <= st_ERROR;
          end case; 
     
-         --default behaviour
-         r_allow_sending   <= '0';
-         s_ebm_ctrl_o.cyc  <= '0';
-         s_ebm_ctrl_o.stb  <= '0';       
-          
-         if v_state = st_PACKET_EMPTY or 
-            v_state = st_PACKET_GATHER then
-            -- In EMPTY and GATHER state, allow arbiter to send messages out            
-            r_allow_sending <= '1';
-         end if;
-         
-         if v_state = st_WAIT_FOR_EBM then
-            s_ebm_ctrl_o.cyc <= '1'; 
-         end if;       
-  
-     
-         if v_state = st_PACKET_PREP  then
-            -- set EBM high address to ECA 
-            s_ebm_ctrl_o.cyc <= '1';
-            s_ebm_ctrl_o.stb <= '1'; 
-            s_ebm_ctrl_o.adr <= std_logic_vector(unsigned(s_ctrl_ebm_adr_o) + unsigned(c_EBM_ADHI));
-            s_ebm_ctrl_o.dat <= s_ctrl_eca_adr_o;      
-         end if; 
-        
-         if v_state = st_PACKET_SEND then
-            -- flush EBM
-            s_ebm_ctrl_o.cyc <= '1';
-            s_ebm_ctrl_o.stb <= '1'; 
-            s_ebm_ctrl_o.adr <= std_logic_vector(unsigned(s_ctrl_ebm_adr_o) + unsigned(c_EBM_FLUSH));
-            s_ebm_ctrl_o.dat <= std_logic_vector(to_unsigned(1, s_ebm_ctrl_o.dat'length));     
-         end if;
-
-
-         if (s_ctrl_clear_o = "1") then
-            s_ctrl_st_late_i(0) <= '0';
-            r_cnt_late          <= (others => '0');
-         end if;
-
-
-        if (s_ts_valid_o and r_allow_sending) = '1' then
-          r_msg_cnt <= r_msg_cnt + 1;
-          if r_late_check <= unsigned(time_i) then
-            -- this message is late
-            s_ctrl_st_late_i(0) <= '1';
-            r_cnt_late          <= std_logic_vector(unsigned(r_cnt_late) +1);
-            if (s_ctrl_st_late_i(0) = '0') then  
-              s_ctrl_ts_late_i <= s_ts_o;
-            end if;
-            --s_ctrl_id_late_i <=    
-          end if;
-        end if;
-
-         -- assign current state to state register
-         r_state <= v_state; 
       end if;
     end if;
-  end process fsm;
+  end process fsm_state;
+
+
+
+  fsm_out : process(r_state, s_ctrl_ebm_adr_o, s_ctrl_eca_adr_o )
+  begin
+   
+    --default behaviour
+    s_ebm_ctrl_o.cyc  <= '0';
+    s_ebm_ctrl_o.stb  <= '0';
+    s_ebm_ctrl_o.we   <= '1';
+    s_ebm_ctrl_o.sel  <= (others => '1');        
+    s_ebm_ctrl_o.adr  <= std_logic_vector(unsigned(s_ctrl_ebm_adr_o) + unsigned(c_EBM_ADHI));
+    s_ebm_ctrl_o.dat  <= s_ctrl_eca_adr_o;
+    s_save_packet_ts  <= '0';
+    s_allow_sending   <= '0';
+    s_msg_cnt_clr     <= '0';
+    
+    case r_state is
+
+
+      when st_PACKET_PREP   =>  -- set EBM high address to ECA 
+                                s_ebm_ctrl_o.cyc <= '1';
+                                s_ebm_ctrl_o.stb <= '1';
+                                --std behaviour, this is redundant. just to show what this state does.                                
+                                --s_ebm_ctrl_o.adr  <= std_logic_vector(unsigned(s_ctrl_ebm_adr_o) + unsigned(c_EBM_ADHI));
+                                --s_ebm_ctrl_o.dat  <= s_ctrl_eca_adr_o;  
+                                s_msg_cnt_clr    <= '1'; 
+                     
+      when st_PACKET_EMPTY  =>  s_allow_sending  <= '1';
+
+      when st_PACKET_START  =>  s_allow_sending  <= '1';
+                                s_save_packet_ts <= '1';  
+                                
+      when st_PACKET_GATHER =>  s_allow_sending  <= '1'; 
+     
+      when st_PACKET_SEND   =>  -- flush EBM
+                                s_ebm_ctrl_o.cyc <= '1';
+                                s_ebm_ctrl_o.stb <= '1'; 
+                                s_ebm_ctrl_o.adr <= std_logic_vector(unsigned(s_ctrl_ebm_adr_o) + unsigned(c_EBM_FLUSH));
+                                s_ebm_ctrl_o.dat <= std_logic_vector(to_unsigned(1, s_ebm_ctrl_o.dat'length)); 
+
+      when st_WAIT_FOR_EBM  =>  s_ebm_ctrl_o.cyc <= '1'; 
+
+      when others           =>  null;
+    end case; 
+
+  end process fsm_out;
 
 
   -- arbiter / ebm ctrl arbitration
@@ -298,7 +313,7 @@ begin
     slaves_o      => slaves_o,
     master_o      => s_arbiter_o,
     master_i      => s_arbiter_i
-    
+      
     ------------------------------
   );
 
@@ -311,14 +326,14 @@ begin
     clk_sys_i         => clk_i,
     rst_sys_n_i       => rst_n_i,
     stall_i           => "0",
-	 error_i         => "0",
+    error_i           => "0",
     reset_o           => s_ctrl_reset_o,
     mode_o            => s_ctrl_mode_o,
     clear_o           => s_ctrl_clear_o,
     st_full_i         => s_ctrl_st_full_i,
-	 st_full_V_i       => "1", 
+    st_full_V_i       => "1", 
     st_late_i         => s_ctrl_st_late_i,
-	 st_late_V_i       => "1",
+    st_late_V_i       => "1",
     ebm_adr_o         => s_ctrl_ebm_adr_o,
     eca_adr_o         => s_ctrl_eca_adr_o,
     tx_max_msgs_o     => s_ctrl_tx_max_msgs_o,
@@ -326,11 +341,11 @@ begin
     tx_rate_limit_o   => s_ctrl_tx_rate_limit_o,
     offs_late_o       => s_ctrl_offs_late_o,
     ts_late_i         => s_ctrl_ts_late_i,
-	 ts_late_V_i       => "1", 
+    ts_late_V_i       => "1", 
     cnt_late_i        => r_cnt_late,
-    cnt_late_V_i       => "1",	 
+    cnt_late_V_i      => "1",   
     cnt_out_all_i     => s_ctrl_cnt_out_all_i,
-	 cnt_out_all_V_i   => "1",	
+    cnt_out_all_V_i   => "1",  
  
     ctrl_i            => ctrl_i,
     ctrl_o            => ctrl_o   );

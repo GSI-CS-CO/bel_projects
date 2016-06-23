@@ -49,7 +49,7 @@ class prio (object):
   'reset'         : ['wp', 1], # Resets the Priority Queue
   'mode'          : ['rwa', 3], # b2: Time limit, b1: Msg limit, b0 enable
   'clear'         : ['wp', 1], # Clears counters and status
-  'st_full'       : ['rd', channels], # Channel Full flag (n..0) 
+  'st_full'       : ['rd', 8], # Channel Full flag (n..0) 
   'st_late'       : ['rd', 1], # Late message detected
   'ebm_adr'       : ['rw', 32], # Etherbone Master address
   'eca_adr'       : ['rw', 32], # Event Condition Action Unit address

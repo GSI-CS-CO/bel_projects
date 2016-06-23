@@ -150,7 +150,8 @@ begin
       g_size                           => g_ram_per_core,
       g_world_bridge_sdb               => g_world_bridge_sdb,
       g_profile                        => f_substr(g_profiles, I, ';'),
-      g_init_file                      => f_substr(g_init_files, I, ';')
+      g_init_file                      => f_substr(g_init_files, I, ';'),
+		g_is_dm                          => g_is_dm
     ) 
     port map(
       clk_sys_i      => clk_ref_i,

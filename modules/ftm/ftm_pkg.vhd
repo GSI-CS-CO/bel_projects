@@ -224,7 +224,7 @@ package ftm_pkg is
     date          => x"20131009",
     name          => "CPU-Info-ROM       ")));
 
-  constant c_ebm_queue_data_sdb : t_sdb_device := (
+  constant c_pq_data_sdb : t_sdb_device := (
     abi_class     => x"0000", -- undocumented device
     abi_ver_major => x"01",
     abi_ver_minor => x"01",
@@ -232,7 +232,7 @@ package ftm_pkg is
     wbd_width     => x"7", -- 8/16/32-bit port granularity
     sdb_component => (
     addr_first    => x"0000000000000000",
-    addr_last     => x"0000000000000003",
+    addr_last     => x"000000000000003f",
     product => (
     vendor_id     => x"0000000000000651", -- GSI
     device_id     => x"10040201",
@@ -240,7 +240,7 @@ package ftm_pkg is
     date          => x"20131009",
     name          => "DM-Prio-Queue-Data ")));
   
-  constant c_ebm_queue_ctrl_sdb : t_sdb_device := (
+  constant c_pq_ctrl_sdb : t_sdb_device := (
     abi_class     => x"0000", -- undocumented device
     abi_ver_major => x"01",
     abi_ver_minor => x"01",
@@ -422,9 +422,9 @@ package body ftm_pkg is
   begin
     -- add info rom, prioq ctrl, rams 
     v_clu_req(0) := f_sdb_auto_device(c_cluster_info_sdb,        true);
-    v_clu_req(1) := f_sdb_auto_device(c_ebm_queue_ctrl_sdb,     is_dm);
+    v_clu_req(1) := f_sdb_auto_device(c_pq_ctrl_sdb,             is_dm);
     for i in 2 to v_clu_req'length-1 loop
-      v_clu_req(i) := f_sdb_auto_device( f_xwb_dpram_userlm32(ramPerCore), True);
+      v_clu_req(i) := f_sdb_auto_device( f_xwb_dpram_userlm32(ramPerCore), true);
     end loop;
 
     return v_clu_req;
@@ -448,8 +448,8 @@ package body ftm_pkg is
               c_lm32_cpu_info           => f_sdb_auto_device(c_cpu_info_sdb,        true),
               c_lm32_sys_time           => f_sdb_auto_device(c_sys_time_sdb,        true),
               c_lm32_atomic             => f_sdb_auto_device(c_atomic_sdb,          true),
-              c_lm32_prioq              => f_sdb_auto_device(c_ebm_queue_data_sdb,  is_dm),             
-              c_lm32_world_bridge       => f_sdb_embed_bridge(g_world_bridge_sdb,    x"80000000")
+              c_lm32_prioq              => f_sdb_auto_device(c_pq_data_sdb,         is_dm),             
+              c_lm32_world_bridge       => f_sdb_embed_bridge(g_world_bridge_sdb,   x"80000000")
             );
     return v_req;
   end f_lm32_slaves_req;

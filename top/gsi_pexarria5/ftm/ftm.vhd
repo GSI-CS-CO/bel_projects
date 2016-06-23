@@ -250,7 +250,7 @@ architecture rtl of ftm is
 
   constant c_family  : string := "Arria V"; 
   constant c_project : string := "ftm";
-  constant c_cores   : natural := 8;
+  constant c_cores   : natural := 9;
   constant c_initf_name 	: string := c_project & ".mif";
   constant c_profile_name  : string := "medium_icache";
 
