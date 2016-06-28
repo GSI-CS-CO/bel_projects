@@ -364,7 +364,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- required slaves
-  constant c_dev_slaves          : natural := 28;
+  constant c_dev_slaves          : natural := 27;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_mbox           : natural := 2;
@@ -377,24 +377,23 @@ architecture rtl of monster is
   constant c_devs_eca_aq         : natural := 9;
   constant c_devs_eca_tlu        : natural := 10;
   constant c_devs_eca_wbm        : natural := 11;
-  constant c_devs_emb_cpu        : natural := 12;
-  constant c_devs_serdes_clk_gen : natural := 13;
-  constant c_devs_control        : natural := 14;
-  constant c_devs_ftm_cluster    : natural := 15;
+  constant c_devs_serdes_clk_gen : natural := 12;
+  constant c_devs_control        : natural := 13;
+  constant c_devs_ftm_cluster    : natural := 14;
   
   -- optional slaves:
-  constant c_devs_lcd            : natural := 16;
-  constant c_devs_oled           : natural := 17;
-  constant c_devs_scubus         : natural := 18;
-  constant c_devs_scubirq        : natural := 19;
-  constant c_devs_mil            : natural := 20;
-  constant c_devs_mil_ctrl       : natural := 21;
-  constant c_devs_ow             : natural := 22;
-  constant c_devs_ssd1325        : natural := 23;
-  constant c_devs_vme_info       : natural := 24;
-  constant c_devs_CfiPFlash      : natural := 25;
-  constant c_devs_nau8811        : natural := 26;
-  constant c_devs_psram          : natural := 27;
+  constant c_devs_lcd            : natural := 15;
+  constant c_devs_oled           : natural := 16;
+  constant c_devs_scubus         : natural := 17;
+  constant c_devs_scubirq        : natural := 18;
+  constant c_devs_mil            : natural := 19;
+  constant c_devs_mil_ctrl       : natural := 20;
+  constant c_devs_ow             : natural := 21;
+  constant c_devs_ssd1325        : natural := 22;
+  constant c_devs_vme_info       : natural := 23;
+  constant c_devs_CfiPFlash      : natural := 24;
+  constant c_devs_nau8811        : natural := 25;
+  constant c_devs_psram          : natural := 26;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -413,7 +412,6 @@ architecture rtl of monster is
     c_devs_eca_aq         => f_sdb_auto_device(c_eca_queue_slave_sdb,            true),
     c_devs_eca_tlu        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              true),
     c_devs_eca_wbm        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           true),
-    c_devs_emb_cpu        => f_sdb_auto_device(c_eca_queue_slave_sdb,            true),
     c_devs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          true),
     c_devs_control        => f_sdb_auto_device(c_io_control_sdb,                 true),
     c_devs_ftm_cluster    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
@@ -444,13 +442,15 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- Only put a slave here if it has critical performance requirements!
-  constant c_top_slaves     : natural := 2;
+  constant c_top_slaves     : natural := 3;
   constant c_tops_eca_event : natural := 0;
   constant c_tops_dev       : natural := 1;
+  constant c_tops_emb_cpu   : natural := 2;
   
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (c_tops_eca_event  => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
-    c_tops_dev        => f_sdb_auto_bridge (c_dev_bridge_sdb));
+    c_tops_dev        => f_sdb_auto_bridge (c_dev_bridge_sdb),
+	 c_tops_emb_cpu    => f_sdb_embed_device(c_eca_queue_slave_sdb,x"70000000"));
   
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -1658,7 +1658,7 @@ begin
       master_o    => top_bus_slave_i(c_topm_eca_wbm),
       master_i    => top_bus_slave_o(c_topm_eca_wbm));
 
-  c2 : eca_queue
+  c2_lm32 : eca_queue
     generic map(
       g_queue_id  => 2)
     port map(   
@@ -1668,8 +1668,8 @@ begin
       a_channel_i => s_channel_o(2),
       q_clk_i     => clk_sys,
       q_rst_n_i   => rstn_sys,  
-      q_slave_i   => dev_bus_master_o(c_devs_emb_cpu),
-      q_slave_o   => dev_bus_master_i(c_devs_emb_cpu)); 
+      q_slave_i   => top_bus_master_o(c_tops_emb_cpu),
+      q_slave_o   => top_bus_master_i(c_tops_emb_cpu)); 
   
   eca_scu : if g_en_scubus generate
     c3 : eca_scubus_channel

@@ -7,8 +7,15 @@ bel_projects/modules/syncmon/scripts/configure-data-master.sh
 jbai@belpc136:~/test/bel_projects_B2B/bel_projects/modules/lm32_B2B_transfer$
 ssh root@scuxl0020.acc.gsi.de
 root@scuxl0020.acc.gsi.de's password: geheim
+ 
+Tips: 
+bel_projects/syn/gsi_scu/control3/scu_control.rpd.bak is the version that ECA
+action queue connects to the dev croosbar.
+bel_projects/syn/gsi_scu/control3/scu_control.sof.bak is the version that ECA
+action queue connects to the top croosbar.
 ===============================================================================================================
 For the source B2B SCU, please do the following configuration:
+Don't forge to load the correct gateware. E.g.scu_control.sof 
 //configure the ECA queue
 ssh root@scuxlNo.acc.gsi.de pwd:geheim
 [root@scuxl0041 ~]# saft-ecpu-ctl baseboard -x
@@ -65,10 +72,12 @@ killall saftd
 //To monitor the timing events
 # saft-io-ctl baseboard B1 -s
 jbai@belpc136:~/test/bel_projects_B2B/bel_projects/ip_cores/saftlib$
-./saft-B2B-triggerSCU -v
+./saft-B2B-triggerSCU baseboard -v
 
 ===============================================================================================================
 Use packeth to produce the timing event EVT_B2B_START
+Payload for the EVT_B2B_START:ipv4(0800) 
+45000048000040003f11451ec0a80001c0a80002ebd0ebd1003400004e6f14448a0f08007ffffff0deadbeef1111111100013085159d822a0000000000000000000984299b573950
 or
 # simulation DM to produce the EVT_B2B_BEGIN
 ~/test/bel_projects_dm/bel_projects/modules/DM_B2B$./DM_configure.sh tcp/scuxl0041.acc.gsi.de
@@ -108,8 +117,7 @@ ECA
 
 
 # Send event
-[root@scuxl0041 ~]# saft-ctl baseboard inject 0xdeadbeef11111111
-0xaaaaaaaabbbbbbbb 0
+[root@scuxl0041 ~]# saft-ctl baseboard inject 0xdeadbeef11111111 0xaaaaaaaabbbbbbbb 0
 #Pop the event out
 eb-write tcp/scuxl0041.acc.gsi.de 0xc4/4 0x1
 # Read event content

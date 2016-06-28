@@ -31,6 +31,7 @@ Soure B2B SCU
 #include "time_counter.h"
 #include "eca_queue_regs.h"
 #include "B2B_event.h"
+#include "util.h"
 
 /* Vender ID and device ID */
 #define venID 0x651
@@ -152,6 +153,16 @@ enum B2B_WAIT_machine {
   WAIT_kicker_ts_s,
   WAIT_kicker_ts_t
 };
+
+int time_converter (uint64_t timestamp)
+{
+  //mprintf("TAI Time: ");
+  mprintf("%s.", format_time(timestamp/1000000000));
+  //mprintf ("%x %x\n ",timestamp%1000000000,(timestamp%1000000000)>>32);
+  mprintf ("%d\n\n ",(int32_t)(timestamp%1000000000));
+}
+
+
 int procedure_error (enum B2B_WAIT_machine B2B_example)
 {
   mprintf("Procedure Error: %s\n", B2B_example);
@@ -182,7 +193,7 @@ void init()
 
 void event_get_from_queue (uint32_t event_param_hi, uint32_t event_param_lo, uint32_t event_ex_hi, uint32_t event_ex_lo)
 {
-  mprintf(">>>>>>>>>>>>>>>>>>>>>>>>>Receive telegram from WR network\n");
+  //mprintf(">>>>>>>>>>>>>>>>>>>>>>>>>Receive telegram from WR network\n");
   event_param_hi   = *(pECA_Q +(ECA_QUEUE_PARAM_HI_GET >> 2));
   event_param_lo   = *(pECA_Q +(ECA_QUEUE_PARAM_LO_GET >> 2));
   event_ex_hi      = *(pECA_Q +(ECA_QUEUE_EXECUTED_HI_GET >> 2));
@@ -191,14 +202,14 @@ void event_get_from_queue (uint32_t event_param_hi, uint32_t event_param_lo, uin
   *(pECA_Q +(ECA_QUEUE_POP_OWR >> 2)) = 0x1;
 
   //mprintf(" EVENT_PARAM_HI:%x\n EVENT_PARAM_LO:%x\n EVENT_EX_HI:%x\n EVENT_EX_LO:%x \n",event_param_hi,event_param_lo,event_ex_hi,event_ex_lo);
-  mprintf("EVENT_ID : %x %x\n",*(pECA_Q +(ECA_QUEUE_EVENT_ID_HI_GET >> 2)), *(pECA_Q +(ECA_QUEUE_EVENT_ID_LO_GET >> 2)));
+  //mprintf("EVENT_ID : %x %x\n",*(pECA_Q +(ECA_QUEUE_EVENT_ID_HI_GET >> 2)), *(pECA_Q +(ECA_QUEUE_EVENT_ID_LO_GET >> 2)));
 }
 
 /* TLU simulates the next zero cross timestamp of two machines */
 // B2 is used for the src B2B SCU, channel 1 for TLU
 uint64_t get_rising_edge_tm_from_FG ()
 {
-  mprintf("/************************TLU************************/\n");
+  //mprintf("/************************TLU************************/\n");
   uint32_t trg_ts_hi = 0;
   uint32_t trg_ts_lo = 0;
   //uint32_t B2_timestamp_hi;
@@ -210,11 +221,11 @@ uint64_t get_rising_edge_tm_from_FG ()
   *(pTLU + (TLU_ACTIVE_SET >> 2)) = 0x3;
   *(pTLU + (TLU_CH_SELECT >> 2)) = 0x1;
   count = *(pTLU + (TLU_CH_FILL_COUNT >> 2));
-  mprintf("TLU active %x \n",count);
+  //mprintf("TLU active %x \n",count);
   //clear channel 0 (B1) 0x1, channel 1 (B2) 0x2
   *(pTLU + (TLU_CLEAR >> 2)) = 0x2;
   count = *(pTLU + (TLU_CH_FILL_COUNT >> 2));
-  mprintf("TLU clear activate %x \n",count);
+  //mprintf("TLU clear activate %x \n",count);
   //usleep (1000000);
   while (trg_ts_hi == 0 )
   {
@@ -225,18 +236,18 @@ uint64_t get_rising_edge_tm_from_FG ()
   }
   tm_high_zero_trg = ((uint64_t)trg_ts_hi << 32) | trg_ts_lo;
   //mprintf("SIS100 trg B2B SCU rf simulation timestamp (B2) %x %x\n",trg_ts_hi,trg_ts_lo);
-  mprintf("SIS100: target B2B SCU gets timestamp of rising zero-crossing of the simulated rf signal %x %x\n",trg_ts_hi,trg_ts_lo);
+ // mprintf("SIS100: target B2B SCU gets timestamp of rising zero-crossing of the simulated rf signal %x %x\n",trg_ts_hi,trg_ts_lo);
 
   return tm_high_zero_trg;
 }
 
 int ebm_send_msg (uint32_t WB_Addr_t, uint64_t eventID, uint64_t Param_t, uint32_t TEF, uint32_t Reserved, uint64_t Timestamp_t)
 {
-  mprintf("<<<<<<<<<<<<<<<<<<<<<<<<<Send telegram to WR network\n");
+  //mprintf("<<<<<<<<<<<<<<<<<<<<<<<<<Send telegram to WR network\n");
 
   uint32_t EventID_H = (uint32_t) ((eventID & 0xffffffff00000000 ) >> 32);
   uint32_t EventID_L = (uint32_t) (eventID & 0x00000000ffffffff );
-  mprintf("eventID = 0x%x %x",EventID_H, EventID_L);
+  //mprintf("eventID = 0x%x %x",EventID_H, EventID_L);
   uint32_t Param_H   = (uint32_t)((Param_t & 0xffffffff00000000 ) >> 32);
   uint32_t Param_L   = (uint32_t)(Param_t & 0x00000000ffffffff );
   //uint32_t TEF       = 0x11111111;
@@ -266,9 +277,8 @@ int ebm_send_msg (uint32_t WB_Addr_t, uint64_t eventID, uint64_t Param_t, uint32
 /* Function main */
 int main (void)
 {
-  mprintf ("----------------------U28+ B2B transfer from SIS18 to SIS100--------------------------\n ");
-  mprintf ("--------------------------------Target B2B SCU----------------------------------------\n ");
   init();
+  mprintf ("U28+ B2B transfer from SIS18 to SIS100 => Target B2B SCU\n\n ");
   enum B2B_WAIT_machine trg_b2b_scu=IDLE;
 
   *(pECA_Q +(ECA_QUEUE_POP_OWR >> 2)) = 0x1;
@@ -283,8 +293,6 @@ int main (void)
   uint32_t ts_ex_lo;
   uint64_t ts_now;
   //timiestamp of the zero crossing point from the target function generator
-  uint32_t trg_tm_hi;
-  uint32_t trg_tm_lo;
 
   //timestamp of the trigger pulse from the src Trigger SCU
   uint32_t trigger_ts_s_hi;
@@ -344,22 +352,22 @@ int main (void)
   phase_h1_tof = tof_time % period_h1_src * 0xFFFF / period_h1_src;
   phase_high_harmonic_tof = tof_time % period_high_harmonic_src * 0xFFFF / period_high_harmonic_src;;
 
-  mprintf ("SIS18  h=1 period  =  %d(ps)\n",(uint32_t)period_h1_src);
-  mprintf ("SIS100 h=1 period  =  %d(ps)\n",(uint32_t)period_h1_trg);
-  mprintf ("SIS18  high harmonic period = %d(ps)\n",(uint32_t)period_high_harmonic_src);
-  mprintf ("SIS100 high harmonic period = %d(ps)\n",(uint32_t)period_high_harmonic_trg);
-  init();
+  //mprintf ("SIS18  h=1 period  =  %d(ps)\n",(uint32_t)period_h1_src);
+  //mprintf ("SIS100 h=1 period  =  %d(ps)\n",(uint32_t)period_h1_trg);
+  //mprintf ("SIS18  high harmonic period = %d(ps)\n",(uint32_t)period_high_harmonic_src);
+  //mprintf ("SIS100 high harmonic period = %d(ps)\n",(uint32_t)period_high_harmonic_trg);
   //SM_param_load(fre_src,fre_trg,har_src,har_trg,phase_shift_time, tof_time, kicker_delay, rst_fmax1, rst_fmax2);
 
   /* Base address of the related ep cores */
   pSCUbm =(unsigned short*)find_device_adr(venID,devID_SCUBM);
   pEBm   = (unsigned int*)find_device_adr(venID,devID_EBM);
-  pECA_Q   = 0xa00000c0;
+  pECA_Q   = 0xd0000000;
   //pECA_Q = (unsigned int*)find_device_adr(venID,devID_ECA);
   pTLU   = (unsigned int*)find_device_adr(venID,devID_TLU);
   pTIME  = (unsigned int*)find_device_adr(venID,devID_TIME);
 
-  mprintf("base address %x\n",pTLU);
+ // time_converter(0x1cfb1047f7bf0);
+  //mprintf("base address %x\n",pTLU);
  // find_device_multi(&found_sdb[0], &clu_cb_idx, 20, GSI, LM32_CB_CLUSTER); // find location of cluster crossbar
   //find_device_multi_in_subtree(&found_sdb[0], lm32_irq_endp, &lm32_endp_idx, 10, GSI, LM32_IRQ_EP); // list irq endpoints in cluster crossbar
   //for (int i=0; i < lm32_endp_idx; i++)
@@ -393,10 +401,13 @@ int main (void)
     switch(trg_b2b_scu)
     {
       case WAIT_b2b_start:
+        mprintf(">>>>>>>>>>>>>>>>>>>>>>>>> Receive EVT_START_B2B from WR network\n");
         //Pop the EVT_START_B2B from queue
         *(pECA_Q +(ECA_QUEUE_POP_OWR >> 2)) = 0x1;
         /* Function Generator simulates the zero crossing point of high harmonic. TLU gets the timestamp of source TTL signal */
         get_rising_edge_tm_from_FG ();
+        mprintf("Target synchrotron SIS100: TAI time of the zero crossing point:");
+        time_converter(tm_high_zero_trg*8);
         event_get_from_queue(param_hi,param_lo,ts_ex_hi,ts_ex_lo);
         //ts_ex_hi    = *(pECA_Q +(ECA_QUEUE_DEADLINE_HI_GET >> 2));
         //ts_ex_lo    = *(pECA_Q +(ECA_QUEUE_DEADLINE_LO_GET >> 2));
@@ -407,6 +418,7 @@ int main (void)
         //ECA could accept early/late timing events, but only events within next 4 second could be executed.
         //second. So the timestamp of ebm_send_msg could not be too late.
         //ebm_send_msg (WB_Addr, TGM_PHASE_TIME, tm_high_zero_trg, 0,0,tm_high_zero_trg*8+4000000000);
+        mprintf("<<<<<<<<<<<<<<<<<<<<<<<<< Send TGM_PHASE_TIME to WR network\n");
         ebm_send_msg (WB_Addr, TGM_PHASE_TIME, tm_high_zero_trg, 0,0,0);
         //ebm_send_msg (WB_Addr, 0xcafebabe22222222, 0x1234567811223344, 0x87654321,0xaabbccdd,0x9988776655443322);
         break;
