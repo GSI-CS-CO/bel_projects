@@ -1,12 +1,10 @@
 ssh root@scuxl0041.acc.gsi.de
-Pw: geheim
 
 branch: network_monitor_asterisk_test_pps_out
 bel_projects/modules/syncmon/scripts/configure-data-master.sh
 
 jbai@belpc136:~/test/bel_projects_B2B/bel_projects/modules/lm32_B2B_transfer$
 ssh root@scuxl0020.acc.gsi.de
-root@scuxl0020.acc.gsi.de's password: geheim
  
 Tips: 
 bel_projects/syn/gsi_scu/control3/scu_control.rpd.bak is the version that ECA
@@ -17,7 +15,7 @@ action queue connects to the top croosbar.
 For the source B2B SCU, please do the following configuration:
 Don't forge to load the correct gateware. E.g.scu_control.sof 
 //configure the ECA queue
-ssh root@scuxlNo.acc.gsi.de pwd:geheim
+ssh root@scuxlNo.acc.gsi.de
 [root@scuxl0041 ~]# saft-ecpu-ctl baseboard -x
 [root@scuxl0041 ~]# saft-ecpu-ctl baseboard -c 0xdeadbeef00000000 32 0 0
 Action sink configured...
@@ -39,7 +37,7 @@ make B2B_main_src.bin
 ===============================================================================================================
 For the target B2B SCU, please do the following configuration:
 //configure the ECA queue
-ssh root@scuxlNo.acc.gsi.de pwd:geheim
+ssh root@scuxlNo.acc.gsi.de 
 [root@scuxl0041 ~]# saft-ecpu-ctl baseboard -x
 [root@scuxl0041 ~]# saft-ecpu-ctl baseboard -c 0xdeadbeef00000000 32 0 0
 Action sink configured...
