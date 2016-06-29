@@ -364,7 +364,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- required slaves
-  constant c_dev_slaves          : natural := 28;
+  constant c_dev_slaves          : natural := 29;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_mbox           : natural := 2;
@@ -381,20 +381,21 @@ architecture rtl of monster is
   constant c_devs_serdes_clk_gen : natural := 13;
   constant c_devs_control        : natural := 14;
   constant c_devs_ftm_cluster    : natural := 15;
+  constant c_devs_milbus_tag     : natural := 16;
   
   -- optional slaves:
-  constant c_devs_lcd            : natural := 16;
-  constant c_devs_oled           : natural := 17;
-  constant c_devs_scubus         : natural := 18;
-  constant c_devs_scubirq        : natural := 19;
-  constant c_devs_mil            : natural := 20;
-  constant c_devs_mil_ctrl       : natural := 21;
-  constant c_devs_ow             : natural := 22;
-  constant c_devs_ssd1325        : natural := 23;
-  constant c_devs_vme_info       : natural := 24;
-  constant c_devs_CfiPFlash      : natural := 25;
-  constant c_devs_nau8811        : natural := 26;
-  constant c_devs_psram          : natural := 27;
+  constant c_devs_lcd            : natural := 17;
+  constant c_devs_oled           : natural := 18;
+  constant c_devs_scubus         : natural := 19;
+  constant c_devs_scubirq        : natural := 20;
+  constant c_devs_mil            : natural := 21;
+  constant c_devs_mil_ctrl       : natural := 22;
+  constant c_devs_ow             : natural := 23;
+  constant c_devs_ssd1325        : natural := 24;
+  constant c_devs_vme_info       : natural := 25;
+  constant c_devs_CfiPFlash      : natural := 26;
+  constant c_devs_nau8811        : natural := 27;
+  constant c_devs_psram          : natural := 28;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -414,6 +415,7 @@ architecture rtl of monster is
     c_devs_eca_tlu        => f_sdb_auto_device(c_eca_tlu_slave_sdb,              true),
     c_devs_eca_wbm        => f_sdb_auto_device(c_eca_ac_wbm_slave_sdb,           true),
     c_devs_emb_cpu        => f_sdb_auto_device(c_eca_queue_slave_sdb,            true),
+    c_devs_milbus_tag     => f_sdb_auto_device(c_eca_queue_slave_sdb,            true),
     c_devs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          true),
     c_devs_control        => f_sdb_auto_device(c_io_control_sdb,                 true),
     c_devs_ftm_cluster    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
@@ -591,13 +593,15 @@ architecture rtl of monster is
   constant c_loc_wb_master    : natural := 1;
   constant c_loc_embedded_cpu : natural := 2;
   constant c_loc_scubus_tag   : natural := 3;
+  constant c_loc_milbus_tag   : natural := 4;
   
   function f_channel_types return t_nat_array is
-    constant c_scu_channel_types : t_nat_array(3 downto 0) := (
+    constant c_scu_channel_types : t_nat_array(4 downto 0) := (
       0 => c_loc_linux, 
       1 => c_loc_wb_master, 
       2 => c_loc_embedded_cpu,
-      3 => c_loc_scubus_tag);
+      3 => c_loc_scubus_tag,
+      4 => c_loc_milbus_tag);
     constant c_channel_types : t_nat_array(2 downto 0) := c_scu_channel_types(2 downto 0);
   begin
     if g_en_scubus then
@@ -1678,7 +1682,20 @@ begin
         rst_n_i   => rstn_ref,
         channel_i => s_channel_o(3),
         tag_valid => tag_valid,
-        tag       => tag);
+        tag       => tag);  
+  c4 : eca_queue
+    generic map(
+      g_queue_id  => 4)
+    port map(   
+      a_clk_i     => clk_ref,
+      a_rst_n_i   => rstn_ref,
+      a_stall_o   => s_stall_i(4),
+      a_channel_i => s_channel_o(4),
+      q_clk_i     => clk_sys,
+      q_rst_n_i   => rstn_sys,  
+      q_slave_i   => dev_bus_master_o(c_devs_milbus_tag),
+      q_slave_o   => dev_bus_master_i(c_devs_milbus_tag)); 
+
   end generate;
         
   lvds_pins : altera_lvds
