@@ -89,12 +89,12 @@ int scan_for_fgs(struct scu_bus *bus, uint32_t *fglist) {
     i++; // next scu bus slot
   }
 
-  /* fg in ifa */
-  fglist[j] = 24;                               // output bits
-  fglist[j] |= 0x2 << 8;                        // version
-  fglist[j] |= 0x1 << 16;                       // device number from mil bus 
-  fglist[j] |= 13 << 24;                        // slot 13 -> mil bus
-  j++; 
+//  /* fg in ifa */
+//  fglist[j] = 24;                               // output bits
+//  fglist[j] |= 0x2 << 8;                        // version
+//  fglist[j] |= 0x1 << 16;                       // device number from mil bus 
+//  fglist[j] |= 13 << 24;                        // slot 13 -> mil bus
+//  j++; 
   
   fglist[j] = 0;  //set next macro to 0 to mark end of list
   return j; //return number of found fgs

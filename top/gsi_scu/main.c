@@ -21,7 +21,7 @@
 
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2
-#define SEND_SIG(SIG)     *(volatile unsigned int *)(char*)(fg_regs[channel].irq | 0x80000000UL) = SIG
+#define SEND_SIG(SIG)     *(volatile unsigned int *)(char*)(pCpuMsiBox + fg_regs[channel].mbx_slot * 2) = SIG
 #define SIG_REFILL      0
 #define SIG_START       1
 #define SIG_STOP_EMPTY  2
@@ -47,7 +47,7 @@ uint32_t SHARED backplane_temp = -1;
 uint32_t SHARED fg_magic_number = 0xdeadbeef;
 uint32_t SHARED fg_version = 0x3; // 0x2 saftlib,
                                   // 0x3 new msi system with mailbox
-uint32_t SHARED fg_sw_irq = -1;
+uint32_t SHARED fg_mb_slot = -1;
 uint32_t SHARED fg_num_channels = MAX_FG_CHANNELS;
 uint32_t SHARED fg_buffer_size = BUFFER_SIZE+1;
 uint32_t SHARED fg_macros[MAX_FG_MACROS]; // hi..lo bytes: slot, device, version, output-bits
@@ -66,6 +66,9 @@ volatile unsigned int* cpu_info_base = 0;
 volatile unsigned int param_sent[MAX_FG_CHANNELS];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
 
+void sw_irq_handler();
+
+
 
 void show_msi()
 {
@@ -80,16 +83,16 @@ void isr0()
 }
 
 
-void enable_msis(int channel) {
+void enable_scub_msis(int channel) {
   int slot;
   //SCU Bus Master
   scub_base[GLOBAL_IRQ_ENA] = 0x20;                                 //enable slave irqs in scu bus master
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
     slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
     scub_irq_base[8] = slot-1;                                      //channel select
-    scub_irq_base[9] = 0x08154711;                                  //msg
-    //scub_irq_base[10] = getSdbAdr(&lm32_irq_endp[endp_idx + MSI_SLAVE]) + (slot << 2); //destination address, do not use lower 2 bits
-    scub_irq_base[2] = (1 << (slot - 1));                          //enable slave
+    scub_irq_base[9] = slot-1;                                      //msg: slot number
+    scub_irq_base[10] = (uint32_t)pMyMsi;                           //msi queue destination address of this cpu
+    scub_irq_base[2] = (1 << (slot - 1));                           //enable slave
     //mprintf("IRQs for slave %d enabled.\n", slot);
   }
 }
@@ -153,7 +156,7 @@ void handle(int slave_nr, unsigned FG_BASE)
         SEND_SIG(SIG_STOP_EMPTY); // normal stop
       else
         SEND_SIG(SIG_STOP_NEMPTY); // something went wrong
-      //disable_slave_irq(channel);
+      disable_slave_irq(channel);
       fg_regs[channel].state = 0;
     } else if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
       SEND_SIG(SIG_START); // fg has received the tag
@@ -167,18 +170,31 @@ void handle(int slave_nr, unsigned FG_BASE)
     }
 }
 
-void slave_irq_handler()
+
+void irq_handler()
 {
   int i, j = 0;
-  unsigned char slave_nr = global_msi.adr>>2 & 0xf;
+  unsigned char slave_nr = global_msi.msg + 1;
   volatile unsigned short tmr_irq_cnts; 
   static unsigned short old_tmr_cnt[MAX_SCU_SLAVES];
-  volatile unsigned int slv_int_act_reg = scub_base[(slave_nr << 16) + SLAVE_INT_ACT];
+  volatile unsigned int slv_int_act_reg;
   unsigned int slave_acks = 0;
   int channel;
 
+  if ((global_msi.adr & 0xff) == 0x10) {
+    sw_irq_handler();
+    return;
+  }
+  slv_int_act_reg = scub_base[(slave_nr << 16) + SLAVE_INT_ACT];
+  //mprintf("slv_int_act_reg of slave %d is: 0x%x\n", slave_nr, slv_int_act_reg); 
+
+  if ((global_msi.adr & 0xff) != 0x00) {
+    mprintf("IRQ unkwown.\n");
+    return;
+  }
+
   if (slave_nr < 0 || slave_nr > MAX_SCU_SLAVES) {
-    mprintf("IRQ unknown.\n");
+    mprintf("slave nr unknown.\n");
     return;
   }
 
@@ -243,7 +259,8 @@ int configure_fg_macro(int channel) {
     dev =  (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
     scub_base[SRQ_ENA] |= (1 << (slot-1));                          //enable irqs for the slave
     /* enable irqs in the slave cards */
-    scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000;      //enable fg1 and fg2 irq
+    scub_base[(slot << 16) + SLAVE_INT_ACT] = 0xc000;               //clear all irqs
+    scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000;              //enable fg1 and fg2 irq
     
     /* which macro are we? */
     if (dev == 0) {
@@ -260,7 +277,7 @@ int configure_fg_macro(int channel) {
     //set virtual fg number Bit 9..4
     scub_base[(slot << 16) + fg_base + FG_CNTRL] |= (channel << 4);
     //fetch first parameter set from buffer
-    //mprintf("wrptr 0x%x rdptr 0x%x\n", fg_regs[channel].wr_ptr, fg_regs[channel].rd_ptr);
+    //mprintf("wrptr 0x%x rdptr 0x%x\n", fg_regs[channel].wr_ptr, fg_regs[channel].rd_ptr); //ONLY FOR TESTING
     if(!cbisEmpty(&fg_regs[0], channel)) {
       cbRead(&fg_buffer[0], &fg_regs[0], channel, &pset);
       step_cnt_sel = pset.control & 0x7;
@@ -273,7 +290,7 @@ int configure_fg_macro(int channel) {
       scub_base[(slot << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
       param_sent[i]++;
     }
-    //mprintf("enable channel[%d] 0x%x PLEASE REMOVE AFTER USE!!!!!!!\n", channel, fg_regs[channel].irq);
+    //mprintf("enable channel[%d] 0x%x PLEASE REMOVE AFTER USE!!!!!!!\n", channel, fg_regs[channel].mbx_slot);
     scub_base[(slot << 16) + fg_base + FG_TAG_LOW] = fg_regs[channel].tag & 0xffff;
     scub_base[(slot << 16) + fg_base + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
     //enable the fg macro
@@ -328,7 +345,7 @@ void print_regs() {
   for(i=0; i < MAX_FG_CHANNELS; i++) {
     mprintf("channel[%d].wr_ptr %d\n", i, fg_regs[i].wr_ptr);
     mprintf("channel[%d].rd_ptr %d\n", i, fg_regs[i].rd_ptr);
-    mprintf("channel[%d].irq 0x%x\n", i, fg_regs[i].irq);
+    mprintf("channel[%d].mbx_slot 0x%x\n", i, fg_regs[i].mbx_slot);
     mprintf("channel[%d].macro_number %d\n", i, fg_regs[i].macro_number);
     mprintf("channel[%d].ramp_count %d\n", i, fg_regs[i].ramp_count);
     mprintf("channel[%d].tag 0x%x\n", i, fg_regs[i].tag);
@@ -342,7 +359,7 @@ void disable_channel(unsigned int channel) {
   if (fg_regs[channel].macro_number == -1) return;
   slot = fg_macros[fg_regs[channel].macro_number] >> 24;         //dereference slot number
   dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
-  //mprintf("disarmed slot %d dev %d in channel[%d] state %d\n", slot, dev, channel, fg_regs[channel].state); 
+  //mprintf("disarmed slot %d dev %d in channel[%d] state %d\n", slot, dev, channel, fg_regs[channel].state); //ONLY FOR TESTING
   /* which macro are we? */
   if (dev == 0) {
     fg_base = FG1_BASE;
@@ -353,7 +370,7 @@ void disable_channel(unsigned int channel) {
   } else
     return;
   // disarm hardware
-  scub_base[(slot >> 16) + fg_base + FG_CNTRL] &= ~(0x2);
+  scub_base[(slot << 16) + fg_base + FG_CNTRL] &= ~(0x2);
   scub_base[(slot << 16) + dac_base + DAC_CNTRL] &= ~(0x10); // set FG mode
   if (fg_regs[channel].state == 1) {    // hw is running
     fg_regs[channel].rd_ptr = fg_regs[channel].wr_ptr;
@@ -362,54 +379,6 @@ void disable_channel(unsigned int channel) {
   } 
 }
 
-void sw_irq_handler() {
-  int i;
-  struct param_set pset;
-  switch(global_msi.adr>>2 & 0xf) {
-    case 0:
-      init_buffers(&fg_regs[0], global_msi.msg, &fg_macros[0], scub_base);
-      param_sent[global_msi.msg] = 0;
-      //mprintf("swi flush %d\n", global_msi.msg);
-    break;
-    case 1:
-      configure_timer(global_msi.msg);
-      enable_msis(global_msi.msg);
-      scub_base[(0xd << 16) + TMR_BASE + TMR_CNTRL] = 0x2; //multicast tmr enable
-    break;
-    case 2:
-      enable_msis(global_msi.msg);
-      configure_fg_macro(global_msi.msg);
-      //print_regs();
-    break;
-    case 3:
-      disable_channel(global_msi.msg);
-    break;
-    case 4:
-      for (i = 0; i < MAX_FG_CHANNELS; i++)
-        mprintf("fg[%d] buffer: %d param_sent: %d\n", i, cbgetCount(&fg_regs[0], i), param_sent[i]);
-    break;
-    case 5:
-      if (global_msi.msg >= 0 && global_msi.msg < MAX_FG_CHANNELS) {
-        if(!cbisEmpty(&fg_regs[0], global_msi.msg)) {
-          cbRead(&fg_buffer[0], &fg_regs[0], global_msi.msg, &pset);
-          mprintf("read buffer[%d]: a %d, l_a %d, b %d, l_b %d, c %d, n %d\n",
-                   global_msi.msg, pset.coeff_a, (pset.control & 0x1f000) >> 12, pset.coeff_b,
-                   (pset.control & 0xfc0) >> 6, pset.coeff_c, (pset.control & 0x7));
-        } else {
-          mprintf("read buffer[%d]: buffer empty!\n", global_msi.msg);
-        }
-          
-      }
-    break;
-    case 6:
-      run_mil_test(scu_mil_base, global_msi.msg & 0xff);
-    break;
-    default:
-      mprintf("swi: 0x%x\n", global_msi.adr);
-      mprintf("     0x%x\n", global_msi.msg);
-    break;
-  }
-}
 void updateTemp() {
   BASE_ONEWIRE = (unsigned char *)getSdbAdr(&ow_base[0]);
   wrpc_w1_init();
@@ -426,24 +395,21 @@ void tmr_irq_handler() {
   //updateTemp();
 }
 
-void init_irq_handlers() {
+void init_irq_table() {
   isr_table_clr();
-  isr_ptr_table[0] = &isr0;
-  isr_ptr_table[1] = &slave_irq_handler;
+  isr_ptr_table[0] = &irq_handler;
   irq_set_mask(0x01);
   irq_enable();
-  mprintf("MSI IRQs configured.\n");
+  mprintf("IRQ table configured.\n");
 }
 
 
 void init() {
   int i;
   for (i=0; i < MAX_FG_CHANNELS; i++)
-    fg_regs[i].macro_number = -1; //no macros assigned to channels at startup
-  uart_init_hw();           //enables the uart for debug messages
-  updateTemp();             //update 1Wire ID and temperatures
-  print_fgs();              //scans for slave cards and fgs
-  init_irq_handlers();      //enable the irqs
+    fg_regs[i].macro_number = -1;     //no macros assigned to channels at startup
+  updateTemp();                       //update 1Wire ID and temperatures
+  print_fgs();                        //scans for slave cards and fgs
 } 
 
 void _segfault(int sig)
@@ -453,14 +419,69 @@ void _segfault(int sig)
   return;
 }
 
+void sw_irq_handler() {
+  int i, msg, adr;
+  struct param_set pset;
+  
+  if (global_msi.adr != 0x10)
+    return;
+    
+  adr = global_msi.msg >> 16;
+  msg = global_msi.msg & 0xffff;
+
+  switch(adr) {
+    case 0:
+      init_buffers(&fg_regs[0], msg, &fg_macros[0], scub_base);
+      param_sent[msg] = 0;
+      //mprintf("swi flush %d\n", global_msi.msg);
+    break;
+    case 1:
+      configure_timer(msg);
+      enable_scub_msis(msg);
+      scub_base[(0xd << 16) + TMR_BASE + TMR_CNTRL] = 0x2; //multicast tmr enable
+    break;
+    case 2:
+      enable_scub_msis(msg);
+      configure_fg_macro(msg);
+      //print_regs();
+    break;
+    case 3:
+      disable_channel(msg);
+    break;
+    case 4:
+      for (i = 0; i < MAX_FG_CHANNELS; i++)
+        mprintf("fg[%d] buffer: %d param_sent: %d\n", i, cbgetCount(&fg_regs[0], i), param_sent[i]);
+    break;
+    case 5:
+      if (msg >= 0 && msg < MAX_FG_CHANNELS) {
+        if(!cbisEmpty(&fg_regs[0], msg)) {
+          cbRead(&fg_buffer[0], &fg_regs[0], msg, &pset);
+          mprintf("read buffer[%d]: a %d, l_a %d, b %d, l_b %d, c %d, n %d\n",
+                   global_msi.msg, pset.coeff_a, (pset.control & 0x1f000) >> 12, pset.coeff_b,
+                   (pset.control & 0xfc0) >> 6, pset.coeff_c, (pset.control & 0x7));
+        } else {
+          mprintf("read buffer[%d]: buffer empty!\n", msg);
+        }
+          
+      }
+    break;
+    case 6:
+      run_mil_test(scu_mil_base, msg & 0xff);
+    break;
+    default:
+      mprintf("swi: 0x%x\n", global_msi.adr);
+      mprintf("     0x%x\n", global_msi.msg);
+    break;
+  }
+}
+
 int main(void) {
-  int i;
+  int i, mb_slot;
   sdb_location found_sdb[20];
   uint32_t lm32_endp_idx = 0;
   uint32_t ow_base_idx = 0;
   uint32_t clu_cb_idx = 0;
   discoverPeriphery();
-  fg_sw_irq = (uint32_t)pMyMsi; // set irq address for sw irqs from saftlib
   uart_init_hw();
   /* additional periphery needed for scu */
   cpu_info_base   = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);  
@@ -470,10 +491,16 @@ int main(void) {
   scu_mil_base    = (unsigned int*)find_device(SCU_MIL);
   find_device_multi(ow_base, &ow_base_idx, 2, CERN, WR_1Wire);
   
-  init_irq_handlers();  
 
   mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
-  cfgMsiBox(0, 0x10);
+  mb_slot = getMsiBoxSlot(0x10);
+  if (mb_slot == -1)
+    mprintf("No free slots in MsgBox left!\n");
+  else
+    mprintf("Configured slot %d in MsgBox\n", mb_slot);
+  fg_mb_slot = mb_slot; //tell saftlib the mailbox slot for sw irqs
+
+  init_irq_table();  
 
   msDelayBig(1500); //wait for wr deamon to read sdbfs
 
@@ -498,7 +525,7 @@ int main(void) {
   }
   mprintf("scub_irq_base is: 0x%x\n", scub_irq_base);
 
-  //init(); // init and scan for fgs
+  init(); // init and scan for fgs
 
   while(1) {
  //   updateTemp();

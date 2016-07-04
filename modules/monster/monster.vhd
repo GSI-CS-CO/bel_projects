@@ -1821,8 +1821,8 @@ begin
         Test                  => 0,  
         Time_Out_in_ns        => 350)
       port map(
-        clk_i    => clk_sys,
-        rst_n_i  => rstn_sys,
+        clk_i              => clk_sys,
+        rst_n_i            => rstn_sys,
         tag                => tag,
         tag_valid          => tag_valid,
         irq_master_o       => dev_msi_slave_i (c_devs_scubirq),

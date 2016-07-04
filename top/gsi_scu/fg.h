@@ -56,7 +56,7 @@ struct param_set {
 struct channel_regs {
   unsigned int wr_ptr;
   unsigned int rd_ptr;
-  unsigned int irq;
+  unsigned int mbx_slot;
   unsigned int macro_number;
   unsigned int ramp_count;
   unsigned int tag;

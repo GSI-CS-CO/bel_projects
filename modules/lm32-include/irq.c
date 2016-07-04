@@ -23,6 +23,7 @@
  *******************************************************************************
  */
 #include "irq.h"
+#include "aux.h"
 
 volatile isr_ptr_t isr_ptr_table[32]; 
 
@@ -38,6 +39,22 @@ extern inline void       irq_disable(void);
 extern inline void       irq_enable(void);
 extern inline void       irq_clear( uint32_t mask);
 
+int getMsiBoxSlot(uint32_t myOffs) {
+ unsigned int slot = 0;
+  atomic_on();
+  // search for the first free slot
+  while ((*(pCpuMsiBox + (slot << 1)) != 0xffffffff) && (slot < 128)) {
+    slot++;
+  }
+  if (slot < 128) {
+    cfgMsiBox(slot, myOffs);
+    atomic_off();
+    return slot;
+  } else {
+    atomic_off();
+    return -1;  
+  }
+}
 
 void cfgMsiBox(uint8_t slot, uint32_t myOffs) {
   *(pCpuMsiBox + (slot <<1)+1) = (uint32_t)(pMyMsi + (myOffs>>2));

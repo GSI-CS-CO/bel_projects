@@ -166,5 +166,6 @@ inline void irq_clear( uint32_t mask)
 
 void _irq_entry(void); 
 void cfgMsiBox(uint8_t slot, uint32_t myOffs);
+int getMsiBoxSlot(uint32_t myOffs);
 
 #endif // include guard
