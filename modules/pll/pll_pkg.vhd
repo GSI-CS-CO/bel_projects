@@ -89,8 +89,7 @@ package pll_pkg is
       outclk_1 : out std_logic;        -- 100   MHz (flash+reconfig)
       outclk_2 : out std_logic;        --  20   MHz (display+scubus)
       outclk_3 : out std_logic;        --  10   MHz (remote update)
-      outclk_4 : out std_logic;        -- 100   MHz +1.0 ns
-      outclk_5 : out std_logic;        -- 100   MHz +1.5 ns
+      outclk_4 : out std_logic;        --  50   MHz
       rst      : in  std_logic := 'X';
       locked   : out std_logic);
   end component;
