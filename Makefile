@@ -8,6 +8,7 @@
 #       will actually install them into /tmp/package/usr for zipping.
 STAGING     ?=
 PREFIX      ?= /usr/local
+SYSCONFDIR  ?= /etc
 EXTRA_FLAGS ?=
 PWD         := $(shell pwd)
 
@@ -33,6 +34,17 @@ etherbone-clean::
 
 etherbone-install::
 	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" DESTDIR=$(STAGING) install
+
+saftlib::
+	test -f ip_cores/saftlib/Makefile.in || ./ip_cores/saftlib/autogen.sh
+	cd ip_cores/saftlib; test -f Makefile || ./configure --enable-maintainer-mode --prefix=$(PREFIX) --sysconfdir=$(SYSCONFDIR)
+	$(MAKE) -C ip_cores/saftlib EXTRA_FLAGS="$(EXTRA_FLAGS)" all
+
+saftlib-clean::
+	! test -f ip_cores/saftlib/Makefile || $(MAKE) -C ip_cores/saftlib EXTRA_FLAGS="$(EXTRA_FLAGS)" distclean
+
+saftlib-install::
+	$(MAKE) -C ip_cores/saftlib EXTRA_FLAGS="$(EXTRA_FLAGS)" DESTDIR=$(STAGING) install
 
 tools::		etherbone eca tlu
 	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
