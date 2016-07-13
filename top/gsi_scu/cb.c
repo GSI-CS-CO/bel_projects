@@ -4,19 +4,6 @@
 #include <aux.h>
 #include <mprintf.h>
 
-int cbisEmpty(volatile struct channel_regs* cr, int channel) {
-  return cr[channel].wr_ptr == cr[channel].rd_ptr;
-}
-
-int cbisFull(volatile struct channel_regs* cr, int channel) {
-  int ret = 0;
-  ret = (cr[channel].wr_ptr + 1) % (BUFFER_SIZE+1) == cr[channel].rd_ptr;
-  return ret; 
-}
-
-int cbgetCount(volatile struct channel_regs* cr, int channel) {
-  return abs(cr[channel].wr_ptr - cr[channel].rd_ptr);
-}
 
 void cbWrite(volatile struct channel_buffer* cb, volatile struct channel_regs* cr, int channel, struct param_set *pset) {
   unsigned int wptr = cr[channel].wr_ptr;
@@ -29,18 +16,6 @@ void cbWrite(volatile struct channel_buffer* cb, volatile struct channel_regs* c
     cr[channel].rd_ptr = (cr[channel].rd_ptr + 1) % (BUFFER_SIZE+1);
 }
 
-void cbRead(volatile struct channel_buffer *cb, volatile struct channel_regs* cr, int channel, struct param_set *pset) {
-  unsigned int rptr = cr[channel].rd_ptr;
-  unsigned int wptr = cr[channel].wr_ptr;
-  /* check empty */
-  if (wptr == rptr) {
-    return;
-  }
-  /* read element */
-  *pset = cb[channel].pset[rptr];
-  /* move read pointer forward */
-  cr[channel].rd_ptr = (rptr + 1) % (BUFFER_SIZE+1);    
-}
 
 void cbDump(volatile struct channel_buffer *cb, volatile struct channel_regs* cr, int channel) {
   int i = 0, col;

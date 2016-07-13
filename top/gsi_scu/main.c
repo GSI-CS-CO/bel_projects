@@ -36,6 +36,11 @@
 #define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
 
 extern struct w1_bus wrpc_w1_bus;
+extern inline int cbisEmpty(volatile struct channel_regs*, int);
+extern inline void cbRead(volatile struct channel_buffer*, volatile struct channel_regs*, int, struct param_set*);
+extern inline int cbisFull(volatile struct channel_regs*, int);
+extern int cbgetCount(volatile struct channel_regs*, int); 
+
 
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED board_id = -1;
@@ -66,7 +71,7 @@ volatile unsigned int* cpu_info_base = 0;
 volatile unsigned int param_sent[MAX_FG_CHANNELS];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
 
-void sw_irq_handler();
+void sw_irq_handler(unsigned int, unsigned int);
 
 
 
@@ -122,17 +127,17 @@ void msDelay(uint32_t msecs) {
   usleep(1000 * msecs);
 }
 
-void send_fg_param(int slave_nr, int fg_base) {
+inline void send_fg_param(int slave_nr, int fg_base, unsigned short cntrl_reg) {
   struct param_set pset;
-  int fg_num, add_freq_sel, step_cnt_sel;
+  int fg_num;
+  unsigned short cntrl_reg_wr;
   
-  fg_num = (scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] & 0x3f0) >> 4; // virtual fg number Bits 9..4
-  if(!cbisEmpty(&fg_regs[0], fg_num)) {
+  fg_num = (cntrl_reg & 0x3f0) >> 4; // virtual fg number Bits 9..4
+  if( !cbisEmpty(&fg_regs[0], fg_num)) {
     cbRead(&fg_buffer[0], &fg_regs[0], fg_num, &pset);
-    step_cnt_sel = pset.control & 0x7;
-    add_freq_sel = (pset.control & 0x38) >> 3;
-    scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] &= ~(0xfc00); // clear freq and step select
-    scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] |= (add_freq_sel << 13) | (step_cnt_sel << 10);
+    cntrl_reg_wr = cntrl_reg & ~(0xfc00); // clear freq and step select
+    cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
+    scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] = cntrl_reg_wr;
     scub_base[(slave_nr << 16) + fg_base + FG_A] = pset.coeff_a;
     scub_base[(slave_nr << 16) + fg_base + FG_B] = pset.coeff_b;
     scub_base[(slave_nr << 16) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
@@ -142,10 +147,9 @@ void send_fg_param(int slave_nr, int fg_base) {
   }
 }
 
-void handle(int slave_nr, unsigned FG_BASE)
+inline void handle(int slave_nr, unsigned FG_BASE)
 {
-
-    short cntrl_reg = scub_base[(slave_nr << 16) + FG_BASE + FG_CNTRL];
+    unsigned short cntrl_reg = scub_base[(slave_nr << 16) + FG_BASE + FG_CNTRL];
     int channel = (cntrl_reg & 0x3f0) >> 4;        // virtual fg number Bits 9..4
     fg_regs[channel].ramp_count = scub_base[(slave_nr << 16) + FG_BASE + FG_RAMP_CNT_LO];          // last cnt from from fg macro, read from LO address copies hardware counter to shadow reg
     fg_regs[channel].ramp_count |= scub_base[(slave_nr << 16) + FG_BASE + FG_RAMP_CNT_HI] << 16;    // last cnt from from fg macro
@@ -162,11 +166,11 @@ void handle(int slave_nr, unsigned FG_BASE)
       SEND_SIG(SIG_START); // fg has received the tag
       if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
         SEND_SIG(SIG_REFILL);
-      send_fg_param(slave_nr, FG_BASE);
+      send_fg_param(slave_nr, FG_BASE, cntrl_reg);
     } else if ((cntrl_reg & FG_RUNNING) && (cntrl_reg & FG_DREQ)) {
       if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
         SEND_SIG(SIG_REFILL);
-      send_fg_param(slave_nr, FG_BASE);
+      send_fg_param(slave_nr, FG_BASE, cntrl_reg);
     }
 }
 
@@ -178,11 +182,10 @@ void irq_handler()
   volatile unsigned short tmr_irq_cnts; 
   static unsigned short old_tmr_cnt[MAX_SCU_SLAVES];
   volatile unsigned int slv_int_act_reg;
-  unsigned int slave_acks = 0;
-  int channel;
+  unsigned short slave_acks = 0;
 
   if ((global_msi.adr & 0xff) == 0x10) {
-    sw_irq_handler();
+    sw_irq_handler(global_msi.adr, global_msi.msg);
     return;
   }
   slv_int_act_reg = scub_base[(slave_nr << 16) + SLAVE_INT_ACT];
@@ -216,6 +219,7 @@ void irq_handler()
     mprintf("irq1 slave: %d, cnt: %x, act: %x\n", slave_nr, old_tmr_cnt[slave_nr-1], tmr_irq_cnts);
   }
 
+   
   if (slv_int_act_reg & FG1_IRQ) { //FG irq?
     handle(slave_nr, FG1_BASE);
     slave_acks |= FG1_IRQ;
@@ -419,58 +423,58 @@ void _segfault(int sig)
   return;
 }
 
-void sw_irq_handler() {
-  int i, msg, adr;
+void sw_irq_handler(unsigned int adr, unsigned int msg) {
+  int i;
+  unsigned int code, value;
   struct param_set pset;
   
-  if (global_msi.adr != 0x10)
+  if (adr != 0x10)
     return;
     
-  adr = global_msi.msg >> 16;
-  msg = global_msi.msg & 0xffff;
+  code = msg >> 16;
+  value = msg & 0xffff;
 
-  switch(adr) {
+  switch(code) {
     case 0:
       init_buffers(&fg_regs[0], msg, &fg_macros[0], scub_base);
-      param_sent[msg] = 0;
-      //mprintf("swi flush %d\n", global_msi.msg);
+      param_sent[value] = 0;
     break;
     case 1:
-      configure_timer(msg);
-      enable_scub_msis(msg);
+      configure_timer(value);
+      enable_scub_msis(value);
       scub_base[(0xd << 16) + TMR_BASE + TMR_CNTRL] = 0x2; //multicast tmr enable
     break;
     case 2:
-      enable_scub_msis(msg);
-      configure_fg_macro(msg);
+      enable_scub_msis(value);
+      configure_fg_macro(value);
       //print_regs();
     break;
     case 3:
-      disable_channel(msg);
+      disable_channel(value);
     break;
     case 4:
       for (i = 0; i < MAX_FG_CHANNELS; i++)
         mprintf("fg[%d] buffer: %d param_sent: %d\n", i, cbgetCount(&fg_regs[0], i), param_sent[i]);
     break;
     case 5:
-      if (msg >= 0 && msg < MAX_FG_CHANNELS) {
-        if(!cbisEmpty(&fg_regs[0], msg)) {
-          cbRead(&fg_buffer[0], &fg_regs[0], msg, &pset);
+      if (value >= 0 && value < MAX_FG_CHANNELS) {
+        if(!cbisEmpty(&fg_regs[0], value)) {
+          cbRead(&fg_buffer[0], &fg_regs[0], value, &pset);
           mprintf("read buffer[%d]: a %d, l_a %d, b %d, l_b %d, c %d, n %d\n",
-                   global_msi.msg, pset.coeff_a, (pset.control & 0x1f000) >> 12, pset.coeff_b,
+                   value, pset.coeff_a, (pset.control & 0x1f000) >> 12, pset.coeff_b,
                    (pset.control & 0xfc0) >> 6, pset.coeff_c, (pset.control & 0x7));
         } else {
-          mprintf("read buffer[%d]: buffer empty!\n", msg);
+          mprintf("read buffer[%d]: buffer empty!\n", value);
         }
           
       }
     break;
     case 6:
-      run_mil_test(scu_mil_base, msg & 0xff);
+      run_mil_test(scu_mil_base, value & 0xff);
     break;
     default:
-      mprintf("swi: 0x%x\n", global_msi.adr);
-      mprintf("     0x%x\n", global_msi.msg);
+      mprintf("swi: 0x%x\n", adr);
+      mprintf("     0x%x\n", msg);
     break;
   }
 }
