@@ -35,7 +35,7 @@ package monster_pkg is
   
   type io_channel is (IO_GPIO, IO_LVDS, IO_FIXED);
   type io_direction is (IO_OUTPUT, IO_INPUT, IO_INOUTPUT);
-  type io_logic_level is (IO_TTL, IO_LVTTL, IO_LVDS, IO_NIM);
+  type io_logic_level is (IO_TTL, IO_LVTTL, IO_LVDS, IO_NIM, IO_CMOS);
   type io_special_purpose is (IO_NONE, IO_TTL_TO_NIM, IO_CLK_IN_EN);
   
   type t_io_mapping_table is
@@ -454,6 +454,7 @@ package body monster_pkg is
         when IO_LVTTL => logic_level := 1;
         when IO_LVDS  => logic_level := 2;
         when IO_NIM   => logic_level := 3;
+        when IO_CMOS  => logic_level := 4;
         when others   => logic_level := 15;
       end case;
       result(i).info_logic_level := std_logic_vector(to_unsigned(logic_level, result(i).info_logic_level'length));
