@@ -33,6 +33,7 @@
 #define SLAVE_INT_ENA     0x21
 #define SLAVE_INT_PEND    0x22
 #define SLAVE_INT_ACT     0x24
+#define SLAVE_EXT_CLK     0x30
 
 #define DAC1_BASE         0x200
 #define DAC2_BASE         0x210

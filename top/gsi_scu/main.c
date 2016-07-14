@@ -155,13 +155,13 @@ inline void handle(int slave_nr, unsigned FG_BASE)
     fg_regs[channel].ramp_count |= scub_base[(slave_nr << 16) + FG_BASE + FG_RAMP_CNT_HI] << 16;    // last cnt from from fg macro
     //mprintf("irq received for channel[%d]\n", channel);
     if (!(cntrl_reg  & FG_RUNNING)) {  // fg stopped
-      //mprintf("fg 0x%x in slave %d stopped after %d tuples\n", FG_BASE, slave_nr, fg_regs[channel].ramp_count);
       if (cbisEmpty(&fg_regs[0], channel))
         SEND_SIG(SIG_STOP_EMPTY); // normal stop
       else
         SEND_SIG(SIG_STOP_NEMPTY); // something went wrong
       disable_slave_irq(channel);
       fg_regs[channel].state = 0;
+      mprintf("fg 0x%x in slave %d stopped after %d tuples. %d tuples left in buffer.\n", FG_BASE, slave_nr, fg_regs[channel].ramp_count, cbgetCount(&fg_regs[0], channel));
     } else if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
       SEND_SIG(SIG_START); // fg has received the tag
       if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
@@ -255,13 +255,13 @@ int configure_fg_macro(int channel) {
   int i = 0;
   int slot, dev, fg_base, dac_base;
   struct param_set pset;
-  int add_freq_sel, step_cnt_sel;
   
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
     /* actions per slave card */
     slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
     dev =  (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
     scub_base[SRQ_ENA] |= (1 << (slot-1));                          //enable irqs for the slave
+    
     /* enable irqs in the slave cards */
     scub_base[(slot << 16) + SLAVE_INT_ACT] = 0xc000;               //clear all irqs
     scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000;              //enable fg1 and fg2 irq
@@ -278,15 +278,12 @@ int configure_fg_macro(int channel) {
     
     scub_base[(slot << 16) + dac_base + DAC_CNTRL] = 0x10; // set FG mode
     scub_base[(slot << 16) + fg_base + FG_CNTRL] = 0x1; // reset fg
-    //set virtual fg number Bit 9..4
-    scub_base[(slot << 16) + fg_base + FG_CNTRL] |= (channel << 4);
     //fetch first parameter set from buffer
-    //mprintf("wrptr 0x%x rdptr 0x%x\n", fg_regs[channel].wr_ptr, fg_regs[channel].rd_ptr); //ONLY FOR TESTING
     if(!cbisEmpty(&fg_regs[0], channel)) {
       cbRead(&fg_buffer[0], &fg_regs[0], channel, &pset);
-      step_cnt_sel = pset.control & 0x7;
-      add_freq_sel = (pset.control & 0x38) >> 3;
-      scub_base[(slot << 16) + fg_base + FG_CNTRL] |= add_freq_sel << 13 | step_cnt_sel << 10;
+      //cntrl_reg_wr = cntrl_reg & ~(0xfc00); // clear freq and step select
+      //set virtual fg number Bit 9..4
+      scub_base[(slot << 16) + fg_base + FG_CNTRL] = (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4;
       scub_base[(slot << 16) + fg_base + FG_A] = pset.coeff_a;
       scub_base[(slot << 16) + fg_base + FG_B] = pset.coeff_b;
       scub_base[(slot << 16) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
@@ -294,10 +291,9 @@ int configure_fg_macro(int channel) {
       scub_base[(slot << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
       param_sent[i]++;
     }
-    //mprintf("enable channel[%d] 0x%x PLEASE REMOVE AFTER USE!!!!!!!\n", channel, fg_regs[channel].mbx_slot);
     scub_base[(slot << 16) + fg_base + FG_TAG_LOW] = fg_regs[channel].tag & 0xffff;
     scub_base[(slot << 16) + fg_base + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
-    //enable the fg macro
+    //configure and enable macro
     scub_base[(slot << 16) + fg_base + FG_CNTRL] |= FG_ENABLED;
     fg_regs[channel].state = 1; 
     SEND_SIG(SIG_ARMED);

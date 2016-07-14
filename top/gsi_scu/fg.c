@@ -8,6 +8,7 @@ extern unsigned int* wb_fg_base;
 
 int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr) {
   int i, j = 0;
+  unsigned short ext_clk_reg;
   memset(bus->slaves, 0, sizeof(bus->slaves));
   bus->unique_id = id;
 
@@ -22,6 +23,11 @@ int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base
       bus->slaves[j].cid_group = base_adr[i * (1<<16) + CID_GROUP];
       bus->slaves[j].cid_sys = base_adr[i * (1<<16) + CID_SYS];
       bus->slaves[j].version = base_adr[i * (1<<16) + SLAVE_VERSION];
+
+      ext_clk_reg = base_adr[(i << 16) + SLAVE_EXT_CLK];          //read clk status from slave
+      if (ext_clk_reg & 0x1)
+        base_adr[(i << 16) + SLAVE_EXT_CLK] = 0x1;                //switch clk to sys clk from scu bus
+
       j++; /* next found slave */
     }
   }
