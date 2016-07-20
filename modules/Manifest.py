@@ -43,7 +43,6 @@ modules = {
     "mbox",
     "prioq2",
     "pmc_ctrl",
-    "microtca_ctrl",
-    "spi_slave"
+    "microtca_ctrl"
   ]
 }
