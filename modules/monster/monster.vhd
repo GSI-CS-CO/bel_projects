@@ -81,6 +81,8 @@ entity monster is
     g_lvds_out             : natural;
     g_fixed                : natural;
     g_lvds_invert          : boolean;
+    g_clocks_inout         : natural;
+    g_triggers_out         : natural;
     g_en_pcie              : boolean;
     g_en_vme               : boolean;
     g_en_usb               : boolean;
@@ -1306,15 +1308,9 @@ begin
       inta_o        => pmc_inta_o,
       req_o         => pmc_req_o,
       gnt_i         => pmc_gnt_i,
-      debug_i       => s_pmc_debug_in,
-      debug_o       => s_pmc_debug_out
+      debug_i       => (others => '0')
 );
   end generate;
-
-s_pmc_debug_in(0)          <= pmc_pb_i;      -- FPGA push button used to trigger INTx IRQ
-s_pmc_debug_in(1)          <= pmc_pb_cpld_i; -- CPLD push button used to trigger MSI IRQ
-s_pmc_debug_in(7 downto 2) <= (others => '0');
-
   
   -- END OF Wishbone masters
   ----------------------------------------------------------------------------------
