@@ -109,7 +109,7 @@ package monster_pkg is
       g_en_psram             : boolean := false;
       g_io_table             : t_io_mapping_table_arg_array(natural range <>);
       g_en_pmc               : boolean := false;
-      g_en_pmc_ctrl          : boolean := false;
+      g_en_microtca          : boolean := false;
       g_en_microtca_ctrl     : boolean := false;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;

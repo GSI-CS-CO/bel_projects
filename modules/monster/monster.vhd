@@ -97,7 +97,6 @@ entity monster is
     g_en_psram             : boolean;
     g_io_table             : t_io_mapping_table_arg_array(natural range <>);
     g_en_pmc               : boolean;
-    g_en_pmc_ctrl          : boolean;
     g_en_microtca_ctrl     : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
@@ -320,7 +319,7 @@ entity monster is
     pmc_req_o              : out   std_logic;
     pmc_gnt_i              : in    std_logic;
 
-    -- g_en_pmc_ctrl
+    -- g_en_pmc
     pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0);
     pmc_pb_i               : in    std_logic;
     pmc_ctrl_hs_cpld_i     : in    std_logic_vector(3 downto 0);
@@ -329,6 +328,7 @@ entity monster is
     pmc_log_oe_o           : out   std_logic_vector(16 downto 0) := (others => 'Z');
     pmc_log_out_o          : out   std_logic_vector(16 downto 0) := (others => 'Z');
     pmc_log_in_i           : in    std_logic_vector(16 downto 0);
+
     -- g_en_microtca_ctrl
     mtca_ctrl_hs_i         : in    std_logic_vector(3 downto 0);
     mtca_pb_i              : in    std_logic;
@@ -364,6 +364,7 @@ entity monster is
     mtca_libera_trig_p_o   : out   std_logic_vector(f_sub1(g_triggers_out) downto 0) := (others => 'Z');
     mtca_libera_trig_n_o   : out   std_logic_vector(f_sub1(g_triggers_out) downto 0) := (others => 'Z');
     mtca_libera_trig_oen_o : out   std_logic_vector(f_sub1(g_triggers_out) downto 0) := (others => '1');
+
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
     hw_version             : in    std_logic_vector(31 downto 0));
@@ -439,7 +440,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- required slaves
-  constant c_dev_slaves          : natural := 28;
+  constant c_dev_slaves          : natural := 30;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_mbox           : natural := 2;
@@ -470,6 +471,10 @@ architecture rtl of monster is
   constant c_devs_CfiPFlash      : natural := 25;
   constant c_devs_nau8811        : natural := 26;
   constant c_devs_psram          : natural := 27;
+  constant c_devs_pmc_ctrl       : natural := 28;
+  constant c_devs_mtca_ctrl      : natural := 29;
+
+
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -503,7 +508,10 @@ architecture rtl of monster is
     c_devs_vme_info       => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme),
     c_devs_psram          => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
     c_devs_CfiPFlash      => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
-    c_devs_ssd1325        => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325));
+    c_devs_ssd1325        => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325),
+    c_devs_pmc_ctrl       => f_sdb_auto_device(c_pmc_ctrl_sdb,                   g_en_pmc),
+    c_devs_mtca_ctrl      => f_sdb_auto_device(c_mtca_ctrl_sdb,                  g_en_mtca)
+);
     
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
@@ -2113,16 +2121,16 @@ begin
       ps_wait   => ps_wait);
   end generate;
   
-  pmc_ctrl_n : if not g_en_pmc_ctrl generate
-    dev_bus_master_i(c_tops_pmc_ctrl) <= cc_dummy_slave_out;
+  pmc_ctrl_n : if not g_en_pmc generate
+    dev_bus_master_i(c_devs_pmc_ctrl) <= cc_dummy_slave_out;
   end generate;
-  pmc_ctrl_y : if g_en_pmc_ctrl generate
+  pmc_ctrl_y : if g_en_pmc generate
     pmc_ctrl_unit : pmc_ctrl
       port map (
         clk_sys_i             => clk_sys,
         rst_n_i               => rstn_sys,
-        slave_i               => dev_bus_master_o(c_tops_pmc_ctrl),
-        slave_o               => dev_bus_master_i(c_tops_pmc_ctrl),
+        slave_i               => dev_bus_master_o(c_devs_pmc_ctrl),
+        slave_o               => dev_bus_master_i(c_devs_pmc_ctrl),
         hex_switch_i          => pmc_ctrl_hs_i,
         push_button_i(0)      => pmc_pb_i,
         hex_switch_cpld_i     => pmc_ctrl_hs_cpld_i,
@@ -2135,15 +2143,15 @@ begin
   end generate;  
   
   microtca_ctrl_n : if not g_en_microtca_ctrl generate
-    dev_bus_master_i(c_tops_microtca_ctrl) <= cc_dummy_slave_out;
+    dev_bus_master_i(c_devs_mtca_ctrl) <= cc_dummy_slave_out;
   end generate;
   microtca_ctrl_y : if g_en_microtca_ctrl generate
     microtca_ctrl_unit : microtca_ctrl
       port map (
         clk_sys_i             => clk_sys,
         rst_n_i               => rstn_sys,
-        slave_i               => dev_bus_master_o(c_tops_microtca_ctrl),
-        slave_o               => dev_bus_master_i(c_tops_microtca_ctrl),
+        slave_i               => dev_bus_master_o(c_devs_mtca_ctrl),
+        slave_o               => dev_bus_master_i(c_devs_mtca_ctrl),
         backplane_conf0_o     => mtca_backplane_conf0_o,
         backplane_conf1_o     => mtca_backplane_conf1_o,
         backplane_conf2_o     => mtca_backplane_conf2_o,
