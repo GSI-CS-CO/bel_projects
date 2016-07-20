@@ -1,0 +1,24 @@
+<wbdevice unitname="pmc_ctrl" author="A. Hahn" email="a.hahn@gsi.de" version="0.0.1">
+  
+  <codegen>
+    <generate language="vhdl" documentation="yes" test="yes"></generate>
+  </codegen>
+  
+  <generics>
+  </generics>
+  
+  <slaveinterface name="slave" data="32" type="pipelined" pages="0">
+     <sdb vendorID="GSI" productID="0x98C59EC1" version="1" date="auto" name="PMC_CONTROL_UNIT"></sdb>
+     <registers>
+       <reg name="HEX_SWITCH"       read="yes" write="no"  mask="0xf"     comment="Shows hex switch inputs"></reg>
+       <reg name="PUSH_BUTTON"      read="yes" write="no"  mask="0x1"     comment="Shows status of the push button"></reg>
+       <reg name="HEX_SWITCH_CPLD"  read="yes" write="no"  mask="0xf"     comment="Shows hex switch inputs (CPLD)"></reg>
+       <reg name="PUSH_BUTTON_CPLD" read="yes" write="no"  mask="0x1"     comment="Shows status of the push button (CPLD)"></reg>
+       <reg name="CLOCK_CONTROL_OE" read="yes" write="yes" mask="0x1"     comment="External input clock output enable"></reg>
+       <reg name="LOGIC_CONTROL_OE" read="yes" write="yes" mask="0x1ffff" comment="External logic analyzer output enable"></reg>
+       <reg name="LOGIC_OUTPUT"     read="yes" write="yes" mask="0x1ffff" comment="External logic analyzer output (write)"></reg>
+       <reg name="LOGIC_INPUT"      read="yes" write="no"  mask="0x1ffff" comment="External logic analyzer input (read)"></reg>
+     </registers>
+  </slaveinterface>
+  
+</wbdevice>
