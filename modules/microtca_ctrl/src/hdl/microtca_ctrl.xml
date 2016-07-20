@@ -1,0 +1,40 @@
+<wbdevice unitname="microtca_ctrl" author="A. Hahn" email="a.hahn@gsi.de" version="0.0.1">
+  
+  <codegen>
+    <generate language="vhdl" documentation="yes" test="yes"></generate>
+  </codegen>
+  
+  <generics>
+  </generics>
+  
+  <slaveinterface name="slave" data="32" type="pipelined" pages="0">
+     <sdb vendorID="GSI" productID="0x0E10DD1A" version="1" date="auto" name="UTCA_CONTROL_UNIT"></sdb>
+     <registers>
+       <reg name="HEX_SWITCH"       read="yes" write="no"  drive="yes" mask="0xf"        comment="Shows hex switch inputs"></reg>
+       <reg name="PUSH_BUTTON"      read="yes" write="no"  drive="yes" mask="0x1"        comment="Shows status of the push button"></reg>
+       <reg name="HEX_SWITCH_CPLD"  read="yes" write="no"  drive="yes" mask="0xf"        comment="Shows hex switch inputs (CPLD)"></reg>
+       <reg name="PUSH_BUTTON_CPLD" read="yes" write="no"  drive="yes" mask="0x1"        comment="Shows status of the push button (CPLD)"></reg>
+       <reg name="CLOCK_CONTROL_OE" read="yes" write="yes"             mask="0x1"        comment="External input clock output enable"></reg>
+       <reg name="LOGIC_CONTROL_OE" read="yes" write="yes"             mask="0x1ffff"    comment="External logic analyzer output enable"></reg>
+       <reg name="LOGIC_OUTPUT"     read="yes" write="yes"             mask="0x1ffff"    comment="External logic analyzer output (write)"></reg>
+       <reg name="LOGIC_INPUT"      read="yes" write="no"  drive="yes" mask="0x1ffff"    comment="External logic analyzer input (read)"></reg>
+       <reg name="BACKPLANE_CONF0"  read="yes" write="yes"             mask="0xffff"     comment="Backplane Config 0"></reg>
+       <reg name="BACKPLANE_CONF1"  read="yes" write="yes"             mask="0xffff"     comment="Backplane Config 1"></reg>
+       <reg name="BACKPLANE_CONF2"  read="yes" write="yes"             mask="0xffff"     comment="Backplane Config 2"></reg>
+       <reg name="BACKPLANE_CONF3"  read="yes" write="yes"             mask="0xffff"     comment="Backplane Config 3"></reg>
+       <reg name="BACKPLANE_CONF4"  read="yes" write="yes"             mask="0xffff"     comment="Backplane Config 4"></reg>
+       <reg name="BACKPLANE_CONF5"  read="yes" write="yes"             mask="0xffff"     comment="Backplane Config 5"></reg>
+       <reg name="BACKPLANE_CONF6"  read="yes" write="yes"             mask="0xffff"     comment="Backplane Config 6"></reg>
+       <reg name="BACKPLANE_CONF7"  read="yes" write="yes"             mask="0xffff"     comment="Backplane Config 7"></reg>
+       <reg name="BACKPLANE_STAT0"  read="yes" write="no"  drive="yes" mask="0xffff"     comment="Backplane Status 0"></reg>
+       <reg name="BACKPLANE_STAT1"  read="yes" write="no"  drive="yes" mask="0xffff"     comment="Backplane Status 1"></reg>
+       <reg name="BACKPLANE_STAT2"  read="yes" write="no"  drive="yes" mask="0xffff"     comment="Backplane Status 2"></reg>
+       <reg name="BACKPLANE_STAT3"  read="yes" write="no"  drive="yes" mask="0xffff"     comment="Backplane Status 3"></reg>
+       <reg name="BACKPLANE_STAT4"  read="yes" write="no"  drive="yes" mask="0xffff"     comment="Backplane Status 4"></reg>
+       <reg name="BACKPLANE_STAT5"  read="yes" write="no"  drive="yes" mask="0xffff"     comment="Backplane Status 5"></reg>
+       <reg name="BACKPLANE_STAT6"  read="yes" write="no"  drive="yes" mask="0xffff"     comment="Backplane Status 6"></reg>
+       <reg name="BACKPLANE_STAT7"  read="yes" write="no"  drive="yes" mask="0xffff"     comment="Backplane Status 7"></reg>
+     </registers>
+  </slaveinterface>
+  
+</wbdevice>
