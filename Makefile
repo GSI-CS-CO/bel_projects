@@ -182,3 +182,9 @@ sio3::		firmware
 
 sio3-clean::
 	$(MAKE) -C syn/scu_sio3 PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+pmc::	firmware
+	$(MAKE) -C syn/gsi_pmc/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+pmc-clean::
+	$(MAKE) -C syn/gsi_pmc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
