@@ -93,6 +93,8 @@ package monster_pkg is
       g_lvds_out             : natural := 0;
       g_fixed                : natural := 0;
       g_lvds_invert          : boolean := false;
+      g_clocks_inout         : natural := 0;
+      g_triggers_out         : natural := 0;
       g_en_pcie              : boolean := false;
       g_en_vme               : boolean := false;
       g_en_usb               : boolean := false;
@@ -106,9 +108,13 @@ package monster_pkg is
       g_en_user_ow           : boolean := false;
       g_en_psram             : boolean := false;
       g_io_table             : t_io_mapping_table_arg_array(natural range <>);
+      g_en_pmc               : boolean := false;
+      g_en_pmc_ctrl          : boolean := false;
+      g_en_microtca_ctrl     : boolean := false;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
+      g_lm32_shared_ramsize  : natural := 16384/4; -- in 32b words -- will only be used if g_lm32_cores > 1
       g_lm32_init_files      : string; -- multiple init files must be seperated by a semicolon ';'
 		g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false
@@ -307,6 +313,69 @@ package monster_pkg is
       ps_cre                 : out   std_logic;
       ps_advn                : out   std_logic;
       ps_wait                : in    std_logic := '0';
+      -- g_en_pmc
+      pmc_pci_clk_i          : in    std_logic := '0';
+      pmc_pci_rst_i          : in    std_logic := '0';
+      pmc_buf_oe_o           : out   std_logic;
+      pmc_busmode_io         : inout std_logic_vector(3 downto 0) := (others => 'Z');
+      pmc_ad_io              : inout std_logic_vector(31 downto 0) := (others => 'Z');
+      pmc_c_be_io            : inout std_logic_vector(3 downto 0) := (others => 'Z');
+      pmc_par_io             : inout std_logic := 'Z';
+      pmc_frame_io           : inout std_logic := 'Z';
+      pmc_trdy_io            : inout std_logic := 'Z';
+      pmc_irdy_io            : inout std_logic := 'Z';
+      pmc_stop_io            : inout std_logic := 'Z';
+      pmc_devsel_io          : inout std_logic := 'Z';
+      pmc_idsel_i            : in    std_logic := '0';
+      pmc_perr_io            : inout std_logic := 'Z';
+      pmc_serr_io            : inout std_logic := 'Z';
+      pmc_inta_o             : out   std_logic;
+      pmc_req_o              : out   std_logic;
+      pmc_gnt_i              : in    std_logic := '1';
+
+      -- g_en_pmc_ctrl
+      pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0) := (others => '0');
+      pmc_pb_i               : in    std_logic := '0';
+      pmc_ctrl_hs_cpld_i     : in    std_logic_vector(3 downto 0) := (others => '0');
+      pmc_pb_cpld_i          : in    std_logic := '0';
+      pmc_clk_oe_o           : out   std_logic;
+      pmc_log_oe_o           : out   std_logic_vector(16 downto 0);
+      pmc_log_out_o          : out   std_logic_vector(16 downto 0);
+      pmc_log_in_i           : in    std_logic_vector(16 downto 0):= (others => '0');
+    -- g_en_microtca_ctrl
+      mtca_ctrl_hs_i         : in    std_logic_vector(3 downto 0) := (others => '0');
+      mtca_pb_i              : in    std_logic := '0';
+      mtca_ctrl_hs_cpld_i    : in    std_logic_vector(3 downto 0) := (others => '0');
+      mtca_pb_cpld_i         : in    std_logic := '0';
+      mtca_clk_oe_o          : out   std_logic;
+      mtca_log_oe_o          : out   std_logic_vector(16 downto 0);
+      mtca_log_out_o         : out   std_logic_vector(16 downto 0);
+      mtca_log_in_i          : in    std_logic_vector(16 downto 0):= (others => '0');
+      mtca_backplane_conf0_o : out   std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_conf1_o : out   std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_conf2_o : out   std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_conf3_o : out   std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_conf4_o : out   std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_conf5_o : out   std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_conf6_o : out   std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_conf7_o : out   std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_stat0_i : in    std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_stat1_i : in    std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_stat2_i : in    std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_stat3_i : in    std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_stat4_i : in    std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_stat5_i : in    std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_stat6_i : in    std_logic_vector(31 downto 0) := (others => '0');
+      mtca_backplane_stat7_i : in    std_logic_vector(31 downto 0) := (others => '0');
+      -- utca stuff
+      mtca_clocks_p_i        : in    std_logic_vector(f_sub1(g_clocks_inout) downto 0) := (others => '0');
+      mtca_clocks_n_i        : in    std_logic_vector(f_sub1(g_clocks_inout) downto 0) := (others => '0');
+      mtca_clocks_p_o        : out   std_logic_vector(f_sub1(g_clocks_inout) downto 0);
+      mtca_clocks_n_o        : out   std_logic_vector(f_sub1(g_clocks_inout) downto 0);
+      mtca_clocks_oen_o      : out   std_logic_vector(f_sub1(g_clocks_inout) downto 0);
+      mtca_libera_trig_p_o   : out   std_logic_vector(f_sub1(g_triggers_out) downto 0);
+      mtca_libera_trig_n_o   : out   std_logic_vector(f_sub1(g_triggers_out) downto 0);
+      mtca_libera_trig_oen_o : out   std_logic_vector(f_sub1(g_triggers_out) downto 0);
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z');
       hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z'));

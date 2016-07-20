@@ -31,14 +31,16 @@ if { $branch == "HEAD" || $branch == "proposed_master" || $branch == "master" } 
   set branch "zenith" ; # largest release possible
 }
 
-set revl [open "| git rev-list --count HEAD" "r"]
-gets $revl count
-if { [catch {close $revl}] } {
-  post_message -type error "Failed to determine commit count"
-  exit 1
-}
+# commented out due to git version issues
+#set revl [open "| git rev-list --count HEAD" "r"]
+#gets $revl count
+#if { [catch {close $revl}] } {
+#  post_message -type error "Failed to determine commit count"
+#  exit 1
+#}
 
-set source_info "$branch-$count"
+#set source_info "$branch-$count"
+set source_info "$branch"
 
 if {$tcl_platform(os) == "Linux"} {
   set lsb [open "| lsb_release -d" "r"]
@@ -63,7 +65,7 @@ lappend output "OS version  : $build_os"
 lappend output "Quartus     : $quartus(version)"
 lappend output ""
 
-set gitlog [open "| git log --oneline --decorate=no -n 5" "r"]
+set gitlog [open "| git log --oneline --decorate=short -n 5" "r"]
 while {[gets $gitlog line] >= 0} { lappend output "  $line" }
 close $gitlog
 
