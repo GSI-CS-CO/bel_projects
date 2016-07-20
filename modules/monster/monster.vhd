@@ -2114,15 +2114,15 @@ begin
   end generate;
   
   pmc_ctrl_n : if not g_en_pmc_ctrl generate
-    top_cbar_master_i(c_tops_pmc_ctrl) <= cc_dummy_slave_out;
+    dev_bus_master_i(c_tops_pmc_ctrl) <= cc_dummy_slave_out;
   end generate;
   pmc_ctrl_y : if g_en_pmc_ctrl generate
     pmc_ctrl_unit : pmc_ctrl
       port map (
         clk_sys_i             => clk_sys,
         rst_n_i               => rstn_sys,
-        slave_i               => top_cbar_master_o(c_tops_pmc_ctrl),
-        slave_o               => top_cbar_master_i(c_tops_pmc_ctrl),
+        slave_i               => dev_bus_master_o(c_tops_pmc_ctrl),
+        slave_o               => dev_bus_master_i(c_tops_pmc_ctrl),
         hex_switch_i          => pmc_ctrl_hs_i,
         push_button_i(0)      => pmc_pb_i,
         hex_switch_cpld_i     => pmc_ctrl_hs_cpld_i,
@@ -2135,15 +2135,15 @@ begin
   end generate;  
   
   microtca_ctrl_n : if not g_en_microtca_ctrl generate
-    top_cbar_master_i(c_tops_microtca_ctrl) <= cc_dummy_slave_out;
+    dev_bus_master_i(c_tops_microtca_ctrl) <= cc_dummy_slave_out;
   end generate;
   microtca_ctrl_y : if g_en_microtca_ctrl generate
     microtca_ctrl_unit : microtca_ctrl
       port map (
         clk_sys_i             => clk_sys,
         rst_n_i               => rstn_sys,
-        slave_i               => top_cbar_master_o(c_tops_microtca_ctrl),
-        slave_o               => top_cbar_master_i(c_tops_microtca_ctrl),
+        slave_i               => dev_bus_master_o(c_tops_microtca_ctrl),
+        slave_o               => dev_bus_master_i(c_tops_microtca_ctrl),
         backplane_conf0_o     => mtca_backplane_conf0_o,
         backplane_conf1_o     => mtca_backplane_conf1_o,
         backplane_conf2_o     => mtca_backplane_conf2_o,
