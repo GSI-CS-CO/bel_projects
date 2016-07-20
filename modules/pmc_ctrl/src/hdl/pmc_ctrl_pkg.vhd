@@ -51,7 +51,7 @@ package pmc_ctrl_pkg is
    );
    end component;
 
-   constant c_pmc_ctrl_slave_sdb : t_sdb_device := work.pmc_ctrl_auto_pkg.c_pmc_ctrl_slave_sdb;
+   constant c_pmc_ctrl_sdb : t_sdb_device := work.pmc_ctrl_auto_pkg.c_pmc_ctrl_slave_sdb;
    
 end pmc_ctrl_pkg;
 package body pmc_ctrl_pkg is

@@ -807,6 +807,7 @@ set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/fabric/
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/hpll_period_detect.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/ftm/ftm_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rx_crc_size_check.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/spi_slave/spi_slave.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_ifa.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wrc_core/wrc_dpram.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_pps_gen/wr_pps_gen.vhd
@@ -1188,6 +1189,7 @@ set_global_assignment -name VERILOG_FILE ../../../ip_cores/general-cores/modules
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_endpoint/ep_rtu_header_extract.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_eca/eca_tlu_auto_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/etherbone-core/hdl/eb_slave_core/eb_slave_fsm.vhd
+set_global_assignment -name VHDL_FILE ../../../modules/spi_slave/spi_slave_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/modulbus/K_EPCS_IF.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/timing/dmtd_with_deglitcher.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/dac714/dac714_pkg.vhd

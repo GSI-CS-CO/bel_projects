@@ -510,7 +510,7 @@ architecture rtl of monster is
     c_devs_CfiPFlash      => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
     c_devs_ssd1325        => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325),
     c_devs_pmc_ctrl       => f_sdb_auto_device(c_pmc_ctrl_sdb,                   g_en_pmc),
-    c_devs_mtca_ctrl      => f_sdb_auto_device(c_mtca_ctrl_sdb,                  g_en_mtca)
+    c_devs_mtca_ctrl      => f_sdb_auto_device(c_mtca_ctrl_sdb,                  g_en_mtca_ctrl)
 );
     
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);

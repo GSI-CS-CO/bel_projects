@@ -69,7 +69,7 @@ package microtca_ctrl_pkg is
    );
    end component;
 
-   constant c_microtca_ctrl_slave_sdb : t_sdb_device := work.microtca_ctrl_auto_pkg.c_microtca_ctrl_slave_sdb;
+   constant c_mtca_ctrl_sdb : t_sdb_device := work.microtca_ctrl_auto_pkg.c_microtca_ctrl_slave_sdb;
    
 end microtca_ctrl_pkg;
 package body microtca_ctrl_pkg is
