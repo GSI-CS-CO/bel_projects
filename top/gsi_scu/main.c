@@ -161,7 +161,7 @@ inline void handle(int slave_nr, unsigned FG_BASE)
         SEND_SIG(SIG_STOP_NEMPTY); // something went wrong
       disable_slave_irq(channel);
       fg_regs[channel].state = 0;
-      mprintf("fg 0x%x in slave %d stopped after %d tuples. %d tuples left in buffer.\n", FG_BASE, slave_nr, fg_regs[channel].ramp_count, cbgetCount(&fg_regs[0], channel));
+      //mprintf("fg 0x%x in slave %d stopped after %d tuples. %d tuples left in buffer.\n", FG_BASE, slave_nr, fg_regs[channel].ramp_count, cbgetCount(&fg_regs[0], channel));
     } else if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
       SEND_SIG(SIG_START); // fg has received the tag
       if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
