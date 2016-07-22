@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
    
 //*****************************************************************************************************************//
 
-  //printf("Connecting to FTM\n");
+  if (verbose) printf("ftm-ctl v%s\n", TOOL_VER);
   validCpus = ftmOpen(netaddress, overrideFWcheck);
   
   if(validCpus <= 0) {

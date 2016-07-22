@@ -12,8 +12,10 @@ eb_device_t device;
 eb_socket_t mySocket;
 
 /// Expected Firmware Version ///
-const char myVer[] = "0.2.1\n";
-const char myName[] = "ftm\n";
+//const char myVer[] = "0.2.1\n";
+//deprecated - using EXP_VER symbol from Makefile instead
+
+const char expName[] = "ftm\n";
 ////////////////////////////////
 
 const uint64_t vendID_CERN       = 0x000000000000ce42;
@@ -180,7 +182,7 @@ static int ftmRamClear(uint32_t address, uint32_t len)
 }
 
 
-static uint8_t isFwValid(struct  sdb_device* ram, const char* sVerExp, const char* sName)
+static uint8_t isFwValid(struct  sdb_device* ram, int cpuIdx, const char* sVerExp, const char* sName)
 {
   uint8_t validity = 1;
   uint32_t len = FWID_LEN/4;
@@ -216,14 +218,14 @@ static uint8_t isFwValid(struct  sdb_device* ram, const char* sVerExp, const cha
    
   //check for magic word
   if(strncmp(cBuff, "UserLM32", 8)) {validity = 0;} 
-  if(!validity) { printf("No firmware found!\n"); return 0; }
+  if(!validity) { printf("Core #%02u: No firmware found!\n", cpuIdx); return 0; }
 
   //check project
   pos = strstr(cBuff, "Project     : ");
   if(pos != NULL) {
     pos += 14;
     if(strncmp(pos, sName, strlen(sName))) {validity = 0;} 
-  } else { printf("This is no ftm firmware, name does not match!\n"); return 0;}
+  } else { printf("Core #%02u: This is no ftm firmware, name does not match!\n", cpuIdx); return 0;}
   
   //check version
   pos = strstr(cBuff, "Version     : ");
@@ -240,11 +242,11 @@ static uint8_t isFwValid(struct  sdb_device* ram, const char* sVerExp, const cha
   
   if(verExp > verFnd ) {
     validity = 0;
-    printf("ERROR: Expected firmware %u.%u.%u, but found only %u.%u.%u! If you are sure, use -o to override.\n", verExpMaj, verExpMin, verExpRev, verFndMaj, verFndMin, verFndRev);
+    printf("Core #%02u: Expected firmware %u.%u.%u, but found only %u.%u.%u! If you are sure, use -o to override.\n", cpuIdx, verExpMaj, verExpMin, verExpRev, verFndMaj, verFndMin, verFndRev);
     return 0;  
   }
   if(verExp < verFnd ) {
-    printf("ERROR: Expected firmware %u.%u.%u is lower than found %u.%u.%u. If you are sure, use -o to override.\n", verExpMaj, verExpMin, verExpRev, verFndMaj, verFndMin, verFndRev);
+    printf("Core #%02u: Expected firmware %u.%u.%u is lower than found %u.%u.%u. If you are sure, use -o to override.\n", cpuIdx, verExpMaj, verExpMin, verExpRev, verFndMaj, verFndMin, verFndRev);
     return 0;
   }
   
@@ -415,7 +417,7 @@ int ftmOpen(const char* netaddress, uint8_t overrideFWcheck)
       //check for valid firmware
       uint8_t isValid = 0;
       if(overrideFWcheck) isValid = 1;
-      else                { isValid = isFwValid(&devices[cpuIdx], &myVer[0], &myName[0]);}
+      else                { isValid = isFwValid(&devices[cpuIdx], cpuIdx, &EXP_VER[0], &expName[0]);}
       validCpus |= (isValid << cpuIdx);
       p->pCores[cpuIdx].hasValidFW = isValid;
     }
@@ -817,11 +819,9 @@ int v02FtmFetchStatus(uint32_t* buff, uint32_t len) {
   offset += (EBM_SEMA_RW)>>2; //advance offset
 
   // read PrioQ status 
-  printf("PQadr: 0x%08x\n", (uint32_t)p->prioQAdr);
   ftmRamRead(p->prioQAdr + PRIO_MODE_GET,     (const uint8_t*)&buff[(EBM_SEMA_RW + PRIO_MODE_GET)>>2],    4,                                            BIG_ENDIAN);
   ftmRamRead(p->prioQAdr + PRIO_ST_FULL_GET,  (const uint8_t*)&buff[(EBM_SEMA_RW + PRIO_ST_FULL_GET)>>2], PRIO_CNT_OUT_ALL_GET_1 - PRIO_ST_FULL_GET +4, BIG_ENDIAN);
   offset += (PRIO_CNT_OUT_ALL_GET_1 + 4)>>2; //advance offset
-  printf("PQadr1: 0x%08x\n", (uint32_t)p->prioQAdr);
 
   //read WR State
   if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return die(status, "failed to create cycle"); 
@@ -948,6 +948,7 @@ void ftmShowStatus(uint32_t srcCpus, uint32_t* status, uint8_t verbose) {
 
   if(verbose) {
     //Generate EBM Status
+     
     SNTPRINTF(pSB ,"\u2552"); for(i=0;i<79;i++) SNTPRINTF(pSB ,"\u2550"); SNTPRINTF(pSB ,"\u2555\n");
     SNTPRINTF(pSB ,"\u2502 %sEBM%s                                                                           \u2502\n", KCYN, KNRM);
     SNTPRINTF(pSB ,"\u251C"); for(i=0;i<14;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u252C"); for(i=0;i<64;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2524\n");
