@@ -109,14 +109,13 @@ package monster_pkg is
       g_en_psram             : boolean := false;
       g_io_table             : t_io_mapping_table_arg_array(natural range <>);
       g_en_pmc               : boolean := false;
-      g_en_microtca          : boolean := false;
-      g_en_microtca_ctrl     : boolean := false;
+      g_en_mtca_ctrl         : boolean := false;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
       g_lm32_shared_ramsize  : natural := 16384/4; -- in 32b words -- will only be used if g_lm32_cores > 1
       g_lm32_init_files      : string; -- multiple init files must be seperated by a semicolon ';'
-		g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
+		  g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
       g_lm32_are_ftm         : boolean := false
     );
     port(
@@ -133,6 +132,8 @@ package monster_pkg is
       core_rstn_wr_ref_o     : out   std_logic;
       core_rstn_butis_o      : out   std_logic;
       core_debug_o           : out   std_logic_vector(15 downto 0);
+      clk_sys_o              : out   std_logic;
+
       -- Required: white rabbit pins
       wr_onewire_io          : inout std_logic;
       wr_sfp_sda_io          : inout std_logic;

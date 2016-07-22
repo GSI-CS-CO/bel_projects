@@ -97,7 +97,7 @@ entity monster is
     g_en_psram             : boolean;
     g_io_table             : t_io_mapping_table_arg_array(natural range <>);
     g_en_pmc               : boolean;
-    g_en_microtca_ctrl     : boolean;
+    g_en_mtca_ctrl         : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -119,6 +119,7 @@ entity monster is
     core_rstn_wr_ref_o     : out   std_logic;
     core_rstn_butis_o      : out   std_logic;
     core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
+    clk_sys_o              : out   std_logic;
     -- Required: white rabbit pins
     wr_onewire_io          : inout std_logic;
     wr_sfp_sda_io          : inout std_logic;
@@ -329,7 +330,7 @@ entity monster is
     pmc_log_out_o          : out   std_logic_vector(16 downto 0) := (others => 'Z');
     pmc_log_in_i           : in    std_logic_vector(16 downto 0);
 
-    -- g_en_microtca_ctrl
+    -- g_en_mtca_ctrl
     mtca_ctrl_hs_i         : in    std_logic_vector(3 downto 0);
     mtca_pb_i              : in    std_logic;
     mtca_ctrl_hs_cpld_i    : in    std_logic_vector(3 downto 0);
@@ -338,6 +339,7 @@ entity monster is
     mtca_log_oe_o          : out   std_logic_vector(16 downto 0) := (others => 'Z');
     mtca_log_out_o         : out   std_logic_vector(16 downto 0) := (others => 'Z');
     mtca_log_in_i          : in    std_logic_vector(16 downto 0);
+
     mtca_backplane_conf0_o : out   std_logic_vector(31 downto 0) := (others => '0');
     mtca_backplane_conf1_o : out   std_logic_vector(31 downto 0) := (others => '0');
     mtca_backplane_conf2_o : out   std_logic_vector(31 downto 0) := (others => '0');
@@ -355,15 +357,6 @@ entity monster is
     mtca_backplane_stat6_i : in    std_logic_vector(31 downto 0) := (others => '0');
     mtca_backplane_stat7_i : in    std_logic_vector(31 downto 0) := (others => '0');
 
-    -- utca stuff
-    mtca_clocks_p_i        : in    std_logic_vector(f_sub1(g_clocks_inout) downto 0);
-    mtca_clocks_n_i        : in    std_logic_vector(f_sub1(g_clocks_inout) downto 0);
-    mtca_clocks_p_o        : out   std_logic_vector(f_sub1(g_clocks_inout) downto 0) := (others => 'Z');
-    mtca_clocks_n_o        : out   std_logic_vector(f_sub1(g_clocks_inout) downto 0) := (others => 'Z');
-    mtca_clocks_oen_o      : out   std_logic_vector(f_sub1(g_clocks_inout) downto 0) := (others => '1');
-    mtca_libera_trig_p_o   : out   std_logic_vector(f_sub1(g_triggers_out) downto 0) := (others => 'Z');
-    mtca_libera_trig_n_o   : out   std_logic_vector(f_sub1(g_triggers_out) downto 0) := (others => 'Z');
-    mtca_libera_trig_oen_o : out   std_logic_vector(f_sub1(g_triggers_out) downto 0) := (others => '1');
 
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
@@ -776,7 +769,7 @@ architecture rtl of monster is
   signal lvds_dat_fr_eca_chan : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat_fr_clk_gen  : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat             : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
-  signal lvds_i               : t_lvds_byte_array(15 downto 0);
+  signal lvds_i               : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
   
   signal s_triggers : t_trigger_array(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto 0);
   
@@ -874,6 +867,8 @@ begin
   sys_clk : global_region port map(
     inclk  => clk_sys0,
     outclk => clk_sys);
+    
+  clk_sys_o <= clk_sys; -- for use in top file
   
   reconf_clk : global_region port map(
     inclk  => clk_sys1,
@@ -2142,10 +2137,10 @@ begin
       );
   end generate;  
   
-  microtca_ctrl_n : if not g_en_microtca_ctrl generate
+  microtca_ctrl_n : if not g_en_mtca_ctrl generate
     dev_bus_master_i(c_devs_mtca_ctrl) <= cc_dummy_slave_out;
   end generate;
-  microtca_ctrl_y : if g_en_microtca_ctrl generate
+  microtca_ctrl_y : if g_en_mtca_ctrl generate
     microtca_ctrl_unit : microtca_ctrl
       port map (
         clk_sys_i             => clk_sys,
