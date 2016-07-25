@@ -156,9 +156,6 @@ entity microtca_control is
     mmc_quiesce_out_i       : in  std_logic; -- mmc alert to fpga that amc will be powered off
     mmc_quiesce_in_o        : out std_logic; -- fpga reply to mmc that is ready for power down
 
-    mmc_i2c_sda_io          : inout std_logic; -- mmc's I2C bus
-    mmc_i2c_clk_i           : in    std_logic; -- mmc's I2C bus
-
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
