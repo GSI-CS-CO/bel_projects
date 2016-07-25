@@ -369,14 +369,14 @@ package monster_pkg is
       mtca_backplane_stat6_i : in    std_logic_vector(31 downto 0) := (others => '0');
       mtca_backplane_stat7_i : in    std_logic_vector(31 downto 0) := (others => '0');
       -- utca stuff
-      mtca_clocks_p_i        : in    std_logic_vector(f_sub1(g_clocks_inout) downto 0) := (others => '0');
-      mtca_clocks_n_i        : in    std_logic_vector(f_sub1(g_clocks_inout) downto 0) := (others => '0');
-      mtca_clocks_p_o        : out   std_logic_vector(f_sub1(g_clocks_inout) downto 0);
-      mtca_clocks_n_o        : out   std_logic_vector(f_sub1(g_clocks_inout) downto 0);
-      mtca_clocks_oen_o      : out   std_logic_vector(f_sub1(g_clocks_inout) downto 0);
-      mtca_libera_trig_p_o   : out   std_logic_vector(f_sub1(g_triggers_out) downto 0);
-      mtca_libera_trig_n_o   : out   std_logic_vector(f_sub1(g_triggers_out) downto 0);
-      mtca_libera_trig_oen_o : out   std_logic_vector(f_sub1(g_triggers_out) downto 0);
+--      mtca_clocks_p_i        : in    std_logic_vector(f_sub1(g_clocks_inout) downto 0) := (others => '0');
+--      mtca_clocks_n_i        : in    std_logic_vector(f_sub1(g_clocks_inout) downto 0) := (others => '0');
+--      mtca_clocks_p_o        : out   std_logic_vector(f_sub1(g_clocks_inout) downto 0);
+--      mtca_clocks_n_o        : out   std_logic_vector(f_sub1(g_clocks_inout) downto 0);
+--      mtca_clocks_oen_o      : out   std_logic_vector(f_sub1(g_clocks_inout) downto 0);
+--      mtca_libera_trig_p_o   : out   std_logic_vector(f_sub1(g_triggers_out) downto 0);
+--      mtca_libera_trig_n_o   : out   std_logic_vector(f_sub1(g_triggers_out) downto 0);
+--      mtca_libera_trig_oen_o : out   std_logic_vector(f_sub1(g_triggers_out) downto 0);
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z');
       hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z'));

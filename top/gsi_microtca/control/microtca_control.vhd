@@ -20,9 +20,9 @@ entity microtca_control is
   port(
     clk_20m_vcxo_i      : in std_logic;  -- 20MHz VCXO clock
 
-    clk_125m_pllref_i : in std_logic; -- 125 MHz PLL reference - (clk_125m_wrpll_0  on schl)
+    clk_125m_pllref_i : in std_logic; -- 125 MHz PLL reference - (clk_125m_wrpll_0  on sch)
     clk_125m_local_i  : in std_logic; -- local clk from 125Mhz oszillator (clk_osc_1  on sch)
-    sfp234_ref_clk_i  : in std_logic; -- SFP clk (clk_125m_wrpll_1 on sch)
+    clk_sfp_ref_i     : in std_logic; -- SFP clk (clk_125m_wrpll_1 on sch)
     lvt_clk_i         : in std_logic; -- LEMO front panel input
 
 --    clk_osc_0_i         : in std_logic;  -- local clk from 100MHz or 125Mhz oscillator
@@ -367,6 +367,7 @@ begin
       g_en_usb          => true,
       g_en_lcd          => true,
       g_io_table        => io_mapping_table,
+      g_en_pcie         => true,
       g_en_mtca_ctrl     => true,
       g_lm32_cores      => c_cores,
       g_lm32_ramsizes   => c_lm32_ramsizes/4,
@@ -376,7 +377,7 @@ begin
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_pllref_i => clk_125m_pllref_i,
-      core_clk_125m_sfpref_i => sfp234_ref_clk_i,
+      core_clk_125m_sfpref_i => clk_sfp_ref_i,
       core_clk_125m_local_i  => clk_125m_local_i,
       core_rstn_i            => fpga_res,
       clk_sys_o              => clk_sys,
