@@ -266,8 +266,8 @@ architecture rtl of scu_control is
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 1) := 
   (
   -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
-    ("B1         ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL),
-    ("B2         ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_TTL)
+    ("B1         ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_CMOS),
+    ("B2         ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  true,         false,       IO_CMOS)
   );
   
   constant c_family  : string := "Arria II"; 
