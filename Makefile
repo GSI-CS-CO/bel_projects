@@ -102,10 +102,10 @@ toolchain:	gcc-4.5.3-lm32.tar.xz
 toolchain-clean::
 	rm -rf toolchain
 
-ip_cores/wrpc-sw/.config:
+wrpc-sw-config:
 	$(MAKE) -C ip_cores/wrpc-sw/ gsi_defconfig
 
-firmware::	sdbfs etherbone toolchain ip_cores/wrpc-sw/.config
+firmware::	sdbfs etherbone toolchain wrpc-sw-config
 	$(MAKE) -C ip_cores/wrpc-sw EB=$(PWD)/ip_cores/etherbone-core/api SDBFS=$(PWD)/ip_cores/fpga-config-space/sdbfs/userspace PATH=$(PWD)/toolchain/bin:$(PATH) all
 
 firmware-clean::
