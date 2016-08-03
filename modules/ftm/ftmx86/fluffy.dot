@@ -1,0 +1,137 @@
+digraph g {
+name="fluffy";
+
+graph [ root="Evt_BREQ_00",  rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
+node [type="TMsg", shape="rectangle",  style="filled", fillcolor="white", color="black"]
+edge [type="defdst", color="red"]
+
+Evt_TKREQ_00        [type="TMsg",                tOffs=0, id="0x0000000000000001", par="0x123", shape="oval"];
+Evt_PREP_DM         [type="TMsg",              tOffs=100, id="0x1111000000000000", par="0x0", shape="oval"];
+Cmd_TKREQ_01        [shape="oval",             tOffs=300, type="Flow", color="magenta", tValid=0, qty=9];
+Evt_TKREQ_DM        [type="TMsg",              tOffs=500, id="0x2222000000000000", par="0x0", shape="oval"];
+Evt_TKREQ_02        [type="TMsg",             tOffs=1000, id="0x0000000000000002", par="0x456", shape="oval"];
+B_TKREQ             [type="Block",        tPeriod=200000000];
+B_LOOP0             [type="Block",         tPeriod=10000];
+Evt_BREQ_00         [type="TMsg",                tOffs=0, id="0x0000000000000003", par="0x456", shape="oval"];
+Evt_BREQ_DM         [type="TMsg",             tOffs=2000, id="0x3333000000000000", par="0x456", shape="oval"];
+Evt_BREQ_01         [type="TMsg",             tOffs=9000, id="0x0000000000000004", par="0x456", shape="oval"];
+B_BREQ              [type="Block",        tPeriod=2000000];
+B_LOOP1             [type="Block",         tPeriod=10000];
+B_FLEXWAIT0         [type="Block",         tPeriod=71111];
+Evt_MULTI_MULTI_00  [type="TMsg",              tOffs=0,  id="0x0000000000000005", par="0x456", shape="oval"];
+Evt_MB_LOAD         [type="TMsg",              tOffs=200,  id="0x0000000000000006", par="0x456", shape="oval"];
+Evt_MULTI_MULTI_01  [type="TMsg",              tOffs=700,  id="0x0000000000000007", par="0x456", shape="oval"];
+B_MULTI_MULTI       [type="BlockAlign", tPeriod=10000000];
+Evt_BTRN_00         [type="TMsg",              tOffs=500,  id="0x0000000000000008", par="0x456", shape="oval"];
+Evt_TKREL           [type="TMsg",            tOffs=10000,  id="0x4444000000000000", par="0x456", shape="oval"];
+Evt_BTRN_01         [type="TMsg",            tOffs=10500,  id="0x0000000000000009", par="0x456", shape="oval"];
+B_BTRN              [type="Block",        tPeriod=200000];
+
+Evt_TKREQ_00  -> Evt_PREP_DM -> Cmd_TKREQ_01 -> Evt_TKREQ_DM -> Evt_TKREQ_02 -> B_TKREQ -> B_LOOP0 -> B_LOOP0;
+Cmd_TKREQ_01  -> B_MULTI_MULTI [type="target", color="blue", label="target"];
+Cmd_TKREQ_01  -> Evt_BREQ_00 [type="flowdst", color="magenta", label="flow dest x 10"];
+
+Evt_PREP_DM   -> B_LOOP0 [type="dynpar0", color="grey", label="dynpar0"];
+Evt_PREP_DM   -> Evt_BREQ_00 [type="dynpar1", color="grey", label="dynpar1"];
+Evt_TKREQ_DM  -> B_LOOP1 [type="dynpar0", color="grey", label="dynpar0"];
+Evt_TKREQ_DM  -> B_FLEXWAIT0 [type="dynpar1", color="grey", label="dynpar1"];
+B_LOOP0       -> Evt_BREQ_00 [type="altdst", color="black"];
+
+Evt_BREQ_00   -> Evt_BREQ_DM  -> Evt_BREQ_01  -> B_BREQ -> B_LOOP1 -> B_LOOP1;
+B_LOOP1       -> B_FLEXWAIT0 [type="altdst", color="black"];
+B_FLEXWAIT0   -> Evt_MULTI_MULTI_00 -> Evt_MB_LOAD -> Evt_MULTI_MULTI_01 -> B_MULTI_MULTI -> Evt_BTRN_00 -> Evt_TKREL -> Evt_BTRN_01 -> B_BTRN;
+B_MULTI_MULTI -> Evt_BREQ_00 [type="altdst", color="black"];
+
+
+B_LOOP0_ListDst [type="ListDst", color="grey", style=dashed, flags=0];
+B_LOOP0_QBl_Hi [type="QInfo", color="grey", style=dashed, flags=0];
+B_LOOP0_QBl_Il [type="QInfo", color="grey", style=dashed, flags=0];
+B_LOOP0_QBl_Lo [type="QInfo", color="grey", style=dashed, flags=0];
+B_LOOP0_Qb_Hi0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_LOOP0_Qb_Il0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_LOOP0_Qb_Lo0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_LOOP0_Qb_Hi1 [type="QBuf", color="grey", style=dashed, flags=0];
+B_LOOP0_Qb_Il1 [type="QBuf", color="grey", style=dashed, flags=0];
+B_LOOP0_Qb_Lo1 [type="QBuf", color="grey", style=dashed, flags=0];
+
+B_LOOP0->B_LOOP0_QBl_Il [type="prioil", color="grey", style=dashed, label="Il Qbuf List"];
+B_LOOP0->B_LOOP0_QBl_Hi [type="priohi", color="grey", style=dashed, label="Hi Qbuf List"];
+B_LOOP0->B_LOOP0_QBl_Lo [type="priolo", color="grey", style=dashed, label="Lo Qbuf List"];
+B_LOOP0_QBl_Il->B_LOOP0_Qb_Il0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_LOOP0_QBl_Hi->B_LOOP0_Qb_Hi0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_LOOP0_QBl_Lo->B_LOOP0_Qb_Lo0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_LOOP0_QBl_Il->B_LOOP0_Qb_Il1 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_LOOP0_QBl_Hi->B_LOOP0_Qb_Hi1 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_LOOP0_QBl_Lo->B_LOOP0_Qb_Lo1 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_LOOP0->B_LOOP0_ListDst [type="listdst", color="grey", style=dashed, label="listdst"];
+
+B_LOOP1_ListDst [type="ListDst", color="grey", style=dashed, flags=0];
+B_LOOP1_QBl_Hi [type="QInfo", color="grey", style=dashed, flags=0];
+B_LOOP1_QBl_Il [type="QInfo", color="grey", style=dashed, flags=0];
+B_LOOP1_QBl_Lo [type="QInfo", color="grey", style=dashed, flags=0];
+B_LOOP1_Qb_Hi0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_LOOP1_Qb_Il0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_LOOP1_Qb_Lo0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_LOOP1_Qb_Hi1 [type="QBuf", color="grey", style=dashed, flags=0];
+B_LOOP1_Qb_Il1 [type="QBuf", color="grey", style=dashed, flags=0];
+B_LOOP1_Qb_Lo1 [type="QBuf", color="grey", style=dashed, flags=0];
+
+B_LOOP1->B_LOOP1_QBl_Il [type="prioil", color="grey", style=dashed, label="Il Qbuf List"];
+B_LOOP1->B_LOOP1_QBl_Hi [type="priohi", color="grey", style=dashed, label="Hi Qbuf List"];
+B_LOOP1->B_LOOP1_QBl_Lo [type="priolo", color="grey", style=dashed, label="Lo Qbuf List"];
+B_LOOP1_QBl_Il->B_LOOP1_Qb_Il0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_LOOP1_QBl_Hi->B_LOOP1_Qb_Hi0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_LOOP1_QBl_Lo->B_LOOP1_Qb_Lo0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_LOOP1_QBl_Il->B_LOOP1_Qb_Il1 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_LOOP1_QBl_Hi->B_LOOP1_Qb_Hi1 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_LOOP1_QBl_Lo->B_LOOP1_Qb_Lo1 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_LOOP1->B_LOOP1_ListDst [type="listdst", color="grey", style=dashed, label="listdst"];
+
+B_FLEXWAIT0_ListDst [type="ListDst", color="grey", style=dashed, flags=0];
+B_FLEXWAIT0_QBl_Hi [type="QInfo", color="grey", style=dashed, flags=0];
+B_FLEXWAIT0_QBl_Il [type="QInfo", color="grey", style=dashed, flags=0];
+B_FLEXWAIT0_QBl_Lo [type="QInfo", color="grey", style=dashed, flags=0];
+B_FLEXWAIT0_Qb_Hi0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_FLEXWAIT0_Qb_Il0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_FLEXWAIT0_Qb_Lo0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_FLEXWAIT0_Qb_Hi1 [type="QBuf", color="grey", style=dashed, flags=0];
+B_FLEXWAIT0_Qb_Il1 [type="QBuf", color="grey", style=dashed, flags=0];
+B_FLEXWAIT0_Qb_Lo1 [type="QBuf", color="grey", style=dashed, flags=0];
+
+B_FLEXWAIT0->B_FLEXWAIT0_QBl_Il [type="prioil", color="grey", style=dashed, label="Il Qbuf List"];
+B_FLEXWAIT0->B_FLEXWAIT0_QBl_Hi [type="priohi", color="grey", style=dashed, label="Hi Qbuf List"];
+B_FLEXWAIT0->B_FLEXWAIT0_QBl_Lo [type="priolo", color="grey", style=dashed, label="Lo Qbuf List"];
+B_FLEXWAIT0_QBl_Il->B_FLEXWAIT0_Qb_Il0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_FLEXWAIT0_QBl_Hi->B_FLEXWAIT0_Qb_Hi0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_FLEXWAIT0_QBl_Lo->B_FLEXWAIT0_Qb_Lo0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_FLEXWAIT0_QBl_Il->B_FLEXWAIT0_Qb_Il1 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_FLEXWAIT0_QBl_Hi->B_FLEXWAIT0_Qb_Hi1 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_FLEXWAIT0_QBl_Lo->B_FLEXWAIT0_Qb_Lo1 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_FLEXWAIT0->B_FLEXWAIT0_ListDst [type="listdst", color="grey", style=dashed, label="listdst"];
+
+
+B_MULTI_MULTI_ListDst [type="ListDst", color="grey", style=dashed, flags=0];
+B_MULTI_MULTI_QBl_Hi [type="QInfo", color="grey", style=dashed, flags=0];
+B_MULTI_MULTI_QBl_Il [type="QInfo", color="grey", style=dashed, flags=0];
+B_MULTI_MULTI_QBl_Lo [type="QInfo", color="grey", style=dashed, flags=0];
+B_MULTI_MULTI_Qb_Hi0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_MULTI_MULTI_Qb_Il0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_MULTI_MULTI_Qb_Lo0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_MULTI_MULTI_Qb_Hi1 [type="QBuf", color="grey", style=dashed, flags=0];
+B_MULTI_MULTI_Qb_Il1 [type="QBuf", color="grey", style=dashed, flags=0];
+B_MULTI_MULTI_Qb_Lo1 [type="QBuf", color="grey", style=dashed, flags=0];
+
+B_MULTI_MULTI->B_MULTI_MULTI_QBl_Il [type="prioil", color="grey", style=dashed, label="Il Qbuf List"];
+B_MULTI_MULTI->B_MULTI_MULTI_QBl_Hi [type="priohi", color="grey", style=dashed, label="Hi Qbuf List"];
+B_MULTI_MULTI->B_MULTI_MULTI_QBl_Lo [type="priolo", color="grey", style=dashed, label="Lo Qbuf List"];
+B_MULTI_MULTI_QBl_Il->B_MULTI_MULTI_Qb_Il0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_MULTI_MULTI_QBl_Hi->B_MULTI_MULTI_Qb_Hi0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_MULTI_MULTI_QBl_Lo->B_MULTI_MULTI_Qb_Lo0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_MULTI_MULTI_QBl_Il->B_MULTI_MULTI_Qb_Il1 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_MULTI_MULTI_QBl_Hi->B_MULTI_MULTI_Qb_Hi1 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_MULTI_MULTI_QBl_Lo->B_MULTI_MULTI_Qb_Lo1 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_MULTI_MULTI->B_MULTI_MULTI_ListDst [type="listdst", color="grey", style=dashed, label="listdst"];
+
+
+
+}

@@ -1,23 +1,27 @@
-LD        := lm32-elf-ld
-CC        := lm32-elf-gcc
-DEBUGLVL  = 0
-TARGET    = ftm
-MYPATH    = .
-CHECKOUT  = /home/mkreider/hdlprojects/new_bel_projects
-INCPATH   = $(CHECKOUT)/modules/lm32-include
-W1        = $(CHECKOUT)/ip_cores/wrpc-sw
-CFLAGS    = -I$(INCPATH) -mmultiply-enabled -mbarrel-shift-enabled -Os -I$(W1)/include -I$(W1)/pp_printf -DDEBUGLEVEL=$(DEBUGLVL)
+TARGET		?= ftm
+DEBUGLVL  	= 0 
+FLASH		?= EPCQ256
+RAM_SIZE	?= 49152 
+SHARED_SIZE 	?= 16384
+USRCPUCLK   	?= 125000
+VERSION     	?= 0.6.2
+
+
+include ../../../syn/build.mk
+
+EBMPATH   ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
+PRIOPATH  ?= $(TOP)/modules/prioq2
+FTMPATH   ?= $(TOP)/modules/ftm
+FWPATH    ?= $(FTMPATH)/ftmfw
+PREFIX	  ?= /usr/local
+CFLAGS	  += -I$(FWPATH) -I$(PRIOPATH) -I$(FWPATH)/../include -DDEBUGLEVEL=$(DEBUGLVL) 
 
 all: $(TARGET).bin $(TARGET).elf
 
-$(TARGET).bin: $(TARGET).elf
-	lm32-elf-objcopy -O binary $< $@
 
-$(TARGET).elf:	$(INCPATH)/dbg.c $(INCPATH)/aux.c $(INCPATH)/ebm.c $(INCPATH)/timer.c $(INCPATH)/irq.c \
-		$(INCPATH)/mini_sdb.c $(MYPATH)/main.c $(INCPATH)/crt0.S $(INCPATH)/mprintf.c \
-		$(W1)/dev/uart.c $(MYPATH)/ftm.c
-		$(CC) $(CFLAGS) -o $@ -nostdlib -T linker.ld $^ 
+$(TARGET).elf: main.c $(INCPATH)/ebm.c dm.c 
 
 
-clean:
-	rm -f *.o *.elf *.bin
+clean::
+	rm -f $(FWPATH)/*.o $(FWPATH)/*.a $(FWPATH)/*.elf $(FWPATH)/*.bin
+
