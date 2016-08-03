@@ -1,0 +1,31 @@
+digraph g {
+name="helloadv";
+
+graph []
+edge  [type="defdst"]
+//node [qLo="1", qHi="1", qIl="1"];
+
+subgraph cpu0 {
+  node  [cpu="0"];
+
+
+  Evt_PPS   [type="tmsg",   toffs=          0,   fid=2, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
+  B_PPS     [type="block",  tperiod=1000000000];
+  Evt_PPSA  [type="tmsg",   toffs=          0,   fid=2, gid=5, evtno=205, sid=2, bpid=8, par="0x1"];
+
+  Evt_PPS   -> B_PPS;
+  B_PPS->Evt_PPSA  -> Evt_PPS;
+
+}
+
+subgraph cpu1 {
+  node  [cpu="1"];
+
+  Evt_Bla [type="tmsg",   toffs=           0, id="0x0000000000000001", par="0x0"];
+  B_Bla   [type="block",  tperiod=1000000000];
+
+  Evt_Bla -> B_Bla;
+
+}
+
+}

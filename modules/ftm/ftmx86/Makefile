@@ -1,42 +1,60 @@
-EBMPATH   ?= ../../../ip_cores/etherbone-core/hdl/eb_master_core
-PRIOPATH  ?= ../../../modules/prioq2
-PATHTOOL  ?= .
-XMLPATH   = /usr/include/libxml2
-VERSION         ?= 0.2.4
-VERSION_TOOL    ?= 0.1.4
+TOP          ?= ../../..
 
-T_FLAGS   = -fPIC -Wall -O2 -g -I$(PRIOPATH) -I$(EBMPATH) -I$(XMLPATH) -I$(PATHTOOL)
-T_CFLAGS  = $(T_FLAGS) -Wmissing-declarations -Wmissing-prototypes -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\" -std=gnu99
-T_SOURCES	= $(PATHTOOL)/ftmx86.c $(PATHTOOL)/xmlaux.c $(PATHTOOL)/access.c
-T_LIBS    = -Wl,-rpath,/usr/local/lib -letherbone -lxml2
-T_LIBRARY = libetherbone.so libxml2.so
-T_EXTRA   = libetherbone.so.*
-T_CXXFLAGS= $(T_FLAGS)
-T_CC      = gcc
-T_CXX     = g++
+VERSION      ?= 0.6.2
+VERSION_TOOL ?= 0.6.3
 
 
-tool: $(PATHTOOL)/ftm-ctl
+EBMPATH      ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
+PRIOPATH     ?= $(TOP)/modules/prioq2
+FTMPATH      ?= $(TOP)/modules/ftm
+SRCPATH      = $(FTMPATH)/src
+BINPATH      = $(FTMPATH)/bin
+LIBPATH      = $(FTMPATH)/lib
+FWPATH       ?= $(FTMPATH)/ftmfw
+TOOLPATH     ?= $(FTMPATH)/ftmx86
+PREFIX       ?= /usr/local
+INSTALLPATH  = $(PREFIX)/bin
 
-$(PATHTOOL)/libftm.a: $(T_SOURCES)
-	$(T_CC) $(T_CFLAGS) -c $(T_SOURCES) $(T_LIBS)
-	ar rcsv $@ *.o 
+T_CXX         = g++
+T_CXXFLAGS    = -Wall -g -std=c++11 -I$(FTMPATH)/include -I$(FWPATH) -Wfatal-errors -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\" 
 
-$(PATHTOOL)/ftm-ctl:	$(PATHTOOL)/libftm.a 
-	$(T_CC) $(T_CFLAGS) -o $@ $(PATHTOOL)/main.c $^ $(T_LIBS)
+SRC_FILES     = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMschedule.cpp graph.cpp alloctable.cpp mempool.cpp
+T_SOURCES     = $(addprefix $(SRCPATH)/, $(SRC_FILES))
+T_LIBS        = -Wl,-rpath,/usr/local/lib -letherbone -lboost_graph -l:libboost_serialization.so.1.62.0
 
-install: $(PATHTOOL)/ftm-ctl
-	cp $(PATHTOOL)/ftm-ctl $(PREFIX)/bin/
+all: lib tools
+
+lib: $(LIBPATH)/libcarpedm.a   
+
+tools: $(BINPATH)/dm-sched $(BINPATH)/dm-cmd
+	
+
+$(BINPATH)/dm-sched: $(TOOLPATH)/dm-sched
+	mkdir -p $(BINPATH) 
+	cp $^ $(BINPATH)
+
+$(BINPATH)/dm-cmd: $(TOOLPATH)/dm-cmd
+	mkdir -p $(BINPATH)
+	cp $^ $(BINPATH)
+
+
+$(FWPATH)/ftm_shared_mmap.h:
+	$(MAKE) -C $(FWPATH) ftm_shared_mmap.h
+
+
+$(LIBPATH)/libcarpedm.a: $(T_SOURCES) $(FWPATH)/ftm_shared_mmap.h 
+	mkdir -p $(LIBPATH)
+	$(T_CXX) $(T_CXXFLAGS) -c $(T_SOURCES) $(T_LIBS)
+	ar rcsv $@ *.o
+
+$(TOOLPATH)/dm-sched: $(LIBPATH)/libcarpedm.a
+	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/dm-schedule.cpp $^ $(T_LIBS)
+
+$(TOOLPATH)/dm-cmd: $(LIBPATH)/libcarpedm.a
+	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/dm-cmd.cpp $^ $(T_LIBS)
+
+install: $(BINPATH)/dm-sched $(BINPATH)/dm-cmd
+	cp $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(INSTALLPATH) 
 
 clean::
-	rm -f $(PATHTOOL)/*.o $(PATHTOOL)/*.a $(PATHTOOL)/*.elf $(PATHTOOL)/*.bin $(PATHTOOL)/ftm-ctl $(PATHTOOL)/mockup-test
-	        
-mockup: $(PATHTOOL)/ftmx86.c $(PATHTOOL)/xmlaux.c $(PATHTOOL)/mockup.c
-	$(T_CC) $(T_CFLAGS) -DMOCKUP=1 -c $^ -Wl,-rpath, -lxml2
-	ar rcsv libftmmockup.a *.o  
-
-mockup-test:	mockup
-	$(T_CC) $(T_CFLAGS) -DMOCKUP=1 -o $@ $(PATHTOOL)/main.c libftmmockup.a -Wl,-rpath, -lxml2
-
-
-
+	rm -f $(TOOLPATH)/*.o $(TOOLPATH)/*.a $(TOOLPATH)/*.elf $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(LIBPATH)/libcarpedm.a
