@@ -39,6 +39,22 @@ extern inline void       irq_disable(void);
 extern inline void       irq_enable(void);
 extern inline void       irq_clear( uint32_t mask);
 
+
+int getMsiBoxCpuSlot(uint32_t cpuIdx, uint32_t myOffs) {
+  uint32_t slot = cpuIdx;
+
+  atomic_on();
+  // search for the first free slot
+  if ((*(pCpuMsiBox + (slot << 1)) == 0xffffffff) && (slot < 32)) {
+    cfgMsiBox(slot, myOffs);
+    atomic_off();  
+    return (int)slot;  
+  } else {
+    atomic_off();
+    return -1;  
+  }
+}
+
 int getMsiBoxSlot(uint32_t myOffs) {
  unsigned int slot = 0;
   atomic_on();
