@@ -583,7 +583,6 @@ int v02FtmCommand(uint32_t dstCpus, uint32_t command) {
   
   for(cpuIdx=0;cpuIdx < p->cpuQty;cpuIdx++) {
     if((dstCpus >> cpuIdx) & 0x1) {
-      printf("cmd adr: 0x%08x\n", (eb_address_t)(p->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_CMD_OFFSET));  
       eb_cycle_write(cycle, (eb_address_t)(p->pCores[cpuIdx].ramAdr + ftm_shared_offs + FTM_CMD_OFFSET), EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)command);
     }
   }
