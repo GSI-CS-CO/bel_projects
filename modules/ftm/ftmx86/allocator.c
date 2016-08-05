@@ -14,7 +14,7 @@ static uint32_t getSize(t_block* c) {
 static int isInList(t_block* c, t_block* pList) {
   t_block* t; 
   if ((c != NULL) && (pList != NULL)) {
-    t = getFirst(pList);
+    t = getHead(pList);
     while (t != NULL) {
       if (t == c) return 1;
       t = t->next;
@@ -24,12 +24,12 @@ static int isInList(t_block* c, t_block* pList) {
 } 
 
 
-t_block* getFirst(t_block* l) {
+t_block* getHead(t_block* l) {
   if(l != NULL) while (l->prev != NULL) l = l->prev;
   return l;
 }
 
-t_block* getLast(t_block* l) {
+t_block* getTail(t_block* l) {
   if(l != NULL) while (l->next != NULL) l = l->next;
   return l;
 }
@@ -49,7 +49,7 @@ void dest(t_block* pRem) {
   free(rem(pRem));
 }
 
-t_block* add_after(t_block* pDst, t_block* pAdd) {
+t_block* addAfter(t_block* pDst, t_block* pAdd) {
   
   if (pDst != NULL) {
     if (pAdd != NULL) {
@@ -63,7 +63,7 @@ t_block* add_after(t_block* pDst, t_block* pAdd) {
   return pDst;
 }
 
-t_block* add_before(t_block* pDst, t_block* pAdd)  {
+t_block* addBefore(t_block* pDst, t_block* pAdd)  {
   if (pDst != NULL) {
     if (pAdd != NULL) {
       pAdd->next = pDst;
@@ -77,7 +77,7 @@ t_block* add_before(t_block* pDst, t_block* pAdd)  {
 
 void swap(t_block* pA, t_block* pB) {
   if ((pA != NULL) && (pB != NULL)) {
-    add_after(pB, rem(pA));
+    addAfter(pB, rem(pA));
     
   }
 }
@@ -91,118 +91,230 @@ t_block* sortBySize(t_block* pList) {
 }
 
 t_block* bubblesort(t_block* pList, uint32_t (*getValue)()) {
-  t_block* n = getFirst(pList);
-  t_block* c = n;  
+  t_block* c = getHead(pList);  
   int sorting = 1;
   if (pList != NULL) {
     while (sorting) {
       sorting = 0;
       while (c->next != NULL) {
-        //showfull(c);
         if (getValue(c) > getValue(c->next)) {swap(c, c->next); sorting = 1; }
         else { c = c->next; }
-        //showfull(c);
       }
-      c = n; //reset to list head
+      c = getHead(c); //reset to list head the ugly way
     }
   }
   return pList; 
 }
 
-t_block* createBlockList(uint8_t* buf, t_block* pNewList) {return NULL;}
+int tab2BlockList(t_lbt* tab, t_block** pBlockList,  t_block** pFreeList, uint32_t ramsize) {
+
+  //int e = 0;
+  uint32_t cnt;
+
+  //init free list
+
+  for (cnt=0; cnt < 32; cnt++) {
+     
+    printf("#%u  b: %u a: %u s: %u\n", cnt, ((tab->bmp >> cnt) & 1), tab->lb[cnt].adr, tab->lb[cnt].size);
+    
+    if ((tab->bmp >> cnt) & 1) {
+      t_block* pAdd = (t_block*)malloc(sizeof(t_block));
+      if (pAdd != NULL) {
+        pAdd->adr   = tab->lb[cnt].adr;
+        pAdd->size  = tab->lb[cnt].size;
+        pAdd->idx   = cnt;
+        *pBlockList = addAfter(*pBlockList, pAdd);
+      } else return -1;
+    }
+
+  }
+  
+  *pFreeList = createFreeList(*pBlockList, ramsize);
+
+  return 0;
+
+}
 
 
-t_block* createFreeList(t_block* pBlockList, t_block* pFreeList, uint32_t ramsize) {
-  pBlockList = sortByAdr(pBlockList);
+
+t_block* createFreeList(t_block* pBlockList, uint32_t ramsize) {
+  t_block* pF = NULL;  
+
+  printf("Creating Free List\n"); 
+
+  //if Block list is empty, create 1 element free list containing whole memory
+  if(pBlockList == NULL) {
+    t_block* pAdd = (t_block*)malloc(sizeof(t_block));
+    if (pAdd != NULL) {
+      pAdd->adr   = 0;
+      pAdd->size  = ramsize;
+      addAfter(pF, pAdd);
+    }
+  }
+  
+  pBlockList = getHead(sortByAdr(pBlockList));
   int32_t diff;
   t_block* c = pBlockList;
-  t_block* d = pFreeList;
+
+
+  
 
   //create first block
   if (c->adr > 0) {
+    printf("Gap at start\n"); 
     t_block* pAdd = (t_block*)malloc(sizeof(t_block));
     if (pAdd != NULL) {
       pAdd->adr   = 0;
       pAdd->size  = c->adr;
-      add_after(d, pAdd);
-      d           = d->next;
+      pF = addAfter(pF, pAdd);
+      pF = getTail(pF);
     } else {printf("CreateFreeList: Couldn't alloc new free element\n");}
   }
+  
+
+  showList(c);
+
   while (c != NULL ) {
     if (c->next != NULL) {
-      diff = c->adr + c->size - c->next->adr;
+      show(c);
+      show(c->next);
+      diff = c->next->adr - (c->adr + c->size);
+      printf("diff: %d", diff);
       if (diff > 0) {
+        printf("Gap mid\n"); 
         t_block* pAdd = (t_block*)malloc(sizeof(t_block));
         if (pAdd != NULL) {
           pAdd->adr   = c->adr + c->size;
           pAdd->size  = diff;
-          add_after(d, pAdd);
-          d           = d->next;
+          pF = addAfter(pF, pAdd);
+          pF = getTail(pF);
+          printf(".*..\n");
         } else {printf("CreateFreeList: Couldn't alloc new free element\n");}
-
       }
     } else {
       //create last block
+      printf("Doing Last Free\n"); 
       diff = ramsize - (c->adr + c->size);  
       if (diff > 0) {
+        printf("Gap end\n"); 
         t_block* pAdd = (t_block*)malloc(sizeof(t_block));
         if (pAdd != NULL) {
           pAdd->adr   = c->adr + c->size;
           pAdd->size  = diff;
-          add_after(d, pAdd);
-          d           = d->next;
+          printf("..\n"); 
+          pF = addAfter(pF, pAdd);
+          printf("...\n"); 
+          pF = getTail(pF);
+          printf(".!..\n");
         } else {printf("CreateFreeList: Couldn't alloc new free element\n");}
       }
     }
     c = c->next;
+    printf(".....\n");
   }
-  
-  return pBlockList;        
+  printf("Done\n"); 
+  return getHead(pF);        
 }
 
-t_block* freeBlock(t_block* pBlock, t_block** pBlockList, t_block* pFreeList) {
-   t_block* c;  
-  if (isInList(pBlock, (t_block*)*pBlockList)) {
-    //printf("Block found\n");
-    pFreeList = moveBlockBetweenLists(pBlock, pBlockList, pFreeList);
-    pFreeList = getFirst(sortByAdr(pFreeList));
-    c = getFirst(pFreeList);
-    //printf("Clear so far\n");
-    while (c->next != NULL) {
-      /*printf("Left\n");
-      show(c);
-      printf("Right\n");
-      show(c->next);
-      */
-      if (c->adr + c->size == c->next->adr) { //Coalesce adjacent blocks
-        //printf("Coalesce\n");
-        c->size += c->next->size;
-        /*        
-        show(c);
-        printf("!!! Old Free List\n");
-        showList(getFirst(pFreeList));
-        */
-        dest(c->next);
-        /*
-        printf("!!! New Free List\n");
-        showList(getFirst(pFreeList));
-        */
-      } else c = c->next; // only advance if the new, bigger block was tested
+
+
+int blockList2tab(t_lbt* tab, t_block* pBlockList) {
+  
+  uint32_t i, cntS = 0, cntB = 0;
+  t_block* pB = getHead(pBlockList);
+  
+  //check space in tab bitmap (the dumb way)
+  for (i=0;i<32;i++) cntS += (~(tab->bmp >> i) & 1);
+  //check number of blocks
+  while (pB != NULL) {cntB++; pB = pB->next;}
+
+  if (cntB > cntS) {printf("Not enough space in Tab, needed %u, got %u\n", cntB, cntS); return -1;}
+
+  
+  //find space
+
+  pB = getHead(pBlockList);
+  for (i=0;i<32;i++) {
+    if (pB == NULL) break;
+    printf("+# %2u %u\n", i, (!((tab->bmp >> i) & 1)));
+    if (!((tab->bmp >> i) & 1)) {
+      tab->bmp |= 1<<i;
+      tab->lb[i].adr  = pB->adr;
+      tab->lb[i].size = pB->size;
+      pB = pB->next;    
     }
   }
-  return pFreeList;
+  return cntB;
+}
+
+
+t_block* allocateBlockInTab(uint32_t size, t_block** pFreeList, t_block** pBlockList, t_block* getFit(), t_lbt* tab) {
+
+  int i;
+  t_block* pBlock = allocateBlock(size, pFreeList, pBlockList, getFit );
+  if (pBlock != NULL) {
+  
+
+    //find space
+    for (i=0;i<32;i++) {
+      if (!((tab->bmp >> i) & 1)) {
+        tab->bmp       |= (1 << i);
+        tab->lb[i].adr  = pBlock->adr;
+        tab->lb[i].size = pBlock->size;
+        pBlock->idx     = i;  
+        break;
+      }
+    }
+    if (pBlock->idx == -1) {printf("No Idx for block found\n");}
+  }
+
+  return pBlock;
+
+}
+
+
+int freeBlockInTab(t_block* pBlock, t_block** pBlockList, t_block** pFreeList, t_lbt* tab) {
+
+  //clear entry in table
+  if (pBlock != NULL) {
+    if (pBlock->idx < 32) {
+      tab->bmp &= ~(1 << pBlock->idx);
+      //unnecesssary but easier to debug
+      tab->lb[pBlock->idx].adr  = 0;
+      tab->lb[pBlock->idx].size = 0;
+    }
+  }
+  return freeBlock(pBlock, pBlockList, pFreeList);
+}
+
+int freeBlock(t_block* pBlock, t_block** pBlockList, t_block** pFreeList) {
+   t_block* c;  
+  if (isInList(pBlock, (t_block*)*pBlockList)) {
+ 
+    moveBlockBetweenLists(pBlock, pBlockList, pFreeList);
+    *pFreeList = getHead(sortByAdr(*pFreeList));
+    c = *pFreeList;
+    while (c->next != NULL) {
+      if (c->adr + c->size == c->next->adr) { //Coalesce adjacent blocks
+        c->size += c->next->size;
+        dest(c->next);
+        
+      } else c = c->next; // only advance if the new, bigger block was tested
+    }
+  } else {return -1;}
+  return 0;
 }
 
 
 
-t_block* getBestFit(uint32_t size, t_block* pFreeList) {
+t_block* getBestFit(uint32_t size, t_block** pFreeList) {
   t_block* c;
-  if (size != 0 && pFreeList != NULL) {
-    pFreeList = getFirst(sortBySize(pFreeList));
-    c = pFreeList;
+  if (size != 0 && *pFreeList != NULL) {
+    *pFreeList = getHead(sortBySize(*pFreeList));
+    c = *pFreeList;
     //find a fitting free block
     if (c->size >= size) return c;
-    while (c->next != NULL) {
+    while (c != NULL) {
       if (c->size >= size) { //best fit
         return c;
       }
@@ -213,55 +325,48 @@ t_block* getBestFit(uint32_t size, t_block* pFreeList) {
   return NULL;
 }
 
-t_block* allocateBlock(uint32_t size, t_block** pFreeList, t_block* pBlockList, t_block* getFit() ) {
-  t_block* pF = getFit(size, *pFreeList); // fitter returns matching free block
+t_block* allocateBlock(uint32_t size, t_block** pFreeList, t_block** pBlockList, t_block* getFit() ) {
+  t_block* pF = getFit(size, pFreeList); // fitter returns matching free block, list is sorted
   t_block* pFNew;
-  // printf("Match\n");
-  //showfull(pF);
+
+  printf("Allocating 0x%05x...", size);
   if (pF != NULL) {
+    printf(" allocator found 0x%05x 0x%05x\n", pF->adr, pF->size);
     if (pF->size != size) { //exact size match?
       //No. Split
+      //create new free block of leftover size
       pFNew = (t_block*)malloc(sizeof(t_block));
       pFNew->size = pF->size - size;
-      pFNew->adr  = pF->adr + size;
-      //create new free block of leftover size
-     
-      *pFreeList = add_after(((t_block*)*pFreeList), pFNew);
+      pFNew->adr  = pF->adr  + size;
+      pFNew->idx  = -1;
+      //Add to free list
+      addAfter((getTail((t_block*)*pFreeList)), pFNew);
       //modify old free block before moving it to live block list
       pF->size = size;
-    }
-    /*
-    printf("LEftover\n");
-    showfull(pFNew);
-    printf("Block\n");
-    showfull(pF);
-    */
-    //move free block to live block list
-    
-    
-    pBlockList = moveBlockBetweenLists(pF, pFreeList, pBlockList);
-   
-  } else printf("No space/elements in Free List!\n");
-  return pBlockList;
+    } else {printf("Size Match\n");}
+
+    //move old free block to live block list
+    moveBlockBetweenLists(pF, pFreeList, pBlockList);
+
+  } else printf(" No space/elements in Free List!\n");
+  return pF;
 }
 
 
-t_block* moveBlockBetweenLists(t_block* pSrc, t_block** pSrcList, t_block* pDstList) {
-  
-
+t_block* moveBlockBetweenLists(t_block* pSrc, t_block** pSrcList, t_block** pDstList) {
   if (isInList(pSrc, (t_block*)*pSrcList)) {
     if (pSrc == (t_block*)*pSrcList) { //are we trying to remove the element pSrcList points to?
-      if (((t_block*)*pSrcList)->next == NULL) *pSrcList = ((t_block*)*pSrcList)->prev;//Tail, get prev
+      if      (((t_block*)*pSrcList)->next == NULL) *pSrcList = ((t_block*)*pSrcList)->prev;//Tail, get prev
       else if (((t_block*)*pSrcList)->prev == NULL) *pSrcList = ((t_block*)*pSrcList)->next;//Head. get next. if both are NULL, we get an empty List
     }
-    pDstList = add_after(pDstList, rem(pSrc));
-  } else {printf("Block not found\n");}
-  return pDstList;
+    *pDstList = addAfter(getTail(*pDstList), rem(pSrc));
+  } else {printf("Block not found\n"); return NULL;}
+  return pSrc;
 }
 
 void show(t_block* c) {
   if (c == NULL) printf("NULL\n");
-  else printf("0x%08x 0x%05x\n", c->adr, c->size);
+  else printf("A 0x%08x S 0x%05x I #%2d\n", c->adr, c->size, c->idx);
 }
 
 void showfull(t_block* c) {
@@ -276,7 +381,7 @@ void showfull(t_block* c) {
 void showList(t_block* l) {
   uint32_t cnt = 0;
   if (l != NULL) {
-    t_block *c = getFirst(l);
+    t_block *c = getHead(l);
     //c = sortByAdr(c);  
     show(c);
     while ((c->next != NULL)){
@@ -288,30 +393,61 @@ void showList(t_block* l) {
   } else {printf("NULL\n");}
 } 
 
-int  showFrag(t_block* pFreeList, int ramsize) {
+int  getCont(t_block* pFreeList) {
   t_block* c;
   int m;
 
-  if (ramsize != 0) { 
-    c = getFirst(pFreeList);
-    m = 0;
-    while (c != NULL) {
-      if (c->size > m) m = c->size;
-      c = c->next;
-    }
-    return ((ramsize - m) * 100) / ramsize;
-  } else return -1;
+
+  c = getHead(pFreeList);
+  if (c == NULL) return -1;
+  m = 0;
+  while (c != NULL) {
+    if (c->size > m) m = c->size;
+    c = c->next;
+  }
+  return m;
+
+}
+
+int  getUsage(t_block* pBlockList) {
+  t_block* c;
+  int m;
+
+
+  c = getHead(pBlockList);
+  if (c == NULL) return 0;
+  m = 0;
+  while (c != NULL) {
+    m += c->size;
+    c = c->next;
+  }
+  return m;
+
 }
 
 void showAll(t_block* pF, t_block* pB, int ramsize) {
     printf("#####################\nFree List:\n");
     pF = sortByAdr(pF);
-    showList(getFirst(pF));
+    showList(getHead(pF));
     printf("Block List:\n");
-    pB = sortBySize(pB);
-    showList(getFirst(pB));
-    printf("Fragmentation: %u\n", showFrag(pF, ramsize));
+    pB = sortByAdr(pB);
+    showList(getHead(pB));
+    printf("Memory use:     %u/%u, %u\n", getUsage(pB), ramsize, getUsage(pB) *100 / ramsize);
+    printf("Max Continuous: %u\n", getCont(pF));
+    printf("Fragmentation:  %u\n",  (ramsize - getCont(pF))*100 / ramsize );
+    
     printf("+++++++++++++++++++++\n\n");
+ 
+}
+
+void showAllWithTab(t_block* pF, t_block* pB, int ramsize, t_lbt* tab) {
+  int cnt;
+  
+  printf("**************************************\n** ");
+  for (cnt=0; cnt < 32; cnt++) {if ((tab->bmp >> cnt) & 1) printf("1"); else printf("_");}
+  printf(" **\n**************************************\n");
+  for (cnt=0; cnt < 32; cnt++) {if ((tab->bmp >> cnt) & 1) { printf("#%2u  b: %u a: 0x%05x s: 0x%05x\n", cnt, ((tab->bmp >> cnt) & 1), tab->lb[cnt].adr, tab->lb[cnt].size); }}
+  showAll(pF, pB, ramsize);
 }
 
 uint8_t createLBT(uint8_t* buf, t_block* pBlockList) {return 0;}
