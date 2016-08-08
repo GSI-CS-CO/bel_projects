@@ -7,7 +7,7 @@ VERSION_TOOL    ?= 0.1.4
 
 T_FLAGS   = -fPIC -Wall -O2 -g -I$(PRIOPATH) -I$(EBMPATH) -I$(XMLPATH) -I$(PATHTOOL)
 T_CFLAGS  = $(T_FLAGS) -Wmissing-declarations -Wmissing-prototypes -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\" -std=gnu99
-T_SOURCES	= $(PATHTOOL)/ftmx86.c $(PATHTOOL)/xmlaux.c $(PATHTOOL)/access.c
+T_SOURCES	= $(PATHTOOL)/ftmx86.c $(PATHTOOL)/xmlaux.c $(PATHTOOL)/access.c $(PATHTOOL)/allocator.c
 T_LIBS    = -Wl,-rpath,/usr/local/lib -letherbone -lxml2
 T_LIBRARY = libetherbone.so libxml2.so
 T_EXTRA   = libetherbone.so.*

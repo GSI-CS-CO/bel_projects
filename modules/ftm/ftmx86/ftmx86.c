@@ -142,11 +142,9 @@ static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufS
    sigDst   = 0;
    condSrc  = 0;
    
-   //FIXME: change to proper sdb find
    if (pChain->flags & FLAGS_IS_SIG_MSI)           sigDst = pChain->sigCpu;
    else if (pChain->flags & FLAGS_IS_SIG_ADR)      sigDst = pChain->sigDst;
-   
-   //FIXME: change to proper sdb find
+
    if (pChain->flags & FLAGS_IS_COND_MSI)          condSrc = 0x0;
    else if (pChain->flags & FLAGS_IS_COND_ADR)     condSrc = pChain->condSrc;
    
@@ -163,7 +161,9 @@ static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufS
    uint32ToBytes(&pBuf[FTM_CHAIN_REPCNT],    0);
    uint32ToBytes(&pBuf[FTM_CHAIN_MSGQTY],    pChain->msgQty);
    uint32ToBytes(&pBuf[FTM_CHAIN_MSGIDX],    0);
-   
+
+
+   //FIXME WHY THE HELL DOES THIS NEED ABSOLUTE ADDRESSES?  Can't this be offsets???   
    pBufMsg  = embeddedOffs + FTM_CHAIN_END_ + ( (uint32_t)( (uintptr_t)pBuf - (uintptr_t)pBufStart ) );
    uint32ToBytes(&pBuf[FTM_CHAIN_PMSG],    pBufMsg);
    

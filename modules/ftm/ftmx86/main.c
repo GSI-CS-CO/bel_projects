@@ -245,11 +245,11 @@ int main(int argc, char** argv) {
   else if (!strcasecmp(command, "swap")) {
    ftmCommand(validTargetThrs, CMD_COMMIT_PAGE);
   } 
-
+  /* TODO this is obsolete, remove
   else if (!strcasecmp(command, "condump")) {
    ftmCommand(validTargetThrs, CMD_SHOW_ACT);
   } 
-  
+  */
   else if (!strcasecmp(command, "clear")) {
    ftmClear(validTargetThrs);
   }

@@ -106,7 +106,7 @@ t_block* bubblesort(t_block* pList, uint32_t (*getValue)()) {
   return pList; 
 }
 
-int tab2BlockList(t_lbt* tab, t_block** pBlockList,  t_block** pFreeList, uint32_t ramsize) {
+int tab2BlockList(uint32_t* tab, t_block** pBlockList,  t_block** pFreeList, uint32_t ramsize, uint32_t offset) {
 
   //int e = 0;
   uint32_t cnt;
@@ -115,13 +115,13 @@ int tab2BlockList(t_lbt* tab, t_block** pBlockList,  t_block** pFreeList, uint32
 
   for (cnt=0; cnt < 32; cnt++) {
      
-    printf("#%u  b: %u a: %u s: %u\n", cnt, ((tab->bmp >> cnt) & 1), tab->lb[cnt].adr, tab->lb[cnt].size);
+    printf("#%u  b: %u a: %u s: %u\n", cnt, ((tab[(LBT_BMP)>>2] >> cnt) & 1), tab[(LBT_TAB + cnt * _LB_SIZE_ + LB_PTR)>>2], tab[(LBT_TAB + cnt * _LB_SIZE_ + LB_SIZE)>>2]);
     
-    if ((tab->bmp >> cnt) & 1) {
+    if ((tab[(LBT_BMP)>>2] >> cnt) & 1) {
       t_block* pAdd = (t_block*)malloc(sizeof(t_block));
       if (pAdd != NULL) {
-        pAdd->adr   = tab->lb[cnt].adr;
-        pAdd->size  = tab->lb[cnt].size;
+        pAdd->adr   = tab[(LBT_TAB + cnt * _LB_SIZE_ + LB_PTR)>>2];
+        pAdd->size  = tab[(LBT_TAB + cnt * _LB_SIZE_ + LB_SIZE)>>2];
         pAdd->idx   = cnt;
         *pBlockList = addAfter(*pBlockList, pAdd);
       } else return -1;
@@ -129,7 +129,7 @@ int tab2BlockList(t_lbt* tab, t_block** pBlockList,  t_block** pFreeList, uint32
 
   }
   
-  *pFreeList = createFreeList(*pBlockList, ramsize);
+  *pFreeList = createFreeList(*pBlockList, ramsize, offset);
 
   return 0;
 
@@ -137,7 +137,7 @@ int tab2BlockList(t_lbt* tab, t_block** pBlockList,  t_block** pFreeList, uint32
 
 
 
-t_block* createFreeList(t_block* pBlockList, uint32_t ramsize) {
+t_block* createFreeList(t_block* pBlockList, uint32_t ramsize, uint32_t offset) {
   t_block* pF = NULL;  
 
   printf("Creating Free List\n"); 
@@ -160,11 +160,11 @@ t_block* createFreeList(t_block* pBlockList, uint32_t ramsize) {
   
 
   //create first block
-  if (c->adr > 0) {
+  if (c->adr > offset) {
     printf("Gap at start\n"); 
     t_block* pAdd = (t_block*)malloc(sizeof(t_block));
     if (pAdd != NULL) {
-      pAdd->adr   = 0;
+      pAdd->adr   = offset;
       pAdd->size  = c->adr;
       pF = addAfter(pF, pAdd);
       pF = getTail(pF);
@@ -218,13 +218,13 @@ t_block* createFreeList(t_block* pBlockList, uint32_t ramsize) {
 
 
 
-int blockList2tab(t_lbt* tab, t_block* pBlockList) {
+int blockList2tab(uint32_t* tab, t_block* pBlockList) {
   
   uint32_t i, cntS = 0, cntB = 0;
   t_block* pB = getHead(pBlockList);
   
   //check space in tab bitmap (the dumb way)
-  for (i=0;i<32;i++) cntS += (~(tab->bmp >> i) & 1);
+  for (i=0;i<32;i++) cntS += (~(tab[(LBT_BMP)>>2] >> i) & 1);
   //check number of blocks
   while (pB != NULL) {cntB++; pB = pB->next;}
 
@@ -236,11 +236,11 @@ int blockList2tab(t_lbt* tab, t_block* pBlockList) {
   pB = getHead(pBlockList);
   for (i=0;i<32;i++) {
     if (pB == NULL) break;
-    printf("+# %2u %u\n", i, (!((tab->bmp >> i) & 1)));
-    if (!((tab->bmp >> i) & 1)) {
-      tab->bmp |= 1<<i;
-      tab->lb[i].adr  = pB->adr;
-      tab->lb[i].size = pB->size;
+    printf("+# %2u %u\n", i, (!((tab[(LBT_BMP)>>2] >> i) & 1)));
+    if (!((tab[LBT_BMP] >> i) & 1)) {
+      tab[(LBT_BMP)>>2]                          |= 1<<i;
+      tab[(LBT_TAB + i * _LB_SIZE_ + LB_PTR)>>2]  = pB->adr;
+      tab[(LBT_TAB + i * _LB_SIZE_ + LB_SIZE)>>2] = pB->size;
       pB = pB->next;    
     }
   }
@@ -248,19 +248,22 @@ int blockList2tab(t_lbt* tab, t_block* pBlockList) {
 }
 
 
-t_block* allocateBlockInTab(uint32_t size, t_block** pFreeList, t_block** pBlockList, t_block* getFit(), t_lbt* tab) {
+t_block* allocateBlockInTab(uint32_t size, t_block** pFreeList, t_block** pBlockList, t_block* getFit(), uint32_t* tab) {
 
   int i;
+  printf("WTF %p, %08x\n", tab, tab[0]);
   t_block* pBlock = allocateBlock(size, pFreeList, pBlockList, getFit );
+  
   if (pBlock != NULL) {
   
 
     //find space
     for (i=0;i<32;i++) {
-      if (!((tab->bmp >> i) & 1)) {
-        tab->bmp       |= (1 << i);
-        tab->lb[i].adr  = pBlock->adr;
-        tab->lb[i].size = pBlock->size;
+      if (!((tab[(LBT_BMP)>>2] >> i) & 1)) {
+        printf("Idx: %u, tab bmp: %p, tab b: %p, tab c: %p\n", i, (uint32_t*)&tab[LBT_BMP], (uint32_t*)&tab[LBT_TAB], (uint32_t*)&tab[LBT_TAB + i * _LB_SIZE_ + LB_PTR]);
+        tab[(LBT_BMP)>>2]                          |= (1 << i);
+        tab[(LBT_TAB + i * _LB_SIZE_ + LB_PTR)>>2]  = pBlock->adr;
+        tab[(LBT_TAB + i * _LB_SIZE_ + LB_SIZE)>>2] = pBlock->size;
         pBlock->idx     = i;  
         break;
       }
@@ -273,15 +276,15 @@ t_block* allocateBlockInTab(uint32_t size, t_block** pFreeList, t_block** pBlock
 }
 
 
-int freeBlockInTab(t_block* pBlock, t_block** pBlockList, t_block** pFreeList, t_lbt* tab) {
+int freeBlockInTab(t_block* pBlock, t_block** pBlockList, t_block** pFreeList, uint32_t* tab) {
 
   //clear entry in table
   if (pBlock != NULL) {
     if (pBlock->idx < 32) {
-      tab->bmp &= ~(1 << pBlock->idx);
+      tab[(LBT_BMP)>>2]                          &= ~(1 << pBlock->idx);
       //unnecesssary but easier to debug
-      tab->lb[pBlock->idx].adr  = 0;
-      tab->lb[pBlock->idx].size = 0;
+      tab[(LBT_TAB + pBlock->idx * _LB_SIZE_ + LB_PTR)>>2]  = 0;
+      tab[(LBT_TAB + pBlock->idx * _LB_SIZE_ + LB_SIZE)>>2] = 0;
     }
   }
   return freeBlock(pBlock, pBlockList, pFreeList);
@@ -349,6 +352,7 @@ t_block* allocateBlock(uint32_t size, t_block** pFreeList, t_block** pBlockList,
     moveBlockBetweenLists(pF, pFreeList, pBlockList);
 
   } else printf(" No space/elements in Free List!\n");
+
   return pF;
 }
 
@@ -440,13 +444,18 @@ void showAll(t_block* pF, t_block* pB, int ramsize) {
  
 }
 
-void showAllWithTab(t_block* pF, t_block* pB, int ramsize, t_lbt* tab) {
+void showTab(uint32_t* tab) {
   int cnt;
   
   printf("**************************************\n** ");
-  for (cnt=0; cnt < 32; cnt++) {if ((tab->bmp >> cnt) & 1) printf("1"); else printf("_");}
+  for (cnt=0; cnt < 32; cnt++) {if ((tab[(LBT_BMP)>>2] >> cnt) & 1) printf("1"); else printf("_");}
   printf(" **\n**************************************\n");
-  for (cnt=0; cnt < 32; cnt++) {if ((tab->bmp >> cnt) & 1) { printf("#%2u  b: %u a: 0x%05x s: 0x%05x\n", cnt, ((tab->bmp >> cnt) & 1), tab->lb[cnt].adr, tab->lb[cnt].size); }}
+  for (cnt=0; cnt < 32; cnt++) {if ((tab[(LBT_BMP)>>2] >> cnt) | 1) { printf("#%2u  b: %u a: 0x%05x s: 0x%05x\n", cnt,
+  ((tab[(LBT_BMP)>>2] >> cnt) & 1), tab[(LBT_TAB + cnt * _LB_SIZE_ + LB_PTR)>>2], tab[(LBT_TAB + cnt * _LB_SIZE_ + LB_SIZE)>>2]); }}
+}
+
+void showAllWithTab(t_block* pF, t_block* pB, int ramsize, uint32_t* tab) {
+  showTab(tab);
   showAll(pF, pB, ramsize);
 }
 

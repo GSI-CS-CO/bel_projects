@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 #include <etherbone.h>
+#include "allocator.h"
 
 
 extern eb_device_t device;
@@ -123,10 +124,8 @@ extern const char* program;
 typedef struct {
    uint32_t ramAdr;
    uint32_t mask;
-   uint32_t actOffs;
-   uint32_t inaOffs;
-   uint32_t sharedOffs;
    uint8_t  hasValidFW;
+   uint32_t lbt[_LBT_SIZE_>>2];
 } t_core;
 
 typedef struct {
