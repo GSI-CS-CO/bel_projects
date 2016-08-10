@@ -11,7 +11,8 @@
 #include "../ftm_common.h"
 #include "prio_regs.h"
 
-
+extern uint32_t*       _startshared[];
+extern uint32_t*       _endshared[];
 
 #define PRIO_BIT_ENABLE     (1<<0)
 #define PRIO_BIT_MSG_LIMIT  (1<<1)
@@ -35,6 +36,15 @@ uint32_t cmdCnt;
 
 uint32_t prioQcapacity;
 
+//FIXME No more structs, structs are BAD when used between platforms.
+//intermediate solution is to use the base ptr from the LBT plus an offset
+
+//TODO blocks are to be live code, not just data. this will get rid of all the offset business if we use PIC
+//TODO TODO get rid of instruction cache
+//TODO TODO TODO tie RAM port directly to LM32 for 1 cycle access
+
+
+/*
 
 typedef struct {
    uint8_t sig;
@@ -45,13 +55,16 @@ typedef struct {
    uint8_t reserved [ FTM_PAGEDATA ];
 } t_pageSpace;  
 
-typedef uint64_t t_time ;
+
 
 
 typedef struct {
    uint32_t value; 
    t_time   time;
 } t_shared;
+*/
+
+typedef uint64_t t_time ;
 
 typedef struct {
    uint64_t id;
@@ -66,7 +79,7 @@ typedef struct {
    
    t_time               tStart;  //desired start time of this chain
    t_time               tPeriod; //chain period
-   t_time               tExec;   //chain execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod FIXME
+   t_time               tExec;   //chain execution time. if repQty > 0 or -1, this will be tStart + n*tPeriod 
    uint32_t             flags; 
    uint32_t*            condSrc; //condition source adr
    uint32_t             condVal; //pattern to compare
@@ -77,11 +90,15 @@ typedef struct {
    uint32_t             repCnt;  //running count of repetitions
    uint32_t             msgQty;  //Number of messages
    uint32_t             msgIdx;  //idx of the currently processed msg
-   t_ftmMsg*            pMsg;    //pointer to messages
-   struct t_ftmChain*   pNext;   //pointer to next chain
-   
+     
+   uint32_t             msgOffset; //offset to messages
+   uint32_t             nextOffset;   //offset to next chain
+
+
 } t_ftmChain;
 
+
+/*
 //a plan is a linked list of chains
 typedef struct {
 
@@ -93,33 +110,25 @@ typedef struct {
    
 } t_ftmPage;
 
-typedef struct {
-   t_ftmPage   pPages[2];
-   uint32_t    cmd;
-   uint32_t    status;
-   t_ftmPage*  pAct;
-   t_ftmPage*  pIna;
-   t_ftmChain* pNewBp;
-   t_shared*   pSharedMem;
-   uint64_t    tPrep;
-   uint64_t    tDue;
-   uint64_t    tTrn;
-   t_ftmChain  idle;
-   t_semaphore sema;
-   uint32_t    sctr;
-   uint32_t    debug[32];
-} t_ftmIf;
+*/
+volatile uint32_t* p;
+
+volatile void* pV;
+
+t_ftmChain* pCurrentChain;
+
+
+
+
 
 volatile uint64_t* pMsgCntPQ;
-volatile t_ftmIf* pFtmIf;
-t_ftmChain* pCurrentChain;
 
 void prioQueueInit();
 void ftmInit(void);
 void processFtm();
 
 void cmdEval();
-void showFtmPage(t_ftmPage* pPage);
+//void showFtmPage(t_ftmPage* pPage);
 void showStatus();
 
 extern uint32_t * pEcaAdr;

@@ -15,10 +15,10 @@ uint16_t getIdSID(uint64_t id)     {return ((uint16_t)(id >> ID_SID_POS))     & 
 uint16_t getIdBPID(uint64_t id)    {return ((uint16_t)(id >> ID_BPID_POS))    & (ID_MSK_B16 >> (16 - ID_BPID_LEN));}
 uint16_t getIdSCTR(uint64_t id)    {return ((uint16_t)(id >> ID_SCTR_POS))    & (ID_MSK_B16 >> (16 - ID_SCTR_LEN));}
 
-static uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChainStart, uint8_t* pBufStart, uint32_t embeddedOffs);
+static uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChainStart, uint8_t* pBufStart);
 static uint8_t* deserMsg(uint8_t* pBuf, t_ftmMsg* pMsg);
 
-static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufStart, uint8_t* pBuf, uint32_t embeddedOffs, uint8_t cpuId);
+static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufStart, uint8_t* pBuf, uint8_t cpuId);
 static uint8_t* serMsg(  t_ftmMsg* pMsg, uint8_t* pBuf);
 
 uint64_t getId(uint16_t fid, uint16_t gid, uint16_t evtno, uint16_t sid, uint16_t bpid, uint16_t sctr)
@@ -88,9 +88,9 @@ static uint64_t bytesToUint64(uint8_t* pBuf)
    return val;
 }
 
-uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint32_t embeddedOffs, uint8_t cpuId) 
+uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint8_t cpuId) 
 {
-   printf("Writing ptrPage %p to ptrWrite %p with offset %08x for cpu %u\n", pPage, pBufStart, embeddedOffs, cpuId);
+   printf("Writing ptrPage %p to ptrWrite %p for cpu %u\n", pPage, pBufStart, cpuId);
    uint8_t j,  planIdx, chainIdx;
    uint8_t*    pBuf;
    t_ftmChain* pChain;
@@ -101,12 +101,14 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint32_t embeddedOffs, 
    //leave space for page meta info, write all plans to pBuffer
    for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
    {
-      pBufPlans[planIdx] = embeddedOffs + ((uint32_t)((uintptr_t)pBuf - (uintptr_t)pBufStart));
+          
+
+      pBufPlans[planIdx] = ((uint32_t)((uintptr_t)pBuf - (uintptr_t)pBufStart));
       pChain   = pPage->plans[planIdx].pStart;
       chainIdx = 0;
       while(chainIdx++ < pPage->plans[planIdx].chainQty && pChain != NULL)
       {
-         pBuf     = serChain(pChain, pBufPlans[planIdx], pBufStart, pBuf, embeddedOffs, cpuId);
+         pBuf     = serChain(pChain, pBufPlans[planIdx], pBufStart, pBuf, cpuId);
          pChain   = (t_ftmChain*)pChain->pNext;
       }   
    }
@@ -132,7 +134,7 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint32_t embeddedOffs, 
    return pBuf;   
 }
 
-static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufStart, uint8_t* pBuf, uint32_t embeddedOffs, uint8_t cpuId)
+static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufStart, uint8_t* pBuf, uint8_t cpuId)
 {
    uint8_t msgIdx;
    
@@ -163,8 +165,7 @@ static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufS
    uint32ToBytes(&pBuf[FTM_CHAIN_MSGIDX],    0);
 
 
-   //FIXME WHY THE HELL DOES THIS NEED ABSOLUTE ADDRESSES?  Can't this be offsets???   
-   pBufMsg  = embeddedOffs + FTM_CHAIN_END_ + ( (uint32_t)( (uintptr_t)pBuf - (uintptr_t)pBufStart ) );
+   pBufMsg  = FTM_CHAIN_END_ + ( (uint32_t)( (uintptr_t)pBuf - (uintptr_t)pBufStart ) );
    uint32ToBytes(&pBuf[FTM_CHAIN_PMSG],    pBufMsg);
    
    if(pChain->pNext != NULL) {
@@ -193,7 +194,7 @@ static uint8_t* serMsg(  t_ftmMsg* pMsg, uint8_t* pBuf)
    return pBuf + FTM_MSG_END_;
 }
 
-t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs)
+t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart)
 {
    uint32_t j, chainQty, planStart;
    uint8_t*    pBufPlans[FTM_PLAN_MAX];
@@ -210,7 +211,7 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
       //read the offset to start of first chain
       planStart      = bytesToUint32(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE]);
        
-      pBufPlans[j]   = pBufStart + (uintptr_t)planStart - (uintptr_t)embeddedOffs;
+      pBufPlans[j]   = pBufStart + (uintptr_t)planStart;
       
       //allocate first chain and a Next Chain
       chainQty = 1;
@@ -219,16 +220,15 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
       //set plan start to first chain
       pPage->plans[j].pStart = pChain;
       //deserialise (pBufStart +  offset) to pChain and fix pChains next ptr
-      pBuf = deserChain(pChain, pNext, pBufPlans[j], pBufStart, embeddedOffs);
-      //printf("PChain %p Start %p offs %08x\n", pChain, pBufStart, embeddedOffs);
-      //printf("Plan %u Chain 0 @ %08x\n", j, pBufStart-pBuf);
+      pBuf = deserChain(pChain, pNext, pBufPlans[j], pBufStart);
+
       //deserialise chains until we reached the end or we reached max
       
       while(!(pChain->flags & FLAGS_IS_END) && chainQty < 10)
       {
          pChain   = pNext;
          pNext    = calloc(1, sizeof(t_ftmChain));
-         pBuf     = deserChain(pChain, pNext, pBuf, pBufStart, embeddedOffs);
+         pBuf     = deserChain(pChain, pNext, pBuf, pBufStart);
          //printf("Plan %u Chain %u @ %08x\n", j, chainQty, pBufStart-pBuf);
          
       } 
@@ -246,21 +246,21 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart, uint32_t embeddedOffs
    else if  (pPage->pBp    == ftm_shared_offs + FTM_IDLE_OFFSET)  {pPage->idxBp  = 0xdeadbeef;}
    else for (j=0; j<pPage->planQty; j++)      
    {
-      if(pBufPlans[j]-pBufStart == ((uintptr_t)pPage->pBp - (uintptr_t)embeddedOffs)) {pPage->idxBp = j;}
+      if(pBufPlans[j]-pBufStart == (uintptr_t)pPage->pBp) {pPage->idxBp = j;}
    }  
       
    if       (pPage->pStart == FTM_NULL)           {pPage->idxStart = 0xcafebabe;}
    else if  (pPage->pStart == ftm_shared_offs + FTM_IDLE_OFFSET)    {pPage->idxStart = 0xdeadbeef;}
    else for(j=0; j<pPage->planQty; j++) 
    {
-      if(pBufPlans[j]-pBufStart == ((uintptr_t)pPage->pStart - (uintptr_t)embeddedOffs)) {pPage->idxStart = j;}
+      if(pBufPlans[j]-pBufStart == (uintptr_t)pPage->pStart) {pPage->idxStart = j;}
    }    
    //pPage->pp->sharedAdr = pBufStart[FTM_PAGE_PTR_p->sharedAdr];    
       
    return pPage;     
 }
 
-static uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChainStart, uint8_t* pBufStart, uint32_t embeddedOffs)
+static uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChainStart, uint8_t* pBufStart)
 {
    uint8_t* pBuf = pChainStart;
    uint32_t msgIdx;
@@ -286,7 +286,7 @@ static uint8_t* deserChain(t_ftmChain* pChain, t_ftmChain* pNext, uint8_t* pChai
    for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++) pBuf = deserMsg(pBuf, &pChain->pMsg[msgIdx]);   
    //set pBuf ptr to 
    
-   return pBufStart + (uintptr_t)bytesToUint32(&pChainStart[FTM_CHAIN_PNEXT]) - (uintptr_t)embeddedOffs;
+   return pBufStart + (uintptr_t)bytesToUint32(&pChainStart[FTM_CHAIN_PNEXT]);
    
 }
 

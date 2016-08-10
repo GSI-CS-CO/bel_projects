@@ -113,9 +113,11 @@ int tab2BlockList(uint32_t* tab, t_block** pBlockList,  t_block** pFreeList, uin
 
   //init free list
 
+  showTab(tab);
+
   for (cnt=0; cnt < 32; cnt++) {
      
-    printf("#%u  b: %u a: %u s: %u\n", cnt, ((tab[(LBT_BMP)>>2] >> cnt) & 1), tab[(LBT_TAB + cnt * _LB_SIZE_ + LB_PTR)>>2], tab[(LBT_TAB + cnt * _LB_SIZE_ + LB_SIZE)>>2]);
+    
     
     if ((tab[(LBT_BMP)>>2] >> cnt) & 1) {
       t_block* pAdd = (t_block*)malloc(sizeof(t_block));
@@ -129,8 +131,11 @@ int tab2BlockList(uint32_t* tab, t_block** pBlockList,  t_block** pFreeList, uin
 
   }
   
-  *pFreeList = createFreeList(*pBlockList, ramsize, offset);
+  showList(*pBlockList);
 
+  *pFreeList = createFreeList(*pBlockList, ramsize, offset);
+  printf("###################\n"); 
+  showList(*pFreeList); 
   return 0;
 
 }
@@ -139,25 +144,27 @@ int tab2BlockList(uint32_t* tab, t_block** pBlockList,  t_block** pFreeList, uin
 
 t_block* createFreeList(t_block* pBlockList, uint32_t ramsize, uint32_t offset) {
   t_block* pF = NULL;  
-
+  t_block* pAdd;
   printf("Creating Free List\n"); 
 
   //if Block list is empty, create 1 element free list containing whole memory
   if(pBlockList == NULL) {
-    t_block* pAdd = (t_block*)malloc(sizeof(t_block));
+      printf("No Blocks found, assign all memory to Free List\n"); 
+    pAdd = (t_block*)malloc(sizeof(t_block));
     if (pAdd != NULL) {
-      pAdd->adr   = 0;
+      
+      pAdd->adr   = offset;
       pAdd->size  = ramsize;
-      addAfter(pF, pAdd);
+      pF = addAfter(pF, pAdd);
     }
+
+    return getHead(pF);
   }
   
   pBlockList = getHead(sortByAdr(pBlockList));
   int32_t diff;
   t_block* c = pBlockList;
 
-
-  
 
   //create first block
   if (c->adr > offset) {
@@ -166,46 +173,57 @@ t_block* createFreeList(t_block* pBlockList, uint32_t ramsize, uint32_t offset) 
     if (pAdd != NULL) {
       pAdd->adr   = offset;
       pAdd->size  = c->adr;
+      pAdd->idx   = -1;
+      pAdd->next  = NULL;
+      pAdd->prev  = NULL;  
       pF = addAfter(pF, pAdd);
       pF = getTail(pF);
     } else {printf("CreateFreeList: Couldn't alloc new free element\n");}
   }
   
 
-  showList(c);
 
   while (c != NULL ) {
     if (c->next != NULL) {
       show(c);
       show(c->next);
       diff = c->next->adr - (c->adr + c->size);
-      printf("diff: %d", diff);
+      //printf("diff: %d", diff);
       if (diff > 0) {
         printf("Gap mid\n"); 
         t_block* pAdd = (t_block*)malloc(sizeof(t_block));
         if (pAdd != NULL) {
           pAdd->adr   = c->adr + c->size;
           pAdd->size  = diff;
+          pAdd->idx   = -1;
+          pAdd->next  = NULL;
+          pAdd->prev  = NULL;
           pF = addAfter(pF, pAdd);
+          
           pF = getTail(pF);
-          printf(".*..\n");
+
+          //printf(".*..\n");
         } else {printf("CreateFreeList: Couldn't alloc new free element\n");}
       }
     } else {
       //create last block
       printf("Doing Last Free\n"); 
-      diff = ramsize - (c->adr + c->size);  
+      diff = (offset + ramsize) - (c->adr + c->size);  
       if (diff > 0) {
         printf("Gap end\n"); 
         t_block* pAdd = (t_block*)malloc(sizeof(t_block));
         if (pAdd != NULL) {
           pAdd->adr   = c->adr + c->size;
           pAdd->size  = diff;
-          printf("..\n"); 
+          pAdd->idx   = -1;
+          pAdd->next  = NULL;
+          pAdd->prev  = NULL;
+          //printf("..\n"); 
           pF = addAfter(pF, pAdd);
-          printf("...\n"); 
+          //printf("...\n"); 
+          //showfull(pF);
           pF = getTail(pF);
-          printf(".!..\n");
+          //printf(".!..\n");
         } else {printf("CreateFreeList: Couldn't alloc new free element\n");}
       }
     }
@@ -450,7 +468,7 @@ void showTab(uint32_t* tab) {
   printf("**************************************\n** ");
   for (cnt=0; cnt < 32; cnt++) {if ((tab[(LBT_BMP)>>2] >> cnt) & 1) printf("1"); else printf("_");}
   printf(" **\n**************************************\n");
-  for (cnt=0; cnt < 32; cnt++) {if ((tab[(LBT_BMP)>>2] >> cnt) | 1) { printf("#%2u  b: %u a: 0x%05x s: 0x%05x\n", cnt,
+  for (cnt=0; cnt < 32; cnt++) {if ((tab[(LBT_BMP)>>2] >> cnt) | 1) { printf("#%02u  b: %u a: 0x%05x s: 0x%05x\n", cnt,
   ((tab[(LBT_BMP)>>2] >> cnt) & 1), tab[(LBT_TAB + cnt * _LB_SIZE_ + LB_PTR)>>2], tab[(LBT_TAB + cnt * _LB_SIZE_ + LB_SIZE)>>2]); }}
 }
 

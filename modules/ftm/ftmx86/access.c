@@ -257,11 +257,11 @@ static uint8_t isFwValid(struct  sdb_device* ram, int cpuIdx, const char* sVerEx
 }
 
 static int ftmPut(uint32_t dstCpus, t_ftmPage*  pPage, uint8_t* bufWrite, uint32_t bufSizes) {
-  uint32_t baseAddr, absOffset, offs, cpuIdx, i;
+  uint32_t baseAddr, absOffset, cpuIdx, i;
    
   uint8_t* bufRead = (uint8_t *)malloc(bufSizes);
   t_block *pF, *pB, *alloc;
-  uint32_t* tab;
+  uint32_t *tab, *newAddress, *newSize, *newBmp;
   uint32_t len;
   eb_cycle_t cycle;
   eb_status_t status;
@@ -272,48 +272,53 @@ static int ftmPut(uint32_t dstCpus, t_ftmPage*  pPage, uint8_t* bufWrite, uint32
     if((dstCpus >> cpuIdx) & 0x1) {
       baseAddr  = p->pCores[cpuIdx].ramAdr + ftm_shared_offs;
       absOffset = p->pCores[cpuIdx].ramAdr + ftm_shared_offs + _SHCTL_SIZE_;
-  
-      tab = (uint32_t*)&(p->pCores[cpuIdx].lbt[0];
+      pF = NULL;
+      pB = NULL; 
+
+      tab = (uint32_t*)&(p->pCores[cpuIdx].lbt[0]);
       
       //init LiveBlock- and Free List from LBT
-      tab2BlockList(tab, &pB, &pF, ramsize, absOffset);
+      tab2BlockList(tab, &pB, &pF, SHARED_SIZE, absOffset);
       
       
       memset(bufWrite, 0, bufSizes);
-      //FIXME This is a problem ... serpage needs the offset and returns len, allocateBlockInTab needs len and returns the offset.
-      //FIXME Edit serpage to avoid circular dependency, doesnt make sense to use absolute addresses there anyway
-
-      bufWrite = serPage (pPage, bufWrite, absOffset, cpuIdx);  
+      bufWrite = serPage (pPage, bufWrite, cpuIdx);
+      
+      hexDump("Hallo", bufWrite, bufSizes);  
       if(bufWrite == NULL) return -1;
-      len = (uint32_t)bufWrite - (uint32_t)bufStart;
+      len = (uint32_t)(uintptr_t)(bufWrite - bufStart);
       //Tell the allocator the length of the block we need and get an index in return. Address & Size are already in LBT
       alloc = allocateBlockInTab(len, &pF, &pB, (void*)&getBestFit, tab);      
       
-      //Use LBT ONLY! otherwise we can't determine where a bad address came from
-
+      //Use LBT and the allocated Idx only (for now)
+      newAddress = (uint32_t*)&tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_PTR)>>2];
+      newSize    = (uint32_t*)&tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_SIZE)>>2];
+      newBmp     = (uint32_t*)&tab[(LBT_BMP)>>2]; 
       
-      ftmRamWrite(tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_PTR)>>2], bufStart, tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_SIZE)>>2], BIG_ENDIAN);
-      printf("Wrote %u byte schedule to CPU %u at 0x%08x.", tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_SIZE)>>2], cpuIdx, tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_PTR)>>2]);
+      //ftmRamWrite(*newAddress, bufStart, *newSize, BIG_ENDIAN);
+      printf("Wrote %u byte schedule to CPU %u at 0x%08x.", *newSize, cpuIdx, *newAddress);
       printf("Verify..."); 
-      ftmRamRead(tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_PTR)>>2], bufRead, tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_SIZE)>>2], BIG_ENDIAN);
-      for(i = 0; i<tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_SIZE)>>2]; i++) {
+
+          
+      ftmRamRead(*newAddress, bufRead, *newSize, BIG_ENDIAN);
+      for(i = 0; i<*newSize; i++) {
         if(!(bufRead[i] == bufWrite[i])) { 
-          fprintf(stderr, "!ERROR! \nVerify failed for CPU %u at offset 0x%08x\n", cpuIdx, tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_PTR)>>2] +( i & ~0x3) );
+          fprintf(stderr, "!ERROR! \nVerify failed for CPU %u at offset 0x%08x\n", cpuIdx, *newAddress +( i & ~0x3) );
           free(bufRead);
           return -2;
         }
       }
       
 
-      //copy LBT Update to embedded side
+      //copy LBT Update to embedded side, BMP last
       if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return die(status, "failed to create cycle");
-      eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_TAB + alloc->idx * _LB_SIZE_ + LB_PTR),  EB_BIG_ENDIAN | EB_DATA32, tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_PTR)>>2]);
-      eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_TAB + alloc->idx * _LB_SIZE_ + LB_SIZE), EB_BIG_ENDIAN | EB_DATA32, tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_SIZE)>>2]);
-      eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_BMP), EB_BIG_ENDIAN | EB_DATA32, tab[(LBT_BMP)>>2] );
+      eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_TAB + alloc->idx * _LB_SIZE_ + LB_PTR),  EB_BIG_ENDIAN | EB_DATA32, *newAddress);
+      eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_TAB + alloc->idx * _LB_SIZE_ + LB_SIZE), EB_BIG_ENDIAN | EB_DATA32, *newSize);
+      eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_BMP),                                    EB_BIG_ENDIAN | EB_DATA32, *newBmp );
       if ((status = eb_cycle_close(cycle)) != EB_OK)  return die(status, "failed to close write cycle");
 
       printf("OK\n");
-    }
+    }  
   }
   free(bufRead);
   printf("done.\n");
@@ -455,7 +460,7 @@ int ftmOpen(const char* netaddress, uint8_t overrideFWcheck)
     if (p->pCores[cpuIdx].hasValidFW) {
       if (-1 == ftmRamRead((p->pCores[cpuIdx].ramAdr + ftm_shared_offs + SHCTL_LBTAB),  (const uint8_t*)&(p->pCores[cpuIdx].lbt), _LBT_SIZE_, BIG_ENDIAN)) {
         printf("Core #%u: Failed to read Live Block Table\n", cpuIdx);
-      }
+      } else {printf("Core #%u: LBT found at 0x%08x\n", cpuIdx, (p->pCores[cpuIdx].ramAdr + ftm_shared_offs + SHCTL_LBTAB)); }
     } else printf("Core #%u: Can't read schedule data offsets - no valid firmware present.\n", cpuIdx);
   }
   p->validCpus = validCpus;
@@ -628,7 +633,7 @@ int v02FtmCheckString(const char* sXml) {
   t_ftmPage*  pPage = parseXmlString(sXml);
   
   
-  if(serPage (pPage, (uint8_t*)&buff[0], 0, 0) != NULL) {
+  if(serPage (pPage, (uint8_t*)&buff[0], 0) != NULL) {
     printf("Schedule OK\n");
     ret = 0;
   } else {
@@ -660,23 +665,23 @@ int v02FtmPutFile(uint32_t dstCpus, const char* filename) {
 
 
 int v02FtmDump(uint32_t srcCpus, uint32_t len, uint8_t lbtIdx, char* stringBuf, uint32_t lenStringBuf) {
-  uint32_t baseAddr, offs, cpuIdx;  
+  uint32_t cpuIdx, tabOffset;  
   t_ftmPage* pPage;
   uint8_t* bufRead = (uint8_t *)malloc(len);
   char* bufStr = stringBuf;
+  uint32_t* tab;
   
+  tabOffset = LBT_TAB + lbtIdx * _LB_SIZE_; 
+
   for(cpuIdx=0;cpuIdx < p->cpuQty;cpuIdx++) {
     if((srcCpus >> cpuIdx) & 0x1) {
-      baseAddr  = p->pCores[cpuIdx].ramAdr;
+      tab = (uint32_t*)&(p->pCores[cpuIdx].lbt[0]);
+       
+      //Get the absolute address from the Live block Table
+      if(tab[(LBT_BMP)>>2] & (1 << lbtIdx)) {
 
-      //Get the offset from the Live block Table
-      if(p->pCores[cpuIdx].lbt[(LBT_BMP)>>2] & (1 << lbtIdx)) {
-        offs = p->pCores[cpuIdx].lbt[(LBT_TAB + lbtIdx * _LB_SIZE_ + LB_PTR)>>2];
-      
-
-      
-        ftmRamRead( baseAddr + (offs & p->pCores[cpuIdx].mask), bufRead, len, BIG_ENDIAN);
-        pPage = deserPage(calloc(1, sizeof(t_ftmPage)), bufRead, offs);
+        ftmRamRead( tab[(tabOffset + LB_PTR)>>2], bufRead, tab[(tabOffset + LB_SIZE)>>2], BIG_ENDIAN);
+        pPage = deserPage(calloc(1, sizeof(t_ftmPage)), bufRead);
         if(pPage != NULL) {  
            printf("Deserialization successful.\n\n");
            if (lenStringBuf - (bufStr - stringBuf) < 2048) {printf("String buffer running too low, aborting.\n"); return (uint32_t)(bufStr - stringBuf);}
@@ -691,27 +696,48 @@ int v02FtmDump(uint32_t srcCpus, uint32_t len, uint8_t lbtIdx, char* stringBuf, 
 }
 
 int v02FtmClear(uint32_t dstCpus) {
-  uint32_t  baseAddr, tabOffset, cpuIdx; 
+  uint32_t  tabOffset, cpuIdx, baseAddr; 
   uint32_t* tab; 
   int cnt;
+    eb_cycle_t cycle;
+  eb_status_t status;
+  
 
   for(cpuIdx=0;cpuIdx < p->cpuQty;cpuIdx++) {
     if((dstCpus >> cpuIdx) & 0x1) {
       //Scrub all unmounted blocks of this CPU's RAM hard 
-      baseAddr  = p->pCores[cpuIdx].ramAdr;
-      tab = (uint32_t*)&(p->pCores[cpuIdx].lbt[0]);    
+      tab = (uint32_t*)&(p->pCores[cpuIdx].lbt[0]);
+      baseAddr  = p->pCores[cpuIdx].ramAdr + ftm_shared_offs;
+
+      //FIXME this has to go later
+      tab[(LBT_BMP)>>2] = 0;
+    
+      if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return die(status, "failed to create cycle");
+
       for (cnt=0; cnt < 32; cnt++) {
         //unmounted ?
         if (!((tab[(LBT_BMP)>>2] >> cnt) & 1)) {
           tabOffset = LBT_TAB + cnt * _LB_SIZE_;
           //not a NULL pointer and not of size 0?
           if ((tab[(tabOffset + LB_PTR)>>2] != 0) & (tab[(tabOffset + LB_SIZE)>>2] != 0)) {
-            ftmRamClear(baseAddr + (tab[(tabOffset + LB_PTR)>>2] & p->pCores[cpuIdx].mask), tab[(tabOffset + LB_SIZE)>>2] );
-            printf("Cleared Entry %u - %u bytes #%u@0x%08x.", cnt, tab[(tabOffset + LB_SIZE)>>2],
-            cpuIdx, baseAddr + (tab[(tabOffset + LB_PTR)>>2] & p->pCores[cpuIdx].mask) );  
+            ftmRamClear( tab[(tabOffset + LB_PTR)>>2], tab[(tabOffset + LB_SIZE)>>2] );
+            printf("Cleared Entry %u - %u bytes #%u @ 0x%08x\n", cnt, tab[(tabOffset + LB_SIZE)>>2],
+            cpuIdx, tab[(tabOffset + LB_PTR)>>2] );
+
+                  //copy LBT Update to embedded side, BMP last
+            
+            eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_TAB + cnt * _LB_SIZE_ + LB_PTR),  EB_BIG_ENDIAN | EB_DATA32, 0);
+            eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_TAB + cnt * _LB_SIZE_ + LB_SIZE), EB_BIG_ENDIAN | EB_DATA32, 0);
+            
+      
+
+  
           }
         }
       }
+
+      eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_BMP),                                    EB_BIG_ENDIAN | EB_DATA32, 0 );
+      if ((status = eb_cycle_close(cycle)) != EB_OK)  return die(status, "failed to close write cycle");
     }  
   }
   printf("done.\n");

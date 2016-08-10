@@ -18,21 +18,31 @@ void prioQueueInit()
    pFpqCtrl[PRIO_ECA_ADR_RW>>2]     = (uint32_t)pEca & ~0x80000000;
    pFpqCtrl[PRIO_EBM_ADR_RW>>2]     = ((uint32_t)pEbm & ~0x80000000);
    pFpqCtrl[PRIO_TX_MAX_MSGS_RW>>2] = 5;
-   pFpqCtrl[PRIO_TX_MAX_WAIT_RW>>2] = loW(pFtmIf->tDue);
+   pFpqCtrl[PRIO_TX_MAX_WAIT_RW>>2] = loW(*(uint64_t*)(pV + SHCTL_TGATHER));
    pFpqCtrl[PRIO_MODE_SET>>2]       = PRIO_BIT_ENABLE     | 
-                                          PRIO_BIT_MSG_LIMIT  |
-                                          PRIO_BIT_TIME_LIMIT;
+                                      PRIO_BIT_MSG_LIMIT  |
+                                      PRIO_BIT_TIME_LIMIT;
 }
 
 void ftmInit()
 {
-   pFtmIf = (t_ftmIf*)_startshared;
-   //mprintf("Shared Area @ 0x%08x\n", (uint32_t)pFtmIf); 
-   pFtmIf->cmd = 0;
-   pFtmIf->status = 0x0;
-   pFtmIf->pAct = (t_ftmPage*)&(pFtmIf->pPages[0]);
-   pFtmIf->pIna = (t_ftmPage*)&(pFtmIf->pPages[1]);
-   pFtmIf->idle = (t_ftmChain){ .tStart     = 0,
+   p  = (uint32_t*)_startshared;
+   pV = (void*)_startshared;
+   //mprintf("Shared Area @ 0x%08x\n", (uint32_t)p); 
+
+   p[SHCTL_STATUS]  = 0;
+   p[SHCTL_MSG_CNT] = 0;
+   p[SHCTL_CMD]     = 0; 
+
+   //FIXME this belongs to thread ctrl now
+   /* 
+   p[pAct = (t_ftmPage*)&(p[pPages[0]);
+   p[pIna = (t_ftmPage*)&(p[pPages[1]);
+   */
+  
+   //FIXME obsolete
+   /* 
+   p[idle = (t_ftmChain){ .tStart     = 0,
                                 .tPeriod    = 5000,
                                 .tExec      = 0,
                                 .flags      = (FLAGS_IS_BP),
@@ -47,22 +57,19 @@ void ftmInit()
                                 .pMsg       = NULL,
                                 .pNext      = NULL
                                 };
-   
-   //pFtmIf->pSharedMem   = (t_shared*)pSharedRam;
-   pFtmIf->sema.sig     = 1;
-   pFtmIf->sema.cond    = 1;
-   pCurrentChain        = (t_ftmChain*)&pFtmIf->idle;
-   pFtmIf->tPrep        = 150000;
-//   pFtmIf->tTrn         = 15000/8;
-   pFtmIf->tDue         = 5000;
+   */
+
+   //FIXME if at all, this belongs to thread data now
+   /* 
+   p[sema.sig     = 1;
+   p[sema.cond    = 1;
+   */
+   pCurrentChain  = NULL;
+   *(uint64_t*)(pV + SHCTL_TPREP) = 150000;
+   *(uint64_t*)(pV + SHCTL_TGATHER)  = 5000;
+
    prioQueueInit();
 
-   // MODELSIM FIRMWARE
-   //pFtmIf->cmd = CMD_START;    
- 
-   pFtmIf->debug[DBG_DISP_DUR_MIN] = 0xffffffff;
-   pFtmIf->debug[DBG_DISP_DUR_MAX] = 0x0;
-   pFtmIf->debug[DBG_DISP_DUR_AVG] = 0x0;
 }
 
 inline void showId()
@@ -73,10 +80,10 @@ inline void showId()
 void cmdEval()
 {
    uint32_t cmd, stat;
-   t_ftmPage* pTmp;
+
    
-   cmd = pFtmIf->cmd;
-   stat = pFtmIf->status;
+   cmd  = p[SHCTL_CMD >>2];
+   stat = p[SHCTL_STATUS >>2];
    
    
    if(cmd)
@@ -85,56 +92,67 @@ void cmdEval()
       
       if(cmd & CMD_RST)          { showId(); mprintf("Ftm Init done\n"); stat = 0; ftmInit(); }
       if(cmd & CMD_START)        { showId(); mprintf("Run\n"); 
+                                   //FIXME OBSOLETE, we just need pStart for now       
+                                   /* 
                                    pFtmIf->pAct->pBp = pFtmIf->pAct->pStart;
+                                   */     
                                    stat = (stat & STAT_ERROR) | STAT_RUNNING;
                                  }
-      if(cmd & CMD_IDLE)         { pFtmIf->pAct->pBp = (t_ftmChain*)&pFtmIf->idle; showId(); mprintf("Going to Idle\n");}
+      if(cmd & CMD_IDLE)         { }//FIXME No such thing as IDLE anymore
+                                    //pFtmIf->pAct->pBp = (t_ftmChain*)&pFtmIf->idle; showId(); mprintf("Going to Idle\n");}
       if(cmd & CMD_STOP_REQ)     { stat |= STAT_STOP_REQ; }
       if(cmd & CMD_STOP_NOW)     { stat = (stat & STAT_ERROR) & ~STAT_RUNNING; showId(); mprintf("Stop (forced)\n");} 
       
-      if(cmd & CMD_COMMIT_PAGE)  {//showId(); mprintf("Page Commit\n");
+      if(cmd & CMD_COMMIT_PAGE)  { //FIXME No such thing as commit anymore, any mounted block can be activated
+                                  /*
                                   pTmp = pFtmIf->pIna;
                                   pFtmIf->pIna = pFtmIf->pAct;
                                   pFtmIf->pAct = pTmp;
                                   pFtmIf->pAct->pBp = pFtmIf->pAct->pStart;
+                                  */    
                                  }
       //if(cmd & CMD_COMMIT_BP)    {pFtmIf->pAct->pBp = pFtmIf->pNewBp;}
       
       if(cmd & CMD_DBG_0)        {showStatus();}
       if(cmd & CMD_DBG_1)        {showId(); mprintf("DBG1\n");}
-      
-      if(cmd & CMD_SHOW_ACT)     {  showId(); mprintf("Showing Active\n"); showFtmPage(pFtmIf->pAct);}
-      if(cmd & CMD_SHOW_INA)     {  showId(); mprintf("Showing Inactive\n"); showFtmPage(pFtmIf->pIna);}
-      
+ 
       //only zero the command reg if you found a command. otherwise this becomes race-condition-hell!
-      pFtmIf->cmd = 0;                       
+      p[SHCTL_CMD >>2] = 0;                       
    }
    
+   //FIXME No such thing as IDLE anymore
+   /* 
    if(pCurrentChain == &pFtmIf->idle)  {stat |=  STAT_IDLE;}
    else                       {stat &= ~STAT_IDLE;}
+    */
+    /*
    if(pCurrentChain == &pFtmIf->idle && (stat & STAT_STOP_REQ)) { stat = (stat & STAT_ERROR) & ~STAT_RUNNING; showId(); mprintf("Stop\n");}
-   
-   pFtmIf->status = stat;
+   */
+   p[SHCTL_STATUS >>2] = stat;
    
 }
 
 
-
+/*
 void showFtmPage(t_ftmPage* pPage)
 {
 }
-
+*/
 void showStatus()
 {
-   uint32_t stat = pFtmIf->status;
+   //FIXME obsolete bullshit
+   /*
+
+   uint32_t stat = p[SHCTL_STATUS >>2];
    mprintf("\f%08x\tStatus:\t", (uint32_t)(&(pFtmIf->cmd)) );
    if(stat & STAT_RUNNING) mprintf("\t\t-RUNNING"); else mprintf("\t\t-\t");
-   if(stat & STAT_IDLE) mprintf("\t\t-IDLE"); else mprintf("\t\t-\n");
+   //FIXME No such thing as IDLE anymore 
+   //if(stat & STAT_IDLE) mprintf("\t\t-IDLE"); else mprintf("\t\t-\n");
    if(stat & STAT_STOP_REQ) mprintf("\t\t-STOP_REQ"); else mprintf("\t\t-\t");
    if(stat & STAT_ERROR) mprintf("\t\t-ERROR"); else mprintf("\t\t-\t");
    mprintf("\t\tE:\t%x%08x", (uint32_t)(execCnt), (uint32_t)(execCnt>>32) );
    mprintf("\n");
-   
+   */
 }
 
 inline int dispatch(t_ftmMsg* pMsg)
@@ -144,7 +162,7 @@ inline int dispatch(t_ftmMsg* pMsg)
   int ret = 1;
   uint32_t msgCnt, stat;
   uint64_t tmpPar; 
-  stat = pFtmIf->status;
+
    
   //incIdSCTR(&pMsg->id, &pFtmIf->sctr); //copy sequence counter (sctr) into msg id and inc sctr
   
@@ -162,8 +180,9 @@ inline int dispatch(t_ftmMsg* pMsg)
   *(pFpqData + (PRIO_DAT_TS_HI>>2)) = hiW(pMsg->ts);
   *(pFpqData + (PRIO_DAT_TS_LO>>2)) = loW(pMsg->ts);
   atomic_off();
-  msgCnt = (stat >> 16); 
-  pFtmIf->status = (stat & 0x0000ffff) | ((msgCnt+1) << 16);
+    
+  //increase Msg count for this CPU
+  p[SHCTL_MSG_CNT >>2]++;
    
    
   return ret;
@@ -172,7 +191,10 @@ inline int dispatch(t_ftmMsg* pMsg)
 
 inline uint8_t condValid(t_ftmChain* c)
 {
+   //FIXME obsolete, this is per sig event now  
+  
    uint8_t ret = 0;
+   /* 
    t_time time;
    t_ftmChain* tmp; 
    
@@ -205,7 +227,7 @@ inline uint8_t condValid(t_ftmChain* c)
                time |= ((uint64_t)(*c->condSrc+2))<<32;
                c->tStart = time;
             }   
-            else c->tStart = getSysTime()+ pFtmIf->tPrep;
+            else c->tStart = getSysTime()+ *(uint64_t*)(pV + SHCTL_TPREP);
             tmp = (t_ftmChain*)c->pNext;
                  
             ret = 1;
@@ -216,14 +238,17 @@ inline uint8_t condValid(t_ftmChain* c)
    }
    else ret = 1;
    
-   if(ret) {pFtmIf->status &= ~STAT_WAIT; pFtmIf->sema.cond = 0;}    
-   else    {pFtmIf->status |=  STAT_WAIT; }
-   
+   if(ret) {p[SHCTL_STATUS >>2] &= ~STAT_WAIT; pFtmIf->sema.cond = 0;}    
+   else    {p[SHCTL_STATUS >>2] |=  STAT_WAIT; }
+   */
    return ret; 
 } 
 
+
 inline void sigSend(t_ftmChain* c)
 {
+   //FIXME obsolete, this is per sig event now
+         /* 
    t_time time;
    uint32_t slot;
 
@@ -245,7 +270,8 @@ inline void sigSend(t_ftmChain* c)
         *(c->sigDst+2) = loW(time);
    }
    }
-   pFtmIf->sema.sig = 0; 
+   pFtmIf->sema.sig = 0; p[SHCTL_STATUS >>2]
+  */
 }
 
 inline t_ftmChain* processChainAux(t_ftmChain* c)
@@ -261,26 +287,28 @@ inline t_ftmChain* processChainAux(t_ftmChain* c)
    pCur  = c; 
    now   = getSysTime();
    
-   if( now + pFtmIf->tPrep >= c->tStart) {
-      //DBPRINT3("now+tp\t: x%08x%08x\ncstart\t: x%08x%08x\n", hiW(now + pFtmIf->tPrep), loW(now + pFtmIf->tPrep), hiW(c->tStart), loW(c->tStart)    ); 
+   if( now + *(uint64_t*)(pV + SHCTL_TPREP) >= c->tStart) {
+      //DBPRINT3("now+tp\t: x%08x%08x\ncstart\t: x%08x%08x\n", hiW(now + *(uint64_t*)(pV + SHCTL_TPREP)), loW(now + *(uint64_t*)(pV + SHCTL_TPREP)), hiW(c->tStart), loW(c->tStart)    ); 
       //signal to send ?
-      
+      //FIXME obsolete, if at all, this belongs to thread data now
+         /*  
       if(pFtmIf->sema.sig &&  (c->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED))) {
           
          sigSend(c);
       }
-      
+      */
+
       DBPRINT3("repcnt %04x repqty %04x\n", c->repCnt, c->repQty);
       if( c->repCnt < c->repQty || c->repQty == -1) //reps left ?  
       {
          DBPRINT3("repcnt %u repqty %u", c->repCnt, c->repQty);
          while(c->msgIdx < c->msgQty) //msgs left to process?
          {
-            pCurMsg = c->pMsg + c->msgIdx;
+            pCurMsg = (t_ftmMsg*)((uint32_t)c + (c->msgOffset + (c->msgIdx * FTM_MSG_END_)));
             pCurMsg->ts = c->tStart + pCurMsg->offs; //set execution time for msg 
-            if( now + pFtmIf->tPrep >= pCurMsg->ts)  //### time to hand it over to prio queue ? ###
+            if( now + *(uint64_t*)(pV + SHCTL_TPREP) >= pCurMsg->ts)  //### time to hand it over to prio queue ? ###
             {
-               uint32_t msgCnt = (pFtmIf->status >> 16); 
+               uint32_t msgCnt = (p[SHCTL_STATUS >>2] >> 16); 
                
                //dbg_then = getSysTime();
                if(dispatch(pCurMsg)) c->msgIdx++;
@@ -303,16 +331,22 @@ inline t_ftmChain* processChainAux(t_ftmChain* c)
                  
             if( (c->flags & FLAGS_IS_END) && (c->flags & FLAGS_IS_ENDLOOP)) 
             { 
-               pCur = (t_ftmChain*)c->pNext;
+               pCur = (t_ftmChain*)((uint32_t)c + c->nextOffset);
+               //FIXME obsolete, if at all, this belongs to thread data now
+         /*
                pFtmIf->sema.sig  = 1;
                pFtmIf->sema.cond = 1;
+               */ 
                DBPRINT1("Chain Loop to 0x%08x\n", pCur); 
             }
             else pCur = c;
             
             pCur->tStart = c->tStart + c->tPeriod; 
+            //FIXME obsolete, if at all, this belongs to thread data now
+         /*
             if(c->flags & FLAGS_IS_SIG_ALL)  pFtmIf->sema.sig  = 1;
             if(c->flags & FLAGS_IS_COND_ALL) pFtmIf->sema.cond = 1;
+            */
 
             //is c a branchpoint? if so, jump, reset sequence counter (sctr), semaphores and BP 
             if((c->flags & FLAGS_IS_BP) && (pFtmIf->pAct->pBp != NULL))       
@@ -333,18 +367,39 @@ inline t_ftmChain* processChainAux(t_ftmChain* c)
          //done, go to next chain
          DBPRINT3("RepCnt: %u RepQty: %u\n", c->repCnt, c->repQty);
          c->msgIdx = 0; c->repCnt = 0;
+         //FIXME this belongs to thread control now
+         /*
          if( ((c->flags & FLAGS_IS_END) && (c->flags & FLAGS_IS_ENDLOOP)) || (c->pNext == NULL) ) pCur = (t_ftmChain*)&pFtmIf->idle;
          else pCur = (t_ftmChain*)c->pNext;
-         
+         */
          pCur->tStart = c->tStart + c->tPeriod;
+         //FIXME obsolete, if at all, this belongs to thread data now
+         /* 
          pFtmIf->sema.sig  = 1;
          pFtmIf->sema.cond = 1;
+         
          DBPRINT3("NC SemaCond: %u\n", pFtmIf->sema.cond);
-        
+        */
       }
-  }
-   
-  return pCur;    
+      
+   }
+
+   //FIXME this belongs to block Qs now (not yet implemented)
+         /*
+   //is c a branchpoint? if so, jump, reset sequence counter (sctr), semaphores and BP
+   if((c->flags & FLAGS_IS_BP) && (pFtmIf->pAct->pBp != NULL))       
+   { 
+      pCur = pFtmIf->pAct->pBp;  //BP? go to alt chain
+      
+      pFtmIf->sctr      = 0;
+      pFtmIf->pAct->pBp = NULL;
+      pFtmIf->sema.sig  = 1;
+      pFtmIf->sema.cond = 1;
+      
+      DBPRINT3("BP SemaCond: %u\n", pFtmIf->sema.cond);
+   }
+   */ 
+   return pCur;    
 }
 
 
@@ -355,20 +410,28 @@ inline t_ftmChain* processChain(t_ftmChain* c)
    
    //if starttime is 0 or in the past, set to earliest possible time
    //   || c->tStart < now
-   if ( !c->tStart ) {c->tStart = now + pFtmIf->tPrep; DBPRINT2("Adjust time\n#ST: %08x %08x \n TS: %08x %08x\n", now, c->tStart);}
-   if(pFtmIf->sema.cond) condValid(c);
+   if ( !c->tStart ) {c->tStart = now + *(uint64_t*)(pV + SHCTL_TPREP)  ; DBPRINT2("Adjust time\n#ST: %08x %08x \n TS: %08x %08x\n", now, c->tStart);}
+   //FIXME obsolete, if at all, this belongs to thread data now 
+   //if(pFtmIf->sema.cond) condValid(c);
    
-   if(!pFtmIf->sema.cond) pCur = processChainAux(c); 
-   else 
-   {
+   //FIXME obsolete, if at all, this belongs to thread data now
+   //if(!pFtmIf->sema.cond) {
+      pCur = processChainAux(c); 
+
+   //} else {
+    //FIXME this belongs to block Qs now (not yet implemented)
+         /*
       if((c->flags & FLAGS_IS_BP) && pFtmIf->pAct->pBp != NULL)
       { 
+         
          pCur = pFtmIf->pAct->pBp; 
          pFtmIf->sctr      = 0;
          pFtmIf->pAct->pBp = NULL;
+         
       } 
+
    }
-      
+    */  
    return pCur;    
 }
 
@@ -376,6 +439,8 @@ inline t_ftmChain* processChain(t_ftmChain* c)
 void processFtm()
 {
    DBPRINT3("c = %08x\n", pCurrentChain);
-   if (pFtmIf->status & STAT_RUNNING) { pCurrentChain = processChain(pCurrentChain); execCnt++;} 
+   if (p[SHCTL_STATUS >>2] & STAT_RUNNING) { pCurrentChain = processChain(pCurrentChain); execCnt++;} 
+
+
 }
 

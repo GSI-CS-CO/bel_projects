@@ -54,6 +54,7 @@ t_block* moveBlockBetweenLists(t_block* pSrc, t_block** pSrcList, t_block** pDst
 
 void showfull(t_block* c);
 void show(t_block* c);
+void showTab(uint32_t* tab);
 void showList(t_block* l);
 int  getCont(t_block* pFreeList);
 int  getUsage(t_block* pFreeList);
