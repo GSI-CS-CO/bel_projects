@@ -116,7 +116,7 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
       subFieldNode = checkNode(fieldNode->children, "source");
       if(subFieldNode != NULL)
       {
-               if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "shared",  6) == 0) pChain->flags |= FLAGS_IS_COND_SHARED;
+               if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "shared",  6) == 0) {printf("WARNING: Condition source shared is no longer supported! Using MSI instead\n"); pChain->flags |= FLAGS_IS_COND_MSI;}
          else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "msi",     3) == 0) pChain->flags |= FLAGS_IS_COND_MSI;
          else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "0x",      2) == 0) {strtou64( (const char*)xmlNodeGetContent(subFieldNode));
          pChain->flags |= FLAGS_IS_COND_ADR;} 
@@ -141,7 +141,7 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
       subFieldNode = checkNode(fieldNode->children, "destination");
       if(subFieldNode != NULL)
       {
-               if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "shared",  6) == 0) pChain->flags |= FLAGS_IS_SIG_SHARED;
+               if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "shared",  6) == 0) {printf("WARNING: Signal destination shared is no longer supported! Using MSI instead\n"); pChain->flags |= FLAGS_IS_SIG_MSI;}
          else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "msi",     3) == 0) pChain->flags |= FLAGS_IS_SIG_MSI;
          else  if(strncmp( (const char*)xmlNodeGetContent(subFieldNode), "0x",      2) == 0) {strtou64( (const char*)xmlNodeGetContent(subFieldNode));
          pChain->flags |= FLAGS_IS_SIG_ADR;}

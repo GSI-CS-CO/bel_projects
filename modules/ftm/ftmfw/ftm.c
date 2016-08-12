@@ -181,7 +181,7 @@ inline uint8_t condValid(t_ftmChain* c)
       if(c->flags & FLAGS_IS_COND_MSI)
       {
          uint32_t  ip, msg;
-         irq_disable();
+
          asm ("rcsr %0, ip": "=r"(ip)); //get pending irq flags
          if(ip & 1<<MSI_SIG)
          {
@@ -189,7 +189,7 @@ inline uint8_t condValid(t_ftmChain* c)
             msg = global_msi.msg;
             irq_clear(1<<MSI_SIG);     //clear pending bit
          }      
-         irq_enable();
+
          if((c->condVal & c->condMsk) == (msg & c->condMsk)) ret = 1;   
       }
       else
@@ -225,15 +225,25 @@ inline uint8_t condValid(t_ftmChain* c)
 inline void sigSend(t_ftmChain* c)
 {
    t_time time;
-   
+   uint32_t slot;
+
    //DBPRINT1("Sig Val: %08x Dst: %08x\n", c->sigVal,  c->sigDst );
    time = c->tStart + c->tPeriod;
-   
-   *(c->sigDst) = c->sigVal;
-   if(c->flags & FLAGS_IS_SIG_TIME)
-   {
-      *(c->sigDst+1) = hiW(time);
-      *(c->sigDst+2) = loW(time);
+
+   //want to signal via MSI? use the Msg Box
+    
+   if (c->flags & FLAGS_IS_SIG_MSI) {
+     
+     slot = ((uint32_t)c->sigDst & 0x1f);   
+     *(pCpuMsiBox + (slot <<1)) = c->sigVal;
+    } else { 
+
+     *(c->sigDst) = c->sigVal;
+     if(c->flags & FLAGS_IS_SIG_TIME)
+     {
+        *(c->sigDst+1) = hiW(time);
+        *(c->sigDst+2) = loW(time);
+   }
    }
    pFtmIf->sema.sig = 0; 
 }

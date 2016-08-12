@@ -143,13 +143,11 @@ static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufS
    condSrc  = 0;
    
    //FIXME: change to proper sdb find
-   if (pChain->flags & FLAGS_IS_SIG_MSI)           sigDst = 0x40000800 + pChain->sigCpu * 0x100; //FIXME !!!!
-   else if (pChain->flags & FLAGS_IS_SIG_SHARED)   sigDst = p->sharedAdr  + pChain->sigCpu * 0xC; 
+   if (pChain->flags & FLAGS_IS_SIG_MSI)           sigDst = pChain->sigCpu;
    else if (pChain->flags & FLAGS_IS_SIG_ADR)      sigDst = pChain->sigDst;
    
    //FIXME: change to proper sdb find
    if (pChain->flags & FLAGS_IS_COND_MSI)          condSrc = 0x0;
-   else if (pChain->flags & FLAGS_IS_COND_SHARED)  { condSrc = p->sharedAdr + cpuId * 0xC; printf("SharedCondLoc: 0x%08x\n", condSrc);}
    else if (pChain->flags & FLAGS_IS_COND_ADR)     condSrc = pChain->condSrc;
    
    uint64ToBytes(&pBuf[FTM_CHAIN_TSTART],    pChain->tStart);
