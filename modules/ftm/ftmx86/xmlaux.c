@@ -294,7 +294,7 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
          chainIdx++;
          chainNode = xmlNextElementSibling(chainNode);               
       }
-      if(planIsLoop) { printf("Plan %u loops to Ptr 0x%p\n", planIdx, pPage->plans[planIdx].pStart);
+      if(planIsLoop) { //printf("Plan %u loops to Ptr 0x%p\n", planIdx, pPage->plans[planIdx].pStart);
                        pChain->flags |= FLAGS_IS_ENDLOOP;
                        pChain->pNext = (struct t_ftmChain*)(pPage->plans[planIdx].pStart);
                      }  

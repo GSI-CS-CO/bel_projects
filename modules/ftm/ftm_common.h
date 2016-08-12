@@ -66,9 +66,10 @@
 
 //Thread Control
 #define _TC_START_    0
-#define TC_START_STOP (_TC_START_)
-#define TC_GET        (TC_START_STOP + _32b_SIZE_)
-#define _TC_SIZE_     (TC_GET        + _32b_SIZE_)
+#define TC_START      (_TC_START_)
+#define TC_STOP       (TC_START + _32b_SIZE_)
+#define TC_GET        (TC_STOP  + _32b_SIZE_)
+#define _TC_SIZE_     (TC_GET   + _32b_SIZE_)
 
 //Thread Data
 

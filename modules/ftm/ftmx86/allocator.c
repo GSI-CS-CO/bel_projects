@@ -59,7 +59,10 @@ t_block* addAfter(t_block* pDst, t_block* pAdd) {
     }
     if (pDst->next != NULL) pDst->next->prev = pAdd;
     pDst->next = pAdd;
-  } else {pDst = pAdd; printf("Created new list\n");}
+  } else {
+    pDst = pAdd; 
+    //printf("Created new list\n");
+  }
   return pDst;
 }
 
@@ -71,7 +74,10 @@ t_block* addBefore(t_block* pDst, t_block* pAdd)  {
     }
     if (pDst->prev != NULL) pDst->prev->next = pAdd;
     pDst->prev = pAdd;
-  } else {pDst = pAdd; printf("Created new list\n");}
+  } else {
+    pDst = pAdd;
+    //printf("Created new list\n");
+  }
   return pDst;
 }
 
@@ -113,7 +119,7 @@ int tab2BlockList(uint32_t* tab, t_block** pBlockList,  t_block** pFreeList, uin
 
   //init free list
 
-  showTab(tab);
+  //showTab(tab);
 
   for (cnt=0; cnt < 32; cnt++) {
      
@@ -131,11 +137,11 @@ int tab2BlockList(uint32_t* tab, t_block** pBlockList,  t_block** pFreeList, uin
 
   }
   
-  showList(*pBlockList);
+  //showList(*pBlockList);
 
   *pFreeList = createFreeList(*pBlockList, ramsize, offset);
-  printf("###################\n"); 
-  showList(*pFreeList); 
+  //printf("###################\n"); 
+  //showList(*pFreeList); 
   return 0;
 
 }
@@ -145,7 +151,7 @@ int tab2BlockList(uint32_t* tab, t_block** pBlockList,  t_block** pFreeList, uin
 t_block* createFreeList(t_block* pBlockList, uint32_t ramsize, uint32_t offset) {
   t_block* pF = NULL;  
   t_block* pAdd;
-  printf("Creating Free List\n"); 
+  //printf("Creating Free List\n"); 
 
   //if Block list is empty, create 1 element free list containing whole memory
   if(pBlockList == NULL) {
@@ -168,7 +174,7 @@ t_block* createFreeList(t_block* pBlockList, uint32_t ramsize, uint32_t offset) 
 
   //create first block
   if (c->adr > offset) {
-    printf("Gap at start\n"); 
+    //printf("Gap at start\n"); 
     t_block* pAdd = (t_block*)malloc(sizeof(t_block));
     if (pAdd != NULL) {
       pAdd->adr   = offset;
@@ -185,12 +191,12 @@ t_block* createFreeList(t_block* pBlockList, uint32_t ramsize, uint32_t offset) 
 
   while (c != NULL ) {
     if (c->next != NULL) {
-      show(c);
-      show(c->next);
+      //show(c);
+      //show(c->next);
       diff = c->next->adr - (c->adr + c->size);
       //printf("diff: %d", diff);
       if (diff > 0) {
-        printf("Gap mid\n"); 
+        //printf("Gap mid\n"); 
         t_block* pAdd = (t_block*)malloc(sizeof(t_block));
         if (pAdd != NULL) {
           pAdd->adr   = c->adr + c->size;
@@ -207,10 +213,10 @@ t_block* createFreeList(t_block* pBlockList, uint32_t ramsize, uint32_t offset) 
       }
     } else {
       //create last block
-      printf("Doing Last Free\n"); 
+      //printf("Doing Last Free\n"); 
       diff = (offset + ramsize) - (c->adr + c->size);  
       if (diff > 0) {
-        printf("Gap end\n"); 
+        //printf("Gap end\n"); 
         t_block* pAdd = (t_block*)malloc(sizeof(t_block));
         if (pAdd != NULL) {
           pAdd->adr   = c->adr + c->size;
@@ -228,7 +234,7 @@ t_block* createFreeList(t_block* pBlockList, uint32_t ramsize, uint32_t offset) 
       }
     }
     c = c->next;
-    printf(".....\n");
+    //printf(".....\n");
   }
   printf("Done\n"); 
   return getHead(pF);        
@@ -254,7 +260,7 @@ int blockList2tab(uint32_t* tab, t_block* pBlockList) {
   pB = getHead(pBlockList);
   for (i=0;i<32;i++) {
     if (pB == NULL) break;
-    printf("+# %2u %u\n", i, (!((tab[(LBT_BMP)>>2] >> i) & 1)));
+    //printf("+# %2u %u\n", i, (!((tab[(LBT_BMP)>>2] >> i) & 1)));
     if (!((tab[LBT_BMP] >> i) & 1)) {
       tab[(LBT_BMP)>>2]                          |= 1<<i;
       tab[(LBT_TAB + i * _LB_SIZE_ + LB_PTR)>>2]  = pB->adr;
@@ -269,7 +275,7 @@ int blockList2tab(uint32_t* tab, t_block* pBlockList) {
 t_block* allocateBlockInTab(uint32_t size, t_block** pFreeList, t_block** pBlockList, t_block* getFit(), uint32_t* tab) {
 
   int i;
-  printf("WTF %p, %08x\n", tab, tab[0]);
+  
   t_block* pBlock = allocateBlock(size, pFreeList, pBlockList, getFit );
   
   if (pBlock != NULL) {
@@ -278,7 +284,7 @@ t_block* allocateBlockInTab(uint32_t size, t_block** pFreeList, t_block** pBlock
     //find space
     for (i=0;i<32;i++) {
       if (!((tab[(LBT_BMP)>>2] >> i) & 1)) {
-        printf("Idx: %u, tab bmp: %p, tab b: %p, tab c: %p\n", i, (uint32_t*)&tab[LBT_BMP], (uint32_t*)&tab[LBT_TAB], (uint32_t*)&tab[LBT_TAB + i * _LB_SIZE_ + LB_PTR]);
+        //printf("Idx: %u, tab bmp: %p, tab b: %p, tab c: %p\n", i, (uint32_t*)&tab[LBT_BMP], (uint32_t*)&tab[LBT_TAB], (uint32_t*)&tab[LBT_TAB + i * _LB_SIZE_ + LB_PTR]);
         tab[(LBT_BMP)>>2]                          |= (1 << i);
         tab[(LBT_TAB + i * _LB_SIZE_ + LB_PTR)>>2]  = pBlock->adr;
         tab[(LBT_TAB + i * _LB_SIZE_ + LB_SIZE)>>2] = pBlock->size;
@@ -287,7 +293,7 @@ t_block* allocateBlockInTab(uint32_t size, t_block** pFreeList, t_block** pBlock
       }
     }
     if (pBlock->idx == -1) {printf("No Idx for block found\n");}
-  }
+  } else {printf("Computer says NO\n");}
 
   return pBlock;
 
@@ -330,19 +336,23 @@ int freeBlock(t_block* pBlock, t_block** pBlockList, t_block** pFreeList) {
 
 t_block* getBestFit(uint32_t size, t_block** pFreeList) {
   t_block* c;
+  int32_t maxSize = 0;
+
   if (size != 0 && *pFreeList != NULL) {
     *pFreeList = getHead(sortBySize(*pFreeList));
     c = *pFreeList;
     //find a fitting free block
-    if (c->size >= size) return c;
+    
+    //if (c->size >= size) return c;
     while (c != NULL) {
+      if (c->size > maxSize) maxSize =  c->size;
       if (c->size >= size) { //best fit
         return c;
       }
       c = c->next;
     }
   } 
-
+  printf("Not enough memory. Needed %u Byte, got %u\n", size, maxSize);
   return NULL;
 }
 
@@ -350,9 +360,9 @@ t_block* allocateBlock(uint32_t size, t_block** pFreeList, t_block** pBlockList,
   t_block* pF = getFit(size, pFreeList); // fitter returns matching free block, list is sorted
   t_block* pFNew;
 
-  printf("Allocating 0x%05x...", size);
+
   if (pF != NULL) {
-    printf(" allocator found 0x%05x 0x%05x\n", pF->adr, pF->size);
+    printf("Allocated %u Bytes, found %u @ 0x%05x\n", size, pF->size, pF->adr);
     if (pF->size != size) { //exact size match?
       //No. Split
       //create new free block of leftover size
@@ -369,7 +379,7 @@ t_block* allocateBlock(uint32_t size, t_block** pFreeList, t_block** pBlockList,
     //move old free block to live block list
     moveBlockBetweenLists(pF, pFreeList, pBlockList);
 
-  } else printf(" No space/elements in Free List!\n");
+  } else printf(" Can't allocate. Insufficient space in Free List!\n");
 
   return pF;
 }

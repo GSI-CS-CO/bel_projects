@@ -35,7 +35,7 @@ static void help(void) {
   fprintf(stderr, "  fstop                     force stop on this core\n");
   fprintf(stderr, "  bpset                     set branchpoint. accepts 0..n or 'idle'\n");
   fprintf(stderr, "  idle                      request idle state on this core\n");
-  fprintf(stderr, "  swap                      swap active and inactive page on this core\n");
+  fprintf(stderr, "  setthread                 set active block for Thread 0 on this core\n");
   fprintf(stderr, "  put <filename>            puts ftm data from xml file to inactive page on this core\n");
   fprintf(stderr, "  sig <offset><value><mask> Writes to FTM's shared memory area for this core. Mask is optional, default is 64b\n");
   fprintf(stderr, "  clear                     clears all pages on this core\n");
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
    // cpu access related
    int cpuId = 0;
    uint8_t overrideFWcheck;
-   int32_t targetCpus, validCpus, validTargetCpus;
+   int32_t targetCpus, validCpus, validTargetCpus, tabIdx;
    int64_t validTargetThrs; //validTargetThrs is there for compatibility with future versions of access library
    
    overrideFWcheck = 0;
@@ -79,6 +79,7 @@ int main(int argc, char** argv) {
    sigValue   = 0;
    sigMask    = 0;
    show_time  = 0;
+   tabIdx     = -1;
   
    // start getopt 
    while ((opt = getopt(argc, argv, "c:ovht")) != -1) {
@@ -154,7 +155,18 @@ int main(int argc, char** argv) {
       if (optind+3 < argc) {
          sigMask    = (uint64_t)strtoll(argv[optind+3], NULL, 16);
       } else { sigMask = 0xffffffffffffffff; }
-   } 
+   }
+
+   
+   if ( (!strcasecmp(command, "dump")) || (!strcasecmp(command, "get")) || (!strcasecmp(command, "clear")) || (!strcasecmp(command, "setthread")) ) { 
+      if (optind+1 < argc) {
+         tabIdx = strtol(argv[optind+1], NULL, 10);
+         if (tabIdx > 31) {
+          fprintf(stderr, "%s: <Memory Table Index> must be within 0-31\n", program);
+          return 1;
+         }  
+      }
+   }   
    
    if ( (!strcasecmp(command, "preptime")) || (!strcasecmp(command, "gathertime")) || (!strcasecmp(command, "maxmsg"))) { 
       if (optind+1 < argc) {
@@ -242,16 +254,11 @@ int main(int argc, char** argv) {
    ftmCommand(validTargetThrs, CMD_STOP_NOW); 
   } 
 
-  else if (!strcasecmp(command, "swap")) {
-   ftmCommand(validTargetThrs, CMD_COMMIT_PAGE);
+  else if (!strcasecmp(command, "setthread")) {
+   ftmSetThread(validTargetThrs, tabIdx);
   } 
-  /* TODO this is obsolete, remove
-  else if (!strcasecmp(command, "condump")) {
-   ftmCommand(validTargetThrs, CMD_SHOW_ACT);
-  } 
-  */
   else if (!strcasecmp(command, "clear")) {
-   ftmClear(validTargetThrs);
+   ftmClear(validTargetThrs, tabIdx);
   }
   
   else if (!strcasecmp(command, "reset")) {
@@ -276,23 +283,32 @@ int main(int argc, char** argv) {
       return res;   
     } else { fprintf(stderr, "No xml file specified\n"); return -1;}
   }
-  
+  //FIXME the same as get for now, but it should show the current thread information instead
   else if(!strcasecmp(command, "dump")) {
+    if (tabIdx == -1) {
+      ftmShowTable(targetCpus, verbose);  
+    } else {
     char* pBufDump = (char*)malloc(DUMP_STR_LEN); 
-    ftmDump(validTargetThrs, BUF_SIZE, ACTIVE, pBufDump, DUMP_STR_LEN);
+    ftmDump(validTargetThrs, tabIdx, pBufDump, DUMP_STR_LEN);
     printf("%s\n", pBufDump);
     free(pBufDump);
+    }
     return 0;
   }   
   
   else if(!strcasecmp(command, "get")) {
+    if (tabIdx == -1) {
+      ftmShowTable(targetCpus, verbose);
+    } else {
     char* pBufDump = (char*)malloc(DUMP_STR_LEN); 
-    ftmDump(validTargetThrs, BUF_SIZE, INACTIVE, pBufDump, DUMP_STR_LEN);
+    ftmDump(validTargetThrs, tabIdx, pBufDump, DUMP_STR_LEN);
     printf("%s\n", pBufDump);
     free(pBufDump);
-    return 0; 
+    }
+    return 0;
+   
   }
-
+  
   else if (!strcasecmp(command, "setbp")) {
     int planIdx;
     if(!strcasecmp(bpstr, "idle")) planIdx = -1;

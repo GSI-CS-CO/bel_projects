@@ -91,8 +91,8 @@ typedef struct {
    uint32_t             msgQty;  //Number of messages
    uint32_t             msgIdx;  //idx of the currently processed msg
      
-   uint32_t             msgOffset; //offset to messages
-   uint32_t             nextOffset;   //offset to next chain
+   uint32_t             msgOffset;  //offset to messages
+   uint32_t             nextOffset; //offset to next chain
 
 
 } t_ftmChain;
@@ -115,7 +115,7 @@ volatile uint32_t* p;
 
 volatile void* pV;
 
-t_ftmChain* pCurrentChain;
+t_ftmChain* pCurrent;
 
 
 
@@ -125,7 +125,7 @@ volatile uint64_t* pMsgCntPQ;
 
 void prioQueueInit();
 void ftmInit(void);
-void processFtm();
+t_ftmChain* processChain(t_ftmChain* c, uint32_t* pOffset);
 
 void cmdEval();
 //void showFtmPage(t_ftmPage* pPage);

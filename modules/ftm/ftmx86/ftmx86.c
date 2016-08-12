@@ -90,7 +90,7 @@ static uint64_t bytesToUint64(uint8_t* pBuf)
 
 uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint8_t cpuId) 
 {
-   printf("Writing ptrPage %p to ptrWrite %p for cpu %u\n", pPage, pBufStart, cpuId);
+   //printf("Writing ptrPage %p to ptrWrite %p for cpu %u\n", pPage, pBufStart, cpuId);
    uint8_t j,  planIdx, chainIdx;
    uint8_t*    pBuf;
    t_ftmChain* pChain;

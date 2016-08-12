@@ -222,6 +222,7 @@ int ftmFwLoad(uint32_t dstCpus, const char* filename);
 int ftmSetPreptime(uint32_t dstCpus, uint64_t tprep);
 int ftmGetStatus(uint32_t srcCpus, uint32_t* buff);
 void ftmShowStatus(uint32_t srcCpus, uint32_t* status, uint8_t verbose);
+void ftmShowTable(uint32_t srcCpus, uint8_t verbose);
 
 //per thread
 int ftmThrRst(uint64_t dstBitField);
@@ -231,11 +232,11 @@ int v02FtmCommand(uint32_t dstCpus, uint32_t command);
 int v02FtmPutString(uint32_t dstCpus, const char* sXml);
 int v02FtmPutFile(uint32_t dstCpus, const char* filename);
 int v02FtmCheckString(const char* sXml);
-int v02FtmClear(uint32_t dstCpus);
-int v02FtmDump(uint32_t srcCpus, uint32_t len, uint8_t actIna, char* stringBuf, uint32_t lenStringBuf);
+int v02FtmClear(uint32_t dstCpus, int32_t tabIdx);
+int v02FtmDump(uint32_t srcCpus, int32_t tabIdx, char* stringBuf, uint32_t lenStringBuf);
 int v02FtmSetBp(uint32_t dstCpus, int32_t planIdx);
 int v02FtmFetchStatus(uint32_t* buff, uint32_t len);
-t_status* v02FtmParseStatus(uint32_t srcCpus, uint32_t* status, t_status* sSt); 
+int v04ftmSetThread(uint32_t cpuIdx, uint32_t thrIdx, int32_t tabIdx);
 
 #endif
 
@@ -244,11 +245,11 @@ int ftmSignal(uint64_t dstThr, uint32_t offset, uint64_t value, uint64_t mask);
 int ftmPutString(uint64_t dstThr, const char* sXml);
 int ftmCheckString(const char* sXml);
 int ftmPutFile(uint64_t dstThr, const char* filename);
-int ftmClear(uint64_t dstThr);
-int ftmDump(uint64_t srcThr, uint32_t len, uint8_t actIna, char* stringBuf, uint32_t lenStringBuf);
+int ftmClear(uint64_t dstThr, int32_t tabIdx);
+int ftmDump(uint64_t srcThr, int32_t tabIdx, char* stringBuf, uint32_t lenStringBuf);
 int ftmSetBp(uint64_t dstThr, int32_t planIdx);
 int ftmFetchStatus(uint32_t* buff, uint32_t len);
-t_status* ftmParseStatus(uint32_t srcCpus, uint32_t* status, t_status* sSt); 
+int ftmSetThread(uint64_t dstThr, int32_t tabIdx);
 
 #ifdef __cplusplus
 }

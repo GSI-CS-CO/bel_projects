@@ -15,6 +15,10 @@ unsigned int cpuId, cpuQty, heapCap;
 uint64_t SHARED dummy = 0;
 
 
+static uint32_t getNextThreadIdx() {
+  return 0;
+}
+
 void show_msi()
 {
   mprintf(" Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
@@ -111,6 +115,10 @@ int insertFpqEntry()
 void main(void) {
    
    int j;
+   uint32_t lbtIdx, thrIdx;
+   uint32_t *pOffset;
+   uint32_t *pBlock; 
+
 
    init();
    //uint32_t test = &pFtmIf->tPrep;
@@ -138,8 +146,30 @@ void main(void) {
 
    while (1) {
       cmdEval();
-      processFtm();
+      thrIdx = getNextThreadIdx();
+      lbtIdx = p[(SHCTL_THR_DAT + thrIdx * _TDS_SIZE_ + TD_LBT_IDX) >>2];
+      
+      
+      pBlock  = (uint32_t*)&p[(SHCTL_LBTAB + LBT_TAB + lbtIdx * _LB_SIZE_ + LB_PTR) >> 2];
+      pOffset = (uint32_t*)&p[(SHCTL_THR_DAT + thrIdx * _TDS_SIZE_ + TD_LBT_IDX) >>2];
 
+      //check if ptr in block table equals the active one minus the offset
+      //if not, update
+      if((pCurrent - *pOffset) != (t_ftmChain*)pBlock) {
+        pCurrent = (t_ftmChain*)pBlock;
+        *pOffset = 0;
+      }
+
+      //run
+      if ( ((p[(SHCTL_THR_CTL + TC_GET) >>2]) >> thrIdx) & 1) {
+          pCurrent = processChain(pCurrent, pOffset);
+      }
+
+      
+     
    }
+
+
+
 
 }

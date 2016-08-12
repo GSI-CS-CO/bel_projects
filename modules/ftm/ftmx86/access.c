@@ -284,25 +284,27 @@ static int ftmPut(uint32_t dstCpus, t_ftmPage*  pPage, uint8_t* bufWrite, uint32
       memset(bufWrite, 0, bufSizes);
       bufWrite = serPage (pPage, bufWrite, cpuIdx);
       
-      hexDump("Hallo", bufWrite, bufSizes);  
+       
       if(bufWrite == NULL) return -1;
       len = (uint32_t)(uintptr_t)(bufWrite - bufStart);
+      //hexDump("Hallo", bufStart, len); 
       //Tell the allocator the length of the block we need and get an index in return. Address & Size are already in LBT
       alloc = allocateBlockInTab(len, &pF, &pB, (void*)&getBestFit, tab);      
-      
+      if (alloc == NULL) return -1;
+
       //Use LBT and the allocated Idx only (for now)
       newAddress = (uint32_t*)&tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_PTR)>>2];
       newSize    = (uint32_t*)&tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_SIZE)>>2];
       newBmp     = (uint32_t*)&tab[(LBT_BMP)>>2]; 
       
-      //ftmRamWrite(*newAddress, bufStart, *newSize, BIG_ENDIAN);
+      ftmRamWrite(*newAddress, bufStart, *newSize, BIG_ENDIAN);
       printf("Wrote %u byte schedule to CPU %u at 0x%08x.", *newSize, cpuIdx, *newAddress);
       printf("Verify..."); 
 
           
       ftmRamRead(*newAddress, bufRead, *newSize, BIG_ENDIAN);
       for(i = 0; i<*newSize; i++) {
-        if(!(bufRead[i] == bufWrite[i])) { 
+        if(!(bufRead[i] == bufStart[i])) { 
           fprintf(stderr, "!ERROR! \nVerify failed for CPU %u at offset 0x%08x\n", cpuIdx, *newAddress +( i & ~0x3) );
           free(bufRead);
           return -2;
@@ -460,7 +462,7 @@ int ftmOpen(const char* netaddress, uint8_t overrideFWcheck)
     if (p->pCores[cpuIdx].hasValidFW) {
       if (-1 == ftmRamRead((p->pCores[cpuIdx].ramAdr + ftm_shared_offs + SHCTL_LBTAB),  (const uint8_t*)&(p->pCores[cpuIdx].lbt), _LBT_SIZE_, BIG_ENDIAN)) {
         printf("Core #%u: Failed to read Live Block Table\n", cpuIdx);
-      } else {printf("Core #%u: LBT found at 0x%08x\n", cpuIdx, (p->pCores[cpuIdx].ramAdr + ftm_shared_offs + SHCTL_LBTAB)); }
+      } 
     } else printf("Core #%u: Can't read schedule data offsets - no valid firmware present.\n", cpuIdx);
   }
   p->validCpus = validCpus;
@@ -664,21 +666,25 @@ int v02FtmPutFile(uint32_t dstCpus, const char* filename) {
 
 
 
-int v02FtmDump(uint32_t srcCpus, uint32_t len, uint8_t lbtIdx, char* stringBuf, uint32_t lenStringBuf) {
+int v02FtmDump(uint32_t srcCpus, int32_t tabIdx, char* stringBuf, uint32_t lenStringBuf) {
   uint32_t cpuIdx, tabOffset;  
   t_ftmPage* pPage;
-  uint8_t* bufRead = (uint8_t *)malloc(len);
+  uint8_t* bufRead;
+  uint32_t bufSize;
   char* bufStr = stringBuf;
   uint32_t* tab;
-  
-  tabOffset = LBT_TAB + lbtIdx * _LB_SIZE_; 
+
+  tabOffset = LBT_TAB + tabIdx * _LB_SIZE_; 
+  //bufSize = (((tab[(tabOffset + LB_SIZE)>>2]+3)>>2)<<2); //round up entry size to next multiple of 4
+  bufRead = (uint8_t *)malloc(65536);
+
 
   for(cpuIdx=0;cpuIdx < p->cpuQty;cpuIdx++) {
     if((srcCpus >> cpuIdx) & 0x1) {
       tab = (uint32_t*)&(p->pCores[cpuIdx].lbt[0]);
        
       //Get the absolute address from the Live block Table
-      if(tab[(LBT_BMP)>>2] & (1 << lbtIdx)) {
+      if(tab[(LBT_BMP)>>2] & (1 << tabIdx)) {
 
         ftmRamRead( tab[(tabOffset + LB_PTR)>>2], bufRead, tab[(tabOffset + LB_SIZE)>>2], BIG_ENDIAN);
         pPage = deserPage(calloc(1, sizeof(t_ftmPage)), bufRead);
@@ -687,20 +693,25 @@ int v02FtmDump(uint32_t srcCpus, uint32_t len, uint8_t lbtIdx, char* stringBuf, 
            if (lenStringBuf - (bufStr - stringBuf) < 2048) {printf("String buffer running too low, aborting.\n"); return (uint32_t)(bufStr - stringBuf);}
            SNTPRINTF(bufStr, "---CPU %u %s page---\n", cpuIdx, "active"); //don't do zero termination in between dumps
            bufStr += showFtmPage(pPage, bufStr); //don't do zero termination in between dumps
-        } else {printf("Deserialization for CPU %u FAILED! Corrupt/No Data ?\n", cpuIdx); return -1;}
-      } else printf("Lookup for Block %u at CPU #%u FAILED! Corrupt/No Data ?\n", lbtIdx, cpuIdx);
+        } else {printf("Deserialization of Block %u for CPU %u failed! Corrupt Data ?\n", tabIdx, cpuIdx); return -1;}
+      } else printf("Lookup of Block %u at CPU #%u failed! Corrupt/No Data ?\n", tabIdx, cpuIdx);
     }
   }
   *bufStr++ = 0x00; // zero terminate all dumps
   return (uint32_t)(bufStr - stringBuf); // return number of characters
 }
 
-int v02FtmClear(uint32_t dstCpus) {
-  uint32_t  tabOffset, cpuIdx, baseAddr; 
+int v02FtmClear(uint32_t dstCpus, int32_t lbtIdx) {
+  uint32_t  tabOffset, cpuIdx, baseAddr, bmpBit; 
   uint32_t* tab; 
   int cnt;
     eb_cycle_t cycle;
   eb_status_t status;
+  
+  
+  bmpBit = 1 << (uint32_t)lbtIdx;
+  if (lbtIdx == -1) bmpBit = -1; //clear all if idx eq -1
+    
   
 
   for(cpuIdx=0;cpuIdx < p->cpuQty;cpuIdx++) {
@@ -709,34 +720,31 @@ int v02FtmClear(uint32_t dstCpus) {
       tab = (uint32_t*)&(p->pCores[cpuIdx].lbt[0]);
       baseAddr  = p->pCores[cpuIdx].ramAdr + ftm_shared_offs;
 
-      //FIXME this has to go later
-      tab[(LBT_BMP)>>2] = 0;
-    
+      //unmount designated blocks 
+      printf("in: %d out: %08x b4: %08x", lbtIdx, bmpBit, tab[(LBT_BMP)>>2]);
+      tab[(LBT_BMP)>>2] &= ~bmpBit;
+      printf("after: %08x\n", tab[(LBT_BMP)>>2]);    
+
       if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return die(status, "failed to create cycle");
 
       for (cnt=0; cnt < 32; cnt++) {
-        //unmounted ?
+        //clear unmounted blocks
         if (!((tab[(LBT_BMP)>>2] >> cnt) & 1)) {
           tabOffset = LBT_TAB + cnt * _LB_SIZE_;
-          //not a NULL pointer and not of size 0?
-          if ((tab[(tabOffset + LB_PTR)>>2] != 0) & (tab[(tabOffset + LB_SIZE)>>2] != 0)) {
-            ftmRamClear( tab[(tabOffset + LB_PTR)>>2], tab[(tabOffset + LB_SIZE)>>2] );
-            printf("Cleared Entry %u - %u bytes #%u @ 0x%08x\n", cnt, tab[(tabOffset + LB_SIZE)>>2],
-            cpuIdx, tab[(tabOffset + LB_PTR)>>2] );
+          
+          ftmRamClear( tab[(tabOffset + LB_PTR)>>2], tab[(tabOffset + LB_SIZE)>>2] );
+          printf("Cleared Entry %u - %u bytes #%u @ 0x%08x\n", cnt, tab[(tabOffset + LB_SIZE)>>2],
+          cpuIdx, tab[(tabOffset + LB_PTR)>>2] );
 
-                  //copy LBT Update to embedded side, BMP last
-            
-            eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_TAB + cnt * _LB_SIZE_ + LB_PTR),  EB_BIG_ENDIAN | EB_DATA32, 0);
-            eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_TAB + cnt * _LB_SIZE_ + LB_SIZE), EB_BIG_ENDIAN | EB_DATA32, 0);
-            
-      
-
-  
-          }
+                //copy LBT Update to embedded side, BMP last
+          
+          eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_TAB + cnt * _LB_SIZE_ + LB_PTR),  EB_BIG_ENDIAN | EB_DATA32, 0);
+          eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_TAB + cnt * _LB_SIZE_ + LB_SIZE), EB_BIG_ENDIAN | EB_DATA32, 0);
+          
         }
       }
 
-      eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_BMP),                                    EB_BIG_ENDIAN | EB_DATA32, 0 );
+      eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_LBTAB + LBT_BMP),                                    EB_BIG_ENDIAN | EB_DATA32, tab[(LBT_BMP)>>2]  );
       if ((status = eb_cycle_close(cycle)) != EB_OK)  return die(status, "failed to close write cycle");
     }  
   }
@@ -1167,14 +1175,83 @@ uint32_t thrs2cpus(uint64_t thrs) {
   
 }
 
-t_status* ftmParseStatus(uint32_t srcCpus, uint32_t* status, t_status* sSt) {return v02FtmParseStatus(srcCpus, status, sSt);} 
+void ftmShowTable(uint32_t srcCpus, uint8_t verbose) {
+  uint32_t cpuIdx, i;
+  uint32_t coreStateSize = (CPU_STATE_SIZE + p->thrQty * THR_STATE_SIZE);
+  char strBuff[65536];
+  char* pSB = (char*)&strBuff;
+  uint32_t* tab; 
+
+  
+
+  for(cpuIdx=0;cpuIdx < p->cpuQty;cpuIdx++) {
+    if((srcCpus >> cpuIdx) & 0x1) {
+    tab = (uint32_t*)&(p->pCores[cpuIdx].lbt[0]);
+      
+      //for (cnt=0; cnt < 32; cnt++) {if ((tab[(LBT_BMP)>>2] >> cnt) & 1) printf("1"); else printf("_");}
+      
+      
+     
+      SNTPRINTF(pSB ,"\u2552"); for(i=0;i<35;i++) SNTPRINTF(pSB ,"\u2550"); SNTPRINTF(pSB ,"\u2555\n");
+      SNTPRINTF(pSB ,"\u2502 %s#%02u Live Block Table%s              \u2502\n", KCYN, cpuIdx, KNRM);
+      //SNTPRINTF(pSB ,"\u251C"); for(i=0;i<35;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2524\n");
+      SNTPRINTF(pSB ,"\u251C"); SNTPRINTF(pSB ,"\u2500\u2500\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u252C"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u252C"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2524\n");
+      SNTPRINTF(pSB ,"\u2502 Idx \u2502 X \u2502 Address    \u2502 Size       \u2502\n");
+      SNTPRINTF(pSB ,"\u251C"); SNTPRINTF(pSB ,"\u2500\u2500\u2500\u2500\u2500\u253C\u2500\u2500\u2500\u253C"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u253C"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2524\n");
+      for (i=0; i < 32; i++) {if ( ((tab[(LBT_BMP)>>2] >> i) & 1) | verbose){ SNTPRINTF(pSB ,"\u2502 %02u  \u2502 %u \u2502 0x%08x \u2502 0x%08x \u2502\n", i,
+      ((tab[(LBT_BMP)>>2] >> i) & 1), tab[(LBT_TAB + i * _LB_SIZE_ + LB_PTR)>>2], tab[(LBT_TAB + i * _LB_SIZE_ + LB_SIZE)>>2]); }}
+      SNTPRINTF(pSB ,"\u2514"); SNTPRINTF(pSB ,"\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2534"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2534"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2518\n");  
+
+    }
+  }
+    printf("%s", (const char*)strBuff);
+}
+
+
+int v04ftmSetThread(uint32_t cpuIdx, uint32_t thrIdx, int32_t tabIdx) {
+
+  eb_status_t status;
+  eb_cycle_t cycle;
+  uint32_t baseAddr;
+
+  if((p->validCpus >> cpuIdx) & 0x1) {
+    baseAddr  = p->pCores[cpuIdx].ramAdr + ftm_shared_offs;
+    
+    if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return die(status, "failed to create cycle");
+    eb_cycle_write(cycle, (eb_address_t)(baseAddr + SHCTL_THR_DAT + thrIdx * _TDS_SIZE_ + TD_LBT_IDX),  EB_BIG_ENDIAN | EB_DATA32, tabIdx);
+    if ((status = eb_cycle_close(cycle)) != EB_OK) return  die(status, "failed to close write cycle");
+  
+  }
+  return 0;
+}
+
+
 int ftmFetchStatus(uint32_t* buff, uint32_t len)      { return v02FtmFetchStatus(buff, len);}
 int ftmCommand(uint64_t dstThr, uint32_t command)     { return v02FtmCommand(thrs2cpus(dstThr),command);}
 int ftmPutString(uint64_t dstThr, const char* sXml)   { return v02FtmPutString(thrs2cpus(dstThr), sXml);}
 int ftmPutFile(uint64_t dstThr, const char* filename) { return v02FtmPutFile(thrs2cpus(dstThr), filename);}
 int ftmCheckString(const char* sXml)                  { return v02FtmCheckString(sXml);}
-int ftmClear(uint64_t dstThr)                         { return v02FtmClear(thrs2cpus(dstThr));}
-int ftmDump(uint64_t srcThr, uint32_t len, uint8_t actIna, char* stringBuf, uint32_t lenStringBuf) 
-                                                      { return v02FtmDump(thrs2cpus(srcThr), len, actIna, stringBuf, lenStringBuf);}
+int ftmClear(uint64_t dstThr, int32_t tabIdx)                 { return v02FtmClear(thrs2cpus(dstThr), tabIdx);}
+int ftmDump(uint64_t srcThr, int32_t tabIdx, char* stringBuf, uint32_t lenStringBuf) 
+                                                      { return v02FtmDump(thrs2cpus(srcThr), tabIdx, stringBuf, lenStringBuf);}
 int ftmSetBp(uint64_t dstThr, int32_t planIdx)        { return v02FtmSetBp(thrs2cpus(dstThr), planIdx);}
+int ftmSetThread(uint64_t dstThr, int32_t tabIdx) { 
+
+  uint64_t mask = 0xff;
+  uint32_t cpuIdx, thrIdx;
+
+  for(cpuIdx=0;cpuIdx<8;cpuIdx++) {
+    if (dstThr & mask) {
+      for(thrIdx=0;thrIdx<8;thrIdx++) {
+        if (dstThr & 1) return v04ftmSetThread(cpuIdx, thrIdx, tabIdx); 
+        dstThr = dstThr >> 1;                
+      }
+      dstThr = dstThr >> 8;
+    }
+  }
+  printf("cpu: %u thr: %u tab %u\n", cpuIdx, thrIdx, tabIdx);
+
+  return v04ftmSetThread(cpuIdx, thrIdx, tabIdx);
+
+}
   

@@ -64,7 +64,7 @@ void ftmInit()
    p[sema.sig     = 1;
    p[sema.cond    = 1;
    */
-   pCurrentChain  = NULL;
+   pCurrent  = NULL;
    *(uint64_t*)(pV + SHCTL_TPREP) = 150000;
    *(uint64_t*)(pV + SHCTL_TGATHER)  = 5000;
 
@@ -92,16 +92,17 @@ void cmdEval()
       
       if(cmd & CMD_RST)          { showId(); mprintf("Ftm Init done\n"); stat = 0; ftmInit(); }
       if(cmd & CMD_START)        { showId(); mprintf("Run\n"); 
-                                   //FIXME OBSOLETE, we just need pStart for now       
-                                   /* 
-                                   pFtmIf->pAct->pBp = pFtmIf->pAct->pStart;
-                                   */     
+                                   //FIXME No more direct editing in future, and add ctrl for all individual threads
+                                   p[(SHCTL_THR_CTL + TC_GET) >>2] = -1;
+                                      
                                    stat = (stat & STAT_ERROR) | STAT_RUNNING;
                                  }
       if(cmd & CMD_IDLE)         { }//FIXME No such thing as IDLE anymore
                                     //pFtmIf->pAct->pBp = (t_ftmChain*)&pFtmIf->idle; showId(); mprintf("Going to Idle\n");}
       if(cmd & CMD_STOP_REQ)     { stat |= STAT_STOP_REQ; }
-      if(cmd & CMD_STOP_NOW)     { stat = (stat & STAT_ERROR) & ~STAT_RUNNING; showId(); mprintf("Stop (forced)\n");} 
+      if(cmd & CMD_STOP_NOW)     { //FIXME No more direct editing in future, and add ctrl for all individual threads
+                                   p[(SHCTL_THR_CTL + TC_GET) >>2] = -0;
+                                   stat = (stat & STAT_ERROR) & ~STAT_RUNNING; showId(); mprintf("Stop (forced)\n");} 
       
       if(cmd & CMD_COMMIT_PAGE)  { //FIXME No such thing as commit anymore, any mounted block can be activated
                                   /*
@@ -122,11 +123,11 @@ void cmdEval()
    
    //FIXME No such thing as IDLE anymore
    /* 
-   if(pCurrentChain == &pFtmIf->idle)  {stat |=  STAT_IDLE;}
+   if(pCurrent == &pFtmIf->idle)  {stat |=  STAT_IDLE;}
    else                       {stat &= ~STAT_IDLE;}
     */
     /*
-   if(pCurrentChain == &pFtmIf->idle && (stat & STAT_STOP_REQ)) { stat = (stat & STAT_ERROR) & ~STAT_RUNNING; showId(); mprintf("Stop\n");}
+   if(pCurrent == &pFtmIf->idle && (stat & STAT_STOP_REQ)) { stat = (stat & STAT_ERROR) & ~STAT_RUNNING; showId(); mprintf("Stop\n");}
    */
    p[SHCTL_STATUS >>2] = stat;
    
@@ -274,7 +275,7 @@ inline void sigSend(t_ftmChain* c)
   */
 }
 
-inline t_ftmChain* processChainAux(t_ftmChain* c)
+inline t_ftmChain* processChainAux(t_ftmChain* c, uint32_t* pOffset)
 {
    t_ftmChain* pCur;
    t_ftmMsg*   pCurMsg;
@@ -332,6 +333,7 @@ inline t_ftmChain* processChainAux(t_ftmChain* c)
             if( (c->flags & FLAGS_IS_END) && (c->flags & FLAGS_IS_ENDLOOP)) 
             { 
                pCur = (t_ftmChain*)((uint32_t)c + c->nextOffset);
+               *pOffset = c->nextOffset; 
                //FIXME obsolete, if at all, this belongs to thread data now
          /*
                pFtmIf->sema.sig  = 1;
@@ -403,7 +405,7 @@ inline t_ftmChain* processChainAux(t_ftmChain* c)
 }
 
 
-inline t_ftmChain* processChain(t_ftmChain* c)
+inline t_ftmChain* processChain(t_ftmChain* c, uint32_t* pOffset)
 {
    t_ftmChain* pCur = c;
    t_time now = getSysTime();
@@ -416,7 +418,7 @@ inline t_ftmChain* processChain(t_ftmChain* c)
    
    //FIXME obsolete, if at all, this belongs to thread data now
    //if(!pFtmIf->sema.cond) {
-      pCur = processChainAux(c); 
+      pCur = processChainAux(c, pOffset); 
 
    //} else {
     //FIXME this belongs to block Qs now (not yet implemented)
@@ -434,13 +436,13 @@ inline t_ftmChain* processChain(t_ftmChain* c)
     */  
    return pCur;    
 }
-
+/*
 
 void processFtm()
 {
-   DBPRINT3("c = %08x\n", pCurrentChain);
-   if (p[SHCTL_STATUS >>2] & STAT_RUNNING) { pCurrentChain = processChain(pCurrentChain); execCnt++;} 
+   DBPRINT3("c = %08x\n", pCurrent);
+   if (p[SHCTL_STATUS >>2] & STAT_RUNNING) { pCurrent = processChain(pCurrent); execCnt++;} 
 
 
 }
-
+*/
