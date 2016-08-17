@@ -275,9 +275,9 @@ inline void sigSend(t_ftmChain* c)
   */
 }
 
-inline t_ftmChain* processChainAux(t_ftmChain* c, uint32_t* pOffset)
+inline uint32_t processChainAux(t_ftmChain** pCur)
 {
-   t_ftmChain* pCur;
+   t_ftmChain* c; = pCur;
    t_ftmMsg*   pCurMsg;
    uint64_t tMsgExec, now;
 
@@ -285,20 +285,15 @@ inline t_ftmChain* processChainAux(t_ftmChain* c, uint32_t* pOffset)
    uint32_t dbg_dur;
 
    DBPRINT2("Time to process Chain %08x reached\n", c);
-   pCur  = c; 
+
+
+   c = pCur; 
    now   = getSysTime();
+   tNewStart = c->tStart + c->tPeriod; 
+
    
    if( now + *(uint64_t*)(pV + SHCTL_TPREP) >= c->tStart) {
-      //DBPRINT3("now+tp\t: x%08x%08x\ncstart\t: x%08x%08x\n", hiW(now + *(uint64_t*)(pV + SHCTL_TPREP)), loW(now + *(uint64_t*)(pV + SHCTL_TPREP)), hiW(c->tStart), loW(c->tStart)    ); 
-      //signal to send ?
-      //FIXME obsolete, if at all, this belongs to thread data now
-         /*  
-      if(pFtmIf->sema.sig &&  (c->flags & (FLAGS_IS_SIG_MSI | FLAGS_IS_SIG_SHARED))) {
-          
-         sigSend(c);
-      }
-      */
-
+      
       DBPRINT3("repcnt %04x repqty %04x\n", c->repCnt, c->repQty);
       if( c->repCnt < c->repQty || c->repQty == -1) //reps left ?  
       {
@@ -313,101 +308,42 @@ inline t_ftmChain* processChainAux(t_ftmChain* c, uint32_t* pOffset)
                
                //dbg_then = getSysTime();
                if(dispatch(pCurMsg)) c->msgIdx++;
-               //dbg_now = getSysTime();
-      
-                  //Debug Stuff
-                  
-               /*dbg_dur = (uint32_t)(dbg_now-dbg_then);
-               if(msgCnt == 0) dbg_sum = 0;
-               else dbg_sum += (uint64_t)dbg_dur;
-               if(pFtmIf->debug[DBG_DISP_DUR_MIN] > dbg_dur) pFtmIf->debug[DBG_DISP_DUR_MIN] = dbg_dur; //min
-               if(pFtmIf->debug[DBG_DISP_DUR_MAX] < dbg_dur) pFtmIf->debug[DBG_DISP_DUR_MAX] = dbg_dur; //max
-               pFtmIf->debug[DBG_DISP_DUR_AVG] = dbg_sum/(msgCnt+1);
-               */
+              
             } else {break; DBPRINT3("Too early for Msg %u", c->msgIdx);}
          } 
          if(c->msgIdx == c->msgQty)
          {
             c->msgIdx = 0; c->repCnt++; //repetions left, stay with this chain
-                 
-            if( (c->flags & FLAGS_IS_END) && (c->flags & FLAGS_IS_ENDLOOP)) 
-            { 
-               pCur = (t_ftmChain*)((uint32_t)c + c->nextOffset);
-               *pOffset = c->nextOffset; 
-               //FIXME obsolete, if at all, this belongs to thread data now
-         /*
-               pFtmIf->sema.sig  = 1;
-               pFtmIf->sema.cond = 1;
-               */ 
-               DBPRINT1("Chain Loop to 0x%08x\n", pCur); 
-            }
-            else pCur = c;
-            
-            pCur->tStart = c->tStart + c->tPeriod; 
-            //FIXME obsolete, if at all, this belongs to thread data now
-         /*
-            if(c->flags & FLAGS_IS_SIG_ALL)  pFtmIf->sema.sig  = 1;
-            if(c->flags & FLAGS_IS_COND_ALL) pFtmIf->sema.cond = 1;
-            */
-
-            //is c a branchpoint? if so, jump, reset sequence counter (sctr), semaphores and BP 
-            if((c->flags & FLAGS_IS_BP) && (pFtmIf->pAct->pBp != NULL))       
-            { 
-                pCur = pFtmIf->pAct->pBp;  //BP? go to alt chain
-                
-                pFtmIf->sctr      = 0;
-                pFtmIf->pAct->pBp = NULL;
-                pFtmIf->sema.sig  = 1;
-                pFtmIf->sema.cond = 1;
-                
-                DBPRINT3("BP SemaCond: %u\n", pFtmIf->sema.cond);
-            }
+            c->tStart = tNewStart; 
          }
       } 
       else
       {
-         //done, go to next chain
+         
          DBPRINT3("RepCnt: %u RepQty: %u\n", c->repCnt, c->repQty);
          c->msgIdx = 0; c->repCnt = 0;
-         //FIXME this belongs to thread control now
-         /*
-         if( ((c->flags & FLAGS_IS_END) && (c->flags & FLAGS_IS_ENDLOOP)) || (c->pNext == NULL) ) pCur = (t_ftmChain*)&pFtmIf->idle;
-         else pCur = (t_ftmChain*)c->pNext;
-         */
-         pCur->tStart = c->tStart + c->tPeriod;
-         //FIXME obsolete, if at all, this belongs to thread data now
-         /* 
-         pFtmIf->sema.sig  = 1;
-         pFtmIf->sema.cond = 1;
-         
-         DBPRINT3("NC SemaCond: %u\n", pFtmIf->sema.cond);
-        */
+         c->tStart = tNewStart;
+
+         if(c->nextOffset != NULL) {
+           //move to next chain 
+          *pCur += c->nextOffset;
+         } else {         
+          //move to successor block
+          return c->nextIdx; 
+
+         }
+        
       }
       
    }
 
-   //FIXME this belongs to block Qs now (not yet implemented)
-         /*
-   //is c a branchpoint? if so, jump, reset sequence counter (sctr), semaphores and BP
-   if((c->flags & FLAGS_IS_BP) && (pFtmIf->pAct->pBp != NULL))       
-   { 
-      pCur = pFtmIf->pAct->pBp;  //BP? go to alt chain
-      
-      pFtmIf->sctr      = 0;
-      pFtmIf->pAct->pBp = NULL;
-      pFtmIf->sema.sig  = 1;
-      pFtmIf->sema.cond = 1;
-      
-      DBPRINT3("BP SemaCond: %u\n", pFtmIf->sema.cond);
-   }
-   */ 
-   return pCur;    
+  return -1;    
 }
 
 
-inline t_ftmChain* processChain(t_ftmChain* c, uint32_t* pOffset)
+inline uint32_t processChain(t_ftmChain** c)
 {
-   t_ftmChain* pCur = c;
+   uint32_t idx;
    t_time now = getSysTime();
    
    //if starttime is 0 or in the past, set to earliest possible time
@@ -418,7 +354,7 @@ inline t_ftmChain* processChain(t_ftmChain* c, uint32_t* pOffset)
    
    //FIXME obsolete, if at all, this belongs to thread data now
    //if(!pFtmIf->sema.cond) {
-      pCur = processChainAux(c, pOffset); 
+      idx = processChainAux(c); 
 
    //} else {
     //FIXME this belongs to block Qs now (not yet implemented)
@@ -434,7 +370,7 @@ inline t_ftmChain* processChain(t_ftmChain* c, uint32_t* pOffset)
 
    }
     */  
-   return pCur;    
+   return idx;    
 }
 /*
 

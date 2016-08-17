@@ -115,9 +115,9 @@ int insertFpqEntry()
 void main(void) {
    
    int j;
-   uint32_t lbtIdx, thrIdx;
-   uint32_t *pOffset;
-   uint32_t *pBlock; 
+   uint32_t*  lbtIdx;
+   uint32_t   thrIdx, lbtBmp;
+
 
 
    init();
@@ -143,26 +143,41 @@ void main(void) {
 
    atomic_off();
    if (getMsiBoxCpuSlot(cpuId, 0) == -1) {mprintf("#%02u: Mail box slot acquisition failed\n");}
-
+  
+   
    while (1) {
       cmdEval();
-      thrIdx = getNextThreadIdx();
-      lbtIdx = p[(SHCTL_THR_DAT + thrIdx * _TDS_SIZE_ + TD_LBT_IDX) >>2];
       
+      thrIdx    = getNextThreadIdx();
+      idx       = -1;
+      tcGet     = (uint32_t*)&p[(SHCTL_THR_CTL + TC_GET) >>2];
+      lbtBmp    = (uint32_t)&p[(SHCTL_LBTAB + LBT_BMP) >> 2];
+      lbtIdx    = (uint32_t*)&p[(SHCTL_THR_DAT + thrIdx * _TDS_SIZE_ + TD_LBT_IDX) >>2];
+      pCurrent  = (uint32_t**)&p[(SHCTL_THR_DAT + thrIdx * _TDS_SIZE_ + TD_LB_PTR) >>2];
       
-      pBlock  = (uint32_t*)&p[(SHCTL_LBTAB + LBT_TAB + lbtIdx * _LB_SIZE_ + LB_PTR) >> 2];
-      pOffset = (uint32_t*)&p[(SHCTL_THR_DAT + thrIdx * _TDS_SIZE_ + TD_LBT_IDX) >>2];
-
-      //check if ptr in block table equals the active one minus the offset
-      //if not, update
-      if((pCurrent - *pOffset) != (t_ftmChain*)pBlock) {
-        pCurrent = (t_ftmChain*)pBlock;
-        *pOffset = 0;
-      }
-
+     
+     
       //run
-      if ( ((p[(SHCTL_THR_CTL + TC_GET) >>2]) >> thrIdx) & 1) {
-          pCurrent = processChain(pCurrent, pOffset);
+      if ( (*tcGet >> thrIdx) & 1) {
+          if (*pCurrent != NULL) idx = processChain(pCurrent);
+          else                   idx = *lbtIdx; 
+
+          if (idx != -1) {
+            //successor block ?
+            if((lbtBmp >> idx) & 1) {
+              //if not -1, this calls a new block. Assign idx return value to lbtIdx of this thread
+              *lbtIdx = idx;
+              //Assign value of LB_PTR of table entry at *lbtIdx to referenced ptr  
+              *pCurrent = (uint32_t*)p[(SHCTL_LBTAB + LBT_TAB + *lbtIdx * _LB_SIZE_ + LB_PTR)>>2];
+            } else {
+              //No ptr at this entry.   
+              *pCurrent = NULL;
+              //deactivate thread
+              *tcGet = *tcGet & ~(1 << thrIdx);
+            }
+          }
+
+
       }
 
       

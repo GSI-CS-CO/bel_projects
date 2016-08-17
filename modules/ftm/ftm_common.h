@@ -240,7 +240,8 @@
 #define FTM_CHAIN_MSGIDX        (FTM_CHAIN_MSGQTY         + 4)
 #define FTM_CHAIN_PMSG          (FTM_CHAIN_MSGIDX         + 4)
 #define FTM_CHAIN_PNEXT         (FTM_CHAIN_PMSG           + 4)
-#define FTM_CHAIN_END_          (FTM_CHAIN_PNEXT          + 4)
+#define FTM_CHAIN_PIDX          (FTM_CHAIN_PNEXT          + 4)
+#define FTM_CHAIN_END_          (FTM_CHAIN_PIDX           + 4)
 
 #endif
 

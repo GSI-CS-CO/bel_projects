@@ -93,7 +93,7 @@ typedef struct {
      
    uint32_t             msgOffset;  //offset to messages
    uint32_t             nextOffset; //offset to next chain
-
+   uint32_t             nextIdx; // idx of successor 
 
 } t_ftmChain;
 
@@ -115,7 +115,7 @@ volatile uint32_t* p;
 
 volatile void* pV;
 
-t_ftmChain* pCurrent;
+t_ftmChain** pCurrent;
 
 
 
