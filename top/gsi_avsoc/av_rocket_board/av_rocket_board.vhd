@@ -152,6 +152,14 @@ architecture rtl of av_rocket_board is
   signal hps_warm_reset         : std_logic;
   signal hps_debug_reset        : std_logic;
   signal hps_reset_req          : std_logic_vector(2 downto 0);
+  
+  signal led_blinking: std_logic := '0';
+  signal led_counter : std_logic_vector(31 downto 0) := (others => '0');
+  
+  signal s_button_clk : std_logic;
+  signal s_led_button_clk : std_logic;
+  signal s_button : std_logic;
+  signal s_led_button : std_logic;
 
 begin
 
@@ -165,6 +173,31 @@ begin
       outclk_2 => clk_125m_local,
       outclk_3 => clk_20m_vcxo
     );
+	 
+  proc_led_button: process( clk_125m_pllref )
+  begin
+    if rising_edge(clk_125m_pllref) then
+	   if unsigned(led_counter) = 0 then
+		  led_counter <= std_logic_vector(to_unsigned(125000000, 32));
+	     led_blinking <= not led_blinking;
+		else
+		  led_counter <= std_logic_vector(unsigned(led_counter) - 1);
+		end if;
+		
+		s_led_button_clk <= s_button_clk;
+		
+	 end if;
+  end process;
+  
+  s_button_clk <= fpga_button_pio(0);
+  s_button <= fpga_button_pio(1);
+  s_led_button <= s_button;
+  
+  fpga_led_pio(0) <=        led_blinking;
+  fpga_led_pio(1) <=        s_led_button_clk;
+  fpga_led_pio(2) <=        s_led_button;
+  fpga_led_pio(3) <=        not led_blinking;
+
   
   -- Monster ...
   monster_inst : monster
@@ -172,7 +205,7 @@ begin
       g_family          => c_family,
       g_project         => c_project,
       g_flash_bits      => 25,
-      g_gpio_inout      => 4,
+      g_gpio_inout      => io_mapping_table'LENGTH,
 	   g_en_pcie         => true,
       g_io_table        => io_mapping_table,
       g_lm32_cores      => c_cores,
@@ -344,7 +377,7 @@ begin
     );
   
   -- SoC connections
-  fpga_led_pio                <= not(fpga_led_internal); -- !!! Inverted to verify the correct bitstream
+  --fpga_led_pio                <= not(fpga_led_internal); -- !!! Inverted to verify the correct bitstream
   stm_hw_events(3  downto  0) <= fpga_debounced_buttons;
   stm_hw_events(7  downto  4) <= fpga_led_internal;
   stm_hw_events(11 downto  8) <= fpga_dipsw_pio;

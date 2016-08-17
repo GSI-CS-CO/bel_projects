@@ -1294,7 +1294,9 @@ set_location_assignment PIN_H16 -to hps_gpio_GPIO43
 
 
 
-set_location_assignment PIN_AL6 -to pcie_resetn_i
+set_location_assignment PIN_AK6 -to pcie_resetn_i
+set_location_assignment HIP_X174_Y10_N0 -to "monster:monster_inst|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria5_pcie_hip:\\arria5:hip|altpcie_av_hip_ast_hwtcl:arria5_pcie_hip_inst|altpcie_av_hip_128bit_atom:altpcie_av_hip_128bit_atom|g_cavhip.arriav_hd_altpe2_hip_top"
+set_location_assignment HIP_X174_Y10_N0 -to "monster:monster_inst|pcie_wb:\\pcie_y:pcie|pcie_altera:pcie_phy|arria5_pcie_hip:\\arria5:hip|altpcie_av_hip_ast_hwtcl:arria5_pcie_hip_inst|altpcie_av_hip_128bit_atom:altpcie_av_hip_128bit_atom|coreclkout"
 
 
 
@@ -1314,7 +1316,7 @@ set_location_assignment PIN_AN1 -to pcie_rx_i[2]
 set_location_assignment PIN_AL1 -to pcie_rx_i[3]
 set_location_assignment PIN_AT3 -to pcie_tx_o[0]
 set_location_assignment PIN_AP3 -to pcie_tx_o[1]
-set_location_assignment PIN_AM4 -to pcie_tx_o[2]
+set_location_assignment PIN_AM3 -to pcie_tx_o[2]
 set_location_assignment PIN_AK3 -to pcie_tx_o[3]
 
 set_instance_assignment -name IO_STANDARD "1.5-V PCML" -to pcie_refclk_i(n)
@@ -1332,7 +1334,7 @@ set_location_assignment PIN_AN2 -to pcie_rx_i[2](n)
 set_location_assignment PIN_AR2 -to pcie_rx_i[1](n)
 set_location_assignment PIN_AU2 -to pcie_rx_i[0](n)
 set_location_assignment PIN_AK4 -to pcie_tx_o[3](n)
-set_location_assignment PIN_AM3 -to pcie_tx_o[2](n)
+set_location_assignment PIN_AM4 -to pcie_tx_o[2](n)
 set_location_assignment PIN_AP4 -to pcie_tx_o[1](n)
 set_location_assignment PIN_AT4 -to pcie_tx_o[0](n)
 
