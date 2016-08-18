@@ -256,58 +256,65 @@ static uint8_t isFwValid(struct  sdb_device* ram, int cpuIdx, const char* sVerEx
     
 }
 
-static int ftmPut(uint32_t dstCpus, t_ftmPage*  pPage, uint8_t* bufWrite, uint32_t bufSizes) {
+static int ftmPut(uint32_t dstCpus, t_ftmPage*  pPage, uint32_t bufSizes) {
   uint32_t baseAddr, absOffset, cpuIdx, i;
    
   uint8_t* bufRead = (uint8_t *)malloc(bufSizes);
+  if(bufRead == NULL) {fprintf(stderr, "Failed to allocate Read Buffer\n"); return ERROR_ALLOC_BUFFER;}
+  uint8_t* bufWriteStart = (uint8_t *)malloc(bufSizes);
+  if(bufWriteStart == NULL) {fprintf(stderr, "Failed to allocate Write Buffer\n"); free(bufRead); return ERROR_ALLOC_BUFFER;}
+
   t_block *pF, *pB, *alloc;
   uint32_t *tab, *newAddress, *newSize, *newBmp;
   uint32_t len;
   eb_cycle_t cycle;
   eb_status_t status;
-  uint8_t* bufStart = bufWrite;
+  uint8_t* bufWrite;
   
-  
+  pF = NULL;
+  pB = NULL;
+
   for(cpuIdx=0;cpuIdx < p->cpuQty;cpuIdx++) {
     if((dstCpus >> cpuIdx) & 0x1) {
       baseAddr  = p->pCores[cpuIdx].ramAdr + ftm_shared_offs;
       absOffset = p->pCores[cpuIdx].ramAdr + ftm_shared_offs + _SHCTL_SIZE_;
-      pF = NULL;
-      pB = NULL; 
+      
 
       tab = (uint32_t*)&(p->pCores[cpuIdx].lbt[0]);
+      bufWrite = bufWriteStart;
       
+      pF = clearList(pF);
+      pB = clearList(pB);
       //init LiveBlock- and Free List from LBT
       tab2BlockList(tab, &pB, &pF, SHARED_SIZE, absOffset);
       
-      
       memset(bufWrite, 0, bufSizes);
       bufWrite = serPage (pPage, bufWrite, cpuIdx);
-      
        
-      if(bufWrite == NULL) return -1;
-      len = (uint32_t)(uintptr_t)(bufWrite - bufStart);
+      
+      len = (uint32_t)(uintptr_t)(bufWrite - bufWriteStart);
       //hexDump("Hallo", bufStart, len); 
       //Tell the allocator the length of the block we need and get an index in return. Address & Size are already in LBT
       alloc = allocateBlockInTab(len, &pF, &pB, (void*)&getBestFit, tab);      
-      if (alloc == NULL) return -1;
+      if (alloc == NULL) {fprintf(stderr, "Failed to allocate RAM on Core #%02u\n", cpuIdx); free(bufRead); return ERROR_ALLOC_EMBEDDED_RAM;}
 
       //Use LBT and the allocated Idx only (for now)
       newAddress = (uint32_t*)&tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_PTR)>>2];
       newSize    = (uint32_t*)&tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_SIZE)>>2];
       newBmp     = (uint32_t*)&tab[(LBT_BMP)>>2]; 
       
-      ftmRamWrite(*newAddress, bufStart, *newSize, BIG_ENDIAN);
-      printf("Wrote %u byte schedule to CPU %u at 0x%08x.", *newSize, cpuIdx, *newAddress);
-      printf("Verify..."); 
+      ftmRamWrite(*newAddress, bufWriteStart, *newSize, BIG_ENDIAN);
+      printf("Wrote %u byte schedule to CPU %u at 0x%08x.\n", *newSize, cpuIdx, *newAddress);
+      printf("Verifying CPU %u ...", cpuIdx); 
 
           
       ftmRamRead(*newAddress, bufRead, *newSize, BIG_ENDIAN);
       for(i = 0; i<*newSize; i++) {
-        if(!(bufRead[i] == bufStart[i])) { 
-          fprintf(stderr, "!ERROR! \nVerify failed for CPU %u at offset 0x%08x\n", cpuIdx, *newAddress +( i & ~0x3) );
+        if(!(bufRead[i] == bufWriteStart[i])) { 
+          printf("FAILED at offset 0x%08x\n", *newAddress +( i & ~0x3) );
           free(bufRead);
-          return -2;
+          free(bufWriteStart);
+          return ERROR_VERIFY_FAILED;
         }
       }
       
@@ -323,6 +330,7 @@ static int ftmPut(uint32_t dstCpus, t_ftmPage*  pPage, uint8_t* bufWrite, uint32
     }  
   }
   free(bufRead);
+  free(bufWriteStart);
   printf("done.\n");
   return 0;  
 
@@ -649,18 +657,17 @@ int v02FtmCheckString(const char* sXml) {
 }
 
 int v02FtmPutString(uint32_t dstCpus, const char* sXml) {
-  uint8_t    bufWrite[BUF_SIZE];
+
   t_ftmPage*  pPage;
   pPage = parseXmlString(sXml);
     
-  return ftmPut(dstCpus, pPage, (uint8_t*)&bufWrite, BUF_SIZE);
+  return ftmPut(dstCpus, pPage, BUF_SIZE);
 }
   
 int v02FtmPutFile(uint32_t dstCpus, const char* filename) {
-  uint8_t    bufWrite[BUF_SIZE];
   t_ftmPage*  pPage = parseXmlFile(filename);
-  
-  return ftmPut(dstCpus, pPage, (uint8_t*)&bufWrite, BUF_SIZE);
+  //printf("Conversion OK\n");
+  return ftmPut(dstCpus, pPage, BUF_SIZE);
   
 }
 
@@ -1181,30 +1188,59 @@ void ftmShowTable(uint32_t srcCpus, uint8_t verbose) {
   char strBuff[65536];
   char* pSB = (char*)&strBuff;
   uint32_t* tab; 
+  uint32_t absOffset; 
+  t_block *pF, *pB;
 
-  
+  pF = NULL; pB = NULL;
 
   for(cpuIdx=0;cpuIdx < p->cpuQty;cpuIdx++) {
-    if((srcCpus >> cpuIdx) & 0x1) {
     tab = (uint32_t*)&(p->pCores[cpuIdx].lbt[0]);
+
+    pF = clearList(pF);
+    pB = clearList(pB);
+    absOffset = p->pCores[cpuIdx].ramAdr + ftm_shared_offs + _SHCTL_SIZE_;
+    tab2BlockList(tab, &pB, &pF, SHARED_SIZE, absOffset);
+
+    if((srcCpus >> cpuIdx) & 0x1) {
       
       //for (cnt=0; cnt < 32; cnt++) {if ((tab[(LBT_BMP)>>2] >> cnt) & 1) printf("1"); else printf("_");}
       
       
+
+
+    
      
       SNTPRINTF(pSB ,"\u2552"); for(i=0;i<35;i++) SNTPRINTF(pSB ,"\u2550"); SNTPRINTF(pSB ,"\u2555\n");
       SNTPRINTF(pSB ,"\u2502 %s#%02u Live Block Table%s              \u2502\n", KCYN, cpuIdx, KNRM);
       //SNTPRINTF(pSB ,"\u251C"); for(i=0;i<35;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2524\n");
-      SNTPRINTF(pSB ,"\u251C"); SNTPRINTF(pSB ,"\u2500\u2500\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u252C"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u252C"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2524\n");
+      //SNTPRINTF(pSB ,"\u251C"); SNTPRINTF(pSB ,"\u2500\u2500\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u252C"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u252C"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2524\n");
+      
+      SNTPRINTF(pSB ,"\u251C"); for(i=0;i<7;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u252C"); for(i=0;i<7;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u252C");
+      for(i=0;i<5;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u252C"); for(i=0;i<7;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u252C"); for(i=0;i<5;i++) SNTPRINTF(pSB ,"\u2500");   SNTPRINTF(pSB ,"\u2524\n");      
+      
+      SNTPRINTF(pSB ,"\u2502 Used  \u2502 Total \u2502  %%U \u2502 Block \u2502  %%F \u2502\n");
+      SNTPRINTF(pSB ,"\u251C"); for(i=0;i<7;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u253C"); for(i=0;i<7;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u253C");
+      for(i=0;i<5;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u253C"); for(i=0;i<7;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u253C"); for(i=0;i<5;i++) SNTPRINTF(pSB ,"\u2500");   SNTPRINTF(pSB ,"\u2524\n");
+      SNTPRINTF(pSB ,"\u2502 %5u \u2502 %5u \u2502 %3u \u2502 %5u \u2502 %3u \u2502\n", getUsage(pB), SHARED_SIZE, getUsage(pB) *100 / SHARED_SIZE, getCont(pF), (getUsage(pF) - getCont(pF))*100 / getUsage(pF) );
+      
+      SNTPRINTF(pSB ,"\u251C"); SNTPRINTF(pSB ,"\u2500\u2500\u2500\u2500\u2500\u252C\u2500\u2534\u2500\u252C"); for(i=0;i<5;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2534"); for(i=0;i<5;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2534\u252C");
+      for(i=0;i<6;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2534"); for(i=0;i<5;i++) SNTPRINTF(pSB ,"\u2500");  SNTPRINTF(pSB ,"\u2524\n");
+      
       SNTPRINTF(pSB ,"\u2502 Idx \u2502 X \u2502 Address    \u2502 Size       \u2502\n");
       SNTPRINTF(pSB ,"\u251C"); SNTPRINTF(pSB ,"\u2500\u2500\u2500\u2500\u2500\u253C\u2500\u2500\u2500\u253C"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u253C"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2524\n");
       for (i=0; i < 32; i++) {if ( ((tab[(LBT_BMP)>>2] >> i) & 1) | verbose){ SNTPRINTF(pSB ,"\u2502 %02u  \u2502 %u \u2502 0x%08x \u2502 0x%08x \u2502\n", i,
       ((tab[(LBT_BMP)>>2] >> i) & 1), tab[(LBT_TAB + i * _LB_SIZE_ + LB_PTR)>>2], tab[(LBT_TAB + i * _LB_SIZE_ + LB_SIZE)>>2]); }}
       SNTPRINTF(pSB ,"\u2514"); SNTPRINTF(pSB ,"\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2534"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2534"); for(i=0;i<12;i++) SNTPRINTF(pSB ,"\u2500"); SNTPRINTF(pSB ,"\u2518\n");  
+      
+      
 
     }
   }
     printf("%s", (const char*)strBuff);
+
+    //Get Memory Consumption
+
+    
 }
 
 

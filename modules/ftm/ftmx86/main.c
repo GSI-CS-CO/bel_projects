@@ -271,8 +271,9 @@ int main(int argc, char** argv) {
   
   else if(!strcasecmp(command, "put")) {
     if(!readonly) {
-      uint32_t res;
+      int32_t res;
       res = ftmPutFile(validTargetThrs, filename);
+
 #if MOCKUP==1
       char* pBufDump = (char*)malloc(DUMP_STR_LEN); 
       ftmDump(validTargetThrs, BUF_SIZE, INACTIVE, pBufDump, DUMP_STR_LEN);

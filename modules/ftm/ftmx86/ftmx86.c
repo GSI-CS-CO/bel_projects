@@ -99,15 +99,22 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint8_t cpuId)
    
    if(pPage == NULL) {fprintf(stderr, "error: Got no DOM to serialize from XML Parser. Something went wrong.\n"); return NULL;};
    //leave space for page meta info, write all plans to pBuffer
-   for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
+
+   //FIXME ONLY ONE PLAN FOR NOW!!!
+// for(planIdx = 0; planIdx < pPage->planQty; planIdx++)
+   //printf("Serializing page\n");
+   for(planIdx = 0; planIdx < 1; planIdx++)
    {
           
 
       pBufPlans[planIdx] = ((uint32_t)((uintptr_t)pBuf - (uintptr_t)pBufStart));
       pChain   = pPage->plans[planIdx].pStart;
       chainIdx = 0;
+      
+
       while(chainIdx++ < pPage->plans[planIdx].chainQty && pChain != NULL)
       {
+         //printf("Ser Flags: 0x%08x, ChainQty; %u \n", pChain->flags, pPage->plans[planIdx].chainQty);
          pBuf     = serChain(pChain, pBufPlans[planIdx], pBufStart, pBuf, cpuId);
          pChain   = (t_ftmChain*)pChain->pNext;
       }   
@@ -223,12 +230,13 @@ t_ftmPage* deserPage(t_ftmPage* pPage, uint8_t* pBufStart)
       pBuf = deserChain(pChain, pNext, pBufPlans[j], pBufStart);
 
       //deserialise chains until we reached the end or we reached max
-      
+      //printf("Flags: 0x%08x, ChainQty; %u \n", pChain->flags, chainQty);
       while(!(pChain->flags & FLAGS_IS_END) && chainQty < 10)
       {
          pChain   = pNext;
          pNext    = calloc(1, sizeof(t_ftmChain));
          pBuf     = deserChain(pChain, pNext, pBuf, pBufStart);
+         chainQty++;
          //printf("Plan %u Chain %u @ %08x\n", j, chainQty, pBufStart-pBuf);
          
       } 

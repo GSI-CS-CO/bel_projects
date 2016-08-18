@@ -41,6 +41,8 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
    uint64_t offset;
    uint16_t vals[5];
    
+   //printf("Msgss \n");
+
    fieldNode =  checkNode(msgNode->children, "id") ;
    if(fieldNode != NULL)
    {
@@ -80,12 +82,14 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
    //OBSOLOTE WITH ECA2 - DM USES NANOSECONDS NATIVELY NOW!!!	
    //pMsg->tef   = ((uint32_t)offset & 0x7) << 29;  //Tef is 0-7ns, but left shifted because it's a fixed point fraction
    
+   //printf("End Msgss \n");
+
    return pMsg;       
 }
 
 t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
 {
-   
+   //printf("Chains \n");
    xmlNode *fieldNode, *subFieldNode, *curNode = NULL;
    
    fieldNode =  checkNode(chainNode->children, "meta");
@@ -162,13 +166,13 @@ t_ftmChain* createChain(xmlNode* chainNode, t_ftmChain* pChain)
       
    }
    //else printf("no signal found \n");
-         
+   //printf("End Chains \n");       
    return pChain;       
 }
 
 t_ftmPage* createPage(xmlNode* pageNode, t_ftmPage* pPage)
 {
-   
+   //printf("Plans \n");
    xmlNode *fieldNode = NULL;
    const char* planChar;
    
@@ -176,7 +180,11 @@ t_ftmPage* createPage(xmlNode* pageNode, t_ftmPage* pPage)
    if(fieldNode != NULL) fieldNode =  fieldNode->children;
    else printf("ERROR meta \n");
    
-   
+   //FIXME this is obsolete
+
+
+
+   /*
    fieldNode = checkNode(fieldNode, "startplan");
    if(fieldNode != NULL) 
    {  
@@ -194,6 +202,11 @@ t_ftmPage* createPage(xmlNode* pageNode, t_ftmPage* pPage)
       else pPage->idxBp = (uint32_t)(planChar[0] & 0xdf) - 'A';
    }
    else printf("ERROR altplan\n");
+   */ 
+   pPage->idxStart = 0;
+   pPage->idxBp    = 0; 
+   //printf("End Plans \n");
+
    return pPage;       
 }
 
@@ -286,13 +299,17 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
             createMsg(msgNode, &pMsg[msgIdx++]);
             msgNode = xmlNextElementSibling(msgNode);      
          }
+      
+         //printf("Msgs OK\n");
+
          //realloc msg array size to actual space
          pMsg = realloc(pMsg, msgIdx*sizeof(t_ftmMsg)); //adjust msg mem allocation to actual cnt
          //write msg array ptr and msg qty to parent chain
          pChain->pMsg     = pMsg;
          pChain->msgQty   = msgIdx;
          chainIdx++;
-         chainNode = xmlNextElementSibling(chainNode);               
+         chainNode = xmlNextElementSibling(chainNode);    
+         //printf("Chain OK\n");           
       }
       if(planIsLoop) { //printf("Plan %u loops to Ptr 0x%p\n", planIdx, pPage->plans[planIdx].pStart);
                        pChain->flags |= FLAGS_IS_ENDLOOP;
@@ -304,8 +321,12 @@ t_ftmPage* convertDOM2ftmPage(xmlNode * aNode)
       
       planNode = xmlNextElementSibling(planNode);
    }
-   pPage->planQty                 = planIdx;
-   
+
+   //FIXME Whats this? 
+   //pPage->planQty                 = planIdx;
+   pPage->planQty = 1; 
+   //printf("Page OK\n");     
+    
    return pPage;    
 }
 
@@ -333,12 +354,13 @@ t_ftmPage* parseXmlFile(const char* filename)
 
     /*free the document */
     xmlFreeDoc(doc);
-
+    //printf("Free OK\n");
     /*
      *Free the global variables that may
      *have been allocated by the parser.
      */
     xmlCleanupParser();
+    //printf("Cleanup OK\n");
     return pPage;
 
 }

@@ -46,6 +46,7 @@ t_block* allocateBlockInTab(uint32_t size, t_block** pFreeList, t_block** pBlock
 
 t_block* createBlockList(uint8_t* buf, t_block* pNewList);
 t_block* createFreeList(t_block* pBlockList, uint32_t ramsize,uint32_t offset);
+t_block* clearList(t_block* pClear);
 
 int freeBlock(t_block* pBlock, t_block** pBlockList, t_block** pFreeList);
 t_block* getBestFit(uint32_t size, t_block** pFreeList);
