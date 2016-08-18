@@ -125,7 +125,7 @@ volatile uint64_t* pMsgCntPQ;
 
 void prioQueueInit();
 void ftmInit(void);
-t_ftmChain* processChain(t_ftmChain* c, uint32_t* pOffset);
+uint32_t processChain(t_ftmChain** c);
 
 void cmdEval();
 //void showFtmPage(t_ftmPage* pPage);

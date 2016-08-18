@@ -115,10 +115,10 @@ int insertFpqEntry()
 void main(void) {
    
    int j;
-   uint32_t*  lbtIdx;
-   uint32_t   thrIdx, lbtBmp;
-
-
+   uint32_t   *lbtIdx, *lbtPtr, *tcGet;
+   uint32_t   thrIdx, lbtBmp, idx;
+    
+   uint32_t** test; 
 
    init();
    //uint32_t test = &pFtmIf->tPrep;
@@ -153,9 +153,9 @@ void main(void) {
       tcGet     = (uint32_t*)&p[(SHCTL_THR_CTL + TC_GET) >>2];
       lbtBmp    = (uint32_t)&p[(SHCTL_LBTAB + LBT_BMP) >> 2];
       lbtIdx    = (uint32_t*)&p[(SHCTL_THR_DAT + thrIdx * _TDS_SIZE_ + TD_LBT_IDX) >>2];
-      pCurrent  = (uint32_t**)&p[(SHCTL_THR_DAT + thrIdx * _TDS_SIZE_ + TD_LB_PTR) >>2];
+      pCurrent  = (t_ftmChain**)&p[(SHCTL_THR_DAT + thrIdx * _TDS_SIZE_ + TD_LB_PTR) >>2];
       
-     
+
      
       //run
       if ( (*tcGet >> thrIdx) & 1) {
@@ -168,7 +168,7 @@ void main(void) {
               //if not -1, this calls a new block. Assign idx return value to lbtIdx of this thread
               *lbtIdx = idx;
               //Assign value of LB_PTR of table entry at *lbtIdx to referenced ptr  
-              *pCurrent = (uint32_t*)p[(SHCTL_LBTAB + LBT_TAB + *lbtIdx * _LB_SIZE_ + LB_PTR)>>2];
+              *pCurrent = (t_ftmChain*)p[(SHCTL_LBTAB + LBT_TAB + *lbtIdx * _LB_SIZE_ + LB_PTR)>>2];
             } else {
               //No ptr at this entry.   
               *pCurrent = NULL;

@@ -41,23 +41,7 @@ void ftmInit()
    */
   
    //FIXME obsolete
-   /* 
-   p[idle = (t_ftmChain){ .tStart     = 0,
-                                .tPeriod    = 5000,
-                                .tExec      = 0,
-                                .flags      = (FLAGS_IS_BP),
-                                .condVal    = 0,
-                                .condMsk    = 0,
-                                .sigDst     = 0,
-                                .sigVal     = 0,
-                                .repQty     = -1,
-                                .repCnt     = 0,
-                                .msgQty     = 0,
-                                .msgIdx     = 0,
-                                .pMsg       = NULL,
-                                .pNext      = NULL
-                                };
-   */
+ 
 
    //FIXME if at all, this belongs to thread data now
    /* 
@@ -79,81 +63,53 @@ inline void showId()
 
 void cmdEval()
 {
-   uint32_t cmd, stat;
+  uint32_t cmd, stat;
 
+
+  cmd  = p[SHCTL_CMD >>2];
+  stat = p[SHCTL_STATUS >>2];
    
-   cmd  = p[SHCTL_CMD >>2];
-   stat = p[SHCTL_STATUS >>2];
    
-   
-   if(cmd)
-   {
+  if(cmd) {
       
       
-      if(cmd & CMD_RST)          { showId(); mprintf("Ftm Init done\n"); stat = 0; ftmInit(); }
-      if(cmd & CMD_START)        { showId(); mprintf("Run\n"); 
-                                   //FIXME No more direct editing in future, and add ctrl for all individual threads
-                                   p[(SHCTL_THR_CTL + TC_GET) >>2] = -1;
-                                      
-                                   stat = (stat & STAT_ERROR) | STAT_RUNNING;
-                                 }
-      if(cmd & CMD_IDLE)         { }//FIXME No such thing as IDLE anymore
-                                    //pFtmIf->pAct->pBp = (t_ftmChain*)&pFtmIf->idle; showId(); mprintf("Going to Idle\n");}
-      if(cmd & CMD_STOP_REQ)     { stat |= STAT_STOP_REQ; }
-      if(cmd & CMD_STOP_NOW)     { //FIXME No more direct editing in future, and add ctrl for all individual threads
-                                   p[(SHCTL_THR_CTL + TC_GET) >>2] = -0;
-                                   stat = (stat & STAT_ERROR) & ~STAT_RUNNING; showId(); mprintf("Stop (forced)\n");} 
-      
-      if(cmd & CMD_COMMIT_PAGE)  { //FIXME No such thing as commit anymore, any mounted block can be activated
-                                  /*
-                                  pTmp = pFtmIf->pIna;
-                                  pFtmIf->pIna = pFtmIf->pAct;
-                                  pFtmIf->pAct = pTmp;
-                                  pFtmIf->pAct->pBp = pFtmIf->pAct->pStart;
-                                  */    
-                                 }
-      //if(cmd & CMD_COMMIT_BP)    {pFtmIf->pAct->pBp = pFtmIf->pNewBp;}
-      
-      if(cmd & CMD_DBG_0)        {showStatus();}
-      if(cmd & CMD_DBG_1)        {showId(); mprintf("DBG1\n");}
- 
-      //only zero the command reg if you found a command. otherwise this becomes race-condition-hell!
-      p[SHCTL_CMD >>2] = 0;                       
-   }
-   
-   //FIXME No such thing as IDLE anymore
-   /* 
-   if(pCurrent == &pFtmIf->idle)  {stat |=  STAT_IDLE;}
-   else                       {stat &= ~STAT_IDLE;}
-    */
-    /*
-   if(pCurrent == &pFtmIf->idle && (stat & STAT_STOP_REQ)) { stat = (stat & STAT_ERROR) & ~STAT_RUNNING; showId(); mprintf("Stop\n");}
-   */
-   p[SHCTL_STATUS >>2] = stat;
-   
+    if(cmd & CMD_RST)          { showId(); mprintf("Ftm Init done\n"); stat = 0; ftmInit(); }
+    if(cmd & CMD_START)        { showId(); mprintf("Run\n"); 
+                                 //FIXME No more direct editing in future, and add ctrl for all individual threads
+                                 p[(SHCTL_THR_CTL + TC_GET) >>2] = -1;
+                                    
+                                 stat = (stat & STAT_ERROR) | STAT_RUNNING;
+                               }
+    if(cmd & CMD_IDLE)         { }//FIXME No such thing as IDLE anymore
+
+    if(cmd & CMD_STOP_REQ)     { stat |= STAT_STOP_REQ; }
+    if(cmd & CMD_STOP_NOW)     { //FIXME No more direct editing in future, and add ctrl for all individual threads
+                                 p[(SHCTL_THR_CTL + TC_GET) >>2] = -0;
+                                 stat = (stat & STAT_ERROR) & ~STAT_RUNNING; showId(); mprintf("Stop (forced)\n");} 
+
+    if(cmd & CMD_COMMIT_PAGE)  {} //FIXME No such thing as commit anymore, any mounted block can be activated
+
+    //TODO this belong sto block Qs now                                 }
+    //if(cmd & CMD_COMMIT_BP)    {pFtmIf->pAct->pBp = pFtmIf->pNewBp;}
+
+    if(cmd & CMD_DBG_0)        {showStatus();}
+    if(cmd & CMD_DBG_1)        {showId(); mprintf("DBG1\n");}
+
+    //only zero the command reg if you found a command. otherwise this becomes race-condition-hell!
+    p[SHCTL_CMD >>2] = 0;                       
+
+
+    //FIXME No such thing as IDLE anymore
+    p[SHCTL_STATUS >>2] = stat;
+  }  
 }
 
 
-/*
-void showFtmPage(t_ftmPage* pPage)
-{
-}
-*/
+
 void showStatus()
 {
    //FIXME obsolete bullshit
-   /*
 
-   uint32_t stat = p[SHCTL_STATUS >>2];
-   mprintf("\f%08x\tStatus:\t", (uint32_t)(&(pFtmIf->cmd)) );
-   if(stat & STAT_RUNNING) mprintf("\t\t-RUNNING"); else mprintf("\t\t-\t");
-   //FIXME No such thing as IDLE anymore 
-   //if(stat & STAT_IDLE) mprintf("\t\t-IDLE"); else mprintf("\t\t-\n");
-   if(stat & STAT_STOP_REQ) mprintf("\t\t-STOP_REQ"); else mprintf("\t\t-\t");
-   if(stat & STAT_ERROR) mprintf("\t\t-ERROR"); else mprintf("\t\t-\t");
-   mprintf("\t\tE:\t%x%08x", (uint32_t)(execCnt), (uint32_t)(execCnt>>32) );
-   mprintf("\n");
-   */
 }
 
 inline int dispatch(t_ftmMsg* pMsg)
@@ -164,9 +120,6 @@ inline int dispatch(t_ftmMsg* pMsg)
   uint32_t msgCnt, stat;
   uint64_t tmpPar; 
 
-   
-  //incIdSCTR(&pMsg->id, &pFtmIf->sctr); //copy sequence counter (sctr) into msg id and inc sctr
-  
   //Diagnostic Event? insert PQ Message counter. Different device, can't be placed inside atomic!
   if (pMsg->id == DIAG_PQ_MSG_CNT) tmpPar = *pMsgCntPQ;
   else                             tmpPar = pMsg->par;  
@@ -188,6 +141,78 @@ inline int dispatch(t_ftmMsg* pMsg)
    
   return ret;
 
+}
+
+
+
+inline uint32_t processChainAux(t_ftmChain** pCur)
+{
+  t_ftmChain* c;
+  t_ftmMsg*   pCurMsg;
+  uint64_t    now, tNewStart;
+
+
+  c         = *pCur; 
+  now       = getSysTime();
+  tNewStart = c->tStart + c->tPeriod; 
+
+
+  //reps left ? 
+  DBPRINT3("repcnt %04x repqty %04x\n", c->repCnt, c->repQty);
+  if( c->repCnt < c->repQty || c->repQty == -1) {
+     DBPRINT3("repcnt %u repqty %u", c->repCnt, c->repQty);
+     //msgs left ?
+     while(c->msgIdx < c->msgQty) {
+        pCurMsg = (t_ftmMsg*)((uint32_t)c + (c->msgOffset + (c->msgIdx * FTM_MSG_END_)));
+        pCurMsg->ts = c->tStart + pCurMsg->offs; //set execution time for msg 
+
+        //msg due ?
+        if( now + *(uint64_t*)(pV + SHCTL_TPREP) >= pCurMsg->ts) {
+           uint32_t msgCnt = (p[SHCTL_STATUS >>2] >> 16); 
+           
+           //dbg_then = getSysTime();
+           if(dispatch(pCurMsg)) c->msgIdx++;
+          
+        } else {break; DBPRINT3("Too early for Msg %u", c->msgIdx);}
+     } 
+     c->msgIdx = 0;
+     c->repCnt++; //repetions left, stay with this chain
+     c->tStart = tNewStart; 
+    
+  } else {
+     DBPRINT3("RepCnt: %u RepQty: %u\n", c->repCnt, c->repQty);
+     c->msgIdx = 0;
+     c->repCnt = 0;
+     c->tStart = tNewStart;
+
+     if(c->nextOffset != 0) {
+       //move to next chain 
+      *pCur = (t_ftmChain*)((void*)(*pCur) + c->nextOffset);
+     } else {         
+      //move to successor block
+      return c->nextIdx; 
+     }
+    
+  }
+
+
+  return -1;    
+}
+
+
+inline uint32_t processChain(t_ftmChain** pCur)
+{
+  uint32_t idx;
+  t_time now = getSysTime();
+  t_ftmChain* c;
+  c  = *pCur; 
+
+  //if starttime is 0 or in the past, set to earliest possible time
+
+  if ( !c->tStart ) {c->tStart = now + *(uint64_t*)(pV + SHCTL_TPREP)  ; DBPRINT2("Adjust time\n#ST: %08x %08x \n TS: %08x %08x\n", now, c->tStart);}
+  idx = processChainAux(pCur); 
+  //TODO block Qs now (not yet implemented)
+  return idx;    
 }
 
 inline uint8_t condValid(t_ftmChain* c)
@@ -275,110 +300,3 @@ inline void sigSend(t_ftmChain* c)
   */
 }
 
-inline uint32_t processChainAux(t_ftmChain** pCur)
-{
-   t_ftmChain* c; = pCur;
-   t_ftmMsg*   pCurMsg;
-   uint64_t tMsgExec, now;
-
-   uint64_t dbg_now, dbg_then; 
-   uint32_t dbg_dur;
-
-   DBPRINT2("Time to process Chain %08x reached\n", c);
-
-
-   c = pCur; 
-   now   = getSysTime();
-   tNewStart = c->tStart + c->tPeriod; 
-
-   
-   if( now + *(uint64_t*)(pV + SHCTL_TPREP) >= c->tStart) {
-      
-      DBPRINT3("repcnt %04x repqty %04x\n", c->repCnt, c->repQty);
-      if( c->repCnt < c->repQty || c->repQty == -1) //reps left ?  
-      {
-         DBPRINT3("repcnt %u repqty %u", c->repCnt, c->repQty);
-         while(c->msgIdx < c->msgQty) //msgs left to process?
-         {
-            pCurMsg = (t_ftmMsg*)((uint32_t)c + (c->msgOffset + (c->msgIdx * FTM_MSG_END_)));
-            pCurMsg->ts = c->tStart + pCurMsg->offs; //set execution time for msg 
-            if( now + *(uint64_t*)(pV + SHCTL_TPREP) >= pCurMsg->ts)  //### time to hand it over to prio queue ? ###
-            {
-               uint32_t msgCnt = (p[SHCTL_STATUS >>2] >> 16); 
-               
-               //dbg_then = getSysTime();
-               if(dispatch(pCurMsg)) c->msgIdx++;
-              
-            } else {break; DBPRINT3("Too early for Msg %u", c->msgIdx);}
-         } 
-         if(c->msgIdx == c->msgQty)
-         {
-            c->msgIdx = 0; c->repCnt++; //repetions left, stay with this chain
-            c->tStart = tNewStart; 
-         }
-      } 
-      else
-      {
-         
-         DBPRINT3("RepCnt: %u RepQty: %u\n", c->repCnt, c->repQty);
-         c->msgIdx = 0; c->repCnt = 0;
-         c->tStart = tNewStart;
-
-         if(c->nextOffset != NULL) {
-           //move to next chain 
-          *pCur += c->nextOffset;
-         } else {         
-          //move to successor block
-          return c->nextIdx; 
-
-         }
-        
-      }
-      
-   }
-
-  return -1;    
-}
-
-
-inline uint32_t processChain(t_ftmChain** c)
-{
-   uint32_t idx;
-   t_time now = getSysTime();
-   
-   //if starttime is 0 or in the past, set to earliest possible time
-   //   || c->tStart < now
-   if ( !c->tStart ) {c->tStart = now + *(uint64_t*)(pV + SHCTL_TPREP)  ; DBPRINT2("Adjust time\n#ST: %08x %08x \n TS: %08x %08x\n", now, c->tStart);}
-   //FIXME obsolete, if at all, this belongs to thread data now 
-   //if(pFtmIf->sema.cond) condValid(c);
-   
-   //FIXME obsolete, if at all, this belongs to thread data now
-   //if(!pFtmIf->sema.cond) {
-      idx = processChainAux(c); 
-
-   //} else {
-    //FIXME this belongs to block Qs now (not yet implemented)
-         /*
-      if((c->flags & FLAGS_IS_BP) && pFtmIf->pAct->pBp != NULL)
-      { 
-         
-         pCur = pFtmIf->pAct->pBp; 
-         pFtmIf->sctr      = 0;
-         pFtmIf->pAct->pBp = NULL;
-         
-      } 
-
-   }
-    */  
-   return idx;    
-}
-/*
-
-void processFtm()
-{
-   DBPRINT3("c = %08x\n", pCurrent);
-   if (p[SHCTL_STATUS >>2] & STAT_RUNNING) { pCurrent = processChain(pCurrent); execCnt++;} 
-
-
-}
-*/
