@@ -178,14 +178,14 @@ t_block* createFreeList(t_block* pBlockList, uint32_t ramsize, uint32_t offset) 
   int32_t diff;
   t_block* c = pBlockList;
 
-
+ 
   //create first block
   if (c->adr > offset) {
-    //printf("Gap at start\n"); 
+    //printf("Gap at start, 0x%08x, O 0x%08x\n",c->adr, offset); 
     t_block* pAdd = (t_block*)malloc(sizeof(t_block));
     if (pAdd != NULL) {
       pAdd->adr   = offset;
-      pAdd->size  = c->adr;
+      pAdd->size  = c->adr - offset;
       pAdd->idx   = -1;
       pAdd->next  = NULL;
       pAdd->prev  = NULL;  
@@ -194,6 +194,7 @@ t_block* createFreeList(t_block* pBlockList, uint32_t ramsize, uint32_t offset) 
     } else {printf("CreateFreeList: Couldn't alloc new free element\n");}
   }
   
+
 
 
   while (c != NULL ) {
@@ -438,8 +439,8 @@ int  getCont(t_block* pFreeList) {
   t_block* c;
   int m;
 
-
   c = getHead(pFreeList);
+
   if (c == NULL) return -1;
   m = 0;
   while (c != NULL) {
