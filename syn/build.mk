@@ -28,6 +28,7 @@ $(error Missing mandatory RAM_SIZE parameter! Quitting ...)
 endif
 
 .PHONY: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd
+.PRECIOUS: $(TARGET).bin
 
 include $(INCPATH)/build_lm32.mk
  

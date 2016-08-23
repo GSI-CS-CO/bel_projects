@@ -258,7 +258,7 @@ int main(int argc, char** argv) {
   }
 
   else if (!strcasecmp(command, "preptime")) {
-     ftmSetPreptime(validTargetThrs, uint64val);
+     ftmSetPreptime(validTargetCpus, uint64val);
   }
   
   else if(!strcasecmp(command, "put")) {
