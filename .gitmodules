@@ -16,3 +16,6 @@
 [submodule "ip_cores/saftlib"]
 	path = ip_cores/saftlib
 	url = https://github.com/GSI-CS-CO/saftlib.git
+[submodule "ip_cores/fpga-config-space-dev"]
+	path = ip_cores/fpga-config-space
+	url = git@github.com:GSI-CS-CO-Forks/fpga-config-space-dev.git
