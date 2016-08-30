@@ -812,7 +812,7 @@ begin
       c3     => clk_sys3,         --  10  MHz
       locked => sys_locked);
     clk_sys4 <= clk_sys1;
-    clk_sys5 <= clk_sys1;
+    
   end generate;
   sys_a5 : if c_is_arria5 generate
     sys_inst : sys_pll5 port map(
@@ -822,8 +822,7 @@ begin
       outclk_1 => clk_sys1,           -- 100  MHz +0   ns
       outclk_2 => clk_sys2,           --  20  MHz
       outclk_3 => clk_sys3,           --  10  MHz
-      outclk_4 => clk_sys4,           -- 100  MHz +0.5 ns
-      outclk_5 => clk_sys5,           -- 100  MHz +1.0 ns
+      outclk_4 => clk_sys4,           --  20  MHz
       locked   => sys_locked);
   end generate;
   
@@ -847,10 +846,7 @@ begin
     inclk  => clk_sys4,
     outclk => clk_flash_ext);
   
-  flash_in : global_region port map(
-    inclk  => clk_sys5,
-    outclk => clk_flash_in);
-  
+  clk_flash_in  <= clk_flash_ext;
   clk_flash_out <= clk_reconf;
   
   ref_a2 : if c_is_arria2 generate
@@ -1505,7 +1501,7 @@ s_pmc_debug_in(7 downto 2) <= (others => '0');
         g_port_width             => 4,  -- quad-lane SPI bus
         g_addr_width             => g_flash_bits,
         g_dummy_time             => 10,
-        g_input_latch_edge       => '1',
+        g_input_latch_edge       => '0',
         g_output_latch_edge      => '1',
         g_input_to_output_cycles => 4)
       port map(
@@ -1513,9 +1509,9 @@ s_pmc_debug_in(7 downto 2) <= (others => '0');
         rstn_i    => rstn_sys,
         slave_i   => dev_bus_master_o(c_devs_flash),
         slave_o   => dev_bus_master_i(c_devs_flash),
-        clk_ext_i => clk_flash_ext, -- +0.5 ns
-        clk_out_i => clk_flash_out, -- +0.0 ns
-        clk_in_i  => clk_flash_in); -- +1.0 ns
+        clk_ext_i => clk_flash_ext,
+        clk_out_i => clk_flash_ext,
+        clk_in_i  => clk_flash_ext);
   end generate;
   
   wb_reset : wb_arria_reset
@@ -1909,8 +1905,8 @@ s_pmc_debug_in(7 downto 2) <= (others => '0');
         Test                  => 0,  
         Time_Out_in_ns        => 350)
       port map(
-        clk_i    => clk_sys,
-        rst_n_i  => rstn_sys,
+        clk_i              => clk_sys,
+        rst_n_i            => rstn_sys,
         tag                => tag,
         tag_valid          => tag_valid,
         irq_master_o       => dev_msi_slave_i (c_devs_scubirq),
