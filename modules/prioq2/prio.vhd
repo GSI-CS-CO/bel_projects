@@ -185,7 +185,7 @@ begin
           when st_PACKET_EMPTY  =>  if(s_ctrl_mode_o(c_ENABLE) = '0') then
                                       r_state <= st_IDLE;  
                                     elsif s_ts_valid_o = '1' then
-                                      r_state <= st_PACKET_GATHER;
+                                      r_state <= st_PACKET_START;
                                     end if;
           
           when st_PACKET_START  =>  r_state <= st_PACKET_GATHER;
@@ -242,9 +242,10 @@ begin
                                 --std behaviour, this is redundant. just to show what this state does.                                
                                 --s_ebm_ctrl_o.adr  <= std_logic_vector(unsigned(s_ctrl_ebm_adr_o) + unsigned(c_EBM_ADHI));
                                 --s_ebm_ctrl_o.dat  <= s_ctrl_eca_adr_o;  
-                                s_msg_cnt_clr    <= '1'; 
+                                
                      
       when st_PACKET_EMPTY  =>  s_allow_sending  <= '1';
+                                s_msg_cnt_clr    <= '1'; 
 
       when st_PACKET_START  =>  s_allow_sending  <= '1';
                                 s_save_packet_ts <= '1';  
