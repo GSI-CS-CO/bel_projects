@@ -183,6 +183,20 @@ architecture rtl of pci_pmc is
   signal s_butis        : std_logic;
   signal s_butis_t0     : std_logic;
 
+  signal s_pmc_buf_oe     : std_logic;
+  signal s_pmc_buf_sd_oe  : std_logic;
+  signal s_pmc_buf_ld_oe  : std_logic;
+
+  signal s_count_dis      : std_logic;
+
+  signal s_delay_counter  : unsigned(19 downto 0);
+  constant c_SHORT_DELAY  : unsigned(19 downto 0):= x"0000A"; -- 10*10us = 100us
+  constant c_LONG_DELAY   : unsigned(19 downto 0):= x"003e8"; -- 1000*10us = 10ms  
+  constant c_MAX_COUNT    : unsigned(19 downto 0):= x"FFFF0";
+
+  
+
+
 
   constant io_mapping_table : t_io_mapping_table_arg_array(0 to 12) := 
   (
@@ -277,7 +291,7 @@ begin
       usb_fd_io              => fd,
       pmc_pci_clk_i          => pmc_clk_i,
       pmc_pci_rst_i          => pmc_rst_i,
-      pmc_buf_oe_o           => open, -- pmc_buf_oe_o,
+      pmc_buf_oe_o           => s_pmc_buf_oe,
       pmc_busmode_io         => pmc_busmode_io,
       pmc_ad_io              => pmc_ad_io,
       pmc_c_be_io            => pmc_c_be_io,
@@ -308,7 +322,34 @@ begin
       lcd_in_o               => dis_di(0));
 
 
-  pmc_buf_oe_o <= '1'; -- enable PCI bus translators
+-- PCI buffer output enable generation
+
+ buf_oe_dly_count : process(s_butis) 
+ begin
+    if s_count_dis = '0' then
+       s_delay_counter <= s_delay_counter + 1;
+    else 
+       s_delay_counter <= s_delay_counter;
+    end if;
+ end process;
+
+ s_count_dis <= '1' when s_delay_counter > c_MAX_COUNT else '0';
+
+ s_pmc_buf_sd_oe <= '1' when s_delay_counter > c_SHORT_DELAY else '0';
+ s_pmc_buf_ld_oe <= '1' when s_delay_counter > c_LONG_DELAY  else '0';
+
+
+  -- PCI bus translators enable
+ with s_test_sel(3 downto 0) select
+  pmc_buf_oe_o <= 
+    '1' when x"1", -- always on   
+    s_pmc_buf_sd_oe when x"2", -- on after short power on delay
+    s_pmc_buf_ld_oe when x"3", -- on after long  power on delay
+    s_pmc_buf_oe when x"4",    -- controlled by PCI core
+    '0' when others; -- off
+
+
+
 
   -- SFP always enabled
   sfp_tx_disable_o <= '0';
