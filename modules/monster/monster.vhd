@@ -62,7 +62,7 @@ use work.psram_pkg.all;
 use work.wb_serdes_clk_gen_pkg.all;
 use work.io_control_pkg.all;
 use work.wb_pmc_host_bridge_pkg.all;
-use work.pmc_ctrl_pkg.all;
+--use work.pmc_ctrl_pkg.all;
 
 entity monster is
   generic(
@@ -94,7 +94,7 @@ entity monster is
     g_en_psram             : boolean;
     g_io_table             : t_io_mapping_table_arg_array(natural range <>);
     g_en_pmc               : boolean;
-    g_en_pmc_ctrl          : boolean;
+--    g_en_pmc_ctrl          : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -316,14 +316,14 @@ entity monster is
     pmc_gnt_i              : in    std_logic;
 
     -- g_en_pmc_ctrl
-    pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0);
-    pmc_pb_i               : in    std_logic;
-    pmc_ctrl_hs_cpld_i     : in    std_logic_vector(3 downto 0);
-    pmc_pb_cpld_i          : in    std_logic;
-    pmc_clk_oe_o           : out   std_logic := 'Z';
-    pmc_log_oe_o           : out   std_logic_vector(16 downto 0) := (others => 'Z');
-    pmc_log_out_o          : out   std_logic_vector(16 downto 0) := (others => 'Z');
-    pmc_log_in_i           : in    std_logic_vector(16 downto 0);
+--    pmc_ctrl_hs_i          : in    std_logic_vector(3 downto 0);
+--    pmc_pb_i               : in    std_logic;
+--    pmc_ctrl_hs_cpld_i     : in    std_logic_vector(3 downto 0);
+--    pmc_pb_cpld_i          : in    std_logic;
+--    pmc_clk_oe_o           : out   std_logic := 'Z';
+--    pmc_log_oe_o           : out   std_logic_vector(16 downto 0) := (others => 'Z');
+--    pmc_log_out_o          : out   std_logic_vector(16 downto 0) := (others => 'Z');
+--    pmc_log_in_i           : in    std_logic_vector(16 downto 0);
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
     hw_version             : in    std_logic_vector(31 downto 0));
@@ -1150,8 +1150,8 @@ begin
 );
   end generate;
 
-s_pmc_debug_in(0)          <= pmc_pb_i;      -- FPGA push button used to trigger INTx IRQ
-s_pmc_debug_in(1)          <= pmc_pb_cpld_i; -- CPLD push button used to trigger MSI IRQ
+s_pmc_debug_in(0)          <= gpio_i(0);      -- FPGA push button used to trigger INTx IRQ
+s_pmc_debug_in(1)          <= gpio_i(1); -- CPLD push button used to trigger MSI IRQ
 s_pmc_debug_in(7 downto 2) <= (others => '0');
   
   vme_n : if not g_en_vme generate

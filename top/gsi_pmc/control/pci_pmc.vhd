@@ -157,7 +157,8 @@ architecture rtl of pci_pmc is
   constant c_test_pattern_a   : std_logic_vector(15 downto 0) := x"5555";
   constant c_test_pattern_b   : std_logic_vector(15 downto 0) := x"0000";
   
-  signal s_gpio         : std_logic_vector(7 downto 0);
+  signal s_gpio_out           : std_logic_vector(8 downto 0);
+  signal s_gpio_in            : std_logic_vector(9 downto 0);
   
   signal s_lvds_p_i     : std_logic_vector(4 downto 0);
   signal s_lvds_n_i     : std_logic_vector(4 downto 0);
@@ -184,22 +185,33 @@ architecture rtl of pci_pmc is
   signal s_butis_t0     : std_logic;
 
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 12) := 
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 23) := 
   (
   -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
-    ("LED1_USR_R ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED2_USR_B ", IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED3_USR_G ", IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED4_USR_W ", IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED5_USR_R ", IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED6_USR_B ", IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED7_USR_G ", IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED8_USR_W ", IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("IO1        ", IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("LED1       ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL), -- user LEDs
+    ("LED2       ", IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED3       ", IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED4       ", IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED5       ", IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED6       ", IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED7       ", IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED8       ", IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("IO1        ", IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL), -- front panel IOs
     ("IO2        ", IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
     ("IO3        ", IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
     ("IO4        ", IO_NONE,         false,   false,  3,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
-    ("IO5        ", IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL)
+    ("IO5        ", IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("PBF        ", IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL), -- FPGA push button
+    ("PBC        ", IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL), -- CPLD push button
+    ("SWF0       ", IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL), -- FPGA HEX switch
+    ("SWF1       ", IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("SWF2       ", IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("SWF3       ", IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("SWC0       ", IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL), -- CPLD HEX switch
+    ("SWC1       ", IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("SWC2       ", IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("SWC3       ", IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
+    ("IOCLKEN    ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL)  -- enable for IO clk buffer
   );
 
   
@@ -221,12 +233,13 @@ begin
       g_lvds_inout      => 5,  -- 5 LEMOs at front panel
       g_lvds_in         => 0,
       g_lvds_out        => 0,
-      g_gpio_out        => 8,  -- 8 on-boards LEDs
+      g_gpio_out        => 9,  -- 8 on-boards LEDs
+      g_gpio_in         => 10, -- FPGA button and HEX switch (1+4), CPLD button and HEX switch (1+4)
       g_en_usb          => true,
       g_en_lcd          => true,
       g_io_table        => io_mapping_table,
       g_en_pmc          => true,
-      g_en_pmc_ctrl     => true,
+--     g_en_pmc_ctrl     => true,
       g_lm32_cores      => c_cores,
       g_lm32_ramsizes   => c_lm32_ramsizes/4,
       g_lm32_init_files => f_string_list_repeat(c_initf_name & ".mif", c_cores),
@@ -250,7 +263,8 @@ begin
       wr_dac_sclk_o          => wr_dac_sclk,
       wr_dac_din_o           => wr_dac_din,
       wr_ndac_cs_o           => wr_ndac_cs,
-      gpio_o                 => s_gpio,
+      gpio_o                 => s_gpio_out,
+      gpio_i                 => s_gpio_in,
       lvds_p_i               => s_lvds_p_i,
       lvds_n_i               => s_lvds_n_i,
       lvds_i_led_o           => s_lvds_i_led,
@@ -275,6 +289,7 @@ begin
       usb_slwrn_o            => slwr,
       usb_pktendn_o          => pa(6),
       usb_fd_io              => fd,
+ 
       pmc_pci_clk_i          => pmc_clk_i,
       pmc_pci_rst_i          => pmc_rst_i,
       pmc_buf_oe_o           => open, -- pmc_buf_oe_o,
@@ -294,18 +309,28 @@ begin
       pmc_req_o              => pmc_req_o,
       pmc_gnt_i              => pmc_gnt_i,
 
-      pmc_ctrl_hs_i          => hswf,
-      pmc_pb_i               => pbs_f,
-      pmc_ctrl_hs_cpld_i     => con(4 downto 1),
-      pmc_pb_cpld_i          => con(5),
-      pmc_clk_oe_o           => s_wr_ext_in,
-      pmc_log_oe_o           => s_log_oe,
-      pmc_log_out_o          => s_log_out,
-      pmc_log_in_i           => s_log_in,
+--     pmc_ctrl_hs_i          => hswf,
+--     pmc_pb_i               => pbs_f,
+--     pmc_ctrl_hs_cpld_i     => con(4 downto 1),
+--     pmc_pb_cpld_i          => con(5),
+--     pmc_clk_oe_o           => s_wr_ext_in,
+--     pmc_log_oe_o           => s_log_oe,
+--     pmc_log_out_o          => s_log_out,
+--     pmc_log_in_i           => s_log_in,
+ 
       lcd_scp_o              => dis_di(3),
       lcd_lp_o               => dis_di(1),
       lcd_flm_o              => dis_di(2),
-      lcd_in_o               => dis_di(0));
+      lcd_in_o               => dis_di(0)
+);
+ 
+
+
+  -- button and hex switches
+  s_gpio_in(0)  <= pbs_f;  -- fpga button
+  s_gpio_in(1)  <= con(5); -- cpld button
+  s_gpio_in(5 downto 2) <= hswf; --  fpga hex switch
+  s_gpio_in(9 downto 6) <= con(4 downto 1); -- cpld hex switch
 
 
   pmc_buf_oe_o <= '1'; -- enable PCI bus translators
@@ -329,7 +354,7 @@ begin
   s_status_led_moster(4) <= s_led_pps;                          -- white = PPS
 
   -- GPIOs
-  s_status_led_moster(6 downto 5) <= s_gpio (1 downto 0);
+  s_status_led_moster(6 downto 5) <= s_gpio_out (1 downto 0);
 
   -- invert FPGA button and HEX switch
   s_test_sel(4)          <= not pbs_f;
@@ -352,7 +377,7 @@ begin
                   x"55"                    when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
                   ("000" &     con)        when ('0' & x"D"),   -- FPGA hex sw in position D, button not pressed, CPLD HEX SW and button test  
                   ("000" & not con)        when ('1' & x"D"),   -- FPGA hex sw in position D, button     pressed, CPLD HEX SW and button test  
-                  s_gpio                   when others;         -- driven by monster
+                  s_gpio_out(7 downto 0)   when others;         -- driven by monster
 
   user_led_o <= not s_user_led;
 
@@ -394,16 +419,16 @@ begin
 
   -- Logic analyzer
   -- inputs
-  s_log_in(15 downto 0) <= hpw(15 downto 0);
-  s_log_in(16)          <= hpwck;
+  --s_log_in(15 downto 0) <= hpw(15 downto 0);
+  --s_log_in(16)          <= hpwck;
 
   -- outputs
-  hpwck                 <= s_log_out(16) when s_log_oe(16) = '1' else 'Z';
+  hpwck           <= 'Z';
   hpw_out : for i in 0 to 15 generate
-    hpw(i)               <= s_log_out(i) when s_log_oe(i) = '1' else 'Z';  
+    hpw(i)        <= 'Z';  
   end generate;
   
-  -- External white rabbit clock input
-  lvttl_in_clk_en_o <= not(s_wr_ext_in); 
+  -- Enable clock input from IO
+  lvttl_in_clk_en_o <= not s_gpio_out(8); 
   
 end rtl;
