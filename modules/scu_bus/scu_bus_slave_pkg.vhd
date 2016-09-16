@@ -132,5 +132,23 @@ component housekeeping is
     debug_serial_i:     in  std_logic);
 end component; 
 
+type t_scu_local_master_o is record
+  adr_val:  std_logic;
+  rd_act:   std_logic;
+  wr_act:   std_logic;
+  dat:      std_logic_vector(15 downto 0);
+  adr:      std_logic_vector(15 downto 0);
+end record t_scu_local_master_o;
+
+subtype t_scu_local_slave_i is t_scu_local_master_o;
+
+type t_scu_local_slave_o is record
+  dtack:    std_logic;
+  dat:      std_logic_vector(15 downto 0);
+  dat_val:  std_logic;
+end record t_scu_local_slave_o;
+
+subtype t_scu_local_master_i is t_scu_local_slave_o;
+
 
 end package scu_bus_slave_pkg;
