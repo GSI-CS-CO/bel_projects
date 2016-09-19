@@ -7,6 +7,9 @@ use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 
 entity pci_pmc is
+  generic(
+		g_HW_TEST : boolean := false
+  );
   port(
     -----------------------------------------
     -- Clocks
@@ -160,17 +163,17 @@ architecture rtl of pci_pmc is
   signal s_gpio_out           : std_logic_vector(8 downto 0);
   signal s_gpio_in            : std_logic_vector(9 downto 0);
   
-  signal s_lvds_p_i     : std_logic_vector(4 downto 0);
-  signal s_lvds_n_i     : std_logic_vector(4 downto 0);
-  signal s_lvds_i_led   : std_logic_vector(4 downto 0);
-  signal s_lvds_p_o     : std_logic_vector(4 downto 0);
-  signal s_lvds_n_o     : std_logic_vector(4 downto 0);
-  signal s_lvds_o_led   : std_logic_vector(4 downto 0);
-  signal s_lvds_led     : std_logic_vector(4 downto 0);  
-  signal s_lvds_oen     : std_logic_vector(4 downto 0);
-  signal s_lvds_oe      : std_logic_vector(4 downto 0);
+  signal s_lvds_p_i     : std_logic_vector(5 downto 1);
+  signal s_lvds_n_i     : std_logic_vector(5 downto 1);
+  signal s_lvds_i_led   : std_logic_vector(5 downto 1);
+  signal s_lvds_p_o     : std_logic_vector(5 downto 1);
+  signal s_lvds_n_o     : std_logic_vector(5 downto 1);
+  signal s_lvds_o_led   : std_logic_vector(5 downto 1);
+  signal s_lvds_led     : std_logic_vector(5 downto 1);  
+  signal s_lvds_oen     : std_logic_vector(5 downto 1);
+  signal s_lvds_oe      : std_logic_vector(5 downto 1);
 
-  signal s_lvds_oen_monster   : std_logic_vector(4 downto 0);
+  signal s_lvds_oen_monster   : std_logic_vector(5 downto 1);
 
   
   signal s_log_oe       : std_logic_vector(16 downto 0);
@@ -309,15 +312,6 @@ begin
       pmc_req_o              => pmc_req_o,
       pmc_gnt_i              => pmc_gnt_i,
 
---     pmc_ctrl_hs_i          => hswf,
---     pmc_pb_i               => pbs_f,
---     pmc_ctrl_hs_cpld_i     => con(4 downto 1),
---     pmc_pb_cpld_i          => con(5),
---     pmc_clk_oe_o           => s_wr_ext_in,
---     pmc_log_oe_o           => s_log_oe,
---     pmc_log_out_o          => s_log_out,
---     pmc_log_in_i           => s_log_in,
- 
       lcd_scp_o              => dis_di(3),
       lcd_lp_o               => dis_di(1),
       lcd_flm_o              => dis_di(2),
@@ -326,11 +320,11 @@ begin
  
 
 
-  -- button and hex switches
-  s_gpio_in(0)  <= pbs_f;  -- fpga button
-  s_gpio_in(1)  <= con(5); -- cpld button
-  s_gpio_in(5 downto 2) <= hswf; --  fpga hex switch
-  s_gpio_in(9 downto 6) <= con(4 downto 1); -- cpld hex switch
+  -- button and hex switches as gpio inputs
+  s_gpio_in(0)  <= not pbs_f;  -- fpga button
+  s_gpio_in(1)  <= not con(5); -- cpld button
+  s_gpio_in(5 downto 2) <= not hswf; --  fpga hex switch
+  s_gpio_in(9 downto 6) <= not con(4 downto 1); -- cpld hex switch
 
 
   pmc_buf_oe_o <= '1'; -- enable PCI bus translators
@@ -355,6 +349,61 @@ begin
 
   -- GPIOs
   s_status_led_moster(6 downto 5) <= s_gpio_out (1 downto 0);
+
+
+-- normal build, no hw test functionality
+iotest_false : if g_HW_TEST = false generate
+
+  -- status LED output 
+  status_led_o <= not s_status_led_moster;         -- driven by monster
+
+  -- USER LED output 
+  user_led_o <= not s_gpio_out(7 downto 0);         -- driven by monster
+
+  
+  -- LVDS inputs
+  s_lvds_p_i <= lvttio_in_p;
+  s_lvds_n_i <= lvttio_in_n;
+  
+  -- LVDS outputs
+  lvttio_out_p <= s_lvds_p_o;
+  lvttio_out_n <= s_lvds_n_o;
+
+  io_ctrl : for i in 1 to 5 generate
+	  -- LVDS output enable pins (active low)
+	  lvttio_oe(i) <= '0' when s_lvds_oen_monster(i) = '1' else 'Z'; -- driven by monster
+
+	  -- LVDS termination pins (active hi)
+	  lvttio_term_en(i) <= '0' when s_lvds_oen_monster(i) = '1' else '1'; -- driven by monster (enable termination when output disabled)
+
+	  -- LVDS direction indicator RED LEDs (active hi)
+	  lvttio_dir_led(i) <= '0' when s_lvds_oe(i) = '1' else '0';    -- driven by monster
+
+	  -- LVDS activity indicator BLUE LEDs (active hi)
+	  lvttio_act_led(i) <= s_lvds_i_led(i) or s_lvds_o_led(i);   -- driven by monster
+	end generate;
+	
+  -- Logic analyzer
+  -- inputs
+  --s_log_in(15 downto 0) <= hpw(15 downto 0);
+  --s_log_in(16)          <= hpwck;
+
+  -- outputs
+  hpwck           <= 'Z';
+  hpw_out : for i in 0 to 15 generate
+    hpw(i)        <= 'Z';  
+  end generate;
+  
+  -- Enable clock input from IO
+  lvttl_in_clk_en_o <= '0' when s_gpio_out(8)= '1' else 'Z'; 
+
+end generate; -- iotest_false
+
+
+-- ############################################################################
+
+iotest_true : if g_HW_TEST = true generate
+
 
   -- invert FPGA button and HEX switch
   s_test_sel(4)          <= not pbs_f;
@@ -387,8 +436,8 @@ begin
   s_lvds_n_i <= lvttio_in_n;
   
   -- LVDS outputs
-  lvttio_out_p <= s_lvds_p_o(4 downto 0);
-  lvttio_out_n <= s_lvds_n_o(4 downto 0);
+  lvttio_out_p <= s_lvds_p_o;
+  lvttio_out_n <= s_lvds_n_o;
   
 
   -- LVDS output enable pins (active low)
@@ -429,6 +478,9 @@ begin
   end generate;
   
   -- Enable clock input from IO
-  lvttl_in_clk_en_o <= not s_gpio_out(8); 
+  lvttl_in_clk_en_o <= '0' when s_gpio_out(8)= '1' else 'Z'; 
+
+end generate; -- iotest_true
+
   
 end rtl;
