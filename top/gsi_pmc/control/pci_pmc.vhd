@@ -156,10 +156,6 @@ architecture rtl of pci_pmc is
   signal s_status_led         : std_logic_vector(6 downto 1);
   signal s_user_led           : std_logic_vector(8 downto 1);
   
-  
-  constant c_test_pattern_a   : std_logic_vector(15 downto 0) := x"5555";
-  constant c_test_pattern_b   : std_logic_vector(15 downto 0) := x"0000";
-  
   signal s_gpio_out           : std_logic_vector(8 downto 0);
   signal s_gpio_in            : std_logic_vector(9 downto 0);
   
@@ -170,18 +166,14 @@ architecture rtl of pci_pmc is
   signal s_lvds_n_o     : std_logic_vector(5 downto 1);
   signal s_lvds_o_led   : std_logic_vector(5 downto 1);
   signal s_lvds_led     : std_logic_vector(5 downto 1);  
-  signal s_lvds_oen     : std_logic_vector(5 downto 1);
   signal s_lvds_oe      : std_logic_vector(5 downto 1);
-
-  signal s_lvds_oen_monster   : std_logic_vector(5 downto 1);
+  signal s_lvds_term_en : std_logic_vector(5 downto 1);
 
   
   signal s_log_oe       : std_logic_vector(16 downto 0);
   signal s_log_out      : std_logic_vector(16 downto 0);
   signal s_log_in       : std_logic_vector(16 downto 0);
 
-  signal s_test_sel    : std_logic_vector(4 downto 0);
-  
   signal s_wr_ext_in    : std_logic;
   
   signal s_butis        : std_logic;
@@ -274,7 +266,9 @@ begin
       lvds_p_o               => s_lvds_p_o,
       lvds_n_o               => s_lvds_n_o,
       lvds_o_led_o           => s_lvds_o_led,
-      lvds_oen_o             => s_lvds_oen_monster,
+      lvds_oen_o             => s_lvds_oe,
+      lvds_term_o            => s_lvds_term_en,
+
       led_link_up_o          => s_led_link_up,
       led_link_act_o         => s_led_link_act,
       led_track_o            => s_led_track,
@@ -351,13 +345,10 @@ begin
   s_status_led_moster(6 downto 5) <= s_gpio_out (1 downto 0);
 
 
--- normal build, no hw test functionality
-iotest_false : if g_HW_TEST = false generate
-
-  -- status LED output 
+  -- status LED output (active low)
   status_led_o <= not s_status_led_moster;         -- driven by monster
 
-  -- USER LED output 
+  -- USER LED output (active_low)
   user_led_o <= not s_gpio_out(7 downto 0);         -- driven by monster
 
   
@@ -371,13 +362,13 @@ iotest_false : if g_HW_TEST = false generate
 
   io_ctrl : for i in 1 to 5 generate
 	  -- LVDS output enable pins (active low)
-	  lvttio_oe(i) <= '0' when s_lvds_oen_monster(i) = '1' else 'Z'; -- driven by monster
+	  lvttio_oe(i) <= '0' when s_lvds_oe(i) = '1' else 'Z'; -- driven by monster
 
 	  -- LVDS termination pins (active hi)
-	  lvttio_term_en(i) <= '0' when s_lvds_oen_monster(i) = '1' else '1'; -- driven by monster (enable termination when output disabled)
+	  lvttio_term_en(i) <= '1' when s_lvds_term_en(i) = '1' else '0'; -- driven by monster
 
 	  -- LVDS direction indicator RED LEDs (active hi)
-	  lvttio_dir_led(i) <= '0' when s_lvds_oe(i) = '1' else '0';    -- driven by monster
+	  lvttio_dir_led(i) <= '1' when s_lvds_oe(i) = '1' else '0';    -- driven by monster
 
 	  -- LVDS activity indicator BLUE LEDs (active hi)
 	  lvttio_act_led(i) <= s_lvds_i_led(i) or s_lvds_o_led(i);   -- driven by monster
@@ -396,91 +387,6 @@ iotest_false : if g_HW_TEST = false generate
   
   -- Enable clock input from IO
   lvttl_in_clk_en_o <= '0' when s_gpio_out(8)= '1' else 'Z'; 
-
-end generate; -- iotest_false
-
-
--- ############################################################################
-
-iotest_true : if g_HW_TEST = true generate
-
-
-  -- invert FPGA button and HEX switch
-  s_test_sel(4)          <= not pbs_f;
-  s_test_sel(3 downto 0) <= not hswf;
-
-  -- status LED output according to FPGA hex switch position and fpga button
-  -- F position - simple led test
-  with s_test_sel select
-    s_status_led <= "101010"               when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
-                    "010101"               when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
-                    s_status_led_moster    when others;         -- driven by monster
-
-  status_led_o <= not s_status_led;                  
-
-  -- USER LED output according to fpga hex switch position and fpga button                  
-  -- F position - simple led test
-  -- D position - show state of CPLD hex switch and button
-  with s_test_sel select
-    s_user_led <= x"AA"                    when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
-                  x"55"                    when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
-                  ("000" &     con)        when ('0' & x"D"),   -- FPGA hex sw in position D, button not pressed, CPLD HEX SW and button test  
-                  ("000" & not con)        when ('1' & x"D"),   -- FPGA hex sw in position D, button     pressed, CPLD HEX SW and button test  
-                  s_gpio_out(7 downto 0)   when others;         -- driven by monster
-
-  user_led_o <= not s_user_led;
-
-  
-  -- LVDS inputs
-  s_lvds_p_i <= lvttio_in_p;
-  s_lvds_n_i <= lvttio_in_n;
-  
-  -- LVDS outputs
-  lvttio_out_p <= s_lvds_p_o;
-  lvttio_out_n <= s_lvds_n_o;
-  
-
-  -- LVDS output enable pins (active low)
-  lvttio_oe <= s_lvds_oen_monster; -- driven by monster
-
-  s_lvds_oe <= not s_lvds_oen_monster;
-
-  s_lvds_led <= s_lvds_i_led or s_lvds_o_led;
-
-  -- LVDS termination pins (active hi)
-  with s_test_sel select
-    lvttio_term_en <= (others => '0')     when ('0' & x"E"),   -- FPGA hex sw in position E, button not pressed, termination test
-                      (others => '1')     when ('1' & x"E"),   -- FPGA hex sw in position E, button     pressed, termination test
-                       s_lvds_oen_monster when others;         -- driven by monster (enable termination when output disabled)
-
-  -- LVDS direction indicator RED LEDs (active hi)
-  with s_test_sel select
-    lvttio_dir_led <= (others => '0')  when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
-                      (others => '1')  when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
-                       s_lvds_oe       when others;         -- driven by monster
-
-  -- LVDS activity indicator BLUE LEDs (active hi)
-  with s_test_sel select
-    lvttio_act_led <= (others => '1') when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
-                      (others => '0') when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
-                       s_lvds_led     when others;         -- driven by monster
-
-
-  -- Logic analyzer
-  -- inputs
-  --s_log_in(15 downto 0) <= hpw(15 downto 0);
-  --s_log_in(16)          <= hpwck;
-
-  -- outputs
-  hpwck           <= 'Z';
-  hpw_out : for i in 0 to 15 generate
-    hpw(i)        <= 'Z';  
-  end generate;
-  
-  -- Enable clock input from IO
-  lvttl_in_clk_en_o <= '0' when s_gpio_out(8)= '1' else 'Z'; 
-
-end generate; -- iotest_true
 
   
 end rtl;
