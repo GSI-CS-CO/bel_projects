@@ -7,9 +7,6 @@ use work.monster_pkg.all;
 use work.ramsize_pkg.c_lm32_ramsizes;
 
 entity pci_pmc is
-  generic(
-		g_HW_TEST : boolean := false
-  );
   port(
     -----------------------------------------
     -- Clocks
@@ -156,7 +153,7 @@ architecture rtl of pci_pmc is
   signal s_status_led         : std_logic_vector(6 downto 1);
   signal s_user_led           : std_logic_vector(8 downto 1);
   
-  signal s_gpio_out           : std_logic_vector(8 downto 0);
+  signal s_gpio_out           : std_logic_vector(7 downto 0);
   signal s_gpio_in            : std_logic_vector(9 downto 0);
   
   signal s_lvds_p_i     : std_logic_vector(5 downto 1);
@@ -180,7 +177,7 @@ architecture rtl of pci_pmc is
   signal s_butis_t0     : std_logic;
 
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 23) := 
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 22) := 
   (
   -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LED1       ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL), -- user LEDs
@@ -205,8 +202,7 @@ architecture rtl of pci_pmc is
     ("SWC0       ", IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL), -- CPLD HEX switch
     ("SWC1       ", IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
     ("SWC2       ", IO_NONE,         false,   false,  2,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("SWC3       ", IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL),
-    ("IOCLKEN    ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_LVTTL)  -- enable for IO clk buffer
+    ("SWC3       ", IO_NONE,         false,   false,  3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVTTL)
   );
 
   
@@ -228,7 +224,7 @@ begin
       g_lvds_inout      => 5,  -- 5 LEMOs at front panel
       g_lvds_in         => 0,
       g_lvds_out        => 0,
-      g_gpio_out        => 9,  -- 8 on-boards LEDs
+      g_gpio_out        => 8,  -- 8 on-boards LEDs
       g_gpio_in         => 10, -- FPGA button and HEX switch (1+4), CPLD button and HEX switch (1+4)
       g_en_usb          => true,
       g_en_lcd          => true,
@@ -386,7 +382,7 @@ begin
   end generate;
   
   -- Enable clock input from IO
-  lvttl_in_clk_en_o <= '0' when s_gpio_out(8)= '1' else 'Z'; 
+  lvttl_in_clk_en_o <= 'Z'; 
 
   
 end rtl;
