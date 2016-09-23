@@ -24,8 +24,8 @@ set_false_path -from [get_clocks {pmc_clk_i}] -to [get_clocks {main|\sys_a5:sys_
 set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {pmc_clk_i}]
 
 # cut: wb sys <=> wb flash   (different frequencies and using xwb_clock_crossing)
-set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[3].*}]
-set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[3].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}]
+set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[4].*}]
+set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[4].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}]
 # cut: wb sys <=> wb display (different frequencies and using xwb_clock_crossing)
 set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[1].*}]
 set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[1].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}]
