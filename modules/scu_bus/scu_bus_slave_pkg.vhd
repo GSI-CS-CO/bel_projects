@@ -6,6 +6,31 @@ library work;
 
 package scu_bus_slave_pkg is
 
+  type t_scu_local_master_o is record
+    adr_val:  std_logic;
+    rd_act:   std_logic;
+    wr_act:   std_logic;
+    dat:      std_logic_vector(15 downto 0);
+    adr:      std_logic_vector(15 downto 0);
+  end record t_scu_local_master_o;
+
+  subtype t_scu_local_slave_i is t_scu_local_master_o;
+
+  type t_scu_local_slave_o is record
+    dtack:    std_logic;
+    dat:      std_logic_vector(15 downto 0);
+    dat_val:  std_logic;
+  end record t_scu_local_slave_o;
+
+  subtype t_scu_local_master_i is t_scu_local_slave_o;
+
+  type t_scu_slave_o_array is array(natural range <>) of t_scu_local_slave_o;
+  
+  constant scu_dummy_data: std_logic_vector(15 downto 0) := (others => 'X');
+  constant scu_dummy_slave_o: t_scu_local_slave_o := ('0', scu_dummy_data, '0');
+  
+  
+
 component SCU_Bus_Slave
 
 generic
@@ -104,6 +129,66 @@ port
     );
 end component;
 
+component scu_slave_macro is
+  generic (
+    clk_in_hz:        integer  := 100_000_000;             -- frequency of the "SCU_Bus_Slave" clock in Hz,
+                                                          -- should be higher then 100 Mhz
+    slave_id:         integer range 0 to 16#ffff# := 0;   -- ID of the realisied slave board function
+    Firmware_Version: integer range 0 to 16#ffff# := 0;
+    Firmware_Release: integer range 0 to 16#ffff# := 0;
+
+    -- "CSCOHW" hat z.B. die "CID_System"-Kennung dezimal 55. Baugruppen anderer Gewerke-Hersteller sollten verbindlich
+    -- ihre "CID_System"-Kennung eintragen. Falls keine vorhanden ist, darf der Defaultwert 0 nicht verändert werden.
+    cid_system:       integer range 0 to 16#ffff# := 0
+
+    -- Jede Baugruppe die diesen Macro verwendet sollte durch die "CID-Group" zusammen mit "CID-System" eine eindeutige
+    -- Identifizierug der Hardware-Funktion und deren Revision ermöglichen. Die "CID-Group"-Nummer wird bei jeder neuen Karte
+    -- oder jeder neuen Revision hochgezählt.Z.B. "CSCOHW" hat die Karte "FG900160_SCU_ADDAC1" entwickelt,
+    -- für die die "CID_Group"-Nummer 0003 dezimal vergeben wurde.
+    -- Eine neue Version der Baugruppe, z.B. "FG900161_SCU_ADDAC2" könnte die "CID-Group"-Nummer 0011 haben, da
+    -- zwischenzeitlich  "CID-Group"-Nummern für andere Projekte (Funktionen) vergeben wurden, und die "CID-Group"-Nummer
+    -- kontinuierlich hochgezählt werden soll.                                  --
+    -- Falls keine verbindliche "CID-Group"-Nummer vorliegt, muss der Defaultwert 0 stehen bleiben!
+    -- CID_Group: integer range 0 to 16#FFFF# := 0;
+  );
+  port (
+    scub_addr:          in    std_logic_vector(15 downto 0);  -- SCU_Bus: address bus
+    nscub_timing_cyc:   in    std_logic;                      -- SCU_Bus signal: low active SCU_Bus runs timing cycle
+    scub_data:          inout std_logic_vector(15 downto 0);  -- SCU_Bus: data bus (FPGA tri state buffer)
+    nscub_slave_sel:    in    std_logic;                      -- SCU_Bus: '0' => SCU master select slave
+    nscub_ds:           in    std_logic;                      -- SCU_Bus: '0' => SCU master activate data strobe
+    scub_rdnwr:         in    std_logic;                      -- SCU_Bus: '1' => SCU master read slave
+    clk:                in    std_logic;                      -- clock of "SCU_Bus_Slave"
+    nscub_reset_in:     in    std_logic;                      -- SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
+    scub_dtack:         out   std_logic;                      -- for connect via ext. open collector driver - '1' => slave give
+                                                              -- dtack to SCU master
+    scub_srq:           out   std_logic;                      -- for connect via ext. open collector driver - '1' => slave
+                                                              -- service request to SCU master
+    nSel_Ext_Data_Drv:  out   std_logic;                      -- '0' => select the external data driver on the SCU_Bus slave
+    scu_master_o:       out   t_scu_local_master_o;
+    scu_master_i:       in    t_scu_local_master_i;
+
+    -- 15 interrupts from external user functions
+    irq_i:              in    std_logic_vector(15 downto 1); 
+    
+    -- CID Group has default as 0x0000, or mapped to actual parameter as defined by hex dial in top level.
+    cid_group:            in    integer range 0 to 16#ffff# := 0;
+    
+    -- if an extension card is connected to the slave card, than you can map cid_system of this extension
+    -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
+    extension_cid_system: in  integer range 0 to 16#ffff# := 0;
+    
+    -- if an extension card is connected to the slave card, than you can map cid_group of this extension
+    -- (vorausgesetzt der Typ der Extension-Card ist über diese Verbindung eindeutig bestimmbar).
+    extension_cid_group:  in  integer range 0 to 16#ffff# := 0;
+
+    -- timing tag from scu bus
+    tag_i:                out std_logic_vector(31 downto 0);
+    tag_valid:            out   std_logic;    -- timing pattern received
+    nPowerup_Res:         out   std_logic    -- '0' => the FPGA make a powerup
+  );
+end component;
+
 component housekeeping is
   generic (
     Base_addr:  unsigned(15 downto 0));
@@ -132,23 +217,6 @@ component housekeeping is
     debug_serial_i:     in  std_logic);
 end component; 
 
-type t_scu_local_master_o is record
-  adr_val:  std_logic;
-  rd_act:   std_logic;
-  wr_act:   std_logic;
-  dat:      std_logic_vector(15 downto 0);
-  adr:      std_logic_vector(15 downto 0);
-end record t_scu_local_master_o;
-
-subtype t_scu_local_slave_i is t_scu_local_master_o;
-
-type t_scu_local_slave_o is record
-  dtack:    std_logic;
-  dat:      std_logic_vector(15 downto 0);
-  dat_val:  std_logic;
-end record t_scu_local_slave_o;
-
-subtype t_scu_local_master_i is t_scu_local_slave_o;
 
 
 end package scu_bus_slave_pkg;

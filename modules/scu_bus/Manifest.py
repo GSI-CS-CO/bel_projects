@@ -4,5 +4,6 @@ files = [
   "scu_bus_pkg.vhd", 
   "scu_bus_slave_pkg.vhd",
   "scu_bus_slave.vhd",
+  "scu_bus_macro.vhd",
   "housekeeping.vhd"
 ]
