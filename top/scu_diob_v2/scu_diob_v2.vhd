@@ -96,21 +96,7 @@ architecture arch of scu_diob_v2 is
   constant c_Firmware_Release:    integer := 20;  ---- Firmware_release Stand 17.02.2016 ( INFO ROM in Housekeeping Modul eingefügt)
 
     
-  constant clk_switch_status_cntrl_addr:  unsigned := x"0030";
-  constant c_lm32_ow_Base_Addr:           unsigned(15 downto 0):=  x"0040";   -- housekeeping/LM32
-
-  constant c_ADDAC_Base_addr:             integer := 16#0200#;                -- ADDAC (DAC = x"0200", ADC = x"0230")
-  constant c_io_port_Base_Addr:           unsigned(15 downto 0):=  x"0220";   -- 4x8 Bit (ADDAC FG900.161)
-  constant c_fg_1_Base_Addr:              unsigned(15 downto 0):=  x"0300";   -- FG1
-  constant c_tmr_Base_Addr:               unsigned(15 downto 0):=  x"0330";   -- Timer
-  constant c_fg_2_Base_Addr:              unsigned(15 downto 0):=  x"0340";   -- FG2
-
-  constant c_Conf_Sts1_Base_Addr:         integer := 16#0500#;                -- Status-Config-Register
-  constant c_AW_Port1_Base_Addr:          integer := 16#0510#;                -- Anwender I/O-Register
-  constant c_INL_xor1_Base_Addr:          integer := 16#0530#;                -- Interlock-Pegel-Register
-  constant c_INL_msk1_Base_Addr:          integer := 16#0540#;                -- Interlock-Masken-Register
-  constant c_Tag_Ctrl1_Base_Addr:         integer := 16#0580#;                -- Tag-Steuerung
-  constant c_IOBP_Masken_Base_Addr:       integer := 16#0600#;                -- IO-Backplane Masken-Register
+  
    
   
   
@@ -122,29 +108,7 @@ architecture arch of scu_diob_v2 is
   constant c_cid_system:     integer range 0 to 16#FFFF#:= 55;     -- extension card: cid_system, CSCOHW=55
 
 
-  type ID_CID is record
-    ID   : std_logic_vector(7 downto 0);
-    CID  : integer range 0 to 16#FFFF#;
-  end record;
---                                        +--------------- Piggy-ID(Codierung)
---                                        |     +--------- CID(extension card: cid_system)
---                                        |     |     
-  constant c_AW_P37IO:      ID_CID:= (x"01", 27);   ---- Piggy-ID(Codierung), B"0000_0001", FG900_700
-  constant c_AW_P25IO:      ID_CID:= (x"02", 28);   ---- Piggy-ID(Codierung), B"0000_0010", FG900_710
-  constant c_AW_OCin:       ID_CID:= (x"03", 29);   ---- Piggy-ID(Codierung), B"0000_0011", FG900_720
-  constant c_AW_OCIO1:      ID_CID:= (x"04", 30);   ---- Piggy-ID(Codierung), B"0000_0100", FG900_730
-  constant c_AW_UIO:        ID_CID:= (x"05", 31);   ---- Piggy-ID(Codierung), B"0000_0101", FG900_740
-  constant c_AW_DA:         ID_CID:= (x"06", 32);   ---- Piggy-ID(Codierung), B"0000_0110", FG900_750
-  constant c_AW_Frei:       ID_CID:= (x"07", 00);   ---- Piggy-ID(Codierung), B"0000_0111", FG900_760
-  constant c_AW_SPSIO1:     ID_CID:= (x"08", 33);   ---- Piggy-ID(Codierung), B"0000_1000", FG900_770 -- Ausgänge schalten nach 24V
-  constant c_AW_HFIO:       ID_CID:= (x"09", 34);   ---- Piggy-ID(Codierung), B"0000_1001", FG900_780
-  constant c_AW_SPSIOI1:    ID_CID:= (x"0A", 68);   ---- Piggy-ID(Codierung), B"0000_1010", FG901_770 -- Ausgänge schalten nach GND
-  constant c_AW_INLB12S:    ID_CID:= (x"0B", 67);   ---- Piggy-ID(Codierung), B"0000_1011", FG902_050 -- IO-Modul-Backplane mit 12 Steckplätzen
-  constant c_AW_16Out2:     ID_CID:= (x"0C", 70);   ---- Piggy-ID(Codierung), B"0000_1100", FG901_010 -- Output 16 Bit
-  constant c_AW_16In2:      ID_CID:= (x"0D", 71);   ---- Piggy-ID(Codierung), B"0000_1101", FG901_020 -- Input 16 Bit
-  constant c_AW_OCIO2:      ID_CID:= (x"0E", 61);   ---- Piggy-ID(Codierung), B"0000_1110", FG900_731
---  constant c_AW:            ID_CID:= (x"0F", 00);   ---- Piggy-ID(Codierung), B"0000_1111", 
-
+  
   
   constant  stretch_cnt:    integer := 5;                               -- für LED's
   
@@ -215,8 +179,8 @@ architecture arch of scu_diob_v2 is
   signal Ext_RD_fin_ovl:            std_logic;
   signal SCU_Ext_Wr_fin:            std_logic;
   signal nPowerup_Res:              std_logic;
-  signal Timing_Pattern_LA:         std_logic_vector(31 downto 0);--  latched timing pattern from SCU_Bus for external user functions
-  signal Timing_Pattern_RCV:        std_logic;----------------------  timing pattern received
+  signal tag_i:                     std_logic_vector(31 downto 0);--  latched timing pattern from SCU_Bus for external user functions
+  signal tag_valid:                 std_logic;----------------------  timing pattern received
   
   signal extension_cid_system:      integer range 0 to 16#FFFF#;  -- in,  extension card: cid_system
   signal extension_cid_group:       integer range 0 to 16#FFFF#;  --in, extension card: cid_group
@@ -234,7 +198,6 @@ architecture arch of scu_diob_v2 is
   signal owr_i:                     std_logic_vector(1 downto 0);
   
   signal wb_scu_rd_active:          std_logic;
-  signal wb_scu_dtack:              std_logic;
   signal wb_scu_data_to_SCUB:       std_logic_vector(15 downto 0);
    
 
@@ -289,7 +252,6 @@ architecture arch of scu_diob_v2 is
   signal sys_clk_deviation_led_n:   std_logic;
   signal clk_switch_rd_data:        std_logic_vector(15 downto 0);
   signal clk_switch_rd_active:      std_logic;
-  signal clk_switch_dtack:          std_logic;
   signal pll_locked:                std_logic;
   signal clk_switch_intr:           std_logic;
   
@@ -309,25 +271,31 @@ architecture arch of scu_diob_v2 is
   signal scu_master_o:              t_scu_local_master_o;
   signal scu_master_i:              t_scu_local_master_i;
   
-  constant module_count:            natural := 2;
-  type bit_vector_array is array  (0 to module_count-1) of std_logic_vector(PIO'length-1 downto 0);
-  signal bit_vector_in:             bit_vector_array;
-  signal bit_vector_out:            bit_vector_array;
-  signal bit_vector_en:             bit_vector_array;
-  signal pio_bit_vector_in:         std_logic_vector(PIO'length-1 downto 0);
-  signal pio_bit_vector_out:        std_logic_vector(PIO'length-1 downto 0);
-  signal pio_bit_vector_en:         std_logic_vector(PIO'length-1 downto 0);
+  signal s_module_io_in:            std_logic_vector(pio_size-1 downto 0);
+  signal s_module_irq:              std_logic_vector(15 downto 1);
+  
+  
+  constant top_slaves:              natural := 2;
+  type t_scu_slave_o_array is array (0 to module_count + top_slaves -1) of t_scu_local_slave_o;
+  signal scu_slave_mod_o:           t_scu_slave_o_array;
 
-  function or_reduce(a : bit_vector_array; vector_size : integer) return std_logic_vector is
-    variable ret : std_logic_vector(vector_size-1 downto 0);
-  begin
-    for i in a'range loop
-        ret := ret or a(i);
-    end loop;
-
-    return ret;
-  end function or_reduce;
-
+  
+  constant c_module_list: t_module_array(module_count-1 downto 0) :=
+   (0  =>  (x"01", 27, "AW_P37IO     "), ---- Piggy-ID(Codierung), B"0000_0001", FG900_700
+    1  =>  (x"02", 28, "AW_P25IO     "), ---- Piggy-ID(Codierung), B"0000_0010", FG900_710  
+    2  =>  (x"03", 29, "AW_OCin      "), ---- Piggy-ID(Codierung), B"0000_0011", FG900_720
+    3  =>  (x"04", 30, "AW_OCIO1     "), ---- Piggy-ID(Codierung), B"0000_0100", FG900_730
+    4  =>  (x"05", 31, "AW_UIO       "), ---- Piggy-ID(Codierung), B"0000_0101", FG900_740
+    5  =>  (x"06", 32, "AW_DA        "), ---- Piggy-ID(Codierung), B"0000_0110", FG900_750
+    6  =>  (x"07", 00, "AW_Frei      "), ---- Piggy-ID(Codierung), B"0000_0111", FG900_760
+    7  =>  (x"08", 33, "AW_SPSIO1    "), ---- Piggy-ID(Codierung), B"0000_1000", FG900_770 -- Ausgänge schalten nach 24V
+    8  =>  (x"09", 34, "AW_HFIO      "), ---- Piggy-ID(Codierung), B"0000_1001", FG900_780
+    9  =>  (x"0a", 68, "AW_SPSIOI1   "), ---- Piggy-ID(Codierung), B"0000_1010", FG901_770 -- Ausgänge schalten nach GND
+    10 =>  (x"0b", 67, "AW_INLB12S   "), ---- Piggy-ID(Codierung), B"0000_1011", FG902_050 -- IO-Modul-Backplane mit 12 Steckplätzen
+    11 =>  (x"0c", 70, "AW_16Out2    "), ---- Piggy-ID(Codierung), B"0000_1100", FG901_010 -- Output 16 Bit
+    12 =>  (x"0d", 71, "AW_16In2     "), ---- Piggy-ID(Codierung), B"0000_1101", FG901_020 -- Input 16 Bit
+    13 =>  (x"0e", 61, "AW_OCIO2     "), ---- Piggy-ID(Codierung), B"0000_1110", FG900_731
+    14 =>  (x"0f", 00, "AW           "));---- Piggy-ID(Codierung), B"0000_1111", 
   
 --  ###############################################################################################################################
 --  ###############################################################################################################################
@@ -348,52 +316,99 @@ architecture arch of scu_diob_v2 is
   A_nUser_EN            <= '0';
   
 
-  pio_mux: diob_pio_tristate
-  generic map ( pio_size => PIO'length)
-  port map (
-    pio             => PIO,
-    bit_vector_in   => pio_bit_vector_in,
-    bit_vector_out  => pio_bit_vector_out,
-    bit_vector_en   => pio_bit_vector_en,
-    module_io_i     => open);
+  clk_divider: process (clk_sys)
+    variable count: unsigned(26 downto 0);
+  begin
+    if rising_edge(clk_sys) then
+        count := count - 1;
+    end if;
+    A_nLED_D2 <= count(26);
+  end process; 
   
-    pio_bit_vector_in   <= or_reduce(bit_vector_in, PIO'length);
-    pio_bit_vector_out  <= or_reduce(bit_vector_out, PIO'length);
-    pio_bit_vector_en   <= or_reduce(bit_vector_en, PIO'length);
 
-
+  pio_mux: entity work.diob_pio_tristate(arch)
+  generic map (
+    pio_size          => pio_size,
+    module_count      => module_count,
+    module_list       => c_module_list
+  )
+  port map (
+    module_id             => module_id,
+    pio                   => PIO,
+    bit_vector_config(5)  => pio_bit_vectors(5),
+    bit_vector_config(13) => pio_bit_vectors(13),
+    module_io_i           => s_module_io_in,
+    irq_o                 => s_module_irq);
+    
+    
+  -- SCUDA1
   module1: entity work.diob_module(diob_module1_arch)
     generic map (
-      size      => PIO'length,
-      module_id => c_AW_P37IO.ID
+      clk_in_hz => clk_sys_in_Hz,
+      size      => pio_size
     )
     port map (
-          scu_slave_i => scu_master_o,
-          scu_slave_o => scu_master_i,
-          tag_i       => Timing_Pattern_LA,
-          tag_valid   => Timing_Pattern_RCV,
-          en_i        => '0',
-          vect_i      => bit_vector_in(0),
-          vect_o      => bit_vector_out(0),
-          vect_en     => bit_vector_en(0));
+          clk           => clk_sys,
+          rstn          => rstn_sys,
+          scu_slave_i   => scu_master_o,
+          scu_slave_o   => scu_slave_mod_o(5),
+          tag_i         => tag_i,
+          tag_valid     => tag_valid,
+          module_id     => module_id,
+          en_i          => '0',
+          module_io_in  => s_module_io_in,
+          vect_i        => pio_bit_vectors(5).vect_in,
+          vect_o        => pio_bit_vectors(5).vect_out,
+          vect_en       => pio_bit_vectors(5).vect_en,
+          irq_o         => pio_bit_vectors(5).irq);
   
+  -- OCIO2
   module2: entity work.diob_module(diob_module2_arch)
     generic map (
-      size      => PIO'length,
-      module_id => c_AW_P25IO.ID
-    )
+      clk_in_hz => clk_sys_in_Hz,
+      size      => pio_size
+    ) 
     port map (
-          scu_slave_i => scu_master_o,
-          scu_slave_o => scu_master_i,
-          tag_i       => Timing_Pattern_LA,
-          tag_valid   => Timing_Pattern_RCV,
-          en_i        => '1',
-          vect_i      => bit_vector_in(1),
-          vect_o      => bit_vector_out(1),
-          vect_en     => bit_vector_en(1));
+          clk           => clk_sys,
+          rstn          => rstn_sys,
+          scu_slave_i   => scu_master_o,
+          scu_slave_o   => scu_slave_mod_o(13),
+          tag_i         => tag_i,
+          tag_valid     => tag_valid,
+          module_id     => module_id,
+          en_i          => '1',
+          module_io_in  => s_module_io_in,
+          vect_i        => pio_bit_vectors(13).vect_in,
+          vect_o        => pio_bit_vectors(13).vect_out,
+          vect_en       => pio_bit_vectors(13).vect_en,
+          irq_o         => pio_bit_vectors(13).irq);
 
 
-  
+  scu_mux: entity work.genmux(logic)
+    generic map (width => module_count + top_slaves)
+    port map (
+      din(16) => scu_slave_mod_o(16),
+      din(15) => scu_slave_mod_o(15),
+      din(14) => scu_dummy_slave_o,
+      din(13) => scu_slave_mod_o(13),
+      din(12) => scu_dummy_slave_o,
+      din(11) => scu_dummy_slave_o,
+      din(10) => scu_dummy_slave_o,
+      din(9)  => scu_dummy_slave_o,
+      din(8)  => scu_dummy_slave_o,
+      din(7)  => scu_dummy_slave_o,
+      din(6)  => scu_dummy_slave_o,
+      din(5)  => scu_slave_mod_o(5),
+      din(4)  => scu_dummy_slave_o,
+      din(3)  => scu_dummy_slave_o,
+      din(2)  => scu_dummy_slave_o,
+      din(1)  => scu_dummy_slave_o,
+      din(0)  => scu_dummy_slave_o,
+      
+      dout      => scu_master_i.dat,
+      dout_val  => scu_master_i.dat_val,
+      dtack     => scu_master_i.dtack
+    );
 
 
   
@@ -409,7 +424,7 @@ architecture arch of scu_diob_v2 is
       local_clk_i             => CLK_20MHz_D,
       sys_clk_i               => A_SysClock,
       nReset                  => nPowerup_Res,
-      master_clk_o            => clk_sys,               -- core clocking
+      master_clk_o            => clk_sys,                     -- core clocking
       pll_locked              => pll_locked,
       sys_clk_is_bad          => sys_clk_is_bad,
       sys_clk_is_bad_la       => sys_clk_is_bad_la,
@@ -417,19 +432,46 @@ architecture arch of scu_diob_v2 is
       local_clk_is_running    => local_clk_is_running,
       sys_clk_deviation       => sys_clk_deviation,
       sys_clk_deviation_la    => sys_clk_deviation_la,
-      Adr_from_SCUB_LA        => ADR_from_SCUB_LA,      -- in, latched address from SCU_Bus
-      Data_from_SCUB_LA       => Data_from_SCUB_LA,     -- in, latched data from SCU_Bus
-      Ext_Adr_Val             => Ext_Adr_Val,           -- in, '1' => "ADR_from_SCUB_LA" is valid
-      Ext_Rd_active           => Ext_Rd_active,         -- in, '1' => Rd-Cycle is active
-      Ext_Wr_active           => Ext_Wr_active,         -- in, '1' => Wr-Cycle is active
-      Rd_Port                 => clk_switch_rd_data,    -- output for all read sources of this macro
-      Rd_Activ                => clk_switch_rd_active,  -- this acro has read data available at the Rd_Port.
-      Dtack                   => clk_switch_dtack,
+      Adr_from_SCUB_LA        => scu_master_o.adr,
+      Data_from_SCUB_LA       => scu_master_o.dat,
+      Ext_Adr_Val             => scu_master_o.adr_val,
+      Ext_Rd_active           => scu_master_o.rd_act,
+      Ext_Wr_active           => scu_master_o.wr_act,
+      Rd_Port                 => scu_slave_mod_o(15).dat,     -- output for all read sources of this macro
+      Rd_Activ                => scu_slave_mod_o(15).dat_val, -- this acro has read data available at the Rd_Port.
+      Dtack                   => scu_slave_mod_o(15).dtack,
       signal_tap_clk_250mhz   => signal_tap_clk_250mhz,
       clk_update              => clk_update,
       clk_flash               => clk_flash,
       clk_encdec              => open
       );
+  
+  lm32_ow: housekeeping
+    generic map (
+      Base_addr => c_lm32_ow_Base_Addr)
+    port map (
+      clk_sys           => clk_sys,
+      clk_update        => clk_update,
+      clk_flash         => clk_flash,
+      rstn_sys          => rstn_sys,
+      rstn_update       => rstn_update,
+      rstn_flash        => rstn_flash,
+      ADR_from_SCUB_LA  => scu_master_o.adr,
+      Data_from_SCUB_LA => scu_master_o.dat,
+      Ext_Adr_Val       => scu_master_o.adr_val,
+      Ext_Rd_active     => scu_master_o.rd_act,
+      Ext_Wr_active     => scu_master_o.wr_act,
+      user_rd_active    => scu_slave_mod_o(16).dat_val,
+      Data_to_SCUB      => scu_slave_mod_o(16).dat,
+      Dtack_to_SCUB     => scu_slave_mod_o(16).dtack,
+
+      owr_pwren_o       => owr_pwren_o,
+      owr_en_o          => owr_en_o,
+      owr_i             => owr_i,
+
+      debug_serial_o    => uart_txd_out,
+      debug_serial_i    => '0');
+      
    
    reset : altera_reset
     generic map(
@@ -453,89 +495,43 @@ architecture arch of scu_diob_v2 is
 
   clk_switch_intr <= local_clk_is_running or sys_clk_deviation_la;
 
-  SCU_Slave: SCU_Bus_Slave
+  scu_slave: entity work.scu_slave_macro(arch)
   generic map (
-    CLK_in_Hz               => clk_sys_in_Hz,
-    Firmware_Release        => c_Firmware_Release,  -------------------- important: => Firmware_Release
-    Firmware_Version        => c_Firmware_Version,  -------------------- important: => Firmware_Version
-    CID_System              => 55, ------------------------------------- important: => CSCOHW
-    intr_Enable             => b"0000_0000_0000_0001")
+    clk_in_hz               => clk_sys_in_Hz,
+    fw_release              => c_Firmware_Release,  -------------------- important: => Firmware_Release
+    fw_version              => c_Firmware_Version,  -------------------- important: => Firmware_Version
+    CID_System              => 55  ------------------------------------- important: => CSCOHW
+  )
   port map (
-    SCUB_Addr               => A_A,                                   -- in, SCU_Bus: address bus
-    nSCUB_Timing_Cyc        => A_nEvent_Str,                          -- in, SCU_Bus signal: low active SCU_Bus runs timing cycle
-    SCUB_Data               => A_D,                                   -- inout, SCU_Bus: data bus (FPGA tri state buffer)
-    nSCUB_Slave_Sel         => A_nBoardSel,                           -- in, SCU_Bus: '0' => SCU master select slave
-    nSCUB_DS                => A_nDS,                                 -- in, SCU_Bus: '0' => SCU master activate data strobe
-    SCUB_RDnWR              => A_RnW,                                 -- in, SCU_Bus: '1' => SCU master read slave
+    scub_addr               => A_A,                                   -- in, SCU_Bus: address bus
+    nscub_timing_cyc        => A_nEvent_Str,                          -- in, SCU_Bus signal: low active SCU_Bus runs timing cycle
+    scub_data               => A_D,                                   -- inout, SCU_Bus: data bus (FPGA tri state buffer)
+    nscub_slave_sel         => A_nBoardSel,                           -- in, SCU_Bus: '0' => SCU master select slave
+    nscub_ds                => A_nDS,                                 -- in, SCU_Bus: '0' => SCU master activate data strobe
+    scub_rdnwr              => A_RnW,                                 -- in, SCU_Bus: '1' => SCU master read slave
     clk                     => clk_sys,
-    nSCUB_Reset_in          => A_nReset,                              -- in, SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
-    Data_to_SCUB            => Data_to_SCUB,                          -- in, connect read sources from external user functions
-    Dtack_to_SCUB           => Dtack_to_SCUB,                         -- in, connect Dtack from from external user functions
-    intr_in                 => FG_1_dreq & FG_2_dreq & tmr_irq & '0'  -- bit 15..12
+    nscub_reset_in          => A_nReset,                              -- in, SCU_Bus-Signal: '0' => 'nSCUB_Reset_in' is active
+    scub_dtack              => SCUB_Dtack,                            -- out, for connect via ext. open collector driver                                                                -- '1' => slave give dtack to SCU master
+    scub_srq                => SCUB_SRQ,                              -- out, for connect via ext. open collector driver
+                                                                      -- '1' => slave service request to SCU master
+    nsel_ext_data_drv       => A_nSel_Ext_Data_Drv,                   -- out, '0' => select the external data driver on the SCU_Bus slave                                                                  
+    ext_data_drv_rd         => A_Ext_Data_RD,                         -- out, '1' => direction of the external data driver on the
+                                                                      -- SCU_Bus slave is to the SCU_Bus                                                                  
+    scu_master_o            => scu_master_o,
+    scu_master_i            => scu_master_i,
+    irq_i                   => s_module_irq(15) & s_module_irq(14) & tmr_irq & '0'  -- bit 15..12
                               & x"0"                                  -- bit 11..8
                               & x"0"                                  -- bit 7..4
                               & '0' & '0' & clk_switch_intr,          -- bit 3..1
-    User_Ready              => '1',
-    CID_GROUP               => 26,                                    -- important: => "FG900500_SCU_Diob1"
+    cid_group               => 26,                                    -- important: => "FG900500_SCU_Diob1"
     extension_cid_system    => extension_cid_system,                  -- in, extension card: cid_system
     extension_cid_group     => extension_cid_group,                   -- in, extension card: cid_group
-    Data_from_SCUB_LA       => Data_from_SCUB_LA,                     -- out, latched data from SCU_Bus for external user functions
-    ADR_from_SCUB_LA        => ADR_from_SCUB_LA,                      -- out, latched address from SCU_Bus for external user functions
-    Timing_Pattern_LA       => Timing_Pattern_LA,                     -- out, latched timing pattern from SCU_Bus for external user functions
-    Timing_Pattern_RCV      => Timing_Pattern_RCV,                    -- out, timing pattern received
-    nSCUB_Dtack_Opdrn       => open,                                  -- out, for direct connect to SCU_Bus opendrain signal
-                                                                      -- '0' => slave give dtack to SCU master
-    SCUB_Dtack              => SCUB_Dtack,                            -- out, for connect via ext. open collector driver
-                                                                      -- '1' => slave give dtack to SCU master
-    nSCUB_SRQ_Opdrn         => open,                                  -- out, for direct connect to SCU_Bus opendrain signal
-                                                                      -- '0' => slave service request to SCU ma
-    SCUB_SRQ                => SCUB_SRQ,                              -- out, for connect via ext. open collector driver
-                                                                      -- '1' => slave service request to SCU master
-    nSel_Ext_Data_Drv       => A_nSel_Ext_Data_Drv,                   -- out, '0' => select the external data driver on the SCU_Bus slave
-    Ext_Data_Drv_Rd         => A_Ext_Data_RD,                         -- out, '1' => direction of the external data driver on the
-                                                                      -- SCU_Bus slave is to the SCU_Bus
-    Standard_Reg_Acc        => Standard_Reg_Acc,                      -- out, '1' => mark the access to register of this macro
-    Ext_Adr_Val             => Ext_Adr_Val,                           -- out, for external user functions: '1' => "ADR_from_SCUB_LA" is valid
-    Ext_Rd_active           => Ext_Rd_active,                         -- out, '1' => Rd-Cycle to external user register is active
-    Ext_Rd_fin              => Ext_Rd_fin,                            -- out, marks end of read cycle, active one for one clock period
-                                                                      -- of clk past cycle end (no overlap)
-    Ext_Rd_Fin_ovl          => Ext_Rd_Fin_ovl,                        -- out, marks end of read cycle, active one for one clock period
-                                                                      -- of clk during cycle end (overlap)
-    Ext_Wr_active           => Ext_Wr_active,                         -- out, '1' => Wr-Cycle to external user register is active
-    Ext_Wr_fin              => SCU_Ext_Wr_fin,                        -- out, marks end of write cycle, active high for one clock period
-                                                                      -- of clk past cycle end (no overlap)
-    Ext_Wr_fin_ovl          => Ext_Wr_fin_ovl,                        -- out, marks end of write cycle, active high for one clock period
-                                                                      -- of clk before write cycle finished (with overlap)
-    Deb_SCUB_Reset_out      => Deb_SCUB_Reset_out,                    -- out, the debounced 'nSCUB_Reset_in'-signal, is active high,
-                                                                      -- can be used to reset
-                                                                      -- external macros, when 'nSCUB_Reset_in' is '0'
-    nPowerup_Res            => nPowerup_Res,                          -- out, this macro generates a power up reset
-    Powerup_Done            => Powerup_Done);                         -- out, this signal is set after powerup. Only the SCUB-Master can clear this bit.
+    tag_i                   => tag_i,                                 -- out, latched timing pattern from SCU_Bus for external user functions
+    tag_valid               => tag_valid,                             -- out, timing pattern received
+    nPowerup_Res            => nPowerup_Res);
 
-  lm32_ow: housekeeping
-    generic map (
-      Base_addr => c_lm32_ow_Base_Addr)
-    port map (
-      clk_sys           => clk_sys,
-      clk_update        => clk_update,
-      clk_flash         => clk_flash,
-      rstn_sys          => rstn_sys,
-      rstn_update       => rstn_update,
-      rstn_flash        => rstn_flash,
-      ADR_from_SCUB_LA  => ADR_from_SCUB_LA,
-      Data_from_SCUB_LA => Data_from_SCUB_LA,
-      Ext_Adr_Val       => Ext_Adr_Val,
-      Ext_Rd_active     => Ext_Rd_active,
-      Ext_Wr_active     => Ext_Wr_active,
-      user_rd_active    => wb_scu_rd_active,
-      Data_to_SCUB      => wb_scu_data_to_SCUB,
-      Dtack_to_SCUB     => wb_scu_dtack,
 
-      owr_pwren_o       => owr_pwren_o,
-      owr_en_o          => owr_en_o,
-      owr_i             => owr_i,
-
-      debug_serial_o    => uart_txd_out,
-      debug_serial_i    => '0');
+  A_nDtack  <= not SCUB_Dtack;
+  A_nSRQ    <= not SCUB_SRQ;
     
 end architecture arch;

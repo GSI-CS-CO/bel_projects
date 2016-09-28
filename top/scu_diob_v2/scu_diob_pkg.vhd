@@ -44,15 +44,6 @@ package scu_diob_pkg is
   type t_pio_bit_vectors_array is array (0 to module_count-1) of t_pio_bit_vectors;
   signal pio_bit_vectors:           t_pio_bit_vectors_array;
   
-  --  function or_reduce(a : bit_vector_array; vector_size : integer) return std_logic_vector is
---    variable ret : std_logic_vector(vector_size-1 downto 0);
---  begin
---    for i in a'range loop
---        ret := ret or a(i);
---    end loop;
---
---    return ret;
---  end function or_reduce;
  
   type id_cid is record
     id:     std_logic_vector(7 downto 0); -- Piggy-ID(Codierung)
@@ -60,7 +51,6 @@ package scu_diob_pkg is
     name:   string(1 to 13);              -- module name
   end record;
   type t_module_array is array(natural range <>) of id_cid;
-  
   
   
 end scu_diob_pkg;
