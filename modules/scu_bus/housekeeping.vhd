@@ -75,18 +75,19 @@ architecture housekeeping_arch of housekeeping is
 
   signal lm32_interrupt:   std_logic_vector(31 downto 0);
   signal lm32_rstn:        std_logic;
+  constant c_ram_offset:   std_logic_vector(31 downto 0) := x"10000000";
 
   -- Top crossbar layout
   constant c_slaves     : natural := 6;
   constant c_masters    : natural := 2;
   constant c_dpram_size : natural := 32768; -- in 32-bit words (64KB)
   constant c_layout_req     : t_sdb_record_array(c_slaves-1 downto 0) :=
-   (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size), x"00000000"),
+   (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size), c_ram_offset),
     1 => f_sdb_embed_device(c_xwb_owm,                 x"00020000"),
     2 => f_sdb_embed_device(c_xwb_uart,                x"00020100"),
     3 => f_sdb_embed_device(c_xwb_scu_reg,             x"00020200"),
     4 => f_sdb_embed_device(c_wb_rem_upd_sdb,          x"00020500"),
-    5 => f_sdb_embed_device(c_wb_asmi_sdb,             x"10000000"));
+    5 => f_sdb_embed_device(c_wb_asmi_sdb,             x"20000000"));
   
   constant c_top_layout  : t_sdb_record_array(c_slaves-1 downto 0) := f_sdb_auto_layout(c_layout_req);
   constant c_sdb_address : t_wishbone_address := x"3FFFE000";
@@ -145,7 +146,10 @@ begin
   -- The LM32 is master 0+1
   LM32 : xwb_lm32
     generic map(
-      g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
+      g_profile       => "medium_icache_debug", -- Including JTAG and I-cache (no divide)
+      g_reset_vector  => c_ram_offset,
+      g_sdb_address   => c_sdb_address
+    ) 
     port map(
       clk_sys_i => clk_sys,
       rst_n_i => rstn_sys,
