@@ -21,7 +21,7 @@ package scu_diob_pkg is
   constant c_fg_2_Base_Addr:              unsigned(15 downto 0):=  x"0340";   -- FG2
 
   constant c_Conf_Sts1_Base_Addr:         integer := 16#0500#;                -- Status-Config-Register
-  constant c_AW_Port1_Base_Addr:          integer := 16#0510#;                -- Anwender I/O-Register
+  constant c_AW_Port1_Base_Addr:          unsigned(15 downto 0) := x"0510";   -- Anwender I/O-Register
   constant c_INL_xor1_Base_Addr:          integer := 16#0530#;                -- Interlock-Pegel-Register
   constant c_INL_msk1_Base_Addr:          integer := 16#0540#;                -- Interlock-Masken-Register
   constant c_Tag_Ctrl1_Base_Addr:         integer := 16#0580#;                -- Tag-Steuerung
@@ -43,6 +43,7 @@ package scu_diob_pkg is
   
   type t_pio_bit_vectors_array is array (0 to module_count-1) of t_pio_bit_vectors;
   signal pio_bit_vectors:           t_pio_bit_vectors_array;
+  constant pio_dummy_vector:        t_pio_bit_vectors := ((others => '0'), (others => '0'), (others => '0'), (others => '0'));
   
  
   type id_cid is record
@@ -52,5 +53,25 @@ package scu_diob_pkg is
   end record;
   type t_module_array is array(natural range <>) of id_cid;
   
+  function getModuleCid(list: t_module_array; module_id: std_logic_vector)  return integer;
+
+  type t_user_io_array is array (natural range <>) of std_logic_vector(15 downto 0);
+  type t_user_io_rw_array is array (natural range <>) of std_logic;
+
+  
+end scu_diob_pkg;
+
+package body scu_diob_pkg is
+
+  function getModuleCid(list: t_module_array; module_id: std_logic_vector)  return integer is
+  begin
+    for i in list'range loop
+      if module_id = list(i).id then
+        return list(i).cid;
+      end if;
+    end loop;
+    -- module not in list
+    return 0;
+  end function;
   
 end scu_diob_pkg;

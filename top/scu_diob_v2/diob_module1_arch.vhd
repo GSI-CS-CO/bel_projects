@@ -71,6 +71,21 @@ architecture diob_module1_arch of diob_module is
   signal da1_db:            std_logic_vector(15 downto 0);
   signal da2_db:            std_logic_vector(15 downto 0);
   signal Data_to_SCUB:      std_logic_vector(15 downto 0);
+  
+  signal user_dtack:        std_logic;
+  signal user_rd_active:    std_logic;
+  signal user_data_to_SCUB: std_logic_vector(15 downto 0);
+  
+  signal user_config:           std_logic_vector(15 downto 0);
+  signal user_dac1_reg:         std_logic_vector(15 downto 0);
+  signal user_dac2_reg:         std_logic_vector(15 downto 0);
+  signal user_dac1_wr, da1_str: std_logic;
+  signal user_dac2_wr, da2_str: std_logic;
+  
+  signal fg1_sw_out:        std_logic_vector(31 downto 0);
+  signal fg2_sw_out:        std_logic_vector(31 downto 0);
+  signal fg1_sw_strobe:     std_logic;
+  signal fg2_sw_strobe:     std_logic;
 
 begin
   vect_o(17) <= '1'; --A_nLED7
@@ -138,21 +153,45 @@ begin
     if rising_edge(clk) then
         count := count - 1;
     end if;
-    A_nLED7 <= count(26);
+    A_nLED1 <= count(26);
   end process;
+  
+  user_reg: entity work.user_io_reg(arch)
+    generic map (
+      base_addr => c_AW_Port1_Base_Addr,
+      count     => 3
+    )
+    port map (
+      clk                 => clk,
+      rstn                => rstn,
+      scu_slave_i         => scu_slave_i,
+      scu_slave_o.dtack   => user_dtack,
+      scu_slave_o.dat_val => user_rd_active,
+      scu_slave_o.dat     => user_data_to_SCUB,
+      
+      user_in_reg(0)   => (others => 'X'),
+      user_in_reg(1)   => (others => 'X'),
+      user_in_reg(2)   => (others => 'X'),
+      user_out_reg(0)  => user_config,
+      user_out_reg(1)  => user_dac1_reg,
+      user_out_reg(2)  => user_dac2_reg,
+      
+      user_io_wr(1)    => user_dac1_wr,
+      user_io_wr(2)    => user_dac2_wr
+    );
   
   fg_1: fg_quad_scu_bus
   generic map (
-    Base_addr => c_fg_1_Base_Addr,
-    clk_in_hz => clk_in_hz,
-    diag_on_is_1 => 0 -- if 1 then diagnosic information is generated during compilation
+    Base_addr     => c_fg_1_Base_Addr,
+    clk_in_hz     => clk_in_hz,
+    diag_on_is_1  => 0 -- if 1 then diagnosic information is generated during compilation
     )
   port map (
 
     -- SCUB interface
     Adr_from_SCUB_LA  => scu_slave_i.adr,
     Data_from_SCUB_LA => scu_slave_i.dat,
-    Ext_Adr_Val       => scu_slave_i.adr_val,
+    Ext_Adr_Val       => scu_slave_i.adr_val and en_i,
     Ext_Rd_active     => scu_slave_i.rd_act,
     Ext_Wr_active     => scu_slave_i.wr_act,
     clk               => clk,
@@ -166,9 +205,8 @@ begin
     ext_trigger       => '0',                   -- starts the ramping by external signal
 
     -- fg output
-    sw_out(31 downto 16)  => da1_db,
-    sw_out(15 downto 0)   => open, 
-    sw_strobe             => DA1_CLK
+    sw_out            => fg1_sw_out,
+    sw_strobe         => fg1_sw_strobe
   );
   
   DA1_DB15 <= da1_db(15);
@@ -199,7 +237,7 @@ begin
     -- SCUB interface
     Adr_from_SCUB_LA  => scu_slave_i.adr,
     Data_from_SCUB_LA => scu_slave_i.dat,
-    Ext_Adr_Val       => scu_slave_i.adr_val,
+    Ext_Adr_Val       => scu_slave_i.adr_val and en_i,
     Ext_Rd_active     => scu_slave_i.rd_act,
     Ext_Wr_active     => scu_slave_i.wr_act,
     clk               => clk,                   -- in, should be the same clk, used by SCU_Bus_Slave
@@ -213,10 +251,8 @@ begin
     ext_trigger       => '0',                   -- starts the ramping by external signal
 
     -- fg output
-    sw_out(31 downto 16)  => da2_db,--DA2_DB15 & DA2_DB14 & DA2_DB13 & DA2_DB12 & DA2_DB11 & DA2_DB10 & DA2_DB9 & DA2_DB8 &
-                          --DA2_DB7 & DA2_DB6 & DA2_DB5 & DA2_DB4 & DA2_DB3 & DA2_DB2 & DA2_DB1 &  DA2_DB0,
-    sw_out(15 downto 0)   => open, 
-    sw_strobe         => open
+    sw_out            => fg2_sw_out,
+    sw_strobe         => fg2_sw_strobe
   );
   
   DA2_DB15 <= da2_db(15);
@@ -236,31 +272,51 @@ begin
   DA2_DB1 <= da2_db(1);
   DA2_DB0 <= da2_db(0);
   
+  
+  da1_db <= fg1_sw_out(30 downto 15) when user_config(4)  = '1' else user_dac1_reg;
+  da2_db <= fg2_sw_out(30 downto 15) when user_config(4)  = '1' else user_dac2_reg;
+  
+  
+  dac_str: process(clk)
+  begin
+    -- just delay the strobe one clk cycle
+    if rising_edge(clk) then
+      da1_str <= user_dac1_wr;
+      da2_str <= user_dac2_wr;
+    end if;
+  end process dac_str;
+  
+  da1_CLK <= fg1_sw_strobe when user_config(4) = '1' else da1_str;
+  da2_CLK <= fg2_sw_strobe when user_config(4) = '1' else da2_str;
+  
+  
   p_read_mux: process (
     FG_1_rd_active, FG_1_data_to_SCUB,
-    FG_2_rd_active, FG_2_data_to_SCUB
-    )
-  variable sel: unsigned(1 downto 0);
+    FG_2_rd_active, FG_2_data_to_SCUB,
+    user_rd_active, user_data_to_SCUB
+  )
+  variable sel: unsigned(2 downto 0);
   begin
-    sel := FG_2_rd_active & FG_1_rd_active;
+    sel := user_rd_active & FG_2_rd_active & FG_1_rd_active;
     case sel IS
-      when "01" => Data_to_SCUB <= FG_1_data_to_SCUB;
-      when "10" => Data_to_SCUB <= FG_2_data_to_SCUB;
+      when "001" => Data_to_SCUB <= FG_1_data_to_SCUB;
+      when "010" => Data_to_SCUB <= FG_2_data_to_SCUB;
+      when "100" => Data_to_SCUB <= user_data_to_SCUB;
       when others =>
         Data_to_SCUB <= x"0000";
     end case;
   end process p_read_mux;
   
   scu_slave_o.dat     <= Data_to_SCUB;
-  scu_slave_o.dat_val <= FG_1_rd_active or FG_2_rd_active;
-  scu_slave_o.dtack   <= FG_1_dtack or FG_2_dtack;
+  scu_slave_o.dat_val <= FG_1_rd_active or FG_2_rd_active or user_rd_active;
+  scu_slave_o.dtack   <= FG_1_dtack or FG_2_dtack or user_dtack;
 
+  A_nLED7 <= '1'; --led off
   A_nLED6 <= '1'; --led off
   A_nLED5 <= '1'; --led off
   A_nLED4 <= '1'; --led off
-  A_nLED3 <= '1'; --led off
-  A_nLED2 <= '1'; --led off
-  A_nLED1 <= '1'; --led off
+  A_nLED3 <= not user_config(4); --fg mode
+  A_nLED2 <= not user_config(4); --fg mode
   A_nLED0 <= '1'; --led off
   
   A_nLED_EXT_TRG1 <= '1'; -- led off
