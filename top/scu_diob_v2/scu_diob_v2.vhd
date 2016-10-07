@@ -182,8 +182,8 @@ architecture arch of scu_diob_v2 is
   signal tag_i:                     std_logic_vector(31 downto 0);--  latched timing pattern from SCU_Bus for external user functions
   signal tag_valid:                 std_logic;----------------------  timing pattern received
   
-  signal extension_cid_system:      integer range 0 to 16#FFFF#;  -- in,  extension card: cid_system
-  signal extension_cid_group:       integer range 0 to 16#FFFF#;  --in, extension card: cid_group
+  signal extension_cid_system:      integer range 0 to 16#FFFF#;  -- in, extension card: cid_system
+  signal extension_cid_group:       integer range 0 to 16#FFFF#;  -- in, extension card: cid_group
   
   signal led_ena_cnt:               std_logic;
 
@@ -273,7 +273,7 @@ architecture arch of scu_diob_v2 is
   
   signal s_module_io_in:            std_logic_vector(pio_size-1 downto 0);
   signal s_module_irq:              std_logic_vector(15 downto 1);
-  
+  signal mod_en:                    std_logic_vector(module_count-1 downto 0);
   
   constant top_slaves:              natural := 2;
   type t_scu_slave_o_array is array (0 to module_count + top_slaves -1) of t_scu_local_slave_o;
@@ -333,14 +333,30 @@ architecture arch of scu_diob_v2 is
     module_list       => c_module_list
   )
   port map (
-    module_id             => module_id,
-    pio                   => PIO,
-    bit_vector_config(5)  => pio_bit_vectors(5),
-    bit_vector_config(13) => pio_bit_vectors(13),
-    module_io_i           => s_module_io_in,
-    irq_o                 => s_module_irq);
-    
-    
+    module_id               => module_id,
+    pio                     => PIO,
+    bit_vector_config(0)    => pio_dummy_vector,
+    bit_vector_config(1)    => pio_dummy_vector,
+    bit_vector_config(2)    => pio_dummy_vector,
+    bit_vector_config(3)    => pio_dummy_vector,
+    bit_vector_config(4)    => pio_dummy_vector,
+    bit_vector_config(5)    => pio_bit_vectors(5),
+    bit_vector_config(6)    => pio_dummy_vector,
+    bit_vector_config(7)    => pio_dummy_vector,
+    bit_vector_config(8)    => pio_dummy_vector,
+    bit_vector_config(9)    => pio_dummy_vector,
+    bit_vector_config(10)   => pio_dummy_vector,
+    bit_vector_config(11)   => pio_dummy_vector,
+    bit_vector_config(12)   => pio_dummy_vector,
+    bit_vector_config(13)   => pio_bit_vectors(13),
+    bit_vector_config(14)   => pio_dummy_vector,
+    module_io_i             => s_module_io_in,
+    irq_o                   => s_module_irq,
+    mod_en                  => mod_en);
+   
+  extension_cid_system <= 55;
+  extension_cid_group <= getModuleCid(c_module_list, module_id);
+   
   -- SCUDA1
   module1: entity work.diob_module(diob_module1_arch)
     generic map (
@@ -355,7 +371,7 @@ architecture arch of scu_diob_v2 is
           tag_i         => tag_i,
           tag_valid     => tag_valid,
           module_id     => module_id,
-          en_i          => '0',
+          en_i          => mod_en(5),
           module_io_in  => s_module_io_in,
           vect_i        => pio_bit_vectors(5).vect_in,
           vect_o        => pio_bit_vectors(5).vect_out,
@@ -376,7 +392,7 @@ architecture arch of scu_diob_v2 is
           tag_i         => tag_i,
           tag_valid     => tag_valid,
           module_id     => module_id,
-          en_i          => '1',
+          en_i          => mod_en(13),
           module_io_in  => s_module_io_in,
           vect_i        => pio_bit_vectors(13).vect_in,
           vect_o        => pio_bit_vectors(13).vect_out,
@@ -445,6 +461,11 @@ architecture arch of scu_diob_v2 is
       clk_flash               => clk_flash,
       clk_encdec              => open
       );
+  
+  -- open drain buffer for one wire
+  owr_i(0) <= A_OneWire;
+  A_OneWire <= owr_pwren_o(0) when (owr_pwren_o(0) = '1' or owr_en_o(0) = '1') else 'Z';
+  
   
   lm32_ow: housekeeping
     generic map (
@@ -533,5 +554,6 @@ architecture arch of scu_diob_v2 is
 
   A_nDtack  <= not SCUB_Dtack;
   A_nSRQ    <= not SCUB_SRQ;
+  A_TA(15 downto 0) <= x"000" & '0' & '0' & '1' & uart_txd_out;
     
 end architecture arch;
