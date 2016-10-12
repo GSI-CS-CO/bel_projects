@@ -5,9 +5,16 @@ use ieee.numeric_std.all;
 
 package daq_pkg is
   
-  type t_daq_dat is array(natural range <>) of std_logic_vector(15 downto 0);
-  type t_daq_ctl is array(natural range <>) of std_logic;
+  type t_daq_dat  is array(natural range <>) of std_logic_vector(15 downto 0);
+  type t_daq_ctl  is array(natural range <>) of std_logic;
 
+  type t_pm_uw    is array(natural range <>) of std_logic_vector(4 downto 0);
+  type t_daq_uw   is array(natural range <>) of std_logic_vector(3 downto 0);
+  type t_daq_ts   is array(natural range <>) of std_logic_vector(63 downto 0); 
+  type t_daq_cn   is array(natural range <>) of std_logic_vector(3 downto 0);
+  type t_daq_dctr is array(natural range <>) of std_logic_vector(3 downto 0);
+
+  
   constant dummy_daq_dat_in :       std_logic_vector(15 downto 0) :=  (x"0000");
   constant dummy_daq_ctl_in :       std_logic :=  ('0');
 
@@ -140,6 +147,9 @@ package daq_pkg is
       Ext_Wr_active:			in		std_logic;							      -- '1' => Wr-Cycle is active
       clk_i:						  in		std_logic;							      -- should be the same clk, used by SCU_Bus_Slave
       nReset:					    in		std_logic;
+      
+      timestamp:          in    std_logic_vector(63 downto 0);--WR Timestamp
+      diob_extension_id:  in    std_logic_vector(15 downto 0);
       
       user_rd_active:     out   std_logic;
       Rd_Port:            out   std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
