@@ -66,6 +66,7 @@
 #define FG_RAMP_CNT_HI    0x8
 #define FG_TAG_LOW        0x9
 #define FG_TAG_HIGH       0xa
+#define FG_VER            0xb
 
 #define FG1_IRQ           (1<<15)
 #define FG2_IRQ           (1<<14)

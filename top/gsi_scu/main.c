@@ -335,7 +335,9 @@ void print_fgs() {
   while(i < MAX_FG_MACROS) {
     // hi..lo bytes: slot, device, version, output-bits
     if (fg_macros[i] != 0)
-      mprintf("fg-%d-%d\n", fg_macros[i] >> 24, (fg_macros[i] >> 16) & 0xff);
+      mprintf("fg-%d-%d ver: %d output-bits: %d\n", fg_macros[i] >> 24,
+              (fg_macros[i] >> 16) & 0xff, (fg_macros[i] >> 8) & 0xff,
+              fg_macros[i] & 0xff);
     i++;
   } 
 }

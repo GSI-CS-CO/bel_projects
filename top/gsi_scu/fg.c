@@ -23,6 +23,7 @@ int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base
       bus->slaves[j].cid_group = base_adr[i * (1<<16) + CID_GROUP];
       bus->slaves[j].cid_sys = base_adr[i * (1<<16) + CID_SYS];
       bus->slaves[j].version = base_adr[i * (1<<16) + SLAVE_VERSION];
+      bus->slaves[j].fg_ver = base_adr[i * (1<<16) + FG1_BASE + FG_VER]; 
 
       ext_clk_reg = base_adr[(i << 16) + SLAVE_EXT_CLK];          //read clk status from slave
       if (ext_clk_reg & 0x1)
@@ -37,9 +38,6 @@ int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base
 
 int scan_for_fgs(struct scu_bus *bus, uint32_t *fglist) {
   int i = 0, j = 0;
-  
-  /*FIXME*/
-  /* read version from fg macro */
 
   while(bus->slaves[i].unique_id) {
     if (bus->slaves[i].cid_sys == SYS_CSCO || bus->slaves[i].cid_sys == SYS_PBRF || bus->slaves[i].cid_sys == SYS_LOEP) {
@@ -48,47 +46,47 @@ int scan_for_fgs(struct scu_bus *bus, uint32_t *fglist) {
           bus->slaves[i].cid_group == GRP_DIOB) {
         /* two FGs */
         if (j < MAX_FG_MACROS) {
-          fglist[j] = OUTPUT_BITS;              //output bits
-          fglist[j] |= 0x1 << 8;                //version
-          fglist[j] |= 0x0 << 16;               //device: macro number inside of the slave card
-          fglist[j] |= (bus->slaves[i].slot) << 24;  //slot
-          j++;                                  //next macro
+          fglist[j] = 16;                             //output bits
+          fglist[j] |= (bus->slaves[i].fg_ver) << 8;  //version
+          fglist[j] |= 0x0 << 16;                     //device: macro number inside of the slave card
+          fglist[j] |= (bus->slaves[i].slot) << 24;   //slot
+          j++;                                        //next macro
         }
         if (j < MAX_FG_MACROS) {
-          fglist[j] = OUTPUT_BITS;              //output bits
-          fglist[j] |= 0x1 << 8;                //version
-          fglist[j] |= 0x1 << 16;               //device: macro number inside of the slave card
-          fglist[j] |= (bus->slaves[i].slot) << 24;  //slot
-          j++;                                  //next macro
+          fglist[j] = 16;                             //output bits
+          fglist[j] |= (bus->slaves[i].fg_ver) << 8;  //version
+          fglist[j] |= 0x1 << 16;                     //device: macro number inside of the slave card
+          fglist[j] |= (bus->slaves[i].slot) << 24;   //slot
+          j++;                                        //next macro
         }
        
       /* ACU/MFU */
       } else if (bus->slaves[i].cid_group == GRP_MFU) {
         /* two FGs */
         if (j < MAX_FG_MACROS) {
-          fglist[j] = 20;                       //output bits
-          fglist[j] |= 0x1 << 8;                //version
-          fglist[j] |= 0x0 << 16;               //device: macro number inside of the slave card
-          fglist[j] |= (bus->slaves[i].slot) << 24;  //slot
-          j++;                                  //next macro
+          fglist[j] = 20;                             //output bits
+          fglist[j] |= (bus->slaves[i].fg_ver) << 8;  //version
+          fglist[j] |= 0x0 << 16;                     //device: macro number inside of the slave card
+          fglist[j] |= (bus->slaves[i].slot) << 24;   //slot
+          j++;                                        //next macro
         }
         if (j < MAX_FG_MACROS) {
-          fglist[j] = 20;                       //output bits
-          fglist[j] |= 0x1 << 8;                //version
-          fglist[j] |= 0x1 << 16;               //device: macro number inside of the slave card
-          fglist[j] |= (bus->slaves[i].slot) << 24;  //slot
-          j++;                                  //next macro
+          fglist[j] = 20;                             //output bits
+          fglist[j] |= (bus->slaves[i].fg_ver) << 8;  //version
+          fglist[j] |= 0x1 << 16;                     //device: macro number inside of the slave card
+          fglist[j] |= (bus->slaves[i].slot) << 24;   //slot
+          j++;                                        //next macro
         }
       
       /* FIB */ 
       } else if (bus->slaves[i].cid_group == GRP_FIB_DDS) {
         /* one FG */
         if (j < MAX_FG_MACROS) {
-          fglist[j] = OUTPUT_BITS;              //output bits
-          fglist[j] |= 0x1 << 8;                //version
-          fglist[j] |= 0x0 << 16;               //device: macro number inside of the slave card
-          fglist[j] |= (bus->slaves[i].slot) << 24;  //slot
-          j++;                                  //next macro
+          fglist[j] = 32;                             //output bits
+          fglist[j] |= (bus->slaves[i].fg_ver) << 8;  //version
+          fglist[j] |= 0x0 << 16;                     //device: macro number inside of the slave card
+          fglist[j] |= (bus->slaves[i].slot) << 24;   //slot
+          j++;                                        //next macro
         }
       }
     }
