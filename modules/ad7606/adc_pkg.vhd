@@ -20,6 +20,8 @@ component ad7606  is
     clk:            in std_logic;
     nrst:           in std_logic;
     sync_rst:       in std_logic;
+    ext_trg_i:      in std_logic;
+    tag_trg_i:      in std_logic;
     trigger_mode:   in std_logic;                     -- 0: continuous conversion 1: triggered by extern trig input
     transfer_mode:  in std_logic_vector(1 downto 0);  -- select communication mode
                                                       --	00: par
@@ -54,22 +56,26 @@ component adc_scu_bus is
   port (
     clk:            in std_logic;
     nrst:           in std_logic;
+    tag_i:          in std_logic_vector(31 downto 0);
+    tag_valid:      in std_logic; 
     
     -- ADC interface
-    db:             in std_logic_vector(13 downto 0); -- databus from the ADC
-    db14_hben:      inout std_logic;                  -- hben in mode ser
-    db15_byte_sel:  inout std_logic;                  -- byte sel in mode ser
-    convst_a:       out std_logic;                    -- start conversion for channels 1-4
-    convst_b:       out std_logic;                    -- start conversion for channels 5-8
-    n_cs:           out std_logic;                    -- chipselect, enables tri state databus
-    n_rd_sclk:      out std_logic;                    -- first falling edge after busy clocks data out
-    busy:           in std_logic;                     -- falling edge signals end of conversion
-    adc_reset:      out std_logic;
-    os:             out std_logic_vector(2 downto 0); -- oversampling config
-    par_ser_sel:    out std_logic;                    -- parallel/serial/byte serial
-    adc_range:      out std_logic;                    -- 10V/-10V or 5V/-5V
-    firstdata:      in std_logic;
-    nDiff_In_En:    out std_logic;                    -- logic low enables diff input for chn 3-8
+    db:             in    std_logic_vector(13 downto 0);  -- databus from the ADC
+    db14_hben:      inout std_logic;                      -- hben in mode ser
+    db15_byte_sel:  inout std_logic;                      -- byte sel in mode ser
+    convst_a:       out   std_logic;                      -- start conversion for channels 1-4
+    convst_b:       out   std_logic;                      -- start conversion for channels 5-8
+    n_cs:           out   std_logic;                      -- chipselect, enables tri state databus
+    n_rd_sclk:      out   std_logic;                      -- first falling edge after busy clocks data out
+    busy:           in    std_logic;                      -- falling edge signals end of conversion
+    adc_reset:      out   std_logic;
+    os:             out   std_logic_vector(2 downto 0);   -- oversampling config
+    par_ser_sel:    out   std_logic;                      -- parallel/serial/byte serial
+    adc_range:      out   std_logic;                      -- 10V/-10V or 5V/-5V
+    firstdata:      in    std_logic;
+    nDiff_In_En:    out   std_logic;                      -- logic low enables diff input for chn 3-8
+    ext_trg_i:      in    std_logic;                      -- trigger input
+    ext_trgd_o:     out   std_logic;                      -- triggered while in ext trigger mode
     
     -- SCUB interface
     Adr_from_SCUB_LA:   in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus

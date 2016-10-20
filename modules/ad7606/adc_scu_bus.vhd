@@ -10,26 +10,30 @@ entity adc_scu_bus is
     Base_addr:            unsigned(15 downto 0);
     clk_in_hz:            integer := 50_000_000;        -- 50Mhz
     diag_on_is_1:         integer range 0 to 1 := 0;   -- if 1 then diagnosic information is generated during compilation
-    fw_version:           integer range 0 to 65535 := 1);
+    fw_version:           integer range 0 to 65535 := 2);
   port (
     clk:            in std_logic;
     nrst:           in std_logic;
+    tag_i:          in std_logic_vector(31 downto 0);
+    tag_valid:      in std_logic;
     
     -- ADC interface
-    db:             in std_logic_vector(13 downto 0); -- databus from the ADC
-    db14_hben:      inout std_logic;                  -- hben in mode ser
-    db15_byte_sel:  inout std_logic;                  -- byte sel in mode ser
-    convst_a:       out std_logic;                    -- start conversion for channels 1-4
-    convst_b:       out std_logic;                    -- start conversion for channels 5-8
-    n_cs:           out std_logic;                    -- chipselect, enables tri state databus
-    n_rd_sclk:      out std_logic;                    -- first falling edge after busy clocks data out
-    busy:           in std_logic;                     -- falling edge signals end of conversion
-    adc_reset:      out std_logic;
-    os:             out std_logic_vector(2 downto 0); -- oversampling config
-    par_ser_sel:    out std_logic;                    -- parallel/serial/byte serial
-    adc_range:      out std_logic;                    -- logic high 10V/-10V or logic low 5V/-5V
-    firstdata:      in std_logic;                     -- is high during transmit of the frist channel
-    nDiff_In_En:    out std_logic;                    -- logic low enables diff input for chn 3-8
+    db:             in    std_logic_vector(13 downto 0);  -- databus from the ADC
+    db14_hben:      inout std_logic;                      -- hben in mode ser
+    db15_byte_sel:  inout std_logic;                      -- byte sel in mode ser
+    convst_a:       out   std_logic;                      -- start conversion for channels 1-4
+    convst_b:       out   std_logic;                      -- start conversion for channels 5-8
+    n_cs:           out   std_logic;                      -- chipselect, enables tri state databus
+    n_rd_sclk:      out   std_logic;                      -- first falling edge after busy clocks data out
+    busy:           in    std_logic;                      -- falling edge signals end of conversion
+    adc_reset:      out   std_logic;
+    os:             out   std_logic_vector(2 downto 0);   -- oversampling config
+    par_ser_sel:    out   std_logic;                      -- parallel/serial/byte serial
+    adc_range:      out   std_logic;                      -- logic high 10V/-10V or logic low 5V/-5V
+    firstdata:      in    std_logic;                      -- is high during transmit of the frist channel
+    nDiff_In_En:    out   std_logic;                      -- logic low enables diff input for chn 3-8
+    ext_trg_i:      in    std_logic;                      -- trigger input
+    ext_trgd_o:     out   std_logic;                      -- triggered while in ext trigger mode
     
     -- SCUB interface
     Adr_from_SCUB_LA:   in    std_logic_vector(15 downto 0);  -- latched address from SCU_Bus
@@ -70,29 +74,98 @@ constant chn_6_reg_adr:   unsigned(15 downto 0)   := Base_addr + x"0006";
 constant chn_7_reg_adr:   unsigned(15 downto 0)   := Base_addr + x"0007";
 constant chn_8_reg_adr:   unsigned(15 downto 0)   := Base_addr + x"0008";
 constant fw_version_adr:  unsigned(15 downto 0)   := Base_addr + x"0009";
+constant tag_low_adr:     unsigned(15 downto 0)   := Base_addr + x"000a";
+constant tag_high_adr:    unsigned(15 downto 0)   := Base_addr + x"000b";
 
-signal wr_adc_cntrl: std_logic;
-signal rd_adc_cntrl: std_logic;
-signal rd_adc_chn_1: std_logic;
-signal rd_adc_chn_2: std_logic;
-signal rd_adc_chn_3: std_logic;
-signal rd_adc_chn_4: std_logic;
-signal rd_adc_chn_5: std_logic;
-signal rd_adc_chn_6: std_logic;
-signal rd_adc_chn_7: std_logic;
-signal rd_adc_chn_8: std_logic;
+signal wr_adc_cntrl:  std_logic;
+signal rd_adc_cntrl:  std_logic;
+signal rd_adc_chn_1:  std_logic;
+signal rd_adc_chn_2:  std_logic;
+signal rd_adc_chn_3:  std_logic;
+signal rd_adc_chn_4:  std_logic;
+signal rd_adc_chn_5:  std_logic;
+signal rd_adc_chn_6:  std_logic;
+signal rd_adc_chn_7:  std_logic;
+signal rd_adc_chn_8:  std_logic;
 signal rd_fw_version: std_logic;
+signal wr_tag_low:    std_logic;
+signal wr_tag_high:   std_logic;
+signal rd_tag_low:    std_logic;
+signal rd_tag_high:   std_logic;
 
-signal dtack:         std_logic;
-signal adc_cntrl_reg: std_logic_vector(15 downto 0);
-signal adc_cntrl_rd_reg: std_logic_vector(15 downto 0);
+signal dtack:             std_logic;
+signal adc_cntrl_reg:     std_logic_vector(15 downto 0);
+signal adc_cntrl_rd_reg:  std_logic_vector(15 downto 0);
 
-signal rd_pulse1: std_logic;
-signal rd_pulse2: std_logic;
+signal rd_pulse1:   std_logic;
+signal rd_pulse2:   std_logic;
 signal copy_shadow: std_logic;
+
+type tag_state_type is(IDLE, TAG_RECEIVED);
+signal tag_state:	tag_state_type;
+signal tag_trg_i: std_logic;
+
+signal tag_low_reg:   std_logic_vector(15 downto 0);
+signal tag_high_reg:  std_logic_vector(15 downto 0);
+signal sync_ext_trg:  std_logic_vector(1 downto 0);
+signal ext_trg_pos:   std_logic;
+signal ext_trg_neg:   std_logic;
+signal ext_trg:       std_logic;
 
 
 begin
+
+edge_trg: process (clk, nrst)
+begin
+  if rising_edge(clk) then
+    sync_ext_trg(0) <= ext_trg_i;
+    sync_ext_trg(1) <= sync_ext_trg(0);
+  end if;
+end process;
+
+ext_trg_pos <= sync_ext_trg(0) and not sync_ext_trg(1);
+ext_trg_neg <= not sync_ext_trg(0)  and sync_ext_trg(1);
+
+sel_edge: process (clk, nrst)
+begin
+  if nrst = '0' then
+    ext_trg <= '0';
+  elsif rising_edge(clk) then
+    ext_trg <= '0';
+    if (adc_cntrl_reg(9) = '1' and ext_trg_pos = '1' ) or (adc_cntrl_reg(9) = '0' and ext_trg_neg = '1') then
+      ext_trg <= '1';
+    end if;
+  end if;
+end process;
+
+
+
+tag_comp: process (clk, nrst) 
+begin
+  if nrst = '0' then
+    tag_trg_i <= '0';
+    tag_state <= IDLE;
+     
+  elsif rising_edge(clk) then
+    tag_trg_i <= '0';
+    
+    case tag_state is
+      when IDLE =>
+        if tag_valid = '1' then
+          tag_state <= TAG_RECEIVED;
+        end if;
+          
+      when TAG_RECEIVED =>       
+        if (tag_i = tag_high_reg & tag_low_reg) then
+          tag_trg_i <= '1';
+        end if;
+        tag_state <= IDLE;
+                 
+      when others	=>	null;
+    end case;
+            
+  end if;
+end process tag_comp;
 
 adc: ad7606
   generic map (
@@ -102,6 +175,8 @@ adc: ad7606
 
     clk           => clk,
     nrst          => nrst,
+    ext_trg_i     => ext_trg and not adc_cntrl_reg(10),
+    tag_trg_i     => tag_trg_i,
     sync_rst      => adc_cntrl_reg(0),
     trigger_mode  => adc_cntrl_reg(4),
     transfer_mode => adc_cntrl_reg(2 downto 1),
@@ -140,6 +215,10 @@ begin
     rd_adc_chn_7  <= '0';
     rd_adc_chn_8  <= '0';
     rd_fw_version <= '0';
+    wr_tag_low    <= '0';
+    wr_tag_high   <= '0';
+    rd_tag_low    <= '0';
+    rd_tag_high   <= '0';
     dtack         <= '0';
   elsif rising_edge(clk) then
     wr_adc_cntrl  <= '0';
@@ -153,6 +232,10 @@ begin
     rd_adc_chn_7  <= '0';
     rd_adc_chn_8  <= '0';
     rd_fw_version <= '0';
+    wr_tag_low    <= '0';
+    wr_tag_high   <= '0';
+    rd_tag_low    <= '0';
+    rd_tag_high   <= '0';
     dtack         <= '0';
     
     if Ext_Adr_Val = '1' then
@@ -173,6 +256,26 @@ begin
             dtack          <= '1'; 
           end if;
         
+        when tag_low_adr =>
+          if Ext_Wr_active = '1' then
+            wr_tag_low <= '1';
+            dtack      <= '1';
+          end if;
+          if Ext_Rd_active = '1' then
+            rd_tag_low <= '1';
+            dtack      <= '1';
+          end if;
+          
+        when tag_high_adr =>
+          if Ext_Wr_active = '1' then
+            wr_tag_high <= '1';
+            dtack       <= '1';
+          end if;
+          if Ext_Rd_active = '1' then
+            rd_tag_high <= '1';
+            dtack       <= '1';
+          end if;
+          
         when chn_1_reg_adr =>
           if Ext_Rd_active = '1' then
             rd_adc_chn_1 <= '1';
@@ -262,12 +365,29 @@ begin
   end if;
 end process;
 
+tag_reg: process (clk, nrst)
+begin
+  if nrst = '0' then
+    tag_low_reg <= (others => '0');
+    tag_high_reg <= (others => '0');
+  elsif rising_edge(clk) then
+    if wr_tag_low = '1' then
+      tag_low_reg <= Data_from_SCUB_LA;
+    end if;
+    if wr_tag_high = '1' then
+      tag_high_reg <= Data_from_SCUB_LA;
+    end if;
+  end if;
+end process;
+
 -- adc_cntrl_reg(0)           : reset, 1 -> active
 -- adc_cntrl_reg(2 downto 1)  : transfer mode, 00 -> par, 01 -> serial
 -- adc_cntrl_reg(3)           : adc range, 1 -> -10/+10, 0 -> -5/+5
--- adc_cntrl_reg(4)           : adc trigger mode: 0 -> continuous, 1 -> triggered by extern input
+-- adc_cntrl_reg(4)           : adc trigger mode: 0 -> continuous, 1 -> triggered by tag or ext input
 -- adc_cntrl_reg(7 downto 5)  : oversample config: 000 -> no OS, 110 -> ratio 64
 -- adc_cntrl_reg(8)           : enables differential input for channels 3 to 8
+-- adc_cntrl_reg(9)           : ext trigger edge: 1 -> pos edge, 0 -> neg edge
+-- adc_cntrl_reg(10)          : mask out ext trigger input, for tag only trigger 
 cntrl_reg: process (clk, nrst, rd_adc_cntrl, wr_adc_cntrl)
   variable reset_cnt: unsigned(1 downto 0) := "00";
 begin
@@ -293,7 +413,7 @@ adc_cntrl_rd_reg <=  adc_cntrl_reg;
     
 user_rd_active <= rd_adc_cntrl or rd_adc_chn_1 or rd_adc_chn_2 or rd_adc_chn_3
                   or rd_adc_chn_4 or rd_adc_chn_5 or rd_adc_chn_6 or rd_adc_chn_7
-                  or rd_adc_chn_8 or rd_fw_version;
+                  or rd_adc_chn_8 or rd_fw_version or rd_tag_high or rd_tag_low;
 
 Data_to_SCUB <= s_ext_regs(0) when rd_adc_chn_1 = '1' else
                 s_ext_regs(1) when rd_adc_chn_2 = '1' else
@@ -305,6 +425,8 @@ Data_to_SCUB <= s_ext_regs(0) when rd_adc_chn_1 = '1' else
                 s_ext_regs(7) when rd_adc_chn_8 = '1' else
                 adc_cntrl_rd_reg when rd_adc_cntrl = '1' else
                 std_logic_vector(to_unsigned(fw_version, 16)) when rd_fw_version = '1' else
+                tag_low_reg when rd_tag_low = '1' else
+                tag_high_reg when rd_tag_high = '1' else
                 x"0000";
                 
 Dtack_to_SCUB <= dtack;
@@ -321,5 +443,6 @@ channel_8 <= chn_8;
 adc_range   <= adc_cntrl_reg(3);
 os          <= adc_cntrl_reg(7 downto 5);
 nDiff_In_En <= adc_cntrl_reg(8);
+ext_trgd_o  <= ext_trg and adc_cntrl_reg(4) and not adc_cntrl_reg(10); -- signal trigger while in ext trigger mode and not masked
 
 end architecture;
