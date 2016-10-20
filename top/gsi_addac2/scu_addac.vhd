@@ -19,7 +19,7 @@ entity scu_addac is
   generic(
     g_cid_group: integer := 38;
     g_card_type: string := "addac";
-    g_firmware_version: integer := 3;
+    g_firmware_version: integer := 4;
     g_firmware_release: integer := 0
     );
   port (
@@ -262,11 +262,10 @@ component IO_4x8
   signal  rstn_flash:             std_logic;
   signal  rstn_stc:               std_logic;
 
-  
-  --signal irqcnt:  unsigned(12 downto 0);
   signal tmr_irq: std_logic;
   
   signal dac_1_ext_trig, dac_2_ext_trig: std_logic;
+  signal adc_trgd: std_logic;
   
   constant c_led_cnt:       integer := integer(ceil(real(clk_sys_in_hz) / real(1_000_000_000) * real(125000000)));
   constant c_led_cnt_width: integer := integer(floor(log2(real(c_led_cnt)))) + 2;
@@ -538,6 +537,8 @@ adc: adc_scu_bus
   port map (
     clk           => clk_sys,
     nrst          => rstn_sys,
+    tag_i         => Timing_Pattern_LA,
+    tag_valid     => Timing_Pattern_RCV,
     
     db            => ADC_DB(13 downto 0),
     db14_hben     => ADC_DB(14),
@@ -553,6 +554,8 @@ adc: adc_scu_bus
     adc_range     => ADC_Range,
     firstdata     => ADC_FRSTDATA,
     nDiff_In_En   => NDIFF_IN_EN,
+    ext_trg_i     => EXT_TRIG_ADC,
+    ext_trgd_o    => adc_trgd,
     
     Adr_from_SCUB_LA  => ADR_from_SCUB_LA,
     Data_from_SCUB_LA => Data_from_SCUB_LA,
@@ -840,6 +843,16 @@ ext_trig_led: led_n
     Sig_in => dac_1_ext_trig or dac_2_ext_trig,
     nLED => open,
     nLED_opdrn => A_nLED_Trig_DAC);
+    
+adc_trig_led: led_n
+  generic map (
+    stretch_cnt => 3)
+  port map (
+    ena => led_ena_cnt, -- is every 10 ms for one clock period active
+    clk => clk_sys,
+    Sig_in => adc_trgd,
+    nLED => open,
+    nLED_opdrn => A_nLED_Trig_ADC);
 
 clk_deviation_led: led_n
   generic map (

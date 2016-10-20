@@ -20,6 +20,8 @@ entity ad7606  is
       clk:            in std_logic;
       nrst:           in std_logic;
       sync_rst:       in std_logic;
+      ext_trg_i:      in std_logic;
+      tag_trg_i:      in std_logic;
       trigger_mode:   in std_logic;                         -- 0: continuous conversion 1: triggered by extern trig input
       transfer_mode:  in std_logic_vector(1 downto 0);      -- select communication mode
                                                             --  00: par
@@ -51,7 +53,7 @@ end entity;
 architecture ad7606_arch of ad7606 is
   type channel_reg_type is array(0 to 7) of std_logic_vector(15 downto 0);    -- array for 8 registers
   signal s_shadow_regs:  channel_reg_type;
-  type state_type is (reset, idle,  conv_trigger, conv_st, wait_for_busy, wait_for_conv_fin, read_par,
+  type state_type is (reset, idle,  conv_trigger, conv_st, wait_for_trigger, wait_for_busy, wait_for_conv_fin, read_par,
             read_ser, data_ready, wait_rd_low, wait_cs_high);
   
   signal conv_state:    state_type;
@@ -148,12 +150,12 @@ begin
 
 
   -- tri stating the hben and byte_sel lines
-  s_db14 <= db14_hben;
-  s_db15 <= db15_byte_sel;
-  db14_hben <= s_hben when s_par_ser_sel = '1' else 'Z';
+  s_db14        <= db14_hben;
+  s_db15        <= db15_byte_sel;
+  db14_hben     <= s_hben when s_par_ser_sel = '1' else 'Z';
   db15_byte_sel <= s_byte_sel when s_par_ser_sel = '1' else 'Z';
   
-  s_db_in <= s_db15 & s_db14 & db;
+  s_db_in       <= s_db15 & s_db14 & db;
   
   serial_clk_en: process(clk, nrst, s_par_ser_sel)
   begin
@@ -161,11 +163,11 @@ begin
       s_sclk_cnt <= (others=> '0');
     elsif rising_edge(clk) then
       if s_sclk_cnt = to_unsigned(c_sclk_cnt-1, s_sclk_cnt'length) then
-        s_sclk_en <= '1';
-        s_sclk_cnt <= (others=> '0');
+        s_sclk_en   <= '1';
+        s_sclk_cnt  <= (others=> '0');
       else
-        s_sclk_en <= '0';
-        s_sclk_cnt <= s_sclk_cnt + 1;
+        s_sclk_en   <= '0';
+        s_sclk_cnt  <= s_sclk_cnt + 1;
       end if;
     end if;
   end process;
@@ -232,25 +234,25 @@ conv_cycle: process(clk, nrst, sync_rst)
   begin
   
     if nrst = '0' or sync_rst = '1' then
-      conv_state <= reset;
-      s_convst_a    <= '1';
-      s_convst_b    <= '1';
-      s_n_cs      <= '1';
-      s_n_rd      <= '1';
-      s_adc_reset   <= '0';
-      s_reset_delay <= (others => '0');
-      s_conv_wait <= (others => '0');
-      s_wait_d_ready <= (others => '0');
-      s_wait_rd_low <= (others => '0');
-      s_wait_cs_high <= (others => '0');
-      s_inter_cycle <= (others => '0');
+      conv_state      <= reset;
+      s_convst_a      <= '1';
+      s_convst_b      <= '1';
+      s_n_cs          <= '1';
+      s_n_rd          <= '1';
+      s_adc_reset     <= '0';
+      s_reset_delay   <= (others => '0');
+      s_conv_wait     <= (others => '0');
+      s_wait_d_ready  <= (others => '0');
+      s_wait_rd_low   <= (others => '0');
+      s_wait_cs_high  <= (others => '0');
+      s_inter_cycle   <= (others => '0');
       
-      s_channel_cnt <= 0;
-      s_par_ser_sel <= '0';
-      s_hben <= '0';
-      s_byte_sel <= '0';
+      s_channel_cnt   <= 0;
+      s_par_ser_sel   <= '0';
+      s_hben          <= '0';
+      s_byte_sel      <= '0';
       s_channel_latch <= '0';
-      s_busy <= '0';
+      s_busy          <= '0';
       
       
     elsif rising_edge(clk) then
@@ -260,7 +262,6 @@ conv_cycle: process(clk, nrst, sync_rst)
       s_n_cs          <= '1';
       s_n_rd          <= '1';
       s_adc_reset     <= '0';
-      --s_par_ser_sel   <= '0';
       s_hben          <= '0';
       s_byte_sel      <= '0';
       s_channel_latch <= '0';
@@ -278,18 +279,29 @@ conv_cycle: process(clk, nrst, sync_rst)
           
         when idle =>
           if s_inter_cycle = to_unsigned(c_inter_cycle, s_inter_cycle'length) then
-            conv_state <= conv_st;
+            conv_state <= wait_for_trigger;
             s_inter_cycle <= (others => '0');
           else
             s_inter_cycle <= s_inter_cycle + 1;
           end if;
         
+        when wait_for_trigger =>
+          if trigger_mode = '0' then
+            conv_state <= conv_st;
+          else
+            if ext_trg_i = '1' then
+              conv_state <= conv_st;
+            end if;
+            if tag_trg_i = '1' then
+              conv_state <= conv_st;
+            end if;
+          end if;
           
         when conv_st =>
           s_convst_a <= '0';
           s_convst_b <= '0';
           if s_conv_wait = to_unsigned(c_conv_wait, s_conv_wait'length) then
-            conv_state <= wait_for_busy;
+            conv_state  <= wait_for_busy;
             s_conv_wait <= (others => '0');
           else
             s_conv_wait <= s_conv_wait + 1;
@@ -311,8 +323,8 @@ conv_cycle: process(clk, nrst, sync_rst)
           end if;
         when read_ser =>
           s_par_ser_sel <= '1';
-          s_n_cs <= '0';
-          s_n_rd <= s_sclk;
+          s_n_cs        <= '0';
+          s_n_rd        <= s_sclk;
           
           if s_bit_count = (c_ser_length ) then
             conv_state <= idle;
@@ -320,7 +332,7 @@ conv_cycle: process(clk, nrst, sync_rst)
           
         
         when read_par =>
-          s_busy <= '1';
+          s_busy        <= '1';
           s_par_ser_sel <= '0';
           -- wait for c_wait_d_ready until data is stable
     
@@ -332,7 +344,7 @@ conv_cycle: process(clk, nrst, sync_rst)
           end if;
           
         when data_ready =>
-          s_busy <= '1';
+          s_busy        <= '1';
           s_par_ser_sel <= '0';
           -- now data should be stable
           
@@ -345,36 +357,36 @@ conv_cycle: process(clk, nrst, sync_rst)
             conv_state <= wait_rd_low;
           else
             s_channel_cnt <= 0;
-            conv_state <= idle;
+            conv_state    <= idle;
           end if;
           
             
         when wait_rd_low =>
-          s_busy <= '1';
+          s_busy        <= '1';
           s_par_ser_sel <= '0';
           -- hold rd low for c_wait_rd_low
-          s_n_cs <= '0';
-          s_n_rd <= '0';
+          s_n_cs        <= '0';
+          s_n_rd        <= '0';
           
           
           if s_wait_rd_low = to_unsigned(c_wait_rd_low, s_wait_rd_low'length) then
-            conv_state <= wait_cs_high;
-            s_wait_rd_low <= (others=> '0');
+            conv_state      <= wait_cs_high;
+            s_wait_rd_low   <= (others=> '0');
             s_channel_latch <= '1';
           else
             s_wait_rd_low <= s_wait_rd_low + 1;
           end if;
         
         when wait_cs_high =>
-          s_busy <= '1';
+          s_busy        <= '1';
           s_par_ser_sel <= '0';
           
           -- rd and cs goes high for c_wait_cs_high
           if s_wait_cs_high = to_unsigned(c_wait_cs_high, s_wait_cs_high'length) then
-            conv_state <= data_ready;
-            s_wait_cs_high <= (others=> '0');
+            conv_state      <= data_ready;
+            s_wait_cs_high  <= (others=> '0');
           else
-            s_wait_cs_high <= s_wait_cs_high + 1;
+            s_wait_cs_high  <= s_wait_cs_high + 1;
           end if;
   
         when others =>
@@ -386,12 +398,12 @@ conv_cycle: process(clk, nrst, sync_rst)
   
   
   -- ADC signals
-  n_cs <= s_n_cs;
-  n_rd_sclk <= s_n_rd;
+  n_cs        <= s_n_cs;
+  n_rd_sclk   <= s_n_rd;
   par_ser_sel <= s_par_ser_sel;
-  convst_a <= s_convst_a;
-  convst_b <= s_convst_b;
-  adc_reset <= s_adc_reset;
+  convst_a    <= s_convst_a;
+  convst_b    <= s_convst_b;
+  adc_reset   <= s_adc_reset;
   
   -- channel order has to be switched for SCU_ADDA
   channel_1 <= s_shadow_regs(7);
@@ -403,5 +415,5 @@ conv_cycle: process(clk, nrst, sync_rst)
   channel_7 <= s_shadow_regs(1);
   channel_8 <= s_shadow_regs(0);
   
-  reg_busy <= s_busy;
+  reg_busy  <= s_busy;
 end architecture;
