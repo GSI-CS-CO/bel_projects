@@ -680,18 +680,23 @@ architecture rtl of monster is
   signal s_eca_io   : t_gpio_array(c_eca_io-1 downto 0);
   signal s_tlu_io   : t_gpio_array(c_tlu_io-1 downto 0);
 
-  signal s_gpio_out     : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
-  signal s_gpio_src_eca : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
-  signal s_gpio_src_ioc : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_out          : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_src_eca      : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_src_ioc      : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_src_wr_pps   : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_gpio_src_butis_t0 : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
   
   signal s_gpio_mux      : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
   signal s_lvds_mux      : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
+  signal s_gpio_pps_mux  : std_logic_vector(f_sub1(c_eca_gpio) downto 0);
+  signal s_lvds_pps_mux  : std_logic_vector(f_sub1(c_eca_lvds) downto 0);
   signal s_lvds_vec_i    : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
   
   signal lvds_dat_fr_butis_t0 : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat_fr_ioc      : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat_fr_eca_chan : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat_fr_clk_gen  : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
+  signal lvds_dat_fr_wr_pps   : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat             : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_i               : t_lvds_byte_array(15 downto 0);
   
@@ -1467,11 +1472,13 @@ begin
       gpio_spec_out_o => gpio_spec_out_o,
       gpio_spec_in_o  => gpio_spec_in_o,
       gpio_mux_o      => s_gpio_mux,
+      gpio_pps_mux_o  => s_gpio_pps_mux,
       lvds_oe_o       => lvds_oen_o,
       lvds_term_o     => lvds_term_o,
       lvds_spec_out_o => lvds_spec_out_o,
       lvds_spec_in_o  => lvds_spec_in_o,
-      lvds_mux_o      => s_lvds_mux);
+      lvds_mux_o      => s_lvds_mux,
+      lvds_pps_mux_o  => s_lvds_pps_mux);
   
   lvds_vec_in_zero : if (g_lvds_inout + g_lvds_in = 0) generate
     s_lvds_vec_i <= (others => (others => '0'));
@@ -1482,12 +1489,22 @@ begin
   end generate;
   
   gpio_out_selector : for i in 0 to f_sub1(c_eca_gpio) generate
-    gpio_o(i) <= s_gpio_out(i) when s_gpio_mux(i)='0' else clk_butis_t0_ts;
+    s_gpio_src_butis_t0(i) <= '0' when s_gpio_mux(i)='0' else clk_butis_t0_ts;
   end generate;
-  s_gpio_out <= s_gpio_src_eca or s_gpio_src_ioc;
+  
+  gpio_pps_selector : for i in 0 to f_sub1(c_eca_gpio) generate
+    s_gpio_src_wr_pps(i) <= '0' when s_gpio_pps_mux(i)='0' else ext_pps;
+  end generate;
+  
+  s_gpio_out <= s_gpio_src_eca or s_gpio_src_ioc or s_gpio_src_butis_t0 or s_gpio_src_wr_pps;
+  gpio_o     <= s_gpio_out;
   
   lvds_out_selector : for i in 0 to f_sub1(c_eca_lvds) generate
-    lvds_dat_fr_butis_t0(i) <= (others => clk_butis_t0_ts and s_lvds_mux(i));
+    lvds_dat_fr_butis_t0(i) <= (others => clk_butis_t0_ts and s_lvds_mux(i)); -- !!! This is just a STUB and UNSAFE -> Clock domain crossing 1bit 20MHz <-> 8bit 125MHz
+  end generate;
+  
+  lvds_pps_selector : for i in 0 to f_sub1(c_eca_lvds) generate
+    lvds_dat_fr_wr_pps(i) <= (others => ext_pps and s_lvds_pps_mux(i));
   end generate;
   
   -- Instantiate SERDES clock generator
@@ -1509,7 +1526,7 @@ begin
 
   -- LVDS component data input is OR between ECA chan output and SERDES clk. gen.
   gen_lvds_dat : for i in lvds_dat'range generate
-    lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i) or lvds_dat_fr_ioc(i) or lvds_dat_fr_butis_t0(i);
+    lvds_dat(i) <= lvds_dat_fr_eca_chan(i) or lvds_dat_fr_clk_gen(i) or lvds_dat_fr_ioc(i) or lvds_dat_fr_butis_t0(i) or lvds_dat_fr_wr_pps(i);
   end generate gen_lvds_dat;
   
   tlu_gpio : if (g_gpio_in + g_gpio_inout > 0) generate
