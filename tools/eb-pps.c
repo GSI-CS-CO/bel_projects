@@ -41,6 +41,7 @@
 #define WB_IO_CONTROL_LVDS_PPS_Mux_Reset_high  0x00000f0c
 #define WB_IO_CONTROL_MASK_ALL                 0xffffffff
 #define WB_IO_CONTROL_MAX_DEVICES              1
+#define EXAMPLE_DEVICE                         "dev/ttyUSB0"
 
 /* Global */
 /* ==================================================================================================== */
@@ -50,6 +51,7 @@ const char* devName;
 /* Prototypes */
 /* ==================================================================================================== */
 void vHandleEBError(const char* where, eb_status_t status);
+void vShowHelp(void);
 
 /* Function vHandleEBError(...) */
 /* ==================================================================================================== */
@@ -57,6 +59,29 @@ void vHandleEBError(const char* where, eb_status_t status)
 {
   fprintf(stderr, "%s: %s failed: %s\n", program, where, eb_status(status));
   exit(1);
+}
+
+/* Function vShowHelp(...) */
+/* ==================================================================================================== */
+void vShowHelp(void)
+{
+  /* Print arguments and options */
+  printf("Usage: %s <proto/host/port> <options>\n", program);
+  printf("\n");
+  printf("Arguments/[OPTIONS]:\n");
+  printf("  -s : Turn output enable on/off and input termination off/on\n");
+  printf("  -o : Disable PPS\n");
+  printf("  -h : Print help (this message)\n");
+  printf("  -v : Switch to verbose mode\n");
+  printf("\n");
+  printf("Examples:\n");
+  printf("%s %s       : Enable PPS\n", program, EXAMPLE_DEVICE);
+  printf("%s %s -s    : Enable PPS (and enable outputs)\n", program, EXAMPLE_DEVICE);
+  printf("%s %s -o    : Disable PPS\n", program, EXAMPLE_DEVICE);
+  printf("%s %s -o -s : Disable PPS (and disable outputs)\n", program, EXAMPLE_DEVICE);
+  printf("\n");
+  printf("Report bugs to <csco-tg@gsi.de>\n");
+  printf("Licensed under the GPLv3\n");
 }
 
 /* Function main(...) */
@@ -107,7 +132,7 @@ int main(int argc, char** argv)
   }
   
   /* Show help? */
-  if (show_help) { return -1; }
+  if (show_help) { vShowHelp(); return -1; }
   
   /* Open socket and device */
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_DATAX|EB_ADDRX, &socket)) != EB_OK) { vHandleEBError("eb_socket_open", status); }
@@ -123,8 +148,7 @@ int main(int argc, char** argv)
   /* Did we find at least one? */
   if (dev_count != WB_IO_CONTROL_MAX_DEVICES) 
   {
-    printf("IO CONTROL unit missing!\n");
-    return -1;
+    printf("IO CONTROL unit missing!\n"); return -1;
   }
   else
   {
@@ -135,12 +159,14 @@ int main(int argc, char** argv)
   /* Configure unit */
   if (!turn_off)
   {
+    printf("Enabling PPS...\n");
     eb_device_write(device, wb_addr_base + WB_IO_CONTROL_GPIO_PPS_Mux_Set_low, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
     eb_device_write(device, wb_addr_base + WB_IO_CONTROL_GPIO_PPS_Mux_Set_high, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
     eb_device_write(device, wb_addr_base + WB_IO_CONTROL_LVDS_PPS_Mux_Set_low, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
     eb_device_write(device, wb_addr_base + WB_IO_CONTROL_LVDS_PPS_Mux_Set_high, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
     if (setup_io)
     {
+      printf("Enabling output...\n");
       eb_device_write(device, wb_addr_base + WB_IO_CONTROL_GPIO_Oe_Set_low, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
       eb_device_write(device, wb_addr_base + WB_IO_CONTROL_GPIO_Oe_Set_high, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
       eb_device_write(device, wb_addr_base + WB_IO_CONTROL_LVDS_Oe_Set_low, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
@@ -153,12 +179,14 @@ int main(int argc, char** argv)
   }
   else
   {
+    printf("Disabling PPS...\n");
     eb_device_write(device, wb_addr_base + WB_IO_CONTROL_GPIO_PPS_Mux_Reset_low, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
     eb_device_write(device, wb_addr_base + WB_IO_CONTROL_GPIO_PPS_Mux_Reset_high, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
     eb_device_write(device, wb_addr_base + WB_IO_CONTROL_LVDS_PPS_Mux_Reset_low, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
     eb_device_write(device, wb_addr_base + WB_IO_CONTROL_LVDS_PPS_Mux_Reset_high, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
     if (setup_io)
     {
+      printf("Disabling output...\n");
       eb_device_write(device, wb_addr_base + WB_IO_CONTROL_GPIO_Oe_Reset_low, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
       eb_device_write(device, wb_addr_base + WB_IO_CONTROL_GPIO_Oe_Reset_high, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
       eb_device_write(device, wb_addr_base + WB_IO_CONTROL_LVDS_Oe_Reset_low, EB_DATA32, WB_IO_CONTROL_MASK_ALL, 0, NULL);
