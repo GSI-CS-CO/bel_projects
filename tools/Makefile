@@ -3,7 +3,7 @@ STAGING ?=
 EB      ?= ../ip_cores/etherbone-core/api
 ECA	?= ../ip_cores/wr-cores/modules/wr_eca
 TLU	?= ../ip_cores/wr-cores/modules/wr_tlu
-TARGETS := eb-flash eb-sflash eb-info eb-console eb-config-nv eb-time eb-fwload eb-pps
+TARGETS := eb-flash eb-info eb-console eb-config-nv eca-snoop button-game io-test eb-time  eb-sflash
 
 EXTRA_FLAGS ?=
 CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) 
