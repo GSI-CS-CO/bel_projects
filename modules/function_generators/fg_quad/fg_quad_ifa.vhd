@@ -87,9 +87,6 @@ architecture fg_quad_scu_bus_arch of fg_quad_ifa is
   signal  state_change_irq: std_logic;
   signal  dreq:             std_logic;
   signal  tag_start:        std_logic;
-  
-  signal  s_fc_str:         std_logic_vector(1 downto 0);
-  signal  s_fc_valid:       std_logic;
 
   type tag_state_type is(IDLE, TAG_RECEIVED);
 	signal tag_state	:	tag_state_type;
@@ -122,19 +119,6 @@ begin
       sw_strobe           => sw_strobe,
       fg_is_running       => fg_is_running       
     );
-    
-    
-  fc_str_edge: process (clk, nReset)
-  begin
-    if nReset = '0' then
-      s_fc_str <= (others => '0');
-    elsif rising_edge(clk) then
-      s_fc_str(0) <= fc_str;
-      s_fc_str(1) <= s_fc_str(0);
-    end if;
-  end process;
-  
-  s_fc_valid <= not s_fc_str(1) and s_fc_str(0);
     
     
   adr_decoder: process (clk, nReset)
@@ -173,7 +157,7 @@ begin
       wr_brc_start      <= '0';
 
     
-      if s_fc_valid = '1' then
+      if fc_str = '1' then
 
         case unsigned(fc) is
 
@@ -324,17 +308,45 @@ end process;
 fg_cntrl_rd_reg <= fg_cntrl_reg(15 downto 13) & fg_cntrl_reg(12 downto 10) &
                     fg_cntrl_reg(9 downto 4) & fg_cntrl_reg(3) & fg_is_running & fg_cntrl_reg(1 downto 0);
 
-user_rd_active <= rd_fg_cntrl or rd_coeff_a or rd_coeff_b or rd_start_value_h
+                    
+rd_act: process (clk)
+-- generate a pulse for the mil encoder which goes only low, when the data in the rd port register changes
+variable user_rd_act: std_logic;
+begin
+  if rising_edge(clk) then
+    user_rd_act := '0';
+  
+    if fc_str = '1' then
+      user_rd_act := rd_fg_cntrl or rd_coeff_a or rd_coeff_b or rd_start_value_h
                   or rd_start_value_l or rd_shift or rd_fw_version;
+    end if;
+  end if;
+  user_rd_active <= user_rd_act;
+end process;
 
-Rd_Port <= fg_cntrl_rd_reg                  when rd_fg_cntrl = '1' else
-            coeff_a_reg                     when rd_coeff_a = '1' else
-            coeff_b_reg                     when rd_coeff_b = '1' else
-            start_value_reg(31 downto 16)   when rd_start_value_h = '1' else
-            start_value_reg(15 downto 0)    when rd_start_value_l = '1' else
-            shift_reg                       when rd_shift = '1' else
-            std_logic_vector(to_unsigned(fw_version, 16)) when rd_fw_version = '1' else
-            x"0000";
+rd_mux: process (clk, nreset)
+begin
+  if nreset = '0' then
+    Rd_Port <= (others => '0');
+  elsif rising_edge(clk) then
+    
+    if rd_fg_cntrl = '1' then
+      Rd_Port <= fg_cntrl_rd_reg;
+    elsif rd_coeff_a = '1' then
+      Rd_Port <= coeff_a_reg;
+    elsif rd_coeff_b = '1' then
+      Rd_Port <= coeff_b_reg;
+    elsif rd_start_value_h = '1' then
+      Rd_Port <= start_value_reg(31 downto 16);
+    elsif rd_start_value_l = '1' then
+      Rd_Port <= start_value_reg(15 downto 0);
+    elsif rd_shift = '1' then
+      Rd_Port <= shift_reg;
+    elsif rd_fw_version = '1' then
+      Rd_Port <= std_logic_vector(to_unsigned(fw_version, 16));
+    end if;
+  end if;
+end process;
 
 nirq <= not s_irq;
 
