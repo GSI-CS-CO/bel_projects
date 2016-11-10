@@ -39,8 +39,10 @@ void ebmInit()
 {
   
    int j;
+   
    while (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) {
-     for (j = 0; j < (125000000/4); ++j) { asm("nop"); }
+     for (j = 0; j < (125000000/2); ++j) { asm("nop"); }
+     mprintf("#%02u: DM cores Waiting for IP from WRC...\n", cpuId);  
    } 
 
    ebm_init();
@@ -58,12 +60,12 @@ void init()
    cmdCnt = 0;
    cpuId = getCpuIdx();
    ftmInit();
-   //mprintf("#%02u: Configured EBM and PQ\n", cpuId); 
+
    if (cpuId == 0) {
 
      ebmInit();
      prioQueueInit();
-     mprintf("#%02u: Configured EBM and PQ\n", cpuId); 
+     mprintf("#%02u: Got IP from WRC. Configured EBM and PQ\n", cpuId); 
    }
    
    isr_table_clr();
@@ -91,16 +93,16 @@ int insertFpqEntry()
       
    stime = getSysTime() + ct_sec + ct_trn - ((run++)); //+ (1 + ((run>>5)*5))*ct_sec ;
    
-      atomic_on();
-      *pFpqData = (unsigned int)(stime>>32);
-      *pFpqData = (unsigned int)(stime);
-       *pFpqData = 0xDEADBEEF;
-       *pFpqData = 0xCAFEBABE;
-       *pFpqData = 0x11111111;
-       *pFpqData = 0x22222222;
-       *pFpqData = 0x33333333;
-       *pFpqData = run;
-      atomic_off(); 
+  atomic_on();
+  *pFpqData = (unsigned int)(stime>>32);
+  *pFpqData = (unsigned int)(stime);
+  *pFpqData = 0xDEADBEEF;
+  *pFpqData = 0xCAFEBABE;
+  *pFpqData = 0x11111111;
+  *pFpqData = 0x22222222;
+  *pFpqData = 0x33333333;
+  *pFpqData = run;
+  atomic_off(); 
   
     
     return ret;
@@ -133,46 +135,11 @@ void main(void) {
 
    atomic_off();
    if (getMsiBoxCpuSlot(cpuId, 0) == -1) {mprintf("#%02u: Mail box slot acquisition failed\n");}
-  
-   //mprintf("#%02u: Tprep @ 0x%08x\n", cpuId, test);
-   //hexDump ("Plan 0 Chain 0 : \n", (void*)pFtmIf->pAct->plans[0], 128);
-   /*
-   t_time now, later;
-   int64_t diff, diffSum;
-   int64_t diffMin, diffMax, diffAvg;
-   int64_t div = 1000000;
-   diffMin =  0x7fffffff;
-   diffMax =  0xffffffff;
-   diffAvg =  0;
-   */
-   
+
    while (1) {
       cmdEval();
       processFtm();
-      
-      //mprintf("pAct 0x%08x, Qty 0x%08x, pStart 0x%08x, lans[0] 0x%08x,\n", pFtmIf->pAct, pFtmIf->pAct->planQty, pFtmIf->pAct->pStart, pFtmIf->pAct->plans[0]);
-      
-      //for (j = 0; j < (125000000/4); ++j) { asm("nop"); }
-      /*
-      ebm_hi(0x0);
-      atomic_on();
-      ebm_op(0x0, 0x0BEEBABE, EBM_WRITE);
-      ebm_op(0x0, 0x1BEEBABE, EBM_WRITE);
-      atomic_off();
-      ebm_flush();
-      
-      for (j = 0; j < div; ++j) {
-         now   = getSysTime();
-         later = getSysTime();
-         diff  = (int64_t) later - (int64_t) now;
-         //mprintf("Min: %d Max: %d\n", (int32_t)diffMin, (int32_t)diffMax);
-         if(diffMin > diff) diffMin = diff;
-         if(diffMax < diff) diffMax = diff;
-         diffSum += diff;
-      }
-      mprintf("Min: %d Max: %d Avg: %d\n", (int32_t)diffMin, (int32_t)diffMax, ((int32_t)(diffSum / div)));
-      diffSum = 0;
-      */
+
    }
 
 }
