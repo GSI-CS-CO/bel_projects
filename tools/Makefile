@@ -9,10 +9,12 @@ EXTRA_FLAGS ?=
 CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(ECA) -I $(TLU)
 LIBS        ?= -L $(EB)/.libs -L $(ECA) -L $(TLU) -Wl,-rpath,$(PREFIX)/lib -letherbone -leca -ltlu -lm
 
-all:	$(TARGETS)
-clean:
+all:	$(TARGETS) monitoring
+
+clean:  monitoring-clean
 	rm -f $(TARGETS)
-install:
+
+install: monitoring-install
 	mkdir -p $(STAGING)$(PREFIX)/bin
 	cp $(TARGETS) $(STAGING)$(PREFIX)/bin
 
@@ -21,3 +23,17 @@ install:
 
 %:	%.cpp
 	g++ $(CFLAGS) -o $@ $< $(LIBS)
+
+monitoring: wr-mon
+
+monitoring-install:
+	$(MAKE) -C monitoring install
+
+monitoring-clean:
+	$(MAKE) -C monitoring clean
+
+wr-mon:
+	$(MAKE) -C monitoring all
+
+
+
