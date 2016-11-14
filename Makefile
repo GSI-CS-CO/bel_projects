@@ -12,13 +12,13 @@ SYSCONFDIR  ?= /etc
 EXTRA_FLAGS ?=
 PWD         := $(shell pwd)
 
-all::		etherbone tools eca tlu sdbfs toolchain firmware driver
+all::		etherbone tools tlu sdbfs toolchain firmware driver
 
 gateware:	all pexarria5 exploder5 vetar2a scu2 scu3
 
-install::	etherbone-install tools-install eca-install tlu-install driver-install
+install::	etherbone-install tools-install tlu-install driver-install
 
-clean::		etherbone-clean tools-clean eca-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean exploder5-clean pexarria5-clean sio3-clean
+clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean exploder5-clean pexarria5-clean sio3-clean
 
 distclean::	clean
 	git clean -xfd .

@@ -112,9 +112,4 @@ eb_status_t wb_wr_get_temp(eb_device_t device,                 /* EB device */
                            );
 
 
-/* get uptime of WR */
-eb_status_t wb_wr_get_uptime(eb_device_t device,               /* EB device */
-                             int *uptime                       /* uptime [s] */
-                             );
- 		 
 #endif /* wb_api.h */

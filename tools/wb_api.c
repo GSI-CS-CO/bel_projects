@@ -371,28 +371,3 @@ eb_status_t wb_wr_get_temp(eb_device_t device, double *temp)
   return status;
 
 } /* wb_wr_get_temp */
-
-
-eb_status_t wb_wr_get_uptime(eb_device_t device, int *uptime)
-{
-  eb_address_t address;
-  eb_data_t    data;
-  eb_status_t  status;
-  int          devIndex = 0;
-
-#ifdef WB_SIMULATE
-  *uptime  = 69;
-
-  return EB_OK;
-#endif
-
-  *uptime  = 0x0;
-
-  if ((status = wb_check_device(device, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_PRODUCT, WB4_BLOCKRAM_VMAJOR, WB4_BLOCKRAM_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status;
-
-  address = WB4_BLOCKRAM_WR_UPTIME + wb4_ram ;
-  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
-  *uptime = data; /* need to mask relevant bits */
-
-  return status;
-} /* wb_wr_get_uptime */
