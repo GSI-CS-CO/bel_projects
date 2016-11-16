@@ -4,16 +4,12 @@
 #   make PREFIX=/usr all
 PREFIX      ?= /usr/local
 STAGING     ?=
+EB          ?= ../../ip_cores/etherbone-core/api
+TARGETS     := wr-mon
+
 EXTRA_FLAGS ?=
-TARGETS := wr-mon
-
-FLAGS   = -fPIC
-LIBS    = -Wl,-rpath,$(PREFIX)/lib -L$(PREFIX)/lib -letherbone
-INCLUDE = $(PREFIX)/include
-
-FLAGS	:= $(FLAGS) -I$(INCLUDE) -Wall -O2
-CFLAGS	= $(EXTRA_FLAGS) $(FLAGS) -Wmissing-declarations -Wmissing-prototypes
-CC	= $(TARGET)gcc
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) 
+LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 
 # special for wr-mon
 WBDIR    = ..
