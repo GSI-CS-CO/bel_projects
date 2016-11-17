@@ -19,14 +19,14 @@ use work.generic_fifo_pkg.all;
 -- entity
 entity wb_nau8811_audio_driver is
   generic (
-    g_address_size     : natural := 32;  -- in bit(s)
-    g_data_size        : natural := 32;  -- in bit(s)
-    g_spi_fifo_size    : natural := 32;  -- in g_spi_data_size(s)
-    g_spi_data_size    : natural := 16;  -- in bit(s)
-    g_iis_tx_fifo_size : natural := 512; -- in g_iis_tx_fifo_size(s)
-    g_iis_rx_fifo_size : natural := 512; -- in g_iis_rx_fifo_size(s)
-    g_iis_word_size    : natural := 32;  -- in bit(s)
-    g_use_external_pll : boolean := true -- true for real synthesis or false for simulation purpose 
+    g_address_size     : natural := 32;   -- in bit(s)
+    g_data_size        : natural := 32;   -- in bit(s)
+    g_spi_fifo_size    : natural := 32;   -- in g_spi_data_size(s)
+    g_spi_data_size    : natural := 16;   -- in bit(s)
+    g_iis_tx_fifo_size : natural := 1024; -- in g_iis_tx_fifo_size(s)
+    g_iis_rx_fifo_size : natural := 1024; -- in g_iis_rx_fifo_size(s)
+    g_iis_word_size    : natural := 32;   -- in bit(s)
+    g_use_external_pll : boolean := true  -- true for real synthesis or false for simulation purpose 
   );
   port (
     -- generic system interface
@@ -66,8 +66,8 @@ architecture rtl of wb_nau8811_audio_driver is
   signal s_iis_reset         : std_logic;
   signal s_iis_adc_out       : std_logic;
   signal s_iis_adc_in        : std_logic;
-  signal s_iis_tx_fill_level : std_logic_vector (8 downto 0);
-  signal s_iis_rx_fill_level : std_logic_vector (8 downto 0);
+  signal s_iis_tx_fill_level : std_logic_vector (9 downto 0);
+  signal s_iis_rx_fill_level : std_logic_vector (9 downto 0);
   
   -- pll management
   signal s_pll_reset  : std_logic;
@@ -140,6 +140,10 @@ architecture rtl of wb_nau8811_audio_driver is
   signal s_status_reg               : std_logic_vector ((g_data_size-1) downto 0);
   signal s_iis_fill_level_reg       : std_logic_vector ((g_data_size-1) downto 0);
   
+  -- sync
+  signal s_wb_to_iis_stage1         : std_logic_vector (7 downto 0);
+  signal s_wb_to_iis_stage2         : std_logic_vector (7 downto 0);
+  
   -- constant wishbone bus error (register is not readable or writable, ...)
   constant c_wb_bus_read_error : std_logic_vector (g_data_size-1 downto 0):= x"DEADBEEF";
 
@@ -198,14 +202,14 @@ begin
     rx_data_o         => s_iis_rx_fifo_data_in(g_iis_word_size-1 downto 0),
     tx_read_o         => s_iis_tx_fifo_read_en,
     rx_write_o        => s_iis_rx_fifo_write_en,
-    iis_heartbeat_i   => s_iis_heartbeat_mode,
-    iis_trigger_pol_i => s_iis_heartbeat_pol,
-    iis_trigger_i     => s_iis_trigger_sync,
-    iis_enable_clk_i  => s_iis_control_clock_enable,
-    iis_transaction_i => s_iis_transaction_mode,
-    iis_mono_output_i => s_iis_mono_output,
-    iis_invert_fs_i   => s_iis_invert_fs,
-    iis_padding_i     => s_iis_padding
+    iis_heartbeat_i   => s_wb_to_iis_stage2(7), -- s_iis_heartbeat_mode
+    iis_trigger_pol_i => s_wb_to_iis_stage2(6), -- s_iis_heartbeat_pol
+    iis_trigger_i     => s_wb_to_iis_stage2(5), -- s_iis_trigger_sync
+    iis_enable_clk_i  => s_wb_to_iis_stage2(4), -- s_iis_control_clock_enable
+    iis_transaction_i => s_wb_to_iis_stage2(3), -- s_iis_transaction_mode
+    iis_mono_output_i => s_wb_to_iis_stage2(2), -- s_iis_mono_output
+    iis_invert_fs_i   => s_wb_to_iis_stage2(1), -- s_iis_invert_fs
+    iis_padding_i     => s_wb_to_iis_stage2(0)  -- s_iis_padding
   );  
   
     iis_tx_fifo : generic_async_fifo
@@ -427,12 +431,12 @@ begin
   -- fifo fill level register
   p_fill_level_reg : process (s_iis_tx_fill_level, s_iis_tx_fifo_full, s_iis_rx_fill_level, s_iis_rx_fifo_full)
   begin
-    s_iis_fill_level_reg(8 downto 0)   <= s_iis_tx_fill_level;
-    s_iis_fill_level_reg(9)            <= s_iis_tx_fifo_full;
-    s_iis_fill_level_reg(15 downto 10) <= (others => '0');
-    s_iis_fill_level_reg(24 downto 16) <= s_iis_rx_fill_level;
-    s_iis_fill_level_reg(25)           <= s_iis_rx_fifo_full;
-    s_iis_fill_level_reg(31 downto 26) <= (others => '0');
+    s_iis_fill_level_reg(9 downto 0)   <= s_iis_tx_fill_level;
+    s_iis_fill_level_reg(10)           <= s_iis_tx_fifo_full;
+    s_iis_fill_level_reg(15 downto 11) <= (others => '0');
+    s_iis_fill_level_reg(25 downto 16) <= s_iis_rx_fill_level;
+    s_iis_fill_level_reg(26)           <= s_iis_rx_fifo_full;
+    s_iis_fill_level_reg(31 downto 27) <= (others => '0');
   end process;
   
   -- process handle wishbone requests
@@ -653,4 +657,23 @@ begin
     end if; -- check reset
   end process;
 
+  -- sync signals for iis master
+  p_sync_signals : process(pll_ref_i, rst_n_i)
+  begin
+    if (rst_n_i = '0') then
+      s_wb_to_iis_stage1 <= (others => '0');
+      s_wb_to_iis_stage2 <= (others => '0');
+    elsif (rising_edge(pll_ref_i)) then
+      s_wb_to_iis_stage1(7) <= s_iis_heartbeat_mode;
+      s_wb_to_iis_stage1(6) <= s_iis_heartbeat_pol;
+      s_wb_to_iis_stage1(5) <= s_iis_trigger_sync;
+      s_wb_to_iis_stage1(4) <= s_iis_control_clock_enable;
+      s_wb_to_iis_stage1(3) <= s_iis_transaction_mode;
+      s_wb_to_iis_stage1(2) <= s_iis_mono_output;
+      s_wb_to_iis_stage1(1) <= s_iis_invert_fs;
+      s_wb_to_iis_stage1(0) <= s_iis_padding;
+      s_wb_to_iis_stage2 <= s_wb_to_iis_stage1;
+    end if;
+  end process;
+  
 end rtl;
