@@ -14,7 +14,7 @@
 
 /* Defines */
 /* ==================================================================================================== */
-#define TX_TOTAL_DEVICE_BUFFER    512                                   /* Dwords */
+#define TX_TOTAL_DEVICE_BUFFER    1024                                  /* Dwords */
 #define TX_BUFFER_LENGTH          TX_TOTAL_DEVICE_BUFFER/2              /* Dwords */
 #define TX_NEXT_PACKET_LEVEL      TX_TOTAL_DEVICE_BUFFER/2              /* Dwords */
 #define WAV_HEADER_LENGTH         44                                    /* 44 bytes header information */
