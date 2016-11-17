@@ -4,23 +4,29 @@
  *
  *  created : Apr 10, 2013
  *  author  : Dietrich Beck, GSI-Darmstadt
+ *            some code for 1-wire stuff borrowed from
+ *            -- Stefan Rauch <s.rauch@gsi.de>
+ *            -- Wesley W. Terpstra <w.terpstra@gsi.de>
+ *            -- Alessandro Rubini <rubini@gnudd.com>
+ *            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
  *  version : 11-Nov-2016
 */
 #define WB_API_VERSION "0.04.0"
 /*
- * Api for wishbone devices for timing receiver nodes. This is  not a timing receiver API,
- * but only a temporary solution.
+ * Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
+ * 
  *
  * requires:
  *  - etherbone
  *  - wb_slaves.h
+ *  - 1-wire 
  *
- * example of usage: monitoring/wr-mon.c
+ * example of usage: see monitoring/wr-mon.c
  *
  * compile flags:
  *  - WB_SIMULATE, no access to real devices, just for testing
  * definitions of application specific addresses of wishbone devices must be
- * included in the main program
+ * included in the main program.
  *
  *
  * -------------------------------------------------------------------------------------------
@@ -101,14 +107,14 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device,           /* EB device */
                                  );
 
 
-/* get ID from 1-wire sensor */
+/* get ID from 1-wire temperature sensor */
 eb_status_t wb_wr_get_id(eb_device_t device,                   /* EB device */
                          uint64_t *id                          /* ID of 1-wire sensor */
                          );
 
 /* get temp from 1-wire sensor */
 eb_status_t wb_wr_get_temp(eb_device_t device,                 /* EB device */
-                           double *temp                        /* ID of 1-wire sensor */
+                           double *temp                        /* temperature */
                            );
 
 

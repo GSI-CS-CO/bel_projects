@@ -41,6 +41,9 @@
 /* etherbone */
 #include <etherbone.h>
 
+/* 1-wire */
+#include <w1.h>
+
 /* wishbone api */
 #include <wb_api.h>
 #include <wb_slaves.h>
@@ -54,6 +57,12 @@ eb_address_t endpoint_addr  = EB_NULL;
 eb_address_t etherbone_addr = EB_NULL;
 eb_address_t tlu_addr       = EB_NULL;
 eb_address_t wb4_ram        = EB_NULL;
+eb_address_t wb4_1wire      = EB_NULL;
+
+eb_address_t BASE_ONEWIRE;
+extern struct w1_bus wrpc_w1_bus;
+
+
 
 /* private routines */
 static void wb_warn(eb_status_t status, const char* what) {
@@ -247,7 +256,7 @@ eb_status_t wb_wr_get_link(eb_device_t device, int *link )
   data = WR_ENDPOINT_LINK_MASK & data; /* mask highest bytes */
   *link = (data == WR_ENDPOINT_LINK_MASK);
 
-  return status;
+  return status;\
 } /* wb_wr_get_link */
 
 
@@ -306,15 +315,13 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device, int *syncState )
 
 eb_status_t wb_wr_get_id(eb_device_t device, uint64_t *id)
 {
-  eb_address_t address;
-  eb_data_t    hidata;
-  eb_data_t    lodata;
   eb_status_t  status;
   int          devIndex = 0;
+  uint64_t     tmpID;
 
-  /* this is a hack only for SCU, must be replace by something more general for TF */
+  struct       w1_dev *d;
+  int          i;
 
-#define BOARD_ID        0x500
 
 #ifdef WB_SIMULATE
   *id   = 0x1234567890ABCDEF;
@@ -324,33 +331,37 @@ eb_status_t wb_wr_get_id(eb_device_t device, uint64_t *id)
 
   *id   = 0x0;
 
-  /* the following is a hack only for the SCU and must be replaced by something more generic for all types of TR */
-  if ((status = wb_check_device(device, LM32_RAM_USER_VENDOR, LM32_RAM_USER_PRODUCT, LM32_RAM_USER_VMAJOR, LM32_RAM_USER_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status;  
+  if ((status = wb_check_device(device, WB4_PERIPH_1WIRE_VENDOR, WB4_PERIPH_1WIRE_PRODUCT, WB4_PERIPH_1WIRE_VMAJOR, WB4_PERIPH_1WIRE_VMINOR, devIndex, &wb4_1wire)) != EB_OK) return status;
 
-  address = wb4_ram + BOARD_ID;
-  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &hidata, 0, eb_block)) != EB_OK) return status;
+  BASE_ONEWIRE = wb4_1wire;
 
-  address = wb4_ram + BOARD_ID + 0x4;
-  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &lodata, 0, eb_block)) != EB_OK) return status;
-
-  *id = hidata;
-  *id = (*id << 32);
-  *id = *id + lodata;
-
+  wrpc_w1_bus.detail = devIndex;
+  wrpc_w1_init();
+  w1_scan_bus(&wrpc_w1_bus);
+  for (i = 0; i < W1_MAX_DEVICES; i++) {
+    d = wrpc_w1_bus.devs + i;
+    if ((d->rom & 0xff) == 0x42 || (d->rom & 0xff) == 0x28) {
+      tmpID = (int)(d->rom >> 32);
+      tmpID = (tmpID << 32);
+      tmpID = tmpID + (int)(d->rom);
+      *id = tmpID;
+      return status;
+    } /* if d->rom ... */
+  } /* for i */
+  
   return status;
 } /* wb_wr_get_id */
 
+
 eb_status_t wb_wr_get_temp(eb_device_t device, double *temp)
 {
-  eb_address_t address;
-  eb_data_t    data;
   eb_status_t  status;
   int          devIndex = 0;
+  int          tmpT;
 
-  /* this is a hack only for SCU, must be replace by something more general for TF */
+  struct       w1_dev *d;
+  int          i;
 
-
-#define BOARD_TEMP      0x518
 
 #ifdef WB_SIMULATE
   *temp   = 0x22.2222;
@@ -360,14 +371,21 @@ eb_status_t wb_wr_get_temp(eb_device_t device, double *temp)
 
   *temp   = 0.0;
 
-  /* the following is a hack only for the SCU and must be replaced by something more generic for all types of TR */
-  if ((status = wb_check_device(device, LM32_RAM_USER_VENDOR, LM32_RAM_USER_PRODUCT, LM32_RAM_USER_VMAJOR, LM32_RAM_USER_VMINOR, devIndex, &wb4_ram)) != EB_OK) return status;  
+  if ((status = wb_check_device(device, WB4_PERIPH_1WIRE_VENDOR, WB4_PERIPH_1WIRE_PRODUCT, WB4_PERIPH_1WIRE_VMAJOR, WB4_PERIPH_1WIRE_VMINOR, devIndex, &wb4_1wire)) != EB_OK) return status;
 
-  address = wb4_ram + BOARD_TEMP;
-  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
+  BASE_ONEWIRE = wb4_1wire;
 
-  *temp = (double)data/16;
-
+  wrpc_w1_bus.detail = devIndex;
+  wrpc_w1_init();
+  w1_scan_bus(&wrpc_w1_bus);
+  for (i = 0; i < W1_MAX_DEVICES; i++) {
+    d = wrpc_w1_bus.devs + i;
+    if ((d->rom & 0xff) == 0x42 || (d->rom & 0xff) == 0x28) {
+      tmpT = w1_read_temp(wrpc_w1_bus.devs + i, 0);
+      *temp = (tmpT >> 16) + ((int)((tmpT & 0xffff) * 10 * 1000 >> 16))/10000.0;
+      return status;
+    } /* if d->rom ... */
+  } /* for i */
+  
   return status;
-
 } /* wb_wr_get_temp */

@@ -43,6 +43,8 @@
 #define WR_PPS_GEN_ESCR_MASKPPS 0x2         /* PPS valid bit */
 #define WR_PPS_GEN_ESCR_MASKTS  0x4         /* timestamp valid bit */
 
+
+
 /*** WR-Endpoint ***/
 /* device ID */
 #define WR_ENDPOINT_VENDOR      WB_CERN     /* vendor ID */
@@ -59,6 +61,8 @@
 #define WR_ENDPOINT_MACHI_MASK  0x0000ffff  /* only two bytes are of interest */
 #define WR_ENDPOINT_LINK_MASK   0x000000a0  /* only this bit */
 
+
+
 /*** Etherbone-Config ***/
 /* device ID */
 #define ETHERBONE_CONFIG_VENDOR       	 WB_GSI      /* vendor ID */
@@ -71,17 +75,21 @@
 
 /* masks */
 
+
+
 /*** LM32-RAM-User ***/
 /* device ID */
 #define LM32_RAM_USER_VENDOR      WB_GSI             /* vendor ID */
 #define LM32_RAM_USER_PRODUCT     0x54111351         /* product ID */
 #define LM32_RAM_USER_VMAJOR      1                  /* major revision */
-#define LM32_RAM_USER_VMINOR      1                  /* minor revision */
+#define LM32_RAM_USER_VMINOR      0                  /* minor revision */
 
 
 /* register offsets */
 
 /* masks */
+
+
 
 /*** WB4-BlockRAM ***/
 /* device ID */
@@ -94,6 +102,20 @@
 #define WB4_BLOCKRAM_WR_UPTIME   0xa0                /* uptime of WR */
 
 /* masks */
+
+
+
+/*** WR-Periph-1Wire ***/
+/* device ID */
+#define WB4_PERIPH_1WIRE_VENDOR      WB_CERN             /* vendor ID */
+#define WB4_PERIPH_1WIRE_PRODUCT     0x779c5443          /* product ID */
+#define WB4_PERIPH_1WIRE_VMAJOR      1                   /* major revision */
+#define WB4_PERIPH_1WIRE_VMINOR      1                   /* minor revision */
+
+/* register offsets */
+
+/* masks */
+
 
 #endif  /* wb_slaves.h */
 

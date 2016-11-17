@@ -53,6 +53,7 @@
 
 const char* program;
 static int verbose=0;
+eb_device_t device;        /* needs to be global for 1-wire stuff */
 
 
 static void die(const char* where, eb_status_t status) {
@@ -64,7 +65,7 @@ static void die(const char* where, eb_status_t status) {
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device>\n", program);
   fprintf(stderr, "\n");
-  fprintf(stderr, "  -b               display board ID\n");
+  fprintf(stderr, "  -b               display board ID (1-wire temperature sensor)\n");
   fprintf(stderr, "  -d               display WR time\n");
   fprintf(stderr, "  -e               display etherbone version\n");
   fprintf(stderr, "  -h               display this help and exit\n");
@@ -73,9 +74,10 @@ static void help(void) {
   fprintf(stderr, "  -m               display WR MAC\n");
   fprintf(stderr, "  -o               display offset between WR time and system time\n");
   fprintf(stderr, "  -s               display WR sync status\n");
-  fprintf(stderr, "  -t               display board temperature\n");
+  fprintf(stderr, "  -t               display board temperature (1-wire sensor)\n");
   fprintf(stderr, "  -v               display verbose information\n");
   fprintf(stderr, "\n");
+  fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", WRMON_VERSION);
@@ -84,7 +86,7 @@ static void help(void) {
 
 int main(int argc, char** argv) {
   eb_status_t       status;
-  eb_device_t       device;
+  //  eb_device_t       device;
   eb_socket_t       socket;
 
   const char* devName;
@@ -271,7 +273,7 @@ int main(int argc, char** argv) {
     if ((status = wb_wr_get_temp(device, &temp) != EB_OK)) die("WR get board temperature", status);
      if (verbose) fprintf(stdout, "temp: ");
      fprintf(stdout, "%.4f\n", (float)temp);
-  }
+ } 
 
   wb_close(device, socket);
   
