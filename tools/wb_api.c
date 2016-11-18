@@ -319,7 +319,7 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device, int devIndex, int *syncStat
 } /* wb_wr_get_sync_state */
 
 
-eb_status_t wb_wr_get_id(eb_device_t device, int devIndex, uint64_t *id)
+eb_status_t wb_wr_get_id(eb_device_t device, int devIndex, unsigned int busIndex, uint64_t *id)
 {
   eb_status_t  status;
   uint64_t     tmpID;
@@ -340,7 +340,7 @@ eb_status_t wb_wr_get_id(eb_device_t device, int devIndex, uint64_t *id)
 
   BASE_ONEWIRE = wb4_1wire;
 
-  wrpc_w1_bus.detail = devIndex;
+  wrpc_w1_bus.detail = busIndex;
   wrpc_w1_init();
   w1_scan_bus(&wrpc_w1_bus);
   for (i = 0; i < W1_MAX_DEVICES; i++) {
@@ -354,11 +354,11 @@ eb_status_t wb_wr_get_id(eb_device_t device, int devIndex, uint64_t *id)
     } /* if d->rom ... */
   } /* for i */
   
-  return status;
+  return EB_OOM;
 } /* wb_wr_get_id */
 
 
-eb_status_t wb_wr_get_temp(eb_device_t device, int devIndex, double *temp)
+eb_status_t wb_wr_get_temp(eb_device_t device, int devIndex, unsigned int busIndex, double *temp)
 {
   eb_status_t  status;
   int          tmpT;
@@ -378,18 +378,19 @@ eb_status_t wb_wr_get_temp(eb_device_t device, int devIndex, double *temp)
   if ((status = wb_check_device(device, WB4_PERIPH_1WIRE_VENDOR, WB4_PERIPH_1WIRE_PRODUCT, WB4_PERIPH_1WIRE_VMAJOR, WB4_PERIPH_1WIRE_VMINOR, devIndex, &wb4_1wire)) != EB_OK) return status;
 
   BASE_ONEWIRE = wb4_1wire;
+  wrpc_w1_bus.detail = busIndex;
 
-  wrpc_w1_bus.detail = devIndex;
   wrpc_w1_init();
   w1_scan_bus(&wrpc_w1_bus);
+
   for (i = 0; i < W1_MAX_DEVICES; i++) {
     d = wrpc_w1_bus.devs + i;
-    if ((d->rom & 0xff) == 0x42 || (d->rom & 0xff) == 0x28) {
+    if (((d->rom & 0xff) == 0x42) || ((d->rom & 0xff) == 0x28)) {
       tmpT = w1_read_temp(wrpc_w1_bus.devs + i, 0);
       *temp = (tmpT >> 16) + ((int)((tmpT & 0xffff) * 10 * 1000 >> 16))/10000.0;
       return status;
     } /* if d->rom ... */
   } /* for i */
   
-  return status;
+  return EB_OOM; /* no 1-wire temperature sensor at specified WB device and specified 1-wire bus ... */
 } /* wb_wr_get_temp */

@@ -115,12 +115,14 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device,           /* EB device */
 /* get ID from 1-wire temperature sensor */
 eb_status_t wb_wr_get_id(eb_device_t device,                   /* EB device */
                          int devIndex,                         /* 0,1,2... - there may be more than 1 device on the WB bus */
+                         unsigned int busIndex,                /* index of the physical 1-wire bus */
                          uint64_t *id                          /* ID of 1-wire sensor */
                          );
 
 /* get temp from 1-wire sensor */
 eb_status_t wb_wr_get_temp(eb_device_t device,                 /* EB device */
                            int devIndex,                       /* 0,1,2... - there may be more than 1 device on the WB bus */
+                           unsigned int busIndex,              /* index of the physical 1-wire bus */
                            double *temp                        /* temperature */
                            );
 
