@@ -9,7 +9,7 @@
  *            -- Wesley W. Terpstra <w.terpstra@gsi.de>
  *            -- Alessandro Rubini <rubini@gnudd.com>
  *            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
- *  version : 11-Nov-2016
+ *  version : 18-Nov-2016
 */
 #define WB_API_VERSION "0.04.0"
 /*
@@ -77,43 +77,50 @@ eb_status_t wb_get_device_address(eb_device_t device,          /* EB device */
                                   uint32_t product_id,         /* product ID of WB device */
                                   uint8_t  ver_major,          /* major version */
                                   uint8_t  ver_minor,          /* minor version */
-                                  int      devIndex,           /* 0,1,2... - there may be more than 1 device on the bus */
+                                  int      devIndex,           /* 0,1,2... - there may be more than 1 device on the WB bus */
                                   eb_address_t *address        /* start address of WB device */
                                   );
 
 /* gets the actual UTC or TAI time (depends on configuration of clock master) */
 eb_status_t wb_wr_get_time(eb_device_t  device,                /* EB device */
-                           uint64_t    *nsecs                  /* timestamp [ns] */
+                           int devIndex,                       /* 0,1,2... - there may be more than 1 device on the WB bus */
+                           uint64_t *nsecs                     /* timestamp [ns] */
                            );
 
 /* gets MAC of White Rabbit port */
 eb_status_t wb_wr_get_mac(eb_device_t device,                  /* EB device */
-                          uint64_t    *mac                     /* MAC address */
+                          int devIndex,                        /* 0,1,2... - there may be more than 1 device on the WB bus */
+                          uint64_t *mac                        /* MAC address */
                           );
 
 /* gets link state of White Rabbit port */
 eb_status_t wb_wr_get_link(eb_device_t device,                 /* EB device */
+                           int devIndex,                       /* 0,1,2... - there may be more than 1 device on the WB bus */
                            int *link                           /* link state: 0: link down, 1: link up */
                            );
 
 /* gets ip address of White Rabbit port */
 eb_status_t wb_wr_get_ip(eb_device_t device,                   /* EB device */
+                         int devIndex,                         /* 0,1,2... - there may be more than 1 device on the WB bus */
                          int *ip                               /* ip address */
                          );
 
 /* gets sync state of WR port */
 eb_status_t wb_wr_get_sync_state(eb_device_t device,           /* EB device */
+                                 int devIndex,                 /* 0,1,2... - there may be more than 1 device on the WB bus */
                                  int *syncState                /* sync state: 0: NO_SYNC, 2: PPS, 4: TIME, 6:LOCK, 14: TRACK */
                                  );
 
 
 /* get ID from 1-wire temperature sensor */
 eb_status_t wb_wr_get_id(eb_device_t device,                   /* EB device */
+                         int devIndex,                         /* 0,1,2... - there may be more than 1 device on the WB bus */
                          uint64_t *id                          /* ID of 1-wire sensor */
                          );
 
 /* get temp from 1-wire sensor */
 eb_status_t wb_wr_get_temp(eb_device_t device,                 /* EB device */
+                           int devIndex,                       /* 0,1,2... - there may be more than 1 device on the WB bus */
                            double *temp                        /* temperature */
                            );
 

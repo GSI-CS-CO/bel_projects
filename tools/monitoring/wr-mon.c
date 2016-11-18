@@ -76,6 +76,7 @@ static void help(void) {
   fprintf(stderr, "  -s               display WR sync status\n");
   fprintf(stderr, "  -t               display board temperature (1-wire sensor)\n");
   fprintf(stderr, "  -v               display verbose information\n");
+  fprintf(stderr, "  -w<index>        specify device in case multiple WB devices of the same type exist on the bus (default: 0)\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
   fprintf(stderr, "\n");
@@ -86,8 +87,8 @@ static void help(void) {
 
 int main(int argc, char** argv) {
   eb_status_t       status;
-  //  eb_device_t       device;
   eb_socket_t       socket;
+  int               devIndex=-1; /* 0,1,2... - there may be more than 1 device on the WB bus */
 
   const char* devName;
 
@@ -121,10 +122,11 @@ int main(int argc, char** argv) {
   struct timeval htm;
 
   int opt, error=0;
+  char *tail;
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "bdosmlietvh")) != -1) {
+  while ((opt = getopt(argc, argv, "w:bdosmlietvh")) != -1) {
     switch (opt) {
     case 'b':
       getBoardID=1;
@@ -165,6 +167,13 @@ int main(int argc, char** argv) {
       /* getEBVersion=1; disabled as many runtime system still have old libraries */
       verbose=1;
       break;
+    case 'w':
+      devIndex = strtol(optarg, &tail, 0);
+      if (*tail != 0) {
+        fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+        exit(1);
+      } /* if *tail */
+      break;
     case 'h':
       help();
       return 0;
@@ -175,8 +184,8 @@ int main(int argc, char** argv) {
     default:
       fprintf(stderr, "%s: bad getopt result\n", program);
       return 1;
-    }
-  }
+    } /* switch opt */
+  } /* while opt */
 
   if (error) {
     help();
@@ -191,6 +200,7 @@ int main(int argc, char** argv) {
   }
 
   devName = argv[optind];
+  if (devIndex < 0) devIndex = 0; /* default: grab first device of the requested type on the wishbone bus */
   
   if (getEBVersion) {
     if (verbose) fprintf(stdout, "EB version / EB source: ");
@@ -204,7 +214,7 @@ int main(int argc, char** argv) {
   }
 
   if (getWRDate || getWROffset) {
-    if ((status = wb_wr_get_time(device, &nsecs64) != EB_OK)) die("WR get time", status);
+    if ((status = wb_wr_get_time(device, devIndex, &nsecs64) != EB_OK)) die("WR get time", status);
     secs     = (unsigned long)((double)nsecs64 / 1000000000.0);
     msecs64  = nsecs64 / 1000000.0;
 
@@ -228,7 +238,7 @@ int main(int argc, char** argv) {
   }
 
   if (getWRSync) {
-    if ((status = wb_wr_get_sync_state(device, &syncState) != EB_OK)) die("WR get sync state", status);
+    if ((status = wb_wr_get_sync_state(device, devIndex, &syncState) != EB_OK)) die("WR get sync state", status);
     if ((syncState & 0x8))
       sprintf(syncStr,"TRACKING");
     else if ((syncState & 0x4))
@@ -242,13 +252,13 @@ int main(int argc, char** argv) {
   }
 
   if (getWRMac) {
-    if ((status = wb_wr_get_mac(device, &mac) != EB_OK)) die("WR get MAC", status);
+    if ((status = wb_wr_get_mac(device, devIndex, &mac) != EB_OK)) die("WR get MAC", status);
     if (verbose) fprintf(stdout, "MAC: ");
     fprintf(stdout, "%012llx\n", (long long unsigned)mac);
   }
 
   if (getWRLink) {
-    if ((status = wb_wr_get_link(device, &link) != EB_OK)) die("WR get link state", status);
+    if ((status = wb_wr_get_link(device, devIndex, &link) != EB_OK)) die("WR get link state", status);
     if (link) 
       sprintf(linkStr, "LINK_UP");
     else
@@ -258,19 +268,19 @@ int main(int argc, char** argv) {
   }
 
  if (getWRIP) {
-    if ((status = wb_wr_get_ip(device, &ip) != EB_OK)) die("WR get IP", status);
+    if ((status = wb_wr_get_ip(device, devIndex, &ip) != EB_OK)) die("WR get IP", status);
      if (verbose) fprintf(stdout, "IP: ");
      fprintf(stdout, "%d.%d.%d.%d\n", (ip & 0xFF000000) >> 24, (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
   }
 
  if (getBoardID) {
-    if ((status = wb_wr_get_id(device, &id) != EB_OK)) die("WR get board ID", status);
+    if ((status = wb_wr_get_id(device, devIndex, &id) != EB_OK)) die("WR get board ID", status);
      if (verbose) fprintf(stdout, "ID: ");
      fprintf(stdout, "0x%016"PRIx64"\n", id);
   }
 
  if (getBoardTemp) {
-    if ((status = wb_wr_get_temp(device, &temp) != EB_OK)) die("WR get board temperature", status);
+    if ((status = wb_wr_get_temp(device, devIndex, &temp) != EB_OK)) die("WR get board temperature", status);
      if (verbose) fprintf(stdout, "temp: ");
      fprintf(stdout, "%.4f\n", (float)temp);
  } 

@@ -136,6 +136,12 @@ eb_status_t wb_get_device_address(eb_device_t device, uint64_t vendor_id, uint32
     return EB_OOM;
   }
 
+  if (devIndex < 0) {
+    sprintf(buff, "device vendor %"PRIx64", product %x : devIndex must be larger than 0", vendor_id, product_id);
+    wb_warn(EB_OOM, buff);
+    return EB_OOM;
+  }
+
 #ifdef WB_SIMULATE
   *address = 0;
 
@@ -156,6 +162,11 @@ eb_status_t wb_get_device_address(eb_device_t device, uint64_t vendor_id, uint32
     wb_warn(EB_OOM, buff);
     return EB_OOM;
   }
+  if (nDevices < devIndex + 1) {
+    sprintf(buff, "device vendor %"PRIx64", product %x, requested wishbone device does not exist on the bus!", vendor_id, product_id);
+    wb_warn(EB_OOM, buff);
+    return EB_OOM;
+  }
   if (sdbDevice[devIndex].abi_ver_major != ver_major) {
     sprintf(buff, "device vendor %"PRIx64", product %x : major version == %d expected", vendor_id, product_id, ver_major);
     wb_warn(EB_ABI, buff);
@@ -173,13 +184,12 @@ eb_status_t wb_get_device_address(eb_device_t device, uint64_t vendor_id, uint32
   return status;
 } /* wb_get_device_address */
 
-eb_status_t wb_wr_get_time(eb_device_t device, uint64_t *nsecs)
+eb_status_t wb_wr_get_time(eb_device_t device, int devIndex, uint64_t *nsecs)
 {
   eb_data_t    data1;
   eb_data_t    data2;
   eb_status_t  status;
   eb_cycle_t   cycle;
-  int          devIndex = 0;
 
 #ifdef WB_SIMULATE
   *nsecs       = 1000000123456789;
@@ -203,13 +213,12 @@ eb_status_t wb_wr_get_time(eb_device_t device, uint64_t *nsecs)
 } /* wb_wr_get_time */
 
 
-eb_status_t wb_wr_get_mac(eb_device_t device, uint64_t *mac )
+eb_status_t wb_wr_get_mac(eb_device_t device, int devIndex, uint64_t *mac )
 {
   eb_data_t    hidata;
   eb_data_t    lodata;
   eb_address_t address;
   eb_status_t  status;
-  int          devIndex = 0;
 
 #ifdef WB_SIMULATE
   *mac = 0x0000c5c012345678;
@@ -235,12 +244,11 @@ eb_status_t wb_wr_get_mac(eb_device_t device, uint64_t *mac )
 } /* wb_wr_get_mac */
 
 
-eb_status_t wb_wr_get_link(eb_device_t device, int *link )
+eb_status_t wb_wr_get_link(eb_device_t device, int devIndex, int *link )
 {
   eb_data_t    data;
   eb_address_t address;
   eb_status_t  status;
-  int          devIndex = 0;
 
 #ifdef WB_SIMULATE
   *link = 0x1;
@@ -260,12 +268,11 @@ eb_status_t wb_wr_get_link(eb_device_t device, int *link )
 } /* wb_wr_get_link */
 
 
-eb_status_t wb_wr_get_ip(eb_device_t device, int *ip )
+eb_status_t wb_wr_get_ip(eb_device_t device, int devIndex, int *ip )
 {
   eb_data_t    data;
   eb_address_t address;
   eb_status_t  status;
-  int          devIndex = 0;
 
 #ifdef WB_SIMULATE
   *ip = 0x1234abcd;
@@ -284,12 +291,11 @@ eb_status_t wb_wr_get_ip(eb_device_t device, int *ip )
 } /* wb_wr_get_ip */
 
 
-eb_status_t wb_wr_get_sync_state(eb_device_t device, int *syncState )
+eb_status_t wb_wr_get_sync_state(eb_device_t device, int devIndex, int *syncState )
 {
   eb_address_t address;
   eb_data_t    data;
   eb_status_t  status;
-  int          devIndex = 0;
 
 #ifdef WB_SIMULATE
   *syncState  = WR_PPS_GEN_ESCR_MASK + 0x8;
@@ -313,10 +319,9 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device, int *syncState )
 } /* wb_wr_get_sync_state */
 
 
-eb_status_t wb_wr_get_id(eb_device_t device, uint64_t *id)
+eb_status_t wb_wr_get_id(eb_device_t device, int devIndex, uint64_t *id)
 {
   eb_status_t  status;
-  int          devIndex = 0;
   uint64_t     tmpID;
 
   struct       w1_dev *d;
@@ -353,10 +358,9 @@ eb_status_t wb_wr_get_id(eb_device_t device, uint64_t *id)
 } /* wb_wr_get_id */
 
 
-eb_status_t wb_wr_get_temp(eb_device_t device, double *temp)
+eb_status_t wb_wr_get_temp(eb_device_t device, int devIndex, double *temp)
 {
   eb_status_t  status;
-  int          devIndex = 0;
   int          tmpT;
 
   struct       w1_dev *d;
