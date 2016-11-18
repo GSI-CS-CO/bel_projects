@@ -217,13 +217,13 @@ int main(int argc, char** argv) {
   }
 
   /* open Etherbone device and socket */
-  if ((status = wb_open(devName, &device, &socket) != EB_OK)) {
+  if ((status = wb_open(devName, &device, &socket)) != EB_OK) {
     fprintf(stderr, "can't open connection to device %s \n", devName);
     return (1);
   }
 
   if (getWRDate || getWROffset) {
-    if ((status = wb_wr_get_time(device, devIndex, &nsecs64) != EB_OK)) die("WR get time", status);
+    if ((status = wb_wr_get_time(device, devIndex, &nsecs64)) != EB_OK) die("WR get time", status);
     secs     = (unsigned long)((double)nsecs64 / 1000000000.0);
     msecs64  = nsecs64 / 1000000.0;
 
@@ -247,7 +247,7 @@ int main(int argc, char** argv) {
   }
 
   if (getWRSync) {
-    if ((status = wb_wr_get_sync_state(device, devIndex, &syncState) != EB_OK)) die("WR get sync state", status);
+    if ((status = wb_wr_get_sync_state(device, devIndex, &syncState)) != EB_OK) die("WR get sync state", status);
     if ((syncState & 0x8))
       sprintf(syncStr,"TRACKING");
     else if ((syncState & 0x4))
@@ -261,13 +261,13 @@ int main(int argc, char** argv) {
   }
 
   if (getWRMac) {
-    if ((status = wb_wr_get_mac(device, devIndex, &mac) != EB_OK)) die("WR get MAC", status);
+    if ((status = wb_wr_get_mac(device, devIndex, &mac)) != EB_OK) die("WR get MAC", status);
     if (verbose) fprintf(stdout, "MAC: ");
     fprintf(stdout, "%012llx\n", (long long unsigned)mac);
   }
 
   if (getWRLink) {
-    if ((status = wb_wr_get_link(device, devIndex, &link) != EB_OK)) die("WR get link state", status);
+    if ((status = wb_wr_get_link(device, devIndex, &link)) != EB_OK) die("WR get link state", status);
     if (link) 
       sprintf(linkStr, "LINK_UP");
     else
@@ -277,19 +277,19 @@ int main(int argc, char** argv) {
   }
   
   if (getWRIP) {
-    if ((status = wb_wr_get_ip(device, devIndex, &ip) != EB_OK)) die("WR get IP", status);
+    if ((status = wb_wr_get_ip(device, devIndex, &ip)) != EB_OK) die("WR get IP", status);
     if (verbose) fprintf(stdout, "IP: ");
     fprintf(stdout, "%d.%d.%d.%d\n", (ip & 0xFF000000) >> 24, (ip & 0x00FF0000) >> 16, (ip & 0x0000FF00) >> 8, ip & 0x000000FF);
   }
   
   if (getBoardID) {
-   if ((status = wb_wr_get_id(device, devIndex, busIndex, &id) != EB_OK)) die("WR get board ID", status);
-   if (verbose) fprintf(stdout, "ID: ");
-   fprintf(stdout, "0x%016"PRIx64"\n", id);
+    if ((status = wb_wr_get_id(device, devIndex, busIndex, &id)) != EB_OK) die("WR get board ID", status);
+    if (verbose) fprintf(stdout, "ID: ");
+    fprintf(stdout, "0x%016"PRIx64"\n", id);
   }
 
  if (getBoardTemp) {
-   if ((status = wb_wr_get_temp(device, devIndex, busIndex, &temp) != EB_OK)) die("WR get board temperature", status);
+   if ((status = wb_wr_get_temp(device, devIndex, busIndex, &temp)) != EB_OK) die("WR get board temperature", status);
    if (verbose) fprintf(stdout, "temp: ");
    fprintf(stdout, "%.4f\n", (float)temp);
  } 
