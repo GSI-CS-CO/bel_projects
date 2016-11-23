@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
   if (error) return 1;
   
   if (optind + 1 != argc) {
-    fprintf(stderr, "%s: expecting three non-optional arguments: <proto/host/port>\n", program);
+    fprintf(stderr, "%s: expecting non-optional argument: <proto/host/port>\n", program);
     return 1;
   }
   
