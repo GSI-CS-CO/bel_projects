@@ -1,8 +1,9 @@
-create_clock -period  33Mhz -name LPC_FPGA_CLK   [get_ports {LPC_FPGA_CLK}]
-create_clock -period 100Mhz -name pcie_refclk_i  [get_ports {pcie_refclk_i}]
-create_clock -period 125Mhz -name sfp2_ref_clk_i [get_ports {sfp2_ref_clk_i}]
-create_clock -period 1Mhz   -name mil_dsc        [get_ports {IO_2_5V[4]}]
-create_clock -period 1Mhz   -name mil_esc        [get_ports {IO_2_5V[9]}]
+create_clock -period  33Mhz -name LPC_FPGA_CLK      [get_ports {LPC_FPGA_CLK}]
+create_clock -period 100Mhz -name pcie_refclk_i     [get_ports {pcie_refclk_i}]
+create_clock -period 125Mhz -name clk_125m_local_i  [get_ports {clk_125m_local_i}]
+create_clock -period 125Mhz -name sfp2_ref_clk_i    [get_ports {sfp2_ref_clk_i}]
+create_clock -period 1Mhz   -name mil_dsc           [get_ports {IO_2_5V[4]}]
+create_clock -period 1Mhz   -name mil_esc           [get_ports {IO_2_5V[9]}]
 
 derive_pll_clocks -create_base_clocks
 derive_clock_uncertainty
