@@ -248,9 +248,9 @@ architecture rtl of pci_control is
     ("MHDMR_SYOU ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS)
   );
   constant c_family    : string := "Arria V"; 
-  constant c_project   : string := "pci_control_stub";
+  constant c_project   : string := "pci_control";
   constant c_cores         : natural:= 1;
-  constant c_initf_name 	: string := c_project & ".mif";
+  constant c_initf_name 	: string := c_project & "_stub.mif";
   constant c_profile_name  : string := "medium_icache_debug";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
   -- multiple init files for n processors are to be seperated by semicolon ';'

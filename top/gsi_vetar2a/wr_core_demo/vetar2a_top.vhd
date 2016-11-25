@@ -317,9 +317,9 @@ architecture rtl of vetar2a_top is
     ("HX2_3      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL)
   );
   constant c_family       : string := "Arria II"; 
-  constant c_project      : string := "vetar2a_stub";
+  constant c_project      : string := "vetar_top2a";
   constant c_cores        : natural:= 1;
-  constant c_initf_name   : string := c_project & ".mif";
+  constant c_initf_name   : string := "vetar2a_stub.mif";
   constant c_profile_name : string := "medium_icache_debug";
 
 begin
