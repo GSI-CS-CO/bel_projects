@@ -624,13 +624,23 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wr1_nc4
 set_location_assignment PIN_B1 -to wr1_nc1
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to wr1_nc1
 set_global_assignment -name AUTO_SHIFT_REGISTER_RECOGNITION OFF
-set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
 set_global_assignment -name LL_CORE_ONLY OFF -section_id flash
 set_global_assignment -name LL_ROUTING_REGION_EXPANSION_SIZE 2147483647 -section_id flash
 set_global_assignment -name LL_CORE_ONLY OFF -section_id "wr_arria5:reconf"
 set_global_assignment -name LL_ROUTING_REGION_EXPANSION_SIZE 2147483647 -section_id "wr_arria5:reconf"
 set_global_assignment -name LL_CORE_ONLY OFF -section_id "wr_arria5:tx"
 set_global_assignment -name LL_ROUTING_REGION_EXPANSION_SIZE 2147483647 -section_id "wr_arria5:tx"
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
+set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca|eca:E0|*"
+set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32|*"
+set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to "monster:main|altera_reset:reset|nresets[3][0]"
+set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to "monster:main|altera_reset:reset|nresets[1][0]"
+set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to "monster:main|xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|rst_net_n_o"
+set_instance_assignment -name GLOBAL_SIGNAL GLOBAL_CLOCK -to "monster:main|xwr_core:U_WR_CORE|wr_core:WRPC|wrc_periph:PERIPH|rst_wrc_n_o~0"
+set_instance_assignment -name GLOBAL_SIGNAL REGIONAL_CLOCK -to "monster:main|eb_master_slave_wrapper:eb|eb_master_top:\\MS1:U_ebm|s_rst_n"
+set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_tlu:tlu|*"
+set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|xwb_serdes_clk_gen:cmp_serdes_clk_gen|*"
+set_instance_assignment -name GLOBAL_SIGNAL REGIONAL_CLOCK -to "monster:main|ez_usb:\\usb_y:usb|nreset"
 set_global_assignment -name VHDL_FILE ../../../ip_cores/general-cores/modules/common/gc_i2c_slave.vhd
 set_global_assignment -name VHDL_FILE ../../../ip_cores/wr-cores/modules/wr_softpll_ng/spll_period_detect.vhd
 set_global_assignment -name VHDL_FILE ../../../modules/function_generators/fg_quad/fg_quad_datapath.vhd
