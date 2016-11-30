@@ -90,7 +90,7 @@ files = [
   "IFACTL_b.bsf",
   "IFACTL_b.tdf",
   "IFACTL_c.bsf",
-  "IFACTL_c.tdf",
+  "ifactl_c.vhd",
   "IFA_VERS.bsf",
   "IFA_VERS.tdf",
   "IFK_FairBus.bsf",
