@@ -1,4 +1,4 @@
-TITLE "IFA_VERS sollte alle Änderungsbemerkungen der IFA (FG 380.221) enthalten.";
+TITLE "IFA_VERS sollte alle ï¿½nderungsbemerkungen der IFA (FG 380.221) enthalten.";
 
 PARAMETERS (TEST);
 
@@ -11,7 +11,7 @@ CONSTANT C_IFK_Version	 = (TEST==0) ?  1: 0;
 --
 --                                                 +--> D[3..0] = Hier immer die aktuelle Revision-Nummer festlegen !!!
 --                                                 |
-CONSTANT C_IFK_Revision	 = (TEST==0) ?  8: 0;
+CONSTANT C_IFK_Revision	 = (TEST==0) ?  9: 0;
 --                                           |
 --										     +--> Eine Testversion bekommt immer die Nr. 00 !!!    
 --
@@ -24,74 +24,74 @@ SUBDESIGN IFA_VERS
 	Rev[3..0]  : OUTPUT;
 )
 --	1. Version	-- Version mit EPM7192SQC160-15
---	2. Version	-- Version mit folgenden Änderungen zu Vers. 1:
+--	2. Version	-- Version mit folgenden ï¿½nderungen zu Vers. 1:
 --						a. Interrupt Maske nach Powerup ( INL = enabled, DRQ u. DRDY = isabled) 
 --						b. Powerup-Statusbit (Bit 0 im "C9-Status" nach Powerup = 0) 
 --						c. Broadcast nach Powerup = enabled
---						d. LED für Hochstrom-Interlock ist jetzt für POWER-UP-FLAG 
+--						d. LED fï¿½r Hochstrom-Interlock ist jetzt fï¿½r POWER-UP-FLAG 
 --
---	3. Version	-- Version mit EPF10K30QP244-3, (Änderungen zu Vers. 2: )
+--	3. Version	-- Version mit EPF10K30QP244-3, (ï¿½nderungen zu Vers. 2: )
 --						a. Interface fuer IIc-Bus 
 --						b. umschaltbar zwischen drei Betriebsarten,
 --							IFA: allgemeine Interface-Karte
 --							FG:	 Funktionsgenerator
 --							MB:	 ModulBus Interface-Karte (IFC)   
 --
--- 	4. Version(IF211b)	-- Version mit EPF10K30QP244-3, (Änderungen zu Vers. 3:)
+-- 	4. Version(IF211b)	-- Version mit EPF10K30QP244-3, (ï¿½nderungen zu Vers. 3:)
 --						a. /STG_Strobe an VG-Leiste Pin 16B 
---						b. Signalbelegung von ST-Test und ST-ERW geändert
+--						b. Signalbelegung von ST-Test und ST-ERW geï¿½ndert
 --
 --
--- 	5. Version(IF211c)	-- Version mit EPF10K30QP244-3, (Änderungen zu Vers. 4: )
---						a. Signalbelegung von ST-Test und ST-ERW zurückgeändert
---						b. umschaltbar zwischen fünf Betriebsarten,
+-- 	5. Version(IF211c)	-- Version mit EPF10K30QP244-3, (ï¿½nderungen zu Vers. 4: )
+--						a. Signalbelegung von ST-Test und ST-ERW zurï¿½ckgeï¿½ndert
+--						b. umschaltbar zwischen fï¿½nf Betriebsarten,
 --							IFA: 	allgemeine Interface-Karte
 --							FG:	 	Funktionsgenerator		
---							MB:	 	ModulBus Interface-Karte (IFC)	(nur über Pin 7B der VG-Leiste)   
---							IOB: 	Ansteuerung für IO-Bus-Piggy   (nur über Pin 7B + 8B der VG-Leiste)
+--							MB:	 	ModulBus Interface-Karte (IFC)	(nur ï¿½ber Pin 7B der VG-Leiste)   
+--							IOB: 	Ansteuerung fï¿½r IO-Bus-Piggy   (nur ï¿½ber Pin 7B + 8B der VG-Leiste)
 --							FG_DDS: Funktionsgenerator mit DDS-Interface
 --
 -- 	6. Version(IF211c)	-- Timing-Fehler beim Senden im Blockmode beseitigt.
 --
 -- 	7. Version(IF211c)	-- Datum:	19.02.2007
 --						-- Fehler:	Ausschalt-Spannungspitze am Ende jedes MIL-Schreib-Zyklus. 
---						-- Lösung:	Die MIL-Write-Signale /BZO-OUT und /BOO-OUT, wurden invertiert und vertauscht,
---									um den Ruhezustand nach der Übertragung auf inaktiv (=0) zu setzen.
---									Das Enable-Signal für den Treiber wurde in (BZO xor BOO) zurückgeändert (kein FF).
+--						-- Lï¿½sung:	Die MIL-Write-Signale /BZO-OUT und /BOO-OUT, wurden invertiert und vertauscht,
+--									um den Ruhezustand nach der ï¿½bertragung auf inaktiv (=0) zu setzen.
+--									Das Enable-Signal fï¿½r den Treiber wurde in (BZO xor BOO) zurï¿½ckgeï¿½ndert (kein FF).
 --
 --
 --
--- ============================= Änderung ab IFA8 FG380.221 ==============================================
+-- ============================= ï¿½nderung ab IFA8 FG380.221 ==============================================
 -- ============ Aufteilung der Versionskennung: D[7..4] = Version und D[3..0] = Revision =================
 --
 --
 -- V: 1, R: 0	Datum:24.11.2008 (EPLD ist jetzt Cyclone EP1C20F400C7)
---									Erweiterungen für FAIR-Bus Betrieb
+--									Erweiterungen fï¿½r FAIR-Bus Betrieb
 --
--- V: 1, R: 1	Datum:20.08.2009	Fehler bei Time-Out-CLK vom Sweeper, geändert: von 12000 -> 120000 
+-- V: 1, R: 1	Datum:20.08.2009	Fehler bei Time-Out-CLK vom Sweeper, geï¿½ndert: von 12000 -> 120000 
 --
--- V: 1, R: 2	Datum:21.09.2010	Erweiterung: Anschluß für FG-Piggy (FG 380.75x) über Stecker J3.
---									Änderung: "C9"-StatusBit 1, im FB-Mode = Slave-Ready, sonnst VCC.
+-- V: 1, R: 2	Datum:21.09.2010	Erweiterung: Anschluï¿½ fï¿½r FG-Piggy (FG 380.75x) ï¿½ber Stecker J3.
+--									ï¿½nderung: "C9"-StatusBit 1, im FB-Mode = Slave-Ready, sonnst VCC.
 --									SD vom "Mil_enc_Vhd" an SD vom "HD6408" angepasst.										  
 --
--- V: 1, R: 3	Datum:08.11.2010	Änderung: SCU-Adress-Bus Ansteuerung
+-- V: 1, R: 3	Datum:08.11.2010	ï¿½nderung: SCU-Adress-Bus Ansteuerung
 --
--- V: 1, R: 4	Datum:28.06.2011	Erweiterung: Piggy LED und IO-Ansteuerung und Rückleseung
+-- V: 1, R: 4	Datum:28.06.2011	Erweiterung: Piggy LED und IO-Ansteuerung und Rï¿½ckleseung
 --
 --
 -- V: 1, R: 5	Datum:08.11.2011	Timing FG-DDS angepasst.
 --
--- V: 1, R: 6	Datum:25.05.2012	Die Clock für den FG wurde wieder auf 8,192 MHz eingestellt.
+-- V: 1, R: 6	Datum:25.05.2012	Die Clock fï¿½r den FG wurde wieder auf 8,192 MHz eingestellt.
 --											Der interner Manchester-Decoder wurde auf "Bipolar" umgestellt, mit
---											Fehlerzähler für VW- und Data-Error.
+--											Fehlerzï¿½hler fï¿½r VW- und Data-Error.
 --									
---											*** Achtung grundsätzliche Änderung: ***			
+--											*** Achtung grundsï¿½tzliche ï¿½nderung: ***			
 --											Solange das "Powerup-Flag" gesetzt ist("C9"-StatusBit 8 = 0-aktiv),
---											werden die Daten zur VG-Leiste und die Fehlerzähler auf "0" gehalten.
+--											werden die Daten zur VG-Leiste und die Fehlerzï¿½hler auf "0" gehalten.
 --
--- V: 0, R: 7	Datum:11.01.2013	Testversion: Betriebsart, SCU_ACU_Mode hinzugefügt.
+-- V: 0, R: 7	Datum:11.01.2013	Testversion: Betriebsart, SCU_ACU_Mode hinzugefï¿½gt.
 --
--- V: 1, R: 7	Datum:11.10.2013	Betriebsart, SCU_ACU_Mode (16 Bit Adressbereich auf Slave-Steckplatz #1) hinzugefügt.
+-- V: 1, R: 7	Datum:11.10.2013	Betriebsart, SCU_ACU_Mode (16 Bit Adressbereich auf Slave-Steckplatz #1) hinzugefï¿½gt.
 --									Beim SCU-Bus-Macro (IFA_FairBus) wurde Time_Out_in_ns auf 350 gesetzt. 
 --
 -- V: 1, R: 8	Datum:24.02.2014	Das Signal DCQ (15B) wurde Invertiert, um wieder den gleichen Signalpegel wie
