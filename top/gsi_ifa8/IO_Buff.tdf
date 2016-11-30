@@ -26,7 +26,6 @@ SUBDESIGN IO_Buff
 	New_Data:			INPUT;
 	nIRQ:				INPUT;
 	nDRQ:				INPUT;
-	6MHZ:				INPUT;
 	nPu_Reset:			INPUT;
 	PowerUP_Flag:		INPUT;
 
@@ -446,7 +445,7 @@ BEGIN
 		(nSend_Str, nSend_Ena)		=  T_B[6..5].out;			(T_B[6..5], T_B[6..5].oe)		= GND;-- Input
 		T_B[9]						= (Send_Data);				 T_B[9].oe						= VCC;-- Output
 		(nDRDY_IFA, nDRQ_IFA)		=  T_B[11..10].out;			(T_B[11..10], T_B[11..10].oe)	= GND; -- Input
-		T_B[14..12]					= (6MHZ,FC_Str, nPu_Reset);	 T_B[14..12].oe					= VCC;-- Output
+		T_B[14..12]					= (GND,FC_Str, nPu_Reset);	 T_B[14..12].oe					= VCC;-- Output
 --
 		(DIW3, DIW2, DIW1, DIW0)	=  T_B[31..28].out;			(T_B[31..28], T_B[31..28].oe)	= GND;-- Input
 
