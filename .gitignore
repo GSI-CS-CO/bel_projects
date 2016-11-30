@@ -23,4 +23,5 @@ syn
 *.sym
 *.swo
 *.swp
+*.orig
 greybox_tmp
