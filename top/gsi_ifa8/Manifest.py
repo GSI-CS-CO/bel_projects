@@ -58,7 +58,7 @@ files = [
   "8xwire-bus-out.bsf",
   "8xwire-bus-out.gdf",
   "bm_sych.gdf",
-  "dds_out.tdf",
+  "dds_out.vhd",
 #  "Debounce.bsf",
 #  "debounce.tdf",
   "div_by_n.tdf",
