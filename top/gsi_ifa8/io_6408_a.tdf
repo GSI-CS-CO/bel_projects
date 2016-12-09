@@ -26,28 +26,28 @@ SUBDESIGN IO_6408_a
     (
 	CLK,				-- System-Clock
 	SCLR,				-- Sychron Clear
-	SDO,				-- Serial-Data-Out		-+-> (Signale vom '6408' für zu empfangene Daten) 
+	SDO,				-- Serial-Data-Out		-+-> (Signale vom '6408' fï¿½r zu empfangene Daten) 
 	DSC,				-- Data-Shift-Clock		 |
 	TD,					-- Take-Data			 |
 	CDS,				-- Command/Data Synch.	 |
 	VW,					-- Valid Word			-+ 
-	Res_VW_Err,		    -- Reset Fehlerspeicher für VW-Test
+	Res_VW_Err,		    -- Reset Fehlerspeicher fï¿½r VW-Test
 	WR_MIL,			    -- Starte Daten Senden
-	Sts_Da[15..0],		-- Sende-Daten 			-+-> (Signale vom/zum '6408' für zu sendende Daten)
+	Sts_Da[15..0],		-- Sende-Daten 			-+-> (Signale vom/zum '6408' fï¿½r zu sendende Daten)
 	ESC,				-- Encoder-Shift-Clock	 |
 	SD,					-- Send-Data			-+
-	BZO,				-- Bus-Zero-Out			-+-> (Signale vom '6408' für zu sendende Daten)
+	BZO,				-- Bus-Zero-Out			-+-> (Signale vom '6408' fï¿½r zu sendende Daten)
 	BOO					-- Bus-One-Out			-+
 
 	:Input;		
 
-	RCV_Ready,		  -- Strobe für neue gültige Daten
-	CMD_RCV,		  -- CommandwordFunktionscode-Strobe für Piggy
+	RCV_Ready,		  -- Strobe fï¿½r neue gï¿½ltige Daten
+	CMD_RCV,		  -- CommandwordFunktionscode-Strobe fï¿½r Piggy
 	MIL_RCV_D[15..0], -- Interne Daten
-	SDI,			  -- Serial-Data-In (serielle Daten zum '6408' für zu sendende Daten) 
+	SDI,			  -- Serial-Data-In (serielle Daten zum '6408' fï¿½r zu sendende Daten) 
 	EE,				  -- Encoder Enable (Startet Sendesequence beim '6408')
 	/Send_En,		  -- Enable Signal zur Sender-Freigabe
-	/Rcv_En,		  -- Enable Signal zur Empfänger-Freigabe
+	/Rcv_En,		  -- Enable Signal zur Empfï¿½nger-Freigabe
 	Rcv_Err			  -- Zeigt einen Fehler beim Datenempfang.(VW Test)
 	: OUTPUT
 	)
@@ -62,8 +62,8 @@ VARIABLE
 	v_RCV_En1		: dff;
 	v_RCV_En2		: dff;
 
-	v_VW_Count[4..0]	: DFF;	-- Zähler für VW-Test
-	v_VW_Cnt_Syn[4..0]	: DFF;	-- Syc.-Zähler-Stand
+	v_VW_Count[4..0]	: DFF;	-- Zï¿½hler fï¿½r VW-Test
+	v_VW_Cnt_Syn[4..0]	: DFF;	-- Syc.-Zï¿½hler-Stand
 	v_VW_OK				: DFF;
 	v_VW_OK_T1			: DFF;
 	v_VW_OK_T2			: DFF;
@@ -77,25 +77,25 @@ VARIABLE
 BEGIN
 
 --+----------------------------------------------------------------------------------------------------------------
---| Shift-Reg. für Empfangene Daten 
+--| Shift-Reg. fï¿½r Empfangene Daten 
 --+----------------------------------------------------------------------------------------------------------------
 v_Data_in.	(clock, shiftin, sclr) 		= ((DSC AND TD), SDO, SCLR);		
 
 --+----------------------------------------------------------------------------------------------------------------
---| Shift-Reg. für zu sendende Daten. Das Schieberegister wird so lange mit 'SD[15..0]' geladen SD nicht Aktiv ist. 
+--| Shift-Reg. fï¿½r zu sendende Daten. Das Schieberegister wird so lange mit 'SD[15..0]' geladen SD nicht Aktiv ist. 
 --+----------------------------------------------------------------------------------------------------------------
 v_Data_out.	(data[], clock, load, sclr)	= (Sts_Da[], NOT ESC, NOT SD, SCLR);	
 
 --+--------------------------------------------------------------------------------------------------------
---| Speicher für Command-Word Erkennung. (nur beim Shift-Clk für das 'Data_in' Shift-Reg. ist CDS gültig)   
+--| Speicher fï¿½r Command-Word Erkennung. (nur beim Shift-Clk fï¿½r das 'Data_in' Shift-Reg. ist CDS gï¿½ltig)   
 --+--------------------------------------------------------------------------------------------------------
 v_CMD_Word.	(D, CLK, CLRN) = (CDS, (TD AND DSC), NOT SCLR);
 
 --+--------------------------------------------------------------------------
---| Einschaltverzögerung für Empfänger (REC_Enable) nach EE (Sender Start)  
+--| Einschaltverzï¿½gerung fï¿½r Empfï¿½nger (REC_Enable) nach EE (Sender Start)  
 --|  
 --| Alle 3 Reg. weden mit  !EE auf '1' gesetzt, somit auch /REC_En = '1'.  
---| Nach 3 pos. Flanken vom ESC, wird /REC_En '0' und somit ist der Empfänger enabled.
+--| Nach 3 pos. Flanken vom ESC, wird /REC_En '0' und somit ist der Empfï¿½nger enabled.
 --+--------------------------------------------------------------------------
 v_RCV_En. (D, CLK, PRN, CLRN) = ( GND,		  	ESC, NOT EE, NOT SCLR);	
 v_RCV_En1.(D, CLK, PRN, CLRN) = ( v_RCV_En.q,	ESC, NOT EE, NOT SCLR);	
@@ -108,7 +108,7 @@ v_RCV_En2.(D, CLK, PRN, CLRN) = ( v_RCV_En1.q,	ESC, NOT EE, NOT SCLR);
 v_EE.(S, R, CLK, CLRN) = ( WR_MIL, SD, CLK, NOT SCLR);
 
 --+==========================================================================
---| Es wird geprüft ob VaildWord innerhalb 16-18us nach TakeData kommt.
+--| Es wird geprï¿½ft ob VaildWord innerhalb 16-18us nach TakeData kommt.
 --+==========================================================================
 
 	v_VW_Count[].clk  = DSC;
@@ -124,24 +124,24 @@ v_EE.(S, R, CLK, CLRN) = ( WR_MIL, SD, CLK, NOT SCLR);
 
 
 v_VW_Cnt_Syn[]				=	v_VW_Count[];
-v_VW_Cnt_Syn[].(CLK, CLRN)	= ( clk, NOT sclr);-- Sychrone Zähler-Bit's
+v_VW_Cnt_Syn[].(CLK, CLRN)	= ( clk, NOT sclr);-- Sychrone Zï¿½hler-Bit's
 
---- Test ob während der Zähler auf 17 steht, die pos. Flanke von VW kommt --
+--- Test ob wï¿½hrend der Zï¿½hler auf 17 steht, die pos. Flanke von VW kommt --
 
 v_VW_OK. (D, CLK)		 = ( ((v_VW_Cnt_Syn[] == c_vw_cnt) & VW), CLK);
---v_VW_OK. (D, CLK)		 = ( ((v_VW_Count[] == c_vw_cnt) & VW), CLK); -- mit nicht Synch. Zählerausgängen
+--v_VW_OK. (D, CLK)		 = ( ((v_VW_Count[] == c_vw_cnt) & VW), CLK); -- mit nicht Synch. Zï¿½hlerausgï¿½ngen
 
 
---- Zeitverzögerung und Synchronisation ---
+--- Zeitverzï¿½gerung und Synchronisation ---
 
-v_VW_OK_t1. (D, CLK)		 = ( v_VW_OK.q,    CLK);	-- Zeitvezögerung
-v_VW_OK_t2. (D, CLK)		 = ( v_VW_OK_t1.q, CLK);	-- Zeitvezögerung
+v_VW_OK_t1. (D, CLK)		 = ( v_VW_OK.q,    CLK);	-- Zeitvezï¿½gerung
+v_VW_OK_t2. (D, CLK)		 = ( v_VW_OK_t1.q, CLK);	-- Zeitvezï¿½gerung
 v_VW_OK_syn. (D, CLK)		 = ( v_VW_OK_t1.q AND NOT v_VW_OK_t2.q , CLK); --- Synchronisation
 
 
 
-v_ERROR.  (D, CLK, CLRN) = ((v_VW_Count[] != c_vw_cnt), VW OR (v_VW_Count[] == c_end), NOT SCLR);
-v_RCV_ERR.(D, CLK, CLRN) = ( VCC, v_Error.q, NOT Res_VW_Err);
+--v_ERROR.  (D, CLK, CLRN) = ((v_VW_Count[] != c_vw_cnt), VW OR (v_VW_Count[] == c_end), NOT SCLR);
+--v_RCV_ERR.(D, CLK, CLRN) = ( VCC, v_Error.q, NOT Res_VW_Err);
 
 
 ---------------------------- Output-Daten-Register --------------------------------------
@@ -153,12 +153,12 @@ v_DI	  .(data[], clock, enable, sclr) = (v_Data_in.q[],	clk, vw, SCLR);
 --|                           Ausgaenge 
 --+##########################################################################
 
-RCV_Ready	=	v_VW_OK_syn.q;	  -- Strobe für neue gültige Daten
-CMD_RCV		=	v_CMD_Word.q;	  -- CommandwordFunktionscode-Strobe für Piggy
+RCV_Ready	=	v_VW_OK_syn.q;	  -- Strobe fï¿½r neue gï¿½ltige Daten
+CMD_RCV		=	v_CMD_Word.q;	    -- CommandwordFunktionscode-Strobe fï¿½r Piggy
 MIL_RCV_D[]	=	v_DI.q[];
-RCV_ERR		=	v_RCV_ERR.q;
+RCV_ERR		=	GND;              -- FIXME commented out fishy error code
 EE			=	v_EE.q;
-/Send_En	=	NOT (BZO != BOO); -- Ausgang für Sender_Enable = (BZO xor BOO)  
+/Send_En	=	NOT (BZO != BOO); -- Ausgang fï¿½r Sender_Enable = (BZO xor BOO)  
 /RCV_En		=	v_RCV_En2.q;
 SDI			=	v_Data_out.shiftout;
 
