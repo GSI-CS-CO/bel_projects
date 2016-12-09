@@ -92,6 +92,7 @@ architecture fg_quad_scu_bus_arch of fg_quad_ifa is
 	signal tag_state	:	tag_state_type;
   
   signal s_irq:             std_logic;
+  signal s_sw_out:          std_logic_vector(31 downto 0);
 
 begin
   quad_fg: fg_quad_datapath 
@@ -114,8 +115,7 @@ begin
       state_change_irq    => state_change_irq,
       dreq                => dreq,
       ramp_sec_fin        => ramp_sec_fin,
-      sw_out(31 downto 8) => sw_out,
-      sw_out(7 downto 0)  => open,
+      sw_out              => s_sw_out,
       sw_strobe           => sw_strobe,
       fg_is_running       => fg_is_running       
     );
@@ -350,6 +350,7 @@ end process;
 
 nirq <= not s_irq;
 
-fg_version <= std_logic_vector(to_unsigned(fw_version, 7));
+fg_version  <= std_logic_vector(to_unsigned(fw_version, 7));
+sw_out      <= s_sw_out(31 downto 8); -- only 24 Bit are needed for the IFA8
             
 end architecture;
