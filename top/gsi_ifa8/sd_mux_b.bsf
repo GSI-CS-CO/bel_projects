@@ -4,7 +4,7 @@ editor if you plan to continue editing the block that represents it in
 the Block Editor! File corruption is VERY likely to occur.
 */
 /*
-Copyright (C) 1991-2007 Altera Corporation
+Copyright (C) 1991-2013 Altera Corporation
 Your use of Altera Corporation's design tools, logic functions 
 and other software and tools, and its AMPP partner logic 
 functions, and any output files from any of the foregoing 
@@ -18,82 +18,82 @@ programming logic devices manufactured by Altera and sold by
 Altera or its authorized distributors.  Please refer to the 
 applicable agreement for further details.
 */
-(header "symbol" (version "1.1"))
+(header "symbol" (version "1.2"))
 (symbol
-	(rect 16 16 256 208)
-	(text "sd_mux_b" (rect 5 0 75 16)(font "Arial" (font_size 8)))
-	(text "inst" (rect 8 173 31 188)(font "Arial" ))
+	(rect 16 16 232 208)
+	(text "sd_mux_b" (rect 5 0 76 15)(font "Arial" (font_size 10)))
+	(text "inst" (rect 8 178 25 188)(font "Arial" ))
 	(port
 		(pt 0 32)
 		(input)
-		(text "IFA-SD[15..0]" (rect 0 0 93 16)(font "Arial" (font_size 8)))
-		(text "IFA-SD[15..0]" (rect 21 27 114 43)(font "Arial" (font_size 8)))
+		(text "IFA-SD[15..0]" (rect 0 0 80 12)(font "Arial" (font_size 8)))
+		(text "IFA-SD[15..0]" (rect 21 27 101 39)(font "Arial" (font_size 8)))
 		(line (pt 0 32)(pt 16 32)(line_width 3))
 	)
 	(port
 		(pt 0 48)
 		(input)
-		(text "MB-SD[15..0]" (rect 0 0 93 16)(font "Arial" (font_size 8)))
-		(text "MB-SD[15..0]" (rect 21 43 114 59)(font "Arial" (font_size 8)))
+		(text "MB-SD[15..0]" (rect 0 0 79 12)(font "Arial" (font_size 8)))
+		(text "MB-SD[15..0]" (rect 21 43 100 55)(font "Arial" (font_size 8)))
 		(line (pt 0 48)(pt 16 48)(line_width 3))
 	)
 	(port
 		(pt 0 64)
 		(input)
-		(text "FB-SD[15..0]" (rect 0 0 89 16)(font "Arial" (font_size 8)))
-		(text "FB-SD[15..0]" (rect 21 59 110 75)(font "Arial" (font_size 8)))
+		(text "FB-SD[15..0]" (rect 0 0 76 12)(font "Arial" (font_size 8)))
+		(text "FB-SD[15..0]" (rect 21 59 97 71)(font "Arial" (font_size 8)))
 		(line (pt 0 64)(pt 16 64)(line_width 3))
 	)
 	(port
 		(pt 0 80)
 		(input)
-		(text "FG-SD[15..0]" (rect 0 0 90 16)(font "Arial" (font_size 8)))
-		(text "FG-SD[15..0]" (rect 21 75 111 91)(font "Arial" (font_size 8)))
+		(text "FG-SD[15..0]" (rect 0 0 77 12)(font "Arial" (font_size 8)))
+		(text "FG-SD[15..0]" (rect 21 75 98 87)(font "Arial" (font_size 8)))
 		(line (pt 0 80)(pt 16 80)(line_width 3))
 	)
 	(port
 		(pt 0 96)
 		(input)
-		(text "Sweep-Stat[15..0]" (rect 0 0 122 16)(font "Arial" (font_size 8)))
-		(text "Sweep-Stat[15..0]" (rect 21 91 143 107)(font "Arial" (font_size 8)))
+		(text "Sweep-Stat[15..0]" (rect 0 0 105 12)(font "Arial" (font_size 8)))
+		(text "Sweep-Stat[15..0]" (rect 21 91 126 103)(font "Arial" (font_size 8)))
 		(line (pt 0 96)(pt 16 96)(line_width 3))
 	)
 	(port
 		(pt 0 112)
 		(input)
-		(text "MB-RD-Aktiv" (rect 0 0 87 16)(font "Arial" (font_size 8)))
-		(text "MB-RD-Aktiv" (rect 21 107 108 123)(font "Arial" (font_size 8)))
-		(line (pt 0 112)(pt 16 112)(line_width 1))
+		(text "MB-RD-Aktiv" (rect 0 0 76 12)(font "Arial" (font_size 8)))
+		(text "MB-RD-Aktiv" (rect 21 107 97 119)(font "Arial" (font_size 8)))
+		(line (pt 0 112)(pt 16 112))
 	)
 	(port
 		(pt 0 128)
 		(input)
-		(text "FB-RD-Aktiv" (rect 0 0 83 16)(font "Arial" (font_size 8)))
-		(text "FB-RD-Aktiv" (rect 21 123 104 139)(font "Arial" (font_size 8)))
-		(line (pt 0 128)(pt 16 128)(line_width 1))
+		(text "FB-RD-Aktiv" (rect 0 0 74 12)(font "Arial" (font_size 8)))
+		(text "FB-RD-Aktiv" (rect 21 123 95 135)(font "Arial" (font_size 8)))
+		(line (pt 0 128)(pt 16 128))
 	)
 	(port
 		(pt 0 144)
 		(input)
-		(text "FG-RD-Aktiv" (rect 0 0 84 16)(font "Arial" (font_size 8)))
-		(text "FG-RD-Aktiv" (rect 21 139 105 155)(font "Arial" (font_size 8)))
-		(line (pt 0 144)(pt 16 144)(line_width 1))
+		(text "FG-RD-Aktiv" (rect 0 0 75 12)(font "Arial" (font_size 8)))
+		(text "FG-RD-Aktiv" (rect 21 139 96 151)(font "Arial" (font_size 8)))
+		(line (pt 0 144)(pt 16 144))
 	)
 	(port
 		(pt 0 160)
 		(input)
-		(text "Sweep-Stat-Rd" (rect 0 0 102 16)(font "Arial" (font_size 8)))
-		(text "Sweep-Stat-Rd" (rect 21 155 123 171)(font "Arial" (font_size 8)))
-		(line (pt 0 160)(pt 16 160)(line_width 1))
+		(text "Sweep-Stat-Rd" (rect 0 0 89 12)(font "Arial" (font_size 8)))
+		(text "Sweep-Stat-Rd" (rect 21 155 110 167)(font "Arial" (font_size 8)))
+		(line (pt 0 160)(pt 16 160))
 	)
 	(port
-		(pt 240 32)
+		(pt 216 32)
 		(output)
-		(text "SD[15..0]" (rect 0 0 64 16)(font "Arial" (font_size 8)))
-		(text "SD[15..0]" (rect 155 27 219 43)(font "Arial" (font_size 8)))
-		(line (pt 240 32)(pt 224 32)(line_width 3))
+		(text "SD[15..0]" (rect 0 0 55 12)(font "Arial" (font_size 8)))
+		(text "SD[15..0]" (rect 140 27 195 39)(font "Arial" (font_size 8)))
+		(line (pt 216 32)(pt 200 32)(line_width 3))
 	)
 	(drawing
-		(rectangle (rect 16 16 224 176)(line_width 1))
+		(rectangle (rect 16 16 200 176))
 	)
 )
