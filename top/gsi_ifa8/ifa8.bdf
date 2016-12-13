@@ -4713,9 +4713,85 @@ applicable agreement for further details.
 	(annotation_block (parameter)(rect 1904 -568 2016 -536))
 )
 (symbol
-	(rect 1472 -656 1520 -624)
+	(rect 1160 -832 1224 -752)
+	(text "DFF" (rect 1 0 21 9)(font "Arial" (font_size 6)))
+	(text "inst17" (rect 3 68 32 78)(font "Arial" ))
+	(port
+		(pt 32 80)
+		(input)
+		(text "CLRN" (rect 21 59 48 70)(font "Courier New" (bold)))
+		(text "CLRN" (rect 21 58 48 69)(font "Courier New" (bold)))
+		(line (pt 32 80)(pt 32 76))
+	)
+	(port
+		(pt 0 40)
+		(input)
+		(text "CLK" (rect 3 29 25 40)(font "Courier New" (bold))(invisible))
+		(text "CLK" (rect 3 29 25 40)(font "Courier New" (bold))(invisible))
+		(line (pt 0 40)(pt 12 40))
+	)
+	(port
+		(pt 0 24)
+		(input)
+		(text "D" (rect 14 20 23 31)(font "Courier New" (bold)))
+		(text "D" (rect 14 20 23 31)(font "Courier New" (bold)))
+		(line (pt 0 24)(pt 12 24))
+	)
+	(port
+		(pt 32 0)
+		(input)
+		(text "PRN" (rect 24 13 45 24)(font "Courier New" (bold)))
+		(text "PRN" (rect 24 11 45 22)(font "Courier New" (bold)))
+		(line (pt 32 4)(pt 32 0))
+	)
+	(port
+		(pt 64 24)
+		(output)
+		(text "Q" (rect 45 20 54 31)(font "Courier New" (bold)))
+		(text "Q" (rect 45 20 54 31)(font "Courier New" (bold)))
+		(line (pt 52 24)(pt 64 24))
+	)
+	(drawing
+		(line (pt 12 12)(pt 52 12))
+		(line (pt 12 68)(pt 52 68))
+		(line (pt 52 68)(pt 52 12))
+		(line (pt 12 68)(pt 12 12))
+		(line (pt 19 40)(pt 12 47))
+		(line (pt 12 32)(pt 20 40))
+		(circle (rect 28 4 36 12))
+		(circle (rect 28 68 36 76))
+	)
+)
+(symbol
+	(rect 1160 -872 1208 -840)
+	(text "NOT" (rect 26 0 47 9)(font "Arial" (font_size 6)))
+	(text "inst18" (rect 16 21 45 31)(font "Arial" ))
+	(port
+		(pt 48 16)
+		(input)
+		(text "IN" (rect 2 7 16 18)(font "Courier New" (bold))(invisible))
+		(text "IN" (rect 32 7 46 18)(font "Courier New" (bold))(invisible))
+		(line (pt 48 16)(pt 35 16))
+	)
+	(port
+		(pt 0 16)
+		(output)
+		(text "OUT" (rect 32 7 54 18)(font "Courier New" (bold))(invisible))
+		(text "OUT" (rect -6 7 16 18)(font "Courier New" (bold))(invisible))
+		(line (pt 9 16)(pt 0 16))
+	)
+	(drawing
+		(line (pt 35 25)(pt 35 7))
+		(line (pt 35 7)(pt 17 16))
+		(line (pt 35 25)(pt 17 16))
+		(circle (rect 9 12 17 20))
+	)
+	(flipy)
+)
+(symbol
+	(rect 1456 -656 1504 -624)
 	(text "NOT" (rect 1 0 22 9)(font "Arial" (font_size 6)))
-	(text "inst6" (rect 3 21 26 31)(font "Arial" ))
+	(text "inst19" (rect 3 21 32 31)(font "Arial" ))
 	(port
 		(pt 0 16)
 		(input)
@@ -4778,11 +4854,6 @@ applicable agreement for further details.
 	(pt 872 -64)
 )
 (connector
-	(text "CLK" (rect 2616 -896 2644 -884)(font "Arial" (font_size 8)))
-	(pt 2616 -880)
-	(pt 2664 -880)
-)
-(connector
 	(pt 2480 -872)
 	(pt 2496 -872)
 )
@@ -4816,11 +4887,6 @@ applicable agreement for further details.
 	(text "Ena_Every_20ms" (rect 2944 -1040 3047 -1028)(font "Arial" (font_size 8)))
 	(pt 3064 -1024)
 	(pt 2936 -1024)
-)
-(connector
-	(text "CLK" (rect 3024 -1024 3052 -1012)(font "Arial" (font_size 8)))
-	(pt 3024 -1008)
-	(pt 3064 -1008)
 )
 (connector
 	(pt 3144 216)
@@ -4936,11 +5002,6 @@ applicable agreement for further details.
 	(pt 944 80)
 )
 (connector
-	(text "SCLR" (rect 1904 760 1940 772)(font "Arial" (font_size 8)))
-	(pt 1896 776)
-	(pt 1992 776)
-)
-(connector
 	(text "FC_STR" (rect 1904 808 1955 820)(font "Arial" (font_size 8)))
 	(pt 1896 824)
 	(pt 1992 824)
@@ -5004,11 +5065,6 @@ applicable agreement for further details.
 	(text "A_MIL1_BOI" (rect 1904 792 1979 804)(font "Arial" (font_size 8)))
 	(pt 1896 808)
 	(pt 1992 808)
-)
-(connector
-	(text "SCLR" (rect 544 168 580 180)(font "Arial" (font_size 8)))
-	(pt 656 184)
-	(pt 544 184)
 )
 (connector
 	(text "A_ME_DSC" (rect 544 280 615 292)(font "Arial" (font_size 8)))
@@ -5082,11 +5138,6 @@ applicable agreement for further details.
 	(pt 544 376)
 )
 (connector
-	(text "CLK" (rect 544 200 572 212)(font "Arial" (font_size 8)))
-	(pt 656 216)
-	(pt 544 216)
-)
-(connector
 	(text "Ena_Every_500ns" (rect 544 232 651 244)(font "Arial" (font_size 8)))
 	(pt 544 248)
 	(pt 656 248)
@@ -5132,11 +5183,6 @@ applicable agreement for further details.
 	(text "SD_ME_MM" (rect 1904 920 1979 932)(font "Arial" (font_size 8)))
 	(pt 1888 936)
 	(pt 1992 936)
-)
-(connector
-	(text "CLK" (rect 1448 -960 1476 -948)(font "Arial" (font_size 8)))
-	(pt 1432 -944)
-	(pt 1488 -944)
 )
 (connector
 	(text "Ena_Every_20ms" (rect 1688 -864 1791 -852)(font "Arial" (font_size 8)))
@@ -5191,11 +5237,6 @@ applicable agreement for further details.
 	(pt 3128 -928)
 )
 (connector
-	(text "CLK" (rect 3216 -928 3244 -916)(font "Arial" (font_size 8)))
-	(pt 3216 -912)
-	(pt 3256 -912)
-)
-(connector
 	(pt 3416 -976)
 	(pt 3488 -976)
 )
@@ -5218,16 +5259,6 @@ applicable agreement for further details.
 	(pt 3200 656)
 )
 (connector
-	(text "CLK" (rect 3160 624 3188 636)(font "Arial" (font_size 8)))
-	(pt 3152 640)
-	(pt 3200 640)
-)
-(connector
-	(text "SCLR" (rect 3160 608 3196 620)(font "Arial" (font_size 8)))
-	(pt 3152 624)
-	(pt 3200 624)
-)
-(connector
 	(text "Event_ser_in[15..0]" (rect 2496 -872 2609 -860)(font "Arial" (font_size 8)))
 	(pt 2480 -856)
 	(pt 2608 -856)
@@ -5240,11 +5271,6 @@ applicable agreement for further details.
 	(bus)
 )
 (connector
-	(text "CLK" (rect 2448 -736 2476 -724)(font "Arial" (font_size 8)))
-	(pt 2488 -720)
-	(pt 2440 -720)
-)
-(connector
 	(pt 2320 -736)
 	(pt 2376 -736)
 )
@@ -5252,11 +5278,6 @@ applicable agreement for further details.
 	(text "Sync_Event_Ser_Str" (rect 2456 -752 2577 -740)(font "Arial" (font_size 8)))
 	(pt 2440 -736)
 	(pt 2584 -736)
-)
-(connector
-	(text "CLK" (rect 2328 -736 2356 -724)(font "Arial" (font_size 8)))
-	(pt 2320 -720)
-	(pt 2368 -720)
 )
 (connector
 	(pt 2256 -736)
@@ -5274,11 +5295,6 @@ applicable agreement for further details.
 (connector
 	(pt 2096 -840)
 	(pt 2160 -840)
-)
-(connector
-	(text "SCLR" (rect 2064 -872 2100 -860)(font "Arial" (font_size 8)))
-	(pt 2056 -856)
-	(pt 2160 -856)
 )
 (connector
 	(pt 2128 -736)
@@ -5785,11 +5801,6 @@ applicable agreement for further details.
 	(bus)
 )
 (connector
-	(text "SCLR" (rect 2248 -360 2284 -348)(font "Arial" (font_size 8)))
-	(pt 2240 -344)
-	(pt 2296 -344)
-)
-(connector
 	(text "FC[7..0]" (rect 2376 -472 2424 -460)(font "Arial" (font_size 8)))
 	(pt 2368 -456)
 	(pt 2472 -456)
@@ -5971,19 +5982,9 @@ applicable agreement for further details.
 	(pt 1120 576)
 )
 (connector
-	(text "CLK" (rect 736 608 764 620)(font "Arial" (font_size 8)))
-	(pt 736 624)
-	(pt 864 624)
-)
-(connector
 	(text "ENA_Every_100ns" (rect 736 624 846 636)(font "Arial" (font_size 8)))
 	(pt 736 640)
 	(pt 864 640)
-)
-(connector
-	(text "SCLR" (rect 736 640 772 652)(font "Arial" (font_size 8)))
-	(pt 736 656)
-	(pt 864 656)
 )
 (connector
 	(text "CMD_RCV" (rect 736 656 803 668)(font "Arial" (font_size 8)))
@@ -6268,11 +6269,6 @@ applicable agreement for further details.
 	(pt 1528 -8)
 )
 (connector
-	(text "CLK" (rect 1392 -8 1420 4)(font "Arial" (font_size 8)))
-	(pt 1392 8)
-	(pt 1528 8)
-)
-(connector
 	(text "ENA_Every_100ns" (rect 1392 8 1502 20)(font "Arial" (font_size 8)))
 	(pt 1392 24)
 	(pt 1528 24)
@@ -6296,11 +6292,6 @@ applicable agreement for further details.
 	(text "A_EXT_CLK" (rect 1392 88 1468 100)(font "Arial" (font_size 8)))
 	(pt 1392 104)
 	(pt 1528 104)
-)
-(connector
-	(text "SCLR" (rect 1392 104 1428 116)(font "Arial" (font_size 8)))
-	(pt 1392 120)
-	(pt 1528 120)
 )
 (connector
 	(text "RCV_RDY" (rect 1392 120 1456 132)(font "Arial" (font_size 8)))
@@ -6782,16 +6773,6 @@ applicable agreement for further details.
 	(pt 2472 -520)
 )
 (connector
-	(text "CLK" (rect 2360 -616 2388 -604)(font "Arial" (font_size 8)))
-	(pt 2352 -600)
-	(pt 2472 -600)
-)
-(connector
-	(text "SCLR" (rect 2360 -600 2396 -588)(font "Arial" (font_size 8)))
-	(pt 2352 -584)
-	(pt 2472 -584)
-)
-(connector
 	(text "SCU_Mode" (rect 1920 968 1988 980)(font "Arial" (font_size 8)))
 	(pt 1912 984)
 	(pt 1992 984)
@@ -6817,16 +6798,6 @@ applicable agreement for further details.
 	(pt 656 1032)
 )
 (connector
-	(text "SCLR" (rect 664 1032 693 1042)(font "Arial" ))
-	(pt 784 1048)
-	(pt 656 1048)
-)
-(connector
-	(text "CLK" (rect 664 968 686 978)(font "Arial" ))
-	(pt 656 984)
-	(pt 784 984)
-)
-(connector
 	(text "/EX_SEND_ENA_SYN" (rect 961 968 1069 978)(font "Arial" ))
 	(pt 960 984)
 	(pt 1072 984)
@@ -6842,20 +6813,10 @@ applicable agreement for further details.
 	(pt 464 736)
 )
 (connector
-	(text "CLK" (rect 336 704 364 716)(font "Arial" (font_size 8)))
-	(pt 336 720)
-	(pt 464 720)
-)
-(connector
 	(text "IFA[7..0]" (rect 664 704 714 716)(font "Arial" (font_size 8)))
 	(pt 864 720)
 	(pt 648 720)
 	(bus)
-)
-(connector
-	(text "SCLR" (rect 336 736 372 748)(font "Arial" (font_size 8)))
-	(pt 336 752)
-	(pt 464 752)
 )
 (connector
 	(text "IFA_In[7..0]" (rect 342 752 397 762)(font "Arial" ))
@@ -6864,27 +6825,173 @@ applicable agreement for further details.
 	(bus)
 )
 (connector
-	(text "CLK" (rect 1344 -688 1372 -676)(font "Arial" (font_size 8)))
-	(pt 1328 -672)
-	(pt 1376 -672)
-)
-(connector
 	(pt 2344 -344)
 	(pt 2472 -344)
 )
 (connector
 	(text "Manchester_clk" (rect 1336 -664 1411 -654)(font "Arial" ))
+	(pt 1416 -656)
 	(pt 1328 -656)
-	(pt 1456 -656)
 )
 (connector
+	(pt 1160 -808)
+	(pt 1128 -808)
+)
+(connector
+	(pt 1128 -808)
+	(pt 1128 -856)
+)
+(connector
+	(pt 1128 -856)
+	(pt 1160 -856)
+)
+(connector
+	(text "Manchester_clk" (rect 1090 -800 1165 -790)(font "Arial" ))
+	(pt 1064 -792)
+	(pt 1160 -792)
+)
+(connector
+	(text "A_ME_12MHZ" (rect 1232 -816 1302 -806)(font "Arial" ))
+	(pt 1224 -808)
+	(pt 1336 -808)
+)
+(connector
+	(text "sys_clk" (rect 1448 -960 1492 -948)(font "Arial" (font_size 8)))
+	(pt 1416 -944)
+	(pt 1488 -944)
+)
+(connector
+	(text "sys_clk" (rect 1392 -8 1436 4)(font "Arial" (font_size 8)))
+	(pt 1392 8)
+	(pt 1528 8)
+)
+(connector
+	(text "sys_clk" (rect 544 200 588 212)(font "Arial" (font_size 8)))
+	(pt 656 216)
+	(pt 544 216)
+)
+(connector
+	(text "sys_clk" (rect 336 704 380 716)(font "Arial" (font_size 8)))
+	(pt 336 720)
+	(pt 464 720)
+)
+(connector
+	(text "sys_clk" (rect 736 608 780 620)(font "Arial" (font_size 8)))
+	(pt 736 624)
+	(pt 864 624)
+)
+(connector
+	(text "sys_clk" (rect 664 968 700 978)(font "Arial" ))
+	(pt 656 984)
+	(pt 784 984)
+)
+(connector
+	(text "sys_clk" (rect 3024 -1024 3068 -1012)(font "Arial" (font_size 8)))
+	(pt 3024 -1008)
+	(pt 3064 -1008)
+)
+(connector
+	(text "sys_clk" (rect 3216 -928 3260 -916)(font "Arial" (font_size 8)))
+	(pt 3216 -912)
+	(pt 3256 -912)
+)
+(connector
+	(text "sys_clk" (rect 3160 624 3204 636)(font "Arial" (font_size 8)))
+	(pt 3152 640)
+	(pt 3200 640)
+)
+(connector
+	(text "sys_clk" (rect 2616 -896 2660 -884)(font "Arial" (font_size 8)))
+	(pt 2616 -880)
+	(pt 2664 -880)
+)
+(connector
+	(text "sys_clk" (rect 2328 -736 2372 -724)(font "Arial" (font_size 8)))
+	(pt 2320 -720)
+	(pt 2368 -720)
+)
+(connector
+	(text "sys_clk" (rect 2448 -736 2492 -724)(font "Arial" (font_size 8)))
+	(pt 2488 -720)
+	(pt 2440 -720)
+)
+(connector
+	(text "sys_clk" (rect 2360 -616 2404 -604)(font "Arial" (font_size 8)))
+	(pt 2352 -600)
+	(pt 2472 -600)
+)
+(connector
+	(pt 1208 -856)
+	(pt 1336 -856)
+)
+(connector
+	(pt 1336 -808)
+	(pt 1336 -856)
+)
+(connector
+	(text "sys_clk" (rect 1344 -688 1388 -676)(font "Arial" (font_size 8)))
+	(pt 1416 -672)
+	(pt 1328 -672)
+)
+(connector
+	(text "sclr" (rect 1392 104 1414 116)(font "Arial" (font_size 8)))
+	(pt 1392 120)
+	(pt 1528 120)
+)
+(connector
+	(text "sclr" (rect 544 168 566 180)(font "Arial" (font_size 8)))
+	(pt 656 184)
+	(pt 544 184)
+)
+(connector
+	(text "sclr" (rect 736 640 758 652)(font "Arial" (font_size 8)))
+	(pt 736 656)
+	(pt 864 656)
+)
+(connector
+	(text "sclr" (rect 664 1032 681 1042)(font "Arial" ))
+	(pt 784 1048)
+	(pt 656 1048)
+)
+(connector
+	(text "sclr" (rect 2360 -600 2382 -588)(font "Arial" (font_size 8)))
+	(pt 2352 -584)
+	(pt 2472 -584)
+)
+(connector
+	(text "sclr" (rect 2232 -360 2254 -348)(font "Arial" (font_size 8)))
+	(pt 2296 -344)
+	(pt 2224 -344)
+)
+(connector
+	(text "sclr" (rect 3160 608 3182 620)(font "Arial" (font_size 8)))
+	(pt 3152 624)
+	(pt 3200 624)
+)
+(connector
+	(text "sclr" (rect 1904 760 1926 772)(font "Arial" (font_size 8)))
+	(pt 1896 776)
+	(pt 1992 776)
+)
+(connector
+	(text "sclr" (rect 336 736 358 748)(font "Arial" (font_size 8)))
+	(pt 336 752)
+	(pt 464 752)
+)
+(connector
+	(text "sclr" (rect 2064 -872 2086 -860)(font "Arial" (font_size 8)))
+	(pt 2056 -856)
+	(pt 2160 -856)
+)
+(connector
+	(text "locked" (rect 1336 -648 1367 -638)(font "Arial" ))
+	(pt 1456 -640)
 	(pt 1328 -640)
-	(pt 1472 -640)
 )
 (connector
-	(text "SCLR" (rect 1528 -648 1557 -638)(font "Arial" ))
-	(pt 1520 -640)
-	(pt 1592 -640)
+	(text "sclr" (rect 1512 -648 1529 -638)(font "Arial" ))
+	(pt 1504 -640)
+	(pt 1584 -640)
 )
 (junction (pt 944 80))
 (text "Serial-Input" (rect 696 -256 783 -241)(font "Arial" (color 255 0 0)(font_size 10)(bold)))
@@ -6905,7 +7012,7 @@ applicable agreement for further details.
 	(section (rect 0 48 368 72)(text "DESIGNER" (rect 2 0 58 10)(font "Arial" ))(text "RHart/BELAB" (rect 56 2 171 19)(font "Arial" (font_size 12)))(border))
 	(section (rect 0 72 280 96)(text "NUMBER" (rect 2 0 49 10)(font "Arial" ))(text "1.00" (rect 56 1 87 16)(font "Arial" (font_size 10)))(border))
 	(section (rect 280 72 368 96)(text "REV" (rect 2 1 25 11)(font "Arial" ))(text "C" (rect 43 1 55 16)(font "Arial" (font_size 10)))(border))
-	(section (rect 0 96 240 120)(text "DATE" (rect 2 0 31 10)(font "Arial" ))(text "Thu Dec  8 11:40:06 2016" (rect 56 3 235 18)(font "Arial" (font_size 10)))(date)(border))
+	(section (rect 0 96 240 120)(text "DATE" (rect 2 0 31 10)(font "Arial" ))(text "Tue Dec 13 16:52:13 2016" (rect 56 3 238 18)(font "Arial" (font_size 10)))(date)(border))
 	(section (rect 240 96 310 120)(text "SHEET" (rect 2 0 38 10)(font "Arial" ))(text "1" (rect 55 5 65 20)(font "Arial" (font_size 10))))
 	(section (rect 310 96 368 120)(text "OF" (rect 10 0 26 10)(font "Arial" ))(text "1" (rect 34 4 44 19)(font "Arial" (font_size 10))))
 	(drawing

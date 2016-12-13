@@ -20,27 +20,18 @@ create_clock -period "8.333 ns" \
              -name {A_ME_VW} {A_ME_VW}
 # ---------------------------------------------
 
+#create_clock -name A_Loader_CLK  -period   125MHz   [get_ports  A_Loader_CLK]
+
 
 derive_pll_clocks -create_base_clocks
 
 set_clock_groups -asynchronous \
-                 -group { \
-                       A_ME_ESC \
-                        } \
-                 -group { \
-                       A_ME_TD \
-                        } \
-                 -group { \
-                       A_ME_VW \
-                        } \
-                 -group { \
-                       inst8|altpll_component|pll|clk[0] \
-                       inst8|altpll_component|pll|clk[1] \
-                       A_CLK_20MHZ \
-                        } \
-                 -group { \
-                       A_ME_DSC \
-                        } \
+                 -group { A_ME_ESC  } \
+                 -group { A_ME_TD   } \
+                 -group { A_ME_VW   } \
+                 -group { inst8|altpll_component|pll|clk[0] } \
+                 -group { inst8|altpll_component|pll|clk[1] } \
+                 -group { A_ME_DSC  }
 
 
 
