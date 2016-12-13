@@ -209,3 +209,9 @@ pmc::	firmware
 
 pmc-clean::
 	$(MAKE) -C syn/gsi_pmc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+ifa8::
+	$(MAKE) -C syn/gsi_ifa8 all
+
+ifa8-clean::
+	$(MAKE) -C syn/gsi_ifa8 clean
