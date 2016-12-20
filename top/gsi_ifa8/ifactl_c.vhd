@@ -2,6 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library work;
+use work.ifa8_pkg.all;
+
 entity ifactl_c is
 port (
   clk:                in std_logic;                       -- system clock
@@ -54,6 +57,8 @@ constant c_rd_irm:          std_logic_vector(7 downto 0) := x"c9";
 constant c_rd_cntrl:        std_logic_vector(7 downto 0) := x"ca";
 constant c_rd_id:     		  std_logic_vector(7 downto 0) := x"cc";
 constant c_rd_vers:         std_logic_vector(7 downto 0) := x"cd";
+constant c_rd_buildid:      std_logic_vector(7 downto 0) := x"ce";
+constant c_rst_buildid:     std_logic_vector(7 downto 0) := x"cf";
 constant c_rd_echo:         std_logic_vector(7 downto 0) := x"89";
 constant c_rd_if_mode:      std_logic_vector(7 downto 0) := x"97";
 constant c_rd_i2c:          std_logic_vector(7 downto 0) := x"98";
@@ -87,6 +92,8 @@ signal s_rd_irm:      std_logic;
 signal s_rd_cntrl:    std_logic;
 signal s_rd_id:       std_logic;
 signal s_rd_vers:     std_logic;
+signal s_rd_buildid:  std_logic;
+signal s_rst_buildid: std_logic;
 signal s_rd_sts:      std_logic;
 signal s_rd_echo:     std_logic;
 signal s_send_str:    std_logic;
@@ -116,6 +123,8 @@ signal s_rd_me_data_err:    std_logic;
 signal s_wr_clr_me_vw_err:  std_logic;
 signal s_wr_clr_me_data_err: std_logic;
 
+signal build_id_out:  std_logic_vector(15 downto 0);
+
 
 begin
 
@@ -133,6 +142,10 @@ begin
         when c_rd_id =>
           s_fc_int <= '1';
         when c_rd_vers =>
+          s_fc_int <= '1';
+        when c_rd_buildid =>
+          s_fc_int <= '1';
+        when c_rst_buildid =>
           s_fc_int <= '1';
         when c_rd_echo =>
           s_fc_int <= '1';
@@ -197,20 +210,24 @@ begin
   rd_status: process (clk, sclr)
   begin
     if sclr = '1' then
-      s_rd_irm    <= '0';
-      s_rd_cntrl  <= '0';
-      s_rd_id     <= '0';
-      s_rd_vers   <= '0';
-      s_rd_sts    <= '0';
-      s_rd_echo   <= '0';
+      s_rd_irm      <= '0';
+      s_rd_cntrl    <= '0';
+      s_rd_id       <= '0';
+      s_rd_vers     <= '0';
+      s_rd_buildid  <= '0';
+      s_rst_buildid <= '0';
+      s_rd_sts      <= '0';
+      s_rd_echo     <= '0';
     elsif rising_edge(clk) then
+      s_rd_irm      <= '0';
+      s_rd_cntrl    <= '0';
+      s_rd_id       <= '0';
+      s_rd_vers     <= '0';
+      s_rd_buildid  <= '0';
+      s_rst_buildid <= '0';
+      s_rd_sts      <= '0';
+      s_rd_echo     <= '0';
       if fc_str = '1' then
-        s_rd_irm    <= '0';
-        s_rd_cntrl  <= '0';
-        s_rd_id     <= '0';
-        s_rd_vers   <= '0';
-        s_rd_sts    <= '0';
-        s_rd_echo   <= '0';
         case (fc) is
           when c_rd_irm =>
             s_rd_irm <= '1';
@@ -223,6 +240,12 @@ begin
             
           when c_rd_vers =>
             s_rd_vers <= '1';
+            
+          when c_rd_buildid =>
+            s_rd_buildid <= '1';
+            
+          when c_rst_buildid =>
+            s_rst_buildid <= '1';
             
           when x"c" & "----" =>
             s_rd_sts <= '1';
@@ -431,6 +454,13 @@ begin
     end if;
   end process;
   
+  buildid: build_id_ram 
+  port map (
+    clk           => clk,
+    sclr          => s_rst_buildid,
+    str           => s_rd_buildid,
+    build_id_out  => build_id_out);
+
   
   ifa_sd_mux <= sts & ifa_adr                   when s_rd_sts         = '1' else
                 inrm & x"00"                    when s_rd_irm         = '1' else
@@ -446,6 +476,7 @@ begin
                 x"00" & ifp_id                  when s_rd_ifp_id      = '1' else
                 me_vw_err                       when s_rd_me_vw_err   = '1' else
                 me_data_err                     when s_rd_me_data_err = '1' else
+                build_id_out                    when s_rd_buildid     = '1' else
                 diw;
 
 fc_ext      <= s_fc_ext;

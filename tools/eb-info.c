@@ -36,14 +36,23 @@
 #define ROM_ID	0x2d39fa8b
 #define CERN_ID 0xce42
 
-#define RAM_ID	0x54111351
-#define FWID_LEN 0x400
-#define BOOTL_LEN 0x100
-#define SLV_INFO_ROM 0x1c0
-#define ECHO_REG 0x20
-#define SCU_BUS_ID 0x9602eb6f
+#define RAM_ID	      0x54111351
+#define FWID_LEN      0x400
+#define BOOTL_LEN     0x100
+#define SLV_INFO_ROM  0x1c0
+#define ECHO_REG      0x20
+#define SCU_BUS_ID    0x9602eb6f
+#define DEV_BUS_ID    0x35aa6b96
 
 #define SLV_INFO_ROM_SIZE 256
+#define IFK_INFO_ROM_SIZE 1024
+
+#define DATA_REG          0x0
+#define CMD_REG           0x4
+#define IFK_ID            0xcc
+#define IFK_BUILD_ID_RD   0xce 
+#define IFK_BUILD_ID_RST  0xcf
+
 const char *program;
 
 static void help(void) {
@@ -51,6 +60,7 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "  -w             show found firmware IDs\n");
   fprintf(stderr, "  -s 1..12       show build info of slave card\n");
+  fprintf(stderr, "  -i 0x00..0xff  show build info of ifa8 card\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  -h             display this help and exit\n");
   fprintf(stderr, "\n");
@@ -75,8 +85,10 @@ int main(int argc, char** argv) {
   const char cFwMagic[] = "UserLM32";
   unsigned char detectFW = 0;
   char *svalue = NULL;
+  char *ivalue = NULL;
   struct sdb_device fwram[25];
   eb_address_t scu_bus;
+  eb_address_t dev_bus;
   /* Default arguments */
   program = argv[0];
   error = 0;
@@ -84,13 +96,16 @@ int main(int argc, char** argv) {
   
   /* Process the command-line arguments */
   error = 0;
-  while ((opt = getopt(argc, argv, "hws:")) != -1) {
+  while ((opt = getopt(argc, argv, "hws:i:")) != -1) {
     switch (opt) {
     case 'w':
       detectFW = 1;
       break;
     case 's':
       svalue = optarg;
+      break;
+    case 'i':
+      ivalue = optarg;
       break;
     case 'h':
       help();
@@ -147,6 +162,60 @@ int main(int argc, char** argv) {
       (char)(data[i]      ) & 0xff);
   }
 
+
+  if(ivalue != NULL) {
+    int nDevices;
+    unsigned int ifa_id = 0;
+    char *p;
+    errno = 0;
+    long conv = strtol(ivalue, &p, 16);
+    eb_data_t ifk_version;
+   
+    if (errno != 0 || *p != '\0' || conv <= 0x0 || conv > 0xff) {
+      printf("parameter i is out of range 0x00 - 0xff\n");
+      exit(1);
+    } else {
+      ifa_id = conv;
+    }
+
+    printf("\nInfo ROM of IFA 0x%x\n", ifa_id);
+    nDevices = 1;
+    if ((status = eb_sdb_find_by_identity(device, GSI_ID, DEV_BUS_ID, &sdb[0], &nDevices)) != EB_OK)
+      die("find_by_identiy failed", status);
+
+    if (nDevices == 0)
+      die("no DEV bus found", EB_FAIL);
+    if (nDevices > 1)
+      die("more then one DEV bus", EB_FAIL);
+  
+    dev_bus = sdb[0].sdb_component.addr_first;
+    if ((eb_device_write(device, dev_bus + CMD_REG, EB_DATA32|EB_BIG_ENDIAN, IFK_ID << 8 | ifa_id, 0, eb_block)) != EB_OK) {
+      exit(1);
+    }
+    if ((eb_device_read(device, dev_bus + DATA_REG, EB_DATA32|EB_BIG_ENDIAN, &ifk_version, 0, eb_block)) != EB_OK) {
+      printf("no ifa card found with this id!\n");
+      exit(1);
+    }
+
+    eb_device_write(device, dev_bus + CMD_REG, EB_DATA32|EB_BIG_ENDIAN, IFK_BUILD_ID_RST << 8 | ifa_id, 0, eb_block);      
+    len = IFK_INFO_ROM_SIZE;
+    
+    if ((data = malloc(len * sizeof(eb_data_t))) == 0)
+      die("malloc", EB_OOM);
+  
+    for (i = 0; i < len; ++i) {
+      eb_device_write(device, dev_bus + CMD_REG, EB_DATA32|EB_BIG_ENDIAN, IFK_BUILD_ID_RD << 8 | ifa_id, 0, eb_block);      
+      eb_device_read(device, dev_bus + DATA_REG, EB_DATA32|EB_BIG_ENDIAN, &data[i], 0, eb_block);
+    } 
+
+
+    for (i = 0; i < len; ++i) {
+      printf("%c%c", 
+        (char)(data[i] >>  8) & 0xff,
+        (char)(data[i]      ) & 0xff);
+    }
+  
+  }
 
   if(svalue != NULL) {
 

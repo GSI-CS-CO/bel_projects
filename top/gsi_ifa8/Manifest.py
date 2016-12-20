@@ -153,10 +153,10 @@ files = [
   "Test_Mux.tdf",
   "Timebase.bsf",
   "Timebase.tdf",
-#  "Time_Ena.tdf",
   "VERS_SEL_a.bsf",
   "VERS_SEL_a.tdf",
   "vg_mux.bdf",
+  "build_id_ram.vhd",
 ]
 fetchto = "../../ip_cores"
 modules = {
