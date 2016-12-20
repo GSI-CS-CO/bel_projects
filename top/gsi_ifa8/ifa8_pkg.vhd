@@ -45,4 +45,14 @@ component sweep_cntrl is
   );
 end component;
 
+component build_id_ram is
+  port ( 
+    clk:      in std_logic;
+    sclr:     in std_logic;
+    str:      in std_logic;
+    
+    build_id_out: out std_logic_vector(15 downto 0)
+  );
+end component;
+
 end package ifa8_pkg;
