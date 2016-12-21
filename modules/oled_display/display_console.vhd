@@ -16,6 +16,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.numeric_std.all;
 
 use work.wishbone_pkg.all;
+use work.oled_display_pkg.all;
 ----------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------------
 entity display_console is
@@ -39,99 +40,6 @@ end display_console;
 ----------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------------
 architecture behavioral of display_console is
-----------------------------------------------------------------------------------------------------------------------------
-
-	
-	component wb_console is
-generic(
-    FifoDepth : integer := 4);
-  port(
-    -- Common wishbone signals
-    clk_i       : in  std_logic;
-    nRst_i     : in  std_logic;
-    -- Slave control port
-    slave_i     : in  t_wishbone_slave_in;
-    slave_o     : out t_wishbone_slave_out;
-	 
-	 -- General Purpose Signals common to all modes
-	 valid_o			: out std_logic;
-	 mode_o			:	out std_logic_vector(1 downto 0);
-	 reset_disp_o 	: out std_logic; 							--issue a reset of the display controller
-	 col_offset_o  : out std_logic_vector(7 downto 0);
-	 
-	 --Raw Image
-	 raw_data_i		: in  std_logic_vector(7 downto 0);
-	 raw_data_o 	: out std_logic_vector(7 downto 0);
-	 raw_addr_o 	: out std_logic_vector(10 downto 0);
-	 raw_wren_o		: out std_logic;
-	 
-	 --Raw Char
-	 char_row_o		:	out std_logic_vector(2 downto 0);
-	 char_col_o 	: 	out std_logic_vector(3 downto 0); 
-	 
-	 --UART console	
-    fifo_o			:	out std_logic_vector(7 downto 0);
-	 empty_o			: out std_logic;
-	 
-	 read_i		: in std_logic
-	 
-	 
-	); 
-end component wb_console;
-	
----------------------------------------------------------------------------------------------------------------------------
-	component Display_RAM_Ini_v01
-		port	(
-				address_a	: IN STD_LOGIC_VECTOR (10 DOWNTO 0);
-				address_b	: IN STD_LOGIC_VECTOR (10 DOWNTO 0);
-				clock			: IN STD_LOGIC  := '1';
-				data_a		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
-				data_b		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
-				wren_a		: IN STD_LOGIC  := '0';
-				wren_b		: IN STD_LOGIC  := '0';
-				q_a			: OUT STD_LOGIC_VECTOR (7 DOWNTO 0);
-				q_b			: OUT STD_LOGIC_VECTOR (7 DOWNTO 0)
-				);
-	end component;
-----------------------------------------------------------------------------------------------------------------------------
-	component spi_master is
-port (
-    clk_i         : in  std_logic;
-    nRst_i        : in  std_logic;
-    
-    -- Control
-    load_i		   : in std_logic;
-	  DC_i         : in  std_logic;                   -- 1 Datastream, Commandstream 0
-    data_i        : in  std_logic_vector(7 downto 0);-- parallel data in
-    stream_len_i  : in std_logic_vector(15 downto 0);           -- length of stream for controlling cs_n
-    
-    word_done_o   : out std_logic;                   -- ack after each word sent
-    stream_done_o : out std_logic;                   -- ack after complete sream sent
-    buf_empty_o   : out std_logic;
-    
-    
-    --SPI
-    spi_clk       : out std_logic;
-    spi_mosi      : out std_logic;
-    spi_miso      : in  std_logic;
-    spi_cs_n      : out std_logic;
-    
-    DC_o          : out std_logic
-);
-end component;
-
----------------------------------------------------------------------------------------------------------------------------
-	component char_render is
-	port(
-				clk_i       : in std_logic;
-			   nRst_i      : std_logic;
-			   addr_char_i : in std_logic_vector(7 downto 0);
-			   load_i      : in std_logic;
-			   valid_o     : out std_logic;
-			   q_o			: out std_logic_vector(7 downto 0)
-	);
-	end component;
-----------------------------------------------------------------------------------------------------------------------------
 ----------------------------------------------------------------------------------------------------------------------------
 
 	subtype byte is std_logic_vector(7 downto 0);
@@ -187,9 +95,7 @@ end component;
 	
 	signal displaymode : std_logic_vector(1 downto 0);
 	
-	constant cDISPMODE_UART : std_logic_vector(1 downto 0) := "01";
-	constant cDISPMODE_CHAR : std_logic_vector(1 downto 0) := "10";
-	constant cDISPMODE_RAW : std_logic_vector(1 downto 0)  := "11";
+
 	
 	
 	signal ptr : natural;
@@ -288,33 +194,29 @@ begin
 
 
 
-		wbif : wb_console
-generic map(FifoDepth => 16)
+  wbif : wb_console
   port map (
     -- Common wishbone signals
-    clk_i			=> clk_i,
-	 nRst_i 			=> nRst_i, -- only connect to external reset
+    clk_i			    => clk_i,
+    nRst_i 			  => nRst_i, -- only connect to external reset
     -- Slave control port
-    slave_i     => slave_i,
-    slave_o     => slave_o,
-	 --Raw Image
-	 raw_data_i	=> disp_ram_raw_q,
-	 raw_data_o => disp_ram_raw_data,
-	 raw_addr_o => disp_ram_raw_addr,
-	 raw_wren_o	=> disp_ram_raw_we,
-	 col_offset_o => col_offset,
+    slave_i       => slave_i,
+    slave_o       => slave_o,
+    --Raw Image
+    raw_data_i	  => disp_ram_raw_q,
+    raw_data_o    => disp_ram_raw_data,
+    raw_addr_o    => disp_ram_raw_addr,
+    raw_wren_o	  => disp_ram_raw_we,
+    col_offset_o  => col_offset,
+    reset_disp_o  => reset_disp,
 
-
-	 
-reset_disp_o => 	 reset_disp,
-	 
-    fifo_o		=> ascii_code,
-    char_row_o	=> char_row,
-	 char_col_o => char_col,
-	 empty_o 	=> char_buffer_empty ,
-	 valid_o		=> char_valid,
-	 read_i		=> char_en,
-	 mode_o		=> displaymode
+    fifo_o		    => ascii_code,
+    char_row_o	  => char_row,
+    char_col_o    => char_col,
+    empty_o 	    => char_buffer_empty,
+    valid_o		    => char_valid,
+    read_i		    => char_en,
+    mode_o		    => displaymode
 	); 
 
 s_firstCol <= unsigned(col_offset);
@@ -324,7 +226,7 @@ s_firstCol <= unsigned(col_offset);
 					clk_i				      => clk_i,
 					nRst_i 			     => nRst, -- external / WB reset
 					load_i 			     => char_load,
-					addr_char_i		  => ascii_code_reg,
+					addr_char_i		   => ascii_code_reg,
 					valid_o			     =>	disp_ram_render_we,
 					q_o				       => disp_ram_render_data
 					);

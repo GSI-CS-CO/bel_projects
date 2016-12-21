@@ -1,0 +1,14 @@
+<wbdevice author="M. Kreider" email="m.kreider@gsi.de" version="0.2.0">
+   <clockdomain name="sys"></clockdomain>
+   <slaveinterface name="slave" data="32" type="pipelined">          
+      <sdb vendorID="GSI" productID="0x93a6f3c4" version="2" date="auto" name="OLED_Display"></sdb>
+      <registers>
+          <reg  name="reset"          write="yes"              bits="1"  pulse="yes"   comment="Resets the OLED display"></reg>
+          <reg  name="col_offs"       write="yes" read="yes"   bits="8"                comment="first visible pixel column. 0x23 for old, 0x30 for new controllers"></reg>
+          <reg  name="uart"           write="yes"              bits="8"  flags="yes"   comment="UART input FIFO. Ascii on b7..0"></reg>
+          <reg  name="char"           write="yes"              bits="14" flags="yes"   comment="Char input FIFO. Row b13..11, Col b10..8, Ascii b7..0"></reg>
+          <reg  name="raw"            write="yes"              bits="19" flags="yes"   comment="Raw  input FIFO. Disp RAM Adr b18..8, Pixel (Col) b7..0"></reg>          
+      </registers>
+   </slaveinterface>
+</wbdevice>
+
