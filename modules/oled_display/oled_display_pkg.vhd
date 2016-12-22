@@ -29,8 +29,6 @@ end component display_console;
 
 	
 	component wb_console is
-generic(
-    FifoDepth : integer := 4);
   port(
     -- Common wishbone signals
     clk_i       : in  std_logic;

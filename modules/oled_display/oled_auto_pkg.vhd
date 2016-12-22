@@ -1,7 +1,7 @@
 --! @file        oled_auto_pkg.vhd
 --  DesignUnit   oled_auto
 --! @author      M. Kreider <m.kreider@gsi.de>
---! @date        21/12/2016
+--! @date        22/12/2016
 --! @version     0.2.0
 --! @copyright   2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -41,7 +41,7 @@ package oled_auto_pkg is
   constant c_reset_OWR    : natural := 16#0#;   -- wo,  1 b, Resets the OLED display
   constant c_col_offs_RW  : natural := 16#4#;   -- rw,  8 b, first visible pixel column. 0x23 for old, 0x30 for new controllers
   constant c_uart_OWR     : natural := 16#8#;   -- wo,  8 b, UART input FIFO. Ascii on b7..0
-  constant c_char_OWR     : natural := 16#c#;   -- wo, 14 b, Char input FIFO. Row b13..11, Col b10..8, Ascii b7..0
+  constant c_char_OWR     : natural := 16#c#;   -- wo, 19 b, Char input FIFO. Row b18..16, Col b11..8, Ascii b7..0
   constant c_raw_OWR      : natural := 16#10#;  -- wo, 19 b, Raw  input FIFO. Disp RAM Adr b18..8, Pixel (Col) b7..0
 
   --| Component ------------------------- oled_auto -------------------------------------------|
@@ -51,7 +51,7 @@ package oled_auto_pkg is
     rst_sys_n_i : std_logic;                            -- Reset input (active low) for sys domain
     error_i     : in  std_logic_vector(1-1 downto 0);   -- Error control
     stall_i     : in  std_logic_vector(1-1 downto 0);   -- flow control
-    char_o      : out std_logic_vector(14-1 downto 0);  -- Char input FIFO. Row b13..11, Col b10..8, Ascii b7..0
+    char_o      : out std_logic_vector(19-1 downto 0);  -- Char input FIFO. Row b18..16, Col b11..8, Ascii b7..0
     char_WR_o   : out std_logic_vector(1-1 downto 0);   -- Write enable flag - char
     col_offs_o  : out std_logic_vector(8-1 downto 0);   -- first visible pixel column. 0x23 for old, 0x30 for new controllers
     raw_o       : out std_logic_vector(19-1 downto 0);  -- Raw  input FIFO. Disp RAM Adr b18..8, Pixel (Col) b7..0
@@ -80,7 +80,7 @@ package oled_auto_pkg is
   vendor_id     => x"0000000000000651",
   device_id     => x"93a6f3c4",
   version       => x"00000020",
-  date          => x"20161221",
+  date          => x"20161222",
   name          => "OLED_Display       ")));
 
 end oled_auto_pkg;

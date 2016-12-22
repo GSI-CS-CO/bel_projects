@@ -53,7 +53,7 @@ architecture rtl of wb_console is
   signal s_slave_uart_WR_o  : std_logic_vector(1-1 downto 0)  := (others => '0'); -- Write enable flag - uart
   signal s_slave_uart_o     : std_logic_vector(8-1 downto 0)  := (others => '0'); -- UART input FIFO. Ascii on b7..0
   signal s_slave_char_WR_o  : std_logic_vector(1-1 downto 0)  := (others => '0'); -- Write enable flag - char
-  signal s_slave_char_o     : std_logic_vector(14-1 downto 0) := (others => '0'); -- Char input FIFO. Row b13..11, Col b10..8, Ascii b7..0
+  signal s_slave_char_o     : std_logic_vector(19-1 downto 0) := (others => '0'); -- Char input FIFO. Row b13..11, Col b10..8, Ascii b7..0
   signal s_slave_raw_WR_o   : std_logic_vector(1-1 downto 0)  := (others => '0'); -- Write enable flag - raw
   signal s_slave_raw_o      : std_logic_vector(19-1 downto 0) := (others => '0'); -- Raw  input FIFO. Disp RAM Adr b18..8, Pixel (Col) b7..0
   
@@ -97,8 +97,8 @@ begin
 
   fifo_o     <= s_slave_uart_o(7  downto  0) when (s_mode = cDISPMODE_UART)
            else s_slave_char_o(7  downto  0);
-	char_col_o <= s_slave_char_o(10 downto  8);
-  char_row_o <= s_slave_char_o(13 downto 11);
+	char_col_o <= s_slave_char_o(11 downto  8);
+  char_row_o <= s_slave_char_o(18 downto 16);
   raw_data_o <=  s_slave_raw_o(7  downto  0);
   raw_addr_o <=  s_slave_raw_o(18 downto  8);
 	mode_o     <= s_mode;

@@ -1,7 +1,7 @@
 --! @file        oled_auto.vhd
 --  DesignUnit   oled_auto
 --! @author      M. Kreider <m.kreider@gsi.de>
---! @date        21/12/2016
+--! @date        22/12/2016
 --! @version     0.2.0
 --! @copyright   2016 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -44,7 +44,7 @@ Port(
   rst_sys_n_i : std_logic;                            -- Reset input (active low) for sys domain
   error_i     : in  std_logic_vector(1-1 downto 0);   -- Error control
   stall_i     : in  std_logic_vector(1-1 downto 0);   -- flow control
-  char_o      : out std_logic_vector(14-1 downto 0);  -- Char input FIFO. Row b13..11, Col b10..8, Ascii b7..0
+  char_o      : out std_logic_vector(19-1 downto 0);  -- Char input FIFO. Row b18..16, Col b11..8, Ascii b7..0
   char_WR_o   : out std_logic_vector(1-1 downto 0);   -- Write enable flag - char
   col_offs_o  : out std_logic_vector(8-1 downto 0);   -- first visible pixel column. 0x23 for old, 0x30 for new controllers
   raw_o       : out std_logic_vector(19-1 downto 0);  -- Raw  input FIFO. Disp RAM Adr b18..8, Pixel (Col) b7..0
@@ -86,7 +86,7 @@ architecture rtl of oled_auto is
   signal r_uart_WR        : std_logic_vector(1-1 downto 0)  := std_logic_vector(to_unsigned(0, 1)); -- Write enable flag - uart
   signal r_uart           : std_logic_vector(8-1 downto 0)  := (others => '0');                     -- UART input FIFO. Ascii on b7..0
   signal r_char_WR        : std_logic_vector(1-1 downto 0)  := std_logic_vector(to_unsigned(0, 1)); -- Write enable flag - char
-  signal r_char           : std_logic_vector(14-1 downto 0) := (others => '0');                     -- Char input FIFO. Row b13..11, Col b10..8, Ascii b7..0
+  signal r_char           : std_logic_vector(19-1 downto 0) := (others => '0');                     -- Char input FIFO. Row b18..16, Col b11..8, Ascii b7..0
   signal r_raw_WR         : std_logic_vector(1-1 downto 0)  := std_logic_vector(to_unsigned(0, 1)); -- Write enable flag - raw
   signal r_raw            : std_logic_vector(19-1 downto 0) := (others => '0');                     -- Raw  input FIFO. Disp RAM Adr b18..8, Pixel (Col) b7..0
 
