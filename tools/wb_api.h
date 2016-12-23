@@ -9,9 +9,9 @@
  *            -- Wesley W. Terpstra <w.terpstra@gsi.de>
  *            -- Alessandro Rubini <rubini@gnudd.com>
  *            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
- *  version : 18-Nov-2016
+ *  version : 23-Dec-2016
 */
-#define WB_API_VERSION "0.04.0"
+#define WB_API_VERSION "0.05.0"
 /*
  * Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
  * 
@@ -21,7 +21,7 @@
  *  - wb_slaves.h
  *  - 1-wire 
  *
- * example of usage: see monitoring/wr-mon.c
+ * example of usage: see monitoring/eb-mon.c
  *
  * compile flags:
  *  - WB_SIMULATE, no access to real devices, just for testing
@@ -112,17 +112,19 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device,           /* EB device */
                                  );
 
 
-/* get ID from 1-wire temperature sensor */
+/* get ID of the 1st 1-wire sensor found on the specified bus*/
 eb_status_t wb_wr_get_id(eb_device_t device,                   /* EB device */
                          int devIndex,                         /* 0,1,2... - there may be more than 1 device on the WB bus */
                          unsigned int busIndex,                /* index of the physical 1-wire bus */
+                         unsigned int family,                  /* family code of 1-wire sensor */
                          uint64_t *id                          /* ID of 1-wire sensor */
                          );
 
-/* get temp from 1-wire sensor */
+/* get temp the 1st 1-wire temperatur sensor found on the specified bus */
 eb_status_t wb_wr_get_temp(eb_device_t device,                 /* EB device */
                            int devIndex,                       /* 0,1,2... - there may be more than 1 device on the WB bus */
                            unsigned int busIndex,              /* index of the physical 1-wire bus */
+                           unsigned int family,                /* family code of 1-wire sensor */                                          
                            double *temp                        /* temperature */
                            );
 
