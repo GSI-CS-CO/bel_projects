@@ -1,11 +1,11 @@
 /******************************************************************************
- *  wr-mon.c
+ *  eb-mon.c (previously wr-mon.c)
  *
  *  created : 2015
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Nov-2016
+ *  version : 23-Dec-2016
  *
- * Command-line interface for saftlib. This tool focuses on the software part.
+ * Command-line interface for WR monitoring via Etherbone.
  *
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -65,9 +65,10 @@ static void die(const char* where, eb_status_t status) {
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device>\n", program);
   fprintf(stderr, "\n");
-  fprintf(stderr, "  -b<busIndex>     display board ID (ID of temperature sensor on the specified 1-wire bus\n");
+  fprintf(stderr, "  -b<busIndex>     display ID (ID of slave on the specified 1-wire bus)\n");
   fprintf(stderr, "  -d               display WR time\n");
   fprintf(stderr, "  -e               display etherbone version\n");
+  fprintf(stderr, "  -f<familyCode>   specifiy family code of 1-wire slave (0x43: EEPROM; 0x28,0x42: temperature)\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "  -i               display WR IP\n");
   fprintf(stderr, "  -l               display WR link status\n");
@@ -79,6 +80,8 @@ static void help(void) {
   fprintf(stderr, "  -w<index>        specify WB device in case multiple WB devices of the same type exist (default: 0)\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
+  fprintf(stderr, "Example1: '%s -v dev/wbm0' display typical information.\n", program);
+  fprintf(stderr, "Example2: '%s -b0 -f0x43 dev/wbm0' read ID of EEPROM connected to 1st 1-wire bus\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", WRMON_VERSION);
@@ -104,6 +107,7 @@ int main(int argc, char** argv) {
   int         getBoardTemp=0;
   int         exitCode=0;
 
+  unsigned int family = 0;
 
   uint64_t    nsecs64;
   uint64_t    msecs64;
@@ -127,7 +131,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:w:b:dosmlievh")) != -1) {
+  while ((opt = getopt(argc, argv, "t:w:f:b:dosmlievh")) != -1) {
     switch (opt) {
     case 'b':
       getBoardID=1;
@@ -139,6 +143,13 @@ int main(int argc, char** argv) {
       break;
     case 'd':
       getWRDate=1;
+      break;
+    case 'f':
+      family = strtol(optarg, &tail, 0);
+      if (*tail != 0) {
+        fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+        exit(1);
+      } /* if *tail */
       break;
     case 'o':
       getWROffset=1;
@@ -283,13 +294,15 @@ int main(int argc, char** argv) {
   }
   
   if (getBoardID) {
-    if ((status = wb_wr_get_id(device, devIndex, busIndex, &id)) != EB_OK) die("WR get board ID", status);
+    if (!family) die("family code not specified (1-wire)", EB_OOM);
+    if ((status = wb_wr_get_id(device, devIndex, busIndex, family, &id)) != EB_OK) die("WR get board ID", status);
     if (verbose) fprintf(stdout, "ID: ");
     fprintf(stdout, "0x%016"PRIx64"\n", id);
   }
 
  if (getBoardTemp) {
-   if ((status = wb_wr_get_temp(device, devIndex, busIndex, &temp)) != EB_OK) die("WR get board temperature", status);
+   if (!family) die("family code not specified (1-wire)", EB_OOM);
+   if ((status = wb_wr_get_temp(device, devIndex, busIndex, family, &temp)) != EB_OK) die("WR get board temperature", status);
    if (verbose) fprintf(stdout, "temp: ");
    fprintf(stdout, "%.4f\n", (float)temp);
  } 
