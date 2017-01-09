@@ -3,7 +3,7 @@
  *
  *  created : Apr 10, 2013
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Nov-2016
+ *  version : 23-Dec-2016
  *
  * Api for wishbone devices for timing receiver nodes. This is  not a timing receiver API,
  * but only a temporary solution.
@@ -319,10 +319,10 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device, int devIndex, int *syncStat
 } /* wb_wr_get_sync_state */
 
 
-eb_status_t wb_wr_get_id(eb_device_t device, int devIndex, unsigned int busIndex, uint64_t *id)
+eb_status_t wb_wr_get_id(eb_device_t device, int devIndex, unsigned int busIndex, unsigned int family, uint64_t *id)
 {
   eb_status_t  status;
-  uint64_t     tmpID;
+  uint64_t     oneWireID;
 
   struct       w1_dev *d;
   int          i;
@@ -345,11 +345,11 @@ eb_status_t wb_wr_get_id(eb_device_t device, int devIndex, unsigned int busIndex
   w1_scan_bus(&wrpc_w1_bus);
   for (i = 0; i < W1_MAX_DEVICES; i++) {
     d = wrpc_w1_bus.devs + i;
-    if ((d->rom & 0xff) == 0x42 || (d->rom & 0xff) == 0x28) {
-      tmpID = (int)(d->rom >> 32);
-      tmpID = (tmpID << 32);
-      tmpID = tmpID + (int)(d->rom);
-      *id = tmpID;
+    if ((d->rom & 0xff) == family) {
+      oneWireID = (int)(d->rom >> 32);
+      oneWireID = (oneWireID << 32);
+      oneWireID = oneWireID + (int)(d->rom);
+      *id = oneWireID;
       return status;
     } /* if d->rom ... */
   } /* for i */
@@ -358,7 +358,7 @@ eb_status_t wb_wr_get_id(eb_device_t device, int devIndex, unsigned int busIndex
 } /* wb_wr_get_id */
 
 
-eb_status_t wb_wr_get_temp(eb_device_t device, int devIndex, unsigned int busIndex, double *temp)
+eb_status_t wb_wr_get_temp(eb_device_t device, int devIndex, unsigned int busIndex, unsigned int family, double *temp)
 {
   eb_status_t  status;
   int          tmpT;
@@ -385,7 +385,7 @@ eb_status_t wb_wr_get_temp(eb_device_t device, int devIndex, unsigned int busInd
 
   for (i = 0; i < W1_MAX_DEVICES; i++) {
     d = wrpc_w1_bus.devs + i;
-    if (((d->rom & 0xff) == 0x42) || ((d->rom & 0xff) == 0x28)) {
+    if ((d->rom & 0xff) == family) {
       tmpT = w1_read_temp(wrpc_w1_bus.devs + i, 0);
       *temp = (tmpT >> 16) + ((int)((tmpT & 0xffff) * 10 * 1000 >> 16))/10000.0;
       return status;

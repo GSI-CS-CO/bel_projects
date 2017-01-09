@@ -10,6 +10,7 @@ t_ftmAccess* p;
 t_ftmAccess ftmAccess;
 eb_device_t device;
 eb_socket_t mySocket;
+uint8_t show_time;
 
 /// Expected Firmware Version ///
 //const char myVer[] = "0.2.1\n";
@@ -39,7 +40,7 @@ const uint32_t eva_time_low_get  = 0x1c;
 
 const char     devName_RAM_pre[] = "WB4-BlockRAM_";
 
-extern uint8_t show_time;
+
 uint32_t currentTimeHigh;
 uint32_t currentTimeLow;
   
@@ -1052,6 +1053,58 @@ void ftmShowStatus(uint32_t srcCpus, uint32_t* status, uint8_t verbose) {
   printf("%s", (const char*)strBuff);
 }
 
+t_status* v02FtmParseStatus(uint32_t srcCpus, uint32_t* status, t_status* sSt) {
+  uint32_t cpuIdx, i;
+  uint32_t* buffEbm   = status;
+  uint32_t* buffPrioq = (uint32_t*)&buffEbm[((EBM_SEMA_RW)>>2)];
+  uint32_t* buffWr    = (uint32_t*)&buffPrioq[((PRIO_CNT_OUT_ALL_GET_1 + 4)>>2)];
+  uint32_t* buffCpu   = (uint32_t*)&buffWr[WR_STATE_SIZE];
+  uint32_t coreStateSize = (CPU_STATE_SIZE + p->thrQty * THR_STATE_SIZE);
+
+  //Generate EBM Status
+  sSt->sEbm.state    = buffEbm[EBM_STATUS_GET>>2];
+  sSt->sEbm.src.mac  = ((uint64_t)buffEbm[EBM_SRC_MAC_RW_1>>2] << 32 | (uint64_t)buffEbm[EBM_SRC_MAC_RW_0>>2]);
+  sSt->sEbm.src.ipv4 = buffEbm[EBM_SRC_IP_RW>>2];
+  sSt->sEbm.src.port = buffEbm[EBM_SRC_PORT_RW>>2];
+  sSt->sEbm.dst.mac  = ((uint64_t)buffEbm[EBM_DST_MAC_RW_1>>2] << 32 | (uint64_t)buffEbm[EBM_DST_MAC_RW_0>>2]);
+  sSt->sEbm.dst.ipv4 = buffEbm[EBM_DST_IP_RW>>2];
+  sSt->sEbm.dst.port = buffEbm[EBM_DST_PORT_RW>>2];
+  sSt->sEbm.mtu      = buffEbm[EBM_MTU_RW>>2];
+  sSt->sEbm.adhi     = buffEbm[EBM_ADR_HI_RW>>2];
+  sSt->sEbm.opt      = buffEbm[EBM_EB_OPT_RW>>2];
+
+  //Generate PrioQ Status
+  sSt->sPq.mode      = buffPrioq[PRIO_MODE_GET>>2];
+  sSt->sPq.maxMsg    = buffPrioq[PRIO_TX_MAX_MSGS_RW>>2];
+  sSt->sPq.maxWait   = buffPrioq[PRIO_TX_MAX_WAIT_RW>>2];
+  sSt->sPq.adEbm     = buffPrioq[PRIO_EBM_ADR_RW>>2];
+  sSt->sPq.adEca     = buffPrioq[PRIO_ECA_ADR_RW>>2];
+  sSt->sPq.msgCnt    = (((uint64_t)buffPrioq[PRIO_CNT_OUT_ALL_GET_1>>2]) <<32) + ((uint64_t)buffPrioq[PRIO_CNT_OUT_ALL_GET_0>>2]);
+  sSt->sPq.lateCnt   = buffPrioq[PRIO_CNT_LATE_GET>>2];
+  
+  //Generate WR Status
+  sSt->sWr.tsEca     = ((uint64_t)currentTimeHigh << 32 | (uint64_t)currentTimeLow);  
+  sSt->sWr.tsWr      = (((uint64_t)buffWr[WR_UTC_HI]) << 32 | ((uint64_t)buffWr[WR_UTC_LO]));
+  sSt->sWr.state     = buffWr[WR_STATUS];
+
+  //Generate CPUs Status
+  for(cpuIdx=0;cpuIdx < p->cpuQty;cpuIdx++) {
+    if((srcCpus >> cpuIdx) & 0x1) {
+      sSt->sCore[i].state = buffCpu[cpuIdx*coreStateSize + CPU_STATUS] & 0xff;  
+      sSt->sCore[i].msgCnt = buffCpu[cpuIdx*coreStateSize + CPU_MSGS];
+      sSt->sCore[i].errCnt = (buffCpu[cpuIdx*coreStateSize + CPU_STATUS] >> 8) & 0xff; //convert lm32's view to pcie's view
+      sSt->sCore[i].tPrep = (((uint64_t)buffCpu[cpuIdx*coreStateSize + CPU_TPREP_HI]) << 32 | ((uint64_t)buffCpu[cpuIdx*coreStateSize + CPU_TPREP_LO]));
+      
+      sSt->sCore[i].thrRun   = buffCpu[cpuIdx*coreStateSize + CPU_THR_RUNNING];
+      sSt->sCore[i].thrIdle  = buffCpu[cpuIdx*coreStateSize + CPU_THR_IDLE];
+      sSt->sCore[i].thrWait  = buffCpu[cpuIdx*coreStateSize + CPU_THR_WAITING];
+      sSt->sCore[i].thrError = buffCpu[cpuIdx*coreStateSize + CPU_THR_ERROR];
+      sSt->sCore[i].thrActAB = buffCpu[cpuIdx*coreStateSize + CPU_THR_ACT_A];
+    }
+  }
+  return sSt;
+}
+
 uint64_t cpus2thrs(uint32_t cpus) {
   uint64_t i;
   uint64_t res=0;
@@ -1071,6 +1124,7 @@ uint32_t thrs2cpus(uint64_t thrs) {
   
 }
 
+t_status* ftmParseStatus(uint32_t srcCpus, uint32_t* status, t_status* sSt) {return v02FtmParseStatus(srcCpus, status, sSt);} 
 int ftmFetchStatus(uint32_t* buff, uint32_t len)      { return v02FtmFetchStatus(buff, len);}
 int ftmCommand(uint64_t dstThr, uint32_t command)     { return v02FtmCommand(thrs2cpus(dstThr),command);}
 int ftmPutString(uint64_t dstThr, const char* sXml)   { return v02FtmPutString(thrs2cpus(dstThr), sXml);}

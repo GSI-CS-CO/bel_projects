@@ -5,8 +5,8 @@ SPI_LANES	= ASx4
 RAM_SIZE	= 49152 
 SHARED_SIZE     = 8K
 USRCPUCLK       = 125000
-VERSION         = 0.2.4
-VERSION_TOOL    = 0.1.4
+VERSION         = 0.3.1
+VERSION_TOOL    = 0.2.0
 
 EBMPATH   = ../../../ip_cores/etherbone-core/hdl/eb_master_core
 PRIOPATH  = ../../../modules/prioq2

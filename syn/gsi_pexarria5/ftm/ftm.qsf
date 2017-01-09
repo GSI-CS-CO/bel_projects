@@ -1,5 +1,5 @@
 set_global_assignment -name FAMILY "Arria V"
-set_global_assignment -name DEVICE 5AGXMA3D4F27C5
+set_global_assignment -name DEVICE 5AGXMA3D4F27I3
 set_global_assignment -name TOP_LEVEL_ENTITY ftm
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "11:00:25 FEBRUARY 13, 2012"
