@@ -1111,7 +1111,8 @@ uint64_t cpus2thrs(uint32_t cpus) {
   
   for(i=0;i<8;i++) {
     res |= (((cpus >> i) & 1ull) << (i*8));
-  }  
+  }
+  
   return res;
 }
 
@@ -1120,6 +1121,10 @@ uint32_t thrs2cpus(uint64_t thrs) {
   uint64_t res=0;
   
   for(i=0;i<64;i++) res |= (((thrs >> i) & 1) << (i/8));
+  
+  // Hack: This must be core 8
+  if (!res) { res=0x100; }
+  
   return res;
   
 }
