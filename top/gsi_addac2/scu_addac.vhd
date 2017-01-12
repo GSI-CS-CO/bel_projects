@@ -13,14 +13,16 @@ use work.fg_quad_pkg.all;
 use work.pll_pkg.all;
 use work.monster_pkg.all;
 
-
+-------------------------------------------------------------------------------------------------------------------
+-- FW 4.1  2017-Jan-12  KK : FW release incremented. ADDAC now running on A_SYSCLK again.
+-------------------------------------------------------------------------------------------------------------------
 
 entity scu_addac is
   generic(
     g_cid_group: integer := 38;
     g_card_type: string := "addac";
     g_firmware_version: integer := 4;
-    g_firmware_release: integer := 0
+    g_firmware_release: integer := 1
     );
   port (
     -------------------------------------------------------------------------------------------------------------------
