@@ -17,10 +17,10 @@ use work.monster_pkg.all;
 
 entity scu_addac is
   generic(
-    g_cid_group: integer := 38;
+    g_cid_group: integer := 3;
     g_card_type: string := "addac";
     g_firmware_version: integer := 4;
-    g_firmware_release: integer := 0
+    g_firmware_release: integer := 1
     );
   port (
     -------------------------------------------------------------------------------------------------------------------
