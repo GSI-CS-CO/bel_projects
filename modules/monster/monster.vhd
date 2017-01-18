@@ -336,7 +336,7 @@ architecture rtl of monster is
   -- GSI Top Crossbar Masters ------------------------------------------------------
   ----------------------------------------------------------------------------------
   
-  constant c_top_my_masters : natural := 6;
+  constant c_top_my_masters : natural := 7;
   constant c_topm_ebs       : natural := 0;
   constant c_topm_eca_wbm   : natural := 1;
   constant c_topm_pcie      : natural := 2;
@@ -351,7 +351,8 @@ architecture rtl of monster is
     c_topm_pcie    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
     c_topm_vme     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
     c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     false), -- Need to add MSI support !!!
-    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false));  
+    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false),
+    c_topm_pmc     => f_sdb_auto_msi(c_pmc_msi,    g_en_pmc));  
   
   -- The FTM adds a bunch of masters to this crossbar
   constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
