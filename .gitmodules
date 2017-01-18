@@ -19,3 +19,6 @@
 [submodule "ip_cores/saftlib"]
 	path = ip_cores/saftlib
 	url = https://github.com/GSI-CS-CO/saftlib.git
+[submodule "ip_cores/pci-core"]
+	path = ip_cores/pci-core
+	url = git://ohwr.org/hdl-core-lib/pci-core.git
