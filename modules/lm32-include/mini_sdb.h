@@ -16,7 +16,7 @@
 
 
 
-#define ERROR_NOT_FOUND  0XDEADBEE2
+#define ERROR_NOT_FOUND  0xFFFFFFFE
 #define NO_MSI           0XDEADBEE3
 #define OWN_MSI          (1<<31)
 

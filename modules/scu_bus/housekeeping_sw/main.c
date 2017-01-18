@@ -98,19 +98,19 @@ int main(void)
   mprintf("BASE_UART: 0x%x\n", BASE_UART);
   mprintf("BASE_ONEWIRE: 0x%x\n", BASE_ONEWIRE);
 
-  if (!aru_base) {
+  if ((int)aru_base == ERROR_NOT_FOUND) {
     mprintf("no remote update controller found!\n");
     while (1) {};
   }
-  if (!scu_reg) {
+  if ((int)scu_reg == ERROR_NOT_FOUND) {
     mprintf("no WB to SCU memory found!\n");
     while (1) {};
   }
-  if (!asmi_base) {
+  if ((int)asmi_base == ERROR_NOT_FOUND) {
     mprintf("no ASMI controller found!\n");
     while (1) {};
   }
-  if (!BASE_ONEWIRE) {
+  if ((int)BASE_ONEWIRE == ERROR_NOT_FOUND) {
     mprintf("no 1Wire controller found!\n");
     while (1) {};
   }

@@ -298,7 +298,7 @@ int32_t iSSD1325_AutoInitialize(void)
   p_sSSD1325_Area = (s_SSD1325_RegisterArea*) find_device_adr(GSI, SSD1325_SER_DRIVER);
   
   /* Check if device was found */
-  if(p_sSSD1325_Area == NULL)
+  if(p_sSSD1325_Area == ERROR_NOT_FOUND)
   {
     /* Device was not found */
     return(SSD1325_RETURN_FAILURE_CODE);

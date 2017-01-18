@@ -267,7 +267,7 @@ int32_t iNAU8811_AutoInitialize(void)
   p_sNAU8811_Area = (s_NAU8811_RegisterArea*) find_device_adr(GSI, NAU8811_AUD_DRIVER);
   
   /* Check if device was found */
-  if(p_sNAU8811_Area == NULL)
+  if(p_sNAU8811_Area == ERROR_NOT_FOUND)
   {
     /* Device was not found */
     return(NAU8811_RETURN_FAILURE_CODE);
