@@ -61,6 +61,7 @@ use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
 use work.wb_serdes_clk_gen_pkg.all;
 use work.io_control_pkg.all;
+use work.wb_pmc_host_bridge_pkg.all;
 
 entity monster is
   generic(
@@ -91,6 +92,7 @@ entity monster is
     g_en_user_ow           : boolean;
     g_en_psram             : boolean;
     g_io_table             : t_io_mapping_table_arg_array(natural range <>);
+    g_en_pmc               : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -291,6 +293,27 @@ entity monster is
     ps_cre                 : out   std_logic := 'Z';
     ps_advn                : out   std_logic := 'Z';
     ps_wait                : in    std_logic;
+    
+    -- g_en_pmc
+    pmc_pci_clk_i          : in    std_logic;
+    pmc_pci_rst_i          : in    std_logic;
+    pmc_buf_oe_o           : out   std_logic := 'Z';
+    pmc_busmode_io         : inout std_logic_vector(3 downto 0);
+    pmc_ad_io              : inout std_logic_vector(31 downto 0);
+    pmc_c_be_io            : inout std_logic_vector(3 downto 0);
+    pmc_par_io             : inout std_logic;
+    pmc_frame_io           : inout std_logic;
+    pmc_trdy_io            : inout std_logic;
+    pmc_irdy_io            : inout std_logic;
+    pmc_stop_io            : inout std_logic;
+    pmc_devsel_io          : inout std_logic;
+    pmc_idsel_i            : in    std_logic;
+    pmc_perr_io            : inout std_logic;
+    pmc_serr_io            : inout std_logic;
+    pmc_inta_o             : out   std_logic := 'Z';
+    pmc_req_o              : out   std_logic;
+    pmc_gnt_i              : in    std_logic;
+
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
     hw_version             : in    std_logic_vector(31 downto 0));
@@ -320,6 +343,7 @@ architecture rtl of monster is
   constant c_topm_vme       : natural := 3;
   constant c_topm_usb       : natural := 4;
   constant c_topm_prioq     : natural := 5;
+  constant c_topm_pmc       : natural := 6;
   
   constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) :=
    (c_topm_ebs     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
@@ -1070,6 +1094,60 @@ begin
         slave_i       => top_msi_master_o(c_topm_pcie),
         slave_o       => top_msi_master_i(c_topm_pcie));
   end generate;
+
+  pmc_n : if not g_en_pmc generate
+    top_bus_slave_i (c_topm_pmc) <= cc_dummy_master_out;
+    top_msi_master_i(c_topm_pmc) <= cc_dummy_slave_out;
+  end generate;
+ pmc_y : if g_en_pmc generate
+    signal s_pmc_debug_in   : std_logic_vector(7 downto 0);
+    signal s_pmc_debug_out  : std_logic_vector(7 downto 0);  
+ begin 
+    pmc : wb_pmc_host_bridge
+    generic map(
+      g_family      => g_family,
+      g_sdb_addr    => c_top_sdb_address
+    ) 
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+
+      master_clk_i  => clk_sys,
+      master_rstn_i => rstn_sys,
+      slave_clk_i   => clk_sys,
+      slave_rstn_i  => rstn_sys,
+      master_o      => top_bus_slave_i (c_topm_pmc),
+      master_i      => top_bus_slave_o (c_topm_pmc),
+      slave_i       => top_msi_master_o(c_topm_pmc),
+      slave_o       => top_msi_master_i(c_topm_pmc), 
+      pci_clk_i     => pmc_pci_clk_i,
+      pci_rst_i     => pmc_pci_rst_i,
+      buf_oe_o      => pmc_buf_oe_o,
+      busmode_io    => pmc_busmode_io,
+      ad_io         => pmc_ad_io,
+      c_be_io       => pmc_c_be_io,
+      par_io        => pmc_par_io,
+      frame_io      => pmc_frame_io,
+      trdy_io       => pmc_trdy_io,
+      irdy_io       => pmc_irdy_io,
+      stop_io       => pmc_stop_io,
+      devsel_io     => pmc_devsel_io,
+      idsel_i       => pmc_idsel_i,
+      perr_io       => pmc_perr_io,
+      serr_io       => pmc_serr_io,
+      inta_o        => pmc_inta_o,
+      req_o         => pmc_req_o,
+      gnt_i         => pmc_gnt_i,
+      debug_i       => s_pmc_debug_in,
+      debug_o       => s_pmc_debug_out
+    );
+
+    s_pmc_debug_in(0)          <= gpio_i(0);      -- FPGA push button used to trigger INTx IRQ
+    s_pmc_debug_in(1)          <= gpio_i(1); -- CPLD push button used to trigger MSI IRQ
+    s_pmc_debug_in(7 downto 2) <= (others => '0');
+
+  end generate;
+
   
   vme_n : if not g_en_vme generate
     top_bus_slave_i (c_topm_vme) <= cc_dummy_master_out;
