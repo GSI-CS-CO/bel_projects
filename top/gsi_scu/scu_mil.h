@@ -44,6 +44,7 @@ int write_mil(volatile unsigned int *base, short data, short fc_ifk_addr);
 int trm_free(volatile unsigned int *base);
 int rcv_flag(volatile unsigned int *base);
 int read_mil(volatile unsigned int *base, short *data, short fc_ifk_addr);
+void clear_receive_flag(volatile unsigned int *base);
 void run_mil_test(volatile unsigned int *base, unsigned char ifk_addr);
 
 

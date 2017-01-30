@@ -10,7 +10,11 @@
 #define   MAX_WB_FG_MACROS  1
 #define   BUFFER_SIZE       121
 #define   THRESHOLD         BUFFER_SIZE * 40 / 100
-#define   OUTPUT_BITS       24 
+#define   OUTPUT_BITS       24
+#define   MIL_EXT           1
+#define   MAX_SIO3          MAX_SCU_SLAVES 
+#define   IFK_MAX_ADR       255
+#define   GRP_IFA8          321
 
 struct fg_dev {
   unsigned int dev_number;
@@ -37,7 +41,7 @@ struct scu_slave {
 
 struct scu_bus {
   uint64_t unique_id; /* onewire id */
-  struct scu_slave slaves[MAX_SCU_SLAVES + 1];
+  struct scu_slave slaves[MAX_SCU_SLAVES + MIL_EXT + MAX_SIO3 + 1];
 };
 
 struct fg_list {
@@ -68,7 +72,7 @@ struct channel_buffer {
   struct param_set pset[BUFFER_SIZE];
 };
 
-int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr);
+int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr, volatile unsigned int *mil_base);
 int scan_for_fgs(struct scu_bus *bus, uint32_t *fglist);
 void init_buffers(struct channel_regs *cr, int channel, uint32_t *macro, volatile unsigned short* scub_base);
 

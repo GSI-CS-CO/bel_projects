@@ -314,7 +314,7 @@ void reset_slaves() {
 /* scans for slaves and then for fgs */
 void print_fgs() {
   int i=0, j=0;
-  scan_scu_bus(&scub, backplane_id, scub_base);
+  scan_scu_bus(&scub, backplane_id, scub_base, scu_mil_base);
   scan_for_fgs(&scub, &fg_macros[0]);
   mprintf("ID: 0x%08x%08x\n", (int)(scub.unique_id >> 32), (int)scub.unique_id); 
   while(scub.slaves[i].unique_id) { /* more slaves in list */ 
