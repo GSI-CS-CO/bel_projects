@@ -1,12 +1,12 @@
 derive_pll_clocks -create_base_clocks
 derive_clock_uncertainty
+create_clock -period 50Mhz -name hps_clk [get_ports {fpga_clk_50}]
 
-# Cut the clock domains from each other
 set_clock_groups -asynchronous                           \
  -group { altera_reserved_tck                          } \
  -group { clk_20m_vcxo_i    main|\dmtd_a5:dmtd_inst|*  } \
  -group { clk_125m_local_i  main|\sys_a5:sys_inst|*    } \
- -group { clk_sfp_i         main|\ref_a5:ref_inst|*      \
+ -group { sfp234_ref_clk_i  main|\ref_a5:ref_inst|*      \
           main|\phy_a5:phy|*.cdr_refclk*                 \
           main|\phy_a5:phy|*.cmu_pll.*                   \
           main|\phy_a5:phy|*|av_tx_pma|*                 \
@@ -38,3 +38,44 @@ set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[1].*}] -to [ge
 # cut: wr-ref <=> butis
 set_false_path -from [get_clocks {main|\ref_a5:ref_inst|*|counter[0].*}] -to [get_clocks {main|\ref_a5:ref_inst|*|counter[1].*}]
 set_false_path -from [get_clocks {main|\ref_a5:ref_inst|*|counter[1].*}] -to [get_clocks {main|\ref_a5:ref_inst|*|counter[0].*}]
+
+## Cut the clock domonster:mains from each other
+#set_clock_groups -asynchronous                           \
+# -group { altera_reserved_tck                          } \
+# -group { clk_20m_vcxo_i     monster:monster_inst|dmtd_pll5:\dmtd_a5:dmtd_instt|*  } \
+# -group { clk_125m_local_i   monster:monster_inst|sys_pll5:\sys_a5:sys_inst|*    } \
+# -group { sfp234_ref_clk_i   monster:monster_inst|ref_a5:\ref_a5:ref_inst|*      \
+#          monster:monster_inst|wr_arria5_phy:\phy_a5:phy|*.cdr_refclk*                 \
+#          monster:monster_inst|wr_arria5_phy:\phy_a5:phy|*.cmu_pll.*                   \
+#          monster:monster_inst|wr_arria5_phy:\phy_a5:phy|*|av_tx_pma|*                 \
+#          monster:monster_inst|wr_arria5_phy:\phy_a5:phy|*|inst_av_pcs|*|tx*         } \
+# -group { monster:monster_inst|wr_arria5_phy:\phy_a5:phy|*|clk90bdes                   \
+#          monster:monster_inst|wr_arria5_phy:\phy_a5:phy|*|clk90b                      \
+#          monster:monster_inst|wr_arria5_phy:\phy_a5:phy|*|rcvdclkpma                } \
+# -group { pcie_refclk_i                                  \
+#
+#monster:monster_inst|pcie_wb:\pcie_y:pcie|
+#
+#          monster:monster_inst|pcie_wb:\pcie_y:pcie|*.cdr_refclk*                \
+#          monster:monster_inst|pcie_wb:\pcie_y:pcie|*.cmu_pll.*                  \
+#          monster:monster_inst|pcie_wb:\pcie_y:pcie|*                            \
+#          monster:monster_inst|pcie_wb:\pcie_y:pcie|*|tx*        }               \
+# -group { monster:monster_inst|pcie_wb:\pcie_y:pcie|*|rx_pmas[0]*|clk90bdes      \
+#          monster:monster_inst|pcie_wb:\pcie_y:pcie|*|rx_pmas[0]*|clk90b       } \
+# -group { monster:monster_inst|pcie_wb:\pcie_y:pcie|*|rx_pmas[1]*|clk90bdes      \
+#          monster:monster_inst|pcie_wb:\pcie_y:pcie|*|rx_pmas[1]*|clk90b       } \
+# -group { monster:monster_inst|pcie_wb:\pcie_y:pcie|*|rx_pmas[2]*|clk90bdes      \
+#          monster:monster_inst|pcie_wb:\pcie_y:pcie|*|rx_pmas[2]*|clk90b       } \
+# -group { monster:monster_inst|pcie_wb:\pcie_y:pcie|*|rx_pmas[3]*|clk90bdes      \
+#          monster:monster_inst|pcie_wb:\pcie_y:pcie|*|rx_pmas[3]*|clk90b       } \
+# -group { monster:monster_inst|pcie_wb:\pcie_y:pcie|*|coreclkout               }
+#
+## cut: wb sys <=> wb flash   (different frequencies and using xwb_clock_crossing)
+#set_false_path -from [get_clocks {monster:monster_inst|sys_pll5:\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {monster:monster_inst|sys_pll5:\sys_a5:sys_inst|*|general[3].*}]
+#set_false_path -from [get_clocks {monster:monster_inst|sys_pll5:\sys_a5:sys_inst|*|general[3].*}] -to [get_clocks {monster:monster_inst|sys_pll5:\sys_a5:sys_inst|*|general[0].*}]
+## cut: wb sys <=> wb display (different frequencies and using xwb_clock_crossing)
+#set_false_path -from [get_clocks {monster:monster_inst|sys_pll5:\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {monster:monster_inst|sys_pll5:\sys_a5:sys_inst|*|general[1].*}]
+#set_false_path -from [get_clocks {monster:monster_inst|sys_pll5:\sys_a5:sys_inst|*|general[1].*}] -to [get_clocks {monster:monster_inst|sys_pll5:\sys_a5:sys_inst|*|general[0].*}]
+## cut: wr-ref <=> butis
+#set_false_path -from [get_clocks {monster:monster_inst|ref_a5:\ref_a5:ref_inst|*|counter[0].*}] -to [get_clocks {monster:monster_inst|ref_a5:\ref_a5:ref_inst|*|counter[1].*}]
+#set_false_path -from [get_clocks {monster:monster_inst|ref_a5:\ref_a5:ref_inst|*|counter[1].*}] -to [get_clocks {monster:monster_inst|ref_a5:\ref_a5:ref_inst|*|counter[0].*}]

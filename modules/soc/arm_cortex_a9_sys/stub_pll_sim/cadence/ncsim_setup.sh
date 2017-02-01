@@ -12,7 +12,7 @@
 # or its authorized distributors. Please refer to the applicable 
 # agreement for further details.
 
-# ACDS 16.0 211 linux 2016.06.17.11:32:49
+# ACDS 16.0 211 linux 2016.12.06.15:32:12
 
 # ----------------------------------------
 # ncsim - auto-generated simulation script
@@ -101,12 +101,12 @@
 # within the Quartus project, and generate a unified
 # script which supports all the Altera IP within the design.
 # ----------------------------------------
-# ACDS 16.0 211 linux 2016.06.17.11:32:49
+# ACDS 16.0 211 linux 2016.12.06.15:32:12
 # ----------------------------------------
 # initialize variables
 TOP_LEVEL_NAME="stub_pll"
 QSYS_SIMDIR="./../"
-QUARTUS_INSTALL_DIR="/home/alex/workspace/optional/altera/16.0/quartus/"
+QUARTUS_INSTALL_DIR="/home/bradomyn/altera/16.0/quartus/"
 SKIP_FILE_COPY=0
 SKIP_DEV_COM=0
 SKIP_COM=0

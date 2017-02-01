@@ -7,8 +7,7 @@
    <irq preferredWidth="63" />
   </columns>
  </systemtable>
- <library
-   expandedCategories="Library/Interface Protocols/PCI Express/Example Design Components,Library/Interface Protocols,Library/Interface Protocols/PCI Express,Project,Library/Interface Protocols/PCI Express/QSYS Example Designs,Library" />
+ <library expandedCategories="Project,Library,Library/Qsys Interconnect" />
  <window width="2092" height="1195" x="-1" y="25" />
  <generation synthesis="VHDL" path="_PROJECT_NAME_" />
 </preferences>

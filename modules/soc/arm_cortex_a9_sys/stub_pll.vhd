@@ -77,10 +77,10 @@ end architecture rtl; -- of stub_pll
 -- Retrieval info: 	<generic name="debug_print_output" value="false" />
 -- Retrieval info: 	<generic name="debug_use_rbc_taf_method" value="false" />
 -- Retrieval info: 	<generic name="device_family" value="Arria V" />
--- Retrieval info: 	<generic name="device" value="Unknown" />
+-- Retrieval info: 	<generic name="device" value="5AGTFC7H3F35I3" />
 -- Retrieval info: 	<generic name="gui_device_speed_grade" value="2" />
 -- Retrieval info: 	<generic name="gui_pll_mode" value="Integer-N PLL" />
--- Retrieval info: 	<generic name="gui_reference_clock_frequency" value="50.0" />
+-- Retrieval info: 	<generic name="gui_reference_clock_frequency" value="125.0" />
 -- Retrieval info: 	<generic name="gui_channel_spacing" value="0.0" />
 -- Retrieval info: 	<generic name="gui_operation_mode" value="direct" />
 -- Retrieval info: 	<generic name="gui_feedback_clock" value="Global Clock" />
@@ -111,7 +111,7 @@ end architecture rtl; -- of stub_pll
 -- Retrieval info: 	<generic name="gui_actual_phase_shift1" value="0" />
 -- Retrieval info: 	<generic name="gui_duty_cycle1" value="50" />
 -- Retrieval info: 	<generic name="gui_cascade_counter2" value="false" />
--- Retrieval info: 	<generic name="gui_output_clock_frequency2" value="125.0" />
+-- Retrieval info: 	<generic name="gui_output_clock_frequency2" value="50.0" />
 -- Retrieval info: 	<generic name="gui_divide_factor_c2" value="1" />
 -- Retrieval info: 	<generic name="gui_actual_output_clock_frequency2" value="0 MHz" />
 -- Retrieval info: 	<generic name="gui_ps_units2" value="ps" />
@@ -129,7 +129,7 @@ end architecture rtl; -- of stub_pll
 -- Retrieval info: 	<generic name="gui_actual_phase_shift3" value="0" />
 -- Retrieval info: 	<generic name="gui_duty_cycle3" value="50" />
 -- Retrieval info: 	<generic name="gui_cascade_counter4" value="false" />
--- Retrieval info: 	<generic name="gui_output_clock_frequency4" value="100.0" />
+-- Retrieval info: 	<generic name="gui_output_clock_frequency4" value="50.0" />
 -- Retrieval info: 	<generic name="gui_divide_factor_c4" value="1" />
 -- Retrieval info: 	<generic name="gui_actual_output_clock_frequency4" value="0 MHz" />
 -- Retrieval info: 	<generic name="gui_ps_units4" value="ps" />
