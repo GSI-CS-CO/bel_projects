@@ -18,7 +18,7 @@ entity av_rocket_board is
     sfp4_mod0              : in    std_logic; -- grounded by module
     sfp4_mod1              : inout std_logic; -- SCL
     sfp4_mod2              : inout std_logic; -- SDA
-    sfp4_rate              : out   std_logic;      
+    --sfp4_rate              : out   std_logic;      
     
     sfp3_tx_disable_o      : out   std_logic := '1';
     sfp3_tx_fault          : in    std_logic;
@@ -28,7 +28,7 @@ entity av_rocket_board is
     sfp3_mod0              : in    std_logic; -- grounded by module
     sfp3_mod1              : inout std_logic; -- SCL
     sfp3_mod2              : inout std_logic; -- SDA
-    sfp3_rate              : out   std_logic;
+    --sfp3_rate              : out   std_logic;
     
     sfp2_tx_disable_o      : out   std_logic := '1';
     sfp2_tx_fault          : in    std_logic;
@@ -38,7 +38,7 @@ entity av_rocket_board is
     sfp2_mod0              : in    std_logic; -- grounded by module
     sfp2_mod1              : inout std_logic; -- SCL
     sfp2_mod2              : inout std_logic; -- SDA
-    sfp2_rate              : out   std_logic;
+    --sfp2_rate              : out   std_logic;
     
     sfp1_tx_disable_o      : out   std_logic := '1';
     sfp1_tx_fault          : in    std_logic;
@@ -48,7 +48,7 @@ entity av_rocket_board is
     sfp1_mod0              : in    std_logic; -- grounded by module
     sfp1_mod1              : inout std_logic; -- SCL
     sfp1_mod2              : inout std_logic; -- SDA
-    sfp1_rate              : out   std_logic;
+    --sfp1_rate              : out   std_logic;
 
 --------------------------------------------    
     sfp4_red_o             : out   std_logic := 'Z';
@@ -60,11 +60,11 @@ entity av_rocket_board is
     sfp1_red_o             : out   std_logic := 'Z';
     sfp1_green_o           : out   std_logic := 'Z';
 
---------------------------------------------
+    --------------------------------------------
     pe_smdat          : inout std_logic; -- unused (needed for CvP)
     pe_smclk          : out   std_logic := 'Z';
     pe_waken          : out   std_logic := 'Z';
---------------------------------------------
+    --------------------------------------------
     rom_data               : inout std_logic; -- OneWire
     dac_sclk               : out   std_logic; -- WR
     dac_din                : out   std_logic; -- WR
@@ -92,11 +92,23 @@ entity av_rocket_board is
     lemo_n_i          : in    std_logic_vector(8 downto 1);
     lemo_p_o          : out   std_logic_vector(8 downto 1);
     lemo_n_o          : out   std_logic_vector(8 downto 1);
-    --lemo_oen_o        : out   std_logic_vector(8 downto 1);
-    --lemo_term_o       : out   std_logic_vector(8 downto 1);
-    --lemo_oe_ledn_o    : out   std_logic_vector(8 downto 1);
-    --lemo_act_ledn_o   : out   std_logic_vector(8 downto 1);
+    lemo_oen_o        : out   std_logic_vector(8 downto 1);
+    lemo_term_o       : out   std_logic_vector(8 downto 1);
+    lemo_oe_ledn_o    : out   std_logic_vector(8 downto 1);
+    lemo_act_ledn_o   : out   std_logic_vector(8 downto 1);
     led_o             : out   std_logic_vector( 8 downto 1) := (others => '1');
+
+    lvds_p_i          : in    std_logic_vector(3 downto 1);
+    lvds_n_i          : in    std_logic_vector(3 downto 1);
+    lvds_i_ledn_o     : out   std_logic_vector(3 downto 1);
+    lvds_clk_p_i      : in    std_logic;
+    --lvds_clk_n_i      : in    std_logic;
+
+    lvds_p_o          : out   std_logic_vector(3 downto 1);
+    lvds_n_o          : out   std_logic_vector(3 downto 1);
+    lvds_o_ledn_o     : out   std_logic_vector(3 downto 1);
+    lvds_clk_p_o      : out   std_logic;
+    --lvds_clk_n_o      : out   std_logic;
 
     ------------------------------------------------------------------------
     -- Display
@@ -119,12 +131,11 @@ entity av_rocket_board is
     -----------------------------------------------------------------------
     -- io
     -----------------------------------------------------------------------
---    fpga_rest       : in std_logic; -- reset from CPLD
---    nres            : in std_logic; -- from chip
---    pbs2            : in std_logic; -- switches
---    hpw             : inout std_logic_vector(15 downto 0) := (others => 'Z'); -- logic analyzer
---    ant             : inout std_logic_vector(26 downto 1) := (others => 'Z'); -- trigger bus 
---    con_io          : inout std_logic_vector( 9 downto 1) := (others => 'Z'); -- unused
+    fpga_rest_i     : in std_logic; -- reset from CPLD
+    nres_i          : in std_logic; -- from chip
+    con_io          : inout std_logic_vector( 5 downto 1) := (others => 'Z');
+--  pbs2            : in std_logic; -- switches
+--  hpw             : inout std_logic_vector(15 downto 0) := (others => 'Z'); -- logic analyzer
 
 --    -- FPGA peripherals ports
 --    fpga_dipsw_pio         : in    std_logic_vector(3 downto 0);
@@ -245,16 +256,21 @@ architecture rtl of av_rocket_board is
 
   signal s_gpio_o       : std_logic_vector( 4 downto 1);
   signal s_gpio_i       : std_logic_vector( 4 downto 1);
-  signal s_lvds_p_i     : std_logic_vector( 8 downto 1);
-  signal s_lvds_n_i     : std_logic_vector( 8 downto 1);
-  signal s_lvds_i_led   : std_logic_vector( 8 downto 1);
-  signal s_lvds_p_o     : std_logic_vector( 8 downto 1);
-  signal s_lvds_n_o     : std_logic_vector( 8 downto 1);
-  signal s_lvds_o_led   : std_logic_vector( 8 downto 1);
+  signal s_lvds_p_i     : std_logic_vector(11 downto 1);
+  signal s_lvds_n_i     : std_logic_vector(11 downto 1);
+  signal s_lvds_i_led   : std_logic_vector(11 downto 1);
+  signal s_lvds_p_o     : std_logic_vector(11 downto 1);
+  signal s_lvds_n_o     : std_logic_vector(11 downto 1);
+  signal s_lvds_o_led   : std_logic_vector(11 downto 1);
   signal s_lvds_oen     : std_logic_vector( 8 downto 1);
-  signal s_lvds_term    : std_logic_vector( 8 downto 1);
-  
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 15) := 
+  signal s_lvds_term    : std_logic_vector(11 downto 1);
+
+  signal s_led_link_up  : std_logic;
+  signal s_led_link_act : std_logic;
+  signal s_led_track    : std_logic;
+  signal s_led_pps      : std_logic;
+
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 24) := 
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LED1       ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -272,7 +288,16 @@ architecture rtl of av_rocket_board is
     ("IO5        ",  IO_NONE,         false,   false,  4,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
     ("IO6        ",  IO_NONE,         false,   false,  5,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
     ("IO7        ",  IO_NONE,         false,   false,  6,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
-    ("IO8        ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL)
+    ("IO8        ",  IO_NONE,         false,   false,  7,     IO_INOUTPUT, IO_LVDS,  true,         true,        IO_LVTTL),
+    ("LVDSo1     ",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("LVDSo2     ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("LVDSo3     ",  IO_NONE,         false,   false, 10,     IO_OUTPUT,   IO_LVDS,  false,        false,       IO_LVDS),
+    ("LVDSi1     ",  IO_NONE,         false,   false,  8,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("LVDSi2     ",  IO_NONE,         false,   false,  9,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("LVDSi3     ",  IO_NONE,         false,   false, 10,     IO_INPUT,    IO_LVDS,  false,        false,       IO_LVDS),
+    ("LVDSoClk   ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),
+    ("WR200MHz   ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),
+    ("LVDSiClk   ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_LVDS)
   );
 
   -- HPS signals
@@ -314,10 +339,12 @@ begin
       g_family          => c_family,
       g_project         => c_project,
       g_flash_bits      => 25, 
-      --g_gpio_inout      => 4,
       g_gpio_in         => 4,
       g_gpio_out        => 4,
+      g_lvds_in         => 3,
+      g_lvds_out        => 3,
       g_lvds_inout      => 8,
+      g_fixed           => 3,
       g_en_pcie         => true,
       g_en_usb          => true,
       g_en_ssd1325      => true,
@@ -332,6 +359,7 @@ begin
       core_clk_125m_pllref_i => clk_125m_pllref_i,
       core_clk_125m_sfpref_i => sfp234_ref_clk_i,
       core_clk_125m_local_i  => clk_125m_local_i,
+      core_clk_butis_o       => lvds_clk_p_o,
       wr_onewire_io          => rom_data,
       wr_sfp_sda_io          => sfp4_mod2,
       wr_sfp_scl_io          => sfp4_mod1,
@@ -341,6 +369,10 @@ begin
       wr_dac_sclk_o          => dac_sclk,
       wr_dac_din_o           => dac_din,
       wr_ndac_cs_o           => ndac_cs,
+      led_link_up_o          => s_led_link_up,
+      led_link_act_o         => s_led_link_act,
+      led_track_o            => s_led_track,
+      led_pps_o              => s_led_pps,
       --wr_uart_o              => uart_o,
       --wr_uart_i              => uart_i,
       usb_rstn_o              => ures,
@@ -356,6 +388,7 @@ begin
       usb_slwrn_o             => slwr,
       usb_pktendn_o           => pa(6),
       usb_fd_io               => fd,
+      wr_ext_clk_i           => lvds_clk_p_i,
       gpio_o                 => s_gpio_o,
       gpio_i                 => s_gpio_i,
       lvds_p_i               => s_lvds_p_i,
@@ -382,10 +415,10 @@ begin
   sfp3_tx_disable_o <= '1';
   sfp2_tx_disable_o <= '1';
   sfp1_tx_disable_o <= '1';
-  sfp4_rate <= '1';
-  sfp3_rate <= '1';
-  sfp2_rate <= '1';
-  sfp1_rate <= '1';
+  --sfp4_rate <= '1';
+  --sfp3_rate <= '1';
+  --sfp2_rate <= '1';
+  --sfp1_rate <= '1';
   
   -- SoC sub-system module
 --  soc_inst : ghrd_5astfd5k3
@@ -586,6 +619,15 @@ begin
 --  stm_hw_events(11 downto  8) <= fpga_dipsw_pio;
 --  stm_hw_events(27 downto 12) <= (others => '0');
 
+  -- Base board LEDs (2.5V outputs, with 2.5V pull-up)
+  led_o(1) <= '0' when (s_led_link_act and s_led_link_up)='1' else 'Z'; -- red   = traffic/no-link
+  led_o(2) <= '0' when s_led_link_up                   ='1' else 'Z'; -- blue  = link
+  led_o(3) <= '0' when s_led_track                     ='1' else 'Z'; -- green = timing valid
+  led_o(4) <= '0' when s_led_pps                       ='1' else 'Z'; -- white = PPS
+
+-- Link LEDs (2.5V outputs, with 2.5V pull-up)
+  sfp4_red_o   <= '0' when s_led_link_act='1' else 'Z';
+  sfp4_green_o <= '0' when s_led_link_up ='1' else 'Z';
 
   -- GPIO LED outputs
   led_o(5)         <= '0' when s_gpio_o(1)='1' else 'Z';  
@@ -603,10 +645,23 @@ begin
     lemo_p_o(i) <= s_lvds_p_o(i);
     lemo_n_o(i) <= s_lvds_n_o(i);
 
---  lemo_oen_o(i)      <= '0' when s_lvds_oen(i)  ='1' else '1'; -- has pull-up to 3.3V, output is 3.3V
---  lemo_term_o(i)     <= '1' when s_lvds_term(i) ='1' else '0'; -- has pull-down,       output is 3.3V
---  lemo_oe_ledn_o(i)  <= '0' when s_lvds_oen(i)  ='1' else 'Z'; -- has pull-up to 3.3V, output is 2.5V
---  lemo_act_ledn_o(i) <= '0' when s_lvds_i_led(i)='1' else 'Z'; -- has pull-up to 3.3V, output is 2.5V
+    lemo_oen_o(i)      <= '0' when s_lvds_oen(i)  ='1' else '1'; -- has pull-up to 3.3V, output is 3.3V
+    lemo_term_o(i)     <= '1' when s_lvds_term(i) ='1' else '0'; -- has pull-down,       output is 3.3V
+    lemo_oe_ledn_o(i)  <= '0' when s_lvds_oen(i)  ='1' else 'Z'; -- has pull-up to 3.3V, output is 2.5V
+    lemo_act_ledn_o(i) <= '0' when s_lvds_i_led(i)='1' else 'Z'; -- has pull-up to 3.3V, output is 2.5V
   end generate;
-  
+
+  lvds : for i in 1 to 3 generate
+    s_lvds_p_i(i+8) <= lvds_p_i(i);
+    s_lvds_n_i(i+8) <= lvds_n_i(i);
+    lvds_p_o(i) <= s_lvds_p_o(i+8);
+    lvds_n_o(i) <= s_lvds_n_o(i+8);
+
+    lvds_i_ledn_o(i) <= '0' when s_lvds_i_led(i+8)='1' else 'Z'; -- has pull-up to 3.3V, output is 2.5V
+    lvds_o_ledn_o(i) <= '0' when s_lvds_o_led(i+8)='1' else 'Z'; -- has pull-up to 3.3V, output is 2.5V
+  end generate;
+      
+  -- Wires to CPLD, currently unused
+  con_io <= (others => 'Z');
+
 end rtl;
