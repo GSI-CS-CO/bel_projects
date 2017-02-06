@@ -29,9 +29,32 @@
 #define SIG_ARMED       4
 #define SIG_DISARMED    5
 
-#define FG_RUNNING  0x4
-#define FG_ENABLED  0x2
-#define FG_DREQ     0x8
+#define FG_RUNNING    0x4
+#define FG_ENABLED    0x2
+#define FG_DREQ       0x8
+#define DEV_BUS_SLOT  13
+#define FC_CNTRL_WR   0x14 << 8
+#define FC_COEFF_A_WR 0x15 << 8
+#define FC_COEFF_B_WR 0x16 << 8
+#define FC_SHIFT_WR   0x17 << 8
+#define FC_START_L_WR 0x18 << 8
+#define FC_START_H_WR 0x19 << 8
+#define FC_CNTRL_RD   0xa0 << 8
+#define FC_COEFF_A_RD 0xa1 << 8
+#define FC_COEFF_B_RD 0xa2 << 8
+#define FC_IRQ_STAT   0xc9 << 8
+#define FC_IRQ_MSK    0x12 << 8
+
+
+#define DEVB_MSI      0xdeb50000
+#define SCUB_MSI      0x5cb50000
+
+#define MIL_DRQ       0x2
+#define MIL_DRY       0x1
+#define MIL_INL       0x0
+
+#define DRQ_BIT       (1 << 10)
+
 
 #define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
 
@@ -65,6 +88,7 @@ struct fg_list fgs;
 volatile unsigned short* scub_base = 0;
 volatile unsigned int* scub_irq_base = 0;
 volatile unsigned int* scu_mil_base = 0;
+volatile unsigned int* mil_irq_base = 0;
 sdb_location ow_base[2];              // there should be two controllers
 volatile unsigned int* cpu_info_base = 0;
 
@@ -90,15 +114,33 @@ void isr0()
 
 void enable_scub_msis(int channel) {
   int slot;
-  //SCU Bus Master
-  scub_base[GLOBAL_IRQ_ENA] = 0x20;                                 //enable slave irqs in scu bus master
+  slot = fg_macros[fg_regs[channel].macro_number] >> 24;  //dereference slot number
+  
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
-    slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
-    scub_irq_base[8] = slot-1;                                      //channel select
-    scub_irq_base[9] = slot-1;                                      //msg: slot number
-    scub_irq_base[10] = (uint32_t)pMyMsi;                           //msi queue destination address of this cpu
-    scub_irq_base[2] = (1 << (slot - 1));                           //enable slave
-    //mprintf("IRQs for slave %d enabled.\n", slot);
+
+    if (slot < DEV_BUS_SLOT) {
+      //SCU Bus Master
+      scub_base[GLOBAL_IRQ_ENA] = 0x20;             //enable slave irqs in scu bus master
+      scub_irq_base[8]  = slot-1;                   //channel select
+      scub_irq_base[9]  = slot-1;                   //msg: slot number
+      scub_irq_base[10] = (uint32_t)pMyMsi + 0x0;   //msi queue destination address of this cpu
+      scub_irq_base[2]  = (1 << (slot - 1));        //enable slave
+      //mprintf("IRQs for slave %d enabled.\n", slot);
+    } else if (slot == DEV_BUS_SLOT) {
+      mil_irq_base[8]   = MIL_DRQ;
+      mil_irq_base[9]   = MIL_DRQ;
+      mil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
+
+      //mil_irq_base[8]   = MIL_DRY;
+      //mil_irq_base[9]   = MIL_DRY;
+      //mil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
+      
+      //mil_irq_base[8]   = MIL_INL;
+      //mil_irq_base[9]   = MIL_INL;
+      //mil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
+      //mil_irq_base[2]   = (1 << MIL_INL) | (1 << MIL_DRY) | (1 << MIL_DRQ);
+      mil_irq_base[2]   = (1 << MIL_DRQ);
+    }
   }
 }
 
@@ -107,12 +149,15 @@ void disable_slave_irq(int channel) {
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
     slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //slot number
     dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff;  //dev number
-    if (dev == 0)
-      scub_base[(slot << 16) + SLAVE_INT_ENA] &= ~(0x8000);         //disable fg1 irq
-    else if (dev == 1)
-      scub_base[(slot << 16) + SLAVE_INT_ENA] &= ~(0x4000);         //disable fg2 irq
-      
-
+    
+    if (slot < DEV_BUS_SLOT) {
+      if (dev == 0)
+        scub_base[(slot << 16) + SLAVE_INT_ENA] &= ~(0x8000);       //disable fg1 irq
+      else if (dev == 1)
+        scub_base[(slot << 16) + SLAVE_INT_ENA] &= ~(0x4000);       //disable fg2 irq
+    } else if (slot == DEV_BUS_SLOT) {
+      write_mil(scu_mil_base, 0x0, FC_IRQ_MSK | dev);               //disable Data-Request
+    }
     //mprintf("IRQs for slave %d disabled.\n", slot);
   }
 }
@@ -127,7 +172,7 @@ void msDelay(uint32_t msecs) {
   usleep(1000 * msecs);
 }
 
-inline void send_fg_param(int slave_nr, int fg_base, unsigned short cntrl_reg) {
+inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
   struct param_set pset;
   int fg_num;
   unsigned short cntrl_reg_wr;
@@ -136,23 +181,46 @@ inline void send_fg_param(int slave_nr, int fg_base, unsigned short cntrl_reg) {
   if (cbRead(&fg_buffer[0], &fg_regs[0], fg_num, &pset)) {
     cntrl_reg_wr = cntrl_reg & ~(0xfc00); // clear freq and step select
     cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
-    scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] = cntrl_reg_wr;
-    scub_base[(slave_nr << 16) + fg_base + FG_A] = pset.coeff_a;
-    scub_base[(slave_nr << 16) + fg_base + FG_B] = pset.coeff_b;
-    scub_base[(slave_nr << 16) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
-    scub_base[(slave_nr << 16) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
-    scub_base[(slave_nr << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+    if (slot < DEV_BUS_SLOT) {
+      scub_base[(slot << 16) + fg_base + FG_CNTRL] = cntrl_reg_wr;
+      scub_base[(slot << 16) + fg_base + FG_A] = pset.coeff_a;
+      scub_base[(slot << 16) + fg_base + FG_B] = pset.coeff_b;
+      scub_base[(slot << 16) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
+      scub_base[(slot << 16) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
+      scub_base[(slot << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+    } else if (slot == DEV_BUS_SLOT) {
+      write_mil(scu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | fg_base);
+      write_mil(scu_mil_base, pset.coeff_a, FC_COEFF_A_WR | fg_base);
+      write_mil(scu_mil_base, pset.coeff_b, FC_COEFF_B_WR | fg_base);
+      write_mil(scu_mil_base, (pset.control & 0x3ffc0) >> 6,  FC_SHIFT_WR | fg_base); //shift a 17..12 shift b 11..6
+      write_mil(scu_mil_base, pset.coeff_c & 0xffff, FC_START_L_WR | fg_base);
+      write_mil(scu_mil_base, (pset.coeff_c & 0xffff0000) >> 16, FC_START_H_WR | fg_base); // data written with high word
+    }
     param_sent[fg_num]++;
   }
 }
 
-inline void handle(int slave_nr, unsigned FG_BASE)
-{
-    unsigned short cntrl_reg = scub_base[(slave_nr << 16) + FG_BASE + FG_CNTRL];
+inline void handle(int slot, unsigned fg_base) {
+    unsigned short cntrl_reg = 0;
+
+    if (slot < DEV_BUS_SLOT)
+      cntrl_reg = scub_base[(slot << 16) + fg_base + FG_CNTRL];
+    else if (slot == DEV_BUS_SLOT)
+      read_mil(scu_mil_base, &cntrl_reg, FC_CNTRL_RD | fg_base);
+      
     int channel = (cntrl_reg & 0x3f0) >> 4;        // virtual fg number Bits 9..4
-    fg_regs[channel].ramp_count = scub_base[(slave_nr << 16) + FG_BASE + FG_RAMP_CNT_LO];          // last cnt from from fg macro, read from LO address copies hardware counter to shadow reg
-    fg_regs[channel].ramp_count |= scub_base[(slave_nr << 16) + FG_BASE + FG_RAMP_CNT_HI] << 16;    // last cnt from from fg macro
+    
+    if (slot < DEV_BUS_SLOT) {
+      /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
+      fg_regs[channel].ramp_count = scub_base[(slot << 16) + fg_base + FG_RAMP_CNT_LO];
+      fg_regs[channel].ramp_count |= scub_base[(slot << 16) + fg_base + FG_RAMP_CNT_HI] << 16;
+    } else if (slot == DEV_BUS_SLOT) {
+      /* count in software only */
+      fg_regs[channel].ramp_count++;
+    }
+      
     //mprintf("irq received for channel[%d]\n", channel);
+    
     if (!(cntrl_reg  & FG_RUNNING)) {  // fg stopped
       if (cbisEmpty(&fg_regs[0], channel))
         SEND_SIG(SIG_STOP_EMPTY); // normal stop
@@ -160,18 +228,41 @@ inline void handle(int slave_nr, unsigned FG_BASE)
         SEND_SIG(SIG_STOP_NEMPTY); // something went wrong
       disable_slave_irq(channel);
       fg_regs[channel].state = 0;
-      //mprintf("fg 0x%x in slave %d stopped after %d tuples. %d tuples left in buffer.\n", FG_BASE, slave_nr, fg_regs[channel].ramp_count, cbgetCount(&fg_regs[0], channel));
+      //mprintf("fg 0x%x in slave %d stopped after %d tuples. %d tuples left in buffer.\n",
+      //        fg_base, slot, fg_regs[channel].ramp_count, cbgetCount(&fg_regs[0], channel));
     } else if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
       fg_regs[channel].state = 1; 
       SEND_SIG(SIG_START); // fg has received the tag
       if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
         SEND_SIG(SIG_REFILL);
-      send_fg_param(slave_nr, FG_BASE, cntrl_reg);
+      send_fg_param(slot, fg_base, cntrl_reg);
     } else if ((cntrl_reg & FG_RUNNING) && (cntrl_reg & FG_DREQ)) {
       if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
         SEND_SIG(SIG_REFILL);
-      send_fg_param(slave_nr, FG_BASE, cntrl_reg);
+      send_fg_param(slot, fg_base, cntrl_reg);
     }
+}
+
+inline void dev_bus_irq_handle(unsigned int msi_adr, unsigned int msi_msg) {
+  int i;
+  int slot, dev;
+  short data;
+  for (i = 0; i < MAX_FG_CHANNELS; i++) {
+    if (fg_regs[i].state == 1) {
+      slot = fg_macros[fg_regs[i].macro_number] >> 24;
+      dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+      if(slot == DEV_BUS_SLOT) {
+        //mprintf("fg_regs[%d] slot %d, dev %d\n", i, slot, dev);
+        if (read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev) != OKAY)
+          return;
+        /* test for active 0 */
+        if (~data & DRQ_BIT) {
+          handle(slot, dev);
+          //clear irq pending
+        }
+      }
+    }
+  }  
 }
 
 
@@ -190,6 +281,11 @@ void irq_handler()
   }
   slv_int_act_reg = scub_base[(slave_nr << 16) + SLAVE_INT_ACT];
   //mprintf("slv_int_act_reg of slave %d is: 0x%x\n", slave_nr, slv_int_act_reg); 
+
+  if ((global_msi.adr & 0xff) == 0x20) {
+    dev_bus_irq_handle(global_msi.adr, global_msi.msg);
+    return;
+  }
 
   if ((global_msi.adr & 0xff) != 0x00) {
     mprintf("IRQ unkwown.\n");
@@ -260,40 +356,71 @@ int configure_fg_macro(int channel) {
     /* actions per slave card */
     slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //dereference slot number
     dev =  (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
-    scub_base[SRQ_ENA] |= (1 << (slot-1));                          //enable irqs for the slave
+
+    /* enable irqs */
+    if (slot < DEV_BUS_SLOT) {                                      //scu bus slave
+      scub_base[SRQ_ENA] |= (1 << (slot-1));                        //enable irqs for the slave
     
-    /* enable irqs in the slave cards */
-    scub_base[(slot << 16) + SLAVE_INT_ACT] = 0xc000;               //clear all irqs
-    scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000;              //enable fg1 and fg2 irq
+      scub_base[(slot << 16) + SLAVE_INT_ACT] = 0xc000;             //clear all irqs
+      scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000;            //enable fg1 and fg2 irq
     
+    } else if (slot == DEV_BUS_SLOT) {
+      write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev);           //enable Data-Request
+    }
+
     /* which macro are we? */
-    if (dev == 0) {
-      fg_base = FG1_BASE;
-      dac_base = DAC1_BASE;
-    } else if (dev == 1) {
-      fg_base = FG2_BASE;
-      dac_base = DAC2_BASE;
-    } else
-      return -1;
+    if (slot < DEV_BUS_SLOT) {                                      //scu bus slave
+      if (dev == 0) {
+        fg_base = FG1_BASE;
+        dac_base = DAC1_BASE;
+      } else if (dev == 1) {
+        fg_base = FG2_BASE;
+        dac_base = DAC2_BASE;
+      } else
+        return -1;
+    }     
     
-    scub_base[(slot << 16) + dac_base + DAC_CNTRL] = 0x10; // set FG mode
-    scub_base[(slot << 16) + fg_base + FG_CNTRL] = 0x1; // reset fg
+    /* fg mode and reset */    
+    if (slot < DEV_BUS_SLOT) {                                      //scu bus slave
+      scub_base[(slot << 16) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
+      scub_base[(slot << 16) + fg_base + FG_CNTRL] = 0x1;           // reset fg
+    } else if (slot == DEV_BUS_SLOT) {
+      write_mil(scu_mil_base, 0x1, 0x60 << 8 | dev);                // set FG mode
+      write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev);              // reset fg
+    }
+
     //fetch first parameter set from buffer
     if (cbRead(&fg_buffer[0], &fg_regs[0], channel, &pset)) {
-      //cntrl_reg_wr = cntrl_reg & ~(0xfc00); // clear freq and step select
-      //set virtual fg number Bit 9..4
-      scub_base[(slot << 16) + fg_base + FG_CNTRL] = (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4;
-      scub_base[(slot << 16) + fg_base + FG_A] = pset.coeff_a;
-      scub_base[(slot << 16) + fg_base + FG_B] = pset.coeff_b;
-      scub_base[(slot << 16) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
-      scub_base[(slot << 16) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
-      scub_base[(slot << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+      if (slot < DEV_BUS_SLOT) {
+        //set virtual fg number Bit 9..4
+        scub_base[(slot << 16) + fg_base + FG_CNTRL] = (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4;
+        scub_base[(slot << 16) + fg_base + FG_A] = pset.coeff_a;
+        scub_base[(slot << 16) + fg_base + FG_B] = pset.coeff_b;
+        scub_base[(slot << 16) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
+        scub_base[(slot << 16) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
+        scub_base[(slot << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+      } else if (slot == DEV_BUS_SLOT) {
+        //set virtual fg number Bit 9..4
+        write_mil(scu_mil_base, (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4, FC_CNTRL_WR | dev);
+        write_mil(scu_mil_base, pset.coeff_a, FC_COEFF_A_WR | dev);
+        write_mil(scu_mil_base, pset.coeff_b, FC_COEFF_B_WR | dev);
+        write_mil(scu_mil_base, (pset.control & 0x3ffc0) >> 6, FC_SHIFT_WR | dev); //shift a 17..12 shift b 11..6
+        write_mil(scu_mil_base, pset.coeff_c & 0xffff, FC_START_L_WR | dev);
+        write_mil(scu_mil_base, (pset.coeff_c & 0xffff0000) >> 16, FC_START_H_WR | dev); // data written with high word
+      }
       param_sent[i]++;
     }
-    scub_base[(slot << 16) + fg_base + FG_TAG_LOW] = fg_regs[channel].tag & 0xffff;
-    scub_base[(slot << 16) + fg_base + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
-    //configure and enable macro
-    scub_base[(slot << 16) + fg_base + FG_CNTRL] |= FG_ENABLED;
+
+    /* configure and enable macro */
+    if (slot < DEV_BUS_SLOT) {
+      scub_base[(slot << 16) + fg_base + FG_TAG_LOW] = fg_regs[channel].tag & 0xffff;
+      scub_base[(slot << 16) + fg_base + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
+      scub_base[(slot << 16) + fg_base + FG_CNTRL] |= FG_ENABLED;
+    } else if (slot == DEV_BUS_SLOT) {
+      short data;
+      read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev);
+      write_mil(scu_mil_base, 0xffff & data | FG_ENABLED, FC_CNTRL_WR | dev); 
+    }
     SEND_SIG(SIG_ARMED);
   }
   return 0; 
@@ -356,22 +483,32 @@ void print_regs() {
 
 void disable_channel(unsigned int channel) {
   int slot, dev, fg_base, dac_base;
+  short data;
   if (fg_regs[channel].macro_number == -1) return;
   slot = fg_macros[fg_regs[channel].macro_number] >> 24;         //dereference slot number
   dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
   //mprintf("disarmed slot %d dev %d in channel[%d] state %d\n", slot, dev, channel, fg_regs[channel].state); //ONLY FOR TESTING
-  /* which macro are we? */
-  if (dev == 0) {
-    fg_base = FG1_BASE;
-    dac_base = DAC1_BASE;
-  } else if (dev == 1) {
-    fg_base = FG2_BASE;
-    dac_base = DAC2_BASE;
-  } else
-    return;
-  // disarm hardware
-  scub_base[(slot << 16) + fg_base + FG_CNTRL] &= ~(0x2);
-  scub_base[(slot << 16) + dac_base + DAC_CNTRL] &= ~(0x10); // set FG mode
+  if (slot < DEV_BUS_SLOT) {
+    /* which macro are we? */
+    if (dev == 0) {
+      fg_base = FG1_BASE;
+      dac_base = DAC1_BASE;
+    } else if (dev == 1) {
+      fg_base = FG2_BASE;
+      dac_base = DAC2_BASE;
+    } else
+      return;
+
+    // disarm hardware
+    scub_base[(slot << 16) + fg_base + FG_CNTRL] &= ~(0x2);
+    scub_base[(slot << 16) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
+  } else if (slot == DEV_BUS_SLOT) {
+    // disarm hardware
+    read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev);
+    write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev);
+    //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
+  }
+
   if (fg_regs[channel].state == 1) {    // hw is running
     fg_regs[channel].rd_ptr = fg_regs[channel].wr_ptr;
   } else {
@@ -484,11 +621,12 @@ int main(void) {
   discoverPeriphery();
   uart_init_hw();
   /* additional periphery needed for scu */
-  cpu_info_base   = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);  
-  scub_base       = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
-  scub_irq_base   = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);    // irq controller for scu bus
+  cpu_info_base = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);  
+  scub_base     = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
+  scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);    // irq controller for scu bus
   find_device_multi(&found_sdb[0], &clu_cb_idx, 20, GSI, LM32_CB_CLUSTER); // find location of cluster crossbar
-  scu_mil_base    = (unsigned int*)find_device(SCU_MIL);
+  scu_mil_base  = (unsigned int*)find_device(SCU_MIL);
+  mil_irq_base  = (unsigned int*)find_device_adr(GSI, MIL_IRQ_CTRL); // irq controller for dev bus extension
   find_device_multi(ow_base, &ow_base_idx, 2, CERN, WR_1Wire);
   
 
@@ -524,6 +662,7 @@ int main(void) {
     mprintf("ow_base[%d] is: 0x%x\n",i, getSdbAdr(&ow_base[i]));
   }
   mprintf("scub_irq_base is: 0x%x\n", scub_irq_base);
+  mprintf("mil_irq_base is: 0x%x\n", mil_irq_base);
 
   init(); // init and scan for fgs
 
