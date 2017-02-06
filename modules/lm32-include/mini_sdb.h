@@ -67,6 +67,7 @@
 #define SCU_BUS_MASTER        0x9602eb6f
 #define SCU_IRQ_CTRL          0x9602eb70
 #define WB_FG_IRQ_CTRL        0x9602eb71
+#define MIL_IRQ_CTRL          0x9602eb72
 
 #define SCU_BUS_MASTER        0x9602eb6f
 #define WR_1Wire              0x779c5443
