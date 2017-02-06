@@ -336,4 +336,20 @@ component mil_pll is
     locked:           out   std_logic);
 end component mil_pll;
 
+constant c_mil_irq_ctrl_sdb : t_sdb_device := (
+    abi_class     => x"0000", -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7", -- 8/16/32-bit port granularity
+    sdb_component => (
+    addr_first    => x"0000000000000000",
+    addr_last     => x"00000000000000ff",
+    product => (
+    vendor_id     => x"0000000000000651", -- GSI
+    device_id     => x"9602eb72",
+    version       => x"00000001",
+    date          => x"20170131",
+    name          => "IRQ_MASTER_CTRL    ")));
+
 end package wb_mil_scu_pkg;
