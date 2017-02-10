@@ -286,6 +286,7 @@ begin
       g_en_nau8811      => true,
       g_en_psram        => true,
       g_en_user_ow      => true,
+      g_en_tempsens     => true,
       g_io_table        => io_mapping_table,
       g_lm32_init_files => c_initf
     )
