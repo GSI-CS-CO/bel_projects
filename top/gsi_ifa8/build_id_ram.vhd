@@ -16,7 +16,7 @@ entity build_id_ram is
 end entity;
 
 architecture arch of build_id_ram is
-  signal rom_addr:        unsigned(11 downto 0);
+  signal rom_addr:        unsigned(8 downto 0);
   signal str_reg:         std_logic_vector(1 downto 0);
   signal str_edge:        std_logic;
   signal s_build_id_out:  std_logic_vector(31 downto 0);
@@ -46,11 +46,11 @@ begin
   generic map (
     operation_mode  => "ROM",
     width_a         => 32,
-    widthad_a       => 12,
+    widthad_a       => 8,
     init_file       => "build_id.mif")
   port map (
     clock0          => clk,
-    address_a       => '0' & std_logic_vector(rom_addr(11 downto 1)),
+    address_a       => std_logic_vector(rom_addr(8 downto 1)),
     q_a             => s_build_id_out,
     q_b             => open);
   
