@@ -48,8 +48,10 @@ int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *scub
           bus->slaves[j].slot = i;
           bus->slaves[j].cid_sys = SYS_CSCO;
           bus->slaves[j].cid_group = GRP_IFA8;
-          if (read_mil(mil_addr, &data, 0xcc << 8 | adr) == OKAY)
+          if (read_mil(mil_addr, &data, 0xcc << 8 | adr) == OKAY) {
             bus->slaves[j].version = 0xffff & data;
+            write_mil(mil_addr, 0x100, 0x12 << 8 | adr); //clear PUR
+          }
           j++;    
       }
     }
@@ -131,24 +133,29 @@ int scan_for_fgs(struct scu_bus *bus, uint32_t *fglist) {
 
 
 /* init the buffers for MAX_FG_CHANNELS */
-void init_buffers(struct channel_regs *cr, int channel, uint32_t *fg_macros,  volatile unsigned short* scub_base) {
+void init_buffers(struct channel_regs *cr, int channel, uint32_t *fg_macros,  volatile unsigned short* scub_base, volatile unsigned int* devb_base) {
   uint32_t slot;
-  uint32_t device;
+  uint32_t dev;
   uint32_t macro;
   if(channel >= 0 && channel < MAX_FG_CHANNELS) {
     cr[channel].wr_ptr = 0;
     cr[channel].rd_ptr = 0;
     cr[channel].state = 0;
+    cr[channel].ramp_count = 0;
     //reset hardware
     if (cr[channel].macro_number >= 0) {    //there is a macro assigned to that channel
       macro = cr[channel].macro_number;
       slot = fg_macros[macro] >> 24;
-      device = (fg_macros[macro] >> 16) & 0xff;
+      dev = (fg_macros[macro] >> 16) & 0xff;
       //mprintf("reset fg %d in slot %d\n", device, slot);
-      if (device == 0) {
-        scub_base[(slot << 16) + FG1_BASE + FG_CNTRL] = 0x1; // reset fg
-      } else if (device == 1) {
-        scub_base[(slot << 16) + FG2_BASE + FG_CNTRL] = 0x1; // reset fg
+      if (slot < DEV_BUS_SLOT) {
+        if (dev == 0) {
+          scub_base[(slot << 16) + FG1_BASE + FG_CNTRL] = 0x1; // reset fg
+        } else if (dev == 1) {
+          scub_base[(slot << 16) + FG2_BASE + FG_CNTRL] = 0x1; // reset fg
+        }
+      } else if (slot == DEV_BUS_SLOT) {
+        write_mil(devb_base, 0x1, 0x14 << 8 | dev); // reset fg 
       }
     }
   }
