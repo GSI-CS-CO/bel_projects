@@ -14,7 +14,24 @@
 #define   MIL_EXT           1
 #define   MAX_SIO3          MAX_SCU_SLAVES 
 #define   IFK_MAX_ADR       255
-#define   GRP_IFA8          321
+#define   GRP_IFA8          24
+
+#define FG_RUNNING    0x4
+#define FG_ENABLED    0x2
+#define FG_DREQ       0x8
+#define DEV_BUS_SLOT  13
+#define FC_CNTRL_WR   0x14 << 8
+#define FC_COEFF_A_WR 0x15 << 8
+#define FC_COEFF_B_WR 0x16 << 8
+#define FC_SHIFT_WR   0x17 << 8
+#define FC_START_L_WR 0x18 << 8
+#define FC_START_H_WR 0x19 << 8
+#define FC_CNTRL_RD   0xa0 << 8
+#define FC_COEFF_A_RD 0xa1 << 8
+#define FC_COEFF_B_RD 0xa2 << 8
+#define FC_IRQ_STAT   0xc9 << 8
+#define FC_IRQ_MSK    0x12 << 8
+
 
 struct fg_dev {
   unsigned int dev_number;
@@ -74,6 +91,6 @@ struct channel_buffer {
 
 int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr, volatile unsigned int *mil_base);
 int scan_for_fgs(struct scu_bus *bus, uint32_t *fglist);
-void init_buffers(struct channel_regs *cr, int channel, uint32_t *macro, volatile unsigned short* scub_base);
+void init_buffers(struct channel_regs *cr, int channel, uint32_t *macro, volatile unsigned short* scub_base, volatile unsigned int* devb_base);
 
 #endif
