@@ -29,23 +29,6 @@
 #define SIG_ARMED       4
 #define SIG_DISARMED    5
 
-#define FG_RUNNING    0x4
-#define FG_ENABLED    0x2
-#define FG_DREQ       0x8
-#define DEV_BUS_SLOT  13
-#define FC_CNTRL_WR   0x14 << 8
-#define FC_COEFF_A_WR 0x15 << 8
-#define FC_COEFF_B_WR 0x16 << 8
-#define FC_SHIFT_WR   0x17 << 8
-#define FC_START_L_WR 0x18 << 8
-#define FC_START_H_WR 0x19 << 8
-#define FC_CNTRL_RD   0xa0 << 8
-#define FC_COEFF_A_RD 0xa1 << 8
-#define FC_COEFF_B_RD 0xa2 << 8
-#define FC_IRQ_STAT   0xc9 << 8
-#define FC_IRQ_MSK    0x12 << 8
-
-
 #define DEVB_MSI      0xdeb50000
 #define SCUB_MSI      0x5cb50000
 
@@ -156,7 +139,8 @@ void disable_slave_irq(int channel) {
       else if (dev == 1)
         scub_base[(slot << 16) + SLAVE_INT_ENA] &= ~(0x4000);       //disable fg2 irq
     } else if (slot == DEV_BUS_SLOT) {
-      write_mil(scu_mil_base, 0x0, FC_IRQ_MSK | dev);               //disable Data-Request
+      //write_mil(scu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
+      write_mil(scu_mil_base, 0x0, FC_IRQ_MSK | dev);               //mask drq
     }
     //mprintf("IRQs for slave %d disabled.\n", slot);
   }
@@ -222,6 +206,8 @@ inline void handle(int slot, unsigned fg_base) {
     //mprintf("irq received for channel[%d]\n", channel);
     
     if (!(cntrl_reg  & FG_RUNNING)) {  // fg stopped
+      if (slot == DEV_BUS_SLOT)
+        fg_regs[channel].ramp_count--;
       if (cbisEmpty(&fg_regs[0], channel))
         SEND_SIG(SIG_STOP_EMPTY); // normal stop
       else
@@ -252,11 +238,12 @@ inline void dev_bus_irq_handle(unsigned int msi_adr, unsigned int msi_msg) {
       slot = fg_macros[fg_regs[i].macro_number] >> 24;
       dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
       if(slot == DEV_BUS_SLOT) {
-        //mprintf("fg_regs[%d] slot %d, dev %d\n", i, slot, dev);
+       // mprintf("fg_regs[%d] slot %d, dev %d\n", i, slot, dev);
         if (read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev) != OKAY)
           return;
         /* test for active 0 */
         if (~data & DRQ_BIT) {
+  //        mprintf("DRQ_BIT is set!\n");
           handle(slot, dev);
           //clear irq pending
         }
@@ -569,7 +556,7 @@ void sw_irq_handler(unsigned int adr, unsigned int msg) {
 
   switch(code) {
     case 0:
-      init_buffers(&fg_regs[0], msg, &fg_macros[0], scub_base);
+      init_buffers(&fg_regs[0], msg, &fg_macros[0], scub_base, scu_mil_base);
       param_sent[value] = 0;
     break;
     case 1:
