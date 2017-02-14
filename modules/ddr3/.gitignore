@@ -1,0 +1,15 @@
+testbench/
+greybox_remp/
+altmemphy-library/
+ddr3_high_performance_controller-library/
+arria2/*.v
+arria2/*.tcl
+arria2/*.vhd
+arria2/*.sdc
+arria2/*.qip
+arria2/*.txt
+arria2/*.ipa
+arria2/*.iv
+arria2/*.cmp
+arria2/europa_temp/
+
