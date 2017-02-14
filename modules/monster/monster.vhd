@@ -2094,7 +2094,7 @@ begin
   end generate;
  
   tempsens_n : if not g_en_tempsens generate
-    top_cbar_master_i(c_tops_tempsens) <= cc_dummy_slave_out;
+    dev_bus_master_i(c_tops_tempsens) <= cc_dummy_slave_out;
   end generate;
 
   tempsens_y : if g_en_tempsens generate
@@ -2102,8 +2102,8 @@ begin
       port map (
         clk_sys_i  => clk_sys,
         rst_n_i    => rstn_sys,
-        slave_i    => top_cbar_master_o(c_tops_tempsens),
-        slave_o    => top_cbar_master_i(c_tops_tempsens),
+        slave_i    => dev_bus_master_o(c_tops_tempsens),
+        slave_o    => dev_bus_master_i(c_tops_tempsens),
         clr_o      => tempsens_clr_out);
   end generate;
 

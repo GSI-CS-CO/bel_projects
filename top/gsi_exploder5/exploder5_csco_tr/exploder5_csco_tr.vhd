@@ -289,6 +289,7 @@ begin
       g_en_nau8811      => true,
       g_en_psram        => true,
       g_en_user_ow      => true,
+      g_en_tempsens     => true,
       g_io_table        => io_mapping_table,
       g_lm32_cores      => c_cores,
       g_lm32_ramsizes   => c_lm32_ramsizes/4,
