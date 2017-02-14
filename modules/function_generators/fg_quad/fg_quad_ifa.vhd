@@ -93,6 +93,12 @@ architecture fg_quad_scu_bus_arch of fg_quad_ifa is
   
   signal s_irq:             std_logic;
   signal s_sw_out:          std_logic_vector(31 downto 0);
+  
+  type irq_type is (idle, signaling, signaling_interrupt);
+  signal irq_sm : irq_type;
+  
+  signal dreq_edge1: std_logic;
+  signal dreq_edge2: std_logic; 
 
 begin
   quad_fg: fg_quad_datapath 
@@ -292,16 +298,46 @@ begin
   end if;
 end process;
 
+dreq_edge: process(clk, nreset)
+begin
+  if rising_edge(clk) then
+    dreq_edge1 <= dreq;
+    dreq_edge2 <= dreq_edge1;
+  end if;
+end process;
+
+
 irqreg: process(clk, nreset)
+  variable cnt: unsigned(7 downto 0) := (others => '0');
 begin
   if nreset= '0' then
     s_irq <= '0';
+    cnt := (others => '0');
   elsif rising_edge(clk) then
-    if state_change_irq = '1' or dreq = '1' then
-      s_irq <= '1';
-    elsif wr_coeff_a = '1' then
-      s_irq <= '0';
-    end if;
+    case irq_sm is
+    
+      when idle =>
+        s_irq <= '0';
+        if (dreq_edge2 = '0' and dreq_edge1 = '1') or state_change_irq = '1' then
+          irq_sm <= signaling;
+        end if;
+        
+      when signaling =>
+        s_irq <= '1';
+        if (dreq_edge2 = '0' and dreq_edge1 = '1') or state_change_irq = '1' then
+          irq_sm <= signaling_interrupt;
+        elsif wr_coeff_a = '1' then -- irq handled
+          irq_sm <= idle;
+        end if;
+        
+      when signaling_interrupt =>
+        s_irq <= '0';
+        cnt := cnt + 1;
+        if cnt = to_unsigned(30, cnt'length) then
+          cnt := (others => '0');
+          irq_sm <= signaling;
+        end if;
+    end case;
   end if;
 end process;
 
@@ -348,8 +384,7 @@ begin
   end if;
 end process;
 
-nirq <= not s_irq;
-
+nirq        <= not s_irq;
 fg_version  <= std_logic_vector(to_unsigned(fw_version, 7));
 sw_out      <= s_sw_out(31 downto 8); -- only 24 Bit are needed for the IFA8
             
