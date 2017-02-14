@@ -62,6 +62,7 @@ use work.psram_pkg.all;
 use work.wb_serdes_clk_gen_pkg.all;
 use work.io_control_pkg.all;
 use work.wb_pmc_host_bridge_pkg.all;
+use work.ddr3_wrapper_pkg.all;
 
 entity monster is
   generic(
@@ -87,6 +88,7 @@ entity monster is
     g_en_oled              : boolean;
     g_en_lcd               : boolean;
     g_en_cfi               : boolean;
+    g_en_ddr3              : boolean;
     g_en_ssd1325           : boolean;
     g_en_nau8811           : boolean;
     g_en_user_ow           : boolean;
@@ -282,6 +284,22 @@ entity monster is
     cfi_noe_fsh            : out   std_logic := 'Z';
     cfi_nrst_fsh           : out   std_logic := 'Z';
     cfi_wait_fsh           : in    std_logic;
+    -- g_en_ddr3
+    mem_DDR3_DQ            : inout std_logic_vector(15 downto 0);
+    mem_DDR3_DM            : out   std_logic_vector( 1 downto 0);
+    mem_DDR3_BA            : out   std_logic_vector( 2 downto 0);
+    mem_DDR3_ADDR          : out   std_logic_vector(12 downto 0);
+    mem_DDR3_CS_n          : out   std_logic_vector( 0 downto 0);
+    mem_DDR3_DQS           : inout std_logic_vector( 1 downto 0);
+    mem_DDR3_DQSn          : inout std_logic_vector( 1 downto 0);
+    mem_DDR3_RES_n         : out   std_logic;
+    mem_DDR3_CKE           : out   std_logic_vector( 0 downto 0);
+    mem_DDR3_ODT           : out   std_logic_vector( 0 downto 0);
+    mem_DDR3_CAS_n         : out   std_logic;
+    mem_DDR3_RAS_n         : out   std_logic;
+    mem_DDR3_CLK           : inout std_logic_vector( 0 downto 0);
+    mem_DDR3_CLK_n         : inout std_logic_vector( 0 downto 0);
+    mem_DDR3_WE_n          : out   std_logic;
     -- g_en_psram
     ps_clk                 : out   std_logic := 'Z';
     ps_addr                : out   std_logic_vector(g_psram_bits-1 downto 0) := (others => 'Z');
@@ -389,7 +407,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- required slaves
-  constant c_dev_slaves          : natural := 28;
+  constant c_dev_slaves          : natural := 31;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_mbox           : natural := 2;
@@ -420,6 +438,9 @@ architecture rtl of monster is
   constant c_devs_CfiPFlash      : natural := 25;
   constant c_devs_nau8811        : natural := 26;
   constant c_devs_psram          : natural := 27;
+  constant c_devs_DDR3_if1       : natural := 28;
+  constant c_devs_DDR3_if2       : natural := 29;
+  constant c_devs_DDR3_ctrl      : natural := 30;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -453,6 +474,9 @@ architecture rtl of monster is
     c_devs_vme_info       => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme),
     c_devs_psram          => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
     c_devs_CfiPFlash      => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
+    c_devs_ddr3_if1       => f_sdb_auto_device(c_wb_DDR3_if1_sdb,                g_en_ddr3),
+    c_devs_ddr3_if2       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
+    c_devs_ddr3_ctrl      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
     c_devs_ssd1325        => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325));
     
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
@@ -1812,6 +1836,58 @@ begin
         nRST_FSH       => cfi_nrst_fsh,
         WAIT_FSH       => cfi_wait_fsh);
   end generate;
+
+ DDR3_n : if not g_en_ddr3 generate
+    dev_bus_master_i(c_devs_DDR3_if1)  <= cc_dummy_slave_out;
+    dev_bus_master_i(c_devs_DDR3_if2)  <= cc_dummy_slave_out;
+    --dev_bus_master_i(c_devs_DDR3_ctrl) <= cc_dummy_slave_out;
+    dev_msi_slave_i (c_devs_DDR3_ctrl) <= cc_dummy_master_out;
+  end generate;
+
+
+ DDR3_y : if g_en_ddr3 generate
+  DDR3_inst: ddr3_wrapper 
+    port map(
+      clk_sys                                                 => clk_sys,       -- 125MHz Clk
+      rstn_sys                                                => rstn_sys,
+      
+      -- Wishbone
+      slave_i_1                                               => dev_bus_master_o(c_devs_DDR3_if1),    -- to Slave
+      slave_o_1                                               => dev_bus_master_i(c_devs_DDR3_if1),    -- to WB
+      
+      slave_i_2                                               => dev_bus_master_o(c_devs_DDR3_if2),    -- to Slave
+      slave_o_2                                               => dev_bus_master_i(c_devs_DDR3_if2),    -- to WB
+      --msi i/f
+      irq_mst_o                                               => dev_msi_slave_i (c_devs_DDR3_ctrl),
+      irq_mst_i                                               => dev_msi_slave_o (c_devs_DDR3_ctrl),
+      -- ctrl i/f
+      --  ctrl_irq_o                                           => dev_bus_master_i(c_devs_DDR3_ctrl),
+      --  ctrl_irq_i                                           => dev_bus_master_o(c_devs_DDR3_ctrl),
+      -- External DDR3 Pins
+      altmemddr_0_memory_mem_odt                              => mem_DDR3_ODT,  -- Dynamic OnDie Termination
+      altmemddr_0_memory_mem_clk                              => mem_DDR3_CLK,  -- 300 MHz Clk
+      altmemddr_0_memory_mem_clk_n                            => mem_DDR3_CLK_n,-- dito
+      altmemddr_0_memory_mem_cs_n                             => mem_DDR3_CS_n, -- Chip Select
+      altmemddr_0_memory_mem_cke                              => mem_DDR3_CKE,  -- Clock Enable
+      altmemddr_0_memory_mem_addr                             => mem_DDR3_ADDR, -- Addr 12..0
+      altmemddr_0_memory_mem_ba                               => mem_DDR3_BA,   -- Bank Addr 2..0
+      altmemddr_0_memory_mem_ras_n                            => mem_DDR3_RAS_n,-- Row Addr Sel
+      altmemddr_0_memory_mem_cas_n                            => mem_DDR3_CAS_n,-- Col Addr Sel
+      altmemddr_0_memory_mem_we_n                             => mem_DDR3_WE_n, -- Wr Enable
+      altmemddr_0_memory_mem_dq                               => mem_DDR3_DQ,   -- Data 15.0
+      altmemddr_0_memory_mem_dqs                              => mem_DDR3_DQS,  -- Data Strobe 1..0
+      altmemddr_0_memory_mem_dqsn                             => mem_DDR3_DQSn, -- dito
+      altmemddr_0_memory_mem_dm                               => mem_DDR3_DM,   -- Data Mask 1..0
+      altmemddr_0_memory_mem_reset_n                          => mem_DDR3_RES_n,-- Ext Reset
+      altmemddr_0_external_connection_local_refresh_ack       => open,          -- ACKs when in user mode 
+      altmemddr_0_external_connection_local_init_done         => open,          -- High when init done
+      altmemddr_0_external_connection_reset_phy_clk_n         => open,          -- To reset phy_clk driven logic
+      altmemddr_0_external_connection_dll_reference_clk       => open,          -- To feed external DLLs
+      altmemddr_0_external_connection_dqs_delay_ctrl_export   => open           -- To share ALTMEMPHY DLLs
+     );
+  end generate; --of ddr3_wrapper
+  
+
 
   lcd_n : if not g_en_lcd generate
     dev_bus_master_i(c_devs_lcd) <= cc_dummy_slave_out;
