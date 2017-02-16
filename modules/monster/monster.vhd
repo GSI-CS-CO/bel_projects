@@ -61,6 +61,8 @@ use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
 use work.wb_serdes_clk_gen_pkg.all;
 use work.io_control_pkg.all;
+use work.wb_pmc_host_bridge_pkg.all;
+use work.ddr3_wrapper_pkg.all;
 
 entity monster is
   generic(
@@ -86,11 +88,13 @@ entity monster is
     g_en_oled              : boolean;
     g_en_lcd               : boolean;
     g_en_cfi               : boolean;
+    g_en_ddr3              : boolean;
     g_en_ssd1325           : boolean;
     g_en_nau8811           : boolean;
     g_en_user_ow           : boolean;
     g_en_psram             : boolean;
     g_io_table             : t_io_mapping_table_arg_array(natural range <>);
+    g_en_pmc               : boolean;
     g_lm32_cores           : natural;
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
@@ -280,6 +284,22 @@ entity monster is
     cfi_noe_fsh            : out   std_logic := 'Z';
     cfi_nrst_fsh           : out   std_logic := 'Z';
     cfi_wait_fsh           : in    std_logic;
+    -- g_en_ddr3
+    mem_DDR3_DQ            : inout std_logic_vector(15 downto 0);
+    mem_DDR3_DM            : out   std_logic_vector( 1 downto 0);
+    mem_DDR3_BA            : out   std_logic_vector( 2 downto 0);
+    mem_DDR3_ADDR          : out   std_logic_vector(12 downto 0);
+    mem_DDR3_CS_n          : out   std_logic_vector( 0 downto 0);
+    mem_DDR3_DQS           : inout std_logic_vector( 1 downto 0);
+    mem_DDR3_DQSn          : inout std_logic_vector( 1 downto 0);
+    mem_DDR3_RES_n         : out   std_logic;
+    mem_DDR3_CKE           : out   std_logic_vector( 0 downto 0);
+    mem_DDR3_ODT           : out   std_logic_vector( 0 downto 0);
+    mem_DDR3_CAS_n         : out   std_logic;
+    mem_DDR3_RAS_n         : out   std_logic;
+    mem_DDR3_CLK           : inout std_logic_vector( 0 downto 0);
+    mem_DDR3_CLK_n         : inout std_logic_vector( 0 downto 0);
+    mem_DDR3_WE_n          : out   std_logic;
     -- g_en_psram
     ps_clk                 : out   std_logic := 'Z';
     ps_addr                : out   std_logic_vector(g_psram_bits-1 downto 0) := (others => 'Z');
@@ -291,6 +311,27 @@ entity monster is
     ps_cre                 : out   std_logic := 'Z';
     ps_advn                : out   std_logic := 'Z';
     ps_wait                : in    std_logic;
+    
+    -- g_en_pmc
+    pmc_pci_clk_i          : in    std_logic;
+    pmc_pci_rst_i          : in    std_logic;
+    pmc_buf_oe_o           : out   std_logic := 'Z';
+    pmc_busmode_io         : inout std_logic_vector(3 downto 0);
+    pmc_ad_io              : inout std_logic_vector(31 downto 0);
+    pmc_c_be_io            : inout std_logic_vector(3 downto 0);
+    pmc_par_io             : inout std_logic;
+    pmc_frame_io           : inout std_logic;
+    pmc_trdy_io            : inout std_logic;
+    pmc_irdy_io            : inout std_logic;
+    pmc_stop_io            : inout std_logic;
+    pmc_devsel_io          : inout std_logic;
+    pmc_idsel_i            : in    std_logic;
+    pmc_perr_io            : inout std_logic;
+    pmc_serr_io            : inout std_logic;
+    pmc_inta_o             : out   std_logic := 'Z';
+    pmc_req_o              : out   std_logic;
+    pmc_gnt_i              : in    std_logic;
+
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
     hw_version             : in    std_logic_vector(31 downto 0));
@@ -313,13 +354,14 @@ architecture rtl of monster is
   -- GSI Top Crossbar Masters ------------------------------------------------------
   ----------------------------------------------------------------------------------
   
-  constant c_top_my_masters : natural := 6;
+  constant c_top_my_masters : natural := 7;
   constant c_topm_ebs       : natural := 0;
   constant c_topm_eca_wbm   : natural := 1;
   constant c_topm_pcie      : natural := 2;
   constant c_topm_vme       : natural := 3;
   constant c_topm_usb       : natural := 4;
   constant c_topm_prioq     : natural := 5;
+  constant c_topm_pmc       : natural := 6;
   
   constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) :=
    (c_topm_ebs     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
@@ -327,7 +369,8 @@ architecture rtl of monster is
     c_topm_pcie    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
     c_topm_vme     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
     c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     false), -- Need to add MSI support !!!
-    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false));  
+    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false),
+    c_topm_pmc     => f_sdb_auto_msi(c_pmc_msi,    g_en_pmc));  
   
   -- The FTM adds a bunch of masters to this crossbar
   constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
@@ -364,7 +407,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- required slaves
-  constant c_dev_slaves          : natural := 28;
+  constant c_dev_slaves          : natural := 31;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_mbox           : natural := 2;
@@ -395,6 +438,9 @@ architecture rtl of monster is
   constant c_devs_CfiPFlash      : natural := 25;
   constant c_devs_nau8811        : natural := 26;
   constant c_devs_psram          : natural := 27;
+  constant c_devs_DDR3_if1       : natural := 28;
+  constant c_devs_DDR3_if2       : natural := 29;
+  constant c_devs_DDR3_ctrl      : natural := 30;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -428,6 +474,9 @@ architecture rtl of monster is
     c_devs_vme_info       => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme),
     c_devs_psram          => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
     c_devs_CfiPFlash      => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
+    c_devs_ddr3_if1       => f_sdb_auto_device(c_wb_DDR3_if1_sdb,                g_en_ddr3),
+    c_devs_ddr3_if2       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
+    c_devs_ddr3_ctrl      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
     c_devs_ssd1325        => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325));
     
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
@@ -1070,6 +1119,60 @@ begin
         slave_i       => top_msi_master_o(c_topm_pcie),
         slave_o       => top_msi_master_i(c_topm_pcie));
   end generate;
+
+  pmc_n : if not g_en_pmc generate
+    top_bus_slave_i (c_topm_pmc) <= cc_dummy_master_out;
+    top_msi_master_i(c_topm_pmc) <= cc_dummy_slave_out;
+  end generate;
+ pmc_y : if g_en_pmc generate
+    signal s_pmc_debug_in   : std_logic_vector(7 downto 0);
+    signal s_pmc_debug_out  : std_logic_vector(7 downto 0);  
+ begin 
+    pmc : wb_pmc_host_bridge
+    generic map(
+      g_family      => g_family,
+      g_sdb_addr    => c_top_sdb_address
+    ) 
+    port map(
+      clk_sys_i     => clk_sys,
+      rst_n_i       => rstn_sys,
+
+      master_clk_i  => clk_sys,
+      master_rstn_i => rstn_sys,
+      slave_clk_i   => clk_sys,
+      slave_rstn_i  => rstn_sys,
+      master_o      => top_bus_slave_i (c_topm_pmc),
+      master_i      => top_bus_slave_o (c_topm_pmc),
+      slave_i       => top_msi_master_o(c_topm_pmc),
+      slave_o       => top_msi_master_i(c_topm_pmc), 
+      pci_clk_i     => pmc_pci_clk_i,
+      pci_rst_i     => pmc_pci_rst_i,
+      buf_oe_o      => pmc_buf_oe_o,
+      busmode_io    => pmc_busmode_io,
+      ad_io         => pmc_ad_io,
+      c_be_io       => pmc_c_be_io,
+      par_io        => pmc_par_io,
+      frame_io      => pmc_frame_io,
+      trdy_io       => pmc_trdy_io,
+      irdy_io       => pmc_irdy_io,
+      stop_io       => pmc_stop_io,
+      devsel_io     => pmc_devsel_io,
+      idsel_i       => pmc_idsel_i,
+      perr_io       => pmc_perr_io,
+      serr_io       => pmc_serr_io,
+      inta_o        => pmc_inta_o,
+      req_o         => pmc_req_o,
+      gnt_i         => pmc_gnt_i,
+      debug_i       => s_pmc_debug_in,
+      debug_o       => s_pmc_debug_out
+    );
+
+    s_pmc_debug_in(0)          <= gpio_i(0);      -- FPGA push button used to trigger INTx IRQ
+    s_pmc_debug_in(1)          <= gpio_i(1); -- CPLD push button used to trigger MSI IRQ
+    s_pmc_debug_in(7 downto 2) <= (others => '0');
+
+  end generate;
+
   
   vme_n : if not g_en_vme generate
     top_bus_slave_i (c_topm_vme) <= cc_dummy_master_out;
@@ -1733,6 +1836,58 @@ begin
         nRST_FSH       => cfi_nrst_fsh,
         WAIT_FSH       => cfi_wait_fsh);
   end generate;
+
+ DDR3_n : if not g_en_ddr3 generate
+    dev_bus_master_i(c_devs_DDR3_if1)  <= cc_dummy_slave_out;
+    dev_bus_master_i(c_devs_DDR3_if2)  <= cc_dummy_slave_out;
+    --dev_bus_master_i(c_devs_DDR3_ctrl) <= cc_dummy_slave_out;
+    dev_msi_slave_i (c_devs_DDR3_ctrl) <= cc_dummy_master_out;
+  end generate;
+
+
+ DDR3_y : if g_en_ddr3 generate
+  DDR3_inst: ddr3_wrapper 
+    port map(
+      clk_sys                                                 => clk_sys,       -- 125MHz Clk
+      rstn_sys                                                => rstn_sys,
+      
+      -- Wishbone
+      slave_i_1                                               => dev_bus_master_o(c_devs_DDR3_if1),    -- to Slave
+      slave_o_1                                               => dev_bus_master_i(c_devs_DDR3_if1),    -- to WB
+      
+      slave_i_2                                               => dev_bus_master_o(c_devs_DDR3_if2),    -- to Slave
+      slave_o_2                                               => dev_bus_master_i(c_devs_DDR3_if2),    -- to WB
+      --msi i/f
+      irq_mst_o                                               => dev_msi_slave_i (c_devs_DDR3_ctrl),
+      irq_mst_i                                               => dev_msi_slave_o (c_devs_DDR3_ctrl),
+      -- ctrl i/f
+      --  ctrl_irq_o                                           => dev_bus_master_i(c_devs_DDR3_ctrl),
+      --  ctrl_irq_i                                           => dev_bus_master_o(c_devs_DDR3_ctrl),
+      -- External DDR3 Pins
+      altmemddr_0_memory_mem_odt                              => mem_DDR3_ODT,  -- Dynamic OnDie Termination
+      altmemddr_0_memory_mem_clk                              => mem_DDR3_CLK,  -- 300 MHz Clk
+      altmemddr_0_memory_mem_clk_n                            => mem_DDR3_CLK_n,-- dito
+      altmemddr_0_memory_mem_cs_n                             => mem_DDR3_CS_n, -- Chip Select
+      altmemddr_0_memory_mem_cke                              => mem_DDR3_CKE,  -- Clock Enable
+      altmemddr_0_memory_mem_addr                             => mem_DDR3_ADDR, -- Addr 12..0
+      altmemddr_0_memory_mem_ba                               => mem_DDR3_BA,   -- Bank Addr 2..0
+      altmemddr_0_memory_mem_ras_n                            => mem_DDR3_RAS_n,-- Row Addr Sel
+      altmemddr_0_memory_mem_cas_n                            => mem_DDR3_CAS_n,-- Col Addr Sel
+      altmemddr_0_memory_mem_we_n                             => mem_DDR3_WE_n, -- Wr Enable
+      altmemddr_0_memory_mem_dq                               => mem_DDR3_DQ,   -- Data 15.0
+      altmemddr_0_memory_mem_dqs                              => mem_DDR3_DQS,  -- Data Strobe 1..0
+      altmemddr_0_memory_mem_dqsn                             => mem_DDR3_DQSn, -- dito
+      altmemddr_0_memory_mem_dm                               => mem_DDR3_DM,   -- Data Mask 1..0
+      altmemddr_0_memory_mem_reset_n                          => mem_DDR3_RES_n,-- Ext Reset
+      altmemddr_0_external_connection_local_refresh_ack       => open,          -- ACKs when in user mode 
+      altmemddr_0_external_connection_local_init_done         => open,          -- High when init done
+      altmemddr_0_external_connection_reset_phy_clk_n         => open,          -- To reset phy_clk driven logic
+      altmemddr_0_external_connection_dll_reference_clk       => open,          -- To feed external DLLs
+      altmemddr_0_external_connection_dqs_delay_ctrl_export   => open           -- To share ALTMEMPHY DLLs
+     );
+  end generate; --of ddr3_wrapper
+  
+
 
   lcd_n : if not g_en_lcd generate
     dev_bus_master_i(c_devs_lcd) <= cc_dummy_slave_out;

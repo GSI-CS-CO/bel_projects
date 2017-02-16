@@ -11,7 +11,7 @@
 
 extern eb_device_t device;
 extern eb_socket_t mySocket;
-
+extern uint8_t show_time;
 
 #define SWAP_4(x) ( ((x) << 24) | \
          (((x) << 8) & 0x00ff0000) | \
@@ -67,9 +67,9 @@ extern eb_socket_t mySocket;
 #define PRIOQ_CAPACITY    (PRIOQ_TDUE_LO  + 1)
 #define PRIOQ_MSG_PAC     (PRIOQ_CAPACITY + 1)  
 
-#define VALID_PRIOQ_CFG   0x3b
-#define ECA_ADDRESS       0x7fffffff
-#define MAX_MSG_PER_PACKET 42 
+#define VALID_PRIOQ_CFG   0x7
+#define ECA_ADDRESS       0x7ffffff0
+#define MAX_MSG_PER_PACKET 36 
 
 #define OFFSET_WR       34
 #define WR_STATUS        0
@@ -145,6 +145,63 @@ typedef struct {
 
 
 
+
+
+typedef struct {
+  uint32_t state;
+  uint64_t tPrep;
+  uint32_t msgCnt;
+  uint32_t errCnt;
+  uint32_t thrRun;
+  uint32_t thrWait;
+  uint32_t thrIdle;
+  uint32_t thrActAB;
+  uint32_t thrActP[THR_MAX];
+  uint32_t thrError;
+  //add support for memory table
+} t_statusCore;
+
+typedef struct {
+  uint8_t  mode;
+  uint32_t maxMsg;
+  uint32_t maxWait;
+  uint32_t adEbm;
+  uint32_t adEca;
+  uint64_t msgCnt;
+  uint64_t lateCnt;
+} t_statusPq;
+
+typedef struct {
+  uint64_t mac;
+  uint32_t ipv4;
+  uint16_t port;
+} t_nwAddr;
+
+typedef struct {
+  uint32_t state;
+  t_nwAddr src;
+  t_nwAddr dst;
+  uint16_t mtu;
+  uint32_t adhi;
+  uint32_t opt;
+} t_statusEbm;
+
+typedef struct {
+  uint8_t state;
+  uint64_t tsWr;
+  uint64_t tsEca;
+} t_statusWr;
+
+typedef struct {
+   uint8_t cpuQty;
+   uint8_t thrQty;
+   uint32_t validCpus;
+   t_statusCore  sCore[CPU_MAX];
+   t_statusWr    sWr;
+   t_statusEbm   sEbm;
+   t_statusPq    sPq;
+} t_status;
+
 extern uint32_t ftm_shared_offs;
 extern t_ftmAccess* p;
 
@@ -179,6 +236,7 @@ int v02FtmClear(uint32_t dstCpus);
 int v02FtmDump(uint32_t srcCpus, uint32_t len, uint8_t actIna, char* stringBuf, uint32_t lenStringBuf);
 int v02FtmSetBp(uint32_t dstCpus, int32_t planIdx);
 int v02FtmFetchStatus(uint32_t* buff, uint32_t len);
+t_status* v02FtmParseStatus(uint32_t srcCpus, uint32_t* status, t_status* sSt); 
 
 #endif
 
@@ -191,7 +249,7 @@ int ftmClear(uint64_t dstThr);
 int ftmDump(uint64_t srcThr, uint32_t len, uint8_t actIna, char* stringBuf, uint32_t lenStringBuf);
 int ftmSetBp(uint64_t dstThr, int32_t planIdx);
 int ftmFetchStatus(uint32_t* buff, uint32_t len);
-
+t_status* ftmParseStatus(uint32_t srcCpus, uint32_t* status, t_status* sSt); 
 
 #ifdef __cplusplus
 }

@@ -7,6 +7,7 @@ use work.wishbone_pkg.all;
 use work.gencores_pkg.all;
 use work.wb_scu_reg_pkg.all;
 use work.remote_update_pkg.all;
+use work.ftm_pkg.all;
 
 entity housekeeping is
   generic ( 
@@ -76,20 +77,28 @@ architecture housekeeping_arch of housekeeping is
   signal lm32_interrupt:   std_logic_vector(31 downto 0);
   signal lm32_rstn:        std_logic;
 
+  constant c_lm32_data    : natural := 0;
+  constant c_lm32_ins     : natural := 1;
+  constant c_lm32_offset  : std_logic_vector(31 downto 0) := x"10000000";
+ 
+  
   -- Top crossbar layout
   constant c_slaves     : natural := 6;
   constant c_masters    : natural := 2;
   constant c_dpram_size : natural := 32768; -- in 32-bit words (64KB)
-  constant c_layout_req     : t_sdb_record_array(c_slaves-1 downto 0) :=
-   (0 => f_sdb_embed_device(f_xwb_dpram(c_dpram_size), x"00000000"),
-    1 => f_sdb_embed_device(c_xwb_owm,                 x"00020000"),
-    2 => f_sdb_embed_device(c_xwb_uart,                x"00020100"),
-    3 => f_sdb_embed_device(c_xwb_scu_reg,             x"00020200"),
-    4 => f_sdb_embed_device(c_wb_rem_upd_sdb,          x"00020500"),
-    5 => f_sdb_embed_device(c_wb_asmi_sdb,             x"10000000"));
-  
-  constant c_top_layout  : t_sdb_record_array(c_slaves-1 downto 0) := f_sdb_auto_layout(c_layout_req);
-  constant c_sdb_address : t_wishbone_address := x"3FFFE000";
+  constant c_layout_req_slaves     : t_sdb_record_array(c_slaves-1 downto 0) :=
+   (0 => f_sdb_embed_device(f_xwb_dpram_userlm32(c_dpram_size), c_lm32_offset),
+    1 => f_sdb_auto_device(c_xwb_owm,                 true),
+    2 => f_sdb_auto_device(c_xwb_uart,                true),
+    3 => f_sdb_auto_device(c_xwb_scu_reg,             true),
+    4 => f_sdb_auto_device(c_wb_rem_upd_sdb,          true),
+    5 => f_sdb_embed_device(c_wb_asmi_sdb,             x"20000000"));
+
+  constant c_layout_req_masters : t_sdb_record_array(c_masters-1 downto 0) :=
+    (c_lm32_data  => f_sdb_auto_msi(c_msi_lm32_sdb,           true),
+    c_lm32_ins   => f_sdb_auto_msi(c_null_msi,               false));
+  constant c_top_layout  : t_sdb_record_array := f_sdb_auto_layout(c_layout_req_masters, c_layout_req_slaves);
+  constant c_sdb_address : t_wishbone_address := f_sdb_auto_sdb(c_layout_req_masters, c_layout_req_slaves);
 
   signal cbar_slave_i : t_wishbone_slave_in_array (c_masters-1 downto 0);
   signal cbar_slave_o : t_wishbone_slave_out_array(c_masters-1 downto 0);
@@ -130,7 +139,7 @@ begin
      g_num_slaves => c_slaves,
      g_registered => true,
      g_wraparound => false, -- Should be true for nested buses
-     g_layout => c_layout_req,
+     g_layout => c_top_layout,
      g_sdb_addr => c_sdb_address)
    port map(
      clk_sys_i => clk_sys,
@@ -145,15 +154,17 @@ begin
   -- The LM32 is master 0+1
   LM32 : xwb_lm32
     generic map(
-      g_profile => "medium_icache_debug") -- Including JTAG and I-cache (no divide)
+      g_profile => "medium_icache_debug",-- Including JTAG and I-cache (no divide)
+      g_reset_vector => c_lm32_offset,
+      g_sdb_address => c_sdb_address) 
     port map(
       clk_sys_i => clk_sys,
       rst_n_i => rstn_sys,
       irq_i => lm32_interrupt,
-      dwb_o => cbar_slave_i(0), -- Data bus
-      dwb_i => cbar_slave_o(0),
-      iwb_o => cbar_slave_i(1), -- Instruction bus
-      iwb_i => cbar_slave_o(1));
+      dwb_o => cbar_slave_i(c_lm32_data), -- Data bus
+      dwb_i => cbar_slave_o(c_lm32_data),
+      iwb_o => cbar_slave_i(c_lm32_ins), -- Instruction bus
+      iwb_i => cbar_slave_o(c_lm32_ins));
   -- The other 31 interrupt pins are unconnected
   lm32_interrupt(31 downto 1) <= (others => '0');
 

@@ -1,5 +1,5 @@
 //
-// eb-sflash: flash tool for scu slave cards
+// eb-sflash: tool for programming scu slave card remotly with new gateware
 // 
 
 //standard includes
@@ -17,9 +17,10 @@
 //Etherbone
 #include <etherbone.h>
 
-#define GSI_ID 0x651
-#define CERN_ID 0xce42
-#define SCU_BUS_ID 0x9602eb6f
+
+#define GSI_ID      0x651
+#define CERN_ID     0xce42
+#define SCU_BUS_ID  0x9602eb6f
 
 
 // all scu bus addresses shifted left by one bit
@@ -64,7 +65,7 @@ void itoa(unsigned int n,char s[], int base){
      int i;
  
      i = 0;
-     do {       /* generate digits in reverse order */
+     do {                           /* generate digits in reverse order */
          s[i++] = n % base + '0';   /* get next digit */
      } while ((n /= base) > 0);     /* delete it */
      s[i] = '\0';
@@ -223,6 +224,7 @@ void reconfig(int slave_nr, int asmi_addr) {
       die("reading ASMI_CMD failed", status);
   }
 }
+
 int kbhit(void)
 {
   struct termios oldt, newt;
@@ -251,6 +253,18 @@ int kbhit(void)
 }
 
 
+void show_help() {
+  printf("Usage: eb-sflash [OPTION] <proto/host/port>\n");
+  printf("\n");
+  printf("-h          show the help for this program\n");
+  printf("-s <slot>   slot number in the range 1-12\n");
+  printf("-t          trigger reconfiguration\n");
+  printf("-b          blank check the flash\n");
+  printf("-w <file>   write programming file into flash\n");
+  printf("-v <file>   verify flash against programming file\n");
+}
+
+
 int main(int argc, char * const* argv) {
   eb_status_t status;
   struct sdb_device sdbDevice[SDB_DEVICES];
@@ -265,7 +279,6 @@ int main(int argc, char * const* argv) {
   char *wvalue = NULL;
   int rflag = 0;
   char *vvalue = NULL; 
-  int dflag = 0;
   char *svalue = NULL;
   int bflag = 0;
   int tflag = 0;
@@ -278,7 +291,7 @@ int main(int argc, char * const* argv) {
 
   opterr = 0;
 
-  while ((c = getopt (argc, argv, "s:w:rdv:bt")) != -1)
+  while ((c = getopt (argc, argv, "s:w:rv:bth")) != -1)
     switch (c)
       {
       case 'w':
@@ -286,9 +299,6 @@ int main(int argc, char * const* argv) {
         break;
       case 'r':
         rflag = 1;
-        break;
-      case 'd':
-        dflag = 1;
         break;
       case 'v':
         vvalue = optarg;
@@ -302,8 +312,11 @@ int main(int argc, char * const* argv) {
       case 't':
         tflag = 1;
         break;
+      case 'h':
+        show_help();
+        exit(1);
       case '?':
-        if (optopt == 'c')
+        if (optopt == 'w' || optopt == 'v' || optopt == 's')
           fprintf (stderr, "Option -%c requires an argument.\n", optopt);
         else if (isprint (optopt))
           fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -317,16 +330,17 @@ int main(int argc, char * const* argv) {
       }
 
 
-
   // assign non option arguments
   index = optind;
 
-  if (argc < 2) {
-    printf("program needs at least the device name of the etherbone device as a parameter.\n");
+  
+
+  if (argc < 3 || argc-optind < 1) {
+    printf("program needs at least the device name of the etherbone device and a scu bus slot as a parameter.\n");
     printf("e.g. %s dev/wbm0 -s1\n", argv[0]);
     exit(0);
   }
-  
+
   if (index < argc) {
     devName = argv[index];
     index++;
@@ -397,8 +411,10 @@ int main(int argc, char * const* argv) {
   eb_cycle_read(cycle, scu_bus + slave_id * (1<<17) + CID_SYS, EB_BIG_ENDIAN|EB_DATA16, &cid_sys);   
   eb_cycle_read(cycle, scu_bus + slave_id * (1<<17) + CID_GRP, EB_BIG_ENDIAN|EB_DATA16, &cid_grp);   
     
-	if ((status = eb_cycle_close(cycle)) != EB_OK)
-	   die("EP eb_cycle_close", status);
+	if ((status = eb_cycle_close(cycle)) != EB_OK) {
+    printf("No slave card found in slot %d!\n", slave_id);
+    exit(1);
+  }
 
   read_asmi_id(slave_id, &epcsid);
   if ((int)epcsid != EPCS128ID) {
@@ -415,16 +431,9 @@ int main(int argc, char * const* argv) {
   
   FILE *fp;
 
-  //delete sector
-  //if (dflag == 1) {
-  //  erase_asmi_sector(slave_id, epcs_addr);
-  //  printf("epcs addr 0x%x erased.\n", epcs_addr);
-  //}
-
   //trigger reconfiguration
   if (tflag == 1) {
     reconfig(slave_id, 0xdeadbeef);
-
     exit(1);
   }
 
@@ -453,14 +462,12 @@ int main(int argc, char * const* argv) {
     printf("%d sector(s) will be erased.\n", needed_sectors);  
    
     //delete sector
-    if (dflag == 1) {
-      for (i = 0; i < needed_sectors; i++) {
-        printf("erase epcs addr 0x%x\r", i * PAGE_SIZE * PAGES_PER_SECTOR);
-        fflush(stdout);
-        erase_asmi_sector(slave_id, i * PAGE_SIZE * PAGES_PER_SECTOR);
-      }
-      printf("%d sectors erased.                \n", needed_sectors);
+    for (i = 0; i < needed_sectors; i++) {
+      printf("erase epcs addr 0x%x\r", i * PAGE_SIZE * PAGES_PER_SECTOR);
+      fflush(stdout);
+      erase_asmi_sector(slave_id, i * PAGE_SIZE * PAGES_PER_SECTOR);
     }
+    printf("%d sectors erased.                \n", needed_sectors);
  
 
     //read in data from stdin

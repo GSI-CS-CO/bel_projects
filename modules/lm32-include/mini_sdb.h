@@ -16,7 +16,7 @@
 
 
 
-#define ERROR_NOT_FOUND  0XDEADBEE2
+#define ERROR_NOT_FOUND  0xFFFFFFFE
 #define NO_MSI           0XDEADBEE3
 #define OWN_MSI          (1<<31)
 
@@ -73,6 +73,8 @@
 #define WB_FG_QUAD            0x863e07f0
 
 #define WR_CFIPFlash          0x12122121
+#define WB_DDR3_if1           0x20150828
+#define WB_DDR3_if2           0x20160525
 #define WR_SYS_CON            0xff07fc47  
 #define WB_REMOTE_UPDATE      0x38956271
 #define WB_ASMI               0x48526423
@@ -101,6 +103,10 @@ volatile uint32_t* pCluCB;
 volatile uint32_t* pOneWire;
 
 volatile uint32_t* pCfiPFlash;
+
+volatile uint32_t* pDDR3_if1;
+volatile uint32_t* pDDR3_if2;
+
 
 typedef struct pair64 {
   uint32_t high;
