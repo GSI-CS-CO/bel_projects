@@ -314,6 +314,9 @@ begin
       wr_ext_clk_i           => lvds_clk_p_i,
       wr_uart_o              => rs232_tx_o,
       wr_uart_i              => rs232_rx_i,
+      sfp_tx_disable_o       => sfp4_tx_disable_o,
+      sfp_tx_fault_i         => sfp4_tx_fault,
+      sfp_los_i              => sfp4_los,
       gpio_o                 => s_gpio_o,
       gpio_i                 => s_gpio_i,
       lvds_p_i               => s_lvds_p_i,
@@ -375,7 +378,7 @@ begin
   sfp1_tx_disable_o <= '1';
   sfp2_tx_disable_o <= '1';
   sfp3_tx_disable_o <= '1';
-  sfp4_tx_disable_o <= '0';
+  --sfp4_tx_disable_o <= '0';
 
   -- Base board LEDs (2.5V outputs, with 2.5V pull-up)
   led_o(1) <= '0' when (led_link_act and led_link_up)='1' else 'Z'; -- red   = traffic/no-link
