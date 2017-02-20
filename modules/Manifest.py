@@ -42,5 +42,6 @@ modules = {
     "watchdog",
     "mbox",
     "prioq2",
+    "eca_tap",	
   ]
 }
