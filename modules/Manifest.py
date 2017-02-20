@@ -45,6 +45,7 @@ modules = {
     "mbox",
     "prioq2",
     "temp_sens",
+    "eca_tap",	
     "beam_dump",
     "daq",
     "diob"

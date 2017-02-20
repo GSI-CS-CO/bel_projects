@@ -142,7 +142,7 @@ begin
   s_e_p           <=  r_e or r_e_wait;
   s_a_ext         <= s_a & "00";
   s_stall         <= s_full;
-  s_push          <= slave_i.cyc and slave_i.stb and not s_stall;
+  s_push          <= ctrl_i.cyc and ctrl_i.stb and not s_stall;
   s_e             <= not (s_empty or s_e_p);
   s_pop           <= s_valid_ok;
   ctrl_o.stall    <= s_stall;
