@@ -1,7 +1,7 @@
 --! @file        eca_tap_auto.vhd
 --  DesignUnit   eca_tap_auto
 --! @author      M. Kreider <m.kreider@gsi.de>
---! @date        17/02/2017
+--! @date        21/02/2017
 --! @version     0.0.1
 --! @copyright   2017 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -52,6 +52,7 @@ Port(
   diff_min_V_i  : in  std_logic_vector(1-1 downto 0);   -- Valid flag - diff_min
   error_i       : in  std_logic_vector(1-1 downto 0);   -- Error control
   stall_i       : in  std_logic_vector(1-1 downto 0);   -- flow control
+  capture_o     : out std_logic_vector(1-1 downto 0);   -- Enable/Disable Capture
   clear_o       : out std_logic_vector(3-1 downto 0);   -- b2: clear count/accu, b1: clear max, b0: clear min
   reset_o       : out std_logic_vector(1-1 downto 0);   -- Resets ECA-Tap
   
@@ -85,6 +86,7 @@ architecture rtl of eca_tap_auto is
   signal s_stall_i        : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- flow control
   signal r_reset          : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Resets ECA-Tap
   signal r_clear          : std_logic_vector(3-1 downto 0)  := (others => '0');                     -- b2: clear count/accu, b1: clear max, b0: clear min
+  signal r_capture        : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Enable/Disable Capture
   signal r_cnt_msg_V      : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Valid flag - cnt_msg
   signal s_cnt_msg_V_i    : std_logic_vector(1-1 downto 0)  := (others => '0');                     -- Valid flag - cnt_msg
   signal r_cnt_msg        : std_logic_vector(64-1 downto 0) := (others => '0');                     -- Message Count
@@ -151,6 +153,7 @@ begin
   s_stall_i       <= stall_i;
   reset_o         <= r_reset;
   clear_o         <= r_clear;
+  capture_o       <= r_capture;
   s_cnt_msg_V_i   <= cnt_msg_V_i;
   s_cnt_msg_i     <= cnt_msg_i;
   s_diff_acc_V_i  <= diff_acc_V_i;
@@ -170,6 +173,7 @@ begin
         r_error     <= std_logic_vector(to_unsigned(0, 1));
         r_reset     <= (others => '0');
         r_clear     <= (others => '0');
+        r_capture   <= (others => '0');
         r_cnt_msg   <= (others => '0');
         r_diff_acc  <= (others => '0');
         r_diff_min  <= (others => '0');
@@ -202,13 +206,15 @@ begin
           if(s_w = '1') then
             -- WISHBONE WRITE ACTIONS
             case to_integer(unsigned(s_a_ext)) is
-              when c_reset_OWR  => r_reset  <= f_wb_wr(r_reset, s_d, s_s, "owr"); -- 
-              when c_clear_OWR  => r_clear  <= f_wb_wr(r_clear, s_d, s_s, "owr"); -- 
-              when others       => r_error  <= "1";
+              when c_reset_OWR  => r_reset    <= f_wb_wr(r_reset, s_d, s_s, "owr");   -- 
+              when c_clear_OWR  => r_clear    <= f_wb_wr(r_clear, s_d, s_s, "owr");   -- 
+              when c_capture_RW => r_capture  <= f_wb_wr(r_capture, s_d, s_s, "owr"); -- 
+              when others       => r_error    <= "1";
             end case;
           else
             -- WISHBONE READ ACTIONS
             case to_integer(unsigned(s_a_ext)) is
+              when c_capture_RW     => null;
               when c_cnt_msg_GET_0  => null;
               when c_cnt_msg_GET_1  => null;
               when c_diff_acc_GET_0 => null;
@@ -223,6 +229,7 @@ begin
         end if; -- s_e
         
         case to_integer(unsigned(r_a_ext1)) is
+          when c_capture_RW     => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_capture), ctrl_o.dat'length));                  -- 
           when c_cnt_msg_GET_0  => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_cnt_msg(31 downto 0)), ctrl_o.dat'length));     -- 
           when c_cnt_msg_GET_1  => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_cnt_msg(63 downto 32)), ctrl_o.dat'length));    -- 
           when c_diff_acc_GET_0 => ctrl_o.dat <= std_logic_vector(resize(unsigned(r_diff_acc(31 downto 0)), ctrl_o.dat'length));    -- 

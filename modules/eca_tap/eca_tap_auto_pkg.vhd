@@ -1,7 +1,7 @@
 --! @file        eca_tap_auto_pkg.vhd
 --  DesignUnit   eca_tap_auto
 --! @author      M. Kreider <m.kreider@gsi.de>
---! @date        17/02/2017
+--! @date        21/02/2017
 --! @version     0.0.1
 --! @copyright   2017 GSI Helmholtz Centre for Heavy Ion Research GmbH
 --!
@@ -40,14 +40,15 @@ package eca_tap_auto_pkg is
 
   constant c_reset_OWR      : natural := 16#00#;  -- wo,  1 b, Resets ECA-Tap
   constant c_clear_OWR      : natural := 16#04#;  -- wo,  3 b, b2: clear count/accu, b1: clear max, b0: clear min
-  constant c_cnt_msg_GET_0  : natural := 16#08#;  -- ro, 32 b, Message Count
-  constant c_cnt_msg_GET_1  : natural := 16#0c#;  -- ro, 32 b, Message Count
-  constant c_diff_acc_GET_0 : natural := 16#10#;  -- ro, 32 b, Accumulated differences (dl - ts)
-  constant c_diff_acc_GET_1 : natural := 16#14#;  -- ro, 32 b, Accumulated differences (dl - ts)
-  constant c_diff_min_GET_0 : natural := 16#18#;  -- ro, 32 b, Minimum difference
-  constant c_diff_min_GET_1 : natural := 16#1c#;  -- ro, 32 b, Minimum difference
-  constant c_diff_max_GET_0 : natural := 16#20#;  -- ro, 32 b, Maximum difference
-  constant c_diff_max_GET_1 : natural := 16#24#;  -- ro, 32 b, Maximum difference
+  constant c_capture_RW     : natural := 16#08#;  -- rw,  1 b, Enable/Disable Capture
+  constant c_cnt_msg_GET_0  : natural := 16#0c#;  -- ro, 32 b, Message Count
+  constant c_cnt_msg_GET_1  : natural := 16#10#;  -- ro, 32 b, Message Count
+  constant c_diff_acc_GET_0 : natural := 16#14#;  -- ro, 32 b, Accumulated differences (dl - ts)
+  constant c_diff_acc_GET_1 : natural := 16#18#;  -- ro, 32 b, Accumulated differences (dl - ts)
+  constant c_diff_min_GET_0 : natural := 16#1c#;  -- ro, 32 b, Minimum difference
+  constant c_diff_min_GET_1 : natural := 16#20#;  -- ro, 32 b, Minimum difference
+  constant c_diff_max_GET_0 : natural := 16#24#;  -- ro, 32 b, Maximum difference
+  constant c_diff_max_GET_1 : natural := 16#28#;  -- ro, 32 b, Maximum difference
 
   --| Component ----------------------- eca_tap_auto ------------------------------------------|
   component eca_tap_auto is
@@ -64,6 +65,7 @@ package eca_tap_auto_pkg is
     diff_min_V_i  : in  std_logic_vector(1-1 downto 0);   -- Valid flag - diff_min
     error_i       : in  std_logic_vector(1-1 downto 0);   -- Error control
     stall_i       : in  std_logic_vector(1-1 downto 0);   -- flow control
+    capture_o     : out std_logic_vector(1-1 downto 0);   -- Enable/Disable Capture
     clear_o       : out std_logic_vector(3-1 downto 0);   -- b2: clear count/accu, b1: clear max, b0: clear min
     reset_o       : out std_logic_vector(1-1 downto 0);   -- Resets ECA-Tap
     
@@ -87,7 +89,7 @@ package eca_tap_auto_pkg is
   vendor_id     => x"0000000000000651",
   device_id     => x"0eca07a2",
   version       => x"00000001",
-  date          => x"20170217",
+  date          => x"20170221",
   name          => "ECA-Tap            ")));
 
 end eca_tap_auto_pkg;
