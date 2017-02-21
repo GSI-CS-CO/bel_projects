@@ -58,7 +58,7 @@ architecture rtl of eca_tap is
   signal r_min, r_max, s_dl, r_diff_acc, r_diff, s_diff : signed(63 downto 0) := (others => '0'); --check again - do we need it that wide?
   signal r_cnt_word : unsigned(3 downto 0) := (others => '0'); 
   signal r_cnt_msg  : unsigned(63 downto 0) := (others => '0');
-  signal s_en, r_en, s_push, s_new_min, s_new_max, s_inc_msg : std_logic := '0';
+  signal s_en, r_en0, s_push, s_new_min, s_new_max, s_inc_msg : std_logic := '0';
   signal s_valid : std_logic_vector(0 downto 0) := (others => '0');
 
   constant c_DIFF_MIN   : natural := 0;
@@ -69,6 +69,7 @@ architecture rtl of eca_tap is
   signal s_ctrl_stall_i       : std_logic_vector(1-1 downto 0)  := (others => '0'); -- flow control
   signal s_ctrl_reset_o       : std_logic_vector(1-1 downto 0)  := (others => '0'); -- Resets ECA-Tap
   signal s_ctrl_clear_o       : std_logic_vector(3-1 downto 0)  := (others => '0'); -- b2: clear count/accu, b1: clear max, b0: clear min
+  signal s_ctrl_capture_o     : std_logic_vector(1-1 downto 0)  := (others => '0'); -- Enable/Disable Capture
   signal s_ctrl_cnt_msg_i     : std_logic_vector(64-1 downto 0) := (others => '0'); -- Message Count
   signal s_ctrl_diff_acc_i    : std_logic_vector(64-1 downto 0) := (others => '0'); -- Accumulated differences (dl - ts)
   signal s_ctrl_diff_min_i    : std_logic_vector(64-1 downto 0) := (others => '0'); -- Minimum difference
@@ -92,6 +93,7 @@ instOn: if g_build_tap = TRUE generate
     stall_i       => "0",
     reset_o       => s_ctrl_reset_o,
     clear_o       => s_ctrl_clear_o,
+    capture_o     => s_ctrl_capture_o,
     cnt_msg_V_i   => s_valid,
     cnt_msg_i     => s_ctrl_cnt_msg_i,
     diff_acc_V_i  => s_valid,
@@ -104,7 +106,7 @@ instOn: if g_build_tap = TRUE generate
     ctrl_o        => ctrl_o  );
 
 
-  s_valid(0)        <= not (s_en or r_en);
+  s_valid(0)        <= not (s_en or r_en0);
   s_ctrl_cnt_msg_i  <= std_logic_vector(r_cnt_msg);
   s_ctrl_diff_acc_i <= std_logic_vector(r_diff_acc);
   s_ctrl_diff_min_i <= std_logic_vector(r_min);
@@ -130,10 +132,10 @@ instOn: if g_build_tap = TRUE generate
   begin
     if rising_edge(clk_i) then
       if(rst_n_i = '0' or s_en = '1') then -- reset also on underflow
-        r_cnt_word <= to_unsigned(6, r_cnt_word'length);      
+        r_cnt_word <= to_unsigned(7, r_cnt_word'length);      
       else
         if s_push = '1' then
-          r_cnt_word <= r_cnt_word -1;      
+          r_cnt_word <= r_cnt_word - resize(unsigned(s_ctrl_capture_o), r_cnt_word'length);      
         end if; 
       end if;   
     end if;
@@ -142,7 +144,7 @@ instOn: if g_build_tap = TRUE generate
   main : process(clk_i)
   begin
     if rising_edge(clk_i) then
-      r_en    <= s_en;  -- on r_en = '1', s_dl contains timestamp      
+      
       r_dl_hi <= r_dl_lo; 
       
      if(rst_n_i = '0' or s_ctrl_reset_o = "1") then
@@ -152,8 +154,9 @@ instOn: if g_build_tap = TRUE generate
         r_max               <= (others => '1'); -- set rmax to maximum negative value 
         r_diff_acc          <= (others => '0');
         r_cnt_msg           <= (others => '0');
+        r_en0               <= '0';
       else
-
+        r_en0  <= s_en;  -- on r_en = '1', s_dl contains timestamp
         r_diff <= s_diff;
 
         if s_push = '1' then  -- save word on push
@@ -164,14 +167,14 @@ instOn: if g_build_tap = TRUE generate
         if s_ctrl_clear_o(c_DIFF_MIN) = '1' then
           r_min               <= (others => '1'); -- set rmin to maximum positive value 
           r_min(r_min'left)   <= '0';
-        elsif (s_new_min and r_en) = '1' then 
+        elsif (s_new_min and r_en0) = '1' then 
           r_min <= r_diff;  -- save minimum diff
         end if;
 
         -- Diff Max
         if s_ctrl_clear_o(c_DIFF_MAX) = '1' then
           r_max <= (others => '1'); -- set rmax to maximum negative value 
-        elsif (s_new_max and r_en) = '1' then 
+        elsif (s_new_max and r_en0) = '1' then 
           r_max <= r_diff;  -- save maximum diff
         end if;
 
@@ -179,9 +182,9 @@ instOn: if g_build_tap = TRUE generate
         if s_ctrl_clear_o(c_DIFF_MEAN) = '1' then
           r_diff_acc          <= (others => '0');
           r_cnt_msg           <= (others => '0');
-        elsif r_en = '1' then
+        elsif r_en0 = '1' then
           r_diff_acc <= r_diff_acc + r_diff;  -- add to diff accumulator
-          r_cnt_msg  <= r_cnt_msg;            -- inc msg counter
+          r_cnt_msg  <= r_cnt_msg  + 1;       -- inc msg counter
         end if;        
 
       end if;   

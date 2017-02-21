@@ -5,8 +5,10 @@
    <slaveinterface name="ctrl" data="32" type="pipelined">          
       <sdb vendorID="GSI" productID="0x0eca07a2" version="1" date="auto" name="ECA-Tap"></sdb>
       <registers>
+          
           <reg  name="reset"       write="yes"             bits="1"  pulse="yes"   comment="Resets ECA-Tap"></reg>
-          <reg  name="clear"       write="yes"             bits="3"  pulse="yes"   comment="b2: clear count/accu, b1: clear max, b0: clear min"></reg>>
+          <reg  name="clear"       write="yes"             bits="3"  pulse="yes"   comment="b2: clear count/accu, b1: clear max, b0: clear min"></reg>
+          <reg  name="capture"     read="yes"  write="yes" bits="1"                comment="Enable/Disable Capture"></reg>
           <reg  name="cnt_msg"     read="yes"  drive="yes" bits="64"               comment="Message Count"></reg>
           <reg  name="diff_acc"    read="yes"  drive="yes" bits="64"               comment="Accumulated differences (dl - ts)"></reg> 
           <reg  name="diff_min"    read="yes"  drive="yes" bits="64"               comment="Minimum difference"></reg>
