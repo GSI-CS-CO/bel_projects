@@ -364,7 +364,7 @@ begin
   
   -- BuTiS/MDMHR Output
   p19 <= butis_clk_200;
-  p24 <= butis_t0_ts;
+  p24 <= not(butis_t0_ts);
   
   -- BuTiS/MHDMR activity LEDs
   p6  <= '0' when butis_clk_200='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3)
