@@ -1,5 +1,13 @@
 #include "scu_mil.h"
 
+/***********************************************************
+ ***********************************************************
+ *  
+ * 1st part: original MIL bus library
+ *
+ ***********************************************************
+ ***********************************************************/
+
 void clear_receive_flag(volatile unsigned int *base) {
   unsigned short rcv_data = 0;
   usleep(50); // wait 50us, because an initiated mil_read takes 20us for trm function code and ifc address
@@ -131,3 +139,236 @@ void run_mil_test(volatile unsigned int *base, unsigned char ifc_addr) {
     test_pattern++;
   }
 }
+
+/***********************************************************
+ ***********************************************************
+ * 
+ * 2st part:  (new) MIL bus library
+ *
+ ***********************************************************
+ ***********************************************************/
+int16_t writeDevMil(volatile uint32_t *base, uint8_t  ifbAddr, uint8_t  fctCode, uint16_t  data)
+{
+  // just a wrapper for the function of the original library
+  // replace code once original library becomes deprecated
+  
+  uint16_t fc_ifb_addr;
+
+  fc_ifb_addr = ifbAddr | (fctCode << 8);
+
+  return (int16_t)write_mil((unsigned int *)base, (short)data, (short)fc_ifb_addr);
+} // writeDevMil
+
+int16_t readDevMil(volatile uint32_t *base, uint8_t  ifbAddr, uint8_t  fctCode, uint16_t  *data)
+{
+  // just a wrapper for the function of the original library
+  // replace code once original library becomes deprecated
+
+  uint16_t fc_ifb_addr;
+
+  fc_ifb_addr = ifbAddr | (fctCode << 8);
+
+  return (int16_t)read_mil((unsigned int *)base, (short *)data, (short)fc_ifb_addr);
+} //writeDevMil
+
+int16_t echoTestDevMil(volatile uint32_t *base, uint8_t  ifbAddr, uint16_t data)
+{
+  int32_t  busStatus;
+  uint16_t rData = 0x0;
+
+  busStatus = writeDevMil(base, ifbAddr, FC_WR_IFC_ECHO, data);
+  if (busStatus != MIL_STAT_OK) return busStatus;
+
+  busStatus = readDevMil(base, ifbAddr, FC_RD_IFC_ECHO, &rData);
+  if (busStatus != MIL_STAT_OK) return busStatus;
+
+  if (data != rData) return MIL_STAT_ERROR;
+  else               return MIL_STAT_OK;
+} //echoTestDevMil
+
+
+int16_t clearFilterEvtMil(volatile uint32_t *base)
+{
+  uint32_t filterSize;         // size of filter RAM     
+  uint32_t *pFilterRAM;        // RAM for event filters
+  uint32_t i;
+
+  filterSize = (MIL_REG_EV_FILT_LAST >> 2) - (MIL_REG_EV_FILT_FIRST >> 2) + 1;
+  mprintf("filtersize: %d, base 0x%08x\n", filterSize, base);
+
+  pFilterRAM = (uint32_t *)(base + (MIL_REG_EV_FILT_FIRST >> 2));      // address to filter RAM 
+  for (i=0; i < filterSize; i++) pFilterRAM[i] = 0x0;
+  mprintf("&pFilterRAM[0]: 0x%08x, &pFilterRAM[filterSize-1]: 0x%08x\n", &(pFilterRAM[0]), &(pFilterRAM[filterSize-1]));
+
+  return MIL_STAT_OK;
+} //clearFiterEvtMil
+
+int16_t setFilterEvtMil(volatile uint32_t *base, uint8_t evtCode, uint8_t virtAcc, uint32_t filter)
+{
+  uint32_t *pFilterRAM;        // RAM for event filters
+
+  if (virtAcc > 15) return MIL_STAT_OUT_OF_RANGE;
+
+  pFilterRAM = (uint32_t*)(base + (uint32_t)(MIL_REG_EV_FILT_FIRST >> 2));  // address to filter RAM 
+
+  pFilterRAM[virtAcc*256+evtCode] = filter;
+  mprintf("pFilter: 0x%08x, &pFilter[evt_code*16+acc_number]: 0x%08x\n", pFilterRAM, &(pFilterRAM[evtCode*16+virtAcc]));
+
+  return MIL_STAT_OK;
+} //setFilterEvtMil
+
+int16_t enableFilterEvtMil(volatile uint32_t *base)
+{
+  uint32_t regValue;
+
+  readCtrlStatRegEvtMil(base, &regValue);
+  regValue = regValue | MIL_CTRL_STAT_EV_FILTER_ON;
+  writeCtrlStatRegEvtMil(base, regValue);
+  
+  return MIL_STAT_OK;
+} //enableFilterEvtMil
+
+
+int16_t disableFilterEvtMil(volatile uint32_t *base)
+{
+  uint32_t regValue;
+
+  readCtrlStatRegEvtMil(base, &regValue);
+  regValue = regValue & (MIL_CTRL_STAT_EV_FILTER_ON);
+  writeCtrlStatRegEvtMil(base, regValue);
+    
+  return MIL_STAT_OK;
+} // disableFilterEvtMil
+
+int16_t writeCtrlStatRegEvtMil(volatile uint32_t *base, uint32_t value)
+{
+  uint32_t *pControlRegister;  // control register of event filter
+
+  pControlRegister  = (uint32_t *)(base + (MIL_REG_WR_RD_STATUS >> 2));
+  *pControlRegister = value;
+
+  return MIL_STAT_OK;
+} // writeCtrlStatRegMil
+
+int16_t readCtrlStatRegEvtMil(volatile uint32_t *base, uint32_t *value)
+{
+  uint32_t *pControlRegister;  // control register of event filter
+
+  pControlRegister  = (uint32_t *)(base + (MIL_REG_WR_RD_STATUS >> 2));
+  *value = *pControlRegister;
+
+  return MIL_STAT_OK;
+} //readCtrlStatRegMil
+
+uint8_t fifoNotemptyEvtMil(volatile uint32_t *base)
+{
+  uint32_t regValue;
+  uint8_t  fifoNotEmpty;
+
+  readCtrlStatRegEvtMil(base, &regValue);
+  fifoNotEmpty = regValue & MIL_CTRL_STAT_EV_FIFO_NE;
+  
+  return (fifoNotEmpty);
+} // fifoNotemptyEvtMil
+
+int16_t clearFifoEvtMil(volatile uint32_t *base)
+{
+  uint32_t *pFIFO;
+
+  pFIFO = (uint32_t *)(base + (MIL_REG_RD_CLR_EV_FIFO >> 2));
+  *pFIFO = 0x1; // check value!!!
+
+  return MIL_STAT_OK;
+} // clearFifoEvtMil
+
+int16_t popFifoEvtMil(volatile uint32_t *base, uint32_t *evtData)
+{
+  uint32_t *pFIFO;
+
+  pFIFO = (uint32_t *)(base + (MIL_REG_RD_CLR_EV_FIFO >> 2));
+
+  *evtData = *pFIFO;
+  
+  return MIL_STAT_OK;
+} // popFifoEvtMil
+
+int16_t configLemoPulseEvtMil(volatile uint32_t *base, uint32_t lemo)
+{
+  uint32_t *pConfigRegister;
+
+  uint32_t statRegValue;
+  uint32_t confRegValue;
+  
+  if (lemo > 4) return MIL_STAT_OUT_OF_RANGE;
+
+  // disable gate mode 
+  readCtrlStatRegEvtMil(base, &statRegValue);
+  if (lemo == 1) statRegValue = statRegValue & ~MIL_CTRL_STAT_PULS1_FRAME;
+  if (lemo == 2) statRegValue = statRegValue & ~MIL_CTRL_STAT_PULS2_FRAME;
+  writeCtrlStatRegEvtMil(base, statRegValue);
+
+  // enable output
+  pConfigRegister = (uint32_t *)(base + (MIL_REG_WR_RF_LEMO_CONF >> 2));
+  confRegValue = *pConfigRegister;
+  if (lemo == 1) confRegValue = confRegValue | MIL_LEMO_OUT_EN1 | MIL_LEMO_EVENT_EN1;
+  if (lemo == 2) confRegValue = confRegValue | MIL_LEMO_OUT_EN2 | MIL_LEMO_EVENT_EN2;
+  if (lemo == 3) confRegValue = confRegValue | MIL_LEMO_OUT_EN3 | MIL_LEMO_EVENT_EN3;
+  if (lemo == 4) confRegValue = confRegValue | MIL_LEMO_OUT_EN4 | MIL_LEMO_EVENT_EN4;
+  *pConfigRegister = confRegValue;
+
+  return MIL_STAT_OK;
+} // configLemoPulseEvtMil
+
+int16_t configLemoGateEvtMil(volatile uint32_t *base, uint32_t lemo)
+{
+  uint32_t *pConfigRegister;
+
+  uint32_t statRegValue;
+  uint32_t confRegValue;
+
+  if (lemo > 2) return MIL_STAT_OUT_OF_RANGE;
+  
+  // enable gate mode 
+  readCtrlStatRegEvtMil(base, &statRegValue);
+  if (lemo == 1) statRegValue = statRegValue | MIL_CTRL_STAT_PULS1_FRAME;
+  if (lemo == 2) statRegValue = statRegValue | MIL_CTRL_STAT_PULS2_FRAME;
+  writeCtrlStatRegEvtMil(base, statRegValue);
+
+  // enable output
+  pConfigRegister = (uint32_t *)(base + (MIL_REG_WR_RF_LEMO_CONF >> 2));
+  confRegValue = *pConfigRegister;
+  if (lemo == 1) confRegValue = confRegValue | MIL_LEMO_EVENT_EN1;
+  if (lemo == 2) confRegValue = confRegValue | MIL_LEMO_EVENT_EN2;
+  *pConfigRegister = confRegValue;
+  
+  return MIL_STAT_OK;  
+} //enableLemoGateEvtMil
+
+int16_t disableLemoEvtMil(volatile uint32_t *base, uint32_t lemo)
+{
+  uint32_t *pConfigRegister;
+
+  uint32_t statRegValue;
+  uint32_t confRegValue;
+
+  if (lemo > 4) return MIL_STAT_OUT_OF_RANGE;
+
+  // disable gate mode 
+  readCtrlStatRegEvtMil(base, &statRegValue);
+  if (lemo == 1) statRegValue = statRegValue & ~MIL_CTRL_STAT_PULS1_FRAME;
+  if (lemo == 2) statRegValue = statRegValue & ~MIL_CTRL_STAT_PULS2_FRAME;
+  writeCtrlStatRegEvtMil(base, statRegValue);
+
+  // disable output
+  pConfigRegister = (uint32_t *)(base + (MIL_REG_WR_RF_LEMO_CONF >> 2));
+  confRegValue = *pConfigRegister;
+  if (lemo == 1) confRegValue = confRegValue & ~MIL_LEMO_OUT_EN1 & ~MIL_LEMO_EVENT_EN1;
+  if (lemo == 2) confRegValue = confRegValue & ~MIL_LEMO_OUT_EN2 & ~MIL_LEMO_EVENT_EN2;
+  if (lemo == 3) confRegValue = confRegValue & ~MIL_LEMO_OUT_EN3 & ~MIL_LEMO_EVENT_EN3;
+  if (lemo == 4) confRegValue = confRegValue & ~MIL_LEMO_OUT_EN4 & ~MIL_LEMO_EVENT_EN4;
+  *pConfigRegister = confRegValue;
+
+  return MIL_STAT_OK;
+} // disableLemoEvtMil
+
+
