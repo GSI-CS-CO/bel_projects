@@ -10,10 +10,11 @@ SHELL = /bin/sh
 OBJCOPY		=  $(CROSS_COMPILE)objcopy
 GENRAMMIF	?= $(TOP)/ip_cores/wrpc-sw/tools/genrammif
 INCPATH	:= $(TOP)/modules/lm32-include
+EBPATH  := $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 W1    	:= $(TOP)/ip_cores/wrpc-sw
 USRCPUCLK	?= 62500
 CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os -DUSRCPUCLK=$(USRCPUCLK) -I$(INCPATH) -I$(W1)/include \
-		-I$(W1)/sdb-lib -I$(W1)/pp_printf -std=gnu99 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 -DSDBFS_BIG_ENDIAN
+		-I$(W1)/sdb-lib -I$(W1)/pp_printf -I$(EBPATH) -std=gnu99 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 -DSDBFS_BIG_ENDIAN
 
 
 STUBD	?= $(TOP)/modules/lm32_stub
