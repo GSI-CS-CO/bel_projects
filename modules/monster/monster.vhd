@@ -33,6 +33,7 @@ use work.monster_pkg.all;
 use work.wr_fabric_pkg.all;
 use work.wishbone_pkg.all;
 use work.eca_pkg.all;
+use work.eca_tap_pkg.all;
 use work.tlu_pkg.all;
 use work.pcie_wb_pkg.all;
 use work.wr_altera_pkg.all;
@@ -61,6 +62,7 @@ use work.cfi_flash_pkg.all;
 use work.psram_pkg.all;
 use work.wb_serdes_clk_gen_pkg.all;
 use work.io_control_pkg.all;
+
 
 entity monster is
   generic(
@@ -364,7 +366,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- required slaves
-  constant c_dev_slaves          : natural := 28;
+  constant c_dev_slaves          : natural := 29;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_mbox           : natural := 2;
@@ -395,6 +397,7 @@ architecture rtl of monster is
   constant c_devs_CfiPFlash      : natural := 25;
   constant c_devs_nau8811        : natural := 26;
   constant c_devs_psram          : natural := 27;
+  constant c_devs_eca_tap        : natural := 28;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -428,7 +431,8 @@ architecture rtl of monster is
     c_devs_vme_info       => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme),
     c_devs_psram          => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
     c_devs_CfiPFlash      => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
-    c_devs_ssd1325        => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325));
+    c_devs_ssd1325        => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325),
+    c_devs_eca_tap        => f_sdb_auto_device(c_eca_tap_sdb,                    true));
     
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
@@ -532,6 +536,9 @@ architecture rtl of monster is
   signal wrc_slave_o   : t_wishbone_slave_out;
   signal wrc_master_i  : t_wishbone_master_in;
   signal wrc_master_o  : t_wishbone_master_out;
+  signal s_eca_evt_m_i  : t_wishbone_master_in;
+  signal s_eca_evt_m_o  : t_wishbone_master_out;
+
   signal eb_src_out    : t_wrf_source_out;
   signal eb_src_in     : t_wrf_source_in;
   signal eb_snk_out    : t_wrf_sink_out;
@@ -611,7 +618,7 @@ architecture rtl of monster is
   
   signal s_stall_i   : std_logic_vector(c_channel_types'range) := (others => '0');
   signal s_channel_o : t_channel_array(c_channel_types'range);
-  signal s_time      : t_time;
+  signal s_time, s_sys_time : t_time;
   
   constant c_num_streams : natural := 2;
   signal s_stream_i : t_stream_array(c_num_streams-1 downto 0);
@@ -1553,12 +1560,36 @@ begin
       irq_master_o   => dev_msi_slave_i (c_devs_tlu),
       irq_master_i   => dev_msi_slave_o (c_devs_tlu));
   
+
+
+
+  -- transparent wire tap on eca events
+  ecatap : eca_tap
+  generic map(
+    g_build_tap => true
+  )
+  port map (
+    clk_sys_i    => clk_sys,
+    rst_sys_n_i  => rstn_sys,
+    clk_ref_i    => clk_ref,
+    rst_ref_n_i  => rstn_ref,
+    time_ref_i   => s_time,
+    ctrl_o       => dev_bus_master_i(c_devs_eca_tap),
+    ctrl_i       => dev_bus_master_o(c_devs_eca_tap),
+    tap_out_o    => s_eca_evt_m_o,
+    tap_out_i    => s_eca_evt_m_i,
+    tap_in_o     => top_bus_master_i(c_tops_eca_event),
+    tap_in_i     => top_bus_master_o(c_tops_eca_event)
+  );
+
+
+
   ecawb : eca_wb_event
     port map(
       w_clk_i    => clk_sys,
       w_rst_n_i  => rstn_sys,
-      w_slave_i  => top_bus_master_o(c_tops_eca_event),
-      w_slave_o  => top_bus_master_i(c_tops_eca_event),
+      w_slave_i  => s_eca_evt_m_o,
+      w_slave_o  => s_eca_evt_m_i,
       e_clk_i    => clk_ref,
       e_rst_n_i  => rstn_ref,
       e_stream_o => s_stream_i(0),
