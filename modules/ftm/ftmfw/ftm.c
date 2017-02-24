@@ -16,7 +16,7 @@ void prioQueueInit()
    pFpqCtrl[PRIO_MODE_CLR>>2]       = 0xffffffff;
    pFpqCtrl[PRIO_ECA_ADR_RW>>2]     = (uint32_t)pEca & ~0x80000000;
    pFpqCtrl[PRIO_EBM_ADR_RW>>2]     = ((uint32_t)pEbm & ~0x80000000);
-   pFpqCtrl[PRIO_TX_MAX_MSGS_RW>>2] = 5;
+   pFpqCtrl[PRIO_TX_MAX_MSGS_RW>>2] = 38;
    pFpqCtrl[PRIO_TX_MAX_WAIT_RW>>2] = loW(pFtmIf->tDue);
    pFpqCtrl[PRIO_MODE_SET>>2]       = PRIO_BIT_ENABLE     | 
                                           PRIO_BIT_MSG_LIMIT  |
@@ -53,7 +53,7 @@ void ftmInit()
    pCurrentChain        = (t_ftmChain*)&pFtmIf->idle;
    pFtmIf->tPrep        = 150000;
 //   pFtmIf->tTrn         = 15000/8;
-   pFtmIf->tDue         = 5000;
+   pFtmIf->tDue         = 50000;
    prioQueueInit();
 
    // MODELSIM FIRMWARE
