@@ -27,7 +27,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.wishbone_pkg.all;
 use work.wbgenplus_pkg.all;
---use work.genram_pkg.all;
+use work.genram_pkg.all;
 use work.eca_tap_auto_pkg.all;
 
 
@@ -37,17 +37,19 @@ entity eca_tap is generic
   g_build_tap : boolean := true
 );
 port (
-  clk_i        : in  std_logic;  -- system clock 
-  rst_n_i      : in  std_logic;  -- reset, active low 
-  tm_tai8ns_i  : in  std_logic_vector(63 downto 0) := (others => '0');
+  clk_sys_i       : in  std_logic;  -- system clock 
+  rst_sys_n_i     : in  std_logic;  -- reset, active low
+  clk_ref_i       : in  std_logic;  -- system clock 
+  rst_ref_n_i     : in  std_logic;  -- reset, active low 
+  time_ref_i      : in  std_logic_vector(63 downto 0) := (others => '0');
     
-  ctrl_o       : out t_wishbone_slave_out;
-  ctrl_i       : in  t_wishbone_slave_in;
+  ctrl_o      : out t_wishbone_slave_out;
+  ctrl_i      : in  t_wishbone_slave_in;
 
-  tap_out_o    : out t_wishbone_master_out; 
-  tap_out_i    : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
-  tap_in_o     : out t_wishbone_slave_out;
-  tap_in_i     : in  t_wishbone_slave_in
+  tap_out_o   : out t_wishbone_master_out; 
+  tap_out_i   : in  t_wishbone_master_in := ('0', '0', '0', '0', '0', x"00000000");
+  tap_in_o    : out t_wishbone_slave_out;
+  tap_in_i    : in  t_wishbone_slave_in
 
 );
 end eca_tap;
@@ -60,6 +62,9 @@ architecture rtl of eca_tap is
   signal r_cnt_msg  : unsigned(63 downto 0) := (others => '0');
   signal s_en, r_en0, s_push, s_new_min, s_new_max, s_inc_msg : std_logic := '0';
   signal s_valid : std_logic_vector(0 downto 0) := (others => '0');
+
+  signal s_empty, s_full, r_push, s_pop : std_logic;
+  signal s_time_sys : std_logic_vector(63 downto 0);
 
   constant c_DIFF_MIN   : natural := 0;
   constant c_DIFF_MAX   : natural := 1;
@@ -84,11 +89,58 @@ begin
 
 instOn: if g_build_tap = TRUE generate
 
+   gaf : generic_async_fifo
+   generic map (
+     g_data_width => time_ref_i'length,
+     g_size       => 8,
+     g_show_ahead => true,
+
+     g_with_rd_empty        => true,
+     g_with_rd_full         => false,
+     g_with_rd_almost_empty => false,
+     g_with_rd_almost_full  => false,
+     g_with_rd_count        => false,
+
+     g_with_wr_empty        => false,
+     g_with_wr_full         => true,
+     g_with_wr_almost_empty => false,
+     g_with_wr_almost_full  => false,
+     g_with_wr_count        => false
+     )
+   port map (
+     rst_n_i           => rst_ref_n_i,
+     clk_wr_i          => clk_ref_i,
+     d_i               => time_ref_i,
+     we_i              => r_push,
+     wr_full_o         => s_full,
+     clk_rd_i          => clk_sys_i,
+     q_o               => s_time_sys,
+     rd_i              => s_pop,
+     rd_empty_o        => s_empty);
+ 
+
+  s_pop <= not s_empty;
+
+  tsin : process(clk_ref_i)
+  begin
+    if rising_edge(clk_ref_i) then
+        if(rst_ref_n_i = '0') then
+          r_push <= '0';
+        else
+          r_push <= not r_push and not s_full; -- ref clk / 2
+        end if;
+    end if;
+  end process;
+
+
+
+
+
 --WB IF
   INST_eca_tap_auto : eca_tap_auto
   port map (
-    clk_sys_i     => clk_i,
-    rst_sys_n_i   => rst_n_i,
+    clk_sys_i     => clk_sys_i,
+    rst_sys_n_i   => rst_sys_n_i,
     error_i       => "0",
     stall_i       => "0",
     reset_o       => s_ctrl_reset_o,
@@ -122,16 +174,16 @@ instOn: if g_build_tap = TRUE generate
 
   s_dl      <= signed(r_dl_hi & r_dl_lo);                            -- deadline ts registers
 
-  s_diff    <= s_dl - signed(tm_tai8ns_i);                         -- deadline diff
+  s_diff    <= s_dl - signed(s_time_sys);                         -- deadline diff
 
   --no protection against invalid timing messages, but that can come later
   s_inc_msg   <= r_cnt_word(r_cnt_word'left);                         -- word count underflow
   s_en        <= s_inc_msg;                                           -- enable signal
 
-  word_cnt : process(clk_i)
+  word_cnt : process(clk_sys_i)
   begin
-    if rising_edge(clk_i) then
-      if(rst_n_i = '0' or s_en = '1') then -- reset also on underflow
+    if rising_edge(clk_sys_i) then
+      if(rst_sys_n_i = '0' or s_en = '1') then -- reset also on underflow
         r_cnt_word <= to_unsigned(7, r_cnt_word'length);      
       else
         if s_push = '1' then
@@ -141,13 +193,13 @@ instOn: if g_build_tap = TRUE generate
     end if;
   end process;
 
-  main : process(clk_i)
+  main : process(clk_sys_i)
   begin
-    if rising_edge(clk_i) then
+    if rising_edge(clk_sys_i) then
       
       r_dl_hi <= r_dl_lo; 
       
-     if(rst_n_i = '0' or s_ctrl_reset_o = "1") then
+     if(rst_sys_n_i = '0' or s_ctrl_reset_o = "1") then
         r_dl_lo             <= (others => '0');
         r_min               <= (others => '1'); -- set rmin to maximum positive value 
         r_min(r_min'left)   <= '0';
