@@ -14,9 +14,11 @@ package eca_tap_pkg is
 
   );
   port (
-    clk_i         : in  std_logic;  -- system clock 
-    rst_n_i       : in  std_logic;  -- reset, active low 
-    tm_tai8ns_i   : in  std_logic_vector(63 downto 0) := (others => '0');
+    clk_sys_i       : in  std_logic;  -- system clock 
+    rst_sys_n_i     : in  std_logic;  -- reset, active low
+    clk_ref_i       : in  std_logic;  -- system clock 
+    rst_ref_n_i     : in  std_logic;  -- reset, active low 
+    time_ref_i      : in  std_logic_vector(63 downto 0) := (others => '0');
       
     ctrl_o        : out t_wishbone_slave_out;
     ctrl_i        : in  t_wishbone_slave_in;

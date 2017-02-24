@@ -34,6 +34,7 @@ use work.wr_fabric_pkg.all;
 use work.wishbone_pkg.all;
 use work.eca_pkg.all;
 use work.eca_internals_pkg.eca_wr_time;
+use work.eca_tap_pkg.all;
 use work.tlu_pkg.all;
 use work.pcie_wb_pkg.all;
 use work.wr_altera_pkg.all;
@@ -418,7 +419,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- required slaves
-  constant c_dev_slaves          : natural := 27;
+  constant c_dev_slaves          : natural := 28;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
@@ -448,6 +449,7 @@ architecture rtl of monster is
   constant c_devs_DDR3_if2       : natural := 24;
   constant c_devs_DDR3_ctrl      : natural := 25;
   constant c_devs_tempsens       : natural := 26;
+  constant c_devs_eca_tap        : natural := 27;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -480,7 +482,8 @@ architecture rtl of monster is
     c_devs_ddr3_if1       => f_sdb_auto_device(c_wb_DDR3_if1_sdb,                g_en_ddr3),
     c_devs_ddr3_if2       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
     c_devs_ddr3_ctrl      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
-    c_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens));
+    c_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
+    c_devs_eca_tap        => f_sdb_auto_device(c_eca_tap_sdb,                    g_en_tap));
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -596,6 +599,9 @@ architecture rtl of monster is
   signal wrc_slave_o   : t_wishbone_slave_out;
   signal wrc_master_i  : t_wishbone_master_in;
   signal wrc_master_o  : t_wishbone_master_out;
+  signal s_eca_evt_m_i  : t_wishbone_master_in;
+  signal s_eca_evt_m_o  : t_wishbone_master_out;
+
   signal eb_src_out    : t_wrf_source_out;
   signal eb_src_in     : t_wrf_source_in;
   signal eb_snk_out    : t_wrf_sink_out;
@@ -1768,6 +1774,24 @@ end generate;
   end generate gen_lvds_dat;
   --FIXME not sure about those ... do they need initialising when there is no ECA/TLU? => YES!
 
+ -- transparent wire tap on eca events
+  ecatap : eca_tap
+  generic map(
+    g_build_tap => g_en_tap
+  )
+  port map (
+    clk_sys_i    => clk_sys,
+    rst_sys_n_i  => rstn_sys,
+    clk_ref_i    => clk_ref,
+    rst_ref_n_i  => rstn_ref,
+    time_ref_i   => s_time,
+    ctrl_o       => dev_bus_master_i(c_devs_eca_tap),
+    ctrl_i       => dev_bus_master_o(c_devs_eca_tap),
+    tap_out_o    => s_eca_evt_m_o,
+    tap_out_i    => s_eca_evt_m_i,
+    tap_in_o     => top_bus_master_i(c_tops_eca_event),
+    tap_in_i     => top_bus_master_o(c_tops_eca_event)
+  );
 
 
   -- FTM - NO ECA --
