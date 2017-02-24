@@ -1,4 +1,5 @@
 TARGET		= example
+.DEFAULT_GOAL := fwbin
 DEVICE		= 5AGXMA3D4
 FLASH		= EPCQ256
 SPI_LANES	= ASx4
@@ -7,16 +8,22 @@ SHARED_SIZE     = 8K
 USRCPUCLK       = 125000
 VERSION         = 0.0.1
 
-PATHFW    = .
-PATHPKG		= $(shell python2.7 ../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
-PREFIX    ?= /usr/local
-CFLAGS    = -I$(PATHFW) 
-include   ../../syn/build.mk
+PATHFW 	= .
+PATHPKG	= $(shell python2.7 ../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
+PREFIX 	?= /usr/local
+CFLAGS 	= -I$(PATHFW) 
 
-all: $(TARGET).elf 
+
+include ../../syn/build.mk
+
+
+fwbin: $(TARGET).bin 
+
+
 
 $(TARGET).elf: $(PATHFW)/main.c $(INCPATH)/ebm.c 
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
+
 
