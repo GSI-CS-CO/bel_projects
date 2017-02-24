@@ -136,6 +136,8 @@ void main(void) {
    atomic_off();
    if (getMsiBoxCpuSlot(cpuId, 0) == -1) {mprintf("#%02u: Mail box slot acquisition failed\n");}
 
+   mprintf( "Dbg Min @ %08x\n", (uint32_t)(&pFtmIf->debug[DBG_DISP_DUR_MIN]));
+
    while (1) {
       cmdEval();
       processFtm();

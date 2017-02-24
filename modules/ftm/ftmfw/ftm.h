@@ -107,7 +107,7 @@ typedef struct {
    t_ftmChain  idle;
    t_semaphore sema;
    uint32_t    sctr;
-   uint32_t    debug[32];
+   int32_t     debug[32];
 } t_ftmIf;
 
 volatile uint64_t* pMsgCntPQ;

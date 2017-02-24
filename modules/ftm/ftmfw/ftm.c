@@ -1,12 +1,11 @@
 #include "ftm.h"
 #include "dbg.h"
 
-
-
-
 uint64_t dbg_sum = 0;
-
 uint64_t execCnt; 
+uint64_t dbg_now, dbg_then; 
+int32_t dbg_dur;
+
 
 void prioQueueInit()
 {
@@ -60,8 +59,8 @@ void ftmInit()
    // MODELSIM FIRMWARE
    //pFtmIf->cmd = CMD_START;    
  
-   pFtmIf->debug[DBG_DISP_DUR_MIN] = 0xffffffff;
-   pFtmIf->debug[DBG_DISP_DUR_MAX] = 0x0;
+   pFtmIf->debug[DBG_DISP_DUR_MIN] = 0xcfffffff;
+   pFtmIf->debug[DBG_DISP_DUR_MAX] = 0x80000000;
    pFtmIf->debug[DBG_DISP_DUR_AVG] = 0x0;
 }
 
@@ -151,6 +150,10 @@ inline int dispatch(t_ftmMsg* pMsg)
   //Diagnostic Event? insert PQ Message counter. Different device, can't be placed inside atomic!
   if (pMsg->id == DIAG_PQ_MSG_CNT) tmpPar = *pMsgCntPQ;
   else                             tmpPar = pMsg->par;  
+
+  dbg_dur = (int32_t)(pMsg->ts - getSysTime());
+  if(pFtmIf->debug[DBG_DISP_DUR_MIN] > dbg_dur) pFtmIf->debug[DBG_DISP_DUR_MIN] = dbg_dur; //min
+  if(pFtmIf->debug[DBG_DISP_DUR_MAX] < dbg_dur) pFtmIf->debug[DBG_DISP_DUR_MAX] = dbg_dur; //max
 
   atomic_on();
   *(pFpqData + (PRIO_DAT_STD>>2))   = hiW(pMsg->id);
@@ -254,8 +257,6 @@ inline t_ftmChain* processChainAux(t_ftmChain* c)
    t_ftmMsg*   pCurMsg;
    uint64_t tMsgExec, now;
 
-   uint64_t dbg_now, dbg_then; 
-   uint32_t dbg_dur;
 
    DBPRINT2("Time to process Chain %08x reached\n", c);
    pCur  = c; 
@@ -288,13 +289,9 @@ inline t_ftmChain* processChainAux(t_ftmChain* c)
       
                   //Debug Stuff
                   
-               /*dbg_dur = (uint32_t)(dbg_now-dbg_then);
-               if(msgCnt == 0) dbg_sum = 0;
-               else dbg_sum += (uint64_t)dbg_dur;
-               if(pFtmIf->debug[DBG_DISP_DUR_MIN] > dbg_dur) pFtmIf->debug[DBG_DISP_DUR_MIN] = dbg_dur; //min
-               if(pFtmIf->debug[DBG_DISP_DUR_MAX] < dbg_dur) pFtmIf->debug[DBG_DISP_DUR_MAX] = dbg_dur; //max
-               pFtmIf->debug[DBG_DISP_DUR_AVG] = dbg_sum/(msgCnt+1);
-               */
+ 
+
+               
             } else {break; DBPRINT3("Too early for Msg %u", c->msgIdx);}
          } 
          if(c->msgIdx == c->msgQty)
@@ -343,7 +340,7 @@ inline t_ftmChain* processChainAux(t_ftmChain* c)
         
       }
   }
-   
+  dbg_then = now; 
   return pCur;    
 }
 
