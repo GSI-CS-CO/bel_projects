@@ -28,13 +28,16 @@ ifndef RAM_SIZE
 $(error Missing mandatory RAM_SIZE parameter! Quitting ...)
 endif
 
-.PHONY: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd
+.PHONY: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd $(TARGET)_shared_mmap.h
 .PRECIOUS: $(TARGET).bin
 
 include $(INCPATH)/build_lm32.mk
  
 
 all:	$(TARGET).mif $(TARGET)_stub.mif $(TARGET).sof $(TARGET).jic $(TARGET).rpd
+
+$(TARGET)_shared_mmap.h:
+	@(printf %b $(SMM)) > $@
 
 buildid.c:
 	@(printf %b $(CBR)) > $@
@@ -49,7 +52,7 @@ clean::
 	rm -rf db incremental_db PLLJ_PLLSPE_INFO.txt
 	rm -f $(TARGET).*.rpt $(TARGET).*.summary $(TARGET).map* $(TARGET).fit.* $(TARGET).pin $(TARGET).jdi $(TARGET)*.qdf $(TARGET).done $(TARGET).qws
 	rm -f $(TARGET).rpd $(TARGET).jic $(TARGET).pof $(TARGET).sof $(TARGET).dep $(TARGET).elf $(TARGET).o *.mif *.elf
-	rm -f ram.ld buildid.c  
+	rm -f ram.ld buildid.c $(TARGET)_shared_mmap.h 
 
 prog:
 	@read -p "If you have multiple USB-Programmer connected, choose the one you want to use: " BLASTER; \
@@ -59,7 +62,7 @@ prog:
 %_stub.elf:  ram.ld
 	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(LDFLAGS)
 
-%.elf:	buildid.c ram.ld
+%.elf:	buildid.c ram.ld $(TARGET)_shared_mmap.h
 	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(INCLUDES) $(LDFLAGS)
 
 %.bin:	%.elf
