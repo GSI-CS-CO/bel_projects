@@ -74,7 +74,7 @@ uint32_t *pShared;            /* pointer to begin of shared memory region       
 uint32_t *pSharedCounter;     /* pointer to a "user defined" u32 register; here: publish counter            */
 uint32_t *pSharedInput;       /* pointer to a "user defined" u32 register; here: get input from host system */
 uint32_t *pSharedCmd;         /* pointer to a "user defined" u32 register; here: get commnand from host s.  */
-
+uint32_t *pCpuRamExternal;    /* external address (seen from host bridge) of this CPU's RAM
 /*
 void show_msi()
 {
@@ -153,20 +153,35 @@ void getWishboneTAI()
 void useSharedMem()
 {
   int      i,j;
+  uint32_t idx;
+  const uint32_t c_Max_Rams = 10;
+  sdb_location found_sdb[c_Max_Rams];
+  sdb_location found_clu;
 
   /* get pointer to shared memory       */                    
   pShared        = (uint32_t *)_startshared;
   pSharedCounter = (uint32_t *)(pShared + (EXAMPLE_SHARED_COUNTER >> 2));
   pSharedInput   = (uint32_t *)(pShared + (EXAMPLE_SHARED_INPUT >> 2));
-  
+
   /* print local pointer info to UART   */
   mprintf("internal shared memory: start            @ 0x%08x\n", (uint32_t)pShared);
   mprintf("internal shared memory: counter address  @ 0x%08x\n", (uint32_t)pSharedCounter);
   mprintf("internal shared memory: input address    @ 0x%08x\n", (uint32_t)pSharedInput);
 
-  /* print external WB info to UART     */
-  mprintf("external WB address   : counter offset   @ 0x%08x\n", EXAMPLE_SHARED_COUNTER + SHARED_OFFS);
-  mprintf("external WB address   : input offset     @ 0x%08x\n", EXAMPLE_SHARED_INPUT + SHARED_OFFS);
+  idx = 0;
+  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
+  idx = 0;
+  find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
+  if(idx >= cpuId) {
+    pCpuRamExternal = (uint32_t*)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+    /* print external WB info to UART     */
+    mprintf("external WB address   : counter offset   @ 0x%08x\n", (uint32_t)(pCpuRamExternal + ((EXAMPLE_SHARED_COUNTER + SHARED_OFFS) >> 2)));
+    mprintf("external WB address   : input offset     @ 0x%08x\n", (uint32_t)(pCpuRamExternal + ((EXAMPLE_SHARED_INPUT    + SHARED_OFFS) >> 2))); 
+  } else {
+    pCpuRamExternal = (uint32_t*)ERROR_NOT_FOUND;
+    mprintf("Could not find external WB address of my own RAM !\n");
+  }
+  
   
   /* initialize values of shared memory */
   *pSharedCounter = 0x0;
@@ -281,7 +296,7 @@ void initCmds()
   /* print pointer info to UART */
   mprintf("\n");
   mprintf("internal shared memory: command address  @ 0x%08x\n", (uint32_t)pSharedCmd);
-  mprintf("external WB address   : command offset   @ 0x%08x\n", EXAMPLE_SHARED_CMD + SHARED_OFFS);
+  mprintf("external WB address   : command offset   @ 0x%08x\n", (uint32_t)(pCpuRamExternal + ((EXAMPLE_SHARED_CMD + SHARED_OFFS) >> 2)));
   mprintf("\n");
 
   /* initalize command value: 0x0 means 'no command        */
