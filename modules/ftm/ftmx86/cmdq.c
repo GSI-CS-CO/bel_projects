@@ -9,6 +9,12 @@
 
 const uint8_t cOff[4] = {CMDQ_LO_OFF / 4, CMDQ_HI_OFF / 4, CMDQ_IL_OFF /4, CMDQ_IL_OFF /4};
 
+const uint8_t sIL[] = "INTERLOCK";
+const uint8_t sHI[] = "High";
+const uint8_t sLO[] = "low";
+
+const uint8_t *str[3] = {sLO, sHI, sIL};
+
 uint32_t createFlow(uint32_t nextIdx, uint32_t qty)
 {
    return (ACT_TYPE_FLOW << ACT_TYPE_POS) | ((nextIdx << ACT_FLOW_NEXT_POS) & ACT_FLOW_NEXT_MSK) | ((qty << ACT_FNF_QTY_POS) & ACT_FNF_QTY_MSK);  
@@ -53,31 +59,43 @@ int32_t checkQs(uint32_t *pQs, int32_t idxnext, uint64_t now) {
 
   //masking all indices with CMDQ_IDX_OF_MSK would be safer, but takes a lot of time. leave out for now.
   //We rely on host writing conformant indices and mask our own updates
+  //printf("  ILWR: %x HIWR: %x LOWR: %x\n", *(pQs + (CMDQ_IL_WR_OFF >> 2)), *(pQs + (CMDQ_HI_WR_OFF >> 2)), *(pQs + (CMDQ_LO_WR_OFF >> 2)));
+  //printf("  ILRD: %x HIRD: %x LORD: %x\n", *(pQs + (CMDQ_IL_RD_OFF >> 2)), *(pQs + (CMDQ_HI_RD_OFF >> 2)), *(pQs + (CMDQ_LO_RD_OFF >> 2)));
+
   qIlNotEmpty = ( *(pQs + (CMDQ_IL_WR_OFF >> 2)) != *(pQs + (CMDQ_IL_RD_OFF >> 2)) );
   qHiNotEmpty = ( *(pQs + (CMDQ_HI_WR_OFF >> 2)) != *(pQs + (CMDQ_HI_RD_OFF >> 2)) );
   qLoNotEmpty = ( *(pQs + (CMDQ_LO_WR_OFF >> 2)) != *(pQs + (CMDQ_LO_RD_OFF >> 2)) );
-  queueIdx    = (qIlNotEmpty << 1) + qHiNotEmpty;
+
+  
+
+  printf("  IL: %d HI: %d LO: %d\n", qIlNotEmpty, qHiNotEmpty, qLoNotEmpty);
+
+  queueIdx    = qIlNotEmpty + qHiNotEmpty;
 
   //check if any elements were found
   if (queueIdx + qLoNotEmpty) {
 
-    //now     = getSysTime();
-    printf("Elements found in Q %u\n", queueIdx);
+    
 
-    pQ      = pQ + cOff[queueIdx];                                          //get ptr to non empty queue of highest priority
+    //now     = getSysTime();
+
+    printf("!!! %s: Elements found, ", str[queueIdx]);
+
+    pQ      = pQs + cOff[queueIdx];                                          //get ptr to non empty queue of highest priority
     rdIdx   = *(uint32_t*)(pQ   + (CMDQ_RD_OFF >> 2));                      //get read idx
     pCmd    =  (uint32_t*)(pQ   + ((CMDQ_BUF_OFF + (rdIdx & CMDQ_IDX_MSK) * _CMD_SIZE) >> 2)); //get ptr to current command
     ts      = *(uint64_t*)(pCmd + (CMD_TS_OFF   >> 2));                      //get current due time
     pAct    =  (uint32_t*)(pCmd + (CMD_ACT_OFF >> 2));                      //get ptr to current action
 
+        
     //Check if element is Due
     if (now < ts) {
     //not due
-
+      printf("NOT due, dl %llu, now %llu\n", (long long unsigned int)ts, (long long unsigned int)now);
     } else {
       //due
       //Get type
-      printf("Element due, dl %llu, now %llu\n", (long long unsigned int)ts, (long long unsigned int)now);
+      printf("due, dl %llu, now %llu\n", (long long unsigned int)ts, (long long unsigned int)now);
 
       type = *pAct & CMD_TYPE_MSK;
 
@@ -88,7 +106,7 @@ int32_t checkQs(uint32_t *pQs, int32_t idxnext, uint64_t now) {
       qty  = *pAct & ACT_FNF_QTY_MSK; 
       if (qty <= 1) {
         //pop Q
-        printf("Popping Q\n");
+        printf("Qty %u, popping queue\n", qty);
         *(pQ + (CMDQ_RD_OFF >> 2)) += 1;
         *(pQ + (CMDQ_RD_OFF >> 2)) &= CMDQ_IDX_OF_MSK; //trim by mask
       } else {
@@ -109,6 +127,7 @@ int32_t checkQs(uint32_t *pQs, int32_t idxnext, uint64_t now) {
     } // due
   } else {
   // no elements in cmdq
+    printf("*** No Elements\n");
   }
 
   return idxnext;
