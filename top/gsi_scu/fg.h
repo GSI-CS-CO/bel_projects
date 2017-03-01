@@ -31,6 +31,7 @@ struct scu_slave {
   unsigned int cid_group;
   unsigned int cid_sys;
   unsigned int slot; /* 1 to 12 */
+  unsigned int fg_ver;
   struct fg_dev devs[MAX_FG_PER_SLAVE + 1];
 };
 

@@ -98,6 +98,9 @@ int main(int argc, char** argv) {
    int error = 0;
    int compare = 0;
    
+   netaddress0 = NULL;
+   netaddress1 = NULL;
+   
    // start getopt 
    while ((opt = getopt(argc, argv, "c:h")) != -1) {
       switch (opt) {

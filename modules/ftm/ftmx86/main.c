@@ -15,7 +15,8 @@
 #define STATUS_BUF_SIZE 65536
 
 const char* program;
-uint8_t verbose, readonly, error, show_time;
+uint8_t verbose, readonly, error;
+extern uint8_t show_time;
 
 
 static void help(void) {

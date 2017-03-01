@@ -12,13 +12,13 @@ SYSCONFDIR  ?= /etc
 EXTRA_FLAGS ?=
 PWD         := $(shell pwd)
 
-all::		etherbone tools eca tlu sdbfs toolchain firmware driver
+all::		etherbone tools sdbfs toolchain firmware driver
 
 gateware:	all pexarria5 exploder5 vetar2a scu2 scu3
 
-install::	etherbone-install tools-install eca-install tlu-install driver-install
+install::	etherbone-install tools-install driver-install
 
-clean::		etherbone-clean tools-clean eca-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean exploder5-clean pexarria5-clean sio3-clean
+clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean
 
 distclean::	clean
 	git clean -xfd .
@@ -30,7 +30,7 @@ etherbone::
 	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
 
 etherbone-clean::
-	! test -f ip_cores/etherbone-core/Makefile || $(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" distclean
+	! test -f ip_cores/etherbone-core/api/Makefile || $(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" distclean
 
 etherbone-install::
 	$(MAKE) -C ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" DESTDIR=$(STAGING) install
@@ -46,14 +46,23 @@ saftlib-clean::
 saftlib-install::
 	$(MAKE) -C ip_cores/saftlib EXTRA_FLAGS="$(EXTRA_FLAGS)" DESTDIR=$(STAGING) install
 
-tools::		etherbone eca tlu
-	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
+tools::		etherbone
+	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
 
 tools-clean::
-	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" clean
+	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" clean
 
 tools-install::
-	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" install
+	$(MAKE) -C tools EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" install
+
+ecatools:: 	etherbone eca tlu
+	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" ecatools
+
+ecatools-clean::
+	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" ecatools-clean
+
+ecatools-install::
+	$(MAKE) -C tools ECA=$(PWD)/ip_cores/wr-cores/modules/wr_eca TLU=$(PWD)/ip_cores/wr-cores/modules/wr_tlu EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" ecatools-install
 
 eca::		etherbone
 	$(MAKE) -C ip_cores/wr-cores/modules/wr_eca EB=$(PWD)/ip_cores/etherbone-core/api EXTRA_FLAGS="$(EXTRA_FLAGS)" all
@@ -194,3 +203,9 @@ sio3::		firmware
 
 sio3-clean::
 	$(MAKE) -C syn/scu_sio3 PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+pmc::	firmware
+	$(MAKE) -C syn/gsi_pmc/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+pmc-clean::
+	$(MAKE) -C syn/gsi_pmc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean

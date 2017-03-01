@@ -65,7 +65,7 @@ module serirq_slave(clk_i, nrst_i,
  
     wire irq_changed = (serirq_mode & (current_irq != irq_i));
  
-    always @(posedge clk_i or negedge nrst_i)
+    always @(posedge clk_i)
         if(~nrst_i)
         begin
             state <= `SERIRQ_ST_IDLE;
@@ -146,7 +146,7 @@ module serirq_slave(clk_i, nrst_i,
     reg [3:0] stop_clk_cnt;
  
     // Look for STOP cycles
-    always @(posedge clk_i or negedge nrst_i)
+    always @(posedge clk_i)
         if(~nrst_i)
         begin
             found_stop <= 1'b0;

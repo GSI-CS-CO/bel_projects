@@ -56,6 +56,7 @@ architecture rtl of generic_iis_master is
   signal   s_current_trigger          : std_logic; -- actual trigger signal
   signal   s_prev_trigger             : std_logic; -- value of the previous trigger signal
   signal   s_sync_trigger             : std_logic; -- sync stage for trigger signal
+  signal   s_sync_trigger_pre         : std_logic; -- sync pre. stage for trigger signal  
   signal   s_frame_done               : std_logic; -- pulse every new frame sync cycle
   
 begin
@@ -304,9 +305,11 @@ begin
   p_sync_trigger : process(clk_sys_i, rst_n_i)
   begin
     if (rst_n_i = '0') then
-      s_sync_trigger <= '0';
+      s_sync_trigger_pre <= '0';
+      s_sync_trigger     <= '0';
     elsif (rising_edge(clk_sys_i)) then
-      s_sync_trigger <= iis_trigger_i;
+      s_sync_trigger_pre <= iis_trigger_i;
+      s_sync_trigger     <= s_sync_trigger_pre;
     end if;
   end process;
   

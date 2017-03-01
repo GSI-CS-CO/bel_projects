@@ -335,7 +335,9 @@ void print_fgs() {
   while(i < MAX_FG_MACROS) {
     // hi..lo bytes: slot, device, version, output-bits
     if (fg_macros[i] != 0)
-      mprintf("fg-%d-%d\n", fg_macros[i] >> 24, (fg_macros[i] >> 16) & 0xff);
+      mprintf("fg-%d-%d ver: %d output-bits: %d\n", fg_macros[i] >> 24,
+              (fg_macros[i] >> 16) & 0xff, (fg_macros[i] >> 8) & 0xff,
+              fg_macros[i] & 0xff);
     i++;
   } 
 }
@@ -504,20 +506,20 @@ int main(void) {
 
   msDelayBig(1500); //wait for wr deamon to read sdbfs
 
-  if (BASE_SYSCON)
-    mprintf("SYS_CON found on adr: 0x%x\n", BASE_SYSCON);
-  else
+  if ((int)BASE_SYSCON == ERROR_NOT_FOUND)
     mprintf("no SYS_CON found!\n"); 
+  else
+    mprintf("SYS_CON found on adr: 0x%x\n", BASE_SYSCON);
 
   timer_init(1); //needed by usleep_init() 
   usleep_init();
   
-  if(cpu_info_base) {
+  if((int)cpu_info_base == ERROR_NOT_FOUND) {
+    mprintf("no CPU INFO ROM found!\n");
+  } else {
     mprintf("CPU ID: 0x%x\n", cpu_info_base[0]);
     mprintf("number MSI endpoints: %d\n", cpu_info_base[1]);
-  } else 
-    mprintf("no CPU INFO ROM found!\n");
-
+  }
 
   mprintf("number of 1Wire controllers found: %d\n", ow_base_idx);
   for (i=0; i < ow_base_idx; i++) {

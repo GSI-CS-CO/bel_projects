@@ -13,14 +13,14 @@ use work.genram_pkg.all;
 package wb_nau8811_audio_driver_pkg is
   component wb_nau8811_audio_driver
     generic (
-      g_address_size     : natural := 32;  -- in bit(s)
-      g_data_size        : natural := 32;  -- in bit(s)
-      g_spi_fifo_size    : natural := 32;  -- in g_spi_data_size(s)
-      g_spi_data_size    : natural := 16;  -- in bit(s)
-      g_iis_tx_fifo_size : natural := 512; -- in g_spi_data_size(s)
-      g_iis_rx_fifo_size : natural := 512; -- in g_spi_data_size(s)
-      g_iis_word_size    : natural := 32;  -- in bit(s)
-      g_use_external_pll : boolean := true -- true for real synthesis or false for simulation purpose
+      g_address_size     : natural := 32;   -- in bit(s)
+      g_data_size        : natural := 32;   -- in bit(s)
+      g_spi_fifo_size    : natural := 32;   -- in g_spi_data_size(s)
+      g_spi_data_size    : natural := 16;   -- in bit(s)
+      g_iis_tx_fifo_size : natural := 1024; -- in g_spi_data_size(s)
+      g_iis_rx_fifo_size : natural := 1024; -- in g_spi_data_size(s)
+      g_iis_word_size    : natural := 32;   -- in bit(s)
+      g_use_external_pll : boolean := true  -- true for real synthesis or false for simulation purpose
     );
     port (
       -- generic system interface

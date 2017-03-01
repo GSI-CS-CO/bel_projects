@@ -815,7 +815,7 @@ int main(int argc, char** argv) {
   if (error) return 1;
   
   if (optind + 2 != argc) {
-    fprintf(stderr, "%s: expecting three non-optional arguments: <proto/host/port> <firmware>\n", program);
+    fprintf(stderr, "%s: expecting two non-optional arguments: <proto/host/port> <firmware(rpd file)>\n", program);
     return 1;
   }
   
