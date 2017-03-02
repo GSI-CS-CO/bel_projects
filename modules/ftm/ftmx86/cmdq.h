@@ -30,9 +30,10 @@
 #define ACT_FLOW_NEXT_MSK     0x0fff0000
 #define ACT_FLOW_NEXT_POS     16
 //Action of Flush type
-#define ACT_FLUSH_LO_MSK      0x00010000   
-#define ACT_FLUSH_HI_MSK      0x00020000   
-#define ACT_FLUSH_IL_MSK      0x00040000   
+#define ACT_FLUSH_LO_MSK      0x00010000
+#define ACT_FLUSH_LO_POS      16 
+#define ACT_FLUSH_HI_MSK      0x00020000
+#define ACT_FLUSH_HI_POS      17   
 #define ACT_FLUSH_LO_RNG_MSK  0x000000ff
 #define ACT_FLUSH_LO_RNG_POS  0
 #define ACT_FLUSH_HI_RNG_MSK  0x0000ff00
@@ -75,7 +76,7 @@ extern const uint8_t cOff[4];
 
 uint32_t createFlow(uint32_t nextIdx, uint32_t qty);
 uint32_t createNop(uint32_t qty);
-uint32_t createFlush(uint32_t qty);
+uint32_t createFlush(uint8_t flushHi, uint8_t flushIdxHi, uint8_t flushLo, uint8_t flushIdxLo);
 uint32_t* pushQ(uint32_t* pQs, uint32_t priority, uint32_t action, uint64_t time);
 int32_t checkQs(uint32_t* pQs, int32_t idxnext, uint64_t now);
   
