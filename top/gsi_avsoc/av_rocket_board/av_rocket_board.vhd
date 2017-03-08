@@ -295,6 +295,29 @@ entity av_rocket_board is
     -- HPS I2C
     hps_i2c0_SDA           : inout std_logic; -- Management serial data;       I2C0_SCL,UART1_TX,SPIM1_MOSI,HPS_GPIO64;        -- PIN_N12, 7A
     hps_i2c0_SCL           : inout std_logic; -- Management serial clock;      I2C0_SDA,UART1_RX,SPIM1_CLK,HPS_GPIO63;         -- PIN_B18, 7A
+    -- GPIO
+    hps_gpio_GPIO00        : inout std_logic;
+    hps_gpio_GPIO17        : inout std_logic;
+    hps_gpio_GPIO18        : inout std_logic;
+    hps_gpio_GPIO22        : inout std_logic;
+    hps_gpio_GPIO24        : inout std_logic;
+    hps_gpio_GPIO26        : inout std_logic;
+    hps_gpio_GPIO27        : inout std_logic;
+    hps_gpio_GPIO35        : inout std_logic;
+    hps_gpio_GPIO40        : inout std_logic;
+    hps_gpio_GPIO41        : inout std_logic;
+    hps_gpio_GPIO42        : inout std_logic;
+    hps_gpio_GPIO43        : inout std_logic;
+    -- TRACE
+    hps_trace_CLK          : inout std_logic;  -- PIN_A15
+    hps_trace_D0           : inout std_logic;  -- PIN_K10
+    hps_trace_D1           : inout std_logic;  -- PIN_A16
+    hps_trace_D2           : inout std_logic;  -- PIN_L10 -- I2C1_SDA @ HPS_GPIO51
+    hps_trace_D3           : inout std_logic;  -- PIN_A18 -- I2C1_SCL @ HPS_GPIO52
+    hps_trace_D4           : inout std_logic;  -- PIN_L11
+    hps_trace_D5           : inout std_logic;  -- PIN_A17
+    hps_trace_D6           : inout std_logic;  -- PIN_M11
+    hps_trace_D7           : inout std_logic;  -- PIN_B15
     -- FPGA clock and reset
     sfp234_ref_clk_i       : in    std_logic;
     clk_20m_vcxo_i         : in    std_logic;
@@ -379,16 +402,7 @@ architecture rtl of av_rocket_board is
   signal hps_warm_reset         : std_logic;
   signal hps_debug_reset        : std_logic;
   signal hps_reset_req          : std_logic_vector(2 downto 0);
-  signal hps_trace_CLK          : std_logic;
-  signal hps_trace_D0           : std_logic;
-  signal hps_trace_D1           : std_logic;
-  signal hps_trace_D2           : std_logic;
-  signal hps_trace_D3           : std_logic;
-  signal hps_trace_D4           : std_logic;
-  signal hps_trace_D5           : std_logic;
-  signal hps_trace_D6           : std_logic;
-  signal hps_trace_D7           : std_logic;
-  
+
   signal fpga_button_pio_dummy  : std_logic_vector(3 downto 0);
   
   -- Misc. debug stuff
@@ -580,18 +594,18 @@ begin
       hps_io_hps_io_trace_inst_D6           => hps_trace_D6,
       hps_io_hps_io_trace_inst_D7           => hps_trace_D7,
       --
-      --hps_io_hps_io_gpio_inst_GPIO00        => hps_gpio_GPIO00,
-      --hps_io_hps_io_gpio_inst_GPIO17        => hps_gpio_GPIO17,
-      --hps_io_hps_io_gpio_inst_GPIO18        => hps_gpio_GPIO18,
-      --hps_io_hps_io_gpio_inst_GPIO22        => hps_gpio_GPIO22,
-      --hps_io_hps_io_gpio_inst_GPIO24        => hps_gpio_GPIO24,
-      --hps_io_hps_io_gpio_inst_GPIO26        => hps_gpio_GPIO26,
-      --hps_io_hps_io_gpio_inst_GPIO27        => hps_gpio_GPIO27,
-      --hps_io_hps_io_gpio_inst_GPIO35        => hps_gpio_GPIO35,
-      --hps_io_hps_io_gpio_inst_GPIO40        => hps_gpio_GPIO40,
-      --hps_io_hps_io_gpio_inst_GPIO41        => hps_gpio_GPIO41,
-      --hps_io_hps_io_gpio_inst_GPIO42        => hps_gpio_GPIO42,
-      --hps_io_hps_io_gpio_inst_GPIO43        => hps_gpio_GPIO43,
+      hps_io_hps_io_gpio_inst_GPIO00        => hps_gpio_GPIO00,
+      hps_io_hps_io_gpio_inst_GPIO17        => hps_gpio_GPIO17,
+      hps_io_hps_io_gpio_inst_GPIO18        => hps_gpio_GPIO18,
+      hps_io_hps_io_gpio_inst_GPIO22        => hps_gpio_GPIO22,
+      hps_io_hps_io_gpio_inst_GPIO24        => hps_gpio_GPIO24,
+      hps_io_hps_io_gpio_inst_GPIO26        => hps_gpio_GPIO26,
+      hps_io_hps_io_gpio_inst_GPIO27        => hps_gpio_GPIO27,
+      hps_io_hps_io_gpio_inst_GPIO35        => hps_gpio_GPIO35,
+      hps_io_hps_io_gpio_inst_GPIO40        => hps_gpio_GPIO40,
+      hps_io_hps_io_gpio_inst_GPIO41        => hps_gpio_GPIO41,
+      hps_io_hps_io_gpio_inst_GPIO42        => hps_gpio_GPIO42,
+      hps_io_hps_io_gpio_inst_GPIO43        => hps_gpio_GPIO43,
       
       
       
