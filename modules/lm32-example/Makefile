@@ -1,4 +1,15 @@
-TARGET		= example
+# Two examples are provided
+# - miniExample: 'hello world' for lm32
+# - example: demo program including
+# -- shared memory for exchange of data via Wishbone
+# -- access to other Wishbone devices
+# -- receive commands via shared memory
+# -- get actions from the ECA by polling
+#
+# Example usage:
+#   make TARGET=example
+#   ... will compile the more complex example program
+TARGET		?= miniExample
 .DEFAULT_GOAL := fwbin
 DEVICE		= 5AGXMA3D4
 FLASH		= EPCQ256
@@ -17,11 +28,9 @@ CFLAGS 	= -I$(PATHFW)
 include ../../syn/build.mk
 
 
-fwbin: $(TARGET).bin 
+fwbin: $(TARGET).bin
 
-
-
-$(TARGET).elf: $(PATHFW)/main.c $(INCPATH)/ebm.c 
+$(TARGET).elf: $(PATHFW)/$(TARGET).c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin

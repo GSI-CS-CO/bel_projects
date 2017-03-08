@@ -1,5 +1,5 @@
 /********************************************************************************************
- *  main.c
+ *  example.c
  *
  *  created : 2017
  *  author  : Mathias Kreider,  Dietrich Beck, GSI-Darmstadt
@@ -50,7 +50,6 @@
 
 /* includes specific for bel_projects */
 #include "irq.h"
-#include "ebm.h"
 #include "aux.h"
 #include "dbg.h"
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
@@ -65,8 +64,8 @@
 /* stuff required for environment */
 extern uint32_t*       _startshared[];
 unsigned int cpuId, cpuQty;
-//#define SHARED __attribute__((section(".shared")))
-//uint64_t SHARED dummy = 0;
+#define SHARED __attribute__((section(".shared")))
+uint64_t SHARED dummy = 0;
 
 uint32_t *pECAQ;              /* WB address of ECA queue                                                    */
 
@@ -74,7 +73,8 @@ uint32_t *pShared;            /* pointer to begin of shared memory region       
 uint32_t *pSharedCounter;     /* pointer to a "user defined" u32 register; here: publish counter            */
 uint32_t *pSharedInput;       /* pointer to a "user defined" u32 register; here: get input from host system */
 uint32_t *pSharedCmd;         /* pointer to a "user defined" u32 register; here: get commnand from host s.  */
-uint32_t *pCpuRamExternal;    /* external address (seen from host bridge) of this CPU's RAM
+uint32_t *pCpuRamExternal;    /* external address (seen from host bridge) of this CPU's RAM                 */
+
 /*
 void show_msi()
 {
@@ -85,22 +85,6 @@ void isr0()
 {
   mprintf("ISR0\n");   
   show_msi();
-} 
-
-void ebmInit()
-{
-   int j;
-   
-   while (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) {
-     for (j = 0; j < (125000000/2); ++j) { asm("nop"); }
-     mprintf("#%02u: DM cores Waiting for IP from WRC...\n", cpuId);  
-   } 
-
-   ebm_init();
-   ebm_config_meta(1500, 42, 0x00000000 );
-   ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff,                0xebd0); //Dst: EB broadcast - CAREFUL HERE!
-   ebm_config_if(SOURCE,      0xd15ea5edbeef, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: bogus mac (will be replaced by WR), WR IP
-
 }
 */
 
@@ -173,10 +157,10 @@ void useSharedMem()
   idx = 0;
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if(idx >= cpuId) {
-    pCpuRamExternal = (uint32_t*)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+    pCpuRamExternal = (uint32_t*)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); /* CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective */
     /* print external WB info to UART     */
     mprintf("external WB address   : counter offset   @ 0x%08x\n", (uint32_t)(pCpuRamExternal + ((EXAMPLE_SHARED_COUNTER + SHARED_OFFS) >> 2)));
-    mprintf("external WB address   : input offset     @ 0x%08x\n", (uint32_t)(pCpuRamExternal + ((EXAMPLE_SHARED_INPUT    + SHARED_OFFS) >> 2))); 
+    mprintf("external WB address   : input offset     @ 0x%08x\n", (uint32_t)(pCpuRamExternal + ((EXAMPLE_SHARED_INPUT   + SHARED_OFFS) >> 2))); 
   } else {
     pCpuRamExternal = (uint32_t*)ERROR_NOT_FOUND;
     mprintf("Could not find external WB address of my own RAM !\n");
