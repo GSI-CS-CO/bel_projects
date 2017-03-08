@@ -127,6 +127,14 @@
 // Payload Data (Blocks and Events                                  //
 //////////////////////////////////////////////////////////////////////
 // Block Hdr
+
+#define BLOCK_FLAGS_HAS_Q     ( 1 << 0)
+#define BLOCK_FLAGS_START_POS 4
+#define BLOCK_FLAGS_START_MSK 0x3
+#define BLOCK_START_AT  0
+#define BLOCK_START_NOW 1
+#define BLOCK_START_PPS 2
+
 #define BLOCK_PERIOD        0
 #define BLOCK_START_TIME    (BLOCK_PERIOD       + 8)
 #define BLOCK_FLAGS         (BLOCK_START_TIME   + 8)
@@ -141,12 +149,13 @@
 //#define _BLOCK_HDR_SIZE     (BLOCK_NEXT_IDX     + 4)
 
 // Event Hdr
-#define OFFS_TIME_NOW       0xFFFFFFFFFFFFFFFFULL
-#define OFFS_TIME_PPS       0xFFFFFFFFFFFFFFFEULL
+#define EVT_TYPE_TMSG       1
+#define EVT_TYPE_CMD        2
 
 #define EVT_OFFS_TIME       0
-#define EVT_FLAGS           (EVT_OFFS_TIME  + 8)
-#define _EVT_HDR_SIZE       (EVT_FLAGS      + 4)    
+#define EVT_TYPE            (EVT_OFFS_TIME  + 8)
+#define EVT_FLAGS           (EVT_TYPE       + 2)
+#define _EVT_HDR_SIZE       (EVT_FLAGS      + 2)    
 
 // Timing Message Event
 #define EVT_TM_ID           (_EVT_HDR_SIZE)
@@ -201,10 +210,10 @@
 #define ACT_FLUSH_HI_RNG_POS  8
 
 //Command Queue structure
-#define CMDQ_QTY              4 ///
-#define _CMDQ_BUF_SIZE        (CMDQ_QTY * _CMD_SIZE)
-#define CMDQ_IDX_OF_MSK       (2 * CMDQ_QTY -1) // x2 for overflow bit
-#define CMDQ_IDX_MSK          (CMDQ_QTY -1) // 
+#define CMDQ_DEPTH              4 ///
+#define _CMDQ_BUF_SIZE        (CMDQ_DEPTH * _CMD_SIZE)
+#define CMDQ_IDX_OF_MSK       (2 * CMDQ_DEPTH -1) // x2 for overflow bit
+#define CMDQ_IDX_MSK          (CMDQ_DEPTH -1) // 
 #define _CMDQ_IDX_SIZE        4
 #define CMDQ_OFF              0
 #define CMDQ_RD_OFF           (CMDQ_OFF)
