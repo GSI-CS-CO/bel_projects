@@ -160,6 +160,8 @@ entity exploder5_csco_tr is
     sfp4_red_o        : out   std_logic := 'Z';
     sfp4_green_o      : out   std_logic := 'Z';
 
+
+
     -----------------------------------------------------------------------
     -- Daughter board
     -----------------------------------------------------------------------
@@ -285,9 +287,9 @@ begin
       g_fixed           => 3,
       g_en_pcie         => true,
       g_en_usb          => true,
-      g_en_ssd1325      => true,
-      g_en_nau8811      => true,
-      g_en_psram        => true,
+      g_en_ssd1325      => false,
+      g_en_nau8811      => false,
+      g_en_psram        => false,
       g_en_user_ow      => true,
       g_io_table        => io_mapping_table,
       g_lm32_cores      => c_cores,
@@ -314,6 +316,9 @@ begin
       wr_ext_clk_i           => lvds_clk_p_i,
       wr_uart_o              => rs232_tx_o,
       wr_uart_i              => rs232_rx_i,
+      sfp_tx_disable_o       => open,
+      sfp_tx_fault_i         => sfp4_tx_fault,
+      sfp_los_i              => sfp4_los,
       gpio_o                 => s_gpio_o,
       gpio_i                 => s_gpio_i,
       lvds_p_i               => s_lvds_p_i,
