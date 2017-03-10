@@ -1,4 +1,3 @@
-
 /********************************************************************************************
  *  dm-unipz.c
  *
@@ -68,17 +67,25 @@ uint32_t *pECAQ;              /* WB address of ECA queue                        
 
 uint32_t *pShared;            /* pointer to begin of shared memory region                                   */
 uint32_t *pSharedStatus;      /* pointer to a "user defined" u32 register; here: publish status             */
-uint32_t *pSharedCmd;         /* pointer to a "user defined" u32 register; here: get commnand from host     */
-uint32_t *pSharedData1;       /* pointer to a "user defined" u32 register; here: data                       */
-uint32_t *pSharedData2;       /* pointer to a "user defined" u32 register; here: data                       */
-uint32_t *pSharedData3;       /* pointer to a "user defined" u32 register; here: data                       */
-uint32_t *pSharedData4;       /* pointer to a "user defined" u32 register; here: data                       */
+volatile uint32_t *pSharedCmd;   /* pointer to a "user defined" u32 register; here: get commnand from host  */
+volatile uint32_t *pSharedData1; /* pointer to a "user defined" u32 register; here: data                    */
+volatile uint32_t *pSharedData2; /* pointer to a "user defined" u32 register; here: data                    */
+volatile uint32_t *pSharedData3; /* pointer to a "user defined" u32 register; here: data                    */
+volatile uint32_t *pSharedData4; /* pointer to a "user defined" u32 register; here: data                    */
 
 uint32_t *pCpuRamExternal;    /* external address (seen from host bridge) of this CPU's RAM                 */
 uint32_t *pSharedData1External; /* external address (seen from host bridge) of Data                         */
 uint32_t *pSharedData2External; /* external address (seen from host bridge) of Data                         */
 uint32_t *pSharedData3External; /* external address (seen from host bridge) of Data                         */
 uint32_t *pSharedData4External; /* external address (seen from host bridge) of Data                         */
+
+uint32_t *pRemotePPSGen;        /* WB address of remote PPS_GEN */
+uint32_t *pRemotePPSSecs;       /* TAI full seconds             */
+uint32_t *pRemotePPSNsecs;      /* TAI nanoseconds part         */
+
+uint32_t *pLocalPPSGen;         /* WB address of PPS_GEN        */
+uint32_t *pLocalPPSSecs;        /* TAI full seconds             */
+uint32_t *pLocalPPSNsecs;       /* TAI nanoseconds part         */
 
 /*
 void show_msi()
@@ -105,8 +112,10 @@ void ebmInit()
   
   ebm_init();
   ebm_config_meta(1500, 42, 0x00000000 );
+
   ebm_config_if(DESTINATION, 0x00267b00022b, 0xc0a81410,                  0xebd0); //Dst: EB broadcast - CAREFUL HERE!
   ebm_config_if(SOURCE,      0x00267b000401, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: MAC is a hack!, WR IP
+
   mprintf("my IP:  0x%08x\n",  *(pEbCfg + (EBC_SRC_IP>>2)));
   mprintf("pEbCfg: 0x%08x\n",  pEbCfg);
   ebm_clr();
@@ -125,67 +134,110 @@ void init()
   irq_disable(); 
 } /* init */
 
+void initRemotePPSGen(){
+  int      i;
 
-void getWishboneTAI()
-{
-  uint32_t *pPPSGen;            /* WB address of PPS_GEN     */
-  uint32_t taiSecs;             /* TAI full seconds          */
-  uint32_t taiNsecs;            /* TAI nanoseconds part      */
-
-  /* get Wishbone address of WR PPS GEN                      */
-  pPPSGen   = find_device_adr(WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT);
-
-  /* get data from WR PPS GEN and print to UART              */
-  taiSecs  = *(pPPSGen + (WR_PPS_GEN_CNTR_UTCLO >> 2));
-  taiNsecs = *(pPPSGen + (WR_PPS_GEN_CNTR_NSEC >> 2));
-
-  /* print TAI to UART */
-  mprintf("WB TAI: %08u.%09u\n", taiSecs, taiNsecs);
-
-} /* getWishboneTAI */
-
-void getEtherboneTAI()
-{
-  uint32_t *pPPSGen;            /* WB address of remote PPS_GEN */
-  uint32_t *pTaiSecs;           /* TAI full seconds             */
-  uint32_t *pTaiNsecs;          /* TAI nanoseconds part         */
-
-  int j;
-  
   /* get Wishbone address of remote  WR PPS GEN                 */
-  pPPSGen = (uint32_t *)0x8060300;   /* this is a hack          */
+  pRemotePPSGen  = (uint32_t *)0x8060300;   /* this is a hack    */
 
   /* get Wishbone addresses of (nano)seconds counters           */
-  pTaiSecs  = (uint32_t *)(pPPSGen + (WR_PPS_GEN_CNTR_UTCLO >> 2));
-  pTaiNsecs = (uint32_t *)(pPPSGen + (WR_PPS_GEN_CNTR_NSEC >> 2));
+  pRemotePPSSecs  = (uint32_t *)(pRemotePPSGen + (WR_PPS_GEN_CNTR_UTCLO >> 2));
+  pRemotePPSNsecs = (uint32_t *)(pRemotePPSGen + (WR_PPS_GEN_CNTR_NSEC >> 2));
+} /* init external PPS */
 
-  mprintf("pPPSGen 0x%08x\n", pPPSGen);
-  mprintf("pTaiSecs  0x%08x\n", pTaiSecs);
-  mprintf("pTainSecs 0x%08x\n", pTaiNsecs);
-  mprintf("EBM_READ  0x%08x\n", (uint32_t)EBM_READ);
-  mprintf("EBM_WRITE 0x%08x\n", (uint32_t)EBM_WRITE);
+void initLocalPPSGen(){
+  /* get Wishbone address of local WR PPS GEN                   */
+  pLocalPPSGen    = find_device_adr(WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT);
 
-
-  /* ebm_hi((uint32_t)pTaiSecs);
-  ebm_op((uint32_t)pTaiNsecs,(uint32_t)pSharedData2External, EBM_READ);
-  ebm_op((uint32_t)pTaiSecs, (uint32_t)pSharedData1External, EBM_READ);
-  ebm_op((uint32_t)pTaiNsecs,(uint32_t)pSharedData2External, EBM_READ);
-  ebm_op((uint32_t)pTaiSecs, (uint32_t)pSharedData1External, EBM_READ);
-  */
+  /* get Wishbone addresses of (nano)seconds counters           */
+  pLocalPPSSecs   = (uint32_t *)(pLocalPPSGen + (WR_PPS_GEN_CNTR_UTCLO >> 2));
+  pLocalPPSNsecs  = (uint32_t *)(pLocalPPSGen + (WR_PPS_GEN_CNTR_NSEC >> 2));
+} /* init local PPS */
 
 
+void getWishboneTAI(uint32_t *secs, uint32_t *nsecs)
+{
+  /* get data from WR PPS GEN and print to UART              */
+  *secs  = *pLocalPPSSecs;
+  *nsecs = *pLocalPPSNsecs;
+} /* getWishboneTAI */
 
-  ebm_hi(0x80a0000);
-  ebm_op(0x80a0000, 0xbedead, EBM_WRITE);
-  ebm_op(0x80a0004, 0x17, EBM_WRITE);
-
-  ebm_flush();
+void getEtherboneTAI(uint32_t *secs, uint32_t *nsecs)
+{
+  int i;
   
-  for (j = 0; j < (125000000/4); ++j) { asm("nop"); }
-  /* print TAI to UART */
-  mprintf("EB TAI: %08u.%09u\n", *pSharedData1, 0);
- 
+  /* setup and commit EB cycle to remote device */
+  ebm_hi((uint32_t)pRemotePPSSecs);
+  ebm_op((uint32_t)pRemotePPSSecs, (uint32_t)pSharedData1External, EBM_READ);
+  ebm_op((uint32_t)pRemotePPSNsecs,(uint32_t)pSharedData2External, EBM_READ);
+  ebm_flush();
+
+  *secs  = 0x0;
+  *nsecs = 0x0;
+
+  /* reset shared data                                          */
+  *pSharedData1 = 0x0;
+  *pSharedData2 = 0x0;
+
+  /* wait until timeout values are received via shared mem or timeout */
+  i=0;
+  while (! (*pSharedData1)) {
+    i++;
+    if (i > 125000000/16) break; /* timeout */
+    asm("nop");
+  } /* while */
+
+  if (*pSharedData1 > 0) {
+    i = 0;
+    *secs  = *pSharedData1;
+    *nsecs = *pSharedData2;
+  } /* if */
+
+    
 } /* getEtherboneTAI */
+
+void checkSync(uint32_t *inSync, uint32_t *dT)
+{
+  uint32_t rSecs, lSecs1, lSecs2; 
+  uint32_t rNsecs, lNsecs1, lNsecs2;
+
+  uint32_t meanLNsecs;
+  uint32_t j;
+
+  getWishboneTAI(&lSecs1, &lNsecs1);
+
+  /* wait until the next full second */
+  lSecs2 = lSecs1;
+  while (lSecs2 == lSecs1) {
+    getWishboneTAI(&lSecs2, &lNsecs2);
+    asm("nop");
+  } 
+
+  /* wait for 100ms to be on the safe side */
+  for (j = 0; j < (125000000/40); ++j) { asm("nop"); }
+  
+  getWishboneTAI(&lSecs1, &lNsecs1);
+  getEtherboneTAI(&rSecs, &rNsecs);
+  getWishboneTAI(&lSecs2, &lNsecs2);
+
+  /* if same number of seconds: assume we are in synch */
+  *inSync = ((lSecs1 == lSecs2) && (lSecs1 == rSecs));
+  if (*inSync) {
+    /* get mean time to correct for execution time */
+    meanLNsecs = ((lNsecs1 + lNsecs2) >> 1);
+
+    if (meanLNsecs > rNsecs) *dT = meanLNsecs - rNsecs;
+    else                     *dT = rNsecs - meanLNsecs;
+  } /* if in sync */
+  else *dT = 0;
+  mprintf("\n\n\nelapsed time : %09u ns\n", (lNsecs2 - lNsecs1));
+  
+  mprintf("local  WB TAI: %08u.%09u\n", lSecs1, lNsecs1);
+  mprintf("remote EB TAI: %08u.%09u\n", rSecs, rNsecs);
+  mprintf("local  WB TAI: %08u.%09u\n", lSecs2, lNsecs2);
+
+  mprintf("in sync: %u; dT = %09u ns\n", *inSync, *dT);
+} /* checkSynch */
 
 
 void initSharedMem()
@@ -219,8 +271,9 @@ void initSharedMem()
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if(idx >= cpuId) {
     pCpuRamExternal = (uint32_t*)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
-    /* WRONG
-     pSharedData1External = (uint32_t *)(pEbCfg + ((DMUNIPZ_SHARED_DATA1  + SHARED_OFFS) >> 2));
+
+    /*
+    pSharedData1External = (uint32_t *)(pEbCfg + ((DMUNIPZ_SHARED_DATA1  + SHARED_OFFS) >> 2));
     pSharedData2External = (uint32_t *)(pEbCfg + ((DMUNIPZ_SHARED_DATA2  + SHARED_OFFS) >> 2));
     pSharedData3External = (uint32_t *)(pEbCfg + ((DMUNIPZ_SHARED_DATA3  + SHARED_OFFS) >> 2));
     pSharedData4External = (uint32_t *)(pEbCfg + ((DMUNIPZ_SHARED_DATA4  + SHARED_OFFS) >> 2));
@@ -230,7 +283,7 @@ void initSharedMem()
     pSharedData2External = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_DATA2  + SHARED_OFFS) >> 2));
     pSharedData3External = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_DATA3  + SHARED_OFFS) >> 2));
     pSharedData4External = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_DATA4  + SHARED_OFFS) >> 2));
-
+    
     /* print external WB info to UART     */
     mprintf("external WB address   : start            @ 0x%08x\n", (uint32_t)(pCpuRamExternal));
     mprintf("external WB address   : status           @ 0x%08x\n", (uint32_t)(pCpuRamExternal + ((DMUNIPZ_SHARED_STATUS + SHARED_OFFS) >> 2)));
@@ -361,18 +414,22 @@ void cmdHandler()
 void main(void) {
   
   int i,j;
+
+  uint32_t inSync;
+  uint32_t dT;
   
   /* initialize 'boot' lm32 */
   init();
-  getWishboneTAI();      /* get TAI via WB and print to UART */
   //initSharedMem();       /* read/write to shared memory      */
   //initEca();             /* init for actions from ECA        */
   //initCmds();            /* init for cmds from shared mem    */
-  ebmInit();             /* init EB master                   */
-  initSharedMem();       /* read/write to shared memory      */
+  ebmInit();               /* init EB master                   */
+  initSharedMem();         /* read/write to shared memory      */
+  initRemotePPSGen();
+  initLocalPPSGen();
 
-  getEtherboneTAI();     /* get TAI via remote EB and print  */
-
+  checkSync(&inSync, &dT);
+  
   i=0;
   while (1) {
     /* do the things that have to be done                    */
