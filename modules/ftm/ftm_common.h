@@ -165,6 +165,7 @@
 // Command Message Event
 #define EVT_CM_TIME         (_EVT_HDR_SIZE)
 #define EVT_CM_ACT          (EVT_CM_TIME    + 8)
+#define EVT_CMD_RESERVED    (EVT_CM_ACT     + 4)
 
 #define _EVT_SIZE           (_EVT_HDR_SIZE  + 20)
 
@@ -200,6 +201,7 @@
 #define ACT_FLOW_NEXT_MSK     0x0fff0000
 #define ACT_FLOW_NEXT_POS     16
 //Action of Flush type
+#define ACT_FLUSH_RANGE_ALL   0xff
 #define ACT_FLUSH_LO_MSK      0x00010000
 #define ACT_FLUSH_LO_POS      16 
 #define ACT_FLUSH_HI_MSK      0x00020000
@@ -208,6 +210,7 @@
 #define ACT_FLUSH_LO_RNG_POS  0
 #define ACT_FLUSH_HI_RNG_MSK  0x0000ff00
 #define ACT_FLUSH_HI_RNG_POS  8
+#define _ACT_SIZE             4
 
 //Command Queue structure
 #define CMDQ_DEPTH              4 ///
