@@ -13,6 +13,7 @@ int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base
   bus->unique_id = id;
 
   for (i = 1; i <= MAX_SCU_SLAVES; i++) {
+    base_adr[i * (1<<16) + 0x10] = 0; //clear echo reg
     if (base_adr[i * (1<<16) + 0x10] != 0xdead) {
       bus->slaves[j].unique_id = (uint64_t)(base_adr[i * (1<<16) + 0x40]) << 48;
       bus->slaves[j].unique_id |= (uint64_t)(base_adr[i * (1<<16) + 0x41]) << 32;
