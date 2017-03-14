@@ -8,7 +8,12 @@ inline int cbisEmpty(volatile struct channel_regs* cr, int channel) {
 }
 
 inline int cbgetCount(volatile struct channel_regs* cr, int channel) {
-  return abs(cr[channel].wr_ptr - cr[channel].rd_ptr);
+  if (cr[channel].wr_ptr > cr[channel].rd_ptr)
+    return abs(cr[channel].wr_ptr - cr[channel].rd_ptr);
+  else if (cr[channel].rd_ptr > cr[channel].wr_ptr)
+    return abs(BUFFER_SIZE+1 - cr[channel].rd_ptr + cr[channel].wr_ptr);
+  else
+    return 0;
 }
 
 
