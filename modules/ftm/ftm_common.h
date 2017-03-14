@@ -205,7 +205,9 @@
 #define ACT_FLUSH_LO_MSK      0x00010000
 #define ACT_FLUSH_LO_POS      16 
 #define ACT_FLUSH_HI_MSK      0x00020000
-#define ACT_FLUSH_HI_POS      17   
+#define ACT_FLUSH_HI_POS      17
+#define ACT_FLUSH_IL_MSK      0x00040000
+#define ACT_FLUSH_IL_POS      18 
 #define ACT_FLUSH_LO_RNG_MSK  0x000000ff
 #define ACT_FLUSH_LO_RNG_POS  0
 #define ACT_FLUSH_HI_RNG_MSK  0x0000ff00

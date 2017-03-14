@@ -70,10 +70,9 @@ void Flush::show(uint32_t cnt, const char* prefix) {
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
   printf("%s Flush \n", p);
-  if (this->qIl) printf("Interlock Q ");
-  l
-  if (this->qHi) printf("High Prio. Q up to idx");
-  if (this->qLo) printf("Low Prio. Q up to");
+  if (this->qIl) printf("Interlock Q\n");
+  if (this->qHi) printf("High Prio. Q up to idx %u\n", this->upToHi);
+  if (this->qLo) printf("Low Prio. Q up to idx  %u\n", this->upToLo);
 }
 
 

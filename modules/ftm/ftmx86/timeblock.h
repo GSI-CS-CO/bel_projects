@@ -1,26 +1,46 @@
 #ifndef _TIME_BLOCK_H_
 #define _TIME_BLOCK_H_
 #include <stdint.h>
-#include "../ftm_common.h"
-
 #include <stdlib.h>
-#include <stdint.h>
-#include <boost/container/list.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/container/vector.hpp>
+#include "../ftm_common.h"
+#include "event.h"
 
-class TimeBlock {
-  uint64_t tOffs;  
-  uint16_t flags;
+typedef boost::container::vector<Event> vEvt;
+typedef boost::container::vector<Event>::iterator itEvt;
+typedef boost::shared_ptr<Event> evt_ptr;
 
+
+
+class MemBlock{
   
+  uint16_t idx;
+  
+public:
+  
+  MemBlock() ;
+  ~MemBlock();
+  
+  vBuf buf;
+  uint16_t getIdx() {return idx;}
+  uint32_t getSize();
+
+  void deserialise();
+  void serialise();
+  
+};
+
+
+
+
+class TimeBlock : public MemBlock{
 
 public:
   TimeBlock();
   ~TimeBlock();
-  void show();
-  uint8_t* serialise(uint8_t *buf);
-  
-  
+  uint16_t getIdx() {return MemBlock::getIdx();}
+  uint32_t getSize() {return MemBlock::getSize();}
 };
 
 
