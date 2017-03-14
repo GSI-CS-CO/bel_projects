@@ -67,13 +67,13 @@ unsigned int cpuId, cpuQty;
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED dummy = 0;
 
-uint32_t *pECAQ;              /* WB address of ECA queue                                                    */
+uint32_t *pECAQ;                 /* WB address of ECA queue                                                    */
 
-uint32_t *pShared;            /* pointer to begin of shared memory region                                   */
-uint32_t *pSharedCounter;     /* pointer to a "user defined" u32 register; here: publish counter            */
-uint32_t *pSharedInput;       /* pointer to a "user defined" u32 register; here: get input from host system */
-uint32_t *pSharedCmd;         /* pointer to a "user defined" u32 register; here: get commnand from host s.  */
-uint32_t *pCpuRamExternal;    /* external address (seen from host bridge) of this CPU's RAM                 */
+uint32_t *pShared;               /* pointer to begin of shared memory region                                   */
+uint32_t *pSharedCounter;        /* pointer to a "user defined" u32 register; here: publish counter            */
+volatile uint32_t *pSharedInput; /* pointer to a "user defined" u32 register; here: get input from host system */
+volatile uint32_t *pSharedCmd;   /* pointer to a "user defined" u32 register; here: get commnand from host s.  */
+uint32_t *pCpuRamExternal;       /* external address (seen from host bridge) of this CPU's RAM                 */
 
 /*
 void show_msi()

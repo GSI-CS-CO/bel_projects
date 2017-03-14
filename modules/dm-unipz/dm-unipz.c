@@ -166,18 +166,18 @@ void getEtherboneTAI(uint32_t *secs, uint32_t *nsecs)
 {
   int i;
   
-  /* setup and commit EB cycle to remote device */
-  ebm_hi((uint32_t)pRemotePPSSecs);
-  ebm_op((uint32_t)pRemotePPSSecs, (uint32_t)pSharedData1External, EBM_READ);
-  ebm_op((uint32_t)pRemotePPSNsecs,(uint32_t)pSharedData2External, EBM_READ);
-  ebm_flush();
-
   *secs  = 0x0;
   *nsecs = 0x0;
 
   /* reset shared data                                          */
   *pSharedData1 = 0x0;
   *pSharedData2 = 0x0;
+
+  /* setup and commit EB cycle to remote device */
+  ebm_hi((uint32_t)pRemotePPSSecs);
+  ebm_op((uint32_t)pRemotePPSSecs, (uint32_t)pSharedData1External, EBM_READ);
+  ebm_op((uint32_t)pRemotePPSNsecs,(uint32_t)pSharedData2External, EBM_READ);
+  ebm_flush();
 
   /* wait until timeout values are received via shared mem or timeout */
   i=0;
@@ -213,8 +213,8 @@ void checkSync(uint32_t *inSync, uint32_t *dT)
     asm("nop");
   } 
 
-  /* wait for 100ms to be on the safe side */
-  for (j = 0; j < (125000000/40); ++j) { asm("nop"); }
+  /* wait for 1ms to be on the safe side */
+  for (j = 0; j < (250000); ++j) { asm("nop"); }
   
   getWishboneTAI(&lSecs1, &lNsecs1);
   getEtherboneTAI(&rSecs, &rNsecs);
@@ -271,13 +271,6 @@ void initSharedMem()
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if(idx >= cpuId) {
     pCpuRamExternal = (uint32_t*)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
-
-    /*
-    pSharedData1External = (uint32_t *)(pEbCfg + ((DMUNIPZ_SHARED_DATA1  + SHARED_OFFS) >> 2));
-    pSharedData2External = (uint32_t *)(pEbCfg + ((DMUNIPZ_SHARED_DATA2  + SHARED_OFFS) >> 2));
-    pSharedData3External = (uint32_t *)(pEbCfg + ((DMUNIPZ_SHARED_DATA3  + SHARED_OFFS) >> 2));
-    pSharedData4External = (uint32_t *)(pEbCfg + ((DMUNIPZ_SHARED_DATA4  + SHARED_OFFS) >> 2));
-    */
 
     pSharedData1External = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_DATA1  + SHARED_OFFS) >> 2));
     pSharedData2External = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_DATA2  + SHARED_OFFS) >> 2));
@@ -418,9 +411,7 @@ void main(void) {
   uint32_t inSync;
   uint32_t dT;
   
-  /* initialize 'boot' lm32 */
-  init();
-  //initSharedMem();       /* read/write to shared memory      */
+  init();                  /* initialize 'boot' lm32           */
   //initEca();             /* init for actions from ECA        */
   //initCmds();            /* init for cmds from shared mem    */
   ebmInit();               /* init EB master                   */
@@ -441,6 +432,6 @@ void main(void) {
     //*pSharedStatus = i;
 
     /* wait for 100  microseconds                            */
-    for (j = 0; j < (125000000/40000); ++j) { asm("nop"); }
+    for (j = 0; j < (25000); ++j) { asm("nop"); }
   } /* while */
 } /* main */
