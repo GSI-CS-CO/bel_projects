@@ -2,8 +2,8 @@
  *  example.c
  *
  *  created : 2017
- *  author  : Mathias Kreider,  Dietrich Beck, GSI-Darmstadt
- *  version : 23-Feb-2017
+ *  author  : Dietrich Beck, Mathias Kreider GSI-Darmstadt
+ *  version : 15-Mar-2017
  *
  *  example program for lm32 softcore on GSI timing receivers
  * 
@@ -53,6 +53,8 @@
 #include "aux.h"
 #include "dbg.h"
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
+#include "../../top/gsi_scu/scu_mil.h"
+
 
 /* register maps for some selected Wishbone devices  */
 #include "../../tools/wb_slaves.h" /* this is a hack */
@@ -68,7 +70,7 @@ unsigned int cpuId, cpuQty;
 uint64_t SHARED dummy = 0;
 
 uint32_t *pECAQ;                 /* WB address of ECA queue                                                    */
-
+unsigned int  *pMILDevicebus;    /* WB address of MIL device bus (MIL piggy)                                   */
 uint32_t *pShared;               /* pointer to begin of shared memory region                                   */
 uint32_t *pSharedCounter;        /* pointer to a "user defined" u32 register; here: publish counter            */
 volatile uint32_t *pSharedInput; /* pointer to a "user defined" u32 register; here: get input from host system */
@@ -175,7 +177,7 @@ void useSharedMem()
   /* initialize counter */
   i=0;
   while (i<10) {
-    for (j = 0; j < (125000000/4); ++j) { asm("nop"); } /* wait for 1 second                               */
+    for (j = 0; j < (3100000*5); ++j) { asm("nop"); }   /* wait for 500ms                                  */
     i++;
     /* write value of counter 'i' to shared memory. Use eb-read to obtain the value from the host system.  */
     *pSharedCounter = i;
@@ -186,6 +188,54 @@ void useSharedMem()
   } /* while 1 */
 
 } /* useSharedMem */
+
+
+/*************************************************************
+* 
+* demonstrate how to talk to MIL devicebus
+* HERE: get WB address of Wishbone device GSI_MIL_SCU
+*
+**************************************************************/
+void initMILDevicebus(){
+  /* get Wishbone address for MIL Devicebus         */
+  pMILDevicebus   = (unsigned int*)find_device_adr(GSI, SCU_MIL);
+  mprintf("pMILDevicebus: 0x%08x\n",  pMILDevicebus);
+} /* init MILDevicebus */
+
+
+/*************************************************************
+* 
+* demonstrate how to talk to a MIL device
+* HERE: write (read) data to (from)  the echo register of 
+* a MIL device
+*
+**************************************************************/
+void testEchoMILDevice(short wData)
+{
+  short ifkAddr  = 0x20;   /* address of interface card               */
+  short fcEchoW  = 0x13;   /* function code: write to echo register   */
+  short fcEchoR  = 0x89;   /* function code: read from echo register  */
+  short rData    = 0x0;    /* data to read                            */
+  unsigned short fc_ifk;   /* function code and interface card addr   */
+  int busStatus = 0;       /* status of bus operation                 */
+  int j;
+
+  mprintf("writeData: 0x%x to IFK with address 0x%x\n", wData, ifkAddr);
+
+  /* write to echo register */
+  fc_ifk = ifkAddr | (fcEchoW << 8);
+  busStatus = write_mil(pMILDevicebus, wData, fc_ifk);
+  mprintf("fc_ifk: 0x%x - bus status: %d\n", fc_ifk, busStatus);
+
+  /* read from echo register */
+  fc_ifk = ifkAddr | (fcEchoR << 8);
+  busStatus = read_mil(pMILDevicebus, &rData, fc_ifk);
+  mprintf("fc_ifk: 0x%x - bus status: %d\n", fc_ifk, busStatus);
+  
+  mprintf("readData: 0x%x from IFK with address 0x%x\n", rData, ifkAddr);
+
+} /* testEchoMILDevice */
+
 
 /*************************************************************
 * 
@@ -328,13 +378,15 @@ void main(void) {
   init();
   
   /* wait 1 second and print initial message to UART         */
-  for (j = 0; j < (125000000/4); ++j) { asm("nop"); }
+  for (j = 0; j < (31000000); ++j) { asm("nop"); }
   mprintf("Hello World!\n");
 
   getWishboneTAI();      /* get TAI via WB and print to UART */
   useSharedMem();        /* read/write to shared memory      */
   initEca();             /* init for actions from ECA        */
   initCmds();            /* init for cmds from shared mem    */
+  initMILDevicebus();    /* init MIL devicebus master        */
+  testEchoMILDevice(0xbabe);    /* write/read to MIL device  */
 
   i=0;
   while (1) {
@@ -347,6 +399,6 @@ void main(void) {
     *pSharedCounter = i;
 
     /* wait for 100  microseconds                            */
-    for (j = 0; j < (125000000/40000); ++j) { asm("nop"); }
+    for (j = 0; j < (25000); ++j) { asm("nop"); }
   } /* while */
 } /* main */

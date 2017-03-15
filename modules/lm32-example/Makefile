@@ -30,7 +30,7 @@ include ../../syn/build.mk
 
 fwbin: $(TARGET).bin
 
-$(TARGET).elf: $(PATHFW)/$(TARGET).c
+$(TARGET).elf: $(PATHFW)/$(TARGET).c $(PATHFW)/../../top/gsi_scu/scu_mil.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
