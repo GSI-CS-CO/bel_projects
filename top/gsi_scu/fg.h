@@ -8,7 +8,7 @@
 #define   MAX_FG_CHANNELS   12
 #define   MAX_FG_PER_SLAVE  2
 #define   MAX_WB_FG_MACROS  1
-#define   BUFFER_SIZE       120
+#define   BUFFER_SIZE       121
 #define   THRESHOLD         BUFFER_SIZE * 40 / 100
 #define   OUTPUT_BITS       24 
 
@@ -65,7 +65,7 @@ struct channel_regs {
 };
 
 struct channel_buffer {
-  struct param_set pset[BUFFER_SIZE+1];
+  struct param_set pset[BUFFER_SIZE];
 };
 
 int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr);
