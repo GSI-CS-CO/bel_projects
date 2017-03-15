@@ -386,7 +386,7 @@ void main(void) {
   initEca();             /* init for actions from ECA        */
   initCmds();            /* init for cmds from shared mem    */
   initMILDevicebus();    /* init MIL devicebus master        */
-  testEchoMILDevice(0xbabe);    /* write/read to MIL device  */
+  testEchoMILDevice(0xbabe);  /* write/read to MIL device    */
 
   i=0;
   while (1) {
