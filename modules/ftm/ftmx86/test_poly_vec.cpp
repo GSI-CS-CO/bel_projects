@@ -1,8 +1,10 @@
 #include <boost/shared_ptr.hpp>
+#include <boost/variant.hpp>
 #include <stdio.h>
 #include <iostream>
 #include <inttypes.h>
 #include "common.h"
+#include "node.h"
 #include "event.h"
 #include "timeblock.h"
 #include <algorithm>
@@ -77,30 +79,35 @@ static void hexDump (char *desc, itBuf ib, int off, int len) {
 }
 
 
-
-const bool MyDataSortPredicate(const boost::shared_ptr<Event> e1, const boost::shared_ptr<Event> e2)
+/*
+const bool MyDataSortPredicate(const boost::shared_ptr<Node> e1, const boost::shared_ptr<Node> e2)
   {
     return e1->tOffs < e2->tOffs;
   }
+*/
 
 
 
-
-
+typedef boost::shared_ptr<Node> node_ptr;
 
 
 int main() {
 
   
 
+/*
+  boost::container::vector<boost::variant<TimeBlock, TimingMsg, Noop, Flow, Flush> > vars;
+  vars.push_back(TimingMsg(0xcafebabedeadbee7ULL, 0, 1, 2, 4));
+  vars.push_back(TimeBlock(1000));;
+*/
+  boost::container::vector<node_ptr> test;
 
-  boost::container::vector<evt_ptr> test;
+  boost::container::vector<node_ptr>::iterator it;
 
-  boost::container::vector<evt_ptr>::iterator it;
-
-  test.push_back((evt_ptr) new TimingMsg(0xcafebabedeadbee7ULL, 0, 1, 2, 4));
-  test.push_back((evt_ptr) new TimingMsg(0xcafebabedeadbee6ULL, 0, 1, 2, 4));
-  test.push_back((evt_ptr) new      Flow(0xcafebabedeadbee8ULL, 6, 7, 8, NULL));
+  test.push_back((node_ptr) new TimeBlock(0xcafebabedeadbee7ULL, true));
+  test.push_back((node_ptr) new TimingMsg(0xcafebabedeadbee7ULL, 0, 1, 2, 4));
+  test.push_back((node_ptr) new TimingMsg(0xcafebabedeadbee6ULL, 0, 1, 2, 4));
+  test.push_back((node_ptr) new      Flow(0xcafebabedeadbee8ULL, 6, 7, 8, NULL));
 
 
 
@@ -110,7 +117,7 @@ int main() {
   for(it=test.begin() ; it < test.end(); it++) {
     (*it)->show(it - test.begin(), "  ");
   } 
-
+/*
   std::sort(test.begin(), test.end(), MyDataSortPredicate);
 
   printf ("\n\n ----------------------- Sorted by Time: \n\n");
@@ -118,7 +125,7 @@ int main() {
   for(it=test.begin() ; it < test.end(); it++) {
     (*it)->show(it - test.begin(), "  ");
   } 
-
+*/
   
   vBuf myVec(8192);
   itBuf ib = myVec.begin();

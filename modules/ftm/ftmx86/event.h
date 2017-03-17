@@ -3,23 +3,24 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include "common.h"
-
-
-class Event; //forward declaration to break circular include
+#include "ftm_common.h"
+#include "node.h"
 #include "timeblock.h"
+#include "visitor.h"
+
+
 
 
 #define NO_SUCCESSOR -1
 enum prio {NONE, LOW, HIGH, INTERLOCK};
 
 
-class Event {
+class Event : public Node {
 public:
   uint64_t tOffs;
   Event() {}
   Event(uint64_t tOffs, uint16_t flags) : tOffs(tOffs), flags(flags) {}
-  ~Event() {};
+  virtual ~Event() {};
   virtual void show(void) = 0;
   virtual void show(uint32_t cnt, const char* sPrefix) = 0;
   virtual void serialise(itBuf ib) = 0;
@@ -28,7 +29,7 @@ protected:
 
   uint16_t flags;
   void serialiseB(itBuf ib);
-
+  virtual void accept(Visitor& v) = 0;
   
 };
 
@@ -40,9 +41,11 @@ class TimingMsg : public Event {
 public:
   TimingMsg(uint64_t tOffs, uint16_t flags, uint64_t id, uint64_t par, uint32_t tef) : Event (tOffs, flags), id(id), par(par), tef(tef) {}
   ~TimingMsg() {};
+  uint64_t getId(){return id;}
   void show(void);
   void show(uint32_t cnt, const char* sPrefix);
   void serialise(itBuf ib);
+   virtual void accept(Visitor& v) override 		{ v.visit(*this); }
 };
 
 
@@ -57,6 +60,7 @@ public:
   virtual void show(void);
   virtual void show(uint32_t cnt, const char* sPrefix);
   virtual void serialise(itBuf ib) = 0;
+	virtual void accept(Visitor& v) = 0;
 };
 
 
@@ -69,6 +73,7 @@ public:
   void show(void);
   void show(uint32_t cnt, const char* sPrefix);
   void serialise(itBuf ib);
+  virtual void accept(Visitor& v) override 		{ v.visit(*this); }
 };
 
 class Flow : public Command {
@@ -82,6 +87,7 @@ public:
   void show(void);
   void show(uint32_t cnt, const char* sPrefix);
   void serialise(itBuf ib);
+   virtual void accept(Visitor& v) override 		{ v.visit(*this); }
 };
 
 class Flush : public Command {
@@ -104,6 +110,7 @@ public:
   void set(prio target, uint8_t upTo);
   void clear(prio target);
   void serialise(itBuf ib);
+  virtual void accept(Visitor& v) override 		{ v.visit(*this); }
 };
 
 
