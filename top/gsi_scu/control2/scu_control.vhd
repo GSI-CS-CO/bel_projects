@@ -89,6 +89,8 @@ entity scu_control is
     sfp2_tx_disable_o : out std_logic := '0';
     sfp2_txp_o        : out std_logic;
     sfp2_rxp_i        : in  std_logic;
+    sfp2_los_i        : in std_logic;
+    sfp2_tx_fault_i   : in std_logic;
     
     sfp2_mod0         : in    std_logic; -- grounded by module
     sfp2_mod1         : inout std_logic; -- SCL
@@ -320,6 +322,9 @@ begin
       wr_ndac_cs_o           => ndac_cs,
       wr_uart_o              => uart_txd_o(0),
       wr_uart_i              => uart_rxd_i(0),
+      sfp_tx_disable_o       => open,
+      sfp_tx_fault_i         => sfp2_tx_fault_i,
+      sfp_los_i              => sfp2_los_i,
       led_link_up_o          => s_leds(3),
       led_link_act_o         => s_leds(2),
       led_track_o            => s_leds(4),
