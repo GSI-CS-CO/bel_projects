@@ -48,7 +48,9 @@
 #include "ebm.h"
 #include "aux.h"
 #include "dbg.h"
+#include "../../top/gsi_scu/scu_mil.h"
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
+#include "dm-unipz.h"
 
 /* register maps for some selected Wishbone devices  */
 #include "../../tools/wb_slaves.h" /* this is a hack */
@@ -64,6 +66,7 @@ unsigned int cpuId, cpuQty;
 uint64_t SHARED dummy = 0;
 
 uint32_t *pECAQ;              /* WB address of ECA queue                                                    */
+unsigned int *pMILDevicebus;  /* WB address of MIL device bus (MIL piggy)                                   */
 
 uint32_t *pShared;            /* pointer to begin of shared memory region                                   */
 uint32_t *pSharedStatus;      /* pointer to a "user defined" u32 register; here: publish status             */
@@ -153,6 +156,15 @@ void initLocalPPSGen(){
   pLocalPPSSecs   = (uint32_t *)(pLocalPPSGen + (WR_PPS_GEN_CNTR_UTCLO >> 2));
   pLocalPPSNsecs  = (uint32_t *)(pLocalPPSGen + (WR_PPS_GEN_CNTR_NSEC >> 2));
 } /* init local PPS */
+
+
+void initMILDevicebus(){
+  /* get Wishbone address for MIL Devicebus         */
+  pMILDevicebus   = (unsigned int*)find_device_adr(GSI, SCU_MIL);
+  mprintf("pMILDevicebus: 0x%08x\n",  pMILDevicebus);
+} /* init MILDevicebus */
+
+
 
 
 void getWishboneTAI(uint32_t *secs, uint32_t *nsecs)
@@ -404,34 +416,136 @@ void cmdHandler()
   } /* if command */
 } /* ecaHandler */
 
+
+
+int testEchoMILDevice(uint8_t ifbAddr)
+{
+  short wData    = 0xcafe; /* data to write                           */
+  short rData    = 0x0;    /* data to read                            */
+  unsigned short fcIfb;    /* function code and interface card addr   */
+  int busStatus = 0;       /* status of bus operation                 */
+
+  /* write to echo register */
+  fcIfb = ifbAddr | (0x13 << 8);
+  busStatus = write_mil(pMILDevicebus, wData, fcIfb);
+
+  if (busStatus != OKAY) return busStatus; 
+
+  /* read from echo register */
+  fcIfb = ifbAddr | (0x89 << 8);
+  busStatus = read_mil(pMILDevicebus, &rData, fcIfb);
+
+  return busStatus;
+} /* testEchoMILDevciebus */
+
+int writeToPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t data)
+{
+  short wData    = 0x0;    /* data to write                           */
+  short rData    = 0x0;    /* data to read                            */
+  unsigned short fcIfb;    /* function code and interface card addr   */
+  int busStatus = 0;       /* status of bus operation                 */
+
+  /* select module */
+  fcIfb    = ifbAddr | (IFB_ADR_BUS_W << 8);
+  wData     = (modAddr << 8) | C_IO32_KANAL_0;
+  busStatus = write_mil(pMILDevicebus, wData, fcIfb);
+
+  if (busStatus != OKAY) return busStatus;
+
+  /* write data word */
+  fcIfb    = ifbAddr | (IFB_DATA_BUS_W << 8);
+  wData     = data;
+  busStatus = write_mil(pMILDevicebus, wData, fcIfb);
+
+  return (busStatus);
+} /* writeToPZU */
+
+
+int readFromPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t *data)
+{
+  short wData    = 0x0;    /* data to write                           */
+  short rData    = 0x0;    /* data to read                            */
+  unsigned short fcIfb;    /* function code and interface card addr   */
+  int busStatus = 0;       /* status of bus operation                 */
+
+  /* select module */
+  fcIfb    = ifbAddr | (IFB_ADR_BUS_W << 8);
+  wData     = (modAddr << 8) | C_IO32_KANAL_0;
+  busStatus = write_mil(pMILDevicebus, wData, fcIfb);
+
+  if (busStatus != OKAY) return busStatus;
+
+  fcIfb    = ifbAddr | (IFB_DATA_BUS_R << 8);
+  busStatus = read_mil(pMILDevicebus, &rData, fcIfb);
+
+  *data = rData;
+
+  return(busStatus);
+} /* readFromPZU */
+ 
+
+
 void main(void) {
   
   int i,j;
 
   uint32_t inSync;
   uint32_t dT;
+  uint16_t test;
+  int      status;
+  WriteToPZU_Type  writePZUData; /* Modulbus SIS, I/O-Modul 1, Bits 0..15 */
+  ReadFromPZU_Type readPZUData;  /* Modulbus SIS, I/O-Modul 3, Bits 0..15 */
   
-  init();                  /* initialize 'boot' lm32           */
-  //initEca();             /* init for actions from ECA        */
-  //initCmds();            /* init for cmds from shared mem    */
-  ebmInit();               /* init EB master                   */
-  initSharedMem();         /* read/write to shared memory      */
-  initRemotePPSGen();
-  initLocalPPSGen();
+  init();                       /* initialize 'boot' lm32           */
+  //initEca();                  /* init for actions from ECA        */
+  //initCmds();                 /* init for cmds from shared mem    */
+  //ebmInit();                  /* init EB master                   */
+  initSharedMem();              /* read/write to shared memory      */
 
-  checkSync(&inSync, &dT);
-  
+  //initRemotePPSGen();
+  //initLocalPPSGen();
+  //checkSync(&inSync, &dT);
+
+  initMILDevicebus();
+  status = testEchoMILDevice(IFB_ADDRESS_SIS);
+  if (status != OKAY) mprintf("FATAL: Modulbus SIS IFK not available!\n");
+  else                mprintf("OK: Modulbus SIS IFK found\n");
+
+  status = testEchoMILDevice(IFB_ADDRESS_UNI);
+  if (status != OKAY) mprintf("FATAL: Modulbus UNI IFK not available!\n");
+  else                mprintf("OK: Modulbus UNI IFK found\n");
+
+  writePZUData.uword       = 0x0;
+  writePZUData.bits.SIS_Request = true;
+
   i=0;
   while (1) {
     /* do the things that have to be done                    */
     //ecaHandler();
     //cmdHandler();
 
+    status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, i);
+    if (status != OKAY) mprintf("ERROR: Can't write to PZU @ IFK 0x%x!\n", IFB_ADDRESS_SIS);
+    else                mprintf("OK: 0x%x written to PZU @ IFK 0x%x\n", i, IFB_ADDRESS_SIS);
+
+    status = readFromPZU(IFB_ADDRESS_UNI, IO_MODULE_1, &test);
+    if (status != OKAY) mprintf("ERROR: Can't read from PZU @ IFK 0x%x!\n", IFB_ADDRESS_UNI);
+    else                mprintf("OK: 0x%x read from PZU @ IFK 0x%x\n", test, IFB_ADDRESS_UNI);    
+    
+    /*    status = writeToPZUUni(i);
+    if (status != OKAY) mprintf("ERROR: Can't write to PZU (UNILAC side)!\n");
+    else                mprintf("OK: wrote 0x%x to PZU (UNILAC side)\n",i);    
+      
+
+    status = readFromPZU(&readPZUData);
+    if (status != OKAY) mprintf("ERROR: Can't read from PZU!\n");
+    else                mprintf("OK: read data from PZU: 0x%x\n", readPZUData.uword); */
+
     /* increment and update iteration counter                */
     i++;
     //*pSharedStatus = i;
 
     /* wait for 100  microseconds                            */
-    for (j = 0; j < (25000); ++j) { asm("nop"); }
+    for (j = 0; j < (32000000); ++j) { asm("nop"); }
   } /* while */
 } /* main */
