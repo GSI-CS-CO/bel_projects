@@ -29,7 +29,8 @@ protected:
 
   uint16_t flags;
   void serialiseB(itBuf ib);
-  virtual void accept(Visitor& v) = 0;
+  virtual void acceptVertex(Visitor& v) = 0;
+  virtual void acceptEdge(Visitor& v) = 0;
   
 };
 
@@ -45,7 +46,9 @@ public:
   void show(void);
   void show(uint32_t cnt, const char* sPrefix);
   void serialise(itBuf ib);
-   virtual void accept(Visitor& v) override 		{ v.visit(*this); }
+  virtual void acceptVertex(Visitor& v) override { v.visitVertex(*this); }
+  virtual void acceptEdge(Visitor& v) override { v.visitEdge(*this); }
+
 };
 
 
@@ -60,7 +63,8 @@ public:
   virtual void show(void);
   virtual void show(uint32_t cnt, const char* sPrefix);
   virtual void serialise(itBuf ib) = 0;
-	virtual void accept(Visitor& v) = 0;
+	virtual void acceptVertex(Visitor& v) = 0;
+  virtual void acceptEdge(Visitor& v) = 0;
 };
 
 
@@ -73,7 +77,8 @@ public:
   void show(void);
   void show(uint32_t cnt, const char* sPrefix);
   void serialise(itBuf ib);
-  virtual void accept(Visitor& v) override 		{ v.visit(*this); }
+  virtual void acceptVertex(Visitor& v) override { v.visitVertex(*this); }
+  virtual void acceptEdge(Visitor& v) override { v.visitEdge(*this); }
 };
 
 class Flow : public Command {
@@ -87,7 +92,8 @@ public:
   void show(void);
   void show(uint32_t cnt, const char* sPrefix);
   void serialise(itBuf ib);
-   virtual void accept(Visitor& v) override 		{ v.visit(*this); }
+  virtual void acceptVertex(Visitor& v) override { v.visitVertex(*this); }
+  virtual void acceptEdge(Visitor& v) override { v.visitEdge(*this); }
 };
 
 class Flush : public Command {
@@ -110,7 +116,8 @@ public:
   void set(prio target, uint8_t upTo);
   void clear(prio target);
   void serialise(itBuf ib);
-  virtual void accept(Visitor& v) override 		{ v.visit(*this); }
+  virtual void acceptVertex(Visitor& v) override { v.visitVertex(*this); }
+  virtual void acceptEdge(Visitor& v) override { v.visitEdge(*this); }
 };
 
 

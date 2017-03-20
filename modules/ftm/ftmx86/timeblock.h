@@ -14,9 +14,11 @@ class TimeBlock : public Node {
   bool      cmdQ;
 
 public:
+  TimeBlock(uint64_t start, uint64_t period, bool cmdQ) : period(period), cmdQ(cmdQ) {}
   TimeBlock(uint64_t period, bool cmdQ) : period(period), cmdQ(cmdQ) {}
   ~TimeBlock() {};
-  virtual void accept(Visitor& v) { v.visit(*this); }
+  virtual void acceptVertex(Visitor& v) override { v.visitVertex(*this); }
+  virtual void acceptEdge(Visitor& v) override { v.visitEdge(*this); }
 /*
            downloadTable()
   void     allocate(uint8_t cpu, uint16_t idx, uint32_t adr ); //replace by call to allocator
