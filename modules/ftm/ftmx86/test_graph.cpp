@@ -59,9 +59,9 @@ int main() {
 
   Graph g;
 
-  vertex_t root = boost::add_vertex((myVertex) {"A000", (node_ptr)new TimeBlock(0xcafebabedeadbee7ULL, true)}, g);
+  vertex_t root = boost::add_vertex((myVertex) {"A", (node_ptr)new TimeBlock(0xcafebabedeadbee7ULL, true)}, g);
   vertex_t Aa = boost::add_vertex((myVertex) {"Evt_A_0", (node_ptr)new TimingMsg(0xcafebabedeadbee6ULL, 0, 42, 2, 4)} , g);
-  vertex_t Ab = boost::add_vertex((myVertex) {"Evt_A_1", (node_ptr)new TimingMsg(0xdeadbeefdeadbee6ULL, 1, 10, 1, 3)} , g);
+  vertex_t Ab = boost::add_vertex((myVertex) {"Evt_A_1", (node_ptr)new Noop(5000, 1, 10000, 10)} , g);
 
   boost::add_edge(root, Aa, (myEdge){SYNC, 8}, g);
   boost::add_edge(root, Ab, (myEdge){SYNC, 2000}, g);
@@ -107,7 +107,7 @@ int main() {
   std::ofstream out("./test.dot"); 
 
   
-  Visitor v = Visitor(out);
+  //Visitor v = Visitor(out);
 
   //g[Aa].np->accept(v);
   //g[Ab].np->accept(v);

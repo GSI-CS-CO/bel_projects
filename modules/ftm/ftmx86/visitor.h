@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <iostream>
 
+class Event;
+class Command;
 class Noop;
 class TimeBlock;
 class TimingMsg;
@@ -14,6 +16,8 @@ class Flush;
 
   class Visitor {
     std::ostream& out;
+    void eventString(Event& el);
+    void commandString(Command& el);
   public:
     Visitor(std::ostream& out) : out(out) {};
     ~Visitor() {};
@@ -22,6 +26,7 @@ class Flush;
     void visitVertex(Flow& el);
     void visitVertex(Flush& el);
     void visitVertex(Noop& el);
+
     void visitEdge(TimeBlock& el);
 		void visitEdge(TimingMsg& el);
     void visitEdge(Flow& el);

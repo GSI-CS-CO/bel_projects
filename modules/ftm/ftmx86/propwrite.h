@@ -22,7 +22,7 @@ typedef boost::shared_ptr<Node> node_ptr;
     const std::string& sroot;
     void operator()(std::ostream& out) const {
       out << "graph [root=" << sroot << ", rankdir=LR, nodesep=0.6, mindist=1.0, ranksep=1.0, overlap=false]" << std::endl;
-      out << "node [shape=record]" << std::endl;
+      out << "node [shape=\"rectangle\"]" << std::endl;
       //out << "node [shape=circle color=white]" << std::endl;
       //out << "edge [style=dashed]" << std::endl;
     }
@@ -34,7 +34,7 @@ typedef boost::shared_ptr<Node> node_ptr;
     vertex_writer(objMap om) : om(om) {}
     template <class Vertex>
     void operator()(std::ostream& out, const Vertex& v) const {
-      Visitor vs = Visitor(out); //awkward ... is there a better way to do this?
+      Visitor vs = Visitor(out);
       om[v]->acceptVertex(vs);
     }
   private:
@@ -89,11 +89,10 @@ template <class Name>
     edge_writer(typeMap type, offsMap offs) : type(type),  offs(offs) {}
     template <class Edge>
     void operator()(std::ostream& out, const Edge& v) const {
-      char sep = ' ';      
       out <<  "[";
       if (type[v] == STANDARD) {out <<  "color=\"black\", label=\"" << offs[v] << "\"";}     
       if (type[v] == DEFAULT) {out <<  "color=\"red\", label=\"" << offs[v] << "\"";}
-      if (type[v] == SYNC) {out <<  sep << "  style=\"dashed\", label=\"" << offs[v] << "\" ";} //constraint=false,
+      if (type[v] == SYNC) {out <<  "  style=\"dashed\", label=\"" << offs[v] << "\" ";} //constraint=false,
       out <<  "]";   
     }
   private:

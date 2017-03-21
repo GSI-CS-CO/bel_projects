@@ -15,7 +15,7 @@ class TimeBlock : public Node {
 
 public:
   TimeBlock(uint64_t start, uint64_t period, bool cmdQ) : period(period), cmdQ(cmdQ) {}
-  TimeBlock(uint64_t period, bool cmdQ) : period(period), cmdQ(cmdQ) {}
+  TimeBlock(uint64_t period, bool cmdQ) : period(period), cmdQ(cmdQ), cpu(0), idx(0), adr(0) {}
   ~TimeBlock() {};
   virtual void acceptVertex(Visitor& v) override { v.visitVertex(*this); }
   virtual void acceptEdge(Visitor& v) override { v.visitEdge(*this); }
@@ -24,7 +24,11 @@ public:
   void     allocate(uint8_t cpu, uint16_t idx, uint32_t adr ); //replace by call to allocator
   void     deallocate(); //call to allocator free
 */
-  uint16_t getIdx() {return idx;}
+  uint8_t  getCpu()     {return cpu;}
+  uint16_t getIdx()     {return idx;}
+  uint32_t getAdr()     {return adr;}
+  uint64_t getPeriod()  {return period;}
+  bool hasCmdQ() {return cmdQ;}
   void show(void) {show(0, "");}
   void show(uint32_t cnt, const char* sPrefix)  {printf("I'am a Timeblock\n");}
   void serialise(itBuf ib) {printf("I'am a serialised Timeblock\n");}
