@@ -162,6 +162,7 @@ inline void handle(int slave_nr, unsigned FG_BASE)
       fg_regs[channel].state = 0;
       //mprintf("fg 0x%x in slave %d stopped after %d tuples. %d tuples left in buffer.\n", FG_BASE, slave_nr, fg_regs[channel].ramp_count, cbgetCount(&fg_regs[0], channel));
     } else if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
+      fg_regs[channel].state = 1; 
       SEND_SIG(SIG_START); // fg has received the tag
       if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
         SEND_SIG(SIG_REFILL);
@@ -293,7 +294,6 @@ int configure_fg_macro(int channel) {
     scub_base[(slot << 16) + fg_base + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
     //configure and enable macro
     scub_base[(slot << 16) + fg_base + FG_CNTRL] |= FG_ENABLED;
-    fg_regs[channel].state = 1; 
     SEND_SIG(SIG_ARMED);
   }
   return 0; 
