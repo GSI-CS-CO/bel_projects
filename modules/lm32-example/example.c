@@ -70,7 +70,7 @@ unsigned int cpuId, cpuQty;
 uint64_t SHARED dummy = 0;
 
 uint32_t *pECAQ;                 /* WB address of ECA queue                                                    */
-uint32_t *pMILPiggy;             /* WB address of MIL piggy on SCU                                             */
+unsigned int *pMILPiggy;         /* WB address of MIL piggy on SCU                                             */
 uint32_t *pShared;               /* pointer to begin of shared memory region                                   */
 uint32_t *pSharedCounter;        /* pointer to a "user defined" u32 register; here: publish counter            */
 volatile uint32_t *pSharedInput; /* pointer to a "user defined" u32 register; here: get input from host system */
@@ -198,7 +198,7 @@ void useSharedMem()
 **************************************************************/
 void initMILPiggy(){
   /* get Wishbone address for MIL piggy */
-  pMILPiggy   = find_device_adr(GSI, SCU_MIL);
+  pMILPiggy   = (unsigned int *)find_device_adr(GSI, SCU_MIL);
   mprintf("pMILPiggy: 0x%08x\n",  pMILPiggy);
 } /* init MILDevicebus */
 
@@ -211,80 +211,21 @@ void initMILPiggy(){
 **************************************************************/
 void initMILEvt(){
   uint32_t *pControlRegister;  /* control register of event filter                */
-  uint32_t *pFilterRAM;        /* RAM for event filters                           */
-  uint32_t filterSize;         /* size of RAM for event filters in 32bit words    */
   uint32_t regValue;           /* value for control register                      */
-  int i;
 
-  /*NOTE: register addresses of scu_mil.h are in units of 32bit words             */
-  /* --> not bit shift required                                                   */
-  
   /* clear filter RAM */
-  filterSize = (EV_FILT_LAST - EV_FILT_FIRST);
-  filterSize = (filterSize * 6) >> 2;          /* filtersize in units of 6 bytes  */
-  mprintf("filtersize: %d\n", filterSize);
-  pFilterRAM = pMILPiggy + EV_FILT_FIRST;      /* get address to filter RAM       */
-  for (i=0; i < filterSize; i++) pFilterRAM[i] = 0;
+  //clear_filter_evt_mil(pMILPiggy);
 
   /* clear event fifo */
-  *(pMILPiggy + RD_CLR_EV_FIFO) = 0x1;         /* check: value                    */
+  //clear_fifo_evt_mil(pMILPiggy);
 
-  /* define value to be written to control register */
+  /* write values to control register */
   regValue = 0x0;
   regValue = regValue | MIL_ENDECODER_FPGA;    /* use manchester encoder in FPGA  */
   regValue = regValue | MIL_INTR_DEB_ON;       /* CHECK!! debouncing of IRQ lines */
-  //regValue = regValue | MIL_EV_FILTER_ON;      /* enable event filter             */
-  
-  /* write value to control register */
-  pControlRegister  = pMILPiggy + MIL_WR_RD_STATUS; /* address of control registr */
-  *pControlRegister = regValue;
-
-  /* use polling mode -> don't enable IRQ mask */
-
-  mprintf("MILEvt initialized @ control register 0x%x with value 0x%x\n", pControlRegister, regValue);
+  write_statusreg_evt_mil(pMILPiggy, regValue);
+  disable_filter_evt_mil(pMILPiggy);
 } /* iniMILEvt */
-
-
-/*************************************************************
-* 
-* demonstrate how to configure the filter for MIL events  
-* on the MIL piggy (Lemo input)
-*
-**************************************************************/
-void configMILEvt(){
-  uint32_t *pControlRegister;  /* control register of event filter                */
-  uint32_t *pFilterRAM;        /* RAM for event filters                           */
-  uint32_t filterSize;         /* size of RAM for event filters in 32bit words    */
-  uint32_t regValue;           /* value for control register                      */
-  int i;
-
-  /*NOTE: register addresses of scu_mil.h are in units of 32bit words             */
-  /* --> not bit shift required                                                   */
-  
-  /* clear filter RAM */
-  //filterSize = (EV_FILT_LAST - EV_FILT_FIRST);
-  //filterSize = (filterSize * 6) >> 2;          /* filtersize in units of 6 bytes  */
-  //mprintf("filtersize: %d\n", filterSize);
-  //pFilterRAM = pMILPiggy + EV_FILT_FIRST;      /* get address to filter RAM       */
-  //for (i=0; i < filterSize; i++) pFilterRAM[i] = 0;
-
-  /* clear event fifo */
-  //*(pMILPiggy + RD_CLR_EV_FIFO) = 0x1;         /* check: value                    */
-
-  /* define value to be written to control register */
-  //regValue = 0x0;
-  //regValue = regValue | MIL_ENDECODER_FPGA;    /* use manchester encoder in FPGA  */
-  //regValue = regValue | MIL_INTR_DEB_ON;       /* CHECK!! debouncing of IRQ lines */
-  //regValue = regValue | MIL_EV_FILTER_ON;      /* enable event filter             */
-  
-  /* write value to control register */
-  pControlRegister  = pMILPiggy + MIL_WR_RD_STATUS; /* address of control registr */
-  regValue = *pControlRegister;
-
-  /* use polling mode -> don't enable IRQ mask */
-
-  mprintf("MILEvt read control register 0x%x, value: 0x%x\n", pControlRegister, regValue);
-} /* configMILEvt */
 
 
 /*************************************************************
@@ -294,9 +235,6 @@ void configMILEvt(){
 *
 **************************************************************/
 void MILEvtHandler(){
-  uint32_t *pControlRegister;  /* control register of event filter                */
-  uint32_t *pEventFIFO;        /* FIFO for events                                 */
-  uint32_t regValue;           /* value for control register                      */
   uint32_t evtData;            /* data of one MIL event                           */
   uint32_t evtCode;            /* "event number"                                  */
   uint32_t virtAcc;            /* virtual accelerator                             */
@@ -306,18 +244,11 @@ void MILEvtHandler(){
   uint32_t help1, help2; 
   int i;
 
-  pControlRegister  = pMILPiggy + MIL_WR_RD_STATUS; /* address of control registr */
-  pEventFIFO        = pMILPiggy + RD_CLR_EV_FIFO;   /* address of event FIFO      */
-
-  //for (i=0; i<32000; i++) { asm("nop"); }  //100ms
-
-  regValue = *pControlRegister;
-
   i = 0;
-  while (i < 500) {
-    if (regValue && MIL_EV_FIFO_NE) {
+  while (i < 100) {
+    if (fifo_notempty_evt_mil(pMILPiggy)) {
       i++;
-      evtData  = *pEventFIFO;
+      pop_fifo_evt_mil(pMILPiggy, (unsigned int*)(&evtData));
       evtCode  = evtData & 0x000000ff;
       help1   = (evtData >> 8);
       switch (evtCode) {
@@ -425,12 +356,12 @@ void testEchoMILDevice(short wData)
 
   /* write to echo register */
   fc_ifk = ifkAddr | (fcEchoW << 8);
-  busStatus = write_mil((unsigned int *)pMILPiggy, wData, fc_ifk);
+  busStatus = write_mil(pMILPiggy, wData, fc_ifk);
   mprintf("fc_ifk: 0x%x - bus status: %d\n", fc_ifk, busStatus);
 
   /* read from echo register */
   fc_ifk = ifkAddr | (fcEchoR << 8);
-  busStatus = read_mil((unsigned int *)pMILPiggy, &rData, fc_ifk);
+  busStatus = read_mil(pMILPiggy, &rData, fc_ifk);
   mprintf("fc_ifk: 0x%x - bus status: %d\n", fc_ifk, busStatus);
   
   mprintf("readData: 0x%x from IFK with address 0x%x\n", rData, ifkAddr);
@@ -588,9 +519,23 @@ void main(void) {
   initCmds();            /* init for cmds from shared mem    */
   initMILPiggy();        /* init MIL piggy on SCU            */
   testEchoMILDevice(0xbabe);  /* write/read to a MIL device  */
-  initMILEvt();          /* init event receiver on MIL piggy */
+  //initMILEvt();          /* init event receiver on MIL piggy */
 
-  configMILEvt();
+  write_statusreg_evt_mil(pMILPiggy, MIL_ENDECODER_FPGA | MIL_INTR_DEB_ON);
+  disable_filter_evt_mil(pMILPiggy);
+  clear_filter_evt_mil(pMILPiggy);
+  set_filter_evt_mil(pMILPiggy,  1, 15, 0x1);
+  set_filter_evt_mil(pMILPiggy, 12, 15, 0x11);
+  set_filter_evt_mil(pMILPiggy, 18, 15, 0x1);
+  set_filter_evt_mil(pMILPiggy, 24, 15, 0x1);
+  set_filter_evt_mil(pMILPiggy, 25, 15, 0x1);
+  set_filter_evt_mil(pMILPiggy, 26, 15, 0x5);
+  set_filter_evt_mil(pMILPiggy, 27, 15, 0x9);
+  enable_lemo_pulse_evt_mil(pMILPiggy, 2);
+  enable_lemo_gate_evt_mil(pMILPiggy, 1);
+  clear_fifo_evt_mil(pMILPiggy);
+  enable_filter_evt_mil(pMILPiggy);
+  
   MILEvtHandler();
 
   
