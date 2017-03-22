@@ -16,6 +16,8 @@
 #define C_IO32_KANAL_1      0x02        /* Subadresse I/O-Modul für I/O-Bits 16..31 */
 
 
+// How are you using these ? Do you have assignment/serialiser/deserialiser functions?
+
 typedef struct TPZSInfo1 {
   /* Bit 11..15 */  uint16_t free1         : 5;
   /* Bit 10     */  uint16_t Med_MachID_ok : 1;   /* MachineID is ok */
@@ -37,6 +39,9 @@ typedef struct TPZSInfo5 {
   /* Bit  0..3  */  uint16_t SIS_Acc_Select: 4;   /* Requested accelerator */ 
 } TPZSInfo5;
 
+
+// How are you using these ? Do you have assignment/serialiser/deserialiser functions?
+
 typedef union {
   TPZSInfo5 bits;
   uint16_t uword;
@@ -46,6 +51,8 @@ typedef union {
   TPZSInfo1 bits;
   uint16_t uword;
 } ReadFromPZU_Type;
+
+
 
 
 //#define INFO1_SIS_REQ_ACK   0x10        /* Acknowledge for TK preparation           */
