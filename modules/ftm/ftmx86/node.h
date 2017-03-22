@@ -13,6 +13,8 @@ public:
   int Dummy;
   Node() {}
   virtual ~Node() {};
+  virtual uint64_t getTPeriod() = 0;
+  virtual uint64_t getTOffs() = 0;
   virtual void serialise(itBuf ib) = 0;
   virtual void show(void) = 0;
   virtual void show(uint32_t cnt, const char* sPrefix) = 0;

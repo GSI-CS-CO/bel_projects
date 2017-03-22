@@ -7,6 +7,8 @@
 #include "timeblock.h"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 #include "propwrite.h"
 #include "node.h"
 #include "timeblock.h"
@@ -21,11 +23,14 @@ typedef boost::shared_ptr<Node> node_ptr;
     node_ptr np;
   } myVertex;
 
+
+
+
   typedef struct {
     int type;
-    uint64_t offs;  
+    boost::function<uint64_t(void)> getTimeParent;
+    boost::function<uint64_t(void)> getTimeChild;
   } myEdge;
-
 
 
 
@@ -41,13 +46,16 @@ typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
 
 
 
-void addEdge(vertex_t& p, vertex_t& c) {
-  //add visitor for 
-
-
-
+vertex_t add_child_at(std::string name, node_ptr node, vertex_t parent, Graph& g) {
+  vertex_t child = boost::add_vertex((myVertex) {name, node}, g);
+  boost::add_edge(parent, child, (myEdge) {SYNC, boost::bind(&Node::getTPeriod, g[parent].np), boost::bind(&Node::getTOffs, g[child].np)}, g);
+  return child;
 }
 
+vertex_t connect(vertex_t child, vertex_t parent, Graph& g) {
+  boost::add_edge(parent, child, (myEdge) {SYNC, boost::bind(&Node::getTPeriod, g[parent].np), boost::bind(&Node::getTOffs, g[child].np)}, g);
+  return child;
+}
 
 
 
@@ -58,7 +66,7 @@ int main() {
   boost::graph_traits < boost::adjacency_list <> >::vertex_iterator i, end;
 
   Graph g;
-
+/*
   vertex_t root = boost::add_vertex((myVertex) {"A", (node_ptr)new TimeBlock(0xcafebabedeadbee7ULL, true)}, g);
   vertex_t Aa = boost::add_vertex((myVertex) {"Evt_A_0", (node_ptr)new TimingMsg(0xcafebabedeadbee6ULL, 0, 42, 2, 4)} , g);
   vertex_t Ab = boost::add_vertex((myVertex) {"Evt_A_1", (node_ptr)new Noop(5000, 1, 10000, 10)} , g);
@@ -104,6 +112,24 @@ int main() {
   boost::add_edge(D, E, (myEdge){DEFAULT, 100}, g);
   boost::add_edge(E, Ea, (myEdge){SYNC, 100}, g);
 
+*/
+  vertex_t root = boost::add_vertex((myVertex) {"A", (node_ptr) new TimeBlock(5000, true)}, g);
+  vertex_t tmp, tmp1, tmp2;
+  tmp =  add_child_at("Evt_A_0", (node_ptr)new TimingMsg(300, 0, 42, 2, 4), root, g);
+  tmp = add_child_at("B0", (node_ptr)new TimeBlock(6000, true), root, g);
+  add_child_at("Evt_B_0", (node_ptr)new TimingMsg(300, 0, 42, 2, 4), tmp, g);
+  add_child_at("Evt_B_1", (node_ptr)new TimingMsg(400, 0, 42, 2, 4), tmp, g);
+  add_child_at("Evt_B_2", (node_ptr)new TimingMsg(0, 0, 42, 2, 4), tmp, g);
+  tmp1 = add_child_at("C0", (node_ptr)new TimeBlock(2000, false), tmp, g);
+  tmp2 = add_child_at("C1", (node_ptr)new TimeBlock(2000, false), tmp, g);
+  tmp = add_child_at("D0", (node_ptr)new TimeBlock(1000, true), tmp2, g);
+  add_child_at("Evt_D_0", (node_ptr)new Noop(8, 1, 10000, 10), tmp, g);
+  tmp2 = add_child_at("Evt_D_1", (node_ptr)new TimingMsg(100, 0, 42, 2, 4), tmp, g);
+  connect(root, tmp2, g);
+  connect(tmp, tmp1, g);
+  connect(root, tmp, g);
+  tmp = add_child_at("E0", (node_ptr)new TimeBlock(9000, false), tmp, g);
+  
   std::ofstream out("./test.dot"); 
 
   
@@ -116,7 +142,9 @@ int main() {
   
 
 
-  boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)), make_edge_writer(boost::get(&myEdge::type, g), boost::get(&myEdge::offs, g)), sample_graph_writer{g[root].name}, boost::get(&myVertex::name, g));
+  boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)), make_edge_writer(boost::get(&myEdge::getTimeParent, g), boost::get(&myEdge::getTimeChild, g)), sample_graph_writer{g[root].name}, boost::get(&myVertex::name, g));
+
+  
 
   return 0;	
 }

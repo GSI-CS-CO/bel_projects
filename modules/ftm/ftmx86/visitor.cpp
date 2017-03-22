@@ -19,8 +19,8 @@ void Visitor::commandString(Command& el) {
 
 void Visitor::visitVertex(TimeBlock& el) { 
   out << " [shape=\"rectangle\"";
-  out << ", t_period=" << el.getPeriod();
-  if(el.hasCmdQ()) out << ", hasCmdQ=" << el.hasCmdQ();
+  out << ", t_period=" << el.getTPeriod();
+  if(el.hasCmdQ()) out << ", color=\"red\", hasCmdQ=" << el.hasCmdQ();
   //out << ", cpu=" << el.getCpu();
   out << ", idx=" << el.getIdx();
   out << ", adr=" << el.getAdr();
@@ -73,3 +73,6 @@ void Visitor::visitEdge(TimingMsg& el) { std::cout << "Visited a TimingMsg!";	ou
 void Visitor::visitEdge(Flow& el) { std::cout << "Visited a Flow!";		out << "[shape=\"oval\", color=\"blue\"]";}
 void Visitor::visitEdge(Flush& el) { std::cout << "Visited a Flush!";	out << "[shape=\"oval\", color=\"red\"]";}
 void Visitor::visitEdge(Noop& el) { std::cout << "Visited a Noop!";	out << "[shape=\"oval\", color=\"green\"]";}
+
+
+

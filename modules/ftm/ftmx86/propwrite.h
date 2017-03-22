@@ -83,27 +83,33 @@ template <class Name>
 
 
 
-  template <class typeMap, class offsMap>
+  template <class pMap, class cMap>
   class edge_writer {
   public:
-    edge_writer(typeMap type, offsMap offs) : type(type),  offs(offs) {}
+    edge_writer(pMap p, cMap c) : p(p), c(c) {}
     template <class Edge>
     void operator()(std::ostream& out, const Edge& v) const {
-      out <<  "[";
-      if (type[v] == STANDARD) {out <<  "color=\"black\", label=\"" << offs[v] << "\"";}     
-      if (type[v] == DEFAULT) {out <<  "color=\"red\", label=\"" << offs[v] << "\"";}
-      if (type[v] == SYNC) {out <<  "  style=\"dashed\", label=\"" << offs[v] << "\" ";} //constraint=false,
+      out <<  "[label=";
+      uint64_t pT, cT;
+
+      pT = (uint64_t)(p[v]());
+      cT = (uint64_t)(c[v]());
+
+      if ((pT != -1)  & (cT == -1) ) {out << pT << ", style=\"solid\"";}// block -> block
+      if ((pT != -1)  & (cT != -1) ) {out << cT << ", style=\"dashed\"";}// block -> Evt
+      if ((pT == -1)  & (cT == -1) ) {out << "\"cmd\", style=\"dotted\"";}// (evt)Cmd -> Block
+ 
       out <<  "]";   
     }
   private:
-    typeMap type;
-    offsMap offs;
+    pMap p;
+    cMap c;
   };
 
-  template <class typeMap, class offsMap>
-  inline edge_writer<typeMap, offsMap> 
-  make_edge_writer(typeMap type, offsMap offs) {
-    return edge_writer<typeMap, offsMap>(type, offs);
+  template <class pMap, class cMap>
+  inline edge_writer<pMap, cMap> 
+  make_edge_writer(pMap p, cMap c) {
+    return edge_writer<pMap, cMap>(p, c);
   }
 /*
   template <class typeMap, class nameMap, >
