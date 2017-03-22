@@ -1,5 +1,5 @@
 /********************************************************************************************
- *  example.c
+ *  milExample.c
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
