@@ -1,0 +1,5 @@
+hdl/.qsys_edit
+*.qsys
+*.sopcinfo
+*.debuginfo
+*.qip

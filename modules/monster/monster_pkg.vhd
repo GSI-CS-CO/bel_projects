@@ -113,7 +113,8 @@ package monster_pkg is
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
       g_lm32_init_files      : string; -- multiple init files must be seperated by a semicolon ';'
 		g_lm32_profiles        : string; -- multiple profiles must be seperated by a semicolon ';'
-      g_lm32_are_ftm         : boolean := false
+      g_lm32_are_ftm         : boolean := false;
+      g_en_tempsens          : boolean := false
     );
     port(
       -- Required: core signals

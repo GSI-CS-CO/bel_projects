@@ -62,6 +62,7 @@ use work.psram_pkg.all;
 use work.wb_serdes_clk_gen_pkg.all;
 use work.io_control_pkg.all;
 use work.wb_pmc_host_bridge_pkg.all;
+use work.wb_temp_sense_pkg.all;
 use work.ddr3_wrapper_pkg.all;
 use work.endpoint_pkg.all;
 
@@ -101,7 +102,8 @@ entity monster is
     g_lm32_ramsizes        : natural;
     g_lm32_init_files      : string;
 	 g_lm32_profiles        : string;
-    g_lm32_are_ftm         : boolean);
+    g_lm32_are_ftm         : boolean;
+    g_en_tempsens          : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -339,7 +341,10 @@ entity monster is
 
     -- g_en_user_ow
     ow_io                  : inout std_logic_vector(1 downto 0);
-    hw_version             : in    std_logic_vector(31 downto 0));
+    hw_version             : in    std_logic_vector(31 downto 0);
+
+   -- g_en_tempsens
+    tempsens_clr_out       : out   std_logic);
 end monster;
 
 architecture rtl of monster is
@@ -412,7 +417,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- required slaves
-  constant c_dev_slaves          : natural := 31;
+  constant c_dev_slaves          : natural := 32;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_mbox           : natural := 2;
@@ -446,6 +451,7 @@ architecture rtl of monster is
   constant c_devs_DDR3_if1       : natural := 28;
   constant c_devs_DDR3_if2       : natural := 29;
   constant c_devs_DDR3_ctrl      : natural := 30;
+  constant c_tops_tempsens       : natural := 31;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -479,10 +485,11 @@ architecture rtl of monster is
     c_devs_vme_info       => f_sdb_auto_device(c_vme_info_sdb,                   g_en_vme),
     c_devs_psram          => f_sdb_auto_device(f_psram_sdb(g_psram_bits),        g_en_psram),
     c_devs_CfiPFlash      => f_sdb_auto_device(c_wb_CfiPFlash_sdb,               g_en_cfi),
+    c_devs_ssd1325        => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325),
     c_devs_ddr3_if1       => f_sdb_auto_device(c_wb_DDR3_if1_sdb,                g_en_ddr3),
     c_devs_ddr3_if2       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
     c_devs_ddr3_ctrl      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
-    c_devs_ssd1325        => f_sdb_auto_device(c_ssd1325_sdb,                    g_en_ssd1325));
+    c_tops_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens));
     
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
@@ -2206,6 +2213,20 @@ begin
       ps_wait   => ps_wait);
   end generate;
  
+  tempsens_n : if not g_en_tempsens generate
+    dev_bus_master_i(c_tops_tempsens) <= cc_dummy_slave_out;
+  end generate;
+
+  tempsens_y : if g_en_tempsens generate
+    tempsens_display : wb_temp_sense
+      port map (
+        clk_sys_i  => clk_sys,
+        rst_n_i    => rstn_sys,
+        slave_i    => dev_bus_master_o(c_tops_tempsens),
+        slave_o    => dev_bus_master_i(c_tops_tempsens),
+        clr_o      => tempsens_clr_out);
+  end generate;
+
   -- END OF Wishbone slaves
   ----------------------------------------------------------------------------------
   
