@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Mathias Kreider,  Dietrich Beck, GSI-Darmstadt
- *  version : 28-Feb-2017
+ *  version : 23-Mar-2017
  *
  *  very basic example program for lm32 softcore on GSI timing receivers
  * 
@@ -57,24 +57,23 @@ unsigned int cpuId, cpuQty;
 uint64_t SHARED dummy = 0;
 
 void init(){
-  discoverPeriphery();   /* mini-sdb: get info on important Wishbone infrastructure */
-  uart_init_hw();        /* init UART, required for printf...                       */
-  cpuId = getCpuIdx();   /* get ID of THIS CPU */ 
-
-} /* init */
+  discoverPeriphery();   // mini-sdb: get info on important Wishbone infrastructure
+  uart_init_hw();        // init UART, required for printf... 
+  cpuId = getCpuIdx();   // get ID of THIS CPU 
+} // init
 
 void main(void) {
   int j;
   
   init();
   
-  /* wait 1 second and print initial message to UART         */
-  /* pro tip: try 'eb-console' to view printed messages      */
-  for (j = 0; j < (125000000/4); ++j) { asm("nop"); }
+  // wait 1 second and print initial message to UART
+  // pro tip: try 'eb-console' to view printed messages
+  for (j = 0; j < (31000000); ++j) { asm("nop"); } // 31.25 x 'asm("nop")' operations take 1 us.
   mprintf("Hello World!\n");
 
   while (1) {
     mprintf("boring...\n");
-    for (j = 0; j < (125000000/4); ++j) { asm("nop"); }
-  } /* while */
+    for (j = 0; j < (31000000); ++j) { asm("nop"); }
+  } // while
 } /* main */
