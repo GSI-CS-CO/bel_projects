@@ -241,6 +241,18 @@ int16_t configLemoGateEvtMil(volatile uint32_t *base,   // Wishbone address seen
                              uint32_t lemo              // select LEMO 1..4                                
                              );
 
+/* configure a single ended LEMO for programmable output (not controlled via event) */
+int16_t configLemoOutputEvtMil(volatile uint32_t *base,   // Wishbone address seen from the CPUs perspective 
+                               uint32_t lemo              // select LEMO 1..4                                
+                               );
+
+
+/* set the output value of a single ended LEMO programmatically (not controlled via event) */
+int16_t setLemoOutputEvtMil(volatile uint32_t *base,   // Wishbone address seen from the CPUs perspective 
+                            uint32_t lemo,             // select LEMO 1..4
+                            uint32_t on                // 1: on, 0: off
+                            );
+
 /* disable a single ended LEMO output; returns error code */
 int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen from the CPUs perspective 
                           uint32_t lemo                 // select LEMO 1..4                                
@@ -342,6 +354,22 @@ int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen
 #define   MIL_LEMO_EVENT_EN2  0x0020    // '1' ==> LEMO 2 can be controlled by event (MIL Piggy)
 #define   MIL_LEMO_EVENT_EN3  0x0040    // '1' ==> LEMO 3 can be controlled by event (unused?)
 #define   MIL_LEMO_EVENT_EN4  0x0080    // '1' ==> LEMO 4 can be controlled by event (unused?) 
+
+
+/***********************************************************
+ * 
+ * defintion of LEMO data register
+ * in case LEMO outputs are not controlled via events,
+ * this register can be used to control them
+ * 
+ * bits 0..3: see below
+ * bits 4..31: unused
+ *
+ ***********************************************************/
+#define   MIL_LEMO_DAT1    0x0001    // '1' ==> LEMO 1 is switched active HIGH (MIL Piggy & SIO)
+#define   MIL_LEMO_DAT2    0x0002    // '1' ==> LEMO 2 is switched active HIGH (MIL Piggy & SIO)
+#define   MIL_LEMO_DAT3    0x0004    // '1' ==> LEMO 3 is switched active HIGH (SIO)
+#define   MIL_LEMO_DAT4    0x0008    // '1' ==> LEMO 4 is switched active HIGH (SIO)
 
 
 #endif

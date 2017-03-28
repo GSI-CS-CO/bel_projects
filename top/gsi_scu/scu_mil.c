@@ -344,6 +344,67 @@ int16_t configLemoGateEvtMil(volatile uint32_t *base, uint32_t lemo)
   return MIL_STAT_OK;  
 } //enableLemoGateEvtMil
 
+int16_t configLemoOutputEvtMil(volatile uint32_t *base, uint32_t lemo)
+{
+  uint32_t *pConfigRegister;
+
+  uint32_t statRegValue;
+  uint32_t confRegValue;
+  
+  if (lemo > 4) return MIL_STAT_OUT_OF_RANGE;
+
+  // disable gate mode 
+  readCtrlStatRegEvtMil(base, &statRegValue);
+  if (lemo == 1) statRegValue = statRegValue & ~MIL_CTRL_STAT_PULS1_FRAME;
+  if (lemo == 2) statRegValue = statRegValue & ~MIL_CTRL_STAT_PULS2_FRAME;
+  writeCtrlStatRegEvtMil(base, statRegValue);
+
+  // enable output for programable operation
+  pConfigRegister = (uint32_t *)(base + (MIL_REG_WR_RF_LEMO_CONF >> 2));
+  confRegValue = *pConfigRegister;
+  if (lemo == 1) confRegValue = confRegValue | MIL_LEMO_OUT_EN1;
+  if (lemo == 2) confRegValue = confRegValue | MIL_LEMO_OUT_EN2;
+  if (lemo == 3) confRegValue = confRegValue | MIL_LEMO_OUT_EN3;
+  if (lemo == 4) confRegValue = confRegValue | MIL_LEMO_OUT_EN4;
+  *pConfigRegister = confRegValue;
+
+  return MIL_STAT_OK; 
+} //configLemoOutputEvtMil
+
+int16_t setLemoOutputEvtMil(volatile uint32_t *base, uint32_t lemo, uint32_t on)
+{
+  uint32_t *pLemoDataRegister;
+
+  uint32_t dataRegValue;
+
+  if (lemo > 4) return MIL_STAT_OUT_OF_RANGE;
+  if (on > 1)   return MIL_STAT_OUT_OF_RANGE;
+
+  // read current value of register
+  pLemoDataRegister = (uint32_t *)(base + (MIL_REG_WR_RD_LEMO_DAT >> 2));
+  dataRegValue = *pLemoDataRegister;
+
+  // modify value for register
+  if (on) {
+    if (lemo == 1) dataRegValue = dataRegValue | MIL_LEMO_OUT_EN1;
+    if (lemo == 2) dataRegValue = dataRegValue | MIL_LEMO_OUT_EN2;
+    if (lemo == 3) dataRegValue = dataRegValue | MIL_LEMO_OUT_EN3;
+    if (lemo == 4) dataRegValue = dataRegValue | MIL_LEMO_OUT_EN4;
+  } // if on
+  else {
+    if (lemo == 1) dataRegValue = dataRegValue & ~MIL_LEMO_OUT_EN1;
+    if (lemo == 2) dataRegValue = dataRegValue & ~MIL_LEMO_OUT_EN2;
+    if (lemo == 3) dataRegValue = dataRegValue & ~MIL_LEMO_OUT_EN3;
+    if (lemo == 4) dataRegValue = dataRegValue & ~MIL_LEMO_OUT_EN4;
+  } //else if on
+
+  //write new value to register
+  *pLemoDataRegister = dataRegValue;
+
+  return MIL_STAT_OK;
+} //setLemoOutputEvtMil
+
+
 int16_t disableLemoEvtMil(volatile uint32_t *base, uint32_t lemo)
 {
   uint32_t *pConfigRegister;
