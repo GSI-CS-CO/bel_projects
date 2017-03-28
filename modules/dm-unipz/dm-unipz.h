@@ -1,6 +1,17 @@
 #ifndef __DM_UNIPZ_H_
 #define __DM_UNIPZ_H_
 
+#define  DMUNIPZ_ECA_TAG         0x4         // tag for ECA actions we want to receive
+#define  DMUNIPZ_US_ASMNOP       31          // # of asm("nop") operations per microsecond
+#define  DMUNIPZ_MS_ASMNOP       31 * 1000   // # of asm("nop") operations per microsecond
+#define  DMUNIPZ_WB_ECA_IN       0x7ffffff0  // Wishbone address of ECA input
+
+#define  DMUNIPZ_STAT_UNKNOWN    0           // unknown status
+#define  DMUNIPZ_STAT_OK         1           // status OK
+#define  DMUNIPZ_STAT_ERROR      2           // an error occured
+#define  DMUNIPZ_STAT_TIMEDOUT   3           // a timeout occured
+
+// part below provide by Ludwig Hechler 
 #define IFB_ADDRESS_SIS     0x20        /* Adresse der Interfacekarte               */
 #define IFB_ADDRESS_UNI     0x10        /* Adresse der Interfacekarte               */
 
@@ -16,8 +27,7 @@
 #define C_IO32_KANAL_1      0x02        /* Subadresse I/O-Modul für I/O-Bits 16..31 */
 
 
-// How are you using these ? Do you have assignment/serialiser/deserialiser functions?
-
+// part below provided by Ludwig Hechler
 typedef struct TPZSInfo1 {
   /* Bit 11..15 */  uint16_t free1         : 5;
   /* Bit 10     */  uint16_t Med_MachID_ok : 1;   /* MachineID is ok */
@@ -40,8 +50,7 @@ typedef struct TPZSInfo5 {
 } TPZSInfo5;
 
 
-// How are you using these ? Do you have assignment/serialiser/deserialiser functions?
-
+// part below provided by Ludwig Hechler
 typedef union {
   TPZSInfo5 bits;
   uint16_t uword;
@@ -51,8 +60,6 @@ typedef union {
   TPZSInfo1 bits;
   uint16_t uword;
 } ReadFromPZU_Type;
-
-
 
 
 //#define INFO1_SIS_REQ_ACK   0x10        /* Acknowledge for TK preparation           */
