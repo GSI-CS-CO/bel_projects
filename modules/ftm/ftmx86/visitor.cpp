@@ -6,18 +6,20 @@
 
 //"struct0 [label=\"<f0> " << name[v] << " | <f1> " << period[v] << "\"];"; go for structs ...
 
-void Visitor::eventString(Event& el) {
+Graph Visitor::defaultGraph;
+vertex_t Visitor::defaultVertex;
+
+void Visitor::eventString(const Event& el) const {
   out << " [shape=\"oval\"";
   out << ", t_offs=" << el.getTOffs();
   out << ", flags=" << el.getFlags();
 }
 
-void Visitor::commandString(Command& el) {
-  printf("Hello?\n");
+void Visitor::commandString(const Command& el) const {
   out << ", t_valid=" << el.getTValid();
 }
 
-void Visitor::visitVertex(TimeBlock& el) { 
+void Visitor::visitVertex(const TimeBlock& el) const  { 
   out << " [shape=\"rectangle\"";
   out << ", t_period=" << el.getTPeriod();
   if(el.hasCmdQ()) out << ", color=\"red\", hasCmdQ=" << el.hasCmdQ();
@@ -27,7 +29,7 @@ void Visitor::visitVertex(TimeBlock& el) {
   out << "]";
 }
 
-void Visitor::visitVertex(TimingMsg& el) {
+void Visitor::visitVertex(const TimingMsg& el) const {
   eventString((Event&)el);
   out << ", type=\"TMsg\", color=\"black\"";
   out << ", id=" << el.getId();
@@ -36,7 +38,7 @@ void Visitor::visitVertex(TimingMsg& el) {
   out << "]";
 }
 
-void Visitor::visitVertex(Noop& el) { 
+void Visitor::visitVertex(const Noop& el) const { 
   eventString((Event&)el);
   out << ", type=\"Noop\", color=\"green\"";
   commandString((Command&) el);
@@ -44,7 +46,7 @@ void Visitor::visitVertex(Noop& el) {
   out << "]";
 }
 
-void Visitor::visitVertex(Flow& el) { 
+void Visitor::visitVertex(const Flow& el) const  { 
   eventString((Event&)el);
   out << ", type=\"Flow\", color=\"blue\"";
   commandString((Command&) el);
@@ -55,7 +57,7 @@ void Visitor::visitVertex(Flow& el) {
   out << "\"]";
 }
 
-void Visitor::visitVertex(Flush& el) { 
+void Visitor::visitVertex(const Flush& el) const { 
   eventString((Event&)el);
   out << ", type=\"Flush\", color=\"red\"";
   commandString((Command&) el);
@@ -68,11 +70,14 @@ void Visitor::visitVertex(Flush& el) {
 }
 
 
-void Visitor::visitEdge(TimeBlock& el) { std::cout << ("Hello!\n"); out << "[shape=\"rectangle\"]";	}
-void Visitor::visitEdge(TimingMsg& el) { std::cout << "Visited a TimingMsg!";	out << "[shape=\"oval\", color=\"black\"]"; }//, label=\"" << el.getId() << "\"]"; }
-void Visitor::visitEdge(Flow& el) { std::cout << "Visited a Flow!";		out << "[shape=\"oval\", color=\"blue\"]";}
-void Visitor::visitEdge(Flush& el) { std::cout << "Visited a Flush!";	out << "[shape=\"oval\", color=\"red\"]";}
-void Visitor::visitEdge(Noop& el) { std::cout << "Visited a Noop!";	out << "[shape=\"oval\", color=\"green\"]";}
+void Visitor::visitSerialiser(const TimeBlock& el) const {std::cout <<  "TB  Ser for " << g[n].name << "\n"; }
+void Visitor::visitSerialiser(const Event& el) const     {std::cout << "Evt Ser for " << g[n].name << "\n";}
+
+void Visitor::visitEdge(const TimeBlock& el) const { std::cout << ("Hello!\n"); out << "[shape=\"rectangle\"]";	}
+void Visitor::visitEdge(const TimingMsg& el) const { std::cout << "Visited a TimingMsg!";	out << "[shape=\"oval\", color=\"black\"]"; }//, label=\"" << el.getId() << "\"]"; }
+void Visitor::visitEdge(const Flow& el) const { std::cout << "Visited a Flow!";		out << "[shape=\"oval\", color=\"blue\"]";}
+void Visitor::visitEdge(const Flush& el) const { std::cout << "Visited a Flush!";	out << "[shape=\"oval\", color=\"red\"]";}
+void Visitor::visitEdge(const Noop& el) const { std::cout << "Visited a Noop!";	out << "[shape=\"oval\", color=\"green\"]";}
 
 
 

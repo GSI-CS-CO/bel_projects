@@ -5,39 +5,21 @@
 #include "common.h"
 #include "event.h"
 #include "timeblock.h"
-#include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
-#include <boost/function.hpp>
-#include <boost/bind.hpp>
+
 #include "propwrite.h"
 #include "node.h"
 #include "timeblock.h"
 #include "event.h"
 #include "visitor.h"
 
-typedef boost::shared_ptr<Node> node_ptr;
-
-
-  typedef struct {
-    std::string name;
-    node_ptr np;
-  } myVertex;
 
 
 
 
-  typedef struct {
-    int type;
-    boost::function<uint64_t(void)> getTimeParent;
-    boost::function<uint64_t(void)> getTimeChild;
-  } myEdge;
 
 
 
-
-  typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::directedS, myVertex, myEdge > Graph;
-  typedef boost::graph_traits<Graph>::vertex_descriptor vertex_t;
-typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
 
 
 
@@ -49,14 +31,52 @@ typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
 vertex_t add_child_at(std::string name, node_ptr node, vertex_t parent, Graph& g) {
   vertex_t child = boost::add_vertex((myVertex) {name, node}, g);
   boost::add_edge(parent, child, (myEdge) {SYNC, boost::bind(&Node::getTPeriod, g[parent].np), boost::bind(&Node::getTOffs, g[child].np)}, g);
+  
+
+
   return child;
 }
 
 vertex_t connect(vertex_t child, vertex_t parent, Graph& g) {
   boost::add_edge(parent, child, (myEdge) {SYNC, boost::bind(&Node::getTPeriod, g[parent].np), boost::bind(&Node::getTOffs, g[child].np)}, g);
+
+  // parent is an event, traverse parents until we find a block. Connect.
+  
+
   return child;
 }
 
+void show_children(vertex_t v, Graph& g) {
+Graph::out_edge_iterator out_begin, out_end;
+for (boost::tie(out_begin, out_end) = out_edges(v,g); out_begin != out_end; ++out_begin)
+{   
+    std::cout << g[target(*out_begin,g)].name << std::endl;
+}
+std::cout << std::endl;
+}
+
+
+void show_parents(vertex_t v, Graph& g) {
+
+Graph::in_edge_iterator in_begin, in_end;
+for (boost::tie(in_begin, in_end) = in_edges(v,g); in_begin != in_end; ++in_begin)
+{   
+    std::cout << g[source(*in_begin,g)].name << std::endl;
+}
+std::cout << std::endl;
+}
+
+/*
+vertex_t& getParents(vertex_t v, Graph& g) {
+
+Graph::in_edge_iterator in_begin, in_end;
+for (boost::tie(in_begin, in_end) = in_edges(v,g); in_begin != in_end; ++in_begin)
+{   
+    std::cout << g[source(*in_begin,g)].name << std::endl;
+}
+std::cout << std::endl;
+}
+*/
 
 
 int main() {
@@ -114,7 +134,7 @@ int main() {
 
 */
   vertex_t root = boost::add_vertex((myVertex) {"A", (node_ptr) new TimeBlock(5000, true)}, g);
-  vertex_t tmp, tmp1, tmp2;
+  vertex_t tmp, tmp1, tmp2, tmp3;
   tmp =  add_child_at("Evt_A_0", (node_ptr)new TimingMsg(300, 0, 42, 2, 4), root, g);
   tmp = add_child_at("B0", (node_ptr)new TimeBlock(6000, true), root, g);
   add_child_at("Evt_B_0", (node_ptr)new TimingMsg(300, 0, 42, 2, 4), tmp, g);
@@ -123,7 +143,7 @@ int main() {
   tmp1 = add_child_at("C0", (node_ptr)new TimeBlock(2000, false), tmp, g);
   tmp2 = add_child_at("C1", (node_ptr)new TimeBlock(2000, false), tmp, g);
   tmp = add_child_at("D0", (node_ptr)new TimeBlock(1000, true), tmp2, g);
-  add_child_at("Evt_D_0", (node_ptr)new Noop(8, 1, 10000, 10), tmp, g);
+  tmp3 = add_child_at("Evt_D_0", (node_ptr)new Noop(8, 1, 10000, 10), tmp, g);
   tmp2 = add_child_at("Evt_D_1", (node_ptr)new TimingMsg(100, 0, 42, 2, 4), tmp, g);
   connect(root, tmp2, g);
   connect(tmp, tmp1, g);
@@ -133,7 +153,7 @@ int main() {
   std::ofstream out("./test.dot"); 
 
   
-  //Visitor v = Visitor(out);
+  
 
   //g[Aa].np->accept(v);
   //g[Ab].np->accept(v);
@@ -144,7 +164,15 @@ int main() {
 
   boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)), make_edge_writer(boost::get(&myEdge::getTimeParent, g), boost::get(&myEdge::getTimeChild, g)), sample_graph_writer{g[root].name}, boost::get(&myVertex::name, g));
 
-  
+  show_parents(root, g);
+  show_children(root, g);
+
+  //Visitor v = Visitor(out, root, g);
+
+  g[root].np->acceptSerialiser(Visitor(out, root, g)); 
+
+
+  g[tmp3].np->acceptSerialiser(Visitor(out, tmp3, g)); 
 
   return 0;	
 }

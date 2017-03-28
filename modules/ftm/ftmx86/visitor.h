@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <iostream>
+#include "common.h"
 
 class Event;
 class Command;
@@ -16,22 +17,30 @@ class Flush;
 
   class Visitor {
     std::ostream& out;
-    void eventString(Event& el);
-    void commandString(Command& el);
+    static Graph defaultGraph;
+    static vertex_t defaultVertex;
+    vertex_t& n;
+    Graph& g;
+    void eventString(const Event& el) const;
+    void commandString(const Command& el) const;
   public:
-    Visitor(std::ostream& out) : out(out) {};
+    Visitor(std::ostream& out) : out(out), n(defaultVertex), g(defaultGraph) {};
+    Visitor(std::ostream& out, vertex_t& n, Graph& g) : out(out), n(n), g(g) {};
     ~Visitor() {};
-    void visitVertex(TimeBlock& el);
-		void visitVertex(TimingMsg& el);
-    void visitVertex(Flow& el);
-    void visitVertex(Flush& el);
-    void visitVertex(Noop& el);
+    void visitVertex(const TimeBlock& el) const;
+		void visitVertex(const TimingMsg& el) const;
+    void visitVertex(const Flow& el) const;
+    void visitVertex(const Flush& el) const;
+    void visitVertex(const Noop& el) const;
 
-    void visitEdge(TimeBlock& el);
-		void visitEdge(TimingMsg& el);
-    void visitEdge(Flow& el);
-    void visitEdge(Flush& el);
-    void visitEdge(Noop& el);
+    void visitSerialiser(const TimeBlock& el) const;
+		void visitSerialiser(const Event& el) const;
+
+    void visitEdge(const TimeBlock& el) const;
+		void visitEdge(const TimingMsg& el) const;
+    void visitEdge(const Flow& el) const;
+    void visitEdge(const Flush& el) const;
+    void visitEdge(const Noop& el) const;
   };
 
 #endif

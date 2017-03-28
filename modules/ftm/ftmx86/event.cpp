@@ -16,11 +16,11 @@ void TimingMsg::serialise(itBuf ib) {
   uint32ToBytes(ib + _EVT_HDR_SIZE + EVT_TM_TEF, this->tef);
 }
 
-void TimingMsg::show(void) {
+void TimingMsg::show(void)  const{
   TimingMsg::show(0, "");
 }
 
-void TimingMsg::show(uint32_t cnt, const char* prefix) {
+void TimingMsg::show(uint32_t cnt, const char* prefix)  const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
@@ -37,11 +37,11 @@ void Command::serialiseB(itBuf ib) {
   uint32ToBytes(ib + _EVT_HDR_SIZE + EVT_CMD_RESERVED, 0); //pad
 }
 
-void Command::show(void) {
+void Command::show(void)  const {
   Command::show(0, "");
 }
 
-void Command::show(uint32_t cnt, const char* prefix) {
+void Command::show(uint32_t cnt, const char* prefix)  const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
@@ -50,14 +50,14 @@ void Command::show(uint32_t cnt, const char* prefix) {
   printf("%sValid @ %llu, ", p, (long long unsigned int)this->tValid);
 }
 
-void Noop::show(void) {
+void Noop::show(void) const {
   Noop::show(0, "");
 }
 
 
 
 
-void Noop::show(uint32_t cnt, const char* prefix) {
+void Noop::show(uint32_t cnt, const char* prefix)  const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
@@ -70,11 +70,11 @@ void Noop::serialise(itBuf ib) {
   uint32ToBytes(ib + _EVT_HDR_SIZE + EVT_CM_ACT, (ACT_TYPE_NOP | ((this->qty << ACT_FNF_QTY_POS) & ACT_FNF_QTY_MSK)));
 }
 
-void Flow::show(void) {
+void Flow::show(void) const {
   Flow::show(0, "");
 }
 
-void Flow::show(uint32_t cnt, const char* prefix) {
+void Flow::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
@@ -94,11 +94,11 @@ void Flow::serialise(itBuf ib) {
 }
 
 
-void Flush::show(void) {
+void Flush::show(void) const {
   Flush::show(0, "");
 }
 
-void Flush::show(uint32_t cnt, const char* prefix) {
+void Flush::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;

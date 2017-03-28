@@ -5,9 +5,35 @@
 #include <stdint.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/container/vector.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 
+class Node;
+
+typedef boost::shared_ptr<Node> node_ptr;
 typedef boost::container::vector<uint8_t> vBuf;
 typedef boost::container::vector<uint8_t>::iterator itBuf;
+
+
+  typedef struct {
+    std::string name;
+    node_ptr np;
+  } myVertex;
+
+
+
+
+  typedef struct {
+    int type;
+    boost::function<uint64_t(void)> getTimeParent;
+    boost::function<uint64_t(void)> getTimeChild;
+  } myEdge;
+
+
+  typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS, myVertex, myEdge > Graph;
+  typedef boost::graph_traits<Graph>::vertex_descriptor vertex_t;
+typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
 
 
 inline void uint16ToBytes(itBuf ib, uint16_t val) {

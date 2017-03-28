@@ -22,21 +22,22 @@ protected:
   uint64_t tOffs;
   uint16_t flags;
   void serialiseB(itBuf ib);
-  virtual void acceptVertex(Visitor& v) = 0;
-  virtual void acceptEdge(Visitor& v)   = 0;
+
 
 public:
   Event() {}
   Event(uint64_t tOffs, uint16_t flags) : tOffs(tOffs), flags(flags) {}
-  virtual ~Event() {};
-  uint64_t getTPeriod() { return -1;}
-  uint64_t getTOffs() { return tOffs;}
-  uint16_t getFlags() { return flags;}
+  virtual ~Event()  {};
+  uint64_t getTPeriod() const { return -1;}
+  uint64_t getTOffs() const { return tOffs;}
+  uint16_t getFlags() const { return flags;}
   
-  virtual void show(void) = 0;
-  virtual void show(uint32_t cnt, const char* sPrefix) = 0;
+  virtual void show(void)  const = 0;
+  virtual void show(uint32_t cnt, const char* sPrefix) const = 0;
   virtual void serialise(itBuf ib) = 0;
-
+  virtual void acceptVertex(const Visitor& v) const = 0;
+  virtual void acceptEdge(const Visitor& v) const   = 0;
+  virtual void acceptSerialiser(const Visitor& v) const override { v.visitSerialiser(*this); }
 
   
 };
@@ -48,20 +49,20 @@ class TimingMsg : public Event {
 
 public:
   TimingMsg(uint64_t tOffs, uint16_t flags, uint64_t id, uint64_t par, uint32_t tef) : Event (tOffs, flags), id(id), par(par), tef(tef) {}
-  ~TimingMsg() {};
-  uint64_t getTOffs() { return Event::getTOffs();}
-  uint64_t getTPeriod() { return Event::getTPeriod();}
-  uint16_t getFlags() { return Event::getFlags();} 
-  uint64_t getId(){return id;}
-  uint64_t getPar(){return par;}
-  uint32_t getTef(){return tef;}
+  ~TimingMsg()  {};
+  uint64_t getTOffs() const { return Event::getTOffs();}
+  uint64_t getTPeriod() const { return Event::getTPeriod();}
+  uint16_t getFlags() const { return Event::getFlags();} 
+  uint64_t getId() const {return id;}
+  uint64_t getPar() const {return par;}
+  uint32_t getTef() const {return tef;}
 
-  void show(void);
-  void show(uint32_t cnt, const char* sPrefix);
+  void show(void)  const;
+  void show(uint32_t cnt, const char* sPrefix)  const;
   void serialise(itBuf ib);
-  virtual void acceptVertex(Visitor& v) override { v.visitVertex(*this); }
-  virtual void acceptEdge(Visitor& v)   override { v.visitEdge(*this); }
-
+  virtual void acceptVertex(const Visitor& v) const override { v.visitVertex(*this); }
+  virtual void acceptEdge(const Visitor& v) const   override { v.visitEdge(*this); }
+  virtual void acceptSerialiser(const Visitor& v) const override { Event::acceptSerialiser(v); }
 };
 
 
@@ -70,19 +71,22 @@ protected:
   uint64_t tValid;
   void serialiseB(itBuf ib);
 
+
 public:
   Command(uint64_t tOffs, uint16_t flags, uint64_t tValid) : Event (tOffs, flags), tValid(tValid) {}
   ~Command() {};
-  uint64_t getTOffs() { return Event::getTOffs();}
-  uint16_t getFlags() { return Event::getFlags();}
-  uint64_t getTPeriod() { return Event::getTPeriod();}
-  uint64_t getTValid(){ return tValid;}
+  uint64_t getTOffs() const { return Event::getTOffs();}
+  uint16_t getFlags() const { return Event::getFlags();}
+  uint64_t getTPeriod() const { return Event::getTPeriod();}
+  uint64_t getTValid() const{ return tValid;}
+  virtual void show(void) const;
+  virtual void show(uint32_t cnt, const char* sPrefix) const;
+  virtual void serialise(itBuf ib)     = 0;
+	virtual void acceptVertex(const Visitor& v) const = 0;
+  virtual void acceptEdge(const Visitor& v) const   = 0;
+  virtual void acceptSerialiser(const Visitor& v) const { Event::acceptSerialiser(v); }
 
-  virtual void show(void);
-  virtual void show(uint32_t cnt, const char* sPrefix);
-  virtual void serialise(itBuf ib)      = 0;
-	virtual void acceptVertex(Visitor& v) = 0;
-  virtual void acceptEdge(Visitor& v)   = 0;
+
 };
 
 
@@ -92,17 +96,18 @@ class Noop : public Command {
 public:
   Noop(uint64_t tOffs, uint16_t flags, uint64_t tValid, uint16_t qty) : Command( tOffs,  flags,  tValid) , qty(qty) {}
   ~Noop() {};
-  uint64_t getTOffs() { return Command::getTOffs();}
-  uint64_t getTPeriod() { return Command::getTPeriod();}
-  uint16_t getFlags() { return Command::getFlags();} 
-  uint64_t getTValid(){ return Command::getTValid();}
-  uint16_t getQty() { return qty;} 
+  uint64_t getTOffs() const { return Command::getTOffs() ;}
+  uint64_t getTPeriod() const { return Command::getTPeriod();}
+  uint16_t getFlags() const { return Command::getFlags();} 
+  uint64_t getTValid() const{ return Command::getTValid();}
+  uint16_t getQty() const { return qty;} 
 
-  void show(void);
-  void show(uint32_t cnt, const char* sPrefix);
+  void show(void) const;
+  void show(uint32_t cnt, const char* sPrefix) const;
   void serialise(itBuf ib);
-  virtual void acceptVertex(Visitor& v) override { v.visitVertex(*this); }
-  virtual void acceptEdge(Visitor& v)   override { v.visitEdge(*this); }
+  virtual void acceptVertex(const Visitor& v) const override { v.visitVertex(*this); }
+  virtual void acceptEdge(const Visitor& v) const   override { v.visitEdge(*this); }
+  virtual void acceptSerialiser(const Visitor& v) const override { Command::acceptSerialiser(v); }
 };
 
 class Flow : public Command {
@@ -113,18 +118,19 @@ public:
   Flow(uint64_t tOffs, uint16_t flags, uint64_t tValid, uint16_t qty, TimeBlock *blNext)
       : Command( tOffs,  flags,  tValid) , qty(qty), blNext(blNext) {}
   ~Flow() {};
-  uint64_t getTOffs() { return Command::getTOffs();}
-  uint64_t getTPeriod() { return Command::getTPeriod();}
-  uint16_t getFlags() { return Command::getFlags();} 
-  uint64_t getTValid(){ return Command::getTValid();}
-  uint16_t getQty() { return qty;} 
-  TimeBlock* getNext() { return blNext;}
+  uint64_t getTOffs() const { return Command::getTOffs();}
+  uint64_t getTPeriod() const { return Command::getTPeriod();}
+  uint16_t getFlags() const { return Command::getFlags();} 
+  uint64_t getTValid() const{ return Command::getTValid();}
+  uint16_t getQty() const { return qty;} 
+  TimeBlock* getNext() const { return blNext;}
 
-  void show(void);
-  void show(uint32_t cnt, const char* sPrefix);
+  void show(void) const;
+  void show(uint32_t cnt, const char* sPrefix) const;
   void serialise(itBuf ib);
-  virtual void acceptVertex(Visitor& v) override { v.visitVertex(*this); }
-  virtual void acceptEdge(Visitor& v)   override { v.visitEdge(*this); }
+  virtual void acceptVertex(const Visitor& v) const override { v.visitVertex(*this); }
+  virtual void acceptEdge(const Visitor& v) const   override { v.visitEdge(*this); }
+  virtual void acceptSerialiser(const Visitor& v) const override { Command::acceptSerialiser(v); }
 };
 
 class Flush : public Command {
@@ -142,25 +148,26 @@ public:
   Flush(uint64_t tOffs, uint16_t flags, uint64_t tValid, bool qIl, bool qHi, bool qLo, uint8_t upToHi, uint8_t upToLo) 
         : Command( tOffs,  flags,  tValid) , qIl(qIl), qHi(qHi), qLo(qLo), upToHi(upToHi), upToLo(upToLo) {}
   ~Flush() {};
-  uint64_t getTOffs() { return Command::getTOffs();}
-  uint64_t getTPeriod() { return Command::getTPeriod();}
-  uint16_t getFlags() { return Command::getFlags();} 
-  uint64_t getTValid(){ return Command::getTValid();}
-  bool getFlushQil() { return qIl;}
-  bool getFlushQhi() { return qHi;}
-  bool getFlushQlo() { return qLo;}
-  uint8_t getFlushQ() {return (uint8_t)((qIl << 2) | (qHi << 1) | (qLo << 0));}
-  uint8_t getFlushUpToHi() {return upToHi;}
-  uint8_t getFlushUpToLo() {return upToLo;} 
+  uint64_t getTOffs() const { return Command::getTOffs();}
+  uint64_t getTPeriod() const { return Command::getTPeriod();}
+  uint16_t getFlags() const { return Command::getFlags();} 
+  uint64_t getTValid() const{ return Command::getTValid();}
+  bool getFlushQil() const { return qIl;}
+  bool getFlushQhi() const { return qHi;}
+  bool getFlushQlo() const { return qLo;}
+  uint8_t getFlushQ() const {return (uint8_t)((qIl << 2) | (qHi << 1) | (qLo << 0));}
+  uint8_t getFlushUpToHi() const {return upToHi;}
+  uint8_t getFlushUpToLo() const {return upToLo;} 
 
 
-  void show(void);
-  void show(uint32_t cnt, const char* sPrefix);
+  void show(void)  const;
+  void show(uint32_t cnt, const char* sPrefix)  const;
   void set(prio target, uint8_t upTo);
   void clear(prio target);
   void serialise(itBuf ib);
-  virtual void acceptVertex(Visitor& v) override { v.visitVertex(*this); }
-  virtual void acceptEdge(Visitor& v)   override { v.visitEdge(*this); }
+  virtual void acceptVertex(const Visitor& v) const override { v.visitVertex(*this); }
+  virtual void acceptEdge(const Visitor& v) const   override { v.visitEdge(*this); }
+  virtual void acceptSerialiser(const Visitor& v) const override { Command::acceptSerialiser(v); }
 };
 
 
