@@ -167,21 +167,21 @@ void run_mil_test(volatile unsigned int *base, unsigned char ifk_addr);
 
 // write to MIL device bus; returns error code                                                             
 int16_t writeDevMil(volatile uint32_t *base,            // Wishbone address seen from the CPUs perspective 
-                    uint8_t  ifbAddr,                   // MIL address of interface board                  
-                    uint8_t  fctCode,                   // function code                                   
+                    uint16_t  ifbAddr,                  // MIL address of interface board                  
+                    uint16_t  fctCode,                  // function code                                   
                     uint16_t  data                      // data                                            
                     );
 
 // read from MIL device bus; returns error code                                                            
 int16_t readDevMil(volatile uint32_t *base,             // Wishbone address seen from the CPUs perspective 
-                   uint8_t  ifbAddr,                    // MIL address of interface board                  
-                   uint8_t  fctCode,                    // function code                                   
+                   uint16_t  ifbAddr,                   // MIL address of interface board                  
+                   uint16_t  fctCode,                   // function code                                   
                    uint16_t  *data                      // data                                            
                    );
 
 // write data to the echo register of a MIL device, then read and compare the data; returns error code                                                            
 int16_t echoTestDevMil(volatile uint32_t *base,         // Wishbone address seen from the CPUs perspective 
-                    uint8_t  ifbAddr,                   // MIL address of interface board                  
+                    uint16_t  ifbAddr,                  // MIL address of interface board                  
                     uint16_t  data                      // data                                            
                     );
 
@@ -195,8 +195,8 @@ int16_t clearFilterEvtMil(volatile uint32_t *base      // Wishbone address seen 
 
 /* set a filter; returns error code */
 int16_t setFilterEvtMil(volatile uint32_t *base,       // Wishbone address seen from the CPUs perspective 
-                        uint8_t evtCode,               // event code                                      
-                        uint8_t virtAcc,               // virtual accelerator                             
+                        uint16_t evtCode,              // event code                                      
+                        uint16_t virtAcc,              // virtual accelerator                             
                         uint32_t filter                // filter value                                    
                         );
 
@@ -219,7 +219,7 @@ int16_t readCtrlStatRegEvtMil(volatile uint32_t *base,    // Wishbone address se
                               );
 
 /* query fill state of event FIFO; returns '1' if not empty */
-uint8_t fifoNotemptyEvtMil(volatile uint32_t *base      // Wishbone address seen from the CPUs perspective 
+uint16_t fifoNotemptyEvtMil(volatile uint32_t *base      // Wishbone address seen from the CPUs perspective 
                            );
 
 /* remove all elements from the FIFO; returns error code */
@@ -240,6 +240,18 @@ int16_t configLemoPulseEvtMil(volatile uint32_t *base, // Wishbone address seen 
 int16_t configLemoGateEvtMil(volatile uint32_t *base,   // Wishbone address seen from the CPUs perspective 
                              uint32_t lemo              // select LEMO 1..4                                
                              );
+
+/* configure a single ended LEMO for programmable output (not controlled via event) */
+int16_t configLemoOutputEvtMil(volatile uint32_t *base,   // Wishbone address seen from the CPUs perspective 
+                               uint32_t lemo              // select LEMO 1..4                                
+                               );
+
+
+/* set the output value of a single ended LEMO programmatically (not controlled via event) */
+int16_t setLemoOutputEvtMil(volatile uint32_t *base,   // Wishbone address seen from the CPUs perspective 
+                            uint32_t lemo,             // select LEMO 1..4
+                            uint32_t on                // 1: on, 0: off
+                            );
 
 /* disable a single ended LEMO output; returns error code */
 int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen from the CPUs perspective 
@@ -342,6 +354,22 @@ int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen
 #define   MIL_LEMO_EVENT_EN2  0x0020    // '1' ==> LEMO 2 can be controlled by event (MIL Piggy)
 #define   MIL_LEMO_EVENT_EN3  0x0040    // '1' ==> LEMO 3 can be controlled by event (unused?)
 #define   MIL_LEMO_EVENT_EN4  0x0080    // '1' ==> LEMO 4 can be controlled by event (unused?) 
+
+
+/***********************************************************
+ * 
+ * defintion of LEMO data register
+ * in case LEMO outputs are not controlled via events,
+ * this register can be used to control them
+ * 
+ * bits 0..3: see below
+ * bits 4..31: unused
+ *
+ ***********************************************************/
+#define   MIL_LEMO_DAT1    0x0001    // '1' ==> LEMO 1 is switched active HIGH (MIL Piggy & SIO)
+#define   MIL_LEMO_DAT2    0x0002    // '1' ==> LEMO 2 is switched active HIGH (MIL Piggy & SIO)
+#define   MIL_LEMO_DAT3    0x0004    // '1' ==> LEMO 3 is switched active HIGH (SIO)
+#define   MIL_LEMO_DAT4    0x0008    // '1' ==> LEMO 4 is switched active HIGH (SIO)
 
 
 #endif
