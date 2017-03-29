@@ -67,6 +67,29 @@ std::cout << std::endl;
 }
 
 /*
+void all_evt_children(vertex_t v, Graph& g) {
+  Graph::out_edge_iterator out_begin, out_end, out_cur;
+  boost::tie(out_begin, out_end) = out_edges(v,g);
+  for (out_cur = out_begin; out_cur != out_end; ++out_cur)
+  {   
+      std::cout << g[target(*out_cur,g)].name << " x " << (vertex_t)(out_cur - out_begin) << std::endl;
+      
+  }
+  std::cout << std::endl;
+  }
+*/
+void all_evt_children(vertex_t v, Graph& g) {
+  Graph::out_edge_iterator out_begin, out_end, out_cur;
+  boost::tie(out_begin, out_end) = out_edges(v,g);
+  for (out_cur = out_begin; out_cur != out_end; ++out_cur)
+  {   
+      std::cout << g[target(*out_cur,g)].name << " x " << (vertex_t)(out_cur - out_begin) << std::endl;
+      
+  }
+  std::cout << std::endl;
+  }
+
+/*
 vertex_t& getParents(vertex_t v, Graph& g) {
 
 Graph::in_edge_iterator in_begin, in_end;
@@ -135,19 +158,23 @@ int main() {
 */
   vertex_t root = boost::add_vertex((myVertex) {"A", (node_ptr) new TimeBlock(5000, true)}, g);
   vertex_t tmp, tmp1, tmp2, tmp3;
-  tmp =  add_child_at("Evt_A_0", (node_ptr)new TimingMsg(300, 0, 42, 2, 4), root, g);
+  tmp =  add_child_at("Evt_A_0", (node_ptr)new TimingMsg(300, 0, 40, 2, 4), root, g);
+  tmp =  add_child_at("Evt_A_1", (node_ptr)new TimingMsg(400, 0, 41, 2, 4), tmp, g);
+  tmp =  add_child_at("Evt_A_2", (node_ptr)new TimingMsg(600, 0, 42, 2, 4), tmp, g);
+  tmp =  add_child_at("Evt_A_3", (node_ptr)new TimingMsg(700, 0, 43, 2, 4), tmp, g);
   tmp = add_child_at("B0", (node_ptr)new TimeBlock(6000, true), root, g);
   add_child_at("Evt_B_0", (node_ptr)new TimingMsg(300, 0, 42, 2, 4), tmp, g);
   add_child_at("Evt_B_1", (node_ptr)new TimingMsg(400, 0, 42, 2, 4), tmp, g);
   add_child_at("Evt_B_2", (node_ptr)new TimingMsg(0, 0, 42, 2, 4), tmp, g);
   tmp1 = add_child_at("C0", (node_ptr)new TimeBlock(2000, false), tmp, g);
-  tmp2 = add_child_at("C1", (node_ptr)new TimeBlock(2000, false), tmp, g);
+  tmp2 = add_child_at("C1", (node_ptr)new TimeBlock(2300, false), tmp, g);
   tmp = add_child_at("D0", (node_ptr)new TimeBlock(1000, true), tmp2, g);
   tmp3 = add_child_at("Evt_D_0", (node_ptr)new Noop(8, 1, 10000, 10), tmp, g);
   tmp2 = add_child_at("Evt_D_1", (node_ptr)new TimingMsg(100, 0, 42, 2, 4), tmp, g);
   connect(root, tmp2, g);
   connect(tmp, tmp1, g);
   connect(root, tmp, g);
+  connect(root, tmp3, g);
   tmp = add_child_at("E0", (node_ptr)new TimeBlock(9000, false), tmp, g);
   
   std::ofstream out("./test.dot"); 
@@ -159,20 +186,24 @@ int main() {
   //g[Ab].np->accept(v);
 
 
-  
-
 
   boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)), make_edge_writer(boost::get(&myEdge::getTimeParent, g), boost::get(&myEdge::getTimeChild, g)), sample_graph_writer{g[root].name}, boost::get(&myVertex::name, g));
 
-  show_parents(root, g);
-  show_children(root, g);
+  
 
-  //Visitor v = Visitor(out, root, g);
-
-  g[root].np->acceptSerialiser(Visitor(out, root, g)); 
+  vBuf myVBuf(8192);
 
 
-  g[tmp3].np->acceptSerialiser(Visitor(out, tmp3, g)); 
+  //boost::container::vector<vBuf> 
+  
+  
+
+
+  //g[root].np->accept(VisitorCreateMemBlock(root, g, myVBuf)); 
+  
+  BOOST_FOREACH( vertex_t v, vertices(g) ) {
+    g[v].np->accept(VisitorCreateMemBlock(v, g, myVBuf));
+  } 
 
   return 0;	
 }

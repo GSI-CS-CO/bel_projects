@@ -35,9 +35,9 @@ public:
   virtual void show(void)  const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix) const = 0;
   virtual void serialise(itBuf ib) = 0;
-  virtual void acceptVertex(const Visitor& v) const = 0;
-  virtual void acceptEdge(const Visitor& v) const   = 0;
-  virtual void acceptSerialiser(const Visitor& v) const override { v.visitSerialiser(*this); }
+  virtual void accept(const VisitorVertexWriter& v) const = 0;
+  virtual void accept(const VisitorCreateMemBlock & v) const override { v.visit(*this); }
+  virtual void accept(const VisitorAddEvtChildren & v) const override { v.visit(*this); }
 
   
 };
@@ -60,9 +60,9 @@ public:
   void show(void)  const;
   void show(uint32_t cnt, const char* sPrefix)  const;
   void serialise(itBuf ib);
-  virtual void acceptVertex(const Visitor& v) const override { v.visitVertex(*this); }
-  virtual void acceptEdge(const Visitor& v) const   override { v.visitEdge(*this); }
-  virtual void acceptSerialiser(const Visitor& v) const override { Event::acceptSerialiser(v); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorCreateMemBlock & v)  const override { Event::accept(v); }
+  virtual void accept(const VisitorAddEvtChildren & v)   const override { Event::accept(v); }
 };
 
 
@@ -82,9 +82,9 @@ public:
   virtual void show(void) const;
   virtual void show(uint32_t cnt, const char* sPrefix) const;
   virtual void serialise(itBuf ib)     = 0;
-	virtual void acceptVertex(const Visitor& v) const = 0;
-  virtual void acceptEdge(const Visitor& v) const   = 0;
-  virtual void acceptSerialiser(const Visitor& v) const { Event::acceptSerialiser(v); }
+	virtual void accept(const VisitorVertexWriter& v)     const = 0;
+  virtual void accept(const VisitorCreateMemBlock & v)  const override { Event::accept(v); }
+  virtual void accept(const VisitorAddEvtChildren & v)   const override { Event::accept(v); }
 
 
 };
@@ -105,9 +105,9 @@ public:
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
   void serialise(itBuf ib);
-  virtual void acceptVertex(const Visitor& v) const override { v.visitVertex(*this); }
-  virtual void acceptEdge(const Visitor& v) const   override { v.visitEdge(*this); }
-  virtual void acceptSerialiser(const Visitor& v) const override { Command::acceptSerialiser(v); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorCreateMemBlock & v)  const override { Command::accept(v); }
+  virtual void accept(const VisitorAddEvtChildren & v)   const override { Command::accept(v); }
 };
 
 class Flow : public Command {
@@ -128,9 +128,9 @@ public:
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
   void serialise(itBuf ib);
-  virtual void acceptVertex(const Visitor& v) const override { v.visitVertex(*this); }
-  virtual void acceptEdge(const Visitor& v) const   override { v.visitEdge(*this); }
-  virtual void acceptSerialiser(const Visitor& v) const override { Command::acceptSerialiser(v); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorCreateMemBlock & v)  const override { Command::accept(v); }
+  virtual void accept(const VisitorAddEvtChildren & v)   const override { Command::accept(v); }
 };
 
 class Flush : public Command {
@@ -165,9 +165,9 @@ public:
   void set(prio target, uint8_t upTo);
   void clear(prio target);
   void serialise(itBuf ib);
-  virtual void acceptVertex(const Visitor& v) const override { v.visitVertex(*this); }
-  virtual void acceptEdge(const Visitor& v) const   override { v.visitEdge(*this); }
-  virtual void acceptSerialiser(const Visitor& v) const override { Command::acceptSerialiser(v); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorCreateMemBlock & v)  const override { Command::accept(v); }
+  virtual void accept(const VisitorAddEvtChildren & v)   const override { Command::accept(v); }
 };
 
 

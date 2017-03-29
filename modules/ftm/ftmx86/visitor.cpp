@@ -6,20 +6,15 @@
 
 //"struct0 [label=\"<f0> " << name[v] << " | <f1> " << period[v] << "\"];"; go for structs ...
 
-Graph Visitor::defaultGraph;
-vertex_t Visitor::defaultVertex;
-
-void Visitor::eventString(const Event& el) const {
-  out << " [shape=\"oval\"";
-  out << ", t_offs=" << el.getTOffs();
-  out << ", flags=" << el.getFlags();
+void VisitorVertexWriter::eventString(const Event& el) const {
+  out << " [shape=\"oval\", t_offs=" << el.getTOffs() << ", flags=" << el.getFlags();
 }
 
-void Visitor::commandString(const Command& el) const {
+void VisitorVertexWriter::commandString(const Command& el) const {
   out << ", t_valid=" << el.getTValid();
 }
 
-void Visitor::visitVertex(const TimeBlock& el) const  { 
+void VisitorVertexWriter::visit(const TimeBlock& el) const  { 
   out << " [shape=\"rectangle\"";
   out << ", t_period=" << el.getTPeriod();
   if(el.hasCmdQ()) out << ", color=\"red\", hasCmdQ=" << el.hasCmdQ();
@@ -29,7 +24,7 @@ void Visitor::visitVertex(const TimeBlock& el) const  {
   out << "]";
 }
 
-void Visitor::visitVertex(const TimingMsg& el) const {
+void VisitorVertexWriter::visit(const TimingMsg& el) const {
   eventString((Event&)el);
   out << ", type=\"TMsg\", color=\"black\"";
   out << ", id=" << el.getId();
@@ -38,7 +33,7 @@ void Visitor::visitVertex(const TimingMsg& el) const {
   out << "]";
 }
 
-void Visitor::visitVertex(const Noop& el) const { 
+void VisitorVertexWriter::visit(const Noop& el) const { 
   eventString((Event&)el);
   out << ", type=\"Noop\", color=\"green\"";
   commandString((Command&) el);
@@ -46,7 +41,7 @@ void Visitor::visitVertex(const Noop& el) const {
   out << "]";
 }
 
-void Visitor::visitVertex(const Flow& el) const  { 
+void VisitorVertexWriter::visit(const Flow& el) const  { 
   eventString((Event&)el);
   out << ", type=\"Flow\", color=\"blue\"";
   commandString((Command&) el);
@@ -57,7 +52,7 @@ void Visitor::visitVertex(const Flow& el) const  {
   out << "\"]";
 }
 
-void Visitor::visitVertex(const Flush& el) const { 
+void VisitorVertexWriter::visit(const Flush& el) const { 
   eventString((Event&)el);
   out << ", type=\"Flush\", color=\"red\"";
   commandString((Command&) el);
@@ -70,14 +65,57 @@ void Visitor::visitVertex(const Flush& el) const {
 }
 
 
-void Visitor::visitSerialiser(const TimeBlock& el) const {std::cout <<  "TB  Ser for " << g[n].name << "\n"; }
-void Visitor::visitSerialiser(const Event& el) const     {std::cout << "Evt Ser for " << g[n].name << "\n";}
+bool VisitorCreateMemBlock::NodeSortPredicate(const node_ptr e1, const node_ptr e2) {
+  return e1->getTOffs() < e2->getTOffs();
+}
 
-void Visitor::visitEdge(const TimeBlock& el) const { std::cout << ("Hello!\n"); out << "[shape=\"rectangle\"]";	}
-void Visitor::visitEdge(const TimingMsg& el) const { std::cout << "Visited a TimingMsg!";	out << "[shape=\"oval\", color=\"black\"]"; }//, label=\"" << el.getId() << "\"]"; }
-void Visitor::visitEdge(const Flow& el) const { std::cout << "Visited a Flow!";		out << "[shape=\"oval\", color=\"blue\"]";}
-void Visitor::visitEdge(const Flush& el) const { std::cout << "Visited a Flush!";	out << "[shape=\"oval\", color=\"red\"]";}
-void Visitor::visitEdge(const Noop& el) const { std::cout << "Visited a Noop!";	out << "[shape=\"oval\", color=\"green\"]";}
+void VisitorCreateMemBlock::visit(const TimeBlock& el) const {
+  //std::cout <<  "TB  CMB for " << g[n].name << "\n";
+  //el.serialise(
+  el.show(0, g[n].name.c_str()); 
+  npBuf npB;
+
+  // get all children, don't add yourself
+  Graph::out_edge_iterator out_begin, out_end, out_cur;
+  boost::tie(out_begin, out_end) = out_edges(n,g);
+  for (out_cur = out_begin; out_cur != out_end; ++out_cur)
+  {   
+     //std::cout << g[target(*out_cur,g)].name << " x " << (vertex_t)target(*out_cur,g) << std::endl;
+     g[target(*out_cur,g)].np->accept(VisitorAddEvtChildren((vertex_t)target(*out_cur,g), g, npB));       
+  }
+  //sort events by time offset
+  std::sort(npB.begin(), npB.end(), NodeSortPredicate);
+
+
+  //show all found evt descendants
+  boost::container::vector<node_ptr>::iterator it;
+  for(it=npB.begin() ; it < npB.end(); it++) {
+    (*it)->show(it - npB.begin(), "  ");
+  }
+
+}
+
+void VisitorAddEvtChildren::visit(const Event& el) const {
+  //std::cout << "Evt AEC for " << g[n].name << "\n";
+  Graph::out_edge_iterator out_begin, out_end, out_cur;
+  
+  //add yourself, call for all children
+  npB.push_back(g[n].np);
+
+  boost::tie(out_begin, out_end) = out_edges(n,g);
+  for (out_cur = out_begin; out_cur != out_end; ++out_cur)
+  {   
+      //std::cout << g[target(*out_cur,g)].name << " x " << (vertex_t)target(*out_cur,g) << std::endl;
+     g[target(*out_cur,g)].np->accept(VisitorAddEvtChildren((vertex_t)target(*out_cur,g), g, npB));       
+  }
+
+}
+
+void VisitorEdgeWriter::visit(const TimeBlock& el) const { std::cout << ("Hello!\n"); out << "[shape=\"rectangle\"]";	}
+void VisitorEdgeWriter::visit(const TimingMsg& el) const { std::cout << "Visited a TimingMsg!";	out << "[shape=\"oval\", color=\"black\"]"; }//, label=\"" << el.getId() << "\"]"; }
+void VisitorEdgeWriter::visit(const Flow& el) const { std::cout << "Visited a Flow!";		out << "[shape=\"oval\", color=\"blue\"]";}
+void VisitorEdgeWriter::visit(const Flush& el) const { std::cout << "Visited a Flush!";	out << "[shape=\"oval\", color=\"red\"]";}
+void VisitorEdgeWriter::visit(const Noop& el) const { std::cout << "Visited a Noop!";	out << "[shape=\"oval\", color=\"green\"]";}
 
 
 

@@ -17,9 +17,10 @@ public:
   //TimeBlock(uint64_t start, uint64_t period, bool cmdQ) : period(period), cmdQ(cmdQ) {}
   TimeBlock(uint64_t period, bool cmdQ) : cpu(0), idx(0), adr(0), period(period), cmdQ(cmdQ) {}
   ~TimeBlock()  {};
-  virtual void acceptVertex(const Visitor& v) const override { v.visitVertex((const TimeBlock&)*this); }
-  virtual void acceptEdge(const Visitor& v) const override { v.visitEdge((const TimeBlock&)*this); }
-  virtual void acceptSerialiser(const Visitor& v) const override { v.visitSerialiser((const TimeBlock&)*this); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorCreateMemBlock & v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorAddEvtChildren & v)   const override { v.visit(*this); }
+
 /*
            downloadTable() const
   void     allocate(uint8_t cpu, uint16_t idx, uint32_t adr ); //replace by call to allocator
@@ -32,7 +33,7 @@ public:
   uint64_t getTPeriod() const  {return period;}
   bool hasCmdQ() const {return cmdQ;}
   void show(void) const {show(0, "");}
-  void show(uint32_t cnt, const char* sPrefix)  const {printf("I'am a Timeblock\n");}
+  void show(uint32_t cnt, const char* sPrefix)  const {printf("*** Block %s, Period %llu\n", sPrefix, (unsigned long long)period);}
   void serialise(itBuf ib)  {printf("I'am a serialised Timeblock\n");}
 
   

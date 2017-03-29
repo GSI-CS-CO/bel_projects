@@ -4,10 +4,12 @@
 #include <stdlib.h>
 #include "common.h"
 #include "visitor.h"
+#include "ftm_common.h"
 
 
 
 class Node {
+  vBuf vB;
 
 public:
   int Dummy;
@@ -17,10 +19,10 @@ public:
   virtual uint64_t getTOffs() const = 0;
   virtual void serialise(itBuf ib)  = 0;
   virtual void show(void) const = 0;
-  virtual void show(uint32_t cnt, const char* sPrefix) const = 0;
-  virtual void acceptVertex(const Visitor& v) const = 0;
-  virtual void acceptEdge(const Visitor& v) const = 0;
-  virtual void acceptSerialiser(const Visitor& v) const = 0;
+  virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
+  virtual void accept(const VisitorVertexWriter& v)     const = 0;
+  virtual void accept(const VisitorCreateMemBlock & v)  const = 0;
+  virtual void accept(const VisitorAddEvtChildren & v)  const = 0;
 };
 
 

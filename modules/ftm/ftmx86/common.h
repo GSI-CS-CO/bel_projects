@@ -13,6 +13,7 @@ class Node;
 
 typedef boost::shared_ptr<Node> node_ptr;
 typedef boost::container::vector<uint8_t> vBuf;
+typedef boost::container::vector<node_ptr> npBuf;
 typedef boost::container::vector<uint8_t>::iterator itBuf;
 
 

@@ -15,32 +15,58 @@ class Flush;
 
 
 
-  class Visitor {
+  class VisitorVertexWriter {
     std::ostream& out;
-    static Graph defaultGraph;
-    static vertex_t defaultVertex;
-    vertex_t& n;
-    Graph& g;
     void eventString(const Event& el) const;
     void commandString(const Command& el) const;
   public:
-    Visitor(std::ostream& out) : out(out), n(defaultVertex), g(defaultGraph) {};
-    Visitor(std::ostream& out, vertex_t& n, Graph& g) : out(out), n(n), g(g) {};
-    ~Visitor() {};
-    void visitVertex(const TimeBlock& el) const;
-		void visitVertex(const TimingMsg& el) const;
-    void visitVertex(const Flow& el) const;
-    void visitVertex(const Flush& el) const;
-    void visitVertex(const Noop& el) const;
+    VisitorVertexWriter(std::ostream& out) : out(out) {};
+    ~VisitorVertexWriter() {};
+    virtual void visit(const TimeBlock& el) const;
+		virtual void visit(const TimingMsg& el) const;
+    virtual void visit(const Flow& el) const;
+    virtual void visit(const Flush& el) const;
+    virtual void visit(const Noop& el) const;
 
-    void visitSerialiser(const TimeBlock& el) const;
-		void visitSerialiser(const Event& el) const;
+  };
 
-    void visitEdge(const TimeBlock& el) const;
-		void visitEdge(const TimingMsg& el) const;
-    void visitEdge(const Flow& el) const;
-    void visitEdge(const Flush& el) const;
-    void visitEdge(const Noop& el) const;
+ class VisitorEdgeWriter {
+    std::ostream& out;
+  public:
+    VisitorEdgeWriter(std::ostream& out) : out(out) {};
+    ~VisitorEdgeWriter() {};
+    virtual void visit(const TimeBlock& el) const;
+		virtual void visit(const TimingMsg& el) const;
+    virtual void visit(const Flow& el) const;
+    virtual void visit(const Flush& el) const;
+    virtual void visit(const Noop& el) const;
+  };
+
+
+
+
+  class VisitorCreateMemBlock {
+    vertex_t n;
+    Graph& g;
+    static bool NodeSortPredicate(const node_ptr e1, const node_ptr e2);
+  public:
+    VisitorCreateMemBlock(vertex_t n, Graph& g, vBuf& vB) : n(n), g(g) {};
+    ~VisitorCreateMemBlock() {};
+    virtual void visit(const TimeBlock& el) const;
+	  virtual void visit(const Event& el) const {}; 
+
+     
+  };
+
+  class VisitorAddEvtChildren {
+    vertex_t n;
+    Graph& g;
+    npBuf& npB;
+  public:
+    VisitorAddEvtChildren(vertex_t n, Graph& g, npBuf& npB) : n(n), g(g), npB(npB) {};
+    ~VisitorAddEvtChildren() {};
+    virtual void visit(const TimeBlock& el) const {}
+	  virtual void visit(const Event& el) const;
   };
 
 #endif

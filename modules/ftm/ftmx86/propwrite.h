@@ -34,8 +34,7 @@ typedef boost::shared_ptr<Node> node_ptr;
     vertex_writer(objMap om) : om(om) {}
     template <class Vertex>
     void operator()(std::ostream& out, const Vertex& v) const {
-      Visitor vs = Visitor(out);
-      om[v]->acceptVertex(vs);
+      om[v]->accept(VisitorVertexWriter(out));
     }
   private:
     objMap om;
@@ -89,16 +88,16 @@ template <class Name>
     edge_writer(pMap p, cMap c) : p(p), c(c) {}
     template <class Edge>
     void operator()(std::ostream& out, const Edge& v) const {
-      out <<  "[label=";
+      out <<  "[label=\"";
       uint64_t pT, cT;
 
       pT = (uint64_t)(p[v]());
       cT = (uint64_t)(c[v]());
 
-      if ((pT != -1)  & (cT == -1) ) {out << pT << ", style=\"solid\"";}// block -> block
-      if ((pT != -1)  & (cT != -1) ) {out << cT << ", style=\"dashed\"";}// block -> Evt
-      if ((pT == -1)  & (cT == -1) ) {out << "\"cmd\", style=\"dotted\"";}// (evt)Cmd -> Block
- 
+      if ((pT != -1)  & (cT == -1) ) {out << pT << "\", style=\"solid\"";}// block -> block
+      else if ((pT != -1)  & (cT != -1) ) {out << cT << "\", style=\"dashed\"";}// block -> Evt
+      else if ((pT == -1)  & (cT == -1) ) {out << "cmd\", style=\"dotted\"";}// (evt)Cmd -> Block
+      else out << "\"";
       out <<  "]";   
     }
   private:
