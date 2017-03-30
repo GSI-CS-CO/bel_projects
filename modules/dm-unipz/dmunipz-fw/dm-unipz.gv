@@ -1,0 +1,21 @@
+digraph finite_state_machine {
+    rankdir=LR;
+    size="8,5"
+
+    node [shape = point ]; qi
+
+    node [shape = circle width=1.5];
+    qi         -> S0;
+    S0         -> IDLE        [ label = "automatic" ];
+    S0         -> FATAL       [ label = "fatal error during init" ];
+    IDLE       -> CONFIGURED  [ label = "configure" ];
+    CONFIGURED -> IDLE        [ label = "idle" ];
+    CONFIGURED -> CONFIGURED  [ label = "configure" ];
+    CONFIGURED -> OPERATION   [ label = "startop" ];
+    OPERATION  -> STOPPING    [ label = "stopop" ];
+    STOPPING   -> CONFIGURED  [ label = "automatic" ];
+    ERROR      -> IDLE        [ label = "recover" ];
+    
+}
+
+/* use 'dot -Tpng dm-unipz.gv -o dm-unipz.png' to create an image */
