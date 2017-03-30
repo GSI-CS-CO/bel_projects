@@ -63,6 +63,14 @@ package pll_pkg is
       outclk_3   : out std_logic;        --1000 MHz
       outclk_4   : out std_logic;        -- 125 MHz, 1/8 duty cycle, -1.5ns phase
       rst        : in  std_logic := 'X';
+      locked     : out std_logic);
+  end component;
+  
+  component butis_pll5 is  -- arria5
+    port(
+      refclk     : in  std_logic := 'X'; -- 125 MHz
+      outclk_0   : out std_logic;        -- 200 MHz
+      rst        : in  std_logic := 'X';
       locked     : out std_logic;
       scanclk    : in  std_logic;
       cntsel     : in  std_logic_vector(4 downto 0);

@@ -545,12 +545,14 @@ architecture rtl of monster is
   
   -- Ref PLL from clk_125m_pllref_i
   signal ref_locked       : std_logic;
+  signal butis_locked     : std_logic;
   signal clk_ref0         : std_logic;
   signal clk_ref1         : std_logic;
   signal clk_ref2         : std_logic;
   signal clk_ref3         : std_logic;
   signal clk_ref4         : std_logic;
-  
+  signal clk_ref_butis    : std_logic;
+ 
   signal clk_ref          : std_logic;
   signal clk_butis        : std_logic;
   signal clk_phase        : std_logic;
@@ -905,7 +907,13 @@ begin
       outclk_2   => clk_ref2,         --  25 MHz
       outclk_3   => clk_ref3,         --1000 MHz
       outclk_4   => clk_ref4,         -- 125 MHz, 1/8 duty, -1.5ns phase
-      locked     => ref_locked,
+      locked     => ref_locked);
+
+  butis_inst : butis_pll5 port map(
+      rst        => pll_rst,
+      refclk     => core_clk_125m_pllref_i, -- 125 MHz
+      outclk_0   => clk_ref_butis,          -- 200 MHz
+      locked     => butis_locked,
       scanclk    => clk_free,  
       cntsel     => phase_sel, 
       phase_en   => phase_step,
@@ -920,7 +928,7 @@ begin
       g_base          => 0,
       g_vco_freq      => 1000, -- 1GHz
       g_output_freq   => (0 => 200),
-      g_output_select => (0 => f_pick(c_is_arria5, 4, 3)))
+      g_output_select => (0 => f_pick(c_is_arria5, 0, 3)))
     port map(
       clk_i       => clk_free,
       rstn_i      => rstn_free,
@@ -938,7 +946,7 @@ begin
   --butis_clk : global_region port map(
   --  inclk  => clk_ref1,
   -- outclk => clk_butis);
-  clk_butis <= clk_ref1;
+  clk_butis <= clk_ref_butis;
   
   clk_div: process(clk_ref0)
     variable cnt: integer := 0;
