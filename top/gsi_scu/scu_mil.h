@@ -167,21 +167,21 @@ void run_mil_test(volatile unsigned int *base, unsigned char ifk_addr);
 
 // write to MIL device bus; returns error code                                                             
 int16_t writeDevMil(volatile uint32_t *base,            // Wishbone address seen from the CPUs perspective 
-                    uint8_t  ifbAddr,                   // MIL address of interface board                  
-                    uint8_t  fctCode,                   // function code                                   
+                    uint16_t  ifbAddr,                  // MIL address of interface board                  
+                    uint16_t  fctCode,                  // function code                                   
                     uint16_t  data                      // data                                            
                     );
 
 // read from MIL device bus; returns error code                                                            
 int16_t readDevMil(volatile uint32_t *base,             // Wishbone address seen from the CPUs perspective 
-                   uint8_t  ifbAddr,                    // MIL address of interface board                  
-                   uint8_t  fctCode,                    // function code                                   
+                   uint16_t  ifbAddr,                   // MIL address of interface board                  
+                   uint16_t  fctCode,                   // function code                                   
                    uint16_t  *data                      // data                                            
                    );
 
 // write data to the echo register of a MIL device, then read and compare the data; returns error code                                                            
 int16_t echoTestDevMil(volatile uint32_t *base,         // Wishbone address seen from the CPUs perspective 
-                    uint8_t  ifbAddr,                   // MIL address of interface board                  
+                    uint16_t  ifbAddr,                  // MIL address of interface board                  
                     uint16_t  data                      // data                                            
                     );
 
@@ -195,8 +195,8 @@ int16_t clearFilterEvtMil(volatile uint32_t *base      // Wishbone address seen 
 
 /* set a filter; returns error code */
 int16_t setFilterEvtMil(volatile uint32_t *base,       // Wishbone address seen from the CPUs perspective 
-                        uint8_t evtCode,               // event code                                      
-                        uint8_t virtAcc,               // virtual accelerator                             
+                        uint16_t evtCode,              // event code                                      
+                        uint16_t virtAcc,              // virtual accelerator                             
                         uint32_t filter                // filter value                                    
                         );
 
@@ -219,7 +219,7 @@ int16_t readCtrlStatRegEvtMil(volatile uint32_t *base,    // Wishbone address se
                               );
 
 /* query fill state of event FIFO; returns '1' if not empty */
-uint8_t fifoNotemptyEvtMil(volatile uint32_t *base      // Wishbone address seen from the CPUs perspective 
+uint16_t fifoNotemptyEvtMil(volatile uint32_t *base      // Wishbone address seen from the CPUs perspective 
                            );
 
 /* remove all elements from the FIFO; returns error code */
