@@ -1,15 +1,35 @@
 #ifndef __DM_UNIPZ_H_
 #define __DM_UNIPZ_H_
 
-#define  DMUNIPZ_ECA_TAG         0x4         // tag for ECA actions we want to receive
-#define  DMUNIPZ_US_ASMNOP       31          // # of asm("nop") operations per microsecond
-#define  DMUNIPZ_MS_ASMNOP       31 * 1000   // # of asm("nop") operations per microsecond
-#define  DMUNIPZ_WB_ECA_IN       0x7ffffff0  // Wishbone address of ECA input
+#define  DMUNIPZ_ECA_TAG          0x4         // tag for ECA actions we want to receive
+#define  DMUNIPZ_US_ASMNOP        31          // # of asm("nop") operations per microsecond
+#define  DMUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
+#define  DMUNIPZ_WB_ECA_IN        0x7ffffff0  // Wishbone address of ECA input
 
-#define  DMUNIPZ_STAT_UNKNOWN    0           // unknown status
-#define  DMUNIPZ_STAT_OK         1           // status OK
-#define  DMUNIPZ_STAT_ERROR      2           // an error occured
-#define  DMUNIPZ_STAT_TIMEDOUT   3           // a timeout occured
+// (error) status
+#define  DMUNIPZ_STATUS_UNKNOWN   0           // unknown status
+#define  DMUNIPZ_STATUS_OK        1           // status OK
+#define  DMUNIPZ_STATUS_ERROR     2           // an error occured
+#define  DMUNIPZ_STATUS_TIMEDOUT  3           // a timeout occured
+
+// commands from the outside
+#define  DMUNIPZ_CMD_NOCMD        0           // no command ...
+#define  DMUNIPZ_CMD_CONFIGURE    1           // configures the gateway
+#define  DMUNIPZ_CMD_STARTOP      2           // starts operation
+#define  DMUNIPZ_CMD_STOPOP       3           // stops operation
+#define  DMUNIPZ_CMD_IDLE         4           // requests gateway to enter idle state
+#define  DMUNIPZ_CMD_RECOVER      5           // recovery from error state
+
+//states; implicitely, all states may transit to the ERROR state
+#define  DMUNIPZ_STATE_UNKNOWN    0           // initial state -> IDLE (automatic)
+#define  DMUNIPZ_STATE_S0         1           // initial state -> IDLE (automatic)
+#define  DMUNIPZ_STATE_IDLE       2           // idle state -> CONFIGURED (by command "configure")
+#define  DMUNIPZ_STATE_CONFIGURED 3           // configured state -> IDLE ("idle"), CONFIGURED ("configure"), OPERATION ("startop")
+#define  DMUNIPZ_STATE_OPERATION  4           // gateway in operation -> STOPPING ("stopop")
+#define  DMUNIPZ_STATE_STOPPING   5           // gateway in operation -> CONFIGURED (automatic)
+#define  DMUNIPZ_STATE_ERROR      6           // gateway in error -> IDLE ("recover")
+#define  DMUNIPZ_STATE_FATAL      7           // gateway in fatal error; RIP
+
 
 // part below provide by Ludwig Hechler 
 #define IFB_ADDRESS_SIS     0x20        /* Adresse der Interfacekarte               */
