@@ -1,12 +1,15 @@
 derive_pll_clocks -create_base_clocks
 derive_clock_uncertainty
+create_clock -period 10Mhz -name wr_10Mhz [get_ports {lvds_clk_p_i}]
 
 # Cut the clock domains from each other
 set_clock_groups -asynchronous                           \
  -group { altera_reserved_tck                          } \
  -group { clk_20m_vcxo_i    main|\dmtd_a5:dmtd_inst|*  } \
  -group { clk_125m_local_i  main|\sys_a5:sys_inst|*    } \
- -group { sfp234_ref_clk_i  main|\ref_a5:ref_inst|*      \
+ -group { wr_10Mhz                                     } \
+ -group { main|\nau8811_y:nau8811_audio|*              } \
+ -group { clk_sfp_i         main|\ref_a5:ref_inst|*      \
           main|\phy_a5:phy|*.cdr_refclk*                 \
           main|\phy_a5:phy|*.cmu_pll.*                   \
           main|\phy_a5:phy|*|av_tx_pma|*                 \
@@ -36,5 +39,5 @@ set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[4].*}] -to [ge
 set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[1].*}]
 set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[1].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}]
 # cut: wr-ref <=> butis
-set_false_path -from [get_clocks {main|\ref_a5:ref_inst|*|counter[0].*}] -to [get_clocks {main|\ref_a5:ref_inst|*|counter[1].*}]
-set_false_path -from [get_clocks {main|\ref_a5:ref_inst|*|counter[1].*}] -to [get_clocks {main|\ref_a5:ref_inst|*|counter[0].*}]
+set_false_path -from [get_clocks {main|\ref_a5:butis_inst|*|counter[0].*}] -to [get_clocks {main|\ref_a5:ref_inst|*|counter[0].*}]
+set_false_path -from [get_clocks {main|\ref_a5:ref_inst|*|counter[0].*}] -to [get_clocks {main|\ref_a5:butis_inst|*|counter[0].*}]

@@ -39,5 +39,5 @@ set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[4].*}] -to [ge
 set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[1].*}]
 set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[1].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}]
 # cut: wr-ref <=> butis
-set_false_path -from [get_clocks {main|\ref_a5:ref_inst|*|counter[0].*}] -to [get_clocks {main|\ref_a5:ref_inst|*|counter[1].*}]
-set_false_path -from [get_clocks {main|\ref_a5:ref_inst|*|counter[1].*}] -to [get_clocks {main|\ref_a5:ref_inst|*|counter[0].*}]
+set_false_path -from [get_clocks {main|\ref_a5:butis_inst|*|counter[0].*}] -to [get_clocks {main|\ref_a5:ref_inst|*|counter[0].*}]
+set_false_path -from [get_clocks {main|\ref_a5:ref_inst|*|counter[0].*}] -to [get_clocks {main|\ref_a5:butis_inst|*|counter[0].*}]
