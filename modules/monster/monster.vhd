@@ -888,7 +888,7 @@ begin
       areset => pll_rst,
       inclk0 => core_clk_125m_pllref_i, -- 125 MHz
       c0     => clk_ref0,          -- 125 MHz, counter: 0010 - #2
-      c1     => clk_ref1,          -- 200 MHz, counter: 0011 = #3
+      c1     => clk_ref_butis,     -- 200 MHz, counter: 0011 = #3
       c2     => clk_ref2,          --  25 MHz, counter: 0100 = #4
       locked => ref_locked,
       scanclk            => clk_free,
@@ -912,7 +912,7 @@ begin
   butis_inst : butis_pll5 port map(
       rst        => pll_rst,
       refclk     => core_clk_125m_pllref_i, -- 125 MHz
-      outclk_0   => clk_ref_butis,          -- 200 MHz
+      outclk_0   => clk_ref_butis,          -- 200 MHz Butis
       locked     => butis_locked,
       scanclk    => clk_free,  
       cntsel     => phase_sel, 
