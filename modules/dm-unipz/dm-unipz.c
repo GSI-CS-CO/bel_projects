@@ -88,11 +88,11 @@ uint32_t *pCpuRamExternalData4EB;      // external address (seen from host bridg
 uint32_t timeRecMILEvtHigh;            // TAI of received MIL event 32 high bits
 uint32_t timeRecMILEvtLow;             // TAI of received MIL event 32 low bits
 
-uint16_t  uniReady2SisCode;            // event code for "UNI_READY_TO_SIS"
-uint16_t  uniReady2SisAcc;             // virtual accelerator requested
-
-uint32_t actState;                     // actual state
+uint32_t actStatus;                    // actual (error) status, see DMUNIPZ_STATUS_...
+uint32_t actState;                     // actual state,          see DMUNIPZ_STATE_...
 uint32_t reqState;                     // requested state
+
+uint32_t unipzTimeoutMs;               // default timeout for UNIPZ in milliseconds
 
 /*
 void show_msi()
@@ -120,9 +120,10 @@ void ebmInit() // intialize Etherbone master
   ebm_init();
   ebm_config_meta(1500, 42, 0x00000000 );
   
-  //ebm_config_if(DESTINATION, 0x00267b000386, 0xc0a8a019,      0xebd0);             //Dst: scuxl0134
-  ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff ,      0xebd0);            //Dst: broadcast DANGER!!!
-  ebm_config_if(SOURCE,      0x00267b000321, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: MAC is a hack!, WR IP
+  ebm_config_if(DESTINATION, 0x00267b000386, 0xc0a8a019,      0xebd0);             //Dst: scuxl0134
+  //ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff ,      0xebd0);            //Dst: broadcast DANGER!!!
+  //ebm_config_if(SOURCE,      0x00267b000401, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: MAC is a hack!, WR IP lxdv54
+  ebm_config_if(SOURCE,      0x00267b000321, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: MAC is a hack!, WR IP scuxl0033
 
   mprintf("my IP:  0x%08x\n",  *(pEbCfg + (EBC_SRC_IP>>2)));
   mprintf("pEbCfg: 0x%08x\n",  pEbCfg);
@@ -272,6 +273,8 @@ void findECAControl() // find WB address of ECA Control
 void getECATAI(uint32_t *timeHi, uint32_t *timeLo) // get TAI from local ECA
 {
   uint32_t *pECATimeHi, *pECATimeLo;
+  
+  /* check: registers not protected against overflow of low32bits. To Do: read high bits twice! */
 
   pECATimeHi = (uint32_t *)(pECACtrl + (ECA_TIME_HI_GET >> 2));
   pECATimeLo = (uint32_t *)(pECACtrl + (ECA_TIME_LO_GET >> 2));
@@ -281,43 +284,61 @@ void getECATAI(uint32_t *timeHi, uint32_t *timeLo) // get TAI from local ECA
 } //getECATAI
 
 
-
-
-
-void ecaHandler() // 1. query ECA for new action, 2. do action
+uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc)  // 1. query ECA for actions, 2. trigger activity
 {
-  uint32_t flag;                // flag for the next action
+  uint32_t i,j;
+  uint32_t *pECAFlag;           // address of ECA flag
   uint32_t evtIdHigh;           // high 32bit of eventID   
   uint32_t evtIdLow;            // low 32bit of eventID    
   uint32_t evtDeadlHigh;        // high 32bit of deadline  
   uint32_t evtDeadlLow;         // low 32bit of deadline   
   uint32_t actTag;              // tag of action           
+  uint32_t nextAction;          // describes what to do next
 
-  flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // read flag and check if there was an action
+  *virtAcc = 0;
 
-  if (flag & (0x0001 << ECA_VALID)) { // data is valid?
+  pECAFlag       = (uint32_t *)(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));   // address of ECA flag
+
+  for (i=0; i < msTimeout * DMUNIPZ_MS_ASMNOP; i++) {      // while not timed out
+    if (*pECAFlag & (0x0001 << ECA_VALID)) {               // if ECA data is valid
+      
+      // read data
+      evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
+      evtIdLow     = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
+      evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));
+      evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
+      actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
     
-    // read data
-    evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
-    evtIdLow     = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
-    evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));
-    evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
-    actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
-    
-    // pop action from channel
-    *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
+      // pop action from channel
+      *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
 
-    // here: do s.th. according to action
-    switch (actTag) {
-    case 0x4:
-      mprintf("EvtID: 0x%08x%08x; deadline: %08x%08x; flag: %08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
-      break;
-    default:
-      mprintf("ecaHandler: unknown tag\n");
-    } // switch
+      // here: do s.th. according to tag
+      switch (actTag) 
+        {
+        case DMUNIPZ_ECADO_REQTK :
+          nextAction = DMUNIPZ_ECADO_REQTK;
+          *virtAcc = evtIdLow & 0xf;   // check: later we need to extract this info from the data delivered by the ECA 
+          // check: later we also need to extract address and information we need to write to the Datamaster
+          mprintf("dm-unipz: received ECA event request TK\n");
+          break;
+        case DMUNIPZ_ECADO_REQBEAM :
+          nextAction = DMUNIPZ_ECADO_REQBEAM;
+          *virtAcc = evtIdLow & 0xf;   // check: later we need to extract this info from the data delivered by the ECA 
+          // check: later we also need to extract address and information we need to write to the Datamaster
+          mprintf("dm-unipz: received ECA event request beam\n");
+          break;
+        default: 
+          nextAction = DMUNIPZ_ECADO_UNKOWN;
+        } // switch
 
-  } // if data is valid
-} // ecaHandler
+      return nextAction;
+
+    } // if data is valid
+    asm("nop"); // ECA data was not valid: wait 4 CPU ticks
+  } // for i...
+
+  return  DMUNIPZ_ECADO_TIMEOUT;
+} // wait for ECA event
 
 
 void initCmds() // init stuff for handling commands, trivial for now, will be extended
@@ -329,8 +350,7 @@ void initCmds() // init stuff for handling commands, trivial for now, will be ex
 } // initCmds
 
 
-
-int writeToPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t data) // write bit field to module bus output (linked to UNI PZ)
+int16_t writeToPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t data) // write bit field to module bus output (linked to UNI PZ)
 {
   uint16_t wData     = 0x0;     // data to write
   int16_t  busStatus = 0;       // status of bus operation
@@ -347,7 +367,7 @@ int writeToPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t data) // write bit f
 } // writeToPZU
 
 
-int readFromPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t *data) // read bit field from module bus input (linked to UNI PZ)
+int16_t readFromPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t *data) // read bit field from module bus input (linked to UNI PZ)
 {
   uint16_t wData      = 0x0;    // data to write
   uint16_t rData      = 0x0;    // data to read
@@ -362,13 +382,58 @@ int readFromPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t *data) // read bit 
 
   return(busStatus);
 } // readFromPZU 
- 
 
+
+uint32_t requestTK(uint32_t msTimeout, uint32_t virtAcc, uint32_t dryRun)
+{
+  WriteToPZU_Type  writePZUData; // Modulbus SIS, I/O-Modul 1, Bits 0..15
+  ReadFromPZU_Type readPZUData;  // Modulbus SIS, I/O-Modul 3, Bits 0..15
+  int16_t          status;       // status MIL device bus operation
+  uint32_t         i,j;          
+
+  if (virtAcc > 0xf) return DMUNIPZ_STATUS_OUTOFRANGE;  
+
+  // send request to modulbus I/O (UNIPZ)
+  writePZUData.uword               = 0x0;
+  writePZUData.bits.TK_Request     = true;
+  writePZUData.bits.SIS_Acc_Select = virtAcc;
+  writePZUData.bits.ReqNoBeam      = dryRun;
+  if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_REQTKFAILED;
+
+  // wait for acknowledgement from UNIPZ
+  for (i=0; i < msTimeout; i++) {      // while not timed out, poll reply from UNIPZ
+    if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_REQTKFAILED; // read from modulbus I/O (UNIPZ)
+  
+    if (readPZUData.bits.TK_Req_Ack == true) return DMUNIPZ_STATUS_OK;   // check for acknowledgement
+    
+    for (j=0; j<DMUNIPZ_MS_ASMNOP;j++) asm("nop");                  // not yet acknowledged: wait for 1ms 
+  } // for i: loop until timeout
+  
+  return DMUNIPZ_STATUS_TIMEDOUT;
+} // requestTK
+
+
+uint32_t requestBeam()
+{
+  WriteToPZU_Type  writePZUData; // Modulbus SIS, I/O-Modul 1, Bits 0..15
+  ReadFromPZU_Type readPZUData;  // Modulbus SIS, I/O-Modul 3, Bits 0..15
+  int16_t          status;       // status MIL device bus operation
+  uint32_t         i,j;          
+
+  // send request to modulbus I/O (UNIPZ)
+  writePZUData.uword             = 0x0;
+  writePZUData.bits.SIS_Request  = true;
+  if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_REQBEAMFAILED;
+ 
+  return DMUNIPZ_STATUS_OK;
+} // requestBeam
+
+ 
 uint32_t configMILEvent(uint16_t evtCode, uint16_t virtAcc) // configure SoC to receive events via MIL bus
 {
   // initialize status and command register with intial values; disable event filtering; clear filter RAM
-  if (writeCtrlStatRegEvtMil(pMILPiggy, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return 17; //DMUNIPZ_STATUS_ERROR;
-
+  if (writeCtrlStatRegEvtMil(pMILPiggy, MIL_CTRL_STAT_ENDECODER_FPGA | MIL_CTRL_STAT_INTR_DEB_ON) != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
+  mprintf("dm-unipz: configmilevent\n");
   // clean up 
   if (disableLemoEvtMil(pMILPiggy, 1) != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
   if (disableLemoEvtMil(pMILPiggy, 2) != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
@@ -376,7 +441,7 @@ uint32_t configMILEvent(uint16_t evtCode, uint16_t virtAcc) // configure SoC to 
   if (clearFilterEvtMil(pMILPiggy)    != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
 
   // set filter (FIFO and LEMO1 pulsing), configure LEMO1 for pulse generation
-  if (setFilterEvtMil(pMILPiggy,  evtCode, virtAcc, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return 18; //DMUNIPZ_STATUS_ERROR;
+  if (setFilterEvtMil(pMILPiggy,  evtCode, virtAcc, MIL_FILTER_EV_TO_FIFO | MIL_FILTER_EV_PULS1_S) != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
   if (configLemoPulseEvtMil(pMILPiggy, 1) != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
 
   return DMUNIPZ_STATUS_OK;
@@ -389,6 +454,9 @@ uint16_t wait4MILEvt(uint16_t evtCode, uint16_t virtAcc, uint32_t msTimeout) // 
   uint32_t evtCodeRec;         // "event number"
   uint32_t virtAccRec;         // virtual accelerator
   uint32_t i = 0;
+  uint32_t j = 0;
+
+  mprintf("dm-unipz: wait 4 mil event, max i %d, msTimeout %d, evtCode %d, virtAcc %d\n",  msTimeout * DMUNIPZ_MS_ASMNOP, msTimeout, evtCode, virtAcc);
 
   for (i=0; i < msTimeout * DMUNIPZ_MS_ASMNOP; i++) {
     while (fifoNotemptyEvtMil(pMILPiggy)) {     // drain fifo until empty
@@ -396,85 +464,66 @@ uint16_t wait4MILEvt(uint16_t evtCode, uint16_t virtAcc, uint32_t msTimeout) // 
       evtCodeRec  = evtDataRec & 0x000000ff;    // extract event code
       virtAccRec  = (evtDataRec >> 8) & 0x0f;   // extract virtual accelerator (assuming event message)
       if ((evtCodeRec == evtCode) && (virtAccRec == virtAcc)) return DMUNIPZ_STATUS_OK;
+      j++;
     } // while fifo not empty
     asm("nop"); // wait 4 CPU ticks
   } // for i...
+
+  mprintf("dm-unipz: wait 4 mil event, timed out, j %d\n",j);
 
   return DMUNIPZ_STATUS_TIMEDOUT;
 } //wait4MILEvent
 
 
-void triggerSIS18Cycle() //triggers the start of the SIS18 cycle
+void pulseLemo2() //for debugging with scope
 {
-  // at present this routine is bogus and just writes to the local ECA
-
-  uint32_t WBTargetAddress; // Wishbone address we need to address with Etherbone
   uint32_t i;
-  
+
   setLemoOutputEvtMil(pMILPiggy, 2, 1);
   for (i=0; i< 10 * DMUNIPZ_US_ASMNOP; i++) asm("nop");
   setLemoOutputEvtMil(pMILPiggy, 2, 0);
-  
-  // clear shared data for EB return values
-  //ebmClearSharedMem();
+} // pulseLemo2
 
-  
-  /* for the first test, we send an event to the ECA of another node */
-  WBTargetAddress = 0x7ffffff0;
-  //mprintf("WBTargetAddress: 0x%08x, timeHigh: 0x%08x\n", (uint32_t)WBTargetAddress, timeRecMILEvtHigh);
 
-  /********* work in progress ***********/
-  
-  // setup and commit EB cycle to remote device
-  // here: timing message
-  // commented: bad things happen here!!!!
-  /*
-  getECATAI(&timeRecMILEvtHigh, &timeRecMILEvtLow);
-  */
+void replyRequestTK()
+{
+  /* check: not yet implemented */
+} // replyRequestTK
 
-  /* ATOMIC!!! 
-  ebm_hi((uint32_t)WBTargetAddress);
-  ebm_op((uint32_t)WBTargetAddress, 0xaaaaaaaa, EBM_WRITE);                  // evtID high 32 bits
-  ebm_op((uint32_t)WBTargetAddress, 0xbbbbbbbb, EBM_WRITE);                  // evtID low 32 bits
-  ebm_op((uint32_t)WBTargetAddress, 0x00000000, EBM_WRITE);                  // parameter field high 32 bits
-  ebm_op((uint32_t)WBTargetAddress, 0x00000000, EBM_WRITE);                  // parameter field low 32 bits
-  ebm_op((uint32_t)WBTargetAddress, 0x00000000, EBM_WRITE);                  // TEF field 32 bits
-  ebm_op((uint32_t)WBTargetAddress, 0x00000000, EBM_WRITE);                  // reserve field 32 bits
-  ebm_op((uint32_t)WBTargetAddress, timeRecMILEvtHigh, EBM_WRITE);           // timestamp high 32 bits
-  ebm_op((uint32_t)WBTargetAddress, timeRecMILEvtLow, EBM_WRITE);            // timestamp low 32 bits
 
-  ebm_flush();
-  */
-} // triggerSIS18Cycle
+void replyRequestBeam()
+{
+  /* check: not yet implemented */
+} // replyRequestBeam
 
 
 uint32_t entryActionConfigured()
 {
   uint32_t status = DMUNIPZ_STATUS_OK;
- 
+  uint32_t i;
+
   // check if modulbus I/O is ok
   if ((status = echoTestDevMil(pMILPiggy, IFB_ADDRESS_SIS, 0xbabe)) != DMUNIPZ_STATUS_OK) {
     mprintf("dm-unipz: ERROR - modulbus SIS IFK not available!\n");
     return status;
   }
 
-  // configure MIL piggy for timing events
-  if ((status = configMILEvent(uniReady2SisCode, uniReady2SisAcc)) != DMUNIPZ_STATUS_OK) {
-    mprintf("dm-unipz: ERROR - failed to configure MIL piggy for receiving timing events! %d %d\n", status, uniReady2SisAcc);
+  // configure MIL piggy for timing events for all 16 virtual accelerators
+  //for (i=0; i< (0xf + 1); i++) check
+  if ((status = configMILEvent(DMUNIPZ_EVT_UNI_READY, 15)) != DMUNIPZ_STATUS_OK) {
+    mprintf("dm-unipz: ERROR - failed to configure MIL piggy for receiving timing events! %d %d\n", status, i);
     return status;
   }
 
-  configLemoOutputEvtMil(pMILPiggy, 2);
- 
+  configLemoOutputEvtMil(pMILPiggy, 2);  // used to see a blinking LED (and optionally connect a scope) for debugging
+  unipzTimeoutMs = 1000;                 // default timeout value for unipz; check: make this configurable via shared mem
+
   return status;
 } // entryActionConfigured
 
 
 uint32_t entryActionOperation()
 {
-  if (clearFifoEvtMil(pMILPiggy) != MIL_STAT_OK)    return DMUNIPZ_STATUS_ERROR;
-  if (enableFilterEvtMil(pMILPiggy) != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
- 
   return DMUNIPZ_STATUS_OK;
 } // entryActionOperation
 
@@ -566,30 +615,61 @@ void changeState() //state machine; see dm-unipz.h for possible states and trans
     default:   nextState = DMUNIPZ_STATE_S0;  // in case we are in an undefined state, start all over again
     } // if reqState
 
-  // in case state change was not successful transit to error state
+  // in case state change can not be done, transit to error state
   if (status != DMUNIPZ_STATUS_OK) nextState = DMUNIPZ_STATE_ERROR;
 
-  if (actState != nextState) mprintf("dm-unipz: changed to state %d\n", nextState);
-
+  // state change: update info
+  if (actState != nextState) {  
+    mprintf("dm-unipz: changed to state %d\n", nextState);
+    *pSharedState = nextState;
+  }
   // finaly ...
   actState = nextState;
   reqState = DMUNIPZ_STATE_UNKNOWN; //check
 } //changeState
 
 
-void doActionOperation()
+uint32_t doActionOperation()
 {
   uint32_t i;
+  uint32_t status;
+  uint32_t nextAction;
+  uint32_t virtAcc;
+  uint32_t regValue;
 
-  if (wait4MILEvt(uniReady2SisCode, uniReady2SisAcc, 1000) == DMUNIPZ_STATUS_OK) {
-      //getECATAI(&timeRecMILEvtHigh, &timeRecMILEvtLow); 
-    triggerSIS18Cycle();
-    //(*pSharedNRecMILEvt)++;
-    //mprintf("triggered SIS 18 cycle at ECA time: high 0x%08x, low 0x%08x\n", timeRecMILEvtHigh, timeRecMILEvtLow);
-  } // if wait 
-  
-  //for (i=0; i< DMUNIPZ_MS_ASMNOP * 1000; i++) asm("nop");
-  //triggerSIS18Cycle();
+  status = actStatus; 
+
+  nextAction = wait4ECAEvent(DMUNIPZ_DEFAULT_TIMEOUT, &virtAcc);
+
+  switch (nextAction) 
+    {
+    case DMUNIPZ_ECADO_REQTK :                // request TK
+      status = requestTK(unipzTimeoutMs, virtAcc, 0);  // talk to UNIPZ
+      mprintf("dm-unipz: status requesting TK %d for virtAcc %d\n", status, virtAcc);
+      if (status !=  DMUNIPZ_STATUS_OK) {}    // no error handling, see https://www-acc.gsi.de/wiki/FAIR/CCT/Minutes300317 
+      replyRequestTK();                       // reply to DM 
+      break;
+    case DMUNIPZ_ECADO_REQBEAM :              // request beam from UNILAC
+      status = requestBeam(unipzTimeoutMs);   // talk to UNIPZ
+      if (status ==  DMUNIPZ_STATUS_OK) {
+        if (clearFifoEvtMil(pMILPiggy) != MIL_STAT_OK)    return DMUNIPZ_STATUS_REQBEAMFAILED;
+        if (enableFilterEvtMil(pMILPiggy) != MIL_STAT_OK) return DMUNIPZ_STATUS_REQBEAMFAILED;
+        clearFifoEvtMil(pMILPiggy);
+        status = wait4MILEvt(DMUNIPZ_EVT_UNI_READY, virtAcc, unipzTimeoutMs); // only wait for UNI_READY_TO_SIS in case beam request was ok
+        /* todo/check: get WR timestamp for DM */                             // timestamp MIL event
+        pulseLemo2();                                                         // for hardware debugging with scope
+        if (status == DMUNIPZ_STATUS_OK) (*pSharedNRecMILEvt)++;              // increment counter for number of received MIL events
+        if (disableFilterEvtMil(pMILPiggy) != MIL_STAT_OK) return DMUNIPZ_STATUS_REQBEAMFAILED;
+        mprintf("dm-unipz: wait 4 mil event status %d\n", status);
+      } // status ok
+      else mprintf("dm-unipz: failed to request beam %d\n", status);
+      if (status !=  DMUNIPZ_STATUS_OK) {}    // no error handling, see https://www-acc.gsi.de/wiki/FAIR/CCT/Minutes300317
+      replyRequestBeam();                     // reply to DM
+      break;
+    default: ;
+    } // switch nextAction
+
+  return status;
 } //doActionOperation
 
 
@@ -602,25 +682,20 @@ void main(void) {
   uint16_t test;
   int      status;
 
-
-  WriteToPZU_Type  writePZUData; // Modulbus SIS, I/O-Modul 1, Bits 0..15
-  ReadFromPZU_Type readPZUData;  // Modulbus SIS, I/O-Modul 3, Bits 0..15
-
   init();                        // initialize stuff for lm32
   initSharedMem();               // initialize shared memory
   initState();                   // init state machine
   ebmInit();                     // init EB master 
   ebmClearSharedMem();           // clear shared memory used for EB return values
-
+  
+  status    = DMUNIPZ_STATUS_OK;       // init (error) status 
+  actStatus = DMUNIPZ_STATUS_UNKNOWN;  // init actual (error) status 
 
   findECAQueue();                // find WB device, required to receive events from the ECA
   findECAControl();              // find WB device, required to obtain timestamp
   findMILPiggy();                // find WB device, required for device bus master and event bus slave
 
   initCmds();                    // init command handler
-
-  uniReady2SisCode =  1;         // hack: change later
-  uniReady2SisAcc  = 15;         // hack: change later
 
   i=0;
   while (1) {
@@ -630,57 +705,21 @@ void main(void) {
     switch(actState) // state specific do actions
       {
       case DMUNIPZ_STATE_OPERATION :
-        doActionOperation();
+        status = doActionOperation();
         break;
       case DMUNIPZ_STATE_FATAL :
         mprintf("dm-unipz: a FATAL error has occured. Good bye.\n");
         while (1) asm("nop"); // RIP!
         break;
       default :
-        for (j = 0; j < (1000 * DMUNIPZ_MS_ASMNOP); j++) { asm("nop"); } //wait for 100 ms
+        for (j = 0; j < (DMUNIPZ_DEFAULT_TIMEOUT * DMUNIPZ_MS_ASMNOP); j++) { asm("nop"); } // wait: use value for default timeout
       } // switch 
-    
-    //triggerSIS18Cycle();
-    //for (j = 0; j <  DMUNIPZ_MS_ASMNOP; j++)  { asm("nop"); } //wait for 1 ms
-    
-    
-    /* 
-    if (wait4MILEvt(uniReady2SisCode, uniReady2SisAcc, 1000) == DMUNIPZ_STATUS_OK) {
-      //getECATAI(&timeRecMILEvtHigh, &timeRecMILEvtLow); 
-      triggerSIS18Cycle();
-      //(*pSharedNRecMILEvt)++;
-      //mprintf("triggered SIS 18 cycle at ECA time: high 0x%08x, low 0x%08x\n", timeRecMILEvtHigh, timeRecMILEvtLow);
-    } 
-    // disableFilterEvtMil(pMILPiggy);
 
-    /* do the things that have to be done                    */
-    //ecaHandler();
-
-
-    //status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, i);
-    //if (status != OKAY) mprintf("ERROR: Can't write to PZU @ IFK 0x%x!\n", IFB_ADDRESS_SIS);
-    //else                mprintf("OK: 0x%x written to PZU @ IFK 0x%x\n", i, IFB_ADDRESS_SIS);
-
-    //status = readFromPZU(IFB_ADDRESS_UNI, IO_MODULE_1, &test);
-    //if (status != OKAY) mprintf("ERROR: Can't read from PZU @ IFK 0x%x!\n", IFB_ADDRESS_UNI);
-    //else                mprintf("OK: 0x%x read from PZU @ IFK 0x%x\n", test, IFB_ADDRESS_UNI);    
-    
-
-      //what is all this commented stuff? remove?    
-
-    /*    status = writeToPZUUni(i);
-    if (status != OKAY) mprintf("ERROR: Can't write to PZU (UNILAC side)!\n");
-    else                mprintf("OK: wrote 0x%x to PZU (UNILAC side)\n",i);    
-      
-
-    status = readFromPZU(&readPZUData);
-    if (status != OKAY) mprintf("ERROR: Can't read from PZU!\n");
-    else                mprintf("OK: read data from PZU: 0x%x\n", readPZUData.uword); */
-
-    // increment and update iteration counter
-
-    // update status
+    // update status and counter for main loop
+    if (actStatus != status) {
+      *pSharedStatus = status;
+      actStatus = status;
+    }
     i++; *pSharedNIterMain = i;
-    *pSharedState = actState;
   } // while
 } /* main */

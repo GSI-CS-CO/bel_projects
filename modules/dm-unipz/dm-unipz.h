@@ -1,16 +1,21 @@
 #ifndef __DM_UNIPZ_H_
 #define __DM_UNIPZ_H_
 
-#define  DMUNIPZ_ECA_TAG          0x4         // tag for ECA actions we want to receive
 #define  DMUNIPZ_US_ASMNOP        31          // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
-#define  DMUNIPZ_WB_ECA_IN        0x7ffffff0  // Wishbone address of ECA input
+#define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout value ms; used by main loop 
+#define  DMUNIPZ_EVT_UNI_READY    1           // event number EVT_UNI_READY; check: number is bogus
 
 // (error) status
-#define  DMUNIPZ_STATUS_UNKNOWN   0           // unknown status
-#define  DMUNIPZ_STATUS_OK        1           // status OK
-#define  DMUNIPZ_STATUS_ERROR     2           // an error occured
-#define  DMUNIPZ_STATUS_TIMEDOUT  3           // a timeout occured
+#define  DMUNIPZ_STATUS_UNKNOWN       0       // unknown status
+#define  DMUNIPZ_STATUS_OK            1       // status OK
+#define  DMUNIPZ_STATUS_ERROR         2       // an error occured
+#define  DMUNIPZ_STATUS_TIMEDOUT      3       // a timeout occured
+#define  DMUNIPZ_STATUS_OUTOFRANGE    4       // request to reserve TK failed
+#define  DMUNIPZ_STATUS_REQTKFAILED   5       // request to reserve TK failed
+#define  DMUNIPZ_STATUS_REQTKTIMEOUT  6       // request to reserve TK timed out
+#define  DMUNIPZ_STATUS_REQBEAMFAILED 7       // request to reserve TK timed out
+
 
 // commands from the outside
 #define  DMUNIPZ_CMD_NOCMD        0           // no command ...
@@ -20,7 +25,7 @@
 #define  DMUNIPZ_CMD_IDLE         4           // requests gateway to enter idle state
 #define  DMUNIPZ_CMD_RECOVER      5           // recovery from error state
 
-//states; implicitely, all states may transit to the ERROR state
+// states; implicitely, all states may transit to the ERROR or FATAL state
 #define  DMUNIPZ_STATE_UNKNOWN    0           // initial state -> IDLE (automatic)
 #define  DMUNIPZ_STATE_S0         1           // initial state -> IDLE (automatic)
 #define  DMUNIPZ_STATE_IDLE       2           // idle state -> CONFIGURED (by command "configure")
@@ -29,6 +34,12 @@
 #define  DMUNIPZ_STATE_STOPPING   5           // gateway in operation -> CONFIGURED (automatic)
 #define  DMUNIPZ_STATE_ERROR      6           // gateway in error -> IDLE ("recover")
 #define  DMUNIPZ_STATE_FATAL      7           // gateway in fatal error; RIP
+
+// activity requested by ECA Handler, the relevant codes are also used as "tags".
+#define  DMUNIPZ_ECADO_TIMEOUT    0           // timeout: no activity requested
+#define  DMUNIPZ_ECADO_UNKOWN     1           // unnkown activity requested (unexpected action by ECA)
+#define  DMUNIPZ_ECADO_REQTK      2           // request the transfer channel (TK)
+#define  DMUNIPZ_ECADO_REQBEAM    3           // request beam from UNIPZ
 
 
 // part below provide by Ludwig Hechler 
