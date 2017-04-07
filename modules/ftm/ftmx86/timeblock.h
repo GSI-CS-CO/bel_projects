@@ -7,41 +7,19 @@
 
 
 class TimeBlock : public Node {
-  uint8_t   cpu;
-  uint16_t  idx;
-  uint32_t  adr;
   uint64_t  period;
-  bool      cmdQ;
 
 public:
-  //TimeBlock(uint64_t start, uint64_t period, bool cmdQ) : period(period), cmdQ(cmdQ) {}
-  TimeBlock(uint64_t period, bool cmdQ) : cpu(0), idx(0), adr(0), period(period), cmdQ(cmdQ) {}
+
+  TimeBlock(uint64_t period) : period(period) {}
   ~TimeBlock()  {};
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
-  virtual void accept(const VisitorCreateMemBlock & v)  const override { v.visit(*this); }
-  virtual void accept(const VisitorAddEvtChildren & v)   const override { v.visit(*this); }
 
-/*
-           downloadTable() const
-  void     allocate(uint8_t cpu, uint16_t idx, uint32_t adr ); //replace by call to allocator
-  void     deallocate() const; //call to allocator free
-*/
-  uint8_t  getCpu() const     {return cpu;}
-  uint16_t getIdx() const     {return idx;}
-  uint32_t getAdr() const     {return adr;}
-  uint64_t getTOffs() const   {return -1;}
-  uint64_t getTPeriod() const  {return period;}
-  bool hasCmdQ() const {return cmdQ;}
-  void show(void) const {show(0, "");}
+  uint32_t getAdr()     const {return Node::getAdr();}
+  void show(void)       const {show(0, "");}
   void show(uint32_t cnt, const char* sPrefix)  const {printf("*** Block %s, Period %llu\n", sPrefix, (unsigned long long)period);}
   void serialise(itBuf ib)  {printf("I'am a serialised Timeblock\n");}
-
   
-/*
-  uint32_t getEvtQty() const {return gsub.size() const;}
-  uint32_t getSize() const {} //call to allocator map
-  bool     hasQ() const {return cmdQ;}
-*/
 
 };
 

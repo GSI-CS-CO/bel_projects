@@ -70,8 +70,20 @@ bool VisitorCreateMemBlock::NodeSortPredicate(const node_ptr e1, const node_ptr 
 }
 
 void VisitorCreateMemBlock::visit(const TimeBlock& el) const {
-  //std::cout <<  "TB  CMB for " << g[n].name << "\n";
-  //el.serialise(
+  
+  //does the allocator know me?
+  //yes
+    //am I an updated block?
+  //no
+    //create allocator map entry
+  //call serialise functions with referenec to allocator map 
+  
+  g[n].np->vB.clear();
+
+  //what about all the destructors in node class? do it right!
+
+
+
   el.show(0, g[n].name.c_str()); 
   npBuf npB;
 
@@ -86,17 +98,31 @@ void VisitorCreateMemBlock::visit(const TimeBlock& el) const {
   //sort events by time offset
   std::sort(npB.begin(), npB.end(), NodeSortPredicate);
 
+  g[n].np->vBuf.reserve( (npB.end() - npB.begin()) * _EVT_SIZE + _BLOCK_HDR_SIZE ); // preallocate memory
+  
+  vBuf vBtmp(_BLOCK_HDR_SIZE); //create and fill temp buffer
+  itBuf ser = vBtmp.begin();
+  g[n].np->serialise(ser); 
 
-  //show all found evt descendants
+  g[n].np->vB.insert( g[n].np->vB.end(), vBtmp.begin(), vBtmp.end() );   // insert block hdr 
+
+    //serialise / show all found evt descendants
   boost::container::vector<node_ptr>::iterator it;
   for(it=npB.begin() ; it < npB.end(); it++) {
     (*it)->show(it - npB.begin(), "  ");
+    g[n].np->vB.clear();
+    //reserve size?
+    g[n].np->serialise((*it)->vB.begin()); //serialise into local node buffer
+
+    g[n].np->vBuf.insert( g[n].np->vB.end(), (*it)->vB.begin(), (*it)->vB.end() ); // insert all events
   }
 
 }
 
 void VisitorAddEvtChildren::visit(const Event& el) const {
-  //std::cout << "Evt AEC for " << g[n].name << "\n";
+ 
+  
+
   Graph::out_edge_iterator out_begin, out_end, out_cur;
   
   //add yourself, call for all children

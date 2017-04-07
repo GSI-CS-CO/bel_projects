@@ -19,6 +19,22 @@ typedef boost::container::vector<uint8_t>::iterator itBuf;
 
   typedef struct {
     std::string name;
+    std::string type;
+    //list all possible attributes to put node objects later
+    //dirty business. this will have to go in the future. overload graphviz_read subfunctions
+    //make this a class and have a node factory controlled by type field
+
+    uint64_t tStart, tPeriod;
+    uint16_t flags;
+    uint64_t tOffs;
+    uint64_t id, par;
+    uint32_t tef;
+
+    uint64_t tValid, tUpdateStart;
+    uint16_t qty;
+    uint8_t  upToHi, upToLo, fromHi, fromLo;
+    uint8_t  flushIl, flushHi, flushLo;
+    
     node_ptr np;
   } myVertex;
 
@@ -26,9 +42,7 @@ typedef boost::container::vector<uint8_t>::iterator itBuf;
 
 
   typedef struct {
-    int type;
-    boost::function<uint64_t(void)> getTimeParent;
-    boost::function<uint64_t(void)> getTimeChild;
+    std::string type;
   } myEdge;
 
 

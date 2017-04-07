@@ -9,20 +9,27 @@
 
 
 class Node {
-  vBuf vB;
+
+  //sigh ... this looks more and more like a dumbed down version of git
+  Allocator& al;
+  uint32_t flags;
+  const std:string& name;
+  
 
 public:
-  int Dummy;
-  Node() {}
-  virtual ~Node() {};
-  virtual uint64_t getTPeriod() const = 0;
-  virtual uint64_t getTOffs() const = 0;
-  virtual void serialise(itBuf ib)  = 0;
+  
+
+  Node(Allocator& al, const std:string& name, const uint32_t& hash) : al(al), flags(flags), name(name), {al.allocate(name);} //what to do if it fails?
+  virtual ~Node() {al.deallocate(name);} //what to do if it fails?
+
+  const std:string& getName() const {return name;}
+  const uint32_t& getHash()   const {//calc FNV hash}
+  const uint32_t getAdr()     const {return al.lookupAdr(name);}
+
+  virtual void serialise(//const string &defaultDest, const string &target, const string vector &altDest, const string vector &meta)  = 0;
   virtual void show(void) const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
-  virtual void accept(const VisitorCreateMemBlock & v)  const = 0;
-  virtual void accept(const VisitorAddEvtChildren & v)  const = 0;
 };
 
 
