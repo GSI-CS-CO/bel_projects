@@ -6,8 +6,13 @@
 
 //"struct0 [label=\"<f0> " << name[v] << " | <f1> " << period[v] << "\"];"; go for structs ...
 
+
+
 void VisitorVertexWriter::eventString(const Event& el) const {
-  out << " [shape=\"oval\", t_offs=" << el.getTOffs() << ", flags=" << el.getFlags();
+  out << " [shape=\"oval\"";
+  if(el.isPainted()) out << ", fillcolor=\"green\"";
+  else out << ", fillcolor=\"grey\"";
+  out << ", t_offs=" << el.getTOffs() << ", flags=" << el.getFlags();
 }
 
 void VisitorVertexWriter::commandString(const Command& el) const {
@@ -16,11 +21,9 @@ void VisitorVertexWriter::commandString(const Command& el) const {
 
 void VisitorVertexWriter::visit(const TimeBlock& el) const  { 
   out << " [shape=\"rectangle\"";
+  if(el.isPainted()) out << ", fillcolor=\"green\"";
+  else out << ", fillcolor=\"grey\"";
   out << ", t_period=" << el.getTPeriod();
-  if(el.hasCmdQ()) out << ", color=\"red\", hasCmdQ=" << el.hasCmdQ();
-  //out << ", cpu=" << el.getCpu();
-  out << ", idx=" << el.getIdx();
-  out << ", adr=" << el.getAdr();
   out << "]";
 }
 
@@ -46,9 +49,6 @@ void VisitorVertexWriter::visit(const Flow& el) const  {
   out << ", type=\"Flow\", color=\"blue\"";
   commandString((Command&) el);
   out << ", qty=" << el.getQty();
-  out << ", dest=\""; 
-  if (el.getNext() != NULL) out << "aName"; //el.blNext->name;
-  else out << "None";
   out << "\"]";
 }
 
@@ -64,11 +64,15 @@ void VisitorVertexWriter::visit(const Flush& el) const {
   out << "]";
 }
 
-
-bool VisitorCreateMemBlock::NodeSortPredicate(const node_ptr e1, const node_ptr e2) {
-  return e1->getTOffs() < e2->getTOffs();
+void VisitorVertexWriter::visit(const Meta& el) const {
+  out << " [shape=\"oval\"";
+  if(el.isPainted()) out << ", fillcolor=\"green\"";
+  else out << ", fillcolor=\"grey\"";
+  out << ", style=dashed, flags=" << el.getFlags();
+  out << "]";
 }
 
+/*
 void VisitorCreateMemBlock::visit(const TimeBlock& el) const {
   
   //does the allocator know me?
@@ -142,6 +146,6 @@ void VisitorEdgeWriter::visit(const TimingMsg& el) const { std::cout << "Visited
 void VisitorEdgeWriter::visit(const Flow& el) const { std::cout << "Visited a Flow!";		out << "[shape=\"oval\", color=\"blue\"]";}
 void VisitorEdgeWriter::visit(const Flush& el) const { std::cout << "Visited a Flush!";	out << "[shape=\"oval\", color=\"red\"]";}
 void VisitorEdgeWriter::visit(const Noop& el) const { std::cout << "Visited a Noop!";	out << "[shape=\"oval\", color=\"green\"]";}
-
+*/
 
 
