@@ -64,10 +64,6 @@
 /* shared memory map for communication via Wishbone  */
 #include "example_smmap.h"
 
-
-#define BUILDID_OFFS 0x100 // location in linker script (ram.ld) (do I need this?)
-#define SHARED_OFFS  0x500 // location in linker script (ram.ld) (do I need this?)
-
 /* stuff required for environment */
 extern uint32_t*       _startshared[];
 unsigned int cpuId, cpuQty;
@@ -107,7 +103,6 @@ void init()
   irq_disable();          // ...
 } // init
 
-
 /*************************************************************
 * 
 * demonstrate how to talk to MIL devicebus and receive MIL events
@@ -144,6 +139,8 @@ void getWishboneTAI()
 
 } // getWishboneTAI
 
+
+
 /*************************************************************
 * 
 * demonstrate how to poll actions ("events") from ECA
@@ -179,6 +176,12 @@ void findECAQ()
 
 } // findECAQ
 
+void findEcaControl() // find WB address of ECA Control
+{
+  pECACtrl  = find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
+  mprintf("pECACtrl: 0x%08x\n",  pECACtrl);
+}
+
 uint64_t getECATAI(uint32_t *timeHi, uint32_t *timeLo) // get TAI from local ECA
 {
   volatile uint32_t *pECATimeHi = (pECACtrl + (ECA_TIME_HI_GET >> 2));
@@ -199,59 +202,6 @@ uint64_t getECATAI(uint32_t *timeHi, uint32_t *timeLo) // get TAI from local ECA
   return time;
 } 
 
-
-// write an event to the device bus. The SCU dev bus output (sub-D) will be connected to the "yellow box"
-// that forwards the signal through a Lemo event bus cable to a TIF module
-int16_t writeEvtMil(volatile uint32_t *base, uint8_t  funcPz, uint8_t virtAcc, uint16_t evtNr)
-{
-  uint32_t telegram = 0; // 32 bit write to mil macro, upper bits [31:16] don't care
-  telegram |= funcPz  << 12;
-  telegram |= virtAcc <<  8;
-  telegram |= evtNr;
-
-  if (trm_free(base) == OKAY) {
-    base[MIL_WR_CMD] = telegram;
-  } else {
-    return TRM_NOT_FREE;
-  }
-  return OKAY;
-}
-
-// void usleep(int us)
-// {
-
-//   unsigned i;
-//   unsigned long long delay = us;
-//   /* prevent arithmetic overflow */
-//   delay *= CPU_CLOCK;
-//   delay /= 1000000;
-//   delay /= 4; // instructions per loop
-//   for (i = delay; i > 0; i--) asm("# noop");
-// }  
-
-// send EVT_START_CYCLE ...
-//    ... wait for some us and ...
-// ... send EVT_END_CYCLE.
-int16_t writeEvtMilCycle(volatile uint32_t *base)
-{
-
-  if (trm_free(base) == OKAY) {
-    base[MIL_WR_CMD] = 0x32;
-  } else {
-    return TRM_NOT_FREE;
-  }
-
-  usleep(10);
-
-  if (trm_free(base) == OKAY) {
-    base[MIL_WR_CMD] = 0x55;
-  } else {
-    return TRM_NOT_FREE;
-  }
-
-
-  return OKAY;
-}
 
 /*************************************************************
 * 
@@ -279,11 +229,6 @@ void ecaHandler()
   uint32_t virtAcc;             // virtual accelerator number for MIL
   uint32_t ecaTimeHi, ecaTimeLo;// time from eca registers
   uint64_t ecaTime; 
-  uint32_t milTelegram    = 0;  // translated information for MIL event bus
-  uint16_t milHighCurrent = 1;  // flags that go into the most significant 4 bits of the mil Telegram
-  uint16_t milNoBeam      = 0;
-  uint16_t milRigidBeam   = 1;
-  uint16_t milUnused      = 0; 
 
   // read flag and check if there was an action 
   flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
@@ -311,29 +256,17 @@ void ecaHandler()
       evtDeadl <<= 32;
       evtDeadl  |= evtDeadlLow;
 
-      mprintf("EvtNo: 0x%08x\n", evtNo);
       if ((evtNo&0x00000f00) == 0) // if evtNo in MIL-range [0..255]
       {
         //mprintf("timing event is for MIL event bus evnt_code=0x%08x virt.Acc=0x%08x\n", evtCode, virtAcc);
-        do {
+        //do {
           ecaTime = getECATAI(&ecaTimeHi,&ecaTimeLo);
-        } while(ecaTime < evtDeadl);
+        //} while(ecaTime < evtDeadl);
         mprintf("deliver NOW\n");
 
-      //   milTelegram  = virtAcc<<8;
-        milTelegram |= evtCode;
-      //   milTelegram |= milHighCurrent << 15;
-      //   milTelegram |= milNoBeam      << 15;
-      //   milTelegram |= milRigidBeam   << 15;
-      //   milTelegram |= milUnused      << 15;
 
-
-
-      //   mprintf("MIL event telegram: 0x%08x\n", milTelegram);
-      //   while (ecaTime < evtDeadl); // wait ...
         mprintf("eca time is : 0x%08x%08x\n", ecaTimeHi, ecaTimeLo);
-        //writeEvtMil(pMILPiggy, 0, 1, 32);
-        writeEvtMilCycle(pMILPiggy);
+       // writeEvtMilCycle(pMILPiggy);
 
       }
 
@@ -345,40 +278,10 @@ void ecaHandler()
   } // if data is valid
 } // ecaHandler
 
-void findEcaControl() // find WB address of ECA Control
-{
-  pECACtrl  = find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
-}
-
-/*************************************************************
-* 
-* demonstrate how to talk to a MIL device
-* HERE: write (read) data to (from)  the echo register of 
-* a MIL device
-*
-**************************************************************/
-void echoTestMILDevice(uint16_t wData, uint8_t ifbAddr)
-{
-  int16_t  busStatus;
-  uint16_t rData = 0x0;
-
-  busStatus = writeDevMil(pMILPiggy, ifbAddr, FC_WR_IFC_ECHO, wData);
-  if (busStatus != MIL_STAT_OK) mprintf("echo test on MIL: ERROR\n");
-
-  busStatus = readDevMil(pMILPiggy, ifbAddr, FC_RD_IFC_ECHO, &rData);
-  if (busStatus != MIL_STAT_OK) mprintf("echo test on MIL: ERROR\n");
-
-  if (wData != rData)  mprintf("echo test on MIL: ERROR\n");
-  else                 mprintf("echo test on MIL: OK\n");
-
-  // please note, that a dedicated funtion is already implemented in scu_mil.h(c)
-  // busStatus = echoTestDevMil(pMILPiggy, ifbAddr, wData);
-} // testEchoMILDevice
 
 void main(void) {
-  uint8_t  ifbAddr = 0x20;  // address of MIL interface board  
+  
   uint32_t i,j;
-  int16_t busStatus;
   
   init();   // initialize 'boot' lm32
   
@@ -389,10 +292,7 @@ void main(void) {
   findECAQ();        // find ECA channel for LM32
   findMILPiggy();
   findEcaControl();
-  // mprintf("write to MIL\n");                           // print message to UART
-  // busStatus = writeDevMil(pMILPiggy, ifbAddr, FC_WR_IFC_ECHO, 0xaffe);
-  // mprintf("MIL busStatus: %d (OKAY = %d)\n", busStatus, OKAY);
-
+  
   i=0;
   while (1) {
     // do the things that have to be done
