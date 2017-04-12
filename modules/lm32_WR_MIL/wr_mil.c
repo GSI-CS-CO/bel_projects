@@ -182,14 +182,16 @@ void findEcaControl() // find WB address of ECA Control
   mprintf("pECACtrl: 0x%08x\n",  pECACtrl);
 }
 
-uint64_t getECATAI(uint32_t *timeHi, uint32_t *timeLo) // get TAI from local ECA
+uint64_t getECATAI(uint32_t *timeHi, uint32_t *timeLo, uint32_t *attempts) // get TAI from local ECA
 {
   volatile uint32_t *pECATimeHi = (pECACtrl + (ECA_TIME_HI_GET >> 2));
   volatile uint32_t *pECATimeLo = (pECACtrl + (ECA_TIME_LO_GET >> 2));
   uint32_t timeHi2;
   uint64_t time;
 
+  *attempts = 0;
   do {
+    ++(*attempts);
     *timeHi = *pECATimeHi;
     *timeLo = *pECATimeLo;
     timeHi2 = *pECATimeHi;      // read high word again to check for overflow
@@ -202,6 +204,33 @@ uint64_t getECATAI(uint32_t *timeHi, uint32_t *timeLo) // get TAI from local ECA
   return time;
 } 
 
+// send EVT_START_CYCLE ...
+//    ... wait for some us and ...
+// ... send EVT_END_CYCLE.
+int16_t writeEvtMilCycle(volatile uint32_t *base)
+{
+    int j;
+    for (j = 0; j < (3200); ++j) { asm("nop"); }
+  //if (trm_free(base) == OKAY) {
+    base[MIL_WR_CMD] = 32;
+//  } else {
+//    return TRM_NOT_FREE;
+//  }
+
+    for (j = 0; j < (3200); ++j) { asm("nop"); }
+    base[MIL_WR_CMD] = 0x22;
+
+//  usleep(10);
+
+//  if (trm_free(base) == OKAY) {
+    for (j = 0; j < (3200); ++j) { asm("nop"); }
+    base[MIL_WR_CMD] = 55;
+//  } else {
+//    return TRM_NOT_FREE;
+//  }
+
+  return OKAY;
+}
 
 /*************************************************************
 * 
@@ -217,18 +246,18 @@ uint64_t getECATAI(uint32_t *timeHi, uint32_t *timeLo) // get TAI from local ECA
 **************************************************************/
 void ecaHandler()
 {
-  uint32_t flag;                // flag for the next action
-  uint32_t evtIdHigh;           // high 32bit of eventID
-  uint32_t evtIdLow;            // low 32bit of eventID
-  uint32_t evtDeadlHigh;        // high 32bit of deadline
-  uint32_t evtDeadlLow;         // low 32bit of deadline
-  uint64_t evtDeadl;
-  uint32_t actTag;              // tag of action
-  uint32_t evtNo;               // EVTNO as extracted from EventID field
-  uint32_t evtCode;             // event code for MIL
-  uint32_t virtAcc;             // virtual accelerator number for MIL
-  uint32_t ecaTimeHi, ecaTimeLo;// time from eca registers
-  uint64_t ecaTime; 
+  static uint32_t flag;                // flag for the next action
+  static uint32_t evtIdHigh;           // high 32bit of eventID
+  static uint32_t evtIdLow;            // low 32bit of eventID
+  static uint32_t evtDeadlHigh;        // high 32bit of deadline
+  static uint32_t evtDeadlLow;         // low 32bit of deadline
+  static uint64_t evtDeadl;
+  static uint32_t actTag;              // tag of action
+  static uint32_t evtNo;               // EVTNO as extracted from EventID field
+  static uint32_t evtCode;             // event code for MIL
+  static uint32_t virtAcc;             // virtual accelerator number for MIL
+  static uint32_t ecaTimeHi, ecaTimeLo;// time from eca registers
+  static uint64_t ecaTime; 
 
   // read flag and check if there was an action 
   flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
@@ -245,13 +274,14 @@ void ecaHandler()
     evtCode      = evtNo         &0x000000ff;
     virtAcc      = (evtIdLow>>24)&0x0000000f;
     
+    //mprintf("pop from eca queue\n");
     // pop action from channel
     *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
 
     // here: do s.th. according to action
     switch (actTag) {
     case MY_ECA_TAG:
-      mprintf("EvtID: 0x%08x%08x; deadline: 0x%08x%08x; flag: 0x%08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
+      //mprintf("EvtID: 0x%08x%08x; deadline: 0x%08x%08x; flag: 0x%08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
       evtDeadl   = evtDeadlHigh;
       evtDeadl <<= 32;
       evtDeadl  |= evtDeadlLow;
@@ -260,13 +290,15 @@ void ecaHandler()
       {
         //mprintf("timing event is for MIL event bus evnt_code=0x%08x virt.Acc=0x%08x\n", evtCode, virtAcc);
         //do {
-          ecaTime = getECATAI(&ecaTimeHi,&ecaTimeLo);
+          //int32_t attempts;
+          //ecaTime = getECATAI(&ecaTimeHi,&ecaTimeLo,&attempts);
+          //int32_t dt = ecaTime - evtDeadl;
+          //mprintf("eca time is (after %d attempts): 0x%08x%08x   dt=%d\n", attempts, ecaTimeHi, ecaTimeLo, dt);
         //} while(ecaTime < evtDeadl);
-        mprintf("deliver NOW\n");
+        //mprintf("deliver NOW\n");
 
 
-        mprintf("eca time is : 0x%08x%08x\n", ecaTimeHi, ecaTimeLo);
-       // writeEvtMilCycle(pMILPiggy);
+        writeEvtMilCycle(pMILPiggy);
 
       }
 
@@ -277,6 +309,8 @@ void ecaHandler()
 
   } // if data is valid
 } // ecaHandler
+
+
 
 
 void main(void) {
@@ -292,17 +326,17 @@ void main(void) {
   findECAQ();        // find ECA channel for LM32
   findMILPiggy();
   findEcaControl();
-  
+
   i=0;
   while (1) {
     // do the things that have to be done
     ecaHandler();
 
     // increment and update iteration counter
-    i++;
-    *pSharedCounter = i;
+    //i++;
+    //*pSharedCounter = i;
 
     // wait for 100  microseconds 
-    for (j = 0; j < (3200); ++j) { asm("nop"); }
+    //for (j = 0; j < (16); ++j) { asm("nop"); }
   } // while
 } /* main */
