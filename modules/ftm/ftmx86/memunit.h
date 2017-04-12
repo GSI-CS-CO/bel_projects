@@ -24,25 +24,34 @@
     uint32_t  adr;
     uint32_t  hash;
     vBuf      buf;
+    bool      transfer;
   } chunkMeta;
 
 typedef std::map<std::string, chunkMeta> mMap;
 typedef std::map<std::string, chunkMeta> aMap;
 typedef std::map<uint32_t, std::string> hMap;
+typedef  std::set<uint32_t> aPool; // contains all available addresses in LM32 memory area
 typedef   hMap::iterator itHm;
 typedef   aMap::iterator itAm;
 typedef   mMap::iterator itMm;
+typedef aPool::iterator itAp;
 
 
 
 class MemUnit {
 
-  uint8_t   cpu;
-  uint32_t  baseAdr;
-  uint32_t  poolSize;
-  Graph&    g;
+  const uint8_t   cpu;
+  const uint32_t  baseAdr;
+  const uint32_t  poolSize;
+  const uint32_t  bmpLen;
+  const uint32_t  startOffs; // baseAddress + bmpLen rounded up to next multiple of MEM_BLOCK_SIZE to accomodate BMP
+  const uint32_t  endOffs;   // baseAddress + poolSize rounded down to next multiple of MEM_BLOCK_SIZE, can only use whole blocks 
+     
+  Graph&  g;
+  aPool   memPool;
 
-  std::set<uint32_t> memPool; // contains all available addresses in LM32 memory
+  //ebdevice
+  //eb socket
 
   
 
@@ -51,29 +60,24 @@ class MemUnit {
   aMap allocMap;
   mMap mgmtMap;
   hMap  hashMap;
-  MemUnit(uint8_t cpu, uint32_t baseAdr, uint32_t  poolSize, Graph& g) : cpu(cpu), baseAdr(baseAdr), poolSize(poolSize), g(g) { initMemPool();}
+  vBuf    mgmtBmp; 
+  MemUnit(uint8_t cpu, uint32_t baseAdr, uint32_t  poolSize, Graph& g) : cpu(cpu), baseAdr(baseAdr), 
+          poolSize(poolSize), bmpLen( poolSize / MEM_BLOCK_SIZE), 
+          startOffs((((bmpLen + 8 -1)/8 + MEM_BLOCK_SIZE -1) / MEM_BLOCK_SIZE) * MEM_BLOCK_SIZE),
+          endOffs((poolSize / MEM_BLOCK_SIZE) * MEM_BLOCK_SIZE),
+          mgmtBmp(vBuf( (bmpLen + 8 -1)/8) ), g(g) { initMemPool();}
   ~MemUnit() { };
 
   //MemPool Functions
-  void updatememPoolFromBmp32(uint32_t bmp, int bmpNo); 
+  void updatememPoolFromBmp(); 
   void initMemPool();
   bool acquireChunk(uint32_t &adr);
   bool freeChunk(uint32_t &adr);
 
   //Management functions
-  void initMgmt() {clearMgmt(); mgmtMap["Entry00"] = {baseAdr, 0xdeadbeef, vBuf(32)}; } //generate hashtable entires !!!
-  bool updateMgmt();
-    //clear all mgmt nodes
-    //get names of all designated entry points
-    //calculate number of nodes to create for table
-    //create nodes
-    //assign entry point children
-    //create edges to entry point children and next mgmt node
-    //ready for serialisation
-  bool clearMgmt(); { //delete all mgmt nodes
-    for (itMm it = mgmtMap.begin(); it != mgmtMap.end(); it++) {freeChunk(it->second.adr);} mgmtMap.clear();
-  }
-     
+  void updateBmpFromAlloc();
+  void showAdrsFromBmp();
+ 
 
   //Allocation functions
   bool allocate(const std::string& name);

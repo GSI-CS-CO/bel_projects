@@ -8,6 +8,20 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+#include <boost/graph/graphviz.hpp>
+
+
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+  (byte & 0x80 ? '1' : '0'), \
+  (byte & 0x40 ? '1' : '0'), \
+  (byte & 0x20 ? '1' : '0'), \
+  (byte & 0x10 ? '1' : '0'), \
+  (byte & 0x08 ? '1' : '0'), \
+  (byte & 0x04 ? '1' : '0'), \
+  (byte & 0x02 ? '1' : '0'), \
+  (byte & 0x01 ? '1' : '0') 
+
 
 class Node;
 
@@ -52,7 +66,6 @@ public:
     uint16_t qty;
     uint8_t  upToHi, upToLo, fromHi, fromLo;
     uint8_t  flushIl, flushHi, flushLo;
-    
     node_ptr np;
   } myVertex;
 
@@ -67,6 +80,9 @@ public:
   typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS, myVertex, myEdge > Graph;
   typedef boost::graph_traits<Graph>::vertex_descriptor vertex_t;
 typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
+
+
+ 
 
 
 inline void uint16ToBytes(itBuf ib, uint16_t val) {

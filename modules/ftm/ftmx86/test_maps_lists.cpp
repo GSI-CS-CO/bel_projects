@@ -39,6 +39,12 @@ int main() {
   testme->buf.push_back('k');
   testme->buf.push_back('l');
 
+  
+
+  mmu.deallocate("Sie");
+
+
+
   for (itAm it = mmu.allocMap.begin(); it != mmu.allocMap.end(); it++) {
     std::cout << "Name: " <<  it->first << " Adr: 0x" << std::hex << it->second.adr << " Buf: ";
     for (itBuf itb = it->second.buf.begin(); itb < it->second.buf.end(); itb++) {
@@ -55,6 +61,15 @@ int main() {
   }
   std::cout << std::endl;
  
+  mmu.updateBmpFromAlloc();
+  
+  
+  for (itBuf it = mmu.mgmtBmp.begin(); it < mmu.mgmtBmp.end(); it++) {
+    printf(BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(*it));
+  }
+  printf("\n");
+
+  mmu.showAdrsFromBmp();
 
   return 0;	
 }
