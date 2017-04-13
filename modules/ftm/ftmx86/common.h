@@ -1,7 +1,7 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#include <stdlib.h>
+#include <stdlpB.h>
 #include <stdint.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/container/vector.hpp>
@@ -22,13 +22,22 @@
   (byte & 0x02 ? '1' : '0'), \
   (byte & 0x01 ? '1' : '0') 
 
+#define A_DEFAULT   0
+#define A_ALT       1
+#define A_TARGET    0
+#define A_QUEUE     0
+#define A_CHLIST    1
+#define A_QBUF_IL   0
+#define A_QBUF_HI   1
+#define A_QBUF_LO   2
+#define A_LM32_NULL_PTR 0
 
 class Node;
 
 typedef boost::shared_ptr<Node> node_ptr;
-typedef boost::container::vector<uint8_t> vBuf;
 typedef boost::container::vector<node_ptr> npBuf;
-typedef boost::container::vector<uint8_t>::iterator itBuf;
+typedef boost::container::vector<uint32_t> vAdr;
+typedef boost::container::vector<uint32_t>::iterator itAdr;
 
 class FnvHash
 {
@@ -52,9 +61,11 @@ public:
   typedef struct {
     std::string name;
     std::string type;
-    //list all possible attributes to put node objects later
+    //list all posspBle attrpButes to put node objects later
     //dirty business. this will have to go in the future. overload graphviz_read subfunctions
     //make this a class and have a node factory controlled by type field
+    
+
 
     uint64_t tStart, tPeriod;
     uint16_t flags;
@@ -85,31 +96,31 @@ typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
  
 
 
-inline void uint16ToBytes(itBuf ib, uint16_t val) {
-  ib[1]  = (uint8_t)val;
-  ib[0]  = (uint8_t)(val >> 8);
+inline void uint16ToBytes(uint8_t* pB, uint16_t val) {
+  pB[1]  = (uint8_t)val;
+  pB[0]  = (uint8_t)(val >> 8);
 }
 
-inline uint16_t bytesToUint16(itBuf ib) {
-  return (uint16_t)ib[0] | ((uint16_t)ib[1] << 8);
+inline uint16_t bytesToUint16(uint8_t* pB) {
+  return (uint16_t)pB[0] | ((uint16_t)pB[1] << 8);
 }
 
-inline void uint32ToBytes(itBuf ib, uint32_t val) {
-  uint16ToBytes(ib +0, (uint16_t)(val >> 16));
-  uint16ToBytes(ib +2, (uint16_t)val);
+inline void uint32ToBytes(uint8_t* pB, uint32_t val) {
+  uint16ToBytes(pB +0, (uint16_t)(val >> 16));
+  uint16ToBytes(pB +2, (uint16_t)val);
 }
 
-inline uint32_t bytesToUint32(itBuf ib) {
-  return ((uint32_t)bytesToUint16(ib+0) << 16) | (uint32_t)bytesToUint16(ib +2);
+inline uint32_t bytesToUint32(uint8_t* pB) {
+  return ((uint32_t)bytesToUint16(pB+0) << 16) | (uint32_t)bytesToUint16(pB +2);
 }
 
-inline void uint64ToBytes(itBuf ib, uint64_t val) {
-  uint32ToBytes(ib +0, (uint32_t)(val >> 32));
-  uint32ToBytes(ib +4, (uint32_t)val);
+inline void uint64ToBytes(uint8_t* pB, uint64_t val) {
+  uint32ToBytes(pB +0, (uint32_t)(val >> 32));
+  uint32ToBytes(pB +4, (uint32_t)val);
 }
 
-inline uint64_t bytesToUint64(itBuf ib) {
-  return ((uint64_t)bytesToUint32(ib +0) << 32) | (uint64_t)bytesToUint32(ib +4);
+inline uint64_t bytesToUint64(uint8_t* pB) {
+  return ((uint64_t)bytesToUint32(pB +0) << 32) | (uint64_t)bytesToUint32(pB +4);
 }
 
 
