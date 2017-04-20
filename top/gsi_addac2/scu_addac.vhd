@@ -361,8 +361,8 @@ clk_switch_intr <= sys_clk_is_bad_la or sys_clk_deviation_la;
 SCU_Slave: SCU_Bus_Slave
   generic map (
     CLK_in_Hz           => clk_sys_in_Hz,
-    Firmware_Release    => 0,
-    Firmware_Version    => 2,
+    Firmware_Release    => g_firmware_release,
+    Firmware_Version    => g_firmware_version,
     CID_System          => 55,                    -- important: 55 => CSCOHW
     Intr_Enable         => b"0000_0000_0000_0001")
   port map (
