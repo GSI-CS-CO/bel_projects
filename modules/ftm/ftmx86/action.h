@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include "timeblock.h"
+#include "Block.h"
 enum prio {NONE, LOW, HIGH, INTERLOCK};
 
 
@@ -33,10 +33,10 @@ public:
 
 class Flow : public Command {
   uint16_t qty;
-  TimeBlock *blNext;
+  Block *blNext;
 
 public:
-  Flow(uint64_t tOffs, uint16_t flags, uint64_t tValid, uint16_t qty, TimeBlock *blNext)
+  Flow(uint64_t tOffs, uint16_t flags, uint64_t tValid, uint16_t qty, Block *blNext)
       : Command( tOffs,  flags,  tValid) , qty(qty), blNext(blNext) {}
   ~Flow() {};
   void show(void);

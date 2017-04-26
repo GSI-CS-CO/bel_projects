@@ -24,6 +24,8 @@
 //Memory Block (Node) Size in Bytes
 #define _MEM_BLOCK_SIZE         64
 
+#define LM32_NULL_PTR           0x0
+
 //////////////////////////////////////////////////////////////////////
 //"struct" types                                                    //
 //////////////////////////////////////////////////////////////////////
@@ -61,7 +63,7 @@
 #define T_CMD_TIME              (0)                     // time this command becomes valid
 #define T_CMD_ACT               (T_CMD_TIME + _TS_SIZE_)  // action describing the command
 //either ...
-#define T_CMD_WAIT_TIME         (T_CMD_ACT  + _32b_SIZE_)  // if it's a wait command, this is the new block period to add/new absolute thread time to use
+#define T_CMD_WAIT_TIME         (T_CMD_ACT  + _32b_SIZE_)  // if it's a wait command, this is the new block tPeriod to add/new absolute thread time to use
 // ... or
 #define T_CMD_FLOW_DEST         (T_CMD_ACT  + _32b_SIZE_) // if it's a flow command, this is the alternative destination to use
 #define T_CMD_RES               (T_CMD_DEST + _32b_SIZE_)
@@ -99,9 +101,9 @@
                                                                 
 //////////////////////////////////////////////////////////////////////
 // Generic Node Attributes ///////////////////////////////////////////
-#define NODE_START              (0)
+#define NODE_BEGIN              (0)
 
-// pack all generic data to the end! Makes ptr arithmetic easier for array types   
+// This pack all generic data to the end! Makes ptr arithmetic easier for array types   
 #define NODE_HASH               (0x28)                                
 #define NODE_FLAGS              (NODE_HASH  + _32b_SIZE_)             
 #define NODE_DEF_DEST_PTR       (NODE_FLAGS + _32b_SIZE_)             
@@ -110,46 +112,49 @@
 //////////////////////////////////////////////////////////////////////
 //// Meta Nodes - Specific Attributes ////////////////////////////////
 
-////// TimeBlock
+////// Block
 //
-#define BLOCK_PERIOD            (NODE_START)                        
-#define BLOCK_ALT_DEST_PTR      (BLOCK_DEF_DEST_PTR + _PTR_SIZE_)   
+#define BLOCK_BEGIN             (NODE_BEGIN)      // a bit unusual layout, see above
+#define BLOCK_PERIOD            (BLOCK_BEGIN)                        
+#define BLOCK_ALT_DEST_PTR      (BLOCK_PERIOD       + _TS_SIZE_)   
 #define BLOCK_CMDQ_IL_PTR       (BLOCK_ALT_DEST_PTR + _PTR_SIZE_)   
-#define BLOCK_CMDQ_HI_PTR       (CMDQ_IL_PTR        + _PTR_SIZE_)   
-#define BLOCK_CMDQ_LO_PTR       (CMDQ_HI_PTR        + _PTR_SIZE_)   
-#define BLOCK_CMDQ_WR_IDXS      (CMDQ_WR            + _PTR_SIZE_)   
-#define BLOCK_CMDQ_RD_IDXS      (CMDQ_RD            + _32b_SIZE_)   
+#define BLOCK_CMDQ_HI_PTR       (BLOCK_CMDQ_IL_PTR  + _PTR_SIZE_)   
+#define BLOCK_CMDQ_LO_PTR       (BLOCK_CMDQ_HI_PTR  + _PTR_SIZE_)   
+#define BLOCK_CMDQ_WR_IDXS      (BLOCK_CMDQ_LO_PTR  + _PTR_SIZE_)   
+#define BLOCK_CMDQ_RD_IDXS      (BLOCK_CMDQ_WR_IDXS + _32b_SIZE_)   
                                                                 
 ///// CMDQ Meta Node 
 //
 // Array of pointers to cmd buffer nodes
-#define CMDQ_BUF_ARRAY          (NODE_START)
+#define CMDQ_BUF_ARRAY          (NODE_BEGIN)
 
 
 ///// CMD Buffer Meta Node
 //
 // Elements of size _CMD_SIZE
-#define CMDB_CMD_ARRAY          (NODE_START)
+#define CMDB_CMD_ARRAY          (NODE_BEGIN)
 
 
 ///// Alternative Destinations Meta Node
 //
 // Host only, array of pointers to nodes
-#define ALTDST_ARRAY            (NODE_START)
+#define ALTDST_ARRAY            (NODE_BEGIN)
 
 ///// Sync Meta Node
 //
 // Host only, Element format: Src Ptr 32b, Dst Ptr 32b, Time Offset 64b
-#define SYNC_ARRAY              (NODE_START)
+#define SYNC_ARRAY              (NODE_BEGIN)
 
 //////////////////////////////////////////////////////////////////////
 //// Generic Event Attributes ////////////////////////////////////////
-#define EVT_OFFS_TIME           (NODE_START)                     
+#define EVT_BEGIN        (NODE_BEGIN) 
+#define EVT_OFFS_TIME           (EVT_BEGIN)                     
 #define EVT_HDR_END             (EVT_OFFS_TIME + _TS_SIZE_)       
 
 //// Timing Msg
 //
-#define TMSG_ID                 (EVT_HDR_END)                        
+#define TMSG_BEGIN        (EVT_HDR_END)
+#define TMSG_ID                 (TMSG_BEGIN)                        
 #define TMSG_PAR                (TMSG_ID      + _64b_SIZE_)          
 #define TMSG_TEF                (TMSG_PAR     + _64b_SIZE_)          
 #define TMSG_RES                (TMSG_TEF     + _32b_SIZE_)          
@@ -157,19 +162,34 @@
    
 //////////////////////////////////////////////////////////////////////
 //// Generic Command Attributes //////////////////////////////////////
-#define CMD_TARGET              (EVT_HDR_END )                      
-#define CMD_ACT                 (CMD_TARGET + _PTR_SIZE_)           
-#define CMD_HDR_END             (CMD_ACT    + _32b_SIZE_)           
+#define CMD_BEGIN               (EVT_HDR_END)
+#define CMD_TARGET              (CMD_BEGIN) 
+#define CMD_VALID_TIME          (CMD_TARGET      + _PTR_SIZE_)                          
+#define CMD_ACT                 (CMD_VALID_TIME    + _TS_SIZE_)           
+#define CMD_HDR_END             (CMD_ACT        + _32b_SIZE_)           
                                                              
 
 //// Cmd Flow ////////////////////////////////////////////////////////
 //
+
 #define CMD_FLOW_DEST           (CMD_HDR_END)                       
                                                               
 //// Cmd Flush - Specific Attributes /////////////////////////////////
 //
-#define CMD_FLUSHRNG_HILO       (CMD_HDR_END)                       
-#define CMD_FLUSHRNG_IL         (CMD_FLUSHRNG_HILO + _32b_SIZE_)    
+#define CMD_FLUSHRNG_IL         (CMD_HDR_END)                       
+
+#define CMD_FLUSHRNG_IL_FRM     (CMD_FLUSHRNG_IL)
+#define CMD_FLUSHRNG_IL_TO      (CMD_FLUSHRNG_IL_FRM  + _8b_SIZE_)
+
+#define CMD_FLUSHRNG_HILO       (CMD_FLUSHRNG_IL      + _32b_SIZE_)
+
+#define CMD_FLUSHRNG_HI_FRM     (CMD_FLUSHRNG_HILO    + _8b_SIZE_)
+#define CMD_FLUSHRNG_HI_TO      (CMD_FLUSHRNG_HI_FRM  + _8b_SIZE_)
+#define CMD_FLUSHRNG_LO_FRM     (CMD_FLUSHRNG_HI_TO   + _8b_SIZE_)
+#define CMD_FLUSHRNG_LO_TO      (CMD_FLUSHRNG_LO_FRM  + _8b_SIZE_)
+
+
+
                                                              
 //// Cmd Nop - Specific Attributes ///////////////////////////////////
 //
@@ -181,6 +201,21 @@
                                                               
 //////////////////////////////////////////////////////////////////////
 
+// Address Vector Order
+//
+// Destination
+#define DEST_ADR_DEF            0  
+#define DEST_ADR_ALT_START      1 // only if multiple destinations    
+//
+// Custom - Block
+#define CUST_ADR_BLOCK_Q_IL     0 // only if multiple destinations
+#define CUST_ADR_BLOCK_Q_HI     1 // only if multiple destinations
+#define CUST_ADR_BLOCK_Q_LO     2 // only if multiple destinations
+#define CUST_ADR_BLOCK_ALT_LST  3 // only if multiple destinations
+//
+// Custom - Command
+#define CUST_ADR_CMD_TARGET     0
+#define CUST_ADR_CMD_FLOW_DEST  1 // only if command is Flow change
 
 
 
@@ -212,12 +247,17 @@
 #define ACT_FLUSH_PRIO_MSK      0x7
 #define ACT_FLUSH_PRIO_POS      (ACT_BITS_SPECIFIC_POS + 0)
 #define ACT_FLUSH_PRIO_SMSK     ACT_FLUSH_PRIO_MSK << ACT_FLUSH_PRIO_POS
+
+#define PRIO_IL 2
+#define PRIO_HI 1
+#define PRIO_LO 0
+
 //Command Flush Mode
 #define ACT_FLUSH_MODE_MSK      0x7
 #define ACT_FLUSH_MODE_POS      (ACT_BITS_SPECIFIC_POS + 3)
 #define ACT_FLUSH_MODE_SMSK     ACT_FLUSH_MODE_MSK << ACT_FLUSH_MODE_POS
 
-//Command Wait Time absolute/relative (period)
+//Command Wait Time absolute/relative (tPeriod)
 #define ACT_WAIT_ABS_MSK        0x1
 #define ACT_WAIT_ABS_POS        (ACT_BITS_SPECIFIC_POS + 0)
 #define ACT_WAIT_ABS_SMSK       ACT_WAIT_ABS_MSK << ACT_WAIT_ABS_POS
@@ -242,8 +282,8 @@
 #define NODE_TYPE_CFLUSH        0x22  // sends a flush command to designated block
 #define NODE_TYPE_CWAIT         0x23  // sends a wait command to designated block 
 //Shared Meta Type Enums
-#define NODE_TYPE_BLOCK         0x40  // shows time block period and if necessary links to Q Meta and altdest nodes
-#define NODE_TYPE_Q             0x41  // a command queue meta node (array of pointers to buffer nodes)
+#define NODE_TYPE_BLOCK         0x40  // shows time block tPeriod and if necessary links to Q Meta and altdest nodes
+#define NODE_TYPE_QUEUE         0x41  // a command queue meta node (array of pointers to buffer nodes)
 #define NODE_TYPE_QBUF          0x42  // a buffer for a command queue
 #define NODE_TYPE_SHARE         0x43  // share a value via MSI to multiple memory destinations
 //Host only Meta Type Enums
@@ -296,9 +336,9 @@
 #define NFLG_TMSG_DYN_TEF_SMSK  NFLG_TMSG_DYN_TEF_MSK << NFLG_TMSG_DYN_TEF_POS
 
 //interprete RES low word as 32b ptr
-#define NFLG_TMSG_DYN_TEF_MSK   0x1
-#define NFLG_TMSG_DYN_TEF_POS   (NFLG_BITS_SPECIFIC_POS + 3)
-#define NFLG_TMSG_DYN_TEF_SMSK  NFLG_TMSG_DYN_RES_MSK << NFLG_TMSG_DYN_RES_POS
+#define NFLG_TMSG_DYN_RES_MSK   0x1
+#define NFLG_TMSG_DYN_RES_POS   (NFLG_BITS_SPECIFIC_POS + 3)
+#define NFLG_TMSG_DYN_RES_SMSK  NFLG_TMSG_DYN_RES_MSK << NFLG_TMSG_DYN_RES_POS
 
 #endif
 

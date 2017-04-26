@@ -1,7 +1,7 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#include <stdlpB.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/container/vector.hpp>
@@ -22,15 +22,7 @@
   (byte & 0x02 ? '1' : '0'), \
   (byte & 0x01 ? '1' : '0') 
 
-#define A_DEFAULT   0
-#define A_ALT       1
-#define A_TARGET    0
-#define A_QUEUE     0
-#define A_CHLIST    1
-#define A_QBUF_IL   0
-#define A_QBUF_HI   1
-#define A_QBUF_LO   2
-#define A_LM32_NULL_PTR 0
+
 
 class Node;
 
@@ -60,7 +52,8 @@ public:
 
   typedef struct {
     std::string name;
-    std::string type;
+    uint32_t hash;
+    node_ptr np;
     //list all posspBle attrpButes to put node objects later
     //dirty business. this will have to go in the future. overload graphviz_read subfunctions
     //make this a class and have a node factory controlled by type field
@@ -75,9 +68,9 @@ public:
 
     uint64_t tValid, tUpdateStart;
     uint16_t qty;
-    uint8_t  upToHi, upToLo, fromHi, fromLo;
+    uint8_t  toHi, toLo, fromHi, fromLo;
     uint8_t  flushIl, flushHi, flushLo;
-    node_ptr np;
+
   } myVertex;
 
 

@@ -8,6 +8,8 @@
 
 class Meta : public Node {
 
+protected:
+  virtual void serialise(vAdr &dest, vAdr &custom);
 
 public:
   Meta(std::string& name, uint32_t& hash, uint32_t flags) : Node(name, hash, flags) {}
@@ -15,44 +17,51 @@ public:
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
-  virtual void serialise(itAdr dest, itAdr custom)      const = 0;
-  
+/*
+  const std::string&  getName() const {return Node::getName();}
+  const uint32_t&     getHash() const {return this->hash;}
+  const uint32_t&     getFlags() const {return this->flags;}
+  const bool isPainted() const {return Node::isPainted();}
+  */
 
 };
 
 
-// timeblock, adds its own tPeriod to threads current block time. roughly eq. to beam process end. (e.g., evt-...-evt-Block ) 
-class TimeBlock : public Meta {
-  uint64_t  period;
+// Block, adds its own tPeriod to threads current block time. roughly eq. to beam process end. (e.g., evt-...-evt-Block ) 
+class Block : public Meta {
+  uint64_t  tPeriod;
+  uint8_t rdIdxIl, rdIdxHi, rdIdxLo;
+  uint8_t wrIdxIl, wrIdxHi, wrIdxLo;
 
 public:
-  TimeBlock(std::string& name, uint32_t& hash, uint32_t flags, uint64_t period) : Node(name, hash, flags), period(period) {}
-  ~TimeBlock()  {};
+  Block(std::string& name, uint32_t& hash, uint32_t flags, uint64_t tPeriod) 
+  : Meta(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK << NFLG_TYPE_POS))), tPeriod(tPeriod) {}
+  ~Block()  {};
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
 
-  void show(void)       const {show(0, "");}
-  void show(uint32_t cnt, const char* sPrefix)  const {printf("*** Block %s, Period %llu\n", sPrefix, (unsigned long long)period);}
-  void serialise(itAdr dest, itAdr custom) const;
-
+  void show(void)       const;
+  void show(uint32_t cnt, const char* sPrefix)  const;
+  void serialise(vAdr &dest, vAdr &custom);
+  uint32_t getWrIdxs(void) const;
+  uint32_t getRdIdxs(void) const;
+  uint64_t getTPeriod() const {return this->tPeriod;}
 };
 
 
 //Command Queue - manages cmdq buffers and executes commands
 class CmdQueue : public Meta {
-  uint8_t rdIdxIl, rdIdxHi, rdIdxLo;
-  uint8_t wrIdxIl, wrIdxHi, wrIdxLo;
+
 
 public:
-  CmdQueue(std::string& name, uint32_t& hash, uint32_t flags) : Node(name, hash, flags) {}
-  CmdQueue(std::string& name, uint32_t& hash, uint32_t flags, ) : Node(name, hash, flags) {}
+  CmdQueue(std::string& name, uint32_t& hash, uint32_t flags) 
+  : Meta(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QUEUE << NFLG_TYPE_POS))) {}
   ~CmdQueue()  {};
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
 
-  void show(void)       const {show(0, "");}
-  void show(uint32_t cnt, const char* sPrefix)  const {printf("*** Block %s, Period %llu\n", sPrefix, (unsigned long long)period);}
-  void serialise(itAdr dest, itAdr custom) const;
- 
-
+  void show(void)       const;
+  void show(uint32_t cnt, const char* sPrefix) const;
+  void serialise(vAdr &dest, vAdr &custom);
+  
 };
 
 
@@ -60,18 +69,31 @@ public:
 class CmdQBuffer : public Meta {
 
 public:
-  CmdQBuffer(std::string& name, uint32_t& hash, uint32_t flags, uint64_t period) : Node(name, hash, flags), period(period) {}
+  CmdQBuffer(std::string& name, uint32_t& hash, uint32_t flags) 
+  : Meta(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QBUF << NFLG_TYPE_POS))) {}
   ~CmdQBuffer()  {};
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
 
-  void show(void)       const {show(0, "");}
-  void show(uint32_t cnt, const char* sPrefix)  const {printf("*** Block %s, Period %llu\n", sPrefix, (unsigned long long)period);}
-  void serialise(itAdr dest, itAdr custom) const;
- 
+  void show(void)       const;
+  void show(uint32_t cnt, const char* sPrefix)  const;
+  void serialise(vAdr &dest, vAdr &custom);
 
 };
 
+//Alternative Destinations List - used to recreate edges between nodes from lm32 binary
+class AltDestList : public Meta {
 
+public:
+  AltDestList(std::string& name, uint32_t& hash, uint32_t flags) 
+  : Meta(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_ALTDST << NFLG_TYPE_POS))) {}
+  ~AltDestList()  {};
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+
+  void show(void)       const;
+  void show(uint32_t cnt, const char* sPrefix)  const;
+  void serialise(vAdr &dest, vAdr &custom);
+
+};
 
 
 

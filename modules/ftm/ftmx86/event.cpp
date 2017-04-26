@@ -6,91 +6,96 @@
 
 
 
-void Event::serialiseB(itAdr dest) {
-  Node::serialiseB(dest);
-  uint64ToBytes((uint8_t*)&buf[EVT_OFFS_TIME],   this->tOffs);
+void Event::serialise(vAdr &dest, vAdr &custom) {
+  uint8_t* b = (uint8_t*)&(this->buf[0]);
+  Node::serialise(dest, custom);
+  uint64ToBytes(b + (ptrdiff_t)EVT_OFFS_TIME, this->tOffs);
 }
 
-void TimingMsg::serialise(itAdr dest, itAdr custom) {
-  Event::serialiseB(dest); 
-  uint16ToBytes((uint8_t*)&buf[EVT_TYPE, EVT_TYPE_TMSG);
-  uint64ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_TM_ID,  this->id);
-  uint64ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_TM_PAR, this->par);
-  uint32ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_TM_TEF, this->tef);
-}
-
-
-void Command::serialiseB(itAdr dest, itAdr custom) {
-   if (custom.size() < 1) //scream and shout, we didn't get told what our target queue is!
-
-  Event::serialiseB(dest); //call protected base serialiser
-  uint64ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_CM_TIME],  this->tValid);
-  uint32ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_CMD_RESERVED], 0); //pad
+void TimingMsg::serialise(vAdr &dest, vAdr &custom) {
+  uint8_t* b = (uint8_t*)&(this->buf[0]);
+  Event::serialise(dest, custom);
+     
+  uint64ToBytes(b + (ptrdiff_t)TMSG_ID,  this->id);
+  uint64ToBytes(b + (ptrdiff_t)TMSG_PAR, this->par);
+  uint32ToBytes(b + (ptrdiff_t)TMSG_TEF, this->tef);
+  uint32ToBytes(b + (ptrdiff_t)TMSG_RES, this->res);    
 }
 
 
-
-void Noop::serialise(itAdr dest, itAdr custom) {
-  Command::serialiseB(dest, custom);
-  uint16ToBytes((uint8_t*)&buf[EVT_TYPE], CMD_TYPE_NOOP);  
-  uint32ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_CM_ACT], (ACT_TYPE_NOP | ((this->qty << ACT_FNF_QTY_POS) & ACT_FNF_QTY_MSK)));
-}
-
-
-
-void Flow::serialise(itAdr dest, itAdr custom) {
-  Command::serialiseB(dest, custom);
-  uint16ToBytes((uint8_t*)&buf[EVT_TYPE], CMD_TYPE_FLOW);
-  //if (custom.size() < 2) //scream and shout, we didn't get told what to change the flow to!
-
-
-
-  uint32ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_CM_ACT], (ACT_TYPE_FLOW | ((idxNext << ACT_FLOW_NEXT_POS) & ACT_FLOW_NEXT_MSK) | ((this->qty << ACT_FNF_QTY_POS) & ACT_FNF_QTY_MSK)));
-}
-
-
-void Wait::serialise(itAdr dest, itAdr custom) {
-  Command::serialiseB(dest, custom);
-  uint16ToBytes((uint8_t*)&buf[EVT_TYPE], CMD_TYPE_WAIT);
-  uint32_t act =  (ACT_TYPE_FLUSH | (this->qIl << ACT_FLUSH_IL_POS) | (this->qHi << ACT_FLUSH_HI_POS) | (this->qLo << ACT_FLUSH_LO_POS) |
-                 ((this->upToHi & CMDQ_IDX_OF_MSK) << ACT_FLUSH_HI_RNG_POS) | ((this->upToLo & CMDQ_IDX_OF_MSK) << ACT_FLUSH_LO_RNG_POS) );
-  uint32ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_CM_ACT], act);
-  
-}
-
-void Flush::serialise(itAdr dest, itAdr custom) {
-  Command::serialiseB(dest, custom);
-  uint16ToBytes((uint8_t*)&buf[EVT_TYPE], CMD_TYPE_FLUSH);
-  uint32_t act =  (ACT_TYPE_FLUSH | (this->qIl << ACT_FLUSH_IL_POS) | (this->qHi << ACT_FLUSH_HI_POS) | (this->qLo << ACT_FLUSH_LO_POS) |
-                 ((this->upToHi & CMDQ_IDX_OF_MSK) << ACT_FLUSH_HI_RNG_POS) | ((this->upToLo & CMDQ_IDX_OF_MSK) << ACT_FLUSH_LO_RNG_POS) );
-  uint32ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_CM_ACT], act);
-  
-}
-
- void Flush::set(prio target, uint8_t upTo) {
-    switch(target) {
-      case(INTERLOCK) : this->qIl = true; break;
-      case(HIGH)      : this->qHi = true; this->upToHi = upTo; break;
-      case(LOW)       : this->qLo = true; this->upToLo = upTo; break;
-      default         : break;
-    } 
- }
-
- void Flush::clear(prio target) {
-  switch(target) {
-      case(INTERLOCK) : this->qIl = false; break;
-      case(HIGH)      : this->qHi = false; break;
-      case(LOW)       : this->qLo = false; break;
-      default         : break;
-    } 
+void Command::serialise(vAdr &dest, vAdr &custom) {
+  uint8_t* b = (uint8_t*)&(this->buf[0]);
+  if (custom.size() < 1) //scream and shout, we didn't get told what our target queue is!
+  {
+    Event::serialise(dest, custom);
+    uint32ToBytes(b + (ptrdiff_t)CMD_TARGET,  custom[CUST_ADR_CMD_TARGET]);
+    uint64ToBytes(b + (ptrdiff_t)CMD_VALID_TIME, this->tValid); 
   }
+}
 
 
-void TimingMsg::show(void) {
+
+void Noop::serialise(vAdr &dest, vAdr &custom) {
+  uint8_t* b = (uint8_t*)&(this->buf[0]);
+  Command::serialise(dest, custom);
+  uint32_t act = (ACT_TYPE_NOOP << ACT_TYPE_POS) | ((this->qty & ACT_QTY_MSK) << ACT_QTY_POS); 
+  uint32ToBytes(b + (ptrdiff_t)CMD_ACT, act);
+}
+
+
+
+void Flow::serialise(vAdr &dest, vAdr &custom) {
+  uint8_t* b = (uint8_t*)&(this->buf[0]);
+  Command::serialise(dest, custom);
+  //if (custom.size() < 2) //scream and shout, we didn't get told what to change the flow to!
+  uint32_t act = (ACT_TYPE_FLOW << ACT_TYPE_POS) | ((this->qty & ACT_QTY_MSK) << ACT_QTY_POS); 
+  uint32ToBytes(b + (ptrdiff_t)CMD_ACT, act);
+  uint32ToBytes(b + (ptrdiff_t)CMD_FLOW_DEST, custom[CUST_ADR_CMD_FLOW_DEST]); 
+}
+
+
+void Wait::serialise(vAdr &dest, vAdr &custom) {
+  uint8_t* b = (uint8_t*)&(this->buf[0]);
+  Command::serialise(dest, custom);
+  uint32_t act = (ACT_TYPE_WAIT << ACT_TYPE_POS) | ((this->qty & ACT_QTY_MSK) << ACT_QTY_POS); 
+  uint32ToBytes(b + (ptrdiff_t)CMD_ACT, act);
+  uint64ToBytes(b + (ptrdiff_t)CMD_WAIT_TIME, this->tWait);  
+
+}
+
+void Flush::serialise(vAdr &dest, vAdr &custom) {
+  uint8_t* b = (uint8_t*)&(this->buf[0]);
+  Command::serialise(dest, custom);
+  uint32_t act = (ACT_TYPE_FLUSH << ACT_TYPE_POS) | ((this->getPrio() & ACT_FLUSH_PRIO_MSK) << ACT_FLUSH_PRIO_POS) | ((this->getMode() & ACT_FLUSH_MODE_MSK) << ACT_FLUSH_MODE_POS); 
+  uint32ToBytes(b + (ptrdiff_t)CMD_ACT, act);
+  buf[CMD_FLUSHRNG_IL_FRM]  = this->frmIl;
+  buf[CMD_FLUSHRNG_IL_TO]   = this->toIl;
+  buf[CMD_FLUSHRNG_HI_FRM]  = this->frmHi;
+  buf[CMD_FLUSHRNG_HI_TO]   = this->toHi;
+  buf[CMD_FLUSHRNG_LO_FRM]  = this->frmLo;
+  buf[CMD_FLUSHRNG_LO_TO]   = this->toLo;
+  
+}
+
+const uint8_t  Flush::getPrio(void) const {
+  return ((this->act >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK);
+}
+
+const uint8_t  Flush::getMode(void) const {
+  return ((this->act >> ACT_FLUSH_MODE_POS) & ACT_FLUSH_MODE_MSK);
+}
+
+const uint16_t Flush::getRng(uint8_t q) const {
+  if (q ==  PRIO_IL) {return (uint16_t)((this->frmIl << 8) | this->toIl);}
+  if (q ==  PRIO_HI) {return (uint16_t)((this->frmHi << 8) | this->toHi);}
+  return (uint16_t)((this->frmLo << 8) | this->toLo);
+}
+
+void TimingMsg::show(void) const {
   TimingMsg::show(0, "");
 }
 
-void TimingMsg::show(uint32_t cnt, const char* prefix) {
+void TimingMsg::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
@@ -100,11 +105,11 @@ void TimingMsg::show(uint32_t cnt, const char* prefix) {
   (uint32_t)this->id, (uint32_t)(this->par >> 32), (uint32_t)this->par, this->tef);
 }
 
-void Command::show(void) {
+void Command::show(void) const {
   Command::show(0, "");
 }
 
-void Command::show(uint32_t cnt, const char* prefix) {
+void Command::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
@@ -117,43 +122,40 @@ void Flush::show(void) const {
   Flush::show(0, "");
 }
 
-void Flush::show(uint32_t cnt, const char* prefix) {
+void Flush::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
   Command::show( cnt, p);
   printf("%s Flush \n", p);
   if (this->qIl) printf("Interlock Q\n");
-  if (this->qHi) printf("High Prio. Q up to idx %u\n", this->upToHi);
-  if (this->qLo) printf("Low Prio. Q up to idx  %u\n", this->upToLo);
+  if (this->qHi) printf("High Prio. Q up to idx %u\n", this->toHi);
+  if (this->qLo) printf("Low Prio. Q up to idx  %u\n", this->toLo);
 }
 
-void Flow::show(void) {
+void Flow::show(void) const {
   Flow::show(0, "");
 }
 
-void Flow::show(uint32_t cnt, const char* prefix) {
+void Flow::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
-  uint16_t idxNext = NO_SUCCESSOR;
-  //if (this->blNext != NULL) idxNext = blNext->getIdx();
+  
   Command::show( cnt, p);
-  //printf("%s%u x Flow Change to", p, this->qty);
-  //if (idxNext == NO_SUCCESSOR)  printf(" END\n");
-  //else                          printf(" Block %u\n", idxNext);
+  
 }
 
 
 
-void Noop::show(void) {
+void Noop::show(void) const {
   Noop::show(0, "");
 }
 
 
 
 
-void Noop::show(uint32_t cnt, const char* prefix) {
+void Noop::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;

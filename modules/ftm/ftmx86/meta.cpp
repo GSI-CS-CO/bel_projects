@@ -1,99 +1,108 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "Meta.h"
+#include "meta.h"
 #include "ftm_common.h"
 
 
-void TimeBlock::serialise(itAdr dest, itAdr custom) {
+void Meta::serialise(vAdr &dest, vAdr &custom) {
+  Node::serialise(dest, custom);
+}
 
-  uint16ToBytes((uint8_t*)&buf[EVT_TYPE, EVT_TYPE_TMSG);
-  uint64ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_TM_ID,  this->id);
-  uint64ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_TM_PAR, this->par);
-  uint32ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_TM_TEF, this->tef);
+void Block::serialise(vAdr &dest, vAdr &custom) {
+  uint8_t* b = (uint8_t*)&(this->buf[0]);
+  Meta::serialise(dest, custom);
+  
+  uint64ToBytes(b + (ptrdiff_t)BLOCK_PERIOD,  this->tPeriod);
+  if ((dest.size() > 1) && (custom.size() == 4)) {
+    uint32ToBytes(b + (ptrdiff_t)BLOCK_ALT_DEST_PTR,  custom[CUST_ADR_BLOCK_ALT_LST]);  
+    uint32ToBytes(b + (ptrdiff_t)BLOCK_CMDQ_IL_PTR,   custom[CUST_ADR_BLOCK_Q_IL]); 
+    uint32ToBytes(b + (ptrdiff_t)BLOCK_CMDQ_HI_PTR,   custom[CUST_ADR_BLOCK_Q_HI]); 
+    uint32ToBytes(b + (ptrdiff_t)BLOCK_CMDQ_LO_PTR,   custom[CUST_ADR_BLOCK_Q_LO]);   
+    uint32ToBytes(b + (ptrdiff_t)BLOCK_CMDQ_WR_IDXS,  this->getWrIdxs());
+    uint32ToBytes(b + (ptrdiff_t)BLOCK_CMDQ_RD_IDXS,  this->getRdIdxs());
+  } else {
+    // do a check and warn if inconsistent parameters are detected
+    uint32ToBytes(b + (ptrdiff_t)BLOCK_ALT_DEST_PTR,  LM32_NULL_PTR);  
+    uint32ToBytes(b + (ptrdiff_t)BLOCK_CMDQ_IL_PTR,   LM32_NULL_PTR); 
+    uint32ToBytes(b + (ptrdiff_t)BLOCK_CMDQ_HI_PTR,   LM32_NULL_PTR); 
+    uint32ToBytes(b + (ptrdiff_t)BLOCK_CMDQ_LO_PTR,   LM32_NULL_PTR);   
+  }
 }
 
 
-void CmdQueue::serialise(itAdr dest, itAdr custom) {
-   if (custom.size() < 1) //scream and shout, we didn't get told what our target queue is!
+void CmdQueue::serialise(vAdr &dest, vAdr &custom) {
+  uint8_t* b = (uint8_t*)&(this->buf[0]);
+  if (custom.size() < 1) {// we need at least one cmd buffer
 
-  Meta::serialiseB(dest); //call protected base serialiser
-  uint64ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_CM_TIME],  this->tValid);
-  uint32ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_CMD_RESERVED], 0); //pad
+    Meta::serialise(dest, custom);
+    for(itAdr it = custom.begin(); it < custom.end(); it++) {
+      uint32ToBytes(b + (ptrdiff_t)CMDQ_BUF_ARRAY + (it - custom.begin()),  *it); 
+    }
+  }
 }
 
 
 
-void CmdQBuffer::serialise(itAdr dest, itAdr custom) {
-  uint16ToBytes((uint8_t*)&buf[EVT_TYPE], CMD_TYPE_NOOP);  
-  uint32ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_CM_ACT], (ACT_TYPE_NOP | ((this->qty << ACT_FNF_QTY_POS) & ACT_FNF_QTY_MSK)));
+void CmdQBuffer::serialise(vAdr &dest, vAdr &custom) {
+  uint8_t* b = (uint8_t*)&(this->buf[0]);
+  Meta::serialise(dest, custom);
 }
 
-void AltDestList::serialise(itAdr dest, itAdr custom) {
-  uint16ToBytes((uint8_t*)&buf[EVT_TYPE], CMD_TYPE_NOOP);  
-  uint32ToBytes((uint8_t*)&buf[_EVT_HDR_SIZE + EVT_CM_ACT], (ACT_TYPE_NOP | ((this->qty << ACT_FNF_QTY_POS) & ACT_FNF_QTY_MSK)));
+void AltDestList::serialise(vAdr &dest, vAdr &custom) {
+  uint8_t* b = (uint8_t*)&(this->buf[0]);
+  Meta::serialise(dest, custom);
 }
 
 
-void TimeBlock::show(void) {
-  TimeBlock::show(0, "");
+void Block::show(void) const {
+  Block::show(0, "");
 }
 
-void TimeBlock::show(uint32_t cnt, const char* prefix) {
+void Block::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
   printf("%s***------- %3u -------\n", p, cnt);
-  printf("%s*** TimeBlock @ %llu, ", p, (long long unsigned int)this->tOffs);
-  printf("%sID 0x%08x%08x, Par 0x%08x%08x, Tef 0x%08x\n", p, (uint32_t)(this->id >> 32),
-  (uint32_t)this->id, (uint32_t)(this->par >> 32), (uint32_t)this->par, this->tef);
+  printf("%s*** Block @ %llu, ", p, (long long unsigned int)this->tPeriod);
 }
 
-v
+uint32_t Block::getWrIdxs(void) const {
+  return (uint32_t)((this->wrIdxIl << 16) | (this->wrIdxHi << 8) | (this->wrIdxLo << 0));
+};
+
+uint32_t Block::getRdIdxs(void) const {
+  return (uint32_t)((this->rdIdxIl << 16) | (this->rdIdxHi << 8) | (this->rdIdxLo << 0));
+};
 
 void CmdQueue::show(void) const {
-  Flush::show(0, "");
+  CmdQueue::show(0, "");
 }
 
-void CmdQueue::show(uint32_t cnt, const char* prefix) {
+void CmdQueue::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
-  Command::show( cnt, p);
-  printf("%s Flush \n", p);
-  if (this->qIl) printf("Interlock Q\n");
-  if (this->qHi) printf("High Prio. Q up to idx %u\n", this->upToHi);
-  if (this->qLo) printf("Low Prio. Q up to idx  %u\n", this->upToLo);
 }
 
-void CmdQBuffer::show(void) {
-  Flow::show(0, "");
+void CmdQBuffer::show(void) const {
+  CmdQBuffer::show(0, "");
 }
 
-void CmdQBuffer::show(uint32_t cnt, const char* prefix) {
+void CmdQBuffer::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
-  uint16_t idxNext = NO_SUCCESSOR;
-  //if (this->blNext != NULL) idxNext = blNext->getIdx();
-  Command::show( cnt, p);
-  //printf("%s%u x Flow Change to", p, this->qty);
-  //if (idxNext == NO_SUCCESSOR)  printf(" END\n");
-  //else                          printf(" Block %u\n", idxNext);
+
 }
 
-void AltDestList::show(void) {
-  Flow::show(0, "");
+void AltDestList::show(void) const {
+  AltDestList::show(0, "");
 }
 
-void AltDestList::show(uint32_t cnt, const char* prefix) {
+void AltDestList::show(uint32_t cnt, const char* prefix) const {
   char* p;
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
-  uint16_t idxNext = NO_SUCCESSOR;
-  //if (this->blNext != NULL) idxNext = blNext->getIdx();
-  Command::show( cnt, p);
-  //printf("%s%u x Flow Change to", p, this->qty);
-  //if (idxNext == NO_SUCCESSOR)  printf(" END\n");
-  //else                          printf(" Block %u\n", idxNext);
+
 }
 
