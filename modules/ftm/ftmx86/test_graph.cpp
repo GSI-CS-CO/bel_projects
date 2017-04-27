@@ -1,6 +1,7 @@
 #include <boost/shared_ptr.hpp>
 #include <stdio.h>
 #include <iostream>
+#include <string>
 #include <inttypes.h>
 #include "common.h"
 #include <boost/graph/graphviz.hpp>
@@ -10,11 +11,44 @@
 #include "meta.h"
 #include "event.h"
 #include "visitor.h"
+#include "memunit.h"
 
 
 
 
+static void hexDump (const char *desc, void *addr, int len) {
+    int i;
+    unsigned char buff[17];
+    unsigned char *pc = (unsigned char*)addr;
 
+    // Output description if given.
+    if (desc != NULL)
+       printf ("\n%s:\n", desc);
+
+    // Process every byte in the data.
+    for (i = 0; i < len; i++) {
+        // Multiple of 16 means new line (with line offset).
+
+        if ((i % 16) == 0) {
+            // Just don't print ASCII for the zeroth line.
+            if (i != 0)
+               printf ("  %s\n", buff);
+
+            // Output the offset.
+           printf ("  %04x ", i);
+        }
+
+        // Now the hex code for the specific character.
+       printf (" %02x", pc[i]);
+
+        // And store a printable ASCII character for later.
+        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
+            buff[i % 16] = '.';
+        else
+            buff[i % 16] = pc[i];
+        buff[(i % 16) + 1] = '\0';
+    }
+}
 
 
 
@@ -154,8 +188,44 @@ int main() {
   boost::add_edge(E, Ea, (myEdge){SYNC, 100}, g);
 
 */
-  vertex_t root = boost::add_vertex((myVertex) {"Abe"}, g);
-  g[root].hash = FnvHash::fnvHash(g[root].name.c_str());
+  MemUnit mmu = MemUnit(1, 0x1000, 8192, g);
+  mmu.allocate("Matze");
+  mmu.allocate("Hund");
+  mmu.allocate("Katze");
+  mmu.allocate("Maus");
+
+  //vertex_t vCur, vPrev; = boost::add_vertex((myVertex) {myName, }, g);
+
+  vertex_t tmpCur, tmpPrev;
+  bool firstRun = true;
+
+  std::string myName = "Matze";
+  uint32_t myHash = 1324;
+
+  uint8_t testme[_MEM_BLOCK_SIZE];
+
+  for (auto& x : mmu.allocMap) {
+    std::cout << x.first << ": @ 0x" << std::hex << x.second.adr << " # 0x" << x.second.hash << '\n';
+    if(firstRun) {
+      tmpPrev = boost::add_vertex((myVertex) {x.first, x.second.hash}, g);
+      g[tmpPrev].np = (node_ptr) new TimingMsg(x.first, x.second.hash, x.second.b, 0x0, 1234ULL, 0x1deadbeefULL, 0x2cafebabeULL, 0xf, 0xe);
+    }  
+    else         {
+      tmpCur  = boost::add_vertex((myVertex) {x.first, x.second.hash}, g);
+      g[tmpCur].np = (node_ptr) new TimingMsg(x.first, x.second.hash, x.second.b, 0x0, 1234ULL, 0x1deadbeefULL, 0x2cafebabeULL, 0xf, 0xe);
+      boost::add_edge(tmpPrev, tmpCur, (myEdge) {"testedge"}, g);
+      tmpPrev = tmpCur;  
+    }  
+    firstRun = false;
+  }
+
+
+
+
+
+/*
+  vertex_t root = boost::add_vertex((myVertex) {"Abe", }, g);
+  g[root].hash = FnvHash::fnvHash(x.first.c_str());
   g[root].np = (node_ptr) new Block(g[root].name, g[root].hash, 0x0, 5000);
 
   vertex_t tmp = boost::add_vertex((myVertex) {"Bob"}, g);
@@ -194,7 +264,7 @@ int main() {
 
 
   boost::default_writer dw; 
-  boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)), dw, sample_graph_writer{g[root].name}, boost::get(&myVertex::name, g));
+  boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)), dw, sample_graph_writer{"Matze"}, boost::get(&myVertex::name, g));
   //boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)), );
   
 
@@ -207,11 +277,14 @@ int main() {
 
 
   //g[root].np->accept(VisitorCreateMemBlock(root, g, myVBuf)); 
-  /*
+  vAdr myAdr = vAdr(1);
+  myAdr[0] = 0x12345678;
+
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
-    g[v].np->accept(VisitorCreateMemBlock(v, g, myVBuf));
+    g[v].np->serialise(myAdr, myAdr);
+    hexDump(g[v].name.c_str(), mmu.allocMap.at(g[v].name).b, _MEM_BLOCK_SIZE);
   } 
-  */
+  
   return 0;	
 }
 

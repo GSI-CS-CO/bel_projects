@@ -9,14 +9,15 @@
 class Meta : public Node {
 
 protected:
-  virtual void serialise(vAdr &dest, vAdr &custom);
+  
 
 public:
-  Meta(std::string& name, uint32_t& hash, uint32_t flags) : Node(name, hash, flags) {}
+  Meta(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Node(name, hash, b, flags) {}
   ~Meta()  {};
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
+  virtual void serialise(vAdr &dest, vAdr &custom);
 /*
   const std::string&  getName() const {return Node::getName();}
   const uint32_t&     getHash() const {return this->hash;}
@@ -34,8 +35,8 @@ class Block : public Meta {
   uint8_t wrIdxIl, wrIdxHi, wrIdxLo;
 
 public:
-  Block(std::string& name, uint32_t& hash, uint32_t flags, uint64_t tPeriod) 
-  : Meta(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK << NFLG_TYPE_POS))), tPeriod(tPeriod) {}
+  Block(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tPeriod) 
+  : Meta(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK << NFLG_TYPE_POS))), tPeriod(tPeriod) {}
   ~Block()  {};
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
 
@@ -53,8 +54,8 @@ class CmdQueue : public Meta {
 
 
 public:
-  CmdQueue(std::string& name, uint32_t& hash, uint32_t flags) 
-  : Meta(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QUEUE << NFLG_TYPE_POS))) {}
+  CmdQueue(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) 
+  : Meta(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QUEUE << NFLG_TYPE_POS))) {}
   ~CmdQueue()  {};
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
 
@@ -69,8 +70,8 @@ public:
 class CmdQBuffer : public Meta {
 
 public:
-  CmdQBuffer(std::string& name, uint32_t& hash, uint32_t flags) 
-  : Meta(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QBUF << NFLG_TYPE_POS))) {}
+  CmdQBuffer(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) 
+  : Meta(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QBUF << NFLG_TYPE_POS))) {}
   ~CmdQBuffer()  {};
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
 
@@ -84,8 +85,8 @@ public:
 class AltDestList : public Meta {
 
 public:
-  AltDestList(std::string& name, uint32_t& hash, uint32_t flags) 
-  : Meta(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_ALTDST << NFLG_TYPE_POS))) {}
+  AltDestList(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) 
+  : Meta(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_ALTDST << NFLG_TYPE_POS))) {}
   ~AltDestList()  {};
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
 

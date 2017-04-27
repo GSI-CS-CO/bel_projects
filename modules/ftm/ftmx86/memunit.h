@@ -7,12 +7,13 @@
 #include <set>
 #include <stdlib.h>
 #include "common.h"
+#include "ftm_common.h"
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX_IDX 32
 #define IDX_BMPS (MAX_IDX / 32)
 
-#define MEM_BLOCK_SIZE  32
+
 
 
 
@@ -23,17 +24,16 @@
   typedef struct  {
     uint32_t  adr;
     uint32_t  hash;
-    vBuf      buf;
+    uint8_t   b[_MEM_BLOCK_SIZE];
     bool      transfer;
   } chunkMeta;
 
-typedef std::map<std::string, chunkMeta> mMap;
-typedef std::map<std::string, chunkMeta> aMap;
-typedef std::map<uint32_t, std::string> hMap;
-typedef  std::set<uint32_t> aPool; // contains all available addresses in LM32 memory area
-typedef   hMap::iterator itHm;
-typedef   aMap::iterator itAm;
-typedef   mMap::iterator itMm;
+
+typedef std::map<std::string, chunkMeta>  aMap;
+typedef std::map<uint32_t,  std::string>  hMap;
+typedef std::set<uint32_t>                aPool; // contains all available addresses in LM32 memory area
+typedef hMap::iterator  itHm;
+typedef aMap::iterator  itAm;
 typedef aPool::iterator itAp;
 
 
@@ -58,13 +58,12 @@ class MemUnit {
   
   public:
   aMap allocMap;
-  mMap mgmtMap;
-  hMap  hashMap;
-  vBuf    mgmtBmp; 
+  hMap hashMap;
+  vBuf mgmtBmp; 
   MemUnit(uint8_t cpu, uint32_t baseAdr, uint32_t  poolSize, Graph& g) : cpu(cpu), baseAdr(baseAdr), 
-          poolSize(poolSize), bmpLen( poolSize / MEM_BLOCK_SIZE), 
-          startOffs((((bmpLen + 8 -1)/8 + MEM_BLOCK_SIZE -1) / MEM_BLOCK_SIZE) * MEM_BLOCK_SIZE),
-          endOffs((poolSize / MEM_BLOCK_SIZE) * MEM_BLOCK_SIZE),
+          poolSize(poolSize), bmpLen( poolSize / _MEM_BLOCK_SIZE), 
+          startOffs((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE),
+          endOffs((poolSize / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE),
           mgmtBmp(vBuf( (bmpLen + 8 -1)/8) ), g(g) { initMemPool();}
   ~MemUnit() { };
 

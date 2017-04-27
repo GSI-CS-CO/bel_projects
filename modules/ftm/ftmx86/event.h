@@ -19,11 +19,11 @@ class Event : public Node {
 
 protected:  
   uint64_t tOffs;
-  virtual void serialise(vAdr &dest, vAdr &custom);
+  
 
 
 public:
-  Event(std::string& name, uint32_t& hash, uint32_t flags, uint64_t tOffs) : Node(name, hash, flags), tOffs(tOffs) {}
+  Event(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs) : Node(name, hash, b, flags), tOffs(tOffs) {}
   virtual ~Event()  {};
 
   
@@ -31,6 +31,7 @@ public:
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
   const uint64_t getTOffs() const {return this->tOffs;}
+  virtual void serialise(vAdr &dest, vAdr &custom);
   
 };
 
@@ -42,8 +43,8 @@ class TimingMsg : public Event {
   uint32_t res;
 
 public:
-  TimingMsg(std::string& name, uint32_t& hash, uint32_t flags, uint64_t tOffs,  uint64_t id, uint64_t par, uint32_t tef, uint32_t res) 
-  : Event (name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_TMSG << NFLG_TYPE_POS)), tOffs), id(id), par(par), tef(tef), res(res) {}
+  TimingMsg(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs,  uint64_t id, uint64_t par, uint32_t tef, uint32_t res) 
+  : Event (name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_TMSG << NFLG_TYPE_POS)), tOffs), id(id), par(par), tef(tef), res(res) {}
   ~TimingMsg()  {};
 
 
@@ -64,8 +65,8 @@ protected:
   uint64_t tValid;
   uint32_t act;
 
-  virtual void serialise(vAdr &dest, vAdr &custom);
-  Command(std::string& name, uint32_t& hash, uint32_t flags, uint64_t tOffs, uint64_t tValid) : Event (name, hash, flags, tOffs), tValid(tValid) {}
+  
+  Command(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid) : Event (name, hash, b, flags, tOffs), tValid(tValid) {}
 
 public:
   
@@ -77,6 +78,7 @@ public:
   virtual void accept(const VisitorVertexWriter& v)    const = 0;
   const uint64_t getTValid() const {return this->tValid;}
   const uint32_t getAct() const {return this->act;}
+  virtual void serialise(vAdr &dest, vAdr &custom);
 };
 
 // Makes receiving Q do nothing when leaving block for N times
@@ -84,8 +86,8 @@ class Noop : public Command {
   uint16_t qty;
 
 public:
-  Noop(std::string& name, uint32_t& hash, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint16_t qty) 
-  : Command(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CNOOP << NFLG_TYPE_POS)), tOffs, tValid) , qty(qty) {}
+  Noop(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint16_t qty) 
+  : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CNOOP << NFLG_TYPE_POS)), tOffs, tValid) , qty(qty) {}
   ~Noop() {};
 
 
@@ -102,8 +104,8 @@ class Flow : public Command {
   uint16_t qty;
 
 public:
-  Flow(std::string& name, uint32_t& hash, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint16_t qty)
-      : Command(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLOW << NFLG_TYPE_POS)), tOffs, tValid) , qty(qty) {}
+  Flow(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint16_t qty)
+      : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLOW << NFLG_TYPE_POS)), tOffs, tValid) , qty(qty) {}
   ~Flow() {};
 
 
@@ -121,8 +123,8 @@ class Wait : public Command {
   uint64_t tWait;
 public:
   
-  Wait(std::string& name, uint32_t& hash, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint64_t tWait) 
-  : Command(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CWAIT << NFLG_TYPE_POS)), tOffs, tValid), tWait(tWait) {}
+  Wait(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint64_t tWait) 
+  : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CWAIT << NFLG_TYPE_POS)), tOffs, tValid), tWait(tWait) {}
   ~Wait() {};
 
 
@@ -144,10 +146,10 @@ class Flush : public Command {
 
 
 public:
-  Flush(std::string& name, uint32_t& hash, uint32_t flags, uint64_t tOffs, uint64_t tValid, bool qIl, bool qHi, bool qLo ) 
-        : Command(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid) , qIl(qIl), qHi(qHi), qLo(qLo), frmIl(0), toIl(0), frmHi(0), toHi(0), frmLo(0), toLo(0) {}
-  Flush(std::string& name, uint32_t& hash, uint32_t flags, uint64_t tOffs, uint64_t tValid, bool qIl, bool qHi, bool qLo, uint8_t frmIl, uint8_t toIl, uint8_t frmHi, uint8_t toHi, uint8_t frmLo, uint8_t toLo) 
-        : Command(name, hash, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(frmIl), toIl(toIl), frmHi(frmHi), toHi(toHi), frmLo(frmLo), toLo(toLo) {}
+  Flush(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, bool qIl, bool qHi, bool qLo ) 
+        : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid) , qIl(qIl), qHi(qHi), qLo(qLo), frmIl(0), toIl(0), frmHi(0), toHi(0), frmLo(0), toLo(0) {}
+  Flush(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, bool qIl, bool qHi, bool qLo, uint8_t frmIl, uint8_t toIl, uint8_t frmHi, uint8_t toHi, uint8_t frmLo, uint8_t toLo) 
+        : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(frmIl), toIl(toIl), frmHi(frmHi), toHi(toHi), frmLo(frmLo), toLo(toLo) {}
   ~Flush() {};
 
   void show(void)  const;

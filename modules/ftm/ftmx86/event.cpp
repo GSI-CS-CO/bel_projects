@@ -7,73 +7,66 @@
 
 
 void Event::serialise(vAdr &dest, vAdr &custom) {
-  uint8_t* b = (uint8_t*)&(this->buf[0]);
   Node::serialise(dest, custom);
-  uint64ToBytes(b + (ptrdiff_t)EVT_OFFS_TIME, this->tOffs);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)EVT_OFFS_TIME, this->tOffs);
 }
 
 void TimingMsg::serialise(vAdr &dest, vAdr &custom) {
-  uint8_t* b = (uint8_t*)&(this->buf[0]);
   Event::serialise(dest, custom);
      
-  uint64ToBytes(b + (ptrdiff_t)TMSG_ID,  this->id);
-  uint64ToBytes(b + (ptrdiff_t)TMSG_PAR, this->par);
-  uint32ToBytes(b + (ptrdiff_t)TMSG_TEF, this->tef);
-  uint32ToBytes(b + (ptrdiff_t)TMSG_RES, this->res);    
+  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_ID,  this->id);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_PAR, this->par);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_TEF, this->tef);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_RES, this->res);    
 }
 
 
 void Command::serialise(vAdr &dest, vAdr &custom) {
-  uint8_t* b = (uint8_t*)&(this->buf[0]);
   if (custom.size() < 1) //scream and shout, we didn't get told what our target queue is!
   {
     Event::serialise(dest, custom);
-    uint32ToBytes(b + (ptrdiff_t)CMD_TARGET,  custom[CUST_ADR_CMD_TARGET]);
-    uint64ToBytes(b + (ptrdiff_t)CMD_VALID_TIME, this->tValid); 
+    writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_TARGET,  custom[CUST_ADR_CMD_TARGET]);
+    writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_VALID_TIME, this->tValid); 
   }
 }
 
 
 
 void Noop::serialise(vAdr &dest, vAdr &custom) {
-  uint8_t* b = (uint8_t*)&(this->buf[0]);
   Command::serialise(dest, custom);
   uint32_t act = (ACT_TYPE_NOOP << ACT_TYPE_POS) | ((this->qty & ACT_QTY_MSK) << ACT_QTY_POS); 
-  uint32ToBytes(b + (ptrdiff_t)CMD_ACT, act);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT, act);
 }
 
 
 
 void Flow::serialise(vAdr &dest, vAdr &custom) {
-  uint8_t* b = (uint8_t*)&(this->buf[0]);
   Command::serialise(dest, custom);
   //if (custom.size() < 2) //scream and shout, we didn't get told what to change the flow to!
   uint32_t act = (ACT_TYPE_FLOW << ACT_TYPE_POS) | ((this->qty & ACT_QTY_MSK) << ACT_QTY_POS); 
-  uint32ToBytes(b + (ptrdiff_t)CMD_ACT, act);
-  uint32ToBytes(b + (ptrdiff_t)CMD_FLOW_DEST, custom[CUST_ADR_CMD_FLOW_DEST]); 
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT, act);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_FLOW_DEST, custom[CUST_ADR_CMD_FLOW_DEST]); 
 }
 
 
 void Wait::serialise(vAdr &dest, vAdr &custom) {
-  uint8_t* b = (uint8_t*)&(this->buf[0]);
   Command::serialise(dest, custom);
   uint32_t act = (ACT_TYPE_WAIT << ACT_TYPE_POS) | ((this->qty & ACT_QTY_MSK) << ACT_QTY_POS); 
-  uint32ToBytes(b + (ptrdiff_t)CMD_ACT, act);
-  uint64ToBytes(b + (ptrdiff_t)CMD_WAIT_TIME, this->tWait);  
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT, act);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_WAIT_TIME, this->tWait);  
 
 }
 
 void Flush::serialise(vAdr &dest, vAdr &custom) {
-  uint8_t* b = (uint8_t*)&(this->buf[0]);
   Command::serialise(dest, custom);
   uint32_t act = (ACT_TYPE_FLUSH << ACT_TYPE_POS) | ((this->getPrio() & ACT_FLUSH_PRIO_MSK) << ACT_FLUSH_PRIO_POS) | ((this->getMode() & ACT_FLUSH_MODE_MSK) << ACT_FLUSH_MODE_POS); 
-  uint32ToBytes(b + (ptrdiff_t)CMD_ACT, act);
-  buf[CMD_FLUSHRNG_IL_FRM]  = this->frmIl;
-  buf[CMD_FLUSHRNG_IL_TO]   = this->toIl;
-  buf[CMD_FLUSHRNG_HI_FRM]  = this->frmHi;
-  buf[CMD_FLUSHRNG_HI_TO]   = this->toHi;
-  buf[CMD_FLUSHRNG_LO_FRM]  = this->frmLo;
-  buf[CMD_FLUSHRNG_LO_TO]   = this->toLo;
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT, act);
+  b[CMD_FLUSHRNG_IL_FRM]  = this->frmIl;
+  b[CMD_FLUSHRNG_IL_TO]   = this->toIl;
+  b[CMD_FLUSHRNG_HI_FRM]  = this->frmHi;
+  b[CMD_FLUSHRNG_HI_TO]   = this->toHi;
+  b[CMD_FLUSHRNG_LO_FRM]  = this->frmLo;
+  b[CMD_FLUSHRNG_LO_TO]   = this->toLo;
   
 }
 

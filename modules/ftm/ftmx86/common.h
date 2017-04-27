@@ -9,6 +9,7 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/endian/conversion.hpp>
 
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
@@ -28,8 +29,9 @@ class Node;
 
 typedef boost::shared_ptr<Node> node_ptr;
 typedef boost::container::vector<node_ptr> npBuf;
+typedef boost::container::vector<uint8_t> vBuf;
 typedef boost::container::vector<uint32_t> vAdr;
-typedef boost::container::vector<uint32_t>::iterator itAdr;
+
 
 class FnvHash
 {
@@ -50,70 +52,54 @@ public:
  
 };
 
-  typedef struct {
-    std::string name;
-    uint32_t hash;
-    node_ptr np;
-    //list all posspBle attrpButes to put node objects later
-    //dirty business. this will have to go in the future. overload graphviz_read subfunctions
-    //make this a class and have a node factory controlled by type field
-    
+typedef struct {
+  std::string name;
+  uint32_t hash;
+  node_ptr np;
+  //list all posspBle attrpButes to put node objects later
+  //dirty business. this will have to go in the future. overload graphviz_read subfunctions
+  //make this a class and have a node factory controlled by type field
+  
 
 
-    uint64_t tStart, tPeriod;
-    uint16_t flags;
-    uint64_t tOffs;
-    uint64_t id, par;
-    uint32_t tef;
+  uint64_t tStart, tPeriod;
+  uint16_t flags;
+  uint64_t tOffs;
+  uint64_t id, par;
+  uint32_t tef;
 
-    uint64_t tValid, tUpdateStart;
-    uint16_t qty;
-    uint8_t  toHi, toLo, fromHi, fromLo;
-    uint8_t  flushIl, flushHi, flushLo;
+  uint64_t tValid, tUpdateStart;
+  uint16_t qty;
+  uint8_t  toHi, toLo, fromHi, fromLo;
+  uint8_t  flushIl, flushHi, flushLo;
 
-  } myVertex;
-
-
+} myVertex;
 
 
-  typedef struct {
-    std::string type;
-  } myEdge;
 
 
-  typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS, myVertex, myEdge > Graph;
-  typedef boost::graph_traits<Graph>::vertex_descriptor vertex_t;
+typedef struct {
+  std::string type;
+} myEdge;
+
+
+typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS, myVertex, myEdge > Graph;
+typedef boost::graph_traits<Graph>::vertex_descriptor vertex_t;
 typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
-
 
  
 
-
-inline void uint16ToBytes(uint8_t* pB, uint16_t val) {
-  pB[1]  = (uint8_t)val;
-  pB[0]  = (uint8_t)(val >> 8);
+template<typename T>
+inline void writeLeNumberToBeBytes(uint8_t* pB, T val) {
+  T x = val; //boost::endian::endian_reverse(val);
+  std::copy(static_cast<const uint8_t*>(static_cast<const void*>(&x)),
+            static_cast<const uint8_t*>(static_cast<const void*>(&x)) + sizeof x,
+            pB);
 }
 
-inline uint16_t bytesToUint16(uint8_t* pB) {
-  return (uint16_t)pB[0] | ((uint16_t)pB[1] << 8);
-}
-
-inline void uint32ToBytes(uint8_t* pB, uint32_t val) {
-  uint16ToBytes(pB +0, (uint16_t)(val >> 16));
-  uint16ToBytes(pB +2, (uint16_t)val);
-}
-
-inline uint32_t bytesToUint32(uint8_t* pB) {
-  return ((uint32_t)bytesToUint16(pB+0) << 16) | (uint32_t)bytesToUint16(pB +2);
-}
-
-inline void uint64ToBytes(uint8_t* pB, uint64_t val) {
-  uint32ToBytes(pB +0, (uint32_t)(val >> 32));
-  uint32ToBytes(pB +4, (uint32_t)val);
-}
-
-inline uint64_t bytesToUint64(uint8_t* pB) {
-  return ((uint64_t)bytesToUint32(pB +0) << 32) | (uint64_t)bytesToUint32(pB +4);
+template<typename T>
+inline T writeBeBytesToLeNumber(uint8_t* pB) {
+  return boost::endian::endian_reverse(*((T*)pB));
 }
 
 

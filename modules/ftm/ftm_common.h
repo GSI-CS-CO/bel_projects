@@ -22,7 +22,7 @@
 #define ALLLOW_UNALIGNED        0
 
 //Memory Block (Node) Size in Bytes
-#define _MEM_BLOCK_SIZE         64
+#define _MEM_BLOCK_SIZE         52
 
 #define LM32_NULL_PTR           0x0
 
