@@ -461,7 +461,7 @@ void ecaHandler()
 void main(void) {
   
   uint32_t i,j;
-  uint64_t k = 100000000ll;
+  uint64_t k = 100000ll;
   
   init();   // initialize 'boot' lm32
 
@@ -484,13 +484,19 @@ void main(void) {
     else break;
   }
 
+  pMILPiggy[MIL_REG_WR_RF_LEMO_CONF>>2] |= (1<<MIL_LEMO_OUT_EN1) | (1<<MIL_LEMO_OUT_EN2);
 
   i=0;
   while (1) {
 
 
     // do the things that have to be done
-    ecaHandler();
+    //ecaHandler();
+    pMILPiggy[MIL_REG_WR_RD_LEMO_DAT>>2] |= (1<<MIL_LEMO_DAT1) | (1<<MIL_LEMO_DAT2);
+    DELAY100us;
+    pMILPiggy[MIL_REG_WR_RD_LEMO_DAT>>2] &= ~((1<<MIL_LEMO_DAT1) | (1<<MIL_LEMO_DAT2));
+    DELAY100us;
+
 
     // increment and update iteration counter
     //i++;
