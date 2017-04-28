@@ -58,7 +58,9 @@
 #include "../../ip_cores/saftlib/drivers/eca_flags.h"
 
 /* local includes for wr_mil firmware*/
-#include "wr_mil_tai.h"
+#include "wr_mil_value64bit.h"
+#include "wr_mil_piggy.h"
+#include "wr_mil_eca_queue.h"
 
 #define  MY_ECA_TAG      0x4 //just define a tag for ECA actions we want to receive
 
@@ -70,7 +72,8 @@
 #include "example_smmap.h"
 
 /* stuff required for environment */
-extern uint32_t*       _startshared[];
+//extern uint32_t*       _startshared[];
+extern void* _startshared; // provided in linker script "ram.ld"
 unsigned int cpuId, cpuQty;
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED dummy = 0;
@@ -187,6 +190,42 @@ void findECAQ()
 
 } // findECAQ
 
+/*************************************************************
+* 
+* demonstrate how to poll actions ("events") from ECA
+* HERE: get WB address of relevant ECA queue
+*
+**************************************************************/
+uint32_t *new_findECAQ()
+{
+#define ECAQMAX           4         //  max number of ECA queues
+#define ECACHANNELFORLM32 2         //  this is a hack! suggest to implement proper sdb-records with info for queues
+
+  // stuff below needed to get WB address of ECA queue 
+  sdb_location ECAQ_base[ECAQMAX]; // base addresses of ECA queues
+  uint32_t ECAQidx = 0;            // max number of ECA queues in the SoC
+  uint32_t *tmp;                
+  uint32_t i;
+
+  uint32_t *pECAQ = 0x0; //initialize Wishbone address for LM32 ECA queue
+
+  // get Wishbone addresses of all ECA Queues
+  find_device_multi(ECAQ_base, &ECAQidx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
+
+  // walk through all ECA Queues and find the one for the LM32
+  for (i=0; i < ECAQidx; i++) {
+    tmp = (uint32_t *)(getSdbAdr(&ECAQ_base[i]));  
+    if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
+  }
+  
+  mprintf("\n");
+  if (!pECAQ) { mprintf("FATAL: can't find ECA queue for lm32, good bye! \n"); while(1) asm("nop"); }
+  mprintf("ECA queue found at: 0x%08x. Waiting for actions with flag 0x%08x ...\n", pECAQ, MY_ECA_TAG);
+  mprintf("\n");
+  return pECAQ;
+} // findECAQ
+
+
 void findEcaControl() // find WB address of ECA Control
 {
   pECACtrl  = find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
@@ -237,276 +276,77 @@ void delay_96plus32n_ns(uint32_t n)
 #define DELAY1000us delay_96plus32n_ns(31220)
 
 
-uint32_t delta1, delta2, delta3;
-
-uint64_t evtDeadl; // global for now...
-TAI_t   evtDeadl2; // a union of a 64bit value and 2 32bit values
-// send EVT_START_CYCLE ...
-//    ... wait for some us and ...
-// ... send EVT_END_CYCLE.
-int16_t writeEvtMilCycle(volatile uint32_t *base)
+void newECAHandler(volatile ECAQueueRegs *eca_queue, volatile MilPiggyRegs *mil_piggy)
 {
-    //int j;
-    //for (j = 0; j < (waitingtime); ++j) { asm("nop"); }
-  //if (trm_free(base) == OKAY) {
-//    base[MIL_WR_CMD] = 32;
-//  } else {
-//    return TRM_NOT_FREE;
-//  }
-    base[MIL_WR_CMD] = 55;
-
-    volatile int64_t now  ;
-    volatile int64_t then ;
-    volatile int64_t delta;
-    TAI_t ecaTime;
-    evtDeadl2.value += 30000;
-    //do {
-      //getECATAI(&ecaTime);
-    GET_ECA_TAI(ecaTime);
-    delta   = evtDeadl2.value - ecaTime.value; // delay in ns
-    delta >>= 4;                             // delay in tics (divide by 16)
-    if (delta > 0)  delay_96plus32n_ns(delta);
-
-    //} while(ecaTime.value < evtDeadl2.value);
-
-    base[MIL_WR_CMD] = 32;
-    delta1 = delta;
-
-    for (int i = 0; i < 10; ++i)
+  if (ECAQueue_getFlags(eca_queue) & (1<<ECA_VALID))
+  {
+    EvtId_t evtId = { 
+      .part.hi = eca_queue->event_id_hi_get,
+      .part.lo = eca_queue->event_id_lo_get
+    };
+    TAI_t evtDeadl = { 
+      .part.hi = eca_queue->deadline_hi_get,
+      .part.lo = eca_queue->deadline_lo_get
+    };
+    switch(eca_queue->tag_get)
     {
-      evtDeadl2.value += 30000;
-    //  do {
-        //getECATAI(&ecaTime);
-        GET_ECA_TAI(ecaTime);
-        delta   = evtDeadl2.value - ecaTime.value; // delay in ns
-        delta >>= 4;                             // delay in tics (divide by 16)
-        if (delta > 0) delay_96plus32n_ns(delta);
-  //    } while(ecaTime.value < evtDeadl2.value);
-      base[MIL_WR_CMD] = 0x22;
-    }
-
-    evtDeadl2.value += 30000;
-    do {
-      //getECATAI(&ecaTime);
-      GET_ECA_TAI(ecaTime);
-      //  delta   = evtDeadl2.value - ecaTime.value; // delay in ns
-      //  delta >>= 4;                             // delay in tics (divide by 16)
-      //  delay_96plus32n_ns(delta);
-    } while(ecaTime.value < evtDeadl2.value);
-
-    base[MIL_WR_CMD] = 55;
-    delta3 = delta;
-//  } else {
-//    return TRM_NOT_FREE;
-//  }
-
-  return OKAY;
-}
-
-
-/*************************************************************
-* 
-* demonstrate how to poll actions ("events") from ECA
-* HERE: poll ECA, get data of action and do something
-*
-* This example assumes that
-* - action for this lm32 are configured by using saft-ecpu-ctl
-*   from the host system
-* - a TAG with value 0x4 has been configure (see saft-ecpu-ctl -h
-*   for help
-*
-**************************************************************/
-void ecaHandler()
-{
-  uint32_t flag;                // flag for the next action
-  uint32_t evtIdHigh;           // high 32bit of eventID
-  uint32_t evtIdLow;            // low 32bit of eventID
-  uint32_t evtDeadlHigh;        // high 32bit of deadline
-  uint32_t evtDeadlLow;         // low 32bit of deadline
-  //uint64_t evtDeadl;
-  uint32_t actTag;              // tag of action
-  uint32_t evtNo;               // EVTNO as extracted from EventID field
-  uint32_t evtCode;             // event code for MIL
-  uint32_t virtAcc;             // virtual accelerator number for MIL
-  uint32_t ecaTimeHi, ecaTimeLo;// time from eca registers
-  TAI_t ecaTime, ecaTime_old; 
-
-  // read flag and check if there was an action 
-  flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
-  if (flag & (0x0001 << ECA_VALID)) { 
-    // read data 
-    evtIdHigh         = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
-    evtIdLow          = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
-    evtDeadl2.part.hi = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));
-    evtDeadl2.part.lo = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
-    actTag            = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
-
-    // get EventNo and SID from EventId
-    evtNo        = (evtIdHigh>>4)&0x00000fff;
-    evtCode      = evtNo         &0x000000ff;
-    virtAcc      = (evtIdLow>>24)&0x0000000f;
-    
-    //mprintf("pop from eca queue\n");
-    // pop action from channel
-    *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
-
-    // here: do s.th. according to action
-    switch (actTag) {
-    case MY_ECA_TAG:
-      //mprintf("EvtID: 0x%08x%08x; deadline: 0x%08x%08x; flag: 0x%08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
-
-      // evtDeadl   = evtDeadlHigh;
-      // evtDeadl <<= 32;
-      // evtDeadl  |= evtDeadlLow;
-      // evtDeadl2.part.hi = evtDeadlHi;
-      // evtDeadl2.part.lo = evtDeadlLow;
-
-      //mprintf("hi %08x lo %08x    my hi %08x lo %08x    my hi %08x lo %08x\n", evtDeadlHigh, evtDeadlLow, evtDeadl2.pos[0], evtDeadl2.pos[1], evtDeadl2.part.hi, evtDeadl2.part.lo );
-
-      //evtDeadl2.value += 10000; // add 10 us
-
-      //if ((evtNo&0x00000f00) == 0) // if evtNo in MIL-range [0..255]
-      {
-        //mprintf("timing event is for MIL event bus evnt_code=0x%08x virt.Acc=0x%08x\n", evtCode, virtAcc);
-        //int32_t attempts = 0;
-        //int32_t loops = 0;
-        //do {
-          //++loops;
-          //asm("nop");
-          //getECATAI(&ecaTime.part.hi, &ecaTime.part.lo, &attempts);
-
-          // {                                                                             
-          //   volatile uint32_t *pECATimeHi = (pECACtrl + (ECA_TIME_HI_GET >> 2));        
-          //   volatile uint32_t *pECATimeLo = (pECACtrl + (ECA_TIME_LO_GET >> 2));        
-          //   uint32_t timeHi2;                                                           
-          //   do {                                                                        
-          //     ++(attempts);                                                             
-          //     ecaTime.part.hi  = *pECATimeHi;                                                    
-          //     ecaTime.part.lo  = *pECATimeLo;                                                    
-          //     timeHi2          = *pECATimeHi;      // read high word again to check for overflow 
-          //   } while (ecaTime.part.hi != timeHi2); // repeat until high time is consistent        
-          // }                                                                             
-
-          //mprintf("eca time is (after %d attempts): 0x%08x%08x   dt=%d\n", attempts, ecaTimeHi, ecaTimeLo, dt);
-        //} while(ecaTime.value < evtDeadl2.value); // quit the loop at least 7us before the deadline
-        //int64_t t_remaining = evtDeadl-ecaTime; // remaining time
-        //for (int32_t q = t_remaining; q > 0; --q) asm("nop");
-        //mprintf("t_rem=%d\n",t_remaining);
-        //mprintf("deliver NOW\n");
-
-        //int64_t now   = ecaTime.value;
-        //int64_t then  = evtDeadl2.value;
-        //if (now >= then) break;
-        //int32_t delta = then-now;
-        //precise_delay(delta);
-    //TAI_t ecaTime;
-    pMILPiggy[MIL_WR_CMD] = 32;
-
-    //GET_ECA_TAI(evtDeadl2);
-
-    for (int i = 0; i < 50; ++i)
-    {
-      //evtDeadl2.value += 200000;
-      //GET_ECA_TAI(ecaTime);
-      //int32_t delta = evtDeadl2.value - ecaTime.value;
-      //delta >>= 4; // delay in tics (divide by 16)
-      //if (delta > 0)  
-      //  delay_96plus32n_ns(delta);
-      //DELAY100us;
-      delay_96plus32n_ns(3122-9);
-      pMILPiggy[MIL_WR_CMD] = 0x22;
-    }
-    DELAY50us;
-    pMILPiggy[MIL_WR_CMD] = 55;
-    DELAY1000us;
-
-
-        //writeEvtMilCycle(pMILPiggy);
-
-
-        //mprintf("deltas %d %d %d\n", delta1, delta2, delta3);
-        // getECATAI(&ecaTime.part.hi, &ecaTime.part.lo);
-        // delta1 = ecaTime.value - ecaTime_old.value;
-        // ecaTime_old = ecaTime;
-        // precise_delay(30000);
-        // getECATAI(&ecaTime.part.hi, &ecaTime.part.lo);
-        // ecaTime_old = ecaTime;
-        // getECATAI(&ecaTime.part.hi, &ecaTime.part.lo);
-        // delta1 = ecaTime.value - ecaTime_old.value;
-        // ecaTime_old = ecaTime;
-        // getECATAI(&ecaTime.part.hi, &ecaTime.part.lo);
-        // delta2 = ecaTime.value - ecaTime_old.value;
-        // ecaTime_old = ecaTime;
-        // getECATAI(&ecaTime.part.hi, &ecaTime.part.lo);
-        // delta3 = ecaTime.value - ecaTime_old.value;
-        // ecaTime_old = ecaTime;
-
-        mprintf("deltas %d %d %d\n", delta1, delta2, delta3);
-
-
-
-      }
-
+      case MY_ECA_TAG:
+        mil_piggy->wr_cmd = 32;
+        for (int i = 0; i < 50; ++i)
+        {
+          DELAY50us;
+          mil_piggy->wr_cmd = 0x22;
+        }
+        DELAY50us;
+        mil_piggy->wr_cmd = 55;
+        DELAY1000us;      
       break;
-    default:
-      mprintf("ecaHandler: unknown tag\n");
-    } // switch
-
-  } // if data is valid
-} // ecaHandler
-
-
+      default:
+        mprintf("ecaHandler: unknown tag\n");
+      break;
+    }
+    uint32_t actTag = ECAQueue_getActTag(eca_queue);
+  }
+}
 
 
 void main(void) {
   
   uint32_t i,j;
-  uint64_t k = 100000ll;
+  uint64_t k = 10000ll;
   
   init();   // initialize 'boot' lm32
-
 
   for (j = 0; j < (31000000); ++j) { asm("nop"); }     // wait 1 second
   mprintf("Hello World!\n");                           // print message to UART
 
 
   getWishboneTAI();  // get TAI via WB and print to UART
-  findECAQ();        // find ECA channel for LM32
-  findMILPiggy();
-  findEcaControl();
 
-  while(1) {
-    uint32_t flag = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
-    if (flag & (0x0001 << ECA_VALID)) {
-      //mprintf("pop\n");
-      *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
-    }
-    else break;
-  }
+  // MilPiggy setup
+  volatile MilPiggyRegs *mil_piggy = MilPiggy_init(find_device_adr(GSI, SCU_MIL));
+  MilPiggy_lemoOut1Enable(mil_piggy);
+  MilPiggy_lemoOut2Enable(mil_piggy);
+  mprintf("mil_piggy.pMILPiggy = 0x%08x\n", mil_piggy);
 
-  pMILPiggy[MIL_REG_WR_RF_LEMO_CONF>>2] |= (1<<MIL_LEMO_OUT_EN1) | (1<<MIL_LEMO_OUT_EN2);
+  // ECAQueue setup
+  ECAQueueRegs *eca_queue = ECAQueue_init(new_findECAQ());
+  uint32_t n_events = ECAQueue_clear(eca_queue);
+  mprintf("found %d events in eca queue\n", n_events);
 
   i=0;
   while (1) {
-
-
-    // do the things that have to be done
-    //ecaHandler();
-    pMILPiggy[MIL_REG_WR_RD_LEMO_DAT>>2] |= (1<<MIL_LEMO_DAT1) | (1<<MIL_LEMO_DAT2);
+    MilPiggy_lemoOut1High(mil_piggy);
+    MilPiggy_lemoOut2High(mil_piggy);
+    newECAHandler(eca_queue, mil_piggy);
+    MilPiggy_lemoOut1Low(mil_piggy);
+    MilPiggy_lemoOut2Low(mil_piggy);
     DELAY100us;
-    pMILPiggy[MIL_REG_WR_RD_LEMO_DAT>>2] &= ~((1<<MIL_LEMO_DAT1) | (1<<MIL_LEMO_DAT2));
-    DELAY100us;
-
-
-    // increment and update iteration counter
-    //i++;
-    //*pSharedCounter = i;
-
-    // wait for 100  microseconds 
+    // wait a bit before end all operations
     if (k) --k;
     else  {
       mprintf("program done!");
       while(1) asm("nop"); // do nothing forerver
     } 
-  } // while
-} /* main */
+  } 
+} 

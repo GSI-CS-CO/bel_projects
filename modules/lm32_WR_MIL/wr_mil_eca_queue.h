@@ -1,26 +1,38 @@
 #ifndef WR_MIL_ECA_QUEUE_H_
 #define WR_MIL_ECA_QUEUE_H_
 
-#include "wr_mil_tai.h"
+#include "wr_mil_value64bit.h"
 
 /* stucture and functions to read events from the eca queue */
 
 typedef struct 
 {
-  volatile uint32_t *pECAQ;
-  volatile uint32_t *pEvtIdHi;
-  volatile uint32_t *pEvtIdLo;
-  volatile uint32_t *pEvtDeadlHi;
-  volatile uint32_t *pEvtDeadlLo;
-  volatile uint32_t *pActTag;
-  volatile uint32_t *pQueuePopOwr;
-} ECAQueue_t;
+	uint32_t queue_id_get;
+	uint32_t pop_owr;
+	uint32_t flags_get;
+	uint32_t num_get;
+	uint32_t event_id_hi_get;
+	uint32_t event_id_lo_get;
+	uint32_t param_hi_get;
+	uint32_t param_lo_get;
+	uint32_t tag_get;
+	uint32_t tef_get;
+	uint32_t deadline_hi_get;
+	uint32_t deadline_lo_get;
+	uint32_t executed_hi_get;
+	uint32_t executed_lo_get;
+} ECAQueueRegs;
 
-void ECAQueue_init(ECAQueue_t *queue, uint32_t *device_addr);
-void ECAQueue_popAction(ECAQueue_t *queue);
-void ECAQueue_getDeadl(ECAQueue_t *queue, TAI_t *deadl);
-void ECAQueue_getMilEventData(ECAQueue_t *queue, uint32_t *evtNo, 
-                                                 uint32_t *evtCode, 
-                                                 uint32_t *virtAcc);
+
+volatile ECAQueueRegs *ECAQueue_init(uint32_t *device_addr);
+void ECAQueue_popAction(volatile ECAQueueRegs *queue);
+void ECAQueue_getDeadl(volatile ECAQueueRegs *queue, TAI_t *deadl);
+void ECAQueue_getEvtId(volatile ECAQueueRegs *queue, EvtId_t *evtId);
+uint32_t ECAQueue_getActTag(volatile ECAQueueRegs *queue);
+uint32_t ECAQueue_clear(volatile ECAQueueRegs *queue);
+uint32_t ECAQueue_getFlags(volatile ECAQueueRegs *queue);
+void ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtNo, 
+                                                            uint32_t *evtCode, 
+                                                            uint32_t *virtAcc);
 
 #endif

@@ -47,19 +47,74 @@
                                                             //    uint32_t *pFilter; 
                                                             //    pFilter[virtAcc * 256 + evtCode]
 
+/***********************************************************
+ * 
+ * defintion of LEMO config register
+ * 
+ * bits 0..7: see below
+ * bits 8..31: unused
+ *
+ ***********************************************************/
+#define   MIL_LEMO_OUT_EN1    0x0001    // '1' ==> LEMO 1 configured as output (MIL Piggy)
+#define   MIL_LEMO_OUT_EN2    0x0002    // '1' ==> LEMO 2 configured as output (MIL Piggy)
+#define   MIL_LEMO_OUT_EN3    0x0004    // '1' ==> LEMO 3 configured as output (SIO)
+#define   MIL_LEMO_OUT_EN4    0x0008    // '1' ==> LEMO 4 configured as output (SIO)
+#define   MIL_LEMO_EVENT_EN1  0x0010    // '1' ==> LEMO 1 can be controlled by event (MIL Piggy)
+#define   MIL_LEMO_EVENT_EN2  0x0020    // '1' ==> LEMO 2 can be controlled by event (MIL Piggy)
+#define   MIL_LEMO_EVENT_EN3  0x0040    // '1' ==> LEMO 3 can be controlled by event (unused?)
+#define   MIL_LEMO_EVENT_EN4  0x0080    // '1' ==> LEMO 4 can be controlled by event (unused?) 
+
+
+/***********************************************************
+ * 
+ * defintion of LEMO data register
+ * in case LEMO outputs are not controlled via events,
+ * this register can be used to control them
+ * 
+ * bits 0..3: see below
+ * bits 4..31: unused
+ *
+ ***********************************************************/
+#define   MIL_LEMO_DAT1    0x0001    // '1' ==> LEMO 1 is switched active HIGH (MIL Piggy & SIO)
+#define   MIL_LEMO_DAT2    0x0002    // '1' ==> LEMO 2 is switched active HIGH (MIL Piggy & SIO)
+#define   MIL_LEMO_DAT3    0x0004    // '1' ==> LEMO 3 is switched active HIGH (SIO)
+#define   MIL_LEMO_DAT4    0x0008    // '1' ==> LEMO 4 is switched active HIGH (SIO)
 
 
 
-
-void MilPiggy_init(MilPiggy_t *piggy, uint32_t *device_addr)
+/* function implementation */
+volatile MilPiggyRegs *MilPiggy_init(uint32_t *device_addr)
 {
-	piggy->pMilPiggy      = device_addr;
-	piggy->pReadWriteData = piggy->pMilPiggy + (MIL_REG_RD_WR_DATA >> 2);
-	piggy->pWriteCmd      = piggy->pMilPiggy + (MIL_REG_WR_CMD     >> 2);
+	return (volatile MilPiggyRegs*) device_addr;
 }
 
-/* write the lower 16 bit of cmd to Mil device bus */
-void MilPiggy_writeCmd(MilPiggy_t *piggy, uint32_t cmd)
+void MilPiggy_writeCmd(volatile MilPiggyRegs *piggy, uint32_t cmd)
 {
-	*piggy->pWriteCmd = cmd;
+	piggy->wr_cmd = cmd;
 }
+
+void MilPiggy_lemoOut1Enable(volatile MilPiggyRegs *piggy)
+{
+	piggy->wr_rf_lemo_conf |= MIL_LEMO_OUT_EN1;
+}
+void MilPiggy_lemoOut2Enable(volatile MilPiggyRegs *piggy)
+{
+	piggy->wr_rf_lemo_conf |= MIL_LEMO_OUT_EN2;
+}
+void MilPiggy_lemoOut1High(volatile MilPiggyRegs *piggy)
+{
+	piggy->wr_rd_lemo_dat |= MIL_LEMO_DAT1;
+}
+void MilPiggy_lemoOut2High(volatile MilPiggyRegs *piggy)
+{
+	piggy->wr_rd_lemo_dat |= MIL_LEMO_DAT2;
+}
+void MilPiggy_lemoOut1Low(volatile MilPiggyRegs *piggy)
+{
+	piggy->wr_rd_lemo_dat &= ~MIL_LEMO_DAT1;
+}
+void MilPiggy_lemoOut2Low(volatile MilPiggyRegs *piggy)
+{
+	piggy->wr_rd_lemo_dat &= ~MIL_LEMO_DAT2;
+}
+
