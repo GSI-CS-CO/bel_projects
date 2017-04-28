@@ -30,13 +30,13 @@ void Block::serialise(vAdr &dest, vAdr &custom) {
 
 
 void CmdQueue::serialise(vAdr &dest, vAdr &custom) {
-  if (custom.size() < 1) {// we need at least one cmd buffer
+  //if (custom.size() < 1) {// we need at least one cmd buffer
 
     Meta::serialise(dest, custom);
     for(auto it = custom.begin(); it < custom.end(); it++) {
       writeLeNumberToBeBytes(b + (ptrdiff_t)CMDQ_BUF_ARRAY + (it - custom.begin()),  *it); 
     }
-  }
+  //} 
 }
 
 
@@ -47,6 +47,12 @@ void CmdQBuffer::serialise(vAdr &dest, vAdr &custom) {
 
 void AltDestList::serialise(vAdr &dest, vAdr &custom) {
   Meta::serialise(dest, custom);
+  auto startIt = dest.begin() + DEST_ADR_ALT_START;
+
+  for(auto it = startIt; it < dest.end(); it++) {
+    writeLeNumberToBeBytes(b + (ptrdiff_t)ALTDST_ARRAY + (it - startIt),  *it); 
+  }
+
 }
 
 

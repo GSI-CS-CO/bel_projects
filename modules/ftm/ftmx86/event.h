@@ -8,9 +8,6 @@
 #include "visitor.h"
 
 
-
-
-#define NO_SUCCESSOR -1
 enum prio {NONE, LOW, HIGH, INTERLOCK};
 
 // An event to be sent over the timing network or bus. adds its own tOffs to threads current block time to obtain deadline

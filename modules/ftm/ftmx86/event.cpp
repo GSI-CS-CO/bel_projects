@@ -22,12 +22,12 @@ void TimingMsg::serialise(vAdr &dest, vAdr &custom) {
 
 
 void Command::serialise(vAdr &dest, vAdr &custom) {
-  if (custom.size() < 1) //scream and shout, we didn't get told what our target queue is!
-  {
+  //if (custom.size() < 1) //scream and shout, we didn't get told what our target queue is!
+  //{
     Event::serialise(dest, custom);
     writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_TARGET,  custom[CUST_ADR_CMD_TARGET]);
     writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_VALID_TIME, this->tValid); 
-  }
+  //}
 }
 
 

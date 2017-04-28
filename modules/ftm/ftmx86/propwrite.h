@@ -119,7 +119,7 @@ template <class Name>
     void operator()(std::ostream& out, const Vertex& v) const {
       char sep = ' ';      
       if (type[v] == BLOCK) {
-        out << "struct0 [label=\"<f0> " << name[v] << " | <f1> " << period[v] << "\"];";
+        out << "struct0 [label=\"<f0> " << name[v] << " | <f1> " << tPeriod[v] << "\"];";
       }
       else {     
         out <<  "[";
