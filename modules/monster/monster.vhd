@@ -1644,8 +1644,7 @@ begin
   end generate;
   
   gpio_out_selector : for i in 0 to f_sub1(c_eca_gpio) generate
-    --s_gpio_src_butis_t0(i) <= '0' when s_gpio_mux(i)='0' else clk_butis_t0_ts;
-    s_gpio_src_butis_t0(i) <= '0';
+    s_gpio_src_butis_t0(i) <= '0' when s_gpio_mux(i)='0' else clk_butis_t0_ts;
   end generate;
   
   gpio_pps_selector : for i in 0 to f_sub1(c_eca_gpio) generate
@@ -1655,14 +1654,9 @@ begin
   s_gpio_out <= s_gpio_src_eca or s_gpio_src_ioc or s_gpio_src_butis_t0 or s_gpio_src_wr_pps;
   gpio_o     <= s_gpio_out;
   
---  lvds_out_selector : for i in 0 to f_sub1(c_eca_lvds) generate
---    lvds_dat_fr_butis_t0(i) <= (others => clk_butis_t0_ts and s_lvds_mux(i)); -- !!! This is just a STUB and UNSAFE -> Clock domain crossing 1bit 20MHz <-> 8bit 125MHz
---  end generate;
-
   lvds_out_selector : for i in 0 to f_sub1(c_eca_lvds) generate
-    lvds_dat_fr_butis_t0(i) <= (others => '0'); -- !!! This is just a STUB and UNSAFE -> Clock domain crossing 1bit 20MHz <-> 8bit 125MHz
+    lvds_dat_fr_butis_t0(i) <= (others => clk_butis_t0_ts and s_lvds_mux(i)); -- !!! This is just a STUB and UNSAFE -> Clock domain crossing 1bit 20MHz <-> 8bit 125MHz
   end generate;
-
   
   lvds_pps_selector : for i in 0 to f_sub1(c_eca_lvds) generate
     lvds_dat_fr_wr_pps(i) <= (others => ext_pps and s_lvds_pps_mux(i));
