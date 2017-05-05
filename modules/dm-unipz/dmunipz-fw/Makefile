@@ -9,19 +9,15 @@ USRCPUCLK       = 125000
 VERSION         = 0.0.1
 
 PATHFW 	= .
-PATHPKG	= $(shell python2.7 ../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
+PATHPKG	= $(shell python2.7 ../../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
 PREFIX 	?= /usr/local
 CFLAGS 	= -I$(PATHFW) 
 
-
-include ../../syn/build.mk
-
+include ../../../syn/build.mk
 
 fwbin: $(TARGET).bin 
 
-
-
-$(TARGET).elf: $(PATHFW)/dm-unipz.c $(INCPATH)/ebm.c $(PATHFW)/../../top/gsi_scu/scu_mil.c
+$(TARGET).elf: $(PATHFW)/dm-unipz.c $(INCPATH)/ebm.c $(PATHFW)/../../../top/gsi_scu/scu_mil.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin

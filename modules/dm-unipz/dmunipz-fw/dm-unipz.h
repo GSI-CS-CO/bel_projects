@@ -4,7 +4,7 @@
 #define  DMUNIPZ_US_ASMNOP        31          // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout value ms; used by main loop 
-#define  DMUNIPZ_EVT_UNI_READY    1           // event number EVT_UNI_READY; check: number is bogus
+#define  DMUNIPZ_EVT_UNI_READY    0x1e        // event number EVT_UNI_READY; check: number is bogus
 
 // (error) status
 #define  DMUNIPZ_STATUS_UNKNOWN       0       // unknown status
@@ -14,8 +14,9 @@
 #define  DMUNIPZ_STATUS_OUTOFRANGE    4       // request to reserve TK failed
 #define  DMUNIPZ_STATUS_REQTKFAILED   5       // request to reserve TK failed
 #define  DMUNIPZ_STATUS_REQTKTIMEOUT  6       // request to reserve TK timed out
-#define  DMUNIPZ_STATUS_REQBEAMFAILED 7       // request to reserve TK timed out
-
+#define  DMUNIPZ_STATUS_REQBEAMFAILED 7       // request to request beam failed
+#define  DMUNIPZ_STATUS_RELTKFAILED   8       // release of TK request failed
+#define  DMUNIPZ_STATUS_RELBEAMFAILED 9       // release of beam request failed
 
 // commands from the outside
 #define  DMUNIPZ_CMD_NOCMD        0           // no command ...
