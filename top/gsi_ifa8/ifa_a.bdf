@@ -1401,8 +1401,8 @@ applicable agreement for further details.
 )
 (symbol
 	(rect 648 104 912 504)
-	(text "ifactl_c" (rect 5 0 39 10)(font "Arial" ))
-	(text "inst1" (rect 8 384 31 394)(font "Arial" ))
+	(text "ifactl" (rect 5 0 28 10)(font "Arial" ))
+	(text "inst3" (rect 8 384 31 394)(font "Arial" ))
 	(port
 		(pt 0 32)
 		(input)
@@ -2365,7 +2365,7 @@ applicable agreement for further details.
 	(section (rect 0 72 91 96)(text "SIZE" (rect 3 0 31 11)(font "Courier New" (color 0 0 255)(bold)))(text "C" (rect 41 2 51 17)(font "Courier New" (color 0 0 0)(font_size 10)(bold)))(border))
 	(section (rect 91 72 280 96)(text "NUMBER" (rect 5 0 46 11)(font "Courier New" (color 0 0 255)(bold)))(text "1.00" (rect 77 1 115 16)(font "Courier New" (color 0 0 0)(font_size 10)(bold)))(border))
 	(section (rect 280 72 368 96)(text "REV" (rect 4 1 26 12)(font "Courier New" (color 0 0 255)(bold)))(text "V4" (rect 43 1 63 16)(font "Courier New" (color 0 0 0)(font_size 10)(bold)))(border))
-	(section (rect 0 96 240 120)(text "DATE" (rect 2 0 30 11)(font "Courier New" (color 0 0 255)(bold)))(text "Fri Nov 11 17:14:13 2016" (rect 35 3 258 18)(font "Courier New" (color 0 0 0)(font_size 10)(bold)))(date)(border))
+	(section (rect 0 96 240 120)(text "DATE" (rect 2 0 30 11)(font "Courier New" (color 0 0 255)(bold)))(text "Fri May 12 11:41:39 2017" (rect 35 3 256 18)(font "Courier New" (color 0 0 0)(font_size 10)(bold)))(date)(border))
 	(section (rect 240 96 310 120)(text "SHEET" (rect 3 0 37 11)(font "Courier New" (color 0 0 255)(bold)))(text "1" (rect 55 4 65 19)(font "Courier New" (color 0 0 0)(font_size 10)(bold))))
 	(section (rect 310 96 368 120)(text "OF" (rect 10 0 24 11)(font "Courier New" (color 0 0 255)(bold)))(text "1" (rect 34 4 44 19)(font "Courier New" (color 0 0 0)(font_size 10)(bold))))
 	(drawing
