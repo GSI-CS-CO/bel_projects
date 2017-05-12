@@ -46,8 +46,8 @@ SUBDESIGN IO_6408_a
 	MIL_RCV_D[15..0], -- Interne Daten
 	SDI,			  -- Serial-Data-In (serielle Daten zum '6408' f�r zu sendende Daten) 
 	EE,				  -- Encoder Enable (Startet Sendesequence beim '6408')
-	/Send_En,		  -- Enable Signal zur Sender-Freigabe
-	/Rcv_En,		  -- Enable Signal zur Empf�nger-Freigabe
+	nSend_En,		  -- Enable Signal zur Sender-Freigabe
+	nRcv_En,		  -- Enable Signal zur Empf�nger-Freigabe
 	Rcv_Err			  -- Zeigt einen Fehler beim Datenempfang.(VW Test)
 	: OUTPUT
 	)
@@ -158,8 +158,8 @@ CMD_RCV		=	v_CMD_Word.q;	    -- CommandwordFunktionscode-Strobe f�r Piggy
 MIL_RCV_D[]	=	v_DI.q[];
 RCV_ERR		=	GND;              -- FIXME commented out fishy error code
 EE			=	v_EE.q;
-/Send_En	=	NOT (BZO != BOO); -- Ausgang f�r Sender_Enable = (BZO xor BOO)  
-/RCV_En		=	v_RCV_En2.q;
+nSend_En	=	NOT (BZO != BOO); -- Ausgang f�r Sender_Enable = (BZO xor BOO)  
+nRCV_En		=	v_RCV_En2.q;
 SDI			=	v_Data_out.shiftout;
 
 END;
