@@ -35,97 +35,97 @@ WR_Mil(EE)  ----------------------------++--------------------------------------
 
 %
 
-CONSTANT c_FC_wr_a		= 4;	-- Zählerstand: Funktionscode write Anfang 
-CONSTANT c_FC_wr_e		= 15;	-- Zählerstand: Funktionscode write Ende 
+CONSTANT c_FC_wr_a       = 4;     -- Zählerstand: Funktionscode write Anfang
+CONSTANT c_FC_wr_e       = 15;    -- Zählerstand: Funktionscode write Ende
 
-CONSTANT c_FC_rd_a		= 4;	-- Zählerstand: Funktionscode Anfang, read 
-CONSTANT c_EE			= 10;	-- Zählerstand: Encoder-Enable 
-CONSTANT c_FC_rd_e		= 75;	-- Zählerstand: Funktionscode Ende, read 
-CONSTANT c_Reg_clear	= 80;	-- Zählerstand: Register-Clear nach einem Read 
-CONSTANT c_cnt_max		= 127;	-- max. Zählerstand
+CONSTANT c_FC_rd_a       = 4;     -- Zählerstand: Funktionscode Anfang, read
+CONSTANT c_EE            = 10;    -- Zählerstand: Encoder-Enable
+CONSTANT c_FC_rd_e       = 75;    -- Zählerstand: Funktionscode Ende, read
+CONSTANT c_Reg_clear     = 80;    -- Zählerstand: Register-Clear nach einem Read
+CONSTANT c_cnt_max       = 127;   -- max. Zählerstand
 
----
-CONSTANT C_Broadcast_Adr	= H"FF";	-- Broadcast-Adresse für Funktionscodes oder Daten an 'alle'
-CONSTANT C_RD_Blockmode		= H"8F";	-- Funktionscodes für Datenlesen im Blockmode
+                                  -- -
+CONSTANT C_Broadcast_Adr = H"FF"; -- Broadcast-Adresse für Funktionscodes oder Daten an 'alle'
+CONSTANT C_RD_Blockmode  = H"8F"; -- Funktionscodes für Datenlesen im Blockmode
 
 
 SUBDESIGN IO_Dec_d
 
     (
-	CLK,				-- System-Clock
-	Ena_Every_100ns,	-- Count_Enable
-	SCLR,				-- Sychron Clear
---
-	CMD_RCV,			-- 1 = CMD-Synch. / 0 = Data-Synch. -+-> (Signale vom "MIL_En_Decoder" für zu empfangene Daten)
-	RCV_Rdy,			-- neue Cmd/Data bereit 			 |
-	MIL_RCV_D[15..0],	-- neue Cmd/Data					-+
---			
-	ADR[7..0],			-- Interface-Karten Adresse von der VG-Leiste
-	MB_GRP_CNT[3..0],	-- Anzahl der virt.-Interface-Karten Adresse
-	MB_Mode,			-- Interface-Karte im Modulbus-Mode
-	FB_Mode,			-- Interface-Karte im Fair-Bus-Mode
-	Broadcast_En,	    -- Broadcast Enable, sperrt den Sender im Broadcast-Mode
-	Send_Str,		    -- Startet das Senden von Daten
-	/Ex_Send_Ena,	    -- Enable für externe Sendersteuerung (Modulbus, IO-Bus, Blockmode oder Piggy)
-	/Ex_Send_Str	    -- Startet das Senden von Daten bei ext.Steuerung (Modulbus, IO-Bus, Blockmode oder Piggy)
-	
-	:Input;		
+	CLK,               -- System-Clock
+	Ena_Every_100ns,   -- Count_Enable
+	SCLR,              -- Sychron Clear
+	                   -- 
+	CMD_RCV,           -- 1 = CMD-Synch. / 0 = Data-Synch. -+-> (Signale vom "MIL_En_Decoder" für zu empfangene Daten)
+	RCV_Rdy,           -- neue Cmd/Data bereit                          |
+	MIL_RCV_D[15..0],  -- neue Cmd/Data                                        -+
+	                   -- 
+	ADR[7..0],         -- Interface-Karten Adresse von der VG-Leiste
+	MB_GRP_CNT[3..0],  -- Anzahl der virt.-Interface-Karten Adresse
+	MB_Mode,           -- Interface-Karte im Modulbus-Mode
+	FB_Mode,           -- Interface-Karte im Fair-Bus-Mode
+	Broadcast_En,      -- Broadcast Enable, sperrt den Sender im Broadcast-Mode
+	Send_Str,          -- Startet das Senden von Daten
+	/Ex_Send_Ena,      -- Enable für externe Sendersteuerung (Modulbus, IO-Bus, Blockmode oder Piggy)
+	/Ex_Send_Str       -- Startet das Senden von Daten bei ext.Steuerung (Modulbus, IO-Bus, Blockmode oder Piggy)
+        
+	:Input;
 
-	IFK_Sel,			-- Signal, Interface-Karte ist Selektiert
-	Fc_Str,				-- Funktionscode-Strobe
-	FC[7..0],			-- Funktionscode
-	SW_INT[15..0],		-- Interne Daten
+	IFK_Sel,           -- Signal, Interface-Karte ist Selektiert
+	Fc_Str,            -- Funktionscode-Strobe
+	FC[7..0],          -- Funktionscode
+	SW_INT[15..0],     -- Interne Daten
 
-	WR_MIL,				-- Starte Übertragung			------------> (Signal zum MIL_En_Decoder' für zu sendende Daten)
---
-	Bus_Fc_Str,		  	-- Funktionscode-Strobe für Bus-Betrieb
-	mb_Virt_Adr[3..0], 	-- virt. IFK-ADR., für ModBus-Betrieb
-	IFK_ADR_OK,			-- IFK-ADR. ok.
-	IFK_VIRT_ADR_OK,	-- Virt.-IFK-ADR. ok.
-	Ena_WR_MIL_int,		-- Enable des int. WR_Mil Signals
-	FC_RD,				-- FC_Read_FF
-	FC_WR,				-- FC_Write_FF
-	Reg_clear,			-- Register-Clear nach Read
-	FC_Count[6..0]		-- Zähler für Fc-Str
+	WR_MIL,            -- Starte Übertragung  --  > (Signal zum MIL_En_Decoder' für zu sendende Daten)
+	                   -- 
+	Bus_Fc_Str,        -- Funktionscode-Strobe für Bus-Betrieb
+	mb_Virt_Adr[3..0], -- virt. IFK-ADR., für ModBus-Betrieb
+	IFK_ADR_OK,        -- IFK-ADR. ok.
+	IFK_VIRT_ADR_OK,   -- Virt.-IFK-ADR. ok.
+	Ena_WR_MIL_int,    -- Enable des int. WR_Mil Signals
+	FC_RD,             -- FC_Read_FF
+	FC_WR,             -- FC_Write_FF
+	Reg_clear,         -- Register-Clear nach Read
+	FC_Count[6..0]     -- Zähler für Fc-Str
 
 	: OUTPUT
 	)
 
 VARIABLE
 	
-	v_IFK_Adr			: lpm_compare 	WITH (LPM_WIDTH=8 %, ONE_INPUT_IS_CONSTANT="YES" %); 
-	v_Broadcast_Adr		: lpm_compare 	WITH (LPM_WIDTH=8, ONE_INPUT_IS_CONSTANT="YES"); 
-	v_RD_Blockmode		: lpm_compare 	WITH (LPM_WIDTH=8, ONE_INPUT_IS_CONSTANT="YES"); 
-	v_Broadcast			: dffe;
-	v_IFK_Sel			: NODE;
-	v_Data_Str_Syn		: dff;
-	v_FC_Str_Syn		: dff;
-	v_WR_MIL			: Dff;
+	v_IFK_Adr          : lpm_compare   WITH (LPM_WIDTH=8 %, ONE_INPUT_IS_CONSTANT="YES" %);
+	v_Broadcast_Adr    : lpm_compare   WITH (LPM_WIDTH=8, ONE_INPUT_IS_CONSTANT="YES");
+	v_RD_Blockmode     : lpm_compare   WITH (LPM_WIDTH=8, ONE_INPUT_IS_CONSTANT="YES");
+	v_Broadcast        : dffe;
+	v_IFK_Sel          : NODE;
+	v_Data_Str_Syn     : dff;
+	v_FC_Str_Syn       : dff;
+	v_WR_MIL           : Dff;
 
-	v_FC 	 			: LPM_FF WITH (LPM_WIDTH=8);
-	v_DI 	 			: LPM_FF WITH (LPM_WIDTH=16);	
-	v_SW_INT 			: LPM_FF WITH (LPM_WIDTH=16);	
+	v_FC               : LPM_FF WITH (LPM_WIDTH=8);
+	v_DI               : LPM_FF WITH (LPM_WIDTH=16);
+	v_SW_INT           : LPM_FF WITH (LPM_WIDTH=16);
 
-	v_FC_cnt[6..0]		: DFFE;
---	v_fc_rd				: DFF;
---	v_fc_wr				: DFF;
-	v_fc_rd				: SRFF;
-	v_fc_wr				: SRFF;
-	v_fc_str 			: DFF;
-	v_Reg_clear			: DFF;
-	
-	v_wr_mil1			: DFF;
-	v_wr_mil2			: DFF;
-	v_Start_cnt			: SRFF;
+	v_FC_cnt[6..0]     : DFFE;
+	--      v_fc_rd    : DFF;
+	--      v_fc_wr    : DFF;
+	v_fc_rd            : SRFF;
+	v_fc_wr            : SRFF;
+	v_fc_str           : DFF;
+	v_Reg_clear        : DFF;
+        
+	v_wr_mil1          : DFF;
+	v_wr_mil2          : DFF;
+	v_Start_cnt        : SRFF;
 
-	v_virt_IFK_Adr		: lpm_compare 	WITH (LPM_WIDTH=8); 
-	v_bus_fc_str		: DFF;		    
-	v_mb_Virt_Adr		: LPM_FF WITH (LPM_WIDTH=4);	
+	v_virt_IFK_Adr     : lpm_compare   WITH (LPM_WIDTH=8);
+	v_bus_fc_str       : DFF;
+	v_mb_Virt_Adr      : LPM_FF WITH (LPM_WIDTH=4);
 
-	v_IFK_ADR_OK		: DFF;
-	v_Broadcast_ADR_OK	: DFF;
-	v_RD_Blockmode_OK	: DFF;
-	v_virt_IFK_ADR_OK	: DFF;
+	v_IFK_ADR_OK       : DFF;
+	v_Broadcast_ADR_OK : DFF;
+	v_RD_Blockmode_OK  : DFF;
+	v_virt_IFK_ADR_OK  : DFF;
 
 BEGIN
 
@@ -133,48 +133,43 @@ BEGIN
 --+-----------------------------------------------------------------
 --| ADR-Komperatoren, L-Byte des Commandwortes = Adr
 --+-----------------------------------------------------------------
-v_IFK_Adr.		(dataa[], datab[])	= 	(MIL_RCV_D[7..0], ADR[]); 				-- IFK-Adr			
-v_IFK_ADR_OK.		(D, CLK)		=	(v_IFK_Adr.aeb,		 	CLK);
---
-v_Broadcast_Adr.(dataa[], datab[])	= 	(MIL_RCV_D[7..0], C_Broadcast_Adr);		-- Broadcast-Adr
-v_Broadcast_ADR_OK.	(D, CLK)		=	(v_Broadcast_Adr.aeb,	CLK);
---
-v_RD_Blockmode.(dataa[], datab[])	= 	(FC[7..0], C_RD_Blockmode);				-- Datenlesen im Blockmode
-v_RD_Blockmode_OK.	(D, CLK)		=	(v_RD_Blockmode.aeb,	CLK);
+v_IFK_Adr.              (dataa[], datab[]) = (MIL_RCV_D[7..0], ADR[]);             -- IFK-Adr
+v_IFK_ADR_OK.           (D, CLK)           = (v_IFK_Adr.aeb, CLK);
+                                                                                   -- 
+v_Broadcast_Adr.(dataa[], datab[])         = (MIL_RCV_D[7..0], C_Broadcast_Adr);   -- Broadcast-Adr
+v_Broadcast_ADR_OK.     (D, CLK)           = (v_Broadcast_Adr.aeb, CLK);
+                                                                                   -- 
+v_RD_Blockmode.(dataa[], datab[])          = (FC[7..0], C_RD_Blockmode);           -- Datenlesen im Blockmode
+v_RD_Blockmode_OK.      (D, CLK)           = (v_RD_Blockmode.aeb, CLK);
 
 --#################################################################################################################
 --+-----------------------------------------------------------------
 --| Komperator virt.-IFK-Adr, L-Byte des Commandwortes = Adr
 --+-----------------------------------------------------------------
-v_virt_IFK_Adr.(dataa[7..0]) = (MIL_RCV_D[7..0]); 
-v_virt_IFK_Adr.(datab[7..4]) = (ADR[7..4]); 
+v_virt_IFK_Adr.(dataa[7..0])     = (MIL_RCV_D[7..0]);
+v_virt_IFK_Adr.(datab[7..4])     = (ADR[7..4]);
 
-v_virt_IFK_Adr_ok.	(D, CLK) = (v_virt_IFK_Adr.aeb,	CLK);
+v_virt_IFK_Adr_ok.      (D, CLK) = (v_virt_IFK_Adr.aeb, CLK);
 
 
 IF MB_GRP_CNT[] == H"F" THEN
-	 v_virt_IFK_Adr.(datab[3..0]) = (MIL_RCV_D[3..0]); -- 16 virt.-ADR 
-     v_mb_Virt_Adr.data[3..0]	  = (MIL_RCV_D[3..0]); -- Daten für virt. IFK-ADR-Register (0..F)
---	END IF;
-ELSIF MB_GRP_CNT[] == H"8" THEN
-	 v_virt_IFK_Adr.(datab[3])    = (ADR[3]); 			 --+-- 8 virt.-ADR
-	 v_virt_IFK_Adr.(datab[2..0]) = (MIL_RCV_D[2..0]); --+
-     v_mb_Virt_Adr.data[3..0]	  = (MIL_RCV_D[3..0] AND H"7" %(MB_GRP_CNT[3..0]-1)%); -- virt. IFK-ADR-(0..7)
---	END IF;
-ELSIF MB_GRP_CNT[] == H"4" THEN
-	 v_virt_IFK_Adr.(datab[3..2]) = (ADR[3..2]); 		 --+-- 4 virt.-ADR
-	 v_virt_IFK_Adr.(datab[1..0]) = (MIL_RCV_D[1..0]); --+ 
-     v_mb_Virt_Adr.data[3..0]	  = (MIL_RCV_D[3..0] AND H"3" %(MB_GRP_CNT[3..0]-1)%); -- virt. IFK-ADR-(0..3)
---	END IF;
-ELSIF MB_GRP_CNT[] == H"2" THEN
-	 v_virt_IFK_Adr.(datab[3..1]) = (ADR[3..1]); 	     --+-- 2 virt.-ADR
-	 v_virt_IFK_Adr.(datab[0])    = (MIL_RCV_D[0]);    --+
-     v_mb_Virt_Adr.data[3..0]	  = (MIL_RCV_D[3..0] AND H"1" %(MB_GRP_CNT[3..0]-1)%); -- virt. IFK-ADR-(0..1)
---	END IF;
-ELSE % MB_GRP_CNT[] == H"0" THEN %
-	 v_virt_IFK_Adr.(datab[3..0]) = (ADR[3..0]); 	     --+-- keine virt.-ADR 
-     v_mb_Virt_Adr.data[3..0]	  = 0;					 --+   
-	END IF;
+  v_virt_IFK_Adr.(datab[3..0]) = (MIL_RCV_D[3..0]);                                 -- 16 virt.-ADR
+  v_mb_Virt_Adr.data[3..0]     = (MIL_RCV_D[3..0]);                                 -- Daten für virt. IFK-ADR-Register (0..F)
+  ELSIF MB_GRP_CNT[] == H"8" THEN
+  v_virt_IFK_Adr.(datab[3])    = (ADR[3]);                                          -- + -- 8 virt.-ADR
+  v_virt_IFK_Adr.(datab[2..0]) = (MIL_RCV_D[2..0]);                                 -- +
+  v_mb_Virt_Adr.data[3..0]     = (MIL_RCV_D[3..0] AND H"7" %(MB_GRP_CNT[3..0]-1)%); -- virt. IFK-ADR-(0..7)
+  ELSIF MB_GRP_CNT[] == H"4" THEN
+  v_virt_IFK_Adr.(datab[3..2]) = (ADR[3..2]);                                       -- + -- 4 virt.-ADR
+  v_virt_IFK_Adr.(datab[1..0]) = (MIL_RCV_D[1..0]);                                 -- +
+  v_mb_Virt_Adr.data[3..0]     = (MIL_RCV_D[3..0] AND H"3" %(MB_GRP_CNT[3..0]-1)%); -- virt. IFK-ADR-(0..3)
+  ELSIF MB_GRP_CNT[] == H"2" THEN
+  v_virt_IFK_Adr.(datab[3..1]) = (ADR[3..1]);                                       -- + -- 2 virt.-ADR v_virt_IFK_Adr.(datab[0])          = (MIL_RCV_D[0]); -- +
+  v_mb_Virt_Adr.data[3..0]     = (MIL_RCV_D[3..0] AND H"1" %(MB_GRP_CNT[3..0]-1)%); -- virt. IFK-ADR-(0..1)
+  ELSE % MB_GRP_CNT[] == H"0" THEN %
+  v_virt_IFK_Adr.(datab[3..0]) = (ADR[3..0]);                                       -- + -- keine virt.-ADR
+  v_mb_Virt_Adr.data[3..0]     = 0;                                                 -- +
+END IF;
 
 
 --#################################################################################################################
@@ -184,7 +179,7 @@ ELSE % MB_GRP_CNT[] == H"0" THEN %
 --+-----------------------------------------------------------------
 v_mb_Virt_Adr.clock  = CLK;
 v_mb_Virt_Adr.enable = (v_fc_str_syn.q AND (v_virt_IFK_Adr_ok.q OR v_IFK_Adr_ok.q));
-v_mb_Virt_Adr.sclr	 = SCLR;
+v_mb_Virt_Adr.sclr   = SCLR;
 
 --#################################################################################################################
 
@@ -207,9 +202,7 @@ v_Data_Str_Syn.	(D, CLK, CLRN) = ((NOT CMD_Rcv AND RCV_Rdy), CLK, NOT SCLR);
 --| FKTC_Str für Normal- und Broadcastbetrieb    
 --+--------------------------------------------------------------------------
 
-v_FC_Str_Syn.(D, CLK, CLRN) = ( (  (   (v_Broadcast_Adr_ok.q AND Broadcast_EN)
-								 		OR  v_IFK_Adr_ok.q
-								 		OR  v_virt_IFK_Adr_ok.q)	AND CMD_Rcv AND RCV_Rdy ),	CLK, NOT SCLR);		
+v_FC_Str_Syn.(D, CLK, CLRN) = ((((v_Broadcast_Adr_ok.q AND Broadcast_EN) OR  v_IFK_Adr_ok.q OR  v_virt_IFK_Adr_ok.q) AND CMD_Rcv AND RCV_Rdy ), CLK, NOT SCLR);		
 ---
 
 -- v_ADR_OK =  ((v_Broadcast_Adr_ok.q AND Broadcast_EN) OR v_IFK_Adr_ok.q OR v_virt_IFK_Adr_ok.q);		
@@ -243,13 +236,13 @@ END IF;
 --| Funktionscode Stobes    
 --+--------------------------------------------------------------------------
 
-v_fc_wr.S			= ((v_FC_cnt[] == c_FC_wr_a)  AND  NOT fc7);
-v_fc_wr.R			= ((v_FC_cnt[] == c_FC_wr_e)  AND  NOT fc7);
-v_fc_wr.(CLK, CLRN)	= (CLK, NOT SCLR);
+v_fc_wr.S                       = ((v_FC_cnt[] == c_FC_wr_a)  AND  NOT fc7);
+v_fc_wr.R                       = ((v_FC_cnt[] == c_FC_wr_e)  AND  NOT fc7);
+v_fc_wr.(CLK, CLRN)             = (CLK, NOT SCLR);
 
-v_fc_rd.S			= ((v_FC_cnt[] == c_FC_rd_a)  AND   fc7);
-v_fc_rd.R			= ((v_FC_cnt[] == c_FC_rd_e)  AND   fc7);
-v_fc_rd.(CLK, CLRN)	= (CLK, NOT SCLR);
+v_fc_rd.S                       = ((v_FC_cnt[] == c_FC_rd_a)  AND   fc7);
+v_fc_rd.R                       = ((v_FC_cnt[] == c_FC_rd_e)  AND   fc7);
+v_fc_rd.(CLK, CLRN)             = (CLK, NOT SCLR);
 
 
 v_fc_str.D			= ( (v_fc_rd OR v_fc_wr) AND					-- FC-Strobe für read oder write
@@ -295,9 +288,9 @@ v_wr_mil. (D, CLK, CLRN) = ( (v_wr_mil1.q AND NOT v_wr_mil2.q),  CLK, NOT SCLR);
 --------------------------- Output-Daten-Register --------------------------------------
 
 
-v_FC	  	.(data[], clock, enable, sclr) = (MIL_RCV_D[15..8], clk, v_fc_str_syn.q,   SCLR);		
-v_DI	  	.(data[], clock, enable, sclr) = (MIL_RCV_D[],	    clk, v_data_str_syn.q, SCLR);
-v_SW_INT  	.(data[], clock, enable, sclr) = (v_DI.q[],		    clk, v_fc_str_syn.q,   SCLR);
+v_FC            .(data[] , clock , enable , sclr) = (MIL_RCV_D[15..8] , clk , v_fc_str_syn.q   , SCLR);
+v_DI            .(data[] , clock , enable , sclr) = (MIL_RCV_D[]      , clk , v_data_str_syn.q , SCLR);
+v_SW_INT        .(data[] , clock , enable , sclr) = (v_DI.q[]         , clk , v_fc_str_syn.q   , SCLR);
 
 
 
@@ -305,27 +298,27 @@ v_SW_INT  	.(data[], clock, enable, sclr) = (v_DI.q[],		    clk, v_fc_str_syn.q,
 --|                           Ausgaenge 
 --+##########################################################################
 
-IFK_Sel			=	v_IFK_Sel;
-	
-WR_MIL			=	v_WR_MIL.q;
-Ena_WR_MIL_int	=	(v_FC_cnt[] == c_ee);-- Testsignal: Enable des int. WR_Mil Signals
+IFK_Sel           = v_IFK_Sel;
+        
+WR_MIL            = v_WR_MIL.q;
+Ena_WR_MIL_int    = (v_FC_cnt[] == c_ee); -- Testsignal: Enable des int. WR_Mil Signals
 
 
-FC_STR       	= v_fc_str;
-FC[]			= v_FC		.q[];
+FC_STR            = v_fc_str;
+FC[]              = v_FC          .q[];
 
-SW_INT[]		= v_SW_INT	.q[];
+SW_INT[]          = v_SW_INT      .q[];
 
-Bus_Fc_Str			=	v_bus_fc_str;  
-mb_Virt_Adr[3..0]	=	v_mb_Virt_Adr.q[];  
+Bus_Fc_Str        = v_bus_fc_str;
+mb_Virt_Adr[3..0] = v_mb_Virt_Adr.q[];
 
-IFK_ADR_OK			=	v_IFK_Adr_ok.q;		-- IFK-ADR. ok.
-IFK_VIRT_ADR_OK		=	v_virt_IFK_Adr_ok.q;	-- Virt.-IFK-ADR. ok.
+IFK_ADR_OK        = v_IFK_Adr_ok.q;       -- IFK-ADR. ok.
+IFK_VIRT_ADR_OK   = v_virt_IFK_Adr_ok.q;  -- Virt.-IFK-ADR. ok.
 
-FC_RD				=	v_fc_rd.q;		-- FC_Read_FF
-FC_WR				=	v_fc_wr.q;		-- FC_Write_FF
-Reg_clear			=	v_Reg_clear;	-- Register-Clear nach Read
-FC_Count[]			=	v_Fc_Cnt[];		-- Zähler für Fc-Str
+FC_RD             = v_fc_rd.q;            -- FC_Read_FF
+FC_WR             = v_fc_wr.q;            -- FC_Write_FF
+Reg_clear         = v_Reg_clear;          -- Register-Clear nach Read
+FC_Count[]        = v_Fc_Cnt[];           -- Zähler für Fc-Str
 
 
 
