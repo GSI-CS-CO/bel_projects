@@ -54,7 +54,7 @@ const t_ftmChain Idle = { .tStart         = 0,
 
 
                           
-static uint8_t* uint32ToBytes(uint8_t* pBuf, uint32_t val)
+static uint8_t* writeLeNumberToBeBytes(uint8_t* pBuf, uint32_t val)
 {
    uint8_t i;
    for(i=0;i<FTM_WORD_SIZE;   i++) pBuf[i]  = val >> (8*i) & 0xff;
@@ -62,10 +62,10 @@ static uint8_t* uint32ToBytes(uint8_t* pBuf, uint32_t val)
    return pBuf+4;
 }
 
-static uint8_t* uint64ToBytes(uint8_t* pBuf, uint64_t val)
+static uint8_t* writeLeNumberToBeBytes(uint8_t* pBuf, uint64_t val)
 {
-  uint32ToBytes(pBuf+0, (uint32_t)(val>>32));
-  uint32ToBytes(pBuf+4, (uint32_t)val);
+  writeLeNumberToBeBytes(pBuf+0, (uint32_t)(val>>32));
+  writeLeNumberToBeBytes(pBuf+4, (uint32_t)val);
 
    return pBuf+8;
 }
@@ -121,11 +121,11 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint8_t cpuId)
    }
    
    // now write page meta
-   uint32ToBytes(&pBufStart[FTM_PAGE_QTY], pPage->planQty);
+   writeLeNumberToBeBytes(&pBufStart[FTM_PAGE_QTY], pPage->planQty);
    for(j=0;j<pPage->planQty;    j++)
-      uint32ToBytes(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE], pBufPlans[j]);
+      writeLeNumberToBeBytes(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE], pBufPlans[j]);
    for(j=pPage->planQty;j<FTM_PLAN_MAX;    j++)
-      uint32ToBytes(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE], FTM_NULL);
+      writeLeNumberToBeBytes(&pBufStart[FTM_PAGE_PLANPTRS + j*FTM_WORD_SIZE], FTM_NULL);
    
    if( pPage->idxBp == 0xdeadbeef)    pPage->pBp = ftm_shared_offs + FTM_IDLE_OFFSET;
    else pPage->pBp     = pBufPlans[pPage->idxBp];
@@ -135,8 +135,8 @@ uint8_t* serPage (t_ftmPage*  pPage, uint8_t* pBufStart, uint8_t cpuId)
    
    //printf("BP: %08x, Start: %08x\n", pPage->pBp, pPage->pStart);
    
-   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_BP],         pPage->pBp);
-   uint32ToBytes(&pBufStart[FTM_PAGE_PTR_START],      pPage->pStart);
+   writeLeNumberToBeBytes(&pBufStart[FTM_PAGE_PTR_BP],         pPage->pBp);
+   writeLeNumberToBeBytes(&pBufStart[FTM_PAGE_PTR_START],      pPage->pStart);
    
    return pBuf;   
 }
@@ -157,30 +157,30 @@ static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufS
    if (pChain->flags & FLAGS_IS_COND_MSI)          condSrc = 0x0;
    else if (pChain->flags & FLAGS_IS_COND_ADR)     condSrc = pChain->condSrc;
    
-   uint64ToBytes(&pBuf[FTM_CHAIN_TSTART],    pChain->tStart);
-   uint64ToBytes(&pBuf[FTM_CHAIN_TPERIOD],   pChain->tPeriod);
-   uint64ToBytes(&pBuf[FTM_CHAIN_TEXEC],     0);
-   uint32ToBytes(&pBuf[FTM_CHAIN_FLAGS],     pChain->flags);
-   uint32ToBytes(&pBuf[FTM_CHAIN_CONDSRC],   condSrc);
-   uint32ToBytes(&pBuf[FTM_CHAIN_CONDVAL],   pChain->condVal);
-   uint32ToBytes(&pBuf[FTM_CHAIN_CONDMSK],   pChain->condMsk);
-   uint32ToBytes(&pBuf[FTM_CHAIN_SIGDST],    sigDst);
-   uint32ToBytes(&pBuf[FTM_CHAIN_SIGVAL],    pChain->sigVal);
-   uint32ToBytes(&pBuf[FTM_CHAIN_REPQTY],    pChain->repQty);
-   uint32ToBytes(&pBuf[FTM_CHAIN_REPCNT],    0);
-   uint32ToBytes(&pBuf[FTM_CHAIN_MSGQTY],    pChain->msgQty);
-   uint32ToBytes(&pBuf[FTM_CHAIN_MSGIDX],    0);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_TSTART],    pChain->tStart);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_TPERIOD],   pChain->tPeriod);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_TEXEC],     0);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_FLAGS],     pChain->flags);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_CONDSRC],   condSrc);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_CONDVAL],   pChain->condVal);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_CONDMSK],   pChain->condMsk);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_SIGDST],    sigDst);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_SIGVAL],    pChain->sigVal);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_REPQTY],    pChain->repQty);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_REPCNT],    0);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_MSGQTY],    pChain->msgQty);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_MSGIDX],    0);
 
 
    pBufMsg  = FTM_CHAIN_END_ + ( (uint32_t)( (uintptr_t)pBuf - (uintptr_t)pBufStart ) );
-   uint32ToBytes(&pBuf[FTM_CHAIN_PMSG],    pBufMsg);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_PMSG],    pBufMsg);
    
    if(pChain->pNext != NULL) {
       if(((pChain->flags & FLAGS_IS_END) && (pChain->flags & FLAGS_IS_ENDLOOP)))   pBufNext = (uint32_t)pPlanStart;
       else                                                                         pBufNext = pBufMsg + pChain->msgQty * FTM_MSG_END_;
    } 
    else pBufNext = FTM_NULL;
-   uint32ToBytes(&pBuf[FTM_CHAIN_PNEXT],    pBufNext);
+   writeLeNumberToBeBytes(&pBuf[FTM_CHAIN_PNEXT],    pBufNext);
  
    pBuf += FTM_CHAIN_END_;
    for(msgIdx = 0; msgIdx < pChain->msgQty; msgIdx++) pBuf = serMsg(&pMsg[msgIdx], pBuf);   
@@ -191,13 +191,13 @@ static uint8_t* serChain(t_ftmChain* pChain, uint32_t pPlanStart, uint8_t* pBufS
 
 static uint8_t* serMsg(  t_ftmMsg* pMsg, uint8_t* pBuf)
 {
-   uint64ToBytes(&pBuf[FTM_MSG_ID],     pMsg->id);
-   uint64ToBytes(&pBuf[FTM_MSG_PAR],    pMsg->par);
+   writeLeNumberToBeBytes(&pBuf[FTM_MSG_ID],     pMsg->id);
+   writeLeNumberToBeBytes(&pBuf[FTM_MSG_PAR],    pMsg->par);
    
-   uint32ToBytes(&pBuf[FTM_MSG_TEF],    pMsg->tef); 
-   uint32ToBytes(&pBuf[FTM_MSG_RES],    pMsg->res); 
-   uint64ToBytes(&pBuf[FTM_MSG_TS],     0);
-   uint64ToBytes(&pBuf[FTM_MSG_OFFS],   pMsg->offs);
+   writeLeNumberToBeBytes(&pBuf[FTM_MSG_TEF],    pMsg->tef); 
+   writeLeNumberToBeBytes(&pBuf[FTM_MSG_RES],    pMsg->res); 
+   writeLeNumberToBeBytes(&pBuf[FTM_MSG_TS],     0);
+   writeLeNumberToBeBytes(&pBuf[FTM_MSG_OFFS],   pMsg->offs);
    return pBuf + FTM_MSG_END_;
 }
 

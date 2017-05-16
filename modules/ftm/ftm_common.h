@@ -138,7 +138,7 @@
 ///// Alternative Destinations Meta Node
 //
 // Host only, array of pointers to nodes
-#define ALTDST_ARRAY            (NODE_BEGIN)
+#define DST_ARRAY            (NODE_BEGIN)
 
 ///// Sync Meta Node
 //
@@ -204,18 +204,23 @@
 // Address Vector Order
 //
 // Destination
-#define DEST_ADR_DEF            0  
-#define DEST_ADR_ALT_START      1 // only if multiple destinations    
+#define ADR_DEF_DST            0  
+#define ADR_ALT_DST_ARRAY      1 // only if multiple destinations    
 //
-// Custom - Block
-#define CUST_ADR_BLOCK_Q_IL     0 // only if multiple destinations
-#define CUST_ADR_BLOCK_Q_HI     1 // only if multiple destinations
-#define CUST_ADR_BLOCK_Q_LO     2 // only if multiple destinations
-#define CUST_ADR_BLOCK_ALT_LST  3 // only if multiple destinations
+// Block
+#define ADR_BLOCK_DST_LST  1 // only if multiple destinations
+#define ADR_BLOCK_Q_IL     2 // only if multiple destinations
+#define ADR_BLOCK_Q_HI     3 // only if multiple destinations
+#define ADR_BLOCK_Q_LO     4 // only if multiple destinations
+
 //
-// Custom - Command
-#define CUST_ADR_CMD_TARGET     0
-#define CUST_ADR_CMD_FLOW_DEST  1 // only if command is Flow change
+// Command
+#define ADR_CMD_TARGET     1
+#define ADR_CMD_FLOW_DEST  2 // only if command is Flow change
+
+// Command Queue
+#define ADR_CMDQ_BUF_ARRAY 1
+
 
 
 

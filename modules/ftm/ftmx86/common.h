@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/container/vector.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -31,6 +32,13 @@ typedef boost::shared_ptr<Node> node_ptr;
 typedef boost::container::vector<node_ptr> npBuf;
 typedef boost::container::vector<uint8_t> vBuf;
 typedef boost::container::vector<uint32_t> vAdr;
+
+extern const std::string sQM[];
+extern const std::string sDL;
+extern const std::string sDD;
+extern const std::string sAD;
+extern const std::string sTG;
+extern const std::string sFD;
 
 
 class FnvHash
@@ -118,6 +126,7 @@ typedef struct {
 typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS, myVertex, myEdge > Graph;
 typedef boost::graph_traits<Graph>::vertex_descriptor vertex_t;
 typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
+typedef boost::container::vector<vertex_t> vVertices;
 
  
 

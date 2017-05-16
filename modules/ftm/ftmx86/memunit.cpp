@@ -58,6 +58,11 @@
     
   }
 /*
+  uint32_t MemUnit::getFreeSpace() { return 0;
+
+
+  }
+
   void MemUnit::downLoadChunks() {
     //get BMP
 
@@ -136,20 +141,18 @@ void MemUnit::prepareUpload() {
     return ret;
   }
 
-  bool MemUnit::insert(const std::string& name, uint32_t adr) {}
+  bool MemUnit::insert(const std::string& name, uint32_t adr) {return true;}
 
   bool MemUnit::deallocate(const std::string& name) {
     bool ret = true;
-    if ( (allocMap.count(name) > 0) && freeChunk(allocMap[name].adr) ) { allocMap.erase(name); 
+    if ( (allocMap.count(name) > 0) && freeChunk(allocMap.at(name).adr) ) { allocMap.erase(name); 
     } else {ret = false;}
     return ret;
   }
 
-  bool MemUnit::lookupName2Chunk(const std::string& name, chunkMeta*& chunk) {
-    bool ret = true;
-    if (allocMap.count(name) > 0) { chunk = (chunkMeta*)&(allocMap[name]); 
-    } else {ret = false;}
-    return ret;
+  chunkMeta* MemUnit::lookupName(const std::string& name) const  {
+    if (allocMap.count(name) > 0) { return (chunkMeta*)&(allocMap.at(name));} 
+    else {return NULL;}
   }
 
   //Hash functions
@@ -167,9 +170,19 @@ void MemUnit::prepareUpload() {
     return false;
   }
   
-  bool MemUnit::lookupHash2Name(const uint32_t hash, std::string& name)  {
-    if (hashMap.count(hash) > 0) {name = hashMap.at(hash); return true;}
-    return false;
+  chunkMeta* MemUnit::lookupHash(const uint32_t hash) const  {
+    //if (allocMap.count(name) > 0) { return (chunkMeta*)&(allocMap.at(name));} 
+    //else {return NULL;}
+    return NULL;
   }
 
+vAdr MemUnit::vertices2addresses(const vVertices &v) const {
+  vAdr ret = vAdr();
+  for(auto it = v.begin(); it < v.end(); it++) {
+    auto* x = MemUnit::lookupName(g[*it].name);
+    if (x == NULL) {std::cerr << "!!! Node " << g[*it].name << " was not found in allocation table !!!" << std::endl; ret.push_back(LM32_NULL_PTR);}
+    else {ret.push_back(x->adr);}
+  }
+  return ret;
+}
 

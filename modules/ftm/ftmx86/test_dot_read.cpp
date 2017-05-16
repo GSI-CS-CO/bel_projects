@@ -1,17 +1,19 @@
 #include <boost/shared_ptr.hpp>
-#include <boost/algorithm/string.hpp>  
+#include <algorithm>  
 #include <stdio.h>
 #include <iostream>
 #include <string>
 #include <inttypes.h>
 #include <boost/graph/graphviz.hpp>
 
+#include "visitor.h"
 #include "common.h"
 #include "propwrite.h"
 #include "node.h"
+#include "block.h"
 #include "meta.h"
 #include "event.h"
-#include "visitor.h"
+
 #include "memunit.h"
 
 static void hexDump (const char *desc, void *addr, int len) {
@@ -52,14 +54,19 @@ static void hexDump (const char *desc, void *addr, int len) {
 void all_evt_children(vertex_t v, Graph& g) {
   Graph::out_edge_iterator out_begin, out_end, out_cur;
   boost::tie(out_begin, out_end) = out_edges(v,g);
+  std::cout << "Out Edges: " << (vertex_t)(out_end - out_begin) << std::endl;
   for (out_cur = out_begin; out_cur != out_end; ++out_cur)
   {   
-      //std::cout << g[target(*out_cur,g)].name << " x " << (vertex_t)(out_cur - out_begin) << std::endl;
-      std::cout << "Edge Type " << g[*out_cur].type << std::endl;
-      
+    std::cout << "#" << (vertex_t)(out_cur - out_begin) << " -- " << g[*out_cur].type << " -> " << g[target(*out_cur,g)].name;
+    if (g[target(*out_cur,g)].np == NULL) std::cout << "(UNDEFINED)" << std::endl;
+    else {
+      if (g[target(*out_cur,g)].np->isMeta()) std::cout << "(meta)" << std::endl;
+      else std::cout << "(real)" << std::endl;
+    }
   }
   std::cout << std::endl;
-  }
+}
+
 
 
 int main() {
@@ -114,30 +121,38 @@ int main() {
 
   MemUnit mmu = MemUnit(1, 0x1000, 8192, g);
   
-
+  BOOST_FOREACH( edge_t e, edges(g) ) {
+    std::transform(g[e].type.begin(), g[e].type.end(), g[e].type.begin(), ::tolower);
+  }
 
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
+    
+    std::transform(g[v].type.begin(), g[v].type.end(), g[v].type.begin(), ::tolower);
     cmp = g[v].type;
-    boost::algorithm::to_lower(cmp);
 
     mmu.allocate(g[v].name);
-    auto& x = mmu.allocMap.at(g[v].name);
+
+    std::cout << "Test1" << std::endl;
+
+    auto* x = mmu.lookupName(g[v].name);
+    if(x == NULL) {std::cerr << "ERROR: Tried to lookup unallocated node " << g[v].name <<  std::endl; return -1;}
+
     std::cout << "Type " << g[v].type << std::endl;
-    std::cout << g[v].name << ": @ 0x" << std::hex << x.adr << " # 0x" << x.hash << '\n';
+    std::cout << g[v].name << ": @ 0x" << std::hex << x->adr << " # 0x" << x->hash << '\n';
 
 
-    if      (cmp == "tmsg")     {g[v].np = (node_ptr) new   TimingMsg(g[v].name, x.hash, x.b, g[v].flags, g[v].tOffs, g[v].id, g[v].par, g[v].tef, g[v].res); }
-    else if (cmp == "noop")     {g[v].np = (node_ptr) new        Noop(g[v].name, x.hash, x.b, g[v].flags, g[v].tOffs, g[v].tValid, g[v].qty); }
+    if      (cmp == "tmsg")     {g[v].np = (node_ptr) new   TimingMsg(g[v].name, x->hash, x->b, g[v].flags, g[v].tOffs, g[v].id, g[v].par, g[v].tef, g[v].res); }
+    else if (cmp == "noop")     {g[v].np = (node_ptr) new        Noop(g[v].name, x->hash, x->b, g[v].flags, g[v].tOffs, g[v].tValid, g[v].qty); }
     else if (cmp == "flow")     {std::cerr << "not yet implemented " << g[v].type << std::endl;}
     else if (cmp == "flush")    {std::cerr << "not yet implemented " << g[v].type << std::endl;}
     else if (cmp == "wait")     {std::cerr << "not yet implemented " << g[v].type << std::endl;}
-    else if (cmp == "block")    {g[v].np = (node_ptr) new     Block(g[v].name, x.hash, x.b, g[v].flags, g[v].tPeriod ); }
-    else if (cmp == "qinfo")    {g[v].np = (node_ptr) new    CmdQueue(g[v].name, x.hash, x.b, g[v].flags);}
-    else if (cmp == "destinfo") {g[v].np = (node_ptr) new AltDestList(g[v].name, x.hash, x.b, g[v].flags);}
-    else if (cmp == "qbuf")     {g[v].np = (node_ptr) new  CmdQBuffer(g[v].name, x.hash, x.b, g[v].flags);}
+    else if (cmp == "block")    {g[v].np = (node_ptr) new     Block(g[v].name, x->hash, x->b, g[v].flags, g[v].tPeriod ); }
+    else if (cmp == "qinfo")    {g[v].np = (node_ptr) new    CmdQMeta(g[v].name, x->hash, x->b, g[v].flags);}
+    else if (cmp == "listdst") {g[v].np = (node_ptr) new DestList(g[v].name, x->hash, x->b, g[v].flags);}
+    else if (cmp == "qbuf")     {g[v].np = (node_ptr) new  CmdQBuffer(g[v].name, x->hash, x->b, g[v].flags);}
     else if (cmp == "meta")     {std::cerr << "not yet implemented " << g[v].type << std::endl;}
 
-    else                        {std::cerr << "Node type" << g[v].type << " not supported! " << std::endl;}
+    else                        {std::cerr << "Node type" << cmp << " not supported! " << std::endl;}
 
 
     
@@ -146,17 +161,31 @@ int main() {
   vAdr myAdr = vAdr(1);
   myAdr[0] = 0x12345678;
 
+
+
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
 
-    all_evt_children(v, g);
+    
 
     if (g[v].np == NULL ){std::cerr << " Node " << g[v].name << " was not initialised! " << g[v].type << std::endl;}
     else {
-      g[v].np->serialise(myAdr, myAdr);
+      //g[v].np->serialise(myAdr, myAdr);
+      std::cout << " *** " << g[v].name << " *** " << std::endl;
+      g[v].np->accept(VisitorNodeCrawler(v, mmu));
       hexDump(g[v].name.c_str(), mmu.allocMap.at(g[v].name).b, _MEM_BLOCK_SIZE);
+      std::cout << std::endl;
+      
+      
     }
-
-
+    //all_evt_children(v, g);
+    /*
+    auto vDst = getDst(v, g);
+    for(auto it = vDst.begin(); it < vDst.end(); it++) {
+      if (it - vDst.begin() == 0) std::cout << "defDst: ";
+      else std::cout << "altDst: ";
+      std::cout << g[*it].name << std::endl;
+    }
+    */
     
   }
 

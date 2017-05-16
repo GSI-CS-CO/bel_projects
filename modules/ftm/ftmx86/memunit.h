@@ -1,5 +1,6 @@
 #ifndef _MEM_UNIT_H_
 #define _MEM_UNIT_H_
+
 #include <stdint.h>
 #include <string>
 #include <iostream>
@@ -39,24 +40,27 @@ typedef aPool::iterator itAp;
 
 
 class MemUnit {
-
+  
   const uint8_t   cpu;
   const uint32_t  baseAdr;
   const uint32_t  poolSize;
   const uint32_t  bmpLen;
+ 
+
+  
   const uint32_t  startOffs; // baseAddress + bmpLen rounded up to next multiple of MEM_BLOCK_SIZE to accomodate BMP
   const uint32_t  endOffs;   // baseAddress + poolSize rounded down to next multiple of MEM_BLOCK_SIZE, can only use whole blocks 
      
   Graph&  g;
-  aPool   memPool;
+  
 
   //ebdevice
   //eb socket
 
   
-
+ aPool   memPool;
   
-  public:
+public:
   aMap allocMap;
   hMap hashMap;
   vBuf mgmtBmp; 
@@ -64,7 +68,7 @@ class MemUnit {
           poolSize(poolSize), bmpLen( poolSize / _MEM_BLOCK_SIZE), 
           startOffs((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE),
           endOffs((poolSize / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE),
-          mgmtBmp(vBuf( (bmpLen + 8 -1)/8) ), g(g) { initMemPool();}
+          g(g), mgmtBmp(vBuf( (bmpLen + 8 -1)/8) ) { initMemPool();}
   ~MemUnit() { };
 
   //MemPool Functions
@@ -82,13 +86,14 @@ class MemUnit {
   bool allocate(const std::string& name);
   bool insert(const std::string& name, uint32_t adr);
   bool deallocate(const std::string& name);
-  bool lookupName2Chunk(const std::string& name, chunkMeta*& chunk) ;
+  chunkMeta* lookupName(const std::string& name) const;
 
   //Hash functions
   bool insertHash(const std::string& name, uint32_t &hash);
   bool removeHash(const uint32_t hash);
-  bool lookupHash2Name(const uint32_t hash, std::string& name);
-  Graph getGraph() const;
+  chunkMeta* lookupHash(const uint32_t hash) const ;
+  Graph& getGraph() const {return g;}
+  vAdr vertices2addresses(const vVertices &v) const;
 
 };
 

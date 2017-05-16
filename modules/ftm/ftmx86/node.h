@@ -39,13 +39,20 @@ public:
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
-  virtual void serialise(vAdr &dest, vAdr &custom) {
+  virtual void accept(const VisitorNodeCrawler& v)      const = 0;
+  virtual bool isMeta(void) const = 0;
+  virtual void serialise(const vAdr &va) const {
+  
+     std::cout << "va: " << va.size() << std::endl;
+  //FIXME size check !
+  for(auto it = va.begin(); it < va.end(); it++) std::cout << "#" << it - va.begin() << " 0x" << std::hex << *it << std::endl;
+  std::cout << std::endl;  
+  
+    writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_DEF_DEST_PTR,  va[ADR_DEF_DST]);
     writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_HASH,   this->hash);
     writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_FLAGS,  this->flags);
-    if (dest.size() < 1) { writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_DEF_DEST_PTR, LM32_NULL_PTR); }     //no successor, insert null ptr
-    else                 { writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_DEF_DEST_PTR, dest[DEST_ADR_DEF]);}
   }
-  
+
 };
 
 

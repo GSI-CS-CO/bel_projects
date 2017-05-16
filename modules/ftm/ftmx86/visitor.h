@@ -3,20 +3,23 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <iostream>
-#include "common.h"
+//#include "common.h"
+#include "memunit.h"
 
 class Event;
+class Block;
+class Meta;
+
 class Command;
 class Noop;
-class Block;
 class TimingMsg;
 class Flow;
 class Flush;
 class Wait;
-class Meta;
-class CmdQueue;
+
+class CmdQMeta;
 class CmdQBuffer;
-class AltDestList;
+class DestList;
 
 
 
@@ -33,9 +36,37 @@ class AltDestList;
     virtual void visit(const Flush& el) const;
     virtual void visit(const Noop& el) const;
     virtual void visit(const Wait& el) const;
-    virtual void visit(const CmdQueue& el) const;
+    virtual void visit(const CmdQMeta& el) const;
     virtual void visit(const CmdQBuffer& el) const;
-    virtual void visit(const AltDestList& el) const;
+    virtual void visit(const DestList& el) const;
+
+  };
+
+  
+
+  class VisitorNodeCrawler {
+    vertex_t v;
+    MemUnit& mmu;
+
+    vAdr getDefDst(void)    const;
+    vAdr getQInfo(void)     const;
+    vAdr getQBuf(void)      const;
+    vAdr getCmdTarget(void) const;
+    vAdr getFlowDst(void)   const;
+    vAdr getListDst(void)   const;
+
+  public:
+    VisitorNodeCrawler(vertex_t v, MemUnit& mmu)  : v(v), mmu(mmu) {};
+    ~VisitorNodeCrawler() {};
+    virtual void visit(const Block& el) const;
+    virtual void visit(const TimingMsg& el) const;
+    virtual void visit(const Flow& el) const;
+    virtual void visit(const Flush& el) const;
+    virtual void visit(const Noop& el) const;
+    virtual void visit(const Wait& el) const;
+    virtual void visit(const CmdQMeta& el) const;
+    virtual void visit(const CmdQBuffer& el) const;
+    virtual void visit(const DestList& el) const;
 
   };
 /*

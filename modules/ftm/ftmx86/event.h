@@ -27,9 +27,10 @@ public:
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
+  virtual void accept(const VisitorNodeCrawler& v)      const = 0;
   const uint64_t getTOffs() const {return this->tOffs;}
-  virtual void serialise(vAdr &dest, vAdr &custom);
-  
+  virtual void serialise(const vAdr &va) const;
+  bool isMeta(void) const {return false;}
 };
 
 // std timing message for the ECA, sent over the timing network
@@ -47,8 +48,9 @@ public:
 
   void show(void)                                       const;
   void show(uint32_t cnt, const char* sPrefix)          const;
-  void serialise(vAdr &dest, vAdr &custom);
+  void serialise(const vAdr &va) const;
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeCrawler& v)      const override { v.visit(*this); }
   const uint64_t getId() const {return this->id;}
   const uint64_t getPar() const {return this->par;}
   const uint32_t getTef() const {return this->tef;}
@@ -75,7 +77,7 @@ public:
   virtual void accept(const VisitorVertexWriter& v)    const = 0;
   const uint64_t getTValid() const {return this->tValid;}
   const uint32_t getAct() const {return this->act;}
-  virtual void serialise(vAdr &dest, vAdr &custom);
+  virtual void serialise(const vAdr &va) const;
 };
 
 // Makes receiving Q do nothing when leaving block for N times
@@ -90,8 +92,9 @@ public:
 
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
-  void serialise(vAdr &dest, vAdr &custom);
+  void serialise(const vAdr &va) const;
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeCrawler& v)      const override { v.visit(*this); }
   const uint16_t getQty() const {return (this->flags >> ACT_QTY_POS) & ACT_QTY_MSK;}
 
 };
@@ -108,8 +111,9 @@ public:
 
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
-  void serialise(vAdr &dest, vAdr &custom);
+  void serialise(const vAdr &va) const;
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeCrawler& v)      const override { v.visit(*this); }
   const uint16_t getQty() const {return (this->flags >> ACT_QTY_POS) & ACT_QTY_MSK;}
 
 };
@@ -127,8 +131,9 @@ public:
 
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
-  void serialise(vAdr &dest, vAdr &custom);
+  void serialise(const vAdr &va) const;
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeCrawler& v)      const override { v.visit(*this); }
 
 
 };
@@ -155,8 +160,9 @@ public:
   const uint8_t getMode(void) const;
   const uint16_t getRng(uint8_t q) const;
 
-  void serialise(vAdr &dest, vAdr &custom);
+  void serialise(const vAdr &va) const;
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeCrawler& v)      const override { v.visit(*this); }
 
 };
 
