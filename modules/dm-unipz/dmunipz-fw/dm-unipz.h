@@ -4,19 +4,22 @@
 #define  DMUNIPZ_US_ASMNOP        31          // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout value ms; used by main loop 
-#define  DMUNIPZ_EVT_UNI_READY    0x1e        // event number EVT_UNI_READY; check: number is bogus
+#define  DMUNIPZ_REQTIMEOUT       1000        // timeout value ms; used when requesting things from UNILAC
+#define  DMUNIPZ_EVT_UNI_READY    0x1e        // event number EVT_UNI_READY
 
 // (error) status
-#define  DMUNIPZ_STATUS_UNKNOWN       0       // unknown status
-#define  DMUNIPZ_STATUS_OK            1       // status OK
-#define  DMUNIPZ_STATUS_ERROR         2       // an error occured
-#define  DMUNIPZ_STATUS_TIMEDOUT      3       // a timeout occured
-#define  DMUNIPZ_STATUS_OUTOFRANGE    4       // request to reserve TK failed
-#define  DMUNIPZ_STATUS_REQTKFAILED   5       // request to reserve TK failed
-#define  DMUNIPZ_STATUS_REQTKTIMEOUT  6       // request to reserve TK timed out
-#define  DMUNIPZ_STATUS_REQBEAMFAILED 7       // request to request beam failed
-#define  DMUNIPZ_STATUS_RELTKFAILED   8       // release of TK request failed
-#define  DMUNIPZ_STATUS_RELBEAMFAILED 9       // release of beam request failed
+#define  DMUNIPZ_STATUS_UNKNOWN        0      // unknown status
+#define  DMUNIPZ_STATUS_OK             1      // status OK
+#define  DMUNIPZ_STATUS_ERROR          2      // an error occured
+#define  DMUNIPZ_STATUS_TIMEDOUT       3      // a timeout occured
+#define  DMUNIPZ_STATUS_OUTOFRANGE     4      // request to reserve TK failed
+#define  DMUNIPZ_STATUS_REQTKFAILED    5      // request to reserve TK failed
+#define  DMUNIPZ_STATUS_REQTKTIMEOUT   6      // request to reserve TK timed out
+#define  DMUNIPZ_STATUS_REQBEAMFAILED  7      // request to request beam failed
+#define  DMUNIPZ_STATUS_RELTKFAILED    8      // release of TK request failed
+#define  DMUNIPZ_STATUS_RELBEAMFAILED  9      // release of beam request failed
+#define  DMUNIPZ_STATUS_DEVBUSERROR   10      // something went wrong with write/read on the MIL devicebus
+#define  DMUNIPZ_STATUS_REQNOTOK      11      // UNILAC signals 'request not ok'
 
 // commands from the outside
 #define  DMUNIPZ_CMD_NOCMD        0           // no command ...
@@ -41,6 +44,13 @@
 #define  DMUNIPZ_ECADO_UNKOWN     1           // unnkown activity requested (unexpected action by ECA)
 #define  DMUNIPZ_ECADO_REQTK      2           // request the transfer channel (TK)
 #define  DMUNIPZ_ECADO_REQBEAM    3           // request beam from UNIPZ
+
+// status of transfer (status bits)
+#define DMUNIPZ_TRANS_UNKNOWN     0           // unknown status
+#define DMUNIPZ_TRANS_REQTK       1           // TK request
+#define DMUNIPZ_TRANS_REQBEAM     2           // beam request
+#define DMUNIPZ_TRANS_SUCCESS     4           // transfer successful
+#define DMUNIPZ_TRANS_FAIL        8           // transfer failed
 
 
 // part below provide by Ludwig Hechler 
