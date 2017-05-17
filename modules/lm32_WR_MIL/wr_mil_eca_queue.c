@@ -3,10 +3,42 @@
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"       // register layout ECA controle
 #include "../../ip_cores/saftlib/drivers/eca_flags.h"
+#include "mini_sdb.h"
 
 volatile ECAQueueRegs *ECAQueue_init(uint32_t *device_addr)
 {
+  if (!device_addr) // find ECAQueue via SDB
+  {
+    return (volatile ECAQueueRegs*)ECAQueue_findAddress();
+  }
   return (volatile ECAQueueRegs*)device_addr;
+}
+
+uint32_t *ECAQueue_findAddress()
+{
+#define ECAQMAX           4         //  max number of ECA queues
+#define ECACHANNELFORLM32 2         //  this is a hack! suggest to implement proper sdb-records with info for queues
+
+  uint32_t *pECAQ;                  // the pointer to the ECA queue
+
+  // stuff below needed to get WB address of ECA queue 
+  sdb_location ECAQ_base[ECAQMAX]; // base addresses of ECA queues
+  uint32_t ECAQidx = 0;            // max number of ECA queues in the SoC
+  uint32_t *tmp;                
+  uint32_t i;
+
+  pECAQ = 0x0; //initialize Wishbone address for LM32 ECA queue
+
+  // get Wishbone addresses of all ECA Queues
+  find_device_multi(ECAQ_base, &ECAQidx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
+
+  // walk through all ECA Queues and find the one for the LM32
+  for (i=0; i < ECAQidx; i++) {
+    tmp = (uint32_t *)(getSdbAdr(&ECAQ_base[i]));  
+    if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
+  }
+
+  return pECAQ;  
 }
 
 void ECAQueue_popAction(volatile ECAQueueRegs *queue)

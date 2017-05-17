@@ -155,77 +155,6 @@ void getWishboneTAI()
 
 
 
-/*************************************************************
-* 
-* demonstrate how to poll actions ("events") from ECA
-* HERE: get WB address of relevant ECA queue
-*
-**************************************************************/
-void findECAQ()
-{
-#define ECAQMAX           4         //  max number of ECA queues
-#define ECACHANNELFORLM32 2         //  this is a hack! suggest to implement proper sdb-records with info for queues
-
-  // stuff below needed to get WB address of ECA queue 
-  sdb_location ECAQ_base[ECAQMAX]; // base addresses of ECA queues
-  uint32_t ECAQidx = 0;            // max number of ECA queues in the SoC
-  uint32_t *tmp;                
-  uint32_t i;
-
-  pECAQ = 0x0; //initialize Wishbone address for LM32 ECA queue
-
-  // get Wishbone addresses of all ECA Queues
-  find_device_multi(ECAQ_base, &ECAQidx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
-
-  // walk through all ECA Queues and find the one for the LM32
-  for (i=0; i < ECAQidx; i++) {
-    tmp = (uint32_t *)(getSdbAdr(&ECAQ_base[i]));  
-    if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
-  }
-  
-  mprintf("\n");
-  if (!pECAQ) { mprintf("FATAL: can't find ECA queue for lm32, good bye! \n"); while(1) asm("nop"); }
-  mprintf("ECA queue found at: 0x%08x. Waiting for actions with flag 0x%08x ...\n", pECAQ, MY_ECA_TAG);
-  mprintf("\n");
-
-} // findECAQ
-
-/*************************************************************
-* 
-* demonstrate how to poll actions ("events") from ECA
-* HERE: get WB address of relevant ECA queue
-*
-**************************************************************/
-uint32_t *new_findECAQ()
-{
-#define ECAQMAX           4         //  max number of ECA queues
-#define ECACHANNELFORLM32 2         //  this is a hack! suggest to implement proper sdb-records with info for queues
-
-  // stuff below needed to get WB address of ECA queue 
-  sdb_location ECAQ_base[ECAQMAX]; // base addresses of ECA queues
-  uint32_t ECAQidx = 0;            // max number of ECA queues in the SoC
-  uint32_t *tmp;                
-  uint32_t i;
-
-  uint32_t *pECAQ = 0x0; //initialize Wishbone address for LM32 ECA queue
-
-  // get Wishbone addresses of all ECA Queues
-  find_device_multi(ECAQ_base, &ECAQidx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
-
-  // walk through all ECA Queues and find the one for the LM32
-  for (i=0; i < ECAQidx; i++) {
-    tmp = (uint32_t *)(getSdbAdr(&ECAQ_base[i]));  
-    if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
-  }
-  
-  mprintf("\n");
-  if (!pECAQ) { mprintf("FATAL: can't find ECA queue for lm32, good bye! \n"); while(1) asm("nop"); }
-  mprintf("ECA queue found at: 0x%08x. Waiting for actions with flag 0x%08x ...\n", pECAQ, MY_ECA_TAG);
-  mprintf("\n");
-  return pECAQ;
-} // findECAQ
-
-
 void findEcaControl() // find WB address of ECA Control
 {
   pECACtrl  = find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
@@ -325,12 +254,12 @@ void main(void) {
 
   // MilPiggy setup
   volatile MilPiggyRegs *mil_piggy = MilPiggy_init(find_device_adr(GSI, SCU_MIL));
+  mprintf("mil_piggy.pMILPiggy = 0x%08x\n", mil_piggy);
   MilPiggy_lemoOut1Enable(mil_piggy);
   MilPiggy_lemoOut2Enable(mil_piggy);
-  mprintf("mil_piggy.pMILPiggy = 0x%08x\n", mil_piggy);
 
   // ECAQueue setup
-  ECAQueueRegs *eca_queue = ECAQueue_init(new_findECAQ());
+  volatile ECAQueueRegs *eca_queue = ECAQueue_init(0);
   uint32_t n_events = ECAQueue_clear(eca_queue);
   mprintf("found %d events in eca queue\n", n_events);
 

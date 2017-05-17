@@ -1,7 +1,7 @@
-#ifndef WR_MIL_TAI_H_
-#define WR_MIL_TAI_H_
+#ifndef WR_MIL_VALUE64BIT_H_
+#define WR_MIL_VALUE64BIT_H_
 
-/* provides union TAI_t to facilitate access and manipulation of 64-bit TAI values */
+/* provides Value64Bit_t to facilitate access and manipulation of 64-bit TAI values */
 #include <stdint.h>
 
 typedef struct 
@@ -15,6 +15,9 @@ typedef union
   // uint32_t pos[2]; // pos[0] contains high bit part;   pos[1] contains low bit part
   HiLo_t   part;
   uint64_t value;
-} TAI_t;
+} Value64Bit_t;
+
+typedef Value64Bit_t TAI_t;
+typedef Value64Bit_t EvtID_t;
 
 #endif

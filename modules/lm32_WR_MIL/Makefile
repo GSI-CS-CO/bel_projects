@@ -32,7 +32,11 @@ LDFLAGS += -Wl,-Map,$(TARGET).map
 
 fwbin: $(TARGET).bin
 
-$(TARGET).elf: wr_mil_piggy.c $(PATHFW)/$(TARGET).c $(PATHFW)/wr_mil_eca_ctrl.c $(PATHFW)/wr_mil_eca_queue.c $(PATHFW)/../../top/gsi_scu/scu_mil.c
+$(TARGET).elf: wr_mil_piggy.c                        \
+			   $(PATHFW)/$(TARGET).c                 \
+			   $(PATHFW)/wr_mil_eca_ctrl.c           \
+			   $(PATHFW)/wr_mil_eca_queue.c          \
+			   $(PATHFW)/../../top/gsi_scu/scu_mil.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
