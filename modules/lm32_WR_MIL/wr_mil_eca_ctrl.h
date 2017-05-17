@@ -1,14 +1,15 @@
 #ifndef WR_MIL_ECA_CTRL_H_
 #define WR_MIL_ECA_CTRL_H_
 
+#include <stdint.h>
 #include "wr_mil_value64bit.h"
 
-typedef struct
-{
-  volatile uint32_t *pECACtrl;
-  volatile uint32_t *pECATimeHi;
-  volatile uint32_t *pECATimeLo;
-} ECACtrl_t;
+// typedef struct
+// {
+//   volatile uint32_t *pECACtrl;
+//   volatile uint32_t *pECATimeHi;
+//   volatile uint32_t *pECATimeLo;
+// } ECACtrl_t;
 
 typedef struct 
 {
@@ -69,9 +70,9 @@ typedef struct
   uint32_t channel_deadline_lo_get;     // 0xdc  //ro, 32 b, The deadline of the first action with the selected error code on the selected subchannel, cleared when channel_failed_count is read (low word)
   uint32_t channel_executed_hi_get;     // 0xe0  //ro, 32 b, The actual execution time of the first action with the selected error code on the selected subchannel, cleared when channel_failed_count is read (high word)
   uint32_t channel_executed_lo_get;     // 0xe4  //ro, 32 b, The actual execution time of the first action with the selected error code on the selected subchannel, cleared when channel_failed_count is read (low word)
-} ECARegs;
+} ECACtrlRegs;
 
-volatile ECARegs *ECACtrl_init(uint32_t *device_addr);
-void ECACtrl_getTAI(volatile ECARegs *eca, TAI_t *tai);
+volatile ECACtrlRegs *ECACtrl_init(uint32_t *device_addr);
+void ECACtrl_getTAI(volatile ECACtrlRegs *eca, TAI_t *tai);
 
 #endif
