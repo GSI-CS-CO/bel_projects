@@ -51,6 +51,40 @@ static void hexDump (const char *desc, void *addr, int len) {
   printf ("\n");  
 }
 
+static void vHexDump (const char *desc, vBuf pc, int len) {
+    int i;
+    unsigned char buff[17];
+
+    // Output description if given.
+    if (desc != NULL)
+       printf ("%s:\n", desc);
+
+    // Process every byte in the data.
+    for (i = 0; i < len; i++) {
+        // Multiple of 16 means new line (with line offset).
+
+        if ((i % 16) == 0) {
+            // Just don't print ASCII for the zeroth line.
+            if (i != 0)
+               printf ("  %s\n", buff);
+
+            // Output the offset.
+           printf ("  %04x ", i);
+        }
+
+        // Now the hex code for the specific character.
+       printf (" %02x", pc[i]);
+
+        // And store a printable ASCII character for later.
+        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
+            buff[i % 16] = '.';
+        else
+            buff[i % 16] = pc[i];
+        buff[(i % 16) + 1] = '\0';
+    }
+  printf ("\n");  
+}
+
 void all_evt_children(vertex_t v, Graph& g) {
   Graph::out_edge_iterator out_begin, out_end, out_cur;
   boost::tie(out_begin, out_end) = out_edges(v,g);
@@ -119,7 +153,7 @@ int main() {
 
     std::string cmp; 
 
-  MemUnit mmu = MemUnit(1, 0x1000, 8192, g);
+  MemUnit mmu = MemUnit(1, 0x4110000, 0x1000000, 0x1000, 65536, g);
   
   BOOST_FOREACH( edge_t e, edges(g) ) {
     std::transform(g[e].type.begin(), g[e].type.end(), g[e].type.begin(), ::tolower);
@@ -137,8 +171,8 @@ int main() {
     auto* x = mmu.lookupName(g[v].name);
     if(x == NULL) {std::cerr << "ERROR: Tried to lookup unallocated node " << g[v].name <<  std::endl; return -1;}
 
-    std::cout << "Type " << g[v].type << std::endl;
-    std::cout << g[v].name << ": @ 0x" << std::hex << x->adr << " # 0x" << x->hash << '\n';
+    //std::cout << "Type " << g[v].type << std::endl;
+    //std::cout << g[v].name << ": @ 0x" << std::hex << x->adr << " # 0x" << x->hash << '\n';
 
 
     if      (cmp == "tmsg")     {g[v].np = (node_ptr) new   TimingMsg(g[v].name, x->hash, x->b, g[v].flags, g[v].tOffs, g[v].id, g[v].par, g[v].tef, g[v].res); }
@@ -170,10 +204,10 @@ int main() {
     if (g[v].np == NULL ){std::cerr << " Node " << g[v].name << " was not initialised! " << g[v].type << std::endl;}
     else {
       //g[v].np->serialise(myAdr, myAdr);
-      std::cout << " *** " << g[v].name << " *** " << std::endl;
+      //std::cout << " *** " << g[v].name << " @ Int 0x" << std::hex << mmu.lookupName(g[v].name)->intAdr << " @ Ext 0x" << mmu.lookupName(g[v].name)->extAdr << " *** " << std::endl;
       g[v].np->accept(VisitorNodeCrawler(v, mmu));
-      hexDump(g[v].name.c_str(), mmu.allocMap.at(g[v].name).b, _MEM_BLOCK_SIZE);
-      std::cout << std::endl;
+      //hexDump(g[v].name.c_str(), mmu.lookupName(g[v].name)->b, _MEM_BLOCK_SIZE);
+      //std::cout << std::endl;
       
       
     }
@@ -188,8 +222,18 @@ int main() {
     */
     
   }
-
   
+  for (auto& it : mmu.getAllChunks()) {
+    std::cout << "E@: 0x" << std::hex << mmu.adr2intAdr(it->adr) << " #: 0x" << it->hash << " -> Name: " << mmu.hash2name(it->hash) << std::endl;
+    hexDump("", it->b, _MEM_BLOCK_SIZE);
+  }
+ 
+  for (auto& it : mmu.getUploadAdrs()) { std::cout << "WR @: 0x" << std::hex << it << std::endl;}
+
+  vBuf data = mmu.getUploadData();
+
+
+  vHexDump("EB to Transfer", data, data.size()); 
 
 
   return 0;

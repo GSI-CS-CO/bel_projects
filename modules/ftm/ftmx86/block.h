@@ -16,7 +16,8 @@ protected:
 
 public:
   Block(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tPeriod) 
-  : Node(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK << NFLG_TYPE_POS))), tPeriod(tPeriod) {};
+  : Node(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK << NFLG_TYPE_POS))), tPeriod(tPeriod),
+    rdIdxIl(0), rdIdxHi(0), rdIdxLo(0), wrIdxIl(0), wrIdxHi(0), wrIdxLo(0) {}
   ~Block()  {};
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorNodeCrawler& v)      const override { v.visit(*this); }

@@ -14,6 +14,8 @@ const std::string sFD  = "flowdst";
 
 //"struct0 [label=\"<f0> " << name[v] << " | <f1> " << tPeriod[v] << "\"];"; go for structs ...
 
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // Vertex Writer Visitor
 
@@ -228,7 +230,7 @@ void VisitorNodeCrawler::visit(const DestList& el) const {
           if (found) {std::cerr << "!!! Found more than one default destination !!!" << std::endl; break;
           } else {
             auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-            if (x != NULL) {ret.push_back(x->adr); found = true; std::cout << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << x->adr << std::endl;}
+            if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
           }
         }
       }  
@@ -257,7 +259,7 @@ void VisitorNodeCrawler::visit(const DestList& el) const {
           if (found) {std::cerr << "!!! Found more than one Destination List !!!" << std::endl; break;
           } else {
             auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-            if (x != NULL) {ret.push_back(x->adr); found = true; std::cout << g[target(*out_cur,g)].name << " @ 0x" << std::hex << x->adr << std::endl;}
+            if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
           }
         }
       }  
@@ -275,7 +277,7 @@ void VisitorNodeCrawler::visit(const DestList& el) const {
             if (found) {std::cerr << "!!! Found more than one queue info of type " << sQM[idx] << " !!!" << std::endl; break;}
             else {
               auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-              if (x != NULL) {ret.push_back(x->adr); found = true; std::cout << "qMeta: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << x->adr << std::endl;}
+              if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "qMeta: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
             }  
           }
         }  
@@ -302,7 +304,7 @@ vAdr VisitorNodeCrawler::getQBuf() const {
 
       if (g[target(*out_cur,g)].np->isMeta()) {
         auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-        if (x != NULL) {ret.push_back(x->adr); found = true; std::cout << "qBuf: " <<  g[target(*out_cur,g)].name << " @ 0x" << std::hex << x->adr << std::endl;}
+        if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "qBuf: " <<  g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
       }
     }  
   }
@@ -329,7 +331,7 @@ vAdr VisitorNodeCrawler::getCmdTarget() const {
         if (found) {std::cerr << "!!! Found more than one target !!!" << std::endl; break;
         } else {
           auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-          if (x != NULL) {ret.push_back(x->adr); found = true; std::cout << "Target: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << x->adr << std::endl;}
+          if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "Target: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
         }
       }
     }  
@@ -359,7 +361,7 @@ vAdr VisitorNodeCrawler::getFlowDst() const {
         if (found) {std::cerr << "!!! Found more than one flow destination !!!" << std::endl; break;
         } else {
           auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-          if (x != NULL) {ret.push_back(x->adr); found = true; std::cout << "flowDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << x->adr << std::endl;}
+          if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "flowDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
         }
       }
     }  
@@ -397,7 +399,7 @@ vAdr VisitorNodeCrawler::getListDst() const {
         if (found) {std::cerr << "!!! Found more than one default destination !!!" << std::endl; break;
         } else {
           auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-          if (x != NULL) {ret.push_back(x->adr); found = true; std::cout << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << x->adr << std::endl;}
+          if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
         }
       }
     }  
@@ -413,7 +415,7 @@ vAdr VisitorNodeCrawler::getListDst() const {
 
       if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sAD) {
         auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-        if (x != NULL) {ret.push_back(x->adr); found = true; std::cout << "altDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << x->adr << std::endl;}
+        if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "altDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
       }
     }  
   }

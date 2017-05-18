@@ -2,17 +2,13 @@
 #include "common.h"
 
 
-  void MemUnit::updatememPoolFromBmp() {
-    //remember not to put the BMP into the pool of available memory
-
-    
-    
-  } 
 
   void MemUnit::initMemPool() { 
     memPool.clear();
-    std::cout << "BaseAdr = " << baseAdr << ", Poolsize = " << poolSize << ", bmpLen = " << bmpLen << ", startOffs = " << startOffs << ", endOffs = " << endOffs << ", vBufSize = " << mgmtBmp.size() << std::endl;
-    for(uint32_t adr = baseAdr + startOffs; adr < baseAdr + endOffs; adr += _MEM_BLOCK_SIZE) { 
+    std::cout << "extBaseAdr = 0x" << std::hex << extBaseAdr << " intBaseAdr = 0x" << intBaseAdr << ", Poolsize = " << std::dec << poolSize 
+    << ", bmpLen = " << bmpLen << ", startOffs = 0x" << std::hex << startOffs << ", endOffs = 0x" << std::hex << endOffs << ", vBufSize = " 
+    << std::dec << uploadBmp.size() << std::endl;
+    for(uint32_t adr = startOffs; adr < endOffs; adr += _MEM_BLOCK_SIZE) { 
       //Never issue <baseAddress - (baseAddress + bmpLen -1) >, as this is where Mgmt bitmap vector resides     
       //std::cout << std::hex << adr << std::endl; 
       memPool.insert(adr); 
@@ -38,62 +34,80 @@
     return ret;
   }        
 
-  void MemUnit::updateBmpFromAlloc() {
-    for (auto& it : mgmtBmp) { 
+  void MemUnit::createUploadBmp() {
+    for (auto& it : uploadBmp) { 
       it = 0;
     }    
 
     //Go through allocmap and update Bmp
     for (auto& it : allocMap) {
-      if( (it.second.adr >= baseAdr + startOffs) && (it.second.adr < baseAdr + endOffs)) {
-        int bitIdx = (it.second.adr - baseAdr) / _MEM_BLOCK_SIZE;
+      if( (it.second.adr >= startOffs) && (it.second.adr < endOffs)) {
+        int bitIdx = (it.second.adr) / _MEM_BLOCK_SIZE;
         uint8_t tmp = 1 << (bitIdx % 8);
         printf("Bidx = %u, bufIdx = %u, val = %x\n", bitIdx, bitIdx / 8 , tmp);
         
-        mgmtBmp[bitIdx / 8] |= tmp;
+        uploadBmp[bitIdx / 8] |= tmp;
       } else {//something's awfully wrong, address out of scope!
-        std::cout << "Address 0x" << std::hex << it.second.adr << " is not within 0x" << std::hex << baseAdr + startOffs << "-" << std::hex << baseAdr + endOffs << std::endl;
+        std::cout << "Address 0x" << std::hex << it.second.adr << " is not within 0x" << std::hex << startOffs << "-" << std::hex << endOffs << std::endl;
       }
     }
     
   }
-/*
-  uint32_t MemUnit::getFreeSpace() { return 0;
 
+ 
 
+  vAdr MemUnit::getUploadAdrs() {
+    vAdr ret;
+
+    for (auto& it : allocMap) {
+      for (uint32_t adr = adr2extAdr(it.second.adr); adr < adr2extAdr(it.second.adr) + _MEM_BLOCK_SIZE; adr += _32b_SIZE_ ) ret.push_back(adr);
+    }    
+    return ret;
   }
 
-  void MemUnit::downLoadChunks() {
-    //get BMP
+  vBuf MemUnit::getUploadData() {
+    vBuf ret;
+    ret.reserve( uploadBmp.size() + allocMap.size() * _MEM_BLOCK_SIZE ); // preallocate memory for BMP and all Nodes
+    
+    ret.insert( ret.end(), uploadBmp.begin(), uploadBmp.end() );
+    for (auto& it : allocMap) { 
+      ret.insert( ret.end(), it.second.b, it.second.b + _MEM_BLOCK_SIZE );
+    }  
+    return ret;
+  }
 
-    //create Address vector
-    aPool downloadAdr;
-    uint32_t adr;
+  vAdr getDownloadAdrs();
 
-    for (itBuf it = mgmtBmp.begin(); it < mgmtBmp.end(); it++) {
-      for (int i=0; i <8; i++) {
-        if ((*it) & (1<<i)) {
-          adr = baseAdr + int(mgmtBmp.end() - it)*8 + i * _MEM_BLOCK_SIZE;
-          downloadAdr.push_back(adr);
-          std::cout << "Found Address 0x" << std::hex << adr << std::endl;
-        }
-      }
+
+  void parseDownloadData();
+  //dlAlloc: adr -> vertex_desc, hash, buffer
+
+  // creating nodes
+  // iterate over (big) eb download buffer (data blocks):
+    //obtain key by converting from extAdr (download Address) to adr value, create dlAlloc entry 
+    //copy data block to dlAlloc entry buffer
+    //convert all intAdr values to adr values
+    //create node according to type field, assign all parsed data and name for given hash
+    //add vertex descriptor to dlAlloc entry
+  //creating edges
+    //iterate over dlAlloc map
+    //get vertex descriptor, this will be the parent.
+    //call parser function matching node type on dlAlloc entry buffer
+    //for each address ...
+      //lookup vertex descriptor, this will be the child.
+      //create edge to child. Edge type property must match link use within node (eg. defDst, altDst, target, etc)
+    
+
+
+
+  vChunk MemUnit::getAllChunks() const {
+    vChunk ret;
+    for (auto& it : allocMap) {
+      ret.push_back((chunkMeta*)(&it.second));
     }    
 
-    vBuf tmp = vBuf(_MEM_BLOCK_SIZE);
-    //while downloadAdr
-      //download Chunk via eb into tmp vec
-
-      //get hash
-
-      //lookup Name
-
-      //allocate and copy tmp    
-
-    
-    
+    return ret;
   }
-*/
 
 
 
@@ -106,7 +120,15 @@ void MemUnit::prepareUpload() {
 
     //update BMP
 
-
+for (itBuf it = uploadBmp.begin(); it < uploadBmp.end(); it++) {
+      for (int i=0; i <8; i++) {
+        if ((*it) & (1<<i)) {
+          adr = extBaseAdr + int(uploadBmp.end() - it)*8 + i * _MEM_BLOCK_SIZE;
+          ret.push_back(adr);
+          std::cout << "0x" << std::hex << adr << std::endl;
+        }
+      }
+    }   
 
     //serialise
       //go through graph
@@ -116,7 +138,39 @@ void MemUnit::prepareUpload() {
 
   void MemUnit::upload() {
       
+eb_status_t ftmRamWrite()
+{
+   eb_status_t status;
+   eb_cycle_t cycle;
+   uint32_t i,j, packets, partLen, start, data;
+   uint32_t* writeout = (uint32_t*)buf;   
+   
+   boost::container::vector<uint32_t> vpChunkMeta;chunkMeta*>
 
+   //wrap frame buffer in EB packet
+   packets = ((getUsedSpace() + PACKET_SIZE-1) / PACKET_SIZE);
+   start = 0;
+   
+   for(j=0; j < packets; j++)
+   {
+      if(j == parts-1 && (len % PACKET_SIZE != 0)) partLen = len % PACKET_SIZE;
+      else partLen = PACKET_SIZE;
+      
+      if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return die(status, "failed to create cycle"); 
+      
+      for(i= start>>2; i< (start + partLen) >>2;i++)  
+      {
+         if (bufEndian == LITTLE_ENDIAN)  data = SWAP_4(writeout[i]);
+         else                             data = writeout[i];
+         
+         eb_cycle_write(cycle, (eb_address_t)(address+(i<<2)), EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)data); 
+      }
+      if ((status = eb_cycle_close(cycle)) != EB_OK) return die(status, "failed to close write cycle");
+      start = start + partLen;
+   }
+   
+   return 0;
+}
     //split all allocmap elements marked for upload (transfer = true) into network packets ( div 38)
 
       //play each entry's buffer as eb operations
@@ -160,29 +214,17 @@ void MemUnit::prepareUpload() {
   bool MemUnit::insertHash(const std::string& name, uint32_t &hash) {
     hash = FnvHash::fnvHash(name.c_str());
 
-    if (hashMap.count(hash) > 0) return false;
-    else hashMap[hash] = name;
+    if (hashMap.left.count(hash) > 0) return false;
+    else hashMap.insert( hashValue(hash, name) );
     return true;
   }
 
   bool MemUnit::removeHash(const uint32_t hash) {
-    if (hashMap.count(hash) > 0) {hashMap.erase(hash); return true;}
+    if (hashMap.left.count(hash) > 0) {hashMap.left.erase(hash); return true;}
     return false;
   }
   
-  chunkMeta* MemUnit::lookupHash(const uint32_t hash) const  {
-    //if (allocMap.count(name) > 0) { return (chunkMeta*)&(allocMap.at(name));} 
-    //else {return NULL;}
-    return NULL;
-  }
+  
 
-vAdr MemUnit::vertices2addresses(const vVertices &v) const {
-  vAdr ret = vAdr();
-  for(auto it = v.begin(); it < v.end(); it++) {
-    auto* x = MemUnit::lookupName(g[*it].name);
-    if (x == NULL) {std::cerr << "!!! Node " << g[*it].name << " was not found in allocation table !!!" << std::endl; ret.push_back(LM32_NULL_PTR);}
-    else {ret.push_back(x->adr);}
-  }
-  return ret;
-}
+
 
