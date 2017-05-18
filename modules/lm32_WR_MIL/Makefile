@@ -36,6 +36,7 @@ $(TARGET).elf: wr_mil_piggy.c                        \
 			   $(PATHFW)/$(TARGET).c                 \
 			   $(PATHFW)/wr_mil_eca_ctrl.c           \
 			   $(PATHFW)/wr_mil_eca_queue.c          \
+			   $(PATHFW)/wr_mil_cmd.c                \
 			   $(PATHFW)/../../top/gsi_scu/scu_mil.c
 
 clean::

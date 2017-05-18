@@ -62,6 +62,7 @@
 #include "wr_mil_piggy.h"
 #include "wr_mil_eca_queue.h"
 #include "wr_mil_eca_ctrl.h"
+#include "wr_mil_cmd.h"
 
 #define  MY_ECA_TAG      0x4 //just define a tag for ECA actions we want to receive
 
@@ -69,25 +70,16 @@
 #include "../../tools/wb_slaves.h" /* this is a hack */
 #include "../../top/gsi_scu/scu_mil.h"
 
-/* shared memory map for communication via Wishbone  */
-#include "example_smmap.h"
-
-/* stuff required for environment */
-//extern uint32_t*       _startshared[];
-extern void* _startshared; // provided in linker script "ram.ld"
-unsigned int cpuId, cpuQty;
-#define SHARED __attribute__((section(".shared")))
-//uint64_t SHARED dummy = 0;
-
-
-void init()
+int init()
 {
+  int cpu_id;
   discoverPeriphery();    // mini-sdb: get info on important Wishbone infrastructure, such as (this) CPU, flash, ...
   uart_init_hw();         // init UART, required for printf... . To view print message, you may use 'eb-console' from the host
-  cpuId = getCpuIdx();    // get ID of THIS CPU
+  cpu_id = getCpuIdx();            // get ID of THIS CPU
   isr_table_clr();        // set MSI IRQ handler
   irq_set_mask(0x01);     // ...
   irq_disable();          // ...
+  return cpu_id;
 }
 
 void delay_96plus32n_ns(uint32_t n)
@@ -136,14 +128,11 @@ void newECAHandler(volatile ECAQueueRegs *eca_queue, volatile MilPiggyRegs *mil_
 }
 
 
-void main(void) {
-  
+void main(void) 
+{
   uint32_t i,j;
   
   init();   // initialize 'boot' lm32
-
-  for (j = 0; j < (1000); ++j) { DELAY1000us; }     // wait 1 second
-  mprintf("Hello World!\n");                           // print message to UART
 
   // MilPiggy setup
   volatile MilPiggyRegs *mil_piggy = MilPiggy_init(find_device_adr(GSI, SCU_MIL));
@@ -159,19 +148,19 @@ void main(void) {
   // ECACtrl setup
   volatile ECACtrlRegs *eca_ctrl = ECACtrl_init(0);
 
-  uint64_t k = 10000ll;
+  // Cmd setup
+  volatile MilCmdRegs *mil_cmd = MilCmd_init(0);
+
   while (1) {
+    // do whatever has to be done
     MilPiggy_lemoOut1High(mil_piggy);
     MilPiggy_lemoOut2High(mil_piggy);
     newECAHandler(eca_queue, mil_piggy);
     MilPiggy_lemoOut1Low(mil_piggy);
     MilPiggy_lemoOut2Low(mil_piggy);
     DELAY100us;
-    // wait a bit before end all operations
-    if (k) --k;
-    else  {
-      mprintf("program done!");
-      while(1) asm("nop"); // do nothing forerver
-    } 
+
+    // poll user commands
+    MilCmd_poll(mil_cmd);
   } 
 } 
