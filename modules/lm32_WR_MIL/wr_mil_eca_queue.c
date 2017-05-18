@@ -67,21 +67,72 @@ uint32_t ECAQueue_getFlags(volatile ECAQueueRegs *queue)
 uint32_t ECAQueue_clear(volatile ECAQueueRegs *queue)
 {
 	uint32_t n;
-	for (n = 0; queue->flags_get & (1<<ECA_VALID); ++n) 
+	for (n = 0; ECAQueue_actionPresent(queue); ++n) 
 	{
 		queue->pop_owr = 0x1;
 	}
 	return n;
 }
+uint32_t ECAQueue_actionPresent(volatile ECAQueueRegs *queue)
+{
+  return (queue->flags_get & (1<<ECA_VALID));
+}
+void ECAQueue_actionPop(volatile ECAQueueRegs *queue)
+{
+  queue->pop_owr = 0x1;;
+}
 
+// translate some arbitrary eventIds into more interesting ones
+uint64_t evtId_translator(uint64_t evtId)
+{
+  switch (evtId)
+  {
+    case 56612204463523840:
+      return 0x0000020008000000; // evtCode = 32 = 0x20
+    break;
+    case 56893679440235520:
+      return 0x0000022008000000; // evtCode = 0x22
+    break;
+    case 59127406031540224:
+      return 0x0000037008000000; // evtCode = 55 = 0x37
+    break;
+    default:
+      return evtId;
+    break;
+  }
+}
 
-void ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtNo,
+uint32_t ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtNo,
                                                             uint32_t *evtCode,
                                                             uint32_t *virtAcc)
 {
-  uint32_t evtIdHi = queue->event_id_hi_get;
-  uint32_t evtIdLo = queue->event_id_lo_get;
-  *evtNo   = (evtIdHi>>4)  & 0x00000fff;
+  // EventID 
+  // |---------------evtIdHi---------------|  |---------------evtIdLo---------------|
+  // FFFF GGGG GGGG GGGG EEEE EEEE EEEE SSSS  SSSS SSSS BBBB BBBB BBBB BBRR RRRR RRRR
+  //                          cccc cccc            vvvv
+  //                              
+  // F: FID(4)
+  // G: GID(12)
+  // E: EVTNO(12) = evtNo
+  // S: SID(12)
+  // B: BPID(14)
+  // R: Reserved(10)
+  // v: virtAcc = virtual accellerator
+  // c: evtCode = MIL relevant part of the evtNo (only 0..255)
+  EvtId_t evtId = { 
+    .part.hi = queue->event_id_hi_get,
+    .part.lo = queue->event_id_lo_get
+  };  
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  // for testing without the correct event ids: map some of the event to desired ones
+  evtId.value = evtId_translator(evtId.value);
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  *evtNo   = (evtId.part.hi>>4)  & 0x00000fff;
   *evtCode = *evtNo        & 0x000000ff;
-  *virtAcc = (evtIdLo>>24) & 0x0000000f;
+  *virtAcc = (evtId.part.lo>>24) & 0x0000000f;
+
+  // For MIL events, the upper 4 bits ov evtNo are zero
+  return (*evtNo & 0x00000f00) == 0; 
 }

@@ -45,17 +45,13 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdint.h>
-#include "mprintf.h"
-#include "mini_sdb.h"
-
 
 /* includes specific for bel_projects */
+#include "mprintf.h"
+#include "mini_sdb.h"
 #include "irq.h"
 #include "aux.h"
 #include "dbg.h"
-#include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
-#include "../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"       // register layout ECA controle
-#include "../../ip_cores/saftlib/drivers/eca_flags.h"
 
 /* local includes for wr_mil firmware*/
 #include "wr_mil_value64bit.h"
@@ -64,11 +60,9 @@
 #include "wr_mil_eca_ctrl.h"
 #include "wr_mil_cmd.h"
 
-#define  MY_ECA_TAG      0x4 //just define a tag for ECA actions we want to receive
-
-/* register maps for some selected Wishbone devices  */
-#include "../../tools/wb_slaves.h" /* this is a hack */
-#include "../../top/gsi_scu/scu_mil.h"
+// for the event handler
+#include "../../ip_cores/saftlib/drivers/eca_flags.h"
+#define  MY_ECA_TAG      0x00000004 //just define a tag for ECA actions we want to receive
 
 int init()
 {
@@ -94,49 +88,75 @@ void delay_96plus32n_ns(uint32_t n)
 #define DELAY100us  delay_96plus32n_ns(3122)
 #define DELAY1000us delay_96plus32n_ns(31220)
 
-void newECAHandler(volatile ECAQueueRegs *eca_queue, volatile MilPiggyRegs *mil_piggy)
+
+void eventHandler(volatile ECAQueueRegs *eca_queue, 
+                  volatile MilPiggyRegs *mil_piggy)
 {
-  // if (ECAQueue_getFlags(eca_queue) & (1<<ECA_VALID))
-  // {
-  //   EvtId_t evtId = { 
-  //     .part.hi = eca_queue->event_id_hi_get,
-  //     .part.lo = eca_queue->event_id_lo_get
-  //   };
-  //   TAI_t evtDeadl = { 
-  //     .part.hi = eca_queue->deadline_hi_get,
-  //     .part.lo = eca_queue->deadline_lo_get
-  //   };
-    // switch(eca_queue->tag_get)
-    // {
-    //   case MY_ECA_TAG:
-        mil_piggy->wr_cmd = 32;
-        for (int i = 0; i < 50; ++i)
-        {
-          DELAY50us;
-          mil_piggy->wr_cmd = 0x22;
-        }
-        DELAY50us;
-        mil_piggy->wr_cmd = 55;
-        DELAY1000us;      
-  //      break;
-  //      default:
-  //        mprintf("ecaHandler: unknown tag\n");
-  //      break;
-  //    }
-  //   uint32_t actTag = ECAQueue_getActTag(eca_queue);
-  // }
+  if (ECAQueue_actionPresent(eca_queue))
+  {
+    EvtId_t evtId = { 
+      .part.hi = eca_queue->event_id_hi_get,
+      .part.lo = eca_queue->event_id_lo_get
+    };
+    TAI_t evtDeadl = { 
+      .part.hi = eca_queue->deadline_hi_get,
+      .part.lo = eca_queue->deadline_lo_get
+    };
+
+    uint32_t evtNo, evtCode, virtAcc;
+    if (eca_queue->tag_get == MY_ECA_TAG &&
+        ECAQueue_getMilEventData(eca_queue, &evtNo, &evtCode, &virtAcc))
+    {
+      uint32_t milTelegram = 0;  
+      //mprintf("evtCode=%d\n",evtCode);
+      switch (evtCode)
+      {
+        case 8://32:
+          // generate MIL event EVT_START_CYCLE, followed by 5 UTC EVENTS
+          milTelegram  = virtAcc << 8;
+          milTelegram |= 32;//evtCode; // EVT_START_CYCLE
+          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+          milTelegram &= ~(0x000000ff);
+          milTelegram |= 0x22;//0xE0; // EVT_UTC_1
+          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+          milTelegram &= ~(0x000000ff);
+          milTelegram |= 0x22;//0xE1; // EVT_UTC_2
+          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+          milTelegram &= ~(0x000000ff);
+          milTelegram |= 0x22;//0xE2; // EVT_UTC_3
+          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+          milTelegram &= ~(0x000000ff);
+          milTelegram |= 0x22;//0xE3; // EVT_UTC_4
+          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+          milTelegram &= ~(0x000000ff);
+          milTelegram |= 0x22;//0xE4; // EVT_UTC_5
+          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+          milTelegram &= ~(0x000000ff);
+          milTelegram |= 55;//0xE4; // EVT_UTC_5
+          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+        break;
+        default:
+          // generate MIL event
+          milTelegram  = virtAcc << 8;
+          milTelegram |= evtCode;
+          MilPiggy_writeCmd(mil_piggy, milTelegram);
+          break;
+      }
+      uint32_t actTag = ECAQueue_getActTag(eca_queue);
+    }
+    // remove action ECA queue 
+    ECAQueue_actionPop(eca_queue);
+  }
 }
 
 
 void main(void) 
 {
-  uint32_t i,j;
-  
   init();   // initialize 'boot' lm32
 
+
   // MilPiggy setup
-  volatile MilPiggyRegs *mil_piggy = MilPiggy_init(find_device_adr(GSI, SCU_MIL));
-  mprintf("mil_piggy.pMILPiggy = 0x%08x\n", mil_piggy);
+  volatile MilPiggyRegs *mil_piggy = MilPiggy_init(0);
   MilPiggy_lemoOut1Enable(mil_piggy);
   MilPiggy_lemoOut2Enable(mil_piggy);
 
@@ -153,12 +173,13 @@ void main(void)
 
   while (1) {
     // do whatever has to be done
-    MilPiggy_lemoOut1High(mil_piggy);
-    MilPiggy_lemoOut2High(mil_piggy);
-    newECAHandler(eca_queue, mil_piggy);
-    MilPiggy_lemoOut1Low(mil_piggy);
-    MilPiggy_lemoOut2Low(mil_piggy);
-    DELAY100us;
+    //MilPiggy_lemoOut1High(mil_piggy);
+    //MilPiggy_lemoOut2High(mil_piggy);
+    DELAY50us;
+    eventHandler(eca_queue, mil_piggy);
+    //MilPiggy_lemoOut1Low(mil_piggy);
+    //MilPiggy_lemoOut2Low(mil_piggy);
+    DELAY50us;
 
     // poll user commands
     MilCmd_poll(mil_cmd);

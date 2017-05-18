@@ -24,13 +24,13 @@ PATHPKG	= $(shell python2.7 ../../ip_cores/hdl-make/hdlmake list-mods | grep -G 
 PREFIX 	?= /usr/local
 CFLAGS 	= -I$(PATHFW) 
 
-
 include ../../syn/build.mk
-# create linker.map file
-LDFLAGS += -Wl,-Map,$(TARGET).map
 
+# let linker create a .map file
+LDFLAGS += -Wl,-Map,$(TARGET).map -Wl,-O1
 
 fwbin: $(TARGET).bin
+	./stop_and_flash.sh
 
 $(TARGET).elf: wr_mil_piggy.c                        \
 			   $(PATHFW)/$(TARGET).c                 \

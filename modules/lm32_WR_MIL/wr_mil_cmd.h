@@ -14,5 +14,4 @@ volatile MilCmdRegs *MilCmd_init(uint32_t *device_addr);
 
 void MilCmd_poll(volatile MilCmdRegs *cmd);
 
-
 #endif

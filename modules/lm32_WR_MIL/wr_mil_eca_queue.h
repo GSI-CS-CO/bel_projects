@@ -36,12 +36,18 @@ void ECAQueue_getEvtId(volatile ECAQueueRegs *queue, EvtId_t *evtId);
 
 uint32_t ECAQueue_getActTag(volatile ECAQueueRegs *queue);
 
+uint32_t ECAQueue_getFlags(volatile ECAQueueRegs *queue);
+
 // remove all events from the ECA queue and return the number of removed events
 uint32_t ECAQueue_clear(volatile ECAQueueRegs *queue);
 
-uint32_t ECAQueue_getFlags(volatile ECAQueueRegs *queue);
+uint32_t ECAQueue_actionPresent(volatile ECAQueueRegs *queue);
+void ECAQueue_actionPop(volatile ECAQueueRegs *queue);
 
-void ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtNo, 
+// extract event number, event code and virtual accelerator number
+// from the EventId in the ECA queue. 
+// return value is nonzero if the event code must be put on MIL event bus, zero otherwise
+uint32_t ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtNo, 
                                                             uint32_t *evtCode, 
                                                             uint32_t *virtAcc);
 
