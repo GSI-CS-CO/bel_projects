@@ -3,9 +3,9 @@
 #include <iostream>
 #include <string>
 #include <inttypes.h>
-#include "common.h"
 #include <boost/graph/graphviz.hpp>
 
+#include "common.h"
 #include "propwrite.h"
 #include "node.h"
 #include "meta.h"
@@ -97,14 +97,15 @@ for (boost::tie(in_begin, in_end) = in_edges(v,g); in_begin != in_end; ++in_begi
 }
 std::cout << std::endl;
 }
-
+*/
 
 void all_evt_children(vertex_t v, Graph& g) {
   Graph::out_edge_iterator out_begin, out_end, out_cur;
   boost::tie(out_begin, out_end) = out_edges(v,g);
   for (out_cur = out_begin; out_cur != out_end; ++out_cur)
   {   
-      std::cout << g[target(*out_cur,g)].name << " x " << (vertex_t)(out_cur - out_begin) << std::endl;
+      //std::cout << g[target(*out_cur,g)].name << " x " << (vertex_t)(out_cur - out_begin) << std::endl;
+      std::cout << "Edge Type " << g[*out_cur].type << std::endl;
       
   }
   std::cout << std::endl;
@@ -131,7 +132,6 @@ for (boost::tie(in_begin, in_end) = in_edges(v,g); in_begin != in_end; ++in_begi
 }
 std::cout << std::endl;
 }
-*/
 
 
 int main() {

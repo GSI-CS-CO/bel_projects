@@ -5,6 +5,7 @@
 #include "meta.h"
 #include "event.h"
 
+const std::string sNodeType[] = {"prioil", "priohi", "priolo"};
 const std::string sQM[] = {"prioil", "priohi", "priolo"};
 const std::string sDL  = "listdst";
 const std::string sDD  = "defdst";
@@ -215,12 +216,13 @@ void VisitorNodeCrawler::visit(const DestList& el) const {
 
  vAdr VisitorNodeCrawler::getDefDst() const {
     bool found = false;
-    Graph& g = mmu.getGraph();
+    Graph& g = mmu.getUpGraph();
     vAdr ret;
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(v,g);
  
-    
+    std::cout << g[v].name << ": " << std::endl;
+
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
     {   
       if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
@@ -230,7 +232,7 @@ void VisitorNodeCrawler::visit(const DestList& el) const {
           if (found) {std::cerr << "!!! Found more than one default destination !!!" << std::endl; break;
           } else {
             auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-            if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
+            if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << x->adr << std::endl;}
           }
         }
       }  
@@ -243,7 +245,7 @@ void VisitorNodeCrawler::visit(const DestList& el) const {
   vAdr VisitorNodeCrawler::getQInfo() const {
     int idx;
     bool found;
-    Graph& g = mmu.getGraph();
+    Graph& g = mmu.getUpGraph();
     vAdr ret;
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(v,g);
@@ -291,7 +293,7 @@ void VisitorNodeCrawler::visit(const DestList& el) const {
 
 vAdr VisitorNodeCrawler::getQBuf() const {
   bool found;
-  Graph& g = mmu.getGraph();
+  Graph& g = mmu.getUpGraph();
   vAdr ret;
   Graph::out_edge_iterator out_begin, out_end, out_cur;
   boost::tie(out_begin, out_end) = out_edges(v,g);
@@ -316,7 +318,7 @@ vAdr VisitorNodeCrawler::getQBuf() const {
 
 vAdr VisitorNodeCrawler::getCmdTarget() const {
   bool found;
-  Graph& g = mmu.getGraph();
+  Graph& g = mmu.getUpGraph();
   vAdr ret;
   Graph::out_edge_iterator out_begin, out_end, out_cur;
   boost::tie(out_begin, out_end) = out_edges(v,g);
@@ -344,7 +346,7 @@ vAdr VisitorNodeCrawler::getCmdTarget() const {
 
 vAdr VisitorNodeCrawler::getFlowDst() const {
   bool found;
-  Graph& g = mmu.getGraph();
+  Graph& g = mmu.getUpGraph();
   vAdr ret;
 
 
@@ -374,7 +376,7 @@ vAdr VisitorNodeCrawler::getFlowDst() const {
 
 vAdr VisitorNodeCrawler::getListDst() const {
   bool found;
-  Graph& g = mmu.getGraph();
+  Graph& g = mmu.getUpGraph();
   vAdr ret;
   Graph::out_edge_iterator out_begin, out_end, out_cur;
   Graph::in_edge_iterator in_begin, in_end;

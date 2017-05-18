@@ -1,5 +1,11 @@
+#include <boost/graph/graphviz.hpp>
 #include "memunit.h"
 #include "common.h"
+#include "visitor.h"
+#include "node.h"
+#include "block.h"
+#include "meta.h"
+#include "event.h"
 
 
 
@@ -42,9 +48,9 @@
     //Go through allocmap and update Bmp
     for (auto& it : allocMap) {
       if( (it.second.adr >= startOffs) && (it.second.adr < endOffs)) {
-        int bitIdx = (it.second.adr) / _MEM_BLOCK_SIZE;
-        uint8_t tmp = 1 << (bitIdx % 8);
-        printf("Bidx = %u, bufIdx = %u, val = %x\n", bitIdx, bitIdx / 8 , tmp);
+        int bitIdx = (it.second.adr - startOffs) / _MEM_BLOCK_SIZE;
+        uint8_t tmp = 1 << (7 - (bitIdx % 8));
+        //printf("Bidx = %u, bufIdx = %u, val = %x\n", bitIdx, bitIdx / 8 , tmp);
         
         uploadBmp[bitIdx / 8] |= tmp;
       } else {//something's awfully wrong, address out of scope!
@@ -67,20 +73,99 @@
 
   vBuf MemUnit::getUploadData() {
     vBuf ret;
-    ret.reserve( uploadBmp.size() + allocMap.size() * _MEM_BLOCK_SIZE ); // preallocate memory for BMP and all Nodes
-    
+     std::cout << std::dec << uploadBmp.size() << " " <<  allocMap.size() << " " << _MEM_BLOCK_SIZE << std::endl;
+    ret.reserve( uploadBmp.size() + allocMap.size() * _MEM_BLOCK_SIZE); // preallocate memory for BMP and all Nodes
+
+    createUploadBmp();
     ret.insert( ret.end(), uploadBmp.begin(), uploadBmp.end() );
     for (auto& it : allocMap) { 
       ret.insert( ret.end(), it.second.b, it.second.b + _MEM_BLOCK_SIZE );
-    }  
+    } 
+    //ret.push_back( 0x0); 
     return ret;
   }
 
-  vAdr getDownloadAdrs();
+  vAdr MemUnit::getDownloadAdrs() {
+    //easy 1st version: read everything in shared area
+    vAdr ret = vAdr((poolSize + _32b_SIZE_ - 1)/ _32b_SIZE_ );
+   
+    for (uint32_t adr = startOffs + extBaseAdr; adr < endOffs + extBaseAdr; adr += _32b_SIZE_ ) {
+      ret.push_back(adr);
+    }
+
+    return ret;
+  }  
+    
 
 
-  void parseDownloadData();
+  void MemUnit::parseDownloadData(vBuf downloadData) {
+    //extract and parse downloadBmp
+    parserMap.clear();
+    std::copy(downloadData.begin(), downloadData.begin() + downloadBmp.size(), downloadBmp.begin());
+
+    //create parserMap and Vertices
+
+    for(unsigned int bitIdx = 0; bitIdx < bmpLen; bitIdx++) {
+      if (downloadBmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {
+        uint32_t localAdr = (startOffs - sharedOffs) + bitIdx * _MEM_BLOCK_SIZE;
+        uint32_t adr      = localAdr + sharedOffs;
+        uint32_t hash     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_HASH]);
+
+        std::cout << hash2name(hash) << " -- L@: 0x" << std::hex << localAdr << " @: 0x" << adr << " #0x" << hash << std::endl;
+        uint32_t flags    = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]);
+        vertex_t tmpV     = boost::add_vertex((myVertex) {hash2name(hash), hash, NULL, "", flags}, gDown);
+        parserMap[adr]    = (parserMeta){tmpV, hash};
+        auto src = downloadData.begin()+localAdr;
+        std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&parserMap.at(adr).b[0]);
+
+
+      
+        switch (gDown[tmpV].flags & NFLG_TYPE_MSK) {
+          case NODE_TYPE_TMSG : gDown[tmpV].np = (node_ptr) new   TimingMsg(gDown[tmpV].name, parserMap.at(adr).hash, parserMap.at(adr).b, gDown[tmpV].flags, 0, 0, 0, 0, 0); break;
+          case NODE_TYPE_CNOOP : gDown[tmpV].np = (node_ptr) new        Noop(gDown[tmpV].name, parserMap.at(adr).hash, parserMap.at(adr).b, gDown[tmpV].flags, 0, 0, 0); break;
+          case NODE_TYPE_BLOCK : gDown[tmpV].np = (node_ptr) new   Block(gDown[tmpV].name, parserMap.at(adr).hash, parserMap.at(adr).b, gDown[tmpV].flags, 0); break;
+          case NODE_TYPE_QUEUE : gDown[tmpV].np = (node_ptr) new   CmdQMeta(gDown[tmpV].name, parserMap.at(adr).hash, parserMap.at(adr).b, gDown[tmpV].flags); break;
+          case NODE_TYPE_ALTDST : gDown[tmpV].np = (node_ptr) new   DestList(gDown[tmpV].name, parserMap.at(adr).hash, parserMap.at(adr).b, gDown[tmpV].flags); break;
+          case NODE_TYPE_QBUF : gDown[tmpV].np = (node_ptr) new   CmdQBuffer(gDown[tmpV].name, parserMap.at(adr).hash, parserMap.at(adr).b, gDown[tmpV].flags); break;
+          default : break;
+        }
+      
+        //std::cout << "Added " << hash2name(hash) << " @V " << tmpV << std::endl;
+      }
+    }
+
+    boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
+    boost::tie(vi, vi_end) = vertices(gDown);
+    std::cout << std::dec << "Size gDown: " << vi_end - vi << std::endl;
+
+    BOOST_FOREACH( vertex_t v, vertices(gDown) )  {
+      std::cout << "Name: " << gDown[v].name << std::endl;
+    }
+    // create edges
+    for(auto& it : parserMap) {
+      //find default destination
+      //hexDump(gDown[it.second.v].name.c_str(), (uint8_t*)&it.second.b[0], _MEM_BLOCK_SIZE);
+      //hexDump("original", (uint8_t*)&downloadData[it.first - sharedOffs], _MEM_BLOCK_SIZE);
+      uint32_t childAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&it.second.b[NODE_DEF_DEST_PTR]);
+      if ( childAdr != LM32_NULL_PTR ) childAdr = intAdr2adr(childAdr);
+    
+      std::cout << gDown[it.second.v].name << " is defaulting to " << std::hex << childAdr << std::endl;
+      if (parserMap.count(childAdr) > 0) {
+        auto& child = parserMap.at(childAdr);
+        std::cout << gDown[it.second.v].name << "'s defDest is " << gDown[child.v].name << std::endl;
+        boost::add_edge(it.second.v, child.v, (myEdge){"defDest"}, gDown);
+      } else {
+        std::cout << gDown[it.second.v].name << "has no defDest." << std::endl;
+      }
+      
+      
+    }
+  }  
+
+
   //dlAlloc: adr -> vertex_desc, hash, buffer
+      
+      
 
   // creating nodes
   // iterate over (big) eb download buffer (data blocks):
@@ -224,7 +309,39 @@ eb_status_t ftmRamWrite()
     return false;
   }
   
-  
+  void MemUnit::prepareUpload() {
+    std::string cmp; 
+
+    //allocate and init all nodes
+    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+      allocate(gUp[v].name);
+
+      auto* x = lookupName(gUp[v].name);
+      if(x == NULL) {std::cerr << "ERROR: Tried to lookup unallocated node " << gUp[v].name <<  std::endl; return;}
+
+      //init binary node data
+      cmp = gUp[v].type;
+      if      (cmp == "tmsg")     {gUp[v].np = (node_ptr) new   TimingMsg(gUp[v].name, x->hash, x->b, gUp[v].flags, gUp[v].tOffs, gUp[v].id, gUp[v].par, gUp[v].tef, gUp[v].res); }
+      else if (cmp == "noop")     {gUp[v].np = (node_ptr) new        Noop(gUp[v].name, x->hash, x->b, gUp[v].flags, gUp[v].tOffs, gUp[v].tValid, gUp[v].qty); }
+      else if (cmp == "flow")     {std::cerr << "not yet implemented " << gUp[v].type << std::endl;}
+      else if (cmp == "flush")    {std::cerr << "not yet implemented " << gUp[v].type << std::endl;}
+      else if (cmp == "wait")     {std::cerr << "not yet implemented " << gUp[v].type << std::endl;}
+      else if (cmp == "block")    {gUp[v].np = (node_ptr) new     Block(gUp[v].name, x->hash, x->b, gUp[v].flags, gUp[v].tPeriod ); }
+      else if (cmp == "qinfo")    {gUp[v].np = (node_ptr) new    CmdQMeta(gUp[v].name, x->hash, x->b, gUp[v].flags);}
+      else if (cmp == "listdst") {gUp[v].np = (node_ptr) new DestList(gUp[v].name, x->hash, x->b, gUp[v].flags);}
+      else if (cmp == "qbuf")     {gUp[v].np = (node_ptr) new  CmdQBuffer(gUp[v].name, x->hash, x->b, gUp[v].flags);}
+      else if (cmp == "meta")     {std::cerr << "not yet implemented " << gUp[v].type << std::endl;}
+      else                        {std::cerr << "Node type" << cmp << " not supported! " << std::endl;} 
+    }
+
+    //serialise all nodes
+    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+        if (allocMap.count(gUp[v].name) == 0){std::cerr << " Node " << gUp[v].name << " was not allocated " << gUp[v].type << std::endl; return;} 
+        if (gUp[v].np == NULL ){std::cerr << " Node " << gUp[v].name << " was not initialised! " << gUp[v].type << std::endl; return;}
+        // try to serialise
+        gUp[v].np->accept(VisitorNodeCrawler(v, *this));
+    }    
+  }
 
 
 

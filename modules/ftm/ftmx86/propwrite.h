@@ -16,7 +16,12 @@
 
 
 #include "visitor.h"
-typedef boost::shared_ptr<Node> node_ptr;
+#include "common.h"
+#include "node.h"
+#include "block.h"
+#include "meta.h"
+#include "event.h"
+
 
   struct sample_graph_writer {
     const std::string& sroot;
