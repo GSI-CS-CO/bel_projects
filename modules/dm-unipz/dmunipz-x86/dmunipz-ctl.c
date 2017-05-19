@@ -130,17 +130,19 @@ static void help(void) {
   fprintf(stderr, "  -i               display information on gateway\n");
   fprintf(stderr, "  -s<n>            snoop gateway for information continuously\n");
   fprintf(stderr, "                   0: print all messages (default)\n");
-  fprintf(stderr, "                   1: only print error status and state changes\n");
-  fprintf(stderr, "                   2: only print state changes\n");
+  fprintf(stderr, "                   1: as 0, but without info on ongoing transfers\n");
+  fprintf(stderr, "                   2: as 1, but without info on transfers\n");
+  fprintf(stderr, "                   3: as 2, but without info on status\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  configure        command requests state change to CONFIGURED\n");
   fprintf(stderr, "  startop          command requests state change to OPERATION\n");
   fprintf(stderr, "  stopop           command requests state change to STOPPING -> IDLE\n");
-  fprintf(stderr, "  stopop           command requests state change to STOPPING -> CONFIGURED\n");
+  fprintf(stderr, "  recover          command requests state change to IDLE\n");
   fprintf(stderr, "  idle             command requests state change to IDLE\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control the DM-UNIPZ gateway from the command line.\n");
   fprintf(stderr, "Example1: '%s -i dev/wbm0' display typical information.\n", program);
+  fprintf(stderr, "Example2: '%s -s0 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", DMUNIPZ_X86_VERSION);
@@ -315,27 +317,29 @@ int main(int argc, char** argv) {
       } // switch actState
       
       // if required, print status change
-      if  (actState     != state)       
-        if (logLevel <= DMUNIPZ_LOGLEVEL_STATE)  printf("dm-unipz: state change to %s\n",   dmunipz_state_text(state));
+      if  ((actState != state) && (logLevel <= DMUNIPZ_LOGLEVEL_STATE)) printFlag = 1;
 
-      // if required, print info on status and transfer
+      // determine when to print info
       printFlag = 0;
-      if  ((actStatus    != status) && (logLevel <= DMUNIPZ_LOGLEVEL_STATUS))                                                                    printFlag = 1;
-      if ((actStatTrans != statTrans) && (actTransfers == transfers) && (statTrans & DMUNIPZ_TRANS_RELTK) && (logLevel == DMUNIPZ_LOGLEVEL_ALL)) printFlag = 1;
+
+      if ((actState     != state)     && (logLevel <= DMUNIPZ_LOGLEVEL_STATE))                                         {printFlag = 1; actState = state;}
+      if ((actStatus    != status)    && (logLevel <= DMUNIPZ_LOGLEVEL_STATUS))                                        {printFlag = 1; actStatus = status;}
+      if ((actTransfers != transfers) && (logLevel <= DMUNIPZ_LOGLEVEL_COMPLETE) && (statTrans & DMUNIPZ_TRANS_RELTK)) {printFlag = 1; actTransfers = transfers;}
+      if ((actStatTrans != statTrans) && (logLevel <= DMUNIPZ_LOGLEVEL_ALL))                                           {printFlag = 1; actStatTrans = statTrans;}
 
       if (printFlag) {
         printf("dm-unipz: transfer - "); 
         printTransfer(transfers, virtAcc, statTrans); 
-        printf(", status - %s\n", dmunipz_status_text(status));
+        printf(", %s, status - %s\n", dmunipz_state_text(state), dmunipz_status_text(status));
       } // if printFlag
 
       fflush(stdout);                                                                  // required for immediate writing (if stdout is piped to syslog)
     
-      // update local variables
+      /*      // update local variables
       actTransfers  = transfers;
       actStatus     = status;
       actState      = state;
-      actStatTrans  = statTrans;
+      actStatTrans  = statTrans; */
 
       //sleep 
       usleep(sleepTime);

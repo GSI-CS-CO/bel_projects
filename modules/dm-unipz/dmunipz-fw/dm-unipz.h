@@ -20,7 +20,7 @@
 #define  DMUNIPZ_STATUS_RELBEAMFAILED    9    // UNILAC refuses to release beam request
 #define  DMUNIPZ_STATUS_DEVBUSERROR     10    // something went wrong with write/read on the MIL devicebus
 #define  DMUNIPZ_STATUS_REQNOTOK        11    // UNILAC signals 'request not ok'                          
-#define  DMUNIPZ_STATUS_REQBEAMTIMEDOUT 12    // UNILAC beam request timed out
+#define  DMUNIPZ_STATUS_REQBEAMTIMEDOUT 12    // UNILAC beam request timed out                                
 
 // commands from the outside
 #define  DMUNIPZ_CMD_NOCMD        0           // no command ...
@@ -57,9 +57,10 @@
 #define DMUNIPZ_TRANS_RELBEAM    32           // beam released          
 
 // define log levels for print statemens
-#define DMUNIPZ_LOGLEVEL_ALL      0           // print all messages
-#define DMUNIPZ_LOGLEVEL_STATUS   1           // print changes of status and state
-#define DMUNIPZ_LOGLEVEL_STATE    2           // print changes of state only
+#define DMUNIPZ_LOGLEVEL_ALL      0           // info on ongoing transfers, info on completed transfers, info on status changes, info on state changes
+#define DMUNIPZ_LOGLEVEL_COMPLETE 1           // info on completed transfers, info on status changes, info on state changes
+#define DMUNIPZ_LOGLEVEL_STATUS   2           // info on status changes, info on state changes
+#define DMUNIPZ_LOGLEVEL_STATE    3           // info on state changes
 
 // part below provide by Ludwig Hechler 
 #define IFB_ADDRESS_SIS     0x20        /* Adresse der Interfacekarte               */
