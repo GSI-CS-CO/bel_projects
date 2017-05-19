@@ -8,18 +8,19 @@
 #define  DMUNIPZ_EVT_UNI_READY    0x1e        // event number EVT_UNI_READY
 
 // (error) status
-#define  DMUNIPZ_STATUS_UNKNOWN        0      // unknown status
-#define  DMUNIPZ_STATUS_OK             1      // OK
-#define  DMUNIPZ_STATUS_ERROR          2      // an error occured
-#define  DMUNIPZ_STATUS_TIMEDOUT       3      // a timeout occured
-#define  DMUNIPZ_STATUS_OUTOFRANGE     4      // some value is out of range
-#define  DMUNIPZ_STATUS_REQTKFAILED    5      // UNILAC refuses request for TK
-#define  DMUNIPZ_STATUS_REQTKTIMEOUT   6      // request to reserve TK timed out
-#define  DMUNIPZ_STATUS_REQBEAMFAILED  7      // UNILAC refuses request for beam
-#define  DMUNIPZ_STATUS_RELTKFAILED    8      // UNILAC refuse to release TK request
-#define  DMUNIPZ_STATUS_RELBEAMFAILED  9      // UNILAC refuse to release beam request
-#define  DMUNIPZ_STATUS_DEVBUSERROR   10      // something went wrong with write/read on the MIL devicebus
-#define  DMUNIPZ_STATUS_REQNOTOK      11      // UNILAC signals 'request not ok'                          
+#define  DMUNIPZ_STATUS_UNKNOWN          0    // unknown status
+#define  DMUNIPZ_STATUS_OK               1    // OK
+#define  DMUNIPZ_STATUS_ERROR            2    // an error occured
+#define  DMUNIPZ_STATUS_TIMEDOUT         3    // a timeout occured
+#define  DMUNIPZ_STATUS_OUTOFRANGE       4    // some value is out of range
+#define  DMUNIPZ_STATUS_REQTKFAILED      5    // UNILAC refuses TK request
+#define  DMUNIPZ_STATUS_REQTKTIMEOUT     6    // UNILAC TK request timed out
+#define  DMUNIPZ_STATUS_REQBEAMFAILED    7    // UNILAC refuses beam request
+#define  DMUNIPZ_STATUS_RELTKFAILED      8    // UNILAC refuses to release TK request
+#define  DMUNIPZ_STATUS_RELBEAMFAILED    9    // UNILAC refuses to release beam request
+#define  DMUNIPZ_STATUS_DEVBUSERROR     10    // something went wrong with write/read on the MIL devicebus
+#define  DMUNIPZ_STATUS_REQNOTOK        11    // UNILAC signals 'request not ok'                          
+#define  DMUNIPZ_STATUS_REQBEAMTIMEDOUT 12    // UNILAC beam request timed out
 
 // commands from the outside
 #define  DMUNIPZ_CMD_NOCMD        0           // no command ...
@@ -53,7 +54,7 @@
 #define DMUNIPZ_TRANS_RELTK       4           // TK released
 #define DMUNIPZ_TRANS_REQBEAM     8           // beam requested
 #define DMUNIPZ_TRANS_REQBEAMOK  16           // beam request succeeded
-#define DMUNIPZ_TRANS_RELBEAM    32           // beam released
+#define DMUNIPZ_TRANS_RELBEAM    32           // beam released          
 
 // define log levels for print statemens
 #define DMUNIPZ_LOGLEVEL_ALL      0           // print all messages

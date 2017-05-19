@@ -83,13 +83,14 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_ERROR            : return "an error occured";
   case DMUNIPZ_STATUS_TIMEDOUT         : return "a timeout occured";
   case DMUNIPZ_STATUS_OUTOFRANGE       : return "some value is out of range";
-  case DMUNIPZ_STATUS_REQTKFAILED      : return "UNILAC refuses request for TK";
-  case DMUNIPZ_STATUS_REQTKTIMEOUT     : return "request to reserve TK timed out";
-  case DMUNIPZ_STATUS_REQBEAMFAILED    : return "UNILAC refuses request for beam";
-  case DMUNIPZ_STATUS_RELTKFAILED      : return "UNILAC refuse to release TK request";
-  case DMUNIPZ_STATUS_RELBEAMFAILED    : return "UNILAC refuse to release beam request";
+  case DMUNIPZ_STATUS_REQTKFAILED      : return "UNILAC refuses TK request";
+  case DMUNIPZ_STATUS_REQTKTIMEOUT     : return "UNILAC TK request timed out";
+  case DMUNIPZ_STATUS_REQBEAMFAILED    : return "UNILAC refuses beam request";
+  case DMUNIPZ_STATUS_RELTKFAILED      : return "UNILAC refuses to release TK request";
+  case DMUNIPZ_STATUS_RELBEAMFAILED    : return "UNILAC refuses to release beam request";
   case DMUNIPZ_STATUS_DEVBUSERROR      : return "something went wrong with write/read on the MIL devicebus";
   case DMUNIPZ_STATUS_REQNOTOK         : return "UNILAC signals 'request not ok'";
+  case DMUNIPZ_STATUS_REQBEAMTIMEDOUT  : return "UNILAC beam request timed out";
   default                              : return "dm-unipz: undefined error code";
   }
 }
@@ -110,12 +111,14 @@ const char* dmunipz_state_text(uint32_t code) {
 
 const char* dmunipz_transferStatus_text(uint32_t code) {
   switch (code) {
-  case DMUNIPZ_TRANS_UNKNOWN : return "unknown status";
-  case DMUNIPZ_TRANS_REQTK   : return "TK request";
-  case DMUNIPZ_TRANS_REQBEAM : return "beam request";
-  case DMUNIPZ_TRANS_SUCCESS : return "transfer successful";
-  case DMUNIPZ_TRANS_FAIL    : return "transfer failed";
-  default                    : return "dm-unipz: undefined transfer status";
+  case DMUNIPZ_TRANS_UNKNOWN   : return "unknown status";
+  case DMUNIPZ_TRANS_REQTK     : return "TK requested";
+  case DMUNIPZ_TRANS_REQTKOK   : return "TK request succeeded";
+  case DMUNIPZ_TRANS_RELTK     : return "TK released";
+  case DMUNIPZ_TRANS_REQBEAM   : return "beam requested";
+  case DMUNIPZ_TRANS_REQBEAMOK : return "beam request succeeded";
+  case DMUNIPZ_TRANS_RELBEAM   : return "beam released";
+  default                      : return "undefined transfer status";
   }
 }
 
@@ -179,12 +182,16 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
 
 void printTransfer(uint32_t transfers, uint32_t virtAcc, uint32_t statTrans)
 {
-    printf("%08d, %02d, %d %d %d %d \n", transfers, virtAcc, 
-           ((statTrans & DMUNIPZ_TRANS_REQTK) > 0),
-           ((statTrans & DMUNIPZ_TRANS_REQBEAM) > 0),  
-           ((statTrans & DMUNIPZ_TRANS_SUCCESS) > 0 ), 
-           ((statTrans & DMUNIPZ_TRANS_FAIL) > 0));
-}
+    printf("%08d, %02d, %d %d %d %d %d %d", transfers, virtAcc, 
+           ((statTrans & DMUNIPZ_TRANS_REQTK    ) > 0),  
+           ((statTrans & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
+           ((statTrans & DMUNIPZ_TRANS_RELTK    ) > 0),
+           ((statTrans & DMUNIPZ_TRANS_REQBEAM  ) > 0),
+           ((statTrans & DMUNIPZ_TRANS_REQBEAMOK) > 0),
+           ((statTrans & DMUNIPZ_TRANS_RELBEAM  ) > 0)
+           );
+                        
+} // printTransfer
 
 int main(int argc, char** argv) {
   eb_status_t       eb_status;
@@ -209,6 +216,8 @@ int main(int argc, char** argv) {
   uint32_t actStatus;      // actual status of gateway
   uint32_t actStatTrans;   // actual status of ongoing transfer
   uint32_t sleepTime;      // time to sleep [us]
+  uint32_t printFlag;      // flag for printing
+  
 
   program = argv[0];    
 
@@ -305,13 +314,20 @@ int main(int argc, char** argv) {
         sleepTime = 100000;                          
       } // switch actState
       
-      // if required, print stuff
+      // if required, print status change
       if  (actState     != state)       
         if (logLevel <= DMUNIPZ_LOGLEVEL_STATE)  printf("dm-unipz: state change to %s\n",   dmunipz_state_text(state));
-      if  (actStatus    != status)
-        if (logLevel <= DMUNIPZ_LOGLEVEL_STATUS) printf("dm-unipz: virtual accelerator %d - %s\n", virtAcc, dmunipz_status_text(status));
-      if ((actStatTrans != statTrans) && (actTransfers == transfers)) 
-        if (logLevel == DMUNIPZ_LOGLEVEL_ALL)   {printf("dm-unipz: transfer status - "); printTransfer(transfers, virtAcc, statTrans);}
+
+      // if required, print info on status and transfer
+      printFlag = 0;
+      if  ((actStatus    != status) && (logLevel <= DMUNIPZ_LOGLEVEL_STATUS))                                                                    printFlag = 1;
+      if ((actStatTrans != statTrans) && (actTransfers == transfers) && (statTrans & DMUNIPZ_TRANS_RELTK) && (logLevel == DMUNIPZ_LOGLEVEL_ALL)) printFlag = 1;
+
+      if (printFlag) {
+        printf("dm-unipz: transfer - "); 
+        printTransfer(transfers, virtAcc, statTrans); 
+        printf(", status - %s\n", dmunipz_status_text(status));
+      } // if printFlag
 
       fflush(stdout);                                                                  // required for immediate writing (if stdout is piped to syslog)
     
