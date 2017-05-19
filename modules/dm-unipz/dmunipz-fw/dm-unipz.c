@@ -74,6 +74,7 @@ volatile uint32_t *pShared;            // pointer to begin of shared memory regi
 uint32_t *pSharedStatus;               // pointer to a "user defined" u32 register; here: publish status
 uint32_t *pSharedNIterMain;            // pointer to a "user defined" u32 register; here: publish # of iterations of main loop
 uint32_t *pSharedNTransfer;            // pointer to a "user defined" u32 register; here: publish # of transfers
+uint32_t *pSharedNInject;              // pointer to a "user defined" u32 register; here: publish # of injections (of current transfer)
 uint32_t *pSharedVirtAcc;              // pointer to a "user defined" u32 register; here: publish # of virtual accelerator
 uint32_t *pSharedStatTrans;            // pointer to a "user defined" u32 register; here: publish status of ongoing transfer
 volatile uint32_t *pSharedCmd;         // pointer to a "user defined" u32 register; here: get command from host
@@ -85,12 +86,10 @@ uint32_t *pCpuRamExternalCmd;          // external address (seen from host bridg
 uint32_t *pCpuRamExternalState;        // external address (seen from host bridge) of this CPU's RAM: state (write)
 uint32_t *pCpuRamExternalNIterMain;    // external address (seen from host bridge) of this CPU's RAM: # of iterations of main loop (write)
 uint32_t *pCpuRamExternalNTransfer;    // external address (seen from host bridge) of this CPU's RAM: # of transfers (write) 
+uint32_t *pCpuRamExternalNInject;      // external address (seen from host bridge) of this CPU's RAM: # of injections (of current transfer) (write) 
 uint32_t *pCpuRamExternalVirtAcc;      // external address (seen from host bridge) of this CPU's RAM: # of virtual accelarator (write)
 uint32_t *pCpuRamExternalStatTrans;    // external address (seen from host bridge) of this CPU's RAM: status of ongoing transfer
 uint32_t *pCpuRamExternalData4EB;      // external address (seen from host bridge) of this CPU's RAM: field for EB return values (read)
-
-uint32_t timeRecMILEvtHigh;            // TAI of received MIL event 32 high bits
-uint32_t timeRecMILEvtLow;             // TAI of received MIL event 32 low bits
 
 uint32_t actStatus;                    // actual (error) status, see DMUNIPZ_STATUS_...
 uint32_t actState;                     // actual state,          see DMUNIPZ_STATE_...
@@ -170,6 +169,7 @@ void initSharedMem() // determine address and clear shared mem
   pSharedState      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_STATE >> 2));
   pSharedNIterMain  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_NITERMAIN >> 2));
   pSharedNTransfer  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSN >> 2));
+  pSharedNInject    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_INJECTN >> 2));
   pSharedVirtAcc    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSVIRTACC >> 2));
   pSharedStatTrans  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSSTATUS >> 2));
   pSharedData4EB    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DATA_4EB_START >> 2));
@@ -181,6 +181,7 @@ void initSharedMem() // determine address and clear shared mem
   mprintf("internal shared memory: state address           @ 0x%08x\n", (uint32_t)pSharedState);
   mprintf("internal shared memory: # of iterations address @ 0x%08x\n", (uint32_t)pSharedNIterMain);
   mprintf("internal shared memory: # of transfers          @ 0x%08x\n", (uint32_t)pSharedNTransfer);
+  mprintf("internal shared memory: # of injections         @ 0x%08x\n", (uint32_t)pSharedNInject);
   mprintf("internal shared memory: # virtual accelerator   @ 0x%08x\n", (uint32_t)pSharedVirtAcc);
   mprintf("internal shared memory: status of transfer      @ 0x%08x\n", (uint32_t)pSharedStatTrans);
   mprintf("internal shared memory: EB return value address @ 0x%08x to 0x%08x\n", (uint32_t)pSharedData4EB, (uint32_t)(&(pSharedData4EB[DMUNIPZ_SHARED_DATA_4EB_SIZE >> 2])));
@@ -197,6 +198,7 @@ void initSharedMem() // determine address and clear shared mem
     pCpuRamExternalState      = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_STATE + SHARED_OFFS) >> 2));
     pCpuRamExternalNIterMain  = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_NITERMAIN + SHARED_OFFS) >> 2));
     pCpuRamExternalNTransfer  = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_TRANSN + SHARED_OFFS) >> 2));
+    pCpuRamExternalNInject    = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_INJECTN + SHARED_OFFS) >> 2));
     pCpuRamExternalVirtAcc    = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_TRANSVIRTACC + SHARED_OFFS) >> 2));
     pCpuRamExternalStatTrans  = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_TRANSSTATUS + SHARED_OFFS) >> 2));
     pCpuRamExternalData4EB    = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_DATA_4EB_START + SHARED_OFFS) >> 2));
@@ -208,6 +210,7 @@ void initSharedMem() // determine address and clear shared mem
     mprintf("external WB address   : state            @ 0x%08x\n", (uint32_t)(pCpuRamExternalState));
     mprintf("external WB address   : # of iterations  @ 0x%08x\n", (uint32_t)(pCpuRamExternalNIterMain));
     mprintf("external WB address   : # of transfers   @ 0x%08x\n", (uint32_t)(pCpuRamExternalNTransfer));
+    mprintf("external WB address   : # of injections  @ 0x%08x\n", (uint32_t)(pCpuRamExternalNInject));
     mprintf("external WB address   : # virtual acc.   @ 0x%08x\n", (uint32_t)(pCpuRamExternalVirtAcc));
     mprintf("external WB address   : status transfer  @ 0x%08x\n", (uint32_t)(pCpuRamExternalStatTrans));
     mprintf("external WB address   : EB return values @ 0x%08x to 0x%08x\n", (uint32_t)pCpuRamExternalData4EB, (uint32_t)(&(pCpuRamExternalData4EB[DMUNIPZ_SHARED_DATA_4EB_SIZE >> 2])));
@@ -223,6 +226,7 @@ void initSharedMem() // determine address and clear shared mem
   *pSharedState      = DMUNIPZ_STATE_UNKNOWN;
   *pSharedNIterMain  = 0x0;
   *pSharedNTransfer  = 0x0;
+  *pSharedNInject    = 0x0;
   *pSharedVirtAcc    = 0xFF;
   *pSharedStatTrans  = DMUNIPZ_TRANS_UNKNOWN;
   ebmClearSharedMem();
@@ -725,7 +729,7 @@ uint32_t changeState() //state machine; see dm-unipz.h for possible states and t
 } //changeState
 
 
-uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t *nTransfer)
+uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t *nTransfer, uint32_t *nInject)
 {
   uint32_t i;
   uint32_t status;
@@ -742,9 +746,10 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
     {
     case DMUNIPZ_ECADO_REQTK :                                                     // received command "REQ_TK" from data master
 
-      *virtAcc        = virtAccTmp;                                                // number of virtual accelerator is set when DM request TK
+      *virtAcc        = virtAccTmp;                                                // number of virtual accelerator is set when DM requests TK
       *statusTransfer = DMUNIPZ_TRANS_REQTK;                                       // update status of transfer
-      (*nTransfer)++;                                                              // increment number of tranfsers
+      (*nTransfer)++;                                                              // increment number of transfers
+      *nInject        = 0;                                                         // number of injections is reset when DM requests TK
 
       status = requestTK(DMUNIPZ_REQTIMEOUT, virtAccTmp, 0);                       // request TK from UNIPZ
       replyRequestTK(virtAccTmp, status);                                          // reply to DM 
@@ -755,6 +760,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
     case DMUNIPZ_ECADO_REQBEAM :                                                   // received command "REQ_BEAM" from data master
 
       *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAM;                   // update status of transfer
+      (*nInject)++;                                                                // injrement number of injections (of current transfer)
 
       enableFilterEvtMil(pMILPiggy);                                               // enable filter @ MIL piggy
       clearFifoEvtMil(pMILPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
@@ -802,6 +808,7 @@ void main(void) {
   int      status;
   uint32_t statusTransfer;
   uint32_t nTransfer;
+  uint32_t nInject;
   uint32_t virtAcc;
 
 
@@ -830,8 +837,7 @@ void main(void) {
     switch(actState)          // state specific do actions
       {
       case DMUNIPZ_STATE_OPERATION :
-        status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer);
-        //mprintf("dm-unipz: status transfer %d, virtual accelerator %d, 
+        status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer, &nInject);
         break;
       case DMUNIPZ_STATE_FATAL :
         mprintf("dm-unipz: a FATAL error has occured. Good bye.\n");
@@ -854,5 +860,6 @@ void main(void) {
     *pSharedStatTrans = statusTransfer;
     *pSharedVirtAcc   = virtAcc;
     *pSharedNTransfer = nTransfer;
+    *pSharedNInject   = nInject;
   } // while
 } /* main */
