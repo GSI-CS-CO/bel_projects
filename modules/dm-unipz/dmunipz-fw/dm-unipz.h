@@ -9,17 +9,17 @@
 
 // (error) status
 #define  DMUNIPZ_STATUS_UNKNOWN        0      // unknown status
-#define  DMUNIPZ_STATUS_OK             1      // status OK
+#define  DMUNIPZ_STATUS_OK             1      // OK
 #define  DMUNIPZ_STATUS_ERROR          2      // an error occured
 #define  DMUNIPZ_STATUS_TIMEDOUT       3      // a timeout occured
-#define  DMUNIPZ_STATUS_OUTOFRANGE     4      // request to reserve TK failed
-#define  DMUNIPZ_STATUS_REQTKFAILED    5      // request to reserve TK failed
+#define  DMUNIPZ_STATUS_OUTOFRANGE     4      // some value is out of range
+#define  DMUNIPZ_STATUS_REQTKFAILED    5      // UNILAC refuses request for TK
 #define  DMUNIPZ_STATUS_REQTKTIMEOUT   6      // request to reserve TK timed out
-#define  DMUNIPZ_STATUS_REQBEAMFAILED  7      // request to request beam failed
-#define  DMUNIPZ_STATUS_RELTKFAILED    8      // release of TK request failed
-#define  DMUNIPZ_STATUS_RELBEAMFAILED  9      // release of beam request failed
+#define  DMUNIPZ_STATUS_REQBEAMFAILED  7      // UNILAC refuses request for beam
+#define  DMUNIPZ_STATUS_RELTKFAILED    8      // UNILAC refuse to release TK request
+#define  DMUNIPZ_STATUS_RELBEAMFAILED  9      // UNILAC refuse to release beam request
 #define  DMUNIPZ_STATUS_DEVBUSERROR   10      // something went wrong with write/read on the MIL devicebus
-#define  DMUNIPZ_STATUS_REQNOTOK      11      // UNILAC signals 'request not ok'
+#define  DMUNIPZ_STATUS_REQNOTOK      11      // UNILAC signals 'request not ok'                          
 
 // commands from the outside
 #define  DMUNIPZ_CMD_NOCMD        0           // no command ...
@@ -30,14 +30,14 @@
 #define  DMUNIPZ_CMD_RECOVER      5           // recovery from error state
 
 // states; implicitely, all states may transit to the ERROR or FATAL state
-#define  DMUNIPZ_STATE_UNKNOWN    0           // initial state -> IDLE (automatic)
+#define  DMUNIPZ_STATE_UNKNOWN    0           // unknown state
 #define  DMUNIPZ_STATE_S0         1           // initial state -> IDLE (automatic)
 #define  DMUNIPZ_STATE_IDLE       2           // idle state -> CONFIGURED (by command "configure")
 #define  DMUNIPZ_STATE_CONFIGURED 3           // configured state -> IDLE ("idle"), CONFIGURED ("configure"), OPERATION ("startop")
 #define  DMUNIPZ_STATE_OPERATION  4           // gateway in operation -> STOPPING ("stopop")
 #define  DMUNIPZ_STATE_STOPPING   5           // gateway in operation -> CONFIGURED (automatic)
 #define  DMUNIPZ_STATE_ERROR      6           // gateway in error -> IDLE ("recover")
-#define  DMUNIPZ_STATE_FATAL      7           // gateway in fatal error; RIP
+#define  DMUNIPZ_STATE_FATAL      7           // gateway in fatal error; RIP                                                             
 
 // activity requested by ECA Handler, the relevant codes are also used as "tags".
 #define  DMUNIPZ_ECADO_TIMEOUT    0           // timeout: no activity requested
@@ -50,8 +50,12 @@
 #define DMUNIPZ_TRANS_REQTK       1           // TK request
 #define DMUNIPZ_TRANS_REQBEAM     2           // beam request
 #define DMUNIPZ_TRANS_SUCCESS     4           // transfer successful
-#define DMUNIPZ_TRANS_FAIL        8           // transfer failed
+#define DMUNIPZ_TRANS_FAIL        8           // transfer failed    
 
+// define log levels for print statemens
+#define DMUNIPZ_LOGLEVEL_ALL      0           // print all messages
+#define DMUNIPZ_LOGLEVEL_STATUS   1           // print changes of status and state
+#define DMUNIPZ_LOGLEVEL_STATE    2           // print changes of state only
 
 // part below provide by Ludwig Hechler 
 #define IFB_ADDRESS_SIS     0x20        /* Adresse der Interfacekarte               */

@@ -1,0 +1,334 @@
+/******************************************************************************
+ *  dmunipz-ctl.c
+ *
+ *  created : 2017
+ *  author  : Dietrich Beck, GSI-Darmstadt
+ *  version : 17-May-2017
+ *
+ * Command-line interface for dmunipz
+ *
+ * -------------------------------------------------------------------------------------------
+ * License Agreement for this software:
+ *
+ * Copyright (C) 2013  Dietrich Beck
+ * GSI Helmholtzzentrum für Schwerionenforschung GmbH
+ * Planckstraße 1
+ * D-64291 Darmstadt
+ * Germany
+ *
+ * Contact: d.beck@gsi.de
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * For all questions and ideas contact: d.beck@gsi.de
+ * Last update: 17-May-2017
+ ********************************************************************************************/
+#define DMUNIPZ_X86_VERSION "0.0.1"
+
+// standard includes 
+#include <unistd.h> // getopt
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <time.h>
+#include <sys/time.h>
+
+// Etherbone
+#include <etherbone.h>
+
+// dm-unipz
+#include <dm-unipz.h>
+#include <dm-unipz_smmap.h>
+
+const char* program;
+static int getInfo = 0;
+static int snoop = 0;
+static int logLevel=0;
+
+eb_device_t  device;             // keep this and below global
+eb_address_t lm32_base;          // base address of lm32
+eb_address_t dmunipz_status;     // status of dmunipz, read
+eb_address_t dmunipz_state;      // state, read
+eb_address_t dmunipz_iterations; // number of iterations of main loop, read
+eb_address_t dmunipz_transfers;  // number of transfers from UNILAC to SIS, read
+eb_address_t dmunipz_virtAcc;    // number of virtual accelerator of ongoing or last transfer, read
+eb_address_t dmunipz_statTrans;  // status of ongoing or last transfer, read
+eb_address_t dmunipz_cmd;        // command, write
+
+
+
+static void die(const char* where, eb_status_t status) {
+  fprintf(stderr, "%s: %s failed: %s\n",
+          program, where, eb_status(status));
+  exit(1);
+} //die
+
+
+const char* dmunipz_status_text(uint32_t code) {
+  switch (code) {
+  case DMUNIPZ_STATUS_UNKNOWN          : return "unknown status";
+  case DMUNIPZ_STATUS_OK               : return "OK";
+  case DMUNIPZ_STATUS_ERROR            : return "an error occured";
+  case DMUNIPZ_STATUS_TIMEDOUT         : return "a timeout occured";
+  case DMUNIPZ_STATUS_OUTOFRANGE       : return "some value is out of range";
+  case DMUNIPZ_STATUS_REQTKFAILED      : return "UNILAC refuses request for TK";
+  case DMUNIPZ_STATUS_REQTKTIMEOUT     : return "request to reserve TK timed out";
+  case DMUNIPZ_STATUS_REQBEAMFAILED    : return "UNILAC refuses request for beam";
+  case DMUNIPZ_STATUS_RELTKFAILED      : return "UNILAC refuse to release TK request";
+  case DMUNIPZ_STATUS_RELBEAMFAILED    : return "UNILAC refuse to release beam request";
+  case DMUNIPZ_STATUS_DEVBUSERROR      : return "something went wrong with write/read on the MIL devicebus";
+  case DMUNIPZ_STATUS_REQNOTOK         : return "UNILAC signals 'request not ok'";
+  default                              : return "dm-unipz: undefined error code";
+  }
+}
+
+const char* dmunipz_state_text(uint32_t code) {
+  switch (code) {
+  case DMUNIPZ_STATE_UNKNOWN      : return "UNKNOWN   ";
+  case DMUNIPZ_STATE_S0           : return "S0        ";
+  case DMUNIPZ_STATE_IDLE         : return "IDLE      ";                                       
+  case DMUNIPZ_STATE_CONFIGURED   : return "CONFIGURED";
+  case DMUNIPZ_STATE_OPERATION    : return "OPERATION ";
+  case DMUNIPZ_STATE_STOPPING     : return "STOPPING  ";
+  case DMUNIPZ_STATE_ERROR        : return "ERROR     ";
+  case DMUNIPZ_STATE_FATAL        : return "FATAL(RIP)";
+  default                         : return "undefined  ";
+  }
+}
+
+const char* dmunipz_transferStatus_text(uint32_t code) {
+  switch (code) {
+  case DMUNIPZ_TRANS_UNKNOWN : return "unknown status";
+  case DMUNIPZ_TRANS_REQTK   : return "TK request";
+  case DMUNIPZ_TRANS_REQBEAM : return "beam request";
+  case DMUNIPZ_TRANS_SUCCESS : return "transfer successful";
+  case DMUNIPZ_TRANS_FAIL    : return "transfer failed";
+  default                    : return "dm-unipz: undefined transfer status";
+  }
+}
+
+
+static void help(void) {
+  fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  -h               display this help and exit\n");
+  fprintf(stderr, "  -i               display information on gateway\n");
+  fprintf(stderr, "  -s<n>            snoop gateway for information continuously\n");
+  fprintf(stderr, "                   0: print all messages (default)\n");
+  fprintf(stderr, "                   1: only print error status and state changes\n");
+  fprintf(stderr, "                   2: only print state changes\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  configure        command requests state change to CONFIGURED\n");
+  fprintf(stderr, "  startop          command requests state change to OPERATION\n");
+  fprintf(stderr, "  stopop           command requests state change to STOPPING -> IDLE\n");
+  fprintf(stderr, "  stopop           command requests state change to STOPPING -> CONFIGURED\n");
+  fprintf(stderr, "  idle             command requests state change to IDLE\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Use this tool to control the DM-UNIPZ gateway from the command line.\n");
+  fprintf(stderr, "Example1: '%s -i dev/wbm0' display typical information.\n", program);
+  fprintf(stderr, "\n");
+  fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
+  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", DMUNIPZ_X86_VERSION);
+} //help
+
+
+int readTransfers(uint32_t *transfers)
+{
+  eb_cycle_t  cycle;
+  eb_status_t eb_status;
+  
+  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("EP eb_cycle_open", eb_status);
+  eb_cycle_read(cycle, dmunipz_transfers,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)transfers);
+  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("EP eb_cycle_close", eb_status);
+
+  return eb_status;
+} // getInfo
+
+
+int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *transfers, uint32_t *virtAcc, uint32_t *statTrans)
+{
+  eb_cycle_t  cycle;
+  eb_status_t eb_status;
+  
+  if ((eb_status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) die("EP eb_cycle_open", eb_status);
+
+  eb_cycle_read(cycle, dmunipz_status,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)status);
+  eb_cycle_read(cycle, dmunipz_state,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)state);
+  eb_cycle_read(cycle, dmunipz_iterations,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)iterations);
+  eb_cycle_read(cycle, dmunipz_transfers,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)transfers);
+  eb_cycle_read(cycle, dmunipz_virtAcc,     EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)virtAcc);
+  eb_cycle_read(cycle, dmunipz_statTrans,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)statTrans);
+
+  if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("EP eb_cycle_close", eb_status);
+
+  return eb_status;
+} // getInfo
+
+
+void printTransfer(uint32_t transfers, uint32_t virtAcc, uint32_t statTrans)
+{
+    printf("%08d, %02d, %d %d %d %d \n", transfers, virtAcc, 
+           ((statTrans & DMUNIPZ_TRANS_REQTK) > 0),
+           ((statTrans & DMUNIPZ_TRANS_REQBEAM) > 0),  
+           ((statTrans & DMUNIPZ_TRANS_SUCCESS) > 0 ), 
+           ((statTrans & DMUNIPZ_TRANS_FAIL) > 0));
+}
+
+int main(int argc, char** argv) {
+  eb_status_t       eb_status;
+  eb_socket_t       socket;
+
+  const char* devName;
+  const char* command;
+
+  int opt, error = 0;
+  int exitCode   = 0;
+  char *tail;
+
+  uint32_t status;    
+  uint32_t state;     
+  uint32_t iterations;
+  uint32_t transfers; 
+  uint32_t virtAcc;   
+  uint32_t statTrans; 
+
+  uint32_t actTransfers;   // actual number of transfers
+  uint32_t actState;       // actual state of gateway
+  uint32_t actStatus;      // actual status of gateway
+  uint32_t actStatTrans;   // actual status of ongoing transfer
+  uint32_t sleepTime;      // time to sleep [us]
+
+  program = argv[0];    
+
+  while ((opt = getopt(argc, argv, "s:ih")) != -1) {
+    switch (opt) {
+    case 'i':
+      getInfo = 1;
+      break;
+    case 's':
+      snoop = 1;
+      logLevel = strtol(optarg, &tail, 0);
+      if (*tail != 0) {
+        fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+        exit(1);
+      } /* if *tail */
+      if ((logLevel < DMUNIPZ_LOGLEVEL_ALL) || (logLevel > DMUNIPZ_LOGLEVEL_STATE)) fprintf(stderr, "log level out of range\n");
+      break;
+    case 'h':
+      help();
+      return 0;
+      case ':':
+      case '?':
+        error = 1;
+      break;
+    default:
+      fprintf(stderr, "%s: bad getopt result\n", program);
+      return 1;
+    } /* switch opt */
+  } /* while opt */
+
+  if (error) {
+    help();
+    return 1;
+  }
+  
+  if (optind >= argc) {
+    fprintf(stderr, "%s: expecting one non-optional argument: <etherbone-device>\n", program);
+    fprintf(stderr, "\n");
+    help();
+    return 1;
+  }
+
+  devName = argv[optind];
+  if (optind+1 < argc)  command = argv[++optind];
+  else command = NULL;
+
+  /* open Etherbone device and socket */
+  if ((eb_status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDR32|EB_DATA32, &socket)) != EB_OK) die("eb_socket_open", eb_status);
+  if ((eb_status = eb_device_open(socket, devName, EB_ADDR32|EB_DATA32, 3, &device)) != EB_OK) die("eb_device_open", eb_status);
+
+  /* get device Wishbone address of lm32 */
+  lm32_base          = 0x20090000;  //chk, need to do this properly
+  dmunipz_status     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_STATUS;
+  dmunipz_state      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_STATE;;
+  dmunipz_iterations = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NITERMAIN;
+  dmunipz_transfers  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSN;
+  dmunipz_virtAcc    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSVIRTACC;
+  dmunipz_statTrans  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSSTATUS;
+  dmunipz_cmd        = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_CMD;
+
+  if (getInfo) {
+    readInfo(&status, &state, &iterations, &transfers, &virtAcc, &statTrans);
+    
+    printf("dm-unipz: state %s, status %s, iterations %d\n",dmunipz_state_text(state),  dmunipz_status_text(status), iterations);
+    printf("dm-unipz: transfer, virtAcc, reqTK reqBeam success failed:\n          ");
+    printTransfer(transfers, virtAcc, statTrans);
+  } // if getInfo
+
+  if (command) {
+    if (!strcasecmp(command, "configure")) eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_CONFIGURE, 0, eb_block);
+    if (!strcasecmp(command, "startop"))   eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_STARTOP  , 0, eb_block);
+    if (!strcasecmp(command, "stopop"))    eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_STOPOP   , 0, eb_block);
+    if (!strcasecmp(command, "recover"))   eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_RECOVER  , 0, eb_block);
+    if (!strcasecmp(command, "idle"))      eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_IDLE     , 0, eb_block);
+  } //if command
+
+  if (snoop) {
+    printf("dm-unipz: continous monitoring gateway...\n");
+    
+    actTransfers = 0;
+    actState     = DMUNIPZ_STATE_UNKNOWN;
+    actStatus    = DMUNIPZ_STATUS_UNKNOWN;
+    actStatTrans = DMUNIPZ_TRANS_UNKNOWN;
+
+    while (1) {
+      readInfo(&status, &state, &iterations, &transfers, &virtAcc, &statTrans);        // read info from lm32
+
+      switch(state) {
+      case DMUNIPZ_STATE_OPERATION :
+        if (actTransfers != transfers) sleepTime = DMUNIPZ_REQTIMEOUT * 1000 + 200000; // sleep as long as a beam should have been transferred
+        else                           sleepTime = 100000;                             // sleep for 100ms to be sure to catch the next TK_REQ
+        break;
+      default:
+        sleepTime = 100000;                          
+      } // switch actState
+      
+      // if required, print stuff
+      if  (actState     != state)       
+        if (logLevel <= DMUNIPZ_LOGLEVEL_STATE)  printf("dm-unipz: state change to %s\n",   dmunipz_state_text(state));
+      if  (actStatus    != status)
+        if (logLevel <= DMUNIPZ_LOGLEVEL_STATUS) printf("dm-unipz: virtual accelerator %d - %s\n", virtAcc, dmunipz_status_text(status));
+      if ((actStatTrans != statTrans) && (actTransfers == transfers)) 
+        if (logLevel == DMUNIPZ_LOGLEVEL_ALL)   {printf("dm-unipz: transfer status - "); printTransfer(transfers, virtAcc, statTrans);}
+
+      fflush(stdout);                                                                  // required for immediate writing (if stdout is piped to syslog)
+    
+      // update local variables
+      actTransfers  = transfers;
+      actStatus     = status;
+      actState      = state;
+      actStatTrans  = statTrans;
+
+      //sleep 
+      usleep(sleepTime);
+    } // while
+  } // if snoop
+
+  // close Etherbone device and socket
+  if ((eb_status = eb_device_close(device)) != EB_OK) die("eb_device_close", eb_status);
+  if ((eb_status = eb_socket_close(socket)) != EB_OK) die("eb_socket_close", eb_status);
+
+  return exitCode;
+}
