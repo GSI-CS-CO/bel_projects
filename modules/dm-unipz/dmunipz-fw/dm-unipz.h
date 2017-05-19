@@ -3,8 +3,8 @@
 
 #define  DMUNIPZ_US_ASMNOP        31          // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
-#define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout value ms; used by main loop 
-#define  DMUNIPZ_REQTIMEOUT       1000        // timeout value ms; used when requesting things from UNILAC
+#define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
+#define  DMUNIPZ_REQTIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
 #define  DMUNIPZ_EVT_UNI_READY    0x1e        // event number EVT_UNI_READY
 
 // (error) status
@@ -44,13 +44,16 @@
 #define  DMUNIPZ_ECADO_UNKOWN     1           // unnkown activity requested (unexpected action by ECA)
 #define  DMUNIPZ_ECADO_REQTK      2           // request the transfer channel (TK)
 #define  DMUNIPZ_ECADO_REQBEAM    3           // request beam from UNIPZ
+#define  DMUNIPZ_ECADO_RELTK      4           // release the transfer channel (TK)
 
 // status of transfer (status bits)
 #define DMUNIPZ_TRANS_UNKNOWN     0           // unknown status
-#define DMUNIPZ_TRANS_REQTK       1           // TK request
-#define DMUNIPZ_TRANS_REQBEAM     2           // beam request
-#define DMUNIPZ_TRANS_SUCCESS     4           // transfer successful
-#define DMUNIPZ_TRANS_FAIL        8           // transfer failed    
+#define DMUNIPZ_TRANS_REQTK       1           // TK requested
+#define DMUNIPZ_TRANS_REQTKOK     2           // TK request succeeded
+#define DMUNIPZ_TRANS_RELTK       4           // TK released
+#define DMUNIPZ_TRANS_REQBEAM     8           // beam requested
+#define DMUNIPZ_TRANS_REQBEAMOK  16           // beam request succeeded
+#define DMUNIPZ_TRANS_RELBEAM    32           // beam released
 
 // define log levels for print statemens
 #define DMUNIPZ_LOGLEVEL_ALL      0           // print all messages

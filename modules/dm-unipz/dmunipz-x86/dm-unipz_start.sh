@@ -7,9 +7,10 @@
 # clean up stuff
 ###########################################
 echo -e bring possibly resident firmware to idle state
-eb-write dev/wbm0 0x20090504/4 0x3
+./dmunipz-ctl dev/wbm0 stopop
 sleep 5
-eb-write dev/wbm0 0x20090504/4 0x4
+
+./dmunipz-ctl dev/wbm0 idle
 sleep 5
 echo -e destroy all unowned conditions for lm32 channel of ECA
 saft-ecpu-ctl baseboard -x
@@ -36,11 +37,11 @@ eb-fwload dev/wbm0 u 0x0 dmunipz.bin
 echo -e make firmware operational
 # send CONFIGURE command to firmware
 sleep 5
-eb-write dev/wbm0 0x20090504/4 0x1
+./dmunipz-ctl dev/wbm0 configure
 
 # send START OPERATATION command to firmware
 sleep 5
-eb-write dev/wbm0 0x20090504/4 0x2
+./dmunipz-ctl dev/wbm0 startop
 
 ###########################################
 # configure ECA
@@ -52,6 +53,9 @@ saft-ecpu-ctl baseboard -c 0x2222000000000000 0xffff000000000000 0 0x2 -d
 
 # configure ECA for lm32 channel: here action for TK request, tag "0x3"
 saft-ecpu-ctl baseboard -c 0x3333000000000000 0xffff000000000000 0 0x3 -d
+
+# configure ECA for lm32 channel: here action for TK request, tag "0x4"
+saft-ecpu-ctl baseboard -c 0x4444000000000000 0xffff000000000000 0 0x4 -d
 
 ###########################################
 # testing without datamaster
