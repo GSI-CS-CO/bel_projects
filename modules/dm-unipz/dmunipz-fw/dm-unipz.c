@@ -594,7 +594,7 @@ uint32_t entryActionConfigured()
   // check if modulbus I/O is ok
   if ((status = echoTestDevMil(pMILPiggy, IFB_ADDRESS_SIS, 0xbabe)) != DMUNIPZ_STATUS_OK) {
     mprintf("dm-unipz: ERROR - modulbus SIS IFK not available!\n");
-    return status;
+    return DMUNIPZ_STATUS_DEVBUSERROR;
   }
 
   // configure MIL piggy for timing events for all 16 virtual accelerators
@@ -664,7 +664,7 @@ void cmdHandler() // handle commands from the outside world
       mprintf("received cmd %d\n", cmd);
       break;
     case DMUNIPZ_CMD_RECOVER :
-      reqState = DMUNIPZ_CMD_IDLE;
+      reqState = DMUNIPZ_STATE_IDLE;
       mprintf("received cmd %d\n", cmd);
       break;
     default:
@@ -672,25 +672,20 @@ void cmdHandler() // handle commands from the outside world
     } // switch 
     *pSharedCmd = 0x0; // reset cmd value in shared memory 
   } // if command 
-} // ecaHandler
+} // cmdHandler
 
 
-void changeState() //state machine; see dm-unipz.h for possible states and transitions
+uint32_t changeState() //state machine; see dm-unipz.h for possible states and transitions
 {
   uint32_t status;
   uint32_t nextState;
 
-  // if something severe happened, perform immediate state change and return
-  if ((reqState == DMUNIPZ_STATE_ERROR) || (reqState == DMUNIPZ_STATE_FATAL)) { 
-    actState = reqState;
-    return;
-  } // if something severe happened...
-  
-  nextState = actState; // per default: remain in actual state without exit or entry action
   status    = DMUNIPZ_STATUS_OK; 
-  
-  switch (actState)     // check for allowed transitions: 1. determine next state, 2. perform exit or entry actions if required
-    {
+  // if something severe happened, perform immediate state change and return
+  if ((reqState == DMUNIPZ_STATE_ERROR) || (reqState == DMUNIPZ_STATE_FATAL)) nextState = reqState;
+  else {
+    nextState = actState; // per default: remain in actual state without exit or entry action
+    switch (actState) {   // check for allowed transitions: 1. determine next state, 2. perform exit or entry actions if required
     case DMUNIPZ_STATE_S0:
       nextState = DMUNIPZ_STATE_IDLE;     //automatic transition
       break;
@@ -711,12 +706,13 @@ void changeState() //state machine; see dm-unipz.h for possible states and trans
       if      (reqState == DMUNIPZ_STATE_IDLE)        {status = actionRecover();         nextState = reqState;}
       break;
     default:   nextState = DMUNIPZ_STATE_S0;  // in case we are in an undefined state, start all over again
-    } // if reqState
-
+    } // switch actState
+  }  // else something severe happened
+  
   // in case state change can not be done, transit to error state
   if (status != DMUNIPZ_STATUS_OK) nextState = DMUNIPZ_STATE_ERROR;
 
-  // state change: update info
+  // state change: update info and reset status
   if (actState != nextState) {  
     mprintf("dm-unipz: changed to state %d\n", nextState);
     *pSharedState = nextState;
@@ -724,6 +720,8 @@ void changeState() //state machine; see dm-unipz.h for possible states and trans
   // finaly ...
   actState = nextState;
   reqState = DMUNIPZ_STATE_UNKNOWN; //check
+
+  return status;
 } //changeState
 
 
@@ -768,6 +766,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
 
       if (status == DMUNIPZ_STATUS_TIMEDOUT)                                       // discriminate between 'timeout' and 'REQ_NOT_OK'
         if (checkClearReqNotOk(DMUNIPZ_REQTIMEOUT) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;
+        else                                                             status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;
       
       replyRequestBeam(virtAccTmp, timestamp, status);                             // reply to DM
 
@@ -825,10 +824,10 @@ void main(void) {
   nTransfer = 0;
 
   while (1) {
-    cmdHandler();    // check for commands and possibly request state changes
-    changeState();   // handle requested state changes
+    cmdHandler();             // check for commands and possibly request state changes
+    status = changeState();   // handle requested state changes
     
-    switch(actState) // state specific do actions
+    switch(actState)          // state specific do actions
       {
       case DMUNIPZ_STATE_OPERATION :
         status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer);
@@ -842,10 +841,14 @@ void main(void) {
         for (j = 0; j < (DMUNIPZ_DEFAULT_TIMEOUT * DMUNIPZ_MS_ASMNOP); j++) { asm("nop"); } // wait: use value for default timeout
       } // switch 
 
+    // check for severe errors requiring changing to ERROR state
+    if (status == DMUNIPZ_STATUS_DEVBUSERROR) reqState = DMUNIPZ_STATE_ERROR;
+    if (status == DMUNIPZ_STATUS_ERROR)       reqState = DMUNIPZ_STATE_ERROR;
+
     // update status and counter for main loop
     if (actStatus != status) {
       *pSharedStatus = status;
-      actStatus = status;
+      actStatus      = status;
     }
     i++; *pSharedNIterMain = i;
     *pSharedStatTrans = statusTransfer;
