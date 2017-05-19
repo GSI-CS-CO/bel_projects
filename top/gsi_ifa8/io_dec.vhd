@@ -57,11 +57,9 @@ entity io_dec is
     mb_virt_adr     : out std_logic_vector(3 downto 0);  -- virtual interface card address for modbus operation
     ifk_adr_ok      : out std_logic;                     -- interface card address decoded 
     ifk_virt_adr_ok : out std_logic;                     -- virtual interface card address decoded
-    ena_wr_mil_int  : out std_logic;                     -- enable of the internal wr_mil signal
     fc_rd           : out std_logic;                     -- read fc
     fc_wr           : out std_logic;                     -- write fc
-    reg_clear       : out std_logic;                     -- register clear after read
-    fc_count        : out std_logic_vector(6 downto 0)); -- do not connect
+    reg_clear       : out std_logic);                    -- register clear after read
 end entity io_dec;
 
 architecture arch of io_dec is
@@ -75,8 +73,10 @@ architecture arch of io_dec is
   constant c_reg_clear     : integer    := 80;    -- counter value: register clear after read
   constant c_cnt_max       : integer    := 127;   -- max. counter value
 
-  constant c_broadcast_adr : std_logic_vector(7 downto 0)    := x"ff"; -- broadcast address
-  constant c_rd_blockmode  : std_logic_vector(7 downto 0)    := x"8f"; -- read blockmode address
+  constant c_broadcast_adr : std_logic_vector(7 downto 0) := x"ff"; -- broadcast address
+  constant c_rd_blockmode  : std_logic_vector(7 downto 0) := x"8f"; -- read blockmode address
+  constant c_wr_blockmode  : std_logic_vector(7 downto 0) := x"6b"; -- write parameter set to fg
+
   signal s_ifk_adr_ok      : std_logic;
   signal s_brc_adr_ok      : std_logic;
   signal s_rd_blk_mode_ok  : std_logic;
@@ -87,8 +87,8 @@ architecture arch of io_dec is
   signal s_broadcast       : std_logic;
   signal s_fc_str          : std_logic;
   signal s_fc_str_syn      : std_logic;
-  signal s_fc_cnt          : integer range 0 to c_cnt_max       := 0;
-  signal s_fc_cnt_en      : std_logic;
+  signal s_fc_cnt          : integer range 0 to c_cnt_max   := 0;
+  signal s_fc_cnt_en       : std_logic;
   signal s_fc              : std_logic_vector(7 downto 0);
   signal s_data_str        : std_logic;
   signal s_wr_mil_comb     : std_logic;
@@ -101,9 +101,10 @@ architecture arch of io_dec is
   signal s_bus_fc_str      : std_logic;
   signal s_di              : std_logic_vector(15 downto 0);
   signal s_sw_int          : std_logic_vector(15 downto 0);
+  signal s_wr_blk_mode_ok  : std_logic;
 begin
 
-  -- ADR-Komperatoren, L-Byte des Commandwortes = Adr
+  -- adr decoder, low byte of the command word is the address
   ifk_adr: process(clk, adr, mil_rcv_d)
   begin
     if rising_edge(clk) then
@@ -136,8 +137,20 @@ begin
       end if;
     end if;
   end process;
+  
+  wr_blk_mode_ok: process(clk, s_fc)
+  begin
+    if rising_edge(clk) then
+      if c_wr_blockmode = s_fc then
+        s_wr_blk_mode_ok <= '1';
+      else
+        s_wr_blk_mode_ok <= '0';
+      end if;
+    end if;
+  end process;
 
-  -- Komperator virt.-IFK-Adr, L-Byte des Commandwortes = Adr
+
+  -- decoder for virt interface card adr, low byte of the command word is the address
   virt_ifk_adr: process(clk)
   begin
     if rising_edge(clk) then
@@ -177,7 +190,6 @@ begin
     end if;
   end process;
 
-
   -- interface card selected
   s_ifk_sel <= s_ifk_adr_ok and rcv_rdy;
 
@@ -206,10 +218,10 @@ begin
     if sclr = '1' then
       s_fc_str_syn <= '0';
     elsif rising_edge(clk) then
-      s_fc_str_syn <= (((s_brc_adr_ok and broadcast_en) or s_ifk_adr_ok or s_virt_ifk_adr_ok) and cmd_rcv and rcv_rdy);
+      s_fc_str_syn <= (((s_brc_adr_ok and broadcast_en) or s_ifk_adr_ok or s_virt_ifk_adr_ok) and cmd_rcv and rcv_rdy)
+                      or (s_wr_blk_mode_ok and cmd_rcv and rcv_rdy);
     end if;
   end process;
-
 
   -- function code counter, starts with s_fc_str 
   fc_cnt: process(clk, sclr)
@@ -221,7 +233,7 @@ begin
       s_fc_rd     <= '0';
       s_fc_cnt_en <= '0';
     elsif rising_edge(clk) then
-      if s_fc_str_syn = '1' then
+      if s_fc_str_syn = '1' or (rcv_rdy = '1' and s_wr_blk_mode_ok = '1') then
         s_fc_cnt_en <= '1';
       end if;
       
@@ -262,14 +274,11 @@ begin
 		
     end if;
   end process fc_cnt;
-
-
-
   
   s_wr_mil_comb <= '1' when s_broadcast = '0' and 
                       ((n_ex_send_ena = '1' and send_str = '1' and s_fc_cnt = c_ee and s_rd_blk_mode_ok = '0') or 
-                       (n_ex_send_ena = '0' and n_ex_send_str = '0')) else '0'; --  transmit with external transmit control (MB/IO-Bus, Blockmode or Piggy)
-
+                       (n_ex_send_ena = '0' and n_ex_send_str = '0')) else '0';   --  transmit with external transmit control
+                                                                                  -- (MB/IO-Bus, Blockmode or Piggy)
   wr_mil_edge: process(clk, sclr)
   begin
     if sclr = '1' then
@@ -281,8 +290,7 @@ begin
     end if;
   end process;
 
-  s_wr_mil <= s_wr_mil1 and not s_wr_mil2; -- positive edge
-
+  s_wr_mil <= s_wr_mil1 and not s_wr_mil2; -- positive edge of s_wr_mil_comb
       
   -- fc strobe
   fc_str_out_reg: process(clk)
@@ -290,7 +298,7 @@ begin
     if sclr = '1' then
       s_fc_str <= '0';
     elsif rising_edge(clk) then
-      s_fc_str <= (s_fc_rd or s_fc_wr) and ((s_brc_adr_ok and broadcast_en) or s_ifk_adr_ok);
+      s_fc_str <= (s_fc_rd or s_fc_wr) and ((s_brc_adr_ok and broadcast_en) or s_ifk_adr_ok or s_wr_blk_mode_ok);
     end if;
   end process;
 
@@ -323,11 +331,11 @@ begin
         s_fc <= mil_rcv_d(15 downto 8);
       end if;
       
-      if s_data_str = '1' then
+      if s_data_str = '1' or (s_wr_blk_mode_ok = '1' and cmd_rcv = '0') then
         s_di <= mil_rcv_d;
       end if;
 
-      if s_fc_str_syn = '1' then
+      if s_fc_str_syn = '1' or s_wr_blk_mode_ok = '1' then
         s_sw_int <= s_di;
       end if;
     end if;
@@ -337,7 +345,6 @@ begin
   ifk_sel         <= s_ifk_sel;
 
   wr_mil          <= s_wr_mil;
-  ena_wr_mil_int  <= '0';
 
   fc_str          <= s_fc_str;
   fc              <= s_fc;
@@ -353,6 +360,5 @@ begin
   fc_rd           <= s_fc_rd;
   fc_wr           <= s_fc_wr;
   reg_clear       <= s_reg_clear;
-  fc_count        <= "0000000";
   
 end architecture arch;
