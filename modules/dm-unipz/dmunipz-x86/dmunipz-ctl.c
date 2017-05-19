@@ -63,6 +63,7 @@ eb_address_t dmunipz_status;     // status of dmunipz, read
 eb_address_t dmunipz_state;      // state, read
 eb_address_t dmunipz_iterations; // number of iterations of main loop, read
 eb_address_t dmunipz_transfers;  // number of transfers from UNILAC to SIS, read
+eb_address_t dmunipz_injections; // number of injections in ongoing transfer
 eb_address_t dmunipz_virtAcc;    // number of virtual accelerator of ongoing or last transfer, read
 eb_address_t dmunipz_statTrans;  // status of ongoing or last transfer, read
 eb_address_t dmunipz_cmd;        // command, write
@@ -144,6 +145,20 @@ static void help(void) {
   fprintf(stderr, "Example1: '%s -i dev/wbm0' display typical information.\n", program);
   fprintf(stderr, "Example2: '%s -s0 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
   fprintf(stderr, "\n");
+  fprintf(stderr, "When using option '-s', the following information is displayed\n");
+  fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 02, 1 1 1 1 1 1, OPERATION , status - OK\n");
+  fprintf(stderr, "                            |   |   |  | | | | | |  |                    |\n");
+  fprintf(stderr, "                            |   |   |  | | | | | |  |                    - error status\n");
+  fprintf(stderr, "                            |   |   |  | | | | | |   - state\n");
+  fprintf(stderr, "                            |   |   |  | | | | | - beam (request) released\n");
+  fprintf(stderr, "                            |   |   |  | | | | - beam request succeeded\n");
+  fprintf(stderr, "                            |   |   |  | | | - beam requested\n");
+  fprintf(stderr, "                            |   |   |  | | - TK (request) released -> transfer completed\n");
+  fprintf(stderr, "                            |   |   |  | - TK request succeeded\n");
+  fprintf(stderr, "                            |   |   |  - TK requested\n");
+  fprintf(stderr, "                            |   |   - number of virtual accelerator\n");
+  fprintf(stderr, "                            |   |- number of injections in current transfer\n");
+  fprintf(stderr, "                            - number of transfers\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
   fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", DMUNIPZ_X86_VERSION);
 } //help
@@ -162,7 +177,7 @@ int readTransfers(uint32_t *transfers)
 } // getInfo
 
 
-int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *transfers, uint32_t *virtAcc, uint32_t *statTrans)
+int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *transfers, uint32_t *injections, uint32_t *virtAcc, uint32_t *statTrans)
 {
   eb_cycle_t  cycle;
   eb_status_t eb_status;
@@ -173,26 +188,28 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   eb_cycle_read(cycle, dmunipz_state,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)state);
   eb_cycle_read(cycle, dmunipz_iterations,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)iterations);
   eb_cycle_read(cycle, dmunipz_transfers,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)transfers);
+  // here: read number of injections
   eb_cycle_read(cycle, dmunipz_virtAcc,     EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)virtAcc);
   eb_cycle_read(cycle, dmunipz_statTrans,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)statTrans);
-
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("EP eb_cycle_close", eb_status);
+
+  *injections = 1; // chk, hack!
 
   return eb_status;
 } // getInfo
 
 
-void printTransfer(uint32_t transfers, uint32_t virtAcc, uint32_t statTrans)
+void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAcc, uint32_t statTrans)
 {
-    printf("%08d, %02d, %d %d %d %d %d %d", transfers, virtAcc, 
-           ((statTrans & DMUNIPZ_TRANS_REQTK    ) > 0),  
-           ((statTrans & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
-           ((statTrans & DMUNIPZ_TRANS_RELTK    ) > 0),
-           ((statTrans & DMUNIPZ_TRANS_REQBEAM  ) > 0),
-           ((statTrans & DMUNIPZ_TRANS_REQBEAMOK) > 0),
-           ((statTrans & DMUNIPZ_TRANS_RELBEAM  ) > 0)
-           );
-                        
+  printf("%08d, %02d, %02d, %d %d %d %d %d %d", transfers, injections, virtAcc, 
+         ((statTrans & DMUNIPZ_TRANS_REQTK    ) > 0),  
+         ((statTrans & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
+         ((statTrans & DMUNIPZ_TRANS_RELTK    ) > 0),
+         ((statTrans & DMUNIPZ_TRANS_REQBEAM  ) > 0),
+         ((statTrans & DMUNIPZ_TRANS_REQBEAMOK) > 0),
+         ((statTrans & DMUNIPZ_TRANS_RELBEAM  ) > 0)
+         );
+  
 } // printTransfer
 
 int main(int argc, char** argv) {
@@ -210,6 +227,7 @@ int main(int argc, char** argv) {
   uint32_t state;     
   uint32_t iterations;
   uint32_t transfers; 
+  uint32_t injections;
   uint32_t virtAcc;   
   uint32_t statTrans; 
 
@@ -276,16 +294,18 @@ int main(int argc, char** argv) {
   dmunipz_state      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_STATE;;
   dmunipz_iterations = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NITERMAIN;
   dmunipz_transfers  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSN;
+  dmunipz_injections = NULL; //todo, chk
   dmunipz_virtAcc    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSVIRTACC;
   dmunipz_statTrans  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSSTATUS;
   dmunipz_cmd        = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_CMD;
 
   if (getInfo) {
-    readInfo(&status, &state, &iterations, &transfers, &virtAcc, &statTrans);
+    readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans);
     
     printf("dm-unipz: state %s, status %s, iterations %d\n",dmunipz_state_text(state),  dmunipz_status_text(status), iterations);
     printf("dm-unipz: transfer, virtAcc, reqTK reqBeam success failed:\n          ");
-    printTransfer(transfers, virtAcc, statTrans);
+    printTransfer(transfers, injections, virtAcc, statTrans);
+    printf("\n");
   } // if getInfo
 
   if (command) {
@@ -297,7 +317,7 @@ int main(int argc, char** argv) {
   } //if command
 
   if (snoop) {
-    printf("dm-unipz: continous monitoring gateway...\n");
+    printf("dm-unipz: continous monitoring of gateway...\n");
     
     actTransfers = 0;
     actState     = DMUNIPZ_STATE_UNKNOWN;
@@ -305,12 +325,12 @@ int main(int argc, char** argv) {
     actStatTrans = DMUNIPZ_TRANS_UNKNOWN;
 
     while (1) {
-      readInfo(&status, &state, &iterations, &transfers, &virtAcc, &statTrans);        // read info from lm32
+      readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans);  // read info from lm32
 
       switch(state) {
       case DMUNIPZ_STATE_OPERATION :
-        if (actTransfers != transfers) sleepTime = DMUNIPZ_REQTIMEOUT * 1000 + 200000; // sleep as long as a beam should have been transferred
-        else                           sleepTime = 100000;                             // sleep for 100ms to be sure to catch the next TK_REQ
+        if (actTransfers != transfers) sleepTime = DMUNIPZ_REQTIMEOUT * 1000 + 200000;        // sleep as long as a beam should have been transferred
+        else                           sleepTime = 100000;                                    // sleep for 100ms to be sure to catch the next TK_REQ
         break;
       default:
         sleepTime = 100000;                          
@@ -329,7 +349,7 @@ int main(int argc, char** argv) {
 
       if (printFlag) {
         printf("dm-unipz: transfer - "); 
-        printTransfer(transfers, virtAcc, statTrans); 
+        printTransfer(transfers, injections, virtAcc, statTrans); 
         printf(", %s, status - %s\n", dmunipz_state_text(state), dmunipz_status_text(status));
       } // if printFlag
 
