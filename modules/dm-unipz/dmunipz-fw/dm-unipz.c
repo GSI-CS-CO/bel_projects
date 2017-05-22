@@ -71,7 +71,6 @@ uint64_t SHARED dummy = 0;
 
 
 volatile uint32_t *pECAQ;              // WB address of ECA queue
-volatile uint32_t *pECACtrl;           // WB address of ECA control
 volatile uint32_t *pMILPiggy;          // WB address of MIL device bus (MIL piggy)                              
 volatile uint32_t *pShared;            // pointer to begin of shared memory region                              
 uint32_t *pSharedVersion;              // pointer to a "user defined" u32 register; here: publish version
@@ -272,34 +271,8 @@ void findECAQueue() // find WB address of ECA channel for LM32
     if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
   }
 
-  // hack for testing
-  if (pECAQ) {mprintf("dm-unipz: FATAL - can't find ECA queue\n"); reqState = DMUNIPZ_STATE_FATAL; }
-  //if (!pECAQ) {mprintf("dm-unipz: FATAL - can't find ECA queue\n"); reqState = DMUNIPZ_STATE_FATAL; }
+  if (!pECAQ) {mprintf("dm-unipz: FATAL - can't find ECA queue\n"); reqState = DMUNIPZ_STATE_FATAL;}
 } // findECAQueue
-
-void findECAControl() // find WB address of ECA Control
-{
-  pECACtrl = 0x0;
-
-  // get Wishbone address for ECA Control
-  pECACtrl = find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
-
-  if (!pECACtrl) {mprintf("dm-unipz: FATAL - can't find ECA control\n"); reqState = DMUNIPZ_STATE_FATAL; }
-} // findECAControl
-
-
-void getECATAI(uint32_t *timeHi, uint32_t *timeLo) // get TAI from local ECA
-{
-  uint32_t *pECATimeHi, *pECATimeLo;
-  
-  /* check: registers not protected against overflow of low32bits. To Do: read high bits twice! */
-
-  pECATimeHi = (uint32_t *)(pECACtrl + (ECA_TIME_HI_GET >> 2));
-  pECATimeLo = (uint32_t *)(pECACtrl + (ECA_TIME_LO_GET >> 2));
-
-  *timeHi = *pECATimeHi;
-  *timeLo = *pECATimeLo;
-} //getECATAI
 
 
 uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc)  // 1. query ECA for actions, 2. trigger activity
@@ -829,9 +802,8 @@ void main(void) {
 
 
   findECAQueue();                // find WB device, required to receive events from the ECA
-  findECAControl();              // find WB device, required to obtain timestamp
   findMILPiggy();                // find WB device, required for device bus master and event bus slave
-
+  mprintf("dm-unipz: actstatus %d\n", actStatus);
   initCmds();                    // init command handler
 
   i=0;
@@ -849,7 +821,7 @@ void main(void) {
       case DMUNIPZ_STATE_FATAL :
         *pSharedState  = actState;
         *pSharedStatus = status;
-        mprintf("dm-unipz: a FATAL error has occured: %d. Good bye.\n", status);
+        mprintf("dm-unipz: a FATAL error has occured. Good bye.\n");
         while (1) asm("nop"); // RIP!
         break;
       default :
