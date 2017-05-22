@@ -11,6 +11,7 @@
 #include "common.h"
 #include "ftm_common.h"
 
+
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX_IDX 32
 #define IDX_BMPS (MAX_IDX / 32)
@@ -20,6 +21,8 @@
 
 
 //typedef std::map< std::string, myData >::iterator itMap ;
+
+
 
   typedef struct  {
     vertex_t  v;
@@ -42,7 +45,7 @@ typedef boost::bimap< uint32_t, std::string > hBiMap;
 typedef hBiMap::value_type hashValue;
 typedef std::set<uint32_t>                aPool; // contains all available addresses in LM32 memory area
 typedef boost::container::vector<chunkMeta*> vChunk;
-
+typedef std::map<std::string, chunkMeta>  aMap;
 
 
 class MemUnit {
@@ -65,7 +68,7 @@ class MemUnit {
   pMap   parserMap;
   hBiMap hashMap;
   
-
+  
 
 
   
@@ -80,11 +83,15 @@ public:
           poolSize(poolSize), bmpLen( poolSize / _MEM_BLOCK_SIZE), 
           startOffs(sharedOffs + ((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE)),
           endOffs(sharedOffs + ((poolSize / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE)),
-          gUp(g), uploadBmp(vBuf( ((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE) )), downloadBmp(vBuf( ((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE) )) { initMemPool();}
+          gUp(g),
+          uploadBmp(vBuf( ((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE) )), 
+          downloadBmp(vBuf( ((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE) )) { 
+            initMemPool();
+          }
   ~MemUnit() { };
 
   Graph& getUpGraph() const {return gUp;}
-  Graph getDownGraph() const {return gDown;}
+  Graph& getDownGraph() {return gDown;}
 
   //MemPool Functions
 
@@ -103,6 +110,7 @@ public:
   bool insert(const std::string& name, uint32_t adr);
   bool deallocate(const std::string& name);
   chunkMeta* lookupName(const std::string& name) const;
+  parserMeta* lookupAdr(uint32_t adr) const;
   vChunk getAllChunks() const;
 
   //Hash functions
@@ -112,10 +120,10 @@ public:
   const uint32_t&    name2hash(const std::string& name) const  { return hashMap.right.at(name); }
 
   //Addr Functions
-  const uint32_t extAdr2adr(const uint32_t ea)    const  { return ea - extBaseAdr; }
-  const uint32_t intAdr2adr(const uint32_t ia)    const  { return ia - intBaseAdr; }
-  const uint32_t extAdr2intAdr(const uint32_t ea) const  { return ea - extBaseAdr + intBaseAdr; }
-  const uint32_t intAdr2extAdr(const uint32_t ia) const  { return ia - intBaseAdr + extBaseAdr; }
+  const uint32_t extAdr2adr(const uint32_t ea)    const  { return (ea == LM32_NULL_PTR ? LM32_NULL_PTR : ea - extBaseAdr); }
+  const uint32_t intAdr2adr(const uint32_t ia)    const  { return (ia == LM32_NULL_PTR ? LM32_NULL_PTR : ia - intBaseAdr); }
+  const uint32_t extAdr2intAdr(const uint32_t ea) const  { return (ea == LM32_NULL_PTR ? LM32_NULL_PTR : ea - extBaseAdr + intBaseAdr); }
+  const uint32_t intAdr2extAdr(const uint32_t ia) const  { return (ia == LM32_NULL_PTR ? LM32_NULL_PTR : ia - intBaseAdr + extBaseAdr); }
   const uint32_t adr2extAdr(const uint32_t a)     const  { return a + extBaseAdr; }
   const uint32_t adr2intAdr(const uint32_t a)     const  { return a + intBaseAdr; }
   

@@ -127,7 +127,7 @@
 //
 // Array of pointers to cmd buffer nodes
 #define CMDQ_BUF_ARRAY          (NODE_BEGIN)
-
+#define CMDQ_BUF_ARRAY_END      (CMDQ_BUF_ARRAY + 10 * _PTR_SIZE_)  
 
 ///// CMD Buffer Meta Node
 //
@@ -139,6 +139,7 @@
 //
 // Host only, array of pointers to nodes
 #define DST_ARRAY            (NODE_BEGIN)
+#define DST_ARRAY_END        (DST_ARRAY + 10 * _PTR_SIZE_)
 
 ///// Sync Meta Node
 //

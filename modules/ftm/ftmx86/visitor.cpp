@@ -112,9 +112,9 @@ void VisitorVertexWriter::visit(const DestList& el) const {
 // Node Crawler Visitor
 
 
+// Upload Crawler
 
-
-void VisitorNodeCrawler::visit(const Block& el) const {
+void VisitorNodeUploadCrawler::visit(const Block& el) const {
   vAdr vA, tmpDD, tmpQM;
   tmpDD = getDefDst();
   tmpQM = getQInfo();
@@ -126,11 +126,11 @@ void VisitorNodeCrawler::visit(const Block& el) const {
   el.serialise(vA);
 }
 
-void VisitorNodeCrawler::visit(const TimingMsg& el) const  {
+void VisitorNodeUploadCrawler::visit(const TimingMsg& el) const  {
   el.serialise(getDefDst());
 }
 
-void VisitorNodeCrawler::visit(const Flow& el) const  {
+void VisitorNodeUploadCrawler::visit(const Flow& el) const  {
   vAdr vA, tmpDD, tmpCT, tmpFD;
   tmpDD = getDefDst();
   tmpCT = getCmdTarget();
@@ -144,7 +144,7 @@ void VisitorNodeCrawler::visit(const Flow& el) const  {
 
 }
 
-void VisitorNodeCrawler::visit(const Flush& el) const {
+void VisitorNodeUploadCrawler::visit(const Flush& el) const {
   vAdr vA, tmpDD, tmpCT;
   tmpDD = getDefDst();
   tmpCT = getCmdTarget();
@@ -157,7 +157,7 @@ void VisitorNodeCrawler::visit(const Flush& el) const {
 
 }
 
-void VisitorNodeCrawler::visit(const Noop& el) const {
+void VisitorNodeUploadCrawler::visit(const Noop& el) const {
   vAdr vA, tmpDD, tmpCT;
   tmpDD = getDefDst();
   tmpCT = getCmdTarget();
@@ -170,7 +170,7 @@ void VisitorNodeCrawler::visit(const Noop& el) const {
 
 }
 
-void VisitorNodeCrawler::visit(const Wait& el) const {
+void VisitorNodeUploadCrawler::visit(const Wait& el) const {
   vAdr vA, tmpDD, tmpCT;
   tmpDD = getDefDst();
   tmpCT = getCmdTarget();
@@ -183,7 +183,7 @@ void VisitorNodeCrawler::visit(const Wait& el) const {
 
 }
 
-void VisitorNodeCrawler::visit(const CmdQMeta& el) const {
+void VisitorNodeUploadCrawler::visit(const CmdQMeta& el) const {
   vAdr vA, tmpDD, tmpQB;
   tmpDD = getDefDst();
   tmpQB = getQBuf();
@@ -195,11 +195,11 @@ void VisitorNodeCrawler::visit(const CmdQMeta& el) const {
   el.serialise(vA);
 }
 
-void VisitorNodeCrawler::visit(const CmdQBuffer& el) const {
+void VisitorNodeUploadCrawler::visit(const CmdQBuffer& el) const {
   el.serialise(getDefDst());
 }
 
-void VisitorNodeCrawler::visit(const DestList& el) const {
+void VisitorNodeUploadCrawler::visit(const DestList& el) const {
   vAdr vA, tmpDD, tmpDL;
   tmpDD = getDefDst();
   tmpDL = getListDst();
@@ -211,10 +211,177 @@ void VisitorNodeCrawler::visit(const DestList& el) const {
   el.serialise(vA);
 }
 
+////////////////////////////////////////////////////////////////////
+// Download Crawler
+/*
+   //find default destination
+      uint32_t childAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&it.second.b[NODE_DEF_DEST_PTR]);
+      if ( childAdr != LM32_NULL_PTR ) childAdr = intAdr2adr(childAdr);
+    
+      if (parserMap.count(childAdr) > 0) {
+        auto& child = parserMap.at(childAdr);
+        std::cout << gDown[it.second.v].name << "'s defDest is " << gDown[child.v].name << std::endl;
+        boost::add_edge(it.second.v, child.v, (myEdge){"defDest"}, gDown);
+      } else {
+        std::cout << gDown[it.second.v].name << "has no defDest." << std::endl;
+*/
+
+void VisitorNodeDownloadCrawler::setDefDst() const {
+  
+  uint32_t tmpAdr, auxAdr;
+  Graph& g = mmu.getDownGraph();
+  uint8_t* b = (uint8_t*)&g[v].np->getB();
+
+  auxAdr = writeBeBytesToLeNumber<uint32_t>(b + NODE_DEF_DEST_PTR);
+  tmpAdr = mmu.intAdr2adr(auxAdr);
+  parserMeta* tmpParser = mmu.lookupAdr(tmpAdr);
+
+  std::cout << "InAdr: 0x" << std::hex << auxAdr << " Adr: 0x" << std::hex << tmpAdr <<  std::endl;
+  if (tmpParser == NULL) std::cout << "Parser Entry not found !" <<  std::endl;
+  else if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, tmpParser->v, (myEdge){sDD}, g);
+
+}
+
+
+
+
+void VisitorNodeDownloadCrawler::visit(const Block& el) const {
+    
+  
+  uint32_t tmpAdr;
+  Graph& g = mmu.getDownGraph();
+  uint8_t* b = (uint8_t*)&g[v].np->getB();
+   Graph::in_edge_iterator in_begin, in_end;
+
+  setDefDst();
+  tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + BLOCK_ALT_DEST_PTR ));
+  if (tmpAdr != LM32_NULL_PTR) { boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sDL},          g);
+  std::cout << "Node " << g[v].name << " has destlist " << g[((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v].name << std::endl; 
+
+  for (boost::tie(in_begin, in_end) = in_edges(((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v,g); in_begin != in_end; ++in_begin)
+{   
+    std::cout << "Parent of " << g[((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v].name << " is " << g[source(*in_begin,g)].name << std::endl;
+}
+  }
+  tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_IL_PTR ));
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sQM[PRIO_IL]}, g);
+  tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_HI_PTR ));
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sQM[PRIO_HI]}, g);
+  tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_LO_PTR ));
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sQM[PRIO_LO]}, g);
+
+}
+
+void VisitorNodeDownloadCrawler::visit(const TimingMsg& el) const  {
+  setDefDst();
+}
+
+void VisitorNodeDownloadCrawler::visit(const Flow& el) const  {
+  
+  uint32_t tmpAdr;
+  Graph& g = mmu.getDownGraph();
+  uint8_t* b = (uint8_t*)&g[v].np->getB();
+
+  setDefDst();
+  tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sTG},          g);
+  tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + CMD_FLOW_DEST ));
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sFD},          g);
+
+}
+
+void VisitorNodeDownloadCrawler::visit(const Flush& el) const {
+  
+  uint32_t tmpAdr;
+  Graph& g = mmu.getDownGraph();
+  uint8_t* b = (uint8_t*)&g[v].np->getB();
+
+  setDefDst();
+  tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sTG},          g);
+
+}
+
+void VisitorNodeDownloadCrawler::visit(const Noop& el) const {
+  
+  uint32_t tmpAdr;
+  Graph& g = mmu.getDownGraph();
+  uint8_t* b = (uint8_t*)&g[v].np->getB();
+
+  setDefDst();
+  tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sTG},          g);
+
+}
+
+void VisitorNodeDownloadCrawler::visit(const Wait& el) const {
+  
+  uint32_t tmpAdr;
+  Graph& g = mmu.getDownGraph();
+  uint8_t* b = (uint8_t*)&g[v].np->getB();
+
+  setDefDst();
+  tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sTG},          g);
+
+}
+
+void VisitorNodeDownloadCrawler::visit(const CmdQMeta& el) const {
+  
+  uint32_t tmpAdr;
+  Graph& g = mmu.getDownGraph();
+  uint8_t* b = (uint8_t*)&g[v].np->getB();
+  parserMeta* pMeta;
+
+  for (ptrdiff_t offs = CMDQ_BUF_ARRAY; offs < CMDQ_BUF_ARRAY_END; offs += _32b_SIZE_) {
+    tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + offs ));
+    if (tmpAdr != LM32_NULL_PTR) {
+      pMeta = ((parserMeta*)(mmu.lookupAdr(tmpAdr)));
+      if (pMeta != NULL) {std::cout << "found qbuf!" << std::endl; boost::add_edge(v, pMeta->v, (myEdge){"meta"}, g);}
+    }  
+  }
+}
+
+void VisitorNodeDownloadCrawler::visit(const CmdQBuffer& el) const {
+}
+
+void VisitorNodeDownloadCrawler::visit(const DestList& el) const {
+  vertex_t tmpV, vPblock;
+  uint32_t tmpAdr;
+  Graph& g = mmu.getDownGraph();
+  uint8_t* b = (uint8_t*)&g[v].np->getB();
+  Graph::in_edge_iterator in_begin, in_end;
+  parserMeta* pMeta;
+
+  std::cout << "Trying to find parent of " << g[v].name << std::endl;
+  boost::tie(in_begin, in_end) = in_edges(v,g);
+  if(in_begin != in_end) {
+
+    //get the parent Block. there shall be only one, a block (no check for that right now, sorry)
+    std::cout << "Found parent: " << g[source(*in_begin,g)].name << std::endl;
+
+
+
+    vPblock = source(*in_begin,g);
+
+    //add all the alternative destination connections from the dest list to the parent block
+    for (ptrdiff_t offs = DST_ARRAY + ADR_ALT_DST_ARRAY * _32b_SIZE_; offs < DST_ARRAY_END; offs += _32b_SIZE_) {
+      tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + offs ));
+      if (tmpAdr != LM32_NULL_PTR) {
+        pMeta = ((parserMeta*)(mmu.lookupAdr(tmpAdr)));
+        if (pMeta != NULL) {std::cout << "found altdest!" << std::endl; boost::add_edge(vPblock, pMeta->v, (myEdge){sAD}, g);}
+      }  
+    }
+  } else {
+    std::cerr << "!!! No parent found !!!" << std::endl;
+  }  
+
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // private helper functions
 
- vAdr VisitorNodeCrawler::getDefDst() const {
+ vAdr VisitorNodeUploadCrawler::getDefDst() const {
     bool found = false;
     Graph& g = mmu.getUpGraph();
     vAdr ret;
@@ -242,7 +409,7 @@ void VisitorNodeCrawler::visit(const DestList& el) const {
     return ret;
   }
 
-  vAdr VisitorNodeCrawler::getQInfo() const {
+  vAdr VisitorNodeUploadCrawler::getQInfo() const {
     int idx;
     bool found;
     Graph& g = mmu.getUpGraph();
@@ -291,7 +458,7 @@ void VisitorNodeCrawler::visit(const DestList& el) const {
   }
 
 
-vAdr VisitorNodeCrawler::getQBuf() const {
+vAdr VisitorNodeUploadCrawler::getQBuf() const {
   bool found;
   Graph& g = mmu.getUpGraph();
   vAdr ret;
@@ -316,7 +483,7 @@ vAdr VisitorNodeCrawler::getQBuf() const {
   return ret;
 }
 
-vAdr VisitorNodeCrawler::getCmdTarget() const {
+vAdr VisitorNodeUploadCrawler::getCmdTarget() const {
   bool found;
   Graph& g = mmu.getUpGraph();
   vAdr ret;
@@ -344,7 +511,7 @@ vAdr VisitorNodeCrawler::getCmdTarget() const {
   return ret;
 }
 
-vAdr VisitorNodeCrawler::getFlowDst() const {
+vAdr VisitorNodeUploadCrawler::getFlowDst() const {
   bool found;
   Graph& g = mmu.getUpGraph();
   vAdr ret;
@@ -374,7 +541,7 @@ vAdr VisitorNodeCrawler::getFlowDst() const {
   return ret;
 }
 
-vAdr VisitorNodeCrawler::getListDst() const {
+vAdr VisitorNodeUploadCrawler::getListDst() const {
   bool found;
   Graph& g = mmu.getUpGraph();
   vAdr ret;

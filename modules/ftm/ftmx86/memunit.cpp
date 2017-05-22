@@ -1,11 +1,11 @@
 #include <boost/graph/graphviz.hpp>
 #include "memunit.h"
 #include "common.h"
-#include "visitor.h"
 #include "node.h"
 #include "block.h"
 #include "meta.h"
 #include "event.h"
+#include "visitor.h"
 
 
 
@@ -77,6 +77,8 @@
     ret.reserve( uploadBmp.size() + allocMap.size() * _MEM_BLOCK_SIZE); // preallocate memory for BMP and all Nodes
 
     createUploadBmp();
+    vHexDump ("ULBMP", uploadBmp, uploadBmp.size());
+
     ret.insert( ret.end(), uploadBmp.begin(), uploadBmp.end() );
     for (auto& it : allocMap) { 
       ret.insert( ret.end(), it.second.b, it.second.b + _MEM_BLOCK_SIZE );
@@ -98,39 +100,49 @@
     
 
 
+
   void MemUnit::parseDownloadData(vBuf downloadData) {
     //extract and parse downloadBmp
     parserMap.clear();
     std::copy(downloadData.begin(), downloadData.begin() + downloadBmp.size(), downloadBmp.begin());
 
     //create parserMap and Vertices
+    std::cout << "Got " << downloadData.size() << " bytes of data, " << downloadData.size() / _MEM_BLOCK_SIZE << " blocks." << std::endl;
+    vHexDump ("DLBMP", downloadBmp, downloadBmp.size());
 
     for(unsigned int bitIdx = 0; bitIdx < bmpLen; bitIdx++) {
+      //std::cout << std::dec << "bIdx " << bitIdx << " BIdx " << bitIdx / 8 << " Pos " << (7 - bitIdx % 8) << " is 0x" << std::hex << downloadBmp[bitIdx / 8] << " c " << (downloadBmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) << std::endl;
       if (downloadBmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {
         uint32_t localAdr = (startOffs - sharedOffs) + bitIdx * _MEM_BLOCK_SIZE;
         uint32_t adr      = localAdr + sharedOffs;
+        std::cout << "IMPORTANT: This is the key: 0x" << std::hex << adr << std::endl; 
         uint32_t hash     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_HASH]);
 
         std::cout << hash2name(hash) << " -- L@: 0x" << std::hex << localAdr << " @: 0x" << adr << " #0x" << hash << std::endl;
         uint32_t flags    = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]);
-        vertex_t tmpV     = boost::add_vertex((myVertex) {hash2name(hash), hash, NULL, "", flags}, gDown);
-        parserMap[adr]    = (parserMeta){tmpV, hash};
+        uint32_t type     = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
+        vertex_t v        = boost::add_vertex((myVertex) {hash2name(hash), hash, NULL, "", flags}, gDown);
+        parserMap[adr]    = (parserMeta){v, hash};
         auto src = downloadData.begin()+localAdr;
         std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&parserMap.at(adr).b[0]);
 
-
       
-        switch (gDown[tmpV].flags & NFLG_TYPE_MSK) {
-          case NODE_TYPE_TMSG : gDown[tmpV].np = (node_ptr) new   TimingMsg(gDown[tmpV].name, parserMap.at(adr).hash, parserMap.at(adr).b, gDown[tmpV].flags, 0, 0, 0, 0, 0); break;
-          case NODE_TYPE_CNOOP : gDown[tmpV].np = (node_ptr) new        Noop(gDown[tmpV].name, parserMap.at(adr).hash, parserMap.at(adr).b, gDown[tmpV].flags, 0, 0, 0); break;
-          case NODE_TYPE_BLOCK : gDown[tmpV].np = (node_ptr) new   Block(gDown[tmpV].name, parserMap.at(adr).hash, parserMap.at(adr).b, gDown[tmpV].flags, 0); break;
-          case NODE_TYPE_QUEUE : gDown[tmpV].np = (node_ptr) new   CmdQMeta(gDown[tmpV].name, parserMap.at(adr).hash, parserMap.at(adr).b, gDown[tmpV].flags); break;
-          case NODE_TYPE_ALTDST : gDown[tmpV].np = (node_ptr) new   DestList(gDown[tmpV].name, parserMap.at(adr).hash, parserMap.at(adr).b, gDown[tmpV].flags); break;
-          case NODE_TYPE_QBUF : gDown[tmpV].np = (node_ptr) new   CmdQBuffer(gDown[tmpV].name, parserMap.at(adr).hash, parserMap.at(adr).b, gDown[tmpV].flags); break;
-          default : break;
+        switch(type) {
+          case NODE_TYPE_TMSG    : gDown[v].np =(node_ptr) new  TimingMsg(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_CNOOP   : gDown[v].np =(node_ptr) new       Noop(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_CFLOW   : gDown[v].np =(node_ptr) new       Flow(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_CFLUSH  : gDown[v].np =(node_ptr) new      Flush(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_CWAIT   : gDown[v].np =(node_ptr) new       Wait(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_BLOCK   : gDown[v].np =(node_ptr) new      Block(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_QUEUE   : gDown[v].np =(node_ptr) new   CmdQMeta(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_ALTDST  : gDown[v].np =(node_ptr) new   DestList(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_QBUF    : gDown[v].np =(node_ptr) new CmdQBuffer(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); break;
+          case NODE_TYPE_UNKNOWN : std::cerr << "not yet implemented " << gDown[v].type << std::endl; break;
+          default                : std::cerr << "Node type" << gDown[v].type << " not supported! " << std::endl;
         }
-      
-        //std::cout << "Added " << hash2name(hash) << " @V " << tmpV << std::endl;
+        
+     
+        
       }
     }
 
@@ -138,50 +150,28 @@
     boost::tie(vi, vi_end) = vertices(gDown);
     std::cout << std::dec << "Size gDown: " << vi_end - vi << std::endl;
 
-    BOOST_FOREACH( vertex_t v, vertices(gDown) )  {
-      std::cout << "Name: " << gDown[v].name << std::endl;
-    }
-    // create edges
-    for(auto& it : parserMap) {
-      //find default destination
-      //hexDump(gDown[it.second.v].name.c_str(), (uint8_t*)&it.second.b[0], _MEM_BLOCK_SIZE);
-      //hexDump("original", (uint8_t*)&downloadData[it.first - sharedOffs], _MEM_BLOCK_SIZE);
-      uint32_t childAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&it.second.b[NODE_DEF_DEST_PTR]);
-      if ( childAdr != LM32_NULL_PTR ) childAdr = intAdr2adr(childAdr);
     
-      std::cout << gDown[it.second.v].name << " is defaulting to " << std::hex << childAdr << std::endl;
-      if (parserMap.count(childAdr) > 0) {
-        auto& child = parserMap.at(childAdr);
-        std::cout << gDown[it.second.v].name << "'s defDest is " << gDown[child.v].name << std::endl;
-        boost::add_edge(it.second.v, child.v, (myEdge){"defDest"}, gDown);
+    // create edges
+
+    //first, iterate all non meta-types to establish block -> dstList parenthood
+    for(auto& it : parserMap) {
+      // handled by visitor
+      if (gDown[it.second.v].np == NULL) { std::cerr << "Node " << gDown[it.second.v].name << " is not initialised ! " << std::endl; 
       } else {
-        std::cout << gDown[it.second.v].name << "has no defDest." << std::endl;
-      }
-      
-      
+        if  (!(gDown[it.second.v].np->isMeta())) gDown[it.second.v].np->accept(VisitorNodeDownloadCrawler(it.second.v, *this));
+      }  
+    }
+    //second, iterate all meta-types
+    for(auto& it : parserMap) {
+      // handled by visitor
+      if (gDown[it.second.v].np == NULL) { std::cerr << "Node " << gDown[it.second.v].name << " is not initialised ! " << std::endl; 
+      } else {
+        if  (gDown[it.second.v].np->isMeta()) gDown[it.second.v].np->accept(VisitorNodeDownloadCrawler(it.second.v, *this));
+      }  
     }
   }  
 
-
-  //dlAlloc: adr -> vertex_desc, hash, buffer
-      
-      
-
-  // creating nodes
-  // iterate over (big) eb download buffer (data blocks):
-    //obtain key by converting from extAdr (download Address) to adr value, create dlAlloc entry 
-    //copy data block to dlAlloc entry buffer
-    //convert all intAdr values to adr values
-    //create node according to type field, assign all parsed data and name for given hash
-    //add vertex descriptor to dlAlloc entry
-  //creating edges
-    //iterate over dlAlloc map
-    //get vertex descriptor, this will be the parent.
-    //call parser function matching node type on dlAlloc entry buffer
-    //for each address ...
-      //lookup vertex descriptor, this will be the child.
-      //create edge to child. Edge type property must match link use within node (eg. defDst, altDst, target, etc)
-    
+   
 
 
 
@@ -294,6 +284,11 @@ eb_status_t ftmRamWrite()
     else {return NULL;}
   }
 
+  parserMeta* MemUnit::lookupAdr(uint32_t adr) const {
+    if (parserMap.count(adr) > 0) { return (parserMeta*)&(parserMap.at(adr));} 
+    else {return NULL;}  
+  }
+
   //Hash functions
 
   bool MemUnit::insertHash(const std::string& name, uint32_t &hash) {
@@ -320,16 +315,20 @@ eb_status_t ftmRamWrite()
       if(x == NULL) {std::cerr << "ERROR: Tried to lookup unallocated node " << gUp[v].name <<  std::endl; return;}
 
       //init binary node data
+
+      //TODO this should be a factory, yet the variadic part is complex ... any ideas?
       cmp = gUp[v].type;
-      if      (cmp == "tmsg")     {gUp[v].np = (node_ptr) new   TimingMsg(gUp[v].name, x->hash, x->b, gUp[v].flags, gUp[v].tOffs, gUp[v].id, gUp[v].par, gUp[v].tef, gUp[v].res); }
-      else if (cmp == "noop")     {gUp[v].np = (node_ptr) new        Noop(gUp[v].name, x->hash, x->b, gUp[v].flags, gUp[v].tOffs, gUp[v].tValid, gUp[v].qty); }
-      else if (cmp == "flow")     {std::cerr << "not yet implemented " << gUp[v].type << std::endl;}
-      else if (cmp == "flush")    {std::cerr << "not yet implemented " << gUp[v].type << std::endl;}
-      else if (cmp == "wait")     {std::cerr << "not yet implemented " << gUp[v].type << std::endl;}
-      else if (cmp == "block")    {gUp[v].np = (node_ptr) new     Block(gUp[v].name, x->hash, x->b, gUp[v].flags, gUp[v].tPeriod ); }
-      else if (cmp == "qinfo")    {gUp[v].np = (node_ptr) new    CmdQMeta(gUp[v].name, x->hash, x->b, gUp[v].flags);}
-      else if (cmp == "listdst") {gUp[v].np = (node_ptr) new DestList(gUp[v].name, x->hash, x->b, gUp[v].flags);}
-      else if (cmp == "qbuf")     {gUp[v].np = (node_ptr) new  CmdQBuffer(gUp[v].name, x->hash, x->b, gUp[v].flags);}
+      if      (cmp == "tmsg")     {gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, x->hash, x->b, gUp[v].flags,  gUp[v].tOffs, gUp[v].id, gUp[v].par, gUp[v].tef, gUp[v].res); }
+      else if (cmp == "noop")     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, x->hash, x->b, gUp[v].flags,  gUp[v].tOffs, gUp[v].tValid, gUp[v].qty); }
+      else if (cmp == "flow")     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, x->hash, x->b, gUp[v].flags,  gUp[v].tOffs, gUp[v].tValid, gUp[v].qty); }
+      else if (cmp == "flush")    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, x->hash, x->b, gUp[v].flags, gUp[v].tOffs, gUp[v].tValid, 
+                                                                         gUp[v].qIl,                gUp[v].qHi,                gUp[v].qLo, 
+                                                                         gUp[v].frmIl, gUp[v].toIl, gUp[v].frmHi, gUp[v].toHi, gUp[v].frmLo, gUp[v].toLo ); }
+      else if (cmp == "wait")     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, x->hash, x->b, gUp[v].flags,  gUp[v].tOffs, gUp[v].tValid, gUp[v].tWait); }
+      else if (cmp == "block")    {gUp[v].np = (node_ptr) new      Block(gUp[v].name, x->hash, x->b, gUp[v].flags, gUp[v].tPeriod ); }
+      else if (cmp == "qinfo")    {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, x->hash, x->b, gUp[v].flags);}
+      else if (cmp == "listdst")  {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, x->hash, x->b, gUp[v].flags);}
+      else if (cmp == "qbuf")     {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, x->hash, x->b, gUp[v].flags);}
       else if (cmp == "meta")     {std::cerr << "not yet implemented " << gUp[v].type << std::endl;}
       else                        {std::cerr << "Node type" << cmp << " not supported! " << std::endl;} 
     }
@@ -339,7 +338,7 @@ eb_status_t ftmRamWrite()
         if (allocMap.count(gUp[v].name) == 0){std::cerr << " Node " << gUp[v].name << " was not allocated " << gUp[v].type << std::endl; return;} 
         if (gUp[v].np == NULL ){std::cerr << " Node " << gUp[v].name << " was not initialised! " << gUp[v].type << std::endl; return;}
         // try to serialise
-        gUp[v].np->accept(VisitorNodeCrawler(v, *this));
+        gUp[v].np->accept(VisitorNodeUploadCrawler(v, *this));
     }    
   }
 

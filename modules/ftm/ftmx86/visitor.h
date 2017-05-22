@@ -44,7 +44,7 @@ class DestList;
 
   
 
-  class VisitorNodeCrawler {
+  class VisitorNodeUploadCrawler {
     vertex_t v;
     MemUnit& mmu;
 
@@ -56,8 +56,8 @@ class DestList;
     vAdr getListDst(void)   const;
 
   public:
-    VisitorNodeCrawler(vertex_t v, MemUnit& mmu)  : v(v), mmu(mmu) {};
-    ~VisitorNodeCrawler() {};
+    VisitorNodeUploadCrawler(vertex_t v, MemUnit& mmu)  : v(v), mmu(mmu) {};
+    ~VisitorNodeUploadCrawler() {};
     virtual void visit(const Block& el) const;
     virtual void visit(const TimingMsg& el) const;
     virtual void visit(const Flow& el) const;
@@ -69,6 +69,29 @@ class DestList;
     virtual void visit(const DestList& el) const;
 
   };
+
+  class VisitorNodeDownloadCrawler {
+    vertex_t v;
+    MemUnit& mmu;
+
+    void setDefDst(void) const;
+
+  public:
+    VisitorNodeDownloadCrawler(vertex_t v, MemUnit& mmu)  : v(v), mmu(mmu) {};
+    ~VisitorNodeDownloadCrawler() {};
+    virtual void visit(const Block& el) const;
+    virtual void visit(const TimingMsg& el) const;
+    virtual void visit(const Flow& el) const;
+    virtual void visit(const Flush& el) const;
+    virtual void visit(const Noop& el) const;
+    virtual void visit(const Wait& el) const;
+    virtual void visit(const CmdQMeta& el) const;
+    virtual void visit(const CmdQBuffer& el) const;
+    virtual void visit(const DestList& el) const;
+
+  };
+
+
 /*
  class VisitorEdgeWriter {
     std::ostream& out;

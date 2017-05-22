@@ -144,7 +144,7 @@ inline T writeBeBytesToLeNumber(uint8_t* pB) {
   return boost::endian::endian_reverse(*((T*)pB));
 }
 
-static void hexDump (const char *desc, void *addr, int len) {
+inline void hexDump (const char *desc, void *addr, int len) {
     int i;
     unsigned char buff[17];
     unsigned char *pc = (unsigned char*)addr;
@@ -179,7 +179,7 @@ static void hexDump (const char *desc, void *addr, int len) {
   printf ("\n");  
 }
 
-static void vHexDump (const char *desc, vBuf pc, int len) {
+inline void vHexDump (const char *desc, vBuf pc, int len) {
     int i;
     unsigned char buff[17];
 

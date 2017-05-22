@@ -20,6 +20,7 @@ protected:
 
 
 public:
+  Event(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Node(name, hash, b, flags) {}
   Event(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs) : Node(name, hash, b, flags), tOffs(tOffs) {}
   virtual ~Event()  {};
 
@@ -27,9 +28,11 @@ public:
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
-  virtual void accept(const VisitorNodeCrawler& v)      const = 0;
+  virtual void accept(const VisitorNodeUploadCrawler& v)      const = 0;
+  virtual void accept(const VisitorNodeDownloadCrawler& v)    const = 0;
   const uint64_t getTOffs() const {return this->tOffs;}
   virtual void serialise(const vAdr &va) const;
+  virtual void deserialise();
   bool isMeta(void) const {return false;}
 };
 
@@ -41,6 +44,7 @@ class TimingMsg : public Event {
   uint32_t res;
 
 public:
+  TimingMsg(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Event(name, hash, b, flags) {}
   TimingMsg(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs,  uint64_t id, uint64_t par, uint32_t tef, uint32_t res) 
   : Event (name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_TMSG << NFLG_TYPE_POS)), tOffs), id(id), par(par), tef(tef), res(res) {}
   ~TimingMsg()  {};
@@ -49,8 +53,10 @@ public:
   void show(void)                                       const;
   void show(uint32_t cnt, const char* sPrefix)          const;
   void serialise(const vAdr &va) const;
-  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeCrawler& v)      const override { v.visit(*this); }
+  void deserialise();
+  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeDownloadCrawler& v)  const override { v.visit(*this); }
   const uint64_t getId() const {return this->id;}
   const uint64_t getPar() const {return this->par;}
   const uint32_t getTef() const {return this->tef;}
@@ -64,7 +70,7 @@ protected:
   uint64_t tValid;
   uint32_t act;
 
-  
+  Command(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Event(name, hash, b, flags) {}
   Command(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid) : Event (name, hash, b, flags, tOffs), tValid(tValid) {}
 
 public:
@@ -74,10 +80,13 @@ public:
   virtual void show(void) const;
   virtual void show(uint32_t cnt, const char* sPrefix) const;
 
-  virtual void accept(const VisitorVertexWriter& v)    const = 0;
+  virtual void accept(const VisitorVertexWriter& v)         const = 0;
+  virtual void accept(const VisitorNodeUploadCrawler& v)    const = 0;
+  virtual void accept(const VisitorNodeDownloadCrawler& v)  const = 0;
   const uint64_t getTValid() const {return this->tValid;}
   const uint32_t getAct() const {return this->act;}
   virtual void serialise(const vAdr &va) const;
+  virtual void deserialise();
 };
 
 // Makes receiving Q do nothing when leaving block for N times
@@ -85,6 +94,7 @@ class Noop : public Command {
   uint16_t qty;
 
 public:
+  Noop(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Command(name, hash, b, flags) {}
   Noop(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint16_t qty) 
   : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CNOOP << NFLG_TYPE_POS)), tOffs, tValid) , qty(qty) {}
   ~Noop() {};
@@ -93,8 +103,10 @@ public:
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
   void serialise(const vAdr &va) const;
-  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeCrawler& v)      const override { v.visit(*this); }
+  void deserialise();
+  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeDownloadCrawler& v)  const override { v.visit(*this); }
   const uint16_t getQty() const {return (this->flags >> ACT_QTY_POS) & ACT_QTY_MSK;}
 
 };
@@ -104,6 +116,7 @@ class Flow : public Command {
   uint16_t qty;
 
 public:
+  Flow(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Command(name, hash, b, flags) {}
   Flow(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint16_t qty)
       : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLOW << NFLG_TYPE_POS)), tOffs, tValid) , qty(qty) {}
   ~Flow() {};
@@ -112,8 +125,10 @@ public:
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
   void serialise(const vAdr &va) const;
-  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeCrawler& v)      const override { v.visit(*this); }
+  void deserialise();
+  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeDownloadCrawler& v)  const override { v.visit(*this); }
   const uint16_t getQty() const {return (this->flags >> ACT_QTY_POS) & ACT_QTY_MSK;}
 
 };
@@ -123,7 +138,7 @@ class Wait : public Command {
   uint16_t qty;
   uint64_t tWait;
 public:
-  
+  Wait(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Command(name, hash, b, flags) {}
   Wait(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint64_t tWait) 
   : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CWAIT << NFLG_TYPE_POS)), tOffs, tValid), tWait(tWait) {}
   ~Wait() {};
@@ -132,14 +147,17 @@ public:
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
   void serialise(const vAdr &va) const;
-  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeCrawler& v)      const override { v.visit(*this); }
+  void deserialise();
+  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeDownloadCrawler& v)  const override { v.visit(*this); }
 
 
 };
 
 // Makes receiving Q clear <prio> queue buffer when leaving block once
 class Flush : public Command {
+  uint8_t prio, mode;
   bool qIl, qHi, qLo;
 
   uint8_t frmIl, toIl;
@@ -148,6 +166,7 @@ class Flush : public Command {
 
 
 public:
+  Flush(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Command(name, hash, b, flags) {}
   Flush(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, bool qIl, bool qHi, bool qLo ) 
         : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid) , qIl(qIl), qHi(qHi), qLo(qLo), frmIl(0), toIl(0), frmHi(0), toHi(0), frmLo(0), toLo(0) {}
   Flush(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, bool qIl, bool qHi, bool qLo, uint8_t frmIl, uint8_t toIl, uint8_t frmHi, uint8_t toHi, uint8_t frmLo, uint8_t toLo) 
@@ -161,8 +180,10 @@ public:
   const uint16_t getRng(uint8_t q) const;
 
   void serialise(const vAdr &va) const;
-  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeCrawler& v)      const override { v.visit(*this); }
+  void deserialise();
+  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorNodeDownloadCrawler& v)  const override { v.visit(*this); }
 
 };
 

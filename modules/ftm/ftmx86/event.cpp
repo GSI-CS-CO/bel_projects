@@ -4,11 +4,21 @@
 #include "ftm_common.h"
 
 
-
+void Event::deserialise() {
+  this->tOffs = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[EVT_OFFS_TIME]);
+}
 
 void Event::serialise(const vAdr &va) const {
   Node::serialise(va);
   writeLeNumberToBeBytes(b + (ptrdiff_t)EVT_OFFS_TIME, this->tOffs);
+}
+
+void TimingMsg::deserialise() {
+  Event::deserialise();
+  this->id  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[TMSG_ID]);
+  this->par = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[TMSG_PAR]);
+  this->tef = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[TMSG_TEF]);
+  this->res = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[TMSG_RES]);
 }
 
 void TimingMsg::serialise(const vAdr &va) const {
@@ -20,6 +30,10 @@ void TimingMsg::serialise(const vAdr &va) const {
   writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_RES, this->res);    
 }
 
+void Command::deserialise()  {
+  Event::deserialise();
+  this->tValid  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[CMD_VALID_TIME]);
+}
 
 void Command::serialise(const vAdr &va) const {
   //if (custom.size() < 1) //scream and shout, we didn't get told what our target queue is!
@@ -30,7 +44,11 @@ void Command::serialise(const vAdr &va) const {
   //}
 }
 
-
+void Noop::deserialise()  {
+  Command::deserialise();
+  uint32_t act = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[CMD_ACT]);
+  this->qty  = (act >> ACT_QTY_POS) & ACT_QTY_MSK;
+}
 
 void Noop::serialise(const vAdr &va) const {
   Command::serialise(va);
@@ -38,7 +56,11 @@ void Noop::serialise(const vAdr &va) const {
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT, act);
 }
 
-
+void Flow::deserialise()  {
+  Command::deserialise();
+  uint32_t act = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[CMD_ACT]);
+  this->qty  = (act >> ACT_QTY_POS) & ACT_QTY_MSK;
+}
 
 void Flow::serialise(const vAdr &va) const {
   Command::serialise(va);
@@ -47,6 +69,12 @@ void Flow::serialise(const vAdr &va) const {
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_FLOW_DEST, va[ADR_CMD_FLOW_DEST]); 
 }
 
+void Wait::deserialise()  {
+  Command::deserialise();
+  uint32_t act = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[CMD_ACT]);
+  this->qty    = (act >> ACT_QTY_POS) & ACT_QTY_MSK;
+  this->tWait  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[CMD_WAIT_TIME]);
+}
 
 void Wait::serialise(const vAdr &va) const {
   Command::serialise(va);
@@ -54,6 +82,19 @@ void Wait::serialise(const vAdr &va) const {
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT, act);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_WAIT_TIME, this->tWait);  
 
+}
+
+void Flush::deserialise()  {
+  Command::deserialise();
+  uint32_t act = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[CMD_ACT]);
+  this->prio   = (act >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;
+  this->mode   = (act >> ACT_FLUSH_MODE_POS) & ACT_FLUSH_MODE_MSK;
+  this->frmIl  = b[CMD_FLUSHRNG_IL_FRM];
+  this->toIl   = b[CMD_FLUSHRNG_IL_TO];
+  this->frmHi  = b[CMD_FLUSHRNG_HI_FRM];
+  this->toHi   = b[CMD_FLUSHRNG_HI_TO];
+  this->frmLo  = b[CMD_FLUSHRNG_LO_FRM];
+  this->toLo   = b[CMD_FLUSHRNG_LO_TO];
 }
 
 void Flush::serialise(const vAdr &va) const {
@@ -138,6 +179,18 @@ void Flow::show(uint32_t cnt, const char* prefix) const {
   
 }
 
+void Wait::show(void) const {
+  Wait::show(0, "");
+}
+
+void Wait::show(uint32_t cnt, const char* prefix) const {
+  char* p;
+  if (prefix == NULL) p = (char*)"";
+  else p = (char*)prefix;
+  
+  Command::show( cnt, p);
+  
+}
 
 
 void Noop::show(void) const {

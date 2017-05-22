@@ -3,7 +3,9 @@
 #include "block.h"
 #include "ftm_common.h"
 
-
+void Block::deserialise()  {
+  this->tPeriod = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[BLOCK_PERIOD]);
+}
 
 void Block::serialise(const vAdr &va) const {
 
