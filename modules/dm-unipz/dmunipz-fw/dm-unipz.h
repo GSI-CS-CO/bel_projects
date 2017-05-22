@@ -21,7 +21,8 @@
 #define  DMUNIPZ_STATUS_DEVBUSERROR     10    // something went wrong with write/read on the MIL devicebus
 #define  DMUNIPZ_STATUS_REQNOTOK        11    // UNILAC signals 'request not ok'                          
 #define  DMUNIPZ_STATUS_REQBEAMTIMEDOUT 12    // UNILAC beam request timed out                                
-
+#define  DMUNIPZ_STATUS_NOECAQUEUE      13    // no Wishbone device ECA Queue
+                                
 // commands from the outside
 #define  DMUNIPZ_CMD_NOCMD        0           // no command ...
 #define  DMUNIPZ_CMD_CONFIGURE    1           // configures the gateway

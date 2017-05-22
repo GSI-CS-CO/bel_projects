@@ -272,7 +272,9 @@ void findECAQueue() // find WB address of ECA channel for LM32
     if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
   }
 
-  if (!pECAQ) {mprintf("dm-unipz: FATAL - can't find ECA queue\n"); reqState = DMUNIPZ_STATE_FATAL; }
+  // hack for testing
+  if (pECAQ) {mprintf("dm-unipz: FATAL - can't find ECA queue\n"); reqState = DMUNIPZ_STATE_FATAL; }
+  //if (!pECAQ) {mprintf("dm-unipz: FATAL - can't find ECA queue\n"); reqState = DMUNIPZ_STATE_FATAL; }
 } // findECAQueue
 
 void findECAControl() // find WB address of ECA Control
@@ -681,8 +683,7 @@ uint32_t changeState(uint32_t *actState, uint32_t actStatus)   //state machine; 
   uint32_t nextState;                   
 
   // if something severe happened, perform immediate state change and return
-  if ((reqState == DMUNIPZ_STATE_ERROR) || (reqState == DMUNIPZ_STATE_FATAL)) 
-    {statusOfStateChange = status = actStatus; nextState = reqState;}
+  if ((reqState == DMUNIPZ_STATE_ERROR) || (reqState == DMUNIPZ_STATE_FATAL))    {statusOfStateChange = actStatus; nextState = reqState;}
   else {
     nextState = *actState;                       // per default: remain in actual state without exit or entry action
     switch (*actState) {                         // check for allowed transitions: 1. determine next state, 2. perform exit or entry actions if required
@@ -709,14 +710,15 @@ uint32_t changeState(uint32_t *actState, uint32_t actStatus)   //state machine; 
     } // switch actState
   }  // else something severe happened
   
-  // in case state change can not be done, transit to error state
-  if (statusOfStateChange != DMUNIPZ_STATUS_OK) nextState = DMUNIPZ_STATE_ERROR;
+  // in case state change can not be done, transit to error state (except we are already in FATAL state)
+  if ((statusOfStateChange != DMUNIPZ_STATUS_OK) && (nextState != DMUNIPZ_STATE_FATAL)) nextState = DMUNIPZ_STATE_ERROR;
 
   // a state change happened
   if (*actState != nextState) {                   
     mprintf("dm-unipz: changed to state %d\n", nextState);
-    *actState = nextState;                       // update state info ...
-    status = statusOfStateChange;                // ... and return status of state change
+    *actState = nextState;                      
+    // returns status of state transition, except we change to ERROR or FATAL state
+    status = statusOfStateChange;
   } // if state change
   else  status = actStatus;                      // no state change: return (unchanged) actStatus
 
@@ -845,7 +847,9 @@ void main(void) {
         status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer, &nInject, actStatus);
         break;
       case DMUNIPZ_STATE_FATAL :
-        mprintf("dm-unipz: a FATAL error has occured: '%s'. Good bye.\n", status);
+        *pSharedState  = actState;
+        *pSharedStatus = status;
+        mprintf("dm-unipz: a FATAL error has occured: %d. Good bye.\n", status);
         while (1) asm("nop"); // RIP!
         break;
       default :
