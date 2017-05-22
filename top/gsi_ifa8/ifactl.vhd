@@ -6,49 +6,50 @@ library work;
 use work.ifa8_pkg.all;
 
 entity ifactl is
-port (
-  clk                : in std_logic;                       -- system clock
-  sclr               : in std_logic;                       -- synchronous clear
-  ifa_adr            : in std_logic_vector(7 downto 0);    -- IFK address
-  fc_str             : in std_logic;                       -- function code strobe
-  clr_after_rd       : in std_logic;                       -- function code strobe
-  fc                 : in std_logic_vector(7 downto 0);    -- function code
-  di                 : in std_logic_vector(15 downto 0);   -- data set value
-  diw                : in std_logic_vector(15 downto 0);   -- data actual value
-  sts                : in std_logic_vector(7 downto 0);    -- 8 Bit status from VG connector
-  inrm               : in std_logic_vector(7 downto 0);    -- 8 Bit interrupt mask
-  ifa_ctrl           : in std_logic_vector(7 downto 0);    -- IFA internal control status
-  ifa_id             : in std_logic_vector(7 downto 0);    -- IFA identification code
-  ifp_id             : in std_logic_vector(7 downto 0);    -- IF-Piggy identification code
-  ifp_in             : in std_logic;                       -- IF-Piggy input
-  ifa_epld_vers      : in std_logic_vector(7 downto 0);    -- IFA EPLD version number
-  i2c_data           : in std_logic_vector(12 downto 0);   -- data i2c bus
-  fwl_data_sts       : in std_logic_vector(15 downto 0);   -- data or status from IFA firmware loader
-  me_vw_err          : in std_logic_vector(15 downto 0);   -- error counter ME-VW
-  me_data_err        : in std_logic_vector(15 downto 0);   -- error counter ME-Data
-  if_mode            : in std_logic_vector(15 downto 0);   -- mode of interface card
+  generic (
+    ifa_id : in std_logic_vector(7 downto 0) := x"00");
+  port (
+    clk                : in std_logic;                       -- system clock
+    sclr               : in std_logic;                       -- synchronous clear
+    ifa_adr            : in std_logic_vector(7 downto 0);    -- IFK address
+    fc_str             : in std_logic;                       -- function code strobe
+    clr_after_rd       : in std_logic;                       -- function code strobe
+    fc                 : in std_logic_vector(7 downto 0);    -- function code
+    di                 : in std_logic_vector(15 downto 0);   -- data set value
+    diw                : in std_logic_vector(15 downto 0);   -- data actual value
+    sts                : in std_logic_vector(7 downto 0);    -- 8 Bit status from VG connector
+    inrm               : in std_logic_vector(7 downto 0);    -- 8 Bit interrupt mask
+    ifa_ctrl           : in std_logic_vector(7 downto 0);    -- IFA internal control status
+    ifp_id             : in std_logic_vector(7 downto 0);    -- IF-Piggy identification code
+    ifp_in             : in std_logic;                       -- IF-Piggy input
+    ifa_epld_vers      : in std_logic_vector(7 downto 0);    -- IFA EPLD version number
+    i2c_data           : in std_logic_vector(12 downto 0);   -- data i2c bus
+    fwl_data_sts       : in std_logic_vector(15 downto 0);   -- data or status from IFA firmware loader
+    me_vw_err          : in std_logic_vector(15 downto 0);   -- error counter ME-VW
+    me_data_err        : in std_logic_vector(15 downto 0);   -- error counter ME-Data
+    if_mode            : in std_logic_vector(15 downto 0);   -- mode of interface card
   
-  ifa_sd_mux_sel     : out std_logic_vector(3 downto 0);   -- mux select for status and data of the IFA
-  ifa_sd_mux         : out std_logic_vector(15 downto 0);  -- mux output for status and data of the IFA
-  vg_data            : out std_logic_vector(15 downto 0);  -- data output in IFA-Mode to VG connector
-  send_str           : out std_logic;                      -- send strobe for EE-FlipFlop of the sender 6408
-  fc_ext             : out std_logic;                      -- signals external data access
-  ifa_fc_int         : out std_logic;                      -- function codes for IFA
-  wr_i2c             : out std_logic;                      -- write data of the i2c bus
-  wr_irm             : out std_logic;                      -- write interrupt mask
-  wr_fwl_data        : out std_logic;                      -- write data to IFA firmware loader
-  wr_fwl_ctrl        : out std_logic;                      -- write ctrl to IFA firmware loader
-  rd_fwl_data        : out std_logic;                      -- read data from IFA firmware loader
-  rd_fwl_sts         : out std_logic;                      -- read status from IFA firmware loader
-  rd_me_vw_err       : out std_logic;                      -- error counter for ME-VW-Error
-  rd_me_data_err     : out std_logic;                      -- error counter for ME-Data-Error
-  wr_clr_me_vw_err   : out std_logic;                      -- clear ME-VR error counter
-  wr_clr_me_data_err : out std_logic;                      -- clear ME-Data error counter
-  ifp_led            : out std_logic_vector(15 downto 0);  -- IF-Piggy 'FG 380.751' LED port
-  ifp_led_out        : out std_logic_vector(15 downto 0);  -- IF-Piggy 'FG 380.751' out/leds
-  broad_en           : out std_logic;                      -- flag for broadcast enable
-  reset_cmd          : out std_logic;                      -- reset command (fc = 0x01)
-  res_vw_err         : out std_logic);                     -- reset VW error
+    ifa_sd_mux_sel     : out std_logic_vector(3 downto 0);   -- mux select for status and data of the IFA
+    ifa_sd_mux         : out std_logic_vector(15 downto 0);  -- mux output for status and data of the IFA
+    vg_data            : out std_logic_vector(15 downto 0);  -- data output in IFA-Mode to VG connector
+    send_str           : out std_logic;                      -- send strobe for EE-FlipFlop of the sender 6408
+    fc_ext             : out std_logic;                      -- signals external data access
+    ifa_fc_int         : out std_logic;                      -- function codes for IFA
+    wr_i2c             : out std_logic;                      -- write data of the i2c bus
+    wr_irm             : out std_logic;                      -- write interrupt mask
+    wr_fwl_data        : out std_logic;                      -- write data to IFA firmware loader
+    wr_fwl_ctrl        : out std_logic;                      -- write ctrl to IFA firmware loader
+    rd_fwl_data        : out std_logic;                      -- read data from IFA firmware loader
+    rd_fwl_sts         : out std_logic;                      -- read status from IFA firmware loader
+    rd_me_vw_err       : out std_logic;                      -- error counter for ME-VW-Error
+    rd_me_data_err     : out std_logic;                      -- error counter for ME-Data-Error
+    wr_clr_me_vw_err   : out std_logic;                      -- clear ME-VR error counter
+    wr_clr_me_data_err : out std_logic;                      -- clear ME-Data error counter
+    ifp_led            : out std_logic_vector(15 downto 0);  -- IF-Piggy 'FG 380.751' LED port
+    ifp_led_out        : out std_logic_vector(15 downto 0);  -- IF-Piggy 'FG 380.751' out/leds
+    broad_en           : out std_logic;                      -- flag for broadcast enable
+    reset_cmd          : out std_logic;                      -- reset command (fc = 0x01)
+    res_vw_err         : out std_logic);                     -- reset VW error
 end entity ifactl;
 
 architecture arch of ifactl is
