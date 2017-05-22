@@ -87,13 +87,16 @@ uint64_t evtId_translator(uint64_t evtId)
 {
   switch (evtId)
   {
-    case 56612204463523840:
+    case 59131185602760704:
+    case 56877942680062976:
       return 0x0000020008000000; // evtCode = 32 = 0x20
     break;
-    case 56893679440235520:
+    case 59127337312064512:
+    case 56878011399539712:
       return 0x0000022008000000; // evtCode = 0x22
     break;
-    case 59127406031540224:
+    case 59131185602761728:
+    case 56877873960586240:
       return 0x0000037008000000; // evtCode = 55 = 0x37
     break;
     default:
@@ -130,7 +133,7 @@ uint32_t ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtNo,
   ////////////////////////////////////////////////////////////////////////////////////
 
   *evtNo   = (evtId.part.hi>>4)  & 0x00000fff;
-  *evtCode = *evtNo        & 0x000000ff;
+  *evtCode = *evtNo              & 0x000000ff;
   *virtAcc = (evtId.part.lo>>24) & 0x0000000f;
 
   // For MIL events, the upper 4 bits ov evtNo are zero

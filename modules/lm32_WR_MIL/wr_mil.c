@@ -88,57 +88,128 @@ void delay_96plus32n_ns(uint32_t n)
 #define DELAY100us  delay_96plus32n_ns(3122)
 #define DELAY1000us delay_96plus32n_ns(31220)
 
+void make_mil_timestamp(uint64_t tai, uint8_t *UTC1, // 0xE0 ms[ 9: 2]
+                                      uint8_t *UTC2, // 0xE1 ms[ 1: 0] s[30:25]
+                                      uint8_t *UTC3, // 0xE2  s[24:16] 
+                                      uint8_t *UTC4, // 0xE3  s[15: 8]
+                                      uint8_t *UTC5) // 0xE4  s[ 7: 0]
+{
+  uint64_t ms = tai/1000000; // conversion from ns to ms
+//  uint64_t 
+  //TODO finalize this
+}
 
-void eventHandler(volatile ECAQueueRegs *eca_queue, 
+uint32_t wait_until_tai_poll(volatile ECACtrlRegs *eca, uint64_t tai_stop)
+{
+  // poll current time until it is later than the stop time
+  TAI_t tai_now; 
+  do {
+    ECACtrl_getTAI(eca, &tai_now);
+  } while (tai_now.value < tai_stop);
+  uint32_t lateness_ns = tai_now.value - tai_stop; // we are too late by so many us
+//  if (lateness_ns < 5096) {
+    uint32_t additional_delay = 1500 - lateness_ns;
+    additional_delay -= 96;
+    additional_delay >>= 5;
+    delay_96plus32n_ns(additional_delay);
+//  }
+  return lateness_ns;
+}
+
+uint32_t wait_until_tai(volatile ECACtrlRegs *eca, uint64_t tai_stop)
+{
+  // get current time, calculate waiting time, and wait.
+  TAI_t tai_now; 
+  ECACtrl_getTAI(eca, &tai_now);
+  if (tai_stop < tai_now.value) return 1; 
+  uint32_t ns_to_go = tai_stop - tai_now.value; 
+  uint32_t delay = ns_to_go;
+  delay -= 96;
+  delay >>= 5;
+  delay_96plus32n_ns(delay);
+  return 0;
+}
+
+void eventHandler(volatile ECACtrlRegs  *eca,
+                  volatile ECAQueueRegs *eca_queue, 
                   volatile MilPiggyRegs *mil_piggy)
 {
   if (ECAQueue_actionPresent(eca_queue))
   {
-    EvtId_t evtId = { 
-      .part.hi = eca_queue->event_id_hi_get,
-      .part.lo = eca_queue->event_id_lo_get
-    };
-    TAI_t evtDeadl = { 
-      .part.hi = eca_queue->deadline_hi_get,
-      .part.lo = eca_queue->deadline_lo_get
-    };
-
     uint32_t evtNo, evtCode, virtAcc;
     if (eca_queue->tag_get == MY_ECA_TAG &&
         ECAQueue_getMilEventData(eca_queue, &evtNo, &evtCode, &virtAcc))
     {
       uint32_t milTelegram = 0;  
+      TAI_t tai_now, tai_deadl; 
+      uint32_t dt;
+      //ECACtrl_getTAI(eca, &tai_now);
+      ECAQueue_getDeadl(eca_queue, &tai_deadl);
       //mprintf("evtCode=%d\n",evtCode);
       switch (evtCode)
       {
-        case 8://32:
-          // generate MIL event EVT_START_CYCLE, followed by 5 UTC EVENTS
+        case 32:
+         // generate MIL event EVT_START_CYCLE, followed by 5 UTC EVENTS
           milTelegram  = virtAcc << 8;
           milTelegram |= 32;//evtCode; // EVT_START_CYCLE
-          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+          dt = wait_until_tai(eca, tai_deadl.value + 2*1000000);
+          MilPiggy_writeCmd(mil_piggy, milTelegram); 
+    MilPiggy_lemoOut1High(mil_piggy);
+    MilPiggy_lemoOut2High(mil_piggy);
+          mprintf("dt1=%d\n",dt);
+    MilPiggy_lemoOut1Low(mil_piggy);
+    MilPiggy_lemoOut2Low(mil_piggy);
           milTelegram &= ~(0x000000ff);
           milTelegram |= 0x22;//0xE0; // EVT_UTC_1
-          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+          dt = wait_until_tai(eca, tai_deadl.value + 2*2000000);
+          MilPiggy_writeCmd(mil_piggy, milTelegram); 
+    MilPiggy_lemoOut1High(mil_piggy);
+    MilPiggy_lemoOut2High(mil_piggy);
+          mprintf("dt2=%d\n",dt);
+    MilPiggy_lemoOut1Low(mil_piggy);
+    MilPiggy_lemoOut2Low(mil_piggy);
           milTelegram &= ~(0x000000ff);
           milTelegram |= 0x22;//0xE1; // EVT_UTC_2
-          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+          dt = wait_until_tai(eca, tai_deadl.value + 2*3000000);
+          MilPiggy_writeCmd(mil_piggy, milTelegram); 
+    MilPiggy_lemoOut1High(mil_piggy);
+    MilPiggy_lemoOut2High(mil_piggy);
+          mprintf("dt3=%d\n",dt);
+    MilPiggy_lemoOut1Low(mil_piggy);
+    MilPiggy_lemoOut2Low(mil_piggy);
           milTelegram &= ~(0x000000ff);
           milTelegram |= 0x22;//0xE2; // EVT_UTC_3
-          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+          dt = wait_until_tai(eca, tai_deadl.value + 2*4000000);
+          MilPiggy_writeCmd(mil_piggy, milTelegram); 
+    MilPiggy_lemoOut1High(mil_piggy);
+    MilPiggy_lemoOut2High(mil_piggy);
+          mprintf("dt4=%d\n",dt);
+    MilPiggy_lemoOut1Low(mil_piggy);
+    MilPiggy_lemoOut2Low(mil_piggy);
           milTelegram &= ~(0x000000ff);
           milTelegram |= 0x22;//0xE3; // EVT_UTC_4
-          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+          dt = wait_until_tai(eca, tai_deadl.value + 2*5000000);
+          MilPiggy_writeCmd(mil_piggy, milTelegram); 
+    MilPiggy_lemoOut1High(mil_piggy);
+    MilPiggy_lemoOut2High(mil_piggy);
+          mprintf("dt5=%d\n",dt);
+    MilPiggy_lemoOut1Low(mil_piggy);
+    MilPiggy_lemoOut2Low(mil_piggy);
           milTelegram &= ~(0x000000ff);
           milTelegram |= 0x22;//0xE4; // EVT_UTC_5
-          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
-          milTelegram &= ~(0x000000ff);
-          milTelegram |= 55;//0xE4; // EVT_UTC_5
-          MilPiggy_writeCmd(mil_piggy, milTelegram); DELAY50us;
+          dt = wait_until_tai(eca, tai_deadl.value + 2*6000000);
+          MilPiggy_writeCmd(mil_piggy, milTelegram); 
+    MilPiggy_lemoOut1High(mil_piggy);
+    MilPiggy_lemoOut2High(mil_piggy);
+          mprintf("dt6=%d\n",dt);
+    MilPiggy_lemoOut1Low(mil_piggy);
+    MilPiggy_lemoOut2Low(mil_piggy);
         break;
         default:
           // generate MIL event
           milTelegram  = virtAcc << 8;
           milTelegram |= evtCode;
+          dt = wait_until_tai(eca, tai_deadl.value + 2*7000000);
           MilPiggy_writeCmd(mil_piggy, milTelegram);
           break;
       }
@@ -149,11 +220,32 @@ void eventHandler(volatile ECAQueueRegs *eca_queue,
   }
 }
 
+void testOfFunction_wait_until_tai(volatile MilPiggyRegs *mil_piggy,
+                                   volatile ECACtrlRegs *eca_ctrl)
+{
+    TAI_t tai_now; 
+    ECACtrl_getTAI(eca_ctrl, &tai_now);
+
+    uint32_t lateness1 = wait_until_tai(eca_ctrl, tai_now.value + 20000);
+    MilPiggy_lemoOut1High(mil_piggy);
+    MilPiggy_lemoOut2High(mil_piggy);
+    MilPiggy_lemoOut1Low(mil_piggy);
+    MilPiggy_lemoOut2Low(mil_piggy);
+
+    uint32_t lateness2 = wait_until_tai(eca_ctrl, tai_now.value + 1020000ll);
+    MilPiggy_lemoOut1High(mil_piggy);
+    MilPiggy_lemoOut2High(mil_piggy);
+    MilPiggy_lemoOut1Low(mil_piggy);
+    MilPiggy_lemoOut2Low(mil_piggy);
+
+    mprintf("%d %d\n",lateness1, lateness2);
+
+    for (int i = 0; i < 50; ++i) DELAY1000us;
+}
 
 void main(void) 
 {
   init();   // initialize 'boot' lm32
-
 
   // MilPiggy setup
   volatile MilPiggyRegs *mil_piggy = MilPiggy_init(0);
@@ -163,23 +255,32 @@ void main(void)
   // ECAQueue setup
   volatile ECAQueueRegs *eca_queue = ECAQueue_init(0);
   uint32_t n_events = ECAQueue_clear(eca_queue);
-  mprintf("found %d events in eca queue\n", n_events);
+  mprintf("found %d events in eca queue, popped all of them\n", n_events);
 
   // ECACtrl setup
   volatile ECACtrlRegs *eca_ctrl = ECACtrl_init(0);
+  mprintf("eca ctrl regs at %08x\n", eca_ctrl);
 
   // Cmd setup
   volatile MilCmdRegs *mil_cmd = MilCmd_init(0);
+  mprintf("mil cmd regs at %08x\n", mil_cmd);
+
+  TAI_t tai_now, tai_stop; 
+  ECACtrl_getTAI(eca_ctrl, &tai_now);
+  mprintf("TAI now: 0x%08x%08x\n", tai_now.part.hi, tai_now.part.lo);
 
   while (1) {
+    //ECAQueue_clear(eca_queue);
+
     // do whatever has to be done
     //MilPiggy_lemoOut1High(mil_piggy);
     //MilPiggy_lemoOut2High(mil_piggy);
-    DELAY50us;
-    eventHandler(eca_queue, mil_piggy);
+    eventHandler(eca_ctrl, eca_queue, mil_piggy);
     //MilPiggy_lemoOut1Low(mil_piggy);
     //MilPiggy_lemoOut2Low(mil_piggy);
-    DELAY50us;
+     DELAY10us;
+
+//    testOfFunction_wait_until_tai(mil_piggy, eca_ctrl);
 
     // poll user commands
     MilCmd_poll(mil_cmd);

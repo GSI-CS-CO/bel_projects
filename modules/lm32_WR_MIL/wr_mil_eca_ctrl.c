@@ -8,7 +8,7 @@ volatile ECACtrlRegs *ECACtrl_init(uint32_t *device_addr)
 {
 	if (!device_addr)
 	{
-		find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
+		return (volatile ECACtrlRegs*)find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
 	}
 	return (volatile ECACtrlRegs*)device_addr;
 }
