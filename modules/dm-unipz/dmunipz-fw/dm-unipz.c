@@ -34,6 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
+#define DMUNIPZ_FW_VERSION 0x000002                                // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -67,10 +68,13 @@ unsigned int cpuId, cpuQty;
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED dummy = 0;
 
+
+
 volatile uint32_t *pECAQ;              // WB address of ECA queue
 volatile uint32_t *pECACtrl;           // WB address of ECA control
 volatile uint32_t *pMILPiggy;          // WB address of MIL device bus (MIL piggy)                              
 volatile uint32_t *pShared;            // pointer to begin of shared memory region                              
+uint32_t *pSharedVersion;              // pointer to a "user defined" u32 register; here: publish version
 uint32_t *pSharedStatus;               // pointer to a "user defined" u32 register; here: publish status
 uint32_t *pSharedNIterMain;            // pointer to a "user defined" u32 register; here: publish # of iterations of main loop
 uint32_t *pSharedNTransfer;            // pointer to a "user defined" u32 register; here: publish # of transfers
@@ -81,6 +85,7 @@ volatile uint32_t *pSharedCmd;         // pointer to a "user defined" u32 regist
 uint32_t *pSharedState;                // pointer to a "user defined" u32 register; here: publish status
 volatile uint32_t *pSharedData4EB ;    // pointer to a n x u32 register; here: memory region for receiving EB return values
 uint32_t *pCpuRamExternal;             // external address (seen from host bridge) of this CPU's RAM            
+uint32_t *pCpuRamExternalVersion;      // external address (seen from host bridge) of this CPU's RAM: version (write)
 uint32_t *pCpuRamExternalStatus;       // external address (seen from host bridge) of this CPU's RAM: status  (write)
 uint32_t *pCpuRamExternalCmd;          // external address (seen from host bridge) of this CPU's RAM: command (read)
 uint32_t *pCpuRamExternalState;        // external address (seen from host bridge) of this CPU's RAM: state (write)
@@ -91,10 +96,7 @@ uint32_t *pCpuRamExternalVirtAcc;      // external address (seen from host bridg
 uint32_t *pCpuRamExternalStatTrans;    // external address (seen from host bridge) of this CPU's RAM: status of ongoing transfer
 uint32_t *pCpuRamExternalData4EB;      // external address (seen from host bridge) of this CPU's RAM: field for EB return values (read)
 
-uint32_t actStatus;                    // actual (error) status, see DMUNIPZ_STATUS_...
-uint32_t actState;                     // actual state,          see DMUNIPZ_STATE_...
 uint32_t reqState;                     // requested state
-
 WriteToPZU_Type  writePZUData;         // Modulbus SIS, I/O-Modul 1, Bits 0..15
 
 /*
@@ -164,6 +166,7 @@ void initSharedMem() // determine address and clear shared mem
 
   // get pointer to shared memory
   pShared           = (uint32_t *)_startshared;
+  pSharedVersion    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_VERSION >> 2));
   pSharedStatus     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_STATUS >> 2));
   pSharedCmd        = (uint32_t *)(pShared + (DMUNIPZ_SHARED_CMD >> 2));
   pSharedState      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_STATE >> 2));
@@ -176,6 +179,7 @@ void initSharedMem() // determine address and clear shared mem
 
   // print local pointer info to UART
   mprintf("internal shared memory: start                   @ 0x%08x\n", (uint32_t)pShared);
+  mprintf("internal shared memory: version                 @ 0x%08x\n", (uint32_t)pSharedVersion);
   mprintf("internal shared memory: status address          @ 0x%08x\n", (uint32_t)pSharedStatus);
   mprintf("internal shared memory: command address         @ 0x%08x\n", (uint32_t)pSharedCmd);
   mprintf("internal shared memory: state address           @ 0x%08x\n", (uint32_t)pSharedState);
@@ -193,6 +197,7 @@ void initSharedMem() // determine address and clear shared mem
   find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
   if(idx >= cpuId) {
     pCpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+    pCpuRamExternalVersion    = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_VERSION + SHARED_OFFS) >> 2));
     pCpuRamExternalStatus     = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_STATUS + SHARED_OFFS) >> 2));
     pCpuRamExternalCmd        = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_CMD + SHARED_OFFS) >> 2));
     pCpuRamExternalState      = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_STATE + SHARED_OFFS) >> 2));
@@ -205,6 +210,7 @@ void initSharedMem() // determine address and clear shared mem
     
     // print external WB info to UART
     mprintf("external WB address   : start            @ 0x%08x\n", (uint32_t)(pCpuRamExternal));
+    mprintf("external WB address   : version          @ 0x%08x\n", (uint32_t)(pCpuRamExternalVersion));
     mprintf("external WB address   : status           @ 0x%08x\n", (uint32_t)(pCpuRamExternalStatus));
     mprintf("external WB address   : command          @ 0x%08x\n", (uint32_t)(pCpuRamExternalCmd));
     mprintf("external WB address   : state            @ 0x%08x\n", (uint32_t)(pCpuRamExternalState));
@@ -219,26 +225,18 @@ void initSharedMem() // determine address and clear shared mem
     pCpuRamExternal = (uint32_t *)ERROR_NOT_FOUND;
     mprintf("Could not find external WB address of my own RAM !\n");
   }
+
+  *pSharedVersion = DMUNIPZ_FW_VERSION; // of all the shared variabes, only VERSION is a constant. Set it now!
   
-  // initialize values of shared memory
-  *pSharedStatus     = DMUNIPZ_STATUS_UNKNOWN;
-  *pSharedCmd        = 0x0;
-  *pSharedState      = DMUNIPZ_STATE_UNKNOWN;
-  *pSharedNIterMain  = 0x0;
-  *pSharedNTransfer  = 0x0;
-  *pSharedNInject    = 0x0;
-  *pSharedVirtAcc    = 0xFF;
-  *pSharedStatTrans  = DMUNIPZ_TRANS_UNKNOWN;
   ebmClearSharedMem();
 } // initSharedMem 
 
 
-void initState()
+void initState(uint32_t *actState)
 {
-  actState      = DMUNIPZ_STATE_S0;
+  *actState     = DMUNIPZ_STATE_UNKNOWN;
   reqState      = DMUNIPZ_STATE_S0;
-  *pSharedState = DMUNIPZ_STATE_S0;
-} //iniState
+} //initState
 
 
 void findMILPiggy() //find WB address of MIL Piggy
@@ -484,9 +482,7 @@ uint32_t releaseTK()
 
 uint32_t requestBeam(uint32_t msTimeout)
 {
-  ReadFromPZU_Type readPZUData;  // Modulbus SIS, I/O-Modul 3, Bits 0..15
   int16_t          status;       // status MIL device bus operation
-  uint32_t         i,j;          
 
   // send request to modulbus I/O (UNIPZ)
   writePZUData.bits.SIS_Request  = true;
@@ -602,11 +598,10 @@ uint32_t entryActionConfigured()
   }
 
   // configure MIL piggy for timing events for all 16 virtual accelerators
-  //for (i=0; i < (0xf + 1); i++)
-    if ((status = configMILEvent(DMUNIPZ_EVT_UNI_READY)) != DMUNIPZ_STATUS_OK) {
-      mprintf("dm-unipz: ERROR - failed to configure MIL piggy for receiving timing events! %d %d\n", status, i);
-      return status;
-    } 
+  if ((status = configMILEvent(DMUNIPZ_EVT_UNI_READY)) != DMUNIPZ_STATUS_OK) {
+    mprintf("dm-unipz: ERROR - failed to configure MIL piggy for receiving timing events! %d\n", status);
+    return status;
+  } 
 
   configLemoOutputEvtMil(pMILPiggy, 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
   checkClearReqNotOk(DMUNIPZ_REQTIMEOUT);  // in case a 'req_not_ok' flag has been set at UNIPZ, try to clear it
@@ -679,62 +674,62 @@ void cmdHandler() // handle commands from the outside world
 } // cmdHandler
 
 
-uint32_t changeState() //state machine; see dm-unipz.h for possible states and transitions
+uint32_t changeState(uint32_t *actState, uint32_t actStatus)   //state machine; see dm-unipz.h for possible states and transitions
 {
+  uint32_t statusOfStateChange = DMUNIPZ_STATUS_OK;
   uint32_t status;
-  uint32_t nextState;
+  uint32_t nextState;                   
 
-  status    = DMUNIPZ_STATUS_OK; 
   // if something severe happened, perform immediate state change and return
-  if ((reqState == DMUNIPZ_STATE_ERROR) || (reqState == DMUNIPZ_STATE_FATAL)) nextState = reqState;
+  if ((reqState == DMUNIPZ_STATE_ERROR) || (reqState == DMUNIPZ_STATE_FATAL)) 
+    {statusOfStateChange = status = actStatus; nextState = reqState;}
   else {
-    nextState = actState; // per default: remain in actual state without exit or entry action
-    switch (actState) {   // check for allowed transitions: 1. determine next state, 2. perform exit or entry actions if required
+    nextState = *actState;                       // per default: remain in actual state without exit or entry action
+    switch (*actState) {                         // check for allowed transitions: 1. determine next state, 2. perform exit or entry actions if required
     case DMUNIPZ_STATE_S0:
-      nextState = DMUNIPZ_STATE_IDLE;     //automatic transition
+      nextState = DMUNIPZ_STATE_IDLE;            //automatic transition
       break;
     case DMUNIPZ_STATE_IDLE:
-      if      (reqState == DMUNIPZ_STATE_CONFIGURED)  {status = entryActionConfigured(); nextState = reqState;}
+      if      (reqState == DMUNIPZ_STATE_CONFIGURED)  {statusOfStateChange = entryActionConfigured(); nextState = reqState;}
       break;
     case DMUNIPZ_STATE_CONFIGURED:
-      if      (reqState == DMUNIPZ_STATE_IDLE)        {                                  nextState = reqState;}
-      else if (reqState == DMUNIPZ_STATE_CONFIGURED)  {status = entryActionConfigured(); nextState = reqState;}
-      else if (reqState == DMUNIPZ_STATE_OPERATION)   {status = entryActionOperation();  nextState = reqState;}
+      if      (reqState == DMUNIPZ_STATE_IDLE)        {                                               nextState = reqState;}
+      else if (reqState == DMUNIPZ_STATE_CONFIGURED)  {statusOfStateChange = entryActionConfigured(); nextState = reqState;}
+      else if (reqState == DMUNIPZ_STATE_OPERATION)   {statusOfStateChange = entryActionOperation();  nextState = reqState;}
       break;
     case DMUNIPZ_STATE_OPERATION:
-      if      (reqState == DMUNIPZ_STATE_STOPPING)    {status = exitActionOperation();   nextState = reqState;}
+      if      (reqState == DMUNIPZ_STATE_STOPPING)    {statusOfStateChange = exitActionOperation();   nextState = reqState;}
       break;
     case DMUNIPZ_STATE_STOPPING:
-      nextState = DMUNIPZ_STATE_CONFIGURED; //automatic transition
+      nextState = DMUNIPZ_STATE_CONFIGURED;      //automatic transition
     case DMUNIPZ_STATE_ERROR:
-      if      (reqState == DMUNIPZ_STATE_IDLE)        {status = actionRecover();         nextState = reqState;}
+      if      (reqState == DMUNIPZ_STATE_IDLE)        {statusOfStateChange = actionRecover();         nextState = reqState;}
       break;
-    default:   nextState = DMUNIPZ_STATE_S0;  // in case we are in an undefined state, start all over again
+    default:   nextState = DMUNIPZ_STATE_S0;     // in case we are in an undefined state, start all over again
     } // switch actState
   }  // else something severe happened
   
   // in case state change can not be done, transit to error state
-  if (status != DMUNIPZ_STATUS_OK) nextState = DMUNIPZ_STATE_ERROR;
+  if (statusOfStateChange != DMUNIPZ_STATUS_OK) nextState = DMUNIPZ_STATE_ERROR;
 
-  // state change: update info and reset status
-  if (actState != nextState) {  
+  // a state change happened
+  if (*actState != nextState) {                   
     mprintf("dm-unipz: changed to state %d\n", nextState);
-    *pSharedState = nextState;
-  }
-  // finaly ...
-  actState = nextState;
-  reqState = DMUNIPZ_STATE_UNKNOWN; //check
+    *actState = nextState;                       // update state info ...
+    status = statusOfStateChange;                // ... and return status of state change
+  } // if state change
+  else  status = actStatus;                      // no state change: return (unchanged) actStatus
+
+  reqState = DMUNIPZ_STATE_UNKNOWN;              // reset the requested state (after handling the request)
 
   return status;
 } //changeState
 
 
-uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t *nTransfer, uint32_t *nInject)
+uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t *nTransfer, uint32_t *nInject, uint32_t actStatus)
 {
-  uint32_t i;
   uint32_t status;
   uint32_t nextAction;
-  uint32_t regValue;
   uint32_t virtAccTmp;
   uint64_t timestamp;
 
@@ -770,9 +765,10 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       timestamp = getSysTime();                                                    // get timestamp for MIL event
       pulseLemo2();                                                                // for hardware debugging with scope
 
-      if (status == DMUNIPZ_STATUS_TIMEDOUT)                                       // discriminate between 'timeout' and 'REQ_NOT_OK'
+      if (status == DMUNIPZ_STATUS_TIMEDOUT) {                                     // discriminate between 'timeout' and 'REQ_NOT_OK'
         if (checkClearReqNotOk(DMUNIPZ_REQTIMEOUT) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;
         else                                                             status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;
+      } // if status
       
       replyRequestBeam(virtAccTmp, timestamp, status);                             // reply to DM
 
@@ -799,27 +795,36 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
 
 
 void main(void) {
-  
+ 
   uint32_t i,j;
 
-  uint32_t inSync;
-  uint32_t dT;
-  uint16_t test;
   int      status;
+  uint32_t actStatus;                   
+  uint32_t actState;            
+
   uint32_t statusTransfer;
   uint32_t nTransfer;
   uint32_t nInject;
   uint32_t virtAcc;
 
+  // init global variables
+  actStatus      = DMUNIPZ_STATUS_UNKNOWN; // init actual (error) status 
 
+  // init local variables
+  status         = DMUNIPZ_STATUS_OK;      // (error) status 
+  nTransfer      = 0;                      // number of transfers
+  nInject        = 0;                      // number of injections (of current transfer)
+  virtAcc        = 0xff;                   // virtual accelerator
+  statusTransfer = DMUNIPZ_TRANS_UNKNOWN;  // status of transfer
+
+  
   init();                        // initialize stuff for lm32
   initSharedMem();               // initialize shared memory
-  initState();                   // init state machine
+  initState(&actState);          // init state machine
   ebmInit();                     // init EB master 
   ebmClearSharedMem();           // clear shared memory used for EB return values
   
-  status    = DMUNIPZ_STATUS_OK;       // init (error) status 
-  actStatus = DMUNIPZ_STATUS_UNKNOWN;  // init actual (error) status 
+
 
   findECAQueue();                // find WB device, required to receive events from the ECA
   findECAControl();              // find WB device, required to obtain timestamp
@@ -832,15 +837,15 @@ void main(void) {
 
   while (1) {
     cmdHandler();             // check for commands and possibly request state changes
-    status = changeState();   // handle requested state changes
+    status = changeState(&actState, actStatus); // handle requested state changes
     
     switch(actState)          // state specific do actions
       {
       case DMUNIPZ_STATE_OPERATION :
-        status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer, &nInject);
+        status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer, &nInject, actStatus);
         break;
       case DMUNIPZ_STATE_FATAL :
-        mprintf("dm-unipz: a FATAL error has occured. Good bye.\n");
+        mprintf("dm-unipz: a FATAL error has occured: '%s'. Good bye.\n", status);
         while (1) asm("nop"); // RIP!
         break;
       default :
@@ -851,11 +856,13 @@ void main(void) {
     if (status == DMUNIPZ_STATUS_DEVBUSERROR) reqState = DMUNIPZ_STATE_ERROR;
     if (status == DMUNIPZ_STATUS_ERROR)       reqState = DMUNIPZ_STATE_ERROR;
 
-    // update status and counter for main loop
+    // update status
     if (actStatus != status) {
       *pSharedStatus = status;
       actStatus      = status;
     }
+
+    *pSharedState     = actState;
     i++; *pSharedNIterMain = i;
     *pSharedStatTrans = statusTransfer;
     *pSharedVirtAcc   = virtAcc;

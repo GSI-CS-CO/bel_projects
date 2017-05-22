@@ -6,12 +6,12 @@ SPI_LANES	= ASx4
 RAM_SIZE	= 49152 
 SHARED_SIZE     = 8K
 USRCPUCLK       = 125000
-VERSION         = 0.0.1
+VERSION         = 0.0.2
 
 PATHFW 	= .
 PATHPKG	= $(shell python2.7 ../../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
 PREFIX 	?= /usr/local
-CFLAGS 	= -I$(PATHFW) 
+CFLAGS 	= -I$(PATHFW)
 
 include ../../../syn/build.mk
 

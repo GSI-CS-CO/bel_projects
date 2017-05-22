@@ -10,7 +10,8 @@
 #define DMUNIPZ_SHARED_CMD            0x04   // input of 32bit command
 #define DMUNIPZ_SHARED_STATE          0x08   // state of state machine
 #define DMUNIPZ_SHARED_NITERMAIN      0x0C   // # of iterations of main loop
-// 0x10-0x2F: reserved
+#define DMUNIPZ_SHARED_VERSION        0x10   // version of firmware
+// 0x13-0x2F: reserved
 #define DMUNIPZ_SHARED_TRANSN         0x30   // # N of transfers
 #define DMUNIPZ_SHARED_INJECTN        0x34   // # N of injections (of current transfer)
 #define DMUNIPZ_SHARED_TRANSVIRTACC   0x38   // # requested virtual accelerator 0..F
