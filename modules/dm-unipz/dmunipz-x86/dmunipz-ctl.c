@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.0.1"
+#define DMUNIPZ_X86_VERSION "0.0.2"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -67,6 +67,7 @@ eb_address_t dmunipz_injections; // number of injections in ongoing transfer
 eb_address_t dmunipz_virtAcc;    // number of virtual accelerator of ongoing or last transfer, read
 eb_address_t dmunipz_statTrans;  // status of ongoing or last transfer, read
 eb_address_t dmunipz_cmd;        // command, write
+eb_address_t dmunipz_version;    // version, read
 
 
 
@@ -188,12 +189,10 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
   eb_cycle_read(cycle, dmunipz_state,       EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)state);
   eb_cycle_read(cycle, dmunipz_iterations,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)iterations);
   eb_cycle_read(cycle, dmunipz_transfers,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)transfers);
-  // here: read number of injections
+  eb_cycle_read(cycle, dmunipz_injections,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)injections);
   eb_cycle_read(cycle, dmunipz_virtAcc,     EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)virtAcc);
   eb_cycle_read(cycle, dmunipz_statTrans,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)statTrans);
   if ((eb_status = eb_cycle_close(cycle)) != EB_OK) die("EP eb_cycle_close", eb_status);
-
-  *injections = 1; // chk, hack!
 
   return eb_status;
 } // getInfo
@@ -201,7 +200,7 @@ int readInfo(uint32_t *status, uint32_t *state, uint32_t *iterations, uint32_t *
 
 void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAcc, uint32_t statTrans)
 {
-  printf("%08d, %02d, %02d, %d %d %d %d %d %d", transfers, injections, virtAcc, 
+  printf("%08d, %02d, %03d, %d %d %d %d %d %d", transfers, injections, virtAcc, 
          ((statTrans & DMUNIPZ_TRANS_REQTK    ) > 0),  
          ((statTrans & DMUNIPZ_TRANS_REQTKOK  ) > 0), 
          ((statTrans & DMUNIPZ_TRANS_RELTK    ) > 0),
@@ -230,6 +229,7 @@ int main(int argc, char** argv) {
   uint32_t injections;
   uint32_t virtAcc;   
   uint32_t statTrans; 
+  uint32_t version; 
 
   uint32_t actTransfers;   // actual number of transfers
   uint32_t actState;       // actual state of gateway
@@ -294,14 +294,19 @@ int main(int argc, char** argv) {
   dmunipz_state      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_STATE;;
   dmunipz_iterations = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NITERMAIN;
   dmunipz_transfers  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSN;
-  dmunipz_injections = NULL; //todo, chk
+  dmunipz_injections = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_INJECTN;
   dmunipz_virtAcc    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSVIRTACC;
   dmunipz_statTrans  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSSTATUS;
   dmunipz_cmd        = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_CMD;
+  dmunipz_version    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_VERSION;
 
   if (getInfo) {
+    // version info
+    eb_device_read(device, dmunipz_version, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)(&version), 0, eb_block);
+    printf("dm-unipz: software version %s, firmware version %06x\n",  DMUNIPZ_X86_VERSION, version); 
+
+    // status
     readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans);
-    
     printf("dm-unipz: state %s, status %s, iterations %d\n",dmunipz_state_text(state),  dmunipz_status_text(status), iterations);
     printf("dm-unipz: transfer, virtAcc, reqTK reqBeam success failed:\n          ");
     printTransfer(transfers, injections, virtAcc, statTrans);
