@@ -698,7 +698,7 @@ architecture rtl of monster is
   signal lvds_dat_fr_clk_gen  : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat_fr_wr_pps   : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
   signal lvds_dat             : t_lvds_byte_array(f_sub1(c_eca_lvds) downto 0);
-  signal lvds_i               : t_lvds_byte_array(15 downto 0);
+  signal lvds_i               : t_lvds_byte_array(f_sub1(g_lvds_inout+g_lvds_in) downto 0);
   
   signal s_triggers : t_trigger_array(g_gpio_in + g_gpio_inout + g_lvds_inout + g_lvds_in -1 downto 0);
   
