@@ -23,7 +23,7 @@ typedef struct
 	uint32_t executed_lo_get;
 } ECAQueueRegs;
 
-volatile ECAQueueRegs *ECAQueue_init(uint32_t *device_addr);
+volatile ECAQueueRegs *ECAQueue_init();
 
 // locate the ECAQueue via SDB and return a pointer to the channel for the soft CPU
 uint32_t *ECAQueue_findAddress();

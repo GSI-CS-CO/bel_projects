@@ -4,14 +4,12 @@
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"       // register layout ECA controle
 #include "mini_sdb.h"
 
-volatile ECACtrlRegs *ECACtrl_init(uint32_t *device_addr)
+#ifndef UNITTEST
+volatile ECACtrlRegs *ECACtrl_init()
 {
-	if (!device_addr)
-	{
-		return (volatile ECACtrlRegs*)find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
-	}
-	return (volatile ECACtrlRegs*)device_addr;
+  return (volatile ECACtrlRegs*)find_device_adr(ECA_SDB_VENDOR_ID, ECA_SDB_DEVICE_ID);
 }
+#endif
 
 void ECACtrl_getTAI(volatile ECACtrlRegs *eca, TAI_t *tai)
 {

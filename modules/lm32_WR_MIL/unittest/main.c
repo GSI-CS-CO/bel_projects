@@ -2,46 +2,21 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include "wr_mil_piggy.h"
 #include "wr_mil_eca_queue.h"
 #include "wr_mil_eca_ctrl.h"
+#include "wr_mil_utils.h"
 
-
-/***********************************************************
- * 
- * defintion of LEMO config register
- * 
- * bits 0..7: see below
- * bits 8..31: unused
- *
- ***********************************************************/
-#define   MIL_LEMO_OUT_EN1    0x0001    // '1' ==> LEMO 1 configured as output (MIL Piggy)
-#define   MIL_LEMO_OUT_EN2    0x0002    // '1' ==> LEMO 2 configured as output (MIL Piggy)
-#define   MIL_LEMO_OUT_EN3    0x0004    // '1' ==> LEMO 3 configured as output (SIO)
-#define   MIL_LEMO_OUT_EN4    0x0008    // '1' ==> LEMO 4 configured as output (SIO)
-#define   MIL_LEMO_EVENT_EN1  0x0010    // '1' ==> LEMO 1 can be controlled by event (MIL Piggy)
-#define   MIL_LEMO_EVENT_EN2  0x0020    // '1' ==> LEMO 2 can be controlled by event (MIL Piggy)
-#define   MIL_LEMO_EVENT_EN3  0x0040    // '1' ==> LEMO 3 can be controlled by event (unused?)
-#define   MIL_LEMO_EVENT_EN4  0x0080    // '1' ==> LEMO 4 can be controlled by event (unused?) 
-
-
-/***********************************************************
- * 
- * defintion of LEMO data register
- * in case LEMO outputs are not controlled via events,
- * this register can be used to control them
- * 
- * bits 0..3: see below
- * bits 4..31: unused
- *
- ***********************************************************/
-#define   MIL_LEMO_DAT1    0x0001    // '1' ==> LEMO 1 is switched active HIGH (MIL Piggy & SIO)
-#define   MIL_LEMO_DAT2    0x0002    // '1' ==> LEMO 2 is switched active HIGH (MIL Piggy & SIO)
-#define   MIL_LEMO_DAT3    0x0004    // '1' ==> LEMO 3 is switched active HIGH (SIO)
-#define   MIL_LEMO_DAT4    0x0008    // '1' ==> LEMO 4 is switched active HIGH (SIO)
-
-
+#define   MIL_LEMO_OUT_EN1        0x0001    // '1' ==> LEMO 1 configured as output (MIL Piggy)
+#define   MIL_LEMO_OUT_EN2        0x0002    // '1' ==> LEMO 2 configured as output (MIL Piggy)
+#define   MIL_LEMO_EVENT_EN1      0x0010    // '1' ==> LEMO 1 can be controlled by event (MIL Piggy)
+#define   MIL_LEMO_EVENT_EN2      0x0020    // '1' ==> LEMO 2 can be controlled by event (MIL Piggy)
+#define   MIL_LEMO_DAT1           0x0001    // '1' ==> LEMO 1 is switched active HIGH (MIL Piggy & SIO)
+#define   MIL_LEMO_DAT2           0x0002    // '1' ==> LEMO 2 is switched active HIGH (MIL Piggy & SIO)
+#define   SCU_MIL                 0x35aa6b96
+#define   MIL_CTRL_STAT_TRM_READY 0x0080
 
 typedef struct
 {
@@ -81,12 +56,12 @@ typedef struct
 } ECAQueueFakeDevice;
 ECAQueueFakeDevice my_fake_eca_queue_device;
 
-int main()
+int main() 
 {
 	////////////////////////////////////////
 	// MilPiggy module tests
 	////////////////////////////////////////
-	volatile MilPiggyRegs *mil_piggy = MilPiggy_init((uint32_t*)&my_fake_mil_piggy_device);
+	volatile MilPiggyRegs *mil_piggy = (volatile MilPiggyRegs *)&my_fake_mil_piggy_device;
 
 	uint32_t mil_piggy_test_value = 42;
 	MilPiggy_writeCmd(mil_piggy, mil_piggy_test_value);
@@ -107,7 +82,7 @@ int main()
 	////////////////////////////////////////
 	// ECA queue module tests
 	////////////////////////////////////////
-	ECAQueue_t *eca_queue = ECAQueue_init((uint32_t*)&my_fake_eca_queue_device);
+	ECAQueueRegs *eca_queue = (ECAQueueRegs *)&my_fake_eca_queue_device;
 
 	// test getEvtId function
 	uint32_t eca_queue_test_id_hi = 0x12345678u;
@@ -120,6 +95,33 @@ int main()
 	assert(evt_id.part.lo == eca_queue_test_id_lo);
 
 
+	// test timestamp conversion
+	uint32_t sec_old, ms_old;
+	for (uint64_t i = 0; i < 20000; ++i)
+	{
+		uint64_t TAI = 0x14c13f9783795370 + i*1000000;
+		uint32_t EVT_UTC[5];
+		make_mil_timestamp(TAI, EVT_UTC);
+		for (int i = 0; i < 5; ++i) EVT_UTC[i] >>= 8;
+		//printf("TAI_ms %" PRIu64 "\n", TAI_ms);
+		uint32_t ms   = (EVT_UTC[0] << 2) | ((EVT_UTC[1] >> 6));
+		uint32_t sec  = (EVT_UTC[1] & 0x0000002f) << 24;
+		         sec |= (EVT_UTC[2] & 0x000000ff) << 16;
+		         sec |= (EVT_UTC[3] & 0x000000ff) << 8;
+		         sec |= (EVT_UTC[4] & 0x000000ff) << 0;
+		//printf("sec %d  :  ms %d   \n",sec, ms);
+
+		// assert some critical properties of the second and milisecond values
+		if (i != 0)	{
+			assert((ms_old+1)%1000 == ms);
+			if (ms==0) {
+				assert(sec_old+1 == sec);
+			}
+		}
+
+		sec_old = sec;
+		ms_old  = ms;
+	}
 
 
 	printf("all tests successful\n");

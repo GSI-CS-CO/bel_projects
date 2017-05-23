@@ -72,7 +72,7 @@ typedef struct
   uint32_t channel_executed_lo_get;     // 0xe4  //ro, 32 b, The actual execution time of the first action with the selected error code on the selected subchannel, cleared when channel_failed_count is read (low word)
 } ECACtrlRegs;
 
-volatile ECACtrlRegs *ECACtrl_init(uint32_t *device_addr);
+volatile ECACtrlRegs *ECACtrl_init();
 void ECACtrl_getTAI(volatile ECACtrlRegs *eca, TAI_t *tai);
 
 #endif

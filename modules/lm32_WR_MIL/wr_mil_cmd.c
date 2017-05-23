@@ -6,15 +6,11 @@ extern volatile uint32_t _startshared[]; // provided in linker script "ram.ld"
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED dummy = 0; // not sure if this is really needed... 
 
-volatile MilCmdRegs *MilCmd_init(uint32_t *device_addr)
+volatile MilCmdRegs *MilCmd_init()
 {
-  if (!device_addr)
-  {
-    volatile MilCmdRegs *cmd = (volatile MilCmdRegs*)_startshared;
-    cmd->cmd = 0;
-    return cmd;
-  }
-  return (volatile MilCmdRegs*)device_addr;
+  volatile MilCmdRegs *cmd = (volatile MilCmdRegs*)_startshared;
+  cmd->cmd = 0;
+  return cmd;
 }
 
 // check if the command (cmd) register is != 0, 

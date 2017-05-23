@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+
 typedef struct 
 {
 	uint32_t rd_wr_data;        // MIL_RD_WR_DATA;
@@ -21,7 +22,7 @@ typedef struct
 	uint32_t ev_filt_last;      // EV_FILT_LAST;	
 } MilPiggyRegs;
 
-volatile MilPiggyRegs *MilPiggy_init(uint32_t *device_addr);
+volatile MilPiggyRegs *MilPiggy_init();
 
 /* write the lower 16 bit of cmd to Mil device bus */
 void MilPiggy_writeCmd(volatile MilPiggyRegs *piggy, uint32_t cmd);

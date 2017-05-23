@@ -10,7 +10,7 @@ typedef struct
 	uint32_t cmd;       // base + 8
 } MilCmdRegs;
 
-volatile MilCmdRegs *MilCmd_init(uint32_t *device_addr);
+volatile MilCmdRegs *MilCmd_init();
 
 void MilCmd_poll(volatile MilCmdRegs *cmd);
 
