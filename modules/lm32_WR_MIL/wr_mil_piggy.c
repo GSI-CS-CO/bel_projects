@@ -14,6 +14,7 @@ volatile MilPiggyRegs *MilPiggy_init(uint32_t *device_addr)
 
 void MilPiggy_writeCmd(volatile MilPiggyRegs *piggy, uint32_t cmd)
 {
+     while(!(piggy->wr_rd_status & MIL_CTRL_STAT_TRM_READY)); // wait until ready
 	piggy->wr_cmd = cmd;
 }
 
