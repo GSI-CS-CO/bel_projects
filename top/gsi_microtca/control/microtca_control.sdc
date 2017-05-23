@@ -4,9 +4,10 @@ derive_clock_uncertainty
 # Cut the clock domains from each other
 set_clock_groups -asynchronous                           \
  -group { altera_reserved_tck                          } \
- -group { clk_20m_vcxo_i    main|\dmtd_a5:dmtd_inst|*  } \
- -group { clk_125m_local_i  main|\sys_a5:sys_inst|*    } \
- -group { sfp234_ref_clk_i  main|\ref_a5:ref_inst|*      \
+ -group { lvttl_clk_i                                  } \
+ -group { clk_20m_vcxo_i     main|\dmtd_a5:dmtd_inst|* } \
+ -group { clk_125m_local_i   main|\sys_a5:sys_inst|*   } \
+ -group { sfp234_ref_clk_i   main|\ref_a5:ref_inst|*     \
           main|\phy_a5:phy|*.cdr_refclk*                 \
           main|\phy_a5:phy|*.cmu_pll.*                   \
           main|\phy_a5:phy|*|av_tx_pma|*                 \
@@ -14,7 +15,7 @@ set_clock_groups -asynchronous                           \
  -group { main|\phy_a5:phy|*|clk90bdes                   \
           main|\phy_a5:phy|*|clk90b                      \
           main|\phy_a5:phy|*|rcvdclkpma                } \
- -group { pcie_refclk_i                                  \
+ -group { pcie_clk_i                                     \
           main|\pcie_y:pcie|*.cdr_refclk*                \
           main|\pcie_y:pcie|*.cmu_pll.*                  \
           main|\pcie_y:pcie|*|av_tx_pma|*                \
