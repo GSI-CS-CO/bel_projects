@@ -138,26 +138,26 @@ static void help(void) {
   fprintf(stderr, "\n");
   fprintf(stderr, "  configure        command requests state change to CONFIGURED\n");
   fprintf(stderr, "  startop          command requests state change to OPERATION\n");
-  fprintf(stderr, "  stopop           command requests state change to STOPPING -> IDLE\n");
-  fprintf(stderr, "  recover          command requests state change to IDLE\n");
+  fprintf(stderr, "  stopop           command requests state change to STOPPING -> CONFIGURED\n");
+  fprintf(stderr, "  recover          command tries to recover from ERROR state and transit to IDLE\n");
   fprintf(stderr, "  idle             command requests state change to IDLE\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control the DM-UNIPZ gateway from the command line.\n");
   fprintf(stderr, "Example1: '%s -i dev/wbm0' display typical information.\n", program);
   fprintf(stderr, "Example2: '%s -s0 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
   fprintf(stderr, "\n");
-  fprintf(stderr, "When using option '-s', the following information is displayed\n");
-  fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 02, 1 1 1 1 1 1, OPERATION , status - OK\n");
-  fprintf(stderr, "                            |   |   |  | | | | | |  |                    |\n");
-  fprintf(stderr, "                            |   |   |  | | | | | |  |                    - error status\n");
-  fprintf(stderr, "                            |   |   |  | | | | | |   - state\n");
-  fprintf(stderr, "                            |   |   |  | | | | | - beam (request) released\n");
-  fprintf(stderr, "                            |   |   |  | | | | - beam request succeeded\n");
-  fprintf(stderr, "                            |   |   |  | | | - beam requested\n");
-  fprintf(stderr, "                            |   |   |  | | - TK (request) released -> transfer completed\n");
-  fprintf(stderr, "                            |   |   |  | - TK request succeeded\n");
-  fprintf(stderr, "                            |   |   |  - TK requested\n");
-  fprintf(stderr, "                            |   |   - number of virtual accelerator\n");
+  fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
+  fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 1 1 1 1 1 1, OPERATION , OK\n");
+  fprintf(stderr, "                            |   |    |  | | | | | |  |           |\n");
+  fprintf(stderr, "                            |   |    |  | | | | | |  |           - status\n");
+  fprintf(stderr, "                            |   |    |  | | | | | |   - state\n");
+  fprintf(stderr, "                            |   |    |  | | | | | - beam (request) released\n");
+  fprintf(stderr, "                            |   |    |  | | | | - beam request succeeded\n");
+  fprintf(stderr, "                            |   |    |  | | | - beam requested\n");
+  fprintf(stderr, "                            |   |    |  | | - TK (request) released -> transfer completed\n");
+  fprintf(stderr, "                            |   |    |  | - TK request succeeded\n");
+  fprintf(stderr, "                            |   |    |  - TK requested\n");
+  fprintf(stderr, "                            |   |    - number of virtual accelerator\n");
   fprintf(stderr, "                            |   |- number of injections in current transfer\n");
   fprintf(stderr, "                            - number of transfers\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
@@ -303,14 +303,13 @@ int main(int argc, char** argv) {
   if (getInfo) {
     // version info
     eb_device_read(device, dmunipz_version, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)(&version), 0, eb_block);
-    printf("dm-unipz: software version %s, firmware version %06x\n",  DMUNIPZ_X86_VERSION, version); 
+    printf("dm-unipz: software (firmware) version %s (%06x)\n",  DMUNIPZ_X86_VERSION, version); 
 
     // status
     readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans);
     printf("dm-unipz: state %s, status %s, iterations %d\n",dmunipz_state_text(state),  dmunipz_status_text(status), iterations);
-    printf("dm-unipz: transfer, virtAcc, reqTK reqBeam success failed:\n          ");
-    printTransfer(transfers, injections, virtAcc, statTrans);
-    printf("\n");
+    printf("dm-unipz: "); printTransfer(transfers, injections, virtAcc, statTrans); printf("\n");
+    printf("          # of transfers, # of injections, virtAcc, status transfer\n");
   } // if getInfo
 
   if (command) {
@@ -334,7 +333,7 @@ int main(int argc, char** argv) {
 
       switch(state) {
       case DMUNIPZ_STATE_OPERATION :
-        if (actTransfers != transfers) sleepTime = DMUNIPZ_REQTIMEOUT * 1000 + 200000;        // sleep as long as a beam should have been transferred
+        if (actTransfers != transfers) sleepTime = 500000;                                    // ongoing transfer: reduce polling rate ...
         else                           sleepTime = 100000;                                    // sleep for 100ms to be sure to catch the next TK_REQ
         break;
       default:
@@ -355,16 +354,10 @@ int main(int argc, char** argv) {
       if (printFlag) {
         printf("dm-unipz: transfer - "); 
         printTransfer(transfers, injections, virtAcc, statTrans); 
-        printf(", %s, status - %s\n", dmunipz_state_text(state), dmunipz_status_text(status));
+        printf(", %s, %s\n", dmunipz_state_text(state), dmunipz_status_text(status));
       } // if printFlag
 
-      fflush(stdout);                                                                  // required for immediate writing (if stdout is piped to syslog)
-    
-      /*      // update local variables
-      actTransfers  = transfers;
-      actStatus     = status;
-      actState      = state;
-      actStatTrans  = statTrans; */
+      fflush(stdout);                                                                         // required for immediate writing (if stdout is piped to syslog)
 
       //sleep 
       usleep(sleepTime);
