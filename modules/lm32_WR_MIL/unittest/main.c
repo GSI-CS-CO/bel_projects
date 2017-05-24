@@ -123,6 +123,50 @@ int main()
 		ms_old  = ms;
 	}
 
+	//[michael@belpc121 unittest]$ date +%s
+	//1495611111
+	//  16777216
+	//4294967296
+	//1073741824
+
+	//296416092
+	// 27980636
+
+
+	for (uint64_t i = 0; i < 200; ++i)
+	{
+		uint64_t TAI = 0x14c14a295ab81178 + i*1000000;
+		uint32_t EVT_UTC[5];
+		make_mil_timestamp(TAI, EVT_UTC);
+		uint64_t my_sec   = TAI/UINT64_C(1000000)-UINT64_C(1199142000000);
+		uint32_t my_sec32 = my_sec / 1000;
+		printf("--> %d\n",my_sec32);
+
+		for (int i = 0; i < 5; ++i) EVT_UTC[i] >>= 8;
+		//printf("TAI_ms %" PRIu64 "\n", TAI_ms);
+		uint32_t ms   = (EVT_UTC[0] << 2) | ((EVT_UTC[1] >> 6));
+		uint32_t sec  = 0;
+		         sec |= (EVT_UTC[1] & 0x0000003f) << 24;
+		printf("sec %d  :  ms %d   \n",sec, ms);
+		         sec |= (EVT_UTC[2] & 0x000000ff) << 16;
+		printf("  sec %d  :  ms %d   \n",sec, ms);
+		         sec |= (EVT_UTC[3] & 0x000000ff) << 8;
+		printf("    sec %d  :  ms %d   \n",sec, ms);
+		         sec |= (EVT_UTC[4] & 0x000000ff) << 0;
+		printf("      sec %d  :  ms %d   \n",sec, ms);
+
+		// assert some critical properties of the second and milisecond values
+		if (i != 0)	{
+			assert((ms_old+1)%1000 == ms);
+			if (ms==0) {
+				assert(sec_old+1 == sec);
+			}
+		}
+
+		sec_old = sec;
+		ms_old  = ms;
+	}
+
 
 	printf("all tests successful\n");
 

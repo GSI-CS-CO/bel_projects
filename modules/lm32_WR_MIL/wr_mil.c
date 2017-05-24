@@ -76,18 +76,6 @@ int init()
   return cpu_id;
 }
 
-
-// uint32_t wait_until_tai_poll(volatile ECACtrlRegs *eca, uint64_t tai_stop)
-// {
-//   // poll current time until it is later than the stop time
-//   TAI_t tai_now; 
-//   do {
-//     ECACtrl_getTAI(eca, &tai_now);
-//   } while (tai_now.value < tai_stop);
-//   uint32_t lateness_ns = tai_now.value - tai_stop; // we are too late by so many ns
-//   return lateness_ns;
-// }
-
 uint32_t wait_until_tai(volatile ECACtrlRegs *eca, uint64_t tai_stop)
 {
   // Get current time, ...
@@ -116,10 +104,10 @@ void lemoPulse12(volatile MilPiggyRegs *mil_piggy)
 #define ECA_QUEUE_LM32_TAG    0x00000004 // the tag for ECA actions we (the LM32) want to receive
 #define MIL_EVT_START_CYCLE   0x20       // the special event that causes five additional MIL events:
                                          // EVT_UTC_1, EVT_UTC_2, EVT_UTC_3, EVT_UTC_4, EVT_UTC_5
-#define WR_MIL_BRIDGE_LATENCY 73750      // latency in units of nanoseconds
-                                         // this value was tuned to create a measured time difference
+#define WR_MIL_BRIDGE_LATENCY 73575      // latency in units of nanoseconds
+                                         // this value was determined by measuring the time difference
                                          // of the MIL event rising edge and the ECA output rising edge (no offset)
-                                         // of 100.0(5)us = (100.0+-0.5)us
+                                         // and make this time difference 100.0(5)us
 void eventHandler(volatile ECACtrlRegs  *eca,
                   volatile ECAQueueRegs *eca_queue, 
                   volatile MilPiggyRegs *mil_piggy)
@@ -141,6 +129,7 @@ MilPiggy_lemoOut2High(mil_piggy);
       uint32_t dt;
       ECAQueue_getDeadl(eca_queue, &tai_deadl);
       uint64_t mil_event_time = tai_deadl.value + WR_MIL_BRIDGE_LATENCY; // add 20us to the deadline
+          make_mil_timestamp(mil_event_time, EVT_UTC);     
 
       switch (evtCode)
       {
@@ -148,7 +137,7 @@ MilPiggy_lemoOut2High(mil_piggy);
          // generate MIL event EVT_START_CYCLE, followed by EVT_UTC_1/2/3/4/5 EVENTS
           milTelegram  = virtAcc << 8;
           milTelegram |= evtCode; 
-          make_mil_timestamp(mil_event_time, EVT_UTC);     
+//          make_mil_timestamp(mil_event_time, EVT_UTC);     
 
           dt = wait_until_tai(eca, mil_event_time);
           MilPiggy_writeCmd(mil_piggy, milTelegram); 
@@ -175,9 +164,15 @@ MilPiggy_lemoOut2High(mil_piggy);
 
 
       //output of EVT_UTC
-      //for (int i = 0; i < 5; ++i) EVT_UTC[i] >>= 8;
-      //uint32_t tai_ms = (EVT_UTC[0]<<2)|((EVT_UTC[1]>>6));
-      //mprintf("ms = %d\n",tai_ms);
+    for (int i = 0; i < 5; ++i) EVT_UTC[i] >>= 8;
+    //printf("TAI_ms %" PRIu64 "\n", TAI_ms);
+    uint32_t ms   = (EVT_UTC[0] << 2) | ((EVT_UTC[1] >> 6));
+    uint32_t sec  = (EVT_UTC[1] & 0x0000003f) << 24;
+             sec |= (EVT_UTC[2] & 0x000000ff) << 16;
+             sec |= (EVT_UTC[3] & 0x000000ff) << 8;
+             sec |= (EVT_UTC[4] & 0x000000ff) << 0;
+     //mprintf("0x%08x%08x   sec %d  :  ms %d   \n",tai_deadl.part.hi, tai_deadl.part.lo, sec, ms);
+     //mprintf("%08x  ms = %d\n", tai_deadl.part.lo, tai_ms);
 
     }
     // remove action ECA queue 
@@ -207,7 +202,19 @@ void testOfFunction_wait_until_tai(volatile MilPiggyRegs *mil_piggy,
     MilPiggy_lemoOut1Low(mil_piggy);
     MilPiggy_lemoOut2Low(mil_piggy);
 
-    mprintf("%d %d\n",lateness1, lateness2);
+    uint32_t lateness3 = wait_until_tai(eca_ctrl, tai_now.value + 4020000ll);
+    MilPiggy_lemoOut1High(mil_piggy);
+    MilPiggy_lemoOut2High(mil_piggy);
+    MilPiggy_lemoOut1Low(mil_piggy);
+    MilPiggy_lemoOut2Low(mil_piggy);
+
+    uint32_t lateness4 = wait_until_tai(eca_ctrl, tai_now.value + 10020000ll);
+    MilPiggy_lemoOut1High(mil_piggy);
+    MilPiggy_lemoOut2High(mil_piggy);
+    MilPiggy_lemoOut1Low(mil_piggy);
+    MilPiggy_lemoOut2Low(mil_piggy);
+
+    mprintf("%d %d %d %d\n",lateness1, lateness2, lateness3, lateness4);
 
     for (int i = 0; i < 50; ++i) DELAY1000us;
 }
@@ -243,7 +250,7 @@ void main(void)
     eventHandler(eca_ctrl, eca_queue, mil_piggy);
     DELAY10us;
 
-//    testOfFunction_wait_until_tai(mil_piggy, eca_ctrl);
+    //testOfFunction_wait_until_tai(mil_piggy, eca_ctrl);
     // poll user commands
     MilCmd_poll(mil_cmd);
   } 

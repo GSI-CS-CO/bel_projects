@@ -38,6 +38,7 @@ $(TARGET).elf: wr_mil_piggy.c                        \
 			   $(PATHFW)/wr_mil_eca_queue.c          \
 			   $(PATHFW)/wr_mil_cmd.c                \
 			   $(PATHFW)/wr_mil_utils.c              \
+			   $(PATHFW)/wr_mil_delay_96plus32n_ns.s \
 			   $(PATHFW)/../../top/gsi_scu/scu_mil.c
 
 clean::
