@@ -26,7 +26,7 @@ CFLAGS 	= -I$(PATHFW)
 
 include ../../syn/build.mk
 
-# let linker create a .map file
+# tell linker to create a .map file
 LDFLAGS += -Wl,-Map,$(TARGET).map -Wl,-O1
 
 fwbin: $(TARGET).bin

@@ -14,15 +14,13 @@ uint32_t *ECAQueue_findAddress()
 #define ECAQMAX           4         //  max number of ECA queues
 #define ECACHANNELFORLM32 2         //  this is a hack! suggest to implement proper sdb-records with info for queues
 
-  uint32_t *pECAQ;                  // the pointer to the ECA queue
+  uint32_t *pECAQ = 0;           // the pointer to the ECA queue
 
   // stuff below needed to get WB address of ECA queue 
   sdb_location ECAQ_base[ECAQMAX]; // base addresses of ECA queues
-  uint32_t ECAQidx = 0;            // max number of ECA queues in the SoC
+  uint32_t ECAQidx = UINT32_C(0);  // max number of ECA queues in the SoC
   uint32_t *tmp;                
   uint32_t i;
-
-  pECAQ = 0x0; //initialize Wishbone address for LM32 ECA queue
 
   // get Wishbone addresses of all ECA Queues
   find_device_multi(ECAQ_base, &ECAQidx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
@@ -101,9 +99,7 @@ uint64_t evtId_translator(uint64_t evtId)
   }
 }
 
-uint32_t ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtNo,
-                                                            uint32_t *evtCode,
-                                                            uint32_t *virtAcc)
+uint32_t ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtCode, uint32_t *milTelegram)
 {
   // EventID 
   // |---------------evtIdHi---------------|  |---------------evtIdLo---------------|
@@ -128,10 +124,12 @@ uint32_t ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtNo,
   evtId.value = evtId_translator(evtId.value);
   ////////////////////////////////////////////////////////////////////////////////////
 
-  *evtNo   = (evtId.part.hi>>4)  & 0x00000fff;
-  *evtCode = *evtNo              & 0x000000ff;
-  *virtAcc = (evtId.part.lo>>24) & 0x0000000f;
+  uint32_t evtNo   = (evtId.part.hi>>4)  & 0x00000fff;
+          *evtCode =  evtNo              & 0x000000ff;
+  uint32_t virtAcc = (evtId.part.lo>>24) & 0x0000000f;
+
+  *milTelegram = (virtAcc << 8) | *evtCode;
 
   // For MIL events, the upper 4 bits ov evtNo are zero
-  return (*evtNo & 0x00000f00) == 0; 
+  return (evtNo & 0x00000f00) == 0; 
 }

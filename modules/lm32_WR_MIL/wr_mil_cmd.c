@@ -4,12 +4,13 @@
 
 extern volatile uint32_t _startshared[]; // provided in linker script "ram.ld"
 #define SHARED __attribute__((section(".shared")))
-uint64_t SHARED dummy = 0; // not sure if this is really needed... 
+uint64_t SHARED dummy = UINT64_C(0); // not sure if that variable is really needed
+                                     // the extern volatile uint32_t _startshared[] should be enough
 
 volatile MilCmdRegs *MilCmd_init()
 {
   volatile MilCmdRegs *cmd = (volatile MilCmdRegs*)_startshared;
-  cmd->cmd = 0;
+  cmd->cmd = UINT32_C(0);
   return cmd;
 }
 
@@ -22,13 +23,13 @@ void MilCmd_poll(volatile MilCmdRegs *cmd)
   {
     switch(cmd->cmd)
     {
-      case 0x00000001:
+      case UINT32_C(1):
         mprintf("stop MCU\n");
         while(1);
       default:
         mprintf("found command %08x\n", cmd->cmd);
         break;
     }
-    cmd->cmd = 0;
+    cmd->cmd = UINT32_C(0);
   }   
 }

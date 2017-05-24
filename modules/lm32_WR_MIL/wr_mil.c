@@ -1,16 +1,9 @@
 /********************************************************************************************
- *  example.c
+ *  wr_mil.c
  *
  *  created : 2017
  *  author  : Dietrich Beck, Mathias Kreider GSI-Darmstadt
  *  version : 23-Mar-2017
- *
- *  example program for lm32 softcore on GSI timing receivers
- * 
- *  a few things are demonstrated
- *  - exchange of data via shared RAM. Shared RAM is accessible from the lm32 (this program) 
- *    and via Wishbone from outside the LM32.
- *  - communication with other Wishbone devices
  *
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -62,7 +55,7 @@
 #include "wr_mil_utils.h"
 
 // for the event handler
-#include "../../ip_cores/saftlib/drivers/eca_flags.h"
+//#include "../../ip_cores/saftlib/drivers/eca_flags.h"
 
 int init()
 {
@@ -76,21 +69,6 @@ int init()
   return cpu_id;
 }
 
-uint32_t wait_until_tai(volatile ECACtrlRegs *eca, uint64_t tai_stop)
-{
-  // Get current time, ...
-  TAI_t tai_now; 
-  ECACtrl_getTAI(eca, &tai_now);
-  if (tai_stop < tai_now.value) return 1; // (tai_stop is in the past)
-  // ... calculate waiting time, ...
-  uint32_t ns_to_go = tai_stop - tai_now.value; 
-  uint32_t delay = ns_to_go;
-  delay /= 32; 
-  // ... and wait.
-  delay_96plus32n_ns(delay);
-  return 0;
-}
-
 // produce an output pulse on both lemo outputs of the SCU
 void lemoPulse12(volatile MilPiggyRegs *mil_piggy)
 {
@@ -100,45 +78,39 @@ void lemoPulse12(volatile MilPiggyRegs *mil_piggy)
     MilPiggy_lemoOut2Low(mil_piggy);
 }
 
-#define N_UTC_EVENTS          5          // the number of EVT_UTC events
-#define ECA_QUEUE_LM32_TAG    0x00000004 // the tag for ECA actions we (the LM32) want to receive
-#define MIL_EVT_START_CYCLE   0x20       // the special event that causes five additional MIL events:
-                                         // EVT_UTC_1, EVT_UTC_2, EVT_UTC_3, EVT_UTC_4, EVT_UTC_5
-#define WR_MIL_BRIDGE_LATENCY 73575      // latency in units of nanoseconds
-                                         // this value was determined by measuring the time difference
-                                         // of the MIL event rising edge and the ECA output rising edge (no offset)
-                                         // and make this time difference 100.0(5)us
+#define N_UTC_EVENTS           5          // the number of EVT_UTC events
+#define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
+#define MIL_EVT_START_CYCLE    0x20       // the special event that causes five additional MIL events:
+                                          // EVT_UTC_1, EVT_UTC_2, EVT_UTC_3, EVT_UTC_4, EVT_UTC_5
+#define WR_MIL_GATEWAY_LATENCY 73575      // latency in units of nanoseconds
+                                          // this value was determined by measuring the time difference
+                                          // of the MIL event rising edge and the ECA output rising edge (no offset)
+                                          // and make this time difference 100.0(5)us
 void eventHandler(volatile ECACtrlRegs  *eca,
                   volatile ECAQueueRegs *eca_queue, 
                   volatile MilPiggyRegs *mil_piggy)
 {
-MilPiggy_lemoOut1High(mil_piggy);
-MilPiggy_lemoOut2High(mil_piggy);
   if (ECAQueue_actionPresent(eca_queue))
   {
-    uint32_t evtNo, evtCode, virtAcc;
+    uint32_t evtCode, milTelegram;
     // select all events from the eca queue that are for the LM32 
     // AND that have an evtNo that is supposed to be translated into a MIL event (indicated
     //     by the return value of ECAQueue_getMilEventData being != 0)
     if ((eca_queue->tag_get == ECA_QUEUE_LM32_TAG) &&
-         ECAQueue_getMilEventData(eca_queue, &evtNo, &evtCode, &virtAcc))
+         ECAQueue_getMilEventData(eca_queue, &evtCode, &milTelegram))
     {
-      uint32_t milTelegram = 0;  
       TAI_t    tai_deadl; 
       uint32_t EVT_UTC[N_UTC_EVENTS];
       uint32_t dt;
       ECAQueue_getDeadl(eca_queue, &tai_deadl);
-      uint64_t mil_event_time = tai_deadl.value + WR_MIL_BRIDGE_LATENCY; // add 20us to the deadline
+      uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY; // add 20us to the deadline
           make_mil_timestamp(mil_event_time, EVT_UTC);     
 
       switch (evtCode)
       {
         case MIL_EVT_START_CYCLE: 
-         // generate MIL event EVT_START_CYCLE, followed by EVT_UTC_1/2/3/4/5 EVENTS
-          milTelegram  = virtAcc << 8;
-          milTelegram |= evtCode; 
-//          make_mil_timestamp(mil_event_time, EVT_UTC);     
-
+        // generate MIL event EVT_START_CYCLE, followed by EVT_UTC_1/2/3/4/5 EVENTS
+          //          make_mil_timestamp(mil_event_time, EVT_UTC);     
           dt = wait_until_tai(eca, mil_event_time);
           MilPiggy_writeCmd(mil_piggy, milTelegram); 
           if (dt){ // use lemo output of SCU to indicate that a deadline could not be respected
@@ -148,102 +120,92 @@ MilPiggy_lemoOut2High(mil_piggy);
           for (int i = 0; i < N_UTC_EVENTS; ++i)
           {
             // Churn out the EVT_UTC MIL events as fast as possible. 
-            //  This results in 21 us between two successive events.
+            //  This results in approx. 21 us between two successive events.
             MilPiggy_writeCmd(mil_piggy, EVT_UTC[i]); 
           }
         break;
         default:
           // generate MIL event
-          milTelegram  = virtAcc << 8;
-          milTelegram |= evtCode;
           dt = wait_until_tai(eca, mil_event_time);
           MilPiggy_writeCmd(mil_piggy, milTelegram);
           break;
       }
       uint32_t actTag = ECAQueue_getActTag(eca_queue);
-
-
-      //output of EVT_UTC
-    for (int i = 0; i < 5; ++i) EVT_UTC[i] >>= 8;
-    //printf("TAI_ms %" PRIu64 "\n", TAI_ms);
-    uint32_t ms   = (EVT_UTC[0] << 2) | ((EVT_UTC[1] >> 6));
-    uint32_t sec  = (EVT_UTC[1] & 0x0000003f) << 24;
-             sec |= (EVT_UTC[2] & 0x000000ff) << 16;
-             sec |= (EVT_UTC[3] & 0x000000ff) << 8;
-             sec |= (EVT_UTC[4] & 0x000000ff) << 0;
-     //mprintf("0x%08x%08x   sec %d  :  ms %d   \n",tai_deadl.part.hi, tai_deadl.part.lo, sec, ms);
-     //mprintf("%08x  ms = %d\n", tai_deadl.part.lo, tai_ms);
-
     }
-    // remove action ECA queue 
+    // remove action from ECA queue 
     ECAQueue_actionPop(eca_queue);
-
-
   }
-MilPiggy_lemoOut1Low(mil_piggy);
-MilPiggy_lemoOut2Low(mil_piggy);
 }
 
+
+// this fucnction creates a series of pulses that are triggered by the return from 
+// the function wait_until_tai. The lemo outputs can be observed on the Oscilloscope
+// in order to measure the timing precision of the wait_until_tai function.
 void testOfFunction_wait_until_tai(volatile MilPiggyRegs *mil_piggy,
                                    volatile ECACtrlRegs  *eca_ctrl)
 {
     TAI_t tai_now; 
     ECACtrl_getTAI(eca_ctrl, &tai_now);
 
-    uint32_t lateness1 = wait_until_tai(eca_ctrl, tai_now.value + 20000);
+    uint32_t lateness1 = wait_until_tai(eca_ctrl, tai_now.value + 20000); // start with 20 us margin
     MilPiggy_lemoOut1High(mil_piggy);
     MilPiggy_lemoOut2High(mil_piggy);
     MilPiggy_lemoOut1Low(mil_piggy);
     MilPiggy_lemoOut2Low(mil_piggy);
 
-    uint32_t lateness2 = wait_until_tai(eca_ctrl, tai_now.value + 1020000ll);
+    uint32_t lateness2 = wait_until_tai(eca_ctrl, tai_now.value + 1020000ll); // 1 ms after the first pulse
     MilPiggy_lemoOut1High(mil_piggy);
     MilPiggy_lemoOut2High(mil_piggy);
     MilPiggy_lemoOut1Low(mil_piggy);
     MilPiggy_lemoOut2Low(mil_piggy);
 
-    uint32_t lateness3 = wait_until_tai(eca_ctrl, tai_now.value + 4020000ll);
+    uint32_t lateness3 = wait_until_tai(eca_ctrl, tai_now.value + 4020000ll); // 4 ms after the first pulse
     MilPiggy_lemoOut1High(mil_piggy);
     MilPiggy_lemoOut2High(mil_piggy);
     MilPiggy_lemoOut1Low(mil_piggy);
     MilPiggy_lemoOut2Low(mil_piggy);
 
-    uint32_t lateness4 = wait_until_tai(eca_ctrl, tai_now.value + 10020000ll);
+    uint32_t lateness4 = wait_until_tai(eca_ctrl, tai_now.value + 10020000ll); // 10 ms after the first pulse
     MilPiggy_lemoOut1High(mil_piggy);
     MilPiggy_lemoOut2High(mil_piggy);
     MilPiggy_lemoOut1Low(mil_piggy);
     MilPiggy_lemoOut2Low(mil_piggy);
 
-    mprintf("%d %d %d %d\n",lateness1, lateness2, lateness3, lateness4);
+    mprintf("%d %d %d %d\n",lateness1, lateness2, lateness3, lateness4); // see if any of the pulses was too late
 
-    for (int i = 0; i < 50; ++i) DELAY1000us;
+    for (int i = 0; i < 50; ++i) DELAY1000us; // wait 50 ms before the next series of pulses is generated
 }
 
+// after some initialization, the program enters a tight loop where the event handler is called.
+// in the event handler, the ECA queue is polled for events and if the event number is in the range [0...255]
+// a MIL event is generated. In the special case of event number = MIL_EVT_START_CYCLE = 0x20, in addition to the
+// MIL_EVT_START_CYCLE five MIL events are generated that contain a converted WR timestamp with milisecond precision.
 void main(void) 
 {
-  init();   // initialize lm32
+  init();   
 
-  // MilPiggy setup
+  // MilPiggy 
   volatile MilPiggyRegs *mil_piggy = MilPiggy_init();
   MilPiggy_lemoOut1Enable(mil_piggy);
   MilPiggy_lemoOut2Enable(mil_piggy);
 
-  // ECAQueue setup
+  // ECAQueue 
   volatile ECAQueueRegs *eca_queue = ECAQueue_init();
   uint32_t n_events = ECAQueue_clear(eca_queue);
   mprintf("popped %d events from the eca queue\n", n_events);
 
-  // ECACtrl setup
+  // ECACtrl 
   volatile ECACtrlRegs *eca_ctrl = ECACtrl_init();
   mprintf("eca ctrl regs at %08x\n", eca_ctrl);
 
-  // Cmd setup
+  // Command
   volatile MilCmdRegs *mil_cmd = MilCmd_init();
   mprintf("mil cmd regs at %08x\n", mil_cmd);
 
-  TAI_t tai_now, tai_stop; 
-  ECACtrl_getTAI(eca_ctrl, &tai_now);
-  mprintf("TAI now: 0x%08x%08x\n", tai_now.part.hi, tai_now.part.lo);
+  // say hello on the console
+  TAI_t nowTAI; 
+  ECACtrl_getTAI(eca_ctrl, &nowTAI);
+  mprintf("TAI now: 0x%08x%08x\n", nowTAI.part.hi, nowTAI.part.lo);
 
   while (1) {
     // do whatever has to be done
@@ -251,7 +213,8 @@ void main(void)
     DELAY10us;
 
     //testOfFunction_wait_until_tai(mil_piggy, eca_ctrl);
-    // poll user commands
+
+    //poll user commands
     MilCmd_poll(mil_cmd);
   } 
 } 

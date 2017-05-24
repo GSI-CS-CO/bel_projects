@@ -41,14 +41,19 @@ uint32_t ECAQueue_getFlags(volatile ECAQueueRegs *queue);
 // remove all events from the ECA queue and return the number of removed events
 uint32_t ECAQueue_clear(volatile ECAQueueRegs *queue);
 
+// returns 1 if there is at least one event in the ECA queue
 uint32_t ECAQueue_actionPresent(volatile ECAQueueRegs *queue);
+
+// remove single event from the ECA queue
 void ECAQueue_actionPop(volatile ECAQueueRegs *queue);
 
-// extract event number, event code and virtual accelerator number
-// from the EventId in the ECA queue. 
-// return value is nonzero if the event code must be put on MIL event bus, zero otherwise
-uint32_t ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtNo, 
-                                                            uint32_t *evtCode, 
-                                                            uint32_t *virtAcc);
+// Extract event number, event code and virtual accelerator number from the EventId in the ECA queue. 
+// parameters: 
+//    queue:   pointer to ECA queue registers as obtained from ECAQueue_init()
+//    evtCode: the event code of the MIL event (this is only valid if function returns 1)
+//    milTelegram: correcly formatted MIL telegram that can be passed to the mil piggy 
+//
+// return value: is nonzero if the event code must be put on MIL event bus, zero otherwise
+uint32_t ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtCode, uint32_t *milTelegram);
 
 #endif

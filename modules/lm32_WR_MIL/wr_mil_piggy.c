@@ -6,16 +6,7 @@
 // instead of including the scu_mil.h header, we redefine the constants to be able to 
 // build stand-alone C programs for testing of this module 
 
-#ifdef UNITTEST
-#define   MIL_LEMO_OUT_EN1    0x0001    // '1' ==> LEMO 1 configured as output (MIL Piggy)
-#define   MIL_LEMO_OUT_EN2    0x0002    // '1' ==> LEMO 2 configured as output (MIL Piggy)
-#define   MIL_LEMO_EVENT_EN1  0x0010    // '1' ==> LEMO 1 can be controlled by event (MIL Piggy)
-#define   MIL_LEMO_EVENT_EN2  0x0020    // '1' ==> LEMO 2 can be controlled by event (MIL Piggy)
-#define   MIL_LEMO_DAT1    0x0001    // '1' ==> LEMO 1 is switched active HIGH (MIL Piggy & SIO)
-#define   MIL_LEMO_DAT2    0x0002    // '1' ==> LEMO 2 is switched active HIGH (MIL Piggy & SIO)
-#define  SCU_MIL          0x35aa6b96
-#define MIL_CTRL_STAT_TRM_READY 0x0080
-#else
+#ifndef UNITTEST
 #include "../../top/gsi_scu/scu_mil.h"
 volatile MilPiggyRegs *MilPiggy_init()
 {

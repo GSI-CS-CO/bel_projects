@@ -9,15 +9,6 @@
 #include "wr_mil_eca_ctrl.h"
 #include "wr_mil_utils.h"
 
-#define   MIL_LEMO_OUT_EN1        0x0001    // '1' ==> LEMO 1 configured as output (MIL Piggy)
-#define   MIL_LEMO_OUT_EN2        0x0002    // '1' ==> LEMO 2 configured as output (MIL Piggy)
-#define   MIL_LEMO_EVENT_EN1      0x0010    // '1' ==> LEMO 1 can be controlled by event (MIL Piggy)
-#define   MIL_LEMO_EVENT_EN2      0x0020    // '1' ==> LEMO 2 can be controlled by event (MIL Piggy)
-#define   MIL_LEMO_DAT1           0x0001    // '1' ==> LEMO 1 is switched active HIGH (MIL Piggy & SIO)
-#define   MIL_LEMO_DAT2           0x0002    // '1' ==> LEMO 2 is switched active HIGH (MIL Piggy & SIO)
-#define   SCU_MIL                 0x35aa6b96
-#define   MIL_CTRL_STAT_TRM_READY 0x0080
-
 typedef struct
 {
 	uint32_t MIL_RD_WR_DATA;
@@ -123,37 +114,22 @@ int main()
 		ms_old  = ms;
 	}
 
-	//[michael@belpc121 unittest]$ date +%s
-	//1495611111
-	//  16777216
-	//4294967296
-	//1073741824
-
-	//296416092
-	// 27980636
-
-
-	for (uint64_t i = 0; i < 200; ++i)
+	for (uint64_t i = 0; i < 2000; ++i)
 	{
 		uint64_t TAI = 0x14c14a295ab81178 + i*1000000;
 		uint32_t EVT_UTC[5];
 		make_mil_timestamp(TAI, EVT_UTC);
 		uint64_t my_sec   = TAI/UINT64_C(1000000)-UINT64_C(1199142000000);
 		uint32_t my_sec32 = my_sec / 1000;
-		printf("--> %d\n",my_sec32);
 
 		for (int i = 0; i < 5; ++i) EVT_UTC[i] >>= 8;
-		//printf("TAI_ms %" PRIu64 "\n", TAI_ms);
 		uint32_t ms   = (EVT_UTC[0] << 2) | ((EVT_UTC[1] >> 6));
 		uint32_t sec  = 0;
 		         sec |= (EVT_UTC[1] & 0x0000003f) << 24;
-		printf("sec %d  :  ms %d   \n",sec, ms);
 		         sec |= (EVT_UTC[2] & 0x000000ff) << 16;
-		printf("  sec %d  :  ms %d   \n",sec, ms);
 		         sec |= (EVT_UTC[3] & 0x000000ff) << 8;
-		printf("    sec %d  :  ms %d   \n",sec, ms);
 		         sec |= (EVT_UTC[4] & 0x000000ff) << 0;
-		printf("      sec %d  :  ms %d   \n",sec, ms);
+		//printf("seconds since 01/01/2008 %d.%d   \n",sec, ms);
 
 		// assert some critical properties of the second and milisecond values
 		if (i != 0)	{
