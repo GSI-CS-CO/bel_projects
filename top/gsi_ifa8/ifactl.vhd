@@ -471,7 +471,7 @@ begin
                 s_ed                            when s_rd_echo        = '1' else
                 '0' & '0' & '0' & i2c_data      when s_rd_i2c         = '1' else
                 if_mode                         when s_rd_if_mode     = '1' else
-                fwl_data_sts                    when s_rd_fwl_data    = '1' else
+                fwl_data_sts                    when s_rd_fwl_data    = '1' or s_rd_fwl_sts = '1' else
                 s_ifp_led                       when s_rd_ifp_led     = '1' else
                 ifp_in & s_ifp_out(14 downto 0) when s_rd_ifp_io      = '1' else
                 x"00" & ifp_id                  when s_rd_ifp_id      = '1' else
