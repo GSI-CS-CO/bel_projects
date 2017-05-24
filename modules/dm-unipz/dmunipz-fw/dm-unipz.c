@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Mar-2017
+ *  version : 24-May-2017
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -55,10 +55,6 @@
 #include "../../ip_cores/saftlib/drivers/eca_flags.h"              // defitions for ECA queueu
 #include "dm-unipz.h"
 
-/* register maps for some selected Wishbone devices  */
-// >>>>>>>>>>>>>>>>>>>>> argh ... how about just including their header files in your hack header file ?? <<<<<<<<<<<<<<<<<<<<<<<<
-#include "../../tools/wb_slaves.h" /* this is a hack */
-
 /* shared memory map for communication via Wishbone  */
 #include "dm-unipz_smmap.h"
 
@@ -68,8 +64,7 @@ unsigned int cpuId, cpuQty;
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED dummy = 0;
 
-
-
+// global variables 
 volatile uint32_t *pECAQ;              // WB address of ECA queue
 volatile uint32_t *pMILPiggy;          // WB address of MIL device bus (MIL piggy)                              
 volatile uint32_t *pShared;            // pointer to begin of shared memory region                              
@@ -83,19 +78,7 @@ uint32_t *pSharedStatTrans;            // pointer to a "user defined" u32 regist
 volatile uint32_t *pSharedCmd;         // pointer to a "user defined" u32 register; here: get command from host
 uint32_t *pSharedState;                // pointer to a "user defined" u32 register; here: publish status
 volatile uint32_t *pSharedData4EB ;    // pointer to a n x u32 register; here: memory region for receiving EB return values
-uint32_t *pCpuRamExternal;             // external address (seen from host bridge) of this CPU's RAM            
-uint32_t *pCpuRamExternalVersion;      // external address (seen from host bridge) of this CPU's RAM: version (write)
-uint32_t *pCpuRamExternalStatus;       // external address (seen from host bridge) of this CPU's RAM: status  (write)
-uint32_t *pCpuRamExternalCmd;          // external address (seen from host bridge) of this CPU's RAM: command (read)
-uint32_t *pCpuRamExternalState;        // external address (seen from host bridge) of this CPU's RAM: state (write)
-uint32_t *pCpuRamExternalNIterMain;    // external address (seen from host bridge) of this CPU's RAM: # of iterations of main loop (write)
-uint32_t *pCpuRamExternalNTransfer;    // external address (seen from host bridge) of this CPU's RAM: # of transfers (write) 
-uint32_t *pCpuRamExternalNInject;      // external address (seen from host bridge) of this CPU's RAM: # of injections (of current transfer) (write) 
-uint32_t *pCpuRamExternalVirtAcc;      // external address (seen from host bridge) of this CPU's RAM: # of virtual accelarator (write)
-uint32_t *pCpuRamExternalStatTrans;    // external address (seen from host bridge) of this CPU's RAM: status of ongoing transfer
-uint32_t *pCpuRamExternalData4EB;      // external address (seen from host bridge) of this CPU's RAM: field for EB return values (read)
 
-uint32_t reqState;                     // requested state
 WriteToPZU_Type  writePZUData;         // Modulbus SIS, I/O-Modul 1, Bits 0..15
 
 /*
@@ -158,13 +141,10 @@ void init() // typical init for lm32
 
 void initSharedMem() // determine address and clear shared mem
 {
-  uint32_t idx;
-  const uint32_t c_Max_Rams = 10;
-  sdb_location found_sdb[c_Max_Rams];
-  sdb_location found_clu;
-
   // get pointer to shared memory
   pShared           = (uint32_t *)_startshared;
+
+  // get address to data
   pSharedVersion    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_VERSION >> 2));
   pSharedStatus     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_STATUS >> 2));
   pSharedCmd        = (uint32_t *)(pShared + (DMUNIPZ_SHARED_CMD >> 2));
@@ -176,80 +156,25 @@ void initSharedMem() // determine address and clear shared mem
   pSharedStatTrans  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSSTATUS >> 2));
   pSharedData4EB    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DATA_4EB_START >> 2));
 
-  // print local pointer info to UART
-  mprintf("internal shared memory: start                   @ 0x%08x\n", (uint32_t)pShared);
-  mprintf("internal shared memory: version                 @ 0x%08x\n", (uint32_t)pSharedVersion);
-  mprintf("internal shared memory: status address          @ 0x%08x\n", (uint32_t)pSharedStatus);
-  mprintf("internal shared memory: command address         @ 0x%08x\n", (uint32_t)pSharedCmd);
-  mprintf("internal shared memory: state address           @ 0x%08x\n", (uint32_t)pSharedState);
-  mprintf("internal shared memory: # of iterations address @ 0x%08x\n", (uint32_t)pSharedNIterMain);
-  mprintf("internal shared memory: # of transfers          @ 0x%08x\n", (uint32_t)pSharedNTransfer);
-  mprintf("internal shared memory: # of injections         @ 0x%08x\n", (uint32_t)pSharedNInject);
-  mprintf("internal shared memory: # virtual accelerator   @ 0x%08x\n", (uint32_t)pSharedVirtAcc);
-  mprintf("internal shared memory: status of transfer      @ 0x%08x\n", (uint32_t)pSharedStatTrans);
-  mprintf("internal shared memory: EB return value address @ 0x%08x to 0x%08x\n", (uint32_t)pSharedData4EB, (uint32_t)(&(pSharedData4EB[DMUNIPZ_SHARED_DATA_4EB_SIZE >> 2])));
-
-  // find address of CPU from external perspective
-  idx = 0;
-  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
-  idx = 0;
-  find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
-  if(idx >= cpuId) {
-    pCpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
-    pCpuRamExternalVersion    = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_VERSION + SHARED_OFFS) >> 2));
-    pCpuRamExternalStatus     = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_STATUS + SHARED_OFFS) >> 2));
-    pCpuRamExternalCmd        = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_CMD + SHARED_OFFS) >> 2));
-    pCpuRamExternalState      = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_STATE + SHARED_OFFS) >> 2));
-    pCpuRamExternalNIterMain  = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_NITERMAIN + SHARED_OFFS) >> 2));
-    pCpuRamExternalNTransfer  = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_TRANSN + SHARED_OFFS) >> 2));
-    pCpuRamExternalNInject    = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_INJECTN + SHARED_OFFS) >> 2));
-    pCpuRamExternalVirtAcc    = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_TRANSVIRTACC + SHARED_OFFS) >> 2));
-    pCpuRamExternalStatTrans  = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_TRANSSTATUS + SHARED_OFFS) >> 2));
-    pCpuRamExternalData4EB    = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_DATA_4EB_START + SHARED_OFFS) >> 2));
-    
-    // print external WB info to UART
-    mprintf("external WB address   : start            @ 0x%08x\n", (uint32_t)(pCpuRamExternal));
-    mprintf("external WB address   : version          @ 0x%08x\n", (uint32_t)(pCpuRamExternalVersion));
-    mprintf("external WB address   : status           @ 0x%08x\n", (uint32_t)(pCpuRamExternalStatus));
-    mprintf("external WB address   : command          @ 0x%08x\n", (uint32_t)(pCpuRamExternalCmd));
-    mprintf("external WB address   : state            @ 0x%08x\n", (uint32_t)(pCpuRamExternalState));
-    mprintf("external WB address   : # of iterations  @ 0x%08x\n", (uint32_t)(pCpuRamExternalNIterMain));
-    mprintf("external WB address   : # of transfers   @ 0x%08x\n", (uint32_t)(pCpuRamExternalNTransfer));
-    mprintf("external WB address   : # of injections  @ 0x%08x\n", (uint32_t)(pCpuRamExternalNInject));
-    mprintf("external WB address   : # virtual acc.   @ 0x%08x\n", (uint32_t)(pCpuRamExternalVirtAcc));
-    mprintf("external WB address   : status transfer  @ 0x%08x\n", (uint32_t)(pCpuRamExternalStatTrans));
-    mprintf("external WB address   : EB return values @ 0x%08x to 0x%08x\n", (uint32_t)pCpuRamExternalData4EB, (uint32_t)(&(pCpuRamExternalData4EB[DMUNIPZ_SHARED_DATA_4EB_SIZE >> 2])));
-  }
-  else {
-    pCpuRamExternal = (uint32_t *)ERROR_NOT_FOUND;
-    mprintf("Could not find external WB address of my own RAM !\n");
-  }
-
-  *pSharedVersion = DMUNIPZ_FW_VERSION; // of all the shared variabes, only VERSION is a constant. Set it now!
-  
+  // set initial values;
   ebmClearSharedMem();
+  *pSharedVersion = DMUNIPZ_FW_VERSION; // of all the shared variabes, only VERSION is a constant. Set it now!
 } // initSharedMem 
 
 
-void initState(uint32_t *actState)
-{
-  *actState     = DMUNIPZ_STATE_UNKNOWN;
-  reqState      = DMUNIPZ_STATE_S0;
-} //initState
-
-
-void findMILPiggy() //find WB address of MIL Piggy
+uint32_t findMILPiggy() //find WB address of MIL Piggy
 {
   pMILPiggy = 0x0;
   
   // get Wishbone address for MIL Piggy
   pMILPiggy = find_device_adr(GSI, SCU_MIL);
 
-  if (!pMILPiggy) {mprintf("dm-unipz: FATAL - can't find MIL piggy\n"); reqState = DMUNIPZ_STATE_FATAL;}
+  if (!pMILPiggy) {mprintf("dm-unipz: can't find MIL piggy\n"); return DMUNIPZ_STATUS_ERROR;}
+  else                                                          return DMUNIPZ_STATUS_OK;
 } // initMILPiggy
 
 
-void findECAQueue() // find WB address of ECA channel for LM32
+uint32_t findECAQueue() // find WB address of ECA channel for LM32
 {
 #define ECAQMAX           4     // max number of ECA channels in the system
 #define ECACHANNELFORLM32 2     // this is a hack! suggest implementing finding via sdb-record and info
@@ -271,7 +196,8 @@ void findECAQueue() // find WB address of ECA channel for LM32
     if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
   }
 
-  if (!pECAQ) {mprintf("dm-unipz: FATAL - can't find ECA queue\n"); reqState = DMUNIPZ_STATE_FATAL;}
+  if (!pECAQ) {mprintf("dm-unipz: can't find ECA queue\n"); return DMUNIPZ_STATUS_ERROR;}
+  else                                                      return DMUNIPZ_STATUS_OK;
 } // findECAQueue
 
 
@@ -291,7 +217,7 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc)  // 1. query ECA f
   timeoutT = getSysTime() + msTimeout * 1000000;
 
   while (getSysTime() < timeoutT) {
-    if (*pECAFlag & (0x0001 << ECA_VALID)) {               // if ECA data is valid
+    if (*pECAFlag & (0x0001 << ECA_VALID)) {                         // if ECA data is valid
       
       // read data
       evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
@@ -340,8 +266,6 @@ void initCmds() // init stuff for handling commands, trivial for now, will be ex
 {
   //  initalize command value: 0x0 means 'no command'
   *pSharedCmd     = 0x0;
-
-  mprintf("Waiting for commands...\n");
 } // initCmds
 
 
@@ -380,7 +304,7 @@ int16_t readFromPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t *data) // read 
 } // readFromPZU 
 
 
-uint32_t checkClearReqNotOk(uint32_t msTimeout)
+uint32_t checkClearReqNotOk(uint32_t msTimeout)      // check for 'Req not OK' flag from UNILAC. If the flag is set, try to clear it
 {
   ReadFromPZU_Type readPZUData;  // Modulbus SIS, I/O-Modul 3, Bits 0..15
   int16_t          status;       // status MIL device bus operation
@@ -388,20 +312,20 @@ uint32_t checkClearReqNotOk(uint32_t msTimeout)
 
   timeoutT = getSysTime() + msTimeout * 1000000;
 
-  if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;     // read from modulbus I/O (UNIPZ)
-  if (readPZUData.bits.Req_not_ok == true) {
-    // mprintf("dm-unipz: UNILAC says 'req_not_ok' \n");
+  if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;    
+  if (readPZUData.bits.Req_not_ok == true) {                                                                                            // check for 'req not ok'
+
     writePZUData.uword               = 0x0;
     writePZUData.bits.Req_not_ok_Ack = true;
     if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;      // request to clear not_ok flag
 
-    while (getSysTime() < timeoutT) {
-      if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR; // read from modulbus I/O (UNIPZ)
-      if (readPZUData.bits.Req_not_ok == false) {
-        writePZUData.bits.Req_not_ok_Ack = false;                     // chk
-        writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword); // release request to clear flag
+    while (getSysTime() < timeoutT) {                                                                                                   // check for timeout
+      if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR; 
+      if (readPZUData.bits.Req_not_ok == false) {                                                                                       // remove acknowledgement for 'req not ok'
+        writePZUData.bits.Req_not_ok_Ack = false;                     
+        writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword); 
         return DMUNIPZ_STATUS_REQNOTOK;
-      } // if flag successfully cleared
+      } // if UNILAC cleared 'req not ok' flag
     } // while not timed out
   
     return DMUNIPZ_STATUS_REQNOTOK;
@@ -428,17 +352,13 @@ uint32_t requestTK(uint32_t msTimeout, uint32_t virtAcc, uint32_t dryRun)
   writePZUData.bits.ReqNoBeam      = dryRun;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
 
-  while (getSysTime() < timeoutT) {                                                                                                   // wait for acknowledgement from UNIPZ
+  // for for acknowledgement, 'request not ok' or timeout
+  while (getSysTime() < timeoutT) {                                                                                                   // check for timeout
     if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR; // read from modulbus I/O (UNIPZ)
     if (readPZUData.bits.TK_Req_Ack == true) return DMUNIPZ_STATUS_OK;                                                                // check for acknowledgement
     if ((status = checkClearReqNotOk(msTimeout)) == DMUNIPZ_STATUS_REQNOTOK) return DMUNIPZ_STATUS_REQTKFAILED;                       // check for 'request not ok'
   } // while not timed out
 
-  // mprintf("dm-unipz: requestTK looks like timeout; I have read %d from modulbus I/O \n", readPZUData.uword);
-
-  // check for "request not ok"
-  // if (readPZUData.bits.Req_not_ok == true) return DMUNIPZ_STATUS_REQTKFAILED;  // check for "Request not ok"
-  
   return DMUNIPZ_STATUS_TIMEDOUT;
 } // requestTK
 
@@ -506,31 +426,26 @@ uint32_t configMILEvent(uint16_t evtCode) // configure SoC to receive events via
 } // configMILEvent
 
 
-uint16_t wait4MILEvt(uint16_t evtCode, uint16_t virtAcc, uint32_t msTimeout) // 1. check if FIFO not empty; 2. pop element of FIFO 3; if relevant: do action (if not: discard)
+uint16_t wait4MILEvt(uint16_t evtCode, uint16_t virtAcc, uint32_t msTimeout)  // wait for MIL event or timeout
 {
   uint32_t evtDataRec;         // data of one MIL event
   uint32_t evtCodeRec;         // "event number"
   uint32_t virtAccRec;         // virtual accelerator
   uint64_t timeoutT;           // when to time out
-  uint32_t j = 0;       //chk: debug
 
-  // mprintf("dm-unipz: wait 4 mil event, max i %d, msTimeout %d, evtCode %d, virtAcc %d\n",  msTimeout * DMUNIPZ_MS_ASMNOP, msTimeout, evtCode, virtAcc);
+  timeoutT = getSysTime() + msTimeout * 1000000;      
 
-  timeoutT = getSysTime() + msTimeout * 1000000;
-
-  while(getSysTime() < timeoutT) {
-    while (fifoNotemptyEvtMil(pMILPiggy)) {     // drain fifo until empty
-      popFifoEvtMil(pMILPiggy, &evtDataRec);    // pop element
+  while(getSysTime() < timeoutT) {              // while not timed out...
+    while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
+      popFifoEvtMil(pMILPiggy, &evtDataRec);    
       evtCodeRec  = evtDataRec & 0x000000ff;    // extract event code
       virtAccRec  = (evtDataRec >> 8) & 0x0f;   // extract virtual accelerator (assuming event message)
-      // if (virtAccRec == virtAcc) mprintf("dm-unipz: got virtAcc %d, evtCode %d\n", virtAccRec, evtCodeRec);
-      if ((evtCodeRec == evtCode) && (virtAccRec == virtAcc)) return DMUNIPZ_STATUS_OK;
-      j++;
-    } // while fifo not empty
-    asm("nop"); // wait 4 CPU ticks
-  } // while not timed out
 
-  // mprintf("dm-unipz: wait 4 mil event, timed out, j %d\n",j);
+      if ((evtCodeRec == evtCode) && (virtAccRec == virtAcc)) return DMUNIPZ_STATUS_OK;
+
+    } // while fifo contains data
+    asm("nop");                                 // wait a bit...
+  } // while not timed out
 
   return DMUNIPZ_STATUS_TIMEDOUT;
 } //wait4MILEvent
@@ -558,6 +473,19 @@ void replyRequestBeam(uint32_t virtAcc, uint64_t timestamp, uint32_t status)
   mprintf("dm-unipz: status requesting beam; status %d for virtAcc %d\n", status, virtAcc);
   /* check: not yet implemented */
 } // replyRequestBeam
+
+
+uint32_t doActionS0()
+{
+  uint32_t status = DMUNIPZ_STATUS_OK;
+
+  ebmInit();                     
+  if (findECAQueue() != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_ERROR; 
+  if (findMILPiggy() != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_ERROR; 
+  initCmds();                    
+
+  return status;
+} // entryActionS0
 
 
 uint32_t entryActionConfigured()
@@ -607,13 +535,13 @@ uint32_t exitActionOperation()
   return DMUNIPZ_STATUS_OK;
 } // exitActionOperation
 
-uint32_t actionRecover()
+uint32_t exitActionError()
 {
   return DMUNIPZ_STATUS_OK;
-} // actionRecover
+} // exitActionError
 
 
-void cmdHandler() // handle commands from the outside world
+void cmdHandler(uint32_t *reqState) // handle commands from the outside world
 {
   uint32_t cmd;
 
@@ -622,23 +550,23 @@ void cmdHandler() // handle commands from the outside world
   if (cmd) {
     switch (cmd) {
     case DMUNIPZ_CMD_CONFIGURE :
-      reqState =  DMUNIPZ_STATE_CONFIGURED;
+      *reqState =  DMUNIPZ_STATE_CONFIGURED;
       mprintf("received cmd %d\n", cmd);
       break;
     case DMUNIPZ_CMD_STARTOP :
-      reqState = DMUNIPZ_STATE_OPERATION;
+      *reqState = DMUNIPZ_STATE_OPERATION;
       mprintf("received cmd %d\n", cmd);
       break;
     case DMUNIPZ_CMD_STOPOP :
-      reqState = DMUNIPZ_STATE_STOPPING;
+      *reqState = DMUNIPZ_STATE_STOPPING;
       mprintf("received cmd %d\n", cmd);
       break;
     case DMUNIPZ_CMD_IDLE :
-      reqState = DMUNIPZ_STATE_IDLE;
+      *reqState = DMUNIPZ_STATE_IDLE;
       mprintf("received cmd %d\n", cmd);
       break;
     case DMUNIPZ_CMD_RECOVER :
-      reqState = DMUNIPZ_STATE_IDLE;
+      *reqState = DMUNIPZ_STATE_IDLE;
       mprintf("received cmd %d\n", cmd);
       break;
     default:
@@ -649,53 +577,55 @@ void cmdHandler() // handle commands from the outside world
 } // cmdHandler
 
 
-uint32_t changeState(uint32_t *actState, uint32_t actStatus)   //state machine; see dm-unipz.h for possible states and transitions
+uint32_t changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)   //state machine; see dm-unipz.h for possible states and transitions
 {
-  uint32_t statusOfStateChange = DMUNIPZ_STATUS_OK;
+  uint32_t statusTransition= DMUNIPZ_STATUS_OK;
   uint32_t status;
   uint32_t nextState;                   
 
-  // if something severe happened, perform immediate state change and return
-  if ((reqState == DMUNIPZ_STATE_ERROR) || (reqState == DMUNIPZ_STATE_FATAL))    {statusOfStateChange = actStatus; nextState = reqState;}
+  // if something severe happened, perform implicitely allowed transition to ERROR or FATAL states
+  // else                        , handle explicitcely allowed transitions
+
+  if ((*reqState == DMUNIPZ_STATE_ERROR) || (*reqState == DMUNIPZ_STATE_FATAL)) {statusTransition = actStatus; nextState = *reqState;}
   else {
     nextState = *actState;                       // per default: remain in actual state without exit or entry action
     switch (*actState) {                         // check for allowed transitions: 1. determine next state, 2. perform exit or entry actions if required
     case DMUNIPZ_STATE_S0:
-      nextState = DMUNIPZ_STATE_IDLE;            //automatic transition
+      if      (*reqState == DMUNIPZ_STATE_IDLE)       {                                            nextState = *reqState;}      
       break;
     case DMUNIPZ_STATE_IDLE:
-      if      (reqState == DMUNIPZ_STATE_CONFIGURED)  {statusOfStateChange = entryActionConfigured(); nextState = reqState;}
+      if      (*reqState == DMUNIPZ_STATE_CONFIGURED)  {statusTransition = entryActionConfigured(); nextState = *reqState;}
       break;
     case DMUNIPZ_STATE_CONFIGURED:
-      if      (reqState == DMUNIPZ_STATE_IDLE)        {                                               nextState = reqState;}
-      else if (reqState == DMUNIPZ_STATE_CONFIGURED)  {statusOfStateChange = entryActionConfigured(); nextState = reqState;}
-      else if (reqState == DMUNIPZ_STATE_OPERATION)   {statusOfStateChange = entryActionOperation();  nextState = reqState;}
+      if      (*reqState == DMUNIPZ_STATE_IDLE)        {                                            nextState = *reqState;}
+      else if (*reqState == DMUNIPZ_STATE_CONFIGURED)  {statusTransition = entryActionConfigured(); nextState = *reqState;}
+      else if (*reqState == DMUNIPZ_STATE_OPERATION)   {statusTransition = entryActionOperation();  nextState = *reqState;}
       break;
     case DMUNIPZ_STATE_OPERATION:
-      if      (reqState == DMUNIPZ_STATE_STOPPING)    {statusOfStateChange = exitActionOperation();   nextState = reqState;}
+      if      (*reqState == DMUNIPZ_STATE_STOPPING)    {statusTransition = exitActionOperation();   nextState = *reqState;}
       break;
     case DMUNIPZ_STATE_STOPPING:
-      nextState = DMUNIPZ_STATE_CONFIGURED;      //automatic transition
+      nextState = DMUNIPZ_STATE_CONFIGURED;      //automatic transition but without entryActionConfigured
     case DMUNIPZ_STATE_ERROR:
-      if      (reqState == DMUNIPZ_STATE_IDLE)        {statusOfStateChange = actionRecover();         nextState = reqState;}
+      if      (*reqState == DMUNIPZ_STATE_IDLE)        {statusTransition = exitActionError();       nextState = *reqState;}
       break;
-    default:   nextState = DMUNIPZ_STATE_S0;     // in case we are in an undefined state, start all over again
+    default: 
+      nextState = DMUNIPZ_STATE_S0;
     } // switch actState
   }  // else something severe happened
   
-  // in case state change can not be done, transit to error state (except we are already in FATAL state)
-  if ((statusOfStateChange != DMUNIPZ_STATUS_OK) && (nextState != DMUNIPZ_STATE_FATAL)) nextState = DMUNIPZ_STATE_ERROR;
+  // if the transition failed, transit to error state (except we are already in FATAL state)
+  if ((statusTransition != DMUNIPZ_STATUS_OK) && (nextState != DMUNIPZ_STATE_FATAL)) nextState = DMUNIPZ_STATE_ERROR;
 
-  // a state change happened
+  // if the state changes
   if (*actState != nextState) {                   
     mprintf("dm-unipz: changed to state %d\n", nextState);
     *actState = nextState;                      
-    // returns status of state transition, except we change to ERROR or FATAL state
-    status = statusOfStateChange;
+    status = statusTransition;
   } // if state change
-  else  status = actStatus;                      // no state change: return (unchanged) actStatus
+  else  status = actStatus;
 
-  reqState = DMUNIPZ_STATE_UNKNOWN;              // reset the requested state (after handling the request)
+  *reqState = DMUNIPZ_STATE_UNKNOWN;             // reset requested state (= no change state requested)  
 
   return status;
 } //changeState
@@ -730,11 +660,11 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
     case DMUNIPZ_ECADO_REQBEAM :                                                   // received command "REQ_BEAM" from data master
 
       *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAM;                   // update status of transfer
-      (*nInject)++;                                                                // injrement number of injections (of current transfer)
+      (*nInject)++;                                                                // increment number of injections (of current transfer)
 
       enableFilterEvtMil(pMILPiggy);                                               // enable filter @ MIL piggy
       clearFifoEvtMil(pMILPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
-      requestBeam(DMUNIPZ_REQTIMEOUT);                                             // request beam from UNIPZ, note that we can't check for REQ_NOT_OK in here
+      requestBeam(DMUNIPZ_REQTIMEOUT);                                             // request beam from UNIPZ, note that we can't check for REQ_NOT_OK from here
 
       status = wait4MILEvt(DMUNIPZ_EVT_UNI_READY, virtAccTmp, DMUNIPZ_REQTIMEOUT); // wait for MIL Event
       timestamp = getSysTime();                                                    // get timestamp for MIL event
@@ -757,10 +687,10 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
 
       break;
     case DMUNIPZ_ECADO_RELTK :                                                     // received command "REL_TK" from data master
+
       releaseTK();                                                                 // release TK
       *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELTK;                    // update status of transfer 
-      // the following is a hack for auto-recovery in case no beam could be delivered, chk
-      //checkClearReqNotOk(DMUNIPZ_REQTIMEOUT); // in case a 'req_not_ok' flag has been set at UNIPZ, try to clear it
+
       break;
     default: ;
     } // switch nextAction
@@ -771,52 +701,46 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
 
 void main(void) {
  
-  uint32_t i,j;
+  uint32_t j;
+ 
+  uint32_t i;                                   // counter for iterations of main loop
+  uint32_t status;                              // (error) status
+  uint32_t actState;                            // actual FSM state
+  uint32_t reqState;                            // requested FSM state
 
-  int      status;
-  uint32_t actStatus;                   
-  uint32_t actState;            
-
-  uint32_t statusTransfer;
-  uint32_t nTransfer;
-  uint32_t nInject;
-  uint32_t virtAcc;
-
-  // init global variables
-  actStatus      = DMUNIPZ_STATUS_UNKNOWN; // init actual (error) status 
+  uint32_t statusTransfer;                      // status of transfer
+  uint32_t nTransfer;                           // number of transfers
+  uint32_t nInject;                             // number of injections within current transfer
+  uint32_t virtAcc;                             // number of virtual accelerator
 
   // init local variables
-  status         = DMUNIPZ_STATUS_OK;      // (error) status 
-  nTransfer      = 0;                      // number of transfers
-  nInject        = 0;                      // number of injections (of current transfer)
-  virtAcc        = 0xff;                   // virtual accelerator
-  statusTransfer = DMUNIPZ_TRANS_UNKNOWN;  // status of transfer
-
+  i              = 0;
+  nTransfer      = 0;                           
+  nInject        = 0;                           
+  virtAcc        = 0xff;                        
+  statusTransfer = DMUNIPZ_TRANS_UNKNOWN;       
+  reqState       = DMUNIPZ_STATE_S0;
+  actState       = DMUNIPZ_STATE_UNKNOWN;
+  status         = DMUNIPZ_STATUS_UNKNOWN;      
   
-  init();                        // initialize stuff for lm32
-  initSharedMem();               // initialize shared memory
-  initState(&actState);          // init state machine
-  ebmInit();                     // init EB master 
-  ebmClearSharedMem();           // clear shared memory used for EB return values
-  
-
-
-  findECAQueue();                // find WB device, required to receive events from the ECA
-  findMILPiggy();                // find WB device, required for device bus master and event bus slave
-  mprintf("dm-unipz: actstatus %d\n", actStatus);
-  initCmds();                    // init command handler
-
-  i=0;
-  nTransfer = 0;
+  init();                                                                   // initialize stuff for lm32
+  initSharedMem();                                                          // initialize shared memory
 
   while (1) {
-    cmdHandler();             // check for commands and possibly request state changes
-    status = changeState(&actState, actStatus); // handle requested state changes
+    cmdHandler(&reqState);                                                  // check for commands and possibly request state changes
+    status = changeState(&actState, &reqState, status);                     // handle requested state changes
     
-    switch(actState)          // state specific do actions
+    switch(actState)                                                        // state specific do actions
       {
+      case DMUNIPZ_STATE_S0 :
+        status = doActionS0();                                              // important initialization that must succeed!
+        if (status != DMUNIPZ_STATUS_OK) reqState = DMUNIPZ_STATE_FATAL;    // failed:  -> FATAL
+        else                             reqState = DMUNIPZ_STATE_IDLE;     // success: -> IDLE
+        break;
       case DMUNIPZ_STATE_OPERATION :
-        status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer, &nInject, actStatus);
+        status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer, &nInject, status);
+        if (status == DMUNIPZ_STATUS_DEVBUSERROR) reqState = DMUNIPZ_STATE_ERROR;
+        if (status == DMUNIPZ_STATUS_ERROR)       reqState = DMUNIPZ_STATE_ERROR;
         break;
       case DMUNIPZ_STATE_FATAL :
         *pSharedState  = actState;
@@ -824,20 +748,12 @@ void main(void) {
         mprintf("dm-unipz: a FATAL error has occured. Good bye.\n");
         while (1) asm("nop"); // RIP!
         break;
-      default :
-        for (j = 0; j < (DMUNIPZ_DEFAULT_TIMEOUT * DMUNIPZ_MS_ASMNOP); j++) { asm("nop"); } // wait: use value for default timeout
+      default :                                                             // avoid flooding WB bus with unecessary activity
+        for (j = 0; j < (DMUNIPZ_DEFAULT_TIMEOUT * DMUNIPZ_MS_ASMNOP); j++) { asm("nop"); }
       } // switch 
 
-    // check for severe errors requiring changing to ERROR state
-    if (status == DMUNIPZ_STATUS_DEVBUSERROR) reqState = DMUNIPZ_STATE_ERROR;
-    if (status == DMUNIPZ_STATUS_ERROR)       reqState = DMUNIPZ_STATE_ERROR;
-
-    // update status
-    if (actStatus != status) {
-      *pSharedStatus = status;
-      actStatus      = status;
-    }
-
+    // update shared memory
+    *pSharedStatus    = status;
     *pSharedState     = actState;
     i++; *pSharedNIterMain = i;
     *pSharedStatTrans = statusTransfer;
@@ -845,4 +761,4 @@ void main(void) {
     *pSharedNTransfer = nTransfer;
     *pSharedNInject   = nInject;
   } // while
-} /* main */
+} // main
