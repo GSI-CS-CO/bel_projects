@@ -236,8 +236,10 @@ void VisitorNodeDownloadCrawler::setDefDst() const {
   tmpAdr = mmu.intAdr2adr(auxAdr);
   parserMeta* tmpParser = mmu.lookupAdr(tmpAdr);
 
-  std::cout << "InAdr: 0x" << std::hex << auxAdr << " Adr: 0x" << std::hex << tmpAdr <<  std::endl;
-  if (tmpParser == NULL) std::cout << "Parser Entry not found !" <<  std::endl;
+  //std::cout << "InAdr: 0x" << std::hex << auxAdr << " Adr: 0x" << std::hex << tmpAdr <<  std::endl;
+  if (tmpParser == NULL) {
+    //std::cout << "Parser Entry not found !" <<  std::endl;
+  }  
   else if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, tmpParser->v, (myEdge){sDD}, g);
 
 }
@@ -256,12 +258,13 @@ void VisitorNodeDownloadCrawler::visit(const Block& el) const {
   setDefDst();
   tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + BLOCK_ALT_DEST_PTR ));
   if (tmpAdr != LM32_NULL_PTR) { boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sDL},          g);
-  std::cout << "Node " << g[v].name << " has destlist " << g[((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v].name << std::endl; 
-
+  //std::cout << "Node " << g[v].name << " has destlist " << g[((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v].name << std::endl; 
+  /*
   for (boost::tie(in_begin, in_end) = in_edges(((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v,g); in_begin != in_end; ++in_begin)
 {   
     std::cout << "Parent of " << g[((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v].name << " is " << g[source(*in_begin,g)].name << std::endl;
 }
+*/
   }
   tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_IL_PTR ));
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sQM[PRIO_IL]}, g);
@@ -337,7 +340,9 @@ void VisitorNodeDownloadCrawler::visit(const CmdQMeta& el) const {
     tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + offs ));
     if (tmpAdr != LM32_NULL_PTR) {
       pMeta = ((parserMeta*)(mmu.lookupAdr(tmpAdr)));
-      if (pMeta != NULL) {std::cout << "found qbuf!" << std::endl; boost::add_edge(v, pMeta->v, (myEdge){"meta"}, g);}
+      if (pMeta != NULL) {//std::cout << "found qbuf!" << std::endl; 
+        boost::add_edge(v, pMeta->v, (myEdge){"meta"}, g);
+      }
     }  
   }
 }
@@ -346,19 +351,19 @@ void VisitorNodeDownloadCrawler::visit(const CmdQBuffer& el) const {
 }
 
 void VisitorNodeDownloadCrawler::visit(const DestList& el) const {
-  vertex_t tmpV, vPblock;
+  vertex_t vPblock;
   uint32_t tmpAdr;
   Graph& g = mmu.getDownGraph();
   uint8_t* b = (uint8_t*)&g[v].np->getB();
   Graph::in_edge_iterator in_begin, in_end;
   parserMeta* pMeta;
 
-  std::cout << "Trying to find parent of " << g[v].name << std::endl;
+  //std::cout << "Trying to find parent of " << g[v].name << std::endl;
   boost::tie(in_begin, in_end) = in_edges(v,g);
   if(in_begin != in_end) {
 
     //get the parent Block. there shall be only one, a block (no check for that right now, sorry)
-    std::cout << "Found parent: " << g[source(*in_begin,g)].name << std::endl;
+    //std::cout << "Found parent: " << g[source(*in_begin,g)].name << std::endl;
 
 
 
@@ -369,7 +374,9 @@ void VisitorNodeDownloadCrawler::visit(const DestList& el) const {
       tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + offs ));
       if (tmpAdr != LM32_NULL_PTR) {
         pMeta = ((parserMeta*)(mmu.lookupAdr(tmpAdr)));
-        if (pMeta != NULL) {std::cout << "found altdest!" << std::endl; boost::add_edge(vPblock, pMeta->v, (myEdge){sAD}, g);}
+        if (pMeta != NULL) {//std::cout << "found altdest!" << std::endl; 
+          boost::add_edge(vPblock, pMeta->v, (myEdge){sAD}, g);
+        }
       }  
     }
   } else {
@@ -399,7 +406,11 @@ void VisitorNodeDownloadCrawler::visit(const DestList& el) const {
           if (found) {std::cerr << "!!! Found more than one default destination !!!" << std::endl; break;
           } else {
             auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-            if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << x->adr << std::endl;}
+            if (x != NULL) {
+              ret.push_back(mmu.adr2intAdr(x->adr));
+              found = true; 
+              //std::cout << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << x->adr << std::endl;
+            }
           }
         }
       }  
@@ -428,7 +439,11 @@ void VisitorNodeDownloadCrawler::visit(const DestList& el) const {
           if (found) {std::cerr << "!!! Found more than one Destination List !!!" << std::endl; break;
           } else {
             auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-            if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
+            if (x != NULL) {
+              ret.push_back(mmu.adr2intAdr(x->adr));
+              found = true;
+              //std::cout << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;
+            }
           }
         }
       }  
@@ -446,7 +461,11 @@ void VisitorNodeDownloadCrawler::visit(const DestList& el) const {
             if (found) {std::cerr << "!!! Found more than one queue info of type " << sQM[idx] << " !!!" << std::endl; break;}
             else {
               auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-              if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "qMeta: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
+              if (x != NULL) {
+                ret.push_back(mmu.adr2intAdr(x->adr));
+                found = true;
+                //std::cout << "qMeta: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;
+              }
             }  
           }
         }  
@@ -473,7 +492,11 @@ vAdr VisitorNodeUploadCrawler::getQBuf() const {
 
       if (g[target(*out_cur,g)].np->isMeta()) {
         auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-        if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "qBuf: " <<  g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
+        if (x != NULL) {
+          ret.push_back(mmu.adr2intAdr(x->adr));
+          found = true;
+          //std::cout << "qBuf: " <<  g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;
+        }
       }
     }  
   }
@@ -500,7 +523,11 @@ vAdr VisitorNodeUploadCrawler::getCmdTarget() const {
         if (found) {std::cerr << "!!! Found more than one target !!!" << std::endl; break;
         } else {
           auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-          if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "Target: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
+          if (x != NULL) {
+            ret.push_back(mmu.adr2intAdr(x->adr));
+            found = true;
+            //std::cout << "Target: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;
+          }
         }
       }
     }  
@@ -530,7 +557,11 @@ vAdr VisitorNodeUploadCrawler::getFlowDst() const {
         if (found) {std::cerr << "!!! Found more than one flow destination !!!" << std::endl; break;
         } else {
           auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-          if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "flowDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
+          if (x != NULL) {
+            ret.push_back(mmu.adr2intAdr(x->adr));
+            found = true; 
+            //std::cout << "flowDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;
+          }
         }
       }
     }  
@@ -568,7 +599,11 @@ vAdr VisitorNodeUploadCrawler::getListDst() const {
         if (found) {std::cerr << "!!! Found more than one default destination !!!" << std::endl; break;
         } else {
           auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-          if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
+          if (x != NULL) {
+            ret.push_back(mmu.adr2intAdr(x->adr));
+            found = true;
+            //std::cout << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;
+          }
         }
       }
     }  
@@ -584,7 +619,11 @@ vAdr VisitorNodeUploadCrawler::getListDst() const {
 
       if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sAD) {
         auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-        if (x != NULL) {ret.push_back(mmu.adr2intAdr(x->adr)); found = true; std::cout << "altDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;}
+        if (x != NULL) {
+          ret.push_back(mmu.adr2intAdr(x->adr));
+          found = true;
+          //std::cout << "altDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;
+        }
       }
     }  
   }

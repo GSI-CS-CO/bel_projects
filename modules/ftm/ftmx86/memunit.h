@@ -7,6 +7,7 @@
 #include <map>
 #include <set>
 #include <boost/bimap.hpp>
+#include <boost/optional.hpp>
 #include <stdlib.h>
 #include "common.h"
 #include "ftm_common.h"
@@ -94,7 +95,7 @@ public:
   Graph& getDownGraph() {return gDown;}
 
   //MemPool Functions
-
+  void banChunk(uint32_t adr) {memPool.erase(adr);};
   void initMemPool();
   bool acquireChunk(uint32_t &adr);
   bool freeChunk(uint32_t &adr);
@@ -116,8 +117,11 @@ public:
   //Hash functions
   bool insertHash(const std::string& name, uint32_t &hash);
   bool removeHash(const uint32_t hash);
-  const std::string& hash2name(const uint32_t hash)     const  { return hashMap.left.at(hash); }
-  const uint32_t&    name2hash(const std::string& name) const  { return hashMap.right.at(name); }
+
+
+
+  boost::optional<const std::string&> hash2name(const uint32_t hash)     const  { try { return hashMap.left.at(hash);} catch (...) {throw; return boost::optional<const std::string&>();}  }
+  boost::optional<const uint32_t&>    name2hash(const std::string& name) const  { try { return hashMap.right.at(name);} catch (...) {throw; return boost::optional<const uint32_t&>();}  }
 
   //Addr Functions
   const uint32_t extAdr2adr(const uint32_t ea)    const  { return (ea == LM32_NULL_PTR ? LM32_NULL_PTR : ea - extBaseAdr); }
@@ -131,11 +135,13 @@ public:
   void prepareUpload();
 
   void createUploadBmp();
-  vAdr getUploadAdrs();
+  vAdr getUploadAdrs() const;
   vBuf getUploadData();
 
   //Download Functions
-  vAdr getDownloadAdrs();
+  void setDownloadBmp(vBuf dlBmp) {downloadBmp = dlBmp; vHexDump ("DLBMP", downloadBmp, downloadBmp.size());}
+  const vAdr getDownloadBMPAdrs() const;
+  const vAdr getDownloadAdrs() const;
   void parseDownloadData(vBuf downloadData);
 
 };

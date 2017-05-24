@@ -43,7 +43,9 @@
   void MemUnit::createUploadBmp() {
     for (auto& it : uploadBmp) { 
       it = 0;
-    }    
+    }
+
+
 
     //Go through allocmap and update Bmp
     for (auto& it : allocMap) {
@@ -57,27 +59,32 @@
         std::cout << "Address 0x" << std::hex << it.second.adr << " is not within 0x" << std::hex << startOffs << "-" << std::hex << endOffs << std::endl;
       }
     }
+
+    vHexDump ("ULBMP", uploadBmp, uploadBmp.size());
     
   }
 
  
 
-  vAdr MemUnit::getUploadAdrs() {
+  vAdr MemUnit::getUploadAdrs() const {
     vAdr ret;
-
+    uint32_t adr;
+    //generate addresses for BMP (continuous)
+    for (adr = adr2extAdr(sharedOffs); adr < adr2extAdr(startOffs); adr += _32b_SIZE_) ret.push_back(adr);
+    //generate addresses for nodes (random access)
     for (auto& it : allocMap) {
-      for (uint32_t adr = adr2extAdr(it.second.adr); adr < adr2extAdr(it.second.adr) + _MEM_BLOCK_SIZE; adr += _32b_SIZE_ ) ret.push_back(adr);
+      for (adr = adr2extAdr(it.second.adr); adr < adr2extAdr(it.second.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr);
     }    
     return ret;
   }
 
-  vBuf MemUnit::getUploadData() {
+  vBuf MemUnit::getUploadData()  {
     vBuf ret;
-     std::cout << std::dec << uploadBmp.size() << " " <<  allocMap.size() << " " << _MEM_BLOCK_SIZE << std::endl;
+    //std::cout << std::dec << uploadBmp.size() << " " <<  allocMap.size() << " " << _MEM_BLOCK_SIZE << std::endl;
     ret.reserve( uploadBmp.size() + allocMap.size() * _MEM_BLOCK_SIZE); // preallocate memory for BMP and all Nodes
 
     createUploadBmp();
-    vHexDump ("ULBMP", uploadBmp, uploadBmp.size());
+    //vHexDump ("ULBMP", uploadBmp, uploadBmp.size());
 
     ret.insert( ret.end(), uploadBmp.begin(), uploadBmp.end() );
     for (auto& it : allocMap) { 
@@ -87,14 +94,31 @@
     return ret;
   }
 
-  vAdr MemUnit::getDownloadAdrs() {
-    //easy 1st version: read everything in shared area
-    vAdr ret = vAdr((poolSize + _32b_SIZE_ - 1)/ _32b_SIZE_ );
-   
-    for (uint32_t adr = startOffs + extBaseAdr; adr < endOffs + extBaseAdr; adr += _32b_SIZE_ ) {
-      ret.push_back(adr);
-    }
 
+  
+
+  const vAdr MemUnit::getDownloadBMPAdrs() const {
+    //easy 1st version: read everything in shared area
+    vAdr ret;
+
+    for (uint32_t adr = adr2extAdr(sharedOffs); adr < adr2extAdr(startOffs); adr += _32b_SIZE_) ret.push_back(adr);
+
+    return ret;
+  }
+
+    
+
+  const vAdr MemUnit::getDownloadAdrs() const {
+    vAdr ret;
+
+    for(unsigned int bitIdx = 0; bitIdx < bmpLen; bitIdx++) {
+      if (downloadBmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {
+        uint32_t nodeAdr = startOffs + bitIdx * _MEM_BLOCK_SIZE;
+        //std::cout << "BitIdx " << std::dec << bitIdx << " -> 0x" << std::hex << nodeAdr << std::endl;
+        for (uint32_t adr = adr2extAdr(nodeAdr); adr < adr2extAdr(nodeAdr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {ret.push_back(adr);}
+      }
+    }      
+    
     return ret;
   }  
     
@@ -104,24 +128,31 @@
   void MemUnit::parseDownloadData(vBuf downloadData) {
     //extract and parse downloadBmp
     parserMap.clear();
-    std::copy(downloadData.begin(), downloadData.begin() + downloadBmp.size(), downloadBmp.begin());
+
 
     //create parserMap and Vertices
-    std::cout << "Got " << downloadData.size() << " bytes of data, " << downloadData.size() / _MEM_BLOCK_SIZE << " blocks." << std::endl;
-    vHexDump ("DLBMP", downloadBmp, downloadBmp.size());
-
+    //std::cout << "Got " << downloadData.size() << " bytes of data, " << downloadData.size() / _MEM_BLOCK_SIZE << " blocks." << std::endl;
+    //vHexDump ("DL", downloadData, downloadData.size());
+    uint32_t nodeCnt = 0;
     for(unsigned int bitIdx = 0; bitIdx < bmpLen; bitIdx++) {
-      //std::cout << std::dec << "bIdx " << bitIdx << " BIdx " << bitIdx / 8 << " Pos " << (7 - bitIdx % 8) << " is 0x" << std::hex << downloadBmp[bitIdx / 8] << " c " << (downloadBmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) << std::endl;
       if (downloadBmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {
-        uint32_t localAdr = (startOffs - sharedOffs) + bitIdx * _MEM_BLOCK_SIZE;
-        uint32_t adr      = localAdr + sharedOffs;
-        std::cout << "IMPORTANT: This is the key: 0x" << std::hex << adr << std::endl; 
-        uint32_t hash     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_HASH]);
 
-        std::cout << hash2name(hash) << " -- L@: 0x" << std::hex << localAdr << " @: 0x" << adr << " #0x" << hash << std::endl;
+        uint32_t localAdr = nodeCnt * _MEM_BLOCK_SIZE; nodeCnt++;
+        uint32_t adr      = startOffs + bitIdx * _MEM_BLOCK_SIZE;
+        //std::cout <<  " BitIdx " << bitIdx << " 0x" << std::hex << localAdr << std::endl;
+        uint32_t hash     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_HASH]);
+        boost::optional<std::string> name;
+        // we don't know if the hash map knows about this node. If not, we'll return the hash as a string.
+        try {
+          name = hash2name(hash);
+        } catch (...) {
+          name = "#" + std::to_string(hash);
+        }
+        
+
         uint32_t flags    = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]);
         uint32_t type     = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-        vertex_t v        = boost::add_vertex((myVertex) {hash2name(hash), hash, NULL, "", flags}, gDown);
+        vertex_t v        = boost::add_vertex((myVertex) {std::string(*std::forward<boost::optional<std::string>>(name)), hash, NULL, "", flags}, gDown);
         parserMap[adr]    = (parserMeta){v, hash};
         auto src = downloadData.begin()+localAdr;
         std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&parserMap.at(adr).b[0]);
@@ -140,15 +171,19 @@
           case NODE_TYPE_UNKNOWN : std::cerr << "not yet implemented " << gDown[v].type << std::endl; break;
           default                : std::cerr << "Node type" << gDown[v].type << " not supported! " << std::endl;
         }
-        
-     
+        /*
+        std::cout << gDown[v].name;
+        if (gDown[v].np == NULL) std::cout <<  " has no node !" << std::endl;
+        else std::cout <<  " has is ok." << std::endl;
+        */
         
       }
     }
 
     boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
     boost::tie(vi, vi_end) = vertices(gDown);
-    std::cout << std::dec << "Size gDown: " << vi_end - vi << std::endl;
+    //std::cout << std::dec << "Size gDown: " << vi_end - vi << std::endl;
+
 
     
     // create edges
@@ -169,6 +204,8 @@
         if  (gDown[it.second.v].np->isMeta()) gDown[it.second.v].np->accept(VisitorNodeDownloadCrawler(it.second.v, *this));
       }  
     }
+
+
   }  
 
    
@@ -185,79 +222,6 @@
   }
 
 
-
-  /*
-void MemUnit::prepareUpload() {
-
-      //check allocation
-      //go through graph
-      //call allocate    
-
-    //update BMP
-
-for (itBuf it = uploadBmp.begin(); it < uploadBmp.end(); it++) {
-      for (int i=0; i <8; i++) {
-        if ((*it) & (1<<i)) {
-          adr = extBaseAdr + int(uploadBmp.end() - it)*8 + i * _MEM_BLOCK_SIZE;
-          ret.push_back(adr);
-          std::cout << "0x" << std::hex << adr << std::endl;
-        }
-      }
-    }   
-
-    //serialise
-      //go through graph
-      //call serialise   
-  }
-
-
-  void MemUnit::upload() {
-      
-eb_status_t ftmRamWrite()
-{
-   eb_status_t status;
-   eb_cycle_t cycle;
-   uint32_t i,j, packets, partLen, start, data;
-   uint32_t* writeout = (uint32_t*)buf;   
-   
-   boost::container::vector<uint32_t> vpChunkMeta;chunkMeta*>
-
-   //wrap frame buffer in EB packet
-   packets = ((getUsedSpace() + PACKET_SIZE-1) / PACKET_SIZE);
-   start = 0;
-   
-   for(j=0; j < packets; j++)
-   {
-      if(j == parts-1 && (len % PACKET_SIZE != 0)) partLen = len % PACKET_SIZE;
-      else partLen = PACKET_SIZE;
-      
-      if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return die(status, "failed to create cycle"); 
-      
-      for(i= start>>2; i< (start + partLen) >>2;i++)  
-      {
-         if (bufEndian == LITTLE_ENDIAN)  data = SWAP_4(writeout[i]);
-         else                             data = writeout[i];
-         
-         eb_cycle_write(cycle, (eb_address_t)(address+(i<<2)), EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)data); 
-      }
-      if ((status = eb_cycle_close(cycle)) != EB_OK) return die(status, "failed to close write cycle");
-      start = start + partLen;
-   }
-   
-   return 0;
-}
-    //split all allocmap elements marked for upload (transfer = true) into network packets ( div 38)
-
-      //play each entry's buffer as eb operations
-      //send cycle
-
-    //play BMP as eb operations
-    //send cycle
-
-    
-    
-  }
-*/
 
 
   //Allocation functions

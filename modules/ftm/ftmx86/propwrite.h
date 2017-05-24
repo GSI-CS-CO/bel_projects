@@ -39,7 +39,8 @@
     vertex_writer(objMap om) : om(om) {}
     template <class Vertex>
     void operator()(std::ostream& out, const Vertex& v) const {
-      om[v]->accept(VisitorVertexWriter(out));
+      if (om[v] != NULL) om[v]->accept(VisitorVertexWriter(out));
+      else std::cerr << "Vertex " << v << " has no node !!!" << std::endl;
     }
   private:
     objMap om;

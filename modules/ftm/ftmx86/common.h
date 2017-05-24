@@ -11,6 +11,7 @@
 #include <boost/bind.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/endian/conversion.hpp>
+#include <boost/optional.hpp>
 
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
@@ -26,12 +27,14 @@
 
 
 
+
 class Node;
 
 typedef boost::shared_ptr<Node> node_ptr;
 typedef boost::container::vector<node_ptr> npBuf;
 typedef boost::container::vector<uint8_t> vBuf;
 typedef boost::container::vector<uint32_t> vAdr;
+typedef boost::container::vector<uint32_t> ebBuf;
 
 
 extern const std::string sQM[];
@@ -60,6 +63,8 @@ public:
     }
  
 };
+
+
 
 typedef struct {
   std::string name;
@@ -129,7 +134,7 @@ typedef boost::graph_traits<Graph>::vertex_descriptor vertex_t;
 typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
 typedef boost::container::vector<vertex_t> vVertices;
 
- 
+
 
 template<typename T>
 inline void writeLeNumberToBeBytes(uint8_t* pB, T val) {
