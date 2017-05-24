@@ -333,11 +333,11 @@ int main(int argc, char** argv) {
 
       switch(state) {
       case DMUNIPZ_STATE_OPERATION :
-        if (actTransfers != transfers) sleepTime = 500000;                                    // ongoing transfer: reduce polling rate ...
-        else                           sleepTime = 100000;                                    // sleep for 100ms to be sure to catch the next TK_REQ
+        if (actTransfers != transfers) sleepTime = DMUNIPZ_DEFAULT_TIMEOUT * 1000 * 2;        // ongoing transfer: reduce polling rate ...
+        else                           sleepTime = DMUNIPZ_DEFAULT_TIMEOUT * 1000;            // sleep for default timeout to catch next REQ_TK
         break;
       default:
-        sleepTime = 100000;                          
+        sleepTime = DMUNIPZ_DEFAULT_TIMEOUT * 1000;                          
       } // switch actState
       
       // if required, print status change
