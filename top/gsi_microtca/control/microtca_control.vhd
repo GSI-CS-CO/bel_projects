@@ -205,13 +205,13 @@ architecture rtl of microtca_control is
 
   signal clk_sys       : std_logic;
   
-  signal s_led_status_moster  : std_logic_vector(6 downto 1);
+  signal s_led_status_monster  : std_logic_vector(6 downto 1);
   signal s_led_user_monster   : std_logic_vector(8 downto 1);
 
   signal s_led_status         : std_logic_vector(6 downto 1);
   signal s_led_user           : std_logic_vector(8 downto 1);
  
-  signal s_gpio_out           : std_logic_vector(7 downto 0);
+  signal s_gpio_out           : std_logic_vector(8 downto 0);
   signal s_gpio_in            : std_logic_vector(9 downto 0);
   
   constant c_test_pattern_a   : std_logic_vector(15 downto 0) := x"5555";
@@ -247,17 +247,19 @@ architecture rtl of microtca_control is
   signal s_lvds_led     : std_logic_vector(20 downto 0);
 
 
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 38) := 
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 39) := 
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
-    ("LED1_USR_R ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED2_USR_B ", IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED3_USR_G ", IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED4_USR_W ", IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED5_USR_R ", IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED6_USR_B ", IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED7_USR_G ", IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
-    ("LED8_USR_W ", IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR1_R ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR2_B ", IO_NONE,         false,   false,  1,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR3_G ", IO_NONE,         false,   false,  2,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR4_W ", IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR5_R ", IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR6_B ", IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR7_G ", IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+    ("LED_USR8_W ", IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
+
+    ("HWT_EN     ", IO_NONE,         false,   false,  8,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL), -- for testing front panel LEDs
 
     ("HSWF1      ", IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("HSWF2      ", IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -372,7 +374,9 @@ architecture rtl of microtca_control is
   signal s_mmc_libera_buf_en_reg  : std_logic_vector(7 downto 0);
   signal s_mmc_mtca4_bpl_dis_reg  : std_logic_vector(7 downto 0);
 
-
+  signal s_dis_led_green : std_logic;
+  signal s_dis_led_red   : std_logic;
+  signal s_dis_led_blue  : std_logic;
   
   
 begin
@@ -385,7 +389,7 @@ begin
       g_lvds_inout      => 17,  -- 5 LEMOs at front panel, 8 MTCA4 at BPL, 4 MTCA4 clk at BPL
       g_lvds_in         => 0,
       g_lvds_out        => 4,   -- 4 libera triggers at BPL
-      g_gpio_out        => 8,  -- 8 on-boards LEDs
+      g_gpio_out        => 9,  -- 8 on-boards LEDs, 1 test mode enable
       g_gpio_in         => 10, -- 4 FPGA HEX switch, 4 CPLD HEX switch, 1 FPGA button, 1 CPLD buttong
       g_fixed           => 0,
       g_lvds_invert     => false,
@@ -459,6 +463,13 @@ begin
       lcd_in_o               => dis_di_o(0)
 
   );
+
+
+  -- test mode select via hex switch or sw
+  -- invert FPGA button and HEX switch
+  s_test_sel(4)          <= s_gpio_out(7)          when s_gpio_out(8)='1' else not pbs_f_i;
+  s_test_sel(3 downto 0) <= s_gpio_out(3 downto 0) when s_gpio_out(8)='1' else not hswf_i ;
+
  
   sfp_tx_dis_o <= '0'; -- SFP always enabled
 
@@ -466,20 +477,25 @@ begin
   -- Display
   dis_wr_o    <= '0';
   dis_rst_o   <= '1';
+
+  -- WR status LEDs 
+  s_dis_led_green <= s_gpio_out(4) when s_gpio_out(8)='1' else (    s_led_link_up and     s_led_track); -- green
+  s_dis_led_red   <= s_gpio_out(5) when s_gpio_out(8)='1' else (not s_led_link_up                    ); -- red
+  s_dis_led_blue  <= s_gpio_out(6) when s_gpio_out(8)='1' else (    s_led_link_up and not s_led_track); -- blue
   
-  -- WR LEDs
-  dis_di_o(5) <= '0' when (not s_led_link_up)                     = '1' else 'Z'; -- red
-  dis_di_o(6) <= '0' when (    s_led_link_up and not s_led_track) = '1' else 'Z'; -- blue
-  dis_di_o(4) <= '0' when (    s_led_link_up and     s_led_track) = '1' else 'Z'; -- green
+  -- display backlight color - pullups
+  dis_di_o(4) <= '0' when s_dis_led_green = '1' else 'Z'; -- green
+  dis_di_o(5) <= '0' when s_dis_led_red   = '1' else 'Z'; -- red
+  dis_di_o(6) <= '0' when s_dis_led_blue  = '1' else 'Z'; -- blue
   
   -- Link LEDs
-  s_led_status_moster(1) <= s_led_link_act and s_led_link_up;   -- red   = traffic/no-link
-  s_led_status_moster(2) <= s_led_link_up;                      -- blue  = link
-  s_led_status_moster(3) <= s_led_track;                        -- green = timing valid
-  s_led_status_moster(4) <= s_led_pps;                          -- white = PPS
+  s_led_status_monster(1) <= s_led_link_act and s_led_link_up;   -- red   = traffic/no-link
+  s_led_status_monster(2) <= s_led_link_up;                      -- blue  = link
+  s_led_status_monster(3) <= s_led_track;                        -- green = timing valid
+  s_led_status_monster(4) <= s_led_pps;                          -- white = PPS
 
   -- GPIOs
-  s_led_status_moster(6 downto 5) <= s_gpio_out (1 downto 0);
+  s_led_status_monster(6 downto 5) <= s_gpio_out (1 downto 0);
 
   s_gpio_in(3 downto 0) <= not  hswf_i; -- FPGA HEX switch
   s_gpio_in(7 downto 4) <= con(4 downto 1); -- CPLD HEX switch
@@ -488,16 +504,12 @@ begin
   s_gpio_in(9) <= con(5);  -- CPLD push button
 
 
-  -- invert FPGA button and HEX switch
-  s_test_sel(4)          <= not pbs_f_i;
-  s_test_sel(3 downto 0) <= not hswf_i;
-
   -- status LED output according to FPGA hex switch position and fpga button
   -- F position - simple led test
   with s_test_sel select
-    s_led_status <= "101010"               when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
-                    "010101"               when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
-                    s_led_status_moster    when others;         -- driven by monster
+    s_led_status <= "000000"               when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
+                    "111111"               when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
+                    s_led_status_monster    when others;         -- driven by monster
 
   led_status_o <= not s_led_status;                  
 
@@ -505,17 +517,15 @@ begin
   -- F position - simple led test
   -- D position - show state of CPLD hex switch and button
   with s_test_sel select
-    s_led_user <= x"AA"                    when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
-                  x"55"                    when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
+    s_led_user <= x"00"                    when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
+                  x"FF"                    when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
                   ("000" &     con)        when ('0' & x"D"),   -- FPGA hex sw in position D, button not pressed, CPLD HEX SW and button test  
                   ("000" & not con)        when ('1' & x"D"),   -- FPGA hex sw in position D, button     pressed, CPLD HEX SW and button test  
-                  s_gpio_out               when others;         -- driven by monster
+                  s_gpio_out(7 downto 0)   when others;         -- driven by monster
 
   led_user_o <= not s_led_user;
 
-  
-
-  
+ 
 
   -- LVDS output enable pins (active low)
   s_lvds_oe <= not s_lvds_oen_monster;
@@ -538,8 +548,8 @@ begin
 
   -- LVDS activity indicator BLUE LEDs (active hi)
   with s_test_sel select
-    lvtio_led_act_o <= (others => '1')        when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
-                       (others => '0')        when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
+    lvtio_led_act_o <= (others => '0')        when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, LED test
+                       (others => '1')        when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, LED test
                        s_lvds_led(4 downto 0) when others;         -- driven by monster
 
                        
