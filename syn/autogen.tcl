@@ -29,5 +29,6 @@ proc qmegawiz {files} {
       
       file mtime "$dir/$i.qip" [file mtime "$dir/$i.vhd"]
     }
+  set_global_assignment -name QIP_FILE "$dir/$i.qip"
   }
 }

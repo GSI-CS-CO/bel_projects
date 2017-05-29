@@ -196,7 +196,8 @@ architecture scu_diob_arch of scu_diob is
 --  CONSTANT c_Firmware_Release:    Integer := 20;  ---- Firmware_release Stand 17.02.2016 ( INFO ROM in Housekeeping Modul eingefügt)
 --  CONSTANT c_Firmware_Release:    Integer := 21;  ---- Firmware_release Stand 29.02.2016 ( PLL nur an lokalem CLK angeschlossen)
 --  CONSTANT c_Firmware_Release:    Integer := 22;  ---- Firmware_release Stand 29.06.2016 ( +'700 Status/Error "SM" + Lemo-Outp., + ('700+'710) Lemo-Outp., +'751 (DA2)
-    CONSTANT c_Firmware_Release:    Integer := 23;  ---- Firmware_release Stand 12.01.2017 ( PLL's wieder am SCU-CLK angeschlossen, Interlock-Logik geändert)
+--  CONSTANT c_Firmware_Release:    Integer := 23;  ---- Firmware_release Stand 12.01.2017 ( PLL's wieder am SCU-CLK angeschlossen, Interlock-Logik geändert)
+    CONSTANT c_Firmware_Release:    Integer := 24;     -- Firmware_release Stand 10.05.2017 ( Error, Umschaltung FG: bipolar/unipolar DAC '710
 --  CONSTANT c_Firmware_Release:    Integer := 24;  ---- Firmware_release Stand ??.??.2016 ( + '760 (ATR1) )
 
     
@@ -4188,8 +4189,8 @@ BEGIN
 --       2   | DAC-Strobe:   | 0 = Holec_Mode (4x) (Default), 1 = Strobe (1x)       |    --
 --     ------+----------------------------------------------------------------------|    --
 --           |  Output-Mode:                                                        |    --
---           |    "11" =  FG  mit Strobe                                            |    --
---    [1..0] |    "10" =  frei                                                      |     --
+--           |    "11" =  FG unipolar mit Strobe                                    |    --
+--    [1..0] |    "10" =  FG bipolar mit Strobe                                     |    --
 --           |    "01" =  16 Bit Output, Strobe = wr auf AW_Output_Reg1(0)          |    --
 --           |    "00" =  16 Bit-Dac,    Strobe = wr auf AW_Output_Reg2 (Default)   |    --
 --     ------+----------------------------------------------------------------------+    --
@@ -4252,18 +4253,11 @@ BEGIN
               P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  AW_Output_Reg(2)(15 DOWNTO 0);
               P25IO_DAC_Strobe                   <=  NOT AW_Output_Reg(1)(0);
               
-                
-        when "10"  =>  -- frei:
+    
 
-              P25IO_DAC_Data_FG_Out(15 downto 0) <= (OTHERS => '0');  
-              P25IO_DAC_Strobe                   <= '0';
- 
-
-        when "11"  =>  -- FG-Mode:
+        when "10"  =>  -- FG-Mode: bipolar
               
-              IF  (AW_Config1(2) = '0')  THEN  P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  FG_1_sw(31 downto 16); -- Bipolar
-                                         Else  P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  FG_1_sw(30 downto 15); -- Unipolar
-              END IF; 
+              P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  FG_1_sw(31 downto 16); -- Bipolar
     
               P25IO_DAC_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config1)(5 downto 3)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
 
@@ -4278,6 +4272,26 @@ BEGIN
                                                                       Else  P25IO_DAC_Strobe  <=      P25IO_DAC_DAC_Strobe_o; -- Strobe negativ
                                            END IF; 
               END IF; 
+ 
+
+        when "11"  =>  -- FG-Mode: unipolar
+              
+              P25IO_DAC_Data_FG_Out(15 DOWNTO 0) <=  FG_1_sw(30 downto 15); -- Unipolar
+    
+              P25IO_DAC_DAC_Strobe_Expo  <=  (to_integer(unsigned(AW_Config1)(5 downto 3)));  -- Multiplikationswert für 100ns aus Wertetabelle 2^n
+
+
+              P25IO_Holec_Strobe_Start   <=  FG_1_strobe;                   -- FG_1_strobe (vom Funktionsgen) 
+              P25IO_DAC_DAC_Strobe_i     <=  FG_1_strobe;                   -- FG_1_strobe (vom Funktionsgen)
+
+              IF  (AW_Config1(2) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_Holec_Strobe_Out; -- Strobe positiv
+                                         Else  
+
+                                           IF  (AW_Config1(6) = '0')  THEN  P25IO_DAC_Strobe  <=  NOT P25IO_DAC_DAC_Strobe_o; -- Strobe positiv
+                                                                      Else  P25IO_DAC_Strobe  <=      P25IO_DAC_DAC_Strobe_o; -- Strobe negativ
+                                           END IF; 
+              END IF; 
+
 
       end case;
 

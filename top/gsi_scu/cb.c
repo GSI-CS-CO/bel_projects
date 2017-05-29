@@ -10,10 +10,10 @@ void cbWrite(volatile struct channel_buffer* cb, volatile struct channel_regs* c
   /* write element to free slot */
   cb[channel].pset[wptr] = *pset;
   /* move write pointer forward */
-  cr[channel].wr_ptr = (wptr + 1) % (BUFFER_SIZE+1);
+  cr[channel].wr_ptr = (wptr + 1) % (BUFFER_SIZE);
   /* overwrite */
   if (cr[channel].wr_ptr == cr[channel].rd_ptr)
-    cr[channel].rd_ptr = (cr[channel].rd_ptr + 1) % (BUFFER_SIZE+1);
+    cr[channel].rd_ptr = (cr[channel].rd_ptr + 1) % (BUFFER_SIZE);
 }
 
 
@@ -21,10 +21,10 @@ void cbDump(volatile struct channel_buffer *cb, volatile struct channel_regs* cr
   int i = 0, col;
   struct param_set *pset;
   mprintf("dumped cb[%d]: \n", channel);  
-  mprintf ("wr_ptr: %d rd_ptr: %d size: %d\n", cr[channel].wr_ptr, cr[channel].rd_ptr, BUFFER_SIZE+1);
-  while(i < BUFFER_SIZE+1) {
+  mprintf ("wr_ptr: %d rd_ptr: %d size: %d\n", cr[channel].wr_ptr, cr[channel].rd_ptr, BUFFER_SIZE);
+  while(i < BUFFER_SIZE) {
     mprintf("%d ", i);
-    for(col = 0; (col < 8) && (i < BUFFER_SIZE+1); col++) {
+    for(col = 0; (col < 8) && (i < BUFFER_SIZE); col++) {
       *pset = cb[channel].pset[i++];
       mprintf("0x%x ", pset->coeff_c);
     }

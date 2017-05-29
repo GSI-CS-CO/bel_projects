@@ -63,6 +63,7 @@ use work.wb_serdes_clk_gen_pkg.all;
 use work.io_control_pkg.all;
 use work.wb_pmc_host_bridge_pkg.all;
 use work.ddr3_wrapper_pkg.all;
+use work.endpoint_pkg.all;
 
 entity monster is
   generic(
@@ -130,6 +131,10 @@ entity monster is
     wr_ext_pps_i           : in    std_logic;
     wr_uart_o              : out   std_logic;
     wr_uart_i              : in    std_logic;
+    -- SFP
+    sfp_tx_disable_o       : out   std_logic;
+    sfp_tx_fault_i         : in    std_logic;
+    sfp_los_i              : in    std_logic;
     -- GPIO for the board
     gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0);
     gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0) := (others => 'Z');
@@ -407,40 +412,38 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- required slaves
-  constant c_dev_slaves          : natural := 31;
+  constant c_dev_slaves          : natural := 29;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
-  constant c_devs_mbox           : natural := 2;
-  constant c_devs_flash          : natural := 3;
-  constant c_devs_reset          : natural := 4;
-  constant c_devs_wrc            : natural := 5;
-  constant c_devs_ebm            : natural := 6;
-  constant c_devs_tlu            : natural := 7;
-  constant c_devs_eca_ctl        : natural := 8;
-  constant c_devs_eca_aq         : natural := 9;
-  constant c_devs_eca_tlu        : natural := 10;
-  constant c_devs_eca_wbm        : natural := 11;
-  constant c_devs_emb_cpu        : natural := 12;
-  constant c_devs_serdes_clk_gen : natural := 13;
-  constant c_devs_control        : natural := 14;
-  constant c_devs_ftm_cluster    : natural := 15;
+  constant c_devs_flash          : natural := 2;
+  constant c_devs_reset          : natural := 3;
+  constant c_devs_wrc            : natural := 4;
+  constant c_devs_ebm            : natural := 5;
+  constant c_devs_tlu            : natural := 6;
+  constant c_devs_eca_ctl        : natural := 7;
+  constant c_devs_eca_aq         : natural := 8;
+  constant c_devs_eca_tlu        : natural := 9;
+  constant c_devs_eca_wbm        : natural := 10;
+  constant c_devs_emb_cpu        : natural := 11;
+  constant c_devs_serdes_clk_gen : natural := 12;
+  constant c_devs_control        : natural := 13;
+  constant c_devs_ftm_cluster    : natural := 14;
   
   -- optional slaves:
-  constant c_devs_lcd            : natural := 16;
-  constant c_devs_oled           : natural := 17;
-  constant c_devs_scubus         : natural := 18;
-  constant c_devs_scubirq        : natural := 19;
-  constant c_devs_mil            : natural := 20;
-  constant c_devs_mil_ctrl       : natural := 21;
-  constant c_devs_ow             : natural := 22;
-  constant c_devs_ssd1325        : natural := 23;
-  constant c_devs_vme_info       : natural := 24;
-  constant c_devs_CfiPFlash      : natural := 25;
-  constant c_devs_nau8811        : natural := 26;
-  constant c_devs_psram          : natural := 27;
-  constant c_devs_DDR3_if1       : natural := 28;
-  constant c_devs_DDR3_if2       : natural := 29;
-  constant c_devs_DDR3_ctrl      : natural := 30;
+  constant c_devs_lcd            : natural := 15;
+  constant c_devs_oled           : natural := 16;
+  constant c_devs_scubirq        : natural := 17;
+  constant c_devs_mil            : natural := 18;
+  constant c_devs_mil_ctrl       : natural := 19;
+  constant c_devs_ow             : natural := 20;
+  constant c_devs_ssd1325        : natural := 21;
+  constant c_devs_vme_info       : natural := 22;
+  constant c_devs_CfiPFlash      : natural := 23;
+  constant c_devs_nau8811        : natural := 24;
+  constant c_devs_psram          : natural := 25;
+  constant c_devs_DDR3_if1       : natural := 26;
+  constant c_devs_DDR3_if2       : natural := 27;
+  constant c_devs_DDR3_ctrl      : natural := 28;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -449,7 +452,6 @@ architecture rtl of monster is
   constant c_dev_layout_req_slaves : t_sdb_record_array(c_dev_slaves-1 downto 0) :=
    (c_devs_build_id       => f_sdb_auto_device(c_build_id_sdb,                   true),
     c_devs_watchdog       => f_sdb_auto_device(c_watchdog_sdb,                   true),
-    c_devs_mbox           => f_sdb_auto_device(c_mbox_sdb,                       true),
     c_devs_flash          => f_sdb_auto_device(f_wb_spi_flash_sdb(g_flash_bits), true),
     c_devs_reset          => f_sdb_auto_device(c_arria_reset,                    true),
     c_devs_wrc            => f_sdb_auto_bridge(c_wrcore_bridge_sdb,              true),
@@ -465,7 +467,6 @@ architecture rtl of monster is
     c_devs_ftm_cluster    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
     c_devs_lcd            => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_devs_oled           => f_sdb_auto_device(c_oled_display,                   g_en_oled),
-    c_devs_scubus         => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
     c_devs_scubirq        => f_sdb_auto_device(c_scu_irq_ctrl_sdb,               g_en_scubus),
     c_devs_mil            => f_sdb_auto_device(c_xwb_gsi_mil_scu,                g_en_mil),
     c_devs_mil_ctrl       => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_mil),
@@ -493,13 +494,17 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- Only put a slave here if it has critical performance requirements!
-  constant c_top_slaves     : natural := 2;
+  constant c_top_slaves     : natural := 4;
   constant c_tops_eca_event : natural := 0;
-  constant c_tops_dev       : natural := 1;
+  constant c_tops_scubus    : natural := 1;
+  constant c_tops_mbox      : natural := 2;
+  constant c_tops_dev       : natural := 3;
   
   constant c_top_layout_req_slaves : t_sdb_record_array(c_top_slaves-1 downto 0) :=
    (c_tops_eca_event  => f_sdb_embed_device(c_eca_event_sdb, x"7FFFFFF0"), -- must be located at fixed address
-    c_tops_dev        => f_sdb_auto_bridge (c_dev_bridge_sdb));
+    c_tops_scubus     => f_sdb_auto_device(c_scu_bus_master,                 g_en_scubus),
+    c_tops_mbox       => f_sdb_auto_device(c_mbox_sdb,                       true),
+    c_tops_dev        => f_sdb_auto_bridge(c_dev_bridge_sdb));
   
   constant c_top_layout      : t_sdb_record_array := f_sdb_auto_layout(c_top_layout_req_masters, c_top_layout_req_slaves);
   constant c_top_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_top_layout_req_masters, c_top_layout_req_slaves);
@@ -517,7 +522,6 @@ architecture rtl of monster is
   -- Non-PLL reset stuff
   signal clk_free         : std_logic;
   signal rstn_free        : std_logic;
-  signal gxb_locked       : std_logic;
   signal pll_rst          : std_logic;
   
   -- Sys PLL from clk_125m_local_i
@@ -601,23 +605,36 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   -- White Rabbit signals ----------------------------------------------------------
   ----------------------------------------------------------------------------------
-  
+  constant g_pcs_16bit    : boolean := FALSE;
+
+  signal  phy8_o          : t_phy_8bits_to_wrc;
+  signal  phy8_i          : t_phy_8bits_from_wrc  := c_dummy_phy8_from_wrc;
+  signal  phy16_o         : t_phy_16bits_to_wrc;
+  signal  phy16_i         : t_phy_16bits_from_wrc := c_dummy_phy16_from_wrc;
+
+  signal s_link_ok        : std_logic;
+ 
   signal dac_hpll_load_p1 : std_logic;
   signal dac_dpll_load_p1 : std_logic;
   signal dac_hpll_data    : std_logic_vector(15 downto 0);
   signal dac_dpll_data    : std_logic_vector(15 downto 0);
   
-  signal phy_tx_data      : std_logic_vector(7 downto 0);
-  signal phy_tx_k         : std_logic;
+  signal phy_clk          : std_logic;
+
+  signal phy_ready       : std_logic;
+  signal phy_loopen       : std_logic;
+  signal phy_rst          : std_logic;
+
+  signal phy_tx_clk       : std_logic;
+  signal phy_tx_data      : std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
+  signal phy_tx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
   signal phy_tx_disparity : std_logic;
   signal phy_tx_enc_err   : std_logic;
-  signal phy_rx_data      : std_logic_vector(7 downto 0);
   signal phy_rx_rbclk     : std_logic;
-  signal phy_rx_k         : std_logic;
+  signal phy_rx_data      : std_logic_vector(f_pcs_data_width(g_pcs_16bit)-1 downto 0);
+  signal phy_rx_k         : std_logic_vector(f_pcs_k_width(g_pcs_16bit)-1 downto 0);
   signal phy_rx_enc_err   : std_logic;
-  signal phy_rx_bitslide  : std_logic_vector(3 downto 0);
-  signal phy_rst          : std_logic;
-  signal phy_loopen       : std_logic;
+  signal phy_rx_bitslide  : std_logic_vector(f_pcs_bts_width(g_pcs_16bit)-1 downto 0);
 
   signal link_act : std_logic;
   signal link_up  : std_logic;
@@ -635,6 +652,7 @@ architecture rtl of monster is
   
   signal sfp_scl_o : std_logic;
   signal sfp_sda_o : std_logic;
+  signal s_records_for_phy : boolean := FALSE;
   
   constant c_loc_linux        : natural := 0;
   constant c_loc_wb_master    : natural := 1;
@@ -787,7 +805,7 @@ begin
       pll_lock_i(0) => dmtd_locked,
       pll_lock_i(1) => ref_locked,
       pll_lock_i(2) => sys_locked,
-      pll_lock_i(3) => gxb_locked,
+      pll_lock_i(3) => '1',
       pll_arst_o    => pll_rst,
       clocks_i(0)   => clk_free,
       clocks_i(1)   => clk_sys,
@@ -1303,44 +1321,64 @@ begin
   ----------------------------------------------------------------------------------
   -- White Rabbit ------------------------------------------------------------------
   ----------------------------------------------------------------------------------
-  
+ 
   U_WR_CORE : xwr_core
+   
     generic map (
       g_simulation                => 0,
-      g_phys_uart                 => true,
-      g_virtual_uart              => true,
-      g_with_external_clock_input => true,
-      g_aux_clks                  => 1,
+      g_with_external_clock_input => FALSE,
+      g_phys_uart                 => TRUE,
+      g_virtual_uart              => TRUE,
+      g_aux_clks                  => 0,
       g_ep_rxbuf_size             => 1024,
+      g_tx_runt_padding           => TRUE,
+      g_records_for_phy           => FALSE,
+      g_pcs_16bit                 => FALSE,
       g_dpram_initf               => "../../../ip_cores/wrpc-sw/wrc.mif",
       g_dpram_size                => 131072/4,
       g_interface_mode            => PIPELINED,
       g_address_granularity       => BYTE,
-      g_aux_sdb                   => c_etherbone_sdb)
+      g_aux_sdb                   => c_etherbone_sdb,
+      g_softpll_enable_debugger   => FALSE)
+
     port map (
       clk_sys_i            => clk_sys,
       clk_dmtd_i           => clk_dmtd,
       clk_ref_i            => clk_ref,
       clk_aux_i            => (others => '0'),
-      clk_ext_i            => wr_ext_clk_i,
+      --clk_ext_i            => wr_ext_clk_i,
+      --clk_ext_mul_i        => clk_ext_mul_i,
+      --clk_ext_mul_locked_i => clk_ext_mul_locked_i,
+      --clk_ext_stopped_i    => '0,
+      --clk_ext_rst_o        => open,
       pps_ext_i            => wr_ext_pps_i,
       rst_n_i              => rstn_sys,
       dac_hpll_load_p1_o   => dac_hpll_load_p1,
       dac_hpll_data_o      => dac_hpll_data,
       dac_dpll_load_p1_o   => dac_dpll_load_p1,
       dac_dpll_data_o      => dac_dpll_data,
+      phy_rdy_i            => '1',
+      phy_loopen_vec_o     => open,
+      phy_tx_prbs_sel_o    => open,
+      phy_sfp_tx_fault_i   => '0',
+      phy_sfp_los_i        => '0',
+      phy_sfp_tx_disable_o => open,
       phy_ref_clk_i        => clk_ref,
       phy_tx_data_o        => phy_tx_data,
-      phy_tx_k_o(0)        => phy_tx_k,
+      phy_tx_k_o           => phy_tx_k,
       phy_tx_disparity_i   => phy_tx_disparity,
       phy_tx_enc_err_i     => phy_tx_enc_err,
       phy_rx_data_i        => phy_rx_data,
       phy_rx_rbclk_i       => phy_rx_rbclk,
-      phy_rx_k_i(0)        => phy_rx_k,
+      phy_rx_k_i           => phy_rx_k,
       phy_rx_enc_err_i     => phy_rx_enc_err,
       phy_rx_bitslide_i    => phy_rx_bitslide,
       phy_rst_o            => phy_rst,
       phy_loopen_o         => phy_loopen,
+      phy8_o               => phy8_i,
+      phy8_i               => phy8_o,
+      phy16_o              => phy16_i,
+      phy16_i              => phy16_o,
       led_act_o            => link_act,
       led_link_o           => link_up,
       scl_o                => open, -- Our ROM is on onewire, not i2c
@@ -1377,9 +1415,9 @@ begin
       tm_tai_o             => tm_tai,
       tm_cycles_o          => tm_cycles,
       pps_p_o              => pps,
-      dio_o                => open,
+      --dio_o                => open,
       rst_aux_n_o          => open,
-      link_ok_o            => open);
+      link_ok_o            => s_link_ok);
   
   U_DAC_ARB : spec_serial_dac_arb
     generic map (
@@ -1406,17 +1444,17 @@ begin
         clk_cru_i      => core_clk_125m_sfpref_i,
         clk_free_i     => clk_free,
         rst_i          => pll_rst,
-        locked_o       => gxb_locked,
+        locked_o       => phy_ready,
         loopen_i       => phy_loopen,
         drop_link_i    => phy_rst,
         tx_clk_i       => clk_ref,
         tx_data_i      => phy_tx_data,
-        tx_k_i         => phy_tx_k,
+        tx_k_i         => phy_tx_k(0),
         tx_disparity_o => phy_tx_disparity,
         tx_enc_err_o   => phy_tx_enc_err,
         rx_rbclk_o     => phy_rx_rbclk,
         rx_data_o      => phy_rx_data,
-        rx_k_o         => phy_rx_k,
+        rx_k_o         => phy_rx_k(0),
         rx_enc_err_o   => phy_rx_enc_err,
         rx_bitslide_o  => phy_rx_bitslide,
         pad_txp_o      => wr_sfp_tx_o,
@@ -1425,13 +1463,15 @@ begin
   
   phy_a5 : if c_is_arria5 generate
     phy : wr_arria5_phy
+      generic map (
+        g_pcs_16bit => g_pcs_16bit)
       port map (
         clk_reconf_i   => clk_reconf,
-        clk_phy_i      => core_clk_125m_sfpref_i,
-        locked_o       => gxb_locked,
+        clk_phy_i      => phy_clk,
+        ready_o        => phy_ready,
         loopen_i       => phy_loopen,
         drop_link_i    => phy_rst,
-        tx_clk_i       => clk_ref,
+        tx_clk_o       => phy_tx_clk,
         tx_data_i      => phy_tx_data,
         tx_k_i         => phy_tx_k,
         tx_disparity_o => phy_tx_disparity,
@@ -1442,9 +1482,13 @@ begin
         rx_enc_err_o   => phy_rx_enc_err,
         rx_bitslide_o  => phy_rx_bitslide,
         pad_txp_o      => wr_sfp_tx_o,
-        pad_rxp_i      => wr_sfp_rx_i);    
-  end generate;
-  
+        pad_rxp_i      => wr_sfp_rx_i);
+  end generate phy_a5;
+
+  phy_clk <= core_clk_125m_sfpref_i;
+  phy16_o <= c_dummy_phy16_to_wrc;
+  phy8_o <= c_dummy_phy8_to_wrc;
+
   pps_ext : gc_extend_pulse
     generic map(
       g_width => 10000000)
@@ -1488,10 +1532,10 @@ begin
     port map(
       clk_i        => clk_sys,
       rst_n_i      => rstn_sys,
-      bus_slave_i  => dev_bus_master_o(c_devs_mbox),
-      bus_slave_o  => dev_bus_master_i(c_devs_mbox),
-      msi_master_o => dev_msi_slave_i (c_devs_mbox),
-      msi_master_i => dev_msi_slave_o (c_devs_mbox));
+      bus_slave_i  => top_bus_master_o(c_tops_mbox),
+      bus_slave_o  => top_bus_master_i(c_tops_mbox),
+      msi_master_o => top_msi_slave_i (c_tops_mbox),
+      msi_master_i => top_msi_slave_o (c_tops_mbox));
   
   flash_a2 : if c_is_arria2 generate
     flash : flash_top
@@ -1973,7 +2017,7 @@ begin
   end generate;
   
   scub_n : if not g_en_scubus generate
-    dev_bus_master_i(c_devs_scubus)  <= cc_dummy_slave_out;
+    top_bus_master_i(c_tops_scubus)  <= cc_dummy_slave_out;
     dev_bus_master_i(c_devs_scubirq) <= cc_dummy_slave_out;
     dev_msi_slave_i (c_devs_scubirq) <= cc_dummy_master_out;
     scubus_a_d <= (others => 'Z');
@@ -1996,8 +2040,8 @@ begin
         irq_master_i       => dev_msi_slave_o (c_devs_scubirq),
         ctrl_irq_o         => dev_bus_master_i(c_devs_scubirq),
         ctrl_irq_i         => dev_bus_master_o(c_devs_scubirq),
-        scu_slave_o        => dev_bus_master_i(c_devs_scubus),
-        scu_slave_i        => dev_bus_master_o(c_devs_scubus),
+        scu_slave_o        => top_bus_master_i(c_tops_scubus),
+        scu_slave_i        => top_bus_master_o(c_tops_scubus),
         scub_data          => scubus_a_d,
         nscub_ds           => scubus_a_nds,
         nscub_dtack        => scubus_a_ndtack,
