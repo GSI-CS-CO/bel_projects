@@ -26,22 +26,24 @@
 
 #define LM32_NULL_PTR           0x0
 
+#define _THR_QTY_ 8
+
 //////////////////////////////////////////////////////////////////////
 //"struct" types                                                    //
 //////////////////////////////////////////////////////////////////////
 
 //Thread Control bits
 #define T_TC_START              (0)                     //WR Host, RW LM32
-#define T_TC_STOP               (TC_START + _32b_SIZE_) //WR Host, RW LM32
-#define T_TC_GET                (TC_STOP  + _32b_SIZE_) //RD Host, WR LM32
-#define _T_TC_SIZE_             (TC_GET   + _32b_SIZE_) 
+#define T_TC_STOP               (T_TC_START + _32b_SIZE_) //WR Host, RW LM32
+#define T_TC_GET                (T_TC_STOP  + _32b_SIZE_) //RD Host, WR LM32
+#define _T_TC_SIZE_             (T_TC_GET   + _32b_SIZE_) 
 
 //Thread Data
 #define T_TD_FLAGS              (0)                           //RD Host, RW LM32
 #define T_TD_NODE_PTR           (T_TD_FLAGS     + _32b_SIZE_) //RD Host, RW LM32
 #define T_TD_DEADLINE           (T_TD_NODE_PTR  + _PTR_SIZE_) //RD Host, RW LM32
 #define T_TD_CURRTIME           (T_TD_DEADLINE  + _TS_SIZE_)  //RD Host, RW LM32
-#define T_TD_PREPTIME           (TD_DEADLINE    + _TS_SIZE_)  //RD Host, RW LM32
+#define T_TD_PREPTIME           (T_TD_DEADLINE    + _TS_SIZE_)  //RD Host, RW LM32
 #define _T_TD_SIZE_             (T_TD_PREPTIME  + _TS_SIZE_)
 
 //Thread Starter Stage
@@ -87,6 +89,7 @@
 #define SHCTL_THR_STA    (SHCTL_THR_CTL      + _T_TC_SIZE_  ) //Thread Start Staging Area (1 per Thread )
 #define SHCTL_THR_DAT    (SHCTL_THR_STA      + _THR_QTY_ * _T_TS_SIZE_  ) //Thread Runtime Data (1 per Thread )
 #define SHCTL_INBOXES    (SHCTL_THR_DAT      + _THR_QTY_ * _T_TD_SIZE_  ) //Inboxes for MSI (1 per Core in System )
+#define _SHCTL_END_      (SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_) 
 //////////////////////////////////////////////////////////////////////
 
 

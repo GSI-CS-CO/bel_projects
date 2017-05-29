@@ -14,6 +14,8 @@
 #include "memunit.h"
 #include <etherbone.h>
 
+#include "ftm_shared_mmap.h"
+
 using namespace etherbone;
 
 int ftmRamWrite(Device& dev, vAdr va, vBuf& vb)
@@ -62,9 +64,49 @@ vBuf ftmRamRead(Device& dev, vAdr va)
   return ret;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
 
-  const uint32_t cpuIdx = 3;
+  bool doUpload = false;
+  int opt;
+  const char* program = argv[0];
+// start getopt 
+   while ((opt = getopt(argc, argv, "w")) != -1) {
+      switch (opt) {
+         case 'w':
+            doUpload = true;
+            break;
+        /*    
+         case 'v':
+            verbose = 1;
+            break;
+         case 't':
+            show_time = 1;
+            break;
+         case 'c':
+            cpuId = strtol(optarg, &value_end, 0);
+            if (*value_end || cpuId < -1 ||cpuId > 32) {
+              fprintf(stderr, "%s: invalid cpu id -- '%s'\n", program, optarg);
+              error = 1;
+            }
+            break;
+         case 'h':
+            help();
+            return 0;
+         */   
+         case ':':
+         
+         case '?':
+            //error = 1;
+            break;
+            
+         default:
+            fprintf(stderr, "%s: bad getopt result\n", program);
+            return 1;
+      }
+   }
+
+
+  const uint32_t cpuIdx = 0;
 
   std::vector<struct sdb_device> myDevs;
   //const std::string netaddress = "dev/ttyUSB0"; 
@@ -135,66 +177,73 @@ int main() {
   std::cout << "Found " << myDevs.size() << " User-RAMs, cpu #" << cpuIdx << " is a valid choice " << std::endl;
   //create memory manager
   std::cout << "Creating Memory Unit #" << cpuIdx << "..." << std::endl;
-  MemUnit mmu = MemUnit(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, 0x1000000, 0x500, 8192, g);
+  MemUnit mmu = MemUnit(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR,  SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_, g);
+  
   uint32_t ban;
   mmu.acquireChunk(ban);
   mmu.acquireChunk(ban);
   mmu.acquireChunk(ban);
 
   //analyse and serialise
-  
+  std::cout << "Parsing local file try.dot ..." << std::endl;  
+
   mmu.prepareUpload(); 
-  /*
-  //show structure
-  for (auto& it : mmu.getAllChunks()) {
-    std::cout << "E@: 0x" << std::hex << mmu.adr2extAdr(it->adr) << " #: 0x" << it->hash << " -> Name: " << mmu.hash2name(it->hash) << std::endl;
-    hexDump("", it->b, _MEM_BLOCK_SIZE);
+
+  std::cout << "... Done. " << std::endl;
+
+  if(doUpload) {
+    //show results
+    std::cout << "Generating Binary Data ... " << std::endl;
+    vBuf vUlD = mmu.getUploadData();
+    vAdr vUlA   = mmu.getUploadAdrs(); 
+    
+    //for (auto& it : vUlA) { std::cout << "WR @: 0x" << std::hex << it << std::endl;}
+
+    //vHexDump("EB to Transfer", vUlD, vUlD.size()); 
+    std::cout << "... Done. " << std::endl << " Uploading ... ";
+    //Upload
+    ftmRamWrite(ebd, vUlA, vUlD);
+   
+    std::cout << "...Done. " << std::endl << "To make LM32 start, write Node Adr to 0x" << std::hex << myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + T_TD_NODE_PTR << " then write 1 to 0x" << myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_CTL + T_TC_START << std::endl;
+
+  } else {
+    //Download Readback
+
+    vAdr vDlBmpA = mmu.getDownloadBMPAdrs();
+
+    //for (auto& it : vDlBmpA) { std::cout << "RD BMP @: 0x" << std::hex << it << std::endl;}
+
+    vBuf vBmp = ftmRamRead(ebd, vDlBmpA);
+    mmu.setDownloadBmp(vBmp);
+    
+
+    vAdr vDlA = mmu.getDownloadAdrs();
+    std::cout << "Got " << std::dec << vDlA.size() << " bytes, " << vDlA.size() / (_MEM_BLOCK_SIZE / 4 )<< " Nodes " << std::endl;
+    //for (auto& it : vDlA) { std::cout << "RD @: 0x" << std::hex << it << std::endl;}
+    vBuf vDlD = ftmRamRead(ebd, vDlA);
+
+    std::cout << "Download complete. Parsing...";
+    
+    /*
+    //Verify
+    if(vDlD == vUlD) std::cout << "Up and Download are equal" << std::endl;
+    else {std::cerr << "Verify Failed" << std::endl; }//vHexDump("Verify Failed", vDlD, vDlD.size()); }
+    */
+    mmu.parseDownloadData(vDlD);
+
+    std::cout << "... Done. " << std::endl << "Writing out ...";
+
+    std::ofstream out("./download.dot"); 
+    boost::default_writer dw;
+
+    
+
+    boost::write_graphviz(out, mmu.getDownGraph(), make_vertex_writer(boost::get(&myVertex::np, mmu.getDownGraph())), make_edge_writer(boost::get(&myEdge::type, mmu.getDownGraph())), sample_graph_writer{"Demo"}, boost::get(&myVertex::name, mmu.getDownGraph()));
+
+    std::cout << "... Done. " << std::endl;
   }
-  */
-
-  //show results
-  
-  vBuf vUlD = mmu.getUploadData();
-  vAdr vUlA   = mmu.getUploadAdrs(); 
-  
-  //for (auto& it : vUlA) { std::cout << "WR @: 0x" << std::hex << it << std::endl;}
-
-  //vHexDump("EB to Transfer", vUlD, vUlD.size()); 
-
-  //Upload
-  ftmRamWrite(ebd, vUlA, vUlD);
- 
-
-  //Download Readback
-  vAdr vDlBmpA = mmu.getDownloadBMPAdrs();
-
-  //for (auto& it : vDlBmpA) { std::cout << "RD BMP @: 0x" << std::hex << it << std::endl;}
-
-  vBuf vBmp = ftmRamRead(ebd, vDlBmpA);
-  mmu.setDownloadBmp(vBmp);
-  
-
-  vAdr vDlA = mmu.getDownloadAdrs();
-  std::cout << "Got " << std::dec << vDlA.size() << " bytes, " << vDlA.size() / (_MEM_BLOCK_SIZE / 4 )<< " Nodes " << std::endl;
-  //for (auto& it : vDlA) { std::cout << "RD @: 0x" << std::hex << it << std::endl;}
-  vBuf vDlD = ftmRamRead(ebd, vDlA);
-
-  
   ebd.close();
   ebs.close();
-  /*
-  //Verify
-  if(vDlD == vUlD) std::cout << "Up and Download are equal" << std::endl;
-  else {std::cerr << "Verify Failed" << std::endl; }//vHexDump("Verify Failed", vDlD, vDlD.size()); }
-  */
-  mmu.parseDownloadData(vDlD);
-
-  std::ofstream out("./download.dot"); 
-  boost::default_writer dw;
-
-  
-
-  boost::write_graphviz(out, mmu.getDownGraph(), make_vertex_writer(boost::get(&myVertex::np, mmu.getDownGraph())), dw, sample_graph_writer{"Demo"}, boost::get(&myVertex::name, mmu.getDownGraph()));
 
   return 0;
 }

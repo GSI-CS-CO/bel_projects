@@ -5,14 +5,16 @@
 #include "mprintf.h"
 #include "mini_sdb.h"
 #include "irq.h"
-#include "ftm.h"
 #include "ebm.h"
 #include "aux.h"
 #include "dbg.h"
+#include "../ftm_common.h"
  
 unsigned int cpuId, cpuQty, heapCap;
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED dummy = 0;
+extern uint32_t*       _startshared[];
+extern uint32_t*       _endshared[];
 
 
 static uint32_t getNextThreadIdx() {
@@ -61,14 +63,13 @@ void init()
 { 
    discoverPeriphery();
    uart_init_hw();
-   cmdCnt = 0;
    cpuId = getCpuIdx();
-   ftmInit();
+   //ftmInit();
 
    if (cpuId == 0) {
 
      ebmInit();
-     prioQueueInit();
+     //prioQueueInit();
      mprintf("#%02u: Got IP from WRC. Configured EBM and PQ\n", cpuId); 
    }
    
@@ -79,44 +80,23 @@ void init()
 }
 
 
+void paintPath(uint32_t* node) {
+  mprintf("#%02u: Received 0x%08x\n", cpuId, (uint32_t)node);
+  mprintf("#%02u: @ 0x%08x FL 0x%08x # 0x%08x DD 0x%08x \n", cpuId, (uint32_t)(uint32_t*)&node[NODE_HASH >> 2], node[NODE_FLAGS >> 2], node[NODE_HASH >> 2], node[NODE_DEF_DEST_PTR >> 2]);
+  if(!(node[NODE_FLAGS >> 2] & NFLG_PAINT_LM32_SMSK)) {
+    node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK;
+    mprintf("#%02u: Painted 0x%08x\n", cpuId, node[NODE_HASH >> 2]);
+    if ((uint32_t*)node[NODE_DEF_DEST_PTR >> 2] != NULL) paintPath((uint32_t*)node[NODE_DEF_DEST_PTR >> 2]);
+  }
+}
 
-
-int insertFpqEntry()
-{
-   //test function for prio queue
-   
-   static unsigned int run = 0;
-   int ret = 0;
-   unsigned int diff;
-   unsigned long long stime;
-   
-   const unsigned long long ct_trn = 200000 /8; // 200 us in 8ns steps
-   const unsigned long long ct_sec = 1000000000 /8; // 1s
-
-   const unsigned int c_period = 375000000/1;
-      
-   stime = getSysTime() + ct_sec + ct_trn - ((run++)); //+ (1 + ((run>>5)*5))*ct_sec ;
-   
-  atomic_on();
-  *pFpqData = (unsigned int)(stime>>32);
-  *pFpqData = (unsigned int)(stime);
-  *pFpqData = 0xDEADBEEF;
-  *pFpqData = 0xCAFEBABE;
-  *pFpqData = 0x11111111;
-  *pFpqData = 0x22222222;
-  *pFpqData = 0x33333333;
-  *pFpqData = run;
-  atomic_off(); 
-  
-    
-    return ret;
- }
 
 void main(void) {
    
-   int j;
+   int i,j;
+
    uint32_t   *lbtIdx, *lbtPtr, *tcGet;
-   uint32_t   thrIdx, lbtBmp, idx;
+   uint32_t   start;
     
    uint32_t** test; 
 
@@ -139,49 +119,28 @@ void main(void) {
       mprintf("#%02u: Priority Queue Debugmode ON, timestamps will be written to 0x%08x on receivers", cpuId, DEBUGPRIOQDST);
    #endif
    //mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
-   
+   mprintf("#%02u: This Graph Test v 0.1 \n", cpuId);
 
    atomic_off();
-   if (getMsiBoxCpuSlot(cpuId, 0) == -1) {mprintf("#%02u: Mail box slot acquisition failed\n");}
+   if (getMsiBoxCpuSlot(cpuId, 0) == -1) {mprintf("#%02u: Mail box slot acquisition failed\n", cpuId);}
   
+   uint32_t *p  = (uint32_t*)_startshared; 
    
    while (1) {
-      cmdEval();
-      
-      thrIdx    = getNextThreadIdx();
-      idx       = -1;
-      tcGet     = (uint32_t*)&p[(SHCTL_THR_CTL + TC_GET) >>2];
-      lbtBmp    = (uint32_t)&p[(SHCTL_LBTAB + LBT_BMP) >> 2];
-      lbtIdx    = (uint32_t*)&p[(SHCTL_THR_DAT + thrIdx * _TDS_SIZE_ + TD_LBT_IDX) >>2];
-      pCurrent  = (t_ftmChain**)&p[(SHCTL_THR_DAT + thrIdx * _TDS_SIZE_ + TD_LB_PTR) >>2];
-      
-
-     
-      //run
-      if ( (*tcGet >> thrIdx) & 1) {
-          if (*pCurrent != NULL) idx = processChain(pCurrent);
-          else                   idx = *lbtIdx; 
-
-          if (idx != -1) {
-            //successor block ?
-            if((lbtBmp >> idx) & 1) {
-              //if not -1, this calls a new block. Assign idx return value to lbtIdx of this thread
-              *lbtIdx = idx;
-              //Assign value of LB_PTR of table entry at *lbtIdx to referenced ptr  
-              *pCurrent = (t_ftmChain*)p[(SHCTL_LBTAB + LBT_TAB + *lbtIdx * _LB_SIZE_ + LB_PTR)>>2];
-            } else {
-              //No ptr at this entry.   
-              *pCurrent = NULL;
-              //deactivate thread
-              *tcGet = *tcGet & ~(1 << thrIdx);
-            }
-          }
-
-
+    uint32_t* start = p + (( SHCTL_THR_CTL + T_TC_START )>> 2);
+    for(i=0;i<8;i++) {
+      if (*start & 1<<i) {
+        //mprintf("#%02u: Start Thr #%u\n", cpuId, i);
+        //mprintf("#%02u: Looking at Node Ptr @ 0x%08x\n", cpuId, (uint32_t)(uint32_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TD_NODE_PTR )>> 2] );
+        uint32_t* np = p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TD_NODE_PTR )>> 2);
+        mprintf("#%02u: Node Ptr is 0x%08x\n", cpuId, *np);
+        *start &= ~(1<<i);
+        paintPath((uint32_t*)*np);
+        mprintf("#%02u: Done painting\n", cpuId);
       }
-
       
-     
+    } 
+    for (j = 0; j < ((125000000/2)); ++j) { asm("nop"); }
    }
 
 

@@ -135,7 +135,7 @@ extern uint32_t * pEcaAdr;
 extern uint32_t * pEbmAdr;
 extern uint32_t * pFPQctrl;
 
-
+/*
 inline uint16_t getIdFID(uint64_t id)     {return ((uint16_t)(id >> ID_FID_POS))     & (ID_MSK_B16 >> (16 - ID_FID_LEN));}
 inline uint16_t getIdGID(uint64_t id)     {return ((uint16_t)(id >> ID_GID_POS))     & (ID_MSK_B16 >> (16 - ID_GID_LEN));}
 inline uint16_t getIdEVTNO(uint64_t id)   {return ((uint16_t)(id >> ID_EVTNO_POS))   & (ID_MSK_B16 >> (16 - ID_EVTNO_LEN));}
@@ -143,6 +143,7 @@ inline uint16_t getIdSID(uint64_t id)     {return ((uint16_t)(id >> ID_SID_POS))
 inline uint16_t getIdBPID(uint64_t id)    {return ((uint16_t)(id >> ID_BPID_POS))    & (ID_MSK_B16 >> (16 - ID_BPID_LEN));}
 inline uint16_t getIdSCTR(uint64_t id)    {return ((uint16_t)(id >> ID_SCTR_POS))    & (ID_MSK_B16 >> (16 - ID_SCTR_LEN));}
 inline void incIdSCTR(uint64_t* id, volatile uint16_t* sctr)   {*id = ( *id & 0xfffffffffffffc00) | *sctr; *sctr = (*sctr+1) & ~0xfc00; DBPRINT3("id: %x sctr: %x\n", *id, *sctr);}
+*/
 inline uint32_t hiW(uint64_t dword) {return (uint32_t)(dword >> 32);}
 inline uint32_t loW(uint64_t dword) {return (uint32_t)dword;}
 

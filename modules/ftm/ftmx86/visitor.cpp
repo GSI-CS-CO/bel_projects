@@ -32,7 +32,7 @@ void VisitorVertexWriter::commandString(const Command& el) const {
 }
 
 void VisitorVertexWriter::visit(const Block& el) const  { 
-  out << " [shape=\"rectangle\"";
+  out << " [type=\"Block\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
   else out << ", fillcolor=\"grey\"";
   out << ", t_Period=" << el.getTPeriod();
@@ -51,7 +51,7 @@ void VisitorVertexWriter::visit(const TimingMsg& el) const {
 
 void VisitorVertexWriter::visit(const Noop& el) const { 
   eventString((Event&)el);
-  out << ", type=\"Noop\", color=\"green\"";
+  out << ", type=\"Noop\", color=\"yellow\"";
   commandString((Command&) el);
   out << ", qty=" << el.getQty();
   out << "]";
@@ -76,31 +76,31 @@ void VisitorVertexWriter::visit(const Flush& el) const {
 void VisitorVertexWriter::visit(const Wait& el) const {
   out << " [shape=\"oval\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
-  else out << ", fillcolor=\"grey\"";
+  else out << ", fillcolor=\"white\"";
   out << ", style=dashed, flags=" << el.getFlags();
   out << "]";
 }
 
 void VisitorVertexWriter::visit(const CmdQMeta& el) const {
-  out << " [shape=\"oval\"";
+  out << " [type=\"QInfo\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
-  else out << ", fillcolor=\"grey\"";
+  else out << ", fillcolor=\"white\"";
   out << ", style=dashed, flags=" << el.getFlags();
   out << "]";
 }
 
 void VisitorVertexWriter::visit(const CmdQBuffer& el) const {
-  out << " [shape=\"oval\"";
+  out << " [type=\"QBuf\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
-  else out << ", fillcolor=\"grey\"";
+  else out << ", fillcolor=\"white\"";
   out << ", style=dashed, flags=" << el.getFlags();
   out << "]";
 }
 
 void VisitorVertexWriter::visit(const DestList& el) const {
-  out << " [shape=\"oval\"";
+  out << " [type=\"ListDst\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
-  else out << ", fillcolor=\"grey\"";
+  else out << ", fillcolor=\"white\"";
   out << ", style=dashed, flags=" << el.getFlags();
   out << "]";
 }
@@ -395,7 +395,9 @@ void VisitorNodeDownloadCrawler::visit(const DestList& el) const {
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(v,g);
  
-    std::cout << g[v].name << ": " << std::endl;
+    auto* x = mmu.lookupName(g[v].name);
+    if (x != NULL) std::cout << g[v].name << ": 0x" << std::hex << mmu.adr2intAdr(x->adr) << std::endl;
+    
 
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
     {   

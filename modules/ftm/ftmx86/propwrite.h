@@ -26,8 +26,8 @@
   struct sample_graph_writer {
     const std::string& sroot;
     void operator()(std::ostream& out) const {
-      out << "graph [root=" << sroot << ", rankdir=LR, nodesep=0.6, mindist=1.0, ranksep=1.0, overlap=false]" << std::endl;
-      out << "node [shape=\"rectangle\"]" << std::endl;
+      out << "graph [root=\"" << sroot << "\", rankdir=LR, nodesep=0.6, mindist=1.0, ranksep=1.0, overlap=false]" << std::endl;
+      out << "node [shape=\"rectangle\", style=\"filled\"]" << std::endl;
       //out << "node [shape=circle color=white]" << std::endl;
       //out << "edge [style=dashed]" << std::endl;
     }
@@ -88,33 +88,27 @@ template <class Name>
 
 
 
-  template <class pMap, class cMap>
+  template <class typeMap>
   class edge_writer {
   public:
-    edge_writer(pMap p, cMap c) : p(p), c(c) {}
+    edge_writer(typeMap type) : type(type) {}
     template <class Edge>
     void operator()(std::ostream& out, const Edge& v) const {
-      out <<  "[label=\"";
-      uint64_t pT, cT;
-
-      pT = (uint64_t)(p[v]());
-      cT = (uint64_t)(c[v]());
-
-      if ((pT != -1)  & (cT == -1) ) {out << pT << "\", style=\"solid\"";}// block -> block
-      else if ((pT != -1)  & (cT != -1) ) {out << cT << "\", style=\"dashed\"";}// block -> Evt
-      else if ((pT == -1)  & (cT == -1) ) {out << "cmd\", style=\"dotted\"";}// (evt)Cmd -> Block
-      else out << "\"";
-      out <<  "]";   
+      out <<  "[type=\"" << type[v] << "\", color=\""; 
+      if      (type[v] == sDD) out << "red";
+      else if (type[v] == sAD) out << "black";
+      else if (type[v] == sTG) out << "blue";
+      else out << "grey";
+      out <<  "\"]";   
     }
   private:
-    pMap p;
-    cMap c;
+    typeMap type;
   };
 
-  template <class pMap, class cMap>
-  inline edge_writer<pMap, cMap> 
-  make_edge_writer(pMap p, cMap c) {
-    return edge_writer<pMap, cMap>(p, c);
+  template <class typeMap>
+  inline edge_writer<typeMap> 
+  make_edge_writer(typeMap type) {
+    return edge_writer<typeMap>(type);
   }
 /*
   template <class typeMap, class nameMap, >

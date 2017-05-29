@@ -282,17 +282,17 @@
 
       //TODO this should be a factory, yet the variadic part is complex ... any ideas?
       cmp = gUp[v].type;
-      if      (cmp == "tmsg")     {gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, x->hash, x->b, gUp[v].flags,  gUp[v].tOffs, gUp[v].id, gUp[v].par, gUp[v].tef, gUp[v].res); }
-      else if (cmp == "noop")     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, x->hash, x->b, gUp[v].flags,  gUp[v].tOffs, gUp[v].tValid, gUp[v].qty); }
-      else if (cmp == "flow")     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, x->hash, x->b, gUp[v].flags,  gUp[v].tOffs, gUp[v].tValid, gUp[v].qty); }
-      else if (cmp == "flush")    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, x->hash, x->b, gUp[v].flags, gUp[v].tOffs, gUp[v].tValid, 
+      if      (cmp == "tmsg")     {gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].id, gUp[v].par, gUp[v].tef, gUp[v].res); }
+      else if (cmp == "noop")     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].qty); }
+      else if (cmp == "flow")     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].qty); }
+      else if (cmp == "flush")    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, x->hash, x->b, 0, gUp[v].tOffs, gUp[v].tValid, 
                                                                          gUp[v].qIl,                gUp[v].qHi,                gUp[v].qLo, 
                                                                          gUp[v].frmIl, gUp[v].toIl, gUp[v].frmHi, gUp[v].toHi, gUp[v].frmLo, gUp[v].toLo ); }
-      else if (cmp == "wait")     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, x->hash, x->b, gUp[v].flags,  gUp[v].tOffs, gUp[v].tValid, gUp[v].tWait); }
-      else if (cmp == "block")    {gUp[v].np = (node_ptr) new      Block(gUp[v].name, x->hash, x->b, gUp[v].flags, gUp[v].tPeriod ); }
-      else if (cmp == "qinfo")    {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, x->hash, x->b, gUp[v].flags);}
-      else if (cmp == "listdst")  {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, x->hash, x->b, gUp[v].flags);}
-      else if (cmp == "qbuf")     {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, x->hash, x->b, gUp[v].flags);}
+      else if (cmp == "wait")     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].tWait); }
+      else if (cmp == "block")    {gUp[v].np = (node_ptr) new      Block(gUp[v].name, x->hash, x->b, 0, gUp[v].tPeriod ); }
+      else if (cmp == "qinfo")    {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, x->hash, x->b, 0);}
+      else if (cmp == "listdst")  {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, x->hash, x->b, 0);}
+      else if (cmp == "qbuf")     {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, x->hash, x->b, 0);}
       else if (cmp == "meta")     {std::cerr << "not yet implemented " << gUp[v].type << std::endl;}
       else                        {std::cerr << "Node type" << cmp << " not supported! " << std::endl;} 
     }
