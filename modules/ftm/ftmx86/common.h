@@ -43,7 +43,11 @@ extern const std::string sDD;
 extern const std::string sAD;
 extern const std::string sTG;
 extern const std::string sFD;
-
+extern const std::string sDID;
+extern const std::string sDPAR0;
+extern const std::string sDPAR1;
+extern const std::string sDTEF;
+extern const std::string sDRES;
 
 class FnvHash
 {

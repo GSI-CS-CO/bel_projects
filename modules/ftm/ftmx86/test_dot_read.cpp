@@ -6,7 +6,7 @@
 #include <inttypes.h>
 #include <boost/graph/graphviz.hpp>
 
-#include "visitor.h"
+//#include "visitor.h"
 #include "common.h"
 #include "propwrite.h"
 
@@ -15,6 +15,9 @@
 #include <etherbone.h>
 
 #include "ftm_shared_mmap.h"
+
+
+
 
 using namespace etherbone;
 
@@ -69,44 +72,82 @@ int main(int argc, char* argv[]) {
   bool doUpload = false;
   int opt;
   const char* program = argv[0];
+  const char* netaddress, *localFilename;
+  int32_t tmp, error=0;
+  uint32_t cpuIdx = 0;
+
+  localFilename = NULL;
+
+
 // start getopt 
    while ((opt = getopt(argc, argv, "w")) != -1) {
       switch (opt) {
          case 'w':
             doUpload = true;
             break;
-        /*    
+            
          case 'v':
-            verbose = 1;
+            //verbose = 1;
             break;
          case 't':
-            show_time = 1;
+            //show_time = 1;
             break;
          case 'c':
-            cpuId = strtol(optarg, &value_end, 0);
-            if (*value_end || cpuId < -1 ||cpuId > 32) {
-              fprintf(stderr, "%s: invalid cpu id -- '%s'\n", program, optarg);
-              error = 1;
-            }
+            tmp = atol(optarg);
+            if (tmp < 0 || tmp > 8) {
+              std::cerr << program << ": invalid cpu id -- '" << optarg << "'" << std::endl;
+              error = -1;
+            } else {cpuIdx = (uint32_t)tmp;}
             break;
+         /*    
          case 'h':
             help();
             return 0;
-         */   
+         */ 
          case ':':
          
          case '?':
-            //error = 1;
+            error = -2;
             break;
             
          default:
-            fprintf(stderr, "%s: bad getopt result\n", program);
-            return 1;
+            std::cerr << program << ": bad getopt result" << std::endl; 
+            error = -3;
       }
    }
 
 
-  const uint32_t cpuIdx = 0;
+  if (error) return error;
+
+   if (optind >= argc) {
+   std::cerr << program << ": expecting one non-optional argument: <etherbone-device>" << std::endl;
+   //help();
+   return -4;
+   }
+   
+   // process command arguments
+   
+   netaddress = argv[optind];
+   if (optind+1 < argc) localFilename = argv[optind+1];
+
+   /*
+   if (optind+1 < argc)  command = argv[++optind];
+   else                 {command = "status"; cpuId = -1;}
+   if (!strcasecmp(command, "loadfw")) overrideFWcheck = 1;  
+   
+   if ( (!strcasecmp(command, "put")) || (!strcasecmp(command, "loadfw")))
+   {
+      if (optind+1 < argc) {
+         strncpy(filename, argv[optind+1], FILENAME_LEN);
+
+         readonly = 0;
+      } else {
+         fprintf(stderr, "%s: expecting one non-optional argument: <filename>\n", program);
+         return 1;
+      }
+   } 
+   */
+
 
   std::vector<struct sdb_device> myDevs;
   //const std::string netaddress = "dev/ttyUSB0"; 
@@ -116,6 +157,17 @@ int main(int argc, char* argv[]) {
   // Construct an empty graph and prepare the dynamic_property_maps.
   Graph g;
   boost::dynamic_properties dp(boost::ignore_other_properties);
+
+  ebs.open(0, EB_DATAX|EB_ADDRX);
+    ebd.open(ebs, netaddress, EB_DATAX|EB_ADDRX, 3);
+
+    ebd.sdb_find_by_identity(0x0000000000000651ULL,0x54111351, myDevs);
+    if (cpuIdx >= myDevs.size()) return -1;
+
+    std::cout << "Found " << myDevs.size() << " User-RAMs, cpu #" << cpuIdx << " is a valid choice " << std::endl;
+    //create memory manager
+    std::cout << "Creating Memory Unit #" << cpuIdx << "..." << std::endl;
+    MemUnit mmu = MemUnit(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR,  SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_, g);
 
 
   dp.property("type",  boost::get(&myEdge::type, g));
@@ -149,53 +201,51 @@ int main(int argc, char* argv[]) {
   dp.property("tWait",  boost::get(&myVertex::tWait, g));
 
  
-  std::ifstream in("./try.dot"); 
-  bool status = boost::read_graphviz(in,g,dp,"node_id");
-  boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
-  boost::tie(vi, vi_end) = vertices(g);
-  std::cout << "Size " << vi_end - vi << std::endl;
+  std::ifstream in(localFilename); 
+  if(localFilename == NULL || !(boost::read_graphviz(in,g,dp,"node_id"))) {
+    std::cerr << program << ": Could not open local file <" << localFilename << ">" << std::endl;
+     if(doUpload) {
+      ebd.close();
+      ebs.close();
+      return -5;
+    }
+  }  
+  else { 
+    boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
+    boost::tie(vi, vi_end) = vertices(g);
+    std::cout << "Size " << vi_end - vi << std::endl;
 
- 
-  //format all graph labels lowercase
-    BOOST_FOREACH( edge_t e, edges(g) ) {
-    std::transform(g[e].type.begin(), g[e].type.end(), g[e].type.begin(), ::tolower);
+   
+    //format all graph labels lowercase
+      BOOST_FOREACH( edge_t e, edges(g) ) {
+      std::transform(g[e].type.begin(), g[e].type.end(), g[e].type.begin(), ::tolower);
+    }
+
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      std::transform(g[v].type.begin(), g[v].type.end(), g[v].type.begin(), ::tolower);
+    }
+
+
+
+
+    
+    
+   
+
+    //analyse and serialise
+    std::cout << "Processing local file <" << localFilename << "> ..." << std::endl;  
+
+    mmu.prepareUpload(); 
+
+    std::cout << "... Done. " << std::endl;
+    
+    
   }
-
-  BOOST_FOREACH( vertex_t v, vertices(g) ) {
-    std::transform(g[v].type.begin(), g[v].type.end(), g[v].type.begin(), ::tolower);
-  }
-
-
-
-
-  ebs.open(0, EB_DATAX|EB_ADDRX);
-  ebd.open(ebs, "dev/ttyUSB0", EB_DATAX|EB_ADDRX, 3);
-
-  ebd.sdb_find_by_identity(0x0000000000000651ULL,0x54111351, myDevs);
-  if (cpuIdx >= myDevs.size()) return -1;
-
-  std::cout << "Found " << myDevs.size() << " User-RAMs, cpu #" << cpuIdx << " is a valid choice " << std::endl;
-  //create memory manager
-  std::cout << "Creating Memory Unit #" << cpuIdx << "..." << std::endl;
-  MemUnit mmu = MemUnit(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR,  SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_, g);
-  
-  uint32_t ban;
-  mmu.acquireChunk(ban);
-  mmu.acquireChunk(ban);
-  mmu.acquireChunk(ban);
-
-  //analyse and serialise
-  std::cout << "Parsing local file try.dot ..." << std::endl;  
-
-  mmu.prepareUpload(); 
-
-  std::cout << "... Done. " << std::endl;
-
   if(doUpload) {
     //show results
     std::cout << "Generating Binary Data ... " << std::endl;
     vBuf vUlD = mmu.getUploadData();
-    vAdr vUlA   = mmu.getUploadAdrs(); 
+    vAdr vUlA = mmu.getUploadAdrs(); 
     
     //for (auto& it : vUlA) { std::cout << "WR @: 0x" << std::hex << it << std::endl;}
 
@@ -218,11 +268,11 @@ int main(int argc, char* argv[]) {
     
 
     vAdr vDlA = mmu.getDownloadAdrs();
-    std::cout << "Got " << std::dec << vDlA.size() << " bytes, " << vDlA.size() / (_MEM_BLOCK_SIZE / 4 )<< " Nodes " << std::endl;
+   
     //for (auto& it : vDlA) { std::cout << "RD @: 0x" << std::hex << it << std::endl;}
     vBuf vDlD = ftmRamRead(ebd, vDlA);
-
-    std::cout << "Download complete. Parsing...";
+     std::cout << "Got " << std::dec << vDlA.size() << " bytes, " << vDlA.size() / (_MEM_BLOCK_SIZE / 4 )<< " Nodes " << std::endl;
+    std::cout << "Download complete." << std::endl << "Parsing...";
     
     /*
     //Verify
@@ -234,9 +284,7 @@ int main(int argc, char* argv[]) {
     std::cout << "... Done. " << std::endl << "Writing out ...";
 
     std::ofstream out("./download.dot"); 
-    boost::default_writer dw;
-
-    
+   
 
     boost::write_graphviz(out, mmu.getDownGraph(), make_vertex_writer(boost::get(&myVertex::np, mmu.getDownGraph())), make_edge_writer(boost::get(&myEdge::type, mmu.getDownGraph())), sample_graph_writer{"Demo"}, boost::get(&myVertex::name, mmu.getDownGraph()));
 

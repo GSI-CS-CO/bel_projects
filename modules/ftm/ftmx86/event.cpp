@@ -23,11 +23,25 @@ void TimingMsg::deserialise() {
 
 void TimingMsg::serialise(const vAdr &va) const {
   Event::serialise(va);
-     
-  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_ID,  this->id);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_PAR, this->par);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_TEF, this->tef);
-  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_RES, this->res);    
+
+  uint64_t id  = this->id;
+  uint64_t par = this->par;
+  uint32_t tef = this->tef;
+  uint32_t res = this->res;
+
+  //Careful - the fact that these can be pointers does not mean the LM32 has to interprete them!
+  //That still depends on the flags
+  if (va[ADR_DYN_ID]    != LM32_NULL_PTR) id  &= ~0xffffffffULL; id   |= va[ADR_DYN_ID];;
+  if (va[ADR_DYN_PAR0]  != LM32_NULL_PTR) par &= ~0xffffffffULL; par  |= va[ADR_DYN_PAR0];
+  if (va[ADR_DYN_PAR1]  != LM32_NULL_PTR) par &= ~0xffffffffULL; par  |= va[ADR_DYN_PAR1];
+  if (va[ADR_DYN_TEF]   != LM32_NULL_PTR) tef  = va[ADR_DYN_TEF];
+  if (va[ADR_DYN_RES]   != LM32_NULL_PTR) res  = va[ADR_DYN_RES];
+
+
+  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_ID,  id);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_PAR, par);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_TEF, tef);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)TMSG_RES, res);    
 }
 
 void Command::deserialise()  {

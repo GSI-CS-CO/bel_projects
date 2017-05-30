@@ -210,12 +210,21 @@
 // Destination
 #define ADR_DEF_DST            0  
 #define ADR_ALT_DST_ARRAY      1 // only if multiple destinations    
+
 //
 // Block
 #define ADR_BLOCK_DST_LST  1 // only if multiple destinations
 #define ADR_BLOCK_Q_IL     2 // only if multiple destinations
 #define ADR_BLOCK_Q_HI     3 // only if multiple destinations
 #define ADR_BLOCK_Q_LO     4 // only if multiple destinations
+
+//
+// Timing Message
+#define ADR_DYN_ID         1
+#define ADR_DYN_PAR0       2
+#define ADR_DYN_PAR1       3
+#define ADR_DYN_TEF        4
+#define ADR_DYN_RES        5
 
 //
 // Command
@@ -241,12 +250,12 @@
 //Action Quantity
 #define ACT_QTY_MSK             0xffff
 #define ACT_QTY_POS             0
-#define ACT_QTY_SMSK            ACT_QTY_MSK << ACT_QTY_POS
+#define ACT_QTY_SMSK            (ACT_QTY_MSK << ACT_QTY_POS)
 
 //Action Type
 #define ACT_TYPE_MSK            0xf
 #define ACT_TYPE_POS            16
-#define ACT_TYPE_SMSK           ACT_TYPE_MSK << ACT_TYPE_POS
+#define ACT_TYPE_SMSK           (ACT_TYPE_MSK << ACT_TYPE_POS)
 
 //Cmd Action Flags - type specific bit definitions
 
@@ -255,7 +264,7 @@
 //Command Flush Buffer Priority
 #define ACT_FLUSH_PRIO_MSK      0x7
 #define ACT_FLUSH_PRIO_POS      (ACT_BITS_SPECIFIC_POS + 0)
-#define ACT_FLUSH_PRIO_SMSK     ACT_FLUSH_PRIO_MSK << ACT_FLUSH_PRIO_POS
+#define ACT_FLUSH_PRIO_SMSK     (ACT_FLUSH_PRIO_MSK << ACT_FLUSH_PRIO_POS)
 
 #define PRIO_IL 2
 #define PRIO_HI 1
@@ -264,12 +273,12 @@
 //Command Flush Mode
 #define ACT_FLUSH_MODE_MSK      0x7
 #define ACT_FLUSH_MODE_POS      (ACT_BITS_SPECIFIC_POS + 3)
-#define ACT_FLUSH_MODE_SMSK     ACT_FLUSH_MODE_MSK << ACT_FLUSH_MODE_POS
+#define ACT_FLUSH_MODE_SMSK     (ACT_FLUSH_MODE_MSK << ACT_FLUSH_MODE_POS)
 
 //Command Wait Time absolute/relative (tPeriod)
 #define ACT_WAIT_ABS_MSK        0x1
 #define ACT_WAIT_ABS_POS        (ACT_BITS_SPECIFIC_POS + 0)
-#define ACT_WAIT_ABS_SMSK       ACT_WAIT_ABS_MSK << ACT_WAIT_ABS_POS
+#define ACT_WAIT_ABS_SMSK       (ACT_WAIT_ABS_MSK << ACT_WAIT_ABS_POS)
 
 
 //////////////////////////////////////////////////////////////////////
@@ -278,46 +287,46 @@
 
 //Node Flags - bit definitions
 
-// Node Flags - Type field Enums
+// Node Flags - Type field Enums. Sparsity allows using array of handler function in LM32
 //Unknown/Undef Node Enum
 #define NODE_TYPE_UNKNOWN       0x00  // unknown content, ERROR
 // Defined but unspecified data
-#define NODE_TYPE_RAW           0xFF  // raw data, do not interprete DEV ONLY!
+#define NODE_TYPE_RAW           0x01  // raw data, do not interprete DEV ONLY!
 //Timing Message Enums
-#define NODE_TYPE_TMSG          0x10  // dispatches a timing message
+#define NODE_TYPE_TMSG          0x02  // dispatches a timing message
 //Command Type Enums
-#define NODE_TYPE_CNOOP         0x20  // sends a noop command to designated block
-#define NODE_TYPE_CFLOW         0x21  // sends a flow change command to designated block
-#define NODE_TYPE_CFLUSH        0x22  // sends a flush command to designated block
-#define NODE_TYPE_CWAIT         0x23  // sends a wait command to designated block 
+#define NODE_TYPE_CNOOP         0x03  // sends a noop command to designated block
+#define NODE_TYPE_CFLOW         0x04  // sends a flow change command to designated block
+#define NODE_TYPE_CFLUSH        0x05  // sends a flush command to designated block
+#define NODE_TYPE_CWAIT         0x06  // sends a wait command to designated block 
 //Shared Meta Type Enums
-#define NODE_TYPE_BLOCK         0x40  // shows time block tPeriod and if necessary links to Q Meta and altdest nodes
-#define NODE_TYPE_QUEUE         0x41  // a command queue meta node (array of pointers to buffer nodes)
-#define NODE_TYPE_QBUF          0x42  // a buffer for a command queue
-#define NODE_TYPE_SHARE         0x43  // share a value via MSI to multiple memory destinations
+#define NODE_TYPE_BLOCK         0x07  // shows time block tPeriod and if necessary links to Q Meta and altdest nodes
+#define NODE_TYPE_QUEUE         0x08  // a command queue meta node (array of pointers to buffer nodes)
+#define NODE_TYPE_QBUF          0x09  // a buffer for a command queue
+#define NODE_TYPE_SHARE         0x0a  // share a value via MSI to multiple memory destinations
 //Host only Meta Type Enums
-#define NODE_TYPE_ALTDST        0x80  // lists all alternative destinations of a decision block
-#define NODE_TYPE_SYNC          0x81  // used to denote the time offset for pattern rows
+#define NODE_TYPE_ALTDST        0x0b  // lists all alternative destinations of a decision block
+#define NODE_TYPE_SYNC          0x0c  // used to denote the time offset for pattern rows
 
 //Node type
 #define NFLG_TYPE_MSK           0xff
 #define NFLG_TYPE_POS           0
-#define NFLG_TYPE_SMSK          NFLG_TYPE_MSK << NFLG_TYPE_POS
+#define NFLG_TYPE_SMSK          (NFLG_TYPE_MSK << NFLG_TYPE_POS)
 
 // paint bit - the lm32 has visited this node
 #define NFLG_PAINT_LM32_MSK     0x1
 #define NFLG_PAINT_LM32_POS     8
-#define NFLG_PAINT_LM32_SMSK    NFLG_PAINT_LM32_MSK << NFLG_PAINT_LM32_POS
+#define NFLG_PAINT_LM32_SMSK    (NFLG_PAINT_LM32_MSK << NFLG_PAINT_LM32_POS)
 
 //paint bit - the host has visited this node
 #define NFLG_PAINT_HOST_MSK     0x1
 #define NFLG_PAINT_HOST_POS     9
-#define NFLG_PAINT_HOST_SMSK    NFLG_PAINT_HOST_MSK << NFLG_PAINT_HOST_POS
+#define NFLG_PAINT_HOST_SMSK    (NFLG_PAINT_HOST_MSK << NFLG_PAINT_HOST_POS)
 
 // sync bit - this node should only be started synchronous to another
 #define NFLG_SYNC_MSK           0x1
 #define NFLG_SYNC_POS           10
-#define NFLG_SYNC_SMSK          NFLG_SYNC_MSK << NFLG_SYNC_POS
+#define NFLG_SYNC_SMSK          (NFLG_SYNC_MSK << NFLG_SYNC_POS)
 
 
 // Type dependent Flags ////////////////////////////////////////////////////////////
@@ -332,22 +341,37 @@
 //interprete ID low word as 64b ptr
 #define NFLG_TMSG_DYN_ID_MSK    0x1
 #define NFLG_TMSG_DYN_ID_POS    (NFLG_BITS_SPECIFIC_POS + 0)
-#define NFLG_TMSG_DYN_ID_SMSK   NFLG_TMSG_DYN_ID_MSK << NFLG_TMSG_DYN_ID_POS
+#define NFLG_TMSG_DYN_ID_SMSK   (NFLG_TMSG_DYN_ID_MSK << NFLG_TMSG_DYN_ID_POS)
 
 //interprete PAR low word as 64b ptr
 #define NFLG_TMSG_DYN_PAR_MSK   0x1
 #define NFLG_TMSG_DYN_PAR_POS   (NFLG_BITS_SPECIFIC_POS + 1)
-#define NFLG_TMSG_DYN_PAR_SMSK  NFLG_TMSG_DYN_PAR_MSK << NFLG_TMSG_DYN_PAR_POS
+#define NFLG_TMSG_DYN_PAR_SMSK  (NFLG_TMSG_DYN_PAR_MSK << NFLG_TMSG_DYN_PAR_POS)
+
+//interprete PAR low word as 32b ptr
+#define NFLG_TMSG_DYN_PAR0_MSK  0x1
+#define NFLG_TMSG_DYN_PAR0_POS  (NFLG_BITS_SPECIFIC_POS + 2)
+#define NFLG_TMSG_DYN_PAR0_SMSK (NFLG_TMSG_DYN_PAR0_MSK << NFLG_TMSG_DYN_PAR0_POS)
+
+//interprete PAR high word as 32b ptr
+#define NFLG_TMSG_DYN_PAR1_MSK  0x1
+#define NFLG_TMSG_DYN_PAR1_POS  (NFLG_BITS_SPECIFIC_POS + 3)
+#define NFLG_TMSG_DYN_PAR1_SMSK (NFLG_TMSG_DYN_PAR1_MSK << NFLG_TMSG_DYN_PAR1_POS)
 
 //interprete TEF low word as 32b ptr
 #define NFLG_TMSG_DYN_TEF_MSK   0x1
-#define NFLG_TMSG_DYN_TEF_POS   (NFLG_BITS_SPECIFIC_POS + 2)
-#define NFLG_TMSG_DYN_TEF_SMSK  NFLG_TMSG_DYN_TEF_MSK << NFLG_TMSG_DYN_TEF_POS
+#define NFLG_TMSG_DYN_TEF_POS   (NFLG_BITS_SPECIFIC_POS + 4)
+#define NFLG_TMSG_DYN_TEF_SMSK  (NFLG_TMSG_DYN_TEF_MSK << NFLG_TMSG_DYN_TEF_POS)
 
 //interprete RES low word as 32b ptr
 #define NFLG_TMSG_DYN_RES_MSK   0x1
-#define NFLG_TMSG_DYN_RES_POS   (NFLG_BITS_SPECIFIC_POS + 3)
-#define NFLG_TMSG_DYN_RES_SMSK  NFLG_TMSG_DYN_RES_MSK << NFLG_TMSG_DYN_RES_POS
+#define NFLG_TMSG_DYN_RES_POS   (NFLG_BITS_SPECIFIC_POS + 5)
+#define NFLG_TMSG_DYN_RES_SMSK  (NFLG_TMSG_DYN_RES_MSK << NFLG_TMSG_DYN_RES_POS)
+
+//resolve all ptr fields when executing
+#define NFLG_TMSG_RES_PTR_MSK   0x1
+#define NFLG_TMSG_RES_PTR_POS   (NFLG_BITS_SPECIFIC_POS + 15)
+#define NFLG_TMSG_RES_PTR_SMSK  (NFLG_TMSG_RES_PTR_MSK << NFLG_TMSG_RES_PTR_POS)
 
 #endif
 

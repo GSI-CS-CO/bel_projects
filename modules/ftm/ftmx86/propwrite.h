@@ -15,7 +15,7 @@
 
 
 
-#include "visitor.h"
+#include "visitorvertexwriter.h"
 #include "common.h"
 #include "node.h"
 #include "block.h"
@@ -98,7 +98,7 @@ template <class Name>
       if      (type[v] == sDD) out << "red";
       else if (type[v] == sAD) out << "black";
       else if (type[v] == sTG) out << "blue";
-      else out << "grey";
+      else out << "grey\", label=\"" << type[v];
       out <<  "\"]";   
     }
   private:

@@ -139,7 +139,7 @@ public:
   vBuf getUploadData();
 
   //Download Functions
-  void setDownloadBmp(vBuf dlBmp) {downloadBmp = dlBmp; vHexDump ("DLBMP", downloadBmp, downloadBmp.size());}
+  void setDownloadBmp(vBuf dlBmp) {downloadBmp = dlBmp;} // vHexDump ("DLBMP", downloadBmp, downloadBmp.size());}
   const vAdr getDownloadBMPAdrs() const;
   const vAdr getDownloadAdrs() const;
   void parseDownloadData(vBuf downloadData);

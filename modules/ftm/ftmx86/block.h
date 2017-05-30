@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "node.h"
-#include "visitor.h"
+
 
 
 class Block : public Node {
@@ -22,9 +22,9 @@ public:
   : Node(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK << NFLG_TYPE_POS))), tPeriod(tPeriod),
     rdIdxIl(0), rdIdxHi(0), rdIdxLo(0), wrIdxIl(0), wrIdxHi(0), wrIdxLo(0) {}
   ~Block()  {};
-  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeUploadCrawler& v)    const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
+  virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix)  const;

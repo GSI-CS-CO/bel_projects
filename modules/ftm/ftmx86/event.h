@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include "ftm_common.h"
 #include "node.h"
-#include "visitor.h"
+
 
 
 enum prio {NONE, LOW, HIGH, INTERLOCK};
@@ -28,8 +28,8 @@ public:
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
-  virtual void accept(const VisitorNodeUploadCrawler& v)      const = 0;
-  virtual void accept(const VisitorNodeDownloadCrawler& v)    const = 0;
+  virtual void accept(const VisitorUploadCrawler& v)      const = 0;
+  virtual void accept(const VisitorDownloadCrawler& v)    const = 0;
   const uint64_t getTOffs() const {return this->tOffs;}
   virtual void serialise(const vAdr &va) const;
   virtual void deserialise();
@@ -55,8 +55,8 @@ public:
   void serialise(const vAdr &va) const;
   void deserialise();
   virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeUploadCrawler& v)    const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
   const uint64_t getId() const {return this->id;}
   const uint64_t getPar() const {return this->par;}
   const uint32_t getTef() const {return this->tef;}
@@ -81,8 +81,8 @@ public:
   virtual void show(uint32_t cnt, const char* sPrefix) const;
 
   virtual void accept(const VisitorVertexWriter& v)         const = 0;
-  virtual void accept(const VisitorNodeUploadCrawler& v)    const = 0;
-  virtual void accept(const VisitorNodeDownloadCrawler& v)  const = 0;
+  virtual void accept(const VisitorUploadCrawler& v)    const = 0;
+  virtual void accept(const VisitorDownloadCrawler& v)  const = 0;
   const uint64_t getTValid() const {return this->tValid;}
   const uint32_t getAct() const {return this->act;}
   virtual void serialise(const vAdr &va) const;
@@ -105,8 +105,8 @@ public:
   void serialise(const vAdr &va) const;
   void deserialise();
   virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeUploadCrawler& v)    const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
   const uint16_t getQty() const {return (this->flags >> ACT_QTY_POS) & ACT_QTY_MSK;}
 
 };
@@ -127,8 +127,8 @@ public:
   void serialise(const vAdr &va) const;
   void deserialise();
   virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeUploadCrawler& v)    const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
   const uint16_t getQty() const {return (this->flags >> ACT_QTY_POS) & ACT_QTY_MSK;}
 
 };
@@ -149,8 +149,8 @@ public:
   void serialise(const vAdr &va) const;
   void deserialise();
   virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeUploadCrawler& v)    const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
 
 
 };
@@ -182,8 +182,8 @@ public:
   void serialise(const vAdr &va) const;
   void deserialise();
   virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeUploadCrawler& v)    const override { v.visit(*this); }
-  virtual void accept(const VisitorNodeDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
+  virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
 
 };
 

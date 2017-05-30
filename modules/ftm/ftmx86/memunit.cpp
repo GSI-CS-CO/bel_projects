@@ -5,7 +5,8 @@
 #include "block.h"
 #include "meta.h"
 #include "event.h"
-#include "visitor.h"
+#include "visitoruploadcrawler.h"
+#include "visitordownloadcrawler.h"
 
 
 
@@ -151,6 +152,7 @@
         
 
         uint32_t flags    = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]);
+        //std::cout << "DL Flags 0x" << std::hex << flags << " # 0x"  << hash << std::endl;
         uint32_t type     = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
         vertex_t v        = boost::add_vertex((myVertex) {std::string(*std::forward<boost::optional<std::string>>(name)), hash, NULL, "", flags}, gDown);
         parserMap[adr]    = (parserMeta){v, hash};
@@ -169,7 +171,7 @@
           case NODE_TYPE_ALTDST  : gDown[v].np =(node_ptr) new   DestList(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
           case NODE_TYPE_QBUF    : gDown[v].np =(node_ptr) new CmdQBuffer(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); break;
           case NODE_TYPE_UNKNOWN : std::cerr << "not yet implemented " << gDown[v].type << std::endl; break;
-          default                : std::cerr << "Node type" << gDown[v].type << " not supported! " << std::endl;
+          default                : std::cerr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
         }
         /*
         std::cout << gDown[v].name;
@@ -193,7 +195,7 @@
       // handled by visitor
       if (gDown[it.second.v].np == NULL) { std::cerr << "Node " << gDown[it.second.v].name << " is not initialised ! " << std::endl; 
       } else {
-        if  (!(gDown[it.second.v].np->isMeta())) gDown[it.second.v].np->accept(VisitorNodeDownloadCrawler(it.second.v, *this));
+        if  (!(gDown[it.second.v].np->isMeta())) gDown[it.second.v].np->accept(VisitorDownloadCrawler(it.second.v, *this));
       }  
     }
     //second, iterate all meta-types
@@ -201,7 +203,7 @@
       // handled by visitor
       if (gDown[it.second.v].np == NULL) { std::cerr << "Node " << gDown[it.second.v].name << " is not initialised ! " << std::endl; 
       } else {
-        if  (gDown[it.second.v].np->isMeta()) gDown[it.second.v].np->accept(VisitorNodeDownloadCrawler(it.second.v, *this));
+        if  (gDown[it.second.v].np->isMeta()) gDown[it.second.v].np->accept(VisitorDownloadCrawler(it.second.v, *this));
       }  
     }
 
@@ -280,6 +282,7 @@
 
       //init binary node data
 
+
       //TODO this should be a factory, yet the variadic part is complex ... any ideas?
       cmp = gUp[v].type;
       if      (cmp == "tmsg")     {gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].id, gUp[v].par, gUp[v].tef, gUp[v].res); }
@@ -294,15 +297,26 @@
       else if (cmp == "listdst")  {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, x->hash, x->b, 0);}
       else if (cmp == "qbuf")     {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, x->hash, x->b, 0);}
       else if (cmp == "meta")     {std::cerr << "not yet implemented " << gUp[v].type << std::endl;}
-      else                        {std::cerr << "Node type" << cmp << " not supported! " << std::endl;} 
+      else                        {std::cerr << "Node type 0x" << std::hex << cmp << " not supported! " << std::endl;} 
+
+      //std::cout << "UL b4S Flags 0x" << std::hex << gUp[v].np->getFlags() << " # 0x" << gUp[v].np->getHash() << std::endl;  
     }
+
+
 
     //serialise all nodes
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
         if (allocMap.count(gUp[v].name) == 0){std::cerr << " Node " << gUp[v].name << " was not allocated " << gUp[v].type << std::endl; return;} 
         if (gUp[v].np == NULL ){std::cerr << " Node " << gUp[v].name << " was not initialised! " << gUp[v].type << std::endl; return;}
         // try to serialise
-        gUp[v].np->accept(VisitorNodeUploadCrawler(v, *this));
+        auto* x = lookupName(gUp[v].name);
+        if (x != NULL) std::cout << std::setfill(' ') << std::setw(4) << v 
+          << "   "     << std::setfill(' ') << std::setw(15) << gUp[v].name 
+          << "   # 0x" << std::hex << std::setfill('0') << std::setw(8) << gUp[v].np->getHash() 
+          << "   @Int 0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2intAdr(x->adr) 
+          << "   @Ext 0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2extAdr(x->adr) << std::endl;
+        gUp[v].np->accept(VisitorUploadCrawler(v, *this));
+        //std::cout << "Flags 0x" << std::hex << gUp[v].np->getFlags() << " # 0x" << gUp[v].np->getHash() << std::endl;
     }    
   }
 
