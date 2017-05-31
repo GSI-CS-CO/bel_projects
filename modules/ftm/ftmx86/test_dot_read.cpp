@@ -21,6 +21,8 @@
 
 using namespace etherbone;
 
+const char defOutputFilename[] = "download.dot";
+
 int ftmRamWrite(Device& dev, vAdr va, vBuf& vb)
 {
    //eb_status_t status;
@@ -69,23 +71,29 @@ vBuf ftmRamRead(Device& dev, vAdr va)
 
 int main(int argc, char* argv[]) {
 
-  bool doUpload = false;
+
+
+  bool doUpload = false, readBlock = false;
+
   int opt;
-  const char* program = argv[0];
-  const char* netaddress, *localFilename;
+  const char *program = argv[0];
+  const char *netaddress, *blockName = NULL, *inputFilename = NULL, *outputFilename = defOutputFilename;
   int32_t tmp, error=0;
   uint32_t cpuIdx = 0;
 
-  localFilename = NULL;
-
-
 // start getopt 
-   while ((opt = getopt(argc, argv, "w")) != -1) {
+   while ((opt = getopt(argc, argv, "b:c:o:w")) != -1) {
       switch (opt) {
          case 'w':
             doUpload = true;
             break;
-            
+         case 'o':
+            outputFilename  = optarg;
+            break;
+         case 'b':
+            blockName = optarg;
+            readBlock = true;
+            break;       
          case 'v':
             //verbose = 1;
             break;
@@ -126,9 +134,11 @@ int main(int argc, char* argv[]) {
    }
    
    // process command arguments
-   
+  std::cerr << program << ": " << argc << " " << optind << " " << argv[optind] << " " << argv[optind+1] << " " << argv[optind+2] << " " << std::endl;   
+
    netaddress = argv[optind];
-   if (optind+1 < argc) localFilename = argv[optind+1];
+   if (optind+1 < argc) inputFilename   = argv[optind+1];
+   
 
    /*
    if (optind+1 < argc)  command = argv[++optind];
@@ -159,15 +169,15 @@ int main(int argc, char* argv[]) {
   boost::dynamic_properties dp(boost::ignore_other_properties);
 
   ebs.open(0, EB_DATAX|EB_ADDRX);
-    ebd.open(ebs, netaddress, EB_DATAX|EB_ADDRX, 3);
+  ebd.open(ebs, netaddress, EB_DATAX|EB_ADDRX, 3);
 
-    ebd.sdb_find_by_identity(0x0000000000000651ULL,0x54111351, myDevs);
-    if (cpuIdx >= myDevs.size()) return -1;
+  ebd.sdb_find_by_identity(0x0000000000000651ULL,0x54111351, myDevs);
+  if (cpuIdx >= myDevs.size()) return -1;
 
-    std::cout << "Found " << myDevs.size() << " User-RAMs, cpu #" << cpuIdx << " is a valid choice " << std::endl;
-    //create memory manager
-    std::cout << "Creating Memory Unit #" << cpuIdx << "..." << std::endl;
-    MemUnit mmu = MemUnit(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR,  SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_, g);
+  std::cout << "Found " << myDevs.size() << " User-RAMs, cpu #" << cpuIdx << " is a valid choice " << std::endl;
+  //create memory manager
+  std::cout << "Creating Memory Unit #" << cpuIdx << "..." << std::endl;
+  MemUnit mmu = MemUnit(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR,  SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_, g);
 
 
   dp.property("type",  boost::get(&myEdge::type, g));
@@ -201,9 +211,9 @@ int main(int argc, char* argv[]) {
   dp.property("tWait",  boost::get(&myVertex::tWait, g));
 
  
-  std::ifstream in(localFilename); 
-  if(localFilename == NULL || !(boost::read_graphviz(in,g,dp,"node_id"))) {
-    std::cerr << program << ": Could not open local file <" << localFilename << ">" << std::endl;
+  std::ifstream in(inputFilename); 
+  if(inputFilename == NULL || !(boost::read_graphviz(in,g,dp,"node_id"))) {
+    std::cerr << program << ": Could not open local file <" << inputFilename << ">" << std::endl;
      if(doUpload) {
       ebd.close();
       ebs.close();
@@ -233,11 +243,12 @@ int main(int argc, char* argv[]) {
    
 
     //analyse and serialise
-    std::cout << "Processing local file <" << localFilename << "> ..." << std::endl;  
+    std::cout << "Processing local file <" << inputFilename << "> ..." << std::endl;  
 
     mmu.prepareUpload(); 
 
     std::cout << "... Done. " << std::endl;
+    
     
     
   }
@@ -281,9 +292,69 @@ int main(int argc, char* argv[]) {
     */
     mmu.parseDownloadData(vDlD);
 
-    std::cout << "... Done. " << std::endl << "Writing out ...";
 
-    std::ofstream out("./download.dot"); 
+
+
+    std::cout << "... Done. " << std::endl;
+
+
+    if(readBlock) {
+      auto* x = mmu.lookupName(std::string(blockName));
+      if (x != NULL) {
+        Graph& gb = mmu.getDownGraph();
+
+        auto* q = mmu.lookupAdr(x->adr);
+        if(q != NULL) {
+
+          std::cout << "Found a ";
+          if(gb[q->v].np->isBlock()) {
+            std::cout << "Block " << blockName << " @ 0x" << std::hex << x->adr << std::endl;
+            //read out Block info
+            hexDump ("Binary:", q->b, _MEM_BLOCK_SIZE);
+            auto pb = boost::dynamic_pointer_cast<Block>(gb[q->v].np);
+            //# 0x" << std::hex << std::setfill('0') << std::setw(8)
+            std::cout << "      IlHiLo" << std::endl;
+            std::cout << "WR: 0x" << std::hex << std::setfill('0') << std::setw(6) << pb->getWrIdxs() << std::endl;
+            std::cout << "RD: 0x" << std::hex << std::setfill('0') << std::setw(6) << pb->getRdIdxs() << std::endl;
+
+            //Do the crawl
+            uint8_t wrOffs = (pb->getWrIdxs() >> 16) & 0xff;
+
+            ptrdiff_t prio  = BLOCK_CMDQ_IL_PTR;
+            ptrdiff_t bufIdx   = wrOffs / (_MEM_BLOCK_SIZE / _T_CMD_SIZE  );
+            ptrdiff_t elemIdx  = wrOffs % (_MEM_BLOCK_SIZE / _T_CMD_SIZE  );
+
+            uint32_t bufListAdr, bufAdr, wrAdr;
+            std::cout << blockName << " -- IL --> ";
+            bufListAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&q->b[prio]));
+            auto* qbl = mmu.lookupAdr(bufListAdr);
+            if(qbl != NULL) {bufAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&qbl->b[(CMDQ_BUF_ARRAY + bufIdx * _PTR_SIZE_) ])); std::cout << g[qbl->v].name << " --+" << bufIdx << "b--> ";} 
+            
+            auto* qb = mmu.lookupAdr(bufAdr);
+            if(qb != NULL) {
+              wrAdr = bufAdr + CMDB_CMD_ARRAY  + elemIdx * _T_CMD_SIZE ;
+              std::cout << g[qb->v].name << " --+" << elemIdx << "e--> WrAdr 0x" << std::hex << std::setfill('0') << std::setw(6) << mmu.adr2extAdr(wrAdr) << std::endl;
+              hexDump ("Qbuf", qb->b, _MEM_BLOCK_SIZE);  
+
+              std::cout << "Write Offset <" << std::hex << std::setfill('0') << std::setw(6) << pb->getWrIdxs() << ">" << " @ 0x" << std::hex << std::setfill('0') << std::setw(8) << mmu.adr2extAdr(x->adr + BLOCK_CMDQ_WR_IDXS) << std::endl;
+            }  
+
+
+          } else { std::cout << "Node " << blockName << " @ 0x" << std::hex << x->adr << std::endl; }
+          
+        } else { std::cerr << "Fuck all ptrs" << std::endl;}
+
+      } else {
+
+      }
+
+    }
+
+
+
+    std::cout << "Writing out ...";
+
+    std::ofstream out(outputFilename); 
    
 
     boost::write_graphviz(out, mmu.getDownGraph(), make_vertex_writer(boost::get(&myVertex::np, mmu.getDownGraph())), make_edge_writer(boost::get(&myEdge::type, mmu.getDownGraph())), sample_graph_writer{"Demo"}, boost::get(&myVertex::name, mmu.getDownGraph()));

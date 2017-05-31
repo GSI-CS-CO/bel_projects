@@ -188,8 +188,8 @@ inline void hexDump (const char *desc, void *addr, int len) {
   printf ("\n");  
 }
 
-inline void vHexDump (const char *desc, vBuf pc, int len) {
-    int i;
+inline void vHexDump (const char *desc, vBuf pc) {
+    int i, len = pc.size();
     unsigned char buff[17];
 
     // Output description if given.

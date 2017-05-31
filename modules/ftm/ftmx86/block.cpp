@@ -4,7 +4,9 @@
 #include "ftm_common.h"
 
 void Block::deserialise()  {
-  this->tPeriod = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[BLOCK_PERIOD]);
+  this->tPeriod  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[BLOCK_PERIOD]);
+  setWrIdxs(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[BLOCK_CMDQ_WR_IDXS]));
+  setRdIdxs(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[BLOCK_CMDQ_RD_IDXS]));
 }
 
 void Block::serialise(const vAdr &va) const {
@@ -35,13 +37,5 @@ void Block::show(uint32_t cnt, const char* prefix) const {
   else p = (char*)prefix;
   printf("%s***------- %3u -------\n", p, cnt);
   printf("%s*** Block @ %llu, ", p, (long long unsigned int)this->tPeriod);
-}
-
-uint32_t Block::getWrIdxs(void) const {
-  return (uint32_t)((this->wrIdxIl << 16) | (this->wrIdxHi << 8) | (this->wrIdxLo << 0));
-}
-
-uint32_t Block::getRdIdxs(void) const {
-  return (uint32_t)((this->rdIdxIl << 16) | (this->rdIdxHi << 8) | (this->rdIdxLo << 0));
 }
 

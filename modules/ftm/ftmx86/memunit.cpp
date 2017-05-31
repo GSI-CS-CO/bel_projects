@@ -61,7 +61,7 @@
       }
     }
 
-    vHexDump ("ULBMP", uploadBmp, uploadBmp.size());
+    //vHexDump ("ULBMP", uploadBmp);
     
   }
 
@@ -227,11 +227,11 @@
 
 
   //Allocation functions
-  bool MemUnit::allocate(const std::string& name) {
+  bool MemUnit::allocate(const std::string& name, vertex_t v) {
     uint32_t chunkAdr, hash;
     bool ret = insertHash(name, hash);
     if ( (allocMap.count(name) == 0) && acquireChunk(chunkAdr) ) { 
-      allocMap[name] = (chunkMeta) {chunkAdr, hash};  
+      allocMap[name] = (chunkMeta) {chunkAdr, hash, v};  
     } else {ret = false;}
     return ret;
   }
@@ -275,7 +275,7 @@
 
     //allocate and init all nodes
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-      allocate(gUp[v].name);
+      allocate(gUp[v].name, v);
 
       auto* x = lookupName(gUp[v].name);
       if(x == NULL) {std::cerr << "ERROR: Tried to lookup unallocated node " << gUp[v].name <<  std::endl; return;}

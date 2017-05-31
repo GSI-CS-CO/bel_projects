@@ -73,7 +73,7 @@
 #define T_CMD_FLUSH_RNG_HILO    (T_CMD_ACT  + _32b_SIZE_) // if it's a flush command and mode bits are set, this defines the q from/to idx to flush per qbuf
 #define T_CMD_FLUSH_RNG_IL      (T_CMD_FLUSH_RNG_HILO + _32b_SIZE_)
 //
-#define _T_CMD_SIZE             (T_CMD_TIME + _TS_SIZE_ + _64b_SIZE_)
+#define _T_CMD_SIZE             (_TS_SIZE_ + _32b_SIZE_ + _64b_SIZE_)
 
 
 //////////////////////////////////////////////////////////////////////

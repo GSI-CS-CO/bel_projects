@@ -33,7 +33,7 @@ public:
   const uint64_t getTOffs() const {return this->tOffs;}
   virtual void serialise(const vAdr &va) const;
   virtual void deserialise();
-  bool isMeta(void) const {return false;}
+  
 };
 
 // std timing message for the ECA, sent over the timing network

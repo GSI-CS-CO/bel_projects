@@ -34,6 +34,7 @@
   typedef struct  {
     uint32_t  adr;
     uint32_t  hash;
+    vertex_t  v;
     uint8_t   b[_MEM_BLOCK_SIZE];
     bool      transfer;
   } chunkMeta;
@@ -107,7 +108,7 @@ public:
   uint32_t getUsedSpace() { return poolSize - (memPool.size() * _MEM_BLOCK_SIZE); }
   
   //Allocation functions
-  bool allocate(const std::string& name);
+  bool allocate(const std::string& name, vertex_t v);
   bool insert(const std::string& name, uint32_t adr);
   bool deallocate(const std::string& name);
   chunkMeta* lookupName(const std::string& name) const;
