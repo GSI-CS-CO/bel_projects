@@ -47,7 +47,7 @@ void VisitorVertexWriter::visit(const Flow& el) const  {
   out << ", type=\"Flow\", color=\"blue\"";
   commandString((Command&) el);
   out << ", qty=" << el.getQty();
-  out << "\"]";
+  out << "]";
 }
 
 void VisitorVertexWriter::visit(const Flush& el) const { 

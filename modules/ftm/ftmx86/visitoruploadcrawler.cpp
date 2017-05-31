@@ -47,6 +47,7 @@ void VisitorUploadCrawler::visit(const Flow& el) const  {
   vAdr vA, tmpDD, tmpCT, tmpFD;
   tmpDD = getDefDst();
   tmpCT = getCmdTarget();
+  tmpFD = getFlowDst();
 
   vA.reserve( tmpDD.size() + tmpCT.size() + tmpFD.size() ); // preallocate memory
   vA.insert( vA.end(), tmpDD.begin(), tmpDD.end() );
