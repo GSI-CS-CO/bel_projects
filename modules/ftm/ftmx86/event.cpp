@@ -32,7 +32,7 @@ void TimingMsg::serialise(const vAdr &va) const {
   //Careful - the fact that these can be pointers does not mean the LM32 has to interprete them!
   //That still depends on the flags
   if (va[ADR_DYN_ID]    != LM32_NULL_PTR) id  &= ~0xffffffffULL; id   |= va[ADR_DYN_ID];;
-  if (va[ADR_DYN_PAR0]  != LM32_NULL_PTR) par &= ~0xffffffffULL; par  |= va[ADR_DYN_PAR0];
+  if (va[ADR_DYN_PAR0]  != LM32_NULL_PTR) par &= ~(0xffffffffULL << 32); par  |= ((uint64_t)va[ADR_DYN_PAR0] << 32);
   if (va[ADR_DYN_PAR1]  != LM32_NULL_PTR) par &= ~0xffffffffULL; par  |= va[ADR_DYN_PAR1];
   if (va[ADR_DYN_TEF]   != LM32_NULL_PTR) tef  = va[ADR_DYN_TEF];
   if (va[ADR_DYN_RES]   != LM32_NULL_PTR) res  = va[ADR_DYN_RES];
@@ -47,62 +47,49 @@ void TimingMsg::serialise(const vAdr &va) const {
 void Command::deserialise()  {
   Event::deserialise();
   this->tValid  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[CMD_VALID_TIME]);
+  this->act     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[CMD_ACT]);
 }
 
 void Command::serialise(const vAdr &va) const {
-  //if (custom.size() < 1) //scream and shout, we didn't get told what our target queue is!
-  //{
-    Event::serialise(va);
-    writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_TARGET,  va[ADR_CMD_TARGET]);
-    writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_VALID_TIME, this->tValid); 
-  //}
+  Event::serialise(va);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_TARGET,     va[ADR_CMD_TARGET]);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_VALID_TIME, this->tValid);
+  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT,        this->act); 
+
 }
 
 void Noop::deserialise()  {
   Command::deserialise();
-  uint32_t act = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[CMD_ACT]);
-  this->qty  = (act >> ACT_QTY_POS) & ACT_QTY_MSK;
+  
 }
 
 void Noop::serialise(const vAdr &va) const {
   Command::serialise(va);
-  uint32_t act = (ACT_TYPE_NOOP << ACT_TYPE_POS) | ((this->qty & ACT_QTY_MSK) << ACT_QTY_POS); 
-  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT, act);
+  
 }
 
 void Flow::deserialise()  {
   Command::deserialise();
-  uint32_t act = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[CMD_ACT]);
-  this->qty  = (act >> ACT_QTY_POS) & ACT_QTY_MSK;
 }
 
 void Flow::serialise(const vAdr &va) const {
   Command::serialise(va);
-  uint32_t act = (ACT_TYPE_FLOW << ACT_TYPE_POS) | ((this->qty & ACT_QTY_MSK) << ACT_QTY_POS); 
-  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT, act);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_FLOW_DEST, va[ADR_CMD_FLOW_DEST]); 
 }
 
 void Wait::deserialise()  {
   Command::deserialise();
-  uint32_t act = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[CMD_ACT]);
-  this->qty    = (act >> ACT_QTY_POS) & ACT_QTY_MSK;
-  this->tWait  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[CMD_WAIT_TIME]);
+  this->tWait = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[CMD_WAIT_TIME]);
 }
 
 void Wait::serialise(const vAdr &va) const {
   Command::serialise(va);
-  uint32_t act = (ACT_TYPE_WAIT << ACT_TYPE_POS) | ((this->qty & ACT_QTY_MSK) << ACT_QTY_POS); 
-  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT, act);
   writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_WAIT_TIME, this->tWait);  
 
 }
 
 void Flush::deserialise()  {
   Command::deserialise();
-  uint32_t act = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[CMD_ACT]);
-  this->prio   = (act >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;
-  this->mode   = (act >> ACT_FLUSH_MODE_POS) & ACT_FLUSH_MODE_MSK;
   this->frmIl  = b[CMD_FLUSHRNG_IL_FRM];
   this->toIl   = b[CMD_FLUSHRNG_IL_TO];
   this->frmHi  = b[CMD_FLUSHRNG_HI_FRM];
@@ -113,8 +100,6 @@ void Flush::deserialise()  {
 
 void Flush::serialise(const vAdr &va) const {
   Command::serialise(va);
-  uint32_t act = (ACT_TYPE_FLUSH << ACT_TYPE_POS) | ((this->getPrio() & ACT_FLUSH_PRIO_MSK) << ACT_FLUSH_PRIO_POS) | ((this->getMode() & ACT_FLUSH_MODE_MSK) << ACT_FLUSH_MODE_POS); 
-  writeLeNumberToBeBytes(b + (ptrdiff_t)CMD_ACT, act);
   b[CMD_FLUSHRNG_IL_FRM]  = this->frmIl;
   b[CMD_FLUSHRNG_IL_TO]   = this->toIl;
   b[CMD_FLUSHRNG_HI_FRM]  = this->frmHi;
@@ -122,14 +107,6 @@ void Flush::serialise(const vAdr &va) const {
   b[CMD_FLUSHRNG_LO_FRM]  = this->frmLo;
   b[CMD_FLUSHRNG_LO_TO]   = this->toLo;
   
-}
-
-const uint8_t  Flush::getPrio(void) const {
-  return ((this->act >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK);
-}
-
-const uint8_t  Flush::getMode(void) const {
-  return ((this->act >> ACT_FLUSH_MODE_POS) & ACT_FLUSH_MODE_MSK);
 }
 
 const uint16_t Flush::getRng(uint8_t q) const {
@@ -219,5 +196,5 @@ void Noop::show(uint32_t cnt, const char* prefix) const {
   if (prefix == NULL) p = (char*)"";
   else p = (char*)prefix;
   Command::show( cnt, prefix);
-  printf("%s%u x No Operation\n", p, this->qty);
+  printf("%s%u x No Operation\n", p, this->getQty());
 }

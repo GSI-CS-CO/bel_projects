@@ -271,7 +271,8 @@
   }
   
   void MemUnit::prepareUpload() {
-    std::string cmp; 
+    std::string cmp;
+    //uint8_t prio; 
 
     //allocate and init all nodes
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
@@ -285,13 +286,21 @@
 
       //TODO this should be a factory, yet the variadic part is complex ... any ideas?
       cmp = gUp[v].type;
+      /*
+      std::string::size_type sz;   // alias of size_t
+
+  int i_dec = std::stoi (gUp[v].prio,&sz);
+      */
+
+       
+
       if      (cmp == "tmsg")     {gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].id, gUp[v].par, gUp[v].tef, gUp[v].res); }
-      else if (cmp == "noop")     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].qty); }
-      else if (cmp == "flow")     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].qty); }
-      else if (cmp == "flush")    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, x->hash, x->b, 0, gUp[v].tOffs, gUp[v].tValid, 
+      else if (cmp == "noop")     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio, gUp[v].qty); }
+      else if (cmp == "flow")     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio, gUp[v].qty); }
+      else if (cmp == "flush")    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio,
                                                                          gUp[v].qIl,                gUp[v].qHi,                gUp[v].qLo, 
                                                                          gUp[v].frmIl, gUp[v].toIl, gUp[v].frmHi, gUp[v].toHi, gUp[v].frmLo, gUp[v].toLo ); }
-      else if (cmp == "wait")     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].tWait); }
+      else if (cmp == "wait")     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio, gUp[v].tWait); }
       else if (cmp == "block")    {gUp[v].np = (node_ptr) new      Block(gUp[v].name, x->hash, x->b, 0, gUp[v].tPeriod ); }
       else if (cmp == "qinfo")    {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, x->hash, x->b, 0);}
       else if (cmp == "listdst")  {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, x->hash, x->b, 0);}
@@ -305,16 +314,19 @@
 
 
     //serialise all nodes
+
+    std::cout << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setw(20) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
+    std::cout << std::setfill('-') << std::setw(50) << std::endl;      
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
         if (allocMap.count(gUp[v].name) == 0){std::cerr << " Node " << gUp[v].name << " was not allocated " << gUp[v].type << std::endl; return;} 
         if (gUp[v].np == NULL ){std::cerr << " Node " << gUp[v].name << " was not initialised! " << gUp[v].type << std::endl; return;}
         // try to serialise
         auto* x = lookupName(gUp[v].name);
-        if (x != NULL) std::cout << std::setfill(' ') << std::setw(4) << v 
-          << "   "     << std::setfill(' ') << std::setw(15) << gUp[v].name 
-          << "   # 0x" << std::hex << std::setfill('0') << std::setw(8) << gUp[v].np->getHash() 
-          << "   @Int 0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2intAdr(x->adr) 
-          << "   @Ext 0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2extAdr(x->adr) << std::endl;
+        if (x != NULL) std::cout << std::setfill(' ') << std::setw(4) << std::dec << v 
+          << "   "     << std::setfill(' ') << std::setw(20) << gUp[v].name 
+          << "   0x" << std::hex << std::setfill('0') << std::setw(8) << gUp[v].np->getHash() 
+          << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2intAdr(x->adr) 
+          << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2extAdr(x->adr) << std::endl;
         gUp[v].np->accept(VisitorUploadCrawler(v, *this));
         //std::cout << "Flags 0x" << std::hex << gUp[v].np->getFlags() << " # 0x" << gUp[v].np->getHash() << std::endl;
     }    

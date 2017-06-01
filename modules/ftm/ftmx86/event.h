@@ -70,9 +70,8 @@ protected:
   uint64_t tValid;
   uint32_t act;
 
-  Command(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Event(name, hash, b, flags) {}
-  Command(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid) : Event (name, hash, b, flags, tOffs), tValid(tValid) {}
-
+  Command(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Event(name, hash, b, flags), tValid(0), act(0) {}
+  Command(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint32_t act) : Event (name, hash, b, flags, tOffs), tValid(tValid), act(act) {}
 public:
   
   ~Command() {};
@@ -80,23 +79,25 @@ public:
   virtual void show(void) const;
   virtual void show(uint32_t cnt, const char* sPrefix) const;
 
-  virtual void accept(const VisitorVertexWriter& v)         const = 0;
+  virtual void accept(const VisitorVertexWriter& v)     const = 0;
   virtual void accept(const VisitorUploadCrawler& v)    const = 0;
   virtual void accept(const VisitorDownloadCrawler& v)  const = 0;
-  const uint64_t getTValid() const {return this->tValid;}
-  const uint32_t getAct() const {return this->act;}
   virtual void serialise(const vAdr &va) const;
   virtual void deserialise();
+  virtual const uint64_t getTValid()  const {return this->tValid;}
+  virtual const uint32_t getAct()     const {return this->act;}
+  virtual const uint16_t getQty()     const {return (this->act >> ACT_QTY_POS) & ACT_QTY_MSK;}
+  virtual const uint16_t getPrio()    const {return (this->act >> ACT_PRIO_POS) & ACT_PRIO_MSK;}
 };
 
 // Makes receiving Q do nothing when leaving block for N times
 class Noop : public Command {
-  uint16_t qty;
+
 
 public:
   Noop(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Command(name, hash, b, flags) {}
-  Noop(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint16_t qty) 
-  : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CNOOP << NFLG_TYPE_POS)), tOffs, tValid) , qty(qty) {}
+  Noop(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint16_t qty) 
+  : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CNOOP << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_NOOP << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS ) {}
   ~Noop() {};
 
 
@@ -104,21 +105,20 @@ public:
   void show(uint32_t cnt, const char* sPrefix) const;
   void serialise(const vAdr &va) const;
   void deserialise();
-  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
-  const uint16_t getQty() const {return (this->flags >> ACT_QTY_POS) & ACT_QTY_MSK;}
+
 
 };
 
 // Makes receiving Q select destination when leaving block for N times
 class Flow : public Command {
-  uint16_t qty;
 
 public:
   Flow(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Command(name, hash, b, flags) {}
-  Flow(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint16_t qty)
-      : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLOW << NFLG_TYPE_POS)), tOffs, tValid) , qty(qty) {}
+  Flow(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint16_t qty)
+      : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLOW << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLOW << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS )   {}
   ~Flow() {};
 
 
@@ -126,21 +126,20 @@ public:
   void show(uint32_t cnt, const char* sPrefix) const;
   void serialise(const vAdr &va) const;
   void deserialise();
-  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
-  const uint16_t getQty() const {return (this->flags >> ACT_QTY_POS) & ACT_QTY_MSK;}
+  
 
 };
 
 // Makes receiving Q add tWait instead of tPeriod to current time when leaving block once
 class Wait : public Command {
-  uint16_t qty;
   uint64_t tWait;
 public:
   Wait(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Command(name, hash, b, flags) {}
-  Wait(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint64_t tWait) 
-  : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CWAIT << NFLG_TYPE_POS)), tOffs, tValid), tWait(tWait) {}
+  Wait(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid,  uint8_t prio, uint64_t tWait) 
+  : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CWAIT << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_WAIT << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | 1 << ACT_QTY_POS), tWait(tWait) {}
   ~Wait() {};
 
 
@@ -148,7 +147,7 @@ public:
   void show(uint32_t cnt, const char* sPrefix) const;
   void serialise(const vAdr &va) const;
   void deserialise();
-  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
 
@@ -167,21 +166,21 @@ class Flush : public Command {
 
 public:
   Flush(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Command(name, hash, b, flags) {}
-  Flush(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, bool qIl, bool qHi, bool qLo ) 
-        : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid) , qIl(qIl), qHi(qHi), qLo(qLo), frmIl(0), toIl(0), frmHi(0), toHi(0), frmLo(0), toLo(0) {}
-  Flush(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, bool qIl, bool qHi, bool qLo, uint8_t frmIl, uint8_t toIl, uint8_t frmHi, uint8_t toHi, uint8_t frmLo, uint8_t toLo) 
-        : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(frmIl), toIl(toIl), frmHi(frmHi), toHi(toHi), frmLo(frmLo), toLo(toLo) {}
+  Flush(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo ) 
+        : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(0), toIl(0), frmHi(0), toHi(0), frmLo(0), toLo(0) {}
+  Flush(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo, uint8_t frmIl, uint8_t toIl, uint8_t frmHi, uint8_t toHi, uint8_t frmLo, uint8_t toLo) 
+        : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(frmIl), toIl(toIl), frmHi(frmHi), toHi(toHi), frmLo(frmLo), toLo(toLo) {}
   ~Flush() {};
 
   void show(void)  const;
   void show(uint32_t cnt, const char* sPrefix)  const;
-  const uint8_t getPrio(void) const;
-  const uint8_t getMode(void) const;
+  const uint8_t getFlushPrio(void)  const {return ((this->act >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK);}
+  const uint8_t getMode(void)       const {return ((this->act >> ACT_FLUSH_MODE_POS) & ACT_FLUSH_MODE_MSK);}
   const uint16_t getRng(uint8_t q) const;
 
   void serialise(const vAdr &va) const;
   void deserialise();
-  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
 

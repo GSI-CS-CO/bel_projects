@@ -73,7 +73,7 @@
 #define T_CMD_FLUSH_RNG_HILO    (T_CMD_ACT  + _32b_SIZE_) // if it's a flush command and mode bits are set, this defines the q from/to idx to flush per qbuf
 #define T_CMD_FLUSH_RNG_IL      (T_CMD_FLUSH_RNG_HILO + _32b_SIZE_)
 //
-#define _T_CMD_SIZE             (_TS_SIZE_ + _32b_SIZE_ + _64b_SIZE_)
+#define _T_CMD_SIZE_             (_TS_SIZE_ + _32b_SIZE_ + _64b_SIZE_)
 
 
 //////////////////////////////////////////////////////////////////////
@@ -120,12 +120,18 @@
 #define BLOCK_BEGIN             (NODE_BEGIN)      // a bit unusual layout, see above
 #define BLOCK_PERIOD            (BLOCK_BEGIN)                        
 #define BLOCK_ALT_DEST_PTR      (BLOCK_PERIOD       + _TS_SIZE_)   
-#define BLOCK_CMDQ_IL_PTR       (BLOCK_ALT_DEST_PTR + _PTR_SIZE_)   
-#define BLOCK_CMDQ_HI_PTR       (BLOCK_CMDQ_IL_PTR  + _PTR_SIZE_)   
-#define BLOCK_CMDQ_LO_PTR       (BLOCK_CMDQ_HI_PTR  + _PTR_SIZE_)   
-#define BLOCK_CMDQ_WR_IDXS      (BLOCK_CMDQ_LO_PTR  + _PTR_SIZE_)   
+#define BLOCK_CMDQ_LO_PTR       (BLOCK_ALT_DEST_PTR + _PTR_SIZE_)   
+#define BLOCK_CMDQ_HI_PTR       (BLOCK_CMDQ_LO_PTR  + _PTR_SIZE_)   
+#define BLOCK_CMDQ_IL_PTR       (BLOCK_CMDQ_HI_PTR  + _PTR_SIZE_)   
+#define BLOCK_CMDQ_WR_IDXS      (BLOCK_CMDQ_IL_PTR  + _PTR_SIZE_)   
 #define BLOCK_CMDQ_RD_IDXS      (BLOCK_CMDQ_WR_IDXS + _32b_SIZE_)   
-                                                                
+#define BLOCK_CMDQ_PTRS          BLOCK_CMDQ_LO_PTR
+
+#define Q_IDX_MAX_OVF          3
+#define Q_IDX_MAX              2
+#define Q_IDX_MAX_OVF_MSK      ~(-(1 << Q_IDX_MAX_OVF))
+#define Q_IDX_MAX_MSK          ~(-(1 << Q_IDX_MAX))
+
 ///// CMDQ Meta Node 
 //
 // Array of pointers to cmd buffer nodes
@@ -257,9 +263,13 @@
 #define ACT_TYPE_POS            16
 #define ACT_TYPE_SMSK           (ACT_TYPE_MSK << ACT_TYPE_POS)
 
+#define ACT_PRIO_MSK            0x2
+#define ACT_PRIO_POS            20
+#define ACT_PRIO_SMSK           (ACT_FPRIO_MSK << ACT_PRIO_POS)
+
 //Cmd Action Flags - type specific bit definitions
 
-#define ACT_BITS_SPECIFIC_POS   20
+#define ACT_BITS_SPECIFIC_POS   24
   
 //Command Flush Buffer Priority
 #define ACT_FLUSH_PRIO_MSK      0x7

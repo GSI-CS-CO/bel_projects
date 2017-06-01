@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
 
 
 
-  bool doUpload = false, readBlock = false;
+  bool doUpload = false, readBlock = false, verbose = false;
 
   int opt;
   const char *program = argv[0];
@@ -82,7 +82,7 @@ int main(int argc, char* argv[]) {
   uint32_t cpuIdx = 0;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "b:c:o:w")) != -1) {
+   while ((opt = getopt(argc, argv, "vb:c:o:w")) != -1) {
       switch (opt) {
          case 'w':
             doUpload = true;
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
             readBlock = true;
             break;       
          case 'v':
-            //verbose = 1;
+            verbose = 1;
             break;
          case 't':
             //show_time = 1;
@@ -201,10 +201,7 @@ int main(int argc, char* argv[]) {
   dp.property("res",  boost::get(&myVertex::res, g));
   //Commands
   dp.property("tValid",  boost::get(&myVertex::tValid, g));
-
-  // Leave out Flush for now
- 
-  //Flow, Noop
+  dp.property("prio",  boost::get(&myVertex::prio, g));
   dp.property("qty",  boost::get(&myVertex::qty, g));
 
   //Wait
@@ -246,6 +243,10 @@ int main(int argc, char* argv[]) {
     std::cout << "Processing local file <" << inputFilename << "> ..." << std::endl;  
 
     mmu.prepareUpload(); 
+
+    if(verbose) {
+      BOOST_FOREACH( vertex_t v, vertices(mmu.getUpGraph()) ) hexDump(mmu.getUpGraph()[v].name.c_str(), mmu.lookupName(mmu.getUpGraph()[v].name)->b, _MEM_BLOCK_SIZE);
+    }
 
     std::cout << "... Done. " << std::endl;
     
@@ -321,8 +322,8 @@ int main(int argc, char* argv[]) {
             uint8_t wrOffs = (pb->getWrIdxs() >> 16) & 0xff;
 
             ptrdiff_t prio  = BLOCK_CMDQ_IL_PTR;
-            ptrdiff_t bufIdx   = wrOffs / (_MEM_BLOCK_SIZE / _T_CMD_SIZE  );
-            ptrdiff_t elemIdx  = wrOffs % (_MEM_BLOCK_SIZE / _T_CMD_SIZE  );
+            ptrdiff_t bufIdx   = wrOffs / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
+            ptrdiff_t elemIdx  = wrOffs % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
 
             uint32_t bufListAdr, bufAdr, wrAdr;
             std::cout << blockName << " -- IL --> ";
@@ -332,7 +333,7 @@ int main(int argc, char* argv[]) {
             
             auto* qb = mmu.lookupAdr(bufAdr);
             if(qb != NULL) {
-              wrAdr = bufAdr + CMDB_CMD_ARRAY  + elemIdx * _T_CMD_SIZE ;
+              wrAdr = bufAdr + CMDB_CMD_ARRAY  + elemIdx * _T_CMD_SIZE_ ;
               std::cout << g[qb->v].name << " --+" << elemIdx << "e--> WrAdr 0x" << std::hex << std::setfill('0') << std::setw(6) << mmu.adr2extAdr(wrAdr) << std::endl;
               hexDump ("Qbuf", qb->b, _MEM_BLOCK_SIZE);  
 

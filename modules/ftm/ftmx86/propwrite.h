@@ -98,6 +98,7 @@ template <class Name>
       if      (type[v] == sDD) out << "red";
       else if (type[v] == sAD) out << "black";
       else if (type[v] == sTG) out << "blue";
+      else if (type[v] == sFD) out << "magenta";
       else out << "grey\", label=\"" << type[v];
       out <<  "\"]";   
     }

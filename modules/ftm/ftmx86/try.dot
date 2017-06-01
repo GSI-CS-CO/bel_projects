@@ -1,5 +1,5 @@
 digraph G {
-graph [root="Demo", rankdir=LR, nodesep=0.6, mindist=1.0, ranksep=1.0, overlap=false]
+graph [root="Evt_B2_01", rankdir=LR, nodesep=0.6, mindist=1.0, ranksep=1.0, overlap=false]
 node [shape="rectangle", style="filled"]
 B1 [type="Block", fillcolor="white", t_Period=13000];
 B2 [type="Block", fillcolor="white", t_Period=10000];
@@ -20,7 +20,7 @@ Cmd_B8_02 [shape="oval", fillcolor="white", t_offs=300, flags=3, type="Flow", co
 Evt_B1_00 [shape="oval", fillcolor="white", t_offs=300, flags=2, type="TMsg", color="black", id=40, par=818181, tef=4, res=1000];
 Evt_B1_01 [shape="oval", fillcolor="white", t_offs=200, flags=2, type="TMsg", color="black", id=1000, par=18181818, tef=8, res=1000];
 Evt_B1_03 [shape="oval", fillcolor="white", t_offs=800, flags=2, type="TMsg", color="black", id=51, par=987, tef=1, res=1000];
-Evt_B2_01 [shape="oval", fillcolor="white", t_offs=300, flags=2, type="TMsg", color="black", id=40, par=2, tef=2, res=1000];
+Evt_B2_01 [shape="oval", fillcolor="red", t_offs=300, flags=2, type="TMsg", color="black", id=40, par=2, tef=2, res=1000];
 Evt_B3_01 [shape="oval", fillcolor="white", t_offs=1000, flags=2, type="TMsg", color="black", id=87878, par=500, tef=5, res=1000];
 Evt_B3_02 [shape="oval", fillcolor="white", t_offs=1000, flags=2, type="TMsg", color="black", id=42, par=24, tef=4, res=0];
 Evt_B3_03 [shape="oval", fillcolor="white", t_offs=1200, flags=2, type="TMsg", color="black", id=42, par=24, tef=4, res=0];
@@ -34,12 +34,12 @@ B2->B2_QBl_Lo [type="priolo", color="grey", label="Lo Qbuf List"];
 B8->Evt_B2_01 [type="defdst", color="red"];
 
 Cmd_B8_02->B8 [type="defdst", color="red"];
-Cmd_B8_02->B2 [type="target", color="blue"];
+Cmd_B8_02->B2 [type="target", color="blue", label="target"];
 Cmd_B8_02->Evt_B1_00 [type="flowdst", color="magenta", label="flow dest"];
 
 
 Cmd_B1_02->Evt_B1_03 [type="defdst", color="red"];
-Cmd_B1_02->B2 [type="target", color="blue"];
+Cmd_B1_02->B2 [type="target", color="blue", label="target"];
 Cmd_B1_02->Evt_B8_01 [type="flowdst", color="magenta", label="flow dest"];
 
 Evt_B1_00->Evt_B1_01 [type="defdst", color="red"];

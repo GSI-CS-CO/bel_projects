@@ -44,7 +44,7 @@ void VisitorVertexWriter::visit(const Noop& el) const {
 
 void VisitorVertexWriter::visit(const Flow& el) const  { 
   eventString((Event&)el);
-  out << ", type=\"Flow\", color=\"blue\"";
+  out << ", type=\"Flow\", color=\"magenta\"";
   commandString((Command&) el);
   out << ", qty=" << el.getQty();
   out << "]";
@@ -60,7 +60,7 @@ void VisitorVertexWriter::visit(const Flush& el) const {
 
 void VisitorVertexWriter::visit(const Wait& el) const {
   out << " [shape=\"oval\"";
-  if(el.isPainted()) out << ", fillcolor=\"green\"";
+  if(el.isPainted()) out << ", color=\"green\"";
   else out << ", fillcolor=\"white\"";
   out << ", style=dashed, flags=" << el.getFlags();
   out << "]";

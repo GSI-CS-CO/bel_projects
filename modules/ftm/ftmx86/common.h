@@ -118,6 +118,7 @@ typedef struct {
   uint8_t frmLo, toLo; 
 
   //Flow, Noop
+  uint8_t prio;
   uint16_t qty;
 
   //Wait
