@@ -94,8 +94,8 @@ int main(int argc, char** argv) {
             show_time = 1;
             break;
          case 'c':
-            cpuId = strtol(optarg, &value_end, 0);
-            if (*value_end || cpuId < -1 ||cpuId > 32) {
+            cpuId = atoll(optarg);
+            if (cpuId < -1 ||cpuId > 32) {
               fprintf(stderr, "%s: invalid cpu id -- '%s'\n", program, optarg);
               error = 1;
             }

@@ -26,7 +26,7 @@
 
 #define LM32_NULL_PTR           0x0
 
-#define _THR_QTY_ 8
+#define _THR_QTY_               8
 
 //////////////////////////////////////////////////////////////////////
 //"struct" types                                                    //
@@ -43,7 +43,7 @@
 #define T_TD_NODE_PTR           (T_TD_FLAGS     + _32b_SIZE_) //RD Host, RW LM32
 #define T_TD_DEADLINE           (T_TD_NODE_PTR  + _PTR_SIZE_) //RD Host, RW LM32
 #define T_TD_CURRTIME           (T_TD_DEADLINE  + _TS_SIZE_)  //RD Host, RW LM32
-#define T_TD_PREPTIME           (T_TD_DEADLINE    + _TS_SIZE_)  //RD Host, RW LM32
+#define T_TD_PREPTIME           (T_TD_DEADLINE  + _TS_SIZE_)  //RD Host, RW LM32
 #define _T_TD_SIZE_             (T_TD_PREPTIME  + _TS_SIZE_)
 
 //Thread Starter Stage
@@ -59,7 +59,7 @@
 #define T_SYNC_SRC              (0)                       
 #define T_SYNC_DST              (T_SYNC_SRC   + _PTR_SIZE_)  
 #define T_SYNC_TIME             (T_SYNC_DST   + _PTR_SIZE_)  
-#define _T_SYNC_SIZE            (T_SYNC_TIME  + _TS_SIZE_)
+#define _T_SYNC_SIZE_           (T_SYNC_TIME  + _TS_SIZE_)
 
 //Command (the received format)
 #define T_CMD_TIME              (0)                     // time this command becomes valid
@@ -248,10 +248,12 @@
 //////////////////////////////////////////////////////////////////////
 
 // Action Flags - Type field Enums
-#define ACT_TYPE_NOOP           0x0  // noop command
-#define ACT_TYPE_FLOW           0x1  // flow change command
-#define ACT_TYPE_FLUSH          0x2  // flush command 
-#define ACT_TYPE_WAIT           0x3  // wait command
+#define ACT_TYPE_UNKNOWN        0 // undefined
+#define ACT_TYPE_NOOP           (ACT_TYPE_UNKNOWN +1)  // noop command
+#define ACT_TYPE_FLOW           (ACT_TYPE_NOOP +1)  // flow change command
+#define ACT_TYPE_FLUSH          (ACT_TYPE_FLOW +1)  // flush command 
+#define ACT_TYPE_WAIT           (ACT_TYPE_FLUSH +1)  // wait command
+#define _ACT_TYPE_END_          (ACT_TYPE_WAIT +1)  // Number of Action types
 
 //Action Quantity
 #define ACT_QTY_MSK             0xffff
@@ -263,9 +265,15 @@
 #define ACT_TYPE_POS            16
 #define ACT_TYPE_SMSK           (ACT_TYPE_MSK << ACT_TYPE_POS)
 
+//Action Prirority (which Q at target it is going to)
 #define ACT_PRIO_MSK            0x2
 #define ACT_PRIO_POS            20
-#define ACT_PRIO_SMSK           (ACT_FPRIO_MSK << ACT_PRIO_POS)
+#define ACT_PRIO_SMSK           (ACT_PRIO_MSK << ACT_PRIO_POS)
+
+//Action changes are permanent (1) or temporary (0) (Flow -> DEF_DEST_PTR, Wait -> BLOCK_PERIOD (only use with relative wait!))
+#define ACT_CHP_MSK            0x1
+#define ACT_CHP_POS            23
+#define ACT_CHP_SMSK           (ACT_CHP_MSK << ACT_CHP_POS)
 
 //Cmd Action Flags - type specific bit definitions
 
@@ -299,25 +307,25 @@
 
 // Node Flags - Type field Enums. Sparsity allows using array of handler function in LM32
 //Unknown/Undef Node Enum
-#define NODE_TYPE_UNKNOWN       0x00  // unknown content, ERROR
+#define NODE_TYPE_UNKNOWN       0  // unknown content, ERROR
 // Defined but unspecified data
-#define NODE_TYPE_RAW           0x01  // raw data, do not interprete DEV ONLY!
+#define NODE_TYPE_RAW           (NODE_TYPE_UNKNOWN  +1)  // raw data, do not interprete DEV ONLY!
 //Timing Message Enums
-#define NODE_TYPE_TMSG          0x02  // dispatches a timing message
+#define NODE_TYPE_TMSG          (NODE_TYPE_RAW      +1)  // dispatches a timing message
 //Command Type Enums
-#define NODE_TYPE_CNOOP         0x03  // sends a noop command to designated block
-#define NODE_TYPE_CFLOW         0x04  // sends a flow change command to designated block
-#define NODE_TYPE_CFLUSH        0x05  // sends a flush command to designated block
-#define NODE_TYPE_CWAIT         0x06  // sends a wait command to designated block 
+#define NODE_TYPE_CNOOP         (NODE_TYPE_TMSG     +1)   // sends a noop command to designated block
+#define NODE_TYPE_CFLOW         (NODE_TYPE_CNOOP    +1)   // sends a flow change command to designated block
+#define NODE_TYPE_CFLUSH        (NODE_TYPE_CFLOW    +1)   // sends a flush command to designated block
+#define NODE_TYPE_CWAIT         (NODE_TYPE_CFLUSH   +1)   // sends a wait command to designated block 
 //Shared Meta Type Enums
-#define NODE_TYPE_BLOCK         0x07  // shows time block tPeriod and if necessary links to Q Meta and altdest nodes
-#define NODE_TYPE_QUEUE         0x08  // a command queue meta node (array of pointers to buffer nodes)
-#define NODE_TYPE_QBUF          0x09  // a buffer for a command queue
-#define NODE_TYPE_SHARE         0x0a  // share a value via MSI to multiple memory destinations
+#define NODE_TYPE_BLOCK         (NODE_TYPE_CWAIT    +1)   // shows time block tPeriod and if necessary links to Q Meta and altdest nodes
+#define NODE_TYPE_QUEUE         (NODE_TYPE_BLOCK    +1)   // a command queue meta node (array of pointers to buffer nodes)
+#define NODE_TYPE_QBUF          (NODE_TYPE_QUEUE    +1)   // a buffer for a command queue
+#define NODE_TYPE_SHARE         (NODE_TYPE_QBUF     +1)   // share a value via MSI to multiple memory destinations
 //Host only Meta Type Enums
-#define NODE_TYPE_ALTDST        0x0b  // lists all alternative destinations of a decision block
-#define NODE_TYPE_SYNC          0x0c  // used to denote the time offset for pattern rows
-
+#define NODE_TYPE_ALTDST        (NODE_TYPE_SHARE    +1)   // lists all alternative destinations of a decision block
+#define NODE_TYPE_SYNC          (NODE_TYPE_ALTDST   +1)   // used to denote the time offset for pattern rows
+#define _NODE_TYPE_END_         (NODE_TYPE_SYNC     +1)   // Node type Quantity
 //Node type
 #define NFLG_TYPE_MSK           0xff
 #define NFLG_TYPE_POS           0
