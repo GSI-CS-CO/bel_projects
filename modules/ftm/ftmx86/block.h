@@ -17,10 +17,10 @@ protected:
 
 public:
   Block(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) 
-  : Node(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK << NFLG_TYPE_POS))), tPeriod(0),
+  : Node(name, hash, b, flags), tPeriod(0),
     rdIdxIl(0), rdIdxHi(0), rdIdxLo(0), wrIdxIl(0), wrIdxHi(0), wrIdxLo(0) {}
   Block(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tPeriod) 
-  : Node(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK << NFLG_TYPE_POS))), tPeriod(tPeriod),
+  : Node(name, hash, b, flags), tPeriod(tPeriod),
     rdIdxIl(0), rdIdxHi(0), rdIdxLo(0), wrIdxIl(0), wrIdxHi(0), wrIdxLo(0) {}
   ~Block()  {};
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
@@ -40,7 +40,25 @@ public:
 
 };
 
+class BlockFixed : public Block {
 
+public:
+  BlockFixed(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) 
+  : Block(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK_FIXED << NFLG_TYPE_POS))) {}
+  BlockFixed(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tPeriod) 
+  : Block(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK_FIXED << NFLG_TYPE_POS)), tPeriod) {}
+
+};
+
+class BlockAlign : public Block {
+
+public:
+  BlockAlign(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) 
+  : Block(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK_ALIGN << NFLG_TYPE_POS))) {}
+  BlockAlign(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tPeriod) 
+  : Block(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK_ALIGN << NFLG_TYPE_POS)), tPeriod) {}
+
+};
 
 
 

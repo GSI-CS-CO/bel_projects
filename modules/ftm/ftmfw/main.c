@@ -16,6 +16,9 @@ uint64_t SHARED dummy = 0;
 extern uint32_t*       _startshared[];
 extern uint32_t*       _endshared[];
 
+inline uint32_t hiW(uint64_t dword) {return (uint32_t)(dword >> 32);}
+inline uint32_t loW(uint64_t dword) {return (uint32_t)dword;}
+
 
 static uint32_t getNextThreadIdx() {
   return 0;
@@ -80,7 +83,7 @@ void init()
 }
 
 uint64_t dlEvt(uint32_t* node, uint32_t* thrData) {
-  return *(uint64_t*)&thrData[T_TD_DEADLINE] += *(uint64_t*)&node[EVT_OFFS_TIME];
+  return *(uint64_t*)&thrData[T_TD_DEADLINE] = *(uint64_t*)&thrData[T_TD_CURRTIME] + *(uint64_t*)&node[EVT_OFFS_TIME];
 }
 
 uint64_t dlBlock(uint32_t* node, uint32_t* thrData) {
@@ -107,10 +110,17 @@ uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 }
 
 uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
-  uint32_t* ret;
-T_CMD_WAIT_TIME
-  ret = (uint32_t*)cmd[T_CMD_FLOW_DEST >> 2]; 
- 
+
+  // the block period is added in blockFixed or blockAligned.
+  // we must therefore subtract it here if we modify current time, as execWait is optional
+
+  if ( cmd[T_CMD_ACT >> 2] & ACT_WAIT_ABS_SMSK) {
+    *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD];                      //1. set absolute value - block period
+  } else {
+    if( cmd[T_CMD_ACT >> 2] & ACT_CHP_SMSK) *(uint64_t*)&node[BLOCK_PERIOD] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2];                         //2. set new block period
+    else                *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] += *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD]; //3. add temporary block period - block period
+  }
+   
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 
 }
@@ -156,14 +166,46 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK;
   mprintf("#%02u: Sending Evt 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], node[NODE_DEF_DEST_PTR >> 2]);
 
-
-
-  //TODO Send Evt
-
+  /*
+  //Diagnostic Event? insert PQ Message counter. Different device, can't be placed inside atomic!
+  if (pMsg->id == DIAG_PQ_MSG_CNT) tmpPar = *pMsgCntPQ;
+  else                             tmpPar = pMsg->par;  
+  */
+  atomic_on();
+  *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_ID_HI >> 2];
+  *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_ID_LO >> 2];
+  *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_PAR_HI >> 2];
+  *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_PAR_LO >> 2];
+  *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_TEF >> 2];
+  *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_RES >> 2];
+  *(pFpqData + (PRIO_DAT_TS_HI>>2)) = thrData[T_TD_DEADLINE_HI >> 2];
+  *(pFpqData + (PRIO_DAT_TS_LO>>2)) = thrData[T_TD_DEADLINE_LO >> 2];
+  atomic_off();
+    
+  ++thrData[T_TD_MSG_CNT >> 2];
+   
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 }
 
+uint32_t* blockFixed(uint32_t* node, uint32_t* thrData) {
+  block(node, thrData);
+  *(uint64_t*)&thrData[T_TD_CURRTIME] += *(uint64_t*)&node[BLOCK_PERIOD >> 2];
+}  
 
+uint32_t* blockAligned(uint32_t* node, uint32_t* thrData) {
+  block(node, thrData);
+  uint64_t      *tx =  (uint64_t*)&thrData[T_TD_CURRTIME];  // current time
+  uint64_t       Tx = *(uint64_t*)&node[BLOCK_PERIOD];      // block duration
+  const uint64_t t0 = 0;                                    // alignment offset
+  const uint64_t T0 = 10000;                                // alignment period
+
+  //goal: add block duration to current time, then round result up to alignment offset + nearest multiple of alignment period
+  uint64_t diff = (*tx + Tx) - t0 + (T0 - 1) ; // 1. add block period as minimum advancement 2. subtract alignment offset for division 3. add alignment period -1 for ceil effect  
+  *tx = diff - (diff % T) + t0;                // 4. subtract remainder of modulo for rounding 5. add alignment offset again  
+
+   
+  
+}
 
 uint32_t* block(uint32_t* node, uint32_t* thrData) {
   //mprintf("#%02u: Checking Block 0x%08x \n", cpuId, node[NODE_HASH >> 2]);

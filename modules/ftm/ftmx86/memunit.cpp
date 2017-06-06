@@ -166,7 +166,8 @@
           case NODE_TYPE_CFLOW   : gDown[v].np =(node_ptr) new       Flow(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
           case NODE_TYPE_CFLUSH  : gDown[v].np =(node_ptr) new      Flush(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
           case NODE_TYPE_CWAIT   : gDown[v].np =(node_ptr) new       Wait(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_BLOCK   : gDown[v].np =(node_ptr) new      Block(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_BLOCK_FIXED   : gDown[v].np =(node_ptr) new      BlockFixed(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_BLOCK_ALIGN   : gDown[v].np =(node_ptr) new      BlockAlign(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
           case NODE_TYPE_QUEUE   : gDown[v].np =(node_ptr) new   CmdQMeta(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
           case NODE_TYPE_ALTDST  : gDown[v].np =(node_ptr) new   DestList(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
           case NODE_TYPE_QBUF    : gDown[v].np =(node_ptr) new CmdQBuffer(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); break;
@@ -294,17 +295,19 @@
 
        
 
-      if      (cmp == "tmsg")     {gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].id, gUp[v].par, gUp[v].tef, gUp[v].res); }
-      else if (cmp == "noop")     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio, gUp[v].qty); }
-      else if (cmp == "flow")     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio, gUp[v].qty); }
-      else if (cmp == "flush")    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio,
-                                                                         gUp[v].qIl,                gUp[v].qHi,                gUp[v].qLo, 
-                                                                         gUp[v].frmIl, gUp[v].toIl, gUp[v].frmHi, gUp[v].toHi, gUp[v].frmLo, gUp[v].toLo ); }
-      else if (cmp == "wait")     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio, gUp[v].tWait); }
-      else if (cmp == "block")    {gUp[v].np = (node_ptr) new      Block(gUp[v].name, x->hash, x->b, 0, gUp[v].tPeriod ); }
-      else if (cmp == "qinfo")    {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, x->hash, x->b, 0);}
-      else if (cmp == "listdst")  {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, x->hash, x->b, 0);}
-      else if (cmp == "qbuf")     {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, x->hash, x->b, 0);}
+      if      (cmp == "tmsg")     {gUp[v].np = (node_ptr) new       TimingMsg(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].id, gUp[v].par, gUp[v].tef, gUp[v].res); }
+      else if (cmp == "noop")     {gUp[v].np = (node_ptr) new            Noop(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio, gUp[v].qty); }
+      else if (cmp == "flow")     {gUp[v].np = (node_ptr) new            Flow(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio, gUp[v].qty); }
+      else if (cmp == "flush")    {gUp[v].np = (node_ptr) new           Flush(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio,
+                                                                              gUp[v].qIl,                gUp[v].qHi,                gUp[v].qLo, 
+                                                                              gUp[v].frmIl, gUp[v].toIl, gUp[v].frmHi, gUp[v].toHi, gUp[v].frmLo, gUp[v].toLo ); }
+      else if (cmp == "wait")     {gUp[v].np = (node_ptr) new            Wait(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio, gUp[v].tWait); }
+      else if (cmp == "block")    {gUp[v].np = (node_ptr) new      BlockFixed(gUp[v].name, x->hash, x->b, 0, gUp[v].tPeriod ); }
+      else if (cmp == "blockfixed")    {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, x->hash, x->b, 0, gUp[v].tPeriod ); }
+      else if (cmp == "blockalign")    {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, x->hash, x->b, 0, gUp[v].tPeriod ); }
+      else if (cmp == "qinfo")    {gUp[v].np = (node_ptr) new        CmdQMeta(gUp[v].name, x->hash, x->b, 0);}
+      else if (cmp == "listdst")  {gUp[v].np = (node_ptr) new        DestList(gUp[v].name, x->hash, x->b, 0);}
+      else if (cmp == "qbuf")     {gUp[v].np = (node_ptr) new      CmdQBuffer(gUp[v].name, x->hash, x->b, 0);}
       else if (cmp == "meta")     {std::cerr << "not yet implemented " << gUp[v].type << std::endl;}
       else                        {std::cerr << "Node type 0x" << std::hex << cmp << " not supported! " << std::endl;} 
 

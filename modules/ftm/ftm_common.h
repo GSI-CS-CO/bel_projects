@@ -40,8 +40,11 @@
 
 //Thread Data
 #define T_TD_FLAGS              (0)                           //RD Host, RW LM32
-#define T_TD_NODE_PTR           (T_TD_FLAGS     + _32b_SIZE_) //RD Host, RW LM32
+#define T_TD_MSG_CNT            (T_TD_FLAGS     + _32b_SIZE_) //RD Host, RW LM32
+#define T_TD_NODE_PTR           (T_TD_MSG_CNT   + _64b_SIZE_) //RD Host, RW LM32
 #define T_TD_DEADLINE           (T_TD_NODE_PTR  + _PTR_SIZE_) //RD Host, RW LM32
+#define T_TD_DEADLINE_HI        (T_TD_DEADLINE  + 0) //RD Host, RW LM32
+#define T_TD_DEADLINE_LO        (T_TD_DEADLINE_HI + _32b_SIZE_) //RD Host, RW LM32
 #define T_TD_CURRTIME           (T_TD_DEADLINE  + _TS_SIZE_)  //RD Host, RW LM32
 #define T_TD_PREPTIME           (T_TD_DEADLINE  + _TS_SIZE_)  //RD Host, RW LM32
 #define _T_TD_SIZE_             (T_TD_PREPTIME  + _TS_SIZE_)
@@ -147,8 +150,8 @@
 ///// Alternative Destinations Meta Node
 //
 // Host only, array of pointers to nodes
-#define DST_ARRAY            (NODE_BEGIN)
-#define DST_ARRAY_END        (DST_ARRAY + 10 * _PTR_SIZE_)
+#define DST_ARRAY               (NODE_BEGIN)
+#define DST_ARRAY_END           (DST_ARRAY + 10 * _PTR_SIZE_)
 
 ///// Sync Meta Node
 //
@@ -157,15 +160,19 @@
 
 //////////////////////////////////////////////////////////////////////
 //// Generic Event Attributes ////////////////////////////////////////
-#define EVT_BEGIN        (NODE_BEGIN) 
+#define EVT_BEGIN               (NODE_BEGIN) 
 #define EVT_OFFS_TIME           (EVT_BEGIN)                     
 #define EVT_HDR_END             (EVT_OFFS_TIME + _TS_SIZE_)       
 
 //// Timing Msg
 //
-#define TMSG_BEGIN        (EVT_HDR_END)
-#define TMSG_ID                 (TMSG_BEGIN)                        
-#define TMSG_PAR                (TMSG_ID      + _64b_SIZE_)          
+#define TMSG_BEGIN              (EVT_HDR_END)
+#define TMSG_ID                 (TMSG_BEGIN)
+#define TMSG_ID_HI              (TMSG_ID      + 0)   
+#define TMSG_ID_LO              (TMSG_ID_HI   + _32b_SIZE_)
+#define TMSG_PAR                (TMSG_ID      + _64b_SIZE_)
+#define TMSG_PAR_HI             (TMSG_PAR     + 0)   
+#define TMSG_PAR_LO             (TMSG_PAR_HI  + _32b_SIZE_)          
 #define TMSG_TEF                (TMSG_PAR     + _64b_SIZE_)          
 #define TMSG_RES                (TMSG_TEF     + _32b_SIZE_)          
                                                                
@@ -174,9 +181,11 @@
 //// Generic Command Attributes //////////////////////////////////////
 #define CMD_BEGIN               (EVT_HDR_END)
 #define CMD_TARGET              (CMD_BEGIN) 
-#define CMD_VALID_TIME          (CMD_TARGET      + _PTR_SIZE_)                          
-#define CMD_ACT                 (CMD_VALID_TIME    + _TS_SIZE_)           
-#define CMD_HDR_END             (CMD_ACT        + _32b_SIZE_)           
+#define CMD_VALID_TIME          (CMD_TARGET         + _PTR_SIZE_)
+#define CMD_VALID_TIME_HI       (CMD_VALID_TIME     + 0)
+#define CMD_VALID_TIME_LO       (CMD_VALID_TIME_HI  + _32b_SIZE_)
+#define CMD_ACT                 (CMD_VALID_TIME     + _TS_SIZE_)           
+#define CMD_HDR_END             (CMD_ACT            + _32b_SIZE_)           
                                                              
 
 //// Cmd Flow ////////////////////////////////////////////////////////
@@ -207,7 +216,9 @@
                                                               
 //// Cmd Wait - Specific Attributes //////////////////////////////////
 //
-#define CMD_WAIT_TIME           (CMD_HDR_END)                       
+#define CMD_WAIT_TIME           (CMD_HDR_END)
+#define CMD_WAIT_TIME_HI        (CMD_WAIT_TIME     + 0)
+#define CMD_WAIT_TIME_LO        (CMD_WAIT_TIME_HI  + _32b_SIZE_)                       
                                                               
 //////////////////////////////////////////////////////////////////////
 
@@ -309,23 +320,24 @@
 //Unknown/Undef Node Enum
 #define NODE_TYPE_UNKNOWN       0  // unknown content, ERROR
 // Defined but unspecified data
-#define NODE_TYPE_RAW           (NODE_TYPE_UNKNOWN  +1)  // raw data, do not interprete DEV ONLY!
+#define NODE_TYPE_RAW           (NODE_TYPE_UNKNOWN      +1)  // raw data, do not interprete DEV ONLY!
 //Timing Message Enums
-#define NODE_TYPE_TMSG          (NODE_TYPE_RAW      +1)  // dispatches a timing message
+#define NODE_TYPE_TMSG          (NODE_TYPE_RAW          +1)  // dispatches a timing message
 //Command Type Enums
-#define NODE_TYPE_CNOOP         (NODE_TYPE_TMSG     +1)   // sends a noop command to designated block
-#define NODE_TYPE_CFLOW         (NODE_TYPE_CNOOP    +1)   // sends a flow change command to designated block
-#define NODE_TYPE_CFLUSH        (NODE_TYPE_CFLOW    +1)   // sends a flush command to designated block
-#define NODE_TYPE_CWAIT         (NODE_TYPE_CFLUSH   +1)   // sends a wait command to designated block 
+#define NODE_TYPE_CNOOP         (NODE_TYPE_TMSG         +1)   // sends a noop command to designated block
+#define NODE_TYPE_CFLOW         (NODE_TYPE_CNOOP        +1)   // sends a flow change command to designated block
+#define NODE_TYPE_CFLUSH        (NODE_TYPE_CFLOW        +1)   // sends a flush command to designated block
+#define NODE_TYPE_CWAIT         (NODE_TYPE_CFLUSH       +1)   // sends a wait command to designated block 
 //Shared Meta Type Enums
-#define NODE_TYPE_BLOCK         (NODE_TYPE_CWAIT    +1)   // shows time block tPeriod and if necessary links to Q Meta and altdest nodes
-#define NODE_TYPE_QUEUE         (NODE_TYPE_BLOCK    +1)   // a command queue meta node (array of pointers to buffer nodes)
-#define NODE_TYPE_QBUF          (NODE_TYPE_QUEUE    +1)   // a buffer for a command queue
-#define NODE_TYPE_SHARE         (NODE_TYPE_QBUF     +1)   // share a value via MSI to multiple memory destinations
+#define NODE_TYPE_BLOCK_FIXED   (NODE_TYPE_CWAIT        +1)   // shows time block tPeriod and if necessary links to Q Meta and altdest nodes
+#define NODE_TYPE_BLOCK_ALIGN   (NODE_TYPE_BLOCK_FIXED  +1)   // shows time block tPeriod and if necessary links to Q Meta and altdest nodes
+#define NODE_TYPE_QUEUE         (NODE_TYPE_BLOCK_ALIGN  +1)   // a command queue meta node (array of pointers to buffer nodes)
+#define NODE_TYPE_QBUF          (NODE_TYPE_QUEUE        +1)   // a buffer for a command queue
+#define NODE_TYPE_SHARE         (NODE_TYPE_QBUF         +1)   // share a value via MSI to multiple memory destinations
 //Host only Meta Type Enums
-#define NODE_TYPE_ALTDST        (NODE_TYPE_SHARE    +1)   // lists all alternative destinations of a decision block
-#define NODE_TYPE_SYNC          (NODE_TYPE_ALTDST   +1)   // used to denote the time offset for pattern rows
-#define _NODE_TYPE_END_         (NODE_TYPE_SYNC     +1)   // Node type Quantity
+#define NODE_TYPE_ALTDST        (NODE_TYPE_SHARE        +1)   // lists all alternative destinations of a decision block
+#define NODE_TYPE_SYNC          (NODE_TYPE_ALTDST       +1)   // used to denote the time offset for pattern rows
+#define _NODE_TYPE_END_         (NODE_TYPE_SYNC         +1)   // Node type Quantity
 //Node type
 #define NFLG_TYPE_MSK           0xff
 #define NFLG_TYPE_POS           0
