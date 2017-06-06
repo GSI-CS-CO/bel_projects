@@ -40,6 +40,8 @@ public:
 
 };
 
+// except type field in fĺags, these are identical to superclass
+
 class BlockFixed : public Block {
 
 public:

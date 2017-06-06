@@ -9,12 +9,39 @@
 #include "aux.h"
 #include "dbg.h"
 #include "../ftm_common.h"
- 
+#include "prio_regs.h"
+
 unsigned int cpuId, cpuQty, heapCap;
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED dummy = 0;
 extern uint32_t*       _startshared[];
 extern uint32_t*       _endshared[];
+
+typedef uint64_t  (*deadlineFuncPtr) ( uint32_t*, uint32_t* );
+typedef uint32_t* (*nodeFuncPtr)  ( uint32_t*, uint32_t* );
+typedef uint32_t* (*actionFuncPtr)( uint32_t*, uint32_t*, uint32_t* );
+
+deadlineFuncPtr deadlineFuncs[_NODE_TYPE_END_];
+nodeFuncPtr         nodeFuncs[_NODE_TYPE_END_];
+actionFuncPtr      actionFuncs[_ACT_TYPE_END_];
+
+// TODO clean this up
+// If there is a correct way to return literals from function pointer array, I couldn't find it. Use this workaround for undefined elements
+uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData) { return NULL;}
+uint64_t dummyDeadlineFunc (uint32_t* node, uint32_t* thrData) { return -1;}
+uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData) { return NULL;}
+
+#define PRIO_BIT_ENABLE     (1<<0)
+#define PRIO_BIT_MSG_LIMIT  (1<<1)
+#define PRIO_BIT_TIME_LIMIT (1<<2)
+
+#define PRIO_DAT_STD     0x00
+#define PRIO_DAT_TS_HI   0x04    
+#define PRIO_DAT_TS_LO   0x08 
+#define PRIO_DRP_TS_HI   0x14    
+#define PRIO_DRP_TS_LO   0x18  
+
+#define DIAG_PQ_MSG_CNT  0x0FA62F9000000000
 
 inline uint32_t hiW(uint64_t dword) {return (uint32_t)(dword >> 32);}
 inline uint32_t loW(uint64_t dword) {return (uint32_t)dword;}
@@ -94,8 +121,8 @@ uint32_t* execNoop(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 }
 
-uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint64_t* thrTime) {
-  uint32_t* ret = (uint32_t*)e[T_CMD_FLOW_DEST >> 2]; 
+uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
+  uint32_t* ret = (uint32_t*)cmd[T_CMD_FLOW_DEST >> 2]; 
   if(node[NODE_FLAGS >> 2] & ACT_CHP_SMSK) node[NODE_DEF_DEST_PTR >> 2] = (uint32_t)ret;
   return ret;
 
@@ -104,7 +131,8 @@ uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint64_t* thrTime) {
 uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   uint32_t* ret;
 
-  ret = (uint32_t*)e[T_CMD_FLOW_DEST >> 2]; 
+  //TODO: FLUSH
+  ret = (uint32_t*)cmd[T_CMD_FLOW_DEST >> 2]; 
   return ret;
 
 }
@@ -187,25 +215,7 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 }
 
-uint32_t* blockFixed(uint32_t* node, uint32_t* thrData) {
-  block(node, thrData);
-  *(uint64_t*)&thrData[T_TD_CURRTIME] += *(uint64_t*)&node[BLOCK_PERIOD >> 2];
-}  
 
-uint32_t* blockAligned(uint32_t* node, uint32_t* thrData) {
-  block(node, thrData);
-  uint64_t      *tx =  (uint64_t*)&thrData[T_TD_CURRTIME];  // current time
-  uint64_t       Tx = *(uint64_t*)&node[BLOCK_PERIOD];      // block duration
-  const uint64_t t0 = 0;                                    // alignment offset
-  const uint64_t T0 = 10000;                                // alignment period
-
-  //goal: add block duration to current time, then round result up to alignment offset + nearest multiple of alignment period
-  uint64_t diff = (*tx + Tx) - t0 + (T0 - 1) ; // 1. add block period as minimum advancement 2. subtract alignment offset for division 3. add alignment period -1 for ceil effect  
-  *tx = diff - (diff % T) + t0;                // 4. subtract remainder of modulo for rounding 5. add alignment offset again  
-
-   
-  
-}
 
 uint32_t* block(uint32_t* node, uint32_t* thrData) {
   //mprintf("#%02u: Checking Block 0x%08x \n", cpuId, node[NODE_HASH >> 2]);
@@ -232,10 +242,10 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
     cmd     = (uint32_t*)&b[elOffs >> 2];
     
     //check valid time
-    if getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME)) return node;
+    if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return node;
 
     //get action type
-    *act = (uint32_t*)&cmd[T_CMD_ACT >> 2];
+    act = (uint32_t*)&cmd[T_CMD_ACT >> 2];
     atype = (*act >> ACT_TYPE_POS) & ACT_TYPE_MSK;
     mprintf("#%02u: pending Cmd @ Prio: %u, rdIdx: 0x%08x, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x, type: %u\n", cpuId, prio, (uint32_t)rdIdx, (uint32_t)bl, (uint32_t)b, (uint32_t)cmd, atype );
     
@@ -258,12 +268,27 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   
 }
 
-typedef uint32_t* (*nodeFuncPtr)  ( uint32_t*, uint32_t* );
-typedef uint32_t* (*actionFuncPtr)( uint32_t*, uint32_t*, uint32_t* );
+uint32_t* blockFixed(uint32_t* node, uint32_t* thrData) {
+  uint32_t* ret = block(node, thrData);
+  *(uint64_t*)&thrData[T_TD_CURRTIME] += *(uint64_t*)&node[BLOCK_PERIOD >> 2];
+  return ret;
+}  
 
-nodeFuncPtr     deadlineFuncs[_NODE_TYPE_END_];
-nodeFuncPtr         nodeFuncs[_NODE_TYPE_END_];
-actionFuncPtr      actionFuncs[_ACT_TYPE_END_];
+uint32_t* blockAlign(uint32_t* node, uint32_t* thrData) {
+  uint32_t *ret = block(node, thrData);
+  uint64_t      *tx =  (uint64_t*)&thrData[T_TD_CURRTIME];  // current time
+  uint64_t       Tx = *(uint64_t*)&node[BLOCK_PERIOD];      // block duration
+  const uint64_t t0 = 0;                                    // alignment offset
+  const uint64_t T0 = 10000;                                // alignment period
+
+  //goal: add block duration to current time, then round result up to alignment offset + nearest multiple of alignment period
+  uint64_t diff = (*tx + Tx) - t0 + (T0 - 1) ; // 1. add block period as minimum advancement 2. subtract alignment offset for division 3. add alignment period -1 for ceil effect  
+  *tx = diff - (diff % T0) + t0;               // 4. subtract remainder of modulo for rounding 5. add alignment offset again  
+
+  return ret;
+}
+
+
 
 
 
@@ -278,6 +303,7 @@ void paintPath(uint32_t* node) {
 }
 
 
+
 void main(void) {
    
   int i,j;
@@ -285,37 +311,39 @@ void main(void) {
   uint32_t** test;
   uint32_t *p  = (uint32_t*)_startshared; 
 
-  nodeFuncs[NODE_TYPE_UNKNOWN]  = ( NULL ); 
-  nodeFuncs[NODE_TYPE_RAW]      = ( NULL );
-  nodeFuncs[NODE_TYPE_TMSG]     = tmsg;
-  nodeFuncs[NODE_TYPE_CNOOP]    = cmd;
-  nodeFuncs[NODE_TYPE_CFLOW]    = cmd;
-  nodeFuncs[NODE_TYPE_CFLUSH]   = cmd;
-  nodeFuncs[NODE_TYPE_CWAIT]    = cmd;
-  nodeFuncs[NODE_TYPE_BLOCK]    = block;
-  nodeFuncs[NODE_TYPE_QUEUE]    = ( NULL );
-  nodeFuncs[NODE_TYPE_QBUF]     = ( NULL ); 
-  nodeFuncs[NODE_TYPE_SHARE]    = ( NULL ); 
-  nodeFuncs[NODE_TYPE_ALTDST]   = ( NULL ); 
-  nodeFuncs[NODE_TYPE_SYNC]     = ( NULL );
+  nodeFuncs[NODE_TYPE_UNKNOWN]      = dummyNodeFunc; 
+  nodeFuncs[NODE_TYPE_RAW]          = dummyNodeFunc;
+  nodeFuncs[NODE_TYPE_TMSG]         = tmsg;
+  nodeFuncs[NODE_TYPE_CNOOP]        = cmd;
+  nodeFuncs[NODE_TYPE_CFLOW]        = cmd;
+  nodeFuncs[NODE_TYPE_CFLUSH]       = cmd;
+  nodeFuncs[NODE_TYPE_CWAIT]        = cmd;
+  nodeFuncs[NODE_TYPE_BLOCK_FIXED]  = blockFixed;
+  nodeFuncs[NODE_TYPE_BLOCK_ALIGN]  = blockAlign;
+  nodeFuncs[NODE_TYPE_QUEUE]        = dummyNodeFunc;
+  nodeFuncs[NODE_TYPE_QBUF]         = dummyNodeFunc; 
+  nodeFuncs[NODE_TYPE_SHARE]        = dummyNodeFunc; 
+  nodeFuncs[NODE_TYPE_ALTDST]       = dummyNodeFunc; 
+  nodeFuncs[NODE_TYPE_SYNC]         = dummyNodeFunc;
 
   //deadline updater. Return infinity (-1) if no or unsupported node was given
-  deadlineFuncs[NODE_TYPE_UNKNOWN ] = ( -1 );
-  deadlineFuncs[NODE_TYPE_RAW]      = ( -1 );
-  deadlineFuncs[NODE_TYPE_TMSG]     = dlEvt;
-  deadlineFuncs[NODE_TYPE_CNOOP]    = dlEvt;
-  deadlineFuncs[NODE_TYPE_CFLOW]    = dlEvt;
-  deadlineFuncs[NODE_TYPE_CFLUSH]   = dlEvt;
-  deadlineFuncs[NODE_TYPE_CWAIT]    = dlEvt;
-  deadlineFuncs[NODE_TYPE_BLOCK]    = dlBlock;
-  deadlineFuncs[NODE_TYPE_QUEUE]    = ( -1 );
-  deadlineFuncs[NODE_TYPE_QBUF]     = ( -1 ); 
-  deadlineFuncs[NODE_TYPE_SHARE]    = ( -1 ); 
-  deadlineFuncs[NODE_TYPE_ALTDST]   = ( -1 ); 
-  deadlineFuncs[NODE_TYPE_SYNC]     = ( -1 );
+  deadlineFuncs[NODE_TYPE_UNKNOWN ]     = dummyDeadlineFunc;
+  deadlineFuncs[NODE_TYPE_RAW]          = dummyDeadlineFunc;
+  deadlineFuncs[NODE_TYPE_TMSG]         = dlEvt;
+  deadlineFuncs[NODE_TYPE_CNOOP]        = dlEvt;
+  deadlineFuncs[NODE_TYPE_CFLOW]        = dlEvt;
+  deadlineFuncs[NODE_TYPE_CFLUSH]       = dlEvt;
+  deadlineFuncs[NODE_TYPE_CWAIT]        = dlEvt;
+  deadlineFuncs[NODE_TYPE_BLOCK_FIXED]  = dlBlock;
+  deadlineFuncs[NODE_TYPE_BLOCK_ALIGN]  = dlBlock;
+  deadlineFuncs[NODE_TYPE_QUEUE]        = dummyDeadlineFunc;
+  deadlineFuncs[NODE_TYPE_QBUF]         = dummyDeadlineFunc; 
+  deadlineFuncs[NODE_TYPE_SHARE]        = dummyDeadlineFunc; 
+  deadlineFuncs[NODE_TYPE_ALTDST]       = dummyDeadlineFunc; 
+  deadlineFuncs[NODE_TYPE_SYNC]         = dummyDeadlineFunc;
 
 
-  actionFuncs[ACT_TYPE_UNKNOWN] = ( NULL );
+  actionFuncs[ACT_TYPE_UNKNOWN] = dummyActionFunc;
   actionFuncs[ACT_TYPE_NOOP]    = execNoop;
   actionFuncs[ACT_TYPE_FLOW]    = execFlow;
   actionFuncs[ACT_TYPE_FLUSH]   = execFlush;
@@ -354,11 +382,12 @@ void main(void) {
     for(i=0;i<8;i++) {
       if (*start & 1<<i) {
         //mprintf("#%02u: Start Thr #%u\n", cpuId, i);
-        uint32_t* tp, uint32_t** np;
+        uint32_t* tp;
+        uint32_t** np;
         uint32_t type;
         
         tp = (uint32_t*)*(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2));  
-        np = (uint32_t*)&tp[T_TD_NODE_PTR >> 2];
+        np = (uint32_t**)&tp[T_TD_NODE_PTR >> 2];
 
         *np = (uint32_t*)*(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TD_NODE_PTR ) >> 2));
          
