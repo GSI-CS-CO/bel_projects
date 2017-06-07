@@ -44,9 +44,10 @@
 // activity requested by ECA Handler, the relevant codes are also used as "tags".
 #define  DMUNIPZ_ECADO_TIMEOUT    0           // timeout: no activity requested
 #define  DMUNIPZ_ECADO_UNKOWN     1           // unnkown activity requested (unexpected action by ECA)
-#define  DMUNIPZ_ECADO_REQTK      2           // request the transfer channel (TK)
+#define  DMUNIPZ_ECADO_REQTK      2           // request the transfer channel (TK), carries info on DM wait after beam request
 #define  DMUNIPZ_ECADO_REQBEAM    3           // request beam from UNIPZ
 #define  DMUNIPZ_ECADO_RELTK      4           // release the transfer channel (TK)
+#define  DMUNIPZ_ECADO_PREPDM     5           // dedicated message from DM, carries info on DM wait after TK request
 
 // status of transfer (status bits)
 #define DMUNIPZ_TRANS_UNKNOWN     0           // unknown status

@@ -48,6 +48,9 @@ dmunipz-ctl dev/wbm0 startop
 ###########################################
 echo -e dm-unipz - start: configure lm32 channel of ECA
 
+# configure ECA for lm32 channel: here action for TK request, tag "0x1"
+saft-ecpu-ctl baseboard -c 0x1111000000000000 0xffff000000000000 0 0x1 -d
+
 # configure ECA for lm32 channel: here action for TK request, tag "0x2"
 saft-ecpu-ctl baseboard -c 0x2222000000000000 0xffff000000000000 0 0x2 -d
 
