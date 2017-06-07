@@ -14,7 +14,6 @@ void Block::serialise(const vAdr &va) const {
  
     
   Node::serialise(va);
-  
   writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_PERIOD,  this->tPeriod);
   writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_ALT_DEST_PTR,  va[ADR_BLOCK_DST_LST]);  
   writeLeNumberToBeBytes(b + (ptrdiff_t)BLOCK_CMDQ_IL_PTR,   va[ADR_BLOCK_Q_IL]); 

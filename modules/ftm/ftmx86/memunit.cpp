@@ -154,7 +154,7 @@
         uint32_t flags    = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]);
         //std::cout << "DL Flags 0x" << std::hex << flags << " # 0x"  << hash << std::endl;
         uint32_t type     = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-        vertex_t v        = boost::add_vertex((myVertex) {std::string(*std::forward<boost::optional<std::string>>(name)), hash, NULL, "", flags}, gDown);
+        vertex_t v        = boost::add_vertex(myVertex(std::string(*std::forward<boost::optional<std::string>>(name)), hash, NULL, "", flags), gDown);
         parserMap[adr]    = (parserMeta){v, hash};
         auto src = downloadData.begin()+localAdr;
         std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&parserMap.at(adr).b[0]);

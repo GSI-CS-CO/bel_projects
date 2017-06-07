@@ -121,7 +121,9 @@
 ////// Block
 //
 #define BLOCK_BEGIN             (NODE_BEGIN)      // a bit unusual layout, see above
-#define BLOCK_PERIOD            (BLOCK_BEGIN)                        
+#define BLOCK_PERIOD            (BLOCK_BEGIN)
+#define BLOCK_PERIOD_HI         (BLOCK_BEGIN + 0)
+#define BLOCK_PERIOD_LO         (BLOCK_PERIOD_HI + _32b_SIZE_)
 #define BLOCK_ALT_DEST_PTR      (BLOCK_PERIOD       + _TS_SIZE_)   
 #define BLOCK_CMDQ_LO_PTR       (BLOCK_ALT_DEST_PTR + _PTR_SIZE_)   
 #define BLOCK_CMDQ_HI_PTR       (BLOCK_CMDQ_LO_PTR  + _PTR_SIZE_)   

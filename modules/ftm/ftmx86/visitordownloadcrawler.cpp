@@ -19,7 +19,7 @@ void VisitorDownloadCrawler::setDefDst() const {
   if (tmpParser == NULL) {
     //std::cout << "Parser Entry not found !" <<  std::endl;
   }  
-  else if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, tmpParser->v, (myEdge){sDD}, g);
+  else if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, tmpParser->v, myEdge(sDD), g);
 
 }
 
@@ -33,7 +33,7 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
 
   setDefDst();
   tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + BLOCK_ALT_DEST_PTR ));
-  if (tmpAdr != LM32_NULL_PTR) { boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sDL},          g);
+  if (tmpAdr != LM32_NULL_PTR) { boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sDL),          g);
   //std::cout << "Node " << g[v].name << " has destlist " << g[((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v].name << std::endl; 
   /*
   for (boost::tie(in_begin, in_end) = in_edges(((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v,g); in_begin != in_end; ++in_begin)
@@ -43,11 +43,11 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
 */
   }
   tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_IL_PTR ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sQM[PRIO_IL]}, g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sQM[PRIO_IL]), g);
   tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_HI_PTR ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sQM[PRIO_HI]}, g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sQM[PRIO_HI]), g);
   tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_LO_PTR ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sQM[PRIO_LO]}, g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sQM[PRIO_LO]), g);
 
 }
 
@@ -63,16 +63,16 @@ void VisitorDownloadCrawler::visit(const TimingMsg& el) const  {
   
   if (flags & NFLG_TMSG_DYN_ID_SMSK) {
     tmpAdr = mmu.intAdr2adr((uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_ID ));
-    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sDID},          g);
+    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sDID),          g);
   }
   if (flags & NFLG_TMSG_DYN_PAR0_SMSK) {
     tmpAdr = mmu.intAdr2adr((uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ));
     //std::cout << "found 0x" << std::hex << tmpAdr << std::endl;
-    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sDPAR0},          g);
+    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sDPAR0),          g);
   }
   if (flags & NFLG_TMSG_DYN_PAR1_SMSK) {
     tmpAdr = mmu.intAdr2adr((uint32_t)(writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ) >> 32));
-    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sDPAR1},          g);
+    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sDPAR1),          g);
   }
 }
 
@@ -84,9 +84,9 @@ void VisitorDownloadCrawler::visit(const Flow& el) const  {
 
   setDefDst();
   tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sTG},          g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sTG),          g);
   tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + CMD_FLOW_DEST ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sFD},          g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sFD),          g);
 
 }
 
@@ -98,7 +98,7 @@ void VisitorDownloadCrawler::visit(const Flush& el) const {
 
   setDefDst();
   tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sTG},          g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sTG),          g);
 
 }
 
@@ -110,7 +110,7 @@ void VisitorDownloadCrawler::visit(const Noop& el) const {
 
   setDefDst();
   tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sTG},          g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sTG),          g);
 
 }
 
@@ -122,7 +122,7 @@ void VisitorDownloadCrawler::visit(const Wait& el) const {
 
   setDefDst();
   tmpAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, (myEdge){sTG},          g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sTG),          g);
 
 }
 

@@ -166,7 +166,10 @@ int main(int argc, char* argv[]) {
 
   // Construct an empty graph and prepare the dynamic_property_maps.
   Graph g;
+  
+  //FIXME this is quite dangerous - misspell a property name and it will not be initialised / contain garbage
   boost::dynamic_properties dp(boost::ignore_other_properties);
+  //boost::dynamic_properties dp;
 
   ebs.open(0, EB_DATAX|EB_ADDRX);
   ebd.open(ebs, netaddress, EB_DATAX|EB_ADDRX, 3);
@@ -244,8 +247,25 @@ int main(int argc, char* argv[]) {
 
     mmu.prepareUpload(); 
 
-    if(verbose) {
-      BOOST_FOREACH( vertex_t v, vertices(mmu.getUpGraph()) ) hexDump(mmu.getUpGraph()[v].name.c_str(), mmu.lookupName(mmu.getUpGraph()[v].name)->b, _MEM_BLOCK_SIZE);
+    const char deadbeef[4] = {0xDE, 0xAD, 0xBE, 0xEF};
+    const std::string needle(deadbeef);
+
+
+
+    BOOST_FOREACH( vertex_t v, vertices(mmu.getUpGraph()) ) {
+      std::string haystack(mmu.lookupName(mmu.getUpGraph()[v].name)->b, mmu.lookupName(mmu.getUpGraph()[v].name)->b + _MEM_BLOCK_SIZE);
+      std::size_t n = haystack.find(needle);
+      bool foundUninitialised = (n != std::string::npos);
+
+      if(verbose || foundUninitialised) {
+        std::cout << std::endl;
+        hexDump(mmu.getUpGraph()[v].name.c_str(), mmu.lookupName(mmu.getUpGraph()[v].name)->b, _MEM_BLOCK_SIZE);
+      }
+
+      if(foundUninitialised) {
+        std::cout << std::endl << "Error: Node " << mmu.getUpGraph()[v].name << " contains uninitialised elements! Misspelled/forgot a mandatory property in .dot file ?" << std::endl << std::endl;  
+        return -7;
+      }  
     }
 
     std::cout << "... Done. " << std::endl;

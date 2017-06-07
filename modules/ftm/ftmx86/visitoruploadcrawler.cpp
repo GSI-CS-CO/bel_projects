@@ -183,35 +183,35 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
           if (aId != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic id source !!!" << std::endl; break;
           } else {
             auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-            if (x != NULL) { aId = mmu.adr2intAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);}
+            if (x != NULL) { aId = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);}
           }
         }
         if (g[*out_cur].type == sDPAR0) {
           if (aPar0 != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic par0 source !!!" << std::endl; break;
           } else {
             auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-            if (x != NULL) { aPar0 = mmu.adr2intAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);}             
+            if (x != NULL) { aPar0 = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);}             
           }
         }
         if (g[*out_cur].type == sDPAR1) {
           if (aPar1 != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic par1 source !!!" << std::endl; break;
           } else {
             auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-            if (x != NULL) { aPar1 = mmu.adr2intAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);}
+            if (x != NULL) { aPar1 = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);}
           }
         }
         if (g[*out_cur].type == sDTEF) {
           if (aTef != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic tef source !!!" << std::endl; break;
           } else {
             auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-            if (x != NULL) { aTef = mmu.adr2intAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_TEF_SMSK);}
+            if (x != NULL) { aTef = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_TEF_SMSK);}
           }
         }
         if (g[*out_cur].type == sDRES) {
           if (aRes != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic res source !!!" << std::endl; break;
           } else {
             auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-            if (x != NULL) { aRes = mmu.adr2intAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);}
+            if (x != NULL) { aRes = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);}
           }
         }
       }

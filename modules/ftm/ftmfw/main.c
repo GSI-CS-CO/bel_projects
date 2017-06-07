@@ -123,6 +123,7 @@ uint32_t* execNoop(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
 uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   uint32_t* ret = (uint32_t*)cmd[T_CMD_FLOW_DEST >> 2]; 
+  mprintf("#%02u: Routing Flow to %08x\n", cpuId, (uint32_t)ret);
   if(node[NODE_FLAGS >> 2] & ACT_CHP_SMSK) node[NODE_DEF_DEST_PTR >> 2] = (uint32_t)ret;
   return ret;
 
@@ -165,8 +166,8 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   //calculate pointer (8b) to current write index
   wrIdx = ((uint8_t *)tg + BLOCK_CMDQ_WR_IDXS + prio);
   //calculate Offsets
-  bufOffs = (*wrIdx & Q_IDX_MAX) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;
-  elOffs  = (*wrIdx & Q_IDX_MAX) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_; 
+  bufOffs = (*wrIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;
+  elOffs  = (*wrIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_; 
 
   //get pointer to buf list
   bl = (uint32_t*)tg[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2];
@@ -184,7 +185,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   }
   
   //increase write index
-  *wrIdx = (*wrIdx + 1) & Q_IDX_MAX_OVF;
+  *wrIdx = (*wrIdx + 1) & Q_IDX_MAX_OVF_MSK;
 
   mprintf("#%02u: Sending Cmd 0x%08x, Target: 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], (uint32_t)tg, node[NODE_DEF_DEST_PTR >> 2]);
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
@@ -199,6 +200,7 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   if (pMsg->id == DIAG_PQ_MSG_CNT) tmpPar = *pMsgCntPQ;
   else                             tmpPar = pMsg->par;  
   */
+  /*
   atomic_on();
   *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_ID_HI >> 2];
   *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_ID_LO >> 2];
@@ -209,7 +211,7 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   *(pFpqData + (PRIO_DAT_TS_HI>>2)) = thrData[T_TD_DEADLINE_HI >> 2];
   *(pFpqData + (PRIO_DAT_TS_LO>>2)) = thrData[T_TD_DEADLINE_LO >> 2];
   atomic_off();
-    
+  */  
   ++thrData[T_TD_MSG_CNT >> 2];
    
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
@@ -218,12 +220,12 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
 
 
 uint32_t* block(uint32_t* node, uint32_t* thrData) {
-  //mprintf("#%02u: Checking Block 0x%08x \n", cpuId, node[NODE_HASH >> 2]);
+  mprintf("#%02u: Checking Block 0x%08x\n", cpuId, node[NODE_HASH >> 2]);
   uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
   uint32_t *bl, *b, *cmd, *act;
   uint8_t  *rdIdx;
 
-  uint32_t ardOffs = node[BLOCK_CMDQ_RD_IDXS >> 2], awrOffs = node[BLOCK_CMDQ_WR_IDXS >> 2], bufOffs, elOffs, prio, atype;
+  uint32_t ardOffs = node[BLOCK_CMDQ_RD_IDXS >> 2], awrOffs = node[BLOCK_CMDQ_WR_IDXS >> 2], bufOffs, elOffs, prio, actTmp, atype;
   int16_t qty;
   
   
@@ -235,8 +237,8 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
     if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + PRIO_IL) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + PRIO_IL)) { prio = PRIO_IL; }
 
     rdIdx = ((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + prio);
-    bufOffs = (*rdIdx & Q_IDX_MAX) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;
-    elOffs  = (*rdIdx & Q_IDX_MAX) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_;
+    bufOffs = (*rdIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;
+    elOffs  = (*rdIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_;
     bl      = (uint32_t*)node[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2];
     b       = (uint32_t*)bl[bufOffs >> 2];
     cmd     = (uint32_t*)&b[elOffs >> 2];
@@ -246,22 +248,26 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
 
     //get action type
     act = (uint32_t*)&cmd[T_CMD_ACT >> 2];
-    atype = (*act >> ACT_TYPE_POS) & ACT_TYPE_MSK;
-    mprintf("#%02u: pending Cmd @ Prio: %u, rdIdx: 0x%08x, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x, type: %u\n", cpuId, prio, (uint32_t)rdIdx, (uint32_t)bl, (uint32_t)b, (uint32_t)cmd, atype );
+    actTmp = *act;
+    atype = (actTmp >> ACT_TYPE_POS) & ACT_TYPE_MSK;
+    mprintf("#%02u: pending Cmd @ Prio: %u, rdIdx: 0x%08x, buf: %u, el: %u, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x, type: %u\n", cpuId, prio, (uint32_t)rdIdx, (*rdIdx & Q_IDX_MAX_OVF_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ), 
+      (*rdIdx & Q_IDX_MAX_OVF_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ), (uint32_t)bl, (uint32_t)b, (uint32_t)cmd, atype );
     
     //carry out type specific action
-    ret = actionFuncs[atype](node, thrData, cmd);
+    ret = actionFuncs[atype](node, cmd, thrData);
 
     //decrement qty
-    qty = (*act >> ACT_QTY_POS) & ACT_QTY_MSK;
+    qty = (actTmp >> ACT_QTY_POS) & ACT_QTY_MSK;
+    
     mprintf("#%02u: Act 0x%08x, Qty is at 0x%04x\n", cpuId, *act, qty);
-    *act = ((qty -1) & ACT_QTY_MSK) << ACT_QTY_POS;
-
+    actTmp &= ~ACT_QTY_SMSK;
+    actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS;
+    *act = actTmp;
     //if qty <= zero, pop cmd -> increment read offset
     if(qty <= 0) { *(rdIdx) = (*rdIdx + 1) & Q_IDX_MAX_OVF_MSK; mprintf("#%02u: Qty reached zero, popping\n", cpuId);}
     
   } else {
-    mprintf(" nothing pending\n");
+    //mprintf(" nothing pending\n");
     
   }  
   return ret;
@@ -270,6 +276,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
 
 uint32_t* blockFixed(uint32_t* node, uint32_t* thrData) {
   uint32_t* ret = block(node, thrData);
+  //mprintf("#%02u: BlockDur @ 0x%08x & 0x%08x :  0x%08x%08x\n", cpuId, (uint32_t)&node[BLOCK_PERIOD_HI >> 2], (uint32_t)&node[BLOCK_PERIOD_LO >> 2], node[BLOCK_PERIOD_HI >> 2], node[BLOCK_PERIOD_LO >> 2] );
   *(uint64_t*)&thrData[T_TD_CURRTIME] += *(uint64_t*)&node[BLOCK_PERIOD >> 2];
   return ret;
 }  
@@ -284,7 +291,7 @@ uint32_t* blockAlign(uint32_t* node, uint32_t* thrData) {
   //goal: add block duration to current time, then round result up to alignment offset + nearest multiple of alignment period
   uint64_t diff = (*tx + Tx) - t0 + (T0 - 1) ; // 1. add block period as minimum advancement 2. subtract alignment offset for division 3. add alignment period -1 for ceil effect  
   *tx = diff - (diff % T0) + t0;               // 4. subtract remainder of modulo for rounding 5. add alignment offset again  
-
+  mprintf("#%02u: Rounding to nearest multiple of T\n", cpuId);
   return ret;
 }
 
@@ -350,7 +357,7 @@ void main(void) {
   actionFuncs[ACT_TYPE_WAIT]    = execWait; 
 
   init();
-   //uint32_t test = &pFtmIf->tPrep;
+   
    
    
    // wait 1s + cpuIdx * 1/10s
@@ -386,29 +393,42 @@ void main(void) {
         uint32_t** np;
         uint32_t type;
         
-        tp = (uint32_t*)*(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2));  
+        tp = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2));  
         np = (uint32_t**)&tp[T_TD_NODE_PTR >> 2];
-
+        // init to requested start node  
         *np = (uint32_t*)*(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TD_NODE_PTR ) >> 2));
+        mprintf("#%02u: ThrPtr: 0x%08x, Initial Node Ptr @ 0x%08x is 0x%08x\n",  cpuId, tp, np, *np);
          
+        *(uint64_t*)&tp[T_TD_CURRTIME] = 0;
         
-        
-        while(np != NULL) {
-          while (!(*start & 1<<i)) {for (j = 0; j < ((125000000/8)); ++j) { asm volatile ("nop"); } mprintf("#%02u: Waiting at 0x%08x\n", cpuId, np);};
-          *start &= ~(1<<i);
-          //mprintf("#%02u: Node Ptr is 0x%08x\n", cpuId, np);
+        while(*np != NULL) {
+
+          //while (!(*start & 1<<i)) {
+            for (j = 0; j < ((125000000/8)); ++j) { asm volatile ("nop"); } 
+            //mprintf("#%02u: Waiting at 0x%08x\n", cpuId, *np);
+          //};
+          //*start &= ~(1<<i);
+
+
+          
 
           //process node and update node ptr in threadDate
 
-          //np is checked to be not null, so
-          type = (*np[NODE_FLAGS >> 2] >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-          type &= -(type >= _NODE_TYPE_END_); //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
+          //*np is checked to be not null, so
+          uint32_t* tmpType = (uint32_t*)&(*np)[NODE_FLAGS >> 2];
+          type = (*(uint32_t*)&(*np)[NODE_FLAGS >> 2] >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
+          
+          uint32_t msk = -(type < _NODE_TYPE_END_);
+          //mprintf("#%02u: type is %u, end is %u, msk is %u\n", cpuId, type, _NODE_TYPE_END_, msk);
+          type &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
+          mprintf("#%02u: Node Ptr is 0x%08x, ThrTime: %u Dl: %u, type @ %08x is %u\n", cpuId, *np, (uint32_t)*(uint64_t*)&tp[T_TD_CURRTIME], (uint32_t)*(uint64_t*)&tp[T_TD_DEADLINE], tmpType, type);
+
           *np = nodeFuncs[type](*np, tp);
           
-          //now np could be NULL, tread carefully!
+          //now *np could be NULL, tread carefully!
           if (*np != NULL) {
-            type = (*np[NODE_FLAGS >> 2] >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-            type &= -(type >= _NODE_TYPE_END_); //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
+            type = (*(uint32_t*)&(*np)[NODE_FLAGS >> 2] >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
+            type &= -(type < _NODE_TYPE_END_); //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
           } else {
             type = NODE_TYPE_UNKNOWN;
           }
