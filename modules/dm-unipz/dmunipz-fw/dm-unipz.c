@@ -161,9 +161,11 @@ uint32_t *pSharedStatTrans;            // pointer to a "user defined" u32 regist
 volatile uint32_t *pSharedCmd;         // pointer to a "user defined" u32 register; here: get command from host
 uint32_t *pSharedState;                // pointer to a "user defined" u32 register; here: publish status
 volatile uint32_t *pSharedData4EB;     // pointer to a n x u32 register; here: memory region for receiving EB return values
-volatile uint64_t *pSharedSrcMac;      // pointer to a "user defined" u64 register; here: get MAC of dmunipz WR interface from host
+volatile uint32_t *pSharedSrcMacHi;    // pointer to a "user defined" u64 register; here: get MAC of dmunipz WR interface from host
+volatile uint32_t *pSharedSrcMacLo;    // pointer to a "user defined" u64 register; here: get MAC of dmunipz WR interface from host
 volatile uint32_t *pSharedSrcIP;       // pointer to a "user defined" u32 register; here: get IP of dmunipz WR interface from host
-volatile uint64_t *pSharedDstMac;      // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
+volatile uint32_t *pSharedDstMacHi;    // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
+volatile uint32_t *pSharedDstMacLo;    // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
 volatile uint32_t *pSharedDstIP;       // pointer to a "user defined" u32 register; here: get IP of Data Master WR interface from host
 
 WriteToPZU_Type  writePZUData;         // Modulbus SIS, I/O-Modul 1, Bits 0..15
@@ -196,6 +198,8 @@ void isr0()
 uint32_t ebmInit(uint32_t msTimeout) // intialize Etherbone master
 {
   uint64_t timeoutT;
+  uint64_t dstMac, srcMac;
+  uint32_t *help;
 
   timeoutT = getSysTime() + msTimeout * 1000000;
   while (timeoutT < getSysTime()) {
@@ -210,9 +214,17 @@ uint32_t ebmInit(uint32_t msTimeout) // intialize Etherbone master
   // init ebm
   ebm_init();
   ebm_config_meta(1500, 42, 0x00000000 );
-  
-  ebm_config_if(DESTINATION, *pSharedDstMac, *pSharedDstIP, 0xebd0); 
-  ebm_config_if(SOURCE,      *pSharedSrcMac, *pSharedSrcIP, 0xebd0); 
+
+  dstMac = ((uint64_t)(*pSharedDstMacHi) << 32) + (uint64_t)(*pSharedDstMacLo);
+  help = &dstMac;
+  mprintf("dm-unipz: DM ip 0x%08x, mac 0x%08x%08x\n", *pSharedDstIP, help[0], help[1]);
+
+  srcMac = ((uint64_t)(*pSharedSrcMacHi) << 32) + (uint64_t)(*pSharedSrcMacLo);
+  help = &srcMac;
+  mprintf("dm-unipz: my ip 0x%08x, mac 0x%08x%08x\n", *pSharedSrcIP, help[0], help[1]);
+
+  ebm_config_if(DESTINATION, dstMac, *pSharedDstIP, 0xebd0); 
+  ebm_config_if(SOURCE,      srcMac, *pSharedSrcIP, 0xebd0); 
 
   ebm_clr();
 
@@ -231,25 +243,31 @@ void ebmClearSharedMem() // clear shared memory used for EB return values
 uint32_t ebmRead32(uint32_t msTimeout, uint32_t address, uint32_t *data)
 {
   uint64_t timeoutT;
+  uint32_t hackish = 0x12345678;
 
   *data = 0x0;
 
   // clear shared data for EB return values
   ebmClearSharedMem();
+  pSharedData4EB[0] = hackish;
+
+  mprintf("dm-unipz: ebmread32 address 0x%08x, data 0x%08x\n", address, pSharedData4EB[0]);
 
   // setup and commit EB cycle to remote device
   ebm_hi(address);
-  ebm_op(address, (uint32_t)pSharedData4EB, EBM_READ);
+  ebm_op(address, (uint32_t)(&(pSharedData4EB[0])), EBM_READ);
   ebm_flush();
   
   // wait for timeout or received data
   timeoutT = getSysTime() + msTimeout * 1000000;
   while (getSysTime() < timeoutT) {
-    if (pSharedData4EB[0]) {
+    if (pSharedData4EB[0] != hackish) {
       *data = pSharedData4EB[0];
       return DMUNIPZ_STATUS_OK;
     }
   } //while not timed out
+
+  mprintf("dm-unipz: ebmread32 address 0x%08x, data 0x%08x\n", address, pSharedData4EB[0]);
 
   return DMUNIPZ_STATUS_TIMEDOUT; 
 } //ebmRead32
@@ -283,9 +301,11 @@ void initSharedMem() // determine address and clear shared mem
   pSharedVirtAcc    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSVIRTACC >> 2));
   pSharedStatTrans  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSSTATUS >> 2));
   pSharedData4EB    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DATA_4EB_START >> 2));
-  pSharedSrcMac     = (uint64_t *)(pShared + (DMUNIPZ_SHARED_SRCMAC >> 2));
+  pSharedSrcMacHi   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_SRCMACHI >> 2));
+  pSharedSrcMacLo   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_SRCMACLO >> 2));
   pSharedSrcIP      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_SRCIP >> 2));
-  pSharedDstMac     = (uint64_t *)(pShared + (DMUNIPZ_SHARED_DSTMAC >> 2));
+  pSharedDstMacHi   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACHI >> 2));
+  pSharedDstMacLo   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACLO >> 2));
   pSharedDstIP      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTIP >> 2));  
 
   // set initial values;

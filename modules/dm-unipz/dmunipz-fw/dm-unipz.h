@@ -6,7 +6,7 @@
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
 #define  DMUNIPZ_REQTIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
 #define  DMUNIPZ_EVT_UNI_READY    0x1e        // event number EVT_UNI_READY
-#define  DMUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
+#define  DMUNIPZ_ECA_ADDRESS      0x20000218  // address of ECA input HACKHACKHACKHACK
 
 // (error) status
 #define  DMUNIPZ_STATUS_UNKNOWN          0    // unknown status
