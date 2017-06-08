@@ -160,7 +160,11 @@ uint32_t *pSharedVirtAcc;              // pointer to a "user defined" u32 regist
 uint32_t *pSharedStatTrans;            // pointer to a "user defined" u32 register; here: publish status of ongoing transfer
 volatile uint32_t *pSharedCmd;         // pointer to a "user defined" u32 register; here: get command from host
 uint32_t *pSharedState;                // pointer to a "user defined" u32 register; here: publish status
-volatile uint32_t *pSharedData4EB ;    // pointer to a n x u32 register; here: memory region for receiving EB return values
+volatile uint32_t *pSharedData4EB;     // pointer to a n x u32 register; here: memory region for receiving EB return values
+volatile uint64_t *pSharedSrcMac;      // pointer to a "user defined" u64 register; here: get MAC of dmunipz WR interface from host
+volatile uint32_t *pSharedSrcIP;       // pointer to a "user defined" u32 register; here: get IP of dmunipz WR interface from host
+volatile uint64_t *pSharedDstMac;      // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
+volatile uint32_t *pSharedDstIP;       // pointer to a "user defined" u32 register; here: get IP of Data Master WR interface from host
 
 WriteToPZU_Type  writePZUData;         // Modulbus SIS, I/O-Modul 1, Bits 0..15
 
@@ -189,26 +193,30 @@ void isr0()
 */
 
 
-void ebmInit() // intialize Etherbone master
+uint32_t ebmInit(uint32_t msTimeout) // intialize Etherbone master
 {
-  int j;
-  
-  while (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) {
-    for (j = 0; j < (125000000/2); ++j) { asm("nop"); }
-    mprintf("#%02u: DM cores Waiting for IP from WRC...\n", cpuId);  
-  } /* pEbCfg */
-  
+  uint64_t timeoutT;
+
+  timeoutT = getSysTime() + msTimeout * 1000000;
+  while (timeoutT < getSysTime()) {
+    if (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) asm("nop");
+    else break;
+  } // while no IP via DHCP
+
+  // check IP
+  if (*(pEbCfg + (EBC_SRC_IP>>2)) == EBC_DEFAULT_IP) return DMUNIPZ_STATUS_NOIP;
+  if (*(pEbCfg + (EBC_SRC_IP>>2)) != *pSharedSrcIP)  return DMUNIPZ_STATUS_WRONGIP;
+
+  // init ebm
   ebm_init();
   ebm_config_meta(1500, 42, 0x00000000 );
   
-  ebm_config_if(DESTINATION, 0x00267b000386, 0xc0a8a019,      0xebd0);             //Dst: scuxl0134
-  //ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff ,      0xebd0);            //Dst: broadcast DANGER!!!
-  //ebm_config_if(SOURCE,      0x00267b000401, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: MAC is a hack!, WR IP lxdv54
-  ebm_config_if(SOURCE,      0x00267b000321, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: MAC is a hack!, WR IP scuxl0033
+  ebm_config_if(DESTINATION, *pSharedDstMac, *pSharedDstIP, 0xebd0); 
+  ebm_config_if(SOURCE,      *pSharedSrcMac, *pSharedSrcIP, 0xebd0); 
 
-  // mprintf("my IP:  0x%08x\n",  *(pEbCfg + (EBC_SRC_IP>>2)));
-  // mprintf("pEbCfg: 0x%08x\n",  pEbCfg);
   ebm_clr();
+
+  return DMUNIPZ_STATUS_OK;
 } // ebminit
 
 
@@ -275,6 +283,10 @@ void initSharedMem() // determine address and clear shared mem
   pSharedVirtAcc    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSVIRTACC >> 2));
   pSharedStatTrans  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSSTATUS >> 2));
   pSharedData4EB    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DATA_4EB_START >> 2));
+  pSharedSrcMac     = (uint64_t *)(pShared + (DMUNIPZ_SHARED_SRCMAC >> 2));
+  pSharedSrcIP      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_SRCIP >> 2));
+  pSharedDstMac     = (uint64_t *)(pShared + (DMUNIPZ_SHARED_DSTMAC >> 2));
+  pSharedDstIP      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTIP >> 2));  
 
   // set initial values;
   ebmClearSharedMem();
@@ -369,17 +381,19 @@ uint32_t dmPrepAnswer4TKRequest()                              // prepare answer
   qLowPrioAddr     = blockAddr + BLOCK_CMDQ_LO_PTR;                 
   wrIdxAddr        = blockAddr + BLOCK_CMDQ_WR_IDXS;
   mprintf("dm-unipz: preparing reply 4 TK reqest: blockAddr  %08x\n", blockAddr);
-  mprintf("dm-unipz: preparing reply 4 TK reqest: wrIdxAddr  %08x\n", qLowPrioAddr);
+  mprintf("dm-unipz: preparing reply 4 TK reqest: qLowPrioAddr  %08x\n", qLowPrioAddr);
   mprintf("dm-unipz: preparing reply 4 TK reqest: wrIdxAddr  %08x\n", wrIdxAddr);
 
   // read writeIdx and calculate indices for buffer list and command buffer
-  if ((status = ebmRead32(2000, wrIdxAddr, &wrIdx)) != DMUNIPZ_STATUS_OK) mprintf("dm-unipz: failed to query wrIdx from DM, status %d\n", status); //chk error handling
+  //if ((status = ebmRead32(2000, wrIdxAddr, &wrIdx)) != DMUNIPZ_STATUS_OK) mprintf("dm-unipz: failed to query wrIdx from DM, status %d\n", status); //chk error handling
+  wrIdx = 42; // hack!
   wrIdxLo          = ((wrIdx >> (PRIO_LO * 8)) &  Q_IDX_MAX_OVF_MSK);
   buffListAddrOffs = (wrIdxLo & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_ ) * _PTR_SIZE_;
   cmdListAddrOffs  = (wrIdxLo & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_ ) * _T_CMD_SIZE_; 
 
   // read address where to find list and calculate address of command buffer
-  if ((status = ebmRead32(2000, qLowPrioAddr, &buffListAddr)) != DMUNIPZ_STATUS_OK) mprintf("dm-unipz: failed to query wrIdx from DM, status %d\n", status); //chk error handling
+  //if ((status = ebmRead32(2000, qLowPrioAddr, &buffListAddr)) != DMUNIPZ_STATUS_OK) mprintf("dm-unipz: failed to query buffListAddr from DM, status %d\n", status); //chk error handling
+  buffListAddr = 0x04110a20; // hack!
   buffListAddr     = dmInt2ExtAddr(buffListAddr, extBaseAddr);
   cmdListAddr      = buffListAddr + buffListAddrOffs;
 
@@ -708,7 +722,6 @@ uint32_t doActionS0()
 {
   uint32_t status = DMUNIPZ_STATUS_OK;
 
-  ebmInit();                     
   if (findECAQueue() != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_ERROR; 
   if (findMILPiggy() != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_ERROR; 
   initCmds();                    
@@ -722,7 +735,20 @@ uint32_t entryActionConfigured()
   uint32_t status = DMUNIPZ_STATUS_OK;
   uint32_t virtAcc;
   uint32_t i;
+  uint32_t data;
 
+  // configure EB master (SRC and DST MAC/IP are set from host)
+  if ((status = ebmInit(2000)) != DMUNIPZ_STATUS_OK) {
+    mprintf("dm-unipz: ERROR - init of EB master failed! %d\n", status);
+    return status;
+  } 
+
+  // test if DM is reachable by reading from ECA input
+  if ((status = ebmRead32(2000, DMUNIPZ_ECA_ADDRESS, &data)) != DMUNIPZ_STATUS_OK) {
+    mprintf("dm-unipz: ERROR - Data Master unreachable! %d\n", status);
+    return status;
+  } 
+      
   // check if modulbus I/O is ok
   if ((status = echoTestDevMil(pMILPiggy, IFB_ADDRESS_SIS, 0xbabe)) != DMUNIPZ_STATUS_OK) {
     mprintf("dm-unipz: ERROR - modulbus SIS IFK not available!\n");

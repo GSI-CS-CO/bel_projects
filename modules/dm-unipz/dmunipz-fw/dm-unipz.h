@@ -6,6 +6,7 @@
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
 #define  DMUNIPZ_REQTIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
 #define  DMUNIPZ_EVT_UNI_READY    0x1e        // event number EVT_UNI_READY
+#define  DMUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
 
 // (error) status
 #define  DMUNIPZ_STATUS_UNKNOWN          0    // unknown status
@@ -21,6 +22,9 @@
 #define  DMUNIPZ_STATUS_DEVBUSERROR     10    // something went wrong with write/read on the MIL devicebus
 #define  DMUNIPZ_STATUS_REQNOTOK        11    // UNILAC signals 'request not ok'                          
 #define  DMUNIPZ_STATUS_REQBEAMTIMEDOUT 12    // UNILAC beam request timed out                                
+#define  DMUNIPZ_STATUS_NOIP            13    // DHCP request via WR network failed                                
+#define  DMUNIPZ_STATUS_WRONGIP         14    // IP received via DHCP does not match local config            
+#define  DMUNIPZ_STATUS_NODM            15    // Data Master unreachable                                     
 
                                 
 // commands from the outside

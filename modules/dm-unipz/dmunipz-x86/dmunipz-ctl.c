@@ -93,6 +93,9 @@ const char* dmunipz_status_text(uint32_t code) {
   case DMUNIPZ_STATUS_DEVBUSERROR      : return "something went wrong with write/read on the MIL devicebus";
   case DMUNIPZ_STATUS_REQNOTOK         : return "UNILAC signals 'request not ok'";
   case DMUNIPZ_STATUS_REQBEAMTIMEDOUT  : return "UNILAC beam request timed out";
+  case DMUNIPZ_STATUS_NOIP             : return "DHCP request via WR network failed";
+  case DMUNIPZ_STATUS_WRONGIP          : return "IP received via DHCP does not match local config";
+  case DMUNIPZ_STATUS_NODM             : return "Data Master unreachable";                     
   default                              : return "dm-unipz: undefined error code";
   }
 }
