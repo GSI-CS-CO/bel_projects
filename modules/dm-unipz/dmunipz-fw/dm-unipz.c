@@ -168,6 +168,10 @@ volatile uint32_t *pSharedDstMacHi;    // pointer to a "user defined" u64 regist
 volatile uint32_t *pSharedDstMacLo;    // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
 volatile uint32_t *pSharedDstIP;       // pointer to a "user defined" u32 register; here: get IP of Data Master WR interface from host
 
+uint32_t *pCpuRamExternal;             // external address (seen from host bridge) of this CPU's RAM            
+uint32_t *pCpuRamExternalData4EB;      // external address (seen from host bridge) of this CPU's RAM: field for EB return values
+
+
 WriteToPZU_Type  writePZUData;         // Modulbus SIS, I/O-Modul 1, Bits 0..15
 
 uint32_t dmDynpar0;                    // data master: dynamic parameter sent within message
@@ -199,7 +203,6 @@ uint32_t ebmInit(uint32_t msTimeout) // intialize Etherbone master
 {
   uint64_t timeoutT;
   uint64_t dstMac, srcMac;
-  uint32_t *help;
 
   timeoutT = getSysTime() + msTimeout * 1000000;
   while (timeoutT < getSysTime()) {
@@ -213,15 +216,11 @@ uint32_t ebmInit(uint32_t msTimeout) // intialize Etherbone master
 
   // init ebm
   ebm_init();
+
   ebm_config_meta(1500, 42, 0x00000000 );
 
   dstMac = ((uint64_t)(*pSharedDstMacHi) << 32) + (uint64_t)(*pSharedDstMacLo);
-  help = &dstMac;
-  mprintf("dm-unipz: DM ip 0x%08x, mac 0x%08x%08x\n", *pSharedDstIP, help[0], help[1]);
-
   srcMac = ((uint64_t)(*pSharedSrcMacHi) << 32) + (uint64_t)(*pSharedSrcMacLo);
-  help = &srcMac;
-  mprintf("dm-unipz: my ip 0x%08x, mac 0x%08x%08x\n", *pSharedSrcIP, help[0], help[1]);
 
   ebm_config_if(DESTINATION, dstMac, *pSharedDstIP, 0xebd0); 
   ebm_config_if(SOURCE,      srcMac, *pSharedSrcIP, 0xebd0); 
@@ -243,19 +242,20 @@ void ebmClearSharedMem() // clear shared memory used for EB return values
 uint32_t ebmRead32(uint32_t msTimeout, uint32_t address, uint32_t *data)
 {
   uint64_t timeoutT;
+  uint32_t *extRetAddr;
   uint32_t hackish = 0x12345678;
 
   *data = 0x0;
 
   // clear shared data for EB return values
   ebmClearSharedMem();
-  pSharedData4EB[0] = hackish;
-
-  mprintf("dm-unipz: ebmread32 address 0x%08x, data 0x%08x\n", address, pSharedData4EB[0]);
+  pSharedData4EB[0] = hackish;       // kind of hackish solution to determine, if a reply value has been sent
 
   // setup and commit EB cycle to remote device
   ebm_hi(address);
-  ebm_op(address, (uint32_t)(&(pSharedData4EB[0])), EBM_READ);
+  ebm_op(address, (uint32_t)(&(pCpuRamExternalData4EB[0])), EBM_READ);
+  ebm_op(address, (uint32_t)(&(pCpuRamExternalData4EB[0])), EBM_READ); //this is a hack. Due to a bug in ebm, we need to have to read at least two elements
+
   ebm_flush();
   
   // wait for timeout or received data
@@ -266,8 +266,6 @@ uint32_t ebmRead32(uint32_t msTimeout, uint32_t address, uint32_t *data)
       return DMUNIPZ_STATUS_OK;
     }
   } //while not timed out
-
-  mprintf("dm-unipz: ebmread32 address 0x%08x, data 0x%08x\n", address, pSharedData4EB[0]);
 
   return DMUNIPZ_STATUS_TIMEDOUT; 
 } //ebmRead32
@@ -287,6 +285,11 @@ void init() // typical init for lm32
 
 void initSharedMem() // determine address and clear shared mem
 {
+  uint32_t idx;
+  const uint32_t c_Max_Rams = 10;
+  sdb_location found_sdb[c_Max_Rams];
+  sdb_location found_clu;
+  
   // get pointer to shared memory
   pShared           = (uint32_t *)_startshared;
 
@@ -306,7 +309,18 @@ void initSharedMem() // determine address and clear shared mem
   pSharedSrcIP      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_SRCIP >> 2));
   pSharedDstMacHi   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACHI >> 2));
   pSharedDstMacLo   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACLO >> 2));
-  pSharedDstIP      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTIP >> 2));  
+  pSharedDstIP      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTIP >> 2));
+
+
+  // find address of CPU from external perspective
+  idx = 0;
+  find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
+  idx = 0;
+  find_device_multi_in_subtree(&found_clu, &found_sdb[0], &idx, c_Max_Rams, GSI, LM32_RAM_USER);
+  if(idx >= cpuId) {
+    pCpuRamExternal           = (uint32_t *)(getSdbAdr(&found_sdb[cpuId]) & 0x7FFFFFFF); // CPU sees the 'world' under 0x8..., remove that bit to get host bridge perspective
+    pCpuRamExternalData4EB    = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_DATA_4EB_START + SHARED_OFFS) >> 2));
+  }
 
   // set initial values;
   ebmClearSharedMem();
@@ -767,7 +781,7 @@ uint32_t entryActionConfigured()
   if ((status = ebmRead32(2000, DMUNIPZ_ECA_ADDRESS, &data)) != DMUNIPZ_STATUS_OK) {
     mprintf("dm-unipz: ERROR - Data Master unreachable! %d\n", status);
     return status;
-  } 
+  }
       
   // check if modulbus I/O is ok
   if ((status = echoTestDevMil(pMILPiggy, IFB_ADDRESS_SIS, 0xbabe)) != DMUNIPZ_STATUS_OK) {

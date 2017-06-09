@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.0.2"
+#define DMUNIPZ_X86_VERSION "0.0.3"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -68,9 +68,14 @@ eb_address_t dmunipz_virtAcc;    // number of virtual accelerator of ongoing or 
 eb_address_t dmunipz_statTrans;  // status of ongoing or last transfer, read
 eb_address_t dmunipz_cmd;        // command, write
 eb_address_t dmunipz_version;    // version, read
+eb_address_t dmunipz_srcMacHi;   // ebm src mac, write
+eb_address_t dmunipz_srcMacLo;   // ebm src mac, write
+eb_address_t dmunipz_srcIp;      // ebm src ip, write
+eb_address_t dmunipz_dstMacHi;   // ebm dst mac, write
+eb_address_t dmunipz_dstMacLo;   // ebm dst mac, write
+eb_address_t dmunipz_dstIp;      // ebm dst ip, write
 
-
-
+ 
 static void die(const char* where, eb_status_t status) {
   fprintf(stderr, "%s: %s failed: %s\n",
           program, where, eb_status(status));
@@ -131,23 +136,27 @@ const char* dmunipz_transferStatus_text(uint32_t code) {
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device> [COMMAND]\n", program);
   fprintf(stderr, "\n");
-  fprintf(stderr, "  -h               display this help and exit\n");
-  fprintf(stderr, "  -i               display information on gateway\n");
-  fprintf(stderr, "  -s<n>            snoop gateway for information continuously\n");
-  fprintf(stderr, "                   0: print all messages (default)\n");
-  fprintf(stderr, "                   1: as 0, but without info on ongoing transfers\n");
-  fprintf(stderr, "                   2: as 1, but without info on transfers\n");
-  fprintf(stderr, "                   3: as 2, but without info on status\n");
+  fprintf(stderr, "  -h                  display this help and exit\n");
+  fprintf(stderr, "  -i                  display information on gateway\n");
+  fprintf(stderr, "  -s<n>               snoop gateway for information continuously\n");
+  fprintf(stderr, "                      0: print all messages (default)\n");
+  fprintf(stderr, "                      1: as 0, but without info on ongoing transfers\n");
+  fprintf(stderr, "                      2: as 1, but without info on transfers\n");
+  fprintf(stderr, "                      3: as 2, but without info on status\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  configure        command requests state change to CONFIGURED\n");
-  fprintf(stderr, "  startop          command requests state change to OPERATION\n");
-  fprintf(stderr, "  stopop           command requests state change to STOPPING -> CONFIGURED\n");
-  fprintf(stderr, "  recover          command tries to recover from ERROR state and transit to IDLE\n");
-  fprintf(stderr, "  idle             command requests state change to IDLE\n");
+  fprintf(stderr, "  ebmlocal <mac> <ip> command sets local WR MAC and IP for EB master (values in hex)\n");
+  fprintf(stderr, "  ebmdm    <mac> <ip> command sets DM WR MAC and IP for EB maste (values in hex)\n");
+  fprintf(stderr, "\n");
+  fprintf(stderr, "  configure           command requests state change to CONFIGURED\n");
+  fprintf(stderr, "  startop             command requests state change to OPERATION\n");
+  fprintf(stderr, "  stopop              command requests state change to STOPPING -> CONFIGURED\n");
+  fprintf(stderr, "  recover             command tries to recover from ERROR state and transit to IDLE\n");
+  fprintf(stderr, "  idle                command requests state change to IDLE\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to control the DM-UNIPZ gateway from the command line.\n");
-  fprintf(stderr, "Example1: '%s -i dev/wbm0' display typical information.\n", program);
-  fprintf(stderr, "Example2: '%s -s0 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
+  fprintf(stderr, "Example1: '%s dev/wbm0 ebmdm 0x00267b000401 0xc0a80a01' set MAC and IP of Data Master\n", program);
+  fprintf(stderr, "Example2: '%s -i dev/wbm0' display typical information.\n", program);
+  fprintf(stderr, "Example3: '%s -s0 dev/wbm0 | logger -t TIMING -sp local0.info' monitor firmware and print to screen and to diagnostic logging", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "When using option '-s<n>', the following information is displayed\n");
   fprintf(stderr, "dm-unipz: transfer - 00000074, 01, 002, 1 1 1 1 1 1, OPERATION , OK\n");
@@ -215,9 +224,17 @@ void printTransfer(uint32_t transfers, uint32_t injections, uint32_t virtAcc, ui
 } // printTransfer
 
 int main(int argc, char** argv) {
-  eb_status_t       eb_status;
-  eb_socket_t       socket;
+#define GSI           0x00000651
+#define LM32_RAM_USER 0x54111351
 
+  
+  eb_status_t         eb_status;
+  eb_socket_t         socket;
+
+  struct sdb_device   sdbDevice;          // instantiated lm32 core
+  int                 nDevices;           // number of instantiated cores
+
+  
   const char* devName;
   const char* command;
 
@@ -240,6 +257,11 @@ int main(int argc, char** argv) {
   uint32_t actStatTrans;   // actual status of ongoing transfer
   uint32_t sleepTime;      // time to sleep [us]
   uint32_t printFlag;      // flag for printing
+
+  uint64_t mac;            // mac for config of EB master
+  uint32_t macHi;          // high 32bit of mac
+  uint32_t macLo;          // low 32 bit of mac
+  uint32_t ip;             // ip for config of EB master
   
 
   program = argv[0];    
@@ -284,6 +306,7 @@ int main(int argc, char** argv) {
   }
 
   devName = argv[optind];
+
   if (optind+1 < argc)  command = argv[++optind];
   else command = NULL;
 
@@ -292,7 +315,10 @@ int main(int argc, char** argv) {
   if ((eb_status = eb_device_open(socket, devName, EB_ADDR32|EB_DATA32, 3, &device)) != EB_OK) die("eb_device_open", eb_status);
 
   /* get device Wishbone address of lm32 */
-  lm32_base          = 0x20090000;  //chk, need to do this properly
+  nDevices = 1; // quick and dirty, use only first core
+  if ((eb_status = eb_sdb_find_by_identity(device, GSI, LM32_RAM_USER, &sdbDevice, &nDevices)) != EB_OK) die("find lm32", eb_status);
+  lm32_base =  sdbDevice.sdb_component.addr_first;
+
   dmunipz_status     = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_STATUS;
   dmunipz_state      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_STATE;;
   dmunipz_iterations = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_NITERMAIN;
@@ -302,6 +328,12 @@ int main(int argc, char** argv) {
   dmunipz_statTrans  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TRANSSTATUS;
   dmunipz_cmd        = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_CMD;
   dmunipz_version    = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_VERSION;
+  dmunipz_srcMacHi   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_SRCMACHI;
+  dmunipz_srcMacLo   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_SRCMACLO;
+  dmunipz_srcIp      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_SRCIP;
+  dmunipz_dstMacHi   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTMACHI;
+  dmunipz_dstMacLo   = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTMACLO;
+  dmunipz_dstIp      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTIP;
 
   if (getInfo) {
     // version info
@@ -321,6 +353,39 @@ int main(int argc, char** argv) {
     if (!strcasecmp(command, "stopop"))    eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_STOPOP   , 0, eb_block);
     if (!strcasecmp(command, "recover"))   eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_RECOVER  , 0, eb_block);
     if (!strcasecmp(command, "idle"))      eb_device_write(device, dmunipz_cmd, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)DMUNIPZ_CMD_IDLE     , 0, eb_block);
+    if (!strcasecmp(command, "ebmlocal")) {
+      if (optind+3  != argc) {printf("dm-unipz: expecting exactly two arguments: ebmlocal <mac> <ip>\n"); return 1;} 
+
+      mac = strtoull(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("dm-unipz: invalid mac -- %s\n", argv[optind+2]); return 1;} 
+
+      ip = strtoull(argv[optind+2], &tail, 0);
+      if (*tail != 0)        {printf("dm-unipz: invalid ip -- %sn", argv[optind+3]); return 1;}       
+
+      macHi = (uint32_t)(mac >> 32);
+      macLo = (uint32_t)(mac & 0xffffffff);
+
+      eb_device_write(device, dmunipz_srcMacHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)macHi, 0, eb_block); // todo: all writes in one cycle
+      eb_device_write(device, dmunipz_srcMacLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)macLo, 0, eb_block);
+      eb_device_write(device, dmunipz_srcIp,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)ip , 0, eb_block);
+    } // "ebmlocal"
+    if (!strcasecmp(command, "ebmdm")) {
+      if (optind+3  != argc) {printf("dm-unipz: expecting exactly two arguments: ebmdm <mac> <ip>\n"); return 1;} 
+
+      mac = strtoull(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("dm-unipz: invalid mac -- %s\n", argv[optind+2]); return 1;} 
+
+      ip = strtoull(argv[optind+2], &tail, 0);
+      if (*tail != 0)        {printf("dm-unipz: invalid ip -- %sn", argv[optind+3]); return 1;}       
+
+      macHi = (uint32_t)(mac >> 32);
+      macLo = (uint32_t)(mac & 0xffffffff);
+
+      eb_device_write(device, dmunipz_dstMacHi, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)macHi, 0, eb_block); // todo: all writes in one cycle
+      eb_device_write(device, dmunipz_dstMacLo, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)macLo, 0, eb_block);
+      eb_device_write(device, dmunipz_dstIp,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)ip , 0, eb_block);
+    } // "ebmdm"
+
   } //if command
 
   if (snoop) {
