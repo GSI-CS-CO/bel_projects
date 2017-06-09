@@ -17,6 +17,7 @@ uint64_t SHARED dummy = 0;
 extern uint32_t*       _startshared[];
 extern uint32_t*       _endshared[];
 
+
 typedef uint64_t  (*deadlineFuncPtr) ( uint32_t*, uint32_t* );
 typedef uint32_t* (*nodeFuncPtr)  ( uint32_t*, uint32_t* );
 typedef uint32_t* (*actionFuncPtr)( uint32_t*, uint32_t*, uint32_t* );
@@ -89,17 +90,33 @@ void ebmInit()
 
 }
 
+void prioQueueInit()
+{
+   //set up the pointer to the global msg count
+   //pMsgCntPQ = (uint64_t*)(pFpqCtrl + (PRIO_CNT_OUT_ALL_GET_0>>2));
+
+   pFpqCtrl[PRIO_RESET_OWR>>2]      = 1;
+   pFpqCtrl[PRIO_MODE_CLR>>2]       = 0xffffffff;
+   pFpqCtrl[PRIO_ECA_ADR_RW>>2]     = (uint32_t)pEca & ~0x80000000;
+   pFpqCtrl[PRIO_EBM_ADR_RW>>2]     = ((uint32_t)pEbm & ~0x80000000);
+   pFpqCtrl[PRIO_TX_MAX_MSGS_RW>>2] = 40;
+   pFpqCtrl[PRIO_TX_MAX_WAIT_RW>>2] = loW((uint64_t)(50000));
+   pFpqCtrl[PRIO_MODE_SET>>2]       = PRIO_BIT_ENABLE     | 
+                                      PRIO_BIT_MSG_LIMIT  |
+                                      PRIO_BIT_TIME_LIMIT;
+}
+
 void init()
 { 
    discoverPeriphery();
    uart_init_hw();
    cpuId = getCpuIdx();
-   //ftmInit();
+   
 
    if (cpuId == 0) {
 
      ebmInit();
-     //prioQueueInit();
+     prioQueueInit();
      mprintf("#%02u: Got IP from WRC. Configured EBM and PQ\n", cpuId); 
    }
    
@@ -200,7 +217,7 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   if (pMsg->id == DIAG_PQ_MSG_CNT) tmpPar = *pMsgCntPQ;
   else                             tmpPar = pMsg->par;  
   */
-  /*
+  
   atomic_on();
   *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_ID_HI >> 2];
   *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_ID_LO >> 2];
@@ -211,7 +228,7 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   *(pFpqData + (PRIO_DAT_TS_HI>>2)) = thrData[T_TD_DEADLINE_HI >> 2];
   *(pFpqData + (PRIO_DAT_TS_LO>>2)) = thrData[T_TD_DEADLINE_LO >> 2];
   atomic_off();
-  */  
+    
   ++thrData[T_TD_MSG_CNT >> 2];
    
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
