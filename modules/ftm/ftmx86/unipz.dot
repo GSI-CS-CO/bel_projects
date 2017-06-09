@@ -4,14 +4,14 @@ node [type="TMsg", shape="rectangle",  style="filled", fillcolor="white", color=
 edge [type="defdst", color="red"]
 
 Evt_TKREQ_00        [type="TMsg", tOffs=0, flags=2, id=40, par=818181, tef=0, res=0, shape="oval"];
-Evt_PREP_DM         [type="TMsg", tOffs=0, flags=2, id=40, par=818181, tef=0, res=0, shape="oval"];
+Evt_PREP_DM         [type="TMsg", tOffs=0, flags=2, id=1229764173248856064, par=818181, tef=0, res=0, shape="oval"];
 Cmd_TKREQ_01        [shape="oval", tOffs=300, flags=3, type="Flow", color="magenta", tValid=0, qty=10];
-Evt_TKREQ_DM        [type="TMsg", tOffs=0, flags=2, id=40, par=818181, tef=0, res=0, shape="oval"];
+Evt_TKREQ_DM        [type="TMsg", tOffs=0, flags=2, id=2459528346497712128, par=818181, tef=0, res=0, shape="oval"];
 Evt_TKREQ_02        [type="TMsg", tOffs=0, flags=2, id=40, par=818181, tef=0, res=0, shape="oval"];
 B_TKREQ             [type="Block", tPeriod=200000000];
 B_LOOP0             [type="Block", tPeriod=200000000];
 Evt_BREQ_00         [type="TMsg", tOffs=0, flags=2, id=40, par=818181, tef=0, res=0, shape="oval"];
-Evt_BREQ_DM         [type="TMsg", tOffs=0, flags=2, id=40, par=818181, tef=0, res=0, shape="oval"];
+Evt_BREQ_DM         [type="TMsg", tOffs=0, flags=2, id=3689292519746568192, par=818181, tef=0, res=0, shape="oval"];
 Evt_BREQ_01         [type="TMsg", tOffs=0, flags=2, id=40, par=818181, tef=0, res=0, shape="oval"];
 B_BREQ              [type="Block", tPeriod=200000000];
 B_LOOP1             [type="Block", tPeriod=10000000];
@@ -21,7 +21,7 @@ Evt_MB_LOAD         [type="TMsg", tOffs=500, flags=0, id=40, par=818181, tef=0, 
 Evt_MULTI_MULTI_01  [type="TMsg", tOffs=500, flags=0, id=40, par=818181, tef=0, res=0, shape="oval"];
 B_MULTI_MULTI       [type="Block",  tPeriod=10000000];
 Evt_BTRN_00         [type="TMsg", tOffs=500, flags=0, id=40, par=818181, tef=0, res=0, shape="oval"];
-Evt_TKREL           [type="TMsg", tOffs=1000000, flags=0, id=40, par=818181, tef=0, res=0, shape="oval"];
+Evt_TKREL           [type="TMsg", tOffs=1000000, flags=0, id=491905669299542425, par=818181, tef=0, res=0, shape="oval"];
 Evt_BTRN_01         [type="TMsg", tOffs=500, flags=0, id=40, par=818181, tef=0, res=0, shape="oval"];
 B_BTRN              [type="Block",  tPeriod=200000000];
 
