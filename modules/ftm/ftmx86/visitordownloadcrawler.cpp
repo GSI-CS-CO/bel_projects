@@ -60,18 +60,24 @@ void VisitorDownloadCrawler::visit(const TimingMsg& el) const  {
   uint32_t flags = g[v].np->getFlags();
 
   //std::cout << "TMSG Flags 0x" << std::hex << flags << std::endl;
-  
+  //FIXME do proper null ptr checking for EVERY possibility !!!
+  //TODO include possibility to switch between intern / extern addresses as dynamic parameter
+
   if (flags & NFLG_TMSG_DYN_ID_SMSK) {
-    tmpAdr = mmu.intAdr2adr((uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_ID ));
+    tmpAdr = mmu.extAdr2adr((uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_ID ));
     if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sDID),          g);
   }
   if (flags & NFLG_TMSG_DYN_PAR0_SMSK) {
-    tmpAdr = mmu.intAdr2adr((uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ));
-    //std::cout << "found 0x" << std::hex << tmpAdr << std::endl;
+    //std::cout << "original 0x" << std::hex << (uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ) << " , intbase 0x" << mmu.intBaseAdr + extBaseAdr std::endl;
+    tmpAdr = mmu.extAdr2adr((uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ));
+   // std::cout << "found 0x" << std::hex << tmpAdr << std::endl;
+    //parserMeta* lookupPtr = (parserMeta*)(mmu.lookupAdr(tmpAdr));
+    //if (lookupPtr == NULL) std::cout << "Parsermeta Lookup returned Null " << std::endl;
+    
     if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sDPAR0),          g);
   }
   if (flags & NFLG_TMSG_DYN_PAR1_SMSK) {
-    tmpAdr = mmu.intAdr2adr((uint32_t)(writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ) >> 32));
+    tmpAdr = mmu.extAdr2adr((uint32_t)(writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ) >> 32));
     if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((parserMeta*)(mmu.lookupAdr(tmpAdr)))->v, myEdge(sDPAR1),          g);
   }
 }

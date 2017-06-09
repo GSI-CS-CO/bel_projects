@@ -190,7 +190,8 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
           if (aPar0 != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic par0 source !!!" << std::endl; break;
           } else {
             auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
-            if (x != NULL) { aPar0 = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);}             
+            if (x != NULL) { aPar0 = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);}
+            //std::cout << "DynAdr 0 0x" << std::hex << aPar0 << std::endl;
           }
         }
         if (g[*out_cur].type == sDPAR1) {
@@ -198,6 +199,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
           } else {
             auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
             if (x != NULL) { aPar1 = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);}
+            //std::cout << "DynAdr 1 0x" << std::hex << aPar1 << std::endl;
           }
         }
         if (g[*out_cur].type == sDTEF) {

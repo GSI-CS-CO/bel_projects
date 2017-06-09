@@ -79,10 +79,10 @@ int main(int argc, char* argv[]) {
   const char *program = argv[0];
   const char *netaddress, *blockName = NULL, *inputFilename = NULL, *outputFilename = defOutputFilename;
   int32_t tmp, error=0;
-  uint32_t cpuIdx = 0;
+  uint32_t cpuIdx = 0, thrIdx = 0;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "vb:c:o:w")) != -1) {
+   while ((opt = getopt(argc, argv, "vb:c:o:t:w")) != -1) {
       switch (opt) {
          case 'w':
             doUpload = true;
@@ -98,12 +98,16 @@ int main(int argc, char* argv[]) {
             verbose = 1;
             break;
          case 't':
-            //show_time = 1;
+            tmp = atol(optarg);
+            if (tmp < 0 || tmp > 8) {
+              std::cerr << program << ": invalid thr idx -- '" << optarg << "'" << std::endl;
+              error = -1;
+            } else {thrIdx = (uint32_t)tmp;}
             break;
          case 'c':
             tmp = atol(optarg);
             if (tmp < 0 || tmp > 8) {
-              std::cerr << program << ": invalid cpu id -- '" << optarg << "'" << std::endl;
+              std::cerr << program << ": invalid cpu idx -- '" << optarg << "'" << std::endl;
               error = -1;
             } else {cpuIdx = (uint32_t)tmp;}
             break;
@@ -247,8 +251,8 @@ int main(int argc, char* argv[]) {
 
     mmu.prepareUpload(); 
 
-    const char deadbeef[4] = {0xDE, 0xAD, 0xBE, 0xEF};
-    const std::string needle(deadbeef);
+    const unsigned char deadbeef[4] = {0xDE, 0xAD, 0xBE, 0xEF};
+    const std::string needle((const char*)deadbeef);
 
 
 
@@ -286,9 +290,9 @@ int main(int argc, char* argv[]) {
     //Upload
     ftmRamWrite(ebd, vUlA, vUlD);
    
-    std::cout << "...Done. " << std::endl << "To make LM32 start, write Node Adr to 0x" << std::hex << myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + T_TD_NODE_PTR << " then write 1 to 0x" << myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_CTL + T_TC_START << std::endl;
+    std::cout << "...Done. " << std::endl << "To make LM32 start, write Node Adr to 0x" << std::hex << myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TD_NODE_PTR << " then write 0x" << std::hex << (1 << thrIdx) << " to 0x" << myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_CTL + T_TC_START << std::endl;
 
-  } else {
+  } 
     //Download Readback
 
     vAdr vDlBmpA = mmu.getDownloadBMPAdrs();
@@ -313,8 +317,17 @@ int main(int argc, char* argv[]) {
     */
     mmu.parseDownloadData(vDlD);
 
+    /*
+    if(doStart) {
+
+      uint32_t thrStartNodePtrAdr = myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TD_NODE_PTR;
+      uint32_t thrStartSetRegAdr  = myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_CTL + T_TC_START;
+      uint32_t thrStartSetValue   = (1 << thrIdx);
+      uint32_t nodeAdr = LM32_NULL_PTR;
 
 
+    }
+  */
 
     std::cout << "... Done. " << std::endl;
 
@@ -381,7 +394,7 @@ int main(int argc, char* argv[]) {
     boost::write_graphviz(out, mmu.getDownGraph(), make_vertex_writer(boost::get(&myVertex::np, mmu.getDownGraph())), make_edge_writer(boost::get(&myEdge::type, mmu.getDownGraph())), sample_graph_writer{"Demo"}, boost::get(&myVertex::name, mmu.getDownGraph()));
 
     std::cout << "... Done. " << std::endl;
-  }
+  
   ebd.close();
   ebs.close();
 
