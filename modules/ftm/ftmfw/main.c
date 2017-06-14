@@ -126,12 +126,69 @@ void init()
    
 }
 
+uint32_t __div64_32(uint64_t *n, uint32_t base)
+{
+        uint64_t rem = *n;
+        uint64_t b = base;
+        uint64_t res, d = 1;
+        uint32_t high = rem >> 32;
+
+        /* Reduce the thing a bit first */
+        res = 0;
+        if (high >= base) {
+                high /= base;
+                res = (uint64_t) high << 32;
+                rem -= (uint64_t) (high*base) << 32;
+        }
+
+        while ((int64_t)b > 0 && b < rem) {
+                b = b+b;
+                d = d+d;
+        }
+
+        do {
+                if (rem >= b) {
+                        rem -= b;
+                        res += d;
+                }
+                b >>= 1;
+                d >>= 1;
+        } while (d);
+
+        *n = res;
+        return rem;
+}
+
+
+#define PRINT64_FACTOR  1000000000LL
+static char* print64(uint64_t x, int align)
+{
+        uint32_t h_half, l_half;
+        static char buf[2*10+1];        //2x 32-bit value + \0
+
+        if (x < PRINT64_FACTOR)
+                if (align)
+                        sprintf(buf, "%20u", (uint32_t)x);
+                else
+                        sprintf(buf, "%u", (uint32_t)x);
+        else {
+                l_half = __div64_32(&x, PRINT64_FACTOR);
+                h_half = (uint32_t) x;
+                if (align)
+                        sprintf(buf, "%11u%09u", h_half, l_half);
+                else
+                        sprintf(buf, "%u%09u", h_half, l_half);
+        }
+        return buf;
+}
+
+
 uint64_t dlEvt(uint32_t* node, uint32_t* thrData) {
-  return *(uint64_t*)&thrData[T_TD_DEADLINE] = *(uint64_t*)&thrData[T_TD_CURRTIME] + *(uint64_t*)&node[EVT_OFFS_TIME];
+  return *(uint64_t*)&thrData[T_TD_DEADLINE >> 2] = *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] + *(uint64_t*)&node[EVT_OFFS_TIME >> 2];
 }
 
 uint64_t dlBlock(uint32_t* node, uint32_t* thrData) {
-  return *(uint64_t*)&thrData[T_TD_DEADLINE];
+  return *(uint64_t*)&thrData[T_TD_DEADLINE >> 2];
 }
 
 uint32_t* execNoop(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
@@ -140,7 +197,7 @@ uint32_t* execNoop(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
 uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   uint32_t* ret = (uint32_t*)cmd[T_CMD_FLOW_DEST >> 2]; 
-  mprintf("#%02u: Routing Flow to %08x\n", cpuId, (uint32_t)ret);
+  mprintf("#%02u: Routing Flow to 0x%08x\n", cpuId, (uint32_t)ret);
   if(node[NODE_FLAGS >> 2] & ACT_CHP_SMSK) node[NODE_DEF_DEST_PTR >> 2] = (uint32_t)ret;
   return ret;
 
@@ -161,10 +218,19 @@ uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   // we must therefore subtract it here if we modify current time, as execWait is optional
 
   if ( cmd[T_CMD_ACT >> 2] & ACT_WAIT_ABS_SMSK) {
-    *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD];                      //1. set absolute value - block period
+    *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2];                      //1. set absolute value - block period
+    mprintf("#%02u: Wait, Absolute to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
   } else {
-    if( cmd[T_CMD_ACT >> 2] & ACT_CHP_SMSK) *(uint64_t*)&node[BLOCK_PERIOD] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2];                         //2. set new block period
-    else                *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] += *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD]; //3. add temporary block period - block period
+    if( cmd[T_CMD_ACT >> 2] & ACT_CHP_SMSK) {
+      mprintf("#%02u: Wait, Permanent relative to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
+      *(uint64_t*)&node[BLOCK_PERIOD >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2];                         //2. set new block period
+    } else {
+
+      mprintf("#%02u: Wait, temp relative to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
+      //mprintf("#%02u: Wait thr Old  0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]>> 32), (uint32_t)*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]);  
+      *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] += (*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD]); //3. add temporary block period - block period
+      //mprintf("#%02u: Wait thr new  0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]>> 32), (uint32_t)*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]);  
+    }      
   }
    
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
@@ -181,7 +247,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK;
   
   //calculate pointer (8b) to current write index
-  wrIdx = ((uint8_t *)tg + BLOCK_CMDQ_WR_IDXS + prio);
+  wrIdx = ((uint8_t *)tg + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);
   //calculate Offsets
   bufOffs = (*wrIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;
   elOffs  = (*wrIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_; 
@@ -240,25 +306,26 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   mprintf("#%02u: Checking Block 0x%08x\n", cpuId, node[NODE_HASH >> 2]);
   uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
   uint32_t *bl, *b, *cmd, *act;
-  uint8_t  *rdIdx;
+  uint8_t  *rdIdx,*wrIdx;
 
-  uint32_t ardOffs = node[BLOCK_CMDQ_RD_IDXS >> 2], awrOffs = node[BLOCK_CMDQ_WR_IDXS >> 2], bufOffs, elOffs, prio, actTmp, atype;
+  uint32_t *ardOffs = node + (BLOCK_CMDQ_RD_IDXS >> 2), *awrOffs = node + (BLOCK_CMDQ_WR_IDXS >> 2);
+  uint32_t bufOffs, elOffs, prio, actTmp, atype;
   int16_t qty;
   
   
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK;
 
-  if( awrOffs != ardOffs ) {
+  if( (*awrOffs & 0x00ffffff) != (*ardOffs & 0x00ffffff) ) {
     prio = PRIO_LO;
-    if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + PRIO_HI) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + PRIO_HI)) { prio = PRIO_HI; }
-    if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + PRIO_IL) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + PRIO_IL)) { prio = PRIO_IL; }
-
-    rdIdx = ((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + prio);
+    if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - PRIO_HI - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - PRIO_HI - 1)) { prio = PRIO_HI; }
+    if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - PRIO_IL - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - PRIO_IL - 1)) { prio = PRIO_IL; }
+    rdIdx   = ((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - prio -1);
+    wrIdx   = ((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);
     bufOffs = (*rdIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;
     elOffs  = (*rdIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_;
     bl      = (uint32_t*)node[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2];
     b       = (uint32_t*)bl[bufOffs >> 2];
-    cmd     = (uint32_t*)&b[elOffs >> 2];
+    cmd     = (uint32_t*)&b[elOffs  >> 2];
     
     //check valid time
     if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return node;
@@ -266,23 +333,24 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
     //get action type
     act = (uint32_t*)&cmd[T_CMD_ACT >> 2];
     actTmp = *act;
+    qty = (actTmp >> ACT_QTY_POS) & ACT_QTY_MSK;
+    //if(qty >= 1) {
     atype = (actTmp >> ACT_TYPE_POS) & ACT_TYPE_MSK;
-    mprintf("#%02u: pending Cmd @ Prio: %u, rdIdx: 0x%08x, buf: %u, el: %u, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x, type: %u\n", cpuId, prio, (uint32_t)rdIdx, (*rdIdx & Q_IDX_MAX_OVF_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ), 
+    mprintf("#%02u: pending Cmd @ Prio: %u, awdIdx: 0x%08x, 0x%02x, ardIdx: 0x%08x, 0x%02x, buf: %u, el: %u, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x, type: %u\n", cpuId, prio, *awrOffs, *wrIdx, *ardOffs, *rdIdx, (*rdIdx & Q_IDX_MAX_OVF_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ), 
       (*rdIdx & Q_IDX_MAX_OVF_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ), (uint32_t)bl, (uint32_t)b, (uint32_t)cmd, atype );
     
     //carry out type specific action
     ret = actionFuncs[atype](node, cmd, thrData);
 
     //decrement qty
-    qty = (actTmp >> ACT_QTY_POS) & ACT_QTY_MSK;
     
-    mprintf("#%02u: Act 0x%08x, Qty is at 0x%04x\n", cpuId, *act, qty);
+    mprintf("#%02u: Act 0x%08x, Qty is at %d\n", cpuId, *act, qty);
     actTmp &= ~ACT_QTY_SMSK;
     actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS;
     *act = actTmp;
     //if qty <= zero, pop cmd -> increment read offset
     if(qty <= 0) { *(rdIdx) = (*rdIdx + 1) & Q_IDX_MAX_OVF_MSK; mprintf("#%02u: Qty reached zero, popping\n", cpuId);}
-    
+    //} else {mprintf("#%02u: Error: Qty is already at %d !\n", cpuId, *act, qty); }
   } else {
     //mprintf(" nothing pending\n");
     
@@ -291,17 +359,22 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   
 }
 
+
+
 uint32_t* blockFixed(uint32_t* node, uint32_t* thrData) {
+  //mprintf("#%02u: Pre Call  0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]>> 32), (uint32_t)*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]);  
   uint32_t* ret = block(node, thrData);
   //mprintf("#%02u: BlockDur @ 0x%08x & 0x%08x :  0x%08x%08x\n", cpuId, (uint32_t)&node[BLOCK_PERIOD_HI >> 2], (uint32_t)&node[BLOCK_PERIOD_LO >> 2], node[BLOCK_PERIOD_HI >> 2], node[BLOCK_PERIOD_LO >> 2] );
-  *(uint64_t*)&thrData[T_TD_CURRTIME] += *(uint64_t*)&node[BLOCK_PERIOD >> 2];
+  
+  *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] += *(uint64_t*)&node[BLOCK_PERIOD >> 2];
+  //  mprintf("#%02u: Post Inc  0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]>> 32), (uint32_t)*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]);  
   return ret;
 }  
 
 uint32_t* blockAlign(uint32_t* node, uint32_t* thrData) {
   uint32_t *ret = block(node, thrData);
-  uint64_t      *tx =  (uint64_t*)&thrData[T_TD_CURRTIME];  // current time
-  uint64_t       Tx = *(uint64_t*)&node[BLOCK_PERIOD];      // block duration
+  uint64_t      *tx =  (uint64_t*)&thrData[T_TD_CURRTIME >> 2];  // current time
+  uint64_t       Tx = *(uint64_t*)&node[BLOCK_PERIOD >> 2];      // block duration
   const uint64_t t0 = 0;                                    // alignment offset
   const uint64_t T0 = 10000;                                // alignment period
 
@@ -403,8 +476,17 @@ void main(void) {
 
 
     uint32_t* start = p + (( SHCTL_THR_CTL + T_TC_START ) >> 2);
+    uint32_t* running = p + (( SHCTL_THR_CTL + T_TC_GET ) >> 2);
+    uint32_t* stop = p + (( SHCTL_THR_CTL + T_TC_STOP  ) >> 2);
+
     for(i=0;i<8;i++) {
+      
+      mprintf("#%02u: b4 Start 0x%08x, Stop 0x%08x, Running 0x%08x\n",  cpuId, *start, *stop, *running);
+
+
       if (*start & 1<<i) {
+        *running |= (1<<i);
+        *start   &= ~(1<<i);
         //mprintf("#%02u: Start Thr #%u\n", cpuId, i);
         uint32_t* tp;
         uint32_t** np;
@@ -418,10 +500,11 @@ void main(void) {
          
         *(uint64_t*)&tp[T_TD_CURRTIME] = 0;
         
-        while(*np != NULL) {
-
+        while(*np != NULL && (*running & 1<<i) ) {
+          *running &= ~(*stop & 1<<i);
+          *stop  &= ~(1<<i);  
           //while (!(*start & 1<<i)) {
-            for (j = 0; j < ((125000000/8)); ++j) { asm volatile ("nop"); } 
+            for (j = 0; j < ((12500000/8)); ++j) { asm volatile ("nop"); } 
             //mprintf("#%02u: Waiting at 0x%08x\n", cpuId, *np);
           //};
           //*start &= ~(1<<i);
@@ -438,7 +521,7 @@ void main(void) {
           uint32_t msk = -(type < _NODE_TYPE_END_);
           //mprintf("#%02u: type is %u, end is %u, msk is %u\n", cpuId, type, _NODE_TYPE_END_, msk);
           type &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
-          mprintf("#%02u: Node Ptr is 0x%08x, ThrTime: %u Dl: %u, type @ %08x is %u\n", cpuId, *np, (uint32_t)*(uint64_t*)&tp[T_TD_CURRTIME], (uint32_t)*(uint64_t*)&tp[T_TD_DEADLINE], tmpType, type);
+          mprintf("#%02u: Node Ptr is 0x%08x, Dl: %s, type @ %08x is %u\n", cpuId, *np, print64(*(uint64_t*)&tp[T_TD_DEADLINE >> 2], 0),  tmpType, type);
 
           *np = nodeFuncs[type](*np, tp);
           
@@ -451,7 +534,7 @@ void main(void) {
           }
           //update thread deadline for next node
           deadlineFuncs[type](*np, tp);
-        
+          mprintf("#%02u: Post Process  0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&tp[T_TD_CURRTIME >> 2]>> 32), (uint32_t)*(uint64_t*)&tp[T_TD_CURRTIME >> 2]);  
         }
 
       }
