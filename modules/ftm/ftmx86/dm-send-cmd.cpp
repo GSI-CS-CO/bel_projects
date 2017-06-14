@@ -23,6 +23,21 @@ using namespace etherbone;
 
 const char defOutputFilename[] = "download.dot";
 
+const std::string sPrio[] = {"LO", "HI", "IL"};
+/*
+void sendFlowCmd(Device& dev, uint8_t prio, uint64_t validTime, uint32_t target, uint32_t dest, uint16_t qty) {
+  Cycle cyc;
+
+  cyc.open(dev);
+  cyc.write(target + T_CMD_TIME + 0,          EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)(validTime >> 32));
+  cyc.write(target + T_CMD_TIME + _32b_SIZE_, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)(validTime & 0xffffffff));
+  cyc.write(target + T_CMD_ACT,               EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)((ACT_TYPE_FLOW << ACT_TYPE_POS) | (prio << ACT_PRIO_POS) | (qty << ACT_QTY_POS )) );
+  cyc.write(target + T_CMD_FLOW_DEST,         EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)(dest));
+  cyc.write(target + T_CMD_RES,               EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)(0));
+  cyc.close();
+
+}
+*/
 int ftmRamWrite(Device& dev, vAdr va, vBuf& vb)
 {
    //eb_status_t status;
@@ -137,8 +152,8 @@ int main(int argc, char* argv[]) {
 
   if (error) return error;
 
-   if (optind >= argc) {
-   std::cerr << program << ": expecting one non-optional argument: <etherbone-device>" << std::endl;
+   if (optind+2 >= argc) {
+   std::cerr << program << ": expecting two non-optional argument: <etherbone-device> <target-block> " << std::endl;
    //help();
    return -4;
    }
@@ -323,20 +338,23 @@ int main(int argc, char* argv[]) {
             //read out Block info
             hexDump ("Binary:", q->b, _MEM_BLOCK_SIZE);
             auto pb = boost::dynamic_pointer_cast<Block>(gb[q->v].np);
-            //# 0x" << std::hex << std::setfill('0') << std::setw(8)
+            
+            //Do the crawl
+            uint8_t eWrIdx  = (pb->getWrIdxs() >> (cmdPrio * 8)) & Q_IDX_MAX_OVF_MSK;
+            uint8_t wrIdx   = eWrIdx & Q_IDX_MAX_MSK;
+
             std::cout << "      IlHiLo" << std::endl;
-            std::cout << "WR: 0x" << std::hex << std::setfill('0') << std::setw(6) << pb->getWrIdxs() << std::endl;
+            std::cout << "WR: 0x" << std::hex << std::setfill('0') << std::setw(6) << pb->getWrIdxs() << " -- " << sPrio[cmdPrio] << " --> w0x" << std::hex << (int)wrIdx << std::endl;
             std::cout << "RD: 0x" << std::hex << std::setfill('0') << std::setw(6) << pb->getRdIdxs() << std::endl;
 
-            //Do the crawl
-            uint8_t wrOffs = (pb->getWrIdxs() >> 16) & 0xff;
+            
 
             ptrdiff_t prio  = BLOCK_CMDQ_LO_PTR + cmdPrio * _PTR_SIZE_;
-            ptrdiff_t bufIdx   = wrOffs / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
-            ptrdiff_t elemIdx  = wrOffs % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
+            ptrdiff_t bufIdx   = wrIdx / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
+            ptrdiff_t elemIdx  = wrIdx % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
 
             uint32_t bufListAdr, bufAdr, wrAdr;
-            std::cout << targetName << " -- IL --> ";
+            std::cout << targetName << " -- " << sPrio[cmdPrio] << " --> ";
             bufListAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&q->b[prio]));
             auto* qbl = mmu.lookupAdr(bufListAdr);
             if(qbl != NULL) {bufAdr = mmu.intAdr2adr(writeBeBytesToLeNumber<uint32_t>((uint8_t*)&qbl->b[(CMDQ_BUF_ARRAY + bufIdx * _PTR_SIZE_) ])); std::cout << g[qbl->v].name << " --+" << bufIdx << "b--> ";} 
@@ -349,7 +367,19 @@ int main(int argc, char* argv[]) {
 
               std::cout << "Write Offset <" << std::hex << std::setfill('0') << std::setw(6) << pb->getWrIdxs() << ">" << " @ 0x" << std::hex << std::setfill('0') << std::setw(8) << mmu.adr2extAdr(x->adr + BLOCK_CMDQ_WR_IDXS) << std::endl;
             }  
+/*
+            if(typeName != NULL) {
+              auto* pDest = mmu.lookupName(std::string(para));
+              if (pDest != NULL) {
 
+                sendFlowCmd(dev, cmdPrio, cmdTvalid, mmu.adr2extAdr(wrAdr), dest, cmdQty);
+                Cycle cyc;
+                cyc.open(dev);
+                cyc.write(mmu.adr2extAdr(x->adr + BLOCK_CMDQ_WR_IDXS), EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)(pb->getWrIdxs() & ~(0xff << (cmdPrio * 8)) | ((++eWrIdx & Q_IDX_MAX_OVF_MSK) << (cmdPrio * 8))));
+                cyc.close();
+              } else {std::cout "Destination is invalid" << std::endl;}
+            }    
+*/
 
           } else { std::cout << "Node " << targetName << " @ 0x" << std::hex << x->adr << std::endl; }
           
