@@ -947,8 +947,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       (*nTransfer)++;                                                              // increment number of transfers
       *nInject        = 0;                                                         // number of injections is reset when DM requests TK
 
-      dmPrepFlowCmd(reqBeam);  //chk: error handling                               // prepare flow command for later use, here: beam request
       status = requestTK(DMUNIPZ_REQTIMEOUT, virtAccTmp, 0);                       // request TK from UNIPZ
+      dmPrepFlowCmd(reqTK);              //chk: error handling                     // prepare flow command for later use, here: TK request
       dmChangeFlow(virtAccTmp, status, reqTK); // chk: error handling              // modify block within DM for execution of a flow command, here: TK request
 
       if (status == DMUNIPZ_STATUS_OK) *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQTKOK; // update status of transfer
@@ -971,7 +971,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
         if (checkClearReqNotOk(DMUNIPZ_REQTIMEOUT) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;
         else                                                             status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;
       } // if status
-      
+
+      dmPrepFlowCmd(reqBeam);  //chk: error handling                               // prepare flow command for later use, here: beam request
       dmChangeFlow(virtAccTmp, status, reqBeam);            //chk: error handling  // modify block within DM for execution of a flow command, here: beam request
 
       releaseBeam();                                                               // release beam request
@@ -991,7 +992,6 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       break;
     case DMUNIPZ_ECADO_PREPDM:                                                     // received command "PREP_DM" from datat master
 
-      dmPrepFlowCmd(reqTK);              //chk: error handling                     // prepare flow command for later use, here: TK request
       break;
     default: ;
     } // switch nextAction
