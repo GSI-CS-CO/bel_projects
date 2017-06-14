@@ -3,27 +3,27 @@ graph [label="UniPZ", root="Evt_BREQ_00",  rankdir=TB, nodesep=0.6, mindist=0.6,
 node [type="TMsg", shape="rectangle",  style="filled", fillcolor="white", color="black"]
 edge [type="defdst", color="red"]
 
-Evt_TKREQ_00        [type="TMsg", tOffs=0, flags=2, id=40, par=818181, tef=0, res=0, shape="oval"];
-Evt_PREP_DM         [type="TMsg", tOffs=0, flags=2, id=1229764173248856064, par=818181, tef=0, res=0, shape="oval"];
-Cmd_TKREQ_01        [shape="oval", tOffs=300, flags=3, type="Flow", color="magenta", tValid=0, qty=10];
-Evt_TKREQ_DM        [type="TMsg", tOffs=0, flags=2, id=2459528346497712128, par=818181, tef=0, res=0, shape="oval"];
-Evt_TKREQ_02        [type="TMsg", tOffs=0, flags=2, id=40, par=818181, tef=0, res=0, shape="oval"];
+Evt_TKREQ_00        [type="TMsg", tOffs=0, id="0x0000000000000001", par="0x0", shape="oval"];
+Evt_PREP_DM         [type="TMsg", tOffs=100, id="0x1111000000000000", par="0x0", shape="oval"];
+Cmd_TKREQ_01        [shape="oval", tOffs=300, type="Flow", color="magenta", tValid=0, qty=10];
+Evt_TKREQ_DM        [type="TMsg", tOffs=500, id="0x2222000000000000", par="0x0", shape="oval"];
+Evt_TKREQ_02        [type="TMsg", tOffs=1000, id="0x0000000000000002", par=818181, shape="oval"];
 B_TKREQ             [type="Block", tPeriod=200000000];
-B_LOOP0             [type="Block", tPeriod=200000000];
-Evt_BREQ_00         [type="TMsg", tOffs=0, flags=2, id=40, par=818181, tef=0, res=0, shape="oval"];
-Evt_BREQ_DM         [type="TMsg", tOffs=0, flags=2, id=3689292519746568192, par=818181, tef=0, res=0, shape="oval"];
-Evt_BREQ_01         [type="TMsg", tOffs=0, flags=2, id=40, par=818181, tef=0, res=0, shape="oval"];
+B_LOOP0             [type="Block", tPeriod=10000000];
+Evt_BREQ_00         [type="TMsg", tOffs=0, id="0x0000000000000003", par=818181, shape="oval"];
+Evt_BREQ_DM         [type="TMsg", tOffs=500, id="0x3333000000000000", par=818181, shape="oval"];
+Evt_BREQ_01         [type="TMsg", tOffs=1000, id="0x0000000000000004", par=818181, shape="oval"];
 B_BREQ              [type="Block", tPeriod=200000000];
 B_LOOP1             [type="Block", tPeriod=10000000];
-B_FLEXWAIT0         [type="Block",  tPeriod=10000000];
-Evt_MULTI_MULTI_00  [type="TMsg", tOffs=0, flags=0, id=40, par=818181, tef=0, res=0, shape="oval"];
-Evt_MB_LOAD         [type="TMsg", tOffs=500, flags=0, id=40, par=818181, tef=0, res=0, shape="oval"];
-Evt_MULTI_MULTI_01  [type="TMsg", tOffs=500, flags=0, id=40, par=818181, tef=0, res=0, shape="oval"];
-B_MULTI_MULTI       [type="Block",  tPeriod=10000000];
-Evt_BTRN_00         [type="TMsg", tOffs=500, flags=0, id=40, par=818181, tef=0, res=0, shape="oval"];
-Evt_TKREL           [type="TMsg", tOffs=1000000, flags=0, id=491905669299542425, par=818181, tef=0, res=0, shape="oval"];
-Evt_BTRN_01         [type="TMsg", tOffs=500, flags=0, id=40, par=818181, tef=0, res=0, shape="oval"];
-B_BTRN              [type="Block",  tPeriod=200000000];
+B_FLEXWAIT0         [type="Block", tPeriod=7111111];
+Evt_MULTI_MULTI_00  [type="TMsg", tOffs=0,  id="0x0000000000000005", par=818181, shape="oval"];
+Evt_MB_LOAD         [type="TMsg", tOffs=500,  id="0x0000000000000006", par=818181, shape="oval"];
+Evt_MULTI_MULTI_01  [type="TMsg", tOffs=700,  id="0x0000000000000007", par=818181, shape="oval"];
+B_MULTI_MULTI       [type="BlockAlign", tPeriod=10000000];
+Evt_BTRN_00         [type="TMsg", tOffs=500,  id="0x0000000000000008", par=818181, shape="oval"];
+Evt_TKREL           [type="TMsg", tOffs=10000,  id="0x4444000000000000", par=818181, shape="oval"];
+Evt_BTRN_01         [type="TMsg", tOffs=10500,  id="0x0000000000000009", par=818181, shape="oval"];
+B_BTRN              [type="Block", tPeriod=200000000];
 
 Evt_TKREQ_00  -> Evt_PREP_DM -> Cmd_TKREQ_01 -> Evt_TKREQ_DM -> Evt_TKREQ_02 -> B_TKREQ -> B_LOOP0 -> B_LOOP0;
 Cmd_TKREQ_01  -> B_MULTI_MULTI [type="target", color="blue", label="target"];
