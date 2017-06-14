@@ -26,13 +26,17 @@ eb-fwload dev/wbm0 u 0x0 dmunipz.bin
 # start software on hostsystem 
 ###########################################
 # to be implemented: command with pipe to logger (logstash)
+echo - dm-unipz - start monitoring
+dmunipz-ctl -s2 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
 
 ###########################################
 # configure firmware and make it operational 
 ###########################################
  
 # do some write actions to set register values
-# to be implemented
+echo -e dm-unipz - set MAC and IP of gateway and Data Master
+dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04
+dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80cea
 
 echo -e dm-unipz - start: make firmware operational
 # send CONFIGURE command to firmware
