@@ -252,18 +252,19 @@ int main(int argc, char* argv[]) {
     mmu.prepareUpload(); 
 
     const unsigned char deadbeef[4] = {0xDE, 0xAD, 0xBE, 0xEF};
-    const std::string needle((const char*)deadbeef);
+    const std::string needle(deadbeef, deadbeef + 4);
 
 
 
     BOOST_FOREACH( vertex_t v, vertices(mmu.getUpGraph()) ) {
       std::string haystack(mmu.lookupName(mmu.getUpGraph()[v].name)->b, mmu.lookupName(mmu.getUpGraph()[v].name)->b + _MEM_BLOCK_SIZE);
       std::size_t n = haystack.find(needle);
+
       bool foundUninitialised = (n != std::string::npos);
 
       if(verbose || foundUninitialised) {
         std::cout << std::endl;
-        hexDump(mmu.getUpGraph()[v].name.c_str(), mmu.lookupName(mmu.getUpGraph()[v].name)->b, _MEM_BLOCK_SIZE);
+        hexDump(mmu.getUpGraph()[v].name.c_str(), (void*)haystack.c_str(), _MEM_BLOCK_SIZE);
       }
 
       if(foundUninitialised) {

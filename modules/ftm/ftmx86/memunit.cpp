@@ -154,23 +154,26 @@
         uint32_t flags    = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]);
         //std::cout << "DL Flags 0x" << std::hex << flags << " # 0x"  << hash << std::endl;
         uint32_t type     = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-        vertex_t v        = boost::add_vertex(myVertex(std::string(*std::forward<boost::optional<std::string>>(name)), hash, NULL, "", flags), gDown);
+        std::stringstream stream;
+        stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << flags;
+        std::string tmp(stream.str());
+        vertex_t v        = boost::add_vertex(myVertex(std::string(*std::forward<boost::optional<std::string>>(name)), hash, NULL, "", tmp), gDown);
         parserMap[adr]    = (parserMeta){v, hash};
         auto src = downloadData.begin()+localAdr;
         std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&parserMap.at(adr).b[0]);
 
       
         switch(type) {
-          case NODE_TYPE_TMSG    : gDown[v].np =(node_ptr) new  TimingMsg(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_CNOOP   : gDown[v].np =(node_ptr) new       Noop(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_CFLOW   : gDown[v].np =(node_ptr) new       Flow(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_CFLUSH  : gDown[v].np =(node_ptr) new      Flush(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_CWAIT   : gDown[v].np =(node_ptr) new       Wait(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_BLOCK_FIXED   : gDown[v].np =(node_ptr) new      BlockFixed(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_BLOCK_ALIGN   : gDown[v].np =(node_ptr) new      BlockAlign(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_QUEUE   : gDown[v].np =(node_ptr) new   CmdQMeta(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_ALTDST  : gDown[v].np =(node_ptr) new   DestList(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_QBUF    : gDown[v].np =(node_ptr) new CmdQBuffer(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, gDown[v].flags); break;
+          case NODE_TYPE_TMSG    : gDown[v].np =(node_ptr) new  TimingMsg(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_CNOOP   : gDown[v].np =(node_ptr) new       Noop(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_CFLOW   : gDown[v].np =(node_ptr) new       Flow(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_CFLUSH  : gDown[v].np =(node_ptr) new      Flush(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_CWAIT   : gDown[v].np =(node_ptr) new       Wait(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_BLOCK_FIXED   : gDown[v].np =(node_ptr) new      BlockFixed(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_BLOCK_ALIGN   : gDown[v].np =(node_ptr) new      BlockAlign(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_QUEUE   : gDown[v].np =(node_ptr) new   CmdQMeta(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_ALTDST  : gDown[v].np =(node_ptr) new   DestList(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_QBUF    : gDown[v].np =(node_ptr) new CmdQBuffer(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); break;
           case NODE_TYPE_UNKNOWN : std::cerr << "not yet implemented " << gDown[v].type << std::endl; break;
           default                : std::cerr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
         }
@@ -295,21 +298,39 @@
 
        
 
-      if      (cmp == "tmsg")     {gUp[v].np = (node_ptr) new       TimingMsg(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].id, gUp[v].par, gUp[v].tef, gUp[v].res); }
-      else if (cmp == "noop")     {gUp[v].np = (node_ptr) new            Noop(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio, gUp[v].qty); }
-      else if (cmp == "flow")     {gUp[v].np = (node_ptr) new            Flow(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio, gUp[v].qty); }
-      else if (cmp == "flush")    {gUp[v].np = (node_ptr) new           Flush(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio,
-                                                                              gUp[v].qIl,                gUp[v].qHi,                gUp[v].qLo, 
-                                                                              gUp[v].frmIl, gUp[v].toIl, gUp[v].frmHi, gUp[v].toHi, gUp[v].frmLo, gUp[v].toLo ); }
-      else if (cmp == "wait")     {gUp[v].np = (node_ptr) new            Wait(gUp[v].name, x->hash, x->b, 0,  gUp[v].tOffs, gUp[v].tValid, gUp[v].prio, gUp[v].tWait); }
-      else if (cmp == "block")    {gUp[v].np = (node_ptr) new      BlockFixed(gUp[v].name, x->hash, x->b, 0, gUp[v].tPeriod ); }
-      else if (cmp == "blockfixed")    {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, x->hash, x->b, 0, gUp[v].tPeriod ); }
-      else if (cmp == "blockalign")    {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, x->hash, x->b, 0, gUp[v].tPeriod ); }
+      if      (cmp == "tmsg")     {
+        /*
+        if ( gUp[v].id.find("0xD15EA5EDDEADBEEF") != std::string::npos) { // ID field was undefined. Try to construct from subfields
+          id_fid id_gid;
+  id_evtno;
+  id_sid;
+  id_bpid;
+  id_res;
+
+        }
+
+*/
+
+        gUp[v].np = (node_ptr) new       TimingMsg(gUp[v].name, x->hash, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].id), s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); 
+
+
+      }
+
+
+      else if (cmp == "noop")     {gUp[v].np = (node_ptr) new            Noop(gUp[v].name, x->hash, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
+      else if (cmp == "flow")     {gUp[v].np = (node_ptr) new            Flow(gUp[v].name, x->hash, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
+      else if (cmp == "flush")    {gUp[v].np = (node_ptr) new           Flush(gUp[v].name, x->hash, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
+                                                                              s2u<bool>(gUp[v].qIl), s2u<bool>(gUp[v].qHi), s2u<bool>(gUp[v].qLo), s2u<uint8_t>(gUp[v].frmIl), s2u<uint8_t>(gUp[v].toIl), s2u<uint8_t>(gUp[v].frmHi),
+                                                                              s2u<uint8_t>(gUp[v].toHi), s2u<uint8_t>(gUp[v].frmLo), s2u<uint8_t>(gUp[v].toLo) ); }
+      else if (cmp == "wait")     {gUp[v].np = (node_ptr) new            Wait(gUp[v].name, x->hash, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait)); }
+      else if (cmp == "block")    {gUp[v].np = (node_ptr) new      BlockFixed(gUp[v].name, x->hash, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
+      else if (cmp == "blockfixed")    {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, x->hash, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
+      else if (cmp == "blockalign")    {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, x->hash, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
       else if (cmp == "qinfo")    {gUp[v].np = (node_ptr) new        CmdQMeta(gUp[v].name, x->hash, x->b, 0);}
       else if (cmp == "listdst")  {gUp[v].np = (node_ptr) new        DestList(gUp[v].name, x->hash, x->b, 0);}
       else if (cmp == "qbuf")     {gUp[v].np = (node_ptr) new      CmdQBuffer(gUp[v].name, x->hash, x->b, 0);}
-      else if (cmp == "meta")     {std::cerr << "not yet implemented " << gUp[v].type << std::endl;}
-      else                        {std::cerr << "Node type 0x" << std::hex << cmp << " not supported! " << std::endl;} 
+      else if (cmp == "meta")     {std::cerr << "Pure meta not yet implemented " << gUp[v].type << std::endl;}
+      else                        {std::cerr << "Node type <" << cmp << "> not supported! " << std::endl;} 
 
       //std::cout << "UL b4S Flags 0x" << std::hex << gUp[v].np->getFlags() << " # 0x" << gUp[v].np->getHash() << std::endl;  
     }
@@ -317,7 +338,7 @@
 
 
     //serialise all nodes
-
+    std::ofstream dict("dict.txt");
     std::cout << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setw(20) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
     std::cout << std::setfill('-') << std::setw(50) << std::endl;      
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
@@ -330,6 +351,15 @@
           << "   0x" << std::hex << std::setfill('0') << std::setw(8) << gUp[v].np->getHash() 
           << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2intAdr(x->adr) 
           << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2extAdr(x->adr) << std::endl;
+        gUp[v].np->accept(VisitorUploadCrawler(v, *this));
+
+          
+
+        if (x != NULL) {
+          dict << std::hex << "\"0x" << gUp[v].np->getHash() << "\" : \"" << gUp[v].name << "\"" << std::endl;
+          dict << std::hex << "\"0x" << adr2intAdr(x->adr) << "\" : \"pi_" << gUp[v].name << "\"" << std::endl;
+          dict << std::hex << "\"0x" << adr2extAdr(x->adr) << "\" : \"pe_" << gUp[v].name << "\"" << std::endl;
+        }  
         gUp[v].np->accept(VisitorUploadCrawler(v, *this));
         //std::cout << "Flags 0x" << std::hex << gUp[v].np->getFlags() << " # 0x" << gUp[v].np->getHash() << std::endl;
     }    
