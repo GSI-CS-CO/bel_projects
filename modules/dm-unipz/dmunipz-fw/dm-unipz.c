@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 24-May-2017
+ *  version : 09-June-2017
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000003                                // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000004                                  // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -56,34 +56,6 @@
 #include "../../ftm/ftm_common.h"                                     // defs and regs for data master
 #include "../../ftm/ftmfw/ftm_shared_mmap.h"                          // info on shared map for data master lm32 cluster
 
-uint32_t dmExt2IntAddr(uint32_t extAddr, uint32_t intBaseAddr)         // data master external address -> internal address
-{
-  uint32_t r;
-  uint32_t intAddr;
-
-  // round ram size up to next 2^n value
-  r = RAM_SIZE;
-  r--;
-  r |= r >> 1;
-  r |= r >> 2;
-  r |= r >> 4;
-  r |= r >> 8;
-  r |= r >> 16;
-  r++;
-
-  // decrement to obtain mask
-  r--;
-
-  // apply mask to get rid of bits for external address range
-  intAddr = extAddr & r;
-
-  // add bits for internal address range
-  intAddr = intAddr | intBaseAddr;
-
-  return intAddr;
-} //dmExt2IntAddr
-
-
 uint32_t dmExt2BaseAddr(uint32_t extAddr)
 {
   uint32_t r;
@@ -103,37 +75,35 @@ uint32_t dmExt2BaseAddr(uint32_t extAddr)
   r--;
 
   // apply inverse mask to get rid of bits for external address range
-  baseAddr = baseAddr & ~r;
+  baseAddr = extAddr & ~r;
 
   return baseAddr;
 } //dmExt2BaseAddr
 
 
-uint32_t dmInt2ExtAddr(uint32_t intAddr, uint32_t extbaseAdress)
+uint32_t dmExt2IntAddr(uint32_t extAddr)         // data master external address -> internal address
+{
+  uint32_t intAddr;
+  uint32_t extBaseAddr;
+
+  extBaseAddr = dmExt2BaseAddr(extAddr);
+
+  intAddr     = extAddr & ~extBaseAddr;
+  intAddr     = intAddr | INT_BASE_ADR;
+
+  return intAddr;
+} //dmExt2IntAddr
+
+
+uint32_t dmInt2ExtAddr(uint32_t intAddr, uint32_t extBaseAddr)
 {
   uint32_t r;
   uint32_t extAddr;
 
-  // round ram size up to next 2^n value
-  r = RAM_SIZE;
-  r--;
-  r |= r >> 1;
-  r |= r >> 2;
-  r |= r >> 4;
-  r |= r >> 8;
-  r |= r >> 16;
-  r++;
+  extAddr = intAddr & ~INT_BASE_ADR;
+  extAddr = extAddr | extBaseAddr;
 
-  // decrement to obtain mask
-  r--;
-
-  // apply mask to get rid of bits for external address range
-  extAddr = intAddr & r;
-
-  // add bits for internal address range
-  extAddr = extAddr | INT_BASE_ADR;
-
-  return intAddr;
+  return extAddr;
 } //dmInt2ExtAddr
 
 
@@ -174,15 +144,19 @@ uint32_t *pCpuRamExternalData4EB;      // external address (seen from host bridg
 
 WriteToPZU_Type  writePZUData;         // Modulbus SIS, I/O-Modul 1, Bits 0..15
 
-uint32_t dmDynpar0;                    // data master: dynamic parameter sent within message
-uint32_t dmDynpar1;                    // data master: dynamic parameter sent within message
-uint32_t dmDynpar2;                    // data master: dynamic parameter sent within message
-uint32_t dmDynpar3;                    // data master: dynamic parameter sent within message
+typedef struct {                       // group together all information required for modifying blocks within the data master via Etherbone
+  uint32_t dynpar0;                    // receive from DM in param field: external address of command block
+  uint32_t dynpar1;                    // receive from DM in param field: external address for flow destination
+  uint32_t flowCmdAddr;                // write to DM: external address of flow command
+  uint32_t flowCmdData[_T_CMD_SIZE_];  // write to DM: data of the flow command (valid timestamp, action, internal address of flow destination, ...)
+  uint32_t flowCmdWrIdxAddr;           // write to DM: external address of wrIdx within block
+  uint32_t flowCmdWrIdx;               // write to DM: updated value of wrIdx
+} dmComm;
+#define DM_NBLOCKS       2             // max number of blocks withing the Data Master to be treated
+dmComm  dmData[DM_NBLOCKS];            // data for treatment of blocks
+const uint32_t reqTK   = 0;            // 1st block: handles reply to DM for TK request
+const uint32_t reqBeam = 1;            // 2nd block: handles reply to DM for beam request
 
-uint32_t dmFlowCmd0Addr;               // data master: 1st (waiting) block - address of command
-uint32_t dmFlowCmd0Data[_T_CMD_SIZE_]; // data master: 1st (waiting) block - data of the command
-uint32_t dmFlowCmd0WrIdxAddr;          // data master: addr of wrIdx within control block
-uint32_t dmFlowCmd0WrIdx;              // data master: wrIdx within control block
 
 
 /*
@@ -239,36 +213,175 @@ void ebmClearSharedMem() // clear shared memory used for EB return values
 } //ebmClearSharedMem
 
 
-uint32_t ebmRead32(uint32_t msTimeout, uint32_t address, uint32_t *data)
+uint32_t ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, uint32_t n32BitWords)
 {
   uint64_t timeoutT;
   uint32_t *extRetAddr;
   uint32_t hackish = 0x12345678;
+  int      i;
 
-  *data = 0x0;
+  for (i=0; i< n32BitWords; i++) data[i] = 0x0;
 
-  // clear shared data for EB return values
-  ebmClearSharedMem();
-  pSharedData4EB[0] = hackish;       // kind of hackish solution to determine, if a reply value has been sent
+  if (n32BitWords > (DMUNIPZ_SHARED_DATA_4EB_SIZE >> 2)) return DMUNIPZ_STATUS_OUTOFRANGE;
+  if (n32BitWords == 0)                                  return DMUNIPZ_STATUS_OUTOFRANGE;
 
-  // setup and commit EB cycle to remote device
-  ebm_hi(address);
-  ebm_op(address, (uint32_t)(&(pCpuRamExternalData4EB[0])), EBM_READ);
-  ebm_op(address, (uint32_t)(&(pCpuRamExternalData4EB[0])), EBM_READ); //this is a hack. Due to a bug in ebm, we need to have to read at least two elements
+  ebmClearSharedMem();                                                                               // clear shared data for EB return values
+  pSharedData4EB[0] = hackish;                                                                       // see below
 
-  ebm_flush();
+  ebm_hi(address);                                                                                   // EB operation starts here
+  for (i=0; i<n32BitWords; i++) ebm_op(address, (uint32_t)(&(pCpuRamExternalData4EB[i])), EBM_READ); // put data into EB cycle
+  if (n32BitWords == 1)         ebm_op(address, (uint32_t)(&(pCpuRamExternalData4EB[0])), EBM_READ); // workaround runt frame issue
+  ebm_flush();                                                                                       // commit EB cycle via the network
   
-  // wait for timeout or received data
-  timeoutT = getSysTime() + msTimeout * 1000000;
-  while (getSysTime() < timeoutT) {
-    if (pSharedData4EB[0] != hackish) {
-      *data = pSharedData4EB[0];
+  timeoutT = getSysTime() + msTimeout * 1000000;                                                     
+  while (getSysTime() < timeoutT) {                                                                  // wait for received data until timeout
+    if (pSharedData4EB[0] != hackish) {                                                              // hackish solution to determine if a reply value has been received
+      for (i=0; i<n32BitWords; i++) data[i] = pSharedData4EB[i];
       return DMUNIPZ_STATUS_OK;
     }
   } //while not timed out
 
   return DMUNIPZ_STATUS_TIMEDOUT; 
-} //ebmRead32
+} //ebmReadN
+
+
+uint32_t ebmWriteN(uint32_t address, uint32_t *data, uint32_t n32BitWords)
+{
+  int i;
+
+  if (n32BitWords > (DMUNIPZ_SHARED_DATA_4EB_SIZE >> 2)) return DMUNIPZ_STATUS_OUTOFRANGE;
+  if (n32BitWords == 0)                                  return DMUNIPZ_STATUS_OUTOFRANGE;
+
+  ebmClearSharedMem();                                                      // clear my shared memory used for EB replies
+
+  ebm_hi(address);                                                          // EB operation starts here
+  for (i=0; i<n32BitWords; i++) ebm_op(address + i*4, data[i], EBM_WRITE);  // put data into EB cycle
+  if (n32BitWords == 1)         ebm_op(address      , data[0], EBM_WRITE);  // workaround runt frame issue
+  ebm_flush();                                                              // commit EB cycle via the network
+  
+  return DMUNIPZ_STATUS_OK;
+} // ebmWriteN
+
+
+uint32_t dmPrepFlowCmd(uint32_t idx)                          // prepare flow CMD for DM
+{
+  // simplified memory layout at DM
+  //
+  // blockAddr -> |wrIdx    |
+  //              |rdIdx    |
+  //              |IL       |
+  //              |HI       |
+  //              |QLoPrio--|--buffListAddr--> |buf0  |
+  //                                           |buf1  |
+  //                                           |buf2--|--cmdListAddr-->|cmd0  |
+  //                                           |buf3  |                |cmd1  |                    
+  //                                                                   |cmd2  |
+  //                                                                   |cmd3--|--dmFlowCmd0Addr-->|TS valid Hi|
+  //                                                                                              |TS valid Lo|
+  //                                                                                              |action     |
+  //                                                                                              |flow dest. |
+  //
+
+  uint32_t blockAddr;                                          // address of begin of control block
+  uint32_t qLowPrioAddr;                                       // address of QLoPrio within control block
+  uint32_t wrIdxAddr;                                          // address of wrIdx within control block
+
+  uint32_t wrIdx;                                              // write indices for all prios
+  uint32_t wrIdxLo;                                            // write index for low priority. Low priority Q is used here.
+
+  uint32_t buffListAddr;                                       // address of  buffer list (here: of low prio Q)
+  uint32_t buffListAddrOffs;                                   // where to find the relevant command buffer within the buffer list
+  uint32_t buffAddr;                                           // address of relevant command buffer
+  
+  uint32_t cmdListAddr;                                        // address of command list 
+  uint32_t cmdListAddrOffs;                                    // where to find the relevant command  within the command list
+  uint32_t cmdAddr;                                            // address of relevant command 
+
+  uint32_t cmdAction;                                          // action flags of command
+  uint32_t cmdValidTSHi;                                       // time when command becomes valid, high32 bit
+  uint32_t cmdValidTSLo;                                       // time when command becomes valid, low32 bit
+  uint32_t cmdFlowDestAddr;                                    // address of flow destination
+  
+  uint32_t intBaseAddr;                                        // internal base address of dm; seen from dm lm32 perspective
+  uint32_t extBaseAddr;                                        // external base address of dm; seen from 'world' perspective
+
+  uint32_t status;
+
+  // set important external addresses of block
+  blockAddr        = dmData[idx].dynpar0;  
+  qLowPrioAddr     = blockAddr + BLOCK_CMDQ_LO_PTR;                 
+  wrIdxAddr        = blockAddr + BLOCK_CMDQ_WR_IDXS;
+  
+  // set Data Master (of relevant lm32) basse addresss from internal and external perspective
+  intBaseAddr      = INT_BASE_ADR;                         
+  extBaseAddr      = dmExt2BaseAddr(blockAddr);
+
+  // read value for writeIdx and calculate indices for buffer list and command list
+  if ((status = ebmReadN(2000, wrIdxAddr, &wrIdx,1)) != DMUNIPZ_STATUS_OK) mprintf("dm-unipz: failed to query wrIdx from DM, status %d\n", status); //chk error handling
+  // wrIdx = 4;
+  wrIdxLo          = ((wrIdx >> (PRIO_LO * 8)) &  Q_IDX_MAX_OVF_MSK);
+  buffListAddrOffs = (wrIdxLo & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_ ) * _PTR_SIZE_;
+  cmdListAddrOffs  = (wrIdxLo & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_ ) * _T_CMD_SIZE_; 
+
+  // read address of buffer list and calculate address of command buffer
+  if ((status = ebmReadN(2000, qLowPrioAddr, &buffListAddr,1)) != DMUNIPZ_STATUS_OK) mprintf("dm-unipz: failed to query buffListAddr from DM, status %d\n", status); //chk error handling
+  //buffListAddr = 0x10004711;
+  buffListAddr     = dmInt2ExtAddr(buffListAddr, extBaseAddr);
+  buffAddr         = buffListAddr + buffListAddrOffs;
+
+  // read address of command list and calculate address of command
+  if ((status = ebmReadN(2000, buffAddr, &cmdListAddr,1)) != DMUNIPZ_STATUS_OK) mprintf("dm-unipz: failed to query cmdListAddr from DM, status %d\n", status); //chk error handling
+  //cmdListAddr = 0x10004712;
+  cmdListAddr      = dmInt2ExtAddr(cmdListAddr, extBaseAddr);
+  cmdAddr          = cmdListAddr + cmdListAddrOffs;
+
+  // set command action type
+  cmdAction        = (ACT_TYPE_FLOW & ACT_TYPE_MSK) << ACT_TYPE_POS;  // set type to "flow"
+  cmdAction       |= (            1 & ACT_QTY_MSK)  << ACT_QTY_POS;   // set quantity to "1"
+  cmdAction       |= (      PRIO_LO & ACT_PRIO_MSK) << ACT_PRIO_POS;  // set prio to "Low"
+
+  // set timestamp when command shall become valid, here: as soon as possible
+  cmdValidTSHi     = 0x0;
+  cmdValidTSLo     = 0x0;
+
+  // set address of flow destination
+  cmdFlowDestAddr  = dmExt2IntAddr(dmData[idx].dynpar1);
+
+  // update value for write index
+  wrIdx            = wrIdx & ~(0xff << (PRIO_LO * 8));                // clear current value of write index for low priority
+  wrIdx            = wrIdx | ((wrIdxLo + 1) & Q_IDX_MAX_OVF_MSK);     // update value of write index for low priority
+
+  mprintf("dm-unipz: prep  dmPrepFLowCmd for idx %d, block address 0x%08x, flow dest addr 0x%08x\n", idx, blockAddr, cmdFlowDestAddr);
+  mprintf("dm-unipz: prep  cmdAddr 0x%08x\n", cmdAddr);
+  mprintf("dm-unipz: prep  cmdValidTSHi 0x%08x, index %d\n", cmdValidTSHi, T_CMD_TIME >> 2);
+  mprintf("dm-unipz: prep  cmdValidTSLo 0x%08x\n", cmdValidTSLo);
+  mprintf("dm-unipz: prep  cmdAction 0x%08x, index %d\n", cmdAction, T_CMD_ACT >> 2);
+  mprintf("dm-unipz: prep  cmdFlowDestAddr 0x%08x, index %d\n", cmdFlowDestAddr, T_CMD_FLOW_DEST >> 2);
+  mprintf("dm-unipz: prep  cmdFlowReserved 0x%08x, index %d\n", 0x0, T_CMD_RES >> 2);
+  mprintf("dm-unipz: prep  wrIdx %d\n", wrIdx);
+  mprintf("dm-unipz: prep  wrIdxAddr 0x%08x\n", wrIdxAddr);
+  
+  // assign prepared values for later use;
+  dmData[idx].flowCmdAddr                        = cmdAddr;
+  dmData[idx].flowCmdData[(T_CMD_TIME >> 2) + 0] = cmdValidTSHi;  
+  dmData[idx].flowCmdData[(T_CMD_TIME >> 2) + 1] = cmdValidTSLo;  
+  dmData[idx].flowCmdData[T_CMD_ACT >> 2]        = cmdAction;
+  dmData[idx].flowCmdData[T_CMD_FLOW_DEST >> 2]  = cmdFlowDestAddr;
+  dmData[idx].flowCmdData[T_CMD_RES >> 2]        = 0x0;
+  dmData[idx].flowCmdWrIdx                       = wrIdx;
+  dmData[idx].flowCmdWrIdxAddr                   = wrIdxAddr;  
+
+  return DMUNIPZ_STATUS_OK;
+} //dmPrepFlowCmd
+
+
+void dmChangeFlow(uint32_t virtAcc, uint32_t status, uint32_t idx)     // alter a block within the Data Master on-the fly
+{
+  mprintf("dm-unipz: dmChangeFlow idx %d, flowCmdAddr 0x%08x\n", idx, dmData[idx].flowCmdAddr);
+  ebmWriteN(dmData[idx].flowCmdAddr, dmData[idx].flowCmdData, (_T_CMD_SIZE_ >> 2));  
+  ebmWriteN(dmData[idx].flowCmdWrIdxAddr, &dmData[idx].flowCmdWrIdx, 1);             
+} // dmChangeFlow
+
 
 void init() // typical init for lm32
 {
@@ -367,94 +480,6 @@ uint32_t findECAQueue() // find WB address of ECA channel for LM32
 } // findECAQueue
 
 
-uint32_t dmPrepAnswer4TKRequest()                              // prepare answer to dm for TK request
-{
-  // simplified memory layout at DM
-  //
-  // blockAddr -> |wrIdx    |
-  //              |rdIdx    |
-  //              |IL       |
-  //              |HI       |
-  //              |QLoPrio--|--buffListAddr--> |buf0  |
-  //                                           |buf1  |
-  //                                           |buf2--|--cmdListAddr-->|cmd0  |
-  //                                           |buf3  |                |cmd1  |                    
-  //                                                                   |cmd2  |
-  //                                                                   |cmd3--|--dmFlowCmd0Addr-->|TS valid Hi|
-  //                                                                                              |TS valid Lo|
-  //                                                                                              |action     |
-  //                                                                                              |flow dest. |
-  //
-
-  uint32_t blockAddr;                                          // address of begin of control block
-  uint32_t qLowPrioAddr;                                       // address of QLoPrio within control block
-  uint32_t wrIdxAddr;                                          // address of wrIdx within control block
-
-  uint32_t wrIdx;                                              // write indices for all prios
-  uint32_t wrIdxLo;                                            // write index for low priority
-
-  uint32_t buffListAddr;                                       // address of  buffer list (here: of low prio Q)
-  uint32_t buffListAddrOffs;                                   // where to find the relevnnt command buffer within the buffer list
-  
-  uint32_t cmdListAddr;                                        // address of command list 
-  uint32_t cmdListAddrOffs;                                    // where to find the relevant command  within the command list
-
-  uint32_t cmdAction;                                          // action flags of command
-  
-  uint32_t intBaseAddr;                                        // internal base address of dm; seen from dm lm32 perspective
-  uint32_t extBaseAddr;                                        // external base address of am; seen from 'world' perspective
-
-  uint32_t status;
-
-  // get base addresses from inside dm lm32 and 'world' perspective
-  intBaseAddr      = INT_BASE_ADR;                         
-  extBaseAddr      = dmExt2BaseAddr(blockAddr);
-
-  // get relevant addresses within block
-  blockAddr        = dmDynpar0;
-  qLowPrioAddr     = blockAddr + BLOCK_CMDQ_LO_PTR;                 
-  wrIdxAddr        = blockAddr + BLOCK_CMDQ_WR_IDXS;
-  mprintf("dm-unipz: preparing reply 4 TK reqest: blockAddr  %08x\n", blockAddr);
-  mprintf("dm-unipz: preparing reply 4 TK reqest: qLowPrioAddr  %08x\n", qLowPrioAddr);
-  mprintf("dm-unipz: preparing reply 4 TK reqest: wrIdxAddr  %08x\n", wrIdxAddr);
-
-  // read writeIdx and calculate indices for buffer list and command buffer
-  //if ((status = ebmRead32(2000, wrIdxAddr, &wrIdx)) != DMUNIPZ_STATUS_OK) mprintf("dm-unipz: failed to query wrIdx from DM, status %d\n", status); //chk error handling
-  wrIdx = 42; // hack!
-  wrIdxLo          = ((wrIdx >> (PRIO_LO * 8)) &  Q_IDX_MAX_OVF_MSK);
-  buffListAddrOffs = (wrIdxLo & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_ ) * _PTR_SIZE_;
-  cmdListAddrOffs  = (wrIdxLo & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_ ) * _T_CMD_SIZE_; 
-
-  // read address where to find list and calculate address of command buffer
-  //if ((status = ebmRead32(2000, qLowPrioAddr, &buffListAddr)) != DMUNIPZ_STATUS_OK) mprintf("dm-unipz: failed to query buffListAddr from DM, status %d\n", status); //chk error handling
-  buffListAddr = 0x04110a20; // hack!
-  buffListAddr     = dmInt2ExtAddr(buffListAddr, extBaseAddr);
-  cmdListAddr      = buffListAddr + buffListAddrOffs;
-
-  // calculate address where to find the relevant command
-  dmFlowCmd0Addr = cmdListAddr + cmdListAddrOffs;
-
-  // calculate data of command
-  // do it as soon as possible
-  dmFlowCmd0Data[(CMD_VALID_TIME >> 2) + 0] = 0x0;  
-  dmFlowCmd0Data[(CMD_VALID_TIME >> 2) + 1] = 0x0;  
-  // command action type
-  cmdAction                                 = (ACT_TYPE_FLOW & ACT_TYPE_MSK) << ACT_TYPE_POS;  // set type to "flow"
-  cmdAction                                |= (            1 & ACT_QTY_MSK)  << ACT_QTY_POS;   // set quantity to "1"
-  cmdAction                                |= (      PRIO_LO & ACT_PRIO_MSK) << ACT_PRIO_POS;  // set prio to "Low"
-  dmFlowCmd0Data[CMD_ACT >> 2]              = cmdAction;
-  // destination
-  dmFlowCmd0Data[CMD_FLOW_DEST >> 2]        = dmExt2IntAddr(dmDynpar1, intBaseAddr);
-
-  // update write index
-  wrIdx                 = wrIdx & ~(0xff << (PRIO_LO * 8));             // clear current value of write index for low priority
-  dmFlowCmd0WrIdx       = wrIdx | ((wrIdxLo + 1) & Q_IDX_MAX_OVF_MSK);  // update value of write index for low priority
-  dmFlowCmd0WrIdxAddr   = wrIdxAddr;                                    // address of write index chk
-
-  return DMUNIPZ_STATUS_OK;
-} //dmGetData4ReqTKAnsw
-
-
 uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc)  // 1. query ECA for actions, 2. trigger activity
 {
   uint32_t *pECAFlag;           // address of ECA flag
@@ -494,15 +519,14 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc)  // 1. query ECA f
           nextAction = DMUNIPZ_ECADO_REQTK;
           *virtAcc   = evtIdLow & 0xf;  
           // check: we need to extract the info "req_no_beam"
-          dmDynpar2  = evtParamHigh;
-          dmDynpar3  = evtParamLow;
+          dmData[reqBeam].dynpar0  = evtParamHigh;
+          dmData[reqBeam].dynpar1  = evtParamLow;
           
           // mprintf("dm-unipz: received ECA event request TK\n");
           break;
         case DMUNIPZ_ECADO_REQBEAM :
           nextAction = DMUNIPZ_ECADO_REQBEAM;
           *virtAcc = evtIdLow & 0xf;   
-
           // mprintf("dm-unipz: received ECA event request beam\n");
           break;
         case DMUNIPZ_ECADO_RELTK :
@@ -513,8 +537,8 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc)  // 1. query ECA f
         case DMUNIPZ_ECADO_PREPDM :
           nextAction = DMUNIPZ_ECADO_PREPDM;
           // get DM dynpar for waiting on TKREQ
-          dmDynpar0 = evtParamHigh;
-          dmDynpar1 = evtParamLow;
+          dmData[reqTK].dynpar0 = evtParamHigh;
+          dmData[reqTK].dynpar1 = evtParamLow;
           break;
 
         default: 
@@ -729,29 +753,6 @@ void pulseLemo2() //for debugging with scope
 } // pulseLemo2
 
 
-void replyRequestTK(uint32_t virtAcc, uint32_t status)
-{
-  mprintf("dm-unipz: reply requesting TK; status %d for virtAcc %d\n", status, virtAcc);
-
-  mprintf("dm-unipz: reply requesting TK: dmFlowCommandAddr %08x\n", dmFlowCmd0Addr);
-  mprintf("dm-unipz: reply requesting TK: dmFlowCommandValidTSHi %08x\n", dmFlowCmd0Data[(CMD_VALID_TIME >> 2)]);
-  mprintf("dm-unipz: reply requesting TK: dmFlowCommandCmdAction %08x\n", dmFlowCmd0Data[(CMD_ACT >> 2)]);
-  mprintf("dm-unipz: reply requesting TK: dmFlowCommandFlowDest %08x\n", dmFlowCmd0Data[(CMD_FLOW_DEST >> 2)]);
-  mprintf("dm-unipz: reply requesting TK: dmFlowCmd0WrIdxAddr %08x\n",  dmFlowCmd0WrIdxAddr);
-  mprintf("dm-unipz: reply requesting TK: dmFlowCmd0WrIdx %08x\n",  dmFlowCmd0WrIdx);
-
-  //ebWrite(dmFlowCmd0Addr, dmFlowCmd0Data, _T_CMD_SIZE);  //pseudo code
-  //ebWrite(dmFlowCmd0WrIdxAddr, dmFlowCmd0WrIdx, 4);      //pseudo code
-} // replyRequestTK
-
-
-void replyRequestBeam(uint32_t virtAcc, uint64_t timestamp, uint32_t status)
-{
-  mprintf("dm-unipz: status requesting beam; status %d for virtAcc %d\n", status, virtAcc);
-  /* check: not yet implemented */
-} // replyRequestBeam
-
-
 uint32_t doActionS0()
 {
   uint32_t status = DMUNIPZ_STATUS_OK;
@@ -778,10 +779,12 @@ uint32_t entryActionConfigured()
   } 
 
   // test if DM is reachable by reading from ECA input
-  if ((status = ebmRead32(2000, DMUNIPZ_ECA_ADDRESS, &data)) != DMUNIPZ_STATUS_OK) {
+  if ((status = ebmReadN(2000, DMUNIPZ_ECA_ADDRESS, &data, 1)) != DMUNIPZ_STATUS_OK) {
     mprintf("dm-unipz: ERROR - Data Master unreachable! %d\n", status);
     return status;
   }
+
+  mprintf("dm-unipz: connection to DM ok - 0x%08x\n", data);
       
   // check if modulbus I/O is ok
   if ((status = echoTestDevMil(pMILPiggy, IFB_ADDRESS_SIS, 0xbabe)) != DMUNIPZ_STATUS_OK) {
@@ -789,11 +792,15 @@ uint32_t entryActionConfigured()
     return DMUNIPZ_STATUS_DEVBUSERROR;
   }
 
+  mprintf("dm-unipz: connection to UNIPZ (devicebus) ok\n");  
+
   // configure MIL piggy for timing events for all 16 virtual accelerators
   if ((status = configMILEvent(DMUNIPZ_EVT_UNI_READY)) != DMUNIPZ_STATUS_OK) {
     mprintf("dm-unipz: ERROR - failed to configure MIL piggy for receiving timing events! %d\n", status);
     return status;
   } 
+
+  mprintf("dm-unipz: MIL piggy configured for receving events (eventbus)\n");
 
   configLemoOutputEvtMil(pMILPiggy, 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
   checkClearReqNotOk(DMUNIPZ_REQTIMEOUT);  // in case a 'req_not_ok' flag has been set at UNIPZ, try to clear it
@@ -802,16 +809,10 @@ uint32_t entryActionConfigured()
   writePZUData.uword               = 0x0;
   writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword);
 
-  // reset dynamic parameter fields (from DM)
-  dmDynpar0 = 0x0;
-  dmDynpar1 = 0x0;
-  dmDynpar2 = 0x0;
-  dmDynpar3 = 0x0;
-
   // empty ECA queue for lm32
   i = 0;
   while (wait4ECAEvent(1, &virtAcc) !=  DMUNIPZ_ECADO_TIMEOUT) {i++;}
-  mprintf("dm-unipz: removed %d entries from ECA queue\n", i);
+  mprintf("dm-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
   return status;
 } // entryActionConfigured
@@ -935,7 +936,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
 
   status = actStatus; 
 
-  nextAction = wait4ECAEvent(DMUNIPZ_DEFAULT_TIMEOUT, &virtAccTmp);
+  nextAction = wait4ECAEvent(DMUNIPZ_DEFAULT_TIMEOUT, &virtAccTmp);                // do action is driven by actions issued by the ECA
 
   switch (nextAction) 
     {
@@ -946,11 +947,12 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       (*nTransfer)++;                                                              // increment number of transfers
       *nInject        = 0;                                                         // number of injections is reset when DM requests TK
 
+      dmPrepFlowCmd(reqBeam);  //chk: error handling                               // prepare flow command for later use, here: beam request
       status = requestTK(DMUNIPZ_REQTIMEOUT, virtAccTmp, 0);                       // request TK from UNIPZ
-      replyRequestTK(virtAccTmp, status);                                          // reply to DM 
+      dmChangeFlow(virtAccTmp, status, reqTK); // chk: error handling              // modify block within DM for execution of a flow command, here: TK request
 
       if (status == DMUNIPZ_STATUS_OK) *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQTKOK; // update status of transfer
-      
+
       break;
     case DMUNIPZ_ECADO_REQBEAM :                                                   // received command "REQ_BEAM" from data master
 
@@ -970,7 +972,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
         else                                                             status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;
       } // if status
       
-      replyRequestBeam(virtAccTmp, timestamp, status);                             // reply to DM
+      dmChangeFlow(virtAccTmp, status, reqBeam);            //chk: error handling  // modify block within DM for execution of a flow command, here: beam request
 
       releaseBeam();                                                               // release beam request
 
@@ -988,7 +990,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
 
       break;
     case DMUNIPZ_ECADO_PREPDM:                                                     // received command "PREP_DM" from datat master
-      dmPrepAnswer4TKRequest(); //chk: need some error handling via statusTransfer
+
+      dmPrepFlowCmd(reqTK);              //chk: error handling                     // prepare flow command for later use, here: TK request
       break;
     default: ;
     } // switch nextAction
@@ -1011,6 +1014,8 @@ void main(void) {
   uint32_t nInject;                             // number of injections within current transfer
   uint32_t virtAcc;                             // number of virtual accelerator
 
+  mprintf("dm-unipz: ***** firmware started from scratch *****\n");
+  
   // init local variables
   i              = 0;
   nTransfer      = 0;                           
@@ -1020,7 +1025,7 @@ void main(void) {
   reqState       = DMUNIPZ_STATE_S0;
   actState       = DMUNIPZ_STATE_UNKNOWN;
   status         = DMUNIPZ_STATUS_UNKNOWN;      
-  
+
   init();                                                                   // initialize stuff for lm32
   initSharedMem();                                                          // initialize shared memory
 
@@ -1046,7 +1051,7 @@ void main(void) {
         mprintf("dm-unipz: a FATAL error has occured. Good bye.\n");
         while (1) asm("nop"); // RIP!
         break;
-      default :                                                             // avoid flooding WB bus with unecessary activity
+      default :                                                             // avoid flooding WB bus with unnecessary activity
         for (j = 0; j < (DMUNIPZ_DEFAULT_TIMEOUT * DMUNIPZ_MS_ASMNOP); j++) { asm("nop"); }
       } // switch 
 

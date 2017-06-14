@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.0.3"
+#define DMUNIPZ_X86_VERSION "0.0.4"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -145,7 +145,7 @@ static void help(void) {
   fprintf(stderr, "                      3: as 2, but without info on status\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  ebmlocal <mac> <ip> command sets local WR MAC and IP for EB master (values in hex)\n");
-  fprintf(stderr, "  ebmdm    <mac> <ip> command sets DM WR MAC and IP for EB maste (values in hex)\n");
+  fprintf(stderr, "  ebmdm    <mac> <ip> command sets DM WR MAC and IP for EB master (values in hex)\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  configure           command requests state change to CONFIGURED\n");
   fprintf(stderr, "  startop             command requests state change to OPERATION\n");
