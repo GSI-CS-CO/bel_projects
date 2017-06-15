@@ -242,7 +242,7 @@ architecture rtl of microtca_control is
   signal s_lvds_n_o     : std_logic_vector(20 downto 0);
   signal s_lvds_o_led   : std_logic_vector(20 downto 0);
   signal s_lvds_oe      : std_logic_vector(20 downto 0);
-  signal s_lvds_oen_monster   : std_logic_vector(20 downto 0);
+  signal s_lvds_oe   : std_logic_vector(20 downto 0);
 
   signal s_lvds_led     : std_logic_vector(20 downto 0);
 
@@ -340,27 +340,6 @@ architecture rtl of microtca_control is
   alias  a_mmcspi_re        : std_logic is s_mmcspi_do(14);   -- read  enable bit in mmc spi command
   alias  a_mmcspi_addr      : std_logic_vector(5 downto 0) is s_mmcspi_do(13 downto 8);
 
-  -- backplane configuration settings from microtca_ctrl module
-  signal s_mtca_bpl_conf0  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_conf1  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_conf2  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_conf3  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_conf4  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_conf5  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_conf6  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_conf7  : std_logic_vector(31 downto 0);
-
-  -- backplane configuration status
-  signal s_mtca_bpl_stat0  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_stat1  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_stat2  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_stat3  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_stat4  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_stat5  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_stat6  : std_logic_vector(31 downto 0);
-  signal s_mtca_bpl_stat7  : std_logic_vector(31 downto 0);
-
-
   -- connections from microtca_ctrl registers
   signal s_monster_tclk_en  : std_logic_vector(8 downto 1);
   signal s_monster_tclk_dir     : std_logic_vector(8 downto 1);
@@ -373,6 +352,9 @@ architecture rtl of microtca_control is
   -- registers written by mmc
   signal s_mmc_libera_buf_en_reg  : std_logic_vector(7 downto 0);
   signal s_mmc_mtca4_bpl_dis_reg  : std_logic_vector(7 downto 0);
+
+  signal s_mtca4_bpl_buff_en    : std_logic;
+  signal s_libera_bpl_buff_en   : std_logic;
 
   signal s_dis_led_green : std_logic;
   signal s_dis_led_red   : std_logic;
@@ -430,7 +412,7 @@ begin
       lvds_p_o               => s_lvds_p_o,
       lvds_n_o               => s_lvds_n_o,
       lvds_o_led_o           => s_lvds_o_led,
-      lvds_oen_o             => s_lvds_oen_monster,
+      lvds_oen_o             => s_lvds_oe,
       lvds_term_o            => s_lvds_term_en,
       led_link_up_o          => s_led_link_up,
       led_link_act_o         => s_led_link_act,
@@ -527,18 +509,17 @@ begin
 
  
 
-  -- LVDS output enable pins (active low)
-  s_lvds_oe <= not s_lvds_oen_monster;
-  
-  lvtio_oe_n_o <= s_lvds_oen_monster(4 downto 0);
+  -- enable LEMO output buffers (active LO)
+  lvtio_oe_n_o <= not s_lvds_oe(4 downto 0);
 
-  s_lvds_led(s_lvds_i_led'range) <= s_lvds_i_led or s_lvds_o_led(s_lvds_i_led'range);
+  -- LEMO activity LEDs (active HI)
+  s_lvds_led(4 downto 0) <= s_lvds_i_led(4 downto 0) or s_lvds_o_led(4 downto 0);
   
   -- LVDS termination pins (active hi)
   with s_test_sel select
     lvtio_term_en_o <= (others => '0')                 when ('0' & x"E"),   -- FPGA hex sw in position E, button not pressed, termination test
                        (others => '1')                 when ('1' & x"E"),   -- FPGA hex sw in position E, button     pressed, termination test
-                        s_lvds_term_en(4 downto 0) when others;         -- driven by monster (enable termination when output disabled)
+                        s_lvds_term_en(4 downto 0) when others;             -- driven by monster (enable termination when output disabled)
 
   -- LVDS direction indicator RED LEDs (active hi)
   with s_test_sel select
@@ -566,7 +547,7 @@ begin
   end generate;
 
   -----------------------------------------------------------
-  -- lemo io connectors on front panel
+  -- lemo io connectors on front panel to/from monster
   -----------------------------------------------------------
   -- lvds/lvttl lemos in/out
   s_lvds_p_i(4 downto 0) <= lvtio_in_p_i(5 downto 1);
@@ -602,7 +583,14 @@ begin
   tclk_out_n_o <= s_lvds_n_o(16 downto 13);
   tclk_out_p_o <= s_lvds_p_o(16 downto 13);
 
-  -- Libera triggers (only outputs
+  -----------------------------------------------------------
+  -- Libera outputs
+  -----------------------------------------------------------
+
+  -- no intputs from Libera backplane, outputs only
+  -- trigger outputs to backplane for Libera
+  -- connected directly to monster
+  -- Libera triggers (only outputs)
   lib_trig_n_o <= s_lvds_n_o(20 downto 17);
   lib_trig_p_o <= s_lvds_p_o(20 downto 17);
 
@@ -631,15 +619,6 @@ begin
   end generate;
 
 
-
-  -----------------------------------------------------------
-  -- Libera outputs
-  -----------------------------------------------------------
-
-  -- no intputs from Libera backplane, outputs only
-  -- trigger outputs to backplane for Libera
-  -- connected directly to monster
-
   ----------------------------------------------
   fpga2mmc_int_o  <= '0'; -- irq to mmc
 
@@ -651,177 +630,81 @@ begin
   
 
   -----------------------------------------------------------------------
-  -- backplane ports configuration from monster microtca_ctrl registers
+  -- backplane ports configuration from monster
   ----------------------------------------------------------------------- 
-  s_monster_tclk_en (4 downto 1)    <= not s_lvds_oen_monster(8 downto 5);
-  s_monster_tclk_dir(4 downto 1)    <= s_lvds_oen_monster(8 downto 5);
-  s_monster_mlvd_buf_en(8 downto 1) <= not s_lvds_oen_monster(16 downto 9);
-  s_monster_mlvd_dir   (8 downto 1) <= s_lvds_oen_monster(16 downto 9);
+  s_monster_tclk_en (4 downto 1)    <= s_lvds_oe(8 downto 5);
+  s_monster_tclk_dir(4 downto 1)    <= s_lvds_oe(8 downto 5);
+  s_monster_mlvd_buf_en(8 downto 1) <= s_lvds_oe(16 downto 9);
+  s_monster_mlvd_dir   (8 downto 1) <= s_lvds_oe(16 downto 9);
   s_monster_hss_buf_en (4 downto 1) <= (others => '0');
 
   -----------------------------------------------------------------------
-  -- backplane ports configuration status to monster microtca_ctrl registers
+  -- backplane ports configuration from MMC
   ----------------------------------------------------------------------- 
---  s_mtca_bpl_stat0(s_mmc_libera_buf_en_reg'range) <= s_mmc_libera_buf_en_reg;
---  s_mtca_bpl_stat1(s_mmc_mtca4_bpl_dis_reg'range) <= s_mmc_mtca4_bpl_dis_reg;
-
-  
-  -----------------------------------------------------------------
-  -- SPI slave module connected to MMC via SPI
-  ----------------------------------------------------------------------- 
-  -- enables reading of the microtca_ctrl module registers state
-  -- and mmc Libera B trigger enable register
-
-  mmc_spi : spi_slave
-      generic map (   
-        N           => 16,        -- 16bit serial word length
-        CPOL        => '0',       -- SPI mode selection (mode 0 default)
-        CPHA        => '0',       -- CPOL = clock polarity, CPHA = clock phase.
-        PREFETCH    => 3)         -- prefetch lookahead cycles
-      port map(  
-        clk_i           => clk_sys,               -- internal interface clock (clocks di/do registers)
-        -- spi pins
-        spi_ssel_i      => mmc_spi0_sel_fpga_n_i, -- spi bus slave select line
-        spi_sck_i       => mmc_spi0_sck_i,        -- spi bus sck clock (clocks the shift register core)
-        spi_mosi_i      => mmc_spi0_mosi_i,       -- spi bus mosi input
-        spi_miso_o      => mmc_spi0_miso_o,       -- spi bus spi_miso_o output
-        
-        -- internal interface
-        di_req_o        => s_mmcspi_di_req,     -- preload lookahead data request line
-        di_i            => s_mmcspi_di,         -- parallel load data in (clocked in on rising edge of clk_i)
-        wren_i          => s_mmcspi_wren,       -- user data write enable
-        wr_ack_o        => s_mmcspi_di_wrack,   -- write acknowledge
-        do_valid_o      => s_mmcspi_do_valid,   -- do_o data valid strobe, valid during one clk_i rising edge.
-        do_o            => s_mmcspi_do,         -- parallel output (clocked out on falling clk_i)
-        
-        -- debug ports: can be removed for the application circuit
-        do_transfer_o   => open,    -- debug: internal transfer driver
-        wren_o          => open,    -- debug: internal state of the wren_i pulse stretcher
-        rx_bit_next_o   => open,    -- debug: internal rx bit
-        state_dbg_o     => open,    -- debug: internal state register
-        sh_reg_dbg_o    => open     -- debug: internal shift register
-      );
-
-  s_mmcspi_wren <= s_mmcspi_di_req;      
-      
-  -----------------------------------------------------------------------
-  -- mmc read data select
-  -- addresses are defined in microtca_ctrl module
-  ----------------------------------------------------------------------- 
-  with a_mmcspi_addr select    
-    s_mmcspi_di(7 downto 0) <= 
-        s_monster_tclk_en       when std_logic_vector(to_unsigned(c_BPL_CONF_TCLK_EN     , a_mmcspi_addr'length)),
-        s_monster_tclk_dir      when std_logic_vector(to_unsigned(c_BPL_CONF_TCLK_DIR    , a_mmcspi_addr'length)),
-        s_monster_mlvd_buf_en   when std_logic_vector(to_unsigned(c_BPL_CONF_MLVD_BUF_EN , a_mmcspi_addr'length)),
-        s_monster_mlvd_dir      when std_logic_vector(to_unsigned(c_BPL_CONF_MLVD_BUF_DIR, a_mmcspi_addr'length)),
-        s_monster_hss_buf_en    when std_logic_vector(to_unsigned(c_BPL_CONF_HSS_BUF_EN  , a_mmcspi_addr'length)),
-        
-        s_mmc_libera_buf_en_reg when std_logic_vector(to_unsigned(c_BPL_STAT_LIBERA_BUF_EN , a_mmcspi_addr'length)),
-        s_mmc_mtca4_bpl_dis_reg when std_logic_vector(to_unsigned(c_BPL_STAT_MTCA4_BPL_DIS , a_mmcspi_addr'length)),
-       (others => '0')          when others;
-
-  s_mmcspi_di(15 downto 8) <= (others => '0');
-
-  
-  s_rstn_mmc_spi <= '1';
-  s_clk_mmc_spi  <= clk_sys;
+  -- bpl buffer enable generation depends on the crate in wich AMC is (MTCA.0, MTCA.4, Libera)
+  -- MMC signals in which crate we are
+  -- mmc2fpga_usr_i(1): 0 - not in Libera or MTCA.4, backplane buffers disabled, 1 - in Libera or MTCA.4, see mmc2fpga_usr_i(2)
+  -- mmc2fpga_usr_i(2): 0 - we are in MTCA.4, 1 - we are in Libera
+  s_mtca4_bpl_buff_en   <= '1' when (mmc2fpga_usr_i(1) = '1' and mmc2fpga_usr_i(2) = '0') else '0';
+  s_libera_bpl_buff_en  <= '1' when (mmc2fpga_usr_i(1) = '1' and mmc2fpga_usr_i(2) = '1') else '0';
   
   -----------------------------------------------------------------------
-  -- mmc data write to local registers
+  -- lvds/lvds libera trigger buffers enable (active HI)
   -----------------------------------------------------------------------
-  -- controlled from MMC via SPI - MCH/MMC enable of Libera triggers and
-  -- disable for MTCA.4 triggers, clocks and HSS links
-  p_mmc_write_reg : process(s_clk_mmc_spi)
-  begin
-    if rising_edge(s_clk_mmc_spi) then
-      if s_rstn_mmc_spi = '0' then
-        s_mmc_mtca4_bpl_dis_reg    <= (others => '0');
-        s_mmc_libera_buf_en_reg    <= (others => '1');
-      else
-        -- store settings given by mmc
-        -- for now simply invert libera trigger enable setting
-        -- this prevents connecting MTCA.4 ports to Libera B backplane
-        -- and Libera triggers to MTCA.4 backplane
-        if s_mmcspi_do_valid = '1' and a_mmcspi_we = '1' then 
-          s_mmc_mtca4_bpl_dis_reg  <= not s_mmcspi_do(s_mmc_mtca4_bpl_dis_reg'range);
-        else -- hold
-          s_mmc_mtca4_bpl_dis_reg  <= s_mmc_mtca4_bpl_dis_reg;
-        end if;
-        -- store settings given by mmc
-        if s_mmcspi_do_valid = '1' and a_mmcspi_we = '1' then 
-          s_mmc_libera_buf_en_reg  <= s_mmcspi_do(s_mmc_libera_buf_en_reg'range);
-        else -- hold
-          s_mmc_libera_buf_en_reg  <= s_mmc_libera_buf_en_reg;
-        end if;
-        
-      end if; -- reset
-    end if; -- clk
-  end process p_mmc_write_reg;  
-  
-
-  -----------------------------------------------------------------------
-  -- lvds/lvds libera trigger buffers enable generation
-  -----------------------------------------------------------------------
-  lib_trig_oe_o <= s_mmc_libera_buf_en_reg(0);
+  lib_trig_oe_o <=  s_libera_bpl_buff_en;
 
   -----------------------------------------------------------------------
   -- lvds/m-lvds MTCA.4 buffers enable generation
   -----------------------------------------------------------------------
+  -- m-lvds buffer powerdown (active low) (0 - powered down, 1 - powered up)
+  -- enabled only in MTCA.4
+  mlvdio_pd_n_o    <= '1' when s_mtca4_bpl_buff_en = '1' else '0'; 
+
   gen_mlvd_buf_oe : for i in  1 to 8 generate
     -- enable buffer output towards BACKPLANE (m-lvds driver enable, active hi)
-    mlvdio_de_o(i) <= '1' when (s_mmc_mtca4_bpl_dis_reg(0)  = '0' and 
-                                s_monster_mlvd_buf_en(i)    = '1' and 
-                                s_monster_mlvd_dir(i)       = '1')
-                           else '0';
+    mlvdio_de_o(i) <= '1' when (s_mtca4_bpl_buff_en       = '1' and 
+                                s_monster_mlvd_buf_en(i)  = '1' and 
+                                s_monster_mlvd_dir(i)     = '1')
+                      else '0';
                                
     -- enable buffer output towards FPGA (m-lvds receiver enable, active low)
-    mlvdio_re_n_o(i) <= '0' when (s_mmc_mtca4_bpl_dis_reg(0)  = '0' and 
-                                  s_monster_mlvd_buf_en(i)    = '1' and 
-                                  s_monster_mlvd_dir(i)       = '0')
-                             else '1';
+    mlvdio_re_n_o(i) <=  '0' when (s_mtca4_bpl_buff_en       = '1' and 
+                                   s_monster_mlvd_buf_en(i)  = '0' and 
+                                   s_monster_mlvd_dir(i)     = '0')
+                          else '1';
+
   end generate; -- gen_mlvd_buf_oe
 
-  -- m-lvds buffer powerdown, active low
-  -- when in Libera or when not enabled from monster
-  mlvdio_pd_n_o    <= '0' when (s_mmc_mtca4_bpl_dis_reg(0)  = '1' or 
-                                s_monster_mlvd_buf_en       = x"00")
-                           else '1'; 
 
   -----------------------------------------------------------------------
   -- lvds/lvds MTCA.4 backplane clock buffers enable, direction generation
   -----------------------------------------------------------------------
   gen_tclk_oe_dir : for i in  1 to 4 generate
     -- enable clock switch outputs towards BACKPLANE (switch enable, active lo)
-    tclk_en_n_o(i) <= '0' when (s_mmc_mtca4_bpl_dis_reg(0)  = '0' and 
-                                s_monster_tclk_en(i)        = '1' and 
-                                s_monster_tclk_dir(i)       = '1')
+    tclk_en_n_o(i) <= '0' when (s_mtca4_bpl_buff_en   = '1' and 
+                                s_monster_tclk_en(i)  = '1' and 
+                                s_monster_tclk_dir(i) = '1')
                            else '1';
   
     -- enable clock buffer towards FPGA, switch clock mux to C-A (active hi)
-    tclk_dir_o(i)<= '1' when (s_mmc_mtca4_bpl_dis_reg(0) = '0' and 
-                              s_monster_tclk_en(i)       = '1' and 
-                              s_monster_tclk_dir(i)      = '0')
+    tclk_dir_o(i)<= '1' when (s_mtca4_bpl_buff_en   = '1' and 
+                              s_monster_tclk_en(i)  = '0' and 
+                              s_monster_tclk_dir(i) = '0')
                           else '0';
   end generate; -- gen_tclk_oe_dir
 
   -----------------------------------------------------------------------
-  -- MTCA.4 PORT 12-15 buffers enable generation
+  -- MTCA.4 PORT 12-15 buffers enable generation (active HI)
   -----------------------------------------------------------------------
+  -- currently not used, keep disabled
   gen_hss_buf_oe : for i in  1 to 4 generate
-
-    hss_tx_en_o(i) <= '1' when (s_mmc_mtca4_bpl_dis_reg(0) = '0' and 
-                                 s_monster_hss_buf_en(i)   = '1')
-                               else '0';    
-    hss_rx_en_o(i) <= '1' when (s_mmc_mtca4_bpl_dis_reg(0) = '0' and 
-                                 s_monster_hss_buf_en(i+4) = '1')
-                               else '0';    
+    hss_tx_en_o(i) <= '0';    
+    hss_rx_en_o(i) <= '0';    
   end generate; -- gen_hss_buf_oe
 
   -- disable  Transmit Pre-Emphasis and Receive Equalization
   hss_tx_pe_en_o <= '0';
   hss_rx_eq_en_o <= '0';
-
-
 
 end rtl;
 
