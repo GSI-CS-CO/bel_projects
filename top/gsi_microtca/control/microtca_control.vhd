@@ -242,7 +242,6 @@ architecture rtl of microtca_control is
   signal s_lvds_n_o     : std_logic_vector(20 downto 0);
   signal s_lvds_o_led   : std_logic_vector(20 downto 0);
   signal s_lvds_oe      : std_logic_vector(20 downto 0);
-  signal s_lvds_oe   : std_logic_vector(20 downto 0);
 
   signal s_lvds_led     : std_logic_vector(20 downto 0);
 
@@ -643,10 +642,11 @@ begin
   ----------------------------------------------------------------------- 
   -- bpl buffer enable generation depends on the crate in wich AMC is (MTCA.0, MTCA.4, Libera)
   -- MMC signals in which crate we are
-  -- mmc2fpga_usr_i(1): 0 - not in Libera or MTCA.4, backplane buffers disabled, 1 - in Libera or MTCA.4, see mmc2fpga_usr_i(2)
-  -- mmc2fpga_usr_i(2): 0 - we are in MTCA.4, 1 - we are in Libera
+  -- mmc2fpga_usr_i(1): 0 - we are not in Libera, 1 - we are in Libera
+  -- mmc2fpga_usr_i(2): 0 - we are not in MTCA.4, 1 - we are in MTCA.4
+  -- also check for condition that prevents both enabled at the same time
   s_mtca4_bpl_buff_en   <= '1' when (mmc2fpga_usr_i(1) = '1' and mmc2fpga_usr_i(2) = '0') else '0';
-  s_libera_bpl_buff_en  <= '1' when (mmc2fpga_usr_i(1) = '1' and mmc2fpga_usr_i(2) = '1') else '0';
+  s_libera_bpl_buff_en  <= '1' when (mmc2fpga_usr_i(1) = '0' and mmc2fpga_usr_i(2) = '1') else '0';
   
   -----------------------------------------------------------------------
   -- lvds/lvds libera trigger buffers enable (active HI)
