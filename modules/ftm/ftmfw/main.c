@@ -197,7 +197,7 @@ uint32_t* execNoop(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
 uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   uint32_t* ret = (uint32_t*)cmd[T_CMD_FLOW_DEST >> 2]; 
-  mprintf("#%02u: Routing Flow to 0x%08x\n", cpuId, (uint32_t)ret);
+  DBPRINT3("#%02u: Routing Flow to 0x%08x\n", cpuId, (uint32_t)ret);
   if(node[NODE_FLAGS >> 2] & ACT_CHP_SMSK) node[NODE_DEF_DEST_PTR >> 2] = (uint32_t)ret;
   return ret;
 
@@ -219,14 +219,14 @@ uint32_t* execWait(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 
   if ( cmd[T_CMD_ACT >> 2] & ACT_WAIT_ABS_SMSK) {
     *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD >> 2];                      //1. set absolute value - block period
-    mprintf("#%02u: Wait, Absolute to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
+    DBPRINT2("#%02u: Wait, Absolute to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
   } else {
     if( cmd[T_CMD_ACT >> 2] & ACT_CHP_SMSK) {
-      mprintf("#%02u: Wait, Permanent relative to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
+      DBPRINT2("#%02u: Wait, Permanent relative to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
       *(uint64_t*)&node[BLOCK_PERIOD >> 2] = *(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2];                         //2. set new block period
     } else {
 
-      mprintf("#%02u: Wait, temp relative to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
+      DBPRINT2("#%02u: Wait, temp relative to 0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] >> 32), (uint32_t)*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2]);  
       //mprintf("#%02u: Wait thr Old  0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]>> 32), (uint32_t)*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]);  
       *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] += (*(uint64_t*)&cmd[T_CMD_WAIT_TIME >> 2] - *(uint64_t*)&node[BLOCK_PERIOD]); //3. add temporary block period - block period
       //mprintf("#%02u: Wait thr new  0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]>> 32), (uint32_t)*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]);  
@@ -260,7 +260,7 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   //get pointer to Element to write
   e = (uint32_t*)&b[elOffs >> 2];
 
-  mprintf("#%02u: Prio: %u, wrIdx: 0x%08x, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x\n", cpuId, prio, (uint32_t)wrIdx, (uint32_t)bl, (uint32_t)b, (uint32_t)e );
+  DBPRINT3("#%02u: Prio: %u, wrIdx: 0x%08x, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x\n", cpuId, prio, (uint32_t)wrIdx, (uint32_t)bl, (uint32_t)b, (uint32_t)e );
 
   //write Cmd
   for(uint32_t offs = T_CMD_TIME; offs < T_CMD_TIME + _T_CMD_SIZE_; offs += _32b_SIZE_ ) {
@@ -270,20 +270,19 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   //increase write index
   *wrIdx = (*wrIdx + 1) & Q_IDX_MAX_OVF_MSK;
 
-  mprintf("#%02u: Sending Cmd 0x%08x, Target: 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], (uint32_t)tg, node[NODE_DEF_DEST_PTR >> 2]);
+  DBPRINT2("#%02u: Sending Cmd 0x%08x, Target: 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], (uint32_t)tg, node[NODE_DEF_DEST_PTR >> 2]);
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 }
 
 uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK;
-  mprintf("#%02u: Sending Evt 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], node[NODE_DEF_DEST_PTR >> 2]);
+  DBPRINT2("#%02u: Sending Evt 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], node[NODE_DEF_DEST_PTR >> 2]);
 
   /*
   //Diagnostic Event? insert PQ Message counter. Different device, can't be placed inside atomic!
   if (pMsg->id == DIAG_PQ_MSG_CNT) tmpPar = *pMsgCntPQ;
   else                             tmpPar = pMsg->par;  
   */
-  
   atomic_on();
   *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_ID_HI >> 2];
   *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_ID_LO >> 2];
@@ -303,7 +302,7 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
 
 
 uint32_t* block(uint32_t* node, uint32_t* thrData) {
-  mprintf("#%02u: Checking Block 0x%08x\n", cpuId, node[NODE_HASH >> 2]);
+  DBPRINT2("#%02u: Checking Block 0x%08x\n", cpuId, node[NODE_HASH >> 2]);
   uint32_t *ret = (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
   uint32_t *bl, *b, *cmd, *act;
   uint8_t  *rdIdx,*wrIdx;
@@ -336,7 +335,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
     qty = (actTmp >> ACT_QTY_POS) & ACT_QTY_MSK;
     //if(qty >= 1) {
     atype = (actTmp >> ACT_TYPE_POS) & ACT_TYPE_MSK;
-    mprintf("#%02u: pending Cmd @ Prio: %u, awdIdx: 0x%08x, 0x%02x, ardIdx: 0x%08x, 0x%02x, buf: %u, el: %u, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x, type: %u\n", cpuId, prio, *awrOffs, *wrIdx, *ardOffs, *rdIdx, (*rdIdx & Q_IDX_MAX_OVF_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ), 
+    DBPRINT2("#%02u: pending Cmd @ Prio: %u, awdIdx: 0x%08x, 0x%02x, ardIdx: 0x%08x, 0x%02x, buf: %u, el: %u, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x, type: %u\n", cpuId, prio, *awrOffs, *wrIdx, *ardOffs, *rdIdx, (*rdIdx & Q_IDX_MAX_OVF_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ), 
       (*rdIdx & Q_IDX_MAX_OVF_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ), (uint32_t)bl, (uint32_t)b, (uint32_t)cmd, atype );
     
     //carry out type specific action
@@ -344,12 +343,12 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
 
     //decrement qty
     
-    mprintf("#%02u: Act 0x%08x, Qty is at %d\n", cpuId, *act, qty);
+    DBPRINT3("#%02u: Act 0x%08x, Qty is at %d\n", cpuId, *act, qty);
     actTmp &= ~ACT_QTY_SMSK;
     actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS;
     *act = actTmp;
     //if qty <= zero, pop cmd -> increment read offset
-    if(qty <= 0) { *(rdIdx) = (*rdIdx + 1) & Q_IDX_MAX_OVF_MSK; mprintf("#%02u: Qty reached zero, popping\n", cpuId);}
+    if(qty <= 0) { *(rdIdx) = (*rdIdx + 1) & Q_IDX_MAX_OVF_MSK; DBPRINT3("#%02u: Qty reached zero, popping\n", cpuId);}
     //} else {mprintf("#%02u: Error: Qty is already at %d !\n", cpuId, *act, qty); }
   } else {
     //mprintf(" nothing pending\n");
@@ -362,12 +361,11 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
 
 
 uint32_t* blockFixed(uint32_t* node, uint32_t* thrData) {
-  //mprintf("#%02u: Pre Call  0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]>> 32), (uint32_t)*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]);  
   uint32_t* ret = block(node, thrData);
-  //mprintf("#%02u: BlockDur @ 0x%08x & 0x%08x :  0x%08x%08x\n", cpuId, (uint32_t)&node[BLOCK_PERIOD_HI >> 2], (uint32_t)&node[BLOCK_PERIOD_LO >> 2], node[BLOCK_PERIOD_HI >> 2], node[BLOCK_PERIOD_LO >> 2] );
-  
+    
   *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] += *(uint64_t*)&node[BLOCK_PERIOD >> 2];
-  //  mprintf("#%02u: Post Inc  0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]>> 32), (uint32_t)*(uint64_t*)&thrData[T_TD_CURRTIME >> 2]);  
+  *(uint64_t*)&thrData[T_TD_DEADLINE >> 2]  = *(uint64_t*)&thrData[T_TD_CURRTIME >> 2]; // Deadline must follow block shift
+  
   return ret;
 }  
 
@@ -381,7 +379,10 @@ uint32_t* blockAlign(uint32_t* node, uint32_t* thrData) {
   //goal: add block duration to current time, then round result up to alignment offset + nearest multiple of alignment period
   uint64_t diff = (*tx + Tx) - t0 + (T0 - 1) ; // 1. add block period as minimum advancement 2. subtract alignment offset for division 3. add alignment period -1 for ceil effect  
   *tx = diff - (diff % T0) + t0;               // 4. subtract remainder of modulo for rounding 5. add alignment offset again  
-  mprintf("#%02u: Rounding to nearest multiple of T\n", cpuId);
+  *(uint64_t*)&thrData[T_TD_DEADLINE >> 2]  = *tx; // Deadline must follow block shift
+  
+  DBPRINT2("#%02u: Rounding to nearest multiple of T\n", cpuId);
+
   return ret;
 }
 
@@ -481,7 +482,7 @@ void main(void) {
 
     for(i=0;i<8;i++) {
       
-      mprintf("#%02u: b4 Start 0x%08x, Stop 0x%08x, Running 0x%08x\n",  cpuId, *start, *stop, *running);
+      DBPRINT2("#%02u: b4 Start 0x%08x, Stop 0x%08x, Running 0x%08x\n",  cpuId, *start, *stop, *running);
 
 
       if (*start & 1<<i) {
@@ -491,28 +492,34 @@ void main(void) {
         uint32_t* tp;
         uint32_t** np;
         uint32_t type;
-        
+        uint64_t now;
+
         tp = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2));  
         np = (uint32_t**)&tp[T_TD_NODE_PTR >> 2];
         // init to requested start node  
-        *np = (uint32_t*)*(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TD_NODE_PTR ) >> 2));
-        mprintf("#%02u: ThrPtr: 0x%08x, Initial Node Ptr @ 0x%08x is 0x%08x\n",  cpuId, tp, np, *np);
+        *np = (uint32_t*)*(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_NODE_PTR ) >> 2));
+        DBPRINT1("#%02u: ThrPtr: 0x%08x, Initial Node Ptr @ 0x%08x is 0x%08x\n",  cpuId, tp, np, *np);
          
-        *(uint64_t*)&tp[T_TD_CURRTIME] = 0;
+
+        //now = getSysTime();
         
+
+        *(uint64_t*)&tp[T_TD_CURRTIME >> 2] = getSysTime() + 5000000ULL;
+        *(uint64_t*)&tp[T_TD_DEADLINE >> 2] = *(uint64_t*)&tp[T_TD_CURRTIME >> 2];
+
         while(*np != NULL && (*running & 1<<i) ) {
           *running &= ~(*stop & 1<<i);
           *stop  &= ~(1<<i);  
           //while (!(*start & 1<<i)) {
-            for (j = 0; j < ((12500000/8)); ++j) { asm volatile ("nop"); } 
+            //for (j = 0; j < ((12500000/8)); ++j) { asm volatile ("nop"); } 
             //mprintf("#%02u: Waiting at 0x%08x\n", cpuId, *np);
           //};
           //*start &= ~(1<<i);
 
 
-          
+          if ((*(uint64_t*)&tp[T_TD_DEADLINE >> 2] - 500000ULL) > getSysTime()) continue;
 
-          //process node and update node ptr in threadDate
+          //process node and update node ptr in threadData
 
           //*np is checked to be not null, so
           uint32_t* tmpType = (uint32_t*)&(*np)[NODE_FLAGS >> 2];
@@ -521,7 +528,7 @@ void main(void) {
           uint32_t msk = -(type < _NODE_TYPE_END_);
           //mprintf("#%02u: type is %u, end is %u, msk is %u\n", cpuId, type, _NODE_TYPE_END_, msk);
           type &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
-          mprintf("#%02u: Node Ptr is 0x%08x, Dl: %s, type @ %08x is %u\n", cpuId, *np, print64(*(uint64_t*)&tp[T_TD_DEADLINE >> 2], 0),  tmpType, type);
+          DBPRINT1("#%02u: Node Ptr is 0x%08x, Dl: %s, type @ 0x%08x is %u\n", cpuId, *np, print64(*(uint64_t*)&tp[T_TD_DEADLINE >> 2], 0),  tmpType, type);
 
           *np = nodeFuncs[type](*np, tp);
           
@@ -534,13 +541,13 @@ void main(void) {
           }
           //update thread deadline for next node
           deadlineFuncs[type](*np, tp);
-          mprintf("#%02u: Post Process  0x%08x%08x\n", cpuId, (uint32_t)(*(uint64_t*)&tp[T_TD_CURRTIME >> 2]>> 32), (uint32_t)*(uint64_t*)&tp[T_TD_CURRTIME >> 2]);  
+          
         }
 
       }
-      
+    DBPRINT2("#%02u: Flow of Thr %u completed, going to idle\n",  cpuId, i);  
     } 
-    for (j = 0; j < ((125000000/2)); ++j) { asm("nop"); }
+    //for (j = 0; j < ((125000000/2)); ++j) { asm("nop"); }
    }
 
 
