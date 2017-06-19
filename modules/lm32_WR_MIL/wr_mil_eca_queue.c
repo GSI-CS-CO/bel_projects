@@ -1,13 +1,13 @@
 #include "wr_mil_eca_queue.h"
 
 #include "../../ip_cores/saftlib/drivers/eca_flags.h"
-#ifndef UNITTEST
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
-#include "../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"       // register layout ECA controle
+#include "../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"       // register layout ECA control
+#ifndef UNITTEST
 #include "mini_sdb.h"
-volatile ECAQueueRegs *ECAQueue_init()
+volatile uint32_t *ECAQueue_init()
 {
-  return (volatile ECAQueueRegs*)ECAQueue_findAddress();
+  return (volatile uint32_t*)ECAQueue_findAddress();
 }
 uint32_t *ECAQueue_findAddress()
 {
@@ -35,45 +35,52 @@ uint32_t *ECAQueue_findAddress()
 }
 #endif 
 
-void ECAQueue_popAction(volatile ECAQueueRegs *queue)
+void ECAQueue_popAction(volatile uint32_t *queue)
 {
-  queue->pop_owr = 0x1;
+  *(queue + ECA_QUEUE_POP_OWR/4) = 0x1;
 }
 
-void ECAQueue_getDeadl(volatile ECAQueueRegs *queue, TAI_t *deadl)
+void ECAQueue_getDeadl(volatile uint32_t *queue, TAI_t *deadl)
 {
-  deadl->part.hi = queue->deadline_hi_get;
-  deadl->part.lo = queue->deadline_lo_get;
+  deadl->part.hi = *(queue + ECA_QUEUE_DEADLINE_HI_GET/4);
+  deadl->part.lo = *(queue + ECA_QUEUE_DEADLINE_LO_GET/4);
+
 }
-void ECAQueue_getEvtId(volatile ECAQueueRegs *queue, EvtId_t *evtId)
+
+void ECAQueue_getEvtId(volatile uint32_t *queue, EvtId_t *evtId)
 {
-  evtId->part.hi = queue->event_id_hi_get;
-  evtId->part.lo = queue->event_id_lo_get;
+  evtId->part.hi = *(queue + ECA_QUEUE_EVENT_ID_HI_GET/4);
+  evtId->part.lo = *(queue + ECA_QUEUE_EVENT_ID_LO_GET/4);
 }
-uint32_t ECAQueue_getActTag(volatile ECAQueueRegs *queue)
+
+uint32_t ECAQueue_getActTag(volatile uint32_t *queue)
 {
-  return queue->tag_get;
+  return *(queue + ECA_QUEUE_TAG_GET/4);
 }
-uint32_t ECAQueue_getFlags(volatile ECAQueueRegs *queue)
+
+uint32_t ECAQueue_getFlags(volatile uint32_t *queue)
 {
-	return queue->flags_get;
+  return *(queue + ECA_QUEUE_FLAGS_GET/4);
 }
-uint32_t ECAQueue_clear(volatile ECAQueueRegs *queue)
+
+uint32_t ECAQueue_clear(volatile uint32_t *queue)
 {
 	uint32_t n;
 	for (n = 0; ECAQueue_actionPresent(queue); ++n) 
 	{
-		queue->pop_owr = 0x1;
+    *(queue + ECA_QUEUE_POP_OWR/4) = 0x1;
 	}
 	return n;
 }
-uint32_t ECAQueue_actionPresent(volatile ECAQueueRegs *queue)
+
+uint32_t ECAQueue_actionPresent(volatile uint32_t *queue)
 {
-  return (queue->flags_get & (1<<ECA_VALID));
+  return *(queue + ECA_QUEUE_FLAGS_GET/4) & (1<<ECA_VALID);
 }
-void ECAQueue_actionPop(volatile ECAQueueRegs *queue)
+
+void ECAQueue_actionPop(volatile uint32_t *queue)
 {
-  queue->pop_owr = 0x1;;
+  *(queue + ECA_QUEUE_POP_OWR/4) = 0x1;
 }
 
 // translate some arbitrary eventIds into more interesting ones
@@ -99,7 +106,7 @@ uint64_t evtId_translator(uint64_t evtId)
   }
 }
 
-uint32_t ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtCode, uint32_t *milTelegram)
+uint32_t ECAQueue_getMilEventData(volatile uint32_t *queue, uint32_t *evtCode, uint32_t *milTelegram)
 {
   // EventID 
   // |---------------evtIdHi---------------|  |---------------evtIdLo---------------|
@@ -115,8 +122,8 @@ uint32_t ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtCod
   // v: virtAcc = virtual accellerator
   // c: evtCode = MIL relevant part of the evtNo (only 0..255)
   EvtId_t evtId = { 
-    .part.hi = queue->event_id_hi_get,
-    .part.lo = queue->event_id_lo_get
+    .part.hi = *(queue + ECA_QUEUE_EVENT_ID_HI_GET/4),
+    .part.lo = *(queue + ECA_QUEUE_EVENT_ID_LO_GET/4)
   };  
 
   ////////////////////////////////////////////////////////////////////////////////////

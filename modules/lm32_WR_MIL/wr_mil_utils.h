@@ -49,7 +49,7 @@ void delay_96plus32n_ns(uint32_t n);
 //                 was measured and is < 120 ns
 //               1 if the specified stopTAI was too soon. In this case, the function
 //                 returns at a time after the specified stopTAI
-uint32_t wait_until_tai(volatile ECACtrlRegs *eca, uint64_t stopTAI);
+uint32_t wait_until_tai(volatile uint32_t *eca, uint64_t stopTAI);
 
 
 #endif

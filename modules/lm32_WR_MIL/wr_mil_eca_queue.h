@@ -3,49 +3,29 @@
 
 #include "wr_mil_value64bit.h"
 
-/* stucture and functions to read events from the eca queue */
-
-typedef struct 
-{
-	uint32_t queue_id_get;
-	uint32_t pop_owr;
-	uint32_t flags_get;
-	uint32_t num_get;
-	uint32_t event_id_hi_get;
-	uint32_t event_id_lo_get;
-	uint32_t param_hi_get;
-	uint32_t param_lo_get;
-	uint32_t tag_get;
-	uint32_t tef_get;
-	uint32_t deadline_hi_get;
-	uint32_t deadline_lo_get;
-	uint32_t executed_hi_get;
-	uint32_t executed_lo_get;
-} ECAQueueRegs;
-
-volatile ECAQueueRegs *ECAQueue_init();
+volatile uint32_t *ECAQueue_init();
 
 // locate the ECAQueue via SDB and return a pointer to the channel for the soft CPU
 uint32_t *ECAQueue_findAddress();
 
-void ECAQueue_popAction(volatile ECAQueueRegs *queue);
+void ECAQueue_popAction(volatile uint32_t *queue);
 
-void ECAQueue_getDeadl(volatile ECAQueueRegs *queue, TAI_t *deadl);
+void ECAQueue_getDeadl(volatile uint32_t *queue, TAI_t *deadl);
 
-void ECAQueue_getEvtId(volatile ECAQueueRegs *queue, EvtId_t *evtId);
+void ECAQueue_getEvtId(volatile uint32_t *queue, EvtId_t *evtId);
 
-uint32_t ECAQueue_getActTag(volatile ECAQueueRegs *queue);
+uint32_t ECAQueue_getActTag(volatile uint32_t *queue);
 
-uint32_t ECAQueue_getFlags(volatile ECAQueueRegs *queue);
+uint32_t ECAQueue_getFlags(volatile uint32_t *queue);
 
 // remove all events from the ECA queue and return the number of removed events
-uint32_t ECAQueue_clear(volatile ECAQueueRegs *queue);
+uint32_t ECAQueue_clear(volatile uint32_t *queue);
 
 // returns 1 if there is at least one event in the ECA queue
-uint32_t ECAQueue_actionPresent(volatile ECAQueueRegs *queue);
+uint32_t ECAQueue_actionPresent(volatile uint32_t *queue);
 
 // remove single event from the ECA queue
-void ECAQueue_actionPop(volatile ECAQueueRegs *queue);
+void ECAQueue_actionPop(volatile uint32_t *queue);
 
 // Extract event number, event code and virtual accelerator number from the EventId in the ECA queue. 
 // parameters: 
@@ -53,7 +33,7 @@ void ECAQueue_actionPop(volatile ECAQueueRegs *queue);
 //    evtCode: the event code of the MIL event (this is only valid if function returns 1)
 //    milTelegram: correcly formatted MIL telegram that can be passed to the mil piggy 
 //
-// return value: is nonzero if the event code must be put on MIL event bus, zero otherwise
-uint32_t ECAQueue_getMilEventData(volatile ECAQueueRegs *queue, uint32_t *evtCode, uint32_t *milTelegram);
+// return value: is nonzero if the event code must be forwarded to MIL event bus, zero otherwise
+uint32_t ECAQueue_getMilEventData(volatile uint32_t *queue, uint32_t *evtCode, uint32_t *milTelegram);
 
 #endif

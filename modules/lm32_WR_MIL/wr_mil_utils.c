@@ -35,16 +35,14 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC) // EVT_UTC_1 = EVT_UTC[
 //  while(n--) asm("nop"); // if asm("nop") is missing, compiler will optimize the loop away
 //}
 
-uint32_t wait_until_tai(volatile ECACtrlRegs *eca, uint64_t stopTAI)
+uint32_t wait_until_tai(volatile uint32_t *eca, uint64_t stopTAI)
 {
   // Get current time, ...
   TAI_t tai_now; 
   ECACtrl_getTAI(eca, &tai_now);
   if (stopTAI < tai_now.value) return 1; // (stopTAI is in the past)
   // ... calculate waiting time, ...
-  uint32_t ns_to_go = stopTAI - tai_now.value; 
-  uint32_t delay = ns_to_go;
-  delay /= 32; 
+  uint32_t delay = (stopTAI - tai_now.value)/32; 
   // ... and wait.
   delay_96plus32n_ns(delay);
   return 0;

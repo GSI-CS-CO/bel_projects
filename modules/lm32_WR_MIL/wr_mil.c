@@ -70,7 +70,7 @@ int init()
 }
 
 // produce an output pulse on both lemo outputs of the SCU
-void lemoPulse12(volatile MilPiggyRegs *mil_piggy)
+void lemoPulse12(volatile uint32_t *mil_piggy)
 {
     MilPiggy_lemoOut1High(mil_piggy);
     MilPiggy_lemoOut2High(mil_piggy);
@@ -86,9 +86,9 @@ void lemoPulse12(volatile MilPiggyRegs *mil_piggy)
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
                                           // and make this time difference 100.0(5)us
-void eventHandler(volatile ECACtrlRegs  *eca,
-                  volatile ECAQueueRegs *eca_queue, 
-                  volatile MilPiggyRegs *mil_piggy)
+void eventHandler(volatile uint32_t *eca,
+                  volatile uint32_t *eca_queue, 
+                  volatile uint32_t *mil_piggy)
 {
   if (ECAQueue_actionPresent(eca_queue))
   {
@@ -96,7 +96,7 @@ void eventHandler(volatile ECACtrlRegs  *eca,
     // select all events from the eca queue that are for the LM32 
     // AND that have an evtNo that is supposed to be translated into a MIL event (indicated
     //     by the return value of ECAQueue_getMilEventData being != 0)
-    if ((eca_queue->tag_get == ECA_QUEUE_LM32_TAG) &&
+    if ((ECAQueue_getActTag(eca_queue) == ECA_QUEUE_LM32_TAG) &&
          ECAQueue_getMilEventData(eca_queue, &evtCode, &milTelegram))
     {
       TAI_t    tai_deadl; 
@@ -141,8 +141,8 @@ void eventHandler(volatile ECACtrlRegs  *eca,
 // this fucnction creates a series of pulses that are triggered by the return from 
 // the function wait_until_tai. The lemo outputs can be observed on the Oscilloscope
 // in order to measure the timing precision of the wait_until_tai function.
-void testOfFunction_wait_until_tai(volatile MilPiggyRegs *mil_piggy,
-                                   volatile ECACtrlRegs  *eca_ctrl)
+void testOfFunction_wait_until_tai(volatile uint32_t *mil_piggy,
+                                   volatile uint32_t  *eca_ctrl)
 {
     TAI_t tai_now; 
     ECACtrl_getTAI(eca_ctrl, &tai_now);
@@ -185,17 +185,18 @@ void main(void)
   init();   
 
   // MilPiggy 
-  volatile MilPiggyRegs *mil_piggy = MilPiggy_init();
+  volatile uint32_t *mil_piggy = MilPiggy_init();
   MilPiggy_lemoOut1Enable(mil_piggy);
   MilPiggy_lemoOut2Enable(mil_piggy);
+  mprintf("mil_reg_wr_rf_lemo_conf = 0x%08x\n", MilPiggy_readConf(mil_piggy));
 
   // ECAQueue 
-  volatile ECAQueueRegs *eca_queue = ECAQueue_init();
+  volatile uint32_t *eca_queue = ECAQueue_init();
   uint32_t n_events = ECAQueue_clear(eca_queue);
   mprintf("popped %d events from the eca queue\n", n_events);
 
   // ECACtrl 
-  volatile ECACtrlRegs *eca_ctrl = ECACtrl_init();
+  volatile uint32_t *eca_ctrl = ECACtrl_init();
   mprintf("eca ctrl regs at %08x\n", eca_ctrl);
 
   // Command
