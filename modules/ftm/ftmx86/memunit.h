@@ -6,12 +6,11 @@
 #include <iostream>
 #include <map>
 #include <set>
-#include <boost/bimap.hpp>
 #include <boost/optional.hpp>
 #include <stdlib.h>
 #include "common.h"
 #include "ftm_common.h"
-
+#include "hashmap.h"
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX_IDX 32
@@ -40,14 +39,11 @@
   } chunkMeta;
 
 
-typedef std::map<std::string, chunkMeta>  aMap;
-typedef std::map<uint32_t, parserMeta>  pMap;
-//typedef std::map<uint32_t,  std::string>  hMap;
-typedef boost::bimap< uint32_t, std::string > hBiMap;
-typedef hBiMap::value_type hashValue;
-typedef std::set<uint32_t>                aPool; // contains all available addresses in LM32 memory area
-typedef boost::container::vector<chunkMeta*> vChunk;
-typedef std::map<std::string, chunkMeta>  aMap;
+typedef std::map<std::string, chunkMeta>      aMap;
+typedef std::map<uint32_t, parserMeta>        pMap;
+typedef std::set<uint32_t>                    aPool; // contains all available addresses in LM32 memory area
+typedef boost::container::vector<chunkMeta*>  vChunk;
+typedef std::map<std::string, chunkMeta>      aMap;
 
 
 class MemUnit {
@@ -61,6 +57,7 @@ class MemUnit {
   const uint32_t  startOffs; // baseAddress + bmpLen rounded up to next multiple of MEM_BLOCK_SIZE to accomodate BMP
   const uint32_t  endOffs;   // baseAddress + poolSize rounded down to next multiple of MEM_BLOCK_SIZE, can only use whole blocks 
   Graph&  gUp;
+  HashMap& hashMap;
   Graph gDown;
   vBuf   uploadBmp;
   vBuf   downloadBmp;
@@ -68,7 +65,7 @@ class MemUnit {
   aPool  memPool;
   aMap   allocMap;
   pMap   parserMap;
-  hBiMap hashMap;
+  
   
   
 
@@ -80,12 +77,12 @@ public:
 
 
 
-  MemUnit(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t sharedOffs, uint32_t poolSize, Graph& g) 
+  MemUnit(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t sharedOffs, uint32_t poolSize, Graph& g, HashMap& hm) 
         : cpu(cpu), extBaseAdr(extBaseAdr), intBaseAdr(intBaseAdr), sharedOffs(sharedOffs),
           poolSize(poolSize), bmpLen( poolSize / _MEM_BLOCK_SIZE), 
           startOffs(sharedOffs + ((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE)),
           endOffs(sharedOffs + ((poolSize / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE)),
-          gUp(g),
+          gUp(g), hashMap(hm),
           uploadBmp(vBuf( ((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE) )), 
           downloadBmp(vBuf( ((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE) )) { 
             initMemPool();
@@ -115,14 +112,9 @@ public:
   parserMeta* lookupAdr(uint32_t adr) const;
   vChunk getAllChunks() const;
 
-  //Hash functions
-  bool insertHash(const std::string& name, uint32_t &hash);
-  bool removeHash(const uint32_t hash);
 
 
-
-  boost::optional<const std::string&> hash2name(const uint32_t hash)     const  { try { return hashMap.left.at(hash);} catch (...) {throw; return boost::optional<const std::string&>();}  }
-  boost::optional<const uint32_t&>    name2hash(const std::string& name) const  { try { return hashMap.right.at(name);} catch (...) {throw; return boost::optional<const uint32_t&>();}  }
+  
 
   //Addr Functions
   const uint32_t extAdr2adr(const uint32_t ea)    const  { return (ea == LM32_NULL_PTR ? LM32_NULL_PTR : ea - extBaseAdr); }

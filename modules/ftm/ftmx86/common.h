@@ -37,7 +37,6 @@ typedef boost::container::vector<uint8_t> vBuf;
 typedef boost::container::vector<uint32_t> vAdr;
 typedef boost::container::vector<uint32_t> ebBuf;
 
-
 extern const std::string sQM[];
 extern const std::string sDL;
 extern const std::string sDD;
@@ -49,27 +48,6 @@ extern const std::string sDPAR0;
 extern const std::string sDPAR1;
 extern const std::string sDTEF;
 extern const std::string sDRES;
-
-class FnvHash
-{
-    static const unsigned int FNV_PRIME     = 16777619u;
-    static const unsigned int OFFSET_BASIS  = 2166136261u;
-public:    
-    static unsigned int fnvHash(const char* str)
-    {
-        const size_t length = strlen(str) + 1;
-        unsigned int hash = OFFSET_BASIS;
-        for (size_t i = 0; i < length; ++i)
-        {
-            hash ^= *str++;
-            hash *= FNV_PRIME;
-        }
-        return hash;
-    }
- 
-};
-
-
 
 class  myVertex {
 public:

@@ -145,7 +145,7 @@
         boost::optional<std::string> name;
         // we don't know if the hash map knows about this node. If not, we'll return the hash as a string.
         try {
-          name = hash2name(hash);
+          name = hashMap.lookup(hash);
         } catch (...) {
           name = "#" + std::to_string(hash);
         }
@@ -232,12 +232,21 @@
 
   //Allocation functions
   bool MemUnit::allocate(const std::string& name, vertex_t v) {
-    uint32_t chunkAdr, hash;
-    bool ret = insertHash(name, hash);
+    uint32_t chunkAdr;
+    boost::optional<uint32_t> hash;
+
+    // we don't know if the hash map accepts this node. Check
+    try {
+      hash = hashMap.lookup(name);
+    } catch (...) {
+      return false;
+    }
+
     if ( (allocMap.count(name) == 0) && acquireChunk(chunkAdr) ) { 
-      allocMap[name] = (chunkMeta) {chunkAdr, hash, v};  
-    } else {ret = false;}
-    return ret;
+        allocMap[name] = (chunkMeta) {chunkAdr, uint32_t(*std::forward<boost::optional<uint32_t>>(hash)), v};  
+    } else {return false;}
+
+    return true;
   }
 
   bool MemUnit::insert(const std::string& name, uint32_t adr) {return true;}
@@ -259,21 +268,6 @@
     else {return NULL;}  
   }
 
-  //Hash functions
-
-  bool MemUnit::insertHash(const std::string& name, uint32_t &hash) {
-    hash = FnvHash::fnvHash(name.c_str());
-
-    if (hashMap.left.count(hash) > 0) return false;
-    else hashMap.insert( hashValue(hash, name) );
-    return true;
-  }
-
-  bool MemUnit::removeHash(const uint32_t hash) {
-    if (hashMap.left.count(hash) > 0) {hashMap.left.erase(hash); return true;}
-    return false;
-  }
-  
   void MemUnit::prepareUpload() {
     std::string cmp;
     //uint8_t prio; 

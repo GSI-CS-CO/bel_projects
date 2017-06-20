@@ -15,6 +15,7 @@
 #include <etherbone.h>
 
 #include "ftm_shared_mmap.h"
+#include "hashmap.h"
 
 
 
@@ -170,7 +171,9 @@ int main(int argc, char* argv[]) {
 
   // Construct an empty graph and prepare the dynamic_property_maps.
   Graph g;
-  
+  HashMap hm;
+
+
   //FIXME this is quite dangerous - misspell a property name and it will not be initialised / contain garbage
   boost::dynamic_properties dp(boost::ignore_other_properties);
   //boost::dynamic_properties dp;
@@ -184,7 +187,7 @@ int main(int argc, char* argv[]) {
   std::cout << "Found " << myDevs.size() << " User-RAMs, cpu #" << cpuIdx << " is a valid choice " << std::endl;
   //create memory manager
   std::cout << "Creating Memory Unit #" << cpuIdx << "..." << std::endl;
-  MemUnit mmu = MemUnit(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR,  SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_, g);
+  MemUnit mmu = MemUnit(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR,  SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_, g, hm);
 
 
   dp.property("type",  boost::get(&myEdge::type, g));
@@ -231,7 +234,7 @@ int main(int argc, char* argv[]) {
 
    
     //format all graph labels lowercase
-      BOOST_FOREACH( edge_t e, edges(g) ) {
+    BOOST_FOREACH( edge_t e, edges(g) ) {
       std::transform(g[e].type.begin(), g[e].type.end(), g[e].type.begin(), ::tolower);
     }
 
