@@ -10,10 +10,7 @@ CFLAGS  += -I..                                 \
 
 VPATH=..
 
-OBJECTS = wr_mil_piggy.o     \
-		  wr_mil_eca_queue.o \
-		  wr_mil_eca_ctrl.o  \
-		  wr_mil_utils.o     \
+OBJECTS = wr_mil_utils.o     \
 		  main.o             \
 
 all: unittest

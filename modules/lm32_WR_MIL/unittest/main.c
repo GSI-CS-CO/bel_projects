@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <inttypes.h>
 
-#include "wr_mil_piggy.h"
+//#include "wr_mil_piggy.h"
 #include "wr_mil_eca_queue.h"
 #include "wr_mil_eca_ctrl.h"
 #include "wr_mil_utils.h"
@@ -52,38 +52,38 @@ int main()
 	////////////////////////////////////////
 	// MilPiggy module tests
 	////////////////////////////////////////
-	volatile MilPiggyRegs *mil_piggy = (volatile MilPiggyRegs *)&my_fake_mil_piggy_device;
+	// volatile MilPiggyRegs *mil_piggy = (volatile MilPiggyRegs *)&my_fake_mil_piggy_device;
 
-	uint32_t mil_piggy_test_value = 42;
-	MilPiggy_writeCmd(mil_piggy, mil_piggy_test_value);
-	assert(my_fake_mil_piggy_device.MIL_WR_CMD == mil_piggy_test_value);
+	// uint32_t mil_piggy_test_value = 42;
+	// MilPiggy_writeCmd(mil_piggy, mil_piggy_test_value);
+	// assert(my_fake_mil_piggy_device.MIL_WR_CMD == mil_piggy_test_value);
 
-	// test lemo connector settings
-	MilPiggy_lemoOut1Enable(mil_piggy);
-	assert(my_fake_mil_piggy_device.WR_RF_LEMO_CONF & MIL_LEMO_OUT_EN1);
-	MilPiggy_lemoOut2Enable(mil_piggy);
-	assert(my_fake_mil_piggy_device.WR_RF_LEMO_CONF & MIL_LEMO_OUT_EN2);
-	// test lemo connector on / off
-	MilPiggy_lemoOut2High(mil_piggy);
-	assert(my_fake_mil_piggy_device.WR_RD_LEMO_DAT & MIL_LEMO_DAT2);
-	MilPiggy_lemoOut2Low(mil_piggy);
-	assert(!(my_fake_mil_piggy_device.WR_RD_LEMO_DAT & MIL_LEMO_DAT2));
+	// // test lemo connector settings
+	// MilPiggy_lemoOut1Enable(mil_piggy);
+	// assert(my_fake_mil_piggy_device.WR_RF_LEMO_CONF & MIL_LEMO_OUT_EN1);
+	// MilPiggy_lemoOut2Enable(mil_piggy);
+	// assert(my_fake_mil_piggy_device.WR_RF_LEMO_CONF & MIL_LEMO_OUT_EN2);
+	// // test lemo connector on / off
+	// MilPiggy_lemoOut2High(mil_piggy);
+	// assert(my_fake_mil_piggy_device.WR_RD_LEMO_DAT & MIL_LEMO_DAT2);
+	// MilPiggy_lemoOut2Low(mil_piggy);
+	// assert(!(my_fake_mil_piggy_device.WR_RD_LEMO_DAT & MIL_LEMO_DAT2));
 
 
-	////////////////////////////////////////
-	// ECA queue module tests
-	////////////////////////////////////////
-	ECAQueueRegs *eca_queue = (ECAQueueRegs *)&my_fake_eca_queue_device;
+	// ////////////////////////////////////////
+	// // ECA queue module tests
+	// ////////////////////////////////////////
+	// ECAQueueRegs *eca_queue = (ECAQueueRegs *)&my_fake_eca_queue_device;
 
-	// test getEvtId function
-	uint32_t eca_queue_test_id_hi = 0x12345678u;
-	uint32_t eca_queue_test_id_lo = 0x01234567u;
-	my_fake_eca_queue_device.ECA_QUEUE_EVENT_ID_HI_GET = eca_queue_test_id_hi;
-	my_fake_eca_queue_device.ECA_QUEUE_EVENT_ID_LO_GET = eca_queue_test_id_lo;
-	EvtId_t evt_id;
-	ECAQueue_getEvtId(eca_queue, &evt_id);
-	assert(evt_id.part.hi == eca_queue_test_id_hi);
-	assert(evt_id.part.lo == eca_queue_test_id_lo);
+	// // test getEvtId function
+	// uint32_t eca_queue_test_id_hi = 0x12345678u;
+	// uint32_t eca_queue_test_id_lo = 0x01234567u;
+	// my_fake_eca_queue_device.ECA_QUEUE_EVENT_ID_HI_GET = eca_queue_test_id_hi;
+	// my_fake_eca_queue_device.ECA_QUEUE_EVENT_ID_LO_GET = eca_queue_test_id_lo;
+	// EvtId_t evt_id;
+	// ECAQueue_getEvtId(eca_queue, &evt_id);
+	// assert(evt_id.part.hi == eca_queue_test_id_hi);
+	// assert(evt_id.part.lo == eca_queue_test_id_lo);
 
 
 	// test timestamp conversion

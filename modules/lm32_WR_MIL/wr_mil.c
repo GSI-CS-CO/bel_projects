@@ -53,6 +53,7 @@
 #include "wr_mil_eca_ctrl.h"
 #include "wr_mil_cmd.h"
 #include "wr_mil_utils.h"
+#include "wr_mil_delay.h"
 
 // for the event handler
 //#include "../../ip_cores/saftlib/drivers/eca_flags.h"
@@ -78,6 +79,43 @@ void lemoPulse12(volatile uint32_t *mil_piggy)
     MilPiggy_lemoOut2Low(mil_piggy);
 }
 
+// convert 64-bit TAI from WR into an array of five MIL events (EVT_UTC_1/2/3/4/5 events with evtNr 0xE0 - 0xE4)
+// arguments:
+//   TAI:     a 64-bit WR-TAI value
+//   EVT_UTC: points to an array of 5 uint32_t and will be filled 
+//            with valid special MIL events:
+//                            EVT_UTC_1 = EVT_UTC[0] =  ms[ 9: 2]          , code = 0xE0
+//                            EVT_UTC_2 = EVT_UTC[1] =  ms[ 1: 0] s[30:25] , code = 0xE1
+//                            EVT_UTC_3 = EVT_UTC[2] =   s[24:16]          , code = 0xE2
+//                            EVT_UTC_4 = EVT_UTC[3] =   s[15: 8]          , code = 0xE3
+//                            EVT_UTC_5 = EVT_UTC[4] =   s[ 7: 0]          , code = 0xE4
+//            where s is a 30 bit number (seconds since 2008) and ms is a 10 bit number
+//            containing the  milisecond fraction.
+void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC)
+{
+  uint64_t msNow  = TAI / UINT64_C(1000000); // conversion from ns to ms (since 1970)
+  uint64_t ms2008 = UINT64_C(1199142000000); // miliseconds at 01/01/2008  (since 1970)
+                                             // the number was caluclated using: date --date='01/01/2008' +%s
+  uint64_t mil_timestamp_ms = msNow - ms2008;
+  uint32_t mil_ms           = mil_timestamp_ms % 1000;
+  uint32_t mil_sec          = mil_timestamp_ms / UINT64_C(1000);
+
+  EVT_UTC[0]  = (mil_ms>>2)   & 0x000000ff;  // mil_ms[9:2]    to EVT_UTC_1[7:0]
+  EVT_UTC[1]  = (mil_ms<<6)   & 0x000000C0;  // mil_ms[1:0]    to EVT_UTC_2[7:5]
+  EVT_UTC[1] |= (mil_sec>>24) & 0x0000003f;  // mil_sec[29:24] to EVT_UTC_2[5:0]
+  EVT_UTC[2]  = (mil_sec>>16) & 0x000000ff;  // mil_sec[23:16] to EVT_UTC_3[7:0]
+  EVT_UTC[3]  = (mil_sec>>8)  & 0x000000ff;  // mil_sec[15:8]  to EVT_UTC_4[7:0]
+  EVT_UTC[4]  =  mil_sec      & 0x000000ff;  // mil_sec[7:0]   to EVT_UTC_5[7:0]
+
+  // shift time information to the upper bits [15:8] and add code number
+  EVT_UTC[0] = (EVT_UTC[0] << 8) | 0x22; //0x20 ;// 0xE0;
+  EVT_UTC[1] = (EVT_UTC[1] << 8) | 0x22; //0x21 ;// 0xE1;
+  EVT_UTC[2] = (EVT_UTC[2] << 8) | 0x22; //0x22 ;// 0xE2;
+  EVT_UTC[3] = (EVT_UTC[3] << 8) | 0x22; //0x23 ;// 0xE3;
+  EVT_UTC[4] = (EVT_UTC[4] << 8) | 0x22; //0x24 ;// 0xE4;
+}
+
+
 #define N_UTC_EVENTS           5          // the number of EVT_UTC events
 #define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
 #define MIL_EVT_START_CYCLE    0x20       // the special event that causes five additional MIL events:
@@ -101,7 +139,7 @@ void eventHandler(volatile uint32_t *eca,
     {
       TAI_t    tai_deadl; 
       uint32_t EVT_UTC[N_UTC_EVENTS];
-      uint32_t dt;
+      uint32_t too_late;
       ECAQueue_getDeadl(eca_queue, &tai_deadl);
       uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY; // add 20us to the deadline
           make_mil_timestamp(mil_event_time, EVT_UTC);     
@@ -111,11 +149,8 @@ void eventHandler(volatile uint32_t *eca,
         case MIL_EVT_START_CYCLE: 
         // generate MIL event EVT_START_CYCLE, followed by EVT_UTC_1/2/3/4/5 EVENTS
           //          make_mil_timestamp(mil_event_time, EVT_UTC);     
-          dt = wait_until_tai(eca, mil_event_time);
+          too_late = wait_until_tai(eca, mil_event_time);
           MilPiggy_writeCmd(mil_piggy, milTelegram); 
-          if (dt){ // use lemo output of SCU to indicate that a deadline could not be respected
-            lemoPulse12(mil_piggy);
-          }
           // create the five events EVT_UTC_1/2/3/4/5 with seconds and miliseconds since 01/01/2008
           for (int i = 0; i < N_UTC_EVENTS; ++i)
           {
@@ -126,11 +161,13 @@ void eventHandler(volatile uint32_t *eca,
         break;
         default:
           // generate MIL event
-          dt = wait_until_tai(eca, mil_event_time);
+          too_late = wait_until_tai(eca, mil_event_time);
           MilPiggy_writeCmd(mil_piggy, milTelegram);
           break;
       }
-      uint32_t actTag = ECAQueue_getActTag(eca_queue);
+      if (too_late){ // use lemo output of SCU to indicate that a deadline could not be respected
+        lemoPulse12(mil_piggy);
+      }
     }
     // remove action from ECA queue 
     ECAQueue_actionPop(eca_queue);
