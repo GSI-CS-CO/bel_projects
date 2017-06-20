@@ -3,12 +3,13 @@
 #include "../../ip_cores/saftlib/drivers/eca_flags.h"
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
 #include "../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"       // register layout ECA control
-#ifndef UNITTEST
 #include "mini_sdb.h"
+
 volatile uint32_t *ECAQueue_init()
 {
   return (volatile uint32_t*)ECAQueue_findAddress();
 }
+
 uint32_t *ECAQueue_findAddress()
 {
 #define ECAQMAX           4         //  max number of ECA queues
@@ -33,7 +34,6 @@ uint32_t *ECAQueue_findAddress()
 
   return pECAQ;  
 }
-#endif 
 
 void ECAQueue_popAction(volatile uint32_t *queue)
 {

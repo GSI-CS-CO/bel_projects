@@ -32,8 +32,7 @@ LDFLAGS += -Wl,-Map,$(TARGET).map -Wl,-O1
 fwbin: $(TARGET).bin
 	./stop_and_flash.sh
 
-$(TARGET).elf: wr_mil_piggy.c                        \
-			   $(PATHFW)/$(TARGET).c                 \
+$(TARGET).elf: $(PATHFW)/$(TARGET).c                 \
 			   $(PATHFW)/wr_mil_eca_ctrl.c           \
 			   $(PATHFW)/wr_mil_eca_queue.c          \
 			   $(PATHFW)/wr_mil_cmd.c                \
