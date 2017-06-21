@@ -1,20 +1,21 @@
 /********************************************************************************************
- *  wr_mil.c
+ *  wr_mil.c 
+ *   based on ../lm32-example/example.c
  *
  *  created : 2017
- *  author  : Dietrich Beck, Mathias Kreider GSI-Darmstadt
- *  version : 23-Mar-2017
+ *  author  : Michael Reese, Dietrich Beck, Mathias Kreider GSI-Darmstadt
+ *  version : 21-Jun-2017
  *
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
  *
- * Copyright (C) 2017  Dietrich Beck
+ * Copyright (C) 2017  Michael Reese
  * GSI Helmholtzzentrum für Schwerionenforschung GmbH
  * Planckstraße 1
  * D-64291 Darmstadt
  * Germany
  *
- * Contact: d.beck@gsi.de
+ * Contact: m.reese@gsi.de
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -29,7 +30,7 @@
  *  You should have received a copy of the GNU Lesser General Public
  *  License along with this library. If not, see <http://www.gnu.org/licenses/>.
  *
- * For all questions and ideas contact: d.beck@gsi.de
+ * For all questions and ideas contact: m.reese@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
 
