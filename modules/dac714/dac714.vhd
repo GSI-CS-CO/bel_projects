@@ -467,8 +467,8 @@ begin
   if rising_edge(clk) then
     if nReset = '0' then
       dac_data <= (others => '0');
-    elsif Wr_Shift_Reg = '1' then
-      dac_data <= unsigned(Data_from_SCUB_LA);
+    elsif SPI_SM = Sel_on then
+      dac_data <= shift_reg;
     end if;
   end if;
 end process;

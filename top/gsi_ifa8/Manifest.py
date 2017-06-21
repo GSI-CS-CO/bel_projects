@@ -164,9 +164,17 @@ files = [
   "VERS_SEL_a.tdf",
   "vg_mux.bdf",
 ]
-
+fetchto = "../../ip_cores"
 modules = {
-  "local" : [
-    "../..",
-  ]
+    "local" : [
+        "../../modules/modulbus",
+        "../../modules/lvds",
+        "../../modules/mil",
+        "../../modules/aux_functions",
+        "../../modules/function_generators"
+    ],
+    "git" : [
+        "git://ohwr.org/hdl-core-lib/general-cores.git",
+        "git://ohwr.org/hdl-core-lib/wr-cores.git"
+    ],
 }

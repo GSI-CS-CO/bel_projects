@@ -12,6 +12,11 @@ files = [
    "outpuls.vhd",
    "flanke.vhd",
    "addac_reg.vhd",
+   "io_spi_dac_8420.vhd",
+   "atr_comp_ctrl.vhd",
+   "atr_cnt_n.vhd",
+   "atr_puls_ctrl.vhd",
+   "atr_puls_n.vhd",
 ]
 
 modules = {

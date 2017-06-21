@@ -101,11 +101,13 @@ package monster_pkg is
       g_en_oled              : boolean := false;
       g_en_lcd               : boolean := false;
       g_en_cfi               : boolean := false;
+      g_en_ddr3              : boolean := false;
       g_en_ssd1325           : boolean := false;
       g_en_nau8811           : boolean := false;
       g_en_user_ow           : boolean := false;
       g_en_psram             : boolean := false;
       g_io_table             : t_io_mapping_table_arg_array(natural range <>);
+      g_en_pmc               : boolean := false;
       g_lm32_cores           : natural := 1;
       g_lm32_MSIs            : natural := 1;
       g_lm32_ramsizes        : natural := 131072/4; -- in 32b words
@@ -141,7 +143,11 @@ package monster_pkg is
       wr_ext_clk_i           : in    std_logic := '0'; -- 10MHz
       wr_ext_pps_i           : in    std_logic := '0';
       wr_uart_o              : out   std_logic;
-      wr_uart_i              : in    std_logic := '1';
+      wr_uart_i              : in    std_logic := '1';     
+      -- SFP
+      sfp_tx_disable_o       : out   std_logic;
+      sfp_tx_fault_i         : in    std_logic;
+      sfp_los_i              : in    std_logic;
       -- GPIO for the board (inouts start at 0, dedicated in/outs come after)
       gpio_i                 : in    std_logic_vector(f_sub1(g_gpio_inout+g_gpio_in)  downto 0) := (others => '1');
       gpio_o                 : out   std_logic_vector(f_sub1(g_gpio_inout+g_gpio_out) downto 0);
@@ -296,6 +302,22 @@ package monster_pkg is
       cfi_noe_fsh            : out   std_logic ;
       cfi_nrst_fsh           : out   std_logic ;
       cfi_wait_fsh           : in    std_logic := '0';
+      -- g_en_ddr3
+      mem_DDR3_DQ            : inout std_logic_vector(15 downto 0);
+      mem_DDR3_DM            : out   std_logic_vector( 1 downto 0);
+      mem_DDR3_BA            : out   std_logic_vector( 2 downto 0);
+      mem_DDR3_ADDR          : out   std_logic_vector(12 downto 0);
+      mem_DDR3_CS_n          : out   std_logic_vector( 0 downto 0);
+      mem_DDR3_DQS           : inout std_logic_vector( 1 downto 0);
+      mem_DDR3_DQSn          : inout std_logic_vector( 1 downto 0);
+      mem_DDR3_RES_n         : out   std_logic;
+      mem_DDR3_CKE           : out   std_logic_vector( 0 downto 0);
+      mem_DDR3_ODT           : out   std_logic_vector( 0 downto 0);
+      mem_DDR3_CAS_n         : out   std_logic;
+      mem_DDR3_RAS_n         : out   std_logic;
+      mem_DDR3_CLK           : inout std_logic_vector( 0 downto 0);
+      mem_DDR3_CLK_n         : inout std_logic_vector( 0 downto 0);
+      mem_DDR3_WE_n          : out   std_logic;
       -- g_en_psram
       ps_clk                 : out   std_logic;
       ps_addr                : out   std_logic_vector(g_psram_bits-1 downto 0);
@@ -307,6 +329,26 @@ package monster_pkg is
       ps_cre                 : out   std_logic;
       ps_advn                : out   std_logic;
       ps_wait                : in    std_logic := '0';
+      -- g_en_pmc
+      pmc_pci_clk_i          : in    std_logic := '0';
+      pmc_pci_rst_i          : in    std_logic := '0';
+      pmc_buf_oe_o           : out   std_logic;
+      pmc_busmode_io         : inout std_logic_vector(3 downto 0) := (others => 'Z');
+      pmc_ad_io              : inout std_logic_vector(31 downto 0) := (others => 'Z');
+      pmc_c_be_io            : inout std_logic_vector(3 downto 0) := (others => 'Z');
+      pmc_par_io             : inout std_logic := 'Z';
+      pmc_frame_io           : inout std_logic := 'Z';
+      pmc_trdy_io            : inout std_logic := 'Z';
+      pmc_irdy_io            : inout std_logic := 'Z';
+      pmc_stop_io            : inout std_logic := 'Z';
+      pmc_devsel_io          : inout std_logic := 'Z';
+      pmc_idsel_i            : in    std_logic := '0';
+      pmc_perr_io            : inout std_logic := 'Z';
+      pmc_serr_io            : inout std_logic := 'Z';
+      pmc_inta_o             : out   std_logic;
+      pmc_req_o              : out   std_logic;
+      pmc_gnt_i              : in    std_logic := '1';
+
       -- g_en_user_ow
       ow_io                  : inout std_logic_vector(1 downto 0) := (others => 'Z');
       hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z'));

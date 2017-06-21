@@ -128,7 +128,7 @@ uint32_t* find_device_adr(uint32_t venId, uint32_t devId)
 {
    sdb_location found_sdb;
    uint32_t idx = 0;
-   uint32_t* adr = NULL;
+   uint32_t* adr = (uint32_t*)ERROR_NOT_FOUND;
    
    find_device_multi(&found_sdb, &idx, 1, venId, devId);
    if(idx > 0) adr = (uint32_t*)getSdbAdr(&found_sdb);
@@ -146,7 +146,7 @@ uint32_t* find_device_adr_in_subtree(sdb_location *loc, uint32_t venId, uint32_t
 {
    sdb_location found_sdb;
    uint32_t idx = 0;
-   uint32_t* adr = NULL;
+   uint32_t* adr = (uint32_t*)ERROR_NOT_FOUND;
    find_sdb_deep(getChild(loc), &found_sdb, getSdbAdr(loc), getMsiAdr(loc), getMsiUpperRange(), &idx, 1, venId, devId);
    if(idx > 0) adr = (uint32_t*)getSdbAdr(&found_sdb);
 
@@ -239,6 +239,9 @@ void discoverPeriphery(void)
 
   
   pCfiPFlash     = find_device_adr(GSI, WR_CFIPFlash);
+  
+  pDDR3_if1      = find_device_adr(GSI, WB_DDR3_if1);
+  pDDR3_if2      = find_device_adr(GSI, WB_DDR3_if2);
   
   // Get the second onewire/w1 record (0=white rabbit w1 unit, 1=user w1 unit)
   find_device_multi(&found_sdb_w1[0], &idx_w1, 2, CERN, WR_1Wire);

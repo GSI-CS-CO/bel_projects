@@ -101,6 +101,8 @@ adc: ad7606
 
     clk           => clk,
     nrst          => nrst,
+    ext_trg_i     => '0',
+    tag_trg_i     => '0',
     sync_rst      => adc_cntrl_reg(0),
     trigger_mode  => adc_cntrl_reg(4),
     transfer_mode => adc_cntrl_reg(2 downto 1),

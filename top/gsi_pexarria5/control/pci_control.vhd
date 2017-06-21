@@ -294,6 +294,9 @@ begin
       wr_dac_sclk_o           => dac_sclk,
       wr_dac_din_o            => dac_din,
       wr_ndac_cs_o            => ndac_cs,
+      sfp_tx_disable_o        => open,
+      sfp_tx_fault_i          => sfp4_tx_fault,
+      sfp_los_i               => sfp4_los,
       gpio_o                  => gpio_o,
       lvds_p_i                => lvds_p_i,
       lvds_n_i                => lvds_n_i,
@@ -364,7 +367,7 @@ begin
   
   -- BuTiS/MDMHR Output
   p19 <= butis_clk_200;
-  p24 <= butis_t0_ts;
+  p24 <= not(butis_t0_ts);
   
   -- BuTiS/MHDMR activity LEDs
   p6  <= '0' when butis_clk_200='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3)
