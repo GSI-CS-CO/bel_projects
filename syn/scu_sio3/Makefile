@@ -7,7 +7,6 @@ PSIO3     = ../../top/scu_sio3
 W1        = ../../ip_cores/wrpc-sw
 CFLAGS    = -I$(PHK)/include -I$(PSIO3)
 USRCPUCLK = 125000
-PATHPKG   = $(shell python2.7 ../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
 
 include ../build.mk
 
