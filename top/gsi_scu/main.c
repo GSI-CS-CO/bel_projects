@@ -203,7 +203,7 @@ inline void handle(int slot, unsigned fg_base) {
       fg_regs[channel].ramp_count++;
     }
       
-    //mprintf("irq received for channel[%d]\n", channel);
+    //:wmprintf("irq received for channel[%d]\n", channel);
     
     if (!(cntrl_reg  & FG_RUNNING)) {  // fg stopped
       if (slot == DEV_BUS_SLOT)
@@ -218,7 +218,7 @@ inline void handle(int slot, unsigned fg_base) {
       //        fg_base, slot, fg_regs[channel].ramp_count, cbgetCount(&fg_regs[0], channel));
     } else if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
       fg_regs[channel].state = 1; 
-      SEND_SIG(SIG_START); // fg has received the tag
+      SEND_SIG(SIG_START); // fg has received the tag or brc message
       if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
         SEND_SIG(SIG_REFILL);
       send_fg_param(slot, fg_base, cntrl_reg);
@@ -234,21 +234,19 @@ inline void dev_bus_irq_handle(unsigned int msi_adr, unsigned int msi_msg) {
   int slot, dev;
   short data;
   for (i = 0; i < MAX_FG_CHANNELS; i++) {
-    if (fg_regs[i].state == 1) {
+    //if (fg_regs[i].state == 1) {
       slot = fg_macros[fg_regs[i].macro_number] >> 24;
       dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
       if(slot == DEV_BUS_SLOT) {
-       // mprintf("fg_regs[%d] slot %d, dev %d\n", i, slot, dev);
         if (read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev) != OKAY)
           return;
         /* test for active 0 */
         if (~data & DRQ_BIT) {
-  //        mprintf("DRQ_BIT is set!\n");
           handle(slot, dev);
           //clear irq pending
         }
       }
-    }
+    //}
   }  
 }
 
