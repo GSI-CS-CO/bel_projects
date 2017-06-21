@@ -1,7 +1,6 @@
 files = [ 
   "ddr3_wrapper_pkg.vhd", 
   "ddr3_wrapper.vhd", 
-  "arria2", 
 ]
 
-
+modules = {'local': ["arria2"]}
