@@ -1,7 +1,8 @@
 TOP		:= $(dir $(lastword $(MAKEFILE_LIST)))..
 QUARTUS		?= /opt/quartus
 QUARTUS_BIN	=  $(QUARTUS)/bin
-PATHPKG		?= $(shell python2.7 ../../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
+HDLMAKE := PATH=$(TOP)/bin:$(QUARTUS_BIN):$(PATH) PYTHONPATH=$(TOP)/lib/python2.7/site-packages hdlmake
+PATHPKG		?= $(shell $(HDLMAKE) list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
 SPI_LANES	?= ASx1
 
 CROSS_COMPILE	?= lm32-elf-
@@ -53,6 +54,7 @@ clean::
 	rm -f $(TARGET).*.rpt $(TARGET).*.summary $(TARGET).map* $(TARGET).fit.* $(TARGET).pin $(TARGET).jdi $(TARGET)*.qdf $(TARGET).done $(TARGET).qws
 	rm -f $(TARGET).rpd $(TARGET).jic $(TARGET).pof $(TARGET).sof $(TARGET).dep $(TARGET).elf $(TARGET).o *.mif *.elf
 	rm -f ram.ld buildid.c $(TARGET)_shared_mmap.h 
+	rm -f project project.tcl files.tcl
 
 prog:
 	@read -p "If you have multiple USB-Programmer connected, choose the one you want to use: " BLASTER; \
@@ -72,7 +74,7 @@ prog:
 	$(GENRAMMIF) $< $(RAM_SIZE) > $@
 
 %.sof:	%.qsf %.mif $(PATHPKG)/ramsize_pkg.vhd 
-	python2.7 $(TOP)/ip_cores/hdl-make/hdlmake quartus-project
+	$(HDLMAKE) makefile -f hdlmake.mk ; make -f hdlmake.mk project
 	find $(TOP) -name Manifest.py > $*.dep
 	sed -n -e 's/"//g;s/quartus_sh://;s/set_global_assignment.*-name.*_FILE //p' < $< >> $*.dep
 	echo "$*.sof $@:	$< " `cat $*.dep` > $*.dep
