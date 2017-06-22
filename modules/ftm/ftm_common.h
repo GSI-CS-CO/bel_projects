@@ -46,6 +46,7 @@
 #define T_TD_DEADLINE_HI        (T_TD_DEADLINE  + 0) //RD Host, RW LM32
 #define T_TD_DEADLINE_LO        (T_TD_DEADLINE_HI + _32b_SIZE_) //RD Host, RW LM32
 #define T_TD_CURRTIME           (T_TD_DEADLINE  + _TS_SIZE_)  //RD Host, RW LM32
+
 #define T_TD_PREPTIME           (T_TD_DEADLINE  + _TS_SIZE_)  //RD Host, RW LM32
 #define _T_TD_SIZE_             (T_TD_PREPTIME  + _TS_SIZE_)
 

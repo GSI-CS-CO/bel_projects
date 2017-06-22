@@ -1,4 +1,5 @@
 #include <boost/graph/graphviz.hpp>
+#include <boost/graph/copy.hpp>
 #include "memunit.h"
 #include "common.h"
 #include "node.h"
@@ -12,9 +13,11 @@
 
   void MemUnit::initMemPool() { 
     memPool.clear();
+    /*
     std::cout << "extBaseAdr = 0x" << std::hex << extBaseAdr << " intBaseAdr = 0x" << intBaseAdr << ", Poolsize = " << std::dec << poolSize 
     << ", bmpLen = " << bmpLen << ", startOffs = 0x" << std::hex << startOffs << ", endOffs = 0x" << std::hex << endOffs << ", vBufSize = " 
     << std::dec << uploadBmp.size() << std::endl;
+    */
     for(uint32_t adr = startOffs; adr < endOffs; adr += _MEM_BLOCK_SIZE) { 
       //Never issue <baseAddress - (baseAddress + bmpLen -1) >, as this is where Mgmt bitmap vector resides     
       //std::cout << std::hex << adr << std::endl; 
@@ -239,6 +242,7 @@
     try {
       hash = hashMap.lookup(name);
     } catch (...) {
+      std::cout << "Hashmap doesnt know " << name << std::endl;
       return false;
     }
 
@@ -268,10 +272,12 @@
     else {return NULL;}  
   }
 
-  void MemUnit::prepareUpload() {
+  void MemUnit::prepareUpload(Graph& g) {
     std::string cmp;
-    //uint8_t prio; 
 
+    //save the graph we were shown into our own graph
+    copy_graph(g, gUp);
+    
     //allocate and init all nodes
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       allocate(gUp[v].name, v);
@@ -280,10 +286,9 @@
       if(x == NULL) {std::cerr << "ERROR: Tried to lookup unallocated node " << gUp[v].name <<  std::endl; return;}
 
       //init binary node data
-
-
-      //TODO this should be a factory, yet the variadic part is complex ... any ideas?
       cmp = gUp[v].type;
+      
+      //TODO add the individual ID component representation
       /*
       std::string::size_type sz;   // alias of size_t
 
@@ -326,38 +331,36 @@
       else if (cmp == "meta")     {std::cerr << "Pure meta not yet implemented " << gUp[v].type << std::endl;}
       else                        {std::cerr << "Node type <" << cmp << "> not supported! " << std::endl;} 
 
-      //std::cout << "UL b4S Flags 0x" << std::hex << gUp[v].np->getFlags() << " # 0x" << gUp[v].np->getHash() << std::endl;  
+  
     }
-
-
-
-    //serialise all nodes
-    std::ofstream dict("dict.txt");
-    std::cout << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setw(20) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
-    std::cout << std::setfill('-') << std::setw(50) << std::endl;      
-    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-        if (allocMap.count(gUp[v].name) == 0){std::cerr << " Node " << gUp[v].name << " was not allocated " << gUp[v].type << std::endl; return;} 
-        if (gUp[v].np == NULL ){std::cerr << " Node " << gUp[v].name << " was not initialised! " << gUp[v].type << std::endl; return;}
-        // try to serialise
-        auto* x = lookupName(gUp[v].name);
-        if (x != NULL) std::cout << std::setfill(' ') << std::setw(4) << std::dec << v 
-          << "   "     << std::setfill(' ') << std::setw(20) << gUp[v].name 
-          << "   0x" << std::hex << std::setfill('0') << std::setw(8) << gUp[v].np->getHash() 
-          << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2intAdr(x->adr) 
-          << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2extAdr(x->adr) << std::endl;
-        gUp[v].np->accept(VisitorUploadCrawler(v, *this));
-
-          
-
-        if (x != NULL) {
-          dict << std::hex << "\"0x" << gUp[v].np->getHash() << "\" : \"" << gUp[v].name << "\"" << std::endl;
-          dict << std::hex << "\"0x" << adr2intAdr(x->adr) << "\" : \"pi_" << gUp[v].name << "\"" << std::endl;
-          dict << std::hex << "\"0x" << adr2extAdr(x->adr) << "\" : \"pe_" << gUp[v].name << "\"" << std::endl;
-        }  
-        gUp[v].np->accept(VisitorUploadCrawler(v, *this));
-        //std::cout << "Flags 0x" << std::hex << gUp[v].np->getFlags() << " # 0x" << gUp[v].np->getHash() << std::endl;
-    }    
+    BOOST_FOREACH( vertex_t v, vertices(gUp) ) { gUp[v].np->accept(VisitorUploadCrawler(v, *this)); }
+        
   }
 
+  void MemUnit::showUp(const std::string& title, const std::string& logDictFile ) {
+    Graph& g = gUp;
 
+    std::ofstream dict(logDictFile.c_str());
+    std::cout << title << std::endl;
+    std::cout << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setw(30) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
+    std::cout << std::setfill('-') << std::setw(50) << std::endl;      
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      if (allocMap.count(g[v].name) == 0){std::cerr << " Node " << g[v].name << " was not allocated " << g[v].type << std::endl; return;} 
+      if (g[v].np == NULL ){std::cerr << " Node " << g[v].name << " was not initialised! " << g[v].type << std::endl; return;}
+      // try to serialise
+      auto* x = lookupName(g[v].name);
+      if (x != NULL) std::cout << std::setfill(' ') << std::setw(4) << std::dec << v 
+        << "   "     << std::setfill(' ') << std::setw(30) << g[v].name 
+        << "   0x" << std::hex << std::setfill('0') << std::setw(8) << g[v].np->getHash() 
+        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2intAdr(x->adr) 
+        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2extAdr(x->adr) << std::endl;
+  
+
+      if (x != NULL && dict.good()) {
+        dict << std::hex << "\"0x" << g[v].np->getHash() << "\" : \"" << g[v].name << "\"" << std::endl;
+        dict << std::hex << "\"0x" << adr2intAdr(x->adr) << "\" : \"pi_" << g[v].name << "\"" << std::endl;
+        dict << std::hex << "\"0x" << adr2extAdr(x->adr) << "\" : \"pe_" << g[v].name << "\"" << std::endl;
+      }  
+    }
+  }  
 

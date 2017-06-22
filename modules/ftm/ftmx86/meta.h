@@ -15,8 +15,8 @@ public:
   Meta(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Node(name, hash, b, flags) {}
   ~Meta()  {};
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
-  virtual void accept(const VisitorUploadCrawler& v)      const = 0;
-  virtual void accept(const VisitorDownloadCrawler& v)    const = 0;
+  virtual void accept(const VisitorUploadCrawler& v)    const = 0;
+  virtual void accept(const VisitorDownloadCrawler& v)  const = 0;
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
   virtual void serialise(const vAdr &va) const;
@@ -42,6 +42,9 @@ public:
   CmdQMeta(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) 
   : Meta(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QUEUE << NFLG_TYPE_POS))) {}
   ~CmdQMeta()  {};
+  node_ptr clone() const { return boost::make_shared<CmdQMeta>(*this); }
+
+
   virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
@@ -60,6 +63,8 @@ public:
   CmdQBuffer(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) 
   : Meta(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QBUF << NFLG_TYPE_POS))) {}
   ~CmdQBuffer()  {};
+  node_ptr clone() const { return boost::make_shared<CmdQBuffer>(*this); }
+
   virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
@@ -77,6 +82,8 @@ public:
   DestList(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) 
   : Meta(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_ALTDST << NFLG_TYPE_POS))) {}
   ~DestList()  {};
+  node_ptr clone() const { return boost::make_shared<DestList>(*this); }
+
   virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }

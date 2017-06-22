@@ -27,10 +27,10 @@ void VisitorVertexWriter::visit(const Block& el) const  {
 void VisitorVertexWriter::visit(const TimingMsg& el) const {
   eventString((Event&)el);
   out << ", type=\"TMsg\", color=\"black\"";
-  out << ", id=" << el.getId();
-  out << ", par=" << el.getPar();
-  out << ", tef=" << el.getTef();
-  out << ", res=" << el.getRes();
+  out << ", id=\"0x" << std::hex << el.getId();
+  out << "\", par=\"0x" << std::hex << el.getPar();
+  out << "\", tef=\"0x" << std::hex << el.getTef();
+  out << "\", res=\"0x" << std::hex << el.getRes();
   out << "]";
 }
 

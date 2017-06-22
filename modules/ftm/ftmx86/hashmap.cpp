@@ -1,4 +1,5 @@
 #include "hashmap.h"
+#include <iostream>
 
 uint32_t HashMap::fnvHash(const char* str)
 {
@@ -17,6 +18,7 @@ boost::optional<const uint32_t&> HashMap::add(const std::string& name) {
   try {
     hm.insert( hashValue(hash, name) ); 
   } catch (...) {
+    std::cout << "Failed to add " << name << std::endl;
     throw; 
     return boost::optional<const uint32_t&>();
   } 

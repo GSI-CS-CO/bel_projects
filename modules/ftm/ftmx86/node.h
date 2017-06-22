@@ -30,7 +30,8 @@ public:
   
   Node(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : name(name), hash(hash), b(b), flags(flags) {} //what to do if it fails?
   virtual ~Node() {}
-
+  virtual node_ptr clone() const = 0; 
+  
 
   const std::string&  getName() const {return this->name;}
   const uint32_t&     getHash() const {return this->hash;}

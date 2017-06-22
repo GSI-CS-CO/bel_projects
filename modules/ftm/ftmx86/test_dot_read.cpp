@@ -10,7 +10,7 @@
 #include "common.h"
 #include "propwrite.h"
 
-
+#include "graph.h"
 #include "memunit.h"
 #include <etherbone.h>
 
@@ -187,7 +187,7 @@ int main(int argc, char* argv[]) {
   std::cout << "Found " << myDevs.size() << " User-RAMs, cpu #" << cpuIdx << " is a valid choice " << std::endl;
   //create memory manager
   std::cout << "Creating Memory Unit #" << cpuIdx << "..." << std::endl;
-  MemUnit mmu = MemUnit(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR,  SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_, g, hm);
+  MemUnit mmu = MemUnit(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR,  SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_, hm);
 
 
   dp.property("type",  boost::get(&myEdge::type, g));
@@ -228,10 +228,9 @@ int main(int argc, char* argv[]) {
     }
   }  
   else { 
-    boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
-    boost::tie(vi, vi_end) = vertices(g);
-    std::cout << "Size " << vi_end - vi << std::endl;
-
+    
+    //create hashtable
+    BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.add(g[v].name); }
    
     //format all graph labels lowercase
     BOOST_FOREACH( edge_t e, edges(g) ) {
@@ -239,10 +238,11 @@ int main(int argc, char* argv[]) {
     }
 
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
+
       std::transform(g[v].type.begin(), g[v].type.end(), g[v].type.begin(), ::tolower);
     }
 
-
+    
 
 
     
@@ -251,15 +251,22 @@ int main(int argc, char* argv[]) {
 
     //analyse and serialise
     std::cout << "Processing local file <" << inputFilename << "> ..." << std::endl;  
+    
+    mmu.prepareUpload(g); 
 
-    mmu.prepareUpload(); 
+
 
     const unsigned char deadbeef[4] = {0xDE, 0xAD, 0xBE, 0xEF};
     const std::string needle(deadbeef, deadbeef + 4);
 
-
+    boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
+    boost::tie(vi, vi_end) = vertices(mmu.getUpGraph());
+    //std::cout << "Size " << vi_end - vi << std::endl;
 
     BOOST_FOREACH( vertex_t v, vertices(mmu.getUpGraph()) ) {
+      //std::cout << mmu.getUpGraph()[v].name << ": ";
+      //if (mmu.lookupName(mmu.getUpGraph()[v].name) == NULL) std::cout << ", NULL No wonder..." << std::endl;
+      //else std::cout << ", not the ptrs fault" << std::endl;
       std::string haystack(mmu.lookupName(mmu.getUpGraph()[v].name)->b, mmu.lookupName(mmu.getUpGraph()[v].name)->b + _MEM_BLOCK_SIZE);
       std::size_t n = haystack.find(needle);
 

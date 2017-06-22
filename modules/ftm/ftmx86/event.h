@@ -49,6 +49,7 @@ public:
   : Event (name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_TMSG << NFLG_TYPE_POS)), tOffs), id(id), par(par), tef(tef), res(res) {}
   ~TimingMsg()  {};
 
+  node_ptr clone() const { return boost::make_shared<TimingMsg>(*this); }
 
   void show(void)                                       const;
   void show(uint32_t cnt, const char* sPrefix)          const;
@@ -69,6 +70,7 @@ class Command : public Event {
 protected: 
   uint64_t tValid;
   uint32_t act;
+
 
   Command(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Event(name, hash, b, flags), tValid(0), act(0) {}
   Command(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint32_t act) : Event (name, hash, b, flags, tOffs), tValid(tValid), act(act) {}
@@ -99,7 +101,7 @@ public:
   Noop(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint16_t qty) 
   : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CNOOP << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_NOOP << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS ) {}
   ~Noop() {};
-
+  node_ptr clone() const { return boost::make_shared<Noop>(*this); }
 
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
@@ -120,7 +122,7 @@ public:
   Flow(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint16_t qty)
       : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLOW << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLOW << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS )   {}
   ~Flow() {};
-
+    node_ptr clone() const { return boost::make_shared<Flow>(*this); }
 
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
@@ -141,7 +143,7 @@ public:
   Wait(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid,  uint8_t prio, uint64_t tWait) 
   : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CWAIT << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_WAIT << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | 1 << ACT_QTY_POS), tWait(tWait) {}
   ~Wait() {};
-
+  node_ptr clone() const { return boost::make_shared<Wait>(*this); }
 
   void show(void) const;
   void show(uint32_t cnt, const char* sPrefix) const;
@@ -171,6 +173,7 @@ public:
   Flush(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo, uint8_t frmIl, uint8_t toIl, uint8_t frmHi, uint8_t toHi, uint8_t frmLo, uint8_t toLo) 
         : Command(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLUSH << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(frmIl), toIl(toIl), frmHi(frmHi), toHi(toHi), frmLo(frmLo), toLo(toLo) {}
   ~Flush() {};
+    node_ptr clone() const { return boost::make_shared<Flush>(*this); }
 
   void show(void)  const;
   void show(uint32_t cnt, const char* sPrefix)  const;

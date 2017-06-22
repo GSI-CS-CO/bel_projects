@@ -49,6 +49,7 @@ public:
   : Block(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK_FIXED << NFLG_TYPE_POS))) {}
   BlockFixed(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tPeriod) 
   : Block(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK_FIXED << NFLG_TYPE_POS)), tPeriod) {}
+  node_ptr clone() const { return boost::make_shared<BlockFixed>(*this); }
 
 };
 
@@ -59,7 +60,7 @@ public:
   : Block(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK_ALIGN << NFLG_TYPE_POS))) {}
   BlockAlign(const std::string& name, const uint32_t& hash, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags, uint64_t tPeriod) 
   : Block(name, hash, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_BLOCK_ALIGN << NFLG_TYPE_POS)), tPeriod) {}
-
+  node_ptr clone() const { return boost::make_shared<BlockAlign>(*this); }
 };
 
 
