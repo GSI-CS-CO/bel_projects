@@ -114,15 +114,10 @@ void VisitorUploadCrawler::visit(const CmdQBuffer& el) const {
 }
 
 void VisitorUploadCrawler::visit(const DestList& el) const {
-  vAdr vA, tmpDD, tmpDL;
-  tmpDD = getDefDst();
+  
+  vAdr vA, tmpDL;
   tmpDL = getListDst();
-
-  vA.reserve( tmpDD.size() + tmpDL.size() ); // preallocate memory
-  vA.insert( vA.end(), tmpDD.begin(), tmpDD.end() );
-  vA.insert( vA.end(), tmpDL.begin(), tmpDL.end() );
-
-  el.serialise(vA);
+  el.serialise(tmpDL);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
