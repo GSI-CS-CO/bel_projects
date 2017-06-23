@@ -111,7 +111,8 @@ uint32_t ECAQueue_getMilEventData(volatile uint32_t *queue, uint32_t *evtCode, u
   // EventID 
   // |---------------evtIdHi---------------|  |---------------evtIdLo---------------|
   // FFFF GGGG GGGG GGGG EEEE EEEE EEEE SSSS  SSSS SSSS BBBB BBBB BBBB BBRR RRRR RRRR
-  //                          cccc cccc            vvvv
+  //                          cccc cccc       ssss vvvv
+  //                                          xxxx xxxx
   //                              
   // F: FID(4)
   // G: GID(12)
@@ -119,8 +120,11 @@ uint32_t ECAQueue_getMilEventData(volatile uint32_t *queue, uint32_t *evtCode, u
   // S: SID(12)
   // B: BPID(14)
   // R: Reserved(10)
+  // s: status bits
   // v: virtAcc = virtual accellerator
   // c: evtCode = MIL relevant part of the evtNo (only 0..255)
+  // x: other content for special events like (code=200..208 command events)
+  //    or (code=200 beam status event) 
   EvtId_t evtId = { 
     .part.hi = *(queue + ECA_QUEUE_EVENT_ID_HI_GET/4),
     .part.lo = *(queue + ECA_QUEUE_EVENT_ID_LO_GET/4)
@@ -133,9 +137,10 @@ uint32_t ECAQueue_getMilEventData(volatile uint32_t *queue, uint32_t *evtCode, u
 
   uint32_t evtNo   = (evtId.part.hi>>4)  & 0x00000fff;
           *evtCode =  evtNo              & 0x000000ff;
-  uint32_t virtAcc = (evtId.part.lo>>24) & 0x0000000f;
+  uint32_t tophalf = (evtId.part.lo>>24) & 0x000000ff; // the top half bits (15..8) of the mil telegram.
+                                                       // the meaning depends on the evtCode.
 
-  *milTelegram = (virtAcc << 8) | *evtCode;
+  *milTelegram = (tophalf << 8) | *evtCode;
 
   // For MIL events, the upper 4 bits ov evtNo are zero
   return (evtNo & 0x00000f00) == 0; 

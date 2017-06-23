@@ -119,11 +119,11 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC)
   EVT_UTC[4]  =  mil_sec      & 0x000000ff;  // mil_sec[7:0]   to EVT_UTC_5[7:0]
 
   // shift time information to the upper bits [15:8] and add code number
-  EVT_UTC[0] = (EVT_UTC[0] << 8) | 0x22; //0x20 ;// 0xE0;
-  EVT_UTC[1] = (EVT_UTC[1] << 8) | 0x22; //0x21 ;// 0xE1;
-  EVT_UTC[2] = (EVT_UTC[2] << 8) | 0x22; //0x22 ;// 0xE2;
-  EVT_UTC[3] = (EVT_UTC[3] << 8) | 0x22; //0x23 ;// 0xE3;
-  EVT_UTC[4] = (EVT_UTC[4] << 8) | 0x22; //0x24 ;// 0xE4;
+  EVT_UTC[0] = (EVT_UTC[0] << 8) | 0x20 ;// 0xE0;
+  EVT_UTC[1] = (EVT_UTC[1] << 8) | 0x21 ;// 0xE1;
+  EVT_UTC[2] = (EVT_UTC[2] << 8) | 0x22 ;// 0xE2;
+  EVT_UTC[3] = (EVT_UTC[3] << 8) | 0x23 ;// 0xE3;
+  EVT_UTC[4] = (EVT_UTC[4] << 8) | 0x24 ;// 0xE4;
 }
 
 
@@ -131,7 +131,12 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC)
 #define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
 #define MIL_EVT_START_CYCLE    0x20       // the special event that causes five additional MIL events:
                                           // EVT_UTC_1, EVT_UTC_2, EVT_UTC_3, EVT_UTC_4, EVT_UTC_5
-#define WR_MIL_GATEWAY_LATENCY 73575      // latency in units of nanoseconds
+#define MIL_EVT_END_CYCLE      0x37       // the special event that causes five additional MIL events:
+                                          // EVT_UTC_1, EVT_UTC_2, EVT_UTC_3, EVT_UTC_4, EVT_UTC_5
+#define MIL_EVT_BEGIN_CMD_EXEC 0xf6       // 246 
+#define MIL_EVT_COMMAND        0xff       // 255
+#define MIL_EVT_END_CMD_EXEC   0xf5       // 245
+#define WR_MIL_GATEWAY_LATENCY 73575      // additional latency in units of nanoseconds
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
                                           // and make this time difference 100.0(5)us
@@ -152,36 +157,51 @@ void eventHandler(volatile uint32_t *eca,
       uint32_t EVT_UTC[N_UTC_EVENTS];
       uint32_t too_late;
       ECAQueue_getDeadl(eca_queue, &tai_deadl);
+      ECAQueue_actionPop(eca_queue);
       uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY; // add 20us to the deadline
           make_mil_timestamp(mil_event_time, EVT_UTC);     
 
+      //mprintf("evtCode=%x\n",evtCode);
       switch (evtCode)
       {
-        case MIL_EVT_START_CYCLE: 
+        //case MIL_EVT_START_CYCLE: 
+        case MIL_EVT_END_CYCLE: 
         // generate MIL event EVT_START_CYCLE, followed by EVT_UTC_1/2/3/4/5 EVENTS
-          //          make_mil_timestamp(mil_event_time, EVT_UTC);     
+          //make_mil_timestamp(mil_event_time, EVT_UTC);     
           too_late = wait_until_tai(eca, mil_event_time);
           mil_piggy_write_event(mil_piggy, milTelegram); 
+          for (int i = 0; i < 100; ++i) DELAY1000us; // 100 ms
+          mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_BEGIN_CMD_EXEC); 
+          for (int i = 0; i < 10; ++i) DELAY1000us; // 10 ms
           // create the five events EVT_UTC_1/2/3/4/5 with seconds and miliseconds since 01/01/2008
           for (int i = 0; i < N_UTC_EVENTS; ++i)
           {
             // Churn out the EVT_UTC MIL events as fast as possible. 
             //  This results in approx. 21 us between two successive events.
             mil_piggy_write_event(mil_piggy, EVT_UTC[i]); 
+            DELAY100us;
+            //mil_piggy_write_event(mil_piggy, 0x0000abc0 | i); 
           }
+          for (int i = 0; i < 90; ++i) DELAY1000us; // 90 ms
+          mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_COMMAND); 
+          for (int i = 0; i < 100; ++i) DELAY1000us; // 100 ms
+          mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_COMMAND); 
+          for (int i = 0; i < 100; ++i) DELAY1000us; // 100 ms
+          mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_END_CMD_EXEC); 
         break;
         default:
           // generate MIL event
           too_late = wait_until_tai(eca, mil_event_time);
           mil_piggy_write_event(mil_piggy, milTelegram);
+          //mprintf("mil: %x\n",milTelegram);
           break;
       }
       if (too_late){ // use lemo output of SCU to indicate that a deadline could not be respected
         lemoPulse12(mil_piggy);
+        mprintf("late: %d\n",too_late);
       }
     }
     // remove action from ECA queue 
-    ECAQueue_actionPop(eca_queue);
   }
 }
 

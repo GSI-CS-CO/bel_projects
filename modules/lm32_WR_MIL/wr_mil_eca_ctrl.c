@@ -24,7 +24,7 @@ uint32_t wait_until_tai(volatile uint32_t *eca, uint64_t stopTAI)
   // Get current time, ...
   TAI_t tai_now; 
   ECACtrl_getTAI(eca, &tai_now);
-  if (stopTAI < tai_now.value) return 1; // (stopTAI is in the past)
+  if (stopTAI < tai_now.value) return tai_now.value-stopTAI; // (stopTAI is in the past)
   // ... calculate waiting time, ...
   uint32_t delay = (stopTAI - tai_now.value)/32; 
   // ... and wait.
