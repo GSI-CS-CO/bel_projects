@@ -26,7 +26,7 @@
   struct sample_graph_writer {
     const std::string& sroot;
     void operator()(std::ostream& out) const {
-      out << "graph [root=\"" << sroot << "\", rankdir=LR, nodesep=0.6, mindist=1.0, ranksep=1.0, overlap=false]" << std::endl;
+      out << "graph [root=\"" << sroot << "\", rankdir=TB, nodesep=0.6, mindist=1.0, ranksep=1.0, overlap=false]" << std::endl;
       out << "node [shape=\"rectangle\", style=\"filled\"]" << std::endl;
       //out << "node [shape=circle color=white]" << std::endl;
       //out << "edge [style=dashed]" << std::endl;

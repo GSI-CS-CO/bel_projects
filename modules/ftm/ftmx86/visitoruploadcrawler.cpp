@@ -141,7 +141,8 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
         if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sDD) {
           if (found) {std::cerr << "!!! Found more than one default destination !!!" << std::endl; break;
           } else {
-            auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+            
+            auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
             if (x != NULL) {
               ret.push_back(mmu.adr2intAdr(x->adr));
               found = true; 
@@ -177,14 +178,14 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
         if (g[*out_cur].type == sDID) {
           if (aId != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic id source !!!" << std::endl; break;
           } else {
-            auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+            auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
             if (x != NULL) { aId = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);}
           }
         }
         if (g[*out_cur].type == sDPAR0) {
           if (aPar0 != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic par0 source !!!" << std::endl; break;
           } else {
-            auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+            auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
             if (x != NULL) { aPar0 = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);}
             //std::cout << "DynAdr 0 0x" << std::hex << aPar0 << std::endl;
           }
@@ -192,7 +193,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
         if (g[*out_cur].type == sDPAR1) {
           if (aPar1 != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic par1 source !!!" << std::endl; break;
           } else {
-            auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+            auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
             if (x != NULL) { aPar1 = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);}
             //std::cout << "DynAdr 1 0x" << std::hex << aPar1 << std::endl;
           }
@@ -200,14 +201,14 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
         if (g[*out_cur].type == sDTEF) {
           if (aTef != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic tef source !!!" << std::endl; break;
           } else {
-            auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+            auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
             if (x != NULL) { aTef = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_TEF_SMSK);}
           }
         }
         if (g[*out_cur].type == sDRES) {
           if (aRes != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic res source !!!" << std::endl; break;
           } else {
-            auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+            auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
             if (x != NULL) { aRes = mmu.adr2extAdr(x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);}
           }
         }
@@ -241,7 +242,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
         if (g[target(*out_cur,g)].np->isMeta() && g[target(*out_cur,g)].type == sDL) {
           if (found) {std::cerr << "!!! Found more than one Destination List !!!" << std::endl; break;
           } else {
-            auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+            auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
             if (x != NULL) {
               ret.push_back(mmu.adr2intAdr(x->adr));
               found = true;
@@ -263,7 +264,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
           if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == sQM[idx]) {
             if (found) {std::cerr << "!!! Found more than one queue info of type " << sQM[idx] << " !!!" << std::endl; break;}
             else {
-              auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+              auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
               if (x != NULL) {
                 ret.push_back(mmu.adr2intAdr(x->adr));
                 found = true;
@@ -294,7 +295,7 @@ vAdr VisitorUploadCrawler::getQBuf() const {
     else {
 
       if (g[target(*out_cur,g)].np->isMeta()) {
-        auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+        auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
         if (x != NULL) {
           ret.push_back(mmu.adr2intAdr(x->adr));
           found = true;
@@ -325,7 +326,7 @@ vAdr VisitorUploadCrawler::getCmdTarget() const {
       if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sTG) {
         if (found) {std::cerr << "!!! Found more than one target !!!" << std::endl; break;
         } else {
-          auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+          auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
           if (x != NULL) {
             ret.push_back(mmu.adr2intAdr(x->adr));
             found = true;
@@ -359,7 +360,7 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
       if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sFD) {
         if (found) {std::cerr << "!!! Found more than one flow destination !!!" << std::endl; break;
         } else {
-          auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+          auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
           if (x != NULL) {
             ret.push_back(mmu.adr2intAdr(x->adr));
             found = true; 
@@ -401,7 +402,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
       if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sDD) {
         if (found) {std::cerr << "!!! Found more than one default destination !!!" << std::endl; break;
         } else {
-          auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+          auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
           if (x != NULL) {
             ret.push_back(mmu.adr2intAdr(x->adr));
             found = true;
@@ -421,7 +422,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
     else {
 
       if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sAD) {
-        auto* x = mmu.lookupName(g[target(*out_cur,g)].name);
+        auto* x = mmu.getUpAllocTable().lookupVertex(target(*out_cur,g));
         if (x != NULL) {
           ret.push_back(mmu.adr2intAdr(x->adr));
           found = true;

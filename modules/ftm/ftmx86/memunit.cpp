@@ -52,15 +52,15 @@
 
 
     //Go through allocmap and update Bmp
-    for (auto& it : allocMap) {
-      if( (it.second.adr >= startOffs) && (it.second.adr < endOffs)) {
-        int bitIdx = (it.second.adr - startOffs) / _MEM_BLOCK_SIZE;
+    for (auto& it : atUp.getTable().get<Adr>() ) {
+      if( (it.adr >= startOffs) && (it.adr < endOffs)) {
+        int bitIdx = (it.adr - startOffs) / _MEM_BLOCK_SIZE;
         uint8_t tmp = 1 << (7 - (bitIdx % 8));
         //printf("Bidx = %u, bufIdx = %u, val = %x\n", bitIdx, bitIdx / 8 , tmp);
         
         uploadBmp[bitIdx / 8] |= tmp;
       } else {//something's awfully wrong, address out of scope!
-        std::cout << "Address 0x" << std::hex << it.second.adr << " is not within 0x" << std::hex << startOffs << "-" << std::hex << endOffs << std::endl;
+        throw std::runtime_error( std::string("Address ") + std::to_string(it.adr) + std::string(" is out of range")); return;
       }
     }
 
@@ -76,25 +76,25 @@
     //generate addresses for BMP (continuous)
     for (adr = adr2extAdr(sharedOffs); adr < adr2extAdr(startOffs); adr += _32b_SIZE_) ret.push_back(adr);
     //generate addresses for nodes (random access)
-    for (auto& it : allocMap) {
-      for (adr = adr2extAdr(it.second.adr); adr < adr2extAdr(it.second.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr);
+    for (auto& it : atUp.getTable().get<Adr>()) {
+      for (adr = adr2extAdr(it.adr); adr < adr2extAdr(it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr);
     }    
     return ret;
   }
 
   vBuf MemUnit::getUploadData()  {
     vBuf ret;
-    //std::cout << std::dec << uploadBmp.size() << " " <<  allocMap.size() << " " << _MEM_BLOCK_SIZE << std::endl;
-    ret.reserve( uploadBmp.size() + allocMap.size() * _MEM_BLOCK_SIZE); // preallocate memory for BMP and all Nodes
+    
+    ret.reserve( uploadBmp.size() + atUp.getSize() * _MEM_BLOCK_SIZE); // preallocate memory for BMP and all Nodes
 
     createUploadBmp();
     //vHexDump ("ULBMP", uploadBmp, uploadBmp.size());
 
     ret.insert( ret.end(), uploadBmp.begin(), uploadBmp.end() );
-    for (auto& it : allocMap) { 
-      ret.insert( ret.end(), it.second.b, it.second.b + _MEM_BLOCK_SIZE );
+    //FIXME this is not nice ...see alloctable.h
+    for (auto& it : atUp.getTable().get<Adr>()) { 
+      ret.insert( ret.end(), it.b, it.b + _MEM_BLOCK_SIZE );
     } 
-    //ret.push_back( 0x0); 
     return ret;
   }
 
@@ -131,12 +131,10 @@
 
   void MemUnit::parseDownloadData(vBuf downloadData) {
     //extract and parse downloadBmp
-    parserMap.clear();
+    atDown.clear();
 
 
-    //create parserMap and Vertices
-    //std::cout << "Got " << downloadData.size() << " bytes of data, " << downloadData.size() / _MEM_BLOCK_SIZE << " blocks." << std::endl;
-    //vHexDump ("DL", downloadData, downloadData.size());
+    //create AllocTable and Vertices
     uint32_t nodeCnt = 0;
     for(unsigned int bitIdx = 0; bitIdx < bmpLen; bitIdx++) {
       if (downloadBmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {
@@ -152,7 +150,7 @@
         } catch (...) {
           name = "#" + std::to_string(hash);
         }
-        
+        //FIXME what about future requests to hashmap if we improvised the name from hash? those will fail ...
 
         uint32_t flags    = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]);
         //std::cout << "DL Flags 0x" << std::hex << flags << " # 0x"  << hash << std::endl;
@@ -161,24 +159,25 @@
         stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << flags;
         std::string tmp(stream.str());
         vertex_t v        = boost::add_vertex(myVertex(std::string(*std::forward<boost::optional<std::string>>(name)), hash, NULL, "", tmp), gDown);
-        parserMap[adr]    = (parserMeta){v, hash};
-        auto src = downloadData.begin()+localAdr;
-        std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&parserMap.at(adr).b[0]);
-
+        atDown.insert(adr, hash, v);
+        auto src = downloadData.begin() + localAdr;
+        auto* x  = atDown.lookupAdr(adr);
+        //FIXME check for NULL ?
+        std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&(x->b[0]));
       
         switch(type) {
-          case NODE_TYPE_TMSG    : gDown[v].np =(node_ptr) new  TimingMsg(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_CNOOP   : gDown[v].np =(node_ptr) new       Noop(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_CFLOW   : gDown[v].np =(node_ptr) new       Flow(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_CFLUSH  : gDown[v].np =(node_ptr) new      Flush(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_CWAIT   : gDown[v].np =(node_ptr) new       Wait(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_BLOCK_FIXED   : gDown[v].np =(node_ptr) new      BlockFixed(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_BLOCK_ALIGN   : gDown[v].np =(node_ptr) new      BlockAlign(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_QUEUE   : gDown[v].np =(node_ptr) new   CmdQMeta(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_ALTDST  : gDown[v].np =(node_ptr) new   DestList(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); gDown[v].np->deserialise(); break;
-          case NODE_TYPE_QBUF    : gDown[v].np =(node_ptr) new CmdQBuffer(gDown[v].name, gDown[v].hash, parserMap.at(adr).b, flags); break;
-          case NODE_TYPE_UNKNOWN : std::cerr << "not yet implemented " << gDown[v].type << std::endl; break;
-          default                : std::cerr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
+          case NODE_TYPE_TMSG         : gDown[v].np =(node_ptr) new  TimingMsg(gDown[v].name, x->hash, x->b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_CNOOP        : gDown[v].np =(node_ptr) new       Noop(gDown[v].name, x->hash, x->b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_CFLOW        : gDown[v].np =(node_ptr) new       Flow(gDown[v].name, x->hash, x->b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_CFLUSH       : gDown[v].np =(node_ptr) new      Flush(gDown[v].name, x->hash, x->b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_CWAIT        : gDown[v].np =(node_ptr) new       Wait(gDown[v].name, x->hash, x->b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_BLOCK_FIXED  : gDown[v].np =(node_ptr) new BlockFixed(gDown[v].name, x->hash, x->b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_BLOCK_ALIGN  : gDown[v].np =(node_ptr) new BlockAlign(gDown[v].name, x->hash, x->b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_QUEUE        : gDown[v].np =(node_ptr) new   CmdQMeta(gDown[v].name, x->hash, x->b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_ALTDST       : gDown[v].np =(node_ptr) new   DestList(gDown[v].name, x->hash, x->b, flags); gDown[v].np->deserialise(); break;
+          case NODE_TYPE_QBUF         : gDown[v].np =(node_ptr) new CmdQBuffer(gDown[v].name, x->hash, x->b, flags); break;
+          case NODE_TYPE_UNKNOWN      : std::cerr << "not yet implemented " << gDown[v].type << std::endl; break;
+          default                     : std::cerr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
         }
         /*
         std::cout << gDown[v].name;
@@ -198,46 +197,90 @@
     // create edges
 
     //first, iterate all non meta-types to establish block -> dstList parenthood
-    for(auto& it : parserMap) {
+    for(auto& it : atDown.getTable().get<Adr>()) {
       // handled by visitor
-      if (gDown[it.second.v].np == NULL) { std::cerr << "Node " << gDown[it.second.v].name << " is not initialised ! " << std::endl; 
+      if (gDown[it.v].np == NULL) {throw std::runtime_error( std::string("Node ") + gDown[it.v].name + std::string("not initialised")); return;
       } else {
-        if  (!(gDown[it.second.v].np->isMeta())) gDown[it.second.v].np->accept(VisitorDownloadCrawler(it.second.v, *this));
+        if  (!(gDown[it.v].np->isMeta())) gDown[it.v].np->accept(VisitorDownloadCrawler(it.v, *this));
       }  
     }
     //second, iterate all meta-types
-    for(auto& it : parserMap) {
+    for(auto& it : atDown.getTable().get<Adr>()) {
       // handled by visitor
-      if (gDown[it.second.v].np == NULL) { std::cerr << "Node " << gDown[it.second.v].name << " is not initialised ! " << std::endl; 
+      if (gDown[it.v].np == NULL) {throw std::runtime_error( std::string("Node ") + gDown[it.v].name + std::string("not initialised")); return; 
       } else {
-        if  (gDown[it.second.v].np->isMeta()) gDown[it.second.v].np->accept(VisitorDownloadCrawler(it.second.v, *this));
+        if  (gDown[it.v].np->isMeta()) gDown[it.v].np->accept(VisitorDownloadCrawler(it.v, *this));
       }  
     }
 
 
   }  
 
-   
+  const vAdr MemUnit::getCmdWrAdrs(uint32_t hash, uint8_t prio) const {
+    vAdr ret;  
+
+    //find the address corresponding to given name
+    auto* x = atDown.lookupHash(hash);
+
+    if (x == NULL) {throw std::runtime_error( "Could not find target block in download address table"); return ret;}
 
 
+    //Check if requested queue priority level exists
+    uint32_t blAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_]); 
+    if(blAdr == LM32_NULL_PTR) {throw std::invalid_argument( "Block Node does not have requested queue"); return ret; }
+    
+      //get Write and Read indices
+    uint8_t eWrIdx = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) >> (prio * 8)) & Q_IDX_MAX_OVF_MSK;
+    uint8_t wrIdx  = eWrIdx & Q_IDX_MAX_MSK;
+    uint8_t eRdIdx = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_RD_IDXS]) >> (prio * 8)) & Q_IDX_MAX_OVF_MSK;
+    uint8_t rdIdx  = eRdIdx & Q_IDX_MAX_MSK;
+    
+    //Check if queue is not full
+    if ((wrIdx == rdIdx) && (eWrIdx != eRdIdx)) {throw std::invalid_argument( "Block queue is full, can't write. "); return ret; }
+    //lookup Buffer List                                                        
+    auto* pmBl = atDown.lookupAdr(blAdr);
+    if (pmBl == NULL) {throw std::runtime_error( "Could not find target queue in download address table"); return ret;}
 
-  vChunk MemUnit::getAllChunks() const {
-    vChunk ret;
-    for (auto& it : allocMap) {
-      ret.push_back((chunkMeta*)(&it.second));
-    }    
+    //calculate write offset                                                     
 
+    ptrdiff_t bufIdx   = wrIdx / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
+    ptrdiff_t elemIdx  = wrIdx % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
+    uint32_t  startAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[bufIdx]) + elemIdx * _T_CMD_SIZE_;
+
+    //generate command address range
+    for(uint32_t adr = startAdr; adr < startAdr + _T_CMD_SIZE_; adr += _32b_SIZE_) ret.push_back(adr);
+
+    //and insert address for wr idx increment  
     return ret;
+
+
+  } 
+
+  const uint32_t MemUnit::getCmdInc(uint32_t hash, uint8_t prio) const {
+    uint32_t newIdxs;
+    uint8_t  eWrIdx;
+
+    //find the address corresponding to given name
+    auto* x = atDown.lookupHash(hash);
+
+    if (x == NULL) {throw std::runtime_error( "Could not find target block in download address table"); return 0;}
+    
+    //get incremented Write index of requested prio
+    eWrIdx = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) >> (prio * 8)) & Q_IDX_MAX_OVF_MSK;
+    //assign to index vector
+    newIdxs = ( writeBeBytesToLeNumber<uint32_t>((uint8_t*)&x->b[BLOCK_CMDQ_WR_IDXS]) & ~(0xff << prio * 8)) | (eWrIdx << (prio * 8));
+
+    return newIdxs;
   }
 
 
 
 
-  //Allocation functions
-  bool MemUnit::allocate(const std::string& name, vertex_t v) {
-    uint32_t chunkAdr;
-    boost::optional<uint32_t> hash;
 
+  //Allocation functions
+  bool MemUnit::allocate(uint32_t hash, vertex_t v) {
+    uint32_t chunkAdr;
+    /*
     // we don't know if the hash map accepts this node. Check
     try {
       hash = hashMap.lookup(name);
@@ -245,32 +288,24 @@
       std::cout << "Hashmap doesnt know " << name << std::endl;
       return false;
     }
-
-    if ( (allocMap.count(name) == 0) && acquireChunk(chunkAdr) ) { 
-        allocMap[name] = (chunkMeta) {chunkAdr, uint32_t(*std::forward<boost::optional<uint32_t>>(hash)), v};  
+    */
+    if ( acquireChunk(chunkAdr) )  { 
+        atUp.insert(chunkAdr, hash, v);  
     } else {return false;}
 
     return true;
   }
 
-  bool MemUnit::insert(const std::string& name, uint32_t adr) {return true;}
+  bool MemUnit::deallocate(uint32_t hash) {
+    auto* x = atUp.lookupHash(hash);
 
-  bool MemUnit::deallocate(const std::string& name) {
-    bool ret = true;
-    if ( (allocMap.count(name) > 0) && freeChunk(allocMap.at(name).adr) ) { allocMap.erase(name); 
-    } else {ret = false;}
-    return ret;
+    if ((x != NULL) && freeChunk(x->adr) && atUp.removeByHash(hash)) {return true;}
+    else {return false;}
+
   }
 
-  chunkMeta* MemUnit::lookupName(const std::string& name) const  {
-    if (allocMap.count(name) > 0) { return (chunkMeta*)&(allocMap.at(name));} 
-    else {return NULL;}
-  }
 
-  parserMeta* MemUnit::lookupAdr(uint32_t adr) const {
-    if (parserMap.count(adr) > 0) { return (parserMeta*)&(parserMap.at(adr));} 
-    else {return NULL;}  
-  }
+ 
 
   void MemUnit::prepareUpload(Graph& g) {
     std::string cmp;
@@ -280,10 +315,16 @@
     
     //allocate and init all nodes
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-      allocate(gUp[v].name, v);
+      try {
+        allocate(hashMap.lookup(gUp[v].name).get(), v);
+      } catch(...) {
+        throw;
+      }    
+      
+      
 
-      auto* x = lookupName(gUp[v].name);
-      if(x == NULL) {std::cerr << "ERROR: Tried to lookup unallocated node " << gUp[v].name <<  std::endl; return;}
+      auto* x = atUp.lookupVertex(v);
+      if(x == NULL) {throw std::runtime_error( std::string("Node ") + gDown[v].name + std::string(" not initialised")); return; }
 
       //init binary node data
       cmp = gUp[v].type;
@@ -337,30 +378,33 @@
         
   }
 
-  void MemUnit::showUp(const std::string& title, const std::string& logDictFile ) {
-    Graph& g = gUp;
+  void MemUnit::show(const std::string& title, const std::string& logDictFile, Graph& g, AllocTable& at ) {
 
     std::ofstream dict(logDictFile.c_str());
-    std::cout << title << std::endl;
+    std::cout << std::endl << title << std::endl;
     std::cout << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setw(30) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
     std::cout << std::setfill('-') << std::setw(50) << std::endl;      
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      if (allocMap.count(g[v].name) == 0){std::cerr << " Node " << g[v].name << " was not allocated " << g[v].type << std::endl; return;} 
-      if (g[v].np == NULL ){std::cerr << " Node " << g[v].name << " was not initialised! " << g[v].type << std::endl; return;}
-      // try to serialise
-      auto* x = lookupName(g[v].name);
-      if (x != NULL) std::cout << std::setfill(' ') << std::setw(4) << std::dec << v 
+      try {
+        auto* x = at.lookupHash(hashMap.lookup(g[v].name).get());
+
+        std::cout << std::setfill(' ') << std::setw(4) << std::dec << x->v 
         << "   "     << std::setfill(' ') << std::setw(30) << g[v].name 
-        << "   0x" << std::hex << std::setfill('0') << std::setw(8) << g[v].np->getHash() 
+        << "   0x" << std::hex << std::setfill('0') << std::setw(8) << x->hash
         << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2intAdr(x->adr) 
         << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2extAdr(x->adr) << std::endl;
   
 
-      if (x != NULL && dict.good()) {
-        dict << std::hex << "\"0x" << g[v].np->getHash() << "\" : \"" << g[v].name << "\"" << std::endl;
-        dict << std::hex << "\"0x" << adr2intAdr(x->adr) << "\" : \"pi_" << g[v].name << "\"" << std::endl;
-        dict << std::hex << "\"0x" << adr2extAdr(x->adr) << "\" : \"pe_" << g[v].name << "\"" << std::endl;
-      }  
+        if (dict.good()) {
+          dict << std::hex << "\"0x" << x->hash << "\" : \"" << g[v].name << "\"" << std::endl;
+          dict << std::hex << "\"0x" << adr2intAdr(x->adr) << "\" : \"pi_" << g[v].name << "\"" << std::endl;
+          dict << std::hex << "\"0x" << adr2extAdr(x->adr) << "\" : \"pe_" << g[v].name << "\"" << std::endl;
+        } 
+      } catch(...) {
+        throw std::runtime_error( std::string("Node ") + g[v].name + std::string(" not in dictionary")); return; 
+      }
     }
+    std::cout << std::endl;  
   }  
 
+  

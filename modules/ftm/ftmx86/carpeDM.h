@@ -10,9 +10,12 @@
 #include <inttypes.h>
 #include <boost/graph/graphviz.hpp>
 #include <etherbone.h>
-
+#include "graph.h"
 #include "common.h"
+#include "hashmap.h"
 #include "memunit.h"
+
+class MiniCommand;
 
 using namespace etherbone;
 
@@ -72,15 +75,28 @@ public:
     //TODO assign to CPUs/threads
 
   int downloadAndParse(uint8_t cpuIdx);
-  const void writeDownDot(const std::string& fn, uint8_t cpuIdx) { writeDownDot( fn, vM[cpuIdx]); }
-  const void writeDownDot(const std::string& fn, MemUnit& m);
+  void writeDownDot(const std::string& fn, uint8_t cpuIdx) { writeDownDot( fn, vM[cpuIdx]); }
+  void writeDownDot(const std::string& fn, MemUnit& m);
 
   void verboseOn()  {verbose = true;}
   void verboseOff() {verbose = false;}
-  bool isVerbose()  {return verbose;}
-  int getCpuQty()   {return cpuQty;}
+  bool isVerbose()  const {return verbose;}
+  int getCpuQty()   const {return cpuQty;}
 
-  void show(uint8_t cpuIdx);
+  Graph& getUpGraph(uint8_t cpuIdx)   {return vM.at(cpuIdx).getUpGraph();}
+  Graph& getDownGraph(uint8_t cpuIdx) {return vM.at(cpuIdx).getDownGraph();}
+
+  
+
+  vAdr getCmdWrAdrs(uint8_t cpuIdx, const std::string& targetName, uint8_t);
+  vBuf getCmdData(uint8_t cpuIdx, const std::string& targetName, uint8_t prio, mc_ptr m);
+  
+
+  bool isKnown(const uint32_t hash)     const {return hm.contains(hash);}
+  bool isKnown(const std::string& name) const {return hm.contains(name);}
+
+  void showUp(uint8_t cpuIdx) {MemUnit& m = vM.at(cpuIdx);  m.showUp("Upload Table", "upload_dict.txt");}
+  void showDown(uint8_t cpuIdx) {MemUnit& m = vM.at(cpuIdx);  m.showDown("Download Table", "download_dict.txt");}
 };
 
 #endif

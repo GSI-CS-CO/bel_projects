@@ -30,6 +30,8 @@ public:
   bool remove(const uint32_t hash);
   boost::optional<const std::string&> lookup(const uint32_t hash)     const;
   boost::optional<const uint32_t&>    lookup(const std::string& name) const;
+  bool contains(const uint32_t hash)     const;
+  bool contains(const std::string& name) const;
   void clear() {hm.clear();}
 
 };  

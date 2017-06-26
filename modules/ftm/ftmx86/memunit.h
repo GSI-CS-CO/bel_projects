@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <string>
 #include <iostream>
-#include <map>
 #include <set>
 #include <boost/optional.hpp>
 #include <stdlib.h>
@@ -12,6 +11,7 @@
 #include "graph.h"
 #include "ftm_common.h"
 #include "hashmap.h"
+#include "alloctable.h"
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX_IDX 32
@@ -21,30 +21,11 @@
 
 
 
-//typedef std::map< std::string, myData >::iterator itMap ;
 
 
-
-  typedef struct  {
-    vertex_t  v;
-    uint32_t  hash;
-    uint8_t   b[_MEM_BLOCK_SIZE];
-  } parserMeta;
-
-  typedef struct  {
-    uint32_t  adr;
-    uint32_t  hash;
-    vertex_t  v;
-    uint8_t   b[_MEM_BLOCK_SIZE];
-    bool      transfer;
-  } chunkMeta;
-
-
-typedef std::map<std::string, chunkMeta>      aMap;
-typedef std::map<uint32_t, parserMeta>        pMap;
 typedef std::set<uint32_t>                    aPool; // contains all available addresses in LM32 memory area
-typedef boost::container::vector<chunkMeta*>  vChunk;
-typedef std::map<std::string, chunkMeta>      aMap;
+
+
 
 
 class MemUnit {
@@ -57,20 +38,23 @@ class MemUnit {
   const uint32_t  bmpLen;
   const uint32_t  startOffs; // baseAddress + bmpLen rounded up to next multiple of MEM_BLOCK_SIZE to accomodate BMP
   const uint32_t  endOffs;   // baseAddress + poolSize rounded down to next multiple of MEM_BLOCK_SIZE, can only use whole blocks 
-  Graph  gUp;
+  
   HashMap& hashMap;
-  Graph gDown;
+  
+  
+  Graph  gUp;
   vBuf   uploadBmp;
+  AllocTable atUp;
+
+  Graph gDown;
   vBuf   downloadBmp;
+  AllocTable atDown;
 
   aPool  memPool;
-  aMap   allocMap;
-  pMap   parserMap;
-  
-  
-  
 
+protected:
 
+  void show(const std::string& title, const std::string& logDictFile, Graph& g, AllocTable& at );
   
 
 public:  
@@ -90,8 +74,10 @@ public:
           }
   ~MemUnit() { };
 
-  Graph& getUpGraph() {return gUp;}
+  Graph& getUpGraph()   {return gUp;}
   Graph& getDownGraph() {return gDown;}
+  AllocTable& getDownAllocTable() {return atDown;}
+  AllocTable& getUpAllocTable()   {return atUp;}
 
   //MemPool Functions
   void banChunk(uint32_t adr) {memPool.erase(adr);};
@@ -106,12 +92,11 @@ public:
   uint32_t getUsedSpace() { return poolSize - (memPool.size() * _MEM_BLOCK_SIZE); }
   
   //Allocation functions
-  bool allocate(const std::string& name, vertex_t v);
-  bool insert(const std::string& name, uint32_t adr);
-  bool deallocate(const std::string& name);
-  chunkMeta* lookupName(const std::string& name) const;
-  parserMeta* lookupAdr(uint32_t adr) const;
-  vChunk getAllChunks() const;
+  bool allocate(uint32_t hash, vertex_t v);
+  bool insert(uint32_t hash, uint32_t adr);
+  bool deallocate(uint32_t hash);
+
+
 
 
 
@@ -138,10 +123,15 @@ public:
   const vAdr getDownloadAdrs() const;
   void parseDownloadData(vBuf downloadData);
 
+  const vAdr getCmdWrAdrs(uint32_t hash, uint8_t prio) const; 
+  const uint32_t getCmdInc(uint32_t hash, uint8_t prio) const;
 
-  void showUp(const std::string& title, const std::string& logDictFile );
 
-  
+
+  void showUp(const std::string& title, const std::string& logDictFile ) {show(title, logDictFile, gUp, atUp);}
+  void showDown(const std::string& title, const std::string& logDictFile ) {show(title, logDictFile, gDown, atDown);}
+
+
 
 };
 

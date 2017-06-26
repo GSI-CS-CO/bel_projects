@@ -31,9 +31,10 @@
 
 
 class Node;
+class MiniCommand;
 
 typedef boost::shared_ptr<Node> node_ptr;
-
+typedef boost::shared_ptr<MiniCommand> mc_ptr;
 
 
 typedef boost::container::vector<node_ptr> npBuf;
@@ -75,7 +76,7 @@ inline T writeBeBytesToLeNumber(uint8_t* pB) {
 template<typename T>
 inline T s2u(const std::string& s) {
   return (T)std::stoull(s, 0, 0);
-  
+
 }
 
 

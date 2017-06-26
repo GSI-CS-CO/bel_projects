@@ -12,6 +12,8 @@
 #include "ftm_shared_mmap.h"
 #include "graph.h"
 #include "carpeDM.h"
+#include "minicommand.h"
+
 
 
 
@@ -190,7 +192,9 @@ bool CarpeDM::connect(const std::string& en) {
     m.prepareUpload(g); 
     
     BOOST_FOREACH( vertex_t v, vertices(m.getUpGraph()) ) {
-      std::string haystack(m.lookupName(m.getUpGraph()[v].name)->b, m.lookupName(m.getUpGraph()[v].name)->b + _MEM_BLOCK_SIZE);
+ 
+
+      std::string haystack(m.getUpGraph()[v].np->getB(), m.getUpGraph()[v].np->getB() + _MEM_BLOCK_SIZE);
       std::size_t n = haystack.find(needle);
 
       bool foundUninitialised = (n != std::string::npos);
@@ -232,6 +236,9 @@ bool CarpeDM::connect(const std::string& en) {
     vAdr vDlBmpA;
     vBuf vDlD;
 
+    //verify firmware version first
+    //checkFwVersion(cpuIdx);
+
     vDlBmpA = m.getDownloadBMPAdrs();
     m.setDownloadBmp(ftmRamRead(ebd, vDlBmpA));
     vDlD = ftmRamRead(ebd, m.getDownloadAdrs());
@@ -240,14 +247,11 @@ bool CarpeDM::connect(const std::string& en) {
     return vDlD.size();
   }
     
-  void CarpeDM::show(uint8_t cpuIdx) {
-    MemUnit& m = vM.at(cpuIdx);
-    m.showUp("Upload Table", "upload_dict.txt");
-  }
+ 
 
 
-
-  const void CarpeDM::writeDownDot(const std::string& fn, MemUnit& m) {
+ //write out dotfile from download graph of a memunit
+ void CarpeDM::writeDownDot(const std::string& fn, MemUnit& m) {
     std::ofstream out(fn); 
     if(out.good()) {
       try { boost::write_graphviz(out, m.getDownGraph(), make_vertex_writer(boost::get(&myVertex::np, m.getDownGraph())), 
@@ -263,4 +267,20 @@ bool CarpeDM::connect(const std::string& en) {
     else {sErr << " Could not write to .dot file <" << fn << "> !" << std::endl; return;} 
 
     
+  }
+
+  vAdr CarpeDM::getCmdWrAdrs(uint8_t cpuIdx, const std::string& targetName, uint8_t prio) {
+    return vM.at(cpuIdx).getCmdWrAdrs(hm.lookup(targetName).get(), prio);
+  }
+
+  vBuf CarpeDM::getCmdData(uint8_t cpuIdx, const std::string& targetName, uint8_t prio, mc_ptr mc) {
+    uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
+    vBuf ret(_T_CMD_SIZE_ + _32b_SIZE_);
+
+    mc->serialise(b);
+    writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, vM.at(cpuIdx).getCmdInc(hm.lookup(targetName).get(), prio));
+    
+    ret.insert( ret.end(), b, b + _MEM_BLOCK_SIZE + _32b_SIZE_);
+
+    return ret;
   }
