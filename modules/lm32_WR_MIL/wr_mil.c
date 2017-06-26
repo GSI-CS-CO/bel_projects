@@ -119,11 +119,11 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC)
   EVT_UTC[4]  =  mil_sec      & 0x000000ff;  // mil_sec[7:0]   to EVT_UTC_5[7:0]
 
   // shift time information to the upper bits [15:8] and add code number
-  EVT_UTC[0] = (EVT_UTC[0] << 8) | 0x20 ;// 0xE0;
-  EVT_UTC[1] = (EVT_UTC[1] << 8) | 0x21 ;// 0xE1;
-  EVT_UTC[2] = (EVT_UTC[2] << 8) | 0x22 ;// 0xE2;
-  EVT_UTC[3] = (EVT_UTC[3] << 8) | 0x23 ;// 0xE3;
-  EVT_UTC[4] = (EVT_UTC[4] << 8) | 0x24 ;// 0xE4;
+  EVT_UTC[0] = (EVT_UTC[0] << 8) | 0xE0;
+  EVT_UTC[1] = (EVT_UTC[1] << 8) | 0xE1;
+  EVT_UTC[2] = (EVT_UTC[2] << 8) | 0xE2;
+  EVT_UTC[3] = (EVT_UTC[3] << 8) | 0xE3;
+  EVT_UTC[4] = (EVT_UTC[4] << 8) | 0xE4;
 }
 
 
