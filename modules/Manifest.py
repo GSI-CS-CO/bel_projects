@@ -15,6 +15,7 @@ modules = {
     "chopper",
     "cfi_flash",
     "ddr3",
+    "daq",
     "lpc_uart",
     "aux_functions",
     "function_generators",

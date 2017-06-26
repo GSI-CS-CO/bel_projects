@@ -195,6 +195,13 @@ package dac714_pkg is
 --    generator oder durch einen exteren Trigger ausgeloest wurde.                                                  -- 
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers: 3 Revi: 3: erstellt am 02.05.2017, Autor: K.Kaiser                                                        --
+--                                                                                                                  --
+--  Aenderung 1)                                                                                                    --
+--    Die Shift_Reg Daten werden für DAQ Zwecke in Shift_Reg_latched zwischengespeichert und nach aussen geführt.   -- 
+----------------------------------------------------------------------------------------------------------------------
+
 component dac714 is
   generic (
     Base_addr:        unsigned(15 downto 0) := X"0300";
@@ -214,6 +221,8 @@ component dac714 is
                                                                 -- led on -> nExt_Trig_DAC is low
     FG_Data:            in      std_logic_vector(15 downto 0) := (others => '0');  -- parallel dac data during FG-Mode
     FG_Strobe:          in      std_logic := '0';               -- strobe to start SPI transfer (if possible) during FG-Mode
+    Shift_Reg_latched:  out     std_logic_vector(15 downto 0);
+    Trig_DAC_out:       out     std_logic;
     DAC_SI:             out     std_logic;                      -- connect to DAC-SDI
     nDAC_CLK:           out     std_logic;                      -- spi-clock of DAC
     nCS_DAC:            out     std_logic;                      -- '0' enable shift of internal shift register of DAC

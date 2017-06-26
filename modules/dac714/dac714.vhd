@@ -192,6 +192,13 @@ use work.dac714_pkg.all;
 --    generator oder durch einen exteren Trigger ausgeloest wurde.                                                  -- 
 ----------------------------------------------------------------------------------------------------------------------
 
+----------------------------------------------------------------------------------------------------------------------
+--  Vers: 3 Revi: 3: erstellt am 02.05.2017, Autor: K.Kaiser                                                        --
+--                                                                                                                  --
+--  Aenderung 1)                                                                                                    --
+--    Die Shift_Reg Daten werden für DAQ Zwecke in Shift_Reg_latched zwischengespeichert und nach aussen geführt.   -- 
+--    Dito für Trig_DAC_out, um an die tatsächlich relevanten Triggerereignisse zu kommen.
+----------------------------------------------------------------------------------------------------------------------
 
 
 entity dac714 is
@@ -214,6 +221,8 @@ entity dac714 is
                                                                 -- led on -> nExt_Trig_DAC is low
     FG_Data:            in      std_logic_vector(15 downto 0) := (others => '0');  -- parallel dac data during FG-Mode
     FG_Strobe:          in      std_logic := '0';               -- strobe to start SPI transfer (if possible) during FG-Mode
+    Shift_Reg_latched:  out     std_logic_vector(15 downto 0);
+    Trig_DAC_out:       out     std_logic;
     DAC_SI:             out     std_logic;                      -- connect to DAC-SDI
     nDAC_CLK:           out     std_logic;                      -- spi-clock of DAC
     nCS_DAC:            out     std_logic;                      -- '0' enable shift of internal shift register of DAC
@@ -314,6 +323,7 @@ architecture arch_dac714 OF dac714 IS
 
 begin
 
+Trig_DAC_out <= DAC_convert;
 
 spi_clk_gen:  div_n
   generic map (
@@ -508,10 +518,12 @@ P_SPI_SM: process (clk, nReset_ff)
         if Wr_Shift_Reg = '1' and Wr_Shift_Reg_dly = '0' then
           if SPI_SM = Idle then
             Shift_Reg <= unsigned(Data_from_SCUB_LA);     -- in SW mode and Idle state, load of Shift_Reg is always alowed, source scub data
+            Shift_Reg_latched <= Data_from_SCUB_LA;
             clear_spi_clk <= '1';
             SPI_TRM <= '1';
           elsif dac_conv_extern = '1' and ((SPI_SM = Load) or (SPI_SM = Load_wait)) then
             Shift_Reg <= unsigned(Data_from_SCUB_LA);     -- in SW-Mode and wait for external Trigger, load of Shift_Reg is alowed, source scub data
+            Shift_Reg_latched <= Data_from_SCUB_LA;
             clear_spi_clk <= '1';
             SPI_TRM <= '1';
           else
@@ -523,6 +535,7 @@ P_SPI_SM: process (clk, nReset_ff)
         if FG_Strobe = '1' and FG_Strobe_dly = '0' then
           if SPI_SM = Idle then
             Shift_Reg <= unsigned(FG_Data);               -- in FG mode load Shift_Reg only in Idle state alowed, source FG_Data
+            Shift_Reg_latched <= FG_Data;
             clear_spi_clk <= '1';
             SPI_TRM <= '1';
          else

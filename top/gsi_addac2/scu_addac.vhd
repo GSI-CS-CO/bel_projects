@@ -12,8 +12,10 @@ use work.dac714_pkg.all;
 use work.fg_quad_pkg.all;
 use work.pll_pkg.all;
 use work.monster_pkg.all;
+use work.daq_pkg.all;
 
 -------------------------------------------------------------------------------------------------------------------
+-- FW 4.2  2017-Apr-27  KK : DAQ implemented
 -- FW 4.1  2017-Jan-12  KK : FW release incremented. ADDAC now running on A_SYSCLK again.
 -------------------------------------------------------------------------------------------------------------------
 
@@ -22,7 +24,7 @@ entity scu_addac is
     g_cid_group: integer := 38;
     g_card_type: string := "addac";
     g_firmware_version: integer := 4;
-    g_firmware_release: integer := 1
+    g_firmware_release: integer := 2
     );
   port (
     -------------------------------------------------------------------------------------------------------------------
@@ -134,6 +136,7 @@ constant c_adc_base:                    unsigned := x"0230";
 constant c_fg1_base:                    unsigned := x"0300";
 constant c_tmr_base:                    unsigned := x"0330";
 constant c_fg2_base:                    unsigned := x"0340";
+constant c_daq_base:                    unsigned := x"0400";
 
 component IO_4x8
   generic (
@@ -278,7 +281,28 @@ component IO_4x8
   
   constant c_is_arria5: boolean := false;
 
-  begin
+  signal daq_srq                    : std_logic;
+  signal HiRes_srq                  : std_logic;
+  signal daq_rd_active              : std_logic;      
+  signal daq_dtack                  : std_logic;
+  signal daq_data_to_SCUB           : std_logic_vector(15 downto 0);
+  signal Shift_Reg_latched_Ch1      : std_logic_vector(15 downto 0);
+  signal Shift_Reg_latched_Ch2      : std_logic_vector(15 downto 0);
+
+  signal DAQ_Ch                     : t_daq_dat (1 to 4);
+
+  signal DAQ_Trig1                  : std_logic;
+  signal DAQ_Trig2                  : std_logic;
+  signal DAQ_Trig3                  : std_logic;
+  signal DAQ_Trig4                  : std_logic;
+
+  signal Trig_Dac_out_Ch1           : std_logic;
+  signal Trig_Dac_out_Ch2           : std_logic;    
+  
+  
+  
+  
+    begin
 
 addac_clk_sw: slave_clk_switch
   generic map (
@@ -354,7 +378,7 @@ addac_clk_sw: slave_clk_switch
   
 
 Dtack_to_SCUB <= io_port_Dtack_to_SCUB or dac1_dtack or dac2_dtack or adc_dtack
-                or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack or clk_switch_dtack;
+                or wb_scu_dtack or fg_1_dtack or fg_2_dtack or tmr_dtack or clk_switch_dtack or daq_dtack;
 
 clk_switch_intr <= sys_clk_is_bad_la or sys_clk_deviation_la;
 
@@ -376,10 +400,10 @@ SCU_Slave: SCU_Bus_Slave
     nSCUB_Reset_in      => A_nReset,            -- in,    SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
     Data_to_SCUB        => Data_to_SCUB,        -- in,    connect read sources from external user functions
     Dtack_to_SCUB       => Dtack_to_SCUB,       -- in,    connect Dtack from from external user functions
-    Intr_In             => fg_1_dreq & fg_2_dreq & tmr_irq & '0'  -- intrrupt 15..12
-                          & x"0"                                  -- intrrupt 11..8
-                          & x"0"                                  -- intrrupt 7..4
-                          & '0' & '0' &  clk_switch_intr,         -- intrrupt 3..1, (interrupt 0 is internal generated)
+    Intr_In             => fg_1_dreq & fg_2_dreq & tmr_irq & daq_srq  -- interrupt 15..12
+                         & HiRes_srq & '0'       & '0'     & '0'      -- interrupt 11..8
+                         &  x"0"                                      -- interrupt  7..4
+                         & '0'       & '0'       &  clk_switch_intr,  -- interrupt  3..1 (interrupt 0 is internal generated)
     User_Ready          => '1',
     CID_GROUP           => g_cid_group,
     Data_from_SCUB_LA   => Data_from_SCUB_LA,   -- out,   latched data from SCU_Bus for external user functions
@@ -463,6 +487,8 @@ dac_1: dac714
                                                 -- led on -> nExt_Trig_DAC is low
     FG_Data           => fg_1_sw(31 downto 16), -- parallel dac data during FG-Mode
     FG_Strobe         => fg_1_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
+    Shift_Reg_latched => Shift_Reg_latched_Ch1,
+    Trig_Dac_out      => Trig_Dac_out_Ch1, 
     DAC_SI            => DAC1_SDI,              -- out, is connected to DAC1-SDI
     nDAC_CLK          => nDAC1_CLK,             -- out, spi-clock of DAC1
     nCS_DAC           => nDAC1_A0,              -- out, '0' enable shift of internal shift register of DAC1
@@ -493,6 +519,8 @@ dac_2: dac714
                                                 -- led on -> nExt_Trig_DAC is low
     FG_Data           => fg_2_sw(31 downto 16), -- parallel dac data during FG-Mode
     FG_Strobe         => fg_2_strobe,           -- strobe to start SPI transfer (if possible) during FG-Mode
+    Shift_Reg_latched => Shift_Reg_latched_Ch2,
+    Trig_Dac_out      => Trig_Dac_out_Ch2, 
     DAC_SI            => DAC2_SDI,              -- out, is connected to DAC2-SDI
     nDAC_CLK          => nDAC2_CLK,             -- out, spi-clock of DAC2
     nCS_DAC           => nDAC2_A0,              -- out, '0' enable shift of internal shift register of DAC2
@@ -668,6 +696,53 @@ p_led_ena: div_n
                                 -- (if ena is permanent '1').
 
 
+
+ data_acqui: daq
+  generic map (
+    Base_addr          => c_daq_base,
+    CLK_sys_in_Hz      => clk_sys_in_Hz,
+    ch_num             => 4
+          )
+	port map (
+    Adr_from_SCUB_LA   => ADR_from_SCUB_LA,
+    Data_from_SCUB_LA  => Data_from_SCUB_LA,
+    Ext_Adr_Val        => Ext_Adr_Val,
+    Ext_Rd_active      => Ext_Rd_active,
+    Ext_Wr_active      => Ext_Wr_active,
+    clk_i              => clk_sys,
+    nReset             => rstn_sys,
+
+    timestamp          => (others => '0'),  -- 64bit TAI64 from Register
+    diob_extension_id  => (others => '0'),  -- for header, not used in addac
+
+    user_rd_active     => daq_rd_active,
+    Rd_Port            => daq_data_to_SCUB,
+    Dtack              => daq_dtack,
+
+    daq_srq            => daq_srq,
+    HiRes_srq          => HiRes_srq,
+
+    Timing_Pattern_LA  => Timing_Pattern_LA,
+    Timing_Pattern_RCV => Timing_Pattern_RCV,
+
+      --daq input channels
+    daq_dat_i          => DAQ_Ch,
+    daq_ext_trig       => DAQ_Trig1 & DAQ_Trig2 &  DAQ_Trig3 & DAQ_Trig4  --& DAQ_Trig5 & DAQ_Trig6
+	); --data_acqui
+
+DAQ_Ch(1)   <= ADC_channel_1;  -- ADC Frontleiste Ch.1
+DAQ_Ch(2)   <= ADC_channel_2;  -- ADC Frontleiste Ch.2
+DAQ_Ch(3)   <= Shift_Reg_latched_Ch1;  -- DAC Channel 1
+DAQ_Ch(4)   <= Shift_Reg_latched_Ch2;  -- DAC Channel 2
+--DAQ_Ch5   <= a_io (15 downto  0);  -- Register Interface Bit  15.. 0 VG Leiste (derzeit ungenutzt)
+--DAQ_Ch6   <= a_io (31 downto 16);  -- Register Interface Bit  31..16 VG Leiste (derzeit ungenutzt)
+DAQ_Trig1 <= EXT_TRIG_ADC;   -- Gemeinsamer Trigger (Optionell, wenn ADC im Triggermode)
+DAQ_Trig2 <= EXT_TRIG_ADC;   -- Gemeinsamer Trigger (Optionell, wenn ADC im Triggermode)
+DAQ_Trig3 <= Trig_Dac_out_Ch1;
+DAQ_Trig4 <= Trig_Dac_out_Ch2;
+--DAQ_Trig5 <= '0';--(derzeit ungenutzt)
+--DAQ_Trig6 <= '0';--(derzeit ungenutzt)
+
 --p_test_port_mux: process (
 -- DAC1_SDI, nDAC1_CLK, nDAC1_A0, nDAC1_A1, nDAC1_CLR, dac1_rd_active, dac1_dtack,
 -- DAC2_SDI, nDAC2_CLK, nDAC2_A0, nDAC2_A1, nDAC2_CLR, dac2_rd_active, dac2_dtack,
@@ -766,19 +841,21 @@ p_led_mux: process (
  
 
 p_read_mux: process (
-    io_port_rd_active,  io_port_data_to_SCUB,
-    dac1_rd_active,     dac1_data_to_SCUB,
-    dac2_rd_active,     dac2_data_to_SCUB,
-    adc_rd_active,      adc_data_to_SCUB,
-    fg_1_rd_active,     fg_1_data_to_SCUB,
-    fg_2_rd_active,     fg_2_data_to_SCUB,
-    tmr_rd_active,      tmr_data_to_SCUB,
-    wb_scu_rd_active,   wb_scu_data_to_SCUB,
-    clk_switch_rd_active, clk_switch_rd_data
+    io_port_rd_active,    io_port_data_to_SCUB,
+    dac1_rd_active,       dac1_data_to_SCUB,
+    dac2_rd_active,       dac2_data_to_SCUB,
+    adc_rd_active,        adc_data_to_SCUB,
+    fg_1_rd_active,       fg_1_data_to_SCUB,
+    fg_2_rd_active,       fg_2_data_to_SCUB,
+    tmr_rd_active,        tmr_data_to_SCUB,
+    wb_scu_rd_active,     wb_scu_data_to_SCUB,
+    clk_switch_rd_active, clk_switch_rd_data,
+    daq_rd_active,        daq_data_to_SCUB
     )
-  variable sel: unsigned(8 downto 0);
+  variable sel: unsigned(9 downto 0);
   begin
-    sel := clk_switch_rd_active 
+    sel := daq_rd_active
+         & clk_switch_rd_active 
          & wb_scu_rd_active 
          & tmr_rd_active 
          & fg_2_rd_active 
@@ -787,16 +864,17 @@ p_read_mux: process (
          & dac2_rd_active 
          & dac1_rd_active 
          & io_port_rd_active;
-    case sel IS
-      when "000000001" => Data_to_SCUB <= io_port_data_to_SCUB;
-      when "000000010" => Data_to_SCUB <= dac1_data_to_SCUB;
-      when "000000100" => Data_to_SCUB <= dac2_data_to_SCUB;
-      when "000001000" => Data_to_SCUB <= adc_data_to_SCUB;
-      when "000010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
-      when "000100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
-      when "001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
-      when "010000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
-      when "100000000" => Data_to_SCUB <= clk_switch_rd_data;
+    case sel IS  
+      when "0000000001" => Data_to_SCUB <= io_port_data_to_SCUB;
+      when "0000000010" => Data_to_SCUB <= dac1_data_to_SCUB;
+      when "0000000100" => Data_to_SCUB <= dac2_data_to_SCUB;
+      when "0000001000" => Data_to_SCUB <= adc_data_to_SCUB;
+      when "0000010000" => Data_to_SCUB <= fg_1_data_to_SCUB;
+      when "0000100000" => Data_to_SCUB <= fg_2_data_to_SCUB;
+      when "0001000000" => Data_to_SCUB <= tmr_data_to_SCUB;
+      when "0010000000" => Data_to_SCUB <= wb_scu_data_to_SCUB;
+      when "0100000000" => Data_to_SCUB <= clk_switch_rd_data;
+      when "1000000000" => Data_to_SCUB <= daq_data_to_SCUB;       
       when others =>
         Data_to_SCUB <= X"0000";
     end case;
