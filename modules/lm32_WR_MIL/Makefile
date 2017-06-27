@@ -30,7 +30,7 @@ include ../../syn/build.mk
 LDFLAGS += -Wl,-Map,$(TARGET).map -Wl,-O1
 
 fwbin: $(TARGET).bin
-	./stop_and_flash.sh
+	./stop_flash_configure.sh
 
 $(TARGET).elf: $(PATHFW)/$(TARGET).c                 \
 			   $(PATHFW)/wr_mil_eca_ctrl.c           \

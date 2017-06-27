@@ -53,6 +53,7 @@
 #include "wr_mil_eca_ctrl.h"
 #include "wr_mil_cmd.h"
 #include "wr_mil_delay.h"
+#include "wr_mil_events.h"
 #include "../../top/gsi_scu/scu_mil.h"
 
 // for the event handler
@@ -90,6 +91,15 @@ void lemoPulse12(volatile uint32_t *mil_piggy)
     setLemoOutputEvtMil(mil_piggy, 2, 0);
 }
 
+
+typedef union UTCtime_t
+{
+  uint8_t bytes[8];
+  struct {
+    uint32_t timeMs;
+    uint32_t timeS;
+  } bit;
+} UTCtime;
 // convert 64-bit TAI from WR into an array of five MIL events (EVT_UTC_1/2/3/4/5 events with evtNr 0xE0 - 0xE4)
 // arguments:
 //   TAI:     a 64-bit WR-TAI value
@@ -109,40 +119,31 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC)
                                              // the number was caluclated using: date --date='01/01/2008' +%s
   uint64_t mil_timestamp_ms = msNow - ms2008;
   uint32_t mil_ms           = mil_timestamp_ms % 1000;
-  uint32_t mil_sec          = mil_timestamp_ms / UINT64_C(1000);
+  uint32_t mil_sec          = mil_timestamp_ms / 1000;
 
-  EVT_UTC[0]  = (mil_ms>>2)   & 0x000000ff;  // mil_ms[9:2]    to EVT_UTC_1[7:0]
-  EVT_UTC[1]  = (mil_ms<<6)   & 0x000000C0;  // mil_ms[1:0]    to EVT_UTC_2[7:5]
-  EVT_UTC[1] |= (mil_sec>>24) & 0x0000003f;  // mil_sec[29:24] to EVT_UTC_2[5:0]
-  EVT_UTC[2]  = (mil_sec>>16) & 0x000000ff;  // mil_sec[23:16] to EVT_UTC_3[7:0]
-  EVT_UTC[3]  = (mil_sec>>8)  & 0x000000ff;  // mil_sec[15:8]  to EVT_UTC_4[7:0]
-  EVT_UTC[4]  =  mil_sec      & 0x000000ff;  // mil_sec[7:0]   to EVT_UTC_5[7:0]
+  UTCtime utc_time;
+  utc_time.bit.timeS  =  mil_sec & 0x3fffffff;
+  utc_time.bit.timeMs = (mil_ms & 0x3ff) << 6;
 
-  // shift time information to the upper bits [15:8] and add code number
-  EVT_UTC[0] = (EVT_UTC[0] << 8) | 0xE0;
-  EVT_UTC[1] = (EVT_UTC[1] << 8) | 0xE1;
-  EVT_UTC[2] = (EVT_UTC[2] << 8) | 0xE2;
-  EVT_UTC[3] = (EVT_UTC[3] << 8) | 0xE3;
-  EVT_UTC[4] = (EVT_UTC[4] << 8) | 0xE4;
+  EVT_UTC[0] =  utc_time.bytes[2]*256 + MIL_EVT_UTC_1;
+  EVT_UTC[1] = (utc_time.bytes[3] | 
+                utc_time.bytes[4])*256 + MIL_EVT_UTC_2;
+  EVT_UTC[2] = utc_time.bytes[5]*256 + MIL_EVT_UTC_3;
+  EVT_UTC[3] = utc_time.bytes[6]*256 + MIL_EVT_UTC_4;
+  EVT_UTC[4] = utc_time.bytes[7]*256 + MIL_EVT_UTC_5;
 }
 
 
 #define N_UTC_EVENTS           5          // the number of EVT_UTC events
 #define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
-#define MIL_EVT_START_CYCLE    0x20       // the special event that causes five additional MIL events:
-                                          // EVT_UTC_1, EVT_UTC_2, EVT_UTC_3, EVT_UTC_4, EVT_UTC_5
-#define MIL_EVT_END_CYCLE      0x37       // the special event that causes five additional MIL events:
-                                          // EVT_UTC_1, EVT_UTC_2, EVT_UTC_3, EVT_UTC_4, EVT_UTC_5
-#define MIL_EVT_BEGIN_CMD_EXEC 0xf6       // 246 
-#define MIL_EVT_COMMAND        0xff       // 255
-#define MIL_EVT_END_CMD_EXEC   0xf5       // 245
 #define WR_MIL_GATEWAY_LATENCY 73575      // additional latency in units of nanoseconds
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
                                           // and make this time difference 100.0(5)us
-void eventHandler(volatile uint32_t *eca,
-                  volatile uint32_t *eca_queue, 
-                  volatile uint32_t *mil_piggy)
+void eventHandler(volatile uint32_t   *eca,
+                  volatile uint32_t   *eca_queue, 
+                  volatile uint32_t   *mil_piggy,
+                  volatile MilCmdRegs *mil_cmd)
 {
   if (ECAQueue_actionPresent(eca_queue))
   {
@@ -170,23 +171,25 @@ void eventHandler(volatile uint32_t *eca,
           //make_mil_timestamp(mil_event_time, EVT_UTC);     
           too_late = wait_until_tai(eca, mil_event_time);
           mil_piggy_write_event(mil_piggy, milTelegram); 
-          for (int i = 0; i < 100; ++i) DELAY1000us; // 100 ms
+          delay_96plus32n_ns(mil_cmd->trigger_utc_delay*32);
           mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_BEGIN_CMD_EXEC); 
-          for (int i = 0; i < 10; ++i) DELAY1000us; // 10 ms
+          delay_96plus32n_ns(mil_cmd->trigger_utc_delay*32);
           // create the five events EVT_UTC_1/2/3/4/5 with seconds and miliseconds since 01/01/2008
           for (int i = 0; i < N_UTC_EVENTS; ++i)
           {
             // Churn out the EVT_UTC MIL events as fast as possible. 
             //  This results in approx. 21 us between two successive events.
             mil_piggy_write_event(mil_piggy, EVT_UTC[i]); 
-            DELAY100us;
+            //for (int i = mil_cmd->utc_delay; i != 0; --i) DELAY1us;
+            delay_96plus32n_ns(mil_cmd->utc_delay*32);
+            //DELAY100us;
             //mil_piggy_write_event(mil_piggy, 0x0000abc0 | i); 
           }
-          for (int i = 0; i < 90; ++i) DELAY1000us; // 90 ms
-          mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_COMMAND); 
-          for (int i = 0; i < 100; ++i) DELAY1000us; // 100 ms
-          mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_COMMAND); 
-          for (int i = 0; i < 100; ++i) DELAY1000us; // 100 ms
+          delay_96plus32n_ns(mil_cmd->trigger_utc_delay*32);
+          mil_piggy_write_event(mil_piggy, (mil_cmd->event_source<<12) | MIL_EVT_COMMAND); 
+          delay_96plus32n_ns(mil_cmd->trigger_utc_delay*32);
+          mil_piggy_write_event(mil_piggy, (mil_cmd->event_source<<12) | MIL_EVT_COMMAND); 
+          delay_96plus32n_ns(mil_cmd->trigger_utc_delay*32);
           mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_END_CMD_EXEC); 
         break;
         default:
@@ -278,7 +281,7 @@ void main(void)
 
   while (1) {
     // do whatever has to be done
-    eventHandler(eca_ctrl, eca_queue, mil_piggy);
+    eventHandler(eca_ctrl, eca_queue, mil_piggy, mil_cmd);
     DELAY10us;
 
     //testOfFunction_wait_until_tai(mil_piggy, eca_ctrl);

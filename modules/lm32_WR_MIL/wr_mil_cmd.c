@@ -3,6 +3,7 @@
 #include "mprintf.h"
 #include "wr_mil_delay.h"
 #include "wr_mil_eca_queue.h"
+#include "wr_mil_events.h"
 
 extern volatile uint32_t _startshared[]; // provided in linker script "ram.ld"
 #define SHARED __attribute__((section(".shared")))
@@ -15,7 +16,11 @@ uint64_t SHARED dummy = UINT64_C(0); // not sure if that variable is really need
 volatile MilCmdRegs *MilCmd_init()
 {
   volatile MilCmdRegs *cmd = (volatile MilCmdRegs*)_startshared;
-  cmd->cmd = UINT32_C(0);
+  cmd->cmd               = UINT32_C(0);
+  cmd->utc_trigger       = MIL_EVT_END_CYCLE;
+  cmd->utc_delay         = 100;    //    100 us delay
+  cmd->trigger_utc_delay = 100000; // 100000 us delay (100 ms) 
+  cmd->event_source      = EVENT_SOURCE_NOT_CONFIGURED; // not configured by default
   return cmd;
 }
 
@@ -24,6 +29,10 @@ volatile MilCmdRegs *MilCmd_init()
 //  back to 0
 void MilCmd_poll(volatile MilCmdRegs *cmd)
 {
+  if (cmd->event_source == EVENT_SOURCE_NOT_CONFIGURED)
+  {
+    mprintf("event souce %d\n", cmd->event_source);
+  }
   if (cmd->cmd)
   {
     switch(cmd->cmd)
@@ -32,7 +41,7 @@ void MilCmd_poll(volatile MilCmdRegs *cmd)
         mprintf("stop MCU\n");
         while(1);
       case CMD_PAUSE_10S:
-        mprintf("puase MCU for 10 sec\n");
+        mprintf("pause MCU for 10 sec\n");
         for (int i = 0; i < 10000; ++i) DELAY1000us;
         break;
       default:
@@ -42,3 +51,4 @@ void MilCmd_poll(volatile MilCmdRegs *cmd)
     cmd->cmd = UINT32_C(0);
   }   
 }
+
