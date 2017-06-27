@@ -66,12 +66,39 @@ vBuf CarpeDM::ftmRamRead(Device& dev, vAdr va)
   return ret;
 }
 
+int CarpeDM::ftmRamWriteWord(Device& dev, uint32_t adr, uint32_t data)
+{
+   Cycle cyc;
+
+   cyc.open(dev);
+   cyc.write(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)data);
+   cyc.close();
+   
+   return 0;
+}
+
+uint32_t CarpeDM::ftmRamReadWord(Device& dev, uint32_t adr)
+{
+   //FIXME this sometimes led to memory corruption by eb's handling of &data - investigate !!!
+   uint32_t data, ret;
+
+   Cycle cyc;
+   cyc.open(dev);
+   cyc.read(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&data);
+   cyc.close();
+   
+   ret = data;
+
+   return ret;
+}
+
+
 bool CarpeDM::connect(const std::string& en) {
     ebdevname = std::string(en); //copy to avoid mem trouble later
     bool  ret = false;
 
     vM.clear();
-
+    if(verbose) sLog << "Connecting to " << en << "... ";
     try { 
       ebs.open(0, EB_DATAX|EB_ADDRX);
       ebd.open(ebs, ebdevname.c_str(), EB_DATAX|EB_ADDRX, 3);
@@ -84,12 +111,16 @@ bool CarpeDM::connect(const std::string& en) {
     } catch(...) {
       //TODO report why we could not connect / find CPUs
     }
+
+    if(verbose) sLog << " Done."  << std::endl << "Found " << getCpuQty() << " Cores." << std::endl;
     return ret;
 
   }
 
   bool CarpeDM::disconnect() {
     bool ret = false;
+
+    if(verbose) sLog << "Disconnecting ... ";
     try { 
       ebd.close();
       ebs.close();
@@ -98,6 +129,7 @@ bool CarpeDM::connect(const std::string& en) {
     } catch(...) {
       //TODO report why we could not disconnect
     }
+    if(verbose) sLog << " Done" << std::endl;
     return ret;
   }
 
@@ -106,6 +138,8 @@ bool CarpeDM::connect(const std::string& en) {
     std::ifstream in(fn);
     boost::dynamic_properties dp = createParser(g);
 
+    if(verbose) sLog << "Creating Dictionary from " << fn << " ... ";
+
     if(in.good()) {
   
       try { boost::read_graphviz(in,g,dp,"node_id");}
@@ -113,10 +147,8 @@ bool CarpeDM::connect(const std::string& en) {
         throw;
         //TODO report why parsing the dot / creating the graph failed
       }
-      
-      
     }  
-    else {std::cout << "Could not open .dot file <" << fn << "> for reading!" << std::endl; return;}  
+    else {throw ("Could not open .dot file <" + fn + "> for reading!\n"); return;}  
 
     //add to dictionary
     try {
@@ -126,6 +158,8 @@ bool CarpeDM::connect(const std::string& en) {
       throw;
     }
     in.close();
+
+    if(verbose) sLog << " Done." << std::endl;
   }
 
   void CarpeDM::clearDict() {
@@ -225,6 +259,23 @@ bool CarpeDM::connect(const std::string& en) {
     return vUlD.size();
   }
 
+  int CarpeDM::sendCmd(uint8_t cpuIdx, const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {
+    MemUnit& m = vM.at(cpuIdx);
+    vBuf vUlD = getCmdData(cpuIdx, targetName, cmdPrio, mc); 
+    vAdr vUlA = getCmdWrAdrs(cpuIdx, targetName, cmdPrio);
+    //Upload
+    /*
+    if(debug) sLog << "AdrQty: " << std::dec << vUlA.size() << std::endl;
+    for (auto& it : vUlA) {sLog << "0x" << std::hex << it << std::endl;}
+
+    sLog << "DataQty: " << std::dec << vUlD.size() << std::endl;
+    vHexDump ("CmdData", vUlD);
+    */
+    ftmRamWrite(ebd, vUlA, vUlD);
+
+    return vUlD.size();
+  }
+
 
   //TODO assign to CPUs/threads
 
@@ -247,7 +298,9 @@ bool CarpeDM::connect(const std::string& en) {
     return vDlD.size();
   }
     
- 
+  vBuf carpeDM::getFwVersion(cpuIdx) {
+    
+  }
 
 
  //write out dotfile from download graph of a memunit
@@ -275,12 +328,110 @@ bool CarpeDM::connect(const std::string& en) {
 
   vBuf CarpeDM::getCmdData(uint8_t cpuIdx, const std::string& targetName, uint8_t prio, mc_ptr mc) {
     uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
-    vBuf ret(_T_CMD_SIZE_ + _32b_SIZE_);
-
+    vBuf ret;
     mc->serialise(b);
-    writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, vM.at(cpuIdx).getCmdInc(hm.lookup(targetName).get(), prio));
     
-    ret.insert( ret.end(), b, b + _MEM_BLOCK_SIZE + _32b_SIZE_);
-
+    writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, vM.at(cpuIdx).getCmdInc(hm.lookup(targetName).get(), prio));
+    ret.insert( ret.end(), b, b + _T_CMD_SIZE_ + _32b_SIZE_);
+    
     return ret;
   }
+
+  uint32_t CarpeDM::getNodeAdr(uint8_t cpuIdx, const std::string& name, bool direction, bool intExt) {
+    MemUnit& m = vM.at(cpuIdx); 
+    AllocTable& at = (direction == UPLOAD ? m.getUpAllocTable() : m.getDownAllocTable() );
+    uint32_t hash;
+
+    try {hash = hm.lookup(name).get();} catch (...) {throw;} //just pass it on
+    auto* x = at.lookupHash(hash);
+    if (x == NULL)  {throw std::runtime_error( "Could not find Node in download address table"); return LM32_NULL_PTR;}
+    else            {return (intExt == INTERNAL ? m.adr2intAdr(x->adr) : m.adr2extAdr(x->adr));}
+  }
+
+  //Returns the external address of a thread's command register area
+  uint32_t CarpeDM::getThrCmdAdr(uint8_t cpuIdx) {
+    return myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_CTL;
+  }
+
+  //Returns the external address of a thread's initial node register 
+  uint32_t CarpeDM::getThrInitialNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
+    return myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_NODE_PTR;
+  }
+
+  //Returns the external address of a thread's command register area
+  uint32_t CarpeDM::getThrCurrentNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
+    return myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_NODE_PTR;
+  }
+  
+
+  //Sets the Node the Thread will start from
+  void CarpeDM::setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) {
+     ftmRamWriteWord(ebd, getThrInitialNodeAdr(cpuIdx, thrIdx), getNodeAdr(cpuIdx, name, DOWNLOAD, INTERNAL)) ;
+  }
+
+  //Returns the Node the Thread will start from
+  const std::string CarpeDM::getThrOrigin(uint8_t cpuIdx, uint8_t thrIdx) {
+     uint32_t adr;
+     MemUnit& m = vM.at(cpuIdx);
+     adr = ftmRamReadWord(ebd, getThrInitialNodeAdr(cpuIdx, thrIdx));
+
+  
+
+     auto* x = m.getDownAllocTable().lookupAdr(m.intAdr2adr(adr));
+     if (x != NULL) return m.getDownGraph()[x->v].name;
+     else           return "Unknown";
+  }
+
+  const std::string CarpeDM::getThrCursor(uint8_t cpuIdx, uint8_t thrIdx) {
+    uint32_t adr;
+    MemUnit& m = vM.at(cpuIdx);
+    adr = ftmRamReadWord(ebd, getThrCurrentNodeAdr(cpuIdx, thrIdx));
+
+  
+
+    auto* x = m.getDownAllocTable().lookupAdr(m.intAdr2adr(adr));
+    if (x != NULL) return m.getDownGraph()[x->v].name;
+    else           return "Unknown";  
+  }
+
+  //Get bifield showing running threads
+  uint32_t CarpeDM::getThrRun(uint8_t cpuIdx) {
+    return ftmRamReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING); 
+  }
+
+
+  //Requests Threads to start
+  void CarpeDM::setThrStart(uint8_t cpuIdx, uint32_t bits) {
+    ftmRamWriteWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_START, bits) ;
+  }
+
+
+  //Requests Threads to stop
+  void CarpeDM::setThrStop(uint8_t cpuIdx, uint32_t bits) {
+    ftmRamWriteWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_STOP, bits);
+  }
+
+  //hard abort, emergency only
+  void CarpeDM::clrThrRun(uint8_t cpuIdx, uint32_t bits) {
+    ftmRamWriteWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING, ~bits);
+  }
+
+  bool CarpeDM::isThrRunning(uint8_t cpuIdx, uint8_t thrIdx) {
+    return (bool)(getThrRun(cpuIdx) & (1<< thrIdx));
+  }
+
+  //Requests Thread to start
+  void CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx) {
+    setThrStart(cpuIdx, (1<<thrIdx));    
+  }
+
+  //Requests Thread to stop
+  void CarpeDM::stopThr(uint8_t cpuIdx, uint8_t thrIdx) {
+    setThrStop(cpuIdx, (1<<thrIdx));    
+  }
+
+  //Immediately aborts a Thread
+  void CarpeDM::abortThr(uint8_t cpuIdx, uint8_t thrIdx) {
+    clrThrRun(cpuIdx, (1<<thrIdx));    
+  }
+

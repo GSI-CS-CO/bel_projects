@@ -124,6 +124,8 @@ int main(int argc, char* argv[]) {
     cdm.upload(cpuIdx);
     std::cout << "Done." << std::endl;
     cdm.showUp(cpuIdx);
+
+    
   }
   
   std::cout << "Downloading from CPU #" << cpuIdx << "... ";

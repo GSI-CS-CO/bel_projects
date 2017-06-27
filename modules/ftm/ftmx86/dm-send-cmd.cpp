@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
   if (error) return error;
  
    if (optind+2 >= argc) {
-   std::cerr << program << ": expecting two non-optional argument: <etherbone-device> <target-block> " << std::endl;
+   std::cerr << program << ": expecting two non-optional argument: <etherbone-device> <command type> " << std::endl;
     //help();
     return -4;
     }
@@ -90,8 +90,8 @@ int main(int argc, char* argv[]) {
    
     netaddress = argv[optind];
     if (optind+1 < argc) inputFilename   = argv[optind+1];
-    if (optind+2 < argc) targetName      = argv[optind+2];
-    if (optind+3 < argc) typeName        = argv[optind+3];
+    if (optind+2 < argc) typeName        = argv[optind+2];
+    if (optind+3 < argc) targetName      = argv[optind+3];
     if (optind+4 < argc) para            = argv[optind+4];
    
 
@@ -115,9 +115,9 @@ int main(int argc, char* argv[]) {
 
   CarpeDM cdm = CarpeDM();
 
-  std::cout << "Connecting to " << netaddress << "... ";
+  
   cdm.connect(std::string(netaddress));
-  std::cout << "Done."  << std::endl << "Found " << cdm.getCpuQty() << " Cores." << std::endl;
+
   std::cout << "Creating Dictionary from " << inputFilename << " ... ";
   try { cdm.addDotToDict(inputFilename); }
   catch (...) {
@@ -126,31 +126,68 @@ int main(int argc, char* argv[]) {
   }
   std::cout << "Done." << std::endl;
 
-  if(!(cdm.isKnown(targetName))) {std::cerr << "Error: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+
 
   std::cout << "Downloading from CPU #" << cpuIdx << "... ";
   cdm.downloadAndParse(cpuIdx);
   std::cout << "Done." << std::endl;
 
-/*
-  //Search Node by Name
-  Graph& g = cdm.getDownGraph(cpuIdx);
-  vertex_t vTarget;
-  bool found = false;
-  BOOST_FOREACH( vTarget, vertices(g) ) { if (g[vTarget].name == para) {found = true; break;} }
-  //Check if Node was found
-  if(!(found) || g[vTarget].np == NULL) {std::cerr << "Error: Could not find Node '" << para << "' in CPU #" << cpuIdx << "'s dump, aborting" << std::endl; return -2; }
+  vAdr cmdAdrs;
+  vBuf cmdData;
+  mc_ptr mc = NULL;
 
-*/
+  if (typeName != NULL ) {  
+
+    std::cout << "Trying to generate " << typeName << " command" << std::endl;
+
+    std::string cmp(typeName);
+
+    if      (cmp == "noop")  {
+      if(!(cdm.isKnown(targetName))) {std::cerr << "Error: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
+    }
+    else if (cmp == "flow")  {
+      if(!(cdm.isKnown(targetName))) {std::cerr << "Error: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      if ((para != NULL) && cdm.isKnown(para)) { mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, cdm.getNodeAdr(cpuIdx, para, DOWNLOAD, INTERNAL) ); }
+    }
+    else if (cmp == "flush") {
+        if(!(cdm.isKnown(targetName))) {std::cerr << "Error: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+    }
+    else if (cmp == "wait")  {
+      if(!(cdm.isKnown(targetName))) {std::cerr << "Error: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      if (para != NULL) { mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, atoll(para) ); }
+    }
+    else if (cmp == "origin")  {
+      if (targetName != NULL) { 
+        cdm.setThrOrigin(cpuIdx, thrIdx, targetName);     
+        std::cout << "Origin Node was set to " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl;
+      }
+    }
+    else if (cmp == "cursor")  {
+      std::cout << "Currently at " << cdm.getThrCursor(cpuIdx, thrIdx) << std::endl;
+      
+    }
+    else if (cmp == "start")  {
+      cdm.startThr(cpuIdx, thrIdx); 
+      
+    }
+    else if (cmp == "stop")  {
+      cdm.stopThr(cpuIdx, thrIdx);
+      
+    }
+    else if (cmp == "abort")  {
+      cdm.abortThr(cpuIdx, thrIdx);
+      
+    }
 
 
-  mc_ptr mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, 0xdeadbeef);
+    if (mc != NULL) {
 
+      cdm.sendCmd(cpuIdx, targetName, cmdPrio, mc);      
 
-  vAdr cmdAdrs = cdm.getCmdWrAdrs(cpuIdx, targetName, cmdPrio);
-  vBuf cmdData = cdm.getCmdData(cpuIdx, targetName, cmdPrio, mc);
+    }  
 
-  
+  }
 
 
   return 0;

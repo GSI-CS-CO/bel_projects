@@ -34,9 +34,9 @@
 
 //Thread Control bits
 #define T_TC_START              (0)                     //WR Host, RW LM32
-#define T_TC_STOP               (T_TC_START + _32b_SIZE_) //WR Host, RW LM32
-#define T_TC_GET                (T_TC_STOP  + _32b_SIZE_) //RD Host, WR LM32
-#define _T_TC_SIZE_             (T_TC_GET   + _32b_SIZE_) 
+#define T_TC_STOP               (T_TC_START     + _32b_SIZE_) //WR Host, RW LM32
+#define T_TC_RUNNING            (T_TC_STOP      + _32b_SIZE_) //RD Host, WR LM32
+#define _T_TC_SIZE_             (T_TC_RUNNING   + _32b_SIZE_) 
 
 //Thread Data
 #define T_TD_FLAGS              (0)                           //RD Host, RW LM32
