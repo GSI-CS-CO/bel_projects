@@ -234,7 +234,7 @@ inline void dev_bus_irq_handle(unsigned int msi_adr, unsigned int msi_msg) {
   int slot, dev;
   short data;
   for (i = 0; i < MAX_FG_CHANNELS; i++) {
-    //if (fg_regs[i].state == 1) {
+    if (fg_regs[i].state > 0) {
       slot = fg_macros[fg_regs[i].macro_number] >> 24;
       dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
       if(slot == DEV_BUS_SLOT) {
@@ -246,7 +246,7 @@ inline void dev_bus_irq_handle(unsigned int msi_adr, unsigned int msi_msg) {
           //clear irq pending
         }
       }
-    //}
+    }
   }  
 }
 
@@ -406,6 +406,7 @@ int configure_fg_macro(int channel) {
       read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev);
       write_mil(scu_mil_base, 0xffff & data | FG_ENABLED, FC_CNTRL_WR | dev); 
     }
+    fg_regs[channel].state = 2; //armed
     SEND_SIG(SIG_ARMED);
   }
   return 0; 
@@ -497,6 +498,7 @@ void disable_channel(unsigned int channel) {
   if (fg_regs[channel].state == 1) {    // hw is running
     fg_regs[channel].rd_ptr = fg_regs[channel].wr_ptr;
   } else {
+    fg_regs[channel].state = 0;
     SEND_SIG(SIG_DISARMED);
   } 
 }
