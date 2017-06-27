@@ -5,9 +5,9 @@
 
 typedef struct 
 {
-	uint32_t status;    // base + 0
-	uint32_t data;      // base + 4
-	uint32_t cmd;       // base + 8
+	uint32_t cmd;          // base + 0 : command to be executed
+	uint32_t utc_delay;    // base + 4 : delay in ns between the generated UTC events
+	uint32_t utc_trigger;  // base + 8 : the MIL event that triggers the generation of UTC events
 } MilCmdRegs;
 
 volatile MilCmdRegs *MilCmd_init();

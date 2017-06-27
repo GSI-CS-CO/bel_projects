@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SHARED_SEGMENT_OFFSET=0x500 # 500 is relative start of shared segment
-COMMAND_OFFSET=0x8          #   8 is the address of command word counting from start of shared segment
+COMMAND_OFFSET=0x0          #   0 is the address of command word counting from start of shared segment
 
 # find wishbone address of second LM32 user ram:
 BASE_ADR=`eb-ls tcp/scuxl0089.acc.gsi.de | grep LM32-RAM-User | tail -n 1 | sed 's/  */ /g' | cut -d" " -f3`
