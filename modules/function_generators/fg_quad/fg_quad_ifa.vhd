@@ -231,7 +231,6 @@ begin
 -- fg_cntrl_reg(12 downto 10) : step value M (wo)
 -- fg_cntrl_reg(15 downto 13) : add frequency select (wo)
 cntrl_reg: process (clk, nReset, rd_fg_cntrl, fg_cntrl_reg, wr_fg_cntrl)
-  variable reset_cnt: unsigned(1 downto 0) := "00";
 begin
   if nReset = '0' then
     fg_cntrl_reg    <= (others => '0');
@@ -239,7 +238,6 @@ begin
     coeff_b_reg     <= (others => '0');
     shift_reg       <= (others => '0');
     start_value_reg <= (others => '0');
-    reset_cnt := "00";
   elsif rising_edge(clk) then
     if fg_cntrl_reg(0) = '1' then
       fg_cntrl_reg    <= (others => '0');
@@ -247,7 +245,6 @@ begin
       coeff_b_reg     <= (others => '0');
       shift_reg       <= (others => '0');
       start_value_reg <= (others => '0');
-      reset_cnt := "00";
     else
   
       if wr_fg_cntrl = '1' then
@@ -272,15 +269,6 @@ begin
     
       if wr_start_value_l = '1' then
         start_value_reg(15 downto 0) <= data_i;
-      end if;
-    
-      if  fg_cntrl_reg(0) = '1' then
-        if reset_cnt < 3 then
-          reset_cnt := reset_cnt + 1;
-        else
-          fg_cntrl_reg(0) <= '0';
-          reset_cnt := "00";
-        end if;
       end if;
     
       if wr_brc_start = '1' and fg_cntrl_reg(1) = '1' then -- disable after Started. Prevents unintended triggering by the next broadcast.
