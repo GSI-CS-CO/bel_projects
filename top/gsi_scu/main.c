@@ -587,9 +587,6 @@ void sw_irq_handler(unsigned int adr, unsigned int msg) {
           
       }
     break;
-    case 6:
-      run_mil_test(scu_mil_base, value & 0xff);
-    break;
     default:
       mprintf("swi: 0x%x\n", adr);
       mprintf("     0x%x\n", msg);
