@@ -258,7 +258,7 @@ architecture rtl of microtca_control is
     ("LED_USR7_G ", IO_NONE,         false,   false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
     ("LED_USR8_W ", IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
 
-    ("HWT_EN     ", IO_NONE,         false,   false,  8,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL), -- for testing front panel LEDs
+    ("HWT_EN     ", IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL), -- for testing front panel LEDs
 
     ("HSWF1      ", IO_NONE,         false,   false,  0,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
     ("HSWF2      ", IO_NONE,         false,   false,  1,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),
@@ -358,6 +358,8 @@ architecture rtl of microtca_control is
   signal s_dis_led_green : std_logic;
   signal s_dis_led_red   : std_logic;
   signal s_dis_led_blue  : std_logic;
+
+  signal s_counter : unsigned(23 downto 0);
   
   
 begin
@@ -367,9 +369,9 @@ begin
       g_family          => c_family,
       g_project         => c_project,
       g_flash_bits      => 25,
-      g_lvds_inout      => 17,  -- 5 LEMOs at front panel, 8 MTCA4 at BPL, 4 MTCA4 clk at BPL
+      g_lvds_inout      => 17, -- 5 LEMOs on front panel, 8 MTCA4 on BPL, 4 MTCA4 clk on BPL
       g_lvds_in         => 0,
-      g_lvds_out        => 4,   -- 4 libera triggers at BPL
+      g_lvds_out        => 4,  -- 4 libera triggers at BPL
       g_gpio_out        => 9,  -- 8 on-boards LEDs, 1 test mode enable
       g_gpio_in         => 10, -- 4 FPGA HEX switch, 4 CPLD HEX switch, 1 FPGA button, 1 CPLD buttong
       g_fixed           => 0,
@@ -446,6 +448,14 @@ begin
   );
 
 
+  p_counter: process(clk_sys)
+  begin
+    if rising_edge(clk_sys) then
+	s_counter <= s_counter + 1;
+    end if;
+  end process;
+
+
   -- test mode select via hex switch or sw
   -- invert FPGA button and HEX switch
   s_test_sel(4)          <= s_gpio_out(7)          when s_gpio_out(8)='1' else not pbs_f_i;
@@ -476,7 +486,11 @@ begin
   s_led_status_monster(4) <= s_led_pps;                          -- white = PPS
 
   -- GPIOs
-  s_led_status_monster(6 downto 5) <= s_gpio_out (1 downto 0);
+  s_led_status_monster(5) <= mmc_pcie_rst_n_i; --std_logic(s_counter(23));
+  s_led_status_monster(6) <= s_libera_bpl_buff_en;
+
+
+
 
   s_gpio_in(3 downto 0) <= not  hswf_i; -- FPGA HEX switch
   s_gpio_in(7 downto 4) <= con(4 downto 1); -- CPLD HEX switch
