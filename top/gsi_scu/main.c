@@ -81,6 +81,9 @@ volatile int initialized[MAX_SCU_SLAVES] = {0};
 void sw_irq_handler(unsigned int, unsigned int);
 
 
+void dev_failure(int status) {
+  mprintf("dev bus access failed with status %d\n", status);
+}
 
 void show_msi()
 {
@@ -129,6 +132,7 @@ void enable_scub_msis(int channel) {
 
 void disable_slave_irq(int channel) {
   int slot, dev;
+  int status;
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
     slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //slot number
     dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff;  //dev number
@@ -140,7 +144,7 @@ void disable_slave_irq(int channel) {
         scub_base[(slot << 16) + SLAVE_INT_ENA] &= ~(0x4000);       //disable fg2 irq
     } else if (slot == DEV_BUS_SLOT) {
       //write_mil(scu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
-      write_mil(scu_mil_base, 0x0, FC_IRQ_MSK | dev);               //mask drq
+      if (status = write_mil(scu_mil_base, 0x0, FC_IRQ_MSK | dev) != OKAY) dev_failure(status);  //mask drq
     }
     //mprintf("IRQs for slave %d disabled.\n", slot);
   }
@@ -160,6 +164,7 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
   struct param_set pset;
   int fg_num;
   unsigned short cntrl_reg_wr;
+  int status;
   
   fg_num = (cntrl_reg & 0x3f0) >> 4; // virtual fg number Bits 9..4
   if (cbRead(&fg_buffer[0], &fg_regs[0], fg_num, &pset)) {
@@ -173,12 +178,12 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
       scub_base[(slot << 16) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
       scub_base[(slot << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
     } else if (slot == DEV_BUS_SLOT) {
-      write_mil(scu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | fg_base);
-      write_mil(scu_mil_base, pset.coeff_a, FC_COEFF_A_WR | fg_base);
-      write_mil(scu_mil_base, pset.coeff_b, FC_COEFF_B_WR | fg_base);
-      write_mil(scu_mil_base, (pset.control & 0x3ffc0) >> 6,  FC_SHIFT_WR | fg_base); //shift a 17..12 shift b 11..6
-      write_mil(scu_mil_base, pset.coeff_c & 0xffff, FC_START_L_WR | fg_base);
-      write_mil(scu_mil_base, (pset.coeff_c & 0xffff0000) >> 16, FC_START_H_WR | fg_base); // data written with high word
+      if(status = write_mil(scu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | fg_base)                        != OKAY) dev_failure(status);
+      if(status = write_mil(scu_mil_base, pset.coeff_a, FC_COEFF_A_WR | fg_base)                      != OKAY) dev_failure(status);
+      if(status = write_mil(scu_mil_base, pset.coeff_b, FC_COEFF_B_WR | fg_base)                      != OKAY) dev_failure(status);
+      if(status = write_mil(scu_mil_base, (pset.control & 0x3ffc0) >> 6,  FC_SHIFT_WR | fg_base)      != OKAY) dev_failure(status); //shift a 17..12 shift b 11..6
+      if(status = write_mil(scu_mil_base, pset.coeff_c & 0xffff, FC_START_L_WR | fg_base)             != OKAY) dev_failure(status);
+      if(status = write_mil(scu_mil_base, (pset.coeff_c & 0xffff0000) >> 16, FC_START_H_WR | fg_base) != OKAY) dev_failure(status); // data written with high word
     }
     param_sent[fg_num]++;
   }
@@ -186,11 +191,12 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
 
 inline void handle(int slot, unsigned fg_base) {
     unsigned short cntrl_reg = 0;
+    int status;
 
     if (slot < DEV_BUS_SLOT)
       cntrl_reg = scub_base[(slot << 16) + fg_base + FG_CNTRL];
     else if (slot == DEV_BUS_SLOT)
-      read_mil(scu_mil_base, &cntrl_reg, FC_CNTRL_RD | fg_base);
+      if (status = read_mil(scu_mil_base, &cntrl_reg, FC_CNTRL_RD | fg_base) != OKAY) dev_failure(status);
       
     int channel = (cntrl_reg & 0x3f0) >> 4;        // virtual fg number Bits 9..4
     
@@ -233,13 +239,13 @@ inline void dev_bus_irq_handle(unsigned int msi_adr, unsigned int msi_msg) {
   int i;
   int slot, dev;
   short data;
+  int status;
   for (i = 0; i < MAX_FG_CHANNELS; i++) {
     if (fg_regs[i].state > 0) {
       slot = fg_macros[fg_regs[i].macro_number] >> 24;
       dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
       if(slot == DEV_BUS_SLOT) {
-        if (read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev) != OKAY)
-          return;
+        if (status = read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev) != OKAY) dev_failure(status);
         /* test for active 0 */
         if (~data & DRQ_BIT) {
           handle(slot, dev);
@@ -336,6 +342,7 @@ int configure_fg_macro(int channel) {
   int i = 0;
   int slot, dev, fg_base, dac_base;
   struct param_set pset;
+  int status;
   
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
     /* actions per slave card */
@@ -350,7 +357,7 @@ int configure_fg_macro(int channel) {
       scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000;            //enable fg1 and fg2 irq
     
     } else if (slot == DEV_BUS_SLOT) {
-      write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev);           //enable Data-Request
+      if (status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev) != OKAY) dev_failure(status);           //enable Data-Request
     }
 
     /* which macro are we? */
@@ -370,8 +377,8 @@ int configure_fg_macro(int channel) {
       scub_base[(slot << 16) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
       scub_base[(slot << 16) + fg_base + FG_CNTRL] = 0x1;           // reset fg
     } else if (slot == DEV_BUS_SLOT) {
-      write_mil(scu_mil_base, 0x1, 0x60 << 8 | dev);                // set FG mode
-      write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev);              // reset fg
+      if (status = write_mil(scu_mil_base, 0x1, 0x60 << 8 | dev) != OKAY) dev_failure(status);   // set FG mode
+      if (status = write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev) != OKAY) dev_failure(status); // reset fg
     }
 
     //fetch first parameter set from buffer
@@ -386,12 +393,12 @@ int configure_fg_macro(int channel) {
         scub_base[(slot << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
       } else if (slot == DEV_BUS_SLOT) {
         //set virtual fg number Bit 9..4
-        write_mil(scu_mil_base, (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4, FC_CNTRL_WR | dev);
-        write_mil(scu_mil_base, pset.coeff_a, FC_COEFF_A_WR | dev);
-        write_mil(scu_mil_base, pset.coeff_b, FC_COEFF_B_WR | dev);
-        write_mil(scu_mil_base, (pset.control & 0x3ffc0) >> 6, FC_SHIFT_WR | dev); //shift a 17..12 shift b 11..6
-        write_mil(scu_mil_base, pset.coeff_c & 0xffff, FC_START_L_WR | dev);
-        write_mil(scu_mil_base, (pset.coeff_c & 0xffff0000) >> 16, FC_START_H_WR | dev); // data written with high word
+        if (status = write_mil(scu_mil_base, (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4, FC_CNTRL_WR | dev) != OKAY) dev_failure(status);
+        if (status = write_mil(scu_mil_base, pset.coeff_a, FC_COEFF_A_WR | dev)                                                          != OKAY) dev_failure(status);
+        if (status = write_mil(scu_mil_base, pset.coeff_b, FC_COEFF_B_WR | dev)                                                          != OKAY) dev_failure(status);
+        if (status = write_mil(scu_mil_base, (pset.control & 0x3ffc0) >> 6, FC_SHIFT_WR | dev)                                           != OKAY) dev_failure(status); //shift a 17..12 shift b 11..6
+        if (status = write_mil(scu_mil_base, pset.coeff_c & 0xffff, FC_START_L_WR | dev)                                                 != OKAY) dev_failure(status);
+        if (status = write_mil(scu_mil_base, (pset.coeff_c & 0xffff0000) >> 16, FC_START_H_WR | dev)                                     != OKAY) dev_failure(status); // data written with high word
       }
       param_sent[i]++;
     }
@@ -403,8 +410,8 @@ int configure_fg_macro(int channel) {
       scub_base[(slot << 16) + fg_base + FG_CNTRL] |= FG_ENABLED;
     } else if (slot == DEV_BUS_SLOT) {
       short data;
-      read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev);
-      write_mil(scu_mil_base, 0xffff & data | FG_ENABLED, FC_CNTRL_WR | dev); 
+      if (status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev) != OKAY) dev_failure(status);
+      if (status = write_mil(scu_mil_base, 0xffff & data | FG_ENABLED, FC_CNTRL_WR | dev) != OKAY) dev_failure(status); 
     }
     fg_regs[channel].state = 2; //armed
     SEND_SIG(SIG_ARMED);
@@ -470,6 +477,7 @@ void print_regs() {
 void disable_channel(unsigned int channel) {
   int slot, dev, fg_base, dac_base;
   short data;
+  int status;
   if (fg_regs[channel].macro_number == -1) return;
   slot = fg_macros[fg_regs[channel].macro_number] >> 24;         //dereference slot number
   dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
@@ -490,8 +498,8 @@ void disable_channel(unsigned int channel) {
     scub_base[(slot << 16) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
   } else if (slot == DEV_BUS_SLOT) {
     // disarm hardware
-    read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev);
-    write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev);
+    if(status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev) != OKAY) dev_failure(status);
+    if(status = write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev) != OKAY) dev_failure(status);
     //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
   }
 
