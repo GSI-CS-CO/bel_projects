@@ -477,7 +477,7 @@ void main(void) {
 
 
     uint32_t* start = p + (( SHCTL_THR_CTL + T_TC_START ) >> 2);
-    uint32_t* running = p + (( SHCTL_THR_CTL + T_TC_GET ) >> 2);
+    uint32_t* running = p + (( SHCTL_THR_CTL + T_TC_RUNNING ) >> 2);
     uint32_t* stop = p + (( SHCTL_THR_CTL + T_TC_STOP  ) >> 2);
 
     for(i=0;i<8;i++) {

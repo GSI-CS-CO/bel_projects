@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
   const char *netaddress, *targetName = NULL, *inputFilename = NULL, *typeName = NULL, *para = NULL;
   int32_t tmp, error=0;
   uint32_t cpuIdx = 0, thrIdx = 0, cmdPrio = PRIO_LO, cmdQty = 1;
-  uint64_t cmdTvalid = 0, cmdTWait = 0, cmdFlush = PRIO_LO, longtmp;
+  uint64_t cmdTvalid = 0, cmdFlush = PRIO_LO, longtmp;
 
 // start getopt 
    while ((opt = getopt(argc, argv, "vc:p:t:q:")) != -1) {
@@ -60,11 +60,12 @@ int main(int argc, char* argv[]) {
               error = -1;
             } else {cpuIdx = (uint32_t)tmp;}
             break;
-         /*    
+ 
          case 'h':
-            help();
+            //help();
+          std::cout << program << "<FIXME insert help here > " << std::endl;
             return 0;
-         */ 
+
          case ':':
          
          case '?':
@@ -94,51 +95,38 @@ int main(int argc, char* argv[]) {
     if (optind+3 < argc) targetName      = argv[optind+3];
     if (optind+4 < argc) para            = argv[optind+4];
    
-
-   /*
-   if (optind+1 < argc)  command = argv[++optind];
-   else                 {command = "status"; cpuId = -1;}
-   if (!strcasecmp(command, "loadfw")) overrideFWcheck = 1;  
-   
-   if ( (!strcasecmp(command, "put")) || (!strcasecmp(command, "loadfw")))
-   {
-      if (optind+1 < argc) {
-         strncpy(filename, argv[optind+1], FILENAME_LEN);
-
-         readonly = 0;
-      } else {
-         fprintf(stderr, "%s: expecting one non-optional argument: <filename>\n", program);
-         return 1;
-      }
-   } 
-   */
-
   CarpeDM cdm = CarpeDM();
 
-  
-  cdm.connect(std::string(netaddress));
+  if(verbose) cdm.verboseOn();
 
-  std::cout << "Creating Dictionary from " << inputFilename << " ... ";
-  try { cdm.addDotToDict(inputFilename); }
-  catch (...) {
-    std::cerr << "Failed to create Dictionary." << std::endl;
-    return -10;
+  try {
+    cdm.connect(std::string(netaddress));
+  } catch (std::runtime_error const& err) {
+    std::cerr << "ERROR - Could not connect to DM: " << err.what() << std::endl; return -20;
   }
-  std::cout << "Done." << std::endl;
 
 
 
-  std::cout << "Downloading from CPU #" << cpuIdx << "... ";
-  cdm.downloadAndParse(cpuIdx);
-  std::cout << "Done." << std::endl;
-
+  try { cdm.addDotToDict(inputFilename); }
+  catch (std::runtime_error const& err) {
+    std::cerr << "ERROR: No Nodename/Hash dictionary available. Cause: " << err.what() << std::endl; return -30;
+  }
+    
+  try { 
+    cdm.downloadAndParse(cpuIdx);
+    if(verbose) cdm.showDown(cpuIdx);
+  } catch (std::runtime_error const& err) {
+    std::cerr << "ERROR: Download from CPU#"<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
+    return -7;
+  }
+ 
   vAdr cmdAdrs;
   vBuf cmdData;
   mc_ptr mc = NULL;
 
   if (typeName != NULL ) {  
 
-    std::cout << "Trying to generate " << typeName << " command" << std::endl;
+    if(verbose) std::cout << "Trying to generate " << typeName << " command" << std::endl;
 
     std::string cmp(typeName);
 
@@ -160,7 +148,7 @@ int main(int argc, char* argv[]) {
     else if (cmp == "origin")  {
       if (targetName != NULL) { 
         cdm.setThrOrigin(cpuIdx, thrIdx, targetName);     
-        std::cout << "Origin Node was set to " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl;
+        if(verbose) std::cout << "CPU #" << cpuIdx << " Thr #" << thrIdx << " Origin was set to Node " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl;
       }
     }
     else if (cmp == "cursor")  {

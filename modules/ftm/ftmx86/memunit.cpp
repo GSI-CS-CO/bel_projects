@@ -390,7 +390,7 @@
     std::cout << std::setfill('-') << std::setw(50) << std::endl;      
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       try {
-        auto* x = at.lookupHash(hashMap.lookup(g[v].name).get());
+        auto* x = at.lookupHash(g[v].np->getHash());
 
         std::cout << std::setfill(' ') << std::setw(4) << std::dec << x->v 
         << "   "     << std::setfill(' ') << std::setw(30) << g[v].name 
@@ -405,7 +405,7 @@
           dict << std::hex << "\"0x" << adr2extAdr(x->adr) << "\" : \"pe_" << g[v].name << "\"" << std::endl;
         } 
       } catch(...) {
-        throw std::runtime_error( std::string("Node ") + g[v].name + std::string(" not in dictionary")); return; 
+        throw std::runtime_error( std::string("Node ") + g[v].name + std::string(" not in AllocTable")); return; 
       }
     }
     std::cout << std::endl;  

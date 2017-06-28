@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <inttypes.h>
+#include <map>
 #include <boost/graph/graphviz.hpp>
 #include <etherbone.h>
 #include "graph.h"
@@ -21,11 +22,21 @@
 #define EXTERNAL  1
 #define INTERNAL  0
 
+#define FWID_RAM_TOO_SMALL      -1
+#define FWID_BAD_MAGIC          -2
+#define FWID_BAD_PROJECT_NAME   -3
+#define FWID_NOT_FOUND          -4
+#define FWID_BAD_VERSION_FORMAT -5
+#define VERSION_MAJOR           0
+#define VERSION_MINOR           1
+#define VERSION_REVISION        2
+#define VERSION_MAJOR_MUL       10000
+#define VERSION_MINOR_MUL       100
+#define VERSION_REVISION_MUL    1
 
 class MiniCommand;
 
 using namespace etherbone;
-
 
 class CarpeDM {
 
@@ -37,11 +48,11 @@ protected:
 
   std::string ebdevname;
   std::string outputfilename;
-  
-  std::string  inputfilename;
+  std::string inputfilename;
 
   std::vector<MemUnit> vM;
   std::vector<Graph>  vUp;
+  std::map<uint8_t, uint8_t> cpuIdxMap;
 
   Socket ebs;
   Device ebd;  
@@ -53,12 +64,12 @@ protected:
   std::ostream& sLog;
   std::ostream& sErr;
 
-  int   ftmRamWrite(Device& dev, vAdr va, vBuf& vb);
-  vBuf  ftmRamRead(Device& dev, vAdr va);
-  int ftmRamWriteWord(Device& dev, uint32_t adr, uint32_t data);
-  uint32_t ftmRamReadWord(Device& dev, uint32_t adr);
-
+  int   ebWriteCycle(Device& dev, vAdr va, vBuf& vb);
+  vBuf  ebReadCycle(Device& dev, vAdr va);
+  int ebWriteWord(Device& dev, uint32_t adr, uint32_t data);
+  uint32_t ebReadWord(Device& dev, uint32_t adr);
   boost::dynamic_properties createParser(Graph& g);
+  int parseFwVersionString(const std::string& s);
 
 public:
   CarpeDM() : sLog(std::cout), sErr(std::cerr)  {} 
@@ -66,49 +77,78 @@ public:
   CarpeDM(std::ostream& sLog, std::ostream& sErr) : sLog(sLog), sErr(sErr)  {}
   ~CarpeDM() {};
 
-  bool  connect(const std::string& en);
+  //Open connection to a DM via Etherbone
+  bool connect(const std::string& en);
 
-  bool  disconnect();
-  void  addDotToDict(const std::string& fn);
+  //Close connection
+  bool disconnect();
 
-  void  clearDict();
+  //Retrieve the Firmware Version of cpu at sdb dev array idx <cpuIdx>
+  int getFwVersion(uint8_t cpuIdx);
+
+  //Check if CPU is registered as running a valid firmware
+  bool isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);}
+
+  //Add all nodes in .dot file to name/hash dictionary
+  void addDotToDict(const std::string& fn);
+
+  //Clear the dictionary
+  void clearDict();
   
+  //Parse a .dot file to create unprocessed Graph
   Graph& parseUpDot(const std::string& fn, Graph& g);
 
-  bool  prepareUploadToCpu(Graph& g, uint8_t cpuIdx);
+  //Process Graph for uploading to LM32 SoC
+  bool prepareUploadToCpu(Graph& g, uint8_t cpuIdx);
 
-  int   upload(uint8_t cpuIdx);
+  //Upload processed Graph to LM32 SoC via Etherbone
+  int upload(uint8_t cpuIdx);
 
+  //Process and upload .dot file to to LM32 SoC via Etherbone
+  int uploadDot(uint8_t cpuIdx, const std::string& fn) { Graph gTmp; prepareUploadToCpu( parseUpDot(fn, gTmp), cpuIdx); return upload(cpuIdx); }
+
+  //Send a command to Block <targetName> on CPU <cpuIdx> via Etherbone
   int sendCmd(uint8_t cpuIdx, const std::string& targetName, uint8_t cmdPrio, mc_ptr mc); 
 
-     //TODO NC analysis
+  //TODO NC analysis
 
-    //TODO assign to CPUs/threads
+  //TODO assign to CPUs/threads
 
+  //Download binary from LM32 SoC and create Graph
   int downloadAndParse(uint8_t cpuIdx);
-  void writeDownDot(const std::string& fn, uint8_t cpuIdx) { writeDownDot( fn, vM[cpuIdx]); }
+
+  //Write out processed Download Graph as .dot file
+  void writeDownDot(const std::string& fn, uint8_t cpuIdx) { writeDownDot( fn, vM.at(cpuIdxMap.at(cpuIdx)) ); }
   void writeDownDot(const std::string& fn, MemUnit& m);
 
+  //Turn on Verbose Output
   void verboseOn()  {verbose = true;}
+
+  //Turn off Verbose Output
   void verboseOff() {verbose = false;}
+
+  //Tell if Output is set to Verbose 
   bool isVerbose()  const {return verbose;}
+
+  //Return number of found CPUs (not necessarily valid ones!)
   int getCpuQty()   const {return cpuQty;}
 
-  Graph& getUpGraph(uint8_t cpuIdx)   {return vM.at(cpuIdx).getUpGraph();}
-  Graph& getDownGraph(uint8_t cpuIdx) {return vM.at(cpuIdx).getDownGraph();}
+  //Returns the Upload Graph for CPU <cpuIdx>
+  Graph& getUpGraph(uint8_t cpuIdx)   {return vM.at(cpuIdxMap.at(cpuIdx)).getUpGraph();}
 
-  
-  //generates addresses for command to be sent
-  vAdr getCmdWrAdrs(uint8_t cpuIdx, const std::string& targetName, uint8_t);
+  //Returns the Download Graph for CPU <cpuIdx>
+  Graph& getDownGraph(uint8_t cpuIdx) {return vM.at(cpuIdxMap.at(cpuIdx)).getDownGraph();}
+
+   //generates addresses for command to be sent
+  vAdr getCmdWrAdrs(uint8_t cpuIdx, const std::string& targetName, uint8_t prio);
 
   //generates binary data for command to be sent
   vBuf getCmdData(uint8_t cpuIdx, const std::string& targetName, uint8_t prio, mc_ptr m);
   
 
-  //Returns if a hash / nodename is known to the hashmap
+  //Returns if a hash / nodename is known to the dictionary
   bool isKnown(const uint32_t hash)     const {return hm.contains(hash);}
   bool isKnown(const std::string& name) const {return hm.contains(name);}
-
 
   //Returns the external address of a thread's command register area
   uint32_t getThrCmdAdr(uint8_t cpuIdx);
@@ -155,11 +195,11 @@ public:
   //shortcut to obtain a node's address by its name
   uint32_t getNodeAdr(uint8_t cpuIdx, const std::string& name, bool direction, bool intExt); 
 
-  //show upload table
-  void showUp(uint8_t cpuIdx) {MemUnit& m = vM.at(cpuIdx);  m.showUp("Upload Table", "upload_dict.txt");}
+  //show a CPU's Upload address table
+  void showUp(uint8_t cpuIdx) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.showUp("Upload Table", "upload_dict.txt");}
 
-  //show download table
-  void showDown(uint8_t cpuIdx) {MemUnit& m = vM.at(cpuIdx);  m.showDown("Download Table", "download_dict.txt");}
+  //show a CPU's Download address table
+  void showDown(uint8_t cpuIdx) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.showDown("Download Table", "download_dict.txt");}
 };
 
 #endif

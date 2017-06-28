@@ -24,7 +24,7 @@ using namespace etherbone;
 
 const char defOutputFilename[] = "download.dot";
 
-int ftmRamWrite(Device& dev, vAdr va, vBuf& vb)
+int ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
 {
    //eb_status_t status;
    //std::cout << "Sizes: Va * 4 " << (va.size()*4) << " Vb " << vb.size() << std::endl; 
@@ -45,7 +45,7 @@ int ftmRamWrite(Device& dev, vAdr va, vBuf& vb)
    return 0;
 }
 
-vBuf ftmRamRead(Device& dev, vAdr va)
+vBuf ebReadCycle(Device& dev, vAdr va)
 {
    //eb_status_t status;
    Cycle cyc;
@@ -299,7 +299,7 @@ int main(int argc, char* argv[]) {
     //vHexDump("EB to Transfer", vUlD, vUlD.size()); 
     std::cout << "... Done. " << std::endl << " Uploading ... ";
     //Upload
-    ftmRamWrite(ebd, vUlA, vUlD);
+    ebWriteCycle(ebd, vUlA, vUlD);
    
     std::cout << "...Done. " << std::endl << "To make LM32 start, write Node Adr to 0x" << std::hex << myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_NODE_PTR << " then write 0x" << std::hex << (1 << thrIdx) << " to 0x" << myDevs[cpuIdx].sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_CTL + T_TC_START << std::endl;
 
@@ -310,14 +310,14 @@ int main(int argc, char* argv[]) {
 
     //for (auto& it : vDlBmpA) { std::cout << "RD BMP @: 0x" << std::hex << it << std::endl;}
 
-    vBuf vBmp = ftmRamRead(ebd, vDlBmpA);
+    vBuf vBmp = ebReadCycle(ebd, vDlBmpA);
     mmu.setDownloadBmp(vBmp);
     
 
     vAdr vDlA = mmu.getDownloadAdrs();
    
     //for (auto& it : vDlA) { std::cout << "RD @: 0x" << std::hex << it << std::endl;}
-    vBuf vDlD = ftmRamRead(ebd, vDlA);
+    vBuf vDlD = ebReadCycle(ebd, vDlA);
      std::cout << "Got " << std::dec << vDlA.size() << " bytes, " << vDlA.size() / (_MEM_BLOCK_SIZE / 4 )<< " Nodes " << std::endl;
     std::cout << "Download complete." << std::endl << "Parsing...";
     

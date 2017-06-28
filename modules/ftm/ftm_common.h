@@ -72,7 +72,7 @@
 #define T_CMD_WAIT_TIME         (T_CMD_ACT  + _32b_SIZE_)  // if it's a wait command, this is the new block tPeriod to add/new absolute thread time to use
 // ... or
 #define T_CMD_FLOW_DEST         (T_CMD_ACT  + _32b_SIZE_) // if it's a flow command, this is the alternative destination to use
-#define T_CMD_RES               (T_CMD_DEST + _32b_SIZE_)
+#define T_CMD_RES               (T_CMD_FLOW_DEST + _32b_SIZE_)
 // ... or
 #define T_CMD_FLUSH_RNG_HILO    (T_CMD_ACT  + _32b_SIZE_) // if it's a flush command and mode bits are set, this defines the q from/to idx to flush per qbuf
 #define T_CMD_FLUSH_RNG_IL      (T_CMD_FLUSH_RNG_HILO + _32b_SIZE_)

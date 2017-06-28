@@ -8,7 +8,7 @@
 
 
 const char defOutputFilename[] = "download.dot";
-
+const char defInputFilename[] = "";
 
 int main(int argc, char* argv[]) {
 
@@ -18,12 +18,12 @@ int main(int argc, char* argv[]) {
 
   int opt;
   const char *program = argv[0];
-  const char *netaddress, *blockName = NULL, *inputFilename = NULL, *outputFilename = defOutputFilename;
+  const char *netaddress, *inputFilename = defInputFilename, *outputFilename = defOutputFilename;
   int32_t tmp, error=0;
   uint32_t cpuIdx = 0, thrIdx = 0;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "vb:c:o:t:w")) != -1) {
+   while ((opt = getopt(argc, argv, "v:c:o:t:w")) != -1) {
       switch (opt) {
          case 'w':
             doUpload = true;
@@ -31,10 +31,7 @@ int main(int argc, char* argv[]) {
          case 'o':
             outputFilename  = optarg;
             break;
-         case 'b':
-            blockName = optarg;
-            readBlock = true;
-            break;       
+ 
          case 'v':
             verbose = 1;
             break;
@@ -83,59 +80,51 @@ int main(int argc, char* argv[]) {
 
    netaddress = argv[optind];
    if (optind+1 < argc) inputFilename   = argv[optind+1];
-   
 
-   /*
-   if (optind+1 < argc)  command = argv[++optind];
-   else                 {command = "status"; cpuId = -1;}
-   if (!strcasecmp(command, "loadfw")) overrideFWcheck = 1;  
    
-   if ( (!strcasecmp(command, "put")) || (!strcasecmp(command, "loadfw")))
-   {
-      if (optind+1 < argc) {
-         strncpy(filename, argv[optind+1], FILENAME_LEN);
-
-         readonly = 0;
-      } else {
-         fprintf(stderr, "%s: expecting one non-optional argument: <filename>\n", program);
-         return 1;
-      }
-   } 
-   */
 
   CarpeDM cdm = CarpeDM();
-  Graph gUp;
-  std::cout << "Connecting to " << netaddress << "... ";
-  cdm.connect(std::string(netaddress));
-  std::cout << "Done."  << std::endl << "Found " << cdm.getCpuQty() << " Cores." << std::endl;
-  std::cout << "Creating Dictionary from " << inputFilename << " ... ";
-  try { cdm.addDotToDict(inputFilename); }
-  catch (...) {
-    if(doUpload) {
-      return -5;
-    }
-  }
-  std::cout << "Done. " << std::endl;
-  if(doUpload) {
-    std::cout << "Preparing Upload to CPU #" << cpuIdx << "... " ;
-    cdm.parseUpDot(inputFilename, gUp);
-    cdm.prepareUploadToCpu(gUp, cpuIdx);
-    std::cout << "Done." << std::endl << "Uploading... ";
-    cdm.upload(cpuIdx);
-    std::cout << "Done." << std::endl;
-    cdm.showUp(cpuIdx);
 
-    
+
+  if(verbose) cdm.verboseOn();
+
+  Graph gUp;
+  try {
+    cdm.connect(std::string(netaddress));
+  } catch (std::runtime_error const& err) {
+    std::cerr << "ERROR - Could not connect to DM: " << err.what() << std::endl; return -20;
+  }
+
+
+
+  try { cdm.addDotToDict(inputFilename); }
+  catch (std::runtime_error const& err) {
+    if(doUpload) {
+      std::cerr << "ERROR: No dictionary available, mandatory for upload. Cause: " << err.what() << std::endl;
+      return -5;
+    } else {std::cerr << "WARNING: No Nodename/Hash dictionary available. Cause: " << err.what() << std::endl;}
   }
   
-  std::cout << "Downloading from CPU #" << cpuIdx << "... ";
-  cdm.downloadAndParse(cpuIdx);
-  std::cout << "Done." << std::endl << "Writing Output File " << outputFilename << "... ";
-  cdm.writeDownDot(outputFilename, cpuIdx);
-  std::cout << "Done." << std::endl;
+  if(doUpload) {
 
-
-  cdm.showDown(cpuIdx);
+    try { 
+      cdm.uploadDot(cpuIdx, inputFilename);
+      if(verbose) cdm.showUp(cpuIdx);
+    } catch (std::runtime_error const& err) {
+      std::cerr << "ERROR: Upload to CPU#"<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
+      return -6;
+    }
+  }
+  
+  try { 
+    cdm.downloadAndParse(cpuIdx);
+    cdm.writeDownDot(outputFilename, cpuIdx);
+    if(verbose) cdm.showDown(cpuIdx);
+  } catch (std::runtime_error const& err) {
+    std::cerr << "ERROR: Download from CPU#"<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
+    return -7;
+  }
+ 
 
   cdm.disconnect();
 

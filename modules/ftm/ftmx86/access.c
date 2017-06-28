@@ -86,7 +86,7 @@ static void hexDump (char *desc, void *addr, int len) {
 }
 
 
-static int ftmRamRead(uint32_t address, const uint8_t* buf, uint32_t len, uint32_t bufEndian)
+static int ebReadCycle(uint32_t address, const uint8_t* buf, uint32_t len, uint32_t bufEndian)
 {
    
    eb_status_t status;
@@ -123,7 +123,7 @@ static int ftmRamRead(uint32_t address, const uint8_t* buf, uint32_t len, uint32
    return 0;
 }
 
-static int ftmRamWrite(uint32_t address, const uint8_t* buf, uint32_t len, uint32_t bufEndian)
+static int ebWriteCycle(uint32_t address, const uint8_t* buf, uint32_t len, uint32_t bufEndian)
 {
    eb_status_t status;
    eb_cycle_t cycle;
@@ -303,12 +303,12 @@ static int ftmPut(uint32_t dstCpus, t_ftmPage*  pPage, uint32_t bufSizes) {
       newSize    = (uint32_t*)&tab[(LBT_TAB + alloc->idx * _LB_SIZE_ + LB_SIZE)>>2];
       newBmp     = (uint32_t*)&tab[(LBT_BMP)>>2]; 
       
-      ftmRamWrite(*newAddress, bufWriteStart, *newSize, BIG_ENDIAN);
+      ebWriteCycle(*newAddress, bufWriteStart, *newSize, BIG_ENDIAN);
       printf("Wrote %u byte schedule to CPU %u at 0x%08x.\n", *newSize, cpuIdx, *newAddress);
       printf("Verifying CPU %u ...", cpuIdx); 
 
           
-      ftmRamRead(*newAddress, bufRead, *newSize, BIG_ENDIAN);
+      ebReadCycle(*newAddress, bufRead, *newSize, BIG_ENDIAN);
       for(i = 0; i<*newSize; i++) {
         if(!(bufRead[i] == bufWriteStart[i])) { 
           printf("FAILED at offset 0x%08x\n", *newAddress +( i & ~0x3) );
@@ -468,7 +468,7 @@ int ftmOpen(const char* netaddress, uint8_t overrideFWcheck)
   // get the LiveBlockTables from the core RAM
   for(cpuIdx = 0; cpuIdx < p->cpuQty; cpuIdx++) {
     if (p->pCores[cpuIdx].hasValidFW) {
-      if (-1 == ftmRamRead((p->pCores[cpuIdx].ramAdr + ftm_shared_offs + SHCTL_LBTAB),  (const uint8_t*)&(p->pCores[cpuIdx].lbt), _LBT_SIZE_, BIG_ENDIAN)) {
+      if (-1 == ebReadCycle((p->pCores[cpuIdx].ramAdr + ftm_shared_offs + SHCTL_LBTAB),  (const uint8_t*)&(p->pCores[cpuIdx].lbt), _LBT_SIZE_, BIG_ENDIAN)) {
         printf("Core #%u: Failed to read Live Block Table\n", cpuIdx);
       } 
     } else printf("Core #%u: Can't read schedule data offsets - no valid firmware present.\n", cpuIdx);
@@ -553,7 +553,7 @@ int ftmFwLoad(uint32_t dstCpus, const char* filename) {
     if((dstCpus >> cpuIdx) & 0x1) {
       //Load FW
       printf("Loading %s to CPU %u @ 0x%08x\n", filename, cpuIdx, p->pCores[cpuIdx].ramAdr);  
-      ftmRamWrite(p->pCores[cpuIdx].ramAdr, buffer, fileLen, LITTLE_ENDIAN);
+      ebWriteCycle(p->pCores[cpuIdx].ramAdr, buffer, fileLen, LITTLE_ENDIAN);
     }
   }
   free(buffer);
@@ -693,7 +693,7 @@ int v02FtmDump(uint32_t srcCpus, int32_t tabIdx, char* stringBuf, uint32_t lenSt
       //Get the absolute address from the Live block Table
       if(tab[(LBT_BMP)>>2] & (1 << tabIdx)) {
 
-        ftmRamRead( tab[(tabOffset + LB_PTR)>>2], bufRead, tab[(tabOffset + LB_SIZE)>>2], BIG_ENDIAN);
+        ebReadCycle( tab[(tabOffset + LB_PTR)>>2], bufRead, tab[(tabOffset + LB_SIZE)>>2], BIG_ENDIAN);
         pPage = deserPage(calloc(1, sizeof(t_ftmPage)), bufRead);
         if(pPage != NULL) {  
            printf("Deserialization successful.\n\n");
@@ -865,13 +865,13 @@ int v02FtmFetchStatus(uint32_t* buff, uint32_t len) {
   offset = 0;
 
   // read EBM status
-  ftmRamRead(p->ebmAdr + EBM_STATUS_GET, (const uint8_t*)&buff[EBM_STATUS_GET>>2], EBM_SEMA_RW, BIG_ENDIAN);
+  ebReadCycle(p->ebmAdr + EBM_STATUS_GET, (const uint8_t*)&buff[EBM_STATUS_GET>>2], EBM_SEMA_RW, BIG_ENDIAN);
 
   offset += (EBM_SEMA_RW)>>2; //advance offset
 
   // read PrioQ status 
-  ftmRamRead(p->prioQAdr + PRIO_MODE_GET,     (const uint8_t*)&buff[(EBM_SEMA_RW + PRIO_MODE_GET)>>2],    4,                                            BIG_ENDIAN);
-  ftmRamRead(p->prioQAdr + PRIO_ST_FULL_GET,  (const uint8_t*)&buff[(EBM_SEMA_RW + PRIO_ST_FULL_GET)>>2], PRIO_CNT_OUT_ALL_GET_1 - PRIO_ST_FULL_GET +4, BIG_ENDIAN);
+  ebReadCycle(p->prioQAdr + PRIO_MODE_GET,     (const uint8_t*)&buff[(EBM_SEMA_RW + PRIO_MODE_GET)>>2],    4,                                            BIG_ENDIAN);
+  ebReadCycle(p->prioQAdr + PRIO_ST_FULL_GET,  (const uint8_t*)&buff[(EBM_SEMA_RW + PRIO_ST_FULL_GET)>>2], PRIO_CNT_OUT_ALL_GET_1 - PRIO_ST_FULL_GET +4, BIG_ENDIAN);
   offset += (PRIO_CNT_OUT_ALL_GET_1 + 4)>>2; //advance offset
 
   //read WR State
