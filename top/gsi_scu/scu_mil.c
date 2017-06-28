@@ -1,4 +1,5 @@
 #include "scu_mil.h"
+#include "aux.h"
 
 /***********************************************************
  ***********************************************************
@@ -21,8 +22,9 @@ int trm_free(volatile unsigned int *base) {
   int i = MAX_TST_CNT;
   
   for (i = MAX_TST_CNT; i > 0; i--) {
-    if (base[MIL_WR_RD_STATUS] & MIL_TRM_READY)
+    if (base[MIL_WR_RD_STATUS] & MIL_TRM_READY) {
       break;
+    }
   }
   if (i > 0)
     return OKAY;
@@ -31,15 +33,19 @@ int trm_free(volatile unsigned int *base) {
 }
 
 int write_mil(volatile unsigned int *base, short data, short fc_ifc_addr) {
+  atomic_on();
   if (trm_free(base) == OKAY) {
     base[MIL_RD_WR_DATA] = data;
   } else {
+    atomic_off();
     return TRM_NOT_FREE;
   }
   if (trm_free(base) == OKAY) {
     base[MIL_WR_CMD] = fc_ifc_addr;
+    atomic_off();
     return OKAY;
   } else {
+    atomic_off();
     return TRM_NOT_FREE;
   }
 }
@@ -69,19 +75,24 @@ int rcv_flag(volatile unsigned int *base) {
 int read_mil(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   int rcv_flags = 0;
 
+  atomic_on();
   if (trm_free(base) == OKAY) {
     base[MIL_WR_CMD] = fc_ifc_addr;
   } else {
+    atomic_off();
     return TRM_NOT_FREE;
   }
   rcv_flags = rcv_flag(base);
   if (rcv_flags == OKAY) {
     *data = base[MIL_RD_WR_DATA];
+    atomic_off();
     return OKAY;
   } else if (rcv_flags == RCV_ERROR) {
-      return RCV_ERROR;
+    atomic_off();
+    return RCV_ERROR;
   } else if (rcv_flags == RCV_TIMEOUT) {
-      return RCV_TIMEOUT;
+    atomic_off();
+    return RCV_TIMEOUT;
   }
 }
 
