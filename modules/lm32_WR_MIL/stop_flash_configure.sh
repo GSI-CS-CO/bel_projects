@@ -15,4 +15,4 @@ eb-write tcp/scuxl0089.acc.gsi.de 0x${CMD_ADR}/4 0x1
 sleep 1
 eb-fwload tcp/scuxl0089.acc.gsi.de u1 0 wr_mil.bin 
 sleep 1
-eb-write tcp/scuxl0089.acc.gsi.de 0x${SOURCE_ADR}/4 0x1 
+eb-write tcp/scuxl0089.acc.gsi.de 0x${CMD_ADR}/4 0x3 

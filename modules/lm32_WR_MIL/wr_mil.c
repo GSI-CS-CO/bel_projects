@@ -51,7 +51,7 @@
 #include "wr_mil_value64bit.h"
 #include "wr_mil_eca_queue.h"
 #include "wr_mil_eca_ctrl.h"
-#include "wr_mil_cmd.h"
+#include "wr_mil_config.h"
 #include "wr_mil_delay.h"
 #include "wr_mil_events.h"
 #include "../../top/gsi_scu/scu_mil.h"
@@ -92,14 +92,6 @@ void lemoPulse12(volatile uint32_t *mil_piggy)
 }
 
 
-typedef union UTCtime_t
-{
-  uint8_t bytes[8];
-  struct {
-    uint32_t timeMs;
-    uint32_t timeS;
-  } bit;
-} UTCtime;
 // convert 64-bit TAI from WR into an array of five MIL events (EVT_UTC_1/2/3/4/5 events with evtNr 0xE0 - 0xE4)
 // arguments:
 //   TAI:     a 64-bit WR-TAI value
@@ -121,16 +113,24 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC)
   uint32_t mil_ms           = mil_timestamp_ms % 1000;
   uint32_t mil_sec          = mil_timestamp_ms / 1000;
 
-  UTCtime utc_time;
-  utc_time.bit.timeS  =  mil_sec & 0x3fffffff;
-  utc_time.bit.timeMs = (mil_ms & 0x3ff) << 6;
+  // The following converion code for the UTC timestamps is based on 
+  // some sample code that was kinkly provided by Peter Kainberger.
+  union UTCtime_t
+  {
+    uint8_t bytes[8];
+    struct {
+      uint32_t timeMs;
+      uint32_t timeS;
+    } bit;
+  } utc_time = { .bit.timeS  =  mil_sec & 0x3fffffff,
+                 .bit.timeMs = (mil_ms & 0x3ff) << 6 };
 
-  EVT_UTC[0] =  utc_time.bytes[2]*256 + MIL_EVT_UTC_1;
+  EVT_UTC[0] =  utc_time.bytes[2] *256 + MIL_EVT_UTC_1;
   EVT_UTC[1] = (utc_time.bytes[3] | 
                 utc_time.bytes[4])*256 + MIL_EVT_UTC_2;
-  EVT_UTC[2] = utc_time.bytes[5]*256 + MIL_EVT_UTC_3;
-  EVT_UTC[3] = utc_time.bytes[6]*256 + MIL_EVT_UTC_4;
-  EVT_UTC[4] = utc_time.bytes[7]*256 + MIL_EVT_UTC_5;
+  EVT_UTC[2] =  utc_time.bytes[5] *256 + MIL_EVT_UTC_3;
+  EVT_UTC[3] =  utc_time.bytes[6] *256 + MIL_EVT_UTC_4;
+  EVT_UTC[4] =  utc_time.bytes[7] *256 + MIL_EVT_UTC_5;
 }
 
 
@@ -140,10 +140,10 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC)
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
                                           // and make this time difference 100.0(5)us
-void eventHandler(volatile uint32_t   *eca,
-                  volatile uint32_t   *eca_queue, 
-                  volatile uint32_t   *mil_piggy,
-                  volatile MilCmdRegs *mil_cmd)
+void eventHandler(volatile uint32_t    *eca,
+                  volatile uint32_t    *eca_queue, 
+                  volatile uint32_t    *mil_piggy,
+                  volatile WrMilConfig *mil_cmd)
 {
   if (ECAQueue_actionPresent(eca_queue))
   {
@@ -271,7 +271,7 @@ void main(void)
   mprintf("eca ctrl regs at %08x\n", eca_ctrl);
 
   // Command
-  volatile MilCmdRegs *mil_cmd = MilCmd_init();
+  volatile WrMilConfig *mil_cmd = config_init();
   mprintf("mil cmd regs at %08x\n", mil_cmd);
 
   // say hello on the console
@@ -280,13 +280,13 @@ void main(void)
   mprintf("TAI now: 0x%08x%08x\n", nowTAI.part.hi, nowTAI.part.lo);
 
   while (1) {
+    //poll user commands
+    config_poll(mil_cmd);
+
     // do whatever has to be done
     eventHandler(eca_ctrl, eca_queue, mil_piggy, mil_cmd);
     DELAY10us;
 
     //testOfFunction_wait_until_tai(mil_piggy, eca_ctrl);
-
-    //poll user commands
-    MilCmd_poll(mil_cmd);
   } 
 } 

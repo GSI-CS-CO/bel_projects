@@ -35,7 +35,7 @@ fwbin: $(TARGET).bin
 $(TARGET).elf: $(PATHFW)/$(TARGET).c                 \
 			   $(PATHFW)/wr_mil_eca_ctrl.c           \
 			   $(PATHFW)/wr_mil_eca_queue.c          \
-			   $(PATHFW)/wr_mil_cmd.c                \
+			   $(PATHFW)/wr_mil_config.c             \
 			   $(PATHFW)/wr_mil_delay.s              \
 			   $(PATHFW)/../../top/gsi_scu/scu_mil.c
 

@@ -13,9 +13,9 @@ volatile uint32_t *ECACtrl_init()
 void ECACtrl_getTAI(volatile uint32_t *eca, TAI_t *tai)
 {
   do {
-    tai->part.hi = *((uint32_t*)eca + ECA_TIME_HI_GET/4);
-    tai->part.lo = *((uint32_t*)eca + ECA_TIME_LO_GET/4);
-  } while (tai->part.hi != *((uint32_t*)eca + ECA_TIME_HI_GET/4)); 
+    tai->part.hi = eca[ECA_TIME_HI_GET/4];
+    tai->part.lo = eca[ECA_TIME_LO_GET/4];
+  } while (tai->part.hi != eca[ECA_TIME_HI_GET/4]); 
   /* repeat until high time did not change while reading low time */
 }
 
