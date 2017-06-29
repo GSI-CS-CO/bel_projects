@@ -8,7 +8,7 @@
 #include "ebm.h"
 #include "aux.h"
 #include "dbg.h"
-#include "../ftm_common.h"
+#include "ftm_common.h"
 #include "prio_regs.h"
 
 unsigned int cpuId, cpuQty, heapCap;
@@ -405,8 +405,6 @@ void paintPath(uint32_t* node) {
 void main(void) {
    
   int i,j;
-  uint32_t   start;
-  uint32_t** test;
   uint32_t *p  = (uint32_t*)_startshared; 
 
   nodeFuncs[NODE_TYPE_UNKNOWN]      = dummyNodeFunc; 
@@ -471,14 +469,14 @@ void main(void) {
    atomic_off();
    if (getMsiBoxCpuSlot(cpuId, 0) == -1) {mprintf("#%02u: Mail box slot acquisition failed\n", cpuId);}
   
-
+    uint32_t* start   = p + (( SHCTL_THR_CTL + T_TC_START )   >> 2);
+    uint32_t* running = p + (( SHCTL_THR_CTL + T_TC_RUNNING ) >> 2);
+    uint32_t* stop    = p + (( SHCTL_THR_CTL + T_TC_STOP  )   >> 2);
    
    while (1) {
 
 
-    uint32_t* start = p + (( SHCTL_THR_CTL + T_TC_START ) >> 2);
-    uint32_t* running = p + (( SHCTL_THR_CTL + T_TC_RUNNING ) >> 2);
-    uint32_t* stop = p + (( SHCTL_THR_CTL + T_TC_STOP  ) >> 2);
+
 
     for(i=0;i<8;i++) {
       

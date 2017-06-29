@@ -11,7 +11,7 @@ include ../../../syn/build.mk
 PATHFW		= .
 PATHPRIO	= ../../prioq2
 PREFIX		?= /usr/local
-CFLAGS		+= -I$(PATHFW) -I$(PATHPRIO) -DDEBUGLEVEL=$(DEBUGLVL) 
+CFLAGS		+= -I$(PATHFW) -I$(PATHPRIO) -I$(PATHFW)/../include -DDEBUGLEVEL=$(DEBUGLVL) 
 
 all: $(TARGET).bin $(TARGET).elf
 

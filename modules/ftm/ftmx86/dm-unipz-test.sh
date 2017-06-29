@@ -1,5 +1,6 @@
 #!/bin/bash
-eb-fwload $1 u0 0 /home/mkreider/projects/bel_projects/modules/ftm/ftmfw/ftm.bin 
-./test $1 unipz.dot -w
-#eb-write $1 0x4110538/4 0x10001310; eb-write tcp/tsl008.acc.gsi.de 0x4110528/4 0x1
+eb-fwload $1 u0 0 ../ftmfw/ftm.bin
+./dm-sched $1 -w unipz.dot 
+./dm-cmd $1 unipz.dot origin Evt_TKREQ_00
+./dm-cmd $1 unipz.dot start
 
