@@ -11,13 +11,12 @@ extern volatile uint32_t _startshared[]; // provided in linker script "ram.ld"
 uint64_t SHARED dummy = 0; // not sure if that variable is really needed
                            // the extern volatile uint32_t _startshared[] should be enough
 
-#define WR_MIL_GW_STATE_INIT         0
-#define WR_MIL_GW_STATE_UNCONFIGURED 1
-#define WR_MIL_GW_STATE_CONFIGURED   2
+
 
 volatile WrMilConfig *config_init()
 {
   volatile WrMilConfig *config = (volatile WrMilConfig*)_startshared;
+  config->magic                = WR_MIL_GW_MAGIC_NUMBER;
   config->cmd                  = WR_MIL_GW_CMD_NONE;
   config->utc_trigger          = MIL_EVT_END_CYCLE;
   config->utc_delay            = 100; // 100 us delay

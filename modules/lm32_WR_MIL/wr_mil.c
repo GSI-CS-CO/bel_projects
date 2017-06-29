@@ -134,16 +134,17 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC)
 }
 
 
-#define N_UTC_EVENTS           5          // the number of EVT_UTC events
+#define N_UTC_EVENTS           5          // number of generated EVT_UTC events
 #define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
-#define WR_MIL_GATEWAY_LATENCY 73575      // additional latency in units of nanoseconds
-                                          // this value was determined by measuring the time difference
-                                          // of the MIL event rising edge and the ECA output rising edge (no offset)
-                                          // and make this time difference 100.0(5)us
+// #define WR_MIL_GATEWAY_LATENCY 73575      // additional latency in units of nanoseconds
+//                                           // this value was determined by measuring the time difference
+//                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
+//                                           // and tuning this time difference to 100.0(5)us
+#define WR_MIL_GATEWAY_LATENCY (73575+50000) // 150.0(5) us     
 void eventHandler(volatile uint32_t    *eca,
                   volatile uint32_t    *eca_queue, 
                   volatile uint32_t    *mil_piggy,
-                  volatile WrMilConfig *mil_cmd)
+                  volatile WrMilConfig *config)
 {
   if (ECAQueue_actionPresent(eca_queue))
   {
@@ -171,25 +172,28 @@ void eventHandler(volatile uint32_t    *eca,
           //make_mil_timestamp(mil_event_time, EVT_UTC);     
           too_late = wait_until_tai(eca, mil_event_time);
           mil_piggy_write_event(mil_piggy, milTelegram); 
-          delay_96plus32n_ns(mil_cmd->trigger_utc_delay*32);
+          delay_96plus32n_ns(config->trigger_utc_delay*32);
           mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_BEGIN_CMD_EXEC); 
-          delay_96plus32n_ns(mil_cmd->trigger_utc_delay*32);
+          delay_96plus32n_ns(config->trigger_utc_delay*32);
           // create the five events EVT_UTC_1/2/3/4/5 with seconds and miliseconds since 01/01/2008
           for (int i = 0; i < N_UTC_EVENTS; ++i)
           {
             // Churn out the EVT_UTC MIL events as fast as possible. 
             //  This results in approx. 21 us between two successive events.
             mil_piggy_write_event(mil_piggy, EVT_UTC[i]); 
-            //for (int i = mil_cmd->utc_delay; i != 0; --i) DELAY1us;
-            delay_96plus32n_ns(mil_cmd->utc_delay*32);
+            //for (int i = config->utc_delay; i != 0; --i) DELAY1us;
+            if (i < N_UTC_EVENTS-1)
+            {
+              delay_96plus32n_ns(config->utc_delay*32);
+            }
             //DELAY100us;
             //mil_piggy_write_event(mil_piggy, 0x0000abc0 | i); 
           }
-          delay_96plus32n_ns(mil_cmd->trigger_utc_delay*32);
-          mil_piggy_write_event(mil_piggy, (mil_cmd->event_source<<12) | MIL_EVT_COMMAND); 
-          delay_96plus32n_ns(mil_cmd->trigger_utc_delay*32);
-          mil_piggy_write_event(mil_piggy, (mil_cmd->event_source<<12) | MIL_EVT_COMMAND); 
-          delay_96plus32n_ns(mil_cmd->trigger_utc_delay*32);
+          delay_96plus32n_ns(config->trigger_utc_delay*32);
+          mil_piggy_write_event(mil_piggy, (config->event_source<<12) | MIL_EVT_COMMAND); 
+          delay_96plus32n_ns(config->trigger_utc_delay*32);
+          mil_piggy_write_event(mil_piggy, (config->event_source<<12) | MIL_EVT_COMMAND); 
+          delay_96plus32n_ns(config->trigger_utc_delay*32);
           mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_END_CMD_EXEC); 
         break;
         default:
@@ -247,10 +251,11 @@ void testOfFunction_wait_until_tai(volatile uint32_t *mil_piggy,
     for (int i = 0; i < 50; ++i) DELAY1000us; // wait 50 ms before the next series of pulses is generated
 }
 
-// after some initialization, the program enters a tight loop where the event handler is called.
+// After some initialization, the program enters a tight loop where the event handler is called.
 // in the event handler, the ECA queue is polled for events and if the event number is in the range [0...255]
-// a MIL event is generated. In the special case of event number = MIL_EVT_START_CYCLE = 0x20, in addition to the
-// MIL_EVT_START_CYCLE five MIL events are generated that contain a converted WR timestamp with milisecond precision.
+// a MIL event is generated. If the event number matches the WR_MIL_GW_REG_UTC_TRIGGER register in shared memory
+// in shared memory (default is MIL_EVT_END_CYCLE) five MIL events are generated in addition to the requested event.
+// The UTC events contain a converted  WR timestamp with milisecond precision.
 void main(void) 
 {
   init();   
@@ -271,8 +276,8 @@ void main(void)
   mprintf("eca ctrl regs at %08x\n", eca_ctrl);
 
   // Command
-  volatile WrMilConfig *mil_cmd = config_init();
-  mprintf("mil cmd regs at %08x\n", mil_cmd);
+  volatile WrMilConfig *config = config_init();
+  mprintf("mil cmd regs at %08x\n", config);
 
   // say hello on the console
   TAI_t nowTAI; 
@@ -281,12 +286,15 @@ void main(void)
 
   while (1) {
     //poll user commands
-    config_poll(mil_cmd);
+    config_poll(config);
 
     // do whatever has to be done
-    eventHandler(eca_ctrl, eca_queue, mil_piggy, mil_cmd);
-    DELAY10us;
+    if (config->state == WR_MIL_GW_STATE_CONFIGURED)
+    {
+      eventHandler(eca_ctrl, eca_queue, mil_piggy, config);
+    }
 
+    DELAY10us;
     //testOfFunction_wait_until_tai(mil_piggy, eca_ctrl);
   } 
 } 

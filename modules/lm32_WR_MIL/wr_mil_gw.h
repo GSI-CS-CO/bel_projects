@@ -1,6 +1,11 @@
 #ifndef WR_MIL_GW_H_
 #define WR_MIL_GW_H_
 
+// Magic number to identify the LM32 (if more than one exists) that runs the WR-MIL gateway
+#define WR_MIL_GW_MAGIC_NUMBER       0x1234abcd
+
+#define WR_MIL_GW_SHARED_OFFSET      0x500 // offset to the shared memory section
+
 // Commands to be written into the WR_MIL_GW_REG_COMMAND register
 #define WR_MIL_GW_CMD_NONE           0x0   // empty command
 #define WR_MIL_GW_CMD_FULL_STOP      0x1   // command to stop the LM32 from running
@@ -10,12 +15,13 @@
 
 
 // Configuration register mapping in shared memory region
-#define WR_MIL_GW_REG_COMMAND        0x00  // command to be executed
-#define WR_MIL_GW_REG_UTC_TRIGGER    0x04  // the MIL event that triggers the generation of UTC events
-#define WR_MIL_GW_REG_UTC_SEPARATION 0x08  // delay [us] between the 5 generated UTC MIL events
-#define WR_MIL_GW_REG_UTC_DELAY      0x0C  // delay [us] between the trigger event and the first UTC (and other) generated events
-#define WR_MIL_GW_REG_EVENT_SOURCE   0x10  // for internal use: register to hold the source configuration: 1 = SIS ; 2 = ESR ; 0 not configured
-#define WR_MIL_GW_REG_STATE          0x14  // for internal use: state of the program: INITIAL, UNCONFIGURED, CONFIGURED
+#define WR_MIL_GW_REG_MAGIC_NUMBER   0x00  // command to be executed
+#define WR_MIL_GW_REG_COMMAND        0x04  // command to be executed
+#define WR_MIL_GW_REG_UTC_TRIGGER    0x08  // the MIL event that triggers the generation of UTC events
+#define WR_MIL_GW_REG_UTC_SEPARATION 0x0C  // delay [us] between the 5 generated UTC MIL events
+#define WR_MIL_GW_REG_UTC_DELAY      0x10  // delay [us] between the trigger event and the first UTC (and other) generated events
+#define WR_MIL_GW_REG_EVENT_SOURCE   0x14  // for internal use: register to hold the source configuration: 1 = SIS ; 2 = ESR ; 0 not configured
+#define WR_MIL_GW_REG_STATE          0x18  // for internal use: state of the program: INITIAL, UNCONFIGURED, CONFIGURED
 
 
 // Constants for event source type configuration.
