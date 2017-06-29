@@ -14,20 +14,21 @@ int main(int argc, char* argv[]) {
 
 
 
-  bool doUpload = false, readBlock = false, verbose = false;
+  bool doUpload = false, verbose = false;
 
   int opt;
   const char *program = argv[0];
   const char *netaddress, *inputFilename = defInputFilename, *outputFilename = defOutputFilename;
   int32_t tmp, error=0;
-  uint32_t cpuIdx = 0, thrIdx = 0;
+  uint32_t cpuIdx = 0;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "v:c:o:t:w")) != -1) {
+   while ((opt = getopt(argc, argv, "vc:o:w")) != -1) {
       switch (opt) {
          case 'w':
             doUpload = true;
             break;
+         
          case 'o':
             outputFilename  = optarg;
             break;
@@ -35,13 +36,7 @@ int main(int argc, char* argv[]) {
          case 'v':
             verbose = 1;
             break;
-         case 't':
-            tmp = atol(optarg);
-            if (tmp < 0 || tmp > 8) {
-              std::cerr << program << ": invalid thr idx -- '" << optarg << "'" << std::endl;
-              error = -1;
-            } else {thrIdx = (uint32_t)tmp;}
-            break;
+
          case 'c':
             tmp = atol(optarg);
             if (tmp < 0 || tmp > 8) {
@@ -49,11 +44,12 @@ int main(int argc, char* argv[]) {
               error = -1;
             } else {cpuIdx = (uint32_t)tmp;}
             break;
-         /*    
+
          case 'h':
-            help();
+            //help();
+          std::cout << program << "<FIXME insert help here > " << std::endl;
             return 0;
-         */ 
+         
          case ':':
          
          case '?':

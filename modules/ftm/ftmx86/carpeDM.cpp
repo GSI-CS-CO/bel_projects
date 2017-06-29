@@ -5,6 +5,7 @@
 #include <string>
 #include <inttypes.h>
 #include <boost/graph/graphviz.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "common.h"
 #include "propwrite.h"
@@ -281,18 +282,25 @@ bool CarpeDM::connect(const std::string& en) {
   }
 
   int CarpeDM::sendCmd(uint8_t cpuIdx, const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {
-    if(verbose) sLog << "Sending Command to Block " << targetName << "on CPU #" << cpuIdx << "... ";
-    vBuf vUlD = getCmdData(cpuIdx, targetName, cmdPrio, mc); 
-    vAdr vUlA = getCmdWrAdrs(cpuIdx, targetName, cmdPrio);
-    //Upload
-    /*
-    if(debug) sLog << "AdrQty: " << std::dec << vUlA.size() << std::endl;
-    for (auto& it : vUlA) {sLog << "0x" << std::hex << it << std::endl;}
+    MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
+    if(verbose) sLog << "Preparing Command to Block " << targetName << "on CPU #" << cpuIdx << "... ";
+    vBuf vUlD;
+    vAdr vUlA;
+    uint32_t cmdWrInc, hash;
+    uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
 
-    sLog << "DataQty: " << std::dec << vUlD.size() << std::endl;
-    vHexDump ("CmdData", vUlD);
-    */
-    ebWriteCycle(ebd, vUlA, vUlD);
+    try {
+      hash      = hm.lookup(targetName).get(); 
+      vUlA      = m.getCmdWrAdrs(hash, cmdPrio);
+      cmdWrInc  = m.getCmdInc(hash, cmdPrio);
+      mc->serialise(b);
+      writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, cmdWrInc);
+      vUlD.insert( vUlD.end(), b, b + _T_CMD_SIZE_ + _32b_SIZE_);
+      if(verbose) sLog << "Done." << std::endl << "Sending...";
+      ebWriteCycle(ebd, vUlA, vUlD);
+    } catch (...) {throw;}      
+
+    
     if(verbose) sLog << "Done." << std::endl;
     return vUlD.size();
   }
@@ -323,7 +331,9 @@ bool CarpeDM::connect(const std::string& en) {
   int CarpeDM::parseFwVersionString(const std::string& s) {
     
     int verMaj, verMin, verRev;
-    std::vector<std::string> x = split(s, '.');
+    std::vector<std::string> x;
+
+    boost::split(x, s, boost::is_any_of("."));
     if (x.size() != 3) {return FWID_BAD_VERSION_FORMAT;}
 
     verMaj = std::stoi (x[VERSION_MAJOR]);
@@ -342,11 +352,9 @@ bool CarpeDM::connect(const std::string& en) {
     const std::string tagProject    = "Project     : ";
     const std::string tagExpName    = "ftm";
     const std::string tagVersion    = "Version     : ";
-    const std::string tagVersionEnd = "Platform    :";
+    const std::string tagVersionEnd = "Platform    : ";
     std::string version;
     size_t pos, posEnd;
-    
-
     struct  sdb_device& ram = myDevs.at(cpuIdx);
     vAdr fwIdAdr;
 
@@ -356,12 +364,6 @@ bool CarpeDM::connect(const std::string& en) {
     vBuf fwIdData = ebReadCycle(ebd, fwIdAdr);
     std::string s(fwIdData.begin(),fwIdData.end());
 
-    //vHexDump ("FWID", fwIdData);
-
-
-
-
-    
     //check for magic word
     pos = 0;
     if(s.find(tagMagic, 0) == std::string::npos) {return FWID_BAD_MAGIC;} 
@@ -382,7 +384,6 @@ bool CarpeDM::connect(const std::string& en) {
 
  //write out dotfile from download graph of a memunit
  void CarpeDM::writeDownDot(const std::string& fn, MemUnit& m) {
-   
     std::ofstream out(fn); 
     if(out.good()) {
       if (verbose) sLog << "Writing Output File " << fn << "... ";
@@ -390,31 +391,14 @@ bool CarpeDM::connect(const std::string& en) {
                           make_edge_writer(boost::get(&myEdge::type, m.getDownGraph())), sample_graph_writer{"Demo"},
                           boost::get(&myVertex::name, m.getDownGraph()));
       }
-      catch(...) {
-        throw;
-
-      }
+      catch(...) {throw;}
       out.close();
     }  
     else {throw std::runtime_error(" Could not write to .dot file '" + fn + "'"); return;} 
-
     if (verbose) sLog << "Done.";
   }
 
-  vAdr CarpeDM::getCmdWrAdrs(uint8_t cpuIdx, const std::string& targetName, uint8_t prio) {
-    return vM.at(cpuIdx).getCmdWrAdrs(hm.lookup(targetName).get(), prio);
-  }
-
-  vBuf CarpeDM::getCmdData(uint8_t cpuIdx, const std::string& targetName, uint8_t prio, mc_ptr mc) {
-    uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
-    vBuf ret;
-    mc->serialise(b);
-    
-    writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, vM.at(cpuIdx).getCmdInc(hm.lookup(targetName).get(), prio));
-    ret.insert( ret.end(), b, b + _T_CMD_SIZE_ + _32b_SIZE_);
-    
-    return ret;
-  }
+ 
 
   uint32_t CarpeDM::getNodeAdr(uint8_t cpuIdx, const std::string& name, bool direction, bool intExt) {
     MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx)); 
@@ -492,7 +476,8 @@ bool CarpeDM::connect(const std::string& en) {
 
   //hard abort, emergency only
   void CarpeDM::clrThrRun(uint8_t cpuIdx, uint32_t bits) {
-    ebWriteWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING, ~bits);
+    uint32_t state = ebReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING);
+    ebWriteWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING, state & ~bits);
   }
 
   bool CarpeDM::isThrRunning(uint8_t cpuIdx, uint8_t thrIdx) {

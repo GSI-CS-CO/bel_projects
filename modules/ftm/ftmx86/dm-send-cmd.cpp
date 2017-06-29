@@ -26,18 +26,24 @@ int main(int argc, char* argv[]) {
   uint64_t cmdTvalid = 0, cmdFlush = PRIO_LO, longtmp;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "vc:p:t:q:")) != -1) {
+   while ((opt = getopt(argc, argv, "vc:p:l:t:q:")) != -1) {
       switch (opt) {
          case 'v':
             verbose = 1;
             break;
          case 't':
+            tmp = atol(optarg);
+            if (tmp < 0 || tmp > 8) {
+              std::cerr << program << ": invalid thread idx -- '" << optarg << "'" << std::endl;
+              error = -1;
+            } else {thrIdx = (uint32_t)tmp;}
+         case 'l':
             longtmp = atoll(optarg);
             if (longtmp < 0) {
               std::cerr << program << ": invalid valid time -- '" << optarg << "'" << std::endl;
               error = -1;
             } else {cmdTvalid = (uint64_t)tmp;}
-            break;   
+            break;       
          case 'p':
              tmp = atol(optarg);
             if (tmp < 0 || tmp > 2) {
@@ -131,18 +137,26 @@ int main(int argc, char* argv[]) {
     std::string cmp(typeName);
 
     if      (cmp == "noop")  {
-      if(!(cdm.isKnown(targetName))) {std::cerr << "Error: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
       mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
     }
     else if (cmp == "flow")  {
-      if(!(cdm.isKnown(targetName))) {std::cerr << "Error: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
-      if ((para != NULL) && cdm.isKnown(para)) { mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, cdm.getNodeAdr(cpuIdx, para, DOWNLOAD, INTERNAL) ); }
+      if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      if ((para != NULL) && cdm.isKnown(para)) { 
+        uint32_t adr; 
+        try {
+          adr = cdm.getNodeAdr(cpuIdx, para, DOWNLOAD, INTERNAL);
+        } catch (std::runtime_error const& err) {
+          std::cerr << "ERROR: Could not obtain address of Destination Node " << para << ". Cause: " << err.what() << std::endl;
+        } 
+        mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr );
+      } else {std::cerr << "ERROR: Destination Node '" << para << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
     }
     else if (cmp == "flush") {
-        if(!(cdm.isKnown(targetName))) {std::cerr << "Error: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+        if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
     }
     else if (cmp == "wait")  {
-      if(!(cdm.isKnown(targetName))) {std::cerr << "Error: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
       if (para != NULL) { mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, atoll(para) ); }
     }
     else if (cmp == "origin")  {
@@ -167,11 +181,18 @@ int main(int argc, char* argv[]) {
       cdm.abortThr(cpuIdx, thrIdx);
       
     }
-
+    else if (cmp == "running")  {
+      std::cout << "CPU #" << cpuIdx << " Running Threads: 0x" << cdm.getThrRun(cpuIdx) << std::endl;
+   
+    }
 
     if (mc != NULL) {
-
-      cdm.sendCmd(cpuIdx, targetName, cmdPrio, mc);      
+      try {
+          cdm.sendCmd(cpuIdx, targetName, cmdPrio, mc);     
+        } catch (std::runtime_error const& err) {
+          std::cerr << "ERROR: Could not send command " << para << ". Cause: " << err.what() << std::endl;
+        }  
+       
 
     }  
 

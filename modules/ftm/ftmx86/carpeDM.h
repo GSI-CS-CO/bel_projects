@@ -139,13 +139,6 @@ public:
   //Returns the Download Graph for CPU <cpuIdx>
   Graph& getDownGraph(uint8_t cpuIdx) {return vM.at(cpuIdxMap.at(cpuIdx)).getDownGraph();}
 
-   //generates addresses for command to be sent
-  vAdr getCmdWrAdrs(uint8_t cpuIdx, const std::string& targetName, uint8_t prio);
-
-  //generates binary data for command to be sent
-  vBuf getCmdData(uint8_t cpuIdx, const std::string& targetName, uint8_t prio, mc_ptr m);
-  
-
   //Returns if a hash / nodename is known to the dictionary
   bool isKnown(const uint32_t hash)     const {return hm.contains(hash);}
   bool isKnown(const std::string& name) const {return hm.contains(name);}
