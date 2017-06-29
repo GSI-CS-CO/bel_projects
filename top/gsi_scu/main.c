@@ -36,8 +36,6 @@
 #define MIL_DRY       0x1
 #define MIL_INL       0x0
 
-#define DRQ_BIT       (1 << 10)
-
 
 #define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
 
@@ -191,13 +189,15 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
 
 inline void handle(int slot, unsigned fg_base) {
     unsigned short cntrl_reg = 0;
+    unsigned short irq_data = 0;
     int status;
 
     if (slot < DEV_BUS_SLOT)
       cntrl_reg = scub_base[(slot << 16) + fg_base + FG_CNTRL];
-    else if (slot == DEV_BUS_SLOT)
+    else if (slot == DEV_BUS_SLOT) {
       if (status = read_mil(scu_mil_base, &cntrl_reg, FC_CNTRL_RD | fg_base) != OKAY) dev_failure(status);
-      
+      if (status = read_mil(scu_mil_base, &irq_data, FC_IRQ_ACT_RD | fg_base) != OKAY) dev_failure(status);
+    } 
     int channel = (cntrl_reg & 0x3f0) >> 4;        // virtual fg number Bits 9..4
     
     if (slot < DEV_BUS_SLOT) {
@@ -209,7 +209,9 @@ inline void handle(int slot, unsigned fg_base) {
       fg_regs[channel].ramp_count++;
     }
       
-    //:wmprintf("irq received for channel[%d]\n", channel);
+    //mprintf("irq received for channel[%d]\n", channel);
+    //mprintf("cntrl_reg: 0x%x\n", cntrl_reg);
+    //mprintf("irq_data: 0x%x\n", irq_data); 
     
     if (!(cntrl_reg  & FG_RUNNING)) {  // fg stopped
       if (slot == DEV_BUS_SLOT)
@@ -222,16 +224,31 @@ inline void handle(int slot, unsigned fg_base) {
       fg_regs[channel].state = 0;
       //mprintf("fg 0x%x in slave %d stopped after %d tuples. %d tuples left in buffer.\n",
       //        fg_base, slot, fg_regs[channel].ramp_count, cbgetCount(&fg_regs[0], channel));
-    } else if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
-      fg_regs[channel].state = 1; 
-      SEND_SIG(SIG_START); // fg has received the tag or brc message
-      if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
-        SEND_SIG(SIG_REFILL);
-      send_fg_param(slot, fg_base, cntrl_reg);
-    } else if ((cntrl_reg & FG_RUNNING) && (cntrl_reg & FG_DREQ)) {
-      if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
-        SEND_SIG(SIG_REFILL);
-      send_fg_param(slot, fg_base, cntrl_reg);
+    }
+    if (slot < DEV_BUS_SLOT) {
+      if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
+        fg_regs[channel].state = 1; 
+        SEND_SIG(SIG_START); // fg has received the tag or brc message
+        if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
+          SEND_SIG(SIG_REFILL);
+        send_fg_param(slot, fg_base, cntrl_reg);
+      } else if ((cntrl_reg & FG_RUNNING) && (cntrl_reg & FG_DREQ)) {
+        if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
+          SEND_SIG(SIG_REFILL);
+        send_fg_param(slot, fg_base, cntrl_reg);
+      }
+    } else {
+      if ((cntrl_reg & FG_RUNNING) && (irq_data & DEV_STATE_IRQ)){
+        fg_regs[channel].state = 1; 
+        SEND_SIG(SIG_START); // fg has received the tag or brc message
+        if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
+          SEND_SIG(SIG_REFILL);
+        send_fg_param(slot, fg_base, cntrl_reg);
+      } else if ((cntrl_reg & FG_RUNNING) && (irq_data & DEV_DRQ)) {
+        if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
+          SEND_SIG(SIG_REFILL);
+        send_fg_param(slot, fg_base, cntrl_reg);
+      }
     }
 }
 
@@ -245,11 +262,11 @@ inline void dev_bus_irq_handle(unsigned int msi_adr, unsigned int msi_msg) {
       slot = fg_macros[fg_regs[i].macro_number] >> 24;
       dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
       if(slot == DEV_BUS_SLOT) {
-        if (status = read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev) != OKAY) dev_failure(status);
-        /* test for active 0 */
-        if (~data & DRQ_BIT) {
+        if (status = read_mil(scu_mil_base, &data, FC_IRQ_ACT_RD | dev) != OKAY) dev_failure(status);
+        if (data > 0) { // any irq pending?
           handle(slot, dev);
           //clear irq pending
+          if (status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev) != OKAY) dev_failure(status);
         }
       }
     }
@@ -322,18 +339,18 @@ void configure_timer(unsigned int tmr_value) {
   mprintf("configuring slaves.\n");
   int i = 0;
   int slot;
-  scub_base[SRQ_ENA] = 0x0; //reset bitmask
-  scub_base[MULTI_SLAVE_SEL] = 0x0; //reset bitmask  
+  scub_base[SRQ_ENA] = 0x0;         // reset bitmask
+  scub_base[MULTI_SLAVE_SEL] = 0x0; // reset bitmask
   while(scub.slaves[i].unique_id) {
     slot = scub.slaves[i].slot;
     mprintf("enable slave[%d] in slot %d\n", i, slot);
-    scub_base[SRQ_ENA] |= (1 << (slot-1));  //enable irqs for the slave
-    scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1)); //set bitmask for broadcast select
-    scub_base[(slot << 16) + SLAVE_INT_ENA] = 0x2000; //enable tmr irq in slave macro
-    scub_base[(slot << 16) + TMR_BASE + TMR_CNTRL] = 0x1; //reset TMR
-    scub_base[(slot << 16) + TMR_BASE + TMR_VALUEL] = tmr_value & 0xffff; //enable generation of tmr irqs, 1ms, 0xe848
-    scub_base[(slot << 16) + TMR_BASE + TMR_VALUEH] = tmr_value >> 16; //enable generation of tmr irqs, 1ms, 0x001e
-    scub_base[(slot << 16) + TMR_BASE + TMR_REPEAT] = 0x14; //number of generated irqs
+    scub_base[SRQ_ENA] |= (1 << (slot-1));                                // enable irqs for the slave
+    scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1));                        // set bitmask for broadcast select
+    scub_base[(slot << 16) + SLAVE_INT_ENA] = 0x2000;                     // enable tmr irq in slave macro
+    scub_base[(slot << 16) + TMR_BASE + TMR_CNTRL] = 0x1;                 // reset TMR
+    scub_base[(slot << 16) + TMR_BASE + TMR_VALUEL] = tmr_value & 0xffff; // enable generation of tmr irqs, 1ms, 0xe848
+    scub_base[(slot << 16) + TMR_BASE + TMR_VALUEH] = tmr_value >> 16;    // enable generation of tmr irqs, 1ms, 0x001e
+    scub_base[(slot << 16) + TMR_BASE + TMR_REPEAT] = 0x14;               // number of generated irqs
     i++;
   }
 }
@@ -357,7 +374,7 @@ int configure_fg_macro(int channel) {
       scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000;            //enable fg1 and fg2 irq
     
     } else if (slot == DEV_BUS_SLOT) {
-      if (status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev) != OKAY) dev_failure(status);           //enable Data-Request
+      if (status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev) != OKAY) dev_failure(status); //enable Data-Request
     }
 
     /* which macro are we? */

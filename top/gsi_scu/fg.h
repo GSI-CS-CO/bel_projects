@@ -19,6 +19,9 @@
 #define FG_RUNNING    0x4
 #define FG_ENABLED    0x2
 #define FG_DREQ       0x8
+#define DRQ_BIT       (1 << 10)
+#define DEV_DRQ       (1 << 0)
+#define DEV_STATE_IRQ (1 << 1)
 #define DEV_BUS_SLOT  13
 #define FC_CNTRL_WR   0x14 << 8
 #define FC_COEFF_A_WR 0x15 << 8
@@ -31,6 +34,8 @@
 #define FC_COEFF_B_RD 0xa2 << 8
 #define FC_IRQ_STAT   0xc9 << 8
 #define FC_IRQ_MSK    0x12 << 8
+#define FC_IRQ_ACT_RD 0xa7 << 8
+#define FC_IRQ_ACT_WR 0x21 << 8
 
 
 struct fg_dev {
