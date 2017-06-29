@@ -69,6 +69,16 @@
 #define DMUNIPZ_LOGLEVEL_STATUS   2           // info on status changes, info on state changes
 #define DMUNIPZ_LOGLEVEL_STATE    3           // info on state changes
 
+typedef struct {                              // group together all information required for modifying blocks within the data master via Etherbone
+  uint32_t dynpar0;                           // receive from DM: 1st 32 bit of param field
+  uint32_t dynpar1;                           // receive from DM: 2nd 32 bit of param field
+  uint32_t cmdAddr;                           // write to DM: external address of a command
+  uint32_t cmdData[_T_CMD_SIZE_];             // write to DM: data of a command
+  uint32_t blockWrIdxAddr;                    // write to DM: external address of wrIdx within block
+  uint32_t blockWrIdx;                        // write to DM: updated value of wrIdx
+} dmComm;
+
+
 // part below provide by Ludwig Hechler 
 #define IFB_ADDRESS_SIS     0x20        /* Adresse der Interfacekarte               */
 #define IFB_ADDRESS_UNI     0x10        /* Adresse der Interfacekarte               */
