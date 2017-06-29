@@ -10,7 +10,39 @@
 #include "memunit.h"
 #include "minicommand.h"
 
-
+static void help(const char *program) {
+  fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> <.dot file> <command> [target node] [parameter] \n", program);
+  fprintf(stderr, "\n");
+  fprintf(stderr, "\nSends a command to Thread <n> of CPU Core <m> of the DataMaster (DM), requires dot file of DM's schedule.\nThere are global commands, that influence the whole DM, local commands influencing the whole thread\nand block commands, that only affect one queue in the schedule.\n");
+  fprintf(stderr, "\nGeneral Options:\n");
+  fprintf(stderr, "  -c <cpu-idx>              select CPU core by index, default is 0\n");
+  fprintf(stderr, "  -t <thread-idx>           select thread inside selected CPU core by index, default is 0\n");
+  fprintf(stderr, "  -v                        verbose operation, print more details\n");
+  fprintf(stderr, "\nGlobal commands:\n");
+  fprintf(stderr, "  gathertime <Time / ns>    [NOT YET IMPLEMENTED] Set msg gathering time for priority queue\n");
+  fprintf(stderr, "  maxmsg <Message Quantity> [NOT YET IMPLEMENTED] Set maximum messages in a packet for priority queue\n");
+  fprintf(stderr, "  clear                     [NOT YET IMPLEMENTED] clear all schedule data on this CPU core\n");
+  fprintf(stderr, "  running                   show bitfield of all running threads on this CPU core\n");  
+  fprintf(stderr, "\nLocal commands:\n");
+  fprintf(stderr, "  preptime <Time / ns>      [NOT YET IMPLEMENTED] Set preparation time (lead) for this thread\n");
+  fprintf(stderr, "  origin <target node       Set the node with which selected thread will start\n");
+  fprintf(stderr, "  start                     Request start of selected thread. Requires a valid origin.\n");
+  fprintf(stderr, "  stop                      Request stop of selected thread\n");
+  fprintf(stderr, "  abort                     Immediately aborts selected thread\n");
+  fprintf(stderr, "  cursor                    Show name of currently active node of selected thread\n");
+  fprintf(stderr, "\nBlock commands:\n");
+  fprintf(stderr, "  noop <target node>                        [Options: lpq]   Placeholder to stall succeeding commands, has no effect itself\n");
+  fprintf(stderr, "  flow <target node> <destination node>     [Options: lpqs]  Changes schedule flow to <Destination Node>\n");
+  fprintf(stderr, "  relwait <target node> <wait time / ns>    [Options: lps]   Changes Block period to <wait time>\n");
+  fprintf(stderr, "  abswait <target node> <wait time / ns>    [Options: lp]    [NOT YET IMPLEMENTED] Stretches Block period until <wait time>\n");
+  fprintf(stderr, "  flush <target node> <target priorities>   [Options: lp]    [NOT YET IMPLEMENTED] Flushes all pending commands (hex 0x0 - 0x7) of lower priority\n");
+  fprintf(stderr, "Options for Block commands:\n");
+  fprintf(stderr, "  -l <Time / ns>           the absolute time in ns after which the command will become active, default is 0 (immediately)\n");
+  fprintf(stderr, "  -p <priority>            the priority of the command (0 = Low, 1 = High, 2 = Interlock), default is 0\n");
+  fprintf(stderr, "  -q <quantity>            the number of times the command will be inserted into the target queue, default is 1\n");
+  fprintf(stderr, "  -s                       [NOT YET IMPLEMENTED] Changes to the schedule are permanent\n");
+  fprintf(stderr, "\n");
+}
 
 int main(int argc, char* argv[]) {
 
@@ -26,7 +58,7 @@ int main(int argc, char* argv[]) {
   uint64_t cmdTvalid = 0, cmdFlush = PRIO_LO, longtmp;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "vc:p:l:t:q:")) != -1) {
+   while ((opt = getopt(argc, argv, "hvc:p:l:t:q:")) != -1) {
       switch (opt) {
          case 'v':
             verbose = 1;
@@ -68,8 +100,7 @@ int main(int argc, char* argv[]) {
             break;
  
          case 'h':
-            //help();
-          std::cout << program << "<FIXME insert help here > " << std::endl;
+            help(program);
             return 0;
 
          case ':':
@@ -88,7 +119,7 @@ int main(int argc, char* argv[]) {
   if (error) return error;
  
    if (optind+2 >= argc) {
-   std::cerr << program << ": expecting two non-optional argument: <etherbone-device> <command type> " << std::endl;
+   std::cerr << program << ": expecting three non-optional argument: <etherbone-device> <.dot file> <command> " << std::endl;
     //help();
     return -4;
     }
@@ -155,7 +186,7 @@ int main(int argc, char* argv[]) {
     else if (cmp == "flush") {
         if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
     }
-    else if (cmp == "wait")  {
+    else if (cmp == "relwait")  {
       if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
       if (para != NULL) { mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, atoll(para) ); }
     }

@@ -10,6 +10,19 @@
 const char defOutputFilename[] = "download.dot";
 const char defInputFilename[] = "";
 
+
+static void help(const char *program) {
+  fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> <input .dot file>\n", program);
+  fprintf(stderr, "\n");
+  fprintf(stderr, "\nSchedule Generator. Creates Binary Data for the DataMaster (DM) from Schedule Graphs (.dot files) and\nuploads/downloads to/from CPU Core <m> of the DM. For download, a Schedule Graph is not manadatory ,\nbut hashes will not be resolved to node names. To render a download, use the 'dot -Tpng -o<outputfile.dot>'\n");
+  fprintf(stderr, "\nGeneral Options:\n");
+  fprintf(stderr, "  -c <cpu-idx>              select CPU core by index, default is 0\n");
+  fprintf(stderr, "  -w                        Generate Schedule Graph from input file and uploads it to selected CPU core\n");
+  fprintf(stderr, "  -o <output file>          Specify output file name, default is '%s'\n", defOutputFilename);
+  fprintf(stderr, "  -v                        verbose operation, print more details\n");
+  fprintf(stderr, "\n");
+}
+
 int main(int argc, char* argv[]) {
 
 
@@ -23,7 +36,7 @@ int main(int argc, char* argv[]) {
   uint32_t cpuIdx = 0;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "vc:o:w")) != -1) {
+   while ((opt = getopt(argc, argv, "hvc:o:w")) != -1) {
       switch (opt) {
          case 'w':
             doUpload = true;
@@ -46,8 +59,7 @@ int main(int argc, char* argv[]) {
             break;
 
          case 'h':
-            //help();
-          std::cout << program << "<FIXME insert help here > " << std::endl;
+            help(program);
             return 0;
          
          case ':':
