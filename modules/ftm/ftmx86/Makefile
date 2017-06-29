@@ -5,7 +5,7 @@ BASEPATH     = $(TOP)/modules/ftm
 SRCPATH      = $(BASEPATH)/src
 BINPATH      = $(BASEPATH)/bin
 LIBPATH      = $(BASEPATH)/lib
-TOOLPATH      = $(BASEPATH)/ftmx86
+TOOLPATH     = $(BASEPATH)/ftmx86
 INSTALLPATH  = /usr/bin
 
 VERSION      ?= 0.6.0
