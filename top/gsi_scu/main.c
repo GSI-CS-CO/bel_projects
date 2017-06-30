@@ -252,7 +252,7 @@ inline void handle(int slot, unsigned fg_base) {
     }
 }
 
-inline void dev_bus_irq_handle(unsigned int msi_adr, unsigned int msi_msg) {
+void dev_bus_irq_handle() {
   int i;
   int slot, dev;
   short data;
@@ -675,9 +675,16 @@ int main(void) {
 
   init(); // init and scan for fgs
 
+  unsigned short status;
   while(1) {
- //   updateTemp();
- //   msDelayBig(15000);
+    // check if channels have been stopped
+    msDelayBig(1000);
+    status_mil(scu_mil_base, &status);
+    if (status & MIL_DATA_REQ_INTR) {
+      irq_disable();
+      dev_bus_irq_handle();
+      irq_enable();
+    }
   }
 
   return(0);

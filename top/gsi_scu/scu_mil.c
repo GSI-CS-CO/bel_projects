@@ -71,6 +71,13 @@ int rcv_flag(volatile unsigned int *base) {
     return RCV_TIMEOUT;  // rcv timeout
   }  
 }
+int status_mil(volatile unsigned int *base, unsigned short *status) {
+  atomic_on();
+  *status = base[MIL_WR_RD_STATUS];
+  atomic_off();
+  return OKAY;
+}
+
 
 int read_mil(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   int rcv_flags = 0;
