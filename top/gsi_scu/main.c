@@ -257,20 +257,32 @@ void dev_bus_irq_handle() {
   int slot, dev;
   short data;
   int status;
-  for (i = 0; i < MAX_FG_CHANNELS; i++) {
-    if (fg_regs[i].state > 0) {
-      slot = fg_macros[fg_regs[i].macro_number] >> 24;
-      dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-      if(slot == DEV_BUS_SLOT) {
-        if (status = read_mil(scu_mil_base, &data, FC_IRQ_ACT_RD | dev) != OKAY) dev_failure(status);
-        if (data > 0) { // any irq pending?
-          handle(slot, dev);
-          //clear irq pending
-          if (status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev) != OKAY) dev_failure(status);
+  unsigned short mil_status;
+  status_mil(scu_mil_base, &mil_status);
+  while (mil_status & MIL_DATA_REQ_INTR) {
+    for (i = 0; i < MAX_FG_CHANNELS && (mil_status & MIL_DATA_REQ_INTR); i++) {
+      if (fg_regs[i].state > 0) {
+        slot = fg_macros[fg_regs[i].macro_number] >> 24;
+        dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+        if(slot == DEV_BUS_SLOT) {
+          if (status = read_mil(scu_mil_base, &data, FC_IRQ_ACT_RD | dev) != OKAY) dev_failure(status);
+          if (data > 0) { // any irq pending?
+            handle(slot, dev);
+            //clear irq pending
+            if (status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev) != OKAY) dev_failure(status);
+          }
         }
       }
-    }
-  }  
+      // wait for dreq going low after ack
+      // check if dreq is still active
+      usleep(5);
+      status_mil(scu_mil_base, &mil_status);
+    }  
+    // wait for dreq going low after ack
+    // check if dreq is still active
+    usleep(5);
+    status_mil(scu_mil_base, &mil_status);
+  }
 }
 
 
