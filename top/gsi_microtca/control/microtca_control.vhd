@@ -293,10 +293,10 @@ architecture rtl of microtca_control is
     ("MTCA4_IO7  ", IO_NONE,         false,   false, 15,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
     ("MTCA4_IO8  ", IO_NONE,         false,   false, 16,     IO_INOUTPUT, IO_LVDS,  true,         false,       IO_LVDS),
 
-    ("LIBERA_TR1 ", IO_NONE,         false,   false, 17,     IO_OUTPUT  , IO_LVDS,  true,         false,       IO_LVDS),
-    ("LIBERA_TR2 ", IO_NONE,         false,   false, 18,     IO_OUTPUT  , IO_LVDS,  true,         false,       IO_LVDS),
-    ("LIBERA_TR3 ", IO_NONE,         false,   false, 19,     IO_OUTPUT  , IO_LVDS,  true,         false,       IO_LVDS),
-    ("LIBERA_TR4 ", IO_NONE,         false,   false, 20,     IO_OUTPUT  , IO_LVDS,  true,         false,       IO_LVDS)
+    ("LIBERA_TR1 ", IO_NONE,         false,   false, 17,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS),
+    ("LIBERA_TR2 ", IO_NONE,         false,   false, 18,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS),
+    ("LIBERA_TR3 ", IO_NONE,         false,   false, 19,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS),
+    ("LIBERA_TR4 ", IO_NONE,         false,   false, 20,     IO_OUTPUT  , IO_LVDS,  false,        false,       IO_LVDS)
 
   );
 
@@ -665,8 +665,10 @@ begin
   -----------------------------------------------------------------------
   -- lvds/lvds libera trigger buffers enable (active HI)
   -----------------------------------------------------------------------
-  lib_trig_oe_o <=  s_libera_bpl_buff_en;
-
+  --  lib_trig_oe_o <=  s_libera_bpl_buff_en;
+  -- before MMC is fixed this is the way to enble Libera trigger buffers
+  -- USE THIS ONLY when FTRN is in Libera SLOT 8!!!
+  lib_trig_oe_o <=  '1' when (s_test_sel = "0111" and s_gpio_out(8)='1') else s_libera_bpl_buff_en;
   -----------------------------------------------------------------------
   -- lvds/m-lvds MTCA.4 buffers enable generation
   -----------------------------------------------------------------------
