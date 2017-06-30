@@ -3,7 +3,7 @@ TARGET		= dmunipz
 DEVICE		= 5AGXMA3D4
 FLASH		= EPCQ256
 SPI_LANES	= ASx4
-RAM_SIZE	= 49152 
+RAM_SIZE	= 65536 
 SHARED_SIZE     = 8K
 USRCPUCLK       = 125000
 VERSION         = 0.0.5
@@ -12,7 +12,7 @@ PATHFW 	 = .
 PATHPKG	 = $(shell python2.7 ../../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
 PREFIX 	 ?= /usr/local
 CFLAGS 	 = -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL)
-DEBUGLVL = 3
+DEBUGLVL = 2
 
 include ../../../syn/build.mk
 

@@ -7,7 +7,7 @@
 #define  DMUNIPZ_REQTIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
 #define  DMUNIPZ_EVT_UNI_READY    0x1e        // event number EVT_UNI_READY
 #define  DMUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
-//#define  DMUNIPZ_ECA_ADDRESS      0x20060308  // hack for testing
+#define  DMUNIPZ_EB_HACKISH       0x12345678  // value for a hackish solution to check for replies to EB reads
 
 // (error) status
 #define  DMUNIPZ_STATUS_UNKNOWN          0    // unknown status
@@ -26,6 +26,7 @@
 #define  DMUNIPZ_STATUS_NOIP            13    // DHCP request via WR network failed                                
 #define  DMUNIPZ_STATUS_WRONGIP         14    // IP received via DHCP does not match local config            
 #define  DMUNIPZ_STATUS_NODM            15    // Data Master unreachable                                     
+#define  DMUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out                           
 
                                 
 // commands from the outside
