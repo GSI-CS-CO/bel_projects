@@ -359,6 +359,8 @@ architecture rtl of microtca_control is
   signal s_dis_led_red   : std_logic;
   signal s_dis_led_blue  : std_logic;
 
+  signal s_lib_trig_oe_sw_mmc	: std_logic;
+
   signal s_counter : unsigned(23 downto 0);
   
   
@@ -487,7 +489,7 @@ begin
 
   -- GPIOs
   s_led_status_monster(5) <= mmc_pcie_rst_n_i; --std_logic(s_counter(23));
-  s_led_status_monster(6) <= s_libera_bpl_buff_en;
+  s_led_status_monster(6) <= s_lib_trig_oe_sw_mmc;
 
 
 
@@ -668,7 +670,9 @@ begin
   --  lib_trig_oe_o <=  s_libera_bpl_buff_en;
   -- before MMC is fixed this is the way to enble Libera trigger buffers
   -- USE THIS ONLY when FTRN is in Libera SLOT 8!!!
-  lib_trig_oe_o <=  '1' when (s_test_sel = "0111" and s_gpio_out(8)='1') else s_libera_bpl_buff_en;
+  s_lib_trig_oe_sw_mmc <= '1' when (s_test_sel = "0111" and s_gpio_out(8)='1') else s_libera_bpl_buff_en; 
+  lib_trig_oe_o        <=  s_lib_trig_oe_sw_mmc;
+
   -----------------------------------------------------------------------
   -- lvds/m-lvds MTCA.4 buffers enable generation
   -----------------------------------------------------------------------
