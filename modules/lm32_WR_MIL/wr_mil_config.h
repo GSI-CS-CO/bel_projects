@@ -2,11 +2,8 @@
 #define WR_MIL_CMD_H_
 
 #include <stdint.h>
+#include "wr_mil_gw.h"
 
-// states of the software
-#define WR_MIL_GW_STATE_INIT         0
-#define WR_MIL_GW_STATE_UNCONFIGURED 1
-#define WR_MIL_GW_STATE_CONFIGURED   2
 
 typedef struct 
 {

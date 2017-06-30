@@ -8,8 +8,8 @@
 
 // Commands to be written into the WR_MIL_GW_REG_COMMAND register
 #define WR_MIL_GW_CMD_NONE           0x0   // empty command
-#define WR_MIL_GW_CMD_FULL_STOP      0x1   // command to stop the LM32 from running
-#define WR_MIL_GW_CMD_PAUSE_10S      0x2   // command to stop the LM32 for 10sec
+#define WR_MIL_GW_CMD_KILL           0x1   // command to stop the LM32 from running
+#define WR_MIL_GW_CMD_RESET          0x2   // command to stop the LM32 for 1sec and go into initial state
 #define WR_MIL_GW_CMD_CONFIG_SIS     0x3   // command to configure the gateway for SIS operation
 #define WR_MIL_GW_CMD_CONFIG_ESR     0x4   // command to configure the gateway for ESR operation
 
@@ -23,6 +23,11 @@
 #define WR_MIL_GW_REG_EVENT_SOURCE   0x14  // for internal use: register to hold the source configuration: 1 = SIS ; 2 = ESR ; 0 not configured
 #define WR_MIL_GW_REG_STATE          0x18  // for internal use: state of the program: INITIAL, UNCONFIGURED, CONFIGURED
 
+// states of the software
+#define WR_MIL_GW_STATE_INIT         0
+#define WR_MIL_GW_STATE_UNCONFIGURED 1
+#define WR_MIL_GW_STATE_CONFIGURED   2
+#define WR_MIL_GW_STATE_PAUSED       3
 
 // Constants for event source type configuration.
 // The WR-MIL gateway can run the SIS or the ESR

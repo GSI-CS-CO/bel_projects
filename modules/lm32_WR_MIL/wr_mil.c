@@ -161,14 +161,14 @@ void eventHandler(volatile uint32_t    *eca,
       ECAQueue_getDeadl(eca_queue, &tai_deadl);
       ECAQueue_actionPop(eca_queue);
       uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY; // add 20us to the deadline
-          make_mil_timestamp(mil_event_time, EVT_UTC);     
+      make_mil_timestamp(mil_event_time, EVT_UTC);     
 
       //mprintf("evtCode=%x\n",evtCode);
       switch (evtCode)
       {
         //case MIL_EVT_START_CYCLE: 
         case MIL_EVT_END_CYCLE: 
-        // generate MIL event EVT_START_CYCLE, followed by EVT_UTC_1/2/3/4/5 EVENTS
+          // generate MIL event EVT_START_CYCLE, followed by EVT_UTC_1/2/3/4/5 EVENTS
           //make_mil_timestamp(mil_event_time, EVT_UTC);     
           too_late = wait_until_tai(eca, mil_event_time);
           mil_piggy_write_event(mil_piggy, milTelegram); 
@@ -190,9 +190,9 @@ void eventHandler(volatile uint32_t    *eca,
             //mil_piggy_write_event(mil_piggy, 0x0000abc0 | i); 
           }
           delay_96plus32n_ns(config->trigger_utc_delay*32);
-          mil_piggy_write_event(mil_piggy, (config->event_source<<12) | MIL_EVT_COMMAND); 
+          mil_piggy_write_event(mil_piggy, (config->event_source<<12) | 0xf00 | MIL_EVT_COMMAND ); 
           delay_96plus32n_ns(config->trigger_utc_delay*32);
-          mil_piggy_write_event(mil_piggy, (config->event_source<<12) | MIL_EVT_COMMAND); 
+          mil_piggy_write_event(mil_piggy, (config->event_source<<12) | 0xf00 | MIL_EVT_COMMAND ); 
           delay_96plus32n_ns(config->trigger_utc_delay*32);
           mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_END_CMD_EXEC); 
         break;
@@ -287,7 +287,10 @@ void main(void)
   while (1) {
     //poll user commands
     config_poll(config);
-
+    if (config->state == WR_MIL_GW_STATE_UNCONFIGURED)
+    {
+      ECAQueue_clear(eca_queue);
+    }
     // do whatever has to be done
     if (config->state == WR_MIL_GW_STATE_CONFIGURED)
     {

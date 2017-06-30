@@ -19,6 +19,29 @@ void die(const char *program, const char* where, eb_status_t status) {
   exit(1);
 } //die
 
+const char* state_str(uint32_t state)
+{
+  switch(state)
+  {
+    case WR_MIL_GW_STATE_INIT:         return "WR_MIL_GW_STATE_INIT";
+    case WR_MIL_GW_STATE_UNCONFIGURED: return "WR_MIL_GW_STATE_UNCONFIGURED";
+    case WR_MIL_GW_STATE_CONFIGURED:   return "WR_MIL_GW_STATE_CONFIGURED";
+    case WR_MIL_GW_STATE_PAUSED:       return "WR_MIL_GW_STATE_PAUSED";
+  }
+  return "";
+}
+
+const char* event_source_str(uint32_t source)
+{
+  switch(source)
+  {
+    case WR_MIL_GW_EVENT_SOURCE_UNKNOWN:  return "WR_MIL_GW_EVENT_SOURCE_UNKNOWN";
+    case WR_MIL_GW_EVENT_SOURCE_SIS:      return "WR_MIL_GW_EVENT_SOURCE_SIS";
+    case WR_MIL_GW_EVENT_SOURCE_ESR:      return "WR_MIL_GW_EVENT_SOURCE_ESR";
+  }
+  return "";
+}
+
 void help(const char *program) {
   fprintf(stderr, "Usage: %s [OPTION] <proto/host/port>\n", program);
   fprintf(stderr, "\n");
@@ -26,8 +49,9 @@ void help(const char *program) {
   fprintf(stderr, "  -u <utc-delay> microsecinds between 5 generated utc events\n");
   fprintf(stderr, "  -e             configure WR-MIL gateway as ESR source\n");
   fprintf(stderr, "  -s             configure WR-MIL gateway as SIS source\n");
-  fprintf(stderr, "  -p             pause WR-MIL gateway for 10 seconds\n");
+  fprintf(stderr, "  -r             reset WR-MIL gateway after 1 second pause\n");
   fprintf(stderr, "  -k             kill WR-MIL gateway, only reset or eb-fwload can recover (useful for eb-fwload)\n");
+  fprintf(stderr, "  -i             print information about the WR-MIL gateway\n");
   fprintf(stderr, "  -h             display this help and exit\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Report Etherbone bugs to <etherbone-core@ohwr.org>\n");
@@ -46,10 +70,13 @@ int main(int argc, char *argv[])
   int utc_delay = -1;
   int sis       =  0;
   int esr       =  0;
+  int reset     =  0;
+  int kill      =  0;
+  int info      =  0;
   int opt,error =  0;
 
   /* Process the command-line arguments */
-  while ((opt = getopt(argc, argv, "d:u:seh")) != -1) {
+  while ((opt = getopt(argc, argv, "d:u:sehrki")) != -1) {
     switch (opt) {
     case 'd':
       value = strtol(optarg, &value_end, 0);
@@ -70,8 +97,17 @@ int main(int argc, char *argv[])
     case 's':
       sis = 1;
       break;
+    case 'r':
+      reset = 1;
+      break;
+    case 'k':
+      kill = 1;
+      break;
     case 'e':
       esr = 1;
+      break;
+    case 'i':
+      info = 1;
       break;
     case 'h':
       help(argv[0]);
@@ -89,7 +125,7 @@ int main(int argc, char *argv[])
   if (error) return 1;
   
   if (optind + 1 != argc) {
-    fprintf(stderr, "%s: expecting three non-optional arguments: <proto/host/port> \n", argv[0]);
+    fprintf(stderr, "%s: expecting one non-optional argument: <proto/host/port> \n", argv[0]);
     return 1;
   }
   
@@ -98,7 +134,7 @@ int main(int argc, char *argv[])
   
   if (sis&&esr) 
   {
-    fprintf(stderr, "%s: please specigy either -e (ESR) or -s (SIS), not both.\n", argv[0]);
+    fprintf(stderr, "%s: please specify either -e (ESR) or -s (SIS), not both.\n", argv[0]);
     return 1;
   }
 
@@ -123,12 +159,10 @@ int main(int argc, char *argv[])
   for (int i = 0; i < num_devices; ++i)
   {
     uint64_t addr_first = devices[i].sdb_component.addr_first;
-    //uint64_t addr_last  = devices[i].sdb_component.addr_last ;
-
-    //printf("device %d : adr = [%" PRIx64 ",%" PRIx64 "]\n",i,addr_first, addr_last);
 
     uint32_t magic_number;
     eb_status_t status;
+    // find the correct user LM32 by reading the first value of the shared memory segment and expecting a certain value for the WR-MIL gateway
     status = eb_device_read(device, addr_first+WR_MIL_GW_SHARED_OFFSET, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&magic_number, 0, eb_block);   
     if (status != EB_OK){
       printf("not ok\n");
@@ -152,27 +186,91 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  //printf("wr-mil-gw is at index %d device addr = %" PRIx64 "\n", device_idx, device_addr);
+  // the register adresses 
+  uint32_t reg_shared_addr          = device_addr+WR_MIL_GW_SHARED_OFFSET;
+  uint32_t reg_magic_addr           = reg_shared_addr+WR_MIL_GW_REG_MAGIC_NUMBER;
+  uint32_t reg_command_addr         = reg_shared_addr+WR_MIL_GW_REG_COMMAND;
+  uint32_t reg_utc_trigger_addr     = reg_shared_addr+WR_MIL_GW_REG_UTC_TRIGGER;
+  uint32_t reg_utc_separation_addr  = reg_shared_addr+WR_MIL_GW_REG_UTC_SEPARATION;
+  uint32_t reg_utc_delay_addr       = reg_shared_addr+WR_MIL_GW_REG_UTC_DELAY;
+  uint32_t reg_event_source_addr    = reg_shared_addr+WR_MIL_GW_REG_EVENT_SOURCE;
+  uint32_t reg_state_addr           = reg_shared_addr+WR_MIL_GW_REG_STATE;
 
-  if (esr)
+  if (reset)
   {
-    printf("%s: configure WR-MIL gateway as ESR source\n", argv[0]);
-    eb_device_write(device, device_addr+WR_MIL_GW_SHARED_OFFSET+WR_MIL_GW_REG_COMMAND, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_CONFIG_ESR, 0, eb_block);
+    printf("%s: reset of WR-MIL gateway after 1 second pause\n", argv[0]);
+    if ((eb_status = eb_device_write(device, reg_command_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_RESET, 0, eb_block)) != EB_OK) {
+      die(argv[0],"command WR_MIL_GW_CMD_RESET", eb_status);
+    }
   }
-  if (sis) 
+  if (kill)
   {
-    printf("%s: configure WR-MIL gateway as SIS source\n", argv[0]);
-    eb_device_write(device, device_addr+WR_MIL_GW_SHARED_OFFSET+WR_MIL_GW_REG_COMMAND, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_CONFIG_SIS, 0, eb_block);
+    printf("%s: kill WR-MIL gateway\n", argv[0]);
+    if ((eb_status = eb_device_write(device, reg_command_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_KILL, 0, eb_block)) != EB_OK) {
+      die(argv[0],"command WR_MIL_GW_CMD_KILL", eb_status);
+    }
+  }
+  //printf("wr-mil-gw is at index %d device addr = %" PRIx64 "\n", device_idx, device_addr);
+  if (esr || sis) // check if gateway is already configured. reconfiguration without reset is disallowed
+  {
+    uint32_t value, state, source;
+    eb_status = eb_device_read(device, reg_event_source_addr,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    source = value;
+    eb_status = eb_device_read(device, reg_state_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    state = value;
+    if (state == WR_MIL_GW_STATE_CONFIGURED)
+    {
+      fprintf(stderr, "%s: cannot configure source type (PZ-id): gateway is already configured as %s\n", argv[0], event_source_str(source));
+      esr = sis = 0; 
+    }
+    if (esr)
+    {
+      printf("%s: configure WR-MIL gateway as ESR source\n", argv[0]);
+      if ((eb_status = eb_device_write(device, reg_command_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_CONFIG_ESR, 0, eb_block)) != EB_OK) {
+        die(argv[0],"command WR_MIL_GW_CMD_CONFIG_ESR", eb_status);
+      }
+    }
+    if (sis) 
+    {
+      printf("%s: configure WR-MIL gateway as SIS source\n", argv[0]);
+      if ((eb_status = eb_device_write(device, reg_command_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_CONFIG_SIS, 0, eb_block)) != EB_OK) {
+        die(argv[0],"command WR_MIL_GW_CMD_CONFIG_SIS", eb_status);
+      }
+    }
+  }
+
+  if (info)
+  {
+    printf("%s: WR-MIL status regitster content:\n", argv[0]);
+    uint32_t value;
+    eb_status = eb_device_read(device, reg_magic_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    printf("    WR_MIL_GW_REG_MAGIC_NUMBER:   0x%08x\n", value);
+    eb_status = eb_device_read(device, reg_command_addr,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    printf("    WR_MIL_GW_REG_COMMAND:        0x%08x\n", value);
+    eb_status = eb_device_read(device, reg_utc_trigger_addr,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    printf("    WR_MIL_GW_REG_UTC_TRIGGER:    0x%08x = %d\n", value, value);
+    eb_status = eb_device_read(device, reg_utc_separation_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    printf("    WR_MIL_GW_REG_UTC_SEPARATION: 0x%08x = %d us\n", value, value);
+    eb_status = eb_device_read(device, reg_utc_delay_addr,      EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    printf("    WR_MIL_GW_REG_UTC_DELAY:      0x%08x = %d us\n", value, value);
+    eb_status = eb_device_read(device, reg_event_source_addr,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    printf("    WR_MIL_GW_REG_EVENT_SOURCE:   0x%08x = %s\n", value, event_source_str(value));
+    eb_status = eb_device_read(device, reg_state_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    printf("    WR_MIL_GW_REG_STATE:          0x%08x = %s\n", value, state_str(value));
   }
   if (delay >= 0) 
   {
     printf("%s: set delay = %d us\n", argv[0], delay);
-    eb_device_write(device, device_addr+WR_MIL_GW_SHARED_OFFSET+WR_MIL_GW_REG_UTC_DELAY, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)delay, 0, eb_block);
+    if ((eb_status = eb_device_write(device, device_addr+WR_MIL_GW_SHARED_OFFSET+WR_MIL_GW_REG_UTC_DELAY, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)delay, 0, eb_block)) != EB_OK) {
+      die(argv[0],"configure register WR_MIL_GW_REG_UTC_DELAY", eb_status);
+    }
   }
   if (utc_delay >= 0) 
   {
     printf("%s: set utc delay = %d us\n", argv[0], utc_delay);
-    eb_device_write(device, device_addr+WR_MIL_GW_SHARED_OFFSET+WR_MIL_GW_REG_UTC_SEPARATION, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)utc_delay, 0, eb_block);
+    if ((eb_status = eb_device_write(device, device_addr+WR_MIL_GW_SHARED_OFFSET+WR_MIL_GW_REG_UTC_SEPARATION, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)utc_delay, 0, eb_block)) != EB_OK) {
+      die(argv[0],"configure register WR_MIL_GW_REG_UTC_SEPARATION", eb_status);
+    }
   }
 
   return 0;
