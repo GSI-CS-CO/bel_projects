@@ -2,6 +2,7 @@ library ieee;
 USE ieee.std_logic_1164.all;
 use ieee.math_real.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_misc.all;
 
 library work;
 use work.fg_quad_pkg.all;
@@ -394,7 +395,7 @@ begin
   end if;
 end process;
 
-nirq        <= not s_irq;
+nirq        <= not or_reduce(irq_act_reg); -- signal as long as on irq is active
 fg_version  <= std_logic_vector(to_unsigned(fw_version, 7));
 sw_out      <= s_sw_out(31 downto 8); -- only 24 Bit are needed for the IFA8
             
