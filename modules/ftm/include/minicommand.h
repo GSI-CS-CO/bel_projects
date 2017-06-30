@@ -42,7 +42,7 @@ public:
 class MiniFlow : public MiniCommand {
   uint32_t destAdr;
 public:
-  MiniFlow(uint64_t tValid, uint8_t prio, uint16_t qty, uint32_t destAdr)
+  MiniFlow(uint64_t tValid, uint8_t prio, uint16_t qty, uint32_t destAdr, bool permanent)
       : MiniCommand(tValid, (ACT_TYPE_FLOW << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS ), destAdr(destAdr) {}
   ~MiniFlow() {};
 
@@ -58,7 +58,7 @@ public:
 class MiniWait : public MiniCommand {
   uint64_t tWait;
 public:
-  MiniWait(uint64_t tValid,  uint8_t prio, uint64_t tWait) 
+  MiniWait(uint64_t tValid,  uint8_t prio, uint64_t tWait, bool permanent, bool abs) 
   : MiniCommand(tValid, (ACT_TYPE_WAIT << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | 1 << ACT_QTY_POS), tWait(tWait) {}
   ~MiniWait() {};
   void serialise(uint8_t* b) const {

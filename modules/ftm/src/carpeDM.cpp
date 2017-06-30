@@ -438,7 +438,7 @@ bool CarpeDM::connect(const std::string& en) {
      MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
      adr = ebReadWord(ebd, getThrInitialNodeAdr(cpuIdx, thrIdx));
 
-  
+     if (adr == LM32_NULL_PTR) return "Idle";
 
      auto* x = m.getDownAllocTable().lookupAdr(m.intAdr2adr(adr));
      if (x != NULL) return m.getDownGraph()[x->v].name;
@@ -450,7 +450,7 @@ bool CarpeDM::connect(const std::string& en) {
     MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
     adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpuIdx, thrIdx));
 
-  
+    if (adr == LM32_NULL_PTR) return "Idle";
 
     auto* x = m.getDownAllocTable().lookupAdr(m.intAdr2adr(adr));
     if (x != NULL) return m.getDownGraph()[x->v].name;
@@ -499,3 +499,87 @@ bool CarpeDM::connect(const std::string& en) {
     clrThrRun(cpuIdx, (1<<thrIdx));    
   }
 
+  void CarpeDM::dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio) {
+    MemUnit& m  = vM.at(cpuIdxMap.at(cpuIdx));
+    Graph& g    = m.getDownGraph();
+
+    uint64_t vTime, wTime;     
+    uint32_t type, qty, prio, flPrio, flMode, act, dest, flRngHiLo, flRngIl;
+    bool abs, perm, found;
+ 
+    const std::string sPrio[] = {"      Low", "     High", "Interlock"};
+    const std::string sType[] = {"Unknown", "   Noop", "   Flow", "  Flush", "   Wait"};
+    boost::optional<std::string> name; 
+    
+    auto* block = m.getDownAllocTable().lookupHash(hm.lookup(blockName).get());
+
+    Graph::out_edge_iterator out_begin, out_end, out_cur;
+    boost::tie(out_begin, out_end) = out_edges(block->v,g);
+    
+    //Get Buffer List of requested priority
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur) { if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == sQM[cmdPrio]) {found = true; break;} }
+    if (!(found)) {throw std::runtime_error("Block " + blockName + " does not have a " + sPrio[cmdPrio] + " queue"); return;}            
+    auto* bufList = m.getDownAllocTable().lookupVertex(target(*out_cur,g));    
+    if (bufList == NULL) {return;}
+    
+
+    boost::tie(out_begin, out_end) = out_edges(bufList->v,g);
+    
+    // Iterate Buffers
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
+      
+
+      sLog << "Buffer " << g[target(*out_cur,g)].name << ": " << std::endl;
+
+      hexDump(g[target(*out_cur,g)].name.c_str(), g[target(*out_cur,g)].np->getB(), _MEM_BLOCK_SIZE);
+
+      //output commands
+      for(int i=0; i< _MEM_BLOCK_SIZE / _T_CMD_SIZE_; i ++ ) {
+        uint8_t* b = g[target(*out_cur,g)].np->getB();
+
+        vTime = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[i * _T_CMD_SIZE_ + T_CMD_TIME]);
+        act   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[i * _T_CMD_SIZE_ + T_CMD_ACT]);
+        type = ( ((act >> ACT_TYPE_POS)  & ACT_TYPE_MSK) < _ACT_TYPE_END_ ? ((act >> ACT_TYPE_POS)  & ACT_TYPE_MSK) : ACT_TYPE_UNKNOWN);
+        prio = ( ((act >> ACT_PRIO_POS)  & ACT_PRIO_MSK) < 3 ? ((act >> ACT_PRIO_POS)  & ACT_PRIO_MSK) : PRIO_LO);
+        qty  = (act >> ACT_QTY_POS) & ACT_QTY_MSK;
+        perm = (act >> ACT_CHP_POS) & ACT_CHP_MSK;
+        //type specific
+        abs = (act >> ACT_WAIT_ABS_POS) & ACT_WAIT_ABS_MSK;
+        flPrio = (act >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;
+        flMode = (act >> ACT_FLUSH_MODE_POS) & ACT_FLUSH_MODE_MSK;
+        wTime  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[i * _T_CMD_SIZE_ + T_CMD_WAIT_TIME]);
+        dest   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[i * _T_CMD_SIZE_ + T_CMD_FLOW_DEST]);
+
+        //write output
+        sLog << "Cmd #" << i << ": " << std::endl;
+        if(type == ACT_TYPE_UNKNOWN) {sLog << "Unknown Format / not initialised" << std::endl; continue;}
+        if(type == ACT_TYPE_NOOP || type == ACT_TYPE_FLOW) sLog << qty << " x ";
+        else                                               sLog << "1 x ";
+        sLog << sType[type] << " @ >" << vTime << " ns, " << sPrio[prio] << " priority";
+        if (((type == ACT_TYPE_FLOW) || ((type == ACT_TYPE_WAIT) && !(abs))) && perm) sLog << ", changes are permanent" << std::endl;
+        else sLog << ", changes are temporary" << std::endl;
+
+        //type specific
+        switch(type) {
+          case ACT_TYPE_NOOP  : break;
+          case ACT_TYPE_FLOW  : sLog << "Destination: ";
+                                try { 
+                                  auto* y = m.getDownAllocTable().lookupAdr(m.intAdr2adr(dest));
+                                  name = hm.lookup(y->hash); 
+                                } catch (...) {throw; name = "INVALID";}
+                                sLog << name.get()  << std::endl; break;
+          case ACT_TYPE_FLUSH : sLog << "Priority to Flush: " << flPrio << " Mode: " << flMode << std::endl; break;
+          case ACT_TYPE_WAIT  : if (abs) {sLog << "Wait until " << wTime << std::endl;} else {sLog << "Make Block Period " << wTime << std::endl;} break;
+
+        }
+      }
+    }
+  }      
+
+void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
+  MemUnit& m  = vM.at(cpuIdxMap.at(cpuIdx));
+  try {
+    auto* n = m.getDownAllocTable().lookupHash(hm.lookup(name).get());  
+    hexDump(m.getDownGraph()[n->v].name.c_str(), n->b, _MEM_BLOCK_SIZE); 
+  } catch (...) {throw;}
+}

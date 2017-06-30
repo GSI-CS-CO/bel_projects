@@ -258,6 +258,7 @@
 
   } 
 
+
   const uint32_t MemUnit::getCmdInc(uint32_t hash, uint8_t prio) const {
     uint32_t newIdxs;
     uint8_t  eWrIdx;
@@ -284,15 +285,7 @@
   //Allocation functions
   bool MemUnit::allocate(uint32_t hash, vertex_t v) {
     uint32_t chunkAdr;
-    /*
-    // we don't know if the hash map accepts this node. Check
-    try {
-      hash = hashMap.lookup(name);
-    } catch (...) {
-      std::cout << "Hashmap doesnt know " << name << std::endl;
-      return false;
-    }
-    */
+
     if ( acquireChunk(chunkAdr) )  { 
         atUp.insert(chunkAdr, hash, v);  
     } else {return false;}
@@ -394,7 +387,7 @@
 
         std::cout << std::setfill(' ') << std::setw(4) << std::dec << x->v 
         << "   "     << std::setfill(' ') << std::setw(30) << g[v].name 
-        << "   0x" << std::hex << std::setfill('0') << std::setw(8) << x->hash
+        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << x->hash
         << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2intAdr(x->adr) 
         << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2extAdr(x->adr) << std::endl;
   

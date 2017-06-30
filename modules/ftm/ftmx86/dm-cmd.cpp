@@ -25,7 +25,8 @@ static void help(const char *program) {
   fprintf(stderr, "  running                   show bitfield of all running threads on this CPU core\n");  
   fprintf(stderr, "\nLocal commands:\n");
   fprintf(stderr, "  preptime <Time / ns>      [NOT YET IMPLEMENTED] Set preparation time (lead) for this thread\n");
-  fprintf(stderr, "  origin <target node       Set the node with which selected thread will start\n");
+  fprintf(stderr, "  origin <target node>      Set the node with which selected thread will start\n");
+  fprintf(stderr, "  hex <target node>         Show hex dump of selected Node \n");
   fprintf(stderr, "  start                     Request start of selected thread. Requires a valid origin.\n");
   fprintf(stderr, "  stop                      Request stop of selected thread\n");
   fprintf(stderr, "  abort                     Immediately aborts selected thread\n");
@@ -36,6 +37,7 @@ static void help(const char *program) {
   fprintf(stderr, "  relwait <target node> <wait time / ns>    [Options: lps]   Changes Block period to <wait time>\n");
   fprintf(stderr, "  abswait <target node> <wait time / ns>    [Options: lp]    [NOT YET IMPLEMENTED] Stretches Block period until <wait time>\n");
   fprintf(stderr, "  flush <target node> <target priorities>   [Options: lp]    [NOT YET IMPLEMENTED] Flushes all pending commands (hex 0x0 - 0x7) of lower priority\n");
+  fprintf(stderr, "  queue <target node>                       [Options: p]     Show all queue content (unitialised cmd slots will show garbage) \n");
   fprintf(stderr, "Options for Block commands:\n");
   fprintf(stderr, "  -l <Time / ns>           the absolute time in ns after which the command will become active, default is 0 (immediately)\n");
   fprintf(stderr, "  -p <priority>            the priority of the command (0 = Low, 1 = High, 2 = Interlock), default is 0\n");
@@ -48,17 +50,17 @@ int main(int argc, char* argv[]) {
 
 
 
-  bool verbose = false;
+  bool verbose = false, permanent = false;
 
   int opt;
   const char *program = argv[0];
   const char *netaddress, *targetName = NULL, *inputFilename = NULL, *typeName = NULL, *para = NULL;
   int32_t tmp, error=0;
   uint32_t cpuIdx = 0, thrIdx = 0, cmdPrio = PRIO_LO, cmdQty = 1;
-  uint64_t cmdTvalid = 0, cmdFlush = PRIO_LO, longtmp;
+  uint64_t cmdTvalid = 0, longtmp;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "hvc:p:l:t:q:")) != -1) {
+   while ((opt = getopt(argc, argv, "shvc:p:l:t:q:")) != -1) {
       switch (opt) {
          case 'v':
             verbose = 1;
@@ -98,6 +100,9 @@ int main(int argc, char* argv[]) {
               error = -1;
             } else {cpuIdx = (uint32_t)tmp;}
             break;
+          case 's':
+            permanent = true;
+            break;  
  
          case 'h':
             help(program);
@@ -180,52 +185,79 @@ int main(int argc, char* argv[]) {
         } catch (std::runtime_error const& err) {
           std::cerr << "ERROR: Could not obtain address of Destination Node " << para << ". Cause: " << err.what() << std::endl;
         } 
-        mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr );
+        mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, permanent );
       } else {std::cerr << "ERROR: Destination Node '" << para << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
-    }
-    else if (cmp == "flush") {
-        if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
     }
     else if (cmp == "relwait")  {
       if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
-      if (para != NULL) { mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, atoll(para) ); }
+      if (para == NULL) {std::cerr << "ERROR: Wait time in ns is missing, aborting" << std::endl; return -1; }
+      mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, atoll(para), permanent, false );
     }
+    else if (cmp == "abswait")  {
+      if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      if (para == NULL) {std::cerr << "ERROR: Wait time in ns is missing, aborting" << std::endl; return -1; }
+        mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, atoll(para), permanent, true ); 
+    }
+    else if (cmp == "flush") {
+        if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+        if (para == NULL) {std::cerr << "ERROR: Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7), aborting" << std::endl; return -1; }  
+        uint32_t queuePrio = atoi(para) & 0x7;
+        mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, queuePrio >> PRIO_IL, queuePrio >> PRIO_HI, queuePrio >> PRIO_LO);
+    }
+    else if (cmp == "queue") {
+        if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+        cdm.dumpQueue(cpuIdx, targetName, cmdPrio);
+        return 0;
+    } 
     else if (cmp == "origin")  {
-      if (targetName != NULL) { 
-        cdm.setThrOrigin(cpuIdx, thrIdx, targetName);     
-        if(verbose) std::cout << "CPU #" << cpuIdx << " Thr #" << thrIdx << " Origin was set to Node " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl;
-      }
+      if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      cdm.setThrOrigin(cpuIdx, thrIdx, targetName);     
+      if(verbose) std::cout << "CPU #" << cpuIdx << " Thr #" << thrIdx << " Origin was set to Node " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl;
+      return 0;
     }
     else if (cmp == "cursor")  {
       std::cout << "Currently at " << cdm.getThrCursor(cpuIdx, thrIdx) << std::endl;
-      
+      return 0;
     }
     else if (cmp == "start")  {
-      cdm.startThr(cpuIdx, thrIdx); 
-      
+      cdm.startThr(cpuIdx, thrIdx);
+      return 0;
     }
     else if (cmp == "stop")  {
       cdm.stopThr(cpuIdx, thrIdx);
-      
+      return 0;
     }
     else if (cmp == "abort")  {
       cdm.abortThr(cpuIdx, thrIdx);
-      
+      return 0;
     }
     else if (cmp == "running")  {
       std::cout << "CPU #" << cpuIdx << " Running Threads: 0x" << cdm.getThrRun(cpuIdx) << std::endl;
-   
+      return 0;
+    }
+    else if (cmp == "hex")  {
+      if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      try {
+        cdm.dumpNode(cpuIdx, targetName);
+      } catch (std::runtime_error const& err) {
+        std::cerr << "ERROR: Node not found. Cause: " << err.what() << std::endl; return -21;
+      }  
+      return 0;
     }
 
+    //all the block commands set mc, so...
     if (mc != NULL) {
       try {
           cdm.sendCmd(cpuIdx, targetName, cmdPrio, mc);     
         } catch (std::runtime_error const& err) {
           std::cerr << "ERROR: Could not send command " << para << ". Cause: " << err.what() << std::endl;
         }  
-       
+      return 0; 
 
-    }  
+    } 
+
+
+    std::cerr << "ERROR: " << cmp << " is not a valid command. Type " << program << " -h for help" << std::endl;
 
   }
 

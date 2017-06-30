@@ -193,6 +193,13 @@ public:
 
   //show a CPU's Download address table
   void showDown(uint8_t cpuIdx) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.showDown("Download Table", "download_dict.txt");}
+
+  //Show all command fields in a Queue (past and current)
+  void dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio);
+
+  //hex dump a node
+  void dumpNode(uint8_t cpuIdx, const std::string& name);
+
 };
 
 #endif
