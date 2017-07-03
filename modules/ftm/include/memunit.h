@@ -54,7 +54,7 @@ class MemUnit {
 
 protected:
 
-  void show(const std::string& title, const std::string& logDictFile, Graph& g, AllocTable& at );
+  void show(const std::string& title, const std::string& logDictFile, Graph& g, AllocTable& at, bool filterMeta );
   
 
 public:  
@@ -128,8 +128,8 @@ public:
 
 
 
-  void showUp(const std::string& title, const std::string& logDictFile ) {show(title, logDictFile, gUp, atUp);}
-  void showDown(const std::string& title, const std::string& logDictFile ) {show(title, logDictFile, gDown, atDown);}
+  void showUp(const std::string& title, const std::string& logDictFile, bool filterMeta ) {show(title, logDictFile, gUp, atUp, filterMeta);}
+  void showDown(const std::string& title, const std::string& logDictFile, bool filterMeta ) {show(title, logDictFile, gDown, atDown, filterMeta);}
 
 
 

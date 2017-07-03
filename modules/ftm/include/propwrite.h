@@ -23,6 +23,27 @@
 #include "event.h"
 
 
+
+
+  template <class MetaMap>
+  struct non_meta {
+    non_meta() { }
+    non_meta(MetaMap meta) : meta(meta) { }
+    template <class Vertex>
+    bool operator()(const Vertex& v) const {
+      if (meta[v] != NULL) return !(meta[v]->isMeta());
+      else return true;
+    }
+    MetaMap meta;
+  };
+
+  template <class MetaMap>
+  inline non_meta<MetaMap> 
+  make_non_meta(MetaMap meta) {
+    return non_meta<MetaMap>(meta);
+  }
+
+
   struct sample_graph_writer {
     const std::string& sroot;
     void operator()(std::ostream& out) const {

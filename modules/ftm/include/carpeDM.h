@@ -118,8 +118,8 @@ public:
   int downloadAndParse(uint8_t cpuIdx);
 
   //Write out processed Download Graph as .dot file
-  void writeDownDot(const std::string& fn, uint8_t cpuIdx) { writeDownDot( fn, vM.at(cpuIdxMap.at(cpuIdx)) ); }
-  void writeDownDot(const std::string& fn, MemUnit& m);
+  void writeDownDot(const std::string& fn, uint8_t cpuIdx, bool filterMeta) { writeDownDot( fn, vM.at(cpuIdxMap.at(cpuIdx)), filterMeta ); }
+  void writeDownDot(const std::string& fn, MemUnit& m, bool filterMeta);
 
   //Turn on Verbose Output
   void verboseOn()  {verbose = true;}
@@ -189,10 +189,10 @@ public:
   uint32_t getNodeAdr(uint8_t cpuIdx, const std::string& name, bool direction, bool intExt); 
 
   //show a CPU's Upload address table
-  void showUp(uint8_t cpuIdx) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.showUp("Upload Table", "upload_dict.txt");}
+  void showUp(uint8_t cpuIdx, bool filterMeta) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.showUp("Upload Table", "upload_dict.txt", filterMeta);}
 
   //show a CPU's Download address table
-  void showDown(uint8_t cpuIdx) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.showDown("Download Table", "download_dict.txt");}
+  void showDown(uint8_t cpuIdx, bool filterMeta) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.showDown("Download Table", "download_dict.txt", filterMeta);}
 
   //Show all command fields in a Queue (past and current)
   void dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio);

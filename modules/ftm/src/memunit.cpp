@@ -375,28 +375,33 @@
         
   }
 
-  void MemUnit::show(const std::string& title, const std::string& logDictFile, Graph& g, AllocTable& at ) {
+  void MemUnit::show(const std::string& title, const std::string& logDictFile, Graph& g, AllocTable& at, bool filterMeta ) {
 
     std::ofstream dict(logDictFile.c_str());
     std::cout << std::endl << title << std::endl;
     std::cout << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setw(30) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
     std::cout << std::setfill('-') << std::setw(50) << std::endl;      
+    
+
+
+
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       try {
         auto* x = at.lookupHash(g[v].np->getHash());
+        if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
+          std::cout << std::setfill(' ') << std::setw(4) << std::dec << x->v 
+          << "   "     << std::setfill(' ') << std::setw(30) << g[v].name 
+          << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << x->hash
+          << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2intAdr(x->adr) 
+          << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2extAdr(x->adr) << std::endl;
+    
 
-        std::cout << std::setfill(' ') << std::setw(4) << std::dec << x->v 
-        << "   "     << std::setfill(' ') << std::setw(30) << g[v].name 
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << x->hash
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2intAdr(x->adr) 
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2extAdr(x->adr) << std::endl;
-  
-
-        if (dict.good()) {
-          dict << std::hex << "\"0x" << x->hash << "\" : \"" << g[v].name << "\"" << std::endl;
-          dict << std::hex << "\"0x" << adr2intAdr(x->adr) << "\" : \"pi_" << g[v].name << "\"" << std::endl;
-          dict << std::hex << "\"0x" << adr2extAdr(x->adr) << "\" : \"pe_" << g[v].name << "\"" << std::endl;
-        } 
+          if (dict.good()) {
+            dict << std::hex << "\"0x" << x->hash << "\" : \"" << g[v].name << "\"" << std::endl;
+            dict << std::hex << "\"0x" << adr2intAdr(x->adr) << "\" : \"pi_" << g[v].name << "\"" << std::endl;
+            dict << std::hex << "\"0x" << adr2extAdr(x->adr) << "\" : \"pe_" << g[v].name << "\"" << std::endl;
+          } 
+        }
       } catch(...) {
         throw std::runtime_error( std::string("Node ") + g[v].name + std::string(" not in AllocTable")); return; 
       }

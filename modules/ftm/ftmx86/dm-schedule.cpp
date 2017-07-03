@@ -16,9 +16,10 @@ static void help(const char *program) {
   fprintf(stderr, "\n");
   fprintf(stderr, "\nSchedule Generator. Creates Binary Data for the DataMaster (DM) from Schedule Graphs (.dot files) and\nuploads/downloads to/from CPU Core <m> of the DM. For download, a Schedule Graph is not manadatory ,\nbut hashes will not be resolved to node names. To render a download, use the 'dot -Tpng -o<outputfile.dot>'\n");
   fprintf(stderr, "\nGeneral Options:\n");
-  fprintf(stderr, "  -c <cpu-idx>              select CPU core by index, default is 0\n");
+  fprintf(stderr, "  -c <cpu-idx>              Select CPU core by index, default is 0\n");
   fprintf(stderr, "  -w                        Generate Schedule Graph from input file and uploads it to selected CPU core\n");
   fprintf(stderr, "  -o <output file>          Specify output file name, default is '%s'\n", defOutputFilename);
+  fprintf(stderr, "  -s                        Strip Meta Nodes. Download writes out only schedule paths, no queues etc \n");  
   fprintf(stderr, "  -v                        verbose operation, print more details\n");
   fprintf(stderr, "\n");
 }
@@ -27,7 +28,7 @@ int main(int argc, char* argv[]) {
 
 
 
-  bool doUpload = false, verbose = false;
+  bool doUpload = false, verbose = false, strip=false;
 
   int opt;
   const char *program = argv[0];
@@ -36,7 +37,7 @@ int main(int argc, char* argv[]) {
   uint32_t cpuIdx = 0;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "hvc:o:w")) != -1) {
+   while ((opt = getopt(argc, argv, "shvc:o:w")) != -1) {
       switch (opt) {
          case 'w':
             doUpload = true;
@@ -47,8 +48,12 @@ int main(int argc, char* argv[]) {
             break;
  
          case 'v':
-            verbose = 1;
+            verbose = true;
             break;
+
+         case 's':
+            strip = true;
+            break;   
 
          case 'c':
             tmp = atol(optarg);
@@ -117,7 +122,7 @@ int main(int argc, char* argv[]) {
 
     try { 
       cdm.uploadDot(cpuIdx, inputFilename);
-      if(verbose) cdm.showUp(cpuIdx);
+      if(verbose) cdm.showUp(cpuIdx, strip);
     } catch (std::runtime_error const& err) {
       std::cerr << "ERROR: Upload to CPU#"<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
       return -6;
@@ -126,8 +131,8 @@ int main(int argc, char* argv[]) {
   
   try { 
     cdm.downloadAndParse(cpuIdx);
-    cdm.writeDownDot(outputFilename, cpuIdx);
-    if(verbose) cdm.showDown(cpuIdx);
+    cdm.writeDownDot(outputFilename, cpuIdx, strip);
+    if(verbose) cdm.showDown(cpuIdx, strip);
   } catch (std::runtime_error const& err) {
     std::cerr << "ERROR: Download from CPU#"<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
     return -7;

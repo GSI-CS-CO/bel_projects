@@ -383,13 +383,30 @@ bool CarpeDM::connect(const std::string& en) {
 
 
  //write out dotfile from download graph of a memunit
- void CarpeDM::writeDownDot(const std::string& fn, MemUnit& m) {
-    std::ofstream out(fn); 
+ void CarpeDM::writeDownDot(const std::string& fn, MemUnit& m, bool filterMeta) {
+    std::ofstream out(fn);
+    Graph& g = m.getDownGraph();
+
+
+    typedef boost::property_map< Graph, node_ptr myVertex::* >::type NpMap;
+
+    boost::filtered_graph <Graph, boost::keep_all, non_meta<NpMap> > fg(m.getDownGraph(), boost::keep_all(), make_non_meta(boost::get(&myVertex::np, m.getDownGraph())));
+
     if(out.good()) {
       if (verbose) sLog << "Writing Output File " << fn << "... ";
-      try { boost::write_graphviz(out, m.getDownGraph(), make_vertex_writer(boost::get(&myVertex::np, m.getDownGraph())), 
-                          make_edge_writer(boost::get(&myEdge::type, m.getDownGraph())), sample_graph_writer{"Demo"},
-                          boost::get(&myVertex::name, m.getDownGraph()));
+      try { 
+            
+            if (filterMeta) {
+              boost::write_graphviz(out, fg, make_vertex_writer(boost::get(&myVertex::np, fg)), 
+                          make_edge_writer(boost::get(&myEdge::type, fg)), sample_graph_writer{"Demo"},
+                          boost::get(&myVertex::name, fg));
+            }
+            else {
+            
+              boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)), 
+                          make_edge_writer(boost::get(&myEdge::type, g)), sample_graph_writer{"Demo"},
+                          boost::get(&myVertex::name, g));
+            }
       }
       catch(...) {throw;}
       out.close();

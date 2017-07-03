@@ -35,8 +35,8 @@ static void help(const char *program) {
   fprintf(stderr, "  noop <target node>                        [Options: lpq]   Placeholder to stall succeeding commands, has no effect itself\n");
   fprintf(stderr, "  flow <target node> <destination node>     [Options: lpqs]  Changes schedule flow to <Destination Node>\n");
   fprintf(stderr, "  relwait <target node> <wait time / ns>    [Options: lps]   Changes Block period to <wait time>\n");
-  fprintf(stderr, "  abswait <target node> <wait time / ns>    [Options: lp]    [NOT YET IMPLEMENTED] Stretches Block period until <wait time>\n");
-  fprintf(stderr, "  flush <target node> <target priorities>   [Options: lp]    [NOT YET IMPLEMENTED] Flushes all pending commands (hex 0x0 - 0x7) of lower priority\n");
+  fprintf(stderr, "  abswait <target node> <wait time / ns>    [Options: lp]    Stretches Block period until <wait time>\n");
+  fprintf(stderr, "  flush <target node> <target priorities>   [Options: lp]    [NOT TESTED] Flushes all pending commands (hex 0x0 - 0x7) of lower priority\n");
   fprintf(stderr, "  queue <target node>                       [Options: p]     Show all queue content (unitialised cmd slots will show garbage) \n");
   fprintf(stderr, "Options for Block commands:\n");
   fprintf(stderr, "  -l <Time / ns>           the absolute time in ns after which the command will become active, default is 0 (immediately)\n");
@@ -156,7 +156,7 @@ int main(int argc, char* argv[]) {
     
   try { 
     cdm.downloadAndParse(cpuIdx);
-    if(verbose) cdm.showDown(cpuIdx);
+    if(verbose) cdm.showDown(cpuIdx, false);
   } catch (std::runtime_error const& err) {
     std::cerr << "ERROR: Download from CPU#"<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
     return -7;
