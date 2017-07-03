@@ -88,8 +88,8 @@ uint32_t dmExt2IntAddr(uint32_t extAddr) // data master external address -> inte
 
   extBaseAddr = dmExt2BaseAddr(extAddr);
 
-  intAddr     = extAddr & ~extBaseAddr;
-  intAddr     = intAddr | INT_BASE_ADR;
+  intAddr     = extAddr - extBaseAddr;
+  intAddr     = intAddr + INT_BASE_ADR;
 
   return intAddr;
 } //dmExt2IntAddr
@@ -99,8 +99,8 @@ uint32_t dmInt2ExtAddr(uint32_t intAddr, uint32_t extBaseAddr) // data master in
 {
   uint32_t extAddr;
 
-  extAddr = intAddr & ~INT_BASE_ADR;
-  extAddr = extAddr | extBaseAddr;
+  extAddr = intAddr - INT_BASE_ADR;
+  extAddr = extAddr + extBaseAddr;
 
   return extAddr;
 } //dmInt2ExtAddr
@@ -206,24 +206,28 @@ uint32_t ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, uint32_t
 {
   uint64_t timeoutT;
   int      i;
+  uint32_t handshakeIdx;
+
+  handshakeIdx = n32BitWords + 1;
+
+  if (n32BitWords >= (DMUNIPZ_SHARED_DATA_4EB_SIZE >> 2)) return DMUNIPZ_STATUS_OUTOFRANGE;
+  if (n32BitWords == 0)                                   return DMUNIPZ_STATUS_OUTOFRANGE;
 
   for (i=0; i< n32BitWords; i++) data[i] = 0x0;
 
-  if (n32BitWords > (DMUNIPZ_SHARED_DATA_4EB_SIZE >> 2)) return DMUNIPZ_STATUS_OUTOFRANGE;
-  if (n32BitWords == 0)                                  return DMUNIPZ_STATUS_OUTOFRANGE;
-
   ebmClearSharedMem();                                                                               // clear shared data for EB return values
-  pSharedData4EB[0] = DMUNIPZ_EB_HACKISH;                                                            // see below
+  pSharedData4EB[handshakeIdx] = DMUNIPZ_EB_HACKISH;                                                 // see below
 
   ebm_hi(address);                                                                                   // EB operation starts here
   for (i=0; i<n32BitWords; i++) ebm_op(address, (uint32_t)(&(pCpuRamExternalData4EB[i])), EBM_READ); // put data into EB cycle
-  if (n32BitWords == 1)         ebm_op(address, (uint32_t)(&(pCpuRamExternalData4EB[0])), EBM_READ); // workaround runt frame issue
+                                ebm_op(address, (uint32_t)(&(pCpuRamExternalData4EB[handshakeIdx])), EBM_READ); // handshake data
   ebm_flush();                                                                                       // commit EB cycle via the network
   
   timeoutT = getSysTime() + msTimeout * 1000000;                                                     
   while (getSysTime() < timeoutT) {                                                                  // wait for received data until timeout
-    if (pSharedData4EB[0] != DMUNIPZ_EB_HACKISH) {                                                   // hackish solution to determine if a reply value has been received
+    if (pSharedData4EB[handshakeIdx] != DMUNIPZ_EB_HACKISH) {                                        // hackish solution to determine if a reply value has been received
       for (i=0; i<n32BitWords; i++) data[i] = pSharedData4EB[i];
+      //mprintf("dm-unipz: ebmReadN EB_address 0x%08x, nWords %d, data[0] 0x%08x\n", address, n32BitWords, data[0]);
       return DMUNIPZ_STATUS_OK;
     }
   } //while not timed out
@@ -277,11 +281,14 @@ uint32_t dmPrepCmdCommon(uint32_t idx) // prepare data common to all commands
 
   uint32_t buffListAddr;                                       // address of  buffer list (here: of low prio Q)
   uint32_t buffListAddrOffs;                                   // where to find the relevant command buffer within the buffer list
-  uint32_t buffAddr;                                           // address of relevant command buffer
+  uint32_t buffAddr;                                           // address of relevant command buffer; buffListAdd + buffListAddOffs
   
   uint32_t cmdListAddr;                                        // address of command list 
   uint32_t cmdListAddrOffs;                                    // where to find the relevant command  within the command list
-  uint32_t cmdAddr;                                            // address of relevant command 
+  uint32_t cmdAddr;                                            // address of relevant command; cmdListAddr + cmdListAddrOffs
+  
+  //uint32_t help1;
+  //uint32_t help2;
 
   uint32_t cmdValidTSHi;                                       // time when command becomes valid, high32 bit
   uint32_t cmdValidTSLo;                                       // time when command becomes valid, low32 bit
@@ -302,20 +309,21 @@ uint32_t dmPrepCmdCommon(uint32_t idx) // prepare data common to all commands
 
   // read value for writeIdx and calculate indices for buffer list and command list
   if ((status = ebmReadN(2000, wrIdxAddr, &wrIdx, 1)) != DMUNIPZ_STATUS_OK) return status;
-  // wrIdx = 4;
   wrIdxLo          = ((wrIdx >> (PRIO_LO * 8)) &  Q_IDX_MAX_OVF_MSK);
   buffListAddrOffs = (wrIdxLo & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_ ) * _PTR_SIZE_;
   cmdListAddrOffs  = (wrIdxLo & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_ ) * _T_CMD_SIZE_; 
 
   // read address of buffer list and calculate address of command buffer
+  //if ((status = ebmReadN(2000, qLowPrioAddr, &help1, 1)) != DMUNIPZ_STATUS_OK) return status;
+  //buffListAddr     = help1;
   if ((status = ebmReadN(2000, qLowPrioAddr, &buffListAddr, 1)) != DMUNIPZ_STATUS_OK) return status;
-  //buffListAddr = 0x10004711;
   buffListAddr     = dmInt2ExtAddr(buffListAddr, extBaseAddr);
   buffAddr         = buffListAddr + buffListAddrOffs;
 
   // read address of command list and calculate address of command
+  //if ((status = ebmReadN(2000, buffAddr, &help2, 1)) != DMUNIPZ_STATUS_OK) return status;
+  //cmdListAddr      = help2;
   if ((status = ebmReadN(2000, buffAddr, &cmdListAddr, 1)) != DMUNIPZ_STATUS_OK) return status;
-  //cmdListAddr = 0x10004712;
   cmdListAddr      = dmInt2ExtAddr(cmdListAddr, extBaseAddr);
   cmdAddr          = cmdListAddr + cmdListAddrOffs;
 
@@ -327,7 +335,8 @@ uint32_t dmPrepCmdCommon(uint32_t idx) // prepare data common to all commands
   wrIdx            = wrIdx & ~(0xff << (PRIO_LO * 8));                // clear current value of write index for low priority
   wrIdx            = wrIdx | ((wrIdxLo + 1) & Q_IDX_MAX_OVF_MSK);     // update value of write index for low priority
 
-  DBPRINT2("dm-unipz: prep dmPepCmdCommon for idx %d, block address 0x%08x, buffLAddr 0x%08x, cmdLAddr 0x%08x, cmdAddr 0x%08x\n", idx, blockAddr, buffListAddr, cmdListAddr, cmdAddr);
+  //DBPRINT2("dm-unipz: prep dmPepCmdCommon for idx %d, block address 0x%08x, wrIdx %d, wrIdxLo %d, buffLAddrHelp 0x%08x, buffLAddr 0x%08x, buffAddr 0x%08x, cmdLAddrHelp 0x%08x, cmdLAddr 0x%08x, cmdAddr 0x%08x\n", idx, blockAddr, wrIdx, wrIdxLo, help1, buffListAddr, buffAddr, help2, cmdListAddr, cmdAddr);
+  DBPRINT2("dm-unipz: prep dmPepCmdCommon for idx %d, block address 0x%08x, wrIdx %d, wrIdxLo %d, buffLAddr 0x%08x, buffAddr 0x%08x, cmdLAddr 0x%08x, cmdAddr 0x%08x\n", idx, blockAddr, wrIdx, wrIdxLo, buffListAddr, buffAddr, cmdListAddr, cmdAddr);
   DBPRINT3("dm-unipz: prep cmdValidTSHi 0x%08x, index %d\n", cmdValidTSHi, T_CMD_TIME >> 2);
   DBPRINT3("dm-unipz: prep cmdValidTSLo 0x%08x\n", cmdValidTSLo);
   DBPRINT3("dm-unipz: prep wrIdx %d\n", wrIdx);
@@ -419,9 +428,9 @@ uint32_t dmPrepFlexWaitCmd(uint32_t idx, uint64_t timestamp) // prepare flexible
 
 void dmChangeBlock(uint32_t idx)     // alter a block within the Data Master on-the fly
 {
-  DBPRINT2("dm-unipz: dmChangeBlock idx %d, cmdAddr 0x%08x, cmdData[0] 0x%08x, cmdData[1] 0x%08x\n", idx, dmData[idx].cmdAddr, dmData[idx].cmdData[0], dmData[idx].cmdData[1]);
   ebmWriteN(dmData[idx].cmdAddr, dmData[idx].cmdData, (_T_CMD_SIZE_ >> 2));  
   ebmWriteN(dmData[idx].blockWrIdxAddr, &dmData[idx].blockWrIdx, 1);             
+  DBPRINT2("dm-unipz: dmChangeBlock idx %d, cmdAddr 0x%08x, cmdData[0] 0x%08x, cmdData[1] 0x%08x\n", idx, dmData[idx].cmdAddr, dmData[idx].cmdData[0], dmData[idx].cmdData[1]);
 } // dmChangeBlock
 
 
@@ -1126,7 +1135,7 @@ void main(void) {
       case DMUNIPZ_STATE_FATAL :
         *pSharedState  = actState;
         *pSharedStatus = status;
-        ("dm-unipz: a FATAL error has occured. Good bye.\n");
+        mprintf("dm-unipz: a FATAL error has occured. Good bye.\n");
         while (1) asm("nop"); // RIP!
         break;
       default :                                                             // avoid flooding WB bus with unnecessary activity
