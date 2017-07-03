@@ -344,11 +344,14 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
     //decrement qty
     
     DBPRINT3("#%02u: Act 0x%08x, Qty is at %d\n", cpuId, *act, qty);
-    actTmp &= ~ACT_QTY_SMSK;
-    actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS;
-    *act = actTmp;
-    //if qty <= zero, pop cmd -> increment read offset
+    
+    //if qty <= 1, pop cmd -> increment read offset
     if(qty <= 0) { *(rdIdx) = (*rdIdx + 1) & Q_IDX_MAX_OVF_MSK; DBPRINT3("#%02u: Qty reached zero, popping\n", cpuId);}
+    //decrement qty
+    actTmp &= ~ACT_QTY_SMSK; //clear qty
+    actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS; // OR in decremented and shifted qty
+    *act = actTmp; //write back
+
     //} else {mprintf("#%02u: Error: Qty is already at %d !\n", cpuId, *act, qty); }
   } else {
     //mprintf(" nothing pending\n");
