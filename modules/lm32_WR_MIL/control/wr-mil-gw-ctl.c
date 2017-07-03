@@ -1,5 +1,6 @@
 // standard includes 
 #include <unistd.h> // getopt
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

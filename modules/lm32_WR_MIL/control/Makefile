@@ -9,7 +9,7 @@ FW          ?= ..
 TARGETS     := wr-mil-gw-ctl
 
 EXTRA_FLAGS ?=
-CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(FW)
+CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(FW) -std=c99
 LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 
 all: $(TARGETS)
@@ -18,7 +18,7 @@ wr-mil-gw-ctl: wr-mil-gw-ctl.c
 	$(CC) $(CFLAGS) -o wr-mil-gw-ctl wr-mil-gw-ctl.c $(LIBS)
 
 clean:
-	rm -f *.o dmunipz-ctl
+	rm -f *.o wr-mil-gw-ctl
 
 install:
 	mkdir -p $(STAGING)$(PREFIX)/bin
