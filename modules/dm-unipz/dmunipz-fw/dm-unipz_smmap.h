@@ -17,13 +17,16 @@
 #define DMUNIPZ_SHARED_DSTMACHI       0x20   // WR MAC of data master, bits 31..16 unused
 #define DMUNIPZ_SHARED_DSTMACLO       0x24   // WR MAC of data master
 #define DMUNIPZ_SHARED_DSTIP          0x28   // IP of data master
-// 0x2C-0x2F: reserved
-#define DMUNIPZ_SHARED_TRANSN         0x30   // # N of transfers
-#define DMUNIPZ_SHARED_INJECTN        0x34   // # N of injections (of current transfer)
-#define DMUNIPZ_SHARED_TRANSVIRTACC   0x38   // # requested virtual accelerator 0..F
-#define DMUNIPZ_SHARED_TRANSSTATUS    0x3C   // # status of transfer
-// 0x40-0x4F: reserved
-#define DMUNIPZ_SHARED_DATA_4EB_START 0x50    // start of shared memory for EB return values
+#define DMUNIPZ_SHARED_OFFSETFLEX     0x2C   // TS_FLEXWAIT = OFFSETFLEX + TS_MILEVENT; values in ns
+#define DMUNIPZ_SHARED_UNITIMEOUT     0x30   // timeout for UNILAC
+
+// 0x34-0x3F: reserved
+#define DMUNIPZ_SHARED_TRANSN         0x40   // # N of transfers
+#define DMUNIPZ_SHARED_INJECTN        0x44   // # N of injections (of current transfer)
+#define DMUNIPZ_SHARED_TRANSVIRTACC   0x48   // # requested virtual accelerator 0..F
+#define DMUNIPZ_SHARED_TRANSSTATUS    0x4C   // # status of transfer
+// 0x50-0x5F: reserved
+#define DMUNIPZ_SHARED_DATA_4EB_START 0x60    // start of shared memory for EB return values
 #define DMUNIPZ_SHARED_DATA_4EB_END   DMUNIPZ_SHARED_DATA_4EB_START + DMUNIPZ_SHARED_DATA_4EB_SIZE // end of shared memory area for EB return values
 
 #endif

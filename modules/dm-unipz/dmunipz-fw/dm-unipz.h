@@ -4,10 +4,11 @@
 #define  DMUNIPZ_US_ASMNOP        31          // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
-#define  DMUNIPZ_REQTIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
-#define  DMUNIPZ_EVT_UNI_READY    0x1e        // event number EVT_UNI_READY
+#define  DMUNIPZ_UNITIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
+#define  DMUNIPZ_OFFSETFLEX       1000000     // offset added to obtain TS "flex wait" [ns]
+#define  DMUNIPZ_EVT_UNI_READY    0x1e        // event number EVT_UNI_READY (HEX)
 #define  DMUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
-#define  DMUNIPZ_EB_HACKISH       0x12345678  // value for a hackish solution to check for replies to EB reads
+#define  DMUNIPZ_EB_HACKISH       0x12345678  // value for EB read handshake
 
 // (error) status
 #define  DMUNIPZ_STATUS_UNKNOWN          0    // unknown status

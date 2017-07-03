@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000005                                  // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000006                                  // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -116,37 +116,41 @@ unsigned int cpuId, cpuQty;
 uint64_t SHARED dummy = 0;
 
 // global variables 
-volatile uint32_t *pECAQ;              // WB address of ECA queue
-volatile uint32_t *pMILPiggy;          // WB address of MIL device bus (MIL piggy)                              
-volatile uint32_t *pShared;            // pointer to begin of shared memory region                              
-uint32_t *pSharedVersion;              // pointer to a "user defined" u32 register; here: publish version
-uint32_t *pSharedStatus;               // pointer to a "user defined" u32 register; here: publish status
-uint32_t *pSharedNIterMain;            // pointer to a "user defined" u32 register; here: publish # of iterations of main loop
-uint32_t *pSharedNTransfer;            // pointer to a "user defined" u32 register; here: publish # of transfers
-uint32_t *pSharedNInject;              // pointer to a "user defined" u32 register; here: publish # of injections (of current transfer)
-uint32_t *pSharedVirtAcc;              // pointer to a "user defined" u32 register; here: publish # of virtual accelerator
-uint32_t *pSharedStatTrans;            // pointer to a "user defined" u32 register; here: publish status of ongoing transfer
-volatile uint32_t *pSharedCmd;         // pointer to a "user defined" u32 register; here: get command from host
-uint32_t *pSharedState;                // pointer to a "user defined" u32 register; here: publish status
-volatile uint32_t *pSharedData4EB;     // pointer to a n x u32 register; here: memory region for receiving EB return values
-volatile uint32_t *pSharedSrcMacHi;    // pointer to a "user defined" u64 register; here: get MAC of dmunipz WR interface from host
-volatile uint32_t *pSharedSrcMacLo;    // pointer to a "user defined" u64 register; here: get MAC of dmunipz WR interface from host
-volatile uint32_t *pSharedSrcIP;       // pointer to a "user defined" u32 register; here: get IP of dmunipz WR interface from host
-volatile uint32_t *pSharedDstMacHi;    // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
-volatile uint32_t *pSharedDstMacLo;    // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
-volatile uint32_t *pSharedDstIP;       // pointer to a "user defined" u32 register; here: get IP of Data Master WR interface from host
+volatile uint32_t *pECAQ;               // WB address of ECA queue
+volatile uint32_t *pMILPiggy;           // WB address of MIL device bus (MIL piggy)                              
+volatile uint32_t *pShared;             // pointer to begin of shared memory region                              
+uint32_t *pSharedVersion;               // pointer to a "user defined" u32 register; here: publish version
+uint32_t *pSharedStatus;                // pointer to a "user defined" u32 register; here: publish status
+uint32_t *pSharedNIterMain;             // pointer to a "user defined" u32 register; here: publish # of iterations of main loop
+uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 register; here: publish # of transfers
+uint32_t *pSharedNInject;               // pointer to a "user defined" u32 register; here: publish # of injections (of current transfer)
+uint32_t *pSharedVirtAcc;               // pointer to a "user defined" u32 register; here: publish # of virtual accelerator
+uint32_t *pSharedStatTrans;             // pointer to a "user defined" u32 register; here: publish status of ongoing transfer
+volatile uint32_t *pSharedCmd;          // pointer to a "user defined" u32 register; here: get command from host
+uint32_t *pSharedState;                 // pointer to a "user defined" u32 register; here: publish status
+volatile uint32_t *pSharedData4EB;      // pointer to a n x u32 register; here: memory region for receiving EB return values
+volatile uint32_t *pSharedSrcMacHi;     // pointer to a "user defined" u64 register; here: get MAC of dmunipz WR interface from host
+volatile uint32_t *pSharedSrcMacLo;     // pointer to a "user defined" u64 register; here: get MAC of dmunipz WR interface from host
+volatile uint32_t *pSharedSrcIP;        // pointer to a "user defined" u32 register; here: get IP of dmunipz WR interface from host
+volatile uint32_t *pSharedDstMacHi;     // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
+volatile uint32_t *pSharedDstMacLo;     // pointer to a "user defined" u64 register; here: get MAC of the Data Master WR interface from host
+volatile uint32_t *pSharedDstIP;        // pointer to a "user defined" u32 register; here: get IP of Data Master WR interface from host
+volatile uint32_t *pSharedFlexOffset;   // pointer to a "user defined" u32 register; here: TS_FLEXWAIT = OFFSETFLEX + TS_MILEVENT; values in ns
+volatile uint32_t *pSharedUniTimeout;   // pointer to a "user defined" u32 register; here: timeout value for UNIPZ
 
-uint32_t *pCpuRamExternal;             // external address (seen from host bridge) of this CPU's RAM            
-uint32_t *pCpuRamExternalData4EB;      // external address (seen from host bridge) of this CPU's RAM: field for EB return values
+uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
+uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values
 
+WriteToPZU_Type  writePZUData;          // Modulbus SIS, I/O-Modul 1, Bits 0..15
 
-WriteToPZU_Type  writePZUData;         // Modulbus SIS, I/O-Modul 1, Bits 0..15
+uint32_t flexWaitOffset;                // offset added to obtain timestamp for "flex wait"
+uint32_t uniTimeout;                    // timeout value for UNIPZ
 
-#define DM_NBLOCKS       3             // max number of blocks withing the Data Master to be treated
-dmComm  dmData[DM_NBLOCKS];            // data for treatment of blocks
-#define REQTK            0             // 1st block: handles DM for TK request, flow command
-#define REQBEAMA         1             // 2nd block: handles DM for beam request, flow command
-#define REQBEAMB         2             // 3rd block: handles DM for beam request, flex wait
+#define DM_NBLOCKS       3              // max number of blocks withing the Data Master to be treated
+dmComm  dmData[DM_NBLOCKS];             // data for treatment of blocks
+#define REQTK            0              // 1st block: handles DM for TK request, flow command
+#define REQBEAMA         1              // 2nd block: handles DM for beam request, flow command
+#define REQBEAMB         2              // 3rd block: handles DM for beam request, flex wait
 
 /*
 void show_msi()
@@ -458,23 +462,24 @@ void initSharedMem() // determine address and clear shared mem
   pShared           = (uint32_t *)_startshared;
 
   // get address to data
-  pSharedVersion    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_VERSION >> 2));
-  pSharedStatus     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_STATUS >> 2));
-  pSharedCmd        = (uint32_t *)(pShared + (DMUNIPZ_SHARED_CMD >> 2));
-  pSharedState      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_STATE >> 2));
-  pSharedNIterMain  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_NITERMAIN >> 2));
-  pSharedNTransfer  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSN >> 2));
-  pSharedNInject    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_INJECTN >> 2));
-  pSharedVirtAcc    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSVIRTACC >> 2));
-  pSharedStatTrans  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSSTATUS >> 2));
-  pSharedData4EB    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DATA_4EB_START >> 2));
-  pSharedSrcMacHi   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_SRCMACHI >> 2));
-  pSharedSrcMacLo   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_SRCMACLO >> 2));
-  pSharedSrcIP      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_SRCIP >> 2));
-  pSharedDstMacHi   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACHI >> 2));
-  pSharedDstMacLo   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACLO >> 2));
-  pSharedDstIP      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTIP >> 2));
-
+  pSharedVersion     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_VERSION >> 2));
+  pSharedStatus      = (uint32_t *)(pShared + (DMUNIPZ_SHARED_STATUS >> 2));
+  pSharedCmd         = (uint32_t *)(pShared + (DMUNIPZ_SHARED_CMD >> 2));
+  pSharedState       = (uint32_t *)(pShared + (DMUNIPZ_SHARED_STATE >> 2));
+  pSharedNIterMain   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_NITERMAIN >> 2));
+  pSharedNTransfer   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSN >> 2));
+  pSharedNInject     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_INJECTN >> 2));
+  pSharedVirtAcc     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSVIRTACC >> 2));
+  pSharedStatTrans   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TRANSSTATUS >> 2));
+  pSharedData4EB     = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DATA_4EB_START >> 2));
+  pSharedSrcMacHi    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_SRCMACHI >> 2));
+  pSharedSrcMacLo    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_SRCMACLO >> 2));
+  pSharedSrcIP       = (uint32_t *)(pShared + (DMUNIPZ_SHARED_SRCIP >> 2));
+  pSharedDstMacHi    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACHI >> 2));
+  pSharedDstMacLo    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACLO >> 2));
+  pSharedDstIP       = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTIP >> 2));
+  pSharedFlexOffset  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_OFFSETFLEX >> 2));
+  pSharedUniTimeout  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_UNITIMEOUT>> 2));
 
   // find address of CPU from external perspective
   idx = 0;
@@ -488,7 +493,9 @@ void initSharedMem() // determine address and clear shared mem
 
   // set initial values;
   ebmClearSharedMem();
-  *pSharedVersion = DMUNIPZ_FW_VERSION; // of all the shared variabes, only VERSION is a constant. Set it now!
+  *pSharedVersion    = DMUNIPZ_FW_VERSION; // of all the shared variabes, only VERSION is a constant. Set it now!
+  *pSharedFlexOffset = DMUNIPZ_OFFSETFLEX; // initialize with default value
+  *pSharedUniTimeout = DMUNIPZ_UNITIMEOUT; // initialize with default value
 } // initSharedMem 
 
 
@@ -500,7 +507,7 @@ uint32_t findMILPiggy() //find WB address of MIL Piggy
   pMILPiggy = find_device_adr(GSI, SCU_MIL);
 
   if (!pMILPiggy) {DBPRINT1("dm-unipz: can't find MIL piggy\n"); return DMUNIPZ_STATUS_ERROR;}
-  else                                                          return DMUNIPZ_STATUS_OK;
+  else                                                           return DMUNIPZ_STATUS_OK;
 } // initMILPiggy
 
 
@@ -839,7 +846,7 @@ uint32_t entryActionConfigured()
     return status;
   }
 
-  DBPRINT2("dm-unipz: connection to DM ok - 0x%08x\n", data);
+  DBPRINT1("dm-unipz: connection to DM ok - 0x%08x\n", data);
       
   // check if modulbus I/O is ok
   if ((status = echoTestDevMil(pMILPiggy, IFB_ADDRESS_SIS, 0xbabe)) != DMUNIPZ_STATUS_OK) {
@@ -847,7 +854,7 @@ uint32_t entryActionConfigured()
     return DMUNIPZ_STATUS_DEVBUSERROR;
   }
 
-  DBPRINT2("dm-unipz: connection to UNIPZ (devicebus) ok\n");  
+  DBPRINT1("dm-unipz: connection to UNIPZ (devicebus) ok\n");  
 
   // configure MIL piggy for timing events for all 16 virtual accelerators
   if ((status = configMILEvent(DMUNIPZ_EVT_UNI_READY)) != DMUNIPZ_STATUS_OK) {
@@ -855,19 +862,22 @@ uint32_t entryActionConfigured()
     return status;
   } 
 
-  DBPRINT2("dm-unipz: MIL piggy configured for receving events (eventbus)\n");
+  DBPRINT1("dm-unipz: MIL piggy configured for receving events (eventbus)\n");
 
   configLemoOutputEvtMil(pMILPiggy, 2);    // used to see a blinking LED (and optionally connect a scope) for debugging
-  checkClearReqNotOk(DMUNIPZ_REQTIMEOUT);  // in case a 'req_not_ok' flag has been set at UNIPZ, try to clear it
+  checkClearReqNotOk(uniTimeout);          // in case a 'req_not_ok' flag has been set at UNIPZ, try to clear it
 
   // clear bits for modulbus I/O to UNILAC
-  writePZUData.uword               = 0x0;
+  writePZUData.uword = 0x0;
   writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword);
 
   // empty ECA queue for lm32
   i = 0;
   while (wait4ECAEvent(1, &virtAcc, & dryRunFlag) !=  DMUNIPZ_ECADO_TIMEOUT) {i++;}
-  DBPRINT2("dm-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
+  DBPRINT1("dm-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
+
+  flexWaitOffset = *pSharedFlexOffset;
+  uniTimeout     = *pSharedUniTimeout;
 
   return status;
 } // entryActionConfigured
@@ -1007,7 +1017,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       (*nTransfer)++;                                                              // increment number of transfers
       *nInject        = 0;                                                         // number of injections is reset when DM requests TK
 
-      status = requestTK(DMUNIPZ_REQTIMEOUT, virtAccTmp, dryRunFlag);              // request TK from UNIPZ
+      status = requestTK(uniTimeout, virtAccTmp, dryRunFlag);                      // request TK from UNIPZ
 
       if ((dmStatus = dmPrepCmdCommon(REQTK)) != DMUNIPZ_STATUS_OK)                // prepare common part of command for later use, here: continue after TK request
         return dmStatus;                                                           // failure of preparation is a severe error!
@@ -1034,17 +1044,17 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
     
       enableFilterEvtMil(pMILPiggy);                                               // enable filter @ MIL piggy
       clearFifoEvtMil(pMILPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
-      requestBeam(DMUNIPZ_REQTIMEOUT);                                             // request beam from UNIPZ, note that we can't check for REQ_NOT_OK from here
+      requestBeam(uniTimeout);                                                     // request beam from UNIPZ, note that we can't check for REQ_NOT_OK from here
 
-      status = wait4MILEvt(DMUNIPZ_EVT_UNI_READY, virtAccTmp, DMUNIPZ_REQTIMEOUT); // wait for MIL Event
+      status = wait4MILEvt(DMUNIPZ_EVT_UNI_READY, virtAccTmp, uniTimeout);         // wait for MIL Event
       timestamp = getSysTime();                                                    // get timestamp for MIL event
-      sendT     = timestamp + (uint64_t)1000000; //chk: value for offset configurable
-      pulseLemo2();                                                                // for hardware debugging with scope
+      sendT     = timestamp + (uint64_t)flexWaitOffset;                            // add offset to obtain time for "flex wait"
 
+      pulseLemo2();                                                                // for hardware debugging with scope
 
       dmPrepFlexWaitCmd(REQBEAMB, sendT);                                          // prepare flex wait command, here: wait until absolute time
       dmChangeBlock(REQBEAMB);                                                     // modify the "flex wait" block within DM
-      dmChangeBlock(REQBEAMA);                                                     // modify block within DM for execution of a flow command, here: continue after beam request
+      dmChangeBlock(REQBEAMA);                                                     // modify block within DM for execution of a flow command, here: continue after beam request towards "flex wait"
 
       // tempT = getSysTime();
       
@@ -1056,8 +1066,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       // mprintf("dm-unipz: timestamp - sendT (DM) %u\n", (uint32_t)(sendT - timestamp));
 
       if (status == DMUNIPZ_STATUS_TIMEDOUT) {                                     // discriminate between 'timeout' and 'REQ_NOT_OK'
-        if (checkClearReqNotOk(DMUNIPZ_REQTIMEOUT) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;
-        else                                                             status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;
+        if (checkClearReqNotOk(uniTimeout) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;
+        else                                                     status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;
       } // if status 
 
 
