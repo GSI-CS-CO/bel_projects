@@ -143,7 +143,7 @@ uint32_t *pCpuRamExternalData4EB;       // external address (seen from host brid
 
 WriteToPZU_Type  writePZUData;          // Modulbus SIS, I/O-Modul 1, Bits 0..15
 
-uint32_t flexWaitOffset;                // offset added to obtain timestamp for "flex wait"
+uint32_t flexOffset;                    // offset added to obtain timestamp for "flex wait"
 uint32_t uniTimeout;                    // timeout value for UNIPZ
 
 #define DM_NBLOCKS       3              // max number of blocks withing the Data Master to be treated
@@ -876,8 +876,8 @@ uint32_t entryActionConfigured()
   while (wait4ECAEvent(1, &virtAcc, & dryRunFlag) !=  DMUNIPZ_ECADO_TIMEOUT) {i++;}
   DBPRINT1("dm-unipz: ECA queue flushed - removed %d pending entries from ECA queue\n", i);
 
-  flexWaitOffset = *pSharedFlexOffset;
-  uniTimeout     = *pSharedUniTimeout;
+  flexOffset  = *pSharedFlexOffset;
+  uniTimeout  = *pSharedUniTimeout;
 
   return status;
 } // entryActionConfigured
@@ -1048,7 +1048,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
 
       status = wait4MILEvt(DMUNIPZ_EVT_UNI_READY, virtAccTmp, uniTimeout);         // wait for MIL Event
       timestamp = getSysTime();                                                    // get timestamp for MIL event
-      sendT     = timestamp + (uint64_t)flexWaitOffset;                            // add offset to obtain time for "flex wait"
+      sendT     = timestamp + (uint64_t)flexOffset;                                // add offset to obtain time for "flex wait"
 
       pulseLemo2();                                                                // for hardware debugging with scope
 
