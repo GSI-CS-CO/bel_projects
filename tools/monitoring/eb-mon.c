@@ -54,6 +54,7 @@
 const char* program;
 static int verbose=0;
 eb_device_t device;        /* needs to be global for 1-wire stuff */
+eb_device_t deviceOther;   /* other EB device for comparing timestamps */
 
 
 static void die(const char* where, eb_status_t status) {
@@ -66,6 +67,7 @@ static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device>\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -b<busIndex>     display ID (ID of slave on the specified 1-wire bus)\n");
+  fprintf(stderr, "  -c<eb-device>    compare timestamp with the one of <eb-device> and display the result\n");
   fprintf(stderr, "  -d               display WR time\n");
   fprintf(stderr, "  -e               display etherbone version\n");
   fprintf(stderr, "  -f<familyCode>   specifiy family code of 1-wire slave (0x43: EEPROM; 0x28,0x42: temperature)\n");
@@ -91,10 +93,15 @@ static void help(void) {
 int main(int argc, char** argv) {
   eb_status_t       status;
   eb_socket_t       socket;
-  int               devIndex=-1; /* 0,1,2... - there may be more than 1 device on the WB bus */
+  int               devIndex=-1;  /* 0,1,2... - there may be more than 1 device on the WB bus */
   unsigned int      busIndex=-1;  /* index of 1-wire bus connected to a controller*/
 
+  int               i;            /* counter for comparing WR time with other device */
+  int               nCompare = 5; /* number of compares                              */
+  uint64_t          nsecsDiff64;
+
   const char* devName;
+  const char* devNameOther;
 
   int         getEBVersion=0;
   int         getWRDate=0;
@@ -105,11 +112,15 @@ int main(int argc, char** argv) {
   int         getWRIP=0;
   int         getBoardID=0;
   int         getBoardTemp=0;
+  int         getWRDateOther=0;
   int         exitCode=0;
 
   unsigned int family = 0;
 
-  uint64_t    nsecs64;
+  uint64_t    nsecs64, nsecsOther64;
+  uint64_t    nsecsSum64, nsecsSumOther64;
+  uint64_t    nsecsRound64, nsecsRoundOther64;
+  uint64_t    tmpa64, tmpb64;
   uint64_t    msecs64;
   uint64_t    hostmsecs64;
   int64_t     offset;
@@ -131,7 +142,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:w:f:b:dosmlievh")) != -1) {
+  while ((opt = getopt(argc, argv, "t:w:f:b:c:dosmlievh")) != -1) {
     switch (opt) {
     case 'b':
       getBoardID=1;
@@ -140,6 +151,10 @@ int main(int argc, char** argv) {
         fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
         exit(1);
       } /* if *tail */
+      break;
+    case 'c':
+      getWRDateOther=1;
+      devNameOther = optarg;
       break;
     case 'd':
       getWRDate=1;
@@ -233,6 +248,69 @@ int main(int argc, char** argv) {
     return (1);
   }
 
+  if (getWRDateOther) {
+    if ((status = wb_open(devNameOther, &deviceOther, &socket)) != EB_OK) {
+      fprintf(stderr, "can't open connection to device %s \n", devNameOther);
+      return (1);
+    }
+
+    // do one round, to be sure WR network "knowns" route to other device
+    if ((status = wb_wr_get_time(deviceOther, 0,        &nsecsOther64)) != EB_OK) die("WR get time other", status);
+    if ((status = wb_wr_get_time(device,      devIndex, &nsecs64))      != EB_OK) die("WR get time", status);
+
+    // now start
+    nsecsSum64      = 0;
+    nsecsSumOther64 = 0;
+
+    for (i=0; i < nCompare; i++) {
+      if ((status = wb_wr_get_time(device,      devIndex, &tmpa64))      != EB_OK) die("WR get time", status);
+      if ((status = wb_wr_get_time(deviceOther, 0,        &tmpb64)) != EB_OK) die("WR get time other", status);
+
+      nsecsSum64      += tmpa64;
+      nsecsSumOther64 += tmpb64;
+    } 
+
+    nsecs64       = (uint64_t)((double)(nsecsSum64)      / (double)nCompare);
+    nsecsOther64  = (uint64_t)((double)(nsecsSumOther64) / (double)nCompare);
+
+    // determine the roundtrip time for device
+    wb_wr_get_time(device, 0, &tmpa64);
+    for (i=0; i < nCompare; i++) wb_wr_get_time(device, 0, &tmpb64);
+    nsecsRound64 = tmpb64 - tmpa64;
+    nsecsRound64 = (uint64_t)((double)nsecsRound64/(double)nCompare);
+
+    // determine the roundtrip time for other device
+    wb_wr_get_time(deviceOther, 0, &tmpa64);
+    for (i=0; i < nCompare; i++) wb_wr_get_time(deviceOther, 0, &tmpb64);
+    nsecsRoundOther64 = tmpb64 - tmpa64;
+    nsecsRoundOther64 = (uint64_t)((double)nsecsRoundOther64/(double)nCompare);
+
+    //fprintf(stdout, "nsecsRound64      %llu\n", nsecsRound64);
+    //fprintf(stdout, "nsecsRoundOther64 %llu\n", nsecsRoundOther64);
+    //fprintf(stdout, "nsecs64           %llu\n", nsecs64);
+    //fprintf(stdout, "nsecsdOther64     %llu\n", nsecsOther64);
+
+
+    // nsecsOther64 has been measured after the nsecs64 has been completed. So we need to subtract that roundtrip time of the first device
+    nsecsOther64 = nsecsOther64 - nsecsRound64;
+    //fprintf(stdout, "nsecsdOther64     %llu\n", nsecsOther64);
+
+    // the timestamps nsecs64 and nsecsOther64 are measured after the etherbone packet arrived at the FPGA
+    // we use the simplified model, that the the transmission times to and from the remote FPGA are identical (symmetry) and that the roundtrip is only due to total transmission time
+    // hece, the timestamp is latched after half of the roundtrip time, so we need to subtract that from both values
+
+    nsecsOther64 = nsecsOther64 - (nsecsRoundOther64 >> 1);
+    nsecs64      = nsecs64      - (nsecsRound64      >> 1);
+
+    //fprintf(stdout, "nsecs64           %llu\n", nsecs64);
+    //fprintf(stdout, "nsecsdOther64     %llu\n", nsecsOther64);
+
+    if (nsecs64 > nsecsOther64) nsecsDiff64 = nsecs64      - nsecsOther64;
+    else                        nsecsDiff64 = nsecsOther64 - nsecs64; 
+
+    fprintf(stdout, "WR differs by %llu us\n", nsecsDiff64 / 1000);
+  } 
+
   if (getWRDate || getWROffset) {
     if ((status = wb_wr_get_time(device, devIndex, &nsecs64)) != EB_OK) die("WR get time", status);
     secs     = (unsigned long)((double)nsecs64 / 1000000000.0);
@@ -252,8 +330,9 @@ int main(int argc, char** argv) {
       tm = gmtime(&secs);
       strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
       
-      if (verbose) fprintf(stdout, "Current TAI:");
-      fprintf(stdout, "%s\n", timestr);
+      if (verbose) fprintf(stdout, "Current TAI: ");
+      fprintf(stdout, "%s", timestr);
+      fprintf(stdout, ",  %llu us\n", nsecs64 / 1000);
     }
   }
 
@@ -308,6 +387,7 @@ int main(int argc, char** argv) {
  } 
 
   wb_close(device, socket);
+  wb_close(deviceOther, socket);
   
   return exitCode;
 }
