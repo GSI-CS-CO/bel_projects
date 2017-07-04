@@ -236,7 +236,7 @@ uint32_t ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, uint32_t
     }
   } //while not timed out
 
-  return DMUNIPZ_STATUS_TIMEDOUT; 
+  return DMUNIPZ_STATUS_EBREADTIMEDOUT; 
 } //ebmReadN
 
 
@@ -857,7 +857,7 @@ uint32_t entryActionConfigured()
   DBPRINT1("dm-unipz: connection to UNIPZ (devicebus) ok\n");  
 
   // configure MIL piggy for timing events for all 16 virtual accelerators
-  if ((status = configMILEvent(DMUNIPZ_EVT_UNI_READY)) != DMUNIPZ_STATUS_OK) {
+  if ((status = configMILEvent(DMUNIPZ_EVT_READY2SIS)) != DMUNIPZ_STATUS_OK) {
     DBPRINT1("dm-unipz: ERROR - failed to configure MIL piggy for receiving timing events! %d\n", status);
     return status;
   } 
@@ -1046,7 +1046,7 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       clearFifoEvtMil(pMILPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
       requestBeam(uniTimeout);                                                     // request beam from UNIPZ, note that we can't check for REQ_NOT_OK from here
 
-      status = wait4MILEvt(DMUNIPZ_EVT_UNI_READY, virtAccTmp, uniTimeout);         // wait for MIL Event
+      status = wait4MILEvt(DMUNIPZ_EVT_READY2SIS, virtAccTmp, uniTimeout);         // wait for MIL Event
       timestamp = getSysTime();                                                    // get timestamp for MIL event
       sendT     = timestamp + (uint64_t)flexOffset;                                // add offset to obtain time for "flex wait"
 
