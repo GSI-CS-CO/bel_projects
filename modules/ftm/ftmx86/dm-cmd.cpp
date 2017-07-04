@@ -26,6 +26,7 @@ static void help(const char *program) {
   fprintf(stderr, "\nLocal commands:\n");
   fprintf(stderr, "  preptime <Time / ns>      [NOT YET IMPLEMENTED] Set preparation time (lead) for this thread\n");
   fprintf(stderr, "  origin <target node>      Set the node with which selected thread will start\n");
+  fprintf(stderr, "  origin                    Return the node with which selected thread will start\n");
   fprintf(stderr, "  hex <target node>         Show hex dump of selected Node \n");
   fprintf(stderr, "  start                     Request start of selected thread. Requires a valid origin.\n");
   fprintf(stderr, "  stop                      Request stop of selected thread\n");
@@ -66,37 +67,37 @@ int main(int argc, char* argv[]) {
             verbose = 1;
             break;
          case 't':
-            tmp = atol(optarg);
-            if (tmp < 0 || tmp > 8) {
-              std::cerr << program << ": invalid thread idx -- '" << optarg << "'" << std::endl;
+            tmp = strtol(optarg, NULL, 0);
+            if ((tmp < 0) || (tmp >= 8)) {
+              std::cerr << program << ": Thread idx '" << optarg << "' is invalid. Choose an index between 0 and " << _THR_QTY_ -1 << std::endl;
               error = -1;
             } else {thrIdx = (uint32_t)tmp;}
          case 'l':
-            longtmp = atoll(optarg);
+            longtmp = strtoll(optarg, NULL, 0);
             if (longtmp < 0) {
-              std::cerr << program << ": invalid valid time -- '" << optarg << "'" << std::endl;
+              std::cerr << program << ": Valid time must be a positive offset of nanoseconds to UTC 0 (12:00 Jan 1st 1970)" << std::endl;
               error = -1;
-            } else {cmdTvalid = (uint64_t)tmp;}
+            } else {cmdTvalid = (uint64_t)longtmp;}
             break;       
          case 'p':
-             tmp = atol(optarg);
-            if (tmp < 0 || tmp > 2) {
-              std::cerr << program << ": invalid priority -- '" << optarg << "'" << std::endl;
+             tmp = strtol(optarg, NULL, 0);
+            if ((tmp < PRIO_LO) || (tmp > PRIO_IL)) {
+              std::cerr << program << ": Priority must be 0 (Low), 1 (High) or Interlock (2)  -- '" << std::endl;
                error = -1;
             } else {cmdPrio = (uint32_t)tmp;}
 
              break;
          case 'q':
-            tmp = atol(optarg);
-            if (tmp < 1) {
-              std::cerr << program << ": invalid qty -- '" << optarg << "'" << std::endl;
+            tmp = strtol(optarg, NULL, 0);
+            if ((tmp < 1) || (tmp > ACT_QTY_MSK)) {
+              std::cerr << program << ": Command quantity must be between 1 and " << ACT_QTY_MSK << std::endl;
               error = -1;
             } else {cmdQty = (uint32_t)tmp;}
             break; 
          case 'c':
-            tmp = atol(optarg);
-            if (tmp < 0 || tmp > 8) {
-              std::cerr << program << ": invalid cpu idx -- '" << optarg << "'" << std::endl;
+            tmp = strtol(optarg, NULL, 0);
+            if (tmp < 0) {
+              std::cerr << program << ": CPU idx '" << optarg << "' is invalid, must be a positive number " << std::endl;
               error = -1;
             } else {cpuIdx = (uint32_t)tmp;}
             break;
@@ -144,21 +145,26 @@ int main(int argc, char* argv[]) {
   try {
     cdm.connect(std::string(netaddress));
   } catch (std::runtime_error const& err) {
-    std::cerr << "ERROR - Could not connect to DM: " << err.what() << std::endl; return -20;
+    std::cerr << program << ": Could not connect to DM. Cause: " << err.what() << std::endl; return -20;
   }
 
 
+  if (!(cdm.isCpuIdxValid(cpuIdx))) {
+    std::cerr << program << ": CPU Idx " << cpuIdx << " does not refer to a CPU with valid firmware." << std::endl << std::endl;
+    cdm.showCpuList();
+    return -30;
+  }
 
   try { cdm.addDotToDict(inputFilename); }
   catch (std::runtime_error const& err) {
-    std::cerr << "ERROR: No Nodename/Hash dictionary available. Cause: " << err.what() << std::endl; return -30;
+    std::cerr << program << ": No Nodename/Hash dictionary available. Cause: " << err.what() << std::endl; return -30;
   }
     
   try { 
     cdm.downloadAndParse(cpuIdx);
     if(verbose) cdm.showDown(cpuIdx, false);
   } catch (std::runtime_error const& err) {
-    std::cerr << "ERROR: Download from CPU#"<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
+    std::cerr << program << ": Download from CPU "<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
     return -7;
   }
  
@@ -168,51 +174,54 @@ int main(int argc, char* argv[]) {
 
   if (typeName != NULL ) {  
 
-    if(verbose) std::cout << "Trying to generate " << typeName << " command" << std::endl;
+    if(verbose) std::cout << "Generating " << typeName << " command" << std::endl;
 
     std::string cmp(typeName);
 
     if      (cmp == "noop")  {
-      if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      if(!(cdm.isKnown(targetName))) {std::cerr << program << ": Target node '" << targetName << "'' is not described in " << inputFilename  << std::endl; return -1; }
       mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
     }
     else if (cmp == "flow")  {
-      if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      if(!(cdm.isKnown(targetName))) {std::cerr << program << ": Target node '" << targetName << "'' is not described in " << inputFilename  << std::endl; return -1; }
       if ((para != NULL) && cdm.isKnown(para)) { 
         uint32_t adr; 
         try {
           adr = cdm.getNodeAdr(cpuIdx, para, DOWNLOAD, INTERNAL);
         } catch (std::runtime_error const& err) {
-          std::cerr << "ERROR: Could not obtain address of Destination Node " << para << ". Cause: " << err.what() << std::endl;
+          std::cerr << program << ": Could not obtain address of destination node " << para << ". Cause: " << err.what() << std::endl;
         } 
         mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, permanent );
-      } else {std::cerr << "ERROR: Destination Node '" << para << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      } else {std::cerr << program << ": Destination Node '" << para << "'' is not described in " << inputFilename  << std::endl; return -1; }
     }
     else if (cmp == "relwait")  {
-      if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
-      if (para == NULL) {std::cerr << "ERROR: Wait time in ns is missing, aborting" << std::endl; return -1; }
-      mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, atoll(para), permanent, false );
+      if(!(cdm.isKnown(targetName))) {std::cerr << program << ": Target node '" << targetName << "'' is not described in " << inputFilename  << std::endl; return -1; }
+      if (para == NULL) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
+      mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, false );
     }
     else if (cmp == "abswait")  {
-      if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
-      if (para == NULL) {std::cerr << "ERROR: Wait time in ns is missing, aborting" << std::endl; return -1; }
-        mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, atoll(para), permanent, true ); 
+      if(!(cdm.isKnown(targetName))) {std::cerr << program << ": Target node '" << targetName << "'' is not described in " << inputFilename  << std::endl; return -1; }
+      if (para == NULL) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
+        mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, true ); 
     }
     else if (cmp == "flush") {
-        if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
-        if (para == NULL) {std::cerr << "ERROR: Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7), aborting" << std::endl; return -1; }  
-        uint32_t queuePrio = atoi(para) & 0x7;
-        mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, queuePrio >> PRIO_IL, queuePrio >> PRIO_HI, queuePrio >> PRIO_LO);
+        if(!(cdm.isKnown(targetName))) {std::cerr << program << ": Target node '" << targetName << "'' is not described in " << inputFilename  << std::endl; return -1; }
+        if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }  
+        uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
+        std::cout << "qprio " << para << " 0x" << std::hex << queuePrio << std::endl;
+        mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1));
     }
     else if (cmp == "queue") {
-        if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+        if(!(cdm.isKnown(targetName))) {std::cerr << program << ": Target node '" << targetName << "'' is not described in " << inputFilename  << std::endl; return -1; }
         cdm.dumpQueue(cpuIdx, targetName, cmdPrio);
         return 0;
     } 
     else if (cmp == "origin")  {
-      if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
-      cdm.setThrOrigin(cpuIdx, thrIdx, targetName);     
-      if(verbose) std::cout << "CPU #" << cpuIdx << " Thr #" << thrIdx << " Origin was set to Node " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl;
+      if( targetName != NULL) {
+        if(!(cdm.isKnown(targetName))) {std::cerr << program << ": Target node '" << targetName << "'' is not described in " << inputFilename  << std::endl; return -1; }
+        cdm.setThrOrigin(cpuIdx, thrIdx, targetName);
+      }
+      if( verbose | (targetName == NULL) ) { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " origin points to node " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl;}
       return 0;
     }
     else if (cmp == "cursor")  {
@@ -220,6 +229,8 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "start")  {
+      std::string origin = cdm.getThrOrigin(cpuIdx, thrIdx);
+      if ((origin == "Idle") || (origin == "Unknown")) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
       cdm.startThr(cpuIdx, thrIdx);
       return 0;
     }
@@ -236,11 +247,11 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "hex")  {
-      if(!(cdm.isKnown(targetName))) {std::cerr << "ERROR: Target Node '" << targetName << "'' is not described in " << inputFilename << ", aborting" << std::endl; return -1; }
+      if(!(cdm.isKnown(targetName))) {std::cerr << program << ": Target node '" << targetName << "'' is not described in " << inputFilename  << std::endl; return -1; }
       try {
         cdm.dumpNode(cpuIdx, targetName);
       } catch (std::runtime_error const& err) {
-        std::cerr << "ERROR: Node not found. Cause: " << err.what() << std::endl; return -21;
+        std::cerr << program << ": Node not found. Cause: " << err.what() << std::endl; return -21;
       }  
       return 0;
     }
@@ -250,14 +261,14 @@ int main(int argc, char* argv[]) {
       try {
           cdm.sendCmd(cpuIdx, targetName, cmdPrio, mc);     
         } catch (std::runtime_error const& err) {
-          std::cerr << "ERROR: Could not send command " << para << ". Cause: " << err.what() << std::endl;
+          std::cerr << program << ": Could not send command " << para << ". Cause: " << err.what() << std::endl;
         }  
       return 0; 
 
     } 
 
 
-    std::cerr << "ERROR: " << cmp << " is not a valid command. Type " << program << " -h for help" << std::endl;
+    std::cerr << program << ": " << cmp << " is not a valid command. Type " << program << " -h for help" << std::endl;
 
   }
 

@@ -54,7 +54,7 @@ class MemUnit {
 
 protected:
 
-  void show(const std::string& title, const std::string& logDictFile, Graph& g, AllocTable& at, bool filterMeta );
+  
   
 
 public:  
@@ -126,10 +126,7 @@ public:
   const vAdr getCmdWrAdrs(uint32_t hash, uint8_t prio) const; 
   const uint32_t getCmdInc(uint32_t hash, uint8_t prio) const;
 
-
-
-  void showUp(const std::string& title, const std::string& logDictFile, bool filterMeta ) {show(title, logDictFile, gUp, atUp, filterMeta);}
-  void showDown(const std::string& title, const std::string& logDictFile, bool filterMeta ) {show(title, logDictFile, gDown, atDown, filterMeta);}
+  void show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta );
 
 
 

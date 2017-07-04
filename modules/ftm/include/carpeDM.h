@@ -16,11 +16,7 @@
 #include "hashmap.h"
 #include "memunit.h"
 
-#define UPLOAD    1
-#define DOWNLOAD  0
 
-#define EXTERNAL  1
-#define INTERNAL  0
 
 #define FWID_RAM_TOO_SMALL      -1
 #define FWID_BAD_MAGIC          -2
@@ -52,7 +48,9 @@ protected:
 
   std::vector<MemUnit> vM;
   std::vector<Graph>  vUp;
+  std::vector<int> vFw;
   std::map<uint8_t, uint8_t> cpuIdxMap;
+
 
   Socket ebs;
   Device ebd;  
@@ -189,10 +187,10 @@ public:
   uint32_t getNodeAdr(uint8_t cpuIdx, const std::string& name, bool direction, bool intExt); 
 
   //show a CPU's Upload address table
-  void showUp(uint8_t cpuIdx, bool filterMeta) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.showUp("Upload Table", "upload_dict.txt", filterMeta);}
+  void showUp(uint8_t cpuIdx, bool filterMeta) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.show("Upload Table", "upload_dict.txt", UPLOAD, filterMeta);}
 
   //show a CPU's Download address table
-  void showDown(uint8_t cpuIdx, bool filterMeta) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.showDown("Download Table", "download_dict.txt", filterMeta);}
+  void showDown(uint8_t cpuIdx, bool filterMeta) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.show("Download Table", "download_dict.txt", DOWNLOAD, filterMeta);}
 
   //Show all command fields in a Queue (past and current)
   void dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio);
@@ -200,6 +198,9 @@ public:
   //hex dump a node
   void dumpNode(uint8_t cpuIdx, const std::string& name);
 
+  bool isCpuIdxValid(uint8_t cpuIdx) { if (( cpuIdxMap.find(cpuIdx) != cpuIdxMap.end() ) && (cpuIdxMap.at(cpuIdx) < vM.size()) ) return true; else return false;}
+
+  void showCpuList();
 };
 
 #endif

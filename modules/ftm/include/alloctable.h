@@ -20,8 +20,8 @@ struct AllocMeta {
   vertex_t    v;
   uint8_t     b[_MEM_BLOCK_SIZE];
 
-  AllocMeta(uint32_t adr, uint32_t hash) : adr(adr), hash(hash) {};
-  AllocMeta(uint32_t adr, uint32_t hash, vertex_t v) : adr(adr), hash(hash), v(v) {};
+  AllocMeta(uint32_t adr, uint32_t hash) : adr(adr), hash(hash) {std::memset(b, 0, sizeof b);}
+  AllocMeta(uint32_t adr, uint32_t hash, vertex_t v) : adr(adr), hash(hash), v(v) {std::memset(b, 0, sizeof b);}
 
 };
 

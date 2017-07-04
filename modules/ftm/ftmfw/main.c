@@ -204,11 +204,13 @@ uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 }
 
 uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
-  uint32_t* ret;
+  uint8_t prios = (cmd[T_CMD_ACT >> 2] >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;
+  
+  if(prios & (1 << PRIO_LO)) *((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - PRIO_LO -1) = *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - PRIO_LO -1);
+  if(prios & (1 << PRIO_HI)) *((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - PRIO_HI -1) = *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - PRIO_HI -1);
+  
+  return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 
-  //TODO: FLUSH
-  ret = (uint32_t*)cmd[T_CMD_FLOW_DEST >> 2]; 
-  return ret;
 
 }
 
@@ -309,7 +311,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
 
   uint32_t *ardOffs = node + (BLOCK_CMDQ_RD_IDXS >> 2), *awrOffs = node + (BLOCK_CMDQ_WR_IDXS >> 2);
   uint32_t bufOffs, elOffs, prio, actTmp, atype;
-  int16_t qty;
+  uint16_t qty;
   
   
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK;
@@ -346,7 +348,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
     DBPRINT3("#%02u: Act 0x%08x, Qty is at %d\n", cpuId, *act, qty);
     
     //if qty <= 1, pop cmd -> increment read offset
-    if(qty <= 0) { *(rdIdx) = (*rdIdx + 1) & Q_IDX_MAX_OVF_MSK; DBPRINT3("#%02u: Qty reached zero, popping\n", cpuId);}
+    if(qty <= 1) { *(rdIdx) = (*rdIdx + 1) & Q_IDX_MAX_OVF_MSK; DBPRINT3("#%02u: Qty reached zero, popping\n", cpuId);}
     //decrement qty
     actTmp &= ~ACT_QTY_SMSK; //clear qty
     actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS; // OR in decremented and shifted qty

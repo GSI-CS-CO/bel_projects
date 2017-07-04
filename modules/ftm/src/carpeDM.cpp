@@ -100,10 +100,11 @@ bool CarpeDM::connect(const std::string& en) {
     uint8_t mappedIdx = 0;
     int expVersion = parseFwVersionString(EXP_VER), foundVersion;
 
-    if (expVersion < 0) {throw("Bad minimum firmware version string received from Makefile"); return false;}
+    if (expVersion <= 0) {throw std::runtime_error("Bad required minimum firmware version string received from Makefile"); return false;}
 
     vM.clear();
     cpuIdxMap.clear();
+    vFw.clear();
 
     if(verbose) sLog << "Connecting to " << en << "... ";
     try { 
@@ -116,11 +117,12 @@ bool CarpeDM::connect(const std::string& en) {
         for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
           //only create MemUnits for valid DM CPUs, generate Mapping so we can still use the cpuIdx supplied by User 
           foundVersion = getFwVersion(cpuIdx);
+          vFw.push_back(foundVersion);
           if (expVersion <= foundVersion) {
             cpuIdxMap[cpuIdx] = mappedIdx; 
             vM.push_back(MemUnit(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR,  SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_, hm));
             mappedIdx++;
-          } else {if(verbose) sErr  << std::endl << "CPU " << cpuIdx << " has no/incompatible firmware (found " << getFwVersion(cpuIdx) << ", expected " << expVersion << ")" << std::endl; }
+          }
            
         }  
         ret = true;
@@ -129,9 +131,11 @@ bool CarpeDM::connect(const std::string& en) {
       //TODO report why we could not connect / find CPUs
     }
 
-    if(verbose) sLog << " Done."  << std::endl << "Found " << getCpuQty() << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
-
-    if (cpuIdxMap.size() == 0) {throw std::runtime_error("No valid CPUs running a valid DM firmware found"); return false;}
+    if(verbose) {
+      showCpuList();
+      sLog << " Done."  << std::endl << "Found " << getCpuQty() << " Cores, " << cpuIdxMap.size() << " of them run a valid DM firmware." << std::endl;
+    }  
+    if (cpuIdxMap.size() == 0) {throw std::runtime_error("No CPUs running a valid DM firmware found"); return false;}
 
 
     return ret;
@@ -283,7 +287,7 @@ bool CarpeDM::connect(const std::string& en) {
 
   int CarpeDM::sendCmd(uint8_t cpuIdx, const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {
     MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
-    if(verbose) sLog << "Preparing Command to Block " << targetName << "on CPU #" << cpuIdx << "... ";
+    if(verbose) sLog << "Preparing Command Prio " << cmdPrio << " to Block " << targetName << " on CPU " << std::setfill(' ') << std::setw(2) << std::dec << cpuIdx << "... ";
     vBuf vUlD;
     vAdr vUlA;
     uint32_t cmdWrInc, hash;
@@ -296,7 +300,7 @@ bool CarpeDM::connect(const std::string& en) {
       mc->serialise(b);
       writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, cmdWrInc);
       vUlD.insert( vUlD.end(), b, b + _T_CMD_SIZE_ + _32b_SIZE_);
-      if(verbose) sLog << "Done." << std::endl << "Sending...";
+      if(verbose) sLog << "Done." << std::endl << "Sending to Q adr 0x" << std::hex << vUlA[0] << "...";
       ebWriteCycle(ebd, vUlA, vUlD);
     } catch (...) {throw;}      
 
@@ -333,7 +337,9 @@ bool CarpeDM::connect(const std::string& en) {
     int verMaj, verMin, verRev;
     std::vector<std::string> x;
 
-    boost::split(x, s, boost::is_any_of("."));
+
+
+    try { boost::split(x, s, boost::is_any_of(".")); } catch (...) {};
     if (x.size() != 3) {return FWID_BAD_VERSION_FORMAT;}
 
     verMaj = std::stoi (x[VERSION_MAJOR]);
@@ -528,7 +534,13 @@ bool CarpeDM::connect(const std::string& en) {
     const std::string sType[] = {"Unknown", "   Noop", "   Flow", "  Flush", "   Wait"};
     boost::optional<std::string> name; 
     
+    //FIXME the safeguards for the maps are total crap. Include some decent checks, not everything is worth an exception!!!
     auto* block = m.getDownAllocTable().lookupHash(hm.lookup(blockName).get());
+    sLog << std::endl;
+
+    sLog << "     IlHiLo" << std::endl;
+    sLog << "WR 0x" << std::setfill('0') << std::setw(6) << std::hex << writeBeBytesToLeNumber<uint32_t>((uint8_t*)&block->b[BLOCK_CMDQ_WR_IDXS]) << std::endl;
+    sLog << "RD 0x" << std::setfill('0') << std::setw(6) << std::hex << writeBeBytesToLeNumber<uint32_t>((uint8_t*)&block->b[BLOCK_CMDQ_RD_IDXS]) << std::endl;
 
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(block->v,g);
@@ -546,7 +558,7 @@ bool CarpeDM::connect(const std::string& en) {
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
       
 
-      sLog << "Buffer " << g[target(*out_cur,g)].name << ": " << std::endl;
+      sLog << std::endl;
 
       hexDump(g[target(*out_cur,g)].name.c_str(), g[target(*out_cur,g)].np->getB(), _MEM_BLOCK_SIZE);
 
@@ -566,13 +578,13 @@ bool CarpeDM::connect(const std::string& en) {
         flMode = (act >> ACT_FLUSH_MODE_POS) & ACT_FLUSH_MODE_MSK;
         wTime  = writeBeBytesToLeNumber<uint64_t>((uint8_t*)&b[i * _T_CMD_SIZE_ + T_CMD_WAIT_TIME]);
         dest   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[i * _T_CMD_SIZE_ + T_CMD_FLOW_DEST]);
-
+        
         //write output
-        sLog << "Cmd #" << i << ": " << std::endl;
+        sLog << std::endl << "Cmd #" << i << ": " << std::endl;
         if(type == ACT_TYPE_UNKNOWN) {sLog << "Unknown Format / not initialised" << std::endl; continue;}
-        if(type == ACT_TYPE_NOOP || type == ACT_TYPE_FLOW) sLog << qty << " x ";
+        if(type == ACT_TYPE_NOOP || type == ACT_TYPE_FLOW) sLog << std::dec << qty << " x ";
         else                                               sLog << "1 x ";
-        sLog << sType[type] << " @ >" << vTime << " ns, " << sPrio[prio] << " priority";
+        sLog << sType[type] << " @ > " << vTime << " ns, " << sPrio[prio] << " priority";
         if (((type == ACT_TYPE_FLOW) || ((type == ACT_TYPE_WAIT) && !(abs))) && perm) sLog << ", changes are permanent" << std::endl;
         else sLog << ", changes are temporary" << std::endl;
 
@@ -582,15 +594,18 @@ bool CarpeDM::connect(const std::string& en) {
           case ACT_TYPE_FLOW  : sLog << "Destination: ";
                                 try { 
                                   auto* y = m.getDownAllocTable().lookupAdr(m.intAdr2adr(dest));
-                                  name = hm.lookup(y->hash); 
+                                  if(y != NULL) name = hm.lookup(y->hash);
+                                  else name = "INVALID"; 
                                 } catch (...) {throw; name = "INVALID";}
                                 sLog << name.get()  << std::endl; break;
           case ACT_TYPE_FLUSH : sLog << "Priority to Flush: " << flPrio << " Mode: " << flMode << std::endl; break;
           case ACT_TYPE_WAIT  : if (abs) {sLog << "Wait until " << wTime << std::endl;} else {sLog << "Make Block Period " << wTime << std::endl;} break;
 
         }
+
       }
     }
+    sLog << std::endl;
   }      
 
 void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
@@ -599,4 +614,18 @@ void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
     auto* n = m.getDownAllocTable().lookupHash(hm.lookup(name).get());  
     hexDump(m.getDownGraph()[n->v].name.c_str(), n->b, _MEM_BLOCK_SIZE); 
   } catch (...) {throw;}
+}
+
+void CarpeDM::showCpuList() {
+  int expVersion = parseFwVersionString(EXP_VER);
+
+  sLog << std::setfill(' ') << std::setw(7) << "CPU" << std::setfill(' ') << std::setw(11) << "FW found" << std::setfill(' ') << std::setw(10) << "FW exp." << std::endl;
+  for (int x = 0; x < cpuQty; x++) {
+    if (vFw[x] > expVersion) sLog << " ! ";
+    else if (vFw[x] < expVersion) sLog << " X ";
+    else sLog << "   ";
+    sLog << "  " << std::dec << std::setfill(' ') << std::setw(2) << x << "   " << std::setfill('0') << std::setw(6) << vFw[x] << "   " << std::setfill('0') << std::setw(6) << expVersion;
+    sLog << std::endl;
+  }
+
 }

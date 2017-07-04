@@ -28,7 +28,11 @@
   (byte & 0x01 ? '1' : '0') 
 
 
+#define UPLOAD    1
+#define DOWNLOAD  0
 
+#define EXTERNAL  1
+#define INTERNAL  0
 
 class Node;
 class MiniCommand;

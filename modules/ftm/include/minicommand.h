@@ -48,6 +48,7 @@ public:
 
 
   void serialise(uint8_t* b) const {
+    std::cout << "tValid " << tValid << " act 0x" << std::hex << act << std::endl;
     MiniCommand::serialise(b);
     writeLeNumberToBeBytes(b + (ptrdiff_t)T_CMD_FLOW_DEST, this->destAdr);   
   };
@@ -83,9 +84,9 @@ class MiniFlush : public MiniCommand {
 public:
 
   MiniFlush(uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo ) 
-        : MiniCommand(tValid, (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(0), toIl(0), frmHi(0), toHi(0), frmLo(0), toLo(0) {}
+        : MiniCommand(tValid, (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS | ( ((qIl << PRIO_IL) | (qHi << PRIO_HI) | (qLo << PRIO_LO)) & ACT_FLUSH_PRIO_MSK) << ACT_FLUSH_PRIO_POS ), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(0), toIl(0), frmHi(0), toHi(0), frmLo(0), toLo(0) {}
   MiniFlush(uint64_t tValid, uint8_t prio, bool qIl, bool qHi, bool qLo, uint8_t frmIl, uint8_t toIl, uint8_t frmHi, uint8_t toHi, uint8_t frmLo, uint8_t toLo) 
-        : MiniCommand(tValid, (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(frmIl), toIl(toIl), frmHi(frmHi), toHi(toHi), frmLo(frmLo), toLo(toLo) {}
+        : MiniCommand(tValid, (ACT_TYPE_FLUSH << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (1 & ACT_QTY_MSK) << ACT_QTY_POS | ( ((qIl << PRIO_IL) | (qHi << PRIO_HI) | (qLo << PRIO_LO)) & ACT_FLUSH_PRIO_MSK) << ACT_FLUSH_PRIO_POS ), qIl(qIl), qHi(qHi), qLo(qLo), frmIl(frmIl), toIl(toIl), frmHi(frmHi), toHi(toHi), frmLo(frmLo), toLo(toLo) {}
   ~MiniFlush() {};
     
   void serialise(uint8_t* b) const {
