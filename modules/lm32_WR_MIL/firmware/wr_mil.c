@@ -126,7 +126,7 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC)
 
 #define N_UTC_EVENTS           5          // number of generated EVT_UTC events
 #define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
-#define WR_MIL_GATEWAY_LATENCY 73575      // additional latency in units of nanoseconds
+#define WR_MIL_GATEWAY_LATENCY 73650      // additional latency in units of nanoseconds
                                           // this value was determined by measuring the time difference
                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
                                           // and tuning this time difference to 100.0(5)us
