@@ -50,6 +50,35 @@ int write_mil(volatile unsigned int *base, short data, short fc_ifc_addr) {
   }
 }
 
+int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr) {
+  int i;
+  atomic_on();
+  if (trm_free(base) == OKAY) {
+    base[MIL_RD_WR_DATA] = data[0];
+  } else {
+    atomic_off();
+    return TRM_NOT_FREE;
+  }
+  if (trm_free(base) == OKAY) {
+    base[MIL_WR_CMD] = fc_ifc_addr;
+  } else {
+    atomic_off();
+    return TRM_NOT_FREE;
+  }
+
+  for (i = 1; i < 6; i++) {
+    if (trm_free(base) == OKAY) {
+      base[MIL_RD_WR_DATA] = data[i];
+    } else {
+      atomic_off();
+      return TRM_NOT_FREE;
+    }
+  }
+  atomic_off();
+  return OKAY;
+}
+
+
 int rcv_flag(volatile unsigned int *base) {
   unsigned short status = 0;
   int i = MAX_TST_CNT;

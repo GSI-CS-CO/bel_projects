@@ -98,14 +98,20 @@ architecture fg_quad_scu_bus_arch of fg_quad_ifa is
   type tag_state_type is(IDLE, TAG_RECEIVED);
 	signal tag_state	:	tag_state_type;
   
-  signal s_irq:             std_logic;
   signal s_sw_out:          std_logic_vector(31 downto 0);
   
-  type irq_type is (idle, signaling, signaling_interrupt);
-  signal irq_sm : irq_type;
+  type blk_type is (idle, cntrl, coeff_a, coeff_b, start_l, start_h, shift, end_blk_mode);
+  signal blk_sm         : blk_type;
+  signal blk_cntrl_wr   : std_logic;
+  signal blk_coeff_a_wr : std_logic;
+  signal blk_coeff_b_wr : std_logic;
+  signal blk_shift_wr   : std_logic;
+  signal blk_start_l_wr : std_logic;
+  signal blk_start_h_wr : std_logic;
   
-  signal dreq_edge1: std_logic;
-  signal dreq_edge2: std_logic; 
+  signal fc_edge1    : std_logic;
+  signal fc_edge2    : std_logic;
+  signal fc_str_edge : std_logic;
 
 begin
   quad_fg: fg_quad_datapath 
@@ -118,7 +124,7 @@ begin
       clk                 => clk,
       nrst                => nReset,
       sync_rst            => fg_cntrl_reg(0),
-      a_en                => wr_coeff_a,
+      a_en                => wr_coeff_a or blk_start_h_wr,
       sync_start          => (wr_brc_start or ext_trigger) and fg_cntrl_reg(1),   -- start with broadcast or from external signal
       load_start          => wr_start_value_h,                  -- when high word was written, load into datapath
       step_sel            => fg_cntrl_reg(12 downto 10),
@@ -240,6 +246,89 @@ begin
     end if;
   end process adr_decoder;
 
+  fc_edge: process(clk, nreset)
+  begin
+    if rising_edge(clk) then
+      fc_edge1 <= fc_str;
+      fc_edge2 <= fc_edge1;
+    end if;
+  end process;
+  fc_str_edge <= not fc_edge2 and fc_edge1; 
+
+  block_mode: process(clk, nreset)
+  begin
+    if nreset = '0' then
+        blk_sm         <= idle;
+        blk_cntrl_wr   <= '0';
+        blk_coeff_a_wr <= '0';
+        blk_coeff_b_wr <= '0';
+        blk_shift_wr   <= '0';
+        blk_start_l_wr <= '0';
+        blk_start_h_wr <= '0';
+    elsif rising_edge(clk) then
+      if fg_cntrl_reg(0) = '1' then
+        blk_sm <= idle;
+      end if;
+
+      blk_cntrl_wr   <= '0';
+      blk_coeff_a_wr <= '0';
+      blk_coeff_b_wr <= '0';
+      blk_shift_wr   <= '0';
+      blk_start_l_wr <= '0';
+      blk_start_h_wr <= '0';
+
+      case blk_sm is
+        when idle =>
+          if fc_str_edge = '1' and fc = x"6b" then
+            blk_sm <= cntrl;
+          end if;
+
+        when cntrl =>
+          blk_cntrl_wr <= '1';
+          blk_sm <= coeff_a;
+
+        when coeff_a =>
+          if fc_str_edge = '1' and fc = x"6b" then
+            blk_coeff_a_wr <= '1';
+            blk_sm <= coeff_b;
+          end if;
+
+        when coeff_b =>
+          if fc_str_edge = '1' and fc = x"6b" then
+            blk_coeff_b_wr <= '1';
+            blk_sm <= shift;
+          end if;
+        
+        when shift =>
+          if fc_str_edge = '1' and fc = x"6b" then
+            blk_shift_wr <= '1';
+            blk_sm <= start_l;
+          end if;
+
+        when start_l =>
+          if fc_str_edge = '1' and fc = x"6b" then
+            blk_start_l_wr <= '1';
+            blk_sm <= start_h;
+          end if;
+
+        when start_h =>
+          if fc_str_edge = '1' and fc = x"6b" then
+            blk_start_h_wr <= '1';
+            blk_sm <= end_blk_mode;
+          end if;
+
+        when end_blk_mode =>
+          if fc_str_edge = '1' and fc = x"6b" then
+            blk_sm <= idle;
+          end if;
+
+      end case;
+    end if;
+  end process;
+
+
+          
+
 -- fg_cntrl_reg(0)            : reset, 1 -> active 
 -- fg_cntrl_reg(1)            : 1 -> fg enabled, 0 -> fg disabled
 -- fg_cntrl_reg(2)            : 1 -> running, 0 -> stopped (ro)
@@ -247,6 +336,13 @@ begin
 -- fg_cntrl_reg(9 downto 4)   : virtual fg number (rw)
 -- fg_cntrl_reg(12 downto 10) : step value M (wo)
 -- fg_cntrl_reg(15 downto 13) : add frequency select (wo)
+--
+-- mirror some bits to save register access over dev bus
+-- irq_act_reg(0)             : dreq, 1 -> active
+-- irq_act_reg(1)             : state_change_irq, 1 -> active
+-- irq_act_reg(2)             : 1 -> running, 0 -> stopped (ro)
+-- irq_act_reg(3)             : 
+-- irq_act_reg(9 downto 4)    : virtual fg number (rw)
 cntrl_reg: process (clk, nReset, rd_fg_cntrl, fg_cntrl_reg, wr_fg_cntrl)
 begin
   if nReset = '0' then
@@ -266,27 +362,27 @@ begin
       irq_act_reg     <= (others => '0');
     else
   
-      if wr_fg_cntrl = '1' then
+      if wr_fg_cntrl = '1' or blk_cntrl_wr = '1' then
         fg_cntrl_reg <= data_i;
       end if;
     
-      if wr_coeff_a = '1' then
+      if wr_coeff_a = '1' or blk_coeff_a_wr = '1' then
         coeff_a_reg <= data_i;
       end if;
     
-      if wr_coeff_b = '1' then
+      if wr_coeff_b = '1' or blk_coeff_b_wr = '1' then
         coeff_b_reg <= data_i;
       end if;
     
-      if wr_shift = '1' then
+      if wr_shift = '1'  or blk_shift_wr = '1' then
         shift_reg <= data_i;
       end if;
     
-      if wr_start_value_h = '1' then
+      if wr_start_value_h = '1'  or blk_start_h_wr = '1' then
         start_value_reg(31 downto 16) <= data_i;
       end if;
     
-      if wr_start_value_l = '1' then
+      if wr_start_value_l = '1' or blk_start_l_wr = '1' then
         start_value_reg(15 downto 0) <= data_i;
       end if;
     
@@ -299,56 +395,17 @@ begin
       elsif state_change_irq = '1' then
         irq_act_reg(1) <= '1';
       elsif wr_irq_act = '1' then
-        irq_act_reg <= data_i;
+        -- clear the pending irqs
+        irq_act_reg(1 downto 0) <= "00";
       end if;
+      irq_act_reg(2)          <= fg_is_running;
+      irq_act_reg(9 downto 4) <= fg_cntrl_reg(9 downto 4);
 
     end if;
     
   end if;
 end process;
 
-dreq_edge: process(clk, nreset)
-begin
-  if rising_edge(clk) then
-    dreq_edge1 <= dreq;
-    dreq_edge2 <= dreq_edge1;
-  end if;
-end process;
-
-
-irqreg: process(clk, nreset)
-  variable cnt: unsigned(7 downto 0) := (others => '0');
-begin
-  if nreset= '0' then
-    s_irq <= '0';
-    cnt := (others => '0');
-  elsif rising_edge(clk) then
-    case irq_sm is
-    
-      when idle =>
-        s_irq <= '0';
-        if (dreq_edge2 = '0' and dreq_edge1 = '1') or state_change_irq = '1' then
-          irq_sm <= signaling_interrupt;
-        end if;
-        
-      when signaling =>
-        s_irq <= '1';
-        if (dreq_edge2 = '0' and dreq_edge1 = '1') or state_change_irq = '1' then
-          irq_sm <= signaling_interrupt;
-        elsif wr_coeff_a = '1' then -- irq handled
-          irq_sm <= idle;
-        end if;
-        
-      when signaling_interrupt =>
-        s_irq <= '1';
-        cnt := cnt + 1;
-        if cnt = to_unsigned(c_irq_cnt, cnt'length) then
-          cnt := (others => '0');
-          irq_sm <= idle;
-        end if;
-    end case;
-  end if;
-end process;
 
 fg_cntrl_rd_reg <= fg_cntrl_reg(15 downto 13) & fg_cntrl_reg(12 downto 10) &
                     fg_cntrl_reg(9 downto 4) & '0' & fg_is_running & fg_cntrl_reg(1 downto 0);
@@ -395,7 +452,7 @@ begin
   end if;
 end process;
 
-nirq        <= not or_reduce(irq_act_reg); -- signal as long as on irq is active
+nirq        <= not or_reduce(irq_act_reg(1 downto 0)); -- signal as long as one irq is active
 fg_version  <= std_logic_vector(to_unsigned(fw_version, 7));
 sw_out      <= s_sw_out(31 downto 8); -- only 24 Bit are needed for the IFA8
             
