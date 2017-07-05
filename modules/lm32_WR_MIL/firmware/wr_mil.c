@@ -54,7 +54,7 @@
 #include "wr_mil_config.h"
 #include "wr_mil_delay.h"
 #include "wr_mil_events.h"
-#include "../../top/gsi_scu/scu_mil.h"
+#include "../../../top/gsi_scu/scu_mil.h"
 
 // for the event handler
 //#include "../../ip_cores/saftlib/drivers/eca_flags.h"

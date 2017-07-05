@@ -22,9 +22,9 @@ VERSION     = 0.0.1
 PATHFW 	= .
 PATHPKG	= $(shell python2.7 ../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
 PREFIX 	?= /usr/local
-CFLAGS 	= -I$(PATHFW) 
+CFLAGS 	= -I$(PATHFW) -I$(PATHFW)/.. 
 
-include ../../syn/build.mk
+include ../../../syn/build.mk
 
 # tell linker to create a .map file
 LDFLAGS += -Wl,-Map,$(TARGET).map -Wl,-O1
@@ -37,7 +37,7 @@ $(TARGET).elf: $(PATHFW)/$(TARGET).c                 \
 			   $(PATHFW)/wr_mil_eca_queue.c          \
 			   $(PATHFW)/wr_mil_config.c             \
 			   $(PATHFW)/wr_mil_delay.s              \
-			   $(PATHFW)/../../top/gsi_scu/scu_mil.c
+			   $(PATHFW)/../../../top/gsi_scu/scu_mil.c
 
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
