@@ -36,6 +36,7 @@
 #define FC_IRQ_MSK    0x12 << 8
 #define FC_IRQ_ACT_RD 0xa7 << 8
 #define FC_IRQ_ACT_WR 0x21 << 8
+#define FC_BLK_WR     0x6b << 8
 
 
 struct fg_dev {

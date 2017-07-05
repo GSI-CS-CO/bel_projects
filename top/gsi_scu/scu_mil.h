@@ -47,6 +47,7 @@ int read_mil(volatile unsigned int *base, short *data, short fc_ifk_addr);
 void clear_receive_flag(volatile unsigned int *base);
 void run_mil_test(volatile unsigned int *base, unsigned char ifk_addr);
 int status_mil(volatile unsigned int *base, unsigned short *status);
+int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr);
 
 
 #define  MAX_TST_CNT      10000

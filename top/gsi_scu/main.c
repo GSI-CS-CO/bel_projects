@@ -163,42 +163,46 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
   int fg_num;
   unsigned short cntrl_reg_wr;
   int status;
+  short blk_data[6];
   
   fg_num = (cntrl_reg & 0x3f0) >> 4; // virtual fg number Bits 9..4
   if (cbRead(&fg_buffer[0], &fg_regs[0], fg_num, &pset)) {
     cntrl_reg_wr = cntrl_reg & ~(0xfc00); // clear freq and step select
+    cntrl_reg_wr = cntrl_reg & ~(0x7);    // clear fg_running and fg_enabled
     cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
     if (slot < DEV_BUS_SLOT) {
-      scub_base[(slot << 16) + fg_base + FG_CNTRL] = cntrl_reg_wr;
-      scub_base[(slot << 16) + fg_base + FG_A] = pset.coeff_a;
-      scub_base[(slot << 16) + fg_base + FG_B] = pset.coeff_b;
-      scub_base[(slot << 16) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
+      scub_base[(slot << 16) + fg_base + FG_CNTRL]  = cntrl_reg_wr;
+      scub_base[(slot << 16) + fg_base + FG_A]      = pset.coeff_a;
+      scub_base[(slot << 16) + fg_base + FG_B]      = pset.coeff_b;
+      scub_base[(slot << 16) + fg_base + FG_SHIFT]  = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6
       scub_base[(slot << 16) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
       scub_base[(slot << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
     } else if (slot == DEV_BUS_SLOT) {
-      if(status = write_mil(scu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | fg_base)                        != OKAY) dev_failure(status);
-      if(status = write_mil(scu_mil_base, pset.coeff_a, FC_COEFF_A_WR | fg_base)                      != OKAY) dev_failure(status);
-      if(status = write_mil(scu_mil_base, pset.coeff_b, FC_COEFF_B_WR | fg_base)                      != OKAY) dev_failure(status);
-      if(status = write_mil(scu_mil_base, (pset.control & 0x3ffc0) >> 6,  FC_SHIFT_WR | fg_base)      != OKAY) dev_failure(status); //shift a 17..12 shift b 11..6
-      if(status = write_mil(scu_mil_base, pset.coeff_c & 0xffff, FC_START_L_WR | fg_base)             != OKAY) dev_failure(status);
-      if(status = write_mil(scu_mil_base, (pset.coeff_c & 0xffff0000) >> 16, FC_START_H_WR | fg_base) != OKAY) dev_failure(status); // data written with high word
+      // transmit in one block transfer over the dev bus
+      //mprintf("cntrl_reg_wr: 0x%x\n", cntrl_reg_wr);
+      blk_data[0] = cntrl_reg_wr;
+      blk_data[1] = pset.coeff_a;
+      blk_data[2] = pset.coeff_b;
+      blk_data[3] = (pset.control & 0x3ffc0) >> 6;
+      blk_data[4] = pset.coeff_c & 0xffff;
+      blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16;
+      if(status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | fg_base)  != OKAY) dev_failure(status);
     }
     param_sent[fg_num]++;
   }
 }
 
-inline void handle(int slot, unsigned fg_base) {
+inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
     unsigned short cntrl_reg = 0;
-    unsigned short irq_data = 0;
     int status;
+    int channel;
 
-    if (slot < DEV_BUS_SLOT)
+    if (slot < DEV_BUS_SLOT){
       cntrl_reg = scub_base[(slot << 16) + fg_base + FG_CNTRL];
-    else if (slot == DEV_BUS_SLOT) {
-      if (status = read_mil(scu_mil_base, &cntrl_reg, FC_CNTRL_RD | fg_base) != OKAY) dev_failure(status);
-      if (status = read_mil(scu_mil_base, &irq_data, FC_IRQ_ACT_RD | fg_base) != OKAY) dev_failure(status);
+      channel = (cntrl_reg & 0x3f0) >> 4;     // virtual fg number Bits 9..4
+    } else if (slot == DEV_BUS_SLOT) {
+      channel = (irq_act_reg & 0x3f0) >> 4;   // virtual fg number Bits 9..4
     } 
-    int channel = (cntrl_reg & 0x3f0) >> 4;        // virtual fg number Bits 9..4
     
     if (slot < DEV_BUS_SLOT) {
       /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
@@ -209,22 +213,28 @@ inline void handle(int slot, unsigned fg_base) {
       fg_regs[channel].ramp_count++;
     }
       
-    //mprintf("irq received for channel[%d]\n", channel);
-    //mprintf("cntrl_reg: 0x%x\n", cntrl_reg);
-    //mprintf("irq_data: 0x%x\n", irq_data); 
-    
-    if (!(cntrl_reg  & FG_RUNNING)) {  // fg stopped
-      if (slot == DEV_BUS_SLOT)
+    if (slot < DEV_BUS_SLOT) {
+      if (!(cntrl_reg  & FG_RUNNING)) {       // fg stopped
+        if (cbisEmpty(&fg_regs[0], channel))
+          SEND_SIG(SIG_STOP_EMPTY);           // normal stop
+        else
+          SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
+        disable_slave_irq(channel);
+        fg_regs[channel].state = 0;
+      }
+    } else {
+      if (!(irq_act_reg  & FG_RUNNING)) {     // fg stopped
         fg_regs[channel].ramp_count--;
-      if (cbisEmpty(&fg_regs[0], channel))
-        SEND_SIG(SIG_STOP_EMPTY); // normal stop
-      else
-        SEND_SIG(SIG_STOP_NEMPTY); // something went wrong
-      disable_slave_irq(channel);
-      fg_regs[channel].state = 0;
-      //mprintf("fg 0x%x in slave %d stopped after %d tuples. %d tuples left in buffer.\n",
-      //        fg_base, slot, fg_regs[channel].ramp_count, cbgetCount(&fg_regs[0], channel));
+        if (cbisEmpty(&fg_regs[0], channel))
+          SEND_SIG(SIG_STOP_EMPTY);           // normal stop
+        else
+          SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
+        disable_slave_irq(channel);
+        fg_regs[channel].state = 0;
+      }
     }
+
+
     if (slot < DEV_BUS_SLOT) {
       if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
         fg_regs[channel].state = 1; 
@@ -238,51 +248,55 @@ inline void handle(int slot, unsigned fg_base) {
         send_fg_param(slot, fg_base, cntrl_reg);
       }
     } else {
-      if ((cntrl_reg & FG_RUNNING) && (irq_data & DEV_STATE_IRQ)){
+      if ((irq_act_reg & FG_RUNNING) && (irq_act_reg & DEV_STATE_IRQ)){
         fg_regs[channel].state = 1; 
         SEND_SIG(SIG_START); // fg has received the tag or brc message
         if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
-        send_fg_param(slot, fg_base, cntrl_reg);
-      } else if ((cntrl_reg & FG_RUNNING) && (irq_data & DEV_DRQ)) {
+        send_fg_param(slot, fg_base, irq_act_reg);
+      } else if (irq_act_reg & (FG_RUNNING | DEV_DRQ)) {
         if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
-        send_fg_param(slot, fg_base, cntrl_reg);
+        send_fg_param(slot, fg_base, irq_act_reg);
       }
+
     }
 }
 
 void dev_bus_irq_handle() {
   int i;
   int slot, dev;
-  short data;
+  short irq_data;
   int status;
   unsigned short mil_status;
-  status_mil(scu_mil_base, &mil_status);
-  while (mil_status & MIL_DATA_REQ_INTR) {
+  short dummy_aquisition;
+  if(status = status_mil(scu_mil_base, &mil_status) != OKAY) dev_failure(status);
+  //while (mil_status & MIL_DATA_REQ_INTR) {
     for (i = 0; i < MAX_FG_CHANNELS && (mil_status & MIL_DATA_REQ_INTR); i++) {
       if (fg_regs[i].state > 0) {
         slot = fg_macros[fg_regs[i].macro_number] >> 24;
         dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
         if(slot == DEV_BUS_SLOT) {
-          if (status = read_mil(scu_mil_base, &data, FC_IRQ_ACT_RD | dev) != OKAY) dev_failure(status);
-          if (data > 0) { // any irq pending?
-            handle(slot, dev);
-            //clear irq pending
+          if (status = read_mil(scu_mil_base, &irq_data, FC_IRQ_ACT_RD | dev) != OKAY) dev_failure(status);
+          if (irq_data & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
+            handle(slot, dev, irq_data);
+            //clear irq pending and end block transfer
             if (status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev) != OKAY) dev_failure(status);
+            // dummy data aquisition 
+            if (status = read_mil(scu_mil_base, &dummy_aquisition, FC_CNTRL_RD | dev) != OKAY) dev_failure(status);
           }
         }
       }
       // wait for dreq going low after ack
       // check if dreq is still active
-      usleep(5);
-      status_mil(scu_mil_base, &mil_status);
+      usleep(1);
+      if(status = status_mil(scu_mil_base, &mil_status) != OKAY) dev_failure(status);
     }  
     // wait for dreq going low after ack
     // check if dreq is still active
-    usleep(5);
-    status_mil(scu_mil_base, &mil_status);
-  }
+    //usleep(5);
+    //if(status = status_mil(scu_mil_base, &mil_status) != OKAY) dev_failure(status);
+  //}
 }
 
 
@@ -337,11 +351,11 @@ void irq_handler()
 
    
   if (slv_int_act_reg & FG1_IRQ) { //FG irq?
-    handle(slave_nr, FG1_BASE);
+    handle(slave_nr, FG1_BASE, 0);
     slave_acks |= FG1_IRQ;
   } 
   if (slv_int_act_reg & FG2_IRQ) { //FG irq?
-    handle(slave_nr, FG2_BASE);
+    handle(slave_nr, FG2_BASE, 0);
     slave_acks |= FG2_IRQ;
   } 
   scub_base[(slave_nr << 16) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
