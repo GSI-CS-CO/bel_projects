@@ -47,7 +47,9 @@ void help(const char *program) {
   fprintf(stderr, "Usage: %s [OPTION] <proto/host/port>\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "  -d <delay>     microseconds between trigger event and generated events\n");
-  fprintf(stderr, "  -u <utc-delay> microsecinds between 5 generated utc events\n");
+  fprintf(stderr, "  -u <utc-delay> microseconds between 5 generated utc events\n");
+  fprintf(stderr, "  -t <EvtNo>     MIL event number that tirggers generation of UTC events\n");
+  fprintf(stderr, "  -l <latency>   MIL event is generated latency microseconds. default is 100 us\n");
   fprintf(stderr, "  -e             configure WR-MIL gateway as ESR source\n");
   fprintf(stderr, "  -s             configure WR-MIL gateway as SIS source\n");
   fprintf(stderr, "  -r             reset WR-MIL gateway after 1 second pause\n");
@@ -67,17 +69,20 @@ int main(int argc, char *argv[])
 
   char *value_end;
   int value;
-  int delay     = -1;
-  int utc_delay = -1;
-  int sis       =  0;
-  int esr       =  0;
-  int reset     =  0;
-  int kill      =  0;
-  int info      =  0;
-  int opt,error =  0;
+  int delay       = -1;
+  int utc_delay   = -1;
+  int utc_trigger = -1;
+  int latency     =  0;
+  int set_latency =  0;
+  int sis         =  0;
+  int esr         =  0;
+  int reset       =  0;
+  int kill        =  0;
+  int info        =  0;
+  int opt,error   =  0;
 
   /* Process the command-line arguments */
-  while ((opt = getopt(argc, argv, "d:u:sehrki")) != -1) {
+  while ((opt = getopt(argc, argv, "l:d:u:t:sehrki")) != -1) {
     switch (opt) {
     case 'd':
       value = strtol(optarg, &value_end, 0);
@@ -94,6 +99,23 @@ int main(int argc, char *argv[])
         error = 1;
       }
       utc_delay = value;
+      break;
+    case 't':
+      value = strtol(optarg, &value_end, 0);
+      if (*value_end || value < 0 || value > 255) {
+        fprintf(stderr, "%s: invalid EvtNO for utc trigger -- '%s'\n", argv[0], optarg);
+        error = 1;
+      }
+      utc_trigger = value;
+      break;
+    case 'l':
+      value = strtol(optarg, &value_end, 0);
+      if (*value_end || value < 0 || value > 255) {
+        fprintf(stderr, "%s: invalid EvtNO for utc trigger -- '%s'\n", argv[0], optarg);
+        error = 1;
+      }
+      latency = value;
+      set_latency = 1;
       break;
     case 's':
       sis = 1;
@@ -195,6 +217,7 @@ int main(int argc, char *argv[])
   uint32_t reg_utc_separation_addr  = reg_shared_addr+WR_MIL_GW_REG_UTC_SEPARATION;
   uint32_t reg_utc_delay_addr       = reg_shared_addr+WR_MIL_GW_REG_UTC_DELAY;
   uint32_t reg_event_source_addr    = reg_shared_addr+WR_MIL_GW_REG_EVENT_SOURCE;
+  uint32_t reg_latency_addr         = reg_shared_addr+WR_MIL_GW_REG_LATENCY;
   uint32_t reg_state_addr           = reg_shared_addr+WR_MIL_GW_REG_STATE;
 
   if (reset)
@@ -211,19 +234,49 @@ int main(int argc, char *argv[])
       die(argv[0],"command WR_MIL_GW_CMD_KILL", eb_status);
     }
   }
-  //printf("wr-mil-gw is at index %d device addr = %" PRIx64 "\n", device_idx, device_addr);
-  if (esr || sis) // check if gateway is already configured. reconfiguration without reset is disallowed
+  uint32_t state, source;
+  eb_status = eb_device_read(device, reg_event_source_addr,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+  source = value;
+  eb_status = eb_device_read(device, reg_state_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+  state = value;
+  if (state == WR_MIL_GW_STATE_CONFIGURED &&
+      (esr || sis || delay >=0 || utc_delay >= 0 || utc_trigger >= 0 || set_latency))
   {
-    uint32_t value, state, source;
-    eb_status = eb_device_read(device, reg_event_source_addr,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
-    source = value;
-    eb_status = eb_device_read(device, reg_state_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
-    state = value;
-    if (state == WR_MIL_GW_STATE_CONFIGURED)
+    fprintf(stderr, "%s: cannot configure gateway. It is already running as %s\n", argv[0], event_source_str(source));
+    esr = sis = 0; 
+  }
+  else
+  {
+
+    if (delay >= 0) 
     {
-      fprintf(stderr, "%s: cannot configure source type (PZ-id): gateway is already configured as %s\n", argv[0], event_source_str(source));
-      esr = sis = 0; 
+      printf("%s: set delay = %d us\n", argv[0], delay);
+      if ((eb_status = eb_device_write(device, reg_utc_delay_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)delay, 0, eb_block)) != EB_OK) {
+        die(argv[0],"configure register WR_MIL_GW_REG_UTC_DELAY", eb_status);
+      }
     }
+    if (utc_delay >= 0) 
+    {
+      printf("%s: set utc delay = %d us\n", argv[0], utc_delay);
+      if ((eb_status = eb_device_write(device, reg_utc_separation_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)utc_delay, 0, eb_block)) != EB_OK) {
+        die(argv[0],"configure register WR_MIL_GW_REG_UTC_SEPARATION", eb_status);
+      }
+    }
+    if (utc_trigger >= 0)
+    {
+      printf("%s: set utc trigger evtNo to 0x%x = %d \n", argv[0], utc_trigger, utc_trigger);
+      if ((eb_status = eb_device_write(device, reg_utc_trigger_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)utc_trigger, 0, eb_block)) != EB_OK) {
+        die(argv[0],"configure register WR_MIL_GW_REG_UTC_TRIGGER", eb_status);
+      }
+    }
+    if (set_latency)
+    {
+      printf("%s: set event latency to %d us\n", argv[0], latency);
+      if ((eb_status = eb_device_write(device, reg_latency_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)latency, 0, eb_block)) != EB_OK) {
+        die(argv[0],"configure register WR_MIL_GW_REG_LATENCY", eb_status);
+      }
+    }
+
     if (esr)
     {
       printf("%s: configure WR-MIL gateway as ESR source\n", argv[0]);
@@ -237,7 +290,7 @@ int main(int argc, char *argv[])
       if ((eb_status = eb_device_write(device, reg_command_addr, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)WR_MIL_GW_CMD_CONFIG_SIS, 0, eb_block)) != EB_OK) {
         die(argv[0],"command WR_MIL_GW_CMD_CONFIG_SIS", eb_status);
       }
-    }
+    }    
   }
 
   if (info)
@@ -256,22 +309,10 @@ int main(int argc, char *argv[])
     printf("    WR_MIL_GW_REG_UTC_DELAY:      0x%08x = %d us\n", value, value);
     eb_status = eb_device_read(device, reg_event_source_addr,   EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_EVENT_SOURCE:   0x%08x = %s\n", value, event_source_str(value));
+    eb_status = eb_device_read(device, reg_latency_addr,        EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
+    printf("    WR_MIL_GW_REG_LATENCY:        0x%08x = %d us\n", value, value);
     eb_status = eb_device_read(device, reg_state_addr,          EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     printf("    WR_MIL_GW_REG_STATE:          0x%08x = %s\n", value, state_str(value));
-  }
-  if (delay >= 0) 
-  {
-    printf("%s: set delay = %d us\n", argv[0], delay);
-    if ((eb_status = eb_device_write(device, device_addr+WR_MIL_GW_SHARED_OFFSET+WR_MIL_GW_REG_UTC_DELAY, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)delay, 0, eb_block)) != EB_OK) {
-      die(argv[0],"configure register WR_MIL_GW_REG_UTC_DELAY", eb_status);
-    }
-  }
-  if (utc_delay >= 0) 
-  {
-    printf("%s: set utc delay = %d us\n", argv[0], utc_delay);
-    if ((eb_status = eb_device_write(device, device_addr+WR_MIL_GW_SHARED_OFFSET+WR_MIL_GW_REG_UTC_SEPARATION, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)utc_delay, 0, eb_block)) != EB_OK) {
-      die(argv[0],"configure register WR_MIL_GW_REG_UTC_SEPARATION", eb_status);
-    }
   }
 
   return 0;

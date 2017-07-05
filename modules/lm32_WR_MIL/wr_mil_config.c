@@ -22,6 +22,7 @@ volatile WrMilConfig *config_init()
   config->utc_delay            = 100; // 100 us delay
   config->trigger_utc_delay    = 200; // 200 us delay
   config->event_source         = WR_MIL_GW_EVENT_SOURCE_UNKNOWN; // not configured by default
+  config->latency              = 100; // us
   config->state                = WR_MIL_GW_STATE_INIT;
   return config;
 }

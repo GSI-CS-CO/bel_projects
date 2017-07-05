@@ -71,7 +71,7 @@ int init()
   return cpu_id;
 }
 
-// simply write 16bit word on MIL device bus that will mimic a Mil timing event
+// write 16bit word on MIL device bus that will mimic a Mil timing event
 void mil_piggy_write_event(volatile uint32_t *piggy, uint32_t cmd)
 {
      while(!(*(piggy + (MIL_REG_WR_RD_STATUS/4)) & MIL_CTRL_STAT_TRM_READY)) // wait until ready
@@ -81,16 +81,6 @@ void mil_piggy_write_event(volatile uint32_t *piggy, uint32_t cmd)
 
   *(piggy + (MIL_REG_WR_CMD/4)) = cmd; 
 }
-
-// produce an output pulse on both lemo outputs of the SCU
-void lemoPulse12(volatile uint32_t *mil_piggy)
-{
-    setLemoOutputEvtMil(mil_piggy, 1, 1);
-    setLemoOutputEvtMil(mil_piggy, 2, 1);
-    setLemoOutputEvtMil(mil_piggy, 1, 0);
-    setLemoOutputEvtMil(mil_piggy, 2, 0);
-}
-
 
 // convert 64-bit TAI from WR into an array of five MIL events (EVT_UTC_1/2/3/4/5 events with evtNr 0xE0 - 0xE4)
 // arguments:
@@ -136,11 +126,10 @@ void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC)
 
 #define N_UTC_EVENTS           5          // number of generated EVT_UTC events
 #define ECA_QUEUE_LM32_TAG     0x00000004 // the tag for ECA actions we (the LM32) want to receive
-// #define WR_MIL_GATEWAY_LATENCY 73575      // additional latency in units of nanoseconds
-//                                           // this value was determined by measuring the time difference
-//                                           // of the MIL event rising edge and the ECA output rising edge (no offset)
-//                                           // and tuning this time difference to 100.0(5)us
-#define WR_MIL_GATEWAY_LATENCY (73575+50000) // 150.0(5) us     
+#define WR_MIL_GATEWAY_LATENCY 73575      // additional latency in units of nanoseconds
+                                          // this value was determined by measuring the time difference
+                                          // of the MIL event rising edge and the ECA output rising edge (no offset)
+                                          // and tuning this time difference to 100.0(5)us
 void eventHandler(volatile uint32_t    *eca,
                   volatile uint32_t    *eca_queue, 
                   volatile uint32_t    *mil_piggy,
@@ -160,96 +149,51 @@ void eventHandler(volatile uint32_t    *eca,
       uint32_t too_late;
       ECAQueue_getDeadl(eca_queue, &tai_deadl);
       ECAQueue_actionPop(eca_queue);
-      uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY; // add 20us to the deadline
-      make_mil_timestamp(mil_event_time, EVT_UTC);     
+      uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY + (config->latency-100)*1000; // add latency to the deadline
+      //make_mil_timestamp(mil_event_time, EVT_UTC);     
 
-      //mprintf("evtCode=%x\n",evtCode);
-      switch (evtCode)
+      if (evtCode == config->utc_trigger)
       {
-        //case MIL_EVT_START_CYCLE: 
-        case MIL_EVT_END_CYCLE: 
-          // generate MIL event EVT_START_CYCLE, followed by EVT_UTC_1/2/3/4/5 EVENTS
-          //make_mil_timestamp(mil_event_time, EVT_UTC);     
-          too_late = wait_until_tai(eca, mil_event_time);
-          mil_piggy_write_event(mil_piggy, milTelegram); 
-          delay_96plus32n_ns(config->trigger_utc_delay*32);
-          mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_BEGIN_CMD_EXEC); 
-          delay_96plus32n_ns(config->trigger_utc_delay*32);
-          // create the five events EVT_UTC_1/2/3/4/5 with seconds and miliseconds since 01/01/2008
-          for (int i = 0; i < N_UTC_EVENTS; ++i)
+        // generate MIL event, followed by EVT_UTC_1/2/3/4/5 EVENTS
+        too_late = wait_until_tai(eca, mil_event_time);
+        mil_piggy_write_event(mil_piggy, milTelegram); 
+        make_mil_timestamp(mil_event_time, EVT_UTC);     
+        delay_96plus32n_ns(config->trigger_utc_delay*32);
+        mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_BEGIN_CMD_EXEC); 
+        delay_96plus32n_ns(config->trigger_utc_delay*32);
+        // create the five events EVT_UTC_1/2/3/4/5 with seconds and miliseconds since 01/01/2008
+        for (int i = 0; i < N_UTC_EVENTS; ++i)
+        {
+          // Churn out the EVT_UTC MIL events as fast as possible. 
+          //  This results in approx. 21 us between two successive events.
+          mil_piggy_write_event(mil_piggy, EVT_UTC[i]); 
+          if (i < N_UTC_EVENTS-1)
           {
-            // Churn out the EVT_UTC MIL events as fast as possible. 
-            //  This results in approx. 21 us between two successive events.
-            mil_piggy_write_event(mil_piggy, EVT_UTC[i]); 
-            //for (int i = config->utc_delay; i != 0; --i) DELAY1us;
-            if (i < N_UTC_EVENTS-1)
-            {
-              delay_96plus32n_ns(config->utc_delay*32);
-            }
-            //DELAY100us;
-            //mil_piggy_write_event(mil_piggy, 0x0000abc0 | i); 
+            delay_96plus32n_ns(config->utc_delay*32);
           }
-          delay_96plus32n_ns(config->trigger_utc_delay*32);
-          mil_piggy_write_event(mil_piggy, (config->event_source<<12) | 0xf00 | MIL_EVT_COMMAND ); 
-          delay_96plus32n_ns(config->trigger_utc_delay*32);
-          mil_piggy_write_event(mil_piggy, (config->event_source<<12) | 0xf00 | MIL_EVT_COMMAND ); 
-          delay_96plus32n_ns(config->trigger_utc_delay*32);
-          mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_END_CMD_EXEC); 
-        break;
-        default:
-          // generate MIL event
-          too_late = wait_until_tai(eca, mil_event_time);
-          mil_piggy_write_event(mil_piggy, milTelegram);
-          //mprintf("mil: %x\n",milTelegram);
-          break;
+        }
+        delay_96plus32n_ns(config->trigger_utc_delay*32);
+        mil_piggy_write_event(mil_piggy, (config->event_source<<12) | 0xf00 | MIL_EVT_COMMAND ); 
+        delay_96plus32n_ns(config->trigger_utc_delay*32);
+        mil_piggy_write_event(mil_piggy, (config->event_source<<12) | 0xf00 | MIL_EVT_COMMAND ); 
+        delay_96plus32n_ns(config->trigger_utc_delay*32);
+        mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_END_CMD_EXEC); 
       }
-      if (too_late){ // use lemo output of SCU to indicate that a deadline could not be respected
-        lemoPulse12(mil_piggy);
-        mprintf("late: %d\n",too_late);
+      else
+      {
+        // generate MIL event
+        too_late = wait_until_tai(eca, mil_event_time);
+        mil_piggy_write_event(mil_piggy, milTelegram);
+      }
+      if (too_late)
+      { 
+        mprintf("evtCode: %d late: %d\n",evtCode, too_late);
       }
     }
     // remove action from ECA queue 
   }
 }
 
-
-// this fucnction creates a series of pulses that are triggered by the return from 
-// the function wait_until_tai. The lemo outputs can be observed on the Oscilloscope
-// in order to measure the timing precision of the wait_until_tai function.
-void testOfFunction_wait_until_tai(volatile uint32_t *mil_piggy,
-                                   volatile uint32_t  *eca_ctrl)
-{
-    TAI_t tai_now; 
-    ECACtrl_getTAI(eca_ctrl, &tai_now);
-
-    uint32_t lateness1 = wait_until_tai(eca_ctrl, tai_now.value + 20000); // start with 20 us margin
-    setLemoOutputEvtMil(mil_piggy, 1, 1);
-    setLemoOutputEvtMil(mil_piggy, 2, 1);
-    setLemoOutputEvtMil(mil_piggy, 1, 0);
-    setLemoOutputEvtMil(mil_piggy, 2, 0);
-
-    uint32_t lateness2 = wait_until_tai(eca_ctrl, tai_now.value + 1020000ll); // 1 ms after the first pulse
-    setLemoOutputEvtMil(mil_piggy, 1, 1);
-    setLemoOutputEvtMil(mil_piggy, 2, 1);
-    setLemoOutputEvtMil(mil_piggy, 1, 0);
-    setLemoOutputEvtMil(mil_piggy, 2, 0);
-
-    uint32_t lateness3 = wait_until_tai(eca_ctrl, tai_now.value + 4020000ll); // 4 ms after the first pulse
-    setLemoOutputEvtMil(mil_piggy, 1, 1);
-    setLemoOutputEvtMil(mil_piggy, 2, 1);
-    setLemoOutputEvtMil(mil_piggy, 1, 0);
-    setLemoOutputEvtMil(mil_piggy, 2, 0);
-
-    uint32_t lateness4 = wait_until_tai(eca_ctrl, tai_now.value + 10020000ll); // 10 ms after the first pulse
-    setLemoOutputEvtMil(mil_piggy, 1, 1);
-    setLemoOutputEvtMil(mil_piggy, 2, 1);
-    setLemoOutputEvtMil(mil_piggy, 1, 0);
-    setLemoOutputEvtMil(mil_piggy, 2, 0);
-
-    mprintf("%d %d %d %d\n",lateness1, lateness2, lateness3, lateness4); // see if any of the pulses was too late
-
-    for (int i = 0; i < 50; ++i) DELAY1000us; // wait 50 ms before the next series of pulses is generated
-}
 
 // After some initialization, the program enters a tight loop where the event handler is called.
 // in the event handler, the ECA queue is polled for events and if the event number is in the range [0...255]
@@ -262,9 +206,6 @@ void main(void)
 
   // MilPiggy 
   volatile uint32_t *mil_piggy = (volatile uint32_t*) find_device_adr(GSI, SCU_MIL);
-  configLemoOutputEvtMil(mil_piggy, 1);
-  configLemoOutputEvtMil(mil_piggy, 2);
-  mprintf("mil_reg_wr_rf_lemo_conf = 0x%08x\n", *(mil_piggy + (MIL_REG_WR_RF_LEMO_CONF/4)));
 
   // ECAQueue 
   volatile uint32_t *eca_queue = ECAQueue_init();
@@ -298,6 +239,5 @@ void main(void)
     }
 
     DELAY10us;
-    //testOfFunction_wait_until_tai(mil_piggy, eca_ctrl);
   } 
 } 

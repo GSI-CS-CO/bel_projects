@@ -83,29 +83,6 @@ void ECAQueue_actionPop(volatile uint32_t *queue)
   queue[ECA_QUEUE_POP_OWR/4] = 0x1;
 }
 
-// translate some arbitrary eventIds into more interesting ones
-uint64_t evtId_translator(uint64_t evtId)
-{
-  switch (evtId)
-  {
-    case 59131185602760704:
-    case 56877942680062976:
-      return 0x0000020008000000; // evtCode = 32 = 0x20
-    break;
-    case 59127337312064512:
-    case 56878011399539712:
-      return 0x0000022008000000; // evtCode = 0x22
-    break;
-    case 59131185602761728:
-    case 56877873960586240:
-      return 0x0000037008000000; // evtCode = 55 = 0x37
-    break;
-    default:
-      return evtId;
-    break;
-  }
-}
-
 uint32_t ECAQueue_getMilEventData(volatile uint32_t *queue, uint32_t *evtCode, uint32_t *milTelegram)
 {
   // EventID 
@@ -130,10 +107,6 @@ uint32_t ECAQueue_getMilEventData(volatile uint32_t *queue, uint32_t *evtCode, u
     .part.lo = queue[ECA_QUEUE_EVENT_ID_LO_GET/4]
   };  
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  // for testing without the correct event ids: map some of the event to desired ones
-  evtId.value = evtId_translator(evtId.value);
-  ////////////////////////////////////////////////////////////////////////////////////
 
   uint32_t evtNo   = (evtId.part.hi>>4)  & 0x00000fff;
           *evtCode =  evtNo              & 0x000000ff;
