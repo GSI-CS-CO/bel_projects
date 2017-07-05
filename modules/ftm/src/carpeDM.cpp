@@ -444,7 +444,7 @@ bool CarpeDM::connect(const std::string& en) {
     return myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_NODE_PTR;
   }
 
-  //Returns the external address of a thread's command register area
+  //Returns the external address of a thread's cursor pointer
   uint32_t CarpeDM::getThrCurrentNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
     return myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_NODE_PTR;
   }
@@ -468,6 +468,22 @@ bool CarpeDM::connect(const std::string& en) {
      else           return "Unknown";
   }
 
+  //Returns the Node the Thread will start from
+  uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
+     vAdr vRa;
+     vBuf vDl;
+     uint32_t startAdr = myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_;
+
+
+     vRa.push_back(startAdr + T_TD_DEADLINE_HI);
+     vRa.push_back(startAdr + T_TD_DEADLINE_LO);
+     vDl = ebReadCycle(ebd, vRa);
+
+     uint8_t* b = &vDl[0];
+
+     return writeBeBytesToLeNumber<uint64_t>(b); 
+  }
+
   const std::string CarpeDM::getThrCursor(uint8_t cpuIdx, uint8_t thrIdx) {
     uint32_t adr;
     MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
@@ -480,11 +496,42 @@ bool CarpeDM::connect(const std::string& en) {
     else           return "Unknown";  
   }
 
-  //Get bifield showing running threads
+  //Get bitfield showing running threads
   uint32_t CarpeDM::getThrRun(uint8_t cpuIdx) {
     return ebReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING); 
   }
 
+  //Get bifield showing running threads
+  uint32_t CarpeDM::getStatus(uint8_t cpuIdx) {
+    return ebReadWord(ebd, myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_STATUS); 
+  }
+
+  void CarpeDM::inspectHeap(uint8_t cpuIdx) {
+    vAdr vRa;
+    vBuf heap;
+    MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
+
+    uint32_t baseAdr = myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS;
+    uint32_t heapAdr = baseAdr + SHCTL_HEAP;
+    uint32_t thrAdr  = baseAdr + SHCTL_THR_DAT;
+
+    for(int i=0; i<_THR_QTY_; i++) vRa.push_back(heapAdr + i * _PTR_SIZE_);
+    heap = ebReadCycle(ebd, vRa);
+
+
+    sLog << std::setfill(' ') << std::setw(4) << "Rank  " << std::setfill(' ') << std::setw(5) << "Thread  " << std::setfill(' ') << std::setw(21) 
+    << "Deadline  " << std::setfill(' ') << std::setw(21) << "Origin  " << std::setfill(' ') << std::setw(21) << "Cursor" << std::endl;
+
+
+
+    for(int i=0; i<_THR_QTY_; i++) {
+
+      uint8_t thrIdx = (writeBeBytesToLeNumber<uint32_t>((uint8_t*)&heap[i * _PTR_SIZE_])  - m.extAdr2intAdr(thrAdr)) / _T_TD_SIZE_;
+      sLog << std::dec << std::setfill(' ') << std::setw(4) << i << std::setfill(' ') << std::setw(8) << (int)thrIdx  
+      << std::setfill(' ') << std::setw(21) << getThrDeadline(cpuIdx, thrIdx)   << std::setfill(' ') << std::setw(21) 
+      << getThrOrigin(cpuIdx, thrIdx)  << std::setfill(' ') << std::setw(21) << getThrCursor(cpuIdx, thrIdx) << std::endl;
+    }  
+  }
 
   //Requests Threads to start
   void CarpeDM::setThrStart(uint8_t cpuIdx, uint32_t bits) {

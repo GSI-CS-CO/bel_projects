@@ -155,6 +155,24 @@ int main(int argc, char* argv[]) {
     return -30;
   }
 
+
+
+  uint32_t globalStatus = cdm.getStatus(0), status = cdm.getStatus(cpuIdx);
+
+  if ( !(globalStatus & (SHCTL_STATUS_EBM_INIT_SMSK | SHCTL_STATUS_PQ_INIT_SMSK))
+    || !(status & (SHCTL_STATUS_UART_INIT_SMSK | SHCTL_STATUS_DM_INIT_SMSK)) ) 
+    {
+    std::cerr << program << ": DM is not fully initialised. Cause: " << std::endl;
+    if (!(globalStatus & SHCTL_STATUS_EBM_INIT_SMSK)) std::cerr << "EB Master could not be configured. Does the DM have a valid IP?" << std::endl;
+    if (!(globalStatus & SHCTL_STATUS_PQ_INIT_SMSK))  std::cerr << "Priority Queue could not be configured" << std::endl;
+    if (!(status & SHCTL_STATUS_UART_INIT_SMSK))      std::cerr << "CPU " << cpuIdx << "'s UART is not functional" << std::endl;
+    if (!(status & SHCTL_STATUS_DM_INIT_SMSK))      std::cerr << "CPU " << cpuIdx << " could not be initialised" << std::endl;
+    //if (!(status & SHCTL_STATUS_WR_INIT_SMSK))      std::cerr << "CPU " << cpuIdx << "'s WR time could not be initialised" << std::endl;
+    return -40;
+  }
+
+  
+
   try { cdm.addDotToDict(inputFilename); }
   catch (std::runtime_error const& err) {
     std::cerr << program << ": No Nodename/Hash dictionary available. Cause: " << err.what() << std::endl; return -30;
@@ -253,6 +271,10 @@ int main(int argc, char* argv[]) {
       } catch (std::runtime_error const& err) {
         std::cerr << program << ": Node not found. Cause: " << err.what() << std::endl; return -21;
       }  
+      return 0;
+    }
+    else if (cmp == "heap")  {
+      cdm.inspectHeap(cpuIdx); 
       return 0;
     }
 

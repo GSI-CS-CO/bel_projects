@@ -28,6 +28,8 @@
 
 #define _THR_QTY_               8
 
+
+
 //////////////////////////////////////////////////////////////////////
 //"struct" types                                                    //
 //////////////////////////////////////////////////////////////////////
@@ -85,7 +87,8 @@
 //////////////////////////////////////////////////////////////////////
 
 #define _SHCTL_START_    0
-#define SHCTL_STATUS     (_SHCTL_START_)                    //Status Registers
+#define SHCTL_HEAP       (_SHCTL_START_)                    //Scheduler Heap  
+#define SHCTL_STATUS     (SHCTL_HEAP + _THR_QTY_ * _PTR_SIZE_) //Status Registers
 #define SHCTL_MSG_CNT    (SHCTL_STATUS       + _32b_SIZE_ ) //CPU wide timing message counter
 #define SHCTL_CMD        (SHCTL_MSG_CNT      + _64b_SIZE_ ) //Command Register
 #define SHCTL_TGATHER    (SHCTL_CMD          + _32b_SIZE_ ) //Gather Time (HW Priority Queue Config) Register 
@@ -96,10 +99,22 @@
 #define _SHCTL_END_      (SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_) 
 //////////////////////////////////////////////////////////////////////
 
+// Global Status field bits
+#define SHCTL_STATUS_UART_INIT_MSK    0x1
+#define SHCTL_STATUS_UART_INIT_POS    0
+#define SHCTL_STATUS_UART_INIT_SMSK   (SHCTL_STATUS_UART_INIT_MSK << SHCTL_STATUS_UART_INIT_POS)
 
+#define SHCTL_STATUS_EBM_INIT_MSK     0x1
+#define SHCTL_STATUS_EBM_INIT_POS     1
+#define SHCTL_STATUS_EBM_INIT_SMSK    (SHCTL_STATUS_EBM_INIT_MSK << SHCTL_STATUS_EBM_INIT_POS)
 
+#define SHCTL_STATUS_PQ_INIT_MSK      0x1
+#define SHCTL_STATUS_PQ_INIT_POS      2
+#define SHCTL_STATUS_PQ_INIT_SMSK     (SHCTL_STATUS_PQ_INIT_MSK << SHCTL_STATUS_PQ_INIT_POS)
 
-
+#define SHCTL_STATUS_DM_INIT_MSK      0x1
+#define SHCTL_STATUS_DM_INIT_POS      3
+#define SHCTL_STATUS_DM_INIT_SMSK     (SHCTL_STATUS_DM_INIT_MSK << SHCTL_STATUS_DM_INIT_POS)
 
 //####################################################################
 // #########################  Nodes  #################################

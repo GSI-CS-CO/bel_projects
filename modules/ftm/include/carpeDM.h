@@ -159,8 +159,14 @@ public:
   //Returns the Node the Thread is currently processing
   const std::string getThrCursor(uint8_t cpuIdx, uint8_t thrIdx);
 
-  //Get bifield showing running threads
+  //Get bitfield showing running threads
   uint32_t getThrRun(uint8_t cpuIdx);
+
+  uint32_t getStatus(uint8_t cpuIdx);
+
+  uint64_t getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx);
+
+  void inspectHeap(uint8_t cpuIdx);
 
   //Requests Threads to start
   void setThrStart(uint8_t cpuIdx, uint32_t bits);

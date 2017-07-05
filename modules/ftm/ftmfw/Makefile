@@ -1,10 +1,10 @@
 TARGET		= ftm
-DEBUGLVL  	= 0 
+DEBUGLVL  	= 2 
 FLASH		= EPCQ256
 RAM_SIZE	= 49152 
 SHARED_SIZE 	= 8192
 USRCPUCLK   	= 125000
-VERSION     	= 0.6.0
+VERSION     	= 0.6.1
 
 include ../../../syn/build.mk
 
@@ -15,6 +15,6 @@ CFLAGS		+= -I$(PATHFW) -I$(PATHPRIO) -I$(PATHFW)/../include -DDEBUGLEVEL=$(DEBUG
 
 all: $(TARGET).bin $(TARGET).elf
 
-$(TARGET).elf:	$(PATHFW)/main.c $(INCPATH)/ebm.c
+$(TARGET).elf:	$(PATHFW)/main.c $(INCPATH)/ebm.c $(PATHFW)/dm.c
 clean::
 	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin

@@ -8,7 +8,7 @@ LIBPATH      = $(BASEPATH)/lib
 TOOLPATH     = $(BASEPATH)/ftmx86
 INSTALLPATH  = /usr/bin
 
-VERSION      ?= 0.6.0
+VERSION      ?= 0.6.1
 VERSION_TOOL ?= 0.6.1
 
 T_CXX         = g++
