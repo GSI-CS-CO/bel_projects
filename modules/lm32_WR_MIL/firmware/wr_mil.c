@@ -72,14 +72,17 @@ int init()
 }
 
 // write 16bit word on MIL device bus that will mimic a Mil timing event
-void mil_piggy_write_event(volatile uint32_t *piggy, uint32_t cmd)
+uint32_t mil_piggy_write_event(volatile uint32_t *piggy, uint32_t cmd)
 {
-     while(!(*(piggy + (MIL_REG_WR_RD_STATUS/4)) & MIL_CTRL_STAT_TRM_READY)) // wait until ready
-     {
-          DELAY05us; // delay a bit to have less pressure on the wishbone bus
-     }
+  uint32_t trials = 0;
+  while(!(*(piggy + (MIL_REG_WR_RD_STATUS/4)) & MIL_CTRL_STAT_TRM_READY)) // wait until ready
+  {
+      DELAY05us; // delay a bit to have less pressure on the wishbone bus
+      ++trials;
+  }
 
   *(piggy + (MIL_REG_WR_CMD/4)) = cmd; 
+  return trials;
 }
 
 // convert 64-bit TAI from WR into an array of five MIL events (EVT_UTC_1/2/3/4/5 events with evtNr 0xE0 - 0xE4)
@@ -147,6 +150,7 @@ void eventHandler(volatile uint32_t    *eca,
       TAI_t    tai_deadl; 
       uint32_t EVT_UTC[N_UTC_EVENTS];
       uint32_t too_late;
+      uint32_t trials;
       ECAQueue_getDeadl(eca_queue, &tai_deadl);
       ECAQueue_actionPop(eca_queue);
       uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY + (config->latency-100)*1000; // add latency to the deadline
@@ -156,38 +160,38 @@ void eventHandler(volatile uint32_t    *eca,
       {
         // generate MIL event, followed by EVT_UTC_1/2/3/4/5 EVENTS
         too_late = wait_until_tai(eca, mil_event_time);
-        mil_piggy_write_event(mil_piggy, milTelegram); 
+        trials = mil_piggy_write_event(mil_piggy, milTelegram); 
         make_mil_timestamp(mil_event_time, EVT_UTC);     
         delay_96plus32n_ns(config->trigger_utc_delay*32);
-        mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_BEGIN_CMD_EXEC); 
+        trials = mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_BEGIN_CMD_EXEC); 
         delay_96plus32n_ns(config->trigger_utc_delay*32);
         // create the five events EVT_UTC_1/2/3/4/5 with seconds and miliseconds since 01/01/2008
         for (int i = 0; i < N_UTC_EVENTS; ++i)
         {
           // Churn out the EVT_UTC MIL events as fast as possible. 
           //  This results in approx. 21 us between two successive events.
-          mil_piggy_write_event(mil_piggy, EVT_UTC[i]); 
+          trials = mil_piggy_write_event(mil_piggy, EVT_UTC[i]); 
           if (i < N_UTC_EVENTS-1)
           {
             delay_96plus32n_ns(config->utc_delay*32);
           }
         }
         delay_96plus32n_ns(config->trigger_utc_delay*32);
-        mil_piggy_write_event(mil_piggy, (config->event_source<<12) | 0xf00 | MIL_EVT_COMMAND ); 
+        trials = mil_piggy_write_event(mil_piggy, (config->event_source<<12) | 0xf00 | MIL_EVT_COMMAND ); 
         delay_96plus32n_ns(config->trigger_utc_delay*32);
-        mil_piggy_write_event(mil_piggy, (config->event_source<<12) | 0xf00 | MIL_EVT_COMMAND ); 
+        trials = mil_piggy_write_event(mil_piggy, (config->event_source<<12) | 0xf00 | MIL_EVT_COMMAND ); 
         delay_96plus32n_ns(config->trigger_utc_delay*32);
-        mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_END_CMD_EXEC); 
+        trials = mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_END_CMD_EXEC); 
       }
       else
       {
         // generate MIL event
         too_late = wait_until_tai(eca, mil_event_time);
-        mil_piggy_write_event(mil_piggy, milTelegram);
+        trials = mil_piggy_write_event(mil_piggy, milTelegram);
       }
-      if (too_late)
+      if (too_late || trials)
       { 
-        mprintf("evtCode: %d late: %d\n",evtCode, too_late);
+        mprintf("evtCode: %d trials: %d  late: %d\n",evtCode, trials, too_late);
       }
     }
     // remove action from ECA queue 
@@ -238,6 +242,6 @@ void main(void)
       eventHandler(eca_ctrl, eca_queue, mil_piggy, config);
     }
 
-    DELAY10us;
+    DELAY1us;
   } 
 } 

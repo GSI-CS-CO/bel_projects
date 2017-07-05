@@ -13,7 +13,7 @@ typedef struct
 	uint32_t utc_delay;         // base + 0xC : delay in us between the generated UTC events
 	uint32_t trigger_utc_delay; // base + 0x10: delay in us between the trigger event and the UTC (and other) generated events
 	uint32_t event_source;      // base + 0x14: 1 = SIS ; 2 = ESR ; 0 not configured
-	 int32_t latency;           // base + 0x18: MIL event is generated 100us+latency after the WR event. The value of latency can be negative
+	uint32_t latency;           // base + 0x18: MIL event is generated 100us+latency after the WR event. The value of latency can be negative
 	uint32_t state;             // base + 0x1C: INITIAL, UNCONFIGURED, CONFIGURED
 } WrMilConfig;
 
