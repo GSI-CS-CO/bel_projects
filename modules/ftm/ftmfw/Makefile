@@ -4,7 +4,7 @@ FLASH		= EPCQ256
 RAM_SIZE	= 49152 
 SHARED_SIZE 	= 8192
 USRCPUCLK   	= 125000
-VERSION     	= 0.6.1
+VERSION     	= 0.6.2
 
 include ../../../syn/build.mk
 
