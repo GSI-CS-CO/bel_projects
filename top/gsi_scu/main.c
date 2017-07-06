@@ -38,6 +38,7 @@
 
 
 #define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
+#define CALC_OFFS(SLOT) SLOT * (1 << 16)
 
 extern struct w1_bus wrpc_w1_bus;
 extern inline int cbisEmpty(volatile struct channel_regs*, int);
@@ -47,18 +48,18 @@ extern int cbgetCount(volatile struct channel_regs*, int);
 
 
 #define SHARED __attribute__((section(".shared")))
-uint64_t SHARED board_id = -1;
-uint64_t SHARED ext_id = -1;
-uint64_t SHARED backplane_id = -1;
-uint32_t SHARED board_temp = -1;
-uint32_t SHARED ext_temp = -1; 
-uint32_t SHARED backplane_temp = -1;
-uint32_t SHARED fg_magic_number = 0xdeadbeef;
-uint32_t SHARED fg_version = 0x3; // 0x2 saftlib,
-                                  // 0x3 new msi system with mailbox
-uint32_t SHARED fg_mb_slot = -1;
-uint32_t SHARED fg_num_channels = MAX_FG_CHANNELS;
-uint32_t SHARED fg_buffer_size = BUFFER_SIZE;
+uint64_t SHARED board_id           = -1;
+uint64_t SHARED ext_id             = -1;
+uint64_t SHARED backplane_id       = -1;
+uint32_t SHARED board_temp         = -1;
+uint32_t SHARED ext_temp           = -1;
+uint32_t SHARED backplane_temp     = -1;
+uint32_t SHARED fg_magic_number    = 0xdeadbeef;
+uint32_t SHARED fg_version         = 0x3; // 0x2 saftlib,
+                                          // 0x3 new msi system with mailbox
+uint32_t SHARED fg_mb_slot         = -1;
+uint32_t SHARED fg_num_channels    = MAX_FG_CHANNELS;
+uint32_t SHARED fg_buffer_size     = BUFFER_SIZE;
 uint32_t SHARED fg_macros[MAX_FG_MACROS]; // hi..lo bytes: slot, device, version, output-bits
 struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS]; 
 struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
@@ -66,10 +67,10 @@ struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
 struct scu_bus scub;
 struct fg_list fgs;
 
-volatile unsigned short* scub_base = 0;
+volatile unsigned short* scub_base   = 0;
 volatile unsigned int* scub_irq_base = 0;
-volatile unsigned int* scu_mil_base = 0;
-volatile unsigned int* mil_irq_base = 0;
+volatile unsigned int* scu_mil_base  = 0;
+volatile unsigned int* mil_irq_base  = 0;
 sdb_location ow_base[2];              // there should be two controllers
 volatile unsigned int* cpu_info_base = 0;
 
@@ -137,9 +138,9 @@ void disable_slave_irq(int channel) {
     
     if (slot < DEV_BUS_SLOT) {
       if (dev == 0)
-        scub_base[(slot << 16) + SLAVE_INT_ENA] &= ~(0x8000);       //disable fg1 irq
+        scub_base[CALC_OFFS(slot) + SLAVE_INT_ENA] &= ~(0x8000);       //disable fg1 irq
       else if (dev == 1)
-        scub_base[(slot << 16) + SLAVE_INT_ENA] &= ~(0x4000);       //disable fg2 irq
+        scub_base[CALC_OFFS(slot) + SLAVE_INT_ENA] &= ~(0x4000);       //disable fg2 irq
     } else if (slot == DEV_BUS_SLOT) {
       //write_mil(scu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
       if (status = write_mil(scu_mil_base, 0x0, FC_IRQ_MSK | dev) != OKAY) dev_failure(status);  //mask drq
@@ -171,12 +172,12 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
     cntrl_reg_wr = cntrl_reg & ~(0x7);    // clear fg_running and fg_enabled
     cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
     if (slot < DEV_BUS_SLOT) {
-      scub_base[(slot << 16) + fg_base + FG_CNTRL]  = cntrl_reg_wr;
-      scub_base[(slot << 16) + fg_base + FG_A]      = pset.coeff_a;
-      scub_base[(slot << 16) + fg_base + FG_B]      = pset.coeff_b;
-      scub_base[(slot << 16) + fg_base + FG_SHIFT]  = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6
-      scub_base[(slot << 16) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
-      scub_base[(slot << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+      scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL]  = cntrl_reg_wr;
+      scub_base[CALC_OFFS(slot) + fg_base + FG_A]      = pset.coeff_a;
+      scub_base[CALC_OFFS(slot) + fg_base + FG_B]      = pset.coeff_b;
+      scub_base[CALC_OFFS(slot) + fg_base + FG_SHIFT]  = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6
+      scub_base[CALC_OFFS(slot) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
+      scub_base[CALC_OFFS(slot) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
     } else if (slot == DEV_BUS_SLOT) {
       // transmit in one block transfer over the dev bus
       //mprintf("cntrl_reg_wr: 0x%x\n", cntrl_reg_wr);
@@ -187,6 +188,7 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
       blk_data[4] = pset.coeff_c & 0xffff;
       blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16;
       if(status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | fg_base)  != OKAY) dev_failure(status);
+      // still in block mode !
     }
     param_sent[fg_num]++;
   }
@@ -198,7 +200,7 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
     int channel;
 
     if (slot < DEV_BUS_SLOT){
-      cntrl_reg = scub_base[(slot << 16) + fg_base + FG_CNTRL];
+      cntrl_reg = scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL];
       channel = (cntrl_reg & 0x3f0) >> 4;     // virtual fg number Bits 9..4
     } else if (slot == DEV_BUS_SLOT) {
       channel = (irq_act_reg & 0x3f0) >> 4;   // virtual fg number Bits 9..4
@@ -206,8 +208,8 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
     
     if (slot < DEV_BUS_SLOT) {
       /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
-      fg_regs[channel].ramp_count = scub_base[(slot << 16) + fg_base + FG_RAMP_CNT_LO];
-      fg_regs[channel].ramp_count |= scub_base[(slot << 16) + fg_base + FG_RAMP_CNT_HI] << 16;
+      fg_regs[channel].ramp_count = scub_base[CALC_OFFS(slot) + fg_base + FG_RAMP_CNT_LO];
+      fg_regs[channel].ramp_count |= scub_base[CALC_OFFS(slot) + fg_base + FG_RAMP_CNT_HI] << 16;
     } else if (slot == DEV_BUS_SLOT) {
       /* count in software only */
       fg_regs[channel].ramp_count++;
@@ -234,7 +236,6 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
       }
     }
 
-
     if (slot < DEV_BUS_SLOT) {
       if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
         fg_regs[channel].state = 1; 
@@ -259,7 +260,6 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
           SEND_SIG(SIG_REFILL);
         send_fg_param(slot, fg_base, irq_act_reg);
       }
-
     }
 }
 
@@ -313,7 +313,7 @@ void irq_handler()
     sw_irq_handler(global_msi.adr, global_msi.msg);
     return;
   }
-  slv_int_act_reg = scub_base[(slave_nr << 16) + SLAVE_INT_ACT];
+  slv_int_act_reg = scub_base[CALC_OFFS(slave_nr) + SLAVE_INT_ACT];
   //mprintf("slv_int_act_reg of slave %d is: 0x%x\n", slave_nr, slv_int_act_reg); 
 
   if ((global_msi.adr & 0xff) == 0x20) {
@@ -336,7 +336,7 @@ void irq_handler()
   }
   
   if (slv_int_act_reg & 0x2000) { //tmr irq?
-    //tmr_irq_cnts = scub_base[(slave_nr << 16) + TMR_BASE + TMR_IRQ_CNT];
+    //tmr_irq_cnts = scub_base[CALC_OFFS(slave_nr) + TMR_BASE + TMR_IRQ_CNT];
     // init old_tmr_cnt
     if (!initialized[slave_nr-1]) {
       //old_tmr_cnt[slave_nr-1] = tmr_irq_cnts - 1;
@@ -358,7 +358,7 @@ void irq_handler()
     handle(slave_nr, FG2_BASE, 0);
     slave_acks |= FG2_IRQ;
   } 
-  scub_base[(slave_nr << 16) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
+  scub_base[CALC_OFFS(slave_nr) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
 }
 
 void configure_timer(unsigned int tmr_value) {
@@ -372,11 +372,11 @@ void configure_timer(unsigned int tmr_value) {
     mprintf("enable slave[%d] in slot %d\n", i, slot);
     scub_base[SRQ_ENA] |= (1 << (slot-1));                                // enable irqs for the slave
     scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1));                        // set bitmask for broadcast select
-    scub_base[(slot << 16) + SLAVE_INT_ENA] = 0x2000;                     // enable tmr irq in slave macro
-    scub_base[(slot << 16) + TMR_BASE + TMR_CNTRL] = 0x1;                 // reset TMR
-    scub_base[(slot << 16) + TMR_BASE + TMR_VALUEL] = tmr_value & 0xffff; // enable generation of tmr irqs, 1ms, 0xe848
-    scub_base[(slot << 16) + TMR_BASE + TMR_VALUEH] = tmr_value >> 16;    // enable generation of tmr irqs, 1ms, 0x001e
-    scub_base[(slot << 16) + TMR_BASE + TMR_REPEAT] = 0x14;               // number of generated irqs
+    scub_base[CALC_OFFS(slot) + SLAVE_INT_ENA] = 0x2000;                     // enable tmr irq in slave macro
+    scub_base[CALC_OFFS(slot) + TMR_BASE + TMR_CNTRL] = 0x1;                 // reset TMR
+    scub_base[CALC_OFFS(slot) + TMR_BASE + TMR_VALUEL] = tmr_value & 0xffff; // enable generation of tmr irqs, 1ms, 0xe848
+    scub_base[CALC_OFFS(slot) + TMR_BASE + TMR_VALUEH] = tmr_value >> 16;    // enable generation of tmr irqs, 1ms, 0x001e
+    scub_base[CALC_OFFS(slot) + TMR_BASE + TMR_REPEAT] = 0x14;               // number of generated irqs
     i++;
   }
 }
@@ -396,8 +396,8 @@ int configure_fg_macro(int channel) {
     if (slot < DEV_BUS_SLOT) {                                      //scu bus slave
       scub_base[SRQ_ENA] |= (1 << (slot-1));                        //enable irqs for the slave
     
-      scub_base[(slot << 16) + SLAVE_INT_ACT] = 0xc000;             //clear all irqs
-      scub_base[(slot << 16) + SLAVE_INT_ENA] |= 0xc000;            //enable fg1 and fg2 irq
+      scub_base[CALC_OFFS(slot) + SLAVE_INT_ACT] = 0xc000;             //clear all irqs
+      scub_base[CALC_OFFS(slot) + SLAVE_INT_ENA] |= 0xc000;            //enable fg1 and fg2 irq
     
     } else if (slot == DEV_BUS_SLOT) {
       if (status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev) != OKAY) dev_failure(status); //enable Data-Request
@@ -417,8 +417,8 @@ int configure_fg_macro(int channel) {
     
     /* fg mode and reset */    
     if (slot < DEV_BUS_SLOT) {                                      //scu bus slave
-      scub_base[(slot << 16) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
-      scub_base[(slot << 16) + fg_base + FG_CNTRL] = 0x1;           // reset fg
+      scub_base[CALC_OFFS(slot) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
+      scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL] = 0x1;           // reset fg
     } else if (slot == DEV_BUS_SLOT) {
       if (status = write_mil(scu_mil_base, 0x1, 0x60 << 8 | dev) != OKAY) dev_failure(status);   // set FG mode
       if (status = write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev) != OKAY) dev_failure(status); // reset fg
@@ -428,12 +428,12 @@ int configure_fg_macro(int channel) {
     if (cbRead(&fg_buffer[0], &fg_regs[0], channel, &pset)) {
       if (slot < DEV_BUS_SLOT) {
         //set virtual fg number Bit 9..4
-        scub_base[(slot << 16) + fg_base + FG_CNTRL] = (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4;
-        scub_base[(slot << 16) + fg_base + FG_A] = pset.coeff_a;
-        scub_base[(slot << 16) + fg_base + FG_B] = pset.coeff_b;
-        scub_base[(slot << 16) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
-        scub_base[(slot << 16) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
-        scub_base[(slot << 16) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+        scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL] = (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4;
+        scub_base[CALC_OFFS(slot) + fg_base + FG_A] = pset.coeff_a;
+        scub_base[CALC_OFFS(slot) + fg_base + FG_B] = pset.coeff_b;
+        scub_base[CALC_OFFS(slot) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
+        scub_base[CALC_OFFS(slot) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
+        scub_base[CALC_OFFS(slot) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
       } else if (slot == DEV_BUS_SLOT) {
         //set virtual fg number Bit 9..4
         if (status = write_mil(scu_mil_base, (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4, FC_CNTRL_WR | dev) != OKAY) dev_failure(status);
@@ -448,9 +448,9 @@ int configure_fg_macro(int channel) {
 
     /* configure and enable macro */
     if (slot < DEV_BUS_SLOT) {
-      scub_base[(slot << 16) + fg_base + FG_TAG_LOW] = fg_regs[channel].tag & 0xffff;
-      scub_base[(slot << 16) + fg_base + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
-      scub_base[(slot << 16) + fg_base + FG_CNTRL] |= FG_ENABLED;
+      scub_base[CALC_OFFS(slot) + fg_base + FG_TAG_LOW] = fg_regs[channel].tag & 0xffff;
+      scub_base[CALC_OFFS(slot) + fg_base + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
+      scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL] |= FG_ENABLED;
     } else if (slot == DEV_BUS_SLOT) {
       short data;
       if (status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev) != OKAY) dev_failure(status);
@@ -469,7 +469,7 @@ void reset_slaves() {
   scub_base[MULTI_SLAVE_SEL] = 0x0; //reset bitmask  
   while(scub.slaves[i].unique_id) {
     disp_put_c('x');
-    scub_base[(scub.slaves[i].slot << 16) + TMR_BASE + TMR_CNTRL] = 0x1; //reset TMR
+    scub_base[CALC_OFFS(scub.slaves[i].slot) + TMR_BASE + TMR_CNTRL] = 0x1; //reset TMR
     i++;
   }
 }
@@ -537,8 +537,8 @@ void disable_channel(unsigned int channel) {
       return;
 
     // disarm hardware
-    scub_base[(slot << 16) + fg_base + FG_CNTRL] &= ~(0x2);
-    scub_base[(slot << 16) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
+    scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL] &= ~(0x2);
+    scub_base[CALC_OFFS(slot) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
   } else if (slot == DEV_BUS_SLOT) {
     // disarm hardware
     if(status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev) != OKAY) dev_failure(status);
@@ -613,7 +613,7 @@ void sw_irq_handler(unsigned int adr, unsigned int msg) {
     case 1:
       configure_timer(value);
       enable_scub_msis(value);
-      scub_base[(0xd << 16) + TMR_BASE + TMR_CNTRL] = 0x2; //multicast tmr enable
+      scub_base[CALC_OFFS(0xd) + TMR_BASE + TMR_CNTRL] = 0x2; //multicast tmr enable
     break;
     case 2:
       enable_scub_msis(value);
@@ -702,6 +702,7 @@ int main(void) {
   init(); // init and scan for fgs
 
   unsigned short status;
+
   while(1) {
     // check if channels have been stopped
     msDelayBig(1000);

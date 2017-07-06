@@ -6,6 +6,7 @@
 #include <scu_mil.h>
 #include <mini_sdb.h>
 
+#define CALC_OFFS(SLOT) SLOT * (1 << 16)
 
 int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *scub_adr, volatile unsigned int *mil_addr) {
   int i, j = 0;
@@ -15,38 +16,45 @@ int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *scub
   memset(bus->slaves, 0, sizeof(bus->slaves));
   bus->unique_id = id;
 
+  // scu bus slaves
   for (i = 1; i <= MAX_SCU_SLAVES; i++) {
-    scub_adr[i * (1<<16) + 0x10] = 0; //clear echo reg
-    if (scub_adr[i * (1<<16) + 0x10] != 0xdead) {
-      bus->slaves[j].unique_id = (uint64_t)(scub_adr[i * (1<<16) + 0x40]) << 48;
-      bus->slaves[j].unique_id |= (uint64_t)(scub_adr[i * (1<<16) + 0x41]) << 32;
-      bus->slaves[j].unique_id |= (uint64_t)(scub_adr[i * (1<<16) + 0x42]) << 16;
-      bus->slaves[j].unique_id |= (uint64_t)(scub_adr[i * (1<<16) + 0x43]);
+    scub_adr[CALC_OFFS(i) + 0x10] = 0; //clear echo reg
+    if (scub_adr[CALC_OFFS(i) + 0x10] != 0xdead) {
+      bus->slaves[j].unique_id =  (uint64_t) (scub_adr[CALC_OFFS(i) + 0x40]) << 48;
+      bus->slaves[j].unique_id |= (uint64_t) (scub_adr[CALC_OFFS(i) + 0x41]) << 32;
+      bus->slaves[j].unique_id |= (uint64_t) (scub_adr[CALC_OFFS(i) + 0x42]) << 16;
+      bus->slaves[j].unique_id |= (uint64_t) (scub_adr[CALC_OFFS(i) + 0x43]);
 
-      bus->slaves[j].slot = i;
-      bus->slaves[j].cid_group = scub_adr[i * (1<<16) + CID_GROUP];
-      bus->slaves[j].cid_sys = scub_adr[i * (1<<16) + CID_SYS];
-      bus->slaves[j].version = scub_adr[i * (1<<16) + SLAVE_VERSION];
-      bus->slaves[j].fg_ver = scub_adr[i * (1<<16) + FG1_BASE + FG_VER]; 
+      bus->slaves[j].slot      = i;
+      bus->slaves[j].cid_group = scub_adr[CALC_OFFS(i) + CID_GROUP];
+      bus->slaves[j].cid_sys   = scub_adr[CALC_OFFS(i) + CID_SYS];
+      bus->slaves[j].version   = scub_adr[CALC_OFFS(i) + SLAVE_VERSION];
+      bus->slaves[j].fg_ver    = scub_adr[CALC_OFFS(i) + FG1_BASE + FG_VER];
 
-      ext_clk_reg = scub_adr[(i << 16) + SLAVE_EXT_CLK];          //read clk status from slave
+      ext_clk_reg = scub_adr[CALC_OFFS(i) + SLAVE_EXT_CLK];          //read clk status from slave
       if (ext_clk_reg & 0x1)
-        scub_adr[(i << 16) + SLAVE_EXT_CLK] = 0x1;                //switch clk to sys clk from scu bus
+        scub_adr[CALC_OFFS(i) + SLAVE_EXT_CLK] = 0x1;                //switch clk to sys clk from scu bus
+
+      // if slave is a sio3, scan for ifa cards
+      if (bus->slaves[j].cid_sys == SYS_CSCO && bus->slaves[j].cid_group == GRP_SIO3) {
+
+      }
 
       j++; /* next found slave */
     }
   }
 
+  // ifks connected to mil extension
   if ((int)mil_addr != ERROR_NOT_FOUND) {
     clear_receive_flag(mil_addr);
     for (adr = 0; adr < IFK_MAX_ADR; adr++) {
       if (read_mil(mil_addr, &data, 0xa6 << 8 | adr) == OKAY) {
         if ((0xffff & data) == 0x2)
-          mprintf("found ifk with fg at 0x%x, data: 0x%x\n", adr, 0xffff & data);
-          bus->slaves[j].fg_ver = 0xffff & data;
+          mprintf("found ifa with fg at 0x%x, data: 0x%x\n", adr, 0xffff & data);
+          bus->slaves[j].fg_ver    = 0xffff & data;
           bus->slaves[j].unique_id = adr;
-          bus->slaves[j].slot = i;
-          bus->slaves[j].cid_sys = SYS_CSCO;
+          bus->slaves[j].slot      = 13; // mil extension
+          bus->slaves[j].cid_sys   = SYS_CSCO;
           bus->slaves[j].cid_group = GRP_IFA8;
           if (read_mil(mil_addr, &data, 0xcc << 8 | adr) == OKAY) {
             bus->slaves[j].version = 0xffff & data;
@@ -150,9 +158,9 @@ void init_buffers(struct channel_regs *cr, int channel, uint32_t *fg_macros,  vo
       //mprintf("reset fg %d in slot %d\n", device, slot);
       if (slot < DEV_BUS_SLOT) {
         if (dev == 0) {
-          scub_base[(slot << 16) + FG1_BASE + FG_CNTRL] = 0x1; // reset fg
+          scub_base[CALC_OFFS(slot) + FG1_BASE + FG_CNTRL] = 0x1; // reset fg
         } else if (dev == 1) {
-          scub_base[(slot << 16) + FG2_BASE + FG_CNTRL] = 0x1; // reset fg
+          scub_base[CALC_OFFS(slot) + FG2_BASE + FG_CNTRL] = 0x1; // reset fg
         }
       } else if (slot == DEV_BUS_SLOT) {
         write_mil(devb_base, 0x1, 0x14 << 8 | dev); // reset fg 
