@@ -13,8 +13,11 @@ int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *scub
   unsigned short ext_clk_reg;
   short data;
   unsigned char adr;
+  int sio_iterator = 14;
+  int slot;
   memset(bus->slaves, 0, sizeof(bus->slaves));
   bus->unique_id = id;
+
 
   // scu bus slaves
   for (i = 1; i <= MAX_SCU_SLAVES; i++) {
@@ -37,7 +40,23 @@ int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *scub
 
       // if slave is a sio3, scan for ifa cards
       if (bus->slaves[j].cid_sys == SYS_CSCO && bus->slaves[j].cid_group == GRP_SIO3) {
-
+        slot = bus->slaves[j].slot;
+        for (adr = 0; adr < IFK_MAX_ADR; adr++) {
+          if (scub_read_mil(scub_adr, slot, &data, 0xa6 << 8 | adr) == OKAY) {
+            j++; /* next found ifa */
+            mprintf("found ifa with fg at 0x%x, data: 0x%x\n", adr, 0xffff & data);
+            bus->slaves[j].fg_ver    = 0xffff & data;
+            bus->slaves[j].unique_id = adr;
+            bus->slaves[j].slot      = sio_iterator;
+            bus->slaves[j].cid_sys   = SYS_CSCO;
+            bus->slaves[j].cid_group = GRP_IFA8;
+            if (scub_read_mil(scub_adr, slot, &data, 0xcc << 8 | adr) == OKAY) {
+              bus->slaves[j].version = 0xffff & data;
+              scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | adr); // clear PUR
+            }
+          }
+        }
+        sio_iterator++; /* next sio3 */
       }
 
       j++; /* next found slave */
