@@ -1,0 +1,14 @@
+digraph G {
+graph [label="Blink", root="Evt_POLICE",  rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
+node [type="TMsg", shape="rectangle",  style="filled", fillcolor="white", color="black"]
+edge [type="defdst", color="red"]
+
+Evt_POLICE        [type="TMsg",                tOffs=0, id="0x0000000000000110", par="0x123", shape="oval"];
+Evt_FIREF         [type="TMsg",              tOffs=0, id="0x0000000000000112", par="0x0", shape="oval"];
+B_FIREF           [type="Block",         tPeriod=4000000000];
+B_POLICE          [type="Block",         tPeriod=2000000000];
+
+Evt_POLICE  -> B_POLICE -> Evt_POLICE;
+Evt_FIREF  -> B_FIREF -> Evt_FIREF;
+
+}

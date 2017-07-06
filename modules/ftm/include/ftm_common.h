@@ -27,6 +27,7 @@
 #define LM32_NULL_PTR           0x0
 
 #define _THR_QTY_               8
+#define _HEAP_SIZE_            (_THR_QTY_)
 
 
 

@@ -247,17 +247,34 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "start")  {
-      std::string origin = cdm.getThrOrigin(cpuIdx, thrIdx);
-      if ((origin == "Idle") || (origin == "Unknown")) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
-      cdm.startThr(cpuIdx, thrIdx);
+      //check if a valid origin was assigned before executing
+      std::string origin;
+      if( targetName != NULL) {
+        uint32_t bits = strtol(targetName, NULL, 0);
+        for(int i=0; i < _THR_QTY_; i++) {
+          if((bits >> i) & 1) {
+            origin = cdm.getThrOrigin(cpuIdx, i);
+            if ((origin == "Idle") || (origin == "Unknown")) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
+         } 
+        }
+        cdm.setThrStart(cpuIdx, bits & ((1<<_THR_QTY_)-1) );
+      } else {
+        origin = cdm.getThrOrigin(cpuIdx, thrIdx);
+        if ((origin == "Idle") || (origin == "Unknown")) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
+        cdm.startThr(cpuIdx, thrIdx);
+      }
       return 0;
     }
     else if (cmp == "stop")  {
-      cdm.stopThr(cpuIdx, thrIdx);
+      uint32_t bits = strtol(targetName, NULL, 0);
+      if( targetName != NULL) { cdm.setThrStop(cpuIdx, bits & ((1<<_THR_QTY_)-1) ); }
+      else { cdm.stopThr(cpuIdx, thrIdx); }
       return 0;
     }
     else if (cmp == "abort")  {
-      cdm.abortThr(cpuIdx, thrIdx);
+      uint32_t bits = strtol(targetName, NULL, 0);
+      if( targetName != NULL) { cdm.clrThrRun(cpuIdx, bits & ((1<<_THR_QTY_)-1) ); }
+      else { cdm.abortThr(cpuIdx, thrIdx); }
       return 0;
     }
     else if (cmp == "running")  {
@@ -275,6 +292,20 @@ int main(int argc, char* argv[]) {
     }
     else if (cmp == "heap")  {
       cdm.inspectHeap(cpuIdx); 
+      return 0;
+    }
+    else if (cmp == "starttime")  {
+      if( targetName != NULL) { cdm.setThrStartTime(cpuIdx, thrIdx, strtoll(targetName, NULL, 0)); }
+      else { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Starttime " << cdm.getThrStartTime(cpuIdx, thrIdx) << std::endl; }
+      return 0;
+    }
+    else if (cmp == "preptime")  {
+      if( targetName != NULL) { cdm.setThrPrepTime(cpuIdx, thrIdx, strtoll(targetName, NULL, 0)); }
+      else { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Preptime " << cdm.getThrPrepTime(cpuIdx, thrIdx) << std::endl; }
+      return 0;
+    }
+    else if (cmp == "deadline")  {
+      std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " Deadline " << cdm.getThrDeadline(cpuIdx, thrIdx) << std::endl;
       return 0;
     }
 

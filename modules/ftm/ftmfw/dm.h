@@ -50,7 +50,7 @@ extern uint32_t* const count;
 extern uint32_t* const start;
 extern uint32_t* const running;
 extern uint32_t* const stop;
-extern uint32_t** const hp;     // array of ptrs to threads for scheduler heap
+extern volatile uint32_t** const hp;     // array of ptrs to threads for scheduler heap
 
 
 
@@ -142,5 +142,9 @@ uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData);
 
 inline uint32_t hiW(uint64_t dword) {return (uint32_t)(dword >> 32);}
 inline uint32_t loW(uint64_t dword) {return (uint32_t)dword;}
+
+void heapify();
+
+void heapReplace(uint32_t src);
 
 #endif

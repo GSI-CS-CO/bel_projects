@@ -125,158 +125,93 @@ void main(void) {
   
 
    while (1) {
+    //for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
+    //DBPRINT1("#%02u: Dl: %s\n", cpuId, print64(DL(pT(hp)), 0)); 
+    //for (j = 0; j < ((125000000/16)); ++j) { asm("nop"); }
+    uint8_t thrIdx = *(uint32_t*)(pT(hp) + (T_TD_FLAGS >> 2)) & 0x7; 
+    if (DL(pT(hp))  <= getSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
+         //process node and update node ptr in threadData
 
-    if (DL(*hp) - 500000ULL > getSysTime()) {
-      //no rush. did the host request any threads to be started?
-      //mprintf("#%02u: Got Time\n",  cpuId);
-      for(i=0;i<8;i++) {
-        for (j = 0; j < ((125000000/8)); ++j) { asm("nop"); }
-        mprintf("#%02u: b4 Start 0x%08x, Stop 0x%08x, Running 0x%08x, i %u\n",  cpuId, *start, *stop, *running, i);  
-        if (*start & (1<<i)) {
-          mprintf("#%02u: %u is starting\n",  cpuId, i);  
-          
-
-          uint64_t* startTime = (uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME ) >> 2));
-          uint64_t* prepTime  = (uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TD_PREPTIME  ) >> 2));
-          uint64_t* currTime  = (uint64_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_CURRTIME  ) >> 2));
-          uint64_t* deadline  = (uint64_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_DEADLINE  ) >> 2));
-          
-          uint32_t* origin    = (uint32_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_NODE_PTR) >> 2));
-          uint32_t* cursor    = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_NODE_PTR) >> 2));
-          
-          if (!(*startTime)) {*currTime = getSysTime() + 5000000ULL; }
-          else *currTime = *startTime;
-          *deadline = *currTime;
-
-          *cursor = *origin;
-        }
-        *running |= *start & (1<<i);
-        *start   &= ~(1 << i);  
-      }
-
-      
-      continue;
-    }
-
-
-
-    for (j = 0; j < ((125000000/8)); ++j) { asm("nop"); }
-    //process node and update node ptr in threadData
-
-    if (pN(hp) != NULL) {
-    tmpType = pN(hp) + (NODE_FLAGS >> 2);
-    type = (*tmpType >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-    
-    
-    msk = -(type < _NODE_TYPE_END_);
-    type &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
-    }
-    uint8_t thrIdx = *(uint32_t*)(pT(hp) + (T_TD_FLAGS >> 2)) & 0x7;  
-    DBPRINT1("#%02u: ThrIdx %u, Node Ptr is 0x%08x, Dl: %s, type @ 0x%08x is %u\n", cpuId, thrIdx, pN(hp), print64(DL(pT(hp)), 0),  tmpType, type);
-
-    *pncN(hp) = nodeFuncs[type](pN(hp), pT(hp));
-    
-    //now *np could be NULL, tread carefully!
-    if (pN(hp) != NULL) {
-      tmpType = pN(*hp) + (NODE_FLAGS >> 2);
-      type = (*tmpType >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-      type &= -(type < _NODE_TYPE_END_); //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
-    } else {
+       
+      DBPRINT1("#%02u: ThrIdx %u, Node Ptr is 0x%08x, Dl: %s, type @ 0x%08x is %u\n", cpuId, thrIdx, pN(hp), print64(*(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) ), 0),  tmpType, type);
       type = NODE_TYPE_UNKNOWN;
-    }
-    //update thread deadline for next node
-    deadlineFuncs[type](pN(hp), pT(hp));
-
-
-
-
-    //*running   &= ~(*stop & (1<<thrIdx));
-    DL(pT(hp)) |= (((uint64_t)*running >> thrIdx) & 1) -1;; // if not running, or with infinity
-    //*stop      &= ~(1 << thrIdx);
-    //replaceSort();
+      if (pN(hp) != NULL) {
+        tmpType = pN(hp) + (NODE_FLAGS >> 2);
+        type = (*tmpType >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
         
-
-
-    //check if there is still time til heap top is due
-      //check if a new thread was requested to start
-        //while there are ...
-          //prepare start time and thread ptr and add to heap
-        //heapify
-    //else
-      //run heap top
-      //update successor
-      //check if not idle
-        //update deadline
-        //heap replace
-      //else
-        //heap remove
-        //mark thread as stopped
-
-
-
-    /*
-    for(i=0;i<8;i++) {
-      
-      DBPRINT2("#%02u: b4 Start 0x%08x, Stop 0x%08x, Running 0x%08x\n",  cpuId, *start, *stop, *running);
-
-
-      if (*start & 1<<i) {
-        *running |= (1<<i);
-        *start   &= ~(1<<i);
-
-
-        tp        = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_) >> 2));
-        currTime  = (uint64_t*)&tp[T_TD_CURRTIME >> 2];
-        deadline  = (uint64_t*)&tp[T_TD_DEADLINE >> 2];
-        np        = (uint32_t**)&tp[T_TD_NODE_PTR >> 2];
-        *np       = (uint32_t*)*(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_NODE_PTR ) >> 2));
         
-        DBPRINT1("#%02u: ThrPtr: 0x%08x, Initial Node Ptr @ 0x%08x is 0x%08x\n",  cpuId, tp, np, *np);
-        
-        *currTime = getSysTime() + 5000000ULL;
-        *deadline = *currTime;
-
-
-
-        while(*np != NULL && (*running & 1<<i) ) {
-          *running &= ~(*stop & 1<<i);
-          *stop  &= ~(1<<i);  
-
-          if ((*(uint64_t*)&tp[T_TD_DEADLINE >> 2] - 500000ULL) > getSysTime()) continue;
-
-          //process node and update node ptr in threadData
-
-          //*np is checked to be not null, so
-          uint32_t* tmpType = (uint32_t*)&(*np)[NODE_FLAGS >> 2];
-          type = (*(uint32_t*)&(*np)[NODE_FLAGS >> 2] >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-          
-          uint32_t msk = -(type < _NODE_TYPE_END_);
-          type &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
-          DBPRINT1("#%02u: Node Ptr is 0x%08x, Dl: %s, type @ 0x%08x is %u\n", cpuId, *np, print64(*(uint64_t*)&tp[T_TD_DEADLINE >> 2], 0),  tmpType, type);
-
-          *np = nodeFuncs[type](*np, tp);
-          
-          //now *np could be NULL, tread carefully!
-          if (*np != NULL) {
-            type = (*(uint32_t*)&(*np)[NODE_FLAGS >> 2] >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-            type &= -(type < _NODE_TYPE_END_); //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
-          } else {
-            type = NODE_TYPE_UNKNOWN;
-          }
-          //update thread deadline for next node
-          deadlineFuncs[type](*np, tp);
-          replaceSort();
-        }
-
-
+        msk = -(type < _NODE_TYPE_END_);
+        type &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
       }
-    DBPRINT2("#%02u: Flow of Thr %u completed, going to idle\n",  cpuId, i);  
-    } 
-    //for (j = 0; j < ((125000000/2)); ++j) { asm("nop"); }
-   */
+
+
+      *pncN(hp) = nodeFuncs[type](pN(hp), pT(hp));
+      //DBPRINT1("new: 0x%08x\n", pN(hp));
+      
+      //now *np could be NULL, tread carefully!
+      type = NODE_TYPE_UNKNOWN;
+      if (pN(hp) != NULL) {
+        tmpType = pN(*hp) + (NODE_FLAGS >> 2);
+        type = (*tmpType >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
+        type &= -(type < _NODE_TYPE_END_); //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
+      }
+      //update thread deadline for next node
+      deadlineFuncs[type](pN(hp), pT(hp));
+
+
+
+
+      //*running   &= ~(*stop & (1<<thrIdx));
+      DL(pT(hp)) |= (((uint64_t)*running >> thrIdx) & 1) -1; // if not running, OR with infinity
+      //*stop      &= ~(1 << thrIdx);
+      heapReplace(0);
+        
+      
+    } else {
+      //no rush. did the host request any threads to be started?
+      //for (j = 0; j < ((125000000/1)); ++j) { asm("nop"); }
+      //mprintf("#%02u: b4 Start 0x%08x, Stop 0x%08x, Running 0x%08x, i %u\n",  cpuId, *start, *stop, *running, i);
+      
+      if(*start) {
+        
+        for(i=0;i<8;i++) {
+          if (*start & (1<<i)) {
+            uint64_t* startTime = (uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME ) >> 2));
+            uint64_t* prepTime  = (uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME  ) >> 2));
+            uint64_t* currTime  = (uint64_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_CURRTIME  ) >> 2));
+            uint64_t* deadline  = (uint64_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_DEADLINE  ) >> 2));
+            
+            uint32_t* origin    = (uint32_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_NODE_PTR) >> 2));
+            uint32_t* cursor    = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_NODE_PTR) >> 2));
+            
+            DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
+             
+
+            if (!(*startTime)) {*currTime = getSysTime() + (*prepTime << 1); } // if 0, set to now + 2 * preptime
+            else *currTime = *startTime;
+            *deadline = *currTime;
+
+            *cursor = *origin;
+            *running |= *start & (1<<i);
+            *start   &= ~(1 << i);  // must be pleace here, race condition otherwise
+          }
+          
+          
+        }
+        // restore heap property
+
+        heapify();
+      }
+      
+
+
+    }
+
+
+    
+ 
+
+
+
   }
-
-
-
-
 }

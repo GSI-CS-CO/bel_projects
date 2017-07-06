@@ -468,21 +468,7 @@ bool CarpeDM::connect(const std::string& en) {
      else           return "Unknown";
   }
 
-  //Returns the Node the Thread will start from
-  uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
-     vAdr vRa;
-     vBuf vDl;
-     uint32_t startAdr = myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_;
-
-
-     vRa.push_back(startAdr + T_TD_DEADLINE_HI);
-     vRa.push_back(startAdr + T_TD_DEADLINE_LO);
-     vDl = ebReadCycle(ebd, vRa);
-
-     uint8_t* b = &vDl[0];
-
-     return writeBeBytesToLeNumber<uint64_t>(b); 
-  }
+ 
 
   const std::string CarpeDM::getThrCursor(uint8_t cpuIdx, uint8_t thrIdx) {
     uint32_t adr;
@@ -674,5 +660,48 @@ void CarpeDM::showCpuList() {
     sLog << "  " << std::dec << std::setfill(' ') << std::setw(2) << x << "   " << std::setfill('0') << std::setw(6) << vFw[x] << "   " << std::setfill('0') << std::setw(6) << expVersion;
     sLog << std::endl;
   }
+
+}
+
+
+uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
+  return read64b(cpuIdx, thrIdx, myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
+}
+
+void CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t) {
+  write64b(cpuIdx, thrIdx, myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME, t);
+}
+
+uint64_t CarpeDM::getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx) {
+  return read64b(cpuIdx, thrIdx, myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
+}
+
+void CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t) {
+  write64b(cpuIdx, thrIdx, myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME, t);
+}
+
+uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
+  return read64b(cpuIdx, thrIdx, myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME);
+}
+
+
+ 
+
+ //Reads and returns a 64 bit word from DM
+uint64_t CarpeDM::read64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr) {
+  vAdr vA({startAdr + 0, startAdr + _32b_SIZE_});
+  vBuf vD = ebReadCycle(ebd, vA);
+  uint8_t* b = &vD[0];
+
+  return writeBeBytesToLeNumber<uint64_t>(b); 
+}
+
+uint64_t CarpeDM::write64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr, uint64_t d) {
+  uint8_t b[_TS_SIZE_];
+  writeLeNumberToBeBytes(b, d);
+  vAdr vA({startAdr + 0, startAdr + _32b_SIZE_});
+  vBuf vD(std::begin(b), std::end(b) );
+
+  ebWriteCycle(ebd, vA, vD);
 
 }

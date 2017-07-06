@@ -68,6 +68,8 @@ protected:
   uint32_t ebReadWord(Device& dev, uint32_t adr);
   boost::dynamic_properties createParser(Graph& g);
   int parseFwVersionString(const std::string& s);
+  uint64_t read64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr);
+  uint64_t write64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr, uint64_t d);
 
 public:
   CarpeDM() : sLog(std::cout), sErr(std::cerr)  {} 
@@ -165,6 +167,13 @@ public:
   uint32_t getStatus(uint8_t cpuIdx);
 
   uint64_t getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx);
+  uint64_t getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx);
+  uint64_t getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx); 
+
+  void setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
+  void setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
+
+
 
   void inspectHeap(uint8_t cpuIdx);
 
