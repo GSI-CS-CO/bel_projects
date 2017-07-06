@@ -104,6 +104,7 @@
 #define GRP_DIOB    26
 #define GRP_FIB_DDS 1
 #define GRP_MFU     2
+#define GRP_SIO3    69
 
 
 extern struct w1_bus wrpc_w1_bus;
