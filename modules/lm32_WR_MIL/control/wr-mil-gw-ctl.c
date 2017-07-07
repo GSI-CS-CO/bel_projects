@@ -57,7 +57,7 @@ void help(const char *program) {
   fprintf(stderr, "  -i             print information about the WR-MIL gateway\n");
   fprintf(stderr, "  -h             display this help and exit\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "Report Etherbone bugs to <etherbone-core@ohwr.org>\n");
+  fprintf(stderr, "Report software bugs to <m.reese@gsi.de>\n");
   fprintf(stderr, "Version: %s\n%s\nLicensed under the LGPL v3.\n", eb_source_version(), eb_build_info());
 }
 
