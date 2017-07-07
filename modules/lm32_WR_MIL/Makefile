@@ -1,9 +1,9 @@
 #~/bin/bash
 
 all:
-	cd control; make
-	cd firmware; make
-
+	make PATH=../../..//toolchain/bin:$(PATH) -C firmware 
+	make -C control
+	
 deploy:
 	# init script
 	cp    setup/nfsinit/global/* /common/export/nfsinit/global/
