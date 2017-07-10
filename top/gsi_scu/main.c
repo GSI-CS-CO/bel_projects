@@ -171,22 +171,22 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
     cntrl_reg_wr = cntrl_reg & ~(0xfc00); // clear freq and step select
     cntrl_reg_wr = cntrl_reg & ~(0x7);    // clear fg_running and fg_enabled
     cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
+    blk_data[0] = cntrl_reg_wr;
+    blk_data[1] = pset.coeff_a;
+    blk_data[2] = pset.coeff_b;
+    blk_data[3] = (pset.control & 0x3ffc0) >> 6;     // shift a 17..12 shift b 11..6
+    blk_data[4] = pset.coeff_c & 0xffff;
+    blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+
     if ((slot & 0xf0) == 0) {
-      scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL]  = cntrl_reg_wr;
-      scub_base[CALC_OFFS(slot) + fg_base + FG_A]      = pset.coeff_a;
-      scub_base[CALC_OFFS(slot) + fg_base + FG_B]      = pset.coeff_b;
-      scub_base[CALC_OFFS(slot) + fg_base + FG_SHIFT]  = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6
-      scub_base[CALC_OFFS(slot) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
-      scub_base[CALC_OFFS(slot) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+      scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL]  = blk_data[0];
+      scub_base[CALC_OFFS(slot) + fg_base + FG_A]      = blk_data[1];
+      scub_base[CALC_OFFS(slot) + fg_base + FG_B]      = blk_data[2];
+      scub_base[CALC_OFFS(slot) + fg_base + FG_SHIFT]  = blk_data[3];
+      scub_base[CALC_OFFS(slot) + fg_base + FG_STARTL] = blk_data[4];
+      scub_base[CALC_OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
     } else if (slot & DEV_MIL_EXT) {
       // transmit in one block transfer over the dev bus
-      //mprintf("cntrl_reg_wr: 0x%x\n", cntrl_reg_wr);
-      blk_data[0] = cntrl_reg_wr;
-      blk_data[1] = pset.coeff_a;
-      blk_data[2] = pset.coeff_b;
-      blk_data[3] = (pset.control & 0x3ffc0) >> 6;
-      blk_data[4] = pset.coeff_c & 0xffff;
-      blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16;
       if(status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | fg_base)  != OKAY) dev_failure(status);
       // still in block mode !
     }
@@ -384,7 +384,9 @@ void configure_timer(unsigned int tmr_value) {
 int configure_fg_macro(int channel) {
   int i = 0;
   int slot, dev, fg_base, dac_base;
+  unsigned short cntrl_reg_wr;
   struct param_set pset;
+  short blk_data[6];
   int status;
   
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
@@ -426,22 +428,27 @@ int configure_fg_macro(int channel) {
 
     //fetch first parameter set from buffer
     if (cbRead(&fg_buffer[0], &fg_regs[0], channel, &pset)) {
+      cntrl_reg_wr = ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10) | channel << 4;
+      blk_data[0] = cntrl_reg_wr;
+      blk_data[1] = pset.coeff_a;
+      blk_data[2] = pset.coeff_b;
+      blk_data[3] = (pset.control & 0x3ffc0) >> 6;     // shift a 17..12 shift b 11..6
+      blk_data[4] = pset.coeff_c & 0xffff;
+      blk_data[5] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+
       if ((slot & 0xf0) == 0) {
         //set virtual fg number Bit 9..4
-        scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL] = (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4;
-        scub_base[CALC_OFFS(slot) + fg_base + FG_A] = pset.coeff_a;
-        scub_base[CALC_OFFS(slot) + fg_base + FG_B] = pset.coeff_b;
-        scub_base[CALC_OFFS(slot) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
-        scub_base[CALC_OFFS(slot) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
-        scub_base[CALC_OFFS(slot) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
+        scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL]  = blk_data[0];
+        scub_base[CALC_OFFS(slot) + fg_base + FG_A]      = blk_data[1];
+        scub_base[CALC_OFFS(slot) + fg_base + FG_B]      = blk_data[2];
+        scub_base[CALC_OFFS(slot) + fg_base + FG_SHIFT]  = blk_data[3];
+        scub_base[CALC_OFFS(slot) + fg_base + FG_STARTL] = blk_data[4];
+        scub_base[CALC_OFFS(slot) + fg_base + FG_STARTH] = blk_data[5];
       } else if (slot & DEV_MIL_EXT) {
-        //set virtual fg number Bit 9..4
-        if (status = write_mil(scu_mil_base, (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4, FC_CNTRL_WR | dev) != OKAY) dev_failure(status);
-        if (status = write_mil(scu_mil_base, pset.coeff_a, FC_COEFF_A_WR | dev)                                                          != OKAY) dev_failure(status);
-        if (status = write_mil(scu_mil_base, pset.coeff_b, FC_COEFF_B_WR | dev)                                                          != OKAY) dev_failure(status);
-        if (status = write_mil(scu_mil_base, (pset.control & 0x3ffc0) >> 6, FC_SHIFT_WR | dev)                                           != OKAY) dev_failure(status); //shift a 17..12 shift b 11..6
-        if (status = write_mil(scu_mil_base, pset.coeff_c & 0xffff, FC_START_L_WR | dev)                                                 != OKAY) dev_failure(status);
-        if (status = write_mil(scu_mil_base, (pset.coeff_c & 0xffff0000) >> 16, FC_START_H_WR | dev)                                     != OKAY) dev_failure(status); // data written with high word
+        // transmit in one block transfer over the dev bus
+        if(status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | dev)  != OKAY) dev_failure(status);
+        // still in block mode !
+        if(status = write_mil(scu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | dev)  != OKAY) dev_failure(status);
       }
       param_sent[i]++;
     }
