@@ -670,7 +670,8 @@ begin
   --  lib_trig_oe_o <=  s_libera_bpl_buff_en;
   -- before MMC is fixed this is the way to enble Libera trigger buffers
   -- USE THIS ONLY when FTRN is in Libera SLOT 8!!!
-  s_lib_trig_oe_sw_mmc <= '1' when (s_test_sel = "0111" and s_gpio_out(8)='1') else s_libera_bpl_buff_en; 
+  s_lib_trig_oe_sw_mmc <= '1' when (s_gpio_out(3 downto 0) = "0111" and s_gpio_out(8)='1') 
+                          else s_libera_bpl_buff_en; 
   lib_trig_oe_o        <=  s_lib_trig_oe_sw_mmc;
 
   -----------------------------------------------------------------------
