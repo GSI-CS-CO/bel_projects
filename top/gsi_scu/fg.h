@@ -4,10 +4,10 @@
 #include <stdint.h>
 #include <scu_bus.h>
 
+// 12 SIOs with dev busses and 1 mil extension
 #define   MAX_FG_MACROS     256
 #define   MAX_FG_CHANNELS   12
 #define   MAX_FG_PER_SLAVE  2
-#define   MAX_WB_FG_MACROS  1
 #define   BUFFER_SIZE       121
 #define   THRESHOLD         BUFFER_SIZE * 40 / 100
 #define   OUTPUT_BITS       24
@@ -22,7 +22,9 @@
 #define DRQ_BIT       (1 << 10)
 #define DEV_DRQ       (1 << 0)
 #define DEV_STATE_IRQ (1 << 1)
-#define DEV_BUS_SLOT  13
+#define MIL_EXT_SLOT  13
+#define DEV_SIO       0x20
+#define DEV_MIL_EXT   0x10
 #define FC_CNTRL_WR   0x14 << 8
 #define FC_COEFF_A_WR 0x15 << 8
 #define FC_COEFF_B_WR 0x16 << 8

@@ -103,7 +103,7 @@ void enable_scub_msis(int channel) {
   
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
 
-    if (slot < DEV_BUS_SLOT) {
+    if ((slot & 0xf0) == 0) {
       //SCU Bus Master
       scub_base[GLOBAL_IRQ_ENA] = 0x20;             //enable slave irqs in scu bus master
       scub_irq_base[8]  = slot-1;                   //channel select
@@ -111,7 +111,7 @@ void enable_scub_msis(int channel) {
       scub_irq_base[10] = (uint32_t)pMyMsi + 0x0;   //msi queue destination address of this cpu
       scub_irq_base[2]  = (1 << (slot - 1));        //enable slave
       //mprintf("IRQs for slave %d enabled.\n", slot);
-    } else if (slot == DEV_BUS_SLOT) {
+    } else if (slot & DEV_MIL_EXT) {
       mil_irq_base[8]   = MIL_DRQ;
       mil_irq_base[9]   = MIL_DRQ;
       mil_irq_base[10]  = (uint32_t)pMyMsi + 0x20;
@@ -136,12 +136,12 @@ void disable_slave_irq(int channel) {
     slot = fg_macros[fg_regs[channel].macro_number] >> 24;          //slot number
     dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff;  //dev number
     
-    if (slot < DEV_BUS_SLOT) {
+    if ((slot & 0xf0) == 0) {
       if (dev == 0)
         scub_base[CALC_OFFS(slot) + SLAVE_INT_ENA] &= ~(0x8000);       //disable fg1 irq
       else if (dev == 1)
         scub_base[CALC_OFFS(slot) + SLAVE_INT_ENA] &= ~(0x4000);       //disable fg2 irq
-    } else if (slot == DEV_BUS_SLOT) {
+    } else if (slot & DEV_MIL_EXT) {
       //write_mil(scu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
       if (status = write_mil(scu_mil_base, 0x0, FC_IRQ_MSK | dev) != OKAY) dev_failure(status);  //mask drq
     }
@@ -171,14 +171,14 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
     cntrl_reg_wr = cntrl_reg & ~(0xfc00); // clear freq and step select
     cntrl_reg_wr = cntrl_reg & ~(0x7);    // clear fg_running and fg_enabled
     cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
-    if (slot < DEV_BUS_SLOT) {
+    if ((slot & 0xf0) == 0) {
       scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL]  = cntrl_reg_wr;
       scub_base[CALC_OFFS(slot) + fg_base + FG_A]      = pset.coeff_a;
       scub_base[CALC_OFFS(slot) + fg_base + FG_B]      = pset.coeff_b;
       scub_base[CALC_OFFS(slot) + fg_base + FG_SHIFT]  = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6
       scub_base[CALC_OFFS(slot) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
       scub_base[CALC_OFFS(slot) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
-    } else if (slot == DEV_BUS_SLOT) {
+    } else if (slot & DEV_MIL_EXT) {
       // transmit in one block transfer over the dev bus
       //mprintf("cntrl_reg_wr: 0x%x\n", cntrl_reg_wr);
       blk_data[0] = cntrl_reg_wr;
@@ -199,23 +199,23 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
     int status;
     int channel;
 
-    if (slot < DEV_BUS_SLOT){
+    if ((slot & 0xf0) == 0){
       cntrl_reg = scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL];
       channel = (cntrl_reg & 0x3f0) >> 4;     // virtual fg number Bits 9..4
-    } else if (slot == DEV_BUS_SLOT) {
+    } else if (slot & DEV_MIL_EXT) {
       channel = (irq_act_reg & 0x3f0) >> 4;   // virtual fg number Bits 9..4
     } 
     
-    if (slot < DEV_BUS_SLOT) {
+    if ((slot & 0xf0) == 0) {
       /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
       fg_regs[channel].ramp_count = scub_base[CALC_OFFS(slot) + fg_base + FG_RAMP_CNT_LO];
       fg_regs[channel].ramp_count |= scub_base[CALC_OFFS(slot) + fg_base + FG_RAMP_CNT_HI] << 16;
-    } else if (slot == DEV_BUS_SLOT) {
+    } else if (slot & DEV_MIL_EXT) {
       /* count in software only */
       fg_regs[channel].ramp_count++;
     }
       
-    if (slot < DEV_BUS_SLOT) {
+    if ((slot & 0xf0) == 0) {
       if (!(cntrl_reg  & FG_RUNNING)) {       // fg stopped
         if (cbisEmpty(&fg_regs[0], channel))
           SEND_SIG(SIG_STOP_EMPTY);           // normal stop
@@ -236,7 +236,7 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
       }
     }
 
-    if (slot < DEV_BUS_SLOT) {
+    if ((slot & 0xf0) == 0) {
       if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
         fg_regs[channel].state = 1; 
         SEND_SIG(SIG_START); // fg has received the tag or brc message
@@ -276,7 +276,7 @@ void dev_bus_irq_handle() {
       if (fg_regs[i].state > 0) {
         slot = fg_macros[fg_regs[i].macro_number] >> 24;
         dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-        if(slot == DEV_BUS_SLOT) {
+        if(slot & DEV_MIL_EXT) {
           if (status = read_mil(scu_mil_base, &irq_data, FC_IRQ_ACT_RD | dev) != OKAY) dev_failure(status);
           if (irq_data & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
             handle(slot, dev, irq_data);
@@ -393,18 +393,18 @@ int configure_fg_macro(int channel) {
     dev =  (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
 
     /* enable irqs */
-    if (slot < DEV_BUS_SLOT) {                                      //scu bus slave
+    if ((slot & 0xf0) == 0) {                                      //scu bus slave
       scub_base[SRQ_ENA] |= (1 << (slot-1));                        //enable irqs for the slave
     
       scub_base[CALC_OFFS(slot) + SLAVE_INT_ACT] = 0xc000;             //clear all irqs
       scub_base[CALC_OFFS(slot) + SLAVE_INT_ENA] |= 0xc000;            //enable fg1 and fg2 irq
     
-    } else if (slot == DEV_BUS_SLOT) {
+    } else if (slot & DEV_MIL_EXT) {
       if (status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev) != OKAY) dev_failure(status); //enable Data-Request
     }
 
     /* which macro are we? */
-    if (slot < DEV_BUS_SLOT) {                                      //scu bus slave
+    if ((slot & 0xf0) == 0) {                                      //scu bus slave
       if (dev == 0) {
         fg_base = FG1_BASE;
         dac_base = DAC1_BASE;
@@ -416,17 +416,17 @@ int configure_fg_macro(int channel) {
     }     
     
     /* fg mode and reset */    
-    if (slot < DEV_BUS_SLOT) {                                      //scu bus slave
+    if ((slot & 0xf0) == 0) {                                      //scu bus slave
       scub_base[CALC_OFFS(slot) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
       scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL] = 0x1;           // reset fg
-    } else if (slot == DEV_BUS_SLOT) {
+    } else if (slot & DEV_MIL_EXT) {
       if (status = write_mil(scu_mil_base, 0x1, 0x60 << 8 | dev) != OKAY) dev_failure(status);   // set FG mode
       if (status = write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev) != OKAY) dev_failure(status); // reset fg
     }
 
     //fetch first parameter set from buffer
     if (cbRead(&fg_buffer[0], &fg_regs[0], channel, &pset)) {
-      if (slot < DEV_BUS_SLOT) {
+      if ((slot & 0xf0) == 0) {
         //set virtual fg number Bit 9..4
         scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL] = (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4;
         scub_base[CALC_OFFS(slot) + fg_base + FG_A] = pset.coeff_a;
@@ -434,7 +434,7 @@ int configure_fg_macro(int channel) {
         scub_base[CALC_OFFS(slot) + fg_base + FG_SHIFT] = (pset.control & 0x3ffc0) >> 6; //shift a 17..12 shift b 11..6 
         scub_base[CALC_OFFS(slot) + fg_base + FG_STARTL] = pset.coeff_c & 0xffff;
         scub_base[CALC_OFFS(slot) + fg_base + FG_STARTH] = (pset.coeff_c & 0xffff0000) >> 16; // data written with high word
-      } else if (slot == DEV_BUS_SLOT) {
+      } else if (slot & DEV_MIL_EXT) {
         //set virtual fg number Bit 9..4
         if (status = write_mil(scu_mil_base, (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4, FC_CNTRL_WR | dev) != OKAY) dev_failure(status);
         if (status = write_mil(scu_mil_base, pset.coeff_a, FC_COEFF_A_WR | dev)                                                          != OKAY) dev_failure(status);
@@ -447,11 +447,11 @@ int configure_fg_macro(int channel) {
     }
 
     /* configure and enable macro */
-    if (slot < DEV_BUS_SLOT) {
+    if ((slot & 0xf0) == 0) {
       scub_base[CALC_OFFS(slot) + fg_base + FG_TAG_LOW] = fg_regs[channel].tag & 0xffff;
       scub_base[CALC_OFFS(slot) + fg_base + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
       scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL] |= FG_ENABLED;
-    } else if (slot == DEV_BUS_SLOT) {
+    } else if (slot & DEV_MIL_EXT) {
       short data;
       if (status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev) != OKAY) dev_failure(status);
       if (status = write_mil(scu_mil_base, 0xffff & data | FG_ENABLED, FC_CNTRL_WR | dev) != OKAY) dev_failure(status); 
@@ -525,7 +525,7 @@ void disable_channel(unsigned int channel) {
   slot = fg_macros[fg_regs[channel].macro_number] >> 24;         //dereference slot number
   dev = (fg_macros[fg_regs[channel].macro_number] >> 16) & 0xff; //dereference dev number
   //mprintf("disarmed slot %d dev %d in channel[%d] state %d\n", slot, dev, channel, fg_regs[channel].state); //ONLY FOR TESTING
-  if (slot < DEV_BUS_SLOT) {
+  if ((slot & 0xf0) == 0) {
     /* which macro are we? */
     if (dev == 0) {
       fg_base = FG1_BASE;
@@ -539,7 +539,7 @@ void disable_channel(unsigned int channel) {
     // disarm hardware
     scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL] &= ~(0x2);
     scub_base[CALC_OFFS(slot) + dac_base + DAC_CNTRL] &= ~(0x10); // unset FG mode
-  } else if (slot == DEV_BUS_SLOT) {
+  } else if (slot & DEV_MIL_EXT) {
     // disarm hardware
     if(status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev) != OKAY) dev_failure(status);
     if(status = write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev) != OKAY) dev_failure(status);

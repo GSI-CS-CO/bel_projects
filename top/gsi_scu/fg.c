@@ -47,7 +47,7 @@ int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *scub
             mprintf("found ifa with fg at 0x%x, data: 0x%x\n", adr, 0xffff & data);
             bus->slaves[j].fg_ver    = 0xffff & data;
             bus->slaves[j].unique_id = adr;
-            bus->slaves[j].slot      = sio_iterator;
+            bus->slaves[j].slot      = DEV_SIO | slot; // mark as dev bus device on sio
             bus->slaves[j].cid_sys   = SYS_CSCO;
             bus->slaves[j].cid_group = GRP_IFA8;
             if (scub_read_mil(scub_adr, slot, &data, 0xcc << 8 | adr) == OKAY) {
@@ -72,12 +72,12 @@ int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *scub
           mprintf("found ifa with fg at 0x%x, data: 0x%x\n", adr, 0xffff & data);
           bus->slaves[j].fg_ver    = 0xffff & data;
           bus->slaves[j].unique_id = adr;
-          bus->slaves[j].slot      = 13; // mil extension
+          bus->slaves[j].slot      = DEV_MIL_EXT; // mark as dev bus device on mil extension
           bus->slaves[j].cid_sys   = SYS_CSCO;
           bus->slaves[j].cid_group = GRP_IFA8;
           if (read_mil(mil_addr, &data, 0xcc << 8 | adr) == OKAY) {
             bus->slaves[j].version = 0xffff & data;
-            write_mil(mil_addr, 0x100, 0x12 << 8 | adr); //clear PUR
+            write_mil(mil_addr, 0x100, 0x12 << 8 | adr); // clear PUR
           }
           j++;    
       }
@@ -175,14 +175,18 @@ void init_buffers(struct channel_regs *cr, int channel, uint32_t *fg_macros,  vo
       slot = fg_macros[macro] >> 24;
       dev = (fg_macros[macro] >> 16) & 0xff;
       //mprintf("reset fg %d in slot %d\n", device, slot);
-      if (slot < DEV_BUS_SLOT) {
+      /* scub slave */
+      if ((slot & 0xf0) == 0) {
         if (dev == 0) {
           scub_base[CALC_OFFS(slot) + FG1_BASE + FG_CNTRL] = 0x1; // reset fg
         } else if (dev == 1) {
           scub_base[CALC_OFFS(slot) + FG2_BASE + FG_CNTRL] = 0x1; // reset fg
         }
-      } else if (slot == DEV_BUS_SLOT) {
-        write_mil(devb_base, 0x1, 0x14 << 8 | dev); // reset fg 
+      /* mil extension */
+      } else if (slot & DEV_MIL_EXT) {
+        write_mil(devb_base, 0x1, FC_CNTRL_WR | dev); // reset fg 
+      } else if (slot & DEV_SIO) {
+        scub_write_mil(scub_base, slot & 0xf, 0x1, FC_CNTRL_WR | dev); // reset fg
       }
     }
   }
