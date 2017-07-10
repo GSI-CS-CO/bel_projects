@@ -396,14 +396,17 @@ int configure_fg_macro(int channel) {
 
     /* enable irqs */
     if ((slot & 0xf0) == 0) {                                      //scu bus slave
-      scub_base[SRQ_ENA] |= (1 << (slot-1));                        //enable irqs for the slave
-    
-      scub_base[CALC_OFFS(slot) + SLAVE_INT_ACT] = 0xc000;             //clear all irqs
-      scub_base[CALC_OFFS(slot) + SLAVE_INT_ENA] |= 0xc000;            //enable fg1 and fg2 irq
-    
+      scub_base[SRQ_ENA] |= (1 << (slot-1));                // enable irqs for the slave
+      scub_base[CALC_OFFS(slot) + SLAVE_INT_ACT] = 0xc000;  // clear all irqs
+      scub_base[CALC_OFFS(slot) + SLAVE_INT_ENA] |= 0xc000; // enable fg1 and fg2 irq
     } else if (slot & DEV_MIL_EXT) {
       if (status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev) != OKAY) dev_failure(status); //enable Data-Request
+    } else if (slot & DEV_SIO) {
+      scub_base[SRQ_ENA] |= (1 << ((slot & 0xf)-1));            // enable irqs for the slave
+      scub_base[CALC_OFFS(slot & 0xf) + SLAVE_INT_ACT] = 0x10;  // clear all irqs
+      scub_base[CALC_OFFS(slot & 0xf) + SLAVE_INT_ENA] |= 0x10; // enable fg1 and fg2 irq
     }
+
 
     /* which macro are we? */
     if ((slot & 0xf0) == 0) {                                      //scu bus slave
