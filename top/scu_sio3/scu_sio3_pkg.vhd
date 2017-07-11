@@ -2,6 +2,7 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use work.wishbone_pkg.all;
+use work.genram_pkg.all;
 
 library work;
 
@@ -217,6 +218,35 @@ component pu_reset
 		PU_Res:		out			std_logic
 	);
 end component;
+
+
+
+component generic_sync_fifo
+    generic (
+      g_data_width             : natural;
+      g_size                   : natural;
+      g_show_ahead             : boolean := false;
+      g_with_empty             : boolean := true;
+      g_with_full              : boolean := true;
+      g_with_almost_empty      : boolean := false;
+      g_with_almost_full       : boolean := false;
+      g_with_count             : boolean := false;
+      g_almost_empty_threshold : integer := 0;
+      g_almost_full_threshold  : integer := 0);
+    port (
+      rst_n_i        : in  std_logic := '1';
+      clk_i          : in  std_logic;
+      d_i            : in  std_logic_vector(g_data_width-1 downto 0);
+      we_i           : in  std_logic;
+      q_o            : out std_logic_vector(g_data_width-1 downto 0);
+      rd_i           : in  std_logic;
+      empty_o        : out std_logic;
+      full_o         : out std_logic;
+      almost_empty_o : out std_logic;
+      almost_full_o  : out std_logic;
+      count_o        : out std_logic_vector(f_log2_size(g_size)-1 downto 0));
+  end component;
+
 
 
 end package scu_sio3_pkg;

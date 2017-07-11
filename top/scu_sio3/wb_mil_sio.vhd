@@ -6,9 +6,8 @@ use work.wishbone_pkg.all;
 use work.wb_mil_scu_pkg.all;
 use work.mil_pkg.all;
 use work.aux_functions_pkg.all;
+use work.scu_sio3_pkg.all;
 
-
-ENTITY wb_mil_sio IS
 --+---------------------------------------------------------------------------------------------------------------------------------+
 --| "wb_mil_scu" stellt in Verbindung mit der SCU-Aufsteck-Karte "FG900170_SCU_MIL1" alle Funktionen bereit, die benoetigt werden,  |
 --| um SE-Funktionalitaet mit einer SCU realistieren zu koennen.                                                                    |
@@ -58,12 +57,24 @@ ENTITY wb_mil_sio IS
 --|   07    | K.Kaiser    | 05.05.2015  |    Bis zu 4 LEMO Buchsen (SIO) nun über Register auslesbar und kontrollierbar             |
 --|         |             |             |    Die vorherige Funktion (Steuerung beliebiger LEMO Ausgänge per Event) bleibt erhalten  |
 --|         |             |             |    wenn das entsprechende "event_cntrl" Statusbit gesetzt ist.                            |
---|         |             |             |    Ist das entsprechende "event_cntrl" Statusbit gleich '0'(=default), dann sind LEMOs    |                          |
+--|         |             |             |    Ist das entsprechende "event_cntrl" Statusbit gleich '0'(=default), dann sind LEMOs    |
 --|         |             |             |    a1) nach Reset als Inputs geschaltet.Dise sind (transparent)per Input Reg abfragbar    |
 --|         |             |             |    a2) wird Lemo Out Enable Reg.Bit auf 1 gesetzt,dann werden das entsprechen Reg-Bit     |
 --|         |             |             |        auf den entsprechenden LEMO Ausgang übertragen.                                    |
 --|         |             |             |    Jeder Lemo Buchse sind eigene Bits zugeordnet, sie sind somit einzeln ansteuerbar.     |      
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
+--|   08    | K.Kaiser    | 10.07.2017  |    Fifo (3x16bit) in Senderichtung puffert nun Sendedaten, damit nicht auf                |
+--|         |             |             |    mil_trm_rdy gewartet werden muss. Soll performancesteigernd für LM32 wirken            |
+--|         |             |             |    p_regs_acc wird hierfür geändert.                                                      |
+--|         |             |             |    Ausserdem wurde Interrupts aus Standardisierungsgründen umsortiert:                    | 
+--|         |             |             |    every_ms_intr_o Pos 1-->Pos7                                                           |
+--|         |             |             |    clk_switch_intr Pos14-->Pos1                                                           |
+--| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
+
+
+
+ENTITY wb_mil_sio IS
+
 generic (
     Clk_in_Hz:  INTEGER := 125_000_000;   -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
                                           -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
@@ -250,8 +261,22 @@ signal    lemo_event_en:    std_logic_vector (4 downto 1);
 signal    io_1:             std_logic;
 signal    io_2:             std_logic;
 
+signal    tx_fifo_write_en: std_logic;
+signal    tx_fifo_wr_pulse: std_logic;
+signal    tx_fifo_data_in:  std_logic_vector (16 downto 0);
+
+signal    tx_fifo_read_en:  std_logic;
+signal    tx_fifo_data_out: std_logic_vector (16 downto 0);
+
+signal    tx_fifo_empty:    std_logic;
+signal    tx_fifo_full:     std_logic;
+
+signal    slave_i_we_dly:   std_logic;
+signal    slave_i_we_dly2:  std_logic;
+signal    mil_trm_start_dly:std_logic;
 
 
+-----------------------------------------------------------------------------------------------------------------------------------------
 begin
 
 
@@ -496,9 +521,6 @@ p_deb_lemo_x: debounce
     );
 end generate;
 
-	 
-
-
 
 Mil_1:  mil_hw_or_soft_ip
   generic map (
@@ -544,7 +566,7 @@ Mil_1:  mil_hw_or_soft_ip
     Mil_In_Pos    =>  Mil_BOI,
     Mil_In_Neg    =>  Mil_BZI,
     Mil_Cmd       =>  mil_trm_cmd,
-    Wr_Mil        =>  mil_trm_start,
+    Wr_Mil        =>  mil_trm_start_dly,
     Mil_TRM_D     =>  mil_trm_data,
     EPLD_Manchester_Enc => manchester_fpga,
     Reset_6408    =>  Reset_6408,
@@ -621,14 +643,72 @@ led_fifo_ne: led_n
     nLed_opdrn  => open             -- 
     );
 
+------------------------------------------------------------------------------------------------------------------------------
+tx_fifo : generic_sync_fifo  --kk improving tx performance  start of code section
+  generic map (
+    g_data_width   => 17,
+    g_size   => 1024
+  )
+  port map (
+    clk_i          => clk_i,
+    rst_n_i        => nrst_i,
+    we_i           => tx_fifo_write_en,
+    d_i            => tx_fifo_data_in,
+    rd_i           => tx_fifo_read_en,
+    q_o            => tx_fifo_data_out,
+    empty_o        => tx_fifo_empty,
+    full_o         => tx_fifo_full
+  );
+
+
+mil_trm_data     <= tx_fifo_data_out(15 downto 0);  
+mil_trm_cmd      <= tx_fifo_data_out(16);                    -- is only evaluated on mil_trm_start and must be stable with mil_trm_start_dly
+tx_fifo_read_en  <= mil_trm_start and not mil_trm_start_dly; -- need only one pulse at each fifo pop  (wr_mil is triggered with mil_trm_start_dly)
+
+
+tx_fifo_ctrl:process (clk_i, nrst_i)
+begin
+  if nrst_i = '0' then
+    slave_i_we_dly    <= '0';
+
+    mil_trm_start     <= '0';
+    mil_trm_start_dly <= '0';
+  
+    
+  elsif rising_edge (clk_i) then 
+  
+   --from old code to be sure that harris trm_start is quiet on not ready condition
+    if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';          -- harris active,         give harris trm_start only when trm_rdy
+    elsif                    manchester_fpga = '1' then mil_trm_start <= '0'; end if;  -- internal coder active, give harris trm_start never
+  
+    slave_i_we_dly    <= slave_i.we;
+    mil_trm_start_dly <= mil_trm_start;
+
+    if tx_fifo_empty = '0' and  mil_trm_rdy = '1' then                
+      mil_trm_start   <= '1'; --start tx as long as tx_fifo not empty and mil transmitter is ready
+    else 
+      mil_trm_start   <= '0';   
+    end if;
+    
+  end if;
+  
+end process tx_fifo_ctrl;
+
+
+-- Harris HD6408 running with ME_12MHz, mil_trm_rdy may arrive 83ns later. So it is delayed by 13 x 8 ns=104ns by mil_trm_rdy_shreg
+
+
+--kk improving tx performance  end of code section
+------------------------------------------------------------------------------------------------------------------------------    
+    
     
 --Register section
 
     
-p_regs_acc: process (clk_i, nrst_i)
+p_regs_acc: process (clk_i, nrst_i,slave_i.adr)
 variable LA_a_var : unsigned (17 downto 2);
   begin
-    LA_a_var := unsigned(slave_i.adr(17 downto 2));
+    LA_a_var := unsigned(slave_i.adr(17 downto 2));  -- no good workaround ... give a 10492 Sensitivity List error
     if nrst_i = '0' then
       ex_stall        <= '1';
       ex_ack          <= '0';
@@ -643,10 +723,10 @@ variable LA_a_var : unsigned (17 downto 2);
       ev_reset_on     <= '0';
       clr_mil_rcv_err <= '1';
       
-      mil_trm_start   <= '0';
+      --mil_trm_start   <= '0';
       mil_rd_start    <= '0';
-      mil_trm_cmd     <= '0';
-      mil_trm_data <= (others => '0');
+      --mil_trm_cmd     <= '0';
+      --mil_trm_data <= (others => '0');
 
       rd_ev_fifo      <= '0';
       clr_ev_fifo     <= '1';
@@ -677,10 +757,11 @@ variable LA_a_var : unsigned (17 downto 2);
       sw_clr_ev_timer   <= '0';
       ld_dly_timer      <= '0';
       clr_wait_timer    <= '0';
+      tx_fifo_write_en  <= '0';
       slave_o.dat       <= (others => '0');
 
-      if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';
-      elsif manchester_fpga = '1' then  mil_trm_start <= '0'; end if;
+      --if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';
+      --elsif manchester_fpga = '1' then  mil_trm_start <= '0'; end if;
       
       if mil_rcv_rdy = '0' and manchester_fpga = '0' then mil_rd_start <= '0';
       elsif manchester_fpga = '1' then  mil_rd_start <= '0'; end if;
@@ -690,19 +771,25 @@ variable LA_a_var : unsigned (17 downto 2);
         if (LA_a_var = mil_wr_cmd_a_map) or  (LA_a_var = mil_rd_wr_data_a_map) then
         -- check existing word register
             if slave_i.sel = "1111" then
-              if slave_i.we = '1' then
+              if slave_i.we = '1'  then
                 -- write low word
-                if mil_trm_rdy = '1' and mil_trm_start = '0' then
-                  -- write is allowed, because mil tranmiter is free
-                  mil_trm_start <= '1';
-                  mil_trm_cmd   <= slave_i.adr(2);
-                  mil_trm_data  <= slave_i.dat(15 downto 0);  -- update(mil_trm_data)
-                  ex_stall <= '0';
-                  ex_ack <= '1';
-                else
-                  -- write to mil not allowed, because mil transmit is active
-                  ex_stall <= '0';
-                  ex_err <= '1';
+                  if tx_fifo_full ='0' then               
+--                if mil_trm_rdy = '1' and mil_trm_start = '0' then
+--                  -- write is allowed, because mil transmiter is free
+--                  mil_trm_start <= '1';
+--                  mil_trm_cmd   <= slave_i.adr(2);
+--                  mil_trm_data  <= slave_i.dat(15 downto 0);  -- update(mil_trm_data)
+
+                    tx_fifo_data_in(16)          <= slave_i.adr(2);
+                    tx_fifo_data_in(15 downto 0) <= slave_i.dat(15 downto 0);
+                    tx_fifo_write_en             <= slave_i.stb and slave_i.we and not slave_i_we_dly;
+                  
+                    ex_stall <= '0';
+                    ex_ack   <= '1';
+                  else
+                  -- write to mil not allowed, because tx_fifo is full
+                    ex_stall <= '0';
+                    ex_err   <= '1';
                 end if;
               else
                 -- read low word
@@ -742,7 +829,8 @@ variable LA_a_var : unsigned (17 downto 2);
                 -- read status register
                 slave_o.dat(15 downto 0) <= ( manchester_fpga & ev_filt_12_8b & ev_filt_on & debounce_on              -- mil-status[15..12]
                                             & puls2_frame & puls1_frame & ev_reset_on & mil_rcv_error                 -- mil-status[11..8]
-                                            & mil_trm_rdy & Mil_Cmd_Rcv & mil_rcv_rdy & ev_fifo_full                  -- mil-status[7..4]
+ --                                         & mil_trm_rdy & Mil_Cmd_Rcv & mil_rcv_rdy & ev_fifo_full                  -- mil-status[7..4]
+                                            & tx_fifo_full & Mil_Cmd_Rcv & mil_rcv_rdy & ev_fifo_full                    -- mil-status[7..4]                                            
                                             & ev_fifo_ne & db_data_req_intr & db_data_rdy_intr & db_interlock_intr ); -- mil-status[3..0]
                 ex_stall <= '0';
                 ex_ack <= '1';
