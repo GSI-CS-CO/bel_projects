@@ -2,7 +2,7 @@
 #include "aux.h"
 
 #define MIL_SIO3_OFFSET 0x400
-#define CALC_OFFS(SLOT) SLOT * (1 << 16) + MIL_SIO3_OFFSET
+#define CALC_OFFS(SLOT) (((SLOT) * (1 << 16)) + MIL_SIO3_OFFSET)
 
 /***********************************************************
  ***********************************************************
@@ -247,9 +247,6 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
     return RCV_TIMEOUT;
   }
 }
-
-
-
 
 void run_mil_test(volatile unsigned int *base, unsigned char ifc_addr) {
   int   test_loop_64k = 0;

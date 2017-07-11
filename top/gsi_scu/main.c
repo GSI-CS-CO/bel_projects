@@ -38,7 +38,7 @@
 
 
 #define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
-#define CALC_OFFS(SLOT) SLOT * (1 << 16)
+#define CALC_OFFS(SLOT) ((SLOT) * (1 << 16))
 
 extern struct w1_bus wrpc_w1_bus;
 extern inline int cbisEmpty(volatile struct channel_regs*, int);
