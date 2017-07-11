@@ -192,6 +192,10 @@ inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
       // transmit in one block transfer over the dev bus
       if(status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | fg_base)  != OKAY) dev_failure(status);
       // still in block mode !
+    } else if (slot & DEV_SIO) {
+      // transmit in one block transfer over the dev bus
+      if(status = scub_write_mil_blk(scub_base, slot & 0xf, &blk_data[0], FC_BLK_WR | fg_base)  != OKAY) dev_failure(status);
+      // still in block mode !
     }
     param_sent[fg_num]++;
   }
@@ -205,7 +209,7 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
     if ((slot & 0xf0) == 0){
       cntrl_reg = scub_base[CALC_OFFS(slot) + fg_base + FG_CNTRL];
       channel = (cntrl_reg & 0x3f0) >> 4;     // virtual fg number Bits 9..4
-    } else if (slot & DEV_MIL_EXT) {
+    } else if ((slot & DEV_MIL_EXT) || (slot & DEV_SIO)) {
       channel = (irq_act_reg & 0x3f0) >> 4;   // virtual fg number Bits 9..4
     } 
     
@@ -213,7 +217,7 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
       /* last cnt from from fg macro, read from LO address copies hardware counter to shadow reg */
       fg_regs[channel].ramp_count = scub_base[CALC_OFFS(slot) + fg_base + FG_RAMP_CNT_LO];
       fg_regs[channel].ramp_count |= scub_base[CALC_OFFS(slot) + fg_base + FG_RAMP_CNT_HI] << 16;
-    } else if (slot & DEV_MIL_EXT) {
+    } else if ((slot & DEV_MIL_EXT) || (slot & DEV_SIO)) {
       /* count in software only */
       fg_regs[channel].ramp_count++;
     }
@@ -303,14 +307,13 @@ void dev_sio_irq(int sio_slave_nr) {
   int status;
   unsigned short mil_status;
   short dummy_aquisition;
-  mprintf("irq from sio in slot %d\n", sio_slave_nr);
   if(status = scub_status_mil(scub_base, sio_slave_nr, &mil_status) != OKAY) dev_failure(status);
     for (i = 0; i < MAX_FG_CHANNELS && (mil_status & MIL_DATA_REQ_INTR); i++) {
       if (fg_regs[i].state > 0) {
         slot = fg_macros[fg_regs[i].macro_number] >> 24;
         dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
         /* test only ifas connected to this sio */
-        if(((slot & 0xf) == sio_slave_nr ) && (slot & DEV_MIL_EXT)) {
+        if(((slot & 0xf) == sio_slave_nr ) && (slot & DEV_SIO)) {
           if (status = scub_read_mil(scub_base, sio_slave_nr, &irq_data, FC_IRQ_ACT_RD | dev) != OKAY) dev_failure(status);
           if (irq_data & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
             handle(slot, dev, irq_data);
