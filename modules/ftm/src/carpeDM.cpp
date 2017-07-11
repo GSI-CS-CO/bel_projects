@@ -176,7 +176,8 @@ bool CarpeDM::connect(const std::string& en) {
 
     //add to dictionary
     try {
-      BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.add(g[v].name);}
+      //combine node name and graph name to obtain unique replicable hash
+      BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.add(boost::get_property(g, boost::graph_name) + "." + g[v].name);}
     }  catch (...) {
       //TODO report hash collision and show which names are responsible
       throw;
@@ -194,7 +195,9 @@ bool CarpeDM::connect(const std::string& en) {
   boost::dynamic_properties CarpeDM::createParser(Graph& g) {
 
     boost::dynamic_properties dp(boost::ignore_other_properties);
-    
+
+    boost::ref_property_map<Graph *, std::string> gname(boost::get_property(g, boost::graph_name));
+    dp.property("name",     gname);
     dp.property("type",     boost::get(&myEdge::type,       g));
     dp.property("node_id",  boost::get(&myVertex::name,     g));
     dp.property("type",     boost::get(&myVertex::type,     g));
@@ -233,10 +236,14 @@ bool CarpeDM::connect(const std::string& en) {
     BOOST_FOREACH( edge_t e, edges(g) ) { std::transform(g[e].type.begin(), g[e].type.end(), g[e].type.begin(), ::tolower); }
     BOOST_FOREACH( vertex_t v, vertices(g) ) { std::transform(g[v].type.begin(), g[v].type.end(), g[v].type.begin(), ::tolower); } 
     
-    //TODO create subgraphs as necessary
 
+
+    //GraphNameMap gnameMap = get(boost::graph_name, g);
+    //for (auto & it : gnameMap) sLog << " FOUND " << it << std::endl;
+    //TODO create subgraphs as necessary
+    if (boost::get_property(g, boost::graph_name) == "") {throw std::runtime_error(" Graph attribute 'name' must not be empty "); return g;} 
     //TODO automatically add necessary meta nodes
-    if(verbose) sLog << "Done." << std::endl;
+     if(verbose) sLog << "... retrieved Graph " << boost::get_property(g, boost::graph_name) << "... Done." << std::endl;
     return g;
 
   }
@@ -287,6 +294,9 @@ bool CarpeDM::connect(const std::string& en) {
 
   int CarpeDM::sendCmd(uint8_t cpuIdx, const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {
     MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
+    
+    //problem: graphname should belong to map dot file
+    Graph& g = m.getUpGraph();
     if(verbose) sLog << "Preparing Command Prio " << cmdPrio << " to Block " << targetName << " on CPU " << std::setfill(' ') << std::setw(2) << std::dec << cpuIdx << "... ";
     vBuf vUlD;
     vAdr vUlA;
@@ -294,7 +304,7 @@ bool CarpeDM::connect(const std::string& en) {
     uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
 
     try {
-      hash      = hm.lookup(targetName).get(); 
+      hash      = hm.lookup(boost::get_property(g, boost::graph_name) + targetName).get(); 
       vUlA      = m.getCmdWrAdrs(hash, cmdPrio);
       cmdWrInc  = m.getCmdInc(hash, cmdPrio);
       mc->serialise(b);
@@ -426,9 +436,10 @@ bool CarpeDM::connect(const std::string& en) {
   uint32_t CarpeDM::getNodeAdr(uint8_t cpuIdx, const std::string& name, bool direction, bool intExt) {
     MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx)); 
     AllocTable& at = (direction == UPLOAD ? m.getUpAllocTable() : m.getDownAllocTable() );
+    Graph& g = m.getUpGraph();
     uint32_t hash;
 
-    try {hash = hm.lookup(name).get();} catch (...) {throw;} //just pass it on
+    try {hash = hm.lookup(boost::get_property(g, boost::graph_name) + name).get();} catch (...) {throw;} //just pass it on
     auto* x = at.lookupHash(hash);
     if (x == NULL)  {throw std::runtime_error( "Could not find Node in download address table"); return LM32_NULL_PTR;}
     else            {return (intExt == INTERNAL ? m.adr2intAdr(x->adr) : m.adr2extAdr(x->adr));}
@@ -557,7 +568,7 @@ bool CarpeDM::connect(const std::string& en) {
 
   void CarpeDM::dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio) {
     MemUnit& m  = vM.at(cpuIdxMap.at(cpuIdx));
-    Graph& g    = m.getDownGraph();
+    Graph& g    = m.getUpGraph();
 
     uint64_t vTime, wTime;     
     uint32_t type, qty, prio, flPrio, flMode, act, dest, flRngHiLo, flRngIl;
@@ -568,7 +579,7 @@ bool CarpeDM::connect(const std::string& en) {
     boost::optional<std::string> name; 
     
     //FIXME the safeguards for the maps are total crap. Include some decent checks, not everything is worth an exception!!!
-    auto* block = m.getDownAllocTable().lookupHash(hm.lookup(blockName).get());
+    auto* block = m.getDownAllocTable().lookupHash(hm.lookup(boost::get_property(g, boost::graph_name) + blockName).get());
     sLog << std::endl;
 
     sLog << "     IlHiLo" << std::endl;
@@ -643,8 +654,9 @@ bool CarpeDM::connect(const std::string& en) {
 
 void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
   MemUnit& m  = vM.at(cpuIdxMap.at(cpuIdx));
+  Graph& g = m.getUpGraph();
   try {
-    auto* n = m.getDownAllocTable().lookupHash(hm.lookup(name).get());  
+    auto* n = m.getDownAllocTable().lookupHash(hm.lookup(boost::get_property(g, boost::graph_name) + name).get());  
     hexDump(m.getDownGraph()[n->v].name.c_str(), n->b, _MEM_BLOCK_SIZE); 
   } catch (...) {throw;}
 }

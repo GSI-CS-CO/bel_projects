@@ -101,14 +101,14 @@ int main(int argc, char* argv[]) {
 
   if(verbose) cdm.verboseOn();
 
-  Graph gUp;
+
   try {
     cdm.connect(std::string(netaddress));
   } catch (std::runtime_error const& err) {
     std::cerr << "ERROR - Could not connect to DM: " << err.what() << std::endl; return -20;
   }
 
-
+  //TODO we need a dictionary independent of dot files, otherwise, how do we update?
 
   try { cdm.addDotToDict(inputFilename); }
   catch (std::runtime_error const& err) {

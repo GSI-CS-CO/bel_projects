@@ -1,5 +1,7 @@
-digraph G {
-graph [label="UniPZ", root="Evt_BREQ_00",  rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
+digraph g {
+name="UNIPZv0123";
+
+graph [ root="Evt_BREQ_00",  rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
 node [type="TMsg", shape="rectangle",  style="filled", fillcolor="white", color="black"]
 edge [type="defdst", color="red"]
 

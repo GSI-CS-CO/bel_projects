@@ -315,11 +315,15 @@
 
     //save the graph we were shown into our own graph
     copy_graph(g, gUp);
+    // for some reason, copy_graph does not copy the name
+    boost::set_property(gUp, boost::graph_name, boost::get_property(g, boost::graph_name));
     
+    std::cout << "Graph name is: " << boost::get_property(gUp, boost::graph_name) << std::endl;
+
     //allocate and init all nodes
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       try {
-        allocate(hashMap.lookup(gUp[v].name).get(), v);
+        allocate(hashMap.lookup(boost::get_property(gUp, boost::graph_name) + "." + gUp[v].name).get(), v);
       } catch(...) {
         throw;
       }    
@@ -399,7 +403,7 @@
         auto* x = at.lookupHash(g[v].np->getHash());
         if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
           std::cout << std::setfill(' ') << std::setw(4) << std::dec << x->v 
-          << "   "     << std::setfill(' ') << std::setw(30) << g[v].name 
+          << "   "    << std::setfill(' ') << std::setw(40) << std::left << g[v].name 
           << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << x->hash
           << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2intAdr(x->adr) 
           << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << adr2extAdr(x->adr) << std::endl;
