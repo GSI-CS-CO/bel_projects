@@ -70,6 +70,7 @@
 
 #define FG1_IRQ           (1<<15)
 #define FG2_IRQ           (1<<14)
+#define DREQ              (1<<4) 
 
 #define WB_FG_CNTRL       0x0
 #define WB_FG_A           0x1
