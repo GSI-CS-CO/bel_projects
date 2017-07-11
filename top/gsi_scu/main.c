@@ -103,14 +103,14 @@ void enable_scub_msis(int channel) {
   
   if (channel >= 0 && channel < MAX_FG_CHANNELS) {
 
-    if ((slot & 0xf0) == 0) {
+    if (((slot & 0xf0) == 0) || (slot & DEV_SIO)){
       //SCU Bus Master
-      scub_base[GLOBAL_IRQ_ENA] = 0x20;             //enable slave irqs in scu bus master
-      scub_irq_base[8]  = slot-1;                   //channel select
-      scub_irq_base[9]  = slot-1;                   //msg: slot number
-      scub_irq_base[10] = (uint32_t)pMyMsi + 0x0;   //msi queue destination address of this cpu
-      scub_irq_base[2]  = (1 << (slot - 1));        //enable slave
-      //mprintf("IRQs for slave %d enabled.\n", slot);
+      scub_base[GLOBAL_IRQ_ENA] = 0x20;              // enable slave irqs in scu bus master
+      scub_irq_base[8]  = (slot & 0xf)-1;            // channel select
+      scub_irq_base[9]  = (slot & 0xf)-1;            // msg: slot number
+      scub_irq_base[10] = (uint32_t)pMyMsi + 0x0;    // msi queue destination address of this cpu
+      scub_irq_base[2]  = (1 << ((slot & 0xf) - 1)); // enable slave
+      //mprintf("IRQs for slave %d enabled.\n", (slot & 0xf));
     } else if (slot & DEV_MIL_EXT) {
       mil_irq_base[8]   = MIL_DRQ;
       mil_irq_base[9]   = MIL_DRQ;
@@ -144,7 +144,10 @@ void disable_slave_irq(int channel) {
     } else if (slot & DEV_MIL_EXT) {
       //write_mil(scu_mil_base, 0x0, FC_COEFF_A_WR | dev);            //ack drq
       if (status = write_mil(scu_mil_base, 0x0, FC_IRQ_MSK | dev) != OKAY) dev_failure(status);  //mask drq
+    } else if (slot & DEV_SIO) {
+      if (status = scub_write_mil(scub_base, slot & 0xf, 0x0, FC_IRQ_MSK | dev) != OKAY) dev_failure(status);  //mask drq
     }
+
     //mprintf("IRQs for slave %d disabled.\n", slot);
   }
 }
@@ -271,7 +274,6 @@ void dev_bus_irq_handle() {
   unsigned short mil_status;
   short dummy_aquisition;
   if(status = status_mil(scu_mil_base, &mil_status) != OKAY) dev_failure(status);
-  //while (mil_status & MIL_DATA_REQ_INTR) {
     for (i = 0; i < MAX_FG_CHANNELS && (mil_status & MIL_DATA_REQ_INTR); i++) {
       if (fg_regs[i].state > 0) {
         slot = fg_macros[fg_regs[i].macro_number] >> 24;
@@ -292,11 +294,39 @@ void dev_bus_irq_handle() {
       usleep(1);
       if(status = status_mil(scu_mil_base, &mil_status) != OKAY) dev_failure(status);
     }  
-    // wait for dreq going low after ack
-    // check if dreq is still active
-    //usleep(5);
-    //if(status = status_mil(scu_mil_base, &mil_status) != OKAY) dev_failure(status);
-  //}
+}
+
+void dev_sio_irq(int sio_slave_nr) {
+  int i;
+  int slot, dev;
+  short irq_data;
+  int status;
+  unsigned short mil_status;
+  short dummy_aquisition;
+  mprintf("irq from sio in slot %d\n", sio_slave_nr);
+  if(status = scub_status_mil(scub_base, sio_slave_nr, &mil_status) != OKAY) dev_failure(status);
+    for (i = 0; i < MAX_FG_CHANNELS && (mil_status & MIL_DATA_REQ_INTR); i++) {
+      if (fg_regs[i].state > 0) {
+        slot = fg_macros[fg_regs[i].macro_number] >> 24;
+        dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+        /* test only ifas connected to this sio */
+        if(((slot & 0xf) == sio_slave_nr ) && (slot & DEV_MIL_EXT)) {
+          if (status = scub_read_mil(scub_base, sio_slave_nr, &irq_data, FC_IRQ_ACT_RD | dev) != OKAY) dev_failure(status);
+          if (irq_data & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
+            handle(slot, dev, irq_data);
+            //clear irq pending and end block transfer
+            if (status = scub_write_mil(scub_base, sio_slave_nr, 0, FC_IRQ_ACT_WR | dev) != OKAY) dev_failure(status);
+            // dummy data aquisition 
+            if (status = scub_read_mil(scub_base, sio_slave_nr, &dummy_aquisition, FC_CNTRL_RD | dev) != OKAY) dev_failure(status);
+          }
+        }
+      }
+      // wait for dreq going low after ack
+      // check if dreq is still active
+      usleep(1);
+      if(status = scub_status_mil(scub_base, sio_slave_nr, &mil_status) != OKAY) dev_failure(status);
+    }  
+   
 }
 
 
@@ -358,6 +388,10 @@ void irq_handler()
     handle(slave_nr, FG2_BASE, 0);
     slave_acks |= FG2_IRQ;
   } 
+  if (slv_int_act_reg & DREQ) { //DRQ irq?
+    dev_sio_irq(slave_nr);
+    slave_acks |= DREQ;
+  }
   scub_base[CALC_OFFS(slave_nr) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
 }
 
@@ -403,10 +437,9 @@ int configure_fg_macro(int channel) {
       if (status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev) != OKAY) dev_failure(status); //enable Data-Request
     } else if (slot & DEV_SIO) {
       scub_base[SRQ_ENA] |= (1 << ((slot & 0xf)-1));            // enable irqs for the slave
-      scub_base[CALC_OFFS(slot & 0xf) + SLAVE_INT_ACT] = 0x10;  // clear all irqs
-      scub_base[CALC_OFFS(slot & 0xf) + SLAVE_INT_ENA] |= 0x10; // enable fg1 and fg2 irq
+      scub_base[CALC_OFFS(slot & 0xf) + SLAVE_INT_ENA] = 0x0010; // enable receiving of drq
+      if (status = scub_write_mil(scub_base, slot & 0xf, 1 << 13, FC_IRQ_MSK | dev) != OKAY) dev_failure(status); //enable sending of drq
     }
-
 
     /* which macro are we? */
     if ((slot & 0xf0) == 0) {                                      //scu bus slave
