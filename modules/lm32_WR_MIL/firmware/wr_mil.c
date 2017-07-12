@@ -153,7 +153,7 @@ void eventHandler(volatile uint32_t    *eca,
       uint32_t trials;
       ECAQueue_getDeadl(eca_queue, &tai_deadl);
       ECAQueue_actionPop(eca_queue);
-      uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY + (config->latency-100)*1000; // add latency to the deadline
+      uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY + ((int32_t)config->latency-100)*1000; // add latency to the deadline
       //make_mil_timestamp(mil_event_time, EVT_UTC);     
 
       if (evtCode == config->utc_trigger)
