@@ -1,8 +1,6 @@
 #include "scu_mil.h"
 #include "aux.h"
 
-#define MIL_SIO3_OFFSET 0x400
-#define CALC_OFFS(SLOT) (((SLOT) * (1 << 16)) + MIL_SIO3_OFFSET)
 
 /***********************************************************
  ***********************************************************
@@ -67,23 +65,6 @@ int write_mil(volatile unsigned int *base, short data, short fc_ifc_addr) {
   }
 }
 
-int scub_write_mil(volatile unsigned short *base, int slot, short data, short fc_ifc_addr) {
-  atomic_on();
-  if (scub_trm_free(base, slot) == OKAY) {
-    base[CALC_OFFS(slot) + MIL_RD_WR_DATA ] = data;
-  } else {
-    atomic_off();
-    return TRM_NOT_FREE;
-  }
-  if (scub_trm_free(base, slot) == OKAY) {
-    base[CALC_OFFS(slot) + MIL_WR_CMD] = fc_ifc_addr;
-    atomic_off();
-    return OKAY;
-  } else {
-    atomic_off();
-    return TRM_NOT_FREE;
-  }
-}
 
 int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   int i;
@@ -113,33 +94,6 @@ int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   return OKAY;
 }
 
-int scub_write_mil_blk(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr) {
-  int i;
-  atomic_on();
-  if (scub_trm_free(base, slot) == OKAY) {
-    base[CALC_OFFS(slot) + MIL_RD_WR_DATA] = data[0];
-  } else {
-    atomic_off();
-    return TRM_NOT_FREE;
-  }
-  if (scub_trm_free(base, slot) == OKAY) {
-    base[CALC_OFFS(slot) + MIL_WR_CMD] = fc_ifc_addr;
-  } else {
-    atomic_off();
-    return TRM_NOT_FREE;
-  }
-
-  for (i = 1; i < 6; i++) {
-    if (scub_trm_free(base, slot) == OKAY) {
-      base[CALC_OFFS(slot) + MIL_RD_WR_DATA] = data[i];
-    } else {
-      atomic_off();
-      return TRM_NOT_FREE;
-    }
-  }
-  atomic_off();
-  return OKAY;
-}
 
 int rcv_flag(volatile unsigned int *base) {
   unsigned short status = 0;
@@ -228,12 +182,12 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
   int rcv_flags = 0;
 
   atomic_on();
-  if (scub_trm_free(base, slot) == OKAY) {
+  //if (scub_trm_free(base, slot) == OKAY) {
     base[CALC_OFFS(slot) + MIL_WR_CMD] = fc_ifc_addr;
-  } else {
-    atomic_off();
-    return TRM_NOT_FREE;
-  }
+  //} else {
+    //atomic_off();
+    //return TRM_NOT_FREE;
+  //}
   rcv_flags = scub_rcv_flag(base, slot);
   if (rcv_flags == OKAY) {
     *data = base[CALC_OFFS(slot) + MIL_RD_WR_DATA];

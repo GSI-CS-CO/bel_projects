@@ -5,6 +5,7 @@
 #include <board.h>
 #include <mprintf.h>
 #include <syscon.h>
+#include <aux.h>
 
 
 /***********************************************************
@@ -48,17 +49,18 @@ void clear_receive_flag(volatile unsigned int *base);
 void run_mil_test(volatile unsigned int *base, unsigned char ifk_addr);
 int status_mil(volatile unsigned int *base, unsigned short *status);
 int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr);
-int scub_write_mil(volatile unsigned short *base, int slot, short data, short fc_ifc_addr);
-int scub_write_mil_blk(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr);
 int scub_rcv_flag(volatile unsigned short *base, int slot);
 int scub_status_mil(volatile unsigned short *base, int slot, unsigned short *status);
 int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr);
 
 
-#define  MAX_TST_CNT      10000
-#define  FC_WR_IFC_ECHO   0x13
-#define  FC_RD_IFC_ECHO   0x89
-#define  SCU_MIL          0x35aa6b96
+
+#define MAX_TST_CNT       10000
+#define FC_WR_IFC_ECHO    0x13
+#define FC_RD_IFC_ECHO    0x89
+#define SCU_MIL           0x35aa6b96
+#define MIL_SIO3_OFFSET   0x400
+#define CALC_OFFS(SLOT)   (((SLOT) * (1 << 16)) + MIL_SIO3_OFFSET)
 
 
 /*
@@ -120,6 +122,52 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
 #define   MIL_EV_12_8B        0x4000    // '1' => event decoding 12 bit; '0' => event decoding 8 bit
 #define   MIL_ENDECODER_FPGA  0x8000    // '1' => use manchester en/decoder in fpga; '0' => use external en/decoder 6408
 
+
+inline int scub_write_mil_blk(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr) {
+  int i;
+  atomic_on();
+  //if (scub_trm_free(base, slot) == OKAY) {
+  base[CALC_OFFS(slot) + MIL_RD_WR_DATA] = data[0];
+  //} else {
+    //atomic_off();
+    //return TRM_NOT_FREE;
+  //}
+  //if (scub_trm_free(base, slot) == OKAY) {
+    base[CALC_OFFS(slot) + MIL_WR_CMD] = fc_ifc_addr;
+  //} else {
+    //atomic_off();
+    //return TRM_NOT_FREE;
+  //}
+
+  for (i = 1; i < 6; i++) {
+    //if (scub_trm_free(base, slot) == OKAY) {
+      base[CALC_OFFS(slot) + MIL_RD_WR_DATA] = data[i];
+    //} else {
+      //atomic_off();
+      //return TRM_NOT_FREE;
+    //}
+  }
+  atomic_off();
+  return OKAY;
+}
+
+inline int scub_write_mil(volatile unsigned short *base, int slot, short data, short fc_ifc_addr) {
+  atomic_on();
+  //if (scub_trm_free(base, slot) == OKAY) {
+    base[CALC_OFFS(slot) + MIL_RD_WR_DATA ] = data;
+  //} else {
+    //atomic_off();
+    //return TRM_NOT_FREE;
+  //}
+  //if (scub_trm_free(base, slot) == OKAY) {
+    base[CALC_OFFS(slot) + MIL_WR_CMD] = fc_ifc_addr;
+    atomic_off();
+    return OKAY;
+  //} else {
+    //atomic_off();
+    //return TRM_NOT_FREE;
+  //}
+}
 
 /***********************************************************
  ***********************************************************

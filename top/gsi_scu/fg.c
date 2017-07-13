@@ -6,7 +6,7 @@
 #include <scu_mil.h>
 #include <mini_sdb.h>
 
-#define CALC_OFFS(SLOT) SLOT * (1 << 16)
+#define OFFS(SLOT) ((SLOT) * (1 << 16))
 
 int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *scub_adr, volatile unsigned int *mil_addr) {
   int i, j = 0;
@@ -21,22 +21,22 @@ int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *scub
 
   // scu bus slaves
   for (i = 1; i <= MAX_SCU_SLAVES; i++) {
-    scub_adr[CALC_OFFS(i) + 0x10] = 0; //clear echo reg
-    if (scub_adr[CALC_OFFS(i) + 0x10] != 0xdead) {
-      bus->slaves[j].unique_id =  (uint64_t) (scub_adr[CALC_OFFS(i) + 0x40]) << 48;
-      bus->slaves[j].unique_id |= (uint64_t) (scub_adr[CALC_OFFS(i) + 0x41]) << 32;
-      bus->slaves[j].unique_id |= (uint64_t) (scub_adr[CALC_OFFS(i) + 0x42]) << 16;
-      bus->slaves[j].unique_id |= (uint64_t) (scub_adr[CALC_OFFS(i) + 0x43]);
+    scub_adr[OFFS(i) + 0x10] = 0; //clear echo reg
+    if (scub_adr[OFFS(i) + 0x10] != 0xdead) {
+      bus->slaves[j].unique_id =  (uint64_t) (scub_adr[OFFS(i) + 0x40]) << 48;
+      bus->slaves[j].unique_id |= (uint64_t) (scub_adr[OFFS(i) + 0x41]) << 32;
+      bus->slaves[j].unique_id |= (uint64_t) (scub_adr[OFFS(i) + 0x42]) << 16;
+      bus->slaves[j].unique_id |= (uint64_t) (scub_adr[OFFS(i) + 0x43]);
 
       bus->slaves[j].slot      = i;
-      bus->slaves[j].cid_group = scub_adr[CALC_OFFS(i) + CID_GROUP];
-      bus->slaves[j].cid_sys   = scub_adr[CALC_OFFS(i) + CID_SYS];
-      bus->slaves[j].version   = scub_adr[CALC_OFFS(i) + SLAVE_VERSION];
-      bus->slaves[j].fg_ver    = scub_adr[CALC_OFFS(i) + FG1_BASE + FG_VER];
+      bus->slaves[j].cid_group = scub_adr[OFFS(i) + CID_GROUP];
+      bus->slaves[j].cid_sys   = scub_adr[OFFS(i) + CID_SYS];
+      bus->slaves[j].version   = scub_adr[OFFS(i) + SLAVE_VERSION];
+      bus->slaves[j].fg_ver    = scub_adr[OFFS(i) + FG1_BASE + FG_VER];
 
-      ext_clk_reg = scub_adr[CALC_OFFS(i) + SLAVE_EXT_CLK];          //read clk status from slave
+      ext_clk_reg = scub_adr[OFFS(i) + SLAVE_EXT_CLK];          //read clk status from slave
       if (ext_clk_reg & 0x1)
-        scub_adr[CALC_OFFS(i) + SLAVE_EXT_CLK] = 0x1;                //switch clk to sys clk from scu bus
+        scub_adr[OFFS(i) + SLAVE_EXT_CLK] = 0x1;                //switch clk to sys clk from scu bus
 
       // if slave is a sio3, scan for ifa cards
       if (bus->slaves[j].cid_sys == SYS_CSCO && bus->slaves[j].cid_group == GRP_SIO3) {
@@ -178,9 +178,9 @@ void init_buffers(struct channel_regs *cr, int channel, uint32_t *fg_macros,  vo
       /* scub slave */
       if ((slot & 0xf0) == 0) {
         if (dev == 0) {
-          scub_base[CALC_OFFS(slot) + FG1_BASE + FG_CNTRL] = 0x1; // reset fg
+          scub_base[OFFS(slot) + FG1_BASE + FG_CNTRL] = 0x1; // reset fg
         } else if (dev == 1) {
-          scub_base[CALC_OFFS(slot) + FG2_BASE + FG_CNTRL] = 0x1; // reset fg
+          scub_base[OFFS(slot) + FG2_BASE + FG_CNTRL] = 0x1; // reset fg
         }
       /* mil extension */
       } else if (slot & DEV_MIL_EXT) {
