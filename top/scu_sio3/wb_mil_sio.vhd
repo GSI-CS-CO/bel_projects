@@ -274,7 +274,7 @@ signal    tx_fifo_full:     std_logic;
 signal    slave_i_we_dly:   std_logic;
 signal    slave_i_we_dly2:  std_logic;
 signal    mil_trm_start_dly:std_logic;
-signal    mil_trm_rdy_shreg:std_logic_vector (14 downto 0);
+
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 begin
@@ -662,8 +662,8 @@ tx_fifo : generic_sync_fifo  --kk improving tx performance  start of code sectio
 
 
 mil_trm_data     <= tx_fifo_data_out(15 downto 0);  
-mil_trm_cmd      <= tx_fifo_data_out(16);                    -- is only evaluated on mil_trm_start and must be stable with mil_trm_start
-tx_fifo_read_en  <= mil_trm_start and not mil_trm_start_dly; -- need only one pulse at each start
+mil_trm_cmd      <= tx_fifo_data_out(16);                    -- is only evaluated on mil_trm_start and must be stable with mil_trm_start_dly
+tx_fifo_read_en  <= mil_trm_start and not mil_trm_start_dly; -- need only one pulse at each fifo pop  (wr_mil is triggered with mil_trm_start_dly)
 
 
 tx_fifo_ctrl:process (clk_i, nrst_i)
@@ -673,29 +673,25 @@ begin
 
     mil_trm_start     <= '0';
     mil_trm_start_dly <= '0';
-    
-    mil_trm_rdy_shreg <= (others => '0');
-    
+  
     
   elsif rising_edge (clk_i) then 
   
-    if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';          --from old code to be sure that mil_trm_rdy is quiet
-    elsif                    manchester_fpga = '1' then mil_trm_start <= '0'; end if;  
+   --from old code to be sure that harris trm_start is quiet on not ready condition
+    if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';          -- harris active,         give harris trm_start only when trm_rdy
+    elsif                    manchester_fpga = '1' then mil_trm_start <= '0'; end if;  -- internal coder active, give harris trm_start never
   
     slave_i_we_dly    <= slave_i.we;
-
     mil_trm_start_dly <= mil_trm_start;
-    
-    mil_trm_rdy_shreg(14 downto 1) <=  mil_trm_rdy_shreg(13 downto 0);
-    
-    mil_trm_rdy_shreg(0) <= mil_trm_rdy;
-    
-    if tx_fifo_empty = '0' and  mil_trm_rdy_shreg(14) = '1' and mil_trm_start = '0' then                
-      mil_trm_start   <= '1'; --start tx as long as mil transmitter is not busy and tx_fifo not empty
+
+    if tx_fifo_empty = '0' and  mil_trm_rdy = '1' then                
+      mil_trm_start   <= '1'; --start tx as long as tx_fifo not empty and mil transmitter is ready
     else 
       mil_trm_start   <= '0';   
     end if;
+    
   end if;
+  
 end process tx_fifo_ctrl;
 
 
