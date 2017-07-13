@@ -272,8 +272,9 @@ signal    tx_fifo_empty:    std_logic;
 signal    tx_fifo_full:     std_logic;
 
 signal    slave_i_we_dly:   std_logic;
-signal    slave_i_we_dly2:   std_logic;
+signal    slave_i_we_dly2:  std_logic;
 signal    mil_trm_start_dly:std_logic;
+signal    mil_trm_rdy_shreg:std_logic_vector (14 downto 0);
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 begin
@@ -672,6 +673,10 @@ begin
 
     mil_trm_start     <= '0';
     mil_trm_start_dly <= '0';
+    
+    mil_trm_rdy_shreg <= (others => '0');
+    
+    
   elsif rising_edge (clk_i) then 
   
     if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';          --from old code to be sure that mil_trm_rdy is quiet
@@ -680,13 +685,23 @@ begin
     slave_i_we_dly    <= slave_i.we;
 
     mil_trm_start_dly <= mil_trm_start;
-    if tx_fifo_empty = '0' and  mil_trm_rdy = '1' and mil_trm_start = '0' then                
+    
+    mil_trm_rdy_shreg(14 downto 1) <=  mil_trm_rdy_shreg(13 downto 0);
+    
+    mil_trm_rdy_shreg(0) <= mil_trm_rdy;
+    
+    if tx_fifo_empty = '0' and  mil_trm_rdy_shreg(14) = '1' and mil_trm_start = '0' then                
       mil_trm_start   <= '1'; --start tx as long as mil transmitter is not busy and tx_fifo not empty
     else 
       mil_trm_start   <= '0';   
     end if;
   end if;
 end process tx_fifo_ctrl;
+
+
+-- Harris HD6408 running with ME_12MHz, mil_trm_rdy may arrive 83ns later. So it is delayed by 13 x 8 ns=104ns by mil_trm_rdy_shreg
+
+
 --kk improving tx performance  end of code section
 ------------------------------------------------------------------------------------------------------------------------------    
     
