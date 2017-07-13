@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
 
 
 
-  bool doUpload = false, verbose = false, strip=false;
+  bool doUpload = false, doUpdate = false, doRemove = false, verbose = false, strip=false;
 
   int opt;
   const char *program = argv[0];
@@ -37,16 +37,30 @@ int main(int argc, char* argv[]) {
   uint32_t cpuIdx = 0;
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "shvc:o:w")) != -1) {
+   while ((opt = getopt(argc, argv, "rushvc:o:w")) != -1) {
       switch (opt) {
          case 'w':
             doUpload = true;
+            doUpdate = false;
+            doRemove = false;
             break;
          
          case 'o':
             outputFilename  = optarg;
             break;
  
+         case 'u':
+            doUpload = false;
+            doUpdate = true;
+            doRemove = false;
+            break;
+
+         case 'r':
+            doUpload = false;
+            doUpdate = false;
+            doRemove = true;
+            break;  
+
          case 'v':
             verbose = true;
             break;
@@ -118,16 +132,25 @@ int main(int argc, char* argv[]) {
     } else {std::cerr << "WARNING: No Nodename/Hash dictionary available. Cause: " << err.what() << std::endl;}
   }
   
-  if(doUpload) {
+  if(doUpload | doUpdate) {
 
-    try { 
-      cdm.uploadDot(cpuIdx, inputFilename);
+    try {
+      if(doUpdate) cdm.downloadAndParse(cpuIdx);
+      cdm.uploadDot(cpuIdx, inputFilename, doUpdate);
       if(verbose) cdm.showUp(cpuIdx, strip);
     } catch (std::runtime_error const& err) {
       std::cerr << "ERROR: Upload to CPU#"<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
       return -6;
     }
-  }
+  } else if (doRemove) {
+    try {
+      cdm.downloadAndParse(cpuIdx);
+      cdm.removeDot(cpuIdx, inputFilename);
+    } catch (std::runtime_error const& err) {
+      std::cerr << "ERROR: Remove from CPU#"<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
+      return -6;
+    }
+  } 
   
   try { 
     cdm.downloadAndParse(cpuIdx);

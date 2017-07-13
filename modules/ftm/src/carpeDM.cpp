@@ -252,13 +252,22 @@ bool CarpeDM::connect(const std::string& en) {
      //TODO NC analysis
 
   
-  bool CarpeDM::prepareUploadToCpu(Graph& g, uint8_t cpuIdx) {
+  bool CarpeDM::prepareUploadToCpu(Graph& g, uint8_t cpuIdx, bool update) {
     MemUnit& m = vM.at(cpuIdx);
     if(verbose) sLog << "Calculating Upload Binary for CPU #" << cpuIdx << "... ";
+    
+    // this is the very basic version of a graph update: 
+    // create completely disjunct graphs by letting the allocator know
+    // which memory on the embedded system is already used
+    if (update) m.initMemPoolFromDownloadBMP();
+    else        m.initMemPool();
+
     m.prepareUpload(g); 
     
     BOOST_FOREACH( vertex_t v, vertices(m.getUpGraph()) ) {
- 
+      if (update && (m.getDownAllocTable().lookupHash(m.getUpGraph()[v].np->getHash()) != NULL) ) {
+        throw std::runtime_error("Node '" + boost::get_property(m.getUpGraph(), boost::graph_name) + "." + m.getUpGraph()[v].name + "' already present on DM, duplicates are not allowed."); 
+      }
 
       std::string haystack(m.getUpGraph()[v].np->getB(), m.getUpGraph()[v].np->getB() + _MEM_BLOCK_SIZE);
       std::size_t n = haystack.find(needle);
@@ -290,6 +299,33 @@ bool CarpeDM::connect(const std::string& en) {
     ebWriteCycle(ebd, vUlA, vUlD);
     if(verbose) sLog << "Done." << std::endl;
     return vUlD.size();
+  }
+
+  int CarpeDM::removeDot(uint8_t cpuIdx, const std::string& fn) {
+    MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
+    AllocTable& at =  m.getDownAllocTable();
+    Graph gTmp, gEmpty;
+    parseUpDot(fn, gTmp); 
+    uint32_t hash;
+
+    //Necessary?
+    m.getUpGraph().clear();
+    m.initMemPoolFromDownloadBMP();
+
+    try {
+      //combine node name and graph name to obtain unique replicable hash
+      BOOST_FOREACH( vertex_t v, vertices(gTmp) ) { 
+        hash = hm.lookup(boost::get_property(gTmp, boost::graph_name) + "." + gTmp[v].name).get();
+        if(verbose) {if (!(m.deallocate(hash))) sLog << "Node " << boost::get_property(gTmp, boost::graph_name) + "." + gTmp[v].name << " could not be removed" << std::endl;}
+      }  
+    }  catch (...) {
+      //TODO report hash collision and show which names are responsible
+      throw;
+    }
+
+    //because gUp is empty, upload will only contain uploadBmp
+    return upload(cpuIdx);
+
   }
 
   int CarpeDM::sendCmd(uint8_t cpuIdx, const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {

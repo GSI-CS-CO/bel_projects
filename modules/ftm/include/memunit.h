@@ -17,8 +17,9 @@
 #define MAX_IDX 32
 #define IDX_BMPS (MAX_IDX / 32)
 
-
-
+#define ALLOC_OK             (0)
+#define ALLOC_NO_SPACE      (-1)
+#define ALLOC_ENTRY_EXISTS  (-2)  
 
 
 
@@ -34,10 +35,11 @@ class MemUnit {
   const uint32_t  extBaseAdr;
   const uint32_t  intBaseAdr;
   const uint32_t  sharedOffs;
-  const uint32_t  poolSize;
-  const uint32_t  bmpLen;
+  const uint32_t  nodeQty;
+  const uint32_t  bmpBits;
+  const uint32_t  bmpSize;
   const uint32_t  startOffs; // baseAddress + bmpLen rounded up to next multiple of MEM_BLOCK_SIZE to accomodate BMP
-  const uint32_t  endOffs;   // baseAddress + poolSize rounded down to next multiple of MEM_BLOCK_SIZE, can only use whole blocks 
+  const uint32_t  endOffs;   // baseAddress + nodeQty rounded down to next multiple of MEM_BLOCK_SIZE, can only use whole blocks 
   
   HashMap& hashMap;
   
@@ -62,15 +64,17 @@ public:
 
 
 
-  MemUnit(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t sharedOffs, uint32_t poolSize, HashMap& hm) 
+  MemUnit(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t sharedOffs, uint32_t space, HashMap& hm) 
         : cpu(cpu), extBaseAdr(extBaseAdr), intBaseAdr(intBaseAdr), sharedOffs(sharedOffs),
-          poolSize(poolSize), bmpLen( poolSize / _MEM_BLOCK_SIZE), 
-          startOffs(sharedOffs + ((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE)),
-          endOffs(sharedOffs + ((poolSize / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE)),
+          nodeQty(space / _MEM_BLOCK_SIZE), 
+          bmpBits(nodeQty),
+          bmpSize((bmpBits + 8 * _MEM_BLOCK_SIZE -1) / (8 * _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE), // (bmpBits + memBlockBits -1) / memBlockBits * memBlockBytes = bmpSize in bytes
+          startOffs(sharedOffs + bmpSize), 
+          endOffs(startOffs + (nodeQty * _MEM_BLOCK_SIZE)),
           hashMap(hm),
-          uploadBmp(vBuf( ((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE) )), 
-          downloadBmp(vBuf( ((((bmpLen + 8 -1)/8 + _MEM_BLOCK_SIZE -1) / _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE) )) { 
-            initMemPool();
+          uploadBmp(vBuf(bmpSize)), 
+          downloadBmp(vBuf(bmpSize)) { 
+
           }
   ~MemUnit() { };
 
@@ -80,8 +84,9 @@ public:
   AllocTable& getUpAllocTable()   {return atUp;}
 
   //MemPool Functions
-  void banChunk(uint32_t adr) {memPool.erase(adr);};
+  void removeChunk(uint32_t adr) {memPool.erase(adr);};
   void initMemPool();
+  void initMemPoolFromDownloadBMP();
   bool acquireChunk(uint32_t &adr);
   bool freeChunk(uint32_t &adr);
 
@@ -89,11 +94,11 @@ public:
 
   uint32_t getFreeChunkQty() { return memPool.size(); }
   uint32_t getFreeSpace() { return memPool.size() * _MEM_BLOCK_SIZE; }
-  uint32_t getUsedSpace() { return poolSize - (memPool.size() * _MEM_BLOCK_SIZE); }
+  uint32_t getUsedSpace() { return nodeQty - (memPool.size() * _MEM_BLOCK_SIZE); }
   
   //Allocation functions
-  bool allocate(uint32_t hash, vertex_t v);
-  bool insert(uint32_t hash, uint32_t adr);
+  int allocate(uint32_t hash, vertex_t v);
+  //bool insert(uint32_t hash, uint32_t adr);
   bool deallocate(uint32_t hash);
 
 

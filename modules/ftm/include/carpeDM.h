@@ -99,13 +99,16 @@ public:
   Graph& parseUpDot(const std::string& fn, Graph& g);
 
   //Process Graph for uploading to LM32 SoC
-  bool prepareUploadToCpu(Graph& g, uint8_t cpuIdx);
+  bool prepareUploadToCpu(Graph& g, uint8_t cpuIdx, bool update);
 
   //Upload processed Graph to LM32 SoC via Etherbone
   int upload(uint8_t cpuIdx);
 
   //Process and upload .dot file to to LM32 SoC via Etherbone
-  int uploadDot(uint8_t cpuIdx, const std::string& fn) { Graph gTmp; prepareUploadToCpu( parseUpDot(fn, gTmp), cpuIdx); return upload(cpuIdx); }
+  int uploadDot(uint8_t cpuIdx, const std::string& fn, bool update) { Graph gTmp; prepareUploadToCpu( parseUpDot(fn, gTmp), cpuIdx, update); return upload(cpuIdx); }
+
+  //Process and remove .dot file from LM32 SoC via Etherbone
+  int removeDot(uint8_t cpuIdx, const std::string& fn);
 
   //Send a command to Block <targetName> on CPU <cpuIdx> via Etherbone
   int sendCmd(uint8_t cpuIdx, const std::string& targetName, uint8_t cmdPrio, mc_ptr mc); 

@@ -2,6 +2,12 @@
 
 
   bool AllocTable::insert(uint32_t adr, uint32_t hash, vertex_t v) {
+    /*
+    std::cout << "Problem: " << std::endl; 
+    if (lookupAdr(adr) != NULL) std::cout << "Adr 0x" << std::hex << adr << " exists already" << std::endl;
+    if (lookupHash(hash) != NULL) std::cout << "Hash 0x" << std::hex << hash << " exists already" << std::endl;
+    if (lookupVertex(v) != NULL) std::cout << "V 0x" << std::dec << v << " exists already" << std::endl;
+    */
     auto x = a.insert({adr, hash, v});
     return x.second;
   }
