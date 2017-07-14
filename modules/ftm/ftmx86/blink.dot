@@ -1,4 +1,5 @@
 digraph G {
+name = "blink2";
 graph [label="Blink", root="Evt_POLICE",  rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
 node [type="TMsg", shape="rectangle",  style="filled", fillcolor="white", color="black"]
 edge [type="defdst", color="red"]
@@ -19,6 +20,15 @@ B_POLICE_Qb_Lo1 [type="QBuf", color="grey", style=dashed, flags=0];
 B_POLICE->B_POLICE_QBl_Lo [type="priolo", color="grey", style=dashed, label="Lo Qbuf List"];
 B_POLICE_QBl_Lo->B_POLICE_Qb_Lo0 [type="meta", color="grey", style=dashed, label="QBuf"];
 B_POLICE_QBl_Lo->B_POLICE_Qb_Lo1 [type="meta", color="grey", style=dashed, label="QBuf"];
+
+B_POLICE_QBl_Il [type="QInfo", color="grey", style=dashed, flags=0];
+B_POLICE_Qb_Il0 [type="QBuf", color="grey", style=dashed, flags=0];
+B_POLICE_Qb_Il1 [type="QBuf", color="grey", style=dashed, flags=0];
+B_POLICE->B_POLICE_QBl_Il [type="prioIl", color="grey", style=dashed, label="Il Qbuf List"];
+B_POLICE_QBl_Il->B_POLICE_Qb_Il0 [type="meta", color="grey", style=dashed, label="QBuf"];
+B_POLICE_QBl_Il->B_POLICE_Qb_Il1 [type="meta", color="grey", style=dashed, label="QBuf"];
+
+
 B_POLICE->B_POLICE_ListDst [type="listdst", color="grey", style=dashed, label="listdst"];
 
 
