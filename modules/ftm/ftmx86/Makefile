@@ -16,7 +16,7 @@ T_CXXFLAGS    = -Wall -g -std=c++11 -I$(BASEPATH)/include -I$(BASEPATH)/ftmfw -W
 
 SRC_FILES     = event.cpp meta.cpp block.cpp memunit.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp graph.cpp alloctable.cpp
 T_SOURCES     = $(addprefix $(SRCPATH)/, $(SRC_FILES))
-T_LIBS        = -Wl,-rpath,/usr/local/lib -letherbone -lboost_graph
+T_LIBS        = -Wl,-rpath,/usr/local/lib -letherbone -lboost_graph -l:libboost_serialization.so.1.62.0
 
 all: $(LIBPATH)/libcarpedm.a tools
 

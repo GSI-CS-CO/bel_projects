@@ -69,7 +69,7 @@ protected:
   boost::dynamic_properties createParser(Graph& g);
   int parseFwVersionString(const std::string& s);
   uint64_t read64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr);
-  uint64_t write64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr, uint64_t d);
+  int write64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr, uint64_t d);
 
 public:
   CarpeDM() : sLog(std::cout), sErr(std::cerr)  {} 
@@ -92,6 +92,9 @@ public:
   //Add all nodes in .dot file to name/hash dictionary
   void addDotToDict(const std::string& fn);
 
+  //Remove all nodes in .dot file from name/hash dictionary
+  void removeDotFromDict(const std::string& fn);
+
   //Clear the dictionary
   void clearDict();
   
@@ -109,6 +112,8 @@ public:
 
   //Process and remove .dot file from LM32 SoC via Etherbone
   int removeDot(uint8_t cpuIdx, const std::string& fn);
+
+  int clear(uint8_t cpuIdx);
 
   //Send a command to Block <targetName> on CPU <cpuIdx> via Etherbone
   int sendCmd(uint8_t cpuIdx, const std::string& targetName, uint8_t cmdPrio, mc_ptr mc); 
@@ -142,9 +147,11 @@ public:
   //Returns the Download Graph for CPU <cpuIdx>
   Graph& getDownGraph(uint8_t cpuIdx) {return vM.at(cpuIdxMap.at(cpuIdx)).getDownGraph();}
 
-  //Returns if a hash / nodename is known to the dictionary
-  bool isKnown(const uint32_t hash)     const {return hm.contains(hash);}
-  bool isKnown(const std::string& name) const {return hm.contains(name);}
+  HashMap& getHashMap() {return hm;}
+
+  bool isValid(uint8_t cpuIdx, const uint32_t hash);
+
+  bool isValid(uint8_t cpuIdx, const std::string& name);
 
   //Returns the external address of a thread's command register area
   uint32_t getThrCmdAdr(uint8_t cpuIdx);

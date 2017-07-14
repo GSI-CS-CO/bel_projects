@@ -54,7 +54,7 @@
 
 
   bool MemUnit::freeChunk(uint32_t &adr) {
-    bool ret = true;
+    //bool ret = true;
     uint32_t a = adr - startOffs;
 
 
@@ -70,8 +70,8 @@
     for (auto& it : uploadBmp) { 
       it = 0;
     }
-    for(int i=0; i< bmpBits/8; i++) uploadBmp[i] = 0xff;
-    for(int i=0; i< (bmpBits % 8); i++) {
+    for(uint32_t i=0; i< bmpBits/8; i++) uploadBmp[i] = 0xff;
+    for(uint32_t i=0; i< (bmpBits % 8); i++) {
       //std::cout << "adding bit " << bmpBits/8 + i << " address 0x" << std::hex << (bmpBits/8 + i) * _MEM_BLOCK_SIZE + startOffs << std::endl; 
       uploadBmp[bmpBits/8] |= (1 << (7 - (i % 8)));  
     }
