@@ -6,14 +6,14 @@ if {[info exists env(GSI_BUILD_TYPE)]} {
 
 set build_date [ clock format [ clock seconds ] -format "%a %b %d %H:%M:%S %Z %Y" ]
 
-set user [open "| git config user.name" "r"]
+set user [open "| echo user.name" "r"]
 gets $user username
 if { [catch {close $user}] } {
   post_message -type error "Git user name not set -- please run: git config --global user.name \"your name here\""
   exit 1
 }
 
-set user [open "| git config user.email" "r"]
+set user [open "| echo user.email" "r"]
 gets $user email
 if { [catch {close $user}] } {
   post_message -type error "Git user email not set -- please run: git config --global user.email \"your email here\""
@@ -97,7 +97,7 @@ foreach row $output { puts $outputFile "-- $row" }
 puts $outputFile ""
 puts $outputFile "DEPTH = 256;"
 puts $outputFile "WIDTH = 32;"
-puts $outputFile "ADDRESS_RADIX = HEX;"  
+puts $outputFile "ADDRESS_RADIX = HEX;"
 puts $outputFile "DATA_RADIX = HEX;"
 puts $outputFile ""
 puts $outputFile "CONTENT"
