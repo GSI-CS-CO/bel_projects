@@ -41,39 +41,6 @@
 #define FC_IFAMODE_WR 0x60 << 8
 #define FC_BLK_WR     0x6b << 8
 
-
-struct fg_dev {
-  unsigned int dev_number;
-  unsigned int version;
-  unsigned int offset;
-  unsigned char running;
-  unsigned char timeout;
-  unsigned int rampcnt;
-  unsigned int endvalue; /* ramp value in case of timeout */
-  unsigned char enabled;
-  struct scu_slave *slave;
-};
-
-struct scu_slave {
-  struct scu_bus *bus;
-  uint64_t unique_id; /* onewire id */
-  unsigned int version;
-  unsigned int cid_group;
-  unsigned int cid_sys;
-  unsigned int slot; /* 1 to 12 */
-  unsigned int fg_ver;
-  struct fg_dev devs[MAX_FG_PER_SLAVE + 1];
-};
-
-struct scu_bus {
-  uint64_t unique_id; /* onewire id */
-  struct scu_slave slaves[MAX_SCU_SLAVES + MIL_EXT + MAX_SIO3 + 1];
-};
-
-struct fg_list {
-  struct fg_dev *devs[MAX_FG_MACROS + 1];
-};
-
 struct param_set {
   signed short coeff_a;
   signed short coeff_b;
@@ -98,8 +65,7 @@ struct channel_buffer {
   struct param_set pset[BUFFER_SIZE];
 };
 
-int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *base_adr, volatile unsigned int *mil_base);
-int scan_for_fgs(struct scu_bus *bus, uint32_t *fglist);
+void scan_scu_bus(volatile unsigned short *base_adr, volatile unsigned int *mil_base, uint32_t *fglist);
 void init_buffers(struct channel_regs *cr, int channel, uint32_t *macro, volatile unsigned short* scub_base, volatile unsigned int* devb_base);
 
 #endif

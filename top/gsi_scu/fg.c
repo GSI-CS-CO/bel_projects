@@ -8,155 +8,144 @@
 
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
 
-int scan_scu_bus(struct scu_bus *bus, uint64_t id, volatile unsigned short *scub_adr, volatile unsigned int *mil_addr) {
+int add_to_fglist(int slot, int dev, int cid_sys, int cid_group, int fg_ver, uint32_t *fglist) {
+  int found = 0;
+  int count = 0;
+
+  /* find first free slot */
+  while ((fglist[count] != 0) && (count < MAX_FG_MACROS)) {
+    count++;
+  }
+  
+  if (cid_sys == SYS_CSCO || cid_sys == SYS_PBRF || cid_sys == SYS_LOEP) {
+    if (cid_group == GRP_ADDAC1 ||
+        cid_group == GRP_ADDAC2 ||
+        cid_group == GRP_DIOB) {
+      /* two FGs */
+      if (count < MAX_FG_MACROS) {
+        fglist[count] = 16;           // output bits
+        fglist[count] |= fg_ver << 8; // version
+        fglist[count] |= 0x0 << 16;   // device: macro number inside of the slave card
+        fglist[count] |= slot << 24;  // slot
+        count++;                      // next macro
+        found++;
+      }
+      if (count < MAX_FG_MACROS) {
+        fglist[count] = 16;           // output bits
+        fglist[count] |= fg_ver << 8; // version
+        fglist[count] |= 0x1 << 16;   // device: macro number inside of the slave card
+        fglist[count] |= slot << 24;  // slot
+        count++;                      // next macro
+        found++;
+      }
+     
+    /* ACU/MFU */
+    } else if (cid_group == GRP_MFU) {
+      /* two FGs */
+      if (count < MAX_FG_MACROS) {
+        fglist[count] = 20;           // output bits
+        fglist[count] |= fg_ver << 8; // version
+        fglist[count] |= 0x0 << 16;   // device: macro number inside of the slave card
+        fglist[count] |= slot << 24;  // slot
+        count++;                      // next macro
+        found++;
+      }
+      if (count < MAX_FG_MACROS) {
+        fglist[count] = 20;           // output bits
+        fglist[count] |= fg_ver << 8; // version
+        fglist[count] |= 0x1 << 16;   // device: macro number inside of the slave card
+        fglist[count] |= slot << 24;  // slot
+        count++;                      // next macro
+        found++;
+      }
+    
+    /* FIB */ 
+    } else if (cid_group == GRP_FIB_DDS) {
+      /* one FG */
+      if (count < MAX_FG_MACROS) {
+        fglist[count] = 32;           // output bits
+        fglist[count] |= fg_ver << 8; // version
+        fglist[count] |= 0x0 << 16;   // device: macro number inside of the slave card
+        fglist[count] |= slot << 24;  // slot
+        count++;                      // next macro
+        found++;
+      }
+    /* IFA8 */
+    } else if (cid_group == GRP_IFA8) {
+      if (count < MAX_FG_MACROS) {
+        fglist[count] = 16;           // output bits
+        fglist[count] |= fg_ver << 8; // version
+        fglist[count] |= dev << 16;   // device: macro number inside of the slave card
+        fglist[count] |= slot << 24;  // slot
+        count++;                      // next macro
+        found++;
+      }
+    }
+  }
+
+  return count; //return number of found fgs
+}
+void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_addr, uint32_t *fglist) {
   int i, j = 0;
   unsigned short ext_clk_reg;
   short data;
-  unsigned char adr;
-  int sio_iterator = 14;
+  unsigned char ifa_adr;
   int slot;
-  memset(bus->slaves, 0, sizeof(bus->slaves));
-  bus->unique_id = id;
-
+  int cid_group;
+  int cid_sys;
+  int slave_version;
+  int fg_ver;
 
   // scu bus slaves
   for (i = 1; i <= MAX_SCU_SLAVES; i++) {
     scub_adr[OFFS(i) + 0x10] = 0; //clear echo reg
     if (scub_adr[OFFS(i) + 0x10] != 0xdead) {
-      bus->slaves[j].unique_id =  (uint64_t) (scub_adr[OFFS(i) + 0x40]) << 48;
-      bus->slaves[j].unique_id |= (uint64_t) (scub_adr[OFFS(i) + 0x41]) << 32;
-      bus->slaves[j].unique_id |= (uint64_t) (scub_adr[OFFS(i) + 0x42]) << 16;
-      bus->slaves[j].unique_id |= (uint64_t) (scub_adr[OFFS(i) + 0x43]);
 
-      bus->slaves[j].slot      = i;
-      bus->slaves[j].cid_group = scub_adr[OFFS(i) + CID_GROUP];
-      bus->slaves[j].cid_sys   = scub_adr[OFFS(i) + CID_SYS];
-      bus->slaves[j].version   = scub_adr[OFFS(i) + SLAVE_VERSION];
-      bus->slaves[j].fg_ver    = scub_adr[OFFS(i) + FG1_BASE + FG_VER];
+      slot          = i;
+      cid_group     = scub_adr[OFFS(i) + CID_GROUP];
+      cid_sys       = scub_adr[OFFS(i) + CID_SYS];
+      slave_version = scub_adr[OFFS(i) + SLAVE_VERSION];
+      fg_ver        = scub_adr[OFFS(i) + FG1_BASE + FG_VER];
 
       ext_clk_reg = scub_adr[OFFS(i) + SLAVE_EXT_CLK];          //read clk status from slave
       if (ext_clk_reg & 0x1)
         scub_adr[OFFS(i) + SLAVE_EXT_CLK] = 0x1;                //switch clk to sys clk from scu bus
 
       // if slave is a sio3, scan for ifa cards
-      if (bus->slaves[j].cid_sys == SYS_CSCO && bus->slaves[j].cid_group == GRP_SIO3) {
-        slot = bus->slaves[j].slot;
-        for (adr = 0; adr < IFK_MAX_ADR; adr++) {
-          if (scub_read_mil(scub_adr, slot, &data, 0xa6 << 8 | adr) == OKAY) {
-            j++; /* next found ifa */
-            mprintf("found ifa with fg at 0x%x, data: 0x%x\n", adr, 0xffff & data);
-            bus->slaves[j].fg_ver    = 0xffff & data;
-            bus->slaves[j].unique_id = adr;
-            bus->slaves[j].slot      = DEV_SIO | slot; // mark as dev bus device on sio
-            bus->slaves[j].cid_sys   = SYS_CSCO;
-            bus->slaves[j].cid_group = GRP_IFA8;
-            if (scub_read_mil(scub_adr, slot, &data, 0xcc << 8 | adr) == OKAY) {
-              bus->slaves[j].version = 0xffff & data;
-              scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | adr); // clear PUR
+      if (cid_sys == SYS_CSCO && cid_group == GRP_SIO3) {
+        for (ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++) {
+          if (scub_read_mil(scub_adr, slot, &data, 0xa6 << 8 | ifa_adr) == OKAY) {
+            if ((0xffff & data) >= 0x2) {
+              mprintf("found ifa with fg at 0x%x, ver: 0x%x\n", ifa_adr, 0xffff & data);
+              add_to_fglist(DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & data, fglist);
+              ////for (i=0; i < 5; i++)
+                //mprintf("fglist[%d]: 0x%x\n", i, fglist[i]);
+              //while (1);
+              scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
             }
           }
         }
-        sio_iterator++; /* next sio3 */
+      } else {
+        add_to_fglist(slot, ifa_adr, cid_sys, cid_group, fg_ver, fglist);
       }
-
-      j++; /* next found slave */
     }
   }
 
   // ifks connected to mil extension
   if ((int)mil_addr != ERROR_NOT_FOUND) {
     clear_receive_flag(mil_addr);
-    for (adr = 0; adr < IFK_MAX_ADR; adr++) {
-      if (read_mil(mil_addr, &data, 0xa6 << 8 | adr) == OKAY) {
-        if ((0xffff & data) == 0x2)
-          mprintf("found ifa with fg at 0x%x, data: 0x%x\n", adr, 0xffff & data);
-          bus->slaves[j].fg_ver    = 0xffff & data;
-          bus->slaves[j].unique_id = adr;
-          bus->slaves[j].slot      = DEV_MIL_EXT; // mark as dev bus device on mil extension
-          bus->slaves[j].cid_sys   = SYS_CSCO;
-          bus->slaves[j].cid_group = GRP_IFA8;
-          if (read_mil(mil_addr, &data, 0xcc << 8 | adr) == OKAY) {
-            bus->slaves[j].version = 0xffff & data;
-            write_mil(mil_addr, 0x100, 0x12 << 8 | adr); // clear PUR
-          }
-          j++;    
+    for (ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++) {
+      if (read_mil(mil_addr, &data, 0xa6 << 8 | ifa_adr) == OKAY) {
+        if ((0xffff & data) >= 0x2) {
+          mprintf("found ifa with fg at 0x%x, ver: 0x%x\n", ifa_adr, 0xffff & data);
+          add_to_fglist(DEV_MIL_EXT | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & data, fglist);
+          write_mil(mil_addr, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
+        }
       }
     }
   } 
-
-  bus->slaves[j].unique_id = 0; /* end of list */
-  return j; /* return number of slaves found */
 }
 
-int scan_for_fgs(struct scu_bus *bus, uint32_t *fglist) {
-  int i = 0, j = 0;
-
-  while(bus->slaves[i].unique_id) {
-    if (bus->slaves[i].cid_sys == SYS_CSCO || bus->slaves[i].cid_sys == SYS_PBRF || bus->slaves[i].cid_sys == SYS_LOEP) {
-      if (bus->slaves[i].cid_group == GRP_ADDAC1 ||
-          bus->slaves[i].cid_group == GRP_ADDAC2 ||
-          bus->slaves[i].cid_group == GRP_DIOB) {
-        /* two FGs */
-        if (j < MAX_FG_MACROS) {
-          fglist[j] = 16;                             //output bits
-          fglist[j] |= (bus->slaves[i].fg_ver) << 8;  //version
-          fglist[j] |= 0x0 << 16;                     //device: macro number inside of the slave card
-          fglist[j] |= (bus->slaves[i].slot) << 24;   //slot
-          j++;                                        //next macro
-        }
-        if (j < MAX_FG_MACROS) {
-          fglist[j] = 16;                             //output bits
-          fglist[j] |= (bus->slaves[i].fg_ver) << 8;  //version
-          fglist[j] |= 0x1 << 16;                     //device: macro number inside of the slave card
-          fglist[j] |= (bus->slaves[i].slot) << 24;   //slot
-          j++;                                        //next macro
-        }
-       
-      /* ACU/MFU */
-      } else if (bus->slaves[i].cid_group == GRP_MFU) {
-        /* two FGs */
-        if (j < MAX_FG_MACROS) {
-          fglist[j] = 20;                             //output bits
-          fglist[j] |= (bus->slaves[i].fg_ver) << 8;  //version
-          fglist[j] |= 0x0 << 16;                     //device: macro number inside of the slave card
-          fglist[j] |= (bus->slaves[i].slot) << 24;   //slot
-          j++;                                        //next macro
-        }
-        if (j < MAX_FG_MACROS) {
-          fglist[j] = 20;                             //output bits
-          fglist[j] |= (bus->slaves[i].fg_ver) << 8;  //version
-          fglist[j] |= 0x1 << 16;                     //device: macro number inside of the slave card
-          fglist[j] |= (bus->slaves[i].slot) << 24;   //slot
-          j++;                                        //next macro
-        }
-      
-      /* FIB */ 
-      } else if (bus->slaves[i].cid_group == GRP_FIB_DDS) {
-        /* one FG */
-        if (j < MAX_FG_MACROS) {
-          fglist[j] = 32;                             //output bits
-          fglist[j] |= (bus->slaves[i].fg_ver) << 8;  //version
-          fglist[j] |= 0x0 << 16;                     //device: macro number inside of the slave card
-          fglist[j] |= (bus->slaves[i].slot) << 24;   //slot
-          j++;                                        //next macro
-        }
-      /* IFA8 */
-      } else if (bus->slaves[i].cid_group == GRP_IFA8) {
-        if (j < MAX_FG_MACROS) {
-          fglist[j] = 16;                                 //output bits
-          fglist[j] |= (bus->slaves[i].fg_ver) << 8;      //version
-          fglist[j] |= (bus->slaves[i].unique_id) << 16;  //device: macro number inside of the slave card
-          fglist[j] |= (bus->slaves[i].slot) << 24;       //slot
-          j++;                                            //next macro
-        }
-      }
-    }
-    i++; // next scu bus slot
-  }
-
-  fglist[j] = 0;  //set next macro to 0 to mark end of list
-  return j; //return number of found fgs
-}
 
 
 /* init the buffers for MAX_FG_CHANNELS */

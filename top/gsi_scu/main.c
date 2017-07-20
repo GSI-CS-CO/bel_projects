@@ -62,12 +62,9 @@ uint32_t SHARED fg_version         = 0x3; // 0x2 saftlib,
 uint32_t SHARED fg_mb_slot         = -1;
 uint32_t SHARED fg_num_channels    = MAX_FG_CHANNELS;
 uint32_t SHARED fg_buffer_size     = BUFFER_SIZE;
-uint32_t SHARED fg_macros[MAX_FG_MACROS]; // hi..lo bytes: slot, device, version, output-bits
+uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; // hi..lo bytes: slot, device, version, output-bits
 struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS]; 
 struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
-
-struct scu_bus scub;
-struct fg_list fgs;
 
 volatile unsigned short* scub_base   = 0;
 volatile unsigned int* scub_irq_base = 0;
@@ -447,25 +444,25 @@ void irq_handler()
   scub_base[OFFS(slave_nr) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
 }
 
-void configure_timer(unsigned int tmr_value) {
-  mprintf("configuring slaves.\n");
-  int i = 0;
-  int slot;
-  scub_base[SRQ_ENA] = 0x0;         // reset bitmask
-  scub_base[MULTI_SLAVE_SEL] = 0x0; // reset bitmask
-  while(scub.slaves[i].unique_id) {
-    slot = scub.slaves[i].slot;
-    mprintf("enable slave[%d] in slot %d\n", i, slot);
-    scub_base[SRQ_ENA] |= (1 << (slot-1));                                // enable irqs for the slave
-    scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1));                        // set bitmask for broadcast select
-    scub_base[OFFS(slot) + SLAVE_INT_ENA] = 0x2000;                     // enable tmr irq in slave macro
-    scub_base[OFFS(slot) + TMR_BASE + TMR_CNTRL] = 0x1;                 // reset TMR
-    scub_base[OFFS(slot) + TMR_BASE + TMR_VALUEL] = tmr_value & 0xffff; // enable generation of tmr irqs, 1ms, 0xe848
-    scub_base[OFFS(slot) + TMR_BASE + TMR_VALUEH] = tmr_value >> 16;    // enable generation of tmr irqs, 1ms, 0x001e
-    scub_base[OFFS(slot) + TMR_BASE + TMR_REPEAT] = 0x14;               // number of generated irqs
-    i++;
-  }
-}
+//void configure_timer(unsigned int tmr_value) {
+  //mprintf("configuring slaves.\n");
+  //int i = 0;
+  //int slot;
+  //scub_base[SRQ_ENA] = 0x0;         // reset bitmask
+  //scub_base[MULTI_SLAVE_SEL] = 0x0; // reset bitmask
+  //while(scub.slaves[i].unique_id) {
+    //slot = scub.slaves[i].slot;
+    //mprintf("enable slave[%d] in slot %d\n", i, slot);
+    //scub_base[SRQ_ENA] |= (1 << (slot-1));                                // enable irqs for the slave
+    //scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1));                        // set bitmask for broadcast select
+    //scub_base[OFFS(slot) + SLAVE_INT_ENA] = 0x2000;                     // enable tmr irq in slave macro
+    //scub_base[OFFS(slot) + TMR_BASE + TMR_CNTRL] = 0x1;                 // reset TMR
+    //scub_base[OFFS(slot) + TMR_BASE + TMR_VALUEL] = tmr_value & 0xffff; // enable generation of tmr irqs, 1ms, 0xe848
+    //scub_base[OFFS(slot) + TMR_BASE + TMR_VALUEH] = tmr_value >> 16;    // enable generation of tmr irqs, 1ms, 0x001e
+    //scub_base[OFFS(slot) + TMR_BASE + TMR_REPEAT] = 0x14;               // number of generated irqs
+    //i++;
+  //}
+//}
 
 int configure_fg_macro(int channel) {
   int i = 0;
@@ -576,37 +573,14 @@ int configure_fg_macro(int channel) {
   return 0; 
 } 
 
-void reset_slaves() {
-  mprintf("resetting slaves.\n");
-  int i = 0;
-  scub_base[SRQ_ENA] = 0x0; //reset bitmask
-  scub_base[MULTI_SLAVE_SEL] = 0x0; //reset bitmask  
-  while(scub.slaves[i].unique_id) {
-    disp_put_c('x');
-    scub_base[OFFS(scub.slaves[i].slot) + TMR_BASE + TMR_CNTRL] = 0x1; //reset TMR
-    i++;
-  }
-}
+/* scans for fgs on mil extension and scu bus */
+void print_fgs() { 
+  int i=0;
+  for(i=0; i < MAX_FG_MACROS; i++)
+    fg_macros[i] = 0;
+  scan_scu_bus(scub_base, scu_mil_base, &fg_macros[0]);
 
-/* scans for slaves and then for fgs */
-void print_fgs() {
-  int i=0, j=0;
-  scan_scu_bus(&scub, backplane_id, scub_base, scu_mil_base);
-  scan_for_fgs(&scub, &fg_macros[0]);
-  mprintf("ID: 0x%08x%08x\n", (int)(scub.unique_id >> 32), (int)scub.unique_id); 
-  while(scub.slaves[i].unique_id) { /* more slaves in list */ 
-      mprintf("slaves[%d] ID:  0x%08x%08x\n",i, (int)(scub.slaves[i].unique_id>>32), (int)scub.slaves[i].unique_id); 
-      mprintf("slv ver: 0x%x cid_sys: %d cid_grp: %d\n", scub.slaves[i].version, scub.slaves[i].cid_sys, scub.slaves[i].cid_group); 
-      mprintf("slot:        %d\n", scub.slaves[i].slot); 
-      j = 0; 
-      while(scub.slaves[i].devs[j].version) { /* more fgs in list */ 
-        mprintf("   fg[%d], version 0x%x \n", j, scub.slaves[i].devs[j].version); 
-        j++; 
-      } 
-      i++; 
-  }
-  i = 0;
-
+  i=0;
   while(i < MAX_FG_MACROS) {
     // hi..lo bytes: slot, device, version, output-bits
     if (fg_macros[i] != 0)
@@ -733,9 +707,9 @@ void sw_irq_handler(unsigned int adr, unsigned int msg) {
       param_sent[value] = 0;
     break;
     case 1:
-      configure_timer(value);
-      enable_scub_msis(value);
-      scub_base[OFFS(0xd) + TMR_BASE + TMR_CNTRL] = 0x2; //multicast tmr enable
+      //configure_timer(value);
+      //enable_scub_msis(value);
+      //scub_base[OFFS(0xd) + TMR_BASE + TMR_CNTRL] = 0x2; //multicast tmr enable
     break;
     case 2:
       enable_scub_msis(value);
