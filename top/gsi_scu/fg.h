@@ -6,7 +6,7 @@
 
 // 12 SIOs with dev busses and 1 mil extension
 #define   MAX_FG_MACROS     256
-#define   MAX_FG_CHANNELS   12
+#define   MAX_FG_CHANNELS   16
 #define   MAX_FG_PER_SLAVE  2
 #define   BUFFER_SIZE       121
 #define   THRESHOLD         BUFFER_SIZE * 40 / 100
