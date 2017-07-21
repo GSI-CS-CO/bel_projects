@@ -7,7 +7,9 @@ use ieee.numeric_std.all;
 --| Es ist als Ersatz für das ältere in AHDL geschriebene Interface "ser_para.tdf" vorgesehen.                |
 --|                                                                                                           |
 --| Autor: W.Panschow; Datum 7.05.14                                                                          |
---+-----------------------------------------------------------------------------------------------------------+
+--+-----------------------------------------------------------------------------------------------------------|
+--| K.Kaiser 21-Jul-2017  DSC Denoised, TD SDO TD and vw synchronized by shiftreg due to Harris DSC Problems  |
+--+-----------------------------------------------------------------------------------------------------------|
 
 
 
@@ -29,7 +31,7 @@ entity hw6408_vhdl is
     boo_n:        in  std_logic := '0';               -- verbinde mit HD6408(nBOO) = encoder bipolar one out.
     bzo_n:        in  std_logic := '0';               -- verbinde mit HD6408(nBZO) = encoder bipolar zero out.
     trm_ena_n:    out std_logic;                      -- '0' => der externe Sendetreiber wird selektiert.
-    
+                                                        
     rd_mil:       in  std_logic := '0';               -- liest das empfangene Datum oder Kommando.
     data_o:       out std_logic_vector(15 downto 0);  -- Ausgang fuer das empfangene Datum/Kommando.
     cds:          in  std_logic := '0';               -- verbinde mit HD6408(cds) = command data sync.
@@ -54,6 +56,8 @@ entity hw6408_vhdl is
   );
   end hw6408_vhdl;
 
+  
+ 
 
 architecture arch_hw6408_vhdl of hw6408_vhdl is
 
@@ -65,8 +69,8 @@ type  t_vw_sm is (
 
 signal  vw_sm: t_vw_sm;
 
-signal  vw_set:       std_logic := '0';   -- achtung mit esc getaktet
-signal  rcv_err_set:  std_logic := '0';   -- achtung mit esc getaktet
+signal  vw_set:         std_logic := '0';   -- achtung mit esc getaktet
+signal  rcv_err_set:    std_logic := '0';   -- achtung mit esc getaktet
 
 signal  send_data:      std_logic_vector(15 downto 0) := (others => '0');
 signal  send_init:      std_logic := '0';
@@ -78,7 +82,7 @@ signal  rcv_reg:        std_logic_vector(15 downto 0) := (others => '0');
 signal  vw_reg:         std_logic := '0';
 signal  rcv_err_reg:    std_logic := '0';
 signal  rcv_cmd_reg:    std_logic := '0';
-signal  nrcv_ena_shiftr: std_logic_vector(1 downto 0) := (others => '1');
+signal  nrcv_ena_shiftr:std_logic_vector(1 downto 0) := (others => '1');
 
 
 constant  c_vw_tst_cnt: integer := 16;        -- eigentlich muss c_vw_cnt = 17 sein, es geht aber ein count
@@ -89,8 +93,57 @@ signal    vw_cnt:       integer range 0 to c_end_vw_tst + 1;  -- + 1 damit kein 
 signal    s_ee:         std_logic := '0';     -- signal encoder enable
 signal    s_trm_ena:    std_logic := '0';
 
+signal dsc_sh1:         std_logic;
+signal dsc_sh2:         std_logic;
+signal dsc_denoised:    std_logic;
 
+signal td_sh:           std_logic_vector(3 downto 0);
+signal cds_sh:          std_logic_vector(3 downto 0);
+signal vw_sh:           std_logic_vector(3 downto 0);
+signal sdo_sh:          std_logic_vector(3 downto 0);
+
+	 
 begin
+
+p_dsc_denoise : PROCESS (clk_i, nrst_i)   --KK
+BEGIN
+  IF (nrst_i = '0') THEN
+    dsc_sh1            <= '0';
+    dsc_sh2            <= '0';
+    dsc_denoised       <= '0';
+	 td_sh              <= (others =>'0');
+	 cds_sh             <= (others =>'0');
+	 vw_sh              <= (others =>'0');
+	 sdo_sh             <= (others =>'0');
+  ELSIF rising_edge(clk_i) THEN
+	 td_sh (0)          <= td;
+	 td_sh (3 downto 1) <= td_sh(2 downto 0 ); 
+	 
+	 cds_sh (0)         <= cds;
+	 cds_sh (3 downto 1)<= cds_sh(2 downto 0 ); 
+	 
+	 vw_sh (0)          <= vw;
+	 vw_sh (3 downto 1) <= vw_sh(2 downto 0 ); 
+	 
+	 sdo_sh (0)         <= sdo;
+	 sdo_sh (3 downto 1)<= sdo_sh(2 downto 0 ); 	
+	
+    --dsc rise/fall times are max 8ns, should be stable in 16ns
+    dsc_sh1            <= dsc;
+    dsc_sh2            <= dsc_sh1;
+	 	 
+    IF    dsc_sh1 = '1' AND dsc_sh2 = '1' THEN
+      dsc_denoised <= '1';
+    ELSIF dsc_sh1 = '0' AND dsc_sh2 = '0' THEN
+      dsc_denoised <= '0';
+    ELSE
+      NULL; 
+    END IF;
+	 
+  END IF;
+END PROCESS p_dsc_denoise;
+  
+  
 
 p_res_6408:  process(clk_i, nrst_i, sel_6408)
 
@@ -192,7 +245,7 @@ p_ee: process (esc, nrst_i, sel_6408)
 ee <= s_ee;
   
   
-p_vw_sm:  process (dsc, nrst_i)    
+p_vw_sm:  process (dsc_denoised, nrst_i)    
   begin
     if nrst_i = '0' then
       vw_sm <= idle_vw;
@@ -200,7 +253,7 @@ p_vw_sm:  process (dsc, nrst_i)
       rcv_err_set<= '0';
       vw_cnt <= 0;            -- clear valid word test counter
  
-    elsif rising_edge(dsc) then
+    elsif rising_edge(dsc_denoised) then
 
       vw_set <= '0';
       rcv_err_set<= '0';
@@ -210,14 +263,14 @@ p_vw_sm:  process (dsc, nrst_i)
 
         when idle_vw =>
           vw_cnt <= 0;        -- clear valid word test counter
-          if td = '1' then
+          if td_sh(3) = '1' then
             vw_sm <= wait_vw;
           end if;
           
         when wait_vw =>       -- wait for valid word
           if vw_cnt = c_end_vw_tst then   -- valid word kommt zu spät, oder garnicht.
             vw_sm <= err_vw;              -- gehe in den Fehlerstate
-          elsif vw = '1' then             -- valid word kommt
+          elsif vw_sh(3) = '1' then             -- valid word kommt
             if vw_cnt = c_vw_tst_cnt then -- es kommt zum richtigen Zeitpunkt
               vw_set <= '1';              -- valid word set ist fuer einen 'esc'-Takt aktiv.
               vw_sm <= idle_vw;           -- gehe in den 'idle_vw'-state
@@ -238,13 +291,13 @@ p_vw_sm:  process (dsc, nrst_i)
   end process p_vw_sm;
 
 
-p_ser_par:  process (dsc, nrst_i, sel_6408)
+p_ser_par:  process (dsc_denoised, nrst_i, sel_6408)
   begin
     if (nrst_i = '0') or (sel_6408 = '0') then
       ser_in_par_out <= (others => '0');
-    elsif rising_edge(dsc) then
-      if td = '1' then
-        ser_in_par_out <= ser_in_par_out(14 downto 0) & sdo;
+    elsif rising_edge(dsc_denoised) then
+      if td_sh(3) = '1' then
+        ser_in_par_out <= ser_in_par_out(14 downto 0) & sdo_sh(3);
       end if;
     end if;
   end process p_ser_par;
@@ -262,13 +315,13 @@ p_rcv_reg:  process (clk_i, nrst_i, sel_6408)
 data_o <= rcv_reg; 
 
 
-p_rcv_cmd:  process (dsc, nrst_i, sel_6408, rd_mil)
+p_rcv_cmd:  process (dsc_denoised, nrst_i, sel_6408, rd_mil)
   begin
     if (rd_mil = '1') or (nrst_i = '0') or (sel_6408 = '0') then
       rcv_cmd_reg <= '0';
-    elsif falling_edge(dsc) then
-      if td = '1' then
-        rcv_cmd_reg <= cds;
+    elsif falling_edge(dsc_denoised) then
+      if td_sh(3) = '1' then
+        rcv_cmd_reg <= cds_sh(3);
       end if;
     end if;
   end process p_rcv_cmd;
@@ -299,8 +352,8 @@ p_rcv_ena: process (esc, nrst_i, sel_6408, s_ee)
   end process p_rcv_ena;
   
 rcv_ena_n <= nrcv_ena_shiftr(1);
-valid_w <= vw_reg;
-rcv_err <= rcv_err_set;
+valid_w   <= vw_reg;
+rcv_err   <= rcv_err_set;
 
 
 end arch_hw6408_vhdl;
