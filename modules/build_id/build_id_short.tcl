@@ -20,7 +20,8 @@ if { [catch {close $user}] } {
   exit 1
 }
 
-set revp [open "| git rev-parse --abbrev-ref HEAD" "r"]
+#set revp [open "| git rev-parse --abbrev-ref HEAD" "r"]
+set revp [open "| echo test_branch" "r"]
 gets $revp branch
 if { [catch {close $revp}] } {
   post_message -type error "Failed to determine current git branch"
@@ -31,7 +32,8 @@ if { $branch == "HEAD" || $branch == "proposed_master" || $branch == "master" } 
   set branch "zenith" ; # largest release possible
 }
 
-set revl [open "| git rev-list --count HEAD" "r"]
+#set revl [open "| git rev-list --count HEAD" "r"]
+set revl [open "| echo 123" "r"]
 gets $revl count
 if { [catch {close $revl}] } {
   post_message -type error "Failed to determine commit count"
@@ -63,7 +65,8 @@ lappend output "$build_os"
 lappend output "$quartus(version)"
 lappend output ""
 
-set gitlog [open "| git log --oneline --decorate=no -n 2" "r"]
+#set gitlog [open "| git log --oneline --decorate=no -n 2" "r"]
+set gitlog [open "| echo line1\nline2\n" "r"]
 while {[gets $gitlog line] >= 0} { lappend output "  $line" }
 close $gitlog
 
