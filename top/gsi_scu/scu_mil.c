@@ -19,76 +19,50 @@ void clear_receive_flag(volatile unsigned int *base) {
   }
 }
 
-int trm_free(volatile unsigned int *base) {
-  int i = MAX_TST_CNT;
-  
-  for (i = MAX_TST_CNT; i > 0; i--) {
-    if (base[MIL_WR_RD_STATUS] & MIL_TRM_READY) {
-      break;
-    }
-  }
-  if (i > 0)
-    return OKAY;
-  else
-    return TRM_NOT_FREE;
-}
+//int trm_free(volatile unsigned int *base) {
+  //int i = MAX_TST_CNT;
+  //
+  //for (i = MAX_TST_CNT; i > 0; i--) {
+    //if (base[MIL_WR_RD_STATUS] & MIL_TRM_READY) {
+      //break;
+    //}
+  //}
+  ////if (i > 0)
+    //return OKAY;
+  //else
+    //return TRM_NOT_FREE;
+//}
 
-int scub_trm_free(volatile unsigned short *base, int slot) {
-  int i = MAX_TST_CNT;
-
-  for (i = MAX_TST_CNT; i > 0; i--) {
-    if (base[CALC_OFFS(slot) + MIL_WR_RD_STATUS] & MIL_TRM_READY) {
-      break;
-    }
-  }
-  if (i > 0)
-    return OKAY;
-  else
-    return TRM_NOT_FREE;
-}
+//int scub_trm_free(volatile unsigned short *base, int slot) {
+  //int i = MAX_TST_CNT;
+//
+  //for (i = MAX_TST_CNT; i > 0; i--) {
+    //if (base[CALC_OFFS(slot) + MIL_WR_RD_STATUS] & MIL_TRM_READY) {
+      //break;
+    //}
+  //}
+  //if (i > 0)
+    //return OKAY;
+  //else
+    //return TRM_NOT_FREE;
+//}
 
 int write_mil(volatile unsigned int *base, short data, short fc_ifc_addr) {
   atomic_on();
-  if (trm_free(base) == OKAY) {
-    base[MIL_RD_WR_DATA] = data;
-  } else {
-    atomic_off();
-    return TRM_NOT_FREE;
-  }
-  if (trm_free(base) == OKAY) {
-    base[MIL_WR_CMD] = fc_ifc_addr;
-    atomic_off();
-    return OKAY;
-  } else {
-    atomic_off();
-    return TRM_NOT_FREE;
-  }
+  base[MIL_RD_WR_DATA] = data;
+  base[MIL_WR_CMD] = fc_ifc_addr;
+  atomic_off();
+  return OKAY;
 }
 
 
 int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   int i;
   atomic_on();
-  if (trm_free(base) == OKAY) {
-    base[MIL_RD_WR_DATA] = data[0];
-  } else {
-    atomic_off();
-    return TRM_NOT_FREE;
-  }
-  if (trm_free(base) == OKAY) {
-    base[MIL_WR_CMD] = fc_ifc_addr;
-  } else {
-    atomic_off();
-    return TRM_NOT_FREE;
-  }
-
+  base[MIL_RD_WR_DATA] = data[0];
+  base[MIL_WR_CMD] = fc_ifc_addr;
   for (i = 1; i < 6; i++) {
-    if (trm_free(base) == OKAY) {
       base[MIL_RD_WR_DATA] = data[i];
-    } else {
-      atomic_off();
-      return TRM_NOT_FREE;
-    }
   }
   atomic_off();
   return OKAY;
@@ -158,12 +132,12 @@ int read_mil(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   int rcv_flags = 0;
 
   atomic_on();
-  if (trm_free(base) == OKAY) {
+  //if (trm_free(base) == OKAY) {
     base[MIL_WR_CMD] = fc_ifc_addr;
-  } else {
-    atomic_off();
-    return TRM_NOT_FREE;
-  }
+  //} else {
+    //atomic_off();
+    //return TRM_NOT_FREE;
+  //}
   rcv_flags = rcv_flag(base);
   if (rcv_flags == OKAY) {
     *data = base[MIL_RD_WR_DATA];

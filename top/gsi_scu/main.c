@@ -291,31 +291,39 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
 void dev_bus_irq_handle() {
   int i;
   int slot, dev;
-  short irq_data;
+  short irq_data[MAX_FG_CHANNELS] = {0};
   int status;
   unsigned short mil_status;
   short dummy_aquisition;
   if((status = status_mil(scu_mil_base, &mil_status)) != OKAY) dev_failure(status, 0);
+    /* poll all pending regs on the dev bus; blocking read operation */
     for (i = 0; i < MAX_FG_CHANNELS && (mil_status & MIL_DATA_REQ_INTR); i++) {
       if (fg_regs[i].state > 0) {
         slot = fg_macros[fg_regs[i].macro_number] >> 24;
         dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+        /* test only ifas connected to mil extension */
         if(slot & DEV_MIL_EXT) {
-          if ((status = read_mil(scu_mil_base, &irq_data, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 0);
-          if (irq_data & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
-            handle(slot, dev, irq_data);
-            //clear irq pending and end block transfer
-            if ((status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev)) != OKAY)              dev_failure (status, 0);
-            // dummy data aquisition
-            if ((status = read_mil(scu_mil_base, &dummy_aquisition, FC_CNTRL_RD | dev)) != OKAY) dev_failure (status, 0);
-          }
+          if ((status = read_mil(scu_mil_base, &irq_data[i], FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 0);
         }
       }
-      // wait for dreq going low after ack
-      // check if dreq is still active
-      usleep(1);
-      if((status = status_mil(scu_mil_base, &mil_status)) != OKAY) dev_failure(status, 0);
     }  
+    /* handle irqs for ifas with active pending regs; non blocking write */
+    for (i = 0; i < MAX_FG_CHANNELS; i++) {
+      if (irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
+        slot = fg_macros[fg_regs[i].macro_number] >> 24;
+        dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+        handle(slot, dev, irq_data[i]);
+        //clear irq pending and end block transfer
+        if ((status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev)) != OKAY) dev_failure(status, 0);
+
+        // dummy data aquisition
+        // deactivated until FIFO Rd is implemented
+        //if ((status = scub_read_mil(scub_base, sio_slave_nr, &dummy_aquisition, FC_CNTRL_RD | dev)) != OKAY) {
+          //dev_failure (status, slot & 0xf);
+          //mprintf("dev_sio_irq3\n");
+        //}
+      }
+    }
 }
 
 void dev_sio_irq(int sio_slave_nr) {
@@ -339,13 +347,6 @@ void dev_sio_irq(int sio_slave_nr) {
           }
         }
       }
-      // wait for dreq going low after ack
-      // check if dreq is still active
-      //usleep(1);
-      //if((status = scub_status_mil(scub_base, sio_slave_nr, &mil_status)) != OKAY) {
-        //dev_failure(status, slot & 0xf);
-        //mprintf("dev_sio_irq4\n");
-      //}
     }  
     /*
     for (i = 0; i < MAX_FG_CHANNELS; i++) {
