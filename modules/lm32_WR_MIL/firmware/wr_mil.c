@@ -163,25 +163,15 @@ void eventHandler(volatile uint32_t    *eca,
         trials = mil_piggy_write_event(mil_piggy, milTelegram); 
         make_mil_timestamp(mil_event_time, EVT_UTC);     
         delay_96plus32n_ns(config->trigger_utc_delay*32);
-        trials = mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_BEGIN_CMD_EXEC); 
-        delay_96plus32n_ns(config->trigger_utc_delay*32);
-        // create the five events EVT_UTC_1/2/3/4/5 with seconds and miliseconds since 01/01/2008
         for (int i = 0; i < N_UTC_EVENTS; ++i)
         {
-          // Churn out the EVT_UTC MIL events as fast as possible. 
-          //  This results in approx. 21 us between two successive events.
+          // Churn out the EVT_UTC MIL events with a configurable delay between the individual events.
           trials = mil_piggy_write_event(mil_piggy, EVT_UTC[i]); 
           if (i < N_UTC_EVENTS-1)
           {
             delay_96plus32n_ns(config->utc_delay*32);
           }
         }
-        delay_96plus32n_ns(config->trigger_utc_delay*32);
-        trials = mil_piggy_write_event(mil_piggy, (config->event_source<<12) | 0xf00 | MIL_EVT_COMMAND ); 
-        delay_96plus32n_ns(config->trigger_utc_delay*32);
-        trials = mil_piggy_write_event(mil_piggy, (config->event_source<<12) | 0xf00 | MIL_EVT_COMMAND ); 
-        delay_96plus32n_ns(config->trigger_utc_delay*32);
-        trials = mil_piggy_write_event(mil_piggy, (milTelegram & 0x0000ff00) | MIL_EVT_END_CMD_EXEC); 
       }
       else
       {
