@@ -808,6 +808,50 @@ int main(void) {
       dev_bus_irq_handle();
       irq_enable();
     }
+    scub_status_mil(scub_base, 2, &status);
+    if (status & MIL_DATA_REQ_INTR) {
+      msDelayBig(4000);
+      // does it still signal after 4ms?
+      scub_status_mil(scub_base, 2, &status);
+      if (status & MIL_DATA_REQ_INTR) { 
+        irq_disable();
+        dev_sio_irq(2);
+        irq_enable();
+      }
+    }
+    scub_status_mil(scub_base, 10, &status);
+    if (status & MIL_DATA_REQ_INTR) {
+      msDelayBig(4000);
+      // does it still signal after 4ms?
+      scub_status_mil(scub_base, 10, &status);
+      if (status & MIL_DATA_REQ_INTR) { 
+        irq_disable();
+        dev_sio_irq(10);
+        irq_enable();
+      }
+    }
+    scub_status_mil(scub_base, 4, &status);
+    if (status & MIL_DATA_REQ_INTR) {
+      msDelayBig(4000);
+      // does it still signal after 4ms?
+      scub_status_mil(scub_base, 4, &status);
+      if (status & MIL_DATA_REQ_INTR) { 
+        irq_disable();
+        dev_sio_irq(4);
+        irq_enable();
+      }
+    }
+    scub_status_mil(scub_base, 12, &status);
+    if (status & MIL_DATA_REQ_INTR) {
+      msDelayBig(4000);
+      // does it still signal after 4ms?
+      scub_status_mil(scub_base, 12, &status);
+      if (status & MIL_DATA_REQ_INTR) { 
+        irq_disable();
+        dev_sio_irq(12);
+        irq_enable();
+      }
+    }
   }
 
   return(0);
