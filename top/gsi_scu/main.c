@@ -508,8 +508,8 @@ int configure_fg_macro(int channel) {
       scub_base[OFFS(slot) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
       scub_base[OFFS(slot) + fg_base + FG_CNTRL] = 0x1;           // reset fg
     } else if (slot & DEV_MIL_EXT) {
-      if ((status = write_mil(scu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY)   dev_failure (status, slot & 0xf); // set FG mode
-      if ((status = write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, slot & 0xf); // reset fg
+      if ((status = write_mil(scu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY)   dev_failure (status, 0); // set FG mode
+      if ((status = write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, 0); // reset fg
     } else if (slot & DEV_SIO) {
       if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_IFAMODE_WR | dev)) != OKAY)   dev_failure (status, slot & 0xf); // set FG mode
       if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, slot & 0xf); // reset fg
@@ -536,9 +536,9 @@ int configure_fg_macro(int channel) {
 
       } else if (slot & DEV_MIL_EXT) {
         // transmit in one block transfer over the dev bus
-        if((status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | dev)) != OKAY) dev_failure (status, slot & 0xf);
+        if((status = write_mil_blk(scu_mil_base, &blk_data[0], FC_BLK_WR | dev)) != OKAY) dev_failure (status, 0);
         // still in block mode !
-        if((status = write_mil(scu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, slot & 0xf);
+        if((status = write_mil(scu_mil_base, cntrl_reg_wr, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, 0);
 
       } else if (slot & DEV_SIO) {
         // transmit in one block transfer over the dev bus
@@ -559,12 +559,14 @@ int configure_fg_macro(int channel) {
 
     } else if (slot & DEV_MIL_EXT) {
       short data;
-      if ((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)                       dev_failure (status, slot & 0xf);
-      if ((status = write_mil(scu_mil_base, 0xffff & data | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, slot & 0xf);
+      //if ((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)                       dev_failure (status, 0);
+      // enable and end block mode
+      if ((status = write_mil(scu_mil_base, 0xffff & data | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, 0);
 
     } else if (slot & DEV_SIO) {
       short data;
       //if ((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_CNTRL_RD | dev)) != OKAY)                       dev_failure (status, slot & 0xf);
+      // enable and end block mode
       if ((status = scub_write_mil(scub_base, slot & 0xf, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, slot & 0xf);
     }
 
@@ -631,8 +633,8 @@ void disable_channel(unsigned int channel) {
 
   } else if (slot & DEV_MIL_EXT) {
     // disarm hardware
-    if((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)          dev_failure(status, slot & 0xf); 
-    if((status = write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY) dev_failure(status, slot & 0xf); 
+    if((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)          dev_failure(status, 0); 
+    if((status = write_mil(scu_mil_base, data & ~(0x2), FC_CNTRL_WR | dev)) != OKAY) dev_failure(status, 0); 
     //write_mil(scu_mil_base, 0x0, 0x60 << 8 | dev);             // unset FG mode
 
   } else if (slot & DEV_SIO) {
