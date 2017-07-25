@@ -3,10 +3,12 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 use work.wishbone_pkg.all;
-use work.wb_mil_scu_pkg.all;
-use work.mil_pkg.all;
 use work.aux_functions_pkg.all;
-use work.scu_sio3_pkg.all;
+use work.mil_pkg.all;
+use work.wb_mil_scu_pkg.all;
+use work.genram_pkg.all;  
+
+
 
 --+---------------------------------------------------------------------------------------------------------------------------------+
 --| "wb_mil_scu" stellt in Verbindung mit der SCU-Aufsteck-Karte "FG900170_SCU_MIL1" alle Funktionen bereit, die benoetigt werden,  |
@@ -70,6 +72,7 @@ use work.scu_sio3_pkg.all;
 --|         |             |             |    every_ms_intr_o Pos 1-->Pos7                                                           |
 --|         |             |             |    clk_switch_intr Pos14-->Pos1                                                           |
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
+
 
 
 
@@ -258,9 +261,12 @@ signal    lemo_dat:         std_logic_vector (4 downto 1);
 signal    lemo_out_en:      std_logic_vector (4 downto 1);
 signal    lemo_event_en:    std_logic_vector (4 downto 1);
 
+
+
 signal    io_1:             std_logic;
 signal    io_2:             std_logic;
 
+-----------------------------------------------------------
 signal    tx_fifo_write_en: std_logic;
 signal    tx_fifo_wr_pulse: std_logic;
 signal    tx_fifo_data_in:  std_logic_vector (16 downto 0);
@@ -275,8 +281,10 @@ signal    slave_i_we_dly:   std_logic;
 signal    slave_i_we_dly2:  std_logic;
 signal    mil_trm_start_dly:std_logic;
 
+-----------------------------------------------------------
 
------------------------------------------------------------------------------------------------------------------------------------------
+
+
 begin
 
 
@@ -336,7 +344,7 @@ led_rcv: led_n
     Sig_In      => Mil_Rcv_Rdy,     -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => nLed_Mil_Rcv,    -- changed from opendrain to pushpull due to LED Selftest KK 20151015
-    nLed_opdrn  => open           
+    nLed_opdrn  => open
     );
 
 
@@ -351,7 +359,7 @@ led_trm: led_n
     Sig_In      => Sel_Mil_Drv,     -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => nLed_Mil_Trm,    -- changed from opendrain to pushpull due to LED Selftest KK 20151015
-    nLed_opdrn  => open            
+    nLed_opdrn  => open
     );
 
 
@@ -366,7 +374,7 @@ led_err: led_n
     Sig_In      => Mil_Rcv_Error,   -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => nLed_Mil_Err,    -- changed from opendrain to pushpull due to LED Selftest KK 20151015
-    nLed_opdrn  => open             
+    nLed_opdrn  => open
     );
 
 led_interl: led_n
@@ -380,7 +388,7 @@ led_interl: led_n
     Sig_In      => db_interlock_intr,-- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                      -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => nLed_Interl,      -- changed from opendrain to pushpull due to LED Selftest KK 20151015
-    nLed_opdrn  => open             
+    nLed_opdrn  => open     
     );
 
 led_dry: led_n
@@ -394,7 +402,7 @@ led_dry: led_n
     Sig_In      => db_data_rdy_intr,-- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => nLed_dry,        -- changed from opendrain to pushpull due to LED Selftest KK 20151015
-    nLed_opdrn  => open             
+    nLed_opdrn  => open
     );
 
 led_drq: led_n
@@ -409,7 +417,6 @@ led_drq: led_n
     nLED        => nLed_drq,        -- changed from opendrain to pushpull due to LED Selftest KK 20151015
     nLed_opdrn  => open                                               
                                    
-    
     );
 
 led_timing: led_n
@@ -423,7 +430,7 @@ led_timing: led_n
     Sig_In      => timing_received, -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => nLed_Timing,     --- changed from opendrain to pushpull due to LED Selftest KK 20151015
-    nLed_opdrn  => open             -- 
+    nLed_opdrn  => open
     );
 
 	 
@@ -520,6 +527,9 @@ p_deb_lemo_x: debounce
     DB_Out  => lemo_inp(i)                  -- Das entprellte Signal von "DB_In".
     );
 end generate;
+
+	 
+
 
 
 Mil_1:  mil_hw_or_soft_ip
@@ -640,14 +650,16 @@ led_fifo_ne: led_n
     Sig_In      => ev_fifo_ne,      -- '1' holds "nLED" and "nLED_opdrn" on active zero. "Sig_in" changeing to '0' 
                                     -- "nLED" and "nLED_opdrn" change to inactive State after stretch_cnt clock periodes.
     nLED        => nLed_Fifo_ne,    -- changed from opendrain to pushpull due to LED Selftest KK 20151015
-    nLed_opdrn  => open             -- 
+    nLed_opdrn  => open
     );
+
+
 
 ------------------------------------------------------------------------------------------------------------------------------
 tx_fifo : generic_sync_fifo  --kk improving tx performance  start of code section
   generic map (
     g_data_width   => 17,
-    g_size   => 1024
+    g_size         => 1024
   )
   port map (
     clk_i          => clk_i,
@@ -747,12 +759,12 @@ variable LA_a_var : unsigned (17 downto 2);
       ex_ack            <= '0';
       ex_err            <= '0';
 
-      rd_ev_fifo        <= '0';
-      clr_ev_fifo       <= '0';
-      wr_filt_ram       <= '0';
-      rd_filt_ram       <= '0';
+      rd_ev_fifo      <= '0';
+      clr_ev_fifo     <= '0';
+      wr_filt_ram     <= '0';
+      rd_filt_ram     <= '0';
 
-      clr_no_VW_cnt     <= '0';
+      clr_no_VW_cnt   <= '0';
       clr_not_equal_cnt <= '0';
       sw_clr_ev_timer   <= '0';
       ld_dly_timer      <= '0';
@@ -771,11 +783,11 @@ variable LA_a_var : unsigned (17 downto 2);
         if (LA_a_var = mil_wr_cmd_a_map) or  (LA_a_var = mil_rd_wr_data_a_map) then
         -- check existing word register
             if slave_i.sel = "1111" then
-              if slave_i.we = '1'  then
+              if slave_i.we = '1' then
                 -- write low word
-                  if tx_fifo_full ='0' then               
+                  if tx_fifo_full ='0' then 
 --                if mil_trm_rdy = '1' and mil_trm_start = '0' then
---                  -- write is allowed, because mil transmiter is free
+--                  -- write is allowed, because mil tranmiter is free
 --                  mil_trm_start <= '1';
 --                  mil_trm_cmd   <= slave_i.adr(2);
 --                  mil_trm_data  <= slave_i.dat(15 downto 0);  -- update(mil_trm_data)
@@ -840,7 +852,7 @@ variable LA_a_var : unsigned (17 downto 2);
               ex_stall <= '0';
               ex_err <= '1';
             end if;
-            
+
           elsif (LA_a_var = mil_wr_rd_lemo_conf_a_map) then
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
@@ -849,7 +861,7 @@ variable LA_a_var : unsigned (17 downto 2);
                 lemo_out_en(2)       <= slave_i.dat(b_lemo2_out_en);
                 lemo_out_en(3)       <= slave_i.dat(b_lemo3_out_en);
                 lemo_out_en(4)       <= slave_i.dat(b_lemo4_out_en);
-                lemo_event_en(1)     <= slave_i.dat(b_lemo1_event_en);
+                lemo_event_en(1)     <= slave_i.dat(b_lemo1_event_en);                                        
                 lemo_event_en(2)     <= slave_i.dat(b_lemo2_event_en);
                 lemo_event_en(3)     <= slave_i.dat(b_lemo3_event_en);
                 lemo_event_en(4)     <= slave_i.dat(b_lemo4_event_en);
@@ -888,7 +900,7 @@ variable LA_a_var : unsigned (17 downto 2);
               ex_stall <= '0';
               ex_err <= '1';
             end if;
-            
+
           elsif (LA_a_var = mil_rd_lemo_inp_a_map)then
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
@@ -944,7 +956,6 @@ variable LA_a_var : unsigned (17 downto 2);
               ex_stall <= '0';
               ex_err <= '1';
             end if;
-
 
           elsif (LA_a_var = rd_clr_ev_fifo_a_map) then
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
@@ -1051,11 +1062,9 @@ variable LA_a_var : unsigned (17 downto 2);
               ex_err <= '1';
             end if;
 
-          --when others =>
           else
             ex_stall <= '0';
             ex_err <= '1';
-        --end case;
         end if;
       end if;
     end if;
@@ -1063,23 +1072,23 @@ variable LA_a_var : unsigned (17 downto 2);
 
   
  
-lemo_data_o(1)  <= io_1 when (lemo_event_en(1)='1') else lemo_dat(1);     -- To be compatible with former SCU solution
-lemo_data_o(2)  <= io_2 when (lemo_event_en(2)='1') else lemo_dat(2);     -- which allows 2 event-driven lemo outputs
-lemo_data_o(3)  <= lemo_dat(3);                                           -- This is used in SIO (not event drive-able)
-lemo_data_o(4)  <= lemo_dat(4);                                           -- This is used in SIO (not event drive-able)
+lemo_data_o(1) <= io_1 when (lemo_event_en(1)='1') else lemo_dat(1);   -- To be compatible with former SCU solution
+lemo_data_o(2) <= io_2 when (lemo_event_en(2)='1') else lemo_dat(2);   -- which allows 2 event-driven lemo outputs
+lemo_data_o(3) <= lemo_dat(3);                                         -- This is used in SIO (not event drive-able)
+lemo_data_o(4) <= lemo_dat(4);                                         -- This is used in SIO (not event drive-able)
 
-lemo_out_en_o(1)<= '1' when puls1_frame='1' else lemo_out_en(1);          -- To be compatible with former SCU solution
-lemo_out_en_o(2)<= '1' when puls2_frame='1' else lemo_out_en(2);          -- which allows 2 event-driven lemo outputs
-lemo_out_en_o(3)<= lemo_out_en(3);                                        -- This is used in SIO
-lemo_out_en_o(4)<= lemo_out_en(4);                                        -- This is used in SIO
+lemo_out_en_o(1)<= '1' when puls1_frame='1' else lemo_out_en(1);   -- To be compatible with former SCU solution
+lemo_out_en_o(2)<= '1' when puls2_frame='1' else lemo_out_en(2);   -- which allows 2 event-driven lemo outputs
+lemo_out_en_o(3)<= lemo_out_en(3);                                 -- This is used in SIO
+lemo_out_en_o(4)<= lemo_out_en(4);                                 -- This is used in SIO
 
   
   
 p_every_us: div_n
   generic map (
-    n         => integer(clk_in_hz/1_000_000),  -- KK alle us einen Takt aktiv (ena_every_us * 1000 = 1ms)
-    diag_on   => 0                              -- diag_on = 1 die Breite des Untersetzungzaehlers
-                                                -- mit assert .. note ausgegeben.
+    n         => integer(clk_in_hz/1_000_000), -- KK alle us einen Takt aktiv (ena_every_us * 1000 = 1ms)
+    diag_on   => 0                -- diag_on = 1 die Breite des Untersetzungzaehlers
+                                  -- mit assert .. note ausgegeben.
     )
 
   port map (
@@ -1116,8 +1125,11 @@ p_delay_timer: process (clk_i, nRst_i)
       dly_timer       <= (others => '1');           --to_unsigned(-1, dly_timer'length);
       dly_timer_start := '0';
       dly_intr        <= '0';
+
     elsif rising_edge(clk_i) then
+      
       stall_dly_timer <= '1';
+      
       if ld_dly_timer = '1' then
         stall_dly_timer <= '0';
         dly_intr <= '0';                            -- laden des delay timers setzt delay interrupt zurueck
@@ -1142,6 +1154,7 @@ p_delay_timer: process (clk_i, nRst_i)
   end process p_delay_timer;
   
 dly_intr_o <= dly_intr;
+
 
 p_wait_timer: process (clk_i, nRst_i)
   begin

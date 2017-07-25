@@ -9,7 +9,7 @@ use work.wb_mil_scu_pkg.all;
 use work.genram_pkg.all;  
 
 
-ENTITY wb_mil_scu IS
+
 --+---------------------------------------------------------------------------------------------------------------------------------+
 --| "wb_mil_scu" stellt in Verbindung mit der SCU-Aufsteck-Karte "FG900170_SCU_MIL1" alle Funktionen bereit, die benoetigt werden,  |
 --| um SE-Funktionalitaet mit einer SCU realistieren zu koennen.                                                                    |
@@ -75,6 +75,8 @@ ENTITY wb_mil_scu IS
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
 
 
+
+ENTITY wb_mil_scu IS
 
 generic (
     Clk_in_Hz:  INTEGER := 125_000_000    -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
@@ -155,16 +157,10 @@ port  (
     nLed_Dry:       out     std_logic;
     nLed_Drq:       out     std_logic;
     every_ms_intr_o:  out std_logic;
-	 lemo_data_o:    out     std_logic_vector(4 downto 1);
+    lemo_data_o:    out     std_logic_vector(4 downto 1);
     lemo_nled_o:    out     std_logic_vector(4 downto 1);
-	 lemo_out_en_o:  out     std_logic_vector(4 downto 1);  
+    lemo_out_en_o:  out     std_logic_vector(4 downto 1);  
     lemo_data_i:    in      std_logic_vector(4 downto 1):= (others => '0');
-    --io_1:           buffer  std_logic;
-    --io_1_is_in:     out     std_logic := '0';
-    --nLed_io_1:      out     std_logic;
-    --io_2:           buffer  std_logic;
-    --io_2_is_in:     out     std_logic := '0';
-    --nLed_io_2:      out     std_logic;
     nsig_wb_err:    out     std_logic       -- '0' => gestretchte wishbone access Fehlermeldung
     );
 end wb_mil_scu;
@@ -292,9 +288,9 @@ ena_led_cnt: div_n
   port map (
     res       => '0',
     clk       => clk_i,
-    ena       => open,            -- das untersetzende enable muss in der gleichen ClockdomÃ¤ne erzeugt werden.
+    ena       => open,            -- das untersetzende enable muss in der gleichen Clockdomaene erzeugt werden.
                                   -- Das enable sollte nur ein Takt lang sein.
-                                  -- Z.B. kÃ¶nnte eine weitere div_n-Instanz dieses Signal erzeugen.  
+                                  -- Z.B. koennte eine weitere div_n-Instanz dieses Signal erzeugen.  
     div_o     => ena_led_count    -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
     );
 
@@ -309,9 +305,9 @@ every_1ms_inst: div_n
   port map (
     res       => '0',
     clk       => clk_i,
-    ena       => ena_every_us,    -- das untersetzende enable muss in der gleichen ClockdomÃ¤ne erzeugt werden.
+    ena       => ena_every_us,    -- das untersetzende enable muss in der gleichen Clockdomaene erzeugt werden.
                                   -- Das enable sollte nur ein Takt lang sein.
-                                  -- Z.B. kÃ¶nnte eine weitere div_n-Instanz dieses Signal erzeugen.  
+                                  -- Z.B. koennte eine weitere div_n-Instanz dieses Signal erzeugen.  
     div_o     => every_ms         -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
     );
 
@@ -693,12 +689,14 @@ begin
   
 end process tx_fifo_ctrl;
 
+
 -- Harris HD6408 running with ME_12MHz, mil_trm_rdy may arrive 83ns later. So it is delayed by 13 x 8 ns=104ns by mil_trm_rdy_shreg
 
 
 --kk improving tx performance  end of code section
 ------------------------------------------------------------------------------------------------------------------------------    
-
+    
+    
 --Register section
 
     
@@ -730,23 +728,17 @@ p_regs_acc: process (clk_i, nrst_i)
       sw_clr_ev_timer <= '1';
       ld_dly_timer    <= '0';
       clr_wait_timer  <= '1';
-		
-
-		lemo_out_en      <= (others => '0');	
-		lemo_dat        <= (others => '0');		
-		lemo_i_reg      <= (others => '0');
+      lemo_out_en     <= (others => '0');
+      lemo_dat        <= (others => '0');
+      lemo_i_reg      <= (others => '0');
 
 
       
     elsif rising_edge(clk_i) then
-
-		lemo_i_reg      <= lemo_inp;
- 
-	   
-
-      ex_stall        <= '1';
-      ex_ack          <= '0';
-      ex_err          <= '0';
+      lemo_i_reg        <= lemo_inp;
+      ex_stall          <= '1';
+      ex_ack            <= '0';
+      ex_err            <= '0';
 
       rd_ev_fifo      <= '0';
       clr_ev_fifo     <= '0';
@@ -755,11 +747,11 @@ p_regs_acc: process (clk_i, nrst_i)
 
       clr_no_VW_cnt   <= '0';
       clr_not_equal_cnt <= '0';
-      sw_clr_ev_timer <= '0';
-      ld_dly_timer    <= '0';
-      clr_wait_timer  <= '0';
-      
-      slave_o.dat <= (others => '0');
+      sw_clr_ev_timer   <= '0';
+      ld_dly_timer      <= '0';
+      clr_wait_timer    <= '0';
+      tx_fifo_write_en  <= '0';
+      slave_o.dat       <= (others => '0');
 
       --if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';
       --elsif manchester_fpga = '1' then  mil_trm_start <= '0'; end if;
@@ -785,14 +777,13 @@ p_regs_acc: process (clk_i, nrst_i)
                     tx_fifo_data_in(16)          <= slave_i.adr(2);
                     tx_fifo_data_in(15 downto 0) <= slave_i.dat(15 downto 0);
                     tx_fifo_write_en             <= slave_i.stb and slave_i.we and not slave_i_we_dly;
-
-
-                  ex_stall <= '0';
-                  ex_ack <= '1';
-                else
+                  
+                    ex_stall <= '0';
+                    ex_ack   <= '1';
+                  else
                   -- write to mil not allowed, because tx_fifo is full
-                  ex_stall <= '0';
-                  ex_err <= '1';
+                    ex_stall <= '0';
+                    ex_err   <= '1';
                 end if;
               else
                 -- read low word
@@ -843,7 +834,7 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_stall <= '0';
               ex_err <= '1';
             end if;
-				
+
           when mil_wr_rd_lemo_conf_a =>  -- read or write lemo config register
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
@@ -853,9 +844,9 @@ p_regs_acc: process (clk_i, nrst_i)
                 lemo_out_en(3)       <= slave_i.dat(b_lemo3_out_en);
                 lemo_out_en(4)       <= slave_i.dat(b_lemo4_out_en);
                 lemo_event_en(1)     <= slave_i.dat(b_lemo1_event_en);                                        
-                lemo_event_en(2)     <= slave_i.dat(b_lemo2_event_en); 
-					 lemo_event_en(3)     <= slave_i.dat(b_lemo3_event_en); 
-					 lemo_event_en(4)     <= slave_i.dat(b_lemo4_event_en); 
+                lemo_event_en(2)     <= slave_i.dat(b_lemo2_event_en);
+                lemo_event_en(3)     <= slave_i.dat(b_lemo3_event_en);
+                lemo_event_en(4)     <= slave_i.dat(b_lemo4_event_en);
                 ex_stall <= '0';
                 ex_ack <= '1';
               else
@@ -868,7 +859,7 @@ p_regs_acc: process (clk_i, nrst_i)
               -- access to high word or unaligned word is not allowed
               ex_stall <= '0';
               ex_err <= '1';
-            end if;				
+            end if;
 
           when mil_wr_rd_lemo_dat_a  =>  -- read or write lemo data register
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
@@ -890,8 +881,8 @@ p_regs_acc: process (clk_i, nrst_i)
               -- access to high word or unaligned word is not allowed
               ex_stall <= '0';
               ex_err <= '1';
-            end if;				
-								
+            end if;
+
           when mil_rd_lemo_inp_a  =>  -- read or write lemo input register
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
@@ -908,10 +899,7 @@ p_regs_acc: process (clk_i, nrst_i)
               -- access to high word or unaligned word is not allowed
               ex_stall <= '0';
               ex_err <= '1';
-            end if;				
-												
-				
-				
+            end if;
               
           when rd_clr_no_vw_cnt_a =>  -- read or clear no valid word counters
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
@@ -1034,6 +1022,7 @@ p_regs_acc: process (clk_i, nrst_i)
               ex_stall <= '0';
               ex_err <= '1';
             end if;
+            
 
           when ev_filt_first_a to ev_filt_last_a =>  -- read or write event filter ram 
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
@@ -1070,10 +1059,10 @@ lemo_data_o(2) <= io_2 when (lemo_event_en(2)='1') else lemo_dat(2);   -- which 
 lemo_data_o(3) <= lemo_dat(3);                                         -- This is used in SIO (not event drive-able)
 lemo_data_o(4) <= lemo_dat(4);                                         -- This is used in SIO (not event drive-able)
 
-lemo_out_en_o(1)   <= '1' when puls1_frame='1' else lemo_out_en(1);   -- To be compatible with former SCU solution
-lemo_out_en_o(2)   <= '1' when puls2_frame='1' else lemo_out_en(2);   -- which allows 2 event-driven lemo outputs
-lemo_out_en_o(3)   <= lemo_out_en(3);                                 -- This is used in SIO
-lemo_out_en_o(4)   <= lemo_out_en(4);                                 -- This is used in SIO
+lemo_out_en_o(1)<= '1' when puls1_frame='1' else lemo_out_en(1);   -- To be compatible with former SCU solution
+lemo_out_en_o(2)<= '1' when puls2_frame='1' else lemo_out_en(2);   -- which allows 2 event-driven lemo outputs
+lemo_out_en_o(3)<= lemo_out_en(3);                                 -- This is used in SIO
+lemo_out_en_o(4)<= lemo_out_en(4);                                 -- This is used in SIO
 
   
   
@@ -1092,9 +1081,8 @@ p_every_us: div_n
                                   -- Z.B. koennte eine weitere div_n-Instanz dieses Signal erzeugen.  
     div_o     => ena_every_us     -- Wird nach Erreichen von n-1 fuer einen Takt aktiv.
     );
-
-
-	 
+    
+-- Timer Section
 
 p_ev_timer: process (clk_i, nRst_i)
   begin
@@ -1162,6 +1150,5 @@ p_wait_timer: process (clk_i, nRst_i)
       end if;
     end if;
   end process p_wait_timer;
-
 
 end arch_wb_mil_scu;
