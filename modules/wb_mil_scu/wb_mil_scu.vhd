@@ -250,19 +250,19 @@ signal    io_1:             std_logic;
 signal    io_2:             std_logic;
 
 -----------------------------------------------------------
-signal    tx_fifo_write_en: std_logic;
-signal    tx_fifo_wr_pulse: std_logic;
-signal    tx_fifo_data_in:  std_logic_vector (16 downto 0);
+signal    tx_fifo_write_en  : std_logic;
+signal    tx_fifo_wr_pulse  : std_logic;
+signal    tx_fifo_data_in   : std_logic_vector (16 downto 0);
 
-signal    tx_fifo_read_en:  std_logic;
-signal    tx_fifo_data_out: std_logic_vector (16 downto 0);
+signal    tx_fifo_read_en   : std_logic;
+signal    tx_fifo_data_out  : std_logic_vector (16 downto 0);
 
-signal    tx_fifo_empty:    std_logic;
-signal    tx_fifo_full:     std_logic;
+signal    tx_fifo_empty     : std_logic;
+signal    tx_fifo_full      : std_logic;
 
-signal    slave_i_we_dly:   std_logic;
-signal    slave_i_we_dly2:  std_logic;
-signal    mil_trm_start_dly:std_logic;
+signal    slave_i_we_dly    : std_logic;
+signal    slave_i_stb_dly   : std_logic;
+signal    mil_trm_start_dly : std_logic;
 
 -----------------------------------------------------------
 
@@ -668,6 +668,7 @@ begin
 
     mil_trm_start     <= '0';
     mil_trm_start_dly <= '0';
+    slave_i_stb_dly   <= '0';
   
     
   elsif rising_edge (clk_i) then 
@@ -678,6 +679,7 @@ begin
   
     slave_i_we_dly    <= slave_i.we;
     mil_trm_start_dly <= mil_trm_start;
+    slave_i_stb_dly   <= slave_i.stb;
 
     if tx_fifo_empty = '0' and  mil_trm_rdy = '1' then                
       mil_trm_start   <= '1'; --start tx as long as tx_fifo not empty and mil transmitter is ready
@@ -776,7 +778,7 @@ p_regs_acc: process (clk_i, nrst_i)
 
                     tx_fifo_data_in(16)          <= slave_i.adr(2);
                     tx_fifo_data_in(15 downto 0) <= slave_i.dat(15 downto 0);
-                    tx_fifo_write_en             <= slave_i.stb and slave_i.we and not slave_i_we_dly;
+                    tx_fifo_write_en             <= slave_i.stb and slave_i.we and not slave_i_stb_dly;
                   
                     ex_stall <= '0';
                     ex_ack   <= '1';
