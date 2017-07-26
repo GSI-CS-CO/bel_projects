@@ -44,13 +44,14 @@ class MemUnit {
   HashMap& hashMap;
   
   
-  Graph  gUp;
+  
   vBuf   uploadBmp;
-  AllocTable atUp;
+  Graph&  gUp;
+  AllocTable& atUp;
 
-  Graph gDown;
   vBuf   downloadBmp;
-  AllocTable atDown;
+  Graph& gDown;
+  AllocTable& atDown;
 
   aPool  memPool;
 
@@ -62,9 +63,9 @@ protected:
 public:  
 
 
+// get your own pool and bmps, but use common alloctables and graphs
 
-
-  MemUnit(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t sharedOffs, uint32_t space, HashMap& hm) 
+  MemUnit(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t sharedOffs, uint32_t space, HashMap& hm, Graph& gUp, AllocTable& atUp, Graph& gDown, AllocTable& atDown)
         : cpu(cpu), extBaseAdr(extBaseAdr), intBaseAdr(intBaseAdr), sharedOffs(sharedOffs),
           nodeQty(space / _MEM_BLOCK_SIZE), 
           bmpBits(nodeQty),
@@ -72,10 +73,13 @@ public:
           startOffs(sharedOffs + bmpSize), 
           endOffs(startOffs + (nodeQty * _MEM_BLOCK_SIZE)),
           hashMap(hm),
-          uploadBmp(vBuf(bmpSize)), 
-          downloadBmp(vBuf(bmpSize)) { 
-
-          }
+          uploadBmp(vBuf(bmpSize)),
+          gUp(gUp),
+          atUp(atUp),  
+          downloadBmp(vBuf(bmpSize)),
+          gDown(gDown),
+          atDown(atDown)  
+          {}
   ~MemUnit() { };
 
   Graph& getUpGraph()   {return gUp;}

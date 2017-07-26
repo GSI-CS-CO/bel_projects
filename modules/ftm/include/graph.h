@@ -16,6 +16,7 @@ class Node;
 class  myVertex {
 public:
   std::string name;
+  uint32_t cpu;
   uint32_t hash;
   node_ptr np;
 

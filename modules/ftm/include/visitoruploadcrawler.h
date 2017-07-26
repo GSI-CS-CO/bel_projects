@@ -24,7 +24,9 @@ class DestList;
 
 class VisitorUploadCrawler {
     vertex_t v;
-    MemUnit& mmu;
+    MemUnit& m;
+    Graph& g;
+    AllocTable&     at;
 
     vAdr getDefDst(void)    const;
     vAdr getDynSrc(void)    const;
@@ -35,7 +37,7 @@ class VisitorUploadCrawler {
     vAdr getListDst(void)   const;
 
   public:
-    VisitorUploadCrawler(vertex_t v, MemUnit& mmu)  : v(v), mmu(mmu) {};
+    VisitorUploadCrawler(vertex_t v, MemUnit& m)  : v(v), m(m), g(m.getUpGraph()), at(m.getUpAllocTable()) {};
     ~VisitorUploadCrawler() {};
     virtual void visit(const Block& el) const;
     virtual void visit(const TimingMsg& el) const;

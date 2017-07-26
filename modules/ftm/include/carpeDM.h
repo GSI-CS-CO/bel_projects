@@ -46,8 +46,6 @@ protected:
   std::string outputfilename;
   std::string inputfilename;
 
-  std::vector<MemUnit> vM;
-  std::vector<Graph>  vUp;
   std::vector<int> vFw;
   std::map<uint8_t, uint8_t> cpuIdxMap;
 
@@ -58,6 +56,13 @@ protected:
 
   int cpuQty = -1;
   HashMap hm;
+  AllocTable atUp;
+  Graph gUp;
+  AllocTable atDown;
+  Graph gDown;
+
+  MemUnit comManager;
+
   bool verbose = false;
   std::ostream& sLog;
   std::ostream& sErr;
@@ -72,9 +77,9 @@ protected:
   int write64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr, uint64_t d);
 
 public:
-  CarpeDM() : sLog(std::cout), sErr(std::cerr)  {} 
-  CarpeDM(std::ostream& sLog) : sLog(sLog), sErr(std::cerr)  {} 
-  CarpeDM(std::ostream& sLog, std::ostream& sErr) : sLog(sLog), sErr(sErr)  {}
+  CarpeDM() : sLog(std::cout), sErr(std::cerr), comManager(hm, gUp, atUp, gDown, atDown)  {} 
+  CarpeDM(std::ostream& sLog) : sLog(sLog), sErr(std::cerr), comManager(hm, gUp, atUp, gDown, atDown)   {} 
+  CarpeDM(std::ostream& sLog, std::ostream& sErr) : sLog(sLog), sErr(sErr), comManager(hm, gUp, atUp, gDown, atDown) {}
   ~CarpeDM() {};
 
   //Open connection to a DM via Etherbone
@@ -111,23 +116,25 @@ public:
   int uploadDot(uint8_t cpuIdx, const std::string& fn, bool update) { Graph gTmp; prepareUploadToCpu( parseUpDot(fn, gTmp), cpuIdx, update); return upload(cpuIdx); }
 
   //Process and remove .dot file from LM32 SoC via Etherbone
-  int removeDot(uint8_t cpuIdx, const std::string& fn);
+  int removeDot(const std::string& fn);
 
   int clear(uint8_t cpuIdx);
 
   //Send a command to Block <targetName> on CPU <cpuIdx> via Etherbone
-  int sendCmd(uint8_t cpuIdx, const std::string& targetName, uint8_t cmdPrio, mc_ptr mc); 
+  int sendCmd(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc); 
 
   //TODO NC analysis
 
-  //TODO assign to CPUs/threads
+  //TODO assign a cpu to each node object. Currently taken from input .dot
+  int assignNodesToCpus() {return 0};
+
 
   //Download binary from LM32 SoC and create Graph
   int downloadAndParse(uint8_t cpuIdx);
 
   //Write out processed Download Graph as .dot file
-  void writeDownDot(const std::string& fn, uint8_t cpuIdx, bool filterMeta) { writeDownDot( fn, vM.at(cpuIdxMap.at(cpuIdx)), filterMeta ); }
-  void writeDownDot(const std::string& fn, MemUnit& m, bool filterMeta);
+  void writeDownDot(const std::string& fn, bool filterMeta) { writeDownDot( fn, filterMeta ); }
+  void writeDownDot(const std::string& fn, bool filterMeta);
 
   //Turn on Verbose Output
   void verboseOn()  {verbose = true;}
@@ -142,16 +149,16 @@ public:
   int getCpuQty()   const {return cpuQty;}
 
   //Returns the Upload Graph for CPU <cpuIdx>
-  Graph& getUpGraph(uint8_t cpuIdx)   {return vM.at(cpuIdxMap.at(cpuIdx)).getUpGraph();}
+  Graph& getUpGraph()   {return gUp;}
 
   //Returns the Download Graph for CPU <cpuIdx>
-  Graph& getDownGraph(uint8_t cpuIdx) {return vM.at(cpuIdxMap.at(cpuIdx)).getDownGraph();}
+  Graph& getDownGraph() {return gDown;}
 
   HashMap& getHashMap() {return hm;}
 
-  bool isValid(uint8_t cpuIdx, const uint32_t hash);
+  bool isValid(const uint32_t hash);
 
-  bool isValid(uint8_t cpuIdx, const std::string& name);
+  bool isValid(const std::string& name);
 
   //Returns the external address of a thread's command register area
   uint32_t getThrCmdAdr(uint8_t cpuIdx);
@@ -209,13 +216,13 @@ public:
   void abortThr(uint8_t cpuIdx, uint8_t thrIdx);
 
   //shortcut to obtain a node's address by its name
-  uint32_t getNodeAdr(uint8_t cpuIdx, const std::string& name, bool direction, bool intExt); 
+  uint32_t getNodeAdr(const std::string& name, bool direction, bool intExt); 
 
   //show a CPU's Upload address table
-  void showUp(uint8_t cpuIdx, bool filterMeta) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.show("Upload Table", "upload_dict.txt", UPLOAD, filterMeta);}
+  void showUp(bool filterMeta) {comManager.show("Upload Table", "upload_dict.txt", UPLOAD, filterMeta);}
 
   //show a CPU's Download address table
-  void showDown(uint8_t cpuIdx, bool filterMeta) {MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));  m.show("Download Table", "download_dict.txt", DOWNLOAD, filterMeta);}
+  void showDown(bool filterMeta) {comManager.show("Download Table", "download_dict.txt", DOWNLOAD, filterMeta);}
 
   //Show all command fields in a Queue (past and current)
   void dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio);

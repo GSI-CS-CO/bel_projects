@@ -36,12 +36,10 @@ myVertex::myVertex(myVertex const &src) {
   this->res = src.res;
 
   //Command
-
   this->tValid = src.tValid;
 
 
   // Flush
-
   this->qIl = src.qIl;
   this->qHi = src.qHi;
   this->qLo = src.qLo;

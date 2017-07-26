@@ -387,6 +387,12 @@
 // Prime BS caused by Jutta's "we must know which pattern it belongs to and dont want to use a proper DB lookup".
 // Evil stuff and likely to explode in our faces at some point
 
+//The command is targeting a peer, i.e., target and dest address are inside a peers memory, not inside own
+#define NFLG_CMD_PEER_MSK    0x1
+#define NFLG_CMD_PEER_POS    (NFLG_BITS_SPECIFIC_POS + 0)
+#define NFLG_CMD_PEER_SMSK   (NFLG_CMD_PEER_MSK << NFLG_CMD_PEER_POS)
+
+
 //interprete ID low word as 64b ptr
 #define NFLG_TMSG_DYN_ID_MSK    0x1
 #define NFLG_TMSG_DYN_ID_POS    (NFLG_BITS_SPECIFIC_POS + 0)

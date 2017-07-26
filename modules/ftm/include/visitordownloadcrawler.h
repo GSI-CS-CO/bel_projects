@@ -23,13 +23,18 @@ class CmdQBuffer;
 class DestList;
 
  class VisitorDownloadCrawler {
-    vertex_t v;
-    MemUnit& mmu;
+    vertex_t        v;
+    MemUnit&        m;
+    Graph&          g;
+    AllocTable&     at;
+    uint8_t*        b;
+    const uint8_t&  cpu;
+    uint32_t        tmpAdr;
 
     void setDefDst(void) const;
 
   public:
-    VisitorDownloadCrawler(vertex_t v, MemUnit& mmu)  : v(v), mmu(mmu) {};
+    VisitorDownloadCrawler(vertex_t v, MemUnit& m)  : v(v), m(m), g(m.getDownGraph()), at(m.getDownAllocTable()), b((uint8_t*)&g[v].np->getB()), cpu((uint8_t*)&g[v].np->getCpu()) {};
     ~VisitorDownloadCrawler() {};
     virtual void visit(const Block& el) const;
     virtual void visit(const TimingMsg& el) const;

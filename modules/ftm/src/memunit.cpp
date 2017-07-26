@@ -10,130 +10,45 @@
 #include "visitordownloadcrawler.h"
 
 
-
-  void MemUnit::initMemPool() { 
-    memPool.clear();
-    /*
-    std::cout << "extBaseAdr = 0x" << std::hex << extBaseAdr << " intBaseAdr = 0x" << intBaseAdr << ", nodeQty = " << std::dec << nodeQty 
-    << ", bmpBits = " << bmpBits << ", startOffs = 0x" << std::hex << startOffs << ", endOffs = 0x" << std::hex << endOffs << ", vBufSize = " 
-    << std::dec << uploadBmp.size();
-    */
-    for(uint32_t adr = startOffs; adr < endOffs; adr += _MEM_BLOCK_SIZE) { 
-      //Never issue <baseAddress - (baseAddress + bmpBits -1) >, as this is where Mgmt bitmap vector resides     
-      //std::cout << std::hex << adr << std::endl; 
-      memPool.insert(adr); 
-    }
-
-    //std::cout << " Poolsize " << std::dec << memPool.size() << std::endl;
-  }
-
-  void MemUnit::initMemPoolFromDownloadBMP() {
-    uint32_t nodeAdr;
-    initMemPool(); //init normally, then remove everything already used in download
-    for(unsigned int bitIdx = 0; bitIdx < bmpBits; bitIdx++) {
-      if (downloadBmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {
-        nodeAdr = startOffs + bitIdx * _MEM_BLOCK_SIZE;
-        //std::cout << "Removing 0x" << std::hex << nodeAdr << " from pool" << std::endl;
-        removeChunk(nodeAdr);
-      }
-    }
-  }
-      
-
-
-  bool MemUnit::acquireChunk(uint32_t &adr) {
-    bool ret = true;
-    if ( memPool.empty() ) {
-      ret = false;
-    } else {
-      adr = *(memPool.begin());
-      memPool.erase(adr);
-    }
-    return ret;
-  }
-
-
-  bool MemUnit::freeChunk(uint32_t &adr) {
-    //bool ret = true;
-    uint32_t a = adr - startOffs;
-
-
-
-    if ((a >= endOffs - startOffs) || (a % _MEM_BLOCK_SIZE)) {return false;}
-    if (memPool.count(adr) > 0)  {return false;} //unaligned or attempted double entry, throw exception
-    memPool.insert(adr);
-    return true;
-  }        
-
-  void MemUnit::createUploadBmp() {
-    //awkward initialistion because bmp in bytes can be  > bmpBits / 8
-    for (auto& it : uploadBmp) { 
-      it = 0;
-    }
-    for(uint32_t i=0; i< bmpBits/8; i++) uploadBmp[i] = 0xff;
-    for(uint32_t i=0; i< (bmpBits % 8); i++) {
-      //std::cout << "adding bit " << bmpBits/8 + i << " address 0x" << std::hex << (bmpBits/8 + i) * _MEM_BLOCK_SIZE + startOffs << std::endl; 
-      uploadBmp[bmpBits/8] |= (1 << (7 - (i % 8)));  
-    }
-    /*  
-    std::cout << std::endl << "BMP B4 (size " << uploadBmp.size() << ", bmpSize " << bmpSize << ", bmpBits " << bmpBits << " : ";
-    for(unsigned int bitIdx = 0; bitIdx < bmpSize *8; bitIdx++) {
-      
-      if (uploadBmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {std::cout << "1";}
-      else {std::cout << "0";}
-    }
-    std::cout << std::endl;  
-    */
-
-    //Go through pool and update Bmp
-    for (auto& adr : memPool ) {
-      if( (adr >= startOffs) && (adr <= endOffs)) {
-        int bitIdx = (adr - startOffs) / _MEM_BLOCK_SIZE;
-        uint8_t tmp = ~(1 << (7 - (bitIdx % 8)));
-        //printf("Bidx = %u, bufIdx = %u, val = %x, adr 0x%08x \n", bitIdx, bitIdx / 8 , tmp, adr);
-        
-        uploadBmp[bitIdx / 8] &= tmp;
-      } else {//something's awfully wrong, address out of scope!
-        throw std::runtime_error( std::string("Address ") + std::to_string(adr) + std::string(" is out of range")); return;
-      }
-    }
-    /*
-    std::cout << std::endl << "BMP Up (size " << uploadBmp.size() << ", bmpSize " << bmpSize << ", bmpBits " << bmpBits << " : ";
-    for(unsigned int bitIdx = 0; bitIdx < bmpSize *8; bitIdx++) {
-      
-      if (uploadBmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {std::cout << "1";}
-      else {std::cout << "0";}
-    }
-    std::cout << std::endl;
-    */
-    //vHexDump ("ULBMP", uploadBmp);
-    
-  }
+using namespace MemUnit;
+  
 
  
 
-  vAdr MemUnit::getUploadAdrs() const {
+  vAdr getUploadAdrs() const {
     vAdr ret;
     uint32_t adr;
-    //generate addresses for BMP (continuous)
-    for (adr = adr2extAdr(sharedOffs); adr < adr2extAdr(startOffs); adr += _32b_SIZE_) ret.push_back(adr);
+
+    //prepare Bmps for all memories
+    for(int i = 0; i < atUp.vPool.size(); i++) {
+      //generate addresses for BMP (continuous)
+      for (adr = atUp.adr2extAdr(i, atUp.vPool.sharedOffs); adr < atUp.adr2extAdr(i, atUp.vPool.startOffs); adr += _32b_SIZE_) ret.push_back(adr);
+    }
+
     //generate addresses for nodes (random access)
     for (auto& it : atUp.getTable().get<Adr>()) {
-      for (adr = adr2extAdr(it.adr); adr < adr2extAdr(it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr);
+      for (adr = atUp.adr2extAdr(it.cpu, it.adr); atUp.adr2extAdr(it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr);
     }    
     return ret;
   }
 
-  vBuf MemUnit::getUploadData()  {
+  vBuf getUploadData()  {
     vBuf ret;
     
-    ret.reserve( uploadBmp.size() + atUp.getSize() * _MEM_BLOCK_SIZE); // preallocate memory for BMP and all Nodes
+    bmpSum = 0;
+    for(int i = 0; i < atUp.vPool.size(); i++) { bmpSum += atUp.vPool[i].bmpSize; }
 
-    createUploadBmp();
-    //vHexDump ("ULBMP", uploadBmp, uploadBmp.size());
-
-    ret.insert( ret.end(), uploadBmp.begin(), uploadBmp.end() );
+    ret.reserve( bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE); // preallocate memory for BMPs and all Nodes
+    
+    for(int i = 0; i < atUp.vPool.size(); i++) {
+      
+      atUp.vPool[i].syncBmpToPool(); //sync Bmp to Pool
+      ret.insert( ret.end(), atUp.vPool[i].bmp.begin(), atUp.vPool[i].bmp.end() ); //add Bmp to transfer data
+    }
+   
     //FIXME this is not nice ...see alloctable.h
+    //TODO find out why this isn't nice ...
+
     for (auto& it : atUp.getTable().get<Adr>()) { 
       ret.insert( ret.end(), it.b, it.b + _MEM_BLOCK_SIZE );
     } 
@@ -142,36 +57,40 @@
 
 
   
-
-  const vAdr MemUnit::getDownloadBMPAdrs() const {
+  //Generate download Bmp addresses. For downloads, this has to be two pass: get bmps first, then use them to get the node locations to read 
+  const vAdr getDownloadBMPAdrs() const {
     //easy 1st version: read everything in shared area
     vAdr ret;
-
-    for (uint32_t adr = adr2extAdr(sharedOffs); adr < adr2extAdr(startOffs); adr += _32b_SIZE_) ret.push_back(adr);
-
+     //prepare Bmps for all memories
+    for(int i = 0; i < atDown.vPool.size(); i++) {
+            //generate addresses for BMP (continuous)
+      for (adr = atDown.adr2extAdr(i, atDown.vPool.sharedOffs); adr < atDown.adr2extAdr(i, atDown.vPool.startOffs); adr += _32b_SIZE_) ret.push_back(adr);
+    }
     return ret;
   }
 
     
 
-  const vAdr MemUnit::getDownloadAdrs() const {
+  const vAdr getDownloadAdrs() const {
     vAdr ret;
-
-    for(unsigned int bitIdx = 0; bitIdx < bmpBits; bitIdx++) {
-      if (downloadBmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {
-        uint32_t nodeAdr = startOffs + bitIdx * _MEM_BLOCK_SIZE;
-        //std::cout << "BitIdx " << std::dec << bitIdx << " -> 0x" << std::hex << nodeAdr << std::endl;
-        for (uint32_t adr = adr2extAdr(nodeAdr); adr < adr2extAdr(nodeAdr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {ret.push_back(adr);}
-      }
-    }      
-    
+    //go through all memories
+    for(int i = 0; i < atDown.vPool.size(); i++) {
+      //go through a memory's bmp bits, starting at number of nodes the bmp itself needs (bmpSize / memblocksize). Otherwise, we'd needlessly download the bmp again
+      for(unsigned int bitIdx = atDown.vPool[i].bmpBits / _MEM_BLOCK_SIZE; bitIdx < atDown.vPool[i].bmpBits; bitIdx++) {
+        if (atDown.vPool[i].bmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {
+          uint32_t nodeAdr = atDown.vPool[i].startOffs + bitIdx * _MEM_BLOCK_SIZE;
+          //generate address vector for a node space
+          for (uint32_t adr = atDown.adr2extAdr(nodeAdr); adr < atDown.adr2extAdr(nodeAdr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {ret.push_back(adr);}
+        }
+      }      
+    }
     return ret;
   }  
     
 
 
 
-  void MemUnit::parseDownloadData(vBuf downloadData) {
+  void parseDownloadData(vBuf downloadData) {
     //extract and parse downloadBmp
     atDown.clear();
     gDown.clear();
@@ -208,6 +127,7 @@
         uint32_t flags    = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]);
         //std::cout << "DL Flags 0x" << std::hex << flags << " # 0x"  << hash << std::endl;
         uint32_t type     = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
+        uint8_t cpu       = (flags >> NFLG_CPU_POS) & NFLG_CPU_MSK;
         std::stringstream stream;
         stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << flags;
         std::string tmp(stream.str());
@@ -216,7 +136,7 @@
         //std::cout << "bmpBits " << std::dec << bmpBits << " localAdr: 0x" << std::hex << localAdr << ", adr 0x" << adr << std::endl;
         auto src = downloadData.begin() + localAdr;
 
-        auto* x  = atDown.lookupAdr(adr);
+        auto* x  = atDown.lookupAdr(cpu, adr);
         //FIXME check for NULL ?
         if (x == NULL) {throw std::runtime_error( std::string("Node at (dec) ") + std::to_string(adr) + std::string(", hash (dec) ") + std::to_string(hash) + std::string("not found. This is weird")); return;}
         std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&(x->b[0]));
@@ -272,7 +192,7 @@
     
   }  
 
-  const vAdr MemUnit::getCmdWrAdrs(uint32_t hash, uint8_t prio) const {
+  const vAdr getCmdWrAdrs(uint32_t hash, uint8_t prio) const {
     vAdr ret;  
 
     //find the address corresponding to given name
@@ -296,7 +216,7 @@
     //std::cout << "wrIdx " << (int)wrIdx << " rdIdx " << (int)rdIdx << " ewrIdx " << (int)eWrIdx << " rdIdx " << (int)rdIdx << " eRdIdx " << eRdIdx << std::endl;
     if ((wrIdx == rdIdx) && (eWrIdx != eRdIdx)) {throw std::runtime_error( "Block queue is full, can't write. "); return ret; }
     //lookup Buffer List                                                        
-    auto* pmBl = atDown.lookupAdr(intAdr2adr(blAdr));
+    auto* pmBl = atDown.lookupAdr(x->cpu, atDown.intAdr2adr(x->cpu, blAdr));
 
     if (pmBl == NULL) {throw std::runtime_error( "Could not find target queue in download address table"); return ret;}
 
@@ -321,7 +241,7 @@
   } 
 
 
-  const uint32_t MemUnit::getCmdInc(uint32_t hash, uint8_t prio) const {
+  const uint32_t getCmdInc(uint32_t hash, uint8_t prio) const {
     uint32_t newIdxs;
     uint8_t  eWrIdx;
 
@@ -344,46 +264,12 @@
 
 
 
-  //Allocation functions
-  int MemUnit::allocate(uint32_t hash, vertex_t v) {
-    uint32_t chunkAdr;
-    if (!(acquireChunk(chunkAdr)))         return ALLOC_NO_SPACE;
-    if (!(atUp.insert(chunkAdr, hash, v))) return ALLOC_ENTRY_EXISTS;
-
-    return ALLOC_OK;
-  }
-
-  bool MemUnit::deallocate(uint32_t hash) {
-     /*
-     std::cout << "TableSize3: " << atDown.getSize() << std::endl;
-     std::cout << "Hash 0x" << std::hex << hash << std::endl;
-
-     auto& l = atDown.getTable().get<Hash>();
-    for (auto& it : l)  std::cout << "#Hash 0x" << std::hex << it.hash << std::endl;
-
-    auto it = l.find(hash);
-    if (it != l.end()) std::cout << "Found at 0x" << std::hex << it->adr << std::endl;  
-    */
-    auto* x = atDown.lookupHash(hash);
-
-    if (x == NULL) {
-      //std::cout << "NULL" << std::endl;
-      return false;}
-    if (!(freeChunk(x->adr))) {
-      //std::cout << "Chunk" << std::endl;
-      return false;}
-    if (!(atDown.removeByHash(hash))) {
-      //std::cout << "AT Hash" << std::endl; 
-      return false;}
-    return true;
-    
-
-  }
+  /
 
 
  
 
-  void MemUnit::prepareUpload(Graph& g) {
+  void prepareUpload(Graph& g) {
     std::string cmp;
     uint32_t hash;
 
@@ -458,7 +344,7 @@
         
   }
 
-  void MemUnit::show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta ) {
+  void show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta ) {
 
     Graph& g        = (direction == UPLOAD ? gUp  : gDown);
     AllocTable& at  = (direction == UPLOAD ? atUp : atDown);

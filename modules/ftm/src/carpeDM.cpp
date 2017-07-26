@@ -120,7 +120,8 @@ bool CarpeDM::connect(const std::string& en) {
           vFw.push_back(foundVersion);
           if (expVersion <= foundVersion) {
             cpuIdxMap[cpuIdx] = mappedIdx; 
-            vM.push_back(MemUnit(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR,  SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_, hm));
+              atUp.addMemory(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR, 0x80000000 + myDevs[cpuIdx].sdb_component.addr_first, SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_ );
+            atDown.addMemory(cpuIdx, myDevs[cpuIdx].sdb_component.addr_first, INT_BASE_ADR, 0x80000000 + myDevs[cpuIdx].sdb_component.addr_first, SHARED_OFFS + _SHCTL_END_ , SHARED_SIZE - _SHCTL_END_ );
             mappedIdx++;
           }
            
@@ -224,6 +225,7 @@ bool CarpeDM::connect(const std::string& en) {
     dp.property("name",     gname);
     dp.property("type",     boost::get(&myEdge::type,       g));
     dp.property("node_id",  boost::get(&myVertex::name,     g));
+    dp.property("cpu",      boost::get(&myVertex::cpu,      g));
     dp.property("type",     boost::get(&myVertex::type,     g));
     dp.property("flags",    boost::get(&myVertex::flags,    g));
     dp.property("tPeriod",  boost::get(&myVertex::tPeriod,  g));
@@ -277,34 +279,35 @@ bool CarpeDM::connect(const std::string& en) {
 
   
   bool CarpeDM::prepareUploadToCpu(Graph& g, uint8_t cpuIdx, bool update) {
-    MemUnit& m = vM.at(cpuIdx);
+   
     if(verbose) sLog << "Calculating Upload Binary for CPU #" << cpuIdx << "... ";
     
     // this is the very basic version of a graph update: 
     // create completely disjunct graphs by letting the allocator know
     // which memory on the embedded system is already used
-    if (update) m.initMemPoolFromDownloadBMP();
-    else        m.initMemPool();
+    atUp.clear();
+    if (update) atUp.syncBmps(atDown);
+    else        atUp.clearMemories(); 
 
-    m.prepareUpload(g); 
+    comManager.prepareUpload(g); 
     
-    BOOST_FOREACH( vertex_t v, vertices(m.getUpGraph()) ) {
-      if (update && isValid(cpuIdx, boost::get_property(m.getUpGraph(), boost::graph_name) + "." + m.getUpGraph()[v].name)) {
-        throw std::runtime_error("Node '" + boost::get_property(m.getUpGraph(), boost::graph_name) + "." + m.getUpGraph()[v].name + "' already present on DM.\nThe combination <graphname.nodename> must be unique, duplicates are not allowed."); 
+    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+      if (update && isValid(cpuIdx, boost::get_property(gUp, boost::graph_name) + "." + gUp[v].name)) {
+        throw std::runtime_error("Node '" + boost::get_property(gUp, boost::graph_name) + "." + gUp[v].name + "' already present on DM.\nThe combination <graphname.nodename> must be unique, duplicates are not allowed."); 
       }
 
-      std::string haystack(m.getUpGraph()[v].np->getB(), m.getUpGraph()[v].np->getB() + _MEM_BLOCK_SIZE);
+      std::string haystack(gUp[v].np->getB(), gUp[v].np->getB() + _MEM_BLOCK_SIZE);
       std::size_t n = haystack.find(needle);
 
       bool foundUninitialised = (n != std::string::npos);
 
       if(verbose || foundUninitialised) {
         sLog << std::endl;
-        hexDump(m.getUpGraph()[v].name.c_str(), (void*)haystack.c_str(), _MEM_BLOCK_SIZE);
+        hexDump(gUp[v].name.c_str(), (void*)haystack.c_str(), _MEM_BLOCK_SIZE);
       }
 
       if(foundUninitialised) {
-        throw std::runtime_error("Node '" + m.getUpGraph()[v].name + "'contains uninitialised elements!\nMisspelled/forgot a mandatory property in .dot file ?"); 
+        throw std::runtime_error("Node '" + gUp[v].name + "'contains uninitialised elements!\nMisspelled/forgot a mandatory property in .dot file ?"); 
         return false;
       }  
     }
@@ -314,70 +317,61 @@ bool CarpeDM::connect(const std::string& en) {
     return true;
   }
 
-  int CarpeDM::upload(uint8_t cpuIdx) {
-    if(verbose) sLog << "Uploading to CPU #" << cpuIdx << "... ";
-    MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
-    vBuf vUlD = m.getUploadData();
-    vAdr vUlA = m.getUploadAdrs(); 
+  int CarpeDM::upload() {
+    vBuf vUlD = comManager.getUploadData();
+    vAdr vUlA = comManager.getUploadAdrs(); 
     //Upload
     ebWriteCycle(ebd, vUlA, vUlD);
     if(verbose) sLog << "Done." << std::endl;
     return vUlD.size();
   }
 
-  int CarpeDM::removeDot(uint8_t cpuIdx, const std::string& fn) {
-    MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
+  int CarpeDM::removeDot(const std::string& fn) {
+   
     Graph gTmp, gEmpty;
     parseUpDot(fn, gTmp); 
     uint32_t hash;
 
-    //Necessary?
-    m.getUpGraph().clear();
-    m.initMemPoolFromDownloadBMP();
-
+    //remove all nodes in input file from download allocation table
     try {
       //combine node name and graph name to obtain unique replicable hash
       BOOST_FOREACH( vertex_t v, vertices(gTmp) ) { 
         hash = hm.lookup(boost::get_property(gTmp, boost::graph_name) + "." + gTmp[v].name).get();
-        if (!(m.deallocate(hash))) { if(verbose) {sLog << "Node " << boost::get_property(gTmp, boost::graph_name) + "." + gTmp[v].name << " could not be removed" << std::endl;}}
+        if (!(atDown.deallocate(hash))) { if(verbose) {sLog << "Node " << boost::get_property(gTmp, boost::graph_name) + "." + gTmp[v].name << " could not be removed" << std::endl;}}
       }  
     }  catch (...) {
       //TODO report hash collision and show which names are responsible
       throw;
     }
 
-    //because gUp is empty, upload will only contain uploadBmp
-    return upload(cpuIdx);
+
+    gUp.clear(); //create empty upload allocation table
+    atUp.syncBmps(atDown); //use the bmps of the changed download allocation table for upload
+
+    //because gUp Graph is empty, upload will only contain the reduced upload bmps, effectively deleting nodes
+    return upload();
 
   }
 
-  int CarpeDM::clear(uint8_t cpuIdx) {
-    MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
-   
-    //Necessary?
-    m.getUpGraph().clear();
-    m.initMemPool();
-
-    //because gUp is empty, upload will only contain uploadBmp
-    return upload(cpuIdx);
+  int CarpeDM::clear() {
+    gUp.clear(); //Necessary?
+    atUp.clear();
+    atUp.clearMemories();
+    return upload();
 
   }
 
-  int CarpeDM::sendCmd(uint8_t cpuIdx, const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {
-    MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
-    
-    //problem: graphname should belong to map dot file
-    Graph& g = m.getUpGraph();
-    if(verbose) sLog << "Preparing Command Prio " << cmdPrio << " to Block " << targetName << " on CPU " << std::setfill(' ') << std::setw(2) << std::dec << cpuIdx << "... ";
+  int CarpeDM::sendCmd(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {
+    if(verbose) sLog << "Preparing Command Prio " << cmdPrio << " to Block " << targetName << "... ";
     vBuf vUlD;
     vAdr vUlA;
     uint32_t cmdWrInc, hash;
     uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
 
     try {
-      hash      = hm.lookup(boost::get_property(g, boost::graph_name) + targetName).get(); 
-      vUlA      = m.getCmdWrAdrs(hash, cmdPrio);
-      cmdWrInc  = m.getCmdInc(hash, cmdPrio);
+      hash      = hm.lookup(targetName).get(); 
+      vUlA      = comManager.getCmdWrAdrs(hash, cmdPrio);
+      cmdWrInc  = comManager.getCmdInc(hash, cmdPrio);
       mc->serialise(b);
       writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, cmdWrInc);
       vUlD.insert( vUlD.end(), b, b + _T_CMD_SIZE_ + _32b_SIZE_);
@@ -396,7 +390,7 @@ bool CarpeDM::connect(const std::string& en) {
 
    int CarpeDM::downloadAndParse(uint8_t cpuIdx) {
     
-    MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx)); 
+     
     
     vAdr vDlBmpA;
     vBuf vDlD;
@@ -404,11 +398,11 @@ bool CarpeDM::connect(const std::string& en) {
     //verify firmware version first
     //checkFwVersion(cpuIdx);
     if(verbose) sLog << "Downloading from CPU #" << std::dec << cpuIdx << "... ";
-    vDlBmpA = m.getDownloadBMPAdrs();
-    m.setDownloadBmp(ebReadCycle(ebd, vDlBmpA));
-    vDlD = ebReadCycle(ebd, m.getDownloadAdrs());
+    vDlBmpA = comManager.getDownloadBMPAdrs();
+    comManager.setDownloadBmp(ebReadCycle(ebd, vDlBmpA));
+    vDlD = ebReadCycle(ebd, comManager.getDownloadAdrs());
     if(verbose) sLog << "Done." << std::endl << "Parsing ...";
-    m.parseDownloadData(vDlD);
+    comManager.parseDownloadData(vDlD);
     if(verbose) sLog << "Done." << std::endl;
     return vDlD.size();
   }
@@ -470,14 +464,14 @@ bool CarpeDM::connect(const std::string& en) {
 
 
  //write out dotfile from download graph of a memunit
- void CarpeDM::writeDownDot(const std::string& fn, MemUnit& m, bool filterMeta) {
+ void CarpeDM::writeDownDot(const std::string& fn, bool filterMeta) {
     std::ofstream out(fn);
-    Graph& g = m.getDownGraph();
+    Graph& g = gDown;
 
 
     typedef boost::property_map< Graph, node_ptr myVertex::* >::type NpMap;
 
-    boost::filtered_graph <Graph, boost::keep_all, non_meta<NpMap> > fg(m.getDownGraph(), boost::keep_all(), make_non_meta(boost::get(&myVertex::np, m.getDownGraph())));
+    boost::filtered_graph <Graph, boost::keep_all, non_meta<NpMap> > fg(g, boost::keep_all(), make_non_meta(boost::get(&myVertex::np, g)));
 
     if(out.good()) {
       if (verbose) sLog << "Writing Output File " << fn << "... ";
@@ -505,15 +499,15 @@ bool CarpeDM::connect(const std::string& en) {
  
 
   uint32_t CarpeDM::getNodeAdr(uint8_t cpuIdx, const std::string& name, bool direction, bool intExt) {
-    MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx)); 
-    AllocTable& at = (direction == UPLOAD ? m.getUpAllocTable() : m.getDownAllocTable() );
-    Graph& g = m.getUpGraph();
+     
+    AllocTable& at = (direction == UPLOAD ? atUp : atDown );
+    Graph& g = gUp;
     uint32_t hash;
 
     try {hash = hm.lookup(boost::get_property(g, boost::graph_name) + name).get();} catch (...) {throw;} //just pass it on
     auto* x = at.lookupHash(hash);
     if (x == NULL)  {throw std::runtime_error( "Could not find Node in download address table"); return LM32_NULL_PTR;}
-    else            {return (intExt == INTERNAL ? m.adr2intAdr(x->adr) : m.adr2extAdr(x->adr));}
+    else            {return (intExt == INTERNAL ? at.adr2intAdr(x->cpu, x->adr) : at.adr2extAdr(x->cpu, x->adr));}
   }
 
   //Returns the external address of a thread's command register area
@@ -540,13 +534,13 @@ bool CarpeDM::connect(const std::string& en) {
   //Returns the Node the Thread will start from
   const std::string CarpeDM::getThrOrigin(uint8_t cpuIdx, uint8_t thrIdx) {
      uint32_t adr;
-     MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
+     
      adr = ebReadWord(ebd, getThrInitialNodeAdr(cpuIdx, thrIdx));
 
      if (adr == LM32_NULL_PTR) return "Idle";
 
-     auto* x = m.getDownAllocTable().lookupAdr(m.intAdr2adr(adr));
-     if (x != NULL) return m.getDownGraph()[x->v].name;
+     auto* x = atDown.lookupAdr(cpuIdx, atDown.intAdr2adr(cpuIdx, adr));
+     if (x != NULL) return gDown[x->v].name;
      else           return "Unknown";
   }
 
@@ -554,13 +548,13 @@ bool CarpeDM::connect(const std::string& en) {
 
   const std::string CarpeDM::getThrCursor(uint8_t cpuIdx, uint8_t thrIdx) {
     uint32_t adr;
-    MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
+    
     adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpuIdx, thrIdx));
 
     if (adr == LM32_NULL_PTR) return "Idle";
 
-    auto* x = m.getDownAllocTable().lookupAdr(m.intAdr2adr(adr));
-    if (x != NULL) return m.getDownGraph()[x->v].name;
+    auto* x = atDown.lookupAdr(cpuIdx, atDown.intAdr2adr(cpuIdx, adr));
+    if (x != NULL) return gDown[x->v].name;
     else           return "Unknown";  
   }
 
@@ -577,7 +571,7 @@ bool CarpeDM::connect(const std::string& en) {
   void CarpeDM::inspectHeap(uint8_t cpuIdx) {
     vAdr vRa;
     vBuf heap;
-    MemUnit& m = vM.at(cpuIdxMap.at(cpuIdx));
+    
 
     uint32_t baseAdr = myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS;
     uint32_t heapAdr = baseAdr + SHCTL_HEAP;
@@ -594,7 +588,7 @@ bool CarpeDM::connect(const std::string& en) {
 
     for(int i=0; i<_THR_QTY_; i++) {
 
-      uint8_t thrIdx = (writeBeBytesToLeNumber<uint32_t>((uint8_t*)&heap[i * _PTR_SIZE_])  - m.extAdr2intAdr(thrAdr)) / _T_TD_SIZE_;
+      uint8_t thrIdx = (writeBeBytesToLeNumber<uint32_t>((uint8_t*)&heap[i * _PTR_SIZE_])  - atDown.extAdr2intAdr(cpuIdx, thrAdr)) / _T_TD_SIZE_;
       sLog << std::dec << std::setfill(' ') << std::setw(4) << i << std::setfill(' ') << std::setw(8) << (int)thrIdx  
       << std::setfill(' ') << std::setw(21) << getThrDeadline(cpuIdx, thrIdx)   << std::setfill(' ') << std::setw(21) 
       << getThrOrigin(cpuIdx, thrIdx)  << std::setfill(' ') << std::setw(21) << getThrCursor(cpuIdx, thrIdx) << std::endl;
@@ -638,8 +632,8 @@ bool CarpeDM::connect(const std::string& en) {
   }
 
   void CarpeDM::dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio) {
-    MemUnit& m  = vM.at(cpuIdxMap.at(cpuIdx));
-    Graph& g    = m.getUpGraph();
+    
+    Graph& g    = gUp;
 
     uint64_t vTime, wTime;     
     uint32_t type, qty, prio, flPrio, flMode, act, dest;// flRngHiLo, flRngIl;
@@ -650,7 +644,7 @@ bool CarpeDM::connect(const std::string& en) {
     boost::optional<std::string> name; 
     
     //FIXME the safeguards for the maps are total crap. Include some decent checks, not everything is worth an exception!!!
-    auto* block = m.getDownAllocTable().lookupHash(hm.lookup(boost::get_property(g, boost::graph_name) + blockName).get());
+    auto* block = atDown.lookupHash(hm.lookup(blockName).get());
     sLog << std::endl;
 
     sLog << "     IlHiLo" << std::endl;
@@ -663,7 +657,7 @@ bool CarpeDM::connect(const std::string& en) {
     //Get Buffer List of requested priority
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) { if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == sQM[cmdPrio]) {found = true; break;} }
     if (!(found)) {throw std::runtime_error("Block " + blockName + " does not have a " + sPrio[cmdPrio] + " queue"); return;}            
-    auto* bufList = m.getDownAllocTable().lookupVertex(target(*out_cur,g));    
+    auto* bufList = atDown.lookupVertex(target(*out_cur,g));    
     if (bufList == NULL) {return;}
     
 
@@ -708,7 +702,7 @@ bool CarpeDM::connect(const std::string& en) {
           case ACT_TYPE_NOOP  : break;
           case ACT_TYPE_FLOW  : sLog << "Destination: ";
                                 try { 
-                                  auto* y = m.getDownAllocTable().lookupAdr(m.intAdr2adr(dest));
+                                  auto* y = atDown.lookupAdr(cpuIdx, atDown.intAdr2adr(cpuIdx, dest));
                                   if(y != NULL) name = hm.lookup(y->hash);
                                   else name = "INVALID"; 
                                 } catch (...) {throw; name = "INVALID";}
@@ -724,11 +718,11 @@ bool CarpeDM::connect(const std::string& en) {
   }      
 
 void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
-  MemUnit& m  = vM.at(cpuIdxMap.at(cpuIdx));
-  Graph& g = m.getUpGraph();
+  
+  Graph& g = gUp;
   try {
-    auto* n = m.getDownAllocTable().lookupHash(hm.lookup(boost::get_property(g, boost::graph_name) + name).get());  
-    hexDump(m.getDownGraph()[n->v].name.c_str(), n->b, _MEM_BLOCK_SIZE); 
+    auto* n = atDown.lookupHash(hm.lookup(boost::get_property(g, boost::graph_name) + name).get());  
+    hexDump(gDown[n->v].name.c_str(), n->b, _MEM_BLOCK_SIZE); 
   } catch (...) {throw;}
 }
 
@@ -771,7 +765,7 @@ uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
  
 
  //Reads and returns a 64 bit word from DM
-uint64_t CarpeDM::read64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr) {
+uint64_t CarpeDM::read64b(uint32_t startAdr) {
   vAdr vA({startAdr + 0, startAdr + _32b_SIZE_});
   vBuf vD = ebReadCycle(ebd, vA);
   uint8_t* b = &vD[0];
@@ -779,7 +773,7 @@ uint64_t CarpeDM::read64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr) {
   return writeBeBytesToLeNumber<uint64_t>(b); 
 }
 
-int CarpeDM::write64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr, uint64_t d) {
+int CarpeDM::write64b(uint32_t startAdr, uint64_t d) {
   uint8_t b[_TS_SIZE_];
   writeLeNumberToBeBytes(b, d);
   vAdr vA({startAdr + 0, startAdr + _32b_SIZE_});
@@ -791,13 +785,13 @@ int CarpeDM::write64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr, uint64_
 
 
 //Returns if a hash / nodename is present on DM
-  bool CarpeDM::isValid(uint8_t cpuIdx, const uint32_t hash)  {
-    MemUnit& m  = vM.at(cpuIdxMap.at(cpuIdx));
-    if (m.getDownAllocTable().lookupHash(hash) != NULL) return true;
+  bool CarpeDM::isValid(const uint32_t hash)  {
+
+    if (atDown.lookupHash(hash) != NULL) return true;
     else return false;
   }
 
-  bool CarpeDM::isValid(uint8_t cpuIdx, const std::string& name) {
+  bool CarpeDM::isValid(const std::string& name) {
     if (!(hm.contains(name))) return false;
-    return isValid(cpuIdx, hm.lookup(name).get());
+    return isValid(hm.lookup(name).get());
   }  
