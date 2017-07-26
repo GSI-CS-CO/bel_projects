@@ -746,6 +746,20 @@ void sw_irq_handler(unsigned int adr, unsigned int msg) {
   }
 }
 
+int is_active_sio(unsigned int sio_slave_nr) {
+  int i, slot;
+  for (i = 0; i < MAX_FG_CHANNELS; i++) {
+    if (fg_regs[i].state > 0) {
+      slot = fg_macros[fg_regs[i].macro_number] >> 24;
+      /* is sio and has active fgs */
+      if(((slot & 0xf) == sio_slave_nr ) && (slot & DEV_SIO)) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
+
 int main(void) {
   int i, mb_slot;
   sdb_location found_sdb[20];
@@ -803,58 +817,37 @@ int main(void) {
   unsigned short status;
 
   while(1) {
+    /*
     // check if channels have been stopped
-    msDelayBig(1000);
     status_mil(scu_mil_base, &status);
     if (status & MIL_DATA_REQ_INTR) {
-      irq_disable();
-      dev_bus_irq_handle();
-      irq_enable();
-    }
-    scub_status_mil(scub_base, 2, &status);
-    if (status & MIL_DATA_REQ_INTR) {
       msDelayBig(4000);
       // does it still signal after 4ms?
-      scub_status_mil(scub_base, 2, &status);
-      if (status & MIL_DATA_REQ_INTR) { 
+      status_mil(scu_mil_base, &status);
+      if (status & MIL_DATA_REQ_INTR) {
         irq_disable();
-        dev_sio_irq(2);
+        dev_bus_irq_handle();
         irq_enable();
       }
     }
-    scub_status_mil(scub_base, 10, &status);
-    if (status & MIL_DATA_REQ_INTR) {
-      msDelayBig(4000);
-      // does it still signal after 4ms?
-      scub_status_mil(scub_base, 10, &status);
-      if (status & MIL_DATA_REQ_INTR) { 
-        irq_disable();
-        dev_sio_irq(10);
-        irq_enable();
+
+
+    for (i = 1; i <= MAX_SCU_SLAVES; i++) {
+      if (is_active_sio(i)) {
+        scub_status_mil(scub_base, i, &status);
+        if (status & MIL_DATA_REQ_INTR) {
+          msDelayBig(4000);
+          // does it still signal after 4ms?
+          scub_status_mil(scub_base, i, &status);
+          if (status & MIL_DATA_REQ_INTR) { 
+            irq_disable();
+            dev_sio_irq(i);
+            irq_enable();
+          }
+        }
       }
     }
-    scub_status_mil(scub_base, 4, &status);
-    if (status & MIL_DATA_REQ_INTR) {
-      msDelayBig(4000);
-      // does it still signal after 4ms?
-      scub_status_mil(scub_base, 4, &status);
-      if (status & MIL_DATA_REQ_INTR) { 
-        irq_disable();
-        dev_sio_irq(4);
-        irq_enable();
-      }
-    }
-    scub_status_mil(scub_base, 12, &status);
-    if (status & MIL_DATA_REQ_INTR) {
-      msDelayBig(4000);
-      // does it still signal after 4ms?
-      scub_status_mil(scub_base, 12, &status);
-      if (status & MIL_DATA_REQ_INTR) { 
-        irq_disable();
-        dev_sio_irq(12);
-        irq_enable();
-      }
-    }
+    */
   }
 
   return(0);
