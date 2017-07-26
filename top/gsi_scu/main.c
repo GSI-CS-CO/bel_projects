@@ -561,7 +561,7 @@ int configure_fg_macro(int channel) {
       short data;
       //if ((status = read_mil(scu_mil_base, &data, FC_CNTRL_RD | dev)) != OKAY)                       dev_failure (status, 0);
       // enable and end block mode
-      if ((status = write_mil(scu_mil_base, 0xffff & data | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, 0);
+      if ((status = write_mil(scu_mil_base, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, 0);
 
     } else if (slot & DEV_SIO) {
       short data;
