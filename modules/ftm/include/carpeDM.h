@@ -126,14 +126,13 @@ public:
   //TODO NC analysis
 
   //TODO assign a cpu to each node object. Currently taken from input .dot
-  int assignNodesToCpus() {return 0};
+  int assignNodesToCpus() {return 0;};
 
 
   //Download binary from LM32 SoC and create Graph
   int downloadAndParse(uint8_t cpuIdx);
 
   //Write out processed Download Graph as .dot file
-  void writeDownDot(const std::string& fn, bool filterMeta) { writeDownDot( fn, filterMeta ); }
   void writeDownDot(const std::string& fn, bool filterMeta);
 
   //Turn on Verbose Output
@@ -230,7 +229,7 @@ public:
   //hex dump a node
   void dumpNode(uint8_t cpuIdx, const std::string& name);
 
-  bool isCpuIdxValid(uint8_t cpuIdx) { if (( cpuIdxMap.find(cpuIdx) != cpuIdxMap.end() ) && (cpuIdxMap.at(cpuIdx) < vM.size()) ) return true; else return false;}
+  bool isCpuIdxValid(uint8_t cpuIdx) { if ( cpuIdxMap.find(cpuIdx) != cpuIdxMap.end() ) return true; else return false;}
 
   void showCpuList();
 };

@@ -10,46 +10,46 @@
 #include "visitordownloadcrawler.h"
 
 
-using namespace MemUnit;
+
   
 
  
 
-  vAdr getUploadAdrs() const {
+  vAdr MemUnit::getUploadAdrs() const {
     vAdr ret;
     uint32_t adr;
 
     //prepare Bmps for all memories
-    for(int i = 0; i < atUp.vPool.size(); i++) {
+    for(int i = 0; i < atUp.getMemories().size(); i++) {
       //generate addresses for BMP (continuous)
-      for (adr = atUp.adr2extAdr(i, atUp.vPool.sharedOffs); adr < atUp.adr2extAdr(i, atUp.vPool.startOffs); adr += _32b_SIZE_) ret.push_back(adr);
+      for (adr = atUp.adr2extAdr(i, atUp.getMemories()[i].sharedOffs); adr < atUp.adr2extAdr(i, atUp.getMemories()[i].startOffs); adr += _32b_SIZE_) ret.push_back(adr);
     }
 
     //generate addresses for nodes (random access)
-    for (auto& it : atUp.getTable().get<Adr>()) {
+    for (auto& it : atUp.getTable().get<Hash>()) {
       for (adr = atUp.adr2extAdr(it.cpu, it.adr); atUp.adr2extAdr(it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr);
     }    
     return ret;
   }
 
-  vBuf getUploadData()  {
+  vBuf MemUnit::getUploadData()  {
     vBuf ret;
     
-    bmpSum = 0;
-    for(int i = 0; i < atUp.vPool.size(); i++) { bmpSum += atUp.vPool[i].bmpSize; }
+    size_t bmpSum = 0;
+    for(int i = 0; i < atUp.getMemories().size(); i++) { bmpSum += atUp.getMemories()[i].bmpSize; }
 
     ret.reserve( bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE); // preallocate memory for BMPs and all Nodes
     
-    for(int i = 0; i < atUp.vPool.size(); i++) {
+    for(int i = 0; i < atUp.getMemories().size(); i++) {
       
-      atUp.vPool[i].syncBmpToPool(); //sync Bmp to Pool
-      ret.insert( ret.end(), atUp.vPool[i].bmp.begin(), atUp.vPool[i].bmp.end() ); //add Bmp to transfer data
+      atUp.getMemories()[i].syncBmpToPool(); //sync Bmp to Pool
+      ret.insert( ret.end(), atUp.getMemories()[i].getBmp().begin(), atUp.getMemories()[i].getBmp().end() ); //add Bmp to transfer data
     }
    
     //FIXME this is not nice ...see alloctable.h
     //TODO find out why this isn't nice ...
 
-    for (auto& it : atUp.getTable().get<Adr>()) { 
+    for (auto& it : atUp.getTable().get<Hash>()) { 
       ret.insert( ret.end(), it.b, it.b + _MEM_BLOCK_SIZE );
     } 
     return ret;
@@ -58,29 +58,29 @@ using namespace MemUnit;
 
   
   //Generate download Bmp addresses. For downloads, this has to be two pass: get bmps first, then use them to get the node locations to read 
-  const vAdr getDownloadBMPAdrs() const {
+  const vAdr MemUnit::getDownloadBMPAdrs() const {
     //easy 1st version: read everything in shared area
     vAdr ret;
      //prepare Bmps for all memories
-    for(int i = 0; i < atDown.vPool.size(); i++) {
+    for(int i = 0; i < atDown.getMemories().size(); i++) {
             //generate addresses for BMP (continuous)
-      for (adr = atDown.adr2extAdr(i, atDown.vPool.sharedOffs); adr < atDown.adr2extAdr(i, atDown.vPool.startOffs); adr += _32b_SIZE_) ret.push_back(adr);
+      for (uint32_t adr = atDown.adr2extAdr(i, atDown.getMemories()[i].sharedOffs); adr < atDown.adr2extAdr(i, atDown.getMemories()[i].startOffs); adr += _32b_SIZE_) ret.push_back(adr);
     }
     return ret;
   }
 
     
 
-  const vAdr getDownloadAdrs() const {
+  const vAdr MemUnit::getDownloadAdrs() const {
     vAdr ret;
     //go through all memories
-    for(int i = 0; i < atDown.vPool.size(); i++) {
+    for(int i = 0; i < atDown.getMemories().size(); i++) {
       //go through a memory's bmp bits, starting at number of nodes the bmp itself needs (bmpSize / memblocksize). Otherwise, we'd needlessly download the bmp again
-      for(unsigned int bitIdx = atDown.vPool[i].bmpBits / _MEM_BLOCK_SIZE; bitIdx < atDown.vPool[i].bmpBits; bitIdx++) {
-        if (atDown.vPool[i].bmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {
-          uint32_t nodeAdr = atDown.vPool[i].startOffs + bitIdx * _MEM_BLOCK_SIZE;
+      for(unsigned int bitIdx = atDown.getMemories()[i].bmpBits / _MEM_BLOCK_SIZE; bitIdx < atDown.getMemories()[i].bmpBits; bitIdx++) {
+        if (atDown.getMemories()[i].getBmp()[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {
+          uint32_t nodeAdr = atDown.getMemories()[i].startOffs + bitIdx * _MEM_BLOCK_SIZE;
           //generate address vector for a node space
-          for (uint32_t adr = atDown.adr2extAdr(nodeAdr); adr < atDown.adr2extAdr(nodeAdr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {ret.push_back(adr);}
+          for (uint32_t adr = atDown.adr2extAdr(i, nodeAdr); adr < atDown.adr2extAdr(i, nodeAdr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {ret.push_back(adr);}
         }
       }      
     }
@@ -90,7 +90,7 @@ using namespace MemUnit;
 
 
 
-  void parseDownloadData(vBuf downloadData) {
+  void MemUnit::parseDownloadData(vBuf downloadData) {
     //extract and parse downloadBmp
     atDown.clear();
     gDown.clear();
@@ -132,7 +132,7 @@ using namespace MemUnit;
         stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << flags;
         std::string tmp(stream.str());
         vertex_t v        = boost::add_vertex(myVertex(std::string(*std::forward<boost::optional<std::string>>(name)), hash, NULL, "", tmp), gDown);
-        if (!(atDown.insert(adr, hash, v))) {throw std::runtime_error( std::string("Hash or address collision when adding node ") + std::string(*std::forward<boost::optional<std::string>>(name)) + std::string(", hash (dec) ") + std::to_string(hash) + std::string(". Check if you tried to add the same .dot more than once?")); return;};
+        if (!(atDown.insert(cpu, adr, hash, v))) {throw std::runtime_error( std::string("Hash or address collision when adding node ") + std::string(*std::forward<boost::optional<std::string>>(name)) + std::string(", hash (dec) ") + std::to_string(hash) + std::string(". Check if you tried to add the same .dot more than once?")); return;};
         //std::cout << "bmpBits " << std::dec << bmpBits << " localAdr: 0x" << std::hex << localAdr << ", adr 0x" << adr << std::endl;
         auto src = downloadData.begin() + localAdr;
 
@@ -173,26 +173,26 @@ using namespace MemUnit;
     // create edges
 
     //first, iterate all non meta-types to establish block -> dstList parenthood
-    for(auto& it : atDown.getTable().get<Adr>()) {
+    for(auto& it : atDown.getTable().get<Hash>()) {
       // handled by visitor
       if (gDown[it.v].np == NULL) {throw std::runtime_error( std::string("Node ") + gDown[it.v].name + std::string("not initialised")); return;
       } else {
-        if  (!(gDown[it.v].np->isMeta())) gDown[it.v].np->accept(VisitorDownloadCrawler(it.v, *this));
+        if  (!(gDown[it.v].np->isMeta())) gDown[it.v].np->accept(VisitorDownloadCrawler(it.cpu, it.v, *this));
       }  
     }
     //second, iterate all meta-types
-    for(auto& it : atDown.getTable().get<Adr>()) {
+    for(auto& it : atDown.getTable().get<Hash>()) {
       // handled by visitor
       if (gDown[it.v].np == NULL) {throw std::runtime_error( std::string("Node ") + gDown[it.v].name + std::string("not initialised")); return; 
       } else {
-        if  (gDown[it.v].np->isMeta()) gDown[it.v].np->accept(VisitorDownloadCrawler(it.v, *this));
+        if  (gDown[it.v].np->isMeta()) gDown[it.v].np->accept(VisitorDownloadCrawler(it.cpu, it.v, *this));
       }  
     }
 
     
   }  
 
-  const vAdr getCmdWrAdrs(uint32_t hash, uint8_t prio) const {
+  const vAdr MemUnit::getCmdWrAdrs(uint32_t hash, uint8_t prio) const {
     vAdr ret;  
 
     //find the address corresponding to given name
@@ -241,7 +241,7 @@ using namespace MemUnit;
   } 
 
 
-  const uint32_t getCmdInc(uint32_t hash, uint8_t prio) const {
+  const uint32_t MemUnit::getCmdInc(uint32_t hash, uint8_t prio) const {
     uint32_t newIdxs;
     uint8_t  eWrIdx;
 
@@ -262,14 +262,9 @@ using namespace MemUnit;
 
 
 
-
-
-  /
-
-
  
 
-  void prepareUpload(Graph& g) {
+  void MemUnit::prepareUpload(Graph& g) {
     std::string cmp;
     uint32_t hash;
 
@@ -344,7 +339,7 @@ using namespace MemUnit;
         
   }
 
-  void show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta ) {
+  void MemUnit::show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta ) {
 
     Graph& g        = (direction == UPLOAD ? gUp  : gDown);
     AllocTable& at  = (direction == UPLOAD ? atUp : atDown);

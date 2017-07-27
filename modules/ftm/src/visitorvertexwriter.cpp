@@ -5,20 +5,20 @@
 #include "meta.h"
 #include "event.h"
 
-using namespace VisitorVertexWriter;
 
-void eventString(const Event& el) const {
+
+void VisitorVertexWriter::eventString(const Event& el) const {
   out << " [shape=\"oval\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
   else out << ", fillcolor=\"white\"";
   out << ", tOffs=" <<  std::dec << el.getTOffs() << ", flags=\"0x" << std::hex << el.getFlags();
 }
 
-void commandString(const Command& el) const {
+void VisitorVertexWriter::commandString(const Command& el) const {
   out << ", tValid=" <<  std::dec << el.getTValid();
 }
 
-void visit(const Block& el) const  { 
+void VisitorVertexWriter::visit(const Block& el) const  { 
   out << " [type=\"Block\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
   else out << ", fillcolor=\"white\"";
@@ -26,7 +26,7 @@ void visit(const Block& el) const  {
   out << "]";
 }
 
-void visit(const TimingMsg& el) const {
+void VisitorVertexWriter::visit(const TimingMsg& el) const {
   eventString((Event&)el);
   out << "\", type=\"TMsg\", color=\"black\"";
   out << ", id=\"0x" << std::hex << el.getId();
@@ -36,7 +36,7 @@ void visit(const TimingMsg& el) const {
   out << "\"]";
 }
 
-void visit(const Noop& el) const { 
+void VisitorVertexWriter::visit(const Noop& el) const { 
   eventString((Event&)el);
   out << "\", type=\"Noop\", color=\"pink\"";
   commandString((Command&) el);
@@ -44,7 +44,7 @@ void visit(const Noop& el) const {
   out << "]";
 }
 
-void visit(const Flow& el) const  { 
+void VisitorVertexWriter::visit(const Flow& el) const  { 
   eventString((Event&)el);
   out << "\", type=\"Flow\", color=\"magenta\"";
   commandString((Command&) el);
@@ -52,7 +52,7 @@ void visit(const Flow& el) const  {
   out << "]";
 }
 
-void visit(const Flush& el) const { 
+void VisitorVertexWriter::visit(const Flush& el) const { 
   eventString((Event&)el);
   out << "\", type=\"Flush\", color=\"red\"";
   commandString((Command&) el);
@@ -60,7 +60,7 @@ void visit(const Flush& el) const {
   out << "]";
 }
 
-void visit(const Wait& el) const {
+void VisitorVertexWriter::visit(const Wait& el) const {
   out << " [shape=\"oval\"";
   if(el.isPainted()) out << ", color=\"green\"";
   else out << ", fillcolor=\"white\"";
@@ -68,7 +68,7 @@ void visit(const Wait& el) const {
   out << "\"]";
 }
 
-void visit(const CmdQMeta& el) const {
+void VisitorVertexWriter::visit(const CmdQMeta& el) const {
   out << " [type=\"QInfo\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
   else out << ", fillcolor=\"white\"";
@@ -76,7 +76,7 @@ void visit(const CmdQMeta& el) const {
   out << "\"]";
 }
 
-void visit(const CmdQBuffer& el) const {
+void VisitorVertexWriter::visit(const CmdQBuffer& el) const {
   out << " [type=\"QBuf\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
   else out << ", fillcolor=\"white\"";
@@ -84,7 +84,7 @@ void visit(const CmdQBuffer& el) const {
   out << "\"]";
 }
 
-void visit(const DestList& el) const {
+void VisitorVertexWriter::visit(const DestList& el) const {
   out << " [type=\"ListDst\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
   else out << ", fillcolor=\"white\"";

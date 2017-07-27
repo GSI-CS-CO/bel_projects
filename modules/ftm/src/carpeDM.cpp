@@ -102,7 +102,12 @@ bool CarpeDM::connect(const std::string& en) {
 
     if (expVersion <= 0) {throw std::runtime_error("Bad required minimum firmware version string received from Makefile"); return false;}
 
-    vM.clear();
+    atUp.clear();
+    atUp.removeMemories();
+    gUp.clear();
+    atDown.clear();
+    atDown.removeMemories();
+    gDown.clear();
     cpuIdxMap.clear();
     vFw.clear();
 
