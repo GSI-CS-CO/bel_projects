@@ -65,15 +65,24 @@ use work.genram_pkg.all;
 --|         |             |             |        auf den entsprechenden LEMO Ausgang übertragen.                                    |
 --|         |             |             |    Jeder Lemo Buchse sind eigene Bits zugeordnet, sie sind somit einzeln ansteuerbar.     |      
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
---|   08    | K.Kaiser    | 10.07.2017  |    Fifo (3x16bit) in Senderichtung puffert nun Sendedaten, damit nicht auf                |
---|         |             |             |    mil_trm_rdy gewartet werden muss. Soll performancesteigernd für LM32 wirken            |
+--|   08    | K.Kaiser    | 10.07.2017  |    tx_fifo (1024x17) in Senderichtung puffert nun Sendedaten, damit nicht auf             |
+--|         |             |             |    mil_trm_rdy gewartet werden muss. Wirkt performancesteigernd DevBus FG Param-transfers |
 --|         |             |             |    p_regs_acc wird hierfür geändert.                                                      |
---|         |             |             |    Ausserdem wurde Interrupts aus Standardisierungsgründen umsortiert:                    | 
+--|         |             |             |    Todo:Interrupts aus Standardisierungsgründen auf SIO3 Topebene umsortieren:            | 
 --|         |             |             |    every_ms_intr_o Pos 1-->Pos7                                                           |
 --|         |             |             |    clk_switch_intr Pos14-->Pos1                                                           |
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
-
-
+--|   09    | K.Kaiser    | 25.7.2017   |    8 TX Register für Read Tasks und 8 korrespondierende RX Register hinzu                 |
+--|         |             |             |    Diese werden von einem Scheduler in Round-Robin first-come-first-serve bedient         |
+--|         |             |             |    Status avail Bits zeigen zunächst mit 0x00 "alle Taskregister leer" an.                 |
+--|         |             |             |    Wird ein Task Register mit einem Funktionscode beschrieben, sendet es einen Request    |
+--|         |             |             |    an den Scheduler. Dieser transferiert den Funktionscode, sobald der DevBus frei ist,   |
+--|         |             |             |    an das TX Register und erwartet die Antwort des DevBus Slaves.                         |
+--|         |             |             |    Wird das Datum richtig empfangen, wird kein Error Bit gesetzt.                         |
+--|         |             |             |    Kommt es zum Parityfehler oder Timeout, wird ein Error Bit (Bit 17 Datenreg) gesetzt   |
+--|         |             |             |    Aufgrund des Errorbits wird beim Auslesen des Datenregisters kein DTACK gegeben.       |
+--|         |             |             |    Wurden Tasks durch Empfangen bzw Timeout beendet, wird das availbit zurückgenommen.     |
+--| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
 
 
 ENTITY wb_mil_sio IS
@@ -82,7 +91,7 @@ generic (
     Clk_in_Hz:  INTEGER := 125_000_000;   -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
                                           -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
     sio_mil_first_reg_a:    unsigned(15 downto 0)  := x"0400";
-    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0411";
+    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0440";
     evt_filt_first_a:       unsigned(15 downto 0)  := x"1000";
     evt_filt_last_a:        unsigned(15 downto 0)  := x"1FFF"
     );
@@ -172,8 +181,9 @@ end wb_mil_sio;
 
 ARCHITECTURE arch_wb_mil_sio OF wb_mil_sio IS 
 
-constant mil_rd_wr_data_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + mil_rd_wr_data_a;
-constant mil_wr_cmd_a_map:          unsigned (15 downto 0) := sio_mil_first_reg_a + mil_wr_cmd_a;
+constant mil_rd_wr_data_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + mil_rd_wr_data_a;   --not used  for reads anymore, use task registers therefore.
+                                                                                                        --this address writes data to tx_fifo for block transfers
+constant mil_wr_cmd_a_map:          unsigned (15 downto 0) := sio_mil_first_reg_a + mil_wr_cmd_a;       --this address writes cmds to tx_fifo for block transfers
 constant mil_wr_rd_status_a_map:    unsigned (15 downto 0) := sio_mil_first_reg_a + mil_wr_rd_status_a;
 constant rd_clr_no_vw_cnt_a_map:    unsigned (15 downto 0) := sio_mil_first_reg_a + rd_clr_no_vw_cnt_a;
 constant rd_wr_not_eq_cnt_a_map:    unsigned (15 downto 0) := sio_mil_first_reg_a + rd_wr_not_eq_cnt_a;
@@ -185,7 +195,28 @@ constant mil_wr_rd_lemo_conf_a_map: unsigned (15 downto 0) := sio_mil_first_reg_
 constant mil_wr_rd_lemo_dat_a_map:  unsigned (15 downto 0) := sio_mil_first_reg_a + mil_wr_rd_lemo_dat_a;
 constant mil_rd_lemo_inp_a_map:     unsigned (15 downto 0) := sio_mil_first_reg_a + mil_rd_lemo_inp_a;
 
+-- kk start
+constant wr_tx_taskreg0_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + wr_tx_taskreg0_a; --to write tx task function codes,   bit[31..16] don't care 
+constant wr_tx_taskreg1_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + wr_tx_taskreg1_a;
+constant wr_tx_taskreg2_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + wr_tx_taskreg2_a;
+constant wr_tx_taskreg3_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + wr_tx_taskreg3_a;
+constant wr_tx_taskreg4_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + wr_tx_taskreg4_a;
+constant wr_tx_taskreg5_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + wr_tx_taskreg5_a;
+constant wr_tx_taskreg6_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + wr_tx_taskreg6_a;
+constant wr_tx_taskreg7_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + wr_tx_taskreg7_a;
 
+constant rd_rx_taskreg0_a_map:       unsigned (15 downto 0) := sio_mil_first_reg_a + rd_rx_taskreg0_a; --to read corresponding rx task word, bit[31..16] don't care
+constant rd_rx_taskreg1_a_map:       unsigned (15 downto 0) := sio_mil_first_reg_a + rd_rx_taskreg1_a;
+constant rd_rx_taskreg2_a_map:       unsigned (15 downto 0) := sio_mil_first_reg_a + rd_rx_taskreg2_a;
+constant rd_rx_taskreg3_a_map:       unsigned (15 downto 0) := sio_mil_first_reg_a + rd_rx_taskreg3_a;
+constant rd_rx_taskreg4_a_map:       unsigned (15 downto 0) := sio_mil_first_reg_a + rd_rx_taskreg4_a;
+constant rd_rx_taskreg5_a_map:       unsigned (15 downto 0) := sio_mil_first_reg_a + rd_rx_taskreg5_a;
+constant rd_rx_taskreg6_a_map:       unsigned (15 downto 0) := sio_mil_first_reg_a + rd_rx_taskreg6_a;
+constant rd_rx_taskreg7_a_map:       unsigned (15 downto 0) := sio_mil_first_reg_a + rd_rx_taskreg7_a;
+
+
+constant rd_status_avail_a_map:      unsigned (15 downto 0) := sio_mil_first_reg_a + rd_status_avail_a; --to read corresponding avail bits, bit[31..8] don't care
+-- kk end
 signal    manchester_fpga:  std_logic;  -- '1' => fpga manchester endecoder selected, '0' => external hardware manchester endecoder 6408 selected.
 signal    ev_filt_12_8b:    std_logic;  -- '1' => event filter is on, '0' => event filter is off.
 signal    ev_filt_on:       std_logic;  -- '1' => event filter is on, '0' => event filter is off.
@@ -261,8 +292,6 @@ signal    lemo_dat:         std_logic_vector (4 downto 1);
 signal    lemo_out_en:      std_logic_vector (4 downto 1);
 signal    lemo_event_en:    std_logic_vector (4 downto 1);
 
-
-
 signal    io_1:             std_logic;
 signal    io_2:             std_logic;
 
@@ -276,14 +305,43 @@ signal    tx_fifo_data_out: std_logic_vector (16 downto 0);
 
 signal    tx_fifo_empty:    std_logic;
 signal    tx_fifo_full:     std_logic;
-
-signal    slave_i_we_dly:   std_logic;
-signal    slave_i_we_dly2:  std_logic;
-signal    mil_trm_start_dly:std_logic;
-
 -----------------------------------------------------------
+signal    tx_taskreg0:      std_logic_vector (16 downto 0);
+signal    tx_taskreg1:      std_logic_vector (16 downto 0);   --bit 16 is the request bit, bit 15..0 are the bits for Function Code and DevBus Slave Address
+signal    tx_taskreg2:      std_logic_vector (16 downto 0);
+signal    tx_taskreg3:      std_logic_vector (16 downto 0);
+signal    tx_taskreg4:      std_logic_vector (16 downto 0);
+signal    tx_taskreg5:      std_logic_vector (16 downto 0);
+signal    tx_taskreg6:      std_logic_vector (16 downto 0);
+signal    tx_taskreg7:      std_logic_vector (16 downto 0);
 
+signal    rx_taskreg0:      std_logic_vector (16 downto 0);
+signal    rx_taskreg1:      std_logic_vector (16 downto 0);   --bit 16 is the error bit, bit 15..0 are the bits for the received DevBus data
+signal    rx_taskreg2:      std_logic_vector (16 downto 0);
+signal    rx_taskreg3:      std_logic_vector (16 downto 0);
+signal    rx_taskreg4:      std_logic_vector (16 downto 0);
+signal    rx_taskreg5:      std_logic_vector (16 downto 0);
+signal    rx_taskreg6:      std_logic_vector (16 downto 0);
+signal    rx_taskreg7:      std_logic_vector (16 downto 0);
 
+signal    timeslot:         std_logic_vector (8 downto 0);
+signal    set_avail_ps:     std_logic_vector (7 downto 0);
+signal    clr_avail_ps:     std_logic_vector (7 downto 0);
+signal    taskreg_ack:      std_logic_vector (7 downto 0);
+signal    avail:            std_logic_vector (7 downto 0);
+
+constant  timeout_cntr_max: integer := 70;  --max timeout 50 µs: TX Telegram + RX Telegram + 10µs Gap
+signal    timeout_cntr:     integer :=  0;
+signal    timeout_cntr_en:  std_logic;
+signal    timeout_cntr_clr: std_logic;
+signal    slave_i_stb_dly:  std_logic;
+signal    mil_trm_start_dly:std_logic;
+signal    task_runs:        std_logic;
+
+signal    mil_rd_start_latched:        std_logic; 
+signal    mil_rd_start_dly:            std_logic; 
+signal    mil_rd_start_dly2:           std_logic; 
+      
 
 begin
 
@@ -571,7 +629,7 @@ Mil_1:  mil_hw_or_soft_ip
     ME_TD         =>  ME_TD,        -- in: HD6408-output: take data is high during receipt of data after identification
                                     --                    of a sync pulse and two valid Manchester data bits
     Clk           =>  clk_i,
-    Rd_Mil        =>  mil_rd_start,
+    Rd_Mil        =>  mil_rd_start_latched,
     Mil_RCV_D     =>  Mil_RCV_D,
     Mil_In_Pos    =>  Mil_BOI,
     Mil_In_Neg    =>  Mil_BZI,
@@ -653,74 +711,515 @@ led_fifo_ne: led_n
     nLed_opdrn  => open
     );
 
-
-
 ------------------------------------------------------------------------------------------------------------------------------
-tx_fifo : generic_sync_fifo  --kk improving tx performance  start of code section
-  generic map (
-    g_data_width   => 17,
-    g_size         => 1024
+tx_fifo : generic_sync_fifo        
+  GENERIC MAP
+  (
+    g_data_width => 17, 
+    g_size       => 1024
   )
-  port map (
-    clk_i          => clk_i,
-    rst_n_i        => nrst_i,
-    we_i           => tx_fifo_write_en,
-    d_i            => tx_fifo_data_in,
-    rd_i           => tx_fifo_read_en,
-    q_o            => tx_fifo_data_out,
-    empty_o        => tx_fifo_empty,
-    full_o         => tx_fifo_full
-  );
+    PORT MAP
+    (
+      clk_i   => clk_i, 
+      rst_n_i => nrst_i, 
+      we_i    => tx_fifo_write_en, 
+      d_i     => tx_fifo_data_in, 
+      rd_i    => tx_fifo_read_en, 
+      q_o     => tx_fifo_data_out, 
+      empty_o => tx_fifo_empty, 
+      full_o  => tx_fifo_full
+);
+
+------------------------------------------------------------------------------------------------------------------------------  
+-- common code section for tx and rx control   
+
+-- mil_trm_data     <= tx_fifo_data_out(15 downto 0);  
+-- mil_trm_cmd      <= tx_fifo_data_out(16);                    -- is only evaluated on mil_trm_start and must be stable with mil_trm_start_dly
+-- tx_fifo_read_en  <= mil_trm_start and not mil_trm_start_dly; -- need only one pulse at each fifo pop  (wr_mil is triggered with mil_trm_start_dly)
+-- 
+-- 
+-- tx_fifo_ctrl:process (clk_i, nrst_i)
+-- begin
+--   if nrst_i = '0' then
+-- 
+-- 
+--     mil_trm_start     <= '0';
+--     mil_trm_start_dly <= '0';
+--   
+--     
+--   elsif rising_edge (clk_i) then 
+--   
+--    --from old code to be sure that harris trm_start is quiet on not ready condition
+--     if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';          -- harris active,         give harris trm_start only when trm_rdy
+--     elsif                    manchester_fpga = '1' then mil_trm_start <= '0'; end if;  -- internal coder active, give harris trm_start never
+--   
+-- 
+--     if tx_fifo_empty = '0' and  mil_trm_rdy = '1' then                
+--       mil_trm_start   <= '1'; --start tx as long as tx_fifo not empty and mil transmitter is ready
+--     else 
+--       mil_trm_start   <= '0';   
+--     end if;
+--     
+--   end if;
+--   
+-- end process tx_fifo_ctrl;
+
+--KK New scheduler added for TX_FIFO and Task Register control
+---------------------------------------------------------------------------------------------------
 
 
-mil_trm_data     <= tx_fifo_data_out(15 downto 0);  
-mil_trm_cmd      <= tx_fifo_data_out(16);                    -- is only evaluated on mil_trm_start and must be stable with mil_trm_start_dly
-tx_fifo_read_en  <= mil_trm_start and not mil_trm_start_dly; -- need only one pulse at each fifo pop  (wr_mil is triggered with mil_trm_start_dly)
 
+tx_fifo_read_en  <= mil_trm_start and not mil_trm_start_dly; -- need only one pulse at each fifo pop  (wr_mil is triggered with mil_trm_start_dly
 
-tx_fifo_ctrl:process (clk_i, nrst_i)
-begin
-  if nrst_i = '0' then
-    slave_i_we_dly    <= '0';
-
-    mil_trm_start     <= '0';
-    mil_trm_start_dly <= '0';
-  
+someclockedlogic_p : PROCESS (clk_i, nrst_i)
+BEGIN
+  IF nrst_i = '0' THEN
+    timeout_cntr         <=  0 ;
+    slave_i_stb_dly      <= '0';
+    mil_trm_start_dly    <= '0';
+    mil_rd_start_latched <= '0';
+    mil_rd_start_dly     <= '0';
+    mil_rd_start_dly2    <= '0';
     
-  elsif rising_edge (clk_i) then 
-  
-   --from old code to be sure that harris trm_start is quiet on not ready condition
-    if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';          -- harris active,         give harris trm_start only when trm_rdy
-    elsif                    manchester_fpga = '1' then mil_trm_start <= '0'; end if;  -- internal coder active, give harris trm_start never
-  
-    slave_i_we_dly    <= slave_i.we;
-    mil_trm_start_dly <= mil_trm_start;
-
-    if tx_fifo_empty = '0' and  mil_trm_rdy = '1' then                
-      mil_trm_start   <= '1'; --start tx as long as tx_fifo not empty and mil transmitter is ready
-    else 
-      mil_trm_start   <= '0';   
+  ELSIF rising_edge (clk_i) THEN
+    IF timeout_cntr_clr= '1' then
+      timeout_cntr    <= 0;                                              
+    ELSIF timeout_cntr_en = '1' AND ena_every_us='1' THEN
+      timeout_cntr    <= timeout_cntr + 1;
+    ELSE
+      NULL;
+    END IF; 
+    -- min  1 dsc pulse make hd6408 happy for reset of mil_rcv_rdy
+    if mil_rd_start='1' then
+       mil_rd_start_latched  <= mil_rd_start;
+    elsif mil_rd_start_dly='1' and mil_rd_start_dly2='1' then
+       mil_rd_start_latched <= '0';
     end if;
+       
+    if ena_every_us='1' then
+       mil_rd_start_dly <= mil_rd_start_latched;
+       mil_rd_start_dly2 <= mil_rd_start_dly;
+    end if; 
     
-  end if;
+    slave_i_stb_dly   <= slave_i.stb;
+    mil_trm_start_dly <= mil_trm_start;
+  END IF;
+END PROCESS someclockedlogic_p;
+
+schedule_mux : PROCESS (tx_taskreg0, tx_taskreg1, tx_taskreg2, tx_taskreg3, tx_taskreg4, tx_taskreg5, 
+                        tx_taskreg6, tx_taskreg7, timeslot, tx_fifo_data_out)
+BEGIN
+  IF timeslot = "000000001" THEN
+    mil_trm_data <= tx_taskreg0(15 downto 0); 
+    mil_trm_cmd  <= '1';
+  ELSIF timeslot = "000000010" THEN
+    mil_trm_data <= tx_taskreg1(15 downto 0); 
+    mil_trm_cmd  <= '1';
+  ELSIF timeslot = "000000100" THEN
+    mil_trm_data <= tx_taskreg2(15 downto 0); 
+    mil_trm_cmd  <= '1';
+  ELSIF timeslot = "000001000" THEN
+    mil_trm_data <= tx_taskreg3(15 downto 0); 
+    mil_trm_cmd  <= '1';
+  ELSIF timeslot = "000010000" THEN
+    mil_trm_data <= tx_taskreg4(15 downto 0); 
+    mil_trm_cmd  <= '1';
+  ELSIF timeslot = "000100000" THEN
+    mil_trm_data <= tx_taskreg5(15 downto 0); 
+    mil_trm_cmd  <= '1';
+  ELSIF timeslot = "001000000" THEN
+    mil_trm_data <= tx_taskreg6(15 downto 0); 
+    mil_trm_cmd  <= '1';
+  ELSIF timeslot = "010000000" THEN
+    mil_trm_data <= tx_taskreg7(15 downto 0); 
+    mil_trm_cmd  <= '1';
+  ELSIF timeslot = "100000000" THEN
+    mil_trm_data <= tx_fifo_data_out(15 DOWNTO 0); 
+    mil_trm_cmd  <= tx_fifo_data_out(16);
+  ELSE
+    mil_trm_data <= x"baba"; 
+    mil_trm_cmd  <= '0';
+  END IF;
+END PROCESS schedule_mux;
+
+
+schedule_p : PROCESS (clk_i, nrst_i)
+BEGIN
+  IF nrst_i = '0' THEN
+    timeslot      <= "100000000";                                  --1-Hot Queue, start with fifo due to timeout cntr set
+    mil_trm_start <= '0';
+    taskreg_ack   <= (OTHERS => '0');
+    set_avail_ps  <= (OTHERS => '0');
+    task_runs     <= '0';
+    rx_taskreg0   <= (others => '0');
+    rx_taskreg1   <= (others => '0');
+    rx_taskreg2   <= (others => '0');
+    rx_taskreg3   <= (others => '0');
+    rx_taskreg4   <= (others => '0');
+    rx_taskreg5   <= (others => '0');
+    rx_taskreg6   <= (others => '0');
+    rx_taskreg7   <= (others => '0');
+    timeout_cntr_en <= '0'; 
+    timeout_cntr_clr<= '0';
+    mil_rd_start   <= '0';
+  ELSIF rising_edge (clk_i) THEN
+    mil_trm_start <= '0';
+    mil_rd_start  <= '0';
+    taskreg_ack   <= (OTHERS => '0');
+    set_avail_ps  <= (OTHERS => '0');                            -- only for one pulse
+    timeout_cntr_clr<= '0';
+          
+  IF timeslot(0) = '1' then
+    IF tx_taskreg0(16) = '1'  or task_runs = '1'  THEN                              --check for a task
+      IF mil_trm_rdy = '1' AND task_runs = '0' THEN              --mil_trm should be ready when entering
+        taskreg_ack(0)    <= '1';                                --pulse for acknowledge data
+        mil_trm_start     <= '1';                                --pulse for tx start and timeout_cntr
+        timeout_cntr_en   <= '1';
+        task_runs         <= '1';
+      ELSIF task_runs = '1' THEN
+        IF timeout_cntr = 50  OR Mil_Rcv_Rdy = '1' THEN          --wait 20µs for tx, 20 for rx and 10 for gap
+          timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8); --rotate by 1 to jump to next task 
+          task_runs       <= '0';
+          set_avail_ps(0) <= '1';                                --todo maybe wait until slave_i.stb=0
+          timeout_cntr_en <= '0';                                --stop and reset timeout_cntr for next use
+          timeout_cntr_clr<= '1';
+          IF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '0' THEN        --prepare data output
+            rx_taskreg0 <= '0' & MIL_RCV_D;
+            mil_rd_start<= '1';
+          ELSIF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '1' THEN
+            rx_taskreg0 <= '1' & x"beef";                         --rx_taskreg0(16)=1 causes intented DTACK Error
+            mil_rd_start<= '1';
+          ELSIF timeout_cntr = timeout_cntr_max THEN
+            rx_taskreg0 <= '1' & x"babe";
+          ELSE
+            rx_taskreg0 <= '1' & x"dead";
+          END IF;--MIL_Rcv_Rdy
+        ELSE 
+          NULL;                                                  -- wait for timeout or rx data
+        END IF;--timeout_cntr
+      ELSIF task_runs = '0' THEN                                 --Wait for MIL_RCV_RDY 
+        NULL; 
+      ELSE
+        NULL;
+      END IF; --mil_trm_rdy
+    ELSE 
+      timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8);     --skip if there is nothing to do and rotate to next task  
+    END IF;--tx_taskreg
+    
+ 
+ 
+ 
+   ELSIF timeslot(1) = '1' then
+    IF tx_taskreg1(16) = '1'   or task_runs = '1' THEN                              --check for a task
+      IF mil_trm_rdy = '1' AND task_runs = '0' THEN              --mil_trm should be ready when entering
+        taskreg_ack(1)    <= '1';                                --pulse for acknowledge data
+        mil_trm_start     <= '1';                                --pulse for tx start and timeout_cntr
+        timeout_cntr_en   <= '1';
+        task_runs         <= '1';
+      ELSIF task_runs = '1' THEN
+        IF timeout_cntr = 50   or Mil_Rcv_Rdy = '1' THEN          --wait 20µs for tx, 20 for rx and 10 for gap
+          timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8); --rotate by 1 to jump to next task reg
+          task_runs       <= '0';
+          set_avail_ps(1) <= '1';                                --todo maybe wait until slave_i.stb=0
+          timeout_cntr_en <= '0';                                --stop and reset timeout_cntr for next use
+          timeout_cntr_clr<= '1';
+          IF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '0' THEN        --prepare data output
+            rx_taskreg1 <= '0' & MIL_RCV_D;
+            mil_rd_start<= '1';
+          ELSIF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '1' THEN
+            rx_taskreg1 <= '1' & x"beef";  				--rx_taskreg0(16)=1 causes intented DTACK Error
+            mil_rd_start<= '1';
+          ELSIF timeout_cntr = timeout_cntr_max THEN
+            rx_taskreg1 <= '1' & x"babe";
+          ELSE
+            rx_taskreg1 <= '1' & x"dead";
+          END IF;--MIL_Rcv_Rdy
+        ELSE 
+          NULL;                                                  -- wait for timeout or rx data
+        END IF;--timeout_cntr
+      ELSIF task_runs = '0' THEN                                 --Wait for MIL_RCV_RDY 
+        NULL; 
+      ELSE
+        NULL;
+      END IF; --mil_trm_rdy
+    ELSE 
+      timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8);     --skip if there is nothing to do and rotate to next task  
+    END IF;--tx_taskreg
+    
+ 
+   ELSIF timeslot(2) = '1' then
+    IF tx_taskreg2(16) = '1'   or task_runs = '1' THEN                              --check for a task
+      IF mil_trm_rdy = '1' AND task_runs = '0' THEN              --mil_trm should be ready when entering
+        taskreg_ack(2)    <= '1';                                --pulse for acknowledge data
+        mil_trm_start     <= '1';                                --pulse for tx start and timeout_cntr
+        timeout_cntr_en   <= '1';
+        task_runs         <= '1';
+      ELSIF task_runs = '1' THEN
+        IF timeout_cntr = 50  OR Mil_Rcv_Rdy = '1' THEN          --wait 20µs for tx, 20 for rx and 10 for gap
+          timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8); --rotate by 1 to jump to next task reg
+          task_runs       <= '0';
+          set_avail_ps(2) <= '1';                                --todo maybe wait until slave_i.stb=0
+          timeout_cntr_en <= '0';                                --stop and reset timeout_cntr for next use
+          timeout_cntr_clr<= '1';
+          IF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '0' THEN        --prepare data output
+            rx_taskreg2 <= '0' & MIL_RCV_D;
+            mil_rd_start<= '1';
+          ELSIF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '1' THEN
+            rx_taskreg2 <= '1' & x"beef";                    --rx_taskreg0(16)=1 causes intented DTACK Error
+            mil_rd_start<= '1';
+          ELSIF timeout_cntr = timeout_cntr_max THEN
+            rx_taskreg2 <= '1' & x"babe";
+          ELSE
+            rx_taskreg2 <= '1' & x"dead";
+          END IF;--MIL_Rcv_Rdy
+        ELSE 
+          NULL;                                                  -- wait for timeout or rx data
+        END IF;--timeout_cntr
+      ELSIF task_runs = '0' THEN                                 --Wait for MIL_RCV_RDY 
+        NULL;                                                                                                                                                                          
+      ELSE
+        NULL;
+      END IF; --mil_trm_rdy
+    ELSE 
+      timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8);     --skip if there is nothing to do and rotate to next task  
+    END IF;--tx_taskreg
+    
+ 
+   ELSIF timeslot(3) = '1' then
+    IF tx_taskreg3(16) = '1'   or task_runs = '1' THEN                              --check for a task
+      IF mil_trm_rdy = '1' AND task_runs = '0' THEN              --mil_trm should be ready when entering
+        taskreg_ack(3)    <= '1';                                --pulse for acknowledge data
+        mil_trm_start     <= '1';                                --pulse for tx start and timeout_cntr
+        timeout_cntr_en   <= '1';
+        task_runs         <= '1';
+      ELSIF task_runs = '1' THEN
+        IF timeout_cntr = 50  OR Mil_Rcv_Rdy = '1' THEN          --wait 20µs for tx, 20 for rx and 10 for gap
+          timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8); --rotate by 1 to jump to next task reg
+          task_runs       <= '0';
+          set_avail_ps(3) <= '1';                                --todo maybe wait until slave_i.stb=0
+          timeout_cntr_en <= '0';                                --stop and reset timeout_cntr for next use
+          timeout_cntr_clr<= '1';
+          IF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '0' THEN        --prepare data output
+            rx_taskreg3 <= '0' & MIL_RCV_D;
+            mil_rd_start<= '1';
+          ELSIF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '1' THEN
+            rx_taskreg3 <= '1' & x"beef";   --rx_taskreg0(16)=1 causes intented DTACK Error
+            mil_rd_start<= '1';
+          ELSIF timeout_cntr = timeout_cntr_max THEN
+            rx_taskreg3 <= '1' & x"babe";
+          ELSE
+            rx_taskreg3 <= '1' & x"dead";
+          END IF;--MIL_Rcv_Rdy
+        ELSE 
+          NULL;                                                  -- wait for timeout or rx data
+        END IF;--timeout_cntr
+      ELSIF task_runs = '0' THEN                                 --Wait for MIL_RCV_RDY 
+        NULL; 
+      ELSE
+        NULL;
+      END IF; --mil_trm_rdy
+    ELSE 
+      timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8);     --skip if there is nothing to do and rotate to next task  
+    END IF;--tx_taskreg
+    
+ 
+   ELSIF timeslot(4) = '1' then
+    IF tx_taskreg4(16) = '1'   or task_runs = '1' THEN                              --check for a task
+      IF mil_trm_rdy = '1' AND task_runs = '0' THEN              --mil_trm should be ready when entering
+        taskreg_ack(4)    <= '1';                                --pulse for acknowledge data
+        mil_trm_start     <= '1';                                --pulse for tx start and timeout_cntr
+        timeout_cntr_en   <= '1';
+        task_runs         <= '1';
+      ELSIF task_runs = '1' THEN
+        IF timeout_cntr = 50  OR Mil_Rcv_Rdy = '1' THEN          --wait 20µs for tx, 20 for rx and 10 for gap
+          timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8); --rotate by 1 to jump to next task reg
+          task_runs       <= '0';
+          set_avail_ps(4) <= '1';                                --todo maybe wait until slave_i.stb=0
+          timeout_cntr_en <= '0';                                --stop and reset timeout_cntr for next use
+          timeout_cntr_clr<= '1';
+          IF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '0' THEN        --prepare data output
+            rx_taskreg4 <= '0' & MIL_RCV_D;
+            mil_rd_start<= '1';
+          ELSIF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '1' THEN
+            rx_taskreg4 <= '1' & x"beef";                    --rx_taskreg0(16)=1 causes intented DTACK Error
+            mil_rd_start<= '1';
+          ELSIF timeout_cntr = timeout_cntr_max THEN
+            rx_taskreg4 <= '1' & x"babe";
+          ELSE
+            rx_taskreg4 <= '1' & x"dead";
+          END IF;--MIL_Rcv_Rdy
+        ELSE 
+          NULL;                                                  -- wait for timeout or rx data
+        END IF;--timeout_cntr
+      ELSIF task_runs = '0' THEN                                 --Wait for MIL_RCV_RDY 
+        NULL; 
+      ELSE
+        NULL;
+      END IF; --mil_trm_rdy
+    ELSE 
+      timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8);     --skip if there is nothing to do and rotate to next task  
+    END IF;--tx_taskreg
+    
+ 
+   ELSIF timeslot(5) = '1' then
+    IF tx_taskreg5(16) = '1'   or task_runs = '1' THEN                              --check for a task
+      IF mil_trm_rdy = '1' AND task_runs = '0' THEN              --mil_trm should be ready when entering
+        taskreg_ack(5)    <= '1';                                --pulse for acknowledge data
+        mil_trm_start     <= '1';                                --pulse for tx start and timeout_cntr
+        timeout_cntr_en   <= '1';
+        task_runs         <= '1';
+      ELSIF task_runs = '1' THEN
+        IF timeout_cntr = 50  OR Mil_Rcv_Rdy = '1' THEN          --wait 20µs for tx, 20 for rx and 10 for gap
+          timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8); --rotate by 1 to jump to next task reg
+          task_runs       <= '0';
+          set_avail_ps(5) <= '1';                                --todo maybe wait until slave_i.stb=0
+          timeout_cntr_en <= '0';                                --stop and reset timeout_cntr for next use
+          timeout_cntr_clr<= '1';
+          IF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '0' THEN        --prepare data output
+            rx_taskreg5 <= '0' & MIL_RCV_D;
+            mil_rd_start<= '1';
+          ELSIF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '1' THEN
+            rx_taskreg5 <= '1' & x"beef";                    --rx_taskreg0(16)=1 causes intented DTACK Error
+            mil_rd_start<= '1';
+          ELSIF timeout_cntr = timeout_cntr_max THEN
+            rx_taskreg5 <= '1' & x"babe";
+          ELSE
+            rx_taskreg5 <= '1' & x"dead";
+          END IF;--MIL_Rcv_Rdy
+        ELSE 
+          NULL;                                                  -- wait for timeout or rx data
+        END IF;--timeout_cntr
+      ELSIF task_runs = '0' THEN                                 --Wait for MIL_RCV_RDY 
+        NULL; 
+      ELSE
+        NULL;
+      END IF; --mil_trm_rdy
+    ELSE 
+      timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8);     --skip if there is nothing to do and rotate to next task  
+    END IF;--tx_taskreg
+    
+ 
+   ELSIF timeslot(6) = '1' then
+    IF tx_taskreg6(16) = '1'     or task_runs = '1' THEN                              --check for a task
+      IF mil_trm_rdy = '1' AND task_runs = '0' THEN              --mil_trm should be ready when entering
+        taskreg_ack(6)    <= '1';                                --pulse for acknowledge data
+        mil_trm_start     <= '1';                                --pulse for tx start and timeout_cntr
+        timeout_cntr_en   <= '1';
+        task_runs         <= '1';
+      ELSIF task_runs = '1' THEN
+        IF timeout_cntr = 50  OR Mil_Rcv_Rdy = '1' THEN          --wait 20µs for tx, 20 for rx and 10 for gap
+          timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8); --rotate by 1 to jump to next task reg
+          task_runs       <= '0';
+          set_avail_ps(6) <= '1';                                --todo maybe wait until slave_i.stb=0
+          timeout_cntr_en <= '0';                                --stop and reset timeout_cntr for next use
+          timeout_cntr_clr<= '1';
+          IF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '0' THEN        --prepare data output
+            rx_taskreg6 <= '0' & MIL_RCV_D;
+            mil_rd_start<= '1';
+          ELSIF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '1' THEN
+            rx_taskreg6 <= '1' & x"beef";                    --rx_taskreg0(16)=1 causes intented DTACK Error
+            mil_rd_start<= '1';
+          ELSIF timeout_cntr = timeout_cntr_max THEN
+            rx_taskreg6 <= '1' & x"babe";
+          ELSE
+            rx_taskreg6 <= '1' & x"dead";
+          END IF;--MIL_Rcv_Rdy
+        ELSE 
+          NULL;                                                  -- wait for timeout or rx data
+        END IF;--timeout_cntr
+      ELSIF task_runs = '0' THEN                                 --Wait for MIL_RCV_RDY 
+        NULL; 
+      ELSE
+        NULL;
+      END IF; --mil_trm_rdy
+    ELSE 
+      timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8);     --skip if there is nothing to do and rotate to next task  
+    END IF;--tx_taskreg
+    
+ 
+   ELSIF timeslot(7) = '1' then
+    IF tx_taskreg7(16) = '1'   or task_runs = '1' THEN                              --check for a task
+      IF mil_trm_rdy = '1' AND task_runs = '0' THEN              --mil_trm should be ready when entering
+        taskreg_ack(7)    <= '1';                                --pulse for acknowledge data
+        mil_trm_start     <= '1';                                --pulse for tx start and timeout_cntr
+        timeout_cntr_en   <= '1';
+        task_runs         <= '1';
+      ELSIF task_runs = '1' THEN
+        IF timeout_cntr = 50 OR Mil_Rcv_Rdy = '1' THEN          --wait 20µs for tx, 20 for rx and 10 for gap
+          timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8); --rotate by 1 to jump to next task reg
+          task_runs       <= '0';
+          set_avail_ps(7) <= '1';                                --todo maybe wait until slave_i.stb=0
+          timeout_cntr_en <= '0';                                --stop and reset timeout_cntr for next use
+          timeout_cntr_clr<= '1';
+          IF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '0' THEN        --prepare data output
+            rx_taskreg7 <= '0' & MIL_RCV_D;
+            mil_rd_start<= '1';
+          ELSIF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '1' THEN
+            rx_taskreg7 <= '1' & x"beef";                    --rx_taskreg0(16)=1 causes intented DTACK Error
+            mil_rd_start<= '1';
+          ELSIF timeout_cntr = timeout_cntr_max THEN
+            rx_taskreg7 <= '1' & x"babe";
+          ELSE
+            rx_taskreg7 <= '1' & x"dead";
+          END IF;--MIL_Rcv_Rdy
+        ELSE 
+          NULL;                                                  -- wait for timeout or rx data
+        END IF;--timeout_cntr
+      ELSIF task_runs = '0' THEN                                 --Wait for MIL_RCV_RDY 
+        NULL; 
+      ELSE
+        NULL;
+      END IF; --mil_trm_rdy
+    ELSE 
+      timeslot        <= timeslot(7 DOWNTO 0) & timeslot(8);     --skip if there is nothing to do and rotate to next task  
+    END IF;--tx_taskreg
+    
+ 
+
+  ELSIF timeslot(8) = '1' THEN     --tx fifo in timeslot 8
+   
+	
+    IF  tx_fifo_empty='1'  and task_runs='0'  THEN
+	 
+        timeslot         <= timeslot(7 DOWNTO 0) & timeslot(8);    --skip if there is nothing to do and rotate to next task
+        timeout_cntr_en  <= '0';
+        timeout_cntr_clr <= '1';
+        task_runs        <= '0';
+    ELSIF tx_fifo_empty='0'  and  mil_trm_rdy = '1'  THEN                           -- pop fifo
+        mil_trm_start    <= '1';   
+        task_runs        <= '1';
+        timeout_cntr_en  <= '1';                                    
+        timeout_cntr_clr <= '1';                                              
+	 ELSIF  tx_fifo_empty='1' and  mil_trm_rdy = '1' and timeout_cntr=22  THEN         -- wait for last telegram before exit
+	     mil_trm_start    <= '0';   
+        task_runs        <= '0';
+        timeout_cntr_en  <= '0';                                    
+        timeout_cntr_clr <= '1';
+
+	 ELSE
+	     NULL;
+	 END IF;
+ 
+
+
+  END IF; --timeslot
   
-end process tx_fifo_ctrl;
+END IF;--clocked process
+
+end process schedule_p;
 
 
--- Harris HD6408 running with ME_12MHz, mil_trm_rdy may arrive 83ns later. So it is delayed by 13 x 8 ns=104ns by mil_trm_rdy_shreg
 
 
---kk improving tx performance  end of code section
-------------------------------------------------------------------------------------------------------------------------------    
+
+--KK Added Regs tx_taskreg0..7, rx_taskreg0..7, status_avail reg performance improvement
+-----------------------------------------------------------------------------------------------------
     
-    
---Register section
-
-    
-p_regs_acc: process (clk_i, nrst_i,slave_i.adr)
-variable LA_a_var : unsigned (17 downto 2);
+p_regs_acc: process (clk_i, nrst_i)
+variable LA_a_var : unsigned (17 downto 2);          
   begin
-    LA_a_var := unsigned(slave_i.adr(17 downto 2));  -- no good workaround ... give a 10492 Sensitivity List error
+    LA_a_var := unsigned(slave_i.adr(17 downto 2));  -- LA_a_var is evaluated on each clk edge 
+                                                   
     if nrst_i = '0' then
       ex_stall        <= '1';
       ex_ack          <= '0';
@@ -736,7 +1235,7 @@ variable LA_a_var : unsigned (17 downto 2);
       clr_mil_rcv_err <= '1';
       
       --mil_trm_start   <= '0';
-      mil_rd_start    <= '0';
+      --mil_rd_start    <= '0';
       --mil_trm_cmd     <= '0';
       --mil_trm_data <= (others => '0');
 
@@ -751,7 +1250,17 @@ variable LA_a_var : unsigned (17 downto 2);
       lemo_dat        <= (others => '0');
       lemo_i_reg      <= (others => '0');
 
+      tx_taskreg0     <= (others => '0');
+      tx_taskreg1     <= (others => '0');
+      tx_taskreg2     <= (others => '0');
+      tx_taskreg3     <= (others => '0');
+      tx_taskreg4     <= (others => '0');
+      tx_taskreg5     <= (others => '0');
+      tx_taskreg6     <= (others => '0');
+      tx_taskreg7     <= (others => '0');
 
+
+      clr_avail_ps    <= (others => '0'); 
       
     elsif rising_edge(clk_i) then
       lemo_i_reg        <= lemo_inp;
@@ -759,12 +1268,12 @@ variable LA_a_var : unsigned (17 downto 2);
       ex_ack            <= '0';
       ex_err            <= '0';
 
-      rd_ev_fifo      <= '0';
-      clr_ev_fifo     <= '0';
-      wr_filt_ram     <= '0';
-      rd_filt_ram     <= '0';
+      rd_ev_fifo        <= '0';
+      clr_ev_fifo       <= '0';
+      wr_filt_ram       <= '0';
+      rd_filt_ram       <= '0';
 
-      clr_no_VW_cnt   <= '0';
+      clr_no_VW_cnt     <= '0';
       clr_not_equal_cnt <= '0';
       sw_clr_ev_timer   <= '0';
       ld_dly_timer      <= '0';
@@ -772,29 +1281,54 @@ variable LA_a_var : unsigned (17 downto 2);
       tx_fifo_write_en  <= '0';
       slave_o.dat       <= (others => '0');
 
-      --if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';
+      if taskreg_ack(0)='1'  then tx_taskreg0(16) <= '0'; end if;
+      if taskreg_ack(1)='1'  then tx_taskreg1(16) <= '0'; end if;
+      if taskreg_ack(2)='1'  then tx_taskreg2(16) <= '0'; end if;
+      if taskreg_ack(3)='1'  then tx_taskreg3(16) <= '0'; end if;
+      if taskreg_ack(4)='1'  then tx_taskreg4(16) <= '0'; end if;
+      if taskreg_ack(5)='1'  then tx_taskreg5(16) <= '0'; end if;
+      if taskreg_ack(6)='1'  then tx_taskreg6(16) <= '0'; end if;
+      if taskreg_ack(7)='1'  then tx_taskreg7(16) <= '0'; end if;
+   
+      -- avail pulse are set on received DevBus Data (faulty and o.k. ones) and cleared on RX Register access
+      -- set_avail_ps must not change during register access
+      if clr_avail_ps(0)='1'and set_avail_ps(0)='0' then avail(0)<='0'; elsif set_avail_ps(0)='1' then avail(0)<='1'; else null;end if;
+      if clr_avail_ps(1)='1'and set_avail_ps(1)='0' then avail(1)<='0'; elsif set_avail_ps(1)='1' then avail(1)<='1'; else null;end if;  
+      if clr_avail_ps(2)='1'and set_avail_ps(2)='0' then avail(2)<='0'; elsif set_avail_ps(2)='1' then avail(2)<='1'; else null;end if;     
+      if clr_avail_ps(3)='1'and set_avail_ps(3)='0' then avail(3)<='0'; elsif set_avail_ps(3)='1' then avail(3)<='1'; else null;end if; 
+      if clr_avail_ps(4)='1'and set_avail_ps(4)='0' then avail(4)<='0'; elsif set_avail_ps(4)='1' then avail(4)<='1'; else null;end if; 
+      if clr_avail_ps(5)='1'and set_avail_ps(5)='0' then avail(5)<='0'; elsif set_avail_ps(5)='1' then avail(5)<='1'; else null;end if; 
+      if clr_avail_ps(6)='1'and set_avail_ps(6)='0' then avail(6)<='0'; elsif set_avail_ps(6)='1' then avail(6)<='1'; else null;end if; 
+      if clr_avail_ps(7)='1'and set_avail_ps(7)='0' then avail(7)<='0'; elsif set_avail_ps(7)='1' then avail(7)<='1'; else null;end if; 
+
+      clr_avail_ps <= (others =>'0'); --pulses only set for 1 clk_i period
+
+
+
+      --if mil_trm_rdy = '0' and manchester_fpga = '0' then mil_trm_start <= '0';  --now done from scheduler
       --elsif manchester_fpga = '1' then  mil_trm_start <= '0'; end if;
       
-      if mil_rcv_rdy = '0' and manchester_fpga = '0' then mil_rd_start <= '0';
-      elsif manchester_fpga = '1' then  mil_rd_start <= '0'; end if;
+      --if mil_rcv_rdy = '0' and manchester_fpga = '0' then mil_rd_start <= '0';    --now done from scheduler
+      --elsif manchester_fpga = '1' then  mil_rd_start <= '0'; end if;
 
       if slave_i.cyc = '1' and slave_i.stb = '1' and ex_stall = '1' then
       -- begin of wishbone cycle
+
+      --##############################TX FIFO ACCESS#############################################
         if (LA_a_var = mil_wr_cmd_a_map) or  (LA_a_var = mil_rd_wr_data_a_map) then
         -- check existing word register
             if slave_i.sel = "1111" then
-              if slave_i.we = '1' then
+              if slave_i.we = '1'  then
                 -- write low word
-                  if tx_fifo_full ='0' then 
---                if mil_trm_rdy = '1' and mil_trm_start = '0' then
---                  -- write is allowed, because mil tranmiter is free
---                  mil_trm_start <= '1';
---                  mil_trm_cmd   <= slave_i.adr(2);
---                  mil_trm_data  <= slave_i.dat(15 downto 0);  -- update(mil_trm_data)
+                  if tx_fifo_full ='0' then               
+--                  if mil_trm_rdy = '1' and mil_trm_start = '0' then
+--                    mil_trm_start <= '1';  --                   -- start on read mil transmitter
+--                    mil_trm_cmd   <= slave_i.adr(2);            -- Address bit 2 results in CMD Telegram   
+--                    mil_trm_data  <= slave_i.dat(15 downto 0);  -- update mil_trm_data
 
-                    tx_fifo_data_in(16)          <= slave_i.adr(2);
+                    tx_fifo_data_in(16)          <= slave_i.adr(2);  --Address bit 2 results in CMD Telegram 
                     tx_fifo_data_in(15 downto 0) <= slave_i.dat(15 downto 0);
-                    tx_fifo_write_en             <= slave_i.stb and slave_i.we and not slave_i_we_dly;
+                    tx_fifo_write_en             <= slave_i.stb and not slave_i_stb_dly;
                   
                     ex_stall <= '0';
                     ex_ack   <= '1';
@@ -802,27 +1336,282 @@ variable LA_a_var : unsigned (17 downto 2);
                   -- write to mil not allowed, because tx_fifo is full
                     ex_stall <= '0';
                     ex_err   <= '1';
-                end if;
+                  end if;--tx_fifo_full
               else
-                -- read low word
-                if Mil_Rcv_Rdy = '1' and mil_rd_start = '0' then
-                  -- read is allowed, because mil received a data
-                  mil_rd_start <= '1';
-                  slave_o.dat(15 downto 0) <= Mil_RCV_D;
-                  ex_stall <= '0';
-                  ex_ack <= '1';
-                else
-                  -- read mil not allowed, because mil received no data
+                -- read low word not allowed on TX_FIFO --> Use TX_TASKREGs for READs
                   ex_stall <= '0';
                   ex_err <= '1';
-                end if;
-              end if;
+              end if;--slave_i.we 
             else
               -- access to high word or unaligned word is not allowed
               ex_stall <= '0';
               ex_err <= '1';
-            end if;
- 
+            end if;--slave_i.sel
+       --##############################TX_TASKREG0############################################################
+        --all taskreg accesses result in CMD Telegrams because they sent function codes
+        ELSIF (LA_a_var = wr_tx_taskreg0_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '1' AND tx_taskreg0(16) = '0' THEN --only successfull when taskreg is ready
+              tx_taskreg0 <= '1' &  slave_i.dat(15 DOWNTO 0);  --set bit 16 means a new task request
+              ex_stall    <= '0';
+              ex_ack      <= '1';
+            ELSE                                               --W/O register, read not allowed
+              ex_stall    <= '0';
+              ex_err      <= '1';
+            END IF;
+          ELSE                                                 --high/unaligned word access (others than sel=1111) not allowed
+            ex_stall      <= '0';
+            ex_err        <= '1';
+          END IF;  
+        --##############################TX_TASKREG1############################################################
+        ELSIF (LA_a_var = wr_tx_taskreg1_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '1' AND tx_taskreg1(16) = '0' THEN 
+              tx_taskreg1 <= '1' &  slave_i.dat(15 DOWNTO 0);  
+              ex_stall    <= '0';
+              ex_ack      <= '1';
+            ELSE                                               
+              ex_stall    <= '0';
+              ex_err      <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall      <= '0';
+            ex_err        <= '1';
+          END IF;       
+        --##############################TX_TASKREG2############################################################
+        ELSIF (LA_a_var = wr_tx_taskreg2_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '1' AND tx_taskreg2(16) = '0' THEN 
+              tx_taskreg2 <= '1' &  slave_i.dat(15 DOWNTO 0);  
+              ex_stall    <= '0';
+              ex_ack      <= '1';
+            ELSE                                               
+              ex_stall    <= '0';
+              ex_err      <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall      <= '0';
+            ex_err        <= '1';
+          END IF;    
+        --##############################TX_TASKREG3############################################################
+        ELSIF (LA_a_var = wr_tx_taskreg3_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '1' AND tx_taskreg3(16) = '0' THEN 
+              tx_taskreg3 <= '1' &  slave_i.dat(15 DOWNTO 0);  
+              ex_stall    <= '0';
+              ex_ack      <= '1';
+            ELSE                                               
+              ex_stall    <= '0';
+              ex_err      <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall      <= '0';
+            ex_err        <= '1';
+          END IF;  
+        --##############################TX_TASKREG4############################################################
+        ELSIF (LA_a_var = wr_tx_taskreg4_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '1' AND tx_taskreg4(16) = '0' THEN 
+              tx_taskreg4 <= '1' &  slave_i.dat(15 DOWNTO 0);  
+              ex_stall    <= '0';
+              ex_ack      <= '1';
+            ELSE                                               
+              ex_stall    <= '0';
+              ex_err      <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall      <= '0';
+            ex_err        <= '1';
+          END IF;   
+        --##############################TX_TASKREG5############################################################
+        ELSIF (LA_a_var = wr_tx_taskreg5_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '1' AND tx_taskreg5(16) = '0' THEN 
+              tx_taskreg5 <= '1' &  slave_i.dat(15 DOWNTO 0);  
+              ex_stall    <= '0';
+              ex_ack      <= '1';
+            ELSE                                               
+              ex_stall    <= '0';
+              ex_err      <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall      <= '0';
+            ex_err        <= '1';
+          END IF;  
+        --##############################TX_TASKREG6############################################################
+        ELSIF (LA_a_var = wr_tx_taskreg6_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '1' AND tx_taskreg6(16) = '0' THEN 
+              tx_taskreg6 <= '1' &  slave_i.dat(15 DOWNTO 0);  
+              ex_stall    <= '0';
+              ex_ack      <= '1';
+            ELSE                                               
+              ex_stall    <= '0';
+              ex_err      <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall      <= '0';
+            ex_err        <= '1';
+          END IF;   
+        --##############################TX_TASKREG7############################################################
+        ELSIF (LA_a_var = wr_tx_taskreg7_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '1' AND tx_taskreg7(16) = '0' THEN 
+              tx_taskreg7 <= '1' &  slave_i.dat(15 DOWNTO 0);  
+              ex_stall    <= '0';
+              ex_ack      <= '1';
+            ELSE                                               
+              ex_stall    <= '0';
+              ex_err      <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall      <= '0';
+            ex_err        <= '1';
+          END IF;   
+       --##############################RX_TASKREG0############################################################
+        ELSIF (LA_a_var = rd_rx_taskreg0_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '0' AND rx_taskreg0(16) = '0' THEN --successful read only on rx_taskreg is not faulty
+              slave_o.dat (15 downto 0)  <= rx_taskreg0(15 DOWNTO 0);
+              clr_avail_ps(0)<= '1';                           --avail bit will be cleared by scu bus read access
+              ex_stall       <= '0';
+              ex_ack         <= '1';
+            ELSE                                               --write attempts result in DTACK Error
+              ex_stall       <= '0';
+              ex_err         <= '1';
+            END IF;
+          ELSE                                                 --high/unaligned word access (others than sel=1111) not allowed
+            ex_stall         <= '0';
+            ex_err           <= '1';
+          END IF;
+       --##############################RX_TASKREG1############################################################
+         ELSIF (LA_a_var = rd_rx_taskreg1_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '0' AND rx_taskreg1(16) = '0' THEN 
+              slave_o.dat (15 downto 0)  <= rx_taskreg1(15 DOWNTO 0);
+              clr_avail_ps(1)<= '1';                            
+              ex_stall       <= '0';
+              ex_ack         <= '1';
+            ELSE                                               
+              ex_stall       <= '0';
+              ex_err         <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall         <= '0';
+            ex_err           <= '1';
+          END IF;
+       --##############################RX_TASKREG2############################################################
+         ELSIF (LA_a_var = rd_rx_taskreg2_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '0' AND rx_taskreg2(16) = '0' THEN 
+              slave_o.dat (15 downto 0)  <= rx_taskreg2(15 DOWNTO 0);
+              clr_avail_ps(2)<= '1';                            
+              ex_stall       <= '0';
+              ex_ack         <= '1';
+            ELSE                                               
+              ex_stall       <= '0';
+              ex_err         <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall         <= '0';
+            ex_err           <= '1';
+          END IF;
+       --##############################RX_TASKREG3############################################################
+         ELSIF (LA_a_var = rd_rx_taskreg3_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '0' AND rx_taskreg3(16) = '0' THEN 
+              slave_o.dat (15 downto 0)  <= rx_taskreg3(15 DOWNTO 0);
+              clr_avail_ps(3)<= '1';                           
+              ex_stall       <= '0';
+              ex_ack         <= '1';
+            ELSE                                               
+              ex_stall       <= '0';
+              ex_err         <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall         <= '0';
+            ex_err           <= '1';
+          END IF;
+       --##############################RX_TASKREG4############################################################
+         ELSIF (LA_a_var = rd_rx_taskreg4_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '0' AND rx_taskreg4(16) = '0' THEN 
+              slave_o.dat (15 downto 0)  <= rx_taskreg4(15 DOWNTO 0);
+              clr_avail_ps(4)<= '1';                           
+              ex_stall       <= '0';
+              ex_ack         <= '1';
+            ELSE                                               
+              ex_stall       <= '0';
+              ex_err         <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall         <= '0';
+            ex_err           <= '1';
+          END IF;
+       --##############################RX_TASKREG5############################################################
+         ELSIF (LA_a_var = rd_rx_taskreg5_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '0' AND rx_taskreg5(16) = '0' THEN 
+              slave_o.dat (15 downto 0)  <= rx_taskreg5(15 DOWNTO 0);
+              clr_avail_ps(5)<= '1';                            
+              ex_stall       <= '0';
+              ex_ack         <= '1';
+            ELSE                                               
+              ex_stall       <= '0';
+              ex_err         <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall         <= '0';
+            ex_err           <= '1';
+          END IF;
+       --##############################RX_TASKREG6############################################################
+         ELSIF (LA_a_var = rd_rx_taskreg6_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '0' AND rx_taskreg6(16) = '0' THEN 
+              slave_o.dat (15 downto 0)  <= rx_taskreg6(15 DOWNTO 0);
+              clr_avail_ps(6)<= '1';                            
+              ex_stall       <= '0';
+              ex_ack         <= '1';
+            ELSE                                               
+              ex_stall       <= '0';
+              ex_err         <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall         <= '0';
+            ex_err           <= '1';
+          END IF;
+       --##############################RX_TASKREG7############################################################
+         ELSIF (LA_a_var = rd_rx_taskreg7_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '0' AND rx_taskreg7(16) = '0' THEN 
+              slave_o.dat (15 downto 0)  <= rx_taskreg7(15 DOWNTO 0);
+              clr_avail_ps(7)<= '1';                            
+              ex_stall       <= '0';
+              ex_ack         <= '1';
+            ELSE                                               
+              ex_stall       <= '0';
+              ex_err         <= '1';
+            END IF;
+          ELSE                                                 
+            ex_stall         <= '0';
+            ex_err           <= '1';
+          END IF;
+       --##############################status_avail############################################################
+        ELSIF (LA_a_var = rd_status_avail_a_map) THEN
+          IF slave_i.sel = "1111" THEN
+            IF slave_i.we = '0' THEN 
+              slave_o.dat(15 DOWNTO 0) <= "00000000" & avail; -- available bits 7..0              
+              ex_stall                 <= '0';
+              ex_ack                   <= '1';
+            ELSE
+              ex_stall <= '0';
+              ex_err   <= '1';
+            END IF;
+          ELSE
+            ex_stall <= '0';
+            ex_err   <= '1';
+          END IF;
+        --############################legacy registers###############################################
           elsif (LA_a_var = mil_wr_rd_status_a_map) then
             if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
               if slave_i.we = '1' then
@@ -841,8 +1630,7 @@ variable LA_a_var : unsigned (17 downto 2);
                 -- read status register
                 slave_o.dat(15 downto 0) <= ( manchester_fpga & ev_filt_12_8b & ev_filt_on & debounce_on              -- mil-status[15..12]
                                             & puls2_frame & puls1_frame & ev_reset_on & mil_rcv_error                 -- mil-status[11..8]
- --                                         & mil_trm_rdy & Mil_Cmd_Rcv & mil_rcv_rdy & ev_fifo_full                  -- mil-status[7..4]
-                                            & tx_fifo_full & Mil_Cmd_Rcv & mil_rcv_rdy & ev_fifo_full                    -- mil-status[7..4]                                            
+                                            & tx_fifo_full & Mil_Cmd_Rcv & mil_rcv_rdy & ev_fifo_full                 -- mil-status[7..4]  tx_fifo_full instead of mil_trm_rdy                                          
                                             & ev_fifo_ne & db_data_req_intr & db_data_rdy_intr & db_interlock_intr ); -- mil-status[3..0]
                 ex_stall <= '0';
                 ex_ack <= '1';
@@ -1065,9 +1853,9 @@ variable LA_a_var : unsigned (17 downto 2);
           else
             ex_stall <= '0';
             ex_err <= '1';
-        end if;
-      end if;
-    end if;
+          end if; --LA_a_var
+      end if;--slave_i.cyc
+    end if;--clocked_process
   end process p_regs_acc;
 
   

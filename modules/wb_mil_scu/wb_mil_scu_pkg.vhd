@@ -35,18 +35,20 @@ constant  filter_data_width:  integer := 6;
 constant  filter_ram_size:    integer := 4096;
 constant  filter_addr_width:  integer := integer(ceil(log2(real(filter_ram_size))));
 
---------------------------------------------------------------------------------------------------------------------------
--- allowed wishbone address offsets for calulating the true wishbone address you have to multiply the constant by 4.    --
--- Only 32 bit access allowed.                                                                                          --
---------------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------------------------
+-- In Mil-Option  WB address offsets are multiplied by 4, eg mil_wr_cmd_a =1 gives real eb-tools address :wb_base plus 4              --
+-- In DevBus Slave SIO3 offsets are multiplied by 2, eg mil_wr_cmd=1 gives real eb-tools address: sio_mil_first_reg_adr + 2 e.g. x802 --
+----------------------------------------------------------------------------------------------------------------------------------------
 constant  sio_mil_first_reg_a:      integer := 16#400#;  -- first register in SIO Addressing scheme, used for reg address remapping
-constant  sio_mil_last_reg_a:       integer := 16#411#;  -- last register in SIO Addressing scheme, used for reg addres remapping
+constant  sio_mil_last_reg_a:       integer := 16#440#;  -- last register  in SIO Addressing scheme, used for reg address remapping
 
-constant  mil_rd_wr_data_a:         integer := 16#00#;   -- read mil bus:               wb_mil_scu_offset + 16#00#, only allowed when mil data received. Data[31..16] always zero.
-                                                         -- write data to mil bus:      wb_mil_scu_offset + 16#00#, only allowed when transmitter free. Data[31..16] don't care.
-constant  mil_wr_cmd_a:             integer := 16#01#;   -- write command to mil bus:   wb_mil_scu_offset + 16#04#, only allowed when transmitter free. Data[31..16] don't care.
-constant  mil_wr_rd_status_a:       integer := 16#02#;   -- kk read mil status:         wb_mil_scu_offset + 16#08#, data[31..16] always zero.
-                                                         -- write mil control reg:      wb_mil_scu_offset + 16#08#, bits 15..0 can be changed. Data[31..16] don't care.
+constant  mil_rd_wr_data_a:         integer := 16#00#;   -- read mil bus                 wb_mil_scu_offset + 16#00#, not used anymore, use task registers therefore.
+                                                         -- write data to mil bus:       wb_mil_scu_offset + 16#00#, write for tx block mode fifo, bit[31..16] don't care.
+constant  mil_wr_cmd_a:             integer := 16#01#;   -- write command to mil bus:    wb_mil_scu_offset + 16#04#, write for tx block mode fifo, bit[31..16] don't care.
+
+
+constant  mil_wr_rd_status_a:       integer := 16#02#;   -- kk read mil status:          wb_mil_scu_offset + 16#08#, data[31..16] always zero.
+                                                         -- write mil control reg:       wb_mil_scu_offset + 16#08#, bits 15..0 can be changed. Data[31..16] don't care.
 constant  rd_clr_no_vw_cnt_a:       integer := 16#03#;   -- read no valid counters:      wb_mil_scu_offset + 16#0C#. Data[31..16] always zero.
                                                          -- write(clears)novalid counter wb_mil_scu_offset + 16#0C#. Data[31..0] don't care
 constant  rd_wr_not_eq_cnt_a:       integer := 16#04#;   -- read not equal counters:     wb_mil_scu_offset + 16#10#. Data[31..16] always zero.
@@ -72,7 +74,33 @@ constant  rd_wait_timer_LW_a:       integer := 16#0e#;   -- read wait timer lowe
 constant  rd_wr_dly_timer_LW_a:     integer := 16#10#;   -- read event timer latch LW    wb_mil_scu_offset + 16#40#.
                                                          -- write event timer latch LW   wb_mil_scu_offset + 16#40#.
 constant  rd_wr_dly_timer_HW_a:     integer := 16#11#;   -- read event timer latch HW    wb_mil_scu_offset + 16#44#.
-                                                         -- write event timer latch HW   wb_mil_scu_offset + 16#44#.                                                         
+                                                         -- write event timer latch HW   wb_mil_scu_offset + 16#44#. 
+                                                         
+constant  wr_tx_taskreg0_a :        integer := 16#20#;   -- write tx_taskreg0            wb_mil_scu_offset + 16#80#  to write tx task function codes,   bit[31..16] don't care                                                     
+constant  wr_tx_taskreg1_a :        integer := 16#21#;   -- write tx_taskreg1            wb_mil_scu_offset + 16#84#  
+constant  wr_tx_taskreg2_a :        integer := 16#22#;   -- write tx_taskreg2            wb_mil_scu_offset + 16#88#  
+constant  wr_tx_taskreg3_a :        integer := 16#23#;   -- write tx_taskreg3            wb_mil_scu_offset + 16#8C#  
+constant  wr_tx_taskreg4_a :        integer := 16#24#;   -- write tx_taskreg4            wb_mil_scu_offset + 16#90#  
+constant  wr_tx_taskreg5_a :        integer := 16#25#;   -- write tx_taskreg5            wb_mil_scu_offset + 16#94#  
+constant  wr_tx_taskreg6_a :        integer := 16#26#;   -- write tx_taskreg6            wb_mil_scu_offset + 16#98#  
+constant  wr_tx_taskreg7_a :        integer := 16#27#;   -- write tx_taskreg7            wb_mil_scu_offset + 16#9C# 
+
+constant  rd_rx_taskreg0_a :        integer := 16#30#;   -- read rx_taskreg0             wb_mil_scu_offset + 16#80#  to read corresponding rx task word, bit[31..16] don't care                                                       
+constant  rd_rx_taskreg1_a :        integer := 16#31#;   -- read rx_taskreg1             wb_mil_scu_offset + 16#84#  
+constant  rd_rx_taskreg2_a :        integer := 16#32#;   -- read rx_taskreg2             wb_mil_scu_offset + 16#88#  
+constant  rd_rx_taskreg3_a :        integer := 16#33#;   -- read rx_taskreg3             wb_mil_scu_offset + 16#8C#  
+constant  rd_rx_taskreg4_a :        integer := 16#34#;   -- read rx_taskreg4             wb_mil_scu_offset + 16#90#  
+constant  rd_rx_taskreg5_a :        integer := 16#35#;   -- read rx_taskreg5             wb_mil_scu_offset + 16#94#  
+constant  rd_rx_taskreg6_a :        integer := 16#36#;   -- read rx_taskreg6             wb_mil_scu_offset + 16#98#  
+constant  rd_rx_taskreg7_a :        integer := 16#37#;   -- read rx_taskreg7             wb_mil_scu_offset + 16#9C#  
+
+constant  rd_status_avail_a :       integer := 16#40#;   -- read status_busy             wb_mil_scu_offset + 16#100# 
+  
+
+                                                         
+                                                         
+                                                         
+                                                         
 
 constant  ev_filt_first_a:          integer := 16#1000#;  -- first event filter ram address: wb_mil_scu_offset + 16#4000. 
 constant  ev_filt_last_a:           integer := 16#1FFF#;  -- last event filter  ram address: wb_mil_scu_offset + 16#7FFC.
