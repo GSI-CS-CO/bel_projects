@@ -12,7 +12,7 @@ component wb_mil_wrapper_sio is
 generic (
 		Clk_in_Hz:		INTEGER := 125_000_000;		-- Manchester IP needs 20 Mhz clock for proper detection of short 500ns data pulses
     sio_mil_first_reg_a:    unsigned(15 downto 0)  := x"0400";
-    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0411";
+    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0440";
     evt_filt_first_a:       unsigned(15 downto 0)  := x"1000";
     evt_filt_last_a:        unsigned(15 downto 0)  := x"1FFF"
 		);
@@ -86,7 +86,7 @@ generic (
     Clk_in_Hz:               INTEGER := 125_000_000; -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
                                                      -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
     sio_mil_first_reg_a:    unsigned(15 downto 0)  := x"0400";
-    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0411";
+    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0440";
     evt_filt_first_a:       unsigned(15 downto 0)  := x"1000";
     evt_filt_last_a:        unsigned(15 downto 0)  := x"1FFF"
     );

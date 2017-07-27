@@ -144,7 +144,7 @@ CONSTANT  clk_switch_status_cntrl_addr:  unsigned(15 downto 0) := x"0030";
 CONSTANT  c_housekeeping_base_a:         unsigned(15 downto 0) := x"0040";
 ---       Eb-Flash Macro                                       := x"0040   - x1E0
 CONSTANT  c_sio_mil_first_reg_a:         unsigned(15 downto 0) := x"0400";--x"0400";
-CONSTANT  c_sio_mil_last_reg_a:          unsigned(15 downto 0) := x"0411";--x"0411";
+CONSTANT  c_sio_mil_last_reg_a:          unsigned(15 downto 0) := x"0440";--x"0411";
 CONSTANT  c_ev_filt_first_a:             unsigned(15 downto 0) := x"1000";--x"1000";
 CONSTANT  c_ev_filt_last_a:              unsigned(15 downto 0) := x"1FFF";--x"1FFF";
 
