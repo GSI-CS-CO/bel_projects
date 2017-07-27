@@ -6,6 +6,7 @@
 #include "common.h"
 #include "graph.h"
 #include "memunit.h"
+#include "alloctable.h"
 
 class Event;
 class Block;
@@ -27,6 +28,8 @@ class VisitorUploadCrawler {
     MemUnit& m;
     Graph& g;
     AllocTable&     at;
+    uint8_t         cpu;
+
 
     vAdr getDefDst(void)    const;
     vAdr getDynSrc(void)    const;
@@ -37,7 +40,7 @@ class VisitorUploadCrawler {
     vAdr getListDst(void)   const;
 
   public:
-    VisitorUploadCrawler(vertex_t v, MemUnit& m)  : v(v), m(m), g(m.getUpGraph()), at(m.getUpAllocTable()) {};
+    VisitorUploadCrawler(vertex_t v, MemUnit& m)  : v(v), m(m), g(m.getUpGraph()), at(m.getUpAllocTable()) { auto* ae = at.lookupVertex(v); cpu = ae->cpu;};
     ~VisitorUploadCrawler() {};
     virtual void visit(const Block& el) const;
     virtual void visit(const TimingMsg& el) const;

@@ -133,7 +133,6 @@ public:
   int downloadAndParse(uint8_t cpuIdx);
 
   //Write out processed Download Graph as .dot file
-  void writeDownDot(const std::string& fn, bool filterMeta) { writeDownDot( fn, filterMeta ); }
   void writeDownDot(const std::string& fn, bool filterMeta);
 
   //Turn on Verbose Output

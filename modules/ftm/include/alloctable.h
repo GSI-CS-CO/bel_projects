@@ -9,7 +9,9 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/composite_key.hpp>
 #include "graph.h"
+#include "mempool.h"
 
 #define ALLOC_OK             (0)
 #define ALLOC_NO_SPACE      (-1)
@@ -36,10 +38,7 @@ struct AllocMeta {
 
 struct Hash{};
 struct Vertex{};
-struct CpuAdr:composite_key<
-  BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint8_t,cpu),
-  BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint32_t,adr)
->{};
+struct CpuAdr{};
 
 
 typedef boost::multi_index_container<
@@ -49,8 +48,15 @@ typedef boost::multi_index_container<
       tag<Hash>,  BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint32_t,hash)>,
     hashed_unique<
       tag<Vertex>,  BOOST_MULTI_INDEX_MEMBER(AllocMeta,vertex_t,v)>,
-    ordered_unique<CpuAdr>
-    >  
+    hashed_unique<
+      tag<CpuAdr>,
+      composite_key<
+        AllocMeta,
+        BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint8_t,cpu),
+        BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint32_t,adr)
+      >
+    >
+  >    
  > AllocMeta_set;
 
 
@@ -68,6 +74,7 @@ public:
    //deep copy
   AllocTable(AllocTable const &src);
 
+  std::vector<MemPool>& getMemories() {return vPool;}
   void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space)); }
   void clearMemories() { for (int i = 0; i < vPool.size(); i++ ) vPool[i].init(); }
 
