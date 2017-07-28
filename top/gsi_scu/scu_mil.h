@@ -94,8 +94,25 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
 #define   RD_CLR_TIMER        0x0006    // read => event timer; write clear event timer.
 #define   RD_WR_DLY_TIMER     0x0007    // read => delay timer; write set delay timer.
 #define   RD_CLR_WAIT_TIMER   0x0008    // read => wait timer; write => clear wait timer.
+#define   TX_TASK_0           0x0040    // write => first read command
+#define   TX_TASK_1           0x0041    // write => second read command
+#define   TX_TASK_2           0x0042    // write => ... read command
+#define   TX_TASK_3           0x0043    // write => ... read command
+#define   TX_TASK_4           0x0044    // write => ... read command
+#define   TX_TASK_5           0x0045    // write => ... read command
+#define   TX_TASK_6           0x0046    // write => ... read command
+#define   TX_TASK_7           0x0047    // write => ... read command
 
-#define   EV_FILT_FIRST       0x1000    // first event filter (ram) address.
+#define   RX_TASK_0           0x0060    // read => first read data
+#define   RX_TASK_1           0x0061    // read => ... read data
+#define   RX_TASK_2           0x0062    // read => ... read data
+#define   RX_TASK_3           0x0063    // read => ... read data
+#define   RX_TASK_4           0x0064    // read => ... read data
+#define   RX_TASK_5           0x0065    // read => ... read data
+#define   RX_TASK_6           0x0066    // read => ... read data
+#define   RX_TASK_7           0x0067    // read => last read data
+#define   TASK_STATUS         0x0080    // bitmap of rx regs, 1: data received
+#define   EV_FILT_FIRST       0x1007    // first event filter (ram) address.
 #define   EV_FILT_LAST        0x1FFF    // last event filter (ram) addres.
 
 /*
