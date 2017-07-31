@@ -1,8 +1,7 @@
-#~/bin/bash
 TARGET_DIR=/common/export
 
 all:
-	make PATH=../../..//toolchain/bin:$(PATH) -C firmware 
+	make PATH=../../../toolchain/bin:$(PATH) -C firmware 
 	make -C control
 
 deploy:
