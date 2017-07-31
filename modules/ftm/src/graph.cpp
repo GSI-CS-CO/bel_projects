@@ -4,6 +4,7 @@
 //would be nicer to do this in the ctors initilisier, but Class Node's circular inclusion must be resolved
 myVertex::myVertex(myVertex const &src) {
   this->name = src.name;
+  this->cpu = src.cpu;
   this->hash = src.hash;
   if (src.np != NULL) this->np = src.np->clone();
   this->type = src.type;

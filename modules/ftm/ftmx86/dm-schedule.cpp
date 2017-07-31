@@ -145,9 +145,11 @@ int main(int argc, char* argv[]) {
     if(doUpload | doUpdate) {
       if (inputFilename != NULL) {
         try {
-          if(doUpdate) cdm.downloadAndParse(cpuIdx);
-          cdm.uploadDot(cpuIdx, inputFilename, doUpdate);
-          if(verbose) cdm.showUp(cpuIdx, strip);
+          Graph tmp;
+          if(doUpdate) cdm.download();
+          cdm.prepareUpload(cdm.parseDot(inputFilename, tmp));
+          cdm.upload();
+          if(verbose) cdm.showUp(strip);
         } catch (std::runtime_error const& err) {
           std::cerr << std::endl << program << ": Failed to upload to CPU#"<< cpuIdx << ". Cause: " << err.what() << std::endl;
           return -6;
@@ -156,8 +158,8 @@ int main(int argc, char* argv[]) {
     } else if (doRemove) {
       if (inputFilename != NULL) {
         try {
-          cdm.downloadAndParse(cpuIdx);
-          cdm.removeDot(cpuIdx, inputFilename);
+          cdm.download();
+          cdm.removeDot(inputFilename);
           cdm.removeDotFromDict(inputFilename);
         } catch (std::runtime_error const& err) {
           std::cerr << std::endl << program << ": Failed to remove from CPU#"<< cpuIdx << ". Cause: " << err.what() << std::endl;
@@ -165,15 +167,15 @@ int main(int argc, char* argv[]) {
         }
       } else {std::cerr << std::endl << program << ": Failed - a .dot file is required" << std::endl; return -7;}
     } else if (doClear) {
-        cdm.clear(cpuIdx);
+        cdm.clear();
     }
   
   
     
     try { 
-      cdm.downloadAndParse(cpuIdx);
-      cdm.writeDownDot(outputFilename, cpuIdx, strip);
-      if(verbose) cdm.showDown(cpuIdx, strip);
+      cdm.download();
+      cdm.writeDownDot(outputFilename, strip);
+      if(verbose) cdm.showDown(strip);
     } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Failed to download from CPU#"<< cpuIdx << " Cause: " << err.what() << std::endl;
       return -7;

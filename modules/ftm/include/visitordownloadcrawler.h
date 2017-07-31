@@ -5,7 +5,6 @@
 #include <iostream>
 #include "common.h"
 #include "graph.h"
-#include "memunit.h"
 #include "alloctable.h"
 
 
@@ -25,9 +24,8 @@ class CmdQBuffer;
 class DestList;
 
  class VisitorDownloadCrawler {
-    vertex_t        v;
-    MemUnit&        m;
     Graph&          g;
+    vertex_t        v;
     AllocTable&     at;
     uint8_t*        b;
     uint8_t         cpu;
@@ -35,7 +33,7 @@ class DestList;
     void setDefDst(void) const;
 
   public:
-    VisitorDownloadCrawler(vertex_t v, MemUnit& m)  : v(v), m(m), g(m.getDownGraph()), at(m.getDownAllocTable()) { auto* ae = at.lookupVertex(v); cpu = ae->cpu; b = ae->b; };
+    VisitorDownloadCrawler(Graph& g, vertex_t v, AllocTable& at)  : g(g), v(v), at(at) { auto* ae = at.lookupVertex(v); cpu = ae->cpu; b = ae->b; };
     ~VisitorDownloadCrawler() {};
     virtual void visit(const Block& el) const;
     virtual void visit(const TimingMsg& el) const;

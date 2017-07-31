@@ -1,5 +1,5 @@
 digraph g {
-name="fluffy";
+name="dummy";
 
 graph [ root="Evt_BREQ_00",  rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
 node [type="TMsg", shape="rectangle",  style="filled", fillcolor="white", color="black"]

@@ -76,10 +76,12 @@ public:
 
   std::vector<MemPool>& getMemories() {return vPool;}
   void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space)); }
-  void clearMemories() { for (int i = 0; i < vPool.size(); i++ ) vPool[i].init(); }
+  void clearMemories() { for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].init(); }
   void removeMemories() { vPool.clear(); }
 
   bool syncBmps(AllocTable const &src);
+  bool setBmps(vBuf bmpData);
+  vBuf getBmps();
 
   //Allocation functions
   int  allocate(uint8_t cpu, uint32_t hash, vertex_t v);

@@ -16,16 +16,11 @@ typedef std::set<uint32_t> aPool; // contains all available addresses in LM32 me
 
 
 class MemPool {
+  friend class AllocTable;
+  friend class CarpeDM;
+
+
   
-
-  vBuf  bmp;
-  aPool pool;
-
-protected:
-  
-
-public:  
-  // actually not used by this class, but best place to keep the info
   const uint8_t cpu;
   const uint32_t extBaseAdr;  //where to find the B-Port of this CPU RAM from the Host's perspective
   const uint32_t intBaseAdr;  //where to find the A-Port of this CPU RAM from this CPU's perspective
@@ -36,6 +31,15 @@ public:
   const uint32_t  bmpSize;
   const uint32_t  startOffs; // baseAddress + bmpLen rounded up to next multiple of MEM_BLOCK_SIZE to accomodate BMP
   const uint32_t  endOffs;   // baseAddress + nodeQty rounded down to next multiple of MEM_BLOCK_SIZE, can only use whole blocks 
+  vBuf  bmp;
+  aPool pool;
+
+protected:
+  
+
+public:  
+  // actually not used by this class, but best place to keep the info
+
 
   MemPool(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space)
         : cpu(cpu),
@@ -48,8 +52,8 @@ public:
           bmpSize((bmpBits + 8 * _MEM_BLOCK_SIZE -1) / (8 * _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE), 
           startOffs(sharedOffs + bmpSize), 
           endOffs(startOffs + (nodeQty * _MEM_BLOCK_SIZE)),
-          bmp(vBuf(bmpSize))
-          { init(); }
+          bmp(bmpSize)
+          { std::cout << "bmpSize was " << bmpSize << " size is " << bmp.size() << std::endl;  init();  }
           
   ~MemPool() { };
 
@@ -59,8 +63,11 @@ public:
   void syncPoolToBmp();
   bool syncBmpToPool();
 
-  void setBmp(const vBuf& aBmp) { bmp = aBmp; }
-  const vBuf getBmp()           const { return bmp; }
+  bool getBmpBit(unsigned int bitIdx) {return bmp[bitIdx / 8] & (1 << (7 - bitIdx % 8));}
+
+
+  void setBmp(const vBuf& aBmp) { bmp = aBmp; std::cout << "ste bmp was called" << std::endl; }
+  const vBuf& getBmp()           const { return bmp; }
   
   uint32_t getFreeChunkQty()  const { return pool.size(); }
   uint32_t getFreeSpace()     const { return pool.size() * _MEM_BLOCK_SIZE; }

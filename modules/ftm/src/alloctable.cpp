@@ -57,7 +57,8 @@
   //Allocation functions
   int AllocTable::allocate(uint8_t cpu, uint32_t hash, vertex_t v) {
     uint32_t chunkAdr;
-    if (vPool.size() <= cpu) {
+    std::cout << "Cpu " << (int)cpu << " mempools " << vPool.size() << std::endl;
+    if (cpu >= vPool.size()) {
       //std::cout << "cpu idx out of range" << std::endl;
       return false;}
 
@@ -92,8 +93,37 @@
   bool AllocTable::syncBmps(AllocTable const &src) {
     //check of the number of memories is identical
     if(vPool.size() != src.vPool.size()) {return false;}
-    for (int i = 0; i < vPool.size(); i++ ) vPool[i].setBmp(src.vPool[i].getBmp());
+    for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].setBmp(src.vPool[i].getBmp());
     return true;
+  }
+
+  bool AllocTable::setBmps(vBuf bmpData) {
+    size_t bmpSum = 0;
+    for(unsigned int i = 0; i < vPool.size(); i++) {bmpSum += vPool[i].bmpSize;}
+    if (bmpSum != bmpData.size()) return false;
+
+    //iterate the bmps, take their sizes to split input vector
+    vBuf::iterator bmpBegin = bmpData.begin();
+
+    for(unsigned int i = 0; i < vPool.size(); i++) {
+      vBuf vTmp(bmpBegin, bmpBegin + vPool[i].bmpSize);
+      vPool[i].setBmp(vTmp);
+      bmpBegin += vPool[i].bmpSize;
+    }  
+
+    return true;
+
+  }
+
+  vBuf AllocTable::getBmps() {
+    vBuf ret;
+    size_t bmpSum = 0;
+    for(unsigned int i = 0; i < vPool.size(); i++) {bmpSum += vPool[i].bmpSize;}
+    ret.reserve( bmpSum ); // preallocate memory
+    //apend all bmps
+    for(unsigned int i = 0; i < vPool.size(); i++) {ret.insert( ret.end(), vPool[i].getBmp().begin(), vPool[i].getBmp().end() );}
+    
+    return ret;
   }
 
   AllocTable::AllocTable(AllocTable const &src) {

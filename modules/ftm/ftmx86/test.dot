@@ -1,7 +1,7 @@
 digraph G {
 name = "Test";
 graph [label="Blink", root="Evt_POLICE0",  rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
-node [type="TMsg", shape="rectangle",  style="filled", fillcolor="white", color="black"]
+node [type="TMsg", shape="rectangle",  style="filled", fillcolor="white", color="black", cpu=0]
 edge [type="defdst", color="red"]
 
 Evt_POLICE0        [type="TMsg",                tOffs=0, id="0x0000000000000110", par="0x123", shape="oval", fillcolor="orange"];
@@ -18,7 +18,8 @@ B_POLICE->B_POLICE_QBl_Lo [type="priolo", color="grey", style=dashed, label="Lo 
 B_POLICE_QBl_Lo->B_POLICE_Qb_Lo0 [type="meta", color="grey", style=dashed, label="QBuf"];
 B_POLICE_QBl_Lo->B_POLICE_Qb_Lo1 [type="meta", color="grey", style=dashed, label="QBuf"];
 B_POLICE->B_POLICE_ListDst [type="listdst", color="grey", style=dashed, label="listdst"];
-
-
-
+/*
+Evt_FIREF0        [type="TMsg",                tOffs=0, id="0x0000000000000110", par="0x123", shape="oval", fillcolor="orange", cpu="0"];
+B_FIREF          [type="Block",         tPeriod=2000000000, cpu="0"];
+*/
 }

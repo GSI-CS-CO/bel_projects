@@ -14,7 +14,7 @@
 #include "graph.h"
 #include "common.h"
 #include "hashmap.h"
-#include "memunit.h"
+#include "alloctable.h"
 
 
 
@@ -61,7 +61,6 @@ protected:
   AllocTable atDown;
   Graph gDown;
 
-  MemUnit comManager;
 
   bool verbose = false;
   std::ostream& sLog;
@@ -73,13 +72,13 @@ protected:
   uint32_t ebReadWord(Device& dev, uint32_t adr);
   boost::dynamic_properties createParser(Graph& g);
   int parseFwVersionString(const std::string& s);
-  uint64_t read64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr);
-  int write64b(uint8_t cpuIdx, uint8_t thrIdx, uint32_t startAdr, uint64_t d);
+  uint64_t read64b(uint32_t startAdr);
+  int write64b(uint32_t startAdr, uint64_t d);
 
 public:
-  CarpeDM() : sLog(std::cout), sErr(std::cerr), comManager(hm, gUp, atUp, gDown, atDown)  {} 
-  CarpeDM(std::ostream& sLog) : sLog(sLog), sErr(std::cerr), comManager(hm, gUp, atUp, gDown, atDown)   {} 
-  CarpeDM(std::ostream& sLog, std::ostream& sErr) : sLog(sLog), sErr(sErr), comManager(hm, gUp, atUp, gDown, atDown) {}
+  CarpeDM() : sLog(std::cout), sErr(std::cerr) {} 
+  CarpeDM(std::ostream& sLog) : sLog(sLog), sErr(std::cerr)   {} 
+  CarpeDM(std::ostream& sLog, std::ostream& sErr) : sLog(sLog), sErr(sErr){}
   ~CarpeDM() {};
 
   //Open connection to a DM via Etherbone
@@ -104,21 +103,21 @@ public:
   void clearDict();
   
   //Parse a .dot file to create unprocessed Graph
-  Graph& parseUpDot(const std::string& fn, Graph& g);
+  Graph& parseDot(const std::string& fn, Graph& g);
 
   //Process Graph for uploading to LM32 SoC
-  bool prepareUploadToCpu(Graph& g, uint8_t cpuIdx, bool update);
+  void prepareUpload(Graph& g);
 
   //Upload processed Graph to LM32 SoC via Etherbone
-  int upload(uint8_t cpuIdx);
+  int upload();
 
   //Process and upload .dot file to to LM32 SoC via Etherbone
-  int uploadDot(uint8_t cpuIdx, const std::string& fn, bool update) { Graph gTmp; prepareUploadToCpu( parseUpDot(fn, gTmp), cpuIdx, update); return upload(cpuIdx); }
+  int uploadDot(const std::string& fn) { Graph gTmp; prepareUpload( parseDot(fn, gTmp)); return upload(); }
 
   //Process and remove .dot file from LM32 SoC via Etherbone
   int removeDot(const std::string& fn);
 
-  int clear(uint8_t cpuIdx);
+  int clear();
 
   //Send a command to Block <targetName> on CPU <cpuIdx> via Etherbone
   int sendCmd(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc); 
@@ -130,7 +129,7 @@ public:
 
 
   //Download binary from LM32 SoC and create Graph
-  int downloadAndParse(uint8_t cpuIdx);
+  int download();
 
   //Write out processed Download Graph as .dot file
   void writeDownDot(const std::string& fn, bool filterMeta);
@@ -214,14 +213,17 @@ public:
   //Immediately aborts a Thread
   void abortThr(uint8_t cpuIdx, uint8_t thrIdx);
 
+  //shortcut to obtain a node's cpu by its name
+  uint8_t getNodeCpu(const std::string& name, bool direction); 
+
   //shortcut to obtain a node's address by its name
   uint32_t getNodeAdr(const std::string& name, bool direction, bool intExt); 
 
   //show a CPU's Upload address table
-  void showUp(bool filterMeta) {comManager.show("Upload Table", "upload_dict.txt", UPLOAD, filterMeta);}
+  void showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", UPLOAD, filterMeta);}
 
   //show a CPU's Download address table
-  void showDown(bool filterMeta) {comManager.show("Download Table", "download_dict.txt", DOWNLOAD, filterMeta);}
+  void showDown(bool filterMeta) {show("Download Table", "download_dict.txt", DOWNLOAD, filterMeta);}
 
   //Show all command fields in a Queue (past and current)
   void dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio);
@@ -232,6 +234,23 @@ public:
   bool isCpuIdxValid(uint8_t cpuIdx) { if ( cpuIdxMap.find(cpuIdx) != cpuIdxMap.end() ) return true; else return false;}
 
   void showCpuList();
+
+
+
+ 
+  vAdr getUploadAdrs();
+  vBuf getUploadData();
+
+  //Download Functions
+ 
+  const vAdr getDownloadBMPAdrs();
+  const vAdr getDownloadAdrs();
+  void parseDownloadData(vBuf downloadData);
+
+  const vAdr getCmdWrAdrs(uint32_t hash, uint8_t prio); 
+  const uint32_t getCmdInc(uint32_t hash, uint8_t prio);
+
+  void show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta );
 };
 
 #endif

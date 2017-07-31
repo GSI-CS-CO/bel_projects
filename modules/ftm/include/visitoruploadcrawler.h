@@ -5,7 +5,6 @@
 #include <iostream>
 #include "common.h"
 #include "graph.h"
-#include "memunit.h"
 #include "alloctable.h"
 
 class Event;
@@ -24,9 +23,8 @@ class CmdQBuffer;
 class DestList;
 
 class VisitorUploadCrawler {
-    vertex_t v;
-    MemUnit& m;
     Graph& g;
+    vertex_t v;
     AllocTable&     at;
     uint8_t         cpu;
 
@@ -40,7 +38,7 @@ class VisitorUploadCrawler {
     vAdr getListDst(void)   const;
 
   public:
-    VisitorUploadCrawler(vertex_t v, MemUnit& m)  : v(v), m(m), g(m.getUpGraph()), at(m.getUpAllocTable()) { auto* ae = at.lookupVertex(v); cpu = ae->cpu;};
+    VisitorUploadCrawler(Graph& g, vertex_t v, AllocTable& at)  : g(g), v(v), at(at) { std::cout << "SIze of atUp: " << at.getSize() << std::endl; auto* ae = at.lookupVertex(v); if (ae != NULL) cpu = ae->cpu; else throw std::runtime_error(g[v].name + "cpu lookup failed ... crawler upload");};
     ~VisitorUploadCrawler() {};
     virtual void visit(const Block& el) const;
     virtual void visit(const TimingMsg& el) const;

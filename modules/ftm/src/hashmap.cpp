@@ -37,9 +37,12 @@ bool HashMap::remove(const uint32_t hash) {
   return false;
 }
 
-boost::optional<const std::string&> HashMap::lookup(const uint32_t hash)     const  { try { return hm.left.at(hash);}  catch (...) {throw std::runtime_error("Hash " + std::to_string(hash) + " not found"); return boost::optional<const std::string&>(); }  }
+boost::optional<const std::string&> HashMap::lookup(const uint32_t hash)     const  { try { return hm.left.at(hash);}  catch (...) {//throw std::runtime_error("Hash " + std::to_string(hash) + " not found"); 
+                                                                                                                                    return boost::optional<const std::string&>(); }  
+                                                                                                                                   }
 
-boost::optional<const uint32_t&>    HashMap::lookup(const std::string& name) const  { try { return hm.right.at(name);} catch (...) {throw std::runtime_error("Name " + name + " not found"); return boost::optional<const uint32_t&>();    }  }  
+boost::optional<const uint32_t&>    HashMap::lookup(const std::string& name) const  { try { return hm.right.at(name);} catch (...) {//throw std::runtime_error("Name " + name + " not found"); 
+                                                                                                                                    return boost::optional<const uint32_t&>();    }  }  
 
 bool HashMap::contains(const uint32_t hash)     const {if (hm.left.count(hash)  > 0) {return true;} else {return false;} };
 

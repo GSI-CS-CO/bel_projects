@@ -12,9 +12,9 @@ VERSION      ?= 0.6.2
 VERSION_TOOL ?= 0.6.1
 
 T_CXX         = g++
-T_CXXFLAGS    = -Wall -g -std=c++11 -I$(BASEPATH)/include -I$(BASEPATH)/ftmfw -Wfatal-errors -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\"
+T_CXXFLAGS    = -Wall -g -std=c++11 -I$(BASEPATH)/include -I$(BASEPATH)/ftmfw -Wfatal-errors -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\" 
 
-SRC_FILES     = event.cpp meta.cpp block.cpp memunit.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp graph.cpp alloctable.cpp
+SRC_FILES     = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMschedule.cpp graph.cpp alloctable.cpp mempool.cpp
 T_SOURCES     = $(addprefix $(SRCPATH)/, $(SRC_FILES))
 T_LIBS        = -Wl,-rpath,/usr/local/lib -letherbone -lboost_graph -l:libboost_serialization.so.1.62.0
 

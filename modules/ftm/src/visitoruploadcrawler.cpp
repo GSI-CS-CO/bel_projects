@@ -355,7 +355,7 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
   boost::tie(out_begin, out_end) = out_edges(v,g);
   
   // find the command target (again) and check if it is internal or at a peer
-
+  found = false;
   for (out_cur = out_begin; out_cur != out_end; ++out_cur)
   {   
     if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;

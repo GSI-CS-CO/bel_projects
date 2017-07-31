@@ -179,8 +179,8 @@ int main(int argc, char* argv[]) {
   }
     
   try { 
-    cdm.downloadAndParse(cpuIdx);
-    if(verbose) cdm.showDown(cpuIdx, false);
+    cdm.download();
+    if(verbose) cdm.showDown(false);
   } catch (std::runtime_error const& err) {
     std::cerr << program << ": Download from CPU "<< cpuIdx << " failed. Cause: " << err.what() << std::endl;
     return -7;
@@ -197,15 +197,15 @@ int main(int argc, char* argv[]) {
     std::string cmp(typeName);
 
     if      (cmp == "noop")  {
-      if(!(cdm.isValid(cpuIdx, targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      if(!(cdm.isValid( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
     }
     else if (cmp == "flow")  {
-      if(!(cdm.isValid(cpuIdx, targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
-      if ((para != NULL) && cdm.isValid(cpuIdx, para)) { 
+      if(!(cdm.isValid( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      if ((para != NULL) && cdm.isValid( para)) { 
         uint32_t adr; 
         try {
-          adr = cdm.getNodeAdr(cpuIdx, para, DOWNLOAD, INTERNAL);
+          adr = cdm.getNodeAdr(para, DOWNLOAD, INTERNAL);
         } catch (std::runtime_error const& err) {
           std::cerr << program << ": Could not obtain address of destination node " << para << ". Cause: " << err.what() << std::endl;
         } 
@@ -213,30 +213,30 @@ int main(int argc, char* argv[]) {
       } else {std::cerr << program << ": Destination Node '" << para << "'' was not found on DM" << std::endl; return -1; }
     }
     else if (cmp == "relwait")  {
-      if(!(cdm.isValid(cpuIdx, targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      if(!(cdm.isValid( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (para == NULL) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
       mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, false );
     }
     else if (cmp == "abswait")  {
-      if(!(cdm.isValid(cpuIdx, targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      if(!(cdm.isValid( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (para == NULL) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
         mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, true ); 
     }
     else if (cmp == "flush") {
-        if(!(cdm.isValid(cpuIdx, targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+        if(!(cdm.isValid( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }  
         uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
         std::cout << "qprio " << para << " 0x" << std::hex << queuePrio << std::endl;
         mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1));
     }
     else if (cmp == "queue") {
-        if(!(cdm.isValid(cpuIdx, targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+        if(!(cdm.isValid( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         cdm.dumpQueue(cpuIdx, targetName, cmdPrio);
         return 0;
     } 
     else if (cmp == "origin")  {
       if( targetName != NULL) {
-        if(!(cdm.isValid(cpuIdx, targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+        if(!(cdm.isValid( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         cdm.setThrOrigin(cpuIdx, thrIdx, targetName);
       }
       if( verbose | (targetName == NULL) ) { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " origin points to node " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl;}
@@ -284,7 +284,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "hex")  {
-      if(!(cdm.isValid(cpuIdx, targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      if(!(cdm.isValid( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       try {
         cdm.dumpNode(cpuIdx, targetName);
       } catch (std::runtime_error const& err) {
@@ -314,7 +314,7 @@ int main(int argc, char* argv[]) {
     //all the block commands set mc, so...
     if (mc != NULL) {
       try {
-          cdm.sendCmd(cpuIdx, targetName, cmdPrio, mc);     
+          cdm.sendCmd(targetName, cmdPrio, mc);     
         } catch (std::runtime_error const& err) {
           std::cerr << program << ": Could not send command " << para << ". Cause: " << err.what() << std::endl;
         }  

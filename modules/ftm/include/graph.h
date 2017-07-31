@@ -16,7 +16,7 @@ class Node;
 class  myVertex {
 public:
   std::string name;
-  uint32_t cpu;
+  std::string cpu;
   uint32_t hash;
   node_ptr np;
 
@@ -76,12 +76,12 @@ public:
   //Wait
   std::string tWait;
 
-  myVertex() : name("UNDEFINED"), hash(0xDEADBEEF), np(NULL), type("UNDEFINED"), flags("0xDEADBEEF"), tPeriod("0xD15EA5EDDEADBEEF"), rdIdxIl("0"), rdIdxHi("0"), rdIdxLo("0"), 
+  myVertex() : name("UNDEFINED"), cpu("0"), hash(0xDEADBEEF), np(NULL), type("UNDEFINED"), flags("0xDEADBEEF"), tPeriod("0xD15EA5EDDEADBEEF"), rdIdxIl("0"), rdIdxHi("0"), rdIdxLo("0"), 
   wrIdxIl("0"), wrIdxHi("0"), wrIdxLo("0"), tOffs("0xD15EA5EDDEADBEEF"), id("0xD15EA5EDDEADBEEF"), id_fid("0"), id_gid("0"), id_evtno("0"), id_sid("0"), id_bpid("0"), id_res("0"),
   par("0xD15EA5EDDEADBEEF"), tef("0"), res("0"), tValid("0xD15EA5EDDEADBEEF"),
   qIl("0"), qHi("0"), qLo("0"), frmIl("0"), toIl("0"), frmHi("0"), toHi("0"), frmLo("0"), toLo("0"), prio("0"), qty("1"), tWait("0xD15EA5EDDEADBEEF") {}
   
-  myVertex(std::string name, uint32_t hash, node_ptr np, std::string type, std::string flags) : name(name), hash(hash), np(np), type(type), flags(flags), tPeriod("0xD15EA5EDDEADBEEF"),
+  myVertex(std::string name, std::string cpu, uint32_t hash, node_ptr np, std::string type, std::string flags) : name(name), cpu(cpu), hash(hash), np(np), type(type), flags(flags), tPeriod("0xD15EA5EDDEADBEEF"),
   rdIdxIl("0"), rdIdxHi("0"), rdIdxLo("0"), wrIdxIl("0"), wrIdxHi("0"), wrIdxLo("0"), tOffs("0xD15EA5EDDEADBEEF"), id("0xD15EA5EDDEADBEEF"), id_fid("0"), id_gid("0"), id_evtno("0"), id_sid("0"), id_bpid("0"), id_res("0"),
   par("0xD15EA5EDDEADBEEF"), tef("0"), res("0"), tValid("0xD15EA5EDDEADBEEF"), qIl("0"), qHi("0"), qLo("0"), frmIl("0"), toIl("0"), frmHi("0"), toHi("0"), frmLo("0"), toLo("0"), prio("0"), qty("1"), tWait("0xD15EA5EDDEADBEEF") {}
 
