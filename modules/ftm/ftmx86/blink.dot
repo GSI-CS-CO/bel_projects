@@ -1,7 +1,7 @@
 digraph G {
 name = "blink2";
 graph [label="Blink", root="Evt_POLICE",  rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
-node [type="TMsg", shape="rectangle",  style="filled", fillcolor="white", color="black"]
+node [type="TMsg", shape="rectangle",  style="filled", fillcolor="white", color="black", cpu=0]
 edge [type="defdst", color="red"]
 
 subgraph cluster_0 {
@@ -65,6 +65,9 @@ Cmd_CALL_FIREF  -> B_FIREF [type="target", color="grey", label="change dest..."]
 Cmd_CALL_FIREF  -> Evt_FIREF0 [type="flowdst", color="grey", label="...to"];
 
 
+Evt_PPS             [type="TMsg",         tOffs=          0,   id="0x0000000000000001", par="0x123", shape="oval", cpu="1"];
+B_PPS               [type="Block",      tPeriod=1000000000, cpu="1"];
 
+Evt_PPS -> B_PPS  -> Evt_PPS;
 
 }

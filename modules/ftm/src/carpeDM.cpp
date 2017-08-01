@@ -9,7 +9,6 @@
 
 #include "common.h"
 #include "propwrite.h"
-#include "memunit.h"
 #include "ftm_shared_mmap.h"
 #include "graph.h"
 #include "carpeDM.h"
@@ -30,7 +29,13 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
 
    cyc.open(dev);
    for(int i = 0; i < (veb.end()-veb.begin()); i++) {
+    //FIXME dirty break into cycles
+    if (i && ((va[i] & (RAM_SIZE-1)) ^ (va[i-1] & (RAM_SIZE-1)))) {
+      cyc.close();
+      cyc.open(dev);  
+    }
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)veb[i]);
+
    }
    cyc.close();
    
@@ -48,6 +53,11 @@ vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va)
 
    cyc.open(dev);
    for(int i = 0; i < (va.end()-va.begin()); i++) {
+    //FIXME dirty break into cycles
+    if (i && ((va[i] & (RAM_SIZE-1)) ^ (va[i-1] & (RAM_SIZE-1)))) {
+      cyc.close();
+      cyc.open(dev);  
+    }
     cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&veb[i]);
    }
    cyc.close();
@@ -286,8 +296,15 @@ bool CarpeDM::connect(const std::string& en) {
     }  
     else {throw std::runtime_error(" Could not read from .dot file '" + fn + "'"); return g;}  
     //format all graph labels lowercase
+
+ 
+
+    
+
     boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
     boost::tie(vi, vi_end) = vertices(g);   
+    sLog << "Parser: Grpah has " << vi_end - vi << " Nodes" << std::endl;
+
     BOOST_FOREACH( edge_t e, edges(g) ) { std::transform(g[e].type.begin(), g[e].type.end(), g[e].type.begin(), ::tolower); }
     BOOST_FOREACH( vertex_t v, vertices(g) ) { std::transform(g[v].type.begin(), g[v].type.end(), g[v].type.begin(), ::tolower); } 
     

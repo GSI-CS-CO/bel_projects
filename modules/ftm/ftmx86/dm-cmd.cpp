@@ -7,7 +7,6 @@
 #include "carpeDM.h"
 #include "node.h"
 #include "block.h"
-#include "memunit.h"
 #include "minicommand.h"
 
 static void help(const char *program) {

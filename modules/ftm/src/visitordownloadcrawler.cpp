@@ -16,9 +16,9 @@ void VisitorDownloadCrawler::setDefDst() const {
   tmpAdr = at.intAdr2adr(cpu, auxAdr);
   auto* x = at.lookupAdr(cpu, tmpAdr);
 
-  //std::cout << "InAdr: 0x" << std::hex << auxAdr << " Adr: 0x" << std::hex << tmpAdr <<  std::endl;
+  std::cout << "cpu " << (int)cpu << "InAdr: 0x" << std::hex << auxAdr << " Adr: 0x" << std::hex << tmpAdr <<  std::endl;
   if (x == NULL) {
-    //std::cout << "Parser Entry not found !" <<  std::endl;
+    std::cout << "AtDown Entry not found !" <<  std::endl;
   }  
   else if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, x->v, myEdge(sDD), g);
 

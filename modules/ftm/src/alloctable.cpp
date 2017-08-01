@@ -3,12 +3,12 @@
   
 
   bool AllocTable::insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) {
-    /*
+    
     std::cout << "Problem: " << std::endl; 
-    if (lookupAdr(adr) != NULL) std::cout << "Adr 0x" << std::hex << adr << " exists already" << std::endl;
+    if (lookupAdr(cpu, adr) != NULL) std::cout << (int)cpu << " Adr 0x" << std::hex << adr << " exists already" << std::endl;
     if (lookupHash(hash) != NULL) std::cout << "Hash 0x" << std::hex << hash << " exists already" << std::endl;
     if (lookupVertex(v) != NULL) std::cout << "V 0x" << std::dec << v << " exists already" << std::endl;
-    */
+    
     auto x = a.insert({cpu, adr, hash, v});
     return x.second;
   }
@@ -23,9 +23,11 @@
 
     auto it = a.get<CpuAdr>().find(boost::make_tuple( cpu, adr ));
     a.get<CpuAdr>().erase(it, it);
-    if (it != 0) { return true;  }
+    /*
+    if (it != a.get<Vertex>().end())) { return true;  }
     else         { return false; }
-    
+    */
+    return true;
   }
 
   bool AllocTable::removeByHash(uint32_t hash) {
@@ -60,7 +62,7 @@
     std::cout << "Cpu " << (int)cpu << " mempools " << vPool.size() << std::endl;
     if (cpu >= vPool.size()) {
       //std::cout << "cpu idx out of range" << std::endl;
-      return false;}
+      return ALLOC_NO_SPACE;}
 
     if (!(vPool[cpu].acquireChunk(chunkAdr))) return ALLOC_NO_SPACE;
     if (!(insert(cpu, chunkAdr, hash, v)))    return ALLOC_ENTRY_EXISTS;

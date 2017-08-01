@@ -28,7 +28,7 @@ static void help(const char *program) {
 
 int main(int argc, char* argv[]) {
 
-
+  Graph g;
 
   bool doUpload = false, doUpdate = false, doRemove = false, doClear = false, verbose = false, strip=false;
 
@@ -145,9 +145,9 @@ int main(int argc, char* argv[]) {
     if(doUpload | doUpdate) {
       if (inputFilename != NULL) {
         try {
-          Graph tmp;
+
           if(doUpdate) cdm.download();
-          cdm.prepareUpload(cdm.parseDot(inputFilename, tmp));
+          cdm.prepareUpload(cdm.parseDot(inputFilename, g));
           cdm.upload();
           if(verbose) cdm.showUp(strip);
         } catch (std::runtime_error const& err) {

@@ -18,17 +18,18 @@ void MemPool::syncPoolToBmp() {
   initPool(); //init normally, then remove everything already used in bitmap
   for(unsigned int bitIdx = 0; bitIdx < bmpBits; bitIdx++) {
     if (bmp[bitIdx / 8] & (1 << (7 - bitIdx % 8))) {
-      nodeAdr = startOffs + bitIdx * _MEM_BLOCK_SIZE;
+      nodeAdr = sharedOffs + bitIdx * _MEM_BLOCK_SIZE;
       removeChunk(nodeAdr);
     }
   }
 }
 
 bool MemPool::syncBmpToPool() {
+  initBmp();
   //Go through pool and update Bmp
   for (auto& adr : pool ) {
     if( (adr >= startOffs) && (adr <= endOffs)) {
-      int bitIdx        = (adr - startOffs) / _MEM_BLOCK_SIZE;
+      int bitIdx        = (adr - sharedOffs) / _MEM_BLOCK_SIZE;
       uint8_t       tmp = ~(1 << (7 - (bitIdx % 8)));
       bmp[bitIdx / 8]  &= tmp;
     } else {//something's awfully wrong, address out of range!

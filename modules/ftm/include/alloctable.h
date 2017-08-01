@@ -48,7 +48,7 @@ typedef boost::multi_index_container<
       tag<Hash>,  BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint32_t,hash)>,
     hashed_unique<
       tag<Vertex>,  BOOST_MULTI_INDEX_MEMBER(AllocMeta,vertex_t,v)>,
-    hashed_unique<
+    ordered_unique<
       tag<CpuAdr>,
       composite_key<
         AllocMeta,
