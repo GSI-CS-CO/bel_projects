@@ -12,7 +12,7 @@
 #include "w1.h"
 #include "mini_sdb.h"
 #include <hw/sockit_owm_regs.h>
-#include <hw/wb_vuart.h>
+#include <hw/wb_uart.h>
 
 
 extern struct w1_bus wrpc_w1_bus;

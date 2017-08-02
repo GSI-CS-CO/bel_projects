@@ -37,7 +37,7 @@
 
 extern struct w1_bus wrpc_w1_bus;
 extern inline int cbisEmpty(volatile struct channel_regs*, int);
-extern inline void cbRead(volatile struct channel_buffer*, volatile struct channel_regs*, int, struct param_set*);
+extern inline int cbRead(volatile struct channel_buffer*, volatile struct channel_regs*, int, struct param_set*);
 extern inline int cbisFull(volatile struct channel_regs*, int);
 extern int cbgetCount(volatile struct channel_regs*, int); 
 
@@ -54,7 +54,7 @@ uint32_t SHARED fg_version = 0x3; // 0x2 saftlib,
                                   // 0x3 new msi system with mailbox
 uint32_t SHARED fg_mb_slot = -1;
 uint32_t SHARED fg_num_channels = MAX_FG_CHANNELS;
-uint32_t SHARED fg_buffer_size = BUFFER_SIZE+1;
+uint32_t SHARED fg_buffer_size = BUFFER_SIZE;
 uint32_t SHARED fg_macros[MAX_FG_MACROS]; // hi..lo bytes: slot, device, version, output-bits
 struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS]; 
 struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
@@ -133,8 +133,7 @@ inline void send_fg_param(int slave_nr, int fg_base, unsigned short cntrl_reg) {
   unsigned short cntrl_reg_wr;
   
   fg_num = (cntrl_reg & 0x3f0) >> 4; // virtual fg number Bits 9..4
-  if( !cbisEmpty(&fg_regs[0], fg_num)) {
-    cbRead(&fg_buffer[0], &fg_regs[0], fg_num, &pset);
+  if (cbRead(&fg_buffer[0], &fg_regs[0], fg_num, &pset)) {
     cntrl_reg_wr = cntrl_reg & ~(0xfc00); // clear freq and step select
     cntrl_reg_wr |= ((pset.control & 0x38) << 10) | ((pset.control & 0x7) << 10);
     scub_base[(slave_nr << 16) + fg_base + FG_CNTRL] = cntrl_reg_wr;
@@ -163,6 +162,7 @@ inline void handle(int slave_nr, unsigned FG_BASE)
       fg_regs[channel].state = 0;
       //mprintf("fg 0x%x in slave %d stopped after %d tuples. %d tuples left in buffer.\n", FG_BASE, slave_nr, fg_regs[channel].ramp_count, cbgetCount(&fg_regs[0], channel));
     } else if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
+      fg_regs[channel].state = 1; 
       SEND_SIG(SIG_START); // fg has received the tag
       if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
         SEND_SIG(SIG_REFILL);
@@ -279,8 +279,7 @@ int configure_fg_macro(int channel) {
     scub_base[(slot << 16) + dac_base + DAC_CNTRL] = 0x10; // set FG mode
     scub_base[(slot << 16) + fg_base + FG_CNTRL] = 0x1; // reset fg
     //fetch first parameter set from buffer
-    if(!cbisEmpty(&fg_regs[0], channel)) {
-      cbRead(&fg_buffer[0], &fg_regs[0], channel, &pset);
+    if (cbRead(&fg_buffer[0], &fg_regs[0], channel, &pset)) {
       //cntrl_reg_wr = cntrl_reg & ~(0xfc00); // clear freq and step select
       //set virtual fg number Bit 9..4
       scub_base[(slot << 16) + fg_base + FG_CNTRL] = (pset.control & 0x38) << 10 | (pset.control & 0x7) << 10 | channel << 4;
@@ -295,7 +294,6 @@ int configure_fg_macro(int channel) {
     scub_base[(slot << 16) + fg_base + FG_TAG_HIGH] = fg_regs[channel].tag >> 16;
     //configure and enable macro
     scub_base[(slot << 16) + fg_base + FG_CNTRL] |= FG_ENABLED;
-    fg_regs[channel].state = 1; 
     SEND_SIG(SIG_ARMED);
   }
   return 0; 
