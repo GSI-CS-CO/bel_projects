@@ -3,9 +3,9 @@
  *
  *  created : Apr 10, 2013
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Dec-2016
+ *  version : 02-Aug-2017
  *
- * Api for wishbone devices for timing receiver nodes. This is  not a timing receiver API,
+ * Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
  * but only a temporary solution.
  *
  * -------------------------------------------------------------------------------------------
@@ -53,6 +53,7 @@ eb_device_t  known_dev      = EB_NULL;   /* etherbone device */
 eb_socket_t  known_sock     = EB_NULL;   /* etherbone socket */
 eb_address_t disp_addr      = EB_NULL;   /* wishbone device base address */
 eb_address_t pps_addr       = EB_NULL;
+eb_address_t eca_addr       = EB_NULL;
 eb_address_t endpoint_addr  = EB_NULL;
 eb_address_t etherbone_addr = EB_NULL;
 eb_address_t tlu_addr       = EB_NULL;
@@ -188,6 +189,7 @@ eb_status_t wb_wr_get_time(eb_device_t device, int devIndex, uint64_t *nsecs)
 {
   eb_data_t    data1;
   eb_data_t    data2;
+  eb_data_t    data3;
   eb_status_t  status;
   eb_cycle_t   cycle;
 
@@ -197,16 +199,19 @@ eb_status_t wb_wr_get_time(eb_device_t device, int devIndex, uint64_t *nsecs)
   return EB_OK;
 #endif
 
-  /* get time from PPS generator */
+  /* get time from ECA */
   *nsecs = 0;
-  if ((status = wb_check_device(device, WR_PPS_GEN_VENDOR, WR_PPS_GEN_PRODUCT, WR_PPS_GEN_VMAJOR, WR_PPS_GEN_VMINOR, devIndex, &pps_addr)) != EB_OK) return status;
-  if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
-  eb_cycle_read(cycle, pps_addr + WR_PPS_GEN_CNTR_UTCLO, EB_BIG_ENDIAN|EB_DATA32, &data1);
-  eb_cycle_read(cycle, pps_addr + WR_PPS_GEN_CNTR_NSEC, EB_BIG_ENDIAN|EB_DATA32, &data2);
-  if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+  if ((status = wb_check_device(device, ECA_CTRL_VENDOR, ECA_CTRL_PRODUCT, ECA_CTRL_VMAJOR, ECA_CTRL_VMINOR, devIndex, &eca_addr)) != EB_OK) return status;
+  do {
+    if ((status = eb_cycle_open(device, 0, eb_block, &cycle)) != EB_OK) return status;
+    eb_cycle_read(cycle, eca_addr + ECA_CTRL_TIME_HI_GET, EB_BIG_ENDIAN|EB_DATA32, &data1);
+    eb_cycle_read(cycle, eca_addr + ECA_CTRL_TIME_LO_GET, EB_BIG_ENDIAN|EB_DATA32, &data2);
+    eb_cycle_read(cycle, eca_addr + ECA_CTRL_TIME_HI_GET, EB_BIG_ENDIAN|EB_DATA32, &data3);
+    if ((status = eb_cycle_close(cycle)) != EB_OK) return status;
+  } while (data1 != data3);
 
   /* time */
-  *nsecs = (uint64_t)data1 * 1000000000;
+  *nsecs = (uint64_t)data1 << 32;
   *nsecs = *nsecs + (uint64_t)data2;
 
   return (status);

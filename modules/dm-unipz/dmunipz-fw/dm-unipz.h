@@ -4,8 +4,11 @@
 #define  DMUNIPZ_US_ASMNOP        31          // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_MS_ASMNOP        31 * 1000   // # of asm("nop") operations per microsecond
 #define  DMUNIPZ_DEFAULT_TIMEOUT  100         // default timeout used by main loop [ms]
-#define  DMUNIPZ_REQTIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
-#define  DMUNIPZ_EVT_UNI_READY    0x1e        // event number EVT_UNI_READY
+#define  DMUNIPZ_UNITIMEOUT       1000        // timeout used when requesting things from UNILAC [ms]
+#define  DMUNIPZ_OFFSETFLEX       1000000     // offset added to obtain TS "flex wait" [ns]
+#define  DMUNIPZ_EVT_READY2SIS    0x1e        // event number EVT_READY_TO_SIS (HEX)
+#define  DMUNIPZ_ECA_ADDRESS      0x7ffffff0  // address of ECA input
+#define  DMUNIPZ_EB_HACKISH       0x12345678  // value for EB read handshake
 
 // (error) status
 #define  DMUNIPZ_STATUS_UNKNOWN          0    // unknown status
@@ -21,6 +24,10 @@
 #define  DMUNIPZ_STATUS_DEVBUSERROR     10    // something went wrong with write/read on the MIL devicebus
 #define  DMUNIPZ_STATUS_REQNOTOK        11    // UNILAC signals 'request not ok'                          
 #define  DMUNIPZ_STATUS_REQBEAMTIMEDOUT 12    // UNILAC beam request timed out                                
+#define  DMUNIPZ_STATUS_NOIP            13    // DHCP request via WR network failed                                
+#define  DMUNIPZ_STATUS_WRONGIP         14    // IP received via DHCP does not match local config            
+#define  DMUNIPZ_STATUS_NODM            15    // Data Master unreachable                                     
+#define  DMUNIPZ_STATUS_EBREADTIMEDOUT  16    // EB read via WR network timed out                           
 
                                 
 // commands from the outside
@@ -44,9 +51,10 @@
 // activity requested by ECA Handler, the relevant codes are also used as "tags".
 #define  DMUNIPZ_ECADO_TIMEOUT    0           // timeout: no activity requested
 #define  DMUNIPZ_ECADO_UNKOWN     1           // unnkown activity requested (unexpected action by ECA)
-#define  DMUNIPZ_ECADO_REQTK      2           // request the transfer channel (TK)
+#define  DMUNIPZ_ECADO_REQTK      2           // request the transfer channel (TK), carries info on DM wait after beam request
 #define  DMUNIPZ_ECADO_REQBEAM    3           // request beam from UNIPZ
 #define  DMUNIPZ_ECADO_RELTK      4           // release the transfer channel (TK)
+#define  DMUNIPZ_ECADO_PREPDM     5           // dedicated message from DM, carries info on DM wait after TK request
 
 // status of transfer (status bits)
 #define DMUNIPZ_TRANS_UNKNOWN     0           // unknown status
@@ -62,6 +70,16 @@
 #define DMUNIPZ_LOGLEVEL_COMPLETE 1           // info on completed transfers, info on status changes, info on state changes
 #define DMUNIPZ_LOGLEVEL_STATUS   2           // info on status changes, info on state changes
 #define DMUNIPZ_LOGLEVEL_STATE    3           // info on state changes
+
+typedef struct {                              // group together all information required for modifying blocks within the data master via Etherbone
+  uint32_t dynpar0;                           // receive from DM: 1st 32 bit of param field
+  uint32_t dynpar1;                           // receive from DM: 2nd 32 bit of param field
+  uint32_t cmdAddr;                           // write to DM: external address of a command
+  uint32_t cmdData[_T_CMD_SIZE_];             // write to DM: data of a command
+  uint32_t blockWrIdxAddr;                    // write to DM: external address of wrIdx within block
+  uint32_t blockWrIdx;                        // write to DM: updated value of wrIdx
+} dmComm;
+
 
 // part below provide by Ludwig Hechler 
 #define IFB_ADDRESS_SIS     0x20        /* Adresse der Interfacekarte               */

@@ -1,29 +1,43 @@
-TARGET		= dmunipz
-.DEFAULT_GOAL := fwbin
-DEVICE		= 5AGXMA3D4
-FLASH		= EPCQ256
-SPI_LANES	= ASx4
-RAM_SIZE	= 49152 
-SHARED_SIZE     = 8K
-USRCPUCLK       = 125000
-VERSION         = 0.0.1
+# PREFIX  controls where programs and libraries get installed
+# Note: during compile (all), PREFIX must be set to the final installation path
+# Example usage:
+#   make PREFIX=/usr all
+# Example deploy:
+#   make PREFIX=/usr STAGING=/common/export/timing-rte/dmunipz-dev deploy
+PREFIX      ?= /usr/local
+STAGING     ?=
+ARCH        ?= /x86_64
+# EB          ?= ../../ip_cores/etherbone-core/api
+FW          ?= dmunipz-fw
+SW          ?= dmunipz-x86
+ASL         ?= dmunipz-asl
+#TARGETS     := firmware software
 
-PATHFW 	= .
-PATHPKG	= $(shell python2.7 ../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
-PREFIX 	?= /usr/local
-CFLAGS 	= -I$(PATHFW) 
+#EXTRA_FLAGS ?=
+#CFLAGS      ?= $(EXTRA_FLAGS) -Wall -O2 -I $(EB) -I $(FW)
+#LIBS        ?= -L $(EB)/.libs -Wl,-rpath,$(PREFIX)/lib -letherbone -lm
 
+all:: firmware software
 
-include ../../syn/build.mk
+software:: 
+	$(MAKE) -C $(SW) all
 
+firmware:
+	$(MAKE) -C $(FW)
 
-fwbin: $(TARGET).bin 
+clean:
+	$(MAKE) -C $(SW) clean
+	$(MAKE) -C $(FW) clean
 
+deploy: 
+	mkdir -p $(STAGING)$(ARCH)$(PREFIX)/bin
+	mkdir -p $(STAGING)/firmware
+	cp ../../tools/eb-fwload $(STAGING)$(ARCH)$(PREFIX)/bin
+	cp $(ASL)/dmunipz.sh $(STAGING)
+	cp $(SW)/dm-unipz_start.sh $(STAGING)$(ARCH)$(PREFIX)/bin
+	cp $(SW)/dmunipz-ctl $(STAGING)$(ARCH)$(PREFIX)/bin
+	cp $(FW)/dmunipz.bin $(STAGING)/firmware
+#	script /common/export/nfsinit/global/timing-rte-dmunipz-dev is _here_ in sub-folder dmunipz-asl 
 
-
-$(TARGET).elf: $(PATHFW)/dm-unipz.c $(INCPATH)/ebm.c $(PATHFW)/../../top/gsi_scu/scu_mil.c
-
-clean::
-	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
-
+.PHONY: all clean
 
