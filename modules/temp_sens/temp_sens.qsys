@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<system name="$${FILENAME}">
+ <component
+   name="$${FILENAME}"
+   displayName="$${FILENAME}"
+   version="1.0"
+   description=""
+   tags="INTERNAL_COMPONENT=true"
+   categories="System" />
+ <parameter name="bonusData"><![CDATA[bonusData
+{
+   element temp_sense_0
+   {
+      datum _sortIndex
+      {
+         value = "0";
+         type = "int";
+      }
+   }
+}
+]]></parameter>
+ <parameter name="clockCrossingAdapter" value="HANDSHAKE" />
+ <parameter name="device" value="5AGXMA3D4F27C5" />
+ <parameter name="deviceFamily" value="Arria V" />
+ <parameter name="deviceSpeedGrade" value="5_H4" />
+ <parameter name="fabricMode" value="QSYS" />
+ <parameter name="generateLegacySim" value="false" />
+ <parameter name="generationId" value="0" />
+ <parameter name="globalResetBus" value="false" />
+ <parameter name="hdlLanguage" value="VERILOG" />
+ <parameter name="hideFromIPCatalog" value="true" />
+ <parameter name="lockedInterfaceDefinition" value="" />
+ <parameter name="maxAdditionalLatency" value="1" />
+ <parameter name="projectName" value="" />
+ <parameter name="sopcBorderPoints" value="false" />
+ <parameter name="systemHash" value="0" />
+ <parameter name="testBenchDutName" value="" />
+ <parameter name="timeStamp" value="0" />
+ <parameter name="useTestBenchNamingPattern" value="false" />
+ <instanceScript></instanceScript>
+ <interface name="ce" internal="temp_sense_0.ce" type="conduit" dir="end">
+  <port name="ce" internal="ce" />
+ </interface>
+ <interface name="clk" internal="temp_sense_0.clk" type="clock" dir="end">
+  <port name="clk" internal="clk" />
+ </interface>
+ <interface name="clr" internal="temp_sense_0.clr" type="reset" dir="end">
+  <port name="clr" internal="clr" />
+ </interface>
+ <interface
+   name="tsdcaldone"
+   internal="temp_sense_0.tsdcaldone"
+   type="conduit"
+   dir="end">
+  <port name="tsdcaldone" internal="tsdcaldone" />
+ </interface>
+ <interface
+   name="tsdcalo"
+   internal="temp_sense_0.tsdcalo"
+   type="conduit"
+   dir="end">
+  <port name="tsdcalo" internal="tsdcalo" />
+ </interface>
+ <module
+   name="temp_sense_0"
+   kind="altera_temp_sense"
+   version="15.1"
+   enabled="1"
+   autoexport="1">
+  <parameter name="CBX_AUTO_BLACKBOX" value="ALL" />
+  <parameter name="CE_CHECK" value="true" />
+  <parameter name="CLK_FREQUENCY" value="62.5" />
+  <parameter name="CLOCK_DIVIDER_VALUE" value="80" />
+  <parameter name="CLR_CHECK" value="true" />
+  <parameter name="DEVICE_FAMILY" value="Arria V" />
+  <parameter name="NUMBER_OF_SAMPLES" value="128" />
+  <parameter name="POI_CAL_TEMPERATURE" value="85" />
+  <parameter name="SIM_TSDCALO" value="0" />
+  <parameter name="USER_OFFSET_ENABLE" value="off" />
+  <parameter name="USE_WYS" value="on" />
+ </module>
+ <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
+ <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.insertDefaultSlave" value="FALSE" />
+ <interconnectRequirement for="$system" name="qsys_mm.maxAdditionalLatency" value="1" />
+</system>

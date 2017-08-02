@@ -43,5 +43,6 @@ modules = {
     "watchdog",
     "mbox",
     "prioq2",
+    "temp_sens",
   ]
 }

@@ -1006,3 +1006,5 @@ set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/g
 set_global_assignment -name VHDL_FILE "../../../ip_cores/general-cores/modules/wishbone/wb_onewire_master/xwb_onewire_master.vhd"
 set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:vetar2a_top.tcl"
 
+
+set_instance_assignment -name WEAK_PULL_UP_RESISTOR ON -to vme_iackin_n_i

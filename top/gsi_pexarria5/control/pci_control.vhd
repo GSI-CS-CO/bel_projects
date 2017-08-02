@@ -11,7 +11,7 @@ entity pci_control is
     clk_20m_vcxo_i    : in std_logic;  -- 20MHz VCXO clock
     clk_125m_pllref_i : in std_logic;  -- 125 MHz PLL reference
     clk_125m_local_i  : in std_logic;  -- local clk from 125Mhz oszillator
-    
+
     -----------------------------------------
     -- PCI express pins
     -----------------------------------------
@@ -19,23 +19,23 @@ entity pci_control is
     pcie_rx_i      : in  std_logic_vector(3 downto 0);
     pcie_tx_o      : out std_logic_vector(3 downto 0);
     nPCI_RESET     : in std_logic;
-    
+
     pe_smdat        : inout std_logic; -- !!!
     pe_snclk        : out std_logic;   -- !!!
     pe_waken        : out std_logic;   -- !!!
-    
+
     ------------------------------------------------------------------------
     -- WR DAC signals
     ------------------------------------------------------------------------
     dac_sclk       : out std_logic;
     dac_din        : out std_logic;
     ndac_cs        : out std_logic_vector(2 downto 1);
-    
+
     -----------------------------------------------------------------------
     -- OneWire
     -----------------------------------------------------------------------
     rom_data        : inout std_logic;
-    
+
     -----------------------------------------------------------------------
     -- display
     -----------------------------------------------------------------------
@@ -44,7 +44,7 @@ entity pci_control is
     dout_LCD        : in  std_logic;
     wrdis           : out std_logic := '0';
     dres            : out std_logic := '1';
-    
+
     -----------------------------------------------------------------------
     -- io
     -----------------------------------------------------------------------
@@ -53,7 +53,7 @@ entity pci_control is
     pbs2            : in std_logic;
     hpw             : inout std_logic_vector(15 downto 0) := (others => 'Z'); -- logic analyzer
     ant             : inout std_logic_vector(26 downto 1) := (others => 'Z'); -- trigger bus
-    
+
     -----------------------------------------------------------------------
     -- pexaria5db1/2
     -----------------------------------------------------------------------
@@ -73,7 +73,7 @@ entity pci_control is
     n7              : out   std_logic := 'Z'; -- LED6           (blue)
     p8              : out   std_logic := 'Z'; -- LED7 7-8: 2.5V (green)
     n8              : out   std_logic := 'Z'; -- LED8           (white)
-    
+
     p9              : out   std_logic := 'Z'; -- TERMEN1 = terminate TTLIO1, 1=x, 0|Z=x (Q2 BSH103 -- G pin)
     n9              : out   std_logic := 'Z'; -- TERMEN2 = terminate TTLIO2, 1=x, 0|Z=x
     p10             : out   std_logic := 'Z'; -- TERMEN3 = terminate TTLIO3, 1=x, 0|Z=x
@@ -90,7 +90,7 @@ entity pci_control is
     n15             : inout std_logic := 'Z'; -- ROM_DATA
     p16             : out   std_logic := 'Z'; -- FPLED5  = TTLIO3 (red)  0=on, Z=off
     n16             : out   std_logic := 'Z'; -- FPLED6           (blue)
-    
+
     p17             : in    std_logic;        -- N_LVDS_1 / SYnIN
     n17             : in    std_logic;        -- P_LVDS_1 / SYpIN
     p18             : in    std_logic;        -- N_LVDS_2 / TRnIN
@@ -117,12 +117,12 @@ entity pci_control is
     n29             : out   std_logic := 'Z'; -- FPLED2             (blue)
     p30             : out   std_logic := 'Z'; -- n/c
     n30             : out   std_logic := 'Z'; -- n/c
-    
+
     -----------------------------------------------------------------------
     -- connector cpld
     -----------------------------------------------------------------------
     con             : out std_logic_vector(5 downto 1);
-    
+
     -----------------------------------------------------------------------
     -- usb
     -----------------------------------------------------------------------
@@ -133,76 +133,75 @@ entity pci_control is
     ctl             : in    std_logic_vector(2 downto 0);
     uclk            : in    std_logic;
     ures            : out   std_logic;
-    
+
     -----------------------------------------------------------------------
     -- leds onboard
     -----------------------------------------------------------------------
     led             : out std_logic_vector(8 downto 1) := (others => '1');
-    
+
     -----------------------------------------------------------------------
     -- leds SFPs
     -----------------------------------------------------------------------
     ledsfpr          : out std_logic_vector(4 downto 1);
     ledsfpg          : out std_logic_vector(4 downto 1);
-
-    sfp234_ref_clk_i    : in  std_logic;
+    sfp234_ref_clk_i : in  std_logic;
 
     -----------------------------------------------------------------------
-    -- SFP1  
+    -- SFP1
     -----------------------------------------------------------------------
-    
+
     sfp1_tx_disable_o : out std_logic := '0';
     sfp1_tx_fault     : in std_logic;
     sfp1_los          : in std_logic;
-    
+
     --sfp1_txp_o        : out std_logic;
     --sfp1_rxp_i        : in  std_logic;
-    
+
     sfp1_mod0         : in    std_logic; -- grounded by module
     sfp1_mod1         : inout std_logic; -- SCL
     sfp1_mod2         : inout std_logic; -- SDA
-    
+
     -----------------------------------------------------------------------
     -- SFP2
     -----------------------------------------------------------------------
-    
+
     sfp2_tx_disable_o : out std_logic := '0';
     sfp2_tx_fault     : in  std_logic;
     sfp2_los          : in  std_logic;
-    
+
     --sfp2_txp_o        : out std_logic;
     --sfp2_rxp_i        : in  std_logic;
-    
+
     sfp2_mod0         : in    std_logic; -- grounded by module
     sfp2_mod1         : inout std_logic; -- SCL
     sfp2_mod2         : inout std_logic; -- SDA
-    
+
     -----------------------------------------------------------------------
-    -- SFP3 
+    -- SFP3
     -----------------------------------------------------------------------
-       
+
     sfp3_tx_disable_o : out std_logic := '0';
     sfp3_tx_fault     : in std_logic;
     sfp3_los          : in std_logic;
-    
+
     --sfp3_txp_o        : out std_logic;
     --sfp3_rxp_i        : in  std_logic;
-    
+
     sfp3_mod0         : in    std_logic; -- grounded by module
     sfp3_mod1         : inout std_logic; -- SCL
     sfp3_mod2         : inout std_logic; -- SDA
-    
+
     -----------------------------------------------------------------------
-    -- SFP4 
+    -- SFP4
     -----------------------------------------------------------------------
-    
+
     sfp4_tx_disable_o : out std_logic := '0';
     sfp4_tx_fault     : in std_logic;
     sfp4_los          : in std_logic;
-    
+
     sfp4_txp_o        : out std_logic;
     sfp4_rxp_i        : in  std_logic;
-    
+
     sfp4_mod0         : in    std_logic; -- grounded by module
     sfp4_mod1         : inout std_logic; -- SCL
     sfp4_mod2         : inout std_logic); -- SDA
@@ -214,7 +213,7 @@ architecture rtl of pci_control is
   signal led_link_act  : std_logic;
   signal led_track     : std_logic;
   signal led_pps       : std_logic;
-    
+
   signal gpio_o        : std_logic_vector(7 downto 0);
   signal lvds_p_i      : std_logic_vector(4 downto 0);
   signal lvds_n_i      : std_logic_vector(4 downto 0);
@@ -224,11 +223,11 @@ architecture rtl of pci_control is
   signal lvds_o_led    : std_logic_vector(2 downto 0);
   signal lvds_oen      : std_logic_vector(2 downto 0);
   signal lvds_term     : std_logic_vector(2 downto 0);
-  
+
   signal butis_clk_200 : std_logic;
   signal butis_t0_ts   : std_logic;
-  
-  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) := 
+
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 14) :=
   (
   -- Name[12 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
     ("LED1_BASE_R", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),
@@ -247,12 +246,12 @@ architecture rtl of pci_control is
     ("MHDMR_CK200", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS),
     ("MHDMR_SYOU ", IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS)
   );
-  constant c_family    : string := "Arria V"; 
+  constant c_family    : string := "Arria V";
   constant c_project   : string := "pci_control";
   constant c_cores         : natural:= 1;
   constant c_initf_name 	: string := c_project & "_stub.mif";
   constant c_profile_name  : string := "medium_icache_debug";
-  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
+  -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus
   -- multiple init files for n processors are to be seperated by semicolon ';'
 
 begin
@@ -271,12 +270,14 @@ begin
       g_en_pcie         => true,
       g_en_usb          => true,
       g_en_lcd          => true,
+      g_en_user_ow      => true,
+      g_en_tempsens     => true,
       g_io_table        => io_mapping_table,
       g_lm32_cores      => c_cores,
       g_lm32_ramsizes   => c_lm32_ramsizes/4,
       g_lm32_init_files => f_string_list_repeat(c_initf_name, c_cores),
 		g_lm32_profiles   => f_string_list_repeat(c_profile_name, c_cores)
-    )  
+    )
     port map(
       core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
       core_clk_125m_pllref_i  => clk_125m_pllref_i,
@@ -327,6 +328,8 @@ begin
       usb_slwrn_o             => slwr,
       usb_pktendn_o           => pa(6),
       usb_fd_io               => fd,
+      ow_io(0)                => n15,
+      ow_io(1)                => 'Z',
       lcd_scp_o               => di(3),
       lcd_lp_o                => di(1),
       lcd_flm_o               => di(2),
@@ -349,12 +352,12 @@ begin
   led(2) <= not led_link_up;                    -- blue  = link
   led(3) <= not led_track;                      -- green = timing valid
   led(4) <= not led_pps;                        -- white = PPS
-  
+
   ledsfpg(3 downto 1) <= (others => '1');
   ledsfpr(3 downto 1) <= (others => '1');
   ledsfpg(4) <= not led_link_up;
   ledsfpr(4) <= not led_link_act;
-  
+
   -- GPIO LEDs
   led(5) <= '0' when gpio_o(0)='1' else 'Z'; -- (baseboard), red
   led(6) <= '0' when gpio_o(1)='1' else 'Z'; -- blue
@@ -364,28 +367,28 @@ begin
   n7     <= '0' when gpio_o(5)='1' else 'Z'; -- blue
   p8     <= '0' when gpio_o(6)='1' else 'Z'; -- green
   n8     <= '0' when gpio_o(7)='1' else 'Z'; -- white
-  
+
   -- BuTiS/MDMHR Output
   p19 <= butis_clk_200;
   p24 <= not(butis_t0_ts);
-  
+
   -- BuTiS/MHDMR activity LEDs
   p6  <= '0' when butis_clk_200='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3)
   n6  <= '0' when butis_t0_ts='1'   else 'Z'; -- LED4 (near HDMI = SYOU  / LVDS4)
-  
+
   -- LVDS->LEMO output enable / termination
   n10 <= '0' when lvds_oen(0)='1' else 'Z'; -- TTLIO1 output enable
   n11 <= '0' when lvds_oen(1)='1' else 'Z'; -- TTLIO2 output enable
   n14 <= '0' when lvds_oen(2)='1' else 'Z'; -- TTLIO3 output enable
-  
+
   p9  <= '1' when lvds_term(0)='1' else '0'; -- TERMEN1 (terminate when input)
   n9  <= '1' when lvds_term(1)='1' else '0'; -- TERMEN2 (terminate when input)
   p10 <= '1' when lvds_term(2)='1' else '0'; -- TERMEN3 (terminate when input)
-  
+
   p29 <= '0' when lvds_oen(0)='1' else 'Z'; -- FPLED1/TTLIO1 red
   p26 <= '0' when lvds_oen(1)='1' else 'Z'; -- FPLED3/TTLIO2 red
   p16 <= '0' when lvds_oen(2)='1' else 'Z'; -- FPLED5/TTLIO3 red
-  
+
   -- LVDS inputs
   lvds_p_i(0) <= p21; -- TTLIO1
   lvds_p_i(1) <= p22; -- TTLIO2
@@ -397,7 +400,7 @@ begin
   lvds_n_i(2) <= n23; -- TTLIO3
   lvds_n_i(3) <= n17; -- LVDS_1 / SYIN
   lvds_n_i(4) <= n18; -- LVDS_2 / TRIN
-    
+
   -- LVDS outputs
   n25 <= lvds_n_o(0); -- TTLIO1
   n27 <= lvds_n_o(1); -- TTLIO2
@@ -409,7 +412,7 @@ begin
   p28 <= lvds_p_o(2); -- TTLIO3
   --p19 <= lvds_p_o(3); -- LVDS_3 / CK200 -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   --p24 <= lvds_p_o(4); -- LVDS_4 / SYOU  -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
-  
+
   -- LVDS activity LEDs
   n29 <= '0' when lvds_i_led(0)='1' else 'Z'; -- FPLED2/TTLIO1 blue
   n26 <= '0' when lvds_i_led(1)='1' else 'Z'; -- FPLED4/TTLIO2 blue
@@ -418,8 +421,8 @@ begin
   n5  <= '0' when lvds_i_led(4)='1' else 'Z'; -- LED2 (near HDMI = TRIN  / LVDS2)
   --p6  <= '0' when lvds_o_led(3)='1' else 'Z'; -- LED3 (near HDMI = CK200 / LVDS3) -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
   --n6  <= '0' when lvds_o_led(4)='1' else 'Z'; -- LED4 (near HDMI = SYOU  / LVDS4) -- NEEDED FOR SERDES(FPGA) TO LVDS BUFFER(BOARD)
-  
+
   -- Wires to CPLD, currently unused
   con <= (others => 'Z');
-  
+
 end rtl;

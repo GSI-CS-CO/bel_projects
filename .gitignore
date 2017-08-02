@@ -1,5 +1,7 @@
 gcc-4.5.3-lm32.tar.xz
 toolchain/
+bin/
+lib/
 tags
 syn
 *.bak

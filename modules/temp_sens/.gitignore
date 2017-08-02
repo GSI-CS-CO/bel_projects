@@ -1,0 +1,9 @@
+hdl/.qsys_edit/*
+synthesis/temp_sens.vhd
+*.rpt
+*.sopcinfo
+*.debuginfo
+*.qip
+*.cmp
+*.html
+*.xml
