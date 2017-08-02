@@ -1,0 +1,25 @@
+wrmilgw-ESR-dev/
+├── firmware
+│   └── wr_mil.bin
+├── wrmilgw-ESR.sh
+└── x86_64
+    └── usr
+        └── bin
+            ├── eb-fwload
+            ├── wr-mil-gw-ctl
+            ├── wrmilgw-startESR.sh
+            └── wrmilgw-startSIS.sh
+
+4 directories, 6 files
+[mreese@asl740 timing-rte]$ tree wrmilgw-SIS-dev/
+wrmilgw-SIS-dev/
+├── firmware
+│   └── wr_mil.bin
+├── wrmilgw-SIS.sh
+└── x86_64
+    └── usr
+        └── bin
+            ├── eb-fwload
+            ├── wr-mil-gw-ctl
+            ├── wrmilgw-startESR.sh
+            └── wrmilgw-startSIS.sh
