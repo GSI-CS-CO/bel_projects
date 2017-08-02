@@ -3,12 +3,12 @@
   
 
   bool AllocTable::insert(uint8_t cpu, uint32_t adr, uint32_t hash, vertex_t v) {
-    
+    /*
     std::cout << "Problem: " << std::endl; 
     if (lookupAdr(cpu, adr) != NULL) std::cout << (int)cpu << " Adr 0x" << std::hex << adr << " exists already" << std::endl;
     if (lookupHash(hash) != NULL) std::cout << "Hash 0x" << std::hex << hash << " exists already" << std::endl;
     if (lookupVertex(v) != NULL) std::cout << "V 0x" << std::dec << v << " exists already" << std::endl;
-    
+    */
     auto x = a.insert({cpu, adr, hash, v});
     return x.second;
   }
@@ -59,7 +59,7 @@
   //Allocation functions
   int AllocTable::allocate(uint8_t cpu, uint32_t hash, vertex_t v) {
     uint32_t chunkAdr;
-    std::cout << "Cpu " << (int)cpu << " mempools " << vPool.size() << std::endl;
+    //std::cout << "Cpu " << (int)cpu << " mempools " << vPool.size() << std::endl;
     if (cpu >= vPool.size()) {
       //std::cout << "cpu idx out of range" << std::endl;
       return ALLOC_NO_SPACE;}

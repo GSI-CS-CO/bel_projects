@@ -88,6 +88,8 @@ public:
   virtual void deserialise();
   virtual const uint64_t getTValid()  const {return this->tValid;}
   virtual const uint32_t getAct()     const {return this->act;}
+  virtual const void setAct(uint32_t act) {this->act |= act;}
+  virtual const void clrAct(uint32_t act) {this->act &= ~act;}
   virtual const uint16_t getQty()     const {return (this->act >> ACT_QTY_POS) & ACT_QTY_MSK;}
   virtual const uint16_t getPrio()    const {return (this->act >> ACT_PRIO_POS) & ACT_PRIO_MSK;}
 };

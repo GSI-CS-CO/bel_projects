@@ -48,7 +48,7 @@ void VisitorUploadCrawler::visit(const TimingMsg& el) const  {
 void VisitorUploadCrawler::visit(const Flow& el) const  {
   vAdr vA, tmpDD, tmpCT, tmpFD;
   tmpDD = getDefDst();
-  tmpCT = getCmdTarget();
+  tmpCT = getCmdTarget((Command&)el);
   tmpFD = getFlowDst();
 
   vA.reserve( tmpDD.size() + tmpCT.size() + tmpFD.size() ); // preallocate memory
@@ -63,7 +63,7 @@ void VisitorUploadCrawler::visit(const Flow& el) const  {
 void VisitorUploadCrawler::visit(const Flush& el) const {
   vAdr vA, tmpDD, tmpCT;
   tmpDD = getDefDst();
-  tmpCT = getCmdTarget();
+  tmpCT = getCmdTarget((Command&)el);
 
   vA.reserve( tmpDD.size() + tmpCT.size() ); // preallocate memory
   vA.insert( vA.end(), tmpDD.begin(), tmpDD.end() );
@@ -76,7 +76,7 @@ void VisitorUploadCrawler::visit(const Flush& el) const {
 void VisitorUploadCrawler::visit(const Noop& el) const {
   vAdr vA, tmpDD, tmpCT;
   tmpDD = getDefDst();
-  tmpCT = getCmdTarget();
+  tmpCT = getCmdTarget((Command&)el);
 
   vA.reserve( tmpDD.size() + tmpCT.size() ); // preallocate memory
   vA.insert( vA.end(), tmpDD.begin(), tmpDD.end() );
@@ -89,7 +89,7 @@ void VisitorUploadCrawler::visit(const Noop& el) const {
 void VisitorUploadCrawler::visit(const Wait& el) const {
   vAdr vA, tmpDD, tmpCT;
   tmpDD = getDefDst();
-  tmpCT = getCmdTarget();
+  tmpCT = getCmdTarget((Command&)el);
 
   vA.reserve( tmpDD.size() + tmpCT.size() ); // preallocate memory
   vA.insert( vA.end(), tmpDD.begin(), tmpDD.end() );
@@ -312,7 +312,7 @@ vAdr VisitorUploadCrawler::getQBuf() const {
   return ret;
 }
 
-vAdr VisitorUploadCrawler::getCmdTarget() const {
+vAdr VisitorUploadCrawler::getCmdTarget(Command& el) const {
   bool found;
   
   vAdr ret;
@@ -331,7 +331,11 @@ vAdr VisitorUploadCrawler::getCmdTarget() const {
           auto* x = at.lookupVertex(target(*out_cur,g));
           if (x != NULL) {
             //command cross over to other CPUs is okay, handle by checking if caller cpu idx is different to found child cpu idx
+            //std::cout << "Caller CPU " << int(cpu) << " Callee CPU " << (int)x->cpu << std::endl;
             ret.push_back(x->cpu == cpu ? at.adr2intAdr(x->cpu, x->adr) : at.adr2peerAdr(x->cpu, x->adr));
+            //now we have a problem: we need to reach out to set the peer flag on the calling node. not strictly nice ...
+            el.clrAct(ACT_TCPU_SMSK);
+            el.setAct((x->cpu & ACT_TCPU_MSK) << ACT_TCPU_POS);
             found = true;
           }
         }

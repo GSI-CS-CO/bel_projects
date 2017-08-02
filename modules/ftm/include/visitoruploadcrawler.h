@@ -33,12 +33,12 @@ class VisitorUploadCrawler {
     vAdr getDynSrc(void)    const;
     vAdr getQInfo(void)     const;
     vAdr getQBuf(void)      const;
-    vAdr getCmdTarget(void) const;
+    vAdr getCmdTarget(Command& el) const;
     vAdr getFlowDst(void)   const;
     vAdr getListDst(void)   const;
 
   public:
-    VisitorUploadCrawler(Graph& g, vertex_t v, AllocTable& at)  : g(g), v(v), at(at) { std::cout << "SIze of atUp: " << at.getSize() << std::endl; auto* ae = at.lookupVertex(v); if (ae != NULL) cpu = ae->cpu; else throw std::runtime_error(g[v].name + "cpu lookup failed ... crawler upload");};
+    VisitorUploadCrawler(Graph& g, vertex_t v, AllocTable& at)  : g(g), v(v), at(at) { auto* ae = at.lookupVertex(v); if (ae != NULL) cpu = ae->cpu; else throw std::runtime_error(g[v].name + "cpu lookup failed ... crawler upload");};
     ~VisitorUploadCrawler() {};
     virtual void visit(const Block& el) const;
     virtual void visit(const TimingMsg& el) const;

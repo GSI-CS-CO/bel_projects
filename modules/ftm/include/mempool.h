@@ -53,7 +53,7 @@ public:
           startOffs(sharedOffs + bmpSize), 
           endOffs(startOffs + (nodeQty * _MEM_BLOCK_SIZE)),
           bmp(bmpSize)
-          { std::cout << "bmpSize was " << bmpSize << " size is " << bmp.size() << std::endl;  init();  }
+          { init();  }
           
   ~MemPool() { };
 
@@ -66,7 +66,7 @@ public:
   bool getBmpBit(unsigned int bitIdx) {return bmp[bitIdx / 8] & (1 << (7 - bitIdx % 8));}
 
 
-  void setBmp(const vBuf& aBmp) { bmp = aBmp; std::cout << "ste bmp was called" << std::endl; }
+  void setBmp(const vBuf& aBmp) { bmp = aBmp;}
   const vBuf& getBmp()           const { return bmp; }
   
   uint32_t getFreeChunkQty()  const { return pool.size(); }
