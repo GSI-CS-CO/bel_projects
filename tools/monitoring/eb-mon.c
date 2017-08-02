@@ -3,7 +3,7 @@
  *
  *  created : 2015
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 23-Dec-2016
+ *  version : 2-Aug-2017
  *
  * Command-line interface for WR monitoring via Etherbone.
  *
@@ -75,7 +75,7 @@ static void help(void) {
   fprintf(stderr, "  -i               display WR IP\n");
   fprintf(stderr, "  -l               display WR link status\n");
   fprintf(stderr, "  -m               display WR MAC\n");
-  fprintf(stderr, "  -o               display offset between WR time and system time\n");
+  fprintf(stderr, "  -o               display offset between WR time and system time [ms]\n");
   fprintf(stderr, "  -s               display WR sync status\n");
   fprintf(stderr, "  -t<busIndex>     display temperature of sensor on the specified 1-wire bus\n");
   fprintf(stderr, "  -v               display verbose information\n");
@@ -99,6 +99,7 @@ int main(int argc, char** argv) {
   int               i;            /* counter for comparing WR time with other device */
   int               nCompare = 5; /* number of compares                              */
   uint64_t          nsecsDiff64;
+  int               diffIsPositive;               
 
   const char* devName;
   const char* devNameOther;
@@ -254,7 +255,7 @@ int main(int argc, char** argv) {
       return (1);
     }
 
-    // do one round, to be sure WR network "knowns" route to other device
+    // do one round, to be sure WR network "knows" route to other device
     if ((status = wb_wr_get_time(deviceOther, 0,        &nsecsOther64)) != EB_OK) die("WR get time other", status);
     if ((status = wb_wr_get_time(device,      devIndex, &nsecs64))      != EB_OK) die("WR get time", status);
 
@@ -263,7 +264,7 @@ int main(int argc, char** argv) {
     nsecsSumOther64 = 0;
 
     for (i=0; i < nCompare; i++) {
-      if ((status = wb_wr_get_time(device,      devIndex, &tmpa64))      != EB_OK) die("WR get time", status);
+      if ((status = wb_wr_get_time(device,      devIndex, &tmpa64)) != EB_OK) die("WR get time", status);
       if ((status = wb_wr_get_time(deviceOther, 0,        &tmpb64)) != EB_OK) die("WR get time other", status);
 
       nsecsSum64      += tmpa64;
@@ -285,15 +286,8 @@ int main(int argc, char** argv) {
     nsecsRoundOther64 = tmpb64 - tmpa64;
     nsecsRoundOther64 = (uint64_t)((double)nsecsRoundOther64/(double)nCompare);
 
-    //fprintf(stdout, "nsecsRound64      %llu\n", nsecsRound64);
-    //fprintf(stdout, "nsecsRoundOther64 %llu\n", nsecsRoundOther64);
-    //fprintf(stdout, "nsecs64           %llu\n", nsecs64);
-    //fprintf(stdout, "nsecsdOther64     %llu\n", nsecsOther64);
-
-
     // nsecsOther64 has been measured after the nsecs64 has been completed. So we need to subtract that roundtrip time of the first device
     nsecsOther64 = nsecsOther64 - nsecsRound64;
-    //fprintf(stdout, "nsecsdOther64     %llu\n", nsecsOther64);
 
     // the timestamps nsecs64 and nsecsOther64 are measured after the etherbone packet arrived at the FPGA
     // we use the simplified model, that the the transmission times to and from the remote FPGA are identical (symmetry) and that the roundtrip is only due to total transmission time
@@ -302,13 +296,19 @@ int main(int argc, char** argv) {
     nsecsOther64 = nsecsOther64 - (nsecsRoundOther64 >> 1);
     nsecs64      = nsecs64      - (nsecsRound64      >> 1);
 
-    //fprintf(stdout, "nsecs64           %llu\n", nsecs64);
-    //fprintf(stdout, "nsecsdOther64     %llu\n", nsecsOther64);
+    if (nsecs64 > nsecsOther64) {
+      nsecsDiff64    = nsecs64 - nsecsOther64;
+      diffIsPositive = 1;
+    }
+    else {
+      nsecsDiff64    = nsecsOther64 - nsecs64; 
+      diffIsPositive = 0;
+    }
 
-    if (nsecs64 > nsecsOther64) nsecsDiff64 = nsecs64      - nsecsOther64;
-    else                        nsecsDiff64 = nsecsOther64 - nsecs64; 
-
-    fprintf(stdout, "WR differs by %llu us\n", nsecsDiff64 / 1000);
+      fprintf(stdout, "WR differs by ");
+      if (diffIsPositive) fprintf(stdout, "+");
+      else                fprintf(stdout, "-");
+      fprintf(stdout, "%"PRIu64" us\n", nsecsDiff64 / 1000);
   } 
 
   if (getWRDate || getWROffset) {
@@ -331,8 +331,8 @@ int main(int argc, char** argv) {
       strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
       
       if (verbose) fprintf(stdout, "Current TAI: ");
-      fprintf(stdout, "%s", timestr);
-      fprintf(stdout, ",  %llu us\n", nsecs64 / 1000);
+      fprintf(stdout, "%s (%3lu ms)", timestr, msecs64 - secs * 1000);
+      fprintf(stdout, ", %"PRIu64" us\n", nsecs64 / 1000);
     }
   }
 
