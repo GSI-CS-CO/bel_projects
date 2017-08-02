@@ -305,9 +305,14 @@
 #define ACT_CHP_POS            23
 #define ACT_CHP_SMSK           (ACT_CHP_MSK << ACT_CHP_POS)
 
+//Action Target CPU
+#define ACT_TCPU_MSK            0xf
+#define ACT_TCPU_POS            24
+#define ACT_TCPU_SMSK           (ACT_TCPU_MSK << ACT_TCPU_POS)
+
 //Cmd Action Flags - type specific bit definitions
 
-#define ACT_BITS_SPECIFIC_POS   24
+#define ACT_BITS_SPECIFIC_POS   28
   
 //Command Flush Buffer Priority
 #define ACT_FLUSH_PRIO_MSK      0x7
@@ -378,8 +383,10 @@
 #define NFLG_SYNC_SMSK          (NFLG_SYNC_MSK << NFLG_SYNC_POS)
 
 
+
+
 // Type dependent Flags ////////////////////////////////////////////////////////////
-#define NFLG_BITS_SPECIFIC_POS  16
+#define NFLG_BITS_SPECIFIC_POS  20
 
 // Timing Message //////////////////////////////////////////////////////////////////
 
@@ -425,7 +432,7 @@
 
 //resolve all ptr fields when executing
 #define NFLG_TMSG_RES_PTR_MSK   0x1
-#define NFLG_TMSG_RES_PTR_POS   (NFLG_BITS_SPECIFIC_POS + 15)
+#define NFLG_TMSG_RES_PTR_POS   (NFLG_BITS_SPECIFIC_POS + 6)
 #define NFLG_TMSG_RES_PTR_SMSK  (NFLG_TMSG_RES_PTR_MSK << NFLG_TMSG_RES_PTR_POS)
 
 #endif
