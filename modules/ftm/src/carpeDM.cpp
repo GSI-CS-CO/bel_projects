@@ -154,12 +154,8 @@ bool CarpeDM::connect(const std::string& en) {
             uint32_t peerBaseAdr  = 0x80000000 + extBaseAdr; 
             uint32_t sharedOffs   = SHARED_OFFS + _SHCTL_END_; 
             uint32_t space        = SHARED_SIZE - _SHCTL_END_;
-            uint32_t bmpSize = (((space / _MEM_BLOCK_SIZE) + 8 * _MEM_BLOCK_SIZE -1) / (8 * _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE);
-            
-
-              sLog << "up   cpu " << cpuIdx << " adr 0x"  << std::hex << extBaseAdr << " in 0x" << intBaseAdr << " peer 0x" << peerBaseAdr << " start 0x" << sharedOffs  << " size " << std::dec << space << " bmpSize " << bmpSize << std::endl;
+                        
               atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space );
-              sLog << "donw cpu " << cpuIdx << " adr 0x"  << std::hex << extBaseAdr << " in 0x" << intBaseAdr << " peer 0x" << peerBaseAdr << " start 0x" << sharedOffs  << " size " << std::dec << space << " bmpSize " << bmpSize << std::endl;
             atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space );
             mappedIdx++;
           }
@@ -216,8 +212,12 @@ bool CarpeDM::connect(const std::string& en) {
 
     //add to dictionary
     try {
+      //FIXME using a qualified node name by concatenating the graphname is nice in theory, but prevents replicable hashing from download, so it's out
       //combine node name and graph name to obtain unique replicable hash
-      BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.add(boost::get_property(g, boost::graph_name) + "." + g[v].name);}
+      //BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.add(boost::get_property(g, boost::graph_name) + "." + g[v].name);}
+
+
+      BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.add(g[v].name);}
     }  catch (...) {
       //TODO report hash collision and show which names are responsible
       throw;
@@ -243,8 +243,9 @@ bool CarpeDM::connect(const std::string& en) {
     }  
     else {throw std::runtime_error("Could not open .dot file <" + fn + "> for reading!\n"); return;}  
 
-    
-    BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.remove(boost::get_property(g, boost::graph_name) + "." + g[v].name);}
+    //see addDotToDict
+    //BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.remove(boost::get_property(g, boost::graph_name) + "." + g[v].name);}
+    BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.remove(g[v].name);}
     
     in.close();
 
@@ -303,17 +304,14 @@ bool CarpeDM::connect(const std::string& en) {
 
     boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
     boost::tie(vi, vi_end) = vertices(g);   
-    sLog << "Parser: Grpah has " << vi_end - vi << " Nodes" << std::endl;
-
+    
     BOOST_FOREACH( edge_t e, edges(g) ) { std::transform(g[e].type.begin(), g[e].type.end(), g[e].type.begin(), ::tolower); }
     BOOST_FOREACH( vertex_t v, vertices(g) ) { std::transform(g[v].type.begin(), g[v].type.end(), g[v].type.begin(), ::tolower); } 
     
 
-
-    //GraphNameMap gnameMap = get(boost::graph_name, g);
-    //for (auto & it : gnameMap) sLog << " FOUND " << it << std::endl;
-    //TODO create subgraphs as necessary
-    if (boost::get_property(g, boost::graph_name) == "") {throw std::runtime_error(" Graph attribute 'name' must not be empty "); return g;} 
+    //removed, see addDotToDict
+    //if (boost::get_property(g, boost::graph_name) == "") {throw std::runtime_error(" Graph attribute 'name' must not be empty "); return g;} 
+    
     //TODO automatically add necessary meta nodes
      if(verbose) sLog << "... retrieved Graph " << boost::get_property(g, boost::graph_name) << "... Done." << std::endl;
     return g;
