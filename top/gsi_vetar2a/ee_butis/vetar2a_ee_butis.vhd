@@ -4,6 +4,7 @@ use ieee.numeric_std.all;
 
 library work;
 use work.monster_pkg.all;
+use work.ramsize_pkg.c_lm32_ramsizes;
 
 entity vetar2a_ee_butis is
   port(
@@ -135,7 +136,8 @@ entity vetar2a_ee_butis is
     vme_write_n_i       : in    std_logic;   -- M4               
     vme_am_i            : in    std_logic_vector(5 downto 0);    -- 5=V3, 4=Y1, 3=AA1, 2=AD1, 1=AE1, 0=Y4
     vme_ds_n_i          : in    std_logic_vector(1 downto 0);    -- 1=L3, 0=M2
-    vme_ga_i            : in    std_logic_vector(3 downto 0);    -- 3=U4, 2=w3, 1=W2, 0=V4 -- MON3..MON0
+    vme_ga_i            : in    std_logic_vector(3 downto 0);    -- VN1: 3=U4, 2=W3, 1=W2, 0=V4 -- MON3..MON0
+    vme_ga_extended_i   : in    std_logic_vector(3 downto 0);    -- VN2: 7=U1, 6=R3, 5=T3, 4=U5 -- MON7..MON4
     vme_addr_data_b     : inout std_logic_vector(31 downto 0);   -- 31=L6, 30=M5, 29=P1,  28=R1,  27=M6, 26=N6, 25=T4,  24=U3
                                                                  -- 23=P6, 22=R6, 21=V1,  20=W1,  19=P5, 18=N4, 17=AB1, 16=AC1
                                                                  -- 15=T7, 14=T6, 13=AB3, 12=AB2, 11=U6, 10=V6, 9=AC3,  8=AC22
@@ -240,6 +242,10 @@ architecture rtl of vetar2a_ee_butis is
   signal s_led_link_act    : std_logic;
   signal s_led_track       : std_logic;
   signal s_led_pps         : std_logic;
+  signal s_led_gpio        : std_logic_vector(3 downto 0);
+  
+  signal s_hex_vn1_i       : std_logic_vector(3 downto 0);
+  signal s_hex_vn2_i       : std_logic_vector(3 downto 0);
   
   signal s_clk_ref         : std_logic;
   signal s_clk_butis       : std_logic;
@@ -248,8 +254,11 @@ architecture rtl of vetar2a_ee_butis is
 
   signal s_lemo_addOn      : std_logic_vector(2 downto 0);
   signal s_lemo_oen        : std_logic_vector(2 downto 0);
+  signal s_lemo_term       : std_logic_vector(2 downto 0);
+  signal s_nim_ttl_select  : std_logic_vector(1 downto 0);
   signal s_lemo_addOn_io   : std_logic_vector(2 downto 0);
   signal s_leds_lemo_addOn : std_logic_vector(2 downto 0);
+  signal s_lemo_term_led   : std_logic;
   
   signal s_di_scp          : std_logic;
   signal s_di_flm          : std_logic;
@@ -261,9 +270,55 @@ architecture rtl of vetar2a_ee_butis is
   constant c_green         : std_logic_vector := "110";
   constant c_blue          : std_logic_vector := "011";
   
-  constant c_family  : string := "Arria II"; 
-  constant c_project : string := "vetar2a_ee_butis";
-  constant c_initf   : string := c_project & ".mif"; 
+  constant io_mapping_table : t_io_mapping_table_arg_array(0 to 38) := 
+  (
+  -- Name[11 Bytes], Special Purpose, SpecOut, SpecIn, Index, Direction,   Channel,  OutputEnable, Termination, Logic Level
+    ("IO1        ",  IO_NONE,         false,   false,  0,     IO_INOUTPUT, IO_GPIO,  true,         true,        IO_LVTTL), -- IN/OUT: 1
+    ("IO2        ",  IO_NONE,         false,   false,  1,     IO_INOUTPUT, IO_GPIO,  true,         true,        IO_LVTTL), -- IN/OUT: 2
+    ("IO3        ",  IO_NONE,         false,   false,  2,     IO_INOUTPUT, IO_GPIO,  true,         true,        IO_LVTTL), -- IN/OUT: 3
+    ("OUT1       ",  IO_NONE,         false,   false,  3,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),   -- OUT: 1
+    ("OUT2       ",  IO_NONE,         false,   false,  4,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),   -- OUT: 2
+    ("OUT3       ",  IO_NONE,         false,   false,  5,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),   -- OUT: 3
+    ("OUT        ",  IO_TTL_TO_NIM,   true,    false,  6,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),   -- OUT: 4
+    ("LED9       ",  IO_NONE,         false,   false,  7,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),   -- OUT: 5
+    ("LED10      ",  IO_NONE,         false,   false,  8,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),   -- OUT: 6
+    ("LED11      ",  IO_NONE,         false,   false,  9,     IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),   -- OUT: 7
+    ("LED12      ",  IO_NONE,         false,   false,  10,    IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),   -- OUT: 8
+    ("LED_DACK   ",  IO_NONE,         false,   false,  11,    IO_OUTPUT,   IO_GPIO,  false,        false,       IO_TTL),   -- OUT: 9
+    ("IN         ",  IO_TTL_TO_NIM,   false,   true,   3,     IO_INPUT,    IO_GPIO,  false,        false,       IO_TTL),   -- IN: 1
+    ("I1         ",  IO_NONE,         false,   false,  4,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),  -- IN: 2
+    ("I2         ",  IO_NONE,         false,   false,  5,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),  -- IN: 3
+    ("MHDMR_SYIN ",  IO_NONE,         false,   false,  6,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),  -- IN: 4
+    ("MHDMR_TRIN ",  IO_NONE,         false,   false,  7,     IO_INPUT,    IO_GPIO,  false,        false,       IO_LVDS),  -- IN: 5
+    ("IN1_WR_CLK ",  IO_NONE,         false,   false,  8,     IO_INPUT,    IO_GPIO,  false,        false,       IO_NIM),   -- IN: 6
+    ("IN2_WR_PPS ",  IO_NONE,         false,   false,  9,     IO_INPUT,    IO_GPIO,  false,        false,       IO_NIM),   -- IN: 7
+    ("MHDMR_CK200",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS), -- FIXED: 1
+    ("MHDMR_BUTIS",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS), -- FIXED: 2
+    ("LVDS_CK200 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS), -- FIXED: 3
+    ("LVDS_BUTIS ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_LVDS), -- FIXED: 4
+    ("LED1_HX1_0 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 5
+    ("LED2_HX1_1 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 6
+    ("LED3_HX1_2 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 7
+    ("LED4_HX1_3 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 8
+    ("LED5_HX2_0 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 9
+    ("LED6_HX2_1 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 10
+    ("LED7_HX2_2 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 11
+    ("LED8_HX2_3 ",  IO_NONE,         false,   false,  0,     IO_OUTPUT,   IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 12
+    ("HX1_0      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 13
+    ("HX1_1      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 14
+    ("HX1_2      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 15
+    ("HX1_3      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 16
+    ("HX2_0      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 17
+    ("HX2_1      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 18
+    ("HX2_2      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL),  -- FIXED: 19
+    ("HX2_3      ",  IO_NONE,         false,   false,  0,     IO_INPUT,    IO_FIXED, false,        false,       IO_TTL)   -- FIXED: 20
+  );
+  
+  constant c_family       : string := "Arria II"; 
+  constant c_project      : string := "vetar2a_ee_butis";
+  constant c_cores        : natural:= 1;
+  constant c_initf_name   : string := c_project & ".mif"; 
+  constant c_profile_name : string := "medium_icache_debug";
   -- projectname is standard to ensure a stub mif that prevents unwanted scanning of the bus 
   -- multiple init files for n processors are to be seperated by semicolon ';'
   
@@ -273,96 +328,103 @@ begin
       g_family          => c_family,
       g_project         => c_project,
       g_gpio_inout      => 3,
-      g_gpio_in         => 10,
-      g_gpio_out        => 7,
+      g_gpio_in         => 7,
+      g_gpio_out        => 9,
+      g_fixed           => 20,
       g_flash_bits      => 24,
       g_en_vme          => true,
       g_en_usb          => true,
       g_en_lcd          => true,
-      g_lm32_init_files => c_initf)
+      g_io_table        => io_mapping_table,
+      g_lm32_cores      => c_cores,
+      g_lm32_ramsizes   => c_lm32_ramsizes/4,
+      g_lm32_init_files => f_string_list_repeat(c_initf_name, c_cores),
+      g_lm32_profiles   => f_string_list_repeat(c_profile_name, c_cores)
+    )
     port map(
-      core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
-      core_clk_125m_pllref_i => clk_125m_pllref_i,
-      core_clk_125m_sfpref_i => sfp_ref_clk_i,
-      core_clk_125m_local_i  => clk_125m_local_i,
-      core_clk_wr_ref_o      => s_clk_ref,
-      core_clk_butis_o       => s_clk_butis,
+      core_clk_20m_vcxo_i     => clk_20m_vcxo_i,
+      core_clk_125m_pllref_i  => clk_125m_pllref_i,
+      core_clk_125m_sfpref_i  => sfp_ref_clk_i,
+      core_clk_125m_local_i   => clk_125m_local_i,
+      core_clk_wr_ref_o       => s_clk_ref,
+      core_clk_butis_o        => s_clk_butis,
       core_clk_butis_t0_o    => s_butis_t0,
       -- gpio oe
-      gpio_oen_o(2 downto 0) => s_lemo_oen(2 downto 0),
+      gpio_oen_o(2 downto 0)  => s_lemo_oen(2 downto 0),
+      -- gpio term
+      gpio_term_o(2 downto 0) => s_lemo_term(2 downto 0),
+      -- gpio special
+      gpio_spec_in_o(3)       => s_nim_ttl_select(1),
+      gpio_spec_out_o(6)      => s_nim_ttl_select(0),
       -- gpio out
-      --gpio_o(1 downto 0)     => lvds_out_o(1 downto 0),
-      --gpio_o(2)              => lemo_o,
-      --gpio_o(5 downto 3)     => s_lemo_addOn(2 downto 0),
-      --gpio_o(8 downto 6)     => s_lemo_addOn_io(2 downto 0),
-      --gpio_o(9)              => hdmi_o,
-      gpio_o(0)              => lemo_o,
-      gpio_o(3 downto 1)     => s_lemo_addOn(2 downto 0),
-      gpio_o(6 downto 4)     => s_lemo_addOn_io(2 downto 0),
+      gpio_o(2 downto 0)      => s_lemo_addOn_io(2 downto 0), -- IO1, IO2, IO3
+      gpio_o(5 downto 3)      => s_lemo_addOn(2 downto 0),    -- OUT1, OUT2, OUT3
+      gpio_o(6)               => lemo_o,                      -- OUT (NIM/TTL)
+      gpio_o(10 downto 7)     => s_led_gpio(3 downto 0),      -- LED9, LED10, LED11, LED12
+      gpio_o(11)              => s_lemo_term_led,             -- DACK LED
       -- gpio in
-      --gpio_i(1 downto 0)     => lvds_in_i(1 downto 0),
-      --gpio_i(2)              => lemo_i,
-      --gpio_i(5 downto 3)     => lemo_addOn_io_i(2 downto 0),
-      -- SPECIAL FOR NIKOLAUS: He needs LEMO_I at TLU/IN #3
-      gpio_i(2 downto 0)     => lemo_addOn_io_i(2 downto 0),
-      gpio_i(3)              => lemo_i,
-      gpio_i(5 downto 4)     => lvds_in_i(1 downto 0),
-      gpio_i(7 downto 6)     => hdmi_i(1 downto 0),
-      gpio_i(9 downto 8)     => lemo_nim_ttl_i(1 downto 0),
+      gpio_i(2 downto 0)      => lemo_addOn_io_i(2 downto 0), -- IO1, IO2, IO3
+      gpio_i(3)               => lemo_i,                      -- IN (NIM/TTL)
+      gpio_i(5 downto 4)      => lvds_in_i(1 downto 0),       -- I1, I2
+      gpio_i(7 downto 6)      => hdmi_i(1 downto 0),          -- MHDMR_SYIN, MHDMR_TRIN
+      gpio_i(9 downto 8)      => lemo_nim_ttl_i(1 downto 0),  -- IN1, IN2,
       -- wr core
-      wr_onewire_io          => rom_data_io,
-      wr_sfp_sda_io          => sfp_mod2_io,
-      wr_sfp_scl_io          => sfp_mod1_io,
-      wr_sfp_det_i           => sfp_mod0_i,
-      wr_sfp_tx_o            => sfp_td_o,
-      wr_sfp_rx_i            => sfp_rd_i,
-      wr_dac_sclk_o          => dac_sclk_o,
-      wr_dac_din_o           => dac_din_o,
-      wr_ndac_cs_o           => ndac_cs_o,
-      wr_ext_clk_i           => lemo_nim_ttl_i(1),
-      wr_ext_pps_i           => lemo_nim_ttl_i(0),
-      led_link_up_o          => s_led_link_up,
-      led_link_act_o         => s_led_link_act,
-      led_track_o            => s_led_track,
-      led_pps_o              => s_led_pps,
+      wr_onewire_io           => rom_data_io,
+      wr_sfp_sda_io           => sfp_mod2_io,
+      wr_sfp_scl_io           => sfp_mod1_io,
+      wr_sfp_det_i            => sfp_mod0_i,
+      wr_sfp_tx_o             => sfp_td_o,
+      wr_sfp_rx_i             => sfp_rd_i,
+      wr_dac_sclk_o           => dac_sclk_o,
+      wr_dac_din_o            => dac_din_o,
+      wr_ndac_cs_o            => ndac_cs_o,
+      wr_ext_clk_i            => lemo_nim_ttl_i(1),
+      wr_ext_pps_i            => lemo_nim_ttl_i(0),
+      --sfp_tx_disable_o        => open,
+      --sfp_tx_fault_i          => sfp_tx_fault_i,
+      --sfp_los_i               => sfp_los_i,
+      led_link_up_o           => s_led_link_up,
+      led_link_act_o          => s_led_link_act,
+      led_track_o             => s_led_track,
+      led_pps_o               => s_led_pps,
       -- vme
-      vme_as_n_i             => vme_as_n_i,
-      vme_rst_n_i            => vme_rst_n_i,
-      vme_write_n_i          => vme_write_n_i,
-      vme_am_i               => vme_am_i,
-      vme_ds_n_i             => vme_ds_n_i,
-      vme_ga_i               => vme_ga_i,
-      vme_addr_data_b        => vme_addr_data_b,
-      vme_iack_n_i           => vme_iack_n_i,
-      vme_iackin_n_i         => vme_iackin_n_i,
-      vme_iackout_n_o        => vme_iackout_n_o,
-      vme_irq_n_o            => vme_irq_n_o,
-      vme_berr_o             => vme_berr_o,
-      vme_dtack_oe_o         => vme_dtack_oe_o,
-      vme_buffer_latch_o     => vme_buffer_latch_o,
-      vme_data_oe_ab_o       => vme_data_oe_ab_o,
-      vme_data_oe_ba_o       => vme_data_oe_ba_o,
-      vme_addr_oe_ab_o       => vme_addr_oe_ab_o,
-      vme_addr_oe_ba_o       => vme_addr_oe_ba_o,
+      vme_as_n_i              => vme_as_n_i,
+      vme_rst_n_i             => vme_rst_n_i,
+      vme_write_n_i           => vme_write_n_i,
+      vme_am_i                => vme_am_i,
+      vme_ds_n_i              => vme_ds_n_i,
+      vme_ga_i                => vme_ga_i,
+      vme_addr_data_b         => vme_addr_data_b,
+      vme_iack_n_i            => vme_iack_n_i,
+      vme_iackin_n_i          => vme_iackin_n_i,
+      vme_iackout_n_o         => vme_iackout_n_o,
+      vme_irq_n_o             => vme_irq_n_o,
+      vme_berr_o              => vme_berr_o,
+      vme_dtack_oe_o          => vme_dtack_oe_o,
+      vme_buffer_latch_o      => vme_buffer_latch_o,
+      vme_data_oe_ab_o        => vme_data_oe_ab_o,
+      vme_data_oe_ba_o        => vme_data_oe_ba_o,
+      vme_addr_oe_ab_o        => vme_addr_oe_ab_o,
+      vme_addr_oe_ba_o        => vme_addr_oe_ba_o,
       -- usb
-      usb_rstn_o             => sres_o,
-      usb_ebcyc_i            => ebcyc_i,
-      usb_speed_i            => speed_i,
-      usb_shift_i            => shift_i,
-      usb_readyn_io          => readyn_io,
-      usb_fifoadr_o          => fifoadr_o,
-      usb_sloen_o            => sloen_o,
-      usb_fulln_i            => fulln_i,
-      usb_emptyn_i           => emptyn_i,
-      usb_slrdn_o            => slrdn_o,
-      usb_slwrn_o            => slwrn_o,
-      usb_pktendn_o          => pktendn_o,
-      usb_fd_io              => fd_io,
+      usb_rstn_o              => sres_o,
+      usb_ebcyc_i             => ebcyc_i,
+      usb_speed_i             => speed_i,
+      usb_shift_i             => shift_i,
+      usb_readyn_io           => readyn_io,
+      usb_fifoadr_o           => fifoadr_o,
+      usb_sloen_o             => sloen_o,
+      usb_fulln_i             => fulln_i,
+      usb_emptyn_i            => emptyn_i,
+      usb_slrdn_o             => slrdn_o,
+      usb_slwrn_o             => slwrn_o,
+      usb_pktendn_o           => pktendn_o,
+      usb_fd_io               => fd_io,
       -- lcd
-      lcd_scp_o              => s_di_scp,
-      lcd_lp_o               => s_di_lp,
-      lcd_flm_o              => s_di_flm,
-      lcd_in_o               => s_di_dat);
+      lcd_scp_o               => s_di_scp,
+      lcd_lp_o                => s_di_lp,
+      lcd_flm_o               => s_di_flm,
+      lcd_in_o                => s_di_dat);
 
   -- SFP
   ----------------
@@ -396,14 +458,20 @@ begin
   leds_o(14) <= not s_led_link_up;                      -- Link up
   leds_o(13) <= not s_led_track;                        -- Timing Valid
   leds_o(12) <= not s_led_pps;
+
+  -- Misc. LEDs
+  leds_o(11 downto 8) <= not(s_led_gpio(3 downto 0));
   
-  -- not assigned leds
-  leds_o(11 downto 0)	<= (others => '1'); -- power off
+  -- Display VME address
+  s_hex_vn1_i         <= vme_ga_i;
+  s_hex_vn2_i         <= vme_ga_extended_i;
+  leds_o (3 downto 0) <= not(s_hex_vn1_i);
+  leds_o (7 downto 4) <= not(s_hex_vn2_i);
   
   -- On board lemo
   ---------------- 
-  lemo_i_en_o <= '1';
-  lemo_o_en_o <= '1';
+  lemo_o_en_o <= not(s_nim_ttl_select(0));
+  lemo_i_en_o <= not(s_nim_ttl_select(1));
 
   -- VETAR1DB1 ADD-ON Board
   -------------------------
@@ -413,28 +481,30 @@ begin
   leds_lemo_addOn_o <= s_leds_lemo_addOn;
   lemo_addOn_eo_o   <= '0';
 
-  -- PLL
+  -- PLL/BuTiS/MDMHR Output
   clk_pll_o <= s_clk_butis;
   hdmi_o    <= s_butis_t0;
   
-  -- LVDS
+  -- LVDS/BuTiS/MDMHR Output
   lvds_out_o(0) <= s_clk_butis;
   lvds_out_o(1) <= s_butis_t0;
   
-  -- OE and TERM for LEMOs (s_lemo_oen is driven by monster iodir hack)
-  lemo_addOn_oen_o(0)  <= '0' when s_lemo_oen(0)='0' else 'Z'; -- TTLIO1 output enable
-  lemo_addOn_oen_o(1)  <= '0' when s_lemo_oen(1)='0' else 'Z'; -- TTLIO2 output enable
-  lemo_addOn_oen_o(2)  <= '0' when s_lemo_oen(2)='0' else 'Z'; -- TTLIO3 output enable
+  -- OE and TERM
+  lemo_addOn_oen_o(0)  <= '1' when s_lemo_oen(0)='0' else '0'; -- Output enable
+  lemo_addOn_oen_o(1)  <= '1' when s_lemo_oen(1)='0' else '0'; -- Output enable
+  lemo_addOn_oen_o(2)  <= '1' when s_lemo_oen(2)='0' else '0'; -- Output enable
 
-  lemo_addOn_term_o(0) <= '1' when s_lemo_oen(0)='1' else '0'; -- TERMEN1 (terminate when input)
-  lemo_addOn_term_o(1) <= '1' when s_lemo_oen(1)='1' else '0'; -- TERMEN2 (terminate when input)
-  lemo_addOn_term_o(2) <= '1' when s_lemo_oen(2)='1' else '0'; -- TERMEN3 (terminate when input)
+  lemo_addOn_term_o(0) <= '1' when s_lemo_term(0)='1' else '0'; -- Termination
+  lemo_addOn_term_o(1) <= '1' when s_lemo_term(1)='1' else '0'; -- Termination
+  lemo_addOn_term_o(2) <= '1' when s_lemo_term(2)='1' else '0'; -- Termination
 
-  led_lemo_term_o <= s_led_pps; -- TBD: This is DAK1 on the addon board
+  -- DAK LED
+  led_lemo_term_o <= not(s_lemo_term_led);
   
   -- INOUT LEMOs
   -- Red => Output enable LEDs
-  leds_lemo_io_off_o(2 downto 0) <= s_lemo_oen(2 downto 0);
+  leds_lemo_io_off_o(2 downto 0) <= not(s_lemo_oen(2 downto 0));
+  
   -- Green => Activity LEDs
   leds_lemo_io_on_o(2 downto 0) <= not(s_lemo_addOn_io(2 downto 0) or lemo_addOn_io_i(2 downto 0));
   
