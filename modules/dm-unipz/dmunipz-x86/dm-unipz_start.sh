@@ -6,47 +6,54 @@
 ###########################################
 # clean up stuff
 ###########################################
-echo -e bring possibly resident firmware to idle state
-./dmunipz-ctl dev/wbm0 stopop
+echo -e dm-unipz - start: bring possibly resident firmware to idle state
+dmunipz-ctl dev/wbm0 stopop
 sleep 5
 
-./dmunipz-ctl dev/wbm0 idle
+dmunipz-ctl dev/wbm0 idle
 sleep 5
-echo -e destroy all unowned conditions for lm32 channel of ECA
+echo -e dm-unipz - start: destroy all unowned conditions for lm32 channel of ECA
 saft-ecpu-ctl baseboard -x
 
 
 ###########################################
 # load firmware to lm32
 ###########################################
-echo -e load firmware
+echo -e dm-unipz - start: load firmware
 eb-fwload dev/wbm0 u 0x0 dmunipz.bin
 
 ###########################################
 # start software on hostsystem 
 ###########################################
 # to be implemented: command with pipe to logger (logstash)
+echo - dm-unipz - start monitoring
+dmunipz-ctl -s2 dev/wbm0 | logger -t dmunipz-ctl -sp local0.info &
 
 ###########################################
 # configure firmware and make it operational 
 ###########################################
  
 # do some write actions to set register values
-# to be implemented
+echo -e dm-unipz - set MAC and IP of gateway and Data Master
+dmunipz-ctl dev/wbm0 ebmdm 0x00267b000422 0xc0a80c04
+dmunipz-ctl dev/wbm0 ebmlocal 0x00267b000321 0xc0a80cea
 
-echo -e make firmware operational
+echo -e dm-unipz - start: make firmware operational
 # send CONFIGURE command to firmware
 sleep 5
-./dmunipz-ctl dev/wbm0 configure
+dmunipz-ctl dev/wbm0 configure
 
 # send START OPERATATION command to firmware
 sleep 5
-./dmunipz-ctl dev/wbm0 startop
+dmunipz-ctl dev/wbm0 startop
 
 ###########################################
 # configure ECA
 ###########################################
-echo -e configure lm32 channel of ECA
+echo -e dm-unipz - start: configure lm32 channel of ECA
+
+# configure ECA for lm32 channel: here action for TK request, tag "0x1"
+saft-ecpu-ctl baseboard -c 0x1111000000000000 0xffff000000000000 0 0x5 -d
 
 # configure ECA for lm32 channel: here action for TK request, tag "0x2"
 saft-ecpu-ctl baseboard -c 0x2222000000000000 0xffff000000000000 0 0x2 -d
@@ -56,6 +63,8 @@ saft-ecpu-ctl baseboard -c 0x3333000000000000 0xffff000000000000 0 0x3 -d
 
 # configure ECA for lm32 channel: here action for TK request, tag "0x4"
 saft-ecpu-ctl baseboard -c 0x4444000000000000 0xffff000000000000 0 0x4 -d
+
+echo -e dm-unipz - start: startup script finished
 
 ###########################################
 # testing without datamaster
