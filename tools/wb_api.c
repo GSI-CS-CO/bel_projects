@@ -3,7 +3,7 @@
  *
  *  created : Apr 10, 2013
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Aug-2017
+ *  version : 03-Aug-2017
  *
  * Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
  * but only a temporary solution.
@@ -315,10 +315,6 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device, int devIndex, int *syncStat
   address = pps_addr + WR_PPS_GEN_ESCR;
   if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
   *syncState  = data & WR_PPS_GEN_ESCR_MASK; /* need to mask relevant bits */
-
-  address = pps_addr + WR_PPS_GEN_CR;
-  if ((status = eb_device_read(device, address, EB_BIG_ENDIAN|EB_DATA32, &data, 0, eb_block)) != EB_OK) return status;
-  *syncState = *syncState + !(data &  WR_PPS_GEN_CR_MASK) * 8;
 
   return status;
 } /* wb_wr_get_sync_state */
