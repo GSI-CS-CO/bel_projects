@@ -36,14 +36,11 @@
 #define WR_PPS_GEN_CNTR_UTCHI   0xc         /* UTC seconds high bytes */
 #define WR_PPS_GEN_CNTR_NSEC    0x4         /* UTC nanoseconds */
 #define WR_PPS_GEN_ESCR         0x1c        /* External Sync Control Register */
-#define WR_PPS_GEN_CR           0x0         /* control register */
 
 /* masks */
-#define WR_PPS_GEN_CR_MASK      0x1         /* not-tracking bit  */
-#define WR_PPS_GEN_ESCR_MASK    0x6         /* bit 1: PPS valid, bit 2: timestamp valid */
-#define WR_PPS_GEN_ESCR_MASKPPS 0x2         /* PPS valid bit */
-#define WR_PPS_GEN_ESCR_MASKTS  0x4         /* timestamp valid bit */
-
+#define WR_PPS_GEN_ESCR_MASKPPS 0x4         /* PPS valid bit */
+#define WR_PPS_GEN_ESCR_MASKTS  0x8         /* timestamp valid bit */
+#define WR_PPS_GEN_ESCR_MASK    0xC         /* bit 2: PPS valid, bit 3: timestamp valid */
 
 
 /*** WR-Endpoint ***/
