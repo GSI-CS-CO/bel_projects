@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define EBMON_VERSION "1.2.0"
+#define EBMON_VERSION "1.3.0"
 
 /* standard includes */
 #include <unistd.h> /* getopt */
@@ -50,6 +50,7 @@
 
 /* Wishbone api */
 #include <wb_api.h>
+#include <wb_slaves.h>
 
 const char* program;
 static int verbose=0;
@@ -70,7 +71,7 @@ static void help(void) {
   fprintf(stderr, "  -c<eb-device>    compare timestamp with the one of <eb-device> and display the result\n");
   fprintf(stderr, "  -d               display WR time\n");
   fprintf(stderr, "  -e               display etherbone version\n");
-  fprintf(stderr, "  -f<familyCode>   specifiy family code of 1-wire slave (0x43: EEPROM; 0x28,0x42: temperature)\n");
+  fprintf(stderr, "  -f<familyCode>   specify family code of 1-wire slave (0x43: EEPROM; 0x28,0x42: temperature)\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "  -i               display WR IP\n");
   fprintf(stderr, "  -l               display WR link status\n");
@@ -338,11 +339,11 @@ int main(int argc, char** argv) {
 
   if (getWRSync) {
     if ((status = wb_wr_get_sync_state(device, devIndex, &syncState)) != EB_OK) die("WR get sync state", status);
-    if ((syncState & 0x8))
+    if ((syncState == WR_PPS_GEN_ESCR_MASK))
       sprintf(syncStr,"TRACKING");
-    else if ((syncState & 0x4))
+    else if ((syncState == WR_PPS_GEN_ESCR_MASKTS))
       sprintf(syncStr,"TIME");
-    else if ((syncState & 0x2))
+    else if ((syncState == WR_PPS_GEN_ESCR_MASKPPS))
       sprintf(syncStr, "PPS");
     else
       sprintf(syncStr, "NO SYNC");
