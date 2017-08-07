@@ -144,9 +144,9 @@ void main(void) {
         type &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
       }
 
-
-      *pncN(hp) = nodeFuncs[type](pN(hp), pT(hp));
-      //DBPRINT1("new: 0x%08x\n", pN(hp));
+      //crude workaround to the fact that direct assignment of a pointer by pN(x) seems not possible ('error: lvalue required as left operand of assignment')
+      *pncN(hp) = (uint32_t)nodeFuncs[type](pN(hp), pT(hp));
+      
       
       //now *np could be NULL, tread carefully!
       type = NODE_TYPE_UNKNOWN;

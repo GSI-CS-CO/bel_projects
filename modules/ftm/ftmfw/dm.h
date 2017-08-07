@@ -50,7 +50,7 @@ extern uint32_t* const count;
 extern uint32_t* const start;
 extern uint32_t* const running;
 extern uint32_t* const stop;
-extern volatile uint32_t** const hp;     // array of ptrs to threads for scheduler heap
+extern uint32_t** const hp;     // array of ptrs to threads for scheduler heap
 
 
 

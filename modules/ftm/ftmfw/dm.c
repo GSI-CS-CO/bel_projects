@@ -12,6 +12,7 @@
 #include "dm.h"
 #include "prio_regs.h"
 #include "dbg.h"
+#include "ftm_shared_mmap.h"
 
 uint64_t SHARED dummy = 0;
 
@@ -25,7 +26,7 @@ uint32_t* const count   = (uint32_t*)_startshared + ( SHCTL_MSG_CNT >> 2);
 uint32_t* const start   = (uint32_t*)_startshared + ( (SHCTL_THR_CTL + T_TC_START)    >> 2);
 uint32_t* const running = (uint32_t*)_startshared + ( (SHCTL_THR_CTL + T_TC_RUNNING)  >> 2);
 uint32_t* const stop    = (uint32_t*)_startshared + ( (SHCTL_THR_CTL + T_TC_STOP)     >> 2);
-volatile uint32_t** const hp     = (uint32_t**)_startshared + ( SHCTL_HEAP >> 2); // array of ptrs to thread data for scheduler heap
+uint32_t** const hp     = (uint32_t**)_startshared + ( SHCTL_HEAP >> 2); // array of ptrs to thread data for scheduler heap
 
 void prioQueueInit()
 {
@@ -169,6 +170,8 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
 
   const uint32_t prio = (node[CMD_ACT >> 2] >> ACT_PRIO_POS) & ACT_PRIO_MSK;
   const uint32_t *tg  = (uint32_t*)node[CMD_TARGET >> 2];
+  const uint32_t adrPrefix = (uint32_t)tg & 0xffff0000; // if target is on a different RAM, all ptrs must be translated from the local to our (peer) perspective
+
   uint32_t *bl, *b, *e;
   uint8_t *wrIdx;
   uint32_t bufOffs, elOffs;
@@ -181,14 +184,14 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   elOffs  = (*wrIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_; 
 
   //get pointer to buf list
-  bl = (uint32_t*)tg[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2];
+  bl = (uint32_t*)(tg[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2] - INT_BASE_ADR + adrPrefix);
 
   //get pointer to buf
-  b = (uint32_t*)bl[bufOffs >> 2];
+  b = (uint32_t*)(bl[bufOffs >> 2] - INT_BASE_ADR + adrPrefix);
   //get pointer to Element to write
   e = (uint32_t*)&b[elOffs >> 2];
 
-  DBPRINT3("#%02u: Prio: %u, wrIdx: 0x%08x, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x\n", cpuId, prio, (uint32_t)wrIdx, (uint32_t)bl, (uint32_t)b, (uint32_t)e );
+  DBPRINT3("#%02u: Prio: %u, pre: 0x%08x, base: 0x%08x, wrIdx: 0x%08x, target: 0x%08x, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x\n", cpuId, prio, adrPrefix, INT_BASE_ADR, (uint32_t)wrIdx, (uint32_t)tg, (uint32_t)bl, (uint32_t)b, (uint32_t)e );
 
   //write Cmd
   for(uint32_t offs = T_CMD_TIME; offs < T_CMD_TIME + _T_CMD_SIZE_; offs += _32b_SIZE_ ) {
