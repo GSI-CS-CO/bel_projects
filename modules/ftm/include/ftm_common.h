@@ -13,6 +13,33 @@
 #define _TS_SIZE_               _64b_SIZE_
 
 
+#define ID_RES_BITS             10
+#define ID_BPID_BITS            14
+#define ID_SID_BITS             12
+#define ID_EVTNO_BITS           12  
+#define ID_GID_BITS             12
+#define ID_FID_BITS             4
+
+#define ID_RES_MSK              ((1 << ID_RES_BITS) - 1)
+#define ID_RES_POS              (0)
+#define ID_BPID_MSK             ((1 << ID_BPID_BITS ) - 1)
+#define ID_BPID_POS             (ID_RES_POS + ID_RES_BITS)
+#define ID_SID_MSK              ((1 << ID_SID_BITS ) - 1)
+#define ID_SID_POS              (ID_BPID_POS + ID_BPID_BITS)
+#define ID_EVTNO_MSK            ((1 << ID_EVTNO_BITS ) - 1)
+#define ID_EVTNO_POS            (ID_SID_POS + ID_SID_BITS)
+#define ID_GID_MSK              ((1 << ID_GID_BITS ) - 1)  
+#define ID_GID_POS              (ID_EVTNO_POS + ID_EVTNO_BITS)
+#define ID_FID_MSK              ((1 << ID_FID_BITS ) - 1)
+#define ID_FID_POS              (ID_GID_POS + ID_GID_BITS)
+
+
+#define PRIO_IL 2
+#define PRIO_HI 1
+#define PRIO_LO 0
+
+
+
 //////////////////////////////////////////////////////////////////////
 //  Defines for dynamic Memory Allocation System                    //
 //////////////////////////////////////////////////////////////////////
@@ -250,10 +277,11 @@
 //
 // Block
 #define ADR_BLOCK_DST_LST  1 // only if multiple destinations
-#define ADR_BLOCK_Q_IL     2 // only if multiple destinations
-#define ADR_BLOCK_Q_HI     3 // only if multiple destinations
-#define ADR_BLOCK_Q_LO     4 // only if multiple destinations
 
+
+#define ADR_BLOCK_Q_LO     (ADR_BLOCK_DST_LST + 1 + PRIO_LO) // only if multiple destinations
+#define ADR_BLOCK_Q_HI     (ADR_BLOCK_DST_LST + 1 + PRIO_HI)  // only if multiple destinations
+#define ADR_BLOCK_Q_IL     (ADR_BLOCK_DST_LST + 1 + PRIO_IL)  // only if multiple destinations
 //
 // Timing Message
 #define ADR_DYN_ID         1
@@ -319,9 +347,7 @@
 #define ACT_FLUSH_PRIO_POS      (ACT_BITS_SPECIFIC_POS + 0)
 #define ACT_FLUSH_PRIO_SMSK     (ACT_FLUSH_PRIO_MSK << ACT_FLUSH_PRIO_POS)
 
-#define PRIO_IL 2
-#define PRIO_HI 1
-#define PRIO_LO 0
+
 
 //Command Flush Mode
 #define ACT_FLUSH_MODE_MSK      0x7

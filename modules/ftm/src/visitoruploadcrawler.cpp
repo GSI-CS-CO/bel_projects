@@ -5,8 +5,8 @@
 #include "meta.h"
 #include "event.h"
 
-const std::string sNodeType[] = {"prioil", "priohi", "priolo"};
-const std::string sQM[] = {"prioil", "priohi", "priolo"};
+const std::string sNodeType[] = {"priolo", "priohi", "prioil"};
+const std::string sQM[] = {"priolo", "priohi", "prioil"};
 const std::string sDL  = "listdst";
 const std::string sDD  = "defdst";
 const std::string sAD  = "altdst";

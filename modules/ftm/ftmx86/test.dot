@@ -1,18 +1,32 @@
 digraph g {
-name="PPSv01";
+name="helloadv";
 
-graph [root="Evt_PPS",  rankdir=TB, nodesep=0.6, mindist=0.6, ranksep=0.6, overlap=false]
-node  [type="TMsg",   shape="rectangle", style="filled", fillcolor="white", color="black", cpu="0"]
-edge  [type="defdst", color="red"]
+graph []
+edge  [type="defdst"]
 
-Evt_PPS             [type="TMsg",         tOffs=          0,   id="0x0000000000000001", par="0x123", shape="oval"];
-B_PPS               [type="Block",      tPeriod=1000000000];
+subgraph cpu0 {
+  node  [cpu="0"];
 
-Evt_PPS -> B_PPS  -> Evt_PPS;
+  Evt_PPS   [type="TMsg",   tOffs=          0,   fid=2, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
+  B_PPS     [type="block",  tPeriod=1000000000,  qLo="1"];
+  Evt_PPSA  [type="TMsg",   tOffs=          0,   fid=2, gid=5, evtno=205, sid=2, bpid=8, par="0x1"];
+  Evt_PPSB  [type="TMsg",   tOffs=          0,   fid=2, gid=5, evtno=205, sid=2, bpid=8, par="0x1" ];
 
-Evt_Bla             [type="TMsg",         tOffs=          0,   id="0x0000000000000001", par="0x123", shape="oval", cpu="1"];
-B_Bla               [type="Block",      tPeriod=1000000000, cpu="1"];
+  Evt_PPS   -> B_PPS;
+  B_PPS     -> Evt_PPSA;
+  B_PPS     -> Evt_PPSB [type="altdst"];
+  Evt_PPSA  -> Evt_PPS;
+  Evt_PPSB  -> Evt_PPS;
+}
 
-Evt_Bla -> B_Bla  -> Evt_Bla;
+subgraph cpu1 {
+  node  [cpu="1"];
+
+  Evt_Bla [type="TMsg",   tOffs=           0, id="0x0000000000000001", par="0x0"];
+  B_Bla   [type="block",  tPeriod=1000000000];
+
+  Evt_Bla -> B_Bla;
+
+}
 
 }

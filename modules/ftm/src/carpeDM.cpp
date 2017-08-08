@@ -271,6 +271,14 @@ bool CarpeDM::connect(const std::string& en) {
     dp.property("tPeriod",  boost::get(&myVertex::tPeriod,  g));
     dp.property("tOffs",    boost::get(&myVertex::tOffs,    g));
     dp.property("id",       boost::get(&myVertex::id,       g));
+    //ID sub fields
+    dp.property("fid",      boost::get(&myVertex::id_fid,   g));
+    dp.property("gid",      boost::get(&myVertex::id_gid,   g));
+    dp.property("evtno",    boost::get(&myVertex::id_evtno, g));
+    dp.property("sid",      boost::get(&myVertex::id_sid,   g));
+    dp.property("bpid",     boost::get(&myVertex::id_bpid,  g));
+    dp.property("resid",    boost::get(&myVertex::id_res,  g));
+    
     dp.property("par",      boost::get(&myVertex::par,      g));
     dp.property("tef",      boost::get(&myVertex::tef,      g));
     dp.property("res",      boost::get(&myVertex::res,      g));
@@ -278,6 +286,10 @@ bool CarpeDM::connect(const std::string& en) {
     dp.property("prio",     boost::get(&myVertex::prio,     g));
     dp.property("qty",      boost::get(&myVertex::qty,      g));
     dp.property("tWait",    boost::get(&myVertex::tWait,    g));
+
+    dp.property("qIl",      boost::get(&myVertex::qIl,   g));
+    dp.property("qHi",      boost::get(&myVertex::qHi,   g));
+    dp.property("qLo",      boost::get(&myVertex::qLo,   g));
 
     return (const boost::dynamic_properties)dp;
   }  

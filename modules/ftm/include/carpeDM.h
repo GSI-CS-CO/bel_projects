@@ -39,6 +39,9 @@ class CarpeDM {
 private:
   static const unsigned char deadbeef[4];
   static const std::string needle;
+  void generateBlockMeta();
+  void generateDstLst(Graph& g, vertex_t v);
+  void generateQmeta(Graph& g, vertex_t v, int prio);
 
 protected:
 
@@ -74,6 +77,8 @@ protected:
   int parseFwVersionString(const std::string& s);
   uint64_t read64b(uint32_t startAdr);
   int write64b(uint32_t startAdr, uint64_t d);
+
+
 
 public:
   CarpeDM() : sLog(std::cout), sErr(std::cerr) {} 
@@ -220,10 +225,10 @@ public:
   uint32_t getNodeAdr(const std::string& name, bool direction, bool intExt); 
 
   //show a CPU's Upload address table
-  void showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", UPLOAD, filterMeta);}
+  void showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", UPLOAD, false);}
 
   //show a CPU's Download address table
-  void showDown(bool filterMeta) {show("Download Table", "download_dict.txt", DOWNLOAD, filterMeta);}
+  void showDown(bool filterMeta) {show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", DOWNLOAD, filterMeta);}
 
   //Show all command fields in a Queue (past and current)
   void dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio);

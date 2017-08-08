@@ -88,6 +88,64 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
     return ret;
   }
 
+
+
+  void CarpeDM::generateDstLst(Graph& g, vertex_t v) {
+    const std::string name = g[v].name + "_ListDst";
+    hm.add(name);
+    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), NULL, "listdst", "0x0"), g);
+    boost::add_edge(v,   vD, myEdge(sDL), g);
+  }  
+
+  void CarpeDM::generateQmeta(Graph& g, vertex_t v, int prio) {
+    const std::string sPrefix[] = {"Lo", "Hi", "Il"};
+
+    const std::string nameBl = g[v].name + "_QBl_" + sPrefix[prio];
+    const std::string nameB0 = g[v].name + "_Qb_"  + sPrefix[prio] + "0";
+    const std::string nameB1 = g[v].name + "_Qb_"  + sPrefix[prio] + "1";
+    hm.add(nameBl);
+    hm.add(nameB0);
+    hm.add(nameB1);
+    vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl).get(), NULL, "qinfo", "0x0"), g);
+    vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0).get(), NULL, "qbuf",  "0x0"), g);
+    vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1).get(), NULL, "qbuf",  "0x0"), g);
+    boost::add_edge(v,   vBl, myEdge(sQM[prio]), g);
+    boost::add_edge(vBl, vB0, myEdge("meta"),    g);
+    boost::add_edge(vBl, vB1, myEdge("meta"),    g);
+    
+  }
+
+  void CarpeDM::generateBlockMeta() {
+   Graph& g = gUp;
+   Graph::out_edge_iterator out_begin, out_end, out_cur;
+    
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      std::string cmp = g[v].type;
+      
+      if ((cmp == "blockfixed") || (cmp == "blockalign") || (cmp == "block") ) {
+        boost::tie(out_begin, out_end) = out_edges(v,g);
+        //check if it already has queue links / Destination List
+        bool hasIl=false, hasHi=false, hasLo=false, hasMultiDst=false, hasDstLst=false;
+        for (out_cur = out_begin; out_cur != out_end; ++out_cur)
+        { 
+          
+          if (g[*out_cur].type == sQM[PRIO_IL]) hasIl       = true;
+          if (g[*out_cur].type == sQM[PRIO_HI]) hasHi       = true;
+          if (g[*out_cur].type == sQM[PRIO_LO]) hasLo       = true;
+          if (g[*out_cur].type == sAD)          hasMultiDst = true;
+          if (g[*out_cur].type == sDL)          hasDstLst   = true;
+        }
+        //create requested Queues / Destination List
+        if (g[v].qIl != "0" && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
+        if (g[v].qHi != "0" && !hasHi ) { generateQmeta(g, v, PRIO_HI); }
+        if (g[v].qLo != "0" && !hasLo ) { generateQmeta(g, v, PRIO_LO); }
+        if(hasMultiDst & !hasDstLst)    { generateDstLst(g, v);         }
+
+      }
+    }  
+  }
+
+
   void CarpeDM::prepareUpload(Graph& g) {
     std::string cmp;
     uint32_t hash;
@@ -96,7 +154,7 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
 
     atUp.clear();
     gUp.clear();
-    //atUp.syncBmps(atDown);
+    atUp.syncBmps(atDown);
 
     //save the graph we were shown into our own graph
     copy_graph(g, gUp);
@@ -104,59 +162,43 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
     boost::set_property(gUp, boost::graph_name, boost::get_property(g, boost::graph_name));
     
     //std::cout << "Graph name is: " << boost::get_property(gUp, boost::graph_name) << std::endl;
-
-    boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
-    boost::tie(vi, vi_end) = vertices(gUp);
-
-    //sLog << "Grpah has " << vi_end - vi << " Nodes" << std::endl;
+    
+    //auto generate desired Block Meta Nodes first
+    generateBlockMeta();
+    
 
     //allocate and init all nodes
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       //std::string name = boost::get_property(gUp, boost::graph_name) + "." + gUp[v].name;
       std::string name = gUp[v].name;
-      if (!(hm.lookup(name)))                  {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
+      if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
       hash = hm.lookup(name).get();
       cpu  = s2u<uint8_t>(gUp[v].cpu);
       //FIXME Careful! CPU indices in the (intermediary) .dot do not necessarily match the vector indices. Use the fucking cpuIdx map to translate!
-      if (atDown.lookupAdr(cpu, hash) != NULL)      {throw std::runtime_error("Node '" + name + "' already present on DM.\nThe combination <graphname.nodename> must be unique."); return; } 
+      if (atDown.lookupHash(hash) != NULL)      {throw std::runtime_error("Node '" + name + "' already present on DM.\nThe combination <graphname.nodename> must be unique."); return; } 
       allocState = atUp.allocate(cpu, hash, v);
-      if (allocState == ALLOC_NO_SPACE)             {throw std::runtime_error("Not enough space in CPU " + std::to_string(cpu) + " memory pool"); return; }
-      if (allocState == ALLOC_ENTRY_EXISTS)         {throw std::runtime_error("Node '" + name + "' is duplicate in graph. .\nThe combination <graphname.nodename> must be unique."); return; }
+      if (allocState == ALLOC_NO_SPACE)         {throw std::runtime_error("Not enough space in CPU " + std::to_string(cpu) + " memory pool"); return; }
+      if (allocState == ALLOC_ENTRY_EXISTS)     {throw std::runtime_error("Node '" + name + "' is duplicate in graph. .\nThe combination <graphname.nodename> must be unique."); return; }
+
       // this means alloc went okay
       auto* x = atUp.lookupVertex(v);
       
 
-      //std::cout << "atup cpu " << (int)x->cpu << " Adr: 0x" << std::hex << x->adr <<  std::endl;
       cmp = gUp[v].type;
       
-      //TODO add the individual ID component representation
-      /*
-      std::string::size_type sz;   // alias of size_t
-
-  int i_dec = std::stoi (gUp[v].prio,&sz);
-      */
-
-       
-
       if      (cmp == "tmsg")     {
-        /*
-        if ( gUp[v].id.find("0xD15EA5EDDEADBEEF") != std::string::npos) { // ID field was undefined. Try to construct from subfields
-          id_fid id_gid;
-  id_evtno;
-  id_sid;
-  id_bpid;
-  id_res;
-
-        }
-
-*/
-
-        gUp[v].np = (node_ptr) new       TimingMsg(gUp[v].name, x->hash, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].id), s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); 
-
-
+        uint64_t id;
+        // if ID field was not given, try to construct from subfields
+        if ( gUp[v].id.find("0xD15EA5EDDEADBEEF") != std::string::npos) { 
+          id =  ((s2u<uint64_t>(gUp[v].id_fid)    & ID_FID_MSK)   << ID_FID_POS)   |
+                ((s2u<uint64_t>(gUp[v].id_gid)    & ID_GID_MSK)   << ID_GID_POS)   |
+                ((s2u<uint64_t>(gUp[v].id_evtno)  & ID_EVTNO_MSK) << ID_EVTNO_POS) |
+                ((s2u<uint64_t>(gUp[v].id_sid)    & ID_SID_MSK)   << ID_SID_POS)   |
+                ((s2u<uint64_t>(gUp[v].id_bpid)   & ID_BPID_MSK)  << ID_BPID_POS)  |
+                ((s2u<uint64_t>(gUp[v].id_res)    & ID_RES_MSK)   << ID_RES_POS);
+        } else { id = s2u<uint64_t>(gUp[v].id); }
+        gUp[v].np = (node_ptr) new       TimingMsg(gUp[v].name, x->hash, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), id, s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); 
       }
-
-
       else if (cmp == "noop")     {gUp[v].np = (node_ptr) new            Noop(gUp[v].name, x->hash, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
       else if (cmp == "flow")     {gUp[v].np = (node_ptr) new            Flow(gUp[v].name, x->hash, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
       else if (cmp == "flush")    {gUp[v].np = (node_ptr) new           Flush(gUp[v].name, x->hash, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
@@ -169,8 +211,8 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
       else if (cmp == "qinfo")    {gUp[v].np = (node_ptr) new        CmdQMeta(gUp[v].name, x->hash, x->b, 0);}
       else if (cmp == "listdst")  {gUp[v].np = (node_ptr) new        DestList(gUp[v].name, x->hash, x->b, 0);}
       else if (cmp == "qbuf")     {gUp[v].np = (node_ptr) new      CmdQBuffer(gUp[v].name, x->hash, x->b, 0);}
-      else if (cmp == "meta")     {std::cerr << "Pure meta not yet implemented " << gUp[v].type << std::endl;}
-      else                        {std::cerr << "Node type <" << cmp << "> not supported! " << std::endl;} 
+      else if (cmp == "meta")     {throw std::runtime_error("Pure meta type not yet implemented"); return;}
+      else                        {throw std::runtime_error("Node <" + gUp[v].name + ">'s type <" + cmp + "> is not supported!\nMost likely you forgot to set the type attribute or accidentally created the node by a typo in an edge definition."); return;} 
 
   
     }
@@ -404,8 +446,7 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
       }
     }
 
-    boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
-    boost::tie(vi, vi_end) = vertices(gDown);
+ 
     
 
 
