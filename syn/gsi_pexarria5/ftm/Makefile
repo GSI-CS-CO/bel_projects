@@ -14,17 +14,26 @@ PATHFTM   = ../../../modules/ftm
 PATHFW    = $(PATHFTM)/ftmfw
 PATHTOOL  = $(PATHFTM)/ftmx86
 PREFIX    ?= /usr/local
-CFLAGS    = -I$(PATHFW) -I$(PRIOPATH) -I$(EBMPATH)
+CFLAGS    = -I. -I$(PATHFTM)/include -I$(PATHFW) -I$(PRIOPATH) -I$(EBMPATH)
 
 include ../../build.mk
-include $(PATHTOOL)/Makefile
 
-all: $(TARGET).elf tool
+all: $(TARGET).elf tools
 
-$(TARGET).elf: $(PATHFW)/main.c $(PATHFW)/ftm.c $(INCPATH)/ebm.c 
+tools: 
+	$(MAKE) -C $(PATHTOOL) tools
+	cp $(PATHFTM)/bin/dm-sched $(PATHFTM)/bin/dm-cmd $(PATHFTM)/lib/libcarpedm.a .
+
+install: 
+	$(MAKE) -C $(PATHTOOL) install
+
+ 
+
+$(TARGET).elf: $(PATHFW)/main.c $(PATHFW)/dm.c $(INCPATH)/ebm.c 
 
 clean::
-	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
+	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin dm-sched dm-cmd libcarpedm.a
+	$(MAKE) -C $(PATHTOOL) clean
 
 
         

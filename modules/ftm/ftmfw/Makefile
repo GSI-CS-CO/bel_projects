@@ -1,20 +1,27 @@
-TARGET		= ftm
+TARGET		?= ftm
 DEBUGLVL  	= 0 
-FLASH		= EPCQ256
-RAM_SIZE	= 49152 
-SHARED_SIZE 	= 16384
-USRCPUCLK   	= 125000
-VERSION     	= 0.6.2
+FLASH		?= EPCQ256
+RAM_SIZE	?= 49152 
+SHARED_SIZE 	?= 16384
+USRCPUCLK   	?= 125000
+VERSION     	?= 0.6.2
+
 
 include ../../../syn/build.mk
 
-PATHFW		= .
-PATHPRIO	= ../../prioq2
-PREFIX		?= /usr/local
-CFLAGS		+= -I$(PATHFW) -I$(PATHPRIO) -I$(PATHFW)/../include -DDEBUGLEVEL=$(DEBUGLVL) 
+EBMPATH   ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
+PRIOPATH  ?= $(TOP)/modules/prioq2
+FTMPATH   ?= $(TOP)/modules/ftm
+FWPATH    ?= $(FTMPATH)/ftmfw
+PREFIX	  ?= /usr/local
+CFLAGS	  += -I$(FWPATH) -I$(PRIOPATH) -I$(FWPATH)/../include -DDEBUGLEVEL=$(DEBUGLVL) 
 
 all: $(TARGET).bin $(TARGET).elf
 
-$(TARGET).elf:	$(PATHFW)/main.c $(INCPATH)/ebm.c $(PATHFW)/dm.c
+
+$(TARGET).elf: main.c $(INCPATH)/ebm.c dm.c 
+
+
 clean::
-	rm -f $(PATHFW)/*.o $(PATHFW)/*.a $(PATHFW)/*.elf $(PATHFW)/*.bin
+	rm -f $(FWPATH)/*.o $(FWPATH)/*.a $(FWPATH)/*.elf $(FWPATH)/*.bin
+
