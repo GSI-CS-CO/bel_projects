@@ -15,6 +15,7 @@
 #include "common.h"
 #include "hashmap.h"
 #include "alloctable.h"
+#include "ftm_shared_mmap.h"
 
 
 
@@ -74,6 +75,7 @@ protected:
   int ebWriteWord(Device& dev, uint32_t adr, uint32_t data);
   uint32_t ebReadWord(Device& dev, uint32_t adr);
   boost::dynamic_properties createParser(Graph& g);
+  //std::string getFwInfo(uint8_t cpuIdx);
   int parseFwVersionString(const std::string& s);
   uint64_t read64b(uint32_t startAdr);
   int write64b(uint32_t startAdr, uint64_t d);
@@ -94,6 +96,15 @@ public:
 
   //Retrieve the Firmware Version of cpu at sdb dev array idx <cpuIdx>
   int getFwVersion(uint8_t cpuIdx);
+
+  //mockup for now, this info should be taken from found firmware binary
+  uint32_t getIntBaseAdr(uint8_t cpuIdx) {return INT_BASE_ADR;}
+
+  uint32_t getSharedOffs(uint8_t cpuIdx) {return SHARED_OFFS;}
+
+  uint32_t getSharedSize(uint8_t cpuIdx) {return SHARED_SIZE;}
+
+
 
   //Check if CPU is registered as running a valid firmware
   bool isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);}

@@ -9,7 +9,6 @@
 
 #include "common.h"
 #include "propwrite.h"
-#include "ftm_shared_mmap.h"
 #include "graph.h"
 #include "carpeDM.h"
 #include "minicommand.h"
@@ -146,14 +145,15 @@ bool CarpeDM::connect(const std::string& en) {
         for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
           //only create MemUnits for valid DM CPUs, generate Mapping so we can still use the cpuIdx supplied by User 
           foundVersion = getFwVersion(cpuIdx);
+
           vFw.push_back(foundVersion);
           if (expVersion <= foundVersion) {
             cpuIdxMap[cpuIdx]    = mappedIdx;
             uint32_t extBaseAdr   = myDevs[cpuIdx].sdb_component.addr_first;
-            uint32_t intBaseAdr   = INT_BASE_ADR;
-            uint32_t peerBaseAdr  = 0x80000000 + extBaseAdr; 
-            uint32_t sharedOffs   = SHARED_OFFS + _SHCTL_END_; 
-            uint32_t space        = SHARED_SIZE - _SHCTL_END_;
+            uint32_t intBaseAdr   = getIntBaseAdr(cpuIdx);
+            uint32_t peerBaseAdr  = WORLD_BASE_ADR  + extBaseAdr; 
+            uint32_t sharedOffs   = getSharedOffs(cpuIdx) + _SHCTL_END_; 
+            uint32_t space        = getSharedSize(cpuIdx) - _SHCTL_END_;
                         
               atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space );
             atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space );

@@ -50,6 +50,8 @@
 
 //Memory Block (Node) Size in Bytes
 #define _MEM_BLOCK_SIZE         52
+#define WORLD_BASE_ADR          0x80000000
+
 
 #define LM32_NULL_PTR           0x0
 
