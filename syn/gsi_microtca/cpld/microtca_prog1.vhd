@@ -23,42 +23,40 @@ entity prog1 is
 		pbs1 		: in std_logic -- input from push button
 
 
---.............................................................
-		);
-end prog1;
---
-	architecture rtl of prog1 is
-	signal countx 		: std_logic_vector(26 downto 0); -- counter	
----------------------------------------------------------------------------------------
-	begin
---......................................................................................
--- mode ASx1 and x4 fast 		= 10010
--- mode ASx1 and x4 standard 	= 10011
-		m 					<= b"10010"; -- master SPI
---		m 					<= b"01000"; -- master BPI
-		sel_clk(0)		<= '1'; -- in1 to q0 SW1
-		sel_clk(1)		<= '1'; -- in1 to q1 SW1
-		sel_clk(2)		<= '0'; -- in0 to q0 SW2
-		sel_clk(3)		<= '0'; --	in1 to q1 SW2	
---
---		confix		<= config1; -- 200ms reset pulse to FPGA
-		confix		<= '1'; -- immediaty ready
---		mres				<= '1';
---.......................................................................................
---
-	process(pgclk) begin
-		if (rising_edge(pgclk)) then 
-   			countx <= countx + 1;
-		end if;
-	end process;
-	--
-	pled(1)  <= not cdone;	-- yellow
-	pled(2)  <= confix;		-- red
---	pled(1)  <= countx(22);	-- yellow
---	pled(2)  <= countx(23);		-- red
-	pled(3)  <= '1'; -- countx(24); -- white
-	pled(4)  <= '1'; -- countx(25); -- blue
-	pled(5)  <= '1'; -- countx(26); -- green
---	
-----------------------------------------------------------------------------------------
-	end;	
+-- AMC-TR Architecture
+architecture rtl of pmc_tr_prog is
+
+  -- internal signals
+  signal countx  : std_logic_vector(26 downto 0); -- counter
+  signal leds    : std_logic_vector(4 downto 0);  
+
+begin
+  
+  -- fixed configuration
+  m          <= b"10010"; -- master SPI
+  sel_clk(0) <= '1';      -- in1 to q0 SW1
+  sel_clk(1) <= '1';      -- in1 to q1 SW1
+  confix     <= '1';      -- immediaty ready
+  
+  -- counter process
+  process(pgclk) begin
+    if (rising_edge(pgclk)) then 
+      countx <= countx + 1;
+    end if;
+  end process;
+  
+  -- leds
+  leds(1) <= not(cdone); -- yellow
+  leds(2) <= confix;     -- red
+  leds(3) <= config1;    -- white
+  leds(4) <= nstat;      -- blue
+  leds(5) <= countx(26); -- green
+  
+  -- when CPLD button pressed then show CPLD hex switch state
+  pled <= (countx(24) & hsw) when pbs1 = '0' else leds;
+
+  -- connection to fpga
+  con(4 downto 1) <= not hsw;
+  con(5)          <= not pbs1;
+  
+end;
