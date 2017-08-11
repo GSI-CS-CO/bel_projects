@@ -488,10 +488,10 @@ begin
   s_led_status_monster(4) <= s_led_pps;                          -- white = PPS
 
   -- GPIOs
-  s_led_status_monster(5) <= mmc_pcie_rst_n_i; --std_logic(s_counter(23));
-  s_led_status_monster(6) <= s_lib_trig_oe_sw_mmc;
-
-
+  s_led_status_monster(5) <= mmc_pcie_rst_n_i; 
+  -- different blinks according to which backplane buffers are enabled
+  s_led_status_monster(6) <= (std_logic(s_counter(23)) and std_logic(s_counter(23))) when (s_mtca4_bpl_buff_en  = '0' and s_lib_trig_oe_sw_mmc = '1') else
+                             (std_logic(s_counter(23)) or  std_logic(s_counter(23))) when (s_mtca4_bpl_buff_en  = '1' and s_lib_trig_oe_sw_mmc = '0') else '0';
 
 
   s_gpio_in(3 downto 0) <= not  hswf_i; -- FPGA HEX switch
@@ -579,7 +579,7 @@ begin
   -- microTCA.4 backplane triggers, inputs and outputs
   -----------------------------------------------------------
 
-  -- select reciver input Type for onboard M-LVDS buffers to backplane
+  -- select receiver input Type for onboard M-LVDS buffers to backplane
   -- ('0' = Type-1 , '1' = Type-2 )
   mlvdio_fsen_o <= '1'; 
 
@@ -657,12 +657,8 @@ begin
   -- backplane ports configuration from MMC
   ----------------------------------------------------------------------- 
   -- bpl buffer enable generation depends on the crate in wich AMC is (MTCA.0, MTCA.4, Libera)
-  -- MMC signals in which crate we are
   -- mmc2fpga_usr_i(1): 0 - we are not in Libera, 1 - we are in Libera
-  -- mmc2fpga_usr_i(2): 0 - we are not in MTCA.4, 1 - we are in MTCA.4
-  -- also check for condition that prevents both enabled at the same time
-  s_mtca4_bpl_buff_en   <= '1' when (mmc2fpga_usr_i(1) = '1' and mmc2fpga_usr_i(2) = '0') else '0';
-  s_libera_bpl_buff_en  <= '1' when (mmc2fpga_usr_i(1) = '0' and mmc2fpga_usr_i(2) = '1') else '0';
+  s_libera_bpl_buff_en  <= '1' when mmc2fpga_usr_i(1) = '1' else '0';
   
   -----------------------------------------------------------------------
   -- lvds/lvds libera trigger buffers enable (active HI)
@@ -672,14 +668,17 @@ begin
   -- USE THIS ONLY when FTRN is in Libera SLOT 8!!!
   s_lib_trig_oe_sw_mmc <= '1' when (s_gpio_out(3 downto 0) = "0111" and s_gpio_out(8)='1') 
                           else s_libera_bpl_buff_en; 
-  lib_trig_oe_o        <=  s_lib_trig_oe_sw_mmc;
+  -- cross check with MTCA.4 buffer enable
+  lib_trig_oe_o        <= '1' when (s_mtca4_bpl_buff_en = '0' and s_lib_trig_oe_sw_mmc = '1') else '0';
 
   -----------------------------------------------------------------------
   -- lvds/m-lvds MTCA.4 buffers enable generation
   -----------------------------------------------------------------------
   -- m-lvds buffer powerdown (active low) (0 - powered down, 1 - powered up)
-  -- enabled only in MTCA.4
-  mlvdio_pd_n_o    <= '1' when s_mtca4_bpl_buff_en = '1' else '0'; 
+  -- enabled only in MTCA.4 by SW
+  s_mtca4_bpl_buff_en   <= '1' when (s_gpio_out(3 downto 0) = "1001" and s_gpio_out(8)='1') else '0';
+  -- crosscheck with Libera buffer enable
+  mlvdio_pd_n_o    <= '1' when (s_mtca4_bpl_buff_en = '1' and s_lib_trig_oe_sw_mmc = '0')  else '0'; 
 
   gen_mlvd_buf_oe : for i in  1 to 8 generate
     -- enable buffer output towards BACKPLANE (m-lvds driver enable, active hi)
