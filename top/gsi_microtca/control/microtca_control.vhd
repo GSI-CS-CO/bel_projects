@@ -490,8 +490,9 @@ begin
   -- GPIOs
   s_led_status_monster(5) <= mmc_pcie_rst_n_i; 
   -- different blinks according to which backplane buffers are enabled
-  s_led_status_monster(6) <= (std_logic(s_counter(23)) and std_logic(s_counter(23))) when (s_mtca4_bpl_buff_en  = '0' and s_lib_trig_oe_sw_mmc = '1') else
-                             (std_logic(s_counter(23)) or  std_logic(s_counter(23))) when (s_mtca4_bpl_buff_en  = '1' and s_lib_trig_oe_sw_mmc = '0') else '0';
+  s_led_status_monster(6) <= (std_logic(s_counter(22)) and std_logic(s_counter(21))) when (s_mtca4_bpl_buff_en  = '0' and s_lib_trig_oe_sw_mmc = '1') else
+                             (std_logic(s_counter(22)) or  std_logic(s_counter(21))) when (s_mtca4_bpl_buff_en  = '1' and s_lib_trig_oe_sw_mmc = '0') else 
+                             '0';
 
 
   s_gpio_in(3 downto 0) <= not  hswf_i; -- FPGA HEX switch
@@ -506,7 +507,12 @@ begin
   with s_test_sel select
     s_led_status <= "000000"               when ('0' & x"F"),   -- FPGA hex sw in position F, button not pressed, led test
                     "111111"               when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
-                    s_led_status_monster    when others;         -- driven by monster
+                    (s_led_status_monster(6 downto 5)           
+                     & s_libera_bpl_buff_en 
+                     & s_lib_trig_oe_sw_mmc 
+                     & s_mtca4_bpl_buff_en & '0')
+                                           when ('0' & x"A"),   -- FPGA hex sw in position A, button not pressed, show state of the MMC pin and SW settin
+                    s_led_status_monster   when others;         -- driven by monster
 
   led_status_o <= not s_led_status;                  
 
@@ -657,13 +663,13 @@ begin
   -- backplane ports configuration from MMC
   ----------------------------------------------------------------------- 
   -- bpl buffer enable generation depends on the crate in wich AMC is (MTCA.0, MTCA.4, Libera)
-  -- mmc2fpga_usr_i(1): 0 - we are not in Libera, 1 - we are in Libera
-  s_libera_bpl_buff_en  <= '1' when mmc2fpga_usr_i(1) = '1' else '0';
+  -- mmc2fpga_usr_i(2): 0 - we are not in Libera, 1 - we are in Libera slot8
+  s_libera_bpl_buff_en  <= '1' when mmc2fpga_usr_i(2) = '1' else '0';
   
   -----------------------------------------------------------------------
   -- lvds/lvds libera trigger buffers enable (active HI)
   -----------------------------------------------------------------------
-  --  lib_trig_oe_o <=  s_libera_bpl_buff_en;
+  -- lib_trig_oe_o <=  s_libera_bpl_buff_en;
   -- before MMC is fixed this is the way to enble Libera trigger buffers
   -- USE THIS ONLY when FTRN is in Libera SLOT 8!!!
   s_lib_trig_oe_sw_mmc <= '1' when (s_gpio_out(3 downto 0) = "0111" and s_gpio_out(8)='1') 
