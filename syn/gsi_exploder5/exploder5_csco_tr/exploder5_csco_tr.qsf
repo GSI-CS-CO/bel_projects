@@ -1,3 +1,4 @@
+set_global_assignment -name OPTIMIZATION_MODE "HIGH PERFORMANCE EFFORT"
 set_global_assignment -name FAMILY "Arria V"
 set_global_assignment -name DEVICE 5agxma3d4f27i3
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION 11.1
