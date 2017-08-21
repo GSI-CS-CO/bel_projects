@@ -75,6 +75,41 @@ constant  rd_wr_dly_timer_LW_a:     integer := 16#10#;   -- read event timer lat
                                                          -- write event timer latch LW   wb_mil_scu_offset + 16#40#.
 constant  rd_wr_dly_timer_HW_a:     integer := 16#11#;   -- read event timer latch HW    wb_mil_scu_offset + 16#44#.
                                                          -- write event timer latch HW   wb_mil_scu_offset + 16#44#. 
+                                                         
+-- constant  wr_tx_taskreg0_a :        integer := 16#20#;   -- write tx_taskreg0            wb_mil_scu_offset + 16#80#  to write tx task function codes,   bit[31..16] don't care                                                     
+-- constant  wr_tx_taskreg1_a :        integer := 16#21#;   -- write tx_taskreg1            wb_mil_scu_offset + 16#84#  
+-- constant  wr_tx_taskreg2_a :        integer := 16#22#;   -- write tx_taskreg2            wb_mil_scu_offset + 16#88#  
+-- constant  wr_tx_taskreg3_a :        integer := 16#23#;   -- write tx_taskreg3            wb_mil_scu_offset + 16#8C#  
+-- constant  wr_tx_taskreg4_a :        integer := 16#24#;   -- write tx_taskreg4            wb_mil_scu_offset + 16#90#  
+-- constant  wr_tx_taskreg5_a :        integer := 16#25#;   -- write tx_taskreg5            wb_mil_scu_offset + 16#94#  
+-- constant  wr_tx_taskreg6_a :        integer := 16#26#;   -- write tx_taskreg6            wb_mil_scu_offset + 16#98#  
+-- constant  wr_tx_taskreg7_a :        integer := 16#27#;   -- write tx_taskreg7            wb_mil_scu_offset + 16#9C# 
+
+-- tx_taskreg addresses now from wr_tx_taskreg_low= x200 to wr_tx_taskreg_high=x2FF
+
+
+
+
+
+constant  rd_rx_taskreg0_a :        integer := 16#30#;   -- read rx_taskreg0             wb_mil_scu_offset + 16#80#  to read corresponding rx task word, bit[31..16] don't care                                                       
+constant  rd_rx_taskreg1_a :        integer := 16#31#;   -- read rx_taskreg1             wb_mil_scu_offset + 16#84#  
+constant  rd_rx_taskreg2_a :        integer := 16#32#;   -- read rx_taskreg2             wb_mil_scu_offset + 16#88#  
+constant  rd_rx_taskreg3_a :        integer := 16#33#;   -- read rx_taskreg3             wb_mil_scu_offset + 16#8C#  
+constant  rd_rx_taskreg4_a :        integer := 16#34#;   -- read rx_taskreg4             wb_mil_scu_offset + 16#90#  
+constant  rd_rx_taskreg5_a :        integer := 16#35#;   -- read rx_taskreg5             wb_mil_scu_offset + 16#94#  
+constant  rd_rx_taskreg6_a :        integer := 16#36#;   -- read rx_taskreg6             wb_mil_scu_offset + 16#98#  
+constant  rd_rx_taskreg7_a :        integer := 16#37#;   -- read rx_taskreg7             wb_mil_scu_offset + 16#9C#  
+
+constant  rd_status_avail_a :       integer := 16#40#;   -- read status_busy             wb_mil_scu_offset + 16#100# 
+  
+
+                                                         
+                                                         
+                                                         
+                                                         
+
+constant  ev_filt_first_a:          integer := 16#1000#;  -- first event filter ram address: wb_mil_scu_offset + 16#4000. 
+constant  ev_filt_last_a:           integer := 16#1FFF#;  -- last event filter  ram address: wb_mil_scu_offset + 16#7FFC.
 
 CONSTANT  c_ram_count:                   integer               := 255;     -- max 255
 CONSTANT  c_sio_mil_first_reg_a:         unsigned(15 downto 0) := x"0400";

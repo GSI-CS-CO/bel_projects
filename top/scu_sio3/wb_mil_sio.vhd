@@ -105,8 +105,6 @@ generic (
       rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
       rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
       rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";
-      tx_ram_req_first_adr:      unsigned(15 downto 0)  := x"0720";
-      tx_ram_req_last_adr:       unsigned(15 downto 0)  := x"072F";
       evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
       evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
       );
@@ -129,7 +127,6 @@ port  (
                                             --                (Subject to the preceding cycle being completed).
     ME_SS:                out     std_logic;-- HD6408-input:  sync select actuates a Command sync for an input high
                                             --                and data sync for an input low.
-
     -- decoder (receiver) signals of HD6408 ---------------------------------------------------------------------------------
     ME_BOI:               out     std_logic;-- HD6408-input:  A high input should be applied to bipolar one in when the bus is in its
                                             --                positive state, this pin must be held low when the Unipolar input is used.
@@ -305,7 +302,6 @@ signal   tx_taskram_wr_d:           std_logic_vector (15 downto 0);
 signal   tx_taskram_rd_d:           std_logic_vector (15 downto 0); 
 
 signal   tx_req:                    std_logic_vector (255 downto 1); 
-signal   tx_req_muxed:              std_logic_vector ( 15 downto 0);
 signal   tx_task_ack:               std_logic_vector (255 downto 1); 
 
 
@@ -321,7 +317,7 @@ signal   rx_taskram_rd_d:           std_logic_vector (15 downto 0);
 signal   timeslot:                  integer RANGE 0 to ram_count;       --timeslot 0 is for tx_fifo, 1..255 is for tx_taskram
 signal   set_rx_avail_ps:           std_logic_vector (255 downto 1);
 signal   clr_rx_avail_ps:           std_logic_vector (255 downto 1);
-
+--signal   taskreg_ack:               std_logic_vector (255 downto 1);
 signal   avail:                     std_logic_vector (255 downto 1);
 signal   avail_muxed:               std_logic_vector (15 downto 0); 
 
@@ -532,6 +528,10 @@ led_fifo_ne: led_n
     nLED        => nLed_Fifo_ne,    -- changed from opendrain to pushpull due to LED Selftest KK 20151015
     nLed_opdrn  => OPEN
     );
+
+    
+ -- Debouncer for Input Signals      
+
 
     
  -- Debouncer for Input Signals      
@@ -789,8 +789,6 @@ tx_fifo : generic_sync_fifo
   );
 
 
-
-
 --KK Scheduler modified for TX_FIFO and TX_TASKRAM and RX_TASKRAM control
 ---------------------------------------------------------------------------------------------------
 
@@ -894,19 +892,22 @@ END PROCESS schedule_mux;
 schedule_p : PROCESS (clk_i, nrst_i)
 BEGIN
   IF nrst_i = '0' THEN
-    timeslot           <=  0 ;                                                   -- task timeslot: ts0= fifo tasks, ts1..255= tx_taskram tasks
+    timeslot           <= 0;                                                   -- task timeslot: ts0= fifo tasks, ts1..255= tx_taskram tasks
+    mil_trm_start      <= '0';
+--    taskreg_ack        <= (OTHERS => '0');
+
     task_runs          <= '0';
 
     timeout_cntr_en    <= '0'; 
     timeout_cntr_clr   <= '0';
-
     mil_rd_start       <= '0';
-    mil_trm_start      <= '0';
+    
+    --tx_req           <= (others => '0');
     
     rx_taskram_we      <= '0';
     rx_taskram_wr_d    <= (OTHERS => '0');
     rx_taskram_wr_a    <= (OTHERS => '0');
-    
+    -- rx_err             <= (others => '0');
     set_rx_avail_ps    <= (OTHERS => '0');
     set_rx_err_ps      <= (OTHERS => '0');
   ELSIF rising_edge (clk_i) THEN
@@ -1009,7 +1010,6 @@ END IF;--clocked process
 
 END PROCESS schedule_p;
 
-
 ----------------------------------------------------------------------------------------------------- 
 
 -- KK Upto 256 tx_taskregs are implemented as sychronous ram 
@@ -1047,6 +1047,36 @@ BEGIN
    
 END PROCESS avail_muxer;
 
+avail_muxer: PROCESS (avail,slave_i.adr)
+VARIABLE LA_a_var    : UNSIGNED (17 DOWNTO 2); 
+BEGIN
+  LA_a_var             := UNSIGNED(slave_i.adr(17 DOWNTO 2));  
+  IF     ( LA_a_var  >= rd_status_avail_first_adr) and (LA_a_var  <= rd_status_avail_last_adr ) THEN
+  
+    IF     LA_a_var = (rd_status_avail_first_adr      ) THEN avail_muxed <= avail ( 15 DOWNTO   1) & '0';
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 1  ) THEN avail_muxed <= avail ( 31 DOWNTO  16);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 2  ) THEN avail_muxed <= avail ( 47 DOWNTO  32);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 3  ) THEN avail_muxed <= avail ( 63 DOWNTO  48);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 4  ) THEN avail_muxed <= avail ( 79 DOWNTO  64);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 5  ) THEN avail_muxed <= avail ( 95 DOWNTO  80);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 6  ) THEN avail_muxed <= avail (111 DOWNTO  96);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 7  ) THEN avail_muxed <= avail (127 DOWNTO 112);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 8  ) THEN avail_muxed <= avail (143 DOWNTO 128);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 9  ) THEN avail_muxed <= avail (159 DOWNTO 144);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 10 ) THEN avail_muxed <= avail (175 DOWNTO 160);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 11 ) THEN avail_muxed <= avail (191 DOWNTO 176);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 12 ) THEN avail_muxed <= avail (207 DOWNTO 192);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 13 ) THEN avail_muxed <= avail (223 DOWNTO 208);	 
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 14 ) THEN avail_muxed <= avail (239 DOWNTO 224);	 	
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 15 ) THEN avail_muxed <= avail (255 DOWNTO 240);	 
+    ELSE   
+      avail_muxed <= x"beef";	  -- other addresses out of range
+    END IF;
+  ELSE
+    avail_muxed  <= x"dead";   -- other addresses out of range 
+  END IF;
+   
+END PROCESS avail_muxer;
 
 rx_err_muxer: PROCESS (rx_err,slave_i.adr)
 VARIABLE LA_a_var    : UNSIGNED (17 DOWNTO 2); 
@@ -1079,38 +1109,6 @@ BEGIN
    
 END PROCESS rx_err_muxer;
 
-
-
-tx_req_muxer: PROCESS (tx_req,slave_i.adr)
-VARIABLE LA_a_var    : UNSIGNED (17 DOWNTO 2); 
-BEGIN
-  LA_a_var             := UNSIGNED(slave_i.adr(17 DOWNTO 2));  
-  IF     ( LA_a_var >= tx_ram_req_first_adr) and (LA_a_var  <= tx_ram_req_last_adr ) THEN
-  
-    IF     LA_a_var = (tx_ram_req_first_adr      ) THEN tx_req_muxed <= tx_req( 15 DOWNTO   1) & '0';
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 1  ) THEN tx_req_muxed <= tx_req( 31 DOWNTO  16);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 2  ) THEN tx_req_muxed <= tx_req( 47 DOWNTO  32);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 3  ) THEN tx_req_muxed <= tx_req( 63 DOWNTO  48);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 4  ) THEN tx_req_muxed <= tx_req( 79 DOWNTO  64);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 5  ) THEN tx_req_muxed <= tx_req( 95 DOWNTO  80);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 6  ) THEN tx_req_muxed <= tx_req(111 DOWNTO  96);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 7  ) THEN tx_req_muxed <= tx_req(127 DOWNTO 112);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 8  ) THEN tx_req_muxed <= tx_req(143 DOWNTO 128);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 9  ) THEN tx_req_muxed <= tx_req(159 DOWNTO 144);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 10 ) THEN tx_req_muxed <= tx_req(175 DOWNTO 160);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 11 ) THEN tx_req_muxed <= tx_req(191 DOWNTO 176);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 12 ) THEN tx_req_muxed <= tx_req(207 DOWNTO 192);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 13 ) THEN tx_req_muxed <= tx_req(223 DOWNTO 208);	 
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 14 ) THEN tx_req_muxed <= tx_req(239 DOWNTO 224);	 	
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 15 ) THEN tx_req_muxed <= tx_req(255 DOWNTO 240);	 
-    ELSE   
-      tx_req_muxed <= x"beef";	  -- other addresses out of range
-    END IF;
-  ELSE
-    tx_req_muxed  <= x"dead";     -- other addresses out of range 
-  END IF;
-   
-END PROCESS tx_req_muxer;
 
 
 -----------------------------------------------------------------------------------------------------  
@@ -1303,23 +1301,6 @@ BEGIN
           ex_stall                   <= '0';
           ex_err                     <= '1';
         END IF;
-
---##############################tx_req Regs######################################################
-      ELSIF (LA_a_var >= tx_ram_req_first_adr AND LA_a_var <= tx_ram_req_first_adr) THEN
-        IF slave_i.sel = "1111" THEN
-          IF slave_i.we = '0' THEN 
-            slave_o.dat(15 DOWNTO 0) <= tx_req_muxed; -- Mux selects 16 bits out of tx_req Vector 255..1              
-            ex_stall                 <= '0';
-            ex_ack                   <= '1';
-          ELSE
-            ex_stall                 <= '0';
-            ex_err                   <= '1';
-          END IF;
-        ELSE
-          ex_stall                   <= '0';
-          ex_err                     <= '1';
-        END IF;
-                
 --############################Regs from old MIL Macro)###############################################
        ELSIF (LA_a_var = mil_wr_rd_status_a_map)    THEN
          if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
@@ -1397,8 +1378,6 @@ BEGIN
            ex_stall <= '0';
            ex_err <= '1';
          end if;
-
-
 
        ELSIF (LA_a_var = mil_rd_lemo_inp_a_map)     THEN
          if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
