@@ -131,22 +131,34 @@ ARCHITECTURE arch_scu_sio3 OF scu_sio3 IS
 
 constant clk_sys_in_Hz: integer := 125_000_000;
 
-CONSTANT  c_Firmware_Version:     integer                   := 6;         -- important: => Firmware_Version
-CONSTANT  c_Firmware_Release:     integer                   := 4;         -- important: => Firmware_Release
-CONSTANT  SCU_SIO2_ID:            integer range 16#0200# to 16#020F# := 16#0200#;
-CONSTANT  stretch_cnt:            integer                   := 5;
-CONSTANT  c_is_arria5:            boolean                   := false;
+CONSTANT  c_Firmware_Version:            integer                   := 6;         -- important: => Firmware_Version
+CONSTANT  c_Firmware_Release:            integer                   := 4;         -- important: => Firmware_Release
+CONSTANT  SCU_SIO2_ID:                   integer range 16#0200# to 16#020F# := 16#0200#;
+CONSTANT  stretch_cnt:                   integer                   := 5;
+CONSTANT  c_is_arria5:                   boolean                   := false;
 
-SIGNAL    CID_Group:              integer range 0 to 65535  := 0;
+SIGNAL    CID_Group:                     integer range 0 to 65535  := 0;
 
---        SCU Slave Standard Register                          := x"0000" - x"002f"
+--        SCU Slave Standard Register                          := x"0000"  - x"002f"
 CONSTANT  clk_switch_status_cntrl_addr:  unsigned(15 downto 0) := x"0030";
 CONSTANT  c_housekeeping_base_a:         unsigned(15 downto 0) := x"0040";
 ---       Eb-Flash Macro                                       := x"0040   - x1E0
-CONSTANT  c_sio_mil_first_reg_a:         unsigned(15 downto 0) := x"0400";--x"0400";
-CONSTANT  c_sio_mil_last_reg_a:          unsigned(15 downto 0) := x"0440";--x"0411";
+CONSTANT  c_ram_count:                   integer               := 255;     -- max 255
+CONSTANT  c_sio_mil_first_reg_a:         unsigned(15 downto 0) := x"0400";
+CONSTANT  c_sio_mil_last_reg_a:          unsigned(15 downto 0) := x"0440";
+CONSTANT  c_tx_taskram_first_adr:        unsigned(15 downto 0) := x"0501";
+CONSTANT  c_tx_taskram_last_adr:         unsigned(15 downto 0) := x"05FF";
+CONSTANT  c_rx_taskram_first_adr:        unsigned(15 downto 0) := x"0601";
+CONSTANT  c_rx_taskram_last_adr:         unsigned(15 downto 0) := x"06FF";
+CONSTANT  c_rd_status_avail_first_adr:   unsigned(15 downto 0) := x"0700";
+CONSTANT  c_rd_status_avail_last_adr:    unsigned(15 downto 0) := x"070F";
+CONSTANT  c_rd_rx_err_first_adr:         unsigned(15 downto 0) := x"0710";
+CONSTANT  c_rd_rx_err_last_adr:          unsigned(15 downto 0) := x"071F";
 CONSTANT  c_ev_filt_first_a:             unsigned(15 downto 0) := x"1000";--x"1000";
 CONSTANT  c_ev_filt_last_a:              unsigned(15 downto 0) := x"1FFF";--x"1FFF";
+
+
+
 
 --SCU Bus Address Range is 0000 ... 1FFFF per Slave (for 8 bit accesses).
 --SCU Slaves (LA=Local Access) use 16 bit accesses, so they have 0x0000. 0xFFFF per slave.
@@ -429,11 +441,20 @@ sio3_clk_sw: slave_clk_switch
       
 mil_slave_1: wb_mil_wrapper_sio 
   generic map(
-    Clk_in_Hz           => clk_sys_in_Hz,           -- Wg Bitmessung 1Mb/s (Flanke/Flanke=500 ns), clk_in_hz >= 20 Mhz!
-    sio_mil_first_reg_a => c_sio_mil_first_reg_a,
-    sio_mil_last_reg_a  => c_sio_mil_last_reg_a,
-    evt_filt_first_a    => c_ev_filt_first_a,
-    evt_filt_last_a     => c_ev_filt_last_a
+    Clk_in_Hz                 => clk_sys_in_Hz,           -- Wg Bitmessung 1Mb/s (Flanke/Flanke=500 ns), clk_in_hz >= 20 Mhz!
+    ram_count                 => c_ram_count,
+    sio_mil_first_reg_a       => c_sio_mil_first_reg_a,
+    sio_mil_last_reg_a        => c_sio_mil_last_reg_a,
+    tx_taskram_first_adr      => c_tx_taskram_first_adr,	
+    tx_taskram_last_adr       => c_tx_taskram_last_adr,
+    rx_taskram_first_adr      => c_rx_taskram_first_adr,
+    rx_taskram_last_adr       => c_rx_taskram_last_adr,
+    rd_status_avail_first_adr => c_rd_status_avail_first_adr,
+    rd_status_avail_last_adr  => c_rd_status_avail_last_adr, 
+    rd_rx_err_first_adr       => c_rd_rx_err_first_adr,
+    rd_rx_err_last_adr        => c_rd_rx_err_last_adr,
+    evt_filt_first_a          => c_ev_filt_first_a,
+    evt_filt_last_a           => c_ev_filt_last_a
 
     
   )

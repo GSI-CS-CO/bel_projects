@@ -10,85 +10,103 @@ package scu_sio3_pkg is
 
 component wb_mil_wrapper_sio is 
 generic (
-		Clk_in_Hz:		INTEGER := 125_000_000;		-- Manchester IP needs 20 Mhz clock for proper detection of short 500ns data pulses
-    sio_mil_first_reg_a:    unsigned(15 downto 0)  := x"0400";
-    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0440";
-    evt_filt_first_a:       unsigned(15 downto 0)  := x"1000";
-    evt_filt_last_a:        unsigned(15 downto 0)  := x"1FFF"
-		);
-port	(
-		Adr_from_SCUB_LA: 		in			std_logic_vector(15 downto 0);
-		Data_from_SCUB_LA:		in			std_logic_vector(15 downto 0);
-		Ext_Adr_Val:					in			std_logic;									
-		Ext_Rd_active:				in			std_logic;									
-		Ext_Rd_fin:						in			std_logic;											-- marks end of read cycle, active one for one clock period of sys_clk
-		Ext_Wr_active:				in			std_logic;										
-		Ext_Wr_fin:						in			std_logic;											-- marks end of write cycle, active one for one clock period of sys_clk
-		clk:									in			std_logic;											-- should be the same clk, used by SCU_Bus_Slave
-		Data_to_SCUB:					out			std_logic_vector(15 downto 0);
-		Data_for_SCUB:				out			std_logic;
-		Dtack_to_SCUB:				out			std_logic;
+    Clk_in_Hz:                 INTEGER := 125_000_000;    -- Manchester IP needs 20 Mhz clock for proper detection of short 500ns data pulses
+    ram_count:                 integer                := 255;
+    sio_mil_first_reg_a:       unsigned(15 downto 0)  := x"0400";-- which is for eb-tools 32 bit aligned 0x800
+    sio_mil_last_reg_a:        unsigned(15 downto 0)  := x"0411";
+    tx_taskram_first_adr:      unsigned(15 downto 0)  := x"0500";
+    tx_taskram_last_adr:       unsigned(15 downto 0)  := x"05FF";
+    rx_taskram_first_adr:      unsigned(15 downto 0)  := x"0600";
+    rx_taskram_last_adr:       unsigned(15 downto 0)  := x"06FF"; 
+    rd_status_avail_first_adr: unsigned(15 downto 0)  := x"0700";
+    rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
+    rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
+    rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";    
+    evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
+    evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
+    );
+port  (
+    Adr_from_SCUB_LA:     in       std_logic_vector(15 downto 0);
+    Data_from_SCUB_LA:    in       std_logic_vector(15 downto 0);
+    Ext_Adr_Val:          in       std_logic;                  
+    Ext_Rd_active:        in       std_logic;                  
+    Ext_Rd_fin:           in       std_logic;                      -- marks end of read cycle, active one for one clock period of sys_clk
+    Ext_Wr_active:        in       std_logic;                    
+    Ext_Wr_fin:           in       std_logic;                      -- marks end of write cycle, active one for one clock period of sys_clk
+    clk:                  in       std_logic;                      -- should be the same clk, used by SCU_Bus_Slave
+    Data_to_SCUB:         out      std_logic_vector(15 downto 0);
+    Data_for_SCUB:        out      std_logic;
+    Dtack_to_SCUB:        out      std_logic;
 
-		nME_BZO:							in			std_logic;
-		nME_BOO:							in			std_logic;
-		Reset_Puls:						in			std_logic;
-		ME_SD:								in			std_logic;
-		ME_ESC:								in			std_logic;
-		ME_CDS:								in			std_logic;
-		ME_SDO:								in			std_logic;
-		ME_DSC:								in			std_logic;
-		ME_VW:								in			std_logic;
-		ME_TD:								in			std_logic;
-		ME_SDI:								out			std_logic;
-		ME_SS:								out			std_logic;
-		ME_EE:								out			std_logic;
-		Mil_In_Pos:			 			in			std_logic;											--A_Mil1_BOI
-		Mil_In_Neg:			 			in			std_logic;											--A_Mil1_BZI
-		ME_BOI:								out			std_logic;	
-		ME_BZI:								out			std_logic;	
-		nSel_Mil_Drv:				 	out			std_logic;											--A_MIL1_OUT_En = not nSEl_Mil_Drv
-		nSel_Mil_Rcv:		 			out			std_logic;											--A_Mil1_nIN_En
-		nMil_Out_Pos:		 			out			std_logic;											--A_Mil1_nBZO
-		nMil_Out_Neg:		 			out			std_logic;											--A_Mil1_nBOO
-		nLed_Mil_Rcv:		 			out   	std_logic;											--For Led and TestPort
-		
-		nLed_Mil_Trm:					out			std_logic;
-		nLED_Mil_Rcv_Error:		out	    std_logic;											--For Led and TestPort
-		error_limit_reached:	out			std_logic;											--not used
-		Mil_Decoder_Diag_p:	 	out			std_logic_vector(15 downto 0);	--EPLD-Manchester-Decoders Diagnose: des Positiven Signalpfades
-		Mil_Decoder_Diag_n:	 	out			std_logic_vector(15 downto 0);	--EPLD-Manchester-Decoders Diagnose: des Negativen Signalpfades
+    nME_BZO:              in       std_logic;
+    nME_BOO:              in       std_logic;
+    Reset_Puls:           in       std_logic;
+    ME_SD:                in       std_logic;
+    ME_ESC:               in       std_logic;
+    ME_CDS:               in       std_logic;
+    ME_SDO:               in       std_logic;
+    ME_DSC:               in       std_logic;
+    ME_VW:                in       std_logic;
+    ME_TD:                in       std_logic;
+    ME_SDI:               out      std_logic;
+    ME_SS:                out      std_logic;
+    ME_EE:                out      std_logic;
+    Mil_In_Pos:           in       std_logic;                      --A_Mil1_BOI
+    Mil_In_Neg:           in       std_logic;                      --A_Mil1_BZI
+    ME_BOI:               out      std_logic;  
+    ME_BZI:               out      std_logic;  
+    nSel_Mil_Drv:         out      std_logic;                      --A_MIL1_OUT_En = not nSEl_Mil_Drv
+    nSel_Mil_Rcv:         out      std_logic;                      --A_Mil1_nIN_En
+    nMil_Out_Pos:         out      std_logic;                      --A_Mil1_nBZO
+    nMil_Out_Neg:         out      std_logic;                      --A_Mil1_nBOO
+    nLed_Mil_Rcv:         out      std_logic;                      --For Led and TestPort
+    
+    nLed_Mil_Trm:         out      std_logic;
+    nLED_Mil_Rcv_Error:   out      std_logic;                      --For Led and TestPort
+    error_limit_reached:  out      std_logic;                      --not used
+    Mil_Decoder_Diag_p:   out      std_logic_vector(15 downto 0);  --EPLD-Manchester-Decoders Diagnose: des Positiven Signalpfades
+    Mil_Decoder_Diag_n:   out      std_logic_vector(15 downto 0);  --EPLD-Manchester-Decoders Diagnose: des Negativen Signalpfades
 
-		timing:								in			std_logic;
-		nLed_Timing:					out			std_logic;
-		dly_intr_o:						out			std_logic;
-		nLed_Fifo_ne:					out			std_logic;
-		ev_fifo_ne_intr_o:		out			std_logic;
-		Interlock_Intr_i:			in			std_logic;
-		Data_Rdy_Intr_i:			in			std_logic;
-		Data_Req_Intr_i:			in			std_logic;
-		Interlock_Intr_o:			out			std_logic;
-		Data_Rdy_Intr_o:			out			std_logic;
-		Data_Req_Intr_o:			out			std_logic;
-		nLed_Interl:					out			std_logic;
-		nLed_Dry:							out			std_logic;
-		nLed_Drq:							out			std_logic;
-		every_ms_intr_o:			out			std_logic;
-					-- lemo I/F
-		lemo_data_o:					out			std_logic_vector(4 downto 1);
-		lemo_nled_o:					out			std_logic_vector(4 downto 1);
-		lemo_out_en_o:				out			std_logic_vector(4 downto 1);
-		lemo_data_i:				  in			std_logic_vector(4 downto 1)
-		);
+    timing:               in       std_logic;
+    nLed_Timing:          out      std_logic;
+    dly_intr_o:           out      std_logic;
+    nLed_Fifo_ne:         out      std_logic;
+    ev_fifo_ne_intr_o:    out      std_logic;
+    Interlock_Intr_i:     in       std_logic;
+    Data_Rdy_Intr_i:      in       std_logic;
+    Data_Req_Intr_i:      in       std_logic;
+    Interlock_Intr_o:     out      std_logic;
+    Data_Rdy_Intr_o:      out      std_logic;
+    Data_Req_Intr_o:      out      std_logic;
+    nLed_Interl:          out      std_logic;
+    nLed_Dry:             out      std_logic;
+    nLed_Drq:             out      std_logic;
+    every_ms_intr_o:      out      std_logic;
+          -- lemo I/F
+    lemo_data_o:          out      std_logic_vector(4 downto 1);
+    lemo_nled_o:          out      std_logic_vector(4 downto 1);
+    lemo_out_en_o:        out      std_logic_vector(4 downto 1);
+    lemo_data_i:          in       std_logic_vector(4 downto 1)
+    );
 end component;
 
 component wb_mil_sio IS 
 generic (
-    Clk_in_Hz:               INTEGER := 125_000_000; -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
-                                                     -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
-    sio_mil_first_reg_a:    unsigned(15 downto 0)  := x"0400";
-    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0440";
-    evt_filt_first_a:       unsigned(15 downto 0)  := x"1000";
-    evt_filt_last_a:        unsigned(15 downto 0)  := x"1FFF"
+      Clk_in_Hz:                 INTEGER := 125_000_000;          -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
+                                                                  -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+      ram_count:                 integer                := 255;
+      sio_mil_first_reg_a:       unsigned(15 downto 0)  := x"0400";-- which is for eb-tools 32 bit aligned 0x800
+      sio_mil_last_reg_a:        unsigned(15 downto 0)  := x"0411";
+      tx_taskram_first_adr:      unsigned(15 downto 0)  := x"0501";
+      tx_taskram_last_adr:       unsigned(15 downto 0)  := x"05FF";
+      rx_taskram_first_adr:      unsigned(15 downto 0)  := x"0601";
+      rx_taskram_last_adr:       unsigned(15 downto 0)  := x"06FF"; 
+      rd_status_avail_first_adr: unsigned(15 downto 0)  := x"0700";
+      rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
+      rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
+      rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";
+      evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
+      evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
     );
 port    (
     clk_i:                in  std_logic;
@@ -174,79 +192,50 @@ end component wb_mil_sio;
 
 
 component flash_loader_v01
-	PORT
-	(
-		noe_in		: IN STD_LOGIC 
-	);
+  PORT
+  (
+    noe_in:    IN       STD_LOGIC 
+  );
 END component flash_loader_v01;
 
 
 component pll_sio
-	port(
-		inclk0:		in			std_logic;
-		c0:				out			std_logic;
-		c1:				out			std_logic;
-		locked:		out			std_logic
-	);
+  port(
+    inclk0:    in       std_logic;
+    c0:        out      std_logic;
+    c1:        out      std_logic;
+    locked:    out      std_logic
+  );
 end component;
 
 component mil_pll
-	PORT(
-		inclk0:		IN			std_logic	:= '0';
-		c0:				OUT			std_logic ;
-		locked:		OUT			std_logic 
-	);
+  PORT(
+    inclk0:    IN       std_logic  := '0';
+    c0:        OUT      std_logic ;
+    locked:    OUT      std_logic 
+  );
 end component;
 
 
 component SysClock
-	port(
-		inclk0:		in			std_logic := '0';
-		c0:				out			std_logic;
-		c1:				out			std_logic;
-		locked:		out			std_logic 
-	);
+  port(
+    inclk0:    in       std_logic := '0';
+    c0:        out      std_logic;
+    c1:        out      std_logic;
+    locked:    out      std_logic 
+  );
 end component;
 
 
 component pu_reset
-	generic(
-		PU_Reset_in_clks : INTEGER
-	);
-	port	(
-		Clk:			in			std_logic;
-		PU_Res:		out			std_logic
-	);
+  generic(
+    PU_Reset_in_clks :  INTEGER
+  );
+  port  (
+    Clk:      in        std_logic;
+    PU_Res:    out      std_logic
+  );
 end component;
-
-
-
-component generic_sync_fifo
-    generic (
-      g_data_width             : natural;
-      g_size                   : natural;
-      g_show_ahead             : boolean := false;
-      g_with_empty             : boolean := true;
-      g_with_full              : boolean := true;
-      g_with_almost_empty      : boolean := false;
-      g_with_almost_full       : boolean := false;
-      g_with_count             : boolean := false;
-      g_almost_empty_threshold : integer := 0;
-      g_almost_full_threshold  : integer := 0);
-    port (
-      rst_n_i        : in  std_logic := '1';
-      clk_i          : in  std_logic;
-      d_i            : in  std_logic_vector(g_data_width-1 downto 0);
-      we_i           : in  std_logic;
-      q_o            : out std_logic_vector(g_data_width-1 downto 0);
-      rd_i           : in  std_logic;
-      empty_o        : out std_logic;
-      full_o         : out std_logic;
-      almost_empty_o : out std_logic;
-      almost_full_o  : out std_logic;
-      count_o        : out std_logic_vector(f_log2_size(g_size)-1 downto 0));
-  end component;
-
 
 
 end package scu_sio3_pkg;
