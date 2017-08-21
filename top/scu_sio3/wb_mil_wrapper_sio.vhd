@@ -11,11 +11,20 @@ use work.scu_sio3_pkg.all;
 
 entity wb_mil_wrapper_sio IS  
   generic (
-    Clk_in_Hz:              integer := 125_000_000;  -- Manchester IP needs 20 Mhz clock for proper detection of short 500ns data pulse
-    sio_mil_first_reg_a:    unsigned(15 downto 0)  := x"0400";
-    sio_mil_last_reg_a:     unsigned(15 downto 0)  := x"0411";
-    evt_filt_first_a:       unsigned(15 downto 0)  := x"1000";
-    evt_filt_last_a:        unsigned(15 downto 0)  := x"1FFF"
+    Clk_in_Hz:                 integer := 125_000_000;  -- Manchester IP needs 20 Mhz clock for proper detection of short 500ns data pulse
+    ram_count:                 integer                := 255;
+    sio_mil_first_reg_a:       unsigned(15 downto 0)  := x"0400";-- which is for eb-tools 32 bit aligned 0x800
+    sio_mil_last_reg_a:        unsigned(15 downto 0)  := x"0411";
+    tx_taskram_first_adr:      unsigned(15 downto 0)  := x"0501";
+    tx_taskram_last_adr:       unsigned(15 downto 0)  := x"05FF";
+    rx_taskram_first_adr:      unsigned(15 downto 0)  := x"0601";
+    rx_taskram_last_adr:       unsigned(15 downto 0)  := x"06FF"; 
+    rd_status_avail_first_adr: unsigned(15 downto 0)  := x"0700";
+    rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
+    rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
+    rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";
+    evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
+    evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
 
 
 
@@ -122,7 +131,7 @@ signal cycle_finished:           std_logic;
 signal access_LB:                std_logic;
 
 signal mil_reg_access:           std_logic;
-signal mil_ram_access:           std_logic;
+signal mil_eventfilter_access:   std_logic;
 signal slave_o_ack_la:           std_logic;
 ----------------------------------------------------------------------------------------------
 begin
@@ -201,25 +210,30 @@ Dtack_to_SCUB <= ack_stretched or slave_o_ack_la or dly_buf_ack;
 Data_for_SCUB <= ack_stretched or slave_o_ack_la;
 
 
+
 process (Adr_from_SCUB_LA)
 begin
-  if   (unsigned (Adr_from_SCUB_LA) >=  sio_mil_first_reg_a  and  unsigned (Adr_from_SCUB_LA) <=  sio_mil_last_reg_a ) then
-     mil_reg_access  <= '1';
-     mil_ram_access  <= '0';
-  elsif(unsigned(Adr_from_SCUB_LA) >= (evt_filt_first_a)  and  unsigned (Adr_from_SCUB_LA) <=   (evt_filt_last_a)) then
-     mil_reg_access <= '0';
-      mil_ram_access <= '1';
+  if    (  (unsigned (Adr_from_SCUB_LA)) >=  sio_mil_first_reg_a        and  (unsigned (Adr_from_SCUB_LA))  <=  sio_mil_last_reg_a       )  or
+        (  (unsigned (Adr_from_SCUB_LA)) >=  tx_taskram_first_adr       and  (unsigned (Adr_from_SCUB_LA))  <=  tx_taskram_last_adr      )  or
+        (  (unsigned (Adr_from_SCUB_LA)) >=  rx_taskram_first_adr       and  (unsigned (Adr_from_SCUB_LA))  <=  rx_taskram_last_adr      )  or
+        (  (unsigned (Adr_from_SCUB_LA)) >=  rd_rx_err_first_adr        and  (unsigned (Adr_from_SCUB_LA))  <=  rd_rx_err_last_adr       )  or        
+        (  (unsigned (Adr_from_SCUB_LA))  >=  rd_status_avail_first_adr and  (unsigned (Adr_from_SCUB_LA))  <=  rd_status_avail_last_adr )  then
+     mil_reg_access          <= '1';
+     mil_eventfilter_access  <= '0';
+  elsif    (unsigned(Adr_from_SCUB_LA))   >=    evt_filt_first_a        and  (unsigned (Adr_from_SCUB_LA))  <=   evt_filt_last_a            then
+     mil_reg_access          <= '0';
+     mil_eventfilter_access  <= '1';
   else
-      mil_reg_access <= '0';
-      mil_ram_access <= '0';
+      mil_reg_access         <= '0';
+      mil_eventfilter_access <= '0';
   end if;
 end process;
 
 
-process (Adr_from_SCUB_LA,ack_stretched,slave_o, rd_latch_ev_timer, rd_latch_wait_timer,rd_latch_dly_timer,rd_latch, mil_reg_access, mil_ram_access) 
+process (Adr_from_SCUB_LA,ack_stretched,slave_o, rd_latch_ev_timer, rd_latch_wait_timer,rd_latch_dly_timer,rd_latch, mil_reg_access, mil_eventfilter_access) 
 begin
 
-     if slave_o.ack='1'  and (mil_reg_access='1' or mil_ram_access='1' )then  --for first few clocks
+     if slave_o.ack='1'  and (mil_reg_access='1' or mil_eventfilter_access='1' )then  --for first few clocks
             -- get data direct from sources for quick response
             if    (unsigned(Adr_from_SCUB_LA)) = rd_clr_ev_timer_a_map    then
               Data_to_SCUB            <=  slave_o.dat(31 downto 16);
@@ -255,9 +269,9 @@ begin
       rd_latch_wait_timer   <= (others=>'0');
       rd_latch_dly_timer    <= (others=>'0');
     else  
-      if Ext_Rd_active='1'  and (mil_reg_access='1' or mil_ram_access='1') then 
+      if Ext_Rd_active='1'  and (mil_reg_access='1' or mil_eventfilter_access='1') then 
         if slave_o.ack='1'  or dly_buf_ack='1'   then  
-              --read of timer data (hw directly, lw thru latch)    
+              --read of timer data (high word directly,low word thru latch)    
            if     (unsigned(Adr_from_SCUB_LA)) = rd_clr_ev_timer_a_map   then
               rd_latch            <=  slave_o.dat(31 downto 16);
               rd_latch_ev_timer   <=  slave_o.dat(15 downto  0); 
@@ -325,6 +339,14 @@ end process;
 mil : wb_mil_sio
   generic map(
     Clk_in_Hz           => clk_in_hz,
+	 
+    tx_taskram_first_adr => tx_taskram_first_adr,
+    tx_taskram_last_adr  => tx_taskram_last_adr,
+	 
+    rx_taskram_first_adr => rx_taskram_first_adr,
+    rx_taskram_last_adr  => rx_taskram_last_adr, 
+	 
+	 
     sio_mil_first_reg_a => sio_mil_first_reg_a,
     sio_mil_last_reg_a  => sio_mil_last_reg_a,
     evt_filt_first_a    => evt_filt_first_a,
