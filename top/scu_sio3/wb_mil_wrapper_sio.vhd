@@ -13,7 +13,7 @@ entity wb_mil_wrapper_sio IS
   generic (
     Clk_in_Hz:                 integer := 125_000_000;  -- Manchester IP needs 20 Mhz clock for proper detection of short 500ns data pulse
     ram_count:                 integer                := 255;
-    sio_mil_first_reg_a:       unsigned(15 downto 0)  := x"0400";-- which is for eb-tools 32 bit aligned 0x800
+    sio_mil_first_reg_a:       unsigned(15 downto 0)  := x"0400";-- which is for eb-tools 32 bit aligned =  0x800
     sio_mil_last_reg_a:        unsigned(15 downto 0)  := x"0411";
     tx_taskram_first_adr:      unsigned(15 downto 0)  := x"0501";
     tx_taskram_last_adr:       unsigned(15 downto 0)  := x"05FF";
@@ -23,6 +23,8 @@ entity wb_mil_wrapper_sio IS
     rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
     rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
     rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";
+    tx_ram_req_first_adr:      unsigned(15 downto 0)  := x"0720";
+    tx_ram_req_last_adr:       unsigned(15 downto 0)  := x"072F";    
     evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
     evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
 
@@ -109,30 +111,30 @@ constant rd_wr_dly_timer_LW_a_map:      unsigned (15 downto 0)    := sio_mil_fir
 constant rd_wr_dly_timer_HW_a_map:      unsigned (15 downto 0)    := sio_mil_first_reg_a + rd_wr_dly_timer_HW_a;
 
 
-signal slave_i:                  t_wishbone_slave_in;
-signal slave_o:                  t_wishbone_slave_out;
-
-signal nReset:                   std_logic;
-signal Sel_Mil_Drv:              std_logic;
-
-signal rd_latch:                 std_logic_vector(15 downto 0);
-signal rd_latch_ev_timer:        std_logic_vector(15 downto 0);
-signal rd_latch_wait_timer:      std_logic_vector(15 downto 0);
-signal rd_latch_dly_timer:       std_logic_vector(15 downto 0);
-
-signal wr_latch_dly_timer_lw:    std_logic_vector(15 downto 0);
-signal wr_latch_dly_timer_hw:    std_logic_vector(15 downto 0);
-
-
-signal ack_stretched:            std_logic;
-signal dly_buf_ack:              std_logic;
-
-signal cycle_finished:           std_logic;
-signal access_LB:                std_logic;
-
-signal mil_reg_access:           std_logic;
-signal mil_eventfilter_access:   std_logic;
-signal slave_o_ack_la:           std_logic;
+signal slave_i:                         t_wishbone_slave_in;
+signal slave_o:                         t_wishbone_slave_out;
+                                        
+signal nReset:                          std_logic;
+signal Sel_Mil_Drv:                     std_logic;
+                                        
+signal rd_latch:                        std_logic_vector(15 downto 0);
+signal rd_latch_ev_timer:               std_logic_vector(15 downto 0);
+signal rd_latch_wait_timer:             std_logic_vector(15 downto 0);
+signal rd_latch_dly_timer:              std_logic_vector(15 downto 0);
+                                        
+signal wr_latch_dly_timer_lw:           std_logic_vector(15 downto 0);
+signal wr_latch_dly_timer_hw:           std_logic_vector(15 downto 0);
+                                        
+                                        
+signal ack_stretched:                   std_logic;
+signal dly_buf_ack:                     std_logic;
+                                        
+signal cycle_finished:                  std_logic;
+signal access_LB:                       std_logic;
+                                        
+signal mil_reg_access:                  std_logic;
+signal mil_eventfilter_access:          std_logic;
+signal slave_o_ack_la:                  std_logic;
 ----------------------------------------------------------------------------------------------
 begin
 
@@ -216,8 +218,9 @@ begin
   if    (  (unsigned (Adr_from_SCUB_LA)) >=  sio_mil_first_reg_a        and  (unsigned (Adr_from_SCUB_LA))  <=  sio_mil_last_reg_a       )  or
         (  (unsigned (Adr_from_SCUB_LA)) >=  tx_taskram_first_adr       and  (unsigned (Adr_from_SCUB_LA))  <=  tx_taskram_last_adr      )  or
         (  (unsigned (Adr_from_SCUB_LA)) >=  rx_taskram_first_adr       and  (unsigned (Adr_from_SCUB_LA))  <=  rx_taskram_last_adr      )  or
-        (  (unsigned (Adr_from_SCUB_LA)) >=  rd_rx_err_first_adr        and  (unsigned (Adr_from_SCUB_LA))  <=  rd_rx_err_last_adr       )  or        
-        (  (unsigned (Adr_from_SCUB_LA))  >=  rd_status_avail_first_adr and  (unsigned (Adr_from_SCUB_LA))  <=  rd_status_avail_last_adr )  then
+        (  (unsigned (Adr_from_SCUB_LA)) >=  rd_rx_err_first_adr        and  (unsigned (Adr_from_SCUB_LA))  <=  rd_rx_err_last_adr       )  or   
+        (  (unsigned (Adr_from_SCUB_LA)) >=  tx_ram_req_first_adr       and  (unsigned (Adr_from_SCUB_LA))  <=  tx_ram_req_last_adr       )  or           
+        (  (unsigned (Adr_from_SCUB_LA)) >=  rd_status_avail_first_adr  and  (unsigned (Adr_from_SCUB_LA))  <=  rd_status_avail_last_adr )  then
      mil_reg_access          <= '1';
      mil_eventfilter_access  <= '0';
   elsif    (unsigned(Adr_from_SCUB_LA))   >=    evt_filt_first_a        and  (unsigned (Adr_from_SCUB_LA))  <=   evt_filt_last_a            then
@@ -248,13 +251,13 @@ begin
             elsif (unsigned(Adr_from_SCUB_LA)) = rd_wr_dly_timer_LW_a_map then
               Data_to_SCUB            <=  rd_latch_dly_timer;
             else
-             Data_to_SCUB            <=  slave_o.dat(15 downto 0);
+             Data_to_SCUB             <=  slave_o.dat(15 downto 0);
             end if;
       elsif ack_stretched='1' then     
             -- get data from latch for rest of SCU Bus access cycle
-            Data_to_SCUB            <=   rd_latch;
-      else
-            Data_to_SCUB            <=    x"0000";
+            Data_to_SCUB              <=   rd_latch;
+      else                        
+            Data_to_SCUB              <=    x"0000";
       end if; 
 end process;
 
@@ -263,11 +266,11 @@ process (clk)
 begin
   if (clk'event and clk='1') then
     if Reset_Puls='1' then
-      ack_stretched         <= '0';     
-      rd_latch              <= (others=>'0');
-      rd_latch_ev_timer     <= (others=>'0');
-      rd_latch_wait_timer   <= (others=>'0');
-      rd_latch_dly_timer    <= (others=>'0');
+      ack_stretched               <= '0';     
+      rd_latch                    <= (others=>'0');
+      rd_latch_ev_timer           <= (others=>'0');
+      rd_latch_wait_timer         <= (others=>'0');
+      rd_latch_dly_timer          <= (others=>'0');
     else  
       if Ext_Rd_active='1'  and (mil_reg_access='1' or mil_eventfilter_access='1') then 
         if slave_o.ack='1'  or dly_buf_ack='1'   then  
@@ -308,7 +311,7 @@ begin
     if Reset_Puls='1' then
       wr_latch_dly_timer_hw <= ( others => '0'); 
       wr_latch_dly_timer_lw <= ( others => '0'); 
-      dly_buf_ack <='0';
+      dly_buf_ack           <='0';
     else
       if  Ext_Wr_Active='1' then
         case unsigned(Adr_from_SCUB_LA)is 
@@ -319,17 +322,17 @@ begin
               wr_latch_dly_timer_hw <= Data_from_SCUB_LA;
               dly_buf_ack           <='1';              
          when others  =>
-              dly_buf_ack <='0';
+              dly_buf_ack           <='0';
         end case;
       elsif Ext_Rd_Active ='1' then
         case unsigned(Adr_from_SCUB_LA) is 
           when rd_ev_timer_LW_a_map |rd_wait_timer_LW_a_map | rd_wr_dly_timer_LW_a_map|rd_wr_dly_timer_HW_a_map =>
-              dly_buf_ack  <='1';
+              dly_buf_ack          <='1';
           when others  =>
-              dly_buf_ack  <='0';
+              dly_buf_ack          <='0';
         end case;
       else
-              dly_buf_ack  <='0';
+              dly_buf_ack          <='0';
       end if;
     end if;
   end if;  
@@ -338,79 +341,81 @@ end process;
 
 mil : wb_mil_sio
   generic map(
-    Clk_in_Hz           => clk_in_hz,
-	 
-    tx_taskram_first_adr => tx_taskram_first_adr,
-    tx_taskram_last_adr  => tx_taskram_last_adr,
-	 
-    rx_taskram_first_adr => rx_taskram_first_adr,
-    rx_taskram_last_adr  => rx_taskram_last_adr, 
-	 
-	 
-    sio_mil_first_reg_a => sio_mil_first_reg_a,
-    sio_mil_last_reg_a  => sio_mil_last_reg_a,
-    evt_filt_first_a    => evt_filt_first_a,
-    evt_filt_last_a     => evt_filt_last_a
+    Clk_in_Hz                => clk_in_hz,
+    tx_taskram_first_adr     => tx_taskram_first_adr,
+    tx_taskram_last_adr      => tx_taskram_last_adr,
+    rx_taskram_first_adr     => rx_taskram_first_adr,
+    rx_taskram_last_adr      => rx_taskram_last_adr, 
+    rd_status_avail_first_adr=> rd_status_avail_first_adr,  
+    rd_status_avail_last_adr => rd_status_avail_last_adr,
+    rd_rx_err_first_adr      => rd_rx_err_first_adr, 
+    rd_rx_err_last_adr       => rd_rx_err_last_adr, 
+    tx_ram_req_first_adr     => tx_ram_req_first_adr, 
+    tx_ram_req_last_adr      => tx_ram_req_last_adr, 
+    sio_mil_first_reg_a      => sio_mil_first_reg_a,
+    sio_mil_last_reg_a       => sio_mil_last_reg_a,
+    evt_filt_first_a         => evt_filt_first_a,
+    evt_filt_last_a          => evt_filt_last_a
     )
   port map(
-    clk_i               => clk,
-    nRst_i              => nReset,
-    slave_i             => slave_i,             -- cyc, stb, adr31..0, sel3..0, we, dat 31..0 
-    slave_o             => slave_o,             -- ack,err,stall,dat 31..0 (int not used, rty=static 0) 
+    clk_i                    => clk,
+    nRst_i                   => nReset,
+    slave_i                  => slave_i,             -- cyc, stb, adr31..0, sel3..0, we, dat 31..0 
+    slave_o                  => slave_o,             -- ack,err,stall,dat 31..0 (int not used, rty=static 0) 
   -- encoder (transmitter) signals of HD6408 --------------------------------------------------------------------------------
-    nME_BOO             => nme_boo,
-    nME_BZO             => nme_bzo,
-    ME_SD               => me_sd,
-    ME_ESC              => me_esc,
-    ME_SDI              => me_sdi,
-    ME_EE               => me_ee,
-    ME_SS               => me_ss,
+    nME_BOO                  => nme_boo,
+    nME_BZO                  => nme_bzo,
+    ME_SD                    => me_sd,
+    ME_ESC                   => me_esc,
+    ME_SDI                   => me_sdi,
+    ME_EE                    => me_ee,
+    ME_SS                    => me_ss,
   -- decoder (receiver) signals of HD6408 ---------------------------------------------------------------------------------
-    ME_BOI              => ME_BOI,
-    ME_BZI              => ME_BZI,
-    ME_UDI              => open,                --No use of Harris UDI, set to 0 on sio.vhd
-    ME_CDS              => me_cds,
-    ME_SDO              => me_sdo,
-    ME_DSC              => me_dsc,
-    ME_VW               => me_vw,
-    ME_TD               => me_td,
+    ME_BOI                   => ME_BOI,
+    ME_BZI                   => ME_BZI,
+    ME_UDI                   => open,                --No use of Harris UDI, set to 0 on sio.vhd
+    ME_CDS                   => me_cds,
+    ME_SDO                   => me_sdo,
+    ME_DSC                   => me_dsc,
+    ME_VW                    => me_vw,
+    ME_TD                    => me_td,
   -- decoder/encoder signals of HD6408 ------------------------------------------------------------------------------------
-    Mil_BOI             => Mil_In_Pos,
-    Mil_BZI             => Mil_In_Neg,
-    Sel_Mil_Drv         => Sel_Mil_Drv,
-    nSel_Mil_Rcv        => nsel_Mil_Rcv,
-    Mil_nBOO            => nMil_Out_Neg,
-    Mil_nBZO            => nMil_Out_Pos,
+    Mil_BOI                  => Mil_In_Pos,
+    Mil_BZI                  => Mil_In_Neg,
+    Sel_Mil_Drv              => Sel_Mil_Drv,
+    nSel_Mil_Rcv             => nsel_Mil_Rcv,
+    Mil_nBOO                 => nMil_Out_Neg,
+    Mil_nBZO                 => nMil_Out_Pos,
   -- others ------------------------------------------------------------------------------------
-    nLed_Mil_Rcv        => nLed_Mil_Rcv,
-    nLed_Mil_Trm        => nLed_Mil_Trm,
-    nLed_Mil_Err        => nLED_Mil_Rcv_Error,
-    error_limit_reached => error_limit_reached,
-    Mil_Decoder_Diag_p  => Mil_Decoder_Diag_p,
-    Mil_Decoder_Diag_n  => Mil_Decoder_Diag_n,
-    timing              => timing,              --A_Timing
-    dly_intr_o          => dly_intr_o,          --Interrupt from Delay Timer
-    nLed_Timing         => nLed_Timing,         --A_nLED_Timing
-    nLed_Fifo_ne        => nLed_Fifo_ne,        --A_nLED7 Functionality
+    nLed_Mil_Rcv             => nLed_Mil_Rcv,
+    nLed_Mil_Trm             => nLed_Mil_Trm,
+    nLed_Mil_Err             => nLED_Mil_Rcv_Error,
+    error_limit_reached      => error_limit_reached,
+    Mil_Decoder_Diag_p       => Mil_Decoder_Diag_p,
+    Mil_Decoder_Diag_n       => Mil_Decoder_Diag_n,
+    timing                   => timing,              --A_Timing
+    dly_intr_o               => dly_intr_o,          --Interrupt from Delay Timer
+    nLed_Timing              => nLed_Timing,         --A_nLED_Timing
+    nLed_Fifo_ne             => nLed_Fifo_ne,        --A_nLED7 Functionality
   -- interrupts (in=to be debounced, out=debounced interrupts)
-    ev_fifo_ne_intr_o   => ev_fifo_ne_intr_o, 
-    Interlock_Intr_i    => Interlock_Intr_i,    -- not A_nOPK_INL
-    Data_Rdy_Intr_i     => Data_Rdy_Intr_i,     -- not A_nOPK_DRDY
-    Data_Req_Intr_i     => Data_Req_Intr_i,     -- not A_nOPK_DRQ
-    Interlock_Intr_o    => Interlock_Intr_o, 
-    Data_Rdy_Intr_o     => Data_Rdy_Intr_o,
-    Data_Req_Intr_o     => Data_Req_Intr_o,
-  -- leds
-    nLed_Interl         => nLed_Interl,
-    nLed_drq            => nLed_Drq,
-    nLed_dry            => nLed_dry,
-    every_ms_intr_o     => every_ms_intr_o,
-  -- lemo I/F
-    lemo_data_o         => lemo_data_o,
-    lemo_nled_o         => lemo_nled_o,
-    lemo_out_en_o       => lemo_out_en_o,
-    lemo_data_i         => lemo_data_i,
-    nsig_wb_err         => open
+    ev_fifo_ne_intr_o        => ev_fifo_ne_intr_o, 
+    Interlock_Intr_i         => Interlock_Intr_i,    -- not A_nOPK_INL
+    Data_Rdy_Intr_i          => Data_Rdy_Intr_i,     -- not A_nOPK_DRDY
+    Data_Req_Intr_i          => Data_Req_Intr_i,     -- not A_nOPK_DRQ
+    Interlock_Intr_o         => Interlock_Intr_o, 
+    Data_Rdy_Intr_o          => Data_Rdy_Intr_o,
+    Data_Req_Intr_o          => Data_Req_Intr_o,
+  -- leds                   
+    nLed_Interl              => nLed_Interl,
+    nLed_drq                 => nLed_Drq,
+    nLed_dry                 => nLed_dry,
+    every_ms_intr_o          => every_ms_intr_o,
+  -- lemo I/F               
+    lemo_data_o              => lemo_data_o,
+    lemo_nled_o              => lemo_nled_o,
+    lemo_out_en_o            => lemo_out_en_o,
+    lemo_data_i              => lemo_data_i,
+    nsig_wb_err              => open
   );
 
 end arch_wb_mil_wrapper_sio;

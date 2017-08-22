@@ -146,14 +146,16 @@ CONSTANT  c_housekeeping_base_a:         unsigned(15 downto 0) := x"0040";
 CONSTANT  c_ram_count:                   integer               := 255;     -- max 255
 CONSTANT  c_sio_mil_first_reg_a:         unsigned(15 downto 0) := x"0400";
 CONSTANT  c_sio_mil_last_reg_a:          unsigned(15 downto 0) := x"0440";
-CONSTANT  c_tx_taskram_first_adr:        unsigned(15 downto 0) := x"0501";
-CONSTANT  c_tx_taskram_last_adr:         unsigned(15 downto 0) := x"05FF";
-CONSTANT  c_rx_taskram_first_adr:        unsigned(15 downto 0) := x"0601";
-CONSTANT  c_rx_taskram_last_adr:         unsigned(15 downto 0) := x"06FF";
-CONSTANT  c_rd_status_avail_first_adr:   unsigned(15 downto 0) := x"0700";
-CONSTANT  c_rd_status_avail_last_adr:    unsigned(15 downto 0) := x"070F";
-CONSTANT  c_rd_rx_err_first_adr:         unsigned(15 downto 0) := x"0710";
-CONSTANT  c_rd_rx_err_last_adr:          unsigned(15 downto 0) := x"071F";
+CONSTANT  c_tx_taskram_first_adr:        unsigned(15 downto 0) := x"0C01";
+CONSTANT  c_tx_taskram_last_adr:         unsigned(15 downto 0) := x"0CFF";
+CONSTANT  c_rx_taskram_first_adr:        unsigned(15 downto 0) := x"0D01";
+CONSTANT  c_rx_taskram_last_adr:         unsigned(15 downto 0) := x"0DFF";
+CONSTANT  c_rd_status_avail_first_adr:   unsigned(15 downto 0) := x"0E00";
+CONSTANT  c_rd_status_avail_last_adr:    unsigned(15 downto 0) := x"0E0F";
+CONSTANT  c_rd_rx_err_first_adr:         unsigned(15 downto 0) := x"0E10";
+CONSTANT  c_rd_rx_err_last_adr:          unsigned(15 downto 0) := x"0E1F";
+CONSTANT  c_tx_ram_req_first_adr:        unsigned(15 downto 0) := x"0E20";
+CONSTANT  c_tx_ram_req_last_adr:         unsigned(15 downto 0) := x"0E2F";
 CONSTANT  c_ev_filt_first_a:             unsigned(15 downto 0) := x"1000";--x"1000";
 CONSTANT  c_ev_filt_last_a:              unsigned(15 downto 0) := x"1FFF";--x"1FFF";
 
@@ -453,6 +455,8 @@ mil_slave_1: wb_mil_wrapper_sio
     rd_status_avail_last_adr  => c_rd_status_avail_last_adr, 
     rd_rx_err_first_adr       => c_rd_rx_err_first_adr,
     rd_rx_err_last_adr        => c_rd_rx_err_last_adr,
+    tx_ram_req_first_adr      => c_tx_ram_req_first_adr,
+    tx_ram_req_last_adr       => c_tx_ram_req_last_adr,       
     evt_filt_first_a          => c_ev_filt_first_a,
     evt_filt_last_a           => c_ev_filt_last_a
 
