@@ -105,6 +105,8 @@ generic (
       rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
       rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
       rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";
+      tx_ram_req_first_adr:      unsigned(15 downto 0)  := x"0720";
+      tx_ram_req_last_adr:       unsigned(15 downto 0)  := x"072F";
       evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
       evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
       );
@@ -302,6 +304,7 @@ signal   tx_taskram_wr_d:           std_logic_vector (15 downto 0);
 signal   tx_taskram_rd_d:           std_logic_vector (15 downto 0); 
 
 signal   tx_req:                    std_logic_vector (255 downto 1); 
+signal   tx_req_muxed:              std_logic_vector ( 15 downto 0);
 signal   tx_task_ack:               std_logic_vector (255 downto 1); 
 
 
@@ -317,7 +320,7 @@ signal   rx_taskram_rd_d:           std_logic_vector (15 downto 0);
 signal   timeslot:                  integer RANGE 0 to ram_count;       --timeslot 0 is for tx_fifo, 1..255 is for tx_taskram
 signal   set_rx_avail_ps:           std_logic_vector (255 downto 1);
 signal   clr_rx_avail_ps:           std_logic_vector (255 downto 1);
---signal   taskreg_ack:               std_logic_vector (255 downto 1);
+
 signal   avail:                     std_logic_vector (255 downto 1);
 signal   avail_muxed:               std_logic_vector (15 downto 0); 
 
@@ -892,22 +895,19 @@ END PROCESS schedule_mux;
 schedule_p : PROCESS (clk_i, nrst_i)
 BEGIN
   IF nrst_i = '0' THEN
-    timeslot           <= 0;                                                   -- task timeslot: ts0= fifo tasks, ts1..255= tx_taskram tasks
-    mil_trm_start      <= '0';
---    taskreg_ack        <= (OTHERS => '0');
-
+    timeslot           <=  0 ;                                                   -- task timeslot: ts0= fifo tasks, ts1..255= tx_taskram tasks
     task_runs          <= '0';
 
     timeout_cntr_en    <= '0'; 
     timeout_cntr_clr   <= '0';
+
     mil_rd_start       <= '0';
-    
-    --tx_req           <= (others => '0');
+    mil_trm_start      <= '0';
     
     rx_taskram_we      <= '0';
     rx_taskram_wr_d    <= (OTHERS => '0');
     rx_taskram_wr_a    <= (OTHERS => '0');
-    -- rx_err             <= (others => '0');
+    
     set_rx_avail_ps    <= (OTHERS => '0');
     set_rx_err_ps      <= (OTHERS => '0');
   ELSIF rising_edge (clk_i) THEN
@@ -1111,6 +1111,38 @@ END PROCESS rx_err_muxer;
 
 
 
+tx_req_muxer: PROCESS (tx_req,slave_i.adr)
+VARIABLE LA_a_var    : UNSIGNED (17 DOWNTO 2); 
+BEGIN
+  LA_a_var             := UNSIGNED(slave_i.adr(17 DOWNTO 2));  
+  IF     ( LA_a_var >= tx_ram_req_first_adr) and (LA_a_var  <= tx_ram_req_last_adr ) THEN
+  
+    IF     LA_a_var = (tx_ram_req_first_adr      ) THEN tx_req_muxed <= tx_req( 15 DOWNTO   1) & '0';
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 1  ) THEN tx_req_muxed <= tx_req( 31 DOWNTO  16);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 2  ) THEN tx_req_muxed <= tx_req( 47 DOWNTO  32);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 3  ) THEN tx_req_muxed <= tx_req( 63 DOWNTO  48);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 4  ) THEN tx_req_muxed <= tx_req( 79 DOWNTO  64);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 5  ) THEN tx_req_muxed <= tx_req( 95 DOWNTO  80);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 6  ) THEN tx_req_muxed <= tx_req(111 DOWNTO  96);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 7  ) THEN tx_req_muxed <= tx_req(127 DOWNTO 112);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 8  ) THEN tx_req_muxed <= tx_req(143 DOWNTO 128);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 9  ) THEN tx_req_muxed <= tx_req(159 DOWNTO 144);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 10 ) THEN tx_req_muxed <= tx_req(175 DOWNTO 160);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 11 ) THEN tx_req_muxed <= tx_req(191 DOWNTO 176);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 12 ) THEN tx_req_muxed <= tx_req(207 DOWNTO 192);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 13 ) THEN tx_req_muxed <= tx_req(223 DOWNTO 208);	 
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 14 ) THEN tx_req_muxed <= tx_req(239 DOWNTO 224);	 	
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 15 ) THEN tx_req_muxed <= tx_req(255 DOWNTO 240);	 
+    ELSE   
+      tx_req_muxed <= x"beef";	  -- other addresses out of range
+    END IF;
+  ELSE
+    tx_req_muxed  <= x"dead";     -- other addresses out of range 
+  END IF;
+   
+END PROCESS tx_req_muxer;
+
+
 -----------------------------------------------------------------------------------------------------  
 p_regs_acc: PROCESS (clk_i, nrst_i, slave_i)
 VARIABLE LA_a_var          : UNSIGNED (17 downto 2); 
@@ -1301,6 +1333,23 @@ BEGIN
           ex_stall                   <= '0';
           ex_err                     <= '1';
         END IF;
+
+--##############################tx_req Regs######################################################
+      ELSIF (LA_a_var >= tx_ram_req_first_adr AND LA_a_var <= tx_ram_req_first_adr) THEN
+        IF slave_i.sel = "1111" THEN
+          IF slave_i.we = '0' THEN 
+            slave_o.dat(15 DOWNTO 0) <= tx_req_muxed; -- Mux selects 16 bits out of tx_req Vector 255..1              
+            ex_stall                 <= '0';
+            ex_ack                   <= '1';
+          ELSE
+            ex_stall                 <= '0';
+            ex_err                   <= '1';
+          END IF;
+        ELSE
+          ex_stall                   <= '0';
+          ex_err                     <= '1';
+        END IF;
+                
 --############################Regs from old MIL Macro)###############################################
        ELSIF (LA_a_var = mil_wr_rd_status_a_map)    THEN
          if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed

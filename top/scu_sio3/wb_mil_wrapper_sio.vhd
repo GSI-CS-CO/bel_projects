@@ -13,7 +13,7 @@ entity wb_mil_wrapper_sio IS
   generic (
     Clk_in_Hz:                 integer := 125_000_000;  -- Manchester IP needs 20 Mhz clock for proper detection of short 500ns data pulse
     ram_count:                 integer                := 255;
-    sio_mil_first_reg_a:       unsigned(15 downto 0)  := x"0400";-- which is for eb-tools 32 bit aligned 0x800
+    sio_mil_first_reg_a:       unsigned(15 downto 0)  := x"0400";-- which is for eb-tools 32 bit aligned =  0x800
     sio_mil_last_reg_a:        unsigned(15 downto 0)  := x"0411";
     tx_taskram_first_adr:      unsigned(15 downto 0)  := x"0501";
     tx_taskram_last_adr:       unsigned(15 downto 0)  := x"05FF";
@@ -23,6 +23,8 @@ entity wb_mil_wrapper_sio IS
     rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
     rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
     rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";
+    tx_ram_req_first_adr:      unsigned(15 downto 0)  := x"0720";
+    tx_ram_req_last_adr:       unsigned(15 downto 0)  := x"072F";    
     evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
     evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
 
@@ -109,30 +111,30 @@ constant rd_wr_dly_timer_LW_a_map:      unsigned (15 downto 0)    := sio_mil_fir
 constant rd_wr_dly_timer_HW_a_map:      unsigned (15 downto 0)    := sio_mil_first_reg_a + rd_wr_dly_timer_HW_a;
 
 
-signal slave_i:                  t_wishbone_slave_in;
-signal slave_o:                  t_wishbone_slave_out;
-
-signal nReset:                   std_logic;
-signal Sel_Mil_Drv:              std_logic;
-
-signal rd_latch:                 std_logic_vector(15 downto 0);
-signal rd_latch_ev_timer:        std_logic_vector(15 downto 0);
-signal rd_latch_wait_timer:      std_logic_vector(15 downto 0);
-signal rd_latch_dly_timer:       std_logic_vector(15 downto 0);
-
-signal wr_latch_dly_timer_lw:    std_logic_vector(15 downto 0);
-signal wr_latch_dly_timer_hw:    std_logic_vector(15 downto 0);
-
-
-signal ack_stretched:            std_logic;
-signal dly_buf_ack:              std_logic;
-
-signal cycle_finished:           std_logic;
-signal access_LB:                std_logic;
-
-signal mil_reg_access:           std_logic;
-signal mil_eventfilter_access:   std_logic;
-signal slave_o_ack_la:           std_logic;
+signal slave_i:                         t_wishbone_slave_in;
+signal slave_o:                         t_wishbone_slave_out;
+                                        
+signal nReset:                          std_logic;
+signal Sel_Mil_Drv:                     std_logic;
+                                        
+signal rd_latch:                        std_logic_vector(15 downto 0);
+signal rd_latch_ev_timer:               std_logic_vector(15 downto 0);
+signal rd_latch_wait_timer:             std_logic_vector(15 downto 0);
+signal rd_latch_dly_timer:              std_logic_vector(15 downto 0);
+                                        
+signal wr_latch_dly_timer_lw:           std_logic_vector(15 downto 0);
+signal wr_latch_dly_timer_hw:           std_logic_vector(15 downto 0);
+                                        
+                                        
+signal ack_stretched:                   std_logic;
+signal dly_buf_ack:                     std_logic;
+                                        
+signal cycle_finished:                  std_logic;
+signal access_LB:                       std_logic;
+                                        
+signal mil_reg_access:                  std_logic;
+signal mil_eventfilter_access:          std_logic;
+signal slave_o_ack_la:                  std_logic;
 ----------------------------------------------------------------------------------------------
 begin
 
@@ -216,8 +218,9 @@ begin
   if    (  (unsigned (Adr_from_SCUB_LA)) >=  sio_mil_first_reg_a        and  (unsigned (Adr_from_SCUB_LA))  <=  sio_mil_last_reg_a       )  or
         (  (unsigned (Adr_from_SCUB_LA)) >=  tx_taskram_first_adr       and  (unsigned (Adr_from_SCUB_LA))  <=  tx_taskram_last_adr      )  or
         (  (unsigned (Adr_from_SCUB_LA)) >=  rx_taskram_first_adr       and  (unsigned (Adr_from_SCUB_LA))  <=  rx_taskram_last_adr      )  or
-        (  (unsigned (Adr_from_SCUB_LA)) >=  rd_rx_err_first_adr        and  (unsigned (Adr_from_SCUB_LA))  <=  rd_rx_err_last_adr       )  or        
-        (  (unsigned (Adr_from_SCUB_LA))  >=  rd_status_avail_first_adr and  (unsigned (Adr_from_SCUB_LA))  <=  rd_status_avail_last_adr )  then
+        (  (unsigned (Adr_from_SCUB_LA)) >=  rd_rx_err_first_adr        and  (unsigned (Adr_from_SCUB_LA))  <=  rd_rx_err_last_adr       )  or   
+        (  (unsigned (Adr_from_SCUB_LA)) >=  tx_ram_req_first_adr       and  (unsigned (Adr_from_SCUB_LA))  <=  tx_ram_req_last_adr       )  or           
+        (  (unsigned (Adr_from_SCUB_LA)) >=  rd_status_avail_first_adr  and  (unsigned (Adr_from_SCUB_LA))  <=  rd_status_avail_last_adr )  then
      mil_reg_access          <= '1';
      mil_eventfilter_access  <= '0';
   elsif    (unsigned(Adr_from_SCUB_LA))   >=    evt_filt_first_a        and  (unsigned (Adr_from_SCUB_LA))  <=   evt_filt_last_a            then
@@ -338,19 +341,21 @@ end process;
 
 mil : wb_mil_sio
   generic map(
-    Clk_in_Hz           => clk_in_hz,
-	 
-    tx_taskram_first_adr => tx_taskram_first_adr,
-    tx_taskram_last_adr  => tx_taskram_last_adr,
-	 
-    rx_taskram_first_adr => rx_taskram_first_adr,
-    rx_taskram_last_adr  => rx_taskram_last_adr, 
-	 
-	 
-    sio_mil_first_reg_a => sio_mil_first_reg_a,
-    sio_mil_last_reg_a  => sio_mil_last_reg_a,
-    evt_filt_first_a    => evt_filt_first_a,
-    evt_filt_last_a     => evt_filt_last_a
+    Clk_in_Hz                => clk_in_hz,
+    tx_taskram_first_adr     => tx_taskram_first_adr,
+    tx_taskram_last_adr      => tx_taskram_last_adr,
+    rx_taskram_first_adr     => rx_taskram_first_adr,
+    rx_taskram_last_adr      => rx_taskram_last_adr, 
+    rd_status_avail_first_adr=> rd_status_avail_first_adr,  
+    rd_status_avail_last_adr => rd_status_avail_last_adr,
+    rd_rx_err_first_adr      => rd_rx_err_first_adr, 
+    rd_rx_err_last_adr       => rd_rx_err_last_adr, 
+    tx_ram_req_first_adr     => tx_ram_req_first_adr, 
+    tx_ram_req_last_adr      => tx_ram_req_last_adr, 
+    sio_mil_first_reg_a      => sio_mil_first_reg_a,
+    sio_mil_last_reg_a       => sio_mil_last_reg_a,
+    evt_filt_first_a         => evt_filt_first_a,
+    evt_filt_last_a          => evt_filt_last_a
     )
   port map(
     clk_i                    => clk,
