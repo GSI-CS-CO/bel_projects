@@ -21,7 +21,9 @@ generic (
     rd_status_avail_first_adr: unsigned(15 downto 0)  := x"0700";
     rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
     rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
-    rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";    
+    rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";   
+    tx_ram_req_first_adr:      unsigned(15 downto 0)  := x"0720";
+    tx_ram_req_last_adr:       unsigned(15 downto 0)  := x"072F";
     evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
     evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
     );
@@ -105,6 +107,8 @@ generic (
       rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
       rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
       rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";
+      tx_ram_req_first_adr:      unsigned(15 downto 0)  := x"0720";
+      tx_ram_req_last_adr:       unsigned(15 downto 0)  := x"072F";
       evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
       evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
     );
