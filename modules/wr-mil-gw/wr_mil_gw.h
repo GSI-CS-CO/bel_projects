@@ -23,6 +23,8 @@
 #define WR_MIL_GW_REG_EVENT_SOURCE   0x14  // for internal use: register to hold the source configuration: 1 = SIS ; 2 = ESR ; 0 not configured
 #define WR_MIL_GW_REG_LATENCY        0x18  // MIL event is generated 100us+latency after the WR event. The value of latency can be negative
 #define WR_MIL_GW_REG_STATE          0x1C  // for internal use: state of the program: INITIAL, UNCONFIGURED, CONFIGURED
+#define WR_MIL_GW_REG_UTC_OFFSET_HI  0x20  // delay [ms] between the TAI and the MIL-UTC, high word 
+#define WR_MIL_GW_REG_UTC_OFFSET_LO  0x24  // delay [ms] between the trigger the MIL-UTC, low  word
 
 // states of the software
 #define WR_MIL_GW_STATE_INIT         0

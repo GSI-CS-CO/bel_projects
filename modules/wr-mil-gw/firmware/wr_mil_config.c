@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 #include "wr_mil_config.h"
 #include "mini_sdb.h"
 #include "mprintf.h"
@@ -24,6 +26,7 @@ volatile WrMilConfig *config_init()
   config->event_source         = WR_MIL_GW_EVENT_SOURCE_UNKNOWN; // not configured by default
   config->latency              = 100; // us
   config->state                = WR_MIL_GW_STATE_INIT;
+  config->utc_offset_ms.value  = UINT64_C(1199142000000);
   return config;
 }
 
