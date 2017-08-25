@@ -259,7 +259,15 @@ architecture rtl of scu_control is
   signal mil_lemo_nled_o_tmp   : std_logic_vector(4 downto 1);
   signal mil_lemo_out_en_o_tmp : std_logic_vector(4 downto 1);
   signal mil_lemo_data_i_tmp   : std_logic_vector(4 downto 1);	
- 
+  signal mil_nled_rcv_o        : std_logic;
+  signal mil_nled_trm_o        : std_logic;
+  signal mil_nled_err_o        : std_logic;
+  signal mil_nled_timing_o     : std_logic;
+  signal mil_nled_fifo_ne_o    : std_logic;
+  signal mil_nled_interl_o     : std_logic;
+  signal mil_nled_dry_o        : std_logic;
+  signal mil_nled_drq_o        : std_logic;
+
   
   signal s_lemo_io    : std_logic_vector(1 downto 0);
   signal s_lemo_oe    : std_logic_vector(1 downto 0);
@@ -288,19 +296,19 @@ begin
       g_project       => c_project,
       g_gpio_inout    => 2,
       g_flash_bits    => 24,
-      g_en_pcie    => true,
-      g_en_scubus  => true,
-      g_en_mil     => true,
-      g_en_oled    => true,
-      g_en_user_ow => true,
-      g_en_cfi     => true,
-      g_en_ddr3         => true,
+      g_en_pcie       => true,
+      g_en_scubus     => true,
+      g_en_mil        => true,
+      g_en_oled       => true,
+      g_en_user_ow    => true,
+      g_en_cfi        => true,
+      g_en_ddr3       => true,
       g_io_table        => io_mapping_table,
       g_lm32_cores      => c_cores,
       g_lm32_ramsizes   => c_lm32_ramsizes/4,
       g_lm32_init_files => c_initf,
 		g_lm32_profiles   => f_string_list_repeat(c_profile_name, c_cores)
-    )  
+    )
     port map(
       core_clk_20m_vcxo_i    => clk_20m_vcxo_i,
       core_clk_125m_sfpref_i => sfp2_ref_clk_i,
@@ -365,29 +373,22 @@ begin
       mil_nsel_rcv_o         => eio(7),
       mil_nboo_o             => eio(10),
       mil_nbzo_o             => eio(8),
-      mil_nled_rcv_o         => a_ext_conn3_b4,
-      mil_nled_trm_o         => a_ext_conn3_b5,
-      mil_nled_err_o         => a_ext_conn3_a19,
+      mil_nled_rcv_o         => mil_nled_rcv_o,     --a_ext_conn3_b4,
+      mil_nled_trm_o         => mil_nled_trm_o,     --a_ext_conn3_b5,
+      mil_nled_err_o         => mil_nled_err_o ,    --a_ext_conn3_a19,
       mil_timing_i           => not a_ext_conn3_a7,
-      mil_nled_timing_o      => eio(17),
-      mil_nled_fifo_ne_o     => a_ext_conn3_a19,
+      mil_nled_timing_o      => mil_nled_timing_o,  --eio(17),
+      mil_nled_fifo_ne_o     => mil_nled_fifo_ne_o, --a_ext_conn3_a19,
       mil_interlock_intr_i   => not a_ext_conn3_a2,
       mil_data_rdy_intr_i    => not a_ext_conn3_a3,
       mil_data_req_intr_i    => not a_ext_conn3_a6,
-      mil_nled_interl_o      => a_ext_conn3_a15,
-      mil_nled_dry_o         => a_ext_conn3_a11,
-      mil_nled_drq_o         => a_ext_conn3_a14,
-	   mil_lemo_data_o        => mil_lemo_data_o_tmp,
+      mil_nled_interl_o      => mil_nled_interl_o,  --a_ext_conn3_a15,
+      mil_nled_dry_o         => mil_nled_dry_o,     --a_ext_conn3_a11,
+      mil_nled_drq_o         => mil_nled_drq_o,     --a_ext_conn3_a14,
+      mil_lemo_data_o        => mil_lemo_data_o_tmp,
       mil_lemo_nled_o        => mil_lemo_nled_o_tmp,
-	   mil_lemo_out_en_o      => mil_lemo_out_en_o_tmp,
+      mil_lemo_out_en_o      => mil_lemo_out_en_o_tmp,
       mil_lemo_data_i        => mil_lemo_data_i_tmp,		
---      mil_io1_o              => eio(11),
---      mil_io1_is_in_o        => eio(12),
---      mil_nled_io1_o         => eio(13),
---      mil_io2_o              => eio(14),
---      mil_io2_is_in_o        => eio(15),
---      mil_nled_io2_o         => eio(16),
-
       oled_rstn_o            => hpla_ch(8),
       oled_dc_o              => hpla_ch(6),
       oled_ss_o              => hpla_ch(4),
@@ -422,7 +423,7 @@ begin
       mem_DDR3_CLK_n         => DDR3_CLK_n,
       mem_DDR3_WE_n          => DDR3_WE_n,
       hw_version             => x"0000000" & not scu_cb_version);
- 
+      
   -- LPC UART
   lpc_slave: lpc_uart
     port map(
@@ -491,26 +492,6 @@ begin
         extended_o => s_lemo_leds(i));
   end generate;
   
-  -- LEDs
-  leds_o    <= not s_leds;
-  s_leds(1) <= s_led_pps;
-  
-  -- Logic analyzer port (0,2,4,6,8,10 = OLED)
-  -- Don't put debug clocks too close (makes display flicker)
---  hpla_clk <= 'Z';
-  hpla_ch <= (others => 'Z');
-  
- -- Parallel Flash connected
- -- nRST_FSH <= '0';
- -- AD <= (others => 'Z');
- -- DF <= (others => 'Z');
- -- ADV_FSH  <= 'Z';
- -- nCE_FSH  <= 'Z';
- -- CLK_FSH  <= 'Z';
- -- nWE_FSH  <= 'Z';
- -- nOE_FSH  <= 'Z';
- 
-
   -- MIL Option LEMO Control  
   
   eio(11) <= mil_lemo_data_o_tmp(1) when mil_lemo_out_en_o_tmp(1)='1' else 'Z'; --SCU A17, A_LEMO3_IO
@@ -527,9 +508,48 @@ begin
   eio(16) <= mil_lemo_nled_o_tmp(2);--SCU A23, A_nLEMO4_LED, low = Activity led on
   
   
+  -- LEDs
+  leds_o          <= not s_leds;
+  s_leds(1)       <= s_led_pps;
+  
 
+  mil_extension_leds:PROCESS (
+    mil_nled_rcv_o,
+    mil_nled_trm_o,
+    mil_nled_err_o,
+    mil_nled_timing_o,
+    mil_nled_fifo_ne_o,
+    mil_nled_interl_o,
+    mil_nled_dry_o,
+    mil_nled_drq_o
+  )
+  BEGIN  -- keep outputs "Z" like in previous version
+    IF mil_nled_rcv_o     = '0' THEN a_ext_conn3_b4  <='0'; ELSE a_ext_conn3_b4   <='Z'; END IF;
+    IF mil_nled_trm_o     = '0' THEN a_ext_conn3_b5  <='0'; ELSE a_ext_conn3_b5   <='Z'; END IF;  
+    IF mil_nled_err_o     = '0' THEN a_ext_conn3_a19 <='0'; ELSE a_ext_conn3_a19  <='Z'; END IF; 
+    IF mil_nled_timing_o  = '0' THEN eio(17)         <='0'; ELSE eio(17)          <='Z'; END IF; 
+    IF mil_nled_fifo_ne_o = '0' THEN a_ext_conn3_a19 <='0'; ELSE a_ext_conn3_a19  <='Z'; END IF; 
+    IF mil_nled_interl_o  = '0' THEN a_ext_conn3_a15 <='0'; ELSE a_ext_conn3_a15  <='Z'; END IF; 
+    IF mil_nled_dry_o     = '0' THEN a_ext_conn3_a11 <='0'; ELSE a_ext_conn3_a11  <='Z'; END IF; 
+    IF mil_nled_drq_o     = '0' THEN a_ext_conn3_a14 <='0'; ELSE a_ext_conn3_a14  <='Z'; END IF; 
+  END PROCESS mil_extension_leds;
 
- 
+  -- Logic analyzer port (0,2,4,6,8,10 = OLED)
+  -- Don't put debug clocks too close (makes display flicker)
+  -- hpla_clk <= 'Z';
+
+  hpla_ch <= (others => 'Z');
+  
+  -- Parallel Flash not connected
+  --nRST_FSH <= '0';
+  --AD       <= (others => 'Z');
+  --DF       <= (others => 'Z');
+  --ADV_FSH  <= 'Z';
+  --nCE_FSH  <= 'Z';
+  --CLK_FSH  <= 'Z';
+  --nWE_FSH  <= 'Z';
+  --nOE_FSH  <= 'Z';
+  
   -- DDR3 not connected
   --DDR3_RES_n <= '0';
   --DDR3_DQ    <= (others => 'Z');

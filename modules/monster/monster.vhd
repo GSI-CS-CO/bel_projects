@@ -244,17 +244,11 @@ entity monster is
     mil_nled_interl_o      : out   std_logic := 'Z';
     mil_nled_dry_o         : out   std_logic := 'Z';
     mil_nled_drq_o         : out   std_logic := 'Z';
-	  mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
+    mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
     mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
     mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
     mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');
-
---    mil_io1_o              : out   std_logic := 'Z';
---    mil_io1_is_in_o        : out   std_logic := 'Z';
---    mil_nled_io1_o         : out   std_logic := 'Z';
---    mil_io2_o              : out   std_logic := 'Z';
---    mil_io2_is_in_o        : out   std_logic := 'Z';
---    mil_nled_io2_o         : out   std_logic := 'Z';
+  
     -- g_en_oled
     oled_rstn_o            : out   std_logic := 'Z';
     oled_dc_o              : out   std_logic := 'Z';
@@ -2102,7 +2096,23 @@ begin
 
     mil : wb_mil_scu
       generic map(
-        Clk_in_Hz           => 62_500_000)
+        Clk_in_Hz                 => 62_500_000,
+        ram_count                 => c_ram_count,
+        sio_mil_first_reg_a       => c_sio_mil_first_reg_a,
+        sio_mil_last_reg_a        => c_sio_mil_last_reg_a,
+        tx_taskram_first_adr      => c_tx_taskram_first_adr,	
+        tx_taskram_last_adr       => c_tx_taskram_last_adr,
+        rx_taskram_first_adr      => c_rx_taskram_first_adr,
+        rx_taskram_last_adr       => c_rx_taskram_last_adr,
+        rd_status_avail_first_adr => c_rd_status_avail_first_adr,
+        rd_status_avail_last_adr  => c_rd_status_avail_last_adr, 
+        rd_rx_err_first_adr       => c_rd_rx_err_first_adr,
+        rd_rx_err_last_adr        => c_rd_rx_err_last_adr,
+        tx_ram_req_first_adr      => c_tx_ram_req_first_adr,
+        tx_ram_req_last_adr       => c_tx_ram_req_last_adr,       
+        evt_filt_first_a          => c_ev_filt_first_a,
+        evt_filt_last_a           => c_ev_filt_last_a
+        )
       port map(
         clk_i               => clk_sys,
         nRst_i              => rstn_sys,
