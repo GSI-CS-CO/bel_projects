@@ -67,7 +67,7 @@ void init()
     uart_init_hw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
     ebmInit();        *status |= SHCTL_STATUS_EBM_INIT_SMSK ;
     prioQueueInit();  *status |= SHCTL_STATUS_PQ_INIT_SMSK;
-    mprintf("#%02u: Got IP from WRC. Configured EBM and PQ\n", cpuId); 
+    //mprintf("#%02u: Got IP from WRC. Configured EBM and PQ\n", cpuId); 
   } else {
     *status |= SHCTL_STATUS_UART_INIT_SMSK;
     *status |= SHCTL_STATUS_EBM_INIT_SMSK ;
@@ -99,7 +99,8 @@ void main(void) {
 
   // wait 1s + cpuIdx * 1/10s
   for (j = 0; j < ((125000000/4)+(cpuId*2500000)); ++j) { asm("nop"); }
-  
+  if (cpuId != 0) uart_init_hw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
+
   atomic_on();
     
   mprintf("#%02u: Rdy\n", cpuId);
