@@ -129,6 +129,7 @@ port  (
                                             --                (Subject to the preceding cycle being completed).
     ME_SS:                out     std_logic;-- HD6408-input:  sync select actuates a Command sync for an input high
                                             --                and data sync for an input low.
+
     -- decoder (receiver) signals of HD6408 ---------------------------------------------------------------------------------
     ME_BOI:               out     std_logic;-- HD6408-input:  A high input should be applied to bipolar one in when the bus is in its
                                             --                positive state, this pin must be held low when the Unipolar input is used.
@@ -1427,6 +1428,8 @@ BEGIN
            ex_stall <= '0';
            ex_err <= '1';
          end if;
+
+
 
        ELSIF (LA_a_var = mil_rd_lemo_inp_a_map)     THEN
          if slave_i.sel = "1111" then -- only word access to modulo-4 address allowed
