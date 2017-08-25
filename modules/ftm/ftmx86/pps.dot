@@ -1,0 +1,20 @@
+digraph g {
+name="PPS_Test";
+
+graph []
+edge  [type="defdst"]
+//node [qLo="1", qHi="1", qIl="1"];
+
+subgraph cpu2 {
+  node  [cpu="0"];
+
+
+  Evt_PPS   [type="tmsg",   toffs=          0,   fid=2, gid=5, evtno=205, sid=2, bpid=8, par="0x123"];
+  B_PPS     [type="block",  tperiod=1000000000];
+  Evt_PPS   -> B_PPS -> Evt_PPS;
+
+}
+
+
+
+}
