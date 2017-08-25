@@ -249,23 +249,35 @@ entity scu_control is
     DDR3_CLK          : inout std_logic_vector(0 downto 0);
     DDR3_CLK_n        : inout std_logic_vector(0 downto 0);
     DDR3_WE_n         : out   std_logic);
+
+    
+    
     
 end scu_control;
 
 architecture rtl of scu_control is
   
-  signal kbc_out_port   : std_logic_vector(7 downto 0);
-  signal s_leds         : std_logic_vector(4 downto 1);
-  signal s_lemo_leds    : std_logic_vector(2 downto 1);
-  signal s_led_pps      : std_logic;
-  signal s_tled_sfp_grn : std_logic;
-  signal s_tled_sfp_red : std_logic;
-  signal clk_ref      : std_logic;
-  signal rstn_ref     : std_logic;
+  signal kbc_out_port          : std_logic_vector(7 downto 0);
+  signal s_leds                : std_logic_vector(4 downto 1);
+  signal s_lemo_leds           : std_logic_vector(2 downto 1);
+  signal s_led_pps             : std_logic;
+  signal s_tled_sfp_grn        : std_logic;
+  signal s_tled_sfp_red        : std_logic;
+  signal clk_ref               : std_logic;
+  signal rstn_ref              : std_logic;
   signal mil_lemo_data_o_tmp   : std_logic_vector(4 downto 1);
   signal mil_lemo_nled_o_tmp   : std_logic_vector(4 downto 1);
   signal mil_lemo_out_en_o_tmp : std_logic_vector(4 downto 1);
   signal mil_lemo_data_i_tmp   : std_logic_vector(4 downto 1);	
+  signal mil_nled_rcv_o        : std_logic;
+  signal mil_nled_trm_o        : std_logic;
+  signal mil_nled_err_o        : std_logic;
+  signal mil_nled_timing_o     : std_logic;
+  signal mil_nled_fifo_ne_o    : std_logic;
+  signal mil_nled_interl_o     : std_logic;
+  signal mil_nled_dry_o        : std_logic;
+  signal mil_nled_drq_o        : std_logic;
+
   
   signal s_lemo_io    : std_logic_vector(1 downto 0);
   signal s_lemo_oe    : std_logic_vector(1 downto 0);
@@ -372,28 +384,22 @@ begin
       mil_nsel_rcv_o         => eio(7),
       mil_nboo_o             => eio(10),
       mil_nbzo_o             => eio(8),
-      mil_nled_rcv_o         => a_ext_conn3_b4,
-      mil_nled_trm_o         => a_ext_conn3_b5,
-      mil_nled_err_o         => a_ext_conn3_a19,
+      mil_nled_rcv_o         => mil_nled_rcv_o,     --a_ext_conn3_b4,
+      mil_nled_trm_o         => mil_nled_trm_o,     --a_ext_conn3_b5,
+      mil_nled_err_o         => mil_nled_err_o ,    --a_ext_conn3_a19,
       mil_timing_i           => not a_ext_conn3_a7,
-      mil_nled_timing_o      => eio(17),
-      mil_nled_fifo_ne_o     => a_ext_conn3_a19,
+      mil_nled_timing_o      => mil_nled_timing_o,  --eio(17),
+      mil_nled_fifo_ne_o     => mil_nled_fifo_ne_o, --a_ext_conn3_a19,
       mil_interlock_intr_i   => not a_ext_conn3_a2,
       mil_data_rdy_intr_i    => not a_ext_conn3_a3,
       mil_data_req_intr_i    => not a_ext_conn3_a6,
-      mil_nled_interl_o      => a_ext_conn3_a15,
-      mil_nled_dry_o         => a_ext_conn3_a11,
-      mil_nled_drq_o         => a_ext_conn3_a14,
-	   mil_lemo_data_o        => mil_lemo_data_o_tmp,
+      mil_nled_interl_o      => mil_nled_interl_o,  --a_ext_conn3_a15,
+      mil_nled_dry_o         => mil_nled_dry_o,     --a_ext_conn3_a11,
+      mil_nled_drq_o         => mil_nled_drq_o,     --a_ext_conn3_a14,
+      mil_lemo_data_o        => mil_lemo_data_o_tmp,
       mil_lemo_nled_o        => mil_lemo_nled_o_tmp,
-	   mil_lemo_out_en_o      => mil_lemo_out_en_o_tmp,
+      mil_lemo_out_en_o      => mil_lemo_out_en_o_tmp,
       mil_lemo_data_i        => mil_lemo_data_i_tmp,		
---      mil_io1_o              => eio(11),
---      mil_io1_is_in_o        => eio(12),
---      mil_nled_io1_o         => eio(13),
---      mil_io2_o              => eio(14),
---      mil_io2_is_in_o        => eio(15),
---      mil_nled_io2_o         => eio(16),
       oled_rstn_o            => hpla_ch(8),
       oled_dc_o              => hpla_ch(6),
       oled_ss_o              => hpla_ch(4),
@@ -411,23 +417,22 @@ begin
       cfi_noe_fsh            => nOE_FSH,
       cfi_nrst_fsh           => nRST_FSH,
       cfi_wait_fsh           => WAIT_FSH,
-   -- g_en_ddr3
-      mem_DDR3_DQ            => DDR3_DQ,    --: inout std_logic_vector(15 downto 0);
-      mem_DDR3_DM            => DDR3_DM,    --: out   std_logic_vector( 1 downto 0);
-      mem_DDR3_BA            => DDR3_BA,    --: out   std_logic_vector( 2 downto 0);
-      mem_DDR3_ADDR          => DDR3_ADDR,  --: out   std_logic_vector(12 downto 0);
-      mem_DDR3_CS_n          => DDR3_CS_n,  --: out   std_logic_vector( 0 downto 0);
-      mem_DDR3_DQS           => DDR3_DQS,   --: inout std_logic_vector( 1 downto 0);
-      mem_DDR3_DQSn          => DDR3_DQSn,  --: inout std_logic_vector( 1 downto 0);
-      mem_DDR3_RES_n         => DDR3_RES_n, --: out   std_logic;
-      mem_DDR3_CKE           => DDR3_CKE,   --: out   std_logic_vector( 0 downto 0);
-      mem_DDR3_ODT           => DDR3_ODT,   --: out   std_logic_vector( 0 downto 0);
-      mem_DDR3_CAS_n         => DDR3_CAS_n, --: out   std_logic;
-      mem_DDR3_RAS_n         => DDR3_RAS_N, --: out   std_logic;
-      mem_DDR3_CLK           => DDR3_CLK,   --: inout std_logic_vector( 0 downto 0);
-      mem_DDR3_CLK_n         => DDR3_CLK_n, --: inout std_logic_vector( 0 downto 0);
-      mem_DDR3_WE_n          => DDR3_WE_n,  --: out   std_logic;     
-     
+         -- g_en_ddr3
+      mem_DDR3_DQ            => DDR3_DQ,
+      mem_DDR3_DM            => DDR3_DM,
+      mem_DDR3_BA            => DDR3_BA,
+      mem_DDR3_ADDR          => DDR3_ADDR,
+      mem_DDR3_CS_n          => DDR3_CS_n,
+      mem_DDR3_DQS           => DDR3_DQS,
+      mem_DDR3_DQSn          => DDR3_DQSn,
+      mem_DDR3_RES_n         => DDR3_RES_n,
+      mem_DDR3_CKE           => DDR3_CKE,
+      mem_DDR3_ODT           => DDR3_ODT,
+      mem_DDR3_CAS_n         => DDR3_CAS_n,
+      mem_DDR3_RAS_n         => DDR3_RAS_N,
+      mem_DDR3_CLK           => DDR3_CLK,
+      mem_DDR3_CLK_n         => DDR3_CLK_n,
+      mem_DDR3_WE_n          => DDR3_WE_n,
       hw_version             => x"0000000" & not scu_cb_version);
       
   -- LPC UART
@@ -499,6 +504,7 @@ begin
   end generate;
   
   -- MIL Option LEMO Control  
+  
   eio(11) <= mil_lemo_data_o_tmp(1) when mil_lemo_out_en_o_tmp(1)='1' else 'Z'; --SCU A17, A_LEMO3_IO
   eio(14) <= mil_lemo_data_o_tmp(2) when mil_lemo_out_en_o_tmp(2)='1' else 'Z'; --SCU A20, A_LEMO4_IO
   mil_lemo_data_i_tmp(1) <= eio(11); 
@@ -521,20 +527,43 @@ begin
   naux_sfp_red    <= 'Z';
   s_leds(1)       <= s_led_pps;
   
+
+  mil_extension_leds:PROCESS (
+    mil_nled_rcv_o,
+    mil_nled_trm_o,
+    mil_nled_err_o,
+    mil_nled_timing_o,
+    mil_nled_fifo_ne_o,
+    mil_nled_interl_o,
+    mil_nled_dry_o,
+    mil_nled_drq_o
+  )
+  BEGIN  -- keep outputs "Z" like in previous version
+    IF mil_nled_rcv_o     = '0' THEN a_ext_conn3_b4  <='0'; ELSE a_ext_conn3_b4   <='Z'; END IF;
+    IF mil_nled_trm_o     = '0' THEN a_ext_conn3_b5  <='0'; ELSE a_ext_conn3_b5   <='Z'; END IF;  
+    IF mil_nled_err_o     = '0' THEN a_ext_conn3_a19 <='0'; ELSE a_ext_conn3_a19  <='Z'; END IF; 
+    IF mil_nled_timing_o  = '0' THEN eio(17)         <='0'; ELSE eio(17)          <='Z'; END IF; 
+    IF mil_nled_fifo_ne_o = '0' THEN a_ext_conn3_a19 <='0'; ELSE a_ext_conn3_a19  <='Z'; END IF; 
+    IF mil_nled_interl_o  = '0' THEN a_ext_conn3_a15 <='0'; ELSE a_ext_conn3_a15  <='Z'; END IF; 
+    IF mil_nled_dry_o     = '0' THEN a_ext_conn3_a11 <='0'; ELSE a_ext_conn3_a11  <='Z'; END IF; 
+    IF mil_nled_drq_o     = '0' THEN a_ext_conn3_a14 <='0'; ELSE a_ext_conn3_a14  <='Z'; END IF; 
+  END PROCESS mil_extension_leds;
+
   -- Logic analyzer port (0,2,4,6,8,10 = OLED)
   -- Don't put debug clocks too close (makes display flicker)
---  hpla_clk <= 'Z';
+  -- hpla_clk <= 'Z';
+
   hpla_ch <= (others => 'Z');
   
---  -- Parallel Flash not connected
---  nRST_FSH <= '0';
---  AD <= (others => 'Z');
---  DF <= (others => 'Z');
---  ADV_FSH  <= 'Z';
---  nCE_FSH  <= 'Z';
---  CLK_FSH  <= 'Z';
---  nWE_FSH  <= 'Z';
---  nOE_FSH  <= 'Z';
+  -- Parallel Flash not connected
+  --nRST_FSH <= '0';
+  --AD       <= (others => 'Z');
+  --DF       <= (others => 'Z');
+  --ADV_FSH  <= 'Z';
+  --nCE_FSH  <= 'Z';
+  --CLK_FSH  <= 'Z';
+  --nWE_FSH  <= 'Z';
+  --nOE_FSH  <= 'Z';
   
   -- DDR3 not connected
   --DDR3_RES_n <= '0';

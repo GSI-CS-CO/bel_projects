@@ -75,42 +75,22 @@ constant  rd_wr_dly_timer_LW_a:     integer := 16#10#;   -- read event timer lat
                                                          -- write event timer latch LW   wb_mil_scu_offset + 16#40#.
 constant  rd_wr_dly_timer_HW_a:     integer := 16#11#;   -- read event timer latch HW    wb_mil_scu_offset + 16#44#.
                                                          -- write event timer latch HW   wb_mil_scu_offset + 16#44#. 
-                                                         
--- constant  wr_tx_taskreg0_a :        integer := 16#20#;   -- write tx_taskreg0            wb_mil_scu_offset + 16#80#  to write tx task function codes,   bit[31..16] don't care                                                     
--- constant  wr_tx_taskreg1_a :        integer := 16#21#;   -- write tx_taskreg1            wb_mil_scu_offset + 16#84#  
--- constant  wr_tx_taskreg2_a :        integer := 16#22#;   -- write tx_taskreg2            wb_mil_scu_offset + 16#88#  
--- constant  wr_tx_taskreg3_a :        integer := 16#23#;   -- write tx_taskreg3            wb_mil_scu_offset + 16#8C#  
--- constant  wr_tx_taskreg4_a :        integer := 16#24#;   -- write tx_taskreg4            wb_mil_scu_offset + 16#90#  
--- constant  wr_tx_taskreg5_a :        integer := 16#25#;   -- write tx_taskreg5            wb_mil_scu_offset + 16#94#  
--- constant  wr_tx_taskreg6_a :        integer := 16#26#;   -- write tx_taskreg6            wb_mil_scu_offset + 16#98#  
--- constant  wr_tx_taskreg7_a :        integer := 16#27#;   -- write tx_taskreg7            wb_mil_scu_offset + 16#9C# 
 
--- tx_taskreg addresses now from wr_tx_taskreg_low= x200 to wr_tx_taskreg_high=x2FF
-
-
-
-
-
-constant  rd_rx_taskreg0_a :        integer := 16#30#;   -- read rx_taskreg0             wb_mil_scu_offset + 16#80#  to read corresponding rx task word, bit[31..16] don't care                                                       
-constant  rd_rx_taskreg1_a :        integer := 16#31#;   -- read rx_taskreg1             wb_mil_scu_offset + 16#84#  
-constant  rd_rx_taskreg2_a :        integer := 16#32#;   -- read rx_taskreg2             wb_mil_scu_offset + 16#88#  
-constant  rd_rx_taskreg3_a :        integer := 16#33#;   -- read rx_taskreg3             wb_mil_scu_offset + 16#8C#  
-constant  rd_rx_taskreg4_a :        integer := 16#34#;   -- read rx_taskreg4             wb_mil_scu_offset + 16#90#  
-constant  rd_rx_taskreg5_a :        integer := 16#35#;   -- read rx_taskreg5             wb_mil_scu_offset + 16#94#  
-constant  rd_rx_taskreg6_a :        integer := 16#36#;   -- read rx_taskreg6             wb_mil_scu_offset + 16#98#  
-constant  rd_rx_taskreg7_a :        integer := 16#37#;   -- read rx_taskreg7             wb_mil_scu_offset + 16#9C#  
-
-constant  rd_status_avail_a :       integer := 16#40#;   -- read status_busy             wb_mil_scu_offset + 16#100# 
-  
-
-                                                         
-                                                         
-                                                         
-                                                         
-
-constant  ev_filt_first_a:          integer := 16#1000#;  -- first event filter ram address: wb_mil_scu_offset + 16#4000. 
-constant  ev_filt_last_a:           integer := 16#1FFF#;  -- last event filter  ram address: wb_mil_scu_offset + 16#7FFC.
-
+CONSTANT  c_ram_count:                   integer               := 255;     -- max 255
+CONSTANT  c_sio_mil_first_reg_a:         unsigned(15 downto 0) := x"0400";
+CONSTANT  c_sio_mil_last_reg_a:          unsigned(15 downto 0) := x"0440";
+CONSTANT  c_tx_taskram_first_adr:        unsigned(15 downto 0) := x"0C01";
+CONSTANT  c_tx_taskram_last_adr:         unsigned(15 downto 0) := x"0CFF";
+CONSTANT  c_rx_taskram_first_adr:        unsigned(15 downto 0) := x"0D01";
+CONSTANT  c_rx_taskram_last_adr:         unsigned(15 downto 0) := x"0DFF";
+CONSTANT  c_rd_status_avail_first_adr:   unsigned(15 downto 0) := x"0E00";
+CONSTANT  c_rd_status_avail_last_adr:    unsigned(15 downto 0) := x"0E0F";
+CONSTANT  c_rd_rx_err_first_adr:         unsigned(15 downto 0) := x"0E10";
+CONSTANT  c_rd_rx_err_last_adr:          unsigned(15 downto 0) := x"0E1F";
+CONSTANT  c_tx_ram_req_first_adr:        unsigned(15 downto 0) := x"0E20";
+CONSTANT  c_tx_ram_req_last_adr:         unsigned(15 downto 0) := x"0E2F";
+CONSTANT  c_ev_filt_first_a:             unsigned(15 downto 0) := x"1000";--x"1000";
+CONSTANT  c_ev_filt_last_a:              unsigned(15 downto 0) := x"1FFF";--x"1FFF";
 
 -- bit positions of mil control/status register
 constant  b_sel_fpga_n6408: integer := 15;  -- '1' => fpga manchester endecoder selected, '0' => external hardware manchester endecoder 6408 selected.
@@ -156,8 +136,23 @@ constant  b_lemo4_inp:      integer := 3;   -- '1' => MIL Lemo 4 (debounced) pin
 component wb_mil_scu IS
 
 generic (
-    Clk_in_Hz:  INTEGER := 125_000_000    -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
-                                          -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden.
+    Clk_in_Hz:                 integer                := 62_500_000;   -- Um die Manchester-Flanken bei 1Mb/s genau ausmessen zu koennen
+                                                                       -- (Flankenabstand > 500 ns), muss das Makro mit min. 20 Mhz getaktet werden.
+    ram_count:                 integer                := 255;
+    sio_mil_first_reg_a:       unsigned(15 downto 0)  := x"0400";       -- which is for eb-tools 32 bit aligned 0x800
+    sio_mil_last_reg_a:        unsigned(15 downto 0)  := x"0411";
+    tx_taskram_first_adr:      unsigned(15 downto 0)  := x"0501";
+    tx_taskram_last_adr:       unsigned(15 downto 0)  := x"05FF";
+    rx_taskram_first_adr:      unsigned(15 downto 0)  := x"0601";
+    rx_taskram_last_adr:       unsigned(15 downto 0)  := x"06FF"; 
+    rd_status_avail_first_adr: unsigned(15 downto 0)  := x"0700";
+    rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
+    rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
+    rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";
+    tx_ram_req_first_adr:      unsigned(15 downto 0)  := x"0720";
+    tx_ram_req_last_adr:       unsigned(15 downto 0)  := x"072F";
+    evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
+    evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"                                          
     );
 port  (
     clk_i:              in      std_logic;
