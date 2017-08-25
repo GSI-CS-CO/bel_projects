@@ -242,17 +242,11 @@ entity monster is
     mil_nled_interl_o      : out   std_logic := 'Z';
     mil_nled_dry_o         : out   std_logic := 'Z';
     mil_nled_drq_o         : out   std_logic := 'Z';
-	  mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
+    mil_lemo_data_o        : out   std_logic_vector(4 downto 1);
     mil_lemo_nled_o        : out   std_logic_vector(4 downto 1);
     mil_lemo_out_en_o      : out   std_logic_vector(4 downto 1);
     mil_lemo_data_i        : in    std_logic_vector(4 downto 1):= (others => '0');
-	 
---    mil_io1_o              : out   std_logic := 'Z';
---    mil_io1_is_in_o        : out   std_logic := 'Z';
---    mil_nled_io1_o         : out   std_logic := 'Z';
---    mil_io2_o              : out   std_logic := 'Z';
---    mil_io2_is_in_o        : out   std_logic := 'Z';
---    mil_nled_io2_o         : out   std_logic := 'Z';
+  
     -- g_en_oled
     oled_rstn_o            : out   std_logic := 'Z';
     oled_dc_o              : out   std_logic := 'Z';
@@ -2096,65 +2090,75 @@ begin
      
     mil : wb_mil_scu
       generic map(
-        Clk_in_Hz     => 62_500_000)
+        Clk_in_Hz                 => 62_500_000,
+        ram_count                 => c_ram_count,
+        sio_mil_first_reg_a       => c_sio_mil_first_reg_a,
+        sio_mil_last_reg_a        => c_sio_mil_last_reg_a,
+        tx_taskram_first_adr      => c_tx_taskram_first_adr,	
+        tx_taskram_last_adr       => c_tx_taskram_last_adr,
+        rx_taskram_first_adr      => c_rx_taskram_first_adr,
+        rx_taskram_last_adr       => c_rx_taskram_last_adr,
+        rd_status_avail_first_adr => c_rd_status_avail_first_adr,
+        rd_status_avail_last_adr  => c_rd_status_avail_last_adr, 
+        rd_rx_err_first_adr       => c_rd_rx_err_first_adr,
+        rd_rx_err_last_adr        => c_rd_rx_err_last_adr,
+        tx_ram_req_first_adr      => c_tx_ram_req_first_adr,
+        tx_ram_req_last_adr       => c_tx_ram_req_last_adr,       
+        evt_filt_first_a          => c_ev_filt_first_a,
+        evt_filt_last_a           => c_ev_filt_last_a
+        )
       port map(
-        clk_i         => clk_sys,
-        nRst_i        => rstn_sys,
-        slave_i       => dev_bus_master_o(c_devs_mil),
-        slave_o       => dev_bus_master_i(c_devs_mil),
-        nME_BOO       => mil_nme_boo_i,
-        nME_BZO       => mil_nme_bzo_i,
-        ME_SD         => mil_me_sd_i,
-        ME_ESC        => mil_me_esc_i,
-        ME_SDI        => mil_me_sdi_o,
-        ME_EE         => mil_me_ee_o,
-        ME_SS         => mil_me_ss_o,
-        ME_BOI        => mil_me_boi_o,
-        ME_BZI        => mil_me_bzi_o,
-        ME_UDI        => mil_me_udi_o,
-        ME_CDS        => mil_me_cds_i,
-        ME_SDO        => mil_me_sdo_i,
-        ME_DSC        => mil_me_dsc_i,
-        ME_VW         => mil_me_vw_i,
-        ME_TD         => mil_me_td_i,
-        Mil_BOI       => mil_boi_i,
-        Mil_BZI       => mil_bzi_i,
-        Sel_Mil_Drv   => mil_sel_drv_o,
-        nSel_Mil_Rcv  => mil_nsel_rcv_o,
-        Mil_nBOO      => mil_nboo_o,
-        Mil_nBZO      => mil_nbzo_o,
-        nLed_Mil_Rcv  => mil_nled_rcv_o,
-        nLed_Mil_Trm  => mil_nled_trm_o,
-        nLed_Mil_Err  => mil_nled_err_o,
+        clk_i               => clk_sys,
+        nRst_i              => rstn_sys,
+        slave_i             => dev_bus_master_o(c_devs_mil),
+        slave_o             => dev_bus_master_i(c_devs_mil),
+        nME_BOO             => mil_nme_boo_i,
+        nME_BZO             => mil_nme_bzo_i,
+        ME_SD               => mil_me_sd_i,
+        ME_ESC              => mil_me_esc_i,
+        ME_SDI              => mil_me_sdi_o,
+        ME_EE               => mil_me_ee_o,
+        ME_SS               => mil_me_ss_o,
+        ME_BOI              => mil_me_boi_o,
+        ME_BZI              => mil_me_bzi_o,
+        ME_UDI              => mil_me_udi_o,
+        ME_CDS              => mil_me_cds_i,
+        ME_SDO              => mil_me_sdo_i,
+        ME_DSC              => mil_me_dsc_i,
+        ME_VW               => mil_me_vw_i,
+        ME_TD               => mil_me_td_i,
+        Mil_BOI             => mil_boi_i,
+        Mil_BZI             => mil_bzi_i,
+        Sel_Mil_Drv         => mil_sel_drv_o,
+        nSel_Mil_Rcv        => mil_nsel_rcv_o,
+        Mil_nBOO            => mil_nboo_o,
+        Mil_nBZO            => mil_nbzo_o,
+        nLed_Mil_Rcv        => mil_nled_rcv_o,
+        nLed_Mil_Trm        => mil_nled_trm_o,
+        nLed_Mil_Err        => mil_nled_err_o,
         error_limit_reached => open,
         Mil_Decoder_Diag_p  => open,
         Mil_Decoder_Diag_n  => open,
-        timing         => mil_timing_i,
-        dly_intr_o     => mil_dly_intr_o,
-        nLed_Timing    => mil_nled_timing_o,
-        nLed_Fifo_ne   => mil_nled_fifo_ne_o,
-        ev_fifo_ne_intr_o => mil_ev_fifo_ne_intr_o,
-        Interlock_Intr_i => mil_interlock_intr_i,
-        Data_Rdy_Intr_i  => mil_data_rdy_intr_i,
-        Data_Req_Intr_i  => mil_data_req_intr_i,
-        Interlock_Intr_o => mil_interlock_intr_o,
-        Data_Rdy_Intr_o  => mil_data_rdy_intr_o,
-        Data_Req_Intr_o  => mil_data_req_intr_o,
-        nLed_Interl    => mil_nled_interl_o,
-        nLed_drq       => mil_nled_drq_o,
-        nLed_dry       => mil_nled_dry_o,
-        every_ms_intr_o => mil_every_ms_intr_o,
-        lemo_data_o     => mil_lemo_data_o,
-        lemo_nled_o     => mil_lemo_nled_o, 
-	     lemo_out_en_o   => mil_lemo_out_en_o,     
-        lemo_data_i     => mil_lemo_data_i, 
---        io_1           => mil_io1_o,
---        io_1_is_in     => mil_io1_is_in_o,
---        nLed_io_1      => mil_nled_io1_o,
---        io_2           => mil_io2_o,
---        io_2_is_in     => mil_io2_is_in_o,
---        nLed_io_2      => mil_nled_io2_o,
-        nsig_wb_err    => open);
+        timing              => mil_timing_i,
+        dly_intr_o          => mil_dly_intr_o,
+        nLed_Timing         => mil_nled_timing_o,
+        nLed_Fifo_ne        => mil_nled_fifo_ne_o,
+        ev_fifo_ne_intr_o   => mil_ev_fifo_ne_intr_o,
+        Interlock_Intr_i    => mil_interlock_intr_i,
+        Data_Rdy_Intr_i     => mil_data_rdy_intr_i,
+        Data_Req_Intr_i     => mil_data_req_intr_i,
+        Interlock_Intr_o    => mil_interlock_intr_o,
+        Data_Rdy_Intr_o     => mil_data_rdy_intr_o,
+        Data_Req_Intr_o     => mil_data_req_intr_o,
+        nLed_Interl         => mil_nled_interl_o,
+        nLed_drq            => mil_nled_drq_o,
+        nLed_dry            => mil_nled_dry_o,
+        every_ms_intr_o     => mil_every_ms_intr_o,
+        lemo_data_o         => mil_lemo_data_o,
+        lemo_nled_o         => mil_lemo_nled_o, 
+        lemo_out_en_o       => mil_lemo_out_en_o,     
+        lemo_data_i         => mil_lemo_data_i, 
+        nsig_wb_err         => open);
   end generate;
   
   
