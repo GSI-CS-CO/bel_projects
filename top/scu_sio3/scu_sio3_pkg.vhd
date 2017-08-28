@@ -14,16 +14,16 @@ generic (
     ram_count:                 integer                := 255;
     sio_mil_first_reg_a:       unsigned(15 downto 0)  := x"0400";-- which is for eb-tools 32 bit aligned 0x800
     sio_mil_last_reg_a:        unsigned(15 downto 0)  := x"0411";
-    tx_taskram_first_adr:      unsigned(15 downto 0)  := x"0500";
-    tx_taskram_last_adr:       unsigned(15 downto 0)  := x"05FF";
-    rx_taskram_first_adr:      unsigned(15 downto 0)  := x"0600";
-    rx_taskram_last_adr:       unsigned(15 downto 0)  := x"06FF"; 
-    rd_status_avail_first_adr: unsigned(15 downto 0)  := x"0700";
-    rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
-    rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
-    rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";   
-    tx_ram_req_first_adr:      unsigned(15 downto 0)  := x"0720";
-    tx_ram_req_last_adr:       unsigned(15 downto 0)  := x"072F";
+    tx_taskram_first_adr:      unsigned(15 downto 0)  := x"0c01";
+    tx_taskram_last_adr:       unsigned(15 downto 0)  := x"0cFF";
+    rx_taskram_first_adr:      unsigned(15 downto 0)  := x"0d01";
+    rx_taskram_last_adr:       unsigned(15 downto 0)  := x"0dFF"; 
+    rd_status_avail_first_adr: unsigned(15 downto 0)  := x"0e00";
+    rd_status_avail_last_adr : unsigned(15 downto 0)  := x"0e0F";
+    rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0e10";
+    rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"0e1F";   
+    tx_ram_req_first_adr:      unsigned(15 downto 0)  := x"0e20";
+    tx_ram_req_last_adr:       unsigned(15 downto 0)  := x"0e2F";
     evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
     evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
     );
