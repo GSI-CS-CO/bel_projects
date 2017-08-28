@@ -24,8 +24,7 @@ ENTITY atr_comp_ctrl IS
 		nReset_250mhz:	    in  std_logic;
 --
     ATR_comp_puls:        in  STD_LOGIC_VECTOR(7 DOWNTO 0);   -- Ausgänge von den Comperatoren
-    ATR_res_counter:      in  STD_LOGIC;                      -- Reset Counter
-    ATR_res_cnt_err:      in  STD_LOGIC;                      -- Reset Error-Flag
+    ATR_comp_cnt_err_res: in  STD_LOGIC;                      -- Reset Counter und Error-Flags
     ATR_comp_cnt_error:   out std_logic_VECTOR(7 DOWNTO 0);
 --
 		Reg_rd_active:		  out	std_logic;								      -- read data available at 'Data_to_SCUB'-INL_Out
@@ -105,8 +104,7 @@ COMPONENT atr_cnt_n
     nReset_250mhz:        IN  STD_LOGIC;
 
     ATR_cnt_puls:         IN  STD_LOGIC;
-    ATR_res_counter:      IN  STD_LOGIC;   -- Reset Counter
-    ATR_res_cnt_err:      IN  STD_LOGIC;   -- Reset Error-Flag
+    ATR_comp_cnt_err_res: in  STD_LOGIC;   -- Reset Counter und Error-Flags
 --
     ATR_counter:          OUT std_logic_VECTOR(15 DOWNTO 0);
     ATR_cnt_err:          OUT STD_LOGIC
@@ -119,28 +117,16 @@ begin
   
 ATR_Cnt:  for I in 0 to 7 generate
     Cnt_I:  atr_cnt_n
-          port map(clk               => clk,                   -- Sys-Clock
-                  nReset            => nReset,                 -- Powerup-Reset
-                  clk_250mhz        => clk_250mhz,             -- Clock
-                  nReset_250mhz     => nReset_250mhz,          -- Powerup-Reset (250Mhz)
-                  ATR_cnt_puls      => ATR_comp_puls(i),       -- Comperatorpuls
-                  ATR_res_counter   => ATR_res_counter,        -- Reset Counter
-                  ATR_res_cnt_err   => ATR_res_cnt_err,        -- Reset Error-Flag
-                  ATR_counter       => ATR_comp_cnt(i),        -- Counterstand der Pulsbreite (4ns)
-                  ATR_cnt_err       => ATR_comp_cnt_error(i)); -- Counterstand größer 16Bit
+          port map(clk                  => clk,                   -- Sys-Clock
+                  nReset                => nReset,                 -- Powerup-Reset
+                  clk_250mhz            => clk_250mhz,             -- Clock
+                  nReset_250mhz         => nReset_250mhz,          -- Powerup-Reset (250Mhz)
+                  ATR_cnt_puls          => ATR_comp_puls(i),       -- Comperatorpuls
+                  ATR_comp_cnt_err_res  => ATR_comp_cnt_err_res,   -- Reset Counter und Error-Flags
+                  ATR_counter           => ATR_comp_cnt(i),        -- Counterstand der Pulsbreite (4ns)
+                  ATR_cnt_err           => ATR_comp_cnt_error(i)); -- Counterstand größer 16Bit
           end generate ATR_Cnt;
 
-
-               
---Cnt_0:  atr_cnt_n
---  port map(clk               => clk,                    -- Sys-Clock
---           nReset            => nReset,                 -- Powerup-Reset
---           clk_250mhz        => clk_250mhz,             -- Clock
---           nReset_250mhz     => nReset_250mhz,          -- Powerup-Reset (250Mhz)
---           ATR_cnt_puls      => ATR_comp_puls(0),       -- Comperatorpuls
---           ATR_cnt_res_err   => ATR_comp_cnt_res_err,   -- Reset Error-Flag
---           ATR_counter       => ATR_comp_cnt(0),        -- Counterstand der Pulsbreite (4ns)
---           ATR_cnt_err       => ATR_comp_cnt_error(0)); -- Counterstand größer 16Bit
        
 
 P_Adr_Deco:	process (nReset, clk)
