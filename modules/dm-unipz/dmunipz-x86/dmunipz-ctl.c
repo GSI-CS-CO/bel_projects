@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-July-2017
+ *  version : 31-August-2017
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.0.6"
+#define DMUNIPZ_X86_VERSION "0.0.7"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -49,7 +49,7 @@
 #include <etherbone.h>
 
 //ftm
-#include "../../ftm/ftm_common.h"  // defs and regs for data master
+#include "../../ftm/include/ftm_common.h"  // defs and regs for data master
 
 // dm-unipz
 #include <dm-unipz.h>
@@ -421,7 +421,7 @@ int main(int argc, char** argv) {
   } //if command
 
   if (snoop) {
-    printf("dm-unipz: continous monitoring of gateway...\n");
+    printf("dm-unipz: continous monitoring of gateway, loglevel = %d\n", logLevel);
     
     actTransfers = 0;
     actState     = DMUNIPZ_STATE_UNKNOWN;
@@ -449,7 +449,7 @@ int main(int argc, char** argv) {
       if ((actState     != state)     && (logLevel <= DMUNIPZ_LOGLEVEL_STATE))                                         {printFlag = 1; actState = state;}
       if ((actStatus    != status)    && (logLevel <= DMUNIPZ_LOGLEVEL_STATUS))                                        {printFlag = 1; actStatus = status;}
       if ((actTransfers != transfers) && (logLevel <= DMUNIPZ_LOGLEVEL_COMPLETE) && (statTrans & DMUNIPZ_TRANS_RELTK)) {printFlag = 1; actTransfers = transfers;}
-      if ((actStatTrans != statTrans) && (logLevel <= DMUNIPZ_LOGLEVEL_ALL))                                           {printFlag = 1; actStatTrans = statTrans;}
+      if ((actTransfers != transfers) && (logLevel <= DMUNIPZ_LOGLEVEL_ALL))                                           {printFlag = 1; actTransfers = transfers;}
 
       if (printFlag) {
         printf("dm-unipz: transfer - "); 
