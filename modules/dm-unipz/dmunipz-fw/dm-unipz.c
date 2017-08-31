@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000006                                  // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000007                                  // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -53,7 +53,7 @@
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h" // register layout ECA queue
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"       // register layout ECA control
 #include "../../../ip_cores/saftlib/drivers/eca_flags.h"              // definitions for ECA queue
-#include "../../ftm/ftm_common.h"                                     // defs and regs for data master
+#include "../../ftm/include/ftm_common.h"                             // defs and regs for data master
 #include "../../ftm/ftmfw/ftm_shared_mmap.h"                          // info on shared map for data master lm32 cluster
 
 uint32_t dmExt2BaseAddr(uint32_t extAddr) // data master external address -> external base address
