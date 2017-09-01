@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-June-2017
+ *  version : 31-August-2017
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -1022,8 +1022,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       if ((dmStatus = dmPrepCmdCommon(REQTK)) != DMUNIPZ_STATUS_OK)                // prepare common part of command for later use, here: continue after TK request
         return dmStatus;                                                           // failure of preparation is a severe error!
         
-      dmPrepCmdFlow(REQTK);                                                      // prepare flow command for later use, here: continue after TK request
-      dmChangeBlock(REQTK);                                                      // modify block within DM for execution of a flow command, here: continue after TK request
+      dmPrepCmdFlow(REQTK);                                                        // prepare flow command for later use, here: continue after TK request
+      dmChangeBlock(REQTK);                                                        // modify block within DM for execution of a flow command, here: continue after TK request
 
 
       if (status == DMUNIPZ_STATUS_OK) *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQTKOK; // update status of transfer
