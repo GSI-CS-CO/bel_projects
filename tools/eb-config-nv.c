@@ -60,8 +60,8 @@ int main(int argc, const char **argv) {
   eb_cycle_write(cycle, magic, format, 0x6);        /* write enable */
   eb_cycle_write(cycle, magic, format, 0x80000000); /* execute */
   eb_cycle_write(cycle, magic, format, 0xb1);       /* write non-volatile configuration */
-  eb_cycle_write(cycle, magic, format, 0xfe | (bytes==3));
-  eb_cycle_write(cycle, magic, format, (cycles << 4) | 0xf);
+  eb_cycle_write(cycle, magic, format, 0xde | (bytes==3));  // bits[7:0]
+  eb_cycle_write(cycle, magic, format, (cycles << 4) | 0xf); // bits[15:8]
   eb_cycle_write(cycle, magic, format, 0x80000000); /* execute */
   
   if ((status = eb_cycle_close(cycle)) != EB_OK)
