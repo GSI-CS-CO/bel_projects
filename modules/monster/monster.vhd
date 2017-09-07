@@ -2097,21 +2097,7 @@ begin
     mil : wb_mil_scu
       generic map(
         Clk_in_Hz                 => 62_500_000,
-        ram_count                 => c_ram_count,
-        sio_mil_first_reg_a       => c_sio_mil_first_reg_a,
-        sio_mil_last_reg_a        => c_sio_mil_last_reg_a,
-        tx_taskram_first_adr      => c_tx_taskram_first_adr,	
-        tx_taskram_last_adr       => c_tx_taskram_last_adr,
-        rx_taskram_first_adr      => c_rx_taskram_first_adr,
-        rx_taskram_last_adr       => c_rx_taskram_last_adr,
-        rd_status_avail_first_adr => c_rd_status_avail_first_adr,
-        rd_status_avail_last_adr  => c_rd_status_avail_last_adr, 
-        rd_rx_err_first_adr       => c_rd_rx_err_first_adr,
-        rd_rx_err_last_adr        => c_rd_rx_err_last_adr,
-        tx_ram_req_first_adr      => c_tx_ram_req_first_adr,
-        tx_ram_req_last_adr       => c_tx_ram_req_last_adr,       
-        evt_filt_first_a          => c_ev_filt_first_a,
-        evt_filt_last_a           => c_ev_filt_last_a
+        slave_i_adr_max           => 14                      --14 for SCU, 17 for SIO
         )
       port map(
         clk_i               => clk_sys,
