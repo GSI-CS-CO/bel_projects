@@ -65,133 +65,110 @@ use work.genram_pkg.all;
 --|         |             |             |        auf den entsprechenden LEMO Ausgang übertragen.                                    |
 --|         |             |             |    Jeder Lemo Buchse sind eigene Bits zugeordnet, sie sind somit einzeln ansteuerbar.     |      
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
---|   08    | K.Kaiser    | 10.07.2017  |    tx_fifo (1024x17) in Senderichtung puffert nun Sendedaten, damit nicht auf             |
---|         |             |             |    mil_trm_rdy gewartet werden muss. Wirkt performancesteigernd DevBus FG Param-transfers |
---|         |             |             |    p_regs_acc wird hierfür geändert.                                                      |
---|         |             |             |    Todo:Interrupts aus Standardisierungsgründen auf SIO3 Topebene umsortieren:            | 
---|         |             |             |    every_ms_intr_o Pos 1-->Pos7                                                           |
---|         |             |             |    clk_switch_intr Pos14-->Pos1                                                           |
+--|   08    | K.Kaiser    | 07.09.2017  |    Zur Durchsatzsteigerung des Devicebusses für die FG Parameterübertragung               |
+--|         |             |             |    Ein One-Hot Timeslotscheduler steuert den DB-Zugriff (TS0=TX_FIFO, TX1..254=TaskRam)   |
+--|         |             |             |    Scheduler in TS0: Alle TX_FIFO Aufträge werden abgewickelt bevor er in TS1 wechselt !  | 
+--|         |             |             |    tx_Fifo   (1024x17) Puffer für 1024  CMD oder Daten-Telegramme in Senderichtung        |
+--|         |             |             |                        Bei Überfüllung des TX Fifo Puffers wird kein DTACK gegeben        |
+--|         |             |             |    tx_TaskRam (1..254) Puffer für 254 CMD Telegramme (mit Rücklesen) vom DevBus Slave     |
+--|         |             |             |                        Rücklesedaten werden in RX_Taskram gespeichert                     |
+--|         |             |             |                        Avail und ggf Err Bit (Timeout oder Parity) wird gesetzt           | 
+--|         |             |             |                        Avail und ggf Err Bit wird bei Auslesen RX_Taskramzelle gelöscht   |
+--|         |             |             |                        Solange eine Auftrag im  TX_TaskRam steht und nicht abgeschlossen  |
+--|         |             |             |                        ist, wird ausserdem das tx_req Bit gesetzt                         |    
 --| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
---|   09    | K.Kaiser    | 25.7.2017   |    8 TX Register für Read Tasks und 8 korrespondierende RX Register hinzu                 |
---|         |             |             |    Diese werden von einem Scheduler in Round-Robin first-come-first-serve bedient         |
---|         |             |             |    Status avail Bits zeigen zunächst mit 0x00 "alle Taskregister leer" an.                |
---|         |             |             |    Wird ein Task Register mit einem Funktionscode beschrieben, sendet es einen Request    |
---|         |             |             |    an den Scheduler. Dieser transferiert den Funktionscode, sobald der DevBus frei ist,   |
---|         |             |             |    an das TX Register und erwartet die Antwort des DevBus Slaves.                         |
---|         |             |             |    Wird das Datum richtig empfangen, wird kein Error Bit gesetzt.                         |
---|         |             |             |    Kommt es zum Parityfehler oder Timeout, wird ein Error Bit (Bit 17 Datenreg) gesetzt   |
---|         |             |             |    Aufgrund des Errorbits wird beim Auslesen des Datenregisters kein DTACK gegeben.       |
---|         |             |             |    Wurden Tasks durch Empfangen bzw Timeout beendet, wird das availbit zurückgenommen.    |
---| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
---|   10    | K.Kaiser    | 25.7.2017   |    Generic für 1...256 Read Tasks (Funktion wie Version 09)                               |
---| --------+-------------+-------------+----------------------------------------------------------------------------------------   |
-
-
 
 
 ENTITY wb_mil_scu IS
 
-generic (
-      Clk_in_Hz:  INTEGER := 125_000_000;   -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
-                                            -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden
-      ram_count:                 integer                := 255;
-      sio_mil_first_reg_a:       unsigned(15 downto 0)  := x"0400";-- which is for eb-tools 32 bit aligned 0x800
-      sio_mil_last_reg_a:        unsigned(15 downto 0)  := x"0411";
-      tx_taskram_first_adr:      unsigned(15 downto 0)  := x"0501";
-      tx_taskram_last_adr:       unsigned(15 downto 0)  := x"05FF";
-      rx_taskram_first_adr:      unsigned(15 downto 0)  := x"0601";
-      rx_taskram_last_adr:       unsigned(15 downto 0)  := x"06FF"; 
-      rd_status_avail_first_adr: unsigned(15 downto 0)  := x"0700";
-      rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
-      rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
-      rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";
-      tx_ram_req_first_adr:      unsigned(15 downto 0)  := x"0720";
-      tx_ram_req_last_adr:       unsigned(15 downto 0)  := x"072F";
-      evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
-      evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
+GENERIC (
+      Clk_in_Hz:          INTEGER := 62_500_000;    -- Um die Flanken des Manchester-Datenstroms von 1Mb/s genau genug ausmessen zu koennen
+                                                    -- (kuerzester Flankenabstand 500 ns), muss das Makro mit mindestens 20 Mhz getaktet werden
+                                                    -- SCU benutzt 62_500_000, SIO benutzt 125_000_000 Hz
+      slave_i_adr_max:    INTEGER := 14             -- 14 für SCU, 17 für SIO
       );
-port  (
-    clk_i:                in      std_logic;
-    nRst_i:               in      std_logic;
-    slave_i:              in      t_wishbone_slave_in;
-    slave_o:              out     t_wishbone_slave_out;
+PORT  (
+    clk_i:                IN      STD_LOGIC;
+    nRst_i:               IN      STD_LOGIC;
+    slave_i:              IN      t_wishbone_slave_in;
+    slave_o:              OUT     t_wishbone_slave_out; 
     
     -- encoder (transmitter) signals of HD6408 --------------------------------------------------------------------------------
-    nME_BOO:              in      std_logic;-- HD6408-output: transmit bipolar positive.
-    nME_BZO:              in      std_logic;-- HD6408-output: transmit bipolar negative.
+    nME_BOO:              IN      STD_LOGIC;-- HD6408-output: transmit bipolar positive.
+    nME_BZO:              IN      STD_LOGIC;-- HD6408-output: transmit bipolar negative.
     
-    ME_SD:                in      std_logic;-- HD6408-output: '1' => send data is active.
-    ME_ESC:               in      std_logic;-- HD6408-output: encoder shift clock for shifting data into the encoder. The
+    ME_SD:                IN      STD_LOGIC;-- HD6408-output: '1' => send data is active.
+    ME_ESC:               IN      STD_LOGIC;-- HD6408-output: encoder shift clock for shifting data into the encoder. The
                                             --                encoder samples ME_SDI on low-to-high transition of ME_ESC.
-    ME_SDI:               out     std_logic;-- HD6408-input:  serial data in accepts a serial data stream at a data rate
+    ME_SDI:               OUT     STD_LOGIC;-- HD6408-input:  serial data in accepts a serial data stream at a data rate
                                             --                equal to encoder shift clock.
-    ME_EE:                out     std_logic;-- HD6408-input:  a high on encoder enable initiates the encode cycle.
+    ME_EE:                OUT     STD_LOGIC;-- HD6408-input:  a high on encoder enable initiates the encode cycle.
                                             --                (Subject to the preceding cycle being completed).
-    ME_SS:                out     std_logic;-- HD6408-input:  sync select actuates a Command sync for an input high
+    ME_SS:                OUT     STD_LOGIC;-- HD6408-input:  sync select actuates a Command sync for an input high
                                             --                and data sync for an input low.
 
     -- decoder (receiver) signals of HD6408 ---------------------------------------------------------------------------------
-    ME_BOI:               out     std_logic;-- HD6408-input:  A high input should be applied to bipolar one in when the bus is in its
+    ME_BOI:               OUT     STD_LOGIC;-- HD6408-input:  A high input should be applied to bipolar one in when the bus is in its
                                             --                positive state, this pin must be held low when the Unipolar input is used.
-    ME_BZI:               out     std_logic;-- HD6408-input:  A high input should be applied to bipolar zero in when the bus is in its
+    ME_BZI:               OUT     STD_LOGIC;-- HD6408-input:  A high input should be applied to bipolar zero in when the bus is in its
                                             --                negative state. This pin must be held high when the Unipolar input is used.
-    ME_UDI:               out     std_logic;-- HD6408-input:  With ME_BZI high and ME_BOI low, this pin enters unipolar data in to the
+    ME_UDI:               OUT     STD_LOGIC;-- HD6408-input:  With ME_BZI high and ME_BOI low, this pin enters unipolar data in to the
                                             --                transition finder circuit. If not used this input must be held low.
-    ME_CDS:               in      std_logic;-- HD6408-output: high occurs during output of decoded data which was preced
+    ME_CDS:               IN      STD_LOGIC;-- HD6408-output: high occurs during output of decoded data which was preced
                                             --                by a command synchronizing character. Low indicares a data sync.
-    ME_SDO:               in      std_logic;-- HD6408-output: serial data out delivers received data in correct NRZ format.
-    ME_DSC:               in      std_logic;-- HD6408-output: decoder shift clock delivers a frequency (decoder clock : 12),
+    ME_SDO:               IN      STD_LOGIC;-- HD6408-output: serial data out delivers received data in correct NRZ format.
+    ME_DSC:               IN      STD_LOGIC;-- HD6408-output: decoder shift clock delivers a frequency (decoder clock : 12),
                                             --                synchronized by the recovered serial data stream.
-    ME_VW:                in      std_logic;-- HD6408-output: high indicates receipt of a VALID WORD.
-    ME_TD:                in      std_logic;-- HD6408-output: take data is high during receipt of data after identification
+    ME_VW:                IN      STD_LOGIC;-- HD6408-output: high indicates receipt of a VALID WORD.
+    ME_TD:                IN      STD_LOGIC;-- HD6408-output: take data is high during receipt of data after identification
                                             --                of a sync pulse and two valid Manchester data bits
 
     -- decoder/encoder signals of HD6408 ------------------------------------------------------------------------------------
     --    ME_12MHz:       out     std_logic;-- HD6408-input:    is connected on layout to ME_DC (decoder clock) and ME_EC (encoder clock)
     
 
-    Mil_BOI:              in  std_logic;    -- HD6408-input:  connect positive bipolar receiver, in FPGA directed to the external
+    Mil_BOI:              IN      STD_LOGIC;-- HD6408-input:  connect positive bipolar receiver, in FPGA directed to the external
                                             --                manchester en/decoder HD6408 via output ME_BOI or to the internal FPGA
                                             --                vhdl manchester macro.
-    Mil_BZI:              in  std_logic;    -- HD6408-input:  connect negative bipolar receiver, in FPGA directed to the external
+    Mil_BZI:              IN      STD_LOGIC;-- HD6408-input:  connect negative bipolar receiver, in FPGA directed to the external
                                             --                manchester en/decoder HD6408 via output ME_BZI or to the internal FPGA
                                             --                vhdl manchester macro.
-    Sel_Mil_Drv:          buffer  std_logic;-- HD6408-output: active high, enable the external open collector driver to the transformer
-    nSel_Mil_Rcv:         out     std_logic;-- HD6408-output: active low, enable the external differtial receive circuit.
-    Mil_nBOO:             out     std_logic;-- HD6408-output: connect bipolar positive output to external open collector driver of
+    Sel_Mil_Drv:          BUFFER  STD_LOGIC;-- HD6408-output: active high, enable the external open collector driver to the transformer
+    nSel_Mil_Rcv:         OUT     STD_LOGIC;-- HD6408-output: active low, enable the external differtial receive circuit.
+    Mil_nBOO:             OUT     STD_LOGIC;-- HD6408-output: connect bipolar positive output to external open collector driver of
                                             --                the transformer. Source is the external manchester en/decoder HD6408 via
                                             --                nME_BOO or the internal FPGA vhdl manchester macro.
-    Mil_nBZO:             out     std_logic;-- HD6408-output: connect bipolar negative output to external open collector driver of
+    Mil_nBZO:             OUT     STD_LOGIC;-- HD6408-output: connect bipolar negative output to external open collector driver of
                                             --                the transformer. Source is the external manchester en/decoder HD6408 via
                                             --                nME_BZO or the internal FPGA vhdl manchester macro.
-    nLed_Mil_Rcv:         out     std_logic;
-    nLed_Mil_Trm:         out     std_logic;
-    nLed_Mil_Err:         out     std_logic;
-    error_limit_reached:  out     std_logic;
-    Mil_Decoder_Diag_p:   out     std_logic_vector(15 downto 0);
-    Mil_Decoder_Diag_n:   out     std_logic_vector(15 downto 0);
-    timing:               in      std_logic;
-    nLed_Timing:          out     std_logic;
-    dly_intr_o:           out     std_logic;
-    nLed_Fifo_ne:         out     std_logic;
-    ev_fifo_ne_intr_o:    out     std_logic;
-    Interlock_Intr_i:     in      std_logic;
-    Data_Rdy_Intr_i:      in      std_logic;
-    Data_Req_Intr_i:      in      std_logic;
-    Interlock_Intr_o:     out     std_logic;
-    Data_Rdy_Intr_o:      out     std_logic;
-    Data_Req_Intr_o:      out     std_logic;
-    nLed_Interl:          out     std_logic;
-    nLed_Dry:             out     std_logic;
-    nLed_Drq:             out     std_logic;
-    every_ms_intr_o:      out     std_logic;
-    lemo_data_o:          out     std_logic_vector(4 downto 1);
-    lemo_nled_o:          out     std_logic_vector(4 downto 1);
-    lemo_out_en_o:        out     std_logic_vector(4 downto 1);  
-    lemo_data_i:          in      std_logic_vector(4 downto 1):= (others => '0');
-    nsig_wb_err:          out     std_logic  -- '0' => gestretchte wishbone access Fehlermeldung
+    nLed_Mil_Rcv:         OUT     STD_LOGIC;
+    nLed_Mil_Trm:         OUT     STD_LOGIC;
+    nLed_Mil_Err:         OUT     STD_LOGIC;
+    error_limit_reached:  OUT     STD_LOGIC;
+    Mil_Decoder_Diag_p:   OUT     STD_LOGIC_VECTOR(15 DOWNTO 0);
+    Mil_Decoder_Diag_n:   OUT     STD_LOGIC_VECTOR(15 DOWNTO 0);
+    timing:               IN      STD_LOGIC;
+    nLed_Timing:          OUT     STD_LOGIC;
+    dly_intr_o:           OUT     STD_LOGIC;
+    nLed_Fifo_ne:         OUT     STD_LOGIC;
+    ev_fifo_ne_intr_o:    OUT     STD_LOGIC;
+    Interlock_Intr_i:     IN      STD_LOGIC;
+    Data_Rdy_Intr_i:      IN      STD_LOGIC;
+    Data_Req_Intr_i:      IN      STD_LOGIC;
+    Interlock_Intr_o:     OUT     STD_LOGIC;
+    Data_Rdy_Intr_o:      OUT     STD_LOGIC;
+    Data_Req_Intr_o:      OUT     STD_LOGIC;
+    nLed_Interl:          OUT     STD_LOGIC;
+    nLed_Dry:             OUT     STD_LOGIC;
+    nLed_Drq:             OUT     STD_LOGIC;
+    every_ms_intr_o:      OUT     STD_LOGIC;
+    lemo_data_o:          OUT     STD_LOGIC_VECTOR(4 DOWNTO 1);
+    lemo_nled_o:          OUT     STD_LOGIC_VECTOR(4 DOWNTO 1);
+    lemo_out_en_o:        OUT     STD_LOGIC_VECTOR(4 DOWNTO 1);  
+    lemo_data_i:          IN      STD_LOGIC_VECTOR(4 DOWNTO 1):= (OTHERS => '0');
+    nsig_wb_err:          OUT     STD_LOGIC                   -- '0' => gestretchte wishbone access Fehlermeldung
     );
-end wb_mil_scu;
+END wb_mil_scu;
 
 
 ARCHITECTURE arch_wb_mil_scu OF wb_mil_scu IS 
@@ -340,10 +317,10 @@ signal   mil_trm_start:             std_logic;
 signal   mil_trm_start_dly:         std_logic;
 signal   mil_trm_start_dly2:        std_logic;
 
-
 signal   mil_rd_start_latched:      std_logic; 
 signal   mil_rd_start_dly:          std_logic; 
 signal   mil_rd_start_dly2:         std_logic; 
+signal   mil_rd_start_dly3:         std_logic; 
 
 signal   set_rx_err_ps:             std_logic_vector (255 downto 1);
 signal   clr_rx_err_ps:             std_logic_vector (255 downto 1);
@@ -360,6 +337,8 @@ slave_o.err               <= ex_err;
 slave_o.rty               <= '0';
   
 reset_6408                <= '0'; 
+
+
                                     
 ena_led_cnt: div_n                  
   GENERIC MAP (                     
@@ -711,17 +690,16 @@ ev_fifo_ne_intr_o <= ev_fifo_ne;
     
 ------------------------------------------------------------------------------------------------------------------------------
 --  tx_taskreg ram must be a DP RAM (decoupling write and read)
---  If written with a task, a trm_req bit is set on trm_req vector
---  trm_req bits (0..255 max) are reg bits due to separate reset'ability (the sram isn't)	
+--  If written with a task, a trm_req bit is set on trm_req vector. trm_req is cleared after completing a task.
+--  trm_req may not be visible by SW, because DevBus may be faster than SW routines.  
+--  trm_req bits (0..255 max) are separate reg bits for controling them separately.
 
---  1-Hot FSM scans all trm_req bits robin-round and provides related RAM content (even if not applicable).
---  If trm_req bit is set, according RAM content is sent as CMD Telegram  and DevBus answer is awaited (Timeout Cntr Started as well)
---
+--  1-Hot Scheduler FSM scans all trm_req bits robin-round and provides related RAM content.
+--  If trm_req bit is set, according tx_taskram content is sent as CMD Telegram  and DevBus answer is awaited (Timeout Cntr starting as well)
 
-
---  DevBus Answer is stored in rx_taskreg RAM and rx_avail bit is set in rx_avail vector
---  If received telegram was faulty or a time-out, then upper RAM bit is set - which lets to a "no DTACK"
---  When rx_taskreg data is read,  rx_avail is cleared.
+--  DevBus answer is stored in rx_taskreg RAM and rx_avail bit is set in rx_avail vector
+--  If received telegram was faulty or a time-out, a related rx_err bit is set too
+--  When rx_taskram data is read ,  related rx_avail and rx_err bits are cleared.
 ------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -746,9 +724,9 @@ tx_taskram : generic_simple_dpram
  
 --Usage "simple dualport ram"  SCU Bus Port is r/w, DevBus Port is r/o 
 --     wr and rd on same address --> new wr data appears 1 clock later on qb_o
---Preference is resolved :
---     write only when tx_req bit not set (SCU Bus must not wr 2 times on same time on same address)
---     Scheduler evaluate valid read only when tx_req bit is set
+--Preference is resolved by SW :
+--     SW writes only when tx_req bit not set (SW must not wr 2 times for same task)
+--     Scheduler reads tx_ram cell only when tx_req bit is set
 --     DPRAM write has preference -- no valid SCU Bus write will be lost 
 
 
@@ -790,20 +768,6 @@ tx_fifo : generic_sync_fifo
   );
 
 
-
-
---KK Scheduler modified for TX_FIFO and TX_TASKRAM and RX_TASKRAM control
----------------------------------------------------------------------------------------------------
-
---process (timeslot,mil_trm_start,mil_trm_start_dly)
---BEGIN
---  IF timeslot = 0 THEN 
---    tx_fifo_read_en  <= mil_trm_start AND NOT mil_trm_start_dly; -- need only one pulse at each fifo pop  (wr_mil is triggered with mil_trm_start_dly)
---  ELSE 
---    tx_fifo_read_en  <= '0'; 
---END PROCESS;
-
-
 commonclockedlogic_p : PROCESS (clk_i, nrst_i)
 BEGIN
   IF nrst_i = '0' THEN
@@ -818,7 +782,8 @@ BEGIN
     mil_rd_start_latched    <= '0';
     mil_rd_start_dly        <= '0';
     mil_rd_start_dly2       <= '0';
-
+    mil_rd_start_dly3       <= '0';
+    
   ELSIF rising_edge (clk_i) THEN
  
     IF timeout_cntr_clr= '1' then
@@ -831,13 +796,14 @@ BEGIN
 	     
     IF mil_rd_start='1' THEN                               -- min  1 dsc pulse make hd6408 happy for reset of mil_rcv_rdy
        mil_rd_start_latched  <= mil_rd_start;
-    ELSIF mil_rd_start_dly='1' AND mil_rd_start_dly2='1' THEN
+    ELSIF mil_rd_start_dly2='1' AND mil_rd_start_dly3='1' THEN
        mil_rd_start_latched  <= '0';
     END IF;
        
     IF ena_every_us='1' THEN
        mil_rd_start_dly      <= mil_rd_start_latched;
        mil_rd_start_dly2     <= mil_rd_start_dly;
+       mil_rd_start_dly3     <= mil_rd_start_dly2;       
     END IF; 
   
     slave_i_stb_dly          <= slave_i.stb;
@@ -849,10 +815,10 @@ BEGIN
 END PROCESS commonclockedlogic_p;
 
 
--- This registered mux fetches data from TX_FIFO or TX_TASKRAM for DevBus TX 
--- On Scheduler Timeslot 0 data is got from FIFO
--- On Scheduler Timeslot 1....Timeslot'max data is got from TX_TaskRAM 
--- Therefore TX_TaskRAM Address is calculated from Timeslot pointer -1
+-- This registered mux fetches data from TX_FIFO or TX_TASKRAM for DevBus Transmission 
+-- On Scheduler Timeslot 0 data is got from TX_FIFO
+-- On Scheduler Timeslot 1....254 data is got from TX_TaskRam 
+-- Therefore TX_TaskRAM Address is calculated from Timeslot pointer
 -- TX_TaskRAM Read Address must not be applied when Avail bit isn't set 
 -- This is done to keep  TX_TaskRAM ready for new writes from SCU Bus.
 
@@ -872,11 +838,11 @@ BEGIN
     
     IF timeslot = 0 THEN
       mil_trm_data       <= tx_fifo_data_out(15 DOWNTO 0); 
-      mil_trm_cmd        <= tx_fifo_data_out(16);          --tx_fifo cmd or data telegram depends on bit 16
-      tx_fifo_read_en    <= mil_trm_start AND NOT mil_trm_start_dly;  -- only one pulse to pop fifo, mil_trm_start_dly used for start transmission
+      mil_trm_cmd        <= tx_fifo_data_out(16);                       -- tx_fifo cmd or data telegram depends on upper bit
+      tx_fifo_read_en    <= mil_trm_start AND NOT mil_trm_start_dly;    -- only one pulse to pop fifo, mil_trm_start_dly used for start transmission
       
     ELSIF ((timeslot >= 1) AND (timeslot <= ram_count )) THEN
-      mil_trm_cmd      <= '1';    --tx_taskram sents only cmd telegrams
+      mil_trm_cmd      <= '1';                                          -- tx_taskram sents only cmd telegrams
       mil_trm_data     <= tx_taskram_rd_d(15 DOWNTO 0);    
       
       IF tx_req (timeslot) = '1' THEN 
@@ -895,7 +861,7 @@ END PROCESS schedule_mux;
 schedule_p : PROCESS (clk_i, nrst_i)
 BEGIN
   IF nrst_i = '0' THEN
-    timeslot           <=  0 ;                                                   -- task timeslot: ts0= fifo tasks, ts1..255= tx_taskram tasks
+    timeslot           <=  0 ;                                                  
     task_runs          <= '0';
 
     timeout_cntr_en    <= '0'; 
@@ -919,126 +885,131 @@ BEGIN
     set_rx_err_ps      <= (OTHERS => '0');
     timeout_cntr_clr   <= '0'; 
     rx_taskram_we      <= '0';
-          
-  IF timeslot= 0 then
+    -----------------------------------------Timeslot 0 TX_FIFO--------------------------------------------------------------------------------      
+    IF timeslot= 0 then                                                            --Empty whole TX_FIFO on timeslot 0
   
-    IF  tx_fifo_empty='1'    AND task_runs='0'  THEN                               --skip if there is nothing to do or fifo task finished	 
+      IF  tx_fifo_empty='1'    AND task_runs='0'  THEN                             --skip if there is nothing to do or fifo task finished	 
         timeslot         <= timeslot + 1 ;   
         timeout_cntr_en  <= '0';
         timeout_cntr_clr <= '1';
         task_runs        <= '0'; 
-    ELSIF tx_fifo_empty='0'  AND  mil_trm_rdy = '1'  THEN                        -- perform fifo task
+      ELSIF tx_fifo_empty='0'  AND  mil_trm_rdy = '1'  THEN                        --perform fifo task
         mil_trm_start    <= '1';   
         task_runs        <= '1';
         timeout_cntr_en  <= '1';                                    
         timeout_cntr_clr <= '1';                                              
-    ELSIF  tx_fifo_empty='1' AND  mil_trm_rdy = '1' AND timeout_cntr=22  THEN    -- wait for last telegram before exit  todo: maybe 21 is ok too
+      ELSIF  tx_fifo_empty='1' AND  mil_trm_rdy = '1' AND timeout_cntr=22  THEN    --wait for last telegram before exit  todo: maybe 21 is ok too
         mil_trm_start    <= '0';   
         task_runs        <= '0';
         timeout_cntr_en  <= '0';                                    
         timeout_cntr_clr <= '1';
-    ELSE
-      NULL;
-    END IF;
-  
-  ELSIF ((timeslot >= 1) AND (timeslot <= ram_count )) THEN
-    
-    IF tx_req(timeslot) = '1'  or task_runs = '1'  THEN          --check for a task
-      IF mil_trm_rdy = '1' AND task_runs = '0' THEN              --mil_trm should be ready when entering
-        mil_trm_start               <= '1';                      --or pulse for tx start and timeout_cntr
-        timeout_cntr_en             <= '1';
-        task_runs                   <= '1';
-      ELSIF task_runs = '1' THEN
-        IF timeout_cntr = 50  OR Mil_Rcv_Rdy = '1' THEN          --wait 20µs for tx, 20 for rx and 10 for gap
-          IF timeslot <= ram_count THEN
-            timeslot                <= timeslot +1;              --jump to next timeslot(or to 0) 
-          ELSE                      
-            timeslot                <= 0;
-          END IF;       
-          tx_task_ack(timeslot)     <= '1';                      --pulse for acknowledge tx_task when telegram was received
-          task_runs                 <= '0';
-          set_rx_avail_ps(timeslot) <= '1';                      --todo maybe wait until slave_i.stb=0
-          timeout_cntr_en           <= '0';                      --stop and reset timeout_cntr for next use
-          timeout_cntr_clr          <= '1';
-          IF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '0' THEN      --prepare data output
-            rx_taskram_wr_d         <= MIL_RCV_D;
-            rx_taskram_wr_a         <= std_logic_vector (to_unsigned ((timeslot), 8)) ; --ram adr from 0..255 , timeslot from 0..256 (0=fifo ts)
-            rx_taskram_we           <= '1';
-            set_rx_err_ps(timeslot) <= '0';                  
-            mil_rd_start            <= '1';                        --to bring hd6408 fsm back to idle
-          ELSIF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '1' THEN
-            rx_taskram_wr_d         <= x"beef";
-            rx_taskram_wr_a         <= std_logic_vector (to_unsigned ((timeslot), 8)) ;
-            rx_taskram_we           <= '1';
-            set_rx_err_ps(timeslot) <= '1';                       --rx_taskreg0(16)=1 causes intented DTACK Error                            
-            mil_rd_start<= '1';
-          ELSIF timeout_cntr = timeout_cntr_max THEN
-            rx_taskram_wr_d         <= x"babe";
-            rx_taskram_wr_a         <= std_logic_vector (to_unsigned ((timeslot), 8)) ;
-            rx_taskram_we           <= '1';
-            set_rx_err_ps(timeslot) <= '1';  
-          ELSE                                                    --this case should never be reached     
-            rx_taskram_wr_d         <= x"dead";
-            rx_taskram_wr_a         <= std_logic_vector (to_unsigned ((timeslot), 8)) ;
-            set_rx_err_ps(timeslot) <= '1';   
-            rx_taskram_we           <= '1';
-          END IF;--MIL_Rcv_Rdy
-        ELSE 
-          NULL;                                                  -- wait for timeout or rx data
-        END IF;--timeout_cntr
-        
-      ELSIF task_runs = '0' THEN                                 --Wait for MIL_RCV_RDY 
-        NULL; 
       ELSE
         NULL;
-      END IF; --mil_trm_rdy
+      END IF;
+   --------------------------------------------Timeslot 1...254 TX_TaskRam----------------------------------------------------------------------
+    ELSIF ((timeslot >= 1) AND (timeslot <= ram_count )) THEN      --If not Timeslot 0: Do all taskram slots one after another
+                                                                   --Timeslot 255 reserved for "Beam Transmission Mode"
+      IF    tx_req(timeslot)='0' and task_runs='0'  then           
+                                                                   
+        IF timeslot < ram_count  THEN                              
+          timeslot           <= timeslot +1;                       --jump to next timeslot(or to 0) 
+        ELSE                                                       
+          timeslot           <= 0;                                 
+        END IF;                                                    
+                                                                   
+      ELSIF tx_req(timeslot) = '1'  or task_runs = '1'  THEN       --check for taskrequest or running task 
+                                                                   
+        IF mil_trm_rdy = '1' AND task_runs = '0' THEN              --Case: No Task is running, but transmitter is ready
+          mil_trm_start               <= '1';                      --      or pulse for tx start and timeout_cntr
+          timeout_cntr_en             <= '1';                      
+          task_runs                   <= '1';
+
+        ELSIF task_runs = '1' THEN                                 --Case Transmitter is already running  
+
+          IF timeout_cntr = 55  OR Mil_Rcv_Rdy = '1' THEN          --wait 20µs for tx, 20 for rx and 15 for gap
+            IF timeslot < ram_count THEN
+              timeslot                <= timeslot +1;              --jump to next timeslot(or to 0) 
+            ELSE                      
+              timeslot                <= 0;
+            END IF;       
+            tx_task_ack(timeslot)     <= '1';                      --pulse for acknowledge tx_task when telegram was received
+            task_runs                 <= '0';
+            set_rx_avail_ps(timeslot) <= '1';                      --todo maybe wait until slave_i.stb=0
+            timeout_cntr_en           <= '0';                      --stop and reset timeout_cntr for next use
+            timeout_cntr_clr          <= '1';
+            IF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '0' THEN      --prepare data output
+              rx_taskram_wr_d         <= MIL_RCV_D;
+              rx_taskram_wr_a         <= std_logic_vector (to_unsigned ((timeslot), 8)) ; --ram adr from 0..255 , timeslot from 0..255 (0=fifo ts)
+              rx_taskram_we           <= '1';
+              set_rx_err_ps(timeslot) <= '0';                  
+              mil_rd_start            <= '1';                      --to bring hd6408 fsm back to idle
+            ELSIF MIL_Rcv_Rdy = '1' AND Mil_Rcv_Error = '1' THEN   --this case handles hd6408 parity error
+              rx_taskram_wr_d         <= x"beef";
+              rx_taskram_wr_a         <= std_logic_vector (to_unsigned ((timeslot), 8)) ;
+              rx_taskram_we           <= '1';
+              set_rx_err_ps(timeslot) <= '1';                      --set rx_err bit                          
+              mil_rd_start            <= '1';                      --to bring hd6408 fsm back to idle
+            ELSIF timeout_cntr = timeout_cntr_max THEN             --this case handles telegram receive timeout
+              rx_taskram_wr_d         <= x"babe";
+              rx_taskram_wr_a         <= std_logic_vector (to_unsigned ((timeslot), 8)) ;
+              rx_taskram_we           <= '1';
+              set_rx_err_ps(timeslot) <= '1';  
+              mil_rd_start            <= '1';                       --if a telegram arrives long time later, there is no chance to bring hd6408 fsm back to
+                                                                    --idle condition with behalf of mil_rd_start
+            ELSE                                                    --this case should never be reached     
+              rx_taskram_wr_d         <= x"dead";
+              rx_taskram_wr_a         <= std_logic_vector (to_unsigned ((timeslot), 8)) ;
+              set_rx_err_ps(timeslot) <= '1';   
+              rx_taskram_we           <= '1';
+            END IF;--MIL_Rcv_Rdy
+          ELSE 
+            NULL;                                                  -- wait for timeout or rx data
+          END IF;--End Case:timeout_cntr=55 or mil_rcv_rdy='1' 
  
-   ELSE 
-
-     IF timeslot <= timeslot+1  THEN
-       timeslot           <= timeslot +1;                   --jump to next timeslot(or to 0) 
-     ELSE
-       timeslot           <= 0;
-     END IF;
-    
-   END IF;--tx_taskreg
-
-
-  END IF; --timeslot
+        END IF; -- End Case:mil_trm_rdy=1 or Task_runs=1        
+        
+          
+      ELSE
+        NULL;
+      END IF; -- tx_req and task_runs
+  -----------------------------------------------------This ELSE should never be reached---------------------------------------------------------------------------
+    ELSE  
+      null;
+    END IF; -- all timeslots
   
-END IF;--clocked process
-
+  END IF;--clocked process
 END PROCESS schedule_p;
 
 
 ----------------------------------------------------------------------------------------------------- 
 
--- KK Upto 256 tx_taskregs are implemented as sychronous ram 
+-- 254 tx_taskregs are implemented as sychronous ram 
 -- write is done by a single slave_i.wr pulse on access in ram address range
--- Avail Bits (0..255 max) are kept as registers due they need to be resetable (the sram isn't)
+-- Avail/Err/Req Bits (0..254) are kept as registers due they need to be selective resetable (the sram isn't)
 
 avail_muxer: PROCESS (avail,slave_i.adr)
-VARIABLE LA_a_var    : UNSIGNED (17 DOWNTO 2); 
+VARIABLE LA_a_var    : UNSIGNED (slave_i_adr_max DOWNTO 2); 
 BEGIN
-  LA_a_var             := UNSIGNED(slave_i.adr(17 DOWNTO 2));  
+  LA_a_var             := UNSIGNED(slave_i.adr(slave_i_adr_max DOWNTO 2));  
+  
   IF     ( LA_a_var  >= rd_status_avail_first_adr) and (LA_a_var  <= rd_status_avail_last_adr ) THEN
   
-    IF     LA_a_var = (rd_status_avail_first_adr      ) THEN avail_muxed <= avail ( 15 DOWNTO   1) & '0';
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 1  ) THEN avail_muxed <= avail ( 31 DOWNTO  16);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 2  ) THEN avail_muxed <= avail ( 47 DOWNTO  32);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 3  ) THEN avail_muxed <= avail ( 63 DOWNTO  48);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 4  ) THEN avail_muxed <= avail ( 79 DOWNTO  64);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 5  ) THEN avail_muxed <= avail ( 95 DOWNTO  80);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 6  ) THEN avail_muxed <= avail (111 DOWNTO  96);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 7  ) THEN avail_muxed <= avail (127 DOWNTO 112);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 8  ) THEN avail_muxed <= avail (143 DOWNTO 128);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 9  ) THEN avail_muxed <= avail (159 DOWNTO 144);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 10 ) THEN avail_muxed <= avail (175 DOWNTO 160);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 11 ) THEN avail_muxed <= avail (191 DOWNTO 176);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 12 ) THEN avail_muxed <= avail (207 DOWNTO 192);
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 13 ) THEN avail_muxed <= avail (223 DOWNTO 208);	 
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 14 ) THEN avail_muxed <= avail (239 DOWNTO 224);	 	
-    ELSIF  LA_a_var = (rd_status_avail_first_adr + 15 ) THEN avail_muxed <= avail (255 DOWNTO 240);	 
+    IF     LA_a_var = (rd_status_avail_first_adr      ) THEN avail_muxed <=      avail ( 15 DOWNTO   1) & '0';
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 1  ) THEN avail_muxed <=      avail ( 31 DOWNTO  16);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 2  ) THEN avail_muxed <=      avail ( 47 DOWNTO  32);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 3  ) THEN avail_muxed <=      avail ( 63 DOWNTO  48);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 4  ) THEN avail_muxed <=      avail ( 79 DOWNTO  64);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 5  ) THEN avail_muxed <=      avail ( 95 DOWNTO  80);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 6  ) THEN avail_muxed <=      avail (111 DOWNTO  96);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 7  ) THEN avail_muxed <=      avail (127 DOWNTO 112);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 8  ) THEN avail_muxed <=      avail (143 DOWNTO 128);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 9  ) THEN avail_muxed <=      avail (159 DOWNTO 144);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 10 ) THEN avail_muxed <=      avail (175 DOWNTO 160);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 11 ) THEN avail_muxed <=      avail (191 DOWNTO 176);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 12 ) THEN avail_muxed <=      avail (207 DOWNTO 192);
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 13 ) THEN avail_muxed <=      avail (223 DOWNTO 208);	 
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 14 ) THEN avail_muxed <=      avail (239 DOWNTO 224);	 	
+    ELSIF  LA_a_var = (rd_status_avail_first_adr + 15 ) THEN avail_muxed <= '0'& avail (254 DOWNTO 240);	 
     ELSE   
       avail_muxed <= x"beef";	  -- other addresses out of range
     END IF;
@@ -1050,27 +1021,27 @@ END PROCESS avail_muxer;
 
 
 rx_err_muxer: PROCESS (rx_err,slave_i.adr)
-VARIABLE LA_a_var    : UNSIGNED (17 DOWNTO 2); 
+VARIABLE LA_a_var    : UNSIGNED (slave_i_adr_max DOWNTO 2); 
 BEGIN
-  LA_a_var             := UNSIGNED(slave_i.adr(17 DOWNTO 2));  
+  LA_a_var             := UNSIGNED(slave_i.adr(slave_i_adr_max DOWNTO 2));  
   IF     ( LA_a_var  >= rd_rx_err_first_adr) and (LA_a_var  <= rd_rx_err_last_adr ) THEN
   
-    IF     LA_a_var = (rd_rx_err_first_adr      ) THEN rx_err_muxed <= rx_err( 15 DOWNTO   1) & '0';
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 1  ) THEN rx_err_muxed <= rx_err( 31 DOWNTO  16);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 2  ) THEN rx_err_muxed <= rx_err( 47 DOWNTO  32);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 3  ) THEN rx_err_muxed <= rx_err( 63 DOWNTO  48);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 4  ) THEN rx_err_muxed <= rx_err( 79 DOWNTO  64);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 5  ) THEN rx_err_muxed <= rx_err( 95 DOWNTO  80);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 6  ) THEN rx_err_muxed <= rx_err(111 DOWNTO  96);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 7  ) THEN rx_err_muxed <= rx_err(127 DOWNTO 112);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 8  ) THEN rx_err_muxed <= rx_err(143 DOWNTO 128);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 9  ) THEN rx_err_muxed <= rx_err(159 DOWNTO 144);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 10 ) THEN rx_err_muxed <= rx_err(175 DOWNTO 160);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 11 ) THEN rx_err_muxed <= rx_err(191 DOWNTO 176);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 12 ) THEN rx_err_muxed <= rx_err(207 DOWNTO 192);
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 13 ) THEN rx_err_muxed <= rx_err(223 DOWNTO 208);	 
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 14 ) THEN rx_err_muxed <= rx_err(239 DOWNTO 224);	 	
-    ELSIF  LA_a_var = (rd_rx_err_first_adr + 15 ) THEN rx_err_muxed <= rx_err(255 DOWNTO 240);	 
+    IF     LA_a_var = (rd_rx_err_first_adr      ) THEN rx_err_muxed <=      rx_err( 15 DOWNTO   1) & '0';
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 1  ) THEN rx_err_muxed <=      rx_err( 31 DOWNTO  16);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 2  ) THEN rx_err_muxed <=      rx_err( 47 DOWNTO  32);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 3  ) THEN rx_err_muxed <=      rx_err( 63 DOWNTO  48);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 4  ) THEN rx_err_muxed <=      rx_err( 79 DOWNTO  64);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 5  ) THEN rx_err_muxed <=      rx_err( 95 DOWNTO  80);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 6  ) THEN rx_err_muxed <=      rx_err(111 DOWNTO  96);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 7  ) THEN rx_err_muxed <=      rx_err(127 DOWNTO 112);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 8  ) THEN rx_err_muxed <=      rx_err(143 DOWNTO 128);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 9  ) THEN rx_err_muxed <=      rx_err(159 DOWNTO 144);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 10 ) THEN rx_err_muxed <=      rx_err(175 DOWNTO 160);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 11 ) THEN rx_err_muxed <=      rx_err(191 DOWNTO 176);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 12 ) THEN rx_err_muxed <=      rx_err(207 DOWNTO 192);
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 13 ) THEN rx_err_muxed <=      rx_err(223 DOWNTO 208);	 
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 14 ) THEN rx_err_muxed <=      rx_err(239 DOWNTO 224);	 	
+    ELSIF  LA_a_var = (rd_rx_err_first_adr + 15 ) THEN rx_err_muxed <= '0'& rx_err(254 DOWNTO 240);	 
     ELSE   
       rx_err_muxed <= x"beef";	  -- other addresses out of range
     END IF;
@@ -1083,27 +1054,27 @@ END PROCESS rx_err_muxer;
 
 
 tx_req_muxer: PROCESS (tx_req,slave_i.adr)
-VARIABLE LA_a_var    : UNSIGNED (17 DOWNTO 2); 
+VARIABLE LA_a_var    : UNSIGNED (slave_i_adr_max DOWNTO 2); 
 BEGIN
-  LA_a_var             := UNSIGNED(slave_i.adr(17 DOWNTO 2));  
+  LA_a_var             := UNSIGNED(slave_i.adr(slave_i_adr_max DOWNTO 2));  
   IF     ( LA_a_var >= tx_ram_req_first_adr) and (LA_a_var  <= tx_ram_req_last_adr ) THEN
   
-    IF     LA_a_var = (tx_ram_req_first_adr      ) THEN tx_req_muxed <= tx_req( 15 DOWNTO   1) & '0';
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 1  ) THEN tx_req_muxed <= tx_req( 31 DOWNTO  16);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 2  ) THEN tx_req_muxed <= tx_req( 47 DOWNTO  32);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 3  ) THEN tx_req_muxed <= tx_req( 63 DOWNTO  48);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 4  ) THEN tx_req_muxed <= tx_req( 79 DOWNTO  64);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 5  ) THEN tx_req_muxed <= tx_req( 95 DOWNTO  80);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 6  ) THEN tx_req_muxed <= tx_req(111 DOWNTO  96);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 7  ) THEN tx_req_muxed <= tx_req(127 DOWNTO 112);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 8  ) THEN tx_req_muxed <= tx_req(143 DOWNTO 128);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 9  ) THEN tx_req_muxed <= tx_req(159 DOWNTO 144);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 10 ) THEN tx_req_muxed <= tx_req(175 DOWNTO 160);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 11 ) THEN tx_req_muxed <= tx_req(191 DOWNTO 176);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 12 ) THEN tx_req_muxed <= tx_req(207 DOWNTO 192);
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 13 ) THEN tx_req_muxed <= tx_req(223 DOWNTO 208);	 
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 14 ) THEN tx_req_muxed <= tx_req(239 DOWNTO 224);	 	
-    ELSIF  LA_a_var = (tx_ram_req_first_adr + 15 ) THEN tx_req_muxed <= tx_req(255 DOWNTO 240);	 
+    IF     LA_a_var = (tx_ram_req_first_adr      ) THEN tx_req_muxed <=       tx_req( 15 DOWNTO   1) & '0';
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 1  ) THEN tx_req_muxed <=       tx_req( 31 DOWNTO  16);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 2  ) THEN tx_req_muxed <=       tx_req( 47 DOWNTO  32);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 3  ) THEN tx_req_muxed <=       tx_req( 63 DOWNTO  48);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 4  ) THEN tx_req_muxed <=       tx_req( 79 DOWNTO  64);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 5  ) THEN tx_req_muxed <=       tx_req( 95 DOWNTO  80);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 6  ) THEN tx_req_muxed <=       tx_req(111 DOWNTO  96);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 7  ) THEN tx_req_muxed <=       tx_req(127 DOWNTO 112);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 8  ) THEN tx_req_muxed <=       tx_req(143 DOWNTO 128);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 9  ) THEN tx_req_muxed <=       tx_req(159 DOWNTO 144);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 10 ) THEN tx_req_muxed <=       tx_req(175 DOWNTO 160);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 11 ) THEN tx_req_muxed <=       tx_req(191 DOWNTO 176);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 12 ) THEN tx_req_muxed <=       tx_req(207 DOWNTO 192);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 13 ) THEN tx_req_muxed <=       tx_req(223 DOWNTO 208); 
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 14 ) THEN tx_req_muxed <=       tx_req(239 DOWNTO 224);
+    ELSIF  LA_a_var = (tx_ram_req_first_adr + 15 ) THEN tx_req_muxed <= '0' & tx_req(254 DOWNTO 240); 
     ELSE   
       tx_req_muxed <= x"beef";	  -- other addresses out of range
     END IF;
@@ -1114,11 +1085,23 @@ BEGIN
 END PROCESS tx_req_muxer;
 
 
------------------------------------------------------------------------------------------------------  
+-----------------------------------------------------------------------------------------------------
+-- Next Process controls WB Interface
+-- Special Treatment for TX Fifo 
+--               SCU  write access is shortened to a single pulse action
+--               Address bit 2 is signalling if Access is a Data or a CMD word
+-- Special Treatment for TX_TaskRam
+--               When written, the tx_req bit is set in the same moment
+--               Write accesses to a cell, which has a tx_req bit already set, is not allowed
+-- Special Treatment for RX_TaskRam
+--               When read, the rx_err and rx_avail bits are cleared 
+-- Other Registers are implemented straight-forward
+
+
 p_regs_acc: PROCESS (clk_i, nrst_i, slave_i)
-VARIABLE LA_a_var          : UNSIGNED (17 downto 2); 
+VARIABLE LA_a_var          : UNSIGNED (slave_i_adr_max downto 2); 
 BEGIN
-  LA_a_var                 := UNSIGNED(slave_i.adr(17 downto 2));           -- variables evaluated at each clk edge 
+  LA_a_var                 := UNSIGNED(slave_i.adr(slave_i_adr_max downto 2));           -- variables evaluated at each clk edge 
 
   IF nrst_i = '0' THEN
     ex_stall          <= '1';
@@ -1197,8 +1180,8 @@ BEGIN
     clr_rx_avail_ps <= (OTHERS =>'0'); --pulses only set for 1 clk_i period
     clr_rx_err_ps   <= (others => '0');
 
-    IF slave_i.cyc = '1' AND slave_i.stb = '1' AND ex_stall = '1' THEN
-    -- begin of wishbone cycle
+    IF slave_i.cyc = '1' AND slave_i.stb = '1' AND ex_stall = '1' THEN              -- begin of wishbone cycle
+    
 --##############################TX FIFO ACCESS#############################################
       IF (LA_a_var = mil_wr_cmd_a_map) OR  (LA_a_var = mil_rd_wr_data_a_map) THEN  -- fifo uses old cmd/data reg address
         IF slave_i.sel = "1111" THEN
@@ -1231,13 +1214,13 @@ BEGIN
         IF slave_i.sel = "1111" THEN
           IF slave_i.we = '1' AND slave_i_we_del = '0'AND tx_req(to_integer(unsigned(slave_i.adr(9 downto 2))))='0' THEN 
             tx_taskram_wr_d                   <= slave_i.dat(15 DOWNTO 0);
-            tx_taskram_wr_a                   <= slave_i.adr( 9 DOWNTO 2);  --to address 1..xff in range tx_taskreg_first...last_a_var
+            tx_taskram_wr_a                   <= slave_i.adr( 9 DOWNTO 2);                               --to address 1..xff in range tx_taskreg_first...last_a_var
             tx_taskram_we                     <= '1';
-            tx_req(to_integer(unsigned(slave_i.adr(9 downto 2))))   <= '1'; --Tx Requestbit 1..255 set here (cleared on readout with tx_task_ack bit)
+            tx_req(to_integer(unsigned(slave_i.adr(9 downto 2))))   <= '1';                              --Tx Requestbit 1..254 set here (cleared on readout)
             ex_stall                          <= '0';
             ex_ack                            <= '1';
           ELSE                                               
-            ex_stall                          <= '0';                       --write on existing RAM Task isn't allowed
+            ex_stall                          <= '0';                                                    --write on existing RAM Task isn't allowed
             ex_err                            <= '1';
           END IF;
         ELSE                                                 
@@ -1249,13 +1232,12 @@ BEGIN
 --##############################RX_TASKRAM############################################################
       ELSIF (LA_a_var >= rx_taskram_first_adr and  LA_a_var <= rx_taskram_last_adr ) THEN
         IF slave_i.sel = "1111" THEN
-        
- --     IF   slave_i.we = '0' AND rx_err(to_integer(unsigned(slave_i.adr( 9 DOWNTO 2)))) = '0' THEN      --scu cycle needs 2 clocks for ram access 
+
         IF   slave_i.we = '0' THEN                                                                       --scu cycle needs 2 clocks for ram access          
               IF slave_i_stb_dly2 ='0' THEN               
                 rx_taskram_re              <= '1';                                                       --first get data out of rx_taskram    
                 rx_taskram_rd_a            <= slave_i.adr( 9 DOWNTO 2);
-              ELSE --slave_i_stb_dly ='1'                                                                --second to present it to scu bus
+              ELSE                                                                                       --second to present it to scu bus
                 slave_o.dat (15 downto 0)  <= rx_taskram_rd_d;
                 clr_rx_avail_ps(to_integer(unsigned(slave_i.adr( 9 DOWNTO 2))))  <= '1';                 --avail bit will be cleared by scu bus read access
                 clr_rx_err_ps  (to_integer(unsigned(slave_i.adr( 9 DOWNTO 2))))  <= '1';                 --err bit will be cleared by scu bus read access
@@ -1306,7 +1288,7 @@ BEGIN
         END IF;
 
 --##############################tx_req Regs######################################################
-      ELSIF (LA_a_var >= tx_ram_req_first_adr AND LA_a_var <= tx_ram_req_first_adr) THEN
+      ELSIF (LA_a_var >= tx_ram_req_first_adr AND LA_a_var <= tx_ram_req_last_adr) THEN
         IF slave_i.sel = "1111" THEN
           IF slave_i.we = '0' THEN 
             slave_o.dat(15 DOWNTO 0) <= tx_req_muxed; -- Mux selects 16 bits out of tx_req Vector 255..1              
@@ -1578,10 +1560,10 @@ lemo_data_o(2)   <= io_2 when (lemo_event_en(2)='1') else lemo_dat(2);   -- whic
 lemo_data_o(3)   <= lemo_dat(3);                                         -- This is used in SIO (not event drive-able)
 lemo_data_o(4)   <= lemo_dat(4);                                         -- This is used in SIO (not event drive-able)
 
-lemo_out_en_o(1) <= '1' when puls1_frame='1' else lemo_out_en(1);   -- To be compatible with former SCU solution
-lemo_out_en_o(2) <= '1' when puls2_frame='1' else lemo_out_en(2);   -- which allows 2 event-driven lemo outputs
-lemo_out_en_o(3) <= lemo_out_en(3);                                 -- This is used in SIO
-lemo_out_en_o(4) <= lemo_out_en(4);                                 -- This is used in SIO
+lemo_out_en_o(1) <= '1' when puls1_frame='1' else lemo_out_en(1);        -- To be compatible with former SCU solution
+lemo_out_en_o(2) <= '1' when puls2_frame='1' else lemo_out_en(2);        -- which allows 2 event-driven lemo outputs
+lemo_out_en_o(3) <= lemo_out_en(3);                                      -- This is used in SIO
+lemo_out_en_o(4) <= lemo_out_en(4);                                      -- This is used in SIO
 
   
   

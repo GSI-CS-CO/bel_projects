@@ -339,23 +339,11 @@ begin
 end process;
 
 
-mil : wb_mil_sio
+mil : wb_mil_scu
   generic map(
     Clk_in_Hz                => clk_in_hz,
-    tx_taskram_first_adr     => tx_taskram_first_adr,
-    tx_taskram_last_adr      => tx_taskram_last_adr,
-    rx_taskram_first_adr     => rx_taskram_first_adr,
-    rx_taskram_last_adr      => rx_taskram_last_adr, 
-    rd_status_avail_first_adr=> rd_status_avail_first_adr,  
-    rd_status_avail_last_adr => rd_status_avail_last_adr,
-    rd_rx_err_first_adr      => rd_rx_err_first_adr, 
-    rd_rx_err_last_adr       => rd_rx_err_last_adr, 
-    tx_ram_req_first_adr     => tx_ram_req_first_adr, 
-    tx_ram_req_last_adr      => tx_ram_req_last_adr, 
-    sio_mil_first_reg_a      => sio_mil_first_reg_a,
-    sio_mil_last_reg_a       => sio_mil_last_reg_a,
-    evt_filt_first_a         => evt_filt_first_a,
-    evt_filt_last_a          => evt_filt_last_a
+    slave_i_adr_max          => 17                  --14 for SCU, 17 for SIO
+        
     )
   port map(
     clk_i                    => clk,
@@ -416,6 +404,6 @@ mil : wb_mil_sio
     lemo_out_en_o            => lemo_out_en_o,
     lemo_data_i              => lemo_data_i,
     nsig_wb_err              => open
-  );
+  );--wb_mil_scu
 
 end arch_wb_mil_wrapper_sio;
