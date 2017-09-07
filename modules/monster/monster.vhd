@@ -2102,8 +2102,8 @@ begin
       port map(
         clk_i               => clk_sys,
         nRst_i              => rstn_sys,
-        slave_i             => dev_bus_master_o(c_devs_mil),
-        slave_o             => dev_bus_master_i(c_devs_mil),
+        slave_i             => top_bus_master_o(c_tops_mil),
+        slave_o             => top_bus_master_i(c_tops_mil),
         nME_BOO             => mil_nme_boo_i,
         nME_BZO             => mil_nme_bzo_i,
         ME_SD               => mil_me_sd_i,
