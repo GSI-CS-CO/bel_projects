@@ -337,10 +337,10 @@ int main(int argc, char *argv[])
     eb_status = eb_device_read(device, reg_utc_offset_hi_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     value64_bit = value;
     value64_bit <<= 32;
-    printf("    WR_MIL_GW_REG_STATE:          0x%08x\n", value);
+    printf("    WR_MIL_GW_REG_UTC_OFFSET_HI:  0x%08x\n", value);
     eb_status = eb_device_read(device, reg_utc_offset_lo_addr,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
     value64_bit |= value;
-    printf("    WR_MIL_GW_REG_STATE:          0x%08x = %ld s\n", value, value64_bit/1000);
+    printf("    WR_MIL_GW_REG_UTC_OFFSET_LO:  0x%08x = %ld s\n", value, value64_bit/1000);
   }
 
   return 0;
