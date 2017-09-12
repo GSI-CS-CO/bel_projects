@@ -12,24 +12,7 @@ use work.scu_sio3_pkg.all;
 entity wb_mil_wrapper_sio IS  
   generic (
     Clk_in_Hz:                 integer := 125_000_000;  -- Manchester IP needs 20 Mhz clock for proper detection of short 500ns data pulse
-    ram_count:                 integer                := 255;
-    sio_mil_first_reg_a:       unsigned(15 downto 0)  := x"0400";-- which is for eb-tools 32 bit aligned =  0x800
-    sio_mil_last_reg_a:        unsigned(15 downto 0)  := x"0411";
-    tx_taskram_first_adr:      unsigned(15 downto 0)  := x"0501";
-    tx_taskram_last_adr:       unsigned(15 downto 0)  := x"05FF";
-    rx_taskram_first_adr:      unsigned(15 downto 0)  := x"0601";
-    rx_taskram_last_adr:       unsigned(15 downto 0)  := x"06FF"; 
-    rd_status_avail_first_adr: unsigned(15 downto 0)  := x"0700";
-    rd_status_avail_last_adr : unsigned(15 downto 0)  := x"070F";
-    rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0710";
-    rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"071F";
-    tx_ram_req_first_adr:      unsigned(15 downto 0)  := x"0720";
-    tx_ram_req_last_adr:       unsigned(15 downto 0)  := x"072F";    
-    evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
-    evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
-
-
-
+    ram_count:                 integer := 255
     );
 port  (
     -- SCU Bus Slave I/F
@@ -179,7 +162,7 @@ end process;
 
 
 
-access_LB <= Ext_Adr_Val and (Ext_Wr_Active or Ext_Rd_active);
+access_LB   <= Ext_Adr_Val and (Ext_Wr_Active or Ext_Rd_active);
 slave_i.sel <= x"F";
 slave_i.stb <= access_LB and not cycle_finished;
 slave_i.cyc <= access_LB and not cycle_finished;
@@ -219,7 +202,7 @@ begin
         (  (unsigned (Adr_from_SCUB_LA)) >=  tx_taskram_first_adr       and  (unsigned (Adr_from_SCUB_LA))  <=  tx_taskram_last_adr      )  or
         (  (unsigned (Adr_from_SCUB_LA)) >=  rx_taskram_first_adr       and  (unsigned (Adr_from_SCUB_LA))  <=  rx_taskram_last_adr      )  or
         (  (unsigned (Adr_from_SCUB_LA)) >=  rd_rx_err_first_adr        and  (unsigned (Adr_from_SCUB_LA))  <=  rd_rx_err_last_adr       )  or   
-        (  (unsigned (Adr_from_SCUB_LA)) >=  tx_ram_req_first_adr       and  (unsigned (Adr_from_SCUB_LA))  <=  tx_ram_req_last_adr       )  or           
+        (  (unsigned (Adr_from_SCUB_LA)) >=  tx_ram_req_first_adr       and  (unsigned (Adr_from_SCUB_LA))  <=  tx_ram_req_last_adr      )  or           
         (  (unsigned (Adr_from_SCUB_LA)) >=  rd_status_avail_first_adr  and  (unsigned (Adr_from_SCUB_LA))  <=  rd_status_avail_last_adr )  then
      mil_reg_access          <= '1';
      mil_eventfilter_access  <= '0';
@@ -275,7 +258,7 @@ begin
       if Ext_Rd_active='1'  and (mil_reg_access='1' or mil_eventfilter_access='1') then 
         if slave_o.ack='1'  or dly_buf_ack='1'   then  
               --read of timer data (high word directly,low word thru latch)    
-           if     (unsigned(Adr_from_SCUB_LA)) = rd_clr_ev_timer_a_map   then
+            if    (unsigned(Adr_from_SCUB_LA)) = rd_clr_ev_timer_a_map   then
               rd_latch            <=  slave_o.dat(31 downto 16);
               rd_latch_ev_timer   <=  slave_o.dat(15 downto  0); 
             elsif (unsigned(Adr_from_SCUB_LA)) = rd_ev_timer_LW_a_map    then
@@ -293,7 +276,7 @@ begin
             else
                -- read of other wb_mil_scu data including filter ram and fifo
               rd_latch            <=  slave_o.dat(15 downto  0);
-           end if;           
+            end if;           
         end if;
         ack_stretched <= '1';
       else

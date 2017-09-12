@@ -11,21 +11,7 @@ package scu_sio3_pkg is
 component wb_mil_wrapper_sio is 
 generic (
     Clk_in_Hz:                 INTEGER := 125_000_000;    -- Manchester IP needs 20 Mhz clock for proper detection of short 500ns data pulses
-    ram_count:                 integer                := 254;
-    sio_mil_first_reg_a:       unsigned(15 downto 0)  := x"0400";-- which is for eb-tools 32 bit aligned 0x800
-    sio_mil_last_reg_a:        unsigned(15 downto 0)  := x"0411";
-    tx_taskram_first_adr:      unsigned(15 downto 0)  := x"0c01";
-    tx_taskram_last_adr:       unsigned(15 downto 0)  := x"0cFF";
-    rx_taskram_first_adr:      unsigned(15 downto 0)  := x"0d01";
-    rx_taskram_last_adr:       unsigned(15 downto 0)  := x"0dFF"; 
-    rd_status_avail_first_adr: unsigned(15 downto 0)  := x"0e00";
-    rd_status_avail_last_adr : unsigned(15 downto 0)  := x"0e0F";
-    rd_rx_err_first_adr:       unsigned(15 downto 0)  := x"0e10";
-    rd_rx_err_last_adr:        unsigned(15 downto 0)  := x"0e1F";   
-    tx_ram_req_first_adr:      unsigned(15 downto 0)  := x"0e20";
-    tx_ram_req_last_adr:       unsigned(15 downto 0)  := x"0e2F";
-    evt_filt_first_a:          unsigned(15 downto 0)  := x"1000";
-    evt_filt_last_a:           unsigned(15 downto 0)  := x"1FFF"
+    ram_count:                 INTEGER := 254
     );
 port  (
     Adr_from_SCUB_LA:     in       std_logic_vector(15 downto 0);
