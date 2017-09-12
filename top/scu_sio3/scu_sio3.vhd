@@ -444,21 +444,21 @@ sio3_clk_sw: slave_clk_switch
 mil_slave_1: wb_mil_wrapper_sio 
   generic map(
     Clk_in_Hz                 => clk_sys_in_Hz,           -- Wg Bitmessung 1Mb/s (Flanke/Flanke=500 ns), clk_in_hz >= 20 Mhz!
-    ram_count                 => c_ram_count,
-    sio_mil_first_reg_a       => c_sio_mil_first_reg_a,
-    sio_mil_last_reg_a        => c_sio_mil_last_reg_a,
-    tx_taskram_first_adr      => c_tx_taskram_first_adr,	
-    tx_taskram_last_adr       => c_tx_taskram_last_adr,
-    rx_taskram_first_adr      => c_rx_taskram_first_adr,
-    rx_taskram_last_adr       => c_rx_taskram_last_adr,
-    rd_status_avail_first_adr => c_rd_status_avail_first_adr,
-    rd_status_avail_last_adr  => c_rd_status_avail_last_adr, 
-    rd_rx_err_first_adr       => c_rd_rx_err_first_adr,
-    rd_rx_err_last_adr        => c_rd_rx_err_last_adr,
-    tx_ram_req_first_adr      => c_tx_ram_req_first_adr,
-    tx_ram_req_last_adr       => c_tx_ram_req_last_adr,       
-    evt_filt_first_a          => c_ev_filt_first_a,
-    evt_filt_last_a           => c_ev_filt_last_a
+    ram_count                 => c_ram_count
+--     sio_mil_first_reg_a       => c_sio_mil_first_reg_a,
+--     sio_mil_last_reg_a        => c_sio_mil_last_reg_a,
+--     tx_taskram_first_adr      => c_tx_taskram_first_adr,	
+--     tx_taskram_last_adr       => c_tx_taskram_last_adr,
+--     rx_taskram_first_adr      => c_rx_taskram_first_adr,
+--     rx_taskram_last_adr       => c_rx_taskram_last_adr,
+--     rd_status_avail_first_adr => c_rd_status_avail_first_adr,
+--     rd_status_avail_last_adr  => c_rd_status_avail_last_adr, 
+--     rd_rx_err_first_adr       => c_rd_rx_err_first_adr,
+--     rd_rx_err_last_adr        => c_rd_rx_err_last_adr,
+--     tx_ram_req_first_adr      => c_tx_ram_req_first_adr,
+--     tx_ram_req_last_adr       => c_tx_ram_req_last_adr,       
+--     evt_filt_first_a          => c_ev_filt_first_a,
+--     evt_filt_last_a           => c_ev_filt_last_a
 
     
   )
@@ -587,15 +587,16 @@ end process;
 
 test_port_in_0 <= x"00000000";
 
-   --X"000"             & '0'                 & '0'              & Mil_Rcv_Rdy      & nLed(6) &  -- bit31..16
-   --rstn_sys           & clk_sys             & Ena_Every_100ns  & Ena_Every_166ns  &            -- bit15..12
-   --'0'                & '0'                 & pll_locked     & '0'              &            -- bit11..8
-   --'0'                & '0'                 & A_RnW            & A_nDS            &            -- bit7..4
-  --Timing_Pattern_RCV  & '0'                 & '0'              & SCU_Dtack                     -- bit3..0
-  --;
+   --X"000"              & '0'                 & '0'              & Mil_Rcv_Rdy      & nLed(6) &  -- bit31..16
+   --rstn_sys            & clk_sys             & Ena_Every_100ns  & Ena_Every_166ns  &            -- bit15..12
+   --'0'                 & '0'                 & pll_locked       & '0'              &            -- bit11..8
+   --'0'                 & '0'                 & A_RnW            & A_nDS            &            -- bit7..4
+   --Timing_Pattern_RCV  & '0'                 & '0'              & SCU_Dtack                     -- bit3..0
+   --;
 
-s_intr_in <= '0'& clk_switch_intr & "0000000"& Interlock_Intr_o & Data_Rdy_Intr_o & Data_Req_Intr_o & dly_intr_o & ev_fifo_ne_intr_o & every_ms_intr_o;
-
+--s_intr_in <= '0'& clk_switch_intr & "0000000"& Interlock_Intr_o & Data_Rdy_Intr_o & Data_Req_Intr_o & dly_intr_o & ev_fifo_ne_intr_o & every_ms_intr_o;
+--kk change interrupt orderto be compliant with other scu slaves
+s_intr_in <=  "00000000"    & every_ms_intr_o  & Interlock_Intr_o & Data_Rdy_Intr_o & Data_Req_Intr_o & dly_intr_o & ev_fifo_ne_intr_o &  clk_switch_intr;
 
 SCU_Slave:scu_bus_slave
   generic map  (
