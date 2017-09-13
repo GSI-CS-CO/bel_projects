@@ -116,11 +116,7 @@ void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_
         for (ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++) {
           if (scub_read_mil(scub_adr, slot, &data, 0xa6 << 8 | ifa_adr) == OKAY) {
             if ((0xffff & data) >= 0x2) {
-              mprintf("found ifa with fg at 0x%x, ver: 0x%x\n", ifa_adr, 0xffff & data);
               add_to_fglist(DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & data, fglist);
-              ////for (i=0; i < 5; i++)
-                //mprintf("fglist[%d]: 0x%x\n", i, fglist[i]);
-              //while (1);
               scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
             }
           }
@@ -133,11 +129,9 @@ void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_
 
   // ifks connected to mil extension
   if ((int)mil_addr != ERROR_NOT_FOUND) {
-    clear_receive_flag(mil_addr);
     for (ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++) {
       if (read_mil(mil_addr, &data, 0xa6 << 8 | ifa_adr) == OKAY) {
         if ((0xffff & data) >= 0x2) {
-          mprintf("found ifa with fg at 0x%x, ver: 0x%x\n", ifa_adr, 0xffff & data);
           add_to_fglist(DEV_MIL_EXT | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & data, fglist);
           write_mil(mil_addr, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
         }

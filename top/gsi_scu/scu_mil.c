@@ -10,47 +10,11 @@
  ***********************************************************
  ***********************************************************/
 
-void clear_receive_flag(volatile unsigned int *base) {
-  unsigned short rcv_data = 0;
-  usleep(50); // wait 50us, because an initiated mil_read takes 20us for trm function code and ifc address
-              // and the possible receive pattern needs also 20us.
-  if (rcv_flag(base)) {
-    rcv_data = base[MIL_RD_WR_DATA];  // rcv flag is active, so clear flag with reading mil receive register
-  }
-}
-
-//int trm_free(volatile unsigned int *base) {
-  //int i = MAX_TST_CNT;
-  //
-  //for (i = MAX_TST_CNT; i > 0; i--) {
-    //if (base[MIL_WR_RD_STATUS] & MIL_TRM_READY) {
-      //break;
-    //}
-  //}
-  ////if (i > 0)
-    //return OKAY;
-  //else
-    //return TRM_NOT_FREE;
-//}
-
-//int scub_trm_free(volatile unsigned short *base, int slot) {
-  //int i = MAX_TST_CNT;
-//
-  //for (i = MAX_TST_CNT; i > 0; i--) {
-    //if (base[CALC_OFFS(slot) + MIL_WR_RD_STATUS] & MIL_TRM_READY) {
-      //break;
-    //}
-  //}
-  //if (i > 0)
-    //return OKAY;
-  //else
-    //return TRM_NOT_FREE;
-//}
 
 int write_mil(volatile unsigned int *base, short data, short fc_ifc_addr) {
   atomic_on();
-  base[MIL_RD_WR_DATA] = data;
-  base[MIL_WR_CMD] = fc_ifc_addr;
+  base[MIL_SIO3_TX_DATA] = data;
+  base[MIL_SIO3_TX_CMD]  = fc_ifc_addr;
   atomic_off();
   return OKAY;
 }
@@ -59,177 +23,80 @@ int write_mil(volatile unsigned int *base, short data, short fc_ifc_addr) {
 int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   int i;
   atomic_on();
-  base[MIL_RD_WR_DATA] = data[0];
-  base[MIL_WR_CMD] = fc_ifc_addr;
+  base[MIL_SIO3_TX_DATA] = data[0];
+  base[MIL_SIO3_TX_CMD]  = fc_ifc_addr;
   for (i = 1; i < 6; i++) {
-      base[MIL_RD_WR_DATA] = data[i];
+      base[MIL_SIO3_TX_DATA] = data[i];
   }
   atomic_off();
   return OKAY;
 }
 
-
-int rcv_flag(volatile unsigned int *base) {
-  unsigned short status = 0;
-  int i = MAX_TST_CNT;
-  
-  for (i = MAX_TST_CNT; i > 0; i--) {
-    status = (base[MIL_WR_RD_STATUS] & (MIL_RCV_READY | MIL_RCV_ERROR));
-    if (status) {
-      break;
-    }
-  }
-  if (i > 0) {
-    if ((status & MIL_RCV_READY) > 0) {
-      return OKAY;   // received data
-    } else {
-      base[MIL_WR_RD_STATUS] = base[MIL_WR_RD_STATUS]; // clear rcv error bit
-      return RCV_ERROR;  // rcv error is set
-    }
-  } else {
-    return RCV_TIMEOUT;  // rcv timeout
-  }  
-}
-
-int scub_rcv_flag(volatile unsigned short *base, int slot) {
-  unsigned short status = 0;
-  int i = MAX_TST_CNT;
-
-  for (i = MAX_TST_CNT; i > 0; i--) {
-    status = (base[CALC_OFFS(slot) + MIL_WR_RD_STATUS] & (MIL_RCV_READY | MIL_RCV_ERROR));
-    if (status) {
-      break;
-    }
-  }
-  if (i > 0) {
-    if ((status & MIL_RCV_READY) > 0) {
-      return OKAY;   // received data
-    } else {
-      base[CALC_OFFS(slot) + MIL_WR_RD_STATUS] = base[CALC_OFFS(slot) + MIL_WR_RD_STATUS]; // clear rcv error bit
-      return RCV_ERROR;  // rcv error is set
-    }
-  } else {
-    return RCV_TIMEOUT;  // rcv timeout
-  }
-}
-
 int status_mil(volatile unsigned int *base, unsigned short *status) {
-  atomic_on();
-  *status = base[MIL_WR_RD_STATUS];
-  atomic_off();
+  //atomic_on();
+  //*status = base[MIL_WR_RD_STATUS];
+  //atomic_off();
   return OKAY;
 }
 
 int scub_status_mil(volatile unsigned short *base, int slot, unsigned short *status) {
-  atomic_on();
-  *status = base[CALC_OFFS(slot) + MIL_WR_RD_STATUS];
-  atomic_off();
+  //atomic_on();
+  //*status = base[CALC_OFFS(slot) + MIL_WR_RD_STATUS];
+  //atomic_off();
   return OKAY;
 }
 
 
 int read_mil(volatile unsigned int *base, short *data, short fc_ifc_addr) {
-  int rcv_flags = 0;
+  unsigned short rx_data_avail;
+  unsigned short rx_err;
 
   atomic_on();
-  //if (trm_free(base) == OKAY) {
-    base[MIL_WR_CMD] = fc_ifc_addr;
-  //} else {
-    //atomic_off();
-    //return TRM_NOT_FREE;
-  //}
-  rcv_flags = rcv_flag(base);
-  if (rcv_flags == OKAY) {
-    *data = base[MIL_RD_WR_DATA];
-    atomic_off();
+  // dummy read resets available and error bits
+  base[MIL_SIO3_RX_TASK1];
+  // write fc and addr to taskram
+  base[MIL_SIO3_TX_TASK1] = fc_ifc_addr;
+  atomic_off();
+
+  // wait for task to finish, a read over the dev bus needs at least 40us
+  usleep(100);
+
+  rx_data_avail = base[MIL_SIO3_D_RCVD];
+  rx_err        = base[MIL_SIO3_D_ERR];
+  if ((rx_data_avail & 0x2) && !(rx_err & 0x2)) {
+    // copy received value
+    *data = 0xffff & base[MIL_SIO3_RX_TASK1];
     return OKAY;
-  } else if (rcv_flags == RCV_ERROR) {
-    atomic_off();
-    return RCV_ERROR;
-  } else if (rcv_flags == RCV_TIMEOUT) {
-    atomic_off();
+  } else {
     return RCV_TIMEOUT;
   }
 }
 
 int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr) {
-  int rcv_flags = 0;
+  unsigned short rx_data_avail;
+  unsigned short rx_err;
 
   atomic_on();
-  //if (scub_trm_free(base, slot) == OKAY) {
-    base[CALC_OFFS(slot) + MIL_WR_CMD] = fc_ifc_addr;
-  //} else {
-    //atomic_off();
-    //return TRM_NOT_FREE;
-  //}
-  rcv_flags = scub_rcv_flag(base, slot);
-  if (rcv_flags == OKAY) {
-    *data = base[CALC_OFFS(slot) + MIL_RD_WR_DATA];
-    atomic_off();
+  // dummy read resets available and error bits
+  base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK1];
+  // write fc and addr to taskram
+  base[CALC_OFFS(slot) + MIL_SIO3_TX_TASK1] = fc_ifc_addr;
+  atomic_off();
+
+  // wait for task to finish, a read over the dev bus needs at least 40us
+  usleep(100);
+
+  rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD];
+  rx_err        = base[CALC_OFFS(slot) + MIL_SIO3_D_ERR];
+  if ((rx_data_avail & 0x2) && !(rx_err & 0x2)) {
+    // copy received value
+    *data = 0xffff & base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK1];
     return OKAY;
-  } else if (rcv_flags == RCV_ERROR) {
-    atomic_off();
-    return RCV_ERROR;
-  } else if (rcv_flags == RCV_TIMEOUT) {
-    atomic_off();
+  } else {
     return RCV_TIMEOUT;
   }
 }
 
-void run_mil_test(volatile unsigned int *base, unsigned char ifc_addr) {
-  int   test_loop_64k = 0;
-  int   rcv_timeout_cnt = 0;
-  int   rcv_error_cnt = 0;
-  int   send_error_cnt = 0;
-  int   data_error_cnt = 0;
-  int   read_mil_status = 0;
-  unsigned short rcv_data = 0;
-  unsigned short test_pattern = 0;
-  
-  unsigned short wr_echo_ifc = 0x13 << 8; // place function code wr echo reg (0x13) to high byte; low byte holds ifc-card-address
-  unsigned short rd_echo_ifc = 0x89 << 8; // place function code rd echo reg (0x89) to high byte; low byte holds ifc-card-address  
-  
-  wr_echo_ifc |= ifc_addr;
-  rd_echo_ifc |= ifc_addr;
-    
-
-  mprintf("Mil_Base: 0x%x\n", base);
-  clear_receive_flag(base);
-  while(1) {
-   
-    if (write_mil(base, test_pattern, wr_echo_ifc) == OKAY) {
-      read_mil_status = read_mil(base, &rcv_data, rd_echo_ifc);
-      if (read_mil_status == OKAY) {
-	      if (test_pattern == rcv_data) {
-          if (test_pattern == 0xffff) {
-            test_loop_64k++;
-            mprintf("loop_64k: %d  data_err: %d  rcv_to: %d  rcv_err: %d\n",
-                     test_loop_64k, data_error_cnt, rcv_timeout_cnt, rcv_error_cnt);
-          }
-        } else { // test_pattern not equal with rcv_data
-          mprintf("pattern not equal: test_pattern: 0x%x rcv_data 0x%x\n", test_pattern, rcv_data);
-          data_error_cnt++;
-        }
-      } else if (read_mil_status == TRM_NOT_FREE) {
-          send_error_cnt++;
-          mprintf("mil_rd send error: 0x%x\n", send_error_cnt);
-      } else if (read_mil_status == RCV_ERROR) {
-          rcv_error_cnt++;
-          mprintf("mil_rd rcv error: 0x%x\n", rcv_error_cnt);
-      } else if (read_mil_status == RCV_TIMEOUT) {
-          rcv_timeout_cnt++;
-          mprintf("mil_rcv timeout: 0x%x\n", rcv_timeout_cnt);
-      } else {
-        mprintf("unknown error");
-      }
-    }
-    else { // send error
-      send_error_cnt++;
-      mprintf("mil_wr send error: 0x%x\n", send_error_cnt);
-    }
-    test_pattern++;
-  }
-}
 
 /***********************************************************
  ***********************************************************
