@@ -42,14 +42,9 @@
 
 extern int usleep(useconds_t usec);
 int write_mil(volatile unsigned int *base, short data, short fc_ifk_addr);
-int trm_free(volatile unsigned int *base);
-int rcv_flag(volatile unsigned int *base);
 int read_mil(volatile unsigned int *base, short *data, short fc_ifk_addr);
-void clear_receive_flag(volatile unsigned int *base);
-void run_mil_test(volatile unsigned int *base, unsigned char ifk_addr);
 int status_mil(volatile unsigned int *base, unsigned short *status);
 int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr);
-int scub_rcv_flag(volatile unsigned short *base, int slot);
 int scub_status_mil(volatile unsigned short *base, int slot, unsigned short *status);
 int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr);
 
@@ -60,8 +55,13 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
 #define FC_RD_IFC_ECHO    0x89
 #define SCU_MIL           0x35aa6b96
 #define MIL_SIO3_OFFSET   0x400
-#define CALC_OFFS(SLOT)   (((SLOT) * (1 << 16)) + MIL_SIO3_OFFSET)
-
+#define MIL_SIO3_TX_DATA  0x400
+#define MIL_SIO3_TX_CMD   0x401
+#define MIL_SIO3_RX_TASK1 0xd01
+#define MIL_SIO3_TX_TASK1 0xc01
+#define MIL_SIO3_D_RCVD   0xe00
+#define MIL_SIO3_D_ERR    0xe10
+#define CALC_OFFS(SLOT)   (((SLOT) * (1 << 16)))
 
 /*
   +---------------------------------------------+
@@ -94,24 +94,6 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
 #define   RD_CLR_TIMER        0x0006    // read => event timer; write clear event timer.
 #define   RD_WR_DLY_TIMER     0x0007    // read => delay timer; write set delay timer.
 #define   RD_CLR_WAIT_TIMER   0x0008    // read => wait timer; write => clear wait timer.
-#define   TX_TASK_0           0x0040    // write => first read command
-#define   TX_TASK_1           0x0041    // write => second read command
-#define   TX_TASK_2           0x0042    // write => ... read command
-#define   TX_TASK_3           0x0043    // write => ... read command
-#define   TX_TASK_4           0x0044    // write => ... read command
-#define   TX_TASK_5           0x0045    // write => ... read command
-#define   TX_TASK_6           0x0046    // write => ... read command
-#define   TX_TASK_7           0x0047    // write => ... read command
-
-#define   RX_TASK_0           0x0060    // read => first read data
-#define   RX_TASK_1           0x0061    // read => ... read data
-#define   RX_TASK_2           0x0062    // read => ... read data
-#define   RX_TASK_3           0x0063    // read => ... read data
-#define   RX_TASK_4           0x0064    // read => ... read data
-#define   RX_TASK_5           0x0065    // read => ... read data
-#define   RX_TASK_6           0x0066    // read => ... read data
-#define   RX_TASK_7           0x0067    // read => last read data
-#define   TASK_STATUS         0x0080    // bitmap of rx regs, 1: data received
 #define   EV_FILT_FIRST       0x1007    // first event filter (ram) address.
 #define   EV_FILT_LAST        0x1FFF    // last event filter (ram) addres.
 
@@ -170,20 +152,10 @@ inline int scub_write_mil_blk(volatile unsigned short *base, int slot, short *da
 
 inline int scub_write_mil(volatile unsigned short *base, int slot, short data, short fc_ifc_addr) {
   atomic_on();
-  //if (scub_trm_free(base, slot) == OKAY) {
-    base[CALC_OFFS(slot) + MIL_RD_WR_DATA ] = data;
-  //} else {
-    //atomic_off();
-    //return TRM_NOT_FREE;
-  //}
-  //if (scub_trm_free(base, slot) == OKAY) {
-    base[CALC_OFFS(slot) + MIL_WR_CMD] = fc_ifc_addr;
+    base[CALC_OFFS(slot) + MIL_SIO3_TX_DATA ] = data;
+    base[CALC_OFFS(slot) + MIL_SIO3_TX_CMD] = fc_ifc_addr;
     atomic_off();
     return OKAY;
-  //} else {
-    //atomic_off();
-    //return TRM_NOT_FREE;
-  //}
 }
 
 /***********************************************************
