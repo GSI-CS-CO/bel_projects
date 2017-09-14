@@ -61,6 +61,7 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
 #define MIL_SIO3_TX_TASK1 0xc01
 #define MIL_SIO3_D_RCVD   0xe00
 #define MIL_SIO3_D_ERR    0xe10
+#define MIL_SIO3_TX_REQ   0xe20
 #define CALC_OFFS(SLOT)   (((SLOT) * (1 << 16)))
 
 /*
