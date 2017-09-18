@@ -8,7 +8,7 @@
 
 #define FTM_PAGE_QTY        0
 #define FTM_PLAN_MAX        16
-#define FTM_PAGEDATA        0x0600
+#define FTM_PAGEDATA        0x1000
 #define FTM_PAGEMETA        (4 + 4 * FTM_PLAN_MAX + 4 + 4)   
 #define FTM_PAGESIZE        (FTM_PAGEDATA + FTM_PAGEMETA)
 
