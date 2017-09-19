@@ -303,7 +303,7 @@ signal   clr_rx_avail_ps:           std_logic_vector (255 downto 1);
 signal   avail:                     std_logic_vector (255 downto 1);
 signal   avail_muxed:               std_logic_vector (15 downto 0); 
 
-constant timeout_cntr_max:          integer := 70;  --max timeout 50 µs: TX Telegram + RX Telegram + 10µs Gap
+constant timeout_cntr_max:          integer := 55;  --max timeout 50 µs: TX Telegram + RX Telegram + 10µs Gap
 signal   timeout_cntr:              integer :=  0;
 signal   timeout_cntr_en:           std_logic;
 signal   timeout_cntr_clr:          std_logic;
@@ -327,7 +327,7 @@ signal   clr_rx_err_ps:             std_logic_vector (255 downto 1);
 signal   rx_err:                    std_logic_vector (255 downto 0);      
 signal   rx_err_muxed:              std_logic_vector ( 15 downto 0);
 
-
+signal   task_runs_del:             std_logic; 
 BEGIN                               
                                     
 slave_o.stall             <= ex_stall;
@@ -784,6 +784,9 @@ BEGIN
     mil_rd_start_dly2       <= '0';
     mil_rd_start_dly3       <= '0';
     
+    task_runs_del           <= '0';
+    
+    
   ELSIF rising_edge (clk_i) THEN
  
     IF timeout_cntr_clr= '1' then
@@ -811,6 +814,9 @@ BEGIN
     slave_i_we_del           <= slave_i.we;
     mil_trm_start_dly        <= mil_trm_start;
     mil_trm_start_dly2       <= mil_trm_start_dly; 
+    
+    task_runs_del            <= task_runs;
+    
   END IF;
 END PROCESS commonclockedlogic_p;
 
@@ -909,7 +915,7 @@ BEGIN
    --------------------------------------------Timeslot 1...254 TX_TaskRam----------------------------------------------------------------------
     ELSIF ((timeslot >= 1) AND (timeslot <= ram_count )) THEN      --If not Timeslot 0: Do all taskram slots one after another
                                                                    --Timeslot 255 reserved for "Beam Transmission Mode"
-      IF    tx_req(timeslot)='0' and task_runs='0'  then           
+      IF    tx_req(timeslot)='0' and task_runs_del='0'  then           --proceed with scheduler on no task and no request  
                                                                    
         IF timeslot < ram_count  THEN                              
           timeslot           <= timeslot +1;                       --jump to next timeslot(or to 0) 
@@ -919,20 +925,20 @@ BEGIN
                                                                    
       ELSIF tx_req(timeslot) = '1'  or task_runs = '1'  THEN       --check for taskrequest or running task 
                                                                    
-        IF mil_trm_rdy = '1' AND task_runs = '0' THEN              --Case: No Task is running, but transmitter is ready
+        IF mil_trm_rdy = '1' AND task_runs_del = '0' THEN              --Case: No Task is running, but transmitter is ready
           mil_trm_start               <= '1';                      --      or pulse for tx start and timeout_cntr
           timeout_cntr_en             <= '1';                      
           task_runs                   <= '1';
 
         ELSIF task_runs = '1' THEN                                 --Case Transmitter is already running  
 
-          IF timeout_cntr = 55  OR Mil_Rcv_Rdy = '1' THEN          --wait 20µs for tx, 20 for rx and 15 for gap
-            IF timeslot < ram_count THEN
-              timeslot                <= timeslot +1;              --jump to next timeslot(or to 0) 
-            ELSE                      
-              timeslot                <= 0;
-            END IF;       
-            tx_task_ack(timeslot)     <= '1';                      --pulse for acknowledge tx_task when telegram was received
+          IF timeout_cntr = timeout_cntr_max  OR Mil_Rcv_Rdy = '1' THEN          --wait 20µs for tx, 20 for rx and 15 for gap
+            --IF timeslot < ram_count THEN
+            --  timeslot                <= timeslot +1;              --jump to next timeslot(or to 0) 
+            --ELSE                      
+            --  timeslot                <= 0;
+            --END IF;       
+            tx_task_ack(timeslot)     <= '1';                      --pulse to clear tx_req, needs 2 clocks to get effective
             task_runs                 <= '0';
             set_rx_avail_ps(timeslot) <= '1';                      --todo maybe wait until slave_i.stb=0
             timeout_cntr_en           <= '0';                      --stop and reset timeout_cntr for next use
