@@ -47,6 +47,8 @@ int status_mil(volatile unsigned int *base, unsigned short *status);
 int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr);
 int scub_status_mil(volatile unsigned short *base, int slot, unsigned short *status);
 int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr);
+int set_task_mil(volatile unsigned int *base, unsigned char task, short fc_ifc_addr);
+int get_task_mil(volatile unsigned int *base, unsigned char task, short *data);
 
 
 
@@ -63,6 +65,8 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
 #define MIL_SIO3_D_ERR    0xe10
 #define MIL_SIO3_TX_REQ   0xe20
 #define CALC_OFFS(SLOT)   (((SLOT) * (1 << 16)))
+#define TASKMIN           1
+#define TASKMAX           254
 
 /*
   +---------------------------------------------+
@@ -73,6 +77,7 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
 #define   TRM_NOT_FREE        -1
 #define   RCV_ERROR           -2
 #define   RCV_TIMEOUT         -3
+#define   RCV_TASK_ERR        -4
 
 
 /*

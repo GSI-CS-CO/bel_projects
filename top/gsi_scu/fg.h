@@ -13,7 +13,7 @@
 #define   OUTPUT_BITS       24
 #define   MIL_EXT           1
 #define   MAX_SIO3          MAX_SCU_SLAVES 
-#define   IFK_MAX_ADR       255
+#define   IFK_MAX_ADR       254
 #define   GRP_IFA8          24
 
 #define FG_RUNNING    0x4
