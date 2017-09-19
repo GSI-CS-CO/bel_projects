@@ -814,9 +814,26 @@ int main(void) {
   mprintf("scub_irq_base is: 0x%x\n", scub_irq_base);
   mprintf("mil_irq_base is: 0x%x\n", mil_irq_base);
 
-  init(); // init and scan for fgs
+  //init(); // init and scan for fgs
 
-  unsigned short status;
+  short status;
+  unsigned short data[254];
+  
+  for (i = 0; i < 255; i++) {
+    if ((status = write_mil(scu_mil_base, i, 0x13 << 8 | i & 0xff)) != OKAY) dev_failure(status, 0);
+  }
+  //for (i = 0; i < 255; i++) {
+    //read_mil(scu_mil_base, &data[i - 1], 0x89 << 8 | i & 0xff);
+  //}
+  for (i = 1; i < 255; i++) {
+    if ((status = set_task_mil(scu_mil_base, i, 0x89 << 8 | i & 0xff)) != OKAY) dev_failure(status, 0);
+  }
+  for (i = 1; i < 255; i++) {
+    get_task_mil(scu_mil_base, i, &data[i - 1]) ;
+  }
+  for (i = 1; i < 255; i++) {
+    mprintf("data[%d]: 0x%x\n", i, data[i]);
+  }
 
   while(1) {
     /*
