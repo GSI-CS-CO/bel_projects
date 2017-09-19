@@ -84,7 +84,7 @@ void dev_failure(int status, int slot) {
   char err_message1[20] = "TRM NOT FREE";
   char err_message2[20] = "RCV ERROR";
   char err_message3[20] = "RCV TIMEOUT"; 
-  char err_message4[20] = "UNKNOWN";
+  char err_message4[20] = "RCV_TASK_ERR";
 
   if (status == OKAY) 
     mprintf("dev bus access in slot %d failed with message %s\n", slot, err_message0);
@@ -94,8 +94,10 @@ void dev_failure(int status, int slot) {
     mprintf("dev bus access in slot %d failed with message %s\n", slot, err_message2);
   else if(status == RCV_TIMEOUT) 
     mprintf("dev bus access in slot %d failed with message %s\n", slot, err_message3);
-  else
+  else if(status == RCV_TASK_ERR)
     mprintf("dev bus access in slot %d failed with message %s\n", slot, err_message4);
+  else
+    mprintf("dev bus access in slot %d failed with code %d\n", slot, status);
 }
 
 
