@@ -816,57 +816,8 @@ int main(void) {
 
   //init(); // init and scan for fgs
 
-  short status;
-  unsigned short data[254];
-  
-  for (i = 0; i < 255; i++) {
-    if ((status = write_mil(scu_mil_base, i, 0x13 << 8 | i & 0xff)) != OKAY) dev_failure(status, 0);
-  }
-  //for (i = 0; i < 255; i++) {
-    //read_mil(scu_mil_base, &data[i - 1], 0x89 << 8 | i & 0xff);
-  //}
-  for (i = 1; i < 255; i++) {
-    if ((status = set_task_mil(scu_mil_base, i, 0x89 << 8 | i & 0xff)) != OKAY) dev_failure(status, 0);
-  }
-  for (i = 1; i < 255; i++) {
-    get_task_mil(scu_mil_base, i, &data[i - 1]) ;
-  }
-  for (i = 1; i < 255; i++) {
-    mprintf("data[%d]: 0x%x\n", i, data[i]);
-  }
 
   while(1) {
-    /*
-    // check if channels have been stopped
-    status_mil(scu_mil_base, &status);
-    if (status & MIL_DATA_REQ_INTR) {
-      msDelayBig(4000);
-      // does it still signal after 4ms?
-      status_mil(scu_mil_base, &status);
-      if (status & MIL_DATA_REQ_INTR) {
-        irq_disable();
-        dev_bus_irq_handle();
-        irq_enable();
-      }
-    }
-
-
-    for (i = 1; i <= MAX_SCU_SLAVES; i++) {
-      if (is_active_sio(i)) {
-        scub_status_mil(scub_base, i, &status);
-        if (status & MIL_DATA_REQ_INTR) {
-          msDelayBig(4000);
-          // does it still signal after 4ms?
-          scub_status_mil(scub_base, i, &status);
-          if (status & MIL_DATA_REQ_INTR) { 
-            irq_disable();
-            dev_sio_irq(i);
-            irq_enable();
-          }
-        }
-      }
-    }
-    */
   }
 
   return(0);
