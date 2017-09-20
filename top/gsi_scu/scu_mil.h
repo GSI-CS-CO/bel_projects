@@ -49,6 +49,8 @@ int scub_status_mil(volatile unsigned short *base, int slot, unsigned short *sta
 int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr);
 int set_task_mil(volatile unsigned int *base, unsigned char task, short fc_ifc_addr);
 int get_task_mil(volatile unsigned int *base, unsigned char task, short *data);
+int scub_set_task_mil(volatile unsigned short int *base, int slot, unsigned char task, short fc_ifc_addr);
+int scub_get_task_mil(volatile unsigned short int *base, int slot, unsigned char task, short *data);
 
 
 
