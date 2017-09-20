@@ -925,7 +925,7 @@ BEGIN
                                                                    
       ELSIF tx_req(timeslot) = '1'  or task_runs = '1'  THEN       --check for taskrequest or running task 
                                                                    
-        IF mil_trm_rdy = '1' AND task_runs_del = '0' THEN              --Case: No Task is running, but transmitter is ready
+        IF mil_trm_rdy = '1' AND task_runs_del = '0' and Mil_Rcv_Rdy = '0' THEN     --Case: No Task is running, but transmitter is ready
           mil_trm_start               <= '1';                      --      or pulse for tx start and timeout_cntr
           timeout_cntr_en             <= '1';                      
           task_runs                   <= '1';
