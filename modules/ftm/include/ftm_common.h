@@ -21,17 +21,18 @@
 #define ID_FID_BITS             4
 
 #define ID_RES_MSK              ((1 << ID_RES_BITS) - 1)
-#define ID_RES_POS              (0)
 #define ID_BPID_MSK             ((1 << ID_BPID_BITS ) - 1)
-#define ID_BPID_POS             (ID_RES_POS + ID_RES_BITS)
 #define ID_SID_MSK              ((1 << ID_SID_BITS ) - 1)
-#define ID_SID_POS              (ID_BPID_POS + ID_BPID_BITS)
 #define ID_EVTNO_MSK            ((1 << ID_EVTNO_BITS ) - 1)
-#define ID_EVTNO_POS            (ID_SID_POS + ID_SID_BITS)
 #define ID_GID_MSK              ((1 << ID_GID_BITS ) - 1)  
-#define ID_GID_POS              (ID_EVTNO_POS + ID_EVTNO_BITS)
 #define ID_FID_MSK              ((1 << ID_FID_BITS ) - 1)
-#define ID_FID_POS              (ID_GID_POS + ID_GID_BITS)
+
+#define ID_RES_POS              (0)
+#define ID_BPID_POS             (ID_RES_POS   + ID_RES_BITS)
+#define ID_SID_POS              (ID_BPID_POS  + ID_BPID_BITS)
+#define ID_EVTNO_POS            (ID_SID_POS   + ID_SID_BITS)
+#define ID_GID_POS              (ID_EVTNO_POS + ID_EVTNO_BITS)
+#define ID_FID_POS              (ID_GID_POS   + ID_GID_BITS)
 
 
 #define PRIO_IL 2

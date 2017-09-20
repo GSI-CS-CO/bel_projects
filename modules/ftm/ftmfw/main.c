@@ -82,6 +82,20 @@ void init()
    
 }
 
+uint32_t getNodeType(uint32_t* node) {
+  uint32_t* tmpType;
+  uint32_t msk;
+  uint32_t type = NODE_TYPE_UNKNOWN;
+
+  if (node != NULL) {
+    tmpType   = node + (NODE_FLAGS >> 2);
+    type      = (*tmpType >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
+    msk       = -(type < _NODE_TYPE_END_);
+    type     &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
+  }
+  return type;
+}
+
 
 void main(void) {
    
@@ -89,11 +103,10 @@ void main(void) {
 
   uint32_t* tp;
   uint32_t** np;
-  uint32_t type;
+  
   uint64_t now;
   uint64_t *currTime, *deadline;     
-  uint32_t* tmpType;
-  uint32_t msk;
+ 
 
   init();
 
@@ -127,37 +140,22 @@ void main(void) {
     //for (j = 0; j < ((125000000/16)); ++j) { asm("nop"); }
     uint8_t thrIdx = *(uint32_t*)(pT(hp) + (T_TD_FLAGS >> 2)) & 0x7; 
     if (DL(pT(hp))  <= getSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
-         //process node and update node ptr in threadData
-    
-      DBPRINT1("#%02u: ThrIdx %u, Node Ptr is 0x%08x, Dl: %s, type @ 0x%08x is %u\n", cpuId, thrIdx, pN(hp), print64(*(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) ), 0),  tmpType, type);
-      type = NODE_TYPE_UNKNOWN;
-      if (pN(hp) != NULL) {
-        tmpType   = pN(hp) + (NODE_FLAGS >> 2);
-        type      = (*tmpType >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-        msk       = -(type < _NODE_TYPE_END_);
-        type     &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
-      }
-
-      //crude workaround to the fact that direct assignment of a pointer by pN(x) seems not possible ('error: lvalue required as left operand of assignment')
-      *pncN(hp) = (uint32_t)nodeFuncs[type](pN(hp), pT(hp));
+      //DBPRINT1("#%02u: ThrIdx %u, Node Ptr is 0x%08x, Dl: %s, type @ 0x%08x is %u\n", cpuId, thrIdx, pN(hp), print64(*(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) ), 0),  tmpType, type);
       
-      //now *np could be NULL, tread carefully!
-      type = NODE_TYPE_UNKNOWN;
-      if (pN(hp) != NULL) {
-        tmpType = pN(*hp) + (NODE_FLAGS >> 2);
-        type    = (*tmpType >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-        type   &= -(type < _NODE_TYPE_END_); //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
-      }
+      //process node and update node ptr in threadData
+      //crude workaround cause direct assignment of a pointer from pN(x) seems not possible ('error: lvalue required as left operand of assignment')
+      *pncN(hp) = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));
+      
       //update thread deadline for next node
-      deadlineFuncs[type](pN(hp), pT(hp));
+      deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));
 
       // *running   &= ~(*stop & (1<<thrIdx));
-      DL(pT(hp)) |= (((uint64_t)*running >> thrIdx) & 1) -1; // if not running, OR with infinity
+      DL(pT(hp)) |= (((uint64_t)*running >> thrIdx) & 1) -1; // if not running, set deadline to infinity
       // *stop      &= ~(1 << thrIdx);
       heapReplace(0);
       
     } else {
-      //no rush. did the host request any threads to be started?
+      //nothing due right now. did the host request any new threads to be started?
       //for (j = 0; j < ((125000000/1)); ++j) { asm("nop"); }
       //mprintf("#%02u: b4 Start 0x%08x, Stop 0x%08x, Running 0x%08x, i %u\n",  cpuId, *start, *stop, *running, i);
       
