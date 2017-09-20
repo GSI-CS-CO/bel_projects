@@ -32,8 +32,13 @@ void VisitorVertexWriter::visit(const Block& el) const  {
 void VisitorVertexWriter::visit(const TimingMsg& el) const {
   nodeString((Node&)el);
   eventString((Event&)el);
-  out << ", type=\"TMsg\", color=\"black\"";
-  out << ", id=\"0x" << std::hex << el.getId();
+  uint64_t id = el.getId();
+  out << ", type=\"TMsg\", color=\"black";
+  out << "\", fid=\""   << std::dec << ((id >> ID_FID_POS)   & ID_FID_MSK);
+  out << "\", gid=\""   << std::dec << ((id >> ID_GID_POS)   & ID_GID_MSK);
+  out << "\", evtno=\"" << std::dec << ((id >> ID_EVTNO_POS) & ID_EVTNO_MSK);
+  out << "\", sid=\""   << std::dec << ((id >> ID_SID_POS)   & ID_SID_MSK);
+  out << "\", bpid=\""  << std::dec << ((id >> ID_BPID_POS)  & ID_BPID_MSK);
   out << "\", par=\"0x" << std::hex << el.getPar();
   out << "\", tef=\"0x" << std::hex << el.getTef();
   out << "\", res=\"0x" << std::hex << el.getRes();
