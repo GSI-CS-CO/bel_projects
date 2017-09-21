@@ -29,6 +29,8 @@
 #define SIG_ARMED       4
 #define SIG_DISARMED    5
 
+#define NTASKS 3
+
 #define DEVB_MSI      0xdeb50000
 #define SCUB_MSI      0x5cb50000
 
@@ -39,6 +41,7 @@
 
 #define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
+#define RING_SIZE   8
 
 extern struct w1_bus wrpc_w1_bus;
 extern inline int cbisEmpty(volatile struct channel_regs*, int);
@@ -78,6 +81,17 @@ volatile int initialized[MAX_SCU_SLAVES] = {0};
 
 void sw_irq_handler(unsigned int, unsigned int);
 
+struct msi
+{
+   unsigned int  msg;
+   unsigned int  adr;
+   unsigned int  sel;
+}; 
+
+typedef uint32_t ring_pos_t;
+volatile ring_pos_t ring_head;
+volatile ring_pos_t ring_tail;
+volatile struct msi ring_data[RING_SIZE];
 
 void dev_failure(int status, int slot) {
   char err_message0[20] = "OKAY";
@@ -380,6 +394,32 @@ void dev_sio_irq(int sio_slave_nr) {
     }
    
 }
+int add_msg(struct msi m) {
+    ring_pos_t next_head = (ring_head + 1) % RING_SIZE;
+    if (next_head != ring_tail) {
+        /* there is room */
+        ring_data[ring_head] = m;
+        ring_head = next_head;
+        return 0;
+    } else {
+        /* no room left in the buffer */
+        mprintf("msg buffer full!\n");
+        return -1;
+    }
+}
+
+struct msi remove_msg() {
+    struct msi m;
+    if (ring_head != ring_tail) {
+        m = ring_data[ring_tail];
+        ring_tail = (ring_tail + 1) % RING_SIZE;
+        return m;
+    } else {
+        m.msg = -1;
+        m.adr = -1;
+        return m;
+    }
+}
 
 
 void irq_handler()
@@ -390,6 +430,12 @@ void irq_handler()
   static unsigned short old_tmr_cnt[MAX_SCU_SLAVES];
   volatile unsigned int slv_int_act_reg;
   unsigned short slave_acks = 0;
+  struct msi m;
+
+  // send msi thread safe to main loop
+  m.msg = global_msi.msg;
+  m.adr = global_msi.adr;
+  add_msg(m);
 
   if ((global_msi.adr & 0xff) == 0x10) {
     sw_irq_handler(global_msi.adr, global_msi.msg);
@@ -675,6 +721,7 @@ void init_irq_table() {
   isr_table_clr();
   isr_ptr_table[0] = &irq_handler;
   irq_set_mask(0x01);
+  ring_head = ring_tail; // clear msg buffer
   irq_enable();
   mprintf("IRQ table configured.\n");
 }
@@ -814,10 +861,50 @@ int main(void) {
   mprintf("scub_irq_base is: 0x%x\n", scub_irq_base);
   mprintf("mil_irq_base is: 0x%x\n", mil_irq_base);
 
-  //init(); // init and scan for fgs
+  init(); // init and scan for fgs
 
+  void alpha() {
+    static int state = 0;
+    if (state == 0) {
+      mprintf("alpha state %d\n", state);
+      state = 1;
+    } else {
+      mprintf("alpha state %d\n", state);
+      state = 0;
+    }
+    msDelayBig(4000);
+    return;
+  }
+  
+  void beta() {
+    static int state = 0;
+    if (state == 0) {
+      mprintf("beta state %d\n", state);
+      state = 1;
+    } else {
+      mprintf("beta state %d\n", state);
+      state = 0;
+    }
+    msDelayBig(4000);
+    return;
+  }
 
-  while(1) {
+  void gamma() {
+    struct msi m;
+    static int state = 0;
+    m = remove_msg();
+    if (m.msg != -1 && m.adr != -1)
+      mprintf("msg: 0x%x, adr: 0x%x\n", m.msg, m.adr);
+    msDelayBig(4000);
+    return;
+  }
+
+  void (*tasklist[NTASKS])() = {alpha, beta, gamma};
+  int taskcount;
+
+  while (1) {
+    for (taskcount=0; taskcount<NTASKS; taskcount++)
+       (*tasklist[taskcount])();
   }
 
   return(0);
