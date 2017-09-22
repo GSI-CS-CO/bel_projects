@@ -263,7 +263,7 @@ int main(int argc, char** argv) {
   uint32_t actTransfers;   // actual number of transfers
   uint32_t actState;       // actual state of gateway
   uint32_t actStatus;      // actual status of gateway
-  uint32_t actStatTrans;   // actual status of ongoing transfer
+  // chk uint32_t actStatTrans;   // actual status of ongoing transfer
   uint32_t sleepTime;      // time to sleep [us]
   uint32_t printFlag;      // flag for printing
 
@@ -426,7 +426,7 @@ int main(int argc, char** argv) {
     actTransfers = 0;
     actState     = DMUNIPZ_STATE_UNKNOWN;
     actStatus    = DMUNIPZ_STATUS_UNKNOWN;
-    actStatTrans = DMUNIPZ_TRANS_UNKNOWN;
+    // actStatTrans = DMUNIPZ_TRANS_UNKNOWN; chk
 
     while (1) {
       readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans);  // read info from lm32
