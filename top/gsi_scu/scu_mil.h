@@ -133,26 +133,11 @@ int scub_get_task_mil(volatile unsigned short int *base, int slot, unsigned char
 inline int scub_write_mil_blk(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr) {
   int i;
   atomic_on();
-  //if (scub_trm_free(base, slot) == OKAY) {
-  base[CALC_OFFS(slot) + MIL_RD_WR_DATA] = data[0];
-  //} else {
-    //atomic_off();
-    //return TRM_NOT_FREE;
-  //}
-  //if (scub_trm_free(base, slot) == OKAY) {
-    base[CALC_OFFS(slot) + MIL_WR_CMD] = fc_ifc_addr;
-  //} else {
-    //atomic_off();
-    //return TRM_NOT_FREE;
-  //}
+  base[CALC_OFFS(slot) + MIL_SIO3_TX_DATA] = data[0];
+  base[CALC_OFFS(slot) + MIL_SIO3_TX_CMD] = fc_ifc_addr;
 
   for (i = 1; i < 6; i++) {
-    //if (scub_trm_free(base, slot) == OKAY) {
-      base[CALC_OFFS(slot) + MIL_RD_WR_DATA] = data[i];
-    //} else {
-      //atomic_off();
-      //return TRM_NOT_FREE;
-    //}
+      base[CALC_OFFS(slot) + MIL_SIO3_TX_DATA] = data[i];
   }
   atomic_off();
   return OKAY;
