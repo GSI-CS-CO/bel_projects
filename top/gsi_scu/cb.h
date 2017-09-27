@@ -3,6 +3,8 @@
 
 #include <fg.h>
 
+#define RING_SIZE   64
+
 inline int cbisEmpty(volatile struct channel_regs* cr, int channel) {
   return cr[channel].wr_ptr == cr[channel].rd_ptr;
 }
@@ -38,6 +40,21 @@ inline int cbRead(volatile struct channel_buffer *cb, volatile struct channel_re
   return 1;
 }
 
-void cbWrite(volatile struct channel_buffer*, volatile struct channel_regs*, int, struct param_set*);
+struct msi
+{
+   unsigned int  msg;
+   unsigned int  adr;
+   unsigned int  sel;
+}; 
+
+
+typedef uint32_t ring_pos_t;
+struct message_buffer {
+  ring_pos_t ring_head;
+  ring_pos_t ring_tail;
+  struct msi ring_data[RING_SIZE];
+};
+
+void cbWrite(volatile struct channel_buffer *cb, volatile struct channel_regs*, int, struct param_set*);
 void cbDump(volatile struct channel_buffer *cb, volatile struct channel_regs*, int num);
 #endif

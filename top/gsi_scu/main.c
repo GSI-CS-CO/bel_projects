@@ -29,7 +29,11 @@
 #define SIG_ARMED       4
 #define SIG_DISARMED    5
 
-#define NTASKS 3
+#define NTASKS 4
+#define QUEUE_CNT 3
+#define IRQ 0
+#define SCUBUS 1
+#define DEVBUS 2
 
 #define DEVB_MSI      0xdeb50000
 #define SCUB_MSI      0x5cb50000
@@ -41,7 +45,6 @@
 
 #define CLK_PERIOD (1000000 / USRCPUCLK) // USRCPUCLK in KHz
 #define OFFS(SLOT) ((SLOT) * (1 << 16))
-#define RING_SIZE   8
 
 extern struct w1_bus wrpc_w1_bus;
 extern inline int cbisEmpty(volatile struct channel_regs*, int);
@@ -50,6 +53,9 @@ extern inline int cbisFull(volatile struct channel_regs*, int);
 extern int cbgetCount(volatile struct channel_regs*, int); 
 extern int scub_write_mil(volatile unsigned short *base, int slot, short data, short fc_ifc_addr);
 extern int scub_write_mil_blk(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr);
+extern struct msi remove_msg(volatile struct message_buffer *mb, int queue);
+extern int add_msg(volatile struct message_buffer *mb, int queue, struct msi m); 
+extern int has_msg(volatile struct message_buffer *mb, int queue);
 
 
 #define SHARED __attribute__((section(".shared")))
@@ -81,17 +87,8 @@ volatile int initialized[MAX_SCU_SLAVES] = {0};
 
 void sw_irq_handler(unsigned int, unsigned int);
 
-struct msi
-{
-   unsigned int  msg;
-   unsigned int  adr;
-   unsigned int  sel;
-}; 
+volatile struct message_buffer msg_buf[QUEUE_CNT];
 
-typedef uint32_t ring_pos_t;
-volatile ring_pos_t ring_head;
-volatile ring_pos_t ring_tail;
-volatile struct msi ring_data[RING_SIZE];
 
 void dev_failure(int status, int slot) {
   char err_message0[20] = "OKAY";
@@ -304,43 +301,6 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
     }
 }
 
-void dev_bus_irq_handle() {
-  int i;
-  int slot, dev;
-  short irq_data[MAX_FG_CHANNELS] = {0};
-  int status;
-  unsigned short mil_status;
-  short dummy_aquisition;
-  if((status = status_mil(scu_mil_base, &mil_status)) != OKAY) dev_failure(status, 0);
-    /* poll all pending regs on the dev bus; blocking read operation */
-    for (i = 0; i < MAX_FG_CHANNELS && (mil_status & MIL_DATA_REQ_INTR); i++) {
-      if (fg_regs[i].state > 0) {
-        slot = fg_macros[fg_regs[i].macro_number] >> 24;
-        dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-        /* test only ifas connected to mil extension */
-        if(slot & DEV_MIL_EXT) {
-          if ((status = read_mil(scu_mil_base, &irq_data[i], FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 0);
-        }
-      }
-    }  
-    /* handle irqs for ifas with active pending regs; non blocking write */
-    for (i = 0; i < MAX_FG_CHANNELS; i++) {
-      if (irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
-        slot = fg_macros[fg_regs[i].macro_number] >> 24;
-        dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
-        handle(slot, dev, irq_data[i]);
-        //clear irq pending and end block transfer
-        if ((status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev)) != OKAY) dev_failure(status, 0);
-
-        // dummy data aquisition
-        // deactivated until FIFO Rd is implemented
-        //if ((status = scub_read_mil(scub_base, sio_slave_nr, &dummy_aquisition, FC_CNTRL_RD | dev)) != OKAY) {
-          //dev_failure (status, slot & 0xf);
-          //mprintf("dev_sio_irq3\n");
-        //}
-      }
-    }
-}
 
 void dev_sio_irq(int sio_slave_nr) {
   int i;
@@ -394,124 +354,25 @@ void dev_sio_irq(int sio_slave_nr) {
     }
    
 }
-int add_msg(struct msi m) {
-    ring_pos_t next_head = (ring_head + 1) % RING_SIZE;
-    if (next_head != ring_tail) {
-        /* there is room */
-        ring_data[ring_head] = m;
-        ring_head = next_head;
-        return 0;
-    } else {
-        /* no room left in the buffer */
-        mprintf("msg buffer full!\n");
-        return -1;
-    }
-}
 
-struct msi remove_msg() {
-    struct msi m;
-    if (ring_head != ring_tail) {
-        m = ring_data[ring_tail];
-        ring_tail = (ring_tail + 1) % RING_SIZE;
-        return m;
-    } else {
-        m.msg = -1;
-        m.adr = -1;
-        return m;
-    }
-}
 
 
 void irq_handler()
 {
-  int i, j = 0;
-  unsigned char slave_nr = global_msi.msg + 1;
-  volatile unsigned short tmr_irq_cnts; 
-  static unsigned short old_tmr_cnt[MAX_SCU_SLAVES];
-  volatile unsigned int slv_int_act_reg;
-  unsigned short slave_acks = 0;
   struct msi m;
 
-  // send msi thread safe to main loop
+  // send msi threadsafe to main loop
   m.msg = global_msi.msg;
   m.adr = global_msi.adr;
-  add_msg(m);
+  add_msg(&msg_buf[0], IRQ, m);
 
-  if ((global_msi.adr & 0xff) == 0x10) {
-    sw_irq_handler(global_msi.adr, global_msi.msg);
-    return;
-  }
-  slv_int_act_reg = scub_base[OFFS(slave_nr) + SLAVE_INT_ACT];
-  //mprintf("slv_int_act_reg of slave %d is: 0x%x\n", slave_nr, slv_int_act_reg); 
 
-  if ((global_msi.adr & 0xff) == 0x20) {
-    dev_bus_irq_handle(global_msi.adr, global_msi.msg);
-    return;
-  }
-
-  if ((global_msi.adr & 0xff) != 0x00) {
-    mprintf("IRQ unkwown.\n");
-    return;
-  }
-
-  if (slave_nr < 0 || slave_nr > MAX_SCU_SLAVES) {
-    mprintf("slave nr unknown.\n");
-    return;
-  }
-
-  if (slv_int_act_reg & 0x1) {// powerup interrupt
-    slave_acks |= 0x1;
-  }
-  
-  if (slv_int_act_reg & 0x2000) { //tmr irq?
-    //tmr_irq_cnts = scub_base[OFFS(slave_nr) + TMR_BASE + TMR_IRQ_CNT];
-    // init old_tmr_cnt
-    if (!initialized[slave_nr-1]) {
-      //old_tmr_cnt[slave_nr-1] = tmr_irq_cnts - 1;
-      old_tmr_cnt[slave_nr-1] = 0;
-      mprintf("init slave: %d with %x\n", slave_nr, tmr_irq_cnts - 1); 
-      initialized[slave_nr-1] = 1;
-    }  
-    old_tmr_cnt[slave_nr-1]++;
-    slave_acks |= (1 << 13); //ack timer irq
-    mprintf("irq1 slave: %d, cnt: %x, act: %x\n", slave_nr, old_tmr_cnt[slave_nr-1], tmr_irq_cnts);
-  }
-
-   
-  if (slv_int_act_reg & FG1_IRQ) { //FG irq?
-    handle(slave_nr, FG1_BASE, 0);
-    slave_acks |= FG1_IRQ;
-  } 
-  if (slv_int_act_reg & FG2_IRQ) { //FG irq?
-    handle(slave_nr, FG2_BASE, 0);
-    slave_acks |= FG2_IRQ;
-  } 
-  if (slv_int_act_reg & DREQ) { //DRQ irq?
-    dev_sio_irq(slave_nr);
-    slave_acks |= DREQ;
-  }
-  scub_base[OFFS(slave_nr) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
+  //if (slv_int_act_reg & DREQ) { //DRQ irq?
+    //dev_sio_irq(slave_nr);
+    //slave_acks |= DREQ;
+  //}
 }
 
-//void configure_timer(unsigned int tmr_value) {
-  //mprintf("configuring slaves.\n");
-  //int i = 0;
-  //int slot;
-  //scub_base[SRQ_ENA] = 0x0;         // reset bitmask
-  //scub_base[MULTI_SLAVE_SEL] = 0x0; // reset bitmask
-  //while(scub.slaves[i].unique_id) {
-    //slot = scub.slaves[i].slot;
-    //mprintf("enable slave[%d] in slot %d\n", i, slot);
-    //scub_base[SRQ_ENA] |= (1 << (slot-1));                                // enable irqs for the slave
-    //scub_base[MULTI_SLAVE_SEL] |= (1 << (slot-1));                        // set bitmask for broadcast select
-    //scub_base[OFFS(slot) + SLAVE_INT_ENA] = 0x2000;                     // enable tmr irq in slave macro
-    //scub_base[OFFS(slot) + TMR_BASE + TMR_CNTRL] = 0x1;                 // reset TMR
-    //scub_base[OFFS(slot) + TMR_BASE + TMR_VALUEL] = tmr_value & 0xffff; // enable generation of tmr irqs, 1ms, 0xe848
-    //scub_base[OFFS(slot) + TMR_BASE + TMR_VALUEH] = tmr_value >> 16;    // enable generation of tmr irqs, 1ms, 0x001e
-    //scub_base[OFFS(slot) + TMR_BASE + TMR_REPEAT] = 0x14;               // number of generated irqs
-    //i++;
-  //}
-//}
 
 int configure_fg_macro(int channel) {
   int i = 0;
@@ -721,7 +582,7 @@ void init_irq_table() {
   isr_table_clr();
   isr_ptr_table[0] = &irq_handler;
   irq_set_mask(0x01);
-  ring_head = ring_tail; // clear msg buffer
+  msg_buf[IRQ].ring_head = msg_buf[IRQ].ring_tail; // clear msg buffer
   irq_enable();
   mprintf("IRQ table configured.\n");
 }
@@ -863,43 +724,174 @@ int main(void) {
 
   init(); // init and scan for fgs
 
-  void alpha() {
-    static int state = 0;
-    if (state == 0) {
-      mprintf("alpha state %d\n", state);
-      state = 1;
-    } else {
-      mprintf("alpha state %d\n", state);
-      state = 0;
-    }
-    msDelayBig(4000);
+  void scu_bus_handler() {
+    static int state;
+    volatile unsigned int slv_int_act_reg;
+    unsigned char slave_nr;
+    unsigned short slave_acks = 0;
+    struct msi m;
+
+    if (has_msg(&msg_buf[0], SCUBUS)) {
+
+      m = remove_msg(&msg_buf[0], SCUBUS);
+      if (m.adr == 0x0) {
+        slave_nr = m.msg + 1;
+        if (slave_nr < 0 || slave_nr > MAX_SCU_SLAVES) {
+          mprintf("slave nr unknown.\n");
+          return;
+        }
+        slv_int_act_reg = scub_base[OFFS(slave_nr) + SLAVE_INT_ACT];
+        if (slv_int_act_reg & 0x1) {// powerup interrupt
+          slave_acks |= 0x1;
+        }
+        if (slv_int_act_reg & FG1_IRQ) { //FG irq?
+          handle(slave_nr, FG1_BASE, 0);
+          slave_acks |= FG1_IRQ;
+        } 
+        if (slv_int_act_reg & FG2_IRQ) { //FG irq?
+          handle(slave_nr, FG2_BASE, 0);
+          slave_acks |= FG2_IRQ;
+        } 
+        scub_base[OFFS(slave_nr) + SLAVE_INT_ACT] = slave_acks; // ack all pending irqs 
+      }
+    } 
     return;
+   
+  }
+
+  void dev_bus_handler() {
+    int i;
+    int slot, dev;
+    static short irq_data[MAX_FG_CHANNELS];
+    int status;
+    unsigned short mil_status;
+    short dummy_aquisition;
+    static int state;
+    struct msi m;
+    
+    
+    switch(state) {
+      case 0:
+        // we have nothing to do
+        if (!has_msg(&msg_buf[0], DEVBUS))
+          break;
+        else
+          m = remove_msg(&msg_buf[0], DEVBUS);
+        
+        //mprintf("state %d\n", state);
+        /* poll all pending regs on the dev bus; non blocking read operation */
+        for (i = 0; i < MAX_FG_CHANNELS; i++) {
+          if (fg_regs[i].state > 0) {
+            slot = fg_macros[fg_regs[i].macro_number] >> 24;
+            dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+            /* test only ifas connected to mil extension */
+            if(slot & DEV_MIL_EXT) {
+              if ((status = set_task_mil(scu_mil_base, i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20);
+            }
+          }
+        }  
+        state = 1;
+        break;
+        
+      case 1:
+        //mprintf("state %d\n", state);
+        /* fetch status from dev bus controller; */
+        for (i = 0; i < MAX_FG_CHANNELS; i++)
+          irq_data[i] = 0;
+        for (i = 0; i < MAX_FG_CHANNELS; i++) {
+          if (fg_regs[i].state > 0) {
+            slot = fg_macros[fg_regs[i].macro_number] >> 24;
+            dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+            /* test only ifas connected to mil extension */
+            if(slot & DEV_MIL_EXT) {
+              if ((status = get_task_mil(scu_mil_base, i + 1, &irq_data[i])) != OKAY) dev_failure(status, 21);
+            }
+          }
+        }
+        //for (i = 0; i < MAX_FG_CHANNELS; i++) {
+          //mprintf("irq_data[%d]: 0x%x\n", i, irq_data[i]);
+        //}
+        state = 2;
+        break;
+
+      case 2:
+        //mprintf("state %d\n", state);
+        /* handle irqs for ifas with active pending regs; non blocking write */
+        for (i = 0; i < MAX_FG_CHANNELS; i++) {
+          if (irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
+            slot = fg_macros[fg_regs[i].macro_number] >> 24;
+            dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+            handle(slot, dev, irq_data[i]);
+            //clear irq pending and end block transfer
+            if ((status = write_mil(scu_mil_base, 0, FC_IRQ_ACT_WR | dev)) != OKAY) dev_failure(status, 22);
+
+          }
+        }
+        state = 3;
+        break;
+
+      case 3:
+        //mprintf("state %d\n", state);
+        /* dummy data aquisition */
+        for (i = 0; i < MAX_FG_CHANNELS; i++) {
+          if (irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
+            slot = fg_macros[fg_regs[i].macro_number] >> 24;
+            dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+            // non blocking read for DAQ
+            if ((status = set_task_mil(scu_mil_base, i + 1, FC_CNTRL_RD | dev)) != OKAY) dev_failure(status, 23); 
+          }
+        }
+        state = 4; 
+        break;
+      case 4:
+        //mprintf("state %d\n", state);
+        /* fetch daq data */
+        for (i = 0; i < MAX_FG_CHANNELS; i++) {
+          if (irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
+            slot = fg_macros[fg_regs[i].macro_number] >> 24;
+            dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+            // fetch DAQ
+            if ((status = get_task_mil(scu_mil_base, i + 1, &dummy_aquisition)) != OKAY) dev_failure(status, 24); 
+            //mprintf("daq: 0x%x\n", dummy_aquisition);
+          };
+        }  
+        state = 0;
+        break;
+      default:
+        mprintf("unknown state of dev bus handler!\n");
+        state = 0;
+        break;
+    }
+
+    return;
+      
   }
   
-  void beta() {
-    static int state = 0;
-    if (state == 0) {
-      mprintf("beta state %d\n", state);
-      state = 1;
-    } else {
-      mprintf("beta state %d\n", state);
-      state = 0;
-    }
-    msDelayBig(4000);
-    return;
-  }
-
-  void gamma() {
+  void dispatch() {
     struct msi m;
     static int state = 0;
-    m = remove_msg();
-    if (m.msg != -1 && m.adr != -1)
-      mprintf("msg: 0x%x, adr: 0x%x\n", m.msg, m.adr);
-    msDelayBig(4000);
+    m = remove_msg(&msg_buf[0], IRQ);
+
+    // software message from saftlib
+    if ((m.adr & 0xff) == 0x10) {
+      sw_irq_handler(m.adr, m.msg);
+      return;
+
+    // message from scu bus
+    } else if ((m.adr & 0xff) == 0x0) {
+      add_msg(&msg_buf[0], SCUBUS, m);
+      return;
+
+    // message from dev bus
+    } else if ((m.adr & 0xff) == 0x20) {
+      add_msg(&msg_buf[0], DEVBUS, m);
+      return;
+    }
+
     return;
   }
 
-  void (*tasklist[NTASKS])() = {alpha, beta, gamma};
+  void (*tasklist[NTASKS])() = {scu_bus_handler, dispatch, dev_bus_handler, dispatch};
   int taskcount;
 
   while (1) {
