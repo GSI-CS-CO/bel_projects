@@ -11,8 +11,8 @@
 
 #define false 0   //cant believe I'm doing this ...
 #define true  1
-
-#define F_SYS          62500000ULL
+//
+#define F_SYS          125000000ULL
 #define T_SYS          1000000000ULL / F_SYS
 #define CYCSMICRO      1000ULL/16ULL  
 
