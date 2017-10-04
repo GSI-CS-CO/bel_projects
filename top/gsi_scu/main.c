@@ -96,6 +96,7 @@ struct task_control_block {
 };
 
 struct task_control_block task[NTASKS] = {0};
+uint64_t timeout[MAX_SCU_SLAVES] = {0}; 
 
 
 void dev_failure(int status, int slot) {
@@ -197,6 +198,7 @@ void msDelayBig(uint64_t ms)
 void msDelay(uint32_t msecs) {
   usleep(1000 * msecs);
 }
+
 
 inline void send_fg_param(int slot, int fg_base, unsigned short cntrl_reg) {
   struct param_set pset;
@@ -601,19 +603,21 @@ void sw_irq_handler(unsigned int adr, unsigned int msg) {
   }
 }
 
-//int is_active_sio(unsigned int sio_slave_nr) {
-  //int i, slot;
-  //for (i = 0; i < MAX_FG_CHANNELS; i++) {
-    //if (fg_regs[i].state > 0) {
-      //slot = fg_macros[fg_regs[i].macro_number] >> 24;
-      ///* is sio and has active fgs */
-      //if(((slot & 0xf) == sio_slave_nr ) && (slot & DEV_SIO)) {
-        //return 1;
-      //}
-    //}
-  //}
-  //return 0;
-//}
+/* tells if a sio card has enabled dev bus slaves */
+/* 1 <= sio_slave_nr <= MAX_SCU_SLAVES            */
+int is_active_sio(unsigned int sio_slave_nr) {
+  int i, slot;
+  for (i = 0; i < MAX_FG_CHANNELS; i++) {
+    if (fg_regs[i].state > 0) {
+      slot = fg_macros[fg_regs[i].macro_number] >> 24;
+      /* is sio and has active fgs */
+      if(((slot & 0xf) == sio_slave_nr ) && (slot & DEV_SIO)) {
+        return 1;
+      }
+    }
+  }
+  return 0;
+}
 
 int main(void) {
   int i, mb_slot;
@@ -922,6 +926,42 @@ int main(void) {
 
     return;
       
+  }
+  
+  void cleanup_sio_dev(int id) {
+    unsigned short status;
+
+    int slave_nr = (task[id].slave_nr % MAX_SCU_SLAVES);
+    if (timeout[slave_nr] == 0) {
+      if (is_active_sio(slave_nr + 1)) {
+        scub_status_mil(scub_base, slave_nr + 1, &status);
+        if (status & MIL_DATA_REQ_INTR) {
+          // set timer in 20ms
+          //mprintf("timer[%d] set!\n", slave_nr + 1);
+          timeout[slave_nr] = getSysTime() + 10 * 1000000ULL / 8;
+        }
+      }
+    } else if (timeout[slave_nr] > 0) {
+      if (getSysTime() > timeout[slave_nr]) {
+        // check if still not serviced
+        scub_status_mil(scub_base, slave_nr + 1, &status);
+        if (status & MIL_DATA_REQ_INTR) {
+          struct msi m;
+          m.adr = 0;
+          m.msg = slave_nr; 
+          add_msg(&msg_buf[0], DEVSIO, m);
+          //mprintf("timer[%d] timeout!\n", slave_nr + 1);
+        }
+        // reset timer
+        timeout[slave_nr] = 0;
+      }
+    }
+    // print a 64Bit value
+    //mprintf("sio %d, time(high): 0x%x\n", slave_nr, newtime);
+    //mprintf("sio %d, time(low): 0x%x\n", slave_nr, newtime << 32);
+    //mprintf("sio %d, time(us): %d\n", slave_nr, (diff << 32) / 1000ULL);
+    task[id].slave_nr++;
+    return;
   }
   
   void dispatch(int id) {
