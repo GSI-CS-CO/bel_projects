@@ -1,5 +1,6 @@
 #include "scu_mil.h"
 #include "aux.h"
+#include "scu_bus.h"
 
 
 /***********************************************************
@@ -34,17 +35,16 @@ int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr) {
 }
 
 int status_mil(volatile unsigned int *base, unsigned short *status) {
-  //atomic_on();
-  //*status = base[MIL_WR_RD_STATUS];
-  //atomic_off();
+  *status = base[MIL_SIO3_STAT];
   return OKAY;
 }
 
 int scub_status_mil(volatile unsigned short *base, int slot, unsigned short *status) {
-  //atomic_on();
-  //*status = base[CALC_OFFS(slot) + MIL_WR_RD_STATUS];
-  //atomic_off();
-  return OKAY;
+  if (slot >= 1 && slot <= MAX_SCU_SLAVES) {
+    *status = base[CALC_OFFS(slot) + MIL_SIO3_STAT];
+    return OKAY;
+  } else
+    return ERROR;
 }
 
 
@@ -166,7 +166,12 @@ int scub_get_task_mil(volatile unsigned short int *base, int slot, unsigned char
   } else {
     // dummy read resets available and error bits
     *data = 0xffff & base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK1 + task - 1];
-    return RCV_TIMEOUT;
+    if ((*data & 0xffff) == 0xdead)
+      return RCV_TIMEOUT;
+    else if ((*data & 0xffff) == 0xbabe)
+      return RCV_PARITY;
+    else
+      return RCV_ERROR;
   }
 }
 

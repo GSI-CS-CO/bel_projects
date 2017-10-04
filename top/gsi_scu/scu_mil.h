@@ -61,12 +61,13 @@ int scub_get_task_mil(volatile unsigned short int *base, int slot, unsigned char
 #define MIL_SIO3_OFFSET   0x400
 #define MIL_SIO3_TX_DATA  0x400
 #define MIL_SIO3_TX_CMD   0x401
+#define MIL_SIO3_STAT     0x402
 #define MIL_SIO3_RX_TASK1 0xd01
 #define MIL_SIO3_TX_TASK1 0xc01
 #define MIL_SIO3_D_RCVD   0xe00
 #define MIL_SIO3_D_ERR    0xe10
 #define MIL_SIO3_TX_REQ   0xe20
-#define CALC_OFFS(SLOT)   (((SLOT) * (1 << 16)))
+#define CALC_OFFS(SLOT)   (((SLOT) * (1 << 16))) // from slot 1 to slot 12
 #define TASKMIN           1
 #define TASKMAX           254
 
@@ -80,6 +81,8 @@ int scub_get_task_mil(volatile unsigned short int *base, int slot, unsigned char
 #define   RCV_ERROR           -2
 #define   RCV_TIMEOUT         -3
 #define   RCV_TASK_ERR        -4
+#define   RCV_PARITY          -5
+#define   ERROR               -6
 
 
 /*
