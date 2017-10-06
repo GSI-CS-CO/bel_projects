@@ -83,6 +83,7 @@ int scub_get_task_mil(volatile unsigned short int *base, int slot, unsigned char
 #define   RCV_TASK_ERR        -4
 #define   RCV_PARITY          -5
 #define   ERROR               -6
+#define   RCV_TASK_BSY        -7
 
 
 /*
