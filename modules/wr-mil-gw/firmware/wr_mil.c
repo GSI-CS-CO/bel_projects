@@ -156,11 +156,13 @@ void eventHandler(volatile uint32_t    *eca,
       uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY + ((int32_t)config->latency-100)*1000; // add latency to the deadline
       //make_mil_timestamp(mil_event_time, EVT_UTC);     
 
+      // generate MIL event
+      too_late = wait_until_tai(eca, mil_event_time);
+      trials = mil_piggy_write_event(mil_piggy, milTelegram); 
+      ++config->num_events.value;
       if (evtCode == config->utc_trigger)
       {
-        // generate MIL event, followed by EVT_UTC_1/2/3/4/5 EVENTS
-        too_late = wait_until_tai(eca, mil_event_time);
-        trials = mil_piggy_write_event(mil_piggy, milTelegram); 
+        // generate EVT_UTC_1/2/3/4/5 EVENTS
         make_mil_timestamp(mil_event_time, EVT_UTC, config->utc_offset_ms.value);     
         delay_96plus32n_ns(config->trigger_utc_delay*32);
         for (int i = 0; i < N_UTC_EVENTS; ++i)
@@ -173,15 +175,10 @@ void eventHandler(volatile uint32_t    *eca,
           }
         }
       }
-      else
-      {
-        // generate MIL event
-        too_late = wait_until_tai(eca, mil_event_time);
-        trials = mil_piggy_write_event(mil_piggy, milTelegram);
-      }
       if (too_late || trials)
       { 
-        mprintf("evtCode: %d trials: %d  late: %d\n",evtCode, trials, too_late);
+        ++config->late_events;
+        mprintf("evtCode: %u trials: %u  late: %u\n",evtCode, trials, too_late);
       }
     }
     // remove action from ECA queue 

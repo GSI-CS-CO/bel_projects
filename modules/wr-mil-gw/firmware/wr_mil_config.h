@@ -18,6 +18,11 @@ typedef struct
 	uint32_t     state;             // base + 0x1C: INITIAL, UNCONFIGURED, CONFIGURED
 	Value64Bit_t utc_offset_ms;     // base + 0x20: delay [ms] between the TAI and the MIL-UTC, high word 
                                     // base + 0x24: delay [ms] between the trigger the MIL-UTC, low  word
+
+	// The following registers are for monitoring, not for configuration. They should be read but not written by the config tool.
+	Value64Bit_t num_events;        // base + 0x28: number of translated events from WR to MIL, high word
+									// base + 0x2C: number of translated events from WR to MIL, low word
+	uint32_t	 late_events;       // base + 0x30: number of translated events that could not be delivered in time
 } WrMilConfig;
 
 
