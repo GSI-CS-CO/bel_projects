@@ -109,11 +109,9 @@ int get_task_mil(volatile unsigned int *base, unsigned char task, short *data) {
   reg_offset = task / 16;
   bit_offset = task % 16;
   rx_data_avail = base[MIL_SIO3_D_RCVD + reg_offset];
-  rx_err        = base[MIL_SIO3_D_ERR + reg_offset];
-  while(!(rx_data_avail & (1 << bit_offset))) {
-    usleep(1);
-    rx_data_avail = base[MIL_SIO3_D_RCVD + reg_offset];
-  }
+  // return if data is not available yet
+  if(!(rx_data_avail & (1 << bit_offset)))
+    return RCV_TASK_BSY;
 
   rx_err   = base[MIL_SIO3_D_ERR + reg_offset];
   if ((rx_data_avail & (1 << bit_offset)) && !(rx_err & (1 << bit_offset))) {
@@ -123,7 +121,12 @@ int get_task_mil(volatile unsigned int *base, unsigned char task, short *data) {
   } else {
     // dummy read resets available and error bits
     *data = 0xffff & base[MIL_SIO3_RX_TASK1 + task - 1];
-    return RCV_TIMEOUT;
+    if ((*data & 0xffff) == 0xdead)
+      return RCV_TIMEOUT;
+    else if ((*data & 0xffff) == 0xbabe)
+      return RCV_PARITY;
+    else
+      return RCV_ERROR;
   }
 }
 
@@ -152,12 +155,10 @@ int scub_get_task_mil(volatile unsigned short int *base, int slot, unsigned char
   reg_offset = task / 16;
   bit_offset = task % 16;
   rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD + reg_offset];
-  rx_err        = base[CALC_OFFS(slot) + MIL_SIO3_D_ERR + reg_offset];
-  while(!(rx_data_avail & (1 << bit_offset))) {
-    usleep(1);
-    rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD + reg_offset];
-  }
-
+  // return if data is not available yet
+  if(!(rx_data_avail & (1 << bit_offset)))
+    return RCV_TASK_BSY;
+  
   rx_err  = base[CALC_OFFS(slot) + MIL_SIO3_D_ERR + reg_offset];
   if ((rx_data_avail & (1 << bit_offset)) && !(rx_err & (1 << bit_offset))) {
     // copy received value
