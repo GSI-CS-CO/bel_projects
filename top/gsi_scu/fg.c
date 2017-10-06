@@ -113,13 +113,8 @@ void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_
 
       // if slave is a sio3, scan for ifa cards
       if (cid_sys == SYS_CSCO && cid_group == GRP_SIO3) {
-        for (ifa_adr = 1; ifa_adr <= IFK_MAX_ADR; ifa_adr++) {
-          if (scub_set_task_mil(scub_adr, slot, ifa_adr, 0xa6 << 8 | ifa_adr) != OKAY)
-            mprintf("set_task_mil failed at addr 0x%x\n", 0xa6 << 8 | ifa_adr);
-        }
-
-        for (ifa_adr = 1; ifa_adr <= IFK_MAX_ADR; ifa_adr++) {
-          if (scub_get_task_mil(scub_adr, slot, ifa_adr, &data) == OKAY) { 
+        for (ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++) {
+          if (scub_read_mil(scub_adr, slot, &data, 0xa6 << 8 | ifa_adr) == OKAY) {
             if ((0xffff & data) >= 0x2) {
               add_to_fglist(DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & data, fglist);
               scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
@@ -133,20 +128,15 @@ void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_
   }
   // ifks connected to mil extension
   if ((int)mil_addr != ERROR_NOT_FOUND) {
-    for (ifa_adr = 1; ifa_adr <= IFK_MAX_ADR; ifa_adr++) {
-      if (set_task_mil(mil_addr, ifa_adr, 0xa6 << 8 | ifa_adr) != OKAY) 
-        mprintf("set_task_mil failed at addr 0x%x\n", 0xa6 << 8 | ifa_adr);
-    } 
-    for (ifa_adr = 1; ifa_adr <= IFK_MAX_ADR; ifa_adr++) {
-      if (get_task_mil(mil_addr, ifa_adr, &data) == OKAY) {
+    for (ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++) {
+      if (read_mil(mil_addr, &data, 0xa6 << 8 | ifa_adr) == OKAY) {
         if ((0xffff & data) >= 0x2) {
           add_to_fglist(DEV_MIL_EXT | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & data, fglist);
           write_mil(mil_addr, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
         }
       }
-      
     }
-  } 
+  }
 }
 
 
