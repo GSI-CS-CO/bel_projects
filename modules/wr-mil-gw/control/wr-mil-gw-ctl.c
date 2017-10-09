@@ -379,7 +379,7 @@ int main(int argc, char *argv[])
       eb_status = eb_device_read(device, reg_late_events_addr,    EB_BIG_ENDIAN|EB_DATA32, (eb_data_t*)&value, 0, eb_block);
       //printf("    WR_MIL_GW_REG_LATE_EVENTS:    0x%08x = %d\n", value, value);
 
-      if (last_num_events == value64_bit)
+      if (last_num_events && last_num_events == value64_bit)
       {
         printf("WR-MIL-GATEWAY WARNING: Number of translated MIL events did not increase!\n"
                "  Check if wr-mil-gateway and Data Master are both active\n");
