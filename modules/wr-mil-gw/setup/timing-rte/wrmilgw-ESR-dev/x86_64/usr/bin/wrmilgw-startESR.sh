@@ -20,7 +20,7 @@ saft-ecpu-ctl baseboard -x
 saft-ecpu-ctl baseboard -g -z -c 0x0154000000000000 20 100000 4 -d 
 sleep 1
 
-# configure as ESR gateway
+# configure as ESR gateway and run it
 wr-mil-gw-ctl dev/wbm0 -e
 
 # done

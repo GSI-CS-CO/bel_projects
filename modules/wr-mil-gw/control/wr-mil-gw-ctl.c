@@ -383,11 +383,13 @@ int main(int argc, char *argv[])
       {
         printf("WR-MIL-GATEWAY WARNING: Number of translated MIL events did not increase!\n"
                "  Check if wr-mil-gateway and Data Master are both active\n");
+        fflush(stdout);
       }
       if (last_late_events < value)
       {
         printf("WR-MIL-GATEWAY WARNING: Late MIL event occured!\n"
                "  Number of delayed events since last message/reset: %d/%d\n", value - last_late_events, value);
+        fflush(stdout);
       }
 
       last_late_events = value;
