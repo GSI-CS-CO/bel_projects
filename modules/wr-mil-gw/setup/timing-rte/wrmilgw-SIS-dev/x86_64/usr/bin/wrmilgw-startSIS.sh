@@ -17,7 +17,7 @@ saft-ecpu-ctl baseboard -x
 # create new condition for all MIL events ('0' in first four bits of EVTNO)
 #      GROUP-ID for SIS? --------|||
 #                                VVV
-saft-ecpu-ctl baseboard -g -z -c 0x012c000000000000 20 100000 4 -d 
+saft-ecpu-ctl baseboard -g -z -c 0x112c000000000000 20 100000 4 -d 
 sleep 1
 
 # configure as ESR gateway and run it

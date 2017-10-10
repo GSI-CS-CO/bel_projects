@@ -145,7 +145,7 @@ void eventHandler(volatile uint32_t    *eca,
     // AND that have an evtNo that is supposed to be translated into a MIL event (indicated
     //     by the return value of ECAQueue_getMilEventData being != 0)
     if ((ECAQueue_getActTag(eca_queue) == ECA_QUEUE_LM32_TAG) &&
-         ECAQueue_getMilEventData(eca_queue, &evtCode, &milTelegram))
+         ECAQueue_getMilEventData(eca_queue, &evtCode, &milTelegram, config->event_source))
     {
       TAI_t    tai_deadl; 
       uint32_t EVT_UTC[N_UTC_EVENTS];
