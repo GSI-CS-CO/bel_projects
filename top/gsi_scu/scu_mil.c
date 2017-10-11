@@ -48,38 +48,38 @@ int scub_status_mil(volatile unsigned short *base, int slot, unsigned short *sta
 }
 
 
-// blocking read; uses task slot 1
+// blocking read; uses task slot 2
 int read_mil(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   unsigned short rx_data_avail;
   unsigned short rx_err;
   unsigned short rx_req;
 
   // write fc and addr to taskram
-  base[MIL_SIO3_TX_TASK1] = fc_ifc_addr;
+  base[MIL_SIO3_TX_TASK2] = fc_ifc_addr;
 
   // wait for task to start (tx fifo full or other tasks running)
   rx_req = base[MIL_SIO3_TX_REQ];
-  while(!(rx_req & 0x2)) {
+  while(!(rx_req & 0x4)) {
     usleep(1);
     rx_req = base[MIL_SIO3_TX_REQ];
   }
 
   // wait for task to finish, a read over the dev bus needs at least 40us
   rx_data_avail = base[MIL_SIO3_D_RCVD];
-  while(!(rx_data_avail & 0x2)) {
+  while(!(rx_data_avail & 0x4)) {
     usleep(1);
     rx_data_avail = base[MIL_SIO3_D_RCVD];
   }
 
   // task finished
   rx_err = base[MIL_SIO3_D_ERR];
-  if ((rx_data_avail & 0x2) && !(rx_err & 0x2)) {
+  if ((rx_data_avail & 0x4) && !(rx_err & 0x4)) {
     // copy received value
-    *data = 0xffff & base[MIL_SIO3_RX_TASK1];
+    *data = 0xffff & base[MIL_SIO3_RX_TASK2];
     return OKAY;
   } else {
     // dummy read resets available and error bits
-    *data = base[MIL_SIO3_RX_TASK1];
+    *data = base[MIL_SIO3_RX_TASK2];
     return RCV_TIMEOUT;
   }
 }
@@ -177,38 +177,38 @@ int scub_get_task_mil(volatile unsigned short int *base, int slot, unsigned char
 }
 
 
-
+/* blocking dev bus read over scu bus using task slot 2*/
 int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr) {
   unsigned short rx_data_avail;
   unsigned short rx_err;
   unsigned short rx_req;
 
   // write fc and addr to taskram
-  base[CALC_OFFS(slot) + MIL_SIO3_TX_TASK1] = fc_ifc_addr;
+  base[CALC_OFFS(slot) + MIL_SIO3_TX_TASK2] = fc_ifc_addr;
 
   // wait for task to start (tx fifo full or other tasks running)
   rx_req = base[CALC_OFFS(slot) + MIL_SIO3_TX_REQ];
-  while(!(rx_req & 0x2)) {
+  while(!(rx_req & 0x4)) {
     usleep(1);
     rx_req = base[CALC_OFFS(slot) + MIL_SIO3_TX_REQ];
   }
 
   // wait for task to finish, a read over the dev bus needs at least 40us
   rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD];
-  while(!(rx_data_avail & 0x2)) {
+  while(!(rx_data_avail & 0x4)) {
     usleep(1);
     rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD];
   }
 
   // task finished
   rx_err = base[CALC_OFFS(slot) + MIL_SIO3_D_ERR];
-  if ((rx_data_avail & 0x2) && !(rx_err & 0x2)) {
+  if ((rx_data_avail & 0x4) && !(rx_err & 0x4)) {
     // copy received value
-    *data = 0xffff & base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK1];
+    *data = 0xffff & base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK2];
     return OKAY;
   } else {
     // dummy read resets available and error bits
-    base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK1];
+    base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK2];
     return RCV_TIMEOUT;
   }
 }
