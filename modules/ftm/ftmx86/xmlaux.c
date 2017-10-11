@@ -1,6 +1,6 @@
 #include "xmlaux.h"
 
-const char* msgIdFields[] = {"FID", "GID", "EVTNO", "SID", "BPID", "SCTR"};
+const char* msgIdFields[] = {"FID", "GID", "EVTNO", "SID", "BPID", "RES"};
 
 xmlNode* checkNode(xmlNode* aNode, const char* name)
 {
@@ -39,7 +39,7 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
    xmlNode *fieldNode, *subFieldNode = NULL;
    uint32_t i;
    uint64_t offset;
-   uint16_t vals[5];
+   uint16_t vals[6];
    
    fieldNode =  checkNode(msgNode->children, "id") ;
    if(fieldNode != NULL)
@@ -47,7 +47,7 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
          subFieldNode =  fieldNode->children;
          
          //printf("MSG NODE\n Vals:\t");
-         for(i=0;i<5;i++)
+         for(i=0;i<6;i++)
          {
             if( checkNode(subFieldNode, msgIdFields[i]) != NULL)
             {
@@ -58,7 +58,7 @@ t_ftmMsg* createMsg(xmlNode* msgNode, t_ftmMsg* pMsg)
             subFieldNode =  xmlNextElementSibling(subFieldNode);
             //printf("\t %02x", vals[i]);
          }   
-         pMsg->id = getId(vals[0], vals[1], vals[2], vals[3], vals[4], 0);
+         pMsg->id = getId(vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]);
    } else printf("ERROR id %s \n",  fieldNode->name);
    //printf("\n");
    fieldNode = checkNode(xmlNextElementSibling(fieldNode), "par");
