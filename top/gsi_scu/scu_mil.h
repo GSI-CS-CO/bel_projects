@@ -64,6 +64,8 @@ int scub_get_task_mil(volatile unsigned short int *base, int slot, unsigned char
 #define MIL_SIO3_STAT     0x402
 #define MIL_SIO3_RX_TASK1 0xd01
 #define MIL_SIO3_TX_TASK1 0xc01
+#define MIL_SIO3_RX_TASK2 0xd02
+#define MIL_SIO3_TX_TASK2 0xc02
 #define MIL_SIO3_D_RCVD   0xe00
 #define MIL_SIO3_D_ERR    0xe10
 #define MIL_SIO3_TX_REQ   0xe20
