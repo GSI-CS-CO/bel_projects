@@ -113,6 +113,9 @@ void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_
 
       // if slave is a sio3, scan for ifa cards
       if (cid_sys == SYS_CSCO && cid_group == GRP_SIO3) {
+        // reset all taskslots by reading value back
+        scub_reset_mil(scub_adr, slot);
+
         for (ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++) {
           if (scub_read_mil(scub_adr, slot, &data, 0xa6 << 8 | ifa_adr) == OKAY) {
             if ((0xffff & data) >= 0x2) {
@@ -128,6 +131,9 @@ void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_
   }
   // ifks connected to mil extension
   if ((int)mil_addr != ERROR_NOT_FOUND) {
+    // reset all taskslots by reading value back
+    reset_mil(mil_addr);
+
     for (ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++) {
       if (read_mil(mil_addr, &data, 0xa6 << 8 | ifa_adr) == OKAY) {
         if ((0xffff & data) >= 0x2) {
