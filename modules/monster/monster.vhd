@@ -1195,6 +1195,16 @@ begin
       debug_o       => s_pmc_debug_out
     );
 
+    core_debug_o(0) <= top_bus_slave_i(c_topm_pmc).cyc;
+    core_debug_o(1) <= top_bus_slave_i(c_topm_pmc).stb;
+    core_debug_o(2) <= top_bus_slave_i(c_topm_pmc).we;
+
+    core_debug_o(3) <= top_bus_slave_o(c_topm_pmc).ack;
+    core_debug_o(4) <= top_bus_slave_o(c_topm_pmc).err;
+    core_debug_o(5) <= top_bus_slave_o(c_topm_pmc).rty;
+    core_debug_o(6) <= top_bus_slave_o(c_topm_pmc).stall;
+    core_debug_o(7) <= top_bus_slave_o(c_topm_pmc).int;
+
     s_pmc_debug_in(0)          <= gpio_i(8); -- FPGA push button used to trigger INTx IRQ
     s_pmc_debug_in(1)          <= gpio_i(9); -- CPLD push button used to trigger MSI IRQ
     s_pmc_debug_in(7 downto 2) <= (others => '0');
