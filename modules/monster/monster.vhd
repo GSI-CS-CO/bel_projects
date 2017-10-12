@@ -115,6 +115,7 @@ entity monster is
     core_clk_wr_ref_o      : out   std_logic;
     core_clk_butis_o       : out   std_logic;
     core_clk_butis_t0_o    : out   std_logic;
+    core_clk_sys_o         : out   std_logic;
     core_rstn_wr_ref_o     : out   std_logic;
     core_rstn_butis_o      : out   std_logic;
     core_debug_o           : out   std_logic_vector(15 downto 0) := (others => 'Z');
@@ -581,6 +582,8 @@ architecture rtl of monster is
   signal clk_butis_t0     : std_logic; -- 100KHz
   signal clk_butis_t0_ts  : std_logic; -- 100KHz + timestamp
 
+  signal pci_clk_global   : std_logic;
+  
   -- END OF Clock networks
   ----------------------------------------------------------------------------------
 
@@ -990,7 +993,8 @@ begin
   core_clk_butis_t0_o<= clk_butis_t0_ts;
   core_rstn_wr_ref_o <= rstn_ref;
   core_rstn_butis_o  <= rstn_butis;
-
+  core_clk_sys_o     <= clk_sys;
+  
   -- END OF Reset and PLLs
   ----------------------------------------------------------------------------------
 
@@ -1169,7 +1173,7 @@ begin
       master_i      => top_bus_slave_o (c_topm_pmc),
       slave_i       => top_msi_master_o(c_topm_pmc),
       slave_o       => top_msi_master_i(c_topm_pmc),
-      pci_clk_i     => pmc_pci_clk_i,
+      pci_clk_i     => pci_clk_global,
       pci_rst_i     => pmc_pci_rst_i,
       buf_oe_o      => pmc_buf_oe_o,
       busmode_io    => pmc_busmode_io,
@@ -1191,9 +1195,13 @@ begin
       debug_o       => s_pmc_debug_out
     );
 
-    s_pmc_debug_in(0)          <= gpio_i(0);      -- FPGA push button used to trigger INTx IRQ
-    s_pmc_debug_in(1)          <= gpio_i(1); -- CPLD push button used to trigger MSI IRQ
+    s_pmc_debug_in(0)          <= gpio_i(8); -- FPGA push button used to trigger INTx IRQ
+    s_pmc_debug_in(1)          <= gpio_i(9); -- CPLD push button used to trigger MSI IRQ
     s_pmc_debug_in(7 downto 2) <= (others => '0');
+
+    pci : global_region port map(
+      inclk  => pmc_pci_clk_i,
+      outclk => pci_clk_global);
 
   end generate;
 
