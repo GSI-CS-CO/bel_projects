@@ -433,7 +433,7 @@ begin
                             not (hswf_i);
 
  
-  sfp_tx_dis_o <= '0'; -- SFP always enabled
+--  sfp_tx_dis_o <= '0'; -- SFP always enabled
 
 
   -- Display
