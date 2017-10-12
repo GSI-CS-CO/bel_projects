@@ -50,6 +50,24 @@
 #define PAGE_SIZE   256
 #define SDB_DEVICES 1
 
+#define MIL_SIO3_OFFSET   0x400
+#define MIL_SIO3_TX_DATA  0x1000
+#define MIL_SIO3_TX_CMD   0x1004
+#define MIL_SIO3_STAT     0x402
+#define MIL_SIO3_RX_TASK1 0x3404
+#define MIL_SIO3_TX_TASK1 0x3004
+#define MIL_SIO3_D_RCVD   0x3800
+#define MIL_SIO3_D_ERR    0x3840
+#define MIL_SIO3_TX_REQ   0x3880
+#define   OKAY                 1
+#define   TRM_NOT_FREE        -1
+#define   RCV_ERROR           -2
+#define   RCV_TIMEOUT         -3
+#define   RCV_TASK_ERR        -4
+#define   RCV_PARITY          -5
+#define   ERROR               -6
+#define   RCV_TASK_BSY        -7
+
 #define IFA_ID            0xfa00
 #define RELOAD_FAILSAVE   0x1
 #define RELOAD_USER       0x2
@@ -171,41 +189,86 @@ void show_help() {
   printf("-v <file>      verify flash against programming file\n");
 }
 
-// read from a function code fc of the ifa with the addr ifa_addr
-// if the read is successful, the word read is in read_value
-// uses the mil extension card of an SCU
-void devb_read(eb_address_t base, int ifa_addr, unsigned char fc, eb_data_t* read_value) {
+/* blocking read usign task slot1 */
+int devb_read(eb_address_t base, int ifa_addr, unsigned char fc, eb_data_t* read_value) {
+  eb_data_t rx_data_avail;
+  eb_data_t rx_err;
+  //eb_data_t rx_req;
+
   if (!(fc >> 7))  {
     printf("not a read fc!\n");
     exit(1);
   } else {
-    if ((eb_device_write(device, base + CMD_REG, EB_DATA32|EB_BIG_ENDIAN, fc << 8 | ifa_addr, 0, eb_block)) != EB_OK) {
-      printf("eb write failed!\n");
+    // write fc and addr to taskram
+    if ((eb_device_write(device, base + MIL_SIO3_TX_TASK1, EB_DATA32|EB_BIG_ENDIAN, fc << 8 | ifa_addr, 0, eb_block)) != EB_OK)
+      return RCV_TASK_ERR;
+/*
+    // wait for task to start (tx fifo full or other tasks running)
+    if ((eb_device_read(device, base + MIL_SIO3_TX_REQ, EB_DATA32|EB_BIG_ENDIAN, &rx_req, 0, eb_block)) != EB_OK) {
+      printf("read tx req failed!\n");
       exit(1);
     }
-    if ((eb_device_read(device, base + DATA_REG, EB_DATA32|EB_BIG_ENDIAN, read_value, 0, eb_block)) != EB_OK) {
-      printf("no IFA card found with this addr!\n");
-      exit(1);
+    
+   printf("rx_req: 0x%x\n", rx_req); 
+    while(!(rx_req & 0x2)) {
+      usleep(1);
+      printf("rx_req: 0x%x\n", rx_req); 
+      if ((eb_device_read(device, base + MIL_SIO3_TX_REQ, EB_DATA32|EB_BIG_ENDIAN, &rx_req, 0, eb_block)) != EB_OK) {
+        printf("read tx req failed!\n");
+        exit(1);
+      }
     }
+*/
+    // wait for task to finish, a read over the dev bus needs at least 40us
+    if ((eb_device_read(device, base + MIL_SIO3_D_RCVD, EB_DATA32|EB_BIG_ENDIAN, &rx_data_avail, 0, eb_block)) != EB_OK)
+      return RCV_TASK_ERR;
+      
+    while(!(rx_data_avail & 0x2)) {
+      usleep(1);
+      if ((eb_device_read(device, base + MIL_SIO3_D_RCVD, EB_DATA32|EB_BIG_ENDIAN, &rx_data_avail, 0, eb_block)) != EB_OK)
+        return RCV_TASK_ERR;
+    }
+
+    // task finished
+    if ((eb_device_read(device, base + MIL_SIO3_D_ERR, EB_DATA32|EB_BIG_ENDIAN, &rx_err, 0, eb_block)) != EB_OK)
+      return RCV_ERROR;
+
+    // no error
+    if ((rx_data_avail & 0x2) && !(rx_err & 0x2)) {
+      if ((eb_device_read(device, base + MIL_SIO3_RX_TASK1, EB_DATA32|EB_BIG_ENDIAN, read_value, 0, eb_block)) == EB_OK)
+      return OKAY;
+    // error bit set
+    } else {
+      if ((eb_device_read(device, base + MIL_SIO3_RX_TASK1, EB_DATA32|EB_BIG_ENDIAN, read_value, 0, eb_block)) == EB_OK) {
+        if ((*read_value & 0xffff) == 0xdead)
+          return RCV_PARITY;
+        else
+          return RCV_TIMEOUT;
+      }
+
+    }
+    return RCV_ERROR;
+
   }
 }
    
 // write the word write_value to the function code fc of the ifa with the addr ifa_addr
 // uses the mil extension card of an SCU
-void devb_write(eb_address_t base, int ifa_addr, unsigned char fc, eb_data_t write_value) {
+int devb_write(eb_address_t base, int ifa_addr, unsigned char fc, eb_data_t write_value) {
   if (fc >> 7)  {
     printf("not a write fc!\n");
     exit(1);
   } else {
-    if ((eb_device_write(device, base + DATA_REG, EB_DATA32|EB_BIG_ENDIAN, write_value, 0, eb_block)) != EB_OK) {
-      printf("eb write failed!\n");
+    if ((eb_device_write(device, base + MIL_SIO3_TX_DATA, EB_DATA32|EB_BIG_ENDIAN, write_value, 0, eb_block)) != EB_OK) {
+      printf("write tx data faile!\n");
       exit(1);
     }
-    if ((eb_device_write(device, base + CMD_REG, EB_DATA32|EB_BIG_ENDIAN, fc << 8 | ifa_addr, 0, eb_block)) != EB_OK) {
-      printf("eb write failed!\n");
+    if ((eb_device_write(device, base + MIL_SIO3_TX_CMD, EB_DATA32|EB_BIG_ENDIAN, fc << 8 | ifa_addr, 0, eb_block)) != EB_OK) {
+      printf("write tx cmd failed!\n");
       exit(1);
     }
   }
+  return OKAY;
 }
    
 // sets the addr registers in the firmware loader. flash_addr is written to
@@ -219,9 +282,12 @@ void set_flash_addr(eb_address_t base, int ifa_addr, unsigned int flash_addr) {
 
 void clear_flash(eb_address_t base, int ifa_addr) {
   eb_data_t status;
+  int rstatus;
   set_flash_addr(base, ifa_addr, MAGIC_WORD);
   devb_write(base, ifa_addr, FWL_STATUS_WR, ERASE_USER_FLASH);
-  devb_read(base, ifa_addr, FWL_STATUS_RD, &status);
+  rstatus = devb_read(base, ifa_addr, FWL_STATUS_RD, &status);
+  if (rstatus != OKAY)
+    printf("error while clearing flash!\n");
   // wait for operation to finish
   while(status & ERASE_USER_FLASH)
     devb_read(base, ifa_addr, FWL_STATUS_RD, &status);
@@ -229,8 +295,19 @@ void clear_flash(eb_address_t base, int ifa_addr) {
 
 void check_ifa_addr(eb_address_t base, int ifa_addr) {
   eb_data_t read_val;
-  devb_read(base, ifa_addr, IFK_ID, &read_val);
-  printf("Found IFA with addr 0x%x and id 0x%"EB_DATA_FMT"\n", ifa_addr, read_val);
+  int status;
+
+  status = devb_read(base, ifa_addr, IFK_ID, &read_val);
+  if (status == OKAY)
+    printf("Found IFA with addr 0x%x and id 0x%"EB_DATA_FMT"\n", ifa_addr, read_val);
+  else if (status == RCV_ERROR)
+    printf("not IFA found, rcv error\n");
+  else if (status == RCV_TIMEOUT)
+    printf("not IFA found, rcv timeout\n");
+  else if (status == RCV_PARITY)
+    printf("not IFA found, rcv parity\n");
+  else if (status == RCV_TASK_ERR)
+    printf("not IFA found, rcv task error\n");
 }
 
 
@@ -240,6 +317,7 @@ int main(int argc, char * const* argv) {
   struct sdb_device sdbDevice[SDB_DEVICES];
   int nDevices;  
   eb_address_t dev_bus;
+  eb_data_t version;
 
   char *wvalue = NULL;
   int rflag = 0;
@@ -295,9 +373,9 @@ int main(int argc, char * const* argv) {
       }
 
   if (ivalue != NULL) {
-    long conv = strtol(ivalue, &p, 16);
+    long conv = strtol(ivalue, &p, 10);
     if (errno != 0 || *p != '\0' || conv <= 0x0 || conv > 0xff) {
-      printf("parameter i is out of range 0x00 - 0xff\n");
+      printf("parameter i is out of range 0 - 254\n");
       exit(1);
     } else {
       ifa_id = conv;
@@ -312,7 +390,7 @@ int main(int argc, char * const* argv) {
 
   if (argc < 3 || argc-optind < 1) {
     printf("program needs at least the device name of the etherbone device and an ifa address in the range 0-254.\n");
-    printf("e.g. %s -i0x50 dev/wbm0\n", argv[0]);
+    printf("e.g. %s -i80 dev/wbm0\n", argv[0]);
     exit(0);
   }
 
@@ -348,6 +426,10 @@ int main(int argc, char * const* argv) {
     die("more then one DEV bus", EB_FAIL);
 
   dev_bus = sdbDevice[0].sdb_component.addr_first;
+  version = sdbDevice[0].sdb_component.product.version;
+  
+  if (version < 2)
+    die("wb_mil_scu version >= 2 needed!\n", EB_FAIL);
 
   //print information about the found ifa
   check_ifa_addr(dev_bus, ifa_id);
