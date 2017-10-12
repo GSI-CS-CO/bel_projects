@@ -4,7 +4,7 @@ create_clock -name {lvt_clk_i}        -period 10.000 [get_ports {lvt_clk_i}     
 
 # PCI Clock Settings
 ##############################
-create_clock -period 30 -name PCI_CLOCK pmc_clk_i
+create_clock -period 30 -name PCI_CLOCK [get_ports {pmc_clk_i}]
 set_false_path -from [get_ports pmc_rst_i] -to *
 
 
@@ -16,7 +16,7 @@ derive_clock_uncertainty
 set_clock_groups -asynchronous                           \
  -group { altera_reserved_tck                          } \
  -group { lvt_clk_i                                    } \
- -group { pmc_clk_i                                    } \
+ -group { PCI_CLOCK                                    } \
  -group { clk_20m_vcxo_i    main|\dmtd_a5:dmtd_inst|*  } \
  -group { clk_125m_local_i  main|\sys_a5:sys_inst|*    } \
  -group { clk_sfp_ref_i     main|\ref_a5:ref_inst|*      \
@@ -29,8 +29,8 @@ set_clock_groups -asynchronous                           \
           main|\phy_a5:phy|*|rcvdclkpma                } 
 
 # cut: wb sys <=> pci (different frequencies and using xwb_clock_crossing)
-set_false_path -from [get_clocks {pmc_clk_i}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}]
-set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {pmc_clk_i}]
+set_false_path -from PCI_CLOCK -to [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}]
+set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to PCI_CLOCK
 
 # cut: wb sys <=> wb flash   (different frequencies and using xwb_clock_crossing)
 set_false_path -from [get_clocks {main|\sys_a5:sys_inst|*|general[0].*}] -to [get_clocks {main|\sys_a5:sys_inst|*|general[4].*}]
