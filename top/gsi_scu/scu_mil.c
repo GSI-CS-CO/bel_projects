@@ -213,6 +213,22 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
   }
 }
 
+/* reset all task slots */
+int scub_reset_mil(volatile unsigned short *base, int slot) {
+  unsigned short data;
+  int i;
+  for (i = TASKMIN; i <= TASKMAX; i++) {
+    data = 0xffff & base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK1 + i - 1];
+  }
+}
+/* reset all task slots */
+int reset_mil(volatile unsigned *base) {
+  unsigned short data;
+  int i;
+  for (i = TASKMIN; i <= TASKMAX; i++) {
+    data = 0xffff & base[MIL_SIO3_RX_TASK1 + i - 1];
+  }
+}
 
 /***********************************************************
  ***********************************************************
