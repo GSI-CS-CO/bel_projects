@@ -483,7 +483,8 @@ begin
                   x"FF"                    when ('1' & x"F"),   -- FPGA hex sw in position F, button     pressed, led test
                   ("000" &     con)        when ('0' & x"D"),   -- FPGA hex sw in position D, button not pressed, CPLD HEX SW and button test  
                   ("000" & not con)        when ('1' & x"D"),   -- FPGA hex sw in position D, button     pressed, CPLD HEX SW and button test  
-                core_debug_out(7 downto 0) when ('0' & x"C"),   -- FPGA hex sw in position D, button not pressed, xwb control signals for pmc master output
+               core_debug_out( 7 downto 0) when ('0' & x"C"),   -- FPGA hex sw in position D, button not pressed, xwb control signals for pmc master output
+               core_debug_out(15 downto 8) when ('1' & x"C"),   -- FPGA hex sw in position D, button not pressed, xwb control signals for pmc master output
                   s_gpio_out(7 downto 0)   when others;         -- driven by monster
 
   led_user_o <= not s_led_user;
