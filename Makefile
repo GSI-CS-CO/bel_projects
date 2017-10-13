@@ -101,7 +101,8 @@ sdbfs-clean::
 	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace" clean
 
 gcc-4.5.3-lm32.tar.xz:
-	wget http://www.ohwr.org/attachments/1301/gcc-4.5.3-lm32.tar.xz
+	wget http://www.ohwr.org/attachments/1301/
+	mv index.html gcc-4.5.3-lm32.tar.xz
 
 toolchain:	gcc-4.5.3-lm32.tar.xz
 	tar xvJf gcc-4.5.3-lm32.tar.xz
@@ -192,13 +193,13 @@ addac2::	firmware
 addac2-clean::
 	$(MAKE) -C syn/gsi_addac2 PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
-diob::		firmware		
+diob::		firmware
 	$(MAKE) -C syn/scu_diob PATH=$(PWD)/toolchain/bin:$(PATH) all
 
 diob-clean::
 	$(MAKE) -C syn/scu_diob PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
-sio3::		firmware		
+sio3::		firmware
 	$(MAKE) -C syn/scu_sio3 PATH=$(PWD)/toolchain/bin:$(PATH) all
 
 sio3-clean::
