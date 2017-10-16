@@ -71,6 +71,7 @@
 
 #define SCU_BUS_MASTER        0x9602eb6f
 #define WR_1Wire              0x779c5443
+#define User_1Wire            0x4c8a0635
 #define WB_FG_QUAD            0x863e07f0
 
 #define WR_CFIPFlash          0x12122121

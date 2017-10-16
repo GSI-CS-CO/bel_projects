@@ -86,12 +86,13 @@ uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; // hi..lo bytes: slot, device, v
 struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS]; 
 struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
 
-volatile unsigned short* scub_base   = 0;
-volatile unsigned int* scub_irq_base = 0;
-volatile unsigned int* scu_mil_base  = 0;
-volatile unsigned int* mil_irq_base  = 0;
-sdb_location ow_base[2];              // there should be two controllers
-volatile unsigned int* cpu_info_base = 0;
+volatile unsigned short* scub_base     = 0;
+volatile unsigned int* scub_irq_base   = 0;
+volatile unsigned int* scu_mil_base    = 0;
+volatile unsigned int* mil_irq_base    = 0;
+volatile unsigned int* wr_1wire_base   = 0;
+volatile unsigned int* user_1wire_base = 0;
+volatile unsigned int* cpu_info_base   = 0;
 
 volatile unsigned int param_sent[MAX_FG_CHANNELS];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
@@ -516,14 +517,14 @@ void disable_channel(unsigned int channel) {
 }
 
 void updateTemp() {
-  BASE_ONEWIRE = (unsigned char *)getSdbAdr(&ow_base[0]);
+  BASE_ONEWIRE = (unsigned char *)wr_1wire_base;
   wrpc_w1_init();
   ReadTempDevices(0, &board_id, &board_temp);
-  BASE_ONEWIRE = (unsigned char *)getSdbAdr(&ow_base[1]);
+  BASE_ONEWIRE = (unsigned char *)user_1wire_base;
   wrpc_w1_init();
   ReadTempDevices(0, &ext_id, &ext_temp);
   ReadTempDevices(1, &backplane_id, &backplane_temp);
-  BASE_ONEWIRE = (unsigned char *)getSdbAdr(&ow_base[0]); // important for PTP deamon 
+  BASE_ONEWIRE = (unsigned char *)wr_1wire_base; // important for PTP deamon 
   wrpc_w1_init();
 }
 
@@ -1021,9 +1022,10 @@ int main(void) {
   scub_base     = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
   scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);    // irq controller for scu bus
   find_device_multi(&found_sdb[0], &clu_cb_idx, 20, GSI, LM32_CB_CLUSTER); // find location of cluster crossbar
-  scu_mil_base  = (unsigned int*)find_device(SCU_MIL);
+  scu_mil_base  = (unsigned int*)find_device_adr(GSI,SCU_MIL); // mil extension macro
   mil_irq_base  = (unsigned int*)find_device_adr(GSI, MIL_IRQ_CTRL); // irq controller for dev bus extension
-  find_device_multi(ow_base, &ow_base_idx, 2, CERN, WR_1Wire);
+  wr_1wire_base = (unsigned int*)find_device_adr(CERN, WR_1Wire); // 1Wire controller in the WRC
+  user_1wire_base = (unsigned int*)find_device_adr(GSI, User_1Wire); // 1Wire controller on dev crossbar
   
 
   mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
@@ -1053,10 +1055,8 @@ int main(void) {
     mprintf("number MSI endpoints: %d\n", cpu_info_base[1]);
   }
 
-  mprintf("number of 1Wire controllers found: %d\n", ow_base_idx);
-  for (i=0; i < ow_base_idx; i++) {
-    mprintf("ow_base[%d] is: 0x%x\n",i, getSdbAdr(&ow_base[i]));
-  }
+  mprintf("wr_1wire_base is: 0x%x\n", wr_1wire_base);
+  mprintf("user_1wire_base is: 0x%x\n", user_1wire_base);
   mprintf("scub_irq_base is: 0x%x\n", scub_irq_base);
   mprintf("mil_irq_base is: 0x%x\n", mil_irq_base);
 
