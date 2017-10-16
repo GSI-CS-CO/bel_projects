@@ -18,6 +18,7 @@
 #include "fg.h"
 #include "cb.h"
 #include "scu_mil.h"
+#include "dow_crc.h"
 
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2
@@ -444,7 +445,7 @@ void print_fgs() {
   int i=0;
   for(i=0; i < MAX_FG_MACROS; i++)
     fg_macros[i] = 0;
-  scan_scu_bus(scub_base, scu_mil_base, &fg_macros[0]);
+  scan_scu_bus(scub_base, scu_mil_base, &fg_macros[0], &ext_id);
 
   i=0;
   while(i < MAX_FG_MACROS) {
