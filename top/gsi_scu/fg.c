@@ -85,7 +85,7 @@ int add_to_fglist(int slot, int dev, int cid_sys, int cid_group, int fg_ver, uin
 
   return count; //return number of found fgs
 }
-void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_addr, uint32_t *fglist) {
+void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_addr, uint32_t *fglist, uint64_t *ext_id) {
   int i, j = 0;
   unsigned short ext_clk_reg;
   short data;
@@ -129,8 +129,10 @@ void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_
       }
     }
   }
-  // ifks connected to mil extension
-  if ((int)mil_addr != ERROR_NOT_FOUND) {
+  /* check only for ifks, if there is a macro found and a mil extension attached to the baseboard */
+  /* mil extension is recognized by a valid 1wire id                                              */
+  /* mil extension has a 1wire temp sensor with family if 0x42                                    */
+  if (((int)mil_addr != ERROR_NOT_FOUND) && (((int)*ext_id & 0xff) == 0x42)) {
     // reset all taskslots by reading value back
     reset_mil(mil_addr);
 

@@ -65,7 +65,7 @@ struct channel_buffer {
   struct param_set pset[BUFFER_SIZE];
 };
 
-void scan_scu_bus(volatile unsigned short *base_adr, volatile unsigned int *mil_base, uint32_t *fglist);
+void scan_scu_bus(volatile unsigned short *base_adr, volatile unsigned int *mil_base, uint32_t *fglist, uint64_t *ext_id);
 void init_buffers(struct channel_regs *cr, int channel, uint32_t *macro, volatile unsigned short* scub_base, volatile unsigned int* devb_base);
 
 #endif
