@@ -395,7 +395,7 @@ int main(int argc, char *argv[])
       last_late_events = value;
       last_num_events  = value64_bit;
 
-      sleep(1);
+      sleep(10);
     }
   }
 
