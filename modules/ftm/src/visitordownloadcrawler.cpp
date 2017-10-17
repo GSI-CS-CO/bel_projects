@@ -28,17 +28,12 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
   Graph::in_edge_iterator in_begin, in_end;
   uint32_t tmpAdr;
 
-  setDefDst();
+  
   tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_ALT_DEST_PTR ));
-  if (tmpAdr != LM32_NULL_PTR) { boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sDL),          g);
-  //std::cout << "Node " << g[v].name << " has destlist " << g[((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v].name << std::endl; 
-  /*
-  for (boost::tie(in_begin, in_end) = in_edges(((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v,g); in_begin != in_end; ++in_begin)
-{   
-    std::cout << "Parent of " << g[((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v].name << " is " << g[source(*in_begin,g)].name << std::endl;
-}
-*/
-  }
+  //if the block has no destination list, set default destination ourself
+  if (tmpAdr != LM32_NULL_PTR) { boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sDL), g); }
+  else setDefDst();  
+
   tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_IL_PTR ));
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sQM[PRIO_IL]), g);
   tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_HI_PTR ));
@@ -152,7 +147,9 @@ void VisitorDownloadCrawler::visit(const CmdQBuffer& el) const {
 void VisitorDownloadCrawler::visit(const DestList& el) const {
   vertex_t vPblock;
   Graph::in_edge_iterator in_begin, in_end;
-  uint32_t tmpAdr;  
+  uint32_t tmpAdr, defAdr; 
+
+   
 
   //std::cout << "Trying to find parent of " << g[v].name << std::endl;
   boost::tie(in_begin, in_end) = in_edges(v,g);
@@ -164,14 +161,35 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
     vPblock = source(*in_begin,g);
 
     //add all destination (including default destination (defDstPtr might have changed during runtime) connections from the dest list to the parent block
+
+    bool defaultValid = false;
+    std::string sType = sAD;
+    defAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(g[vPblock].np->getB() + NODE_DEF_DEST_PTR));
+    std::cerr << "def  " << std::hex << "0x" << defAdr << std::endl;   
+
     for (ptrdiff_t offs = DST_ARRAY; offs < DST_ARRAY_END; offs += _32b_SIZE_) {
       tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + offs ));
+
+      //if tmpAdr it is the default address, change edge type to sDD (defdst)
+      std::cerr << "current alt " << std::hex << "0x" << tmpAdr << std::endl;
+      if (tmpAdr == defAdr) { sType = sDD; defaultValid = true;}
+      else sType = sAD;
+
       if (tmpAdr != LM32_NULL_PTR) {
         auto x = at.lookupAdr(cpu, tmpAdr);
-        if (x != NULL) {//std::cout << "found altdest!" << std::endl; 
-          boost::add_edge(vPblock, x->v, (myEdge){sAD}, g);
+        if (x != NULL) {
+          boost::add_edge(vPblock, x->v, (myEdge){sType}, g);
         }
       }  
+    }
+    if (!defaultValid) { //default destination was not in alt dest list. that shouldnt happen ... draw it in
+      std::cerr << "!!! DefDest not in AltDestList. Means someone set an arbitrary pointer for DefDest !!!" << std::endl;
+      if (defAdr != LM32_NULL_PTR) {
+        auto x = at.lookupAdr(cpu, defAdr);
+        if (x != NULL) {
+          boost::add_edge(vPblock, x->v, (myEdge){sBD}, g);
+        } else boost::add_edge(vPblock, vPblock, (myEdge){sBD}, g);
+      }
     }
   } else {
     std::cerr << "!!! No parent found !!!" << std::endl;

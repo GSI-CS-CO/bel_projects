@@ -28,7 +28,10 @@ void CmdQBuffer::serialise(const vAdr &va) const {
 
 void DestList::serialise(const vAdr &va) const {
   Meta::serialise(va);
-  auto startIt = va.begin() + ADR_ALT_DST_ARRAY;
+
+
+
+  auto startIt = va.begin();
   //FIXME size check !
   for(auto it = startIt; it < va.end(); it++) {
     writeLeNumberToBeBytes(b + (ptrdiff_t)DST_ARRAY + (it - startIt) * _32b_SIZE_,  *it); 

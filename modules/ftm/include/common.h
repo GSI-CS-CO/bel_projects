@@ -50,6 +50,7 @@ extern const std::string sQM[];
 extern const std::string sDL;
 extern const std::string sDD;
 extern const std::string sAD;
+extern const std::string sBD;
 extern const std::string sTG;
 extern const std::string sFD;
 extern const std::string sDID;
@@ -79,7 +80,7 @@ inline T s2u(const std::string& s) {
 }
 
 
-inline void hexDump (const char *desc, void *addr, int len) {
+inline void hexDump (const char *desc, const void *addr, int len) {
     int i;
     unsigned char buff[17];
     unsigned char *pc = (unsigned char*)addr;

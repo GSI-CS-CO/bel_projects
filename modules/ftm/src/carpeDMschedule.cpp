@@ -42,20 +42,24 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
       //generate addresses of Bmp's address range
       for (adr = atUp.adr2extAdr(i, atUp.getMemories()[i].sharedOffs); adr < atUp.adr2extAdr(i, atUp.getMemories()[i].startOffs); adr += _32b_SIZE_) ret.push_back(adr);
 
-      //std::cout << "CPU " << i << std::endl;
-      //for(auto& it : ret) {  std::cout << std::hex << "0x" << it << std::endl; }
+      
     }
 
     //add all Node addresses to return vector
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       //generate address range for all nodes staged for upload
-      if(it.staged) { for (adr = atUp.adr2extAdr(it.cpu, it.adr); adr < atUp.adr2extAdr(it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr); }
+      if(it.staged) {
+       //std::cout << std::hex << "Adding Node @ 0x" << atUp.adr2extAdr(it.cpu, it.adr) << std::endl;
+
+       for (adr = atUp.adr2extAdr(it.cpu, it.adr); adr < atUp.adr2extAdr(it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr); 
+     }
     }    
     return ret;
   }
 
   vBuf CarpeDM::getUploadData()  {
     vBuf ret;
+    ret.clear();
     
     size_t bmpSum = 0;
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) { bmpSum += atUp.getMemories()[i].bmpSize; }
@@ -77,9 +81,14 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
       ret.insert( ret.end(), tmpBmp.begin(), tmpBmp.end() ); //add Bmp to to return vector  
     }
     //std::cout << "passed bmp" << std::endl;
-    //add all node buffers to return vector  
-    for (auto& it : atUp.getTable().get<CpuAdr>()) { 
-      if(it.staged) ret.insert( ret.end(), it.b, it.b + _MEM_BLOCK_SIZE ); // add all nodes staged for upload
+    //add all node buffers to return vector
+    atUp.debug();
+
+    for (auto& it : atUp.getTable().get<CpuAdr>()) {
+      if(it.staged) {
+        //hexDump(gUp[it.v].name.c_str(), (const uint8_t*)it.b, _MEM_BLOCK_SIZE); 
+        ret.insert( ret.end(), it.b, it.b + _MEM_BLOCK_SIZE );
+      } // add all nodes staged for upload
     }
     //std::cout << "passed nodes" << std::endl;
     return ret;
@@ -112,8 +121,7 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
     
   }
 
-  void CarpeDM::generateBlockMeta() {
-   Graph& g = gUp;
+  void CarpeDM::generateBlockMeta(Graph& g) {
    Graph::out_edge_iterator out_begin, out_end, out_cur;
     
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
@@ -136,62 +144,107 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
         if (g[v].qIl != "0" && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
         if (g[v].qHi != "0" && !hasHi ) { generateQmeta(g, v, PRIO_HI); }
         if (g[v].qLo != "0" && !hasLo ) { generateQmeta(g, v, PRIO_LO); }
-        if(hasMultiDst & !hasDstLst)    { generateDstLst(g, v);         }
+        if((hasMultiDst | ((g[v].qIl != "0") | hasIl) | ((g[v].qHi != "0") | hasHi) |  ((g[v].qLo != "0") | hasLo)) & !hasDstLst)    { generateDstLst(g, v);         }
 
       }
     }  
   }
 
-        
+  
+
+
+
+  void CarpeDM::merge_vertices(vertex_t borg, vertex_t victim, Graph& g ) {
+    // add all of 'victim's edges to 'borg', then delete 'victim'. Resistance is futile.
+    sLog << g[borg].name << " @ " << borg << " is eating " << g[victim].name << " @ " << victim << std::endl;
+
+    Graph::out_edge_iterator out_begin, out_end, out_cur;
+    boost::tie(out_begin, out_end) = out_edges(victim, g);
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
+      sLog << " moving out edge " << std::endl;
+      boost::add_edge(borg, target(*out_cur,g), (myEdge){boost::get(&myEdge::type, g, *out_cur)}, g);
+      boost::remove_edge(*out_cur, g);  
+    }  
+    
+    Graph::in_edge_iterator in_begin, in_end, in_cur;
+    boost::tie(in_begin, in_end) = in_edges(victim, g);
+    for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
+      sLog << " moving in edge " << std::endl;
+      boost::add_edge(source(*in_cur,g), borg, (myEdge){boost::get(&myEdge::type, g, *in_cur)}, g);
+      boost::remove_edge(*in_cur, g);  
+    }
+    
+
+    
+  }
 
   void CarpeDM::prepareUpload(Graph& g) {
+    typedef std::map<vertex_t, vertex_t> vertex_map_t;
+
     std::string cmp;
     uint32_t hash;
     uint8_t cpu;
     int allocState;
+    vertex_map_t vertexMap, duplicates;
     std::vector<std::string> existingNames;
-
-
-
-
-    //save the graph we were shown into our own graph
-    copy_graph(g, gUp);
-    // for some reason, copy_graph does not copy the name
-    boost::set_property(gUp, boost::graph_name, boost::get_property(g, boost::graph_name));
+    Graph gTmp;
     
-    //std::cout << "Graph name is: " << boost::get_property(gUp, boost::graph_name) << std::endl;
-    
-    //auto generate desired Block Meta Nodes first
-    generateBlockMeta();
-    
+    copy_graph(g, gTmp);     //save the graph we were handed into our own temp graph
+    generateBlockMeta(gTmp); //auto generate desired Block Meta Nodes
 
-    //preserve allocation of downloaded nodes
-    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-      //std::string name = boost::get_property(gUp, boost::graph_name) + "." + gUp[v].name;
-      std::string name = gUp[v].name;
-      if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
-      hash = hm.lookup(name).get();
+    
       
-      //FIXME Careful! CPU indices in the (intermediary) .dot do not necessarily match the vector indices. Use the fucking cpuIdx map to translate!
+
+    // for some reason, copy_graph does not copy the name
+    //boost::set_property(gTmp, boost::graph_name, boost::get_property(g, boost::graph_name));
+    
+    //init up graph from down
+    copy_graph(gDown, gUp);
+    //now, we need to change the buffer pointers in the copied nodes, as they still point to buffers in upload allocation table
 
 
-      amI it = atDown.lookupHash(hash); //if we already have a download entry, keep allocation, but update vertex index
-      if (atDown.isOk(it)) {
-
-        existingNames.push_back(name);
-        atUp.insert(it->cpu, it->adr, hash, v, false);
-
-        it = atUp.lookupHash(hash);
-        /*
-        atUp.clrStaged(it);
-        atUp.setV(it, v); //vertex index must be correct for OUR graph, don't care about download side
-        */
-
-        /////////////////////////////////////////////////////////////////////////////////////
-      }
+    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+      auto* x = (AllocMeta*)&(*atUp.lookupVertex(v));
+      gUp[v].np->setB(x->b);
     }  
 
-    //atUp.debug();
+    //find and list all duplicates i.e. docking points between trees
+ 
+    //probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
+    BOOST_FOREACH( vertex_t v, vertices(gUp) ) { 
+      BOOST_FOREACH( vertex_t w, vertices(gTmp) ) { 
+        if (gTmp[w].name == gUp[v].name) {sLog << gTmp[w].name << " gTmp " << w << " <-> " << gUp[v].name << " gUp " << v << std::endl; duplicates[v] = w;} 
+      }  
+    }
+
+
+    //merge graphs (will lead to disjunct trees with duplicates at overlaps), but keep the mapping for vertex merge
+    boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
+    copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
+    for(auto& it : vertexMap ) {sLog <<  "gTmp " << gTmp[it.first].name << " @ " << it.first << " gUp " << it.second << std::endl; }
+    //merge duplicate nodes
+    for(auto& it : duplicates ) { 
+      sLog <<  it.first << " <- " << it.second << "(" << vertexMap[it.second] << ")" << std::endl; 
+      merge_vertices(it.first, vertexMap[it.second], gUp); 
+
+    }
+
+
+    //then remove duplicates
+    for(auto& it : duplicates ) { 
+      boost::clear_vertex(vertexMap[it.second], gUp); 
+      boost::remove_vertex(vertexMap[it.second], gUp);
+      //remove_vertex changes vector, as it must stay contignuous. descriptors higher than he removed one therefore need to be decremented by 1
+      for( auto& updateIt : vertexMap) {if (updateIt.second > it.second) updateIt.second--; }
+    }
+
+    writeUpDot("inspect.dot", false);
+
+      
+
+   
+
+ 
 
     //allocate and init all new nodes
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
@@ -217,6 +270,9 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
       //TODO Find something better than stupic cast to ptr
       //Ugly as hell. But otherwise the bloody iterator will only allow access to MY alloc buffers (not their pointers!) as const!
       auto* x = (AllocMeta*)&(*it);
+
+
+
 
       if(gUp[v].np == NULL) {
 
@@ -256,9 +312,11 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
 
     //sLog << std::endl;
 
-    //atUp.debug();
+
+    
 
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+      // sLog << " crawling over " << gUp[v].name << std::endl;
       gUp[v].np->accept(VisitorUploadCrawler(gUp, v, atUp)); 
    
       //Check if all mandatory fields were properly initialised
@@ -286,6 +344,8 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
       }    
     }
   
+    
+
   }
 
  
@@ -306,13 +366,14 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
     gUp.clear();
     download();
     //atUp.syncToAtBmps(atDown); //use the bmps of the changed download allocation table for upload
-    //atUp = atDown;
+    atUp = atDown;
     //copy_graph(gDown, gUp);
     
     parseDot(fn, gTmp);
     if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
     prepareUpload(gTmp);
     atUp.updateBmps();
+    writeUpDot("upload.dot", false);
 
     return upload();
 
@@ -392,9 +453,8 @@ int CarpeDM::overwrite(const std::string& fn) {
 
     //remove all nodes in input file from download allocation table
     try {
-      //combine node name and graph name to obtain unique replicable hash
+      
       BOOST_FOREACH( vertex_t v, vertices(gUp) ) { 
-        //hash = hm.lookup(boost::get_property(gTmp, boost::graph_name) + "." + gTmp[v].name).get();
         hash = hm.lookup(gUp[v].name).get();
         if (!(atDown.isOk(atDown.lookupHash(hash)))) { if(verbose) {sLog << "Node " << hm.lookup(hash).get() << " was not present on DM" << std::endl;}}
         if (!(atDown.deallocate(hash))) { if(verbose) {sLog << "Node " << gUp[v].name << "(0x" << std::hex << hash << " could not be removed" << std::endl;}}
@@ -429,10 +489,10 @@ int CarpeDM::overwrite(const std::string& fn) {
 
 
  //write out dotstringfrom download graph
- std::string CarpeDM::createDownDot(bool filterMeta) {
+ std::string CarpeDM::createDot(Graph& g, bool filterMeta) {
     std::ostringstream out;
 
-    Graph& g = gDown;
+
     typedef boost::property_map< Graph, node_ptr myVertex::* >::type NpMap;
 
     boost::filtered_graph <Graph, boost::keep_all, non_meta<NpMap> > fg(g, boost::keep_all(), make_non_meta(boost::get(&myVertex::np, g)));
@@ -457,15 +517,14 @@ int CarpeDM::overwrite(const std::string& fn) {
   }
 
   //write out dotfile from download graph of a memunit
- void CarpeDM::writeDownDot(const std::string& fn, bool filterMeta) {
+ void CarpeDM::writeDot(const std::string& fn, Graph& g, bool filterMeta) {
     std::ofstream out(fn);
     
     if (verbose) sLog << "Writing Output File " << fn << "... ";
-    if(out.good()) { out << createDownDot(filterMeta); }
+    if(out.good()) { out << createDot(g, filterMeta); }
     else {throw std::runtime_error(" Could not write to .dot file '" + fn + "'"); return;} 
     if (verbose) sLog << "Done.";
   }
-
 
 
 
@@ -662,7 +721,7 @@ int CarpeDM::overwrite(const std::string& fn) {
       
       if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
         std::cout   << std::setfill(' ') << std::setw(4) << std::dec << v 
-        << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isOk(x) && x->staged)  
+        << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isOk(x) && (int)(at.isStaged(x)))  
         << " "      << std::setfill(' ') << std::setw(1) << std::dec << (int)(!(at.isOk(x)))
         << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (at.isOk(x) ? (int)x->cpu : -1 )  
         << "   "    << std::setfill(' ') << std::setw(40) << std::left << g[v].name 

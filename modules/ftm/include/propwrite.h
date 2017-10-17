@@ -115,9 +115,12 @@ template <class Name>
     edge_writer(typeMap type) : type(type) {}
     template <class Edge>
     void operator()(std::ostream& out, const Edge& v) const {
-      out <<  "[type=\"" << type[v] << "\", color=\""; 
+      out <<  "[type=\"" << type[v] << "\",";
+      if (type[v] == sBD) out << " style=\"dashed\", label=\"bad defDest\", ";
+      out << "color=\""; 
       if      (type[v] == sDD) out << "red";
       else if (type[v] == sAD) out << "black";
+      else if (type[v] == sBD) out << "orange";
       else if (type[v] == sTG) out << "blue";
       else if (type[v] == sFD) out << "magenta";
       else out << "grey\", label=\"" << type[v];
