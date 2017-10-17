@@ -40,7 +40,7 @@ class CarpeDM {
 private:
   static const unsigned char deadbeef[4];
   static const std::string needle;
-  void generateBlockMeta();
+  void generateBlockMeta(Graph& g);
   void generateDstLst(Graph& g, vertex_t v);
   void generateQmeta(Graph& g, vertex_t v, int prio);
    //Upload processed Graph to LM32 SoC via Etherbone
@@ -50,6 +50,7 @@ private:
 
   //Process Graph for uploading to LM32 SoC
   void prepareUpload(Graph& g);
+  void merge_vertices(vertex_t borg, vertex_t victim, Graph& g ); 
   void prepareKeep(const std::string& fn);
   int  execKeep();
 
@@ -162,10 +163,13 @@ public:
   //Download binary from LM32 SoC and create Graph
   int download();
 
-  std::string createDownDot(bool filterMeta);
+  std::string createDot( Graph& g, bool filterMeta);
 
   //Write out processed Download Graph as .dot file
-  void writeDownDot(const std::string& fn, bool filterMeta);
+  void writeDot(const std::string& fn, Graph& g, bool filterMeta);
+
+  void writeDownDot(const std::string& fn, bool filterMeta) { writeDot(fn, gDown, filterMeta); }
+  void writeUpDot(const std::string& fn, bool filterMeta) { writeDot(fn, gUp, filterMeta); }
 
   //Turn on Verbose Output
   void verboseOn()  {verbose = true;}

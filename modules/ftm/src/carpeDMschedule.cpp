@@ -112,8 +112,7 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
     
   }
 
-  void CarpeDM::generateBlockMeta() {
-   Graph& g = gUp;
+  void CarpeDM::generateBlockMeta(Graph& g) {
    Graph::out_edge_iterator out_begin, out_end, out_cur;
     
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
@@ -142,29 +141,81 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
     }  
   }
 
-        
+  
+
+
+
+  void CarpeDM::merge_vertices(vertex_t borg, vertex_t victim, Graph& g ) {
+    // add all of 'victim's edges to 'borg', then delete 'victim'. Resistance is futile.
+    sLog << g[borg].name << " @ " << borg << " is eating " << g[victim].name << " @ " << victim << std::endl;
+
+    Graph::out_edge_iterator out_begin, out_end, out_cur;
+    boost::tie(out_begin, out_end) = out_edges(victim, g);
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
+      sLog << " moving out edge " << std::endl;
+      boost::add_edge(borg, target(*out_cur,g), (myEdge){boost::get(&myEdge::type, g, *out_cur)}, g);
+      boost::remove_edge(*out_cur, g);  
+    }  
+    
+    Graph::in_edge_iterator in_begin, in_end, in_cur;
+    boost::tie(in_begin, in_end) = in_edges(victim, g);
+    for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
+      sLog << " moving in edge " << std::endl;
+      boost::add_edge(source(*in_cur,g), borg, (myEdge){boost::get(&myEdge::type, g, *in_cur)}, g);
+      boost::remove_edge(*in_cur, g);  
+    }
+    
+
+    
+  }
 
   void CarpeDM::prepareUpload(Graph& g) {
+    typedef std::map<vertex_t, vertex_t> vertex_map_t;
+
     std::string cmp;
     uint32_t hash;
     uint8_t cpu;
     int allocState;
+    vertex_map_t vertexMap, duplicates;
     std::vector<std::string> existingNames;
+    Graph gTmp;
+    
+    copy_graph(g, gTmp);     //save the graph we were handed into our own temp graph
+    generateBlockMeta(gTmp); //auto generate desired Block Meta Nodes
 
-
-
-
-    //save the graph we were shown into our own graph
-    copy_graph(g, gUp);
     // for some reason, copy_graph does not copy the name
-    boost::set_property(gUp, boost::graph_name, boost::get_property(g, boost::graph_name));
+    //boost::set_property(gTmp, boost::graph_name, boost::get_property(g, boost::graph_name));
     
-    //std::cout << "Graph name is: " << boost::get_property(gUp, boost::graph_name) << std::endl;
-    
-    //auto generate desired Block Meta Nodes first
-    generateBlockMeta();
-    
+    //init up graph from down
+    copy_graph(gDown, gUp);
 
+    //find and list all duplicates i.e. docking points between trees
+ 
+    //probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
+    BOOST_FOREACH( vertex_t v, vertices(gUp) ) { 
+      BOOST_FOREACH( vertex_t w, vertices(gTmp) ) { 
+        if (gTmp[w].name == gUp[v].name) {sLog << gTmp[w].name << " gTmp " << w << " <-> " << gUp[v].name << " gUp " << v << std::endl; duplicates[v] = w;} 
+      }  
+    }
+
+    //merge graphs (will lead to disjunct trees with duplicates at overlaps), but keep the mapping for vertex merge
+    boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
+    copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
+    for(auto& it : vertexMap ) {sLog <<  "gTmp " << gTmp[it.first].name << " @ " << it.first << " gUp " << it.second << std::endl; }
+    //merge duplicate nodes
+    for(auto& it : duplicates ) { 
+      sLog <<  it.first << " <- " << it.second << "(" << vertexMap[it.second] << ")" << std::endl; 
+      merge_vertices(it.first, vertexMap[it.second], gUp); 
+
+    }
+    for(auto& it : duplicates ) { 
+      boost::clear_vertex(vertexMap[it.second], gUp); 
+      boost::remove_vertex(vertexMap[it.second], gUp);
+    }
+      
+
+   
+    /*
     //preserve allocation of downloaded nodes
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       //std::string name = boost::get_property(gUp, boost::graph_name) + "." + gUp[v].name;
@@ -182,16 +233,16 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
         atUp.insert(it->cpu, it->adr, hash, v, false);
 
         it = atUp.lookupHash(hash);
-        /*
-        atUp.clrStaged(it);
-        atUp.setV(it, v); //vertex index must be correct for OUR graph, don't care about download side
-        */
+        
+
+        
 
         /////////////////////////////////////////////////////////////////////////////////////
       }
     }  
-
+    */
     //atUp.debug();
+    writeUpDot("inspect.dot", false);
 
     //allocate and init all new nodes
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
@@ -256,9 +307,12 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
 
     //sLog << std::endl;
 
-    //atUp.debug();
+
+
+    atUp.debug();
 
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+      // sLog << " crawling over " << gUp[v].name << std::endl;
       gUp[v].np->accept(VisitorUploadCrawler(gUp, v, atUp)); 
    
       //Check if all mandatory fields were properly initialised
@@ -306,13 +360,14 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
     gUp.clear();
     download();
     //atUp.syncToAtBmps(atDown); //use the bmps of the changed download allocation table for upload
-    //atUp = atDown;
+    atUp = atDown;
     //copy_graph(gDown, gUp);
     
     parseDot(fn, gTmp);
     if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
     prepareUpload(gTmp);
     atUp.updateBmps();
+    writeUpDot("upload.dot", false);
 
     return upload();
 
@@ -392,9 +447,8 @@ int CarpeDM::overwrite(const std::string& fn) {
 
     //remove all nodes in input file from download allocation table
     try {
-      //combine node name and graph name to obtain unique replicable hash
+      
       BOOST_FOREACH( vertex_t v, vertices(gUp) ) { 
-        //hash = hm.lookup(boost::get_property(gTmp, boost::graph_name) + "." + gTmp[v].name).get();
         hash = hm.lookup(gUp[v].name).get();
         if (!(atDown.isOk(atDown.lookupHash(hash)))) { if(verbose) {sLog << "Node " << hm.lookup(hash).get() << " was not present on DM" << std::endl;}}
         if (!(atDown.deallocate(hash))) { if(verbose) {sLog << "Node " << gUp[v].name << "(0x" << std::hex << hash << " could not be removed" << std::endl;}}
@@ -429,10 +483,10 @@ int CarpeDM::overwrite(const std::string& fn) {
 
 
  //write out dotstringfrom download graph
- std::string CarpeDM::createDownDot(bool filterMeta) {
+ std::string CarpeDM::createDot(Graph& g, bool filterMeta) {
     std::ostringstream out;
 
-    Graph& g = gDown;
+
     typedef boost::property_map< Graph, node_ptr myVertex::* >::type NpMap;
 
     boost::filtered_graph <Graph, boost::keep_all, non_meta<NpMap> > fg(g, boost::keep_all(), make_non_meta(boost::get(&myVertex::np, g)));
@@ -457,15 +511,14 @@ int CarpeDM::overwrite(const std::string& fn) {
   }
 
   //write out dotfile from download graph of a memunit
- void CarpeDM::writeDownDot(const std::string& fn, bool filterMeta) {
+ void CarpeDM::writeDot(const std::string& fn, Graph& g, bool filterMeta) {
     std::ofstream out(fn);
     
     if (verbose) sLog << "Writing Output File " << fn << "... ";
-    if(out.good()) { out << createDownDot(filterMeta); }
+    if(out.good()) { out << createDot(g, filterMeta); }
     else {throw std::runtime_error(" Could not write to .dot file '" + fn + "'"); return;} 
     if (verbose) sLog << "Done.";
   }
-
 
 
 
