@@ -10,6 +10,7 @@ const std::string sQM[] = {"priolo", "priohi", "prioil"};
 const std::string sDL  = "listdst";
 const std::string sDD  = "defdst";
 const std::string sAD  = "altdst";
+const std::string sBD  = "baddefdst";
 const std::string sTG  = "target";
 const std::string sFD  = "flowdst";
 const std::string sDID  = "dynid";
@@ -39,8 +40,9 @@ void VisitorUploadCrawler::updateStaging() const {
 
     auto x = at.lookupVertex(v);
     
-    if (!(at.isOk(x))) {return; } //this vertex was removed, we don't need to bother about staging
-    
+    if (!(at.isOk(x))) {std::cout << g[v].name << " not allocated " << std::endl; return; } //this vertex was removed, we don't need to bother about staging
+    else std::cout << g[v].name << " staging is  " << (int)(at.isStaged(x))  << std::endl;
+
     if (!(x->staged)) {
       boost::tie(out_begin, out_end) = out_edges(v, g);  
       for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
@@ -61,32 +63,46 @@ void VisitorUploadCrawler::updateListDstStaging(amI x) const {
     // this is edge leads to  staged Alternative Dst, find this Block's Dst List 
     boost::tie(out_begin, out_end) = out_edges(x->v,g);  
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-      if (g[target(*out_cur,g)].type == sDL) {
-        auto dst = at.lookupHash(g[target(*out_cur,g)].np->getHash());
-        if (at.isOk(dst)) at.setStaged(dst); // if we found a Dst List, stage it
+      if (g[*out_cur].type == sDL) {
+        auto dst = at.lookupVertex(target(*out_cur, g));
+        if (at.isOk(dst)) { at.setStaged(dst); std::cout << g[dst->v].name << " staging is  " << (int)(at.isStaged(dst)) << std::endl; }// if we found a Dst List, stage it
         else throw std::runtime_error("Dst List '" + g[dst->v].name + "' was not allocated, this is very bad");
         break;
       }
     }
+    
   
 }
 
 void VisitorUploadCrawler::updateBlockStaging() const {
   Graph::out_edge_iterator out_begin, out_end, out_cur;
+  Graph::out_edge_iterator dstlist_begin, dstlist_end, dstlist_cur;
 
   auto x = at.lookupVertex(v);
   
-  if (!(at.isOk(x))) {return; } //this vertex was removed, we don't need to bother about staging
+  if (!(at.isOk(x))) {std::cout << g[v].name << " not allocated " << std::endl; return; } //this vertex was removed, we don't need to bother about staging
+    else std::cout << g[v].name << " staging is  " << (int)(at.isStaged(x))  << std::endl;
   
   if (!(x->staged)) {
     boost::tie(out_begin, out_end) = out_edges(v, g);  
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
       auto child = at.lookupVertex(target(*out_cur, g));
-      if (at.isOk(child) && child->staged) { //it's an out edge to removed child node OR an out edge to added child node
-        std::cout << g[x->v].name << ", parent of " << g[child->v].name << ", should also be staged !" << std::endl;
-        at.setStaged(x);  // stage our current Block
-        updateListDstStaging(x); // stage its Destination List
-      } 
+      
+        if (at.isOk(child) && child->staged) { //it's an out edge to removed child node OR an out edge to added child node
+          if (g[*out_cur].type == sDD) {
+            std::cout << g[x->v].name << "'s default destination changed !" << std::endl;
+            std::cout << g[x->v].name << ", parent of " << g[child->v].name << ", should also be staged !" << std::endl;
+            at.setStaged(x);  // stage our current Block
+            std::cout << g[x->v].name << " staging is  " << (int)(at.isStaged(x)) << std::endl;
+          }
+          if (g[*out_cur].type == sAD) {
+            std::cout << g[x->v].name << "'s alt destinations changed !" << std::endl;
+            updateListDstStaging(x); // stage its Destination List
+          }   
+          
+        }
+      
+       
     }  
   }
     
@@ -488,6 +504,9 @@ vAdr VisitorUploadCrawler::getListDst() const {
   vertex_t vp;
 
   //get the parent. there shall be only one, a block (no check for that right now, sorry)
+
+  std::cerr << " crawling edges for " << g[v].name << "'s destlist" << std::endl;
+
   boost::tie(in_begin, in_end) = in_edges(v,g);
   vp = source(*in_begin,g);
   
@@ -510,7 +529,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
           if (x != NULL && x->cpu == cpu) {
             ret.push_back(at.adr2intAdr(x->cpu, x->adr));
             found = true;
-          }
+          } else { std::cerr << "!!! default destination was found unallocated or on different CPU !!!" << std::endl; }
         }
       }
     }  
@@ -530,8 +549,8 @@ vAdr VisitorUploadCrawler::getListDst() const {
         if (x != NULL && x->cpu == cpu) {
           ret.push_back(at.adr2intAdr(x->cpu, x->adr));
           found = true;
-          //std::cout << "altDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << std::endl;
-        }
+          std::cout << "altDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << std::endl;
+        } else { std::cerr << "!!! alt destination was found unallocated or on different CPU !!!" << std::endl; }
       }
     }  
   }

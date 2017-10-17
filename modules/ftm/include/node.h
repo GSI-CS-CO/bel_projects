@@ -21,7 +21,7 @@ class Node {
 
 protected:    
 
-  uint8_t (&b)[_MEM_BLOCK_SIZE];
+  uint8_t* b;
   uint32_t      flags;
   
 
@@ -30,7 +30,7 @@ protected:
 
 public:
   
-  Node(const std::string& name, const uint32_t& hash, const uint8_t& cpu, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : name(name), hash(hash), cpu(cpu), b(b), flags(flags) {} //what to do if it fails?
+  Node(const std::string& name, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : name(name), hash(hash), cpu(cpu), b(b), flags(flags) {} //what to do if it fails?
   virtual ~Node() {}
   virtual node_ptr clone() const = 0; 
   
@@ -42,7 +42,8 @@ public:
   void     setFlags(uint32_t flags) {this->flags |= flags;}
   void     clrFlags(uint32_t flags) {this->flags &= ~flags;}
   const bool isPainted() const {return (bool)(this->flags & NFLG_PAINT_LM32_SMSK);}
-  const auto getB() -> uint8_t (&)[_MEM_BLOCK_SIZE] {return this->b;}
+  uint8_t* getB() {return this->b;}
+  const void setB(uint8_t* b) {this->b = b;}
 
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
