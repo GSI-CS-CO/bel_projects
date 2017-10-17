@@ -1,2 +1,2 @@
 #!/bin/bash
-while ./sleep_until_modified.sh download.dot ; do dot -Tsvg download.dot -odownload.svg; done
+while ./sleep_until_modified.sh $1.dot ; do dot -Tsvg $1.dot -o$1.svg; done
