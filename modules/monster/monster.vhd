@@ -370,9 +370,9 @@ architecture rtl of monster is
   constant c_topm_eca_wbm   : natural := 1;
   constant c_topm_pcie      : natural := 2;
   constant c_topm_vme       : natural := 3;
-  constant c_topm_usb       : natural := 4;
+  constant c_topm_pmc       : natural := 4;
   constant c_topm_prioq     : natural := 5;
-  constant c_topm_pmc       : natural := 6;
+  constant c_topm_usb       : natural := 6;
 
   constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) :=
    (c_topm_ebs     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
