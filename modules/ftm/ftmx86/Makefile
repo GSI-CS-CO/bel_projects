@@ -18,7 +18,7 @@ INSTALLPATH  = $(PREFIX)/bin
 T_CXX         = g++
 T_CXXFLAGS    = -Wall -g -std=c++11 -I$(FTMPATH)/include -I$(FWPATH) -Wfatal-errors -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\" 
 
-SRC_FILES     = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMschedule.cpp graph.cpp alloctable.cpp mempool.cpp
+SRC_FILES     = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMschedule.cpp graph.cpp alloctable.cpp mempool.cpp dotstr.cpp
 T_SOURCES     = $(addprefix $(SRCPATH)/, $(SRC_FILES))
 T_LIBS        = -Wl,-rpath,/usr/local/lib -letherbone -lboost_graph -l:libboost_serialization.so.1.62.0
 

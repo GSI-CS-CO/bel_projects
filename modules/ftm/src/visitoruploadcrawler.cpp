@@ -4,109 +4,9 @@
 #include "block.h"
 #include "meta.h"
 #include "event.h"
+#include "dotstr.h"
 
-const std::string sNodeType[] = {"priolo", "priohi", "prioil"};
-const std::string sQM[] = {"priolo", "priohi", "prioil"};
-const std::string sDL  = "listdst";
-const std::string sDD  = "defdst";
-const std::string sAD  = "altdst";
-const std::string sBD  = "baddefdst";
-const std::string sTG  = "target";
-const std::string sFD  = "flowdst";
-const std::string sDID  = "dynid";
-const std::string sDPAR0  = "dynpar0";
-const std::string sDPAR1  = "dynpar1";
-const std::string sDTEF  = "dyntef";
-const std::string sDRES  = "dynres";
-
-
-
-
-void VisitorUploadCrawler::updateStaging() const {
-  Graph::out_edge_iterator out_begin, out_end, out_cur;
-  // Staging Update by Depency Resolution
-    //
-    //allright, let's recap
-    // - BMPs are always (over)written during upload, node data only if the node is staged
-    // - an upload can currently consist of an addition or a removal, not both
-    // - if the user wants to add nodes, transfer of their binary data is staged for upload to DM
-    // - if the user wants to remove nodes, they are deallocated and thus their data has no staging (staged flag kept in alloctable entry) - their memory just gets freed in the BMP
-    //Staging dependant nodes
-    // - some unstaged nodes have depencies on staged nodes, causing their data to change. They must also be staged
-    //  - all out-edges of unstaged nodes connecting to staged (added) child nodes can cause a change of the parent's data
-    //  - all out-edges of unstaged nodes connecting to deallocated (removed) child nodes will cause a change of the parent's data
-    // - this is true for all out-edges except those marking alternative destinations (altdst). This does not affect the parent Block, but the Block's Destination List (listdst)
-    // - the additional staged nodes cannot cause further dependencies, because their allocation does not change
-
-    auto x = at.lookupVertex(v);
-    
-    if (!(at.isOk(x))) {std::cout << g[v].name << " not allocated " << std::endl; return; } //this vertex was removed, we don't need to bother about staging
-    else std::cout << g[v].name << " staging is  " << (int)(at.isStaged(x))  << std::endl;
-
-    if (!(x->staged)) {
-      boost::tie(out_begin, out_end) = out_edges(v, g);  
-      for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-        auto child = at.lookupVertex(target(*out_cur, g));
-        if (at.isOk(child) && child->staged) { //it's an out edge to removed child node OR an out edge to added child node
-          std::cout << g[x->v].name << ", parent of " << g[child->v].name << ", should also be staged !" << std::endl;
-          at.setStaged(x); // stage current node
-        } 
-      }  
-    }
-    
-}
-
-void VisitorUploadCrawler::updateListDstStaging(amI x) const {
-  Graph::out_edge_iterator out_begin, out_end, out_cur;
-
-  
-    // this is edge leads to  staged Alternative Dst, find this Block's Dst List 
-    boost::tie(out_begin, out_end) = out_edges(x->v,g);  
-    for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-      if (g[*out_cur].type == sDL) {
-        auto dst = at.lookupVertex(target(*out_cur, g));
-        if (at.isOk(dst)) { at.setStaged(dst); std::cout << g[dst->v].name << " staging is  " << (int)(at.isStaged(dst)) << std::endl; }// if we found a Dst List, stage it
-        else throw std::runtime_error("Dst List '" + g[dst->v].name + "' was not allocated, this is very bad");
-        break;
-      }
-    }
-    
-  
-}
-
-void VisitorUploadCrawler::updateBlockStaging() const {
-  Graph::out_edge_iterator out_begin, out_end, out_cur;
-  Graph::out_edge_iterator dstlist_begin, dstlist_end, dstlist_cur;
-
-  auto x = at.lookupVertex(v);
-  
-  if (!(at.isOk(x))) {std::cout << g[v].name << " not allocated " << std::endl; return; } //this vertex was removed, we don't need to bother about staging
-    else std::cout << g[v].name << " staging is  " << (int)(at.isStaged(x))  << std::endl;
-  
-  if (!(x->staged)) {
-    boost::tie(out_begin, out_end) = out_edges(v, g);  
-    for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-      auto child = at.lookupVertex(target(*out_cur, g));
-      
-        if (at.isOk(child) && child->staged) { //it's an out edge to removed child node OR an out edge to added child node
-          if (g[*out_cur].type == sDD) {
-            std::cout << g[x->v].name << "'s default destination changed !" << std::endl;
-            std::cout << g[x->v].name << ", parent of " << g[child->v].name << ", should also be staged !" << std::endl;
-            at.setStaged(x);  // stage our current Block
-            std::cout << g[x->v].name << " staging is  " << (int)(at.isStaged(x)) << std::endl;
-          }
-          if (g[*out_cur].type == sAD) {
-            std::cout << g[x->v].name << "'s alt destinations changed !" << std::endl;
-            updateListDstStaging(x); // stage its Destination List
-          }   
-          
-        }
-      
-       
-    }  
-  }
-    
-}  
+using namespace DotStr;
 
 void VisitorUploadCrawler::visit(const Block& el) const {
   vAdr vA, tmpDD, tmpQM;
@@ -118,7 +18,7 @@ void VisitorUploadCrawler::visit(const Block& el) const {
   vA.insert( vA.end(), tmpQM.begin(), tmpQM.end() );
 
   el.serialise(vA);
-  updateBlockStaging();
+  
 }
 
 void VisitorUploadCrawler::visit(const TimingMsg& el) const  {
@@ -132,7 +32,7 @@ void VisitorUploadCrawler::visit(const TimingMsg& el) const  {
 
 
   el.serialise(vA);
-  updateStaging();  
+
 }
 
 void VisitorUploadCrawler::visit(const Flow& el) const  {
@@ -147,7 +47,7 @@ void VisitorUploadCrawler::visit(const Flow& el) const  {
   vA.insert( vA.end(), tmpFD.begin(), tmpFD.end() );
 
   el.serialise(vA);
-  updateStaging();  
+
 
 }
 
@@ -161,7 +61,7 @@ void VisitorUploadCrawler::visit(const Flush& el) const {
   vA.insert( vA.end(), tmpCT.begin(), tmpCT.end() );
 
   el.serialise(vA);
-  updateStaging();  
+
 
 }
 
@@ -175,7 +75,6 @@ void VisitorUploadCrawler::visit(const Noop& el) const {
   vA.insert( vA.end(), tmpCT.begin(), tmpCT.end() );
 
   el.serialise(vA);
-  updateStaging();
 }
 
 void VisitorUploadCrawler::visit(const Wait& el) const {
@@ -188,7 +87,7 @@ void VisitorUploadCrawler::visit(const Wait& el) const {
   vA.insert( vA.end(), tmpCT.begin(), tmpCT.end() );
 
   el.serialise(vA);
-  updateStaging();
+
 }
 
 void VisitorUploadCrawler::visit(const CmdQMeta& el) const {
@@ -201,12 +100,11 @@ void VisitorUploadCrawler::visit(const CmdQMeta& el) const {
   vA.insert( vA.end(), tmpQB.begin(), tmpQB.end() );
 
   el.serialise(vA);
-  updateStaging();  
+
 }
 
 void VisitorUploadCrawler::visit(const CmdQBuffer& el) const {
   el.serialise(getDefDst());
-  //can't have children, not staging update
 }
 
 void VisitorUploadCrawler::visit(const DestList& el) const {
@@ -214,7 +112,6 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
   vAdr vA, tmpDL;
   tmpDL = getListDst();
   el.serialise(tmpDL);
-  //can't have children, not staging update
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -235,7 +132,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
       if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
       else {
 
-        if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sDD) {
+        if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eDefDst) {
           if (found) {std::cerr << "!!! Found more than one default destination !!!" << std::endl; break;
           } else {
             
@@ -272,14 +169,14 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
       if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
       else {
 
-        if (g[*out_cur].type == sDID) {
+        if (g[*out_cur].type == eDynId) {
           if (aId != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic id source !!!" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             if (x != NULL) { aId = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);}
           }
         }
-        if (g[*out_cur].type == sDPAR0) {
+        if (g[*out_cur].type == eDynPar0) {
           if (aPar0 != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic par0 source !!!" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
@@ -287,7 +184,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
             //std::cout << "DynAdr 0 0x" << std::hex << aPar0 << std::endl;
           }
         }
-        if (g[*out_cur].type == sDPAR1) {
+        if (g[*out_cur].type == eDynPar1) {
           if (aPar1 != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic par1 source !!!" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
@@ -295,14 +192,14 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
             //std::cout << "DynAdr 1 0x" << std::hex << aPar1 << std::endl;
           }
         }
-        if (g[*out_cur].type == sDTEF) {
+        if (g[*out_cur].type == eDynTef) {
           if (aTef != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic tef source !!!" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             if (x != NULL) { aTef = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_TEF_SMSK);}
           }
         }
-        if (g[*out_cur].type == sDRES) {
+        if (g[*out_cur].type == eDynRes) {
           if (aRes != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic res source !!!" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
@@ -336,7 +233,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
     {   
       if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
       else {
-        if (g[target(*out_cur,g)].np->isMeta() && g[target(*out_cur,g)].type == sDL) {
+        if (g[target(*out_cur,g)].np->isMeta() && g[target(*out_cur,g)].type == eDstList) {
           if (found) {std::cerr << "!!! Found more than one Destination List !!!" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
@@ -358,8 +255,8 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
         if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
         else {
 
-          if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == sQM[idx]) {
-            if (found) {std::cerr << "!!! Found more than one queue info of type " << sQM[idx] << " !!!" << std::endl; break;}
+          if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == eQPrio[idx]) {
+            if (found) {std::cerr << "!!! Found more than one queue info of type " << eQPrio[idx] << " !!!" << std::endl; break;}
             else {
               auto x = at.lookupVertex(target(*out_cur,g));
               // Queue nodes MUST NOT lie outside own memory!
@@ -420,7 +317,7 @@ vAdr VisitorUploadCrawler::getCmdTarget(Command& el) const {
     if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
     else {
 
-      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sTG) {
+      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eCmdTarget) {
         if (found) {std::cerr << "!!! Found more than one target !!!" << std::endl; break;
         } else {
           auto x = at.lookupVertex(target(*out_cur,g));
@@ -460,7 +357,7 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
     if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
     else {
 
-      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sTG) {
+      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eCmdTarget) {
         if (found) {std::cerr << "!!! Found more than one target !!!" << std::endl; break;
         } else {
           auto x = at.lookupVertex(target(*out_cur,g));
@@ -476,7 +373,7 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
     if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
     else {
 
-      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sFD) {
+      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eCmdFlowDst) {
         if (found) {std::cerr << "!!! Found more than one flow destination !!!" << std::endl; break;
         } else {
           auto x = at.lookupVertex(target(*out_cur,g));
@@ -521,7 +418,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
     if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
     else {
 
-      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sDD) {
+      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eDefDst) {
         if (found) {std::cerr << "!!! Found more than one default destination !!!" << std::endl; break;
         } else {
           auto x = at.lookupVertex(target(*out_cur,g));
@@ -543,7 +440,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
     if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
     else {
 
-      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == sAD) {
+      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eAltDst) {
         auto x = at.lookupVertex(target(*out_cur,g));
         // Destination MUST NOT lie outside own memory! (well, technically, it'd work, but it'd be race condition galore ...)
         if (x != NULL && x->cpu == cpu) {

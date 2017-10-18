@@ -46,20 +46,6 @@ typedef boost::container::vector<uint8_t> vBuf;
 typedef boost::container::vector<uint32_t> vAdr;
 typedef boost::container::vector<uint32_t> ebBuf;
 
-extern const std::string sQM[];
-extern const std::string sDL;
-extern const std::string sDD;
-extern const std::string sAD;
-extern const std::string sBD;
-extern const std::string sTG;
-extern const std::string sFD;
-extern const std::string sDID;
-extern const std::string sDPAR0;
-extern const std::string sDPAR1;
-extern const std::string sDTEF;
-extern const std::string sDRES;
-
-
 template<typename T>
 inline void writeLeNumberToBeBytes(uint8_t* pB, T val) {
   T x = boost::endian::endian_reverse(val);
@@ -148,24 +134,6 @@ inline void vHexDump (const char *desc, vBuf pc) {
     }
   printf ("\n");  
 }
-/*
-class str_const {
-  // constexpr string
-  private:
-  const char* const p_;
-  const std::size_t sz_;
-  public:
-  template<std::size_t N>
-  constexpr str_const(const char(&a)[N]) :
-  // ctor
-  p_(a), sz_(N-1) {}
-  constexpr char operator[](std::size_t n) {
-  // []
-  return n < sz_ ? p_[n] :
-  throw std::out_of_range("");
-  }
-  constexpr std::size_t size() { return sz_; } // size()
-};
-*/
+
 
 #endif

@@ -16,6 +16,9 @@
 #include "block.h"
 #include "meta.h"
 #include "event.h"
+#include "dotstr.h"
+
+using namespace DotStr;
 
 
 
@@ -244,7 +247,7 @@ int CarpeDM::sendCommands(const std::string& fn) {
     boost::tie(out_begin, out_end) = out_edges(block->v,g);
     
     //Get Buffer List of requested priority
-    for (out_cur = out_begin; out_cur != out_end; ++out_cur) { if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == sQM[cmdPrio]) {found = true; break;} }
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur) { if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == eQPrio[cmdPrio]) {found = true; break;} }
     if (!(found)) {throw std::runtime_error("Block " + blockName + " does not have a " + sPrio[cmdPrio] + " queue"); return;}            
     auto bufList = atDown.lookupVertex(target(*out_cur,g));    
     if (!(atDown.isOk(bufList))) {return;}
