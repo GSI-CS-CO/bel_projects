@@ -9,6 +9,9 @@
 #include <boost/graph/graphviz.hpp>
 #include "ftm_common.h"
 #include "common.h"
+#include "dotstr.h"
+
+using namespace DotStr;
 
 
 class Node;
@@ -36,50 +39,50 @@ public:
   //Meta
 
   //Block 
-  std::string tPeriod = "0xD15EA5EDDEADBEEF";
-  std::string rdIdxIl = "0", rdIdxHi = "0", rdIdxLo = "0";
-  std::string wrIdxIl = "0", wrIdxHi = "0", wrIdxLo = "0";
+  std::string tPeriod = tUndefined64;
+  std::string rdIdxIl = tZero, rdIdxHi = tZero, rdIdxLo = tZero;
+  std::string wrIdxIl = tZero, wrIdxHi = tZero, wrIdxLo = tZero;
 
   //Event
-  std::string tOffs = "0xD15EA5EDDEADBEEF";
+  std::string tOffs = tUndefined64;
 
   //Timing Message
-  std::string id = "0xD15EA5EDDEADBEEF";
-  std::string id_fid    = "0";
-  std::string id_gid    = "0";
-  std::string id_evtno  = "0";
-  std::string id_sid    = "0";
-  std::string id_bpid   = "0";
-  std::string id_res    = "0";
+  std::string id = tUndefined64;
+  std::string id_fid    = tZero;
+  std::string id_gid    = tZero;
+  std::string id_evtno  = tZero;
+  std::string id_sid    = tZero;
+  std::string id_bpid   = tZero;
+  std::string id_res    = tZero;
 
-  std::string par = "0xD15EA5EDDEADBEEF";
-  std::string tef = "0";
-  std::string res = "0";
+  std::string par = tUndefined64;
+  std::string tef = tZero;
+  std::string res = tZero;
 
   //Command
 
-  std::string tValid = "0";
+  std::string tValid = tZero;
 
 
   // Flush
 
-  std::string qIl = "0", qHi = "0", qLo = "0";
+  std::string qIl = tZero, qHi = tZero, qLo = tZero;
 
-  std::string frmIl = "0", toIl = "0";
-  std::string frmHi = "0", toHi = "0";
-  std::string frmLo = "0", toLo = "0"; 
+  std::string frmIl = tZero, toIl = tZero;
+  std::string frmHi = tZero, toHi = tZero;
+  std::string frmLo = tZero, toLo = tZero; 
 
   //Flow, Noop
-  std::string prio = "0";
+  std::string prio = tZero;
   std::string qty = "1";
 
   //Wait
-  std::string tWait = "0xD15EA5EDDEADBEEF";
+  std::string tWait = tUndefined64;
 
-  std::string flowDest = "UNDEFINED";
-  std::string flowTarget = "UNDEFINED";
+  std::string flowDest = tUndefined;
+  std::string flowTarget = tUndefined;
 
-  myVertex() : name("UNDEFINED"), cpu("0"), hash(0xDEADBEEF), np(NULL), type("UNDEFINED"), flags("0xDEADBEEF") {}
+  myVertex() : name(tUndefined), cpu(tZero), hash(uUndefined32), np(NULL), type(tUndefined), flags(tUndefined32) {}
   
   myVertex(std::string name, std::string cpu, uint32_t hash, node_ptr np, std::string type, std::string flags) : name(name), cpu(cpu), hash(hash), np(np), type(type), flags(flags) {}
 
@@ -92,7 +95,7 @@ public:
 class myEdge {
 public:
   std::string type;
-  myEdge() : type("UNDEFINED") {}
+  myEdge() : type(tUndefined) {}
   myEdge(std::string type) : type(type) {}
 };
 

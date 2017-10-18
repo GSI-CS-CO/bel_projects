@@ -441,4 +441,71 @@ void CarpeDM::showCpuList() {
     return (atDown.lookupHash(hm.lookup(name).get()) != NULL);
   }  
 
-  
+  void CarpeDM::show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta ) {
+
+    Graph& g        = (direction == UPLOAD ? gUp  : gDown);
+    AllocTable& at  = (direction == UPLOAD ? atUp : atDown);
+
+
+
+    std::cout << std::endl << title << std::endl;
+    std::cout << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setfill(' ') << std::setw(4) << "S/R" << "   " << std::setfill(' ') << std::setw(4) << "Cpu" << "   " << std::setw(30) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
+    std::cout << std::endl; 
+
+
+
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      auto x = at.lookupVertex(v);
+      
+      if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
+        std::cout   << std::setfill(' ') << std::setw(4) << std::dec << v 
+        << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isOk(x) && (int)(at.isStaged(x)))  
+        << " "      << std::setfill(' ') << std::setw(1) << std::dec << (int)(!(at.isOk(x)))
+        << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (at.isOk(x) ? (int)x->cpu : -1 )  
+        << "   "    << std::setfill(' ') << std::setw(40) << std::left << g[v].name 
+        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? x->hash  : 0 )
+        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adr2intAdr(x->cpu, x->adr)  : 0 ) 
+        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adr2extAdr(x->cpu, x->adr)  : 0 )  << std::endl;
+      }
+    }  
+
+    std::cout << std::endl;  
+  }
+
+   //write out dotstringfrom download graph
+  std::string CarpeDM::createDot(Graph& g, bool filterMeta) {
+    std::ostringstream out;
+
+
+    typedef boost::property_map< Graph, node_ptr myVertex::* >::type NpMap;
+
+    boost::filtered_graph <Graph, boost::keep_all, non_meta<NpMap> > fg(g, boost::keep_all(), make_non_meta(boost::get(&myVertex::np, g)));
+    try { 
+        
+        if (filterMeta) {
+          boost::write_graphviz(out, fg, make_vertex_writer(boost::get(&myVertex::np, fg)), 
+                      make_edge_writer(boost::get(&myEdge::type, fg)), sample_graph_writer{defGraphName},
+                      boost::get(&myVertex::name, fg));
+        }
+        else {
+        
+          boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)), 
+                      make_edge_writer(boost::get(&myEdge::type, g)), sample_graph_writer{defGraphName},
+                      boost::get(&myVertex::name, g));
+        }
+      }
+      catch(...) {throw;}
+
+    
+    return out.str();
+  }
+
+  //write out dotfile from download graph of a memunit
+  void CarpeDM::writeDot(const std::string& fn, Graph& g, bool filterMeta) {
+    std::ofstream out(fn);
+    
+    if (verbose) sLog << "Writing Output File " << fn << "... ";
+    if(out.good()) { out << createDot(g, filterMeta); }
+    else {throw std::runtime_error(" Could not write to .dot file '" + fn + "'"); return;} 
+    if (verbose) sLog << "Done.";
+  }

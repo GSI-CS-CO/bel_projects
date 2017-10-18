@@ -19,16 +19,6 @@
 using namespace DotStr;
 
 
-
-
-
-const unsigned char CarpeDM::deadbeef[4] = {0xDE, 0xAD, 0xBE, 0xEF};
-const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
-
-
-
-
-
      //TODO NC analysis
   vAdr CarpeDM::getUploadAdrs(){
     vAdr ret;
@@ -64,9 +54,6 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
     // std::cout << "mem reserved " << bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE << " equals " << (bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE) / _MEM_BLOCK_SIZE << " nodes, " << atUp.getMemories().size() << " memory" << std::endl; 
     ret.reserve( bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE); // preallocate memory for BMPs and all Nodes
     
-  
-
-
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
       auto& tmpBmp = atUp.getMemories()[i].getBmp();
       //vHexDump("bmpUpb4", tmpBmp);
@@ -94,24 +81,24 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
 
 
   void CarpeDM::generateDstLst(Graph& g, vertex_t v) {
-    const std::string name = g[v].name + "_ListDst";
+    const std::string name = g[v].name + tDstListSuffix;
     hm.add(name);
-    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), NULL, nDstList, "0x0"), g);
+    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), NULL, nDstList, tHexZero), g);
     boost::add_edge(v,   vD, myEdge(eDstList), g);
   }  
 
   void CarpeDM::generateQmeta(Graph& g, vertex_t v, int prio) {
-    const std::string sPrefix[] = {"Lo", "Hi", "Il"};
 
-    const std::string nameBl = g[v].name + "_QBl_" + sPrefix[prio];
-    const std::string nameB0 = g[v].name + "_Qb_"  + sPrefix[prio] + "0";
-    const std::string nameB1 = g[v].name + "_Qb_"  + sPrefix[prio] + "1";
+
+    const std::string nameBl = g[v].name + tQBufListTag + tQPrioPrefix[prio];
+    const std::string nameB0 = g[v].name + tQBufTag     + tQPrioPrefix[prio] + t1stQBufSuffix;
+    const std::string nameB1 = g[v].name + tQBufTag     + tQPrioPrefix[prio] + t2ndQBufSuffix;
     hm.add(nameBl);
     hm.add(nameB0);
     hm.add(nameB1);
-    vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl).get(), NULL, nQInfo, "0x0"), g);
-    vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0).get(), NULL, nQBuf,  "0x0"), g);
-    vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1).get(), NULL, nQBuf,  "0x0"), g);
+    vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl).get(), NULL, nQInfo, tHexZero), g);
+    vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0).get(), NULL, nQBuf,  tHexZero), g);
+    vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1).get(), NULL, nQBuf,  tHexZero), g);
     boost::add_edge(v,   vBl, myEdge(eQPrio[prio]), g);
     boost::add_edge(vBl, vB0, myEdge(nMeta),    g);
     boost::add_edge(vBl, vB1, myEdge(nMeta),    g);
@@ -171,9 +158,6 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
     // staging changes
     Graph& g = gUp;
     AllocTable& at = atUp;
-
- 
-
     //std::cout << g[v].name << ", now parent of " << g[target(e, g)].name  << std::endl;
 
     if (g[e].type == eAltDst) {
@@ -259,7 +243,6 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
       }  
     }
 
-
     //merge graphs (will lead to disjunct trees with duplicates at overlaps), but keep the mapping for vertex merge
     boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
     copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
@@ -268,9 +251,7 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
     for(auto& it : duplicates ) { 
       sLog <<  it.first << " <- " << it.second << "(" << vertexMap[it.second] << ")" << std::endl; 
       mergeUploadDuplicates(it.first, vertexMap[it.second]); 
-
     }
-
 
     //now remove duplicates
     for(auto& it : duplicates ) { 
@@ -282,13 +263,7 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
 
     writeUpDot("inspect.dot", false);
 
-      
-
-   
-
- 
-
-    //allocate and init all new nodes
+    //allocate and init all new vertices
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       //std::string name = boost::get_property(gUp, boost::graph_name) + "." + gUp[v].name;
       std::string name = gUp[v].name;
@@ -313,9 +288,7 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
       //Ugly as hell. But otherwise the bloody iterator will only allow access to MY alloc buffers (not their pointers!) as const!
       auto* x = (AllocMeta*)&(*it);
 
-
-
-
+      // add timing node data objects to vertices
       if(gUp[v].np == NULL) {
 
         cmp = gUp[v].type;
@@ -323,7 +296,7 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
         if      (cmp == nTMsg)     {
           uint64_t id;
           // if ID field was not given, try to construct from subfields
-          if ( gUp[v].id.find("0xD15EA5EDDEADBEEF") != std::string::npos) { 
+          if ( gUp[v].id.find(tUndefined64) != std::string::npos) { 
             id =  ((s2u<uint64_t>(gUp[v].id_fid)    & ID_FID_MSK)   << ID_FID_POS)   |
                   ((s2u<uint64_t>(gUp[v].id_gid)    & ID_GID_MSK)   << ID_GID_POS)   |
                   ((s2u<uint64_t>(gUp[v].id_evtno)  & ID_EVTNO_MSK) << ID_EVTNO_POS) |
@@ -351,14 +324,10 @@ const std::string CarpeDM::needle(CarpeDM::deadbeef, CarpeDM::deadbeef + 4);
       }  
 
     }
-
-    //sLog << std::endl;
-
-
-    
-
+   
+    // Crawl vertices and serialise their data objects for upload
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-      // sLog << " crawling over " << gUp[v].name << std::endl;
+     
       gUp[v].np->accept(VisitorUploadCrawler(gUp, v, atUp)); 
    
       //Check if all mandatory fields were properly initialised
@@ -524,255 +493,3 @@ int CarpeDM::overwrite(const std::string& fn) {
     return upload();
 
   }
-
-
-
-
-
-
- //write out dotstringfrom download graph
- std::string CarpeDM::createDot(Graph& g, bool filterMeta) {
-    std::ostringstream out;
-
-
-    typedef boost::property_map< Graph, node_ptr myVertex::* >::type NpMap;
-
-    boost::filtered_graph <Graph, boost::keep_all, non_meta<NpMap> > fg(g, boost::keep_all(), make_non_meta(boost::get(&myVertex::np, g)));
-    try { 
-        
-        if (filterMeta) {
-          boost::write_graphviz(out, fg, make_vertex_writer(boost::get(&myVertex::np, fg)), 
-                      make_edge_writer(boost::get(&myEdge::type, fg)), sample_graph_writer{"Demo"},
-                      boost::get(&myVertex::name, fg));
-        }
-        else {
-        
-          boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)), 
-                      make_edge_writer(boost::get(&myEdge::type, g)), sample_graph_writer{"Demo"},
-                      boost::get(&myVertex::name, g));
-        }
-      }
-      catch(...) {throw;}
-
-    
-    return out.str();
-  }
-
-  //write out dotfile from download graph of a memunit
- void CarpeDM::writeDot(const std::string& fn, Graph& g, bool filterMeta) {
-    std::ofstream out(fn);
-    
-    if (verbose) sLog << "Writing Output File " << fn << "... ";
-    if(out.good()) { out << createDot(g, filterMeta); }
-    else {throw std::runtime_error(" Could not write to .dot file '" + fn + "'"); return;} 
-    if (verbose) sLog << "Done.";
-  }
-
-
-
-  
-  //Generate download Bmp addresses. For downloads, this has to be two pass: get bmps first, then use them to get the node locations to read 
-  const vAdr CarpeDM::getDownloadBMPAdrs() {
-    AllocTable& at = atDown;
-    vAdr ret;
-
-     //add all Bmp addresses to return vector
-    for(unsigned int i = 0; i < at.getMemories().size(); i++) {
-      //generate addresses of Bmp's address range
-      for (uint32_t adr = at.adr2extAdr(i, at.getMemories()[i].sharedOffs); adr < at.adr2extAdr(i, at.getMemories()[i].startOffs); adr += _32b_SIZE_) ret.push_back(adr);
-    }
-    return ret;
-  }
-
-    
-
-  const vAdr CarpeDM::getDownloadAdrs() {
-    AllocTable& at = atDown;
-    vAdr ret;
-    //go through Memories
-    for(unsigned int i = 0; i < at.getMemories().size(); i++) {
-      //go through a memory's bmp bits, starting at number of nodes the bmp itself needs (bmpSize / memblocksize). Otherwise, we'd needlessly download the bmp again
-      for(unsigned int bitIdx = at.getMemories()[i].bmpSize / _MEM_BLOCK_SIZE; bitIdx < at.getMemories()[i].bmpBits; bitIdx++) {
-        //if the bit says the node is used, we add the node to read addresses
-        //sLog << "Bit Idx " << bitIdx << " valid " << at.getMemories()[i].getBmpBit(bitIdx) << " na 0x" << std::hex << at.getMemories()[i].sharedOffs + bitIdx * _MEM_BLOCK_SIZE << std::endl;
-        if (at.getMemories()[i].getBmpBit(bitIdx)) {
-          uint32_t nodeAdr = at.getMemories()[i].sharedOffs + bitIdx * _MEM_BLOCK_SIZE;
-           //generate addresses of node's address range
-          for (uint32_t adr = at.adr2extAdr(i, nodeAdr); adr < at.adr2extAdr(i, nodeAdr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {ret.push_back(adr);}
-        }
-      }      
-    }
-    return ret;
-  }  
-    
-
-
-
-  void CarpeDM::parseDownloadData(vBuf downloadData) {
-    Graph& g = gDown;
-    AllocTable& at = atDown;
-
-    at.clear();
-    g.clear();
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //create AllocTable and Vertices
-    //sLog << std::dec << "dl size " << downloadData.size() << std::endl;
-
-    uint32_t nodeCnt = 0;
-    //go through Memories
-    for(unsigned int i = 0; i < at.getMemories().size(); i++) {
-      //go through Bmp
-      for(unsigned int bitIdx = at.getMemories()[i].bmpSize / _MEM_BLOCK_SIZE; bitIdx < at.getMemories()[i].bmpBits; bitIdx++) {
-        if (at.getMemories()[i].getBmpBit(bitIdx)) {
-
-          uint32_t    localAdr  = nodeCnt * _MEM_BLOCK_SIZE; nodeCnt++; 
-          uint32_t    adr       = at.getMemories()[i].sharedOffs + bitIdx * _MEM_BLOCK_SIZE;
-          uint32_t    hash      = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_HASH]);
-          //sLog << std::dec << "Offset " << localAdr + NODE_HASH << std::endl;
-          std::string name      = hm.lookup(hash) ? hm.lookup(hash).get() : "#" + std::to_string(hash);
-          uint32_t    flags     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]); //FIXME what about future requests to hashmap if we improvised the name from hash? those will fail ...
-          uint32_t    type      = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-          uint8_t     cpu       = i;
-          
-
-
-          //Vertex needs flags as a std::string. Convert to hex
-          std::stringstream stream;
-          stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << flags;
-          std::string tmp(stream.str());
-
-
-          //Add Vertex
-          vertex_t v        = boost::add_vertex(myVertex(name, std::to_string(cpu), hash, NULL, "", tmp), g);
-          //std::cout << "atdown cpu " << (int)cpu << " Adr: 0x" << std::hex << adr <<  " Hash 0x" << hash << std::endl;
-          //Add allocTable Entry
-          //vBuf test(downloadData.begin() + localAdr, downloadData.begin() + localAdr + _MEM_BLOCK_SIZE);
-          //vHexDump("TEST ****", test);
-
-        
-
-          if (!(at.insert(cpu, adr, hash, v, false))) {throw std::runtime_error( std::string("Hash or address collision when adding node ") + name); return;};
-
-
-          
-
-          // Create node object for Vertex
-          auto src = downloadData.begin() + localAdr;
-
-
-
-          auto it  = at.lookupAdr(cpu, adr);
-          if (!(at.isOk(it))) {throw std::runtime_error( std::string("Node at (dec) ") + std::to_string(adr) + std::string(", hash (dec) ") + std::to_string(hash) + std::string("not found. This is weird")); return;}
-          
-          auto* x = (AllocMeta*)&(*it);
-
-          std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&(x->b[0]));
-        
-          //hexDump("buf", (uint8_t*)&(x->b[0]), _MEM_BLOCK_SIZE);
-
-          switch(type) {
-            case NODE_TYPE_TMSG         : g[v].np = (node_ptr) new  TimingMsg(g[v].name, x->hash, x->cpu, x->b, flags); g[v].np->deserialise(); break;
-            case NODE_TYPE_CNOOP        : g[v].np = (node_ptr) new       Noop(g[v].name, x->hash, x->cpu, x->b, flags); g[v].np->deserialise(); break;
-            case NODE_TYPE_CFLOW        : g[v].np = (node_ptr) new       Flow(g[v].name, x->hash, x->cpu, x->b, flags); g[v].np->deserialise(); break;
-            case NODE_TYPE_CFLUSH       : g[v].np = (node_ptr) new      Flush(g[v].name, x->hash, x->cpu, x->b, flags); g[v].np->deserialise(); break;
-            case NODE_TYPE_CWAIT        : g[v].np = (node_ptr) new       Wait(g[v].name, x->hash, x->cpu, x->b, flags); g[v].np->deserialise(); break;
-            case NODE_TYPE_BLOCK_FIXED  : g[v].np = (node_ptr) new BlockFixed(g[v].name, x->hash, x->cpu, x->b, flags); g[v].np->deserialise(); break;
-            case NODE_TYPE_BLOCK_ALIGN  : g[v].np = (node_ptr) new BlockAlign(g[v].name, x->hash, x->cpu, x->b, flags); g[v].np->deserialise(); break;
-            case NODE_TYPE_QUEUE        : g[v].np = (node_ptr) new   CmdQMeta(g[v].name, x->hash, x->cpu, x->b, flags); g[v].np->deserialise(); break;
-            case NODE_TYPE_ALTDST       : g[v].np = (node_ptr) new   DestList(g[v].name, x->hash, x->cpu, x->b, flags); g[v].np->deserialise(); break;
-            case NODE_TYPE_QBUF         : g[v].np = (node_ptr) new CmdQBuffer(g[v].name, x->hash, x->cpu, x->b, flags); break;
-            case NODE_TYPE_UNKNOWN      : std::cerr << "not yet implemented " << g[v].type << std::endl; break;
-            default                     : std::cerr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
-          }
-          
-        }
-      }
-    }
-
- 
-    
-
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // create edges
-
-    //Two-pass for edges. First, iterate all non meta-types to establish block -> dstList parenthood
-    for(auto& it : at.getTable().get<Hash>()) {
-      // handled by visitor
-      if (g[it.v].np == NULL) {throw std::runtime_error( std::string("Node ") + g[it.v].name + std::string("not initialised")); return;
-      } else {
-        if  (!(g[it.v].np->isMeta())) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at));
-      }  
-    }
-    //second, iterate all meta-types
-    for(auto& it : at.getTable().get<Hash>()) {
-      // handled by visitor
-      if (g[it.v].np == NULL) {throw std::runtime_error( std::string("Node ") + g[it.v].name + std::string("not initialised")); return; 
-      } else {
-        if  (g[it.v].np->isMeta()) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at));
-      }  
-    }
-
-    
-  }  
-
-    //TODO assign to CPUs/threads
-
-
-   int CarpeDM::download() {
-    
-    vAdr vDlBmpA, vlDlA;
-    vBuf vDlBmpD, vDlD;
-
-    //get all BMPs so we know which nodes to download
-    if(verbose) sLog << "Downloading ...";
-    vDlBmpD = ebReadCycle(ebd, getDownloadBMPAdrs());
-    atDown.setBmps( vDlBmpD );
-    vDlD = ebReadCycle(ebd, getDownloadAdrs());
-
-    if(verbose) sLog << "Done." << std::endl << "Parsing ...";
-    parseDownloadData(vDlD);
-    if(verbose) sLog << "Done." << std::endl;
-    
-    return vDlD.size();
-  }
-
-
-
-
- 
-
-  
-
-  void CarpeDM::show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta ) {
-
-    Graph& g        = (direction == UPLOAD ? gUp  : gDown);
-    AllocTable& at  = (direction == UPLOAD ? atUp : atDown);
-
-
-
-    std::cout << std::endl << title << std::endl;
-    std::cout << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setfill(' ') << std::setw(4) << "S/R" << "   " << std::setfill(' ') << std::setw(4) << "Cpu" << "   " << std::setw(30) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
-    std::cout << std::endl; 
-
-
-
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      auto x = at.lookupVertex(v);
-      
-      if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
-        std::cout   << std::setfill(' ') << std::setw(4) << std::dec << v 
-        << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isOk(x) && (int)(at.isStaged(x)))  
-        << " "      << std::setfill(' ') << std::setw(1) << std::dec << (int)(!(at.isOk(x)))
-        << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (at.isOk(x) ? (int)x->cpu : -1 )  
-        << "   "    << std::setfill(' ') << std::setw(40) << std::left << g[v].name 
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? x->hash  : 0 )
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adr2intAdr(x->cpu, x->adr)  : 0 ) 
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adr2extAdr(x->cpu, x->adr)  : 0 )  << std::endl;
-      }
-    }  
-
-    std::cout << std::endl;  
-  }  
-
