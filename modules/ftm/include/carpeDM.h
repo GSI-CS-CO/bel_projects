@@ -38,8 +38,6 @@ using namespace etherbone;
 class CarpeDM {
 
 private:
-  static const unsigned char deadbeef[4];
-  static const std::string needle;
   void updateListDstStaging(vertex_t v);
   void updateStaging(vertex_t v, edge_t e);
   void generateBlockMeta(Graph& g);

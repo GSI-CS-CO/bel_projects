@@ -1,6 +1,28 @@
 #include "dotstr.h"
 
 namespace DotStr {
+  //pattern for uninitialised properties and their detection
+  const unsigned char deadbeef[4] = {0xDE, 0xAD, 0xBE, 0xEF};
+  const std::string needle(deadbeef, deadbeef + 4);
+
+  const std::string tHexZero     = "0x0";
+  const std::string tZero        = "0";
+  const std::string tUndefined64 = "0xD15EA5EDDEADBEEF";
+  const std::string tUndefined32 = "0xDEADBEEF";
+  const uint32_t    uUndefined32 = 0xDEADBEEF;
+
+  const std::string tUndefined   = "UNDEFINED";
+
+  const std::string defGraphName = "Demo";
+
+  //name prefixes, tags and suffixes for automatic meta node generation
+  const std::string tDstListSuffix  = "_ListDst";
+  const std::string tQPrioPrefix[]  = {"Lo", "Hi", "Il"};
+  const std::string tQBufListTag    = "_QBl_";
+  const std::string tQBufTag        = "_Qb_";
+  const std::string t1stQBufSuffix  = "0";
+  const std::string t2ndQBufSuffix  = "1";
+
 
   // tag constants for both nodes and edges
   const std::string tPrioHi       = "prioil"; //FIXME string is still fitting for 'Interlock' as highest priority

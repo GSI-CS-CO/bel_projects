@@ -4,6 +4,25 @@
 #include <string>
 
 namespace DotStr {
+    //pattern for uninitialised properties and their detection
+    extern const unsigned char deadbeef[4];
+    extern const std::string needle;
+    extern const std::string tHexZero;
+    extern const std::string tZero;
+    extern const std::string tUndefined64;
+    extern const std::string tUndefined32;
+    extern const uint32_t    uUndefined32;
+    extern const std::string tUndefined;
+
+    extern const std::string defGraphName;
+
+    //name prefixes, tags and suffixes for automatic meta node generation
+    extern const std::string tDstListSuffix;  
+    extern const std::string tQPrioPrefix[3];  
+    extern const std::string tQBufListTag;    
+    extern const std::string tQBufTag;
+    extern const std::string t1stQBufSuffix;
+    extern const std::string t2ndQBufSuffix;        
 
     // tag constants for both nodes and edges
     extern const std::string tPrioHi;
