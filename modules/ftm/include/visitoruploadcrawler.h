@@ -28,9 +28,9 @@ class VisitorUploadCrawler {
     AllocTable& at;
     int         cpu = -1;
 
-    void updateStaging() const;
-    void updateListDstStaging(amI x) const;
-    void updateBlockStaging() const;
+    //void updateStaging() const;
+    //void updateListDstStaging(amI x) const;
+    //void updateBlockStaging() const;
     vAdr getDefDst(void)    const;
     vAdr getDynSrc(void)    const;
     vAdr getQInfo(void)     const;

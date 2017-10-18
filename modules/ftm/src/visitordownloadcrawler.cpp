@@ -4,8 +4,9 @@
 #include "block.h"
 #include "meta.h"
 #include "event.h"
+#include "dotstr.h"
 
-
+using namespace DotStr;
 
 void VisitorDownloadCrawler::setDefDst() const {
   
@@ -20,7 +21,7 @@ void VisitorDownloadCrawler::setDefDst() const {
   if (!(at.isOk(x))) {
     std::cout << "AtDown Entry not found !" <<  std::endl;
   }  
-  else  boost::add_edge(v, x->v, myEdge(sDD), g);
+  else  boost::add_edge(v, x->v, myEdge(eDefDst), g);
 
 }
 
@@ -31,15 +32,15 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
   
   tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_ALT_DEST_PTR ));
   //if the block has no destination list, set default destination ourself
-  if (tmpAdr != LM32_NULL_PTR) { boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sDL), g); }
+  if (tmpAdr != LM32_NULL_PTR) { boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eDstList), g); }
   else setDefDst();  
 
   tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_IL_PTR ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sQM[PRIO_IL]), g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eQPrio[PRIO_IL]), g);
   tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_HI_PTR ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sQM[PRIO_HI]), g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eQPrio[PRIO_HI]), g);
   tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_LO_PTR ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sQM[PRIO_LO]), g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eQPrio[PRIO_LO]), g);
 
 }
 
@@ -55,7 +56,7 @@ void VisitorDownloadCrawler::visit(const TimingMsg& el) const  {
 
   if (flags & NFLG_TMSG_DYN_ID_SMSK) {
     tmpAdr = at.extAdr2adr(cpu, (uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_ID ));
-    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sDID),          g);
+    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eDynId),          g);
   }
   if (flags & NFLG_TMSG_DYN_PAR0_SMSK) {
     //std::cout << "original 0x" << std::hex << (uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ) << " , intbase 0x" << m.intBaseAdr + extBaseAdr std::endl;
@@ -64,11 +65,11 @@ void VisitorDownloadCrawler::visit(const TimingMsg& el) const  {
     //parserMeta* lookupPtr = (parserMeta*)(m.lookupAdr(tmpAdr));
     //if (lookupPtr == NULL) std::cout << "Parsermeta Lookup returned Null " << std::endl;
     
-    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sDPAR0),          g);
+    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eDynPar0),          g);
   }
   if (flags & NFLG_TMSG_DYN_PAR1_SMSK) {
     tmpAdr = at.extAdr2adr(cpu, (uint32_t)(writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ) >> 32));
-    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sDPAR1),          g);
+    if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eDynPar1),          g);
   }
 }
 
@@ -81,15 +82,11 @@ void VisitorDownloadCrawler::visit(const Flow& el) const  {
   if( targetCpu != cpu) tmpAdr = at.peerAdr2adr(targetCpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
   else                  tmpAdr = at.intAdr2adr(targetCpu,  writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
 
-
-  
-
-
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sTG),          g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eCmdTarget),          g);
 
   tmpAdr = at.intAdr2adr(targetCpu,  writeBeBytesToLeNumber<uint32_t>(b + CMD_FLOW_DEST ));
   //std::cout << g[v].name << "Caller " << (int)cpu << " callee " << (int)targetCpu << std::hex << " 0x" << writeBeBytesToLeNumber<uint32_t>(b + CMD_FLOW_DEST ) << std::hex << " 0x" << tmpAdr << std::endl;
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sFD),          g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eCmdFlowDst),          g);
 
 }
 
@@ -102,7 +99,7 @@ void VisitorDownloadCrawler::visit(const Flush& el) const {
 
   if( targetCpu != cpu) tmpAdr = at.peerAdr2adr(targetCpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
   else                  tmpAdr = at.intAdr2adr(cpu,  writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sTG),          g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eCmdTarget),          g);
 
 }
 
@@ -113,7 +110,7 @@ void VisitorDownloadCrawler::visit(const Noop& el) const {
 
   if( targetCpu != cpu) tmpAdr = at.peerAdr2adr(targetCpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
   else                  tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sTG),          g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eCmdTarget),          g);
 
 }
 
@@ -124,7 +121,7 @@ void VisitorDownloadCrawler::visit(const Wait& el) const {
   setDefDst();
   if( targetCpu != cpu) tmpAdr = at.peerAdr2adr(targetCpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
   else                  tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(sTG),          g);
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eCmdTarget),          g);
 
 }
 
@@ -135,7 +132,7 @@ void VisitorDownloadCrawler::visit(const CmdQMeta& el) const {
     if (tmpAdr != LM32_NULL_PTR) {
       auto x = at.lookupAdr(cpu, tmpAdr);
       if (x != NULL) {//std::cout << "found qbuf!" << std::endl; 
-        boost::add_edge(v, x->v, (myEdge){"meta"}, g);
+        boost::add_edge(v, x->v, (myEdge){nMeta}, g);
       }
     }  
   }
@@ -163,17 +160,15 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
     //add all destination (including default destination (defDstPtr might have changed during runtime) connections from the dest list to the parent block
 
     bool defaultValid = false;
-    std::string sType = sAD;
+    std::string sType = eAltDst;
     defAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(g[vPblock].np->getB() + NODE_DEF_DEST_PTR));
-    std::cerr << "def  " << std::hex << "0x" << defAdr << std::endl;   
 
     for (ptrdiff_t offs = DST_ARRAY; offs < DST_ARRAY_END; offs += _32b_SIZE_) {
       tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + offs ));
 
-      //if tmpAdr it is the default address, change edge type to sDD (defdst)
-      std::cerr << "current alt " << std::hex << "0x" << tmpAdr << std::endl;
-      if (tmpAdr == defAdr) { sType = sDD; defaultValid = true;}
-      else sType = sAD;
+      //if tmpAdr it is the default address, change edge type to eDefDst (defdst)
+      if (tmpAdr == defAdr) { sType = eDefDst; defaultValid = true;}
+      else sType = eAltDst;
 
       if (tmpAdr != LM32_NULL_PTR) {
         auto x = at.lookupAdr(cpu, tmpAdr);
@@ -187,8 +182,8 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
       if (defAdr != LM32_NULL_PTR) {
         auto x = at.lookupAdr(cpu, defAdr);
         if (x != NULL) {
-          boost::add_edge(vPblock, x->v, (myEdge){sBD}, g);
-        } else boost::add_edge(vPblock, vPblock, (myEdge){sBD}, g);
+          boost::add_edge(vPblock, x->v, (myEdge){eBadDefDst}, g);
+        } else boost::add_edge(vPblock, vPblock, (myEdge){eBadDefDst}, g);
       }
     }
   } else {

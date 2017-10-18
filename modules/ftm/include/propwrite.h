@@ -21,6 +21,9 @@
 #include "block.h"
 #include "meta.h"
 #include "event.h"
+#include "dotstr.h"
+
+using namespace DotStr;
 
 
 
@@ -116,13 +119,13 @@ template <class Name>
     template <class Edge>
     void operator()(std::ostream& out, const Edge& v) const {
       out <<  "[type=\"" << type[v] << "\",";
-      if (type[v] == sBD) out << " style=\"dashed\", label=\"bad defDest\", ";
+      if (type[v] == eBadDefDst) out << " style=\"dashed\", label=\"bad defDest\", ";
       out << "color=\""; 
-      if      (type[v] == sDD) out << "red";
-      else if (type[v] == sAD) out << "black";
-      else if (type[v] == sBD) out << "orange";
-      else if (type[v] == sTG) out << "blue";
-      else if (type[v] == sFD) out << "magenta";
+      if      (type[v] == eDefDst) out << "red";
+      else if (type[v] == eAltDst) out << "black";
+      else if (type[v] == eBadDefDst) out << "orange";
+      else if (type[v] == eCmdTarget) out << "blue";
+      else if (type[v] == eCmdFlowDst) out << "magenta";
       else out << "grey\", label=\"" << type[v];
       out <<  "\"]";   
     }

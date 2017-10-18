@@ -40,6 +40,8 @@ class CarpeDM {
 private:
   static const unsigned char deadbeef[4];
   static const std::string needle;
+  void updateListDstStaging(vertex_t v);
+  void updateStaging(vertex_t v, edge_t e);
   void generateBlockMeta(Graph& g);
   void generateDstLst(Graph& g, vertex_t v);
   void generateQmeta(Graph& g, vertex_t v, int prio);
@@ -50,7 +52,7 @@ private:
 
   //Process Graph for uploading to LM32 SoC
   void prepareUpload(Graph& g);
-  void merge_vertices(vertex_t borg, vertex_t victim, Graph& g ); 
+  void mergeUploadDuplicates(vertex_t borg, vertex_t victim); 
   void prepareKeep(const std::string& fn);
   int  execKeep();
 
