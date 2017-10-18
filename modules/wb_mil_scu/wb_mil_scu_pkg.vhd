@@ -39,7 +39,7 @@ constant  filter_addr_width:  integer := integer(ceil(log2(real(filter_ram_size)
 -- In DevBus Slave SIO3 offsets are multiplied by 2, eg mil_wr_cmd=1 gives real eb-tools address: sio_mil_first_reg_adr + 2 e.g. x802 --
 ----------------------------------------------------------------------------------------------------------------------------------------
 
-constant  mil_rd_wr_data_a:         unsigned(15 downto 0)  := x"0000";  -- read mil bus                 wb_mil_scu_offset + 16#00#, not used anymore, use task registers therefore.
+constant  mil_rd_wr_data_a:         unsigned(15 downto 0)  := x"0000";  -- read mil bus                 wb_mil_scu_offset + 16#00#, read not used anymore, use task registers therefore.
                                                                         -- write data to mil bus:       wb_mil_scu_offset + 16#00#, write for tx block mode fifo, bit[31..16] don't care.
 constant  mil_wr_cmd_a:             unsigned(15 downto 0)  := x"0001";  -- write command to mil bus:    wb_mil_scu_offset + 16#04#, write for tx block mode fifo, bit[31..16] don't care.
 
@@ -72,8 +72,9 @@ constant  rd_wr_dly_timer_LW_a:     unsigned(15 downto 0)  := x"0010";  -- read 
                                                                         -- write event timer latch LW   wb_mil_scu_offset + 16#40#.
 constant  rd_wr_dly_timer_HW_a:     unsigned(15 downto 0)  := x"0011";  -- read event timer latch HW    wb_mil_scu_offset + 16#44#.
                                                                         -- write event timer latch HW   wb_mil_scu_offset + 16#44#. 
-   
-                                                         
+constant  wr_soft_reset_a:          unsigned(15 downto 0)  := x"0012";  -- wr softreset to wb_mil_scu   wb_mil_scu_offset + 16#48#.
+
+                                                        
 CONSTANT  ram_count:                integer                :=  254;     -- max 254: aktuelle Version, max 255 zukünftig bei Strahlendiagnosemode.
 CONSTANT  sio_mil_first_reg_a:      unsigned(15 downto 0)  :=  x"0400";
 CONSTANT  sio_mil_last_reg_a:       unsigned(15 downto 0)  :=  x"0440";
