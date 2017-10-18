@@ -88,7 +88,8 @@ port  (
     error_limit_reached:  out   std_logic;
     Mil_Decoder_Diag_p: out   std_logic_vector(15 downto 0);
     Mil_Decoder_Diag_n: out   std_logic_vector(15 downto 0);
-    clr_mil_rcv_err:    in    std_logic
+    clr_mil_rcv_err:    in    std_logic;
+    hw6408_rdy:         out   std_logic
     );
 end mil_hw_or_soft_ip;
 
@@ -168,8 +169,8 @@ component hw6408_vhdl
     clk_i:        in  std_logic;
     
     res_6408:     out std_logic := '0';                                 -- verbinde mit HD6408(mr) = master reset.
-    sel_6408:     in  std_logic := '0'                                  -- '1' => hw6408_vhd kann betrieben werden. '0' => hw6408_vhd
-                                                                        -- ausgeschaltet.
+    sel_6408:     in  std_logic := '0';                                 -- '1' => hw6408_vhd kann betrieben werden. '0' => hw6408_vhd ausgeschaltet
+    hw6408_rdy:   out std_logic                                         -- '1' hw6408 is equipped and in operational state
   );
   end component;
 
@@ -194,7 +195,7 @@ signal    D_OUT:            std_logic_vector(15 downto 0);
 
 signal    Mil_Rcv_Error:    std_logic;
 
-signal  SEL_6408:     std_logic;    -- used for modelsim
+signal    SEL_6408:         std_logic;    -- used for modelsim
 
 begin
 
@@ -239,8 +240,9 @@ hw6408: hw6408_vhdl
     clk_i         => Clk,
     
     res_6408      => Reset_6408,      -- verbinde mit HD6408(mr) = master reset.
-    sel_6408      => SEL_6408         -- '1' => hw6408_vhd kann betrieben werden. '0' => hw6408_vhd
+    sel_6408      => SEL_6408,        -- '1' => hw6408_vhd kann betrieben werden. '0' => hw6408_vhd
                                       -- ausgeschaltet.
+    hw6408_rdy    => hw6408_rdy 
   );
 
       

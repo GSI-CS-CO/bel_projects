@@ -10,6 +10,8 @@ use ieee.numeric_std.all;
 --+-----------------------------------------------------------------------------------------------------------|
 --| K.Kaiser 21-Jul-2017  DSC Denoised, TD SDO TD and vw synchronized by shiftreg due to Harris DSC Problems  |
 --+-----------------------------------------------------------------------------------------------------------|
+--| K.Kaiser 13-Oct-2017  A HW6408_rdy signal added which shows that Harris Chip is equipped and working      |
+--+-----------------------------------------------------------------------------------------------------------|
 
 
 
@@ -51,8 +53,9 @@ entity hw6408_vhdl is
     clk_i:        in  std_logic;
     
     res_6408:     out std_logic := '0';               -- verbinde mit HD6408(mr) = master reset.
-    sel_6408:     in  std_logic := '0'                -- '1' => hw6408_vhd kann betrieben werden. '0' => hw6408_vhd
+    sel_6408:     in  std_logic := '0';               -- '1' => hw6408_vhd kann betrieben werden. '0' => hw6408_vhd
                                                       -- ausgeschaltet.
+    hw6408_rdy:   out std_logic :='0'                 --'1' Harris Chip is working, by checking Harris incoming dsc clk 
   );
   end hw6408_vhdl;
 
@@ -101,16 +104,33 @@ signal td_sh:           std_logic_vector(3 downto 0);
 signal cds_sh:          std_logic_vector(3 downto 0);
 signal vw_sh:           std_logic_vector(3 downto 0);
 signal sdo_sh:          std_logic_vector(3 downto 0);
-
+signal dsc_cnt:         integer range 0 to 15; 
 	 
 begin
+
+
+p_hw6408_rdy: PROCESS( dsc, nrst_i)      --KK to ensure that MIL Piggy is equipped and in operational state
+BEGIN
+  IF (nrst_i='0') THEN 
+    dsc_cnt      <= 0;
+    hw6408_rdy   <='0';   
+  ELSIF rising_edge(dsc) THEN
+    IF dsc_cnt < dsc_cnt'high THEN   
+      dsc_cnt    <= dsc_cnt + 1;   -- keep ready low for 16 µsek
+      hw6408_rdy <='0';
+    ELSE
+      hw6408_rdy <='1';
+      dsc_cnt    <= dsc_cnt'high;  -- stay at 15 until next reset
+    END IF;
+  END IF;
+END PROCESS p_hw6408_rdy; 
 
 p_dsc_denoise : PROCESS (clk_i, nrst_i)   --KK
 BEGIN
   IF (nrst_i = '0') THEN
-    dsc_sh1            <= '0';
-    dsc_sh2            <= '0';
-    dsc_denoised       <= '0';
+   dsc_sh1            <= '0';
+   dsc_sh2            <= '0';
+   dsc_denoised       <= '0';
 	 td_sh              <= (others =>'0');
 	 cds_sh             <= (others =>'0');
 	 vw_sh              <= (others =>'0');
