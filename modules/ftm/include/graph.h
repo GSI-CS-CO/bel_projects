@@ -107,6 +107,7 @@ typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS, 
 typedef boost::graph_traits<Graph>::vertex_descriptor vertex_t;
 typedef boost::graph_traits<Graph>::edge_descriptor edge_t;
 typedef boost::container::vector<vertex_t> vVertices;
+typedef std::map<vertex_t, vertex_t> vertex_map_t;
 
 
 #endif

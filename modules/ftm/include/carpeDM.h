@@ -49,7 +49,8 @@ private:
   Graph& parseDot(const std::string& fn, Graph& g);
 
   //Process Graph for uploading to LM32 SoC
-  void prepareUpload(Graph& g);
+  void baseUploadOnDownload();
+  void prepareUpload();
   void mergeUploadDuplicates(vertex_t borg, vertex_t victim); 
   void prepareKeep(const std::string& fn);
   int  execKeep();

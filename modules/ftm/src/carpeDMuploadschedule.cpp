@@ -204,64 +204,13 @@ using namespace DotStr;
     
   }
 
-  void CarpeDM::prepareUpload(Graph& g) {
-    typedef std::map<vertex_t, vertex_t> vertex_map_t;
-
+  void CarpeDM::prepareUpload() {
+    
     std::string cmp;
     uint32_t hash;
     uint8_t cpu;
     int allocState;
-    vertex_map_t vertexMap, duplicates;
-    std::vector<std::string> existingNames;
-    Graph gTmp;
     
-    copy_graph(g, gTmp);     //save the graph we were handed into our own temp graph
-    generateBlockMeta(gTmp); //auto generate desired Block Meta Nodes
-
-    
-      
-
-    // for some reason, copy_graph does not copy the name
-    //boost::set_property(gTmp, boost::graph_name, boost::get_property(g, boost::graph_name));
-    
-    //init up graph from down
-    copy_graph(gDown, gUp);
-    //now, we need to change the buffer pointers in the copied nodes, as they still point to buffers in upload allocation table
-
-
-    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-      auto* x = (AllocMeta*)&(*atUp.lookupVertex(v));
-      gUp[v].np->setB(x->b);
-    }  
-
-    //find and list all duplicates i.e. docking points between trees
- 
-    //probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
-    BOOST_FOREACH( vertex_t v, vertices(gUp) ) { 
-      BOOST_FOREACH( vertex_t w, vertices(gTmp) ) { 
-        if (gTmp[w].name == gUp[v].name) {sLog << gTmp[w].name << " gTmp " << w << " <-> " << gUp[v].name << " gUp " << v << std::endl; duplicates[v] = w;} 
-      }  
-    }
-
-    //merge graphs (will lead to disjunct trees with duplicates at overlaps), but keep the mapping for vertex merge
-    boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
-    copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
-    for(auto& it : vertexMap ) {sLog <<  "gTmp " << gTmp[it.first].name << " @ " << it.first << " gUp " << it.second << std::endl; }
-    //merge duplicate nodes
-    for(auto& it : duplicates ) { 
-      sLog <<  it.first << " <- " << it.second << "(" << vertexMap[it.second] << ")" << std::endl; 
-      mergeUploadDuplicates(it.first, vertexMap[it.second]); 
-    }
-
-    //now remove duplicates
-    for(auto& it : duplicates ) { 
-      boost::clear_vertex(vertexMap[it.second], gUp); 
-      boost::remove_vertex(vertexMap[it.second], gUp);
-      //remove_vertex() changes the vertex vector, as it must stay contignuous. descriptors higher than he removed one therefore need to be decremented by 1
-      for( auto& updateIt : vertexMap) {if (updateIt.second > it.second) updateIt.second--; }
-    }
-
-    writeUpDot("inspect.dot", false);
 
     //allocate and init all new vertices
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
@@ -346,15 +295,6 @@ using namespace DotStr;
       } 
     }
 
-    if (existingNames.size() > 0) {
-      
-      if (verbose) {
-        sLog << ("Skipped some nodes already present on the DM") << std::endl; 
-        sLog << ("Existing Nodes:") << std::endl; 
-        for (auto& it : existingNames) sLog << it << std::endl;
-      }    
-    }
-  
     
 
   }
@@ -371,18 +311,66 @@ using namespace DotStr;
     return vUlD.size();
   }
 
-  int CarpeDM::add(const std::string& fn) {
-   
-    Graph gTmp;
+  void CarpeDM::baseUploadOnDownload() {
     gUp.clear();
+    //init up graph from down
     download();
-    //atUp.syncToAtBmps(atDown); //use the bmps of the changed download allocation table for upload
     atUp = atDown;
-    //copy_graph(gDown, gUp);
+    // for some reason, copy_graph does not copy the name
+    //boost::set_property(gTmp, boost::graph_name, boost::get_property(g, boost::graph_name));
+    copy_graph(gDown, gUp);
+    //now, we need to change the buffer pointers in the copied nodes, as they still point to buffers in upload allocation table
+
+    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+      auto* x = (AllocMeta*)&(*atUp.lookupVertex(v));
+      gUp[v].np->setB(x->b);
+    } 
+  }
+
+  int CarpeDM::add(const std::string& fn) {
+
+    Graph gTmp;
+    vertex_map_t vertexMap, duplicates;
     
+    baseUploadOnDownload(); 
+
     parseDot(fn, gTmp);
     if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
-    prepareUpload(gTmp);
+        typedef std::map<vertex_t, vertex_t> vertex_map_t;
+    
+    generateBlockMeta(gTmp); //auto generate desired Block Meta Nodes
+
+    //find and list all duplicates i.e. docking points between trees
+ 
+    //probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
+    BOOST_FOREACH( vertex_t v, vertices(gUp) ) { 
+      BOOST_FOREACH( vertex_t w, vertices(gTmp) ) { 
+        if (gTmp[w].name == gUp[v].name) {sLog << gTmp[w].name << " gTmp " << w << " <-> " << gUp[v].name << " gUp " << v << std::endl; duplicates[v] = w;} 
+      }  
+    }
+
+    //merge graphs (will lead to disjunct trees with duplicates at overlaps), but keep the mapping for vertex merge
+    boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
+    copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
+    for(auto& it : vertexMap ) {sLog <<  "gTmp " << gTmp[it.first].name << " @ " << it.first << " gUp " << it.second << std::endl; }
+    //merge duplicate nodes
+    for(auto& it : duplicates ) { 
+      sLog <<  it.first << " <- " << it.second << "(" << vertexMap[it.second] << ")" << std::endl; 
+      mergeUploadDuplicates(it.first, vertexMap[it.second]); 
+    }
+
+    //now remove duplicates
+    for(auto& it : duplicates ) { 
+      boost::clear_vertex(vertexMap[it.second], gUp); 
+      boost::remove_vertex(vertexMap[it.second], gUp);
+      //remove_vertex() changes the vertex vector, as it must stay contignuous. descriptors higher than he removed one therefore need to be decremented by 1
+      for( auto& updateIt : vertexMap) {if (updateIt.second > it.second) updateIt.second--; }
+    }
+
+    writeUpDot("inspect.dot", false);
+
+
+    prepareUpload();
     atUp.updateBmps();
     writeUpDot("upload.dot", false);
 
@@ -395,7 +383,7 @@ int CarpeDM::overwrite(const std::string& fn) {
   Graph gTmp; 
   parseDot(fn, gTmp);
   if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
-  prepareUpload(gTmp);
+  prepareUpload();
   atUp.updateBmps();
 
   return upload();
@@ -416,7 +404,7 @@ int CarpeDM::overwrite(const std::string& fn) {
     gUp.clear();
     parseDot(fn, gTmp);
     if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return;}
-    prepareUpload(gTmp); 
+    prepareUpload(); 
   }  
 
   //removes all nodes NOT in input file
@@ -457,7 +445,7 @@ int CarpeDM::overwrite(const std::string& fn) {
     
     parseDot(fn, gTmp);
     if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
-    prepareUpload(gTmp); 
+    prepareUpload(); 
     download();
 
     uint32_t hash;
