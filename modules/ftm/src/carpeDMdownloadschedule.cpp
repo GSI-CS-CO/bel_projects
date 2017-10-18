@@ -117,8 +117,6 @@ using namespace DotStr;
 
           std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&(x->b[0]));
         
-          //hexDump("buf", (uint8_t*)&(x->b[0]), _MEM_BLOCK_SIZE);
-
           switch(type) {
             case NODE_TYPE_TMSG         : g[v].np = (node_ptr) new  TimingMsg(g[v].name, x->hash, x->cpu, x->b, flags); g[v].np->deserialise(); break;
             case NODE_TYPE_CNOOP        : g[v].np = (node_ptr) new       Noop(g[v].name, x->hash, x->cpu, x->b, flags); g[v].np->deserialise(); break;

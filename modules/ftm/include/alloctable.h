@@ -48,9 +48,9 @@ typedef boost::multi_index_container<
   AllocMeta,
   indexed_by<
     hashed_unique<
-      tag<Hash>,  BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint32_t,hash)>,
-    hashed_unique<
       tag<Vertex>,  BOOST_MULTI_INDEX_MEMBER(AllocMeta,vertex_t,v)>,
+    hashed_unique<
+      tag<Hash>,  BOOST_MULTI_INDEX_MEMBER(AllocMeta,uint32_t,hash)>,  
     ordered_unique<
       tag<CpuAdr>,
       composite_key<
@@ -64,10 +64,21 @@ typedef boost::multi_index_container<
 
 typedef AllocMeta_set::iterator amI;
 
+/*
+struct decrementVDescModifier {
+    void operator()(BOOST_MULTI_INDEX_MEMBER(AllocMeta,vertex_t,v)&) const {
+        //e.v -= 1;
+    }
+};
+
+*/
+
+
 class AllocTable {
 
   AllocMeta_set a;
   std::vector<MemPool> vPool;
+  
   
 
 public:
@@ -94,6 +105,7 @@ public:
   void setStaged(amI it) { a.modify(it, [](AllocMeta& e){e.staged = true;}); }
   void clrStaged(amI it) { a.modify(it, [](AllocMeta& e){e.staged = false;}); }
   bool isStaged(amI it)  { return it->staged; }
+  void modV(amI it, vertex_t vNew) { a.modify(it, [vNew](AllocMeta& e){e.v = vNew;}); } 
 
   //FIXME
         ////// WORKAROUND - not time to figure out fucking modify_key lambda syntax now /////
