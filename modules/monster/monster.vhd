@@ -371,17 +371,18 @@ architecture rtl of monster is
   constant c_topm_pcie      : natural := 2;
   constant c_topm_vme       : natural := 3;
   constant c_topm_pmc       : natural := 4;
-  constant c_topm_prioq     : natural := 5;
-  constant c_topm_usb       : natural := 6;
+  constant c_topm_usb       : natural := 5;
+  constant c_topm_prioq     : natural := 6;
+
 
   constant c_top_layout_my_masters : t_sdb_record_array(c_top_my_masters-1 downto 0) :=
    (c_topm_ebs     => f_sdb_auto_msi(c_ebs_msi,     false),   -- Need to add MSI support !!!
     c_topm_eca_wbm => f_sdb_auto_msi(c_null_msi,    false),   -- no MSIs for ECA=>WB macro player
     c_topm_pcie    => f_sdb_auto_msi(c_pcie_msi,    g_en_pcie),
     c_topm_vme     => f_sdb_auto_msi(c_vme_msi,     g_en_vme),
+    c_topm_pmc     => f_sdb_auto_msi(c_pmc_msi,     g_en_pmc),
     c_topm_usb     => f_sdb_auto_msi(c_usb_msi,     false), -- Need to add MSI support !!!
-    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false),
-    c_topm_pmc     => f_sdb_auto_msi(c_pmc_msi,    g_en_pmc));
+    c_topm_prioq   => f_sdb_auto_msi(c_null_msi,    false));
 
   -- The FTM adds a bunch of masters to this crossbar
   constant c_ftm_masters : t_sdb_record_array := f_lm32_masters_bridge_msis(g_lm32_cores);
