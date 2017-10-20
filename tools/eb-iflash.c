@@ -46,7 +46,6 @@
 #define CMD_REG     0x4
 #define IFK_ID      0xcc
 
-#define PAGE_SIZE   256
 #define SDB_DEVICES 1
 
 #define MIL_SIO3_OFFSET   0x400
@@ -58,6 +57,7 @@
 #define MIL_SIO3_D_RCVD   0x3800
 #define MIL_SIO3_D_ERR    0x3840
 #define MIL_SIO3_TX_REQ   0x3880
+#define MIL_SIO3_RESET    0x1048
 #define   OKAY                 1
 #define   TRM_NOT_FREE        -1
 #define   RCV_ERROR           -2
@@ -66,6 +66,8 @@
 #define   RCV_PARITY          -5
 #define   ERROR               -6
 #define   RCV_TASK_BSY        -7
+#define   MIL_RST_WAIT        1500000
+#define   MIL_RST_PULSE       500
 
 #define IFA_ID            0xfa00
 #define RELOAD_FAILSAVE   0x1
@@ -86,6 +88,7 @@
 #define FWL_DATA_WR       0x65
 #define FWL_DATA_RD       0x9c
 #define MAGIC_WORD        0x654321
+#define PAGE_SIZE         256
 #define EPCS_SIZE         2048 * PAGE_SIZE
 
 
@@ -157,12 +160,14 @@ void die(const char* where,eb_status_t status) {
 void show_help() {
   printf("Usage: eb-iflash [OPTION] <proto/host/port>\n");
   printf("\n");
+  printf("rbf file should be generated with options: active, compressed, EPCS4\n");
+  printf("\n");
   printf("-h             show the help for this program\n");
   printf("-i <ifa adr>   address of the ifa from 0x0 to 0x254\n");
   printf("-f             trigger failsave reconfiguration\n");
   printf("-u             trigger user reconfiguration\n");
-  printf("-w <file>      write programming file into flash\n");
-  printf("-v <file>      verify flash against programming file\n");
+  printf("-w <file>      write rbf file into flash\n");
+  printf("-v <file>      verify flash against rbf file\n");
 }
 
 /* blocking read usign task slot1 */
@@ -236,17 +241,31 @@ int devb_write(eb_address_t base, int ifa_addr, unsigned char fc, eb_data_t writ
     exit(1);
   } else {
     if ((eb_device_write(device, base + MIL_SIO3_TX_DATA, EB_DATA32|EB_BIG_ENDIAN, write_value, 0, eb_block)) != EB_OK) {
-      printf("write tx data faile!\n");
+      printf("devb write tx data failed!\n");
       exit(1);
     }
     if ((eb_device_write(device, base + MIL_SIO3_TX_CMD, EB_DATA32|EB_BIG_ENDIAN, fc << 8 | ifa_addr, 0, eb_block)) != EB_OK) {
-      printf("write tx cmd failed!\n");
+      printf("devb write tx cmd failed!\n");
       exit(1);
     }
   }
   return OKAY;
 }
-   
+// reset mil controller
+int reset_mil(eb_address_t base) {
+  //reset
+  if ((eb_device_write(device, base + MIL_SIO3_RESET, EB_DATA32|EB_BIG_ENDIAN, 0, 0, eb_block)) != EB_OK) {
+    printf("resetting mil failed!\n");
+    exit(1);
+  }
+  usleep(500);
+  //release reset
+  if ((eb_device_write(device, base + MIL_SIO3_RESET, EB_DATA32|EB_BIG_ENDIAN, 0xff, 0, eb_block)) != EB_OK) {
+    printf("resetting mil failed!\n");
+    exit(1);
+  }
+  return OKAY;
+}
    
 // sets the addr registers in the firmware loader. flash_addr is written to
 // low word and high word register
@@ -256,7 +275,6 @@ void set_flash_addr(eb_address_t base, int ifa_addr, unsigned int flash_addr) {
   usleep(10000);
   devb_write(base, ifa_addr, FWL_STATUS_WR, WR_HW_ADDR); 
   devb_write(base, ifa_addr, FWL_DATA_WR, flash_addr >> 16);
-  usleep(10000);
 }
 
 // clears the flash pages
@@ -309,7 +327,6 @@ void initReadBuffer(int size) {
 // read file to wbuffer
 void readFiletoBuffer(char* filename) {
   FILE *fp;
-  int i;
   int bytes_written;
   if (filename != NULL) {
     if ((fp = fopen(filename, "r")) == NULL) {
@@ -319,13 +336,13 @@ void readFiletoBuffer(char* filename) {
     struct stat buf;
     stat(filename, &buf);
     int size = buf.st_size;
-    // not true for rbf files
+    // rbf file size is uneven
     if (size % PAGE_SIZE) {
       printf("size of programming file is not a multiple of %d\n", PAGE_SIZE);
-      //exit(1);
     }
     printf("filesize: %d bytes\n", size);
-    buffer_size = EPCS_SIZE;
+    // buffersize is now a multiple of PAGE_SIZE
+    buffer_size = size - (size % PAGE_SIZE) + PAGE_SIZE; 
     printf("buffer size: %d bytes\n", buffer_size);
     wbuffer = (unsigned char *)malloc(buffer_size);
     if (wbuffer == NULL) {
@@ -340,20 +357,12 @@ void readFiletoBuffer(char* filename) {
     }
     if (bytes_written < buffer_size) {
       // pad with 0xff to end of buffer
+      printf("padding...\n");
       memset(&wbuffer[bytes_written], 0xff, buffer_size - bytes_written);
     }    
-    for (i=0; i < buffer_size; i++) {
-      printf("0x%x ", wbuffer[i]);
-    }
     printf("\n");
     printf("bytes_written: %d\n", bytes_written);
     printf("size: %d\n", size);
-//    for(j=0; j<16; j++) {
-//      for(i = 0; i < 8; i++) {
-//        printf("0x%04x ", wbuffer[i+j*8]); 
-//      }
-//      printf("\n");
-//    }
   }
 }
 
@@ -364,6 +373,7 @@ int main(int argc, char * const* argv) {
   struct sdb_device sdbDevice[SDB_DEVICES];
   int nDevices;  
   eb_address_t dev_bus;
+  eb_cycle_t cycle;
 
   char *wvalue = NULL;
   char *vvalue = NULL; 
@@ -372,7 +382,7 @@ int main(int argc, char * const* argv) {
   int fflag = 0;
   int eflag = 0;
   int uflag = 0;
-  int sflag = 0;
+  //int sflag = 0;
   int index;
   int c;
  
@@ -382,7 +392,7 @@ int main(int argc, char * const* argv) {
  
   /* Process the command-line arguments */
   opterr = 0;
-  while ((c = getopt (argc, argv, "i:w:v:hfuer:s")) != -1)
+  while ((c = getopt (argc, argv, "i:w:v:hfuer:")) != -1)
     switch (c)
       {
         case 'w':
@@ -406,9 +416,9 @@ int main(int argc, char * const* argv) {
         case 'e':
           eflag = 1;
           break;
-        case 's':
-          sflag = 1;
-          break;
+        ////case 's':
+          //sflag = 1;
+          //break;
         case 'h':
           show_help();
           exit(1);
@@ -486,19 +496,22 @@ int main(int argc, char * const* argv) {
     printf("erased the user image from flash\n");
   }
     
+  reset_mil(dev_bus);
   
   // load failsave config
   if (fflag == 1) {
     devb_write(dev_bus, ifa_addr, FWL_STATUS_WR, RELOAD_FAILSAVE);
     // wait for ifa to load image from flash
-    usleep(300000);
+    usleep(MIL_RST_WAIT);
+    reset_mil(dev_bus);
     printf("reload fpga with failsave config.\n");
   }
   // load user config
   if (uflag == 1) {
     devb_write(dev_bus, ifa_addr, FWL_STATUS_WR, RELOAD_USER);
     // wait for ifa to load image from flash
-    usleep(300000);
+    usleep(MIL_RST_WAIT);
+    reset_mil(dev_bus);
     printf("reload fpga with user config.\n");
   }
 
@@ -507,30 +520,40 @@ int main(int argc, char * const* argv) {
     int cnt = 0;
     int i = 0;
     unsigned short lb, hb;
+    
+    // erase flash
+    clearFlash(dev_bus, ifa_addr);
 
     // copy flash data to memory
     readFiletoBuffer(wvalue);
     
-    while (cnt < buffer_size/2) {
+    while (cnt < buffer_size) {
       clearFifo(dev_bus, ifa_addr);
-      set_flash_addr(dev_bus, ifa_addr, cnt*2);
-      printf("write to flash addr 0x%x\n", cnt*2);
+      set_flash_addr(dev_bus, ifa_addr, cnt);
+      printf("write to flash addr 0x%x\n", cnt);
       // set mode to fifo write
       devb_write(dev_bus, ifa_addr, FWL_STATUS_WR, WR_FIFO);
       i = 0;
-      while ((i < 128) && (cnt < buffer_size/2)) {
-        if (sflag) {
-          hb = wbuffer[cnt+1];
-          lb = wbuffer[cnt];
-        } else {
-          hb = wbuffer[cnt];
-          lb = wbuffer[cnt+1];
-        } 
-        devb_write(dev_bus, ifa_addr, FWL_DATA_WR, hb << 8 | lb );
-        printf("0x%04x ", hb << 8 | lb); 
+      //open cycle
+      if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+        die("EP eb_cycle_open", status);
+      while ((i < 128) && (cnt < buffer_size)) {
+        //if (sflag) {
+          //hb = wbuffer[cnt+1];
+          //lb = wbuffer[cnt];
+        //} else {
+        hb = wbuffer[cnt];
+        lb = wbuffer[cnt+1];
+        //} 
+        eb_cycle_write(cycle, dev_bus + MIL_SIO3_TX_DATA, EB_BIG_ENDIAN|EB_DATA32, hb << 8 | lb);
+        eb_cycle_write(cycle, dev_bus + MIL_SIO3_TX_CMD, EB_BIG_ENDIAN|EB_DATA32, FWL_DATA_WR << 8 | ifa_addr);
         cnt+=2;
+        // increment fifo counter
         i++;
       }
+      // close cycle
+      if ((status = eb_cycle_close(cycle)) != EB_OK)
+        die("EP eb_cycle_close", status);
       // check if fifo is full
       devb_read(dev_bus, ifa_addr, FWL_STATUS_RD, &value);
       if (value & WR_FIFO) {
@@ -561,10 +584,10 @@ int main(int argc, char * const* argv) {
     readFiletoBuffer(vvalue);
     initReadBuffer(buffer_size);
 
-    while (cnt < buffer_size/2) {
+    while (cnt < buffer_size) {
       clearFifo(dev_bus, ifa_addr);
-      set_flash_addr(dev_bus, ifa_addr, cnt*2);
-      printf("read from flash addr 0x%x\n", cnt*2);
+      set_flash_addr(dev_bus, ifa_addr, cnt);
+      printf("read from flash addr 0x%x\n", cnt);
       // copy page from flash to fifo
       devb_write(dev_bus, ifa_addr, FWL_STATUS_WR, RD_USER_FLASH);
       // wait until done
@@ -575,17 +598,17 @@ int main(int argc, char * const* argv) {
       }
       // read out page fifo
       i = 0;
-      while ((i < 128) && (cnt < buffer_size/2)) {
+      while ((i < 128) && (cnt < buffer_size)) {
         devb_read(dev_bus, ifa_addr, FWL_DATA_RD, &value);
         lb = value & 0xff;          // low byte
         hb = (value & 0xff00) >> 8; // high byte
-        if (sflag) {
-          rbuffer[cnt+1] = hb;
-          rbuffer[cnt]   = lb;
-        } else {
-          rbuffer[cnt]   = hb;
-          rbuffer[cnt+1] = lb;
-        } 
+        //if (sflag) {
+          //rbuffer[cnt+1] = hb;
+          //rbuffer[cnt]   = lb;
+        //} else {
+        rbuffer[cnt]   = hb;
+        rbuffer[cnt+1] = lb;
+        //} 
 
         cnt+=2;
         i++;
@@ -605,13 +628,18 @@ int main(int argc, char * const* argv) {
     int cnt = 0;
     int i = 0;
     FILE *wfp;
-    // copy flash data to memory
-    initReadBuffer(EPCS_SIZE);
 
-    while (cnt < buffer_size/2) {
+    buffer_size = EPCS_SIZE;
+    printf("buffer size: %d bytes\n", buffer_size);
+
+    if ((wfp = fopen(rvalue, "w+")) == NULL) {
+      printf("open of programming file not successful.\n");
+      exit(1);
+    }
+    while (cnt < buffer_size) {
       clearFifo(dev_bus, ifa_addr);
-      set_flash_addr(dev_bus, ifa_addr, cnt*2);
-      printf("read from flash addr 0x%x\n", cnt*2);
+      set_flash_addr(dev_bus, ifa_addr, cnt);
+      printf("read from flash addr 0x%x\n", cnt);
       // copy page from flash to fifo
       devb_write(dev_bus, ifa_addr, FWL_STATUS_WR, RD_USER_FLASH);
       // wait until done
@@ -622,24 +650,15 @@ int main(int argc, char * const* argv) {
       }
       // read out page fifo
       i = 0;
-      while ((i < 128) && (cnt < buffer_size/2)) {
+      while ((i < 128) && (cnt < buffer_size)) {
         devb_read(dev_bus, ifa_addr, FWL_DATA_RD, &value);
-        rbuffer[cnt+1] = value & 0xff; // low byte
-        rbuffer[cnt] = (value & 0xff00) >> 8; // high byte 
+        putc((value & 0xff00) >> 8, wfp); // high byte
+        putc(value & 0xff, wfp);          // low byte
         cnt+=2;
         i++;
       }
     }
-    if ((wfp = fopen(rvalue, "w+")) == NULL) {
-      printf("open of programming file not successful.\n");
-      exit(1);
-    }
-    // write buffer to file
-    if (fwrite(rbuffer, 1, buffer_size, wfp) != buffer_size) {
-      fprintf(stderr, "write error, %s could not be written to file!\n", rvalue);
-      exit(1);
-    } else
-      printf("user image written to %s\n", rvalue);
+
   }
 
   //print information about the found ifa
