@@ -40,6 +40,7 @@ class CarpeDM {
 private:
   void updateListDstStaging(vertex_t v);
   void updateStaging(vertex_t v, edge_t e);
+  void pushMetaNeighbours(vertex_t v, Graph& g, vertex_set_t& s);
   void generateBlockMeta(Graph& g);
   void generateDstLst(Graph& g, vertex_t v);
   void generateQmeta(Graph& g, vertex_t v, int prio);
@@ -49,6 +50,7 @@ private:
   Graph& parseDot(const std::string& fn, Graph& g);
 
   //Process Graph for uploading to LM32 SoC
+
   void baseUploadOnDownload();
   void prepareUpload();
   void mergeUploadDuplicates(vertex_t borg, vertex_t victim); 

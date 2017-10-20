@@ -147,7 +147,7 @@ using namespace DotStr;
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
       if (g[*out_cur].type == eDstList) {
         auto dst = at.lookupVertex(target(*out_cur, g));
-        if (at.isOk(dst)) { at.setStaged(dst); }// if we found a Dst List, stage it
+        if (at.isOk(dst)) { at.setStaged(dst); std::cout << "staged " << g[dst->v].name  << std::endl; }// if we found a Dst List, stage it
         else throw std::runtime_error("Dst List '" + g[dst->v].name + "' was not allocated, this is very bad");
         break;
       }
@@ -158,14 +158,14 @@ using namespace DotStr;
     // staging changes
     Graph& g = gUp;
     AllocTable& at = atUp;
-    //std::cout << g[v].name << ", now parent of " << g[target(e, g)].name  << std::endl;
+    
 
-    if (g[e].type == eAltDst) {
+    if (g[e].type == eAltDst || g[e].type == eDefDst) {
       
       updateListDstStaging(v); // stage source block's Destination List
     } else {
       auto x = at.lookupVertex(v);
-      if(at.isOk(x)) {at.setStaged(x); }
+      if(at.isOk(x)) {at.setStaged(x); std::cout << "staged " << g[v].name  << std::endl;}
       else throw std::runtime_error("Node '" + g[v].name + "' was not allocated, this is very bad");
       
     }
@@ -255,19 +255,19 @@ using namespace DotStr;
           } else { id = s2u<uint64_t>(gUp[v].id); }
           gUp[v].np = (node_ptr) new       TimingMsg(gUp[v].name, x->hash, x->cpu, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), id, s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); 
         }
-        else if (cmp == nCmdNoop)     {gUp[v].np = (node_ptr) new            Noop(gUp[v].name, x->hash, x->cpu, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
-        else if (cmp == nCmdFlow)     {gUp[v].np = (node_ptr) new            Flow(gUp[v].name, x->hash, x->cpu, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
-        else if (cmp == nCmdFlush)    {gUp[v].np = (node_ptr) new           Flush(gUp[v].name, x->hash, x->cpu, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
-                                                                                s2u<bool>(gUp[v].qIl), s2u<bool>(gUp[v].qHi), s2u<bool>(gUp[v].qLo), s2u<uint8_t>(gUp[v].frmIl), s2u<uint8_t>(gUp[v].toIl), s2u<uint8_t>(gUp[v].frmHi),
-                                                                                s2u<uint8_t>(gUp[v].toHi), s2u<uint8_t>(gUp[v].frmLo), s2u<uint8_t>(gUp[v].toLo) ); }
-        else if (cmp == nCmdWait)     {gUp[v].np = (node_ptr) new            Wait(gUp[v].name, x->hash, x->cpu, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait)); }
-        else if (cmp == nBlock)    {gUp[v].np = (node_ptr) new      BlockFixed(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == nBlockFixed)    {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == nBlockAlign)    {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == nQInfo)    {gUp[v].np = (node_ptr) new        CmdQMeta(gUp[v].name, x->hash, x->cpu, x->b, 0);}
-        else if (cmp == nDstList)  {gUp[v].np = (node_ptr) new        DestList(gUp[v].name, x->hash, x->cpu, x->b, 0);}
-        else if (cmp == nQBuf)     {gUp[v].np = (node_ptr) new      CmdQBuffer(gUp[v].name, x->hash, x->cpu, x->b, 0);}
-        else if (cmp == nMeta)     {throw std::runtime_error("Pure meta type not yet implemented"); return;}
+        else if (cmp == nCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
+        else if (cmp == nCmdFlow)     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
+        else if (cmp == nCmdFlush)    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
+                                                                              s2u<bool>(gUp[v].qIl), s2u<bool>(gUp[v].qHi), s2u<bool>(gUp[v].qLo), s2u<uint8_t>(gUp[v].frmIl), s2u<uint8_t>(gUp[v].toIl), s2u<uint8_t>(gUp[v].frmHi),
+                                                                              s2u<uint8_t>(gUp[v].toHi), s2u<uint8_t>(gUp[v].frmLo), s2u<uint8_t>(gUp[v].toLo) ); }
+        else if (cmp == nCmdWait)     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait)); }
+        else if (cmp == nBlock)       {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
+        else if (cmp == nBlockFixed)  {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
+        else if (cmp == nBlockAlign)  {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
+        else if (cmp == nQInfo)       {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, x->hash, x->cpu, x->b, 0);}
+        else if (cmp == nDstList)     {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, x->hash, x->cpu, x->b, 0);}
+        else if (cmp == nQBuf)        {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, x->hash, x->cpu, x->b, 0);}
+        else if (cmp == nMeta)        {throw std::runtime_error("Pure meta type not yet implemented"); return;}
         //FIXME try to get info from download
         else                        {throw std::runtime_error("Node <" + gUp[v].name + ">'s type <" + cmp + "> is not supported!\nMost likely you forgot to set the type attribute or accidentally created the node by a typo in an edge definition."); return;}
       }  
@@ -294,8 +294,6 @@ using namespace DotStr;
         throw std::runtime_error("Node '" + gUp[v].name + "'contains uninitialised elements!\nMisspelled/forgot a mandatory property in .dot file ?"); 
       } 
     }
-
-    
 
   }
 
@@ -437,39 +435,102 @@ int CarpeDM::overwrite(const std::string& fn) {
 
   }
 
+
+  void CarpeDM::pushMetaNeighbours(vertex_t v, Graph& g, vertex_set_t& s) {
+    
+    //recursively find all adjacent meta type vertices
+    BOOST_FOREACH( vertex_t w, adjacent_vertices(v, g)) {
+      if (g[w].np == NULL) {throw std::runtime_error("Node " + g[w].name + " does not have a data object, this is bad");}
+      if (g[w].np->isMeta()) {
+        s.insert(w);
+        sLog <<  "Added Meta Child " << g[w].name << " to del map " << std::endl; 
+        pushMetaNeighbours(w, g, s);
+      } else {sLog <<  g[w].name << " is not meta, stopping crawl here" << std::endl; }
+    }
+  }
+
   //removes all nodes in input file
   int CarpeDM::remove(const std::string& fn) {
     Graph gTmp;
-    atUp.clear();
-    gUp.clear();
+    vertex_map_t vertexMap;
+    vertex_set_t toDelete;
+    baseUploadOnDownload();
     
     parseDot(fn, gTmp);
     if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
-    prepareUpload(); 
-    download();
 
-    uint32_t hash;
 
-    //remove all nodes in input file from download allocation table
-    try {
-      
-      BOOST_FOREACH( vertex_t v, vertices(gUp) ) { 
-        hash = hm.lookup(gUp[v].name).get();
-        if (!(atDown.isOk(atDown.lookupHash(hash)))) { if(verbose) {sLog << "Node " << hm.lookup(hash).get() << " was not present on DM" << std::endl;}}
-        if (!(atDown.deallocate(hash))) { if(verbose) {sLog << "Node " << gUp[v].name << "(0x" << std::hex << hash << " could not be removed" << std::endl;}}
-      }  
-    }  catch (...) {
-      //TODO report hash collision and show which names are responsible
-      throw;
-    }
-    atDown.updateBmps();
-    //show("After Removal", "", DOWNLOAD, false );
-
-    atUp.syncToAtBmps(atDown); //use the bmps of the changed download allocation table for upload
-    atUp.unstageAll(); // node nodes will be uploaded, only the bmp
+    
+  
+   writeDot("inspect.dot", gTmp,  false);    
+ 
+    //probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
     
 
-    //because gUp Graph is empty, upload will only contain the reduced upload bmps, effectively deleting nodes
+    //create 1:1 vertex map for all vertices in gUp initially marked for deletion. Also add all their meta children to leave no loose ends 
+    
+    bool found; 
+    BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
+      sLog <<  "Scanning " << gTmp[w].name << std::endl;
+      found = false; 
+      BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+      vertexMap[v] = v;  
+      
+        if ((gTmp[w].name == gUp[v].name)) {
+          found = true;
+          if (gTmp[w].type != tUndefined) {
+            
+            toDelete.insert(v);                   // add the node
+            sLog <<  "Added Node " << gUp[v].name << " to del map " << std::endl;   
+            pushMetaNeighbours(v, gUp, toDelete); // add all of its meta children as well
+          } else {}
+          break;
+        }
+      }
+      if (!found) { sLog <<  "Skipping unknown Node " << gTmp[w].name << std::endl;   } 
+    }
+
+    //check staging, vertices might have lost children
+    for(auto& vd : toDelete ) {
+
+      //check out all parents (sources) of this to be deleted node, update their staging
+
+      Graph::in_edge_iterator in_begin, in_end, in_cur;
+
+      boost::tie(in_begin, in_end) = in_edges(vertexMap[vd], gUp);  
+      for (in_cur = in_begin; in_cur != in_end; ++in_cur) { 
+        updateStaging(source(*in_cur, gUp), *in_cur);
+      }
+    }
+    
+    //remove designated vertices
+    for(auto& vd : toDelete ) {  
+      sLog <<  "Removing Node " << gUp[vertexMap[vd]].name << std::endl;  
+      atUp.deallocate(gUp[vertexMap[vd]].hash); //using the hash is independent of vertex descriptors, so no remapping necessary yet
+      boost::clear_vertex(vertexMap[vd], gUp); 
+      boost::remove_vertex(vertexMap[vd], gUp);
+      
+      //remove_vertex() changes the vertex vector, as it must stay contignuous. descriptors higher than he removed one therefore need to be decremented by 1
+      for( auto& updateIt : vertexMap) {if (updateIt.second > vertexMap[vd]) updateIt.second--; }
+    }
+
+    //now we have a problem: all vertex descriptors in the alloctable just got invalidated by the removal ... repair them
+    for( auto it : atUp.getTable() ) { 
+      sLog << "Changing " << gUp[vertexMap[it.v]].name << " index from " << atUp.lookupHash(gUp[vertexMap[it.v]].hash)->v; 
+      atUp.modV(atUp.lookupVertex(it.v), vertexMap[it.v]);
+      sLog << " to " << atUp.lookupHash(gUp[vertexMap[it.v]].hash)->v << std::endl; ; 
+    }  
+    
+
+
+  
+    
+
+
+    prepareUpload();
+    atUp.updateBmps();
+    writeUpDot("upload.dot", false);
+
     return upload();
 
   }

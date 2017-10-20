@@ -309,7 +309,7 @@
 //////////////////////////////////////////////////////////////////////
 
 // Action Flags - Type field Enums
-#define ACT_TYPE_UNKNOWN        0 // undefined
+#define ACT_TYPE_UNKNOWN        0 // tUndefined
 #define ACT_TYPE_NOOP           (ACT_TYPE_UNKNOWN +1)  // noop command
 #define ACT_TYPE_FLOW           (ACT_TYPE_NOOP +1)  // flow change command
 #define ACT_TYPE_FLUSH          (ACT_TYPE_FLOW +1)  // flush command 
