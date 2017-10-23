@@ -11,7 +11,7 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <boost/graph/graphviz.hpp>
-#include <boost/endian/conversion.hpp>
+#include <boost/endian/conversion.hpp> //FIXME this isn't wrong, but it needs Boost 1.62+. ASL cluster only has 1.54, write an alternative endian swap and use depending on version
 #include <boost/optional.hpp>
 #include "ftm_common.h"
 
@@ -46,6 +46,8 @@ typedef boost::container::vector<uint8_t> vBuf;
 typedef boost::container::vector<uint32_t> vAdr;
 typedef boost::container::vector<uint32_t> ebBuf;
 
+//FIXME this isn't wrong, but it needs Boost 1.62+. ASL cluster only has 1.54, write an alternative endian swap and use depending on version
+
 template<typename T>
 inline void writeLeNumberToBeBytes(uint8_t* pB, T val) {
   T x = boost::endian::endian_reverse(val);
@@ -65,7 +67,7 @@ inline T s2u(const std::string& s) {
 
 }
 
-
+//FIXME just fuckin overload it, why are there two hexdump functions again ?
 inline void hexDump (const char *desc, const void *addr, int len) {
     int i;
     unsigned char buff[17];

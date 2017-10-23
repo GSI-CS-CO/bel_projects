@@ -11,7 +11,7 @@ namespace DotStr {
   const std::string tUndefined32 = "0xDEADBEEF";
   const uint32_t    uUndefined32 = 0xDEADBEEF;
 
-  const std::string tUndefined   = "UNDEFINED";
+  const std::string tUndefined   = "undefined";
 
   const std::string defGraphName = "Demo";
 
@@ -58,5 +58,7 @@ namespace DotStr {
   const std::string nDstList      = "listdst";
   const std::string nQBuf         = "qbuf";
   const std::string nMeta         = "meta";
+  const bool        nMetaNode     = true;
+  const bool        nRealNode     = false;
 
 }

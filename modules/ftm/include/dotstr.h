@@ -57,6 +57,18 @@ namespace DotStr {
     extern const std::string nDstList;
     extern const std::string nQBuf;
     extern const std::string nMeta;
+    extern const bool        nMetaNode;
+    extern const bool        nRealNode;
+
+    //node / graph property tags
+
+    //use namespaces
+
+    //FW ID tags
+    
+    //use namespaces
+
+
 };
 
 

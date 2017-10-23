@@ -44,6 +44,11 @@ private:
   void generateBlockMeta(Graph& g);
   void generateDstLst(Graph& g, vertex_t v);
   void generateQmeta(Graph& g, vertex_t v, int prio);
+
+  void addition(Graph& gTmp);
+  void subtraction(Graph& gTmp);
+  void nullify();
+
    //Upload processed Graph to LM32 SoC via Etherbone
   int upload();
     //Parse a .dot file to create unprocessed Graph
@@ -54,8 +59,7 @@ private:
   void baseUploadOnDownload();
   void prepareUpload();
   void mergeUploadDuplicates(vertex_t borg, vertex_t victim); 
-  void prepareKeep(const std::string& fn);
-  int  execKeep();
+
 
 protected:
 

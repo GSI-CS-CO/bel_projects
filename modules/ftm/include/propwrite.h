@@ -25,7 +25,7 @@
 
 using namespace DotStr;
 
-
+  //FIXME use graph / node property tag string constants!
 
 
   template <class MetaMap>
@@ -138,52 +138,6 @@ template <class Name>
   make_edge_writer(typeMap type) {
     return edge_writer<typeMap>(type);
   }
-/*
-  template <class typeMap, class nameMap, >
-  class vertex_writer {
-  public:
-    vertex_writer(typeMap type, nameMap name) : type(type),  name(name) {}
-    template <class Vertex>
-    void operator()(std::ostream& out, const Vertex& v) const {
-      char sep = ' ';      
-      if (type[v] == BLOCK) {
-        out << "struct0 [label=\"<f0> " << name[v] << " | <f1> " << tPeriod[v] << "\"];";
-      }
-      else {     
-        out <<  "[";
-        if (type[v] == TIMING_EVT || type[v] == COMMAND_EVT) {out <<  " shape=\"oval\", evtpar=\"test\""; sep = ',';}     
-        if (type[v] == COMMAND_EVT) {out <<  " style=\"dotted\""; sep = ',';}
-        out <<  sep << " label=\"" << name[v] << "\" ]"; 
-      }
-    }
-  private:
-    typeMap type;
-    nameMap name;
-  };
-
-  template <class typeMap, class nameMap>
-  inline vertex_writer<typeMap, nameMap> 
-  make_vertex_writer(typeMap type, nameMap name) {
-    return vertex_writer<typeMap, nameMap>(type, name);
-  }
-
-*/
-  /*
-
-   //doesn't work - shitty BGL example is missing the implementation ...
-
-  template <class defMap>
-  edge_writer<defMap>
-  make_edge_writer(defMap n);
-
-  */
-
-
-
-  //works
-
-  
-
 
 
 

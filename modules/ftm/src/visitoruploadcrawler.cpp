@@ -8,6 +8,9 @@
 
 using namespace DotStr;
 
+
+//FIXME Dear future self, the code duplication in here is appalling. Create some proper helper functions for crying out loud !
+
 void VisitorUploadCrawler::visit(const Block& el) const {
   vAdr vA, tmpDD, tmpQM;
   tmpDD = getDefDst();
@@ -146,7 +149,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
         }
       }  
     }
-    if (!(found)) ret.push_back(LM32_NULL_PTR);
+    if (!(found)) {std::cerr << "!!! Found no default destination for Node " << g[v].name << " !!!" << std::endl; ret.push_back(LM32_NULL_PTR); }
 
     return ret;
   }
@@ -230,28 +233,37 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
     
     found = false;
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
-    {   
+    { 
+     // std::cerr << "Scanning " << g[target(*out_cur,g)].name << "(classMeta=" << (int)g[target(*out_cur,g)].np->isMeta() << ")," << g[target(*out_cur,g)].type << " connected by " << g[*out_cur].type << " edge against " << eDstList << "," << nDstList << std::endl;  
+
       if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
       else {
-        if (g[target(*out_cur,g)].np->isMeta() && g[target(*out_cur,g)].type == eDstList) {
+        if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == eDstList) {
+
           if (found) {std::cerr << "!!! Found more than one Destination List !!!" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             // Queue nodes MUST NOT lie outside own memory!
+            std::cerr << "Got a DstList at " << g[target(*out_cur,g)].name << std::endl;  
             if (x != NULL && x->cpu == cpu) {
               ret.push_back(at.adr2intAdr(x->cpu, x->adr));
               found = true;
+            } else {
+              std::cerr << "unallocated or wrong cpu " << std::endl;  
             }
           }
         }
       }  
     }
-    if (!(found)) ret.push_back(LM32_NULL_PTR);
+    if (!(found)) { ret.push_back(LM32_NULL_PTR); 
+      //std::cerr << "Found no Destination List" << std::endl; 
+    }
 
     for (idx=0; idx < 3; idx++) {
       found = false;
       for (out_cur = out_begin; out_cur != out_end; ++out_cur)
-      {   
+      { 
+       // std::cerr << "Scanning " << g[target(*out_cur,g)].name << "(classMeta=" << (int)g[target(*out_cur,g)].np->isMeta() << ") connected by " << g[*out_cur].type << " edge against " << eQPrio[idx] << std::endl;   
         if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
         else {
 
@@ -263,12 +275,16 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
               if (x != NULL && x->cpu == cpu) {
                 ret.push_back(at.adr2intAdr(x->cpu, x->adr));
                 found = true;
-              }
+              } else {
+              std::cerr << "unallocated or wrong cpu " << std::endl;  
+            }
             }  
           }
         }  
       }
-      if (!(found)) ret.push_back(LM32_NULL_PTR);
+      if (!(found)) { ret.push_back(LM32_NULL_PTR);
+       //std::cerr << "Found no Q Buffers" << std::endl; 
+     }
     }
 
     return ret;
@@ -394,6 +410,7 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
 
 vAdr VisitorUploadCrawler::getListDst() const {
   bool found;
+
   
   vAdr ret;
   Graph::out_edge_iterator out_begin, out_end, out_cur;
@@ -402,7 +419,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
 
   //get the parent. there shall be only one, a block (no check for that right now, sorry)
 
-  std::cerr << " crawling edges for " << g[v].name << "'s destlist" << std::endl;
+  //std::cerr << " crawling edges for " << g[v].name << "'s destlist" << std::endl;
 
   boost::tie(in_begin, in_end) = in_edges(v,g);
   vp = source(*in_begin,g);
@@ -415,6 +432,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
   found = false;
   for (out_cur = out_begin; out_cur != out_end; ++out_cur)
   {   
+    
     if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
     else {
 
@@ -426,12 +444,15 @@ vAdr VisitorUploadCrawler::getListDst() const {
           if (x != NULL && x->cpu == cpu) {
             ret.push_back(at.adr2intAdr(x->cpu, x->adr));
             found = true;
+            //std::cout << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << std::endl;
           } else { std::cerr << "!!! default destination was found unallocated or on different CPU !!!" << std::endl; }
         }
       }
     }  
   }
-  if (!(found)) ret.push_back(LM32_NULL_PTR);
+  if (!(found)) { ret.push_back(LM32_NULL_PTR); 
+    //std::cout << "No def dest found" << std::endl; 
+  }
 
   //search parent blocks alternative destinations
   found = false;
@@ -443,17 +464,60 @@ vAdr VisitorUploadCrawler::getListDst() const {
       if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eAltDst) {
         auto x = at.lookupVertex(target(*out_cur,g));
         // Destination MUST NOT lie outside own memory! (well, technically, it'd work, but it'd be race condition galore ...)
-        if (x != NULL && x->cpu == cpu) {
-          ret.push_back(at.adr2intAdr(x->cpu, x->adr));
-          found = true;
-          std::cout << "altDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << std::endl;
-        } else { std::cerr << "!!! alt destination was found unallocated or on different CPU !!!" << std::endl; }
+        if (x != NULL) {
+          if (  x->cpu == cpu) {
+            ret.push_back(at.adr2intAdr(x->cpu, x->adr));
+            found = true;
+            //std::cout << "altDst: #" << target(*out_cur,g) << " " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << std::endl;
+          } else { std::cout << "altDst: #" << target(*out_cur,g) << " " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << " expected at CPU" << cpu << ", found on " << (int)x->cpu << " !!!" << std::endl;  at.debug();}
+        } else { std::cerr << "!!! alt destination was found unallocated !!!" << std::endl; }
       }
     }  
   }
-  if (!(found)) ret.push_back(LM32_NULL_PTR);
+  /*
+  if (!(found)) { //ret.push_back(LM32_NULL_PTR); 
+    std::cout << "No alt dest found" << std::endl; }
+  */
+
 
   
   return ret;
 
 }
+
+
+// starting on helper functions for cleanup
+/*
+findNodeAdrByEdgeType(v, eAltDst, bool nodeTypeIsMeta, const unsigned int minResultLen, const unsigned int maxResultLen, const uint32_t resultPadData )
+
+
+vAdr findNodeAdrByEdgeType(vertex_t vStart, const std::string edgeType, const bool nodeTypeIsMeta, const unsigned int minResultLen, const unsigned int maxResultLen, const uint32_t resultPadData ) {
+  Graph::out_edge_iterator out_begin, out_end, out_cur;
+  Graph::in_edge_iterator in_begin, in_end;  
+  vAdr ret;
+  bool found;
+  boost::tie(out_begin, out_end) = out_edges(vStart,g);
+
+  for (out_cur = out_begin; out_cur != out_end; ++out_cur)
+  {   
+    if (g[target(*out_cur,g)].np == NULL) std::cerr << g[target(*out_cur,g)].name << " does not have a data object !!!" << std::endl;
+    else {
+
+      if ( (g[target(*out_cur,g)].np->isMeta() == nodeTypeIsMeta) && g[*out_cur].type == edgeType) {
+        auto x = at.lookupVertex(target(*out_cur,g));
+        // Everything except command targets MUST lie inside own memory! (well, technically, it'd work, but it'd be race condition galore ...)
+        if (x != NULL && ( (edgeType == eCmdTarget) || x->cpu == cpu) ){
+          ret.push_back(at.adr2intAdr(x->cpu, x->adr));
+          found = true;
+          if (ret.size() >= maxResultLen) break;
+          
+        } else { std::cerr << "Nodes connected by " << edgeType << " edges found unallocated or on different CPU" << std::endl; }
+      }
+    }  
+  }
+  if (!(found)) { std::cout << "No nodes connected by " << edgeType << " edges found" << std::endl; }
+  for (int i = ret.size(); i <= minResultLen; i++ ) ret.push_back(resultPadData);
+
+  return ret;  
+}  
+*/

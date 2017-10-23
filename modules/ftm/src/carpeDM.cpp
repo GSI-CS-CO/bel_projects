@@ -260,7 +260,7 @@ bool CarpeDM::connect(const std::string& en) {
   boost::dynamic_properties CarpeDM::createParser(Graph& g) {
 
     boost::dynamic_properties dp(boost::ignore_other_properties);
-
+    //FIXME replace with node property string constants 
     boost::ref_property_map<Graph *, std::string> gname(boost::get_property(g, boost::graph_name));
     dp.property("name",     gname);
     dp.property("type",     boost::get(&myEdge::type,       g));
@@ -356,6 +356,7 @@ bool CarpeDM::connect(const std::string& en) {
 
   //returns firmware version as int <xxyyzz> (x Major Version, y Minor Version, z Revison; negative values for error codes)
   int CarpeDM::getFwVersion(uint8_t cpuIdx) {
+    //FIXME replace with FW ID string constants
     const std::string tagMagic      = "UserLM32";
     const std::string tagProject    = "Project     : ";
     const std::string tagExpName    = "ftm";
