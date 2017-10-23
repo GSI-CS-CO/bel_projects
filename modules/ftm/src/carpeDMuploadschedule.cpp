@@ -396,7 +396,7 @@ using namespace DotStr;
           if (gTmp[w].type != tUndefined) {
             
             toDelete.insert(v);                   // add the node
-            sLog <<  "Added Node " << gUp[v].name << " to del map " << std::endl;   
+            sLog <<  "Added Node " << gTmp[w].name << " of type " << gTmp[w].type << " to del map " << std::endl;   
             pushMetaNeighbours(v, gUp, toDelete); // add all of its meta children as well
           } else {}
           break;
