@@ -160,14 +160,14 @@ using namespace DotStr;
     AllocTable& at = atUp;
     
 
-    if (g[e].type == eAltDst || g[e].type == eDefDst) {
-      
+    if (g[e].type == eDefDst || g[e].type == eAltDst ) {
       updateListDstStaging(v); // stage source block's Destination List
-    } else {
+    }
+    
+    if (g[e].type != eAltDst ) {
       auto x = at.lookupVertex(v);
       if(at.isOk(x)) {at.setStaged(x); std::cout << "staged " << g[v].name  << std::endl;}
       else throw std::runtime_error("Node '" + g[v].name + "' was not allocated, this is very bad");
-      
     }
 
   }
