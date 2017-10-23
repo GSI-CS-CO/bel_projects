@@ -121,8 +121,8 @@ using namespace DotStr;
           if (g[*out_cur].type == eQPrio[PRIO_IL]) hasIl       = true;
           if (g[*out_cur].type == eQPrio[PRIO_HI]) hasHi       = true;
           if (g[*out_cur].type == eQPrio[PRIO_LO]) hasLo       = true;
-          if (g[*out_cur].type == eAltDst)          hasMultiDst = true;
-          if (g[*out_cur].type == eDstList)          hasDstLst   = true;
+          if (g[*out_cur].type == eAltDst)         hasMultiDst = true;
+          if (g[*out_cur].type == eDstList)        hasDstLst   = true;
         }
         //create requested Queues / Destination List
         if (g[v].qIl != "0" && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
@@ -297,8 +297,6 @@ using namespace DotStr;
 
   }
 
- 
-
   int CarpeDM::upload() {
     vBuf vUlD = getUploadData();
     vAdr vUlA = getUploadAdrs();
@@ -325,16 +323,9 @@ using namespace DotStr;
     } 
   }
 
-  int CarpeDM::add(const std::string& fn) {
+  void CarpeDM::addition(Graph& gTmp) {
 
-    Graph gTmp;
     vertex_map_t vertexMap, duplicates;
-    
-    baseUploadOnDownload(); 
-
-    parseDot(fn, gTmp);
-    if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
-        typedef std::map<vertex_t, vertex_t> vertex_map_t;
     
     generateBlockMeta(gTmp); //auto generate desired Block Meta Nodes
 
@@ -367,74 +358,10 @@ using namespace DotStr;
 
     writeUpDot("inspect.dot", false);
 
-
     prepareUpload();
     atUp.updateBmps();
-    writeUpDot("upload.dot", false);
-
-    return upload();
-
+  
   }
-
-
-int CarpeDM::overwrite(const std::string& fn) {
-  Graph gTmp; 
-  parseDot(fn, gTmp);
-  if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
-  prepareUpload();
-  atUp.updateBmps();
-
-  return upload();
-
-}
-
-
-  int CarpeDM::keep(const std::string& fn) {
-    prepareKeep(fn);
-    download();
-    return execKeep();
-  }
-
-
-  void CarpeDM::prepareKeep(const std::string& fn) {
-    Graph gTmp;
-    atUp.clear();
-    gUp.clear();
-    parseDot(fn, gTmp);
-    if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return;}
-    prepareUpload(); 
-  }  
-
-  //removes all nodes NOT in input file
-  int CarpeDM::execKeep() {
-    uint32_t hash;
-    std::set<uint32_t> vHashes;
-
-    //Get all downloaded Hashes
-    for (auto& it : atDown.getTable().get<Hash>()) vHashes.insert(it.hash);
-
-    
-      
-    //Strike all also present in the input file
-    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {   
-      hash = hm.lookup(gUp[v].name).get();
-      if (vHashes.count(hash) > 0) vHashes.erase(hash);
-    }  
-
-    //remove all nodes NOT in input file from download allocation table
-    for (auto& itHash : vHashes) {
-      if (!(atDown.isOk(atDown.lookupHash(itHash)))) { if(verbose) {sLog << "Node " << hm.lookup(itHash).get() << " was not present on DM" << std::endl;}}
-      if (!(atDown.deallocate(itHash))) { if(verbose) {sLog << "Node " << hm.lookup(itHash).get() << " could not be removed" << std::endl;}}  
-    }
-    atDown.updateBmps();
-    //show("After Removal", "", DOWNLOAD, false );
-    atUp.syncToAtBmps(atDown); //use the bmps of the changed download allocation table for upload
-    atUp.unstageAll(); // node nodes will be uploaded, only the bmp
-    //because gUp Graph is empty, upload will only contain the reduced upload bmps, effectively deleting nodes
-    return upload();
-
-  }
-
 
   void CarpeDM::pushMetaNeighbours(vertex_t v, Graph& g, vertex_set_t& s) {
     
@@ -449,24 +376,12 @@ int CarpeDM::overwrite(const std::string& fn) {
     }
   }
 
-  //removes all nodes in input file
-  int CarpeDM::remove(const std::string& fn) {
-    Graph gTmp;
+  void CarpeDM::subtraction(Graph& gTmp) {
+
     vertex_map_t vertexMap;
     vertex_set_t toDelete;
-    baseUploadOnDownload();
     
-    parseDot(fn, gTmp);
-    if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
-
-
-    
-  
-   writeDot("inspect.dot", gTmp,  false);    
- 
     //probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
-    
-
     //create 1:1 vertex map for all vertices in gUp initially marked for deletion. Also add all their meta children to leave no loose ends 
     
     bool found; 
@@ -492,11 +407,9 @@ int CarpeDM::overwrite(const std::string& fn) {
 
     //check staging, vertices might have lost children
     for(auto& vd : toDelete ) {
-
       //check out all parents (sources) of this to be deleted node, update their staging
-
       Graph::in_edge_iterator in_begin, in_end, in_cur;
-
+      
       boost::tie(in_begin, in_end) = in_edges(vertexMap[vd], gUp);  
       for (in_cur = in_begin; in_cur != in_end; ++in_cur) { 
         updateStaging(source(*in_cur, gUp), *in_cur);
@@ -519,26 +432,93 @@ int CarpeDM::overwrite(const std::string& fn) {
       sLog << "Changing " << gUp[vertexMap[it.v]].name << " index from " << atUp.lookupHash(gUp[vertexMap[it.v]].hash)->v; 
       atUp.modV(atUp.lookupVertex(it.v), vertexMap[it.v]);
       sLog << " to " << atUp.lookupHash(gUp[vertexMap[it.v]].hash)->v << std::endl; ; 
-    }  
+    }
+
     
-
-
-  
-    
-
 
     prepareUpload();
-    atUp.updateBmps();
-    writeUpDot("upload.dot", false);
-
-    return upload();
-
+    atUp.updateBmps();  
+    
   }
 
-  int CarpeDM::clear() {
+  void CarpeDM::nullify() {
     gUp.clear(); //Necessary?
     atUp.clear();
     atUp.clearMemories();
+  }
+
+  //high level functions for external interface
+
+  int CarpeDM::add(const std::string& fn) {
+    Graph gTmp;
+    parseDot(fn, gTmp);
+    if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
+
+    baseUploadOnDownload();
+    addition(gTmp);
+    writeUpDot("upload.dot", false);
+
+    return upload();
+  } 
+
+  int CarpeDM::remove(const std::string& fn) {
+    Graph gTmp;
+    parseDot(fn, gTmp);
+    if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
+    baseUploadOnDownload();
+
+    subtraction(gTmp);
+    writeUpDot("upload.dot", false);
+
+    return upload();
+  }
+
+
+  int CarpeDM::keep(const std::string& fn) {
+    Graph gTmpKeep, gTmpRemove;
+    parseDot(fn, gTmpKeep);
+    if ((boost::get_property(gTmpKeep, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
+    generateBlockMeta(gTmpKeep);
+
+    writeDot("inspect.dot", gTmpKeep, false);
+    baseUploadOnDownload();
+    
+    bool found; 
+    BOOST_FOREACH( vertex_t w, vertices(gUp) ) {
+      sLog <<  "Scanning " << gUp[w].name << std::endl;
+      found = false; 
+      BOOST_FOREACH( vertex_t v, vertices(gTmpKeep) ) {
+        if ((gTmpKeep[v].name == gUp[w].name)) {
+          found = true;
+          sLog <<  "Keeping Node " << gUp[w].name << std::endl;
+          break;
+
+        }
+      }
+      if (!found) { sLog <<  "Deleting Node " << gUp[w].name << std::endl; vertex_t u = boost::add_vertex(myVertex(gUp[w]), gTmpRemove); }
+    }
+    
+
+    subtraction(gTmpRemove);
+    writeUpDot("upload.dot", false);
+
+    return upload();
+  }   
+
+  int CarpeDM::clear() {
+    nullify();
+    return upload();
+  }
+
+  int CarpeDM::overwrite(const std::string& fn) {
+    Graph gTmp; 
+    parseDot(fn, gTmp);
+    if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
+    
+    nullify();
+    addition(gTmp);
+    writeUpDot("upload.dot", false);
+
     return upload();
 
   }

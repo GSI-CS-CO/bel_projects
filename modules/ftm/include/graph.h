@@ -99,9 +99,7 @@ public:
   myEdge(std::string type) : type(type) {}
 };
 
-
-
-
+//TODO change to aliases C++14 Style?
 typedef boost::property<boost::graph_name_t, std::string > graph_p;
 typedef boost::adjacency_list< boost::vecS, boost::vecS, boost::bidirectionalS, myVertex, myEdge, graph_p  > Graph;
 typedef boost::graph_traits<Graph>::vertex_descriptor vertex_t;
@@ -110,5 +108,20 @@ typedef boost::container::vector<vertex_t> vVertices;
 typedef std::map<vertex_t, vertex_t> vertex_map_t;
 typedef std::set<vertex_t> vertex_set_t;
 
+typedef boost::property_map<Graph, std::string myVertex::*>::type NameMap;
+
+template <class NameMap >
+struct nameEqualityFilter {
+    nameEqualityFilter(NameMap n, NameMap nc) : names(n), compNames(nc) { }
+  template <typename Vertex>
+  bool operator()(const Vertex& v) const {
+    bool ret = false;
+    for(auto& it : compNames ) { ret |= (names[v] == it.second); } //true if name is known. Hate property maps for not having a test method...
+    return ret;  
+  }
+  NameMap names;
+  NameMap compNames;
+};
+ 
 
 #endif
