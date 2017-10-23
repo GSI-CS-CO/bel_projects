@@ -15,6 +15,8 @@
 #define   MAX_SIO3          MAX_SCU_SLAVES 
 #define   IFK_MAX_ADR       254
 #define   GRP_IFA8          24
+#define   IFA_ID            0xcc 
+#define   IFA_VERS          0xcd 
 
 #define FG_RUNNING    0x4
 #define FG_ENABLED    0x2
