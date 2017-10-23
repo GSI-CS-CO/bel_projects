@@ -310,7 +310,7 @@ signal   clr_rx_avail_ps:           std_logic_vector (255 downto 1);
 signal   avail:                     std_logic_vector (255 downto 1);
 signal   avail_muxed:               std_logic_vector (15 downto 0); 
 
-constant timeout_cntr_max:          integer := 100;  --max timeout 50 µs: TX Telegram + RX Telegram + 10µs Gap
+constant timeout_cntr_max:          integer := 150;  --max timeout 50 µs: TX Telegram + RX Telegram + 10µs Gap
 signal   timeout_cntr:              integer :=  0;
 signal   timeout_cntr_en:           std_logic;
 signal   timeout_cntr_clr:          std_logic;
