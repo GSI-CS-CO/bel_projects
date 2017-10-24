@@ -19,6 +19,8 @@
 #include "cb.h"
 #include "scu_mil.h"
 #include "dow_crc.h"
+#include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
+#include "../../../ip_cores/saftlib/drivers/eca_flags.h"
 
 #define MSI_SLAVE 0
 #define MSI_WB_FG 2
@@ -51,6 +53,8 @@
 #define INTERVAL_2000MS 2000000000ULL
 #define INTERVAL_10MS   10000000ULL
 #define ALWAYS          0ULL
+
+#define  MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
 
 
 extern struct w1_bus wrpc_w1_bus;
@@ -94,6 +98,7 @@ volatile unsigned int* mil_irq_base    = 0;
 volatile unsigned int* wr_1wire_base   = 0;
 volatile unsigned int* user_1wire_base = 0;
 volatile unsigned int* cpu_info_base   = 0;
+volatile uint32_t     *pECAQ           = 0; // WB address of ECA queue
 
 volatile unsigned int param_sent[MAX_FG_CHANNELS];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
@@ -627,6 +632,113 @@ int is_active_sio(unsigned int sio_slave_nr) {
   return 0;
 }
 
+/*************************************************************
+* 
+* demonstrate how to poll actions ("events") from ECA
+* HERE: get WB address of relevant ECA queue
+* code written by D.Beck, example.c
+*
+**************************************************************/
+void findECAQ()
+{
+#define ECAQMAX           4         //  max number of ECA queues
+#define ECACHANNELFORLM32 2         //  this is a hack! suggest to implement proper sdb-records with info for queues
+
+  // stuff below needed to get WB address of ECA queue 
+  sdb_location ECAQ_base[ECAQMAX]; // base addresses of ECA queues
+  uint32_t ECAQidx = 0;            // max number of ECA queues in the SoC
+  uint32_t *tmp;                
+  uint32_t i;
+
+  pECAQ = 0x0; //initialize Wishbone address for LM32 ECA queue
+
+  // get Wishbone addresses of all ECA Queues
+  find_device_multi(ECAQ_base, &ECAQidx, ECAQMAX, ECA_QUEUE_SDB_VENDOR_ID, ECA_QUEUE_SDB_DEVICE_ID);
+
+  // walk through all ECA Queues and find the one for the LM32
+  for (i=0; i < ECAQidx; i++) {
+    tmp = (uint32_t *)(getSdbAdr(&ECAQ_base[i]));  
+    if ( *(tmp + (ECA_QUEUE_QUEUE_ID_GET >> 2)) == ECACHANNELFORLM32) pECAQ = tmp;
+  }
+  
+  mprintf("\n");
+  if (!pECAQ) { mprintf("FATAL: can't find ECA queue for lm32, good bye! \n"); while(1) asm("nop"); }
+  mprintf("ECA queue found at: 0x%08x. Waiting for actions with tag 0x%08x ...\n", pECAQ, MY_ECA_TAG);
+  mprintf("\n");
+
+} // findECAQ
+
+/*************************************************************
+* 
+* demonstrate how to poll actions ("events") from ECA
+* HERE: poll ECA, get data of action and do something
+*
+* This example assumes that
+* - action for this lm32 are configured by using saft-ecpu-ctl
+*   from the host system
+* - a TAG with value 0x4 has been configure (see saft-ecpu-ctl -h
+*   for help
+*
+**************************************************************/
+void ecaHandler()
+{
+  uint32_t flag;                // flag for the next action
+  uint32_t evtIdHigh;           // high 32bit of eventID
+  uint32_t evtIdLow;            // low 32bit of eventID
+  uint32_t evtDeadlHigh;        // high 32bit of deadline
+  uint32_t evtDeadlLow;         // low 32bit of deadline
+  uint32_t actTag;              // tag of action
+  uint32_t i;
+  uint8_t dev_mil_armed = 0;
+  uint8_t dev_sio_armed = 0;
+  uint8_t slot;
+
+  // read flag and check if there was an action 
+  flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
+  if (flag & (0x0001 << ECA_VALID)) { 
+    // read data 
+    //evtIdHigh    = *(pECAQ + (ECA_QUEUE_EVENT_ID_HI_GET >> 2));
+    //evtIdLow     = *(pECAQ + (ECA_QUEUE_EVENT_ID_LO_GET >> 2));
+    //evtDeadlHigh = *(pECAQ + (ECA_QUEUE_DEADLINE_HI_GET >> 2));
+    //evtDeadlLow  = *(pECAQ + (ECA_QUEUE_DEADLINE_LO_GET >> 2));
+    actTag       = *(pECAQ + (ECA_QUEUE_TAG_GET >> 2));
+    
+    // pop action from channel
+    *(pECAQ + (ECA_QUEUE_POP_OWR >> 2)) = 0x1;
+
+    // here: do s.th. according to action
+    switch (actTag) {
+    case MY_ECA_TAG:
+      /* check if there are armed fgs */
+      for (i = 0; i < MAX_FG_CHANNELS; i++) {
+        // only armed fgs
+        if (fg_regs[i].state == 2) {
+          slot = fg_macros[fg_regs[i].macro_number] >> 24;
+          if(slot & DEV_MIL_EXT) {
+            dev_mil_armed = 1;
+          } else if (slot & DEV_SIO) {
+            dev_sio_armed = 1;  
+          }
+        }
+      }  
+      // send broadcast start to mil extension
+      if (dev_mil_armed) write_mil(scu_mil_base, 0x0, 0x20ff); 
+      // send broadcast start to all scu bus slaves
+      if (dev_sio_armed) {
+        // select all scu slaves
+        scub_base[OFFS(0) + MULTI_SLAVE_SEL] = 0xfff;
+        // send broadcast
+        scub_base[OFFS(13) + MIL_SIO3_TX_CMD] = 0x20ff;
+      }
+      //mprintf("EvtID: 0x%08x%08x; deadline: 0x%08x%08x; flag: 0x%08x\n", evtIdHigh, evtIdLow, evtDeadlHigh, evtDeadlLow, flag);
+      break;
+    default:
+      mprintf("ecaHandler: unknown tag\n");
+    } // switch
+
+  } // if data is valid
+} // ecaHandler
+
 /* declaration for the scheduler */
 
 typedef struct {
@@ -648,7 +760,7 @@ static TaskType tasks[] = {
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 4
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_bus_handler    },
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, scu_bus_handler    },
-  //{ 0, 0, {0}, 0, 0, INTERVAL_10MS  , 0, cleanup_sio_dev    },
+  { 0, 0, {0}, 0, 0, INTERVAL_10MS  , 0, ecaHandler         },
 };
 
 TaskType *tsk_getConfig(void) {
@@ -1060,6 +1172,7 @@ int main(void) {
   mprintf("user_1wire_base is: 0x%x\n", user_1wire_base);
   mprintf("scub_irq_base is: 0x%x\n", scub_irq_base);
   mprintf("mil_irq_base is: 0x%x\n", mil_irq_base);
+  findECAQ();
 
   init(); // init and scan for fgs
   
