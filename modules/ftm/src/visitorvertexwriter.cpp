@@ -5,6 +5,9 @@
 #include "meta.h"
 #include "event.h"
 
+//FIXME use graph / node property tag string constants!
+
+
 void VisitorVertexWriter::nodeString(const Node& el) const {
   out << " [cpu=\"" <<  (int)el.getCpu() << "\"";
 }
@@ -22,7 +25,7 @@ void VisitorVertexWriter::commandString(const Command& el) const {
 
 void VisitorVertexWriter::visit(const Block& el) const  {
   nodeString((Node&)el); 
-  out << ", type=\"Block\"";
+  out << ", type=\"" << nBlock << "\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
   else out << ", fillcolor=\"white\"";
   out << ", tPeriod=" <<  std::dec << el.getTPeriod();
@@ -33,7 +36,7 @@ void VisitorVertexWriter::visit(const TimingMsg& el) const {
   nodeString((Node&)el);
   eventString((Event&)el);
   uint64_t id = el.getId();
-  out << ", type=\"TMsg\", color=\"black";
+  out << ", type=\"" << nTMsg << "\", color=\"black";
   out << "\", fid=\""   << std::dec << ((id >> ID_FID_POS)   & ID_FID_MSK);
   out << "\", gid=\""   << std::dec << ((id >> ID_GID_POS)   & ID_GID_MSK);
   out << "\", evtno=\"" << std::dec << ((id >> ID_EVTNO_POS) & ID_EVTNO_MSK);
@@ -48,7 +51,7 @@ void VisitorVertexWriter::visit(const TimingMsg& el) const {
 void VisitorVertexWriter::visit(const Noop& el) const {
   nodeString((Node&)el); 
   eventString((Event&)el);
-  out << ", type=\"Noop\", color=\"pink\"";
+  out << ", type=\"" << nCmdNoop << "\", color=\"pink\"";
   commandString((Command&) el);
   out << ", qty=" <<  std::dec << el.getQty();
   out << "]";
@@ -57,7 +60,7 @@ void VisitorVertexWriter::visit(const Noop& el) const {
 void VisitorVertexWriter::visit(const Flow& el) const  { 
   nodeString((Node&)el);
   eventString((Event&)el);
-  out << ", type=\"Flow\", color=\"magenta\"";
+  out << ", type=\"" << nCmdFlow << "\", color=\"magenta\"";
   commandString((Command&) el);
   out << ", qty=" <<  std::dec << el.getQty();
   out << "]";
@@ -66,7 +69,7 @@ void VisitorVertexWriter::visit(const Flow& el) const  {
 void VisitorVertexWriter::visit(const Flush& el) const { 
   nodeString((Node&)el);
   eventString((Event&)el);
-  out << ", type=\"Flush\", color=\"red\"";
+  out << ", type=\"" << nCmdFlush << "\", color=\"red\"";
   commandString((Command&) el);
   out << ", prio=" <<  std::dec << el.getPrio();
   out << "]";
@@ -75,14 +78,14 @@ void VisitorVertexWriter::visit(const Flush& el) const {
 void VisitorVertexWriter::visit(const Wait& el) const {
   nodeString((Node&)el);
   eventString((Event&)el);
-  out << ", type=\"wait\", color=\"green\"";
+  out << ", type=\"" << nCmdWait << "\", color=\"green\"";
   commandString((Command&) el);
   out << "]";
 }
 
 void VisitorVertexWriter::visit(const CmdQMeta& el) const {
   nodeString((Node&)el);
-  out << ", type=\"QInfo\"";
+  out << ", type=\"" << nQInfo << "\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
   else out << ", fillcolor=\"white\"";
   out << ", style=dashed, flags=\"0x" << std::hex << el.getFlags();
@@ -91,7 +94,7 @@ void VisitorVertexWriter::visit(const CmdQMeta& el) const {
 
 void VisitorVertexWriter::visit(const CmdQBuffer& el) const {
   nodeString((Node&)el);
-  out << ", type=\"QBuf\"";
+  out << ", type=\"" << nQBuf << "\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
   else out << ", fillcolor=\"white\"";
   out << ", style=dashed, flags=\"0x" << std::hex << el.getFlags();
@@ -100,7 +103,7 @@ void VisitorVertexWriter::visit(const CmdQBuffer& el) const {
 
 void VisitorVertexWriter::visit(const DestList& el) const {
   nodeString((Node&)el);
-  out << ", type=\"ListDst\"";
+  out << ", type=\"" << nDstList << "\"";
   if(el.isPainted()) out << ", fillcolor=\"green\"";
   else out << ", fillcolor=\"white\"";
   out << ", style=dashed, flags=\"0x" << std::hex << el.getFlags();

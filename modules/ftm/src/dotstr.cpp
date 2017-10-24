@@ -58,5 +58,7 @@ namespace DotStr {
   const std::string nDstList      = "listdst";
   const std::string nQBuf         = "qbuf";
   const std::string nMeta         = "meta";
+  const bool        nMetaNode     = true;
+  const bool        nRealNode     = false;
 
 }

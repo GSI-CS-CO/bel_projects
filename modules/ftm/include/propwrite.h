@@ -25,7 +25,7 @@
 
 using namespace DotStr;
 
-
+  //FIXME use graph / node property tag string constants!
 
 
   template <class MetaMap>

@@ -59,7 +59,7 @@ public:
   //FIXME size check !
   //for(auto it = va.begin(); it < va.end(); it++) std::cout << "#" << it - va.begin() << " 0x" << std::hex << *it << std::endl;
   //std::cout << std::endl;  
-  
+    std::memset(b, 0, _MEM_BLOCK_SIZE);
     writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_DEF_DEST_PTR,  va[ADR_DEF_DST]);
     writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_HASH,   this->hash);
     writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_FLAGS,  this->flags);

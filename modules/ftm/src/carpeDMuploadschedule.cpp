@@ -66,7 +66,7 @@ using namespace DotStr;
     }
     //std::cout << "passed bmp" << std::endl;
     //add all node buffers to return vector
-    atUp.debug();
+    //atUp.debug();
 
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       if(it.staged) {
@@ -147,7 +147,9 @@ using namespace DotStr;
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
       if (g[*out_cur].type == eDstList) {
         auto dst = at.lookupVertex(target(*out_cur, g));
-        if (at.isOk(dst)) { at.setStaged(dst); std::cout << "staged " << g[dst->v].name  << std::endl; }// if we found a Dst List, stage it
+        if (at.isOk(dst)) { at.setStaged(dst); 
+        //std::cout << "staged " << g[dst->v].name  << std::endl; 
+        }// if we found a Dst List, stage it
         else throw std::runtime_error("Dst List '" + g[dst->v].name + "' was not allocated, this is very bad");
         break;
       }
@@ -166,7 +168,9 @@ using namespace DotStr;
     
     if (g[e].type != eAltDst ) {
       auto x = at.lookupVertex(v);
-      if(at.isOk(x)) {at.setStaged(x); std::cout << "staged " << g[v].name  << std::endl;}
+      if(at.isOk(x)) {at.setStaged(x); 
+        //std::cout << "staged " << g[v].name  << std::endl;
+      }
       else throw std::runtime_error("Node '" + g[v].name + "' was not allocated, this is very bad");
     }
 
@@ -177,7 +181,7 @@ using namespace DotStr;
     Graph& g = gUp;
 
     // add all of nod 'victim's edges to node 'borg'. Resistance is futile.
-    sLog << g[borg].name << " @ " << borg << " consumes " << g[victim].name << " @ " << victim << std::endl;
+    //sLog << g[borg].name << " @ " << borg << " consumes " << g[victim].name << " @ " << victim << std::endl;
 
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(victim, g);
@@ -276,9 +280,9 @@ using namespace DotStr;
    
     // Crawl vertices and serialise their data objects for upload
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-     
+      
       gUp[v].np->accept(VisitorUploadCrawler(gUp, v, atUp)); 
-   
+      
       //Check if all mandatory fields were properly initialised
       std::string haystack(gUp[v].np->getB(), gUp[v].np->getB() + _MEM_BLOCK_SIZE);
       std::size_t n = haystack.find(needle);
@@ -334,26 +338,28 @@ using namespace DotStr;
     //probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) { 
       BOOST_FOREACH( vertex_t w, vertices(gTmp) ) { 
-        if (gTmp[w].name == gUp[v].name) {sLog << gTmp[w].name << " gTmp " << w << " <-> " << gUp[v].name << " gUp " << v << std::endl; duplicates[v] = w;} 
+        if (gTmp[w].name == gUp[v].name) { duplicates[v] = w;
+          //sLog << gTmp[w].name << " gTmp " << w << " <-> " << gUp[v].name << " gUp " << v << std::endl; 
+        } 
       }  
     }
 
     //merge graphs (will lead to disjunct trees with duplicates at overlaps), but keep the mapping for vertex merge
     boost::associative_property_map<vertex_map_t> vertexMapWrapper(vertexMap);
     copy_graph(gTmp, gUp, boost::orig_to_copy(vertexMapWrapper));
-    for(auto& it : vertexMap ) {sLog <<  "gTmp " << gTmp[it.first].name << " @ " << it.first << " gUp " << it.second << std::endl; }
+    //for(auto& it : vertexMap ) {sLog <<  "gTmp " << gTmp[it.first].name << " @ " << it.first << " gUp " << it.second << std::endl; }
     //merge duplicate nodes
     for(auto& it : duplicates ) { 
-      sLog <<  it.first << " <- " << it.second << "(" << vertexMap[it.second] << ")" << std::endl; 
+      //sLog <<  it.first << " <- " << it.second << "(" << vertexMap[it.second] << ")" << std::endl; 
       mergeUploadDuplicates(it.first, vertexMap[it.second]); 
     }
 
     //now remove duplicates
-    for(auto& it : duplicates ) { 
-      boost::clear_vertex(vertexMap[it.second], gUp); 
-      boost::remove_vertex(vertexMap[it.second], gUp);
+    for(auto& itDup : duplicates ) { 
+      boost::clear_vertex(vertexMap[itDup.second], gUp); 
+      boost::remove_vertex(vertexMap[itDup.second], gUp);
       //remove_vertex() changes the vertex vector, as it must stay contignuous. descriptors higher than he removed one therefore need to be decremented by 1
-      for( auto& updateIt : vertexMap) {if (updateIt.second > it.second) updateIt.second--; }
+      for( auto& updateMapIt : vertexMap) {if (updateMapIt.first > itDup.second) updateMapIt.second--; }
     }
 
     writeUpDot("inspect.dot", false);
@@ -370,9 +376,11 @@ using namespace DotStr;
       if (g[w].np == NULL) {throw std::runtime_error("Node " + g[w].name + " does not have a data object, this is bad");}
       if (g[w].np->isMeta()) {
         s.insert(w);
-        sLog <<  "Added Meta Child " << g[w].name << " to del map " << std::endl; 
+        //sLog <<  "Added Meta Child " << g[w].name << " to del map " << std::endl; 
         pushMetaNeighbours(w, g, s);
-      } else {sLog <<  g[w].name << " is not meta, stopping crawl here" << std::endl; }
+      } else {
+        //sLog <<  g[w].name << " is not meta, stopping crawl here" << std::endl; 
+      }
     }
   }
 
@@ -384,19 +392,19 @@ using namespace DotStr;
     //probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
     //create 1:1 vertex map for all vertices in gUp initially marked for deletion. Also add all their meta children to leave no loose ends 
     
+    BOOST_FOREACH( vertex_t v, vertices(gUp) ) vertexMap[v] = v;  
+
     bool found; 
     BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
-      sLog <<  "Scanning " << gTmp[w].name << std::endl;
+      //sLog <<  "Looking at " << gTmp[w].name << std::endl;
       found = false; 
       BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-      vertexMap[v] = v;  
-      
         if ((gTmp[w].name == gUp[v].name)) {
           found = true;
           if (gTmp[w].type != tUndefined) {
             
             toDelete.insert(v);                   // add the node
-            sLog <<  "Added Node " << gTmp[w].name << " of type " << gTmp[w].type << " to del map " << std::endl;   
+            //sLog <<  "Added Node " << gTmp[w].name << " of type " << gTmp[w].type << " to del map " << std::endl;   
             pushMetaNeighbours(v, gUp, toDelete); // add all of its meta children as well
           } else {}
           break;
@@ -404,6 +412,11 @@ using namespace DotStr;
       }
       if (!found) { sLog <<  "Skipping unknown Node " << gTmp[w].name << std::endl;   } 
     }
+
+    /*
+    sLog <<  "Map b4 " << std::endl;
+    for (auto it : vertexMap) sLog <<  it.first << " -> " << it.second << std::endl;
+    */
 
     //check staging, vertices might have lost children
     for(auto& vd : toDelete ) {
@@ -418,22 +431,39 @@ using namespace DotStr;
     
     //remove designated vertices
     for(auto& vd : toDelete ) {  
-      sLog <<  "Removing Node " << gUp[vertexMap[vd]].name << std::endl;  
+      //sLog <<  "Removing Node " << gUp[vertexMap[vd]].name << std::endl;  
       atUp.deallocate(gUp[vertexMap[vd]].hash); //using the hash is independent of vertex descriptors, so no remapping necessary yet
       boost::clear_vertex(vertexMap[vd], gUp); 
-      boost::remove_vertex(vertexMap[vd], gUp);
+      boost::remove_vertex(vertexMap[vd], gUp); 
       
+      //FIXME this is all crap ! Graph vertices and edges ought to be kept in setS or listS so iterators stay valid on removal of other vertices
+      //However, the cure is worse than the disease, graphviz_write, copy_graph all fuck around if we do, as they require vector ...
       //remove_vertex() changes the vertex vector, as it must stay contignuous. descriptors higher than he removed one therefore need to be decremented by 1
-      for( auto& updateIt : vertexMap) {if (updateIt.second > vertexMap[vd]) updateIt.second--; }
+      for( auto& updateMapIt : vertexMap) {if (updateMapIt.first > vd) updateMapIt.second--; }
     }
+
+    /*
+    sLog <<  "Map after " << std::endl;
+    for (auto it : vertexMap) sLog <<  it.first << " -> " << it.second << std::endl;
+
+    atUp.debug();
+    */
+
+    writeUpDot("inspect.dot", false);
 
     //now we have a problem: all vertex descriptors in the alloctable just got invalidated by the removal ... repair them
-    for( auto it : atUp.getTable() ) { 
-      sLog << "Changing " << gUp[vertexMap[it.v]].name << " index from " << atUp.lookupHash(gUp[vertexMap[it.v]].hash)->v; 
-      atUp.modV(atUp.lookupVertex(it.v), vertexMap[it.v]);
-      sLog << " to " << atUp.lookupHash(gUp[vertexMap[it.v]].hash)->v << std::endl; ; 
-    }
+    
+    std::vector<amI> itAtVec; //because elements change order during loop, we need to store iterators first
+    for( amI it = atUp.getTable().begin(); it != atUp.getTable().end(); it++) { itAtVec.push_back(it); }
 
+
+
+    for( auto itIt : itAtVec ) {  //now we can safely iterate over the alloctable iterators
+      //sLog << "Changing " << std::hex << "0x" << it->hash << " index from " << it->v; 
+      atUp.modV(itIt, vertexMap[itIt->v]);
+      //sLog << " to " << it->v << std::endl; ; 
+    }
+    //atUp.debug();
     
 
     prepareUpload();
@@ -468,7 +498,7 @@ using namespace DotStr;
     baseUploadOnDownload();
 
     subtraction(gTmp);
-    writeUpDot("upload.dot", false);
+    //writeUpDot("upload.dot", false);
 
     return upload();
   }
@@ -485,17 +515,19 @@ using namespace DotStr;
     
     bool found; 
     BOOST_FOREACH( vertex_t w, vertices(gUp) ) {
-      sLog <<  "Scanning " << gUp[w].name << std::endl;
+      //sLog <<  "Scanning " << gUp[w].name << std::endl;
       found = false; 
       BOOST_FOREACH( vertex_t v, vertices(gTmpKeep) ) {
         if ((gTmpKeep[v].name == gUp[w].name)) {
           found = true;
-          sLog <<  "Keeping Node " << gUp[w].name << std::endl;
+          //sLog <<  "Keeping Node " << gUp[w].name << std::endl;
           break;
 
         }
       }
-      if (!found) { sLog <<  "Deleting Node " << gUp[w].name << std::endl; vertex_t u = boost::add_vertex(myVertex(gUp[w]), gTmpRemove); }
+      if (!found) { boost::add_vertex(myVertex(gUp[w]), gTmpRemove);
+        //sLog <<  "Deleting Node " << gUp[w].name << std::endl;  
+      }
     }
     
 
