@@ -20,11 +20,12 @@ T_CXXFLAGS    = -Wall -g -std=c++11 -I$(FTMPATH)/include -I$(FWPATH) -Wfatal-err
 
 SRC_FILES     = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMuploadschedule.cpp carpeDMdownloadschedule.cpp graph.cpp alloctable.cpp mempool.cpp dotstr.cpp
 T_SOURCES     = $(addprefix $(SRCPATH)/, $(SRC_FILES))
+T_OBJECTS			= $(subst .cpp,.o,$(SRC_FILES))
 T_LIBS        = -Wl,-rpath,/usr/local/lib -letherbone -lboost_graph -l:libboost_serialization.so.1.62.0
 
 all: lib tools
 
-lib: $(LIBPATH)/libcarpedm.a   
+lib: $(LIBPATH)/libcarpedm.so  
 
 tools: $(BINPATH)/dm-sched $(BINPATH)/dm-cmd
 	
@@ -42,19 +43,21 @@ $(FWPATH)/ftm_shared_mmap.h:
 	$(MAKE) -C $(FWPATH) ftm_shared_mmap.h
 
 
-$(LIBPATH)/libcarpedm.a: $(T_SOURCES) $(FWPATH)/ftm_shared_mmap.h 
+$(LIBPATH)/libcarpedm.so: $(T_SOURCES) $(FWPATH)/ftm_shared_mmap.h 
 	mkdir -p $(LIBPATH)
-	$(T_CXX) $(T_CXXFLAGS) -c $(T_SOURCES) $(T_LIBS)
-	ar rcsv $@ *.o
+	$(T_CXX) $(T_CXXFLAGS) -fPIC -c $(T_SOURCES) $(T_LIBS)
+	$(T_CXX) -shared -o $@ $(T_OBJECTS)
 
-$(TOOLPATH)/dm-sched: $(LIBPATH)/libcarpedm.a
-	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/dm-schedule.cpp $^ $(T_LIBS)
 
-$(TOOLPATH)/dm-cmd: $(LIBPATH)/libcarpedm.a
-	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/dm-cmd.cpp $^ $(T_LIBS)
+$(TOOLPATH)/dm-sched: $(LIBPATH)/libcarpedm.so
+	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/dm-schedule.cpp $^ $(T_LIBS) -L$(LIBPATH) -lcarpedm
+
+
+$(TOOLPATH)/dm-cmd: $(LIBPATH)/libcarpedm.so
+	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/dm-cmd.cpp $^ $(T_LIBS) -L$(LIBPATH) -lcarpedm
 
 install: $(BINPATH)/dm-sched $(BINPATH)/dm-cmd
 	cp $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(INSTALLPATH) 
 
 clean::
-	rm -f $(TOOLPATH)/*.o $(TOOLPATH)/*.a $(TOOLPATH)/*.elf $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(LIBPATH)/libcarpedm.a
+	rm -f $(TOOLPATH)/*.o $(TOOLPATH)/*.a $(TOOLPATH)/*.elf $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(LIBPATH)/libcarpedm.so
