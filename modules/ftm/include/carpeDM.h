@@ -45,14 +45,20 @@ private:
   void generateDstLst(Graph& g, vertex_t v);
   void generateQmeta(Graph& g, vertex_t v, int prio);
 
-  void addition(Graph& gTmp);
-  void subtraction(Graph& gTmp);
+  void addition(Graph& g);
+  void subtraction(Graph& g);
   void nullify();
+
+  int add(Graph& g);
+  int remove(Graph& g);
+  int keep(Graph& g);  
+  int overwrite(Graph& g);
+  int clear();
 
    //Upload processed Graph to LM32 SoC via Etherbone
   int upload();
     //Parse a .dot file to create unprocessed Graph
-  Graph& parseDot(const std::string& fn, Graph& g);
+  Graph& parseDot(const std::string& s, Graph& g);
 
   //Process Graph for uploading to LM32 SoC
 
@@ -60,6 +66,8 @@ private:
   void prepareUpload();
   void mergeUploadDuplicates(vertex_t borg, vertex_t victim); 
 
+  void addToDict(Graph& g);      
+  void removeFromDict(Graph& g); 
 
 protected:
 
@@ -126,30 +134,39 @@ public:
   //Check if CPU is registered as running a valid firmware
   bool isValidDMCpu(uint8_t cpuIdx) {return (cpuIdxMap.count(cpuIdx) > 0);}
 
+  //Wrappers for everything
+
   //Add all nodes in .dot file to name/hash dictionary
-  void addDotToDict(const std::string& fn);
+  void addDotToDict(const std::string& s)           {Graph gTmp; addToDict(parseDot(s, gTmp));};
+  void addDotFileToDict(const std::string& fn)      {addDotToDict(readTextFile(fn));};
 
   //Remove all nodes in .dot file from name/hash dictionary
-  void removeDotFromDict(const std::string& fn);
+  void removeDotFromDict(const std::string& s)      {Graph gTmp; removeFromDict(parseDot(s, gTmp));};
+  void removeDotFileFromDict(const std::string& fn) {removeDotFromDict(readTextFile(fn));};
 
   //Clear the dictionary
   void clearDict();
   
+  void storeDict();
+  void loadDict();
 
 
- 
   /////////////////////////////////////////////////////////////////////////////////////////////////
   //  Schedule Manipulation                                                                      //
   /////////////////////////////////////////////////////////////////////////////////////////////////
-  int add(const std::string& fn);                                                                //
+  int addDot(const std::string& s) {Graph gTmp; add(parseDot(s, gTmp));};                        //
+  int addDotFile(const std::string& fn) {addDot(readTextFile(fn));};                             //
                                                                                                  //
-  int overwrite(const std::string& fn);                                                          //
+  int overwriteDot(const std::string& s) {Graph gTmp; overwrite(parseDot(s, gTmp));};                                                        //
+  int overwriteFromFile(const std::string& fn) {overwriteDot(readTextFile(fn));};                //
                                                                                                  //
   //removes all nodes NOT in input file                                                          //
-  int keep(const std::string& fn);                                                               //
+  int keepDot(const std::string& s) {Graph gTmp; keep(parseDot(s, gTmp));};                                                             //
+  int keepDotFile(const std::string& fn) {keepDot(readTextFile(fn));};                           //
                                                                                                  //
   //removes all nodes in input file                                                              //
-  int remove(const std::string& fn);                                                             //
+  int removeDot(const std::string& s) {Graph gTmp; remove(parseDot(s, gTmp));};                                                           //
+  int removeDotFile(const std::string& fn) {removeDot(readTextFile(fn));};                       //
   //clears all nodes from DM                                                                     //
   int clear();                                                                                   //
                                                                                                  //
@@ -173,10 +190,14 @@ public:
   std::string createDot( Graph& g, bool filterMeta);
 
   //Write out processed Download Graph as .dot file
-  void writeDot(const std::string& fn, Graph& g, bool filterMeta);
+  
+  void writeTextFile(const std::string& fn, const std::string& s);
+  std::string&  readTextFile(const std::string& fn, std::string& s);
+  std::istream& readTextFile(const std::string& fn, std::istream& s);
 
-  void writeDownDot(const std::string& fn, bool filterMeta) { writeDot(fn, gDown, filterMeta); }
-  void writeUpDot(const std::string& fn, bool filterMeta) { writeDot(fn, gUp, filterMeta); }
+  void writeDot(const std::string& fn, Graph& g, bool filterMeta) { writeTextFile(fn, createDot(g, filterMeta)); }
+  void writeDownDot(const std::string& fn, bool filterMeta)       { writeTextFile(fn, createDot(gDown, filterMeta)); }
+  void writeUpDot(const std::string& fn, bool filterMeta)         { writeTextFile(fn, createDot(gUp, filterMeta)); }
 
   //Turn on Verbose Output
   void verboseOn()  {verbose = true;}

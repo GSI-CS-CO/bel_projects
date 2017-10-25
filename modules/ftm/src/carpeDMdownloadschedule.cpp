@@ -83,13 +83,10 @@ using namespace DotStr;
           uint32_t    type      = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
           uint8_t     cpu       = i;
           
-
-
           //Vertex needs flags as a std::string. Convert to hex
           std::stringstream stream;
           stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << flags;
           std::string tmp(stream.str());
-
 
           //Add Vertex
           vertex_t v        = boost::add_vertex(myVertex(name, std::to_string(cpu), hash, nullptr, "", tmp), g);
@@ -98,17 +95,10 @@ using namespace DotStr;
           //vBuf test(downloadData.begin() + localAdr, downloadData.begin() + localAdr + _MEM_BLOCK_SIZE);
           //vHexDump("TEST ****", test);
 
-        
-
           if (!(at.insert(cpu, adr, hash, v, false))) {throw std::runtime_error( std::string("Hash or address collision when adding node ") + name); return;};
-
-
-          
 
           // Create node object for Vertex
           auto src = downloadData.begin() + localAdr;
-
-
 
           auto it  = at.lookupAdr(cpu, adr);
           if (!(at.isOk(it))) {throw std::runtime_error( std::string("Node at (dec) ") + std::to_string(adr) + std::string(", hash (dec) ") + std::to_string(hash) + std::string("not found. This is weird")); return;}

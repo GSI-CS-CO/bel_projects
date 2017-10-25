@@ -194,22 +194,7 @@ bool CarpeDM::connect(const std::string& en) {
     return ret;
   }
 
-  void CarpeDM::addDotToDict(const std::string& fn) {
-    Graph g;
-    std::ifstream in(fn);
-    boost::dynamic_properties dp = createParser(g);
-   
-
-    if(in.good()) {
-      if(verbose) sLog << "Creating Dictionary from " << fn << " ... ";
-      try { boost::read_graphviz(in,g,dp,"node_id");}
-      catch(...) {
-        throw;
-        //TODO report why parsing the dot / creating the graph failed
-      }
-    }  
-    else {throw std::runtime_error("Could not open .dot file <" + fn + "> for reading!\n"); return;}  
-
+  void CarpeDM::addToDict(Graph& g) {
     //add to dictionary
     try {
       //FIXME using a qualified node name by concatenating the graphname is nice in theory, but prevents replicable hashing from download, so it's out
@@ -222,32 +207,13 @@ bool CarpeDM::connect(const std::string& en) {
       //TODO report hash collision and show which names are responsible
       throw;
     }
-    in.close();
-
     if(verbose) sLog << " Done." << std::endl;
   }
 
-  void CarpeDM::removeDotFromDict(const std::string& fn) {
-    Graph g;
-    std::ifstream in(fn);
-    boost::dynamic_properties dp = createParser(g);
-   
-
-    if(in.good()) {
-      if(verbose) sLog << "Removing " << fn << " from dictionary ... ";
-      try { boost::read_graphviz(in,g,dp,"node_id");}
-      catch(...) {
-        throw;
-        //TODO report why parsing the dot / creating the graph failed
-      }
-    }  
-    else {throw std::runtime_error("Could not open .dot file <" + fn + "> for reading!\n"); return;}  
-
+  void CarpeDM::removeFromDict(Graph& g) {
     //see addDotToDict
     //BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.remove(boost::get_property(g, boost::graph_name) + "." + g[v].name);}
     BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.remove(g[v].name);}
-    
-    in.close();
 
     if(verbose) sLog << " Done." << std::endl;
   }
@@ -297,10 +263,10 @@ bool CarpeDM::connect(const std::string& en) {
     return (const boost::dynamic_properties)dp;
   }  
 
-    Graph& CarpeDM::parseDot(const std::string& fn, Graph& g) {
+/*
+
+std::ifstream in(fn);
     
-    std::ifstream in(fn);
-    boost::dynamic_properties dp = createParser(g);
     if(in.good()) {
       if(verbose) sLog << "Parsing .dot file " << fn << "... ";
       try { boost::read_graphviz(in, g, dp, "node_id"); }
@@ -330,7 +296,15 @@ bool CarpeDM::connect(const std::string& en) {
     //TODO automatically add necessary meta nodes
      if(verbose) sLog << "... retrieved Graph " << boost::get_property(g, boost::graph_name) << "... Done." << std::endl;
     return g;
+*/
 
+  //if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
+
+  Graph& CarpeDM::parseDot(const std::string& s, Graph& g) {
+    try { boost::read_graphviz(s, g, dp, "node_id"); }
+    catch(...) { throw; }
+   
+    return g;
   }
 
 
@@ -433,13 +407,13 @@ void CarpeDM::showCpuList() {
 //Returns if a hash / nodename is present on DM
   bool CarpeDM::isValid(const uint32_t hash)  {
 
-    if (atDown.lookupHash(hash) != NULL) return true;
+    if (atDown.isOk(atDown.lookupHash(hash))) return true;
     else return false;
   }
 
   bool CarpeDM::isValid(const std::string& name) {
     if (!(hm.contains(name))) return false;
-    return (atDown.lookupHash(hm.lookup(name).get()) != NULL);
+    return (atDown.isOk(atDown.lookupHash(hm.lookup(name).get())));
   }  
 
   void CarpeDM::show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta ) {
