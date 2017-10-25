@@ -15,13 +15,26 @@ TOOLPATH     ?= $(FTMPATH)/ftmx86
 PREFIX       ?= /usr/local
 INSTALLPATH  = $(PREFIX)/bin
 
+
+#hack for fuckin libetherbone chaos on asl cluster ...
+
+ifeq ($(findstring asl,$(shell hostname)),asl) 
+	EB_INC=-I/common/export/timing-rte/tg-cherry-v2/x86_64/include
+	EB_LIB=/common/export/timing-rte/tg-cherry-v2/x86_64/lib/libetherbone.so
+else
+	EB_LIB=-letherbone
+endif
+
+
 T_CXX         = g++
-T_CXXFLAGS    = -Wall -g -std=c++11 -I$(FTMPATH)/include -I$(FWPATH) -Wfatal-errors -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\" 
+T_CXXFLAGS    = -Wall -g -std=c++11 -I$(FTMPATH)/include $(EB_INC) -I$(FWPATH) -Wfatal-errors -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\" 
 
 SRC_FILES     = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMuploadschedule.cpp carpeDMdownloadschedule.cpp graph.cpp alloctable.cpp mempool.cpp dotstr.cpp
 T_SOURCES     = $(addprefix $(SRCPATH)/, $(SRC_FILES))
-T_OBJECTS			= $(subst .cpp,.o,$(SRC_FILES))
-T_LIBS        = -Wl,-rpath,/usr/local/lib -letherbone -lboost_graph -lboost_serialization
+T_OBJECTS     = $(subst .cpp,.o,$(SRC_FILES))
+T_LIBS        = -Wl,-rpath,/usr/local/lib $(EB_LIB) -lboost_graph -lboost_serialization
+
+
 
 all: lib tools
 
