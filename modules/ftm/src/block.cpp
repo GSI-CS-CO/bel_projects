@@ -32,7 +32,7 @@ void Block::show(void) const {
 
 void Block::show(uint32_t cnt, const char* prefix) const {
   char* p;
-  if (prefix == NULL) p = (char*)"";
+  if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;
   printf("%s***------- %3u -------\n", p, cnt);
   printf("%s*** Block @ %llu, ", p, (long long unsigned int)this->tPeriod);

@@ -45,7 +45,7 @@ void CmdQMeta::show(void) const {
 
 void CmdQMeta::show(uint32_t cnt, const char* prefix) const {
   char* p;
-  if (prefix == NULL) p = (char*)"";
+  if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;
   printf("%s***------- %3u -------\n", p, cnt);
 };
@@ -56,7 +56,7 @@ void CmdQBuffer::show(void) const {
 
 void CmdQBuffer::show(uint32_t cnt, const char* prefix) const {
   char* p;
-  if (prefix == NULL) p = (char*)"";
+  if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;
   printf("%s***------- %3u -------\n", p, cnt);
 };
@@ -67,7 +67,7 @@ void DestList::show(void) const {
 
 void DestList::show(uint32_t cnt, const char* prefix) const {
   char* p;
-  if (prefix == NULL) p = (char*)"";
+  if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;
   printf("%s***------- %3u -------\n", p, cnt);
 

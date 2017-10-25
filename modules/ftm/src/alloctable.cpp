@@ -74,7 +74,7 @@
     auto x = lookupHash(hash);
     
     if (x == a.end()) {
-      //std::cout << "NULL" << std::endl;
+      //std::cout << "nullptr" << std::endl;
       return false;}
     if (vPool.size() <= x->cpu) {
       //std::cout << "cpu idx out of range" << std::endl;

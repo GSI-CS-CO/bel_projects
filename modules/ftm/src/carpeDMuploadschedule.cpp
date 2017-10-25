@@ -83,7 +83,7 @@ using namespace DotStr;
   void CarpeDM::generateDstLst(Graph& g, vertex_t v) {
     const std::string name = g[v].name + tDstListSuffix;
     hm.add(name);
-    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), NULL, nDstList, tHexZero), g);
+    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), nullptr, nDstList, tHexZero), g);
     boost::add_edge(v,   vD, myEdge(eDstList), g);
   }  
 
@@ -96,9 +96,9 @@ using namespace DotStr;
     hm.add(nameBl);
     hm.add(nameB0);
     hm.add(nameB1);
-    vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl).get(), NULL, nQInfo, tHexZero), g);
-    vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0).get(), NULL, nQBuf,  tHexZero), g);
-    vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1).get(), NULL, nQBuf,  tHexZero), g);
+    vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl).get(), nullptr, nQInfo, tHexZero), g);
+    vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0).get(), nullptr, nQBuf,  tHexZero), g);
+    vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1).get(), nullptr, nQBuf,  tHexZero), g);
     boost::add_edge(v,   vBl, myEdge(eQPrio[prio]), g);
     boost::add_edge(vBl, vB0, myEdge(nMeta),    g);
     boost::add_edge(vBl, vB1, myEdge(nMeta),    g);
@@ -242,7 +242,7 @@ using namespace DotStr;
       auto* x = (AllocMeta*)&(*it);
 
       // add timing node data objects to vertices
-      if(gUp[v].np == NULL) {
+      if(gUp[v].np == nullptr) {
 
         cmp = gUp[v].type;
       
@@ -373,7 +373,7 @@ using namespace DotStr;
     
     //recursively find all adjacent meta type vertices
     BOOST_FOREACH( vertex_t w, adjacent_vertices(v, g)) {
-      if (g[w].np == NULL) {throw std::runtime_error("Node " + g[w].name + " does not have a data object, this is bad");}
+      if (g[w].np == nullptr) {throw std::runtime_error("Node " + g[w].name + " does not have a data object, this is bad");}
       if (g[w].np->isMeta()) {
         s.insert(w);
         //sLog <<  "Added Meta Child " << g[w].name << " to del map " << std::endl; 
