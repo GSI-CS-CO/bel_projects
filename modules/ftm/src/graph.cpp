@@ -6,7 +6,7 @@ myVertex::myVertex(myVertex const &src) {
   this->name = src.name;
   this->cpu = src.cpu;
   this->hash = src.hash;
-  if (src.np != NULL) this->np = src.np->clone();
+  if (src.np != nullptr) this->np = src.np->clone();
   this->type = src.type;
   this->flags = src.flags;
   //Meta

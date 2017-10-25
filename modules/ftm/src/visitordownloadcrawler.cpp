@@ -63,7 +63,7 @@ void VisitorDownloadCrawler::visit(const TimingMsg& el) const  {
     tmpAdr = at.extAdr2adr(cpu, (uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ));
    // std::cout << "found 0x" << std::hex << tmpAdr << std::endl;
     //parserMeta* lookupPtr = (parserMeta*)(m.lookupAdr(tmpAdr));
-    //if (lookupPtr == NULL) std::cout << "Parsermeta Lookup returned Null " << std::endl;
+    //if (lookupPtr == nullptr) std::cout << "Parsermeta Lookup returned Null " << std::endl;
     
     if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(eDynPar0),          g);
   }
@@ -131,7 +131,7 @@ void VisitorDownloadCrawler::visit(const CmdQMeta& el) const {
     tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + offs ));
     if (tmpAdr != LM32_NULL_PTR) {
       auto x = at.lookupAdr(cpu, tmpAdr);
-      if (x != NULL) {//std::cout << "found qbuf!" << std::endl; 
+      if (x != nullptr) {//std::cout << "found qbuf!" << std::endl; 
         boost::add_edge(v, x->v, (myEdge){nMeta}, g);
       }
     }  
@@ -172,7 +172,7 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
 
       if (tmpAdr != LM32_NULL_PTR) {
         auto x = at.lookupAdr(cpu, tmpAdr);
-        if (x != NULL) {
+        if (x != nullptr) {
           boost::add_edge(vPblock, x->v, (myEdge){sType}, g);
         }
       }  
@@ -181,7 +181,7 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
       std::cerr << "!!! DefDest not in AltDestList. Means someone set an arbitrary pointer for DefDest !!!" << std::endl;
       if (defAdr != LM32_NULL_PTR) {
         auto x = at.lookupAdr(cpu, defAdr);
-        if (x != NULL) {
+        if (x != nullptr) {
           boost::add_edge(vPblock, x->v, (myEdge){eBadDefDst}, g);
         } else boost::add_edge(vPblock, vPblock, (myEdge){eBadDefDst}, g);
       }

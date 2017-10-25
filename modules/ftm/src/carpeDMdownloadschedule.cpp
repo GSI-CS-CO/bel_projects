@@ -92,7 +92,7 @@ using namespace DotStr;
 
 
           //Add Vertex
-          vertex_t v        = boost::add_vertex(myVertex(name, std::to_string(cpu), hash, NULL, "", tmp), g);
+          vertex_t v        = boost::add_vertex(myVertex(name, std::to_string(cpu), hash, nullptr, "", tmp), g);
           //std::cout << "atdown cpu " << (int)cpu << " Adr: 0x" << std::hex << adr <<  " Hash 0x" << hash << std::endl;
           //Add allocTable Entry
           //vBuf test(downloadData.begin() + localAdr, downloadData.begin() + localAdr + _MEM_BLOCK_SIZE);
@@ -146,7 +146,7 @@ using namespace DotStr;
     //Two-pass for edges. First, iterate all non meta-types to establish block -> dstList parenthood
     for(auto& it : at.getTable().get<Hash>()) {
       // handled by visitor
-      if (g[it.v].np == NULL) {throw std::runtime_error( std::string("Node ") + g[it.v].name + std::string("not initialised")); return;
+      if (g[it.v].np == nullptr) {throw std::runtime_error( std::string("Node ") + g[it.v].name + std::string("not initialised")); return;
       } else {
         if  (!(g[it.v].np->isMeta())) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at));
       }  
@@ -154,7 +154,7 @@ using namespace DotStr;
     //second, iterate all meta-types
     for(auto& it : at.getTable().get<Hash>()) {
       // handled by visitor
-      if (g[it.v].np == NULL) {throw std::runtime_error( std::string("Node ") + g[it.v].name + std::string("not initialised")); return; 
+      if (g[it.v].np == nullptr) {throw std::runtime_error( std::string("Node ") + g[it.v].name + std::string("not initialised")); return; 
       } else {
         if  (g[it.v].np->isMeta()) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at));
       }  

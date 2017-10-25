@@ -121,7 +121,7 @@ void TimingMsg::show(void) const {
 
 void TimingMsg::show(uint32_t cnt, const char* prefix) const {
   char* p;
-  if (prefix == NULL) p = (char*)"";
+  if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;
   printf("%s***------- %3u -------\n", p, cnt);
   printf("%s*** TimingMsg @ %llu, ", p, (long long unsigned int)this->tOffs);
@@ -135,7 +135,7 @@ void Command::show(void) const {
 
 void Command::show(uint32_t cnt, const char* prefix) const {
   char* p;
-  if (prefix == NULL) p = (char*)"";
+  if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;
   printf("%s***------- %3u -------\n", p, cnt);
   printf("%s*** Command   @ %llu, ", p, (long long unsigned int)this->tOffs);
@@ -148,7 +148,7 @@ void Flush::show(void) const {
 
 void Flush::show(uint32_t cnt, const char* prefix) const {
   char* p;
-  if (prefix == NULL) p = (char*)"";
+  if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;
   Command::show( cnt, p);
   printf("%s Flush \n", p);
@@ -163,7 +163,7 @@ void Flow::show(void) const {
 
 void Flow::show(uint32_t cnt, const char* prefix) const {
   char* p;
-  if (prefix == NULL) p = (char*)"";
+  if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;
   
   Command::show( cnt, p);
@@ -176,7 +176,7 @@ void Wait::show(void) const {
 
 void Wait::show(uint32_t cnt, const char* prefix) const {
   char* p;
-  if (prefix == NULL) p = (char*)"";
+  if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;
   
   Command::show( cnt, p);
@@ -193,7 +193,7 @@ void Noop::show(void) const {
 
 void Noop::show(uint32_t cnt, const char* prefix) const {
   char* p;
-  if (prefix == NULL) p = (char*)"";
+  if (prefix == nullptr) p = (char*)"";
   else p = (char*)prefix;
   Command::show( cnt, prefix);
   printf("%s%u x No Operation\n", p, this->getQty());
