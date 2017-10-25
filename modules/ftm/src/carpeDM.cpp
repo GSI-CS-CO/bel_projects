@@ -433,13 +433,13 @@ void CarpeDM::showCpuList() {
 //Returns if a hash / nodename is present on DM
   bool CarpeDM::isValid(const uint32_t hash)  {
 
-    if (atDown.lookupHash(hash) != NULL) return true;
+    if (atDown.isOk(atDown.lookupHash(hash))) return true;
     else return false;
   }
 
   bool CarpeDM::isValid(const std::string& name) {
     if (!(hm.contains(name))) return false;
-    return (atDown.lookupHash(hm.lookup(name).get()) != NULL);
+    return (atDown.isOk(atDown.lookupHash(hm.lookup(name).get())));
   }  
 
   void CarpeDM::show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta ) {
