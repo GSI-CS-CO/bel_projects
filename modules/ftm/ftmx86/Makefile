@@ -22,7 +22,6 @@ ifeq ($(findstring asl,$(shell hostname)),asl)
 	EB_INC=-I/common/export/timing-rte/tg-cherry-v2/x86_64/include
 	EB_LIB=/common/export/timing-rte/tg-cherry-v2/x86_64/lib/libetherbone.so
 else
-	EB_INC=""
 	EB_LIB=-letherbone
 endif
 
