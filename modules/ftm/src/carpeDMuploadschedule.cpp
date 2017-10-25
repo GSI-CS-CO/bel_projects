@@ -17,9 +17,13 @@
 #include "dotstr.h"
 
 using namespace DotStr;
+  
 
+  //TODO NC Traffic Verification
 
-     //TODO NC analysis
+  //TODO CPU Load Balancer
+
+     
   vAdr CarpeDM::getUploadAdrs(){
     vAdr ret;
     uint32_t adr;
@@ -28,8 +32,6 @@ using namespace DotStr;
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
       //generate addresses of Bmp's address range
       for (adr = atUp.adr2extAdr(i, atUp.getMemories()[i].sharedOffs); adr < atUp.adr2extAdr(i, atUp.getMemories()[i].startOffs); adr += _32b_SIZE_) ret.push_back(adr);
-
-      
     }
 
     //add all Node addresses to return vector
@@ -88,8 +90,6 @@ using namespace DotStr;
   }  
 
   void CarpeDM::generateQmeta(Graph& g, vertex_t v, int prio) {
-
-
     const std::string nameBl = g[v].name + tQBufListTag + tQPrioPrefix[prio];
     const std::string nameB0 = g[v].name + tQBufTag     + tQPrioPrefix[prio] + t1stQBufSuffix;
     const std::string nameB1 = g[v].name + tQBufTag     + tQPrioPrefix[prio] + t2ndQBufSuffix;
@@ -133,9 +133,6 @@ using namespace DotStr;
       }
     }  
   }
-
-  
-
 
   void CarpeDM::updateListDstStaging(vertex_t v) {
     Graph::out_edge_iterator out_begin, out_end, out_cur;
@@ -203,9 +200,6 @@ using namespace DotStr;
       boost::remove_edge(*in_cur, g);
        
     }
-    
-
-    
   }
 
   void CarpeDM::prepareUpload() {
@@ -275,7 +269,6 @@ using namespace DotStr;
         //FIXME try to get info from download
         else                        {throw std::runtime_error("Node <" + gUp[v].name + ">'s type <" + cmp + "> is not supported!\nMost likely you forgot to set the type attribute or accidentally created the node by a typo in an edge definition."); return;}
       }  
-
     }
    
     // Crawl vertices and serialise their data objects for upload
@@ -436,8 +429,9 @@ using namespace DotStr;
       boost::clear_vertex(vertexMap[vd], gUp); 
       boost::remove_vertex(vertexMap[vd], gUp); 
       
-      //FIXME this is all crap ! Graph vertices and edges ought to be kept in setS or listS so iterators stay valid on removal of other vertices
-      //However, the cure is worse than the disease, graphviz_write, copy_graph all fuck around if we do, as they require vector ...
+      //FIXME this removal scheme is crap ! Graph vertices and edges ought to be kept in setS or listS so iterators stay valid on removal of other vertices
+      //However, the cure is worse than the disease, graphviz_write, copy_graph all fuck around if we do, as they require vertex descriptors wich setS and listS don't provide ... leave for now
+
       //remove_vertex() changes the vertex vector, as it must stay contignuous. descriptors higher than he removed one therefore need to be decremented by 1
       for( auto& updateMapIt : vertexMap) {if (updateMapIt.first > vd) updateMapIt.second--; }
     }
@@ -479,36 +473,29 @@ using namespace DotStr;
 
   //high level functions for external interface
 
-  int CarpeDM::add(const std::string& fn) {
-    Graph gTmp;
-    parseDot(fn, gTmp);
-    if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
-
+  int CarpeDM::add(Graph& g) {
     baseUploadOnDownload();
-    addition(gTmp);
+    addition(g);
     writeUpDot("upload.dot", false);
 
     return upload();
   } 
 
-  int CarpeDM::remove(const std::string& fn) {
-    Graph gTmp;
-    parseDot(fn, gTmp);
-    if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
+  int CarpeDM::remove(Graph& g) {
     baseUploadOnDownload();
-
-    subtraction(gTmp);
+    subtraction(g);
     //writeUpDot("upload.dot", false);
-
     return upload();
   }
 
 
-  int CarpeDM::keep(const std::string& fn) {
-    Graph gTmpKeep, gTmpRemove;
-    parseDot(fn, gTmpKeep);
-    if ((boost::get_property(gTmpKeep, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
-    generateBlockMeta(gTmpKeep);
+  int CarpeDM::keep(Graph& g) {
+    Graph gTmpRemove;
+    Graph& gTmpKeep = g;
+
+    generateBlockMeta(
+      Graph& gTmpKeep = g;
+      );
 
     writeDot("inspect.dot", gTmpKeep, false);
     baseUploadOnDownload();
@@ -530,7 +517,6 @@ using namespace DotStr;
       }
     }
     
-
     subtraction(gTmpRemove);
     writeUpDot("upload.dot", false);
 
@@ -542,13 +528,9 @@ using namespace DotStr;
     return upload();
   }
 
-  int CarpeDM::overwrite(const std::string& fn) {
-    Graph gTmp; 
-    parseDot(fn, gTmp);
-    if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
-    
+  int CarpeDM::overwrite(Graph& g) {
     nullify();
-    addition(gTmp);
+    addition(g);
     writeUpDot("upload.dot", false);
 
     return upload();
