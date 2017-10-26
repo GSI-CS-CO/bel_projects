@@ -355,7 +355,7 @@ using namespace DotStr;
       for( auto& updateMapIt : vertexMap) {if (updateMapIt.first > itDup.second) updateMapIt.second--; }
     }
 
-    writeUpDot("inspect.dot", false);
+    writeUpDotFile("inspect.dot", false);
 
     prepareUpload();
     atUp.updateBmps();
@@ -443,7 +443,7 @@ using namespace DotStr;
     atUp.debug();
     */
 
-    writeUpDot("inspect.dot", false);
+    writeUpDotFile("inspect.dot", false);
 
     //now we have a problem: all vertex descriptors in the alloctable just got invalidated by the removal ... repair them
     
@@ -476,7 +476,7 @@ using namespace DotStr;
   int CarpeDM::add(Graph& g) {
     baseUploadOnDownload();
     addition(g);
-    writeUpDot("upload.dot", false);
+    writeUpDotFile("upload.dot", false);
 
     return upload();
   } 
@@ -484,7 +484,7 @@ using namespace DotStr;
   int CarpeDM::remove(Graph& g) {
     baseUploadOnDownload();
     subtraction(g);
-    //writeUpDot("upload.dot", false);
+    //writeUpDotFile("upload.dot", false);
     return upload();
   }
 
@@ -493,11 +493,9 @@ using namespace DotStr;
     Graph gTmpRemove;
     Graph& gTmpKeep = g;
 
-    generateBlockMeta(
-      Graph& gTmpKeep = g;
-      );
+    generateBlockMeta(gTmpKeep);
 
-    writeDot("inspect.dot", gTmpKeep, false);
+    writeDotFile("inspect.dot", gTmpKeep, false);
     baseUploadOnDownload();
     
     bool found; 
@@ -518,7 +516,7 @@ using namespace DotStr;
     }
     
     subtraction(gTmpRemove);
-    writeUpDot("upload.dot", false);
+    writeUpDotFile("upload.dot", false);
 
     return upload();
   }   
@@ -531,7 +529,7 @@ using namespace DotStr;
   int CarpeDM::overwrite(Graph& g) {
     nullify();
     addition(g);
-    writeUpDot("upload.dot", false);
+    writeUpDotFile("upload.dot", false);
 
     return upload();
 

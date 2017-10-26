@@ -1,5 +1,6 @@
 #include "hashmap.h"
 #include <iostream>
+#include <sstream>
 
 
 uint32_t HashMap::fnvHash(const char* str)
@@ -19,8 +20,9 @@ boost::optional<const uint32_t&> HashMap::add(const std::string& name) {
   try {
     hm.insert( hashValue(hash, name) ); 
   } catch (...) {
-    std::cout << "Failed to add " << name << std::endl;
-    throw; 
+    std::cout << "Failed to add " << name;
+    if(lookup(hash)) throw std::runtime_error("'" + name + "' would cause a hash collision with '" + lookup(hash).get() + "'");
+    else throw; 
     return boost::optional<const uint32_t&>();
   } 
 
@@ -48,23 +50,19 @@ bool HashMap::contains(const uint32_t hash)     const {if (hm.left.count(hash)  
 
 bool HashMap::contains(const std::string& name) const {if (hm.right.count(name) > 0) {return true;} else {return false;} };
 
-bool HashMap::store(const std::string& fn) {
-  std::ofstream ofs(fn);
-  if (ofs.good()) {
-    boost::archive::text_oarchive oa(ofs);
-    oa << *this;
-    return true;
-  }
-  return false;
+std::string HashMap::store() {
+  std::stringstream os;
+  boost::archive::text_oarchive oa(os);
+  //boost::archive::xml_oarchive oa(ofs);
+  oa << BOOST_SERIALIZATION_NVP(*this);
+  return os.str();
 }
 
-bool HashMap::load(const std::string& fn) {
-  std::ifstream ifs(fn);
-  if (ifs.good()) {
-    boost::archive::text_iarchive ia(ifs);
-    ia >> *this;
-    return true;
-  }
-  return false;
+void HashMap::load(const std::string& s) {
+  std::stringstream is;
+  is.str(s);
   
+  boost::archive::text_iarchive ia(is);
+  //boost::archive::xml_iarchive ia(ifs);
+  ia >> BOOST_SERIALIZATION_NVP(*this);
 }

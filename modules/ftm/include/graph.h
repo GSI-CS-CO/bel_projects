@@ -82,7 +82,7 @@ public:
   std::string flowDest = tUndefined;
   std::string flowTarget = tUndefined;
 
-  myVertex() : name(tUndefined), cpu(tZero), hash(uUndefined32), np(NULL), type(tUndefined), flags(tUndefined32) {}
+  myVertex() : name(tUndefined), cpu(tZero), hash(uUndefined32), np(nullptr), type(tUndefined), flags(tUndefined32) {}
   
   myVertex(std::string name, std::string cpu, uint32_t hash, node_ptr np, std::string type, std::string flags) : name(name), cpu(cpu), hash(hash), np(np), type(type), flags(flags) {}
 

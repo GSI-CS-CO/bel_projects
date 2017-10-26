@@ -110,15 +110,15 @@ int main(int argc, char* argv[]) {
 
   //TODO we need a dictionary independent of dot files, otherwise, how do we update?
 
-  cdm.getHashMap().load("dm.dict");
+  cdm.loadDictFile("dm.dict");
 
   if (inputFilename != NULL) {
-    try { cdm.addDotToDict(inputFilename); }
+    try { cdm.addDotFileToDict(inputFilename); }
     catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Warning - Could not insert your .dot file into dictionary. Cause: " << err.what() << std::endl;
     }
   } else {
-    if (cdm.getHashMap().size() == 0) std::cerr << std::endl << program << ": Warning - No Nodename/Hash dictionary available. Your download will show only hashes." << std::endl;
+    if (cdm.isDictEmpty()) std::cerr << std::endl << program << ": Warning - No Nodename/Hash dictionary available. Your download will show only hashes." << std::endl;
   }
 
 
@@ -133,11 +133,11 @@ int main(int argc, char* argv[]) {
     
     try {
       if (cmd == "clear")     { cdm.clear(); cmdValid = true;}
-      if (cmd == "add")       { cdm.add(inputFilename); cmdValid = true;}
-      if (cmd == "overwrite") { cdm.overwrite(inputFilename); cmdValid = true;}
-      if (cmd == "remove")    { cdm.remove(inputFilename); cmdValid = true;}
-      if (cmd == "keep")      { cdm.keep(inputFilename); cmdValid = true;}
-      if (cmd == "status")      { cdm.keep(inputFilename); cmdValid = true;}
+      if (cmd == "add")       { cdm.addDotFile(inputFilename); cmdValid = true;}
+      if (cmd == "overwrite") { cdm.overwriteDotFile(inputFilename); cmdValid = true;}
+      if (cmd == "remove")    { cdm.removeDotFile(inputFilename); cmdValid = true;}
+      if (cmd == "keep")      { cdm.keepDotFile(inputFilename); cmdValid = true;}
+      if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true;}
       if(verbose) cdm.showUp(false);
     } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Failed to execute <"<< cmd << ". Cause: " << err.what() << std::endl;
@@ -151,8 +151,7 @@ int main(int argc, char* argv[]) {
 
   if ( update ) {
     try { 
-      cdm.download();
-      cdm.writeDownDot(outputFilename, strip);
+      cdm.downloadDotFile(outputFilename, strip);
       if(verbose) cdm.showDown(false);
 
     } catch (std::runtime_error const& err) {
@@ -162,7 +161,7 @@ int main(int argc, char* argv[]) {
   }
 
 
-  cdm.getHashMap().store("dm.dict");  
+  cdm.storeDictFile("dm.dict");  
   
 
   cdm.disconnect();

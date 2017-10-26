@@ -34,7 +34,7 @@ using namespace DotStr;
     non_meta(MetaMap meta) : meta(meta) { }
     template <class Vertex>
     bool operator()(const Vertex& v) const {
-      if (meta[v] != NULL) return !(meta[v]->isMeta());
+      if (meta[v] != nullptr) return !(meta[v]->isMeta());
       else return true;
     }
     MetaMap meta;
@@ -63,8 +63,8 @@ using namespace DotStr;
     vertex_writer(objMap om) : om(om) {}
     template <class Vertex>
     void operator()(std::ostream& out, const Vertex& v) const {
-      if (om[v] != NULL) om[v]->accept(VisitorVertexWriter(out));
-      else std::cerr << "Vertex " << v << " has no node !!!" << std::endl;
+      if (om[v] != nullptr) om[v]->accept(VisitorVertexWriter(out));
+      //else std::cerr << "Vertex " << v << " has no node !!!" << std::endl;
     }
   private:
     objMap om;

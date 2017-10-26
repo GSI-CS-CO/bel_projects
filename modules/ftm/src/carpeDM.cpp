@@ -263,51 +263,46 @@ bool CarpeDM::connect(const std::string& en) {
     return (const boost::dynamic_properties)dp;
   }  
 
-/*
 
-std::ifstream in(fn);
-    
+  std::string CarpeDM::readTextFile(const std::string& fn) {
+    std::string ret;
+    std::ifstream in(fn);
     if(in.good()) {
-      if(verbose) sLog << "Parsing .dot file " << fn << "... ";
-      try { boost::read_graphviz(in, g, dp, "node_id"); }
-      catch(...) {
-        throw;
-
-      }
-      in.close();
+      std::stringstream buffer;
+      buffer << in.rdbuf();
+      ret = buffer.str();
     }  
-    else {throw std::runtime_error(" Could not read from .dot file '" + fn + "'"); return g;}  
-    //format all graph labels lowercase
+    else {throw std::runtime_error(" Could not read from file '" + fn + "'");}  
 
- 
+    return ret;
+  }
+/*
+  std::istream CarpeDM::readTextFile(const std::string& fn) {
+    std::istream ret;
+    std::ifstream in(fn);
+    if(in.good()) {
+      ret << in.rdbuf();
+    }  
+    else {throw std::runtime_error(" Could not read from file '" + fn + "'");}  
 
-    
-
-    boost::graph_traits<Graph>::vertex_iterator vi, vi_end;
-    boost::tie(vi, vi_end) = vertices(g);   
-    
-    BOOST_FOREACH( edge_t e, edges(g) ) { std::transform(g[e].type.begin(), g[e].type.end(), g[e].type.begin(), ::tolower); }
-    BOOST_FOREACH( vertex_t v, vertices(g) ) { std::transform(g[v].type.begin(), g[v].type.end(), g[v].type.begin(), ::tolower); } 
-    
-
-    //removed, see addDotToDict
-    //if (boost::get_property(g, boost::graph_name) == "") {throw std::runtime_error(" Graph attribute 'name' must not be empty "); return g;} 
-    
-    //TODO automatically add necessary meta nodes
-     if(verbose) sLog << "... retrieved Graph " << boost::get_property(g, boost::graph_name) << "... Done." << std::endl;
-    return g;
+    return ret;
+  }
 */
-
   //if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
 
   Graph& CarpeDM::parseDot(const std::string& s, Graph& g) {
+    boost::dynamic_properties dp = createParser(g);
     try { boost::read_graphviz(s, g, dp, "node_id"); }
     catch(...) { throw; }
    
     //generate hashes
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {g[v].hash = hm.add(g[v].name).get(); sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;}
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {g[v].hash = hm.add(g[v].name).get(); 
+      //sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;
+    }
 
     return g;
+
+
   }
 
 
@@ -408,13 +403,13 @@ void CarpeDM::showCpuList() {
 }
 
 //Returns if a hash / nodename is present on DM
-  bool CarpeDM::isValid(const uint32_t hash)  {
+  bool CarpeDM::isInDict(const uint32_t hash)  {
 
     if (atDown.isOk(atDown.lookupHash(hash))) return true;
     else return false;
   }
 
-  bool CarpeDM::isValid(const std::string& name) {
+  bool CarpeDM::isInDict(const std::string& name) {
     if (!(hm.contains(name))) return false;
     return (atDown.isOk(atDown.lookupHash(hm.lookup(name).get())));
   }  
@@ -479,11 +474,11 @@ void CarpeDM::showCpuList() {
   }
 
   //write out dotfile from download graph of a memunit
-  void CarpeDM::writeDot(const std::string& fn, Graph& g, bool filterMeta) {
+  void CarpeDM::writeTextFile(const std::string& fn, const std::string& s) {
     std::ofstream out(fn);
     
     if (verbose) sLog << "Writing Output File " << fn << "... ";
-    if(out.good()) { out << createDot(g, filterMeta); }
+    if(out.good()) { out << s; }
     else {throw std::runtime_error(" Could not write to .dot file '" + fn + "'"); return;} 
     if (verbose) sLog << "Done.";
   }
