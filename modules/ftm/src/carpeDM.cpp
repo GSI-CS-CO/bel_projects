@@ -304,6 +304,9 @@ std::ifstream in(fn);
     try { boost::read_graphviz(s, g, dp, "node_id"); }
     catch(...) { throw; }
    
+    //generate hashes
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {g[v].hash = hm.add(g[v].name).get(); sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;}
+
     return g;
   }
 
