@@ -214,8 +214,8 @@ using namespace DotStr;
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       //std::string name = boost::get_property(gUp, boost::graph_name) + "." + gUp[v].name;
       std::string name = gUp[v].name;
-      if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
-      hash = hm.lookup(name).get();
+      //if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
+      hash = gUp[v].hash;
       cpu  = s2u<uint8_t>(gUp[v].cpu);
       //FIXME Careful! CPU indices in the (intermediary) .dot do not necessarily match the vector indices. Use the fucking cpuIdx map to translate!
 
@@ -331,7 +331,7 @@ using namespace DotStr;
     //probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) { 
       BOOST_FOREACH( vertex_t w, vertices(gTmp) ) { 
-        if (gTmp[w].name == gUp[v].name) { duplicates[v] = w;
+        if (gTmp[w].hash == gUp[v].hash) { duplicates[v] = w;
           //sLog << gTmp[w].name << " gTmp " << w << " <-> " << gUp[v].name << " gUp " << v << std::endl; 
         } 
       }  
@@ -392,7 +392,7 @@ using namespace DotStr;
       //sLog <<  "Looking at " << gTmp[w].name << std::endl;
       found = false; 
       BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-        if ((gTmp[w].name == gUp[v].name)) {
+        if ((gTmp[w].hash == gUp[v].hash)) {
           found = true;
           if (gTmp[w].type != tUndefined) {
             
