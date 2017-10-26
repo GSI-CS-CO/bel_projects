@@ -136,7 +136,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
       else {
 
         if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eDefDst) {
-          if (found) {std::cerr << "!!! Found more than one default destination !!!" << std::endl; break;
+          if (found) {std::cerr << "Found more than one default destination" << std::endl; break;
           } else {
             
             auto x = at.lookupVertex(target(*out_cur,g));
@@ -149,7 +149,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
         }
       }  
     }
-    if (!(found)) {std::cerr << "!!! Found no default destination for Node " << g[v].name << " !!!" << std::endl; ret.push_back(LM32_NULL_PTR); }
+    if (!(found)) {std::cerr << "Found no default destination for Node " << g[v].name << " " << std::endl; ret.push_back(LM32_NULL_PTR); }
 
     return ret;
   }
@@ -173,14 +173,14 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
       else {
 
         if (g[*out_cur].type == eDynId) {
-          if (aId != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic id source !!!" << std::endl; break;
+          if (aId != LM32_NULL_PTR) {std::cerr << "Found more than one dynamic id source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             if (at.isOk(x)) { aId = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);}
           }
         }
         if (g[*out_cur].type == eDynPar0) {
-          if (aPar0 != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic par0 source !!!" << std::endl; break;
+          if (aPar0 != LM32_NULL_PTR) {std::cerr << "Found more than one dynamic par0 source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             if (at.isOk(x)) { aPar0 = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);}
@@ -188,7 +188,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
           }
         }
         if (g[*out_cur].type == eDynPar1) {
-          if (aPar1 != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic par1 source !!!" << std::endl; break;
+          if (aPar1 != LM32_NULL_PTR) {std::cerr << "Found more than one dynamic par1 source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             if (at.isOk(x)) { aPar1 = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);}
@@ -196,14 +196,14 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
           }
         }
         if (g[*out_cur].type == eDynTef) {
-          if (aTef != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic tef source !!!" << std::endl; break;
+          if (aTef != LM32_NULL_PTR) {std::cerr << "Found more than one dynamic tef source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             if (at.isOk(x)) { aTef = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_TEF_SMSK);}
           }
         }
         if (g[*out_cur].type == eDynRes) {
-          if (aRes != LM32_NULL_PTR) {std::cerr << "!!! Found more than one dynamic res source !!!" << std::endl; break;
+          if (aRes != LM32_NULL_PTR) {std::cerr << "Found more than one dynamic res source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             if (at.isOk(x)) { aRes = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);}
@@ -240,7 +240,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
       else {
         if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == eDstList) {
 
-          if (found) {std::cerr << "!!! Found more than one Destination List !!!" << std::endl; break;
+          if (found) {std::cerr << "Found more than one Destination List" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             // Queue nodes MUST NOT lie outside own memory!
@@ -268,7 +268,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
         else {
 
           if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == eQPrio[idx]) {
-            if (found) {std::cerr << "!!! Found more than one queue info of type " << eQPrio[idx] << " !!!" << std::endl; break;}
+            if (found) {std::cerr << "Found more than one queue info of type " << eQPrio[idx] << "" << std::endl; break;}
             else {
               auto x = at.lookupVertex(target(*out_cur,g));
               // Queue nodes MUST NOT lie outside own memory!
@@ -334,7 +334,7 @@ vAdr VisitorUploadCrawler::getCmdTarget(Command& el) const {
     else {
 
       if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eCmdTarget) {
-        if (found) {std::cerr << "!!! Found more than one target !!!" << std::endl; break;
+        if (found) {std::cerr << "Found more than one target" << std::endl; break;
         } else {
           auto x = at.lookupVertex(target(*out_cur,g));
           if (at.isOk(x)) {
@@ -374,7 +374,7 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
     else {
 
       if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eCmdTarget) {
-        if (found) {std::cerr << "!!! Found more than one target !!!" << std::endl; break;
+        if (found) {std::cerr << "Found more than one target" << std::endl; break;
         } else {
           auto x = at.lookupVertex(target(*out_cur,g));
           //command cross over to other CPUs is okay. Find out what Cpu the command target is on
@@ -390,7 +390,7 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
     else {
 
       if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eCmdFlowDst) {
-        if (found) {std::cerr << "!!! Found more than one flow destination !!!" << std::endl; break;
+        if (found) {std::cerr << "Found more than one flow destination" << std::endl; break;
         } else {
           auto x = at.lookupVertex(target(*out_cur,g));
           // Flow Destination must be in the same memory the command target is in
@@ -437,7 +437,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
     else {
 
       if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eDefDst) {
-        if (found) {std::cerr << "!!! Found more than one default destination !!!" << std::endl; break;
+        if (found) {std::cerr << "Found more than one default destination" << std::endl; break;
         } else {
           auto x = at.lookupVertex(target(*out_cur,g));
           // Destination MUST NOT lie outside own memory! (well, technically, it'd work, but it'd be race condition galore ...)
@@ -445,7 +445,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
             ret.push_back(at.adr2intAdr(x->cpu, x->adr));
             found = true;
             //std::cout << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << std::endl;
-          } else { std::cerr << "!!! default destination was found unallocated or on different CPU !!!" << std::endl; }
+          } else { std::cerr << "default destination was found unallocated or on different CPU" << std::endl; }
         }
       }
     }  
@@ -469,8 +469,8 @@ vAdr VisitorUploadCrawler::getListDst() const {
             ret.push_back(at.adr2intAdr(x->cpu, x->adr));
             found = true;
             //std::cout << "altDst: #" << target(*out_cur,g) << " " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << std::endl;
-          } else { std::cout << "altDst: #" << target(*out_cur,g) << " " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << " expected at CPU" << cpu << ", found on " << (int)x->cpu << " !!!" << std::endl;  at.debug();}
-        } else { std::cerr << "!!! alt destination was found unallocated !!!" << std::endl; }
+          } else { std::cout << "altDst: #" << target(*out_cur,g) << " " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << " expected at CPU" << cpu << ", found on " << (int)x->cpu << "" << std::endl;  at.debug();}
+        } else { std::cerr << "alt destination was found unallocated" << std::endl; }
       }
     }  
   }
@@ -500,7 +500,7 @@ vAdr findNodeAdrByEdgeType(vertex_t vStart, const std::string edgeType, const bo
 
   for (out_cur = out_begin; out_cur != out_end; ++out_cur)
   {   
-    if (g[target(*out_cur,g)].np == nullptr) std::cerr << g[target(*out_cur,g)].name << " does not have a data object !!!" << std::endl;
+    if (g[target(*out_cur,g)].np == nullptr) std::cerr << g[target(*out_cur,g)].name << " does not have a data object" << std::endl;
     else {
 
       if ( (g[target(*out_cur,g)].np->isMeta() == nodeTypeIsMeta) && g[*out_cur].type == edgeType) {

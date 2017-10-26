@@ -9,7 +9,10 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 
-
+/*
+#include <boost/archive/xml_oarchive.hpp>
+#include <boost/archive/xml_iarchive.hpp>
+*/
 typedef boost::bimap< uint32_t, std::string > hBiMap;
 typedef hBiMap::value_type hashValue;
 
@@ -23,7 +26,7 @@ private:
   template<class Archive>
   void serialize(Archive & ar, const unsigned int version)
   {
-      ar & hm;
+      ar & BOOST_SERIALIZATION_NVP(hm);
   }
 
   const unsigned int FNV_PRIME     = 16777619u;

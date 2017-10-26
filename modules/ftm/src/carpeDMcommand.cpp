@@ -23,16 +23,14 @@ using namespace DotStr;
 
 
 
-int CarpeDM::sendCommands(const std::string& fn) {
+int CarpeDM::sendCommands(Graph& g) {
 
   vBuf vUlD;
   vAdr vUlA;
   uint32_t cmdWrInc, hash;
   uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
   mc_ptr mc;
-  Graph g;
 
-  g = parseDot(fn, g);
   if ((boost::get_property(g, boost::graph_name)).find("!CMD") == std::string::npos) {throw std::runtime_error("Expected a series of commands (Tag '!CMD' not found in graphname)"); return -1;}
 
  

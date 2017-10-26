@@ -19,8 +19,9 @@ boost::optional<const uint32_t&> HashMap::add(const std::string& name) {
   try {
     hm.insert( hashValue(hash, name) ); 
   } catch (...) {
-    std::cout << "Failed to add " << name << std::endl;
-    throw; 
+    std::cout << "Failed to add " << name;
+    if(lookup(hash)) throw std::runtime_error("'" + name + "' would cause a hash collision with '" + lookup(hash).get() + "'");
+    else throw; 
     return boost::optional<const uint32_t&>();
   } 
 
@@ -52,7 +53,8 @@ bool HashMap::store(const std::string& fn) {
   std::ofstream ofs(fn);
   if (ofs.good()) {
     boost::archive::text_oarchive oa(ofs);
-    oa << *this;
+    //boost::archive::xml_oarchive oa(ofs);
+    oa << BOOST_SERIALIZATION_NVP(*this);
     return true;
   }
   return false;
@@ -62,7 +64,8 @@ bool HashMap::load(const std::string& fn) {
   std::ifstream ifs(fn);
   if (ifs.good()) {
     boost::archive::text_iarchive ia(ifs);
-    ia >> *this;
+    //boost::archive::xml_iarchive ia(ifs);
+    ia >> BOOST_SERIALIZATION_NVP(*this);
     return true;
   }
   return false;

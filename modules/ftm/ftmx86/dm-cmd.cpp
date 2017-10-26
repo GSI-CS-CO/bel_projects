@@ -202,7 +202,7 @@ int main(int argc, char* argv[]) {
   //check if we got a dot full of commands and send if so
   if (cmdFilename != NULL) {
     try {
-          cdm.sendCommands(cmdFilename);
+          cdm.sendCommandsDotFile(cmdFilename);
         } catch (std::runtime_error const& err) {
           std::cerr << program << ": Could not send command .dot " << cmdFilename << ". Cause: " << err.what() << std::endl;
         } 
