@@ -296,7 +296,9 @@ bool CarpeDM::connect(const std::string& en) {
     catch(...) { throw; }
    
     //generate hashes
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {g[v].hash = hm.add(g[v].name).get(); sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;}
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {g[v].hash = hm.add(g[v].name).get(); 
+      //sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;
+    }
 
     return g;
 
@@ -401,13 +403,13 @@ void CarpeDM::showCpuList() {
 }
 
 //Returns if a hash / nodename is present on DM
-  bool CarpeDM::isValid(const uint32_t hash)  {
+  bool CarpeDM::isInDict(const uint32_t hash)  {
 
     if (atDown.isOk(atDown.lookupHash(hash))) return true;
     else return false;
   }
 
-  bool CarpeDM::isValid(const std::string& name) {
+  bool CarpeDM::isInDict(const std::string& name) {
     if (!(hm.contains(name))) return false;
     return (atDown.isOk(atDown.lookupHash(hm.lookup(name).get())));
   }  

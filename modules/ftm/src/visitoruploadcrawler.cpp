@@ -149,7 +149,9 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
         }
       }  
     }
-    if (!(found)) {std::cerr << "Found no default destination for Node " << g[v].name << " " << std::endl; ret.push_back(LM32_NULL_PTR); }
+    if (!(found)) {
+      //std::cerr << "Found no default destination for Node " << g[v].name << " " << std::endl; 
+      ret.push_back(LM32_NULL_PTR); }
 
     return ret;
   }
@@ -240,11 +242,12 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
       else {
         if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == eDstList) {
 
-          if (found) {std::cerr << "Found more than one Destination List" << std::endl; break;
+          if (found) {//std::cerr << "Found more than one Destination List" << std::endl; 
+            break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             // Queue nodes MUST NOT lie outside own memory!
-            std::cerr << "Got a DstList at " << g[target(*out_cur,g)].name << std::endl;  
+            //std::cerr << "Got a DstList at " << g[target(*out_cur,g)].name << std::endl;  
             if (at.isOk(x) && x->cpu == cpu) {
               ret.push_back(at.adr2intAdr(x->cpu, x->adr));
               found = true;
@@ -470,7 +473,9 @@ vAdr VisitorUploadCrawler::getListDst() const {
             found = true;
             //std::cout << "altDst: #" << target(*out_cur,g) << " " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << std::endl;
           } else { std::cout << "altDst: #" << target(*out_cur,g) << " " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << " expected at CPU" << cpu << ", found on " << (int)x->cpu << "" << std::endl;  at.debug();}
-        } else { std::cerr << "alt destination was found unallocated" << std::endl; }
+        } else { 
+          //std::cerr << "alt destination was found unallocated" << std::endl; 
+        }
       }
     }  
   }

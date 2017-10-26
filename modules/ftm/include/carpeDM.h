@@ -145,12 +145,13 @@ public:
   void removeDotFromDict(const std::string& s)      {Graph gTmp; removeFromDict(parseDot(s, gTmp));};
   void removeDotFileFromDict(const std::string& fn) {removeDotFromDict(readTextFile(fn));};
   void clearDict(); //Clear the dictionary
-  void storeDict(); //FIXME Stub !
-  void loadDict(); //FIXME Stub !
-  //FIXME why is this exposed ???
-  HashMap& getHashMap() {return hm;}
-  bool isValid(const uint32_t hash);
-  bool isValid(const std::string& name);
+  std::string storeDict() {return hm.store();}; 
+  void loadDict(const std::string& s) {hm.load(s);}
+  void storeDictFile(const std::string& fn) {writeTextFile(fn, storeDict());};
+  void loadDictFile(const std::string& fn) {loadDict(readTextFile(fn));}; 
+  bool isInDict(const uint32_t hash);
+  bool isInDict(const std::string& name);
+  bool isDictEmpty() {return (bool)(hm.size() == 0);};
 
   // Text File IO /////////////////////////////////////////////////////////////////////////////////
   void writeTextFile(const std::string& fn, const std::string& s);

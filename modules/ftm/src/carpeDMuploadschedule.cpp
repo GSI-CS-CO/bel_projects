@@ -83,7 +83,6 @@ using namespace DotStr;
 
 
   void CarpeDM::generateDstLst(Graph& g, vertex_t v) {
-    sLog << "called genDstlst" << std::endl;
     const std::string name = g[v].name + tDstListSuffix;
     hm.add(name);
     vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), nullptr, nDstList, tHexZero), g);

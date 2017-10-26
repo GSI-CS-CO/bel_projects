@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
 
   //TODO we need a dictionary independent of dot files, otherwise, how do we update?
 
-  cdm.getHashMap().load("dm.dict");
+  cdm.loadDictFile("dm.dict");
 
   if (inputFilename != NULL) {
     try { cdm.addDotFileToDict(inputFilename); }
@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
       std::cerr << std::endl << program << ": Warning - Could not insert your .dot file into dictionary. Cause: " << err.what() << std::endl;
     }
   } else {
-    if (cdm.getHashMap().size() == 0) std::cerr << std::endl << program << ": Warning - No Nodename/Hash dictionary available. Your download will show only hashes." << std::endl;
+    if (cdm.isDictEmpty()) std::cerr << std::endl << program << ": Warning - No Nodename/Hash dictionary available. Your download will show only hashes." << std::endl;
   }
 
 
@@ -161,7 +161,7 @@ int main(int argc, char* argv[]) {
   }
 
 
-  cdm.getHashMap().store("dm.dict");  
+  cdm.storeDictFile("dm.dict");  
   
 
   cdm.disconnect();

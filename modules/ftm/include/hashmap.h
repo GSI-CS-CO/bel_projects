@@ -51,8 +51,8 @@ public:
   bool contains(const uint32_t hash)     const;
   bool contains(const std::string& name) const;
   void clear() {hm.clear();}
-  bool store(const std::string& fn);
-  bool load(const std::string& fn);
+  std::string store();
+  void load(const std::string& s);
   int size() {return hm.size();}
 
 
