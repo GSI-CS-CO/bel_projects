@@ -129,6 +129,7 @@ package monster_pkg is
       core_clk_butis_t0_o    : out   std_logic;
       core_rstn_wr_ref_o     : out   std_logic;
       core_rstn_butis_o      : out   std_logic;
+      core_clk_sys_o         : out   std_logic;
       core_debug_o           : out   std_logic_vector(15 downto 0);
       -- Required: white rabbit pins
       wr_onewire_io          : inout std_logic;
