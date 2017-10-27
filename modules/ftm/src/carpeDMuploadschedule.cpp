@@ -305,8 +305,10 @@ using namespace DotStr;
   }
 
   void CarpeDM::baseUploadOnDownload() {
-    gUp.clear();
     //init up graph from down
+    gUp.clear(); //Necessary?
+    atUp.clear();
+    atUp.clearMemories();
     download();
     atUp = atDown;
     // for some reason, copy_graph does not copy the name
@@ -469,6 +471,10 @@ using namespace DotStr;
     gUp.clear(); //Necessary?
     atUp.clear();
     atUp.clearMemories();
+    gDown.clear(); //Necessary?
+    atDown.clear();
+    atDown.clearMemories();
+
   }
 
   //high level functions for external interface
