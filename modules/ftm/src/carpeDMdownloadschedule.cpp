@@ -60,8 +60,6 @@ using namespace DotStr;
     Graph& g = gDown;
     AllocTable& at = atDown;
 
-    at.clear();
-    g.clear();
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //create AllocTable and Vertices
@@ -161,6 +159,8 @@ using namespace DotStr;
     vAdr vDlBmpA, vlDlA;
     vBuf vDlBmpD, vDlD;
 
+    atDown.clear();
+    gDown.clear();
     //get all BMPs so we know which nodes to download
     if(verbose) sLog << "Downloading ...";
     vDlBmpD = ebReadCycle(ebd, getDownloadBMPAdrs());
