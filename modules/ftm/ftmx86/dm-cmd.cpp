@@ -182,7 +182,7 @@ int main(int argc, char* argv[]) {
 
   cdm.loadDictFile("dm.dict");
 
-  try { cdm.addDotToDict(inputFilename); }
+  try { cdm.addDotFileToDict(inputFilename); }
   catch (std::runtime_error const& err) {
     std::cerr << program << ": Could not insert your .dot file into dictionary. Cause: " << err.what() << std::endl; return -30;
   }

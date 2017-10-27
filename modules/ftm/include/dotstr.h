@@ -4,74 +4,195 @@
 #include <string>
 
 namespace DotStr {
+
+  namespace Misc {
     //pattern for uninitialised properties and their detection
-    extern const unsigned char deadbeef[4];
+    extern const unsigned char deadbeef[4] ;
     extern const std::string needle;
-    extern const std::string tHexZero;
-    extern const std::string tZero;
-    extern const std::string tUndefined64;
-    extern const std::string tUndefined32;
-    extern const uint32_t    uUndefined32;
-    extern const std::string tUndefined;
 
-    extern const std::string defGraphName;
-
-    //name prefixes, tags and suffixes for automatic meta node generation
-    extern const std::string tDstListSuffix;  
-    extern const std::string tQPrioPrefix[3];  
-    extern const std::string tQBufListTag;    
-    extern const std::string tQBufTag;
-    extern const std::string t1stQBufSuffix;
-    extern const std::string t2ndQBufSuffix;        
+    extern const std::string sHexZero     ;
+    extern const std::string sZero        ;
+    extern const std::string sUndefined64 ;
+    extern const std::string sUndefined32 ;
+    extern const uint32_t    uUndefined32 ;
+    extern const uint64_t    uUndefined64 ;
+    extern const std::string sUndefined   ;
 
     // tag constants for both nodes and edges
-    extern const std::string tPrioHi;
-    extern const std::string tPrioMd;
-    extern const std::string tPrioLo;
+    extern const std::string sPrioHi       ;
+    extern const std::string sPrioMd       ;
+    extern const std::string sPrioLo       ;
 
-    // edge type tags
-    extern const std::string eQPrio[3];
-    extern const std::string eDstList;
-    extern const std::string eDefDst;
-    extern const std::string eAltDst;
-    extern const std::string eBadDefDst;
-    extern const std::string eCmdTarget;
-    extern const std::string eCmdFlowDst;
-    extern const std::string eDynId;
-    extern const std::string eDynPar0;
-    extern const std::string eDynPar1;
-    extern const std::string eDynTef;
-    extern const std::string eDynRes;
+  }
+
+ namespace Edge {
+    // edge properties
+    namespace Prop {
+      namespace Base {
+        extern const std::string sType ;
+      }
+    }  
+
+    namespace TypeVal {
+      // edge type tags
+      extern const std::string sQPrio[]      ;
+      extern const std::string sDstList      ;
+      extern const std::string sDefDst       ;
+      extern const std::string sAltDst       ;
+      extern const std::string sBadDefDst    ;
+      extern const std::string sCmdTarget    ;
+      extern const std::string sCmdFlowDst   ;
+      extern const std::string sDynId        ;
+      extern const std::string sDynPar0      ;
+      extern const std::string sDynPar1      ;
+      extern const std::string sDynTef       ;
+      extern const std::string sDynRes       ;
+      extern const std::string sMeta         ;
+    }
+  }
+
+  namespace Node {
+    
+    // node properties
+    namespace Prop {
+      namespace Base {
+        extern const std::string sType   ;
+        extern const std::string sName   ;
+        extern const std::string sCpu    ;
+        extern const std::string sFlags  ;
+        extern const std::string sPentry ;
+        extern const std::string sPexit  ;
+        extern const std::string sPname  ;
+      }
+
+      namespace Block {
+ 
+        extern const std::string sTimePeriod     ;
+        extern const std::string sGenQPrioHi ;
+        extern const std::string sGenQPrioMd ;
+        extern const std::string sGenQPrioLo ;
+      }  
+
+      namespace TMsg {
+
+        extern const std::string sTimeOffs ;
+        extern const std::string sId       ;
+        namespace SubId {
+          extern const std::string sFid    ;
+          extern const std::string sGid    ;
+          extern const std::string sEno    ;
+          extern const std::string sSid    ;
+          extern const std::string sBpid   ;
+          extern const std::string sBin    ;
+          extern const std::string sReqNoB ;
+          extern const std::string sVacc   ;
+          extern const std::string sRes    ;
+        } 
+        extern const std::string sPar      ;
+        extern const std::string sTef      ;
+      }
+
+      namespace Cmd {
+     
+        extern const std::string sTimeValid    ;
+        extern const std::string sPrio     ;
+        extern const std::string sQty      ;
+        extern const std::string sTimeWait ;
+        extern const std::string sFlowDst  ;
+        extern const std::string sFlowTarget;
+      }  
+    }
+
+
+    namespace MetaGen {
+      //name prefixes, tags and suffixes for automatic meta node generation
+      extern const std::string sDstListSuffix  ;
+      extern const std::string sQPrioPrefix[]  ;
+      extern const std::string sQBufListTag    ;
+      extern const std::string sQBufTag        ;
+      extern const std::string s1stQBufSuffix  ;
+      extern const std::string s2ndQBufSuffix  ;
+    }
+
 
     // node type tags
-    extern const std::string nQPrio[3];
-    extern const std::string nTMsg;
-    extern const std::string nCmdNoop;
-    extern const std::string nCmdFlow;
-    extern const std::string nCmdFlush;
-    extern const std::string nCmdWait;
-    extern const std::string nBlock;
-    extern const std::string nBlockFixed;
-    extern const std::string nBlockAlign;
-    extern const std::string nQInfo;
-    extern const std::string nDstList;
-    extern const std::string nQBuf;
-    extern const std::string nMeta;
-    extern const bool        nMetaNode;
-    extern const bool        nRealNode;
+    namespace TypeVal {
+      extern const std::string sQPrio[]      ;
+      extern const std::string sTMsg         ;
+      extern const std::string sCmdNoop      ;
+      extern const std::string sCmdFlow      ;
+      extern const std::string sCmdFlush     ;
+      extern const std::string sCmdWait      ;
+      extern const std::string sBlock        ;
+      extern const std::string sBlockFixed   ;
+      extern const std::string sBlockAlign   ;
+      extern const std::string sQInfo        ;
+      extern const std::string sDstList      ;
+      extern const std::string sQBuf         ;
+      extern const std::string sMeta         ;
+      extern const bool bMetaNode            ;
+      extern const bool bRealNode            ;
 
-    //node / graph property tags
+    }  
+  }  
 
-    //use namespaces
+  namespace Graph {
 
-    //FW ID tags
+    namespace Prop {
+      extern const std::string sName   ;
+      extern const std::string sRoot   ;
+    }  
+    extern const std::string sDefName  ;
+  }
+  
+  //Configures how a dot will be rendered
+  namespace EyeCandy {
+
+    namespace Graph {
+      extern const std::string sLookVert ;
+      extern const std::string sLookHor  ;
+    }
     
-    //use namespaces
+    namespace Node {
+      namespace Base {
+        extern const std::string sLookDef;
+        extern const std::string sLookPaintNone;
+        extern const std::string sLookPaint0;
+        extern const std::string sLookPaint1;
+      }  
+      namespace Block {
+        extern const std::string sLookDef ;
+        extern const std::string sLookFix ;
+        extern const std::string sLookAlign ;
+
+      }
+      namespace TMsg {
+        extern const std::string sLookDef ;
+      }  
+      namespace Cmd {
+        extern const std::string sLookDef ;
+
+      }
+      namespace Meta {
+        extern const std::string sLookDef ;
+      }
+    } 
+
+    namespace Edge {
+   
+      extern const std::string sLookDefDst     ;
+      extern const std::string sLookAltDst     ;
+      extern const std::string sLookMeta       ;
+      extern const std::string sLookTarget     ;
+      extern const std::string sLookArgument   ;
+      extern const std::string sLookbad        ;
+      
+    }   
+  }
 
 
-};
 
+}
 
 
 #endif
-

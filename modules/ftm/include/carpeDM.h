@@ -157,6 +157,7 @@ public:
   void writeTextFile(const std::string& fn, const std::string& s);
   std::string  readTextFile(const std::string& fn);
 
+  // Graphs to Dot
   std::string createDot( Graph& g, bool filterMeta);
   void writeDotFile(const std::string& fn, Graph& g, bool filterMeta) { writeTextFile(fn, createDot(g, filterMeta)); }
   void writeDownDotFile(const std::string& fn, bool filterMeta)       { writeTextFile(fn, createDot(gDown, filterMeta)); }

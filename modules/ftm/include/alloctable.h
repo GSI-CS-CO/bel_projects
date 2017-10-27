@@ -64,15 +64,6 @@ typedef boost::multi_index_container<
 
 typedef AllocMeta_set::iterator amI;
 
-/*
-struct decrementVDescModifier {
-    void operator()(BOOST_MULTI_INDEX_MEMBER(AllocMeta,vertex_t,v)&) const {
-        //e.v -= 1;
-    }
-};
-
-*/
-
 
 class AllocTable {
 

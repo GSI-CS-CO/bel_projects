@@ -16,7 +16,11 @@
 #include "visitordownloadcrawler.h"
 #include "dotstr.h"
 
-using namespace DotStr;
+namespace dnp = DotStr::Node::Prop;
+namespace dnt = DotStr::Node::TypeVal;
+namespace dep = DotStr::Edge::Prop;
+namespace det = DotStr::Edge::TypeVal;;
+namespace dnm = DotStr::Node::MetaGen;
   
 
   //TODO NC Traffic Verification
@@ -83,25 +87,25 @@ using namespace DotStr;
 
 
   void CarpeDM::generateDstLst(Graph& g, vertex_t v) {
-    const std::string name = g[v].name + tDstListSuffix;
+    const std::string name = g[v].name + dnm::sDstListSuffix;
     hm.add(name);
-    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), nullptr, nDstList, tHexZero), g);
-    boost::add_edge(v,   vD, myEdge(eDstList), g);
+    vertex_t vD = boost::add_vertex(myVertex(name, g[v].cpu, hm.lookup(name).get(), nullptr, dnt::sDstList, DotStr::Misc::sHexZero), g);
+    boost::add_edge(v,   vD, myEdge(det::sDstList), g);
   }  
 
   void CarpeDM::generateQmeta(Graph& g, vertex_t v, int prio) {
-    const std::string nameBl = g[v].name + tQBufListTag + tQPrioPrefix[prio];
-    const std::string nameB0 = g[v].name + tQBufTag     + tQPrioPrefix[prio] + t1stQBufSuffix;
-    const std::string nameB1 = g[v].name + tQBufTag     + tQPrioPrefix[prio] + t2ndQBufSuffix;
+    const std::string nameBl = g[v].name + dnm::sQBufListTag + dnm::sQPrioPrefix[prio];
+    const std::string nameB0 = g[v].name + dnm::sQBufTag     + dnm::sQPrioPrefix[prio] + dnm::s1stQBufSuffix;
+    const std::string nameB1 = g[v].name + dnm::sQBufTag     + dnm::sQPrioPrefix[prio] + dnm::s2ndQBufSuffix;
     hm.add(nameBl);
     hm.add(nameB0);
     hm.add(nameB1);
-    vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl).get(), nullptr, nQInfo, tHexZero), g);
-    vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0).get(), nullptr, nQBuf,  tHexZero), g);
-    vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1).get(), nullptr, nQBuf,  tHexZero), g);
-    boost::add_edge(v,   vBl, myEdge(eQPrio[prio]), g);
-    boost::add_edge(vBl, vB0, myEdge(nMeta),    g);
-    boost::add_edge(vBl, vB1, myEdge(nMeta),    g);
+    vertex_t vBl = boost::add_vertex(myVertex(nameBl, g[v].cpu, hm.lookup(nameBl).get(), nullptr, dnt::sQInfo, DotStr::Misc::sHexZero), g);
+    vertex_t vB0 = boost::add_vertex(myVertex(nameB0, g[v].cpu, hm.lookup(nameB0).get(), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
+    vertex_t vB1 = boost::add_vertex(myVertex(nameB1, g[v].cpu, hm.lookup(nameB1).get(), nullptr, dnt::sQBuf,  DotStr::Misc::sHexZero), g);
+    boost::add_edge(v,   vBl, myEdge(det::sQPrio[prio]), g);
+    boost::add_edge(vBl, vB0, myEdge(det::sMeta),    g);
+    boost::add_edge(vBl, vB1, myEdge(det::sMeta),    g);
     
   }
 
@@ -111,18 +115,18 @@ using namespace DotStr;
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       std::string cmp = g[v].type;
       
-      if ((cmp == nBlockFixed) || (cmp == nBlockAlign) || (cmp == nBlock) ) {
+      if ((cmp == dnt::sBlockFixed) || (cmp == dnt::sBlockAlign) || (cmp == dnt::sBlock) ) {
         boost::tie(out_begin, out_end) = out_edges(v,g);
         //check if it already has queue links / Destination List
         bool hasIl=false, hasHi=false, hasLo=false, hasMultiDst=false, hasDstLst=false;
         for (out_cur = out_begin; out_cur != out_end; ++out_cur)
         { 
           
-          if (g[*out_cur].type == eQPrio[PRIO_IL]) hasIl       = true;
-          if (g[*out_cur].type == eQPrio[PRIO_HI]) hasHi       = true;
-          if (g[*out_cur].type == eQPrio[PRIO_LO]) hasLo       = true;
-          if (g[*out_cur].type == eAltDst)         hasMultiDst = true;
-          if (g[*out_cur].type == eDstList)        hasDstLst   = true;
+          if (g[*out_cur].type == det::sQPrio[PRIO_IL]) hasIl       = true;
+          if (g[*out_cur].type == det::sQPrio[PRIO_HI]) hasHi       = true;
+          if (g[*out_cur].type == det::sQPrio[PRIO_LO]) hasLo       = true;
+          if (g[*out_cur].type == det::sAltDst)         hasMultiDst = true;
+          if (g[*out_cur].type == det::sDstList)        hasDstLst   = true;
         }
         //create requested Queues / Destination List
         if (g[v].qIl != "0" && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
@@ -142,7 +146,7 @@ using namespace DotStr;
     // the changed edge leads to Alternative Dst, find and stage the block's dstList 
     boost::tie(out_begin, out_end) = out_edges(v,g);  
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-      if (g[*out_cur].type == eDstList) {
+      if (g[*out_cur].type == det::sDstList) {
         auto dst = at.lookupVertex(target(*out_cur, g));
         if (at.isOk(dst)) { at.setStaged(dst); 
         //std::cout << "staged " << g[dst->v].name  << std::endl; 
@@ -159,11 +163,11 @@ using namespace DotStr;
     AllocTable& at = atUp;
     
 
-    if (g[e].type == eDefDst || g[e].type == eAltDst ) {
+    if (g[e].type == det::sDefDst || g[e].type == det::sAltDst ) {
       updateListDstStaging(v); // stage source block's Destination List
     }
     
-    if (g[e].type != eAltDst ) {
+    if (g[e].type != det::sAltDst ) {
       auto x = at.lookupVertex(v);
       if(at.isOk(x)) {at.setStaged(x); 
         //std::cout << "staged " << g[v].name  << std::endl;
@@ -240,10 +244,10 @@ using namespace DotStr;
 
         cmp = gUp[v].type;
       
-        if      (cmp == nTMsg)     {
+        if (cmp == dnt::sTMsg)     {
           uint64_t id;
           // if ID field was not given, try to construct from subfields
-          if ( gUp[v].id.find(tUndefined64) != std::string::npos) { 
+          if ( gUp[v].id.find(DotStr::Misc::sUndefined64) != std::string::npos) { 
             id =  ((s2u<uint64_t>(gUp[v].id_fid)    & ID_FID_MSK)   << ID_FID_POS)   |
                   ((s2u<uint64_t>(gUp[v].id_gid)    & ID_GID_MSK)   << ID_GID_POS)   |
                   ((s2u<uint64_t>(gUp[v].id_evtno)  & ID_EVTNO_MSK) << ID_EVTNO_POS) |
@@ -253,19 +257,19 @@ using namespace DotStr;
           } else { id = s2u<uint64_t>(gUp[v].id); }
           gUp[v].np = (node_ptr) new       TimingMsg(gUp[v].name, x->hash, x->cpu, x->b, 0,  s2u<uint64_t>(gUp[v].tOffs), id, s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); 
         }
-        else if (cmp == nCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
-        else if (cmp == nCmdFlow)     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
-        else if (cmp == nCmdFlush)    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
+        else if (cmp == dnt::sCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
+        else if (cmp == dnt::sCmdFlow)     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
+        else if (cmp == dnt::sCmdFlush)    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
                                                                               s2u<bool>(gUp[v].qIl), s2u<bool>(gUp[v].qHi), s2u<bool>(gUp[v].qLo), s2u<uint8_t>(gUp[v].frmIl), s2u<uint8_t>(gUp[v].toIl), s2u<uint8_t>(gUp[v].frmHi),
                                                                               s2u<uint8_t>(gUp[v].toHi), s2u<uint8_t>(gUp[v].frmLo), s2u<uint8_t>(gUp[v].toLo) ); }
-        else if (cmp == nCmdWait)     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait)); }
-        else if (cmp == nBlock)       {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == nBlockFixed)  {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == nBlockAlign)  {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == nQInfo)       {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, x->hash, x->cpu, x->b, 0);}
-        else if (cmp == nDstList)     {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, x->hash, x->cpu, x->b, 0);}
-        else if (cmp == nQBuf)        {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, x->hash, x->cpu, x->b, 0);}
-        else if (cmp == nMeta)        {throw std::runtime_error("Pure meta type not yet implemented"); return;}
+        else if (cmp == dnt::sCmdWait)     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait)); }
+        else if (cmp == dnt::sBlock)       {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
+        else if (cmp == dnt::sBlockFixed)  {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
+        else if (cmp == dnt::sBlockAlign)  {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
+        else if (cmp == dnt::sQInfo)       {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, x->hash, x->cpu, x->b, 0);}
+        else if (cmp == dnt::sDstList)     {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, x->hash, x->cpu, x->b, 0);}
+        else if (cmp == dnt::sQBuf)        {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, x->hash, x->cpu, x->b, 0);}
+        else if (cmp == dnt::sMeta)        {throw std::runtime_error("Pure meta type not yet implemented"); return;}
         //FIXME try to get info from download
         else                        {throw std::runtime_error("Node <" + gUp[v].name + ">'s type <" + cmp + "> is not supported!\nMost likely you forgot to set the type attribute or accidentally created the node by a typo in an edge definition."); return;}
       }  
@@ -278,7 +282,7 @@ using namespace DotStr;
       
       //Check if all mandatory fields were properly initialised
       std::string haystack(gUp[v].np->getB(), gUp[v].np->getB() + _MEM_BLOCK_SIZE);
-      std::size_t n = haystack.find(needle);
+      std::size_t n = haystack.find(DotStr::Misc::needle);
 
       bool foundUninitialised = (n != std::string::npos);
 
@@ -396,7 +400,7 @@ using namespace DotStr;
       BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
         if ((gTmp[w].hash == gUp[v].hash)) {
           found = true;
-          if (gTmp[w].type != tUndefined) {
+          if (gTmp[w].type != DotStr::Misc::sUndefined) {
             
             toDelete.insert(v);                   // add the node
             //sLog <<  "Added Node " << gTmp[w].name << " of type " << gTmp[w].type << " to del map " << std::endl;   

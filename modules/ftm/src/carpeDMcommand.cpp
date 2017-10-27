@@ -18,8 +18,9 @@
 #include "event.h"
 #include "dotstr.h"
 
-using namespace DotStr;
 
+namespace dnt = DotStr::Node::TypeVal;
+namespace det = DotStr::Edge::TypeVal;
 
 
 
@@ -42,15 +43,15 @@ int CarpeDM::sendCommands(Graph& g) {
     uint64_t cmdTvalid  = s2u<uint64_t>(g[v].tValid);
     uint8_t  cmdPrio    = s2u<uint8_t>(g[v].prio);
 
-           if (g[v].type == "noop")     { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
+           if (g[v].type == dnt::sCmdNoop)     { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
                                           mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );}
-      else if (g[v].type == "flow")     { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
+      else if (g[v].type == dnt::sCmdFlow)     { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
                                           uint32_t adr    = getNodeAdr(g[v].flowDest, DOWNLOAD, INTERNAL);
                                           mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, false );
                                           
                                         }
-      else if (g[v].type == "flush")    {mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)s2u<uint8_t>(g[v].qIl), (bool)s2u<uint8_t>(g[v].qHi), (bool)s2u<uint8_t>(g[v].qLo));}
-      else if (g[v].type == "wait")     {uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
+      else if (g[v].type == dnt::sCmdFlush)    {mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)s2u<uint8_t>(g[v].qIl), (bool)s2u<uint8_t>(g[v].qHi), (bool)s2u<uint8_t>(g[v].qLo));}
+      else if (g[v].type == dnt::sCmdWait)     {uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
                                           mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );}
        //FIXME try to get info from download
       else                        {throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n"); return -2;}
@@ -245,8 +246,8 @@ int CarpeDM::sendCommands(Graph& g) {
     boost::tie(out_begin, out_end) = out_edges(block->v,g);
     
     //Get Buffer List of requested priority
-    for (out_cur = out_begin; out_cur != out_end; ++out_cur) { if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == eQPrio[cmdPrio]) {found = true; break;} }
-    if (!(found)) {throw std::runtime_error("Block " + blockName + " does not have a " + sPrio[cmdPrio] + " queue"); return;}            
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur) { if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == det::sQPrio[cmdPrio]) {found = true; break;} }
+    if (!(found)) {throw std::runtime_error("Block " + blockName + " does not have a " + det::sQPrio[cmdPrio] + " queue"); return;}            
     auto bufList = atDown.lookupVertex(target(*out_cur,g));    
     if (!(atDown.isOk(bufList))) {return;}
     

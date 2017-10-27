@@ -22,11 +22,20 @@ class CmdQMeta;
 class CmdQBuffer;
 class DestList;
 
+#define F_DEC 0
+#define F_HEX 1
+
  class VisitorVertexWriter {
     std::ostream& out;
-    void nodeString(const Node& el) const;
-    void eventString(const Event& el) const;
-    void commandString(const Command& el) const;
+    void pushStart() const { out << "["; };
+    void pushEnd()   const { out << "]"; };
+    void pushPair(const std::string& p, int v, bool hex) const;
+    void pushPair(const std::string& p, const std::string& v) const;
+    void pushSingle(const std::string& p) const;
+    void pushNodeInfo(const Node& el) const;
+    void pushEventInfo(const Event& el) const;
+    void pushCommandInfo(const Command& el) const;
+    void pushPaintedInfo(const Node& el) const;
   public:
     VisitorVertexWriter(std::ostream& out) : out(out) {};
     ~VisitorVertexWriter() {};
