@@ -12,6 +12,11 @@
 #include "graph.h"
 #include "carpeDM.h"
 #include "minicommand.h"
+#include "dotstr.h"
+
+  namespace dgp = DotStr::Graph::Prop;
+  namespace dnp = DotStr::Node::Prop;
+  namespace dep = DotStr::Edge::Prop;
 
 
 int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
@@ -223,45 +228,51 @@ bool CarpeDM::connect(const std::string& en) {
   }
 
 
-  boost::dynamic_properties CarpeDM::createParser(Graph& g) {
+
+    boost::dynamic_properties CarpeDM::createParser(Graph& g) {
 
     boost::dynamic_properties dp(boost::ignore_other_properties);
-    //FIXME replace with node property string constants 
-    boost::ref_property_map<Graph *, std::string> gname(boost::get_property(g, boost::graph_name));
-    dp.property("name",     gname);
-    dp.property("type",     boost::get(&myEdge::type,       g));
-    dp.property("node_id",  boost::get(&myVertex::name,     g));
-    dp.property("cpu",      boost::get(&myVertex::cpu,      g));
-    dp.property("type",     boost::get(&myVertex::type,     g));
-    dp.property("flags",    boost::get(&myVertex::flags,    g));
-    dp.property("tperiod",  boost::get(&myVertex::tPeriod,  g));
-    dp.property("toffs",    boost::get(&myVertex::tOffs,    g));
-    dp.property("id",       boost::get(&myVertex::id,       g));
-    //ID sub fields
-    dp.property("fid",      boost::get(&myVertex::id_fid,   g));
-    dp.property("gid",      boost::get(&myVertex::id_gid,   g));
-    dp.property("evtno",    boost::get(&myVertex::id_evtno, g));
-    dp.property("sid",      boost::get(&myVertex::id_sid,   g));
-    dp.property("bpid",     boost::get(&myVertex::id_bpid,  g));
-    dp.property("resid",    boost::get(&myVertex::id_res,  g));
-    
-    dp.property("par",      boost::get(&myVertex::par,      g));
-    dp.property("tef",      boost::get(&myVertex::tef,      g));
-    dp.property("res",      boost::get(&myVertex::res,      g));
-    dp.property("tvalid",   boost::get(&myVertex::tValid,   g));
-    dp.property("prio",     boost::get(&myVertex::prio,     g));
-    dp.property("qty",      boost::get(&myVertex::qty,      g));
-    dp.property("twait",    boost::get(&myVertex::tWait,    g));
+    boost::ref_property_map<Graph *, std::string> gname( boost::get_property(g, boost::graph_name));
+    dp.property(dgp::sName,     gname);
+    dp.property(dep::Base::sType,                        boost::get(&myEdge::type,         g));
+    dp.property(dnp::Base::sName,                        boost::get(&myVertex::name,       g));
+    dp.property(dnp::Base::sCpu,                         boost::get(&myVertex::cpu,        g));
+    dp.property(dnp::Base::sType,                        boost::get(&myVertex::type,       g));
+    dp.property(dnp::Base::sFlags,                       boost::get(&myVertex::flags,      g));
+    dp.property(dnp::Base::sPname,                       boost::get(&myVertex::pattern,    g));
+    dp.property(dnp::Base::sPentry,                      boost::get(&myVertex::pentry,     g));
+    dp.property(dnp::Base::sPexit,                       boost::get(&myVertex::pexit,      g));
+    //Block
+    dp.property(dnp::Block::sTimePeriod,                 boost::get(&myVertex::tPeriod,    g));
+    dp.property(dnp::Block::sGenQPrioHi,                 boost::get(&myVertex::qIl,        g));
+    dp.property(dnp::Block::sGenQPrioMd,                 boost::get(&myVertex::qHi,        g));
+    dp.property(dnp::Block::sGenQPrioLo,                 boost::get(&myVertex::qLo,        g));
+    //Timing Message
+    dp.property(dnp::TMsg::sTimeOffs,                    boost::get(&myVertex::tOffs,      g));
+    dp.property(dnp::TMsg::sId,                          boost::get(&myVertex::id,         g));
+      //ID sub fields
+    dp.property(dnp::TMsg::SubId::sFid,                  boost::get(&myVertex::id_fid,     g));
+    dp.property(dnp::TMsg::SubId::sGid,                  boost::get(&myVertex::id_gid,     g));
+    dp.property(dnp::TMsg::SubId::sEno,                  boost::get(&myVertex::id_evtno,   g));
+    dp.property(dnp::TMsg::SubId::sSid,                  boost::get(&myVertex::id_sid,     g));
+    dp.property(dnp::TMsg::SubId::sBpid,                 boost::get(&myVertex::id_bpid,    g));
+    dp.property(dnp::TMsg::SubId::sBin,                  boost::get(&myVertex::id_bin,     g));
+    dp.property(dnp::TMsg::SubId::sReqNoB,               boost::get(&myVertex::id_reqnob,  g));
+    dp.property(dnp::TMsg::SubId::sVacc,                 boost::get(&myVertex::id_vacc,    g));
+    dp.property(dnp::TMsg::sPar,                         boost::get(&myVertex::par,        g));
+    dp.property(dnp::TMsg::sTef,                         boost::get(&myVertex::tef,        g));
+    //Command
+    dp.property(dnp::Cmd::sTimeValid,                    boost::get(&myVertex::tValid,     g));
+    dp.property(dnp::Cmd::sPrio,                         boost::get(&myVertex::prio,       g));
+    dp.property(dnp::Cmd::sQty,                          boost::get(&myVertex::qty,        g));
+    dp.property(dnp::Cmd::sTimeWait,                     boost::get(&myVertex::tWait,      g));
     //for .dot-cmd abuse
-    dp.property("dest",     boost::get(&myVertex::flowDest,   g));
-    dp.property("target",   boost::get(&myVertex::flowTarget, g));
-
-    dp.property("qil",      boost::get(&myVertex::qIl,   g));
-    dp.property("qhi",      boost::get(&myVertex::qHi,   g));
-    dp.property("qlo",      boost::get(&myVertex::qLo,   g));
+    dp.property(dnp::Cmd::sFlowDst,                      boost::get(&myVertex::flowDest,   g));
+    dp.property(dnp::Cmd::sFlowTarget,                   boost::get(&myVertex::flowTarget, g));
+    
 
     return (const boost::dynamic_properties)dp;
-  }  
+  }   
 
 
   std::string CarpeDM::readTextFile(const std::string& fn) {
@@ -292,7 +303,7 @@ bool CarpeDM::connect(const std::string& en) {
 
   Graph& CarpeDM::parseDot(const std::string& s, Graph& g) {
     boost::dynamic_properties dp = createParser(g);
-    try { boost::read_graphviz(s, g, dp, "node_id"); }
+    try { boost::read_graphviz(s, g, dp, dnp::Base::sName); }
     catch(...) { throw; }
    
     //generate hashes
@@ -457,13 +468,13 @@ void CarpeDM::showCpuList() {
         
         if (filterMeta) {
           boost::write_graphviz(out, fg, make_vertex_writer(boost::get(&myVertex::np, fg)), 
-                      make_edge_writer(boost::get(&myEdge::type, fg)), sample_graph_writer{defGraphName},
+                      make_edge_writer(boost::get(&myEdge::type, fg)), sample_graph_writer{DotStr::Graph::sDefName},
                       boost::get(&myVertex::name, fg));
         }
         else {
         
           boost::write_graphviz(out, g, make_vertex_writer(boost::get(&myVertex::np, g)), 
-                      make_edge_writer(boost::get(&myEdge::type, g)), sample_graph_writer{defGraphName},
+                      make_edge_writer(boost::get(&myEdge::type, g)), sample_graph_writer{DotStr::Graph::sDefName},
                       boost::get(&myVertex::name, g));
         }
       }

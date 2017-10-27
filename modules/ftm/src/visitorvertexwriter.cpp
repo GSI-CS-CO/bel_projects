@@ -5,108 +5,140 @@
 #include "meta.h"
 #include "event.h"
 
-//FIXME use graph / node property tag string constants!
+namespace ec  = DotStr::EyeCandy;
+namespace dgp = DotStr::Graph::Prop;
+namespace dnp = DotStr::Node::Prop;
+namespace dnt = DotStr::Node::TypeVal;
+namespace dep = DotStr::Edge::Prop;
+namespace det = DotStr::Edge::TypeVal;
+namespace ssi = DotStr::Node::Prop::TMsg::SubId;
 
-
-void VisitorVertexWriter::nodeString(const Node& el) const {
-  out << " [cpu=\"" <<  (int)el.getCpu() << "\"";
+void VisitorVertexWriter::pushPair(const std::string& p, int v, bool hex) const {
+  out << ", " << p << "=\"";
+  if (hex)  out << std::hex;
+  else      out << std::dec;
+  out << v << "\"";
 }
 
-void VisitorVertexWriter::eventString(const Event& el) const {
-  out << ", shape=\"oval\"";
-  if(el.isPainted()) out << ", fillcolor=\"green\"";
-  else out << ", fillcolor=\"white\"";
-  out << ", tOffs=" <<  std::dec << el.getTOffs() << ", flags=\"0x" << std::hex << el.getFlags() << "\"";
+void VisitorVertexWriter::pushPair(const std::string& p, const std::string& v) const {
+  out << ", " << p << "=\"" << v << "\"";
 }
 
-void VisitorVertexWriter::commandString(const Command& el) const {
-  out << ", tValid=" <<  std::dec << el.getTValid();
+void VisitorVertexWriter::pushSingle(const std::string& p) const  {
+  out << ", " << p;
 }
+
+
+void VisitorVertexWriter::pushNodeInfo(const Node& el) const {
+  pushStart();
+  //can't use our helper for first property, as we cannot have a comma
+  out << dnp::Base::sCpu   << "=\"" <<  (int)el.getCpu() << "\"";
+  pushPair(dnp::Base::sFlags, el.getFlags(), F_HEX);
+}
+
+void VisitorVertexWriter::pushEventInfo(const Event& el) const {
+  pushPair(dnp::TMsg::sTimeOffs, el.getTOffs(), F_DEC);
+}
+
+void VisitorVertexWriter::pushCommandInfo(const Command& el) const {
+  pushPair(dnp::Cmd::sTimeValid, el.getTValid(), F_DEC);
+}
+
+void VisitorVertexWriter::pushPaintedInfo(const Node& el) const {
+  pushSingle((el.isPainted() ? ec::Node::Base::sLookPaint0 : ec::Node::Base::sLookPaintNone));
+}
+
 
 void VisitorVertexWriter::visit(const Block& el) const  {
-  nodeString((Node&)el); 
-  out << ", type=\"" << nBlock << "\"";
-  if(el.isPainted()) out << ", fillcolor=\"green\"";
-  else out << ", fillcolor=\"white\"";
-  out << ", tPeriod=" <<  std::dec << el.getTPeriod();
-  out << "]";
+  pushNodeInfo((Node&)el); 
+  pushPair(dnp::Base::sType, dnt::sBlock);
+  pushPair(dnp::Block::sTimePeriod, el.getTPeriod(), F_DEC);
+  pushSingle(ec::Node::Block::sLookDef);
+  pushEnd();
 }
 
 void VisitorVertexWriter::visit(const TimingMsg& el) const {
-  nodeString((Node&)el);
-  eventString((Event&)el);
+  pushNodeInfo((Node&)el);
+  pushPair(dnp::Base::sType, dnt::sTMsg);
+  pushEventInfo((Event&)el);  
+  
   uint64_t id = el.getId();
-  out << ", type=\"" << nTMsg << "\", color=\"black";
-  out << "\", fid=\""   << std::dec << ((id >> ID_FID_POS)   & ID_FID_MSK);
-  out << "\", gid=\""   << std::dec << ((id >> ID_GID_POS)   & ID_GID_MSK);
-  out << "\", evtno=\"" << std::dec << ((id >> ID_EVTNO_POS) & ID_EVTNO_MSK);
-  out << "\", sid=\""   << std::dec << ((id >> ID_SID_POS)   & ID_SID_MSK);
-  out << "\", bpid=\""  << std::dec << ((id >> ID_BPID_POS)  & ID_BPID_MSK);
-  out << "\", par=\"0x" << std::hex << el.getPar();
-  out << "\", tef=\"0x" << std::hex << el.getTef();
-  out << "\", res=\"0x" << std::hex << el.getRes();
-  out << "\"]";
+
+  pushPair(ssi::sFid, ((id >> ID_FID_POS)   & ID_FID_MSK), F_DEC);
+  //pushSingle(formatId(id));
+  pushPair(dnp::TMsg::sPar, el.getPar(), F_HEX);
+  pushPair(dnp::TMsg::sTef, el.getTef(), F_DEC);
+  //pushPair(dnp::sTMsg::sRes, << el.getRes(), F_DEC);
+  pushSingle(ec::Node::TMsg::sLookDef);
+  pushPaintedInfo((Node&)el);
+  pushEnd();
 }
 
 void VisitorVertexWriter::visit(const Noop& el) const {
-  nodeString((Node&)el); 
-  eventString((Event&)el);
-  out << ", type=\"" << nCmdNoop << "\", color=\"pink\"";
-  commandString((Command&) el);
-  out << ", qty=" <<  std::dec << el.getQty();
-  out << "]";
+  pushNodeInfo((Node&)el); 
+  pushPair(dnp::Base::sType, dnt::sCmdNoop);
+  pushEventInfo((Event&)el);
+  pushCommandInfo((Command&) el);
+  pushPair(dnp::Cmd::sQty, el.getQty(), F_DEC);
+  pushSingle(ec::Node::Cmd::sLookDef);
+  //pushSingle(ec::Node::Cmd::sLookNoop);
+  pushPaintedInfo((Node&)el);
+  pushEnd();
 }
 
 void VisitorVertexWriter::visit(const Flow& el) const  { 
-  nodeString((Node&)el);
-  eventString((Event&)el);
-  out << ", type=\"" << nCmdFlow << "\", color=\"magenta\"";
-  commandString((Command&) el);
-  out << ", qty=" <<  std::dec << el.getQty();
-  out << "]";
+  pushNodeInfo((Node&)el);
+  pushPair(dnp::Base::sType, dnt::sCmdFlow);
+  pushCommandInfo((Command&) el);
+  pushEventInfo((Event&)el);
+  pushPair(dnp::Cmd::sQty, el.getQty(), F_DEC);
+  pushSingle(ec::Node::Cmd::sLookDef);
+  //pushSingle(ec::Node::Cmd::sLookFlow);
+  pushPaintedInfo((Node&)el);
+  pushEnd();
 }
 
 void VisitorVertexWriter::visit(const Flush& el) const { 
-  nodeString((Node&)el);
-  eventString((Event&)el);
-  out << ", type=\"" << nCmdFlush << "\", color=\"red\"";
-  commandString((Command&) el);
-  out << ", prio=" <<  std::dec << el.getPrio();
-  out << "]";
+  pushNodeInfo((Node&)el);
+  pushPair(dnp::Base::sType, dnt::sCmdFlush);
+  pushEventInfo((Event&)el);
+  pushCommandInfo((Command&) el);
+  pushPair(dnp::Cmd::sPrio,  el.getPrio(), F_DEC);
+  pushSingle(ec::Node::Cmd::sLookDef);
+  //pushSingle(ec::Node::Cmd::sLookFlush);
+  pushPaintedInfo((Node&)el);
+  pushEnd();
 }
 
 void VisitorVertexWriter::visit(const Wait& el) const {
-  nodeString((Node&)el);
-  eventString((Event&)el);
-  out << ", type=\"" << nCmdWait << "\", color=\"green\"";
-  commandString((Command&) el);
-  out << "]";
+  pushNodeInfo((Node&)el);
+  pushPair(dnp::Base::sType, dnt::sCmdWait);
+  pushEventInfo((Event&)el);
+  pushCommandInfo((Command&) el);
+  pushSingle(ec::Node::Cmd::sLookDef);
+  //pushSingle(ec::Node::Cmd::sLookWait);
+  pushPaintedInfo((Node&)el);
+  pushEnd();
 }
 
 void VisitorVertexWriter::visit(const CmdQMeta& el) const {
-  nodeString((Node&)el);
-  out << ", type=\"" << nQInfo << "\"";
-  if(el.isPainted()) out << ", fillcolor=\"green\"";
-  else out << ", fillcolor=\"white\"";
-  out << ", style=dashed, flags=\"0x" << std::hex << el.getFlags();
-  out << "\"]";
+  pushNodeInfo((Node&)el);
+  pushPair(dnp::Base::sType, dnt::sQInfo);
+  pushSingle(ec::Node::Meta::sLookDef);
+  pushEnd();
 }
 
 void VisitorVertexWriter::visit(const CmdQBuffer& el) const {
-  nodeString((Node&)el);
-  out << ", type=\"" << nQBuf << "\"";
-  if(el.isPainted()) out << ", fillcolor=\"green\"";
-  else out << ", fillcolor=\"white\"";
-  out << ", style=dashed, flags=\"0x" << std::hex << el.getFlags();
-  out << "\"]";
+  pushNodeInfo((Node&)el);
+  pushPair(dnp::Base::sType, dnt::sQBuf);
+  pushSingle(ec::Node::Meta::sLookDef);
+  pushEnd();
 }
 
 void VisitorVertexWriter::visit(const DestList& el) const {
-  nodeString((Node&)el);
-  out << ", type=\"" << nDstList << "\"";
-  if(el.isPainted()) out << ", fillcolor=\"green\"";
-  else out << ", fillcolor=\"white\"";
-  out << ", style=dashed, flags=\"0x" << std::hex << el.getFlags();
-  out << "\"]";
+  pushNodeInfo((Node&)el);
+  pushPair(dnp::Base::sType, dnt::sDstList);
+  pushSingle(ec::Node::Meta::sLookDef);
+  pushEnd();
 }
 

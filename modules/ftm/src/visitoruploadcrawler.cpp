@@ -6,7 +6,10 @@
 #include "event.h"
 #include "dotstr.h"
 
-using namespace DotStr;
+namespace dnp = DotStr::Node::Prop;
+namespace dnt = DotStr::Node::TypeVal;
+namespace dep = DotStr::Edge::Prop;
+namespace det = DotStr::Edge::TypeVal;
 
 
 //FIXME Dear future self, the code duplication in here is appalling. Create some proper helper functions for crying out loud !
@@ -135,7 +138,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
       if (g[target(*out_cur,g)].np == nullptr) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
       else {
 
-        if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eDefDst) {
+        if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == det::sDefDst) {
           if (found) {std::cerr << "Found more than one default destination" << std::endl; break;
           } else {
             
@@ -174,14 +177,14 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
       if (g[target(*out_cur,g)].np == nullptr) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
       else {
 
-        if (g[*out_cur].type == eDynId) {
+        if (g[*out_cur].type == det::sDynId) {
           if (aId != LM32_NULL_PTR) {std::cerr << "Found more than one dynamic id source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             if (at.isOk(x)) { aId = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);}
           }
         }
-        if (g[*out_cur].type == eDynPar0) {
+        if (g[*out_cur].type == det::sDynPar0) {
           if (aPar0 != LM32_NULL_PTR) {std::cerr << "Found more than one dynamic par0 source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
@@ -189,7 +192,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
             //std::cout << "DynAdr 0 0x" << std::hex << aPar0 << std::endl;
           }
         }
-        if (g[*out_cur].type == eDynPar1) {
+        if (g[*out_cur].type == det::sDynPar1) {
           if (aPar1 != LM32_NULL_PTR) {std::cerr << "Found more than one dynamic par1 source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
@@ -197,14 +200,14 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
             //std::cout << "DynAdr 1 0x" << std::hex << aPar1 << std::endl;
           }
         }
-        if (g[*out_cur].type == eDynTef) {
+        if (g[*out_cur].type == det::sDynTef) {
           if (aTef != LM32_NULL_PTR) {std::cerr << "Found more than one dynamic tef source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
             if (at.isOk(x)) { aTef = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_TEF_SMSK);}
           }
         }
-        if (g[*out_cur].type == eDynRes) {
+        if (g[*out_cur].type == det::sDynRes) {
           if (aRes != LM32_NULL_PTR) {std::cerr << "Found more than one dynamic res source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
@@ -236,11 +239,11 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
     found = false;
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
     { 
-     // std::cerr << "Scanning " << g[target(*out_cur,g)].name << "(classMeta=" << (int)g[target(*out_cur,g)].np->isMeta() << ")," << g[target(*out_cur,g)].type << " connected by " << g[*out_cur].type << " edge against " << eDstList << "," << nDstList << std::endl;  
+     // std::cerr << "Scanning " << g[target(*out_cur,g)].name << "(classMeta=" << (int)g[target(*out_cur,g)].np->isMeta() << ")," << g[target(*out_cur,g)].type << " connected by " << g[*out_cur].type << " edge against " << det::sDstList << "," << nDstList << std::endl;  
 
       if (g[target(*out_cur,g)].np == nullptr) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
       else {
-        if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == eDstList) {
+        if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == det::sDstList) {
 
           if (found) {//std::cerr << "Found more than one Destination List" << std::endl; 
             break;
@@ -266,12 +269,12 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
       found = false;
       for (out_cur = out_begin; out_cur != out_end; ++out_cur)
       { 
-       // std::cerr << "Scanning " << g[target(*out_cur,g)].name << "(classMeta=" << (int)g[target(*out_cur,g)].np->isMeta() << ") connected by " << g[*out_cur].type << " edge against " << eQPrio[idx] << std::endl;   
+       // std::cerr << "Scanning " << g[target(*out_cur,g)].name << "(classMeta=" << (int)g[target(*out_cur,g)].np->isMeta() << ") connected by " << g[*out_cur].type << " edge against " << det::sQPrio[idx] << std::endl;   
         if (g[target(*out_cur,g)].np == nullptr) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
         else {
 
-          if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == eQPrio[idx]) {
-            if (found) {std::cerr << "Found more than one queue info of type " << eQPrio[idx] << "" << std::endl; break;}
+          if (g[target(*out_cur,g)].np->isMeta() && g[*out_cur].type == det::sQPrio[idx]) {
+            if (found) {std::cerr << "Found more than one queue info of type " << det::sQPrio[idx] << "" << std::endl; break;}
             else {
               auto x = at.lookupVertex(target(*out_cur,g));
               // Queue nodes MUST NOT lie outside own memory!
@@ -336,7 +339,7 @@ vAdr VisitorUploadCrawler::getCmdTarget(Command& el) const {
     if (g[target(*out_cur,g)].np == nullptr) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
     else {
 
-      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eCmdTarget) {
+      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == det::sCmdTarget) {
         if (found) {std::cerr << "Found more than one target" << std::endl; break;
         } else {
           auto x = at.lookupVertex(target(*out_cur,g));
@@ -376,7 +379,7 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
     if (g[target(*out_cur,g)].np == nullptr) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
     else {
 
-      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eCmdTarget) {
+      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == det::sCmdTarget) {
         if (found) {std::cerr << "Found more than one target" << std::endl; break;
         } else {
           auto x = at.lookupVertex(target(*out_cur,g));
@@ -392,7 +395,7 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
     if (g[target(*out_cur,g)].np == nullptr) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
     else {
 
-      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eCmdFlowDst) {
+      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == det::sCmdFlowDst) {
         if (found) {std::cerr << "Found more than one flow destination" << std::endl; break;
         } else {
           auto x = at.lookupVertex(target(*out_cur,g));
@@ -439,7 +442,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
     if (g[target(*out_cur,g)].np == nullptr) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
     else {
 
-      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eDefDst) {
+      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == det::sDefDst) {
         if (found) {std::cerr << "Found more than one default destination" << std::endl; break;
         } else {
           auto x = at.lookupVertex(target(*out_cur,g));
@@ -464,7 +467,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
     if (g[target(*out_cur,g)].np == nullptr) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
     else {
 
-      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == eAltDst) {
+      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == det::sAltDst) {
         auto x = at.lookupVertex(target(*out_cur,g));
         // Destination MUST NOT lie outside own memory! (well, technically, it'd work, but it'd be race condition galore ...)
         if (at.isOk(x)) {
@@ -493,7 +496,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
 
 // starting on helper functions for cleanup
 /*
-findNodeAdrByEdgeType(v, eAltDst, bool nodeTypeIsMeta, const unsigned int minResultLen, const unsigned int maxResultLen, const uint32_t resultPadData )
+findNodeAdrByEdgeType(v, det::sAltDst, bool nodeTypeIsMeta, const unsigned int minResultLen, const unsigned int maxResultLen, const uint32_t resultPadData )
 
 
 vAdr findNodeAdrByEdgeType(vertex_t vStart, const std::string edgeType, const bool nodeTypeIsMeta, const unsigned int minResultLen, const unsigned int maxResultLen, const uint32_t resultPadData ) {
@@ -511,7 +514,7 @@ vAdr findNodeAdrByEdgeType(vertex_t vStart, const std::string edgeType, const bo
       if ( (g[target(*out_cur,g)].np->isMeta() == nodeTypeIsMeta) && g[*out_cur].type == edgeType) {
         auto x = at.lookupVertex(target(*out_cur,g));
         // Everything except command targets MUST lie inside own memory! (well, technically, it'd work, but it'd be race condition galore ...)
-        if (at.isOk(x) && ( (edgeType == eCmdTarget) || x->cpu == cpu) ){
+        if (at.isOk(x) && ( (edgeType == det::sCmdTarget) || x->cpu == cpu) ){
           ret.push_back(at.adr2intAdr(x->cpu, x->adr));
           found = true;
           if (ret.size() >= maxResultLen) break;

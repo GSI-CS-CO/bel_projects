@@ -16,7 +16,7 @@
 #include "visitordownloadcrawler.h"
 #include "dotstr.h"
 
-using namespace DotStr;
+
 
 
   //Generate download Bmp addresses. For downloads, this has to be two pass: get bmps first, then use them to get the node locations to read 

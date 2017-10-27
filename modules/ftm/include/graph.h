@@ -11,7 +11,7 @@
 #include "common.h"
 #include "dotstr.h"
 
-using namespace DotStr;
+using namespace DotStr::Misc;
 
 
 class Node;
@@ -22,6 +22,10 @@ public:
   std::string cpu;
   uint32_t hash;
   node_ptr np;
+
+  std::string pattern;
+  std::string pentry;
+  std::string pexit;
 
   //FIXME
   //now follows a list of all possible properties graphviz_read can assign, to copy to concrete Node objects later
@@ -39,50 +43,52 @@ public:
   //Meta
 
   //Block 
-  std::string tPeriod = tUndefined64;
-  std::string rdIdxIl = tZero, rdIdxHi = tZero, rdIdxLo = tZero;
-  std::string wrIdxIl = tZero, wrIdxHi = tZero, wrIdxLo = tZero;
+  std::string tPeriod = sUndefined64;
+  std::string rdIdxIl = sZero, rdIdxHi = sZero, rdIdxLo = sZero;
+  std::string wrIdxIl = sZero, wrIdxHi = sZero, wrIdxLo = sZero;
 
   //Event
-  std::string tOffs = tUndefined64;
+  std::string tOffs = sUndefined64;
 
   //Timing Message
-  std::string id = tUndefined64;
-  std::string id_fid    = tZero;
-  std::string id_gid    = tZero;
-  std::string id_evtno  = tZero;
-  std::string id_sid    = tZero;
-  std::string id_bpid   = tZero;
-  std::string id_res    = tZero;
-
-  std::string par = tUndefined64;
-  std::string tef = tZero;
-  std::string res = tZero;
+  std::string id = sUndefined64;
+  std::string id_fid    = sZero;
+  std::string id_gid    = sZero;
+  std::string id_evtno  = sZero;
+  std::string id_sid    = sZero;
+  std::string id_bpid   = sZero;
+  std::string id_res    = sZero;
+  std::string id_bin    = sZero;
+  std::string id_reqnob = sZero;
+  std::string id_vacc   = sZero;
+  std::string par = sUndefined64;
+  std::string tef = sZero;
+  std::string res = sZero;
 
   //Command
 
-  std::string tValid = tZero;
+  std::string tValid = sZero;
 
 
   // Flush
 
-  std::string qIl = tZero, qHi = tZero, qLo = tZero;
+  std::string qIl = sZero, qHi = sZero, qLo = sZero;
 
-  std::string frmIl = tZero, toIl = tZero;
-  std::string frmHi = tZero, toHi = tZero;
-  std::string frmLo = tZero, toLo = tZero; 
+  std::string frmIl = sZero, toIl = sZero;
+  std::string frmHi = sZero, toHi = sZero;
+  std::string frmLo = sZero, toLo = sZero; 
 
   //Flow, Noop
-  std::string prio = tZero;
+  std::string prio = sZero;
   std::string qty = "1";
 
   //Wait
-  std::string tWait = tUndefined64;
+  std::string tWait = sUndefined64;
 
-  std::string flowDest = tUndefined;
-  std::string flowTarget = tUndefined;
+  std::string flowDest = sUndefined;
+  std::string flowTarget = sUndefined;
 
-  myVertex() : name(tUndefined), cpu(tZero), hash(uUndefined32), np(nullptr), type(tUndefined), flags(tUndefined32) {}
+  myVertex() : name(sUndefined), cpu(sZero), hash(uUndefined32), np(nullptr), type(sUndefined), flags(sUndefined32) {}
   
   myVertex(std::string name, std::string cpu, uint32_t hash, node_ptr np, std::string type, std::string flags) : name(name), cpu(cpu), hash(hash), np(np), type(type), flags(flags) {}
 
@@ -95,7 +101,7 @@ public:
 class myEdge {
 public:
   std::string type;
-  myEdge() : type(tUndefined) {}
+  myEdge() : type(sUndefined) {}
   myEdge(std::string type) : type(type) {}
 };
 

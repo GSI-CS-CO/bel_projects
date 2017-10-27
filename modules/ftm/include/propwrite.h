@@ -23,7 +23,12 @@
 #include "event.h"
 #include "dotstr.h"
 
-using namespace DotStr;
+namespace ec = DotStr::EyeCandy;
+namespace dgp = DotStr::Graph::Prop;
+namespace dnp = DotStr::Node::Prop;
+namespace dep = DotStr::Edge::Prop;
+namespace det = DotStr::Edge::TypeVal;
+
 
   //FIXME use graph / node property tag string constants!
 
@@ -50,10 +55,8 @@ using namespace DotStr;
   struct sample_graph_writer {
     const std::string& sroot;
     void operator()(std::ostream& out) const {
-      out << "graph [root=\"" << sroot << "\", rankdir=TB, nodesep=0.6, mindist=1.0, ranksep=1.0, overlap=false]" << std::endl;
-      out << "node [shape=\"rectangle\", style=\"filled\"]" << std::endl;
-      //out << "node [shape=circle color=white]" << std::endl;
-
+      out << "graph [root=\"" << sroot << "\"," << ec::Graph::sLookVert << "]" << std::endl;
+      out << "node [" << ec::Node::Base::sLookDef << "]" << std::endl;
     }
   };
 
@@ -95,7 +98,7 @@ template <class Name>
     id_writer(objMap om) : om(om) {}
     template <class VertexOrEdge>
     void operator()(std::ostream& out, const VertexOrEdge& v) const {
-      out << "node_id=\"" << om[v] << "\""; 
+      out << dnp::Base::sName << "=\"" << om[v] << "\""; 
     }
   private:
     objMap om;
@@ -118,16 +121,19 @@ template <class Name>
     edge_writer(typeMap type) : type(type) {}
     template <class Edge>
     void operator()(std::ostream& out, const Edge& v) const {
-      out <<  "[type=\"" << type[v] << "\",";
-      if (type[v] == eBadDefDst) out << " style=\"dashed\", label=\"bad defDest\", ";
-      out << "color=\""; 
-      if      (type[v] == eDefDst) out << "red";
-      else if (type[v] == eAltDst) out << "black";
-      else if (type[v] == eBadDefDst) out << "orange";
-      else if (type[v] == eCmdTarget) out << "blue";
-      else if (type[v] == eCmdFlowDst) out << "magenta";
-      else out << "grey\", label=\"" << type[v];
-      out <<  "\"]";   
+      out <<  "[" << dep::Base::sType << "=\"" << type[v] << "\", ";
+      if      (type[v] == det::sBadDefDst)   out << ec::Edge::sLookbad;
+      else if (type[v] == det::sDefDst)      out << ec::Edge::sLookDefDst;
+      else if (type[v] == det::sAltDst)      out << ec::Edge::sLookAltDst;
+      else if (type[v] == det::sCmdTarget)   out << ec::Edge::sLookTarget;
+      else if (type[v] == det::sCmdFlowDst)  out << ec::Edge::sLookArgument;
+      else if (type[v] == det::sDynId)       out << ec::Edge::sLookArgument;
+      else if (type[v] == det::sDynPar0)     out << ec::Edge::sLookArgument;
+      else if (type[v] == det::sDynPar1)     out << ec::Edge::sLookArgument;
+      else if (type[v] == det::sDynTef)      out << ec::Edge::sLookArgument;
+      else if (type[v] == det::sDynRes)      out << ec::Edge::sLookArgument;
+      else                                   out << ec::Edge::sLookMeta;
+      out <<  "]";   
     }
   private:
     typeMap type;
