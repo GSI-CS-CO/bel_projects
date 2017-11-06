@@ -231,6 +231,8 @@ bool CarpeDM::connect(const std::string& en) {
 
     boost::dynamic_properties CarpeDM::createParser(Graph& g) {
 
+
+
     boost::dynamic_properties dp(boost::ignore_other_properties);
     boost::ref_property_map<Graph *, std::string> gname( boost::get_property(g, boost::graph_name));
     dp.property(dgp::sName,     gname);
@@ -306,6 +308,10 @@ bool CarpeDM::connect(const std::string& en) {
     try { boost::read_graphviz(s, g, dp, dnp::Base::sName); }
     catch(...) { throw; }
    
+    auto testme = boost::get(&myVertex::tOffs,      g);
+
+  
+
     //generate hashes
     BOOST_FOREACH( vertex_t v, vertices(g) ) {g[v].hash = hm.add(g[v].name).get(); 
       //sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;

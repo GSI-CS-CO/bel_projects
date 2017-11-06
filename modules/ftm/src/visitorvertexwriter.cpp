@@ -61,14 +61,16 @@ void VisitorVertexWriter::visit(const TimingMsg& el) const {
   pushNodeInfo((Node&)el);
   pushPair(dnp::Base::sType, dnt::sTMsg);
   pushEventInfo((Event&)el);  
-  
-  uint64_t id = el.getId();
 
-  pushPair(ssi::sFid, ((id >> ID_FID_POS)   & ID_FID_MSK), F_DEC);
-  //pushSingle(formatId(id));
+  // ID output depends on FID field
+  uint64_t id = el.getId();
+  uint8_t fid = ((id >> ID_FID_POS) & ID_FID_MSK); 
+  if (fid >= formats.length()) throw ;
+  vPf& vF = idFormats[fid];
+  for(auto& it : vF) { pushPair(vF.s, ((id >> vF.pos) &  ((1 << vF.bits ) - 1) ), F_DEC); }
+
   pushPair(dnp::TMsg::sPar, el.getPar(), F_HEX);
   pushPair(dnp::TMsg::sTef, el.getTef(), F_DEC);
-  //pushPair(dnp::sTMsg::sRes, << el.getRes(), F_DEC);
   pushSingle(ec::Node::TMsg::sLookDef);
   pushPaintedInfo((Node&)el);
   pushEnd();
