@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 09-June-2017
+ *  version : 21-September-2017
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000006                                  // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000008                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -53,7 +53,7 @@
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h" // register layout ECA queue
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"       // register layout ECA control
 #include "../../../ip_cores/saftlib/drivers/eca_flags.h"              // definitions for ECA queue
-#include "../../ftm/ftm_common.h"                                     // defs and regs for data master
+#include "../../ftm/include/ftm_common.h"                             // defs and regs for data master
 #include "../../ftm/ftmfw/ftm_shared_mmap.h"                          // info on shared map for data master lm32 cluster
 
 uint32_t dmExt2BaseAddr(uint32_t extAddr) // data master external address -> external base address
@@ -764,8 +764,8 @@ uint32_t configMILEvent(uint16_t evtCode) // configure SoC to receive events via
   // clean up 
   if (disableLemoEvtMil(pMILPiggy, 1) != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
   if (disableLemoEvtMil(pMILPiggy, 2) != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
-  if (disableFilterEvtMil(pMILPiggy)  != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
-  if (clearFilterEvtMil(pMILPiggy)    != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR;
+  if (disableFilterEvtMil(pMILPiggy)  != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR; 
+  if (clearFilterEvtMil(pMILPiggy)    != MIL_STAT_OK) return DMUNIPZ_STATUS_ERROR; 
 
   for (i=0; i < (0xf+1); i++) {
     // set filter (FIFO and LEMO1 pulsing) for all possible virtual accelerators
@@ -786,7 +786,9 @@ uint16_t wait4MILEvt(uint16_t evtCode, uint16_t virtAcc, uint32_t msTimeout)  //
   uint32_t virtAccRec;         // virtual accelerator
   uint64_t timeoutT;           // when to time out
 
-  timeoutT = getSysTime() + msTimeout * 1000000;      
+  timeoutT = getSysTime() + msTimeout * 10000000;      
+
+  mprintf("dm-unipz: huhu evtCode 0x%04x, virtAcc 0x%04x\n", evtCode, virtAcc);
 
   while(getSysTime() < timeoutT) {              // while not timed out...
     while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
@@ -795,6 +797,8 @@ uint16_t wait4MILEvt(uint16_t evtCode, uint16_t virtAcc, uint32_t msTimeout)  //
       virtAccRec  = (evtDataRec >> 8) & 0x0f;   // extract virtual accelerator (assuming event message)
 
       if ((evtCodeRec == evtCode) && (virtAccRec == virtAcc)) return DMUNIPZ_STATUS_OK;
+
+      // chck mprintf("dm-unipz: virtAcc %03d, evtCode %03d\n", virtAccRec, evtCodeRec);
 
     } // while fifo contains data
     asm("nop");                                 // wait a bit...
@@ -1004,6 +1008,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
   uint32_t sendTnsecs;
   uint64_t tempT;
 
+  uint64_t ts1, ts2, ts3; //chk
+
   status = actStatus; 
 
   nextAction = wait4ECAEvent(DMUNIPZ_DEFAULT_TIMEOUT, &virtAccTmp, &dryRunFlag);   // do action is driven by actions issued by the ECA
@@ -1022,8 +1028,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       if ((dmStatus = dmPrepCmdCommon(REQTK)) != DMUNIPZ_STATUS_OK)                // prepare common part of command for later use, here: continue after TK request
         return dmStatus;                                                           // failure of preparation is a severe error!
         
-      dmPrepCmdFlow(REQTK);                                                      // prepare flow command for later use, here: continue after TK request
-      dmChangeBlock(REQTK);                                                      // modify block within DM for execution of a flow command, here: continue after TK request
+      dmPrepCmdFlow(REQTK);                                                        // prepare flow command for later use, here: continue after TK request
+      dmChangeBlock(REQTK);                                                        // modify block within DM for execution of a flow command, here: continue after TK request
 
 
       if (status == DMUNIPZ_STATUS_OK) *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQTKOK; // update status of transfer
@@ -1044,7 +1050,16 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
     
       enableFilterEvtMil(pMILPiggy);                                               // enable filter @ MIL piggy
       clearFifoEvtMil(pMILPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
+      //      ts1 = getSysTime();
       requestBeam(uniTimeout);                                                     // request beam from UNIPZ, note that we can't check for REQ_NOT_OK from here
+      //ts2 = getSysTime();
+      //ts3 = ts2 - ts1;
+      //      ts3 = ts3 >> 10;
+
+      //ts2 = ts2 >> 30;
+
+      //mprintf("dm-unipz: dt %d %d %d [ns] \n", (uint32_t)ts1, (uint32_t)ts2, (uint32_t)ts3);
+      
 
       status = wait4MILEvt(DMUNIPZ_EVT_READY2SIS, virtAccTmp, uniTimeout);         // wait for MIL Event
       timestamp = getSysTime();                                                    // get timestamp for MIL event
@@ -1124,7 +1139,7 @@ void main(void) {
 
   init();                                                                   // initialize stuff for lm32
   initSharedMem();                                                          // initialize shared memory
-
+  mprintf("dm-unipz: quack\n");
   while (1) {
     cmdHandler(&reqState);                                                  // check for commands and possibly request state changes
     status = changeState(&actState, &reqState, status);                     // handle requested state changes
