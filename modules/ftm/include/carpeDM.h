@@ -44,6 +44,7 @@ private:
   void generateBlockMeta(Graph& g);
   void generateDstLst(Graph& g, vertex_t v);
   void generateQmeta(Graph& g, vertex_t v, int prio);
+  void completeId(vertex_t v, Graph& g);
 
   void addition(Graph& g);
   void subtraction(Graph& g);
@@ -76,6 +77,7 @@ private:
   void addToDict(Graph& g);      
   void removeFromDict(Graph& g); 
 
+
 protected:
 
   std::string ebdevname;
@@ -105,6 +107,7 @@ protected:
   int ebWriteWord(Device& dev, uint32_t adr, uint32_t data);
   uint32_t ebReadWord(Device& dev, uint32_t adr);
   boost::dynamic_properties createParser(Graph& g);
+
   //std::string getFwInfo(uint8_t cpuIdx);
   int parseFwVersionString(const std::string& s);
   uint64_t read64b(uint32_t startAdr);

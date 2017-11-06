@@ -4,6 +4,7 @@
 #include "block.h"
 #include "meta.h"
 #include "event.h"
+#include "idformat.h"
 
 namespace ec  = DotStr::EyeCandy;
 namespace dgp = DotStr::Graph::Prop;
@@ -61,14 +62,19 @@ void VisitorVertexWriter::visit(const TimingMsg& el) const {
   pushNodeInfo((Node&)el);
   pushPair(dnp::Base::sType, dnt::sTMsg);
   pushEventInfo((Event&)el);  
-  
-  uint64_t id = el.getId();
 
-  pushPair(ssi::sFid, ((id >> ID_FID_POS)   & ID_FID_MSK), F_DEC);
-  //pushSingle(formatId(id));
+  // ID output depends on FID field
+  uint64_t id = el.getId();
+  uint8_t fid = ((id >> ID_FID_POS) & ID_FID_MSK); 
+  if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) within ID field of Node '" + el.getName() + "'");
+  vPf& vF = idFormats[fid];
+  //std::cout << "Output Node " << el.getName();
+  for(auto& it : vF) { pushPair(it.s, ((id >> it.pos) &  ((1 << it.bits ) - 1) ), F_DEC); 
+    //std::cout << ", " << it.s << " = " << std::dec << ((id >> it.pos) &  ((1 << it.bits ) - 1) ); 
+  }
+  //std::cout << " ID = 0x" << std::hex << id << std::endl;
   pushPair(dnp::TMsg::sPar, el.getPar(), F_HEX);
   pushPair(dnp::TMsg::sTef, el.getTef(), F_DEC);
-  //pushPair(dnp::sTMsg::sRes, << el.getRes(), F_DEC);
   pushSingle(ec::Node::TMsg::sLookDef);
   pushPaintedInfo((Node&)el);
   pushEnd();

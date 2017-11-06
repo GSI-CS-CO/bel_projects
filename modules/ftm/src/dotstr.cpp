@@ -153,9 +153,9 @@ namespace DotStr {
     namespace Node {
       namespace Base {
         const std::string sLookDef = "style=\"filled\", fillcolor=\"white\", color=\"black\"";
-        const std::string sLookPaintNone = "";
-        const std::string sLookPaint0 = ", fillcolor=\"green\"";
-        const std::string sLookPaint1 = ", fillcolor=\"cyan\"";
+        const std::string sLookPaintNone = "fillcolor=\"white\"";
+        const std::string sLookPaint0 = "fillcolor=\"green\"";
+        const std::string sLookPaint1 = "fillcolor=\"cyan\"";
       }
 
       namespace Block {
