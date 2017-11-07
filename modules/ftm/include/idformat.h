@@ -4,8 +4,8 @@
 #include <string>
 #include <inttypes.h>
 #include "graph.h"
-#include "common.h"
-#include "dotstr.h"
+
+
 
 #define ID_FID_BITS             4
 #define ID_FID_POS              60
@@ -17,13 +17,8 @@ typedef struct {
   const uint8_t bits;
 } propFormat;
 
-
 typedef std::vector<propFormat> vPf;
+extern std::vector<vPf> idFormats;
 
-extern const std::vector<const vPf> formats;
-
-uint64_t toId(vertex_d v, Graph& g);
-std::string toStr(uint64_t id);
-std::string toStr(vertex_d v, Graph& g);
 
 #endif

@@ -12,7 +12,7 @@
 #define _OFFS_SIZE_             _32b_SIZE_
 #define _TS_SIZE_               _64b_SIZE_
 
-
+/*
 #define ID_RES_BITS             10
 #define ID_BPID_BITS            14
 #define ID_SID_BITS             12
@@ -33,7 +33,7 @@
 #define ID_EVTNO_POS            (ID_SID_POS   + ID_SID_BITS)
 #define ID_GID_POS              (ID_EVTNO_POS + ID_EVTNO_BITS)
 #define ID_FID_POS              (ID_GID_POS   + ID_GID_BITS)
-
+*/
 
 #define PRIO_IL 2
 #define PRIO_HI 1

@@ -13,10 +13,12 @@
 #include "carpeDM.h"
 #include "minicommand.h"
 #include "dotstr.h"
+#include "idformat.h"
 
   namespace dgp = DotStr::Graph::Prop;
   namespace dnp = DotStr::Node::Prop;
   namespace dep = DotStr::Edge::Prop;
+
 
 
 int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
@@ -229,6 +231,58 @@ bool CarpeDM::connect(const std::string& en) {
 
 
 
+  void CarpeDM::completeId(vertex_t v, Graph& g) { // deduce SubID fields from ID or vice versa, depending on whether ID is defined
+    
+
+    
+    std::stringstream ss;
+    uint64_t id;
+    uint8_t fid;
+    boost::dynamic_properties dp = createParser(g); //create current property map
+    /*
+      //test
+    auto test0 = boost::get(&myVertex::flowDest,   g);
+    auto test1 = boost::get(dnp::TMsg::SubId::sGid, dp, v);
+
+    std::cout << "Type property: " << boost::typeindex::type_id_with_cvr<decltype(test0)>().pretty_name() << std::endl;
+    std::cout << "Type property map: " << boost::typeindex::type_id_with_cvr<decltype(test1)>().pretty_name() << std::endl;
+    std::cout << "Value property map: " << test1 << std::endl;
+    */
+
+    
+    if (g[v].id == DotStr::Misc::sUndefined64) { // from SubID fields to ID
+      //std::cout << "Input Node  " << g[v].name;
+      fid = (s2u<uint8_t>(g[v].id_fid) & ID_FID_MSK); //get fid
+      if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) field in Node '" + g[v].name + "'");
+      vPf& vTmp = idFormats[fid]; //choose conversion vector by fid
+      
+      for(auto& it : vTmp) {  //for each format vector element 
+        //use dot property tag string as key to dp map (map of tags to (maps of vertex_indices to values))
+        uint64_t val = s2u<uint64_t>(boost::get(it.s, dp, v)); // use vertex index v as key in this property map to obtain value
+        //std::cout << ", " << std::dec << it.s << " = " << (val & ((1 << it.bits ) - 1) ) << ", (" << (int)it.pos << ",0x" << std::hex << ((1 << it.bits ) - 1) << ")";
+        id |= (val & ((1 << it.bits ) - 1) ) << it.pos; // OR the masked and shifted value to id
+      }
+      //std::cout << "ID = 0x" << std::hex << id << std::endl;
+      ss.flush();
+      ss << std::dec << id;
+      g[v].id = ss.str();
+
+    } else { //from ID to SubID fields
+      id = s2u<uint8_t>(g[v].id);
+      fid = ((id >> ID_FID_POS) & ID_FID_MSK);
+      if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) within ID field of Node '" + g[v].name + "'");
+      vPf& vTmp = idFormats[fid];
+
+      for(auto& it : vTmp) {
+        ss.flush();
+        ss << std::dec << ((id >> it.pos) &  ((1 << it.bits ) - 1) );
+        boost::put(it.s, dp, v, ss.str());
+      }  
+    }
+    
+  }  
+
+
     boost::dynamic_properties CarpeDM::createParser(Graph& g) {
 
 
@@ -273,6 +327,9 @@ bool CarpeDM::connect(const std::string& en) {
     dp.property(dnp::Cmd::sFlowTarget,                   boost::get(&myVertex::flowTarget, g));
     
 
+  
+
+
     return (const boost::dynamic_properties)dp;
   }   
 
@@ -308,10 +365,7 @@ bool CarpeDM::connect(const std::string& en) {
     try { boost::read_graphviz(s, g, dp, dnp::Base::sName); }
     catch(...) { throw; }
    
-    auto testme = boost::get(&myVertex::tOffs,      g);
-
-  
-
+    
     //generate hashes
     BOOST_FOREACH( vertex_t v, vertices(g) ) {g[v].hash = hm.add(g[v].name).get(); 
       //sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;
