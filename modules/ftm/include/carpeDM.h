@@ -15,6 +15,7 @@
 #include "common.h"
 #include "hashmap.h"
 #include "alloctable.h"
+#include "patterntable.h"
 #include "ftm_shared_mmap.h"
 
 
@@ -93,6 +94,7 @@ protected:
 
   int cpuQty = -1;
   HashMap hm;
+  PatternTable pt;
   AllocTable atUp;
   Graph gUp;
   AllocTable atDown;
@@ -147,14 +149,26 @@ public:
   //Remove all nodes in .dot file from name/hash dictionary
   void removeDotFromDict(const std::string& s)      {Graph gTmp; removeFromDict(parseDot(s, gTmp));};
   void removeDotFileFromDict(const std::string& fn) {removeDotFromDict(readTextFile(fn));};
-  void clearDict(); //Clear the dictionary
+  void clearDict() {hm.clear();}; //Clear the dictionary
+
+
+
   std::string storeDict() {return hm.store();}; 
   void loadDict(const std::string& s) {hm.load(s);}
   void storeDictFile(const std::string& fn) {writeTextFile(fn, storeDict());};
-  void loadDictFile(const std::string& fn) {loadDict(readTextFile(fn));}; 
+  void loadDictFile(const std::string& fn) {loadDict(readTextFile(fn));};
+
   bool isInDict(const uint32_t hash);
   bool isInDict(const std::string& name);
   bool isDictEmpty() {return (bool)(hm.size() == 0);};
+
+  // Pattern/Entry/Exit Table ///////////////////////////////////////////////////////////////////////////////
+  std::string storePatterns() {return pt.store();}; 
+  void loadPatterns(const std::string& s) {pt.load(s);}
+  void storePatternsFile(const std::string& fn) {writeTextFile(fn, storePatterns());};
+  void loadPatternsFile(const std::string& fn) {loadPatterns(readTextFile(fn));}; 
+  void clearPatterns() {pt.clear();}; //Clear pattern table
+  void testPattern(const std::string& pattern) {bool dummy; pt.insertPattern(pattern, dummy);} 
 
   // Text File IO /////////////////////////////////////////////////////////////////////////////////
   void writeTextFile(const std::string& fn, const std::string& s);

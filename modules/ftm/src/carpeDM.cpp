@@ -225,9 +225,6 @@ bool CarpeDM::connect(const std::string& en) {
     if(verbose) sLog << " Done." << std::endl;
   }
 
-  void CarpeDM::clearDict() {
-    hm.clear();
-  }
 
 
 
@@ -367,7 +364,8 @@ bool CarpeDM::connect(const std::string& en) {
    
     
     //generate hashes
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {g[v].hash = hm.add(g[v].name).get(); 
+    BOOST_FOREACH( vertex_t v, vertices(g) ) {
+      g[v].hash = hm.add(g[v].name).get(); 
       //sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;
     }
 
