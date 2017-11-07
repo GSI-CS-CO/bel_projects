@@ -69,6 +69,10 @@ $(TOOLPATH)/dm-sched: $(LIBPATH)/libcarpedm.so
 $(TOOLPATH)/dm-cmd: $(LIBPATH)/libcarpedm.so
 	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/dm-cmd.cpp $^ $(T_LIBS) -L$(LIBPATH) -lcarpedm
 
+foo: $(LIBPATH)/libcarpedm.so
+	$(T_CXX) $(T_CXXFLAGS) -o $@ $(TOOLPATH)/foo.cpp $^ $(T_LIBS) -L$(LIBPATH) -lcarpedm
+
+
 install: $(BINPATH)/dm-sched $(BINPATH)/dm-cmd
 	cp $(BINPATH)/dm-sched $(BINPATH)/dm-cmd $(INSTALLPATH) 
 
