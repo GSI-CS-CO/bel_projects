@@ -22,6 +22,7 @@ namespace dnt = DotStr::Node::TypeVal;
 namespace dep = DotStr::Edge::Prop;
 namespace det = DotStr::Edge::TypeVal;;
 namespace dnm = DotStr::Node::MetaGen;
+using namespace DotStr::Misc;
   
 
   //TODO NC Traffic Verification
@@ -210,7 +211,7 @@ namespace dnm = DotStr::Node::MetaGen;
   void CarpeDM::prepareUpload() {
     
     std::string cmp;
-    uint32_t hash;
+    uint32_t hash, flags;
     uint8_t cpu;
     int allocState;
     
@@ -222,8 +223,12 @@ namespace dnm = DotStr::Node::MetaGen;
       //if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
       hash = gUp[v].hash;
       cpu  = s2u<uint8_t>(gUp[v].cpu);
-      //FIXME Careful! CPU indices in the (intermediary) .dot do not necessarily match the vector indices. Use the fucking cpuIdx map to translate!
-
+      
+      //add flags for beam process and pattern entry and exit points
+      flags = ((gUp[v].bpEntry  != sZero) << NFLG_BP_ENTRY_LM32_POS) 
+            | ((gUp[v].bpExit   != sZero) << NFLG_BP_EXIT_LM32_POS)
+            | ((gUp[v].patEntry != sZero) << NFLG_PAT_ENTRY_LM32_POS)
+            | ((gUp[v].patExit  != sZero) << NFLG_PAT_EXIT_LM32_POS);
 
       amI it = atUp.lookupHash(hash); //if we already have a download entry, keep allocation, but update vertex index
       if (!(atUp.isOk(it))) {
@@ -245,21 +250,21 @@ namespace dnm = DotStr::Node::MetaGen;
 
         cmp = gUp[v].type;
 
-
+            // FIXME most of this shit should be in constructor
              if (cmp == dnt::sTMsg)        {completeId(v, gUp); // create ID from SubId fields or vice versa
-                                            gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].id), s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); }
-        else if (cmp == dnt::sCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
-        else if (cmp == dnt::sCmdFlow)     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
-        else if (cmp == dnt::sCmdFlush)    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
+                                            gUp[v].np = (node_ptr) new  TimingMsg(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].id), s2u<uint64_t>(gUp[v].par), s2u<uint32_t>(gUp[v].tef), s2u<uint32_t>(gUp[v].res)); }
+        else if (cmp == dnt::sCmdNoop)     {gUp[v].np = (node_ptr) new       Noop(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
+        else if (cmp == dnt::sCmdFlow)     {gUp[v].np = (node_ptr) new       Flow(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint8_t>(gUp[v].qty)); }
+        else if (cmp == dnt::sCmdFlush)    {gUp[v].np = (node_ptr) new      Flush(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio),
                                                                               s2u<bool>(gUp[v].qIl), s2u<bool>(gUp[v].qHi), s2u<bool>(gUp[v].qLo), s2u<uint8_t>(gUp[v].frmIl), s2u<uint8_t>(gUp[v].toIl), s2u<uint8_t>(gUp[v].frmHi),
                                                                               s2u<uint8_t>(gUp[v].toHi), s2u<uint8_t>(gUp[v].frmLo), s2u<uint8_t>(gUp[v].toLo) ); }
-        else if (cmp == dnt::sCmdWait)     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait)); }
-        else if (cmp == dnt::sBlock)       {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == dnt::sBlockFixed)  {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == dnt::sBlockAlign)  {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, x->hash, x->cpu, x->b, 0, s2u<uint64_t>(gUp[v].tPeriod) ); }
-        else if (cmp == dnt::sQInfo)       {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, x->hash, x->cpu, x->b, 0);}
-        else if (cmp == dnt::sDstList)     {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, x->hash, x->cpu, x->b, 0);}
-        else if (cmp == dnt::sQBuf)        {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, x->hash, x->cpu, x->b, 0);}
+        else if (cmp == dnt::sCmdWait)     {gUp[v].np = (node_ptr) new       Wait(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tOffs), s2u<uint64_t>(gUp[v].tValid), s2u<uint8_t>(gUp[v].prio), s2u<uint64_t>(gUp[v].tWait)); }
+        else if (cmp == dnt::sBlock)       {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
+        else if (cmp == dnt::sBlockFixed)  {gUp[v].np = (node_ptr) new BlockFixed(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
+        else if (cmp == dnt::sBlockAlign)  {gUp[v].np = (node_ptr) new BlockAlign(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags, s2u<uint64_t>(gUp[v].tPeriod) ); }
+        else if (cmp == dnt::sQInfo)       {gUp[v].np = (node_ptr) new   CmdQMeta(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags);}
+        else if (cmp == dnt::sDstList)     {gUp[v].np = (node_ptr) new   DestList(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags);}
+        else if (cmp == dnt::sQBuf)        {gUp[v].np = (node_ptr) new CmdQBuffer(gUp[v].name, gUp[v].patName, gUp[v].bpName, x->hash, x->cpu, x->b, flags);}
         else if (cmp == dnt::sMeta)        {throw std::runtime_error("Pure meta type not yet implemented"); return;}
         //FIXME try to get info from download
         else                        {throw std::runtime_error("Node <" + gUp[v].name + ">'s type <" + cmp + "> is not supported!\nMost likely you forgot to set the type attribute or accidentally created the node by a typo in an edge definition."); return;}
@@ -352,7 +357,7 @@ namespace dnm = DotStr::Node::MetaGen;
       for( auto& updateMapIt : vertexMap) {if (updateMapIt.first > itDup.second) updateMapIt.second--; }
     }
 
-    writeUpDotFile("inspect.dot", false);
+    //writeUpDotFile("inspect.dot", false);
 
     prepareUpload();
     atUp.updateBmps();
@@ -440,7 +445,7 @@ namespace dnm = DotStr::Node::MetaGen;
     atUp.debug();
     */
 
-    writeUpDotFile("inspect.dot", false);
+    //writeUpDotFile("inspect.dot", false);
 
     //now we have a problem: all vertex descriptors in the alloctable just got invalidated by the removal ... repair them
     
@@ -477,7 +482,7 @@ namespace dnm = DotStr::Node::MetaGen;
   int CarpeDM::add(Graph& g) {
     baseUploadOnDownload();
     addition(g);
-    writeUpDotFile("upload.dot", false);
+    //writeUpDotFile("upload.dot", false);
 
     return upload();
   } 
@@ -496,7 +501,7 @@ namespace dnm = DotStr::Node::MetaGen;
 
     generateBlockMeta(gTmpKeep);
 
-    writeDotFile("inspect.dot", gTmpKeep, false);
+    //writeDotFile("inspect.dot", gTmpKeep, false);
     baseUploadOnDownload();
     
     bool found; 
@@ -517,7 +522,7 @@ namespace dnm = DotStr::Node::MetaGen;
     }
     
     subtraction(gTmpRemove);
-    writeUpDotFile("upload.dot", false);
+    //writeUpDotFile("upload.dot", false);
 
     return upload();
   }   
@@ -530,7 +535,7 @@ namespace dnm = DotStr::Node::MetaGen;
   int CarpeDM::overwrite(Graph& g) {
     nullify();
     addition(g);
-    writeUpDotFile("upload.dot", false);
+    //writeUpDotFile("upload.dot", false);
 
     return upload();
 

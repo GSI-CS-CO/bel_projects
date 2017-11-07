@@ -411,8 +411,23 @@
 #define NFLG_SYNC_POS           10
 #define NFLG_SYNC_SMSK          (NFLG_SYNC_MSK << NFLG_SYNC_POS)
 
+// Entry point bits - entry into beam processes and patterns
+#define NFLG_BP_ENTRY_LM32_MSK    0x1
+#define NFLG_BP_ENTRY_LM32_POS    12
+#define NFLG_BP_ENTRY_LM32_SMSK   (NFLG_BP_ENTRY_LM32_MSK << NFLG_BP_ENTRY_LM32_POS)
 
+#define NFLG_PAT_ENTRY_LM32_MSK   0x1
+#define NFLG_PAT_ENTRY_LM32_POS   13
+#define NFLG_PAT_ENTRY_LM32_SMSK  (NFLG_PAT_ENTRY_LM32_MSK << NFLG_PAT_ENTRY_LM32_POS)
 
+// Exit point bits - exit from beam processes and patterns
+#define NFLG_BP_EXIT_LM32_MSK     0x1
+#define NFLG_BP_EXIT_LM32_POS     14
+#define NFLG_BP_EXIT_LM32_SMSK    (NFLG_BP_EXIT_LM32_MSK << NFLG_BP_EXIT_LM32_POS)
+
+#define NFLG_PAT_EXIT_LM32_MSK    0x1
+#define NFLG_PAT_EXIT_LM32_POS    15
+#define NFLG_PAT_EXIT_LM32_SMSK   (NFLG_PAT_EXIT_LM32_MSK << NFLG_PAT_EXIT_LM32_POS)
 
 // Type dependent Flags ////////////////////////////////////////////////////////////
 #define NFLG_BITS_SPECIFIC_POS  20

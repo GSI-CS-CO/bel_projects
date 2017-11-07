@@ -56,13 +56,16 @@ namespace DotStr {
     // node properties
     namespace Prop {
       namespace Base {
-        extern const std::string sType   ;
-        extern const std::string sName   ;
-        extern const std::string sCpu    ;
-        extern const std::string sFlags  ;
-        extern const std::string sPentry ;
-        extern const std::string sPexit  ;
-        extern const std::string sPname  ;
+        extern const std::string sType;
+        extern const std::string sName;
+        extern const std::string sCpu;
+        extern const std::string sFlags;
+        extern const std::string sPatEntry; 
+        extern const std::string sPatExit;
+        extern const std::string sPatName;
+        extern const std::string sBpEntry; 
+        extern const std::string sBpExit;
+        extern const std::string sBpName;
       }
 
       namespace Block {

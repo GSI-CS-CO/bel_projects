@@ -19,13 +19,19 @@ class Node;
 class  myVertex {
 public:
   std::string name;
+  std::string patName   = sUndefined;
+  std::string bpName    = sUndefined;
   std::string cpu;
   uint32_t hash;
   node_ptr np;
 
-  std::string pattern;
-  std::string pentry;
-  std::string pexit;
+  
+  std::string patEntry  = sZero;;
+  std::string patExit   = sZero;;
+
+  
+  std::string bpEntry   = sZero;
+  std::string bpExit    = sZero;
 
   //FIXME
   //now follows a list of all possible properties graphviz_read can assign, to copy to concrete Node objects later
@@ -91,6 +97,7 @@ public:
   myVertex() : name(sUndefined), cpu(sZero), hash(uUndefined32), np(nullptr), type(sUndefined), flags(sUndefined32) {}
   
   myVertex(std::string name, std::string cpu, uint32_t hash, node_ptr np, std::string type, std::string flags) : name(name), cpu(cpu), hash(hash), np(np), type(type), flags(flags) {}
+  myVertex(std::string name, std::string pattern, std::string beamproc, std::string cpu, uint32_t hash, node_ptr np, std::string type, std::string flags) : name(name), patName(pattern), bpName(beamproc), cpu(cpu), hash(hash), np(np), type(type), flags(flags) {}
 
   //deep copy
   myVertex(myVertex const &aSource);

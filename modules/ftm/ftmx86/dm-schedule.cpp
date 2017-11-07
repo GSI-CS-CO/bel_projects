@@ -110,7 +110,12 @@ int main(int argc, char* argv[]) {
 
   //TODO we need a dictionary independent of dot files, otherwise, how do we update?
 
-  cdm.loadDictFile("dm.dict");
+  try { cdm.loadDictFile("dm.dict"); } catch (std::runtime_error const& err) {
+      std::cerr << std::endl << program << ": Warning - Could not load dictionary file. Cause: " << err.what() << std::endl;
+    }
+  try { cdm.loadGroupsFile("dm.groups"); } catch (std::runtime_error const& err) {
+      std::cerr << std::endl << program << ": Warning - Could not load groups file. Cause: " << err.what() << std::endl;
+    }
 
   if (inputFilename != NULL) {
     try { cdm.addDotFileToDict(inputFilename); }
@@ -162,7 +167,7 @@ int main(int argc, char* argv[]) {
 
 
   cdm.storeDictFile("dm.dict");  
-  
+  cdm.storeGroupsFile("dm.groups");
 
   cdm.disconnect();
 

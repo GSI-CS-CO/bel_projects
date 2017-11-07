@@ -57,9 +57,12 @@ namespace DotStr {
         const std::string sName   = "node_id";
         const std::string sCpu    = "cpu";   
         const std::string sFlags  = "flags";
-        const std::string sPentry = "patentry"; 
-        const std::string sPexit  = "patexit";
-        const std::string sPname  = "pattern";
+        const std::string sPatEntry = "patentry"; 
+        const std::string sPatExit  = "patexit";
+        const std::string sPatName  = "pattern";
+        const std::string sBpEntry = "bpentry"; 
+        const std::string sBpExit  = "bpexit";
+        const std::string sBpName  = "beamproc";
       }
 
       namespace Block {

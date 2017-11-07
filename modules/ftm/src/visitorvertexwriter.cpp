@@ -14,6 +14,8 @@ namespace dep = DotStr::Edge::Prop;
 namespace det = DotStr::Edge::TypeVal;
 namespace ssi = DotStr::Node::Prop::TMsg::SubId;
 
+using namespace DotStr::Misc;
+
 void VisitorVertexWriter::pushPair(const std::string& p, int v, bool hex) const {
   out << ", " << p << "=\"";
   if (hex)  out << std::hex;
@@ -35,10 +37,23 @@ void VisitorVertexWriter::pushNodeInfo(const Node& el) const {
   //can't use our helper for first property, as we cannot have a comma
   out << dnp::Base::sCpu   << "=\"" <<  (int)el.getCpu() << "\"";
   pushPair(dnp::Base::sFlags, el.getFlags(), F_HEX);
+
 }
 
 void VisitorVertexWriter::pushEventInfo(const Event& el) const {
   pushPair(dnp::TMsg::sTimeOffs, el.getTOffs(), F_DEC);
+  
+  if (el.getPattern() != sUndefined) {
+    pushPair(dnp::Base::sPatName, el.getPattern());
+    pushPair(dnp::Base::sPatEntry, (int)el.isPatEntry(), F_DEC);
+    pushPair(dnp::Base::sPatExit, (int)el.isPatExit(), F_DEC);
+  }  
+  if (el.getBeamProc() != sUndefined) {
+    pushPair(dnp::Base::sBpName, el.getBeamProc());
+    pushPair(dnp::Base::sBpEntry, (int)el.isBpEntry(), F_DEC);
+    pushPair(dnp::Base::sBpExit, (int)el.isBpExit(), F_DEC);
+  } 
+  
 }
 
 void VisitorVertexWriter::pushCommandInfo(const Command& el) const {
@@ -54,6 +69,18 @@ void VisitorVertexWriter::visit(const Block& el) const  {
   pushNodeInfo((Node&)el); 
   pushPair(dnp::Base::sType, dnt::sBlock);
   pushPair(dnp::Block::sTimePeriod, el.getTPeriod(), F_DEC);
+  
+  if (el.getPattern() != sUndefined) {
+    pushPair(dnp::Base::sPatName, el.getPattern());
+    pushPair(dnp::Base::sPatEntry, (int)el.isPatEntry(), F_DEC);
+    pushPair(dnp::Base::sPatExit, (int)el.isPatExit(), F_DEC);
+  }  
+  if (el.getBeamProc() != sUndefined) {
+    pushPair(dnp::Base::sBpName, el.getBeamProc());
+    pushPair(dnp::Base::sBpEntry, (int)el.isBpEntry(), F_DEC);
+    pushPair(dnp::Base::sBpExit, (int)el.isBpExit(), F_DEC);
+  } 
+   
   pushSingle(ec::Node::Block::sLookDef);
   pushEnd();
 }
@@ -62,7 +89,7 @@ void VisitorVertexWriter::visit(const TimingMsg& el) const {
   pushNodeInfo((Node&)el);
   pushPair(dnp::Base::sType, dnt::sTMsg);
   pushEventInfo((Event&)el);  
-
+  
   // ID output depends on FID field
   uint64_t id = el.getId();
   uint8_t fid = ((id >> ID_FID_POS) & ID_FID_MSK); 

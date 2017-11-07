@@ -15,6 +15,7 @@
 #include "common.h"
 #include "hashmap.h"
 #include "alloctable.h"
+#include "grouptable.h"
 #include "ftm_shared_mmap.h"
 
 
@@ -93,6 +94,7 @@ protected:
 
   int cpuQty = -1;
   HashMap hm;
+  GroupTable gt;
   AllocTable atUp;
   Graph gUp;
   AllocTable atDown;
@@ -147,14 +149,28 @@ public:
   //Remove all nodes in .dot file from name/hash dictionary
   void removeDotFromDict(const std::string& s)      {Graph gTmp; removeFromDict(parseDot(s, gTmp));};
   void removeDotFileFromDict(const std::string& fn) {removeDotFromDict(readTextFile(fn));};
-  void clearDict(); //Clear the dictionary
+  void clearDict() {hm.clear();}; //Clear the dictionary
+
+
+
   std::string storeDict() {return hm.store();}; 
   void loadDict(const std::string& s) {hm.load(s);}
   void storeDictFile(const std::string& fn) {writeTextFile(fn, storeDict());};
-  void loadDictFile(const std::string& fn) {loadDict(readTextFile(fn));}; 
+  void loadDictFile(const std::string& fn) {loadDict(readTextFile(fn));};
+
   bool isInDict(const uint32_t hash);
   bool isInDict(const std::string& name);
   bool isDictEmpty() {return (bool)(hm.size() == 0);};
+
+  // Group/Entry/Exit Table ///////////////////////////////////////////////////////////////////////////////
+  std::string storeGroups() {return gt.store();}; 
+  void loadGroups(const std::string& s) {gt.load(s);}
+  void storeGroupsFile(const std::string& fn) {writeTextFile(fn, storeGroups());};
+  void loadGroupsFile(const std::string& fn) {loadGroups(readTextFile(fn));}; 
+  void clearGroups() {gt.clear();}; //Clear pattern table
+  void testGroup(const std::string& sNode) {gt.insert(sNode);}
+  void testGroupPattern(const std::string& node, const std::string& pat, bool entry, bool exit) {gt.setPattern(node, pat, entry, exit);} 
+  void testGroupBeamProc(const std::string& node, const std::string& bp, bool entry, bool exit) {gt.setBeamProc(node, bp, entry, exit);} 
 
   // Text File IO /////////////////////////////////////////////////////////////////////////////////
   void writeTextFile(const std::string& fn, const std::string& s);
