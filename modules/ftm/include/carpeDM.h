@@ -15,7 +15,7 @@
 #include "common.h"
 #include "hashmap.h"
 #include "alloctable.h"
-#include "patterntable.h"
+#include "grouptable.h"
 #include "ftm_shared_mmap.h"
 
 
@@ -94,7 +94,7 @@ protected:
 
   int cpuQty = -1;
   HashMap hm;
-  PatternTable pt;
+  GroupTable gt;
   AllocTable atUp;
   Graph gUp;
   AllocTable atDown;
@@ -162,13 +162,15 @@ public:
   bool isInDict(const std::string& name);
   bool isDictEmpty() {return (bool)(hm.size() == 0);};
 
-  // Pattern/Entry/Exit Table ///////////////////////////////////////////////////////////////////////////////
-  std::string storePatterns() {return pt.store();}; 
-  void loadPatterns(const std::string& s) {pt.load(s);}
-  void storePatternsFile(const std::string& fn) {writeTextFile(fn, storePatterns());};
-  void loadPatternsFile(const std::string& fn) {loadPatterns(readTextFile(fn));}; 
-  void clearPatterns() {pt.clear();}; //Clear pattern table
-  void testPattern(const std::string& pattern) {bool dummy; pt.insertPattern(pattern, dummy);} 
+  // Group/Entry/Exit Table ///////////////////////////////////////////////////////////////////////////////
+  std::string storeGroups() {return gt.store();}; 
+  void loadGroups(const std::string& s) {gt.load(s);}
+  void storeGroupsFile(const std::string& fn) {writeTextFile(fn, storeGroups());};
+  void loadGroupsFile(const std::string& fn) {loadGroups(readTextFile(fn));}; 
+  void clearGroups() {gt.clear();}; //Clear pattern table
+  void testGroup(const std::string& sNode) {gt.insert(sNode);}
+  void testGroupPattern(const std::string& node, const std::string& pat, bool entry, bool exit) {gt.setPattern(node, pat, entry, exit);} 
+  void testGroupBeamProc(const std::string& node, const std::string& bp, bool entry, bool exit) {gt.setBeamProc(node, bp, entry, exit);} 
 
   // Text File IO /////////////////////////////////////////////////////////////////////////////////
   void writeTextFile(const std::string& fn, const std::string& s);

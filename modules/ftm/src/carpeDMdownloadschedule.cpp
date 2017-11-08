@@ -78,6 +78,8 @@ namespace dnt = DotStr::Node::TypeVal;
           uint32_t    hash      = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_HASH]);
           //sLog << std::dec << "Offset " << localAdr + NODE_HASH << std::endl;
           std::string name      = hm.lookup(hash) ? hm.lookup(hash).get() : "#" + std::to_string(hash);
+          std::string pattern   = gt.lookUpOrCreateNode(name)->pattern;
+          std::string beamproc  = gt.lookUpOrCreateNode(name)->beamproc;
           uint32_t    flags     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]); //FIXME what about future requests to hashmap if we improvised the name from hash? those will fail ...
           uint32_t    type      = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
           uint8_t     cpu       = i;
@@ -88,7 +90,8 @@ namespace dnt = DotStr::Node::TypeVal;
           std::string tmp(stream.str());
 
           //Add Vertex
-          vertex_t v        = boost::add_vertex(myVertex(name, std::to_string(cpu), hash, nullptr, "", tmp), g);
+          
+          vertex_t v        = boost::add_vertex(myVertex(name, pattern, beamproc, std::to_string(cpu), hash, nullptr, "", tmp), g);
           
           //std::cout << "atdown cpu " << (int)cpu << " Adr: 0x" << std::hex << adr <<  " Hash 0x" << hash << std::endl;
           //Add allocTable Entry
@@ -108,16 +111,16 @@ namespace dnt = DotStr::Node::TypeVal;
           std::copy(src, src + _MEM_BLOCK_SIZE, (uint8_t*)&(x->b[0]));
         
           switch(type) {
-            case NODE_TYPE_TMSG         : g[v].np = (node_ptr) new  TimingMsg(g[v].name, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sTMsg;       g[v].np->deserialise(); break;
-            case NODE_TYPE_CNOOP        : g[v].np = (node_ptr) new       Noop(g[v].name, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sCmdFlow;    g[v].np->deserialise(); break;
-            case NODE_TYPE_CFLOW        : g[v].np = (node_ptr) new       Flow(g[v].name, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sCmdFlush;   g[v].np->deserialise(); break;
-            case NODE_TYPE_CFLUSH       : g[v].np = (node_ptr) new      Flush(g[v].name, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sCmdWait;    g[v].np->deserialise(); break;
-            case NODE_TYPE_CWAIT        : g[v].np = (node_ptr) new       Wait(g[v].name, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sBlockFixed; g[v].np->deserialise(); break;
-            case NODE_TYPE_BLOCK_FIXED  : g[v].np = (node_ptr) new BlockFixed(g[v].name, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sBlockAlign; g[v].np->deserialise(); break;
-            case NODE_TYPE_BLOCK_ALIGN  : g[v].np = (node_ptr) new BlockAlign(g[v].name, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sQInfo;      g[v].np->deserialise(); break;
-            case NODE_TYPE_QUEUE        : g[v].np = (node_ptr) new   CmdQMeta(g[v].name, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sDstList;    g[v].np->deserialise(); break;
-            case NODE_TYPE_ALTDST       : g[v].np = (node_ptr) new   DestList(g[v].name, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sQBuf;       g[v].np->deserialise(); break;
-            case NODE_TYPE_QBUF         : g[v].np = (node_ptr) new CmdQBuffer(g[v].name, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sMeta; break;
+            case NODE_TYPE_TMSG         : g[v].np = (node_ptr) new  TimingMsg(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sTMsg;       g[v].np->deserialise(); break;
+            case NODE_TYPE_CNOOP        : g[v].np = (node_ptr) new       Noop(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sCmdNoop;    g[v].np->deserialise(); break;
+            case NODE_TYPE_CFLOW        : g[v].np = (node_ptr) new       Flow(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sCmdFlow;    g[v].np->deserialise(); break;
+            case NODE_TYPE_CFLUSH       : g[v].np = (node_ptr) new      Flush(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sCmdFlush;   g[v].np->deserialise(); break;
+            case NODE_TYPE_CWAIT        : g[v].np = (node_ptr) new       Wait(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sCmdWait;    g[v].np->deserialise(); break;
+            case NODE_TYPE_BLOCK_FIXED  : g[v].np = (node_ptr) new BlockFixed(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sBlockFixed; g[v].np->deserialise(); break;
+            case NODE_TYPE_BLOCK_ALIGN  : g[v].np = (node_ptr) new BlockAlign(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sBlockAlign; g[v].np->deserialise(); break;
+            case NODE_TYPE_QUEUE        : g[v].np = (node_ptr) new   CmdQMeta(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sQInfo;    g[v].np->deserialise(); break;
+            case NODE_TYPE_ALTDST       : g[v].np = (node_ptr) new   DestList(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sDstList;  g[v].np->deserialise(); break;
+            case NODE_TYPE_QBUF         : g[v].np = (node_ptr) new CmdQBuffer(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sQBuf; break;
             case NODE_TYPE_UNKNOWN      : std::cerr << "not yet implemented " << g[v].type << std::endl; break;
             default                     : std::cerr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
           }
@@ -126,8 +129,7 @@ namespace dnt = DotStr::Node::TypeVal;
       }
     }
 
- 
-    
+  
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -137,7 +139,9 @@ namespace dnt = DotStr::Node::TypeVal;
     for(auto& it : at.getTable().get<Hash>()) {
       // handled by visitor
       if (g[it.v].np == nullptr) {throw std::runtime_error( std::string("Node ") + g[it.v].name + std::string("not initialised")); return;
+
       } else {
+
         if  (!(g[it.v].np->isMeta())) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at));
       }  
     }

@@ -292,9 +292,12 @@ bool CarpeDM::connect(const std::string& en) {
     dp.property(dnp::Base::sCpu,                         boost::get(&myVertex::cpu,        g));
     dp.property(dnp::Base::sType,                        boost::get(&myVertex::type,       g));
     dp.property(dnp::Base::sFlags,                       boost::get(&myVertex::flags,      g));
-    dp.property(dnp::Base::sPname,                       boost::get(&myVertex::pattern,    g));
-    dp.property(dnp::Base::sPentry,                      boost::get(&myVertex::pentry,     g));
-    dp.property(dnp::Base::sPexit,                       boost::get(&myVertex::pexit,      g));
+    dp.property(dnp::Base::sPatName,                     boost::get(&myVertex::patName,    g));
+    dp.property(dnp::Base::sPatEntry,                    boost::get(&myVertex::patEntry,   g));
+    dp.property(dnp::Base::sPatExit,                     boost::get(&myVertex::patExit,    g));
+    dp.property(dnp::Base::sBpName,                      boost::get(&myVertex::bpName,     g));
+    dp.property(dnp::Base::sBpEntry,                     boost::get(&myVertex::bpEntry,    g));
+    dp.property(dnp::Base::sBpExit,                      boost::get(&myVertex::bpExit,     g));
     //Block
     dp.property(dnp::Block::sTimePeriod,                 boost::get(&myVertex::tPeriod,    g));
     dp.property(dnp::Block::sGenQPrioHi,                 boost::get(&myVertex::qIl,        g));
@@ -343,19 +346,6 @@ bool CarpeDM::connect(const std::string& en) {
 
     return ret;
   }
-/*
-  std::istream CarpeDM::readTextFile(const std::string& fn) {
-    std::istream ret;
-    std::ifstream in(fn);
-    if(in.good()) {
-      ret << in.rdbuf();
-    }  
-    else {throw std::runtime_error(" Could not read from file '" + fn + "'");}  
-
-    return ret;
-  }
-*/
-  //if ((boost::get_property(gTmp, boost::graph_name)).find("!CMD") != std::string::npos) {throw std::runtime_error("Cannot treat a series of commands as a schedule"); return -1;}
 
   Graph& CarpeDM::parseDot(const std::string& s, Graph& g) {
     boost::dynamic_properties dp = createParser(g);
@@ -363,12 +353,18 @@ bool CarpeDM::connect(const std::string& en) {
     catch(...) { throw; }
    
     
-    //generate hashes
+    //generate hashes and adds pattern & beamproc memberships to GroupTable
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      g[v].hash = hm.add(g[v].name).get(); 
+      g[v].hash = hm.add(g[v].name).get();
+      /*
+      std::cout << g[v].name << " P: " << g[v].patName << " " << g[v].patEntry << " " << g[v].patExit;
+      std::cout << " B: " << g[v].bpName << " " << g[v].bpEntry << " " << g[v].bpExit << std::endl;
+      */
+      gt.setBeamProc(g[v].name, g[v].bpName, (g[v].bpEntry  != sZero), (g[v].bpExit  != sZero));
+      gt.setPattern(g[v].name, g[v].patName, (g[v].patEntry != sZero), (g[v].patExit != sZero));
       //sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;
     }
-
+    //gt.debug();
     return g;
 
 

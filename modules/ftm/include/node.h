@@ -8,12 +8,19 @@
 #include "visitordownloadcrawler.h"
 #include "visitorvertexwriter.h"
 #include "ftm_common.h"
+#include "dotstr.h"
 
+using namespace DotStr::Misc;
 
 
 class Node {
 
-  const std::string&  name;
+  std::string name;
+  //FIXME having more references to vertex properties here is not pretty, but we are in a hurry
+  std::string pattern;
+  std::string beamproc;
+
+ 
   const uint32_t&     hash;
   const uint8_t&      cpu;
   
@@ -29,36 +36,40 @@ protected:
 
 
 public:
-  
-  Node(const std::string& name, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : name(name), hash(hash), cpu(cpu), b(b), flags(flags) {} //what to do if it fails?
+  //Node(const std::string& name, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : name(name), pattern(sUndefined), beamproc(sUndefined), hash(hash), cpu(cpu), b(b), flags(flags)  {}
+  Node(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) 
+  : name(name), pattern(pattern), beamproc(beamproc), hash(hash), cpu(cpu), b(b), flags(flags)  {} 
   virtual ~Node() {}
   virtual node_ptr clone() const = 0; 
   
 
-  const std::string&  getName() const {return this->name;}
+  std::string  getName() const {return std::string(this->name);}
+  std::string  getPattern() const {return std::string(this->pattern);}
+  std::string  getBeamProc() const {return std::string(this->beamproc);}
   const uint32_t&     getHash() const {return this->hash;}
+
   const uint8_t&      getCpu()  const {return this->cpu;}
   const uint32_t&     getFlags() const {return this->flags;}
   void     setFlags(uint32_t flags) {this->flags |= flags;}
   void     clrFlags(uint32_t flags) {this->flags &= ~flags;}
-  const bool isPainted() const {return (bool)(this->flags & NFLG_PAINT_LM32_SMSK);}
+  //Check if this node is an entry or exit point to a pattern or beamprocess
+  const bool isPainted()  const {return (bool)(this->flags & NFLG_PAINT_LM32_SMSK);}
+  const bool isBpEntry()  const {return (bool)(this->flags & NFLG_BP_ENTRY_LM32_SMSK);}
+  const bool isBpExit()   const {return (bool)(this->flags & NFLG_BP_EXIT_LM32_SMSK);}
+  const bool isPatEntry() const {return (bool)(this->flags & NFLG_PAT_ENTRY_LM32_SMSK);}
+  const bool isPatExit()  const {return (bool)(this->flags & NFLG_PAT_EXIT_LM32_SMSK);}
   uint8_t* getB() {return this->b;}
   const void setB(uint8_t* b) {this->b = b;}
 
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
-  virtual void accept(const VisitorUploadCrawler& v)      const = 0;
-  virtual void accept(const VisitorDownloadCrawler& v)    const = 0;
+  virtual void accept(const VisitorUploadCrawler& v)    const = 0;
+  virtual void accept(const VisitorDownloadCrawler& v)  const = 0;
   virtual bool isMeta(void) const {return false;}
   virtual bool isBlock(void) const {return false;}
   virtual void deserialise() = 0;
   virtual void serialise(const vAdr &va) const {
-  
-  //   std::cout << "va: " << va.size() << std::endl;
-  //FIXME size check !
-  //for(auto it = va.begin(); it < va.end(); it++) std::cout << "#" << it - va.begin() << " 0x" << std::hex << *it << std::endl;
-  //std::cout << std::endl;  
     std::memset(b, 0, _MEM_BLOCK_SIZE);
     writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_DEF_DEST_PTR,  va[ADR_DEF_DST]);
     writeLeNumberToBeBytes(b + (ptrdiff_t)NODE_HASH,   this->hash);

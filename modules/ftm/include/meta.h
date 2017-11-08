@@ -12,7 +12,7 @@ protected:
   
 
 public:
-  Meta(const std::string& name, const uint32_t& hash, const uint8_t& cpu, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) : Node(name, hash, cpu, b, flags) {}
+  Meta(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : Node(name, pattern, beamproc, hash,  cpu, b, flags) {}
   ~Meta()  {};
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
   virtual void accept(const VisitorUploadCrawler& v)    const = 0;
@@ -39,8 +39,8 @@ class CmdQMeta : public Meta {
 
 
 public:
-  CmdQMeta(const std::string& name, const uint32_t& hash, const uint8_t& cpu, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) 
-  : Meta(name, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QUEUE << NFLG_TYPE_POS))) {}
+  CmdQMeta(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) 
+  : Meta(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QUEUE << NFLG_TYPE_POS))) {}
   ~CmdQMeta()  {};
   node_ptr clone() const { return boost::make_shared<CmdQMeta>(*this); }
 
@@ -60,8 +60,8 @@ public:
 class CmdQBuffer : public Meta {
 
 public:
-  CmdQBuffer(const std::string& name, const uint32_t& hash, const uint8_t& cpu, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) 
-  : Meta(name, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QBUF << NFLG_TYPE_POS))) {}
+  CmdQBuffer(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) 
+  : Meta(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_QBUF << NFLG_TYPE_POS))) {}
   ~CmdQBuffer()  {};
   node_ptr clone() const { return boost::make_shared<CmdQBuffer>(*this); }
 
@@ -79,8 +79,8 @@ public:
 class DestList : public Meta {
 
 public:
-  DestList(const std::string& name, const uint32_t& hash, const uint8_t& cpu, uint8_t (&b)[_MEM_BLOCK_SIZE], uint32_t flags) 
-  : Meta(name, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_ALTDST << NFLG_TYPE_POS))) {}
+  DestList(const std::string& name, const std::string&  pattern, const std::string&  beamproc,  const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) 
+  : Meta(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_ALTDST << NFLG_TYPE_POS))) {}
   ~DestList()  {};
   node_ptr clone() const { return boost::make_shared<DestList>(*this); }
 
