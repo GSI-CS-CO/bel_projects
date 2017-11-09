@@ -42,3 +42,34 @@
     return x.first;
   }
 
+  vStrC GroupTable::getPatternEntryPoints(const std::string& sPattern) {
+    std::cout << "Searching Entries for Pattern " << sPattern << std::endl;
+    vStrC res;
+    pmRange x  = lookup<Groups::Pattern>(sPattern);
+    for (auto it = x.first; it != x.second; ++it) if (it->patternEntry) res.push_back(it->node);
+    return res;
+  }
+
+  vStrC GroupTable::getPatternExitPoints(const std::string& sPattern) {
+    std::cout << "Searching Exits for Pattern " << sPattern << std::endl;
+    vStrC res;
+    pmRange x  = lookup<Groups::Pattern>(sPattern);
+    for (auto it = x.first; it != x.second; ++it) if (it->patternExit) res.push_back(it->node);
+    return res;
+  }
+
+  vStrC GroupTable::getBeamProcEntryPoints(const std::string& sBeamproc) {
+    std::cout << "Searching Entries for beamproc " << sBeamproc << std::endl;
+    vStrC res;
+    pmRange x  = lookup<Groups::BeamProc>(sBeamproc);
+    for (auto it = x.first; it != x.second; ++it) if (it->beamprocEntry) res.push_back(it->node);
+    return res;
+  }
+
+  vStrC GroupTable::getBeamProcExitPoints(const std::string& sBeamproc) {
+    std::cout << "Searching Exits for Pattern " << sBeamproc << std::endl;
+    vStrC res;
+    pmRange x  = lookup<Groups::BeamProc>(sBeamproc);
+    for (auto it = x.first; it != x.second; ++it) if (it->beamprocExit) res.push_back(it->node);
+    return res;
+  }

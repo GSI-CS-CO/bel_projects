@@ -7,6 +7,7 @@
 #include <sstream>
 #include <set>
 #include <boost/optional.hpp>
+#include <boost/container/vector.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -52,6 +53,7 @@ struct GroupMeta {
   
 };
 
+//necessary to avoid confusion with classnames elsewhere
 namespace Groups {
 
 struct Node{};
@@ -62,20 +64,23 @@ struct BeamProc{};
 
 
 
+
 typedef boost::multi_index_container<
   GroupMeta,
   indexed_by<
-    hashed_unique <
+    ordered_unique <
       tag<Groups::Node>,  BOOST_MULTI_INDEX_MEMBER(GroupMeta, std::string, node)>,
-    hashed_non_unique <
+    ordered_non_unique <
       tag<Groups::Pattern>,  BOOST_MULTI_INDEX_MEMBER(GroupMeta, std::string, pattern)>,
-    hashed_non_unique <
+    ordered_non_unique <
       tag<Groups::BeamProc>,  BOOST_MULTI_INDEX_MEMBER(GroupMeta, std::string, beamproc)>  
   >    
  > GroupMeta_set;
 
 typedef GroupMeta_set::iterator pmI;
 typedef std::pair<pmI, pmI> pmRange;
+
+typedef boost::container::vector<std::string> vStrC;
 
 
 class GroupTable {
@@ -127,14 +132,12 @@ public:
   void setBeamProc (const std::string& sNode, const std::string& sNew) { setBeamProc(sNode, sNew, false, false); }
   
 
-  const std::string& getPatternEntry(const std::string& sPattern) {
-    pmRange x  = lookup<Groups::Pattern>(sPattern); 
-    if (isOk(x.first) && isOk(x.second)) {
+  vStrC getPatternEntryPoints(const std::string& sPattern);
+  vStrC getPatternExitPoints(const std::string& sPattern);
+  vStrC getBeamProcEntryPoints(const std::string& sBeamproc);
+  vStrC getBeamProcExitPoints(const std::string& sBeamproc);
 
-    }
 
-    return sUndefined;
-  }
   const GroupMeta_set& getTable() const { return a; }
   const size_t getSize()            const { return a.size(); }
 

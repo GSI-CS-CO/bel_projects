@@ -366,7 +366,9 @@ bool CarpeDM::connect(const std::string& en) {
       gt.setPattern(g[v].name, g[v].patName, (g[v].patEntry != sZero), (g[v].patExit != sZero));
       //sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;
     }
-    //gt.debug();
+    gt.debug();
+    auto vs = gt.getPatternEntryPoints("P1"); 
+    for (auto& it : vs ) {std::cout << "P1 Entry: " << it << std::endl;}
     return g;
 
 
