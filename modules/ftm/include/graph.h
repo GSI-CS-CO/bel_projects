@@ -21,13 +21,14 @@ public:
   std::string name;
   std::string patName   = sUndefined;
   std::string bpName    = sUndefined;
-  std::string cpu;
+  std::string cpu       = sZero;
+  std::string thread    = sZero;
   uint32_t hash;
   node_ptr np;
 
   
-  std::string patEntry  = sZero;;
-  std::string patExit   = sZero;;
+  std::string patEntry  = sZero;
+  std::string patExit   = sZero;
 
   
   std::string bpEntry   = sZero;

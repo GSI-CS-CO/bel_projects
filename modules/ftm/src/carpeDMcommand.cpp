@@ -32,7 +32,8 @@ int CarpeDM::sendCommands(Graph& g) {
   uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
   mc_ptr mc;
 
-  if ((boost::get_property(g, boost::graph_name)).find("!CMD") == std::string::npos) {throw std::runtime_error("Expected a series of commands (Tag '!CMD' not found in graphname)"); return -1;}
+  if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) == std::string::npos) {throw std::runtime_error("Expected a series of commands, but this appears to be a schedule (Tag '" + DotStr::Graph::Special::sCmd + "' not found in graphname)"); return -1;}
+  
 
  
 
@@ -42,19 +43,27 @@ int CarpeDM::sendCommands(Graph& g) {
 
     uint64_t cmdTvalid  = s2u<uint64_t>(g[v].tValid);
     uint8_t  cmdPrio    = s2u<uint8_t>(g[v].prio);
+    uint8_t  cpu        = s2u<uint8_t>(g[v].cpu);
+    uint8_t  thr        = s2u<uint8_t>(g[v].thread);
 
-           if (g[v].type == dnt::sCmdNoop)     { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
-                                          mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );}
-      else if (g[v].type == dnt::sCmdFlow)     { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
-                                          uint32_t adr    = getNodeAdr(g[v].flowDest, DOWNLOAD, INTERNAL);
-                                          mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, false );
-                                          
-                                        }
-      else if (g[v].type == dnt::sCmdFlush)    {mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)s2u<uint8_t>(g[v].qIl), (bool)s2u<uint8_t>(g[v].qHi), (bool)s2u<uint8_t>(g[v].qLo));}
-      else if (g[v].type == dnt::sCmdWait)     {uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
-                                          mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );}
-       //FIXME try to get info from download
-      else                        {throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n"); return -2;}
+    if (!(cpu < getCpuQty())) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");
+    if (!(thr < _THR_QTY_  )) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sThread + "' is invalid\n"); 
+
+           if (g[v].type == dnt::sCmdNoop)    { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
+                                                mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
+                                              }
+      else if (g[v].type == dnt::sCmdFlow)    { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
+                                                uint32_t adr    = getNodeAdr(g[v].flowDest, DOWNLOAD, INTERNAL);
+                                                mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, false );
+                                              }
+      else if (g[v].type == dnt::sCmdFlush)   { mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)s2u<uint8_t>(g[v].qIl), (bool)s2u<uint8_t>(g[v].qHi), (bool)s2u<uint8_t>(g[v].qLo));}
+      else if (g[v].type == dnt::sCmdWait)    { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
+                                                mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
+                                              }
+      else if (g[v].type == dnt::sCmdStart)   { setThrStart(cpu, thr); continue;}
+      else if (g[v].type == dnt::sCmdStop)    { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not yet impleted\n");}
+      else if (g[v].type == dnt::sCmdAbort)   { clrThrRun(cpu, thr); continue;}                                     
+      else                                    { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n"); return -2;}
     
     sLog << "cmd flow " << testme << " -> " <<  g[v].flowDest <<  std::endl;
 
@@ -83,6 +92,7 @@ int CarpeDM::sendCommands(Graph& g) {
     vAdr vUlA;
     uint32_t cmdWrInc, hash;
     uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
+    
 
     try {
       hash      = hm.lookup(targetName).get(); 

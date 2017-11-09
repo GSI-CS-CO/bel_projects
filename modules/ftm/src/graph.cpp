@@ -9,6 +9,7 @@ myVertex::myVertex(myVertex const &src) {
   this->patName   = src.patName;
   this->bpName    = src.bpName;
   this->cpu = src.cpu;
+  this->thread = src.thread;
   this->hash = src.hash;
   if (src.np != nullptr) this->np = src.np->clone();
   this->patEntry  = src.patEntry;

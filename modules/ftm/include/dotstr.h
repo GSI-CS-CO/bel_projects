@@ -52,13 +52,16 @@ namespace DotStr {
   }
 
   namespace Node {
-    
+    namespace Special {
+      extern const std::string sIdle;
+    }  
     // node properties
     namespace Prop {
       namespace Base {
         extern const std::string sType;
         extern const std::string sName;
         extern const std::string sCpu;
+        extern const std::string sThread;
         extern const std::string sFlags;
         extern const std::string sPatEntry; 
         extern const std::string sPatExit;
@@ -126,6 +129,9 @@ namespace DotStr {
       extern const std::string sCmdFlow      ;
       extern const std::string sCmdFlush     ;
       extern const std::string sCmdWait      ;
+      extern const std::string sCmdStart     ;
+      extern const std::string sCmdStop      ;
+      extern const std::string sCmdAbort     ;
       extern const std::string sBlock        ;
       extern const std::string sBlockFixed   ;
       extern const std::string sBlockAlign   ;
@@ -140,6 +146,9 @@ namespace DotStr {
   }  
 
   namespace Graph {
+    namespace Special {
+      extern const std::string sCmd;
+    }
 
     namespace Prop {
       extern const std::string sName   ;
