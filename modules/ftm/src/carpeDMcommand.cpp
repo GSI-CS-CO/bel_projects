@@ -138,11 +138,11 @@ int CarpeDM::sendCommands(Graph& g) {
      
      adr = ebReadWord(ebd, getThrInitialNodeAdr(cpuIdx, thrIdx));
 
-     if (adr == LM32_NULL_PTR) return "Idle";
+     if (adr == LM32_NULL_PTR) return DotStr::Node::Special::sIdle;
 
      auto x = atDown.lookupAdr(cpuIdx, atDown.intAdr2adr(cpuIdx, adr));
-     if (atDown.isOk(x)) return gDown[x->v].name;
-     else           return "Unknown";
+     if (atDown.isOk(x))  return gDown[x->v].name;
+     else                 return DotStr::Misc::sUndefined;
   }
 
  
@@ -152,11 +152,11 @@ int CarpeDM::sendCommands(Graph& g) {
     
     adr = ebReadWord(ebd, getThrCurrentNodeAdr(cpuIdx, thrIdx));
 
-    if (adr == LM32_NULL_PTR) return "Idle";
+    if (adr == LM32_NULL_PTR) return DotStr::Node::Special::sIdle;
 
     auto x = atDown.lookupAdr(cpuIdx, atDown.intAdr2adr(cpuIdx, adr));
     if (atDown.isOk(x)) return gDown[x->v].name;
-    else           return "Unknown";  
+    else                return DotStr::Misc::sUndefined;  
   }
 
   //Get bitfield showing running threads
@@ -419,3 +419,86 @@ uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
     return newIdxs;
   }
 
+
+std::pair<int, int> CarpeDM::findRunningPattern(const std::string& sPattern) {
+  std::pair<int, int> res = {-1, -1};
+  vStrC members   = getPatternMembers (sPattern);
+  try { res.first = getNodeCpu(firstString(members), DOWNLOAD); } catch (...) {res.first = -1; return res;}
+
+  uint32_t thrds  = getThrRun(res.first);
+  
+  vStrC cursors;
+
+  for (int i = 0; i < _THR_QTY_; i++ ) { cursors.push_back(getThrCursor(res.first, i)); }
+
+  for (int i = 0; i < _THR_QTY_; i++ ) {
+    //Get cursors of all running threads not idle or uninitialised
+    if ( (thrds & (1<<i)) && (cursors[i] != DotStr::Misc::sUndefined) && (cursors[i] != DotStr::Node::Special::sIdle) ) {
+      // now the footwork: check if this cursor was pointing to a member of our pattern
+      bool found = false;
+      for ( auto& sM : members ) { if (cursors[i] == sM) found = true; } 
+      if (found) {res.second = i; break;} //yep, we found the idx of the thread running our pattern
+    }  
+  }
+
+  return res;
+
+}
+
+bool CarpeDM::isPatternRunning(const std::string& sPattern) {
+  auto cpuAndThr = findRunningPattern(sPattern);
+  return ((cpuAndThr.first >= 0) && (cpuAndThr.second >= 0));
+}
+
+
+int CarpeDM::getIdleThread(uint8_t cpuIdx) {
+  uint32_t thrds = getThrRun(cpuIdx);
+  int i;
+  for (i = 0; i <= _THR_QTY_; i++) { if ((i < _THR_QTY_) && !(thrds & (1<<i))) break; } // aborts at free thrIdx or returns _THR_QTY_ if no frees found
+  return i;
+}  
+
+//Requests Pattern to start on thread <x>
+void CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx) {
+  std::string sNode = getPatternEntryNode(sPattern);
+  uint8_t cpuIdx    = getNodeCpu(sNode, DOWNLOAD);
+  setThrOrigin(cpuIdx, thrIdx, sNode); //configure thread and run it
+  startThr(cpuIdx, thrIdx);
+}
+//Requests Pattern to start
+void CarpeDM::startPattern(const std::string& sPattern) {
+  
+  std::string sNode = getPatternEntryNode(sPattern);
+  uint8_t cpuIdx    = getNodeCpu(sNode, DOWNLOAD);
+  int thrIdx = getIdleThread(cpuIdx); //find a free thread we can use to run our pattern
+  if (thrIdx == _THR_QTY_) throw std::runtime_error( "Found no free thread on " + sPattern + "'s hosting cpu");
+
+  setThrOrigin(cpuIdx, (uint8_t)thrIdx, sNode); //configure thread and run it
+  startThr(cpuIdx, (uint8_t)thrIdx);        
+}
+
+//Requests Pattern to stop
+void CarpeDM::stopPattern(const std::string& sPattern) {
+  std::string sNode = getPatternExitNode(sPattern);
+
+  mc_ptr mc = (mc_ptr) new MiniFlow(0, PRIO_LO, 1, getNodeAdr(DotStr::Node::Special::sIdle, DOWNLOAD, INTERNAL), false );
+  //send a command: tell patternExitNode to change the flow to Idle
+  sendCmd(sNode, PRIO_LO, mc);
+}
+
+//Immediately aborts a Pattern
+void CarpeDM::abortPattern(const std::string& sPattern) {
+  std::pair<int, int> cpuAndThr = findRunningPattern(sPattern);
+  //if we didn't find it, it's not running now. So no problem that we cannot abort it
+  if ((cpuAndThr.first >= 0) && (cpuAndThr.second >= 0)) abortThr((uint8_t)cpuAndThr.first, (uint8_t)cpuAndThr.second);
+}
+
+
+  const std::string CarpeDM::getNodePattern (const std::string& sNode)          {return firstString(gt.getGroups<Groups::Pattern, &GroupMeta::pattern>(sNode));}
+  const std::string CarpeDM::getNodeBeamproc(const std::string& sNode)          {return firstString(gt.getGroups<Groups::Beamproc, &GroupMeta::beamproc>(sNode));}
+              vStrC CarpeDM::getPatternMembers (const std::string& sPattern)    {return gt.getMembers<Groups::Pattern>(sPattern);}
+ const std::string& CarpeDM::getPatternEntryNode(const std::string& sPattern)   {return firstString(gt.getPatternEntryNodes(sPattern));}
+ const std::string& CarpeDM::getPatternExitNode(const std::string& sPattern)    {return firstString(gt.getPatternExitNodes(sPattern));}
+              vStrC CarpeDM::getBeamprocMembers(const std::string& sBeamproc)   {return gt.getMembers<Groups::Pattern>(sBeamproc);}
+  const std::string CarpeDM::getBeamprocEntryNode(const std::string& sBeamproc) {return firstString(gt.getBeamprocEntryNodes(sBeamproc));}
+  const std::string CarpeDM::getBeamprocExitNode(const std::string& sBeamproc)  {return firstString(gt.getBeamprocExitNodes(sBeamproc));}

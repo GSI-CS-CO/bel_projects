@@ -362,11 +362,13 @@ bool CarpeDM::connect(const std::string& en) {
       std::cout << g[v].name << " P: " << g[v].patName << " " << g[v].patEntry << " " << g[v].patExit;
       std::cout << " B: " << g[v].bpName << " " << g[v].bpEntry << " " << g[v].bpExit << std::endl;
       */
-      gt.setBeamProc(g[v].name, g[v].bpName, (g[v].bpEntry  != sZero), (g[v].bpExit  != sZero));
+      gt.setBeamproc(g[v].name, g[v].bpName, (g[v].bpEntry  != sZero), (g[v].bpExit  != sZero));
       gt.setPattern(g[v].name, g[v].patName, (g[v].patEntry != sZero), (g[v].patExit != sZero));
       //sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;
     }
-    //gt.debug();
+    gt.debug();
+    auto vs = gt.getPatternEntryNodes("P1"); 
+    for (auto& it : vs ) {std::cout << "P1 Entry: " << it << std::endl;}
     return g;
 
 

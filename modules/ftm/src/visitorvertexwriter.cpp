@@ -43,8 +43,8 @@ void VisitorVertexWriter::pushMembershipInfo(const Node& el) const {
     pushPair(dnp::Base::sPatEntry, (int)el.isPatEntry(), FORMAT_BOOL);
     pushPair(dnp::Base::sPatExit, (int)el.isPatExit(), FORMAT_BOOL);
   }  
-  if (el.getBeamProc() != sUndefined) {
-    pushPair(dnp::Base::sBpName, el.getBeamProc());
+  if (el.getBeamproc() != sUndefined) {
+    pushPair(dnp::Base::sBpName, el.getBeamproc());
     pushPair(dnp::Base::sBpEntry, (int)el.isBpEntry(), FORMAT_BOOL);
     pushPair(dnp::Base::sBpExit, (int)el.isBpExit(), FORMAT_BOOL);
   }

@@ -76,6 +76,8 @@ typedef boost::container::vector<node_ptr> npBuf;
 typedef boost::container::vector<uint8_t> vBuf;
 typedef boost::container::vector<uint32_t> vAdr;
 typedef boost::container::vector<uint32_t> ebBuf;
+typedef boost::container::vector<std::string> vStrC;
+
 
 
 

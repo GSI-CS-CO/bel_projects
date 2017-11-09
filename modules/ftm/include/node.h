@@ -45,7 +45,7 @@ public:
 
   std::string  getName() const {return std::string(this->name);}
   std::string  getPattern() const {return std::string(this->pattern);}
-  std::string  getBeamProc() const {return std::string(this->beamproc);}
+  std::string  getBeamproc() const {return std::string(this->beamproc);}
   const uint32_t&     getHash() const {return this->hash;}
 
   const uint8_t&      getCpu()  const {return this->cpu;}

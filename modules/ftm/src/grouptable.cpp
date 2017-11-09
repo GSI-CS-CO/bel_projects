@@ -24,12 +24,12 @@
   void GroupTable::debug() { 
     for (pmI x = a.begin(); x != a.end(); x++) { 
       std::cout << x->node << " -> Pattern: " << x->pattern <<  ", Entry: " <<  (int)x->patternEntry <<  ", Exit: " <<  (int)x->patternExit;
-      std::cout << " -> BeamProc: " << x->beamproc <<  ", Entry: " <<  (int)x->beamprocEntry <<  ", Exit: " <<  (int)x->beamprocExit << std::endl;
+      std::cout << " -> Beamproc: " << x->beamproc <<  ", Entry: " <<  (int)x->beamprocEntry <<  ", Exit: " <<  (int)x->beamprocExit << std::endl;
        
     }
   }
 
-  pmI GroupTable::lookUpOrCreateNode(const std::string& sNode) {
+  pmI GroupTable::lookupOrCreateNode(const std::string& sNode) {
     //std::cout << "Looking for node..." << sNode;
     pmRange x = lookup<Groups::Node>(sNode);
     if (!isOk(x.first)) { //node was not found, try to create
@@ -42,3 +42,5 @@
     return x.first;
   }
 
+
+  

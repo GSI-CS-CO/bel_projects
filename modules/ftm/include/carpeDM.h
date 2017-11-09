@@ -76,7 +76,10 @@ private:
   void mergeUploadDuplicates(vertex_t borg, vertex_t victim); 
 
   void addToDict(Graph& g);      
-  void removeFromDict(Graph& g); 
+  void removeFromDict(Graph& g);
+  int getIdleThread(uint8_t cpuIdx);
+
+  const std::string& firstString(const vStrC& v) {return *(v.begin());}
 
 
 protected:
@@ -170,7 +173,7 @@ public:
   void clearGroups() {gt.clear();}; //Clear pattern table
   void testGroup(const std::string& sNode) {gt.insert(sNode);}
   void testGroupPattern(const std::string& node, const std::string& pat, bool entry, bool exit) {gt.setPattern(node, pat, entry, exit);} 
-  void testGroupBeamProc(const std::string& node, const std::string& bp, bool entry, bool exit) {gt.setBeamProc(node, bp, entry, exit);} 
+  void testGroupBeamproc(const std::string& node, const std::string& bp, bool entry, bool exit) {gt.setBeamproc(node, bp, entry, exit);} 
 
   // Text File IO /////////////////////////////////////////////////////////////////////////////////
   void writeTextFile(const std::string& fn, const std::string& s);
@@ -235,8 +238,28 @@ public:
                void startThr(uint8_t cpuIdx, uint8_t thrIdx); //Requests Thread to start
                void stopThr(uint8_t cpuIdx, uint8_t thrIdx); //Requests Thread to stop
                void abortThr(uint8_t cpuIdx, uint8_t thrIdx); //Immediately aborts a Thread
+               
+
             uint8_t getNodeCpu(const std::string& name, bool direction); //shortcut to obtain a node's cpu by its name 
-           uint32_t getNodeAdr(const std::string& name, bool direction, bool intExt); //shortcut to obtain a node's address by its name   
+        uint32_t    getNodeAdr(const std::string& name, bool direction, bool intExt); //shortcut to obtain a node's address by its name
+  const std::string getNodePattern (const std::string& sNode);
+  const std::string getNodeBeamproc(const std::string& sNode);
+
+              vStrC getPatternMembers (const std::string& sPattern);
+  const std::string& getPatternEntryNode(const std::string& sPattern);
+  const std::string& getPatternExitNode(const std::string& sPattern);
+              
+              vStrC getBeamprocMembers(const std::string& sBeamproc);
+  const std::string getBeamprocEntryNode(const std::string& sBeamproc);
+  const std::string getBeamprocExitNode(const std::string& sBeamproc);
+
+  // The very lazy interface ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu and thread assignment of running pattern
+               bool isPatternRunning(const std::string& sPattern); //true if Pattern <x> is running
+               void startPattern(const std::string& sPattern, uint8_t thrIdx); //Requests Pattern to start
+               void startPattern(const std::string& sPattern); //Requests Pattern to start on first free thread
+               void stopPattern(const std::string& sPattern); //Requests Pattern to stop
+               void abortPattern(const std::string& sPattern); //Immediately aborts a Pattern
 
   // Screen Output //////////////////////////////////////////////////////////////
   void show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta );
