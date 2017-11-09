@@ -1,11 +1,12 @@
 digraph g {
-name="123!CMD";
+name="123!CMD!";
 
 graph []
 
-
-  CMD_FLOW1   [type="flow",   prio="0", toffs="0",  target="B_PPS", dest="Evt_PPSB", tvalid="0"];
-  CMD_FLOW2  [type="flow",   prio="0", toffs="0",  target="B_PPS2", dest="Evt_PPSD", tvalid="0"];
+  CMD_START   [type="start", cpu="1", thread="1"];
+  //CMD_ABORT   [type="abort", cpu="1", thread="1"];
+  CMD_FLOW1   [type="flow",   prio="0", toffs="0",  target="B_PPS", dest="Evt_PPS", tvalid="0"];
+  
   //CMD_WAIT   [type="wait",   prio="1", toffs="55", target="B_Bla", tvalid="5000"];
 
 

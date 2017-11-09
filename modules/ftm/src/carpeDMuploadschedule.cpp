@@ -216,9 +216,10 @@ using namespace DotStr::Misc;
     int allocState;
     
 
+
     //allocate and init all new vertices
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
-      //std::string name = boost::get_property(gUp, boost::graph_name) + "." + gUp[v].name;
+      
       std::string name = gUp[v].name;
       //if (!(hm.lookup(name)))                   {throw std::runtime_error("Node '" + name + "' was unknown to the hashmap"); return;}
       hash = gUp[v].hash;
@@ -333,7 +334,12 @@ using namespace DotStr::Misc;
     //probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) { 
       BOOST_FOREACH( vertex_t w, vertices(gTmp) ) { 
-        if (gTmp[w].hash == gUp[v].hash) { duplicates[v] = w;
+        if (gTmp[w].hash == gUp[v].hash) { 
+          //Check how the duplicate is defined. Implicit (by edge) is okay, explicit is not. necessary to avoid unintentional merge of graph nodes of the same name
+          //Check the type: if it's undefined, node definition was implicit
+          
+          if (gTmp[v].type != sUndefined) throw std::runtime_error( "Node " + gTmp[v].name + " already exists. You can only use the name again in an edge descriptor (implicit definition)");
+          duplicates[v] = w;
           //sLog << gTmp[w].name << " gTmp " << w << " <-> " << gUp[v].name << " gUp " << v << std::endl; 
         } 
       }  
@@ -438,15 +444,6 @@ using namespace DotStr::Misc;
       for( auto& updateMapIt : vertexMap) {if (updateMapIt.first > vd) updateMapIt.second--; }
     }
 
-    /*
-    sLog <<  "Map after " << std::endl;
-    for (auto it : vertexMap) sLog <<  it.first << " -> " << it.second << std::endl;
-
-    atUp.debug();
-    */
-
-    //writeUpDotFile("inspect.dot", false);
-
     //now we have a problem: all vertex descriptors in the alloctable just got invalidated by the removal ... repair them
     
     std::vector<amI> itAtVec; //because elements change order during loop, we need to store iterators first
@@ -480,6 +477,7 @@ using namespace DotStr::Misc;
   //high level functions for external interface
 
   int CarpeDM::add(Graph& g) {
+    if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     baseUploadOnDownload();
     addition(g);
     //writeUpDotFile("upload.dot", false);
@@ -488,6 +486,7 @@ using namespace DotStr::Misc;
   } 
 
   int CarpeDM::remove(Graph& g) {
+    if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     baseUploadOnDownload();
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
@@ -496,6 +495,7 @@ using namespace DotStr::Misc;
 
 
   int CarpeDM::keep(Graph& g) {
+    if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     Graph gTmpRemove;
     Graph& gTmpKeep = g;
 
@@ -533,6 +533,7 @@ using namespace DotStr::Misc;
   }
 
   int CarpeDM::overwrite(Graph& g) {
+    if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     nullify();
     addition(g);
     //writeUpDotFile("upload.dot", false);

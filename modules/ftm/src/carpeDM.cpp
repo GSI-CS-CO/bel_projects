@@ -290,6 +290,7 @@ bool CarpeDM::connect(const std::string& en) {
     dp.property(dep::Base::sType,                        boost::get(&myEdge::type,         g));
     dp.property(dnp::Base::sName,                        boost::get(&myVertex::name,       g));
     dp.property(dnp::Base::sCpu,                         boost::get(&myVertex::cpu,        g));
+
     dp.property(dnp::Base::sType,                        boost::get(&myVertex::type,       g));
     dp.property(dnp::Base::sFlags,                       boost::get(&myVertex::flags,      g));
     dp.property(dnp::Base::sPatName,                     boost::get(&myVertex::patName,    g));
@@ -325,6 +326,7 @@ bool CarpeDM::connect(const std::string& en) {
     //for .dot-cmd abuse
     dp.property(dnp::Cmd::sFlowDst,                      boost::get(&myVertex::flowDest,   g));
     dp.property(dnp::Cmd::sFlowTarget,                   boost::get(&myVertex::flowTarget, g));
+    dp.property(dnp::Base::sThread,                      boost::get(&myVertex::thread,     g));
     
 
   
@@ -432,20 +434,21 @@ bool CarpeDM::connect(const std::string& en) {
      
     AllocTable& at = (direction == UPLOAD ? atUp : atDown );
     uint32_t hash;
-    if (!(hm.lookup(name))) {throw std::runtime_error( "Unknown Node Name"); return -1;} 
+    if (!(hm.lookup(name))) {throw std::runtime_error( "Unknown Node Name '" + name + "' when lookup up hosting cpu"); return -1;} 
     hash = hm.lookup(name).get(); //just pass it on
     
     auto x = at.lookupHash(hash);
-    if (!(at.isOk(x)))  {throw std::runtime_error( "Could not find Node in allocation table"); return -1;}
+    if (!(at.isOk(x)))  {throw std::runtime_error( "Could not find Node '" + name + "' in allocation table"); return -1;}
     
     return x->cpu;
   }
 
   uint32_t CarpeDM::getNodeAdr(const std::string& name, bool direction, bool intExt) {
-     
+    if(name == DotStr::Node::Special::sIdle) return LM32_NULL_PTR; //idle node is resolved as a null ptr without comment
+
     AllocTable& at = (direction == UPLOAD ? atUp : atDown );
     uint32_t hash;
-    if (!(hm.lookup(name))) {throw std::runtime_error( "Unknown Node Name"); return LM32_NULL_PTR;} 
+    if (!(hm.lookup(name))) {throw std::runtime_error( "Unknown Node Name '" + name + "' when lookup up address"); return LM32_NULL_PTR;} 
     hash = hm.lookup(name).get(); //just pass it on
     auto x = at.lookupHash(hash);
     if (!(at.isOk(x)))  {throw std::runtime_error( "Could not find Node in allocation table"); return LM32_NULL_PTR;}
