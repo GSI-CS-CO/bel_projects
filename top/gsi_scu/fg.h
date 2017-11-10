@@ -53,6 +53,10 @@ struct param_set {
                               17..12  shift_a */                           
 };
 
+#define STATE_STOPPED 0
+#define STATE_ACTIVE  1
+#define STATE_ARMED   2
+
 struct channel_regs {
   unsigned int wr_ptr;
   unsigned int rd_ptr;
