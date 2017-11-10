@@ -13,6 +13,7 @@
 #include <boost/graph/graphviz.hpp>
 #include <boost/optional.hpp>
 #include "ftm_common.h"
+#include "dotstr.h"
 
 #if BOOST_VERSION >= 106200 //endian conversian was included in boost 1.62
   #include <boost/endian/conversion.hpp>
@@ -96,6 +97,10 @@ inline T writeBeBytesToLeNumber(uint8_t* pB) {
 
 template<typename T>
 inline T s2u(const std::string& s) {
+  using namespace DotStr::Misc;
+  //check for boolean strings
+  if(s == sTrue)  return 1;
+  if(s == sFalse) return 0;
   return (T)std::stoull(s, 0, 0);
 
 }
