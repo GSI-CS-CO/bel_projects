@@ -12,6 +12,7 @@ namespace DotStr {
 
     extern const std::string sHexZero     ;
     extern const std::string sZero        ;
+    extern const std::string sOne         ;
     extern const std::string sUndefined64 ;
     extern const std::string sUndefined32 ;
     extern const uint32_t    uUndefined32 ;
@@ -22,6 +23,8 @@ namespace DotStr {
     extern const std::string sPrioHi       ;
     extern const std::string sPrioMd       ;
     extern const std::string sPrioLo       ;
+    extern const std::string sTrue         ;
+    extern const std::string sFalse        ;
 
   }
 

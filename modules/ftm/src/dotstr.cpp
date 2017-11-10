@@ -9,6 +9,7 @@ namespace DotStr {
 
     const std::string sHexZero      = "0x0";
     const std::string sZero         = "0";
+    const std::string sOne          = "1";
     const std::string sUndefined64  = "0xD15EA5EDDEADBEEF";
     const std::string sUndefined32  = "0xDEADBEEF";
     const uint32_t    uUndefined32  = 0xDEADBEEF; //yeah yeah, it's not a string. I know
@@ -19,6 +20,8 @@ namespace DotStr {
     const std::string sPrioHi       = "prioil"; //FIXME string is still fitting for 'Interlock' as highest priority
     const std::string sPrioMd       = "priohi"; //FIXME string is still fitting for 'Interlock' as highest priority
     const std::string sPrioLo       = "priolo";
+    const std::string sTrue         = "true";
+    const std::string sFalse        = "false";
 
 
   }
