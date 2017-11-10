@@ -53,23 +53,30 @@ int read_mil(volatile unsigned int *base, short *data, short fc_ifc_addr) {
   unsigned short rx_data_avail;
   unsigned short rx_err;
   unsigned short rx_req;
+  int timeout = 0;
 
   // write fc and addr to taskram
   base[MIL_SIO3_TX_TASK2] = fc_ifc_addr;
 
   // wait for task to start (tx fifo full or other tasks running)
   rx_req = base[MIL_SIO3_TX_REQ];
-  while(!(rx_req & 0x4)) {
+  while(!(rx_req & 0x4) && (timeout < TASK_TIMEOUT)) {
     usleep(1);
     rx_req = base[MIL_SIO3_TX_REQ];
+    timeout++;
   }
+  if (timeout > TASK_TIMEOUT)
+    return RCV_TIMEOUT;
 
   // wait for task to finish, a read over the dev bus needs at least 40us
   rx_data_avail = base[MIL_SIO3_D_RCVD];
-  while(!(rx_data_avail & 0x4)) {
+  while(!(rx_data_avail & 0x4) && (timeout < TASK_TIMEOUT)) {
     usleep(1);
     rx_data_avail = base[MIL_SIO3_D_RCVD];
+    timeout++;
   }
+  if (timeout > TASK_TIMEOUT)
+    return RCV_TIMEOUT;
 
   // task finished
   rx_err = base[MIL_SIO3_D_ERR];
@@ -182,23 +189,30 @@ int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc
   unsigned short rx_data_avail;
   unsigned short rx_err;
   unsigned short rx_req;
+  int timeout = 0;
 
   // write fc and addr to taskram
   base[CALC_OFFS(slot) + MIL_SIO3_TX_TASK2] = fc_ifc_addr;
 
   // wait for task to start (tx fifo full or other tasks running)
   rx_req = base[CALC_OFFS(slot) + MIL_SIO3_TX_REQ];
-  while(!(rx_req & 0x4)) {
+  while(!(rx_req & 0x4) && (timeout < TASK_TIMEOUT)) {
     usleep(1);
     rx_req = base[CALC_OFFS(slot) + MIL_SIO3_TX_REQ];
+    timeout++;
   }
+  if (timeout > TASK_TIMEOUT)
+    return RCV_TIMEOUT;
 
   // wait for task to finish, a read over the dev bus needs at least 40us
   rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD];
-  while(!(rx_data_avail & 0x4)) {
+  while(!(rx_data_avail & 0x4) && (timeout < TASK_TIMEOUT)) {
     usleep(1);
     rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD];
+    timeout++;
   }
+  if (timeout > TASK_TIMEOUT)
+    return RCV_TIMEOUT;
 
   // task finished
   rx_err = base[CALC_OFFS(slot) + MIL_SIO3_D_ERR];

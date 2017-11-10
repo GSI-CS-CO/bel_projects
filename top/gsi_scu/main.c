@@ -59,6 +59,7 @@
 
 #define MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
 
+#define TASK_TIMEOUT  100
 
 extern struct w1_bus wrpc_w1_bus;
 extern inline int cbisEmpty(volatile struct channel_regs*, int);
@@ -736,6 +737,7 @@ typedef struct {
   int slave_nr;                    /* slave nr of the controlling sio card */
   short irq_data[MAX_FG_CHANNELS];
   int i;
+  int task_timeout_cnt;
   uint64_t interval;               /* interval of the task */
   uint64_t lasttick;               /* when was the task ran last */
   void (*func)(int);               /* pointer to the function of the task */
@@ -743,14 +745,14 @@ typedef struct {
 
 /* task configuration table */
 static TaskType tasks[] = {
-  { 0, 0, {0}, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 1
-  { 0, 0, {0}, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 2
-  { 0, 0, {0}, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 3
-  { 0, 0, {0}, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 4
-  { 0, 0, {0}, 0, ALWAYS         , 0, dev_bus_handler    },
-  { 0, 0, {0}, 0, ALWAYS         , 0, scu_bus_handler    },
-  { 0, 0, {0}, 0, INTERVAL_10MS  , 0, ecaHandler         },
-  { 0, 0, {0}, 0, INTERVAL_100MS , 0, channel_watchdog   },
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 1
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 2
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 3
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 4
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_bus_handler    },
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, scu_bus_handler    },
+  { 0, 0, {0}, 0, 0, INTERVAL_10MS  , 0, ecaHandler         },
+  { 0, 0, {0}, 0, 0, INTERVAL_100MS , 0, channel_watchdog   },
 
 };
 
@@ -845,6 +847,12 @@ void dev_sio_handler(int id) {
 
     case 1:
       //mprintf("state %d\n", task_ptr[id].state);
+      /* if timeout reached, proceed with next task */
+      if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
+        mprintf("timeout in dev_sio_handle, state 1, task %d\n", task_ptr[id].i);
+        task_ptr[id].i++;
+        task_ptr[id].task_timeout_cnt = 0;
+      }
       /* fetch status from dev bus controller; */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
         if (fg_regs[i].state > STATE_STOPPED) {
@@ -870,9 +878,12 @@ void dev_sio_handler(int id) {
       if (status == RCV_TASK_BSY) {
         //mprintf("yield\n");
         task_ptr[id].i = i; // start next time from i
+        task_ptr[id].task_timeout_cnt++;
+        //mprintf("rcv_tsk_bsy, timout cnt %d\n", task_ptr[id].task_timeout_cnt);
         break; //yield
       } else {
         task_ptr[id].i = 0; // start next time from 0
+        task_ptr[id].task_timeout_cnt = 0;
         task_ptr[id].state = 2;
         break;
       }
@@ -908,6 +919,12 @@ void dev_sio_handler(int id) {
       break;
     case 4:
       //mprintf("state %d\n", task_ptr[id].state);
+      /* if timeout reached, proceed with next task */
+      if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
+        mprintf("timeout in dev_sio_handle, state 4, task %d\n", task_ptr[id].i);
+        task_ptr[id].i++;
+        task_ptr[id].task_timeout_cnt = 0;
+      }
       /* fetch daq data */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
@@ -932,9 +949,11 @@ void dev_sio_handler(int id) {
       if (status == RCV_TASK_BSY) {
         //mprintf("yield\n");
         task_ptr[id].i = i; // start next time from i
+        task_ptr[id].task_timeout_cnt++;
         break; //yield
       } else {
         task_ptr[id].i = 0; // start next time from 0
+        task_ptr[id].task_timeout_cnt = 0;
         task_ptr[id].state = 0;
         break;
       }
@@ -985,6 +1004,11 @@ void dev_bus_handler(int id) {
 
     case 1:
       //mprintf("state %d\n", task_ptr[id].state);
+      /* if timeout reached, proceed with next task */
+      if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
+        task_ptr[id].i++;
+        task_ptr[id].task_timeout_cnt = 0;
+      }
       /* fetch status from dev bus controller; */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
         if (fg_regs[i].state > STATE_STOPPED) {
@@ -1011,9 +1035,11 @@ void dev_bus_handler(int id) {
       if (status == RCV_TASK_BSY) {
         //mprintf("yield\n");
         task_ptr[id].i = i; // start next time from i
+        task_ptr[id].task_timeout_cnt++;
         break; //yield
       } else {
         task_ptr[id].i = 0; // start next time from 0
+        task_ptr[id].task_timeout_cnt = 0;
         task_ptr[id].state = 2;
         break;
       }
@@ -1049,6 +1075,11 @@ void dev_bus_handler(int id) {
       break;
     case 4:
       //mprintf("state %d\n", task_ptr[id].state);
+      /* if timeout reached, proceed with next task */
+      if (task_ptr[id].task_timeout_cnt > TASK_TIMEOUT) {
+        task_ptr[id].i++;
+        task_ptr[id].task_timeout_cnt = 0;
+      }
       /* fetch daq data */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
         if (task_ptr[id].irq_data[i] & (DEV_STATE_IRQ | DEV_DRQ)) { // any irq pending?
@@ -1073,9 +1104,11 @@ void dev_bus_handler(int id) {
       if (status == RCV_TASK_BSY) {
         //mprintf("yield\n");
         task_ptr[id].i = i; // start next time from i
+        task_ptr[id].task_timeout_cnt++;
         break; //yield
       } else {
         task_ptr[id].i = 0; // start next time from 0
+        task_ptr[id].task_timeout_cnt = 0;
         task_ptr[id].state = 0;
         break;
       }
