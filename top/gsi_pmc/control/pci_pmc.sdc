@@ -127,4 +127,21 @@ set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_req_o]
 set_output_delay -clock PCI_CLOCK 19.0 [get_ports pmc_busmode_io[*]]
 
 
+####################################################
+# Assignments to meet PCI "Float to Active" Delay
+####################################################
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*ad_iob*en_out    ] -to [get_ports pmc_ad_io[*]  ]
+
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*par_iob*en_out   ] -to [get_ports pmc_par_io    ]
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*devsel_iob*en_out] -to [get_ports pmc_devsel_io ]
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*stop_iob*en_out  ] -to [get_ports pmc_stop_io   ]
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*trdy_iob*en_out  ] -to [get_ports pmc_trdy_io   ]
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*perr_iob*en_out  ] -to [get_ports pmc_perr_io   ]
+
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*cbe_iob*en_out   ] -to [get_ports pmc_c_be_io[*]]
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*frame_iob*en_out ] -to [get_ports pmc_frame_io  ]
+set_max_delay 47.0 -from [get_registers *wb_pmc_host_bridge*pci_io_mux*irdy_iob*en_out  ] -to [get_ports pmc_irdy_io   ]
+
+
+
 
