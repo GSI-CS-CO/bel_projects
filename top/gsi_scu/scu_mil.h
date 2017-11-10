@@ -64,6 +64,7 @@ int reset_mil(volatile unsigned *base);
 #define MIL_SIO3_TX_DATA  0x400
 #define MIL_SIO3_TX_CMD   0x401
 #define MIL_SIO3_STAT     0x402
+#define MIL_SIO3_RST      0x412
 #define MIL_SIO3_RX_TASK1 0xd01
 #define MIL_SIO3_TX_TASK1 0xc01
 #define MIL_SIO3_RX_TASK2 0xd02

@@ -165,6 +165,8 @@ void init_buffers(struct channel_regs *cr, int channel, uint32_t *fg_macros,  vo
     cr[channel].state = 0;
     cr[channel].ramp_count = 0;
     //reset hardware
+    reset_mil(devb_base);
+    scub_reset_mil(scub_base, slot);
     if (cr[channel].macro_number >= 0) {    //there is a macro assigned to that channel
       macro = cr[channel].macro_number;
       slot = fg_macros[macro] >> 24;
