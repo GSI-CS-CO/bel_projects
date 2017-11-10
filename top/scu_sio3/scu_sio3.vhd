@@ -21,11 +21,20 @@ use work.monster_pkg.all;
 --|   Introduced for enabling SCU as a substituion for Legacy (device-bus controlled) infrastructure.                |
 --|   V.1 Initial Version from 2015-Jul-16                                                                           |
 --|..................................................................................................................|
---|   V.2 LED Check & Hex Dial Feature added, |
---+-----------------------------------------------------------------------------------------------------------------+
-
-
-
+--|   V.2 LED Check & Hex Dial Feature added                                                                         |
+--+------------------------------------------------------------------------------------------------------------------+
+--|   V...         Release Renumbering due to merge of SIO1, SIO2, SIO3 for getting one Firmware                     |
+--|   V6 Rel 4     Last Release with original legacy MIL Interface ( 1 Data, 1 CMD Register)                         |
+--|                (no TaskRam,no Taskfifo, different Versions for WB_MIL_SIO, WB_MIL_SCU)                           |
+--+------------------------------------------------------------------------------------------------------------------+
+--|   V7 Rel.0 SIO with following Enhancements                                                                       |     
+--|                WB_MIL_SIO and WB_MIL_SCU merged to one version                                                   |  
+--|                Taskfifo 1024 x 17 for fast writes of Data and CMD DevBus Telegrams                               |                   
+--|                Taskram 1...254 for automatic performing of many Write/Read CMD Tasks (one after another)         |  
+--|                DSC Clock de-noised in Hw6408 Sub-Macro (fixed rare cases of faulty receive telegrams before)     |     
+--|                SW Reset on ModuleResetRegister with static low on Baseaddress  x24 (=SIOAdr x824)                |
+--|                HW Detection of not equipped MIL Piggys will let to Wishbone Errors in case of WB Accesses        |
+--+------------------------------------------------------------------------------------------------------------------+
 
 ENTITY scu_sio3 IS 
 generic (
