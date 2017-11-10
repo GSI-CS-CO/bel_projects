@@ -52,9 +52,11 @@
 #define INTERVAL_1000MS 1000000000ULL
 #define INTERVAL_2000MS 2000000000ULL
 #define INTERVAL_10MS   10000000ULL
+#define INTERVAL_10US   10000ULL
 #define ALWAYS          0ULL
 
 #define  MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
+#define RD_TIMEOUT  500
 
 
 extern struct w1_bus wrpc_w1_bus;
@@ -283,7 +285,7 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
         else
           SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
         disable_slave_irq(channel);
-        fg_regs[channel].state = 0;
+        fg_regs[channel].state = STATE_STOPPED;
       }
     } else {
       if (!(irq_act_reg  & FG_RUNNING)) {     // fg stopped
@@ -293,13 +295,13 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
         else
           SEND_SIG(SIG_STOP_NEMPTY);          // something went wrong
         disable_slave_irq(channel);
-        fg_regs[channel].state = 0;
+        fg_regs[channel].state = STATE_STOPPED;
       }
     }
 
     if ((slot & 0xf0) == 0) {
       if ((cntrl_reg & FG_RUNNING) && !(cntrl_reg & FG_DREQ)) {
-        fg_regs[channel].state = 1; 
+        fg_regs[channel].state = STATE_ACTIVE;
         SEND_SIG(SIG_START); // fg has received the tag or brc message
         if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
@@ -311,7 +313,7 @@ inline void handle(int slot, unsigned fg_base, short irq_act_reg) {
       }
     } else {
       if ((irq_act_reg & FG_RUNNING) && (irq_act_reg & DEV_STATE_IRQ)){
-        fg_regs[channel].state = 1; 
+        fg_regs[channel].state = STATE_ACTIVE;
         SEND_SIG(SIG_START); // fg has received the tag or brc message
         if (cbgetCount(&fg_regs[0], channel) == THRESHOLD)
           SEND_SIG(SIG_REFILL);
@@ -439,14 +441,16 @@ int configure_fg_macro(int channel) {
       if ((status = scub_write_mil(scub_base, slot & 0xf, cntrl_reg_wr | FG_ENABLED, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, slot & 0xf);
     }
 
-    fg_regs[channel].state = 2; //armed
+    // reset watchdog
+    timeout[channel] = 0;
+    fg_regs[channel].state = STATE_ARMED;
     SEND_SIG(SIG_ARMED);
   }
-  return 0; 
-} 
+  return 0;
+}
 
 /* scans for fgs on mil extension and scu bus */
-void print_fgs() { 
+void print_fgs() {
   int i=0;
   for(i=0; i < MAX_FG_MACROS; i++)
     fg_macros[i] = 0;
@@ -514,12 +518,12 @@ void disable_channel(unsigned int channel) {
   }
 
 
-  if (fg_regs[channel].state == 1) {    // hw is running
+  if (fg_regs[channel].state == STATE_ACTIVE) {    // hw is running
     fg_regs[channel].rd_ptr = fg_regs[channel].wr_ptr;
   } else {
-    fg_regs[channel].state = 0;
+    fg_regs[channel].state = STATE_STOPPED;
     SEND_SIG(SIG_DISARMED);
-  } 
+  }
 }
 
 void updateTemp() {
@@ -621,7 +625,7 @@ void sw_irq_handler(unsigned int adr, unsigned int msg) {
 int is_active_sio(unsigned int sio_slave_nr) {
   int i, slot;
   for (i = 0; i < MAX_FG_CHANNELS; i++) {
-    if (fg_regs[i].state > 0) {
+    if (fg_regs[i].state > STATE_STOPPED) {
       slot = fg_macros[fg_regs[i].macro_number] >> 24;
       /* is sio and has active fgs */
       if(((slot & 0xf) == sio_slave_nr ) && (slot & DEV_SIO)) {
@@ -712,17 +716,17 @@ void ecaHandler()
       /* check if there are armed fgs */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
         // only armed fgs
-        if (fg_regs[i].state == 2) {
+        if (fg_regs[i].state == STATE_ARMED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           if(slot & DEV_MIL_EXT) {
             dev_mil_armed = 1;
           } else if (slot & DEV_SIO) {
-            dev_sio_armed = 1;  
+            dev_sio_armed = 1;
           }
         }
-      }  
+      }
       // send broadcast start to mil extension
-      if (dev_mil_armed) write_mil(scu_mil_base, 0x0, 0x20ff); 
+      if (dev_mil_armed) scu_mil_base[MIL_SIO3_TX_CMD] = 0x20ff;
       // send broadcast start to all scu bus slaves
       if (dev_sio_armed) {
         // select all scu slaves
@@ -746,7 +750,7 @@ typedef struct {
   int slave_nr;                    /* slave nr of the controlling sio card */
   short irq_data[MAX_FG_CHANNELS];
   int i;
-  uint64_t timer;
+  int timeout;
   uint64_t interval;               /* interval of the task */
   uint64_t lasttick;               /* when was the task ran last */
   void (*func)(int);               /* pointer to the function of the task */
@@ -832,12 +836,12 @@ void dev_sio_handler(int id) {
         break;
       else
         m = remove_msg(&msg_buf[0], DEVSIO);
-      
+
       task_ptr[id].slave_nr = m.msg + 1;
       //mprintf("state %d\n", task_ptr[id].state);
       /* poll all pending regs on the dev bus; non blocking read operation */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
-        if (fg_regs[i].state > 0) {
+        if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to sio */
@@ -851,12 +855,12 @@ void dev_sio_handler(int id) {
         task_ptr[id].irq_data[i] = 0;
       task_ptr[id].state = 1;
       break;
-      
+
     case 1:
       //mprintf("state %d\n", task_ptr[id].state);
       /* fetch status from dev bus controller; */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
-        if (fg_regs[i].state > 0) {
+        if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to sio */
@@ -973,11 +977,11 @@ void dev_bus_handler(int id) {
         break;
       else
         m = remove_msg(&msg_buf[0], DEVBUS);
-      
+
       //mprintf("state %d\n", task_ptr[id].state);
       /* poll all pending regs on the dev bus; non blocking read operation */
       for (i = 0; i < MAX_FG_CHANNELS; i++) {
-        if (fg_regs[i].state > 0) {
+        if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to mil extension */
@@ -985,18 +989,18 @@ void dev_bus_handler(int id) {
             if ((status = set_task_mil(scu_mil_base, i + 1, FC_IRQ_ACT_RD | dev)) != OKAY) dev_failure(status, 20);
           }
         }
-      }  
+      }
       // clear old irq data
       for (i = 0; i < MAX_FG_CHANNELS; i++)
         task_ptr[id].irq_data[i] = 0;
       task_ptr[id].state = 1;
       break;
-      
+
     case 1:
       //mprintf("state %d\n", task_ptr[id].state);
       /* fetch status from dev bus controller; */
       for (i = task_ptr[id].i; i < MAX_FG_CHANNELS; i++) {
-        if (fg_regs[i].state > 0) {
+        if (fg_regs[i].state > STATE_STOPPED) {
           slot = fg_macros[fg_regs[i].macro_number] >> 24;
           dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
           /* test only ifas connected to mil extension */
