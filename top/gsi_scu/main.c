@@ -51,12 +51,13 @@
 
 #define INTERVAL_1000MS 1000000000ULL
 #define INTERVAL_2000MS 2000000000ULL
+#define INTERVAL_100MS  100000000ULL
+#define INTERVAL_84MS   84000000ULL
 #define INTERVAL_10MS   10000000ULL
 #define INTERVAL_10US   10000ULL
 #define ALWAYS          0ULL
 
-#define  MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
-#define RD_TIMEOUT  500
+#define MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
 
 
 extern struct w1_bus wrpc_w1_bus;
@@ -75,6 +76,7 @@ void dev_sio_handler(int);
 void dev_bus_handler(int);
 void scu_bus_handler(int);
 void cleanup_sio_dev(int);
+void channel_watchdog(int);
 
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED board_id           = -1;
@@ -111,7 +113,7 @@ volatile struct message_buffer msg_buf[QUEUE_CNT] = {0};
 
 
 
-uint64_t timeout[MAX_SCU_SLAVES] = {0}; 
+uint64_t timeout[MAX_FG_CHANNELS] = {0};
 
 
 void dev_failure(int status, int slot) {
@@ -620,22 +622,6 @@ void sw_irq_handler(unsigned int adr, unsigned int msg) {
   }
 }
 
-/* tells if a sio card has enabled dev bus slaves */
-/* 1 <= sio_slave_nr <= MAX_SCU_SLAVES            */
-int is_active_sio(unsigned int sio_slave_nr) {
-  int i, slot;
-  for (i = 0; i < MAX_FG_CHANNELS; i++) {
-    if (fg_regs[i].state > STATE_STOPPED) {
-      slot = fg_macros[fg_regs[i].macro_number] >> 24;
-      /* is sio and has active fgs */
-      if(((slot & 0xf) == sio_slave_nr ) && (slot & DEV_SIO)) {
-        return 1;
-      }
-    }
-  }
-  return 0;
-}
-
 /*************************************************************
 * 
 * demonstrate how to poll actions ("events") from ECA
@@ -750,7 +736,6 @@ typedef struct {
   int slave_nr;                    /* slave nr of the controlling sio card */
   short irq_data[MAX_FG_CHANNELS];
   int i;
-  int timeout;
   uint64_t interval;               /* interval of the task */
   uint64_t lasttick;               /* when was the task ran last */
   void (*func)(int);               /* pointer to the function of the task */
@@ -758,13 +743,15 @@ typedef struct {
 
 /* task configuration table */
 static TaskType tasks[] = {
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 1
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 2
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 3
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 4
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_bus_handler    },
-  { 0, 0, {0}, 0, 0, ALWAYS         , 0, scu_bus_handler    },
-  { 0, 0, {0}, 0, 0, INTERVAL_10MS  , 0, ecaHandler         },
+  { 0, 0, {0}, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 1
+  { 0, 0, {0}, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 2
+  { 0, 0, {0}, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 3
+  { 0, 0, {0}, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 4
+  { 0, 0, {0}, 0, ALWAYS         , 0, dev_bus_handler    },
+  { 0, 0, {0}, 0, ALWAYS         , 0, scu_bus_handler    },
+  { 0, 0, {0}, 0, INTERVAL_10MS  , 0, ecaHandler         },
+  { 0, 0, {0}, 0, INTERVAL_100MS , 0, channel_watchdog   },
+
 };
 
 TaskType *tsk_getConfig(void) {
@@ -1102,20 +1089,65 @@ void dev_bus_handler(int id) {
 
 }
 
-void cleanup_sio_dev(int id) {
+void channel_watchdog(int id) {
   unsigned short status;
+  int i, slot, dev;
   static TaskType *task_ptr;              // task pointer
   task_ptr = tsk_getConfig();             // get a pointer to the task configuration
   struct msi m;
 
-  int slave_nr = (task_ptr[id].slave_nr % MAX_SCU_SLAVES);
-  if (is_active_sio(slave_nr + 1)) {
-    // create swi for dev_sio_handler
-    m.msg = slave_nr;
-    m.adr = 0;
-    add_msg(&msg_buf[0], DEVSIO, m);
+  i = task_ptr[id].i % MAX_FG_CHANNELS;
+  // if channel is armed or active
+  if (fg_regs[i].state > STATE_STOPPED) {
+    slot = fg_macros[fg_regs[i].macro_number] >> 24;
+    dev = (fg_macros[fg_regs[i].macro_number] & 0x00ff0000) >> 16;
+
+    if (slot & DEV_SIO) {
+      scub_status_mil(scub_base, slot & 0xf, &status);
+    } else if (slot & DEV_MIL_EXT) {
+      status_mil(scu_mil_base, &status);
+    } else {
+      // channel is on scu bus, no watchdog needed
+      // yield and test another channel next time
+      task_ptr[id].i++;
+      return;
+    }
+
+    // if dreq is high
+    if (status & MIL_DATA_REQ_INTR) {
+      //mprintf("channel %d is active\n", i);
+      // is there already a timeout set?
+      if (timeout[i] > 0) {
+        //  was dreq high for more then 84ms?
+        if ((timeout[i] + INTERVAL_84MS) < getSysTime()) {
+          if (slot & DEV_SIO) {
+            // create swi
+            m.msg = (slot & 0xf) - 1;
+            m.adr = 0;
+            irq_disable();
+            add_msg(&msg_buf[0], DEVSIO, m);
+            irq_enable();
+          } else if (slot & DEV_MIL_EXT) {
+            m.msg = 0;
+            m.adr = 0;
+            irq_disable();
+            add_msg(&msg_buf[0], DEVBUS, m);
+            irq_enable();
+          }
+
+          timeout[i] = 0;
+        }
+      } else {
+        // start watchdog
+        timeout[i] = getSysTime();
+      }
+    } else {
+      // dreq is low, reset watchdog
+      timeout[i] = 0;
+    }
   }
-  task_ptr[id].slave_nr++;
+  //yield and test another channel next time
+  task_ptr[id].i++;
   return;
 }
 
@@ -1134,15 +1166,15 @@ int main(void) {
   discoverPeriphery();
   uart_init_hw();
   /* additional periphery needed for scu */
-  cpu_info_base = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);  
+  cpu_info_base = (unsigned int*)find_device_adr(GSI, CPU_INFO_ROM);
   scub_base     = (unsigned short*)find_device_adr(GSI, SCU_BUS_MASTER);
-  scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);    // irq controller for scu bus
+  scub_irq_base = (unsigned int*)find_device_adr(GSI, SCU_IRQ_CTRL);       // irq controller for scu bus
   find_device_multi(&found_sdb[0], &clu_cb_idx, 20, GSI, LM32_CB_CLUSTER); // find location of cluster crossbar
-  scu_mil_base  = (unsigned int*)find_device_adr(GSI,SCU_MIL); // mil extension macro
-  mil_irq_base  = (unsigned int*)find_device_adr(GSI, MIL_IRQ_CTRL); // irq controller for dev bus extension
-  wr_1wire_base = (unsigned int*)find_device_adr(CERN, WR_1Wire); // 1Wire controller in the WRC
-  user_1wire_base = (unsigned int*)find_device_adr(GSI, User_1Wire); // 1Wire controller on dev crossbar
-  
+  scu_mil_base  = (unsigned int*)find_device_adr(GSI,SCU_MIL);             // mil extension macro
+  mil_irq_base  = (unsigned int*)find_device_adr(GSI, MIL_IRQ_CTRL);       // irq controller for dev bus extension
+  wr_1wire_base = (unsigned int*)find_device_adr(CERN, WR_1Wire);          // 1Wire controller in the WRC
+  user_1wire_base = (unsigned int*)find_device_adr(GSI, User_1Wire);       // 1Wire controller on dev crossbar
+
 
   mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
   mb_slot = getMsiBoxSlot(0x10);
