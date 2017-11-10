@@ -129,6 +129,9 @@ set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_tlu:ecatlu"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|eca_wb_event:ecawb"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|ftm_lm32_cluster:lm32*"
 set_instance_assignment -name MAX_FANOUT 64 -to "monster:main|wr_eca:eca"
+
+set_instance_assignment -name REMOVE_DUPLICATE_REGISTERS OFF -to "monster:main|wb_pmc_host_bridge:\pmc_y:pmc|pci_bridge32:pci_core_inst"
+
 set_location_assignment PIN_H15 -to "clk_125m_pllref_i(n)"
 set_location_assignment PIN_G15 -to clk_125m_pllref_i
 set_instance_assignment -name IO_STANDARD LVDS -to clk_125m_pllref_i
