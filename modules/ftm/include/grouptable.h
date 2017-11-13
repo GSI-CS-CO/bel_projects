@@ -110,7 +110,7 @@ public:
   template <typename Tag>
   pmRange lookup(const std::string& s)   {auto test = a.get<Tag>().equal_range(s); return pmRange({a.iterator_to(*test.first), a.iterator_to(*test.second)});}
   
-  //Lookup a node, create if non existent. Single return value as node names are unique
+  //Lookup a node, create if non existent. Single return value as node names are uniqu./d
   pmI lookupOrCreateNode(const std::string& sNode);
 
 

@@ -28,7 +28,7 @@ int CarpeDM::sendCommands(Graph& g) {
 
   vBuf vUlD;
   vAdr vUlA;
-  uint32_t cmdWrInc, hash;
+  uint32_t cmdWrInc, hashTarget, hashDest;
   uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
   mc_ptr mc;
 
@@ -39,7 +39,12 @@ int CarpeDM::sendCommands(Graph& g) {
 
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
 
-    const std::string testme(g[v].flowTarget);
+    std::string target, destination;
+    bool pattern = false, beamproc = false;
+    //use the pattern and beamprocess tags to determine the target's type
+          if (g[v].patName  != DotStr::Misc::sUndefined) {target = getPatternExitNode(g[v].cmdTarget);  destination = getPatternEntryNode(g[v].cmdTarget); pattern = true;}
+    else  if (g[v].bpName != DotStr::Misc::sUndefined) {target = getBeamprocExitNode(g[v].cmdTarget);   destination = getBeamprocEntryNode(g[v].cmdTarget); beamproc = true;}
+    else  {target = g[v].cmdTarget; destination = g[v].cmdDest; }
 
     uint64_t cmdTvalid  = s2u<uint64_t>(g[v].tValid);
     uint8_t  cmdPrio    = s2u<uint8_t>(g[v].prio);
@@ -49,30 +54,48 @@ int CarpeDM::sendCommands(Graph& g) {
     if (!(cpu < getCpuQty())) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");
     if (!(thr < _THR_QTY_  )) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sThread + "' is invalid\n"); 
 
-           if (g[v].type == dnt::sCmdNoop)    { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
-                                                mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
-                                              }
-      else if (g[v].type == dnt::sCmdFlow)    { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
-                                                uint32_t adr    = getNodeAdr(g[v].flowDest, DOWNLOAD, INTERNAL);
-                                                mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, false );
-                                              }
-      else if (g[v].type == dnt::sCmdFlush)   { mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)s2u<uint8_t>(g[v].qIl), (bool)s2u<uint8_t>(g[v].qHi), (bool)s2u<uint8_t>(g[v].qLo));}
-      else if (g[v].type == dnt::sCmdWait)    { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
-                                                mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
-                                              }
-      else if (g[v].type == dnt::sCmdStart)   { setThrStart(cpu, thr); continue;}
-      else if (g[v].type == dnt::sCmdStop)    { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not yet impleted\n");}
-      else if (g[v].type == dnt::sCmdAbort)   { clrThrRun(cpu, thr); continue;}                                     
-      else                                    { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n"); return -2;}
+
+    //Node independent commands
+    if (g[v].type == dnt::sCmdStart)   { 
+      if(pattern || beamproc) {
+        if (pattern)    {startPattern(g[v].patName);  continue; }
+        //else (beamproc) {startBeamproc(g[v].bpName); continue; }
+      } else {setThrStart(cpu, thr); continue; }
+    }
+    if (g[v].type == dnt::sCmdAbort)   { 
+      if(pattern || beamproc) {
+        if (pattern)    {abortPattern(g[v].patName);  continue; }
+        //else (beamproc) {abortBeamproc(g[v].bpName); continue; }
+      } else {clrThrRun(cpu, thr); continue;}
+    }
     
-    sLog << "cmd flow " << testme << " -> " <<  g[v].flowDest <<  std::endl;
+    //Node commands
+         if (g[v].type == dnt::sCmdNoop)    { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
+                                              mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
+                                            }
+    else if (g[v].type == dnt::sCmdFlow)    { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
+                                              uint32_t adr    = getNodeAdr(destination, DOWNLOAD, INTERNAL);
+                                              mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, false );
+                                            }
+    else if (g[v].type == dnt::sCmdFlush)   { mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)s2u<uint8_t>(g[v].qIl), (bool)s2u<uint8_t>(g[v].qHi), (bool)s2u<uint8_t>(g[v].qLo));}
+    else if (g[v].type == dnt::sCmdWait)    { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
+                                              mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
+                                            }
+    else if (g[v].type == dnt::sCmdStop)    { if(pattern || beamproc) {
+                                                if (pattern)    {stopPattern(g[v].patName);  continue; }
+                                                //else (beamproc) {stopBeamproc(g[v].bpName); continue; }
+                                              } else { mc = (mc_ptr) new MiniFlow(0, PRIO_LO, 1, getNodeAdr(DotStr::Node::Special::sIdle, DOWNLOAD, INTERNAL), false ); }
+                                            }                                                
+    else                                    { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n"); return -2;} 
+    
+    sLog << "cmd flow " << target << " -> " <<  g[v].cmdDest <<  std::endl;
 
-    if(!(hm.contains(testme))) {throw std::runtime_error("Command <" + g[v].name + ">'s target <" + testme + "> is not known to hashmap!\n"); return -5;}
-
-    hash        = hm.lookup(testme).get();
-    vAdr vATmp  = getCmdWrAdrs(hash, cmdPrio);
+    if(!hm.lookup(target))      {throw std::runtime_error("Command <" + g[v].name + ">'s target node '" + target + "' is not known to hashmap!\n"); return -5;}
+    hashTarget = hm.lookup(target).get();
+    
+    vAdr vATmp  = getCmdWrAdrs(hashTarget, cmdPrio);
     vUlA.insert( vUlA.end(), vATmp.begin(), vATmp.end() ); 
-    cmdWrInc    = getCmdInc(hash, cmdPrio);
+    cmdWrInc    = getCmdInc(hashTarget, cmdPrio);
     mc->serialise(b);
     //delete mc;
     writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, cmdWrInc);

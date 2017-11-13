@@ -12,29 +12,6 @@
 #define _OFFS_SIZE_             _32b_SIZE_
 #define _TS_SIZE_               _64b_SIZE_
 
-/*
-#define ID_RES_BITS             10
-#define ID_BPID_BITS            14
-#define ID_SID_BITS             12
-#define ID_EVTNO_BITS           12  
-#define ID_GID_BITS             12
-#define ID_FID_BITS             4
-
-#define ID_RES_MSK              ((1 << ID_RES_BITS) - 1)
-#define ID_BPID_MSK             ((1 << ID_BPID_BITS ) - 1)
-#define ID_SID_MSK              ((1 << ID_SID_BITS ) - 1)
-#define ID_EVTNO_MSK            ((1 << ID_EVTNO_BITS ) - 1)
-#define ID_GID_MSK              ((1 << ID_GID_BITS ) - 1)  
-#define ID_FID_MSK              ((1 << ID_FID_BITS ) - 1)
-
-#define ID_RES_POS              (0)
-#define ID_BPID_POS             (ID_RES_POS   + ID_RES_BITS)
-#define ID_SID_POS              (ID_BPID_POS  + ID_BPID_BITS)
-#define ID_EVTNO_POS            (ID_SID_POS   + ID_SID_BITS)
-#define ID_GID_POS              (ID_EVTNO_POS + ID_EVTNO_BITS)
-#define ID_FID_POS              (ID_GID_POS   + ID_GID_BITS)
-*/
-
 #define PRIO_IL 2
 #define PRIO_HI 1
 #define PRIO_LO 0
@@ -119,14 +96,14 @@
 
 #define _SHCTL_START_    0
 #define SHCTL_HEAP       (_SHCTL_START_)                    //Scheduler Heap  
-#define SHCTL_STATUS     (SHCTL_HEAP + _THR_QTY_ * _PTR_SIZE_) //Status Registers
-#define SHCTL_MSG_CNT    (SHCTL_STATUS       + _32b_SIZE_ ) //CPU wide timing message counter
-#define SHCTL_CMD        (SHCTL_MSG_CNT      + _64b_SIZE_ ) //Command Register
-#define SHCTL_TGATHER    (SHCTL_CMD          + _32b_SIZE_ ) //Gather Time (HW Priority Queue Config) Register 
-#define SHCTL_THR_CTL    (SHCTL_TGATHER      + _T_TS_SIZE_  ) //Thread Control Registers (Start Stop Status) 
-#define SHCTL_THR_STA    (SHCTL_THR_CTL      + _T_TC_SIZE_  ) //Thread Start Staging Area (1 per Thread )
-#define SHCTL_THR_DAT    (SHCTL_THR_STA      + _THR_QTY_ * _T_TS_SIZE_  ) //Thread Runtime Data (1 per Thread )
-#define SHCTL_INBOXES    (SHCTL_THR_DAT      + _THR_QTY_ * _T_TD_SIZE_  ) //Inboxes for MSI (1 per Core in System )
+#define SHCTL_STATUS     (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_) //Status Registers
+#define SHCTL_MSG_CNT    (SHCTL_STATUS  + _32b_SIZE_ ) //CPU wide timing message counter
+#define SHCTL_CMD        (SHCTL_MSG_CNT + _64b_SIZE_ ) //Command Register
+#define SHCTL_TGATHER    (SHCTL_CMD     + _32b_SIZE_ ) //Gather Time (HW Priority Queue Config) Register 
+#define SHCTL_THR_CTL    (SHCTL_TGATHER + _T_TS_SIZE_  ) //Thread Control Registers (Start Stop Status) 
+#define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  ) //Thread Start Staging Area (1 per Thread )
+#define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  ) //Thread Runtime Data (1 per Thread )
+#define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  ) //Inboxes for MSI (1 per Core in System )
 #define _SHCTL_END_      (SHCTL_INBOXES + _THR_QTY_ * _32b_SIZE_) 
 //////////////////////////////////////////////////////////////////////
 
@@ -146,6 +123,10 @@
 #define SHCTL_STATUS_DM_INIT_MSK      0x1
 #define SHCTL_STATUS_DM_INIT_POS      3
 #define SHCTL_STATUS_DM_INIT_SMSK     (SHCTL_STATUS_DM_INIT_MSK << SHCTL_STATUS_DM_INIT_POS)
+
+#define SHCTL_STATUS_DM_ERROR_MSK      0x1
+#define SHCTL_STATUS_DM_ERROR_POS      8
+#define SHCTL_STATUS_DM_ERROR_SMSK     (SHCTL_STATUS_DM_ERROR_MSK << SHCTL_STATUS_DM_ERROR_POS)
 
 //####################################################################
 // #########################  Nodes  #################################
@@ -170,7 +151,7 @@
 #define BLOCK_BEGIN             (NODE_BEGIN)      // a bit unusual layout, see above
 #define BLOCK_PERIOD            (BLOCK_BEGIN)
 #define BLOCK_PERIOD_HI         (BLOCK_BEGIN + 0)
-#define BLOCK_PERIOD_LO         (BLOCK_PERIOD_HI + _32b_SIZE_)
+#define BLOCK_PERIOD_LO         (BLOCK_PERIOD_HI    + _32b_SIZE_)
 #define BLOCK_ALT_DEST_PTR      (BLOCK_PERIOD       + _TS_SIZE_)   
 #define BLOCK_CMDQ_LO_PTR       (BLOCK_ALT_DEST_PTR + _PTR_SIZE_)   
 #define BLOCK_CMDQ_HI_PTR       (BLOCK_CMDQ_LO_PTR  + _PTR_SIZE_)   

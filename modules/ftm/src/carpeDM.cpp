@@ -238,7 +238,7 @@ bool CarpeDM::connect(const std::string& en) {
     boost::dynamic_properties dp = createParser(g); //create current property map
     /*
       //test
-    auto test0 = boost::get(&myVertex::flowDest,   g);
+    auto test0 = boost::get(&myVertex::cmdDest,   g);
     auto test1 = boost::get(dnp::TMsg::SubId::sGid, dp, v);
 
     std::cout << "Type property: " << boost::typeindex::type_id_with_cvr<decltype(test0)>().pretty_name() << std::endl;
@@ -324,8 +324,8 @@ bool CarpeDM::connect(const std::string& en) {
     dp.property(dnp::Cmd::sQty,                          boost::get(&myVertex::qty,        g));
     dp.property(dnp::Cmd::sTimeWait,                     boost::get(&myVertex::tWait,      g));
     //for .dot-cmd abuse
-    dp.property(dnp::Cmd::sFlowDst,                      boost::get(&myVertex::flowDest,   g));
-    dp.property(dnp::Cmd::sFlowTarget,                   boost::get(&myVertex::flowTarget, g));
+    dp.property(dnp::Cmd::sFlowDst,                      boost::get(&myVertex::cmdDest,   g));
+    dp.property(dnp::Cmd::sFlowTarget,                   boost::get(&myVertex::cmdTarget, g));
     dp.property(dnp::Base::sThread,                      boost::get(&myVertex::thread,     g));
     
 

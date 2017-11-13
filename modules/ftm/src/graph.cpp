@@ -71,8 +71,8 @@ myVertex::myVertex(myVertex const &src) {
   this->tWait  = src.tWait;
 
   //for .dot-cmd abuse
-  this->flowDest   = src.flowDest;
-  this->flowTarget = src.flowTarget;
+  this->cmdDest   = src.cmdDest;
+  this->cmdTarget = src.cmdTarget;
   
 
 }

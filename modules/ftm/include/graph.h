@@ -92,8 +92,8 @@ public:
   //Wait
   std::string tWait = sUndefined64;
 
-  std::string flowDest = sUndefined;
-  std::string flowTarget = sUndefined;
+  std::string cmdDest = sUndefined;
+  std::string cmdTarget = sUndefined;
 
   myVertex() : name(sUndefined), cpu(sZero), hash(uUndefined32), np(nullptr), type(sUndefined), flags(sUndefined32) {}
   
