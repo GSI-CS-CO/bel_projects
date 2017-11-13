@@ -79,7 +79,7 @@ private:
   void removeFromDict(Graph& g);
   int getIdleThread(uint8_t cpuIdx);
 
-  const std::string& firstString(const vStrC& v) {return *(v.begin());}
+  const std::string& firstString(const vStrC& v) {return ((v.size() > 0) ? *(v.begin()) : DotStr::Misc::sUndefined);}
 
 
 protected:
@@ -249,8 +249,8 @@ public:
   const std::string getNodePattern (const std::string& sNode);
   const std::string getNodeBeamproc(const std::string& sNode);
               vStrC getPatternMembers (const std::string& sPattern);
- const std::string& getPatternEntryNode(const std::string& sPattern);
- const std::string& getPatternExitNode(const std::string& sPattern);
+ const std::string getPatternEntryNode(const std::string& sPattern);
+ const std::string getPatternExitNode(const std::string& sPattern);
               vStrC getBeamprocMembers(const std::string& sBeamproc);
   const std::string getBeamprocEntryNode(const std::string& sBeamproc);
   const std::string getBeamprocExitNode(const std::string& sBeamproc);

@@ -42,7 +42,7 @@ int CarpeDM::sendCommands(Graph& g) {
     std::string target, destination;
     bool pattern = false, beamproc = false;
     //use the pattern and beamprocess tags to determine the target's type
-          if (g[v].patName  != DotStr::Misc::sUndefined) {pattern = true;}
+          if (g[v].patName  != DotStr::Misc::sUndefined) { pattern = true;}
     else  if (g[v].bpName != DotStr::Misc::sUndefined) { beamproc = true;}
     else  {target = g[v].cmdTarget; destination = g[v].cmdDest; }
 
@@ -93,10 +93,10 @@ int CarpeDM::sendCommands(Graph& g) {
                                               mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
                                             }
     else if (g[v].type == dnt::sCmdStop)    { if(pattern || beamproc) {
-                                                if (pattern)    {stopPattern(g[v].patName); }
+                                                if (pattern)    {stopPattern(g[v].patName); continue; }
                                                 //else if (beamproc) {stopBeamproc(g[v].bpName); }
-                                              } else if (hm.lookup(target)) { stopNodeOrigin(target); }
-                                              else { stopPattern(getNodePattern(getThrCursor(cpu, thr))); }  //careful, this only works safely for repeating patterns. No guarantees otherwise
+                                              } else if (hm.lookup(target)) { stopNodeOrigin(target); continue;}
+                                              else { stopPattern(getNodePattern(getThrCursor(cpu, thr))); continue;}  //careful, this only works safely for repeating patterns. No guarantees otherwise
                                             }                                                
     else                                    { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n"); return -2;} 
     
@@ -496,7 +496,7 @@ int CarpeDM::getIdleThread(uint8_t cpuIdx) {
 //Requests Pattern to start on thread <x>
 void CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx) { startNodeOrigin(getPatternEntryNode(sPattern), thrIdx); }
 //Requests Pattern to start
-void CarpeDM::startPattern(const std::string& sPattern) { startNodeOrigin(getPatternEntryNode(sPattern)); }
+void CarpeDM::startPattern(const std::string& sPattern) { std::string e = getPatternEntryNode(sPattern); std::cout << " P: " << sPattern << " E: " << e << std::endl; startNodeOrigin(e); }
 
 //Requests Pattern to stop
 void CarpeDM::stopPattern(const std::string& sPattern) { stopNodeOrigin(getPatternExitNode(sPattern)); }
@@ -520,7 +520,7 @@ void CarpeDM::startNodeOrigin(const std::string& sNode) {
   uint8_t cpuIdx    = getNodeCpu(sNode, DOWNLOAD);
   int thrIdx = getIdleThread(cpuIdx); //find a free thread we can use to run our pattern
   if (thrIdx == _THR_QTY_) throw std::runtime_error( "Found no free thread on " + std::to_string(cpuIdx) + "'s hosting cpu");
-
+  std::cout << "Starting " << cpuIdx << " " << (uint8_t)thrIdx << " " << sNode << std::endl;
   setThrOrigin(cpuIdx, (uint8_t)thrIdx, sNode); //configure thread and run it
   startThr(cpuIdx, (uint8_t)thrIdx);        
 }
@@ -544,8 +544,8 @@ void CarpeDM::abortNodeOrigin(const std::string& sNode) {
   const std::string CarpeDM::getNodePattern (const std::string& sNode)          {return firstString(gt.getGroups<Groups::Pattern, &GroupMeta::pattern>(sNode));}
   const std::string CarpeDM::getNodeBeamproc(const std::string& sNode)          {return firstString(gt.getGroups<Groups::Beamproc, &GroupMeta::beamproc>(sNode));}
               vStrC CarpeDM::getPatternMembers (const std::string& sPattern)    {return gt.getMembers<Groups::Pattern>(sPattern);}
- const std::string& CarpeDM::getPatternEntryNode(const std::string& sPattern)   {return firstString(gt.getPatternEntryNodes(sPattern));}
- const std::string& CarpeDM::getPatternExitNode(const std::string& sPattern)    {return firstString(gt.getPatternExitNodes(sPattern));}
+ const std::string CarpeDM::getPatternEntryNode(const std::string& sPattern)   {return firstString(gt.getPatternEntryNodes(sPattern));}
+ const std::string CarpeDM::getPatternExitNode(const std::string& sPattern)    {return firstString(gt.getPatternExitNodes(sPattern));}
               vStrC CarpeDM::getBeamprocMembers(const std::string& sBeamproc)   {return gt.getMembers<Groups::Pattern>(sBeamproc);}
   const std::string CarpeDM::getBeamprocEntryNode(const std::string& sBeamproc) {return firstString(gt.getBeamprocEntryNodes(sBeamproc));}
   const std::string CarpeDM::getBeamprocExitNode(const std::string& sBeamproc)  {return firstString(gt.getBeamprocExitNodes(sBeamproc));}

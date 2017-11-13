@@ -3,11 +3,10 @@ name="123!CMD!";
 
 graph []
 
-  CMD_START   [type="start", cpu="1", thread="1"];
-  //CMD_ABORT   [type="abort", cpu="1", thread="1"];
-  CMD_FLOW1   [type="flow",   prio="0", toffs="0",  target="B_PPS", dest="Evt_PPS", tvalid="0"];
-  
-  //CMD_WAIT   [type="wait",   prio="1", toffs="55", target="B_Bla", tvalid="5000"];
+  CMD_START   [type="start", pattern="TEST_DO_SIS18_HTP_20171013"];
+  //CMD_START   [type="start", cpu="0", thread="0"];
+  //CMD_ABORT   [type="abort", pattern="TEST_DO_SIS18_HTP_20171013"];
+  //CMD_STOP   [type="stop", pattern="TEST_DO_SIS18_HTP_20171013"];
 
 
 

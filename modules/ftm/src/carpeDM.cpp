@@ -248,22 +248,22 @@ bool CarpeDM::connect(const std::string& en) {
 
     
     if (g[v].id == DotStr::Misc::sUndefined64) { // from SubID fields to ID
-      std::cout << "Input Node  " << g[v].name;
+      //std::cout << "Input Node  " << g[v].name;
       fid = (s2u<uint8_t>(g[v].id_fid) & ID_FID_MSK); //get fid
       if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) field in Node '" + g[v].name + "'");
       vPf& vTmp = idFormats[fid]; //choose conversion vector by fid
-      
+      id = 0;
       for(auto& it : vTmp) {  //for each format vector element 
         //use dot property tag string as key to dp map (map of tags to (maps of vertex_indices to values))
         uint64_t val = s2u<uint64_t>(boost::get(it.s, dp, v)); // use vertex index v as key in this property map to obtain value
-        std::cout << ", " << std::dec << it.s << " = " << (val & ((1 << it.bits ) - 1) ) << ", (" << (int)it.pos << ",0x" << std::hex << ((1 << it.bits ) - 1) << ")";
-        id |= (val & ((1 << it.bits ) - 1) ) << it.pos; // OR the masked and shifted value to id
+        //std::cout << ", " << std::dec << it.s << " = " << (val & ((1 << it.bits ) - 1) ) << ", (" << (int)it.pos << ",0x" << std::hex << ((1 << it.bits ) - 1) << ")";
+        id |= ((val & ((1 << it.bits ) - 1) ) << it.pos); // OR the masked and shifted value to id
       }
-      std::cout << "ID = 0x" << std::hex << id << std::endl;
+      
       ss.flush();
-      ss << std::dec << id;
+      ss << "0x" << std::hex << id;
       g[v].id = ss.str();
-
+      //std::cout << "ID = " << g[v].id << std::endl;
     } else { //from ID to SubID fields
       id = s2u<uint8_t>(g[v].id);
       fid = ((id >> ID_FID_POS) & ID_FID_MSK);
@@ -351,26 +351,25 @@ bool CarpeDM::connect(const std::string& en) {
 
   Graph& CarpeDM::parseDot(const std::string& s, Graph& g) {
     boost::dynamic_properties dp = createParser(g);
+    bool add2Groups = false;
     try { boost::read_graphviz(s, g, dp, dnp::Base::sName); }
     catch(...) { throw; }
    
+    if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) == std::string::npos) {add2Groups = true;}
     
     //generate hashes and adds pattern & beamproc memberships to GroupTable
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       g[v].hash = hm.add(g[v].name).get();
-      /*
-      std::cout << g[v].name << " P: " << g[v].patName << " " << g[v].patEntry << " " << g[v].patExit;
-      std::cout << " B: " << g[v].bpName << " " << g[v].bpEntry << " " << g[v].bpExit << std::endl;
-      */
-      gt.setBeamproc(g[v].name, g[v].bpName, (g[v].bpEntry  != sZero), (g[v].bpExit  != sZero));
-      gt.setPattern(g[v].name, g[v].patName, (g[v].patEntry != sZero), (g[v].patExit != sZero));
-      //sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;
+   
+      if(add2Groups) {
+        gt.setBeamproc(g[v].name, g[v].bpName, (s2u<bool>(g[v].bpEntry)), (s2u<bool>(g[v].bpExit)));
+        gt.setPattern(g[v].name, g[v].patName, (s2u<bool>(g[v].patEntry)), (s2u<bool>(g[v].patExit)));
+      }
+      
     }
-    /*
-    gt.debug();
-    auto vs = gt.getPatternEntryNodes("P1"); 
-    for (auto& it : vs ) {std::cout << "P1 Entry: " << it << std::endl;}
-    */
+   
+    //if(add2Groups) {    gt.debug(); }
+
     return g;
 
 
