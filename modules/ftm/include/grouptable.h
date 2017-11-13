@@ -103,15 +103,16 @@ public:
   ~GroupTable(){};
 
   std::string store();
-
-
   void load(const std::string& s);
 
   bool insert(const std::string& sNode);
 
   template <typename Tag>
-  pmRange lookup(std::string s)   {auto test = a.get<Tag>().equal_range(s); return pmRange({a.iterator_to(*test.first), a.iterator_to(*test.second)});}
-  pmI lookUpOrCreateNode(const std::string& sNode);
+  pmRange lookup(const std::string& s)   {auto test = a.get<Tag>().equal_range(s); return pmRange({a.iterator_to(*test.first), a.iterator_to(*test.second)});}
+  
+  //Lookup a node, create if non existent. Single return value as node names are unique
+  pmI lookupOrCreateNode(const std::string& sNode);
+
 
   bool isOk(pmI it) const {return (it != a.end()); }
 
@@ -125,19 +126,19 @@ public:
 
   void setPattern (pmI it, const std::string& sNew, bool entry, bool exit)  { a.modify(it, [sNew, entry, exit](GroupMeta& p){p.pattern  = sNew; p.patternEntry  = entry; p.patternExit  = exit;}); } 
   void setPattern (pmI it, const std::string& sNew) { setPattern(it, sNew, false, false); }
-  void setPattern (const std::string& sNode, const std::string& sNew, bool entry, bool exit) { setPattern(lookUpOrCreateNode(sNode), sNew, entry, exit); }
+  void setPattern (const std::string& sNode, const std::string& sNew, bool entry, bool exit) { setPattern(lookupOrCreateNode(sNode), sNew, entry, exit); }
   void setPattern (const std::string& sNode, const std::string& sNew) { setPattern(sNode, sNew, false, false); }
   
   void setBeamproc (pmI it, const std::string& sNew, bool entry, bool exit)  { a.modify(it, [sNew, entry, exit](GroupMeta& p){p.beamproc = sNew; p.beamprocEntry = entry; p.beamprocExit = exit;}); } 
   void setBeamproc (pmI it, const std::string& sNew) { setBeamproc(it, sNew, false, false); }
-  void setBeamproc (const std::string& sNode, const std::string& sNew, bool entry, bool exit) { setBeamproc(lookUpOrCreateNode(sNode), sNew, entry, exit); } ;
+  void setBeamproc (const std::string& sNode, const std::string& sNew, bool entry, bool exit) { setBeamproc(lookupOrCreateNode(sNode), sNew, entry, exit); } ;
   void setBeamproc (const std::string& sNode, const std::string& sNew) { setBeamproc(sNode, sNew, false, false); }
   
   template <typename Tag, std::string GroupMeta::*group>
   vStrC getGroups(const std::string& sNode) {vStrC res; pmRange x  = lookup<Tag>(sNode); if (x.first != a.end()) {for (auto it = x.first; it != x.second; ++it) res.push_back(*it.*group);} return res;}
 
   template <typename Tag, bool GroupMeta::*point>
-  vStrC getGroupNodes(const std::string& s);
+  vStrC getGroupNodes(const std::string& s) {vStrC res; pmRange x  = lookup<Tag>(s);     if (x.first != a.end()) {for (auto it = x.first; it != x.second; ++it) if (*it.*point) res.push_back(it->node); } return res; }
 
   template <typename Tag>
   vStrC getMembers(const std::string& s) {vStrC res; pmRange x  = lookup<Tag>(s); if (x.first != a.end()) {for (auto it = x.first; it != x.second; ++it) res.push_back(it->node);} return res;}

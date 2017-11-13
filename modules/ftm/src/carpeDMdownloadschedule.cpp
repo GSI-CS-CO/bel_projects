@@ -78,8 +78,8 @@ namespace dnt = DotStr::Node::TypeVal;
           uint32_t    hash      = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_HASH]);
           //sLog << std::dec << "Offset " << localAdr + NODE_HASH << std::endl;
           std::string name      = hm.lookup(hash) ? hm.lookup(hash).get() : "#" + std::to_string(hash);
-          std::string pattern   = gt.lookUpOrCreateNode(name)->pattern;
-          std::string beamproc  = gt.lookUpOrCreateNode(name)->beamproc;
+          std::string pattern   = gt.lookupOrCreateNode(name)->pattern;
+          std::string beamproc  = gt.lookupOrCreateNode(name)->beamproc;
           uint32_t    flags     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]); //FIXME what about future requests to hashmap if we improvised the name from hash? those will fail ...
           uint32_t    type      = (flags >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
           uint8_t     cpu       = i;

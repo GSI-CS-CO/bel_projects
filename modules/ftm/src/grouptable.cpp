@@ -29,7 +29,7 @@
     }
   }
 
-  pmI GroupTable::lookUpOrCreateNode(const std::string& sNode) {
+  pmI GroupTable::lookupOrCreateNode(const std::string& sNode) {
     //std::cout << "Looking for node..." << sNode;
     pmRange x = lookup<Groups::Node>(sNode);
     if (!isOk(x.first)) { //node was not found, try to create
@@ -43,12 +43,4 @@
   }
 
 
-
-
-  template <typename Tag, bool GroupMeta::*point>
-  vStrC GroupTable::GroupTable::getGroupNodes(const std::string& s) { 
-    vStrC res;
-    pmRange x  = lookup<Tag>(s);
-    if (x.first != a.end()) {for (auto it = x.first; it != x.second; ++it) if (*it.*point) res.push_back(it->node); }
-    return res;
-  }
+  
