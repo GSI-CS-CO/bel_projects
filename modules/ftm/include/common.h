@@ -101,9 +101,11 @@ template<typename T>
 inline T s2u(const std::string& s) {
   using namespace DotStr::Misc;
   //check for boolean strings
-  if(s == sTrue)  return 1;
-  if(s == sFalse) return 0;
-  return (T)std::stoull(s, 0, 0);
+  if(s == sTrue)  {return (T)1;}
+  if(s == sFalse) {return (T)0;}
+  T ret;
+  try { ret = (T)std::stoull(s, 0, 0);} catch (...) { std::runtime_error("Cannot convert string '" + s + "' to number\n"); }
+  return ret;
 
 }
 

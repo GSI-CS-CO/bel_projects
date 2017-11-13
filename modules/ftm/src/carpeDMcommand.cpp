@@ -28,7 +28,7 @@ int CarpeDM::sendCommands(Graph& g) {
 
   vBuf vUlD;
   vAdr vUlA;
-  uint32_t cmdWrInc, hashTarget, hashDest;
+  uint32_t cmdWrInc, hashTarget;
   uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
   mc_ptr mc;
 
@@ -42,8 +42,8 @@ int CarpeDM::sendCommands(Graph& g) {
     std::string target, destination;
     bool pattern = false, beamproc = false;
     //use the pattern and beamprocess tags to determine the target's type
-          if (g[v].patName  != DotStr::Misc::sUndefined) {target = getPatternExitNode(g[v].cmdTarget);  destination = getPatternEntryNode(g[v].cmdTarget); pattern = true;}
-    else  if (g[v].bpName != DotStr::Misc::sUndefined) {target = getBeamprocExitNode(g[v].cmdTarget);   destination = getBeamprocEntryNode(g[v].cmdTarget); beamproc = true;}
+          if (g[v].patName  != DotStr::Misc::sUndefined) {pattern = true;}
+    else  if (g[v].bpName != DotStr::Misc::sUndefined) { beamproc = true;}
     else  {target = g[v].cmdTarget; destination = g[v].cmdDest; }
 
     uint64_t cmdTvalid  = s2u<uint64_t>(g[v].tValid);
@@ -55,21 +55,32 @@ int CarpeDM::sendCommands(Graph& g) {
     if (!(thr < _THR_QTY_  )) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sThread + "' is invalid\n"); 
 
 
-    //Node independent commands
     if (g[v].type == dnt::sCmdStart)   { 
       if(pattern || beamproc) {
         if (pattern)    {startPattern(g[v].patName);  continue; }
         //else (beamproc) {startBeamproc(g[v].bpName); continue; }
-      } else {setThrStart(cpu, thr); continue; }
+      } else if (hm.lookup(target)) {startNodeOrigin(target); continue; }
+      else {startThr(cpu, thr); continue;}
     }
     if (g[v].type == dnt::sCmdAbort)   { 
       if(pattern || beamproc) {
         if (pattern)    {abortPattern(g[v].patName);  continue; }
         //else (beamproc) {abortBeamproc(g[v].bpName); continue; }
-      } else {clrThrRun(cpu, thr); continue;}
+      } else if (hm.lookup(target)) {abortNodeOrigin(target); continue; }
+      else {abortThr(cpu, thr); continue;}
     }
+    if (g[v].type == dnt::sCmdOrigin)   { 
+      if(pattern || beamproc) {
+        if (pattern)    { target = getPatternEntryNode(g[v].patName); }
+        //else (beamproc) {abortBeamproc(g[v].bpName); continue; }
+      }  
+      //Leave out for now and autocorrect cpu
+      //if (getNodeCpu(target, DOWNLOAD) != cpu) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");
+      setThrOrigin(getNodeCpu(target, DOWNLOAD), thr, target); continue;
+    }
+
     
-    //Node commands
+    //Per-Node commands
          if (g[v].type == dnt::sCmdNoop)    { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
                                               mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
                                             }
@@ -82,9 +93,10 @@ int CarpeDM::sendCommands(Graph& g) {
                                               mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
                                             }
     else if (g[v].type == dnt::sCmdStop)    { if(pattern || beamproc) {
-                                                if (pattern)    {stopPattern(g[v].patName);  continue; }
-                                                //else (beamproc) {stopBeamproc(g[v].bpName); continue; }
-                                              } else { mc = (mc_ptr) new MiniFlow(0, PRIO_LO, 1, getNodeAdr(DotStr::Node::Special::sIdle, DOWNLOAD, INTERNAL), false ); }
+                                                if (pattern)    {stopPattern(g[v].patName); }
+                                                //else if (beamproc) {stopBeamproc(g[v].bpName); }
+                                              } else if (hm.lookup(target)) { stopNodeOrigin(target); }
+                                              else { stopPattern(getNodePattern(getThrCursor(cpu, thr))); }  //careful, this only works safely for repeating patterns. No guarantees otherwise
                                             }                                                
     else                                    { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n"); return -2;} 
     
@@ -473,7 +485,7 @@ bool CarpeDM::isPatternRunning(const std::string& sPattern) {
   return ((cpuAndThr.first >= 0) && (cpuAndThr.second >= 0));
 }
 
-
+//Returns the the index of the first idle thread at cpu <cpuIdx>
 int CarpeDM::getIdleThread(uint8_t cpuIdx) {
   uint32_t thrds = getThrRun(cpuIdx);
   int i;
@@ -482,35 +494,47 @@ int CarpeDM::getIdleThread(uint8_t cpuIdx) {
 }  
 
 //Requests Pattern to start on thread <x>
-void CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx) {
-  std::string sNode = getPatternEntryNode(sPattern);
+void CarpeDM::startPattern(const std::string& sPattern, uint8_t thrIdx) { startNodeOrigin(getPatternEntryNode(sPattern), thrIdx); }
+//Requests Pattern to start
+void CarpeDM::startPattern(const std::string& sPattern) { startNodeOrigin(getPatternEntryNode(sPattern)); }
+
+//Requests Pattern to stop
+void CarpeDM::stopPattern(const std::string& sPattern) { stopNodeOrigin(getPatternExitNode(sPattern)); }
+
+//Immediately aborts a Pattern
+void CarpeDM::abortPattern(const std::string& sPattern) {
+  std::pair<int, int> cpuAndThr = findRunningPattern(sPattern);
+  //if we didn't find it, it's not running now. So no problem that we cannot abort it
+  if ((cpuAndThr.first >= 0) && (cpuAndThr.second >= 0)) abortThr((uint8_t)cpuAndThr.first, (uint8_t)cpuAndThr.second);
+}
+
+
+//Requests thread <thrIdx> to start at node <sNode>
+void CarpeDM::startNodeOrigin(const std::string& sNode, uint8_t thrIdx) {
   uint8_t cpuIdx    = getNodeCpu(sNode, DOWNLOAD);
   setThrOrigin(cpuIdx, thrIdx, sNode); //configure thread and run it
   startThr(cpuIdx, thrIdx);
 }
-//Requests Pattern to start
-void CarpeDM::startPattern(const std::string& sPattern) {
-  
-  std::string sNode = getPatternEntryNode(sPattern);
+//Requests a start at node <sNode>
+void CarpeDM::startNodeOrigin(const std::string& sNode) {
   uint8_t cpuIdx    = getNodeCpu(sNode, DOWNLOAD);
   int thrIdx = getIdleThread(cpuIdx); //find a free thread we can use to run our pattern
-  if (thrIdx == _THR_QTY_) throw std::runtime_error( "Found no free thread on " + sPattern + "'s hosting cpu");
+  if (thrIdx == _THR_QTY_) throw std::runtime_error( "Found no free thread on " + std::to_string(cpuIdx) + "'s hosting cpu");
 
   setThrOrigin(cpuIdx, (uint8_t)thrIdx, sNode); //configure thread and run it
   startThr(cpuIdx, (uint8_t)thrIdx);        
 }
 
-//Requests Pattern to stop
-void CarpeDM::stopPattern(const std::string& sPattern) {
-  std::string sNode = getPatternExitNode(sPattern);
-
+//Requests stop at node <sNode> (flow to idle)
+void CarpeDM::stopNodeOrigin(const std::string& sNode) {
   mc_ptr mc = (mc_ptr) new MiniFlow(0, PRIO_LO, 1, getNodeAdr(DotStr::Node::Special::sIdle, DOWNLOAD, INTERNAL), false );
   //send a command: tell patternExitNode to change the flow to Idle
   sendCmd(sNode, PRIO_LO, mc);
 }
 
-//Immediately aborts a Pattern
-void CarpeDM::abortPattern(const std::string& sPattern) {
+//Immediately aborts the thread whose pattern <sNode> belongs to
+void CarpeDM::abortNodeOrigin(const std::string& sNode) {
+  std::string sPattern = getNodePattern(sNode);
   std::pair<int, int> cpuAndThr = findRunningPattern(sPattern);
   //if we didn't find it, it's not running now. So no problem that we cannot abort it
   if ((cpuAndThr.first >= 0) && (cpuAndThr.second >= 0)) abortThr((uint8_t)cpuAndThr.first, (uint8_t)cpuAndThr.second);
