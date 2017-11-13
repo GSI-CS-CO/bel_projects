@@ -238,20 +238,23 @@ public:
                void startThr(uint8_t cpuIdx, uint8_t thrIdx); //Requests Thread to start
                void stopThr(uint8_t cpuIdx, uint8_t thrIdx); //Requests Thread to stop
                void abortThr(uint8_t cpuIdx, uint8_t thrIdx); //Immediately aborts a Thread
-               
-
+            
+// The lazy interface ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+               void startNodeOrigin(const std::string& sNode, uint8_t thrIdx); //Requests thread <thrIdx> to start at node <sNode>
+               void startNodeOrigin(const std::string& sNode); //Requests a start at node <sNode>
+               void stopNodeOrigin(const std::string& sNode); //Requests stop at node <sNode> (flow to idle)
+               void abortNodeOrigin(const std::string& sNode); //Immediately aborts the thread whose pattern <sNode> belongs to
             uint8_t getNodeCpu(const std::string& name, bool direction); //shortcut to obtain a node's cpu by its name 
-        uint32_t    getNodeAdr(const std::string& name, bool direction, bool intExt); //shortcut to obtain a node's address by its name
+           uint32_t getNodeAdr(const std::string& name, bool direction, bool intExt); //shortcut to obtain a node's address by its name
   const std::string getNodePattern (const std::string& sNode);
   const std::string getNodeBeamproc(const std::string& sNode);
-
               vStrC getPatternMembers (const std::string& sPattern);
-  const std::string& getPatternEntryNode(const std::string& sPattern);
-  const std::string& getPatternExitNode(const std::string& sPattern);
-              
+ const std::string& getPatternEntryNode(const std::string& sPattern);
+ const std::string& getPatternExitNode(const std::string& sPattern);
               vStrC getBeamprocMembers(const std::string& sBeamproc);
   const std::string getBeamprocEntryNode(const std::string& sBeamproc);
   const std::string getBeamprocExitNode(const std::string& sBeamproc);
+
 
   // The very lazy interface ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu and thread assignment of running pattern

@@ -16,7 +16,7 @@ namespace ssi = DotStr::Node::Prop::TMsg::SubId;
 
 using namespace DotStr::Misc;
 
-void VisitorVertexWriter::pushPair(const std::string& p, int v, int format) const {
+void VisitorVertexWriter::pushPair(const std::string& p, uint64_t v, int format) const {
   out << ", " << p << "=\"";
   switch (format) {
     case FORMAT_HEX   : out << std::hex << v; break;
@@ -94,11 +94,11 @@ void VisitorVertexWriter::visit(const TimingMsg& el) const {
   uint8_t fid = ((id >> ID_FID_POS) & ID_FID_MSK); 
   if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) within ID field of Node '" + el.getName() + "'");
   vPf& vF = idFormats[fid];
-  //std::cout << "Output Node " << el.getName();
+  std::cout << "Output Node " << el.getName();
   for(auto& it : vF) { pushPair(it.s, ((id >> it.pos) &  ((1 << it.bits ) - 1) ), FORMAT_DEC); 
-    //std::cout << ", " << it.s << " = " << std::dec << ((id >> it.pos) &  ((1 << it.bits ) - 1) ); 
+    std::cout << ", " << it.s << " = " << std::dec << ((id >> it.pos) &  ((1 << it.bits ) - 1) ); 
   }
-  //std::cout << " ID = 0x" << std::hex << id << std::endl;
+  std::cout << " ID = 0x" << std::hex << id << std::endl;
   pushPair(dnp::TMsg::sPar, el.getPar(), FORMAT_HEX);
   pushPair(dnp::TMsg::sTef, el.getTef(), FORMAT_DEC);
   pushSingle(ec::Node::TMsg::sLookDef);

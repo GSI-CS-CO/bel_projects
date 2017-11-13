@@ -32,7 +32,7 @@ class DestList;
     std::ostream& out;
     void pushStart() const { out << "["; };
     void pushEnd()   const { out << "]"; };
-    void pushPair(const std::string& p, int v, int base) const;
+    void pushPair(const std::string& p, uint64_t v, int base) const;
     void pushPair(const std::string& p, const std::string& v) const;
     void pushSingle(const std::string& p) const;
     void pushNodeInfo(const Node& el) const;

@@ -226,10 +226,10 @@ using namespace DotStr::Misc;
       cpu  = s2u<uint8_t>(gUp[v].cpu);
       
       //add flags for beam process and pattern entry and exit points
-      flags = ((gUp[v].bpEntry  != sZero) << NFLG_BP_ENTRY_LM32_POS) 
-            | ((gUp[v].bpExit   != sZero) << NFLG_BP_EXIT_LM32_POS)
-            | ((gUp[v].patEntry != sZero) << NFLG_PAT_ENTRY_LM32_POS)
-            | ((gUp[v].patExit  != sZero) << NFLG_PAT_EXIT_LM32_POS);
+      flags = ((s2u<bool>(gUp[v].bpEntry)) << NFLG_BP_ENTRY_LM32_POS) 
+            | ((s2u<bool>(gUp[v].bpExit)) << NFLG_BP_EXIT_LM32_POS)
+            | ((s2u<bool>(gUp[v].patEntry)) << NFLG_PAT_ENTRY_LM32_POS)
+            | ((s2u<bool>(gUp[v].patExit)) << NFLG_PAT_EXIT_LM32_POS);
 
       amI it = atUp.lookupHash(hash); //if we already have a download entry, keep allocation, but update vertex index
       if (!(atUp.isOk(it))) {

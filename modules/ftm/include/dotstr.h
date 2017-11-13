@@ -135,6 +135,7 @@ namespace DotStr {
       extern const std::string sCmdStart     ;
       extern const std::string sCmdStop      ;
       extern const std::string sCmdAbort     ;
+      extern const std::string sCmdOrigin;
       extern const std::string sBlock        ;
       extern const std::string sBlockFixed   ;
       extern const std::string sBlockAlign   ;
