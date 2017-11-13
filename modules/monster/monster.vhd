@@ -1215,11 +1215,13 @@ begin
 
     s_pmc_debug_in(7 downto 4) <= gpio_i(3 downto 0); -- FPGA HEX switch
 
-    pci : global_region port map(
-      inclk  => pmc_pci_clk_i,
-      outclk => pci_clk_global);
-
-  end generate;
+    pci_clk_buf : global_region 
+      port map(
+        inclk  => pmc_pci_clk_i,
+        outclk => pci_clk_global
+      );
+  
+end generate;
 
 
   vme_n : if not g_en_vme generate
