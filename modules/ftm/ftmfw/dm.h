@@ -49,7 +49,7 @@ extern uint32_t* const status;
 extern uint32_t* const count;
 extern uint32_t* const start;
 extern uint32_t* const running;
-extern uint32_t* const stop;
+extern uint32_t* const abort1;
 extern uint32_t** const hp;     // array of ptrs to threads for scheduler heap
 
 
@@ -111,6 +111,8 @@ static char* print64(uint64_t x, int align)
 void prioQueueInit();
 
 void dmInit();
+
+uint8_t getNodeType(uint32_t* node);
 
 uint64_t dlEvt(uint32_t* node, uint32_t* thrData);
 

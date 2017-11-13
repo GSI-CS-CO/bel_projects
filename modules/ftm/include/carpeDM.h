@@ -79,7 +79,7 @@ private:
   void removeFromDict(Graph& g);
   int getIdleThread(uint8_t cpuIdx);
 
-  const std::string& firstString(const vStrC& v) {return *(v.begin());}
+  const std::string& firstString(const vStrC& v) {return ((v.size() > 0) ? *(v.begin()) : DotStr::Misc::sUndefined);}
 
 
 protected:
@@ -232,11 +232,9 @@ public:
                void setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
                void inspectHeap(uint8_t cpuIdx);
                void setThrStart(uint8_t cpuIdx, uint32_t bits); //Requests Threads to start
-               void setThrStop(uint8_t cpuIdx, uint32_t bits); //Requests Threads to stop
-               void clrThrRun(uint8_t cpuIdx, uint32_t bits); //hard abort, emergency only
+               void setThrAbort(uint8_t cpuIdx, uint32_t bits); //Immediately aborts Threads
                bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx); //true if thread <thrIdx> is running
                void startThr(uint8_t cpuIdx, uint8_t thrIdx); //Requests Thread to start
-               void stopThr(uint8_t cpuIdx, uint8_t thrIdx); //Requests Thread to stop
                void abortThr(uint8_t cpuIdx, uint8_t thrIdx); //Immediately aborts a Thread
             
 // The lazy interface ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -249,8 +247,8 @@ public:
   const std::string getNodePattern (const std::string& sNode);
   const std::string getNodeBeamproc(const std::string& sNode);
               vStrC getPatternMembers (const std::string& sPattern);
- const std::string& getPatternEntryNode(const std::string& sPattern);
- const std::string& getPatternExitNode(const std::string& sPattern);
+ const std::string getPatternEntryNode(const std::string& sPattern);
+ const std::string getPatternExitNode(const std::string& sPattern);
               vStrC getBeamprocMembers(const std::string& sBeamproc);
   const std::string getBeamprocEntryNode(const std::string& sBeamproc);
   const std::string getBeamprocExitNode(const std::string& sBeamproc);

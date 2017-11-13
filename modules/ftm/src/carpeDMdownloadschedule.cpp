@@ -92,6 +92,12 @@ namespace dnt = DotStr::Node::TypeVal;
           //Add Vertex
           
           vertex_t v        = boost::add_vertex(myVertex(name, pattern, beamproc, std::to_string(cpu), hash, nullptr, "", tmp), g);
+          //FIXME workaround for groupstable updates from download. not  nice ...
+          
+          g[v].bpEntry  = std::to_string((bool)(flags & NFLG_BP_ENTRY_LM32_POS));
+          g[v].bpExit   = std::to_string((bool)(flags & NFLG_BP_EXIT_LM32_POS));
+          g[v].patEntry = std::to_string((bool)(flags &  NFLG_PAT_ENTRY_LM32_POS));
+          g[v].patExit  = std::to_string((bool)(flags &  NFLG_PAT_EXIT_LM32_POS));
           
           //std::cout << "atdown cpu " << (int)cpu << " Adr: 0x" << std::hex << adr <<  " Hash 0x" << hash << std::endl;
           //Add allocTable Entry

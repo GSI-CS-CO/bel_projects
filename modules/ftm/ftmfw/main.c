@@ -46,9 +46,8 @@ void ebmInit()
    } 
 
    ebm_init();
-
-   ebm_config_meta(1500, 42, 0x00000000 );
-   ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff,                0xebd0); //Dst: EB broadcast 
+   ebm_config_meta(1500, 42, 0x00000000 );                                          //MTU, max EB msgs, flags
+   ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff,                0xebd0);   //Dst: EB broadcast 
    ebm_config_if(SOURCE,      0xd15ea5edbeef, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: bogus mac (will be replaced by WR), WR IP
 
 }
@@ -82,19 +81,7 @@ void init()
    
 }
 
-uint32_t getNodeType(uint32_t* node) {
-  uint32_t* tmpType;
-  uint32_t msk;
-  uint32_t type = NODE_TYPE_UNKNOWN;
 
-  if (node != NULL) {
-    tmpType   = node + (NODE_FLAGS >> 2);
-    type      = (*tmpType >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
-    msk       = -(type < _NODE_TYPE_END_);
-    type     &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
-  }
-  return type;
-}
 
 
 void main(void) {
@@ -127,7 +114,7 @@ void main(void) {
     mprintf("#%02u: Priority Queue Debugmode ON, timestamps will be written to 0x%08x on receivers", cpuId, DEBUGPRIOQDST);
   #endif
   //mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
-  mprintf("#%02u: This is DM FW 6.2.3 \n", cpuId);
+  mprintf("#%02u: This is DM FW 0.7.3 \n", cpuId);
 
   atomic_off();
 
@@ -136,31 +123,25 @@ void main(void) {
    while (1) {
     
     //for (j = 0; j < ((125000000/4)); ++j) { asm("nop"); }
-    //DBPRINT1("#%02u: Dl: %s\n", cpuId, print64(DL(pT(hp)), 0)); 
-    //for (j = 0; j < ((125000000/16)); ++j) { asm("nop"); }
     uint8_t thrIdx = *(uint32_t*)(pT(hp) + (T_TD_FLAGS >> 2)) & 0x7; 
-    if (DL(pT(hp))  <= getSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
-      //DBPRINT1("#%02u: ThrIdx %u, Node Ptr is 0x%08x, Dl: %s, type @ 0x%08x is %u\n", cpuId, thrIdx, pN(hp), print64(*(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) ), 0),  tmpType, type);
-      
-      //process node and update node ptr in threadData
-      //crude workaround cause direct assignment of a pointer from pN(x) seems not possible ('error: lvalue required as left operand of assignment')
-      *pncN(hp) = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));
-      
-      //update thread deadline for next node
-      deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));
 
-      // *running   &= ~(*stop & (1<<thrIdx));
-      DL(pT(hp)) |= (((uint64_t)*running >> thrIdx) & 1) -1; // if not running, set deadline to infinity
-      // *stop      &= ~(1 << thrIdx);
-      heapReplace(0);
+    if (DL(pT(hp))  <= getSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
+
+      DBPRINT1("#%02u: ThrIdx %u, Node Ptr is 0x%08x, Dl: %s, type @ 0x%08x is %u\n", cpuId, thrIdx, pN(hp), print64(*(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) ), 0),  tmpType, type);
+
+      *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp)); //process node and return thread's next node
+      
+      DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
+      DL(pT(hp)) |= (~((uint64_t)*abort1 >> thrIdx) & 1) -1; // if abort bit was set, move deadline to infinity
+      *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);        // clear running bit if deadline is at infinity
+      *abort1    &= ~(1 << thrIdx);                         // clear abort bit
+
+      heapReplace(0); // call scheduler, re-sort only current thread
       
     } else {
       //nothing due right now. did the host request any new threads to be started?
-      //for (j = 0; j < ((125000000/1)); ++j) { asm("nop"); }
-      //mprintf("#%02u: b4 Start 0x%08x, Stop 0x%08x, Running 0x%08x, i %u\n",  cpuId, *start, *stop, *running, i);
       
       if(*start) {
-        
         for(i=0;i<8;i++) {
           if (*start & (1<<i)) {
             uint64_t* startTime = (uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME ) >> 2));
@@ -171,20 +152,18 @@ void main(void) {
             uint32_t* cursor    = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_NODE_PTR) >> 2));
             
             DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
-             
+            
             if (!(*startTime)) {*currTime = getSysTime() + (*prepTime << 1); } // if 0, set to now + 2 * preptime
-            else *currTime = *startTime;
+            else                *currTime = *startTime;
             *deadline = *currTime;
 
             *cursor   = *origin;
-            *running |= *start & (1<<i);
-            *start   &= ~(1 << i);  // must be pleace here, race condition otherwise
+            *running |= *start & (1<<i);  // if start bit is set, set running bit
+            *start   &= ~(1 << i);        // clear start bit
           }
-          
         }
-        // restore heap property
-
-        heapify();
+        
+        heapify(); // re-sort all threads in schedulder (necessary because multiple threads may have been started)
       }
     }
   }

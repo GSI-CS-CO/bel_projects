@@ -287,16 +287,19 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "stop")  {
+      std::cerr << program << ": Stop currently only working from cmd fot file, sorry " << std::endl; return -1;
+      /*
       if( targetName != NULL) { 
         uint32_t bits = strtol(targetName, NULL, 0);
         cdm.setThrStop(cpuIdx, bits & ((1<<_THR_QTY_)-1) ); 
       } else { cdm.stopThr(cpuIdx, thrIdx); }
       return 0;
+      */
     }
     else if (cmp == "abort")  {
       if( targetName != NULL) {
         uint32_t bits = strtol(targetName, NULL, 0);
-       cdm.clrThrRun(cpuIdx, bits & ((1<<_THR_QTY_)-1) );
+       cdm.setThrAbort(cpuIdx, bits & ((1<<_THR_QTY_)-1) );
       } else { cdm.abortThr(cpuIdx, thrIdx); }
       return 0;
     }

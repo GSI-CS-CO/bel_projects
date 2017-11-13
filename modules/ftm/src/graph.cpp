@@ -71,8 +71,10 @@ myVertex::myVertex(myVertex const &src) {
   this->tWait  = src.tWait;
 
   //for .dot-cmd abuse
-  this->cmdDest   = src.cmdDest;
-  this->cmdTarget = src.cmdTarget;
+  this->cmdTarget   = src.cmdTarget;
+  this->cmdDest     = src.cmdDest;
+  this->cmdDestBp   = src.cmdDestBp;
+  this->cmdDestPat  = src.cmdDestPat;
   
 
 }

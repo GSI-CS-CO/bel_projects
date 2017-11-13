@@ -248,22 +248,22 @@ bool CarpeDM::connect(const std::string& en) {
 
     
     if (g[v].id == DotStr::Misc::sUndefined64) { // from SubID fields to ID
-      std::cout << "Input Node  " << g[v].name;
+      //std::cout << "Input Node  " << g[v].name;
       fid = (s2u<uint8_t>(g[v].id_fid) & ID_FID_MSK); //get fid
       if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) field in Node '" + g[v].name + "'");
       vPf& vTmp = idFormats[fid]; //choose conversion vector by fid
-      
+      id = 0;
       for(auto& it : vTmp) {  //for each format vector element 
         //use dot property tag string as key to dp map (map of tags to (maps of vertex_indices to values))
         uint64_t val = s2u<uint64_t>(boost::get(it.s, dp, v)); // use vertex index v as key in this property map to obtain value
-        std::cout << ", " << std::dec << it.s << " = " << (val & ((1 << it.bits ) - 1) ) << ", (" << (int)it.pos << ",0x" << std::hex << ((1 << it.bits ) - 1) << ")";
-        id |= (val & ((1 << it.bits ) - 1) ) << it.pos; // OR the masked and shifted value to id
+        //std::cout << ", " << std::dec << it.s << " = " << (val & ((1 << it.bits ) - 1) ) << ", (" << (int)it.pos << ",0x" << std::hex << ((1 << it.bits ) - 1) << ")";
+        id |= ((val & ((1 << it.bits ) - 1) ) << it.pos); // OR the masked and shifted value to id
       }
-      std::cout << "ID = 0x" << std::hex << id << std::endl;
+      
       ss.flush();
-      ss << std::dec << id;
+      ss << "0x" << std::hex << id;
       g[v].id = ss.str();
-
+      //std::cout << "ID = " << g[v].id << std::endl;
     } else { //from ID to SubID fields
       id = s2u<uint8_t>(g[v].id);
       fid = ((id >> ID_FID_POS) & ID_FID_MSK);
@@ -287,46 +287,48 @@ bool CarpeDM::connect(const std::string& en) {
     boost::dynamic_properties dp(boost::ignore_other_properties);
     boost::ref_property_map<Graph *, std::string> gname( boost::get_property(g, boost::graph_name));
     dp.property(dgp::sName,     gname);
-    dp.property(dep::Base::sType,                        boost::get(&myEdge::type,         g));
-    dp.property(dnp::Base::sName,                        boost::get(&myVertex::name,       g));
-    dp.property(dnp::Base::sCpu,                         boost::get(&myVertex::cpu,        g));
+    dp.property(dep::Base::sType,               boost::get(&myEdge::type,         g));
+    dp.property(dnp::Base::sName,               boost::get(&myVertex::name,       g));
+    dp.property(dnp::Base::sCpu,                boost::get(&myVertex::cpu,        g));
 
-    dp.property(dnp::Base::sType,                        boost::get(&myVertex::type,       g));
-    dp.property(dnp::Base::sFlags,                       boost::get(&myVertex::flags,      g));
-    dp.property(dnp::Base::sPatName,                     boost::get(&myVertex::patName,    g));
-    dp.property(dnp::Base::sPatEntry,                    boost::get(&myVertex::patEntry,   g));
-    dp.property(dnp::Base::sPatExit,                     boost::get(&myVertex::patExit,    g));
-    dp.property(dnp::Base::sBpName,                      boost::get(&myVertex::bpName,     g));
-    dp.property(dnp::Base::sBpEntry,                     boost::get(&myVertex::bpEntry,    g));
-    dp.property(dnp::Base::sBpExit,                      boost::get(&myVertex::bpExit,     g));
+    dp.property(dnp::Base::sType,               boost::get(&myVertex::type,       g));
+    dp.property(dnp::Base::sFlags,              boost::get(&myVertex::flags,      g));
+    dp.property(dnp::Base::sPatName,            boost::get(&myVertex::patName,    g));
+    dp.property(dnp::Base::sPatEntry,           boost::get(&myVertex::patEntry,   g));
+    dp.property(dnp::Base::sPatExit,            boost::get(&myVertex::patExit,    g));
+    dp.property(dnp::Base::sBpName,             boost::get(&myVertex::bpName,     g));
+    dp.property(dnp::Base::sBpEntry,            boost::get(&myVertex::bpEntry,    g));
+    dp.property(dnp::Base::sBpExit,             boost::get(&myVertex::bpExit,     g));
     //Block
-    dp.property(dnp::Block::sTimePeriod,                 boost::get(&myVertex::tPeriod,    g));
-    dp.property(dnp::Block::sGenQPrioHi,                 boost::get(&myVertex::qIl,        g));
-    dp.property(dnp::Block::sGenQPrioMd,                 boost::get(&myVertex::qHi,        g));
-    dp.property(dnp::Block::sGenQPrioLo,                 boost::get(&myVertex::qLo,        g));
+    dp.property(dnp::Block::sTimePeriod,        boost::get(&myVertex::tPeriod,    g));
+    dp.property(dnp::Block::sGenQPrioHi,        boost::get(&myVertex::qIl,        g));
+    dp.property(dnp::Block::sGenQPrioMd,        boost::get(&myVertex::qHi,        g));
+    dp.property(dnp::Block::sGenQPrioLo,        boost::get(&myVertex::qLo,        g));
     //Timing Message
-    dp.property(dnp::TMsg::sTimeOffs,                    boost::get(&myVertex::tOffs,      g));
-    dp.property(dnp::TMsg::sId,                          boost::get(&myVertex::id,         g));
+    dp.property(dnp::TMsg::sTimeOffs,           boost::get(&myVertex::tOffs,      g));
+    dp.property(dnp::TMsg::sId,                 boost::get(&myVertex::id,         g));
       //ID sub fields
-    dp.property(dnp::TMsg::SubId::sFid,                  boost::get(&myVertex::id_fid,     g));
-    dp.property(dnp::TMsg::SubId::sGid,                  boost::get(&myVertex::id_gid,     g));
-    dp.property(dnp::TMsg::SubId::sEno,                  boost::get(&myVertex::id_evtno,   g));
-    dp.property(dnp::TMsg::SubId::sSid,                  boost::get(&myVertex::id_sid,     g));
-    dp.property(dnp::TMsg::SubId::sBpid,                 boost::get(&myVertex::id_bpid,    g));
-    dp.property(dnp::TMsg::SubId::sBin,                  boost::get(&myVertex::id_bin,     g));
-    dp.property(dnp::TMsg::SubId::sReqNoB,               boost::get(&myVertex::id_reqnob,  g));
-    dp.property(dnp::TMsg::SubId::sVacc,                 boost::get(&myVertex::id_vacc,    g));
-    dp.property(dnp::TMsg::sPar,                         boost::get(&myVertex::par,        g));
-    dp.property(dnp::TMsg::sTef,                         boost::get(&myVertex::tef,        g));
+    dp.property(dnp::TMsg::SubId::sFid,         boost::get(&myVertex::id_fid,     g));
+    dp.property(dnp::TMsg::SubId::sGid,         boost::get(&myVertex::id_gid,     g));
+    dp.property(dnp::TMsg::SubId::sEno,         boost::get(&myVertex::id_evtno,   g));
+    dp.property(dnp::TMsg::SubId::sSid,         boost::get(&myVertex::id_sid,     g));
+    dp.property(dnp::TMsg::SubId::sBpid,        boost::get(&myVertex::id_bpid,    g));
+    dp.property(dnp::TMsg::SubId::sBin,         boost::get(&myVertex::id_bin,     g));
+    dp.property(dnp::TMsg::SubId::sReqNoB,      boost::get(&myVertex::id_reqnob,  g));
+    dp.property(dnp::TMsg::SubId::sVacc,        boost::get(&myVertex::id_vacc,    g));
+    dp.property(dnp::TMsg::sPar,                boost::get(&myVertex::par,        g));
+    dp.property(dnp::TMsg::sTef,                boost::get(&myVertex::tef,        g));
     //Command
-    dp.property(dnp::Cmd::sTimeValid,                    boost::get(&myVertex::tValid,     g));
-    dp.property(dnp::Cmd::sPrio,                         boost::get(&myVertex::prio,       g));
-    dp.property(dnp::Cmd::sQty,                          boost::get(&myVertex::qty,        g));
-    dp.property(dnp::Cmd::sTimeWait,                     boost::get(&myVertex::tWait,      g));
+    dp.property(dnp::Cmd::sTimeValid,           boost::get(&myVertex::tValid,     g));
+    dp.property(dnp::Cmd::sPrio,                boost::get(&myVertex::prio,       g));
+    dp.property(dnp::Cmd::sQty,                 boost::get(&myVertex::qty,        g));
+    dp.property(dnp::Cmd::sTimeWait,            boost::get(&myVertex::tWait,      g));
     //for .dot-cmd abuse
-    dp.property(dnp::Cmd::sFlowDst,                      boost::get(&myVertex::cmdDest,   g));
-    dp.property(dnp::Cmd::sFlowTarget,                   boost::get(&myVertex::cmdTarget, g));
-    dp.property(dnp::Base::sThread,                      boost::get(&myVertex::thread,     g));
+    dp.property(dnp::Cmd::sTarget,              boost::get(&myVertex::cmdTarget,  g));
+    dp.property(dnp::Cmd::sDst,                 boost::get(&myVertex::cmdDest,    g));
+    dp.property(dnp::Cmd::sDstPattern,          boost::get(&myVertex::cmdDestPat, g));                     
+    dp.property(dnp::Cmd::sDstBeamproc,         boost::get(&myVertex::cmdDestBp,  g));
+    dp.property(dnp::Base::sThread,             boost::get(&myVertex::thread,     g));
     
 
   
@@ -351,26 +353,25 @@ bool CarpeDM::connect(const std::string& en) {
 
   Graph& CarpeDM::parseDot(const std::string& s, Graph& g) {
     boost::dynamic_properties dp = createParser(g);
+    bool add2Groups = false;
     try { boost::read_graphviz(s, g, dp, dnp::Base::sName); }
     catch(...) { throw; }
    
+    if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) == std::string::npos) {add2Groups = true;}
     
     //generate hashes and adds pattern & beamproc memberships to GroupTable
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       g[v].hash = hm.add(g[v].name).get();
-      /*
-      std::cout << g[v].name << " P: " << g[v].patName << " " << g[v].patEntry << " " << g[v].patExit;
-      std::cout << " B: " << g[v].bpName << " " << g[v].bpEntry << " " << g[v].bpExit << std::endl;
-      */
-      gt.setBeamproc(g[v].name, g[v].bpName, (g[v].bpEntry  != sZero), (g[v].bpExit  != sZero));
-      gt.setPattern(g[v].name, g[v].patName, (g[v].patEntry != sZero), (g[v].patExit != sZero));
-      //sLog << "Adding " << g[v].name << " under " << std::hex << "0x" << g[v].hash << std::endl;
+   
+      if(add2Groups) {
+        gt.setBeamproc(g[v].name, g[v].bpName, (s2u<bool>(g[v].bpEntry)), (s2u<bool>(g[v].bpExit)));
+        gt.setPattern(g[v].name, g[v].patName, (s2u<bool>(g[v].patEntry)), (s2u<bool>(g[v].patExit)));
+      }
+      
     }
-    /*
-    gt.debug();
-    auto vs = gt.getPatternEntryNodes("P1"); 
-    for (auto& it : vs ) {std::cout << "P1 Entry: " << it << std::endl;}
-    */
+   
+    //if(add2Groups) {    gt.debug(); }
+
     return g;
 
 

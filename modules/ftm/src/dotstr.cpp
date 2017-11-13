@@ -101,12 +101,14 @@ namespace DotStr {
 
       namespace Cmd {
      
-        const std::string sTimeValid     = "tvalid";
-        const std::string sPrio          = "prio";
-        const std::string sQty           = "qty";
-        const std::string sTimeWait      = "twait";
-        const std::string sFlowDst       = "dest";
-        const std::string sFlowTarget    = "target";
+        const std::string sTimeValid   = "tvalid";
+        const std::string sPrio        = "prio";
+        const std::string sQty         = "qty";
+        const std::string sTimeWait    = "twait";
+        const std::string sTarget      = "target";
+        const std::string sDst         = "dest";
+        const std::string sDstPattern  = "destpattern";
+        const std::string sDstBeamproc = "destbeamproc";
       }  
     }
 
