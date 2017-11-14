@@ -238,16 +238,16 @@ int CarpeDM::sendCommands(Graph& g) {
 
 
   //Requests Threads to stop
-  void CarpeDM::setThrStop(uint8_t cpuIdx, uint32_t bits) {
-    ebWriteWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_STOP, bits);
+  void CarpeDM::setThrAbort(uint8_t cpuIdx, uint32_t bits) {
+    ebWriteWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_ABORT, bits);
   }
-
+/*
   //hard abort, emergency only
   void CarpeDM::clrThrRun(uint8_t cpuIdx, uint32_t bits) {
     uint32_t state = ebReadWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING);
     ebWriteWord(ebd, getThrCmdAdr(cpuIdx) + T_TC_RUNNING, state & ~bits);
   }
-
+*/
   bool CarpeDM::isThrRunning(uint8_t cpuIdx, uint8_t thrIdx) {
     return (bool)(getThrRun(cpuIdx) & (1<< thrIdx));
   }
@@ -256,15 +256,15 @@ int CarpeDM::sendCommands(Graph& g) {
   void CarpeDM::startThr(uint8_t cpuIdx, uint8_t thrIdx) {
     setThrStart(cpuIdx, (1<<thrIdx));    
   }
-
+/*
   //Requests Thread to stop
   void CarpeDM::stopThr(uint8_t cpuIdx, uint8_t thrIdx) {
     setThrStop(cpuIdx, (1<<thrIdx));    
   }
-
+*/
   //Immediately aborts a Thread
   void CarpeDM::abortThr(uint8_t cpuIdx, uint8_t thrIdx) {
-    clrThrRun(cpuIdx, (1<<thrIdx));    
+    setThrAbort(cpuIdx, (1<<thrIdx));   
   }
 
   void CarpeDM::dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio) {
@@ -489,8 +489,8 @@ bool CarpeDM::isPatternRunning(const std::string& sPattern) {
 int CarpeDM::getIdleThread(uint8_t cpuIdx) {
   uint32_t thrds = getThrRun(cpuIdx);
   int i;
-  for (i = 0; i <= _THR_QTY_; i++) { if ((i < _THR_QTY_) && !(thrds & (1<<i))) break; } // aborts at free thrIdx or returns _THR_QTY_ if no frees found
-  return i;
+  for (i = 0; i < _THR_QTY_; i++) { if(!(bool)(thrds & (1<<i))) return i; } // aborts at free thrIdx or returns _THR_QTY_ if no frees found
+  return _THR_QTY_;
 }  
 
 //Requests Pattern to start on thread <x>
@@ -518,10 +518,10 @@ void CarpeDM::startNodeOrigin(const std::string& sNode, uint8_t thrIdx) {
 //Requests a start at node <sNode>
 void CarpeDM::startNodeOrigin(const std::string& sNode) {
   uint8_t cpuIdx    = getNodeCpu(sNode, DOWNLOAD);
-  int thrIdx = getIdleThread(cpuIdx); //find a free thread we can use to run our pattern
+  int thrIdx = 0; //getIdleThread(cpuIdx); //find a free thread we can use to run our pattern
   if (thrIdx == _THR_QTY_) throw std::runtime_error( "Found no free thread on " + std::to_string(cpuIdx) + "'s hosting cpu");
-  std::cout << "Starting " << cpuIdx << " " << (uint8_t)thrIdx << " " << sNode << std::endl;
-  setThrOrigin(cpuIdx, (uint8_t)thrIdx, sNode); //configure thread and run it
+  std::cout << "Starting on Cpu " << (int)cpuIdx << ", thread " << (int)thrIdx << " from " << sNode << std::endl;
+  setThrOrigin(cpuIdx, thrIdx, sNode); //configure thread and run it
   startThr(cpuIdx, (uint8_t)thrIdx);        
 }
 

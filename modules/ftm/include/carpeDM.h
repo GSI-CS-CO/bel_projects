@@ -232,11 +232,9 @@ public:
                void setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t);
                void inspectHeap(uint8_t cpuIdx);
                void setThrStart(uint8_t cpuIdx, uint32_t bits); //Requests Threads to start
-               void setThrStop(uint8_t cpuIdx, uint32_t bits); //Requests Threads to stop
-               void clrThrRun(uint8_t cpuIdx, uint32_t bits); //hard abort, emergency only
+               void setThrAbort(uint8_t cpuIdx, uint32_t bits); //Immediately aborts Threads
                bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx); //true if thread <thrIdx> is running
                void startThr(uint8_t cpuIdx, uint8_t thrIdx); //Requests Thread to start
-               void stopThr(uint8_t cpuIdx, uint8_t thrIdx); //Requests Thread to stop
                void abortThr(uint8_t cpuIdx, uint8_t thrIdx); //Immediately aborts a Thread
             
 // The lazy interface ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
