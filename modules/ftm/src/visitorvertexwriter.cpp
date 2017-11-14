@@ -81,6 +81,7 @@ void VisitorVertexWriter::visit(const Block& el) const  {
   pushPair(dnp::Block::sTimePeriod, el.getTPeriod(), FORMAT_DEC);
   pushMembershipInfo((Node&)el); 
   pushSingle(ec::Node::Block::sLookDef);
+  pushPaintedInfo((Node&)el);
   pushEnd();
 }
 
