@@ -59,7 +59,6 @@
 
 #define MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
 
-#define TASK_TIMEOUT  100
 
 extern struct w1_bus wrpc_w1_bus;
 extern inline int cbisEmpty(volatile struct channel_regs*, int);
@@ -343,6 +342,7 @@ int configure_fg_macro(int channel) {
   int i = 0;
   int slot, dev, fg_base, dac_base;
   unsigned short cntrl_reg_wr;
+  unsigned short data;
   struct param_set pset;
   short blk_data[6];
   int status;
@@ -354,13 +354,25 @@ int configure_fg_macro(int channel) {
 
     /* enable irqs */
     if ((slot & 0xf0) == 0) {                                      //scu bus slave
-      scub_base[SRQ_ENA] |= (1 << (slot-1));                // enable irqs for the slave
+      scub_base[SRQ_ENA] |= (1 << (slot-1));           // enable irqs for the slave
       scub_base[OFFS(slot) + SLAVE_INT_ACT] = 0xc000;  // clear all irqs
       scub_base[OFFS(slot) + SLAVE_INT_ENA] |= 0xc000; // enable fg1 and fg2 irq
     } else if (slot & DEV_MIL_EXT) {
+      // check for PUR
+      if((status = read_mil(scu_mil_base, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, 0); 
+      if (!(data & 0x100)) {
+        SEND_SIG(SIG_DISARMED);
+        return 0;
+      }
       if ((status = write_mil(scu_mil_base, 1 << 13, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf); //enable Data-Request
     } else if (slot & DEV_SIO) {
-      scub_base[SRQ_ENA] |= (1 << ((slot & 0xf)-1));            // enable irqs for the slave
+      // check for PUR
+      if((status = scub_read_mil(scub_base, slot & 0xf, &data, FC_IRQ_STAT | dev)) != OKAY)          dev_failure(status, slot & 0xf); 
+      if (!(data & 0x100)) {
+        SEND_SIG(SIG_DISARMED);
+        return 0;
+      }
+      scub_base[SRQ_ENA] |= (1 << ((slot & 0xf)-1));        // enable irqs for the slave
       scub_base[OFFS(slot & 0xf) + SLAVE_INT_ENA] = 0x0010; // enable receiving of drq
       if ((status = scub_write_mil(scub_base, slot & 0xf, 1 << 13, FC_IRQ_MSK | dev)) != OKAY) dev_failure(status, slot & 0xf); //enable sending of drq
     }
@@ -382,11 +394,11 @@ int configure_fg_macro(int channel) {
       scub_base[OFFS(slot) + dac_base + DAC_CNTRL] = 0x10;        // set FG mode
       scub_base[OFFS(slot) + fg_base + FG_CNTRL] = 0x1;           // reset fg
     } else if (slot & DEV_MIL_EXT) {
-      if ((status = write_mil(scu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY)   dev_failure (status, 0); // set FG mode
-      if ((status = write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, 0); // reset fg
+      if ((status = write_mil(scu_mil_base, 0x1, FC_IFAMODE_WR | dev)) != OKAY) dev_failure (status, 0); // set FG mode
+      if ((status = write_mil(scu_mil_base, 0x1, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, 0); // reset fg
     } else if (slot & DEV_SIO) {
-      if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_IFAMODE_WR | dev)) != OKAY)   dev_failure (status, slot & 0xf); // set FG mode
-      if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_CNTRL_WR | dev)) != OKAY) dev_failure (status, slot & 0xf); // reset fg
+      if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_IFAMODE_WR | dev)) != OKAY) dev_failure (status, slot & 0xf); // set FG mode
+      if ((status = scub_write_mil(scub_base, slot & 0xf, 0x1, FC_CNTRL_WR | dev)) != OKAY)   dev_failure (status, slot & 0xf); // reset fg
     }
 
     //fetch first parameter set from buffer

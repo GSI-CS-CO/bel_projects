@@ -123,7 +123,7 @@ void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_
 
           if (((0xffff & fg_vers) >= 0x2) && ((0xffff & ifa_id) == 0xfa00) && ((0xffff & ifa_vers) >= 0x1900)) {
             add_to_fglist(DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & fg_vers, fglist);
-            scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
+            //scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
           }
         }
       } else {
@@ -146,7 +146,7 @@ void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_
       
       if (((0xffff & fg_vers) >= 0x2) && ((0xffff & ifa_id) == 0xfa00) && ((0xffff & ifa_vers) >= 0x1900)) {
         add_to_fglist(DEV_MIL_EXT | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & fg_vers, fglist);
-        write_mil(mil_addr, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
+        //write_mil(mil_addr, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
       }
     }
   }
