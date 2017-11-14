@@ -107,8 +107,12 @@ namespace DotStr {
         extern const std::string sPrio     ;
         extern const std::string sQty      ;
         extern const std::string sTimeWait ;
-        extern const std::string sFlowDst  ;
-        extern const std::string sFlowTarget;
+        extern const std::string sTarget;
+        extern const std::string sDst  ;
+        extern const std::string sDstPattern;
+        extern const std::string sDstBeamproc;
+        
+        
       }  
     }
 

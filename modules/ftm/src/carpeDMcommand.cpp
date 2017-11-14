@@ -40,11 +40,17 @@ int CarpeDM::sendCommands(Graph& g) {
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
 
     std::string target, destination;
-    bool pattern = false, beamproc = false;
-    //use the pattern and beamprocess tags to determine the target's type
-          if (g[v].patName  != DotStr::Misc::sUndefined) { pattern = true;}
-    else  if (g[v].bpName != DotStr::Misc::sUndefined) { beamproc = true;}
-    else  {target = g[v].cmdTarget; destination = g[v].cmdDest; }
+    
+    //use the pattern and beamprocess tags to determine the target. Pattern overrides Beamprocess overrides cpu/thread
+          if (g[v].patName  != DotStr::Misc::sUndefined)    { target = getPatternExitNode(g[v].patName); }
+    else  if (g[v].bpName != DotStr::Misc::sUndefined)      { target = getBeamprocExitNode(g[v].bpName); }
+    else  {target = g[v].cmdTarget;}
+
+    //use the destPattern and destBeamprocess tags to determine the destination
+    if (g[v].cmdDestPat  != DotStr::Misc::sUndefined)      { destination  = getPatternEntryNode(g[v].cmdDestPat); }
+    else  if (g[v].cmdDestBp != DotStr::Misc::sUndefined)  { destination  = getBeamprocEntryNode(g[v].cmdDestBp); }
+    else                                                    {destination = g[v].cmdDest;}
+     
 
     uint64_t cmdTvalid  = s2u<uint64_t>(g[v].tValid);
     uint8_t  cmdPrio    = s2u<uint8_t>(g[v].prio);
@@ -54,37 +60,40 @@ int CarpeDM::sendCommands(Graph& g) {
     if (!(cpu < getCpuQty())) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");
     if (!(thr < _THR_QTY_  )) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sThread + "' is invalid\n"); 
 
+    sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
 
-    if (g[v].type == dnt::sCmdStart)   { 
-      if(pattern || beamproc) {
-        if (pattern)    {startPattern(g[v].patName);  continue; }
-        //else (beamproc) {startBeamproc(g[v].bpName); continue; }
-      } else if (hm.lookup(target)) {startNodeOrigin(target); continue; }
-      else {startThr(cpu, thr); continue;}
+    // Commands with optional target
+    if (g[v].type == dnt::sCmdStart)   {
+      target = getPatternEntryNode(g[v].patName); 
+      if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(target); continue; }
+      else {sLog << " Starting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  startThr(cpu, thr); continue;}
     }
+    if (g[v].type == dnt::sCmdStop)    {
+      if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(target); continue;}
+      else { sLog << " Stopping (trying) cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; stopPattern(getNodePattern(getThrCursor(cpu, thr))); continue;}  //careful, this only works safely for repeating patterns. No guarantees otherwise
+    }  
     if (g[v].type == dnt::sCmdAbort)   { 
-      if(pattern || beamproc) {
-        if (pattern)    {abortPattern(g[v].patName);  continue; }
-        //else (beamproc) {abortBeamproc(g[v].bpName); continue; }
-      } else if (hm.lookup(target)) {abortNodeOrigin(target); continue; }
-      else {abortThr(cpu, thr); continue;}
+      if (hm.lookup(target)) {sLog << " Aborting (trying) at <" << target << ">" << std::endl; abortNodeOrigin(target); continue; }
+      else {sLog << " Aborting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; abortThr(cpu, thr); continue;}
     }
+
+    //Every command below needs a valid target node
+    if(!hm.lookup(target))      {throw std::runtime_error("Command <" + g[v].name + ">'s target node '" + target + "' is not known to hashmap!\n"); return -5;}
+
     if (g[v].type == dnt::sCmdOrigin)   { 
-      if(pattern || beamproc) {
-        if (pattern)    { target = getPatternEntryNode(g[v].patName); }
-        //else (beamproc) {abortBeamproc(g[v].bpName); continue; }
-      }  
       //Leave out for now and autocorrect cpu
       //if (getNodeCpu(target, DOWNLOAD) != cpu) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");
       setThrOrigin(getNodeCpu(target, DOWNLOAD), thr, target); continue;
     }
 
-    
-    //Per-Node commands
+    // Commands targeted at cmd queue of individual blocks, using miniCommand (mc) class
          if (g[v].type == dnt::sCmdNoop)    { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
                                               mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
                                             }
     else if (g[v].type == dnt::sCmdFlow)    { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
+                                              //Flow needs a valid destination node
+                                              if (!hm.lookup(destination)) {throw std::runtime_error("Command <" + g[v].name + ">'s destination node '" + target + "' is not known to hashmap!\n"); return -5;} 
+                                              sLog << " Flowing from <" << target << "> to <" << destination << ">" << std::endl;
                                               uint32_t adr    = getNodeAdr(destination, DOWNLOAD, INTERNAL);
                                               mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, false );
                                             }
@@ -92,24 +101,15 @@ int CarpeDM::sendCommands(Graph& g) {
     else if (g[v].type == dnt::sCmdWait)    { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
                                               mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
                                             }
-    else if (g[v].type == dnt::sCmdStop)    { if(pattern || beamproc) {
-                                                if (pattern)    {stopPattern(g[v].patName); continue; }
-                                                //else if (beamproc) {stopBeamproc(g[v].bpName); }
-                                              } else if (hm.lookup(target)) { stopNodeOrigin(target); continue;}
-                                              else { stopPattern(getNodePattern(getThrCursor(cpu, thr))); continue;}  //careful, this only works safely for repeating patterns. No guarantees otherwise
-                                            }                                                
     else                                    { throw std::runtime_error("Command <" + g[v].name + ">'s type <" + g[v].type + "> is not supported!\n"); return -2;} 
     
-    sLog << "cmd flow " << target << " -> " <<  g[v].cmdDest <<  std::endl;
-
-    if(!hm.lookup(target))      {throw std::runtime_error("Command <" + g[v].name + ">'s target node '" + target + "' is not known to hashmap!\n"); return -5;}
+    sLog << std::endl;
+    //send miniCommand
     hashTarget = hm.lookup(target).get();
-    
     vAdr vATmp  = getCmdWrAdrs(hashTarget, cmdPrio);
     vUlA.insert( vUlA.end(), vATmp.begin(), vATmp.end() ); 
     cmdWrInc    = getCmdInc(hashTarget, cmdPrio);
     mc->serialise(b);
-    //delete mc;
     writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, cmdWrInc);
     vUlD.insert( vUlD.end(), b, b + _T_CMD_SIZE_ + _32b_SIZE_);
   }
