@@ -112,7 +112,7 @@ void scan_scu_bus(volatile unsigned short *scub_adr, volatile unsigned int *mil_
         scub_adr[OFFS(i) + SLAVE_EXT_CLK] = 0x1;                //switch clk to sys clk from scu bus
 
       // if slave is a sio3, scan for ifa cards
-      if (cid_sys == SYS_CSCO && cid_group == GRP_SIO3) {
+      if (cid_sys == SYS_CSCO && (cid_group == GRP_SIO3 || cid_group == GRP_SIO2)) {
         // reset all taskslots by reading value back
         scub_reset_mil(scub_adr, slot);
 
