@@ -82,6 +82,7 @@ int CarpeDM::ebWriteWord(Device& dev, uint32_t adr, uint32_t data)
 {
    Cycle cyc;
    //FIXME What about returned eb status ??
+   //std::cout << "writing @ 0x" << std::hex << adr << " V 0x" << data << std::endl;
    cyc.open(dev);
    cyc.write(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)data);
    cyc.close();

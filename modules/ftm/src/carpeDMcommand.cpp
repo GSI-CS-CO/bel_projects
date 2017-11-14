@@ -122,7 +122,7 @@ int CarpeDM::sendCommands(Graph& g) {
   
 
   int CarpeDM::sendCmd(const std::string& targetName, uint8_t cmdPrio, mc_ptr mc) {
-    if(verbose) sLog << "Preparing Command Prio " << cmdPrio << " to Block " << targetName << "... ";
+    
     vBuf vUlD;
     vAdr vUlA;
     uint32_t cmdWrInc, hash;
@@ -136,12 +136,12 @@ int CarpeDM::sendCommands(Graph& g) {
       mc->serialise(b);
       writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, cmdWrInc);
       vUlD.insert( vUlD.end(), b, b + _T_CMD_SIZE_ + _32b_SIZE_);
-      if(verbose) sLog << "Done." << std::endl << "Sending to Q adr 0x" << std::hex << vUlA[0] << "...";
+      
       ebWriteCycle(ebd, vUlA, vUlD);
     } catch (...) {throw;}      
 
     
-    if(verbose) sLog << "Done." << std::endl;
+    
     return vUlD.size();
   }
 
@@ -520,7 +520,6 @@ void CarpeDM::startNodeOrigin(const std::string& sNode) {
   uint8_t cpuIdx    = getNodeCpu(sNode, DOWNLOAD);
   int thrIdx = 0; //getIdleThread(cpuIdx); //find a free thread we can use to run our pattern
   if (thrIdx == _THR_QTY_) throw std::runtime_error( "Found no free thread on " + std::to_string(cpuIdx) + "'s hosting cpu");
-  std::cout << "Starting on Cpu " << (int)cpuIdx << ", thread " << (int)thrIdx << " from " << sNode << std::endl;
   setThrOrigin(cpuIdx, thrIdx, sNode); //configure thread and run it
   startThr(cpuIdx, (uint8_t)thrIdx);        
 }

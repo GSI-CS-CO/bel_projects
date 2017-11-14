@@ -48,7 +48,6 @@ public:
 
 
   void serialise(uint8_t* b) const {
-    std::cout << "tValid " << tValid << " act 0x" << std::hex << act << std::endl;
     MiniCommand::serialise(b);
     writeLeNumberToBeBytes(b + (ptrdiff_t)T_CMD_FLOW_DEST, this->destAdr);   
   };

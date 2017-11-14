@@ -142,19 +142,17 @@ public:
     if (x.first != a.end()) {
       for (auto it = x.first; it != x.second; ++it) {
         if (*it.*point) {
-          std::cout << "found " << it->node << std::endl;
           res.push_back(it->node);
         }
       }   
     }
-    std::cout << " res " << res.size() << std::endl; 
     return res;
   }
 
   template <typename Tag>
   vStrC getMembers(const std::string& s) {vStrC res; pmRange x  = lookup<Tag>(s); if (x.first != a.end()) {for (auto it = x.first; it != x.second; ++it) res.push_back(it->node);} return res;}
 
-  vStrC getPatternEntryNodes(const std::string& sPattern)    {auto res = getGroupNodes<Groups::Pattern, &GroupMeta::patternEntry>(sPattern); std::cout << " res1 " << res.size() << std::endl; return res;};
+  vStrC getPatternEntryNodes(const std::string& sPattern)    {auto res = getGroupNodes<Groups::Pattern, &GroupMeta::patternEntry>(sPattern); return res;};
   vStrC getPatternExitNodes(const std::string& sPattern)     {return getGroupNodes<Groups::Pattern, &GroupMeta::patternExit>(sPattern); };
   vStrC getBeamprocEntryNodes(const std::string& sBeamproc)  {return getGroupNodes<Groups::Pattern, &GroupMeta::beamprocEntry>(sBeamproc); };
   vStrC getBeamprocExitNodes(const std::string& sBeamproc)   {return getGroupNodes<Groups::Pattern, &GroupMeta::beamprocExit>(sBeamproc); };
