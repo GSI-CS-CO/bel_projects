@@ -54,7 +54,7 @@ public:
   void show(uint32_t cnt, const char* sPrefix)          const;
   void serialise(const vAdr &va) const;
   void deserialise();
-  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
   const uint64_t getId() const {return this->id;}
