@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 21-September-2017
+ *  version : 10-November-2017
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000008                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x000009                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -137,6 +137,7 @@ volatile uint32_t *pSharedDstMacLo;     // pointer to a "user defined" u64 regis
 volatile uint32_t *pSharedDstIP;        // pointer to a "user defined" u32 register; here: get IP of Data Master WR interface from host
 volatile uint32_t *pSharedFlexOffset;   // pointer to a "user defined" u32 register; here: TS_FLEXWAIT = OFFSETFLEX + TS_MILEVENT; values in ns
 volatile uint32_t *pSharedUniTimeout;   // pointer to a "user defined" u32 register; here: timeout value for UNIPZ
+volatile uint32_t *pSharedTkTimeout;    // pointer to a "user defined" u32 register; here: timeout value for TK (via UNIPZ)
 
 uint32_t *pCpuRamExternal;              // external address (seen from host bridge) of this CPU's RAM            
 uint32_t *pCpuRamExternalData4EB;       // external address (seen from host bridge) of this CPU's RAM: field for EB return values
@@ -145,12 +146,13 @@ WriteToPZU_Type  writePZUData;          // Modulbus SIS, I/O-Modul 1, Bits 0..15
 
 uint32_t flexOffset;                    // offset added to obtain timestamp for "flex wait"
 uint32_t uniTimeout;                    // timeout value for UNIPZ
+uint32_t tkTimeout;                     // timeout value for TK (via UNIPZ)
 
-#define DM_NBLOCKS       3              // max number of blocks withing the Data Master to be treated
+#define DM_NBLOCKS       2 /* 3 */      // max number of blocks withing the Data Master to be treated  >>> no need to reply to DM after TK request <<<
 dmComm  dmData[DM_NBLOCKS];             // data for treatment of blocks
-#define REQTK            0              // 1st block: handles DM for TK request, flow command
-#define REQBEAMA         1              // 2nd block: handles DM for beam request, flow command
-#define REQBEAMB         2              // 3rd block: handles DM for beam request, flex wait
+/* #define REQTK            0              // 1st block: handles DM for TK request, flow command >>> no need to reply to DM after TK request <<< */
+#define REQBEAMA         0              // 1st block: handles DM for beam request, flow command
+#define REQBEAMB         1              // 2nd block: handles DM for beam request, flex wait
 
 /*
 void show_msi()
@@ -480,6 +482,7 @@ void initSharedMem() // determine address and clear shared mem
   pSharedDstIP       = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTIP >> 2));
   pSharedFlexOffset  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_OFFSETFLEX >> 2));
   pSharedUniTimeout  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_UNITIMEOUT>> 2));
+  pSharedTkTimeout   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TKTIMEOUT>> 2));
 
   // find address of CPU from external perspective
   idx = 0;
@@ -496,6 +499,7 @@ void initSharedMem() // determine address and clear shared mem
   *pSharedVersion    = DMUNIPZ_FW_VERSION; // of all the shared variabes, only VERSION is a constant. Set it now!
   *pSharedFlexOffset = DMUNIPZ_OFFSETFLEX; // initialize with default value
   *pSharedUniTimeout = DMUNIPZ_UNITIMEOUT; // initialize with default value
+  *pSharedTkTimeout  = DMUNIPZ_TKTIMEOUT;  // initialize with default value
 } // initSharedMem 
 
 
@@ -593,13 +597,14 @@ uint32_t wait4ECAEvent(uint32_t msTimeout, uint32_t *virtAcc, uint32_t *dryRunFl
           nextAction = DMUNIPZ_ECADO_RELTK;
           *virtAcc = evtIdLow & 0xf; 
           break;
+        /* no need to reply to DM after TK request          
         case DMUNIPZ_ECADO_PREPDM :
           nextAction = DMUNIPZ_ECADO_PREPDM;
           // get DM dynpar for waiting on TKREQ
           dmData[REQTK].dynpar0 = evtParamHigh;
           dmData[REQTK].dynpar1 = evtParamLow;
           break;
-
+          */
         default: 
           nextAction = DMUNIPZ_ECADO_UNKOWN;
         } // switch
@@ -703,7 +708,7 @@ uint32_t requestTK(uint32_t msTimeout, uint32_t virtAcc, uint32_t dryRunFlag)
   writePZUData.bits.ReqNoBeam      = dryRunFlag;
   if ((status = writeToPZU(IFB_ADDRESS_SIS, IO_MODULE_1, writePZUData.uword)) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR;
 
-  // for for acknowledgement, 'request not ok' or timeout
+  // check for acknowledgement, 'request not ok' or timeout
   while (getSysTime() < timeoutT) {                                                                                                   // check for timeout
     if ((status = readFromPZU(IFB_ADDRESS_SIS, IO_MODULE_3, &(readPZUData.uword))) != MIL_STAT_OK) return DMUNIPZ_STATUS_DEVBUSERROR; // read from modulbus I/O (UNIPZ)
     if (readPZUData.bits.TK_Req_Ack == true) return DMUNIPZ_STATUS_OK;                                                                // check for acknowledgement
@@ -882,6 +887,7 @@ uint32_t entryActionConfigured()
 
   flexOffset  = *pSharedFlexOffset;
   uniTimeout  = *pSharedUniTimeout;
+  tkTimeout   = *pSharedTkTimeout;
 
   return status;
 } // entryActionConfigured
@@ -1023,14 +1029,14 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       (*nTransfer)++;                                                              // increment number of transfers
       *nInject        = 0;                                                         // number of injections is reset when DM requests TK
 
-      status = requestTK(uniTimeout, virtAccTmp, dryRunFlag);                      // request TK from UNIPZ
-
+      status = requestTK(tkTimeout, virtAccTmp, dryRunFlag);                       // request TK from UNIPZ
+      /* no need to reply to DM after TK request
       if ((dmStatus = dmPrepCmdCommon(REQTK)) != DMUNIPZ_STATUS_OK)                // prepare common part of command for later use, here: continue after TK request
         return dmStatus;                                                           // failure of preparation is a severe error!
         
       dmPrepCmdFlow(REQTK);                                                        // prepare flow command for later use, here: continue after TK request
       dmChangeBlock(REQTK);                                                        // modify block within DM for execution of a flow command, here: continue after TK request
-
+      */
 
       if (status == DMUNIPZ_STATUS_OK) *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQTKOK; // update status of transfer
 
@@ -1050,16 +1056,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
     
       enableFilterEvtMil(pMILPiggy);                                               // enable filter @ MIL piggy
       clearFifoEvtMil(pMILPiggy);                                                  // get rid of junk in FIFO @ MIL piggy
-      //      ts1 = getSysTime();
+
       requestBeam(uniTimeout);                                                     // request beam from UNIPZ, note that we can't check for REQ_NOT_OK from here
-      //ts2 = getSysTime();
-      //ts3 = ts2 - ts1;
-      //      ts3 = ts3 >> 10;
-
-      //ts2 = ts2 >> 30;
-
-      //mprintf("dm-unipz: dt %d %d %d [ns] \n", (uint32_t)ts1, (uint32_t)ts2, (uint32_t)ts3);
-      
 
       status = wait4MILEvt(DMUNIPZ_EVT_READY2SIS, virtAccTmp, uniTimeout);         // wait for MIL Event
       timestamp = getSysTime();                                                    // get timestamp for MIL event
@@ -1068,23 +1066,13 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       pulseLemo2();                                                                // for hardware debugging with scope
 
       dmPrepFlexWaitCmd(REQBEAMB, sendT);                                          // prepare flex wait command, here: wait until absolute time
-      dmChangeBlock(REQBEAMB);                                                     // modify the "flex wait" block within DM
-      dmChangeBlock(REQBEAMA);                                                     // modify block within DM for execution of a flow command, here: continue after beam request towards "flex wait"
-
-      // tempT = getSysTime();
-      
-      // sendTsecs  = (uint32_t)(sendT / (uint64_t)1000000000);
-      // sendTnsecs = (uint32_t)(sendT - (uint64_t)sendTsecs);
-       
-      // mprintf("dm-unipz: sendT %u.%u\n", sendTsecs, sendTnsecs);
-      // mprintf("dm-unipz: timestamp - tempT (DM) %u\n", (uint32_t)(tempT - timestamp));
-      // mprintf("dm-unipz: timestamp - sendT (DM) %u\n", (uint32_t)(sendT - timestamp));
+      // disabled dmChangeBlock(REQBEAMB);                                                     // modify the "flex wait" block within DM
+      // disabled dmChangeBlock(REQBEAMA);                                                     // modify block within DM for execution of a flow command, here: continue after beam request towards "flex wait"
 
       if (status == DMUNIPZ_STATUS_TIMEDOUT) {                                     // discriminate between 'timeout' and 'REQ_NOT_OK'
         if (checkClearReqNotOk(uniTimeout) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;
         else                                                     status = DMUNIPZ_STATUS_REQBEAMTIMEDOUT;
       } // if status 
-
 
       releaseBeam();                                                               // release beam request
 
@@ -1101,9 +1089,11 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELTK;                    // update status of transfer 
 
       break;
+    /* no need to reply to DM after TK request
     case DMUNIPZ_ECADO_PREPDM:                                                     // received command "PREP_DM" from data master
 
       break;
+    */
     default: ;
     } // switch nextAction
 

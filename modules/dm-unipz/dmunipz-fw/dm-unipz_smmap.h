@@ -19,6 +19,7 @@
 #define DMUNIPZ_SHARED_DSTIP          0x28   // IP of data master
 #define DMUNIPZ_SHARED_OFFSETFLEX     0x2C   // TS_FLEXWAIT = OFFSETFLEX + TS_MILEVENT; values in ns
 #define DMUNIPZ_SHARED_UNITIMEOUT     0x30   // timeout for UNILAC
+#define DMUNIPZ_SHARED_TKTIMEOUT      0x34   // timeout for TK (via UNILAC)
 
 // 0x34-0x3F: reserved
 #define DMUNIPZ_SHARED_TRANSN         0x40   // # N of transfers
