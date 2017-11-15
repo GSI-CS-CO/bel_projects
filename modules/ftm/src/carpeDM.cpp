@@ -40,6 +40,7 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
       cyc.close();
       cyc.open(dev);  
     }
+    std::cout << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)veb[i]);
 
    }
@@ -82,7 +83,7 @@ int CarpeDM::ebWriteWord(Device& dev, uint32_t adr, uint32_t data)
 {
    Cycle cyc;
    //FIXME What about returned eb status ??
-   //std::cout << "writing @ 0x" << std::hex << adr << " V 0x" << data << std::endl;
+   std::cout << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << adr << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << data << std::endl;
    cyc.open(dev);
    cyc.write(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)data);
    cyc.close();
@@ -200,30 +201,6 @@ bool CarpeDM::connect(const std::string& en) {
     }
     if(verbose) sLog << " Done" << std::endl;
     return ret;
-  }
-
-  void CarpeDM::addToDict(Graph& g) {
-    //add to dictionary
-    try {
-      //FIXME using a qualified node name by concatenating the graphname is nice in theory, but prevents replicable hashing from download, so it's out
-      //combine node name and graph name to obtain unique replicable hash
-      //BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.add(boost::get_property(g, boost::graph_name) + "." + g[v].name);}
-
-
-      BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.add(g[v].name);}
-    }  catch (...) {
-      //TODO report hash collision and show which names are responsible
-      throw;
-    }
-    if(verbose) sLog << " Done." << std::endl;
-  }
-
-  void CarpeDM::removeFromDict(Graph& g) {
-    //see addDotToDict
-    //BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.remove(boost::get_property(g, boost::graph_name) + "." + g[v].name);}
-    BOOST_FOREACH( vertex_t v, vertices(g) ) { hm.remove(g[v].name);}
-
-    if(verbose) sLog << " Done." << std::endl;
   }
 
 
@@ -354,28 +331,13 @@ bool CarpeDM::connect(const std::string& en) {
 
   Graph& CarpeDM::parseDot(const std::string& s, Graph& g) {
     boost::dynamic_properties dp = createParser(g);
-    bool add2Groups = false;
+
     try { boost::read_graphviz(s, g, dp, dnp::Base::sName); }
     catch(...) { throw; }
    
-    if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) == std::string::npos) {add2Groups = true;}
+    BOOST_FOREACH( vertex_t v, vertices(g) ) { g[v].hash = hm.fnvHash(g[v].name.c_str()); } //generate hash to complete vertex information
     
-    //generate hashes and adds pattern & beamproc memberships to GroupTable
-    BOOST_FOREACH( vertex_t v, vertices(g) ) {
-      g[v].hash = hm.add(g[v].name).get();
-   
-      if(add2Groups) {
-        gt.setBeamproc(g[v].name, g[v].bpName, (s2u<bool>(g[v].bpEntry)), (s2u<bool>(g[v].bpExit)));
-        gt.setPattern(g[v].name, g[v].patName, (s2u<bool>(g[v].patEntry)), (s2u<bool>(g[v].patExit)));
-      }
-      
-    }
-   
-    //if(add2Groups) {    gt.debug(); }
-
     return g;
-
-
   }
 
 
@@ -477,13 +439,13 @@ void CarpeDM::showCpuList() {
 }
 
 //Returns if a hash / nodename is present on DM
-  bool CarpeDM::isInDict(const uint32_t hash)  {
+  bool CarpeDM::isInHashDict(const uint32_t hash)  {
 
     if (atDown.isOk(atDown.lookupHash(hash))) return true;
     else return false;
   }
 
-  bool CarpeDM::isInDict(const std::string& name) {
+  bool CarpeDM::isInHashDict(const std::string& name) {
     if (!(hm.contains(name))) return false;
     return (atDown.isOk(atDown.lookupHash(hm.lookup(name).get())));
   }  

@@ -24,6 +24,22 @@ namespace det = DotStr::Edge::TypeVal;
 
 
 
+std::pair<int, int> CarpeDM::parseCpuAndThr(vertex_t v, Graph& g) {
+
+  uint8_t  cpu, thr;
+
+  try { cpu = s2u<uint8_t>(g[v].cpu);   
+        thr = s2u<uint8_t>(g[v].thread);
+      } catch (...) { throw std::runtime_error("Node '" + g[v].name + "'s has non numeric value properties '" + DotStr::Node::Prop::Base::sCpu + " or " + DotStr::Node::Prop::Base::sThread + "\n"); }
+
+  if (!((cpu >= 0) && (cpu < getCpuQty()))) throw std::runtime_error("Node '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' (" + std::to_string(cpu) + " is out of range (0-" + std::to_string(getCpuQty()-1) + "\n");
+  if (!((thr >= 0) && (thr < _THR_QTY_  ))) throw std::runtime_error("Node '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sThread + "' (" + std::to_string(cpu) + " is out of range (0-" + std::to_string(_THR_QTY_-1) + "\n");
+
+  std::pair<int, int> res = {cpu, thr};
+  return res;
+}
+
+
 int CarpeDM::sendCommands(Graph& g) {
 
   vBuf vUlD;
@@ -34,52 +50,62 @@ int CarpeDM::sendCommands(Graph& g) {
 
   if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) == std::string::npos) {throw std::runtime_error("Expected a series of commands, but this appears to be a schedule (Tag '" + DotStr::Graph::Special::sCmd + "' not found in graphname)"); return -1;}
   
-
+  //FIXME This is bad, global commands (start/abort, currently also stop) are always sent first ! Queue them normally!!!!
  
 
   BOOST_FOREACH( vertex_t v, vertices(g) ) {
 
     std::string target, destination;
     
+    
+
     //use the pattern and beamprocess tags to determine the target. Pattern overrides Beamprocess overrides cpu/thread
           if (g[v].patName  != DotStr::Misc::sUndefined)    { target = getPatternExitNode(g[v].patName); }
     else  if (g[v].bpName != DotStr::Misc::sUndefined)      { target = getBeamprocExitNode(g[v].bpName); }
     else  {target = g[v].cmdTarget;}
 
+  
+
     //use the destPattern and destBeamprocess tags to determine the destination
-    if (g[v].cmdDestPat  != DotStr::Misc::sUndefined)      { destination  = getPatternEntryNode(g[v].cmdDestPat); }
-    else  if (g[v].cmdDestBp != DotStr::Misc::sUndefined)  { destination  = getBeamprocEntryNode(g[v].cmdDestBp); }
+    if (g[v].cmdDestPat  != DotStr::Misc::sUndefined)      { destination = getPatternEntryNode(g[v].cmdDestPat); }
+    else  if (g[v].cmdDestBp != DotStr::Misc::sUndefined)  { destination = getBeamprocEntryNode(g[v].cmdDestBp); }
     else                                                    {destination = g[v].cmdDest;}
      
 
     uint64_t cmdTvalid  = s2u<uint64_t>(g[v].tValid);
     uint8_t  cmdPrio    = s2u<uint8_t>(g[v].prio);
-    uint8_t  cpu        = s2u<uint8_t>(g[v].cpu);
-    uint8_t  thr        = s2u<uint8_t>(g[v].thread);
+    uint8_t cpu, thr;
 
-    if (!(cpu < getCpuQty())) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");
-    if (!(thr < _THR_QTY_  )) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sThread + "' is invalid\n"); 
-
-    sLog << "Command <" << g[v].name << ">, type <" << g[v].type << ">" << std::endl;
+   sLog << "Command <" << g[v].name << ">, type <" << g[v].type << "> pat <" << g[v].patName << "> target <" << g[v].cmdTarget << "> dest <" << g[v].cmdDest << ">" << std::endl;
+    
 
     // Commands with optional target
     if (g[v].type == dnt::sCmdStart)   {
+      
       target = getPatternEntryNode(g[v].patName); 
-      if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(target); continue; }
-      else {sLog << " Starting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  startThr(cpu, thr); continue;}
+      if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(target);  }
+      else {
+        std::tie(cpu, thr) = parseCpuAndThr(v, g);
+        sLog << " Starting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  startThr(cpu, thr); 
+      }
+      continue;
     }
     if (g[v].type == dnt::sCmdStop)    {
-      if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(target); continue;}
-      else { sLog << " Stopping (trying) cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; stopPattern(getNodePattern(getThrCursor(cpu, thr))); continue;}  //careful, this only works safely for repeating patterns. No guarantees otherwise
+      if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(target); }
+      else {
+        std::tie(cpu, thr) = parseCpuAndThr(v, g);
+        sLog << " Stopping (trying) cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; stopPattern(getNodePattern(getThrCursor(cpu, thr)));
+      }  //careful, this only works safely for repeating patterns. No guarantees otherwise
+      continue;
     }  
-    if (g[v].type == dnt::sCmdAbort)   { 
+    else if (g[v].type == dnt::sCmdAbort)   { 
       if (hm.lookup(target)) {sLog << " Aborting (trying) at <" << target << ">" << std::endl; abortNodeOrigin(target); continue; }
-      else {sLog << " Aborting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; abortThr(cpu, thr); continue;}
+      else {
+        std::tie(cpu, thr) = parseCpuAndThr(v, g);
+        sLog << " Aborting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; abortThr(cpu, thr); continue;}
     }
 
-    //Every command below needs a valid target node
-    if(!hm.lookup(target))      {throw std::runtime_error("Command <" + g[v].name + ">'s target node '" + target + "' is not known to hashmap!\n"); return -5;}
-
+ 
     if (g[v].type == dnt::sCmdOrigin)   { 
       //Leave out for now and autocorrect cpu
       //if (getNodeCpu(target, DOWNLOAD) != cpu) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");
@@ -91,10 +117,12 @@ int CarpeDM::sendCommands(Graph& g) {
                                               mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
                                             }
     else if (g[v].type == dnt::sCmdFlow)    { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
-                                              //Flow needs a valid destination node
-                                              if (!hm.lookup(destination)) {throw std::runtime_error("Command <" + g[v].name + ">'s destination node '" + target + "' is not known to hashmap!\n"); return -5;} 
                                               sLog << " Flowing from <" << target << "> to <" << destination << ">" << std::endl;
-                                              uint32_t adr    = getNodeAdr(destination, DOWNLOAD, INTERNAL);
+                                              uint32_t adr = LM32_NULL_PTR;
+                                              try { adr = getNodeAdr(destination, DOWNLOAD, INTERNAL); } catch (std::runtime_error const& err) {
+                                                throw std::runtime_error("Destination invalid, " + std::string(err.what()));
+                                              }
+
                                               mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, false );
                                             }
     else if (g[v].type == dnt::sCmdFlush)   { mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)s2u<uint8_t>(g[v].qIl), (bool)s2u<uint8_t>(g[v].qHi), (bool)s2u<uint8_t>(g[v].qLo));}
@@ -105,13 +133,16 @@ int CarpeDM::sendCommands(Graph& g) {
     
     sLog << std::endl;
     //send miniCommand
-    hashTarget = hm.lookup(target).get();
+    if (!(hm.lookup(target))) {throw std::runtime_error( "Target invalid, Unknown Node Name '" + target + "'");}
+    hashTarget  = hm.lookup(target).get();
     vAdr vATmp  = getCmdWrAdrs(hashTarget, cmdPrio);
     vUlA.insert( vUlA.end(), vATmp.begin(), vATmp.end() ); 
     cmdWrInc    = getCmdInc(hashTarget, cmdPrio);
+ 
     mc->serialise(b);
     writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, cmdWrInc);
     vUlD.insert( vUlD.end(), b, b + _T_CMD_SIZE_ + _32b_SIZE_);
+
   }
 
   ebWriteCycle(ebd, vUlA, vUlD);
@@ -128,15 +159,16 @@ int CarpeDM::sendCommands(Graph& g) {
     uint32_t cmdWrInc, hash;
     uint8_t b[_T_CMD_SIZE_ + _32b_SIZE_];
     
+    if (!hm.lookup(targetName)) throw std::runtime_error("Command target <" + targetName + "> is not valid\n");
 
-    try {
-      hash      = hm.lookup(targetName).get(); 
-      vUlA      = getCmdWrAdrs(hash, cmdPrio);
-      cmdWrInc  = getCmdInc(hash, cmdPrio);
-      mc->serialise(b);
-      writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, cmdWrInc);
-      vUlD.insert( vUlD.end(), b, b + _T_CMD_SIZE_ + _32b_SIZE_);
-      
+    
+    hash      = hm.lookup(targetName).get(); 
+    vUlA      = getCmdWrAdrs(hash, cmdPrio);
+    cmdWrInc  = getCmdInc(hash, cmdPrio);
+    mc->serialise(b);
+    writeLeNumberToBeBytes(b + (ptrdiff_t)_T_CMD_SIZE_, cmdWrInc);
+    vUlD.insert( vUlD.end(), b, b + _T_CMD_SIZE_ + _32b_SIZE_);
+    try {  
       ebWriteCycle(ebd, vUlA, vUlD);
     } catch (...) {throw;}      
 
@@ -540,8 +572,8 @@ void CarpeDM::abortNodeOrigin(const std::string& sNode) {
 }
 
 
-  const std::string CarpeDM::getNodePattern (const std::string& sNode)          {return firstString(gt.getGroups<Groups::Pattern, &GroupMeta::pattern>(sNode));}
-  const std::string CarpeDM::getNodeBeamproc(const std::string& sNode)          {return firstString(gt.getGroups<Groups::Beamproc, &GroupMeta::beamproc>(sNode));}
+  const std::string CarpeDM::getNodePattern (const std::string& sNode)          {return firstString(gt.getGroups<Groups::Node, &GroupMeta::pattern>(sNode));}
+  const std::string CarpeDM::getNodeBeamproc(const std::string& sNode)          {return firstString(gt.getGroups<Groups::Node, &GroupMeta::beamproc>(sNode));}
               vStrC CarpeDM::getPatternMembers (const std::string& sPattern)    {return gt.getMembers<Groups::Pattern>(sPattern);}
  const std::string CarpeDM::getPatternEntryNode(const std::string& sPattern)   {return firstString(gt.getPatternEntryNodes(sPattern));}
  const std::string CarpeDM::getPatternExitNode(const std::string& sPattern)    {return firstString(gt.getPatternExitNodes(sPattern));}

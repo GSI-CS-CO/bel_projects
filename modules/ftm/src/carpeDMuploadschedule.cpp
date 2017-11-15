@@ -326,8 +326,14 @@ using namespace DotStr::Misc;
   void CarpeDM::addition(Graph& gTmp) {
 
     vertex_map_t vertexMap, duplicates;
-    
+
     generateBlockMeta(gTmp); //auto generate desired Block Meta Nodes
+
+    //add to hash dict
+    BOOST_FOREACH( vertex_t v, vertices(gTmp) ) {
+      hm.add(gTmp[v].name);
+    }
+   
 
     //find and list all duplicates i.e. docking points between trees
  
@@ -363,6 +369,12 @@ using namespace DotStr::Misc;
       for( auto& updateMapIt : vertexMap) {if (updateMapIt.first > itDup.second) updateMapIt.second--; }
     }
 
+    //FIXME this also adds/changes the known nodes based on the download. Do we really want that?
+    //add whats left to groups dict
+    BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+      gt.setBeamproc(gUp[v].name, gUp[v].bpName, (s2u<bool>(gUp[v].bpEntry)), (s2u<bool>(gUp[v].bpExit)));
+      gt.setPattern(gUp[v].name, gUp[v].patName, (s2u<bool>(gUp[v].patEntry)), (s2u<bool>(gUp[v].patExit)));
+    }  
     //writeUpDotFile("inspect.dot", false);
 
     prepareUpload();
@@ -431,15 +443,20 @@ using namespace DotStr::Misc;
     }
     
     //remove designated vertices
-    for(auto& vd : toDelete ) {  
+    for(auto& vd : toDelete ) {
       //sLog <<  "Removing Node " << gUp[vertexMap[vd]].name << std::endl;  
       atUp.deallocate(gUp[vertexMap[vd]].hash); //using the hash is independent of vertex descriptors, so no remapping necessary yet
+      //remove node from hash and groups dict 
+      sLog <<  "Removing " << gUp[vertexMap[vd]].name << std::endl; 
+      hm.remove(gUp[vertexMap[vd]].name);
+      gt.remove<Groups::Node>(gUp[vertexMap[vd]].name); 
       boost::clear_vertex(vertexMap[vd], gUp); 
       boost::remove_vertex(vertexMap[vd], gUp); 
       
       //FIXME this removal scheme is crap ! Graph vertices and edges ought to be kept in setS or listS so iterators stay valid on removal of other vertices
       //However, the cure is worse than the disease, graphviz_write, copy_graph all fuck around if we do, as they require vertex descriptors wich setS and listS don't provide ... leave for now
 
+       
       //remove_vertex() changes the vertex vector, as it must stay contignuous. descriptors higher than he removed one therefore need to be decremented by 1
       for( auto& updateMapIt : vertexMap) {if (updateMapIt.first > vd) updateMapIt.second--; }
     }
@@ -471,6 +488,10 @@ using namespace DotStr::Misc;
     gDown.clear(); //Necessary?
     atDown.clear();
     atDown.clearMemories();
+    gt.clear();
+    hm.clear();
+   
+
 
   }
 

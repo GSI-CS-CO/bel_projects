@@ -80,8 +80,21 @@ typedef boost::multi_index_container<
  > GroupMeta_set;
 
 typedef GroupMeta_set::iterator pmI;
-typedef std::pair<pmI, pmI> pmRange;
 
+/* accepted
+  
+  //the iterator dilemma
+
+ivs.get<1>() gives you index, not iterator. You need to call begin(), end() and other methods on that index to get iterator (like you do on containers). You better use typedef though:
+
+indexed_vertex_set ivs;
+typedef indexed_vertex_set::nth_index<1>::type sorted_index;
+sorted_index &idx = ivs.get<1>();
+for( sorted_index::iterator it = idx.begin(); it != idx.end(); ++it ) {
+    it->vid = 123; // getting access to fields
+}
+
+*/
 
 
 
@@ -108,19 +121,19 @@ public:
   bool insert(const std::string& sNode);
 
   template <typename Tag>
-  pmRange lookup(const std::string& s)   {auto test = a.get<Tag>().equal_range(s); return pmRange({a.iterator_to(*test.first), a.iterator_to(*test.second)});}
+  pmI lookup(const std::string& s)   {auto tmp = a.get<Tag>().find(s); return a.iterator_to(*tmp);}
+
   
   //Lookup a node, create if non existent. Single return value as node names are uniqu./d
   pmI lookupOrCreateNode(const std::string& sNode);
 
 
-  bool isOk(pmI it) const {return (it != a.end()); }
-
   template <typename Tag>
-  bool contains(const std::string& s) const {return isOk(lookup<Tag>(s));}
-
-  template <typename Tag>
-  bool remove(const std::string& s) {auto it = a.get<Tag>().erase(s); return (it != a.end() ? true : false);};
+  bool remove(const std::string& s) {
+    auto range = a.get<Tag>().equal_range(s);
+    auto it = a.get<Tag>().erase(range.first, range.second); 
+    return (it != a.end() ? true : false);
+  };
 
   void clear() { a.clear(); }
 
@@ -135,32 +148,29 @@ public:
   void setBeamproc (const std::string& sNode, const std::string& sNew) { setBeamproc(sNode, sNew, false, false); }
   
   template <typename Tag, std::string GroupMeta::*group>
-  vStrC getGroups(const std::string& sNode) {vStrC res; pmRange x  = lookup<Tag>(sNode); if (x.first != a.end()) {for (auto it = x.first; it != x.second; ++it) res.push_back(*it.*group);} return res;}
+  vStrC getGroups(const std::string& sNode) {vStrC res; auto x  = a.get<Tag>().equal_range(sNode); for (auto it = x.first; it != x.second; ++it) res.push_back(*it.*group); return res;}
 
   template <typename Tag, bool GroupMeta::*point>
-  vStrC getGroupNodes(const std::string& s) {vStrC res; pmRange x  = lookup<Tag>(s); 
-    if (x.first != a.end()) {
-      for (auto it = x.first; it != x.second; ++it) {
-        if (*it.*point) {
-          res.push_back(it->node);
-        }
-      }   
-    }
+  vStrC getGroupNodes(const std::string& s) {
+    //if we get this high level call, there ought to be information in the groups dict. if not, something is wrong
+    vStrC res; auto x  = a.get<Tag>().equal_range(s); 
+    for (auto it = x.first; it != x.second; ++it) {
+      if (*it.*point) {
+        res.push_back(it->node);
+      }
+    }   
     return res;
   }
 
   template <typename Tag>
-  vStrC getMembers(const std::string& s) {vStrC res; pmRange x  = lookup<Tag>(s); if (x.first != a.end()) {for (auto it = x.first; it != x.second; ++it) res.push_back(it->node);} return res;}
+  vStrC getMembers(const std::string& s) {vStrC res; auto x  = a.get<Tag>().equal_range(s); for (auto it = x.first; it != x.second; ++it) res.push_back(it->node); return res;}
 
   vStrC getPatternEntryNodes(const std::string& sPattern)    {auto res = getGroupNodes<Groups::Pattern, &GroupMeta::patternEntry>(sPattern); return res;};
-  vStrC getPatternExitNodes(const std::string& sPattern)     {return getGroupNodes<Groups::Pattern, &GroupMeta::patternExit>(sPattern); };
-  vStrC getBeamprocEntryNodes(const std::string& sBeamproc)  {return getGroupNodes<Groups::Pattern, &GroupMeta::beamprocEntry>(sBeamproc); };
-  vStrC getBeamprocExitNodes(const std::string& sBeamproc)   {return getGroupNodes<Groups::Pattern, &GroupMeta::beamprocExit>(sBeamproc); };
+  vStrC getPatternExitNodes(const std::string& sPattern)     {return getGroupNodes<Groups::Pattern,  &GroupMeta::patternExit>(sPattern); };
+  vStrC getBeamprocEntryNodes(const std::string& sBeamproc)  {return getGroupNodes<Groups::Beamproc, &GroupMeta::beamprocEntry>(sBeamproc); };
+  vStrC getBeamprocExitNodes(const std::string& sBeamproc)   {return getGroupNodes<Groups::Beamproc, &GroupMeta::beamprocExit>(sBeamproc); };
 
 
-
-//
-  
 
   
 
