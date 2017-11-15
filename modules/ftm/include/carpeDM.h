@@ -80,7 +80,7 @@ private:
   int getIdleThread(uint8_t cpuIdx);
 
   const std::string& firstString(const vStrC& v) {return ((v.size() > 0) ? *(v.begin()) : DotStr::Misc::sUndefined);}
-
+  std::pair<int, int> parseCpuAndThr(vertex_t v, Graph& g);
 
 protected:
 
@@ -147,33 +147,25 @@ public:
 
   // Name/Hash Dict ///////////////////////////////////////////////////////////////////////////////
   //Add all nodes in .dot file to name/hash dictionary
-  void addDotToDict(const std::string& s)           {Graph gTmp; addToDict(parseDot(s, gTmp));};
-  void addDotFileToDict(const std::string& fn)      {addDotToDict(readTextFile(fn));};
-  //Remove all nodes in .dot file from name/hash dictionary
-  void removeDotFromDict(const std::string& s)      {Graph gTmp; removeFromDict(parseDot(s, gTmp));};
-  void removeDotFileFromDict(const std::string& fn) {removeDotFromDict(readTextFile(fn));};
-  void clearDict() {hm.clear();}; //Clear the dictionary
-
-
-
-  std::string storeDict() {return hm.store();}; 
-  void loadDict(const std::string& s) {hm.load(s);}
-  void storeDictFile(const std::string& fn) {writeTextFile(fn, storeDict());};
-  void loadDictFile(const std::string& fn) {loadDict(readTextFile(fn));};
-
-  bool isInDict(const uint32_t hash);
-  bool isInDict(const std::string& name);
-  bool isDictEmpty() {return (bool)(hm.size() == 0);};
+  void clearHashDict() {hm.clear();}; //Clear the dictionary
+  std::string storeHashDict() {return hm.store();}; 
+  void loadHashDict(const std::string& s) {hm.load(s);}
+  void storeHashDictFile(const std::string& fn) {writeTextFile(fn, storeHashDict());};
+  void loadHashDictFile(const std::string& fn) {loadHashDict(readTextFile(fn));};
+  bool isInHashDict(const uint32_t hash);
+  bool isInHashDict(const std::string& name);
+  bool isHashDictEmpty() {return (bool)(hm.size() == 0);};
+  int  getHashDictSize() {return hm.size();};
+  void showHashDict() {hm.debug();};
 
   // Group/Entry/Exit Table ///////////////////////////////////////////////////////////////////////////////
-  std::string storeGroups() {return gt.store();}; 
-  void loadGroups(const std::string& s) {gt.load(s);}
-  void storeGroupsFile(const std::string& fn) {writeTextFile(fn, storeGroups());};
-  void loadGroupsFile(const std::string& fn) {loadGroups(readTextFile(fn));}; 
-  void clearGroups() {gt.clear();}; //Clear pattern table
-  void testGroup(const std::string& sNode) {gt.insert(sNode);}
-  void testGroupPattern(const std::string& node, const std::string& pat, bool entry, bool exit) {gt.setPattern(node, pat, entry, exit);} 
-  void testGroupBeamproc(const std::string& node, const std::string& bp, bool entry, bool exit) {gt.setBeamproc(node, bp, entry, exit);} 
+  std::string storeGroupsDict() {return gt.store();}; 
+  void loadGroupsDict(const std::string& s) {gt.load(s);}
+  void storeGroupsDictFile(const std::string& fn) {writeTextFile(fn, storeGroupsDict());};
+  void loadGroupsDictFile(const std::string& fn) {loadGroupsDict(readTextFile(fn));}; 
+  void clearGroupsDict() {gt.clear();}; //Clear pattern table
+ int getGroupsSize() {return gt.getSize();};
+ void showGroupsDict() {gt.debug();};
 
   // Text File IO /////////////////////////////////////////////////////////////////////////////////
   void writeTextFile(const std::string& fn, const std::string& s);

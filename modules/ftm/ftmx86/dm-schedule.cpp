@@ -110,20 +110,19 @@ int main(int argc, char* argv[]) {
 
   //TODO we need a dictionary independent of dot files, otherwise, how do we update?
 
-  try { cdm.loadDictFile("dm.dict"); } catch (std::runtime_error const& err) {
+  try { cdm.loadHashDictFile("dm.dict"); } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Warning - Could not load dictionary file. Cause: " << err.what() << std::endl;
     }
-  try { cdm.loadGroupsFile("dm.groups"); } catch (std::runtime_error const& err) {
+  std::cout << std::endl << program << ": Loaded " << cdm.getHashDictSize() << " Node / Hash entries" << std::endl;  
+
+  try { cdm.loadGroupsDictFile("dm.groups"); } catch (std::runtime_error const& err) {
       std::cerr << std::endl << program << ": Warning - Could not load groups file. Cause: " << err.what() << std::endl;
     }
+  std::cout << std::endl << program << ": Loaded " << cdm.getGroupsSize() << " Node / Pattern / Beamprocess entries" << std::endl;    
 
-  if (inputFilename != NULL) {
-    try { cdm.addDotFileToDict(inputFilename); }
-    catch (std::runtime_error const& err) {
-      std::cerr << std::endl << program << ": Warning - Could not insert your .dot file into dictionary. Cause: " << err.what() << std::endl;
-    }
-  } else {
-    if (cdm.isDictEmpty()) std::cerr << std::endl << program << ": Warning - No Nodename/Hash dictionary available. Your download will show only hashes." << std::endl;
+
+  if (inputFilename == NULL) {
+    if (cdm.isHashDictEmpty()) std::cerr << std::endl << program << ": Warning - No Nodename/Hash dictionary available. Your download will show only hashes." << std::endl;
   }
 
 
@@ -166,8 +165,10 @@ int main(int argc, char* argv[]) {
   }
 
 
-  cdm.storeDictFile("dm.dict");  
-  cdm.storeGroupsFile("dm.groups");
+  cdm.storeHashDictFile("dm.dict");  
+  cdm.storeGroupsDictFile("dm.groups");
+
+  //cdm.showGroupsDict();
 
   cdm.disconnect();
 

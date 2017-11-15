@@ -21,8 +21,8 @@ public:
   std::string name;
   std::string patName   = sUndefined;
   std::string bpName    = sUndefined;
-  std::string cpu       = sZero;
-  std::string thread    = sZero;
+  std::string cpu       = sUndefined;
+  std::string thread    = sUndefined;
   uint32_t hash;
   node_ptr np;
 

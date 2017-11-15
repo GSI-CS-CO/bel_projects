@@ -10,13 +10,14 @@
 #include "minicommand.h"
 
 static void help(const char *program) {
-  fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> <.dot file> <command> [target node] [parameter] \n", program);
+  fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> <command> [target node] [parameter] \n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "\nSends a command to Thread <n> of CPU Core <m> of the DataMaster (DM), requires dot file of DM's schedule.\nThere are global commands, that influence the whole DM, local commands influencing the whole thread\nand block commands, that only affect one queue in the schedule.\n");
   fprintf(stderr, "\nGeneral Options:\n");
   fprintf(stderr, "  -c <cpu-idx>              select CPU core by index, default is 0\n");
   fprintf(stderr, "  -t <thread-idx>           select thread inside selected CPU core by index, default is 0\n");
   fprintf(stderr, "  -v                        verbose operation, print more details\n");
+  fprintf(stderr, "  -i command .dot file      dot file containing commands\n");
   fprintf(stderr, "\nGlobal commands:\n");
   fprintf(stderr, "  gathertime <Time / ns>    [NOT YET IMPLEMENTED] Set msg gathering time for priority queue\n");
   fprintf(stderr, "  maxmsg <Message Quantity> [NOT YET IMPLEMENTED] Set maximum messages in a packet for priority queue\n");
@@ -54,7 +55,7 @@ int main(int argc, char* argv[]) {
 
   int opt;
   const char *program = argv[0];
-  const char *netaddress, *targetName = NULL, *inputFilename = NULL, *cmdFilename = NULL, *typeName = NULL, *para = NULL;
+  const char *netaddress, *targetName = NULL, *cmdFilename = NULL, *typeName = NULL, *para = NULL;
   int32_t tmp, error=0;
   uint32_t cpuIdx = 0, thrIdx = 0, cmdPrio = PRIO_LO, cmdQty = 1;
   uint64_t cmdTvalid = 0, longtmp;
@@ -126,15 +127,15 @@ int main(int argc, char* argv[]) {
 
   if (error) return error;
  
-  if (optind+2 >= argc && cmdFilename == NULL) {
+  if (optind+1 >= argc && cmdFilename == NULL) {
 
-   std::cerr << program << ": expecting two non-optional arguments + command: <etherbone-device> <.dot file> <command> " << std::endl;
+   std::cerr << program << ": expecting two non-optional arguments + command: <etherbone-device> <command> " << std::endl;
     //help();
     return -4;
     }
     
-  if (optind+1 >= argc && cmdFilename != NULL) {
-    std::cerr << program << ": expecting two non-optional arguments: <etherbone-device> <.dot file> " << std::endl;
+  if (optind+0 >= argc && cmdFilename != NULL) {
+    std::cerr << program << ": expecting one non-optional arguments: <etherbone-device>" << std::endl;
     //help();
     return -4;
     }
@@ -142,10 +143,10 @@ int main(int argc, char* argv[]) {
     // process command arguments
    
     netaddress = argv[optind];
-    if (optind+1 < argc) inputFilename   = argv[optind+1];
-    if (optind+2 < argc) typeName        = argv[optind+2];
-    if (optind+3 < argc) targetName      = argv[optind+3];
-    if (optind+4 < argc) para            = argv[optind+4];
+
+    if (optind+1 < argc) typeName        = argv[optind+1];
+    if (optind+2 < argc) targetName      = argv[optind+2];
+    if (optind+3 < argc) para            = argv[optind+3];
    
   CarpeDM cdm = CarpeDM();
 
@@ -180,12 +181,15 @@ int main(int argc, char* argv[]) {
     return -40;
   }
 
-  cdm.loadDictFile("dm.dict");
+  try { cdm.loadHashDictFile("dm.dict"); } catch (std::runtime_error const& err) {
+      std::cerr << std::endl << program << ": Warning - Could not load dictionary file. Cause: " << err.what() << std::endl;
+    }
+  try { cdm.loadGroupsDictFile("dm.groups"); } catch (std::runtime_error const& err) {
+      std::cerr << std::endl << program << ": Warning - Could not load groups file. Cause: " << err.what() << std::endl;
+    }
 
-  try { cdm.addDotFileToDict(inputFilename); }
-  catch (std::runtime_error const& err) {
-    std::cerr << program << ": Could not insert your .dot file into dictionary. Cause: " << err.what() << std::endl; return -30;
-  }
+
+ 
     
   try { 
     cdm.download();
@@ -218,12 +222,12 @@ int main(int argc, char* argv[]) {
     std::string cmp(typeName);
 
     if      (cmp == "noop")  {
-      if(!(cdm.isInDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
     }
     else if (cmp == "flow")  {
-      if(!(cdm.isInDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
-      if ((para != NULL) && cdm.isInDict( para)) { 
+      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      if ((para != NULL) && cdm.isInHashDict( para)) { 
         uint32_t adr; 
         try {
           adr = cdm.getNodeAdr(para, DOWNLOAD, INTERNAL);
@@ -234,30 +238,30 @@ int main(int argc, char* argv[]) {
       } else {std::cerr << program << ": Destination Node '" << para << "'' was not found on DM" << std::endl; return -1; }
     }
     else if (cmp == "relwait")  {
-      if(!(cdm.isInDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (para == NULL) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
       mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, false );
     }
     else if (cmp == "abswait")  {
-      if(!(cdm.isInDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if (para == NULL) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
         mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, true ); 
     }
     else if (cmp == "flush") {
-        if(!(cdm.isInDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+        if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }  
         uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
         std::cout << "qprio " << para << " 0x" << std::hex << queuePrio << std::endl;
         mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)(queuePrio >> PRIO_IL & 1), (bool)(queuePrio >> PRIO_HI & 1), (bool)(queuePrio >> PRIO_LO & 1));
     }
     else if (cmp == "queue") {
-        if(!(cdm.isInDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+        if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         cdm.dumpQueue(cpuIdx, targetName, cmdPrio);
         return 0;
     } 
     else if (cmp == "origin")  {
       if( targetName != NULL) {
-        if(!(cdm.isInDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+        if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         cdm.setThrOrigin(cpuIdx, thrIdx, targetName);
       }
       if( verbose | (targetName == NULL) ) { std::cout << "CPU " << cpuIdx << " Thr " << thrIdx << " origin points to node " << cdm.getThrOrigin(cpuIdx, thrIdx) << std::endl;}
@@ -308,7 +312,7 @@ int main(int argc, char* argv[]) {
       return 0;
     }
     else if (cmp == "hex")  {
-      if(!(cdm.isInDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       try {
         cdm.dumpNode(cpuIdx, targetName);
       } catch (std::runtime_error const& err) {
