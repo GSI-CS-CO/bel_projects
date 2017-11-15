@@ -31,13 +31,14 @@
 
   pmI GroupTable::lookupOrCreateNode(const std::string& sNode) {
     //std::cout << "Looking for node..." << sNode;
-    pmRange x = lookup<Groups::Node>(sNode);
-    if (!isOk(x.first)) { //node was not found, try to create
-      //std::cout << "not found. Creating..." << sNode;
+    auto x  = a.get<Groups::Node>().equal_range(sNode); 
+    if (x.first == x.second) { //node was not found, try to create
+      //std::cout << "not found. Creating..." << sNode << std::endl;
       GroupMeta m = GroupMeta(sNode);
-      auto y = a.insert(m); 
+      auto y = a.insert(m);  // returns pair < iterator it, bool success>
       if (y.second) {x.first = y.first;} else {throw std::runtime_error( "Failed to manage group memberships of Node '" + sNode + "', node does not exist and could not be created");}
-    }
+      
+    }// else std::cout << "found: " << sNode;
     //std::cout << " done" << std::endl;
     return x.first;
   }
