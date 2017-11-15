@@ -36,13 +36,13 @@ private:
 
 
 protected:
-  uint32_t fnvHash(const char* str);
+  
 
 public:
 
   HashMap()   {};
   ~HashMap()  {};
-
+  uint32_t fnvHash(const char* str);
   boost::optional<const uint32_t&> add(const std::string& name);
   bool remove(const std::string& name);
   bool remove(const uint32_t hash);
@@ -54,6 +54,7 @@ public:
   std::string store();
   void load(const std::string& s);
   int size() {return hm.size();}
+  void debug();
 
 
 };
