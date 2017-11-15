@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 31-August-2017
+ *  version : 10-November-2017
  *
  * Command-line interface for dmunipz
  *
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.0.7"
+#define DMUNIPZ_X86_VERSION "0.0.8"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -79,6 +79,7 @@ eb_address_t dmunipz_dstMacLo;   // ebm dst mac, write
 eb_address_t dmunipz_dstIp;      // ebm dst ip, write
 eb_address_t dmunipz_flexOffset; // offset added to timestamp of MIL event for schedule continuation
 eb_address_t dmunipz_uniTimeout; // timeout value for UNILAC
+eb_address_t dmunipz_tkTimeout;  // timeout value for TK (via UNILAC)
 
 
  
@@ -154,7 +155,8 @@ static void help(void) {
   fprintf(stderr, "  ebmlocal <mac> <ip> command sets local WR MAC and IP for EB master (values in hex)\n");
   fprintf(stderr, "  ebmdm    <mac> <ip> command sets DM WR MAC and IP for EB master (values in hex)\n");
   fprintf(stderr, "  flex    <offset>    command sets offset added to timestamp (WR) of UNILAC event READY_TO_SIS [ns]\n");
-  fprintf(stderr, "  uni     <timeout>   command sets timeout value for UNILAC [ms]\n");
+  fprintf(stderr, "  uni     <timeout>   command sets timeout value for UNILAC (default 1000ms) [ms]\n");
+  fprintf(stderr, "  tk      <timeout>   command sets timeout value for TK (via UNILAC, default 210) [ms]\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  configure           command requests state change to CONFIGURED\n");
   fprintf(stderr, "  startop             command requests state change to OPERATION\n");
@@ -273,6 +275,7 @@ int main(int argc, char** argv) {
   uint32_t ip;             // ip for config of EB master
   uint32_t flexOffset;     // offset value added to MIL EVent timestamp
   uint32_t uniTimeout;     // timeout value for UNILAC
+  uint32_t tkTimeout;      // timeout value for TK (via UNILAC)
   
 
   program = argv[0];    
@@ -347,6 +350,7 @@ int main(int argc, char** argv) {
   dmunipz_dstIp      = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_DSTIP;
   dmunipz_flexOffset = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_OFFSETFLEX;
   dmunipz_uniTimeout = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_UNITIMEOUT;
+  dmunipz_tkTimeout  = lm32_base + SHARED_OFFS + DMUNIPZ_SHARED_TKTIMEOUT;
 
   if (getInfo) {
     // version info
@@ -355,7 +359,8 @@ int main(int argc, char** argv) {
 
     eb_device_read(device, dmunipz_flexOffset, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)(&flexOffset), 0, eb_block);
     eb_device_read(device, dmunipz_uniTimeout, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)(&uniTimeout), 0, eb_block);
-    printf("dm-unipz: flexOffset %"PRIu32" ns, uniTimeout %"PRIu32" ms (if 'CONFIGURED')\n", flexOffset, uniTimeout);
+    eb_device_read(device, dmunipz_tkTimeout,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)(&tkTimeout),  0, eb_block);
+    printf("dm-unipz: flexOffset %"PRIu32" ns, uniTimeout %"PRIu32" ms, tkTimeout %"PRIu32" ms (if 'CONFIGURED')\n", flexOffset, uniTimeout, tkTimeout);
 
     // status
     readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans);
@@ -418,6 +423,14 @@ int main(int argc, char** argv) {
 
       eb_device_write(device, dmunipz_uniTimeout, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)uniTimeout, 0, eb_block);
     } // "uni"
+    if (!strcasecmp(command, "tk")) {
+      if (optind+2  != argc) {printf("dm-unipz: expecting exactly one argument: tk <timeout>\n"); return 1;} 
+
+      tkTimeout = strtoul(argv[optind+1], &tail, 0);
+      if (*tail != 0)        {printf("dm-unipz: invalid timeout -- %s\n", argv[optind+2]); return 1;} 
+
+      eb_device_write(device, dmunipz_tkTimeout, EB_BIG_ENDIAN|EB_DATA32, (eb_data_t)tkTimeout, 0, eb_block);
+    } // "tk"
   } //if command
 
   if (snoop) {
