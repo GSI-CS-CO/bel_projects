@@ -66,3 +66,11 @@ void HashMap::load(const std::string& s) {
   //boost::archive::xml_iarchive ia(ifs);
   ia >> BOOST_SERIALIZATION_NVP(*this);
 }
+
+void HashMap::debug() { 
+    for (auto& x : hm) { 
+
+      std::cout << "Node: " << std::setfill(' ') << std::setw(40) << x.left << " Hash 0x"  << std::hex << std::setfill('0') << std::setw(8) << x.right << std::endl;
+    }
+  }
+
