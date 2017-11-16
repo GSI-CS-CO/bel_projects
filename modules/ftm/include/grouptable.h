@@ -153,15 +153,12 @@ public:
   template <typename Tag, bool GroupMeta::*point>
   vStrC getGroupNodes(const std::string& s) {
     //if we get this high level call, there ought to be information in the groups dict. if not, something is wrong
-    if(getSize() == 0) throw std::runtime_error("Could not lookup pattern or beamprocess information - groups dictionary is empty\n");
     vStrC res; auto x  = a.get<Tag>().equal_range(s); 
     for (auto it = x.first; it != x.second; ++it) {
       if (*it.*point) {
         res.push_back(it->node);
       }
     }   
-    
-    std::cout << "Exit Group Nodes"  << std::endl;
     return res;
   }
 
