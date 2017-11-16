@@ -220,6 +220,7 @@ component dac714 is
     nLD_DAC:            out     std_logic;                      -- '0' copy shift register to output latch of DAC
     nCLR_DAC:           buffer  std_logic;                      -- '0' resets the DAC, Clear Pulsewidth min 200ns
                                                                 -- resets both the input latch and the D/A latch to 0000H (midscale).
+    dac_data_o:         out     std_logic_vector(15 downto 0);  -- latched value of the data word for the dac714 converter
     ext_trig_valid:     out     std_logic;                      -- got an valid external trigger, during extern trigger mode.
     DAC_convert_o:      out     std_logic;                      -- '1' when DAC convert driven by software, functiongenerator or external trigger
     Rd_Port:            out     std_logic_vector(15 downto 0);  -- output for all read sources of this macro
