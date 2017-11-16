@@ -44,5 +44,6 @@ modules = {
     "mbox",
     "prioq2",
     "temp_sens",
+    "daq",
   ]
 }
