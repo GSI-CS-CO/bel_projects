@@ -19,9 +19,9 @@ using namespace DotStr::Misc;
 void VisitorVertexWriter::pushPair(const std::string& p, uint64_t v, int format) const {
   out << ", " << p << "=\"";
   switch (format) {
-    case FORMAT_HEX   : out << std::hex << v; break;
+    case FORMAT_HEX   : out << "0x" << std::hex << v; break;
     case FORMAT_DEC   : out << std::dec << v; break;
-    case FORMAT_BIN   : out << std::dec << (v & 1); break;
+    case FORMAT_BIT   : out << std::dec << (v & 1); break;
     case FORMAT_BOOL  : out << ((v & 1) ? sTrue : sFalse); break;
     default           : out << std::hex << v;
   }  
