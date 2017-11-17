@@ -24,7 +24,7 @@ class DestList;
 
 #define FORMAT_DEC 10
 #define FORMAT_HEX 16
-#define FORMAT_BIN 2
+#define FORMAT_BIT 2
 #define FORMAT_BOOL -2
 
 
