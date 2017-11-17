@@ -227,7 +227,7 @@ int main(int argc, char* argv[]) {
     }
     else if (cmp == "flow")  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
-      if ((para != NULL) && cdm.isInHashDict( para)) { 
+      if ((para != NULL) && ((para == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( para))) { 
         uint32_t adr; 
         try {
           adr = cdm.getNodeAdr(para, DOWNLOAD, INTERNAL);
@@ -342,7 +342,7 @@ int main(int argc, char* argv[]) {
     //all the block commands set mc, so...
     if (mc != NULL) {
       try {
-          cdm.sendCmd(targetName, cmdPrio, mc);     
+          cdm.sendCommand(targetName, cmdPrio, mc);     
         } catch (std::runtime_error const& err) {
           std::cerr << program << ": Could not send command " << para << ". Cause: " << err.what() << std::endl;
         }  

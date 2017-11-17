@@ -21,6 +21,7 @@
 
 
 
+
 int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
 {
    //eb_status_t status;
@@ -412,6 +413,7 @@ bool CarpeDM::connect(const std::string& en) {
   }
 
   uint32_t CarpeDM::getNodeAdr(const std::string& name, bool direction, bool intExt) {
+    std::cout << "Looking up Adr of " << name << std::endl;
     if(name == DotStr::Node::Special::sIdle) return LM32_NULL_PTR; //idle node is resolved as a null ptr without comment
 
     AllocTable& at = (direction == UPLOAD ? atUp : atDown );
