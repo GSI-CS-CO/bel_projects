@@ -137,7 +137,7 @@ constant c_adc_base:                    unsigned := x"0230";
 constant c_fg1_base:                    unsigned := x"0300";
 constant c_tmr_base:                    unsigned := x"0330";
 constant c_fg2_base:                    unsigned := x"0340";
-constant c_daq_base:                    unsigned := x"0500";
+constant c_daq_base:                    unsigned := x"2000";  --scu_sio3 event filter ends at x1fff
 constant daq_ch_num:                    integer  := 4;
 
 component IO_4x8
@@ -294,7 +294,11 @@ component IO_4x8
       
   signal DAC_channel_1          : std_logic_vector(15 downto 0);
   signal DAC_channel_2          : std_logic_vector(15 downto 0);
+  
+  signal daq_irq                : std_logic;
+  signal HiRes_irq              : std_logic;
 
+  
   begin
 
 addac_clk_sw: slave_clk_switch
@@ -369,14 +373,14 @@ addac_clk_sw: slave_clk_switch
       clk_i                   => clk_sys,             -- should be the same sysclk as used by SCU_Bus_Slave Macro
       nReset                  => nPowerup_Res,
       
-      timestamp               => timestamp,           -- WR Timestamp
+
       diob_extension_id       => (others => '0'),     -- hard-coded ID Value, used for Header in daq, here nulled for addac
       
       user_rd_active          => daq_rd_active,
       Rd_Port                 => daq_rd_data_to_SCUB, -- Data to SCU Bus Macro
       Dtack                   => daq_dtack,           -- Dtack to SCU Bus Macro
-      daq_srq                 => open,                -- consolidated irq lines from n daq channels for "channel fifo full"
-      HiRes_srq               => open,                -- consolidated irq lines from n HiRes channels for "HiRes Daq finished"
+      daq_srq                 => daq_irq,             -- consolidated irq lines from n daq channels for "channel fifo full"
+      HiRes_srq               => hires_irq,           -- consolidated irq lines from n HiRes channels for "HiRes Daq finished"
       Timing_Pattern_LA       => Timing_Pattern_LA,   -- latched data from SCU_Bus 
       Timing_Pattern_RCV      => Timing_Pattern_RCV,  -- timing pattern received
       
@@ -384,7 +388,7 @@ addac_clk_sw: slave_clk_switch
       daq_dat_i               => daq_dat_i,           -- := (others => dummy_daq_dat_in);
       daq_ext_trig            => daq_ext_trig_i       -- := (others => dummy_daq_ctl_in)  
     );--daq_inst
- 
+
 
 
       daq_dat_i    (1)   <= ADC_channel_1;
@@ -427,10 +431,10 @@ SCU_Slave: SCU_Bus_Slave
     nSCUB_Reset_in      => A_nReset,            -- in,    SCU_Bus-Signal: '0' => 'nSCUB_Reset_In' is active
     Data_to_SCUB        => Data_to_SCUB,        -- in,    connect read sources from external user functions
     Dtack_to_SCUB       => Dtack_to_SCUB,       -- in,    connect Dtack from from external user functions
-    Intr_In             => fg_1_dreq & fg_2_dreq & tmr_irq & '0'  -- interrupt 15..12
-                          & x"0"                                  -- interrupt 11..8
-                          & x"0"                                  -- interrupt 7..4
-                          & '0' & '0' &  clk_switch_intr,         -- interrupt 3..1, (interrupt 0 is internally generated)
+    Intr_In             => fg_1_dreq & fg_2_dreq & tmr_irq & daq_irq  -- interrupt 15..12
+                          & hires_irq & b"000"                        -- interrupt 11..8
+                          & x"0"                                      -- interrupt 7..4
+                          & '0' & '0' &  clk_switch_intr,             -- interrupt 3..1, (interrupt 0 is internally generated)
     User_Ready          => '1',
     CID_GROUP           => g_cid_group,
     Data_from_SCUB_LA   => Data_from_SCUB_LA,   -- out,   latched data from SCU_Bus for external user functions

@@ -25,7 +25,7 @@ entity zeitbasis_daq is
 --			Ena_every_166ns:  OUT	STD_LOGIC;	
 --			Ena_every_250ns:  OUT	STD_LOGIC;
 --			Ena_every_500ns:  OUT	STD_LOGIC;
---			Ena_every_1us:    OUT	STD_LOGIC;
+      Ena_every_1us:    out	std_logic;
       Ena_every_10us:   out std_logic;
       Ena_every_100us:  out std_logic;
       Ena_every_1ms:    out std_logic;
@@ -39,30 +39,29 @@ architecture arch_zeitbasis_daq of zeitbasis_daq is
 
 	CONSTANT	CLK_in_ps			: INTEGER	:= (1000000000 / (CLK_in_Hz / 1000)); -- muss eigentlich clk-halbe sein
 
-	--CONSTANT	c_Ena_every_100ns_cnt	: INTEGER	:= 100		* 1000 / CLK_in_ps;
-	--CONSTANT	c_Ena_every_166ns_cnt	: INTEGER	:= 166		* 1000 / CLK_in_ps;
-	--CONSTANT	c_Ena_every_500ns_cnt	: INTEGER	:= 500  	* 1000 / CLK_in_ps;
-	--CONSTANT	c_Ena_every_1us_cnt		: INTEGER	:= 1000 	* 1000 / CLK_in_ps;
-  
---	CONSTANT	c_Ena_every_250ns_cnt	: INTEGER	:= 250  	* 1000 / CLK_in_ps;  
-  --CONSTANT	c_Ena_every_10us_cnt	: INTEGER	:= 10000 	* 1000 / CLK_in_ps;
-  --CONSTANT	c_Ena_every_100us_cnt	: INTEGER	:= 100000 * 1000 / CLK_in_ps;
-  --CONSTANT	c_Ena_every_1ms_cnt	  : INTEGER	:= 1000000 * 1000 / CLK_in_ps;
+  --CONSTANT	c_Ena_every_100ns_cnt	: INTEGER	:= 100	  * 1000 / CLK_in_ps;
+  --CONSTANT	c_Ena_every_166ns_cnt	: INTEGER	:= 166	  * 1000 / CLK_in_ps;
+  --CONSTANT	c_Ena_every_500ns_cnt	: INTEGER	:= 500  	  * 1000 / CLK_in_ps;
+  CONSTANT	c_Ena_every_1us_cnt		: INTEGER	:= 1000 	* 1000 / CLK_in_ps;
+
+  --CONSTANT	c_Ena_every_250ns_cnt	: INTEGER	:= 250      * 1000 / CLK_in_ps;  
+  --CONSTANT	c_Ena_every_10us_cnt  	: INTEGER	:= 10000    * 1000 / CLK_in_ps;
+  --CONSTANT	c_Ena_every_100us_cnt	: INTEGER	:= 100000   * 1000 / CLK_in_ps;
+  --CONSTANT	c_Ena_every_1ms_cnt	   : INTEGER	:= 1000000  * 1000 / CLK_in_ps;
   CONSTANT	c_Ena_every_250ns_cnt	: INTEGER	:= 50   	* 1000 / CLK_in_ps;   --for simulation
-  CONSTANT	c_Ena_every_10us_cnt	: INTEGER	:= 80   	* 1000 / CLK_in_ps;   --for simulation
-  CONSTANT	c_Ena_every_100us_cnt	: INTEGER	:= 120    * 1000 / CLK_in_ps;
-  CONSTANT	c_Ena_every_1ms_cnt	  : INTEGER	:= 160    * 1000 / CLK_in_ps; 
+  CONSTANT	c_Ena_every_10us_cnt	   : INTEGER	:= 80   	* 1000 / CLK_in_ps;   --for simulation
+  CONSTANT	c_Ena_every_100us_cnt	: INTEGER	:= 120   * 1000 / CLK_in_ps;
+  CONSTANT	c_Ena_every_1ms_cnt	   : INTEGER	:= 160   * 1000 / CLK_in_ps; 
   
  	--SIGNAL	s_every_100ns	: STD_LOGIC;
 	--SIGNAL	s_every_166ns	: STD_LOGIC;
 	--SIGNAL	s_every_20ms	: STD_LOGIC;
 	--SIGNAL	s_every_500ns	: STD_LOGIC;
-	--SIGNAL	s_every_1us		: STD_LOGIC;
-  
-	SIGNAL	s_every_250ns	: STD_LOGIC;
-  SIGNAL	s_every_10us	: STD_LOGIC;
+	SIGNAL	s_every_1us		: STD_LOGIC;
+   SIGNAL	s_every_250ns	: STD_LOGIC;
+   SIGNAL	s_every_10us	: STD_LOGIC;
 	SIGNAL	s_every_100us	: STD_LOGIC;
- 	SIGNAL	s_every_1ms	  : STD_LOGIC; 
+ 	SIGNAL	s_every_1ms	   : STD_LOGIC; 
 
   
 
@@ -117,13 +116,13 @@ BEGIN
 --                div_o => s_every_500ns
 --              );
 --
---sel_every_1us: div_n
---  generic map (n => c_Ena_every_1us_cnt, diag_on => diag_on)
---    port map  ( res => res,
---                clk => clk,
---                ena => '1',
---                div_o => s_every_1us
---              );
+  sel_every_1us: div_n
+    generic map (n => c_Ena_every_1us_cnt, diag_on => diag_on)
+      port map  ( res => res,
+                  clk => clk,
+                  ena => '1',
+                  div_o => s_every_1us
+                 );
 
 sel_every_250ns: div_n
   generic map (n => c_Ena_every_250ns_cnt, diag_on => diag_on)
@@ -171,7 +170,7 @@ sel_every_1ms: div_n
 --Ena_every_166ns	<= 	s_every_166ns;		
 --Ena_every_250ns	<= 	s_every_250ns;		
 --Ena_every_500ns	<= 	s_every_500ns;		
---Ena_every_1us	  <= 	s_every_1us;	
+Ena_every_1us	  <= 	s_every_1us;	
 Ena_every_250ns <=  s_every_250ns;
 Ena_every_10us	<= 	s_every_10us;	
 Ena_every_100us	<= 	s_every_100us;	
