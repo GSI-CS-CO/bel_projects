@@ -12,7 +12,7 @@ PATHFW 	 = .
 PATHPKG	 = $(shell python2.7 ../../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
 PREFIX 	 ?= /usr/local
 CFLAGS 	 = -I$(PATHFW) -DDEBUGLEVEL=$(DEBUGLVL)
-DEBUGLVL = 0
+DEBUGLVL = 5
 
 include ../../../syn/build.mk
 

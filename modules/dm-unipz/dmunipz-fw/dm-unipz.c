@@ -154,7 +154,7 @@ dmComm  dmData[DM_NBLOCKS];             // data for treatment of blocks
 #define REQBEAMA         0              // 1st block: handles DM for beam request, flow command
 #define REQBEAMB         1              // 2nd block: handles DM for beam request, flex wait
 
-/*
+/* disabled MSI usage, keep for later!
 void show_msi()
 {
   DBPRINT3(" Msg:\t%08x\nAdr:\t%08x\nSel:\t%01x\n", global_msi.msg, global_msi.adr, global_msi.sel);
@@ -233,7 +233,7 @@ uint32_t ebmReadN(uint32_t msTimeout, uint32_t address, uint32_t *data, uint32_t
   while (getSysTime() < timeoutT) {                                                                  // wait for received data until timeout
     if (pSharedData4EB[handshakeIdx] != DMUNIPZ_EB_HACKISH) {                                        // hackish solution to determine if a reply value has been received
       for (i=0; i<n32BitWords; i++) data[i] = pSharedData4EB[i];
-      //mprintf("dm-unipz: ebmReadN EB_address 0x%08x, nWords %d, data[0] 0x%08x\n", address, n32BitWords, data[0]);
+      // dbg mprintf("dm-unipz: ebmReadN EB_address 0x%08x, nWords %d, data[0] 0x%08x, hackish 0x%08x, return 0x%08x\n", address, n32BitWords, data[0], DMUNIPZ_EB_HACKISH, pSharedData4EB[handshakeIdx]);
       return DMUNIPZ_STATUS_OK;
     }
   } //while not timed out
@@ -629,7 +629,7 @@ int16_t writeToPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t data) // write b
 {
   uint16_t wData     = 0x0;     // data to write
   int16_t  busStatus = 0;       // status of bus operation
-  
+    
   // select module
   wData     = (modAddr << 8) | C_IO32_KANAL_0;
   if ((busStatus = writeDevMil(pMILPiggy, ifbAddr, IFB_ADR_BUS_W, wData)) != MIL_STAT_OK) return busStatus;
@@ -638,7 +638,7 @@ int16_t writeToPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t data) // write b
   wData     = data;
   busStatus = writeDevMil(pMILPiggy, ifbAddr, IFB_DATA_BUS_W, wData);
   // DBPRINT1("dm-unipz: writeToPZU, wrote wData %d\n", wData);
-
+  
   return (busStatus);
 } // writeToPZU
 
@@ -648,14 +648,14 @@ int16_t readFromPZU(uint16_t ifbAddr, uint16_t modAddr, uint16_t *data) // read 
   uint16_t wData      = 0x0;    // data to write
   uint16_t rData      = 0x0;    // data to read
   int16_t  busStatus  = 0;      // status of bus operation
-
+  
   // select module
   wData     = (modAddr << 8) | C_IO32_KANAL_0;
   if ((busStatus = writeDevMil(pMILPiggy, ifbAddr, IFB_ADR_BUS_W, wData))  != MIL_STAT_OK) return busStatus;
 
   // read data
   if ((busStatus = readDevMil(pMILPiggy, ifbAddr, IFB_DATA_BUS_R, &rData)) == MIL_STAT_OK) *data = rData;
-
+  
   return(busStatus);
 } // readFromPZU 
 
@@ -842,7 +842,7 @@ uint32_t entryActionConfigured()
   uint32_t dryRunFlag;
   uint32_t i;
   uint32_t data;
-
+  
   // configure EB master (SRC and DST MAC/IP are set from host)
   if ((status = ebmInit(2000)) != DMUNIPZ_STATUS_OK) {
     DBPRINT1("dm-unipz: ERROR - init of EB master failed! %d\n", status);
@@ -856,13 +856,13 @@ uint32_t entryActionConfigured()
   }
 
   DBPRINT1("dm-unipz: connection to DM ok - 0x%08x\n", data);
-      
+  /*    
   // check if modulbus I/O is ok
   if ((status = echoTestDevMil(pMILPiggy, IFB_ADDRESS_SIS, 0xbabe)) != DMUNIPZ_STATUS_OK) {
     DBPRINT1("dm-unipz: ERROR - modulbus SIS IFK not available!\n");
     return DMUNIPZ_STATUS_DEVBUSERROR;
   }
-
+  */
   DBPRINT1("dm-unipz: connection to UNIPZ (devicebus) ok\n");  
 
   // configure MIL piggy for timing events for all 16 virtual accelerators
@@ -1133,7 +1133,6 @@ void main(void) {
   while (1) {
     cmdHandler(&reqState);                                                  // check for commands and possibly request state changes
     status = changeState(&actState, &reqState, status);                     // handle requested state changes
-    
     switch(actState)                                                        // state specific do actions
       {
       case DMUNIPZ_STATE_S0 :
@@ -1141,7 +1140,7 @@ void main(void) {
         if (status != DMUNIPZ_STATUS_OK) reqState = DMUNIPZ_STATE_FATAL;    // failed:  -> FATAL
         else                             reqState = DMUNIPZ_STATE_IDLE;     // success: -> IDLE
         break;
-      case DMUNIPZ_STATE_OPERATION :
+        case DMUNIPZ_STATE_OPERATION :
         status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer, &nInject, status);
         if (status == DMUNIPZ_STATUS_DEVBUSERROR)    reqState = DMUNIPZ_STATE_ERROR;
         if (status == DMUNIPZ_STATUS_ERROR)          reqState = DMUNIPZ_STATE_ERROR;

@@ -53,7 +53,7 @@ dmunipz-ctl dev/wbm0 startop
 echo -e dm-unipz - start: configure lm32 channel of ECA
 
 # configure ECA for lm32 channel: here action for TK request, tag "0x1"
-saft-ecpu-ctl baseboard -c 0x1111000000000000 0xffff000000000000 0 0x5 -d
+# no longer needed, here: prep_dm saft-ecpu-ctl baseboard -c 0x1111000000000000 0xffff000000000000 0 0x5 -d
 
 # configure ECA for lm32 channel: here action for TK request, tag "0x2"
 saft-ecpu-ctl baseboard -c 0x2222000000000000 0xffff000000000000 0 0x2 -d
@@ -72,7 +72,8 @@ echo -e dm-unipz - start: startup script finished
 # saft-dm bla -fp -n 3600000 schedule.txt
 # alternative : 
 # - saft-ctl bla -fp inject 0x2222000000000002 0x0 0
-# - saft-ctl bla -fp inject 0x3333000000000002 0x0 0
+# - saft-ctl bla -fp inject 0x3333000000000002 0x0 500000000
+# - saft-ctl bla -fp inject 0x4444000000000002 0x0 800000000
 # note that action of firmware is triggered by tag and
 # that virtual accelerator is specified by low bits of EvtID
 
