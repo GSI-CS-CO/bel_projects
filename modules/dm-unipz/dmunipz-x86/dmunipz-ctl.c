@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 17-May-2017
  ********************************************************************************************/
-#define DMUNIPZ_X86_VERSION "0.0.8"
+#define DMUNIPZ_X86_VERSION "0.0.9"
 
 // standard includes 
 #include <unistd.h> // getopt
@@ -362,6 +362,17 @@ int main(int argc, char** argv) {
     eb_device_read(device, dmunipz_tkTimeout,  EB_BIG_ENDIAN|EB_DATA32, (eb_data_t *)(&tkTimeout),  0, eb_block);
     printf("dm-unipz: flexOffset %"PRIu32" ns, uniTimeout %"PRIu32" ms, tkTimeout %"PRIu32" ms (if 'CONFIGURED')\n", flexOffset, uniTimeout, tkTimeout);
 
+    eb_device_read(device, dmunipz_srcMacHi, EB_BIG_ENDIAN|EB_DATA32,   (eb_data_t *)(&macHi),      0, eb_block);
+    eb_device_read(device, dmunipz_srcMacLo, EB_BIG_ENDIAN|EB_DATA32,   (eb_data_t *)(&macLo),      0, eb_block);
+    eb_device_read(device, dmunipz_srcIp,    EB_BIG_ENDIAN|EB_DATA32,   (eb_data_t *)(&ip),         0, eb_block);
+    printf("dm-unipz: EB Master (local): mac 0x%04x%08x, ip %03d.%03d.%03d.%03d (if 'CONFIGURED')\n", macHi, macLo, (ip & 0xff000000) >> 24, (ip & 0x00ff0000) >> 16, (ip & 0x0000ff00) >> 8, (ip & 0x000000ff));
+
+    eb_device_read(device, dmunipz_dstMacHi, EB_BIG_ENDIAN|EB_DATA32,   (eb_data_t *)(&macHi),      0, eb_block);
+    eb_device_read(device, dmunipz_dstMacLo, EB_BIG_ENDIAN|EB_DATA32,   (eb_data_t *)(&macLo),      0, eb_block);
+    eb_device_read(device, dmunipz_dstIp,    EB_BIG_ENDIAN|EB_DATA32,   (eb_data_t *)(&ip),         0, eb_block);
+    printf("dm-unipz: EB Master (DM   ): mac 0x%04x%08x, ip %03d.%03d.%03d.%03d (if 'CONFIGURED')\n", macHi, macLo, (ip & 0xff000000) >> 24, (ip & 0x00ff0000) >> 16, (ip & 0x0000ff00) >> 8, (ip & 0x000000ff));
+    
+    
     // status
     readInfo(&status, &state, &iterations, &transfers, &injections, &virtAcc, &statTrans);
     printf("dm-unipz: state %s, status %s, iterations %d\n",dmunipz_state_text(state),  dmunipz_status_text(status), iterations);
