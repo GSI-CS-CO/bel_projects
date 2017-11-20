@@ -88,7 +88,9 @@ package monster_pkg is
       g_gpio_in              : natural := 0;
       g_gpio_out             : natural := 0;
       g_tlu_fifo_size        : natural := 256;
-      g_lvds_inout           : natural := 0;
+      g_lvds_inout           : natural := 0;    
+      g_fec_decoder          : boolean := false;
+      g_fec_encoder          : boolean := false;
       g_lvds_in              : natural := 0;
       g_lvds_out             : natural := 0;
       g_fixed                : natural := 0;

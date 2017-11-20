@@ -64,6 +64,7 @@ use work.io_control_pkg.all;
 use work.wb_pmc_host_bridge_pkg.all;
 use work.ddr3_wrapper_pkg.all;
 use work.endpoint_pkg.all;
+use work.fec_pkg.all;
 
 entity monster is
   generic(
@@ -81,6 +82,8 @@ entity monster is
     g_lvds_out             : natural;
     g_fixed                : natural;
     g_lvds_invert          : boolean;
+    g_fec_decoder          : boolean;
+    g_fec_encoder          : boolean;
     g_en_pcie              : boolean;
     g_en_vme               : boolean;
     g_en_usb               : boolean;
@@ -100,7 +103,7 @@ entity monster is
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
     g_lm32_init_files      : string;
-	 g_lm32_profiles        : string;
+	g_lm32_profiles        : string;
     g_lm32_are_ftm         : boolean);
   port(
     -- Required: core signals
@@ -412,7 +415,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
   
   -- required slaves
-  constant c_dev_slaves          : natural := 29;
+  constant c_dev_slaves          : natural := 30;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
@@ -428,22 +431,22 @@ architecture rtl of monster is
   constant c_devs_serdes_clk_gen : natural := 12;
   constant c_devs_control        : natural := 13;
   constant c_devs_ftm_cluster    : natural := 14;
-  
+  constant c_devs_fec            : natural := 15;
   -- optional slaves:
-  constant c_devs_lcd            : natural := 15;
-  constant c_devs_oled           : natural := 16;
-  constant c_devs_scubirq        : natural := 17;
-  constant c_devs_mil            : natural := 18;
-  constant c_devs_mil_ctrl       : natural := 19;
-  constant c_devs_ow             : natural := 20;
-  constant c_devs_ssd1325        : natural := 21;
-  constant c_devs_vme_info       : natural := 22;
-  constant c_devs_CfiPFlash      : natural := 23;
-  constant c_devs_nau8811        : natural := 24;
-  constant c_devs_psram          : natural := 25;
-  constant c_devs_DDR3_if1       : natural := 26;
-  constant c_devs_DDR3_if2       : natural := 27;
-  constant c_devs_DDR3_ctrl      : natural := 28;
+  constant c_devs_lcd            : natural := 16;
+  constant c_devs_oled           : natural := 17;
+  constant c_devs_scubirq        : natural := 18;
+  constant c_devs_mil            : natural := 19;
+  constant c_devs_mil_ctrl       : natural := 20;
+  constant c_devs_ow             : natural := 21;
+  constant c_devs_ssd1325        : natural := 22;
+  constant c_devs_vme_info       : natural := 23;
+  constant c_devs_CfiPFlash      : natural := 24;
+  constant c_devs_nau8811        : natural := 25;
+  constant c_devs_psram          : natural := 26;
+  constant c_devs_DDR3_if1       : natural := 27;
+  constant c_devs_DDR3_if2       : natural := 28;
+  constant c_devs_DDR3_ctrl      : natural := 29;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -465,6 +468,7 @@ architecture rtl of monster is
     c_devs_serdes_clk_gen => f_sdb_auto_device(c_wb_serdes_clk_gen_sdb,          true),
     c_devs_control        => f_sdb_auto_device(c_io_control_sdb,                 true),
     c_devs_ftm_cluster    => f_sdb_auto_bridge(c_ftm_slaves,                     true),
+    c_devs_fec            => f_sdb_auto_device(c_fec_sdb,                        true),
     c_devs_lcd            => f_sdb_auto_device(c_wb_serial_lcd_sdb,              g_en_lcd),
     c_devs_oled           => f_sdb_auto_device(c_oled_display,                   g_en_oled),
     c_devs_scubirq        => f_sdb_auto_device(c_scu_irq_ctrl_sdb,               g_en_scubus),
@@ -589,6 +593,16 @@ architecture rtl of monster is
   signal eb_src_in     : t_wrf_source_in;
   signal eb_snk_out    : t_wrf_sink_out;
   signal eb_snk_in     : t_wrf_sink_in;
+  -- FEC WR Fabric signals
+  signal fec_dec_src_out   : t_wrf_source_out;
+  signal fec_dec_src_in    : t_wrf_source_in;
+  signal fec_dec_snk_out   : t_wrf_sink_out;
+  signal fec_dec_snk_in    : t_wrf_sink_in;
+  signal fec_enc_src_out   : t_wrf_source_out;
+  signal fec_enc_src_in    : t_wrf_source_in;
+  signal fec_enc_snk_out   : t_wrf_sink_out;
+  signal fec_enc_snk_in    : t_wrf_sink_in;
+ 
   
   signal uart_usb : std_logic; -- from usb
   signal uart_mux : std_logic; -- either usb or external
@@ -640,6 +654,8 @@ architecture rtl of monster is
   signal link_up  : std_logic;
   signal pps      : std_logic;
   signal ext_pps  : std_logic;
+
+  signal txtsu_ts : t_txtsu_timestamp;
 
   signal tm_valid  : std_logic;
   signal tm_tai    : std_logic_vector(39 downto 0);
@@ -984,6 +1000,30 @@ begin
   core_clk_butis_t0_o<= clk_butis_t0_ts;
   core_rstn_wr_ref_o <= rstn_ref;
   core_rstn_butis_o  <= rstn_butis;
+
+  FEC : wb_fec
+    generic map (
+    g_num_block   => 4,
+    g_en_fec_enc  => g_fec_encoder,
+    g_en_fec_dec  => g_fec_decoder,
+    g_en_golay    => false,
+    g_en_dec_time => false)
+  port map ( 
+    clk_i             => clk_ref,
+    rst_n_i           => rstn_ref,
+    fec_timestamps_i  => txtsu_ts,
+    fec_tm_tai_i      => tm_tai,
+    fec_tm_cycle_i    => tm_cycles,
+    fec_dec_sink_i    => fec_dec_src_out,
+    fec_dec_sink_o    => fec_dec_src_in,
+    fec_dec_src_i     => fec_dec_snk_out,
+    fec_dec_src_o     => fec_dec_snk_in,
+    fec_enc_sink_i    => fec_enc_src_out,
+    fec_enc_sink_o    => fec_enc_src_in,
+    fec_enc_src_i     => fec_enc_snk_out,
+    fec_enc_src_o     => fec_enc_snk_in,
+    wb_slave_o        => dev_bus_master_i(c_devs_fec),
+    wb_slave_i        => dev_bus_master_o(c_devs_fec));
   
   -- END OF Reset and PLLs
   ----------------------------------------------------------------------------------
@@ -1073,10 +1113,10 @@ begin
     port map(
       clk_i           => clk_sys,
       nRst_i          => rstn_sys,
-      snk_i           => eb_snk_in,
-      snk_o           => eb_snk_out,
-      src_o           => eb_src_out,
-      src_i           => eb_src_in,
+      snk_i           => fec_dec_src_out,
+      snk_o           => fec_dec_src_in,
+      src_o           => fec_enc_snk_in,
+      src_i           => fec_enc_snk_out,
       ebs_cfg_slave_o => wrc_master_i,
       ebs_cfg_slave_i => wrc_master_o,
       ebs_wb_master_o => top_bus_slave_i (c_topm_ebs),
@@ -1402,15 +1442,16 @@ begin
       slave_o              => wrc_slave_o,
       aux_master_o         => wrc_master_o,
       aux_master_i         => wrc_master_i,
-      wrf_src_o            => eb_snk_in,
-      wrf_src_i            => eb_snk_out,
-      wrf_snk_o            => eb_src_in,
-      wrf_snk_i            => eb_src_out,
+      wrf_src_o            => fec_dec_snk_in,
+      wrf_src_i            => fec_dec_snk_out,
+      wrf_snk_o            => fec_enc_src_in,
+      wrf_snk_i            => fec_enc_src_out,
       tm_link_up_o         => open,
       tm_dac_value_o       => open,
       tm_dac_wr_o          => open,
       tm_clk_aux_lock_en_i => (others => '0'),
       tm_clk_aux_locked_o  => open,
+      timestamps_o         => txtsu_ts,
       tm_time_valid_o      => tm_valid,
       tm_tai_o             => tm_tai,
       tm_cycles_o          => tm_cycles,
