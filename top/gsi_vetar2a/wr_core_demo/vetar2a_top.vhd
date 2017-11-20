@@ -333,6 +333,8 @@ begin
       g_gpio_out        => 11,
       g_fixed           => 18,
       g_flash_bits      => 24,
+      g_fec_encoder     => true,
+      g_fec_decoder     => false,
       g_en_vme          => true,
       g_en_usb          => true,
       g_en_lcd          => true,
