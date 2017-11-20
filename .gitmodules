@@ -22,3 +22,6 @@
 [submodule "ip_cores/pci-core"]
 	path = ip_cores/pci-core
 	url = git://ohwr.org/hdl-core-lib/pci-core.git
+[submodule "ip_cores/wb_fec"]
+	path = ip_cores/wb_fec
+	url = git@bitbucket.org:bradomyn/wb_fec.git
