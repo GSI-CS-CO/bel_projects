@@ -10,7 +10,8 @@ use work.daq_pkg.all;
 ------------------------------------------------------------------------------------------------------------------------------------
 --  Vers: 0 Revi: 0: 2015Sep09 K.Kaiser Initial Version    
 --        0       1: 2016Sep23 K.Kaiser Concept Change of DIOB requires flexible DAQ Channel count 
---                2: 2016Okt07 K.Kaiser Add Descriptor to each DAQ Data Packet                                                                                                                         
+--                2: 2016Okt07 K.Kaiser Add Descriptor to each DAQ Data Packet  
+--                3: 2017Nov20 K.Kaiser Added used Fifowords, Register readback and changed Interrupt Register handling
 ------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -25,31 +26,197 @@ port  (
       -- SCUB interface
       Adr_from_SCUB_LA:		in		std_logic_vector(15 downto 0);-- latched address from SCU_Bus
       Data_from_SCUB_LA:	in		std_logic_vector(15 downto 0);-- latched data from SCU_Bus 
-      Ext_Adr_Val:			  in		std_logic;							      -- '1' => "ADR_from_SCUB_LA" is valid
+      Ext_Adr_Val:		   in		std_logic;							      -- '1' => "ADR_from_SCUB_LA" is valid
       Ext_Rd_active:			in		std_logic;							      -- '1' => Rd-Cycle is active
       Ext_Wr_active:			in		std_logic;							      -- '1' => Wr-Cycle is active
-      clk_i:						  in		std_logic;							      -- should be the same clk, used by SCU_Bus_Slave
-      nReset:					    in		std_logic;
+      clk_i:					in		std_logic;							      -- should be the same clk, used by SCU_Bus_Slave
+      nReset:					in		std_logic;
       
-      timestamp:          in    std_logic_vector(63 downto 0);-- WR Timestamp
-      diob_extension_id:  in    std_logic_vector(15 downto 0);-- hard-coded ID Value
+      diob_extension_id:   in    std_logic_vector(15 downto 0);-- hard-coded ID Value for DAQ Diob implementation
       
-      user_rd_active:     out   std_logic;
-      Rd_Port:            out   std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
-      Dtack:              out   std_logic;                    -- Dtack to SCU Bus Macro
-      daq_srq:            out   std_logic;                    -- consolidated irq lines from n daq channels for "channel fifo full"
-      HiRes_srq:          out   std_logic;                    -- consolidated irq lines from n HiRes channels for "HiRes Daq finished"
-      Timing_Pattern_LA:  in    std_logic_vector(31 downto 0);-- latched data from SCU_Bus 
-      Timing_Pattern_RCV: in    std_logic;                    -- timing pattern received
+      user_rd_active:      out   std_logic;
+      Rd_Port:             out   std_logic_vector(15 downto 0);-- Data to SCU Bus Macro
+      Dtack:               out   std_logic;                    -- Dtack to SCU Bus Macro
+      daq_srq:             out   std_logic;                    -- consolidated irq lines from n daq channels for "channel fifo full"
+      HiRes_srq:           out   std_logic;                    -- consolidated irq lines from n HiRes channels for "HiRes Daq finished"
+      Timing_Pattern_LA:   in    std_logic_vector(31 downto 0);-- latched data from SCU_Bus 
+      Timing_Pattern_RCV:  in    std_logic;                    -- timing pattern received
       
       --daq input channels
-      daq_dat_i:          in    t_daq_dat (1 to ch_num);      -- := (others => dummy_daq_dat_in);
-      daq_ext_trig:       in    t_daq_ctl (1 to ch_num)       -- := (others => dummy_daq_ctl_in)  
+      daq_dat_i:           in    t_daq_dat (1 to ch_num);      -- := (others => dummy_daq_dat_in);
+      daq_ext_trig:        in    t_daq_ctl (1 to ch_num)       -- := (others => dummy_daq_ctl_in)  
     );
 end daq;
 
 
 architecture daq_arch of daq is
+                                                                                                   
+  --common registers for all channels                                                          
+  constant daq_irq_reg_adr:          unsigned(15 downto 0):= (Base_addr + x"0060" );
+  constant HiRes_irq_reg_adr:        unsigned(15 downto 0):= (Base_addr + x"0061" ); 
+  constant timestamp_cntr_word1_adr: unsigned(15 downto 0):= (Base_addr + x"0062" ); 
+  constant timestamp_cntr_word2_adr: unsigned(15 downto 0):= (Base_addr + x"0063" ); 
+  constant timestamp_cntr_word3_adr: unsigned(15 downto 0):= (Base_addr + x"0064" ); 
+  constant timestamp_cntr_word4_adr: unsigned(15 downto 0):= (Base_addr + x"0065" ); 
+  constant timestamp_cntr_tag_lw_adr:unsigned(15 downto 0):= (Base_addr + x"0066" );  
+  constant timestamp_cntr_tag_hw_adr:unsigned(15 downto 0):= (Base_addr + x"0067" );  
+  --specific register (one per channel)
+
+  type adr_ch_array is array (1 to 16) of unsigned(15 downto 0); --Channelcount is 1 to 16 !
+ 
+  constant  CtrlReg_adr_ch:        adr_ch_array         :=  (
+                                                            Base_addr + x"0000",
+                                                            Base_addr + x"0001",                                                                                                                  
+                                                            Base_addr + x"0002",
+                                                            Base_addr + x"0003",  
+                                                            Base_addr + x"0004",
+                                                            Base_addr + x"0005",  
+                                                            Base_addr + x"0006",
+                                                            Base_addr + x"0007",  
+                                                            Base_addr + x"0008",
+                                                            Base_addr + x"0009",  
+                                                            Base_addr + x"000a",
+                                                            Base_addr + x"000b",  
+                                                            Base_addr + x"000c",
+                                                            Base_addr + x"000d",  
+                                                            Base_addr + x"000e",
+                                                            Base_addr + x"000f"                                                                
+                                                           );
+  constant  trig_lw_adr_ch:        adr_ch_array        :=  (
+                                                            Base_addr + x"0010",
+                                                            Base_addr + x"0011",                                                                                                                  
+                                                            Base_addr + x"0012",
+                                                            Base_addr + x"0013",  
+                                                            Base_addr + x"0014",
+                                                            Base_addr + x"0015",  
+                                                            Base_addr + x"0016",
+                                                            Base_addr + x"0017",  
+                                                            Base_addr + x"0018",
+                                                            Base_addr + x"0019",  
+                                                            Base_addr + x"001a",
+                                                            Base_addr + x"001b",  
+                                                            Base_addr + x"001c",
+                                                            Base_addr + x"001d",  
+                                                            Base_addr + x"001e",
+                                                            Base_addr + x"001f"                                                                
+                                                           ); 
+  constant  trig_hw_adr_ch:        adr_ch_array        :=  (
+                                                            Base_addr + x"0020",
+                                                            Base_addr + x"0021",                                                                                                                  
+                                                            Base_addr + x"0022",
+                                                            Base_addr + x"0023",  
+                                                            Base_addr + x"0024",
+                                                            Base_addr + x"0025",  
+                                                            Base_addr + x"0026",
+                                                            Base_addr + x"0027",  
+                                                            Base_addr + x"0028",
+                                                            Base_addr + x"0029",  
+                                                            Base_addr + x"002a",
+                                                            Base_addr + x"002b",  
+                                                            Base_addr + x"002c",
+                                                            Base_addr + x"002d",  
+                                                            Base_addr + x"002e",
+                                                            Base_addr + x"002f"                                                                
+                                                           ); 
+  constant  trig_dly_word_adr_ch:  adr_ch_array      :=(
+                                                            Base_addr + x"0030",
+                                                            Base_addr + x"0031",                                                                                                                  
+                                                            Base_addr + x"0032",
+                                                            Base_addr + x"0033",  
+                                                            Base_addr + x"0034",
+                                                            Base_addr + x"0035",  
+                                                            Base_addr + x"0036",
+                                                            Base_addr + x"0037",  
+                                                            Base_addr + x"0038",
+                                                            Base_addr + x"0039",  
+                                                            Base_addr + x"003a",
+                                                            Base_addr + x"003b",  
+                                                            Base_addr + x"003c",
+                                                            Base_addr + x"003d",  
+                                                            Base_addr + x"003e",
+                                                            Base_addr + x"003f"   
+                                                          );                                                            
+  constant  PMDat_adr_ch:          adr_ch_array      :=(
+                                                            Base_addr + x"0040",
+                                                            Base_addr + x"0041",                                                                                                                  
+                                                            Base_addr + x"0042",
+                                                            Base_addr + x"0043",  
+                                                            Base_addr + x"0044",
+                                                            Base_addr + x"0045",  
+                                                            Base_addr + x"0046",
+                                                            Base_addr + x"0047",  
+                                                            Base_addr + x"0048",
+                                                            Base_addr + x"0049",  
+                                                            Base_addr + x"004a",
+                                                            Base_addr + x"004b",  
+                                                            Base_addr + x"004c",
+                                                            Base_addr + x"004d",  
+                                                            Base_addr + x"004e",
+                                                            Base_addr + x"004f"                                                                
+                                                           ); 
+  constant  DaqDat_adr_ch:        adr_ch_array      :=(
+                                                            Base_addr + x"0050",
+                                                            Base_addr + x"0051",                                                                                                                  
+                                                            Base_addr + x"0052",
+                                                            Base_addr + x"0053",  
+                                                            Base_addr + x"0054",
+                                                            Base_addr + x"0055",  
+                                                            Base_addr + x"0056",
+                                                            Base_addr + x"0057",  
+                                                            Base_addr + x"0058",
+                                                            Base_addr + x"0059",  
+                                                            Base_addr + x"005a",
+                                                            Base_addr + x"005b",  
+                                                            Base_addr + x"005c",
+                                                            Base_addr + x"005d",  
+                                                            Base_addr + x"005e",
+                                                            Base_addr + x"005f"                                                                
+                                                           ); 
+                                                             
+
+	
+  constant  DAQ_FIFO_Words_adr_ch:        adr_ch_array      :=(
+                                                            Base_addr + x"0070",
+                                                            Base_addr + x"0071",                                                                                                                  
+                                                            Base_addr + x"0072",
+                                                            Base_addr + x"0073",  
+                                                            Base_addr + x"0074",
+                                                            Base_addr + x"0075",  
+                                                            Base_addr + x"0076",
+                                                            Base_addr + x"0077",  
+                                                            Base_addr + x"0078",
+                                                            Base_addr + x"0079",  
+                                                            Base_addr + x"007a",
+                                                            Base_addr + x"007b",  
+                                                            Base_addr + x"007c",
+                                                            Base_addr + x"007d",  
+                                                            Base_addr + x"007e",
+                                                            Base_addr + x"007f"                                                                
+                                                           ); 
+                                                               
+                                                           
+  constant  PM_FIFO_Words_adr_ch:        adr_ch_array      :=(
+                                                            Base_addr + x"0080",
+                                                            Base_addr + x"0081",                                                                                                                  
+                                                            Base_addr + x"0082",
+                                                            Base_addr + x"0083",  
+                                                            Base_addr + x"0084",
+                                                            Base_addr + x"0085",  
+                                                            Base_addr + x"0086",
+                                                            Base_addr + x"0087",  
+                                                            Base_addr + x"0088",
+                                                            Base_addr + x"0089",  
+                                                            Base_addr + x"008a",
+                                                            Base_addr + x"008b",  
+                                                            Base_addr + x"008c",
+                                                            Base_addr + x"008d",  
+                                                            Base_addr + x"008e",
+                                                            Base_addr + x"008f"                                                                
+                                                           ); 
+                                                                                                                     
+
+
+
 
 -- fifo stuff  
   signal we_pg1:                  t_daq_ctl(1 to ch_num); 
@@ -75,6 +242,14 @@ architecture daq_arch of daq is
   signal DAQ_FIFO_Overflow:       t_daq_ctl(1 to ch_num);
 
   signal page1_active:            t_daq_ctl(1 to ch_num);
+  
+  type   t_pagefifowords  is array(natural range <> ) of std_logic_vector(8 downto 0); 
+  type   t_pmfifowords    is array(natural range <> ) of std_logic_vector(9 downto 0);   
+  
+  signal page1_fifo_words:        t_pagefifowords(1 to ch_num);
+  signal page2_fifo_words:        t_pagefifowords(1 to ch_num);
+  signal daq_fifo_words:          t_pagefifowords(1 to ch_num);
+  signal pm_fifo_words:           t_pmfifowords(1 to ch_num); 
 
 --Register stuff
   signal CtrlReg_Ch:              t_daq_dat(1 to ch_num);
@@ -94,20 +269,15 @@ architecture daq_arch of daq is
   signal rd_DAQDat:               t_daq_ctl(1 to ch_num); 
   signal rd_DAQDat_del:           t_daq_ctl(1 to ch_num);  
 
-  signal or_dtack_wr:             t_daq_ctl(1 to ch_num);
-  signal or_dtack_rd:             t_daq_ctl(1 to ch_num);  
-  signal or_Rd_Port:              t_daq_dat(1 to ch_num);
-  signal or_user_rd_active:       t_daq_ctl(1 to ch_num); 
 
-  signal Dtack_ch_wr:             t_daq_ctl(1 to ch_num);
-  signal Dtack_ch_rd:             t_daq_ctl(1 to ch_num);
-  signal Rd_Port_ch:              t_daq_dat(1 to ch_num);  
-  signal user_rd_active_ch:       t_daq_ctl(1 to ch_num);
+  signal Dtack_ch:                t_daq_ctl(1 to 16);
+  signal Rd_Port_ch:              t_daq_dat(1 to 16);  
+  signal user_rd_active_ch:       t_daq_ctl(1 to 16);
 
   
-  signal dtack_irqs:              std_logic;
-  signal user_rd_active_irqs:     std_logic;
-  signal Rd_Port_irqs:            std_logic_vector (15 downto 0);           
+  signal dtack_cn_regs:           std_logic;
+  signal user_rd_active_cn_regs:  std_logic;
+  signal Rd_Port_common_regs:     std_logic_vector (15 downto 0);           
   
   
 --register bit definitions control register (per channel)
@@ -129,12 +299,14 @@ architecture daq_arch of daq is
   signal DaqDat_DlyCnt:           t_daq_dat(1 to ch_num);
   signal Trig_dly_cnt:            t_daq_dat(1 to ch_num) := (others => dummy_daq_dat_in);
   signal HiRes_trig_cntr:         t_daq_dat(1 to ch_num) := (others => dummy_daq_dat_in);
-
+       
+  
 -- resets, clocks and clock enables  
   signal Reset:                   std_logic;
   signal nSClr_PM_FIFO:           t_daq_ctl(1 to ch_num);
   signal nSClr_DAQ_FIFO:          t_daq_ctl(1 to ch_num);
   
+ 
   signal Ena_every_10us:          std_logic;
   signal Ena_every_100us:         std_logic;
   signal Ena_every_1ms:           std_logic;
@@ -190,10 +362,11 @@ architecture daq_arch of daq is
   signal or_HiRes_srq:            t_daq_ctl(1 to ch_num);
 
   signal HiRes_irq_reg_rd:        std_logic;
+  signal HiRes_irq_reg_wr:        std_logic;
   signal daq_irq_reg_rd:          std_logic;
+  signal daq_irq_reg_wr:          std_logic;
   signal daq_irq_reg:             std_logic_vector (16 downto 1);
   signal HiRes_irq_reg:           std_logic_vector (16 downto 1);
-  
   
 -- Trigger from Inputs or Timing Events  
   signal Timing_pattern_matched:  t_daq_ctl(1 to ch_num);
@@ -212,6 +385,26 @@ architecture daq_arch of daq is
   signal Ena_DAQ:                 t_daq_ctl(1 to ch_num); -- one of Sample enables (10ns/100ns/1ms) is set
   signal Ena_DAQ_del:             t_daq_ctl(1 to ch_num);
   signal Ena_DAQ_Start_pulse:     t_daq_ctl(1 to ch_num); -- resets DAQ Fifos and starts Wait_for_Trigger
+  
+-- Timestamp Counter
+  signal timestamp_cntr:             std_logic_vector (63 downto 0); 
+  signal timestamp_cntr_preset:      std_logic_vector (63 downto 0);
+  signal timestamp_cntr_word1_wr:    std_logic;
+  signal timestamp_cntr_word2_wr:    std_logic;
+  signal timestamp_cntr_word3_wr:    std_logic;
+  signal timestamp_cntr_word4_wr:    std_logic;
+  signal timestamp_cntr_word1_rd:    std_logic;
+  signal timestamp_cntr_word2_rd:    std_logic;
+  signal timestamp_cntr_word3_rd:    std_logic;
+  signal timestamp_cntr_word4_rd:    std_logic; 
+-- Timestamp Counter Tag
+  signal timestamp_cntr_tag_matched: std_logic;
+  signal timestamp_cntr_tag_pulse:   std_logic;
+  signal timestamp_cntr_tag_lw_rd:   std_logic;
+  signal timestamp_cntr_tag_hw_rd:   std_logic;
+  signal timestamp_cntr_tag_lw_wr:   std_logic;
+  signal timestamp_cntr_tag_hw_wr:   std_logic;
+  signal timestamp_cntr_tag:         std_logic_vector (31 downto 0);
   
 ----------------------------------------------------------------------------------------------------------------
   
@@ -281,9 +474,14 @@ end generate Trigger_Registered_Logic;
 
 Fifo_Data_Muxes: for I in 1 to ch_num generate
     -- Provide data of Page which is actually not active
-    DaqDat_Ch(i)    <=  DaqDat_pg1(i) when page1_active(i) ='0' else
-                        DaqDat_pg2(i) when page1_active(i) ='1' else
-                        x"0000";
+    DaqDat_Ch(i)      <=  DaqDat_pg1(i) when page1_active(i) ='0' else
+                          DaqDat_pg2(i) when page1_active(i) ='1' else
+                          x"0000";
+                        
+    daq_fifo_words(i) <=  page1_fifo_words(i) when page1_active(i) ='0' else
+                          page2_fifo_words(i) when page1_active(i) ='1' else 
+                          b"0_0000_0000";
+                          
 end generate Fifo_Data_Muxes;
 
 
@@ -461,7 +659,7 @@ DAQ_Descr: for i in 1 to ch_num generate
       DAQ_Timestamp_latched(i)     <= (others => '0');
     elsif rising_edge (clk_i) then
       if almost_full_pulse_pg1(i) ='1' or almost_full_pulse_pg2(i)='1' then
-        DAQ_Timestamp_latched(i)   <= Timestamp;
+        DAQ_Timestamp_latched(i)   <= Timestamp_cntr;
       else
         null;
       end if;
@@ -478,17 +676,17 @@ DAQ_Descr: for i in 1 to ch_num generate
     end if;
   end process DAQ_Descr_Logic;
   
-  DAQ_Descr_data(i) <=  diob_extension_id                                when DAQ_Descr_cntr(i)=x"0" else  
-                        DAQ_Timestamp_latched(i)(15 downto 0)            when DAQ_Descr_cntr(i)=x"1" else   
-                        DAQ_Timestamp_latched(i)(31 downto 16)           when DAQ_Descr_cntr(i)=x"2" else 
-                        DAQ_Timestamp_latched(i)(47 downto 32)           when DAQ_Descr_cntr(i)=x"3" else 
-                        DAQ_Timestamp_latched(i)(63 downto 48)           when DAQ_Descr_cntr(i)=x"4" else 
-                        TrigWord_LW_Ch(i)                                when DAQ_Descr_cntr(i)=x"5" else 
-                        TrigWord_HW_Ch(i)                                when DAQ_Descr_cntr(i)=x"6" else 
-                        Trig_Dly_word_Ch(i)                              when DAQ_Descr_cntr(i)=x"7" else 
+  DAQ_Descr_data(i) <=  diob_extension_id(3 downto 0)  &  "00000000" & CtrlReg_Ch(i) (15 downto 12)  when DAQ_Descr_cntr(i)=x"0" else  
+                        DAQ_Timestamp_latched(i)(15 downto 0)                                        when DAQ_Descr_cntr(i)=x"1" else   
+                        DAQ_Timestamp_latched(i)(31 downto 16)                                       when DAQ_Descr_cntr(i)=x"2" else 
+                        DAQ_Timestamp_latched(i)(47 downto 32)                                       when DAQ_Descr_cntr(i)=x"3" else 
+                        DAQ_Timestamp_latched(i)(63 downto 48)                                       when DAQ_Descr_cntr(i)=x"4" else 
+                        TrigWord_LW_Ch(i)                                                            when DAQ_Descr_cntr(i)=x"5" else 
+                        TrigWord_HW_Ch(i)                                                            when DAQ_Descr_cntr(i)=x"6" else 
+                        Trig_Dly_word_Ch(i)                                                          when DAQ_Descr_cntr(i)=x"7" else 
                         (
                          CtrlReg_Ch(i)(7 downto 0) & '1' & '0' & '0' & std_logic_vector (to_unsigned(I,5 )) 
-                        )                                                when DAQ_Descr_cntr(i)=x"8" else 
+                        )                                                                            when DAQ_Descr_cntr(i)=x"8" else 
                         x"0000";
 
 
@@ -595,7 +793,7 @@ PM_Logic : for I in 1 to ch_num generate
       Last_mode_was_PM(i)         <= '0';
     elsif rising_edge (clk_i) then
       if Stop_PM_pulse(i) ='1' or Stop_HiRes_pulse(i)='1' then
-        PM_Timestamp_latched(i)   <= Timestamp;
+        PM_Timestamp_latched(i)   <= Timestamp_cntr;
         if Stop_PM_pulse(i) ='1' then
           Last_mode_was_PM(i)     <='1';
         elsif PM_Descr_runs(i) ='1' then
@@ -620,17 +818,17 @@ PM_Logic : for I in 1 to ch_num generate
     end if;
   end process PM_Descr_Logic;
   
-  PM_Descr_data(i) <=   diob_extension_id                                when PM_Descr_cntr(i)=x"0" else  
-                        PM_Timestamp_latched(i)(15 downto 0)             when PM_Descr_cntr(i)=x"1" else   
-                        PM_Timestamp_latched(i)(31 downto 16)            when PM_Descr_cntr(i)=x"2" else 
-                        PM_Timestamp_latched(i)(47 downto 32)            when PM_Descr_cntr(i)=x"3" else 
-                        PM_Timestamp_latched(i)(63 downto 48)            when PM_Descr_cntr(i)=x"4" else 
-                        TrigWord_LW_Ch(i)                                when PM_Descr_cntr(i)=x"5" else 
-                        TrigWord_HW_Ch(i)                                when PM_Descr_cntr(i)=x"6" else 
-                        Trig_Dly_word_Ch(i)                              when PM_Descr_cntr(i)=x"7" else 
+  PM_Descr_data(i) <=   diob_extension_id(3 downto 0)  &  "00000000" & CtrlReg_Ch(i) (15 downto 12) when PM_Descr_cntr(i)=x"0" else 
+                        PM_Timestamp_latched(i)(15 downto 0)                                         when PM_Descr_cntr(i)=x"1" else   
+                        PM_Timestamp_latched(i)(31 downto 16)                                        when PM_Descr_cntr(i)=x"2" else 
+                        PM_Timestamp_latched(i)(47 downto 32)                                        when PM_Descr_cntr(i)=x"3" else 
+                        PM_Timestamp_latched(i)(63 downto 48)                                        when PM_Descr_cntr(i)=x"4" else 
+                        TrigWord_LW_Ch(i)                                                            when PM_Descr_cntr(i)=x"5" else 
+                        TrigWord_HW_Ch(i)                                                            when PM_Descr_cntr(i)=x"6" else 
+                        Trig_Dly_word_Ch(i)                                                          when PM_Descr_cntr(i)=x"7" else 
                         (
                          CtrlReg_Ch(i)(7 downto 0) & '0' & not Last_mode_was_PM (i) & Last_mode_was_PM(i) & std_logic_vector (to_unsigned(I,5 )) 
-                        )                                                when PM_Descr_cntr(i)=x"8" else 
+                        )                                                                            when PM_Descr_cntr(i)=x"8" else 
                         x"0000";
 
 PM_fifo_data(i) <= daq_dat_i_synched(i) when PM_Descr_runs(i) ='0' else  PM_Descr_data(i); 
@@ -641,6 +839,8 @@ end generate PM_Logic;
 -------------------------------------------Component Instantiation Section------------------------------------------------ 
  
 fifo_instances: for i in 1 to ch_num generate
+
+
   page1_fifo : generic_sync_fifo
     generic map(
       g_data_width             => 16, 
@@ -650,6 +850,7 @@ fifo_instances: for i in 1 to ch_num generate
       g_with_empty             => true,
       g_with_full              => true,
       g_with_almost_full       => true,
+      g_with_count             => true,  --todo
       g_almost_full_threshold  => 500   --for simulation
       --g_almost_full_threshold  => 10   --for simulation 
       
@@ -664,9 +865,11 @@ fifo_instances: for i in 1 to ch_num generate
       empty_o        => open,
       full_o         => fifo_full_pg1(i),
       almost_full_o  => almost_full_pg1(i),
-      count_o        => open
+      --count_o        => open
+      count_o        => page1_fifo_words(i) --todo
       );
-     
+
+      
   page2_fifo : generic_sync_fifo
     generic map(
       g_data_width             => 16, 
@@ -676,6 +879,7 @@ fifo_instances: for i in 1 to ch_num generate
       g_with_empty             => true,
       g_with_full              => true,
       g_with_almost_full       => true,
+      g_with_count             => true,  --todo
       g_almost_full_threshold  => 500   --for simulation
       --g_almost_full_threshold  => 10   --for simulation 
       
@@ -690,9 +894,11 @@ fifo_instances: for i in 1 to ch_num generate
       empty_o        => open,
       full_o         => fifo_full_pg2(i),
       almost_full_o  => almost_full_pg2(i),
-      count_o        => open
+      --count_o        => open
+      count_o        => page2_fifo_words(i) --todo
       );     
-
+    
+  
   postmortem_fifo : generic_sync_fifo
     generic map(
       g_data_width             => 16, 
@@ -702,6 +908,7 @@ fifo_instances: for i in 1 to ch_num generate
       g_with_empty             => true,
       g_with_full              => true,
       g_with_almost_full       => false,
+      g_with_count             => true,  --todo
       g_almost_full_threshold  => open)
     port map(
       rst_n_i        => nSClr_PM_FIFO(i),
@@ -711,7 +918,9 @@ fifo_instances: for i in 1 to ch_num generate
       q_o            => PmDat_Ch(i),
       rd_i           => PM_rd_i(i),
       empty_o        => fifo_empty_pm(i),
+      count_o        => pm_fifo_words(i), --todo
       full_o         => fifo_full_pm(i)
+      
       );
 end generate fifo_instances;
   
@@ -724,6 +933,7 @@ time_base:zeitbasis_daq
   port map (
       Res             => Reset,
       Clk             => clk_i,
+      Ena_every_1us   => open,
       Ena_every_10us  => Ena_every_10us,
       Ena_every_100us => Ena_every_100us,
       Ena_every_1ms   => Ena_every_1ms,
@@ -736,9 +946,8 @@ time_base:zeitbasis_daq
 IRQ_PULSES: for I in 1 to ch_num generate   
   -- IRQ Pulses when HiRes is finished or DAQ Fifo is full
   HiRes_IRQ_pulse(i)            <= '1' when HiRes_runs(i) ='0' and HiRes_runs_del(i)='1' else '0';
-  -- ToDo : for Improvement HiRes_IRQ_pulse can be delayed by 9 sysclks   
-  
-  
+  -- ToDo : for Timing optimization HiRes_IRQ_pulse can be delayed by 9 sysclks (the header length)   
+    
   daq_irq_pulse(i)              <=  fifo_full_pulse_pg1(i) or fifo_full_pulse_pg2(i);
   fifo_full_pulse_pg1(i)        <= (fifo_full_pg1(i)and not fifo_full_pg1_del(i));
   fifo_full_pulse_pg2(i)        <= (fifo_full_pg2(i)and not fifo_full_pg2_del(i));
@@ -748,21 +957,28 @@ IRQ_PULSES: for I in 1 to ch_num generate
   almost_full_pulse_pg2(i) <= almost_full_pg2(i) and not almost_full_pg2_del(i);
   
   -- Two Register to store pending Interrupts (daq_irq_reg and  HiRes_irq_reg are common for all channels)
+  -- Todo : Writing on Bit Position i should clear bit position, not read and clear all bits as before
  
-  PENDING_IRQ_REGs: process (clk_i, nReset)
+  PENDING_IRQ_REG_bits_1_to_16: process (clk_i, nReset)
+  
   begin
     if nReset = '0' then
       daq_irq_reg (i)   <=  '0';
       HiRes_irq_reg (i) <=  '0';
     elsif rising_edge(clk_i) then  
-      if daq_irq_reg_rd = '1' and daq_irq_pulse(i)='0' then      -- no irq should be lost
+    
+      -- Keep in mind: ch_num i is from 1..16, bit position is from 0..15
+      -- Writing 1 to a certain bit position clear the stored bit in daq_irq_reg or hires_irq_reg
+      -- If writing a 1 to a reg bit whilst daq_irq_pulse occurs at the same time, pulse wins !
+      if daq_irq_reg_wr = '1' and Data_from_SCUB_LA(i-1)='1'  and daq_irq_pulse(i)='0' then      -- no irq should be lost
          daq_irq_reg(i) <= '0';
       elsif daq_irq_pulse(i) ='1' then 
          daq_irq_reg(i) <= '1';
       else
          null;
       end if;
-      if HiRes_irq_reg_rd = '1' and HiRes_irq_pulse(i)='0' then  -- no irq should be lost
+      
+      if HiRes_irq_reg_wr = '1'and Data_from_SCUB_LA(i-1)='1' and HiRes_irq_pulse(i)='0' then  -- no irq should be lost
          HiRes_irq_reg(i) <= '0';
       elsif daq_irq_pulse(i) ='1' then 
          HiRes_irq_reg(i) <= '1';
@@ -770,7 +986,7 @@ IRQ_PULSES: for I in 1 to ch_num generate
          null;
       end if;
     end if;
-  end process PENDING_IRQ_REGs;
+  end process PENDING_IRQ_REG_bits_1_to_16;
 end generate IRQ_PULSES;  
 
 fill_unused_regbits: for I in (ch_num + 1) to 16 generate
@@ -795,6 +1011,8 @@ or_HiRes_srq_gen:     for i in 2 to (ch_num) generate
 -----------------------------------------Register Section-------------------------------------------------------------------
   
 -- For better readability CtrlReg_Ch bits are assigned to clear names  
+-- Todo Add bit 15..12 for SCU Slave Slots
+
 wr_reg_bits:For i in 1 to ch_num generate
   Ena_PM(i)               <= CtrlReg_Ch (i)(0);  -- to stop or run PostMortem Sampling with fixed Sample rate 100us
   Sample10us_Ch(i)        <= CtrlReg_Ch (i)(1);  -- DAQ SampleRate (set only one of this 3 bits) 
@@ -806,41 +1024,19 @@ wr_reg_bits:For i in 1 to ch_num generate
   ExtTrig_nEvTrig_HiRes(i)<= CtrlReg_Ch (i)(7);  -- Trigger Select for HiRes Mode (uses same Trigger sources as DAQ Channel)
 end generate;
 
- 
-wr_regs:For i in 1 to ch_num generate
-  reg_inst:daq_chan_wrregs 
-  generic map
-    (
-    CtrlReg_adr        => CtrlReg_adr_ch(i),
-    trig_lw_adr        => trig_lw_adr_ch(i),
-    trig_hw_adr        => trig_hw_adr_ch(i),
-    trig_dly_word_adr  => trig_dly_word_adr_ch(i)
-    )
-
-  port map
-    (
-    -- SCUB interface
-    Adr_from_SCUB_LA   => ADR_from_SCUB_LA,
-    Data_from_SCUB_LA  => Data_from_SCUB_LA,  
-    Ext_Adr_Val        => Ext_Adr_Val,
-    Ext_Wr_active 		 => Ext_Wr_active, 	
-    clk_i 						 => clk_i, 
-    nReset  				   => nreset, 
-    CtrlReg            => CtrlReg_Ch(i),   
-    TrigWord_LW        => TrigWord_LW_Ch(i),
-    TrigWord_HW        => TrigWord_HW_Ch(i),
-    Trig_dly_word      => Trig_Dly_word_Ch(i),
-    Dtack              => dtack_ch_wr(i)   
-    );
-end generate;
- 
 
  rd_logic:For i in 1 to ch_num generate
-  rd_logic_inst:daq_chan_rd_logic 
+  rd_logic_inst:daq_chan_reg_logic 
   generic map
     (
+      CtrlReg_adr        => CtrlReg_adr_ch(i),
+      trig_lw_adr        => trig_lw_adr_ch(i),
+      trig_hw_adr        => trig_hw_adr_ch(i),
+      trig_dly_word_adr  => trig_dly_word_adr_ch(i),
       PmDat_adr          => PMDat_adr_ch(i),
-      DaqDat_adr         => DAQDat_adr_ch(i)
+      DaqDat_adr         => DAQDat_adr_ch(i),
+      DAQ_FIFO_Words_adr => DAQ_FIFO_Words_adr_ch(i),
+      PM_FIFO_Words_adr  => PM_FIFO_Words_adr_ch(i)
     )
 
   port map
@@ -848,78 +1044,238 @@ end generate;
       Adr_from_SCUB_LA   => ADR_from_SCUB_LA,
       Data_from_SCUB_LA  => Data_from_SCUB_LA,  
       Ext_Adr_Val        => Ext_Adr_Val,
-      Ext_Rd_active 		 => Ext_Rd_active, 	
+      Ext_Rd_active 		 => Ext_Rd_active,
+      Ext_Wr_active 		 => Ext_Wr_active,
       clk_i 						 => clk_i, 
       nReset  				   => nreset,
       
       PmDat              => PmDat_Ch(i),
       DaqDat             => DaqDat_Ch(i),
       Ena_PM_rd          => Ena_PM_rd(i),
+      daq_fifo_word      => daq_fifo_words(i),
+      pm_fifo_word       => pm_fifo_words(i),
       
       Rd_Port            => Rd_Port_Ch(i),
       user_rd_active     => user_rd_active_ch(i),
+      
+      CtrlReg_o          => CtrlReg_Ch(i),   
+      TrigWord_LW_o      => TrigWord_LW_Ch(i),
+      TrigWord_HW_o      => TrigWord_HW_Ch(i),
+      Trig_dly_word_o    => Trig_Dly_word_Ch(i),      
+      
       rd_PMDat           => rd_PMDat(i),
       rd_DAQDat          => rd_DAQDat(i),
-      dtack              => dtack_ch_rd(i)
+      dtack              => dtack_ch(i)
     );
 end generate;
 
--- Generate consolidated DAQ macro Rd_Port by an large "or" of all channel Rd_Port signals
--- (not addressed channel Rd_Ports deliver 0x0 when not accessed)
 
-                      or_dtack_wr(1)         <= dtack_ch_wr(1);
-                      or_dtack_rd(1)         <= dtack_ch_rd(1);
-                      or_user_rd_active(1)   <= user_rd_active_ch(1);
-                      or_Rd_Port(1)          <= Rd_Port_Ch(1);
-big_or_gate_gen:      for i in 2 to (ch_num) generate
-                        or_dtack_wr(i)       <= dtack_ch_wr(2) or or_dtack_wr (i-1);
-                        or_dtack_rd(i)       <= dtack_ch_rd(2) or or_dtack_rd (i-1);
-                        or_user_rd_active(i) <= user_rd_active_ch(2) or or_user_rd_active (i-1);
-                        or_Rd_Port(i)        <= Rd_Port_Ch (i) or or_Rd_Port(i-1);
-                      end generate;
-                      dtack          <= or_dtack_rd (ch_num) or or_dtack_wr (ch_num) or dtack_irqs ;
-                      user_rd_active <= or_user_rd_active (ch_num) or user_rd_active_irqs ;
-                      Rd_Port        <= or_Rd_Port (ch_num) or Rd_Port_irqs ;
+-- -- Generate consolidated DAQ macro Rd_Port by an large "or" of all channel Rd_Port signals
+-- -- (not addressed channel Rd_Ports deliver 0x0 when not accessed)
 
--- Both Service request regs are not channel specific therefore placed separately here
+fill_unused_signals:for i in (ch_num + 1) to (16) generate
+                      dtack_ch(i)          <= '0';
+                      user_rd_active_ch(i) <= '0';
+                      Rd_Port_ch(i)        <= x"0000";
+                    end generate;
+
+dtack <=     dtack_ch(1) or dtack_ch(2)  or dtack_ch(3)  or dtack_ch(4)  or dtack_ch(5) or dtack_ch(6)  or dtack_ch(7)  or dtack_ch(8)  or
+             dtack_ch(9) or dtack_ch(10) or dtack_ch(11) or dtack_ch(12) or dtack_ch(13)or dtack_ch(14) or dtack_ch(15) or dtack_ch(16) or dtack_cn_regs ;
+             
+Rd_Port <=   Rd_Port_Ch(1) or Rd_Port_Ch(2)  or Rd_Port_Ch(3)  or Rd_Port_Ch(4)  or Rd_Port_Ch(5)  or Rd_Port_Ch(6)  or Rd_Port_Ch(7)  or Rd_Port_Ch(8)  or  
+             Rd_Port_Ch(9) or Rd_Port_Ch(10) or Rd_Port_Ch(11) or Rd_Port_Ch(12) or Rd_Port_Ch(13) or Rd_Port_Ch(14) or Rd_Port_Ch(15) or Rd_Port_Ch(16) or Rd_Port_common_regs;
+             
+user_rd_active <=  user_rd_active_ch(1)  or user_rd_active_ch(2)  or user_rd_active_ch(3)  or user_rd_active_ch(4)  or user_rd_active_ch(5)  or user_rd_active_ch(6)  or
+                   user_rd_active_ch(7)  or user_rd_active_ch(8)  or user_rd_active_ch(9)  or user_rd_active_ch(10) or user_rd_active_ch(11) or user_rd_active_ch(12) or
+                   user_rd_active_ch(13) or user_rd_active_ch(14) or user_rd_active_ch(15) or user_rd_active_ch(16) or user_rd_active_cn_regs ;
+ ----------------------------------------------------------------------------------------------
+
+-- All Registers which are not channel specific, are placed here
 adr_decoder: process (clk_i, nReset)
   begin
     if nReset = '0' then
       daq_irq_reg_rd           <= '0';
-      HiRes_irq_reg_rd         <= '0';   
+      HiRes_irq_reg_rd         <= '0';
+      daq_irq_reg_wr           <= '0';
+      HiRes_irq_reg_wr         <= '0'; 
+      timestamp_cntr_word1_wr  <= '0';
+      timestamp_cntr_word2_wr  <= '0';
+      timestamp_cntr_word3_wr  <= '0';
+      timestamp_cntr_word4_wr  <= '0';
+      timestamp_cntr_word1_rd  <= '0';
+      timestamp_cntr_word2_rd  <= '0';
+      timestamp_cntr_word3_rd  <= '0';
+      timestamp_cntr_word4_rd  <= '0';
+		timestamp_cntr_tag_lw_wr <= '0';
+		timestamp_cntr_tag_hw_wr <= '0';
+		timestamp_cntr_tag_lw_rd <= '0';
+		timestamp_cntr_tag_hw_rd <= '0';
     elsif rising_edge(clk_i) then
       daq_irq_reg_rd           <= '0';
       HiRes_irq_reg_rd         <= '0';
-
+      daq_irq_reg_wr           <= '0';
+      HiRes_irq_reg_wr         <= '0';
+      timestamp_cntr_word1_wr  <= '0';
+      timestamp_cntr_word2_wr  <= '0';
+      timestamp_cntr_word3_wr  <= '0';
+      timestamp_cntr_word4_wr  <= '0';
+      timestamp_cntr_word1_rd  <= '0';
+      timestamp_cntr_word2_rd  <= '0';
+      timestamp_cntr_word3_rd  <= '0';
+      timestamp_cntr_word4_rd  <= '0';
+		timestamp_cntr_tag_lw_wr <= '0';
+		timestamp_cntr_tag_hw_wr <= '0';
+		timestamp_cntr_tag_lw_rd <= '0';
+		timestamp_cntr_tag_hw_rd <= '0';
+		
       if Ext_Adr_Val = '1' then
         case unsigned(Adr_from_SCUB_LA) is
  
           when HiRes_irq_reg_adr =>  
             if Ext_Rd_active =  '1' then
               HiRes_irq_reg_rd <= '1';
+            elsif Ext_Wr_active ='1' then
+              HiRes_irq_reg_wr <= '1';
             end if;
             
           when daq_irq_reg_adr =>  
             if Ext_Rd_active =  '1' then
               daq_irq_reg_rd   <= '1';
+            elsif Ext_Wr_active ='1' then
+              daq_irq_reg_wr   <= '1';
+            end if;     
+            
+          when timestamp_cntr_word1_adr =>  
+            if Ext_Rd_active =  '1' then
+              timestamp_cntr_word1_rd   <= '1';
+            elsif Ext_Wr_active ='1' then
+              timestamp_cntr_word1_wr   <= '1';
+            end if;            
+
+          when timestamp_cntr_word2_adr =>  
+            if Ext_Rd_active =  '1' then
+              timestamp_cntr_word2_rd   <= '1';
+            elsif Ext_Wr_active ='1' then
+              timestamp_cntr_word2_wr   <= '1';
+            end if;        
+            
+          when timestamp_cntr_word3_adr =>  
+            if Ext_Rd_active =  '1' then
+              timestamp_cntr_word3_rd   <= '1';
+            elsif Ext_Wr_active ='1' then
+              timestamp_cntr_word3_wr   <= '1';
+            end if;    
+            
+          when timestamp_cntr_word4_adr =>  
+            if Ext_Rd_active =  '1' then
+              timestamp_cntr_word4_rd   <= '1';
+            elsif Ext_Wr_active ='1' then
+              timestamp_cntr_word4_wr   <= '1';
             end if;            
  
+           when timestamp_cntr_tag_lw_adr =>  
+            if Ext_Rd_active =  '1' then
+              timestamp_cntr_tag_lw_rd   <= '1';
+            elsif Ext_Wr_active ='1' then
+              timestamp_cntr_tag_lw_wr   <= '1';
+            end if;            
+ 
+          when timestamp_cntr_tag_hw_adr =>  
+            if Ext_Rd_active =  '1' then
+              timestamp_cntr_tag_hw_rd   <= '1';
+            elsif Ext_Wr_active ='1' then
+              timestamp_cntr_tag_hw_wr   <= '1';
+            end if;            
           when others =>
-            daq_irq_reg_rd     <= '0';
-            HiRes_irq_reg_rd   <= '0';
-            
-        end case;
+            daq_irq_reg_rd           <= '0';
+            HiRes_irq_reg_rd         <= '0';
+            daq_irq_reg_wr           <= '0';
+            HiRes_irq_reg_wr         <= '0';
+            timestamp_cntr_word1_wr  <= '0';
+            timestamp_cntr_word2_wr  <= '0';
+            timestamp_cntr_word3_wr  <= '0';
+            timestamp_cntr_word4_wr  <= '0';
+            timestamp_cntr_word1_rd  <= '0';
+            timestamp_cntr_word2_rd  <= '0';
+            timestamp_cntr_word3_rd  <= '0';
+            timestamp_cntr_word4_rd  <= '0';
+		      timestamp_cntr_tag_lw_wr <= '0';
+		      timestamp_cntr_tag_hw_wr <= '0';
+		      timestamp_cntr_tag_lw_rd <= '0';
+		      timestamp_cntr_tag_hw_rd <= '0';
+          end case;
       end if;
     end if;
     
   end process adr_decoder;
   
-Rd_Port_irqs     <= daq_irq_reg         when daq_irq_reg_rd    ='1'  else  
-                    HiRes_irq_reg       when HiRes_irq_reg_rd  ='1'  else          
-                    x"0000";
+-- wiring of common registers  
+  
+Rd_Port_common_regs<= daq_irq_reg                         when daq_irq_reg_rd          ='1'  else  
+                      HiRes_irq_reg                       when HiRes_irq_reg_rd        ='1'  else         
+                      timestamp_cntr_preset(15 downto  0) when timestamp_cntr_word1_rd ='1'  else
+                      timestamp_cntr_preset(31 downto 16) when timestamp_cntr_word2_rd ='1'  else   
+                      timestamp_cntr_preset(47 downto 32) when timestamp_cntr_word3_rd ='1'  else
+                      timestamp_cntr_preset(63 downto 48) when timestamp_cntr_word4_rd ='1'  else
+                      timestamp_cntr_tag   (15 downto  0) when timestamp_cntr_tag_lw_rd='1'  else
+                      timestamp_cntr_tag   (31 downto 16) when timestamp_cntr_tag_hw_rd='1'  else							 
+                      x"0000";
 
-user_rd_active_irqs  <=    HiRes_irq_reg_rd or daq_irq_reg_rd  ;                          
-dtack_irqs           <=    HiRes_irq_reg_rd or daq_irq_reg_rd   ; 
-                 
+user_rd_active_cn_regs  <=    HiRes_irq_reg_rd        or daq_irq_reg_rd          or timestamp_cntr_tag_lw_rd    or timestamp_cntr_tag_hw_rd    or
+                              timestamp_cntr_word1_rd or timestamp_cntr_word2_rd or timestamp_cntr_word3_rd     or timestamp_cntr_word4_rd; 
+										
+dtack_cn_regs           <=    HiRes_irq_reg_rd        or daq_irq_reg_rd          or timestamp_cntr_tag_lw_rd    or timestamp_cntr_tag_hw_rd    or
+                              timestamp_cntr_word1_rd or timestamp_cntr_word2_rd or timestamp_cntr_word3_rd     or timestamp_cntr_word4_rd     or
+                              HiRes_irq_reg_wr        or daq_irq_reg_wr          or timestamp_cntr_tag_lw_wr    or timestamp_cntr_tag_hw_wr    or
+										timestamp_cntr_word1_wr or timestamp_cntr_word2_wr or timestamp_cntr_word3_wr     or timestamp_cntr_word4_wr;
+
+										
+---------------------------------timestamp logic-----------------------------------------------------
+
+  timestamp_cntr_tag_matched <= '1' when Timing_Pattern_LA = timestamp_cntr_tag else '0';
+  -- Timing Trigger fired on received pattern rising edge
+  timestamp_cntr_tag_pulse   <= timestamp_cntr_tag_matched and Timing_Pattern_RCV and not Timing_Pattern_RCV_del;
+
+  
+timestamp : PROCESS (nReset, clk_i)
+BEGIN
+  IF nReset = '0' THEN
+      timestamp_cntr        <= (OTHERS => '0');
+      timestamp_cntr_preset <= (OTHERS => '0');
+		
+  ELSIF rising_edge(clk_i) THEN
+ 
+      --register stuff
+      if     timestamp_cntr_word1_wr  ='1' then
+        timestamp_cntr_preset(15 downto  0)  <= Data_from_SCUB_LA;
+      end if;
+      if     timestamp_cntr_word2_wr  ='1' then
+        timestamp_cntr_preset(31 downto  16) <= Data_from_SCUB_LA;
+      end if;
+      if     timestamp_cntr_word3_wr  ='1' then
+        timestamp_cntr_preset(47 downto  32) <= Data_from_SCUB_LA;
+      end if;
+      if     timestamp_cntr_word4_wr  ='1' then
+        timestamp_cntr_preset(63 downto  48) <= Data_from_SCUB_LA;
+      end if;
+      if     timestamp_cntr_tag_lw_wr ='1' then
+        timestamp_cntr_tag(15 downto  0)     <= Data_from_SCUB_LA;
+      end if;
+      if     timestamp_cntr_tag_hw_wr ='1' then
+        timestamp_cntr_tag(31 downto  16)    <= Data_from_SCUB_LA;
+      end if;
+		
+		-- timestamp counter
+
+      IF timestamp_cntr_tag_pulse = '1' THEN
+        timestamp_cntr    <= timestamp_cntr_preset;
+      ELSIF timestamp_cntr = x"1111_1111_1111_1111" then
+		  timestamp_cntr    <= x"0000_0000_0000_0000";
+		ELSE 
+        timestamp_cntr <= timestamp_cntr + x"0000_0000_0000_1000";
+      END IF;
+      
+  END IF;
+END PROCESS timestamp;
 
 end architecture daq_arch;
