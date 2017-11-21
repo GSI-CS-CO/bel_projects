@@ -8,6 +8,9 @@
 #include "node.h"
 #include "block.h"
 #include "minicommand.h"
+#include "dotstr.h"
+#include "strprintf.h"
+
 
 static void help(const char *program) {
   fprintf(stderr, "\nUsage: %s [OPTION] <etherbone-device> <command> [target node] [parameter] \n", program);
@@ -46,6 +49,98 @@ static void help(const char *program) {
   fprintf(stderr, "  -s                       [NOT YET IMPLEMENTED] Changes to the schedule are permanent\n");
   fprintf(stderr, "\n");
 }
+
+//this is horrible code, but harmless. Does the job for now.
+//TODO: replace this with something more sensible
+void showStatus(CarpeDM& cdm, bool verbose) {
+  std::string show;
+  uint8_t cpuQty = cdm.getCpuQty();
+  uint8_t thrQty = _THR_QTY_;
+
+  std::vector<std::string> vsCursor;
+  std::vector<std::string> vsCursorPattern;
+  std::vector<std::string> vsOrigin;
+  std::vector<std::string> vsOriginPattern;
+
+  //do this fast to get a most coherent picture, no output
+  for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
+    for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
+      vsCursor.push_back(cdm.getThrCursor(cpuIdx, thrIdx));
+    } 
+  }  
+
+  for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
+    for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
+      vsCursorPattern.push_back(cdm.getNodePattern(vsCursor[cpuIdx * thrQty + thrIdx]));
+      vsOrigin.push_back(cdm.getThrOrigin(cpuIdx, thrIdx));
+      vsOriginPattern.push_back(cdm.getNodePattern(vsOrigin[cpuIdx * thrQty + thrIdx]));
+    } 
+  }
+
+
+  std::string originPatternHead = (verbose ? "Origin Pat." : "");
+  std::string originHead = (verbose ? "Origin Node" : "");
+
+  const uint16_t width = 193;
+
+  printf("\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
+  printf("\u2502 %3s \u2502 %3s \u2502 %7s \u2502 %40s \u2502 %40s \u2502 %40s \u2502 %40s \u2502\n", "Cpu", "Thr", "Running", "Pattern", "Node", originPatternHead.c_str(), originHead.c_str());
+  printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
+  for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
+    
+    for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
+      if (verbose || ((cdm.getThrRun(cpuIdx) >> thrIdx) & 1)) {
+
+      std::string running = (((cdm.getThrRun(cpuIdx) >> thrIdx) & 1) ? std::string(KGRN) + std::string("yes") : std::string(KRED) + std::string(" no")) + std::string(KNRM);
+      std::string originPattern = (verbose ? vsOriginPattern[cpuIdx * thrQty + thrIdx] : "");
+      std::string origin        = (verbose ? vsOrigin[cpuIdx * thrQty + thrIdx] : "");
+
+      printf("\u2502 %3u \u2502 %3u \u2502     %3s \u2502 %40s \u2502 %40s \u2502 %40s \u2502 %40s \u2502\n", cpuIdx, thrIdx, running.c_str(), 
+        vsCursorPattern[cpuIdx * thrQty + thrIdx].c_str(),  
+        vsCursor[cpuIdx * thrQty + thrIdx].c_str(),
+        originPattern.c_str(),  
+        origin.c_str()
+        );
+      }
+    } 
+  }
+
+  printf("\u2514"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2518\n");
+
+
+/*
+
+  for(cpuIdx=0;cpuIdx < p->cpuQty;cpuIdx++) {
+    if((srcCpus >> cpuIdx) & 0x1) {
+      show += format("\u2552"); for(i=0;i<79;i++) show += format("\u2550"); show += format("\u2555\n");
+      show += format("\u2502 %sCore #%02u%s                                                                      \u2502\n", KCYN, cpuIdx, KNRM);
+      format("\u251C"); for(i=0;i<24;i++) format("\u2500"); format("\u252C"); for(i=0;i<54;i++) format("\u2500"); format("\u2524\n");
+      format("\u2502 Status: %02x ErrCnt: %3u \u2502   MsgCnt: %9u       TPrep: %13llu ns    \u2502\n", \
+       (uint8_t)ftmStatus, (uint8_t)(ftmStatus >> 8), ftmMsgs, ftmTPrep);
+      format("\u251C"); for(i=0;i<24;i++) format("\u2500"); format("\u253C"); for(i=0;i<54;i++) format("\u2500"); format("\u2524\n");
+      format("\u2502 Shared Mem: 0x%08x \u2502", mySharedMem + cpuIdx*CPU_SHARED_SIZE);
+      if(p->pCores[cpuIdx].actOffs < p->pCores[cpuIdx].inaOffs) format("   Act Page: A 0x%08x  Inact Page: B 0x%08x", p->pCores[cpuIdx].actOffs, p->pCores[cpuIdx].inaOffs);
+      else                      format("   Act Page: B 0x%08x  Inact Page: A 0x%08x", p->pCores[cpuIdx].actOffs, p->pCores[cpuIdx].inaOffs);
+      format("   \u2502\n");
+      format("\u251C"); for(i=0;i<24;i++) format("\u2500"); format("\u2534"); for(i=0;i<54;i++) format("\u2500"); format("\u2524\n");
+      format("\u2502       ");
+
+      if(ftmStatus & STAT_RUNNING)    format("   %sRUNNING%s   ", KGRN, KNRM);  else format("   %sSTOPPED%s   ", KRED, KNRM);
+      if(ftmStatus & STAT_IDLE)       format("     %sIDLE%s    ", KYEL, KNRM);  else format("     %sBUSY%s    ", KGRN, KNRM);
+      if(ftmStatus & STAT_STOP_REQ)   format("   STOP_REQ  ");  else format("      -      ");
+      if(ftmStatus & STAT_ERROR)      format("     %sERROR%s   ", KRED, KNRM);  else format("     %sOK%s      ", KGRN, KNRM);
+      if(ftmStatus & STAT_WAIT)       format("  WAIT_COND  ");  else format("      -      ");
+      format("       \u2502\n");
+      format("\u2514"); for(i=0;i<79;i++) format("\u2500"); format("\u2518\n");
+    }
+  }
+  printf("%s", (const char*)strBuff);
+  */
+}
+
+
+
+
 
 int main(int argc, char* argv[]) {
 
@@ -165,7 +260,7 @@ int main(int argc, char* argv[]) {
     return -30;
   }
 
-
+  namespace dnt = DotStr::Node::TypeVal;
 
   uint32_t globalStatus = cdm.getStatus(0), status = cdm.getStatus(cpuIdx);
 
@@ -221,11 +316,15 @@ int main(int argc, char* argv[]) {
 
     std::string cmp(typeName);
 
-    if      (cmp == "noop")  {
+    if      (cmp == dnt::sCmdNoop)  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
     }
-    else if (cmp == "flow")  {
+    else if (cmp == "status")  {
+      showStatus(cdm, verbose);
+      return 0;
+    }  
+    else if (cmp == dnt::sCmdFlow)  {
       if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
       if ((para != NULL) && ((para == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( para))) { 
         uint32_t adr; 
@@ -247,7 +346,7 @@ int main(int argc, char* argv[]) {
       if (para == NULL) {std::cerr << program << ": Wait time in ns is missing" << std::endl; return -1; }
         mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, strtoll(para, NULL, 0), permanent, true ); 
     }
-    else if (cmp == "flush") {
+    else if (cmp == dnt::sCmdFlush) {
         if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         if (para == NULL) {std::cerr << program << ": Queues to be flushed are missing, require 3 bit as hex (IL HI LO 0x0 - 0x7)" << std::endl; return -1; }  
         uint32_t queuePrio = strtol(para, NULL, 0) & 0x7;
@@ -259,7 +358,7 @@ int main(int argc, char* argv[]) {
         cdm.dumpQueue(cpuIdx, targetName, cmdPrio);
         return 0;
     } 
-    else if (cmp == "origin")  {
+    else if (cmp == dnt::sCmdOrigin)  {
       if( targetName != NULL) {
         if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
         cdm.setThrOrigin(cpuIdx, thrIdx, targetName);
@@ -271,7 +370,7 @@ int main(int argc, char* argv[]) {
       std::cout << "Currently at " << cdm.getThrCursor(cpuIdx, thrIdx) << std::endl;
       return 0;
     }
-    else if (cmp == "start")  {
+    else if (cmp == dnt::sCmdStart)  {
       //check if a valid origin was assigned before executing
       std::string origin;
       if( targetName != NULL) {
@@ -279,28 +378,30 @@ int main(int argc, char* argv[]) {
         for(int i=0; i < _THR_QTY_; i++) {
           if((bits >> i) & 1) {
             origin = cdm.getThrOrigin(cpuIdx, i);
-            if ((origin == "Idle") || (origin == "Unknown")) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
+            if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
          } 
         }
         cdm.setThrStart(cpuIdx, bits & ((1<<_THR_QTY_)-1) );
       } else {
         origin = cdm.getThrOrigin(cpuIdx, thrIdx);
-        if ((origin == "Idle") || (origin == "Unknown")) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
+        if ((origin == DotStr::Node::Special::sIdle) || (origin == DotStr::Misc::sUndefined)) {std::cerr << program << ": Cannot start, origin of CPU " << cpuIdx << "'s thread " << thrIdx << " is not a valid node" << std::endl; return -1;}
         cdm.startThr(cpuIdx, thrIdx);
       }
       return 0;
     }
-    else if (cmp == "stop")  {
-      std::cerr << program << ": Stop currently only working from cmd fot file, sorry " << std::endl; return -1;
-      /*
-      if( targetName != NULL) { 
-        uint32_t bits = strtol(targetName, NULL, 0);
-        cdm.setThrStop(cpuIdx, bits & ((1<<_THR_QTY_)-1) ); 
-      } else { cdm.stopThr(cpuIdx, thrIdx); }
-      return 0;
-      */
+    else if (cmp == dnt::sCmdStop)  {
+      if(!(cdm.isInHashDict( targetName))) {std::cerr << program << ": Target node '" << targetName << "'' was not found on DM" << std::endl; return -1; }
+      
+        uint32_t adr; 
+        try {
+          adr = cdm.getNodeAdr(DotStr::Node::Special::sIdle , DOWNLOAD, INTERNAL);
+        } catch (std::runtime_error const& err) {
+          std::cerr << program << ": Could not obtain address of destination node " << para << ". Cause: " << err.what() << std::endl;
+        } 
+        mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, permanent );
+
     }
-    else if (cmp == "abort")  {
+    else if (cmp == dnt::sCmdAbort)  {
       if( targetName != NULL) {
         uint32_t bits = strtol(targetName, NULL, 0);
        cdm.setThrAbort(cpuIdx, bits & ((1<<_THR_QTY_)-1) );
