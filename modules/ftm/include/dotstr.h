@@ -179,6 +179,8 @@ namespace DotStr {
         extern const std::string sLookPaintNone;
         extern const std::string sLookPaint0;
         extern const std::string sLookPaint1;
+        extern const std::string sLookPatEntry;
+        extern const std::string sLookPatExit;
       }  
       namespace Block {
         extern const std::string sLookDef ;
