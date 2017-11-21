@@ -120,7 +120,11 @@ using namespace DotStr::Misc;
       if ((cmp == dnt::sBlockFixed) || (cmp == dnt::sBlockAlign) || (cmp == dnt::sBlock) ) {
         boost::tie(out_begin, out_end) = out_edges(v,g);
         //check if it already has queue links / Destination List
-        bool hasIl=false, hasHi=false, hasLo=false, hasMultiDst=false, hasDstLst=false;
+        bool  genIl       = s2u<bool>(g[v].qIl),  hasIl = false, 
+              genHi       = s2u<bool>(g[v].qHi),  hasHi = false,
+              genLo       = s2u<bool>(g[v].qLo),  hasLo = false,
+              hasMultiDst = false,            hasDstLst = false;
+
         for (out_cur = out_begin; out_cur != out_end; ++out_cur)
         { 
           
@@ -130,11 +134,13 @@ using namespace DotStr::Misc;
           if (g[*out_cur].type == det::sAltDst)         hasMultiDst = true;
           if (g[*out_cur].type == det::sDstList)        hasDstLst   = true;
         }
+
+        
         //create requested Queues / Destination List
-        if (g[v].qIl != "0" && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
-        if (g[v].qHi != "0" && !hasHi ) { generateQmeta(g, v, PRIO_HI); }
-        if (g[v].qLo != "0" && !hasLo ) { generateQmeta(g, v, PRIO_LO); }
-        if((hasMultiDst | ((g[v].qIl != "0") | hasIl) | ((g[v].qHi != "0") | hasHi) |  ((g[v].qLo != "0") | hasLo)) & !hasDstLst)    { generateDstLst(g, v);         }
+        if (genIl && !hasIl ) { generateQmeta(g, v, PRIO_IL); }
+        if (genHi && !hasHi ) { generateQmeta(g, v, PRIO_HI); }
+        if (genLo && !hasLo ) { generateQmeta(g, v, PRIO_LO); }
+        if( (hasMultiDst | genIl | hasIl | genHi | hasHi | genLo | hasLo) & !hasDstLst)    { generateDstLst(g, v);         }
 
       }
     }  
