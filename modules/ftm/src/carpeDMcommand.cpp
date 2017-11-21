@@ -112,10 +112,10 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     }
 
     // Commands targeted at cmd queue of individual blocks, using miniCommand (mc) class
-         if (g[v].type == dnt::sCmdNoop)    { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
+         if (g[v].type == dnt::sCmdNoop)    { uint16_t cmdQty = s2u<uint16_t>(g[v].qty);
                                               mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
                                             }
-    else if (g[v].type == dnt::sCmdFlow)    { uint16_t cmdQty = s2u<uint8_t>(g[v].qty);
+    else if (g[v].type == dnt::sCmdFlow)    { uint16_t cmdQty = s2u<uint16_t>(g[v].qty);
                                               sLog << " Flowing from <" << target << "> to <" << destination << ">" << std::endl;
                                               uint32_t adr = LM32_NULL_PTR;
                                               try { adr = getNodeAdr(destination, DOWNLOAD, INTERNAL); } catch (std::runtime_error const& err) {
@@ -124,7 +124,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
                                               mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, false );
                                             }
-    else if (g[v].type == dnt::sCmdFlush)   { mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, (bool)s2u<uint8_t>(g[v].qIl), (bool)s2u<uint8_t>(g[v].qHi), (bool)s2u<uint8_t>(g[v].qLo));}
+    else if (g[v].type == dnt::sCmdFlush)   { mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, s2u<bool>(g[v].qIl), s2u<bool>(g[v].qHi), s2u<bool>(g[v].qLo));}
     else if (g[v].type == dnt::sCmdWait)    { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);
                                               mc = (mc_ptr) new MiniWait(cmdTvalid, cmdPrio, cmdTwait, false, false );
                                             }
