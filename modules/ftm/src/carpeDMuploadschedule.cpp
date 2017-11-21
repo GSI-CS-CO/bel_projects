@@ -44,8 +44,6 @@ using namespace DotStr::Misc;
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       //generate address range for all nodes staged for upload
       if(it.staged) {
-       //std::cout << std::hex << "Adding Node @ 0x" << atUp.adr2extAdr(it.cpu, it.adr) << std::endl;
-
        for (adr = atUp.adr2extAdr(it.cpu, it.adr); adr < atUp.adr2extAdr(it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr); 
      }
     }    
@@ -58,31 +56,19 @@ using namespace DotStr::Misc;
     
     size_t bmpSum = 0;
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) { bmpSum += atUp.getMemories()[i].bmpSize; }
-    //FIXME Careful, if bmpSum is not aligned this can kill!
-    // std::cout << "mem reserved " << bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE << " equals " << (bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE) / _MEM_BLOCK_SIZE << " nodes, " << atUp.getMemories().size() << " memory" << std::endl; 
     ret.reserve( bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE); // preallocate memory for BMPs and all Nodes
     
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
       auto& tmpBmp = atUp.getMemories()[i].getBmp();
-      //vHexDump("bmpUpb4", tmpBmp);
-      //atUp.getMemories()[i].syncBmpToPool(); //sync Bmp to Pool
-      //vHexDump("bmpUpafter", tmpBmp);
-      
-      //std::cout << "test bmp size " << tmpBmp.size() << " iterator diff " << tmpBmp.end() - tmpBmp.begin()  << " aligned size " << atUp.getMemories()[i].bmpSize << " bits " << atUp.getMemories()[i].bmpBits << std::endl;
-      
       ret.insert( ret.end(), tmpBmp.begin(), tmpBmp.end() ); //add Bmp to to return vector  
     }
-    //std::cout << "passed bmp" << std::endl;
     //add all node buffers to return vector
-    //atUp.debug();
-
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       if(it.staged) {
-        //hexDump(gUp[it.v].name.c_str(), (const uint8_t*)it.b, _MEM_BLOCK_SIZE); 
-        ret.insert( ret.end(), it.b, it.b + _MEM_BLOCK_SIZE );
+           ret.insert( ret.end(), it.b, it.b + _MEM_BLOCK_SIZE );
       } // add all nodes staged for upload
     }
-    //std::cout << "passed nodes" << std::endl;
+   
     return ret;
   }
 
@@ -150,7 +136,6 @@ using namespace DotStr::Misc;
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     Graph& g = gUp;
     AllocTable& at = atUp;
-    //std::cout << g[v].name << "'s alt destination list changed" << std::endl;
     // the changed edge leads to Alternative Dst, find and stage the block's dstList 
     boost::tie(out_begin, out_end) = out_edges(v,g);  
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
@@ -190,14 +175,11 @@ using namespace DotStr::Misc;
     Graph& g = gUp;
 
     // add all of nod 'victim's edges to node 'borg'. Resistance is futile.
-    //sLog << g[borg].name << " @ " << borg << " consumes " << g[victim].name << " @ " << victim << std::endl;
-
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(victim, g);
     
     // out edges
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-      //sLog << " moving out edge " << std::endl;
       boost::add_edge(borg, target(*out_cur,g), (myEdge){boost::get(&myEdge::type, g, *out_cur)}, g);
       boost::remove_edge(*out_cur, g);
       updateStaging(borg, *out_cur); 
@@ -207,7 +189,6 @@ using namespace DotStr::Misc;
     Graph::in_edge_iterator in_begin, in_end, in_cur;
     boost::tie(in_begin, in_end) = in_edges(victim, g);
     for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
-      //sLog << " moving in edge " << std::endl;
       boost::add_edge(source(*in_cur,g), borg, (myEdge){boost::get(&myEdge::type, g, *in_cur)}, g);
       boost::remove_edge(*in_cur, g);
        
@@ -232,10 +213,10 @@ using namespace DotStr::Misc;
       cpu  = s2u<uint8_t>(gUp[v].cpu);
       
       //add flags for beam process and pattern entry and exit points
-      flags = ((s2u<bool>(gUp[v].bpEntry)) << NFLG_BP_ENTRY_LM32_POS) 
-            | ((s2u<bool>(gUp[v].bpExit)) << NFLG_BP_EXIT_LM32_POS)
+      flags = ((s2u<bool>(gUp[v].bpEntry))  << NFLG_BP_ENTRY_LM32_POS) 
+            | ((s2u<bool>(gUp[v].bpExit))   << NFLG_BP_EXIT_LM32_POS)
             | ((s2u<bool>(gUp[v].patEntry)) << NFLG_PAT_ENTRY_LM32_POS)
-            | ((s2u<bool>(gUp[v].patExit)) << NFLG_PAT_EXIT_LM32_POS);
+            | ((s2u<bool>(gUp[v].patExit))  << NFLG_PAT_EXIT_LM32_POS);
 
       amI it = atUp.lookupHash(hash); //if we already have a download entry, keep allocation, but update vertex index
       if (!(atUp.isOk(it))) {
@@ -349,10 +330,8 @@ using namespace DotStr::Misc;
         if (gTmp[w].hash == gUp[v].hash) { 
           //Check how the duplicate is defined. Implicit (by edge) is okay, explicit is not. necessary to avoid unintentional merge of graph nodes of the same name
           //Check the type: if it's undefined, node definition was implicit
-          
           if (gTmp[v].type != sUndefined) throw std::runtime_error( "Node " + gTmp[v].name + " already exists. You can only use the name again in an edge descriptor (implicit definition)");
           duplicates[v] = w;
-          //sLog << gTmp[w].name << " gTmp " << w << " <-> " << gUp[v].name << " gUp " << v << std::endl; 
         } 
       }  
     }
@@ -408,7 +387,7 @@ using namespace DotStr::Misc;
     vertex_map_t vertexMap;
     vertex_set_t toDelete;
     
-    //probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
+    //TODO probably a more elegant solution out there, but I don't have the time for trial and error on boost property maps.
     //create 1:1 vertex map for all vertices in gUp initially marked for deletion. Also add all their meta children to leave no loose ends 
     
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) vertexMap[v] = v;  
@@ -431,11 +410,6 @@ using namespace DotStr::Misc;
       }
       if (!found) { sLog <<  "Skipping unknown Node " << gTmp[w].name << std::endl;   } 
     }
-
-    /*
-    sLog <<  "Map b4 " << std::endl;
-    for (auto it : vertexMap) sLog <<  it.first << " -> " << it.second << std::endl;
-    */
 
     //check staging, vertices might have lost children
     for(auto& vd : toDelete ) {
@@ -460,7 +434,7 @@ using namespace DotStr::Misc;
       boost::remove_vertex(vertexMap[vd], gUp); 
       
       //FIXME this removal scheme is crap ! Graph vertices and edges ought to be kept in setS or listS so iterators stay valid on removal of other vertices
-      //However, the cure is worse than the disease, graphviz_write, copy_graph all fuck around if we do, as they require vertex descriptors wich setS and listS don't provide ... leave for now
+      //However, the cure is worse than the disease. graphviz_write, copy_graph all fuck around if we do, as they require vertex descriptors wich setS and listS don't provide ... leave for now
 
        
       //remove_vertex() changes the vertex vector, as it must stay contignuous. descriptors higher than he removed one therefore need to be decremented by 1
@@ -468,30 +442,25 @@ using namespace DotStr::Misc;
     }
 
     //now we have a problem: all vertex descriptors in the alloctable just got invalidated by the removal ... repair them
-    
-    std::vector<amI> itAtVec; //because elements change order during loop, we need to store iterators first
+    std::vector<amI> itAtVec; //because elements change order during repair loop, we need to store iterators first
     for( amI it = atUp.getTable().begin(); it != atUp.getTable().end(); it++) { itAtVec.push_back(it); }
 
 
 
     for( auto itIt : itAtVec ) {  //now we can safely iterate over the alloctable iterators
-      //sLog << "Changing " << std::hex << "0x" << it->hash << " index from " << it->v; 
       atUp.modV(itIt, vertexMap[itIt->v]);
-      //sLog << " to " << it->v << std::endl; ; 
     }
-    //atUp.debug();
     
-
     prepareUpload();
     atUp.updateBmps();  
     
   }
 
   void CarpeDM::nullify() {
-    gUp.clear(); //Necessary?
+    gUp.clear(); 
     atUp.clear();
     atUp.clearMemories();
-    gDown.clear(); //Necessary?
+    gDown.clear(); 
     atDown.clear();
     atDown.clearMemories();
     gt.clear();
@@ -538,13 +507,11 @@ using namespace DotStr::Misc;
       BOOST_FOREACH( vertex_t v, vertices(gTmpKeep) ) {
         if ((gTmpKeep[v].name == gUp[w].name)) {
           found = true;
-          //sLog <<  "Keeping Node " << gUp[w].name << std::endl;
           break;
 
         }
       }
       if (!found) { boost::add_vertex(myVertex(gUp[w]), gTmpRemove);
-        //sLog <<  "Deleting Node " << gUp[w].name << std::endl;  
       }
     }
     

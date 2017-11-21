@@ -215,16 +215,6 @@ bool CarpeDM::connect(const std::string& en) {
     uint64_t id;
     uint8_t fid;
     boost::dynamic_properties dp = createParser(g); //create current property map
-    /*
-      //test
-    auto test0 = boost::get(&myVertex::cmdDest,   g);
-    auto test1 = boost::get(dnp::TMsg::SubId::sGid, dp, v);
-
-    std::cout << "Type property: " << boost::typeindex::type_id_with_cvr<decltype(test0)>().pretty_name() << std::endl;
-    std::cout << "Type property map: " << boost::typeindex::type_id_with_cvr<decltype(test1)>().pretty_name() << std::endl;
-    std::cout << "Value property map: " << test1 << std::endl;
-    */
-
     
     if (g[v].id == DotStr::Misc::sUndefined64) { // from SubID fields to ID
       //std::cout << "Input Node  " << g[v].name;

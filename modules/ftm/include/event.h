@@ -8,7 +8,6 @@
 
 
 
-enum prio {NONE, LOW, HIGH, INTERLOCK};
 
 // An event to be sent over the timing network or bus. adds its own tOffs to threads current block time to obtain deadline
 class Event : public Node {
@@ -24,9 +23,9 @@ public:
   virtual ~Event()  {};
 
   
-  virtual void show(void)                               const = 0;
-  virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
-  virtual void accept(const VisitorVertexWriter& v)     const = 0;
+  virtual void show(void)                                 const = 0;
+  virtual void show(uint32_t cnt, const char* sPrefix)    const = 0;
+  virtual void accept(const VisitorVertexWriter& v)       const = 0;
   virtual void accept(const VisitorUploadCrawler& v)      const = 0;
   virtual void accept(const VisitorDownloadCrawler& v)    const = 0;
   const uint64_t getTOffs() const {return this->tOffs;}

@@ -148,7 +148,11 @@ public:
   void setBeamproc (const std::string& sNode, const std::string& sNew) { setBeamproc(sNode, sNew, false, false); }
   
   template <typename Tag, std::string GroupMeta::*group>
-  vStrC getGroups(const std::string& sNode) {vStrC res; auto x  = a.get<Tag>().equal_range(sNode); for (auto it = x.first; it != x.second; ++it) res.push_back(*it.*group); return res;}
+  vStrC getGroups(const std::string& sNode) {
+    vStrC res; auto x  = a.get<Tag>().equal_range(sNode);
+    for (auto it = x.first; it != x.second; ++it) {res.push_back(*it.*group); }
+    return res;
+  }
 
   template <typename Tag, bool GroupMeta::*point>
   vStrC getGroupNodes(const std::string& s) {
