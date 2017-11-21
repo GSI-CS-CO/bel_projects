@@ -174,21 +174,26 @@ namespace DotStr {
         const std::string sLookPaintNone = "fillcolor = \"white\"";
         const std::string sLookPaint0    = "fillcolor = \"green\"";
         const std::string sLookPaint1    = "fillcolor = \"cyan\"";
+        const std::string sLookPatEntry  = "color = \"orange\"";
+        const std::string sLookPatExit   = "color = \"orange\"";
       }
 
       namespace Block {
-        const std::string sLookDef       = "shape     = \"rectangle\", color  = \"black\"";
+        const std::string sLookDef       = "shape     = \"rectangle\"";
         const std::string sLookFix       = sLookDef;
-        const std::string sLookAlign     = "shape     = \"rectangle\", color  = \"blue\"";
+        const std::string sLookAlign     = sLookDef;
+        
 
       }
       namespace TMsg {
-        const std::string sLookDef       = "shape     = \"oval\", color       = \"black\"";
+        const std::string sLookDef       = "shape     = \"oval\"";
+        
       }  
       namespace Cmd {
-        const std::string sLookDef       = "shape     = \"hexagon\", color    = \"blue\"";
+        const std::string sLookDef       = "shape     = \"hexagon\"";
 
-      }
+     
+ }
       namespace Meta {
         const std::string sLookDef       = "shape     = \"rectangle\", color  = \"gray\", style  = \"dashed\"";
       }

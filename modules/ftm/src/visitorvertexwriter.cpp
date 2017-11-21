@@ -38,16 +38,16 @@ void VisitorVertexWriter::pushSingle(const std::string& p) const  {
 
 void VisitorVertexWriter::pushMembershipInfo(const Node& el) const {
 
-  if (el.getPattern() != sUndefined) {
+  //if (el.getPattern() != sUndefined) {
     pushPair(dnp::Base::sPatName, el.getPattern());
     pushPair(dnp::Base::sPatEntry, (int)el.isPatEntry(), FORMAT_BOOL);
     pushPair(dnp::Base::sPatExit, (int)el.isPatExit(), FORMAT_BOOL);
-  }  
-  if (el.getBeamproc() != sUndefined) {
+  //}  
+  //if (el.getBeamproc() != sUndefined) {
     pushPair(dnp::Base::sBpName, el.getBeamproc());
     pushPair(dnp::Base::sBpEntry, (int)el.isBpEntry(), FORMAT_BOOL);
     pushPair(dnp::Base::sBpExit, (int)el.isBpExit(), FORMAT_BOOL);
-  }
+  //}
 }  
 
 void VisitorVertexWriter::pushNodeInfo(const Node& el) const {
@@ -68,10 +68,17 @@ void VisitorVertexWriter::pushCommandInfo(const Command& el) const {
   pushPair(dnp::Cmd::sTimeValid, el.getTValid(), FORMAT_DEC);
 }
 
-void VisitorVertexWriter::pushPaintedInfo(const Node& el) const {
+void VisitorVertexWriter::pushPaintedEyecandy(const Node& el) const {
   pushSingle((el.isPainted() ? ec::Node::Base::sLookPaint0 : ec::Node::Base::sLookPaintNone));
 }
 
+void VisitorVertexWriter::pushStartEyecandy(const Node& el) const {
+  if(el.isPatEntry()) pushSingle(ec::Node::Base::sLookPatEntry);
+}
+
+void VisitorVertexWriter::pushStopEyecandy(const Node& el) const {
+  if(el.isPatExit()) pushSingle(ec::Node::Base::sLookPatExit);
+}
 
 
 
@@ -81,7 +88,8 @@ void VisitorVertexWriter::visit(const Block& el) const  {
   pushPair(dnp::Block::sTimePeriod, el.getTPeriod(), FORMAT_DEC);
   pushMembershipInfo((Node&)el); 
   pushSingle(ec::Node::Block::sLookDef);
-  pushPaintedInfo((Node&)el);
+  pushPaintedEyecandy((Node&)el);
+  pushStopEyecandy((Node&)el);
   pushEnd();
 }
 
@@ -94,16 +102,14 @@ void VisitorVertexWriter::visit(const TimingMsg& el) const {
   uint64_t id = el.getId();
   uint8_t fid = ((id >> ID_FID_POS) & ID_FID_MSK); 
   if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) within ID field of Node '" + el.getName() + "'");
+  //ouput ID subfields
   vPf& vF = idFormats[fid];
-  //std::cout << "Output Node " << el.getName();
-  for(auto& it : vF) { pushPair(it.s, ((id >> it.pos) &  ((1 << it.bits ) - 1) ), FORMAT_DEC); 
-    //std::cout << ", " << it.s << " = " << std::dec << ((id >> it.pos) &  ((1 << it.bits ) - 1) ); 
-  }
-  //std::cout << " ID = 0x" << std::hex << id << std::endl;
+  for(auto& it : vF) { pushPair(it.s, ((id >> it.pos) &  ((1 << it.bits ) - 1) ), FORMAT_DEC); }
   pushPair(dnp::TMsg::sPar, el.getPar(), FORMAT_HEX);
   pushPair(dnp::TMsg::sTef, el.getTef(), FORMAT_DEC);
   pushSingle(ec::Node::TMsg::sLookDef);
-  pushPaintedInfo((Node&)el);
+  pushPaintedEyecandy((Node&)el);
+  pushStartEyecandy((Node&)el);
   pushEnd();
 }
 
@@ -115,7 +121,8 @@ void VisitorVertexWriter::visit(const Noop& el) const {
   pushPair(dnp::Cmd::sQty, el.getQty(), FORMAT_DEC);
   pushSingle(ec::Node::Cmd::sLookDef);
   //pushSingle(ec::Node::Cmd::sLookNoop);
-  pushPaintedInfo((Node&)el);
+  pushPaintedEyecandy((Node&)el);
+  pushStartEyecandy((Node&)el);
   pushEnd();
 }
 
@@ -127,7 +134,8 @@ void VisitorVertexWriter::visit(const Flow& el) const  {
   pushPair(dnp::Cmd::sQty, el.getQty(), FORMAT_DEC);
   pushSingle(ec::Node::Cmd::sLookDef);
   //pushSingle(ec::Node::Cmd::sLookFlow);
-  pushPaintedInfo((Node&)el);
+  pushPaintedEyecandy((Node&)el);
+  pushStartEyecandy((Node&)el);
   pushEnd();
 }
 
@@ -139,7 +147,8 @@ void VisitorVertexWriter::visit(const Flush& el) const {
   pushPair(dnp::Cmd::sPrio,  el.getPrio(), FORMAT_DEC);
   pushSingle(ec::Node::Cmd::sLookDef);
   //pushSingle(ec::Node::Cmd::sLookFlush);
-  pushPaintedInfo((Node&)el);
+  pushPaintedEyecandy((Node&)el);
+  pushStartEyecandy((Node&)el);
   pushEnd();
 }
 
@@ -150,7 +159,8 @@ void VisitorVertexWriter::visit(const Wait& el) const {
   pushCommandInfo((Command&) el);
   pushSingle(ec::Node::Cmd::sLookDef);
   //pushSingle(ec::Node::Cmd::sLookWait);
-  pushPaintedInfo((Node&)el);
+  pushPaintedEyecandy((Node&)el);
+  pushStartEyecandy((Node&)el);
   pushEnd();
 }
 

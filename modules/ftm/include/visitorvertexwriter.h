@@ -38,7 +38,9 @@ class DestList;
     void pushNodeInfo(const Node& el) const;
     void pushEventInfo(const Event& el) const;
     void pushCommandInfo(const Command& el) const;
-    void pushPaintedInfo(const Node& el) const;
+    void pushPaintedEyecandy(const Node& el) const;
+    void pushStartEyecandy(const Node& el) const; 
+    void pushStopEyecandy(const Node& el) const;
     void pushMembershipInfo(const Node& el) const;
   public:
     VisitorVertexWriter(std::ostream& out) : out(out) {};
