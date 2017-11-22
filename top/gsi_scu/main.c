@@ -55,6 +55,7 @@
 #define INTERVAL_84MS   84000000ULL
 #define INTERVAL_10MS   10000000ULL
 #define INTERVAL_10US   10000ULL
+#define INTERVAL_5MS    5000000ULL
 #define ALWAYS          0ULL
 
 #define MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
@@ -696,6 +697,21 @@ void ecaHandler()
   uint8_t dev_sio_armed = 0;
   uint8_t slot;
 
+  /* check if there are armed fgs */
+  for (i = 0; i < MAX_FG_CHANNELS; i++) {
+    // only armed fgs
+    if (fg_regs[i].state == STATE_ARMED) {
+      slot = fg_macros[fg_regs[i].macro_number] >> 24;
+      if(slot & DEV_MIL_EXT) {
+        dev_mil_armed = 1;
+      } else if (slot & DEV_SIO) {
+        dev_sio_armed = 1;
+      }
+    }
+  }
+  if (!dev_mil_armed && !dev_sio_armed)
+    return;
+
   // read flag and check if there was an action 
   flag         = *(pECAQ + (ECA_QUEUE_FLAGS_GET >> 2));
   if (flag & (0x0001 << ECA_VALID)) {
@@ -712,18 +728,6 @@ void ecaHandler()
     // here: do s.th. according to action
     switch (actTag) {
     case MY_ECA_TAG:
-      /* check if there are armed fgs */
-      for (i = 0; i < MAX_FG_CHANNELS; i++) {
-        // only armed fgs
-        if (fg_regs[i].state == STATE_ARMED) {
-          slot = fg_macros[fg_regs[i].macro_number] >> 24;
-          if(slot & DEV_MIL_EXT) {
-            dev_mil_armed = 1;
-          } else if (slot & DEV_SIO) {
-            dev_sio_armed = 1;
-          }
-        }
-      }
       // send broadcast start to mil extension
       if (dev_mil_armed) scu_mil_base[MIL_SIO3_TX_CMD] = 0x20ff;
       // send broadcast start to all scu bus slaves
@@ -763,7 +767,7 @@ static TaskType tasks[] = {
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_sio_handler    }, // sio task 4
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, dev_bus_handler    },
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, scu_bus_handler    },
-  { 0, 0, {0}, 0, 0, INTERVAL_10MS  , 0, ecaHandler         },
+  { 0, 0, {0}, 0, 0, ALWAYS         , 0, ecaHandler         },
   { 0, 0, {0}, 0, 0, INTERVAL_100MS , 0, channel_watchdog   },
 
 };
