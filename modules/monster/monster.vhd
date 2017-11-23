@@ -2054,7 +2054,7 @@ begin
   end generate;
 
   mil_n : if not g_en_mil generate
-    dev_bus_master_i(c_tops_mil)      <= cc_dummy_slave_out;
+    top_bus_master_i(c_tops_mil)      <= cc_dummy_slave_out;
     dev_bus_master_i(c_devs_mil_ctrl) <= cc_dummy_slave_out;
     dev_msi_slave_i (c_devs_mil_ctrl) <= cc_dummy_master_out;
   end generate;
