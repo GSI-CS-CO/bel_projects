@@ -355,6 +355,22 @@ package monster_pkg is
       hw_version             : in std_logic_vector(31 downto 0) := (others => 'Z'));
   end component;
 
+  constant c_user_1wire_sdb : t_sdb_device := (
+    abi_class     => x"0000",              -- undocumented device
+    abi_ver_major => x"01",
+    abi_ver_minor => x"01",
+    wbd_endian    => c_sdb_endian_big,
+    wbd_width     => x"7",                 -- 8/16/32-bit port granularity
+    sdb_component => (
+      addr_first  => x"0000000000000000",
+      addr_last   => x"00000000000000ff",
+      product     => (
+        vendor_id => x"0000000000000651",  -- GSI 
+        device_id => x"4c8a0635",
+        version   => x"00000001",
+        date      => x"20171016",
+        name      => "User-1Wire         ")));
+
   constant c_iodir_sdb : t_sdb_device := (
     abi_class     => x"0000", -- undocumented device
     abi_ver_major => x"00",

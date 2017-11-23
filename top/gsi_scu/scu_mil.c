@@ -1,4 +1,7 @@
 #include "scu_mil.h"
+#include "aux.h"
+#include "scu_bus.h"
+
 
 /***********************************************************
  ***********************************************************
@@ -8,136 +11,243 @@
  ***********************************************************
  ***********************************************************/
 
-void clear_receive_flag(volatile unsigned int *base) {
-  unsigned short rcv_data = 0;
-  usleep(50); // wait 50us, because an initiated mil_read takes 20us for trm function code and ifc address
-              // and the possible receive pattern needs also 20us.
-  if (rcv_flag(base)) {
-    rcv_data = base[MIL_RD_WR_DATA];  // rcv flag is active, so clear flag with reading mil receive register
-  }
-}
 
-int trm_free(volatile unsigned int *base) {
-  int i = MAX_TST_CNT;
-  
-  for (i = MAX_TST_CNT; i > 0; i--) {
-    if (base[MIL_WR_RD_STATUS] & MIL_TRM_READY)
-      break;
-  }
-  if (i > 0)
-    return OKAY;
-  else
-    return TRM_NOT_FREE;
-}
-
+// non blocking write; uses the tx fifo
 int write_mil(volatile unsigned int *base, short data, short fc_ifc_addr) {
-  if (trm_free(base) == OKAY) {
-    base[MIL_RD_WR_DATA] = data;
-  } else {
-    return TRM_NOT_FREE;
+  atomic_on();
+  base[MIL_SIO3_TX_DATA] = data;
+  base[MIL_SIO3_TX_CMD]  = fc_ifc_addr;
+  atomic_off();
+  return OKAY;
+}
+
+
+int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr) {
+  int i;
+  atomic_on();
+  base[MIL_SIO3_TX_DATA] = data[0];
+  base[MIL_SIO3_TX_CMD]  = fc_ifc_addr;
+  for (i = 1; i < 6; i++) {
+      base[MIL_SIO3_TX_DATA] = data[i];
   }
-  if (trm_free(base) == OKAY) {
-    base[MIL_WR_CMD] = fc_ifc_addr;
+  atomic_off();
+  return OKAY;
+}
+
+int status_mil(volatile unsigned int *base, unsigned short *status) {
+  *status = base[MIL_SIO3_STAT];
+  return OKAY;
+}
+
+int scub_status_mil(volatile unsigned short *base, int slot, unsigned short *status) {
+  if (slot >= 1 && slot <= MAX_SCU_SLAVES) {
+    *status = base[CALC_OFFS(slot) + MIL_SIO3_STAT];
     return OKAY;
-  } else {
-    return TRM_NOT_FREE;
-  }
+  } else
+    return ERROR;
 }
 
-int rcv_flag(volatile unsigned int *base) {
-  unsigned short status = 0;
-  int i = MAX_TST_CNT;
-  
-  for (i = MAX_TST_CNT; i > 0; i--) {
-    status = (base[MIL_WR_RD_STATUS] & (MIL_RCV_READY | MIL_RCV_ERROR));
-    if (status) {
-      break;
-    }
-  }
-  if (i > 0) {
-    if ((status & MIL_RCV_READY) > 0) {
-      return OKAY;   // received data
-    } else {
-      base[MIL_WR_RD_STATUS] = base[MIL_WR_RD_STATUS]; // clear rcv error bit
-      return RCV_ERROR;  // rcv error is set
-    }
-  } else {
-    return RCV_TIMEOUT;  // rcv timeout
-  }  
-}
 
+// blocking read; uses task slot 2
 int read_mil(volatile unsigned int *base, short *data, short fc_ifc_addr) {
-  int rcv_flags = 0;
+  unsigned short rx_data_avail;
+  unsigned short rx_err;
+  unsigned short rx_req;
+  int timeout = 0;
 
-  if (trm_free(base) == OKAY) {
-    base[MIL_WR_CMD] = fc_ifc_addr;
-  } else {
-    return TRM_NOT_FREE;
+  // write fc and addr to taskram
+  base[MIL_SIO3_TX_TASK2] = fc_ifc_addr;
+
+  // wait for task to start (tx fifo full or other tasks running)
+  rx_req = base[MIL_SIO3_TX_REQ];
+  while(!(rx_req & 0x4) && (timeout < TASK_TIMEOUT)) {
+    usleep(1);
+    rx_req = base[MIL_SIO3_TX_REQ];
+    timeout++;
   }
-  rcv_flags = rcv_flag(base);
-  if (rcv_flags == OKAY) {
-    *data = base[MIL_RD_WR_DATA];
+  if (timeout > TASK_TIMEOUT)
+    return RCV_TIMEOUT;
+
+  // wait for task to finish, a read over the dev bus needs at least 40us
+  rx_data_avail = base[MIL_SIO3_D_RCVD];
+  while(!(rx_data_avail & 0x4) && (timeout < TASK_TIMEOUT)) {
+    usleep(1);
+    rx_data_avail = base[MIL_SIO3_D_RCVD];
+    timeout++;
+  }
+  if (timeout > TASK_TIMEOUT)
+    return RCV_TIMEOUT;
+
+  // task finished
+  rx_err = base[MIL_SIO3_D_ERR];
+  if ((rx_data_avail & 0x4) && !(rx_err & 0x4)) {
+    // copy received value
+    *data = 0xffff & base[MIL_SIO3_RX_TASK2];
     return OKAY;
-  } else if (rcv_flags == RCV_ERROR) {
-      return RCV_ERROR;
-  } else if (rcv_flags == RCV_TIMEOUT) {
-      return RCV_TIMEOUT;
+  } else {
+    // dummy read resets available and error bits
+    *data = base[MIL_SIO3_RX_TASK2];
+    return RCV_TIMEOUT;
   }
 }
 
-void run_mil_test(volatile unsigned int *base, unsigned char ifc_addr) {
-  int   test_loop_64k = 0;
-  int   rcv_timeout_cnt = 0;
-  int   rcv_error_cnt = 0;
-  int   send_error_cnt = 0;
-  int   data_error_cnt = 0;
-  int   read_mil_status = 0;
-  unsigned short rcv_data = 0;
-  unsigned short test_pattern = 0;
+// non-blocking
+int set_task_mil(volatile unsigned int *base, unsigned char task, short fc_ifc_addr) {
+  if ((task < TASKMIN) || (task > TASKMAX))
+    return RCV_TASK_ERR;
   
-  unsigned short wr_echo_ifc = 0x13 << 8; // place function code wr echo reg (0x13) to high byte; low byte holds ifc-card-address
-  unsigned short rd_echo_ifc = 0x89 << 8; // place function code rd echo reg (0x89) to high byte; low byte holds ifc-card-address  
-  
-  wr_echo_ifc |= ifc_addr;
-  rd_echo_ifc |= ifc_addr;
-    
-
-  mprintf("Mil_Base: 0x%x\n", base);
-  clear_receive_flag(base);
-  while(1) {
+  // write fc and addr to taskram
+  base[MIL_SIO3_TX_TASK1 + task - 1] = fc_ifc_addr;
    
-    if (write_mil(base, test_pattern, wr_echo_ifc) == OKAY) {
-      read_mil_status = read_mil(base, &rcv_data, rd_echo_ifc);
-      if (read_mil_status == OKAY) {
-	      if (test_pattern == rcv_data) {
-          if (test_pattern == 0xffff) {
-            test_loop_64k++;
-            mprintf("loop_64k: %d  data_err: %d  rcv_to: %d  rcv_err: %d\n",
-                     test_loop_64k, data_error_cnt, rcv_timeout_cnt, rcv_error_cnt);
-          }
-        } else { // test_pattern not equal with rcv_data
-          mprintf("pattern not equal: test_pattern: 0x%x rcv_data 0x%x\n", test_pattern, rcv_data);
-          data_error_cnt++;
-        }
-      } else if (read_mil_status == TRM_NOT_FREE) {
-          send_error_cnt++;
-          mprintf("mil_rd send error: 0x%x\n", send_error_cnt);
-      } else if (read_mil_status == RCV_ERROR) {
-          rcv_error_cnt++;
-          mprintf("mil_rd rcv error: 0x%x\n", rcv_error_cnt);
-      } else if (read_mil_status == RCV_TIMEOUT) {
-          rcv_timeout_cnt++;
-          mprintf("mil_rcv timeout: 0x%x\n", rcv_timeout_cnt);
-      } else {
-        mprintf("unknown error");
-      }
-    }
-    else { // send error
-      send_error_cnt++;
-      mprintf("mil_wr send error: 0x%x\n", send_error_cnt);
-    }
-    test_pattern++;
+  return OKAY;
+}
+
+// blocks until data is available or timeout occurs
+int get_task_mil(volatile unsigned int *base, unsigned char task, short *data) {
+  unsigned short rx_data_avail;
+  unsigned short rx_err;
+  unsigned int reg_offset;
+  unsigned int bit_offset;
+
+  if ((task < TASKMIN) || (task > TASKMAX))
+    return RCV_TASK_ERR;
+
+  // fetch avail and err bits
+  reg_offset = task / 16;
+  bit_offset = task % 16;
+  rx_data_avail = base[MIL_SIO3_D_RCVD + reg_offset];
+  // return if data is not available yet
+  if(!(rx_data_avail & (1 << bit_offset)))
+    return RCV_TASK_BSY;
+
+  rx_err   = base[MIL_SIO3_D_ERR + reg_offset];
+  if ((rx_data_avail & (1 << bit_offset)) && !(rx_err & (1 << bit_offset))) {
+    // copy received value
+    *data = 0xffff & base[MIL_SIO3_RX_TASK1 + task - 1];
+    return OKAY;
+  } else {
+    // dummy read resets available and error bits
+    *data = 0xffff & base[MIL_SIO3_RX_TASK1 + task - 1];
+    if ((*data & 0xffff) == 0xdead)
+      return RCV_TIMEOUT;
+    else if ((*data & 0xffff) == 0xbabe)
+      return RCV_PARITY;
+    else
+      return RCV_ERROR;
   }
+}
+
+// non-blocking
+int scub_set_task_mil(volatile unsigned short int *base, int slot, unsigned char task, short fc_ifc_addr) {
+  if ((task < TASKMIN) || (task > TASKMAX))
+    return RCV_TASK_ERR;
+
+  // write fc and addr to taskram
+  base[CALC_OFFS(slot) + MIL_SIO3_TX_TASK1 + task - 1] = fc_ifc_addr;
+
+  return OKAY;
+}
+
+// blocks until data is available or timeout occurs
+int scub_get_task_mil(volatile unsigned short int *base, int slot, unsigned char task, short *data) {
+  unsigned short rx_data_avail;
+  unsigned short rx_err;
+  unsigned int reg_offset;
+  unsigned int bit_offset;
+
+  if ((task < TASKMIN) || (task > TASKMAX))
+    return RCV_TASK_ERR;
+
+  // fetch avail and err bits
+  reg_offset = task / 16;
+  bit_offset = task % 16;
+  rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD + reg_offset];
+  // return if data is not available yet
+  if(!(rx_data_avail & (1 << bit_offset)))
+    return RCV_TASK_BSY;
+  
+  rx_err  = base[CALC_OFFS(slot) + MIL_SIO3_D_ERR + reg_offset];
+  if ((rx_data_avail & (1 << bit_offset)) && !(rx_err & (1 << bit_offset))) {
+    // copy received value
+    *data = 0xffff & base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK1 + task - 1];
+    return OKAY;
+  } else {
+    // dummy read resets available and error bits
+    *data = 0xffff & base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK1 + task - 1];
+    if ((*data & 0xffff) == 0xdead)
+      return RCV_TIMEOUT;
+    else if ((*data & 0xffff) == 0xbabe)
+      return RCV_PARITY;
+    else
+      return RCV_ERROR;
+  }
+}
+
+
+/* blocking dev bus read over scu bus using task slot 2*/
+int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr) {
+  unsigned short rx_data_avail;
+  unsigned short rx_err;
+  unsigned short rx_req;
+  int timeout = 0;
+
+  // write fc and addr to taskram
+  base[CALC_OFFS(slot) + MIL_SIO3_TX_TASK2] = fc_ifc_addr;
+
+  // wait for task to start (tx fifo full or other tasks running)
+  rx_req = base[CALC_OFFS(slot) + MIL_SIO3_TX_REQ];
+  while(!(rx_req & 0x4) && (timeout < TASK_TIMEOUT)) {
+    usleep(1);
+    rx_req = base[CALC_OFFS(slot) + MIL_SIO3_TX_REQ];
+    timeout++;
+  }
+  if (timeout > TASK_TIMEOUT)
+    return RCV_TIMEOUT;
+
+  // wait for task to finish, a read over the dev bus needs at least 40us
+  rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD];
+  while(!(rx_data_avail & 0x4) && (timeout < TASK_TIMEOUT)) {
+    usleep(1);
+    rx_data_avail = base[CALC_OFFS(slot) + MIL_SIO3_D_RCVD];
+    timeout++;
+  }
+  if (timeout > TASK_TIMEOUT)
+    return RCV_TIMEOUT;
+
+  // task finished
+  rx_err = base[CALC_OFFS(slot) + MIL_SIO3_D_ERR];
+  if ((rx_data_avail & 0x4) && !(rx_err & 0x4)) {
+    // copy received value
+    *data = 0xffff & base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK2];
+    return OKAY;
+  } else {
+    // dummy read resets available and error bits
+    base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK2];
+    return RCV_TIMEOUT;
+  }
+}
+
+/* reset all task slots */
+int scub_reset_mil(volatile unsigned short *base, int slot) {
+  unsigned short data;
+  int i;
+  base[CALC_OFFS(slot) + MIL_SIO3_RST] = 0x0;
+  usleep(1000);
+  base[CALC_OFFS(slot) + MIL_SIO3_RST] = 0xff;
+  //for (i = TASKMIN; i <= TASKMAX; i++) {
+    //data = 0xffff & base[CALC_OFFS(slot) + MIL_SIO3_RX_TASK1 + i - 1];
+  ////}
+}
+/* reset all task slots */
+int reset_mil(volatile unsigned *base) {
+  unsigned short data;
+  int i;
+  base[MIL_SIO3_RST] = 0x0;
+  usleep(1000);
+  base[MIL_SIO3_RST] = 0xff;
+  //for (i = TASKMIN; i <= TASKMAX; i++) {
+    //data = 0xffff & base[MIL_SIO3_RX_TASK1 + i - 1];
+  //}
 }
 
 /***********************************************************

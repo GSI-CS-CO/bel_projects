@@ -5,6 +5,7 @@
 #include <board.h>
 #include <mprintf.h>
 #include <syscon.h>
+#include <aux.h>
 
 
 /***********************************************************
@@ -41,18 +42,40 @@
 
 extern int usleep(useconds_t usec);
 int write_mil(volatile unsigned int *base, short data, short fc_ifk_addr);
-int trm_free(volatile unsigned int *base);
-int rcv_flag(volatile unsigned int *base);
 int read_mil(volatile unsigned int *base, short *data, short fc_ifk_addr);
-void run_mil_test(volatile unsigned int *base, unsigned char ifk_addr);
+int status_mil(volatile unsigned int *base, unsigned short *status);
+int write_mil_blk(volatile unsigned int *base, short *data, short fc_ifc_addr);
+int scub_status_mil(volatile unsigned short *base, int slot, unsigned short *status);
+int scub_read_mil(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr);
+int set_task_mil(volatile unsigned int *base, unsigned char task, short fc_ifc_addr);
+int get_task_mil(volatile unsigned int *base, unsigned char task, short *data);
+int scub_set_task_mil(volatile unsigned short int *base, int slot, unsigned char task, short fc_ifc_addr);
+int scub_get_task_mil(volatile unsigned short int *base, int slot, unsigned char task, short *data);
+int scub_reset_mil(volatile unsigned short *base, int slot);
+int reset_mil(volatile unsigned *base);
 
 
-#define  MAX_TST_CNT      10000
-#define  FC_WR_IFC_ECHO   0x13
-#define  FC_RD_IFC_ECHO   0x89
-#define  SCU_MIL          0x35aa6b96
 
-
+#define MAX_TST_CNT       10000
+#define FC_WR_IFC_ECHO    0x13
+#define FC_RD_IFC_ECHO    0x89
+#define SCU_MIL           0x35aa6b96
+#define MIL_SIO3_OFFSET   0x400
+#define MIL_SIO3_TX_DATA  0x400
+#define MIL_SIO3_TX_CMD   0x401
+#define MIL_SIO3_STAT     0x402
+#define MIL_SIO3_RST      0x412
+#define MIL_SIO3_RX_TASK1 0xd01
+#define MIL_SIO3_TX_TASK1 0xc01
+#define MIL_SIO3_RX_TASK2 0xd02
+#define MIL_SIO3_TX_TASK2 0xc02
+#define MIL_SIO3_D_RCVD   0xe00
+#define MIL_SIO3_D_ERR    0xe10
+#define MIL_SIO3_TX_REQ   0xe20
+#define CALC_OFFS(SLOT)   (((SLOT) * (1 << 16))) // from slot 1 to slot 12
+#define TASKMIN           1
+#define TASKMAX           254
+#define TASK_TIMEOUT  100
 /*
   +---------------------------------------------+
   |   mil communication error codes             |
@@ -62,6 +85,10 @@ void run_mil_test(volatile unsigned int *base, unsigned char ifk_addr);
 #define   TRM_NOT_FREE        -1
 #define   RCV_ERROR           -2
 #define   RCV_TIMEOUT         -3
+#define   RCV_TASK_ERR        -4
+#define   RCV_PARITY          -5
+#define   ERROR               -6
+#define   RCV_TASK_BSY        -7
 
 
 /*
@@ -84,7 +111,9 @@ void run_mil_test(volatile unsigned int *base, unsigned char ifk_addr);
 #define   RD_CLR_TIMER        0x0006    // read => event timer; write clear event timer.
 #define   RD_WR_DLY_TIMER     0x0007    // read => delay timer; write set delay timer.
 #define   RD_CLR_WAIT_TIMER   0x0008    // read => wait timer; write => clear wait timer.
-
+#define   MIL_WR_RD_LEMO_CONF 0x0009    // read/write lemo config register
+#define   MIL_WR_RD_LEMO_DAT  0x000A    // read/write lemo output data register
+#define   MIL_RD_LEMO_INP     0x000B    // read pin status at lemo pins        
 #define   EV_FILT_FIRST       0x1000    // first event filter (ram) address.
 #define   EV_FILT_LAST        0x1FFF    // last event filter (ram) addres.
 
@@ -112,6 +141,27 @@ void run_mil_test(volatile unsigned int *base, unsigned char ifk_addr);
 #define   MIL_EV_12_8B        0x4000    // '1' => event decoding 12 bit; '0' => event decoding 8 bit
 #define   MIL_ENDECODER_FPGA  0x8000    // '1' => use manchester en/decoder in fpga; '0' => use external en/decoder 6408
 
+
+inline int scub_write_mil_blk(volatile unsigned short *base, int slot, short *data, short fc_ifc_addr) {
+  int i;
+  atomic_on();
+  base[CALC_OFFS(slot) + MIL_SIO3_TX_DATA] = data[0];
+  base[CALC_OFFS(slot) + MIL_SIO3_TX_CMD] = fc_ifc_addr;
+
+  for (i = 1; i < 6; i++) {
+      base[CALC_OFFS(slot) + MIL_SIO3_TX_DATA] = data[i];
+  }
+  atomic_off();
+  return OKAY;
+}
+
+inline int scub_write_mil(volatile unsigned short *base, int slot, short data, short fc_ifc_addr) {
+  atomic_on();
+    base[CALC_OFFS(slot) + MIL_SIO3_TX_DATA ] = data;
+    base[CALC_OFFS(slot) + MIL_SIO3_TX_CMD] = fc_ifc_addr;
+    atomic_off();
+    return OKAY;
+}
 
 /***********************************************************
  ***********************************************************
@@ -264,29 +314,29 @@ int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen
  * mil registers available via Wishbone
  * 
  ***********************************************************/
-#define   MIL_REG_RD_WR_DATA         MIL_RD_WR_DATA   << 2  // read or write mil bus; only 32bit access alowed; data[31..16] don't care
-#define   MIL_REG_WR_CMD             MIL_WR_CMD       << 2  // write command to mil bus; only 32bit access alowed; data[31..16] don't care
-#define   MIL_REG_WR_RD_STATUS       MIL_WR_RD_STATUS << 2  // read mil status register; only 32bit access alowed; data[31..16] don't care
-                                                            // write mil control register; only 32bit access alowed; data[31..16] don't care
-#define   MIL_REG_RD_CLR_NO_VW_CNT   RD_CLR_NO_VW_CNT << 2  // use only when FPGA Manchester Endecoder is enabled;
-                                                            // read => valid word error counters; write => clears valid word error counters
-#define   MIL_REG_RD_WR_NOT_EQ_CNT   RD_WR_NOT_EQ_CNT << 2  // use only when FPGA Manchester Endecoder is enabled;
-                                                            // read => rcv pattern not equal errors; write => clears rcv pattern not equal errors
-#define   MIL_REG_RD_CLR_EV_FIFO     RD_CLR_EV_FIFO << 2    // read => event fifo; write clears event fifo.
-#define   MIL_REG_RD_CLR_TIMER       RD_CLR_TIMER << 2      // read => event timer; write clear event timer.
-#define   MIL_REG_RD_WR_DLY_TIMER    RD_WR_DLY_TIMER << 2   // read => delay timer; write set delay timer.
-#define   MIL_REG_RD_CLR_WAIT_TIMER  RD_CLR_WAIT_TIMER << 2 // read => wait timer; write => clear wait timer.
-#define   MIL_REG_WR_RF_LEMO_CONF    0x0024                 // read => mil lemo config; write ==> mil lemo config (definition of bits: see below)
-#define   MIL_REG_WR_RD_LEMO_DAT     0x0028                 // read => mil lemo data; write ==> mil lemo data
-#define   MIL_REG_RD_LEMO_INP_A      0x002C                 // read mil lemo input
-#define   MIL_REG_EV_FILT_FIRST      EV_FILT_FIRST << 2     // first event filter (ram) address.
-#define   MIL_REG_EV_FILT_LAST       EV_FILT_LAST << 2      // last event filter (ram) addres.
-                                                            // the filter RAM has a size of 4096 elements
-                                                            // each element has a size of 4 bytes
-                                                            // (definition of filter bits: see below)
-                                                            // the filter RAM is addressed in the following way
-                                                            //    uint32_t *pFilter; 
-                                                            //    pFilter[virtAcc * 256 + evtCode]
+#define   MIL_REG_RD_WR_DATA         (MIL_SIO3_OFFSET + MIL_RD_WR_DATA)   << 2    // read or write mil bus; only 32bit access alowed; data[31..16] don't care
+#define   MIL_REG_WR_CMD             (MIL_SIO3_OFFSET + MIL_WR_CMD)       << 2    // write command to mil bus; only 32bit access alowed; data[31..16] don't care
+#define   MIL_REG_WR_RD_STATUS       (MIL_SIO3_OFFSET + MIL_WR_RD_STATUS) << 2    // read mil status register; only 32bit access alowed; data[31..16] don't care
+                                                                                  // write mil control register; only 32bit access alowed; data[31..16] don't care
+#define   MIL_REG_RD_CLR_NO_VW_CNT   (MIL_SIO3_OFFSET + RD_CLR_NO_VW_CNT) << 2    // use only when FPGA Manchester Endecoder is enabled;
+                                                                                  // read => valid word error counters; write => clears valid word error counters
+#define   MIL_REG_RD_WR_NOT_EQ_CNT   (MIL_SIO3_OFFSET + RD_WR_NOT_EQ_CNT) << 2    // use only when FPGA Manchester Endecoder is enabled;
+                                                                                  // read => rcv pattern not equal errors; write => clears rcv pattern not equal errors
+#define   MIL_REG_RD_CLR_EV_FIFO     (MIL_SIO3_OFFSET + RD_CLR_EV_FIFO) << 2      // read => event fifo; write clears event fifo.
+#define   MIL_REG_RD_CLR_TIMER       (MIL_SIO3_OFFSET + RD_CLR_TIMER)   << 2      // read => event timer; write clear event timer.
+#define   MIL_REG_RD_WR_DLY_TIMER    (MIL_SIO3_OFFSET + RD_WR_DLY_TIMER) << 2     // read => delay timer; write set delay timer.
+#define   MIL_REG_RD_CLR_WAIT_TIMER  (MIL_SIO3_OFFSET + RD_CLR_WAIT_TIMER) << 2   // read => wait timer; write => clear wait timer.
+#define   MIL_REG_WR_RF_LEMO_CONF    (MIL_SIO3_OFFSET + MIL_WR_RD_LEMO_CONF) << 2 // read/write lemo config register     
+#define   MIL_REG_WR_RD_LEMO_DAT     (MIL_SIO3_OFFSET + MIL_WR_RD_LEMO_DAT) << 2  // read/write lemo output data register
+#define   MIL_REG_RD_LEMO_INP_A      (MIL_SIO3_OFFSET + MIL_RD_LEMO_INP) << 2     // read pin status at lemo pins        
+#define   MIL_REG_EV_FILT_FIRST      EV_FILT_FIRST << 2                           // first event filter (ram) address.
+#define   MIL_REG_EV_FILT_LAST       EV_FILT_LAST  << 2                           // last event filter (ram) addres.
+                                                                                  // the filter RAM has a size of 4096 elements
+                                                                                  // each element has a size of 4 bytes
+                                                                                  // (definition of filter bits: see below)
+                                                                                  // the filter RAM is addressed in the following way
+                                                                                  //    uint32_t *pFilter; 
+                                                                                  //    pFilter[virtAcc * 256 + evtCode]
 
 
 /***********************************************************
@@ -344,7 +394,7 @@ int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen
  * 
  * bits 0..7: see below
  * bits 8..31: unused
- *
+ * chk: use cases for MIL and SIO
  ***********************************************************/
 #define   MIL_LEMO_OUT_EN1    0x0001    // '1' ==> LEMO 1 configured as output (MIL Piggy)
 #define   MIL_LEMO_OUT_EN2    0x0002    // '1' ==> LEMO 2 configured as output (MIL Piggy)
@@ -364,7 +414,7 @@ int16_t disableLemoEvtMil(volatile uint32_t *base,      // Wishbone address seen
  * 
  * bits 0..3: see below
  * bits 4..31: unused
- *
+ * chk: use cases for MIL and SIO
  ***********************************************************/
 #define   MIL_LEMO_DAT1    0x0001    // '1' ==> LEMO 1 is switched active HIGH (MIL Piggy & SIO)
 #define   MIL_LEMO_DAT2    0x0002    // '1' ==> LEMO 2 is switched active HIGH (MIL Piggy & SIO)

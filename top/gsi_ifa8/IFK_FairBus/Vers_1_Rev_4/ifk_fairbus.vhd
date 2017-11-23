@@ -358,15 +358,7 @@ ASSERT NOT (C_SRQ_Polling_in_ns < 2000)
 	REPORT "  Error! SRQ_Polling_in_ns is should be >= 2000 ns. Is is: " & integer'image(SRQ_Polling_in_ns) & " ns."
 SEVERITY Error;
 
-
-P_Reset:	PROCESS	(clk, Reset_this_Macro)
-	BEGIN
-		IF rising_edge(clk) THEN
-			S_Sync_Reset_this_Macro <= Reset_this_Macro;
-			S_Reset_this_Macro <= S_Sync_Reset_this_Macro;
-		END IF;
-	END PROCESS P_Reset;
-	
+	S_Reset_this_Macro <= Reset_this_Macro; -- reset ist already synchronized
 
 P_SCUB_Reset:	PROCESS	(clk, S_Reset_this_Macro)								-- Vers_1_Revi_3
 	BEGIN																		-- Vers_1_Revi_3

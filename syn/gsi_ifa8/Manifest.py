@@ -9,6 +9,7 @@ syn_package = "00"
 syn_top = "ifa8"
 syn_project = "ifa8"
 
+quartus_preflow = "ifa8.tcl"
 
 modules = {
   "local" : [ 
