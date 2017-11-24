@@ -122,7 +122,7 @@
     for(unsigned int i = 0; i < vPool.size(); i++) {bmpSum += vPool[i].bmpSize;}
     ret.reserve( bmpSum ); // preallocate memory
     //apend all bmps
-    for(unsigned int i = 0; i < vPool.size(); i++) {ret.insert( ret.end(), vPool[i].getBmp().begin(), vPool[i].getBmp().end() );}
+    for(unsigned int i = 0; i < vPool.size(); i++) {ret += vPool[i].getBmp();}
     
     return ret;
   }

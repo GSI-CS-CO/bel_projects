@@ -158,9 +158,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     
  
     hash        = hm.lookup(targetName).get(); 
-    vAdr vATmp  = getCmdWrAdrs(hash, cmdPrio);
-    
-    ew.va.insert( ew.va.end(), vATmp.begin(), vATmp.end());
+    ew.va += getCmdWrAdrs(hash, cmdPrio);
     
     cmdWrInc    = getCmdInc(hash, cmdPrio);
     mc->serialise(b);

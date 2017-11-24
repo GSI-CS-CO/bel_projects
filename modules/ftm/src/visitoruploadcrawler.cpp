@@ -15,98 +15,31 @@ namespace det = DotStr::Edge::TypeVal;
 //FIXME Dear future self, the code duplication in here is appalling. Create some proper helper functions for crying out loud !
 
 void VisitorUploadCrawler::visit(const Block& el) const {
-  vAdr vA, tmpDD, tmpQM;
-  tmpDD = getDefDst();
-  tmpQM = getQInfo();
-
-  vA.reserve( tmpDD.size() + tmpQM.size() ); // preallocate memory
-  vA.insert( vA.end(), tmpDD.begin(), tmpDD.end() );
-  vA.insert( vA.end(), tmpQM.begin(), tmpQM.end() );
-
-  el.serialise(vA);
-  
+  el.serialise(getDefDst() + getQInfo());
 }
 
 void VisitorUploadCrawler::visit(const TimingMsg& el) const  {
-  vAdr vA, tmpDD, tmpDS;
-  tmpDD = getDefDst();
-  tmpDS = getDynSrc();
-
-  vA.reserve( tmpDD.size() + tmpDS.size() ); // preallocate memory
-  vA.insert( vA.end(), tmpDD.begin(), tmpDD.end() );
-  vA.insert( vA.end(), tmpDS.begin(), tmpDS.end() );
-
-
-  el.serialise(vA);
-
+  el.serialise(getDefDst() + getDynSrc() );
 }
 
 void VisitorUploadCrawler::visit(const Flow& el) const  {
-  vAdr vA, tmpDD, tmpCT, tmpFD;
-  tmpDD = getDefDst();
-  tmpCT = getCmdTarget((Command&)el);
-  tmpFD = getFlowDst();
-
-  vA.reserve( tmpDD.size() + tmpCT.size() + tmpFD.size() ); // preallocate memory
-  vA.insert( vA.end(), tmpDD.begin(), tmpDD.end() );
-  vA.insert( vA.end(), tmpCT.begin(), tmpCT.end() );
-  vA.insert( vA.end(), tmpFD.begin(), tmpFD.end() );
-
-  el.serialise(vA);
-
-
+  el.serialise( getDefDst() + getCmdTarget((Command&)el) + getFlowDst() );
 }
 
 void VisitorUploadCrawler::visit(const Flush& el) const {
-  vAdr vA, tmpDD, tmpCT;
-  tmpDD = getDefDst();
-  tmpCT = getCmdTarget((Command&)el);
-
-  vA.reserve( tmpDD.size() + tmpCT.size() ); // preallocate memory
-  vA.insert( vA.end(), tmpDD.begin(), tmpDD.end() );
-  vA.insert( vA.end(), tmpCT.begin(), tmpCT.end() );
-
-  el.serialise(vA);
-
-
+  el.serialise( getDefDst() + getCmdTarget((Command&)el) );
 }
 
 void VisitorUploadCrawler::visit(const Noop& el) const {
-  vAdr vA, tmpDD, tmpCT;
-  tmpDD = getDefDst();
-  tmpCT = getCmdTarget((Command&)el);
-
-  vA.reserve( tmpDD.size() + tmpCT.size() ); // preallocate memory
-  vA.insert( vA.end(), tmpDD.begin(), tmpDD.end() );
-  vA.insert( vA.end(), tmpCT.begin(), tmpCT.end() );
-
-  el.serialise(vA);
+  el.serialise( getDefDst() + getCmdTarget((Command&)el) );
 }
 
 void VisitorUploadCrawler::visit(const Wait& el) const {
-  vAdr vA, tmpDD, tmpCT;
-  tmpDD = getDefDst();
-  tmpCT = getCmdTarget((Command&)el);
-
-  vA.reserve( tmpDD.size() + tmpCT.size() ); // preallocate memory
-  vA.insert( vA.end(), tmpDD.begin(), tmpDD.end() );
-  vA.insert( vA.end(), tmpCT.begin(), tmpCT.end() );
-
-  el.serialise(vA);
-
+  el.serialise( getDefDst() + getCmdTarget((Command&)el) );
 }
 
 void VisitorUploadCrawler::visit(const CmdQMeta& el) const {
-  vAdr vA, tmpDD, tmpQB;
-  tmpDD = getDefDst();
-  tmpQB = getQBuf();
-
-  vA.reserve( tmpDD.size() + tmpQB.size() ); // preallocate memory
-  vA.insert( vA.end(), tmpDD.begin(), tmpDD.end() );
-  vA.insert( vA.end(), tmpQB.begin(), tmpQB.end() );
-
-  el.serialise(vA);
-
+  el.serialise( getDefDst() + getQBuf() );
 }
 
 void VisitorUploadCrawler::visit(const CmdQBuffer& el) const {
@@ -114,11 +47,9 @@ void VisitorUploadCrawler::visit(const CmdQBuffer& el) const {
 }
 
 void VisitorUploadCrawler::visit(const DestList& el) const {
-  
-  vAdr vA, tmpDL;
-  tmpDL = getListDst();
-  el.serialise(tmpDL);
+  el.serialise(getListDst());
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // private helper functions
