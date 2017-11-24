@@ -217,6 +217,7 @@ public:
            uint32_t getThrCurrentNodeAdr(uint8_t cpuIdx, uint8_t thrIdx); //Returns the external address of a thread's current node register 
   const std::string getThrOrigin(uint8_t cpuIdx, uint8_t thrIdx); //Returns the Node the Thread will start from
   const std::string getThrCursor(uint8_t cpuIdx, uint8_t thrIdx); //Returns the Node the Thread is currently processing
+           uint32_t getThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx);
            uint32_t getThrRun(uint8_t cpuIdx); //Get bitfield showing running threads
            uint32_t getStatus(uint8_t cpuIdx);
            uint64_t getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx);

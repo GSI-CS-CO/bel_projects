@@ -14,6 +14,8 @@
 #define KMAG  "\x1B[35m"
 #define KCYN  "\x1B[36m"
 #define KWHT  "\x1B[37m"
+#define BLGR  "\x1B[40m"
+#define BNRM  "\x1B[49m"
 
 
 

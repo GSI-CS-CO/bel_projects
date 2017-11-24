@@ -114,7 +114,7 @@ void main(void) {
     mprintf("#%02u: Priority Queue Debugmode ON, timestamps will be written to 0x%08x on receivers", cpuId, DEBUGPRIOQDST);
   #endif
   //mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
-  mprintf("#%02u: This is DM FW 0.7.3 \n", cpuId);
+  mprintf("#%02u: This is Cherry DM FW 0.7.3 \n", cpuId);
 
   atomic_off();
 
@@ -127,7 +127,6 @@ void main(void) {
 
     if (DL(pT(hp))  <= getSysTime() + *(uint64_t*)(p + (( SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) )) {
 
-      DBPRINT1("#%02u: ThrIdx %u, Node Ptr is 0x%08x, Dl: %s, type @ 0x%08x is %u\n", cpuId, thrIdx, pN(hp), print64(*(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME   ) >> 2) ), 0),  tmpType, type);
 
       *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp)); //process node and return thread's next node
       
@@ -150,6 +149,7 @@ void main(void) {
             uint64_t* deadline  = (uint64_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_DEADLINE  ) >> 2));
             uint32_t* origin    = (uint32_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_NODE_PTR) >> 2));
             uint32_t* cursor    = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_NODE_PTR) >> 2));
+            uint32_t* msgcnt    = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_MSG_CNT  ) >> 2));
             
             DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
             
@@ -157,9 +157,10 @@ void main(void) {
             else                *currTime = *startTime;
             *deadline = *currTime;
 
-            *cursor   = *origin;
-            *running |= *start & (1<<i);  // if start bit is set, set running bit
-            *start   &= ~(1 << i);        // clear start bit
+            *cursor   = *origin;          // Set cursor to origin node
+            *running |= *start & (1<<i);  // copy this start bit to running bits
+            *start   &= ~(1 << i);        // clear this start bit
+            *msgcnt   = 0;                // clear msg counter
           }
         }
         
