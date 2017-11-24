@@ -58,10 +58,8 @@ using namespace DotStr::Misc;
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) { bmpSum += atUp.getMemories()[i].bmpSize; }
     ret.reserve( bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE); // preallocate memory for BMPs and all Nodes
     
-    for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
-      auto& tmpBmp = atUp.getMemories()[i].getBmp();
-      ret.insert( ret.end(), tmpBmp.begin(), tmpBmp.end() ); //add Bmp to to return vector  
-    }
+    for(unsigned int i = 0; i < atUp.getMemories().size(); i++) { ret += atUp.getMemories()[i].getBmp(); }//add Bmp to to return vector  
+    
     //add all node buffers to return vector
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       if(it.staged) {

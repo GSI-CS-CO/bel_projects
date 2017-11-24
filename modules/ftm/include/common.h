@@ -82,7 +82,23 @@ typedef struct {
   vBuf vb;
 } vEbwrs;
 
+template <typename T>
+boost::container::vector<T> operator+(const boost::container::vector<T> &A, const boost::container::vector<T> &B)
+{
+    boost::container::vector<T> AB;
+    AB.reserve( A.size() + B.size() );                // preallocate memory
+    AB.insert( AB.end(), A.begin(), A.end() );        // add A;
+    AB.insert( AB.end(), B.begin(), B.end() );        // add B;
+    return AB;
+}
 
+template <typename T>
+boost::container::vector<T> &operator+=(boost::container::vector<T> &A, const boost::container::vector<T> &B)
+{
+    A.reserve( A.size() + B.size() );                // preallocate memory without erase original data
+    A.insert( A.end(), B.begin(), B.end() );         // add B;
+    return A;                                        // here A could be named AB
+}
 
 
 
