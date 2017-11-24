@@ -61,11 +61,13 @@ void showStatus(CarpeDM& cdm, bool verbose) {
   std::vector<std::string> vsCursorPattern;
   std::vector<std::string> vsOrigin;
   std::vector<std::string> vsOriginPattern;
+  std::vector<uint32_t> vsMsgCnt;
 
   //do this fast to get a most coherent picture, no output
   for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
     for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
       vsCursor.push_back(cdm.getThrCursor(cpuIdx, thrIdx));
+      vsMsgCnt.push_back(cdm.getThrMsgCnt(cpuIdx, thrIdx));
     } 
   }  
 
@@ -78,29 +80,34 @@ void showStatus(CarpeDM& cdm, bool verbose) {
   }
 
 
-  std::string originPatternHead = (verbose ? "Origin Pat." : "");
-  std::string originHead = (verbose ? "Origin Node" : "");
+  const uint16_t width = 149;
 
-  const uint16_t width = 193;
 
-  printf("\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
-  printf("\u2502 %3s \u2502 %3s \u2502 %7s \u2502 %40s \u2502 %40s \u2502 %40s \u2502 %40s \u2502\n", "Cpu", "Thr", "Running", "Pattern", "Node", originPatternHead.c_str(), originHead.c_str());
+  printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
+  printf("\u2502 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2502\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
+  
+  bool toggle=false;
+
+
   for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
-    
     for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
       if (verbose || ((cdm.getThrRun(cpuIdx) >> thrIdx) & 1)) {
+        //if (!first) {printf("\u251C"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2524\n");
+        
+        
+        std::string running = (((cdm.getThrRun(cpuIdx) >> thrIdx) & 1) ? std::string(KGRN) + std::string("yes") : std::string(KRED) + std::string(" no")) + std::string(KNRM);
+        std::string originPattern = vsOriginPattern[cpuIdx * thrQty + thrIdx];
+        std::string origin        = vsOrigin[cpuIdx * thrQty + thrIdx];
 
-      std::string running = (((cdm.getThrRun(cpuIdx) >> thrIdx) & 1) ? std::string(KGRN) + std::string("yes") : std::string(KRED) + std::string(" no")) + std::string(KNRM);
-      std::string originPattern = (verbose ? vsOriginPattern[cpuIdx * thrQty + thrIdx] : "");
-      std::string origin        = (verbose ? vsOrigin[cpuIdx * thrQty + thrIdx] : "");
-
-      printf("\u2502 %3u \u2502 %3u \u2502     %3s \u2502 %40s \u2502 %40s \u2502 %40s \u2502 %40s \u2502\n", cpuIdx, thrIdx, running.c_str(), 
-        vsCursorPattern[cpuIdx * thrQty + thrIdx].c_str(),  
-        vsCursor[cpuIdx * thrQty + thrIdx].c_str(),
-        originPattern.c_str(),  
-        origin.c_str()
+        printf("\u2502%s %2u  \u2502 %2u  \u2502   %3s%s   \u2502 %9u \u2502 %55s \u2502 %55s %s\u2502\n", (toggle ? BLGR : ""), cpuIdx, thrIdx, running.c_str(), 
+          (toggle ? BLGR : ""),
+          vsMsgCnt[cpuIdx * thrQty + thrIdx],
+          vsCursorPattern[cpuIdx * thrQty + thrIdx].c_str(),  
+          vsCursor[cpuIdx * thrQty + thrIdx].c_str(),
+          BNRM
         );
+        toggle = !toggle;
       }
     } 
   }

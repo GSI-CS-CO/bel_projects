@@ -94,7 +94,7 @@ void dmInit() {
     *(uint64_t*)&tp[T_TD_DEADLINE >> 2] = -1ULL;
     *(uint32_t*)&tp[T_TD_FLAGS >> 2]    = i;
     *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME  ) >> 2)) = 500000ULL;
-    *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME  ) >> 2)) = 0ULL;
+    *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME ) >> 2)) = 0ULL;
     //add thread to heap
     hp[i] = tp;
   }  
@@ -102,9 +102,9 @@ void dmInit() {
 
 }
 
-uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData) { return LM32_NULL_PTR;}
-uint64_t dummyDeadlineFunc (uint32_t* node, uint32_t* thrData) { return -1ULL;}
-uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData) { return LM32_NULL_PTR;}
+uint32_t* dummyNodeFunc (uint32_t* node, uint32_t* thrData)                   { return LM32_NULL_PTR;}
+uint64_t  dummyDeadlineFunc (uint32_t* node, uint32_t* thrData)               { return -1ULL; } //return infinity
+uint32_t* dummyActionFunc (uint32_t* node, uint32_t* cmd, uint32_t* thrData)  { return LM32_NULL_PTR;}
 
 uint8_t getNodeType(uint32_t* node) {
   uint32_t* tmpType;
@@ -114,11 +114,13 @@ uint8_t getNodeType(uint32_t* node) {
   if (node != LM32_NULL_PTR) {
     tmpType   = node + (NODE_FLAGS >> 2);
     type      = (*tmpType >> NFLG_TYPE_POS) & NFLG_TYPE_MSK;
+    DBPRINT2("#%02u: Node Type b4 boundary check: %u\n", cpuId, type);
     msk       = -(type < _NODE_TYPE_END_);
     type     &= msk; //optional boundary check, if out of bounds, type will equal NODE_TYPE_UNKNOWN  
   } else {
-    DBPRINT3("#%02u: NUll node detected\n", cpuId);
+    DBPRINT2("#%02u: Null ptr detected \n", cpuId);  
   }
+
   return type;
 }
 
