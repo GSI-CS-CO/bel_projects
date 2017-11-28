@@ -391,9 +391,9 @@ bool CarpeDM::connect(const std::string& en) {
   }
 
 
-  uint8_t CarpeDM::getNodeCpu(const std::string& name, Direction dir) {
+  uint8_t CarpeDM::getNodeCpu(const std::string& name, TransferDir dir) {
      
-    AllocTable& at = (dir == Direction::UPLOAD ? atUp : atDown );
+    AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
     uint32_t hash;
     if (!(hm.lookup(name))) {throw std::runtime_error( "Unknown Node Name '" + name + "' when lookup up hosting cpu"); return -1;} 
     hash = hm.lookup(name).get(); //just pass it on
@@ -404,11 +404,11 @@ bool CarpeDM::connect(const std::string& en) {
     return x->cpu;
   }
 
-  uint32_t CarpeDM::getNodeAdr(const std::string& name, Direction dir, AdrType adrT) {
+  uint32_t CarpeDM::getNodeAdr(const std::string& name, TransferDir dir, AdrType adrT) {
     std::cout << "Looking up Adr of " << name << std::endl;
     if(name == DotStr::Node::Special::sIdle) return LM32_NULL_PTR; //idle node is resolved as a null ptr without comment
 
-    AllocTable& at = (dir == Direction::UPLOAD ? atUp : atDown );
+    AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
     uint32_t hash;
     if (!(hm.lookup(name))) {throw std::runtime_error( "Unknown Node Name '" + name + "' when lookup up address"); return LM32_NULL_PTR;} 
     hash = hm.lookup(name).get(); //just pass it on
@@ -452,10 +452,10 @@ void CarpeDM::showCpuList() {
     return (atDown.isOk(atDown.lookupHash(hm.lookup(name).get())));
   }  
 
-  void CarpeDM::show(const std::string& title, const std::string& logDictFile, Direction dir, bool filterMeta ) {
+  void CarpeDM::show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta ) {
 
-    Graph& g        = (dir == Direction::UPLOAD ? gUp  : gDown);
-    AllocTable& at  = (dir == Direction::UPLOAD ? atUp : atDown);
+    Graph& g        = (dir == TransferDir::UPLOAD ? gUp  : gDown);
+    AllocTable& at  = (dir == TransferDir::UPLOAD ? atUp : atDown);
 
 
 

@@ -60,7 +60,7 @@
 
 
 enum class AdrType {EXTERNAL, INTERNAL, MGMT, PEER};
-enum class Direction {UPLOAD, DOWNLOAD};
+enum class TransferDir {UPLOAD, DOWNLOAD};
 enum class FwId { FWID_RAM_TOO_SMALL      = -1, 
                   FWID_BAD_MAGIC          = -2,
                   FWID_BAD_PROJECT_NAME   = -3,

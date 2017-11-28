@@ -216,8 +216,8 @@ public:
                bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx); //true if thread <thrIdx> is running
             
 // The lazy interface ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            uint8_t getNodeCpu(const std::string& name, Direction dir); //shortcut to obtain a node's cpu by its name 
-           uint32_t getNodeAdr(const std::string& name, Direction dir, AdrType adrT); //shortcut to obtain a node's address by its name
+            uint8_t getNodeCpu(const std::string& name, TransferDir dir); //shortcut to obtain a node's cpu by its name 
+           uint32_t getNodeAdr(const std::string& name, TransferDir dir, AdrType adrT); //shortcut to obtain a node's address by its name
   const std::string getNodePattern (const std::string& sNode);
   const std::string getNodeBeamproc(const std::string& sNode);
               vStrC getPatternMembers (const std::string& sPattern);
@@ -269,10 +269,10 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
                
 
   // Screen Output //////////////////////////////////////////////////////////////
-  void show(const std::string& title, const std::string& logDictFile, Direction dir, bool filterMeta );
-  void showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", Direction::UPLOAD, false);} //show a CPU's Upload address table
+  void show(const std::string& title, const std::string& logDictFile, TransferDir dir, bool filterMeta );
+  void showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", TransferDir::UPLOAD, false);} //show a CPU's Upload address table
   void showDown(bool filterMeta) {  //show a CPU's Download address table
-    show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", Direction::DOWNLOAD, filterMeta);
+    show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", TransferDir::DOWNLOAD, filterMeta);
   }
   void showCpuList();
   void dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio); //Show all command fields in a Queue (past and current)
