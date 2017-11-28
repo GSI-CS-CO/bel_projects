@@ -1,0 +1,239 @@
+//
+// eb_temp: demo for reading the temperature and IDs of scu slave cards
+// 
+
+//standard includes
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
+
+//Etherbone
+#include <etherbone.h>
+
+//Wishbone devices
+#include <wb4_blockram.h>
+#include <scu_bus_master.h>
+#include <scu_shared.h>
+
+#include <dow_crc.h>
+
+#define FG_MAXNUM     6
+#define FG_PARAM_1    FG_BASE + FG_MAXNUM
+#define MAXLINE	      100
+#define WB_SCU_REG    0x80
+#define TEMP_REG      0x88
+#define CID_SYS       0x08
+#define CID_GRP       0x0a
+
+#define SDB_DEVICES   3
+
+static const char* program;
+
+void itoa(unsigned int n,char s[], int base){
+     int i;
+ 
+     i = 0;
+     do {       /* generate digits in reverse order */
+         s[i++] = n % base + '0';   /* get next digit */
+     } while ((n /= base) > 0);     /* delete it */
+     s[i] = '\0';
+}
+
+void die_eb(const char* where,eb_status_t status) {
+  fprintf(stderr,"%s: %s failed: %s\n",
+    program,where, eb_status(status));
+  exit(1);
+}
+
+void die(const char* where,eb_status_t status) {
+  fprintf(stderr,"%s: %s failed: %s\n",
+    program,where, eb_status(status));
+  exit(1);
+}
+
+int kbhit(void)
+{
+  struct termios oldt, newt;
+  int ch;
+  int oldf;
+ 
+  tcgetattr(STDIN_FILENO, &oldt);
+  newt = oldt;
+  newt.c_lflag &= ~(ICANON | ECHO);
+  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+  oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+  fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+ 
+  ch = getchar();
+ 
+  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+  fcntl(STDIN_FILENO, F_SETFL, oldf);
+ 
+  if(ch != EOF)
+  {
+    ungetc(ch, stdin);
+    return 1;
+  }
+ 
+  return 0;
+}
+
+int main(int argc, const char** argv) {
+  eb_status_t status;
+  eb_device_t device;
+  eb_socket_t socket;
+  struct sdb_device sdbDevice[SDB_DEVICES];
+  eb_cycle_t  cycle;
+  eb_address_t scu_bus, sharedRAM;
+  eb_data_t   temp_data;
+
+  const char* devName;
+  int nDevices;  
+  int slave_id;
+  eb_data_t card_id[4];
+  eb_data_t board_id[2];
+  eb_data_t board_temp;
+  eb_data_t backplane_id[2];
+  eb_data_t backplane_temp;
+  eb_data_t ext_id[2];
+  eb_data_t ext_temp;
+  eb_data_t cid_sys;
+  eb_data_t cid_grp;
+  
+  program = argv[0];
+  if (argc < 2) {
+    fprintf(stderr,"shows temperature of scu slaves\n");
+    fprintf(stderr,"Syntax: %s <protocol/host/port>\n", argv[0]);
+    return 1;
+  }
+  
+  devName     = argv[1];
+  
+  /* Open a socket supporting only 32-bit operations.
+   * As we are not exporting any slaves^Mwe don't care what port we get => 0.
+   * This function always returns immediately.
+   * EB_ABI_CODE helps detect if the application matches the library.
+   */
+  if ((status = eb_socket_open(EB_ABI_CODE,0, EB_ADDR32|EB_DATA32, &socket)) != EB_OK)
+    die("eb_socket_open",status);
+  
+  /* Open the remote device with 3 attemptis to negotiate bus width.
+   * This function is blocking and may stall the thread for up to 3 seconds.
+   * If you need asynchronous open^Msee eb_device_open_nb.
+   * Note: the supported widths can never be more than the socket supports.
+   */
+  if ((status = eb_device_open(socket,devName, EB_ADDR32|EB_DATA32, 3, &device)) != EB_OK)
+    die("eb_device_open",status);
+
+  nDevices = SDB_DEVICES;
+  if ((status = eb_sdb_find_by_identity(device, LM32_RAM_USER_VENDOR, LM32_RAM_USER_PRODUCT, sdbDevice, &nDevices)) != EB_OK)
+    die_eb("BLOCKRAM eb_sdb_find_by_identity", status);
+
+  if (nDevices == 0)
+    die_eb("no BLOCKRAM found", EB_FAIL);
+
+  /* addr of first blockram */
+  sharedRAM = sdbDevice[0].sdb_component.addr_first;
+  printf("sharedRAM: 0x%"EB_DATA_FMT"\n", sharedRAM);
+
+  nDevices = 1;
+  if ((status = eb_sdb_find_by_identity(device, SCU_BUS_MASTER_VENDOR, SCU_BUS_MASTER_PRODUCT, sdbDevice, &nDevices)) != EB_OK)
+    die("find_by_identiy failed", status);
+
+  if (nDevices == 0)
+    die("no SCU bus found", EB_FAIL);
+  if (nDevices > 1)
+    die("more then one SCU bus", EB_FAIL);
+  
+  /* Record the address of the device */
+  scu_bus = sdbDevice[0].sdb_component.addr_first;
+  
+  
+  while (!kbhit()) {
+    /* readout the sensors from SCU */
+    if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+      die("EP eb_cycle_open", status);
+  
+    /* board_id from onboard 0x42 temp sensor (64Bit)*/
+    eb_cycle_read(cycle, sharedRAM + BOARD_ID, EB_BIG_ENDIAN|EB_DATA32, &board_id[0]);
+    eb_cycle_read(cycle, sharedRAM + BOARD_ID + 0x4, EB_BIG_ENDIAN|EB_DATA32, &board_id[1]);
+    /* board_temp from onboard 0x42 temp sensor (16Bit)*/
+    eb_cycle_read(cycle, sharedRAM + BOARD_TEMP, EB_BIG_ENDIAN|EB_DATA32, &board_temp);
+    /* ext_id from extension board temp sensor (64Bit) */
+    eb_cycle_read(cycle, sharedRAM + EXT_ID, EB_BIG_ENDIAN|EB_DATA32, &ext_id[0]);
+    eb_cycle_read(cycle, sharedRAM + EXT_ID + 0x4, EB_BIG_ENDIAN|EB_DATA32, &ext_id[1]);
+    /* ext_temp from extension board temp sensor (16Bit)*/
+    eb_cycle_read(cycle, sharedRAM + EXT_TEMP, EB_BIG_ENDIAN|EB_DATA32, &ext_temp);
+    /* backplane_id from 0x42 temp sensor (64Bit)*/
+    eb_cycle_read(cycle, sharedRAM + BACKPLANE_ID, EB_BIG_ENDIAN|EB_DATA32, &backplane_id[0]);
+    eb_cycle_read(cycle, sharedRAM + BACKPLANE_ID + 0x4, EB_BIG_ENDIAN|EB_DATA32, &backplane_id[1]);
+    /* backplane_temp from 0x42 temp sensor (16Bit)*/
+    eb_cycle_read(cycle, sharedRAM + BACKPLANE_TEMP, EB_BIG_ENDIAN|EB_DATA32, &backplane_temp);
+  
+    if ((status = eb_cycle_close(cycle)) != EB_OK)
+      die("EP eb_cycle_close", status);
+
+
+    
+    if (calc_crc(board_id[0], board_id[1]) == 0) {
+      printf("SCU Baseboard: 0x%08"EB_DATA_FMT"%08"EB_DATA_FMT"", board_id[0], board_id[1]);
+      printf("   Temp: %.4f °C\n", ((float) board_temp/16));
+    } else
+      printf("CRC wrong for 1Wire ID on baseboard.\n");
+    if (calc_crc(ext_id[0], ext_id[1]) == 0) {
+      printf("SCU Ext Board: 0x%08"EB_DATA_FMT"%08"EB_DATA_FMT"", ext_id[0], ext_id[1]);
+      printf("   Temp: %.4f °C\n", ((float) ext_temp/16));
+    } else
+      printf("CRC wrong for 1Wire ID on extension board.\n");
+    if (calc_crc(backplane_id[0], backplane_id[1]) == 0) {
+      printf("SCU Backplane: 0x%08"EB_DATA_FMT"%08"EB_DATA_FMT"", backplane_id[0], backplane_id[1]);
+      printf("   Temp: %.4f °C\n", ((float) backplane_temp/16));
+    } else
+      printf("CRC wrong for 1Wire ID on backplane.\n");
+    
+
+    for (slave_id = 1; slave_id <= 12; slave_id++) {
+
+	    if ((status = eb_cycle_open(device,0, eb_block, &cycle)) != EB_OK)
+	      die("EP eb_cycle_open", status);
+       
+	    eb_cycle_read(cycle, scu_bus + slave_id * (1<<17) + WB_SCU_REG,   EB_BIG_ENDIAN|EB_DATA16, &card_id[3]);
+	    eb_cycle_read(cycle, scu_bus + slave_id * (1<<17) + WB_SCU_REG+2, EB_BIG_ENDIAN|EB_DATA16, &card_id[2]);
+	    eb_cycle_read(cycle, scu_bus + slave_id * (1<<17) + WB_SCU_REG+4, EB_BIG_ENDIAN|EB_DATA16, &card_id[1]);
+	    eb_cycle_read(cycle, scu_bus + slave_id * (1<<17) + WB_SCU_REG+6, EB_BIG_ENDIAN|EB_DATA16, &card_id[0]);   
+	    eb_cycle_read(cycle, scu_bus + slave_id * (1<<17) + WB_SCU_REG+8, EB_BIG_ENDIAN|EB_DATA16, &temp_data);
+      eb_cycle_read(cycle, scu_bus + slave_id * (1<<17) + CID_SYS, EB_BIG_ENDIAN|EB_DATA16, &cid_sys);   
+      eb_cycle_read(cycle, scu_bus + slave_id * (1<<17) + CID_GRP, EB_BIG_ENDIAN|EB_DATA16, &cid_grp);   
+    
+	    if ((status = eb_cycle_close(cycle)) != EB_OK)
+	      // die("EP eb_cycle_close", status);
+	      continue;
+
+
+      if (calc_crc(card_id[3] << 16 | card_id[2], card_id[1] << 16 | card_id[0]) == 0) {	
+	      printf("slave %d: 0x%04"EB_DATA_FMT"%04"EB_DATA_FMT"%04"EB_DATA_FMT"%04"EB_DATA_FMT"", slave_id, card_id[3], card_id[2], card_id[1], card_id[0]);
+	      printf("   Temp: %.4f °C", ((float) temp_data/16));
+      } 
+      printf("   CID_SYS: 0x%"EB_DATA_FMT" CID_GRP: 0x%"EB_DATA_FMT"\n", cid_sys, cid_grp);
+    }
+
+    printf("Press any key to quit.\n");
+    usleep(100000);
+     
+    printf("\033[2J");        /*  clear the screen  */
+    printf("\033[H");	    /* jump to top left */
+  }        
+
+  
+  /* close handler cleanly */
+  if ((status = eb_device_close(device)) != EB_OK)
+    die("eb_device_close",status);
+  if ((status = eb_socket_close(socket)) != EB_OK)
+    die("eb_socket_close",status);
+  
+  return 0;
+}

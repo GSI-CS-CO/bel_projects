@@ -1,0 +1,27 @@
+# PREFIX  controls where programs and libraries get installed
+# Example usage:
+#   make PREFIX=/usr all
+@usage: make all
+PWD     := $(shell pwd)
+HOME    = $(PWD)/..
+ODIR    = $(HOME)/eb_temp
+IDIR    = $(HOME)/eb_temp
+WBDIR   = $(HOME)/wb_api
+DEVDIR  = $(HOME)/wb_devices
+PREFIX  ?= /usr/local
+SVNDIR  = $(HOME)/../production/utility/i386
+INCLUDE = -I$(IDIR) -I$(WBDIR) -I$(DEVDIR)
+LIBS	= -letherbone
+FLAG    = DONTSIMULATE
+
+all: eb_temp
+
+eb_temp: $(IDIR)/eb_temp.c
+	@echo Making eb_temp
+	gcc -g -Wall -D$(FLAG) $(INCLUDE) -Wl,-rpath,$(PREFIX)/lib -o $(ODIR)/eb_temp $(IDIR)/eb_temp.c $(IDIR)/dow_crc.c $(LIBS)
+
+clean:
+	@echo cleaning stuff
+	rm -f eb_temp
+
+
