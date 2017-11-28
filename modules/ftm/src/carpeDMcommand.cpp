@@ -143,13 +143,13 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
                                               mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
                                             }
     else if (g[v].type == dnt::sCmdFlow)    { uint16_t cmdQty = s2u<uint16_t>(g[v].qty);
-                                              sLog << " Flowing from <" << target << "> to <" << destination << ">" << std::endl;
+                                              sLog << " Flowing from <" << target << "> to <" << destination << ">, permanent defDest change='" << s2u<bool>(g[v].perma) << "'" << std::endl;
                                               uint32_t adr = LM32_NULL_PTR;
                                               try { adr = getNodeAdr(destination, Direction::DOWNLOAD, AdrType::INTERNAL); } catch (std::runtime_error const& err) {
                                                 throw std::runtime_error("Destination '" + destination + "'' invalid: " + std::string(err.what()));
                                               }
 
-                                              mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, false );
+                                              mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, s2u<bool>(g[v].perma) );
                                             }
     else if (g[v].type == dnt::sCmdFlush)   { mc = (mc_ptr) new MiniFlush(cmdTvalid, cmdPrio, s2u<bool>(g[v].qIl), s2u<bool>(g[v].qHi), s2u<bool>(g[v].qLo));}
     else if (g[v].type == dnt::sCmdWait)    { uint64_t cmdTwait  = s2u<uint64_t>(g[v].tWait);

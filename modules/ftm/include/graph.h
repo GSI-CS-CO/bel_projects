@@ -88,6 +88,7 @@ public:
   //Flow, Noop
   std::string prio = sZero;
   std::string qty = "1";
+  std::string perma = sZero;
 
   //Wait
   std::string tWait = sUndefined64;

@@ -66,6 +66,7 @@ myVertex::myVertex(myVertex const &src) {
   //Flow, Noop
   this->prio = src.prio;
   this->qty = src.qty;
+  this->perma = src.perma;
 
   //Wait
   this->tWait  = src.tWait;

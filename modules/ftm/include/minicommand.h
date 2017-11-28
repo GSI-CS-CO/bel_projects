@@ -43,7 +43,7 @@ class MiniFlow : public MiniCommand {
   uint32_t destAdr;
 public:
   MiniFlow(uint64_t tValid, uint8_t prio, uint16_t qty, uint32_t destAdr, bool permanent)
-      : MiniCommand(tValid, (ACT_TYPE_FLOW << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS ), destAdr(destAdr) {}
+      : MiniCommand(tValid, (ACT_TYPE_FLOW << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS | ( permanent & ACT_CHP_MSK) << ACT_CHP_POS ), destAdr(destAdr) {}
   ~MiniFlow() {};
 
 

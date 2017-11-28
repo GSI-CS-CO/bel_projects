@@ -110,6 +110,7 @@ namespace DotStr {
         const std::string sDst         = "dest";
         const std::string sDstPattern  = "destpattern";
         const std::string sDstBeamproc = "destbeamproc";
+        const std::string sPermanent   = "permanent"; 
       }  
     }
 
