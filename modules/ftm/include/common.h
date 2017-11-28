@@ -59,11 +59,20 @@
   (byte & 0x01 ? '1' : '0') 
 
 
-#define UPLOAD    1
-#define DOWNLOAD  0
+enum class AdrType {EXTERNAL, INTERNAL, MGMT, PEER};
+enum class Direction {UPLOAD, DOWNLOAD};
+enum class FwId { FWID_RAM_TOO_SMALL      = -1, 
+                  FWID_BAD_MAGIC          = -2,
+                  FWID_BAD_PROJECT_NAME   = -3,
+                  FWID_NOT_FOUND          = -4,
+                  FWID_BAD_VERSION_FORMAT = -5,
+                  VERSION_MAJOR           = 0,
+                  VERSION_MINOR           = 1,
+                  VERSION_REVISION        = 2,
+                  VERSION_MAJOR_MUL       = 10000,
+                  VERSION_MINOR_MUL       = 100,
+                  VERSION_REVISION_MUL    = 1};  
 
-#define EXTERNAL  1
-#define INTERNAL  0
 
 class Node;
 class MiniCommand;
@@ -124,7 +133,7 @@ inline T s2u(const std::string& s) {
   if(s == sTrue)  {return (T)1;}
   if(s == sFalse) {return (T)0;}
   T ret;
-  try { ret = (T)std::stoull(s, 0, 0);} catch (...) { std::runtime_error("Cannot convert string '" + s + "' to number\n"); }
+  try { ret = (T)std::stoull(s, 0, 0);} catch (...) { throw std::runtime_error("Cannot convert string '" + s + "' to number\n"); }
   return ret;
 
 }

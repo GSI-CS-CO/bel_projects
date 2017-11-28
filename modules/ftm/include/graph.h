@@ -18,13 +18,13 @@ class Node;
 
 class  myVertex {
 public:
-  std::string name;
+  std::string name = sUndefined;
   std::string patName   = sUndefined;
   std::string bpName    = sUndefined;
   std::string cpu       = sUndefined;
   std::string thread    = sUndefined;
-  uint32_t hash;
-  node_ptr np;
+  uint32_t hash = uUndefined32;
+  node_ptr np = nullptr;
 
   
   std::string patEntry  = sZero;
@@ -43,9 +43,9 @@ public:
   // Option 2 (hard, but very clean): 
   //    overload graphviz_read subfunctions so the parser evaluates typefield first, then have a 
   //    Node class factory and directly reference derived class members in property map.
-  std::string type;
+  std::string type = sUndefined;
 
-  std::string flags;
+  std::string flags = sUndefined32;
 
   //Meta
 
@@ -97,7 +97,7 @@ public:
   std::string cmdDestBp   = sUndefined;
   std::string cmdDestPat  = sUndefined;
 
-  myVertex() : name(sUndefined), cpu(sZero), hash(uUndefined32), np(nullptr), type(sUndefined), flags(sUndefined32) {}
+  myVertex() {}
   
   myVertex(std::string name, std::string cpu, uint32_t hash, node_ptr np, std::string type, std::string flags) : name(name), cpu(cpu), hash(hash), np(np), type(type), flags(flags) {}
   myVertex(std::string name, std::string pattern, std::string beamproc, std::string cpu, uint32_t hash, node_ptr np, std::string type, std::string flags) : name(name), patName(pattern), bpName(beamproc), cpu(cpu), hash(hash), np(np), type(type), flags(flags) {}

@@ -174,7 +174,7 @@ bool CarpeDM::connect(const std::string& en) {
         ret = true;
       }
     } catch(...) {
-      //TODO report why we could not connect / find CPUs
+      throw std::runtime_error("Could not find CPUs running valid DM Firmware\n" );
     }
 
     if(verbose) {
@@ -340,14 +340,14 @@ bool CarpeDM::connect(const std::string& en) {
 
 
     try { boost::split(x, s, boost::is_any_of(".")); } catch (...) {};
-    if (x.size() != 3) {return FWID_BAD_VERSION_FORMAT;}
+    if (x.size() != 3) {return (int)FwId::FWID_BAD_VERSION_FORMAT;}
 
-    verMaj = std::stoi (x[VERSION_MAJOR]);
-    verMin = std::stoi (x[VERSION_MINOR]);
-    verRev = std::stoi (x[VERSION_REVISION]);
+    verMaj = std::stoi (x[(int)FwId::VERSION_MAJOR]);
+    verMin = std::stoi (x[(int)FwId::VERSION_MINOR]);
+    verRev = std::stoi (x[(int)FwId::VERSION_REVISION]);
     
-    if (verMaj < 0 || verMaj > 99 || verMin < 0 || verMin > 99 || verRev < 0 || verRev > 99) {return  FWID_BAD_VERSION_FORMAT;}
-    else {return verMaj * VERSION_MAJOR_MUL + verMin * VERSION_MINOR_MUL  + verRev * VERSION_REVISION_MUL;}
+    if (verMaj < 0 || verMaj > 99 || verMin < 0 || verMin > 99 || verRev < 0 || verRev > 99) {return (int)FwId::FWID_BAD_VERSION_FORMAT;}
+    else {return verMaj * (int)FwId::VERSION_MAJOR_MUL + verMin * (int)FwId::VERSION_MINOR_MUL  + verRev * (int)FwId::VERSION_REVISION_MUL;}
 
 
   }
@@ -365,7 +365,7 @@ bool CarpeDM::connect(const std::string& en) {
     struct  sdb_device& ram = myDevs.at(cpuIdx);
     vAdr fwIdAdr;
 
-    if ((ram.sdb_component.addr_last - ram.sdb_component.addr_first + 1) < SHARED_OFFS) { return FWID_RAM_TOO_SMALL;}
+    if ((ram.sdb_component.addr_last - ram.sdb_component.addr_first + 1) < SHARED_OFFS) { return (int)FwId::FWID_RAM_TOO_SMALL;}
 
     for (uint32_t adr = ram.sdb_component.addr_first + BUILDID_OFFS; adr < ram.sdb_component.addr_first + SHARED_OFFS; adr += 4) fwIdAdr.push_back(adr);
     vBuf fwIdData = ebReadCycle(ebd, fwIdAdr);
@@ -373,14 +373,14 @@ bool CarpeDM::connect(const std::string& en) {
 
     //check for magic word
     pos = 0;
-    if(s.find(tagMagic, 0) == std::string::npos) {return FWID_BAD_MAGIC;} 
+    if(s.find(tagMagic, 0) == std::string::npos) {return (int)FwId::FWID_BAD_MAGIC;} 
     //check for project name
     pos = s.find(tagProject, 0);
-    if (pos == std::string::npos || (s.find(tagExpName, pos + tagProject.length()) != pos + tagProject.length())) {return FWID_BAD_PROJECT_NAME;} 
+    if (pos == std::string::npos || (s.find(tagExpName, pos + tagProject.length()) != pos + tagProject.length())) {return (int)FwId::FWID_BAD_PROJECT_NAME;} 
     //get Version string xx.yy.zz    
     pos = s.find(tagVersion, 0);
     posEnd = s.find(tagVersionEnd, pos + tagVersion.length());
-    if((pos == std::string::npos) || (posEnd == std::string::npos)) {return FWID_NOT_FOUND;}
+    if((pos == std::string::npos) || (posEnd == std::string::npos)) {return (int)FwId::FWID_NOT_FOUND;}
     version = s.substr(pos + tagVersion.length(), posEnd - (pos + tagVersion.length()));
     
     int ret = parseFwVersionString(version);
@@ -389,9 +389,9 @@ bool CarpeDM::connect(const std::string& en) {
   }
 
 
-  uint8_t CarpeDM::getNodeCpu(const std::string& name, bool direction) {
+  uint8_t CarpeDM::getNodeCpu(const std::string& name, Direction dir) {
      
-    AllocTable& at = (direction == UPLOAD ? atUp : atDown );
+    AllocTable& at = (dir == Direction::UPLOAD ? atUp : atDown );
     uint32_t hash;
     if (!(hm.lookup(name))) {throw std::runtime_error( "Unknown Node Name '" + name + "' when lookup up hosting cpu"); return -1;} 
     hash = hm.lookup(name).get(); //just pass it on
@@ -402,17 +402,25 @@ bool CarpeDM::connect(const std::string& en) {
     return x->cpu;
   }
 
-  uint32_t CarpeDM::getNodeAdr(const std::string& name, bool direction, bool intExt) {
+  uint32_t CarpeDM::getNodeAdr(const std::string& name, Direction dir, AdrType adrT) {
     std::cout << "Looking up Adr of " << name << std::endl;
     if(name == DotStr::Node::Special::sIdle) return LM32_NULL_PTR; //idle node is resolved as a null ptr without comment
 
-    AllocTable& at = (direction == UPLOAD ? atUp : atDown );
+    AllocTable& at = (dir == Direction::UPLOAD ? atUp : atDown );
     uint32_t hash;
     if (!(hm.lookup(name))) {throw std::runtime_error( "Unknown Node Name '" + name + "' when lookup up address"); return LM32_NULL_PTR;} 
     hash = hm.lookup(name).get(); //just pass it on
     auto x = at.lookupHash(hash);
     if (!(at.isOk(x)))  {throw std::runtime_error( "Could not find Node in allocation table"); return LM32_NULL_PTR;}
-    else            {return (intExt == INTERNAL ? at.adr2intAdr(x->cpu, x->adr) : at.adr2extAdr(x->cpu, x->adr));}
+    else {
+      switch (adrT) {
+        case AdrType::MGMT      : return x->adr; break;
+        case AdrType::INTERNAL  : return at.adr2intAdr(x->cpu, x->adr); break;
+        case AdrType::EXTERNAL  : return at.adr2extAdr(x->cpu, x->adr); break;
+        case AdrType::PEER      : return at.adr2peerAdr(x->cpu, x->adr); break;
+        default                 : throw std::runtime_error( "Unknown Adr Type conversion"); return LM32_NULL_PTR;
+      }
+    }  
   }
 
  
@@ -442,10 +450,10 @@ void CarpeDM::showCpuList() {
     return (atDown.isOk(atDown.lookupHash(hm.lookup(name).get())));
   }  
 
-  void CarpeDM::show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta ) {
+  void CarpeDM::show(const std::string& title, const std::string& logDictFile, Direction dir, bool filterMeta ) {
 
-    Graph& g        = (direction == UPLOAD ? gUp  : gDown);
-    AllocTable& at  = (direction == UPLOAD ? atUp : atDown);
+    Graph& g        = (dir == Direction::UPLOAD ? gUp  : gDown);
+    AllocTable& at  = (dir == Direction::UPLOAD ? atUp : atDown);
 
 
 

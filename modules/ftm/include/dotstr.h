@@ -51,6 +51,7 @@ namespace DotStr {
       extern const std::string sDynTef       ;
       extern const std::string sDynRes       ;
       extern const std::string sMeta         ;
+      extern const std::string sAny; 
     }
   }
 
