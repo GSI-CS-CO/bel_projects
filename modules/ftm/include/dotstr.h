@@ -112,6 +112,7 @@ namespace DotStr {
         extern const std::string sDst  ;
         extern const std::string sDstPattern;
         extern const std::string sDstBeamproc;
+        extern const std::string sPermanent;
         
         
       }  

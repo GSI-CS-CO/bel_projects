@@ -139,7 +139,7 @@ uint32_t* execNoop(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   uint32_t* ret = (uint32_t*)cmd[T_CMD_FLOW_DEST >> 2]; 
   DBPRINT3("#%02u: Routing Flow to 0x%08x\n", cpuId, (uint32_t)ret);
-  if(node[NODE_FLAGS >> 2] & ACT_CHP_SMSK) node[NODE_DEF_DEST_PTR >> 2] = (uint32_t)ret;
+  if(cmd[T_CMD_ACT >> 2] & ACT_CHP_SMSK) node[NODE_DEF_DEST_PTR >> 2] = (uint32_t)ret;
   return ret;
 
 }

@@ -292,6 +292,8 @@ bool CarpeDM::connect(const std::string& en) {
     dp.property(dnp::Cmd::sPrio,                boost::get(&myVertex::prio,       g));
     dp.property(dnp::Cmd::sQty,                 boost::get(&myVertex::qty,        g));
     dp.property(dnp::Cmd::sTimeWait,            boost::get(&myVertex::tWait,      g));
+    dp.property(dnp::Cmd::sPermanent,           boost::get(&myVertex::perma,      g));
+
     //for .dot-cmd abuse
     dp.property(dnp::Cmd::sTarget,              boost::get(&myVertex::cmdTarget,  g));
     dp.property(dnp::Cmd::sDst,                 boost::get(&myVertex::cmdDest,    g));

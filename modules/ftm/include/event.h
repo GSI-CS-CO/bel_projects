@@ -119,8 +119,8 @@ class Flow : public Command {
 
 public:
   Flow(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, b, flags) {}
-  Flow(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint16_t qty)
-      : Command(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLOW << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLOW << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS )   {}
+  Flow(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint16_t qty, bool permanent)
+      : Command(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLOW << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLOW << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS | permanent << ACT_CHP_POS )   {}
   ~Flow() {};
     node_ptr clone() const { return boost::make_shared<Flow>(*this); }
 
