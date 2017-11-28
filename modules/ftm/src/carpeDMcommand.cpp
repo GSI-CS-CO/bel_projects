@@ -131,8 +131,8 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
  
     if (g[v].type == dnt::sCmdOrigin)   { 
       //Leave out for now and autocorrect cpu
-      //if (getNodeCpu(target, DOWNLOAD) != cpu) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");try { adr = getNodeAdr(destination, Direction::DOWNLOAD, AdrType::INTERNAL); } catch (std::runtime_error const& err) {
-      try { setThrOrigin(getNodeCpu(target, Direction::DOWNLOAD), thr, target, ew); } catch (std::runtime_error const& err) {
+      //if (getNodeCpu(target, DOWNLOAD) != cpu) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INTERNAL); } catch (std::runtime_error const& err) {
+      try { setThrOrigin(getNodeCpu(target, TransferDir::DOWNLOAD), thr, target, ew); } catch (std::runtime_error const& err) {
         throw std::runtime_error("Cannot execute command '" + g[v].type + "', " + std::string(err.what())); 
       } 
       continue;
@@ -145,7 +145,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     else if (g[v].type == dnt::sCmdFlow)    { uint16_t cmdQty = s2u<uint16_t>(g[v].qty);
                                               sLog << " Flowing from <" << target << "> to <" << destination << ">, permanent defDest change='" << s2u<bool>(g[v].perma) << "'" << std::endl;
                                               uint32_t adr = LM32_NULL_PTR;
-                                              try { adr = getNodeAdr(destination, Direction::DOWNLOAD, AdrType::INTERNAL); } catch (std::runtime_error const& err) {
+                                              try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INTERNAL); } catch (std::runtime_error const& err) {
                                                 throw std::runtime_error("Destination '" + destination + "'' invalid: " + std::string(err.what()));
                                               }
 
@@ -218,7 +218,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     uint8_t b[4];
 
     ew.va.push_back(getThrInitialNodeAdr(cpuIdx, thrIdx));
-    writeLeNumberToBeBytes<uint32_t>(b, getNodeAdr(name, Direction::DOWNLOAD, AdrType::INTERNAL));
+    writeLeNumberToBeBytes<uint32_t>(b, getNodeAdr(name, TransferDir::DOWNLOAD, AdrType::INTERNAL));
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
     return ew;
   }
@@ -528,7 +528,7 @@ uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
 std::pair<int, int> CarpeDM::findRunningPattern(const std::string& sPattern) {
   std::pair<int, int> res = {-1, -1};
   vStrC members   = getPatternMembers (sPattern);
-  try { res.first = getNodeCpu(firstString(members), Direction::DOWNLOAD); } catch (...) {res.first = -1; return res;}
+  try { res.first = getNodeCpu(firstString(members), TransferDir::DOWNLOAD); } catch (...) {res.first = -1; return res;}
 
   uint32_t thrds  = getThrRun(res.first);
   
@@ -582,14 +582,14 @@ vEbwrs& CarpeDM::abortPattern(const std::string& sPattern, vEbwrs& ew) {
 
 //Requests thread <thrIdx> to start at node <sNode>
 vEbwrs& CarpeDM::startNodeOrigin(const std::string& sNode, uint8_t thrIdx, vEbwrs& ew) {
-  uint8_t cpuIdx    = getNodeCpu(sNode, Direction::DOWNLOAD);
+  uint8_t cpuIdx    = getNodeCpu(sNode, TransferDir::DOWNLOAD);
   setThrOrigin(cpuIdx, thrIdx, sNode, ew); //configure thread and run it
   startThr(cpuIdx, thrIdx, ew);
   return ew;
 }
 //Requests a start at node <sNode>
 vEbwrs& CarpeDM::startNodeOrigin(const std::string& sNode, vEbwrs& ew) {
-  uint8_t cpuIdx    = getNodeCpu(sNode, Direction::DOWNLOAD);
+  uint8_t cpuIdx    = getNodeCpu(sNode, TransferDir::DOWNLOAD);
   int thrIdx = 0; //getIdleThread(cpuIdx); //find a free thread we can use to run our pattern
   if (thrIdx == _THR_QTY_) throw std::runtime_error( "Found no free thread on " + std::to_string(cpuIdx) + "'s hosting cpu");
   setThrOrigin(cpuIdx, thrIdx, sNode, ew); //configure thread and run it
@@ -599,7 +599,7 @@ vEbwrs& CarpeDM::startNodeOrigin(const std::string& sNode, vEbwrs& ew) {
 
 //Requests stop at node <sNode> (flow to idle)
 vEbwrs& CarpeDM::stopNodeOrigin(const std::string& sNode, vEbwrs& ew) {
-  mc_ptr mc = (mc_ptr) new MiniFlow(0, PRIO_LO, 1, getNodeAdr(DotStr::Node::Special::sIdle, Direction::DOWNLOAD, AdrType::INTERNAL), false );
+  mc_ptr mc = (mc_ptr) new MiniFlow(0, PRIO_LO, 1, getNodeAdr(DotStr::Node::Special::sIdle, TransferDir::DOWNLOAD, AdrType::INTERNAL), false );
   //send a command: tell patternExitNode to change the flow to Idle
   return createCommand(sNode, PRIO_LO, mc, ew);
 
