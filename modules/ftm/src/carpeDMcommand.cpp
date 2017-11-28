@@ -24,21 +24,39 @@ namespace det = DotStr::Edge::TypeVal;
 
 
 
-std::pair<int, int> CarpeDM::parseCpuAndThr(vertex_t v, Graph& g) {
+boost::optional<std::pair<int, int>> CarpeDM::parseCpuAndThr(vertex_t v, Graph& g) {
 
   uint8_t  cpu, thr;
+  std::pair<int, int> res;
+
+  //sLog << "Try parsing CPU " << g[v].cpu << " and Thr " << g[v].thread << std::endl;   
+        
 
   try { cpu = s2u<uint8_t>(g[v].cpu);   
         thr = s2u<uint8_t>(g[v].thread);
-      } catch (...) { throw std::runtime_error("Node '" + g[v].name + "'s has non numeric value properties '" + DotStr::Node::Prop::Base::sCpu + " or " + DotStr::Node::Prop::Base::sThread + "\n"); }
+        res = {cpu, thr};
+      } catch (...) { 
+      //  sLog << "Caused exception, returning none" << std::endl; 
+        return boost::optional<std::pair<int, int>>(); 
+      }
 
-  if (!((cpu >= 0) && (cpu < getCpuQty()))) throw std::runtime_error("Node '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' (" + std::to_string(cpu) + " is out of range (0-" + std::to_string(getCpuQty()-1) + "\n");
-  if (!((thr >= 0) && (thr < _THR_QTY_  ))) throw std::runtime_error("Node '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sThread + "' (" + std::to_string(cpu) + " is out of range (0-" + std::to_string(_THR_QTY_-1) + "\n");
 
-  std::pair<int, int> res = {cpu, thr};
+  if ( (cpu < 0) || (cpu >= getCpuQty()) || (thr < 0) || (thr >= _THR_QTY_  ) ) { 
+    //sLog << "OOR, returning none" << std::endl; 
+    return boost::optional<std::pair<int, int>>(); 
+  }
+
+
+  //sLog << "Valid, returning " << res.first << " " << res.second << std::endl;
   return res;
 }
 
+
+/*
+throw std::runtime_error("Node '" + g[v].name + "'s has non numeric value properties '" + DotStr::Node::Prop::Base::sCpu + " or " + DotStr::Node::Prop::Base::sThread + "\n");
+throw std::runtime_error("Node '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' (" + std::to_string(cpu) + " is out of range (0-" + std::to_string(getCpuQty()-1) + "\n");
+throw std::runtime_error("Node '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sThread + "' (" + std::to_string(cpu) + " is out of range (0-" + std::to_string(_THR_QTY_-1) + "\n");
+*/
 
 vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
@@ -77,38 +95,47 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     
 
     // Commands with optional target
+
     if (g[v].type == dnt::sCmdStart)   {
-      
-      target = getPatternEntryNode(g[v].patName); 
-      if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(target, ew);  }
-      else {
-        std::tie(cpu, thr) = parseCpuAndThr(v, g);
+      if(parseCpuAndThr(v, g)) {
+        std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
         sLog << " Starting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  startThr(cpu, thr, ew); 
+      } else {
+        target = getPatternEntryNode(g[v].patName); 
+        if (hm.lookup(target)) {sLog << " Starting at <" << target << ">" << std::endl; startNodeOrigin(target, ew);  }
+        else throw std::runtime_error("Cannot execute command '" + g[v].type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n"); 
       }
       continue;
     }
     if (g[v].type == dnt::sCmdStop)    {
-      if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(target, ew); }
-      else {
-        std::tie(cpu, thr) = parseCpuAndThr(v, g);
-        sLog << " Stopping (trying) cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; stopPattern(getNodePattern(getThrCursor(cpu, thr)), ew);
-      }  //careful, this only works safely for repeating patterns. No guarantees otherwise
+      if(parseCpuAndThr(v, g)) {
+        std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
+        sLog << " Stopping (trying) cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl;  stopPattern(getNodePattern(getThrCursor(cpu, thr)), ew); 
+      } else {
+        if (hm.lookup(target)) { sLog << " Stopping at <" << target << ">" << std::endl; stopNodeOrigin(target, ew); }
+        else throw std::runtime_error("Cannot execute command '" + g[v].type + "' No valid cpu/thr provided and '" + target + "' is not a valid node name\n");  
+      }
       continue;
     }  
-    else if (g[v].type == dnt::sCmdAbort)   { 
-      if (hm.lookup(target)) {sLog << " Aborting (trying) at <" << target << ">" << std::endl; abortNodeOrigin(target, ew); }
-      else {
-        std::tie(cpu, thr) = parseCpuAndThr(v, g);
-        sLog << " Aborting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; abortThr(cpu, thr, ew); }
-        
-       continue;  
+    else if (g[v].type == dnt::sCmdAbort)   {
+      if(parseCpuAndThr(v, g)) {
+        std::tie(cpu, thr) = parseCpuAndThr(v, g).get();
+        sLog << " Aborting cpu=" << (int)cpu << ", thr=" << (int)thr << std::endl; abortThr(cpu, thr, ew); 
+      } else {
+        if (hm.lookup(target)) {sLog << " Aborting (trying) at <" << target << ">" << std::endl; abortNodeOrigin(target, ew); }
+        else throw std::runtime_error("Cannot execute command '" + g[v].type + "'. No valid cpu/thr provided and '" + target + "' is not a valid node name\n"); 
+      }
+      continue;  
     }
 
  
     if (g[v].type == dnt::sCmdOrigin)   { 
       //Leave out for now and autocorrect cpu
-      //if (getNodeCpu(target, DOWNLOAD) != cpu) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");
-      setThrOrigin(getNodeCpu(target, DOWNLOAD), thr, target, ew); continue;
+      //if (getNodeCpu(target, DOWNLOAD) != cpu) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");try { adr = getNodeAdr(destination, Direction::DOWNLOAD, AdrType::INTERNAL); } catch (std::runtime_error const& err) {
+      try { setThrOrigin(getNodeCpu(target, Direction::DOWNLOAD), thr, target, ew); } catch (std::runtime_error const& err) {
+        throw std::runtime_error("Cannot execute command '" + g[v].type + "', " + std::string(err.what())); 
+      } 
+      continue;
     }
 
     // Commands targeted at cmd queue of individual blocks, using miniCommand (mc) class
@@ -118,8 +145,8 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     else if (g[v].type == dnt::sCmdFlow)    { uint16_t cmdQty = s2u<uint16_t>(g[v].qty);
                                               sLog << " Flowing from <" << target << "> to <" << destination << ">" << std::endl;
                                               uint32_t adr = LM32_NULL_PTR;
-                                              try { adr = getNodeAdr(destination, DOWNLOAD, INTERNAL); } catch (std::runtime_error const& err) {
-                                                throw std::runtime_error("Destination invalid, " + std::string(err.what()));
+                                              try { adr = getNodeAdr(destination, Direction::DOWNLOAD, AdrType::INTERNAL); } catch (std::runtime_error const& err) {
+                                                throw std::runtime_error("Destination '" + destination + "'' invalid: " + std::string(err.what()));
                                               }
 
                                               mc = (mc_ptr) new MiniFlow(cmdTvalid, cmdPrio, cmdQty, adr, false );
@@ -191,7 +218,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     uint8_t b[4];
 
     ew.va.push_back(getThrInitialNodeAdr(cpuIdx, thrIdx));
-    writeLeNumberToBeBytes<uint32_t>(b, getNodeAdr(name, DOWNLOAD, INTERNAL));
+    writeLeNumberToBeBytes<uint32_t>(b, getNodeAdr(name, Direction::DOWNLOAD, AdrType::INTERNAL));
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
     return ew;
   }
@@ -501,7 +528,7 @@ uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
 std::pair<int, int> CarpeDM::findRunningPattern(const std::string& sPattern) {
   std::pair<int, int> res = {-1, -1};
   vStrC members   = getPatternMembers (sPattern);
-  try { res.first = getNodeCpu(firstString(members), DOWNLOAD); } catch (...) {res.first = -1; return res;}
+  try { res.first = getNodeCpu(firstString(members), Direction::DOWNLOAD); } catch (...) {res.first = -1; return res;}
 
   uint32_t thrds  = getThrRun(res.first);
   
@@ -555,14 +582,14 @@ vEbwrs& CarpeDM::abortPattern(const std::string& sPattern, vEbwrs& ew) {
 
 //Requests thread <thrIdx> to start at node <sNode>
 vEbwrs& CarpeDM::startNodeOrigin(const std::string& sNode, uint8_t thrIdx, vEbwrs& ew) {
-  uint8_t cpuIdx    = getNodeCpu(sNode, DOWNLOAD);
+  uint8_t cpuIdx    = getNodeCpu(sNode, Direction::DOWNLOAD);
   setThrOrigin(cpuIdx, thrIdx, sNode, ew); //configure thread and run it
   startThr(cpuIdx, thrIdx, ew);
   return ew;
 }
 //Requests a start at node <sNode>
 vEbwrs& CarpeDM::startNodeOrigin(const std::string& sNode, vEbwrs& ew) {
-  uint8_t cpuIdx    = getNodeCpu(sNode, DOWNLOAD);
+  uint8_t cpuIdx    = getNodeCpu(sNode, Direction::DOWNLOAD);
   int thrIdx = 0; //getIdleThread(cpuIdx); //find a free thread we can use to run our pattern
   if (thrIdx == _THR_QTY_) throw std::runtime_error( "Found no free thread on " + std::to_string(cpuIdx) + "'s hosting cpu");
   setThrOrigin(cpuIdx, thrIdx, sNode, ew); //configure thread and run it
@@ -572,7 +599,7 @@ vEbwrs& CarpeDM::startNodeOrigin(const std::string& sNode, vEbwrs& ew) {
 
 //Requests stop at node <sNode> (flow to idle)
 vEbwrs& CarpeDM::stopNodeOrigin(const std::string& sNode, vEbwrs& ew) {
-  mc_ptr mc = (mc_ptr) new MiniFlow(0, PRIO_LO, 1, getNodeAdr(DotStr::Node::Special::sIdle, DOWNLOAD, INTERNAL), false );
+  mc_ptr mc = (mc_ptr) new MiniFlow(0, PRIO_LO, 1, getNodeAdr(DotStr::Node::Special::sIdle, Direction::DOWNLOAD, AdrType::INTERNAL), false );
   //send a command: tell patternExitNode to change the flow to Idle
   return createCommand(sNode, PRIO_LO, mc, ew);
 

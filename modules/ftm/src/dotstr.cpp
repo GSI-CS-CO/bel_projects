@@ -49,6 +49,7 @@ namespace DotStr {
       const std::string sDynTef       = "dyntef";
       const std::string sDynRes       = "dynres";
       const std::string sMeta         = "meta";
+      const std::string sAny          = "";
     }
   }
 

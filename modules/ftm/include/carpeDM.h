@@ -10,6 +10,7 @@
 #include <inttypes.h>
 #include <map>
 #include <boost/graph/graphviz.hpp>
+#include <boost/optional.hpp>
 #include <etherbone.h>
 #include "graph.h"
 #include "common.h"
@@ -20,17 +21,6 @@
 
 
 
-#define FWID_RAM_TOO_SMALL      -1
-#define FWID_BAD_MAGIC          -2
-#define FWID_BAD_PROJECT_NAME   -3
-#define FWID_NOT_FOUND          -4
-#define FWID_BAD_VERSION_FORMAT -5
-#define VERSION_MAJOR           0
-#define VERSION_MINOR           1
-#define VERSION_REVISION        2
-#define VERSION_MAJOR_MUL       10000
-#define VERSION_MINOR_MUL       100
-#define VERSION_REVISION_MUL    1
 
 class MiniCommand;
 
@@ -80,7 +70,7 @@ private:
   int getIdleThread(uint8_t cpuIdx);
 
   const std::string& firstString(const vStrC& v) {return ((v.size() > 0) ? *(v.begin()) : DotStr::Misc::sUndefined);}
-  std::pair<int, int> parseCpuAndThr(vertex_t v, Graph& g);
+  boost::optional<std::pair<int, int>> parseCpuAndThr(vertex_t v, Graph& g);
 
 protected:
 
@@ -226,8 +216,8 @@ public:
                bool isThrRunning(uint8_t cpuIdx, uint8_t thrIdx); //true if thread <thrIdx> is running
             
 // The lazy interface ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            uint8_t getNodeCpu(const std::string& name, bool direction); //shortcut to obtain a node's cpu by its name 
-           uint32_t getNodeAdr(const std::string& name, bool direction, bool intExt); //shortcut to obtain a node's address by its name
+            uint8_t getNodeCpu(const std::string& name, Direction dir); //shortcut to obtain a node's cpu by its name 
+           uint32_t getNodeAdr(const std::string& name, Direction dir, AdrType adrT); //shortcut to obtain a node's address by its name
   const std::string getNodePattern (const std::string& sNode);
   const std::string getNodeBeamproc(const std::string& sNode);
               vStrC getPatternMembers (const std::string& sPattern);
@@ -279,10 +269,10 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
                
 
   // Screen Output //////////////////////////////////////////////////////////////
-  void show(const std::string& title, const std::string& logDictFile, bool direction, bool filterMeta );
-  void showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", UPLOAD, false);} //show a CPU's Upload address table
+  void show(const std::string& title, const std::string& logDictFile, Direction dir, bool filterMeta );
+  void showUp(bool filterMeta) {show("Upload Table", "upload_dict.txt", Direction::UPLOAD, false);} //show a CPU's Upload address table
   void showDown(bool filterMeta) {  //show a CPU's Download address table
-    show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", DOWNLOAD, filterMeta);
+    show("Download Table" + (filterMeta ? std::string(" (noMeta)") : std::string("")), "download_dict.txt", Direction::DOWNLOAD, filterMeta);
   }
   void showCpuList();
   void dumpQueue(uint8_t cpuIdx, const std::string& blockName, uint8_t cmdPrio); //Show all command fields in a Queue (past and current)

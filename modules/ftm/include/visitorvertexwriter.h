@@ -22,16 +22,16 @@ class CmdQMeta;
 class CmdQBuffer;
 class DestList;
 
-namespace formatnum {
-    enum {DEC, HEX, HEX16, HEX32, HEX64, BIT, BOOL};
-}
+
+enum class FormatNum {DEC, HEX, HEX16, HEX32, HEX64, BIT, BOOL};
+
 
 
  class VisitorVertexWriter {
     std::ostream& out;
     void pushStart() const { out << "["; };
     void pushEnd()   const { out << "]"; };
-    void pushPair(const std::string& p, uint64_t v, int base) const;
+    void pushPair(const std::string& p, uint64_t v, FormatNum format) const;
     void pushPair(const std::string& p, const std::string& v) const;
     void pushSingle(const std::string& p) const;
     void pushNodeInfo(const Node& el) const;
