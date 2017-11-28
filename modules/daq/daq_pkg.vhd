@@ -104,5 +104,16 @@ PACKAGE daq_pkg IS
       dtack              : OUT std_logic
     );
   END COMPONENT daq_chan_reg_logic;
- 
+  
+  COMPONENT crc5x16 IS
+    PORT (
+      nReset           : IN std_logic;
+      clk_i            : IN std_logic;
+      data_in          : IN std_logic_vector (15 DOWNTO 0);
+      crc_start_pulse  : IN std_logic;                       -- Set CRC to its Start value on transmission of a new packet
+      crc_en_pulse     : IN std_logic;                       -- Enables CRC calculation on stored previous CRC and data_in 
+      crc_out          : OUT std_logic_vector (15 DOWNTO 0)
+    );
+  END COMPONENT crc5x16;
+
 END daq_pkg;

@@ -231,10 +231,12 @@ architecture daq_arch of daq is
   
  
   signal fifo_full_pg1:           t_daq_ctl(1 to ch_num); 
+  signal fifo_empty_pg1:          t_daq_ctl(1 to ch_num); 
   signal fifo_full_pg1_del:       t_daq_ctl(1 to ch_num); 
 
 
   signal fifo_full_pg2:           t_daq_ctl(1 to ch_num); 
+  signal fifo_empty_pg2:          t_daq_ctl(1 to ch_num); 
   signal fifo_full_pg2_del:       t_daq_ctl(1 to ch_num); 
   
   signal fifo_full_pulse_pg1:     t_daq_ctl(1 to ch_num); 
@@ -260,6 +262,7 @@ architecture daq_arch of daq is
   signal PmDat_Ch:                t_daq_dat(1 to ch_num):= (others => dummy_daq_dat_in);
   signal Ena_PM_rd:               t_daq_ctl(1 to ch_num);
   signal PMDat_rd_pulse:          t_daq_ctl(1 to ch_num);
+  signal DAQDat_rd_pulse:         t_daq_ctl(1 to ch_num);
   signal rd_PMDat:                t_daq_ctl(1 to ch_num);
   signal rd_PMDat_del:            t_daq_ctl(1 to ch_num);
   
@@ -283,7 +286,7 @@ architecture daq_arch of daq is
 --register bit definitions control register (per channel)
   
   signal Ena_PM:                  t_daq_ctl(1 to ch_num); --bit 0 
-  signal Start_PM_pulse:            t_daq_ctl(1 to ch_num);   
+  signal Start_PM_pulse:          t_daq_ctl(1 to ch_num);   
   signal Ena_PM_del:              t_daq_ctl(1 to ch_num);
   signal Sample10us_Ch:           t_daq_ctl(1 to ch_num); --bit 1
   signal Sample100us_Ch:          t_daq_ctl(1 to ch_num); --bit 2
@@ -349,6 +352,7 @@ architecture daq_arch of daq is
  
   signal PM_Timestamp_latched:    t_daq_ts(1 to ch_num);  
   signal PM_Descr_cntr:           t_daq_dctr(1 to ch_num);
+  signal PM_Descr_reached_7:      t_daq_ctl(1 to ch_num);
   signal PM_fifo_data:            t_daq_dat(1 to ch_num);
 
 -- input synchronizations 
@@ -405,7 +409,20 @@ architecture daq_arch of daq is
   signal timestamp_cntr_tag_lw_wr:   std_logic;
   signal timestamp_cntr_tag_hw_wr:   std_logic;
   signal timestamp_cntr_tag:         std_logic_vector (31 downto 0);
-  
+-- For clear and trigger crc calculation and append it to packet as last word  
+  signal crc_pm_en_pulse:            t_daq_ctl(1 to ch_num); --enables crc calculation (width of pulse=1 clk_i) 
+  signal crc_daq_en_pulse:           t_daq_ctl(1 to ch_num);
+  signal crc_pm_start_pulse:         t_daq_ctl(1 to ch_num); --clears crc block on start of crc calculation
+  signal crc_daq_start_pulse:        t_daq_ctl(1 to ch_num);
+
+  signal crc_daq_was_read:           t_daq_ctl(1 to ch_num);  
+  signal crc_pm_was_read:            t_daq_ctl(1 to ch_num);
+  signal crc_pm_data_in:             t_daq_dat(1 to ch_num);  
+  signal crc_daq_data_in:            t_daq_dat(1 to ch_num); 
+  signal crc_daq_word:               t_daq_dat(1 to ch_num);
+  signal crc_pm_out:                 t_daq_dat(1 to ch_num);
+  signal crc_daq_out:                t_daq_dat(1 to ch_num);
+  signal PMDat_to_SCUB:              t_daq_dat(1 to ch_num); --switches Fifo dat or crc data to SCUB
 ----------------------------------------------------------------------------------------------------------------
   
 begin
@@ -473,9 +490,12 @@ end generate Trigger_Registered_Logic;
 
 
 Fifo_Data_Muxes: for I in 1 to ch_num generate
+
     -- Provide data of Page which is actually not active
-    DaqDat_Ch(i)      <=  DaqDat_pg1(i) when page1_active(i) ='0' else
-                          DaqDat_pg2(i) when page1_active(i) ='1' else
+    DaqDat_Ch(i)      <=  DaqDat_pg1(i)   when (page1_active(i) ='0' and fifo_empty_pg1(i) ='0'                            )else  --read from inactive fifo1  as long as not empty
+                          crc_daq_word(i) when (page1_active(i) ='0' and fifo_empty_pg1(i) ='1' and crc_daq_was_read(i)='0')else  --read from crc_daq as long not read
+                          DaqDat_pg2(i)   when (page1_active(i) ='1' and fifo_empty_pg2(i) ='0'                            )else  --read from inactive fifo2 as long as not empty
+                          crc_daq_out(i)  when (page1_active(i) ='0' and fifo_empty_pg2(i) ='1' and crc_daq_was_read(i)='0')else  --read from crc_daq as long not read
                           x"0000";
                         
     daq_fifo_words(i) <=  page1_fifo_words(i) when page1_active(i) ='0' else
@@ -563,7 +583,7 @@ fifo_logic: for i in 1 to ch_num generate
 -- Rd allowed when page passive and DAQ_Descr_runs finished
 -- Wr allowed on active page for data aquisition and on passive page for DAQ_Descr Writes
 -- rd_DAQDat generated from SCU Bus fifo read access
-
+DAQDat_rd_pulse(i) <= rd_DAQDat_del(i) and not rd_DAQDat(i);
 page_access_cntrl:process (page1_active,rd_DAQDat,ChRate_gated,rd_DAQDat_del,DAQ_Descr_runs)
 --todo: Improve case when DAQ_Descr_runs and page changes (should never occur)
 --todo: Maybe set some error bit in Descriptor Header for "false read operation"
@@ -577,7 +597,7 @@ page_access_cntrl:process (page1_active,rd_DAQDat,ChRate_gated,rd_DAQDat_del,DAQ
         rd_pg2(i)<= '0'; 
         we_pg2(i)<= DAQ_Descr_runs(i);        
       else
-        rd_pg2(i)<= rd_DAQDat_del(i) and not rd_DAQDat(i); 
+        rd_pg2(i)<= DAQDat_rd_pulse(i);                       --readout next fifo word after SCUB access   
         we_pg2(i)<= '0';     
       end if;
     else                                                   --page 2 active
@@ -589,7 +609,7 @@ page_access_cntrl:process (page1_active,rd_DAQDat,ChRate_gated,rd_DAQDat_del,DAQ
         rd_pg1(i)<= '0'; 
         we_pg1(i)<= DAQ_Descr_runs(i);        
       else
-        rd_pg1(i)<= rd_DAQDat_del(i) and not rd_DAQDat(i); 
+        rd_pg1(i)<= DAQDat_rd_pulse(i);                       --readout next fifo word after SCUB access 
         we_pg1(i)<= '0';     
       end if;
 
@@ -728,7 +748,76 @@ end generate DAQ_Descr;
 
 
 -------------------------------------------PostMortem and HiRes FIFO Control -------------------------------------------------
-                      
+--crc is calculated on each transmitted packet
+--crc start pulse clears crc calculation, its given when descriptor is shifted to fifo
+--crc_en_pulse is a one clock pulse, same pulse as fifo readout pulse
+--with each fifo readout crc is calculated with the data just read out
+--(the first data visible on fifo q - without any readout - is the first data shiftet in) 
+--crc_data_in are the outputs of the daq fifo or pm fifo
+--crc is transmitted as last word of the transmitted packet
+--just after crc is readout, another crc calculation, which is dont care, takes place
+
+crc_daq_gen_logic : for I in 1 to ch_num generate
+
+  crc_daq_start_pulse(i) <= Daq_Descr_runs(i);      -- clear crc when Descriptor is loaded into DAQ Fifo
+  crc_daq_en_pulse(i)    <= DAQDat_rd_pulse(i);     -- DAQDat_rd_pulse (marking end of SCUB Access) reads the next fifo word (or the crc word)
+
+  crc_daq_data_in(i)     <=  DaqDat_Ch(i);                -- dont worry on crc_daq_data_in when crc is read out
+                                                          -- this  false CRC calculation is suppressed by crc_daq_was_read
+ 
+  crc_daq_was_read_pr : PROCESS (clk_i, nreset)
+  BEGIN
+    IF nreset = '0' THEN
+      crc_daq_was_read(i) <= '0';
+    ELSIF rising_edge (clk_i) THEN
+	   -- marking the end of readout of daq fifo samples including descripto
+      IF (DAQ_Descr_cntr(i) = x"8" AND fifo_empty_pg1(i) = '1' and page1_active(i)='0') or  --inactive pg1 fifo now empty
+		   (DAQ_Descr_cntr(i) = x"8" AND fifo_empty_pg2(i) = '1' and page1_active(i)='1')     --inactive pg2 fifo now empty
+		THEN 
+        IF DAQDat_rd_pulse(i) = '1' THEN                           -- marking falling_edge on crc SCUB readout
+          crc_daq_was_read(i) <= '1';
+        END IF;
+      END IF;
+
+	   IF (DAQ_Descr_cntr(i) = x"8" AND fifo_empty_pg1(i) = '0' and page1_active(i)='0') or  --inactive pg1 fifo now filled
+		   (DAQ_Descr_cntr(i) = x"8" AND fifo_empty_pg2(i) = '0' and page1_active(i)='1')     --inactive pg2 fifo now filled
+		THEN
+        crc_daq_was_read(i) <= '0';
+      END IF;
+    END IF;
+  END PROCESS crc_daq_was_read_pr;
+ 
+end generate crc_daq_gen_logic;  
+
+
+crc_pm_gen_logic : for I in 1 to ch_num generate
+
+  crc_pm_start_pulse(i) <= PM_Descr_runs(i);            -- clear crc calculation when Descriptor is loaded
+  crc_pm_en_pulse(i)    <= PMDat_rd_pulse(i);           -- PMDat_rd_pulse reads the next fifo word.Here we get the actual, not next word for crc
+ 
+  crc_pm_data_in(i)     <=  PMDat_Ch(i);
+  PMDat_to_SCUB(i)      <=  PMDat_Ch(i)      when fifo_empty_pm(i) ='0'                            else  -- when not empty SCUB Data comes from FIFO
+                            crc_pm_out(i)    when fifo_empty_pm(i) ='1' and crc_pm_was_read(i)='0' else  -- when Fifo empty and CRC was not read     
+                            x"0000";                                                                     -- suppresses wrong SCUB readouts
+
+  crc_pm_was_read_pr : PROCESS (clk_i, nreset)
+  BEGIN
+    IF nreset = '0' THEN
+      crc_pm_was_read(i) <= '0';
+    ELSIF rising_edge (clk_i) THEN
+      IF PM_Descr_cntr(i) = x"8" AND fifo_empty_pm(i) = '1' THEN -- marking the end of readout of pm fifo samples including descriptor
+        IF PMDat_rd_pulse(i) = '1' THEN                          -- next falling_edge on SCU Slave Bus Read Accesses generates crc_pm_was_read flag 
+          crc_pm_was_read(i) <= '1';
+        END IF;
+      END IF;
+      IF PM_Descr_cntr(i) = x"8" AND fifo_empty_pm(i) = '0' THEN  -- marking the begin of readout of pm fifo
+        crc_pm_was_read(i) <= '0';                                -- on begining of readout crc_pm_was_read flag is cleared
+      END IF;
+    END IF;
+  END PROCESS crc_pm_was_read_pr;
+ 
+end generate crc_pm_gen_logic;                  
+ 
 PM_Logic : for I in 1 to ch_num generate
   
   Start_PM_pulse(i)     <= Ena_PM(i)       and not Ena_PM_del(i);                          --rising_edge
@@ -748,16 +837,19 @@ PM_Logic : for I in 1 to ch_num generate
                         or
                        ( Ena_every_250ns_del and  (HiRes_runs(i) or  HiRes_runs_del(i)) )
                        ;
-                       
-  Ena_PM_rd(i)     <=  not fifo_empty_pm(i) and not Ena_PM(i) and not Ena_HiRes(i) ;    -- PM Reads only allowed on stopped PM / HiRes whilst PM Fifo not empty
+  -- Ena_PM_rd is used to block SCUB if when '0'                     
+  Ena_PM_rd(i)     <=  not crc_pm_was_read(i) and not Ena_PM(i) and not Ena_HiRes(i) ;    -- PM Reads only allowed on stopped PM/Hires until CRC was read
 
-  Pm_rd_i(i)       <=  (Ena_every_100us     and   Ena_PM(i)     and Fifo_full_pm(i)) or -- PM rd in PM Mode to shuffle PM Data  
-                       (Ena_every_250ns     and   HiRes_runs(i) and Fifo_full_pm(i)) or -- PM rd in HiRes Mode to shuffle HiRes Data ?!
-                       (PM_Descr_runs(i)                                           ) or -- to get PM Descriptor data in Fifo whilst FIFO Full
-                       (Stop_PM_pulse(i)                                           ) or -- to get PM Descriptor data in Fifo whilst  PM FIFO Full
-                       (Stop_HiRes_pulse(i)                                        ) or -- to get HiRes Descriptor data in Fifo whilst PM FIFO Full
-                       (PMDat_rd_pulse(i)   and   Ena_PM_rd(i)) 
-                       ;
+  -- pm_rd_i is the read signal for the PM fifo, used to shuffle, to get descriptor into fifo and to get captured samples out to SCUB
+  Pm_rd_i(i)       <=  (Ena_every_100us     and   Ena_PM(i)               and Fifo_full_pm(i)) or -- PM rd in PM Mode to shuffle PM Data  
+                       (Ena_every_250ns     and   HiRes_runs(i)           and Fifo_full_pm(i)) or -- PM rd in HiRes Mode to shuffle HiRes Data ?!
+                       (PM_Descr_reached_7(i)                                                ) or -- to get PM Descriptor data in Fifo whilst FIFO Full
+                       (Stop_PM_pulse(i)    and   fifo_full_pm(i)                            ) or -- to get PM Descriptor data in Fifo whilst  PM FIFO Full
+							                                                                             -- PMStop may occur on full fifo or on not full fifo
+																																  -- only on full fifo we need to shuffle 1 word at PM Stop
+                       (Stop_HiRes_pulse(i)                                                  ) or -- to get HiRes Descriptor data in Fifo whilst PM FIFO Full
+                       (PMDat_rd_pulse(i)   and   Ena_PM_rd(i)                               )    -- to get captured  samples out to SCUB
+                        ;
                        
   -------------------------------------------------------------HiRes Trigger Control--------------------------------------------
   HiRes_Counter: process (clk_i,nreset)
@@ -770,7 +862,8 @@ PM_Logic : for I in 1 to ch_num generate
         HiRes_trig_cntr(i)    <= (others => '0');
         HiRes_runs(i)  <='1';
       elsif Trig_Pulse_HiRes(i) ='1' or  HiRes_trig_cntr(i) /= x"0000" then
-        if HiRes_trig_cntr(i) /=    x"0004" then -- x"0384" then
+     -- if HiRes_trig_cntr(i) /=    x"0004" then -- todo adjust simulation case
+        if HiRes_trig_cntr(i) /=    x"0384" then -- todo adjust normal case = x384=d900 Sample Positions
           HiRes_trig_cntr(i) <= HiRes_trig_cntr(i) + 1;
           HiRes_runs(i)  <='1';
         else
@@ -791,6 +884,7 @@ PM_Logic : for I in 1 to ch_num generate
       PM_Descr_runs(i)            <=  '0';
       PM_Timestamp_latched(i)     <= (others => '0');
       Last_mode_was_PM(i)         <= '0';
+	   PM_Descr_reached_7(i)       <= '0';
     elsif rising_edge (clk_i) then
       if Stop_PM_pulse(i) ='1' or Stop_HiRes_pulse(i)='1' then
         PM_Timestamp_latched(i)   <= Timestamp_cntr;
@@ -809,16 +903,21 @@ PM_Logic : for I in 1 to ch_num generate
       if Stop_PM_pulse(i) ='1' or Stop_HiRes_pulse(i)='1' then
         PM_Descr_cntr(i)      <= (others => '0');
         PM_Descr_runs(i)      <='1';
+		  PM_Descr_reached_7(i) <='1';
       elsif PM_Descr_cntr(i) /= x"8"  and PM_Descr_runs(i)='1' then
+		   if PM_Descr_cntr(i) = x"7" then
+					  PM_Descr_reached_7(i)   <='0';
+		   end if;
         PM_Descr_cntr(i)      <= PM_Descr_cntr(i) + 1;
         PM_Descr_runs(i)      <='1';
       else
         PM_Descr_runs(i)      <='0';
+		  PM_Descr_reached_7(i) <='0';	  
       end if;
     end if;
   end process PM_Descr_Logic;
   
-  PM_Descr_data(i) <=   diob_extension_id(3 downto 0)  &  "00000000" & CtrlReg_Ch(i) (15 downto 12) when PM_Descr_cntr(i)=x"0" else 
+  PM_Descr_data(i) <=   diob_extension_id(3 downto 0)  &  "00000000" & CtrlReg_Ch(i) (15 downto 12)  when PM_Descr_cntr(i)=x"0" else 
                         PM_Timestamp_latched(i)(15 downto 0)                                         when PM_Descr_cntr(i)=x"1" else   
                         PM_Timestamp_latched(i)(31 downto 16)                                        when PM_Descr_cntr(i)=x"2" else 
                         PM_Timestamp_latched(i)(47 downto 32)                                        when PM_Descr_cntr(i)=x"3" else 
@@ -836,7 +935,32 @@ PM_fifo_data(i) <= daq_dat_i_synched(i) when PM_Descr_runs(i) ='0' else  PM_Desc
 end generate PM_Logic; 
 
 
--------------------------------------------Component Instantiation Section------------------------------------------------ 
+-------------------------------------------Component Instantiation Section------------------------------------------------
+crc_instances:for i in 1 to ch_num generate
+
+    
+  crc_daq: crc5x16 
+    PORT MAP (
+      nReset           => nReset,
+      clk_i            => clk_i,
+      data_in          => crc_daq_data_in(i),         -- 15 downto 0  
+      crc_start_pulse  => crc_daq_start_pulse(i),     -- Set CRC to its Start value on transmission of a new packet
+      crc_en_pulse     => crc_daq_en_pulse(i),        -- Enables CRC calculation on stored previous CRC and data_in 
+      crc_out          => crc_daq_out(i)              -- 15 downto 0
+    );
+  crc_pm: crc5x16 
+    PORT MAP (
+      nReset           => nReset,
+      clk_i            => clk_i,
+      data_in          => crc_pm_data_in(i),         -- 15 downto 0  
+      crc_start_pulse  => crc_pm_start_pulse(i),     -- Set CRC to its Start value on transmission of a new packet
+      crc_en_pulse     => crc_pm_en_pulse(i),        -- Enables CRC calculation on stored previous CRC and data_in 
+      crc_out          => crc_pm_out(i)              -- 15 downto 0
+    );
+
+end generate crc_instances;
+
+
  
 fifo_instances: for i in 1 to ch_num generate
 
@@ -862,7 +986,7 @@ fifo_instances: for i in 1 to ch_num generate
       we_i           => we_pg1(i),
       q_o            => DaqDat_pg1(i),
       rd_i           => rd_pg1 (i),
-      empty_o        => open,
+      empty_o        => fifo_empty_pg1(i),
       full_o         => fifo_full_pg1(i),
       almost_full_o  => almost_full_pg1(i),
       --count_o        => open
@@ -891,7 +1015,7 @@ fifo_instances: for i in 1 to ch_num generate
       we_i           => we_pg2(i),
       q_o            => DaqDat_pg2(i),
       rd_i           => rd_pg2 (i),
-      empty_o        => open,
+      empty_o        => fifo_empty_pg2(i),
       full_o         => fifo_full_pg2(i),
       almost_full_o  => almost_full_pg2(i),
       --count_o        => open
@@ -1049,7 +1173,7 @@ end generate;
       clk_i 						 => clk_i, 
       nReset  				   => nreset,
       
-      PmDat              => PmDat_Ch(i),
+      PmDat              => PmDat_to_SCUB(i),
       DaqDat             => DaqDat_Ch(i),
       Ena_PM_rd          => Ena_PM_rd(i),
       daq_fifo_word      => daq_fifo_words(i),
@@ -1063,8 +1187,8 @@ end generate;
       TrigWord_HW_o      => TrigWord_HW_Ch(i),
       Trig_dly_word_o    => Trig_Dly_word_Ch(i),      
       
-      rd_PMDat           => rd_PMDat(i),
-      rd_DAQDat          => rd_DAQDat(i),
+      rd_PMDat           => rd_PMDat(i),      --active as long SCUB accesses PMFIFO  
+      rd_DAQDat          => rd_DAQDat(i),     --active as long SCUB accesses DAQFIFO
       dtack              => dtack_ch(i)
     );
 end generate;
@@ -1277,5 +1401,6 @@ BEGIN
       
   END IF;
 END PROCESS timestamp;
+
 
 end architecture daq_arch;
