@@ -9,7 +9,7 @@ CFLAGS        = -I$(PSCU)/include -I$(PATHSCU)
 
 include ../../build.mk
 
-CFLAGS        += -O2
+CFLAGS        += -O2 -fno-toplevel-reorder
 
 $(TARGET).elf: $(PATHSCU)/main.c  $(INCPATH)/display.c  $(PATHSCU)/cb.c \
                 $(PATHSCU)/scu_bus.c $(PATHSCU)/scu_mil.c $(PATHSCU)/fg.c  \

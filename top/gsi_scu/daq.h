@@ -22,6 +22,7 @@
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library. If not, see <http://www.gnu.org/licenses/>.
 ///////////////////////////////////////////////////////////////////////////////// 
+#define MAX_DAQ_CONCUR_CHNS 20
 #define DAQ_MAX_CHN     16
 #define DAQ_BASE        0x2000
 #define DAQ_BUFFER_SIZE 512  // last 10 words are the descriptor
@@ -68,3 +69,13 @@
 #define DAQ_TMS_3      0x64 /* timestamp counter preset word 3 (Bit 63..48) */
 #define DAQ_TMS_TAG_LW 0x66 /* timestamp counter tag (Bit 15..0) */
 #define DAQ_TMS_TAG_HW 0x67 /* timestamp counter tag (Bit 31..16) */
+
+struct daq_channel_regs {
+  unsigned int mbx_slot;
+  unsigned int macro_number;
+  unsigned int sample_rate;
+  unsigned int selected_channel;
+  unsigned int daq_config; // hi word: trig_dly, lo word: cntrl_reg
+  unsigned int tag;
+  unsigned int state; // meaning private to LM32
+};

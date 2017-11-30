@@ -19,6 +19,7 @@
 #include "cb.h"
 #include "scu_mil.h"
 #include "dow_crc.h"
+#include "daq.h"
 #include "../../../ip_cores/wr-cores/modules/wr_eca/eca_queue_regs.h"
 #include "../../../ip_cores/saftlib/drivers/eca_flags.h"
 
@@ -71,6 +72,7 @@ extern int scub_write_mil_blk(volatile unsigned short *base, int slot, short *da
 extern struct msi remove_msg(volatile struct message_buffer *mb, int queue);
 extern int add_msg(volatile struct message_buffer *mb, int queue, struct msi m);
 extern int has_msg(volatile struct message_buffer *mb, int queue);
+void sw_irq_handler(unsigned int, unsigned int);
 
 /* task prototypes */
 void dev_sio_handler(int);
@@ -89,12 +91,15 @@ uint32_t SHARED backplane_temp     = -1;
 uint32_t SHARED fg_magic_number    = 0xdeadbeef;
 uint32_t SHARED fg_version         = 0x3; // 0x2 saftlib,
                                           // 0x3 new msi system with mailbox
+                                          // 0x4 support for scub daq
 uint32_t SHARED fg_mb_slot         = -1;
 uint32_t SHARED fg_num_channels    = MAX_FG_CHANNELS;
 uint32_t SHARED fg_buffer_size     = BUFFER_SIZE;
 uint32_t SHARED fg_macros[MAX_FG_MACROS] = {0}; // hi..lo bytes: slot, device, version, output-bits
 struct channel_regs SHARED fg_regs[MAX_FG_CHANNELS];
 struct channel_buffer SHARED fg_buffer[MAX_FG_CHANNELS];
+uint32_t SHARED daq_macros[MAX_SCU_SLAVES] = {0}; // hi..lo bytes: slot, num of channels, version, not used
+struct daq_channel_regs SHARED daq_regs[MAX_DAQ_CONCUR_CHNS];
 
 volatile unsigned short* scub_base     = 0;
 volatile unsigned int* scub_irq_base   = 0;
@@ -108,13 +113,11 @@ volatile uint32_t     *pECAQ           = 0; // WB address of ECA queue
 volatile unsigned int param_sent[MAX_FG_CHANNELS];
 volatile int initialized[MAX_SCU_SLAVES] = {0};
 
-void sw_irq_handler(unsigned int, unsigned int);
 
 volatile struct message_buffer msg_buf[QUEUE_CNT] = {0};
-
-
-
 uint64_t timeout[MAX_FG_CHANNELS] = {0};
+unsigned short daq_buffer[DAQ_BUFFER_SIZE];
+unsigned short pm_buffer[DAQ_PM_SIZE];
 
 
 void dev_failure(int status, int slot) {
