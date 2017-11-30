@@ -28,7 +28,9 @@ public:
   virtual void accept(const VisitorVertexWriter& v)       const = 0;
   virtual void accept(const VisitorUploadCrawler& v)      const = 0;
   virtual void accept(const VisitorDownloadCrawler& v)    const = 0;
+  virtual void accept(const VisitorValidation& v)         const = 0;
   const uint64_t getTOffs() const {return this->tOffs;}
+  bool isEvent(void) const {return true;}
   virtual void serialise(const vAdr &va) const;
   virtual void deserialise();
   
@@ -56,6 +58,7 @@ public:
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
   const uint64_t getId() const {return this->id;}
   const uint64_t getPar() const {return this->par;}
   const uint32_t getTef() const {return this->tef;}
@@ -82,6 +85,7 @@ public:
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
   virtual void accept(const VisitorUploadCrawler& v)    const = 0;
   virtual void accept(const VisitorDownloadCrawler& v)  const = 0;
+  virtual void accept(const VisitorValidation& v)       const = 0;
   virtual void serialise(const vAdr &va) const;
   virtual void deserialise();
   virtual const uint64_t getTValid()  const {return this->tValid;}
@@ -110,6 +114,7 @@ public:
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
 
 
 };
@@ -131,6 +136,7 @@ public:
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
   
 
 };
@@ -152,6 +158,7 @@ public:
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
 
 
 };
@@ -186,6 +193,7 @@ public:
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
 
 };
 

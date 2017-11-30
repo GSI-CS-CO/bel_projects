@@ -475,7 +475,7 @@ using namespace DotStr::Misc;
     baseUploadOnDownload();
     addition(g);
     //writeUpDotFile("upload.dot", false);
-
+    validate(gUp, atUp);
     return upload();
   } 
 
@@ -484,6 +484,7 @@ using namespace DotStr::Misc;
     baseUploadOnDownload();
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
+    validate(gUp, atUp);
     return upload();
   }
 
@@ -515,7 +516,7 @@ using namespace DotStr::Misc;
     
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
-
+    validate(gUp, atUp);
     return upload();
   }   
 
@@ -529,7 +530,7 @@ using namespace DotStr::Misc;
     nullify();
     addition(g);
     //writeUpDotFile("upload.dot", false);
-
+    validate(gUp, atUp);
     return upload();
 
   }

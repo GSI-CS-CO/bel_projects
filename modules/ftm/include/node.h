@@ -7,6 +7,7 @@
 #include "visitoruploadcrawler.h"
 #include "visitordownloadcrawler.h"
 #include "visitorvertexwriter.h"
+#include "visitorvalidation.h"
 #include "ftm_common.h"
 #include "dotstr.h"
 
@@ -66,8 +67,10 @@ public:
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
   virtual void accept(const VisitorUploadCrawler& v)    const = 0;
   virtual void accept(const VisitorDownloadCrawler& v)  const = 0;
+  virtual void accept(const VisitorValidation& v)  const = 0;
   virtual bool isMeta(void) const {return false;}
   virtual bool isBlock(void) const {return false;}
+  virtual bool isEvent(void) const {return false;}
   virtual void deserialise() = 0;
   virtual void serialise(const vAdr &va) const {
     std::memset(b, 0, _MEM_BLOCK_SIZE);
