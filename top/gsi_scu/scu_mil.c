@@ -250,6 +250,31 @@ int reset_mil(volatile unsigned *base) {
   //}
 }
 
+void scan_mil_ext(volatile unsigned int *mil_addr, uint64_t *ext_id, uint32_t *fglist) {
+  int slot;
+  short ifa_id, ifa_vers, fg_vers;
+  unsigned char ifa_adr;
+  /* check only for ifks, if there is a macro found and a mil extension attached to the baseboard */
+  /* mil extension is recognized by a valid 1wire id                                              */
+  /* mil extension has a 1wire temp sensor with family if 0x42                                    */
+  slot = 0;
+  if (((int)mil_addr != ERROR_NOT_FOUND) && (((int)*ext_id & 0xff) == 0x42)) {
+    // reset all taskslots by reading value back
+    reset_mil(mil_addr);
+
+    for (ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++) {
+      if (read_mil(mil_addr, &ifa_id, IFA_ID << 8 | ifa_adr) != OKAY)     continue;
+      if (read_mil(mil_addr, &ifa_vers, IFA_VERS << 8 | ifa_adr) != OKAY) continue;
+      if (read_mil(mil_addr, &fg_vers, 0xa6 << 8 | ifa_adr) != OKAY)      continue;
+
+      if (((0xffff & fg_vers) >= 0x2) && ((0xffff & ifa_id) == 0xfa00) && ((0xffff & ifa_vers) >= 0x1900)) {
+        add_to_fglist(DEV_MIL_EXT | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & fg_vers, fglist);
+        //write_mil(mil_addr, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
+      }
+    }
+  }
+}
+
 /***********************************************************
  ***********************************************************
  * 

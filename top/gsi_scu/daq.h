@@ -22,6 +22,8 @@
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library. If not, see <http://www.gnu.org/licenses/>.
 ///////////////////////////////////////////////////////////////////////////////// 
+#ifndef __DAQ_H_
+#define __DAQ_H_
 #define MAX_DAQ_CONCUR_CHNS 20
 #define DAQ_MAX_CHN     16
 #define DAQ_BASE        0x2000
@@ -79,3 +81,5 @@ struct daq_channel_regs {
   unsigned int tag;
   unsigned int state; // meaning private to LM32
 };
+
+#endif

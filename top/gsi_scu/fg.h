@@ -13,10 +13,6 @@
 #define   OUTPUT_BITS       24
 #define   MIL_EXT           1
 #define   MAX_SIO3          MAX_SCU_SLAVES 
-#define   IFK_MAX_ADR       254
-#define   GRP_IFA8          24
-#define   IFA_ID            0xcc 
-#define   IFA_VERS          0xcd 
 
 #define FG_RUNNING    0x4
 #define FG_ENABLED    0x2
@@ -72,7 +68,7 @@ struct channel_buffer {
 };
 
 void scan_scu_bus(volatile unsigned short *base_adr, uint32_t *fglist);
-void scan_mil_ext(volatile unsigned int *mil_base, uint64_t *ext_id, uint32_t *fglist);
 void init_buffers(struct channel_regs *cr, int channel, uint32_t *macro, volatile unsigned short* scub_base, volatile unsigned int* devb_base);
+int add_to_fglist(int slot, int dev, int cid_sys, int cid_group, int fg_ver, uint32_t *fglist);
 
 #endif

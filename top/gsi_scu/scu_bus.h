@@ -108,9 +108,10 @@
 #define GRP_SIO3    69
 #define GRP_SIO2    23 
 
+#define OFFS(SLOT) ((SLOT) * (1 << 16))
 
 extern struct w1_bus wrpc_w1_bus;
-void ReadTemperatureDevices(int bus, uint64_t *id, uint16_t *temp);
 void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*);
 void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp);
+void scan_scu_bus(volatile unsigned short *scub_adr, uint32_t *fglist);
 #endif

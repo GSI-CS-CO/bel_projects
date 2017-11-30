@@ -469,12 +469,17 @@ int configure_fg_macro(int channel) {
 }
 
 /* scans for fgs on mil extension and scu bus */
-void print_fgs() {
+void scan_for_macros() {
   int i=0;
+  /* clear list with fg macros */
   for(i=0; i < MAX_FG_MACROS; i++)
     fg_macros[i] = 0;
-  scan_scu_bus(scub_base, &fg_macros[0]);
+  /* clear list with daq macros */
+  for(i=0; i < MAX_SCU_SLAVES; i++)
+    daq_macros[i] = 0;
+
   scan_mil_ext(scu_mil_base, &ext_id, &fg_macros[0]);
+  scan_scu_bus(scub_base, &fg_macros[0]);
 
   i=0;
   while(i < MAX_FG_MACROS) {
@@ -577,7 +582,7 @@ void init() {
   for (i=0; i < MAX_FG_CHANNELS; i++)
     fg_regs[i].macro_number = -1;     //no macros assigned to channels at startup
   updateTemp();                       //update 1Wire ID and temperatures
-  print_fgs();                        //scans for slave cards and fgs
+  scan_for_macros();                  //scans for slave cards, fgs and daqs
 }
 
 void _segfault(int sig)

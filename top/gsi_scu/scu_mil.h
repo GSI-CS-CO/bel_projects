@@ -6,6 +6,9 @@
 #include <mprintf.h>
 #include <syscon.h>
 #include <aux.h>
+#include <mini_sdb.h>
+#include <fg.h>
+
 
 
 /***********************************************************
@@ -53,6 +56,7 @@ int scub_set_task_mil(volatile unsigned short int *base, int slot, unsigned char
 int scub_get_task_mil(volatile unsigned short int *base, int slot, unsigned char task, short *data);
 int scub_reset_mil(volatile unsigned short *base, int slot);
 int reset_mil(volatile unsigned *base);
+void scan_mil_ext(volatile unsigned int *mil_base, uint64_t *ext_id, uint32_t *fglist);
 
 
 
@@ -75,7 +79,11 @@ int reset_mil(volatile unsigned *base);
 #define CALC_OFFS(SLOT)   (((SLOT) * (1 << 16))) // from slot 1 to slot 12
 #define TASKMIN           1
 #define TASKMAX           254
-#define TASK_TIMEOUT  100
+#define TASK_TIMEOUT      100
+#define IFK_MAX_ADR       254
+#define GRP_IFA8          24
+#define IFA_ID            0xcc 
+#define IFA_VERS          0xcd 
 /*
   +---------------------------------------------+
   |   mil communication error codes             |

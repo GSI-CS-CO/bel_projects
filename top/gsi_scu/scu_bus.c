@@ -4,9 +4,9 @@
 #include "inttypes.h"
 #include "mprintf.h"
 #include "dow_crc.h"
+#include <scu_mil.h>
 
 #define DEBUG
-
 
 /*  for every found slave the slotnumber is added to the slave array
     e.g. [2,3] means slaves in slot 2 and 3
@@ -56,3 +56,51 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp) {
     #endif
   }
 } 
+
+void scan_scu_bus(volatile unsigned short *scub_adr, uint32_t *fglist) {
+  int i = 0;
+  unsigned short ext_clk_reg;
+  short ifa_id, ifa_vers, fg_vers;
+  unsigned char ifa_adr;
+  int slot;
+  int cid_group;
+  int cid_sys;
+  int slave_version;
+  int fg_ver;
+
+  // scu bus slaves
+  for (i = 1; i <= MAX_SCU_SLAVES; i++) {
+    scub_adr[OFFS(i) + 0x10] = 0; //clear echo reg
+    if (scub_adr[OFFS(i) + 0x10] != 0xdead) {
+
+      slot          = i;
+      cid_group     = scub_adr[OFFS(i) + CID_GROUP];
+      cid_sys       = scub_adr[OFFS(i) + CID_SYS];
+      slave_version = scub_adr[OFFS(i) + SLAVE_VERSION];
+      fg_ver        = scub_adr[OFFS(i) + FG1_BASE + FG_VER];
+
+      ext_clk_reg = scub_adr[OFFS(i) + SLAVE_EXT_CLK];          //read clk status from slave
+      if (ext_clk_reg & 0x1)
+        scub_adr[OFFS(i) + SLAVE_EXT_CLK] = 0x1;                //switch clk to sys clk from scu bus
+
+      // if slave is a sio3, scan for ifa cards
+      if (cid_sys == SYS_CSCO && (cid_group == GRP_SIO3 || cid_group == GRP_SIO2)) {
+        // reset all taskslots by reading value back
+        scub_reset_mil(scub_adr, slot);
+
+        for (ifa_adr = 0; ifa_adr < IFK_MAX_ADR; ifa_adr++) {
+          if (scub_read_mil(scub_adr, slot, &ifa_id, IFA_ID << 8 | ifa_adr) != OKAY)     continue;
+          if (scub_read_mil(scub_adr, slot, &ifa_vers, IFA_VERS << 8 | ifa_adr) != OKAY) continue;
+          if (scub_read_mil(scub_adr, slot, &fg_vers, 0xa6 << 8 | ifa_adr) != OKAY)      continue;
+
+          if (((0xffff & fg_vers) >= 0x2) && ((0xffff & ifa_id) == 0xfa00) && ((0xffff & ifa_vers) >= 0x1900)) {
+            add_to_fglist(DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & fg_vers, fglist);
+            //scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
+          }
+        }
+      } else {
+        add_to_fglist(slot, ifa_adr, cid_sys, cid_group, fg_ver, fglist);
+      }
+    }
+  }
+}
