@@ -473,7 +473,8 @@ void print_fgs() {
   int i=0;
   for(i=0; i < MAX_FG_MACROS; i++)
     fg_macros[i] = 0;
-  scan_scu_bus(scub_base, scu_mil_base, &fg_macros[0], &ext_id);
+  scan_scu_bus(scub_base, &fg_macros[0]);
+  scan_mil_ext(scu_mil_base, &ext_id, &fg_macros[0]);
 
   i=0;
   while(i < MAX_FG_MACROS) {
