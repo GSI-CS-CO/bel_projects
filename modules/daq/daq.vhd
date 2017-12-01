@@ -18,7 +18,7 @@ use work.daq_pkg.all;
 entity daq is
 generic (
     Base_addr:          unsigned(15 downto 0):= x"0000";      
-    CLK_sys_in_Hz:      integer := 125000000;                 --needed to adjust sample rates
+    CLK_sys_in_Hz:      integer := 125_000_000;               --needed to adjust sample rates
     ch_num:             integer := 1                          --allowed in range of 1 to 16
         );
 
@@ -60,8 +60,9 @@ architecture daq_arch of daq is
   constant timestamp_cntr_word4_adr: unsigned(15 downto 0):= (Base_addr + x"0065" ); 
   constant timestamp_cntr_tag_lw_adr:unsigned(15 downto 0):= (Base_addr + x"0066" );  
   constant timestamp_cntr_tag_hw_adr:unsigned(15 downto 0):= (Base_addr + x"0067" );  
+  constant timestamp_cntr_increment : integer := 1_000_000_000 / CLK_sys_in_Hz; 
+  
   --specific register (one per channel)
-
   type adr_ch_array is array (1 to 16) of unsigned(15 downto 0); --Channelcount is 1 to 16 !
  
   constant  CtrlReg_adr_ch:        adr_ch_array         :=  (
@@ -215,9 +216,6 @@ architecture daq_arch of daq is
                                                            ); 
                                                                                                                      
 
-
-
-
 -- fifo stuff  
   signal we_pg1:                  t_daq_ctl(1 to ch_num); 
   signal rd_pg1:                  t_daq_ctl(1 to ch_num); 
@@ -251,7 +249,7 @@ architecture daq_arch of daq is
   signal page1_fifo_words:        t_pagefifowords(1 to ch_num);
   signal page2_fifo_words:        t_pagefifowords(1 to ch_num);
   signal daq_fifo_words:          t_pagefifowords(1 to ch_num);
-  signal pm_fifo_words:           t_pmfifowords(1 to ch_num); 
+  signal pm_fifo_words:           t_pmfifowords  (1 to ch_num); 
 
 --Register stuff
   signal CtrlReg_Ch:              t_daq_dat(1 to ch_num);
@@ -322,8 +320,6 @@ architecture daq_arch of daq is
   signal HiRes_runs_del:          t_daq_ctl(1 to ch_num);
  
 -- descriptor for DAQ
-   
-
   signal almost_full_pg1:         t_daq_ctl(1 to ch_num);
   signal almost_full_pg2:         t_daq_ctl(1 to ch_num);
   
@@ -333,14 +329,13 @@ architecture daq_arch of daq is
   signal almost_full_pulse_pg1:   t_daq_ctl(1 to ch_num); 
   signal almost_full_pulse_pg2:   t_daq_ctl(1 to ch_num); 
  
- 
-  signal DAQ_Descr_runs:           t_daq_ctl(1 to ch_num);
-  signal DAQ_Descr_data:           t_daq_dat(1 to ch_num);
+  signal DAQ_Descr_runs:          t_daq_ctl(1 to ch_num);
+  signal DAQ_Descr_data:          t_daq_dat(1 to ch_num);
 
-  signal DAQ_Timestamp_latched:    t_daq_ts(1 to ch_num);  
-  signal DAQ_Descr_cntr:           t_daq_dctr(1 to ch_num);
-  signal DAQ_fifo_data_pg1:        t_daq_dat(1 to ch_num);
-  signal DAQ_fifo_data_pg2:        t_daq_dat(1 to ch_num);  
+  signal DAQ_Timestamp_latched:   t_daq_ts(1 to ch_num);  
+  signal DAQ_Descr_cntr:          t_daq_dctr(1 to ch_num);
+  signal DAQ_fifo_data_pg1:       t_daq_dat(1 to ch_num);
+  signal DAQ_fifo_data_pg2:       t_daq_dat(1 to ch_num);  
 
  -- descriptor for PM/HiRes Mode
   signal Stop_PM_pulse:           t_daq_ctl(1 to ch_num); 
@@ -348,6 +343,7 @@ architecture daq_arch of daq is
   
   signal PM_Descr_runs:           t_daq_ctl(1 to ch_num);
   signal Last_mode_was_PM:        t_daq_ctl(1 to ch_num);
+  signal Last_mode_was_HiRes:     t_daq_ctl(1 to ch_num); 
   signal PM_Descr_data:           t_daq_dat(1 to ch_num);
  
   signal PM_Timestamp_latched:    t_daq_ts(1 to ch_num);  
@@ -409,6 +405,7 @@ architecture daq_arch of daq is
   signal timestamp_cntr_tag_lw_wr:   std_logic;
   signal timestamp_cntr_tag_hw_wr:   std_logic;
   signal timestamp_cntr_tag:         std_logic_vector (31 downto 0);
+  
 -- For clear and trigger crc calculation and append it to packet as last word  
   signal crc_pm_en_pulse:            t_daq_ctl(1 to ch_num); --enables crc calculation (width of pulse=1 clk_i) 
   signal crc_daq_en_pulse:           t_daq_ctl(1 to ch_num);
@@ -435,9 +432,9 @@ Pulses_on_trigger_sources: for I in 1 to ch_num generate
 
   Timing_pattern_matched(i) <= '1' when Timing_Pattern_LA = (TrigWord_HW_Ch(i) & TrigWord_LW_Ch(i)) else '0';
   -- Timing Trigger fired on received pattern rising edge
-  Timing_trigger_pulse(i)   <= Timing_pattern_matched(i) and Timing_Pattern_RCV and not Timing_Pattern_RCV_del;
+  Timing_trigger_pulse(i)   <= Timing_pattern_matched(i) and     Timing_Pattern_RCV  and not Timing_Pattern_RCV_del;
   -- External Trigger fired on rising edge
-  ExtTrig_Pulse(i)          <= daq_ext_trig_synched(i) and not daq_ext_trig_del(i);
+  ExtTrig_Pulse(i)          <= daq_ext_trig_synched(i)   and not daq_ext_trig_del(i);
   -- Trigger Source selected due to Register bit
   Trig_Pulse(i)             <= ExtTrig_Pulse(i) when ExtTrig_nEvTrig(i) ='1'       else Timing_trigger_pulse(i);
   Trig_Pulse_HiRes(i)       <= ExtTrig_Pulse(i) when ExtTrig_nEvTrig_HiRes(i) ='1' else Timing_trigger_pulse(i);
@@ -445,8 +442,8 @@ end generate Pulses_on_trigger_sources;
 
 
 Trigger_Registered_Logic: for i in 1 to ch_num generate
-  Ena_DAQ_Start_pulse(i) <= Ena_DAQ(i) and not Ena_DAQ_del(i);
-  nSClr_DAQ_FIFO(i) <= not (Ena_DAQ_Start_pulse(i) or Reset or DAQ_FIFO_Overflow(i));
+  Ena_DAQ_Start_pulse(i) <=      Ena_DAQ(i)             and not Ena_DAQ_del(i);
+  nSClr_DAQ_FIFO(i)      <= not (Ena_DAQ_Start_pulse(i) or      Reset           or DAQ_FIFO_Overflow(i));
 
   PreTrigger_DelayCntr:process (clk_i,nReset)
     begin
@@ -457,11 +454,11 @@ Trigger_Registered_Logic: for i in 1 to ch_num generate
       elsif rising_edge (clk_i) then
         --Count down with Channel Rate after preload on trigger pulse
         if  (Ena_DAQ_Start_pulse(i)='1' and Ena_TrigMod(i)='1') then
-          Trig_dly_cnt(i)<=  Trig_dly_word_Ch (i); -- initial load
+          Trig_dly_cnt(i) <= Trig_dly_word_Ch (i); -- initial load
         elsif Trig_dly_cnt(i) /= "0000" and ChRate(i)='1' and Wait_for_Trigger(i)  ='0' then
-          Trig_dly_cnt(i)<= Trig_dly_cnt(i)- 1; -- count on each tick until zero
+          Trig_dly_cnt(i) <= Trig_dly_cnt(i)- 1;   -- count on each tick until zero
         else
-          null;                                 --stay 
+          null;                                    --stay 
         end if;
 
         -- Wait for Trigger after setup of channel
@@ -495,7 +492,7 @@ Fifo_Data_Muxes: for I in 1 to ch_num generate
     DaqDat_Ch(i)      <=  DaqDat_pg1(i)   when (page1_active(i) ='0' and fifo_empty_pg1(i) ='0'                            )else  --read from inactive fifo1  as long as not empty
                           crc_daq_word(i) when (page1_active(i) ='0' and fifo_empty_pg1(i) ='1' and crc_daq_was_read(i)='0')else  --read from crc_daq as long not read
                           DaqDat_pg2(i)   when (page1_active(i) ='1' and fifo_empty_pg2(i) ='0'                            )else  --read from inactive fifo2 as long as not empty
-                          crc_daq_out(i)  when (page1_active(i) ='0' and fifo_empty_pg2(i) ='1' and crc_daq_was_read(i)='0')else  --read from crc_daq as long not read
+                          crc_daq_out(i)  when (page1_active(i) ='1' and fifo_empty_pg2(i) ='1' and crc_daq_was_read(i)='0')else  --read from crc_daq as long not read
                           x"0000";
                         
     daq_fifo_words(i) <=  page1_fifo_words(i) when page1_active(i) ='0' else
@@ -584,9 +581,11 @@ fifo_logic: for i in 1 to ch_num generate
 -- Wr allowed on active page for data aquisition and on passive page for DAQ_Descr Writes
 -- rd_DAQDat generated from SCU Bus fifo read access
 DAQDat_rd_pulse(i) <= rd_DAQDat_del(i) and not rd_DAQDat(i);
+
 page_access_cntrl:process (page1_active,rd_DAQDat,ChRate_gated,rd_DAQDat_del,DAQ_Descr_runs)
---todo: Improve case when DAQ_Descr_runs and page changes (should never occur)
---todo: Maybe set some error bit in Descriptor Header for "false read operation"
+  --todo: Improve case when DAQ_Descr_runs and page changes (should never occur)
+  --todo: Maybe set some error bit in Descriptor Header for "false read operation"
+
   begin
     if page1_active(i)='1' then                            --page 1 active
 
@@ -597,7 +596,7 @@ page_access_cntrl:process (page1_active,rd_DAQDat,ChRate_gated,rd_DAQDat_del,DAQ
         rd_pg2(i)<= '0'; 
         we_pg2(i)<= DAQ_Descr_runs(i);        
       else
-        rd_pg2(i)<= DAQDat_rd_pulse(i);                       --readout next fifo word after SCUB access   
+        rd_pg2(i)<= DAQDat_rd_pulse(i);                    --readout next fifo word after SCUB access   
         we_pg2(i)<= '0';     
       end if;
     else                                                   --page 2 active
@@ -609,7 +608,7 @@ page_access_cntrl:process (page1_active,rd_DAQDat,ChRate_gated,rd_DAQDat_del,DAQ
         rd_pg1(i)<= '0'; 
         we_pg1(i)<= DAQ_Descr_runs(i);        
       else
-        rd_pg1(i)<= DAQDat_rd_pulse(i);                       --readout next fifo word after SCUB access 
+        rd_pg1(i)<= DAQDat_rd_pulse(i);                    --readout next fifo word after SCUB access 
         we_pg1(i)<= '0';     
       end if;
 
@@ -650,7 +649,7 @@ fifo_cntrl: process (clk_i, nReset)
       end if;
       
       if    fifo_full_pg1(i) = '1' and fifo_full_pg2(i) ='1' then
-        DAQ_FIFO_Overflow(i)  <='1'; --reset both fifo pages when not served
+        DAQ_FIFO_Overflow(i)  <='1';                --reset both fifo pages when not served
       else
         DAQ_FIFO_Overflow(i)  <='0'; 
       end if;
@@ -727,35 +726,35 @@ end generate DAQ_Descr;
 --------------------------------------------PM/HiRes Mode starting here -----------------------------------------------------
 
 
--- Some Remarks on PostMortem Mode ( which captures always last 1000 Samples of a channel)
+-- Some Remarks on PostMortem Mode ( which captures always last 1014 Data Samples of a channel)
 -- Postmortem starts with Ena_Pm = 1  and clocked with fixed Ena_every_100us clock rate
 -- Readout of PM Fifo is only allowed on stopped PM Capture.
--- todo : maybe send xdeadbeef on false readout
+-- todo : maybe send "deadbeef"  instead of "0000" on false readout
 -- Ring Buffer Feature: To prevent PM FifoFull on PM Capture: last word on full PM Fifo is read before  fresh data is written.
 -- Post Mortem is stopped with Ena_PM = 0
 -- For full Fifo : Even when ENA_PM is set to zero at the same time when Ena_every_100us occurs, following is done:
--- PM_we is stopped one clock later with Ena_PM_del to keep a 1024 sample fifo capture.
+-- PM_we is stopped one clock later with Ena_PM_del to keep exactly 1024 sample in PMFifo
 
--- Some Remarks on the Single Shot High-Res Mode (which is  dual-use of the 1000 Samples PM FIFO)
+-- Some Remarks on the Single Shot High-Res Mode (which is  dual-use of the 1014 Datasamples PMFIFO)
 -- HiRes needs to be enabled by Ena_HiRes=1 (Enabling HiRes and PM at the same time is not allowed)
 -- HiRes makes only sense in combination with the HiRes Trigger therefore do set-up of ExtTrig_nEvTrig_HiRes)
 
 -- After entering HiRes Mode, continous sampling is done with 4MHz (250ns) sample rate
--- When Channel Trigger Condition is fired , another 900 words are sampled to fill the Fifo
--- So we get a 225µs post-trigger and a 25 µs pre-trigger history.
--- HiRes Capture stops by itself at sample position 900 after trigger event and fires a interrupt.
+-- When Channel Trigger Condition is fired , another 914 words are sampled to fill the Fifo
+-- So we get a 228µs post-trigger and a 25 µs pre-trigger history.
+-- HiRes Capture stops by itself at sample position 914 after trigger event and then it releases an interrupt.
 -- For next HiRes capture Ena_HiRes needs to be switched off and on again
 
 
 -------------------------------------------PostMortem and HiRes FIFO Control -------------------------------------------------
 --crc is calculated on each transmitted packet
---crc start pulse clears crc calculation, its given when descriptor is shifted to fifo
---crc_en_pulse is a one clock pulse, same pulse as fifo readout pulse
+--crc start pulse clears crc calculation, its cleared when descriptor is shifted to fifo
+--crc_en_pulse is a one-clock pulse, same pulse as fifo readout pulse
 --with each fifo readout crc is calculated with the data just read out
 --(the first data visible on fifo q - without any readout - is the first data shiftet in) 
 --crc_data_in are the outputs of the daq fifo or pm fifo
 --crc is transmitted as last word of the transmitted packet
---just after crc is readout, another crc calculation, which is dont care, takes place
+--just after crc is readout, another crc calculation, which is a dont-care, takes place
 
 crc_daq_gen_logic : for I in 1 to ch_num generate
 
@@ -862,8 +861,8 @@ PM_Logic : for I in 1 to ch_num generate
         HiRes_trig_cntr(i)    <= (others => '0');
         HiRes_runs(i)  <='1';
       elsif Trig_Pulse_HiRes(i) ='1' or  HiRes_trig_cntr(i) /= x"0000" then
-     -- if HiRes_trig_cntr(i) /=    x"0004" then -- todo adjust simulation case
-        if HiRes_trig_cntr(i) /=    x"0384" then -- todo adjust normal case = x384=d900 Sample Positions
+     -- if HiRes_trig_cntr(i) /=    x"0004" then   -- todo adjust simulation case
+        if HiRes_trig_cntr(i) /=    x"0392" then  -- todo adjust normal case = x392=d914 Sample Positions
           HiRes_trig_cntr(i) <= HiRes_trig_cntr(i) + 1;
           HiRes_runs(i)  <='1';
         else
@@ -884,6 +883,7 @@ PM_Logic : for I in 1 to ch_num generate
       PM_Descr_runs(i)            <=  '0';
       PM_Timestamp_latched(i)     <= (others => '0');
       Last_mode_was_PM(i)         <= '0';
+	   Last_mode_was_HiRes(i)      <= '0';
 	   PM_Descr_reached_7(i)       <= '0';
     elsif rising_edge (clk_i) then
       if Stop_PM_pulse(i) ='1' or Stop_HiRes_pulse(i)='1' then
@@ -895,6 +895,17 @@ PM_Logic : for I in 1 to ch_num generate
         else
           Last_mode_was_PM(i)     <='0';
         end if;
+
+        if Stop_HiRes_pulse(i) ='1' then
+          Last_mode_was_HiRes(i)    <='1';
+        elsif PM_Descr_runs(i) ='1' then
+          null ;                               --keep value        
+        else
+          Last_mode_was_HiRes(i)     <='0';
+        end if;
+		  
+		  
+		  
       else
         null;
       end if;
@@ -926,7 +937,7 @@ PM_Logic : for I in 1 to ch_num generate
                         TrigWord_HW_Ch(i)                                                            when PM_Descr_cntr(i)=x"6" else 
                         Trig_Dly_word_Ch(i)                                                          when PM_Descr_cntr(i)=x"7" else 
                         (
-                         CtrlReg_Ch(i)(7 downto 0) & '0' & not Last_mode_was_PM (i) & Last_mode_was_PM(i) & std_logic_vector (to_unsigned(I,5 )) 
+                         CtrlReg_Ch(i)(7 downto 0) & '0' &  Last_mode_was_HiRes (i) & Last_mode_was_PM(i) & std_logic_vector (to_unsigned(I,5 )) 
                         )                                                                            when PM_Descr_cntr(i)=x"8" else 
                         x"0000";
 
@@ -944,7 +955,7 @@ crc_instances:for i in 1 to ch_num generate
       nReset           => nReset,
       clk_i            => clk_i,
       data_in          => crc_daq_data_in(i),         -- 15 downto 0  
-      crc_start_pulse  => crc_daq_start_pulse(i),     -- Set CRC to its Start value on transmission of a new packet
+      crc_start_pulse  => crc_daq_start_pulse(i),     -- Set CRC to its Start value on output of a new packet
       crc_en_pulse     => crc_daq_en_pulse(i),        -- Enables CRC calculation on stored previous CRC and data_in 
       crc_out          => crc_daq_out(i)              -- 15 downto 0
     );
@@ -953,7 +964,7 @@ crc_instances:for i in 1 to ch_num generate
       nReset           => nReset,
       clk_i            => clk_i,
       data_in          => crc_pm_data_in(i),         -- 15 downto 0  
-      crc_start_pulse  => crc_pm_start_pulse(i),     -- Set CRC to its Start value on transmission of a new packet
+      crc_start_pulse  => crc_pm_start_pulse(i),     -- Set CRC to its Start value on output of a new packet
       crc_en_pulse     => crc_pm_en_pulse(i),        -- Enables CRC calculation on stored previous CRC and data_in 
       crc_out          => crc_pm_out(i)              -- 15 downto 0
     );
@@ -965,17 +976,17 @@ end generate crc_instances;
 fifo_instances: for i in 1 to ch_num generate
 
 
-  page1_fifo : generic_sync_fifo
+  page1_fifo : generic_sync_fifo        
     generic map(
       g_data_width             => 16, 
-      g_size                   => 509,
+      g_size                   => 512, --g_size only available in 2exp(n) steps
       --g_size                   => 19, --for simulation   4 + 9 descriptor  
       g_show_ahead             => true,
       g_with_empty             => true,
       g_with_full              => true,
       g_with_almost_full       => true,
       g_with_count             => true,  --todo
-      g_almost_full_threshold  => 500   --for simulation
+      g_almost_full_threshold  => 502   --for real
       --g_almost_full_threshold  => 10   --for simulation 
       
       )
@@ -989,7 +1000,6 @@ fifo_instances: for i in 1 to ch_num generate
       empty_o        => fifo_empty_pg1(i),
       full_o         => fifo_full_pg1(i),
       almost_full_o  => almost_full_pg1(i),
-      --count_o        => open
       count_o        => page1_fifo_words(i) --todo
       );
 
@@ -997,14 +1007,14 @@ fifo_instances: for i in 1 to ch_num generate
   page2_fifo : generic_sync_fifo
     generic map(
       g_data_width             => 16, 
-      g_size                   => 509,
+      g_size                   => 512, --g_size only available in 2exp(n) step
       --g_size                   => 19, --for simulation   4 + 9 descriptor  
       g_show_ahead             => true,
       g_with_empty             => true,
       g_with_full              => true,
       g_with_almost_full       => true,
-      g_with_count             => true,  --todo
-      g_almost_full_threshold  => 500   --for simulation
+      g_with_count             => true,  
+      g_almost_full_threshold  => 502   --for real
       --g_almost_full_threshold  => 10   --for simulation 
       
       )   --for simulation
@@ -1018,21 +1028,20 @@ fifo_instances: for i in 1 to ch_num generate
       empty_o        => fifo_empty_pg2(i),
       full_o         => fifo_full_pg2(i),
       almost_full_o  => almost_full_pg2(i),
-      --count_o        => open
-      count_o        => page2_fifo_words(i) --todo
+      count_o        => page2_fifo_words(i) 
       );     
     
   
   postmortem_fifo : generic_sync_fifo
     generic map(
       g_data_width             => 16, 
-      g_size                   => 1009,
+      g_size                   => 1024,  --g_size only available in 2exp(n) step
       --g_size                   => 17,   --for simulation 8+9     
-      g_show_ahead             => true, --shows the 1st word w/o rd request
+      g_show_ahead             => true,  --shows the 1st word w/o rd request
       g_with_empty             => true,
       g_with_full              => true,
       g_with_almost_full       => false,
-      g_with_count             => true,  --todo
+      g_with_count             => true,  
       g_almost_full_threshold  => open)
     port map(
       rst_n_i        => nSClr_PM_FIFO(i),
@@ -1042,7 +1051,7 @@ fifo_instances: for i in 1 to ch_num generate
       q_o            => PmDat_Ch(i),
       rd_i           => PM_rd_i(i),
       empty_o        => fifo_empty_pm(i),
-      count_o        => pm_fifo_words(i), --todo
+      count_o        => pm_fifo_words(i), 
       full_o         => fifo_full_pm(i)
       
       );
@@ -1051,8 +1060,8 @@ end generate fifo_instances;
   -- Time Base
 time_base:zeitbasis_daq
   generic map(
-      CLK_in_Hz => 125000000,
-      diag_on   => 0
+      CLK_in_Hz       => 125_000_000,
+      diag_on         => 0
       )
   port map (
       Res             => Reset,
@@ -1069,22 +1078,21 @@ time_base:zeitbasis_daq
 
 IRQ_PULSES: for I in 1 to ch_num generate   
   -- IRQ Pulses when HiRes is finished or DAQ Fifo is full
-  HiRes_IRQ_pulse(i)            <= '1' when HiRes_runs(i) ='0' and HiRes_runs_del(i)='1' else '0';
+  HiRes_IRQ_pulse(i)       <= '1' when HiRes_runs(i) ='0' and HiRes_runs_del(i)='1' else '0';
+  
   -- ToDo : for Timing optimization HiRes_IRQ_pulse can be delayed by 9 sysclks (the header length)   
     
-  daq_irq_pulse(i)              <=  fifo_full_pulse_pg1(i) or fifo_full_pulse_pg2(i);
-  fifo_full_pulse_pg1(i)        <= (fifo_full_pg1(i)and not fifo_full_pg1_del(i));
-  fifo_full_pulse_pg2(i)        <= (fifo_full_pg2(i)and not fifo_full_pg2_del(i));
+  daq_irq_pulse(i)         <= fifo_full_pulse_pg1(i) or      fifo_full_pulse_pg2(i);
+  fifo_full_pulse_pg1(i)   <= fifo_full_pg1(i)       and not fifo_full_pg1_del(i);
+  fifo_full_pulse_pg2(i)   <= fifo_full_pg2(i)       and not fifo_full_pg2_del(i);
  
   -- DAQ Page swaps when fifo almost full
   almost_full_pulse_pg1(i) <= almost_full_pg1(i) and not almost_full_pg1_del(i);
   almost_full_pulse_pg2(i) <= almost_full_pg2(i) and not almost_full_pg2_del(i);
   
   -- Two Register to store pending Interrupts (daq_irq_reg and  HiRes_irq_reg are common for all channels)
-  -- Todo : Writing on Bit Position i should clear bit position, not read and clear all bits as before
  
   PENDING_IRQ_REG_bits_1_to_16: process (clk_i, nReset)
-  
   begin
     if nReset = '0' then
       daq_irq_reg (i)   <=  '0';
@@ -1170,8 +1178,8 @@ end generate;
       Ext_Adr_Val        => Ext_Adr_Val,
       Ext_Rd_active 		 => Ext_Rd_active,
       Ext_Wr_active 		 => Ext_Wr_active,
-      clk_i 						 => clk_i, 
-      nReset  				   => nreset,
+      clk_i 			    => clk_i, 
+      nReset  				 => nreset,
       
       PmDat              => PmDat_to_SCUB(i),
       DaqDat             => DaqDat_Ch(i),
@@ -1203,11 +1211,11 @@ fill_unused_signals:for i in (ch_num + 1) to (16) generate
                       Rd_Port_ch(i)        <= x"0000";
                     end generate;
 
-dtack <=     dtack_ch(1) or dtack_ch(2)  or dtack_ch(3)  or dtack_ch(4)  or dtack_ch(5) or dtack_ch(6)  or dtack_ch(7)  or dtack_ch(8)  or
-             dtack_ch(9) or dtack_ch(10) or dtack_ch(11) or dtack_ch(12) or dtack_ch(13)or dtack_ch(14) or dtack_ch(15) or dtack_ch(16) or dtack_cn_regs ;
+dtack          <=  dtack_ch(1) or dtack_ch(2)  or dtack_ch(3)  or dtack_ch(4)  or dtack_ch(5) or dtack_ch(6)  or dtack_ch(7)  or dtack_ch(8)  or
+                   dtack_ch(9) or dtack_ch(10) or dtack_ch(11) or dtack_ch(12) or dtack_ch(13)or dtack_ch(14) or dtack_ch(15) or dtack_ch(16) or dtack_cn_regs ;
              
-Rd_Port <=   Rd_Port_Ch(1) or Rd_Port_Ch(2)  or Rd_Port_Ch(3)  or Rd_Port_Ch(4)  or Rd_Port_Ch(5)  or Rd_Port_Ch(6)  or Rd_Port_Ch(7)  or Rd_Port_Ch(8)  or  
-             Rd_Port_Ch(9) or Rd_Port_Ch(10) or Rd_Port_Ch(11) or Rd_Port_Ch(12) or Rd_Port_Ch(13) or Rd_Port_Ch(14) or Rd_Port_Ch(15) or Rd_Port_Ch(16) or Rd_Port_common_regs;
+Rd_Port        <=  Rd_Port_Ch(1) or Rd_Port_Ch(2)  or Rd_Port_Ch(3)  or Rd_Port_Ch(4)  or Rd_Port_Ch(5)  or Rd_Port_Ch(6)  or Rd_Port_Ch(7)  or Rd_Port_Ch(8)  or  
+                   Rd_Port_Ch(9) or Rd_Port_Ch(10) or Rd_Port_Ch(11) or Rd_Port_Ch(12) or Rd_Port_Ch(13) or Rd_Port_Ch(14) or Rd_Port_Ch(15) or Rd_Port_Ch(16) or Rd_Port_common_regs;
              
 user_rd_active <=  user_rd_active_ch(1)  or user_rd_active_ch(2)  or user_rd_active_ch(3)  or user_rd_active_ch(4)  or user_rd_active_ch(5)  or user_rd_active_ch(6)  or
                    user_rd_active_ch(7)  or user_rd_active_ch(8)  or user_rd_active_ch(9)  or user_rd_active_ch(10) or user_rd_active_ch(11) or user_rd_active_ch(12) or
@@ -1396,7 +1404,7 @@ BEGIN
       ELSIF timestamp_cntr = x"1111_1111_1111_1111" then
 		  timestamp_cntr    <= x"0000_0000_0000_0000";
 		ELSE 
-        timestamp_cntr <= timestamp_cntr + x"0000_0000_0000_1000";
+        timestamp_cntr    <= timestamp_cntr + x"0000_0000_0000_1000";
       END IF;
       
   END IF;
