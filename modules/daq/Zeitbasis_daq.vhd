@@ -11,7 +11,7 @@ use IEEE.MATH_REAL.ALL;
 entity zeitbasis_daq is
 	generic
     (
-    CLK_in_Hz: INTEGER := 120000000;
+    CLK_in_Hz: INTEGER := 125_000_000;
     diag_on:   INTEGER range 0 to 1 := 0
     );
 	port
@@ -21,16 +21,16 @@ entity zeitbasis_daq is
 			Clk				: IN	STD_LOGIC;
 
 		-- Output ports
---			Ena_every_100ns:  OUT	STD_LOGIC;	
---			Ena_every_166ns:  OUT	STD_LOGIC;	
---			Ena_every_250ns:  OUT	STD_LOGIC;
---			Ena_every_500ns:  OUT	STD_LOGIC;
-      Ena_every_1us:    out	std_logic;
-      Ena_every_10us:   out std_logic;
-      Ena_every_100us:  out std_logic;
-      Ena_every_1ms:    out std_logic;
-      Ena_every_250ns:  out std_logic
---			Ena_Every_20ms:   OUT	STD_LOGIC
+      --	Ena_every_100ns:  OUT	STD_LOGIC;	
+      --	Ena_every_166ns:  OUT	STD_LOGIC;	
+      --	Ena_every_250ns:  OUT	STD_LOGIC;
+      --	Ena_every_500ns:  OUT	STD_LOGIC;
+      Ena_every_1us     :  out std_logic;
+      Ena_every_10us    :  out std_logic;
+      Ena_every_100us   :  out std_logic;
+      Ena_every_1ms     :  out std_logic;
+      Ena_every_250ns   :  out std_logic
+      --	Ena_Every_20ms:   OUT	STD_LOGIC
     );
 end zeitbasis_daq;
 			
@@ -39,19 +39,19 @@ architecture arch_zeitbasis_daq of zeitbasis_daq is
 
 	CONSTANT	CLK_in_ps			: INTEGER	:= (1_000_000_000 / (CLK_in_Hz / 1000));
 
-  --CONSTANT	c_Ena_every_100ns_cnt	: INTEGER	:= 100	  * 1000 / CLK_in_ps;
-  --CONSTANT	c_Ena_every_166ns_cnt	: INTEGER	:= 166	  * 1000 / CLK_in_ps;
-  --CONSTANT	c_Ena_every_500ns_cnt	: INTEGER	:= 500  	  * 1000 / CLK_in_ps;
-  CONSTANT	c_Ena_every_1us_cnt		: INTEGER	:= 1000 	* 1000 / CLK_in_ps;        --for real   
+   --CONSTANT	c_Ena_every_100ns_cnt	: INTEGER	:= 100	  * 1000 / CLK_in_ps;
+   --CONSTANT	c_Ena_every_166ns_cnt	: INTEGER	:= 166	  * 1000 / CLK_in_ps;
+   --CONSTANT	c_Ena_every_500ns_cnt	: INTEGER	:= 500  	  * 1000 / CLK_in_ps;
+   CONSTANT	c_Ena_every_1us_cnt		: INTEGER	:= 1000 	* 1000 / CLK_in_ps;        --for real   
 
-  --CONSTANT	c_Ena_every_250ns_cnt	: INTEGER	:= 250      * 1000 / CLK_in_ps;   --for real  
-  --CONSTANT	c_Ena_every_10us_cnt  	: INTEGER	:= 10000    * 1000 / CLK_in_ps;   --for real 
-  --CONSTANT	c_Ena_every_100us_cnt	: INTEGER	:= 100000   * 1000 / CLK_in_ps;   --for real 
-  --CONSTANT	c_Ena_every_1ms_cnt	   : INTEGER	:= 1000000  * 1000 / CLK_in_ps;   --for real 
-  CONSTANT	c_Ena_every_250ns_cnt	: INTEGER	:= 50   	* 1000 / CLK_in_ps;   --for simulation
-  CONSTANT	c_Ena_every_10us_cnt	   : INTEGER	:= 80   	* 1000 / CLK_in_ps;   --for simulation
-  CONSTANT	c_Ena_every_100us_cnt	: INTEGER	:= 120   * 1000 / CLK_in_ps;   --for simulation
-  CONSTANT	c_Ena_every_1ms_cnt	   : INTEGER	:= 160   * 1000 / CLK_in_ps;   --for simulation
+   CONSTANT	c_Ena_every_250ns_cnt	: INTEGER	:= 250        * 1000 / CLK_in_ps;   --for real  
+   CONSTANT	c_Ena_every_10us_cnt  	: INTEGER	:= 10_000     * 1000 / CLK_in_ps;   --for real 
+   CONSTANT	c_Ena_every_100us_cnt	: INTEGER	:= 100_000    * 1000 / CLK_in_ps;   --for real 
+   CONSTANT	c_Ena_every_1ms_cnt	   : INTEGER	:= 1_000_000  * 1000 / CLK_in_ps;   --for real 
+   --CONSTANT	c_Ena_every_250ns_cnt	: INTEGER	:= 50   	* 1000 / CLK_in_ps;   --for simulation
+   --CONSTANT	c_Ena_every_10us_cnt	   : INTEGER	:= 80   	* 1000 / CLK_in_ps;   --for simulation
+   --CONSTANT	c_Ena_every_100us_cnt	: INTEGER	:= 120   * 1000 / CLK_in_ps;   --for simulation
+   --CONSTANT	c_Ena_every_1ms_cnt	   : INTEGER	:= 160   * 1000 / CLK_in_ps;   --for simulation
   
 
   
@@ -173,9 +173,9 @@ sel_every_1ms: div_n
 --Ena_every_166ns	<= 	s_every_166ns;		
 --Ena_every_250ns	<= 	s_every_250ns;		
 --Ena_every_500ns	<= 	s_every_500ns;		
-Ena_every_1us	  <= 	s_every_1us;	
-Ena_every_250ns <=  s_every_250ns;
-Ena_every_10us	<= 	s_every_10us;	
+Ena_every_1us	   <= 	s_every_1us;	
+Ena_every_250ns   <=    s_every_250ns;
+Ena_every_10us	   <= 	s_every_10us;	
 Ena_every_100us	<= 	s_every_100us;	
 Ena_every_1ms  	<= 	s_every_1ms;
 --Ena_every_20ms	<= 	s_every_20ms;		
