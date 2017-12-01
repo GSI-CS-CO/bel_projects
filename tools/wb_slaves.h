@@ -4,9 +4,9 @@
  *
  *  created : 11-Nov-2016
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 02-Aug-2017
+ *  version : 01-Dec-2017
  */
-#define WB_SLAVES_VERSION "0.02.0"
+#define WB_SLAVES_VERSION "0.03.0"
 /*
  *  defines wishbone vendor IDs
  *  defines wishbone device IDs and registers
@@ -129,6 +129,17 @@
 /* masks */
 
 
+/*** RESET  ***/
+/* device ID */
+#define FPGA_RESET_VENDOR            WB_GSI              /* vendor ID */
+#define FPGA_RESET_PRODUCT           0x3a362063          /* product ID */
+#define FPGA_RESET_VMAJOR            1                   /* major revision */
+#define FPGA_RESET_VMINOR            1                   /* minor revision */
+
+/* register offsets */
+#define FPGA_RESET_RESET             0x0                 /* reset register */
+
+/* masks */
 
 #endif  /* wb_slaves.h */
 
