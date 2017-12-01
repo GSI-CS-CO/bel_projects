@@ -113,5 +113,5 @@
 extern struct w1_bus wrpc_w1_bus;
 void probe_scu_bus(volatile unsigned short*, unsigned short, unsigned short, int*);
 void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp);
-void scan_scu_bus(volatile unsigned short *scub_adr, uint32_t *fglist);
+void scan_scu_bus(volatile unsigned short *scub_adr, uint32_t *fglist, uint32_t *daqlist);
 #endif

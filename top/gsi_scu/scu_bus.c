@@ -4,7 +4,8 @@
 #include "inttypes.h"
 #include "mprintf.h"
 #include "dow_crc.h"
-#include <scu_mil.h>
+#include "scu_mil.h"
+#include "daq.h"
 
 #define DEBUG
 
@@ -57,8 +58,7 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp) {
   }
 } 
 
-void scan_scu_bus(volatile unsigned short *scub_adr, uint32_t *fglist) {
-  int i = 0;
+void scan_scu_bus(volatile unsigned short *scub_adr, uint32_t *fglist, uint32_t *daqlist) {
   unsigned short ext_clk_reg;
   short ifa_id, ifa_vers, fg_vers;
   unsigned char ifa_adr;
@@ -67,21 +67,21 @@ void scan_scu_bus(volatile unsigned short *scub_adr, uint32_t *fglist) {
   int cid_sys;
   int slave_version;
   int fg_ver;
+  int chn;
 
   // scu bus slaves
-  for (i = 1; i <= MAX_SCU_SLAVES; i++) {
-    scub_adr[OFFS(i) + 0x10] = 0; //clear echo reg
-    if (scub_adr[OFFS(i) + 0x10] != 0xdead) {
+  for (slot = 1; slot <= MAX_SCU_SLAVES; slot++) {
+    scub_adr[OFFS(slot)+ 0x10] = 0; //clear echo reg
+    if (scub_adr[OFFS(slot) + 0x10] != 0xdead) {
 
-      slot          = i;
-      cid_group     = scub_adr[OFFS(i) + CID_GROUP];
-      cid_sys       = scub_adr[OFFS(i) + CID_SYS];
-      slave_version = scub_adr[OFFS(i) + SLAVE_VERSION];
-      fg_ver        = scub_adr[OFFS(i) + FG1_BASE + FG_VER];
+      cid_group     = scub_adr[OFFS(slot) + CID_GROUP];
+      cid_sys       = scub_adr[OFFS(slot) + CID_SYS];
+      slave_version = scub_adr[OFFS(slot) + SLAVE_VERSION];
+      fg_ver        = scub_adr[OFFS(slot) + FG1_BASE + FG_VER];
 
-      ext_clk_reg = scub_adr[OFFS(i) + SLAVE_EXT_CLK];          //read clk status from slave
+      ext_clk_reg = scub_adr[OFFS(slot) + SLAVE_EXT_CLK];          //read clk status from slave
       if (ext_clk_reg & 0x1)
-        scub_adr[OFFS(i) + SLAVE_EXT_CLK] = 0x1;                //switch clk to sys clk from scu bus
+        scub_adr[OFFS(slot) + SLAVE_EXT_CLK] = 0x1;                //switch clk to sys clk from scu bus
 
       // if slave is a sio3, scan for ifa cards
       if (cid_sys == SYS_CSCO && (cid_group == GRP_SIO3 || cid_group == GRP_SIO2)) {
@@ -95,10 +95,15 @@ void scan_scu_bus(volatile unsigned short *scub_adr, uint32_t *fglist) {
 
           if (((0xffff & fg_vers) >= 0x2) && ((0xffff & ifa_id) == 0xfa00) && ((0xffff & ifa_vers) >= 0x1900)) {
             add_to_fglist(DEV_SIO | slot, ifa_adr, SYS_CSCO, GRP_IFA8, 0xffff & fg_vers, fglist);
-            //scub_write_mil(scub_adr, slot, 0x100, 0x12 << 8 | ifa_adr); // clear PUR
           }
         }
       } else {
+        /* search for daq channels */
+        chn = 0;
+        while (scub_adr[OFFS(slot) + DAQ_CNTRL(chn++)] != 0xdead);
+        if (chn-1)
+          add_to_daqlist(slot, chn-1, cid_sys, cid_group, daqlist); 
+
         add_to_fglist(slot, ifa_adr, cid_sys, cid_group, fg_ver, fglist);
       }
     }

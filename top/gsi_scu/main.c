@@ -470,25 +470,32 @@ int configure_fg_macro(int channel) {
 
 /* scans for fgs on mil extension and scu bus */
 void scan_for_macros() {
-  int i=0;
+  int m=0;
   /* clear list with fg macros */
-  for(i=0; i < MAX_FG_MACROS; i++)
-    fg_macros[i] = 0;
+  for(m=0; m < MAX_FG_MACROS; m++)
+    fg_macros[m] = 0;
   /* clear list with daq macros */
-  for(i=0; i < MAX_SCU_SLAVES; i++)
-    daq_macros[i] = 0;
+  for(m=0; m < MAX_SCU_SLAVES; m++)
+    daq_macros[m] = 0;
 
   scan_mil_ext(scu_mil_base, &ext_id, &fg_macros[0]);
-  scan_scu_bus(scub_base, &fg_macros[0]);
+  scan_scu_bus(scub_base, &fg_macros[0], &daq_macros[0]);
 
-  i=0;
-  while(i < MAX_FG_MACROS) {
+  m=0;
+  while(m < MAX_FG_MACROS) {
     // hi..lo bytes: slot, device, version, output-bits
-    if (fg_macros[i] != 0)
-      mprintf("fg-%d-%d ver: %d output-bits: %d\n", fg_macros[i] >> 24,
-              (fg_macros[i] >> 16) & 0xff, (fg_macros[i] >> 8) & 0xff,
-              fg_macros[i] & 0xff);
-    i++;
+    if (fg_macros[m] != 0)
+      mprintf("fg-%d-%d ver: %d output-bits: %d\n", fg_macros[m] >> 24,
+              (fg_macros[m] >> 16) & 0xff, (fg_macros[m] >> 8) & 0xff,
+              fg_macros[m] & 0xff);
+    m++;
+  }
+  m=0;
+  while(m < MAX_SCU_SLAVES) {
+    // hi..lo bytes: slot, chns, version, not used 
+    if (daq_macros[m] != 0)
+      mprintf("found %d daq channels on slot %d\n", (daq_macros[m] >> 16) & 0xff, daq_macros[m] >> 24); 
+    m++;
   }
 }
 

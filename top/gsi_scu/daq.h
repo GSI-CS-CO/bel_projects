@@ -24,6 +24,10 @@
 ///////////////////////////////////////////////////////////////////////////////// 
 #ifndef __DAQ_H_
 #define __DAQ_H_
+
+
+#include <inttypes.h>
+
 #define MAX_DAQ_CONCUR_CHNS 20
 #define DAQ_MAX_CHN     16
 #define DAQ_BASE        0x2000
@@ -82,4 +86,5 @@ struct daq_channel_regs {
   unsigned int state; // meaning private to LM32
 };
 
+int add_to_daqlist(int slot, int chncount, int cid_sys, int cid_group, uint32_t *daqlist);
 #endif
