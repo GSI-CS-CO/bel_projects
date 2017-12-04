@@ -482,6 +482,7 @@ void scan_for_macros() {
   scan_scu_bus(scub_base, &fg_macros[0], &daq_macros[0]);
 
   m=0;
+  /* print list of found fg macros */
   while(m < MAX_FG_MACROS) {
     // hi..lo bytes: slot, device, version, output-bits
     if (fg_macros[m] != 0)
@@ -491,6 +492,7 @@ void scan_for_macros() {
     m++;
   }
   m=0;
+  /* print list of found daq macros */
   while(m < MAX_SCU_SLAVES) {
     // hi..lo bytes: slot, chns, version, not used 
     if (daq_macros[m] != 0)
@@ -513,7 +515,7 @@ void print_regs() {
   }
 }
 
-void disable_channel(unsigned int channel) {
+void disable_fg_channel(unsigned int channel) {
   int slot, dev, fg_base, dac_base;
   short data;
   int status;
@@ -556,6 +558,20 @@ void disable_channel(unsigned int channel) {
     fg_regs[channel].state = STATE_STOPPED;
     SEND_SIG(SIG_DISARMED);
   }
+}
+void disable_daq_channel(unsigned int channel) {
+  int slot, mchn;
+  short data;
+  int status;
+  if (daq_regs[channel].macro_number == -1) return;
+  slot = daq_macros[daq_regs[channel].macro_number] >> 24;            // dereference slot number
+  mchn = (daq_macros[daq_regs[channel].macro_number] >> 16) & 0xff; // dereference dev number
+  mprintf("disarmed slot %d channel %d in index[%d] state %d\n", slot, mchn, channel, daq_regs[channel].state); //ONLY FOR TESTING
+
+  // disable daq hardware
+  scub_base[OFFS(slot) + DAQ_CNTRL(mchn)] = 0;
+
+  daq_regs[channel].state = STATE_STOPPED;
 }
 
 void updateTemp() {
@@ -626,7 +642,7 @@ void sw_irq_handler(unsigned int adr, unsigned int msg) {
       //print_regs();
     break;
     case 3:
-      disable_channel(value);
+      disable_fg_channel(value);
     break;
     case 4:
       for (i = 0; i < MAX_FG_CHANNELS; i++)
