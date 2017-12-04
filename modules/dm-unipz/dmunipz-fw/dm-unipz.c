@@ -793,7 +793,7 @@ uint16_t wait4MILEvt(uint16_t evtCode, uint16_t virtAcc, uint32_t msTimeout)  //
 
   timeoutT = getSysTime() + msTimeout * 10000000;      
 
-  mprintf("dm-unipz: huhu evtCode 0x%04x, virtAcc 0x%04x\n", evtCode, virtAcc);
+  // for debugging: mprintf("dm-unipz: huhu evtCode 0x%04x, virtAcc 0x%04x\n", evtCode, virtAcc);
 
   while(getSysTime() < timeoutT) {              // while not timed out...
     while (fifoNotemptyEvtMil(pMILPiggy)) {     // while fifo contains data
@@ -856,13 +856,13 @@ uint32_t entryActionConfigured()
   }
 
   DBPRINT1("dm-unipz: connection to DM ok - 0x%08x\n", data);
-  /*    
+     
   // check if modulbus I/O is ok
   if ((status = echoTestDevMil(pMILPiggy, IFB_ADDRESS_SIS, 0xbabe)) != DMUNIPZ_STATUS_OK) {
     DBPRINT1("dm-unipz: ERROR - modulbus SIS IFK not available!\n");
     return DMUNIPZ_STATUS_DEVBUSERROR;
   }
-  */
+  
   DBPRINT1("dm-unipz: connection to UNIPZ (devicebus) ok\n");  
 
   // configure MIL piggy for timing events for all 16 virtual accelerators
@@ -1066,8 +1066,8 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       pulseLemo2();                                                                // for hardware debugging with scope
 
       dmPrepFlexWaitCmd(REQBEAMB, sendT);                                          // prepare flex wait command, here: wait until absolute time
-      // disabled dmChangeBlock(REQBEAMB);                                                     // modify the "flex wait" block within DM
-      // disabled dmChangeBlock(REQBEAMA);                                                     // modify block within DM for execution of a flow command, here: continue after beam request towards "flex wait"
+      dmChangeBlock(REQBEAMB);                                                     // modify the "flex wait" block within DM
+      dmChangeBlock(REQBEAMA);                                                     // modify block within DM for execution of a flow command, here: continue after beam request towards "flex wait"
 
       if (status == DMUNIPZ_STATUS_TIMEDOUT) {                                     // discriminate between 'timeout' and 'REQ_NOT_OK'
         if (checkClearReqNotOk(uniTimeout) != DMUNIPZ_STATUS_OK) status = DMUNIPZ_STATUS_REQBEAMFAILED;
@@ -1129,7 +1129,7 @@ void main(void) {
 
   init();                                                                   // initialize stuff for lm32
   initSharedMem();                                                          // initialize shared memory
-  mprintf("dm-unipz: quack\n");
+
   while (1) {
     cmdHandler(&reqState);                                                  // check for commands and possibly request state changes
     status = changeState(&actState, &reqState, status);                     // handle requested state changes
