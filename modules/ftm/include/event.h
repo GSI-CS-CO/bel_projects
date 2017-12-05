@@ -29,6 +29,7 @@ public:
   virtual void accept(const VisitorUploadCrawler& v)      const = 0;
   virtual void accept(const VisitorDownloadCrawler& v)    const = 0;
   const uint64_t getTOffs() const {return this->tOffs;}
+  bool isEvent(void) const {return true;}
   virtual void serialise(const vAdr &va) const;
   virtual void deserialise();
   

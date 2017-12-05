@@ -475,7 +475,7 @@ using namespace DotStr::Misc;
     baseUploadOnDownload();
     addition(g);
     //writeUpDotFile("upload.dot", false);
-
+    validate(gUp);
     return upload();
   } 
 

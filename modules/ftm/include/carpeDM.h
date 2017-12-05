@@ -17,6 +17,7 @@
 #include "hashmap.h"
 #include "alloctable.h"
 #include "grouptable.h"
+#include "validation.h"
 #include "ftm_shared_mmap.h"
 
 
@@ -45,6 +46,7 @@ private:
   int remove(Graph& g);
   int keep(Graph& g);  
   int overwrite(Graph& g);
+  bool validate(Graph& g);
   
   int sendCommands(Graph &); //Sends a dotfile of commands to the DM
 

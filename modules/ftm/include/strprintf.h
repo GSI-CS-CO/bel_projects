@@ -36,7 +36,7 @@ vformat (const char *fmt, va_list ap)
     // NB. On Windows, vsnprintf returns -1 if the string didn't fit the
     // buffer.  On Linux & OSX, it returns the length it would have needed.
 
-    if (needed <= size && needed >= 0) {
+    if (needed <= (int)size && needed >= 0) {
         // It fit fine the first time, we're done.
         return std::string (&buf[0]);
     } else {

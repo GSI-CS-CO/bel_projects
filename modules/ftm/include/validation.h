@@ -38,8 +38,7 @@ struct ConstellationRule {
 struct Constellation{};
 struct MinOccurrence
 {
-  bool operator()(unsigned int x,const ConstellationRule& e1)const{return e1.min >= x;}
-  bool operator()(const ConstellationRule& e2,unsigned int x)const{return e2.min >= x;}
+
 };
 
 typedef boost::multi_index_container<
@@ -60,6 +59,16 @@ typedef boost::multi_index_container<
   >    
  > ConstellationRule_set;
 
+
+typedef boost::multi_index_container<
+  const ConstellationRule*,
+  indexed_by<
+    ordered_non_unique<
+      tag<MinOccurrence>, 
+      BOOST_MULTI_INDEX_MEMBER(ConstellationRule, unsigned int, min)
+    >
+  >    
+ > ConstellationRule_min_view;
 
 
  struct ConstellationCnt {

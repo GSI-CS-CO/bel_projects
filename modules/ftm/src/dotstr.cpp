@@ -139,7 +139,7 @@ namespace DotStr {
       const std::string sCmdAbort      = "abort";
       const std::string sCmdOrigin     = "origin";
       const std::string sBlock         = "block";
-      const std::string sBlockFixed    = "blockfixed";
+      const std::string sBlockFixed    = sBlock;
       const std::string sBlockAlign    = "blockalign";
       const std::string sQInfo         = "qinfo";
       const std::string sDstList       = "listdst";

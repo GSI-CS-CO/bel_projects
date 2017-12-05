@@ -48,15 +48,33 @@ namespace Validation {
 
   //check if all outedge (nodetype/edgetype/childtype) tupels are valid and occurrence count is within valid bounds
   void neighbourhoodCheck(vertex_t v, Graph& g) {
-    Graph::out_edge_iterator out_begin, out_end, out_cur;
+    Graph::out_edge_iterator out_begin, out_end, out_cur, out_chk;
+    Graph::in_edge_iterator in_begin, in_end;
     ConstellationCnt_set cCnt;
-    std::string exIntro = "Neighbourhood Validation: Node '" + g[v].name + "' of type '" + g[v].type;
+    std::string exIntro = "Neighbourhood: Node '" + g[v].name + "' of type '" + g[v].type;
+
+    if (g[v].np == nullptr) throw std::runtime_error(exIntro + "' was found unallocated\n"); 
 
     boost::tie(out_begin, out_end) = out_edges(v,g);
-
-    if( (out_begin == out_end) && (g[v].type != n::sBlockFixed) && (g[v].type != n::sBlockAlign) ){ //found an isolated lone node. So far, only a block can exist like this
-      throw std::runtime_error(exIntro + "' cannot exist in isolation\n");
+    if( (out_begin == out_end) && ( g[v].np->isEvent() || (g[v].type == n::sQInfo) )) { //found a childless node. Events and certain meta nodes cannot exist like this
+      throw std::runtime_error(exIntro + "' cannot be childless\n");
     }
+
+    boost::tie(in_begin, in_end) = in_edges(v,g);
+    if( (in_begin == in_end) && g[v].np->isMeta() ) { //found an orphan node. meta nodes cannot exist like this
+      throw std::runtime_error(exIntro + "' cannot be an orphan\n");
+    }
+
+    //Check connection duplicates
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur) { 
+      vertex_t vChk = target(*out_cur,g);
+      edgeType_t et = g[*out_cur].type;
+      unsigned cnt = 0;
+      for (out_chk = out_begin; out_chk != out_end; ++out_chk) { 
+        if ( (vChk == target(*out_chk,g)) && (et == g[*out_chk].type) ) { cnt++;}
+      }
+      if (cnt > 1) throw std::runtime_error(exIntro + "' must not have multiple edges of type '" + et + "' to Node '" + g[vChk].name + "' of type '" + g[vChk].type + "'\n");      
+    }  
 
     for (out_cur = out_begin; out_cur != out_end; ++out_cur) { 
       auto it = cRules.get<Constellation>().find(boost::make_tuple(g[v].type, g[*out_cur].type));
@@ -76,21 +94,17 @@ namespace Validation {
       }
     }
     //check all exisiting constellation counts against rule min/max
-    auto const& by_min = cRules.get<MinOccurrence>();
+    for(auto itCntChk : cCnt )  {
+      auto itRules   = cRules.get<Constellation>().find(boost::make_tuple(itCntChk.parent, itCntChk.edge));
 
-    for(auto itRng : boost::make_iterator_range(by_min.lower_bound(1, MinOccurrence), by_min.end() ) ) {
-      auto itCntChk   = cCnt<Constellation>.get().find({itRng->parent, itRng->edge});
-      unsigned found  = 0;
-      if(itCntChk    != cCnt.end()) {found = itCntChk->cnt;}
 
       std::string possibleChildren;
-      for(auto itPCh : itRng->children) possibleChildren += (*itPCh + ", ");
+      for(auto itPCh : itRules->children) possibleChildren += (itPCh + ", ");
 
-      if(found < itRng->min | found > itRng->max) {
+      if((itCntChk.cnt < itRules->min) | (itCntChk.cnt > itRules->max)) {
         throw std::runtime_error(exIntro + "' must must have between " 
-          + itRng->min + " and " + itRng->max + "' edge(s) of type '" + itRng->edge 
-                              + " connected to children of type(s) '" + possibleChildren
-                                                       + "', found' " + found + "\n");
+          + std::to_string(itRules->min) + " and " + std::to_string(itRules->max) + " edge(s) of type '" + itRules->edge 
+          + "'' connected to children of type(s) '" + possibleChildren + "', found " + std::to_string(itCntChk.cnt) + "\n");
       }  
     }
   }
@@ -102,7 +116,7 @@ namespace Validation {
     unsigned int infiniteLoopGuard = 0;;
     
 
-    std::string exIntroBase = "Event Sequence Validation: Node '"; 
+    std::string exIntroBase = "Event Sequence: Node '"; 
     std::string exIntro;
 
     while (infiniteLoopGuard < MaxDepth::EVENT) {
@@ -165,7 +179,7 @@ namespace Validation {
   }
 
   void metaSequenceCheck(vertex_t v, Graph& g) {
-    std::string exIntroBase = "Meta Sequence Validation: Node '" + g[v].name + "' of type '" + g[v].type + "' must not "; 
+    std::string exIntroBase = "Meta Sequence: Node '" + g[v].name + "' of type '" + g[v].type + "' must not "; 
     std::string exIntro;
     
     try {Aux::metaSequenceCheckAux(v, v, g);} catch (std::runtime_error const& err) {throw std::runtime_error(exIntroBase + std::string(err.what()));} 

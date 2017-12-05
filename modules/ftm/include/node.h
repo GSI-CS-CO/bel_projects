@@ -68,6 +68,7 @@ public:
   virtual void accept(const VisitorDownloadCrawler& v)  const = 0;
   virtual bool isMeta(void) const {return false;}
   virtual bool isBlock(void) const {return false;}
+  virtual bool isEvent(void) const {return false;}
   virtual void deserialise() = 0;
   virtual void serialise(const vAdr &va) const {
     std::memset(b, 0, _MEM_BLOCK_SIZE);
