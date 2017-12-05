@@ -3,7 +3,7 @@
  *
  *  created : 2017
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 10-November-2017
+ *  version : 05-December-2017
  *
  *  lm32 program for gateway between UNILAC Pulszentrale and FAIR-style Data Master
  * 
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define DMUNIPZ_FW_VERSION 0x000009                     // make this consistent with makefile
+#define DMUNIPZ_FW_VERSION 0x00000a                     // make this consistent with makefile
 
 /* standard includes */
 #include <stdio.h>
@@ -126,6 +126,8 @@ uint32_t *pSharedNTransfer;             // pointer to a "user defined" u32 regis
 uint32_t *pSharedNInject;               // pointer to a "user defined" u32 register; here: publish # of injections (of current transfer)
 uint32_t *pSharedVirtAcc;               // pointer to a "user defined" u32 register; here: publish # of virtual accelerator
 uint32_t *pSharedStatTrans;             // pointer to a "user defined" u32 register; here: publish status of ongoing transfer
+uint32_t *pSharedNBadStatus;            // pointer to a "user defined" u32 register; here: publish # of bad status (=error) incidents
+uint32_t *pSharedNBadState;             // pointer to a "user defined" u32 register; here: publish # of bad state (=FATAL, ERROR, UNKNOWN) incidents
 volatile uint32_t *pSharedCmd;          // pointer to a "user defined" u32 register; here: get command from host
 uint32_t *pSharedState;                 // pointer to a "user defined" u32 register; here: publish status
 volatile uint32_t *pSharedData4EB;      // pointer to a n x u32 register; here: memory region for receiving EB return values
@@ -147,6 +149,8 @@ WriteToPZU_Type  writePZUData;          // Modulbus SIS, I/O-Modul 1, Bits 0..15
 uint32_t flexOffset;                    // offset added to obtain timestamp for "flex wait"
 uint32_t uniTimeout;                    // timeout value for UNIPZ
 uint32_t tkTimeout;                     // timeout value for TK (via UNIPZ)
+uint32_t nBadStatus;                    // # of bad status (=error) incidents
+uint32_t nBadState;                     // # of bad state (=FATAL, ERROR, UNKNOWN) incidents
 
 #define DM_NBLOCKS       2 /* 3 */      // max number of blocks withing the Data Master to be treated  >>> no need to reply to DM after TK request <<<
 dmComm  dmData[DM_NBLOCKS];             // data for treatment of blocks
@@ -481,9 +485,11 @@ void initSharedMem() // determine address and clear shared mem
   pSharedDstMacLo    = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTMACLO >> 2));
   pSharedDstIP       = (uint32_t *)(pShared + (DMUNIPZ_SHARED_DSTIP >> 2));
   pSharedFlexOffset  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_OFFSETFLEX >> 2));
-  pSharedUniTimeout  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_UNITIMEOUT>> 2));
-  pSharedTkTimeout   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TKTIMEOUT>> 2));
-
+  pSharedUniTimeout  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_UNITIMEOUT >> 2));
+  pSharedTkTimeout   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_TKTIMEOUT >> 2));
+  pSharedNBadStatus  = (uint32_t *)(pShared + (DMUNIPZ_SHARED_NBADSTATUS >> 2));
+  pSharedNBadState   = (uint32_t *)(pShared + (DMUNIPZ_SHARED_NBADSTATE >> 2));  
+  
   // find address of CPU from external perspective
   idx = 0;
   find_device_multi(&found_clu, &idx, 1, GSI, LM32_CB_CLUSTER);	
@@ -494,12 +500,16 @@ void initSharedMem() // determine address and clear shared mem
     pCpuRamExternalData4EB    = (uint32_t *)(pCpuRamExternal + ((DMUNIPZ_SHARED_DATA_4EB_START + SHARED_OFFS) >> 2));
   }
 
+  DBPRINT2("dm-unipz: CPU RAM External 0x%8x, begin shared 0x%08x\n", pCpuRamExternal, SHARED_OFFS);
+
   // set initial values;
   ebmClearSharedMem();
   *pSharedVersion    = DMUNIPZ_FW_VERSION; // of all the shared variabes, only VERSION is a constant. Set it now!
   *pSharedFlexOffset = DMUNIPZ_OFFSETFLEX; // initialize with default value
   *pSharedUniTimeout = DMUNIPZ_UNITIMEOUT; // initialize with default value
   *pSharedTkTimeout  = DMUNIPZ_TKTIMEOUT;  // initialize with default value
+  *pSharedNBadStatus = 0;
+  *pSharedNBadState  = 0;
 } // initSharedMem 
 
 
@@ -1115,7 +1125,9 @@ void main(void) {
   uint32_t nInject;                             // number of injections within current transfer
   uint32_t virtAcc;                             // number of virtual accelerator
 
+  mprintf("\n");
   mprintf("dm-unipz: ***** firmware v %06d started from scratch *****\n", DMUNIPZ_FW_VERSION);
+  mprintf("\n");
   
   // init local variables
   i              = 0;
@@ -1125,7 +1137,9 @@ void main(void) {
   statusTransfer = DMUNIPZ_TRANS_UNKNOWN;       
   reqState       = DMUNIPZ_STATE_S0;
   actState       = DMUNIPZ_STATE_UNKNOWN;
-  status         = DMUNIPZ_STATUS_UNKNOWN;      
+  status         = DMUNIPZ_STATUS_UNKNOWN;
+  nBadState      = 0;
+  nBadStatus     = 0;
 
   init();                                                                   // initialize stuff for lm32
   initSharedMem();                                                          // initialize shared memory
@@ -1157,9 +1171,12 @@ void main(void) {
       } // switch 
 
     // update shared memory
+    if ((*pSharedStatus == DMUNIPZ_STATUS_OK)       && (status    != DMUNIPZ_STATUS_OK))       {nBadStatus++; *pSharedNBadStatus = nBadStatus;}
+    if ((*pSharedState  == DMUNIPZ_STATE_OPERATION) && (actState  != DMUNIPZ_STATE_OPERATION)) {nBadState++;  *pSharedNBadState  = nBadState;}
     *pSharedStatus    = status;
     *pSharedState     = actState;
-    i++; *pSharedNIterMain = i;
+    i++;
+    *pSharedNIterMain = i;
     *pSharedStatTrans = statusTransfer;
     *pSharedVirtAcc   = virtAcc;
     *pSharedNTransfer = nTransfer;
