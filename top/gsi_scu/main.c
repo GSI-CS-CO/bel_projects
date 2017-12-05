@@ -57,6 +57,7 @@
 #define INTERVAL_10MS   10000000ULL
 #define INTERVAL_10US   10000ULL
 #define INTERVAL_5MS    5000000ULL
+#define INTERVAL_1MS    1000000ULL
 #define ALWAYS          0ULL
 
 #define MY_ECA_TAG      0xdeadbeef //just define a tag for ECA actions we want to receive
@@ -80,6 +81,7 @@ void dev_bus_handler(int);
 void scu_bus_handler(int);
 void cleanup_sio_dev(int);
 void channel_watchdog(int);
+void daq_data_fetch(int id);
 
 #define SHARED __attribute__((section(".shared")))
 uint64_t SHARED board_id           = -1;
@@ -342,6 +344,45 @@ void irq_handler() {
 }
 
 
+int configure_daq_channel(unsigned int channel) {
+  int i = 0;
+  int slot, mchn;
+
+  if (channel >= 0 && channel < MAX_DAQ_CONCUR_CHNS) {
+    /* actions per slave card */
+    slot = daq_macros[daq_regs[channel].macro_number] >> 24;          // dereference slot number
+    mchn = (daq_macros[daq_regs[channel].macro_number] >> 16) & 0xff; // dereference mchn number
+
+    /* configure and enable macro */
+    scub_base[OFFS(slot) + DAQ_TRIG_LW(mchn)]  = daq_regs[channel].tag & 0xffff;
+    scub_base[OFFS(slot) + DAQ_TRIG_HW(mchn)]  = daq_regs[channel].tag >> 16;
+    scub_base[OFFS(slot) + DAQ_TRIG_DLY(mchn)] = daq_regs[channel].daq_config >> 16;
+    /* use slot number from daq_macro array */
+    scub_base[OFFS(slot) + DAQ_CNTRL(mchn)]    = daq_regs[channel].daq_config & 0xfff || (slot) << 12;
+
+    daq_regs[channel].state = STATE_ACTIVE;
+  }
+  return 0;
+}
+
+void disable_daq_channel(unsigned int channel) {
+  int slot, mchn;
+  short data;
+  int status;
+  if (daq_regs[channel].macro_number == -1) return;
+  slot = daq_macros[daq_regs[channel].macro_number] >> 24;          // dereference slot number
+  mchn = (daq_macros[daq_regs[channel].macro_number] >> 16) & 0xff; // dereference mchn number
+  mprintf("FOR DEBUG ONLY disarmed slot %d channel %d in index[%d] state %d\n", slot, mchn, channel, daq_regs[channel].state);
+
+  // disable daq hardware
+  scub_base[OFFS(slot) + DAQ_TRIG_LW(mchn)]  = 0;
+  scub_base[OFFS(slot) + DAQ_TRIG_HW(mchn)]  = 0;
+  scub_base[OFFS(slot) + DAQ_TRIG_DLY(mchn)] = 0;
+  scub_base[OFFS(slot) + DAQ_CNTRL(mchn)]    = 0;
+
+  daq_regs[channel].state = STATE_STOPPED;
+}
+
 int configure_fg_macro(int channel) {
   int i = 0;
   int slot, dev, fg_base, dac_base;
@@ -558,20 +599,6 @@ void disable_fg_channel(unsigned int channel) {
     fg_regs[channel].state = STATE_STOPPED;
     SEND_SIG(SIG_DISARMED);
   }
-}
-void disable_daq_channel(unsigned int channel) {
-  int slot, mchn;
-  short data;
-  int status;
-  if (daq_regs[channel].macro_number == -1) return;
-  slot = daq_macros[daq_regs[channel].macro_number] >> 24;            // dereference slot number
-  mchn = (daq_macros[daq_regs[channel].macro_number] >> 16) & 0xff; // dereference dev number
-  mprintf("disarmed slot %d channel %d in index[%d] state %d\n", slot, mchn, channel, daq_regs[channel].state); //ONLY FOR TESTING
-
-  // disable daq hardware
-  scub_base[OFFS(slot) + DAQ_CNTRL(mchn)] = 0;
-
-  daq_regs[channel].state = STATE_STOPPED;
 }
 
 void updateTemp() {
@@ -801,6 +828,11 @@ static TaskType tasks[] = {
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, scu_bus_handler    },
   { 0, 0, {0}, 0, 0, ALWAYS         , 0, ecaHandler         },
   { 0, 0, {0}, 0, 0, INTERVAL_100MS , 0, channel_watchdog   },
+  { 0, 0, {0}, 0, 0, INTERVAL_1MS   , 0, daq_data_fetch     }, // daq channel 1
+  { 0, 0, {0}, 0, 0, INTERVAL_1MS   , 0, daq_data_fetch     }, // daq channel 2
+  { 0, 0, {0}, 0, 0, INTERVAL_1MS   , 0, daq_data_fetch     }, // daq channel 3
+  { 0, 0, {0}, 0, 0, INTERVAL_1MS   , 0, daq_data_fetch     }, // daq channel 4
+  { 0, 0, {0}, 0, 0, INTERVAL_1MS   , 0, daq_data_fetch     }, // daq channel 5
 
 };
 
@@ -810,6 +842,18 @@ TaskType *tsk_getConfig(void) {
 
 int tsk_getNumTasks(void) {
   return sizeof(tasks) / sizeof(*tasks);
+}
+
+/* can have multiple instances, one for each active daq channel */
+/* persistent data, like the state, is stored in a global structure */
+void daq_data_fetch(int id) {
+  int i;
+  int slot;
+  int status;
+  static TaskType *task_ptr;              // task pointer
+  task_ptr = tsk_getConfig();             // get a pointer to the task configuration
+
+  return;
 }
 
 /* task definition of scu_bus_handler */
