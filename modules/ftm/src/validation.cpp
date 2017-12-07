@@ -18,13 +18,13 @@ namespace Validation {
 
   const ConstellationRule_set cRules = { 
     {n::sTMsg,        e::sDefDst,     {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign},  1, 1  },
-    {n::sTMsg,        e::sDynPar0,    {n::sBlockFixed, n::sBlockAlign },                                                                0, 1  },
-    {n::sTMsg,        e::sDynPar1,    {n::sBlockFixed, n::sBlockAlign },                                                                0, 1  },
+    {n::sTMsg,        e::sDynPar0,    {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign},  0, 1  },
+    {n::sTMsg,        e::sDynPar1,    {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign},  0, 1  },
     {n::sCmdNoop,     e::sDefDst,     {n::sTMsg,  n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign}, 0, 1  },
     {n::sCmdNoop,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},                                                      1, 1  },
     {n::sCmdFlow,     e::sDefDst,     {n::sTMsg,  n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign}, 0, 1  },
     {n::sCmdFlow,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},                                                      1, 1  },
-    {n::sCmdFlow,     e::sCmdFlowDst, {n::sBlock, n::sBlockFixed, n::sBlockAlign},                                                      1, 1  },
+    {n::sCmdFlow,     e::sCmdFlowDst, {n::sTMsg,  n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign}, 1, 1  },
     {n::sCmdFlush,    e::sDefDst,     {n::sTMsg,  n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign}, 1, 1  },
     {n::sCmdFlush,    e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},                                                      1, 1  },
     {n::sCmdWait,     e::sDefDst,     {n::sTMsg,  n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign}, 0, 1  },
@@ -131,8 +131,11 @@ namespace Validation {
        if ( (g[vnext].type == n::sBlockFixed) || (g[vnext].type == n::sBlockAlign) ) { //found a block
         //check for forbidden properties:
 
+        if (g[vcurrent].np == nullptr) throw std::runtime_error(g[vcurrent].name  + " is not allocated\n"); 
+        if (g[vnext].np == nullptr) throw std::runtime_error(g[vnext].name  + " is not allocated\n"); 
+
         //assumption: successors are either of class Event or Block (neighbourhoodCheck ensures this)
-        if (boost::dynamic_pointer_cast<Event>(g[vcurrent].np)->getTOffs() >= boost::dynamic_pointer_cast<Block>(g[vcurrent].np)->getTPeriod() ) { // time offset greater or equal block period 
+        if (boost::dynamic_pointer_cast<Event>(g[vcurrent].np)->getTOffs() >= boost::dynamic_pointer_cast<Block>(g[vnext].np)->getTPeriod() ) { // time offset greater or equal block period 
           throw std::runtime_error(exIntro  + "have a time offset greater of equal than the period of its terminating block\n");
         } 
         return; // found a valid block, we're done.
@@ -142,13 +145,12 @@ namespace Validation {
         throw std::runtime_error(exIntro  + "loop back on itself\n");    
       }
       //assumption: successors are of class events (neighbourhoodCheck and block checks above ensure this)  
-      if (boost::dynamic_pointer_cast<Event>(g[vcurrent].np)->getTOffs() > boost::dynamic_pointer_cast<Event>(g[vnext].np)->getTOffs()) { // non monotonically increasing time offsets
-        throw std::runtime_error(exIntro  + "have a time offset greater than its successor's\n");   
-      }  
       if (vnext == v) { // loop to original vertex without encountering block termination
         throw std::runtime_error(exIntro  + "be part of a loop without a terminating block\n"); 
       }
-
+      if (boost::dynamic_pointer_cast<Event>(g[vcurrent].np)->getTOffs() > boost::dynamic_pointer_cast<Event>(g[vnext].np)->getTOffs()) { // non monotonically increasing time offsets
+        throw std::runtime_error(exIntro  + "have a time offset greater than its successor's\n");   
+      }
      
       
       vcurrent = vnext;

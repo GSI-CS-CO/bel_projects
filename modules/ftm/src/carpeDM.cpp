@@ -521,16 +521,15 @@ void CarpeDM::showCpuList() {
     if (verbose) sLog << "Done.";
   }
 
-  bool CarpeDM::validate(Graph& g) {
+  bool CarpeDM::validate(Graph& g, AllocTable& at) {
     try { 
           BOOST_FOREACH( vertex_t v, vertices(g) ) { Validation::neighbourhoodCheck(v, g);  }
-          /*
+          
           BOOST_FOREACH( vertex_t v, vertices(g) ) { 
-          if (g[v].np == nullptr) throw std::runtime_error("Validation of Sequence: Node '" + g[v].name + "' was not allocated" );
-          g[v].np->accept(VisitorValidation(g, v, at)); 
-          */
-    }
-    catch (std::runtime_error const& err) { throw std::runtime_error("Validation of " + std::string(err.what()) ); }
+            if (g[v].np == nullptr) throw std::runtime_error("Validation of Sequence: Node '" + g[v].name + "' was not allocated" );
+            g[v].np->accept(VisitorValidation(g, v, at)); 
+          }
+    } catch (std::runtime_error const& err) { throw std::runtime_error("Validation of " + std::string(err.what()) ); }
     return true;
   }
 

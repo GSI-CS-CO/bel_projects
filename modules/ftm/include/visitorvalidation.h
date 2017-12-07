@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <iostream>
 #include "graph.h"
+#include "validation.h"
+#include "alloctable.h"
 
 
 class Event;

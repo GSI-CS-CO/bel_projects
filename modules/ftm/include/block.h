@@ -26,6 +26,7 @@ public:
   virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix)  const;

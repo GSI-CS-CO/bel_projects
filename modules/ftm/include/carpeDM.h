@@ -46,7 +46,7 @@ private:
   int remove(Graph& g);
   int keep(Graph& g);  
   int overwrite(Graph& g);
-  bool validate(Graph& g);
+  bool validate(Graph& g, AllocTable& at);
   
   int sendCommands(Graph &); //Sends a dotfile of commands to the DM
 

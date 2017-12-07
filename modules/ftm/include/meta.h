@@ -17,6 +17,7 @@ public:
   virtual void accept(const VisitorVertexWriter& v)     const = 0;
   virtual void accept(const VisitorUploadCrawler& v)    const = 0;
   virtual void accept(const VisitorDownloadCrawler& v)  const = 0;
+  virtual void accept(const VisitorValidation& v)       const = 0;
   virtual void show(void)                               const = 0;
   virtual void show(uint32_t cnt, const char* sPrefix)  const = 0;
   virtual void serialise(const vAdr &va) const;
@@ -45,9 +46,10 @@ public:
   node_ptr clone() const { return boost::make_shared<CmdQMeta>(*this); }
 
 
-  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix) const;
@@ -65,9 +67,10 @@ public:
   ~CmdQBuffer()  {};
   node_ptr clone() const { return boost::make_shared<CmdQBuffer>(*this); }
 
-  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix)  const;
@@ -84,9 +87,10 @@ public:
   ~DestList()  {};
   node_ptr clone() const { return boost::make_shared<DestList>(*this); }
 
-  virtual void accept(const VisitorVertexWriter& v)         const override { v.visit(*this); }
+  virtual void accept(const VisitorVertexWriter& v)     const override { v.visit(*this); }
   virtual void accept(const VisitorUploadCrawler& v)    const override { v.visit(*this); }
   virtual void accept(const VisitorDownloadCrawler& v)  const override { v.visit(*this); }
+  virtual void accept(const VisitorValidation& v)       const override { v.visit(*this); }
 
   void show(void)       const;
   void show(uint32_t cnt, const char* sPrefix)  const;
