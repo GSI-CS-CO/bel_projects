@@ -60,7 +60,9 @@ namespace dnt = DotStr::Node::TypeVal;
   void CarpeDM::parseDownloadData(vBuf downloadData) {
     Graph& g = gDown;
     AllocTable& at = atDown;
+    std::stringstream stream;
 
+    
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //create AllocTable and Vertices
@@ -77,7 +79,10 @@ namespace dnt = DotStr::Node::TypeVal;
           uint32_t    adr       = at.getMemories()[i].sharedOffs + bitIdx * _MEM_BLOCK_SIZE;
           uint32_t    hash      = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_HASH]);
           //sLog << std::dec << "Offset " << localAdr + NODE_HASH << std::endl;
-          std::string name      = hm.lookup(hash) ? hm.lookup(hash).get() : "#" + std::to_string(hash);
+
+          stream.str(""); stream.clear();
+          stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << hash;
+          std::string name      = hm.lookup(hash) ? hm.lookup(hash).get() : "#" + stream.str();
           std::string pattern   = gt.lookupOrCreateNode(name)->pattern;
           std::string beamproc  = gt.lookupOrCreateNode(name)->beamproc;
           uint32_t    flags     = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&downloadData[localAdr + NODE_FLAGS]); //FIXME what about future requests to hashmap if we improvised the name from hash? those will fail ...
@@ -85,7 +90,7 @@ namespace dnt = DotStr::Node::TypeVal;
           uint8_t     cpu       = i;
           
           //Vertex needs flags as a std::string. Convert to hex
-          std::stringstream stream;
+          stream.str(""); stream.clear();
           stream << "0x" << std::setfill ('0') << std::setw(sizeof(uint32_t)*2) << std::hex << flags;
           std::string tmp(stream.str());
 

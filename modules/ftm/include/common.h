@@ -125,6 +125,19 @@ inline T writeBeBytesToLeNumber(uint8_t* pB) {
   return endian_reverse(*((T*)pB));
 }
 
+template<typename T>
+inline void writeBeNumberToLeBytes(uint8_t* pB, T val) {
+  T x = endian_reverse(val);
+  std::copy(static_cast<const uint8_t*>(static_cast<const void*>(&x)),
+            static_cast<const uint8_t*>(static_cast<const void*>(&x)) + sizeof x,
+            pB);
+}
+
+template<typename T>
+inline T writeLeBytesToBeNumber(uint8_t* pB) {
+  return endian_reverse(*((T*)pB));
+}
+
 
 template<typename T>
 inline T s2u(const std::string& s) {

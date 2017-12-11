@@ -22,27 +22,28 @@
 
 
 
+
 int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
 {
    //eb_status_t status;
    //FIXME What about MTU? What about returned eb status ??
    Cycle cyc;
-   ebBuf veb = ebBuf(va.size());
+   eb_data_t veb[va.size()];
 
    for(int i = 0; i < (va.end()-va.begin()); i++) {
      uint32_t data = vb[i*4 + 0] << 24 | vb[i*4 + 1] << 16 | vb[i*4 + 2] << 8 | vb[i*4 + 3];
-     veb[i] = data;
+     veb[i] = (eb_data_t)data;
    } 
 
    cyc.open(dev);
-   for(int i = 0; i < (veb.end()-veb.begin()); i++) {
+   for(int i = 0; i < (va.end()-va.begin()); i++) {
     //FIXME dirty break into cycles
     if (i && ((va[i] & (RAM_SIZE-1)) ^ (va[i-1] & (RAM_SIZE-1)))) {
       cyc.close();
       cyc.open(dev);  
     }
     std::cout << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
-    cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)veb[i]);
+    cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
    }
    cyc.close();
@@ -50,12 +51,13 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
    return 0;
 }
 
+
 vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va)
 {
    //FIXME What about MTU? What about returned eb status ??
    Cycle cyc;
-   uint32_t veb[va.size()];
-   vBuf ret   = vBuf(va.size() * 4);
+   eb_data_t veb[va.size()];
+   vBuf ret = vBuf(va.size() * 4);
       
    //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
 
@@ -66,12 +68,12 @@ vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va)
       cyc.close();
       cyc.open(dev);  
     }
-    cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&veb[i]);
+    cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, veb + i);
    }
    cyc.close();
 
   for(unsigned int i = 0; i < va.size(); i++) { 
-    ret[i * 4 + 0] = (uint8_t)(veb[i] >> 24);
+    ret[i * 4]     = (uint8_t)(veb[i] >> 24);
     ret[i * 4 + 1] = (uint8_t)(veb[i] >> 16);
     ret[i * 4 + 2] = (uint8_t)(veb[i] >> 8);
     ret[i * 4 + 3] = (uint8_t)(veb[i] >> 0);
@@ -94,17 +96,15 @@ int CarpeDM::ebWriteWord(Device& dev, uint32_t adr, uint32_t data)
 
 uint32_t CarpeDM::ebReadWord(Device& dev, uint32_t adr)
 {
-   //FIXME this sometimes led to memory corruption by eb's handling of &data - investigate !!!
-   uint32_t data, ret;
+   eb_data_t data;
 
    Cycle cyc;
    cyc.open(dev);
    cyc.read(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&data);
    cyc.close();
-   
-   ret = data;
 
-   return ret;
+
+   return (uint32_t)data;
 }
 
  //Reads and returns a 64 bit word from DM
@@ -328,7 +328,7 @@ bool CarpeDM::connect(const std::string& en) {
     try { boost::read_graphviz(s, g, dp, dnp::Base::sName); }
     catch(...) { throw; }
    
-    BOOST_FOREACH( vertex_t v, vertices(g) ) { g[v].hash = hm.fnvHash(g[v].name.c_str()); } //generate hash to complete vertex information
+    BOOST_FOREACH( vertex_t v, vertices(g) ) { g[v].hash = hm.hash(g[v].name); } //generate hash to complete vertex information
     
     return g;
   }

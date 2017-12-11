@@ -398,7 +398,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
     if (g[target(*out_cur,g)].np == nullptr) std::cerr << g[target(*out_cur,g)].name << " is UNDEFINED" << std::endl;
     else {
 
-      if (!(g[target(*out_cur,g)].np->isMeta()) && g[*out_cur].type == det::sAltDst) {
+      if (g[*out_cur].type == det::sAltDst) {
         auto x = at.lookupVertex(target(*out_cur,g));
         // Destination MUST NOT lie outside own memory! (well, technically, it'd work, but it'd be race condition galore ...)
         if (at.isOk(x)) {
@@ -430,7 +430,7 @@ vAdr VisitorUploadCrawler::getListDst() const {
 findNodeAdrByEdgeType(v, det::sAltDst, bool nodeTypeIsMeta, const unsigned int minResultLen, const unsigned int maxResultLen, const uint32_t resultPadData )
 
 
-vAdr findNodeAdrByEdgeType(vertex_t vStart, const std::string edgeType, const bool nodeTypeIsMeta, const unsigned int minResultLen, const unsigned int maxResultLen, const uint32_t resultPadData ) {
+vAdr findNodeAdrByEdgeType(vertex_t vStart, const std::string edgeType, const unsigned int minResultLen, const unsigned int maxResultLen, const uint32_t resultPadData ) {
   Graph::out_edge_iterator out_begin, out_end, out_cur;
   Graph::in_edge_iterator in_begin, in_end;  
   vAdr ret;

@@ -20,7 +20,9 @@
 using boost::multi_index_container;
 using namespace boost::multi_index;
 
-
+#define ADR_FROM_TO(from,to) ( (((uint8_t)from & 0xf) << 4) | ((uint8_t)to   & 0xf) )
+ 
+//enum class AdrType {EXT = 0, INT = 1, PEER = 2, MGMT = 3};
 
 struct AllocMeta {
   uint8_t     cpu;
@@ -130,6 +132,32 @@ public:
   amI lookupAdr(uint8_t cpu, uint32_t adr)    const;
 
   bool isOk(amI it) const {return (it != a.end()); }
+
+
+
+  const uint32_t adrConversion(AdrType from, AdrType to, const uint8_t cpu, const uint32_t a) const {
+    if (a == LM32_NULL_PTR) return a;
+    
+    switch (ADR_FROM_TO(from,to)) {
+      case ADR_FROM_TO(AdrType::EXTERNAL, AdrType::MGMT)      : return a - vPool[cpu].extBaseAdr;
+      case ADR_FROM_TO(AdrType::EXTERNAL, AdrType::PEER)      : return a - vPool[cpu].extBaseAdr  + vPool[cpu].peerBaseAdr;
+      case ADR_FROM_TO(AdrType::EXTERNAL, AdrType::INTERNAL)  : return a - vPool[cpu].extBaseAdr  + vPool[cpu].intBaseAdr;
+      case ADR_FROM_TO(AdrType::INTERNAL, AdrType::MGMT)      : return a - vPool[cpu].intBaseAdr;
+      case ADR_FROM_TO(AdrType::INTERNAL, AdrType::EXTERNAL)  : return a - vPool[cpu].intBaseAdr  + vPool[cpu].extBaseAdr;
+      case ADR_FROM_TO(AdrType::INTERNAL, AdrType::PEER)      : return a - vPool[cpu].intBaseAdr  + vPool[cpu].peerBaseAdr;
+      case ADR_FROM_TO(AdrType::PEER,     AdrType::MGMT)      : return a - vPool[cpu].peerBaseAdr;
+      case ADR_FROM_TO(AdrType::PEER,     AdrType::EXTERNAL)  : return a - vPool[cpu].peerBaseAdr + vPool[cpu].extBaseAdr;
+      case ADR_FROM_TO(AdrType::PEER,     AdrType::INTERNAL)  : return a - vPool[cpu].peerBaseAdr + vPool[cpu].intBaseAdr;
+      case ADR_FROM_TO(AdrType::MGMT,     AdrType::EXTERNAL)  : return a + vPool[cpu].extBaseAdr;
+      case ADR_FROM_TO(AdrType::MGMT,     AdrType::INTERNAL)  : return a + vPool[cpu].intBaseAdr;
+      case ADR_FROM_TO(AdrType::MGMT,     AdrType::PEER)      : return a + vPool[cpu].peerBaseAdr;
+      default : throw std::runtime_error("bad address conversion perspective"); return 0;
+    }
+
+
+  }
+
+
 
   const uint32_t extAdr2adr(const uint8_t cpu, const uint32_t ea)      const  { return (ea == LM32_NULL_PTR ? LM32_NULL_PTR : ea - vPool[cpu].extBaseAdr); }
   const uint32_t intAdr2adr(const uint8_t cpu, const uint32_t ia)      const  { return (ia == LM32_NULL_PTR ? LM32_NULL_PTR : ia - vPool[cpu].intBaseAdr); }
