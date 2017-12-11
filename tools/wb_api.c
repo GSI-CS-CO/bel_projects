@@ -3,7 +3,7 @@
  *
  *  created : Apr 10, 2013
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 03-Aug-2017
+ *  version : 01-Dec-2017
  *
  * Api for wishbone devices for timing receiver nodes. This is not a timing receiver API,
  * but only a temporary solution.
@@ -59,6 +59,7 @@ eb_address_t etherbone_addr = EB_NULL;
 eb_address_t tlu_addr       = EB_NULL;
 eb_address_t wb4_ram        = EB_NULL;
 eb_address_t wb4_1wire      = EB_NULL;
+eb_address_t reset_addr     = EB_NULL;
 
 eb_address_t BASE_ONEWIRE;
 extern struct w1_bus wrpc_w1_bus;
@@ -102,23 +103,30 @@ eb_status_t wb_open(const char *dev, eb_device_t *device, eb_socket_t *socket)
 
   *device = EB_NULL;
   *socket = EB_NULL;
-
+  
   if ((status = eb_socket_open(EB_ABI_CODE, 0, EB_ADDRX|EB_DATAX, socket)) != EB_OK) return status;
-  if ((status = eb_device_open(*socket, dev, EB_ADDRX|EB_DATAX, 3, device)) != EB_OK) return status;
+  if ((status = eb_device_open(*socket, dev, EB_ADDRX|EB_DATAX, 10, device)) != EB_OK) return status;
 
   known_sock = *socket;
 
   return status;
 } /* wb_open */
 
-void wb_close(eb_device_t device, eb_socket_t socket)
+eb_status_t wb_close(eb_device_t device, eb_socket_t socket)
 {
+  eb_status_t status;
+
 #ifdef WB_SIMULATE
-  return;
+  return EB_OK;
 #endif
 
-  eb_device_close(device);
-  eb_socket_close(socket);
+  if ((status = eb_device_close(device)) != EB_OK) return status;
+  if ((status = eb_socket_close(socket)) != EB_OK) return status;
+
+  known_sock   = EB_NULL;
+  known_dev    = EB_NULL;
+
+  return status;
 } /* wb_close */
 
 
@@ -286,6 +294,7 @@ eb_status_t wb_wr_get_ip(eb_device_t device, int devIndex, int *ip )
 #endif
 
   *ip = 0x0;
+
   if ((status = wb_check_device(device, ETHERBONE_CONFIG_VENDOR, ETHERBONE_CONFIG_PRODUCT, ETHERBONE_CONFIG_VMAJOR, ETHERBONE_CONFIG_VMINOR, devIndex, &etherbone_addr)) != EB_OK) return status;
 
   address = etherbone_addr + ETHERBONE_CONFIG_IP;
@@ -395,3 +404,26 @@ eb_status_t wb_wr_get_temp(eb_device_t device, int devIndex, unsigned int busInd
   
   return EB_OOM; /* no 1-wire temperature sensor at specified WB device and specified 1-wire bus ... */
 } /* wb_wr_get_temp */
+
+eb_status_t wb_wr_reset(eb_device_t device, int devIndex, uint32_t value)
+{
+  eb_data_t    data;
+  eb_address_t address;
+  eb_status_t  status;
+
+
+#ifdef WB_SIMULATE
+  *ip = 0x1234abcd;
+  
+  return EB_OK;
+#endif
+
+  if ((status = wb_check_device(device, FPGA_RESET_VENDOR, FPGA_RESET_PRODUCT, FPGA_RESET_VMAJOR, FPGA_RESET_VMINOR, devIndex, &reset_addr)) != EB_OK) return status;
+
+  address = reset_addr + FPGA_RESET_RESET;
+  data    = (eb_data_t)value;
+
+  if ((status = eb_device_write(device, address, EB_BIG_ENDIAN|EB_DATA32, data, 0, eb_block)) != EB_OK) return status;
+
+  return status;
+} /* wb_wr_reset */

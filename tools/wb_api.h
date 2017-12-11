@@ -67,9 +67,9 @@ eb_status_t wb_open(const char *dev,                           /* EB device name
                     );
 
 /* closes connection to Wishbone bus */
-void wb_close(eb_device_t device,                              /* EB device */
-              eb_socket_t socket                               /* EB socket */
-              );
+eb_status_t wb_close(eb_device_t device,                       /* EB device */
+                     eb_socket_t socket                        /* EB socket */
+                     );
 
 /* gets start address of a WB device */
 eb_status_t wb_get_device_address(eb_device_t device,          /* EB device */
@@ -127,6 +127,12 @@ eb_status_t wb_wr_get_temp(eb_device_t device,                 /* EB device */
                            unsigned int family,                /* family code of 1-wire sensor */                                          
                            double *temp                        /* temperature */
                            );
+
+/* reset the FPGA, reload new image from flash */
+eb_status_t wb_wr_reset(eb_device_t device,                    /* EB device */
+                        int devIndex,                          /* 0,1,2... - there may be more than 1 device on the WB bus */
+                        uint32_t value                         /* value to be written to the reset controller */
+                        );
 
 
 #endif /* wb_api.h */
