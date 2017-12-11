@@ -393,12 +393,13 @@ using namespace DotStr::Misc;
     bool found; 
     BOOST_FOREACH( vertex_t w, vertices(gTmp) ) {
       //sLog <<  "Looking at " << gTmp[w].name << std::endl;
-      found = false; 
+      found = false;
+      sLog <<  "Searching " << std::hex << " 0x" << gTmp[w].hash << std::endl; 
       BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
+        sLog <<  "... " << std::hex << " 0x" << gUp[v].hash << std::endl;
         if ((gTmp[w].hash == gUp[v].hash)) {
           found = true;
           if (gTmp[w].type != DotStr::Misc::sUndefined) {
-            
             toDelete.insert(v);                   // add the node
             //sLog <<  "Added Node " << gTmp[w].name << " of type " << gTmp[w].type << " to del map " << std::endl;   
             pushMetaNeighbours(v, gUp, toDelete); // add all of its meta children as well
@@ -406,7 +407,9 @@ using namespace DotStr::Misc;
           break;
         }
       }
-      if (!found) { sLog <<  "Skipping unknown Node " << gTmp[w].name << std::endl;   } 
+      if (!found) { 
+        sLog <<  "Skipping unknown Node " << gTmp[w].name << std::hex << " 0x" << gTmp[w].hash << std::endl;   
+      } 
     }
 
     //check staging, vertices might have lost children

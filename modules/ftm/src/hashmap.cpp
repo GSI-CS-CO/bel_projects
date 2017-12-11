@@ -1,7 +1,16 @@
 #include "hashmap.h"
 #include <iostream>
 #include <sstream>
+#include "common.h"
 
+
+uint32_t HashMap::hash(const std::string& s) {
+  const char* ps = s.c_str();
+  if (ps[0] != '#') {return fnvHash(ps);}
+  else              {std::cout << "Found dumped hash, leaving intact" << std::endl; return s2u<uint32_t>(s.substr(1));}  
+}
+
+//FIXME if the string starts with a '#', don't hash it, just parse to number and copy it in!
 
 uint32_t HashMap::fnvHash(const char* str)
 {

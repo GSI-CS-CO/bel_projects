@@ -91,7 +91,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     uint8_t  cmdPrio    = s2u<uint8_t>(g[v].prio);
     uint8_t cpu, thr;
 
-   sLog << "Command <" << g[v].name << ">, type <" << g[v].type << "> pat <" << g[v].patName << "> target <" << g[v].cmdTarget << "> dest <" << g[v].cmdDest << ">" << std::endl;
+   sLog << "Command <" << g[v].name << ">, type <" << g[v].type << "> pat <" << g[v].patName << "> destPat <" << g[v].cmdDestPat << "> target <" << g[v].cmdTarget << "> dest <" << g[v].cmdDest << ">" << std::endl;
     
 
     // Commands with optional target
