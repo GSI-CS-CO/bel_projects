@@ -318,7 +318,8 @@ port  (
     error_limit_reached:  out   std_logic;
     Mil_Decoder_Diag_p: out   std_logic_vector(15 downto 0);
     Mil_Decoder_Diag_n: out   std_logic_vector(15 downto 0);
-    clr_mil_rcv_err:    in    std_logic
+    clr_mil_rcv_err:    in    std_logic;
+    hw6408_rdy:         out   std_logic
     );
 end component;
 

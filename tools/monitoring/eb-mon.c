@@ -1,11 +1,11 @@
 /******************************************************************************
- *  wr-mon.c
+ *  eb-mon.c (previously wr-mon.c)
  *
  *  created : 2015
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Nov-2016
+ *  version : 2-Aug-2017
  *
- * Command-line interface for saftlib. This tool focuses on the software part.
+ * Command-line interface for WR monitoring via Etherbone.
  *
  * -------------------------------------------------------------------------------------------
  * License Agreement for this software:
@@ -34,7 +34,7 @@
  * For all questions and ideas contact: d.beck@gsi.de
  * Last update: 25-April-2015
  ********************************************************************************************/
-#define WRMON_VERSION "1.1.0"
+#define EBMON_VERSION "1.3.0"
 
 /* standard includes */
 #include <unistd.h> /* getopt */
@@ -50,10 +50,12 @@
 
 /* Wishbone api */
 #include <wb_api.h>
+#include <wb_slaves.h>
 
 const char* program;
 static int verbose=0;
 eb_device_t device;        /* needs to be global for 1-wire stuff */
+eb_device_t deviceOther;   /* other EB device for comparing timestamps */
 
 
 static void die(const char* where, eb_status_t status) {
@@ -65,33 +67,43 @@ static void die(const char* where, eb_status_t status) {
 static void help(void) {
   fprintf(stderr, "Usage: %s [OPTION] <etherbone-device>\n", program);
   fprintf(stderr, "\n");
-  fprintf(stderr, "  -b<busIndex>     display board ID (ID of temperature sensor on the specified 1-wire bus\n");
+  fprintf(stderr, "  -b<busIndex>     display ID (ID of slave on the specified 1-wire bus)\n");
+  fprintf(stderr, "  -c<eb-device>    compare timestamp with the one of <eb-device> and display the result\n");
   fprintf(stderr, "  -d               display WR time\n");
   fprintf(stderr, "  -e               display etherbone version\n");
+  fprintf(stderr, "  -f<familyCode>   specify family code of 1-wire slave (0x43: EEPROM; 0x28,0x42: temperature)\n");
   fprintf(stderr, "  -h               display this help and exit\n");
   fprintf(stderr, "  -i               display WR IP\n");
   fprintf(stderr, "  -l               display WR link status\n");
   fprintf(stderr, "  -m               display WR MAC\n");
-  fprintf(stderr, "  -o               display offset between WR time and system time\n");
+  fprintf(stderr, "  -o               display offset between WR time and system time [ms]\n");
   fprintf(stderr, "  -s               display WR sync status\n");
   fprintf(stderr, "  -t<busIndex>     display temperature of sensor on the specified 1-wire bus\n");
   fprintf(stderr, "  -v               display verbose information\n");
   fprintf(stderr, "  -w<index>        specify WB device in case multiple WB devices of the same type exist (default: 0)\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "Use this tool to get some info about WR enabled hardware.\n");
+  fprintf(stderr, "Example1: '%s -v dev/wbm0' display typical information.\n", program);
+  fprintf(stderr, "Example2: '%s -b0 -f0x43 dev/wbm0' read ID of EEPROM connected to 1st 1-wire bus\n", program);
   fprintf(stderr, "\n");
   fprintf(stderr, "Report software bugs to <d.beck@gsi.de>\n");
-  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", WRMON_VERSION);
+  fprintf(stderr, "Version %s. Licensed under the LGPL v3.\n", EBMON_VERSION);
 }
 
 
 int main(int argc, char** argv) {
   eb_status_t       status;
   eb_socket_t       socket;
-  int               devIndex=-1; /* 0,1,2... - there may be more than 1 device on the WB bus */
+  int               devIndex=-1;  /* 0,1,2... - there may be more than 1 device on the WB bus */
   unsigned int      busIndex=-1;  /* index of 1-wire bus connected to a controller*/
 
+  int               i;            /* counter for comparing WR time with other device */
+  int               nCompare = 5; /* number of compares                              */
+  uint64_t          nsecsDiff64;
+  int               diffIsPositive;               
+
   const char* devName;
+  const char* devNameOther;
 
   int         getEBVersion=0;
   int         getWRDate=0;
@@ -102,10 +114,15 @@ int main(int argc, char** argv) {
   int         getWRIP=0;
   int         getBoardID=0;
   int         getBoardTemp=0;
+  int         getWRDateOther=0;
   int         exitCode=0;
 
+  unsigned int family = 0;
 
-  uint64_t    nsecs64;
+  uint64_t    nsecs64, nsecsOther64;
+  uint64_t    nsecsSum64, nsecsSumOther64;
+  uint64_t    nsecsRound64, nsecsRoundOther64;
+  uint64_t    tmpa64, tmpb64;
   uint64_t    msecs64;
   uint64_t    hostmsecs64;
   int64_t     offset;
@@ -127,7 +144,7 @@ int main(int argc, char** argv) {
 
   program = argv[0];
 
-  while ((opt = getopt(argc, argv, "t:w:b:dosmlievh")) != -1) {
+  while ((opt = getopt(argc, argv, "t:w:f:b:c:dosmlievh")) != -1) {
     switch (opt) {
     case 'b':
       getBoardID=1;
@@ -137,8 +154,19 @@ int main(int argc, char** argv) {
         exit(1);
       } /* if *tail */
       break;
+    case 'c':
+      getWRDateOther=1;
+      devNameOther = optarg;
+      break;
     case 'd':
       getWRDate=1;
+      break;
+    case 'f':
+      family = strtol(optarg, &tail, 0);
+      if (*tail != 0) {
+        fprintf(stderr, "Specify a proper number, not '%s'!\n", optarg);
+        exit(1);
+      } /* if *tail */
       break;
     case 'o':
       getWROffset=1;
@@ -222,6 +250,68 @@ int main(int argc, char** argv) {
     return (1);
   }
 
+  if (getWRDateOther) {
+    if ((status = wb_open(devNameOther, &deviceOther, &socket)) != EB_OK) {
+      fprintf(stderr, "can't open connection to device %s \n", devNameOther);
+      return (1);
+    }
+
+    // do one round, to be sure WR network "knows" route to other device
+    if ((status = wb_wr_get_time(deviceOther, 0,        &nsecsOther64)) != EB_OK) die("WR get time other", status);
+    if ((status = wb_wr_get_time(device,      devIndex, &nsecs64))      != EB_OK) die("WR get time", status);
+
+    // now start
+    nsecsSum64      = 0;
+    nsecsSumOther64 = 0;
+
+    for (i=0; i < nCompare; i++) {
+      if ((status = wb_wr_get_time(device,      devIndex, &tmpa64)) != EB_OK) die("WR get time", status);
+      if ((status = wb_wr_get_time(deviceOther, 0,        &tmpb64)) != EB_OK) die("WR get time other", status);
+
+      nsecsSum64      += tmpa64;
+      nsecsSumOther64 += tmpb64;
+    } 
+
+    nsecs64       = (uint64_t)((double)(nsecsSum64)      / (double)nCompare);
+    nsecsOther64  = (uint64_t)((double)(nsecsSumOther64) / (double)nCompare);
+
+    // determine the roundtrip time for device
+    wb_wr_get_time(device, 0, &tmpa64);
+    for (i=0; i < nCompare; i++) wb_wr_get_time(device, 0, &tmpb64);
+    nsecsRound64 = tmpb64 - tmpa64;
+    nsecsRound64 = (uint64_t)((double)nsecsRound64/(double)nCompare);
+
+    // determine the roundtrip time for other device
+    wb_wr_get_time(deviceOther, 0, &tmpa64);
+    for (i=0; i < nCompare; i++) wb_wr_get_time(deviceOther, 0, &tmpb64);
+    nsecsRoundOther64 = tmpb64 - tmpa64;
+    nsecsRoundOther64 = (uint64_t)((double)nsecsRoundOther64/(double)nCompare);
+
+    // nsecsOther64 has been measured after the nsecs64 has been completed. So we need to subtract that roundtrip time of the first device
+    nsecsOther64 = nsecsOther64 - nsecsRound64;
+
+    // the timestamps nsecs64 and nsecsOther64 are measured after the etherbone packet arrived at the FPGA
+    // we use the simplified model, that the the transmission times to and from the remote FPGA are identical (symmetry) and that the roundtrip is only due to total transmission time
+    // hece, the timestamp is latched after half of the roundtrip time, so we need to subtract that from both values
+
+    nsecsOther64 = nsecsOther64 - (nsecsRoundOther64 >> 1);
+    nsecs64      = nsecs64      - (nsecsRound64      >> 1);
+
+    if (nsecs64 > nsecsOther64) {
+      nsecsDiff64    = nsecs64 - nsecsOther64;
+      diffIsPositive = 1;
+    }
+    else {
+      nsecsDiff64    = nsecsOther64 - nsecs64; 
+      diffIsPositive = 0;
+    }
+
+      fprintf(stdout, "WR differs by ");
+      if (diffIsPositive) fprintf(stdout, "+");
+      else                fprintf(stdout, "-");
+      fprintf(stdout, "%"PRIu64" us\n", nsecsDiff64 / 1000);
+  } 
+
   if (getWRDate || getWROffset) {
     if ((status = wb_wr_get_time(device, devIndex, &nsecs64)) != EB_OK) die("WR get time", status);
     secs     = (unsigned long)((double)nsecs64 / 1000000000.0);
@@ -241,18 +331,19 @@ int main(int argc, char** argv) {
       tm = gmtime(&secs);
       strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S %Z", tm);
       
-      if (verbose) fprintf(stdout, "Current TAI:");
-      fprintf(stdout, "%s\n", timestr);
+      if (verbose) fprintf(stdout, "Current TAI: ");
+      fprintf(stdout, "%s (%3lu ms)", timestr, msecs64 - secs * 1000);
+      fprintf(stdout, ", %"PRIu64" us\n", nsecs64 / 1000);
     }
   }
 
   if (getWRSync) {
     if ((status = wb_wr_get_sync_state(device, devIndex, &syncState)) != EB_OK) die("WR get sync state", status);
-    if ((syncState & 0x8))
+    if ((syncState == WR_PPS_GEN_ESCR_MASK))
       sprintf(syncStr,"TRACKING");
-    else if ((syncState & 0x4))
+    else if ((syncState == WR_PPS_GEN_ESCR_MASKTS))
       sprintf(syncStr,"TIME");
-    else if ((syncState & 0x2))
+    else if ((syncState == WR_PPS_GEN_ESCR_MASKPPS))
       sprintf(syncStr, "PPS");
     else
       sprintf(syncStr, "NO SYNC");
@@ -283,18 +374,21 @@ int main(int argc, char** argv) {
   }
   
   if (getBoardID) {
-    if ((status = wb_wr_get_id(device, devIndex, busIndex, &id)) != EB_OK) die("WR get board ID", status);
+    if (!family) die("family code not specified (1-wire)", EB_OOM);
+    if ((status = wb_wr_get_id(device, devIndex, busIndex, family, &id)) != EB_OK) die("WR get board ID", status);
     if (verbose) fprintf(stdout, "ID: ");
     fprintf(stdout, "0x%016"PRIx64"\n", id);
   }
 
  if (getBoardTemp) {
-   if ((status = wb_wr_get_temp(device, devIndex, busIndex, &temp)) != EB_OK) die("WR get board temperature", status);
+   if (!family) die("family code not specified (1-wire)", EB_OOM);
+   if ((status = wb_wr_get_temp(device, devIndex, busIndex, family, &temp)) != EB_OK) die("WR get board temperature", status);
    if (verbose) fprintf(stdout, "temp: ");
    fprintf(stdout, "%.4f\n", (float)temp);
  } 
 
   wb_close(device, socket);
+  wb_close(deviceOther, socket);
   
   return exitCode;
 }

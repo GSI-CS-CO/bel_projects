@@ -123,7 +123,6 @@ signal    clk_switch_cnt:       integer range 0 to clk_switch_cnt_max;
 begin 
 
 
-clk_encdec  <= f_local_12p5_mhz;
 
 pll_125 : if card_type = "addac" generate
     local_clk: local_125_to_12p5
@@ -133,11 +132,21 @@ pll_125 : if card_type = "addac" generate
       );
 end generate;
 
-pll_20 : if card_type = "diob" or card_type = "sio" generate
+pll_20_sio : if card_type = "sio" generate
     local_clk: local_20_to_12p5
       port map(
         inclk0  => local_clk_i,
-        c0      => f_local_12p5_mhz
+        c0      => f_local_12p5_mhz,
+        c1      => clk_encdec
+      );
+end generate;
+
+pll_20 : if card_type = "diob" generate
+    local_clk: local_20_to_12p5
+      port map(
+        inclk0  => local_clk_i,
+        c0      => f_local_12p5_mhz,
+        c1      => open
       );
 end generate;
 

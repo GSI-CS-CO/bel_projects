@@ -18,7 +18,7 @@ gateware:	all pexarria5 exploder5 vetar2a scu2 scu3
 
 install::	etherbone-install tools-install driver-install
 
-clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean 
+clean::		etherbone-clean tools-clean tlu-clean sdbfs-clean driver-clean toolchain-clean firmware-clean scu2-clean scu3-clean exploder-clean exploder5-clean pexarria5-clean sio3-clean ecatools-clean pmc-clean
 
 distclean::	clean
 	git clean -xfd .
@@ -101,7 +101,8 @@ sdbfs-clean::
 	$(MAKE) -C ip_cores/fpga-config-space/sdbfs DIRS="lib userspace" clean
 
 gcc-4.5.3-lm32.tar.xz:
-	wget http://www.ohwr.org/attachments/1301/gcc-4.5.3-lm32.tar.xz
+	wget http://www.ohwr.org/attachments/1301/
+	mv index.html gcc-4.5.3-lm32.tar.xz
 
 toolchain:	gcc-4.5.3-lm32.tar.xz
 	tar xvJf gcc-4.5.3-lm32.tar.xz
@@ -192,14 +193,26 @@ addac2::	firmware
 addac2-clean::
 	$(MAKE) -C syn/gsi_addac2 PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
-diob::		firmware		
+diob::		firmware
 	$(MAKE) -C syn/scu_diob PATH=$(PWD)/toolchain/bin:$(PATH) all
 
 diob-clean::
 	$(MAKE) -C syn/scu_diob PATH=$(PWD)/toolchain/bin:$(PATH) clean
 
-sio3::		firmware		
+sio3::		firmware
 	$(MAKE) -C syn/scu_sio3 PATH=$(PWD)/toolchain/bin:$(PATH) all
 
 sio3-clean::
 	$(MAKE) -C syn/scu_sio3 PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+pmc::	firmware
+	$(MAKE) -C syn/gsi_pmc/control PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+pmc-clean::
+	$(MAKE) -C syn/gsi_pmc/control PATH=$(PWD)/toolchain/bin:$(PATH) clean
+
+ifa8::		firmware
+	$(MAKE) -C syn/gsi_ifa8 PATH=$(PWD)/toolchain/bin:$(PATH) all
+
+ifa8-clean::
+	$(MAKE) -C syn/gsi_ifa8 PATH=$(PWD)/toolchain/bin:$(PATH) clean

@@ -9,9 +9,9 @@
  *            -- Wesley W. Terpstra <w.terpstra@gsi.de>
  *            -- Alessandro Rubini <rubini@gnudd.com>
  *            -- Tomasz Wlostowski <tomasz.wlostowski@cern.ch>
- *  version : 18-Nov-2016
+ *  version : 03-Aug-2017
 */
-#define WB_API_VERSION "0.04.0"
+#define WB_API_VERSION "0.06.0"
 /*
  * Api for wishbone devices for timing receiver nodes. This is not a timing receiver API.
  * 
@@ -21,7 +21,7 @@
  *  - wb_slaves.h
  *  - 1-wire 
  *
- * example of usage: see monitoring/wr-mon.c
+ * example of usage: see monitoring/eb-mon.c
  *
  * compile flags:
  *  - WB_SIMULATE, no access to real devices, just for testing
@@ -67,9 +67,9 @@ eb_status_t wb_open(const char *dev,                           /* EB device name
                     );
 
 /* closes connection to Wishbone bus */
-void wb_close(eb_device_t device,                              /* EB device */
-              eb_socket_t socket                               /* EB socket */
-              );
+eb_status_t wb_close(eb_device_t device,                       /* EB device */
+                     eb_socket_t socket                        /* EB socket */
+                     );
 
 /* gets start address of a WB device */
 eb_status_t wb_get_device_address(eb_device_t device,          /* EB device */
@@ -112,19 +112,27 @@ eb_status_t wb_wr_get_sync_state(eb_device_t device,           /* EB device */
                                  );
 
 
-/* get ID from 1-wire temperature sensor */
+/* get ID of the 1st 1-wire sensor found on the specified bus*/
 eb_status_t wb_wr_get_id(eb_device_t device,                   /* EB device */
                          int devIndex,                         /* 0,1,2... - there may be more than 1 device on the WB bus */
                          unsigned int busIndex,                /* index of the physical 1-wire bus */
+                         unsigned int family,                  /* family code of 1-wire sensor */
                          uint64_t *id                          /* ID of 1-wire sensor */
                          );
 
-/* get temp from 1-wire sensor */
+/* get temp the 1st 1-wire temperatur sensor found on the specified bus */
 eb_status_t wb_wr_get_temp(eb_device_t device,                 /* EB device */
                            int devIndex,                       /* 0,1,2... - there may be more than 1 device on the WB bus */
                            unsigned int busIndex,              /* index of the physical 1-wire bus */
+                           unsigned int family,                /* family code of 1-wire sensor */                                          
                            double *temp                        /* temperature */
                            );
+
+/* reset the FPGA, reload new image from flash */
+eb_status_t wb_wr_reset(eb_device_t device,                    /* EB device */
+                        int devIndex,                          /* 0,1,2... - there may be more than 1 device on the WB bus */
+                        uint32_t value                         /* value to be written to the reset controller */
+                        );
 
 
 #endif /* wb_api.h */

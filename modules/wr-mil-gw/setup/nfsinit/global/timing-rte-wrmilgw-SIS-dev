@@ -1,0 +1,18 @@
+#!/bin/sh
+. /etc/functions
+
+# generic startup
+
+NFSHOST=fsl00c
+NFSBASE=/common/export
+
+log "specific init for $NAME (called by $0)"
+log " script name is " /opt/$NAME/$NAME.sh
+
+[ ! -d /opt/$NAME ] && mkdir -p /opt/$NAME
+mount -t nfs -o ro,nolock,nfsvers=2 $NFSHOST:$NFSBASE/timing-rte/wrmilgw-SIS-dev /opt/$NAME
+
+log "run script " /opt/$NAME/$NAME.sh
+
+/opt/$NAME/$NAME.sh
+#umount /opt/$NAME

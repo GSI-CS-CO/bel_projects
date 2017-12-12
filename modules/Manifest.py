@@ -14,6 +14,7 @@ modules = {
     "modulbus",
     "chopper",
     "cfi_flash",
+    "ddr3",
     "lpc_uart",
     "aux_functions",
     "function_generators",
@@ -42,5 +43,6 @@ modules = {
     "watchdog",
     "mbox",
     "prioq2",
+    "temp_sens",
   ]
 }

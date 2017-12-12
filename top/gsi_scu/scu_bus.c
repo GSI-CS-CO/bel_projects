@@ -3,8 +3,9 @@
 #include "w1.h"
 #include "inttypes.h"
 #include "mprintf.h"
+#include "dow_crc.h"
 
-//#define DEBUG
+#define DEBUG
 
 
 /*  for every found slave the slotnumber is added to the slave array
@@ -31,6 +32,8 @@ void ReadTempDevices(int bus, uint64_t *id, uint32_t *temp) {
     for (i = 0; i < W1_MAX_DEVICES; i++) {
       d = wrpc_w1_bus.devs + i;
         if (d->rom) {
+          if ((calc_crc((int)(d->rom >> 32), (int)d->rom)) != 0)
+            continue;
           #ifdef DEBUG
           mprintf("bus,device (%d,%d): 0x%08x%08x ", wrpc_w1_bus.detail, i, (int)(d->rom >> 32), (int)d->rom);
           #endif

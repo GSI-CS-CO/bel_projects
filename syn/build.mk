@@ -1,7 +1,8 @@
 TOP		:= $(dir $(lastword $(MAKEFILE_LIST)))..
 QUARTUS		?= /opt/quartus
 QUARTUS_BIN	=  $(QUARTUS)/bin
-PATHPKG		= $(shell python2.7 ../../../ip_cores/hdl-make/hdlmake list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
+HDLMAKE := PATH=$(TOP)/bin:$(QUARTUS_BIN):$(PATH) PYTHONPATH=$(TOP)/lib/python2.7/site-packages hdlmake
+PATHPKG		?= $(shell $(HDLMAKE) list-mods | grep -G '^[^\#]' | grep top | grep -o '^\S*')
 SPI_LANES	?= ASx1
 
 CROSS_COMPILE	?= lm32-elf-
@@ -10,10 +11,11 @@ SHELL = /bin/sh
 OBJCOPY		=  $(CROSS_COMPILE)objcopy
 GENRAMMIF	?= $(TOP)/ip_cores/wrpc-sw/tools/genrammif
 INCPATH	:= $(TOP)/modules/lm32-include
+EBPATH  := $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core
 W1    	:= $(TOP)/ip_cores/wrpc-sw
 USRCPUCLK	?= 62500
 CFLAGS	+= 	-mmultiply-enabled -mbarrel-shift-enabled -Os -DUSRCPUCLK=$(USRCPUCLK) -I$(INCPATH) -I$(W1)/include \
-		-I$(W1)/sdb-lib -I$(W1)/pp_printf -std=gnu99 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 -DSDBFS_BIG_ENDIAN
+		-I$(W1)/sdb-lib -I$(W1)/pp_printf -I$(EBPATH) -std=gnu99 -DCONFIG_WR_NODE -DCONFIG_PRINT_BUFSIZE=128 -DSDBFS_BIG_ENDIAN
 
 
 STUBD	?= $(TOP)/modules/lm32_stub
@@ -27,13 +29,16 @@ ifndef RAM_SIZE
 $(error Missing mandatory RAM_SIZE parameter! Quitting ...)
 endif
 
-.PHONY: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd
+.PHONY: ram.ld buildid.c $(PATHPKG)/ramsize_pkg.vhd $(TARGET)_shared_mmap.h
 .PRECIOUS: $(TARGET).bin
 
 include $(INCPATH)/build_lm32.mk
  
 
 all:	$(TARGET).mif $(TARGET)_stub.mif $(TARGET).sof $(TARGET).jic $(TARGET).rpd
+
+$(TARGET)_shared_mmap.h:
+	@(printf %b $(SMM)) > $@
 
 buildid.c:
 	@(printf %b $(CBR)) > $@
@@ -48,7 +53,8 @@ clean::
 	rm -rf db incremental_db PLLJ_PLLSPE_INFO.txt
 	rm -f $(TARGET).*.rpt $(TARGET).*.summary $(TARGET).map* $(TARGET).fit.* $(TARGET).pin $(TARGET).jdi $(TARGET)*.qdf $(TARGET).done $(TARGET).qws
 	rm -f $(TARGET).rpd $(TARGET).jic $(TARGET).pof $(TARGET).sof $(TARGET).dep $(TARGET).elf $(TARGET).o *.mif *.elf
-	rm -f ram.ld buildid.c  
+	rm -f ram.ld buildid.c $(TARGET)_shared_mmap.h 
+	rm -f project project.tcl files.tcl
 
 prog:
 	@read -p "If you have multiple USB-Programmer connected, choose the one you want to use: " BLASTER; \
@@ -58,7 +64,7 @@ prog:
 %_stub.elf:  ram.ld
 	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(LDFLAGS)
 
-%.elf:	buildid.c ram.ld
+%.elf:	buildid.c ram.ld $(TARGET)_shared_mmap.h
 	$(CC) $(CFLAGS) -o $@ $^ $(STUBS) $(INCLUDES) $(LDFLAGS)
 
 %.bin:	%.elf
@@ -68,7 +74,7 @@ prog:
 	$(GENRAMMIF) $< $(RAM_SIZE) > $@
 
 %.sof:	%.qsf %.mif $(PATHPKG)/ramsize_pkg.vhd 
-	python2.7 $(TOP)/ip_cores/hdl-make/hdlmake quartus-project
+	$(HDLMAKE) makefile -f hdlmake.mk ; make -f hdlmake.mk project
 	find $(TOP) -name Manifest.py > $*.dep
 	sed -n -e 's/"//g;s/quartus_sh://;s/set_global_assignment.*-name.*_FILE //p' < $< >> $*.dep
 	echo "$*.sof $@:	$< " `cat $*.dep` > $*.dep

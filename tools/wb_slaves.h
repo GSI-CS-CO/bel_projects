@@ -4,18 +4,19 @@
  *
  *  created : 11-Nov-2016
  *  author  : Dietrich Beck, GSI-Darmstadt
- *  version : 11-Nov-2016
+ *  version : 01-Dec-2017
  */
-#define WB_SLAVES_VERSION "0.01.0"
+#define WB_SLAVES_VERSION "0.03.0"
 /*
  *  defines wishbone vendor IDs
  *  defines wishbone device IDs and registers
  *
  *
  **********************************************************************************************/
-
 #ifndef WB_SLAVES_H_
 #define WB_SLAVES_H_
+
+#include "../ip_cores/wr-cores/modules/wr_eca/eca_regs.h"
 
 /****************************************** vendor IDs ****************************************/
 #define WB_CERN         0xce42
@@ -30,19 +31,16 @@
 #define WR_PPS_GEN_VMAJOR      	1           /* major revision */
 #define WR_PPS_GEN_VMINOR      	1           /* minor revision */
 
-/* register offsets */
+/* register offsets, see ip_cores/wrpc-sw/include/hw/pps_gen_regs.h */
 #define WR_PPS_GEN_CNTR_UTCLO   0x8         /* UTC seconds low bytes */
 #define WR_PPS_GEN_CNTR_UTCHI   0xc         /* UTC seconds high bytes */
 #define WR_PPS_GEN_CNTR_NSEC    0x4         /* UTC nanoseconds */
 #define WR_PPS_GEN_ESCR         0x1c        /* External Sync Control Register */
-#define WR_PPS_GEN_CR           0x0
 
 /* masks */
-#define WR_PPS_GEN_CR_MASK      0x1         /* not-tracking bit  */
-#define WR_PPS_GEN_ESCR_MASK    0x6         /* bit 1: PPS valid, bit 2: timestamp valid */
-#define WR_PPS_GEN_ESCR_MASKPPS 0x2         /* PPS valid bit */
-#define WR_PPS_GEN_ESCR_MASKTS  0x4         /* timestamp valid bit */
-
+#define WR_PPS_GEN_ESCR_MASKPPS 0x4         /* PPS valid bit */
+#define WR_PPS_GEN_ESCR_MASKTS  0x8         /* timestamp valid bit */
+#define WR_PPS_GEN_ESCR_MASK    0xC         /* bit 2: PPS valid, bit 3: timestamp valid */
 
 
 /*** WR-Endpoint ***/
@@ -52,7 +50,7 @@
 #define WR_ENDPOINT_VMAJOR      1           /* major revision */
 #define WR_ENDPOINT_VMINOR      1           /* minor revision */
 
-/* register offsets */
+/* register offsets  */
 #define WR_ENDPOINT_MACHI       0x24        /* MAC high bytes */
 #define WR_ENDPOINT_MACLO       0x28        /* MAC low bytes */
 #define WR_ENDPOINT_LINK        0x30        /* link status */
@@ -116,6 +114,32 @@
 
 /* masks */
 
+
+/*** ECA  ***/
+/* device ID */
+#define ECA_CTRL_VENDOR              WB_GSI              /* vendor ID */
+#define ECA_CTRL_PRODUCT             ECA_SDB_DEVICE_ID   /* product ID */
+#define ECA_CTRL_VMAJOR              1                   /* major revision */
+#define ECA_CTRL_VMINOR              0                   /* minor revision */
+
+/* register offsets */
+#define ECA_CTRL_TIME_HI_GET         ECA_TIME_HI_GET     /* UTC high 32 bit */
+#define ECA_CTRL_TIME_LO_GET         ECA_TIME_LO_GET     /* UTC low  32 bit */
+
+/* masks */
+
+
+/*** RESET  ***/
+/* device ID */
+#define FPGA_RESET_VENDOR            WB_GSI              /* vendor ID */
+#define FPGA_RESET_PRODUCT           0x3a362063          /* product ID */
+#define FPGA_RESET_VMAJOR            1                   /* major revision */
+#define FPGA_RESET_VMINOR            1                   /* minor revision */
+
+/* register offsets */
+#define FPGA_RESET_RESET             0x0                 /* reset register */
+
+/* masks */
 
 #endif  /* wb_slaves.h */
 
