@@ -116,9 +116,9 @@ protected:
 
 
 public:
-  CarpeDM() : sLog(std::cout), sErr(std::cerr) {} 
-  CarpeDM(std::ostream& sLog) : sLog(sLog), sErr(std::cerr)   {} 
-  CarpeDM(std::ostream& sLog, std::ostream& sErr) : sLog(sLog), sErr(sErr){}
+  CarpeDM() : sLog(std::cout), sErr(std::cerr) {Validation::init();} 
+  CarpeDM(std::ostream& sLog) : sLog(sLog), sErr(std::cerr)   {Validation::init();} 
+  CarpeDM(std::ostream& sLog, std::ostream& sErr) : sLog(sLog), sErr(sErr){Validation::init();}
   ~CarpeDM() {};
 
   // Etherbone interface
