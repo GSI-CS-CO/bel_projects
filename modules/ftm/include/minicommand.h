@@ -50,7 +50,7 @@ public:
   void serialise(uint8_t* b) const {
     MiniCommand::serialise(b);
     writeLeNumberToBeBytes(b + (ptrdiff_t)T_CMD_FLOW_DEST, this->destAdr);
-    writeLeNumberToBeBytes(b + (ptrdiff_t)T_CMD_RES, 0);   
+    writeLeNumberToBeBytes(b + (ptrdiff_t)T_CMD_RES, (uint32_t)0);   
   };
 
 };

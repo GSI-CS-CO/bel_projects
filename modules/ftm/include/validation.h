@@ -101,8 +101,10 @@ namespace MaxDepth {
   const unsigned EVENT  = 1000;
 };
 
+extern const children_t cNonMeta;
+extern ConstellationRule_set cRules;
 
-extern const ConstellationRule_set cRules;
+void init();
 
 
 void eventSequenceCheck(vertex_t v, Graph& g); //check if event sequence is well behaved

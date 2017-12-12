@@ -15,36 +15,39 @@ namespace Validation {
 
 
 
+  const children_t cNonMeta = {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign};
+ConstellationRule_set cRules;
 
-  const ConstellationRule_set cRules = { 
-    {n::sTMsg,        e::sDefDst,     {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign},  1, 1  },
-    {n::sTMsg,        e::sDynPar0,    {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign},  0, 1  },
-    {n::sTMsg,        e::sDynPar1,    {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign},  0, 1  },
-    {n::sCmdNoop,     e::sDefDst,     {n::sTMsg,  n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign}, 0, 1  },
-    {n::sCmdNoop,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},                                                      1, 1  },
-    {n::sCmdFlow,     e::sDefDst,     {n::sTMsg,  n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign}, 0, 1  },
-    {n::sCmdFlow,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},                                                      1, 1  },
-    {n::sCmdFlow,     e::sCmdFlowDst, {n::sTMsg,  n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign}, 1, 1  },
-    {n::sCmdFlush,    e::sDefDst,     {n::sTMsg,  n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign}, 1, 1  },
-    {n::sCmdFlush,    e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},                                                      1, 1  },
-    {n::sCmdWait,     e::sDefDst,     {n::sTMsg,  n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign}, 0, 1  },
-    {n::sCmdWait,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},                                                      1, 1  },
-    {n::sBlockFixed,  e::sDefDst,     {n::sTMsg,  n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign}, 0, 1  },
-    {n::sBlockFixed,  e::sAltDst,     {n::sTMsg,  n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign}, 0, 10 },
-    {n::sBlockFixed,  e::sDstList,    {n::sDstList},                                                                                    0, 1  },
-    {n::sBlockFixed,  e::sQPrio[PRIO_IL],     {n::sQInfo},                                                                              0, 1  },
-    {n::sBlockFixed,  e::sQPrio[PRIO_HI],     {n::sQInfo},                                                                              0, 1  },
-    {n::sBlockFixed,  e::sQPrio[PRIO_LO],     {n::sQInfo},                                                                              0, 1  },
-    {n::sBlockAlign,  e::sDefDst,     {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign},  0, 1  },
-    {n::sBlockAlign,  e::sAltDst,     {n::sTMsg, n::sCmdNoop, n::sCmdFlow, n::sCmdFlush, n::sCmdWait, n::sBlockFixed, n::sBlockAlign},  0, 10 },
-    {n::sBlockAlign,  e::sDstList,    {n::sDstList},                                                                                    0, 1  },
-    {n::sBlockAlign,  e::sQPrio[PRIO_IL],     {n::sQInfo},                                                                              0, 1  },
-    {n::sBlockAlign,  e::sQPrio[PRIO_HI],     {n::sQInfo},                                                                              0, 1  },
-    {n::sBlockAlign,  e::sQPrio[PRIO_LO],     {n::sQInfo},                                                                              0, 1  },
-    {n::sQInfo,       e::sMeta,       {n::sQBuf},                                                                                       2, 2  }
 
-  };
 
+void init() {
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sDefDst,     cNonMeta,  1, 1  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar0,    cNonMeta,  0, 1  ));
+        cRules.insert(ConstellationRule(n::sTMsg,        e::sDynPar1,    cNonMeta,  0, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdNoop,     e::sDefDst,     cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdNoop,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  1, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sDefDst,     cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  1, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdFlow,     e::sCmdFlowDst, cNonMeta, 1, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdFlush,    e::sDefDst,     cNonMeta, 1, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdFlush,    e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  1, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdWait,     e::sDefDst,     cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sCmdWait,     e::sCmdTarget,  {n::sBlock, n::sBlockFixed, n::sBlockAlign},  1, 1  ));
+        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDefDst,     cNonMeta, 0, 1  ));
+        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sAltDst,     cNonMeta, 0, 10 ));
+        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sDstList,    {n::sDstList},                                0, 1  ));
+        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_IL],     {n::sQInfo},                          0, 1  ));
+        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_HI],     {n::sQInfo},                          0, 1  ));
+        cRules.insert(ConstellationRule(n::sBlockFixed,  e::sQPrio[PRIO_LO],     {n::sQInfo},                          0, 1  ));
+        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDefDst,     cNonMeta,  0, 1  ));
+        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sAltDst,     cNonMeta,  0, 10 ));
+        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sDstList,    {n::sDstList},                                0, 1  ));
+        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_IL],     {n::sQInfo},                          0, 1  ));
+        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_HI],     {n::sQInfo},                          0, 1  ));
+        cRules.insert(ConstellationRule(n::sBlockAlign,  e::sQPrio[PRIO_LO],     {n::sQInfo},                          0, 1  ));
+        cRules.insert(ConstellationRule(n::sQInfo,       e::sMeta,       {n::sQBuf},                                   2, 2  ));
+
+  }
 
   //check if all outedge (nodetype/edgetype/childtype) tupels are valid and occurrence count is within valid bounds
   void neighbourhoodCheck(vertex_t v, Graph& g) {
