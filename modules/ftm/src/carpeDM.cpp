@@ -25,18 +25,18 @@
 
 int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
 {
-   //eb_status_t status;
-   //FIXME What about MTU? What about returned eb status ??
-   Cycle cyc;
-   eb_data_t veb[va.size()];
+  //eb_status_t status;
+  //FIXME What about MTU? What about returned eb status ??
+  Cycle cyc;
+  eb_data_t veb[va.size()];
 
-   for(int i = 0; i < (va.end()-va.begin()); i++) {
-     uint32_t data = vb[i*4 + 0] << 24 | vb[i*4 + 1] << 16 | vb[i*4 + 2] << 8 | vb[i*4 + 3];
-     veb[i] = (eb_data_t)data;
-   } 
-
-   cyc.open(dev);
-   for(int i = 0; i < (va.end()-va.begin()); i++) {
+  for(int i = 0; i < (va.end()-va.begin()); i++) {
+   uint32_t data = vb[i*4 + 0] << 24 | vb[i*4 + 1] << 16 | vb[i*4 + 2] << 8 | vb[i*4 + 3];
+   veb[i] = (eb_data_t)data;
+  } 
+  try {
+    cyc.open(dev);
+    for(int i = 0; i < (va.end()-va.begin()); i++) {
     //FIXME dirty break into cycles
     if (i && ((va[i] & (RAM_SIZE-1)) ^ (va[i-1] & (RAM_SIZE-1)))) {
       cyc.close();
@@ -45,32 +45,40 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
     std::cout << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
-   }
-   cyc.close();
-   
+    }
+    cyc.close();
+  } catch (etherbone::exception_t const& ex) {
+    throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
+  }
+
    return 0;
 }
 
 
 vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va)
 {
-   //FIXME What about MTU? What about returned eb status ??
-   Cycle cyc;
-   eb_data_t veb[va.size()];
-   vBuf ret = vBuf(va.size() * 4);
-      
-   //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
+  //FIXME What about MTU? What about returned eb status ??
+  Cycle cyc;
+  eb_data_t veb[va.size()];
+  vBuf ret = vBuf(va.size() * 4);
+    
+  //sLog << "Got Adr Vec with " << va.size() << " Adrs" << std::endl;
 
-   cyc.open(dev);
-   for(int i = 0; i < (va.end()-va.begin()); i++) {
+  try {
+    cyc.open(dev);
+    for(int i = 0; i < (va.end()-va.begin()); i++) {
     //FIXME dirty break into cycles
     if (i && ((va[i] & (RAM_SIZE-1)) ^ (va[i-1] & (RAM_SIZE-1)))) {
       cyc.close();
       cyc.open(dev);  
     }
     cyc.read(va[i], EB_BIG_ENDIAN | EB_DATA32, veb + i);
-   }
-   cyc.close();
+    }
+    cyc.close();
+
+  } catch (etherbone::exception_t const& ex) {
+    throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
+  }
 
   for(unsigned int i = 0; i < va.size(); i++) { 
     ret[i * 4]     = (uint8_t)(veb[i] >> 24);
@@ -87,24 +95,29 @@ int CarpeDM::ebWriteWord(Device& dev, uint32_t adr, uint32_t data)
    Cycle cyc;
    //FIXME What about returned eb status ??
    std::cout << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << adr << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << data << std::endl;
-   cyc.open(dev);
-   cyc.write(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)data);
-   cyc.close();
-   
+   try { 
+     cyc.open(dev);
+     cyc.write(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)data);
+     cyc.close();
+   } catch (etherbone::exception_t const& ex) {
+     throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
+   }
+
    return 0;
 }
 
 uint32_t CarpeDM::ebReadWord(Device& dev, uint32_t adr)
 {
-   eb_data_t data;
-
-   Cycle cyc;
-   cyc.open(dev);
-   cyc.read(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&data);
-   cyc.close();
-
-
-   return (uint32_t)data;
+  eb_data_t data;
+  Cycle cyc;
+  try {
+    cyc.open(dev);
+    cyc.read(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t*)&data);
+    cyc.close();
+  } catch (etherbone::exception_t const& ex) {
+    throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
+  }
+  return (uint32_t)data;
 }
 
  //Reads and returns a 64 bit word from DM
@@ -173,6 +186,8 @@ bool CarpeDM::connect(const std::string& en) {
         }  
         ret = true;
       }
+    } catch (etherbone::exception_t const& ex) {
+      throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
     } catch(...) {
       throw std::runtime_error("Could not find CPUs running valid DM Firmware\n" );
     }
@@ -197,7 +212,8 @@ bool CarpeDM::connect(const std::string& en) {
       ebs.close();
       cpuQty = -1;
       ret = true;
-    } catch(...) {
+    } catch (etherbone::exception_t const& ex) {
+      throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
       //TODO report why we could not disconnect
     }
     if(verbose) sLog << " Done" << std::endl;

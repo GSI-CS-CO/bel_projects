@@ -27,7 +27,7 @@ endif
 
 
 T_CXX         = g++
-T_CXXFLAGS    = -Wall -g -std=c++11 -I$(FTMPATH)/include $(EB_INC) -I$(FWPATH) -Wfatal-errors -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\" 
+T_CXXFLAGS    = -Wall -g -std=c++11 -I$(FTMPATH)/include $(EB_INC) -I$(FWPATH) -Wfatal-errors -DPLATFORM=$(BUILD) -DTOOL_VER=\"$(VERSION_TOOL)\"  -DEXP_VER=\"$(VERSION)\" -DETHERBONE_THROWS=1
 
 SRC_FILES     = event.cpp meta.cpp block.cpp visitoruploadcrawler.cpp visitordownloadcrawler.cpp visitorvertexwriter.cpp hashmap.cpp carpeDM.cpp carpeDMcommand.cpp carpeDMuploadschedule.cpp carpeDMdownloadschedule.cpp graph.cpp alloctable.cpp mempool.cpp dotstr.cpp idformat.cpp grouptable.cpp validation.cpp visitorvalidation.cpp
 T_SOURCES     = $(addprefix $(SRCPATH)/, $(SRC_FILES))
