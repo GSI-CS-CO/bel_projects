@@ -4,7 +4,7 @@ FLASH		?= EPCQ256
 RAM_SIZE	?= 49152 
 SHARED_SIZE 	?= 16384
 USRCPUCLK   	?= 125000
-VERSION     	?= 0.6.2
+VERSION     	?= 1.0.0
 
 
 include ../../../syn/build.mk
@@ -14,7 +14,7 @@ PRIOPATH  ?= $(TOP)/modules/prioq2
 FTMPATH   ?= $(TOP)/modules/ftm
 FWPATH    ?= $(FTMPATH)/ftmfw
 PREFIX	  ?= /usr/local
-CFLAGS	  += -I$(FWPATH) -I$(PRIOPATH) -I$(FWPATH)/../include -DDEBUGLEVEL=$(DEBUGLVL) 
+CFLAGS	  += -I$(FWPATH) -I$(PRIOPATH) -I$(FWPATH)/../include -DDEBUGLEVEL=$(DEBUGLVL) -DDIAGNOSTICS 
 
 all: $(TARGET).bin $(TARGET).elf
 

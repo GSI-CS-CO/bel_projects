@@ -1,7 +1,7 @@
 TOP          ?= ../../..
 
-VERSION      ?= 0.6.2
-VERSION_TOOL ?= 0.6.3
+VERSION      ?= 1.0.0
+VERSION_TOOL ?= 0.7.0
 
 
 EBMPATH      ?= $(TOP)/ip_cores/etherbone-core/hdl/eb_master_core

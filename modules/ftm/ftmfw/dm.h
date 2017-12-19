@@ -42,11 +42,17 @@ extern uint32_t* const _endshared[];
 
 
 extern deadlineFuncPtr deadlineFuncs[_NODE_TYPE_END_];
-extern nodeFuncPtr          nodeFuncs[_NODE_TYPE_END_];
-extern actionFuncPtr       actionFuncs[_ACT_TYPE_END_];
+extern nodeFuncPtr         nodeFuncs[_NODE_TYPE_END_];
+extern actionFuncPtr     actionFuncs[_ACT_TYPE_END_];
 extern uint32_t* const p; 
 extern uint32_t* const status;
-extern uint32_t* const count;
+extern uint64_t* const count;
+#ifdef DIAGNOSTICS
+int64_t* const diffsum;
+int64_t* const diffmax;
+int64_t* const diffmin;
+uint64_t* const dbgcount;
+#endif
 extern uint32_t* const start;
 extern uint32_t* const running;
 extern uint32_t* const abort1;

@@ -20,19 +20,23 @@ deadlineFuncPtr deadlineFuncs[_NODE_TYPE_END_];
 nodeFuncPtr     nodeFuncs[_NODE_TYPE_END_];
 actionFuncPtr   actionFuncs[_ACT_TYPE_END_];
 
-uint32_t* const p       = (uint32_t*)_startshared; 
-uint32_t* const status  = (uint32_t*)_startshared + ( SHCTL_STATUS >> 2);
-uint32_t* const count   = (uint32_t*)_startshared + ( SHCTL_MSG_CNT >> 2);
-uint32_t* const start   = (uint32_t*)_startshared + ( (SHCTL_THR_CTL + T_TC_START)    >> 2);
-uint32_t* const running = (uint32_t*)_startshared + ( (SHCTL_THR_CTL + T_TC_RUNNING)  >> 2);
-uint32_t* const abort1   = (uint32_t*)_startshared + ( (SHCTL_THR_CTL + T_TC_ABORT)     >> 2);
-uint32_t** const hp     = (uint32_t**)_startshared + ( SHCTL_HEAP >> 2); // array of ptrs to thread data for scheduler heap
+uint32_t* const p       = (uint32_t*)&_startshared; 
+uint32_t* const status  = (uint32_t*)&_startshared[SHCTL_STATUS   >> 2];
+uint64_t* const count   = (uint64_t*)&_startshared[SHCTL_MSG_CNT  >> 2];
+#ifdef DIAGNOSTICS
+int64_t* const diffsum   = (int64_t*)&_startshared[SHCTL_DIFF_SUM >> 2];
+int64_t* const diffmax   = (int64_t*)&_startshared[SHCTL_DIFF_MAX >> 2];
+int64_t* const diffmin   = (int64_t*)&_startshared[SHCTL_DIFF_MIN >> 2];
+uint64_t* const dbgcount = (uint64_t*)&_startshared[SHCTL_TGATHER >> 2];
+#endif
+uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)    >> 2];
+uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING)  >> 2];
+uint32_t* const abort1  = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_ABORT)    >> 2];
+uint32_t** const hp     = (uint32_t**)&_startshared[SHCTL_HEAP >> 2]; // array of ptrs to thread data for scheduler heap
 
 void prioQueueInit()
 {
-   //set up the pointer to the global msg count
-   //pMsgCntPQ = (uint64_t*)(pFpqCtrl + (PRIO_CNT_OUT_ALL_GET_0>>2));
-
+ 
    pFpqCtrl[PRIO_RESET_OWR>>2]      = 1;
    pFpqCtrl[PRIO_MODE_CLR>>2]       = 0xffffffff;
    pFpqCtrl[PRIO_ECA_ADR_RW>>2]     = (uint32_t)pEca & ~0x80000000;
@@ -97,7 +101,12 @@ void dmInit() {
     *(uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME ) >> 2)) = 0ULL;
     //add thread to heap
     hp[i] = tp;
-  }  
+  }
+  #ifdef DIAGNOSTICS
+    *diffsum   = 0;
+    *diffmax   = INT64_MIN;
+    *diffmin   = INT64_MAX;
+  #endif  
 
 
 }
@@ -147,9 +156,11 @@ uint32_t* execFlow(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
 uint32_t* execFlush(uint32_t* node, uint32_t* cmd, uint32_t* thrData) {
   uint8_t prios = (cmd[T_CMD_ACT >> 2] >> ACT_FLUSH_PRIO_POS) & ACT_FLUSH_PRIO_MSK;
   
+
   if(prios & (1 << PRIO_LO)) *((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - PRIO_LO -1) = *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - PRIO_LO -1);
   if(prios & (1 << PRIO_HI)) *((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - PRIO_HI -1) = *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - PRIO_HI -1);
-  
+  // makes no sense to flush interlock priority, skipping
+
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 
 
@@ -186,9 +197,9 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
   const uint32_t adrPrefix = (uint32_t)tg & 0xffff0000; // if target is on a different RAM, all ptrs must be translated from the local to our (peer) perspective
 
   uint32_t *bl, *b, *e;
-  uint8_t *wrIdx;
+  uint8_t  *wrIdx;
   uint32_t bufOffs, elOffs;
-  node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK;
+  node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited  
   
   wrIdx   = ((uint8_t *)tg + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);                           // calculate pointer (8b) to current write index
   bufOffs = (*wrIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;             // calculate Offsets
@@ -210,27 +221,44 @@ uint32_t* cmd(uint32_t* node, uint32_t* thrData) {
 }
 
 uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
-  node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK;
+  node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
   DBPRINT2("#%02u: Sending Evt 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], node[NODE_DEF_DEST_PTR >> 2]);
 
-  /*
-  //Diagnostic Event? insert PQ Message counter. Different device, can't be placed inside atomic!
-  if (pMsg->id == DIAG_PQ_MSG_CNT) tmpPar = *pMsgCntPQ;
-  else                             tmpPar = pMsg->par;  
-  */
+  uint64_t tmpPar = (uint64_t)node[TMSG_PAR >> 2];
+  
+  #ifdef DIAGNOSTICS
+    //Diagnostic Event? insert PQ Message counter. Different device, can't be placed inside atomic!
+    if (*(uint64_t*)&node[TMSG_ID >> 2] == DIAG_PQ_MSG_CNT) tmpPar = *(uint64_t*)pFpqCtrl[PRIO_CNT_OUT_ALL_GET_0>>2];
+    int64_t diff  = *(uint64_t*)&thrData[T_TD_DEADLINE >> 2] - getSysTime();
+    uint8_t overflow = (diff >= 0) & (*diffsum >= 0) & ((diff + *diffsum)  < 0)
+                     | (diff <  0) & (*diffsum <  0) & ((diff + *diffsum) >= 0);
+
+    *diffsum = (overflow          ? diff : *diffsum + diff);
+    *dbgcount = ((diff < *diffmin) ? *count : *dbgcount);
+    *diffmin = ((diff < *diffmin) ? diff : *diffmin);
+    *diffmax = ((diff > *diffmax) ? diff : *diffmax);
+    *count   = (overflow          ? 0    : *count);
+  #endif
+
+  //disptach timing message to priority queue
   atomic_on();
-  *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_ID_HI >> 2];
-  *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_ID_LO >> 2];
-  *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_PAR_HI >> 2];
-  *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_PAR_LO >> 2];
-  *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_TEF >> 2];
-  *(pFpqData + (PRIO_DAT_STD>>2))   = node[TMSG_RES >> 2];
-  *(pFpqData + (PRIO_DAT_TS_HI>>2)) = thrData[T_TD_DEADLINE_HI >> 2];
-  *(pFpqData + (PRIO_DAT_TS_LO>>2)) = thrData[T_TD_DEADLINE_LO >> 2];
+  *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_ID_HI  >> 2];
+  *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_ID_LO  >> 2];
+  *(pFpqData + (PRIO_DAT_STD   >> 2))  = hiW(tmpPar);
+  *(pFpqData + (PRIO_DAT_STD   >> 2))  = loW(tmpPar);
+  *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_TEF    >> 2];
+  *(pFpqData + (PRIO_DAT_STD   >> 2))  = node[TMSG_RES    >> 2];
+  *(pFpqData + (PRIO_DAT_TS_HI >> 2))  = thrData[T_TD_DEADLINE_HI >> 2];
+  *(pFpqData + (PRIO_DAT_TS_LO >> 2))  = thrData[T_TD_DEADLINE_LO >> 2];
   atomic_off();
-    
-  ++thrData[T_TD_MSG_CNT >> 2];
+  
+  
+  ++(*((uint64_t*)&thrData[T_TD_MSG_CNT >> 2])); //increment thread message counter
+  ++(*count); //increment cpu message counter
+
+
    
+     
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 }
 
@@ -247,45 +275,48 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
   uint16_t qty;
   
   
-  node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK;
+  node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
 
+  //3 ringbuffers -> 3 wr indices, 3 rd indices (one per priority). If any differ, there's work to do
   if( (*awrOffs & 0x00ffffff) != (*ardOffs & 0x00ffffff) ) {
+    //only process one command, and that of the highest priority. default is low, check up
     prio = PRIO_LO;
     if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - PRIO_HI - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - PRIO_HI - 1)) { prio = PRIO_HI; }
     if (*((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_ - PRIO_IL - 1) ^ *((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_ - PRIO_IL - 1)) { prio = PRIO_IL; }
-    rdIdx   = ((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - prio -1);
-    wrIdx   = ((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);
-    bufOffs = (*rdIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;
-    elOffs  = (*rdIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_;
-    bl      = (uint32_t*)node[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2];
-    b       = (uint32_t*)bl[bufOffs >> 2];
-    cmd     = (uint32_t*)&b[elOffs  >> 2];
+    //correct prio found, create shortcuts to control data of corresponding queue
+    rdIdx   = ((uint8_t *)node + BLOCK_CMDQ_RD_IDXS + _32b_SIZE_  - prio -1);               // this queues read index   (using overflow bit for empty/full)
+    wrIdx   = ((uint8_t *)node + BLOCK_CMDQ_WR_IDXS + _32b_SIZE_  - prio -1);               // this queues write index
+    bufOffs = (*rdIdx & Q_IDX_MAX_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _PTR_SIZE_;   // offset of active command buffer's pointer in this queues buffer list
+    elOffs  = (*rdIdx & Q_IDX_MAX_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ) * _T_CMD_SIZE_; // offset of active command data in active command buffer
+    bl      = (uint32_t*)node[(BLOCK_CMDQ_PTRS + prio * _PTR_SIZE_) >> 2];                  // pointer to this queues buffer list
+    b       = (uint32_t*)bl[bufOffs >> 2];                                                  // pointer to active command buffer
+    cmd     = (uint32_t*)&b[elOffs  >> 2];                                                  // pointer to active command data 
     
-    //check valid time
-    if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return node;
+    
+    if (getSysTime() < *((uint64_t*)((void*)cmd + T_CMD_TIME))) return node;                //if chosen command is not yet valid, return to scheduler
 
-    //get action type
-    act = (uint32_t*)&cmd[T_CMD_ACT >> 2];
-    actTmp = *act;
-    qty = (actTmp >> ACT_QTY_POS) & ACT_QTY_MSK;
     
-    atype = (actTmp >> ACT_TYPE_POS) & ACT_TYPE_MSK;
+    act     = (uint32_t*)&cmd[T_CMD_ACT >> 2];          //pointer to command's action
+    actTmp  = *act;                                     //create working copy of action word  
+    qty     = (actTmp >> ACT_QTY_POS) & ACT_QTY_MSK;    //remaining command quantity
+    atype   = (actTmp >> ACT_TYPE_POS) & ACT_TYPE_MSK;  //action type enum
+    
     DBPRINT2("#%02u: pending Cmd @ Prio: %u, awdIdx: 0x%08x, 0x%02x, ardIdx: 0x%08x, 0x%02x, buf: %u, el: %u, BufList: 0x%08x, Buf: 0x%08x, Element: 0x%08x, type: %u\n", cpuId, prio, *awrOffs, *wrIdx, *ardOffs, *rdIdx, (*rdIdx & Q_IDX_MAX_OVF_MSK) / (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ), 
       (*rdIdx & Q_IDX_MAX_OVF_MSK) % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  ), (uint32_t)bl, (uint32_t)b, (uint32_t)cmd, atype );
     
-    //carry out type specific action
-    ret = actionFuncs[atype](node, cmd, thrData);
+    
+    ret = actionFuncs[atype](node, cmd, thrData);       //carry out the type specific action
 
-    //decrement qty
+  
     
     DBPRINT3("#%02u: Act 0x%08x, Qty is at %d\n", cpuId, *act, qty);
     
-    //if qty <= 1, pop cmd -> increment read offset
+    //if qty <= 1, this cmd is now exhausted. pop and increment read offset (technically == 1, but better safe than sorry)
     if(qty <= 1) { *(rdIdx) = (*rdIdx + 1) & Q_IDX_MAX_OVF_MSK; DBPRINT3("#%02u: Qty reached zero, popping\n", cpuId);}
-    //decrement qty
+    //decrement qty bitfield in working copy and write back to action field in any case 
     actTmp &= ~ACT_QTY_SMSK; //clear qty
-    actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS; // OR in decremented and shifted qty
-    *act = actTmp; //write back
+    actTmp |= ((--qty) & ACT_QTY_MSK) << ACT_QTY_POS; 
+    *act = actTmp;
 
     
   } else {
@@ -297,27 +328,28 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
 }
 
 
-
+// a normal time block
 uint32_t* blockFixed(uint32_t* node, uint32_t* thrData) {
   uint32_t* ret = block(node, thrData);
-    
-  *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] += *(uint64_t*)&node[BLOCK_PERIOD >> 2];
-  *(uint64_t*)&thrData[T_TD_DEADLINE >> 2]  = *(uint64_t*)&thrData[T_TD_CURRTIME >> 2]; // Deadline must follow block shift
+   
+  *(uint64_t*)&thrData[T_TD_CURRTIME >> 2] += *(uint64_t*)&node[BLOCK_PERIOD >> 2];     // increment current time sum by block period 
+  *(uint64_t*)&thrData[T_TD_DEADLINE >> 2]  = *(uint64_t*)&thrData[T_TD_CURRTIME >> 2]; // next Deadline unknown, set to earliest possibilty -> current time sum + 0
   
   return ret;
 }  
 
+// self aligning time block. extends own length dynamically to meet given gridsize T0 originating at t0
 uint32_t* blockAlign(uint32_t* node, uint32_t* thrData) {
-  uint32_t *ret = block(node, thrData);
+  uint32_t     *ret = block(node, thrData);
   uint64_t      *tx =  (uint64_t*)&thrData[T_TD_CURRTIME >> 2]; // current time
   uint64_t       Tx = *(uint64_t*)&node[BLOCK_PERIOD >> 2];     // block duration
-  const uint64_t t0 = 0;                                        // alignment offset
-  const uint64_t T0 = 10000;                                    // alignment period
+  const uint64_t t0 = _T_GRID_OFFS_;                            // alignment offset (fix for now, change later)
+  const uint64_t T0 = _T_GRID_SIZE_;                            // alignment period
 
   //goal: add block duration to current time, then round result up to alignment offset + nearest multiple of alignment period
   uint64_t diff = (*tx + Tx) - t0 + (T0 - 1) ;      // 1. add block period as minimum advancement 2. subtract alignment offset for division 3. add alignment period -1 for ceil effect  
   *tx = diff - (diff % T0) + t0;                    // 4. subtract remainder of modulo for rounding 5. add alignment offset again  
-  *(uint64_t*)&thrData[T_TD_DEADLINE >> 2]  = *tx;  // Deadline must follow block shift
+  *(uint64_t*)&thrData[T_TD_DEADLINE >> 2]  = *tx;  // next Deadline unknown, set to earliest possibilty -> current time sum + 0
   
   DBPRINT2("#%02u: Rounding to nearest multiple of T\n", cpuId);
 
