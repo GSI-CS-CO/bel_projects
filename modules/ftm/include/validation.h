@@ -104,7 +104,8 @@ namespace MaxDepth {
 extern const children_t cNonMeta;
 extern ConstellationRule_set cRules;
 
-void init();
+
+void init(); //workaround for boost v1.53 which doesn't support aggregate initalization
 
 
 void eventSequenceCheck(vertex_t v, Graph& g); //check if event sequence is well behaved
