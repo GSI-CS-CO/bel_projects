@@ -22,6 +22,8 @@ class CmdQMeta;
 class CmdQBuffer;
 class DestList;
 
+
+
 class VisitorUploadCrawler {
     Graph&      g;
     vertex_t    v;
@@ -38,6 +40,7 @@ class VisitorUploadCrawler {
     vAdr getCmdTarget(Command& el) const;
     vAdr getFlowDst(void)   const;
     vAdr getListDst(void)   const;
+    static const std::string exIntro;
 
   public:
     VisitorUploadCrawler(Graph& g, vertex_t v, AllocTable& at)  : g(g), v(v), at(at) { auto x = at.lookupVertex(v); if (at.isOk(x)) cpu = x->cpu;}

@@ -23,6 +23,8 @@ class CmdQMeta;
 class CmdQBuffer;
 class DestList;
 
+
+
  class VisitorDownloadCrawler {
     Graph&          g;
     vertex_t        v;
@@ -31,6 +33,7 @@ class DestList;
     uint8_t         cpu;
 
     void setDefDst(void) const;
+    static const std::string exIntro;
 
   public:
     VisitorDownloadCrawler(Graph& g, vertex_t v, AllocTable& at)  : g(g), v(v), at(at) { auto x = at.lookupVertex(v); if (at.isOk(x)) {cpu = x->cpu; b = ((AllocMeta*)&(*x))->b;} };
