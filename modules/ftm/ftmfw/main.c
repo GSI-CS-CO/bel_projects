@@ -63,6 +63,7 @@ void init()
   cpuId = getCpuIdx();
 
   if (cpuId == 0) {
+    //TODO replace bogus system status flags by real ones
     uart_init_hw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
     ebmInit();        *status |= SHCTL_STATUS_EBM_INIT_SMSK ;
     prioQueueInit();  *status |= SHCTL_STATUS_PQ_INIT_SMSK;
@@ -131,9 +132,9 @@ void main(void) {
       *pncN(hp)   = (uint32_t)nodeFuncs[getNodeType(pN(hp))](pN(hp), pT(hp)); //process node and return thread's next node
       
       DL(pT(hp))  = (uint64_t)deadlineFuncs[getNodeType(pN(hp))](pN(hp), pT(hp));   // return thread's next deadline (returns infinity on upcoming NULL ptr)
-      DL(pT(hp)) |= (~((uint64_t)*abort1 >> thrIdx) & 1) -1; // if abort bit was set, move deadline to infinity
-      *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);        // clear running bit if deadline is at infinity
-      *abort1    &= ~(1 << thrIdx);                         // clear abort bit
+      DL(pT(hp)) |= (~((uint64_t)*abort1 >> thrIdx) & 1) -1;  // if abort bit was set, move deadline to infinity
+      *running   &= ~((DL(pT(hp)) == -1ULL) << thrIdx);       // clear running bit if deadline is at infinity
+      *abort1    &= ~(1 << thrIdx);                           // clear abort bit
 
       heapReplace(0); // call scheduler, re-sort only current thread
       
@@ -143,13 +144,13 @@ void main(void) {
       if(*start) {
         for(i=0;i<8;i++) {
           if (*start & (1<<i)) {
-            uint64_t* startTime = (uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME ) >> 2));
-            uint64_t* prepTime  = (uint64_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME  ) >> 2));
-            uint64_t* currTime  = (uint64_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_CURRTIME  ) >> 2));
-            uint64_t* deadline  = (uint64_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_DEADLINE  ) >> 2));
-            uint32_t* origin    = (uint32_t*)(p + (( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_NODE_PTR) >> 2));
-            uint32_t* cursor    = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_NODE_PTR) >> 2));
-            uint32_t* msgcnt    = (uint32_t*)(p + (( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_MSG_CNT  ) >> 2));
+            uint64_t* startTime = (uint64_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_STARTTIME) >> 2];
+            uint64_t* prepTime  = (uint64_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_PREPTIME ) >> 2];
+            uint64_t* currTime  = (uint64_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_CURRTIME ) >> 2];
+            uint64_t* deadline  = (uint64_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_DEADLINE ) >> 2];
+            uint32_t* origin    = (uint32_t*)&p[( SHCTL_THR_STA + i * _T_TS_SIZE_ + T_TS_NODE_PTR ) >> 2];
+            uint32_t* cursor    = (uint32_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_NODE_PTR ) >> 2];
+            uint32_t* msgcnt    = (uint32_t*)&p[( SHCTL_THR_DAT + i * _T_TD_SIZE_ + T_TD_MSG_CNT  ) >> 2];
             
             DBPRINT1("#%02u: ThrIdx %u, Preptime: %s\n", cpuId, i, print64(*prepTime, 0));
             

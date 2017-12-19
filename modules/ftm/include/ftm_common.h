@@ -34,7 +34,9 @@
 #define LM32_NULL_PTR           0x0
 
 #define _THR_QTY_               8
-#define _HEAP_SIZE_            (_THR_QTY_)
+#define _HEAP_SIZE_             (_THR_QTY_)
+#define _T_GRID_OFFS_           0ULL
+#define _T_GRID_SIZE_           10000ULL
 
 
 
@@ -44,8 +46,8 @@
 
 //Thread Control bits
 #define T_TC_START              (0)                     //WR Host, RW LM32
-#define T_TC_ABORT               (T_TC_START     + _32b_SIZE_) //WR Host, RW LM32
-#define T_TC_RUNNING            (T_TC_ABORT      + _32b_SIZE_) //RD Host, WR LM32
+#define T_TC_ABORT              (T_TC_START     + _32b_SIZE_) //WR Host, RW LM32
+#define T_TC_RUNNING            (T_TC_ABORT     + _32b_SIZE_) //RD Host, WR LM32
 #define _T_TC_SIZE_             (T_TC_RUNNING   + _32b_SIZE_) 
 
 //Thread Data
@@ -56,9 +58,7 @@
 #define T_TD_DEADLINE_HI        (T_TD_DEADLINE  + 0) //RD Host, RW LM32
 #define T_TD_DEADLINE_LO        (T_TD_DEADLINE_HI + _32b_SIZE_) //RD Host, RW LM32
 #define T_TD_CURRTIME           (T_TD_DEADLINE  + _TS_SIZE_)  //RD Host, RW LM32
-
-#define T_TD_PREPTIME           (T_TD_DEADLINE  + _TS_SIZE_)  //RD Host, RW LM32
-#define _T_TD_SIZE_             (T_TD_PREPTIME  + _TS_SIZE_)
+#define _T_TD_SIZE_             (T_TD_CURRTIME  + _TS_SIZE_)
 
 //Thread Starter Stage
 #define T_TS_FLAGS              (0)                           //RW Host, RW LM32
@@ -98,9 +98,12 @@
 #define SHCTL_HEAP       (_SHCTL_START_)                    //Scheduler Heap  
 #define SHCTL_STATUS     (SHCTL_HEAP    + _THR_QTY_ * _PTR_SIZE_) //Status Registers
 #define SHCTL_MSG_CNT    (SHCTL_STATUS  + _32b_SIZE_ ) //CPU wide timing message counter
-#define SHCTL_CMD        (SHCTL_MSG_CNT + _64b_SIZE_ ) //Command Register
+#define SHCTL_DIFF_MIN   (SHCTL_MSG_CNT + _64b_SIZE_ ) //all time min diff between dispatch time and deadline
+#define SHCTL_DIFF_MAX   (SHCTL_DIFF_MIN + _64b_SIZE_ ) //all time max diff between dispatch time and deadline
+#define SHCTL_DIFF_SUM   (SHCTL_DIFF_MAX + _64b_SIZE_ ) //running sum of diff between dispatch time and deadline (signed!)
+#define SHCTL_CMD        (SHCTL_DIFF_SUM + _64b_SIZE_ ) //Command Register
 #define SHCTL_TGATHER    (SHCTL_CMD     + _32b_SIZE_ ) //Gather Time (HW Priority Queue Config) Register 
-#define SHCTL_THR_CTL    (SHCTL_TGATHER + _T_TS_SIZE_  ) //Thread Control Registers (Start Stop Status) 
+#define SHCTL_THR_CTL    (SHCTL_TGATHER + _TS_SIZE_  ) //Thread Control Registers (Start Stop Status) 
 #define SHCTL_THR_STA    (SHCTL_THR_CTL + _T_TC_SIZE_  ) //Thread Start Staging Area (1 per Thread )
 #define SHCTL_THR_DAT    (SHCTL_THR_STA + _THR_QTY_ * _T_TS_SIZE_  ) //Thread Runtime Data (1 per Thread )
 #define SHCTL_INBOXES    (SHCTL_THR_DAT + _THR_QTY_ * _T_TD_SIZE_  ) //Inboxes for MSI (1 per Core in System )
@@ -313,9 +316,9 @@
 #define ACT_PRIO_SMSK           (ACT_PRIO_MSK << ACT_PRIO_POS)
 
 //Action changes are permanent (1) or temporary (0) (Flow -> DEF_DEST_PTR, Wait -> BLOCK_PERIOD (only use with relative wait!))
-#define ACT_CHP_MSK            0x1
-#define ACT_CHP_POS            23
-#define ACT_CHP_SMSK           (ACT_CHP_MSK << ACT_CHP_POS)
+#define ACT_CHP_MSK             0x1
+#define ACT_CHP_POS             23
+#define ACT_CHP_SMSK            (ACT_CHP_MSK << ACT_CHP_POS)
 
 //Action Target CPU
 #define ACT_TCPU_MSK            0xf
@@ -330,8 +333,6 @@
 #define ACT_FLUSH_PRIO_MSK      0x7
 #define ACT_FLUSH_PRIO_POS      (ACT_BITS_SPECIFIC_POS + 0)
 #define ACT_FLUSH_PRIO_SMSK     (ACT_FLUSH_PRIO_MSK << ACT_FLUSH_PRIO_POS)
-
-
 
 //Command Flush Mode
 #define ACT_FLUSH_MODE_MSK      0x7

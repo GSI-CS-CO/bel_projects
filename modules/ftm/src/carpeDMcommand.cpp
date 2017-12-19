@@ -431,8 +431,8 @@ void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
 }
 
 
-uint32_t CarpeDM::getThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
-  return ebReadWord(ebd, myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);   
+uint64_t CarpeDM::getThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
+  return read64b(myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);   
 } 
 
 uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
