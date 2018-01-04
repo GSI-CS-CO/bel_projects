@@ -1014,7 +1014,7 @@ uint32_t changeState(uint32_t *actState, uint32_t *reqState, uint32_t actStatus)
 
 uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t *nTransfer, uint32_t *nInject, uint32_t actStatus)
 {
-  uint32_t status, dmStatus;
+  uint32_t status, dmStatus, gotEBTimeout;
   uint32_t nextAction;
   uint32_t virtAccTmp;
   uint32_t dryRunFlag;
@@ -1056,12 +1056,30 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
       *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAM;                   // update status of transfer
       (*nInject)++;                                                                // increment number of injections (of current transfer)
 
-      if ((dmStatus = dmPrepCmdCommon(REQBEAMA)) != DMUNIPZ_STATUS_OK)             // prepare common part of command for later use, here: continue after beam request 
-        return dmStatus;                                                           // failure of preparation is a severe error!
+      /* if ((dmStatus = dmPrepCmdCommon(REQBEAMA)) != DMUNIPZ_STATUS_OK)             // prepare common part of command for later use, here: continue after beam request 
+         return dmStatus; */                                                          // failure of preparation is a severe error!
+      //hack:
+      gotEBTimeout = 0;
+      dmStatus = dmPrepCmdCommon(REQBEAMA);
+      if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {
+        gotEBTimeout = 1;
+        dmStatus = dmPrepCmdCommon(REQBEAMA);    // 2nd chance in case we loose a packet
+      }
+      if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;
+      
       dmPrepCmdFlow(REQBEAMA);                                                     // prepare flow command for later use, here: continue after beam request
-
+      /*
       if ((dmStatus = dmPrepCmdCommon(REQBEAMB)) != DMUNIPZ_STATUS_OK)             // prepare common part of command for later use, here: flex wait
-        return dmStatus;                                                           // failure of preparation is a severe error!      
+      return dmStatus;                                    */                       // failure of preparation is a severe error!
+      dmStatus = dmPrepCmdCommon(REQBEAMB);
+      if (dmStatus == DMUNIPZ_STATUS_EBREADTIMEDOUT) {
+        gotEBTimeout = 1;
+        dmStatus = dmPrepCmdCommon(REQBEAMB);    // 2nd chance
+      }
+      if (dmStatus != DMUNIPZ_STATUS_OK) return dmStatus;
+      
+
+      
       // NB: we can't prepare the flex wait yet, as we need to timestamp the MIL event from UNIPZ first
     
       enableFilterEvtMil(pMILPiggy);                                               // enable filter @ MIL piggy
@@ -1090,7 +1108,10 @@ uint32_t doActionOperation(uint32_t *statusTransfer, uint32_t *virtAcc, uint32_t
 
       *statusTransfer = *statusTransfer |  DMUNIPZ_TRANS_RELBEAM;                  // update status of transfer
       if (status == DMUNIPZ_STATUS_OK)                                           
-        *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAMOK; 
+        *statusTransfer = *statusTransfer | DMUNIPZ_TRANS_REQBEAMOK;
+
+      //hack
+      if ((status == DMUNIPZ_STATUS_OK) && gotEBTimeout) status = DMUNIPZ_STATUS_EBREADTIMEDOUT;                                           
 
       break;
     case DMUNIPZ_ECADO_RELTK :                                                     // received command "REL_TK" from data master
@@ -1158,7 +1179,7 @@ void main(void) {
         status = doActionOperation(&statusTransfer, &virtAcc, &nTransfer, &nInject, status);
         if (status == DMUNIPZ_STATUS_DEVBUSERROR)    reqState = DMUNIPZ_STATE_ERROR;
         if (status == DMUNIPZ_STATUS_ERROR)          reqState = DMUNIPZ_STATE_ERROR;
-        if (status == DMUNIPZ_STATUS_EBREADTIMEDOUT) reqState = DMUNIPZ_STATE_ERROR;
+        // if (status == DMUNIPZ_STATUS_EBREADTIMEDOUT) reqState = DMUNIPZ_STATE_ERROR; // hack avoid error in case of EBREADTIMEOUT
         break;
       case DMUNIPZ_STATE_FATAL :
         *pSharedState  = actState;
