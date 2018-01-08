@@ -71,18 +71,11 @@ int init()
   return cpu_id;
 }
 
-// write 16bit word on MIL device bus that will mimic a Mil timing event
+// write 16bit word (as command) on MIL device bus that will mimic a Mil timing event
 uint32_t mil_piggy_write_event(volatile uint32_t *piggy, uint32_t cmd)
 {
-  uint32_t trials = 0;
-  while(!(*(piggy + (MIL_REG_WR_RD_STATUS/4)) & MIL_CTRL_STAT_TRM_READY)) // wait until ready
-  {
-      DELAY05us; // delay a bit to have less pressure on the wishbone bus
-      ++trials;
-  }
-
-  *(piggy + (MIL_REG_WR_CMD/4)) = cmd; 
-  return trials;
+  piggy[MIL_SIO3_TX_CMD] = cmd;
+  return 0;
 }
 
 // convert 64-bit TAI from WR into an array of five MIL events (EVT_UTC_1/2/3/4/5 events with evtNr 0xE0 - 0xE4)

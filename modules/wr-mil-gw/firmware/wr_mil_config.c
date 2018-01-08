@@ -20,7 +20,7 @@ volatile WrMilConfig *config_init()
   volatile WrMilConfig *config = (volatile WrMilConfig*)_startshared;
   config->magic                = WR_MIL_GW_MAGIC_NUMBER;
   config->cmd                  = WR_MIL_GW_CMD_NONE;
-  config->utc_trigger          = MIL_EVT_END_CYCLE;
+  config->utc_trigger          = MIL_EVT_BEGIN_CMD_EXEC;
   config->utc_delay            = 100; // 100 us delay
   config->trigger_utc_delay    = 200; // 200 us delay
   config->event_source         = WR_MIL_GW_EVENT_SOURCE_UNKNOWN; // not configured by default
