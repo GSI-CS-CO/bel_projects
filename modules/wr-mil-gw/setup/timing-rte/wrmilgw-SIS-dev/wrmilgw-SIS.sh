@@ -11,3 +11,6 @@ cp -a /opt/$NAME/firmware/* /
 
 log 'starting the gateway'
 wrmilgw-startSIS.sh | logger -t wrmilgw-startSIS -sp local0.info
+
+log 'starting the SIS gateway logger'
+wr-mil-gw-ctl dev/wbm0 -m | logger -t wrmilgw-startSIS -sp local0.info &

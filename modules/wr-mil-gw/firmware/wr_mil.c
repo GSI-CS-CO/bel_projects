@@ -97,12 +97,12 @@ uint32_t mil_piggy_write_event(volatile uint32_t *piggy, uint32_t cmd)
 //                            EVT_UTC_5 = EVT_UTC[4] =   s[ 7: 0]          , code = 0xE4
 //            where s is a 30 bit number (seconds since 2008) and ms is a 10 bit number
 //            containing the  milisecond fraction.
-void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC)
+void make_mil_timestamp(uint64_t TAI, uint32_t *EVT_UTC, uint64_t UTC_offset_ms)
 {
   uint64_t msNow  = TAI / UINT64_C(1000000); // conversion from ns to ms (since 1970)
-  uint64_t ms2008 = UINT64_C(1199142000000); // miliseconds at 01/01/2008  (since 1970)
+  //uint64_t ms2008 = UINT64_C(1199142000000); // miliseconds at 01/01/2008  (since 1970)
                                              // the number was caluclated using: date --date='01/01/2008' +%s
-  uint64_t mil_timestamp_ms = msNow - ms2008;
+  uint64_t mil_timestamp_ms = msNow - UTC_offset_ms;//ms2008;
   uint32_t mil_ms           = mil_timestamp_ms % 1000;
   uint32_t mil_sec          = mil_timestamp_ms / 1000;
 
@@ -145,7 +145,7 @@ void eventHandler(volatile uint32_t    *eca,
     // AND that have an evtNo that is supposed to be translated into a MIL event (indicated
     //     by the return value of ECAQueue_getMilEventData being != 0)
     if ((ECAQueue_getActTag(eca_queue) == ECA_QUEUE_LM32_TAG) &&
-         ECAQueue_getMilEventData(eca_queue, &evtCode, &milTelegram))
+         ECAQueue_getMilEventData(eca_queue, &evtCode, &milTelegram, config->event_source))
     {
       TAI_t    tai_deadl; 
       uint32_t EVT_UTC[N_UTC_EVENTS];
@@ -156,12 +156,14 @@ void eventHandler(volatile uint32_t    *eca,
       uint64_t mil_event_time = tai_deadl.value + WR_MIL_GATEWAY_LATENCY + ((int32_t)config->latency-100)*1000; // add latency to the deadline
       //make_mil_timestamp(mil_event_time, EVT_UTC);     
 
+      // generate MIL event
+      too_late = wait_until_tai(eca, mil_event_time);
+      trials = mil_piggy_write_event(mil_piggy, milTelegram); 
+      ++config->num_events.value;
       if (evtCode == config->utc_trigger)
       {
-        // generate MIL event, followed by EVT_UTC_1/2/3/4/5 EVENTS
-        too_late = wait_until_tai(eca, mil_event_time);
-        trials = mil_piggy_write_event(mil_piggy, milTelegram); 
-        make_mil_timestamp(mil_event_time, EVT_UTC);     
+        // generate EVT_UTC_1/2/3/4/5 EVENTS
+        make_mil_timestamp(mil_event_time, EVT_UTC, config->utc_offset_ms.value);     
         delay_96plus32n_ns(config->trigger_utc_delay*32);
         for (int i = 0; i < N_UTC_EVENTS; ++i)
         {
@@ -173,15 +175,10 @@ void eventHandler(volatile uint32_t    *eca,
           }
         }
       }
-      else
-      {
-        // generate MIL event
-        too_late = wait_until_tai(eca, mil_event_time);
-        trials = mil_piggy_write_event(mil_piggy, milTelegram);
-      }
       if (too_late || trials)
       { 
-        mprintf("evtCode: %d trials: %d  late: %d\n",evtCode, trials, too_late);
+        ++config->late_events;
+        mprintf("evtCode: %u trials: %u  late: %u\n",evtCode, trials, too_late);
       }
     }
     // remove action from ECA queue 

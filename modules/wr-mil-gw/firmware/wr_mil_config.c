@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 #include "wr_mil_config.h"
 #include "mini_sdb.h"
 #include "mprintf.h"
@@ -24,6 +26,9 @@ volatile WrMilConfig *config_init()
   config->event_source         = WR_MIL_GW_EVENT_SOURCE_UNKNOWN; // not configured by default
   config->latency              = 100; // us
   config->state                = WR_MIL_GW_STATE_INIT;
+  config->utc_offset_ms.value  = UINT64_C(1199142000000);
+  config->num_events.value     = UINT64_C(0);
+  config->late_events          = UINT64_C(0);
   return config;
 }
 
@@ -46,8 +51,10 @@ void config_command_handler(volatile WrMilConfig *config)
           config->state = WR_MIL_GW_STATE_PAUSED;
           config->event_source = WR_MIL_GW_EVENT_SOURCE_UNKNOWN; //reset the source type
           for (int i = 0; i < 1000; ++i) DELAY1000us;
-          config->state = WR_MIL_GW_STATE_INIT;
-
+            
+          config->state             = WR_MIL_GW_STATE_INIT;
+          config->num_events.value  = UINT64_C(0);
+          config->late_events       = UINT64_C(0);
         }
         break;
       case WR_MIL_GW_CMD_CONFIG_SIS: // allow configuration of PZ-id only if not configured yet
