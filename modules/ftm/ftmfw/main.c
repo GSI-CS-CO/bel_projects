@@ -46,7 +46,7 @@ void ebmInit()
    } 
 
    ebm_init();
-   ebm_config_meta(1500, 42, 0x00000000 );                                          //MTU, max EB msgs, flags
+   ebm_config_meta(1500, 42, EBM_NOREPLY );                                         //MTU, max EB msgs, flags
    ebm_config_if(DESTINATION, 0xffffffffffff, 0xffffffff,                0xebd0);   //Dst: EB broadcast 
    ebm_config_if(SOURCE,      0xd15ea5edbeef, *(pEbCfg + (EBC_SRC_IP>>2)), 0xebd0); //Src: bogus mac (will be replaced by WR), WR IP
 
