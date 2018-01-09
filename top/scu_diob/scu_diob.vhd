@@ -198,7 +198,9 @@ architecture scu_diob_arch of scu_diob is
 --  CONSTANT c_Firmware_Release:    Integer := 22;     -- Firmware_release Stand 29.06.2016 ( +'700 Status/Error "SM" + Lemo-Outp., + ('700+'710) Lemo-Outp., +'751 (DA2)
 --  CONSTANT c_Firmware_Release:    Integer := 23;     -- Firmware_release Stand 12.01.2017 ( PLL's wieder am SCU-CLK angeschlossen, Interlock-Logik geändert)
 --  CONSTANT c_Firmware_Release:    Integer := 24;     -- Firmware_release Stand 10.05.2017 ( Error, Umschaltung FG: bipolar/unipolar DAC '710
-    CONSTANT c_Firmware_Release:    Integer := 25;     -- Firmware_release Stand 28.08.2017 ( + '760 (ATR1) + FG_901.040 AD1) + FG_901.050 8In8Out1) + Tri-State-Steuerung (PIO+UIO) )
+--  CONSTANT c_Firmware_Release:    Integer := 25;     -- Firmware_release Stand 28.08.2017 ( + '760 (ATR1) + FG_901.040 AD1) + FG_901.050 8In8Out1) + Tri-State-Steuerung (PIO+UIO) )
+--  CONSTANT c_Firmware_Release:    Integer := 26;     -- Firmware_release Stand 10.10.2017 ( + 'FG_901.010 16Out, OutpReg1 'MF-Funktion' auf die Outputs umschaltbar)
+    CONSTANT c_Firmware_Release:    Integer := 27;     -- Firmware_release Stand 21.11.2017 ( Error, '760 (ATR1): LED-Mux für FG902070_OptoDig_Out1
 --  CONSTANT c_Firmware_Release:    Integer := 16#FF#; -- Test-Firmware_release 
 
     
@@ -4036,7 +4038,7 @@ p_AW_MUX: PROCESS (clk_sys, rstn_sys, Powerup_Done, AW_ID, s_nLED_Out, signal_ta
             ATR_SPI_DO, ATR_SPI_CLK, ATR_nCS_DAC1, ATR_nCS_DAC2, ATR_nLD_DAC, ATR_CLR_Sel_DAC, ATR_nCLR_DAC,
             ATR_DAC_Status, ATR_Comp_LED_i, ATR_Comp_nLED_o, Syn_ATR_Comp_in, Syn_ATR_Comp_out,
             ATR_comp_cnt_err_res, ATR_comp_cnt_error,
-            ATR_Puls_Start_Strobe_o, nLED_ATR_Trig_In_o,
+            ATR_Puls_nLED_Bus_o, ATR_Puls_Start_Strobe_o, nLED_ATR_Trig_In_o,
             ATR_puls_LED_i, ATR_puls_nLED_o, ATR_Puls_LED_Strobe,
             nLED_ATR_Trig_Out_o, atr_puls_out, atr_puls_config_err, ATR_to_conf_err, ATR_Timeout, ATR_Timeout_err_res,
 --          puls_out,
@@ -5921,14 +5923,14 @@ BEGIN
 
 
           ATR_puls_LED_i          <=  atr_puls_out( 7 downto 0);        -- LED ansteuerung für Ausgangspuls Kanal 1..8
-          ATR_Puls_nLED_Out       <=  ATR_puls_LED_i;                   -- LED-MF-Output 
+          ATR_Puls_nLED_Out       <=  ATR_puls_nLED_o;                  -- LED-MF-Output zum LED Multiplexer 
           
-          UIO_Out(15 downto 12)   <=  not atr_puls_out( 7 downto 4);    -- LED's für Ausgangspuls Kanal 1..4 zur VG-Leiste
-          UIO_Out(11 downto 8)    <=  not atr_puls_out( 3 downto 0);    -- LED's für Ausgangspuls Kanal 5..8 zur VG-Leiste
+          UIO_Out(15 downto 12)   <=  not atr_puls_out( 7 downto 4);    -- Ausgangspuls Kanal 1..4 zur VG-Leiste
+          UIO_Out(11 downto 8)    <=  not atr_puls_out( 3 downto 0);    -- Ausgangspuls Kanal 5..8 zur VG-Leiste
 
-          UIO_Out( 7 downto 4)    <=  ATR_puls_nLED_o(3 downto 0) ;     -- Ausgangspuls Kanal 1..4 oder 5..8 zur VG-Leiste
-          UIO_Out(3)              <=  ATR_Puls_LED_Strobe(0);           -- LED's für Ausgangspuls Kanal 1..4 zur VG-Leiste
-          UIO_Out(2)              <=  ATR_Puls_LED_Strobe(1);           -- LED's für Ausgangspuls Kanal 5..8 zur VG-Leiste
+          UIO_Out( 7 downto 4)    <=  ATR_Puls_nLED_Bus_o(3 downto 0) ; -- LED-Multiplexer: LED-Daten-Bus für Kanal 1..4 oder 5..8     ===> zur VG-Leiste
+          UIO_Out(3)              <=  ATR_Puls_LED_Strobe(0);           -- LED-Multiplexer: LED-Strobe    für Ausgangspuls Kanal 1..4  ===> zur VG-Leiste
+          UIO_Out(2)              <=  ATR_Puls_LED_Strobe(1);           -- LED-Multiplexer: LED-Strobe    für Ausgangspuls Kanal 5..8  ===> zur VG-Leiste
 
           UIO_ENA(15 downto 2)    <=  (others => '1');                  -- Output-Enable
           
@@ -6571,7 +6573,10 @@ BEGIN
 --           +=======================================================================    --
 --           |         User-Config-Register 2 (AW_Config2)                               --
 --     ------+=======================================================================    --
---     15-6  | frei                                                                      --
+--     15-7  | frei                                                                      --
+--     ------+-----------------------------------------------------------------------    --
+--           | 0 = (Default) AW_Output_Reg. 2 ==> Daten-Bit# [15..0]                     --
+--      6    | 1 =           AW_Output_Reg. 1 ==> Daten-Bit# [15..0], kein Strobe        --
 --     ------+-----------------------------------------------------------------------    --
 --      5    | Strobe-Polarität,         1 = Negativ,  0 = Positiv(Default)              --
 --     ------+-----------------------------------------------------------------------    --
@@ -6708,20 +6713,31 @@ BEGIN
       
     --########################## Daten zum Piggy-Stecker JPIO1 ###########################
 
-    (PIO_OUT(51),  PIO_OUT(65),  PIO_OUT(79),  PIO_OUT(93),
-     PIO_OUT(101), PIO_OUT(109), PIO_OUT(117), PIO_OUT(125)) <=  Out16_Out(15 downto 8);  --- Output-Pins zum Piggy [15.. 8]
-    (PIO_OUT(53),  PIO_OUT(67),  PIO_OUT(81),  PIO_OUT(95),
-     PIO_OUT(103), PIO_OUT(111), PIO_OUT(119), PIO_OUT(127)) <=  Out16_Out(7  downto 0);  --- Output-Pins zum Piggy [ 7.. 0]
-
-    (PIO_ENA(51),  PIO_ENA(65),  PIO_ENA(79),  PIO_ENA(93),
-     PIO_ENA(101), PIO_ENA(109), PIO_ENA(117), PIO_ENA(125)) <=  std_logic_vector'("11111111");   -- Output Enable
-    (PIO_ENA(53),  PIO_ENA(67),  PIO_ENA(81),  PIO_ENA(95),
-     PIO_ENA(103), PIO_ENA(111), PIO_ENA(119), PIO_ENA(127)) <=  std_logic_vector'("11111111");   -- Output Enable
+    IF  (AW_Config2(6) = '0')  THEN  (PIO_OUT(51),  PIO_OUT(65),  PIO_OUT(79),  PIO_OUT(93),
+                                      PIO_OUT(101), PIO_OUT(109), PIO_OUT(117), PIO_OUT(125)) <=  Out16_Out(15 downto 8);  --- Output-Pins zum Piggy [15.. 8]
+                                     (PIO_OUT(53),  PIO_OUT(67),  PIO_OUT(81),  PIO_OUT(95),
+                                      PIO_OUT(103), PIO_OUT(111), PIO_OUT(119), PIO_OUT(127)) <=  Out16_Out(7  downto 0);  --- Output-Pins zum Piggy [ 7.. 0]
+                                                                            
+                                      PIO_OUT(37)    <=  Out16_Strobe;     -- Output-Strobe
+                                      PIO_ENA(37)    <=  '1';              -- Output Enable  
 
      
-     PIO_OUT(37)    <=  Out16_Strobe;     -- Output-Strobe
-     PIO_ENA(37)    <=  '1';              -- Output Enable  
+                               ELSE  (PIO_OUT(51),  PIO_OUT(65),  PIO_OUT(79),  PIO_OUT(93),
+                                      PIO_OUT(101), PIO_OUT(109), PIO_OUT(117), PIO_OUT(125)) <=  AW_Output_Reg(1)(15 downto 8);  --- Output-Pins zum Piggy [15.. 8]
+                                     (PIO_OUT(53),  PIO_OUT(67),  PIO_OUT(81),  PIO_OUT(95),
+                                      PIO_OUT(103), PIO_OUT(111), PIO_OUT(119), PIO_OUT(127)) <=  AW_Output_Reg(1)(7  downto 0);  --- Output-Pins zum Piggy [ 7.. 0]
+                                                                            
+                                      PIO_OUT(37)    <=  '0';     -- kein Output-Strobe
+                                      PIO_ENA(37)    <=  '0';     -- kein Output Enable  
 
+    END IF;
+     
+      (PIO_ENA(51),  PIO_ENA(65),  PIO_ENA(79),  PIO_ENA(93),
+       PIO_ENA(101), PIO_ENA(109), PIO_ENA(117), PIO_ENA(125)) <=  std_logic_vector'("11111111");   -- Output Enable
+      (PIO_ENA(53),  PIO_ENA(67),  PIO_ENA(81),  PIO_ENA(95),
+       PIO_ENA(103), PIO_ENA(111), PIO_ENA(119), PIO_ENA(127)) <=  std_logic_vector'("11111111");   -- Output Enable
+       
+     
     
     --########################### Debounce, Input und LED   ############################
 
@@ -7011,12 +7027,7 @@ BEGIN
 --     ------+-----------------------------------------------------------------------    --
 --      7    | Output-Polarität (Lemo),       1 = Negativ,  0 = Positiv(Default)         --
 --     ------+-----------------------------------------------------------------------    --
---      6-2  | frei                                                                      --
---     ------+----------------+------------------------------------------------------    --
---      1    | Triggerflanke: | 1 = neg. Flanke ist Trigger
---           |                | 0 = pos. Flanke ist Trigger  
---     ------+----------------+------------------------------------------------------    --
---      0    | Input-Mode:    | 0 = Input, 1 = Input mit Strobe
+--      6-0  | frei                                                                      --
 --     ------+-----------------------------------------------------------------------    --
     
 
