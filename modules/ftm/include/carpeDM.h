@@ -85,7 +85,8 @@ protected:
 
   Socket ebs;
   Device ebd;  
-  std::vector<struct sdb_device> myDevs;  
+  std::vector<struct sdb_device> cpuDevs;  
+  std::vector<struct sdb_device> ppsDev; 
 
   int cpuQty = -1;
   HashMap hm;
@@ -94,6 +95,7 @@ protected:
   Graph gUp;
   AllocTable atDown;
   Graph gDown;
+  uint64_t modTime;
 
   bool verbose = false;
   std::ostream& sLog;
@@ -267,6 +269,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
                int setThrOrigin(uint8_t cpuIdx, uint8_t thrIdx, const std::string& name) { vEbwrs ew; return send(setThrOrigin(cpuIdx, thrIdx, name, ew));}//Sets the Node the Thread will start from
                int setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           { vEbwrs ew; return send(setThrStartTime(cpuIdx, thrIdx, t, ew));}
                int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; return send(setThrPrepTime(cpuIdx, thrIdx, t, ew));}
+     HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);
+          uint64_t getDmWrTime(); 
 
                
 

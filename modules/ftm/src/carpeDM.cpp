@@ -79,7 +79,7 @@ vBuf CarpeDM::ebReadCycle(Device& dev, vAdr va)
   } catch (etherbone::exception_t const& ex) {
     throw std::runtime_error("Etherbone " + std::string(ex.method) + " returned " + std::string(eb_status(ex.status)) + "\n" );
   }
-
+  //FIXME use endian functions
   for(unsigned int i = 0; i < va.size(); i++) { 
     ret[i * 4]     = (uint8_t)(veb[i] >> 24);
     ret[i * 4 + 1] = (uint8_t)(veb[i] >> 16);
@@ -155,15 +155,22 @@ bool CarpeDM::connect(const std::string& en) {
     atDown.removeMemories();
     gDown.clear();
     cpuIdxMap.clear();
+    cpuDevs.clear();
+
     vFw.clear();
 
     if(verbose) sLog << "Connecting to " << en << "... ";
     try { 
       ebs.open(0, EB_DATAX|EB_ADDRX);
       ebd.open(ebs, ebdevname.c_str(), EB_DATAX|EB_ADDRX, 3);
-      ebd.sdb_find_by_identity(SDB_VENDOR_GSI,SDB_DEVICE_LM32_RAM, myDevs);
-      if (myDevs.size() >= 1) { 
-        cpuQty = myDevs.size();
+      ebd.sdb_find_by_identity(PPS::vendID, PPS::devID, ppsDev);
+      if (ppsDev.size() < 1) throw std::runtime_error("Could not find a WR PPS Generator device. Something is wrong\n");
+ 
+
+
+      ebd.sdb_find_by_identity(SDB_VENDOR_GSI,SDB_DEVICE_LM32_RAM, cpuDevs);
+      if (cpuDevs.size() >= 1) { 
+        cpuQty = cpuDevs.size();
 
         for(int cpuIdx = 0; cpuIdx< cpuQty; cpuIdx++) {
           //only create MemUnits for valid DM CPUs, generate Mapping so we can still use the cpuIdx supplied by User 
@@ -172,7 +179,7 @@ bool CarpeDM::connect(const std::string& en) {
           vFw.push_back(foundVersion);
           if (expVersion <= foundVersion) {
             cpuIdxMap[cpuIdx]    = mappedIdx;
-            uint32_t extBaseAdr   = myDevs[cpuIdx].sdb_component.addr_first;
+            uint32_t extBaseAdr   = cpuDevs[cpuIdx].sdb_component.addr_first;
             uint32_t intBaseAdr   = getIntBaseAdr(cpuIdx);
             uint32_t peerBaseAdr  = WORLD_BASE_ADR  + extBaseAdr; 
             uint32_t sharedOffs   = getSharedOffs(cpuIdx) + _SHCTL_END_; 
@@ -380,7 +387,7 @@ bool CarpeDM::connect(const std::string& en) {
     const std::string tagVersionEnd = "Platform    : ";
     std::string version;
     size_t pos, posEnd;
-    struct  sdb_device& ram = myDevs.at(cpuIdx);
+    struct  sdb_device& ram = cpuDevs.at(cpuIdx);
     vAdr fwIdAdr;
 
     if ((ram.sdb_component.addr_last - ram.sdb_component.addr_first + 1) < SHARED_OFFS) { return (int)FwId::FWID_RAM_TOO_SMALL;}
@@ -547,6 +554,48 @@ void CarpeDM::showCpuList() {
           }
     } catch (std::runtime_error const& err) { throw std::runtime_error("Validation of " + std::string(err.what()) ); }
     return true;
+  }
+
+
+  uint64_t CarpeDM::getDmWrTime() {
+    uint32_t ppsAdr = ppsDev.at(0).sdb_component.addr_first;
+    uint32_t state;
+    uint64_t wr_time;
+    vAdr va;
+    vBuf vb;
+    uint8_t* b;
+    uint8_t tmp;
+  
+    
+
+    
+    //va.push_back(ppsAdr + PPS::STATE_REG);
+    
+    
+
+
+    va.push_back(ppsAdr + PPS::CNTR_UTCLO_REG);
+    va.push_back(ppsAdr + PPS::CNTR_UTCHI_REG);
+    vb = ebReadCycle(ebd, va);
+    //awkward: module excepts read on low word first, then high, which leaves us with words in wrong order. swap words
+    
+    b = (uint8_t*)&vb[0];
+    //hexDump("b4", (const char*)b, 8);
+    for(int i = 0; i<4; i++) {tmp = vb[4+i]; vb[4+i] = vb[i]; vb[i] = tmp;}
+    for(int i = 0; i<3; i++) {vb[i] = 0;} // equal HiWord & 0xff. That wr pps gen is bloody awkward...
+
+    
+
+    
+
+    //hexDump("TESTME", (const char*)b, 8);
+
+    //state   = writeBeBytesToLeNumber<uint32_t>(b + 0) & PPS::STATE_MSK;
+    wr_time = writeBeBytesToLeNumber<uint64_t>(b);
+
+
+    
+    return wr_time;
   }
 
 
