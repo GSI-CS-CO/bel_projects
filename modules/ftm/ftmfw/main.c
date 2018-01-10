@@ -78,7 +78,9 @@ void init()
   irq_set_mask(0x01);
   irq_disable();
 
-  dmInit(); *status |= SHCTL_STATUS_DM_INIT_SMSK;
+  dmInit(); 
+  *status  |= SHCTL_STATUS_DM_INIT_SMSK;
+  *boottime = getSysTime();
    
 }
 

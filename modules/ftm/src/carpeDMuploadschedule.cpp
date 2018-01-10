@@ -32,10 +32,14 @@ using namespace DotStr::Misc;
      
   vAdr CarpeDM::getUploadAdrs(){
     vAdr ret;
-    uint32_t adr;
+    uint32_t adr, smodTimeAdr;
 
     //add all Bmp addresses to return vector
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
+      // modification time address (lo/hi)
+      smodTimeAdr = atUp.getMemories()[i].extBaseAdr + SHARED_OFFS + SHCTL_DIAG + T_DIAG_TS_SMOD;
+      ret.push_back(smodTimeAdr + 0);
+      ret.push_back(smodTimeAdr + _32b_SIZE_);
       //generate addresses of Bmp's address range
       for (adr = atUp.adr2extAdr(i, atUp.getMemories()[i].sharedOffs); adr < atUp.adr2extAdr(i, atUp.getMemories()[i].startOffs); adr += _32b_SIZE_) ret.push_back(adr);
     }
@@ -46,7 +50,8 @@ using namespace DotStr::Misc;
       if(it.staged) {
        for (adr = atUp.adr2extAdr(it.cpu, it.adr); adr < atUp.adr2extAdr(it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr); 
      }
-    }    
+    }
+
     return ret;
   }
 
@@ -55,10 +60,17 @@ using namespace DotStr::Misc;
     ret.clear();
     
     size_t bmpSum = 0;
-    for(unsigned int i = 0; i < atUp.getMemories().size(); i++) { bmpSum += atUp.getMemories()[i].bmpSize; }
+    for(unsigned int i = 0; i < atUp.getMemories().size(); i++) { bmpSum += (_TS_SIZE_ + atUp.getMemories()[i].bmpSize); }
     ret.reserve( bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE); // preallocate memory for BMPs and all Nodes
     
-    for(unsigned int i = 0; i < atUp.getMemories().size(); i++) { ret += atUp.getMemories()[i].getBmp(); }//add Bmp to to return vector  
+    for(unsigned int i = 0; i < atUp.getMemories().size(); i++) { 
+      // save modification time
+      uint8_t b[8];
+      writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);
+      ret.insert( ret.end(), b, b +  _TS_SIZE_  );
+      //add Bmp to to return vector
+      ret += atUp.getMemories()[i].getBmp(); 
+    }  
     
     //add all node buffers to return vector
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
@@ -67,6 +79,8 @@ using namespace DotStr::Misc;
       } // add all nodes staged for upload
     }
    
+   
+
     return ret;
   }
 
@@ -270,7 +284,7 @@ using namespace DotStr::Misc;
 
       if(verbose || foundUninitialised) {
         sLog << std::endl;
-        hexDump(gUp[v].name.c_str(), (void*)haystack.c_str(), _MEM_BLOCK_SIZE);
+        hexDump(gUp[v].name.c_str(), haystack.c_str(), _MEM_BLOCK_SIZE);
       }
 
       if(foundUninitialised) {

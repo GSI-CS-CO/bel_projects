@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <inttypes.h>
+#include <time.h> 
 
 #include "ftm_shared_mmap.h"
 #include "carpeDM.h"
@@ -50,9 +51,8 @@ static void help(const char *program) {
   fprintf(stderr, "\n");
 }
 
-//this is horrible code, but harmless. Does the job for now.
-//TODO: replace this with something more sensible
-void showStatus(CarpeDM& cdm, bool verbose) {
+
+void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   std::string show;
   uint8_t cpuQty = cdm.getCpuQty();
   uint8_t thrQty = _THR_QTY_;
@@ -61,7 +61,9 @@ void showStatus(CarpeDM& cdm, bool verbose) {
   std::vector<std::string> vsCursorPattern;
   std::vector<std::string> vsOrigin;
   std::vector<std::string> vsOriginPattern;
-  std::vector<uint32_t> vsMsgCnt;
+  std::vector<uint64_t> vsMsgCnt;
+  uint64_t wrtime = cdm.getDmWrTime();
+
 
   //do this fast to get a most coherent picture, no output
   for(uint8_t cpuIdx=0; cpuIdx < cpuQty; cpuIdx++) {
@@ -81,9 +83,14 @@ void showStatus(CarpeDM& cdm, bool verbose) {
 
 
   const uint16_t width = 149;
+  //this is horrible code, but harmless. Does the job for now.
+  //TODO: replace this with something more sensible
 
+  const time_t* wrt = (time_t*)&wrtime;
 
   printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
+  printf("\u2502 DataMaster: %-104s \u2502 WR-Time: %.19s \u2502\n", netaddress, ctime(wrt));
+  printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
   printf("\u2502 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2502\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
   
@@ -94,15 +101,13 @@ void showStatus(CarpeDM& cdm, bool verbose) {
     for(uint8_t thrIdx=0; thrIdx < thrQty; thrIdx++) {
       if (verbose || ((cdm.getThrRun(cpuIdx) >> thrIdx) & 1)) {
         //if (!first) {printf("\u251C"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2524\n");
-        
-        
         std::string running = (((cdm.getThrRun(cpuIdx) >> thrIdx) & 1) ? std::string(KGRN) + std::string("yes") : std::string(KRED) + std::string(" no")) + std::string(KNRM);
         std::string originPattern = vsOriginPattern[cpuIdx * thrQty + thrIdx];
         std::string origin        = vsOrigin[cpuIdx * thrQty + thrIdx];
 
-        printf("\u2502%s %2u  \u2502 %2u  \u2502   %3s%s   \u2502 %9u \u2502 %55s \u2502 %55s %s\u2502\n", (toggle ? BLGR : ""), cpuIdx, thrIdx, running.c_str(), 
+        printf("\u2502%s %2u  \u2502 %2u  \u2502   %3s%s   \u2502 %9llu \u2502 %55s \u2502 %55s %s\u2502\n", (toggle ? BLGR : ""), cpuIdx, thrIdx, running.c_str(), 
           (toggle ? BLGR : ""),
-          vsMsgCnt[cpuIdx * thrQty + thrIdx],
+          (unsigned long long int)vsMsgCnt[cpuIdx * thrQty + thrIdx],
           vsCursorPattern[cpuIdx * thrQty + thrIdx].c_str(),  
           vsCursor[cpuIdx * thrQty + thrIdx].c_str(),
           BNRM
@@ -114,35 +119,56 @@ void showStatus(CarpeDM& cdm, bool verbose) {
 
   printf("\u2514"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2518\n");
 
+}
 
-/*
+void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
+  std::string show;
+  uint8_t cpuQty = cdm.getCpuQty();
 
-  for(cpuIdx=0;cpuIdx < p->cpuQty;cpuIdx++) {
-    if((srcCpus >> cpuIdx) & 0x1) {
-      show += format("\u2552"); for(i=0;i<79;i++) show += format("\u2550"); show += format("\u2555\n");
-      show += format("\u2502 %sCore #%02u%s                                                                      \u2502\n", KCYN, cpuIdx, KNRM);
-      format("\u251C"); for(i=0;i<24;i++) format("\u2500"); format("\u252C"); for(i=0;i<54;i++) format("\u2500"); format("\u2524\n");
-      format("\u2502 Status: %02x ErrCnt: %3u \u2502   MsgCnt: %9u       TPrep: %13llu ns    \u2502\n", \
-       (uint8_t)ftmStatus, (uint8_t)(ftmStatus >> 8), ftmMsgs, ftmTPrep);
-      format("\u251C"); for(i=0;i<24;i++) format("\u2500"); format("\u253C"); for(i=0;i<54;i++) format("\u2500"); format("\u2524\n");
-      format("\u2502 Shared Mem: 0x%08x \u2502", mySharedMem + cpuIdx*CPU_SHARED_SIZE);
-      if(p->pCores[cpuIdx].actOffs < p->pCores[cpuIdx].inaOffs) format("   Act Page: A 0x%08x  Inact Page: B 0x%08x", p->pCores[cpuIdx].actOffs, p->pCores[cpuIdx].inaOffs);
-      else                      format("   Act Page: B 0x%08x  Inact Page: A 0x%08x", p->pCores[cpuIdx].actOffs, p->pCores[cpuIdx].inaOffs);
-      format("   \u2502\n");
-      format("\u251C"); for(i=0;i<24;i++) format("\u2500"); format("\u2534"); for(i=0;i<54;i++) format("\u2500"); format("\u2524\n");
-      format("\u2502       ");
+  HealthReport *hr = new HealthReport[cpuQty];
 
-      if(ftmStatus & STAT_RUNNING)    format("   %sRUNNING%s   ", KGRN, KNRM);  else format("   %sSTOPPED%s   ", KRED, KNRM);
-      if(ftmStatus & STAT_IDLE)       format("     %sIDLE%s    ", KYEL, KNRM);  else format("     %sBUSY%s    ", KGRN, KNRM);
-      if(ftmStatus & STAT_STOP_REQ)   format("   STOP_REQ  ");  else format("      -      ");
-      if(ftmStatus & STAT_ERROR)      format("     %sERROR%s   ", KRED, KNRM);  else format("     %sOK%s      ", KGRN, KNRM);
-      if(ftmStatus & STAT_WAIT)       format("  WAIT_COND  ");  else format("      -      ");
-      format("       \u2502\n");
-      format("\u2514"); for(i=0;i<79;i++) format("\u2500"); format("\u2518\n");
-    }
-  }
-  printf("%s", (const char*)strBuff);
-  */
+
+  for(uint8_t i=0; i < cpuQty; i++) { cdm.getHealth(i, hr[i]); }  
+  uint64_t wrtime = cdm.getDmWrTime();
+  
+
+  const uint16_t width = 149;
+  //this is horrible code, but harmless. Does the job for now.
+  //TODO: replace this with something more sensible
+
+  const time_t* wrt = (time_t*)&wrtime;
+
+  printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
+  printf("\u2502 DataMaster: %-104s \u2502 WR-Time: %.19s \u2502\n", netaddress, ctime(wrt));
+  printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
+  printf("\u2502 %3s \u2502 %.19s \u2502 %.19s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502\n", "Cpu", "BootTime", "Schedule ModTime", "Min TimeDiff", "Max TimeDiff", "Avg TimeDiff", "Warning Diff Threshold", "Warning Count");
+  printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
+  
+
+
+  for(uint8_t i=0; i < cpuQty; i++) {   
+    //this is nanoseconds, we need to convert to seconds
+    uint64_t bootTime = hr[i].bootTime / 1000000000ULL;
+    uint64_t smodTime = hr[i].smodTime / 1000000000ULL;
+    char tmpBuf[40];
+    ctime_r((time_t*)&smodTime, tmpBuf);
+
+    printf("\u2502 %3u \u2502 %15llu \u2502 %.19s \u2502 %.19s \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 0x%08x \u2502\n",  hr[i].cpu,
+                                                                                                                    hr[i].msgCnt,
+                                                                                                                    ctime((time_t*)&bootTime),
+                                                                                                                    tmpBuf,
+                                                                                                                    (int)hr[i].minTimeDiff,
+                                                                                                                    (int)hr[i].maxTimeDiff,
+                                                                                                                    (int)hr[i].avgTimeDiff,
+                                                                                                                    (int)hr[i].warningThreshold,
+                                                                                                                    hr[i].warningCnt,
+                                                                                                                    hr[i].stat);
+  }  
+  
+
+
+  printf("\u2514"); for(int i=0;i<width;i++) printf("\u2500"); printf("\u2518\n");
+
 }
 
 
@@ -328,7 +354,8 @@ int main(int argc, char* argv[]) {
       mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
     }
     else if (cmp == "status")  {
-      showStatus(cdm, verbose);
+      showStatus(netaddress, cdm, verbose);
+      showHealth(netaddress, cdm, verbose);
       return 0;
     }  
     else if (cmp == dnt::sCmdFlow)  {

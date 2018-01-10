@@ -3,34 +3,21 @@
 #include <string>
 #include <inttypes.h>
 
-#include "carpeDM.h"
+#include "etherbone.h"
 
+#define ETHERBONE_THROWS
+
+using namespace etherbone;
 
 int main(int argc, char* argv[]) {
 
+  Socket ebs;
+  Device ebd;  
+  std::vector<struct sdb_device> cpuDevs;  
 
-   
+  ebs.open(0, EB_DATAX|EB_ADDRX);
+  ebd.open(ebs, ebdevname.c_str(), EB_DATAX|EB_ADDRX, 3);
 
-  CarpeDM cdm = CarpeDM();
-
-  //TODO we need a dictionary independent of dot files, otherwise, how do we update?
-
-  try {
-    cdm.loadPatternsFile("dm.dict2");
-  } catch (std::runtime_error const& err) {
-   std::cerr << std::endl << " No pattern file" << std::endl;
-  }
-
-  
-
-  std::string tests(argv[optind]);
-
-  std::cout << "Found " << tests << std::endl;
-
-  cdm.testPattern(tests);  
-
-
-  cdm.storePatternsFile("dm.dict2");  
   
 
   return 0;

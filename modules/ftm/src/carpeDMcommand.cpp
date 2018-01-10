@@ -199,17 +199,17 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
   //Returns the external address of a thread's command register area
   uint32_t CarpeDM::getThrCmdAdr(uint8_t cpuIdx) {
-    return myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_CTL;
+    return cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_CTL;
   }
 
   //Returns the external address of a thread's initial node register 
   uint32_t CarpeDM::getThrInitialNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
-    return myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_NODE_PTR;
+    return cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_NODE_PTR;
   }
 
   //Returns the external address of a thread's cursor pointer
   uint32_t CarpeDM::getThrCurrentNodeAdr(uint8_t cpuIdx, uint8_t thrIdx) {
-    return myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_NODE_PTR;
+    return cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_NODE_PTR;
   }
   
 
@@ -257,7 +257,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
   //Get bifield showing running threads
   uint32_t CarpeDM::getStatus(uint8_t cpuIdx) {
-    return ebReadWord(ebd, myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_STATUS); 
+    return ebReadWord(ebd, cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_STATUS); 
   }
 
   void CarpeDM::inspectHeap(uint8_t cpuIdx) {
@@ -265,7 +265,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     vBuf heap;
     
 
-    uint32_t baseAdr = myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS;
+    uint32_t baseAdr = cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS;
     uint32_t heapAdr = baseAdr + SHCTL_HEAP;
     uint32_t thrAdr  = baseAdr + SHCTL_THR_DAT;
 
@@ -371,7 +371,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
       sLog << std::endl;
 
-      hexDump(g[target(*out_cur,g)].name.c_str(), g[target(*out_cur,g)].np->getB(), _MEM_BLOCK_SIZE);
+      hexDump(g[target(*out_cur,g)].name.c_str(), (const char*)g[target(*out_cur,g)].np->getB(), _MEM_BLOCK_SIZE);
 
       //output commands
       for(int i=0; i< _MEM_BLOCK_SIZE / _T_CMD_SIZE_; i ++ ) {
@@ -426,35 +426,35 @@ void CarpeDM::dumpNode(uint8_t cpuIdx, const std::string& name) {
     auto it = atDown.lookupHash(hm.lookup(name).get());
     if (atDown.isOk(it)) {
       auto* x = (AllocMeta*)&(*it);  
-      hexDump(g[x->v].name.c_str(), x->b, _MEM_BLOCK_SIZE); 
+      hexDump(g[x->v].name.c_str(), (const char*)x->b, _MEM_BLOCK_SIZE); 
     }
 }
 
 
 uint64_t CarpeDM::getThrMsgCnt(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);   
+  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_MSG_CNT);   
 } 
 
 uint64_t CarpeDM::getThrDeadline(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
+  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_DAT + thrIdx * _T_TD_SIZE_ + T_TD_DEADLINE);
 }
 
 vEbwrs&  CarpeDM::setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
-  write64b(myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME, t);
+  write64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME, t);
   return ew;
 }
 
 uint64_t CarpeDM::getThrStartTime(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
+  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_STARTTIME);
 }
 
 vEbwrs&  CarpeDM::setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t, vEbwrs& ew) {
-  write64b(myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME, t);
+  write64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME, t);
   return ew;
 }
 
 uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
-  return read64b(myDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME);
+  return read64b(cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS + SHCTL_THR_STA + thrIdx * _T_TS_SIZE_ + T_TS_PREPTIME);
 }
 
   const vAdr CarpeDM::getCmdWrAdrs(uint32_t hash, uint8_t prio) {
@@ -623,3 +623,39 @@ vEbwrs& CarpeDM::abortNodeOrigin(const std::string& sNode, vEbwrs& ew) {
               vStrC CarpeDM::getBeamprocMembers(const std::string& sBeamproc)   {return gt.getMembers<Groups::Pattern>(sBeamproc);}
   const std::string CarpeDM::getBeamprocEntryNode(const std::string& sBeamproc) {return firstString(gt.getBeamprocEntryNodes(sBeamproc));}
   const std::string CarpeDM::getBeamprocExitNode(const std::string& sBeamproc)  {return firstString(gt.getBeamprocExitNodes(sBeamproc));}
+
+
+
+HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
+  uint32_t const baseAdr = cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS;
+
+  vAdr diagAdr;
+  vBuf diagBuf;
+  uint8_t* b;
+
+  // this is possible because T_DIAG offsets start at 0, see ftm_common.h for definition
+  for (uint32_t offs = 0; offs < _T_DIAG_SIZE_; offs += _32b_SIZE_) diagAdr.push_back(baseAdr + SHCTL_DIAG + offs); 
+  diagAdr.push_back(baseAdr + SHCTL_STATUS);  
+  diagBuf = ebReadCycle(ebd, diagAdr);
+  b = (uint8_t*)&diagBuf[0];
+
+  hexDump("TEST", diagBuf );
+
+  hexDump("boot", (const char*)(b + T_DIAG_TS_BOOT), 8 );
+  hexDump("smod", (const char*)(b + T_DIAG_TS_SMOD), 8 );
+
+  hr.cpu              = cpuIdx;
+  hr.msgCnt           = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_MSG_CNT); 
+  hr.bootTime         = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_TS_BOOT); 
+  printf("bootnum, 0x%016x \n", hr.bootTime);
+  hr.smodTime         = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_TS_SMOD);
+  hr.minTimeDiff      = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MIN);  
+  hr.maxTimeDiff      = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MAX);
+  hr.avgTimeDiff      = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_SUM);// / hr.msgCnt;   
+  hr.warningThreshold = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_WTH);
+  hr.warningCnt       = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_WAR_CNT);
+  hr.stat             = writeBeBytesToLeNumber<uint32_t>(b + _T_DIAG_SIZE_); // stat comes after last element of T_DIAG
+  
+  return hr;
+  
+} 

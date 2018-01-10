@@ -20,18 +20,20 @@ deadlineFuncPtr deadlineFuncs[_NODE_TYPE_END_];
 nodeFuncPtr     nodeFuncs[_NODE_TYPE_END_];
 actionFuncPtr   actionFuncs[_ACT_TYPE_END_];
 
-uint32_t* const p       = (uint32_t*)&_startshared; 
-uint32_t* const status  = (uint32_t*)&_startshared[SHCTL_STATUS   >> 2];
-uint64_t* const count   = (uint64_t*)&_startshared[SHCTL_MSG_CNT  >> 2];
+uint32_t* const p         = (uint32_t*)&_startshared; 
+uint32_t* const status    = (uint32_t*)&_startshared[SHCTL_STATUS >> 2];
+uint64_t* const count     = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_MSG_CNT)  >> 2];
+uint64_t* const boottime  = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_TS_BOOT)  >> 2];
 #ifdef DIAGNOSTICS
-int64_t* const diffsum   = (int64_t*)&_startshared[SHCTL_DIFF_SUM >> 2];
-int64_t* const diffmax   = (int64_t*)&_startshared[SHCTL_DIFF_MAX >> 2];
-int64_t* const diffmin   = (int64_t*)&_startshared[SHCTL_DIFF_MIN >> 2];
-uint64_t* const dbgcount = (uint64_t*)&_startshared[SHCTL_TGATHER >> 2];
+int64_t* const diffsum   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_SUM ) >> 2];
+int64_t* const diffmax   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_MAX ) >> 2];
+int64_t* const diffmin   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_MIN ) >> 2];
+int64_t* const diffwth   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_WTH ) >> 2];
+int64_t* const diffwcnt  = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_WAR_CNT ) >> 2];
 #endif
-uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)    >> 2];
-uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING)  >> 2];
-uint32_t* const abort1  = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_ABORT)    >> 2];
+uint32_t* const start   = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_START)   >> 2];
+uint32_t* const running = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_RUNNING) >> 2];
+uint32_t* const abort1  = (uint32_t*)&_startshared[(SHCTL_THR_CTL + T_TC_ABORT)   >> 2];
 uint32_t** const hp     = (uint32_t**)&_startshared[SHCTL_HEAP >> 2]; // array of ptrs to thread data for scheduler heap
 
 void prioQueueInit()
@@ -106,6 +108,9 @@ void dmInit() {
     *diffsum   = 0;
     *diffmax   = INT64_MIN;
     *diffmin   = INT64_MAX;
+    *diffwth   = 50000LL;
+    *diffwcnt  = 0;
+    *boottime  = getSysTime();
   #endif  
 
 
@@ -232,12 +237,12 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
     int64_t diff  = *(uint64_t*)&thrData[T_TD_DEADLINE >> 2] - getSysTime();
     uint8_t overflow = (diff >= 0) & (*diffsum >= 0) & ((diff + *diffsum)  < 0)
                      | (diff <  0) & (*diffsum <  0) & ((diff + *diffsum) >= 0);
-
-    *diffsum = (overflow          ? diff : *diffsum + diff);
-    *dbgcount = ((diff < *diffmin) ? *count : *dbgcount);
-    *diffmin = ((diff < *diffmin) ? diff : *diffmin);
-    *diffmax = ((diff > *diffmax) ? diff : *diffmax);
-    *count   = (overflow          ? 0    : *count);
+    *diffsum   = (overflow          ? diff    : *diffsum + diff);
+    //*dbgcount  = ((diff < *diffmin) ? *count  : *dbgcount);
+    *diffmin   = ((diff < *diffmin) ? diff    : *diffmin);
+    *diffmax   = ((diff > *diffmax) ? diff    : *diffmax);
+    *count     = (overflow          ? 0       : *count);   // necessary for calculating average: if sum resets, count must also reset
+    *diffwcnt += (int64_t)(diff < *diffwth); //inc diff warning counter when diff below threshold 
   #endif
 
   //disptach timing message to priority queue
@@ -255,7 +260,7 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   
   ++(*((uint64_t*)&thrData[T_TD_MSG_CNT >> 2])); //increment thread message counter
   ++(*count); //increment cpu message counter
-
+  
 
    
      

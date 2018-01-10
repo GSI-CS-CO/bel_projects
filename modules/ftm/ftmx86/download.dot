@@ -1,12 +1,4 @@
 digraph G {
-graph [root="Demo",rankdir=TB, nodesep=0.6, mindist=1.0, ranksep=1.0, overlap=false]
-node [style="filled", fillcolor="white", color="black"]
-B_0[cpu="1", flags="7", type="block", tperiod="1000000000", shape="rectangle", color="black"];
-B_B[cpu="1", flags="7", type="block", tperiod="1000000000", shape="rectangle", color="black"];
-Evt_0[cpu="1", flags="2", type="tmsg", toffs="0", fid="0", gid="5", evtno="2047", sid="1727", bpid="6397", par="123", tef="0", shape="oval", color="black", fillcolor="white"];
-Evt_B[cpu="1", flags="2", type="tmsg", toffs="0", fid="0", gid="5", evtno="2047", sid="3655", bpid="15449", par="123", tef="0", shape="oval", color="black", fillcolor="white"];
-B_B->Evt_0 [type="defdst", color="red"];
-Evt_0->B_0 [type="defdst", color="red"];
-Evt_B->B_B [type="defdst", color="red"];
-B_0->Evt_B [type="defdst", color="red"];
+graph [root="Demo",rankdir   = TB, nodesep           = 0.6, mindist     = 1.0, ranksep = 1.0, overlap = false]
+node [style     = "filled", fillcolor = "white", color = "black"]
 }

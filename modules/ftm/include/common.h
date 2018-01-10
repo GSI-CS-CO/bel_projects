@@ -73,6 +73,29 @@ enum class FwId { FWID_RAM_TOO_SMALL      = -1,
                   VERSION_MINOR_MUL       = 100,
                   VERSION_REVISION_MUL    = 1};  
 
+namespace PPS {
+  const uint32_t CNTR_UTCLO_REG  = 0x08;
+  const uint32_t CNTR_UTCHI_REG  = 0x0C;
+  const uint32_t STATE_REG       = 0x1C;
+  const uint32_t PPS_VALID_MSK   = (1<<2);
+  const uint32_t TS_VALID_MSK    = (1<<3);
+  const uint32_t STATE_MSK       = 0x0C; 
+  const uint64_t vendID          = 0x000000000000ce42ULL;
+  const uint32_t devID           = 0xde0d8ced;
+}
+
+typedef struct {
+  uint8_t   cpu; 
+  uint64_t  msgCnt;
+  uint64_t  bootTime;
+  uint64_t  smodTime;
+  int64_t   minTimeDiff;
+  int64_t   maxTimeDiff;
+  int64_t   avgTimeDiff;
+  int64_t   warningThreshold;
+  uint32_t  warningCnt;
+  uint32_t  stat;
+} HealthReport;
 
 class Node;
 class MiniCommand;
@@ -151,75 +174,9 @@ inline T s2u(const std::string& s) {
 
 }
 
-//FIXME just fuckin overload it, why are there two hexdump functions here ?
-inline void hexDump (const char *desc, const void *addr, int len) {
-    int i;
-    unsigned char buff[17];
-    unsigned char *pc = (unsigned char*)addr;
+void hexDump (const char *desc, const char* addr, int len);
 
-    // Output description if given.
-    if (desc != NULL)
-       printf ("%s:\n", desc);
-
-    // Process every byte in the data.
-    for (i = 0; i < len; i++) {
-        // Multiple of 16 means new line (with line offset).
-
-        if ((i % 16) == 0) {
-            // Just don't print ASCII for the zeroth line.
-            if (i != 0)
-               printf ("  %s\n", buff);
-
-            // Output the offset.
-           printf ("  %04x ", i);
-        }
-
-        // Now the hex code for the specific character.
-       printf (" %02x", pc[i]);
-
-        // And store a printable ASCII character for later.
-        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
-            buff[i % 16] = '.';
-        else
-            buff[i % 16] = pc[i];
-        buff[(i % 16) + 1] = '\0';
-    }
-  printf ("\n");  
-}
-
-inline void vHexDump (const char *desc, vBuf pc) {
-    int i, len = pc.size();
-    unsigned char buff[17];
-
-    // Output description if given.
-    if (desc != NULL)
-       printf ("%s:\n", desc);
-
-    // Process every byte in the data.
-    for (i = 0; i < len; i++) {
-        // Multiple of 16 means new line (with line offset).
-
-        if ((i % 16) == 0) {
-            // Just don't print ASCII for the zeroth line.
-            if (i != 0)
-               printf ("  %s\n", buff);
-
-            // Output the offset.
-           printf ("  %04x ", i);
-        }
-
-        // Now the hex code for the specific character.
-       printf (" %02x", pc[i]);
-
-        // And store a printable ASCII character for later.
-        if ((pc[i] < 0x20) || (pc[i] > 0x7e))
-            buff[i % 16] = '.';
-        else
-            buff[i % 16] = pc[i];
-        buff[(i % 16) + 1] = '\0';
-    }
-  printf ("\n");  
-}
+void hexDump (const char *desc, vBuf vb);
 
 
 #endif

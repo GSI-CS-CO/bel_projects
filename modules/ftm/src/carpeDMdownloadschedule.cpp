@@ -189,6 +189,10 @@ namespace dnt = DotStr::Node::TypeVal;
     parseDownloadData(vDlD);
     if(verbose) sLog << "Done." << std::endl;
     
+    // read out current time for upload mod time
+    modTime = getDmWrTime();
+
+
     return vDlD.size();
   }
 

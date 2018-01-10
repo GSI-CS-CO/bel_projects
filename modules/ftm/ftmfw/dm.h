@@ -47,11 +47,13 @@ extern actionFuncPtr     actionFuncs[_ACT_TYPE_END_];
 extern uint32_t* const p; 
 extern uint32_t* const status;
 extern uint64_t* const count;
+extern uint64_t* const boottime;
 #ifdef DIAGNOSTICS
-int64_t* const diffsum;
-int64_t* const diffmax;
-int64_t* const diffmin;
-uint64_t* const dbgcount;
+extern int64_t*  const diffsum;
+extern int64_t*  const diffmax;
+extern int64_t*  const diffmin;
+extern int64_t*  const diffwth;
+extern int64_t*  const diffwcnt;
 #endif
 extern uint32_t* const start;
 extern uint32_t* const running;
