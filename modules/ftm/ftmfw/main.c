@@ -62,6 +62,8 @@ void init()
   discoverPeriphery();
   cpuId = getCpuIdx();
 
+  
+
   if (cpuId == 0) {
     //TODO replace bogus system status flags by real ones
     uart_init_hw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
@@ -73,6 +75,15 @@ void init()
     *status |= SHCTL_STATUS_EBM_INIT_SMSK ;
     *status |= SHCTL_STATUS_PQ_INIT_SMSK;
   }
+
+  int j;
+ 
+
+  while(!wrTimeValid()) { 
+    for (j = 0; j < (125000000/2); ++j) { asm("nop"); }
+    if (cpuId == 0) mprintf("#%02u: DM cores Waiting for WRC synchronisation...\n", cpuId);
+  }     
+  if (cpuId == 0) mprintf("#%02u: WR time now in sync\n", cpuId);
 
   isr_table_clr();
   irq_set_mask(0x01);
@@ -100,6 +111,7 @@ void main(void) {
 
   init();
 
+  //FIXME why is uart_hw_init here twice ???
   // wait 1s + cpuIdx * 1/10s
   for (j = 0; j < ((125000000/4)+(cpuId*2500000)); ++j) { asm("nop"); }
   if (cpuId != 0) uart_init_hw();   *status |= SHCTL_STATUS_UART_INIT_SMSK;
@@ -117,7 +129,7 @@ void main(void) {
     mprintf("#%02u: Priority Queue Debugmode ON, timestamps will be written to 0x%08x on receivers", cpuId, DEBUGPRIOQDST);
   #endif
   //mprintf("Found MsgBox at 0x%08x. MSI Path is 0x%08x\n", (uint32_t)pCpuMsiBox, (uint32_t)pMyMsi);
-  mprintf("#%02u: This is Cherry DM FW 0.7.3 \n", cpuId);
+  mprintf("#%02u: This is Cherry DM FW %s \n", cpuId, DM_VERSION);
 
   atomic_off();
 

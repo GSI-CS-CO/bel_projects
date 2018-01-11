@@ -639,21 +639,23 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   diagBuf = ebReadCycle(ebd, diagAdr);
   b = (uint8_t*)&diagBuf[0];
 
-  hexDump("TEST", diagBuf );
+  //hexDump("TEST", diagBuf );
 
-  hexDump("boot", (const char*)(b + T_DIAG_TS_BOOT), 8 );
-  hexDump("smod", (const char*)(b + T_DIAG_TS_SMOD), 8 );
+  //hexDump("boot", (const char*)(b + T_DIAG_BOOT_TS), 8 );
+  //hexDump("smod", (const char*)(b + T_DIAG_SMOD_TS), 8 );
 
   hr.cpu              = cpuIdx;
   hr.msgCnt           = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_MSG_CNT); 
-  hr.bootTime         = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_TS_BOOT); 
-  printf("bootnum, 0x%016x \n", hr.bootTime);
-  hr.smodTime         = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_TS_SMOD);
+  hr.bootTime         = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_BOOT_TS); 
+  //TODO Schedule modfication issuer, hash ...
+  //TODO Command time, modfication issuer, hash ...
+  //printf("bootnum, 0x%016x \n", hr.bootTime);
+  hr.smodTime         = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_SMOD_TS);
   hr.minTimeDiff      = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MIN);  
   hr.maxTimeDiff      = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MAX);
-  hr.avgTimeDiff      = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_SUM);// / hr.msgCnt;   
+  hr.avgTimeDiff      = (hr.msgCnt ? writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_SUM) / (int64_t)hr.msgCnt : 0);   
   hr.warningThreshold = writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_WTH);
-  hr.warningCnt       = writeBeBytesToLeNumber<uint32_t>(b + T_DIAG_WAR_CNT);
+  hr.warningCnt       = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_WAR_CNT);
   hr.stat             = writeBeBytesToLeNumber<uint32_t>(b + _T_DIAG_SIZE_); // stat comes after last element of T_DIAG
   
   return hr;

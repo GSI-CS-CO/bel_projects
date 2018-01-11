@@ -23,7 +23,7 @@ actionFuncPtr   actionFuncs[_ACT_TYPE_END_];
 uint32_t* const p         = (uint32_t*)&_startshared; 
 uint32_t* const status    = (uint32_t*)&_startshared[SHCTL_STATUS >> 2];
 uint64_t* const count     = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_MSG_CNT)  >> 2];
-uint64_t* const boottime  = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_TS_BOOT)  >> 2];
+uint64_t* const boottime  = (uint64_t*)&_startshared[(SHCTL_DIAG  + T_DIAG_BOOT_TS)  >> 2];
 #ifdef DIAGNOSTICS
 int64_t* const diffsum   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_SUM ) >> 2];
 int64_t* const diffmax   = (int64_t*) &_startshared[(SHCTL_DIAG   + T_DIAG_DIF_MAX ) >> 2];
@@ -113,6 +113,18 @@ void dmInit() {
     *boottime  = getSysTime();
   #endif  
 
+
+}
+
+
+uint8_t wrTimeValid() {
+
+  const uint32_t STATE_REG       = 0x1C;
+  const uint32_t PPS_VALID_MSK   = (1<<2);
+  const uint32_t TS_VALID_MSK    = (1<<3);
+  const uint32_t STATE_MSK       = PPS_VALID_MSK | TS_VALID_MSK; 
+
+  return  ( (pPps[STATE_REG  >> 2] & STATE_MSK) != 0);
 
 }
 

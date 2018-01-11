@@ -116,6 +116,8 @@ static char* print64(uint64_t x, int align)
         return buf;
 }
 
+uint8_t wrTimeValid();
+
 void prioQueueInit();
 
 void dmInit();

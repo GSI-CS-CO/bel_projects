@@ -37,7 +37,7 @@ using namespace DotStr::Misc;
     //add all Bmp addresses to return vector
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
       // modification time address (lo/hi)
-      smodTimeAdr = atUp.getMemories()[i].extBaseAdr + SHARED_OFFS + SHCTL_DIAG + T_DIAG_TS_SMOD;
+      smodTimeAdr = atUp.getMemories()[i].extBaseAdr + SHARED_OFFS + SHCTL_DIAG + T_DIAG_SMOD_TS;
       ret.push_back(smodTimeAdr + 0);
       ret.push_back(smodTimeAdr + _32b_SIZE_);
       //generate addresses of Bmp's address range

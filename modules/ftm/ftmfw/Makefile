@@ -14,7 +14,7 @@ PRIOPATH  ?= $(TOP)/modules/prioq2
 FTMPATH   ?= $(TOP)/modules/ftm
 FWPATH    ?= $(FTMPATH)/ftmfw
 PREFIX	  ?= /usr/local
-CFLAGS	  += -I$(FWPATH) -I$(PRIOPATH) -I$(FWPATH)/../include -DDEBUGLEVEL=$(DEBUGLVL) -DDIAGNOSTICS 
+CFLAGS	  += -I$(FWPATH) -I$(PRIOPATH) -I$(FWPATH)/../include -DDEBUGLEVEL=$(DEBUGLVL) -DDIAGNOSTICS -DDM_VERSION="\"$(VERSION)\""
 
 all: $(TARGET).bin $(TARGET).elf
 

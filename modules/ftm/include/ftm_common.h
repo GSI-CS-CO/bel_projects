@@ -91,15 +91,22 @@
 
 
 
-#define T_DIAG_MSG_CNT   (0)                            //CPU wide timing message counter
-#define T_DIAG_TS_BOOT   (T_DIAG_MSG_CNT  + _64b_SIZE_) //Timestamp of Uptime beginning
-#define T_DIAG_TS_SMOD   (T_DIAG_TS_BOOT  + _TS_SIZE_ ) //Timestamp of last schedule change
-#define T_DIAG_DIF_MIN   (T_DIAG_TS_SMOD  + _TS_SIZE_ ) //All time min diff between dispatch time and deadline
-#define T_DIAG_DIF_MAX   (T_DIAG_DIF_MIN  + _TS_SIZE_ ) //All time max diff between dispatch time and deadline
-#define T_DIAG_DIF_SUM   (T_DIAG_DIF_MAX  + _TS_SIZE_ ) //Running sum of diff between dispatch time and deadline (signed!)
-#define T_DIAG_DIF_WTH   (T_DIAG_DIF_SUM  + _TS_SIZE_ ) //Diff Threshold between dispatch time and deadline which will trigger a warning
-#define T_DIAG_WAR_CNT   (T_DIAG_DIF_WTH  + _TS_SIZE_ ) //times a warning was triggered
-#define _T_DIAG_SIZE_    (T_DIAG_WAR_CNT  + _32b_SIZE_)
+#define T_DIAG_MSG_CNT      (0)                             //CPU wide timing message counter
+#define T_DIAG_BOOT_TS      (T_DIAG_MSG_CNT  + _64b_SIZE_ ) //Timestamp of Uptime beginning
+#define T_DIAG_SMOD_TS      (T_DIAG_BOOT_TS  + _TS_SIZE_  ) //Timestamp of last schedule modification
+#define T_DIAG_SMOD_IID     (T_DIAG_SMOD_TS  + _TS_SIZE_  ) //Issuer ID of last schedule modification
+#define T_DIAG_SMOD_HSH     (T_DIAG_SMOD_IID + _64b_SIZE_ ) //Hash of last schedule modification
+#define T_DIAG_SMOD_CNT     (T_DIAG_SMOD_HSH + _32b_SIZE_ ) //schedule modification counter
+#define T_DIAG_CMD_TS       (T_DIAG_SMOD_CNT + _32b_SIZE_ ) //Timestamp of last command batch
+#define T_DIAG_CMD_IID      (T_DIAG_CMD_TS   + _TS_SIZE_  ) //Issuer ID of last command batch
+#define T_DIAG_CMD_HSH      (T_DIAG_CMD_IID  + _64b_SIZE_ ) //Hash of last command batch
+#define T_DIAG_CMD_CNT      (T_DIAG_CMD_HSH  + _32b_SIZE_ ) //Command batch counter
+#define T_DIAG_DIF_MIN      (T_DIAG_CMD_CNT  + _32b_SIZE_ ) //All time min diff between dispatch time and deadline   (signed!)
+#define T_DIAG_DIF_MAX      (T_DIAG_DIF_MIN  + _TS_SIZE_  ) //All time max diff between dispatch time and deadline   (signed!)
+#define T_DIAG_DIF_SUM      (T_DIAG_DIF_MAX  + _TS_SIZE_  ) //Running sum of diff between dispatch time and deadline (signed!)
+#define T_DIAG_DIF_WTH      (T_DIAG_DIF_SUM  + _64b_SIZE_ ) //Diff Threshold between dispatch time and deadline which will trigger a warning (signed!)
+#define T_DIAG_WAR_CNT      (T_DIAG_DIF_WTH  + _TS_SIZE_  ) //Diff warning counter
+#define _T_DIAG_SIZE_       (T_DIAG_WAR_CNT  + _64b_SIZE_ ) 
 
 //////////////////////////////////////////////////////////////////////
 // Control Interface                                                //

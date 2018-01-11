@@ -79,7 +79,7 @@ namespace PPS {
   const uint32_t STATE_REG       = 0x1C;
   const uint32_t PPS_VALID_MSK   = (1<<2);
   const uint32_t TS_VALID_MSK    = (1<<3);
-  const uint32_t STATE_MSK       = 0x0C; 
+  const uint32_t STATE_MSK       = PPS_VALID_MSK | TS_VALID_MSK; 
   const uint64_t vendID          = 0x000000000000ce42ULL;
   const uint32_t devID           = 0xde0d8ced;
 }
