@@ -44,6 +44,32 @@
     return   (step16 & 0x00FF00FF00FF00FFULL) << 8
            | (step16 & 0xFF00FF00FF00FF00ULL) >> 8;
   }
+
+ inline int16_t endian_reverse(int16_t x) BOOST_NOEXCEPT
+  {
+    return (static_cast<uint16_t>(x) << 8)
+      | (static_cast<uint16_t>(x) >> 8);
+  }
+
+  inline int32_t endian_reverse(int32_t x) BOOST_NOEXCEPT
+  {
+    uint32_t step16;
+    step16 = static_cast<uint32_t>(x) << 16 | static_cast<uint32_t>(x) >> 16;
+    return
+        ((static_cast<uint32_t>(step16) << 8) & 0xff00ff00)
+      | ((static_cast<uint32_t>(step16) >> 8) & 0x00ff00ff);
+  }
+
+  inline int64_t endian_reverse(int64_t x) BOOST_NOEXCEPT
+  {
+    uint64_t step32, step16;
+    step32 = static_cast<uint64_t>(x) << 32 | static_cast<uint64_t>(x) >> 32;
+    step16 = (step32 & 0x0000FFFF0000FFFFULL) << 16
+           | (step32 & 0xFFFF0000FFFF0000ULL) >> 16;
+    return static_cast<int64_t>((step16 & 0x00FF00FF00FF00FFULL) << 8
+           | (step16 & 0xFF00FF00FF00FF00ULL) >> 8);
+  }
+
 #endif
 
 
