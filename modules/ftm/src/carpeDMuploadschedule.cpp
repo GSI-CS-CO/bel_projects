@@ -36,20 +36,27 @@ using namespace DotStr::Misc;
 
     //add all Bmp addresses to return vector
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
-      // modification time address (lo/hi)
-      smodTimeAdr = atUp.getMemories()[i].extBaseAdr + SHARED_OFFS + SHCTL_DIAG + T_DIAG_SMOD_TS;
-      ret.push_back(smodTimeAdr + 0);
-      ret.push_back(smodTimeAdr + _32b_SIZE_);
       //generate addresses of Bmp's address range
       for (adr = atUp.adr2extAdr(i, atUp.getMemories()[i].sharedOffs); adr < atUp.adr2extAdr(i, atUp.getMemories()[i].startOffs); adr += _32b_SIZE_) ret.push_back(adr);
     }
 
+    std::set<uint8_t> modded;
     //add all Node addresses to return vector
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       //generate address range for all nodes staged for upload
       if(it.staged) {
-       for (adr = atUp.adr2extAdr(it.cpu, it.adr); adr < atUp.adr2extAdr(it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr); 
-     }
+        for (adr = atUp.adr2extAdr(it.cpu, it.adr); adr < atUp.adr2extAdr(it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr);
+
+        // save modification time
+        if( modded.find(it.cpu) != modded.end() ) {
+          modded.insert(it.cpu);
+          // modification time address (lo/hi)
+          smodTimeAdr = atUp.getMemories()[it.cpu].extBaseAdr + SHARED_OFFS + SHCTL_DIAG + T_DIAG_SMOD_TS;
+          printf("SMODTSAdr 0x%08x\n", smodTimeAdr);
+          ret.push_back(smodTimeAdr + 0);
+          ret.push_back(smodTimeAdr + _32b_SIZE_);
+        }  
+      }
     }
 
     return ret;
@@ -64,22 +71,26 @@ using namespace DotStr::Misc;
     ret.reserve( bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE); // preallocate memory for BMPs and all Nodes
     
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) { 
-      // save modification time
-      uint8_t b[8];
-      writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);
-      ret.insert( ret.end(), b, b +  _TS_SIZE_  );
       //add Bmp to to return vector
       ret += atUp.getMemories()[i].getBmp(); 
     }  
     
     //add all node buffers to return vector
+    std::set<uint8_t> modded;
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       if(it.staged) {
-           ret.insert( ret.end(), it.b, it.b + _MEM_BLOCK_SIZE );
+        ret.insert( ret.end(), it.b, it.b + _MEM_BLOCK_SIZE );
+
+        // save modification time
+        if( modded.find(it.cpu) != modded.end() ) {
+          modded.insert(it.cpu);
+          printf("SMODTSData 0x%08x%08x\n", modTime >> 32, (uint32_t)modTime);
+          uint8_t b[8];
+          writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);
+          ret.insert( ret.end(), b, b +  _TS_SIZE_  );
+        }
       } // add all nodes staged for upload
     }
-   
-   
 
     return ret;
   }

@@ -183,15 +183,15 @@ namespace dnt = DotStr::Node::TypeVal;
     if(verbose) sLog << "Downloading ...";
     vDlBmpD = ebReadCycle(ebd, getDownloadBMPAdrs());
     atDown.setBmps( vDlBmpD );
-    vDlD = ebReadCycle(ebd, getDownloadAdrs());
+    vDlD    = ebReadCycle(ebd, getDownloadAdrs());
+    // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
+    modTime = getDmWrTime() * 1000000000ULL;
 
     if(verbose) sLog << "Done." << std::endl << "Parsing ...";
     parseDownloadData(vDlD);
     if(verbose) sLog << "Done." << std::endl;
     
-    // read out current time for upload mod time
-    modTime = getDmWrTime();
-
+    
 
     return vDlD.size();
   }
