@@ -132,17 +132,17 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
   uint64_t wrtime = cdm.getDmWrTime();
   
 
-  const uint16_t width = 149;
+  const uint16_t width = 160;
   //this is horrible code, but harmless. Does the job for now.
   //TODO: replace this with something more sensible
 
   const time_t* wrt = (time_t*)&wrtime;
 
   printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
-  printf("\u2502 DataMaster: %-99s \u2502 WR-Time: %.24s \u2502\n", netaddress, ctime(wrt));
+  printf("\u2502 DataMaster: %-109s \u2502 WR-Time: %.24s \u2502\n", netaddress, ctime(wrt));
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
-  printf("\u2502 %3s \u2502 %24s \u2502 %24s \u2502 %14s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502\n", 
-        "Cpu", "BootTime", "Schedule ModTime", "CPU Msg Cnt", "Min dT", "Max dT", "Avg dT", "Thrs dT", "WrnCnt", "State");
+  printf("\u2502 %3s \u2502 %24s \u2502 %24s \u2502 %8s \u2502 %14s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %9s \u2502 %10s \u2502\n", 
+        "Cpu", "BootTime", "Schedule ModTime", "Issuer", "CPU Msg Cnt", "Min dT", "Max dT", "Avg dT", "Thrs dT", "WrnCnt", "State");
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
   
 
@@ -154,10 +154,11 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
     char tmpBuf[40];
     ctime_r((time_t*)&smodTime, tmpBuf);
 
-    printf("\u2502 %3u \u2502 %.24s \u2502 %.24s \u2502 %14llu \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 0x%08x \u2502\n", 
+    printf("\u2502 %3u \u2502 %.24s \u2502 %.24s \u2502 %8s \u2502 %14llu \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9d \u2502 %9u \u2502 0x%08x \u2502\n", 
                                                                                                                     hr[i].cpu,
                                                                                                                     ctime((time_t*)&bootTime),
                                                                                                                     tmpBuf,
+                                                                                                                    hr[i].smodIssuer,
                                                                                                                     hr[i].msgCnt,
                                                                                                                     (int)hr[i].minTimeDiff,
                                                                                                                     (int)hr[i].maxTimeDiff,

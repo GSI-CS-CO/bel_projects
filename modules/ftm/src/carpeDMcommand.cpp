@@ -651,6 +651,11 @@ HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   //TODO Command time, modfication issuer, hash ...
   //printf("bootnum, 0x%016x \n", hr.bootTime);
   hr.smodTime         = writeBeBytesToLeNumber<uint64_t>(b + T_DIAG_SMOD_TS);
+  for (int i = 0; i<8; i++) { //copy and sanitize issuer name
+    char c = *(char*)(b + T_DIAG_SMOD_IID + i);
+    hr.smodIssuer[i] = (((c > 32) && (c < 126)) ? c : '\00');
+  }
+  hr.smodIssuer[8] = '\00';  
   hr.minTimeDiff      =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MIN);  
   hr.maxTimeDiff      =  writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_MAX);
   hr.avgTimeDiff      = (hr.msgCnt ? writeBeBytesToLeNumber<int64_t>(b + T_DIAG_DIF_SUM) / (int64_t)hr.msgCnt : 0);   

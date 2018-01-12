@@ -96,6 +96,7 @@ protected:
   AllocTable atDown;
   Graph gDown;
   uint64_t modTime;
+  bool freshDownload = false;
 
   bool verbose = false;
   std::ostream& sLog;
