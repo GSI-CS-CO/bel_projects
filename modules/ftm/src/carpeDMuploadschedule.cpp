@@ -7,6 +7,9 @@
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/copy.hpp>
 #include <boost/algorithm/string.hpp>
+#include <unistd.h>
+#include <limits.h>
+
 
 #include "common.h"
 #include "propwrite.h"
@@ -32,64 +35,80 @@ using namespace DotStr::Misc;
      
   vAdr CarpeDM::getUploadAdrs(){
     vAdr ret;
-    uint32_t adr, smodTimeAdr;
+    uint32_t adr, modAdrBase;
+    std::set<uint8_t> modded;
 
     //add all Bmp addresses to return vector
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
+      if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) modded.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed 
       //generate addresses of Bmp's address range
       for (adr = atUp.adr2extAdr(i, atUp.getMemories()[i].sharedOffs); adr < atUp.adr2extAdr(i, atUp.getMemories()[i].startOffs); adr += _32b_SIZE_) ret.push_back(adr);
     }
 
-    std::set<uint8_t> modded;
+    
     //add all Node addresses to return vector
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       //generate address range for all nodes staged for upload
       if(it.staged) {
+        modded.insert(it.cpu); // mark cpu as modified if a node is staged
         for (adr = atUp.adr2extAdr(it.cpu, it.adr); adr < atUp.adr2extAdr(it.cpu, it.adr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) ret.push_back(adr);
-
-        // save modification time
-        if( modded.find(it.cpu) != modded.end() ) {
-          modded.insert(it.cpu);
-          // modification time address (lo/hi)
-          smodTimeAdr = atUp.getMemories()[it.cpu].extBaseAdr + SHARED_OFFS + SHCTL_DIAG + T_DIAG_SMOD_TS;
-          printf("SMODTSAdr 0x%08x\n", smodTimeAdr);
-          ret.push_back(smodTimeAdr + 0);
-          ret.push_back(smodTimeAdr + _32b_SIZE_);
-        }  
       }
     }
 
+    // save modification time
+    for (auto& itMod : modded) {
+      // modification time address (lo/hi)
+      modAdrBase = atUp.getMemories()[itMod].extBaseAdr + SHARED_OFFS + SHCTL_DIAG;
+
+      printf("SMODTSAdr 0x%08x\n", modAdrBase + T_DIAG_SMOD_TS);
+      ret.push_back(modAdrBase + T_DIAG_SMOD_TS + 0);
+      ret.push_back(modAdrBase + T_DIAG_SMOD_TS + _32b_SIZE_);
+      ret.push_back(modAdrBase + T_DIAG_SMOD_IID + 0);
+      ret.push_back(modAdrBase + T_DIAG_SMOD_IID + _32b_SIZE_);
+      
+    }
     return ret;
   }
 
   vBuf CarpeDM::getUploadData()  {
     vBuf ret;
+    std::set<uint8_t> modded;
     ret.clear();
     
     size_t bmpSum = 0;
     for(unsigned int i = 0; i < atUp.getMemories().size(); i++) { bmpSum += (_TS_SIZE_ + atUp.getMemories()[i].bmpSize); }
     ret.reserve( bmpSum + atUp.getSize() * _MEM_BLOCK_SIZE); // preallocate memory for BMPs and all Nodes
     
-    for(unsigned int i = 0; i < atUp.getMemories().size(); i++) { 
+    for(unsigned int i = 0; i < atUp.getMemories().size(); i++) {
+      if (!freshDownload || (atUp.getMemories()[i].getBmp() != atDown.getMemories()[i].getBmp()) ) modded.insert(i); // mark cpu as modified if alloctable empty or Bmp Changed 
       //add Bmp to to return vector
       ret += atUp.getMemories()[i].getBmp(); 
     }  
     
     //add all node buffers to return vector
-    std::set<uint8_t> modded;
+    
     for (auto& it : atUp.getTable().get<CpuAdr>()) {
       if(it.staged) {
+        modded.insert(it.cpu); // mark cpu as modified if a node is staged
         ret.insert( ret.end(), it.b, it.b + _MEM_BLOCK_SIZE );
-
-        // save modification time
-        if( modded.find(it.cpu) != modded.end() ) {
-          modded.insert(it.cpu);
-          printf("SMODTSData 0x%08x%08x\n", modTime >> 32, (uint32_t)modTime);
-          uint8_t b[8];
-          writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);
-          ret.insert( ret.end(), b, b +  _TS_SIZE_  );
-        }
       } // add all nodes staged for upload
+    }
+
+    // save modification time, issuer
+
+    char username[LOGIN_NAME_MAX];
+    getlogin_r(username, LOGIN_NAME_MAX);
+    uint8_t b[8];
+    writeLeNumberToBeBytes<uint64_t>((uint8_t*)&b[0], modTime);
+
+
+
+    for (auto& itMod : modded) {
+      printf("SMODTSData 0x%08x%08x\n", (uint32_t)(modTime >> 32), (uint32_t)modTime);
+      
+      ret.insert( ret.end(), b, b +  _TS_SIZE_  );
+      ret.insert( ret.end(), username, username +  _64b_SIZE_  );
+      
     }
 
     return ret;
@@ -312,6 +331,7 @@ using namespace DotStr::Misc;
     //Upload
     ebWriteCycle(ebd, vUlA, vUlD);
     if(verbose) sLog << "Done." << std::endl;
+    freshDownload = false;
     return vUlD.size();
   }
 
@@ -509,6 +529,7 @@ using namespace DotStr::Misc;
 
   int CarpeDM::remove(Graph& g) {
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
+    generateBlockMeta(g);
     baseUploadOnDownload();
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
@@ -549,7 +570,8 @@ using namespace DotStr::Misc;
   }   
 
   int CarpeDM::clear() {
-    nullify();
+    nullify(); // read out current time for upload mod time (seconds, but probably better to use same format as DM FW. Convert to ns)
+    modTime = getDmWrTime() * 1000000000ULL;
     return upload();
   }
 

@@ -191,7 +191,7 @@ namespace dnt = DotStr::Node::TypeVal;
     parseDownloadData(vDlD);
     if(verbose) sLog << "Done." << std::endl;
     
-    
+    freshDownload = true;
 
     return vDlD.size();
   }

@@ -559,7 +559,7 @@ void CarpeDM::showCpuList() {
 
   uint64_t CarpeDM::getDmWrTime() {
     uint32_t ppsAdr = ppsDev.at(0).sdb_component.addr_first;
-    uint32_t state;
+    //uint32_t state;
     uint64_t wr_time;
     vAdr va;
     vBuf vb;
