@@ -241,11 +241,11 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited
   DBPRINT2("#%02u: Sending Evt 0x%08x, next: 0x%08x\n", cpuId, node[NODE_HASH >> 2], node[NODE_DEF_DEST_PTR >> 2]);
 
-  uint64_t tmpPar = (uint64_t)node[TMSG_PAR >> 2];
+  uint64_t tmpPar = *(uint64_t*)&node[TMSG_PAR >> 2];
   
   #ifdef DIAGNOSTICS
     //Diagnostic Event? insert PQ Message counter. Different device, can't be placed inside atomic!
-    if (*(uint64_t*)&node[TMSG_ID >> 2] == DIAG_PQ_MSG_CNT) tmpPar = *(uint64_t*)pFpqCtrl[PRIO_CNT_OUT_ALL_GET_0>>2];
+    if (*(uint64_t*)&node[TMSG_ID >> 2] == DIAG_PQ_MSG_CNT) tmpPar = *(uint64_t*)&pFpqCtrl[PRIO_CNT_OUT_ALL_GET_0>>2];
     int64_t diff  = *(uint64_t*)&thrData[T_TD_DEADLINE >> 2] - getSysTime();
     uint8_t overflow = (diff >= 0) & (*diffsum >= 0) & ((diff + *diffsum)  < 0)
                      | (diff <  0) & (*diffsum <  0) & ((diff + *diffsum) >= 0);
@@ -269,13 +269,9 @@ uint32_t* tmsg(uint32_t* node, uint32_t* thrData) {
   *(pFpqData + (PRIO_DAT_TS_LO >> 2))  = thrData[T_TD_DEADLINE_LO >> 2];
   atomic_off();
   
-  
   ++(*((uint64_t*)&thrData[T_TD_MSG_CNT >> 2])); //increment thread message counter
   ++(*count); //increment cpu message counter
   
-
-   
-     
   return (uint32_t*)node[NODE_DEF_DEST_PTR >> 2];
 }
 
