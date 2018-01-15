@@ -70,6 +70,8 @@ port  (
     nLed_Dry:             out      std_logic;
     nLed_Drq:             out      std_logic;
     every_ms_intr_o:      out      std_logic;
+    n_tx_req_led:         out      std_logic;
+    n_rx_avail_led:       out      std_logic;
           -- lemo I/F
     lemo_data_o:          out      std_logic_vector(4 downto 1);
     lemo_nled_o:          out      std_logic_vector(4 downto 1);

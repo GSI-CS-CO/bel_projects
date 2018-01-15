@@ -73,6 +73,8 @@ port  (
     nLed_Dry:             out     std_logic;
     nLed_Drq:             out     std_logic;
     every_ms_intr_o:      out     std_logic;
+    n_tx_req_led:         out     std_logic;
+	 n_rx_avail_led:       out     std_logic;
     -- lemo I/F
     lemo_data_o:          out     std_logic_vector(4 downto 1);
     lemo_nled_o:          out     std_logic_vector(4 downto 1);
@@ -386,7 +388,9 @@ mil : wb_mil_scu
     lemo_nled_o              => lemo_nled_o,
     lemo_out_en_o            => lemo_out_en_o,
     lemo_data_i              => lemo_data_i,
-    nsig_wb_err              => open
+    nsig_wb_err              => open,
+    n_tx_req_led             => n_tx_req_led,    -- low solange mindestens ein txreq ansteht
+	 n_rx_avail_led           => n_rx_avail_led
   );--wb_mil_scu
 
 end arch_wb_mil_wrapper_sio;
