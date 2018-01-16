@@ -151,7 +151,7 @@ public:
   bool isInHashDict(const std::string& name);
   bool isHashDictEmpty() {return (bool)(hm.size() == 0);};
   int  getHashDictSize() {return hm.size();};
-  void showHashDict() {hm.debug();};
+  void showHashDict() {hm.debug(sLog);};
 
   // Group/Entry/Exit Table ///////////////////////////////////////////////////////////////////////////////
   std::string storeGroupsDict() {return gt.store();}; 
@@ -160,7 +160,7 @@ public:
   void loadGroupsDictFile(const std::string& fn) {loadGroupsDict(readTextFile(fn));}; 
   void clearGroupsDict() {gt.clear();}; //Clear pattern table
  int getGroupsSize() {return gt.getSize();};
- void showGroupsDict() {gt.debug();};
+ void showGroupsDict() {gt.debug(sLog);};
 
   // Text File IO /////////////////////////////////////////////////////////////////////////////////
   void writeTextFile(const std::string& fn, const std::string& s);

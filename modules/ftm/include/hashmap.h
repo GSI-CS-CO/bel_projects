@@ -55,7 +55,7 @@ public:
   std::string store();
   void load(const std::string& s);
   int size() {return hm.size();}
-  void debug();
+  void debug(std::ostream& os);
 
 
 };

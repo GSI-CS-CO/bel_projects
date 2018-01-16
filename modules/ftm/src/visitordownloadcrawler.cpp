@@ -24,7 +24,7 @@ void VisitorDownloadCrawler::setDefDst() const {
   tmpAdr = at.intAdr2adr(cpu, auxAdr);
   auto x = at.lookupAdr(cpu, tmpAdr);
   if (tmpAdr == LM32_NULL_PTR) return;
-  //std::cout << "cpu " << cpu << "InAdr: 0x" << std::hex << auxAdr << " Adr: 0x" << std::hex << tmpAdr <<  std::endl;
+  //sLog << "cpu " << cpu << "InAdr: 0x" << std::hex << auxAdr << " Adr: 0x" << std::hex << tmpAdr <<  std::endl;
   if (!(at.isOk(x))) throw std::runtime_error( exIntro + "Node " + g[v].name + " of type " + g[v].type + " was found unallocated\n");
   boost::add_edge(v, x->v, myEdge(det::sDefDst), g);
 
@@ -141,7 +141,7 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
 
    
 
-  //std::cout << "Trying to find parent of " << g[v].name << std::endl;
+  //sLog << "Trying to find parent of " << g[v].name << std::endl;
   boost::tie(in_begin, in_end) = in_edges(v,g);
   if(in_begin != in_end) {
 
@@ -169,7 +169,7 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
       }  
     }
     if (!defaultValid) { //default destination was not in alt dest list. that shouldnt happen ... draw it in
-      std::cerr << "!!! DefDest not in AltDestList. Means someone set an arbitrary pointer for DefDest !!!" << std::endl;
+      sErr << "!!! DefDest not in AltDestList. Means someone set an arbitrary pointer for DefDest !!!" << std::endl;
       if (defAdr != LM32_NULL_PTR) {
         auto x = at.lookupAdr(cpu, defAdr);
         if (at.isOk(x)) {

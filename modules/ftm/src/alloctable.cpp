@@ -133,10 +133,10 @@
     this->updatePools();
   }
 
-  void AllocTable::debug() {
+  void AllocTable::debug(std::ostream& os) {
     for (amI x = a.begin(); x != a.end(); x++) {
 
-    std::cout   << std::setfill(' ') << std::setw(4) << std::dec << x->v 
+    os   << std::setfill(' ') << std::setw(4) << std::dec << x->v 
         << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)x->staged
         << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (int)x->cpu
         << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << x->hash

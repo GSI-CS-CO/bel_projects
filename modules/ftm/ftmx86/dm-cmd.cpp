@@ -159,7 +159,7 @@ void showHealth(const char *netaddress, CarpeDM& cdm, bool verbose) {
                                                                                                                     ctime((time_t*)&bootTime),
                                                                                                                     tmpBuf,
                                                                                                                     hr[i].smodIssuer,
-                                                                                                                    hr[i].msgCnt,
+                                                                                                                    (unsigned long long int)hr[i].msgCnt,
                                                                                                                     (int)hr[i].minTimeDiff,
                                                                                                                     (int)hr[i].maxTimeDiff,
                                                                                                                     (int)hr[i].avgTimeDiff,
