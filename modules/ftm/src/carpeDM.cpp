@@ -42,7 +42,7 @@ int CarpeDM::ebWriteCycle(Device& dev, vAdr va, vBuf& vb)
       cyc.close();
       cyc.open(dev);  
     }
-    std::cout << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
+    sLog << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << va[i] << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << veb[i] << std::endl;
     cyc.write(va[i], EB_BIG_ENDIAN | EB_DATA32, veb[i]);
 
     }
@@ -94,7 +94,7 @@ int CarpeDM::ebWriteWord(Device& dev, uint32_t adr, uint32_t data)
 {
    Cycle cyc;
    //FIXME What about returned eb status ??
-   std::cout << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << adr << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << data << std::endl;
+   sLog << "Writing @ 0x" << std::hex << std::setfill('0') << std::setw(8) << adr << " : 0x" << std::hex << std::setfill('0') << std::setw(8) << data << std::endl;
    try { 
      cyc.open(dev);
      cyc.write(adr, EB_BIG_ENDIAN | EB_DATA32, (eb_data_t)data);
@@ -240,7 +240,7 @@ bool CarpeDM::connect(const std::string& en) {
     boost::dynamic_properties dp = createParser(g); //create current property map
     
     if (g[v].id == DotStr::Misc::sUndefined64) { // from SubID fields to ID
-      //std::cout << "Input Node  " << g[v].name;
+      //sLog << "Input Node  " << g[v].name;
       fid = (s2u<uint8_t>(g[v].id_fid) & ID_FID_MSK); //get fid
       if (fid >= idFormats.size()) throw std::runtime_error("bad format id (FID) field in Node '" + g[v].name + "'");
       vPf& vTmp = idFormats[fid]; //choose conversion vector by fid
@@ -248,14 +248,14 @@ bool CarpeDM::connect(const std::string& en) {
       for(auto& it : vTmp) {  //for each format vector element 
         //use dot property tag string as key to dp map (map of tags to (maps of vertex_indices to values))
         uint64_t val = s2u<uint64_t>(boost::get(it.s, dp, v)); // use vertex index v as key in this property map to obtain value
-        //std::cout << ", " << std::dec << it.s << " = " << (val & ((1 << it.bits ) - 1) ) << ", (" << (int)it.pos << ",0x" << std::hex << ((1 << it.bits ) - 1) << ")";
+        //sLog << ", " << std::dec << it.s << " = " << (val & ((1 << it.bits ) - 1) ) << ", (" << (int)it.pos << ",0x" << std::hex << ((1 << it.bits ) - 1) << ")";
         id |= ((val & ((1 << it.bits ) - 1) ) << it.pos); // OR the masked and shifted value to id
       }
       
       ss.flush();
       ss << "0x" << std::hex << id;
       g[v].id = ss.str();
-      //std::cout << "ID = " << g[v].id << std::endl;
+      //sLog << "ID = " << g[v].id << std::endl;
     } else { //from ID to SubID fields
       id = s2u<uint8_t>(g[v].id);
       fid = ((id >> ID_FID_POS) & ID_FID_MSK);
@@ -428,7 +428,7 @@ bool CarpeDM::connect(const std::string& en) {
   }
 
   uint32_t CarpeDM::getNodeAdr(const std::string& name, TransferDir dir, AdrType adrT) {
-    std::cout << "Looking up Adr of " << name << std::endl;
+    sLog << "Looking up Adr of " << name << std::endl;
     if(name == DotStr::Node::Special::sIdle) return LM32_NULL_PTR; //idle node is resolved as a null ptr without comment
 
     AllocTable& at = (dir == TransferDir::UPLOAD ? atUp : atDown );
@@ -480,19 +480,15 @@ void CarpeDM::showCpuList() {
     Graph& g        = (dir == TransferDir::UPLOAD ? gUp  : gDown);
     AllocTable& at  = (dir == TransferDir::UPLOAD ? atUp : atDown);
 
-
-
-    std::cout << std::endl << title << std::endl;
-    std::cout << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setfill(' ') << std::setw(4) << "S/R" << "   " << std::setfill(' ') << std::setw(4) << "Cpu" << "   " << std::setw(30) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
-    std::cout << std::endl; 
-
-
+    sLog << std::endl << title << std::endl;
+    sLog << std::endl << std::setfill(' ') << std::setw(4) << "Idx" << "   " << std::setfill(' ') << std::setw(4) << "S/R" << "   " << std::setfill(' ') << std::setw(4) << "Cpu" << "   " << std::setw(30) << "Name" << "   " << std::setw(10) << "Hash" << "   " << std::setw(10)  <<  "Int. Adr   "  << "   " << std::setw(10) << "Ext. Adr   " << std::endl;
+    sLog << std::endl; 
 
     BOOST_FOREACH( vertex_t v, vertices(g) ) {
       auto x = at.lookupVertex(v);
       
       if( !(filterMeta) || (filterMeta & !(g[v].np->isMeta())) ) {
-        std::cout   << std::setfill(' ') << std::setw(4) << std::dec << v 
+        sLog   << std::setfill(' ') << std::setw(4) << std::dec << v 
         << "   "    << std::setfill(' ') << std::setw(2) << std::dec << (int)(at.isOk(x) && (int)(at.isStaged(x)))  
         << " "      << std::setfill(' ') << std::setw(1) << std::dec << (int)(!(at.isOk(x)))
         << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (at.isOk(x) ? (int)x->cpu : -1 )  
@@ -503,14 +499,12 @@ void CarpeDM::showCpuList() {
       }
     }  
 
-    std::cout << std::endl;  
+    sLog << std::endl;  
   }
 
    //write out dotstringfrom download graph
   std::string CarpeDM::createDot(Graph& g, bool filterMeta) {
     std::ostringstream out;
-
-
     typedef boost::property_map< Graph, node_ptr myVertex::* >::type NpMap;
 
     boost::filtered_graph <Graph, boost::keep_all, non_meta<NpMap> > fg(g, boost::keep_all(), make_non_meta(boost::get(&myVertex::np, g)));
@@ -530,7 +524,6 @@ void CarpeDM::showCpuList() {
       }
       catch(...) {throw;}
 
-    
     return out.str();
   }
 
@@ -566,14 +559,6 @@ void CarpeDM::showCpuList() {
     uint8_t* b;
     uint8_t tmp;
   
-    
-
-    
-    //va.push_back(ppsAdr + PPS::STATE_REG);
-    
-    
-
-
     va.push_back(ppsAdr + PPS::CNTR_UTCLO_REG);
     va.push_back(ppsAdr + PPS::CNTR_UTCHI_REG);
     vb = ebReadCycle(ebd, va);
@@ -584,17 +569,9 @@ void CarpeDM::showCpuList() {
     for(int i = 0; i<4; i++) {tmp = vb[4+i]; vb[4+i] = vb[i]; vb[i] = tmp;}
     for(int i = 0; i<3; i++) {vb[i] = 0;} // equal HiWord & 0xff. That wr pps gen is bloody awkward...
 
-    
-
-    
-
-    //hexDump("TESTME", (const char*)b, 8);
-
     //state   = writeBeBytesToLeNumber<uint32_t>(b + 0) & PPS::STATE_MSK;
     wr_time = writeBeBytesToLeNumber<uint64_t>(b);
 
-
-    
     return wr_time;
   }
 

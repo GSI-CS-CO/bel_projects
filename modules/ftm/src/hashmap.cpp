@@ -6,11 +6,10 @@
 
 uint32_t HashMap::hash(const std::string& s) {
   const char* ps = s.c_str();
-  if (ps[0] != '#') {return fnvHash(ps);}
-  else              {std::cout << "Found dumped hash, leaving intact" << std::endl; return s2u<uint32_t>(s.substr(1));}  
+  if (ps[0] != '#') {return fnvHash(ps);} //if the string starts with a '#', its a hash. don't hash it again, just parse to number and copy it in
+  else              {//std::cout << "Found dumped hash, leaving intact" << std::endl;
+                     return s2u<uint32_t>(s.substr(1));}  
 }
-
-//FIXME if the string starts with a '#', don't hash it, just parse to number and copy it in!
 
 uint32_t HashMap::fnvHash(const char* str)
 {
@@ -29,7 +28,6 @@ boost::optional<const uint32_t&> HashMap::add(const std::string& name) {
   try {
     hm.insert( hashValue(hash, name) ); 
   } catch (...) {
-    std::cout << "Failed to add " << name;
     if(lookup(hash)) throw std::runtime_error("'" + name + "' would cause a hash collision with '" + lookup(hash).get() + "'");
     else throw; 
     return boost::optional<const uint32_t&>();
@@ -76,10 +74,10 @@ void HashMap::load(const std::string& s) {
   ia >> BOOST_SERIALIZATION_NVP(*this);
 }
 
-void HashMap::debug() { 
+void HashMap::debug(std::ostream& os) { 
     for (auto& x : hm) { 
 
-      std::cout << "Node: " << std::setfill(' ') << std::setw(40) << x.left << " Hash 0x"  << std::hex << std::setfill('0') << std::setw(8) << x.right << std::endl;
+      os << "Node: " << std::setfill(' ') << std::setw(40) << x.left << " Hash 0x"  << std::hex << std::setfill('0') << std::setw(8) << x.right << std::endl;
     }
   }
 

@@ -100,10 +100,6 @@ public:
   bool isStaged(amI it)  { return it->staged; }
   void modV(amI it, vertex_t vNew) { a.modify(it, [vNew](AllocMeta& e){e.v = vNew;}); } 
 
-  //FIXME
-        ////// WORKAROUND - not time to figure out fucking modify_key lambda syntax now /////
-  //void setV(amI it, vertex_t vNew) { a.get<Vertex>().modify_key(it, [vNew](vertex_t& v){v = vNew;}); } 
-
   //Allocation functions
 // TODO - Maybe better with pair <iterator, bool> to get a direct handle on the inserted/allocated element?
   int allocate(uint8_t cpu, uint32_t hash, vertex_t v, bool staged);
@@ -172,7 +168,7 @@ public:
   const uint32_t adr2intAdr(const uint8_t cpu, const uint32_t a)       const  { return a + vPool[cpu].intBaseAdr; }
   const uint32_t adr2peerAdr(const uint8_t cpu, const uint32_t a)      const  { return a + vPool[cpu].peerBaseAdr; }
 
-  void debug();
+  void debug(std::ostream& os);
 
 };
 

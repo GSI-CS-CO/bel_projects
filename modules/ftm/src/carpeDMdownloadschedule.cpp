@@ -132,8 +132,8 @@ namespace dnt = DotStr::Node::TypeVal;
             case NODE_TYPE_QUEUE        : g[v].np = (node_ptr) new   CmdQMeta(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sQInfo;    g[v].np->deserialise(); break;
             case NODE_TYPE_ALTDST       : g[v].np = (node_ptr) new   DestList(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sDstList;  g[v].np->deserialise(); break;
             case NODE_TYPE_QBUF         : g[v].np = (node_ptr) new CmdQBuffer(g[v].name, g[v].patName, g[v].bpName, x->hash, x->cpu, x->b, flags); g[v].type = dnt::sQBuf; break;
-            case NODE_TYPE_UNKNOWN      : std::cerr << "not yet implemented " << g[v].type << std::endl; break;
-            default                     : std::cerr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
+            case NODE_TYPE_UNKNOWN      : sErr << "not yet implemented " << g[v].type << std::endl; break;
+            default                     : sErr << "Node type 0x" << std::hex << type << " not supported! " << std::endl;
           }
           
         }
@@ -153,7 +153,7 @@ namespace dnt = DotStr::Node::TypeVal;
 
       } else {
 
-        if  (!(g[it.v].np->isMeta())) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at));
+        if  (!(g[it.v].np->isMeta())) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, sLog, sErr));
       }  
     }
     //second, iterate all meta-types
@@ -161,7 +161,7 @@ namespace dnt = DotStr::Node::TypeVal;
       // handled by visitor
       if (g[it.v].np == nullptr) {throw std::runtime_error( std::string("Node ") + g[it.v].name + std::string("not initialised")); return; 
       } else {
-        if  (g[it.v].np->isMeta()) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at));
+        if  (g[it.v].np->isMeta()) g[it.v].np->accept(VisitorDownloadCrawler(g, it.v, at, sLog, sErr));
       }  
     }
 

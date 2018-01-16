@@ -183,7 +183,7 @@ public:
   const size_t getSize()          const { return a.size(); }
 
 
-  void debug();
+  void debug(std::ostream& os);
 
 
 };

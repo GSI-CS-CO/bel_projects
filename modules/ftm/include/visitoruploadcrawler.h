@@ -28,6 +28,8 @@ class VisitorUploadCrawler {
     Graph&      g;
     vertex_t    v;
     AllocTable& at;
+    std::ostream& sLog;
+    std::ostream& sErr;
     int         cpu = -1;
 
     //void updateStaging() const;
@@ -43,7 +45,7 @@ class VisitorUploadCrawler {
     static const std::string exIntro;
 
   public:
-    VisitorUploadCrawler(Graph& g, vertex_t v, AllocTable& at)  : g(g), v(v), at(at) { auto x = at.lookupVertex(v); if (at.isOk(x)) cpu = x->cpu;}
+    VisitorUploadCrawler(Graph& g, vertex_t v, AllocTable& at, std::ostream& sLog, std::ostream& sErr)  : g(g), v(v), at(at), sLog(sLog), sErr(sErr) { auto x = at.lookupVertex(v); if (at.isOk(x)) cpu = x->cpu;}
     ~VisitorUploadCrawler() {};
     virtual void visit(const Block& el) const;
     virtual void visit(const TimingMsg& el) const;

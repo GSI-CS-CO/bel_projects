@@ -304,7 +304,7 @@ using namespace DotStr::Misc;
     // Crawl vertices and serialise their data objects for upload
     BOOST_FOREACH( vertex_t v, vertices(gUp) ) {
       
-      gUp[v].np->accept(VisitorUploadCrawler(gUp, v, atUp)); 
+      gUp[v].np->accept(VisitorUploadCrawler(gUp, v, atUp, sLog, sErr)); 
       
       //Check if all mandatory fields were properly initialised
       std::string haystack(gUp[v].np->getB(), gUp[v].np->getB() + _MEM_BLOCK_SIZE);
