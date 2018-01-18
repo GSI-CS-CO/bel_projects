@@ -28,6 +28,7 @@ modules = {
     "ftm",
     "lvds",
     "monster",
+    "wb_fec",
     "heap",
     "butis_t0",
     "power_test",

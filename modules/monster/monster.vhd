@@ -65,6 +65,7 @@ use work.wb_pmc_host_bridge_pkg.all;
 use work.wb_temp_sense_pkg.all;
 use work.ddr3_wrapper_pkg.all;
 use work.endpoint_pkg.all;
+use work.fec_pkg.all;
 
 entity monster is
   generic(
@@ -101,9 +102,10 @@ entity monster is
     g_lm32_MSIs            : natural;
     g_lm32_ramsizes        : natural;
     g_lm32_init_files      : string;
-	 g_lm32_profiles        : string;
+	  g_lm32_profiles        : string;
     g_lm32_are_ftm         : boolean;
-    g_en_tempsens          : boolean);
+    g_en_tempsens          : boolean;
+    g_en_fec               : boolean);
   port(
     -- Required: core signals
     core_clk_20m_vcxo_i    : in    std_logic;
@@ -411,7 +413,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- required slaves
-  constant c_dev_slaves          : natural := 28;
+  constant c_dev_slaves          : natural := 29;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
@@ -442,6 +444,7 @@ architecture rtl of monster is
   constant c_devs_DDR3_if2       : natural := 25;
   constant c_devs_DDR3_ctrl      : natural := 26;
   constant c_devs_tempsens       : natural := 27;
+  constant c_devs_fec            : natural := 28;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -475,7 +478,9 @@ architecture rtl of monster is
     c_devs_ddr3_if1       => f_sdb_auto_device(c_wb_DDR3_if1_sdb,                g_en_ddr3),
     c_devs_ddr3_if2       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
     c_devs_ddr3_ctrl      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
-    c_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens));
+    c_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
+    c_devs_fec            => f_sdb_auto_device(c_fec_sdb,                        g_en_fec));
+
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_sdb_address : t_wishbone_address := f_sdb_auto_sdb   (c_dev_layout_req_masters, c_dev_layout_req_slaves);
   constant c_dev_bridge_sdb  : t_sdb_bridge       := f_xwb_bridge_layout_sdb(true, c_dev_layout, c_dev_sdb_address);
@@ -589,6 +594,11 @@ architecture rtl of monster is
   signal eb_src_in     : t_wrf_source_in;
   signal eb_snk_out    : t_wrf_sink_out;
   signal eb_snk_in     : t_wrf_sink_in;
+
+  signal wr_src_out    : t_wrf_source_out;
+  signal wr_src_in     : t_wrf_source_in;
+  signal wr_snk_out    : t_wrf_sink_out;
+  signal wr_snk_in     : t_wrf_sink_in;
 
   signal uart_usb : std_logic; -- from usb
   signal uart_mux : std_logic; -- either usb or external
@@ -1402,10 +1412,10 @@ begin
       slave_o              => wrc_slave_o,
       aux_master_o         => wrc_master_o,
       aux_master_i         => wrc_master_i,
-      wrf_src_o            => eb_snk_in,
-      wrf_src_i            => eb_snk_out,
-      wrf_snk_o            => eb_src_in,
-      wrf_snk_i            => eb_src_out,
+      wrf_src_o            => wr_snk_in,
+      wrf_src_i            => wr_snk_out,
+      wrf_snk_o            => wr_src_in,
+      wrf_snk_i            => wr_src_out,
       tm_link_up_o         => open,
       tm_dac_value_o       => open,
       tm_dac_wr_o          => open,
@@ -1513,6 +1523,32 @@ begin
   ----------------------------------------------------------------------------------
   -- Wishbone slaves ---------------------------------------------------------------
   ----------------------------------------------------------------------------------
+
+  g_WB_ENC_DEC : if g_en_fec generate
+    WB_ENC_DEC : wb_fec
+    generic map(
+      g_num_block    => 4,
+      g_en_fec_enc   => true,
+      g_en_fec_dec   => true,
+      g_en_golay     => false,
+      g_en_dec_time  => false)
+    port map(
+      clk_i             => clk_sys,
+      rst_n_i           => rstn_sys,
+      fec_timestamps_i  => c_fec_timestamps,
+      fec_tm_tai_i      => (others => '0'),
+      fec_tm_cycle_i    => (others => '0'),
+      fec_dec_sink_i    => wr_src_out,
+      fec_dec_sink_o    => wr_src_in,
+      fec_dec_src_i     => wr_snk_out,
+      fec_dec_src_o     => wr_snk_in,
+      fec_enc_sink_i    => eb_src_out,
+      fec_enc_sink_o    => eb_src_in,
+      fec_enc_src_i     => eb_snk_out,
+      fec_enc_src_o     => eb_snk_in,
+      wb_slave_o        => dev_bus_master_i(c_devs_fec),
+      wb_slave_i        => dev_bus_master_o(c_devs_fec));
+  end generate;
 
   id : build_id
     port map(

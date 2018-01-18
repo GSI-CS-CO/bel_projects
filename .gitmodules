@@ -22,3 +22,6 @@
 [submodule "ip_cores/pci-core"]
 	path = ip_cores/pci-core
 	url = git://ohwr.org/hdl-core-lib/pci-core.git
+[submodule "modules/wb_fec"]
+	path = modules/wb_fec
+	url = https://github.com/GSI-CS-CO/wb_fec.git
