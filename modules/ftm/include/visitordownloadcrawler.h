@@ -34,6 +34,7 @@ class DestList;
     uint8_t*        b;
     uint8_t         cpu;
 
+    std::pair<uint8_t, AdrType> createCmd(const Command& el) const;
     void setDefDst(void) const;
     static const std::string exIntro;
 

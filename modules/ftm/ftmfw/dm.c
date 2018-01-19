@@ -285,7 +285,7 @@ uint32_t* block(uint32_t* node, uint32_t* thrData) {
 
   uint32_t *ardOffs = node + (BLOCK_CMDQ_RD_IDXS >> 2), *awrOffs = node + (BLOCK_CMDQ_WR_IDXS >> 2);
   uint32_t bufOffs, elOffs, prio, actTmp, atype;
-  uint16_t qty;
+  uint32_t qty;
   
   
   node[NODE_FLAGS >> 2] |= NFLG_PAINT_LM32_SMSK; // set paint bit to mark this node as visited

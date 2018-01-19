@@ -62,9 +62,6 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(v,g);
  
-    
-    
-
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
     {   
       if (g[target(*out_cur,g)].np == nullptr) throw std::runtime_error( exIntro + "Node " + g[target(*out_cur,g)].name + " of type " + g[target(*out_cur,g)].type + " was found unallocated\n");
@@ -73,7 +70,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
         auto x = at.lookupVertex(target(*out_cur,g));
         // Destination MUST NOT lie outside own memory! (well, technically, it'd' work, but it'd be race condition galore ...)
         if (at.isOk(x) && x->cpu == cpu) {
-          ret.push_back(at.adr2intAdr(x->cpu, x->adr));
+          ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr));
           found = true; 
         }
       }
@@ -105,14 +102,14 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
           if (aId != LM32_NULL_PTR) {sErr << "Found more than one dynamic id source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            if (at.isOk(x)) { aId = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);}
+            if (at.isOk(x)) { aId = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_ID_SMSK);}
           }
         }
         if (g[*out_cur].type == det::sDynPar0) {
           if (aPar0 != LM32_NULL_PTR) {sErr << "Found more than one dynamic par0 source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            if (at.isOk(x)) { aPar0 = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);}
+            if (at.isOk(x)) { aPar0 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR0_SMSK);}
             //sLog << "DynAdr 0 0x" << std::hex << aPar0 << std::endl;
           }
         }
@@ -120,7 +117,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
           if (aPar1 != LM32_NULL_PTR) {sErr << "Found more than one dynamic par1 source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            if (at.isOk(x)) { aPar1 = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);}
+            if (at.isOk(x)) { aPar1 = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_PAR1_SMSK);}
             //sLog << "DynAdr 1 0x" << std::hex << aPar1 << std::endl;
           }
         }
@@ -128,14 +125,14 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
           if (aTef != LM32_NULL_PTR) {sErr << "Found more than one dynamic tef source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            if (at.isOk(x)) { aTef = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_TEF_SMSK);}
+            if (at.isOk(x)) { aTef = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_TEF_SMSK);}
           }
         }
         if (g[*out_cur].type == det::sDynRes) {
           if (aRes != LM32_NULL_PTR) {sErr << "Found more than one dynamic res source" << std::endl; break;
           } else {
             auto x = at.lookupVertex(target(*out_cur,g));
-            if (at.isOk(x)) { aRes = at.adr2extAdr(x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);}
+            if (at.isOk(x)) { aRes = at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); g[v].np->setFlags(NFLG_TMSG_DYN_RES_SMSK);}
           }
         }
       }
@@ -157,8 +154,6 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
     vAdr ret;
     Graph::out_edge_iterator out_begin, out_end, out_cur;
     boost::tie(out_begin, out_end) = out_edges(v,g);
-
-
     
     found = false;
     for (out_cur = out_begin; out_cur != out_end; ++out_cur)
@@ -176,7 +171,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
             // Queue nodes MUST NOT lie outside own memory!
             //sErr << "Got a DstList at " << g[target(*out_cur,g)].name << std::endl;  
             if (at.isOk(x) && x->cpu == cpu) {
-              ret.push_back(at.adr2intAdr(x->cpu, x->adr));
+              ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr));
               found = true;
             } else {
               sErr << "unallocated or wrong cpu " << std::endl;  
@@ -203,7 +198,7 @@ void VisitorUploadCrawler::visit(const DestList& el) const {
               auto x = at.lookupVertex(target(*out_cur,g));
               // Queue nodes MUST NOT lie outside own memory!
               if (at.isOk(x) && x->cpu == cpu) {
-                ret.push_back(at.adr2intAdr(x->cpu, x->adr));
+                ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr));
                 found = true;
               } else {
               sErr << "unallocated or wrong cpu " << std::endl;  
@@ -238,7 +233,7 @@ vAdr VisitorUploadCrawler::getQBuf() const {
         auto x = at.lookupVertex(target(*out_cur,g));
         // Queue nodes MUST NOT lie outside own memory!
         if (at.isOk(x) && x->cpu == cpu) {
-          ret.push_back(at.adr2intAdr(x->cpu, x->adr));
+          ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr));
           found = true;
         }
       }
@@ -270,10 +265,7 @@ vAdr VisitorUploadCrawler::getCmdTarget(Command& el) const {
           if (at.isOk(x)) {
             //command cross over to other CPUs is okay, handle by checking if caller cpu idx is different to found child cpu idx
             //sLog << "Caller CPU " << int(cpu) << " Callee CPU " << (int)x->cpu << std::endl;
-            ret.push_back(x->cpu == cpu ? at.adr2intAdr(x->cpu, x->adr) : at.adr2peerAdr(x->cpu, x->adr));
-            //now we have a problem: we need to reach out to set the peer flag on the calling node. not strictly nice ...
-            el.clrAct(ACT_TCPU_SMSK);
-            el.setAct((x->cpu & ACT_TCPU_MSK) << ACT_TCPU_POS);
+            ret.push_back(x->cpu == cpu ? at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) : at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr));
             found = true;
           }
         }
@@ -325,7 +317,7 @@ vAdr VisitorUploadCrawler::getFlowDst() const {
           auto x = at.lookupVertex(target(*out_cur,g));
           // Flow Destination must be in the same memory the command target is in
           if (at.isOk(x) && x->cpu == targetCpu) {
-            ret.push_back(at.adr2intAdr(x->cpu, x->adr));
+            ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr));
             found = true;
           }
         }
@@ -372,9 +364,9 @@ vAdr VisitorUploadCrawler::getListDst() const {
           auto x = at.lookupVertex(target(*out_cur,g));
           // Destination MUST NOT lie outside own memory! (well, technically, it'd work, but it'd be race condition galore ...)
           if (at.isOk(x) && x->cpu == cpu) {
-            ret.push_back(at.adr2intAdr(x->cpu, x->adr));
+            ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr));
             found = true;
-            //sLog << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << std::endl;
+            //sLog << "defDst: " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adrConv(AdrType::MGMT, AdrType::INT,cpu, x->adr) << std::endl;
           } else { sErr << "default destination was found unallocated or on different CPU" << std::endl; }
         }
       }
@@ -396,10 +388,10 @@ vAdr VisitorUploadCrawler::getListDst() const {
         // Destination MUST NOT lie outside own memory! (well, technically, it'd work, but it'd be race condition galore ...)
         if (at.isOk(x)) {
           if (  x->cpu == cpu) {
-            ret.push_back(at.adr2intAdr(x->cpu, x->adr));
+            ret.push_back(at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr));
             found = true;
-            //sLog << "altDst: #" << target(*out_cur,g) << " " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << std::endl;
-          } else { sLog << "altDst: #" << target(*out_cur,g) << " " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adr2intAdr(cpu, x->adr) << " expected at CPU" << cpu << ", found on " << (int)x->cpu << "" << std::endl;  at.debug(sLog);}
+            //sLog << "altDst: #" << target(*out_cur,g) << " " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adrConv(AdrType::MGMT, AdrType::INT,cpu, x->adr) << std::endl;
+          } else { sLog << "altDst: #" << target(*out_cur,g) << " " << g[target(*out_cur,g)].name << " @ 0x" << std::hex << at.adrConv(AdrType::MGMT, AdrType::INT,cpu, x->adr) << " expected at CPU" << cpu << ", found on " << (int)x->cpu << "" << std::endl;  at.debug(sLog);}
         } else { 
           //sErr << "alt destination was found unallocated" << std::endl; 
         }
@@ -430,7 +422,7 @@ vAdr getChildrenByEdgeType(vertex_t vStart, const std::string edgeType, const un
     if (g[*out_cur].type == edgeType) {
       auto x = at.lookupVertex(target(*out_cur,g));
       if (!at.isOk(x)) throw std::runtime_error( exIntro + "Node " + g[target(*out_cur,g)].name + " of type " + g[target(*out_cur,g)].type + " was found unallocated\n");
-      ret.push_back(x->cpu == cpu ? at.adr2intAdr(x->cpu, x->adr) : at.adr2peerAdr(x->cpu, x->adr));
+      ret.push_back(x->cpu == cpu ? at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) : at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr));
       if (ret.size() >= maxResultLen) break;
     }
   }
@@ -452,7 +444,7 @@ vAdr findNodeAdrByEdgeType(vertex_t vStart, const std::string edgeType, const un
     if (g[*out_cur].type == edgeType) {
       auto x = at.lookupVertex(target(*out_cur,g));
       if (!at.isOk(x)) throw std::runtime_error( exIntro + "Node " + g[target(*out_cur,g)].name + " of type " + g[target(*out_cur,g)].type + " was found unallocated\n");
-      ret.push_back(x->cpu == cpu ? at.adr2intAdr(x->cpu, x->adr) : at.adr2peerAdr(x->cpu, x->adr));
+      ret.push_back(x->cpu == cpu ? at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr) : at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr));
       if (ret.size() >= maxResultLen) break;
     }
   }

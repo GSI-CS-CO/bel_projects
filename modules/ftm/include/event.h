@@ -92,7 +92,7 @@ public:
   virtual const uint32_t getAct()     const {return this->act;}
   virtual const void setAct(uint32_t act) {this->act |= act;}
   virtual const void clrAct(uint32_t act) {this->act &= ~act;}
-  virtual const uint16_t getQty()     const {return (this->act >> ACT_QTY_POS) & ACT_QTY_MSK;}
+  virtual const uint32_t getQty()     const {return (this->act >> ACT_QTY_POS) & ACT_QTY_MSK;}
   virtual const uint16_t getPrio()    const {return (this->act >> ACT_PRIO_POS) & ACT_PRIO_MSK;}
 };
 
@@ -102,7 +102,7 @@ class Noop : public Command {
 
 public:
   Noop(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, b, flags) {}
-  Noop(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint16_t qty) 
+  Noop(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint32_t qty) 
   : Command(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CNOOP << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_NOOP << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS ) {}
   ~Noop() {};
   node_ptr clone() const { return boost::make_shared<Noop>(*this); }
@@ -124,7 +124,7 @@ class Flow : public Command {
 
 public:
   Flow(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags) : Command(name, pattern, beamproc, hash, cpu, b, flags) {}
-  Flow(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint16_t qty, bool permanent)
+  Flow(const std::string& name, const std::string&  pattern, const std::string&  beamproc, const uint32_t& hash, const uint8_t& cpu, uint8_t* b, uint32_t flags, uint64_t tOffs, uint64_t tValid, uint8_t prio, uint32_t qty, bool permanent)
       : Command(name, pattern, beamproc, hash, cpu, b, ((flags & ~NFLG_TYPE_SMSK) | (NODE_TYPE_CFLOW << NFLG_TYPE_POS)), tOffs, tValid, (ACT_TYPE_FLOW << ACT_TYPE_POS) | (prio & ACT_PRIO_MSK) << ACT_PRIO_POS | (qty & ACT_QTY_MSK) << ACT_QTY_POS | permanent << ACT_CHP_POS )   {}
   ~Flow() {};
     node_ptr clone() const { return boost::make_shared<Flow>(*this); }

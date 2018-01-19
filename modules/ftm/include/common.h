@@ -85,7 +85,7 @@
   (byte & 0x01 ? '1' : '0') 
 
 
-enum class AdrType {EXTERNAL, INTERNAL, MGMT, PEER};
+enum class AdrType {EXT, INT, MGMT, PEER, UNKNOWN};
 enum class TransferDir {UPLOAD, DOWNLOAD};
 enum class FwId { FWID_RAM_TOO_SMALL      = -1, 
                   FWID_BAD_MAGIC          = -2,

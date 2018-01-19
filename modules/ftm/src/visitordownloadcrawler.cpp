@@ -21,7 +21,7 @@ void VisitorDownloadCrawler::setDefDst() const {
   uint32_t tmpAdr;
 
   auxAdr = writeBeBytesToLeNumber<uint32_t>(b + NODE_DEF_DEST_PTR);
-  tmpAdr = at.intAdr2adr(cpu, auxAdr);
+  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, auxAdr);
   auto x = at.lookupAdr(cpu, tmpAdr);
   if (tmpAdr == LM32_NULL_PTR) return;
   //sLog << "cpu " << cpu << "InAdr: 0x" << std::hex << auxAdr << " Adr: 0x" << std::hex << tmpAdr <<  std::endl;
@@ -35,16 +35,16 @@ void VisitorDownloadCrawler::visit(const Block& el) const {
   uint32_t tmpAdr;
 
   
-  tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_ALT_DEST_PTR ));
+  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_ALT_DEST_PTR ));
   //if the block has no destination list, set default destination ourself
   if (tmpAdr != LM32_NULL_PTR) { boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sDstList), g); }
   else setDefDst();  
 
-  tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_IL_PTR ));
+  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_IL_PTR ));
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_IL]), g);
-  tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_HI_PTR ));
+  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_HI_PTR ));
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_HI]), g);
-  tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_LO_PTR ));
+  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + BLOCK_CMDQ_LO_PTR ));
   if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sQPrio[PRIO_LO]), g);
 
 }
@@ -56,72 +56,61 @@ void VisitorDownloadCrawler::visit(const TimingMsg& el) const  {
   setDefDst();
 
   if (flags & NFLG_TMSG_DYN_ID_SMSK) {
-    tmpAdr = at.extAdr2adr(cpu, (uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_ID ));
+    tmpAdr = at.adrConv(AdrType::EXT, AdrType::MGMT,cpu, (uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_ID ));
     if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sDynId),          g);
   }
   if (flags & NFLG_TMSG_DYN_PAR0_SMSK) {
-    tmpAdr = at.extAdr2adr(cpu, (uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ));
+    tmpAdr = at.adrConv(AdrType::EXT, AdrType::MGMT,cpu, (uint32_t)writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ));
     if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sDynPar0),          g);
   }
   if (flags & NFLG_TMSG_DYN_PAR1_SMSK) {
-    tmpAdr = at.extAdr2adr(cpu, (uint32_t)(writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ) >> 32));
+    tmpAdr = at.adrConv(AdrType::EXT, AdrType::MGMT,cpu, (uint32_t)(writeBeBytesToLeNumber<uint64_t>(b + TMSG_PAR ) >> 32));
     if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sDynPar1),          g);
   }
 }
 
-void VisitorDownloadCrawler::visit(const Flow& el) const  {
-  uint32_t targetCpu = (el.getAct() >> ACT_TCPU_POS) & ACT_TCPU_MSK;
+std::pair<uint8_t, AdrType> VisitorDownloadCrawler::createCmd(const Command& el) const {
+  uint8_t targetCpu; 
+  AdrType adrT;
   uint32_t tmpAdr;  
+  
+  std::tie(targetCpu, adrT) = at.adrClassification(writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
+
   setDefDst();
+  tmpAdr = at.adrConv(adrT, AdrType::MGMT, targetCpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sCmdTarget),    g);
 
+  return std::make_pair(targetCpu, adrT);
+}
 
-  if( targetCpu != cpu) tmpAdr = at.peerAdr2adr(targetCpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  else                  tmpAdr = at.intAdr2adr(targetCpu,  writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
+void VisitorDownloadCrawler::visit(const Flow& el) const  {
+  uint8_t targetCpu; 
+  AdrType adrT;
+  uint32_t tmpAdr;  
 
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sCmdTarget),          g);
+  std::tie(targetCpu, adrT) = createCmd((Command&)el);
 
-  tmpAdr = at.intAdr2adr(targetCpu,  writeBeBytesToLeNumber<uint32_t>(b + CMD_FLOW_DEST ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sCmdFlowDst),          g);
+  tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT, targetCpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_FLOW_DEST ));
+  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sCmdFlowDst),   g);
 
 }
 
 void VisitorDownloadCrawler::visit(const Flush& el) const {
-  uint32_t targetCpu = (el.getAct() >> ACT_TCPU_POS) & ACT_TCPU_MSK;
-  uint32_t tmpAdr;
-  setDefDst();
-  
-  if( targetCpu != cpu) tmpAdr = at.peerAdr2adr(targetCpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  else                  tmpAdr = at.intAdr2adr(cpu,  writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sCmdTarget),          g);
-
+  createCmd((Command&)el);
 }
 
 void VisitorDownloadCrawler::visit(const Noop& el) const {
-  uint32_t targetCpu = (el.getAct() >> ACT_TCPU_POS) & ACT_TCPU_MSK;
-  uint32_t tmpAdr;
-  setDefDst();
-
-  if( targetCpu != cpu) tmpAdr = at.peerAdr2adr(targetCpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  else                  tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sCmdTarget),          g);
-
+  createCmd((Command&)el);
 }
 
 void VisitorDownloadCrawler::visit(const Wait& el) const {
-  uint32_t tmpAdr; 
-  uint32_t targetCpu = (el.getAct() >> ACT_TCPU_POS) & ACT_TCPU_MSK;
-  
-  setDefDst();
-  if( targetCpu != cpu) tmpAdr = at.peerAdr2adr(targetCpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  else                  tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + CMD_TARGET ));
-  if (tmpAdr != LM32_NULL_PTR) boost::add_edge(v, ((AllocMeta*)&(*(at.lookupAdr(cpu, tmpAdr))))->v, myEdge(det::sCmdTarget),          g);
-
+  createCmd((Command&)el);
 }
 
 void VisitorDownloadCrawler::visit(const CmdQMeta& el) const {
   uint32_t tmpAdr;  
   for (ptrdiff_t offs = CMDQ_BUF_ARRAY; offs < CMDQ_BUF_ARRAY_END; offs += _32b_SIZE_) {
-    tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + offs ));
+    tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + offs ));
     if (tmpAdr != LM32_NULL_PTR) {
       auto x = at.lookupAdr(cpu, tmpAdr);
       if (!(at.isOk(x))) throw std::runtime_error( exIntro + "Node " + g[v].name + " of type " + g[v].type + " was found unallocated\n");
@@ -138,9 +127,6 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
   Graph::in_edge_iterator in_begin, in_end;
   uint32_t tmpAdr, defAdr; 
 
-
-   
-
   //sLog << "Trying to find parent of " << g[v].name << std::endl;
   boost::tie(in_begin, in_end) = in_edges(v,g);
   if(in_begin != in_end) {
@@ -152,10 +138,10 @@ void VisitorDownloadCrawler::visit(const DestList& el) const {
 
     bool defaultValid = false;
     std::string sType = det::sAltDst;
-    defAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(g[vPblock].np->getB() + NODE_DEF_DEST_PTR));
+    defAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(g[vPblock].np->getB() + NODE_DEF_DEST_PTR));
 
     for (ptrdiff_t offs = DST_ARRAY; offs < DST_ARRAY_END; offs += _32b_SIZE_) {
-      tmpAdr = at.intAdr2adr(cpu, writeBeBytesToLeNumber<uint32_t>(b + offs ));
+      tmpAdr = at.adrConv(AdrType::INT, AdrType::MGMT,cpu, writeBeBytesToLeNumber<uint32_t>(b + offs ));
 
       //if tmpAdr it is the default address, change edge type to det::sDefDst (defdst)
       if (tmpAdr == defAdr) { sType = det::sDefDst; defaultValid = true;}

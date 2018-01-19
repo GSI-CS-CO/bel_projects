@@ -181,12 +181,13 @@ bool CarpeDM::connect(const std::string& en) {
             cpuIdxMap[cpuIdx]    = mappedIdx;
             uint32_t extBaseAdr   = cpuDevs[cpuIdx].sdb_component.addr_first;
             uint32_t intBaseAdr   = getIntBaseAdr(cpuIdx);
-            uint32_t peerBaseAdr  = WORLD_BASE_ADR  + extBaseAdr; 
+            uint32_t peerBaseAdr  = WORLD_BASE_ADR  + extBaseAdr;
+            uint32_t rawSize      = cpuDevs[cpuIdx].sdb_component.addr_last - cpuDevs[cpuIdx].sdb_component.addr_first;
             uint32_t sharedOffs   = getSharedOffs(cpuIdx) + _SHCTL_END_; 
             uint32_t space        = getSharedSize(cpuIdx) - _SHCTL_END_;
                         
-              atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space );
-            atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space );
+              atUp.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
+            atDown.addMemory(cpuIdx, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize );
             mappedIdx++;
           }
            
@@ -440,9 +441,9 @@ bool CarpeDM::connect(const std::string& en) {
     else {
       switch (adrT) {
         case AdrType::MGMT      : return x->adr; break;
-        case AdrType::INTERNAL  : return at.adr2intAdr(x->cpu, x->adr); break;
-        case AdrType::EXTERNAL  : return at.adr2extAdr(x->cpu, x->adr); break;
-        case AdrType::PEER      : return at.adr2peerAdr(x->cpu, x->adr); break;
+        case AdrType::INT  : return at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr); break;
+        case AdrType::EXT  : return at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr); break;
+        case AdrType::PEER      : return at.adrConv(AdrType::MGMT, AdrType::PEER, x->cpu, x->adr); break;
         default                 : throw std::runtime_error( "Unknown Adr Type conversion"); return LM32_NULL_PTR;
       }
     }  
@@ -494,8 +495,8 @@ void CarpeDM::showCpuList() {
         << "   "    << std::setfill(' ') << std::setw(4) << std::dec << (at.isOk(x) ? (int)x->cpu : -1 )  
         << "   "    << std::setfill(' ') << std::setw(40) << std::left << g[v].name 
         << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? x->hash  : 0 )
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adr2intAdr(x->cpu, x->adr)  : 0 ) 
-        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adr2extAdr(x->cpu, x->adr)  : 0 )  << std::endl;
+        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adrConv(AdrType::MGMT, AdrType::INT, x->cpu, x->adr)  : 0 ) 
+        << "   0x"  << std::hex << std::setfill('0') << std::setw(8) << (at.isOk(x) ? at.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr)  : 0 )  << std::endl;
       }
     }  
 

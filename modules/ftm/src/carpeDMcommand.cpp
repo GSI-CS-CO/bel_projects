@@ -131,7 +131,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
  
     if (g[v].type == dnt::sCmdOrigin)   { 
       //Leave out for now and autocorrect cpu
-      //if (getNodeCpu(target, DOWNLOAD) != cpu) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INTERNAL); } catch (std::runtime_error const& err) {
+      //if (getNodeCpu(target, DOWNLOAD) != cpu) throw std::runtime_error("Command '" + g[v].name + "'s value for property '" + DotStr::Node::Prop::Base::sCpu + "' is invalid\n");try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
       try { setThrOrigin(getNodeCpu(target, TransferDir::DOWNLOAD), thr, target, ew); } catch (std::runtime_error const& err) {
         throw std::runtime_error("Cannot execute command '" + g[v].type + "', " + std::string(err.what())); 
       } 
@@ -139,13 +139,13 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     }
 
     // Commands targeted at cmd queue of individual blocks, using miniCommand (mc) class
-         if (g[v].type == dnt::sCmdNoop)    { uint16_t cmdQty = s2u<uint16_t>(g[v].qty);
+         if (g[v].type == dnt::sCmdNoop)    { uint32_t cmdQty = s2u<uint32_t>(g[v].qty);
                                               mc = (mc_ptr) new MiniNoop(cmdTvalid, cmdPrio, cmdQty );
                                             }
-    else if (g[v].type == dnt::sCmdFlow)    { uint16_t cmdQty = s2u<uint16_t>(g[v].qty);
+    else if (g[v].type == dnt::sCmdFlow)    { uint32_t cmdQty = s2u<uint32_t>(g[v].qty);
                                               sLog << " Flowing from <" << target << "> to <" << destination << ">, permanent defDest change='" << s2u<bool>(g[v].perma) << "'" << std::endl;
                                               uint32_t adr = LM32_NULL_PTR;
-                                              try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INTERNAL); } catch (std::runtime_error const& err) {
+                                              try { adr = getNodeAdr(destination, TransferDir::DOWNLOAD, AdrType::INT); } catch (std::runtime_error const& err) {
                                                 throw std::runtime_error("Destination '" + destination + "'' invalid: " + std::string(err.what()));
                                               }
 
@@ -218,7 +218,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
     uint8_t b[4];
 
     ew.va.push_back(getThrInitialNodeAdr(cpuIdx, thrIdx));
-    writeLeNumberToBeBytes<uint32_t>(b, getNodeAdr(name, TransferDir::DOWNLOAD, AdrType::INTERNAL));
+    writeLeNumberToBeBytes<uint32_t>(b, getNodeAdr(name, TransferDir::DOWNLOAD, AdrType::INT));
     ew.vb.insert( ew.vb.end(), b, b + sizeof(b));
     return ew;
   }
@@ -231,7 +231,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
      if (adr == LM32_NULL_PTR) return DotStr::Node::Special::sIdle;
 
-     auto x = atDown.lookupAdr(cpuIdx, atDown.intAdr2adr(cpuIdx, adr));
+     auto x = atDown.lookupAdr(cpuIdx, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpuIdx, adr));
      if (atDown.isOk(x))  return gDown[x->v].name;
      else                 return DotStr::Misc::sUndefined;
   }
@@ -245,7 +245,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
     if (adr == LM32_NULL_PTR) return DotStr::Node::Special::sIdle;
 
-    auto x = atDown.lookupAdr(cpuIdx, atDown.intAdr2adr(cpuIdx, adr));
+    auto x = atDown.lookupAdr(cpuIdx, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpuIdx, adr));
     if (atDown.isOk(x)) return gDown[x->v].name;
     else                return DotStr::Misc::sUndefined;  
   }
@@ -280,7 +280,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
 
     for(int i=0; i<_THR_QTY_; i++) {
 
-      uint8_t thrIdx = (writeBeBytesToLeNumber<uint32_t>((uint8_t*)&heap[i * _PTR_SIZE_])  - atDown.extAdr2intAdr(cpuIdx, thrAdr)) / _T_TD_SIZE_;
+      uint8_t thrIdx = (writeBeBytesToLeNumber<uint32_t>((uint8_t*)&heap[i * _PTR_SIZE_])  - atDown.adrConv(AdrType::EXT, AdrType::INT,cpuIdx, thrAdr)) / _T_TD_SIZE_;
       sLog << std::dec << std::setfill(' ') << std::setw(4) << i << std::setfill(' ') << std::setw(8) << (int)thrIdx  
       << std::setfill(' ') << std::setw(21) << getThrDeadline(cpuIdx, thrIdx)   << std::setfill(' ') << std::setw(21) 
       << getThrOrigin(cpuIdx, thrIdx)  << std::setfill(' ') << std::setw(21) << getThrCursor(cpuIdx, thrIdx) << std::endl;
@@ -404,7 +404,7 @@ vEbwrs& CarpeDM::createCommandBurst(Graph& g, vEbwrs& ew) {
           case ACT_TYPE_NOOP  : break;
           case ACT_TYPE_FLOW  : sLog << "Destination: ";
                                 try { 
-                                  auto y = atDown.lookupAdr(cpuIdx, atDown.intAdr2adr(cpuIdx, dest));
+                                  auto y = atDown.lookupAdr(cpuIdx, atDown.adrConv(AdrType::INT, AdrType::MGMT,cpuIdx, dest));
                                   if(atDown.isOk(y)) name = hm.lookup(y->hash);
                                   else name = "INVALID"; 
                                 } catch (...) {throw; name = "INVALID";}
@@ -481,7 +481,7 @@ uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
     //sLog << "wrIdx " << (int)wrIdx << " rdIdx " << (int)rdIdx << " ewrIdx " << (int)eWrIdx << " rdIdx " << (int)rdIdx << " eRdIdx " << eRdIdx << std::endl;
     if ((wrIdx == rdIdx) && (eWrIdx != eRdIdx)) {throw std::runtime_error( "Block queue is full, can't write. "); return ret; }
     //lookup Buffer List                                                        
-    it = atDown.lookupAdr(x->cpu, atDown.intAdr2adr(x->cpu, blAdr));
+    it = atDown.lookupAdr(x->cpu, atDown.adrConv(AdrType::INT, AdrType::MGMT, x->cpu, blAdr));
     if (!(atDown.isOk(it))) {throw std::runtime_error( "Could not find target queue in download address table"); return ret;}
     auto* pmBl = (AllocMeta*)&(*it);
 
@@ -491,7 +491,7 @@ uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
     ptrdiff_t elemIdx  = wrIdx % (_MEM_BLOCK_SIZE / _T_CMD_SIZE_  );
 
     //sLog << "bIdx " << bufIdx << " eIdx " << elemIdx << " @ 0x" << std::hex << pmBl->adr << std::endl;
-    uint32_t  startAdr = atDown.intAdr2extAdr(pmBl->cpu, writeBeBytesToLeNumber<uint32_t>((uint8_t*)&pmBl->b[bufIdx * _PTR_SIZE_])) + elemIdx * _T_CMD_SIZE_;
+    uint32_t  startAdr = atDown.adrConv(AdrType::INT, AdrType::EXT,pmBl->cpu, writeBeBytesToLeNumber<uint32_t>((uint8_t*)&pmBl->b[bufIdx * _PTR_SIZE_])) + elemIdx * _T_CMD_SIZE_;
 
     //sLog << "Current BufAdr 0x" << std::hex << startAdr << std::endl;
 
@@ -499,7 +499,7 @@ uint64_t CarpeDM::getThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx) {
     for(uint32_t adr = startAdr; adr < startAdr + _T_CMD_SIZE_; adr += _32b_SIZE_) ret.push_back(adr);
 
     //and insert address for wr idx increment
-    ret.push_back(atDown.adr2extAdr(x->cpu, x->adr) + BLOCK_CMDQ_WR_IDXS);
+    ret.push_back(atDown.adrConv(AdrType::MGMT, AdrType::EXT, x->cpu, x->adr) + BLOCK_CMDQ_WR_IDXS);
     return ret;
 
 
@@ -599,7 +599,7 @@ vEbwrs& CarpeDM::startNodeOrigin(const std::string& sNode, vEbwrs& ew) {
 
 //Requests stop at node <sNode> (flow to idle)
 vEbwrs& CarpeDM::stopNodeOrigin(const std::string& sNode, vEbwrs& ew) {
-  mc_ptr mc = (mc_ptr) new MiniFlow(0, PRIO_LO, 1, getNodeAdr(DotStr::Node::Special::sIdle, TransferDir::DOWNLOAD, AdrType::INTERNAL), false );
+  mc_ptr mc = (mc_ptr) new MiniFlow(0, PRIO_LO, 1, getNodeAdr(DotStr::Node::Special::sIdle, TransferDir::DOWNLOAD, AdrType::INT), false );
   //send a command: tell patternExitNode to change the flow to Idle
   return createCommand(sNode, PRIO_LO, mc, ew);
 

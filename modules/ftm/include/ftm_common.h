@@ -16,6 +16,10 @@
 #define PRIO_HI 1
 #define PRIO_LO 0
 
+#define WR_PPS_GEN_STATE_MSK 
+#define WR_PPS_GEN_STATE_MSK 
+#define WR_PPS_GEN_STATE_MSK     
+
 
 
 //////////////////////////////////////////////////////////////////////
@@ -316,29 +320,24 @@
 #define _ACT_TYPE_END_          (ACT_TYPE_WAIT +1)  // Number of Action types
 
 //Action Quantity
-#define ACT_QTY_MSK             0xffff
+#define ACT_QTY_MSK             0xfffff
 #define ACT_QTY_POS             0
 #define ACT_QTY_SMSK            (ACT_QTY_MSK << ACT_QTY_POS)
 
 //Action Type
 #define ACT_TYPE_MSK            0xf
-#define ACT_TYPE_POS            16
+#define ACT_TYPE_POS            20
 #define ACT_TYPE_SMSK           (ACT_TYPE_MSK << ACT_TYPE_POS)
 
 //Action Prirority (which Q at target it is going to)
 #define ACT_PRIO_MSK            0x2
-#define ACT_PRIO_POS            20
+#define ACT_PRIO_POS            24
 #define ACT_PRIO_SMSK           (ACT_PRIO_MSK << ACT_PRIO_POS)
 
 //Action changes are permanent (1) or temporary (0) (Flow -> DEF_DEST_PTR, Wait -> BLOCK_PERIOD (only use with relative wait!))
 #define ACT_CHP_MSK             0x1
-#define ACT_CHP_POS             23
+#define ACT_CHP_POS             27
 #define ACT_CHP_SMSK            (ACT_CHP_MSK << ACT_CHP_POS)
-
-//Action Target CPU
-#define ACT_TCPU_MSK            0xf
-#define ACT_TCPU_POS            24
-#define ACT_TCPU_SMSK           (ACT_TCPU_MSK << ACT_TCPU_POS)
 
 //Cmd Action Flags - type specific bit definitions
 

@@ -5,8 +5,8 @@ SPI_LANES	= ASx4
 RAM_SIZE	= 49152 
 SHARED_SIZE     = 16384
 USRCPUCLK       = 125000
-VERSION         = 1.0.0
-VERSION_TOOL    = 0.7.0
+VERSION         = 1.1.0
+VERSION_TOOL    = 0.8.0
 DEBUGLVL  	= 0 
 
 EBMPATH   = ../../../ip_cores/etherbone-core/hdl/eb_master_core

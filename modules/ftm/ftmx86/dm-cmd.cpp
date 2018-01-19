@@ -366,7 +366,7 @@ int main(int argc, char* argv[]) {
       if ((para != NULL) && ((para == DotStr::Node::Special::sIdle ) || cdm.isInHashDict( para))) { 
         uint32_t adr; 
         try {
-          adr = cdm.getNodeAdr(para, TransferDir::DOWNLOAD, AdrType::INTERNAL);
+          adr = cdm.getNodeAdr(para, TransferDir::DOWNLOAD, AdrType::INT);
         } catch (std::runtime_error const& err) {
           std::cerr << program << ": Could not obtain address of destination node " << para << ". Cause: " << err.what() << std::endl;
         } 
@@ -431,7 +431,7 @@ int main(int argc, char* argv[]) {
       
         uint32_t adr; 
         try {
-          adr = cdm.getNodeAdr(DotStr::Node::Special::sIdle , TransferDir::DOWNLOAD, AdrType::INTERNAL);
+          adr = cdm.getNodeAdr(DotStr::Node::Special::sIdle , TransferDir::DOWNLOAD, AdrType::INT);
         } catch (std::runtime_error const& err) {
           std::cerr << program << ": Could not obtain address of destination node " << para << ". Cause: " << err.what() << std::endl;
         } 

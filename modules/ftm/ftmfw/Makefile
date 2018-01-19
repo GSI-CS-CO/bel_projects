@@ -4,7 +4,7 @@ FLASH		?= EPCQ256
 RAM_SIZE	?= 49152 
 SHARED_SIZE 	?= 16384
 USRCPUCLK   	?= 125000
-VERSION     	?= 1.0.0
+VERSION     	?= 1.1.0
 
 
 include ../../../syn/build.mk

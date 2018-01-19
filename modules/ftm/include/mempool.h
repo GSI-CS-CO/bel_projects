@@ -25,12 +25,13 @@ class MemPool {
   const uint32_t extBaseAdr;  //where to find the B-Port of this CPU RAM from the Host's perspective
   const uint32_t intBaseAdr;  //where to find the A-Port of this CPU RAM from this CPU's perspective
   const uint32_t peerBaseAdr; //where to find the B-Port of this CPU RAM from another CPU's perspective
-  const uint32_t  sharedOffs;
-  const uint32_t  nodeQty;
-  const uint32_t  bmpBits;
-  const uint32_t  bmpSize;
-  const uint32_t  startOffs; // baseAddress + bmpLen rounded up to next multiple of MEM_BLOCK_SIZE to accomodate BMP
-  const uint32_t  endOffs;   // baseAddress + nodeQty rounded down to next multiple of MEM_BLOCK_SIZE, can only use whole blocks 
+  const uint32_t sharedOffs;
+  const uint32_t rawSize;
+  const uint32_t nodeQty;
+  const uint32_t bmpBits;
+  const uint32_t bmpSize;
+  const uint32_t startOffs; // baseAddress + bmpLen rounded up to next multiple of MEM_BLOCK_SIZE to accomodate BMP
+  const uint32_t endOffs;   // baseAddress + nodeQty rounded down to next multiple of MEM_BLOCK_SIZE, can only use whole blocks 
   vBuf  bmp;
   aPool pool;
 
@@ -41,12 +42,13 @@ public:
   // actually not used by this class, but best place to keep the info
 
 
-  MemPool(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space)
+  MemPool(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize)
         : cpu(cpu),
           extBaseAdr(extBaseAdr),
           intBaseAdr(intBaseAdr),
           peerBaseAdr(peerBaseAdr),
           sharedOffs(sharedOffs),
+          rawSize(rawSize),
           nodeQty(space / _MEM_BLOCK_SIZE), 
           bmpBits(nodeQty),
           bmpSize((bmpBits + 8 * _MEM_BLOCK_SIZE -1) / (8 * _MEM_BLOCK_SIZE) * _MEM_BLOCK_SIZE), 

@@ -126,8 +126,12 @@ void init() {
       //find the child connected to this node's defdest
       boost::tie(out_begin, out_end) = out_edges(vcurrent,g);
       for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
-        if(g[*out_cur].type == e::sDefDst) vnext = target(*out_cur,g); // there can only be 1 defDst. event nodes with more or less are caught by neighbourhoodcheck
-        break;
+        //std::cout << g[vcurrent].name << " child " << g[target(*out_cur,g)].name << " connected by " << g[*out_cur].type << std::endl;  
+        if(g[*out_cur].type == e::sDefDst) {
+          vnext = target(*out_cur,g);
+          break;
+        }   // there can only be 1 defDst. event nodes with more or less are caught by neighbourhoodcheck
+        
       }
       exIntro = exIntroBase + g[vcurrent].name + "' of type '" + g[vcurrent].type + "' must not ";
       //check for forbidden properties:

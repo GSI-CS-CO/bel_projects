@@ -28,7 +28,7 @@ namespace dnt = DotStr::Node::TypeVal;
      //add all Bmp addresses to return vector
     for(unsigned int i = 0; i < at.getMemories().size(); i++) {
       //generate addresses of Bmp's address range
-      for (uint32_t adr = at.adr2extAdr(i, at.getMemories()[i].sharedOffs); adr < at.adr2extAdr(i, at.getMemories()[i].startOffs); adr += _32b_SIZE_) ret.push_back(adr);
+      for (uint32_t adr = at.adrConv(AdrType::MGMT, AdrType::EXT,i, at.getMemories()[i].sharedOffs); adr < at.adrConv(AdrType::MGMT, AdrType::EXT,i, at.getMemories()[i].startOffs); adr += _32b_SIZE_) ret.push_back(adr);
     }
     return ret;
   }
@@ -47,7 +47,7 @@ namespace dnt = DotStr::Node::TypeVal;
         if (at.getMemories()[i].getBmpBit(bitIdx)) {
           uint32_t nodeAdr = at.getMemories()[i].sharedOffs + bitIdx * _MEM_BLOCK_SIZE;
            //generate addresses of node's address range
-          for (uint32_t adr = at.adr2extAdr(i, nodeAdr); adr < at.adr2extAdr(i, nodeAdr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {ret.push_back(adr);}
+          for (uint32_t adr = at.adrConv(AdrType::MGMT, AdrType::EXT,i, nodeAdr); adr < at.adrConv(AdrType::MGMT, AdrType::EXT,i, nodeAdr + _MEM_BLOCK_SIZE); adr += _32b_SIZE_ ) {ret.push_back(adr);}
         }
       }      
     }

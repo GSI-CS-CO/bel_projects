@@ -83,7 +83,7 @@ public:
   AllocTable(AllocTable const &src);
 
   std::vector<MemPool>& getMemories() {return vPool;}
-  void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space)); }
+  void addMemory(uint8_t cpu, uint32_t extBaseAdr, uint32_t intBaseAdr, uint32_t peerBaseAdr, uint32_t sharedOffs, uint32_t space, uint32_t rawSize) {vPool.push_back(MemPool(cpu, extBaseAdr, intBaseAdr, peerBaseAdr, sharedOffs, space, rawSize)); }
   void clearMemories() { for (unsigned int i = 0; i < vPool.size(); i++ ) vPool[i].init(); }
   void removeMemories() { vPool.clear(); }
 
@@ -129,44 +129,12 @@ public:
 
   bool isOk(amI it) const {return (it != a.end()); }
 
+  //conver addresses from one perspective to another
+  const uint32_t adrConv(AdrType from, AdrType to, const uint8_t cpu, const uint32_t a) const;
 
 
-  const uint32_t adrConversion(AdrType from, AdrType to, const uint8_t cpu, const uint32_t a) const {
-    if (a == LM32_NULL_PTR) return a;
-    
-    switch (ADR_FROM_TO(from,to)) {
-      case ADR_FROM_TO(AdrType::EXTERNAL, AdrType::MGMT)      : return a - vPool[cpu].extBaseAdr;
-      case ADR_FROM_TO(AdrType::EXTERNAL, AdrType::PEER)      : return a - vPool[cpu].extBaseAdr  + vPool[cpu].peerBaseAdr;
-      case ADR_FROM_TO(AdrType::EXTERNAL, AdrType::INTERNAL)  : return a - vPool[cpu].extBaseAdr  + vPool[cpu].intBaseAdr;
-      case ADR_FROM_TO(AdrType::INTERNAL, AdrType::MGMT)      : return a - vPool[cpu].intBaseAdr;
-      case ADR_FROM_TO(AdrType::INTERNAL, AdrType::EXTERNAL)  : return a - vPool[cpu].intBaseAdr  + vPool[cpu].extBaseAdr;
-      case ADR_FROM_TO(AdrType::INTERNAL, AdrType::PEER)      : return a - vPool[cpu].intBaseAdr  + vPool[cpu].peerBaseAdr;
-      case ADR_FROM_TO(AdrType::PEER,     AdrType::MGMT)      : return a - vPool[cpu].peerBaseAdr;
-      case ADR_FROM_TO(AdrType::PEER,     AdrType::EXTERNAL)  : return a - vPool[cpu].peerBaseAdr + vPool[cpu].extBaseAdr;
-      case ADR_FROM_TO(AdrType::PEER,     AdrType::INTERNAL)  : return a - vPool[cpu].peerBaseAdr + vPool[cpu].intBaseAdr;
-      case ADR_FROM_TO(AdrType::MGMT,     AdrType::EXTERNAL)  : return a + vPool[cpu].extBaseAdr;
-      case ADR_FROM_TO(AdrType::MGMT,     AdrType::INTERNAL)  : return a + vPool[cpu].intBaseAdr;
-      case ADR_FROM_TO(AdrType::MGMT,     AdrType::PEER)      : return a + vPool[cpu].peerBaseAdr;
-      default : throw std::runtime_error("bad address conversion perspective"); return 0;
-    }
-
-
-  }
-
-
-
-  const uint32_t extAdr2adr(const uint8_t cpu, const uint32_t ea)      const  { return (ea == LM32_NULL_PTR ? LM32_NULL_PTR : ea - vPool[cpu].extBaseAdr); }
-  const uint32_t intAdr2adr(const uint8_t cpu, const uint32_t ia)      const  { return (ia == LM32_NULL_PTR ? LM32_NULL_PTR : ia - vPool[cpu].intBaseAdr); }
-  const uint32_t peerAdr2adr(const uint8_t cpu, const uint32_t pa)     const  { return (pa == LM32_NULL_PTR ? LM32_NULL_PTR : pa - vPool[cpu].peerBaseAdr); }
-
-  const uint32_t extAdr2intAdr(const uint8_t cpu, const uint32_t ea)   const  { return (ea == LM32_NULL_PTR ? LM32_NULL_PTR : ea - vPool[cpu].extBaseAdr + vPool[cpu].intBaseAdr); }
-  const uint32_t intAdr2extAdr(const uint8_t cpu, const uint32_t ia)   const  { return (ia == LM32_NULL_PTR ? LM32_NULL_PTR : ia - vPool[cpu].intBaseAdr + vPool[cpu].extBaseAdr); }
-  const uint32_t extAdr2peerAdr(const uint8_t cpu, const uint32_t ea)  const  { return (ea == LM32_NULL_PTR ? LM32_NULL_PTR : ea - vPool[cpu].extBaseAdr + vPool[cpu].peerBaseAdr); }
-  const uint32_t peerAdr2extAdr(const uint8_t cpu, const uint32_t pa)  const  { return (pa == LM32_NULL_PTR ? LM32_NULL_PTR : pa - vPool[cpu].peerBaseAdr + vPool[cpu].extBaseAdr); }
-
-  const uint32_t adr2extAdr(const uint8_t cpu, const uint32_t a)       const  { return a + vPool[cpu].extBaseAdr; }
-  const uint32_t adr2intAdr(const uint8_t cpu, const uint32_t a)       const  { return a + vPool[cpu].intBaseAdr; }
-  const uint32_t adr2peerAdr(const uint8_t cpu, const uint32_t a)      const  { return a + vPool[cpu].peerBaseAdr; }
+  //identify an address found in downloaded binary
+  const std::pair<uint8_t, AdrType> adrClassification(const uint32_t a) const;
 
   void debug(std::ostream& os);
 
