@@ -43,6 +43,8 @@ class VisitorUploadCrawler {
     vAdr getFlowDst(void)   const;
     vAdr getListDst(void)   const;
     static const std::string exIntro;
+    vertex_set_t getChildrenByEdgeType(vertex_t vStart, const std::string edgeType) const;
+    vAdr& childrenAdrs(vertex_set_t vs, vAdr& ret, const unsigned int minResults = 1, const unsigned int maxResults = 1, const bool allowPeers = false, const uint32_t resultPadData = LM32_NULL_PTR) const;
 
   public:
     VisitorUploadCrawler(Graph& g, vertex_t v, AllocTable& at, std::ostream& sLog, std::ostream& sErr)  : g(g), v(v), at(at), sLog(sLog), sErr(sErr) { auto x = at.lookupVertex(v); if (at.isOk(x)) cpu = x->cpu;}
