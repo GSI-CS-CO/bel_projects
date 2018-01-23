@@ -2150,7 +2150,10 @@ begin
         lemo_nled_o         => mil_lemo_nled_o, 
         lemo_out_en_o       => mil_lemo_out_en_o,     
         lemo_data_i         => mil_lemo_data_i, 
-        nsig_wb_err         => open);
+        nsig_wb_err         => open,
+        n_tx_req_led        => open,
+        n_rx_avail_led      => open                
+        );
   end generate;
 
 
