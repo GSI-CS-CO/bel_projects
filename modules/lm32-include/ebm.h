@@ -46,7 +46,8 @@ volatile uintptr_t EBM_READ;
 #define EBM_STAT_BUSY        0x00000002
 #define EBM_STAT_ERROR       0x00000004
 #define EBM_STAT_EB_SENT     0xFFFF0000
-#define EBM_NOREPLY          1<<28 
+#define EBM_NOREPLY          1<<28
+#define EBM_USEFEC           1<<24  
 
 
 typedef struct {
