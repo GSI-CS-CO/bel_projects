@@ -89,7 +89,7 @@ void showStatus(const char *netaddress, CarpeDM& cdm, bool verbose) {
   const time_t* wrt = (time_t*)&wrtime;
 
   printf("\n\u2552"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2555\n");
-  printf("\u2502 DataMaster: %-104s \u2502 WR-Time: %.19s \u2502\n", netaddress, ctime(wrt));
+  printf("\u2502 DataMaster: %-83s \u2502 WR-Time: 0x%08x%08x \u2502 %.19s \u2502\n", netaddress, (uint32_t)(wrtime>>32), (uint32_t)wrtime, ctime(wrt));
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
   printf("\u2502 %3s \u2502 %3s \u2502 %7s \u2502 %9s \u2502 %55s \u2502 %55s \u2502\n", "Cpu", "Thr", "Running", "MsgCount", "Pattern", "Node");
   printf("\u251C"); for(int i=0;i<width;i++) printf("\u2550"); printf("\u2524\n");
