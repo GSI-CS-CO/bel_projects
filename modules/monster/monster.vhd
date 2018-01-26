@@ -590,15 +590,15 @@ architecture rtl of monster is
   signal wrc_slave_o   : t_wishbone_slave_out;
   signal wrc_master_i  : t_wishbone_master_in;
   signal wrc_master_o  : t_wishbone_master_out;
-  signal eb_src_out    : t_wrf_source_out;
-  signal eb_src_in     : t_wrf_source_in;
-  signal eb_snk_out    : t_wrf_sink_out;
-  signal eb_snk_in     : t_wrf_sink_in;
+  signal eb2fec_out    : t_wrf_source_out;
+  signal eb2fec_in     : t_wrf_source_in;
+  signal fec2eb_out    : t_wrf_sink_out;
+  signal fec2eb_in     : t_wrf_sink_in;
 
-  signal wr_src_out    : t_wrf_source_out;
-  signal wr_src_in     : t_wrf_source_in;
-  signal wr_snk_out    : t_wrf_sink_out;
-  signal wr_snk_in     : t_wrf_sink_in;
+  signal wr2fec_out    : t_wrf_source_out;
+  signal wr2fec_in     : t_wrf_source_in;
+  signal fec2wr_out    : t_wrf_sink_out;
+  signal fec2wr_in     : t_wrf_sink_in;
 
   signal uart_usb : std_logic; -- from usb
   signal uart_mux : std_logic; -- either usb or external
@@ -1083,10 +1083,10 @@ begin
     port map(
       clk_i           => clk_sys,
       nRst_i          => rstn_sys,
-      snk_i           => eb_snk_in,
-      snk_o           => eb_snk_out,
-      src_o           => eb_src_out,
-      src_i           => eb_src_in,
+      snk_i           => fec2eb_in,
+      snk_o           => fec2eb_out,
+      src_o           => eb2fec_out,
+      src_i           => eb2fec_in,
       ebs_cfg_slave_o => wrc_master_i,
       ebs_cfg_slave_i => wrc_master_o,
       ebs_wb_master_o => top_bus_slave_i (c_topm_ebs),
@@ -1412,10 +1412,10 @@ begin
       slave_o              => wrc_slave_o,
       aux_master_o         => wrc_master_o,
       aux_master_i         => wrc_master_i,
-      wrf_src_o            => wr_snk_in,
-      wrf_src_i            => wr_snk_out,
-      wrf_snk_o            => wr_src_in,
-      wrf_snk_i            => wr_src_out,
+      wrf_src_o            => wr2fec_out,
+      wrf_src_i            => wr2fec_in,
+      wrf_snk_o            => fec2wr_out,
+      wrf_snk_i            => fec2wr_in,
       tm_link_up_o         => open,
       tm_dac_value_o       => open,
       tm_dac_wr_o          => open,
@@ -1538,14 +1538,14 @@ begin
       fec_timestamps_i  => c_fec_timestamps,
       fec_tm_tai_i      => (others => '0'),
       fec_tm_cycle_i    => (others => '0'),
-      fec_dec_sink_i    => wr_src_out,
-      fec_dec_sink_o    => wr_src_in,
-      fec_dec_src_i     => wr_snk_out,
-      fec_dec_src_o     => wr_snk_in,
-      fec_enc_sink_i    => eb_src_out,
-      fec_enc_sink_o    => eb_src_in,
-      fec_enc_src_i     => eb_snk_out,
-      fec_enc_src_o     => eb_snk_in,
+      fec_dec_sink_i    => wr2fec_out,
+      fec_dec_sink_o    => wr2fec_in,
+      fec_dec_src_i     => fec2eb_out,
+      fec_dec_src_o     => fec2eb_in,
+      fec_enc_sink_i    => eb2fec_out,
+      fec_enc_sink_o    => eb2fec_in,
+      fec_enc_src_i     => fec2wr_out,
+      fec_enc_src_o     => fec2wr_in,
       wb_slave_o        => dev_bus_master_i(c_devs_fec),
       wb_slave_i        => dev_bus_master_o(c_devs_fec));
   end generate;
