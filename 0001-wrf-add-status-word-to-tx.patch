@@ -1,0 +1,71 @@
+From 44d4fc1ec2c36a077e63a100ddb93f7157663048 Mon Sep 17 00:00:00 2001
+From: Cesar Prados <c.prados@gsi.de>
+Date: Mon, 29 Jan 2018 12:23:28 +0100
+Subject: [PATCH] wrf: add status word to tx
+
+---
+ hdl/eb_master_core/eb_master_eth_tx.vhd | 26 ++++++++++++--------------
+ hdl/eb_slave_core/eb_eth_tx.vhd         |  3 ++-
+ 2 files changed, 14 insertions(+), 15 deletions(-)
+
+diff --git a/hdl/eb_master_core/eb_master_eth_tx.vhd b/hdl/eb_master_core/eb_master_eth_tx.vhd
+index 97cd23e..f1bcd9f 100644
+--- a/hdl/eb_master_core/eb_master_eth_tx.vhd
++++ b/hdl/eb_master_core/eb_master_eth_tx.vhd
+@@ -343,27 +343,25 @@ begin
+   -- Flag for Checksum field, high when present on s_tx_dat            
+   s_ip_chk_ins <= '1' when r_output_cnt = (c_eth_len + c_ip_chk_pos)
+              else '0';
+-             
++
+   -- Flag for TOL field, high when present on s_tx_dat 
+   s_udp_len_ins <= '1' when r_output_cnt = (c_eth_len + c_ip_len + c_udp_len_pos)
+-             else '0';                      
+-  
++             else '0';
++
+   -- Correct checksum including TOL, valid on s_ip_chk_ins HI
+   s_ip_chk <= not(std_logic_vector(unsigned(s_tx_dat) + unsigned(r_ip_tol)));
+-  
++
+   -- Output Mux for otf insertion
+   s_otf_mux <= s_udp_len_ins & s_ip_chk_ins & s_ip_tol_ins & s_eth_typ_len_ins;
+-  
+-  otf_mux : with s_otf_mux select
+-   src_o.dat <= s_tx_dat      when "0000",
+-                r_eth_typ_len when "0001",
+-                r_ip_tol      when "0010",
+-                s_ip_chk      when "0100",
+-                r_udp_len     when "1000",
+-                s_tx_dat      when others;  
+-  
+ 
+-  
++  src_o.dat <= s_tx_dat      when s_otf_mux = "0000" and s_tx_typ='0' else
++               x"8000"       when s_otf_mux = "0000" and s_tx_typ='1' else
++               r_eth_typ_len when s_otf_mux = "0001" else
++               r_ip_tol      when s_otf_mux = "0010" else
++               s_ip_chk      when s_otf_mux = "0100" else
++               r_udp_len     when s_otf_mux = "1000" else
++               s_tx_dat;
++
+   -- get TOL from first element in commit fifo
+    otf_mod_ip_hdr : process(clk_i)
+    begin
+diff --git a/hdl/eb_slave_core/eb_eth_tx.vhd b/hdl/eb_slave_core/eb_eth_tx.vhd
+index 661c771..852c1bf 100644
+--- a/hdl/eb_slave_core/eb_eth_tx.vhd
++++ b/hdl/eb_slave_core/eb_eth_tx.vhd
+@@ -289,7 +289,8 @@ begin
+   src_o.adr <= c_WRF_STATUS when s_tx_typ='1' else c_WRF_DATA;
+   src_o.we  <= '1';
+   src_o.sel <= "11";
+-  src_o.dat <= s_tx_dat;
++  src_o.dat <= x"4000" when s_tx_typ = '1' else -- c_WRF_STATUS
++               s_tx_dat;                        -- c_WRF_DATA
+   
+   s_tx_pop <= not s_tx_empty and not (s_tx_cyc and src_i.stall);
+   
+-- 
+2.16.1
+

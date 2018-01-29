@@ -1,0 +1,70 @@
+From 8fa5c8e8702b26eb071bbf2567c6238b182df6ee Mon Sep 17 00:00:00 2001
+From: CPrados <c.prados@gsi.de>
+Date: Mon, 29 Jan 2018 13:35:59 +0100
+Subject: [PATCH] pfiler: add rule for forwarding FEC packets to fabric
+
+---
+ tools/pfilter-builder.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/tools/pfilter-builder.c b/tools/pfilter-builder.c
+index 7e6256a..6e6938b 100644
+--- a/tools/pfilter-builder.c
++++ b/tools/pfilter-builder.c
+@@ -16,7 +16,7 @@
+    uses two actual classes even if the filter supports 8. Class bits
+    0-3 go to the CPU (through the mini-nic) and class bits 4-7 go to
+    the internal fabric.  The frame, in the fabric, is prefixed with
+-   a status word that includes the class bits. 
++   a status word that includes the class bits.
+ 
+    The CPU is expected to receive PTP, ICMP, ARP and DHCP replies (so
+    local "bootpc" port).
+@@ -100,7 +100,7 @@
+   * Rd = Rd <oper> (((uint16_t *)packet) [offset] & (1<<bit_number) ? 1 : 0)
+ 
+   Examples:
+- 
++
+       * BTST 3, 10, MOV, 11
+ 
+       will write 1 to reg 11 if the 10th bit in the 3rd word of the
+@@ -216,7 +216,7 @@ enum pf_symbolic_regs {
+ 	FRAME_OUR_VLAN,
+ 	FRAME_TYPE_IPV4,
+ 	FRAME_TYPE_PTP2,
+-	FRAME_TYPE_LATENCY,
++	FRAME_TYPE_FEC,
+ 	FRAME_TYPE_ARP,
+ 	FRAME_ICMP,
+ 	FRAME_UDP,
+@@ -429,7 +429,7 @@ void pfilter_init_novlan(char *fname)
+ 
+ 	/* and now copy out fabric selections: 7 etherbone, 6 for anything else */
+ 	pfilter_logic2(R_CLASS(7), FRAME_UDP, AND, PORT_UDP_ETHERBONE);
+-	pfilter_logic2(R_CLASS(6), FRAME_UDP, NAND, PORT_UDP_ETHERBONE);
++	pfilter_logic2(R_CLASS(6), FRAME_BROADCAST, AND, FRAME_TYPE_FEC);
+ 
+ 	/*
+ 	 * Note that earlier we used to be more strict in ptp ethtype (only proper multicast),
+@@ -437,7 +437,7 @@ void pfilter_init_novlan(char *fname)
+ 	 */
+ 
+ 	/*
+-	 * Also, please note that "streamer" ethtype 0xdbff and "etherbone" udp port 
++	 * Also, please note that "streamer" ethtype 0xdbff and "etherbone" udp port
+ 	 * 0xebd0 go to the fabric by being part of the "anything else" choice".
+ 	 */
+ 
+@@ -485,7 +485,7 @@ void pfilter_init_vlan(char *fname)
+ 
+ 	/* Identify some Ethertypes used later -- type latency is 0xcafe */
+ 	pfilter_cmp(8, 0x88f7, 0xffff, MOV, FRAME_TYPE_PTP2);
+-	pfilter_cmp(8, 0xcafe, 0xffff, OR, FRAME_TYPE_PTP2);
++	pfilter_cmp(8, 0xbabe, 0xffff, MOV, FRAME_TYPE_FEC);
+ 	pfilter_cmp(8, 0x0800, 0xffff, MOV, FRAME_TYPE_IPV4);
+ 	pfilter_cmp(8, 0x0806, 0xffff, MOV, FRAME_TYPE_ARP);
+ 
+-- 
+2.16.1
+
