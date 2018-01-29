@@ -74,6 +74,11 @@ private:
   const std::string& firstString(const vStrC& v) {return ((v.size() > 0) ? *(v.begin()) : DotStr::Misc::sUndefined);}
   boost::optional<std::pair<int, int>> parseCpuAndThr(vertex_t v, Graph& g);
 
+  bool findDefPath(vertex_t start, vertex_t goal, Graph& g);
+  bool hasIncomingDefDsts(const std::string& pattern, vertex_t v, bool strict);
+  bool hasIncomingFlows(vertex_t v);
+  bool findDefPath(vertex_t start, vertex_t goal);
+
 protected:
 
   std::string ebdevname;
@@ -271,7 +276,8 @@ std::pair<int, int> findRunningPattern(const std::string& sPattern); //get cpu a
                int setThrStartTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)           { vEbwrs ew; return send(setThrStartTime(cpuIdx, thrIdx, t, ew));}
                int setThrPrepTime(uint8_t cpuIdx, uint8_t thrIdx, uint64_t t)            { vEbwrs ew; return send(setThrPrepTime(cpuIdx, thrIdx, t, ew));}
      HealthReport& getHealth(uint8_t cpuIdx, HealthReport &hr);
-          uint64_t getDmWrTime(); 
+          uint64_t getDmWrTime();
+              bool isSafeToRemove(const std::string& pattern, bool strict); 
 
                
 

@@ -624,7 +624,192 @@ vEbwrs& CarpeDM::abortNodeOrigin(const std::string& sNode, vEbwrs& ew) {
   const std::string CarpeDM::getBeamprocEntryNode(const std::string& sBeamproc) {return firstString(gt.getBeamprocEntryNodes(sBeamproc));}
   const std::string CarpeDM::getBeamprocExitNode(const std::string& sBeamproc)  {return firstString(gt.getBeamprocExitNodes(sBeamproc));}
 
+bool CarpeDM::isSafeToRemove(const std::string& pattern, bool strict)  {
+  AllocTable& at  = atDown;
+  bool bIf, bId, bC;
+  vertex_t v; 
 
+  
+
+  //because lm32s are writing while we read, memory image has 'motion blur'
+  //initial condition: director does not add new stuff while we check!
+  //inspection order: Flows, DefDsts, Cursor. Important to avoid race conditions
+
+  //TODO: review again for race conditions
+
+  auto x = at.lookupHash(hm.lookup(getPatternEntryNode(pattern)).get());
+  if (!(at.isOk(x))) {throw std::runtime_error( "Could not find entry node"); return false;}
+
+  v   = x->v;
+  bIf = hasIncomingFlows(v);
+  bId = hasIncomingDefDsts(pattern, v, strict);
+  bC  = isPatternRunning(pattern);
+  sLog << "bIf " << (int)bIf << " bId " << (int)bId << " bC "  << (int)bC << " ret " << (int)!(bIf | bId | bC) << std::endl;    
+  return !(bIf | bId | bC);
+     
+}
+
+  bool CarpeDM::findDefPath(vertex_t start, vertex_t goal, Graph& g)  {
+    Graph::out_edge_iterator out_begin, out_end, out_cur;
+    boost::tie(out_begin, out_end) = out_edges(start ,g);
+    // Iterate Buffers
+    if(start == goal) return true; // both points are the same, this counts as a path
+    for (out_cur = out_begin; out_cur != out_end; ++out_cur) {
+      vertex_t vCur = target(*out_cur, g);
+      if(vCur == start) return false; // loop detected, no path
+      if(vCur == goal)  return true; // goal detected, found path
+    }
+    return false; // dead end detected, no path
+  }
+
+
+
+  bool CarpeDM::hasIncomingDefDsts(const std::string& pattern, vertex_t v, bool strict)  {
+    Graph& g = gDown;
+    AllocTable& at  = atDown;
+    vertex_t vDef = -1;
+    bool ret = false;
+    std::set<std::string> cursors;
+
+    //get all active cursors
+    //TODO This is not necessary coherent with download ... fix this
+    for(uint8_t i=0; i < _THR_QTY_; i++) cursors.insert(getThrCursor(s2u<uint8_t>(g[v].cpu), i));
+
+
+    Graph::in_edge_iterator in_begin, in_end, in_cur;
+    sLog << "Searching for defDst connections to forbidden dst " << g[v].name << std::endl;    
+    boost::tie(in_begin, in_end) = in_edges(v,g);
+    for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
+      if(g[*in_cur].type == det::sDefDst) {
+        vDef = source(*in_cur, g);
+        //self reference is okay, as cursor position is checked not be in current pattern
+        sLog << "Found def connection from " << g[vDef].name << std::endl;
+        if( getNodePattern(g[vDef].name) == pattern ) {sLog << "Is member of search pattern, ignoring self reference " << std::endl; continue;}
+        //found a valid def parent. This can be okay, depending if its inactive
+        
+        if(strict) return true;
+        //Check if we can trace back from the valid def parent to any active cursor.
+        //If we can, this is not safe.
+        for (auto& it : cursors) {
+          if (it == DotStr::Node::Special::sIdle) continue;
+          auto x = at.lookupHash(hm.lookup(it).get());
+          if (!(at.isOk(x))) {throw std::runtime_error( "Could not find cursor node" + it ); return false;}
+          bool active = findDefPath(vDef, x->v, g);
+          if (active) {
+            sLog << "Found connection from " << g[vDef].name << " to active cursor " << g[x->v].name << std::endl;
+            return true;
+          }
+
+        }
+        sLog << "Found no connection from " << g[vDef].name << " to active cursors, should be safe " << std::endl;    
+      }
+    }
+
+    
+
+
+    return false;
+  }
+
+
+
+
+  bool CarpeDM::hasIncomingFlows(vertex_t v) {
+    Graph& g        = gDown;
+    AllocTable& at  = atDown;
+
+    Graph::in_edge_iterator in_begin, in_end, in_cur;
+    vertex_set_t possibleQs;
+
+    sLog << "Searching for pending flows to forbidden dst " << g[v].name << std::endl;
+
+    //list all incoming altDst sources        
+    boost::tie(in_begin, in_end) = in_edges(v,g);
+    for (in_cur = in_begin; in_cur != in_end; ++in_cur) {
+      if(g[*in_cur].type == det::sAltDst) {
+        sLog << "Found alt connection from " << g[source(*in_cur, g)].name << std::endl;
+        possibleQs.insert(source(*in_cur, g));
+      }
+    }
+
+    for (auto& it : possibleQs) {
+      //check their Q counters for unprocessed commands
+      uint32_t wrIdxs = boost::dynamic_pointer_cast<Block>(g[it].np)->getWrIdxs(); 
+      uint32_t rdIdxs = boost::dynamic_pointer_cast<Block>(g[it].np)->getRdIdxs();
+      uint32_t diff = (rdIdxs ^ wrIdxs ) & 0x00ffffff;  
+      
+      sLog << "Checking Block " << g[it].name << std::endl;
+
+       
+
+      for (uint8_t prio = 0; prio < 3; prio++) {
+        uint32_t bufLstAdr;
+        uint8_t bufLstCpu;
+        AdrType bufLstAdrType; 
+
+        if (!((diff >> (prio*8)) & Q_IDX_MAX_OVF_MSK)) {sLog << "prio " << (int)prio << " is empty" << std::endl; break;}
+        sLog << "Checking Prio " << prio << std::endl;  
+        //get Block binary
+        uint8_t* bBlock = g[it].np->getB();
+        bufLstAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBlock[BLOCK_CMDQ_LO_PTR + prio * _32b_SIZE_]);
+
+        sLog << "bLstAdr 0x" << std::hex << bufLstAdr << std::endl;
+        std::tie(bufLstCpu, bufLstAdrType) = at.adrClassification(bufLstAdr);  
+        //get BufList binary
+        auto bufLst = at.lookupAdr( s2u<uint8_t>(g[it].cpu), at.adrConv(bufLstAdrType, AdrType::MGMT, s2u<uint8_t>(g[it].cpu), bufLstAdr) );
+        if (!(at.isOk(bufLst))) {throw std::runtime_error( "Could not find buffer list in download address table"); return false;}
+        const uint8_t* bBL = bufLst->b;  
+     
+        //get current read cnt
+        uint8_t rdIdx = (rdIdxs >> (prio*8)) & Q_IDX_MAX_MSK;
+        uint8_t wrIdx = (wrIdxs >> (prio*8)) & Q_IDX_MAX_MSK;
+
+        sLog << "rdCnt " << (int)rdIdx << " wrCnt " << (int)wrIdx << std::endl;
+
+        //force wraparound
+        rdIdx >= wrIdx ? wrIdx+=4 : wrIdx;
+
+        //find buffers of all non empty slots
+        for (uint8_t i = rdIdx; i < wrIdx; i++) {
+          uint8_t idx = i & Q_IDX_MAX_MSK;
+          uint32_t bufAdr, dstAdr;
+          uint8_t bufCpu, dstCpu;
+          AdrType bufAdrType, dstAdrType;
+          
+          bufAdr = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&bBL[(idx / 2) * _32b_SIZE_] );
+          std::tie(bufCpu, bufAdrType) = at.adrClassification(bufAdr);  
+
+          uint32_t tmpAdr = at.adrConv(bufAdrType, AdrType::MGMT, s2u<uint8_t>(g[it].cpu), bufAdr);
+
+          sLog << "bAdr 0x" << std::hex << bufAdr << " 0x" << tmpAdr << std::endl;
+
+          auto buf = at.lookupAdr( s2u<uint8_t>(g[it].cpu), tmpAdr );
+          if (!(at.isOk(buf))) {throw std::runtime_error( "Could not find buffer in download address table"); return false;}
+          const uint8_t* b = buf->b;
+
+          sLog << "Scanning Buffer " << (int)(i / 2) << " - " << g[buf->v].name << " at Offset " << (int)(i % 2) << std::endl;
+          // scan pending command for flow to forbidden destination
+          uint32_t act  = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_ACT]);
+          uint8_t type = (act >> ACT_TYPE_POS) & ACT_TYPE_MSK;
+          sLog << "Found Cmd type " << (int)type << std::endl; 
+
+          if (type == ACT_TYPE_FLOW) {
+
+            dstAdr   = writeBeBytesToLeNumber<uint32_t>((uint8_t*)&b[(idx % 2) * _T_CMD_SIZE_ + T_CMD_FLOW_DEST]);
+            if (dstAdr == LM32_NULL_PTR) continue; // pointing to idle is always okay
+            std::tie(dstCpu, dstAdrType) = at.adrClassification(dstAdr);
+
+            auto x = at.lookupAdr( (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[it].cpu)), at.adrConv(dstAdrType, AdrType::MGMT, (dstAdrType == AdrType::PEER ? dstCpu : s2u<uint8_t>(g[it].cpu)), dstAdr) );
+            if (!(at.isOk(x))) {throw std::runtime_error( "Could not find dst in download address table"); return false;}
+            sLog << "Found flow dst " << g[x->v].name << std::endl;
+            if (x->v == v) return true; //found a pending critical flow command to given destination, abort and report 
+          }
+        }  
+      }  
+    }
+
+    return false;
+  }      
 
 HealthReport& CarpeDM::getHealth(uint8_t cpuIdx, HealthReport &hr) {
   uint32_t const baseAdr = cpuDevs.at(cpuIdx).sdb_component.addr_first + SHARED_OFFS;
