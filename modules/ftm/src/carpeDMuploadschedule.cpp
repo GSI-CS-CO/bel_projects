@@ -527,10 +527,11 @@ using namespace DotStr::Misc;
     return upload();
   } 
 
-  int CarpeDM::remove(Graph& g) {
+  int CarpeDM::remove(Graph& g, bool force) {
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     generateBlockMeta(g);
     baseUploadOnDownload();
+    for(auto& itChk : getGraphPatterns(g)) {if (!(force | isSafeToRemove(itChk, true))) throw std::runtime_error("Pattern " + itChk + " cannot safely be removed\n");}
     subtraction(g);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);
@@ -538,7 +539,7 @@ using namespace DotStr::Misc;
   }
 
 
-  int CarpeDM::keep(Graph& g) {
+  int CarpeDM::keep(Graph& g, bool force) {
     if ((boost::get_property(g, boost::graph_name)).find(DotStr::Graph::Special::sCmd) != std::string::npos) {throw std::runtime_error("Expected a schedule, but these appear to be commands (Tag '" + DotStr::Graph::Special::sCmd + "' found in graphname)"); return -1;}
     Graph gTmpRemove;
     Graph& gTmpKeep = g;
@@ -562,7 +563,7 @@ using namespace DotStr::Misc;
       if (!found) { boost::add_vertex(myVertex(gUp[w]), gTmpRemove);
       }
     }
-    
+    for(auto& itChk : getGraphPatterns(gTmpRemove)) {if (!(force | isSafeToRemove(itChk, true))) throw std::runtime_error("Pattern " + itChk + " cannot safely be removed\n");}
     subtraction(gTmpRemove);
     //writeUpDotFile("upload.dot", false);
     validate(gUp, atUp);

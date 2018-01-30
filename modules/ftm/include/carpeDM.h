@@ -43,8 +43,8 @@ private:
   void nullify();
 
   int add(Graph& g);
-  int remove(Graph& g);
-  int keep(Graph& g);  
+  int remove(Graph& g, bool force);
+  int keep(Graph& g, bool force);  
   int overwrite(Graph& g);
   bool validate(Graph& g, AllocTable& at);
   
@@ -76,8 +76,10 @@ private:
 
   bool findDefPath(vertex_t start, vertex_t goal, Graph& g);
   bool hasIncomingDefDsts(const std::string& pattern, vertex_t v, bool strict);
-  bool hasIncomingFlows(vertex_t v);
+  bool hasIncomingDynamicFlows(vertex_t v);
+  bool hasIncomingResidentFlows(vertex_t v);
   bool findDefPath(vertex_t start, vertex_t goal);
+  vStrC getGraphPatterns(Graph& g);
 
 protected:
 
@@ -191,11 +193,11 @@ public:
   int overwriteDot(const std::string& s) {Graph gTmp; return overwrite(parseDot(s, gTmp));};
   int overwriteDotFile(const std::string& fn) {return overwriteDot(readTextFile(fn));};
   //removes all nodes NOT in input file
-  int keepDot(const std::string& s) {Graph gTmp; return keep(parseDot(s, gTmp));};
-  int keepDotFile(const std::string& fn) {return keepDot(readTextFile(fn));};
+  int keepDot(const std::string& s, bool force) {Graph gTmp; return keep(parseDot(s, gTmp), force);};
+  int keepDotFile(const std::string& fn, bool force) {return keepDot(readTextFile(fn), force);};
   //removes all nodes in input file                                            
-  int removeDot(const std::string& s) {Graph gTmp; return remove(parseDot(s, gTmp));};
-  int removeDotFile(const std::string& fn) {return removeDot(readTextFile(fn));};
+  int removeDot(const std::string& s, bool force) {Graph gTmp; return remove(parseDot(s, gTmp), force);};
+  int removeDotFile(const std::string& fn, bool force) {return removeDot(readTextFile(fn), force);};
   //clears all nodes from DM 
   int clear();
 

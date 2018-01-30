@@ -410,9 +410,9 @@ int main(int argc, char* argv[]) {
     }
     else if (cmp == "chkrem")  {
       bool strictSafe = cdm.isSafeToRemove(targetName, true);
-      bool safe = cdm.isSafeToRemove(targetName, false);
-      std::cout << "Pattern " << targetName << " allows strict safe removal: " << (int)(strictSafe) << std::endl;
-      std::cout << "Pattern " << targetName << " allows safe removal:        " << (int)(safe) << std::endl;
+      //bool safe = cdm.isSafeToRemove(targetName, false);
+      std::cout << std::endl << "Pattern " << targetName << " allows strict safe removal: " << (int)(strictSafe) << std::endl;
+      //std::cout << "Pattern " << targetName << " allows safe removal:        " << (int)(safe) << std::endl;
       return 0;
     }
     else if (cmp == dnt::sCmdStart)  {

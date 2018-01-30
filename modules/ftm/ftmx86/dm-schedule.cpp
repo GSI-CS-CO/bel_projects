@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
 
   Graph g;
 
-  bool update = true, verbose = false, strip=true, cmdValid = false;
+  bool update = true, verbose = false, strip=true, cmdValid = false, force = false;
 
   int opt;
   const char *program = argv[0];
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 
 
 // start getopt 
-   while ((opt = getopt(argc, argv, "nshvo:")) != -1) {
+   while ((opt = getopt(argc, argv, "fnshvo:")) != -1) {
       switch (opt) {
  
          case 'o':
@@ -52,6 +52,9 @@ int main(int argc, char* argv[]) {
          case 'n':
             update = false;
             break;
+         case 'f':
+            force = true;
+            break;   
 
          case 'v':
             verbose = true;
@@ -139,8 +142,8 @@ int main(int argc, char* argv[]) {
       if (cmd == "clear")     { cdm.clear(); cmdValid = true;}
       if (cmd == "add")       { cdm.addDotFile(inputFilename); cmdValid = true;}
       if (cmd == "overwrite") { cdm.overwriteDotFile(inputFilename); cmdValid = true;}
-      if (cmd == "remove")    { cdm.removeDotFile(inputFilename); cmdValid = true;}
-      if (cmd == "keep")      { cdm.keepDotFile(inputFilename); cmdValid = true;}
+      if (cmd == "remove")    { cdm.removeDotFile(inputFilename, force); cmdValid = true;}
+      if (cmd == "keep")      { cdm.keepDotFile(inputFilename, force); cmdValid = true;}
       if (cmd == "status")    { cdm.downloadDotFile(outputFilename, strip); cmdValid = true;}
       if(verbose) cdm.showUp(false);
     } catch (std::runtime_error const& err) {
