@@ -250,7 +250,7 @@ architecture rtl of ftm is
 
   constant c_family  : string := "Arria V"; 
   constant c_project : string := "ftm";
-  constant c_cores   : natural := 3;
+  constant c_cores   : natural := 4;
   constant c_initf_name 	: string := c_project & ".mif";
   constant c_profile_name  : string := "medium_icache";
 
@@ -269,7 +269,7 @@ begin
       g_lvds_invert         => true,
       g_en_pcie             => true,
       g_en_usb              => true,
-      g_en_lcd              => true, 
+      g_en_lcd              => false, 
       g_io_table            => io_mapping_table,
       g_lm32_are_ftm        => true,
       g_lm32_cores          => c_cores,
