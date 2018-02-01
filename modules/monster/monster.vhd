@@ -1526,8 +1526,8 @@ begin
   ----------------------------------------------------------------------------------
   -- Traffic Mux
   -- Class | RX                | Tx
-  -- x"40" | Etherbone packets | EB Slave -> frames non encoded
-  -- x"80" | FEC packets       | EB Master-> frames to encode
+  -- x"80" | Etherbone packets | EB Slave -> frames non encoded
+  -- x"40" | FEC packets       | EB Master-> frames to encode
 
   g_WB_ENC_DEC : if g_en_fec generate
     WB_ENC_DEC : wb_fec_mux
@@ -1535,7 +1535,7 @@ begin
       g_num_block    => 4,
       g_en_fec_enc   => true,
       g_en_fec_dec   => true,
-      g_mux_class    => (0 => x"40", 1 => x"80"),
+      g_mux_class    => (0 => x"80", 1 => x"40"),
       g_oust_ethtype => true,
       g_en_dec_time  => false)
     port map(
