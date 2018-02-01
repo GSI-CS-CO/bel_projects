@@ -66,6 +66,8 @@ use work.wb_temp_sense_pkg.all;
 use work.ddr3_wrapper_pkg.all;
 use work.endpoint_pkg.all;
 use work.fec_pkg.all;
+use work.wb_cnt_checker_pkg.all;
+use work.wrf_pkt_dropper_pkg.all;
 
 entity monster is
   generic(
@@ -413,7 +415,7 @@ architecture rtl of monster is
   ----------------------------------------------------------------------------------
 
   -- required slaves
-  constant c_dev_slaves          : natural := 29;
+  constant c_dev_slaves          : natural := 31;
   constant c_devs_build_id       : natural := 0;
   constant c_devs_watchdog       : natural := 1;
   constant c_devs_flash          : natural := 2;
@@ -445,6 +447,8 @@ architecture rtl of monster is
   constant c_devs_DDR3_ctrl      : natural := 26;
   constant c_devs_tempsens       : natural := 27;
   constant c_devs_fec            : natural := 28;
+  constant c_devs_checker        : natural := 29;
+  constant c_devs_dropper        : natural := 30;
 
   -- We have to specify the values for WRC as they provide no function for this
   constant c_wrcore_bridge_sdb : t_sdb_bridge := f_xwb_bridge_manual_sdb(x"0003ffff", x"00030000");
@@ -479,6 +483,8 @@ architecture rtl of monster is
     c_devs_ddr3_if2       => f_sdb_auto_device(c_wb_DDR3_if2_sdb,                g_en_ddr3),
     c_devs_ddr3_ctrl      => f_sdb_auto_device(c_irq_master_ctrl_sdb,            g_en_ddr3),
     c_devs_tempsens       => f_sdb_auto_device(c_temp_sense_sdb,                 g_en_tempsens),
+    c_devs_checker        => f_sdb_auto_device(c_checker_sdb,                        true),
+    c_devs_dropper        => f_sdb_auto_device(c_dropper_sdb,                    true),
     c_devs_fec            => f_sdb_auto_device(c_fec_sdb,                        g_en_fec));
 
   constant c_dev_layout      : t_sdb_record_array := f_sdb_auto_layout(c_dev_layout_req_masters, c_dev_layout_req_slaves);
@@ -600,6 +606,11 @@ architecture rtl of monster is
   signal wr2fec_in     : t_wrf_sink_in;
   signal fec2wr_out    : t_wrf_source_out;
   signal fec2wr_in     : t_wrf_source_in;
+
+  signal drop2wr_out    : t_wrf_sink_out;
+  signal drop2wr_in     : t_wrf_sink_in;
+  signal fec2drop_out   : t_wrf_source_out;
+  signal fec2drop_in    : t_wrf_source_in;
 
   signal uart_usb : std_logic; -- from usb
   signal uart_mux : std_logic; -- either usb or external
@@ -1415,8 +1426,10 @@ begin
       aux_master_i         => wrc_master_i,
       wrf_src_o            => wr2fec_in,
       wrf_src_i            => wr2fec_out,
-      wrf_snk_o            => fec2wr_in,
-      wrf_snk_i            => fec2wr_out,
+      --wrf_snk_o            => fec2wr_in,
+      --wrf_snk_i            => fec2wr_out,      
+      wrf_snk_o            => drop2wr_out,
+      wrf_snk_i            => drop2wr_in,
       tm_link_up_o         => open,
       tm_dac_value_o       => open,
       tm_dac_wr_o          => open,
@@ -1552,12 +1565,34 @@ begin
 
       wr2fec_snk_i     => wr2fec_in,
       wr2fec_snk_o     => wr2fec_out,
-      fec2wr_src_i     => fec2wr_in,
-      fec2wr_src_o     => fec2wr_out,
+      fec2wr_src_i     => fec2drop_in,
+      --fec2wr_src_i     => fec2wr_in,
+      --fec2wr_src_o     => fec2wr_out,
+      fec2wr_src_o     => fec2drop_out,
 
       wb_slave_o       => dev_bus_master_i(c_devs_fec),
       wb_slave_i       => dev_bus_master_o(c_devs_fec));
   end generate;
+
+  CNT_CHECK: wb_cnt_checker
+    port map(
+      clk_i     => clk_sys,
+      rst_n_i   => rstn_sys,
+      wb_o      => dev_bus_master_i(c_devs_checker),
+      wb_i      => dev_bus_master_o(c_devs_checker));
+  
+  PKT_DROPPER : wrf_pkt_dropper
+    generic map (
+      g_ena_sim => false)
+    port map (
+      clk_i    => clk_sys, 
+      rst_n_i  => rstn_sys,
+      snk_i    => fec2drop_out,
+      snk_o    => fec2drop_in,
+      src_i    => drop2wr_out,
+      src_o    => drop2wr_in,
+      wb_o     => dev_bus_master_i(c_devs_dropper),
+      wb_i     => dev_bus_master_o(c_devs_dropper));
 
   id : build_id
     port map(
